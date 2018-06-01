@@ -135,12 +135,12 @@ AI_BAI_ZONE = {
 --- Creates a new AI_BAI_ZONE object
 -- @param #AI_BAI_ZONE self
 -- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
--- @param Dcs.DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
--- @param Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.
--- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Controllable} in km/h.
+-- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+-- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+-- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.
+-- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Controllable} in km/h.
 -- @param Core.Zone#ZONE_BASE EngageZone The zone where the engage will happen.
--- @param Dcs.DCSTypes#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
+-- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
 -- @return #AI_BAI_ZONE self
 function AI_BAI_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageZone, PatrolAltType )
 
@@ -177,24 +177,24 @@ function AI_BAI_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude
   -- @function [parent=#AI_BAI_ZONE] Engage
   -- @param #AI_BAI_ZONE self
   -- @param #number EngageSpeed (optional) The speed the Group will hold when engaging to the target zone.
-  -- @param Dcs.DCSTypes#Distance EngageAltitude (optional) Desired altitude to perform the unit engagement.
-  -- @param Dcs.DCSTypes#AI.Task.WeaponExpend EngageWeaponExpend (optional) Determines how much weapon will be released at each attack. 
+  -- @param DCS#Distance EngageAltitude (optional) Desired altitude to perform the unit engagement.
+  -- @param DCS#AI.Task.WeaponExpend EngageWeaponExpend (optional) Determines how much weapon will be released at each attack. 
   -- If parameter is not defined the unit / controllable will choose expend on its own discretion.
   -- Use the structure @{DCSTypes#AI.Task.WeaponExpend} to define the amount of weapons to be release at each attack.
   -- @param #number EngageAttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
-  -- @param Dcs.DCSTypes#Azimuth EngageDirection (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
+  -- @param DCS#Azimuth EngageDirection (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
   
   --- Asynchronous Event Trigger for Event Engage.
   -- @function [parent=#AI_BAI_ZONE] __Engage
   -- @param #AI_BAI_ZONE self
   -- @param #number Delay The delay in seconds.
   -- @param #number EngageSpeed (optional) The speed the Group will hold when engaging to the target zone.
-  -- @param Dcs.DCSTypes#Distance EngageAltitude (optional) Desired altitude to perform the unit engagement.
-  -- @param Dcs.DCSTypes#AI.Task.WeaponExpend EngageWeaponExpend (optional) Determines how much weapon will be released at each attack. 
+  -- @param DCS#Distance EngageAltitude (optional) Desired altitude to perform the unit engagement.
+  -- @param DCS#AI.Task.WeaponExpend EngageWeaponExpend (optional) Determines how much weapon will be released at each attack. 
   -- If parameter is not defined the unit / controllable will choose expend on its own discretion.
   -- Use the structure @{DCSTypes#AI.Task.WeaponExpend} to define the amount of weapons to be release at each attack.
   -- @param #number EngageAttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
-  -- @param Dcs.DCSTypes#Azimuth EngageDirection (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
+  -- @param DCS#Azimuth EngageDirection (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
 
 --- OnLeave Transition Handler for State Engaging.
 -- @function [parent=#AI_BAI_ZONE] OnLeaveEngaging
@@ -481,10 +481,10 @@ end
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
 -- @param #number EngageSpeed (optional) The speed the Group will hold when engaging to the target zone.
--- @param Dcs.DCSTypes#Distance EngageAltitude (optional) Desired altitude to perform the unit engagement.
--- @param Dcs.DCSTypes#AI.Task.WeaponExpend EngageWeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
+-- @param DCS#Distance EngageAltitude (optional) Desired altitude to perform the unit engagement.
+-- @param DCS#AI.Task.WeaponExpend EngageWeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
 -- @param #number EngageAttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
--- @param Dcs.DCSTypes#Azimuth EngageDirection (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
+-- @param DCS#Azimuth EngageDirection (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
 function AI_BAI_ZONE:onafterEngage( Controllable, From, Event, To, 
                                     EngageSpeed, 
                                     EngageAltitude, 

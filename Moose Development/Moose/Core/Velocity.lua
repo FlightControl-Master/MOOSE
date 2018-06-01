@@ -8,7 +8,7 @@
 -- ===
 -- 
 -- @module Core.Velocity
--- @image Core_Velocity.JPG
+-- @image MOOSE.JPG
 
 do -- Velocity
 

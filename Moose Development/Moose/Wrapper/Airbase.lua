@@ -238,7 +238,7 @@ end
 
 --- Finds a AIRBASE from the _DATABASE using a DCSAirbase object.
 -- @param #AIRBASE self
--- @param Dcs.DCSWrapper.Airbase#Airbase DCSAirbase An existing DCS Airbase object reference.
+-- @param DCS#Airbase DCSAirbase An existing DCS Airbase object reference.
 -- @return Wrapper.Airbase#AIRBASE self
 function AIRBASE:Find( DCSAirbase )
 

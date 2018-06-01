@@ -13,13 +13,10 @@
 -- @image Task_Command_Center.JPG
 
 
-
-
-
 --- The COMMANDCENTER class
 -- @type COMMANDCENTER
 -- @field Wrapper.Group#GROUP HQ
--- @field Dcs.DCSCoalitionWrapper.Object#coalition CommandCenterCoalition
+-- @field DCS#coalition CommandCenterCoalition
 -- @list<Tasking.Mission#MISSION> Missions
 -- @extends Core.Base#BASE
 

@@ -1,6 +1,6 @@
 --- Various routines
 -- @module routines
--- @author Flightcontrol
+-- @image MOOSE.JPG
 
 env.setErrorMessageBoxEnabled(false)
 

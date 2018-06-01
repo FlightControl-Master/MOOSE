@@ -273,7 +273,7 @@ end
 --- Return the DCSGroup of a Client.
 -- This function is modified to deal with a couple of bugs in DCS 1.5.3
 -- @param #CLIENT self
--- @return Dcs.DCSWrapper.Group#Group
+-- @return DCS#Group The group of the Client.
 function CLIENT:GetDCSGroup()
   self:F3()
 
@@ -347,10 +347,10 @@ function CLIENT:GetDCSGroup()
 end 
 
 
--- TODO: Check Dcs.DCSTypes#Group.ID
+-- TODO: Check DCS#Group.ID
 --- Get the group ID of the client.
 -- @param #CLIENT self
--- @return Dcs.DCSTypes#Group.ID
+-- @return DCS#Group.ID
 function CLIENT:GetClientGroupID()
 
   local ClientGroup = self:GetDCSGroup()
@@ -389,7 +389,7 @@ end
 
 --- Returns the DCSUnit of the CLIENT.
 -- @param #CLIENT self
--- @return Dcs.DCSTypes#Unit
+-- @return DCS#Unit
 function CLIENT:GetClientGroupDCSUnit()
 	self:F2()
 

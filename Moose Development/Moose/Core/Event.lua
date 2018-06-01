@@ -226,34 +226,34 @@ EVENTS = {
 -- @type EVENTDATA
 -- @field #number id The identifier of the event.
 -- 
--- @field Dcs.DCSUnit#Unit initiator (UNIT/STATIC/SCENERY) The initiating @{Dcs.DCSUnit#Unit} or @{Dcs.DCSStaticObject#StaticObject}.
--- @field Dcs.DCSObject#Object.Category IniObjectCategory (UNIT/STATIC/SCENERY) The initiator object category ( Object.Category.UNIT or Object.Category.STATIC ).
--- @field Dcs.DCSUnit#Unit IniDCSUnit (UNIT/STATIC) The initiating @{DCSUnit#Unit} or @{DCSStaticObject#StaticObject}.
+-- @field DCS#Unit initiator (UNIT/STATIC/SCENERY) The initiating @{DCS#Unit} or @{DCS#StaticObject}.
+-- @field DCS#Object.Category IniObjectCategory (UNIT/STATIC/SCENERY) The initiator object category ( Object.Category.UNIT or Object.Category.STATIC ).
+-- @field DCS#Unit IniDCSUnit (UNIT/STATIC) The initiating @{DCS#Unit} or @{DCSStaticObject#StaticObject}.
 -- @field #string IniDCSUnitName (UNIT/STATIC) The initiating Unit name.
 -- @field Wrapper.Unit#UNIT IniUnit (UNIT/STATIC) The initiating MOOSE wrapper @{Unit#UNIT} of the initiator Unit object.
 -- @field #string IniUnitName (UNIT/STATIC) The initiating UNIT name (same as IniDCSUnitName).
--- @field Dcs.DCSGroup#Group IniDCSGroup (UNIT) The initiating {DCSGroup#Group}.
+-- @field DCS#Group IniDCSGroup (UNIT) The initiating {DCSGroup#Group}.
 -- @field #string IniDCSGroupName (UNIT) The initiating Group name.
 -- @field Wrapper.Group#GROUP IniGroup (UNIT) The initiating MOOSE wrapper @{Wrapper.Group#GROUP} of the initiator Group object.
 -- @field #string IniGroupName UNIT) The initiating GROUP name (same as IniDCSGroupName).
 -- @field #string IniPlayerName (UNIT) The name of the initiating player in case the Unit is a client or player slot.
--- @field Dcs.DCScoalition#coalition.side IniCoalition (UNIT) The coalition of the initiator.
--- @field Dcs.DCSUnit#Unit.Category IniCategory (UNIT) The category of the initiator.
+-- @field DCS#coalition.side IniCoalition (UNIT) The coalition of the initiator.
+-- @field DCS#Unit.Category IniCategory (UNIT) The category of the initiator.
 -- @field #string IniTypeName (UNIT) The type name of the initiator.
 -- 
--- @field Dcs.DCSUnit#Unit target (UNIT/STATIC) The target @{Dcs.DCSUnit#Unit} or @{DCSStaticObject#StaticObject}.
--- @field Dcs.DCSObject#Object.Category TgtObjectCategory (UNIT/STATIC) The target object category ( Object.Category.UNIT or Object.Category.STATIC ).
--- @field Dcs.DCSUnit#Unit TgtDCSUnit (UNIT/STATIC) The target @{DCSUnit#Unit} or @{DCSStaticObject#StaticObject}.
+-- @field DCS#Unit target (UNIT/STATIC) The target @{DCS#Unit} or @{DCSStaticObject#StaticObject}.
+-- @field DCS#Object.Category TgtObjectCategory (UNIT/STATIC) The target object category ( Object.Category.UNIT or Object.Category.STATIC ).
+-- @field DCS#Unit TgtDCSUnit (UNIT/STATIC) The target @{DCS#Unit} or @{DCSStaticObject#StaticObject}.
 -- @field #string TgtDCSUnitName (UNIT/STATIC) The target Unit name.
 -- @field Wrapper.Unit#UNIT TgtUnit (UNIT/STATIC) The target MOOSE wrapper @{Unit#UNIT} of the target Unit object.
 -- @field #string TgtUnitName (UNIT/STATIC) The target UNIT name (same as TgtDCSUnitName).
--- @field Dcs.DCSGroup#Group TgtDCSGroup (UNIT) The target {DCSGroup#Group}.
+-- @field DCS#Group TgtDCSGroup (UNIT) The target {DCSGroup#Group}.
 -- @field #string TgtDCSGroupName (UNIT) The target Group name.
 -- @field Wrapper.Group#GROUP TgtGroup (UNIT) The target MOOSE wrapper @{Wrapper.Group#GROUP} of the target Group object.
 -- @field #string TgtGroupName (UNIT) The target GROUP name (same as TgtDCSGroupName).
 -- @field #string TgtPlayerName (UNIT) The name of the target player in case the Unit is a client or player slot.
--- @field Dcs.DCScoalition#coalition.side TgtCoalition (UNIT) The coalition of the target.
--- @field Dcs.DCSUnit#Unit.Category TgtCategory (UNIT) The category of the target.
+-- @field DCS#coalition.side TgtCoalition (UNIT) The coalition of the target.
+-- @field DCS#Unit.Category TgtCategory (UNIT) The category of the target.
 -- @field #string TgtTypeName (UNIT) The type name of the target.
 -- 
 -- @field weapon The weapon used during the event.
@@ -457,7 +457,7 @@ end
 
 --- Initializes the Events structure for the event
 -- @param #EVENT self
--- @param Dcs.DCSWorld#world.event EventID
+-- @param DCS#world.event EventID
 -- @param Core.Base#BASE EventClass
 -- @return #EVENT.Events
 function EVENT:Init( EventID, EventClass )
@@ -483,7 +483,7 @@ end
 --- Removes a subscription
 -- @param #EVENT self
 -- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
--- @param Dcs.DCSWorld#world.event EventID
+-- @param DCS#world.event EventID
 -- @return #EVENT.Events
 function EVENT:RemoveEvent( EventClass, EventID  )
 
@@ -503,7 +503,7 @@ end
 --- Resets subscriptions
 -- @param #EVENT self
 -- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
--- @param Dcs.DCSWorld#world.event EventID
+-- @param DCS#world.event EventID
 -- @return #EVENT.Events
 function EVENT:Reset( EventObject ) --R2.1
 

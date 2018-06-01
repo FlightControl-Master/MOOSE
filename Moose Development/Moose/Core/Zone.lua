@@ -92,10 +92,10 @@ ZONE_BASE = {
 
 --- The ZONE_BASE.BoundingSquare
 -- @type ZONE_BASE.BoundingSquare
--- @field Dcs.DCSTypes#Distance x1 The lower x coordinate (left down)
--- @field Dcs.DCSTypes#Distance y1 The lower y coordinate (left down)
--- @field Dcs.DCSTypes#Distance x2 The higher x coordinate (right up)
--- @field Dcs.DCSTypes#Distance y2 The higher y coordinate (right up)
+-- @field DCS#Distance x1 The lower x coordinate (left down)
+-- @field DCS#Distance y1 The lower y coordinate (left down)
+-- @field DCS#Distance x2 The higher x coordinate (right up)
+-- @field DCS#Distance y2 The higher y coordinate (right up)
 
 
 --- ZONE_BASE constructor
@@ -135,7 +135,7 @@ end
 
 --- Returns if a Vec2 is within the zone.
 -- @param #ZONE_BASE self
--- @param Dcs.DCSTypes#Vec2 Vec2 The Vec2 to test.
+-- @param DCS#Vec2 Vec2 The Vec2 to test.
 -- @return #boolean true if the Vec2 is within the zone.
 function ZONE_BASE:IsVec2InZone( Vec2 )
   self:F2( Vec2 )
@@ -145,7 +145,7 @@ end
 
 --- Returns if a Vec3 is within the zone.
 -- @param #ZONE_BASE self
--- @param Dcs.DCSTypes#Vec3 Vec3 The point to test.
+-- @param DCS#Vec3 Vec3 The point to test.
 -- @return #boolean true if the Vec3 is within the zone.
 function ZONE_BASE:IsVec3InZone( Vec3 )
   local InZone = self:IsVec2InZone( { x = Vec3.x, y = Vec3.z } )
@@ -189,7 +189,7 @@ end
 
 --- Returns a @{Point#POINT_VEC2} of the zone.
 -- @param #ZONE_BASE self
--- @param Dcs.DCSTypes#Distance Height The height to add to the land height where the center of the zone is located.
+-- @param DCS#Distance Height The height to add to the land height where the center of the zone is located.
 -- @return Core.Point#POINT_VEC2 The PointVec2 of the zone.
 function ZONE_BASE:GetPointVec2()
   self:F2( self.ZoneName )
@@ -222,8 +222,8 @@ end
 
 --- Returns the @{DCSTypes#Vec3} of the zone.
 -- @param #ZONE_BASE self
--- @param Dcs.DCSTypes#Distance Height The height to add to the land height where the center of the zone is located.
--- @return Dcs.DCSTypes#Vec3 The Vec3 of the zone.
+-- @param DCS#Distance Height The height to add to the land height where the center of the zone is located.
+-- @return DCS#Vec3 The Vec3 of the zone.
 function ZONE_BASE:GetVec3( Height )
   self:F2( self.ZoneName )
   
@@ -240,7 +240,7 @@ end
 
 --- Returns a @{Point#POINT_VEC3} of the zone.
 -- @param #ZONE_BASE self
--- @param Dcs.DCSTypes#Distance Height The height to add to the land height where the center of the zone is located.
+-- @param DCS#Distance Height The height to add to the land height where the center of the zone is located.
 -- @return Core.Point#POINT_VEC3 The PointVec3 of the zone.
 function ZONE_BASE:GetPointVec3( Height )
   self:F2( self.ZoneName )
@@ -256,7 +256,7 @@ end
 
 --- Returns a @{Point#COORDINATE} of the zone.
 -- @param #ZONE_BASE self
--- @param Dcs.DCSTypes#Distance Height The height to add to the land height where the center of the zone is located.
+-- @param DCS#Distance Height The height to add to the land height where the center of the zone is located.
 -- @return Core.Point#COORDINATE The Coordinate of the zone.
 function ZONE_BASE:GetCoordinate( Height ) --R2.1
   self:F2( self.ZoneName )
@@ -273,7 +273,7 @@ end
 
 --- Define a random @{DCSTypes#Vec2} within the zone.
 -- @param #ZONE_BASE self
--- @return Dcs.DCSTypes#Vec2 The Vec2 coordinates.
+-- @return DCS#Vec2 The Vec2 coordinates.
 function ZONE_BASE:GetRandomVec2()
   return nil
 end
@@ -373,8 +373,8 @@ end
 
 --- The ZONE_RADIUS class, defined by a zone name, a location and a radius.
 -- @type ZONE_RADIUS
--- @field Dcs.DCSTypes#Vec2 Vec2 The current location of the zone.
--- @field Dcs.DCSTypes#Distance Radius The radius of the zone.
+-- @field DCS#Vec2 Vec2 The current location of the zone.
+-- @field DCS#Distance Radius The radius of the zone.
 -- @extends #ZONE_BASE
 
 --- The ZONE_RADIUS class defined by a zone name, a location and a radius.
@@ -411,8 +411,8 @@ ZONE_RADIUS = {
 --- Constructor of @{#ZONE_RADIUS}, taking the zone name, the zone location and a radius.
 -- @param #ZONE_RADIUS self
 -- @param #string ZoneName Name of the zone.
--- @param Dcs.DCSTypes#Vec2 Vec2 The location of the zone.
--- @param Dcs.DCSTypes#Distance Radius The radius of the zone.
+-- @param DCS#Vec2 Vec2 The location of the zone.
+-- @param DCS#Distance Radius The radius of the zone.
 -- @return #ZONE_RADIUS self
 function ZONE_RADIUS:New( ZoneName, Vec2, Radius )
 	local self = BASE:Inherit( self, ZONE_BASE:New( ZoneName ) ) -- #ZONE_RADIUS
@@ -427,7 +427,7 @@ end
 --- Bounds the zone with tires.
 -- @param #ZONE_RADIUS self
 -- @param #number Points (optional) The amount of points in the circle. Default 360.
--- @param Dcs.DCScountry#country.id CountryID The country id of the tire objects, e.g. country.id.USA for blue or country.id.RUSSIA for red.
+-- @param DCS#country.id CountryID The country id of the tire objects, e.g. country.id.USA for blue or country.id.RUSSIA for red.
 -- @param #boolean UnBound (Optional) If true the tyres will be destroyed.
 -- @return #ZONE_RADIUS self
 function ZONE_RADIUS:BoundZone( Points, CountryID, UnBound )
@@ -507,7 +507,7 @@ end
 -- @param #ZONE_RADIUS self
 -- @param Utilities.Utils#FLARECOLOR FlareColor The flare color.
 -- @param #number Points (optional) The amount of points in the circle.
--- @param Dcs.DCSTypes#Azimuth Azimuth (optional) Azimuth The azimuth of the flare.
+-- @param DCS#Azimuth Azimuth (optional) Azimuth The azimuth of the flare.
 -- @param #number AddHeight (optional) The height to be added for the smoke.
 -- @return #ZONE_RADIUS self
 function ZONE_RADIUS:FlareZone( FlareColor, Points, Azimuth, AddHeight )
@@ -535,7 +535,7 @@ end
 
 --- Returns the radius of the zone.
 -- @param #ZONE_RADIUS self
--- @return Dcs.DCSTypes#Distance The radius of the zone.
+-- @return DCS#Distance The radius of the zone.
 function ZONE_RADIUS:GetRadius()
   self:F2( self.ZoneName )
 
@@ -546,8 +546,8 @@ end
 
 --- Sets the radius of the zone.
 -- @param #ZONE_RADIUS self
--- @param Dcs.DCSTypes#Distance Radius The radius of the zone.
--- @return Dcs.DCSTypes#Distance The radius of the zone.
+-- @param DCS#Distance Radius The radius of the zone.
+-- @return DCS#Distance The radius of the zone.
 function ZONE_RADIUS:SetRadius( Radius )
   self:F2( self.ZoneName )
 
@@ -559,7 +559,7 @@ end
 
 --- Returns the @{DCSTypes#Vec2} of the zone.
 -- @param #ZONE_RADIUS self
--- @return Dcs.DCSTypes#Vec2 The location of the zone.
+-- @return DCS#Vec2 The location of the zone.
 function ZONE_RADIUS:GetVec2()
 	self:F2( self.ZoneName )
 
@@ -570,8 +570,8 @@ end
 
 --- Sets the @{DCSTypes#Vec2} of the zone.
 -- @param #ZONE_RADIUS self
--- @param Dcs.DCSTypes#Vec2 Vec2 The new location of the zone.
--- @return Dcs.DCSTypes#Vec2 The new location of the zone.
+-- @param DCS#Vec2 Vec2 The new location of the zone.
+-- @return DCS#Vec2 The new location of the zone.
 function ZONE_RADIUS:SetVec2( Vec2 )
   self:F2( self.ZoneName )
   
@@ -584,8 +584,8 @@ end
 
 --- Returns the @{DCSTypes#Vec3} of the ZONE_RADIUS.
 -- @param #ZONE_RADIUS self
--- @param Dcs.DCSTypes#Distance Height The height to add to the land height where the center of the zone is located.
--- @return Dcs.DCSTypes#Vec3 The point of the zone.
+-- @param DCS#Distance Height The height to add to the land height where the center of the zone is located.
+-- @return DCS#Vec3 The point of the zone.
 function ZONE_RADIUS:GetVec3( Height )
   self:F2( { self.ZoneName, Height } )
 
@@ -829,7 +829,7 @@ end
 
 --- Returns if a location is within the zone.
 -- @param #ZONE_RADIUS self
--- @param Dcs.DCSTypes#Vec2 Vec2 The location to test.
+-- @param DCS#Vec2 Vec2 The location to test.
 -- @return #boolean true if the location is within the zone.
 function ZONE_RADIUS:IsVec2InZone( Vec2 )
   self:F2( Vec2 )
@@ -847,7 +847,7 @@ end
 
 --- Returns if a point is within the zone.
 -- @param #ZONE_RADIUS self
--- @param Dcs.DCSTypes#Vec3 Vec3 The point to test.
+-- @param DCS#Vec3 Vec3 The point to test.
 -- @return #boolean true if the point is within the zone.
 function ZONE_RADIUS:IsVec3InZone( Vec3 )
   self:F2( Vec3 )
@@ -861,7 +861,7 @@ end
 -- @param #ZONE_RADIUS self
 -- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
 -- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
--- @return Dcs.DCSTypes#Vec2 The random location within the zone.
+-- @return DCS#Vec2 The random location within the zone.
 function ZONE_RADIUS:GetRandomVec2( inner, outer )
 	self:F( self.ZoneName, inner, outer )
 
@@ -898,7 +898,7 @@ end
 -- @param #ZONE_RADIUS self
 -- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
 -- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
--- @return Dcs.DCSTypes#Vec3 The random location within the zone.
+-- @return DCS#Vec3 The random location within the zone.
 function ZONE_RADIUS:GetRandomVec3( inner, outer )
   self:F( self.ZoneName, inner, outer )
 
@@ -1029,7 +1029,7 @@ ZONE_UNIT = {
 -- @param #ZONE_UNIT self
 -- @param #string ZoneName Name of the zone.
 -- @param Wrapper.Unit#UNIT ZoneUNIT The unit as the center of the zone.
--- @param Dcs.DCSTypes#Distance Radius The radius of the zone.
+-- @param DCS#Distance Radius The radius of the zone.
 -- @return #ZONE_UNIT self
 function ZONE_UNIT:New( ZoneName, ZoneUNIT, Radius )
   local self = BASE:Inherit( self, ZONE_RADIUS:New( ZoneName, ZoneUNIT:GetVec2(), Radius ) )
@@ -1047,7 +1047,7 @@ end
 
 --- Returns the current location of the @{Unit#UNIT}.
 -- @param #ZONE_UNIT self
--- @return Dcs.DCSTypes#Vec2 The location of the zone based on the @{Unit#UNIT}location.
+-- @return DCS#Vec2 The location of the zone based on the @{Unit#UNIT}location.
 function ZONE_UNIT:GetVec2()
   self:F2( self.ZoneName )
   
@@ -1066,7 +1066,7 @@ end
 
 --- Returns a random location within the zone.
 -- @param #ZONE_UNIT self
--- @return Dcs.DCSTypes#Vec2 The random location within the zone.
+-- @return DCS#Vec2 The random location within the zone.
 function ZONE_UNIT:GetRandomVec2()
   self:F( self.ZoneName )
 
@@ -1088,8 +1088,8 @@ end
 
 --- Returns the @{DCSTypes#Vec3} of the ZONE_UNIT.
 -- @param #ZONE_UNIT self
--- @param Dcs.DCSTypes#Distance Height The height to add to the land height where the center of the zone is located.
--- @return Dcs.DCSTypes#Vec3 The point of the zone.
+-- @param DCS#Distance Height The height to add to the land height where the center of the zone is located.
+-- @return DCS#Vec3 The point of the zone.
 function ZONE_UNIT:GetVec3( Height )
   self:F2( self.ZoneName )
   
@@ -1120,7 +1120,7 @@ ZONE_GROUP = {
 -- @param #ZONE_GROUP self
 -- @param #string ZoneName Name of the zone.
 -- @param Wrapper.Group#GROUP ZoneGROUP The @{Wrapper.Group} as the center of the zone.
--- @param Dcs.DCSTypes#Distance Radius The radius of the zone.
+-- @param DCS#Distance Radius The radius of the zone.
 -- @return #ZONE_GROUP self
 function ZONE_GROUP:New( ZoneName, ZoneGROUP, Radius )
   local self = BASE:Inherit( self, ZONE_RADIUS:New( ZoneName, ZoneGROUP:GetVec2(), Radius ) )
@@ -1137,7 +1137,7 @@ end
 
 --- Returns the current location of the @{Wrapper.Group}.
 -- @param #ZONE_GROUP self
--- @return Dcs.DCSTypes#Vec2 The location of the zone based on the @{Wrapper.Group} location.
+-- @return DCS#Vec2 The location of the zone based on the @{Wrapper.Group} location.
 function ZONE_GROUP:GetVec2()
   self:F( self.ZoneName )
   
@@ -1150,7 +1150,7 @@ end
 
 --- Returns a random location within the zone of the @{Wrapper.Group}.
 -- @param #ZONE_GROUP self
--- @return Dcs.DCSTypes#Vec2 The random location of the zone based on the @{Wrapper.Group} location.
+-- @return DCS#Vec2 The random location of the zone based on the @{Wrapper.Group} location.
 function ZONE_GROUP:GetRandomVec2()
   self:F( self.ZoneName )
 
@@ -1206,7 +1206,7 @@ ZONE_POLYGON_BASE = {
 
 --- A points array.
 -- @type ZONE_POLYGON_BASE.ListVec2
--- @list <Dcs.DCSTypes#Vec2>
+-- @list <DCS#Vec2>
 
 --- Constructor to create a ZONE_POLYGON_BASE instance, taking the zone name and an array of @{DCSTypes#Vec2}, forming a polygon.
 -- The @{Wrapper.Group#GROUP} waypoints define the polygon corners. The first and the last point are automatically connected.
@@ -1233,7 +1233,7 @@ end
 
 --- Returns the center location of the polygon.
 -- @param #ZONE_GROUP self
--- @return Dcs.DCSTypes#Vec2 The location of the zone based on the @{Wrapper.Group} location.
+-- @return DCS#Vec2 The location of the zone based on the @{Wrapper.Group} location.
 function ZONE_POLYGON_BASE:GetVec2()
   self:F( self.ZoneName )
 
@@ -1340,7 +1340,7 @@ end
 --- Returns if a location is within the zone.
 -- Source learned and taken from: https://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
 -- @param #ZONE_POLYGON_BASE self
--- @param Dcs.DCSTypes#Vec2 Vec2 The location to test.
+-- @param DCS#Vec2 Vec2 The location to test.
 -- @return #boolean true if the location is within the zone.
 function ZONE_POLYGON_BASE:IsVec2InZone( Vec2 )
   self:F2( Vec2 )
@@ -1370,7 +1370,7 @@ end
 
 --- Define a random @{DCSTypes#Vec2} within the zone.
 -- @param #ZONE_POLYGON_BASE self
--- @return Dcs.DCSTypes#Vec2 The Vec2 coordinate.
+-- @return DCS#Vec2 The Vec2 coordinate.
 function ZONE_POLYGON_BASE:GetRandomVec2()
   self:F2()
 

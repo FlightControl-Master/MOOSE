@@ -2186,7 +2186,7 @@ do -- SET_UNIT
   
   --- Returns if the @{Set} has targets having a radar (of a given type).
   -- @param #SET_UNIT self
-  -- @param Dcs.DCSWrapper.Unit#Unit.RadarType RadarType
+  -- @param DCS#Unit.RadarType RadarType
   -- @return #number The amount of radars in the Set with the given type
   function SET_UNIT:HasRadar( RadarType )
     self:F2( RadarType )

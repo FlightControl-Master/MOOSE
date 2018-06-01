@@ -24,6 +24,7 @@
 -- ===
 --   
 -- @module Tasking.Task_Cargo
+-- @image MOOSE.JPG
 
 do -- TASK_CARGO
 

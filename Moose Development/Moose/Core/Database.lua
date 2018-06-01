@@ -587,9 +587,9 @@ end
 --- Private method that registers new Group Templates within the DATABASE Object.
 -- @param #DATABASE self
 -- @param #table GroupTemplate
--- @param Dcs.DCScoalition#coalition.side CoalitionSide The coalition.side of the object.
--- @param Dcs.DCSObject#Object.Category CategoryID The Object.category of the object.
--- @param Dcs.DCScountry#country.id CountryID the country.id of the object
+-- @param DCS#coalition.side CoalitionSide The coalition.side of the object.
+-- @param DCS#Object.Category CategoryID The Object.category of the object.
+-- @param DCS#country.id CountryID the country.id of the object
 -- @return #DATABASE self
 function DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionSide, CategoryID, CountryID, GroupName )
 

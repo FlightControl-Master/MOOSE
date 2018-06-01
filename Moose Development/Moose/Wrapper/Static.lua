@@ -56,7 +56,7 @@ end
 
 --- Finds a STATIC from the _DATABASE using a DCSStatic object.
 -- @param #STATIC self
--- @param Dcs.DCSWrapper.Static#Static DCSStatic An existing DCS Static object reference.
+-- @param DCS#StaticObject DCSStatic An existing DCS Static object reference.
 -- @return #STATIC self
 function STATIC:Find( DCSStatic )
 

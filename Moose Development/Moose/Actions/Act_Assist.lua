@@ -1,9 +1,5 @@
 --- (SP) (MP) (FSM) Route AI or players through waypoints or to zones.
 -- 
--- ===
--- 
--- # @{#ACT_ASSIST} FSM class, extends @{Fsm#FSM_PROCESS}
--- 
 -- ## ACT_ASSIST state machine:
 -- 
 -- This class is a state machine: it manages a process that is triggered by events causing state transitions to occur.
@@ -64,7 +60,9 @@
 -- 
 -- ===
 -- 
--- @module Smoke
+-- @module Actions.Assist
+-- @image MOOSE.JPG
+
 
 do -- ACT_ASSIST
 

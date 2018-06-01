@@ -126,8 +126,8 @@
 -- @field Core.Scheduler#SCHEDULER FollowScheduler The instance of the SCHEDULER class.
 -- @field #number FollowDistance The current follow distance.
 -- @field #boolean ReportTargets If true, nearby targets are reported.
--- @Field Dcs.DCSTypes#AI.Option.Air.val.ROE OptionROE Which ROE is set to the EscortGroup.
--- @field Dcs.DCSTypes#AI.Option.Air.val.REACTION_ON_THREAT OptionReactionOnThreat Which REACTION_ON_THREAT is set to the EscortGroup.
+-- @Field DCS#AI.Option.Air.val.ROE OptionROE Which ROE is set to the EscortGroup.
+-- @field DCS#AI.Option.Air.val.REACTION_ON_THREAT OptionReactionOnThreat Which REACTION_ON_THREAT is set to the EscortGroup.
 -- @field FunctionalMENU_GROUPDETECTION_BASE Detection
 ESCORT = {
   ClassName = "ESCORT",
@@ -294,7 +294,7 @@ end
 --- Defines a menu slot to let the escort Join and Follow you at a certain distance.
 -- This menu will appear under **Navigation**.
 -- @param #ESCORT self
--- @param Dcs.DCSTypes#Distance Distance The distance in meters that the escort needs to follow the client.
+-- @param DCS#Distance Distance The distance in meters that the escort needs to follow the client.
 -- @return #ESCORT
 function ESCORT:MenuFollowAt( Distance )
   self:F(Distance)
@@ -319,8 +319,8 @@ end
 --- Defines a menu slot to let the escort hold at their current position and stay low with a specified height during a specified time in seconds.
 -- This menu will appear under **Hold position**.
 -- @param #ESCORT self
--- @param Dcs.DCSTypes#Distance Height Optional parameter that sets the height in meters to let the escort orbit at the current location. The default value is 30 meters.
--- @param Dcs.DCSTypes#Time Seconds Optional parameter that lets the escort orbit at the current position for a specified time. (not implemented yet). The default value is 0 seconds, meaning, that the escort will orbit forever until a sequent command is given.
+-- @param DCS#Distance Height Optional parameter that sets the height in meters to let the escort orbit at the current location. The default value is 30 meters.
+-- @param DCS#Time Seconds Optional parameter that lets the escort orbit at the current position for a specified time. (not implemented yet). The default value is 0 seconds, meaning, that the escort will orbit forever until a sequent command is given.
 -- @param #string MenuTextFormat Optional parameter that shows the menu option text. The text string is formatted, and should contain two %d tokens in the string. The first for the Height, the second for the Time (if given). If no text is given, the default text will be displayed.
 -- @return #ESCORT
 -- TODO: Implement Seconds parameter. Challenge is to first develop the "continue from last activity" function.
@@ -380,8 +380,8 @@ end
 --- Defines a menu slot to let the escort hold at the client position and stay low with a specified height during a specified time in seconds.
 -- This menu will appear under **Navigation**.
 -- @param #ESCORT self
--- @param Dcs.DCSTypes#Distance Height Optional parameter that sets the height in meters to let the escort orbit at the current location. The default value is 30 meters.
--- @param Dcs.DCSTypes#Time Seconds Optional parameter that lets the escort orbit at the current position for a specified time. (not implemented yet). The default value is 0 seconds, meaning, that the escort will orbit forever until a sequent command is given.
+-- @param DCS#Distance Height Optional parameter that sets the height in meters to let the escort orbit at the current location. The default value is 30 meters.
+-- @param DCS#Time Seconds Optional parameter that lets the escort orbit at the current position for a specified time. (not implemented yet). The default value is 0 seconds, meaning, that the escort will orbit forever until a sequent command is given.
 -- @param #string MenuTextFormat Optional parameter that shows the menu option text. The text string is formatted, and should contain one or two %d tokens in the string. The first for the Height, the second for the Time (if given). If no text is given, the default text will be displayed.
 -- @return #ESCORT
 -- TODO: Implement Seconds parameter. Challenge is to first develop the "continue from last activity" function.
@@ -441,8 +441,8 @@ end
 --- Defines a menu slot to let the escort scan for targets at a certain height for a certain time in seconds.
 -- This menu will appear under **Scan targets**.
 -- @param #ESCORT self
--- @param Dcs.DCSTypes#Distance Height Optional parameter that sets the height in meters to let the escort orbit at the current location. The default value is 30 meters.
--- @param Dcs.DCSTypes#Time Seconds Optional parameter that lets the escort orbit at the current position for a specified time. (not implemented yet). The default value is 0 seconds, meaning, that the escort will orbit forever until a sequent command is given.
+-- @param DCS#Distance Height Optional parameter that sets the height in meters to let the escort orbit at the current location. The default value is 30 meters.
+-- @param DCS#Time Seconds Optional parameter that lets the escort orbit at the current position for a specified time. (not implemented yet). The default value is 0 seconds, meaning, that the escort will orbit forever until a sequent command is given.
 -- @param #string MenuTextFormat Optional parameter that shows the menu option text. The text string is formatted, and should contain one or two %d tokens in the string. The first for the Height, the second for the Time (if given). If no text is given, the default text will be displayed.
 -- @return #ESCORT
 function ESCORT:MenuScanForTargets( Height, Seconds, MenuTextFormat )
@@ -566,7 +566,7 @@ end
 -- This menu will appear under **Report targets**.
 -- Note that if a report targets menu is not specified, no targets will be detected by the escort, and the attack and assisted attack menus will not be displayed.
 -- @param #ESCORT self
--- @param Dcs.DCSTypes#Time Seconds Optional parameter that lets the escort report their current detected targets after specified time interval in seconds. The default time is 30 seconds.
+-- @param DCS#Time Seconds Optional parameter that lets the escort report their current detected targets after specified time interval in seconds. The default time is 30 seconds.
 -- @return #ESCORT
 function ESCORT:MenuReportTargets( Seconds )
   self:F( { Seconds } )
@@ -736,7 +736,7 @@ end
 -- @param Functional.Escort#ESCORT self
 -- @param Wrapper.Group#GROUP EscortGroup
 -- @param Wrapper.Client#CLIENT EscortClient
--- @param Dcs.DCSTypes#Distance Distance
+-- @param DCS#Distance Distance
 function ESCORT:JoinUpAndFollow( EscortGroup, EscortClient, Distance )
   self:F( { EscortGroup, EscortClient, Distance } )
 

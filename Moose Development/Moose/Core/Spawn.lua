@@ -547,8 +547,8 @@ end
 --- Randomizes the position of @{Wrapper.Group}s that are spawned within a **radius band**, given an Outer and Inner radius, from the point that the spawn happens.
 -- @param #SPAWN self
 -- @param #boolean RandomizePosition If true, SPAWN will perform the randomization of the @{Wrapper.Group}s position between a given outer and inner radius. 
--- @param Dcs.DCSTypes#Distance OuterRadius (optional) The outer radius in meters where the new group will be spawned.
--- @param Dcs.DCSTypes#Distance InnerRadius (optional) The inner radius in meters where the new group will NOT be spawned.
+-- @param DCS#Distance OuterRadius (optional) The outer radius in meters where the new group will be spawned.
+-- @param DCS#Distance InnerRadius (optional) The inner radius in meters where the new group will NOT be spawned.
 -- @return #SPAWN
 function SPAWN:InitRandomizePosition( RandomizePosition, OuterRadius, InnerRadius )
   self:F( { self.SpawnTemplatePrefix, RandomizePosition, OuterRadius, InnerRadius } )
@@ -568,8 +568,8 @@ end
 --- Randomizes the UNITs that are spawned within a radius band given an Outer and Inner radius.
 -- @param #SPAWN self
 -- @param #boolean RandomizeUnits If true, SPAWN will perform the randomization of the @{UNIT}s position within the group between a given outer and inner radius. 
--- @param Dcs.DCSTypes#Distance OuterRadius (optional) The outer radius in meters where the new group will be spawned.
--- @param Dcs.DCSTypes#Distance InnerRadius (optional) The inner radius in meters where the new group will NOT be spawned.
+-- @param DCS#Distance OuterRadius (optional) The outer radius in meters where the new group will be spawned.
+-- @param DCS#Distance InnerRadius (optional) The inner radius in meters where the new group will NOT be spawned.
 -- @return #SPAWN
 -- @usage
 -- -- NATO helicopters engaging in the battle field. 
@@ -1344,7 +1344,7 @@ end
 -- Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
 -- You can use the returned group to further define the route to be followed.
 -- @param #SPAWN self
--- @param Dcs.DCSTypes#Vec3 Vec3 The Vec3 coordinates where to spawn the group.
+-- @param DCS#Vec3 Vec3 The Vec3 coordinates where to spawn the group.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
 -- @return Wrapper.Group#GROUP that was spawned.
 -- @return #nil Nothing was spawned.
@@ -1454,7 +1454,7 @@ end
 -- Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
 -- You can use the returned group to further define the route to be followed.
 -- @param #SPAWN self
--- @param Dcs.DCSTypes#Vec2 Vec2 The Vec2 coordinates where to spawn the group.
+-- @param DCS#Vec2 Vec2 The Vec2 coordinates where to spawn the group.
 -- @param #number MinHeight (optional) The minimum height to spawn an airborne group into the zone.
 -- @param #number MaxHeight (optional) The maximum height to spawn an airborne group into the zone.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
@@ -1778,7 +1778,7 @@ end
 -- The method will search for a #-mark, and will return the text before the #-mark.
 -- It will return nil of no prefix was found.
 -- @param #SPAWN self
--- @param Dcs.DCSWrapper.Unit#UNIT DCSUnit The @{DCSUnit} to be searched.
+-- @param DCS#UNIT DCSUnit The @{DCSUnit} to be searched.
 -- @return #string The prefix
 -- @return #nil Nothing found
 function SPAWN:_GetPrefixFromGroup( SpawnGroup )

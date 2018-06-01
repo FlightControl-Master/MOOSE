@@ -9,6 +9,7 @@
 -- ===
 --   
 -- @module Tasking.TaskZoneCapture
+-- @image MOOSE.JPG
 
 do -- TASK_ZONE_GOAL
 

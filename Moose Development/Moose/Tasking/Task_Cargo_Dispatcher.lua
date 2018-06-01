@@ -9,6 +9,7 @@
 -- ===
 -- 
 -- @module Tasking.Task_Cargo_Dispatcher
+-- @image MOOSE.JPG
 
 do -- TASK_CARGO_DISPATCHER
 

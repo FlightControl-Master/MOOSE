@@ -72,7 +72,8 @@
 -- 
 -- ===
 -- 
--- @module Route
+-- @module Actions.Route
+-- @image MOOSE.JPG
 
 
 do -- ACT_ROUTE

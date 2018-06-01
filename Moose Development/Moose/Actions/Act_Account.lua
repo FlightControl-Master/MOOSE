@@ -4,8 +4,8 @@
 -- 
 -- === 
 -- 
--- @module Account
-
+-- @module Actions.Account
+-- @image MOOSE.JPG
 
 do -- ACT_ACCOUNT
   

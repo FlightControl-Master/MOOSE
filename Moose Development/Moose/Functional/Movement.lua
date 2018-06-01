@@ -8,6 +8,7 @@
 -- the main DCS execution core of your CPU is fully utilized. So, this class will limit the amount of simultaneous moving GROUND units
 -- on defined intervals (currently every minute).
 -- @module Functional.Movement
+-- @image MOOSE.JPG
 
 --- the MOVEMENT class
 -- @type MOVEMENT

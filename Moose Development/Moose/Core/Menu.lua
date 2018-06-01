@@ -585,7 +585,7 @@ do -- MENU_COALITION
   
   --- MENU_COALITION constructor. Creates a new MENU_COALITION object and creates the menu for a complete coalition.
   -- @param #MENU_COALITION self
-  -- @param Dcs.DCSCoalition#coalition.side Coalition The coalition owning the menu.
+  -- @param DCS#coalition.side Coalition The coalition owning the menu.
   -- @param #string MenuText The text for the menu.
   -- @param #table ParentMenu The parent menu. This parameter can be ignored if you want the menu to be located at the perent menu of DCS world (under F10 other).
   -- @return #MENU_COALITION self
@@ -683,7 +683,7 @@ do -- MENU_COALITION_COMMAND
   
   --- MENU_COALITION constructor. Creates a new radio command item for a coalition, which can invoke a function with parameters.
   -- @param #MENU_COALITION_COMMAND self
-  -- @param Dcs.DCSCoalition#coalition.side Coalition The coalition owning the menu.
+  -- @param DCS#coalition.side Coalition The coalition owning the menu.
   -- @param #string MenuText The text for the menu.
   -- @param Core.Menu#MENU_COALITION ParentMenu The parent menu.
   -- @param CommandMenuFunction A function that is called when the menu key is pressed.

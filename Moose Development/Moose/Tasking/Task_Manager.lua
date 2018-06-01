@@ -30,6 +30,7 @@
 -- ### Author: FlightControl - Framework Design &  Programming
 -- 
 -- @module Tasking.Task_Manager
+-- @image MOOSE.JPG
 
 do -- TASK_MANAGER
   

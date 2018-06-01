@@ -37,7 +37,7 @@ do -- DETECTION_BASE
 
   --- @type DETECTION_BASE
   -- @field Core.Set#SET_GROUP DetectionSetGroup The @{Set} of GROUPs in the Forward Air Controller role.
-  -- @field Dcs.DCSTypes#Distance DetectionRange The range till which targets are accepted to be detected.
+  -- @field DCS#Distance DetectionRange The range till which targets are accepted to be detected.
   -- @field #DETECTION_BASE.DetectedObjects DetectedObjects The list of detected objects.
   -- @field #table DetectedObjectsIdentified Map of the DetectedObjects identified.
   -- @field #number DetectionRun
@@ -553,7 +553,7 @@ do -- DETECTION_BASE
         --self:F( DetectedTargets )
         
         for DetectionObjectID, Detection in pairs( DetectedTargets ) do
-          local DetectedObject = Detection.object -- Dcs.DCSWrapper.Object#Object
+          local DetectedObject = Detection.object -- DCS#Object
           
           if DetectedObject and DetectedObject:isExist() and DetectedObject.id_ < 50000000 then -- and ( DetectedObject:getCategory() == Object.Category.UNIT or DetectedObject:getCategory() == Object.Category.STATIC ) then
     
@@ -891,7 +891,7 @@ do -- DETECTION_BASE
     --     DetectionObject:FilterCategories( { Unit.Category.AIRPLANE, Unit.Category.HELICOPTER } )
     -- 
     -- @param #DETECTION_BASE self
-    -- @param #list<Dcs.DCSUnit#Unit> FilterCategories The Categories entries
+    -- @param #list<DCS#Unit> FilterCategories The Categories entries
     -- @return #DETECTION_BASE self
     function DETECTION_BASE:FilterCategories( FilterCategories )
       self:F2()
@@ -1165,7 +1165,7 @@ do -- DETECTION_BASE
     --- Returns if there are friendlies nearby the FAC units ...
     -- @param #DETECTION_BASE self
     -- @param DetectedItem
-    -- @param Dcs.DCSUnit#Unit.Category Category The category of the unit.
+    -- @param DCS#Unit.Category Category The category of the unit.
     -- @return #boolean true if there are friendlies nearby 
     function DETECTION_BASE:IsFriendliesNearBy( DetectedItem, Category )
       --self:F( { "FriendliesNearBy Test", DetectedItem.FriendliesNearBy } )
@@ -1175,7 +1175,7 @@ do -- DETECTION_BASE
     --- Returns friendly units nearby the FAC units ...
     -- @param #DETECTION_BASE self
     -- @param DetectedItem
-    -- @param Dcs.DCSUnit#Unit.Category Category The category of the unit.
+    -- @param DCS#Unit.Category Category The category of the unit.
     -- @return #map<#string,Wrapper.Unit#UNIT> The map of Friendly UNITs. 
     function DETECTION_BASE:GetFriendliesNearBy( DetectedItem, Category )
       
@@ -1248,7 +1248,7 @@ do -- DETECTION_BASE
           
          }
          
-        --- @param Dcs.DCSWrapper.Unit#Unit FoundDCSUnit
+        --- @param DCS#Unit FoundDCSUnit
         -- @param Wrapper.Group#GROUP ReportGroup
         -- @param Core.Set#SET_GROUP ReportSetGroup
         local FindNearByFriendlies = function( FoundDCSUnit, ReportGroupData )
@@ -1809,7 +1809,7 @@ do -- DETECTION_UNITS
   -- Beware that when the amount of units detected is large, the DetectedItems list will be large also. 
   -- 
   -- @type DETECTION_UNITS
-  -- @field Dcs.DCSTypes#Distance DetectionRange The range till which targets are detected.
+  -- @field DCS#Distance DetectionRange The range till which targets are detected.
   -- @extends #DETECTION_BASE
   DETECTION_UNITS = {
     ClassName = "DETECTION_UNITS",
@@ -2294,7 +2294,7 @@ do -- DETECTION_AREAS
   -- the detected zones when a new detection has taken place.
   -- 
   -- @type DETECTION_AREAS
-  -- @field Dcs.DCSTypes#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
+  -- @field DCS#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
   -- @field #DETECTION_BASE.DetectedItems DetectedItems A list of areas containing the set of @{Wrapper.Unit}s, @{Zone}s, the center @{Wrapper.Unit} within the zone, and ID of each area that was detected within a DetectionZoneRange.
   -- @extends #DETECTION_BASE
   DETECTION_AREAS = {
@@ -2306,7 +2306,7 @@ do -- DETECTION_AREAS
   --- DETECTION_AREAS constructor.
   -- @param #DETECTION_AREAS self
   -- @param Core.Set#SET_GROUP DetectionSetGroup The @{Set} of GROUPs in the Forward Air Controller role.
-  -- @param Dcs.DCSTypes#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
+  -- @param DCS#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
   -- @return #DETECTION_AREAS
   function DETECTION_AREAS:New( DetectionSetGroup, DetectionZoneRange )
   

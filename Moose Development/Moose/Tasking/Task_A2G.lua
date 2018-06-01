@@ -9,6 +9,7 @@
 -- ===
 --   
 -- @module Tasking.Task_A2G
+-- @image MOOSE.JPG
 
 do -- TASK_A2G
 

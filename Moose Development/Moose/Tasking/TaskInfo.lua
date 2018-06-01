@@ -9,6 +9,7 @@
 -- ===
 -- 
 -- @module Tasking.TaskInfo
+-- @image MOOSE.JPG
 
 --- @type TASKINFO
 -- @extends Core.Base#BASE

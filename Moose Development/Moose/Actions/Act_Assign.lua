@@ -77,7 +77,8 @@
 -- 
 -- ===
 -- 
--- @module Assign
+-- @module Actions.Assign
+-- @image MOOSE.JPG
 
 
 do -- ACT_ASSIGN

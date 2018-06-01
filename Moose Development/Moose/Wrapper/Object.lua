@@ -9,6 +9,7 @@
 -- ===
 -- 
 -- @module Wrapper.Object
+-- @image MOOSE.JPG
 
 
 --- @type OBJECT
@@ -40,7 +41,7 @@ OBJECT = {
 
 --- Create a new OBJECT from a DCSObject
 -- @param #OBJECT self
--- @param Dcs.DCSWrapper.Object#Object ObjectName The Object name
+-- @param DCS#Object ObjectName The Object name
 -- @return #OBJECT self
 function OBJECT:New( ObjectName, Test )
   local self = BASE:Inherit( self, BASE:New() )
@@ -53,7 +54,7 @@ end
 
 --- Returns the unit's unique identifier.
 -- @param Wrapper.Object#OBJECT self
--- @return Dcs.DCSWrapper.Object#Object.ID ObjectID
+-- @return DCS#Object.ID ObjectID
 -- @return #nil The DCS Object is not existing or alive.  
 function OBJECT:GetID()
 

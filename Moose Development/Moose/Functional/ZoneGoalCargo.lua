@@ -12,6 +12,7 @@
 -- ===
 -- 
 -- @module Functional.ZoneGoalCargo
+-- @image MOOSE.JPG
 
 do -- ZoneGoal
 
