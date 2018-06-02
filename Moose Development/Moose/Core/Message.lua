@@ -66,6 +66,7 @@ MESSAGE.Type = {
 -- @param #string MessageText is the text of the Message.
 -- @param #number MessageDuration is a number in seconds of how long the MESSAGE should be shown on the display panel.
 -- @param #string MessageCategory (optional) is a string expressing the "category" of the Message. The category will be shown as the first text in the message followed by a ": ".
+-- @param #boolean ClearScreen (optional) Clear all previous messages.
 -- @return #MESSAGE
 -- @usage
 -- -- Create a series of new Messages.
@@ -77,7 +78,7 @@ MESSAGE.Type = {
 -- MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", 25, "Penalty" )
 -- MessageClient1 = MESSAGE:New( "Congratulations, you've just hit a target",  25, "Score" )
 -- MessageClient2 = MESSAGE:New( "Congratulations, you've just killed a target", 25, "Score")
-function MESSAGE:New( MessageText, MessageDuration, MessageCategory )
+function MESSAGE:New( MessageText, MessageDuration, MessageCategory, ClearScreen )
 	local self = BASE:Inherit( self, BASE:New() )
 	self:F( { MessageText, MessageDuration, MessageCategory } )
 
@@ -93,6 +94,11 @@ function MESSAGE:New( MessageText, MessageDuration, MessageCategory )
     end
   else
     self.MessageCategory = ""
+  end
+  
+  self.ClearScreen=false
+  if ClearScreen~=nil then
+    self.ClearScreen=ClearScreen
   end
 
 	self.MessageDuration = MessageDuration or 5
@@ -114,18 +120,24 @@ end
 -- @param self
 -- @param #string MessageText is the text of the Message.
 -- @param #MESSAGE.Type MessageType The type of the message.
+-- @param #boolean ClearScreen (optional) Clear all previous messages.
 -- @return #MESSAGE
 -- @usage
 --   MessageAll = MESSAGE:NewType( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", MESSAGE.Type.Information )
 --   MessageRED = MESSAGE:NewType( "To the RED Players: You receive a penalty because you've killed one of your own units", MESSAGE.Type.Information )
 --   MessageClient1 = MESSAGE:NewType( "Congratulations, you've just hit a target", MESSAGE.Type.Update )
 --   MessageClient2 = MESSAGE:NewType( "Congratulations, you've just killed a target", MESSAGE.Type.Update )
-function MESSAGE:NewType( MessageText, MessageType )
+function MESSAGE:NewType( MessageText, MessageType, ClearScreen )
 
   local self = BASE:Inherit( self, BASE:New() )
   self:F( { MessageText } )
   
   self.MessageType = MessageType
+  
+  self.ClearScreen=false
+  if ClearScreen~=nil then
+    self.ClearScreen=ClearScreen
+  end
 
   self.MessageTime = timer.getTime()
   self.MessageText = MessageText:gsub("^\n","",1):gsub("\n$","",1)
@@ -170,7 +182,7 @@ function MESSAGE:ToClient( Client, Settings )
     if self.MessageDuration ~= 0 then
   		local ClientGroupID = Client:GetClientGroupID()
   		self:T( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
-  		trigger.action.outTextForGroup( ClientGroupID, self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration )
+  		trigger.action.outTextForGroup( ClientGroupID, self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration , self.ClearScreen)
 		end
 	end
 	
@@ -194,7 +206,7 @@ function MESSAGE:ToGroup( Group, Settings )
 
     if self.MessageDuration ~= 0 then
       self:T( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
-      trigger.action.outTextForGroup( Group:GetID(), self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration )
+      trigger.action.outTextForGroup( Group:GetID(), self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration, self.ClearScreen )
     end
   end
   
@@ -262,7 +274,7 @@ function MESSAGE:ToCoalition( CoalitionSide, Settings )
 	if CoalitionSide then
     if self.MessageDuration ~= 0 then
   		self:T( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
-  		trigger.action.outTextForCoalition( CoalitionSide, self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration )
+  		trigger.action.outTextForCoalition( CoalitionSide, self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration, self.ClearScreen )
     end
 	end
 	
