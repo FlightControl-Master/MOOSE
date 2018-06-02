@@ -361,9 +361,7 @@ do -- TASK_A2A_INTERCEPT
   -- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 
-  --- # TASK_A2A_INTERCEPT class, extends @{Task_A2A#TASK_A2A}
-  -- 
-  -- The TASK_A2A_INTERCEPT class defines an intercept task for a human player to be executed.
+  --- Defines an intercept task for a human player to be executed.
   -- When enemy planes need to be intercepted by human players, use this task type to urgen the players to get out there!
   -- 
   -- The TASK_A2A_INTERCEPT is used by the @{Task_A2A_Dispatcher#TASK_A2A_DISPATCHER} to automatically create intercept tasks 
@@ -460,9 +458,7 @@ do -- TASK_A2A_SWEEP
   -- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 
-  --- # TASK_A2A_SWEEP class, extends @{Task_A2A#TASK_A2A}
-  -- 
-  -- The TASK_A2A_SWEEP class defines a sweep task for a human player to be executed.
+  --- Defines a sweep task for a human player to be executed.
   -- A sweep task needs to be given when targets were detected but somehow the detection was lost.
   -- Most likely, these enemy planes are hidden in the mountains or are flying under radar.
   -- These enemy planes need to be sweeped by human players, and use this task type to urge the players to get out there and find those enemy fighters.
@@ -571,9 +567,7 @@ do -- TASK_A2A_ENGAGE
   -- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 
-  --- # TASK_A2A_ENGAGE class, extends @{Task_A2A#TASK_A2A}
-  -- 
-  -- The TASK_A2A_ENGAGE class defines an engage task for a human player to be executed.
+  --- Defines an engage task for a human player to be executed.
   -- When enemy planes are close to human players, use this task type is used urge the players to get out there!
   -- 
   -- The TASK_A2A_ENGAGE is used by the @{Task_A2A_Dispatcher#TASK_A2A_DISPATCHER} to automatically create engage tasks 

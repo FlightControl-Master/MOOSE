@@ -366,9 +366,7 @@ do -- TASK_A2G_SEAD
   -- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 
-  --- # TASK_A2G_SEAD class, extends @{Task_A2G#TASK_A2G}
-  -- 
-  -- The TASK_A2G_SEAD class defines an Suppression or Extermination of Air Defenses task for a human player to be executed.
+  --- Defines an Suppression or Extermination of Air Defenses task for a human player to be executed.
   -- These tasks are important to be executed as they will help to achieve air superiority at the vicinity.
   -- 
   -- The TASK_A2G_SEAD is used by the @{Task_A2G_Dispatcher#TASK_A2G_DISPATCHER} to automatically create SEAD tasks 
@@ -459,9 +457,7 @@ do -- TASK_A2G_BAI
   -- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 
-  --- # TASK_A2G_BAI class, extends @{Task_A2G#TASK_A2G}
-  -- 
-  -- The TASK_A2G_BAI class defines an Battlefield Air Interdiction task for a human player to be executed.
+  -- Defines an Battlefield Air Interdiction task for a human player to be executed.
   -- These tasks are more strategic in nature and are most of the time further away from friendly forces.
   -- BAI tasks can also be used to express the abscence of friendly forces near the vicinity.
   -- 
@@ -555,9 +551,7 @@ do -- TASK_A2G_CAS
   -- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 
-  --- # TASK_A2G_CAS class, extends @{Task_A2G#TASK_A2G}
-  -- 
-  -- The TASK_A2G_CAS class defines an Close Air Support task for a human player to be executed.
+  -- Defines an Close Air Support task for a human player to be executed.
   -- Friendly forces will be in the vicinity within 6km from the enemy.
   -- 
   -- The TASK_A2G_CAS is used by the @{Task_A2G_Dispatcher#TASK_A2G_DISPATCHER} to automatically create CAS tasks 
