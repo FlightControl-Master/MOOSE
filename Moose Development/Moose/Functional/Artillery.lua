@@ -459,7 +459,7 @@ ARTY.id="ARTY | "
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="0.9.8"
+ARTY.version="0.9.8-buggy"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -856,17 +856,21 @@ end
 function ARTY:RemoveTarget(name)
   self:F2(name)
   local id=self:_GetTargetIndexByName(name)
+  
   if id then
+  
+    -- Remove target from table.
     self:T(ARTY.id..string.format("Group %s: Removing target %s (id=%d).", self.Controllable:GetName(), name, id))
     table.remove(self.targets, id)
+  
+    -- Delete marker belonging to this engagement.
+    local batteryname,markTargetID, markMoveID=self:_GetMarkIDfromName(name)
+    if batteryname==self.Controllable:GetName() and markTargetID~=nil then
+      COORDINATE:RemoveMark(markTargetID)
+    end 
+    
   end
   self:T(ARTY.id..string.format("Group %s: Number of targets = %d.", self.Controllable:GetName(), #self.targets))
-  if self.currentTarget then
-    if self.currentTarget.name==name then
-      self:T(ARTY.id..string.format("Group %s: Cancelling current target %s.", self.Controllable:GetName(), name))
-      self:CeaseFire(self.currentTarget)
-    end
-  end
 end
 
 --- Delete a move from move list.
@@ -875,16 +879,17 @@ end
 function ARTY:RemoveMove(name)
   self:F2(name)
   local id=self:_GetMoveIndexByName(name)
+  
   if id then
+    -- Remove move from table.
     self:T(ARTY.id..string.format("Group %s: Removing move %s (id=%d).", self.Controllable:GetName(), name, id))
     table.remove(self.moves, id)
-  end
-  self:T(ARTY.id..string.format("Group %s: Number of moves = %d.", self.Controllable:GetName(), #self.moves))
-  if self.currentMove then
-    if self.currentMove.name==name then
-      self:T(ARTY.id..string.format("Group %s: Cancelling current move %s.", self.Controllable:GetName(), name))
-      self:Arrived()
-    end
+    env.info("FF debug remove move")
+    -- Delete marker belonging to this relocation move.
+    --local batteryname,markTargetID,markMoveID=self:_GetMarkIDfromName(name)
+    --if batteryname==self.Controllable:GetName() and markMoveID~=nil then
+      --COORDINATE:RemoveMark(markMoveID)
+    --end
   end
 end
 
@@ -1112,6 +1117,62 @@ end
 
 --- Extract engagement assignments and parameters from mark text.
 -- @param #ARTY self
+-- @param #string text Marker text.
+-- @return #boolean If true, authentification successful. 
+function ARTY:_MarkerKeyAuthentification(text)
+
+  -- Set battery and coalition.
+  local batteryname=self.Controllable:GetName()
+  local batterycoalition=self.Controllable:GetCoalition()
+
+  -- Get assignment.
+  local mykey=nil
+  if self.markkey~=nil then
+  
+    -- keywords are split by "," 
+    local keywords=self:_split(text, ",")
+    for _,key in pairs(keywords) do
+      local s=self:_split(key, " ")
+      local val=s[2]
+      if key:lower():find("key") then      
+        mykey=tonumber(val)
+        self:T(ARTY.id..string.format("Authorisation Key=%s.", val))
+      end
+    end
+    
+  end
+  
+  -- Check if the authorization key is required and if it is valid.
+  local _validkey=true
+  
+  -- Check if group needs authorization.
+  if self.markkey~=nil then
+    -- Assume key is incorrect.
+    _validkey=false
+    
+    -- If key was found, check if matches.
+    if mykey~=nil then
+      _validkey=self.markkey==mykey            
+    end    
+    self:T2(ARTY.id..string.format("%s, authkey=%s == %s=playerkey ==> valid=%s", batteryname, tostring(self.markkey), tostring(mykey), tostring(_validkey)))
+    
+    -- Send message
+    local text=""
+    if mykey==nil then
+      text=string.format("%s, authorization required but did not receive a key!", batteryname)
+    elseif _validkey==false then
+      text=string.format("%s, authorization required but did receive an incorrect key (key=%s)!", batteryname, tostring(mykey))
+    elseif _validkey==true then
+      text=string.format("%s, authentification successful!", batteryname)
+    end
+    MESSAGE:New(text, 20):ToCoalitionIf(batterycoalition, self.report or self.Debug)
+  end
+
+  return _validkey
+end
+
+--- Extract engagement assignments and parameters from mark text.
+-- @param #ARTY self
 -- @param #string text Marker text to be analyzed.
 -- @return #table Table with assignment parameters, e.g. number of shots, radius, time etc.
 function ARTY:_Markertext(text)
@@ -1123,6 +1184,7 @@ function ARTY:_Markertext(text)
   assignment.move=false
   assignment.engage=false
   assignment.readonly=false
+  assignment.cancelcurrent=false
   assignment.time=nil
   assignment.nshells=nil
   assignment.prio=nil
@@ -1133,7 +1195,7 @@ function ARTY:_Markertext(text)
   assignment.onroad=nil
   assignment.key=nil
   
-  if text:lower():find("arty") then   
+  if text:lower():find("arty") then
     if text:lower():find("engage") then
       assignment.engage=true
     elseif text:lower():find("move") then
@@ -1210,19 +1272,18 @@ function ARTY:_Markertext(text)
         assignment.speed=tonumber(val)
         self:T2(ARTY.id..string.format("Key Speed=%s.", val))
         
-      elseif key:lower():find("road") then
+      elseif key:lower():find("on road") or key:lower():find("onroad") or key:lower():find("use road")then
       
         assignment.onroad=true
         self:T2(ARTY.id..string.format("Key Onroad=true."))
-        
-      elseif key:lower():find("key") then
-      
-        assignment.key=tonumber(val)
-        self:T(ARTY.id..string.format("Key Key=%s.", val))
-        
-      elseif key:lower():find("irrevocable") then
+                
+      elseif key:lower():find("irrevocable") or key:lower():find("readonly") then
         assignment.readonly=true
         self:T2(ARTY.id..string.format("Key Readonly=true."))
+        
+      elseif key:lower():find("cancel current") then
+        assignment.cancelcurrent=true
+        self:T2(ARTY.id..string.format("Key Cancel Current=true."))
       end       
       
     end
@@ -1278,6 +1339,58 @@ function ARTY:onEvent(Event)
     
 end
 
+--- Create a name for an engagement initiated by placing a marker.
+-- @param #ARTY self
+-- @param #number markerid ID of the placed marker.
+-- @return #string Name of target engagement.
+function ARTY:_MarkTargetName(markerid)
+  return string.format("BATTERY=%s, Marked Target ID=%d", self.Controllable:GetName(), markerid)
+end
+
+--- Create a name for a relocation move initiated by placing a marker.
+-- @param #ARTY self
+-- @param #number markerid ID of the placed marker.
+-- @return #string Name of relocation move.
+function ARTY:_MarkMoveName(markerid)
+  return string.format("BATTERY=%s, Marked Relocation ID=%d", self.Controllable:GetName(), markerid)
+end
+
+--- Create a name for a relocation move initiated by placing a marker.
+-- @param #ARTY self
+-- @param #sting name Name of the assignment.
+-- @return #string Name of the ARTY group or nil
+-- @return #number ID of the marked target or nil.
+-- @return #number ID of the marked relocation move or nil
+function ARTY:_GetMarkIDfromName(name)
+
+    -- keywords are split by "," 
+    local keywords=self:_split(name, ",")
+
+    local battery=nil
+    local markTID=nil
+    local markMID=nil
+    
+    for _,key in pairs(keywords) do
+
+      local str=self:_split(key, "=")
+      local par=str[1]
+      local val=str[2]
+      
+      if par:find("BATTERY") then
+        battery=val
+      end
+      if par:find("Marked Target ID") then
+        markTID=tonumber(val)
+      end
+      if par:find("Marked Relocation ID") then
+        markMID=tonumber(val)
+      end
+      
+    end
+    
+    return battery, markTID, markMID
+end
+
 --- Function called when a F10 map mark was removed.
 -- @param #ARTY self
 -- @param #table Event Event data.
@@ -1293,18 +1406,20 @@ function ARTY:_OnEventMarkRemove(Event)
     local _canceltarget=false
     local _name=""
     local _id=nil
+    
     if Event.text:find("Marked Relocation") then
       _cancelmove=true
-      _name=string.format("BATTERY %s Marked Relocation ID=%d", batteryname, Event.idx)
+      _name=self:_MarkMoveName(Event.idx)
       _id=self:_GetMoveIndexByName(_name)
     elseif Event.text:find("Marked Target") then
       _canceltarget=true
-      _name=string.format("BATTERY %s Marked Target ID=%d", batteryname, Event.idx)
+      _name=self:_MarkTargetName(Event.idx)
       _id=self:_GetTargetIndexByName(_name)
     else
       return
     end
     
+    -- Check if there is a task which matches.
     if _id==nil then
       return
     end
@@ -1312,48 +1427,25 @@ function ARTY:_OnEventMarkRemove(Event)
     -- Check if the coalition is the same or an authorization key has been defined.
     if (batterycoalition==Event.coalition and self.markkey==nil) or self.markkey~=nil then
   
-      -- Get assignment.
-      local mykey=nil
-      if self.markkey~=nil then
-        -- keywords are split by "," 
-        local keywords=self:_split(Event.text, ",")
-        for _,key in pairs(keywords) do
-          local s=self:_split(key, " ")
-          local val=s[2]
-          if key:lower():find("key") then      
-            mykey=tonumber(val)
-            self:T(ARTY.id..string.format("Key Key=%s.", val))
-          end
-        end
-      end
-
-      -- Check if the authorization key is required and if it is valid.
-      local _validkey=true
-      if self.markkey~=nil then
-        _validkey=false
-        if mykey~=nil then
-          _validkey=self.markkey==mykey            
-        end
-        self:T2(ARTY.id..string.format("%s, authkey=%s == %s=playerkey ==> valid=%s", batteryname, tostring(self.markkey), tostring(mykey), tostring(_validkey)))
-        local text=""
-        if mykey==nil then
-          text=string.format("%s, authorization required but did not receive a key!", batteryname)
-        elseif _validkey==false then
-          text=string.format("%s, authorization required but did receive an incorrect key (key=%s)!", batteryname, tostring(mykey))
-        elseif _validkey==true then
-          text=string.format("%s, authentification successful!", batteryname)
-        end
-        MESSAGE:New(text, 20):ToCoalitionIf(batterycoalition, self.report or self.Debug)
-      end
+      -- Authentify key
+      local _validkey=self:_MarkerKeyAuthentification(Event.text)
     
       -- Check if we have the right coalition.
       if _validkey then
       
         -- This should be the unique name of the target or move.    
         if _cancelmove then
-          self:RemoveMove(_name)
+          if self.currentMove and self.currentMove.name==_name then
+            self:Arrived()
+          else
+            self:RemoveMove(_name)
+          end
         elseif _canceltarget then
-          self:RemoveTarget(_name)
+          if self.currentTarget and self.currentTarget.name==_name then
+            self:CeaseFire(self.currentTarget)
+          else
+            self:RemoveTarget(_name)
+          end
         end
         
       end
@@ -1397,24 +1489,19 @@ function ARTY:_OnEventMarkChange(Event)
       if not (_assign.engage or _assign.move) or (not _assigned) then
         return
       end
-      
+            
       -- Check if the authorization key is required and if it is valid.
-      local _validkey=true
-      if self.markkey~=nil then
-        _validkey=false
-        if _assign.key~=nil then
-          _validkey=self.markkey==_assign.key            
+      local _validkey=self:_MarkerKeyAuthentification(Event.text)
+      
+      -- Cancel current target.
+      if _validkey and _assign.cancelcurrent then
+        if _assign.move and self.currentMove then
+          self:Arrived()
         end
-        self:T2(ARTY.id..string.format("%s, authkey=%s == %s=playerkey ==> valid=%s", batteryname, tostring(self.markkey), tostring(_assign.key), tostring(_validkey)))
-        local text=""
-        if _assign.key==nil then
-          text=string.format("%s, authorization required but did not receive a key!", batteryname)
-        elseif _validkey==false then
-          text=string.format("%s, authorization required but did receive an incorrect key (key=%s)!", batteryname, tostring(_assign.key))
-        elseif _validkey==true then
-          text=string.format("%s, authentification successful!", batteryname)
+        if _assign.engage and self.currentTarget then
+          self:CeaseFire(self.currentTarget)
         end
-        MESSAGE:New(text, 20):ToCoalitionIf(batterycoalition, self.report or self.Debug)
+        return
       end
       
       -- We are meant.
@@ -1430,17 +1517,18 @@ function ARTY:_OnEventMarkChange(Event)
         -- Also I don't know who can see the mark which was created.
         _coord:RemoveMark(Event.idx)
         
+        -- Anticipate marker ID.
+        -- WARNING: Make sure, no marks are set until the COORDINATE:MarkToCoalition() is called or the target/move name will be wrong and target cannot be removed by deleting its marker.
         local _id=UTILS._MarkID+1
       
         if _assign.move then
         
           -- Create a new name. This determins the string we search when deleting a move!
-          local _name=string.format("BATTERY %s Marked Relocation ID=%d", batteryname, _id)
-          self:E(ARTY.id.._name)
+          local _name=self:_MarkMoveName(_id)
         
           local text=string.format("%s, received new relocation assignment.", batteryname)
           text=text..string.format("\nCoordinates %s",_coord:ToStringLLDMS())
-          MESSAGE:New(text, 20):ToCoalitionIf(batterycoalition, self.report or self.Debug)
+          MESSAGE:New(text, 10):ToCoalitionIf(batterycoalition, self.report or self.Debug)
                 
           -- Assign a relocation of the arty group.
           local _movename=self:AssignMoveCoord(_coord, _assign.time, _assign.speed, _assign.onroad, _assign.cancel,_name, true)
@@ -1451,11 +1539,7 @@ function ARTY:_OnEventMarkChange(Event)
           
             -- Create new target name.
             local clock=tostring(self:_SecondsToClock(_move.time))
-            local _road="Off Road"
-            if _move.onroad==true then
-              _road="On Road"
-            end
-            local _markertext=_movename..string.format(", Time %s, Speed %d km/h, %s.", clock, _move.speed, _road)
+            local _markertext=_movename..string.format(", Time=%s, Speed=%d km/h, Use Roads=%s.", clock, _move.speed, tostring(_move.onroad))
                     
             -- Create a new mark. This will trigger the mark added event.
             local _randomcoord=_coord:GetRandomCoordinateInRadius(100)
@@ -1465,8 +1549,7 @@ function ARTY:_OnEventMarkChange(Event)
         else
          
           -- Create a new name.
-          local _name=string.format("BATTERY %s Marked Target ID=%d", batteryname, _id)
-          self:E(ARTY.id.._name)
+          local _name=self:_MarkTargetName(_id)
                                   
           local text=string.format("%s, received new target assignment.", batteryname)
           text=text..string.format("\nCoordinates %s",_coord:ToStringLLDMS())
@@ -1475,6 +1558,9 @@ function ARTY:_OnEventMarkChange(Event)
           end
           if _assign.prio then
             text=text..string.format("\nPrio %d",_assign.prio)
+          end
+          if _assign.prio then
+            text=text..string.format("\nRadius %d m",_assign.radius)
           end
           if _assign.nshells then
             text=text..string.format("\nShots %d",_assign.nshells)
@@ -1485,7 +1571,7 @@ function ARTY:_OnEventMarkChange(Event)
           if _assign.weapontype then
             text=text..string.format("\nWeapon %s",self:_WeaponTypeName(_assign.weapontype))
           end            
-          MESSAGE:New(text, 20):ToCoalitionIf(batterycoalition, self.report or self.Debug)
+          MESSAGE:New(text, 10):ToCoalitionIf(batterycoalition, self.report or self.Debug)
                                       
           -- Assign a new firing engagement.
           -- Note, we set unique=true so this target gets only added once.
@@ -1498,7 +1584,7 @@ function ARTY:_OnEventMarkChange(Event)
             -- Create new target name.
             local clock=tostring(self:_SecondsToClock(_target.time))
             local weapon=self:_WeaponTypeName(_target.weapontype)
-            local _markertext=_targetname..string.format(", Priority %d, Radius=%d m, Shots %d, Engagements=%d, Weapon %s, Time %s", _target.prio, _target.radius, _target.nshells, _target.maxengage, weapon, clock)
+            local _markertext=_targetname..string.format(", Priority=%d, Radius=%d m, Shots=%d, Engagements=%d, Weapon=%s, Time=%s", _target.prio, _target.radius, _target.nshells, _target.maxengage, weapon, clock)
                     
             -- Create a new mark. This will trigger the mark added event.
             local _randomcoord=_coord:GetRandomCoordinateInRadius(250)
@@ -1546,6 +1632,11 @@ function ARTY:_StatusReport()
   text=text..string.format("Targets:\n")
   for i=1,#self.targets do
     text=text..string.format("- %s\n", self:_TargetInfo(self.targets[i]))
+  end
+  if self.currentMove then
+  text=text..string.format("Current Move        = %s\n", tostring(self.currentMove.name))
+  else
+  text=text..string.format("Current Move        = %s\n", "none")
   end
   text=text..string.format("Moves:\n")
   for i=1,#self.moves do
@@ -1667,18 +1758,6 @@ function ARTY:_NuclearBlast(_coord)
 
 ]]
 
-end
-
---- Eventhandler for shot event.
--- @param #ARTY self
--- @param Core.Event#EVENTDATA EventData
-function ARTY:_OnMarkAdded(EventData)
-  self:F(EventData)
-  if EventData.MarkCoordinate then
-    local coord=EventData.MarkCoordinate --Core.Point#COORDINATE
-    
-    coord:SmokeGreen()
-  end
 end
 
 --- Eventhandler for shot event.
@@ -2453,8 +2532,8 @@ function ARTY:onafterArrived(Controllable, From, Event, To)
   
   -- Remove executed move from queue.
   if self.currentMove then
-    self:RemoveMove(self.currentMove.name)
-    self.currentMove=nil
+    --self:RemoveMove(self.currentMove.name)
+    --self.currentMove=nil
   end
   
 end
