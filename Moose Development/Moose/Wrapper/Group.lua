@@ -185,7 +185,7 @@ function GROUP:GetDCSObject()
   return nil
 end
 
---- Returns the @{DCSTypes#Position3} position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.
+--- Returns the @{DCS#Position3} position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return DCS#Position The 3D position vectors of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.  
@@ -722,7 +722,7 @@ function GROUP:GetCoordinate()
 end
 
 
---- Returns a random @{DCSTypes#Vec3} vector (point in 3D of the UNIT within the mission) within a range around the first UNIT of the GROUP.
+--- Returns a random @{DCS#Vec3} vector (point in 3D of the UNIT within the mission) within a range around the first UNIT of the GROUP.
 -- @param #GROUP self
 -- @param #number Radius
 -- @return DCS#Vec3 The random 3D point vector around the first UNIT of the GROUP.

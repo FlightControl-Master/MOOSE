@@ -19,7 +19,7 @@
 
 --- Wrapper class to handle Scenery objects that are defined on the map.
 -- 
--- The @{Scenery#SCENERY} class is a wrapper class to handle the DCS Scenery objects:
+-- The @{Wrapper.Scenery#SCENERY} class is a wrapper class to handle the DCS Scenery objects:
 -- 
 --  * Wraps the DCS Scenery objects.
 --  * Support all DCS Scenery APIs.

@@ -31,9 +31,9 @@
 --   * @{#TASK.AssignToGroup}():Assign a task to a group (of players).
 --   * @{#TASK.AddProcess}():Add a @{Process} to a task.
 --   * @{#TASK.RemoveProcesses}():Remove a running @{Process} from a running task.
---   * @{#TASK.SetStateMachine}():Set a @{Fsm} to a task.
---   * @{#TASK.RemoveStateMachine}():Remove @{Fsm} from a task.
---   * @{#TASK.HasStateMachine}():Enquire if the task has a @{Fsm}
+--   * @{#TASK.SetStateMachine}():Set a @{Core.Fsm} to a task.
+--   * @{#TASK.RemoveStateMachine}():Remove @{Core.Fsm} from a task.
+--   * @{#TASK.HasStateMachine}():Enquire if the task has a @{Core.Fsm}
 --   * @{#TASK.AssignToUnit}(): Assign a task to a unit. (Needs to be implemented in the derived classes from @{#TASK}.
 --   * @{#TASK.UnAssignFromUnit}(): Unassign the task from a unit.
 --   * @{#TASK.SetTimeOut}(): Set timer in seconds before task gets cancelled if not assigned.

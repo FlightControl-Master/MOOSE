@@ -72,7 +72,7 @@
 -- ### 1.3.2 Event Handling of DCS Events
 -- 
 -- Once the class is subscribed to the event, an **Event Handling** method on the object or class needs to be written that will be called
--- when the DCS event occurs. The Event Handling method receives an @{Event#EVENTDATA} structure, which contains a lot of information
+-- when the DCS event occurs. The Event Handling method receives an @{Core.Event#EVENTDATA} structure, which contains a lot of information
 -- about the event that occurred.
 -- 
 -- Find below an example of the prototype how to write an event handling function for two units: 
@@ -114,7 +114,7 @@
 -- 
 -- # 3) EVENTDATA type
 -- 
--- The @{Event#EVENTDATA} structure contains all the fields that are populated with event information before 
+-- The @{Core.Event#EVENTDATA} structure contains all the fields that are populated with event information before 
 -- an Event Handler method is being called by the event dispatcher.
 -- The Event Handler received the EVENTDATA object as a parameter, and can be used to investigate further the different events.
 -- There are basically 4 main categories of information stored in the EVENTDATA structure:
@@ -229,7 +229,7 @@ EVENTS = {
 -- 
 -- @field DCS#Unit initiator (UNIT/STATIC/SCENERY) The initiating @{DCS#Unit} or @{DCS#StaticObject}.
 -- @field DCS#Object.Category IniObjectCategory (UNIT/STATIC/SCENERY) The initiator object category ( Object.Category.UNIT or Object.Category.STATIC ).
--- @field DCS#Unit IniDCSUnit (UNIT/STATIC) The initiating @{DCS#Unit} or @{DCSStaticObject#StaticObject}.
+-- @field DCS#Unit IniDCSUnit (UNIT/STATIC) The initiating @{DCS#Unit} or @{DCS#StaticObject}.
 -- @field #string IniDCSUnitName (UNIT/STATIC) The initiating Unit name.
 -- @field Wrapper.Unit#UNIT IniUnit (UNIT/STATIC) The initiating MOOSE wrapper @{Wrapper.Unit#UNIT} of the initiator Unit object.
 -- @field #string IniUnitName (UNIT/STATIC) The initiating UNIT name (same as IniDCSUnitName).
@@ -242,9 +242,9 @@ EVENTS = {
 -- @field DCS#Unit.Category IniCategory (UNIT) The category of the initiator.
 -- @field #string IniTypeName (UNIT) The type name of the initiator.
 -- 
--- @field DCS#Unit target (UNIT/STATIC) The target @{DCS#Unit} or @{DCSStaticObject#StaticObject}.
+-- @field DCS#Unit target (UNIT/STATIC) The target @{DCS#Unit} or @{DCS#StaticObject}.
 -- @field DCS#Object.Category TgtObjectCategory (UNIT/STATIC) The target object category ( Object.Category.UNIT or Object.Category.STATIC ).
--- @field DCS#Unit TgtDCSUnit (UNIT/STATIC) The target @{DCS#Unit} or @{DCSStaticObject#StaticObject}.
+-- @field DCS#Unit TgtDCSUnit (UNIT/STATIC) The target @{DCS#Unit} or @{DCS#StaticObject}.
 -- @field #string TgtDCSUnitName (UNIT/STATIC) The target Unit name.
 -- @field Wrapper.Unit#UNIT TgtUnit (UNIT/STATIC) The target MOOSE wrapper @{Wrapper.Unit#UNIT} of the target Unit object.
 -- @field #string TgtUnitName (UNIT/STATIC) The target UNIT name (same as TgtDCSUnitName).

@@ -180,14 +180,14 @@ function ZONE_BASE:IsPointVec3InZone( PointVec3 )
 end
 
 
---- Returns the @{DCSTypes#Vec2} coordinate of the zone.
+--- Returns the @{DCS#Vec2} coordinate of the zone.
 -- @param #ZONE_BASE self
 -- @return #nil.
 function ZONE_BASE:GetVec2()
   return nil 
 end
 
---- Returns a @{Point#POINT_VEC2} of the zone.
+--- Returns a @{Core.Point#POINT_VEC2} of the zone.
 -- @param #ZONE_BASE self
 -- @param DCS#Distance Height The height to add to the land height where the center of the zone is located.
 -- @return Core.Point#POINT_VEC2 The PointVec2 of the zone.
@@ -204,7 +204,7 @@ function ZONE_BASE:GetPointVec2()
 end
 
 
---- Returns a @{Point#COORDINATE} of the zone.
+--- Returns a @{Core.Point#COORDINATE} of the zone.
 -- @param #ZONE_BASE self
 -- @return Core.Point#COORDINATE The Coordinate of the zone.
 function ZONE_BASE:GetCoordinate()
@@ -220,7 +220,7 @@ function ZONE_BASE:GetCoordinate()
 end
 
 
---- Returns the @{DCSTypes#Vec3} of the zone.
+--- Returns the @{DCS#Vec3} of the zone.
 -- @param #ZONE_BASE self
 -- @param DCS#Distance Height The height to add to the land height where the center of the zone is located.
 -- @return DCS#Vec3 The Vec3 of the zone.
@@ -238,7 +238,7 @@ function ZONE_BASE:GetVec3( Height )
   return Vec3  
 end
 
---- Returns a @{Point#POINT_VEC3} of the zone.
+--- Returns a @{Core.Point#POINT_VEC3} of the zone.
 -- @param #ZONE_BASE self
 -- @param DCS#Distance Height The height to add to the land height where the center of the zone is located.
 -- @return Core.Point#POINT_VEC3 The PointVec3 of the zone.
@@ -254,7 +254,7 @@ function ZONE_BASE:GetPointVec3( Height )
   return PointVec3  
 end
 
---- Returns a @{Point#COORDINATE} of the zone.
+--- Returns a @{Core.Point#COORDINATE} of the zone.
 -- @param #ZONE_BASE self
 -- @param DCS#Distance Height The height to add to the land height where the center of the zone is located.
 -- @return Core.Point#COORDINATE The Coordinate of the zone.
@@ -271,21 +271,21 @@ function ZONE_BASE:GetCoordinate( Height ) --R2.1
 end
 
 
---- Define a random @{DCSTypes#Vec2} within the zone.
+--- Define a random @{DCS#Vec2} within the zone.
 -- @param #ZONE_BASE self
 -- @return DCS#Vec2 The Vec2 coordinates.
 function ZONE_BASE:GetRandomVec2()
   return nil
 end
 
---- Define a random @{Point#POINT_VEC2} within the zone.
+--- Define a random @{Core.Point#POINT_VEC2} within the zone.
 -- @param #ZONE_BASE self
 -- @return Core.Point#POINT_VEC2 The PointVec2 coordinates.
 function ZONE_BASE:GetRandomPointVec2()
   return nil
 end
 
---- Define a random @{Point#POINT_VEC3} within the zone.
+--- Define a random @{Core.Point#POINT_VEC3} within the zone.
 -- @param #ZONE_BASE self
 -- @return Core.Point#POINT_VEC3 The PointVec3 coordinates.
 function ZONE_BASE:GetRandomPointVec3()
@@ -391,17 +391,17 @@ end
 -- 
 -- ## Manage the location of the zone
 -- 
---   * @{#ZONE_RADIUS.SetVec2}(): Sets the @{DCSTypes#Vec2} of the zone.
---   * @{#ZONE_RADIUS.GetVec2}(): Returns the @{DCSTypes#Vec2} of the zone.
---   * @{#ZONE_RADIUS.GetVec3}(): Returns the @{DCSTypes#Vec3} of the zone, taking an additional height parameter.
+--   * @{#ZONE_RADIUS.SetVec2}(): Sets the @{DCS#Vec2} of the zone.
+--   * @{#ZONE_RADIUS.GetVec2}(): Returns the @{DCS#Vec2} of the zone.
+--   * @{#ZONE_RADIUS.GetVec3}(): Returns the @{DCS#Vec3} of the zone, taking an additional height parameter.
 -- 
 -- ## Zone point randomization
 -- 
 -- Various functions exist to find random points within the zone.
 -- 
 --   * @{#ZONE_RADIUS.GetRandomVec2}(): Gets a random 2D point in the zone.
---   * @{#ZONE_RADIUS.GetRandomPointVec2}(): Gets a @{Point#POINT_VEC2} object representing a random 2D point in the zone.
---   * @{#ZONE_RADIUS.GetRandomPointVec3}(): Gets a @{Point#POINT_VEC3} object representing a random 3D point in the zone. Note that the height of the point is at landheight.
+--   * @{#ZONE_RADIUS.GetRandomPointVec2}(): Gets a @{Core.Point#POINT_VEC2} object representing a random 2D point in the zone.
+--   * @{#ZONE_RADIUS.GetRandomPointVec3}(): Gets a @{Core.Point#POINT_VEC3} object representing a random 3D point in the zone. Note that the height of the point is at landheight.
 -- 
 -- @field #ZONE_RADIUS
 ZONE_RADIUS = {
@@ -557,7 +557,7 @@ function ZONE_RADIUS:SetRadius( Radius )
   return self.Radius
 end
 
---- Returns the @{DCSTypes#Vec2} of the zone.
+--- Returns the @{DCS#Vec2} of the zone.
 -- @param #ZONE_RADIUS self
 -- @return DCS#Vec2 The location of the zone.
 function ZONE_RADIUS:GetVec2()
@@ -568,7 +568,7 @@ function ZONE_RADIUS:GetVec2()
 	return self.Vec2	
 end
 
---- Sets the @{DCSTypes#Vec2} of the zone.
+--- Sets the @{DCS#Vec2} of the zone.
 -- @param #ZONE_RADIUS self
 -- @param DCS#Vec2 Vec2 The new location of the zone.
 -- @return DCS#Vec2 The new location of the zone.
@@ -582,7 +582,7 @@ function ZONE_RADIUS:SetVec2( Vec2 )
   return self.Vec2 
 end
 
---- Returns the @{DCSTypes#Vec3} of the ZONE_RADIUS.
+--- Returns the @{DCS#Vec3} of the ZONE_RADIUS.
 -- @param #ZONE_RADIUS self
 -- @param DCS#Distance Height The height to add to the land height where the center of the zone is located.
 -- @return DCS#Vec3 The point of the zone.
@@ -879,11 +879,11 @@ function ZONE_RADIUS:GetRandomVec2( inner, outer )
 	return Point
 end
 
---- Returns a @{Point#POINT_VEC2} object reflecting a random 2D location within the zone.
+--- Returns a @{Core.Point#POINT_VEC2} object reflecting a random 2D location within the zone.
 -- @param #ZONE_RADIUS self
 -- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
 -- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
--- @return Core.Point#POINT_VEC2 The @{Point#POINT_VEC2} object reflecting the random 3D location within the zone.
+-- @return Core.Point#POINT_VEC2 The @{Core.Point#POINT_VEC2} object reflecting the random 3D location within the zone.
 function ZONE_RADIUS:GetRandomPointVec2( inner, outer )
   self:F( self.ZoneName, inner, outer )
 
@@ -910,11 +910,11 @@ function ZONE_RADIUS:GetRandomVec3( inner, outer )
 end
 
 
---- Returns a @{Point#POINT_VEC3} object reflecting a random 3D location within the zone.
+--- Returns a @{Core.Point#POINT_VEC3} object reflecting a random 3D location within the zone.
 -- @param #ZONE_RADIUS self
 -- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
 -- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
--- @return Core.Point#POINT_VEC3 The @{Point#POINT_VEC3} object reflecting the random 3D location within the zone.
+-- @return Core.Point#POINT_VEC3 The @{Core.Point#POINT_VEC3} object reflecting the random 3D location within the zone.
 function ZONE_RADIUS:GetRandomPointVec3( inner, outer )
   self:F( self.ZoneName, inner, outer )
 
@@ -926,7 +926,7 @@ function ZONE_RADIUS:GetRandomPointVec3( inner, outer )
 end
 
 
---- Returns a @{Point#COORDINATE} object reflecting a random 3D location within the zone.
+--- Returns a @{Core.Point#COORDINATE} object reflecting a random 3D location within the zone.
 -- @param #ZONE_RADIUS self
 -- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
 -- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
@@ -1086,7 +1086,7 @@ function ZONE_UNIT:GetRandomVec2()
   return RandomVec2
 end
 
---- Returns the @{DCSTypes#Vec3} of the ZONE_UNIT.
+--- Returns the @{DCS#Vec3} of the ZONE_UNIT.
 -- @param #ZONE_UNIT self
 -- @param DCS#Distance Height The height to add to the land height where the center of the zone is located.
 -- @return DCS#Vec3 The point of the zone.
@@ -1166,11 +1166,11 @@ function ZONE_GROUP:GetRandomVec2()
   return Point
 end
 
---- Returns a @{Point#POINT_VEC2} object reflecting a random 2D location within the zone.
+--- Returns a @{Core.Point#POINT_VEC2} object reflecting a random 2D location within the zone.
 -- @param #ZONE_GROUP self
 -- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
 -- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
--- @return Core.Point#POINT_VEC2 The @{Point#POINT_VEC2} object reflecting the random 3D location within the zone.
+-- @return Core.Point#POINT_VEC2 The @{Core.Point#POINT_VEC2} object reflecting the random 3D location within the zone.
 function ZONE_GROUP:GetRandomPointVec2( inner, outer )
   self:F( self.ZoneName, inner, outer )
 
@@ -1183,7 +1183,7 @@ end
 
 
 --- @type ZONE_POLYGON_BASE
--- --@field #ZONE_POLYGON_BASE.ListVec2 Polygon The polygon defined by an array of @{DCSTypes#Vec2}.
+-- --@field #ZONE_POLYGON_BASE.ListVec2 Polygon The polygon defined by an array of @{DCS#Vec2}.
 -- @extends #ZONE_BASE
 
 
@@ -1196,8 +1196,8 @@ end
 -- Various functions exist to find random points within the zone.
 -- 
 --   * @{#ZONE_POLYGON_BASE.GetRandomVec2}(): Gets a random 2D point in the zone.
---   * @{#ZONE_POLYGON_BASE.GetRandomPointVec2}(): Return a @{Point#POINT_VEC2} object representing a random 2D point within the zone.
---   * @{#ZONE_POLYGON_BASE.GetRandomPointVec3}(): Return a @{Point#POINT_VEC3} object representing a random 3D point at landheight within the zone.
+--   * @{#ZONE_POLYGON_BASE.GetRandomPointVec2}(): Return a @{Core.Point#POINT_VEC2} object representing a random 2D point within the zone.
+--   * @{#ZONE_POLYGON_BASE.GetRandomPointVec3}(): Return a @{Core.Point#POINT_VEC3} object representing a random 3D point at landheight within the zone.
 -- 
 -- @field #ZONE_POLYGON_BASE
 ZONE_POLYGON_BASE = {
@@ -1208,11 +1208,11 @@ ZONE_POLYGON_BASE = {
 -- @type ZONE_POLYGON_BASE.ListVec2
 -- @list <DCS#Vec2>
 
---- Constructor to create a ZONE_POLYGON_BASE instance, taking the zone name and an array of @{DCSTypes#Vec2}, forming a polygon.
+--- Constructor to create a ZONE_POLYGON_BASE instance, taking the zone name and an array of @{DCS#Vec2}, forming a polygon.
 -- The @{Wrapper.Group#GROUP} waypoints define the polygon corners. The first and the last point are automatically connected.
 -- @param #ZONE_POLYGON_BASE self
 -- @param #string ZoneName Name of the zone.
--- @param #ZONE_POLYGON_BASE.ListVec2 PointsArray An array of @{DCSTypes#Vec2}, forming a polygon..
+-- @param #ZONE_POLYGON_BASE.ListVec2 PointsArray An array of @{DCS#Vec2}, forming a polygon..
 -- @return #ZONE_POLYGON_BASE self
 function ZONE_POLYGON_BASE:New( ZoneName, PointsArray )
   local self = BASE:Inherit( self, ZONE_BASE:New( ZoneName ) )
@@ -1368,7 +1368,7 @@ function ZONE_POLYGON_BASE:IsVec2InZone( Vec2 )
   return InPolygon
 end
 
---- Define a random @{DCSTypes#Vec2} within the zone.
+--- Define a random @{DCS#Vec2} within the zone.
 -- @param #ZONE_POLYGON_BASE self
 -- @return DCS#Vec2 The Vec2 coordinate.
 function ZONE_POLYGON_BASE:GetRandomVec2()
@@ -1394,9 +1394,9 @@ function ZONE_POLYGON_BASE:GetRandomVec2()
   return Vec2
 end
 
---- Return a @{Point#POINT_VEC2} object representing a random 2D point at landheight within the zone.
+--- Return a @{Core.Point#POINT_VEC2} object representing a random 2D point at landheight within the zone.
 -- @param #ZONE_POLYGON_BASE self
--- @return @{Point#POINT_VEC2}
+-- @return @{Core.Point#POINT_VEC2}
 function ZONE_POLYGON_BASE:GetRandomPointVec2()
   self:F2()
 
@@ -1407,9 +1407,9 @@ function ZONE_POLYGON_BASE:GetRandomPointVec2()
   return PointVec2
 end
 
---- Return a @{Point#POINT_VEC3} object representing a random 3D point at landheight within the zone.
+--- Return a @{Core.Point#POINT_VEC3} object representing a random 3D point at landheight within the zone.
 -- @param #ZONE_POLYGON_BASE self
--- @return @{Point#POINT_VEC3}
+-- @return @{Core.Point#POINT_VEC3}
 function ZONE_POLYGON_BASE:GetRandomPointVec3()
   self:F2()
 
@@ -1421,7 +1421,7 @@ function ZONE_POLYGON_BASE:GetRandomPointVec3()
 end
 
 
---- Return a @{Point#COORDINATE} object representing a random 3D point at landheight within the zone.
+--- Return a @{Core.Point#COORDINATE} object representing a random 3D point at landheight within the zone.
 -- @param #ZONE_POLYGON_BASE self
 -- @return Core.Point#COORDINATE
 function ZONE_POLYGON_BASE:GetRandomCoordinate()

@@ -43,8 +43,8 @@ do -- COORDINATE
   -- A new COORDINATE object can be created with:
   --
   --  * @{#COORDINATE.New}(): a 3D point.
-  --  * @{#COORDINATE.NewFromVec2}(): a 2D point created from a @{DCSTypes#Vec2}.
-  --  * @{#COORDINATE.NewFromVec3}(): a 3D point created from a @{DCSTypes#Vec3}.
+  --  * @{#COORDINATE.NewFromVec2}(): a 2D point created from a @{DCS#Vec2}.
+  --  * @{#COORDINATE.NewFromVec3}(): a 3D point created from a @{DCS#Vec3}.
   --
   -- ## Create waypoints for routes
   --
@@ -1610,7 +1610,7 @@ do -- POINT_VEC3
   -- A new POINT_VEC3 object can be created with:
   --
   --  * @{#POINT_VEC3.New}(): a 3D point.
-  --  * @{#POINT_VEC3.NewFromVec3}(): a 3D point created from a @{DCSTypes#Vec3}.
+  --  * @{#POINT_VEC3.NewFromVec3}(): a 3D point created from a @{DCS#Vec3}.
   --
   --
   -- ## Manupulate the X, Y, Z coordinates of the POINT_VEC3
@@ -1814,8 +1814,8 @@ do -- POINT_VEC2
   --
   -- A new POINT_VEC2 instance can be created with:
   --
-  --  * @{Point#POINT_VEC2.New}(): a 2D point, taking an additional height parameter.
-  --  * @{Point#POINT_VEC2.NewFromVec2}(): a 2D point created from a @{DCSTypes#Vec2}.
+  --  * @{Core.Point#POINT_VEC2.New}(): a 2D point, taking an additional height parameter.
+  --  * @{Core.Point#POINT_VEC2.NewFromVec2}(): a 2D point created from a @{DCS#Vec2}.
   --
   -- ## Manupulate the X, Altitude, Y coordinates of the 2D point
   --

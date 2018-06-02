@@ -16,10 +16,10 @@
 --   * They need to be added in .\l10n\DEFAULT\ in you .miz file (wich can be decompressed like a .zip file),
 --   * For simplicty sake, you can **let DCS' Mission Editor add the file** itself, by creating a new Trigger with the action "Sound to Country", and choosing your sound file and a country you don't use in your mission.
 --   
--- Due to weird DCS quirks, **radio communications behave differently** if sent by a @{Wrapper.Unit#UNIT} or a @{Wrapper.Group#GROUP} or by any other @{Positionable#POSITIONABLE}
+-- Due to weird DCS quirks, **radio communications behave differently** if sent by a @{Wrapper.Unit#UNIT} or a @{Wrapper.Group#GROUP} or by any other @{Wrapper.Positionable#POSITIONABLE}
 -- 
 --   * If the transmitter is a @{Wrapper.Unit#UNIT} or a @{Wrapper.Group#GROUP}, DCS will set the power of the transmission  automatically,
---   * If the transmitter is any other @{Positionable#POSITIONABLE}, the transmisison can't be subtitled or looped.
+--   * If the transmitter is any other @{Wrapper.Positionable#POSITIONABLE}, the transmisison can't be subtitled or looped.
 --   
 -- Note that obviously, the **frequency** and the **modulation** of the transmission are important only if the players are piloting an **Advanced System Modelling** enabled aircraft,
 -- like the A10C or the Mirage 2000C. They will **hear the transmission** if they are tuned on the **right frequency and modulation** (and if they are close enough - more on that below).
@@ -40,11 +40,11 @@
 -- 
 -- There are 3 steps to a successful radio transmission.
 -- 
---   * First, you need to **"add a @{#RADIO} object** to your @{Positionable#POSITIONABLE}. This is done using the @{Positionable#POSITIONABLE.GetRadio}() function,
+--   * First, you need to **"add a @{#RADIO} object** to your @{Wrapper.Positionable#POSITIONABLE}. This is done using the @{Wrapper.Positionable#POSITIONABLE.GetRadio}() function,
 --   * Then, you will **set the relevant parameters** to the transmission (see below),
 --   * When done, you can actually **broadcast the transmission** (i.e. play the sound) with the @{RADIO.Broadcast}() function.
 --   
--- Methods to set relevant parameters for both a @{Wrapper.Unit#UNIT} or a @{Wrapper.Group#GROUP} or any other @{Positionable#POSITIONABLE}
+-- Methods to set relevant parameters for both a @{Wrapper.Unit#UNIT} or a @{Wrapper.Group#GROUP} or any other @{Wrapper.Positionable#POSITIONABLE}
 -- 
 --   * @{#RADIO.SetFileName}() : Sets the file name of your sound file (e.g. "Noise.ogg"),
 --   * @{#RADIO.SetFrequency}() : Sets the frequency of your transmission.
@@ -56,14 +56,14 @@
 --   * @{#RADIO.SetSubtitle}() : Set both the subtitle and its duration,
 --   * @{#RADIO.NewUnitTransmission}() : Shortcut to set all the relevant parameters in one method call
 -- 
--- Additional Methods to set relevant parameters if the transmiter is any other @{Positionable#POSITIONABLE}
+-- Additional Methods to set relevant parameters if the transmiter is any other @{Wrapper.Positionable#POSITIONABLE}
 -- 
 --   * @{#RADIO.SetPower}() : Sets the power of the antenna in Watts
 --   * @{#RADIO.NewGenericTransmission}() : Shortcut to set all the relevant parameters in one method call
 -- 
 -- What is this power thing ?
 -- 
---   * If your transmission is sent by a @{Positionable#POSITIONABLE} other than a @{Wrapper.Unit#UNIT} or a @{Wrapper.Group#GROUP}, you can set the power of the antenna,
+--   * If your transmission is sent by a @{Wrapper.Positionable#POSITIONABLE} other than a @{Wrapper.Unit#UNIT} or a @{Wrapper.Group#GROUP}, you can set the power of the antenna,
 --   * Otherwise, DCS sets it automatically, depending on what's available on your Unit,
 --   * If the player gets **too far** from the transmiter, or if the antenna is **too weak**, the transmission will **fade** and **become noisyer**,
 --   * This an automated DCS calculation you have no say on,
@@ -92,7 +92,7 @@ RADIO = {
 }
 
 --- Create a new RADIO Object. This doesn't broadcast a transmission, though, use @{#RADIO.Broadcast} to actually broadcast
--- If you want to create a RADIO, you probably should use @{Positionable#POSITIONABLE.GetRadio}() instead
+-- If you want to create a RADIO, you probably should use @{Wrapper.Positionable#POSITIONABLE.GetRadio}() instead
 -- @param #RADIO self
 -- @param Wrapper.Positionable#POSITIONABLE Positionable The @{Positionable} that will receive radio capabilities.
 -- @return #RADIO Radio
@@ -261,7 +261,7 @@ end
 
 --- Create a new transmission, that is to say, populate the RADIO with relevant data
 -- In this function the data is especially relevant if the broadcaster is a UNIT or a GROUP,
--- but it will work for any @{Positionable#POSITIONABLE}. 
+-- but it will work for any @{Wrapper.Positionable#POSITIONABLE}. 
 -- Only the RADIO and the Filename are mandatory.
 -- @param #RADIO self
 -- @param #string FileName
@@ -286,7 +286,7 @@ end
 
 --- Actually Broadcast the transmission
 -- * The Radio has to be populated with the new transmission before broadcasting.
--- * Please use RADIO setters or either @{Radio#RADIO.NewGenericTransmission} or @{Radio#RADIO.NewUnitTransmission}
+-- * Please use RADIO setters or either @{#RADIO.NewGenericTransmission} or @{#RADIO.NewUnitTransmission}
 -- * This class is in fact pretty smart, it determines the right DCS function to use depending on the type of POSITIONABLE
 -- * If the POSITIONABLE is not a UNIT or a GROUP, we use the generic (but limited) trigger.action.radioTransmission()
 -- * If the POSITIONABLE is a UNIT or a GROUP, we use the "TransmitMessage" Command
@@ -338,7 +338,7 @@ function RADIO:StopBroadcast()
 end
 
 
---- After attaching a @{#BEACON} to your @{Positionable#POSITIONABLE}, you need to select the right function to activate the kind of beacon you want. 
+--- After attaching a @{#BEACON} to your @{Wrapper.Positionable#POSITIONABLE}, you need to select the right function to activate the kind of beacon you want. 
 -- There are two types of BEACONs available : the AA TACAN Beacon and the general purpose Radio Beacon.
 -- Note that in both case, you can set an optional parameter : the `BeaconDuration`. This can be very usefull to simulate the battery time if your BEACON is
 -- attach to a cargo crate, for exemple. 
@@ -350,8 +350,8 @@ end
 -- 
 -- ## General Purpose Radio Beacon usage
 -- 
--- This beacon will work with any @{Positionable#POSITIONABLE}, but **it won't follow the @{Positionable#POSITIONABLE}** ! This means that you should only use it with
--- @{Positionable#POSITIONABLE} that don't move, or move very slowly. Use @{#BEACON:RadioBeacon}() to set the beacon parameters and start the beacon.
+-- This beacon will work with any @{Wrapper.Positionable#POSITIONABLE}, but **it won't follow the @{Wrapper.Positionable#POSITIONABLE}** ! This means that you should only use it with
+-- @{Wrapper.Positionable#POSITIONABLE} that don't move, or move very slowly. Use @{#BEACON:RadioBeacon}() to set the beacon parameters and start the beacon.
 -- Use @{#BEACON:StopRadioBeacon}() to stop it.
 -- 
 -- @type BEACON
@@ -361,7 +361,7 @@ BEACON = {
 }
 
 --- Create a new BEACON Object. This doesn't activate the beacon, though, use @{#BEACON.AATACAN} or @{#BEACON.Generic}
--- If you want to create a BEACON, you probably should use @{Positionable#POSITIONABLE.GetBeacon}() instead.
+-- If you want to create a BEACON, you probably should use @{Wrapper.Positionable#POSITIONABLE.GetBeacon}() instead.
 -- @param #BEACON self
 -- @param Wrapper.Positionable#POSITIONABLE Positionable The @{Positionable} that will receive radio capabilities.
 -- @return #BEACON Beacon

@@ -267,7 +267,7 @@ do -- DESIGNATE
   -- 
   -- ## 6. Designate Menu Location for a Mission
   -- 
-  -- You can make DESIGNATE work for a @{Mission#MISSION} object. In this way, the designate menu will not appear in the root of the radio menu, but in the menu of the Mission.
+  -- You can make DESIGNATE work for a @{Tasking.Mission#MISSION} object. In this way, the designate menu will not appear in the root of the radio menu, but in the menu of the Mission.
   -- Use the method @{#DESIGNATE.SetMission}() to set the @{Mission} object for the designate function.
   -- 
   -- ## 7. Status Report

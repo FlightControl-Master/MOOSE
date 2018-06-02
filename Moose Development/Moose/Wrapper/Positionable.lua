@@ -69,7 +69,7 @@ function POSITIONABLE:New( PositionableName )
   return self
 end
 
---- Returns the @{DCSTypes#Position3} position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.
+--- Returns the @{DCS#Position3} position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return DCS#Position The 3D position vectors of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.  
@@ -89,7 +89,7 @@ function POSITIONABLE:GetPositionVec3()
   return nil
 end
 
---- Returns the @{DCSTypes#Vec2} vector indicating the point in 2D of the POSITIONABLE within the mission.
+--- Returns the @{DCS#Vec2} vector indicating the point in 2D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return DCS#Vec2 The 2D point vector of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.  
@@ -185,7 +185,7 @@ function POSITIONABLE:GetCoordinate()
 end
 
 
---- Returns a random @{DCSTypes#Vec3} vector within a range, indicating the point in 3D of the POSITIONABLE within the mission.
+--- Returns a random @{DCS#Vec3} vector within a range, indicating the point in 3D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @param #number Radius
 -- @return DCS#Vec3 The 3D point vector of the POSITIONABLE.
@@ -220,7 +220,7 @@ function POSITIONABLE:GetRandomVec3( Radius )
   return nil
 end
 
---- Returns the @{DCSTypes#Vec3} vector indicating the 3D vector of the POSITIONABLE within the mission.
+--- Returns the @{DCS#Vec3} vector indicating the 3D vector of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return DCS#Vec3 The 3D point vector of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.  
@@ -713,7 +713,7 @@ function POSITIONABLE:Message( Message, Duration, Name )
   return nil
 end
 
---- Create a @{Radio#RADIO}, to allow radio transmission for this POSITIONABLE. 
+--- Create a @{Core.Radio#RADIO}, to allow radio transmission for this POSITIONABLE. 
 -- Set parameters with the methods provided, then use RADIO:Broadcast() to actually broadcast the message
 -- @param #POSITIONABLE self
 -- @return Core.Radio#RADIO Radio
@@ -722,7 +722,7 @@ function POSITIONABLE:GetRadio() --R2.1
   return RADIO:New(self) 
 end
 
---- Create a @{Radio#BEACON}, to allow this POSITIONABLE to broadcast beacon signals
+--- Create a @{Core.Radio#BEACON}, to allow this POSITIONABLE to broadcast beacon signals
 -- @param #POSITIONABLE self
 -- @return Core.Radio#RADIO Radio
 function POSITIONABLE:GetBeacon() --R2.1

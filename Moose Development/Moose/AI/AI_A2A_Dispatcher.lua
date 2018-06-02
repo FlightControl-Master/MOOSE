@@ -220,7 +220,7 @@ do -- AI_A2A_DISPATCHER
   -- therefore less CAP and GCI flights will spawn and this will tend to make just the border area active rather than a melee over the whole map. 
   -- It all depends on what the desired effect is. 
   -- 
-  -- EWR networks are **dynamically constructed**, that is, they form part of the @{Functional#DETECTION_BASE} object that is given as the input parameter of the AI\_A2A\_DISPATCHER class.
+  -- EWR networks are **dynamically constructed**, that is, they form part of the @{Functional.Detection#DETECTION_BASE} object that is given as the input parameter of the AI\_A2A\_DISPATCHER class.
   -- By defining in a **smart way the names or name prefixes of the groups** with EWR capable units, these groups will be **automatically added or deleted** from the EWR network, 
   -- increasing or decreasing the radar coverage of the Early Warning System.
   -- 
@@ -821,7 +821,7 @@ do -- AI_A2A_DISPATCHER
   
   --- AI_A2A_DISPATCHER constructor.
   -- This is defining the A2A DISPATCHER for one coaliton.
-  -- The Dispatcher works with a @{Functional#Detection} object that is taking of the detection of targets using the EWR units.
+  -- The Dispatcher works with a @{Functional.Detection#DETECTION_BASE} object that is taking of the detection of targets using the EWR units.
   -- The Detection object is polymorphic, depending on the type of detection object choosen, the detection will work differently.
   -- @param #AI_A2A_DISPATCHER self
   -- @param Functional.Detection#DETECTION_BASE Detection The DETECTION object that will detects targets using the the Early Warning Radar network.
@@ -3165,7 +3165,7 @@ do
   -- @extends #AI_A2A_DISPATCHER
 
   --- Create an automatic air defence system for a coalition setting up GCI and CAP air defenses. 
-  -- The class derives from @{AI#AI_A2A_DISPATCHER} and thus, all the methods that are defined in the @{AI#AI_A2A_DISPATCHER} class, can be used also in AI\_A2A\_GCICAP.
+  -- The class derives from @{#AI_A2A_DISPATCHER} and thus, all the methods that are defined in the @{#AI_A2A_DISPATCHER} class, can be used also in AI\_A2A\_GCICAP.
   -- 
   -- ===
   -- 
@@ -3268,7 +3268,7 @@ do
   -- 
   -- **The place of the helicopter is important, as the airbase closest to the helicopter will be the airbase from where the CAP planes will take off for CAP.**
   -- 
-  -- ## 2) There are a lot of defaults set, which can be further modified using the methods in @{AI#AI_A2A_DISPATCHER}:
+  -- ## 2) There are a lot of defaults set, which can be further modified using the methods in @{#AI_A2A_DISPATCHER}:
   -- 
   -- ### 2.1) Planes are taking off in the air from the airbases.
   -- 

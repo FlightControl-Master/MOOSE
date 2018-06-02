@@ -134,7 +134,7 @@
 -- 
 -- ### Parameters:
 -- 
--- * *coord*: Coordinates of the target, given as @{Point#COORDINATE} object.
+-- * *coord*: Coordinates of the target, given as @{Core.Point#COORDINATE} object.
 -- * *prio*: Priority of the target. This a number between 1 (high prio) and 100 (low prio). Targets with higher priority are engaged before targets with lower priority.
 -- * *radius*: Radius in meters which defines the area the ARTY group will attempt to be hitting. Default is 100 meters.
 -- * *nshells*: Number of shots (shells, rockets, missiles) fired by the group at each engagement of a target. Default is 5.
@@ -220,7 +220,7 @@
 -- 
 -- ### Parameters
 -- 
--- * *coord*: Coordinates where the group should move to given as @{Point#COORDINATE} object.
+-- * *coord*: Coordinates where the group should move to given as @{Core.Point#COORDINATE} object.
 -- * *time*: The time when the move should be executed. This has to be given as a string in the format "hh:mm:ss" (hh=hours, mm=minutes, ss=seconds).
 -- * *speed*: Speed of the group in km/h.
 -- * *onroad*: If this parameter is set to true, the group uses mainly roads to get to the commanded coordinates.

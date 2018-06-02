@@ -184,7 +184,7 @@
 --   * @{#SPAWN.SpawnInZone}(): Spawn a new group in a @{Zone}.
 --   * @{#SPAWN.SpawnAtAirbase}(): Spawn a new group at an @{Wrapper.Airbase}, which can be an airdrome, ship or helipad.
 -- 
--- Note that @{#SPAWN.Spawn} and @{#SPAWN.ReSpawn} return a @{GROUP#GROUP.New} object, that contains a reference to the DCSGroup object. 
+-- Note that @{#SPAWN.Spawn} and @{#SPAWN.ReSpawn} return a @{Wrapper.Group#GROUP.New} object, that contains a reference to the DCSGroup object. 
 -- You can use the @{GROUP} object to do further actions with the DCSGroup.
 -- 
 -- ### **Scheduled** spawning methods

@@ -19,8 +19,8 @@ do -- TASK_A2A
   -- @extends Tasking.Task#TASK
 
   --- Defines Air To Air tasks for a @{Set} of Target Units, 
-  -- based on the tasking capabilities defined in @{Task#TASK}.
-  -- The TASK_A2A is implemented using a @{Fsm#FSM_TASK}, and has the following statuses:
+  -- based on the tasking capabilities defined in @{Tasking.Task#TASK}.
+  -- The TASK_A2A is implemented using a @{Core.Fsm#FSM_TASK}, and has the following statuses:
   -- 
   --   * **None**: Start of the process
   --   * **Planned**: The A2A task is planned.
@@ -364,10 +364,10 @@ do -- TASK_A2A_INTERCEPT
   --- Defines an intercept task for a human player to be executed.
   -- When enemy planes need to be intercepted by human players, use this task type to urgen the players to get out there!
   -- 
-  -- The TASK_A2A_INTERCEPT is used by the @{Task_A2A_Dispatcher#TASK_A2A_DISPATCHER} to automatically create intercept tasks 
+  -- The TASK_A2A_INTERCEPT is used by the @{Tasking.Task_A2A_Dispatcher#TASK_A2A_DISPATCHER} to automatically create intercept tasks 
   -- based on detected airborne enemy targets intruding friendly airspace.
   -- 
-  -- The task is defined for a @{Mission#MISSION}, where a friendly @{Core.Set#SET_GROUP} consisting of GROUPs with one human players each, is intercepting the targets.
+  -- The task is defined for a @{Tasking.Mission#MISSION}, where a friendly @{Core.Set#SET_GROUP} consisting of GROUPs with one human players each, is intercepting the targets.
   -- The task is given a name and a briefing, that is used in the menu structure and in the reporting.
   -- 
   -- @field #TASK_A2A_INTERCEPT
@@ -463,10 +463,10 @@ do -- TASK_A2A_SWEEP
   -- Most likely, these enemy planes are hidden in the mountains or are flying under radar.
   -- These enemy planes need to be sweeped by human players, and use this task type to urge the players to get out there and find those enemy fighters.
   -- 
-  -- The TASK_A2A_SWEEP is used by the @{Task_A2A_Dispatcher#TASK_A2A_DISPATCHER} to automatically create sweep tasks 
+  -- The TASK_A2A_SWEEP is used by the @{Tasking.Task_A2A_Dispatcher#TASK_A2A_DISPATCHER} to automatically create sweep tasks 
   -- based on detected airborne enemy targets intruding friendly airspace, for which the detection has been lost for more than 60 seconds.
   -- 
-  -- The task is defined for a @{Mission#MISSION}, where a friendly @{Core.Set#SET_GROUP} consisting of GROUPs with one human players each, is sweeping the targets.
+  -- The task is defined for a @{Tasking.Mission#MISSION}, where a friendly @{Core.Set#SET_GROUP} consisting of GROUPs with one human players each, is sweeping the targets.
   -- The task is given a name and a briefing, that is used in the menu structure and in the reporting.
   -- 
   -- @field #TASK_A2A_SWEEP
@@ -570,10 +570,10 @@ do -- TASK_A2A_ENGAGE
   --- Defines an engage task for a human player to be executed.
   -- When enemy planes are close to human players, use this task type is used urge the players to get out there!
   -- 
-  -- The TASK_A2A_ENGAGE is used by the @{Task_A2A_Dispatcher#TASK_A2A_DISPATCHER} to automatically create engage tasks 
+  -- The TASK_A2A_ENGAGE is used by the @{Tasking.Task_A2A_Dispatcher#TASK_A2A_DISPATCHER} to automatically create engage tasks 
   -- based on detected airborne enemy targets intruding friendly airspace.
   -- 
-  -- The task is defined for a @{Mission#MISSION}, where a friendly @{Core.Set#SET_GROUP} consisting of GROUPs with one human players each, is engaging the targets.
+  -- The task is defined for a @{Tasking.Mission#MISSION}, where a friendly @{Core.Set#SET_GROUP} consisting of GROUPs with one human players each, is engaging the targets.
   -- The task is given a name and a briefing, that is used in the menu structure and in the reporting.
   -- 
   -- @field #TASK_A2A_ENGAGE

@@ -31,7 +31,7 @@
 -- CLIENTS in a SET\_CLIENT collection, which are not occupied by human players. 
 -- In other words, use AI_BALANCER to simulate human behaviour by spawning in replacement AI in multi player missions.
 -- 
--- The parent class @{Fsm#FSM_SET} manages the functionality to control the Finite State Machine (FSM). 
+-- The parent class @{Core.Fsm#FSM_SET} manages the functionality to control the Finite State Machine (FSM). 
 -- The mission designer can tailor the behaviour of the AI_BALANCER, by defining event and state transition methods.
 -- An explanation about state and event transition methods can be found in the @{FSM} module documentation.
 -- 

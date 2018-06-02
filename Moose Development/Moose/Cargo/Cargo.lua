@@ -36,14 +36,14 @@
 -- The cargo must be in the **Loaded** state.
 -- @function [parent=#CARGO] UnBoard
 -- @param #CARGO self
--- @param Core.Point#POINT_VEC2 ToPointVec2 (optional) @{Point#POINT_VEC2) to where the cargo should run after onboarding. If not provided, the cargo will run to 60 meters behind the Carrier location.
+-- @param Core.Point#POINT_VEC2 ToPointVec2 (optional) @{Core.Point#POINT_VEC2) to where the cargo should run after onboarding. If not provided, the cargo will run to 60 meters behind the Carrier location.
 
 --- UnBoards the cargo to a Carrier. The event will create a movement (= running or driving) of the cargo from the Carrier.
 -- The cargo must be in the **Loaded** state.
 -- @function [parent=#CARGO] __UnBoard
 -- @param #CARGO self
 -- @param #number DelaySeconds The amount of seconds to delay the action.
--- @param Core.Point#POINT_VEC2 ToPointVec2 (optional) @{Point#POINT_VEC2) to where the cargo should run after onboarding. If not provided, the cargo will run to 60 meters behind the Carrier location.
+-- @param Core.Point#POINT_VEC2 ToPointVec2 (optional) @{Core.Point#POINT_VEC2) to where the cargo should run after onboarding. If not provided, the cargo will run to 60 meters behind the Carrier location.
 
 
 -- Load
@@ -68,14 +68,14 @@
 -- The cargo must be in the **Loaded** state.
 -- @function [parent=#CARGO] UnLoad
 -- @param #CARGO self
--- @param Core.Point#POINT_VEC2 ToPointVec2 (optional) @{Point#POINT_VEC2) to where the cargo will be placed after unloading. If not provided, the cargo will be placed 60 meters behind the Carrier location.
+-- @param Core.Point#POINT_VEC2 ToPointVec2 (optional) @{Core.Point#POINT_VEC2) to where the cargo will be placed after unloading. If not provided, the cargo will be placed 60 meters behind the Carrier location.
 
 --- UnLoads the cargo to a Carrier. The event will unload the cargo from the Carrier. There will be no movement simulated of the cargo loading.
 -- The cargo must be in the **Loaded** state.
 -- @function [parent=#CARGO] __UnLoad
 -- @param #CARGO self
 -- @param #number DelaySeconds The amount of seconds to delay the action.
--- @param Core.Point#POINT_VEC2 ToPointVec2 (optional) @{Point#POINT_VEC2) to where the cargo will be placed after unloading. If not provided, the cargo will be placed 60 meters behind the Carrier location.
+-- @param Core.Point#POINT_VEC2 ToPointVec2 (optional) @{Core.Point#POINT_VEC2) to where the cargo will be placed after unloading. If not provided, the cargo will be placed 60 meters behind the Carrier location.
 
 -- State Transition Functions
 

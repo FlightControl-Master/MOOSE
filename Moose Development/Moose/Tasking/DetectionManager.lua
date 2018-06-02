@@ -2,35 +2,35 @@
 -- 
 -- ===
 -- 
--- The @{DetectionManager#DETECTION_MANAGER} class defines the core functions to report detected objects to groups.
+-- The @{#DETECTION_MANAGER} class defines the core functions to report detected objects to groups.
 -- Reportings can be done in several manners, and it is up to the derived classes if DETECTION_MANAGER to model the reporting behaviour.
 -- 
 -- 1.1) DETECTION_MANAGER constructor:
 -- -----------------------------------
---   * @{DetectionManager#DETECTION_MANAGER.New}(): Create a new DETECTION_MANAGER instance.
+--   * @{#DETECTION_MANAGER.New}(): Create a new DETECTION_MANAGER instance.
 -- 
 -- 1.2) DETECTION_MANAGER reporting:
 -- ---------------------------------
--- Derived DETECTION_MANAGER classes will reports detected units using the method @{DetectionManager#DETECTION_MANAGER.ReportDetected}(). This method implements polymorphic behaviour.
+-- Derived DETECTION_MANAGER classes will reports detected units using the method @{#DETECTION_MANAGER.ReportDetected}(). This method implements polymorphic behaviour.
 -- 
--- The time interval in seconds of the reporting can be changed using the methods @{DetectionManager#DETECTION_MANAGER.SetRefreshTimeInterval}(). 
--- To control how long a reporting message is displayed, use @{DetectionManager#DETECTION_MANAGER.SetReportDisplayTime}().
--- Derived classes need to implement the method @{DetectionManager#DETECTION_MANAGER.GetReportDisplayTime}() to use the correct display time for displayed messages during a report.
+-- The time interval in seconds of the reporting can be changed using the methods @{#DETECTION_MANAGER.SetRefreshTimeInterval}(). 
+-- To control how long a reporting message is displayed, use @{#DETECTION_MANAGER.SetReportDisplayTime}().
+-- Derived classes need to implement the method @{#DETECTION_MANAGER.GetReportDisplayTime}() to use the correct display time for displayed messages during a report.
 -- 
--- Reporting can be started and stopped using the methods @{DetectionManager#DETECTION_MANAGER.StartReporting}() and @{DetectionManager#DETECTION_MANAGER.StopReporting}() respectively.
--- If an ad-hoc report is requested, use the method @{DetectionManager#DETECTION_MANAGER#ReportNow}().
+-- Reporting can be started and stopped using the methods @{#DETECTION_MANAGER.StartReporting}() and @{#DETECTION_MANAGER.StopReporting}() respectively.
+-- If an ad-hoc report is requested, use the method @{#DETECTION_MANAGER#ReportNow}().
 -- 
 -- The default reporting interval is every 60 seconds. The reporting messages are displayed 15 seconds.
 -- 
 -- ===
 -- 
--- 2) @{DetectionManager#DETECTION_REPORTING} class, extends @{DetectionManager#DETECTION_MANAGER}
+-- 2) @{#DETECTION_REPORTING} class, extends @{#DETECTION_MANAGER}
 -- ===
--- The @{DetectionManager#DETECTION_REPORTING} class implements detected units reporting. Reporting can be controlled using the reporting methods available in the @{DetectionManager#DETECTION_MANAGER} class.
+-- The @{#DETECTION_REPORTING} class implements detected units reporting. Reporting can be controlled using the reporting methods available in the @{Tasking.DetectionManager#DETECTION_MANAGER} class.
 -- 
 -- 2.1) DETECTION_REPORTING constructor:
 -- -------------------------------
--- The @{DetectionManager#DETECTION_REPORTING.New}() method creates a new DETECTION_REPORTING instance.
+-- The @{#DETECTION_REPORTING.New}() method creates a new DETECTION_REPORTING instance.
 --    
 --    
 -- ===

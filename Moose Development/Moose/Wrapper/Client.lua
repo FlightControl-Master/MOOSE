@@ -411,8 +411,8 @@ function CLIENT:IsTransport()
 	return self.ClientTransport
 end
 
---- Shows the @{AI_Cargo#CARGO} contained within the CLIENT to the player as a message.
--- The @{AI_Cargo#CARGO} is shown using the @{Message#MESSAGE} distribution system.
+--- Shows the @{AI.AI_Cargo#CARGO} contained within the CLIENT to the player as a message.
+-- The @{AI.AI_Cargo#CARGO} is shown using the @{Core.Message#MESSAGE} distribution system.
 -- @param #CLIENT self
 function CLIENT:ShowCargo()
 	self:F()
@@ -445,7 +445,7 @@ end
 -- @param #string Message is the text describing the message.
 -- @param #number MessageDuration is the duration in seconds that the Message should be displayed.
 -- @param #string MessageCategory is the category of the message (the title).
--- @param #number MessageInterval is the interval in seconds between the display of the @{Message#MESSAGE} when the CLIENT is in the air.
+-- @param #number MessageInterval is the interval in seconds between the display of the @{Core.Message#MESSAGE} when the CLIENT is in the air.
 -- @param #string MessageID is the identifier of the message when displayed with intervals.
 function CLIENT:Message( Message, MessageDuration, MessageCategory, MessageInterval, MessageID )
 	self:F( { Message, MessageDuration, MessageCategory, MessageInterval } )

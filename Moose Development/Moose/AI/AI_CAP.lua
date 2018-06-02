@@ -79,13 +79,13 @@
 -- 
 -- ### 2.2 AI_CAP_ZONE Events
 -- 
---   * **@{AI_Patrol#AI_PATROL_ZONE.Start}**: Start the process.
---   * **@{AI_Patrol#AI_PATROL_ZONE.Route}**: Route the AI to a new random 3D point within the Patrol Zone.
+--   * **@{AI.AI_Patrol#AI_PATROL_ZONE.Start}**: Start the process.
+--   * **@{AI.AI_Patrol#AI_PATROL_ZONE.Route}**: Route the AI to a new random 3D point within the Patrol Zone.
 --   * **@{#AI_CAP_ZONE.Engage}**: Let the AI engage the bogeys.
 --   * **@{#AI_CAP_ZONE.Abort}**: Aborts the engagement and return patrolling in the patrol zone.
---   * **@{AI_Patrol#AI_PATROL_ZONE.RTB}**: Route the AI to the home base.
---   * **@{AI_Patrol#AI_PATROL_ZONE.Detect}**: The AI is detecting targets.
---   * **@{AI_Patrol#AI_PATROL_ZONE.Detected}**: The AI has detected new targets.
+--   * **@{AI.AI_Patrol#AI_PATROL_ZONE.RTB}**: Route the AI to the home base.
+--   * **@{AI.AI_Patrol#AI_PATROL_ZONE.Detect}**: The AI is detecting targets.
+--   * **@{AI.AI_Patrol#AI_PATROL_ZONE.Detected}**: The AI has detected new targets.
 --   * **@{#AI_CAP_ZONE.Destroy}**: The AI has destroyed a bogey @{Wrapper.Unit}.
 --   * **@{#AI_CAP_ZONE.Destroyed}**: The AI has destroyed all bogeys @{Wrapper.Unit}s assigned in the CAS task.
 --   * **Status** ( Group ): The AI is checking status (fuel and damage). When the tresholds have been reached, the AI will RTB.
@@ -98,7 +98,7 @@
 -- that will define when the AI will engage with the detected airborne enemy targets.
 -- The range can be beyond or smaller than the range of the Patrol Zone.
 -- The range is applied at the position of the AI.
--- Use the method @{AI_CAP#AI_CAP_ZONE.SetEngageRange}() to define that range.
+-- Use the method @{AI.AI_CAP#AI_CAP_ZONE.SetEngageRange}() to define that range.
 --
 -- ## 4. Set the Zone of Engagement
 -- 
@@ -106,7 +106,7 @@
 -- 
 -- An optional @{Zone} can be set, 
 -- that will define when the AI will engage with the detected airborne enemy targets.
--- Use the method @{AI_Cap#AI_CAP_ZONE.SetEngageZone}() to define that Zone.
+-- Use the method @{AI.AI_Cap#AI_CAP_ZONE.SetEngageZone}() to define that Zone.
 --  
 -- ===
 -- 

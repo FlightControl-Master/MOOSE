@@ -27,7 +27,7 @@
 -- 
 -- The OBJECT class provides the following functions to construct a OBJECT instance:
 --
---  * @{Object#OBJECT.New}(): Create a OBJECT instance.
+--  * @{Wrapper.Object#OBJECT.New}(): Create a OBJECT instance.
 --
 -- @field #OBJECT
 OBJECT = {

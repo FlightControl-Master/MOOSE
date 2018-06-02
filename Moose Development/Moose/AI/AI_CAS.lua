@@ -99,13 +99,13 @@
 -- 
 -- ### 2.2. AI_CAS_ZONE Events
 -- 
---   * **@{AI_Patrol#AI_PATROL_ZONE.Start}**: Start the process.
---   * **@{AI_Patrol#AI_PATROL_ZONE.Route}**: Route the AI to a new random 3D point within the Patrol Zone.
+--   * **@{AI.AI_Patrol#AI_PATROL_ZONE.Start}**: Start the process.
+--   * **@{AI.AI_Patrol#AI_PATROL_ZONE.Route}**: Route the AI to a new random 3D point within the Patrol Zone.
 --   * **@{#AI_CAS_ZONE.Engage}**: Engage the AI to provide CAS in the Engage Zone, destroying any target it finds.
 --   * **@{#AI_CAS_ZONE.Abort}**: Aborts the engagement and return patrolling in the patrol zone.
---   * **@{AI_Patrol#AI_PATROL_ZONE.RTB}**: Route the AI to the home base.
---   * **@{AI_Patrol#AI_PATROL_ZONE.Detect}**: The AI is detecting targets.
---   * **@{AI_Patrol#AI_PATROL_ZONE.Detected}**: The AI has detected new targets.
+--   * **@{AI.AI_Patrol#AI_PATROL_ZONE.RTB}**: Route the AI to the home base.
+--   * **@{AI.AI_Patrol#AI_PATROL_ZONE.Detect}**: The AI is detecting targets.
+--   * **@{AI.AI_Patrol#AI_PATROL_ZONE.Detected}**: The AI has detected new targets.
 --   * **@{#AI_CAS_ZONE.Destroy}**: The AI has destroyed a target @{Wrapper.Unit}.
 --   * **@{#AI_CAS_ZONE.Destroyed}**: The AI has destroyed all target @{Wrapper.Unit}s assigned in the CAS task.
 --   * **Status**: The AI is checking status (fuel and damage). When the tresholds have been reached, the AI will RTB.
@@ -166,7 +166,7 @@ function AI_CAS_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude
   -- @param DCS#Distance EngageAltitude (optional) Desired altitude to perform the unit engagement.
   -- @param DCS#AI.Task.WeaponExpend EngageWeaponExpend (optional) Determines how much weapon will be released at each attack. 
   -- If parameter is not defined the unit / controllable will choose expend on its own discretion.
-  -- Use the structure @{DCSTypes#AI.Task.WeaponExpend} to define the amount of weapons to be release at each attack.
+  -- Use the structure @{DCS#AI.Task.WeaponExpend} to define the amount of weapons to be release at each attack.
   -- @param #number EngageAttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
   -- @param DCS#Azimuth EngageDirection (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
   
@@ -178,7 +178,7 @@ function AI_CAS_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude
   -- @param DCS#Distance EngageAltitude (optional) Desired altitude to perform the unit engagement.
   -- @param DCS#AI.Task.WeaponExpend EngageWeaponExpend (optional) Determines how much weapon will be released at each attack. 
   -- If parameter is not defined the unit / controllable will choose expend on its own discretion.
-  -- Use the structure @{DCSTypes#AI.Task.WeaponExpend} to define the amount of weapons to be release at each attack.
+  -- Use the structure @{DCS#AI.Task.WeaponExpend} to define the amount of weapons to be release at each attack.
   -- @param #number EngageAttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
   -- @param DCS#Azimuth EngageDirection (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
 
