@@ -317,7 +317,7 @@ function MESSAGE:ToAll()
 
   if self.MessageDuration ~= 0 then
     self:T( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
-    trigger.action.outText( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration )
+    trigger.action.outText( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration, self.ClearScreen )
   end
 
   return self
