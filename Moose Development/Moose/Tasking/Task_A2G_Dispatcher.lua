@@ -1,5 +1,16 @@
---- **Tasking** - The TASK\_A2G\_DISPATCHER dispatches A2G Tasks to Players based on enemy location detection.
+--- **Tasking** -- Dynamically allocates A2G tasks to human players, based on detected ground targets through reconnaissance. 
 -- 
+-- **Features:**
+-- 
+--   * Dynamically assign tasks to human players based on detected targets.
+--   * Dynamically change the tasks as the tactical situation evolves during the mission.
+--   * Dynamically assign (CAS) Close Air Support tasks for human players.
+--   * Dynamically assign (BAI) Battlefield Air Interdiction tasks for human players.
+--   * Dynamically assign (SEAD) Supression of Enemy Air Defense tasks for human players to eliminate G2A missile threats.
+--   * Define and use an EWR (Early Warning Radar) network.
+--   * Define different ranges to engage upon intruders.
+--   * Keep task achievements.
+--   * Score task achievements.-- 
 -- ===
 -- 
 -- ### Author: **FlightControl**
