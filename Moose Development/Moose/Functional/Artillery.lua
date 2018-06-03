@@ -88,6 +88,9 @@
 -- @field #boolean markallow If true, Players are allowed to assign targets and moves for ARTY group by placing markers on the F10 map. Default is false.
 -- @field #number markkey Authorization key. Only player who know this key can assign targets and moves via markers on the F10 map. Default no authorization required.
 -- @field #boolean markreadonly Marks for targets are readonly and cannot be removed by players. Default is false.
+-- @field #boolean autorelocate ARTY group will automatically move to within the max/min firing range.
+-- @field #number autorelocatemaxdist Max distance [m] the ARTY group will travel to get within firing range. Default 50000 m = 50 km.
+-- @field #boolean autorelocateonroad ARTY group will use mainly road to automatically get within firing range. Default is false. 
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
 --- Enables mission designers easily to assign targets for artillery units. Since the implementation is based on a Finite State Model (FSM), the mission designer can
@@ -218,6 +221,7 @@
 -- * @{#ARTY.WeaponType}.UnguidedAny: Any unguided weapon (cannons or rockes) will be used.
 -- * @{#ARTY.WeaponType}.GuidedMissile: Any guided missiles are used during the attack. Corresponding ammo type are missiles and can be defined by @{#ARTY.SetMissileTypes}.
 -- * @{#ARTY.WeaponType}.CruiseMissile: Only cruise missiles are used during the attack. Corresponding ammo type are missiles and can be defined by @{#ARTY.SetMissileTypes}.
+-- * @{#ARTY.WeaponType}.TacticalNukes: Use tactical nuclear shells. This works only with units that have shells and is described below.
 -- 
 -- ## Assigning Moves
 -- The ARTY group can be commanded to move. This is done by the @{#ARTY.AssignMoveCoord}(*coord*,*time*,*speed*,*onroad*,*cancel*,*name*) function.
@@ -258,13 +262,15 @@
 -- 
 -- ## Tactical Nukes
 -- 
--- ARTY groups that can fire shells can also be used to fire tactical nukes. This is simply achieved by setting the weapon type to **ARTY.WeaponType.TacticalNukes** in the
+-- ARTY groups that can fire shells can also be used to fire tactical nukes. This is achieved by setting the weapon type to **ARTY.WeaponType.TacticalNukes** in the
 -- @{#ARTY.AssignTargetCoord}() function.
+--
+-- By default, they group does not have any nukes available. To give the group the ability the function @{#ARTY.SetTacNukeShells}(*n*) can be used.
+-- This supplies the group with *n* nuclear shells, where *n* is restricted to the number of conventional shells the group can carry.
+-- Note that the group must always have convenctional shells left in order to fire a nuclear shell. 
 -- 
 -- The default explostion strength is 0.075 kilo tons TNT. The can be changed with the @{#ARTY.SetTacNukeWarhead}(*strength*), where *strength* is given in kilo tons TNT.
--- 
--- By default, all available conventional shells can be used as nuclear shells. However, it is possible to restrict the number with the @{#ARTY.SetTacNukeShells}(*n*) function
--- to only have *n* nuclear shells available. Note that the group must always have convenctional shells left in order to fire a nuclear shell.
+--
 -- 
 -- ## Assignments via Markers on F10 Map
 -- 
@@ -438,6 +444,9 @@ ARTY={
   markallow=false,
   markkey=nil,
   markreadonly=false,
+  autorelocate=false,
+  autorelocatemaxdist=50000,
+  autorelocateonroad=false,
 }
 
 --- Weapong type ID. http://wiki.hoggit.us/view/DCS_enum_weapon_flag
@@ -453,13 +462,54 @@ ARTY.WeaponType={
   TacticalNukes=666,
 }
 
+--- Database of common artillery unit properties.
+-- @list db
+ARTY.db={
+  ["2B11 mortar"] = {
+    minrange = 500,
+    maxrange = 7000,
+  },
+  ["SAU 2-C9"] = {
+    minrange = 500,
+    maxrange = 7000,
+  },
+  ["SPH M109 Paladin"] = {
+    minrange = 300,
+    maxrange = 22000,
+  },
+  ["SAU Gvozdika"] = {
+    minrange = 300,
+    maxrange = 15000,
+  },
+  ["SAU Akatsia"] = {
+    minrange = 300,
+    maxrange = 17000,
+  },
+  ["SAU Msta"] = {
+    minrange = 300,
+    maxrange = 23500,
+  },
+  ["MLRS M270"] = {
+    minrange = 10000,
+    maxrange = 32000,
+  },
+  ["Grad-URAL"] = {
+    minrange = 5000,
+    maxrange = 19000,
+  },
+  ["Smerch"] = {
+    minrange = 20000,
+    maxrange = 70000,
+  }
+}
+
 --- Some ID to identify who we are in output of the DCS.log file.
 -- @field #string id
 ARTY.id="ARTY | "
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="0.9.9"
+ARTY.version="0.9.91"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -826,6 +876,21 @@ function ARTY:SetRearmingPlace(coord)
   self.RearmingPlaceCoord=coord
 end
 
+--- Set automatic relocation of ARTY group if a target is assigned which is out of range. The unit will drive automatically towards or away from the target to be in max/min firing range.
+-- @param #ARTY self
+-- @param #number maxdistance (Optional) The maximum distance in km the group will travel to get within firing range. Default is 50 km. No automatic relocation is performed if targets are assigned which are further away.
+-- @param #boolean onroad (Optional) If true, ARTY group uses roads whenever possible. Default false, i.e. group will move in a straight line to the assigned coordinate. 
+function ARTY:SetAutomaticRelocate(maxdistance, onroad)
+  self:F({distance=maxdistance, onroad=onroad})
+  self.autorelocate=true
+  self.autorelocatemaxdist=maxdistance or 50
+  self.autorelocatemaxdist=self.autorelocatemaxdist*1000
+  if onroad==nil then
+    onroad=false
+  end
+  self.autorelocateonroad=onroad
+end
+
 --- Report messages of ARTY group turned on. This is the default.
 -- @param #ARTY self
 function ARTY:SetReportON()
@@ -1045,6 +1110,18 @@ function ARTY:onafterStart(Controllable, From, Event, To)
     self.Nukes0=0
   end
   
+  -- Check if we have and arty type that is in the DB.
+  local _dbproperties=self:_CheckDB(self.DisplayName)
+  self:T({dbproperties=_dbproperties})
+  if _dbproperties~=nil then
+    for property,value in pairs(_dbproperties) do
+      self:T({property=property, value=value})
+      --if self[property]==nil then
+        self[property]=value
+      --end
+    end
+  end
+  
   local text=string.format("\n******************************************************\n")
   text=text..string.format("Arty group          = %s\n", Controllable:GetName())
   text=text..string.format("Artillery attribute = %s\n", tostring(self.IsArtillery))
@@ -1079,6 +1156,9 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   text=text..string.format("Relocate after fire = %s\n", tostring(self.relocateafterfire))
   text=text..string.format("Relocate min dist.  = %d m\n", self.relocateRmin)
   text=text..string.format("Relocate max dist.  = %d m\n", self.relocateRmax)
+  text=text..string.format("Auto move in  range = %s\n", tostring(self.autorelocate))
+  text=text..string.format("Auto move dist. max = %.1f km\n", self.autorelocatemaxdist/1000)
+  text=text..string.format("Auto move on road   = %s\n", tostring(self.autorelocateonroad))
   text=text..string.format("Marker assignments  = %s\n", tostring(self.markallow))
   text=text..string.format("Marker auth. key    = %s\n", tostring(self.markkey))
   text=text..string.format("Marker readonly     = %s\n", tostring(self.markreadonly))
@@ -1127,6 +1207,20 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   
   -- Start checking status.
   self:__Status(self.StatusInterval)
+end
+
+--- Check the DB for properties of the specified artillery unit type.
+-- @param #ARTY self
+-- @return #table Properties of the requested artillery type. Returns nil if no matching DB entry could be found.
+function ARTY:_CheckDB(displayname)
+  for _type,_properties in pairs(ARTY.db) do
+    self:T({type=_type, properties=_properties})
+    if _type==displayname then
+      self:T({type=_type, properties=_properties})
+      return _properties
+    end
+  end
+  return nil
 end
 
 --- After "Start" event. Initialized ROE and alarm state. Starts the event handler.
@@ -1209,7 +1303,7 @@ function ARTY:_OnEventShot(EventData)
         -- Debug output.
         local text=string.format("%s, fired shot %d of %d with weapon %s on target %s.", self.Controllable:GetName(), self.Nshots, self.currentTarget.nshells, _weaponName, self.currentTarget.name)
         self:T(ARTY.id..text)
-        MESSAGE:New(text, 5):ToAllIf(self.report or self.Debug)
+        MESSAGE:New(text, 5):Clear():ToAllIf(self.report or self.Debug)
         
         -- Last known position of the weapon fired.
         local _lastpos={x=0, y=0, z=0}
@@ -1484,7 +1578,7 @@ function ARTY:_OnEventMarkChange(Event)
           end
         end
       end
-      
+            
       -- We were not addressed.
       if not _assigned then
         return
@@ -1696,9 +1790,12 @@ function ARTY:onafterStatus(Controllable, From, Event, To)
     -- Check that firing started after ~5 min. If not, target is removed.
     self:_CheckShootingStarted()
   end
+  
+  
+  -- Check if targets are in range and update target.inrange value.
+  self:_CheckTargetsInRange()
 
-
-  -- Get a valid timed target if it is due to be attacked.  
+  -- Get a valid timed target if it is due to be attacked.
   local _timedTarget=self:_CheckTimedTargets()
       
   -- Get a valid normal target (one that is not timed).
@@ -2238,6 +2335,9 @@ end
 -- @return #boolean If true, proceed to onafterOpenfire.
 function ARTY:onafterNewTarget(Controllable, From, Event, To, target)
   self:_EventFromTo("onafterNewTarget", Event, From, To)
+  
+  -- Check if target is in range.
+  --local _inrange, _toofar, _tooclose=self:_TargetInRange(target, self.report or self.Debug)
   
   -- Debug message.
   local text=string.format("Adding new target %s.", target.name)
@@ -2831,6 +2931,7 @@ function ARTY:_Markertext(text)
   assignment.engage=false
   assignment.request=false
   assignment.readonly=false
+  assignment.canceltarget=false
   assignment.cancelcurrent=false
   --assignment.time=nil
   --assignment.nshells=nil
@@ -2881,10 +2982,10 @@ function ARTY:_Markertext(text)
         end        
         self:T2(ARTY.id..string.format("Key Time=%s.", val))
         
-      elseif key:lower():find("shots") then
+      elseif key:lower():find("shot") then
       
         assignment.nshells=tonumber(s[2])
-        self:T(ARTY.id..string.format("Key Shots=%s.", val))
+        self:T(ARTY.id..string.format("Key Shot=%s.", val))
         
       elseif key:lower():find("prio") then
       
@@ -2927,12 +3028,20 @@ function ARTY:_Markertext(text)
         self:T2(ARTY.id..string.format("Key Onroad=true."))
                 
       elseif key:lower():find("irrevocable") or key:lower():find("readonly") then
+      
         assignment.readonly=true
         self:T2(ARTY.id..string.format("Key Readonly=true."))
+
+      elseif key:lower():find("canceltarget") then
+      
+        assignment.canceltarget=true
+        self:T2(ARTY.id..string.format("Key Cancel Target (before move)=true."))
         
-      elseif key:lower():find("cancel current") then
+      elseif key:lower():find("cancelcurrent") then
+      
         assignment.cancelcurrent=true
         self:T2(ARTY.id..string.format("Key Cancel Current=true."))
+        
       elseif assignment.request and key:lower():find("ammo") then
         assignment.requestammo=true
       end       
@@ -3057,6 +3166,122 @@ function ARTY:_SortQueueTime(queue)
     self:T3(ARTY.id..string.format("%s: time=%s, clock=%s", _queue.name, _time, _clock))
   end
 
+end
+
+--- Heading from point a to point b in degrees.
+--@param #ARTY self
+--@param Core.Point#COORDINATE a Coordinate.
+--@param Core.Point#COORDINATE b Coordinate.
+--@return #number angle Angle from a to b in degrees.
+function ARTY:_GetHeading(a, b)
+  local dx = b.x-a.x
+  local dy = b.z-a.z
+  local angle = math.deg(math.atan2(dy,dx))
+  if angle < 0 then
+    angle = 360 + angle
+  end
+  return angle
+end
+
+--- Check all targets whether they are in range.
+-- @param #ARTY self
+function ARTY:_CheckTargetsInRange()
+
+  for i=1,#self.targets do
+    local _target=self.targets[i]
+    
+    self:T(ARTY.id..string.format("Before: Target %s - in range = %s", _target.name, tostring(_target.inrange)))
+    
+    -- Check if target is in range.
+    local _inrange,_toofar,_tooclose=self:_TargetInRange(_target)
+    self:T(ARTY.id..string.format("Inbetw: Target %s - in range = %s, toofar = %s, tooclose = %s", _target.name, tostring(_target.inrange), tostring(_toofar), tostring(_tooclose)))
+    
+    -- Init default for assigning moves into range.
+    local _movetowards=false
+    local _moveaway=false
+    
+    if _target.inrange==nil then
+    
+      -- First time the check is performed. We call the function again and send a message.
+      _target.inrange,_toofar,_tooclose=self:_TargetInRange(_target, self.report or self.Debug)
+      
+      -- Send group towards/away from target.
+      if _toofar then
+        _movetowards=true
+      elseif _tooclose then
+        _moveaway=true
+      end
+    
+    elseif _target.inrange==true then
+    
+      -- Target was in range at previous check...
+           
+      if _toofar then       --...but is now too far away.
+        _movetowards=true
+      elseif _tooclose then --...but is now too close.
+        _moveaway=true
+      end
+    
+    elseif _target.inrange==false then
+    
+      -- Target was out of range at previous check.
+      
+      if _inrange then
+        -- Inform coalition that target is now in range.
+        local text=string.format("%s, target %s is now in range.", self.Controllable:GetName(), _target.name)
+        self:T(ARTY.id..text)
+        MESSAGE:New(text,10):ToCoalitionIf(self.Controllable:GetCoalition(), self.report or self.Debug)
+      end
+    
+    end
+    
+    -- Assign a relocation command so that the unit will be in range of the requested target.
+    if self.autorelocate and (_movetowards or _moveaway) then
+    
+      -- Get current position.
+      local _from=self.Controllable:GetCoordinate()
+      local _dist=_from:Get2DDistance(_target.coord)
+      
+      if _dist<=self.autorelocatemaxdist then
+      
+        local _tocoord --Core.Point#COORDINATE
+        local _name=""
+        local _safetymargin=500
+      
+        if _movetowards then
+        
+          -- Target was in range on previous check but now we are too far away.        
+          local _waytogo=_dist-self.maxrange+_safetymargin
+          local _heading=self:_GetHeading(_from,_target.coord)
+          _tocoord=_from:Translate(_waytogo, _heading)
+          _name=string.format("Relocation to within max firing range of target %s", _target.name)
+          
+        elseif _moveaway then
+        
+        -- Target was in range on previous check but now we are too far away.        
+        local _waytogo=_dist-self.minrange+_safetymargin
+        local _heading=self:_GetHeading(_target.coord,_from)
+        _tocoord=_from:Translate(_waytogo, _heading)
+        _name=string.format("Relocation to within min firing range of target %s", _target.name)
+
+        end
+  
+        -- Send info message.
+        MESSAGE:New(_name.." assigned.", 10):ToCoalitionIf(self.Controllable:GetCoalition(), self.report or self.Debug)
+        
+        -- Assign relocation move.
+        self:AssignMoveCoord(_tocoord, nil, nil, self.autorelocateonroad, false, _name, true)        
+        
+      end
+            
+    end
+    
+    -- Update value.
+    _target.inrange=_inrange
+    
+    self:T(ARTY.id..string.format("After: Target %s - in range = %s", _target.name, tostring(_target.inrange)))
+    
+  end
 end
 
 --- Check all timed targets and return the target which should be attacked next.
@@ -3303,37 +3528,49 @@ end
 --- Check if target is in range.
 -- @param #ARTY self
 -- @param #table target Target table.
+-- @param #boolean message (Optional) If true, send a message to the coalition if the target is not in range. Default is no message is send.
 -- @return #boolean True if target is in range, false otherwise.
-function ARTY:_TargetInRange(target)
+-- @return #boolean True if ARTY group is too far away from the target, i.e. distance > max firing range.
+-- @return #boolean True if ARTY group is too close to the target, i.e. distance < min finring range.
+function ARTY:_TargetInRange(target, message)
   self:F3(target)
+  
+  -- Default is no message.
+  if message==nil then
+    message=false
+  end
 
   -- Distance between ARTY group and target.
   local _dist=self.Controllable:GetCoordinate():Get2DDistance(target.coord)
   
   -- Assume we are in range.
   local _inrange=true
+  local _tooclose=false
+  local _toofar=false
   local text=""
   
   if _dist < self.minrange then
     _inrange=false
+    _tooclose=true
     text=string.format("%s, target is out of range. Distance of %.1f km is below min range of %.1f km.", self.Controllable:GetName(), _dist/1000, self.minrange/1000)
   elseif _dist > self.maxrange then
     _inrange=false
+    _toofar=true
     text=string.format("%s, target is out of range. Distance of %.1f km is greater than max range of %.1f km.", self.Controllable:GetName(), _dist/1000, self.maxrange/1000)
   end
   
   -- Debug output.
   if not _inrange then
     self:T(ARTY.id..text)
-    MESSAGE:New(text, 5):ToCoalitionIf(self.Controllable:GetCoalition(), self.report or self.Debug)
+    MESSAGE:New(text, 5):ToCoalitionIf(self.Controllable:GetCoalition(), (self.report and message) or (self.Debug and message))
   end
     
-  -- Remove target if ARTY group cannot move. No change to be ever in range.
+  -- Remove target if ARTY group cannot move, e.g. Mortas. No chance to be ever in range.
   if self.SpeedMax<1 and _inrange==false then
     self:RemoveTarget(target.name)
   end
 
-  return _inrange
+  return _inrange,_toofar,_tooclose
 end
 
 --- Get the weapon type name, which should be used to attack the target.

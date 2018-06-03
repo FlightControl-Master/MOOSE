@@ -66,7 +66,7 @@ MESSAGE.Type = {
 -- @param #string MessageText is the text of the Message.
 -- @param #number MessageDuration is a number in seconds of how long the MESSAGE should be shown on the display panel.
 -- @param #string MessageCategory (optional) is a string expressing the "category" of the Message. The category will be shown as the first text in the message followed by a ": ".
--- @param #boolean ClearScreen (optional) Clear all previous messages.
+-- @param #boolean ClearScreen (optional) Clear all previous messages if true.
 -- @return #MESSAGE
 -- @usage
 -- -- Create a series of new Messages.
@@ -146,6 +146,15 @@ function MESSAGE:NewType( MessageText, MessageType, ClearScreen )
 end
 
 
+
+--- Clears all previous messages from the screen before the new message is displayed. Not that this must come before all functions starting with ToX(), e.g. ToAll(), ToGroup() etc. 
+-- @param #MESSAGE self
+-- @return #MESSAGE
+function MESSAGE:Clear()
+  self:F()
+  self.ClearScreen=true
+  return self
+end
 
 
 
