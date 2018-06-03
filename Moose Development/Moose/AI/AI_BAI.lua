@@ -1,4 +1,13 @@
---- **AI** -- (R2.1) - Manages the independent process of Battlefield Air Interdiction (bombing) for airplanes.
+--- **AI** -- Peform Battlefield Area Interdiction (BAI) within an engagement zone.
+--
+-- **Features:**
+-- 
+--   * Hold and standby within a patrol zone.
+--   * Engage upon command the assigned targets within an engagement zone.
+--   * Loop the zone until all targets are eliminated.
+--   * Trigger different events upon the results achieved.
+--   * After combat, return to the patrol zone and hold.
+--   * RTB when commanded or after out of fuel.
 --
 -- ===
 -- 

@@ -91,7 +91,7 @@ AI_CARGO_DISPATCHER_APC = {
 -- @param Core.Set#SET_GROUP SetAPC The collection of APC @{Wrapper.Group}s.
 -- @param Core.Set#SET_CARGO SetCargo The collection of @{Cargo} derived objects.
 -- @param Core.Set#SET_ZONE SetDeployZone The collection of deploy @{Zone}s, which are used to where the cargo will be deployed by the APCs. 
--- @param #number CombatRadius The cargo will be unloaded from the APC and engage the enemy if the enemy is within CombatRadius range. The radius is in meters, the default value is 500 meters.
+-- @param DCS#Distance CombatRadius The cargo will be unloaded from the APC and engage the enemy if the enemy is within CombatRadius range. The radius is in meters, the default value is 500 meters.
 -- @return #AI_CARGO_DISPATCHER_APC
 -- @usage
 -- 
@@ -101,9 +101,9 @@ AI_CARGO_DISPATCHER_APC = {
 -- SetDeployZone = SET_ZONE:New():FilterPrefixes( "Deploy" ):FilterStart()
 -- AICargoDispatcher = AI_CARGO_DISPATCHER_APC:New( SetAPC, SetCargo, SetDeployZone, 500 )
 -- 
-function AI_CARGO_DISPATCHER_APC:New( SetAPC, SetCargo, SetDeployZones, CombatRadius )
+function AI_CARGO_DISPATCHER_APC:New( SetAPC, SetCargo, SetDeployZone, CombatRadius )
 
-  local self = BASE:Inherit( self, AI_CARGO_DISPATCHER:New( SetAPC, SetCargo, SetDeployZones ) ) -- #AI_CARGO_DISPATCHER_APC
+  local self = BASE:Inherit( self, AI_CARGO_DISPATCHER:New( SetAPC, SetCargo, SetDeployZone ) ) -- #AI_CARGO_DISPATCHER_APC
 
   self.CombatRadius = CombatRadius or 500
 
