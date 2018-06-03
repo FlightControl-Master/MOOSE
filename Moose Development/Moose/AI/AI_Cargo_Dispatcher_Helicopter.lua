@@ -1,4 +1,4 @@
---- **AI** -- (R2.4) - Models the intelligent transportation of infantry and other cargo using Helicopters.
+--- **AI** -- Models the intelligent transportation of infantry and other cargo using Helicopters.
 --
 -- The @{#AI_CARGO_DISPATCHER_HELICOPTER} classes implements the dynamic dispatching of cargo transportation tasks for helicopters.
 --

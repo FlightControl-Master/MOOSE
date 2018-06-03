@@ -1,4 +1,11 @@
---- **AI** -- (2.1) - Balance player slots with AI to create an engaging simulation environment, independent of the amount of players. 
+--- **AI** -- Balance player slots with AI to create an engaging simulation environment, independent of the amount of players. 
+-- 
+-- ** Features:**
+-- 
+--   * Automatically spawn AI as a replacement of free player slots for a coalition.
+--   * Make the AI to perform tasks.
+--   * Define a maximum amount of AI to be active at the same time.
+--   * Configure the behaviour of AI when a human joins a slot for which an AI is active.
 -- 
 -- ===
 -- 

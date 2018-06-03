@@ -1,5 +1,24 @@
 --- **AI** - (R2.2) - Manages the process of an automatic A2A defense system based on an EWR network targets and coordinating CAP and GCI.
 -- 
+-- 
+-- Features:
+-- 
+--    * Setup quickly an A2A defense system for a coalition.
+--    * Setup (CAP) Control Air Patrols at defined zones to enhance your A2A defenses.
+--    * Setup (GCI) Ground Control Intercept at defined airbases to enhance your A2A defenses.
+--    * Define and use an EWR (Early Warning Radar) network.
+--    * Define squadrons at airbases.
+--    * Enable airbases for A2A defenses.
+--    * Add different plane types to different squadrons.
+--    * Add multiple squadrons to different airbases.
+--    * Define different ranges to engage upon intruders.
+--    * Establish an automatic in air refuel process for CAP using refuel tankers.
+--    * Setup default settings for all squadrons and A2A defenses.
+--    * Setup specific settings for specific squadrons.
+--    * Quickly setup an A2A defense system using @{#AI_A2A_GCICAP}.
+--    * Setup a more advanced defense system using @{#AI_A2A_DISPATCHER}.
+-- 
+-- 
 -- # QUICK START GUIDE
 -- 
 -- There are basically two classes available to model an A2A defense system.

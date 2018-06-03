@@ -1,31 +1,11 @@
---- **AI** -- (R2.2) - Build large airborne formations of aircraft.
+--- **AI** -- Build large airborne formations of aircraft.
 -- 
--- ===
+-- **Features:**
+--
+--   * Build in-air formations consisting of more than 40 aircraft as one group.
+--   * Build different formation types.
+--   * Assign a group leader that will guide the large formation path.
 -- 
--- AI_FORMATION makes AI @{Wrapper.Group}s fly in formation of various compositions.
--- The AI_FORMATION class models formations in a different manner than the internal DCS formation logic!!!
--- The purpose of the class is to:
--- 
---   * Make formation building a process that can be managed while in flight, rather than a task.
---   * Human players can guide formations, consisting of larget planes.
---   * Build large formations (like a large bomber field).
---   * Form formations that DCS does not support off the shelve.
--- 
--- A few remarks:
--- 
---   * Depending on the type of plane, the change in direction by the leader may result in the formation getting disentangled while in flight and needs to be rebuild.
---   * Formations are vulnerable to collissions, but is depending on the type of plane, the distance between the planes and the speed and angle executed by the leader.
---   * Formations may take a while to build up.
--- 
--- As a result, the AI_FORMATION is not perfect, but is very useful to:
--- 
---   * Model large formations when flying straight line.
---   * Make humans guide a large formation, when the planes are wide from each other.
--- 
--- There are the following types of classes defined:
--- 
---   * @{#AI_FORMATION}: Create a formation from several @{GROUP}s.
---   
 -- ===
 -- 
 -- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/FOR%20-%20Formation)

@@ -1,5 +1,17 @@
---- **AI** -- (R2.4) - Models the intelligent transportation of infantry and other cargo using APCs.
+--- **AI** -- Models the intelligent transportation of infantry and other cargo using APCs.
 --
+-- **Features:**
+-- 
+--   * Quickly transport cargo to various deploy zones using ground vehicles (APCs, trucks ...).
+--   * Various @{Cargo.Cargo#CARGO} types can be transported. These are infantry groups and crates.
+--   * Define a list of deploy zones of various types to transport the cargo to.
+--   * The vehicles follow the roads to ensure the fastest possible cargo transportation over the ground.
+--   * Multiple vehicles can transport multiple cargo as one vehicle group.
+--   * Multiple vehicle groups can be enabled as one collaborating transportation process.
+--   * Infantry loaded as cargo, will unboard in case enemies are nearby and will help defending the vehicles.
+--   * Different ranges can be setup for enemy defenses.
+--   * Different options can be setup to tweak the cargo transporation behaviour.
+--  
 -- ===
 -- 
 -- ### Author: **FlightControl**
