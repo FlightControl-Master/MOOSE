@@ -254,7 +254,7 @@ function AI_CARGO_HELICOPTER:onafterQueue( Helicopter, From, Event, To, Coordina
     
     local Distance = Coordinate:DistanceFromPointVec2( Helicopter:GetCoordinate() )
     
-    if Distance > 500 then
+    if Distance > 2000 then
       self:__Queue( -10, Coordinate )
     else
     
@@ -348,7 +348,7 @@ function AI_CARGO_HELICOPTER:onafterOrbit( Helicopter, From, Event, To, Coordina
       Route[#Route+1] = WaypointTo
       
       local Tasks = {}
-      Tasks[#Tasks+1] = Helicopter:TaskOrbitCircle( math.random( 30, 80 ), 0, CoordinateTo:GetRandomCoordinateInRadius( 800, 500 ) )
+      Tasks[#Tasks+1] = Helicopter:TaskOrbitCircle( math.random( 30, 80 ), 150, CoordinateTo:GetRandomCoordinateInRadius( 800, 500 ) )
       Route[#Route].task = Helicopter:TaskCombo( Tasks )
   
       Route[#Route+1] = WaypointTo
@@ -641,7 +641,7 @@ function AI_CARGO_HELICOPTER:onafterDeploy( Helicopter, From, Event, To, Coordin
     local Tasks = {}
     
     Tasks[#Tasks+1] = Helicopter:TaskFunction( "AI_CARGO_HELICOPTER._Deploy", self, Coordinate )
-    Tasks[#Tasks+1] = Helicopter:TaskOrbitCircle( math.random( 30, 100 ), 0, CoordinateTo:GetRandomCoordinateInRadius( 800, 500 ) )
+    Tasks[#Tasks+1] = Helicopter:TaskOrbitCircle( math.random( 30, 100 ), 150, CoordinateTo:GetRandomCoordinateInRadius( 800, 500 ) )
     
     --Tasks[#Tasks+1] = Helicopter:TaskLandAtVec2( CoordinateTo:GetVec2() )
     Route[#Route].task = Helicopter:TaskCombo( Tasks )
