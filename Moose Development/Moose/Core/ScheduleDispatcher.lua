@@ -22,7 +22,7 @@
 -- 
 -- The SCHEDULEDISPATCHER allows multiple scheduled functions to be planned and executed for one SCHEDULER object.
 -- The SCHEDULER object therefore keeps a table of "CallID's", which are returned after each planning of a new scheduled function by the SCHEDULEDISPATCHER.
--- The SCHEDULER object plans new scheduled functions through the @{Scheduler#SCHEDULER.Schedule}() method. 
+-- The SCHEDULER object plans new scheduled functions through the @{Core.Scheduler#SCHEDULER.Schedule}() method. 
 -- The Schedule() method returns the CallID that is the reference ID for each planned schedule.
 -- 
 -- ===

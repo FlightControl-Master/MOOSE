@@ -801,7 +801,7 @@ do -- FSM_CONTROLLABLE
   -- @field Wrapper.Controllable#CONTROLLABLE Controllable
   -- @extends Core.Fsm#FSM
   
-  --- FSM_CONTROLLABLE class models Finite State Machines for @{Wrapper.Controllable}s, which are @{Wrapper.Group}s, @{Wrapper.Unit}s, @{Client}s.
+  --- Models Finite State Machines for @{Wrapper.Controllable}s, which are @{Wrapper.Group}s, @{Wrapper.Unit}s, @{Client}s.
   -- 
   -- ===
   -- 
@@ -1177,7 +1177,7 @@ do -- FSM_TASK
   -- @field Tasking.Task#TASK Task
   -- @extends #FSM
    
-  --- FSM_TASK class models Finite State Machines for @{Task}s.
+  --- Models Finite State Machines for @{Tasking.Task}s.
   -- 
   -- ===
   -- 

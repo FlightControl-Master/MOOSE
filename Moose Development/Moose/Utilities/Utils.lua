@@ -10,6 +10,7 @@
 --   * FlightControl : Rework to OO framework 
 -- 
 -- @module Utils
+-- @image MOOSE.JPG
 
 
 --- @type SMOKECOLOR

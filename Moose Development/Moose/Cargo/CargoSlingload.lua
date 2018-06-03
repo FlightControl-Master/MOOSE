@@ -23,9 +23,7 @@ do -- CARGO_SLINGLOAD
   -- @type CARGO_SLINGLOAD
   -- @extends Cargo.Cargo#CARGO_REPRESENTABLE
   
-  --- # CARGO\_CRATE class, extends @{Cargo.Cargo#CARGO_REPRESENTABLE}
-  -- 
-  -- The CARGO\_CRATE class defines a cargo that is represented by a UNIT object within the simulator, and can be transported by a carrier.
+  --- Defines a cargo that is represented by a UNIT object within the simulator, and can be transported by a carrier.
   -- 
   -- ===
   -- 

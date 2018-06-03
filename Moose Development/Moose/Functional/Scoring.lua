@@ -52,7 +52,7 @@
 -- Use the radio menu F10 to consult the scores while running the mission. 
 -- Scores can be reported for your user, or an overall score can be reported of all players currently active in the mission.
 -- 
--- # 1) @{Scoring#SCORING} class, extends @{Core.Base#BASE}
+-- # 1) @{Functional.Scoring#SCORING} class, extends @{Core.Base#BASE}
 -- 
 -- ## 1.1) Set the destroy score or penalty scale
 -- 

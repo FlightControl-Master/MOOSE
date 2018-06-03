@@ -122,7 +122,7 @@ local _ClassID = 0
 -- ### 1.3.2 Event Handling of DCS Events
 -- 
 -- Once the class is subscribed to the event, an **Event Handling** method on the object or class needs to be written that will be called
--- when the DCS event occurs. The Event Handling method receives an @{Event#EVENTDATA} structure, which contains a lot of information
+-- when the DCS event occurs. The Event Handling method receives an @{Core.Event#EVENTDATA} structure, which contains a lot of information
 -- about the event that occurred.
 -- 
 -- Find below an example of the prototype how to write an event handling function for two units: 
@@ -604,8 +604,8 @@ end
 
 --- Creation of a Birth Event.
 -- @param #BASE self
--- @param Dcs.DCSTypes#Time EventTime The time stamp of the event.
--- @param Dcs.DCSWrapper.Object#Object Initiator The initiating object of the event.
+-- @param DCS#Time EventTime The time stamp of the event.
+-- @param DCS#Object Initiator The initiating object of the event.
 -- @param #string IniUnitName The initiating unit name.
 -- @param place
 -- @param subplace
@@ -626,8 +626,8 @@ end
 
 --- Creation of a Crash Event.
 -- @param #BASE self
--- @param Dcs.DCSTypes#Time EventTime The time stamp of the event.
--- @param Dcs.DCSWrapper.Object#Object Initiator The initiating object of the event.
+-- @param DCS#Time EventTime The time stamp of the event.
+-- @param DCS#Object Initiator The initiating object of the event.
 function BASE:CreateEventCrash( EventTime, Initiator )
 	self:F( { EventTime, Initiator } )
 
@@ -642,8 +642,8 @@ end
 
 --- Creation of a Dead Event.
 -- @param #BASE self
--- @param Dcs.DCSTypes#Time EventTime The time stamp of the event.
--- @param Dcs.DCSWrapper.Object#Object Initiator The initiating object of the event.
+-- @param DCS#Time EventTime The time stamp of the event.
+-- @param DCS#Object Initiator The initiating object of the event.
 function BASE:CreateEventDead( EventTime, Initiator )
   self:F( { EventTime, Initiator } )
 
@@ -658,8 +658,8 @@ end
 
 --- Creation of a Takeoff Event.
 -- @param #BASE self
--- @param Dcs.DCSTypes#Time EventTime The time stamp of the event.
--- @param Dcs.DCSWrapper.Object#Object Initiator The initiating object of the event.
+-- @param DCS#Time EventTime The time stamp of the event.
+-- @param DCS#Object Initiator The initiating object of the event.
 function BASE:CreateEventTakeoff( EventTime, Initiator )
   self:F( { EventTime, Initiator } )
 
@@ -672,10 +672,10 @@ function BASE:CreateEventTakeoff( EventTime, Initiator )
   world.onEvent( Event )
 end
 
--- TODO: Complete Dcs.DCSTypes#Event structure.                       
+-- TODO: Complete DCS#Event structure.                       
 --- The main event handling function... This function captures all events generated for the class.
 -- @param #BASE self
--- @param Dcs.DCSTypes#Event event
+-- @param DCS#Event event
 function BASE:onEvent(event)
   --self:F( { BaseEventCodes[event.id], event } )
 

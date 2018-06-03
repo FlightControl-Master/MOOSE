@@ -15,9 +15,10 @@
 --- @type STATIC
 -- @extends Wrapper.Positionable#POSITIONABLE
 
---- Statics are **Static Units** defined within the Mission Editor.
+--- Wrapper class to handle Static objects.
+-- 
 -- Note that Statics are almost the same as Units, but they don't have a controller.
--- The @{Static#STATIC} class is a wrapper class to handle the DCS Static objects:
+-- The @{Wrapper.Static#STATIC} class is a wrapper class to handle the DCS Static objects:
 -- 
 --  * Wraps the DCS Static objects.
 --  * Support all DCS Static APIs.
@@ -56,7 +57,7 @@ end
 
 --- Finds a STATIC from the _DATABASE using a DCSStatic object.
 -- @param #STATIC self
--- @param Dcs.DCSWrapper.Static#Static DCSStatic An existing DCS Static object reference.
+-- @param DCS#StaticObject DCSStatic An existing DCS Static object reference.
 -- @return #STATIC self
 function STATIC:Find( DCSStatic )
 
@@ -126,7 +127,7 @@ function STATIC:GetThreatLevel()
 end
 
 --- Respawn the @{Wrapper.Unit} using a (tweaked) template of the parent Group.
--- @param #UNIT self
+-- @param #STATIC self
 -- @param Core.Point#COORDINATE Coordinate The coordinate where to spawn the new Static.
 -- @param #number Heading The heading of the unit respawn.
 function STATIC:SpawnAt( Coordinate, Heading )
@@ -139,7 +140,7 @@ end
 
 --- Respawn the @{Wrapper.Unit} at the same location with the same properties.
 -- This is useful to respawn a cargo after it has been destroyed.
--- @param #UNIT self
+-- @param #STATIC self
 function STATIC:ReSpawn()
 
   local SpawnStatic = SPAWNSTATIC:NewFromStatic( self.StaticName )
@@ -149,7 +150,7 @@ end
 
 
 --- Respawn the @{Wrapper.Unit} at a defined Coordinate with an optional heading.
--- @param #UNIT self
+-- @param #STATIC self
 -- @param Core.Point#COORDINATE Coordinate The coordinate where to spawn the new Static.
 -- @param #number Heading The heading of the unit respawn.
 function STATIC:ReSpawnAt( Coordinate, Heading )

@@ -37,7 +37,7 @@ do -- DETECTION_BASE
 
   --- @type DETECTION_BASE
   -- @field Core.Set#SET_GROUP DetectionSetGroup The @{Set} of GROUPs in the Forward Air Controller role.
-  -- @field Dcs.DCSTypes#Distance DetectionRange The range till which targets are accepted to be detected.
+  -- @field DCS#Distance DetectionRange The range till which targets are accepted to be detected.
   -- @field #DETECTION_BASE.DetectedObjects DetectedObjects The list of detected objects.
   -- @field #table DetectedObjectsIdentified Map of the DetectedObjects identified.
   -- @field #number DetectionRun
@@ -100,11 +100,11 @@ do -- DETECTION_BASE
   -- 
   -- Various methods exist how to retrieve the grouped items from a DETECTION_BASE derived class:
   -- 
-  --   * The method @{Detection#DETECTION_BASE.GetDetectedItems}() retrieves the DetectedItems[] list.
-  --   * A DetectedItem from the DetectedItems[] list can be retrieved using the method @{Detection#DETECTION_BASE.GetDetectedItem}( DetectedItemIndex ).
+  --   * The method @{Functional.Detection#DETECTION_BASE.GetDetectedItems}() retrieves the DetectedItems[] list.
+  --   * A DetectedItem from the DetectedItems[] list can be retrieved using the method @{Functional.Detection#DETECTION_BASE.GetDetectedItem}( DetectedItemIndex ).
   --     Note that this method returns a DetectedItem element from the list, that contains a Set variable and further information
   --     about the DetectedItem that is set by the DETECTION_BASE derived classes, used to group the DetectedItem.
-  --   * A DetectedSet from the DetectedItems[] list can be retrieved using the method @{Detection#DETECTION_BASE.GetDetectedSet}( DetectedItemIndex ).
+  --   * A DetectedSet from the DetectedItems[] list can be retrieved using the method @{Functional.Detection#DETECTION_BASE.GetDetectedSet}( DetectedItemIndex ).
   --     This method retrieves the Set from a DetectedItem element from the DetectedItem list (DetectedItems[ DetectedItemIndex ].Set ).
   -- 
   -- ## **Visual filters** to fine-tune the probability of the detected objects
@@ -141,7 +141,7 @@ do -- DETECTION_BASE
   -- 
   -- Note that based on this probability factor, not only the detection but also the **type** of the unit will be applied!
   -- 
-  -- Use the method @{Detection#DETECTION_BASE.SetDistanceProbability}() to set the probability factor upon a 10 km distance.
+  -- Use the method @{Functional.Detection#DETECTION_BASE.SetDistanceProbability}() to set the probability factor upon a 10 km distance.
   -- 
   -- ### Alpha Angle visual detection probability
   -- 
@@ -153,7 +153,7 @@ do -- DETECTION_BASE
   -- For example, if a alpha angle probability factor of 0.7 is given, the extrapolated probabilities of the different angles would look like:
   -- 0°: 70%, 10°: 75,21%, 20°: 80,26%, 30°: 85%, 40°: 89,28%, 50°: 92,98%, 60°: 95,98%, 70°: 98,19%, 80°: 99,54%, 90°: 100%
   -- 
-  -- Use the method @{Detection#DETECTION_BASE.SetAlphaAngleProbability}() to set the probability factor if 0°.
+  -- Use the method @{Functional.Detection#DETECTION_BASE.SetAlphaAngleProbability}() to set the probability factor if 0°.
   -- 
   -- ### Cloudy Zones detection probability
   -- 
@@ -161,7 +161,7 @@ do -- DETECTION_BASE
   -- The Cloudy Zones work with the ZONE_BASE derived classes. The mission designer can define within the mission
   -- zones that reflect cloudy areas where detected units may not be so easily visually detected.
   -- 
-  -- Use the method @{Detection#DETECTION_BASE.SetZoneProbability}() to set for a defined number of zones, the probability factors.
+  -- Use the method @{Functional.Detection#DETECTION_BASE.SetZoneProbability}() to set for a defined number of zones, the probability factors.
   -- 
   -- Note however, that the more zones are defined to be "cloudy" within a detection, the more performance it will take
   -- from the DETECTION_BASE to calculate the presence of the detected unit within each zone.
@@ -178,7 +178,7 @@ do -- DETECTION_BASE
   -- ### Detection acceptance of within range limit
   -- 
   -- A range can be set that will limit a successful detection for a unit.
-  -- Use the method @{Detection#DETECTION_BASE.SetAcceptRange}() to apply a range in meters till where detected units will be accepted.
+  -- Use the method @{Functional.Detection#DETECTION_BASE.SetAcceptRange}() to apply a range in meters till where detected units will be accepted.
   -- 
   --      local SetGroup = SET_GROUP:New():FilterPrefixes( "FAC" ):FilterStart() -- Build a SetGroup of Forward Air Controllers.
   -- 
@@ -195,7 +195,7 @@ do -- DETECTION_BASE
   -- ### Detection acceptance if within zone(s).
   -- 
   -- Specific ZONE_BASE object(s) can be given as a parameter, which will only accept a detection if the unit is within the specified ZONE_BASE object(s).
-  -- Use the method @{Detection#DETECTION_BASE.SetAcceptZones}() will accept detected units if they are within the specified zones.
+  -- Use the method @{Functional.Detection#DETECTION_BASE.SetAcceptZones}() will accept detected units if they are within the specified zones.
   -- 
   --      local SetGroup = SET_GROUP:New():FilterPrefixes( "FAC" ):FilterStart() -- Build a SetGroup of Forward Air Controllers.
   -- 
@@ -215,7 +215,7 @@ do -- DETECTION_BASE
   -- ### Detection rejectance if within zone(s).
   -- 
   -- Specific ZONE_BASE object(s) can be given as a parameter, which will reject detection if the unit is within the specified ZONE_BASE object(s).
-  -- Use the method @{Detection#DETECTION_BASE.SetRejectZones}() will reject detected units if they are within the specified zones.
+  -- Use the method @{Functional.Detection#DETECTION_BASE.SetRejectZones}() will reject detected units if they are within the specified zones.
   -- An example of how to use the method is shown below.
   -- 
   --      local SetGroup = SET_GROUP:New():FilterPrefixes( "FAC" ):FilterStart() -- Build a SetGroup of Forward Air Controllers.
@@ -235,7 +235,7 @@ do -- DETECTION_BASE
   --      
   -- ## Detection of Friendlies Nearby
   -- 
-  -- Use the method @{Detection#DETECTION_BASE.SetFriendliesRange}() to set the range what will indicate when friendlies are nearby
+  -- Use the method @{Functional.Detection#DETECTION_BASE.SetFriendliesRange}() to set the range what will indicate when friendlies are nearby
   -- a DetectedItem. The default range is 6000 meters. For air detections, it is advisory to use about 30.000 meters.
   -- 
   -- ## DETECTION_BASE is a Finite State Machine
@@ -553,7 +553,7 @@ do -- DETECTION_BASE
         --self:F( DetectedTargets )
         
         for DetectionObjectID, Detection in pairs( DetectedTargets ) do
-          local DetectedObject = Detection.object -- Dcs.DCSWrapper.Object#Object
+          local DetectedObject = Detection.object -- DCS#Object
           
           if DetectedObject and DetectedObject:isExist() and DetectedObject.id_ < 50000000 then -- and ( DetectedObject:getCategory() == Object.Category.UNIT or DetectedObject:getCategory() == Object.Category.STATIC ) then
     
@@ -891,7 +891,7 @@ do -- DETECTION_BASE
     --     DetectionObject:FilterCategories( { Unit.Category.AIRPLANE, Unit.Category.HELICOPTER } )
     -- 
     -- @param #DETECTION_BASE self
-    -- @param #list<Dcs.DCSUnit#Unit> FilterCategories The Categories entries
+    -- @param #list<DCS#Unit> FilterCategories The Categories entries
     -- @return #DETECTION_BASE self
     function DETECTION_BASE:FilterCategories( FilterCategories )
       self:F2()
@@ -1165,7 +1165,7 @@ do -- DETECTION_BASE
     --- Returns if there are friendlies nearby the FAC units ...
     -- @param #DETECTION_BASE self
     -- @param DetectedItem
-    -- @param Dcs.DCSUnit#Unit.Category Category The category of the unit.
+    -- @param DCS#Unit.Category Category The category of the unit.
     -- @return #boolean true if there are friendlies nearby 
     function DETECTION_BASE:IsFriendliesNearBy( DetectedItem, Category )
       --self:F( { "FriendliesNearBy Test", DetectedItem.FriendliesNearBy } )
@@ -1175,7 +1175,7 @@ do -- DETECTION_BASE
     --- Returns friendly units nearby the FAC units ...
     -- @param #DETECTION_BASE self
     -- @param DetectedItem
-    -- @param Dcs.DCSUnit#Unit.Category Category The category of the unit.
+    -- @param DCS#Unit.Category Category The category of the unit.
     -- @return #map<#string,Wrapper.Unit#UNIT> The map of Friendly UNITs. 
     function DETECTION_BASE:GetFriendliesNearBy( DetectedItem, Category )
       
@@ -1248,7 +1248,7 @@ do -- DETECTION_BASE
           
          }
          
-        --- @param Dcs.DCSWrapper.Unit#Unit FoundDCSUnit
+        --- @param DCS#Unit FoundDCSUnit
         -- @param Wrapper.Group#GROUP ReportGroup
         -- @param Core.Set#SET_GROUP ReportSetGroup
         local FindNearByFriendlies = function( FoundDCSUnit, ReportGroupData )
@@ -1802,14 +1802,13 @@ end
 
 do -- DETECTION_UNITS
 
-  --- # DETECTION_UNITS class, extends @{Detection#DETECTION_BASE}
+  --- Will detect units within the battle zone.
   -- 
-  -- The DETECTION_UNITS class will detect units within the battle zone.
   -- It will build a DetectedItems list filled with DetectedItems. Each DetectedItem will contain a field Set, which contains a @{Core.Set#SET_UNIT} containing ONE @{UNIT} object reference.
   -- Beware that when the amount of units detected is large, the DetectedItems list will be large also. 
   -- 
   -- @type DETECTION_UNITS
-  -- @field Dcs.DCSTypes#Distance DetectionRange The range till which targets are detected.
+  -- @field DCS#Distance DetectionRange The range till which targets are detected.
   -- @extends #DETECTION_BASE
   DETECTION_UNITS = {
     ClassName = "DETECTION_UNITS",
@@ -2052,9 +2051,7 @@ end
 
 do -- DETECTION_TYPES
 
-  --- # 3) DETECTION_TYPES class, extends @{Detection#DETECTION_BASE}
-  -- 
-  -- The DETECTION_TYPES class will detect units within the battle zone.
+  --- Will detect units within the battle zone.
   -- It will build a DetectedItems[] list filled with DetectedItems, grouped by the type of units detected. 
   -- Each DetectedItem will contain a field Set, which contains a @{Core.Set#SET_UNIT} containing ONE @{UNIT} object reference.
   -- Beware that when the amount of different types detected is large, the DetectedItems[] list will be large also. 
@@ -2261,40 +2258,38 @@ end
 
 do -- DETECTION_AREAS
 
-  --- # 4) DETECTION_AREAS class, extends @{Detection#DETECTION_BASE}
-  -- 
-  -- The DETECTION_AREAS class will detect units within the battle zone for a list of @{Wrapper.Group}s detecting targets following (a) detection method(s), 
-  -- and will build a list (table) of @{Core.Set#SET_UNIT}s containing the @{Unit#UNIT}s detected.
+  --- Detect units within the battle zone for a list of @{Wrapper.Group}s detecting targets following (a) detection method(s), 
+  -- and will build a list (table) of @{Core.Set#SET_UNIT}s containing the @{Wrapper.Unit#UNIT}s detected.
   -- The class is group the detected units within zones given a DetectedZoneRange parameter.
   -- A set with multiple detected zones will be created as there are groups of units detected.
   -- 
   -- ## 4.1) Retrieve the Detected Unit Sets and Detected Zones
   -- 
-  -- The methods to manage the DetectedItems[].Set(s) are implemented in @{Detection#DECTECTION_BASE} and 
-  -- the methods to manage the DetectedItems[].Zone(s) is implemented in @{Detection#DETECTION_AREAS}.
+  -- The methods to manage the DetectedItems[].Set(s) are implemented in @{Functional.Detection#DECTECTION_BASE} and 
+  -- the methods to manage the DetectedItems[].Zone(s) is implemented in @{Functional.Detection#DETECTION_AREAS}.
   -- 
-  -- Retrieve the DetectedItems[].Set with the method @{Detection#DETECTION_BASE.GetDetectedSet}(). A @{Core.Set#SET_UNIT} object will be returned.
+  -- Retrieve the DetectedItems[].Set with the method @{Functional.Detection#DETECTION_BASE.GetDetectedSet}(). A @{Core.Set#SET_UNIT} object will be returned.
   -- 
-  -- Retrieve the formed @{Zone@ZONE_UNIT}s as a result of the grouping the detected units within the DetectionZoneRange, use the method @{Detection#DETECTION_BASE.GetDetectionZones}().
-  -- To understand the amount of zones created, use the method @{Detection#DETECTION_BASE.GetDetectionZoneCount}(). 
-  -- If you want to obtain a specific zone from the DetectedZones, use the method @{Detection#DETECTION_BASE.GetDetectionZone}() with a given index.
+  -- Retrieve the formed @{Zone@ZONE_UNIT}s as a result of the grouping the detected units within the DetectionZoneRange, use the method @{Functional.Detection#DETECTION_BASE.GetDetectionZones}().
+  -- To understand the amount of zones created, use the method @{Functional.Detection#DETECTION_BASE.GetDetectionZoneCount}(). 
+  -- If you want to obtain a specific zone from the DetectedZones, use the method @{Functional.Detection#DETECTION_BASE.GetDetectionZone}() with a given index.
   -- 
   -- ## 4.4) Flare or Smoke detected units
   -- 
-  -- Use the methods @{Detection#DETECTION_AREAS.FlareDetectedUnits}() or @{Detection#DETECTION_AREAS.SmokeDetectedUnits}() to flare or smoke the detected units when a new detection has taken place.
+  -- Use the methods @{Functional.Detection#DETECTION_AREAS.FlareDetectedUnits}() or @{Functional.Detection#DETECTION_AREAS.SmokeDetectedUnits}() to flare or smoke the detected units when a new detection has taken place.
   -- 
   -- ## 4.5) Flare or Smoke or Bound detected zones
   -- 
   -- Use the methods:
   -- 
-  --   * @{Detection#DETECTION_AREAS.FlareDetectedZones}() to flare in a color 
-  --   * @{Detection#DETECTION_AREAS.SmokeDetectedZones}() to smoke in a color
-  --   * @{Detection#DETECTION_AREAS.SmokeDetectedZones}() to bound with a tire with a white flag
+  --   * @{Functional.Detection#DETECTION_AREAS.FlareDetectedZones}() to flare in a color 
+  --   * @{Functional.Detection#DETECTION_AREAS.SmokeDetectedZones}() to smoke in a color
+  --   * @{Functional.Detection#DETECTION_AREAS.SmokeDetectedZones}() to bound with a tire with a white flag
   --   
   -- the detected zones when a new detection has taken place.
   -- 
   -- @type DETECTION_AREAS
-  -- @field Dcs.DCSTypes#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
+  -- @field DCS#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
   -- @field #DETECTION_BASE.DetectedItems DetectedItems A list of areas containing the set of @{Wrapper.Unit}s, @{Zone}s, the center @{Wrapper.Unit} within the zone, and ID of each area that was detected within a DetectionZoneRange.
   -- @extends #DETECTION_BASE
   DETECTION_AREAS = {
@@ -2306,7 +2301,7 @@ do -- DETECTION_AREAS
   --- DETECTION_AREAS constructor.
   -- @param #DETECTION_AREAS self
   -- @param Core.Set#SET_GROUP DetectionSetGroup The @{Set} of GROUPs in the Forward Air Controller role.
-  -- @param Dcs.DCSTypes#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
+  -- @param DCS#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
   -- @return #DETECTION_AREAS
   function DETECTION_AREAS:New( DetectionSetGroup, DetectionZoneRange )
   

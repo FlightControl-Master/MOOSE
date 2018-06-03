@@ -198,7 +198,7 @@ end
 
 --- Destroys a missile from the simulator, but checks first if it is still existing!
 -- @param #CLEANUP_AIRBASE self
--- @param Dcs.DCSTypes#Weapon MissileObject
+-- @param DCS#Weapon MissileObject
 function CLEANUP_AIRBASE.__:DestroyMissile( MissileObject )
 	self:F( { MissileObject } )
   
@@ -288,9 +288,9 @@ function CLEANUP_AIRBASE.__:OnEventHit( Event )
 	end
 end
 
---- Add the @{DCSWrapper.Unit#Unit} to the CleanUpList for CleanUp.
+--- Add the @{DCS#Unit} to the CleanUpList for CleanUp.
 -- @param #CLEANUP_AIRBASE self
--- @param Wrapper.Unit#UNIT CleanUpUnit
+-- @param DCS#UNIT CleanUpUnit
 -- @oaram #string CleanUpUnitName
 function CLEANUP_AIRBASE.__:AddForCleanUp( CleanUpUnit, CleanUpUnitName )
 	self:F( { CleanUpUnit, CleanUpUnitName } )

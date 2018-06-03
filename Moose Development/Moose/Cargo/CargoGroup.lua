@@ -28,9 +28,7 @@ do -- CARGO_GROUP
   -- @field Core.Set#SET_CARGO CargoSet The collection of derived CARGO objects.
   -- @field #string GroupName The name of the CargoGroup.
   
-  --- # CARGO\_GROUP class, extends @{Cargo.Cargo#CARGO_REPORTABLE}
-  --
-  -- The CARGO\_GROUP class defines a cargo that is represented by a @{Wrapper.Group} object within the simulator.
+  --- Defines a cargo that is represented by a @{Wrapper.Group} object within the simulator.
   -- The cargo can be Loaded, UnLoaded, Boarded, UnBoarded to and from Carriers.
   -- 
   -- The above cargo classes are used by the AI\_CARGO\_ classes to allow AI groups to transport cargo:

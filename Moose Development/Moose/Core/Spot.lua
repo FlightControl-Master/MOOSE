@@ -46,7 +46,7 @@ do
   -- @extends Core.Fsm#FSM
 
 
-  --- SPOT implements the DCS Spot class functionality, but adds additional luxury to be able to:
+  --- Implements the target spotting or marking functionality, but adds additional luxury to be able to:
   -- 
   --   * Mark targets for a defined duration.
   --   * wiggle the spot at the target.

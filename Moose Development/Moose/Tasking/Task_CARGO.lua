@@ -24,6 +24,7 @@
 -- ===
 --   
 -- @module Tasking.Task_Cargo
+-- @image MOOSE.JPG
 
 do -- TASK_CARGO
 
@@ -31,7 +32,7 @@ do -- TASK_CARGO
   -- @extends Tasking.Task#TASK
 
   ---
-  -- # TASK_CARGO class, extends @{Task#TASK}
+  -- # TASK_CARGO class, extends @{Tasking.Task#TASK}
   -- 
   -- ## A flexible tasking system
   -- 
@@ -118,7 +119,7 @@ do -- TASK_CARGO
   -- ## Handle TASK_CARGO Events ...
   -- 
   -- The TASK_CARGO classes define @{Cargo} transport tasks, 
-  -- based on the tasking capabilities defined in @{Task#TASK}.
+  -- based on the tasking capabilities defined in @{Tasking.Task#TASK}.
   -- 
   -- ### Specific TASK_CARGO Events
   -- 
@@ -129,7 +130,7 @@ do -- TASK_CARGO
   -- 
   -- ### Standard TASK_CARGO Events
   -- 
-  -- The TASK_CARGO is implemented using a @{Statemachine#FSM_TASK}, and has the following standard statuses:
+  -- The TASK_CARGO is implemented using a @{Core.Fsm#FSM_TASK}, and has the following standard statuses:
   -- 
   --   * **None**: Start of the process.
   --   * **Planned**: The cargo task is planned.

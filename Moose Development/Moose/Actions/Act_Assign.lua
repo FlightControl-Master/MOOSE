@@ -2,7 +2,7 @@
 -- 
 -- ===
 -- 
--- # @{#ACT_ASSIGN} FSM template class, extends @{Fsm#FSM_PROCESS}
+-- # @{#ACT_ASSIGN} FSM template class, extends @{Core.Fsm#FSM_PROCESS}
 -- 
 -- ## ACT_ASSIGN state machine:
 -- 
@@ -54,7 +54,7 @@
 -- 
 -- ===
 -- 
--- # 1) @{#ACT_ASSIGN_ACCEPT} class, extends @{Fsm.Assign#ACT_ASSIGN}
+-- # 1) @{#ACT_ASSIGN_ACCEPT} class, extends @{Core.Fsm.Assign#ACT_ASSIGN}
 -- 
 -- The ACT_ASSIGN_ACCEPT class accepts by default a task for a player. No player intervention is allowed to reject the task.
 -- 
@@ -64,7 +64,7 @@
 -- 
 -- ===
 -- 
--- # 2) @{#ACT_ASSIGN_MENU_ACCEPT} class, extends @{Fsm.Assign#ACT_ASSIGN}
+-- # 2) @{#ACT_ASSIGN_MENU_ACCEPT} class, extends @{Core.Fsm.Assign#ACT_ASSIGN}
 -- 
 -- The ACT_ASSIGN_MENU_ACCEPT class accepts a task when the player accepts the task through an added menu option.
 -- This assignment type is useful to conditionally allow the player to choose whether or not he would accept the task.
@@ -77,7 +77,8 @@
 -- 
 -- ===
 -- 
--- @module Assign
+-- @module Actions.Assign
+-- @image MOOSE.JPG
 
 
 do -- ACT_ASSIGN

@@ -381,9 +381,9 @@ function SET_BASE:FilterStop()
   return self
 end
 
---- Iterate the SET_BASE while identifying the nearest object from a @{Point#POINT_VEC2}.
+--- Iterate the SET_BASE while identifying the nearest object from a @{Core.Point#POINT_VEC2}.
 -- @param #SET_BASE self
--- @param Core.Point#POINT_VEC2 PointVec2 A @{Point#POINT_VEC2} object from where to evaluate the closest object in the set.
+-- @param Core.Point#POINT_VEC2 PointVec2 A @{Core.Point#POINT_VEC2} object from where to evaluate the closest object in the set.
 -- @return Core.Base#BASE The closest object.
 function SET_BASE:FindNearestObjectFromPointVec2( PointVec2 )
   self:F2( PointVec2 )
@@ -852,9 +852,9 @@ function SET_GROUP:FindGroup( GroupName )
   return GroupFound
 end
 
---- Iterate the SET_GROUP while identifying the nearest object from a @{Point#POINT_VEC2}.
+--- Iterate the SET_GROUP while identifying the nearest object from a @{Core.Point#POINT_VEC2}.
 -- @param #SET_GROUP self
--- @param Core.Point#POINT_VEC2 PointVec2 A @{Point#POINT_VEC2} object from where to evaluate the closest object in the set.
+-- @param Core.Point#POINT_VEC2 PointVec2 A @{Core.Point#POINT_VEC2} object from where to evaluate the closest object in the set.
 -- @return Wrapper.Group#GROUP The closest group.
 function SET_GROUP:FindNearestGroupFromPointVec2( PointVec2 )
   self:F2( PointVec2 )
@@ -2186,7 +2186,7 @@ do -- SET_UNIT
   
   --- Returns if the @{Set} has targets having a radar (of a given type).
   -- @param #SET_UNIT self
-  -- @param Dcs.DCSWrapper.Unit#Unit.RadarType RadarType
+  -- @param DCS#Unit.RadarType RadarType
   -- @return #number The amount of radars in the Set with the given type
   function SET_UNIT:HasRadar( RadarType )
     self:F2( RadarType )
@@ -4125,9 +4125,9 @@ function SET_AIRBASE:ForEachAirbase( IteratorFunction, ... )
   return self
 end
 
---- Iterate the SET_AIRBASE while identifying the nearest @{Wrapper.Airbase#AIRBASE} from a @{Point#POINT_VEC2}.
+--- Iterate the SET_AIRBASE while identifying the nearest @{Wrapper.Airbase#AIRBASE} from a @{Core.Point#POINT_VEC2}.
 -- @param #SET_AIRBASE self
--- @param Core.Point#POINT_VEC2 PointVec2 A @{Point#POINT_VEC2} object from where to evaluate the closest @{Wrapper.Airbase#AIRBASE}.
+-- @param Core.Point#POINT_VEC2 PointVec2 A @{Core.Point#POINT_VEC2} object from where to evaluate the closest @{Wrapper.Airbase#AIRBASE}.
 -- @return Wrapper.Airbase#AIRBASE The closest @{Wrapper.Airbase#AIRBASE}.
 function SET_AIRBASE:FindNearestAirbaseFromPointVec2( PointVec2 )
   self:F2( PointVec2 )
@@ -4440,10 +4440,10 @@ function SET_CARGO:ForEachCargo( IteratorFunction, ... ) --R2.1
   return self
 end
 
---- (R2.1) Iterate the SET_CARGO while identifying the nearest @{Cargo#CARGO} from a @{Point#POINT_VEC2}.
+--- (R2.1) Iterate the SET_CARGO while identifying the nearest @{Cargo.Cargo#CARGO} from a @{Core.Point#POINT_VEC2}.
 -- @param #SET_CARGO self
--- @param Core.Point#POINT_VEC2 PointVec2 A @{Point#POINT_VEC2} object from where to evaluate the closest @{Cargo#CARGO}.
--- @return Wrapper.Cargo#CARGO The closest @{Cargo#CARGO}.
+-- @param Core.Point#POINT_VEC2 PointVec2 A @{Core.Point#POINT_VEC2} object from where to evaluate the closest @{Cargo.Cargo#CARGO}.
+-- @return Wrapper.Cargo#CARGO The closest @{Cargo.Cargo#CARGO}.
 function SET_CARGO:FindNearestCargoFromPointVec2( PointVec2 ) --R2.1
   self:F2( PointVec2 )
   
@@ -4480,36 +4480,36 @@ function SET_CARGO:FirstCargoWithStateAndNotDeployed( State )
 end
 
 
---- Iterate the SET_CARGO while identifying the first @{Cargo#CARGO} that is UnLoaded.
+--- Iterate the SET_CARGO while identifying the first @{Cargo.Cargo#CARGO} that is UnLoaded.
 -- @param #SET_CARGO self
--- @return Cargo.Cargo#CARGO The first @{Cargo#CARGO}.
+-- @return Cargo.Cargo#CARGO The first @{Cargo.Cargo#CARGO}.
 function SET_CARGO:FirstCargoUnLoaded()
   local FirstCargo = self:FirstCargoWithState( "UnLoaded" )
   return FirstCargo
 end
 
 
---- Iterate the SET_CARGO while identifying the first @{Cargo#CARGO} that is UnLoaded and not Deployed.
+--- Iterate the SET_CARGO while identifying the first @{Cargo.Cargo#CARGO} that is UnLoaded and not Deployed.
 -- @param #SET_CARGO self
--- @return Cargo.Cargo#CARGO The first @{Cargo#CARGO}.
+-- @return Cargo.Cargo#CARGO The first @{Cargo.Cargo#CARGO}.
 function SET_CARGO:FirstCargoUnLoadedAndNotDeployed()
   local FirstCargo = self:FirstCargoWithStateAndNotDeployed( "UnLoaded" )
   return FirstCargo
 end
 
 
---- Iterate the SET_CARGO while identifying the first @{Cargo#CARGO} that is Loaded.
+--- Iterate the SET_CARGO while identifying the first @{Cargo.Cargo#CARGO} that is Loaded.
 -- @param #SET_CARGO self
--- @return Cargo.Cargo#CARGO The first @{Cargo#CARGO}.
+-- @return Cargo.Cargo#CARGO The first @{Cargo.Cargo#CARGO}.
 function SET_CARGO:FirstCargoLoaded()
   local FirstCargo = self:FirstCargoWithState( "Loaded" )
   return FirstCargo
 end
 
 
---- Iterate the SET_CARGO while identifying the first @{Cargo#CARGO} that is Deployed.
+--- Iterate the SET_CARGO while identifying the first @{Cargo.Cargo#CARGO} that is Deployed.
 -- @param #SET_CARGO self
--- @return Cargo.Cargo#CARGO The first @{Cargo#CARGO}.
+-- @return Cargo.Cargo#CARGO The first @{Cargo.Cargo#CARGO}.
 function SET_CARGO:FirstCargoDeployed()
   local FirstCargo = self:FirstCargoWithState( "Deployed" )
   return FirstCargo

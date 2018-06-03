@@ -15,26 +15,26 @@
 -- 
 -- ## MESSAGE construction
 -- 
--- Messages are created with @{Message#MESSAGE.New}. Note that when the MESSAGE object is created, no message is sent yet.
+-- Messages are created with @{#MESSAGE.New}. Note that when the MESSAGE object is created, no message is sent yet.
 -- To send messages, you need to use the To functions.
 -- 
 -- ## Send messages to an audience
 -- 
 -- Messages are sent:
 --
---   * To a @{Client} using @{Message#MESSAGE.ToClient}().
---   * To a @{Wrapper.Group} using @{Message#MESSAGE.ToGroup}()
---   * To a coalition using @{Message#MESSAGE.ToCoalition}().
---   * To the red coalition using @{Message#MESSAGE.ToRed}().
---   * To the blue coalition using @{Message#MESSAGE.ToBlue}().
---   * To all Players using @{Message#MESSAGE.ToAll}().
+--   * To a @{Client} using @{#MESSAGE.ToClient}().
+--   * To a @{Wrapper.Group} using @{#MESSAGE.ToGroup}()
+--   * To a coalition using @{#MESSAGE.ToCoalition}().
+--   * To the red coalition using @{#MESSAGE.ToRed}().
+--   * To the blue coalition using @{#MESSAGE.ToBlue}().
+--   * To all Players using @{#MESSAGE.ToAll}().
 -- 
 -- ## Send conditionally to an audience
 -- 
 -- Messages can be sent conditionally to an audience (when a condition is true):
 --   
---   * To all players using @{Message#MESSAGE.ToAllIf}().
---   * To a coalition using @{Message#MESSAGE.ToCoalitionIf}().
+--   * To all players using @{#MESSAGE.ToAllIf}().
+--   * To a coalition using @{#MESSAGE.ToCoalitionIf}().
 -- 
 -- ===
 --  

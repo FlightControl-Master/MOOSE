@@ -79,7 +79,7 @@ do -- UserSound
   
   --- Play the usersound to the given coalition.
   -- @param #USERSOUND self
-  -- @param Dcs.DCScoalition#coalition Coalition The coalition to play the usersound to.
+  -- @param DCS#coalition Coalition The coalition to play the usersound to.
   -- @return #USERSOUND The usersound instance.
   -- @usage
   --   local BlueVictory = USERSOUND:New( "BlueVictory.ogg" )
@@ -95,7 +95,7 @@ do -- UserSound
 
   --- Play the usersound to the given country.
   -- @param #USERSOUND self
-  -- @param Dcs.DCScountry#country Country The country to play the usersound to.
+  -- @param DCS#country Country The country to play the usersound to.
   -- @return #USERSOUND The usersound instance.
   -- @usage
   --   local BlueVictory = USERSOUND:New( "BlueVictory.ogg" )

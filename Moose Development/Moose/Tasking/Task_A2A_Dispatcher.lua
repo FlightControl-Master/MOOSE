@@ -80,7 +80,7 @@ do -- TASK_A2A_DISPATCHER
   -- therefore less CAP and GCI flights will spawn and this will tend to make just the border area active rather than a melee over the whole map. 
   -- It all depends on what the desired effect is. 
   -- 
-  -- EWR networks are **dynamically constructed**, that is, they form part of the @{Functional#DETECTION_BASE} object that is given as the input parameter of the TASK\_A2A\_DISPATCHER class.
+  -- EWR networks are **dynamically constructed**, that is, they form part of the @{Functional.Detection#DETECTION_BASE} object that is given as the input parameter of the TASK\_A2A\_DISPATCHER class.
   -- By defining in a **smart way the names or name prefixes of the groups** with EWR capable units, these groups will be **automatically added or deleted** from the EWR network, 
   -- increasing or decreasing the radar coverage of the Early Warning System.
   -- 
@@ -334,7 +334,7 @@ do -- TASK_A2A_DISPATCHER
   -- @param #TASK_A2A_DISPATCHER self
   -- @param Tasking.Mission#MISSION Mission
   -- @param Tasking.Task#TASK Task
-  -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Detection#DETECTION_BASE} derived object.
+  -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Functional.Detection#DETECTION_BASE} derived object.
   -- @param #boolean DetectedItemID
   -- @param #boolean DetectedItemChange
   -- @return Tasking.Task#TASK
@@ -484,7 +484,7 @@ do -- TASK_A2A_DISPATCHER
 
   --- Assigns tasks in relation to the detected items to the @{Core.Set#SET_GROUP}.
   -- @param #TASK_A2A_DISPATCHER self
-  -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Detection#DETECTION_BASE} derived object.
+  -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Functional.Detection#DETECTION_BASE} derived object.
   -- @return #boolean Return true if you want the task assigning to continue... false will cancel the loop.
   function TASK_A2A_DISPATCHER:ProcessDetected( Detection )
     self:F()

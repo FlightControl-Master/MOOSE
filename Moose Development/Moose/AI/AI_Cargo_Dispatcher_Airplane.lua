@@ -13,11 +13,7 @@
 -- @extends AI.AI_Cargo_Dispatcher#AI_CARGO_DISPATCHER
 
 
---- # AI\_CARGO\_DISPATCHER\_AIRPLANE class, extends @{AI.AI_Cargo_Dispatcher#AI_CARGO_DISPATCHER}
--- 
--- ===
--- 
--- AI\_CARGO\_DISPATCHER\_AIRPLANE brings a dynamic cargo handling capability for AI groups.
+--- Brings a dynamic cargo handling capability for AI groups.
 -- 
 -- Airplanes can be mobilized to intelligently transport infantry and other cargo within the simulation.
 -- The AI\_CARGO\_DISPATCHER\_AIRPLANE module uses the @{Cargo} capabilities within the MOOSE framework.

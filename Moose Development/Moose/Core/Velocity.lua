@@ -8,7 +8,7 @@
 -- ===
 -- 
 -- @module Core.Velocity
--- @image Core_Velocity.JPG
+-- @image MOOSE.JPG
 
 do -- Velocity
 
@@ -16,7 +16,7 @@ do -- Velocity
   -- @extends Core.Base#BASE
 
 
-  -- VELOCITY models a speed, which can be expressed in various formats according the Settings.
+  --- VELOCITY models a speed, which can be expressed in various formats according the Settings.
   -- 
   -- ## VELOCITY constructor
   --   

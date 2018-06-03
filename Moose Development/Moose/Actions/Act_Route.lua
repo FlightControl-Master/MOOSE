@@ -2,7 +2,7 @@
 -- 
 -- ===
 -- 
--- # @{#ACT_ROUTE} FSM class, extends @{Fsm#FSM_PROCESS}
+-- # @{#ACT_ROUTE} FSM class, extends @{Core.Fsm#FSM_PROCESS}
 -- 
 -- ## ACT_ROUTE state machine:
 -- 
@@ -60,7 +60,7 @@
 -- 
 -- ===
 -- 
--- # 1) @{#ACT_ROUTE_ZONE} class, extends @{Fsm.Route#ACT_ROUTE}
+-- # 1) @{#ACT_ROUTE_ZONE} class, extends @{Core.Fsm.Route#ACT_ROUTE}
 -- 
 -- The ACT_ROUTE_ZONE class implements the core functions to route an AIR @{Wrapper.Controllable} player @{Wrapper.Unit} to a @{Zone}.
 -- The player receives on perioding times messages with the coordinates of the route to follow. 
@@ -72,7 +72,8 @@
 -- 
 -- ===
 -- 
--- @module Route
+-- @module Actions.Route
+-- @image MOOSE.JPG
 
 
 do -- ACT_ROUTE

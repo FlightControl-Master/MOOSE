@@ -31,9 +31,7 @@
 -- @extends AI.AI_Patrol#AI_PATROL_ZONE
 
 
---- # AI_CAP_ZONE class, extends @{AI.AI_Patrol#AI_PATROL_ZONE}
--- 
--- The AI_CAP_ZONE class implements the core functions to patrol a @{Zone} by an AI @{Wrapper.Controllable} or @{Wrapper.Group} 
+-- Implements the core functions to patrol a @{Zone} by an AI @{Wrapper.Controllable} or @{Wrapper.Group} 
 -- and automatically engage any airborne enemies that are within a certain range or within a certain zone.
 -- 
 -- ![Process](..\Presentations\AI_CAP\Dia3.JPG)
@@ -81,13 +79,13 @@
 -- 
 -- ### 2.2 AI_CAP_ZONE Events
 -- 
---   * **@{AI_Patrol#AI_PATROL_ZONE.Start}**: Start the process.
---   * **@{AI_Patrol#AI_PATROL_ZONE.Route}**: Route the AI to a new random 3D point within the Patrol Zone.
+--   * **@{AI.AI_Patrol#AI_PATROL_ZONE.Start}**: Start the process.
+--   * **@{AI.AI_Patrol#AI_PATROL_ZONE.Route}**: Route the AI to a new random 3D point within the Patrol Zone.
 --   * **@{#AI_CAP_ZONE.Engage}**: Let the AI engage the bogeys.
 --   * **@{#AI_CAP_ZONE.Abort}**: Aborts the engagement and return patrolling in the patrol zone.
---   * **@{AI_Patrol#AI_PATROL_ZONE.RTB}**: Route the AI to the home base.
---   * **@{AI_Patrol#AI_PATROL_ZONE.Detect}**: The AI is detecting targets.
---   * **@{AI_Patrol#AI_PATROL_ZONE.Detected}**: The AI has detected new targets.
+--   * **@{AI.AI_Patrol#AI_PATROL_ZONE.RTB}**: Route the AI to the home base.
+--   * **@{AI.AI_Patrol#AI_PATROL_ZONE.Detect}**: The AI is detecting targets.
+--   * **@{AI.AI_Patrol#AI_PATROL_ZONE.Detected}**: The AI has detected new targets.
 --   * **@{#AI_CAP_ZONE.Destroy}**: The AI has destroyed a bogey @{Wrapper.Unit}.
 --   * **@{#AI_CAP_ZONE.Destroyed}**: The AI has destroyed all bogeys @{Wrapper.Unit}s assigned in the CAS task.
 --   * **Status** ( Group ): The AI is checking status (fuel and damage). When the tresholds have been reached, the AI will RTB.
@@ -100,7 +98,7 @@
 -- that will define when the AI will engage with the detected airborne enemy targets.
 -- The range can be beyond or smaller than the range of the Patrol Zone.
 -- The range is applied at the position of the AI.
--- Use the method @{AI_CAP#AI_CAP_ZONE.SetEngageRange}() to define that range.
+-- Use the method @{AI.AI_CAP#AI_CAP_ZONE.SetEngageRange}() to define that range.
 --
 -- ## 4. Set the Zone of Engagement
 -- 
@@ -108,7 +106,7 @@
 -- 
 -- An optional @{Zone} can be set, 
 -- that will define when the AI will engage with the detected airborne enemy targets.
--- Use the method @{AI_Cap#AI_CAP_ZONE.SetEngageZone}() to define that Zone.
+-- Use the method @{AI.AI_Cap#AI_CAP_ZONE.SetEngageZone}() to define that Zone.
 --  
 -- ===
 -- 
@@ -122,11 +120,11 @@ AI_CAP_ZONE = {
 --- Creates a new AI_CAP_ZONE object
 -- @param #AI_CAP_ZONE self
 -- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
--- @param Dcs.DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
--- @param Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.
--- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Controllable} in km/h.
--- @param Dcs.DCSTypes#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
+-- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+-- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+-- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.
+-- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Controllable} in km/h.
+-- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
 -- @return #AI_CAP_ZONE self
 function AI_CAP_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType )
 

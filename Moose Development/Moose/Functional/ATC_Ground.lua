@@ -12,7 +12,7 @@
 -- ===
 -- 
 -- @module Functional.ATC_Ground
-
+-- @image Air_Traffic_Control_Ground_Operations.JPG
 
 --- @type ATC_GROUND
 -- @field Core.Set#SET_CLIENT SetClient

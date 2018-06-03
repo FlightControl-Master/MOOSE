@@ -45,7 +45,7 @@
 -- 
 -- The DCS Unit APIs are used extensively within MOOSE. The UNIT class has for each DCS Unit API a corresponding method.
 -- To be able to distinguish easily in your code the difference between a UNIT API call and a DCS Unit API call,
--- the first letter of the method is also capitalized. So, by example, the DCS Unit method @{DCSWrapper.Unit#Unit.getName}()
+-- the first letter of the method is also capitalized. So, by example, the DCS Unit method @{DCS#Unit.getName}()
 -- is implemented in the UNIT class as @{#UNIT.GetName}().
 -- 
 -- ## Smoke, Flare Units
@@ -116,7 +116,7 @@ end
 
 --- Finds a UNIT from the _DATABASE using a DCSUnit object.
 -- @param #UNIT self
--- @param Dcs.DCSWrapper.Unit#Unit DCSUnit An existing DCS Unit object reference.
+-- @param DCS#Unit DCSUnit An existing DCS Unit object reference.
 -- @return #UNIT self
 function UNIT:Find( DCSUnit )
 
@@ -145,7 +145,7 @@ end
 
 
 --- @param #UNIT self
--- @return Dcs.DCSWrapper.Unit#Unit
+-- @return DCS#Unit
 function UNIT:GetDCSObject()
 
   local DCSUnit = Unit.getByName( self.UnitName )
@@ -311,7 +311,7 @@ end
 function UNIT:IsAlive()
   self:F3( self.UnitName )
 
-  local DCSUnit = self:GetDCSObject() -- Dcs.DCSUnit#Unit
+  local DCSUnit = self:GetDCSObject() -- DCS#Unit
   
   if DCSUnit then
     local UnitIsAlive  = DCSUnit:isExist() and DCSUnit:isActive()
@@ -352,7 +352,7 @@ end
 function UNIT:GetPlayerName()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSObject() -- Dcs.DCSUnit#Unit
+  local DCSUnit = self:GetDCSObject() -- DCS#Unit
   
   if DCSUnit then
   
@@ -458,7 +458,7 @@ end
 
 --- Returns the Unit's ammunition.
 -- @param #UNIT self
--- @return Dcs.DCSWrapper.Unit#Unit.Ammo
+-- @return DCS#Unit.Ammo
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetAmmo()
   self:F2( self.UnitName )
@@ -475,7 +475,7 @@ end
 
 --- Returns the unit sensors.
 -- @param #UNIT self
--- @return Dcs.DCSWrapper.Unit#Unit.Sensors
+-- @return DCS#Unit.Sensors
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetSensors()
   self:F2( self.UnitName )
@@ -539,7 +539,7 @@ end
 --  * Second value is the object of the radar's interest. Not nil only if at least one radar of the unit is tracking a target.
 -- @param #UNIT self
 -- @return #boolean  Indicates if at least one of the unit's radar(s) is on.
--- @return Dcs.DCSWrapper.Object#Object The object of the radar's interest. Not nil only if at least one radar of the unit is tracking a target.
+-- @return DCS#Object The object of the radar's interest. Not nil only if at least one radar of the unit is tracking a target.
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetRadar()
   self:F2( self.UnitName )

@@ -12,6 +12,7 @@
 -- ===
 -- 
 -- @module Functional.ZoneGoalCoalition
+-- @image MOOSE.JPG
 
 do -- ZoneGoal
 
@@ -19,9 +20,7 @@ do -- ZoneGoal
   -- @extends Functional.ZoneGoal#ZONE_GOAL
 
 
-  --- # ZONE_GOAL_COALITION class, extends @{ZoneGoal#ZONE_GOAL}
-  -- 
-  -- ZONE_GOAL_COALITION models processes that have a Goal with a defined achievement involving a Zone for a Coalition.  
+  --- ZONE_GOAL_COALITION models processes that have a Goal with a defined achievement involving a Zone for a Coalition.  
   -- Derived classes implement the ways how the achievements can be realized.
   -- 
   -- ## 1. ZONE_GOAL_COALITION constructor

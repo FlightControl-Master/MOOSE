@@ -21,7 +21,7 @@
 --- @type SETTINGS
 -- @extends Core.Base#BASE
 
---- The SETTINGS class takes care of various settings that influence the behaviour of certain functionalities and classes within the MOOSE framework.
+--- Takes care of various settings that influence the behaviour of certain functionalities and classes within the MOOSE framework.
 -- 
 -- ===
 -- 

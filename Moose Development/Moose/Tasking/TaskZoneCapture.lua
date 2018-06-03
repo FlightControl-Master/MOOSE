@@ -9,6 +9,7 @@
 -- ===
 --   
 -- @module Tasking.TaskZoneCapture
+-- @image MOOSE.JPG
 
 do -- TASK_ZONE_GOAL
 
@@ -17,10 +18,10 @@ do -- TASK_ZONE_GOAL
   -- @field Core.ZoneGoal#ZONE_GOAL ZoneGoal
   -- @extends Tasking.Task#TASK
 
-  --- # TASK_ZONE_GOAL class, extends @{Task#TASK}
+  --- # TASK_ZONE_GOAL class, extends @{Tasking.Task#TASK}
   -- 
   -- The TASK_ZONE_GOAL class defines the task to protect or capture a protection zone. 
-  -- The TASK_ZONE_GOAL is implemented using a @{Fsm#FSM_TASK}, and has the following statuses:
+  -- The TASK_ZONE_GOAL is implemented using a @{Core.Fsm#FSM_TASK}, and has the following statuses:
   -- 
   --   * **None**: Start of the process
   --   * **Planned**: The A2G task is planned.
@@ -166,12 +167,12 @@ do -- TASK_ZONE_CAPTURE
   -- @field Core.ZoneGoalCoalition#ZONE_GOAL_COALITION ZoneGoal
   -- @extends #TASK_ZONE_GOAL
 
-  --- # TASK_ZONE_CAPTURE class, extends @{TaskZoneGoal#TASK_ZONE_GOAL}
+  --- # TASK_ZONE_CAPTURE class, extends @{Tasking.TaskZoneGoal#TASK_ZONE_GOAL}
   -- 
   -- The TASK_ZONE_CAPTURE class defines an Suppression or Extermination of Air Defenses task for a human player to be executed.
   -- These tasks are important to be executed as they will help to achieve air superiority at the vicinity.
   -- 
-  -- The TASK_ZONE_CAPTURE is used by the @{Task_A2G_Dispatcher#TASK_A2G_DISPATCHER} to automatically create SEAD tasks 
+  -- The TASK_ZONE_CAPTURE is used by the @{Tasking.Task_A2G_Dispatcher#TASK_A2G_DISPATCHER} to automatically create SEAD tasks 
   -- based on detected enemy ground targets.
   -- 
   -- @field #TASK_ZONE_CAPTURE

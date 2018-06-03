@@ -18,7 +18,7 @@
 -- @extends Wrapper.Identifiable#IDENTIFIABLE
 
 
---- The POSITIONABLE class is a wrapper class to handle the POSITIONABLE objects:
+--- Wrapper class to handle the POSITIONABLE objects.
 --
 --  * Support all DCS APIs.
 --  * Enhance with POSITIONABLE specific APIs not in the DCS API set.
@@ -60,7 +60,7 @@ POSITIONABLE.__.Cargo = {}
 
 --- Create a new POSITIONABLE from a DCSPositionable
 -- @param #POSITIONABLE self
--- @param Dcs.DCSWrapper.Positionable#Positionable PositionableName The POSITIONABLE name
+-- @param #string PositionableName The POSITIONABLE name
 -- @return #POSITIONABLE self
 function POSITIONABLE:New( PositionableName )
   local self = BASE:Inherit( self, IDENTIFIABLE:New( PositionableName ) )
@@ -69,9 +69,9 @@ function POSITIONABLE:New( PositionableName )
   return self
 end
 
---- Returns the @{DCSTypes#Position3} position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.
+--- Returns the @{DCS#Position3} position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
--- @return Dcs.DCSTypes#Position The 3D position vectors of the POSITIONABLE.
+-- @return DCS#Position The 3D position vectors of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetPositionVec3()
   self:F2( self.PositionableName )
@@ -89,9 +89,9 @@ function POSITIONABLE:GetPositionVec3()
   return nil
 end
 
---- Returns the @{DCSTypes#Vec2} vector indicating the point in 2D of the POSITIONABLE within the mission.
+--- Returns the @{DCS#Vec2} vector indicating the point in 2D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
--- @return Dcs.DCSTypes#Vec2 The 2D point vector of the POSITIONABLE.
+-- @return DCS#Vec2 The 2D point vector of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetVec2()
   self:F2( self.PositionableName )
@@ -185,13 +185,13 @@ function POSITIONABLE:GetCoordinate()
 end
 
 
---- Returns a random @{DCSTypes#Vec3} vector within a range, indicating the point in 3D of the POSITIONABLE within the mission.
+--- Returns a random @{DCS#Vec3} vector within a range, indicating the point in 3D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @param #number Radius
--- @return Dcs.DCSTypes#Vec3 The 3D point vector of the POSITIONABLE.
+-- @return DCS#Vec3 The 3D point vector of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.  
 -- @usage 
--- -- If Radius is ignored, returns the Dcs.DCSTypes#Vec3 of first UNIT of the GROUP
+-- -- If Radius is ignored, returns the DCS#Vec3 of first UNIT of the GROUP
 function POSITIONABLE:GetRandomVec3( Radius )
   self:F2( self.PositionableName )
 
@@ -220,9 +220,9 @@ function POSITIONABLE:GetRandomVec3( Radius )
   return nil
 end
 
---- Returns the @{DCSTypes#Vec3} vector indicating the 3D vector of the POSITIONABLE within the mission.
+--- Returns the @{DCS#Vec3} vector indicating the 3D vector of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
--- @return Dcs.DCSTypes#Vec3 The 3D point vector of the POSITIONABLE.
+-- @return DCS#Vec3 The 3D point vector of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetVec3()
   self:F2( self.PositionableName )
@@ -243,7 +243,7 @@ end
 
 --- Get the bounding box of the underlying POSITIONABLE DCS Object.
 -- @param #POSITIONABLE self
--- @return Dcs.DCSTypes#Distance The bounding box of the POSITIONABLE.
+-- @return DCS#Distance The bounding box of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetBoundingBox() --R2.1
   self:F2()
@@ -251,7 +251,7 @@ function POSITIONABLE:GetBoundingBox() --R2.1
   local DCSPositionable = self:GetDCSObject()
   
   if DCSPositionable then
-    local PositionableDesc = DCSPositionable:getDesc() --Dcs.DCSTypes#Desc
+    local PositionableDesc = DCSPositionable:getDesc() --DCS#Desc
     if PositionableDesc then
       local PositionableBox = PositionableDesc.box
       return PositionableBox
@@ -266,7 +266,7 @@ end
 
 --- Returns the altitude of the POSITIONABLE.
 -- @param Wrapper.Positionable#POSITIONABLE self
--- @return Dcs.DCSTypes#Distance The altitude of the POSITIONABLE.
+-- @return DCS#Distance The altitude of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetAltitude()
   self:F2()
@@ -274,7 +274,7 @@ function POSITIONABLE:GetAltitude()
   local DCSPositionable = self:GetDCSObject()
   
   if DCSPositionable then
-    local PositionablePointVec3 = DCSPositionable:getPoint() --Dcs.DCSTypes#Vec3
+    local PositionablePointVec3 = DCSPositionable:getPoint() --DCS#Vec3
     return PositionablePointVec3.y
   end
   
@@ -383,7 +383,7 @@ end
  
 --- Returns the POSITIONABLE velocity Vec3 vector.
 -- @param Wrapper.Positionable#POSITIONABLE self
--- @return Dcs.DCSTypes#Vec3 The velocity Vec3 vector
+-- @return DCS#Vec3 The velocity Vec3 vector
 -- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetVelocityVec3()
   self:F2( self.PositionableName )
@@ -404,7 +404,7 @@ end
 
 --- Returns the POSITIONABLE height in meters.
 -- @param Wrapper.Positionable#POSITIONABLE self
--- @return Dcs.DCSTypes#Vec3 The height of the positionable.
+-- @return DCS#Vec3 The height of the positionable.
 -- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetHeight() --R2.1
   self:F2( self.PositionableName )
@@ -483,7 +483,7 @@ end
 --- Returns a message with the callsign embedded (if there is one).
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
--- @param Dcs.DCSTypes#Duration Duration The duration of the message.
+-- @param DCS#Duration Duration The duration of the message.
 -- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
 -- @return Core.Message#MESSAGE
 function POSITIONABLE:GetMessage( Message, Duration, Name ) --R2.1 changed callsign and name and using GetMessageText
@@ -518,7 +518,7 @@ end
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
--- @param Dcs.DCSTypes#Duration Duration The duration of the message.
+-- @param DCS#Duration Duration The duration of the message.
 -- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
 function POSITIONABLE:MessageToAll( Message, Duration, Name )
   self:F2( { Message, Duration } )
@@ -535,8 +535,8 @@ end
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
--- @param Dcs.DCSTYpes#Duration Duration The duration of the message.
--- @param Dcs.DCScoalition#coalition MessageCoalition The Coalition receiving the message.
+-- @param DCS#Duration Duration The duration of the message.
+-- @param DCS#coalition MessageCoalition The Coalition receiving the message.
 -- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
 function POSITIONABLE:MessageToCoalition( Message, Duration, MessageCoalition, Name )
   self:F2( { Message, Duration } )
@@ -557,7 +557,7 @@ end
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
 -- @param Core.Message#MESSAGE.Type MessageType The message type that determines the duration.
--- @param Dcs.DCScoalition#coalition MessageCoalition The Coalition receiving the message.
+-- @param DCS#coalition MessageCoalition The Coalition receiving the message.
 -- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
 function POSITIONABLE:MessageTypeToCoalition( Message, MessageType, MessageCoalition, Name )
   self:F2( { Message, MessageType } )
@@ -577,7 +577,7 @@ end
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
--- @param Dcs.DCSTYpes#Duration Duration The duration of the message.
+-- @param DCS#Duration Duration The duration of the message.
 -- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
 function POSITIONABLE:MessageToRed( Message, Duration, Name )
   self:F2( { Message, Duration } )
@@ -594,7 +594,7 @@ end
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
--- @param Dcs.DCSTypes#Duration Duration The duration of the message.
+-- @param DCS#Duration Duration The duration of the message.
 -- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
 function POSITIONABLE:MessageToBlue( Message, Duration, Name )
   self:F2( { Message, Duration } )
@@ -611,7 +611,7 @@ end
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
--- @param Dcs.DCSTypes#Duration Duration The duration of the message.
+-- @param DCS#Duration Duration The duration of the message.
 -- @param Wrapper.Client#CLIENT Client The client object receiving the message.
 -- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
 function POSITIONABLE:MessageToClient( Message, Duration, Client, Name )
@@ -629,7 +629,7 @@ end
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
--- @param Dcs.DCSTypes#Duration Duration The duration of the message.
+-- @param DCS#Duration Duration The duration of the message.
 -- @param Wrapper.Group#GROUP MessageGroup The GROUP object receiving the message.
 -- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
 function POSITIONABLE:MessageToGroup( Message, Duration, MessageGroup, Name )
@@ -676,7 +676,7 @@ end
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
--- @param Dcs.DCSTypes#Duration Duration The duration of the message.
+-- @param DCS#Duration Duration The duration of the message.
 -- @param Core.Set#SET_GROUP MessageSetGroup The SET_GROUP collection receiving the message.
 -- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
 function POSITIONABLE:MessageToSetGroup( Message, Duration, MessageSetGroup, Name )  --R2.1
@@ -700,7 +700,7 @@ end
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
--- @param Dcs.DCSTypes#Duration Duration The duration of the message.
+-- @param DCS#Duration Duration The duration of the message.
 -- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
 function POSITIONABLE:Message( Message, Duration, Name )
   self:F2( { Message, Duration } )
@@ -713,18 +713,18 @@ function POSITIONABLE:Message( Message, Duration, Name )
   return nil
 end
 
---- Create a @{Radio#RADIO}, to allow radio transmission for this POSITIONABLE. 
+--- Create a @{Core.Radio#RADIO}, to allow radio transmission for this POSITIONABLE. 
 -- Set parameters with the methods provided, then use RADIO:Broadcast() to actually broadcast the message
 -- @param #POSITIONABLE self
--- @return #RADIO Radio
+-- @return Core.Radio#RADIO Radio
 function POSITIONABLE:GetRadio() --R2.1
   self:F2(self)
   return RADIO:New(self) 
 end
 
---- Create a @{Radio#BEACON}, to allow this POSITIONABLE to broadcast beacon signals
+--- Create a @{Core.Radio#BEACON}, to allow this POSITIONABLE to broadcast beacon signals
 -- @param #POSITIONABLE self
--- @return #RADIO Radio
+-- @return Core.Radio#RADIO Radio
 function POSITIONABLE:GetBeacon() --R2.1
   self:F2(self)
   return BEACON:New(self) 

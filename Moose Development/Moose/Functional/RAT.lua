@@ -55,7 +55,7 @@
 -- 
 -- ===
 -- @module Functional.Rat
--- @module RAT.JPG
+-- @image RAT.JPG
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --- RAT class
@@ -148,8 +148,7 @@
 -- @field #boolean useparkingdb Parking spots are added to data base once an aircraft has used it. These spots can later be used by other aircraft. Default is true.
 -- @extends Core.Spawn#SPAWN
 
---- The RAT class implements an easy to use way to randomly fill your map with AI aircraft.
--- 
+--- Implements an easy to use way to randomly fill your map with AI aircraft.
 --
 -- ## Airport Selection
 -- 
@@ -1663,7 +1662,7 @@ end
 
 --- Initialize basic parameters of the aircraft based on its (template) group in the mission editor.
 -- @param #RAT self
--- @param Dcs.DCSWrapper.Group#Group DCSgroup Group of the aircraft in the mission editor.
+-- @param DCS#Group DCSgroup Group of the aircraft in the mission editor.
 function RAT:_InitAircraft(DCSgroup)
   self:F2(DCSgroup)
 
@@ -3762,11 +3761,11 @@ end
 function RAT:_Destroy(group)
   self:F2(group)
 
-  local DCSGroup = group:GetDCSObject() -- Dcs.DCSGroup#Group
+  local DCSGroup = group:GetDCSObject() -- DCS#Group
 
   if DCSGroup and DCSGroup:isExist() then
   
-    --local DCSUnit = DCSGroup:getUnit(1) -- Dcs.DCSUnit#Unit
+    --local DCSUnit = DCSGroup:getUnit(1) -- DCS#Unit
     --if DCSUnit then
     --  self:_CreateEventDead(timer.getTime(), DCSUnit)
     --end
@@ -3797,8 +3796,8 @@ end
 
 --- Create a Dead event.
 -- @param #RAT self
--- @param Dcs.DCSTypes#Time EventTime The time stamp of the event.
--- @param Dcs.DCSWrapper.Object#Object Initiator The initiating object of the event.
+-- @param DCS#Time EventTime The time stamp of the event.
+-- @param DCS#Object Initiator The initiating object of the event.
 function RAT:_CreateEventDead(EventTime, Initiator)
   self:F( { EventTime, Initiator } )
 
@@ -4030,11 +4029,11 @@ end
 
 --- Orbit at a specified position at a specified alititude with a specified speed.
 -- @param #RAT self
--- @param Dcs.DCSTypes#Vec2 P1 The point to hold the position.
+-- @param DCS#Vec2 P1 The point to hold the position.
 -- @param #number Altitude The altitude ASL at which to hold the position.
 -- @param #number Speed The speed flying when holding the position in m/s.
 -- @param #number Duration Duration of holding pattern in seconds.
--- @return Dcs.DCSTasking.Task#Task DCSTask
+-- @return DCS#Task DCSTask
 function RAT:_TaskHolding(P1, Altitude, Speed, Duration)
 
   --local LandHeight = land.getHeight(P1)

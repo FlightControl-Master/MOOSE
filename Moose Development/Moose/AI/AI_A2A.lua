@@ -292,8 +292,8 @@ end
 
 --- Sets (modifies) the minimum and maximum speed of the patrol.
 -- @param #AI_A2A self
--- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.
--- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Controllable} in km/h.
+-- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.
+-- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Controllable} in km/h.
 -- @return #AI_A2A self
 function AI_A2A:SetSpeed( PatrolMinSpeed, PatrolMaxSpeed )
   self:F2( { PatrolMinSpeed, PatrolMaxSpeed } )
@@ -305,8 +305,8 @@ end
 
 --- Sets the floor and ceiling altitude of the patrol.
 -- @param #AI_A2A self
--- @param Dcs.DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
--- @param Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+-- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+-- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
 -- @return #AI_A2A self
 function AI_A2A:SetAltitude( PatrolFloorAltitude, PatrolCeilingAltitude )
   self:F2( { PatrolFloorAltitude, PatrolCeilingAltitude } )

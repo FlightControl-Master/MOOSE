@@ -2,25 +2,25 @@
 -- 
 -- ===
 -- 
--- 1) @{Task_Manager#TASK_MANAGER} class, extends @{Fsm#FSM}
+-- 1) @{Tasking.Task_Manager#TASK_MANAGER} class, extends @{Core.Fsm#FSM}
 -- ===
--- The @{Task_Manager#TASK_MANAGER} class defines the core functions to report tasks to groups.
+-- The @{Tasking.Task_Manager#TASK_MANAGER} class defines the core functions to report tasks to groups.
 -- Reportings can be done in several manners, and it is up to the derived classes if TASK_MANAGER to model the reporting behaviour.
 -- 
 -- 1.1) TASK_MANAGER constructor:
 -- -----------------------------------
---   * @{Task_Manager#TASK_MANAGER.New}(): Create a new TASK_MANAGER instance.
+--   * @{Tasking.Task_Manager#TASK_MANAGER.New}(): Create a new TASK_MANAGER instance.
 -- 
 -- 1.2) TASK_MANAGER reporting:
 -- ---------------------------------
--- Derived TASK_MANAGER classes will manage tasks using the method @{Task_Manager#TASK_MANAGER.ManageTasks}(). This method implements polymorphic behaviour.
+-- Derived TASK_MANAGER classes will manage tasks using the method @{Tasking.Task_Manager#TASK_MANAGER.ManageTasks}(). This method implements polymorphic behaviour.
 -- 
--- The time interval in seconds of the task management can be changed using the methods @{Task_Manager#TASK_MANAGER.SetRefreshTimeInterval}(). 
--- To control how long a reporting message is displayed, use @{Task_Manager#TASK_MANAGER.SetReportDisplayTime}().
--- Derived classes need to implement the method @{Task_Manager#TASK_MANAGER.GetReportDisplayTime}() to use the correct display time for displayed messages during a report.
+-- The time interval in seconds of the task management can be changed using the methods @{Tasking.Task_Manager#TASK_MANAGER.SetRefreshTimeInterval}(). 
+-- To control how long a reporting message is displayed, use @{Tasking.Task_Manager#TASK_MANAGER.SetReportDisplayTime}().
+-- Derived classes need to implement the method @{Tasking.Task_Manager#TASK_MANAGER.GetReportDisplayTime}() to use the correct display time for displayed messages during a report.
 -- 
--- Task management can be started and stopped using the methods @{Task_Manager#TASK_MANAGER.StartTasks}() and @{Task_Manager#TASK_MANAGER.StopTasks}() respectively.
--- If an ad-hoc report is requested, use the method @{Task_Manager#TASK_MANAGER#ManageTasks}().
+-- Task management can be started and stopped using the methods @{Tasking.Task_Manager#TASK_MANAGER.StartTasks}() and @{Tasking.Task_Manager#TASK_MANAGER.StopTasks}() respectively.
+-- If an ad-hoc report is requested, use the method @{Tasking.Task_Manager#TASK_MANAGER#ManageTasks}().
 -- 
 -- The default task management interval is every 60 seconds.
 -- 
@@ -30,6 +30,7 @@
 -- ### Author: FlightControl - Framework Design &  Programming
 -- 
 -- @module Tasking.Task_Manager
+-- @image MOOSE.JPG
 
 do -- TASK_MANAGER
   

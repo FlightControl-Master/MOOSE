@@ -27,13 +27,11 @@
 -- @extends Core.Fsm#FSM_SET
 
 
---- # AI_BALANCER class, extends @{Core.Fsm#FSM_SET}
--- 
--- The AI_BALANCER class monitors and manages as many replacement AI groups as there are
--- CLIENTS in a SET_CLIENT collection, which are not occupied by human players. 
+--- Monitors and manages as many replacement AI groups as there are
+-- CLIENTS in a SET\_CLIENT collection, which are not occupied by human players. 
 -- In other words, use AI_BALANCER to simulate human behaviour by spawning in replacement AI in multi player missions.
 -- 
--- The parent class @{Fsm#FSM_SET} manages the functionality to control the Finite State Machine (FSM). 
+-- The parent class @{Core.Fsm#FSM_SET} manages the functionality to control the Finite State Machine (FSM). 
 -- The mission designer can tailor the behaviour of the AI_BALANCER, by defining event and state transition methods.
 -- An explanation about state and event transition methods can be found in the @{FSM} module documentation.
 -- 
@@ -140,7 +138,7 @@ end
 
 --- Returns the AI to the nearest friendly @{Wrapper.Airbase#AIRBASE}.
 -- @param #AI_BALANCER self
--- @param Dcs.DCSTypes#Distance ReturnThresholdRange If there is an enemy @{Wrapper.Client#CLIENT} within the ReturnThresholdRange given in meters, the AI will not return to the nearest @{Wrapper.Airbase#AIRBASE}.
+-- @param DCS#Distance ReturnThresholdRange If there is an enemy @{Wrapper.Client#CLIENT} within the ReturnThresholdRange given in meters, the AI will not return to the nearest @{Wrapper.Airbase#AIRBASE}.
 -- @param Core.Set#SET_AIRBASE ReturnAirbaseSet The SET of @{Core.Set#SET_AIRBASE}s to evaluate where to return to.
 function AI_BALANCER:ReturnToNearestAirbases( ReturnThresholdRange, ReturnAirbaseSet )
 
@@ -151,7 +149,7 @@ end
 
 --- Returns the AI to the home @{Wrapper.Airbase#AIRBASE}.
 -- @param #AI_BALANCER self
--- @param Dcs.DCSTypes#Distance ReturnThresholdRange If there is an enemy @{Wrapper.Client#CLIENT} within the ReturnThresholdRange given in meters, the AI will not return to the nearest @{Wrapper.Airbase#AIRBASE}.
+-- @param DCS#Distance ReturnThresholdRange If there is an enemy @{Wrapper.Client#CLIENT} within the ReturnThresholdRange given in meters, the AI will not return to the nearest @{Wrapper.Airbase#AIRBASE}.
 function AI_BALANCER:ReturnToHomeAirbase( ReturnThresholdRange )
 
   self.ToHomeAirbase = true

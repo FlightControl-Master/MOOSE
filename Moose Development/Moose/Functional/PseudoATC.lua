@@ -53,7 +53,7 @@
 -- @field #boolean eventsmoose If true, events are handled by MOOSE. If false, events are handled directly by DCS eventhandler.
 -- @extends Core.Base#BASE
 
---- The PSEUDOATC class adds some rudimentary ATC functionality via the radio menu.
+--- Adds some rudimentary ATC functionality via the radio menu.
 -- 
 -- Local weather reports can be requested for nearby airports and player's mission waypoints.
 -- The weather report includes
@@ -986,7 +986,7 @@ function PSEUDOATC:_DisplayMessageToGroup(_unit, _text, _time, _clear)
 end
 
 --- Returns a string which consits of this callsign and the player name.  
--- @param #RANGE self
+-- @param #PSEUDOATC self
 -- @param #string unitname Name of the player unit.
 function PSEUDOATC:_myname(unitname)
   self:F2(unitname)
