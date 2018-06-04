@@ -59,7 +59,7 @@
 -- @field #string Type Type of the ARTY group.
 -- @field #string DisplayName Extended type name of the ARTY group.
 -- @field #number IniGroupStrength Inital number of units in the ARTY group.
--- @field #boolean IsArtillery If true, ARTY group has attribute "Artillery".
+-- @field #boolean IsArtillery If true, ARTY group has attribute "Artillery". This is automatically derived from the DCS descriptor table.
 -- @field #number SpeedMax Maximum speed of ARTY group in km/h. This is determined from the DCS descriptor table.
 -- @field #number Speed Default speed in km/h the ARTY group moves at. Maximum speed possible is 80% of maximum speed the group can do.
 -- @field #number RearmingDistance Safe distance in meters between ARTY group and rearming group or place at which rearming is possible. Default 100 m.
@@ -286,11 +286,12 @@
 -- * *time* Time for which which the engagement is schedules, e.g. 08:42. Default is as soon as possible.
 -- * *prio*  Priority of the engagement as number between 1 (high prio) and 100 (low prio). Default is 50.
 -- * *shots* Number of shots (shells, rockets or missiles) fired at each engagement. Default is 5.
--- * *engage* Number of times the target is engaged. Default is 1.
+-- * *maxengage* Number of times the target is engaged. Default is 1.
 -- * *radius* Scattering radius of the fired shots in meters. Default is 100 m.
 -- * *weapon* Type of weapon to be used. Valid parameters are *cannon*, *rocket*, *missile*, *nuke*. Default is automatic selection.
 -- * *battery* Name of the ARTY group that the target is assigned to. Note that the name is case sensitive and has to be given in quotation marks. Default is all ARTY groups of the right coalition.
 -- * *key* A number to authorize the target assignment. Only specifing the correct number will trigger an engagement.
+-- * *readonly* Marker cannot be deleted by users any more. Hence, assignment cannot be cancelled by removing the marker.
 -- 
 -- Here are examples of valid marker texts:
 --      arty engage!
@@ -307,9 +308,11 @@
 -- 
 -- * *time* Time for which which the relocation/move is schedules, e.g. 08:42. Default is as soon as possible.
 -- * *speed* The speed in km/h the group will drive at. Default is 70% of its max possible speed.
--- * *onroad* Group will use mainly roads. Default is off, i.e. it will go in a straight line from its current position to the assigned coordinate.
--- * *cancel* Group will cancel all running firing engagements and immidiately start to move. Default is that group will wait until is current assignment is over.
+-- * *on road* Group will use mainly roads. Default is off, i.e. it will go in a straight line from its current position to the assigned coordinate.
+-- * *canceltarget* Group will cancel all running firing engagements and immidiately start to move. Default is that group will wait until is current assignment is over.
 -- * *battery* Name of the ARTY group that the relocation is assigned to.
+-- * *key* A number to authorize the target assignment. Only specifing the correct number will trigger an engagement.
+-- * *readonly* Marker cannot be deleted by users any more. Hence, assignment cannot be cancelled by removing the marker.
 -- 
 -- Here are some examples:
 --      arty move! time 23:45, speed 50, onroad, cancel
@@ -431,7 +434,7 @@ ARTY={
   ammorockets={},
   ammomissiles={},
   Nshots=0,
-  minrange=100,
+  minrange=300,
   maxrange=1000000,
   nukewarhead=75000,
   Nukes=nil,
@@ -465,42 +468,61 @@ ARTY.WeaponType={
 --- Database of common artillery unit properties.
 -- @list db
 ARTY.db={
-  ["2B11 mortar"] = {
-    minrange = 500,
-    maxrange = 7000,
+  ["2B11 mortar"] = {  -- type "2B11 mortar"
+    minrange   = 500,  -- correct?
+    maxrange   = 7000, -- 7 km
+    reloadtime = 30,   -- 30 sec
   },
-  ["SAU 2-C9"] = {
-    minrange = 500,
-    maxrange = 7000,
+  ["SPH 2S1 Gvozdika"] = { -- type "SAU Gvozdika"
+    minrange   = 300,      -- correct?
+    maxrange   = 15000,    -- 15 km
+    reloadtime = nil,      -- unknown
   },
-  ["SPH M109 Paladin"] = {
-    minrange = 300,
-    maxrange = 22000,
+  ["SPH 2S19 Msta"] = { --type "SAU Msta", alias "2S19 Msta"
+    minrange   = 300,     -- correct?
+    maxrange   = 23500,   -- 23.5 km
+    reloadtime = nil,     -- unknown
   },
-  ["SAU Gvozdika"] = {
-    minrange = 300,
-    maxrange = 15000,
+  ["SPH 2S3 Akatsia"] = { -- type "SAU Akatsia", alias "2S3 Akatsia"
+    minrange   = 300,   -- correct?
+    maxrange   = 17000, -- 17 km
+    reloadtime = nil,   -- unknown
   },
-  ["SAU Akatsia"] = {
-    minrange = 300,
-    maxrange = 17000,
+  ["SPH 2S9 Nona"] = { --type "SAU 2-C9"
+    minrange   = 500,   -- correct?
+    maxrange   = 7000,  -- 7 km
+    reloadtime = nil,   -- unknown
   },
-  ["SAU Msta"] = {
-    minrange = 300,
-    maxrange = 23500,
+  ["SPH M109 Paladin"] = { -- type "M-109", alias "M109"
+    minrange   = 300,     -- correct?
+    maxrange   = 22000,   -- 22 km
+    reloadtime = nil,   -- unknown
   },
-  ["MLRS M270"] = {
-    minrange = 10000,
-    maxrange = 32000,
+  ["SpGH Dana"] = {       -- type "SpGH_Dana"
+    minrange   = 300,     -- correct?
+    maxrange   = 18700,   -- 18.7 km
+    reloadtime = nil,     -- unknown
   },
-  ["Grad-URAL"] = {
-    minrange = 5000,
-    maxrange = 19000,
+  ["MLRS BM-21 Grad"] = { --type "Grad-URAL", alias "MLRS BM-21 Grad"
+    minrange = 5000,  --  5 km
+    maxrange = 19000, -- 19 km
+    reloadtime = 420, -- 7 min
   },
-  ["Smerch"] = {
-    minrange = 20000,
-    maxrange = 70000,
-  }
+  ["MLRS 9K57 Uragan BM-27"] = { -- type "Uragan_BM-27"
+    minrange   = 11500, -- 11.5 km
+    maxrange   = 35800, -- 35.8 km
+    reloadtime = 840,   -- 14 min
+  },
+  ["MLRS 9A52 Smerch"] = { -- type "Smerch"
+    minrange   = 20000, -- 20 km
+    maxrange   = 70000, -- 70 km
+    reloadtime = 2160,  -- 36 min
+  },
+  ["MLRS M270"] = { --type "MRLS", alias "M270 MRLS"
+    minrange   = 10000, -- 10 km
+    maxrange   = 32000, -- 32 km
+    reloadtime = 540,   -- 9 min
+  },
 }
 
 --- Some ID to identify who we are in output of the DCS.log file.
@@ -509,7 +531,7 @@ ARTY.id="ARTY | "
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="0.9.91"
+ARTY.version="0.9.92"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -759,8 +781,9 @@ function ARTY:AssignMoveCoord(coord, time, speed, onroad, cancel, name, unique)
   -- Get max speed of group.
   local speedmax=self.Controllable:GetSpeedMax()
   
-  -- Default speed is 70% of max speed.
+  -- Set speed.
   if speed then
+    -- Make sure, given speed is less than max phycially possible speed of group.
     speed=math.min(speed, speedmax)
   elseif self.Speed then
    speed=self.Speed
@@ -1640,7 +1663,7 @@ function ARTY:_OnEventMarkChange(Event)
           MESSAGE:New(text, 10):ToCoalitionIf(batterycoalition, self.report or self.Debug)
                 
           -- Assign a relocation of the arty group.
-          local _movename=self:AssignMoveCoord(_coord, _assign.time, _assign.speed, _assign.onroad, _assign.cancel,_name, true)
+          local _movename=self:AssignMoveCoord(_coord, _assign.time, _assign.speed, _assign.onroad, _assign.canceltarget,_name, true)
           
           if _movename~=nil then
             local _mid=self:_GetMoveIndexByName(_movename)
@@ -2566,7 +2589,7 @@ end
 -- @param #ARTY self
 -- @param Wrapper.Group#GROUP group Group to route.
 -- @param Core.Point#COORDINATE ToCoord Coordinate where we want to go.
--- @param #number Speed Speed in km/h.
+-- @param #number Speed (Optional) Speed in km/h. Default is 70% of max speed the group can do.
 -- @param #boolean OnRoad If true, use (mainly) roads.
 function ARTY:_Move(group, ToCoord, Speed, OnRoad)
   
@@ -2578,8 +2601,14 @@ function ARTY:_Move(group, ToCoord, Speed, OnRoad)
   -- Set formation.
   local formation = "Off Road"
   
-  -- Default speed is 30 km/h.
-  Speed=Speed or 30
+  -- Get max speed of group.
+  local SpeedMax=group:GetSpeedMax()
+  
+  -- Set speed.
+  Speed=Speed or SpeedMax*0.7
+  
+  -- Make sure, we do not go above max speed possible.
+  Speed=math.min(Speed, SpeedMax)
   
   -- Current coordinates of group.
   local cpini=group:GetCoordinate()
@@ -2757,9 +2786,28 @@ function ARTY:GetAmmo(display)
           -- Get the weapon category: shell=0, missile=1, rocket=2, bomb=3
           local Category=ammotable[w].desc.category
           
+          -- Get missile category: Weapon.MissileCategory AAM=1, SAM=2, BM=3, ANTI_SHIP=4, CRUISE=5, OTHER=6
           local MissileCategory=nil
           if Category==Weapon.Category.MISSILE then
             MissileCategory=ammotable[w].desc.missileCategory
+          end
+          
+          local function missilecat(n)
+            local cat="unknown"
+            if n==1 then
+              cat="air-to-air"
+            elseif n==2 then
+              cat="surface-to-air"
+            elseif n==3 then
+              cat="ballistic"
+            elseif n==4 then
+              cat="anti-ship"
+            elseif n==5 then
+              cat="cruise"
+            elseif n==6 then
+              cat="other"
+            end
+            return cat
           end
           
           -- Check for correct shell type.
@@ -2812,7 +2860,7 @@ function ARTY:GetAmmo(display)
             nshells=nshells+Nammo
           
             -- Debug info.
-            text=text..string.format("- %d shells of type %s (category=%d, missile category=%s)\n", Nammo, Tammo, Category, tostring(MissileCategory))
+            text=text..string.format("- %d shells of type %s\n", Nammo, Tammo)
             
           elseif _gotrocket then
           
@@ -2820,15 +2868,17 @@ function ARTY:GetAmmo(display)
             nrockets=nrockets+Nammo
             
             -- Debug info.
-            text=text..string.format("- %d rockets of type %s (category=%d, missile category=%s)\n", Nammo, Tammo, Category, tostring(MissileCategory))
+            text=text..string.format("- %d rockets of type %s\n", Nammo, Tammo)
             
           elseif _gotmissile then
           
-            -- Add up all rockets.
-            nmissiles=nmissiles+Nammo
+            -- Add up all cruise missiles (category 5)
+            if MissileCategory==5 then
+              nmissiles=nmissiles+Nammo
+            end
             
             -- Debug info.
-            text=text..string.format("- %d missiles of type %s (category=%d, missile category=%s)\n", Nammo, Tammo, Category, tostring(MissileCategory))
+            text=text..string.format("- %d %s missiles of type %s\n", Nammo, missilecat(MissileCategory), Tammo)
                                 
           else
           
