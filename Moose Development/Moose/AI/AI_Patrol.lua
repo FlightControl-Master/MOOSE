@@ -1,4 +1,10 @@
---- **AI** -- (R2.1) - Manages the independent process of Air Patrol for airplanes.
+--- **AI** -- Perform Air Patrolling for airplanes.
+-- 
+-- **Features:**
+-- 
+--   * Patrol AI airplanes within a given zone.
+--   * Trigger detected events when enemy airplanes are detected.
+--   * Manage a fuel treshold to RTB on time.
 -- 
 -- ===
 -- 

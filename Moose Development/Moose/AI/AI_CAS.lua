@@ -1,4 +1,13 @@
---- **AI** -- (R2.1) - Manages the independent process of Close Air Support for airplanes.
+--- **AI** -- Perform Close Air Support (CAS) near friendlies.
+--
+-- **Features:**
+-- 
+--   * Hold and standby within a patrol zone.
+--   * Engage upon command the enemies within an engagement zone.
+--   * Loop the zone until all enemies are eliminated.
+--   * Trigger different events upon the results achieved.
+--   * After combat, return to the patrol zone and hold.
+--   * RTB when commanded or after fuel.
 --
 -- ===
 -- 

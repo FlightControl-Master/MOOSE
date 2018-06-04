@@ -1,4 +1,12 @@
---- **AI** -- (R2.1) - Manages the independent process of Combat Air Patrol (CAP) for airplanes.
+--- **AI** -- Perform Combat Air Patrolling (CAP) for airplanes.
+--
+-- **Features:**
+-- 
+--   * Patrol AI airplanes within a given zone.
+--   * Trigger detected events when enemy airplanes are detected.
+--   * Manage a fuel treshold to RTB on time.
+--   * Engage the enemy when detected.
+-- 
 --
 -- ===
 -- 
@@ -31,7 +39,7 @@
 -- @extends AI.AI_Patrol#AI_PATROL_ZONE
 
 
--- Implements the core functions to patrol a @{Zone} by an AI @{Wrapper.Controllable} or @{Wrapper.Group} 
+--- Implements the core functions to patrol a @{Zone} by an AI @{Wrapper.Controllable} or @{Wrapper.Group} 
 -- and automatically engage any airborne enemies that are within a certain range or within a certain zone.
 -- 
 -- ![Process](..\Presentations\AI_CAP\Dia3.JPG)

@@ -1,4 +1,12 @@
---- **Tasking** -- A MISSION is the main owner of a Mission orchestration within MOOSE.
+--- **Tasking** -- A mission models a goal to be achieved through the execution and completion of tasks by human players.
+-- 
+-- **Features:**
+-- 
+--   * A mission has a goal to be achieved, through the execution and completion of tasks of different categories by human players.
+--   * A mission manages these tasks.
+--   * A mission has a state, that indicates the fase of the mission.
+--   * A mission has a menu structure, that facilitates mission reports and tasking menus.
+--   * A mission can assign a task to a player.
 -- 
 -- ===
 -- 

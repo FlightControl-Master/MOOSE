@@ -1,7 +1,17 @@
---- **Tasking** - The TASK_A2A_DISPATCHER creates and manages player TASK_A2A tasks based on detected targets.
+--- **Tasking** - Dynamically allocates A2A tasks to human players, based on detected airborne targets through an EWR network.
 -- 
--- Implement the dynamic dispatching of tasks upon groups of detected units determined a @{Set} of EWR installation groups.
+-- **Features:**
 -- 
+--   * Dynamically assign tasks to human players based on detected targets.
+--   * Dynamically change the tasks as the tactical situation evolves during the mission.
+--   * Dynamically assign (CAP) Control Air Patrols tasks for human players to perform CAP.
+--   * Dynamically assign (GCI) Ground Control Intercept tasks for human players to perform GCI.
+--   * Dynamically assign Engage tasks for human players to engage on close-by airborne bogeys.
+--   * Define and use an EWR (Early Warning Radar) network.
+--   * Define different ranges to engage upon intruders.
+--   * Keep task achievements.
+--   * Score task achievements.
+--   
 -- ===
 -- 
 -- ### Author: **FlightControl**

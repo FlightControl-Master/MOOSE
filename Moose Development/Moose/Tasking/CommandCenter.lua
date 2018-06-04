@@ -1,5 +1,12 @@
---- **Tasking** -- A COMMANDCENTER is the owner of multiple missions within MOOSE. 
--- A COMMANDCENTER governs multiple missions, the tasking and the reporting.
+--- **Tasking** -- A command center governs multiple missions, and takes care of the reporting and communications.
+-- 
+-- **Features:**
+-- 
+--   * Govern multiple missions.
+--   * Communicate to coalitions, groups.
+--   * Assign tasks.
+--   * Manage the menus.
+--   * Manage reference zones.
 -- 
 -- ===
 --  
