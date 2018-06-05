@@ -251,6 +251,28 @@ do -- COORDINATE
     return { x = self.x, y = self.z }
   end
 
+  --- Returns the coordinate from the latitude and longitude given in decimal degrees.
+  -- @param #COORDINATE self
+  -- @param #number latitude Latitude in decimal degrees.
+  -- @param #number longitude Longitude in decimal degrees.
+  -- @param #number altitude (Optional) Altitude in meters. Default is the land height at the coordinate.
+  -- @return #COORDINATE
+  function COORDINATE:NewFromLLDD( latitude, longitude, altitude)
+    
+    -- Returns a point from latitude and longitude in the vec3 format.
+    local vec3=coord.LLtoLO(latitude, longitude)
+    
+    -- Convert vec3 to coordinate object.
+    local _coord=self:NewFromVec3(vec3)
+    
+    -- Adjust height
+    if altitude==nil then
+      _coord.y=altitude
+    end
+
+    return _coord
+  end
+
   
   --- Returns if the 2 coordinates are at the same 2D position.
   -- @param #COORDINATE self

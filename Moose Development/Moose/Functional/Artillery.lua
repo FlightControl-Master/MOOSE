@@ -531,7 +531,7 @@ ARTY.id="ARTY | "
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="0.9.92"
+ARTY.version="0.9.93"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -1139,9 +1139,7 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   if _dbproperties~=nil then
     for property,value in pairs(_dbproperties) do
       self:T({property=property, value=value})
-      --if self[property]==nil then
         self[property]=value
-      --end
     end
   end
   
@@ -1475,14 +1473,13 @@ function ARTY:onEvent(Event)
   local batteryname=self.Controllable:GetName()
   local batterycoalition=self.Controllable:GetCoalition()
   
-  self:T(string.format("Event captured  = %s", tostring(batteryname)))
-  self:T(string.format("Event id        = %s", tostring(Event.id)))
-  self:T(string.format("Event time      = %s", tostring(Event.time)))
-  self:T(string.format("Event idx       = %s", tostring(Event.idx)))
-  self:T(string.format("Event coalition = %s", tostring(Event.coalition)))
-  self:T(string.format("Event group id  = %s", tostring(Event.groupID)))
-  self:T(string.format("Event text      = %s", tostring(Event.text)))
-  self:E({eventid=Event.id, vec3=Event.pos})
+  self:T2(string.format("Event captured  = %s", tostring(batteryname)))
+  self:T2(string.format("Event id        = %s", tostring(Event.id)))
+  self:T2(string.format("Event time      = %s", tostring(Event.time)))
+  self:T2(string.format("Event idx       = %s", tostring(Event.idx)))
+  self:T2(string.format("Event coalition = %s", tostring(Event.coalition)))
+  self:T2(string.format("Event group id  = %s", tostring(Event.groupID)))
+  self:T2(string.format("Event text      = %s", tostring(Event.text)))
   if Event.initiator~=nil then
     local _unitname=Event.initiator:getName()
     self:T(string.format("Event ini unit name = %s", tostring(_unitname)))
@@ -1589,6 +1586,11 @@ function ARTY:_OnEventMarkChange(Event)
   
       -- Evaluate marker text and extract parameters.
       local _assign=self:_Markertext(Event.text)
+
+      -- Check if ENGAGE or MOVE or REQUEST keywords were found.
+      if _assign==nil or not (_assign.engage or _assign.move or _assign.request) then
+        return
+      end
                     
       -- Check if job is assigned to this ARTY group. Default is for all ARTY groups.
       local _assigned=true
@@ -1606,11 +1608,6 @@ function ARTY:_OnEventMarkChange(Event)
       if not _assigned then
         return
       end
-      
-      -- Check if ENGAGE or MOVE or REQUEST keywords were found.
-      if not (_assign.engage or _assign.move or _assign.request) then
-        return
-      end
             
       -- Check if the authorization key is required and if it is valid.
       local _validkey=self:_MarkerKeyAuthentification(Event.text)
@@ -1620,7 +1617,16 @@ function ARTY:_OnEventMarkChange(Event)
         if _assign.requestammo then
           self:_MarkRequestAmmo()
         end
-        -- Done!
+        if _assign.requestmoves then
+          self:_MarkRequestMoves()
+        end
+        if _assign.requesttargets then
+          self:_MarkRequestTargets()
+        end
+        if _assign.requestrearming then
+          self:Rearm()
+        end        
+        -- Requests Done ==> End of story!
         return
       end
       
@@ -1648,6 +1654,11 @@ function ARTY:_OnEventMarkChange(Event)
         -- Remove old mark because it might contain confidential data such as the key.
         -- Also I don't know who can see the mark which was created.
         _coord:RemoveMark(Event.idx)
+        
+        -- Coordinate was given in text, e.g. as lat, long.
+        if _assign.coord then
+          _coord=_assign.coord
+        end
         
         -- Anticipate marker ID.
         -- WARNING: Make sure, no marks are set until the COORDINATE:MarkToCoalition() is called or the target/move name will be wrong and target cannot be removed by deleting its marker.
@@ -2594,7 +2605,7 @@ end
 function ARTY:_Move(group, ToCoord, Speed, OnRoad)
   
   -- Clear all tasks.
-  group:ClearTasks()
+  --group:ClearTasks()
   group:OptionAlarmStateGreen()
   group:OptionROEHoldFire()
   
@@ -2983,122 +2994,147 @@ function ARTY:_Markertext(text)
   assignment.readonly=false
   assignment.canceltarget=false
   assignment.cancelcurrent=false
-  --assignment.time=nil
-  --assignment.nshells=nil
-  --assignment.prio=nil
-  --assignment.maxengage=nil
-  --assignment.radius=nil
-  --assignment.weapontype=nil
-  --assignment.speed=nil
-  --assignment.onroad=nil
-  --assignment.key=nil
   
-  if text:lower():find("arty") then
-    if text:lower():find("engage") then
-      assignment.engage=true
-    elseif text:lower():find("move") then
-      assignment.move=true
-    elseif text:lower():find("request") then
-      assignment.request=true  
-    else
-      self:E(ARTY.id.."ERROR: Neither ENGAGE nor MOVE keyword specified!")
-      return
-    end
+  -- Check for correct keywords.
+  if text:lower():find("arty engage") or text:lower():find("arty attack") then
+    assignment.engage=true
+  elseif text:lower():find("arty move") or text:lower():find("arty relocate") then
+    assignment.move=true
+  elseif text:lower():find("arty request") then
+    assignment.request=true  
+  else
+    self:E(ARTY.id..'ERROR: Neither "ARTY ENGAGE" nor "ARTY MOVE" nor "ARTY RELOCATE" nor "ARTY REQUEST" keyword specified!')
+    return nil
+  end
     
-    -- keywords are split by "," 
-    local keywords=self:_split(text, ",")
+  -- keywords are split by "," 
+  local keywords=self:_split(text, ",")
+
+  for _,key in pairs(keywords) do
   
-    for _,key in pairs(keywords) do
+    local s=self:_split(key, " ")
+    local val=s[2]
+  
+    -- Battery name, i.e. which ARTY group should fire.
+    if key:lower():find("battery") then
+      
+      local v=self:_split(key, '"')
+      
+      for i=2,#v,2 do        
+        table.insert(assignment.battery, v[i])
+        self:T2(ARTY.id..string.format("Key Battery=%s.", v[i]))
+      end
+                
+    elseif key:lower():find("time") then
     
-      local s=self:_split(key, " ")
-      local val=s[2]
+      if val:lower():find("now") then
+        assignment.time=self:_SecondsToClock(timer.getTime0()+2)
+      else
+        assignment.time=val
+      end        
+      self:T2(ARTY.id..string.format("Key Time=%s.", val))
+      
+    elseif key:lower():find("shot") then
     
-      -- Battery name, i.e. which ARTY group should fire.
-      if key:lower():find("battery") then
+      assignment.nshells=tonumber(s[2])
+      self:T(ARTY.id..string.format("Key Shot=%s.", val))
+      
+    elseif key:lower():find("prio") then
+    
+      assignment.prio=tonumber(val)
+      self:T2(string.format("Key Prio=%s.", val))
+      
+    elseif key:lower():find("maxengage") then
+    
+      assignment.maxengage=tonumber(val)
+      self:T2(ARTY.id..string.format("Key Maxengage=%s.", val))
+      
+    elseif key:lower():find("radius") then
+    
+      assignment.radius=tonumber(val)
+      self:T2(ARTY.id..string.format("Key Radius=%s.", val))
+      
+    elseif key:lower():find("weapon") then
+      
+      if val:lower():find("cannon") then
+        assignment.weapontype=ARTY.WeaponType.Cannon
+      elseif val:lower():find("rocket") then
+        assignment.weapontype=ARTY.WeaponType.Rockets
+      elseif val:lower():find("missile") then
+        assignment.weapontype=ARTY.WeaponType.GuidedMissile
+      elseif val:lower():find("nuke") then
+        assignment.weapontype=ARTY.WeaponType.TacticalNukes
+      else
+        assignment.weapontype=ARTY.WeaponType.Auto
+      end        
+      self:T2(ARTY.id..string.format("Key Weapon=%s.", val))
+      
+    elseif key:lower():find("speed") then
+    
+      assignment.speed=tonumber(val)
+      self:T2(ARTY.id..string.format("Key Speed=%s.", val))
+      
+    elseif key:lower():find("on road") or key:lower():find("onroad") or key:lower():find("use road")then
+    
+      assignment.onroad=true
+      self:T2(ARTY.id..string.format("Key Onroad=true."))
+              
+    elseif key:lower():find("irrevocable") or key:lower():find("readonly") then
+    
+      assignment.readonly=true
+      self:T2(ARTY.id..string.format("Key Readonly=true."))
+
+    elseif key:lower():find("canceltarget") then
+    
+      assignment.canceltarget=true
+      self:T2(ARTY.id..string.format("Key Cancel Target (before move)=true."))
+      
+    elseif key:lower():find("cancelcurrent") then
+    
+      assignment.cancelcurrent=true
+      self:T2(ARTY.id..string.format("Key Cancel Current=true."))
+      
+    elseif assignment.request and key:lower():find("rearm") then
+    
+      assignment.requestrearming=true
+      self:T2(ARTY.id..string.format("Key Request Rearming=true."))
+      
+    elseif assignment.request and key:lower():find("ammo") then
+    
+      assignment.requestammo=true
+      self:T2(ARTY.id..string.format("Key Request Ammo=true."))
+
+    elseif assignment.request and key:lower():find("target") then
+    
+      assignment.requesttargets=true
+      self:T2(ARTY.id..string.format("Key Request Targets=true."))
+      
+    elseif assignment.request and (key:lower():find("move") or key:lower():find("relocation")) then
+    
+      assignment.requestmoves=true
+      self:T2(ARTY.id..string.format("Key Request Moves=true."))
+              
+    elseif key:lower():find("lldms") then
+      
+      local _flat = "%d+:%d+:%d+%s*[N,S]"
+      local _flon = "%d+:%d+:%d+%s*[W,E]"
+      local _lat=key:match(_flat)
+      local _lon=key:match(_flon)
+      self:T2(ARTY.id..string.format("Key LLDMS: lat=%s, long=%s", _lat,_lon))
+      
+      if _lat and _lon then
+      
+        -- Convert DMS string to DD numbers format.
+        local _latitude, _longitude=self:_LLDMS2DD(_lat, _lon)
+        self:T2(ARTY.id..string.format("Key LLDMS: lat=%.3f, long=%.3f", _latitude,_longitude))
         
-        local v=self:_split(key, '"')
-        
-        for i=2,#v,2 do        
-          table.insert(assignment.battery, v[i])
-          self:T2(ARTY.id..string.format("Key Battery=%s.", v[i]))
+        -- Convert LL to coordinate object.
+        if _latitude and _longitude then
+          assignment.coord=COORDINATE:NewFromLLDD(_latitude,_longitude)
         end
                   
-      elseif key:lower():find("time") then
-      
-        if val:lower():find("now") then
-          assignment.time=self:_SecondsToClock(timer.getTime0()+5)
-        else
-          assignment.time=val
-        end        
-        self:T2(ARTY.id..string.format("Key Time=%s.", val))
-        
-      elseif key:lower():find("shot") then
-      
-        assignment.nshells=tonumber(s[2])
-        self:T(ARTY.id..string.format("Key Shot=%s.", val))
-        
-      elseif key:lower():find("prio") then
-      
-        assignment.prio=tonumber(val)
-        self:T2(string.format("Key Prio=%s.", val))
-        
-      elseif key:lower():find("maxengage") then
-      
-        assignment.maxengage=tonumber(val)
-        self:T2(ARTY.id..string.format("Key Maxengage=%s.", val))
-        
-      elseif key:lower():find("radius") then
-      
-        assignment.radius=tonumber(val)
-        self:T2(ARTY.id..string.format("Key Radius=%s.", val))
-        
-      elseif key:lower():find("weapon") then
-        
-        if val:lower():find("cannon") then
-          assignment.weapontype=ARTY.WeaponType.Cannon
-        elseif val:lower():find("rocket") then
-          assignment.weapontype=ARTY.WeaponType.Rockets
-        elseif val:lower():find("missile") then
-          assignment.weapontype=ARTY.WeaponType.GuidedMissile
-        elseif val:lower():find("nuke") then
-          assignment.weapontype=ARTY.WeaponType.TacticalNukes
-        else
-          assignment.weapontype=ARTY.WeaponType.Auto
-        end        
-        self:T2(ARTY.id..string.format("Key Weapon=%s.", val))
-        
-      elseif key:lower():find("speed") then
-      
-        assignment.speed=tonumber(val)
-        self:T2(ARTY.id..string.format("Key Speed=%s.", val))
-        
-      elseif key:lower():find("on road") or key:lower():find("onroad") or key:lower():find("use road")then
-      
-        assignment.onroad=true
-        self:T2(ARTY.id..string.format("Key Onroad=true."))
-                
-      elseif key:lower():find("irrevocable") or key:lower():find("readonly") then
-      
-        assignment.readonly=true
-        self:T2(ARTY.id..string.format("Key Readonly=true."))
-
-      elseif key:lower():find("canceltarget") then
-      
-        assignment.canceltarget=true
-        self:T2(ARTY.id..string.format("Key Cancel Target (before move)=true."))
-        
-      elseif key:lower():find("cancelcurrent") then
-      
-        assignment.cancelcurrent=true
-        self:T2(ARTY.id..string.format("Key Cancel Current=true."))
-        
-      elseif assignment.request and key:lower():find("ammo") then
-        assignment.requestammo=true
-      end       
-      
-    end
-  else
-    self:T2(ARTY.id..string.format("This is NO arty command:\n%s", tostring(text)))
+      end
+    end      
   end
   
   return assignment
@@ -3108,6 +3144,44 @@ end
 -- @param #ARTY self
 function ARTY:_MarkRequestAmmo()
   self:GetAmmo(true)
+end
+
+--- Request Moves.
+-- @param #ARTY self
+function ARTY:_MarkRequestMoves()
+  local text=string.format("%s, relocations:", self.Controllable:GetName())
+  if self.currentMove then
+    text=text..string.format("\n- %s", self:_MoveInfo(self.currentMove))
+  else
+    text=text..string.format("\n- no current relocation")
+  end
+  if #self.moves>0 then
+    for _,move in pairs(self.moves) do
+      text=text..string.format("\n- %s", self:_MoveInfo(move))
+    end
+  else
+    text=text..string.format("\n- no more relocations")
+  end
+  MESSAGE:New(text, 20):Clear():ToCoalition(self.Controllable:GetCoalition())
+end
+
+--- Request Targets.
+-- @param #ARTY self
+function ARTY:_MarkRequestTargets()
+  local text=string.format("%s, targets:", self.Controllable:GetName())
+  if self.currentTarget then
+    text=text..string.format("\n- %s", self:_TargetInfo(self.currentTarget))
+  else
+    text=text..string.format("\n- no current target")
+  end
+  if #self.targets>0 then
+    for _,target in pairs(self.targets) do
+      text=text..string.format("\n- %s", self:_TargetInfo(target))
+    end
+  else
+    text=text..string.format("\n- no more targets")
+  end
+  MESSAGE:New(text, 20):Clear():ToCoalition(self.Controllable:GetCoalition())
 end
 
 --- Create a name for an engagement initiated by placing a marker.
@@ -3320,7 +3394,7 @@ function ARTY:_CheckTargetsInRange()
         MESSAGE:New(_name.." assigned.", 10):ToCoalitionIf(self.Controllable:GetCoalition(), self.report or self.Debug)
         
         -- Assign relocation move.
-        self:AssignMoveCoord(_tocoord, nil, nil, self.autorelocateonroad, false, _name, true)        
+        self:AssignMoveCoord(_tocoord, nil, nil, self.autorelocateonroad, false, _name, true)
         
       end
             
@@ -3714,6 +3788,66 @@ function ARTY:_MoveInfo(move)
   self:F3(move)
   local _clock=self:_SecondsToClock(move.time)
   return string.format("%s: time=%s, speed=%d, onroad=%s, cancel=%s", move.name, _clock, move.speed, tostring(move.onroad), tostring(move.cancel))
+end
+
+--- Convert Latitude and Lontigude from DMS to DD.
+-- @param #ARTY self
+-- @param #string l1 Latitude or longitude as string in the format DD:MM:SS N/S/W/E
+-- @param #string l2 Latitude or longitude as string in the format DD:MM:SS N/S/W/E
+-- @return #number Latitude in decimal degree format.
+-- @return #number Longitude in decimal degree format.
+function ARTY:_LLDMS2DD(l1,l2)
+  self:F2(l1,l2)
+
+  -- Make an array of lat and long.
+  local _latlong={l1,l2}
+  
+  local _latitude=nil
+  local _longitude=nil
+  
+  for _,ll in pairs(_latlong) do
+  
+    -- Format is expected as "DD:MM:SS" or "D:M:S".
+    local _format = "%d+:%d+:%d+"    
+    local _ldms=ll:match(_format)
+    
+    if ldms then
+      
+      -- Split DMS to degrees, minutes and seconds.
+      local _dms=self:_split(_ldms, ":")
+      local _deg=tonumber(_dms[1])
+      local _min=tonumber(_dms[2])
+      local _sec=tonumber(_dms[3])
+      
+      -- Convert DMS to DD.
+      local function DMS2DD(d,m,s)
+       return d+m/60+s/3600
+      end
+  
+      -- Detect with hemisphere is meant.
+      if ll:match("N") then
+        _latitude=DMS2DD(_deg,_min,_sec)
+      elseif ll:match("S") then
+        _latitude=-DMS2DD(_deg,_min,_sec)
+      elseif ll:match("W") then
+        _longitude=-DMS2DD(_deg,_min,_sec)
+      elseif ll:match("E") then
+        _longitude=DMS2DD(_deg,_min,_sec)
+      end
+          
+      -- Debug text.
+      local text=string.format("DMS %02d Deg %02d min %02d sec",_deg,_min,_sec)
+      self:T2(ARTY.id..text)
+
+    end   
+  end
+  
+  -- Debug text.
+  local text=string.format("\nLatitude  %.3f", _latitude)
+  text=text..string.format("\nLongitude %.3f", _longitude)
+  self:T2(ARTY.id..text)
+  
+  return _latitude,_longitude
 end
 
 --- Convert time in seconds to hours, minutes and seconds.
