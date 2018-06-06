@@ -277,8 +277,8 @@
 -- Targets and relocations can be assigned by players via placing a mark on the F10 map. The marker text must contain certain keywords.
 -- 
 -- This feature can be turned on with the @{#ARTY.SetMarkAssignmentsOn}(*key*). The parameter *key* is optional. When set, it can be used as PIN, i.e. only
--- player who know the correct key are able to assign targets or relocations. Default behavior is that all players belonging to the same coalition as the
--- ARTY group are able to assign targets and moves.
+-- players who know the correct key are able to assign and cancel targets or relocations. Default behavior is that all players belonging to the same coalition as the
+-- ARTY group are able to assign targets and moves without a key.
 -- 
 -- ### Target Assignments
 -- A new target can be assigned by writing **arty engage** in the marker text. This can be followed by a comma separated lists of optional keywords and parameters:
@@ -297,7 +297,8 @@
 --      arty engage!
 --      arty engage! shots 20, prio 10, time 08:15, weapon cannons
 --      arty engage! battery "Blue Paladin 1" "Blue MRLS 1", shots 10, time 10:15
---      arty engage! battery "Blue Paladin 1", key 666
+--      arty engage! battery "Blue MRLS 1", key 666
+--      arty engage, battery "Paladin Alpha", weapon nukes, shots 1, time 20:15
 --      
 -- Note that the keywords and parameters are case insensitve. Only exception are the battery group names. These must be exactly the same as the names of the goups defined 
 -- in the mission editor.
@@ -315,9 +316,33 @@
 -- * *readonly* Marker cannot be deleted by users any more. Hence, assignment cannot be cancelled by removing the marker.
 -- 
 -- Here are some examples:
---      arty move! time 23:45, speed 50, onroad, cancel
---      arty move! battery "Blue Paladin", onroad
---      arty move, cancel, speed 10, onroad
+--      arty move
+--      arty move! time 23:45, speed 50, on road
+--      arty move! battery "Blue Paladin"
+--      arty move, battery "Blue MRLS", canceltarget, speed 10, on road
+--      
+-- ### Coordinate Independent Commands
+-- 
+-- There are a couple of commands, which are independent of the position where the marker is placed.
+-- These commands are
+--      arty move, cancelcurrent
+-- which will cancel the current relocation movement. Of course, this can be combined with the *battery* keyword to address a certain battery.
+-- Same goes for targets, e.g.
+--     arty engage, battery "Paladin Alpha", cancelcurrent
+-- which will cancel all running firing tasks.
+-- 
+-- ### General Requests
+-- 
+-- Marks can also be to send requests to the ARTY group. This is done by the keyword **arty request**, which can have the keywords
+-- * *target* All assigned targets are reported.
+-- * *move* All assigned relocation moves are reported.
+-- * *ammo* Current ammunition status is reported.
+-- 
+-- For example
+--      arty request, ammo
+--      arty request, battery "Paladin Bravo", targets
+--      arty request, battery "MRLS Charly", move
+-- 
 -- 
 -- ## Fine Tuning
 -- 
@@ -414,6 +439,7 @@ ARTY={
   Nmissiles0=0,
   Nukes0=0,
   FullAmmo=0,
+  defaultROE="weapon_hold",
   StatusInterval=10,
   WaitForShotTime=300,
   DCSdesc=nil,
@@ -531,7 +557,7 @@ ARTY.id="ARTY | "
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="0.9.93"
+ARTY.version="0.9.94"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -556,6 +582,8 @@ ARTY.version="0.9.93"
 -- TODO: Improve handling of special weapons. When winchester if using selected weapons?
 -- TODO: Handle rearming for ships.
 -- TODO: Make coordinate after rearming general, i.e. also work after the group has moved to anonther location.
+-- TODO: Add set commands via markers. E.g. set rearming place.
+-- TODO: Test stationary types like mortas ==> rearming etc.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -1216,6 +1244,9 @@ function ARTY:onafterStart(Controllable, From, Event, To)
     self:T(ARTY.id..text)
   end
   
+  -- Set default ROE to weapon hold.
+  self.Controllable:OptionROEHoldFire()
+  
   -- Add event handler.
   self:HandleEvent(EVENTS.Shot, self._OnEventShot)
   self:HandleEvent(EVENTS.Dead, self._OnEventDead)
@@ -1246,7 +1277,13 @@ end
 
 --- After "Start" event. Initialized ROE and alarm state. Starts the event handler.
 -- @param #ARTY self
-function ARTY:_StatusReport()
+-- @param #boolean display (Optional) If true, send message to coalition. Default false.
+function ARTY:_StatusReport(display)
+
+  -- Set default.
+  if display==nil then
+    display=false
+  end
 
   -- Get Ammo.
   local Nammo, Nshells, Nrockets, Nmissiles=self:GetAmmo()
@@ -1286,6 +1323,7 @@ function ARTY:_StatusReport()
   end
   text=text..string.format("******************************************************")
   env.info(ARTY.id..text)
+  MESSAGE:New(text, 20):Clear():ToCoalitionIf(self.Controllable:GetCoalition(), display)
   
 end
 
@@ -1623,6 +1661,9 @@ function ARTY:_OnEventMarkChange(Event)
         if _assign.requesttargets then
           self:_MarkRequestTargets()
         end
+        if _assign.requeststatus then
+          self:_MarkRequestStatus()
+        end        
         if _assign.requestrearming then
           self:Rearm()
         end        
@@ -1646,6 +1687,8 @@ function ARTY:_OnEventMarkChange(Event)
       if _validkey then
       
         -- Convert (wrong x-->z, z-->x) vec3
+        -- TODO: This needs to be "fixed", once DCS gives the correct numbers for x and z.
+        -- local vec3={y=Event.pos.y, x=Event.pos.x, z=Event.pos.z}
         local vec3={y=Event.pos.y, x=Event.pos.z, z=Event.pos.x}
         
         -- Get coordinate from vec3.
@@ -1807,6 +1850,7 @@ function ARTY:onafterStatus(Controllable, From, Event, To)
   if self:is("Rearmed") then
     local distance=self.Controllable:GetCoordinate():Get2DDistance(self.InitialCoord)
     self:T2(ARTY.id..string.format("%s: Rearmed. Distance ARTY to InitalCoord = %d m", Controllable:GetName(), distance))
+    -- Check that ARTY group is back and set it to combat ready.
     if distance <= self.RearmingDistance then
       self:T2(ARTY.id..string.format("%s: Rearmed ==> CombatReady", Controllable:GetName()))
       self:CombatReady()
@@ -2062,6 +2106,9 @@ function ARTY:onafterCeaseFire(Controllable, From, Event, To, target)
       self:RemoveTarget(target.name)
     end
     
+    -- Set ROE to weapon hold.
+    self.Controllable:OptionROEHoldFire()
+    
     -- Clear tasks.
     self.Controllable:ClearTasks()
     
@@ -2105,6 +2152,14 @@ end
 function ARTY:onbeforeRearm(Controllable, From, Event, To)
   self:_EventFromTo("onbeforeRearm", Event, From, To)
   
+  local _rearmed=self:_CheckRearmed()
+  if _rearmed then
+    self:T(ARTY.id..string.format("%s, group is already armed to the teeth. Rearming request denied!", self.Controllable:GetName()))
+    return false
+  else
+    self:T(ARTY.id..string.format("%s, group might be rearmed.", self.Controllable:GetName()))
+  end
+  
   -- Check if a reaming unit or rearming place was specified.
   if self.RearmingGroup and self.RearmingGroup:IsAlive() then
     return true
@@ -2127,6 +2182,9 @@ function ARTY:onafterRearm(Controllable, From, Event, To)
   
      -- Coordinate of ARTY unit.
     local coordARTY=self.Controllable:GetCoordinate()
+    
+    -- Remember current coordinates so that we find our way back home.
+    self.InitialCoord=coordARTY
     
     -- Coordinate of rearming group.
     local coordRARM=nil
@@ -2152,7 +2210,9 @@ function ARTY:onafterRearm(Controllable, From, Event, To)
       
       -- Route ARTY group to rearming place.
       if dA > self.RearmingDistance then
-        self:Move(self:_VicinityCoord(self.RearmingPlaceCoord, self.RearmingDistance/4, self.RearmingDistance/2), self.Speed, self.RearmingArtyOnRoad)
+        local _tocoord=self:_VicinityCoord(self.RearmingPlaceCoord, self.RearmingDistance/4, self.RearmingDistance/2)
+        self:AssignMoveCoord(_tocoord, nil, self.Speed, self.RearmingArtyOnRoad, false, "Relocate to rearming place", true)
+        --self:Move(, self.Speed, self.RearmingArtyOnRoad)
       end
       
       -- Route Rearming group to rearming place.
@@ -2193,7 +2253,8 @@ function ARTY:onafterRearm(Controllable, From, Event, To)
       
       -- Route ARTY group to rearming place.
       if dA > self.RearmingDistance then
-        self:Move(self:_VicinityCoord(self.RearmingPlaceCoord), self.Speed, self.RearmingArtyOnRoad)
+        local _tocoord=self:_VicinityCoord(self.RearmingPlaceCoord)
+        self:AssignMoveCoord(_tocoord, nil, self.Speed, self.RearmingArtyOnRoad, false, "Relocate to rearming place", true)
       end    
       
     end
@@ -2222,7 +2283,8 @@ function ARTY:onafterRearmed(Controllable, From, Event, To)
   -- Route ARTY group back to where it came from (if distance is > 100 m).
   local d1=self.Controllable:GetCoordinate():Get2DDistance(self.InitialCoord)
   if d1 > self.RearmingDistance then
-    self:Move(self.InitialCoord, self.Speed, self.RearmingArtyOnRoad)
+    --self:Move(self.InitialCoord, self.Speed, self.RearmingArtyOnRoad)
+    self:AssignMoveCoord(self.InitialCoord, nil, self.Speed, self.RearmingArtyOnRoad, false, "After rearm back to initial pos", true)
   end
   
   -- Route unit back to where it came from (if distance is > 100 m).
@@ -2369,9 +2431,6 @@ end
 -- @return #boolean If true, proceed to onafterOpenfire.
 function ARTY:onafterNewTarget(Controllable, From, Event, To, target)
   self:_EventFromTo("onafterNewTarget", Event, From, To)
-  
-  -- Check if target is in range.
-  --local _inrange, _toofar, _tooclose=self:_TargetInRange(target, self.report or self.Debug)
   
   -- Debug message.
   local text=string.format("Adding new target %s.", target.name)
@@ -2569,7 +2628,7 @@ function ARTY:_NuclearBlast(_coord)
       -- Distance from group to impact point.
       local distance= spos:Get2DDistance(_coord)
 
-      -- Place markers on every possible scenery object.      
+      -- Place markers on every possible scenery object.
       if self.Debug then
         local MarkerID=spos:MarkToAll(string.format("%s scenery object %s", self.Controllable:GetName(), SceneryObject:GetTypeName()))
         local text=string.format("%s scenery: %s, Coord %s", self.Controllable:GetName(), SceneryObject:GetTypeName(), SceneryObject:GetCoordinate():ToStringLLDMS())
@@ -3009,6 +3068,7 @@ function ARTY:_Markertext(text)
     
   -- keywords are split by "," 
   local keywords=self:_split(text, ",")
+  self:T({keywords=keywords})
 
   for _,key in pairs(keywords) do
   
@@ -3025,7 +3085,7 @@ function ARTY:_Markertext(text)
         self:T2(ARTY.id..string.format("Key Battery=%s.", v[i]))
       end
                 
-    elseif key:lower():find("time") then
+    elseif (assignment.engage or assignment.move) and key:lower():find("time") then
     
       if val:lower():find("now") then
         assignment.time=self:_SecondsToClock(timer.getTime0()+2)
@@ -3034,27 +3094,27 @@ function ARTY:_Markertext(text)
       end        
       self:T2(ARTY.id..string.format("Key Time=%s.", val))
       
-    elseif key:lower():find("shot") then
+    elseif assignment.engage and key:lower():find("shot") then
     
       assignment.nshells=tonumber(s[2])
       self:T(ARTY.id..string.format("Key Shot=%s.", val))
       
-    elseif key:lower():find("prio") then
+    elseif assignment.engage and key:lower():find("prio") then
     
       assignment.prio=tonumber(val)
       self:T2(string.format("Key Prio=%s.", val))
       
-    elseif key:lower():find("maxengage") then
+    elseif assignment.engage and key:lower():find("maxengage") then
     
       assignment.maxengage=tonumber(val)
       self:T2(ARTY.id..string.format("Key Maxengage=%s.", val))
       
-    elseif key:lower():find("radius") then
+    elseif assignment.engage and key:lower():find("radius") then
     
       assignment.radius=tonumber(val)
       self:T2(ARTY.id..string.format("Key Radius=%s.", val))
       
-    elseif key:lower():find("weapon") then
+    elseif assignment.engage and key:lower():find("weapon") then
       
       if val:lower():find("cannon") then
         assignment.weapontype=ARTY.WeaponType.Cannon
@@ -3069,12 +3129,12 @@ function ARTY:_Markertext(text)
       end        
       self:T2(ARTY.id..string.format("Key Weapon=%s.", val))
       
-    elseif key:lower():find("speed") then
+    elseif assignment.move and key:lower():find("speed") then
     
       assignment.speed=tonumber(val)
       self:T2(ARTY.id..string.format("Key Speed=%s.", val))
       
-    elseif key:lower():find("on road") or key:lower():find("onroad") or key:lower():find("use road")then
+    elseif assignment.move and (key:lower():find("on road") or key:lower():find("onroad") or key:lower():find("use road")) then
     
       assignment.onroad=true
       self:T2(ARTY.id..string.format("Key Onroad=true."))
@@ -3084,12 +3144,12 @@ function ARTY:_Markertext(text)
       assignment.readonly=true
       self:T2(ARTY.id..string.format("Key Readonly=true."))
 
-    elseif key:lower():find("canceltarget") then
+    elseif assignment.move and key:lower():find("canceltarget") then
     
       assignment.canceltarget=true
       self:T2(ARTY.id..string.format("Key Cancel Target (before move)=true."))
       
-    elseif key:lower():find("cancelcurrent") then
+    elseif (assignment.engage or assignment.move) and key:lower():find("cancelcurrent") then
     
       assignment.cancelcurrent=true
       self:T2(ARTY.id..string.format("Key Cancel Current=true."))
@@ -3108,7 +3168,12 @@ function ARTY:_Markertext(text)
     
       assignment.requesttargets=true
       self:T2(ARTY.id..string.format("Key Request Targets=true."))
-      
+
+    elseif assignment.request and key:lower():find("status") then
+    
+      assignment.requeststatus=true
+      self:T2(ARTY.id..string.format("Key Request Status=true."))
+
     elseif assignment.request and (key:lower():find("move") or key:lower():find("relocation")) then
     
       assignment.requestmoves=true
@@ -3140,27 +3205,32 @@ function ARTY:_Markertext(text)
   return assignment
 end
 
---- Request ammo.
+--- Request ammo via mark.
 -- @param #ARTY self
 function ARTY:_MarkRequestAmmo()
   self:GetAmmo(true)
+end
+
+--- Request status via mark.
+-- @param #ARTY self
+function ARTY:_MarkRequestStatus()
+  self:_StatusReport(true)
 end
 
 --- Request Moves.
 -- @param #ARTY self
 function ARTY:_MarkRequestMoves()
   local text=string.format("%s, relocations:", self.Controllable:GetName())
-  if self.currentMove then
-    text=text..string.format("\n- %s", self:_MoveInfo(self.currentMove))
-  else
-    text=text..string.format("\n- no current relocation")
-  end
   if #self.moves>0 then
     for _,move in pairs(self.moves) do
-      text=text..string.format("\n- %s", self:_MoveInfo(move))
+      if self.currentMove and move.name == self.currentMove.name then
+        text=text..string.format("\n- %s (current)", self:_MoveInfo(move))
+      else
+        text=text..string.format("\n- %s", self:_MoveInfo(move))
+      end
     end
   else
-    text=text..string.format("\n- no more relocations")
+    text=text..string.format("\n- no queued relocations")
   end
   MESSAGE:New(text, 20):Clear():ToCoalition(self.Controllable:GetCoalition())
 end
@@ -3169,17 +3239,16 @@ end
 -- @param #ARTY self
 function ARTY:_MarkRequestTargets()
   local text=string.format("%s, targets:", self.Controllable:GetName())
-  if self.currentTarget then
-    text=text..string.format("\n- %s", self:_TargetInfo(self.currentTarget))
-  else
-    text=text..string.format("\n- no current target")
-  end
   if #self.targets>0 then
     for _,target in pairs(self.targets) do
-      text=text..string.format("\n- %s", self:_TargetInfo(target))
+      if self.currentTarget and target.name == self.currentTarget.name then
+        text=text..string.format("\n- %s (current)", self:_TargetInfo(target))
+      else
+        text=text..string.format("\n- %s", self:_TargetInfo(target))
+      end
     end
   else
-    text=text..string.format("\n- no more targets")
+    text=text..string.format("\n- no queued targets")
   end
   MESSAGE:New(text, 20):Clear():ToCoalition(self.Controllable:GetCoalition())
 end
@@ -3200,7 +3269,7 @@ function ARTY:_MarkMoveName(markerid)
   return string.format("BATTERY=%s, Marked Relocation ID=%d", self.Controllable:GetName(), markerid)
 end
 
---- Create a name for a relocation move initiated by placing a marker.
+--- Get the marker ID from the assigned task name.
 -- @param #ARTY self
 -- @param #string name Name of the assignment.
 -- @return #string Name of the ARTY group or nil
@@ -3552,14 +3621,14 @@ function ARTY:_GetTargetIndexByName(name)
   
   for i=1,#self.targets do
     local targetname=self.targets[i].name
-    self:T(ARTY.id..string.format("Have target with name %s. Index = %d", targetname, i))
+    self:T3(ARTY.id..string.format("Have target with name %s. Index = %d", targetname, i))
     if targetname==name then
-      self:T(ARTY.id..string.format("Found target with name %s. Index = %d", name, i))
+      self:T2(ARTY.id..string.format("Found target with name %s. Index = %d", name, i))
       return i
     end
   end
   
-  self:E(ARTY.id..string.format("ERROR: Target with name %s could not be found!", name))
+  self:T2(ARTY.id..string.format("WARNING: Target with name %s could not be found. (This can happen.)", name))
   return nil
 end
 
@@ -3572,13 +3641,14 @@ function ARTY:_GetMoveIndexByName(name)
   
   for i=1,#self.moves do
     local movename=self.moves[i].name
+    self:T3(ARTY.id..string.format("Have move with name %s. Index = %d", movename, i))
     if movename==name then
       self:T2(ARTY.id..string.format("Found move with name %s. Index = %d", name, i))
       return i
     end
   end
   
-  self:E(ARTY.id..string.format("ERROR: Move with name %s could not be found!", name))
+  self:T2(ARTY.id..string.format("WARNING: Move with name %s could not be found. (This can happen.)", name))
   return nil
 end
 
@@ -3739,7 +3809,7 @@ function ARTY:_VicinityCoord(coord, rmin, rmax)
   local vec2=coord:GetRandomVec2InRadius(rmax, rmin)
   local pops=COORDINATE:NewFromVec2(vec2)
   -- Debug info.
-  self:T(ARTY.id..string.format("Vicinity distance = %d (rmin=%d, rmax=%d)", pops:Get2DDistance(coord), rmin, rmax))
+  self:T3(ARTY.id..string.format("Vicinity distance = %d (rmin=%d, rmax=%d)", pops:Get2DDistance(coord), rmin, rmax))
   return pops
 end
 
