@@ -2290,7 +2290,7 @@ end
 function MessageToBlue( MsgText, MsgTime, MsgName )
 --trace.f()
 
-	MESSAGE:New( MsgText, MsgTime, "To Blue Coalition" ):ToCoalition( coalition.side.RED )
+	MESSAGE:New( MsgText, MsgTime, "To Blue Coalition" ):ToCoalition( coalition.side.BLUE )
 end
 
 function getCarrierHeight( CarrierGroup )
