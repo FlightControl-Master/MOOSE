@@ -2,17 +2,20 @@
 -- 
 -- ===
 -- 
--- The ARTY class can be used to easily assign and manage targets for artillery units.
+-- The ARTY class can be used to easily assign and manage targets for artillery units using an advanced queueing system.
 -- 
 -- ## Features:
 -- 
 -- * Multiple targets can be assigned. No restriction on number of targets.
 -- * Targets can be given a priority. Engagement of targets is executed a according to their priority.
 -- * Engagements can be scheduled, i.e. will be executed at a certain time of the day.
+-- * Multiple relocations of the group can be assigned and scheduled via queueing system. 
 -- * Special weapon types can be selected for each attack, e.g. cruise missiles for Naval units.
--- * Automatic rearming once the artillery is out of ammo.
+-- * Automatic rearming once the artillery is out of ammo (optional).
+-- * Automatic relocation after each firing engagement to prevent counter strikes (optional).
+-- * Automatic relocation movements to get the battery within firing range (optional).
+-- * Simulation of tactical nuclear shells.
 -- * New targets can be added during the mission, e.g. when they are detected by recon units.
--- * Modeling of tactical nuclear shells.
 -- * Targets and relocations can be assigned by placing markers on the F10 map.
 -- * Finite state machine implementation. Mission designer can interact when certain events occur.
 -- 
@@ -276,31 +279,31 @@
 -- 
 -- Targets and relocations can be assigned by players via placing a mark on the F10 map. The marker text must contain certain keywords.
 -- 
--- This feature can be turned on with the @{#ARTY.SetMarkAssignmentsOn}(*key*). The parameter *key* is optional. When set, it can be used as PIN, i.e. only
+-- This feature can be turned on with the @{#ARTY.SetMarkAssignmentsOn}(*key*, *readonly*). The parameter *key* is optional. When set, it can be used as PIN, i.e. only
 -- players who know the correct key are able to assign and cancel targets or relocations. Default behavior is that all players belonging to the same coalition as the
 -- ARTY group are able to assign targets and moves without a key.
 -- 
 -- ### Target Assignments
--- A new target can be assigned by writing **arty engage** in the marker text. This can be followed by a comma separated lists of optional keywords and parameters:
+-- A new target can be assigned by writing **arty engage** in the marker text. This can be followed by a **comma separated list** of optional keywords and parameters:
 -- 
 -- * *time* Time for which which the engagement is schedules, e.g. 08:42. Default is as soon as possible.
--- * *prio*  Priority of the engagement as number between 1 (high prio) and 100 (low prio). Default is 50.
+-- * *prio*  Priority of the engagement as number between 1 (high prio) and 100 (low prio). Default is 50, i.e. medium priority.
 -- * *shots* Number of shots (shells, rockets or missiles) fired at each engagement. Default is 5.
 -- * *maxengage* Number of times the target is engaged. Default is 1.
 -- * *radius* Scattering radius of the fired shots in meters. Default is 100 m.
 -- * *weapon* Type of weapon to be used. Valid parameters are *cannon*, *rocket*, *missile*, *nuke*. Default is automatic selection.
--- * *battery* Name of the ARTY group that the target is assigned to. Note that the name is case sensitive and has to be given in quotation marks. Default is all ARTY groups of the right coalition.
+-- * *battery* Name of the ARTY group that the target is assigned to. Note that **the name is case sensitive** and has to be given in quotation marks. Default is all ARTY groups of the right coalition.
 -- * *key* A number to authorize the target assignment. Only specifing the correct number will trigger an engagement.
--- * *readonly* Marker cannot be deleted by users any more. Hence, assignment cannot be cancelled by removing the marker.
+-- * *readonly* The marker is readonly and cannot be deleted by users. Hence, assignment cannot be cancelled by removing the marker.
 -- 
 -- Here are examples of valid marker texts:
---      arty engage!
---      arty engage! shots 20, prio 10, time 08:15, weapon cannons
---      arty engage! battery "Blue Paladin 1" "Blue MRLS 1", shots 10, time 10:15
---      arty engage! battery "Blue MRLS 1", key 666
+--      arty engage
+--      arty engage, shots 20, prio 10, time 08:15, weapon cannons
+--      arty engage, battery "Blue Paladin 1" "Blue MRLS 1", shots 10, time 10:15
+--      arty engage, battery "Blue MRLS 1", key 666
 --      arty engage, battery "Paladin Alpha", weapon nukes, shots 1, time 20:15
 --      
--- Note that the keywords and parameters are case insensitve. Only exception are the battery group names. These must be exactly the same as the names of the goups defined 
+-- Note that the keywords and parameters are *case insensitve*. Only exception are the battery group names. These must be exactly the same as the names of the goups defined 
 -- in the mission editor.
 -- 
 -- ### Relocation Assignments
@@ -317,8 +320,8 @@
 -- 
 -- Here are some examples:
 --      arty move
---      arty move! time 23:45, speed 50, on road
---      arty move! battery "Blue Paladin"
+--      arty move, time 23:45, speed 50, on road
+--      arty move, battery "Blue Paladin"
 --      arty move, battery "Blue MRLS", canceltarget, speed 10, on road
 --      
 -- ### Coordinate Independent Commands
@@ -334,6 +337,7 @@
 -- ### General Requests
 -- 
 -- Marks can also be to send requests to the ARTY group. This is done by the keyword **arty request**, which can have the keywords
+-- 
 -- * *target* All assigned targets are reported.
 -- * *move* All assigned relocation moves are reported.
 -- * *ammo* Current ammunition status is reported.
@@ -348,6 +352,8 @@
 -- 
 -- The mission designer has a few options to tailor the ARTY object according to his needs.
 -- 
+-- * @{#ARTY.SetAutomaticRelocate}(*maxdist*, *onroad*) lets the ARTY group automatically move to within firing range if a current target is outside the min/max firing range. The 
+-- optional parameter *maxdist* is the maximum distance im km the group will move. If the distance is greater no relocation is performed. Default is 50 km.
 -- * @{#ARTY.SetRelocateAfterEngagement}() will cause the ARTY group to change its position after each firing assignment. 
 -- * @{#ARTY.SetRelocateDistance}(*rmax*, *rmin*) sets the max/min distance for relocation of the group. Default distance is randomly between 300 and 800 m.
 -- * @{#ARTY.RemoveAllTargets}() removes all targets from the target queue.
@@ -1423,36 +1429,7 @@ function ARTY:_OnEventShot(EventData)
         local _weapontype=self:_WeaponTypeName(self.currentTarget.weapontype)
         self:T(ARTY.id..string.format("Group %s ammo: total=%d, shells=%d, rockets=%d, missiles=%d", self.Controllable:GetName(), _nammo, _nshells, _nrockets, _nmissiles))
         self:T(ARTY.id..string.format("Group %s uses weapontype %s for current target.", self.Controllable:GetName(), _weapontype))        
-        
-        -- Special weapon type requested ==> Check if corresponding ammo is empty.
-        local _partlyoutofammo=false
-        if self.currentTarget.weapontype==ARTY.WeaponType.Cannon and _nshells==0 then
-        
-          self:T(ARTY.id..string.format("Group %s, cannons requested but shells empty.", self.Controllable:GetName()))
-          _partlyoutofammo=true
-        
-        elseif self.currentTarget.weapontype==ARTY.WeaponType.TacticalNukes and self.Nukes<=0 then
-
-          self:T(ARTY.id..string.format("Group %s, tactical nukes requested but nukes empty.", self.Controllable:GetName()))
-          _partlyoutofammo=true
-        
-        elseif self.currentTarget.weapontype==ARTY.WeaponType.Rockets and _nrockets==0 then
-
-          self:T(ARTY.id..string.format("Group %s, rockets requested but rockets empty.", self.Controllable:GetName()))
-          _partlyoutofammo=true
-        
-        elseif self.currentTarget.weapontype==ARTY.WeaponType.UnguidedAny and _nshells+_nrockets==0 then
-        
-          self:T(ARTY.id..string.format("Group %s, unguided weapon requested but shells AND rockets empty.", self.Controllable:GetName()))
-          _partlyoutofammo=true
-        
-        elseif (self.currentTarget.weapontype==ARTY.WeaponType.GuidedMissile or self.currentTarget.weapontype==ARTY.WeaponType.CruiseMissile or self.currentTarget.weapontype==ARTY.WeaponType.AntiShipMissile) and _nmissiles==0 then
-        
-          self:T(ARTY.id..string.format("Group %s, guided, anti-ship or cruise missiles requested but all missiles empty.", self.Controllable:GetName()))
-          _partlyoutofammo=true
-          
-        end        
-       
+              
         -- Check if number of shots reached max.
         local _ceasefire=false
         local _relocate=false
@@ -1468,6 +1445,10 @@ function ARTY:_OnEventShot(EventData)
             _relocate=true
           end
         end
+        
+        -- Check if we are partly out of ammo.
+        -- TODO: move this to status.
+        local _partlyoutofammo=self:_CheckOutOfAmmo()
         
         -- Check if we are (partly) out of ammo.
         if _outofammo or _partlyoutofammo then
@@ -1495,6 +1476,51 @@ function ARTY:_OnEventShot(EventData)
       end        
     end
   end
+end
+
+--- Check if group is (partly) out of ammo.
+-- @param #ARTY self
+-- @return @boolean True if any target in the queue requests a weapon type that is null.
+function ARTY:_CheckOutOfAmmo()
+
+  -- Get current ammo.
+  local _nammo,_nshells,_nrockets,_nmissiles=self:GetAmmo()
+
+   -- Special weapon type requested ==> Check if corresponding ammo is empty.
+  local _partlyoutofammo=false
+  
+  for _,Target in pairs(self.targets) do
+  
+    if Target.weapontype==ARTY.WeaponType.Cannon and _nshells==0 then
+    
+      self:T(ARTY.id..string.format("Group %s, cannons requested but shells empty.", self.Controllable:GetName()))
+      _partlyoutofammo=true
+    
+    elseif Target.weapontype==ARTY.WeaponType.TacticalNukes and self.Nukes<=0 then
+    
+      self:T(ARTY.id..string.format("Group %s, tactical nukes requested but nukes empty.", self.Controllable:GetName()))
+      _partlyoutofammo=true
+    
+    elseif Target.weapontype==ARTY.WeaponType.Rockets and _nrockets==0 then
+    
+      self:T(ARTY.id..string.format("Group %s, rockets requested but rockets empty.", self.Controllable:GetName()))
+      _partlyoutofammo=true
+    
+    elseif Target.weapontype==ARTY.WeaponType.UnguidedAny and _nshells+_nrockets==0 then
+    
+      self:T(ARTY.id..string.format("Group %s, unguided weapon requested but shells AND rockets empty.", self.Controllable:GetName()))
+      _partlyoutofammo=true
+    
+    elseif (Target.weapontype==ARTY.WeaponType.GuidedMissile or Target.weapontype==ARTY.WeaponType.CruiseMissile or Target.weapontype==ARTY.WeaponType.AntiShipMissile) and _nmissiles==0 then
+    
+      self:T(ARTY.id..string.format("Group %s, guided, anti-ship or cruise missiles requested but all missiles empty.", self.Controllable:GetName()))
+      _partlyoutofammo=true
+      
+    end
+            
+  end
+  
+  return _partlyoutofammo
 end
 
 --- After "Start" event. Initialized ROE and alarm state. Starts the event handler.
@@ -2319,15 +2345,15 @@ function ARTY:_CheckRearmed()
   -- Rearming status in per cent.
   local _rearmpc=nammo/self.FullAmmo*100
   
-  -- Send message.
+  -- Send message if rearming > 1% complete
   if _rearmpc>1 then
-    local text=string.format("%s, rearming %d %% complete.", self.Controllable:GetName(), _rearmpc)
+    local text=string.format("%s, rearming %d %% complete. nammo=%d , fullammo=%d", self.Controllable:GetName(), _rearmpc, nammo, self.FullAmmo)
     self:T(ARTY.id..text)
     MESSAGE:New(text, 10):ToCoalitionIf(self.Controllable:GetCoalition(), self.report or self.Debug)
   end
       
   -- Return if ammo is full.
-  if nammo==self.FullAmmo then
+  if nammo>=self.FullAmmo then
     return true
   else
     return false
@@ -2664,7 +2690,7 @@ end
 function ARTY:_Move(group, ToCoord, Speed, OnRoad)
   
   -- Clear all tasks.
-  --group:ClearTasks()
+  group:ClearTasks()
   group:OptionAlarmStateGreen()
   group:OptionROEHoldFire()
   
@@ -2681,7 +2707,7 @@ function ARTY:_Move(group, ToCoord, Speed, OnRoad)
   Speed=math.min(Speed, SpeedMax)
   
   -- Current coordinates of group.
-  local cpini=group:GetCoordinate()
+  local cpini=group:GetCoordinate() -- Core.Point#COORDINATE
   
   -- Distance between current and final point. 
   local dist=cpini:Get2DDistance(ToCoord)
@@ -2698,8 +2724,17 @@ function ARTY:_Move(group, ToCoord, Speed, OnRoad)
   if OnRoad then
 
     -- Path on road (only first and last points)
-    local _first=cpini:GetClosestPointToRoad()
-    local _last=ToCoord:GetClosestPointToRoad()
+    --local _first=cpini:GetClosestPointToRoad()
+    --local _last=ToCoord:GetClosestPointToRoad()
+    
+    local _pathonroad=cpini:GetPathOnRoad(ToCoord)
+    local _first=_pathonroad[1]
+    local _last=_pathonroad[#_pathonroad]
+
+    if self.Debug then
+      _first:SmokeBlue()
+      _last:SmokeBlue()
+    end
     
     -- First point on road.
     path[#path+1]=_first:WaypointGround(Speed, "On Road")
@@ -2715,6 +2750,10 @@ function ARTY:_Move(group, ToCoord, Speed, OnRoad)
   path[#path+1]=ToCoord:WaypointGround(Speed, formation)
   task[#task+1]=group:TaskFunction("ARTY._PassingWaypoint", self, #path-1, true)
   
+  if self.Debug then
+    cpini:SmokeBlue()
+    ToCoord:SmokeBlue()
+  end
   
   -- Init waypoints of the group.
   local Waypoints={}

@@ -957,26 +957,25 @@ do -- COORDINATE
   -- The first point is the closest point on road of the given coordinate. The last point is the closest point on road of the ToCoord. Hence, the coordinate itself and the final ToCoord are not necessarily included in the path.
   -- @param #COORDINATE self
   -- @param #COORDINATE ToCoord Coordinate of destination.
-  -- @return #table Table of coordinates on road.
+  -- @return #table Table of coordinates on road. If no path on road can be found, nil is returned.
   function COORDINATE:GetPathOnRoad(ToCoord)
 
     -- DCS API function returning a table of vec2.
     local path = land.findPathOnRoads("roads", self.x, self.z, ToCoord.x, ToCoord.z)
     
-    --Path[#Path+1]=COORDINATE:NewFromVec2(path[1])
-    --Path[#Path+1]=COORDINATE:NewFromVec2(path[#path])
-    --Path[#Path+1]=self:GetClosestPointToRoad()
-    --Path[#Path+1]=ToCoord:GetClosestPointToRoad()
-    -- I've removed this stuff because it severely slows down DCS in case of paths with a lot of segments.
-    -- Just the beginning and the end point is sufficient.
-    
     local Path={}
-    --Path[#Path+1]=self
-    for i, v in ipairs(path) do
-      Path[#Path+1]=COORDINATE:NewFromVec2(v)
-    end
-    --Path[#Path+1]=ToCoord
     
+    if path then
+      --Path[#Path+1]=self
+      for i, v in ipairs(path) do
+        Path[#Path+1]=COORDINATE:NewFromVec2(v)
+      end
+      --Path[#Path+1]=ToCoord
+    else
+      -- There are cases where no path on road can be found.
+      return nil
+    end
+        
     return Path
   end
 
