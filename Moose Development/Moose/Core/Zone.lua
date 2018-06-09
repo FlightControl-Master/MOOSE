@@ -961,7 +961,7 @@ end
 
 --- # ZONE_UNIT class, extends @{Zone#ZONE_RADIUS}
 -- 
--- The ZONE_UNIT class defined by a zone around a @{Unit#UNIT} with a radius.
+-- The ZONE_UNIT class defined by a zone attached to a @{Unit#UNIT} with a radius and optional x and y offsets.
 -- This class implements the inherited functions from @{#ZONE_RADIUS} taking into account the own zone format and properties.
 -- 
 -- @field #ZONE_UNIT
@@ -969,14 +969,21 @@ ZONE_UNIT = {
   ClassName="ZONE_UNIT",
   }
   
---- Constructor to create a ZONE_UNIT instance, taking the zone name, a zone unit and a radius.
+--- Constructor to create a ZONE_UNIT instance, taking the zone name, a zone unit and a radius and optional offsets in X and Y directions.
 -- @param #ZONE_UNIT self
 -- @param #string ZoneName Name of the zone.
 -- @param Wrapper.Unit#UNIT ZoneUNIT The unit as the center of the zone.
 -- @param Dcs.DCSTypes#Distance Radius The radius of the zone.
+-- @param Dcs.DCSTypes#Distance dx The offset in X direction, +x is north.
+-- @param Dcs.DCSTypes#Distance dy The offset in Y direction, +y is east.
 -- @return #ZONE_UNIT self
-function ZONE_UNIT:New( ZoneName, ZoneUNIT, Radius )
+function ZONE_UNIT:New( ZoneName, ZoneUNIT, Radius, dx, dy )
+
+  self.dy = dy or 0.0
+  self.dx = dx or 0.0
+  
   local self = BASE:Inherit( self, ZONE_RADIUS:New( ZoneName, ZoneUNIT:GetVec2(), Radius ) )
+
   self:F( { ZoneName, ZoneUNIT:GetVec2(), Radius } )
 
   self.ZoneUNIT = ZoneUNIT
@@ -988,12 +995,18 @@ end
 
 --- Returns the current location of the @{Unit#UNIT}.
 -- @param #ZONE_UNIT self
--- @return Dcs.DCSTypes#Vec2 The location of the zone based on the @{Unit#UNIT}location.
+-- @return Dcs.DCSTypes#Vec2 The location of the zone based on the @{Unit#UNIT}location and the offset, if any.
 function ZONE_UNIT:GetVec2()
   self:F2( self.ZoneName )
   
   local ZoneVec2 = self.ZoneUNIT:GetVec2()
   if ZoneVec2 then
+    env.info(self.dx .. " " .. self.dy)
+    
+    -- update the zone position with the offsets.
+    ZoneVec2.x = ZoneVec2.x + self.dx
+    ZoneVec2.y = ZoneVec2.y + self.dy
+    
     self.LastVec2 = ZoneVec2
     return ZoneVec2
   else
