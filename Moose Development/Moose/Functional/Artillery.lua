@@ -55,7 +55,6 @@
 -- @field #number Nrockets0 Initial amount of rockets of the whole group.
 -- @field #number Nmissiles0 Initial amount of missiles of the whole group.
 -- @field #number Nukes0 Initial amount of tactical nukes of the whole group. Default is 0.
--- @field #number FullAmmo Full amount of all ammunition taking the number of alive units into account.
 -- @field #number StatusInterval Update interval in seconds between status updates. Default 10 seconds.
 -- @field #number WaitForShotTime Max time in seconds to wait until fist shot event occurs after target is assigned. If time is passed without shot, the target is deleted. Default is 300 seconds.
 -- @field #table DCSdesc DCS descriptors of the ARTY group.
@@ -63,6 +62,8 @@
 -- @field #string DisplayName Extended type name of the ARTY group.
 -- @field #number IniGroupStrength Inital number of units in the ARTY group.
 -- @field #boolean IsArtillery If true, ARTY group has attribute "Artillery". This is automatically derived from the DCS descriptor table.
+-- @field #boolean ismobile If true, ARTY group can move.
+-- @field #string alias Name of the ARTY group.
 -- @field #number SpeedMax Maximum speed of ARTY group in km/h. This is determined from the DCS descriptor table.
 -- @field #number Speed Default speed in km/h the ARTY group moves at. Maximum speed possible is 80% of maximum speed the group can do.
 -- @field #number RearmingDistance Safe distance in meters between ARTY group and rearming group or place at which rearming is possible. Default 100 m.
@@ -221,8 +222,6 @@
 -- * @{#ARTY.WeaponType}.Auto: Automatic weapon selection by the DCS logic. This is the default setting.
 -- * @{#ARTY.WeaponType}.Cannon: Only cannons are used during the attack. Corresponding ammo type are shells and can be defined by @{#ARTY.SetShellTypes}.
 -- * @{#ARTY.WeaponType}.Rockets: Only unguided are used during the attack. Corresponding ammo type are rockets/nurs and can be defined by @{#ARTY.SetRocketTypes}.
--- * @{#ARTY.WeaponType}.UnguidedAny: Any unguided weapon (cannons or rockes) will be used.
--- * @{#ARTY.WeaponType}.GuidedMissile: Any guided missiles are used during the attack. Corresponding ammo type are missiles and can be defined by @{#ARTY.SetMissileTypes}.
 -- * @{#ARTY.WeaponType}.CruiseMissile: Only cruise missiles are used during the attack. Corresponding ammo type are missiles and can be defined by @{#ARTY.SetMissileTypes}.
 -- * @{#ARTY.WeaponType}.TacticalNukes: Use tactical nuclear shells. This works only with units that have shells and is described below.
 -- 
@@ -294,6 +293,8 @@
 -- * *weapon* Type of weapon to be used. Valid parameters are *cannon*, *rocket*, *missile*, *nuke*. Default is automatic selection.
 -- * *battery* Name of the ARTY group that the target is assigned to. Note that **the name is case sensitive** and has to be given in quotation marks. Default is all ARTY groups of the right coalition.
 -- * *key* A number to authorize the target assignment. Only specifing the correct number will trigger an engagement.
+-- * *lldms* Specify the coordinates in Lat/Long degrees, minutes and seconds format. The actual location of the marker is unimportant here. The group will engage the coordinates given in the lldms keyword.
+-- Format is DD:MM:SS[N,S] DD:MM:SS[W,E]. See example below. This can be useful when coordinates in this format are obtained from elsewhere.
 -- * *readonly* The marker is readonly and cannot be deleted by users. Hence, assignment cannot be cancelled by removing the marker.
 -- 
 -- Here are examples of valid marker texts:
@@ -302,6 +303,7 @@
 --      arty engage, battery "Blue Paladin 1" "Blue MRLS 1", shots 10, time 10:15
 --      arty engage, battery "Blue MRLS 1", key 666
 --      arty engage, battery "Paladin Alpha", weapon nukes, shots 1, time 20:15
+--      arty engage, lldms 41:51:00N 41:47:58E
 --      
 -- Note that the keywords and parameters are *case insensitve*. Only exception are the battery group names. These must be exactly the same as the names of the goups defined 
 -- in the mission editor.
@@ -316,6 +318,8 @@
 -- * *canceltarget* Group will cancel all running firing engagements and immidiately start to move. Default is that group will wait until is current assignment is over.
 -- * *battery* Name of the ARTY group that the relocation is assigned to.
 -- * *key* A number to authorize the target assignment. Only specifing the correct number will trigger an engagement.
+-- * *lldms* Specify the coordinates in Lat/Long degrees, minutes and seconds format. The actual location of the marker is unimportant. The group will move to the coordinates given in the lldms keyword.
+-- Format is DD:MM:SS[N,S] DD:MM:SS[W,E]. See example below. 
 -- * *readonly* Marker cannot be deleted by users any more. Hence, assignment cannot be cancelled by removing the marker.
 -- 
 -- Here are some examples:
@@ -323,18 +327,9 @@
 --      arty move, time 23:45, speed 50, on road
 --      arty move, battery "Blue Paladin"
 --      arty move, battery "Blue MRLS", canceltarget, speed 10, on road
+--      arty move, lldms 41:51:00N 41:47:58E
 --      
--- ### Coordinate Independent Commands
--- 
--- There are a couple of commands, which are independent of the position where the marker is placed.
--- These commands are
---      arty move, cancelcurrent
--- which will cancel the current relocation movement. Of course, this can be combined with the *battery* keyword to address a certain battery.
--- Same goes for targets, e.g.
---     arty engage, battery "Paladin Alpha", cancelcurrent
--- which will cancel all running firing tasks.
--- 
--- ### General Requests
+-- ### Requests
 -- 
 -- Marks can also be to send requests to the ARTY group. This is done by the keyword **arty request**, which can have the keywords
 -- 
@@ -346,6 +341,17 @@
 --      arty request, ammo
 --      arty request, battery "Paladin Bravo", targets
 --      arty request, battery "MRLS Charly", move
+-- 
+-- The actual location of the marker is irrelevant for these requests.
+-- 
+-- ### Cancel
+-- 
+-- Current actions can be cancelled by the keyword **arty cancel**. Actions that can be cancelled are current engagements, relocations and rearming assignments.
+-- 
+-- For example
+--      arty cancel, target, battery "Paladin Bravo"
+--      arty cancel, move
+--      arty cancel, rearming, battery "MRLS Charly"
 -- 
 -- 
 -- ## Fine Tuning
@@ -444,13 +450,13 @@ ARTY={
   Nrockets0=0,
   Nmissiles0=0,
   Nukes0=0,
-  FullAmmo=0,
-  defaultROE="weapon_hold",
   StatusInterval=10,
   WaitForShotTime=300,
   DCSdesc=nil,
   Type=nil,
   DisplayName=nil,
+  alias=nil,
+  ismobile=true,
   IniGroupStrength=0,
   IsArtillery=nil,
   RearmingDistance=100,
@@ -490,10 +496,10 @@ ARTY.WeaponType={
   Auto=1073741822,
   Cannon=805306368,
   Rockets=30720,
-  UnguidedAny=805339120,
-  GuidedMissile=268402688,
+  --UnguidedAny=805339120,
+  --GuidedMissile=268402688,
   CruiseMissile=2097152,
-  AntiShipMissile=65536,
+  --AntiShipMissile=65536,
   TacticalNukes=666,
 }
 
@@ -563,7 +569,7 @@ ARTY.id="ARTY | "
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="0.9.95"
+ARTY.version="0.9.96"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -596,9 +602,9 @@ ARTY.version="0.9.95"
 --- Creates a new ARTY object.
 -- @param #ARTY self
 -- @param Wrapper.Group#GROUP group The GROUP object for which artillery tasks should be assigned.
--- @return #ARTY ARTY object.
--- @return nil If group does not exist or is not a ground or naval group.
-function ARTY:New(group)
+-- @param alias (Optional) Alias name the group will be calling itself when sending messages.
+-- @return #ARTY ARTY object or nil if group does not exist or is not a ground or naval group.
+function ARTY:New(group, alias)
   BASE:F2(group)
 
   -- Inherits from FSM_CONTROLLABLE
@@ -616,10 +622,16 @@ function ARTY:New(group)
   if group:IsGround()==false and group:IsShip()==false then
     self:E(ARTY.id..string.format("ERROR: ARTY group %s has to be a GROUND or SHIP group!", group:GetName()))
     return nil
-  end  
+  end
   
   -- Set the controllable for the FSM.
   self:SetControllable(group)
+  
+  if alias~=nil then
+    self.alias=tostring(alias)
+  else
+    self.alias=group:GetName()
+  end
   
   -- Set the initial coordinates of the ARTY group.
   self.InitialCoord=group:GetCoordinate()
@@ -628,9 +640,7 @@ function ARTY:New(group)
   local DCSgroup=Group.getByName(group:GetName())
   local DCSunit=DCSgroup:getUnit(1)
   self.DCSdesc=DCSunit:getDesc()
-  
-  --self.DCSdesc=group:GetDesc()
-  
+
   -- DCS descriptors.
   self:T3(ARTY.id.."DCS descriptors for group "..group:GetName())
   for id,desc in pairs(self.DCSdesc) do
@@ -639,6 +649,13 @@ function ARTY:New(group)
   
   -- Maximum speed in km/h.
   self.SpeedMax=group:GetSpeedMax()
+  
+  -- Group is mobile or not (e.g. mortars).
+  if self.SpeedMax>1 then
+    self.ismobile=true
+  else
+    self.ismobile=false
+  end
   
   -- Set speed to 0.7 of maximum.
   self.Speed=self.SpeedMax * 0.7
@@ -790,6 +807,12 @@ end
 -- @return #string Name of the move. Can be used for further reference, e.g. deleting the move from the list.
 function ARTY:AssignMoveCoord(coord, time, speed, onroad, cancel, name, unique)
   self:F({coord=coord, time=time, speed=speed, onroad=onroad, cancel=cancel, name=name, unique=unique})
+  
+  -- Reject move if the group is immobile.
+  if not self.ismobile then
+    self:T(ARTY.id..string.format("%s: group is immobile. Rejecting move request!", self.Controllable:GetName()))
+    return nil  
+  end
     
   -- Default
   if unique==nil then
@@ -1165,6 +1188,13 @@ function ARTY:onafterStart(Controllable, From, Event, To)
     end
   end
   
+  -- Some mobility consitency checks if group cannot move.
+  if not self.ismobile then
+    self.RearmingPlaceCoord=nil
+    self.relocateafterfire=false
+    self.autorelocate=false
+  end
+  
   local text=string.format("\n******************************************************\n")
   text=text..string.format("Arty group          = %s\n", Controllable:GetName())
   text=text..string.format("Artillery attribute = %s\n", tostring(self.IsArtillery))
@@ -1173,6 +1203,7 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   text=text..string.format("Number of units     = %d\n", self.IniGroupStrength)
   text=text..string.format("Speed max           = %d km/h\n", self.SpeedMax)
   text=text..string.format("Speed default       = %d km/h\n", self.Speed)
+  text=text..string.format("Is mobile           = %s\n", tostring(self.ismobile))
   text=text..string.format("Min range           = %.1f km\n", self.minrange/1000)
   text=text..string.format("Max range           = %.1f km\n", self.maxrange/1000)
   text=text..string.format("Total ammo count    = %d\n", self.Nammo0)
@@ -1358,7 +1389,7 @@ function ARTY:_OnEventShot(EventData)
         self.Nshots=self.Nshots+1
         
         -- Debug output.
-        local text=string.format("%s, fired shot %d of %d with weapon %s on target %s.", self.Controllable:GetName(), self.Nshots, self.currentTarget.nshells, _weaponName, self.currentTarget.name)
+        local text=string.format("%s, fired shot %d of %d with weapon %s on target %s.", self.alias, self.Nshots, self.currentTarget.nshells, _weaponName, self.currentTarget.name)
         self:T(ARTY.id..text)
         MESSAGE:New(text, 5):Clear():ToAllIf(self.report or self.Debug)
         
@@ -1427,7 +1458,7 @@ function ARTY:_OnEventShot(EventData)
         self:T(ARTY.id..string.format("Group %s ammo: total=%d, shells=%d, rockets=%d, missiles=%d", self.Controllable:GetName(), _nammo, _nshells, _nrockets, _nmissiles))
         self:T(ARTY.id..string.format("Group %s uses weapontype %s for current target.", self.Controllable:GetName(), _weapontype))        
               
-        
+        -- Default switches for cease fire and relocation.
         local _ceasefire=false
         local _relocate=false
         
@@ -1474,66 +1505,6 @@ function ARTY:_OnEventShot(EventData)
   end
 end
 
---- Check if group is (partly) out of ammo of a special weapon type.
--- @param #ARTY self
--- @param #table targets Table of targets.
--- @return @boolean True if any target requests a weapon type that is empty.
-function ARTY:_CheckOutOfAmmo(targets)
-
-  -- Get current ammo.
-  local _nammo,_nshells,_nrockets,_nmissiles=self:GetAmmo()
-
-   -- Special weapon type requested ==> Check if corresponding ammo is empty.
-  local _partlyoutofammo=false
-  
-  for _,Target in pairs(targets) do
-  
-    if Target.weapontype==ARTY.WeaponType.Auto and _nammo==0 then
-
-      self:T(ARTY.id..string.format("Group %s, auto weapon requested for target %s but all ammo is empty.", self.Controllable:GetName(), Target.name))
-      _partlyoutofammo=true
-  
-    elseif Target.weapontype==ARTY.WeaponType.Cannon and _nshells==0 then
-    
-      self:T(ARTY.id..string.format("Group %s, cannons requested for target %s but shells empty.", self.Controllable:GetName(), Target.name))
-      _partlyoutofammo=true
-    
-    elseif Target.weapontype==ARTY.WeaponType.TacticalNukes and self.Nukes<=0 then
-    
-      self:T(ARTY.id..string.format("Group %s, tactical nukes requested for target %s but nukes empty.", self.Controllable:GetName(), Target.name))
-      _partlyoutofammo=true
-    
-    elseif Target.weapontype==ARTY.WeaponType.Rockets and _nrockets==0 then
-    
-      self:T(ARTY.id..string.format("Group %s, rockets requested for target %s but rockets empty.", self.Controllable:GetName(), Target.name))
-      _partlyoutofammo=true
-    
-    elseif Target.weapontype==ARTY.WeaponType.UnguidedAny and _nshells+_nrockets==0 then
-    
-      self:T(ARTY.id..string.format("Group %s, unguided weapon requested for target %s but shells AND rockets empty.", self.Controllable:GetName(), Target.name))
-      _partlyoutofammo=true
-    
-    elseif Target.weapontype==ARTY.WeaponType.GuidedMissile and _nmissiles==0 then
-    
-      self:T(ARTY.id..string.format("Group %s, guided missiles requested for target %s but all missiles empty.", self.Controllable:GetName(), Target.name))
-      _partlyoutofammo=true
-
-    elseif Target.weapontype==ARTY.WeaponType.CruiseMissile and _nmissiles==0 then
-    
-      self:T(ARTY.id..string.format("Group %s, cruise missiles requested for target %s but all missiles empty.", self.Controllable:GetName(), Target.name))
-      _partlyoutofammo=true
-
-    elseif Target.weapontype==ARTY.WeaponType.AntiShipMissile and _nmissiles==0 then
-    
-      self:T(ARTY.id..string.format("Group %s, anti-ship missiles requested for target %s but all missiles empty.", self.Controllable:GetName(), Target.name))
-      _partlyoutofammo=true
-      
-    end
-            
-  end
-  
-  return _partlyoutofammo
-end
 
 --- After "Start" event. Initialized ROE and alarm state. Starts the event handler.
 -- @param #ARTY self
@@ -1670,7 +1641,7 @@ function ARTY:_OnEventMarkChange(Event)
       local _assign=self:_Markertext(Event.text)
 
       -- Check if ENGAGE or MOVE or REQUEST keywords were found.
-      if _assign==nil or not (_assign.engage or _assign.move or _assign.request) then
+      if _assign==nil or not (_assign.engage or _assign.move or _assign.request or _assign.cancel) then
         return
       end
                     
@@ -1716,13 +1687,20 @@ function ARTY:_OnEventMarkChange(Event)
       end
       
       -- Cancel current target and return.
-      if  _assign.cancelcurrent and _validkey then
-        if _assign.move and self.currentMove then
+      if _assign.cancel and _validkey then
+        if _assign.cancelmove and self.currentMove then
           self.Controllable:ClearTasks()
           self:Arrived()
-        end
-        if _assign.engage and self.currentTarget then
+        elseif _assign.canceltarget and self.currentTarget then
+          self.currentTarget.engaged=self.currentTarget.engaged+1
           self:CeaseFire(self.currentTarget)
+        elseif _assign.cancelrearm and self.is("Rearming") then
+          local nammo=self:GetAmmo()
+          if nammo>0 then
+            self:Rearmed()
+          else
+            self:Winchester()
+          end
         end
         return
       end
@@ -1761,7 +1739,7 @@ function ARTY:_OnEventMarkChange(Event)
           MESSAGE:New(text, 10):ToCoalitionIf(batterycoalition, self.report or self.Debug)
                 
           -- Assign a relocation of the arty group.
-          local _movename=self:AssignMoveCoord(_coord, _assign.time, _assign.speed, _assign.onroad, _assign.canceltarget,_name, true)
+          local _movename=self:AssignMoveCoord(_coord, _assign.time, _assign.speed, _assign.onroad, _assign.movecanceltarget,_name, true)
           
           if _movename~=nil then
             local _mid=self:_GetMoveIndexByName(_movename)
@@ -2087,18 +2065,9 @@ function ARTY:onafterOpenFire(Controllable, From, Event, To, target)
   elseif target.weapontype==ARTY.WeaponType.Rockets then
     nfire=Nrockets
     _type="rockets"
-  elseif target.weapontype==ARTY.WeaponType.UnguidedAny then
-    nfire=Nshells+Nrockets
-    _type="shells or rockets"
-  elseif target.weapontype==ARTY.WeaponType.GuidedMissile then
-    nfire=Nmissiles
-    _type="guided missiles"
   elseif target.weapontype==ARTY.WeaponType.CruiseMissile then
     nfire=Nmissiles
     _type="cruise missiles"
-  elseif target.weapontype==ARTY.WeaponType.AntiShipMissile then
-    nfire=Nmissiles
-    _type="anti-ship missiles"
   end
   
   -- Adjust if less than requested ammo is left.
@@ -2165,6 +2134,8 @@ function ARTY:onafterCeaseFire(Controllable, From, Event, To, target)
     -- Clear tasks.
     self.Controllable:ClearTasks()
     
+  else
+    self:E(ARTY.id.."ERROR: No target in cease fire for group %s.", self.Controllable:GetName())
   end
       
   -- Set number of shots to zero.
@@ -2365,20 +2336,21 @@ function ARTY:_CheckRearmed()
   end
   
   -- Full Ammo count.
-  self.FullAmmo=self.Nammo0 * nunits / self.IniGroupStrength
+  local FullAmmo=self.Nammo0 * nunits / self.IniGroupStrength
   
   -- Rearming status in per cent.
-  local _rearmpc=nammo/self.FullAmmo*100
+  local _rearmpc=nammo/FullAmmo*100
   
   -- Send message if rearming > 1% complete
   if _rearmpc>1 then
-    local text=string.format("%s, rearming %d %% complete. nammo=%d , fullammo=%d", self.Controllable:GetName(), _rearmpc, nammo, self.FullAmmo)
+    local text=string.format("%s, rearming %d %% complete.", self.alias, _rearmpc)
     self:T(ARTY.id..text)
     MESSAGE:New(text, 10):ToCoalitionIf(self.Controllable:GetCoalition(), self.report or self.Debug)
   end
       
-  -- Return if ammo is full. Strangely, I got the case that a Paladin got one more shell than it can max carry, i.e. 40 not 39 when rearming when it still had some ammo left.
-  if nammo>=self.FullAmmo then
+  -- Return if ammo is full.
+  -- TODO: Strangely, I got the case that a Paladin got one more shell than it can max carry, i.e. 40 not 39 when rearming when it still had some ammo left. Need to report.
+  if nammo>=FullAmmo then
     return true
   else
     return false
@@ -2402,7 +2374,7 @@ function ARTY:onbeforeMove(Controllable, From, Event, To, move)
   self:_EventFromTo("onbeforeMove", Event, From, To)
   
   -- Check if group can actually move...
-  if self.SpeedMax<1 then
+  if not self.ismobile then
     return false
   end
   
@@ -2528,10 +2500,7 @@ function ARTY:onafterDead(Controllable, From, Event, To)
   if units~=nil then
     nunits=#units
   end
-  
-  -- Adjust full ammo count
-  self.FullAmmo=self.Nammo0*nunits/self.IniGroupStrength
-  
+    
   -- Message.
   local text=string.format("%s, one of our units just died! %d units left.", self.Controllable:GetName(), nunits)
   MESSAGE:New(text, 5):ToAllIf(self.Debug)
@@ -2785,10 +2754,10 @@ function ARTY:_Move(group, ToCoord, Speed, OnRoad)
   path[#path+1]=ToCoord:WaypointGround(Speed, formation)
   task[#task+1]=group:TaskFunction("ARTY._PassingWaypoint", self, #path-1, true)
   
-  if self.Debug then
-    cpini:SmokeBlue()
-    ToCoord:SmokeBlue()
-  end
+  --if self.Debug then
+  --  cpini:SmokeBlue()
+  --  ToCoord:SmokeBlue()
+  --end
   
   -- Init waypoints of the group.
   local Waypoints={}
@@ -2927,6 +2896,9 @@ function ARTY:GetAmmo(display)
           -- Typename of current weapon
           local Tammo=ammotable[w]["desc"]["typeName"]
           
+          local _weaponString = self:_split(Tammo,"%.")
+          local _weaponName   = _weaponString[#_weaponString]
+          
           -- Get the weapon category: shell=0, missile=1, rocket=2, bomb=3
           local Category=ammotable[w].desc.category
           
@@ -2987,7 +2959,7 @@ function ARTY:GetAmmo(display)
             nshells=nshells+Nammo
           
             -- Debug info.
-            text=text..string.format("- %d shells of type %s\n", Nammo, Tammo)
+            text=text..string.format("- %d shells of type %s\n", Nammo, _weaponName)
             
           elseif _gotrocket then
           
@@ -2995,7 +2967,7 @@ function ARTY:GetAmmo(display)
             nrockets=nrockets+Nammo
             
             -- Debug info.
-            text=text..string.format("- %d rockets of type %s\n", Nammo, Tammo)
+            text=text..string.format("- %d rockets of type %s\n", Nammo, _weaponName)
             
           elseif _gotmissile then
           
@@ -3005,7 +2977,7 @@ function ARTY:GetAmmo(display)
             end
             
             -- Debug info.
-            text=text..string.format("- %d %s missiles of type %s\n", Nammo, self:_MissileCategoryName(MissileCategory), Tammo)
+            text=text..string.format("- %d %s missiles of type %s\n", Nammo, self:_MissileCategoryName(MissileCategory), _weaponName)
                                 
           else
           
@@ -3130,9 +3102,12 @@ function ARTY:_Markertext(text)
   assignment.move=false
   assignment.engage=false
   assignment.request=false
+  assignment.cancel=false
   assignment.readonly=false
+  assignment.movecanceltarget=false
+  assignment.cancelmove=false
   assignment.canceltarget=false
-  assignment.cancelcurrent=false
+  assignment.cancelrearm=false
   
   -- Check for correct keywords.
   if text:lower():find("arty engage") or text:lower():find("arty attack") then
@@ -3140,9 +3115,11 @@ function ARTY:_Markertext(text)
   elseif text:lower():find("arty move") or text:lower():find("arty relocate") then
     assignment.move=true
   elseif text:lower():find("arty request") then
-    assignment.request=true  
+    assignment.request=true
+  elseif text:lower():find("arty cancel") then
+    assignment.cancel=true    
   else
-    self:E(ARTY.id..'ERROR: Neither "ARTY ENGAGE" nor "ARTY MOVE" nor "ARTY RELOCATE" nor "ARTY REQUEST" keyword specified!')
+    self:E(ARTY.id..'ERROR: Neither "ARTY ENGAGE" nor "ARTY MOVE" nor "ARTY RELOCATE" nor "ARTY REQUEST" nor "ARTY CANCEL" keyword specified!')
     return nil
   end
     
@@ -3150,11 +3127,12 @@ function ARTY:_Markertext(text)
   local keywords=self:_split(text, ",")
   self:T({keywords=keywords})
 
-  for _,key in pairs(keywords) do
+  for _,keyphrase in pairs(keywords) do
   
     -- Split keyphrase by space. First one is the key and second, ... the parameter(s) until the next comma.
-    local s=self:_split(key, " ")
-    local val=s[2]
+    local str=self:_split(keyphrase, " ")
+    local key=str[1]
+    local val=str[2]
   
     -- Battery name, i.e. which ARTY group should fire.
     if key:lower():find("battery") then
@@ -3177,7 +3155,7 @@ function ARTY:_Markertext(text)
       
     elseif assignment.engage and key:lower():find("shot") then
     
-      assignment.nshells=tonumber(s[2])
+      assignment.nshells=tonumber(val)
       self:T(ARTY.id..string.format("Key Shot=%s.", val))
       
     elseif assignment.engage and key:lower():find("prio") then
@@ -3202,7 +3180,7 @@ function ARTY:_Markertext(text)
       elseif val:lower():find("rocket") then
         assignment.weapontype=ARTY.WeaponType.Rockets
       elseif val:lower():find("missile") then
-        assignment.weapontype=ARTY.WeaponType.GuidedMissile
+        assignment.weapontype=ARTY.WeaponType.CruiseMissile
       elseif val:lower():find("nuke") then
         assignment.weapontype=ARTY.WeaponType.TacticalNukes
       else
@@ -3225,15 +3203,10 @@ function ARTY:_Markertext(text)
       assignment.readonly=true
       self:T2(ARTY.id..string.format("Key Readonly=true."))
 
-    elseif assignment.move and key:lower():find("canceltarget") then
+    elseif assignment.move and (key:lower():find("cancel target") or key:lower():find("cancel target")) then
     
-      assignment.canceltarget=true
+      assignment.movecanceltarget=true
       self:T2(ARTY.id..string.format("Key Cancel Target (before move)=true."))
-      
-    elseif (assignment.engage or assignment.move) and key:lower():find("cancelcurrent") then
-    
-      assignment.cancelcurrent=true
-      self:T2(ARTY.id..string.format("Key Cancel Current=true."))
       
     elseif assignment.request and key:lower():find("rearm") then
     
@@ -3259,20 +3232,35 @@ function ARTY:_Markertext(text)
     
       assignment.requestmoves=true
       self:T2(ARTY.id..string.format("Key Request Moves=true."))
-              
+      
+    elseif assignment.cancel and (key:lower():find("engagement") or key:lower():find("attack") or key:lower():find("target")) then
+    
+      assignment.canceltarget=true
+      self:T2(ARTY.id..string.format("Key Cancel Target=true."))    
+      
+    elseif assignment.cancel and (key:lower():find("move") or key:lower():find("relocation")) then
+    
+      assignment.cancelmove=true
+      self:T2(ARTY.id..string.format("Key Cancel Move=true."))
+
+    elseif assignment.cancel and key:lower():find("rearm") then
+    
+      assignment.cancelrearm=true
+      self:T2(ARTY.id..string.format("Key Cancel Rearm=true."))
+          
     elseif key:lower():find("lldms") then
       
       local _flat = "%d+:%d+:%d+%s*[N,S]"
       local _flon = "%d+:%d+:%d+%s*[W,E]"
-      local _lat=key:match(_flat)
-      local _lon=key:match(_flon)
-      self:T2(ARTY.id..string.format("Key LLDMS: lat=%s, long=%s", _lat,_lon))
+      local _lat=keyphrase:match(_flat)
+      local _lon=keyphrase:match(_flon)
+      self:T2(ARTY.id..string.format("Key LLDMS: lat=%s, long=%s  format=DMS", _lat,_lon))
       
       if _lat and _lon then
       
         -- Convert DMS string to DD numbers format.
         local _latitude, _longitude=self:_LLDMS2DD(_lat, _lon)
-        self:T2(ARTY.id..string.format("Key LLDMS: lat=%.3f, long=%.3f", _latitude,_longitude))
+        self:T2(ARTY.id..string.format("Key LLDMS: lat=%.3f, long=%.3f  format=DD", _latitude,_longitude))
         
         -- Convert LL to coordinate object.
         if _latitude and _longitude then
@@ -3464,11 +3452,11 @@ function ARTY:_CheckTargetsInRange()
   for i=1,#self.targets do
     local _target=self.targets[i]
     
-    self:T(ARTY.id..string.format("Before: Target %s - in range = %s", _target.name, tostring(_target.inrange)))
+    self:T3(ARTY.id..string.format("Before: Target %s - in range = %s", _target.name, tostring(_target.inrange)))
     
     -- Check if target is in range.
     local _inrange,_toofar,_tooclose=self:_TargetInRange(_target)
-    self:T(ARTY.id..string.format("Inbetw: Target %s - in range = %s, toofar = %s, tooclose = %s", _target.name, tostring(_target.inrange), tostring(_toofar), tostring(_tooclose)))
+    self:T3(ARTY.id..string.format("Inbetw: Target %s - in range = %s, toofar = %s, tooclose = %s", _target.name, tostring(_target.inrange), tostring(_toofar), tostring(_tooclose)))
     
     -- Init default for assigning moves into range.
     local _movetowards=false
@@ -3502,7 +3490,7 @@ function ARTY:_CheckTargetsInRange()
       
       if _inrange then
         -- Inform coalition that target is now in range.
-        local text=string.format("%s, target %s is now in range.", self.Controllable:GetName(), _target.name)
+        local text=string.format("%s, target %s is now in range.", self.alias, _target.name)
         self:T(ARTY.id..text)
         MESSAGE:New(text,10):ToCoalitionIf(self.Controllable:GetCoalition(), self.report or self.Debug)
       end
@@ -3528,15 +3516,15 @@ function ARTY:_CheckTargetsInRange()
           local _waytogo=_dist-self.maxrange+_safetymargin
           local _heading=self:_GetHeading(_from,_target.coord)
           _tocoord=_from:Translate(_waytogo, _heading)
-          _name=string.format("Relocation to within max firing range of target %s", _target.name)
+          _name=string.format("%s, relocation to within max firing range of target %s", self.alias, _target.name)
           
         elseif _moveaway then
         
-        -- Target was in range on previous check but now we are too far away.        
-        local _waytogo=_dist-self.minrange+_safetymargin
-        local _heading=self:_GetHeading(_target.coord,_from)
-        _tocoord=_from:Translate(_waytogo, _heading)
-        _name=string.format("Relocation to within min firing range of target %s", _target.name)
+          -- Target was in range on previous check but now we are too far away.        
+          local _waytogo=_dist-self.minrange+_safetymargin
+          local _heading=self:_GetHeading(_target.coord,_from)
+          _tocoord=_from:Translate(_waytogo, _heading)
+          _name=string.format("%s, relocation to within min firing range of target %s", self.alias, _target.name)
 
         end
   
@@ -3553,7 +3541,7 @@ function ARTY:_CheckTargetsInRange()
     -- Update value.
     _target.inrange=_inrange
     
-    self:T(ARTY.id..string.format("After: Target %s - in range = %s", _target.name, tostring(_target.inrange)))
+    self:T3(ARTY.id..string.format("After: Target %s - in range = %s", _target.name, tostring(_target.inrange)))
     
   end
 end
@@ -3750,6 +3738,52 @@ function ARTY:_GetMoveIndexByName(name)
   return nil
 end
 
+--- Check if group is (partly) out of ammo of a special weapon type.
+-- @param #ARTY self
+-- @param #table targets Table of targets.
+-- @return @boolean True if any target requests a weapon type that is empty.
+function ARTY:_CheckOutOfAmmo(targets)
+
+  -- Get current ammo.
+  local _nammo,_nshells,_nrockets,_nmissiles=self:GetAmmo()
+
+   -- Special weapon type requested ==> Check if corresponding ammo is empty.
+  local _partlyoutofammo=false
+  
+  for _,Target in pairs(targets) do
+  
+    if Target.weapontype==ARTY.WeaponType.Auto and _nammo==0 then
+
+      self:T(ARTY.id..string.format("Group %s, auto weapon requested for target %s but all ammo is empty.", self.Controllable:GetName(), Target.name))
+      _partlyoutofammo=true
+  
+    elseif Target.weapontype==ARTY.WeaponType.Cannon and _nshells==0 then
+    
+      self:T(ARTY.id..string.format("Group %s, cannons requested for target %s but shells empty.", self.Controllable:GetName(), Target.name))
+      _partlyoutofammo=true
+    
+    elseif Target.weapontype==ARTY.WeaponType.TacticalNukes and self.Nukes<=0 then
+    
+      self:T(ARTY.id..string.format("Group %s, tactical nukes requested for target %s but nukes empty.", self.Controllable:GetName(), Target.name))
+      _partlyoutofammo=true
+    
+    elseif Target.weapontype==ARTY.WeaponType.Rockets and _nrockets==0 then
+    
+      self:T(ARTY.id..string.format("Group %s, rockets requested for target %s but rockets empty.", self.Controllable:GetName(), Target.name))
+      _partlyoutofammo=true
+
+    elseif Target.weapontype==ARTY.WeaponType.CruiseMissile and _nmissiles==0 then
+    
+      self:T(ARTY.id..string.format("Group %s, cruise missiles requested for target %s but all missiles empty.", self.Controllable:GetName(), Target.name))
+      _partlyoutofammo=true
+      
+    end
+            
+  end
+  
+  return _partlyoutofammo
+end
+
 --- Check if a selected weapon type is available for this target, i.e. if the current amount of ammo of this weapon type is currently available.
 -- @param #ARTY self
 -- @param #boolean target Target array data structure.
@@ -3769,13 +3803,7 @@ function ARTY:_CheckWeaponTypeAvailable(target)
     nfire=self.Nukes
   elseif target.weapontype==ARTY.WeaponType.Rockets then
     nfire=Nrockets
-  elseif target.weapontype==ARTY.WeaponType.UnguidedAny then
-    nfire=Nshells+Nrockets
-  elseif target.weapontype==ARTY.WeaponType.GuidedMissile then
-    nfire=Nmissiles
   elseif target.weapontype==ARTY.WeaponType.CruiseMissile then
-    nfire=Nmissiles
-  elseif target.weapontype==ARTY.WeaponType.AntiShipMissile then
     nfire=Nmissiles
   end
   
@@ -3797,13 +3825,7 @@ function ARTY:_CheckWeaponTypePossible(target)
     possible=self.Nukes0>0
   elseif target.weapontype==ARTY.WeaponType.Rockets then
     possible=self.Nrockets0>0
-  elseif target.weapontype==ARTY.WeaponType.UnguidedAny then
-    possible=self.Nshells0+self.Nrockets0>0
-  elseif target.weapontype==ARTY.WeaponType.GuidedMissile then
-    possible=self.Nmissiles0>0
   elseif target.weapontype==ARTY.WeaponType.CruiseMissile then
-    possible=self.Nmissiles0>0
-  elseif target.weapontype==ARTY.WeaponType.AntiShipMissile then
     possible=self.Nmissiles0>0
   end
   
@@ -3904,11 +3926,11 @@ function ARTY:_TargetInRange(target, message)
   if _dist < self.minrange then
     _inrange=false
     _tooclose=true
-    text=string.format("%s, target is out of range. Distance of %.1f km is below min range of %.1f km.", self.Controllable:GetName(), _dist/1000, self.minrange/1000)
+    text=string.format("%s, target is out of range. Distance of %.1f km is below min range of %.1f km.", self.alias, _dist/1000, self.minrange/1000)
   elseif _dist > self.maxrange then
     _inrange=false
     _toofar=true
-    text=string.format("%s, target is out of range. Distance of %.1f km is greater than max range of %.1f km.", self.Controllable:GetName(), _dist/1000, self.maxrange/1000)
+    text=string.format("%s, target is out of range. Distance of %.1f km is greater than max range of %.1f km.", self.alias, _dist/1000, self.maxrange/1000)
   end
   
   -- Debug output.
@@ -3918,7 +3940,7 @@ function ARTY:_TargetInRange(target, message)
   end
     
   -- Remove target if ARTY group cannot move, e.g. Mortas. No chance to be ever in range.
-  if self.SpeedMax<1 and _inrange==false then
+  if not self.ismobile and _inrange==false then
     self:RemoveTarget(target.name)
   end
 
@@ -3938,14 +3960,8 @@ function ARTY:_WeaponTypeName(tnumber)
     name="Cannons"
   elseif tnumber==ARTY.WeaponType.Rockets then
     name="Rockets"
-   elseif tnumber==ARTY.WeaponType.UnguidedAny then
-    name="Unguided Weapons" -- (Cannon or Rockets)
   elseif tnumber==ARTY.WeaponType.CruiseMissile then
     name="Cruise Missiles"
-  elseif tnumber==ARTY.WeaponType.GuidedMissile then
-    name="Guided Missiles"
-  elseif tnumber==ARTY.WeaponType.AntiShipMissile then
-    name="Anti-Ship Missiles"
   elseif tnumber==ARTY.WeaponType.TacticalNukes then
     name="Tactical Nukes"    
   end
@@ -4039,7 +4055,7 @@ function ARTY:_LLDMS2DD(l1,l2)
     local _format = "%d+:%d+:%d+"    
     local _ldms=ll:match(_format)
     
-    if ldms then
+    if _ldms then
       
       -- Split DMS to degrees, minutes and seconds.
       local _dms=self:_split(_ldms, ":")
@@ -4071,8 +4087,8 @@ function ARTY:_LLDMS2DD(l1,l2)
   end
   
   -- Debug text.
-  local text=string.format("\nLatitude  %.3f", _latitude)
-  text=text..string.format("\nLongitude %.3f", _longitude)
+  local text=string.format("\nLatitude  %s", tostring(_latitude))
+  text=text..string.format("\nLongitude %s", tostring(_longitude))
   self:T2(ARTY.id..text)
   
   return _latitude,_longitude
