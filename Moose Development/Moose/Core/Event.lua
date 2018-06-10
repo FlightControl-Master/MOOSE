@@ -933,7 +933,9 @@ function EVENT:onEvent( Event )
       Event.WeaponTypeName = Event.WeaponUNIT and Event.Weapon:getTypeName()
       --Event.WeaponTgtDCSUnit = Event.Weapon:getTarget()
     end
-    
+
+--  @FC: something like this should be added.
+--[[    
     if Event.idx then
       Event.MarkID=Event.idx
       Event.MarkVec3=Event.pos
@@ -942,6 +944,7 @@ function EVENT:onEvent( Event )
       Event.MarkCoalition=Event.coalition
       Event.MarkGroupID = Event.groupID
     end
+]]
     
     if Event.cargo then
       Event.Cargo = Event.cargo
