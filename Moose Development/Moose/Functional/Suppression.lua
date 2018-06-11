@@ -1725,7 +1725,7 @@ end
 --@param Core.Point#COORDINATE a Coordinate.
 --@param Core.Point#COORDINATE b Coordinate.
 --@return #number angle Angle from a to b in degrees.
-function SUPPRESSION:_Heading(a, b, distance)
+function SUPPRESSION:_Heading(a, b)
   local dx = b.x-a.x
   local dy = b.z-a.z
   local angle = math.deg(math.atan2(dy,dx))

@@ -251,6 +251,28 @@ do -- COORDINATE
     return { x = self.x, y = self.z }
   end
 
+  --- Returns the coordinate from the latitude and longitude given in decimal degrees.
+  -- @param #COORDINATE self
+  -- @param #number latitude Latitude in decimal degrees.
+  -- @param #number longitude Longitude in decimal degrees.
+  -- @param #number altitude (Optional) Altitude in meters. Default is the land height at the coordinate.
+  -- @return #COORDINATE
+  function COORDINATE:NewFromLLDD( latitude, longitude, altitude)
+    
+    -- Returns a point from latitude and longitude in the vec3 format.
+    local vec3=coord.LLtoLO(latitude, longitude)
+    
+    -- Convert vec3 to coordinate object.
+    local _coord=self:NewFromVec3(vec3)
+    
+    -- Adjust height
+    if altitude==nil then
+      _coord.y=altitude
+    end
+
+    return _coord
+  end
+
   
   --- Returns if the 2 coordinates are at the same 2D position.
   -- @param #COORDINATE self
@@ -935,26 +957,25 @@ do -- COORDINATE
   -- The first point is the closest point on road of the given coordinate. The last point is the closest point on road of the ToCoord. Hence, the coordinate itself and the final ToCoord are not necessarily included in the path.
   -- @param #COORDINATE self
   -- @param #COORDINATE ToCoord Coordinate of destination.
-  -- @return #table Table of coordinates on road.
+  -- @return #table Table of coordinates on road. If no path on road can be found, nil is returned.
   function COORDINATE:GetPathOnRoad(ToCoord)
 
     -- DCS API function returning a table of vec2.
     local path = land.findPathOnRoads("roads", self.x, self.z, ToCoord.x, ToCoord.z)
     
-    --Path[#Path+1]=COORDINATE:NewFromVec2(path[1])
-    --Path[#Path+1]=COORDINATE:NewFromVec2(path[#path])
-    --Path[#Path+1]=self:GetClosestPointToRoad()
-    --Path[#Path+1]=ToCoord:GetClosestPointToRoad()
-    -- I've removed this stuff because it severely slows down DCS in case of paths with a lot of segments.
-    -- Just the beginning and the end point is sufficient.
-    
     local Path={}
-    --Path[#Path+1]=self
-    for i, v in ipairs(path) do
-      Path[#Path+1]=COORDINATE:NewFromVec2(v)
-    end
-    --Path[#Path+1]=ToCoord
     
+    if path then
+      --Path[#Path+1]=self
+      for i, v in ipairs(path) do
+        Path[#Path+1]=COORDINATE:NewFromVec2(v)
+      end
+      --Path[#Path+1]=ToCoord
+    else
+      -- There are cases where no path on road can be found.
+      return nil
+    end
+        
     return Path
   end
 
@@ -1153,13 +1174,19 @@ do -- COORDINATE
     --- Mark to All
     -- @param #COORDINATE self
     -- @param #string MarkText Free format text that shows the marking clarification.
+    -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+    -- @param #string Text (Optional) Text displayed when mark is added. Default none.
     -- @return #number The resulting Mark ID which is a number.
     -- @usage
     --   local TargetCoord = TargetGroup:GetCoordinate()
     --   local MarkID = TargetCoord:MarkToAll( "This is a target for all players" )
-    function COORDINATE:MarkToAll( MarkText )
+    function COORDINATE:MarkToAll( MarkText, ReadOnly, Text )
       local MarkID = UTILS.GetMarkID()
-      trigger.action.markToAll( MarkID, MarkText, self:GetVec3(), false, "" )
+      if ReadOnly==nil then
+        ReadOnly=false
+      end
+      local text=Text or ""
+      trigger.action.markToAll( MarkID, MarkText, self:GetVec3(), ReadOnly, text)
       return MarkID
     end
 
@@ -1167,50 +1194,66 @@ do -- COORDINATE
     -- @param #COORDINATE self
     -- @param #string MarkText Free format text that shows the marking clarification.
     -- @param Coalition
+    -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+    -- @param #string Text (Optional) Text displayed when mark is added. Default none.
     -- @return #number The resulting Mark ID which is a number.
     -- @usage
     --   local TargetCoord = TargetGroup:GetCoordinate()
     --   local MarkID = TargetCoord:MarkToCoalition( "This is a target for the red coalition", coalition.side.RED )
-    function COORDINATE:MarkToCoalition( MarkText, Coalition )
+    function COORDINATE:MarkToCoalition( MarkText, Coalition, ReadOnly, Text )
       local MarkID = UTILS.GetMarkID()
-      trigger.action.markToCoalition( MarkID, MarkText, self:GetVec3(), Coalition, false, "" )
+      if ReadOnly==nil then
+        ReadOnly=false
+      end
+      local text=Text or ""
+      trigger.action.markToCoalition( MarkID, MarkText, self:GetVec3(), Coalition, ReadOnly, text )
       return MarkID
     end
 
     --- Mark to Red Coalition
     -- @param #COORDINATE self
     -- @param #string MarkText Free format text that shows the marking clarification.
+    -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+    -- @param #string Text (Optional) Text displayed when mark is added. Default none.
     -- @return #number The resulting Mark ID which is a number.
     -- @usage
     --   local TargetCoord = TargetGroup:GetCoordinate()
     --   local MarkID = TargetCoord:MarkToCoalitionRed( "This is a target for the red coalition" )
-    function COORDINATE:MarkToCoalitionRed( MarkText )
-      return self:MarkToCoalition( MarkText, coalition.side.RED )
+    function COORDINATE:MarkToCoalitionRed( MarkText, ReadOnly, Text )
+      return self:MarkToCoalition( MarkText, coalition.side.RED, ReadOnly, Text )
     end
 
     --- Mark to Blue Coalition
     -- @param #COORDINATE self
     -- @param #string MarkText Free format text that shows the marking clarification.
+    -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+    -- @param #string Text (Optional) Text displayed when mark is added. Default none.
     -- @return #number The resulting Mark ID which is a number.
     -- @usage
     --   local TargetCoord = TargetGroup:GetCoordinate()
     --   local MarkID = TargetCoord:MarkToCoalitionBlue( "This is a target for the blue coalition" )
-    function COORDINATE:MarkToCoalitionBlue( MarkText )
-      return self:MarkToCoalition( MarkText, coalition.side.BLUE )
+    function COORDINATE:MarkToCoalitionBlue( MarkText, ReadOnly, Text )
+      return self:MarkToCoalition( MarkText, coalition.side.BLUE, ReadOnly, Text )
     end
 
     --- Mark to Group
     -- @param #COORDINATE self
     -- @param #string MarkText Free format text that shows the marking clarification.
     -- @param Wrapper.Group#GROUP MarkGroup The @{Wrapper.Group} that receives the mark.
+    -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+    -- @param #string Text (Optional) Text displayed when mark is added. Default none.
     -- @return #number The resulting Mark ID which is a number.
     -- @usage
     --   local TargetCoord = TargetGroup:GetCoordinate()
     --   local MarkGroup = GROUP:FindByName( "AttackGroup" )
     --   local MarkID = TargetCoord:MarkToGroup( "This is a target for the attack group", AttackGroup )
-    function COORDINATE:MarkToGroup( MarkText, MarkGroup )
+    function COORDINATE:MarkToGroup( MarkText, MarkGroup, ReadOnly, Text )
       local MarkID = UTILS.GetMarkID()
-      trigger.action.markToGroup( MarkID, MarkText, self:GetVec3(), MarkGroup:GetID(), false, "" )
+      if ReadOnly==nil then
+        ReadOnly=false
+      end
+      local text=Text or ""
+      trigger.action.markToGroup( MarkID, MarkText, self:GetVec3(), MarkGroup:GetID(), ReadOnly, text )
       return MarkID
     end
     
