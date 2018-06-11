@@ -65,6 +65,7 @@
 -- @field #boolean ismobile If true, ARTY group can move.
 -- @field #string groupname Name of the ARTY group as defined in the mission editor.
 -- @field #string alias Name of the ARTY group.
+-- @field #table clusters Table of names of clusters the group belongs to. Can be used to address all groups within the cluster simultaniously.
 -- @field #number SpeedMax Maximum speed of ARTY group in km/h. This is determined from the DCS descriptor table.
 -- @field #number Speed Default speed in km/h the ARTY group moves at. Maximum speed possible is 80% of maximum speed the group can do.
 -- @field #number RearmingDistance Safe distance in meters between ARTY group and rearming group or place at which rearming is possible. Default 100 m.
@@ -293,6 +294,8 @@
 -- * *radius* Scattering radius of the fired shots in meters. Default is 100 m.
 -- * *weapon* Type of weapon to be used. Valid parameters are *cannon*, *rocket*, *missile*, *nuke*. Default is automatic selection.
 -- * *battery* Name of the ARTY group that the target is assigned to. Note that **the name is case sensitive** and has to be given in quotation marks. Default is all ARTY groups of the right coalition.
+-- * *alias* Alias of the ARTY group that the target is assigned to. The alias is **case sensitive** and needs to be in quotation marks.
+-- * *cluster* The cluster of ARTY groups that is addessed. Clusters can be defined by the function @{#ARTY.AddToCluster}(*clusters*). Names are **case sensitive** and need to be in quotation marks.
 -- * *key* A number to authorize the target assignment. Only specifing the correct number will trigger an engagement.
 -- * *lldms* Specify the coordinates in Lat/Long degrees, minutes and seconds format. The actual location of the marker is unimportant here. The group will engage the coordinates given in the lldms keyword.
 -- Format is DD:MM:SS[N,S] DD:MM:SS[W,E]. See example below. This can be useful when coordinates in this format are obtained from elsewhere.
@@ -305,9 +308,13 @@
 --      arty engage, battery "Blue MRLS 1", key 666
 --      arty engage, battery "Paladin Alpha", weapon nukes, shots 1, time 20:15
 --      arty engage, lldms 41:51:00N 41:47:58E
+--      arty engage, alias "Bob", weapon missiles
+--      arty engage, cluster "All Mortas"
+--      arty engage, cluster "Northern Batteries" "Southern Batteries"
+--      arty engage, cluster "Northern Batteries", cluster "Southern Batteries"
 --      
--- Note that the keywords and parameters are *case insensitve*. Only exception are the battery group names. These must be exactly the same as the names of the goups defined 
--- in the mission editor.
+-- Note that the keywords and parameters are *case insensitve*. Only exception are the battery, alias and cluster names.
+-- These must be exactly the same as the names of the goups defined in the mission editor or the aliases and cluster names defined in the script.
 -- 
 -- ### Relocation Assignments
 -- 
@@ -318,6 +325,8 @@
 -- * *on road* Group will use mainly roads. Default is off, i.e. it will go in a straight line from its current position to the assigned coordinate.
 -- * *canceltarget* Group will cancel all running firing engagements and immidiately start to move. Default is that group will wait until is current assignment is over.
 -- * *battery* Name of the ARTY group that the relocation is assigned to.
+-- * *alias* Alias of the ARTY group that the target is assigned to. The alias is **case sensitive** and needs to be in quotation marks.
+-- * *cluster* The cluster of ARTY groups that is addessed. Clusters can be defined by the function @{#ARTY.AddToCluster}(*clusters*). Names are **case sensitive** and need to be in quotation marks.
 -- * *key* A number to authorize the target assignment. Only specifing the correct number will trigger an engagement.
 -- * *lldms* Specify the coordinates in Lat/Long degrees, minutes and seconds format. The actual location of the marker is unimportant. The group will move to the coordinates given in the lldms keyword.
 -- Format is DD:MM:SS[N,S] DD:MM:SS[W,E]. See example below. 
@@ -329,6 +338,10 @@
 --      arty move, battery "Blue Paladin"
 --      arty move, battery "Blue MRLS", canceltarget, speed 10, on road
 --      arty move, lldms 41:51:00N 41:47:58E
+--      arty move, alias "Bob", weapon missiles
+--      arty move, cluster "All Howitzer"
+--      arty move, cluster "Northern Batteries" "Southern Batteries"
+--      arty move, cluster "Northern Batteries", cluster "Southern Batteries"
 --      
 -- ### Requests
 -- 
@@ -341,7 +354,7 @@
 -- For example
 --      arty request, ammo
 --      arty request, battery "Paladin Bravo", targets
---      arty request, battery "MRLS Charly", move
+--      arty request, cluster "All Mortars", move
 -- 
 -- The actual location of the marker is irrelevant for these requests.
 -- 
@@ -363,6 +376,7 @@
 -- optional parameter *maxdist* is the maximum distance im km the group will move. If the distance is greater no relocation is performed. Default is 50 km.
 -- * @{#ARTY.SetAutoRelocateAfterEngagement}(*rmax*, *rmin*) will cause the ARTY group to change its position after each firing assignment.
 -- Optional parameters *rmax*, *rmin* define the max/min distance for relocation of the group. Default distance is randomly between 300 and 800 m.
+-- * @{#ARTY.AddToCluster}(*clusters*) Can be used to add the ARTY group to one or more clusters. All groups in a cluster can be addressed simultaniously with one marker command.
 -- * @{#ARTY.RemoveAllTargets}() removes all targets from the target queue.
 -- * @{#ARTY.RemoveTarget}(*name*) deletes the target with *name* from the target queue.
 -- * @{#ARTY.SetMaxFiringRange}(*range*) defines the maximum firing range. Targets further away than this distance are not engaged.
@@ -458,6 +472,7 @@ ARTY={
   DisplayName=nil,
   groupname=nil,
   alias=nil,
+  clusters={},
   ismobile=true,
   IniGroupStrength=0,
   IsArtillery=nil,
@@ -571,7 +586,7 @@ ARTY.id="ARTY | "
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="1.0.0"
+ARTY.version="1.0.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -605,7 +620,7 @@ ARTY.version="1.0.0"
 --- Creates a new ARTY object.
 -- @param #ARTY self
 -- @param Wrapper.Group#GROUP group The GROUP object for which artillery tasks should be assigned.
--- @param alias (Optional) Alias name the group will be calling itself when sending messages.
+-- @param alias (Optional) Alias name the group will be calling itself when sending messages. Default is the group name.
 -- @return #ARTY ARTY object or nil if group does not exist or is not a ground or naval group.
 function ARTY:New(group, alias)
   BASE:F2(group)
@@ -1136,6 +1151,38 @@ function ARTY:AssignMoveCoord(coord, time, speed, onroad, cancel, name, unique)
   return _name
 end
 
+--- Set alias, i.e. the name the group will use when sending messages.
+-- @param #ARTY self
+-- @param #string alias The alias for the group.
+function ARTY:SetAlias(alias)
+  self:F({alias=alias})
+  self.alias=tostring(alias)
+end
+
+--- Add ARTY group to one or more clusters. Enables addressing all ARTY groups within a cluster simultaniously via marker assignments.
+-- @param #ARTY self
+-- @param #table clusters Table of cluster names the group should belong to.
+function ARTY:AddToCluster(clusters)
+  self:F({clusters=clusters})
+  
+  -- Convert input to table.
+  local names
+  if type(clusters)=="table" then
+    names=clusters   
+  elseif type(clusters)=="string" then
+    names={clusters}
+  else
+    -- error message
+    self:E(ARTY.id.."ERROR: Input parameter must be a string or a table in ARTY:AddToCluster()!")
+    return
+  end
+
+  -- Add names to cluster array.
+  for _,cluster in pairs(names) do
+    table.insert(self.clusters, cluster)
+  end  
+end
+
 --- Set minimum firing range. Targets closer than this distance are not engaged.
 -- @param #ARTY self
 -- @param #number range Min range in kilometers. Default is 0.1 km.
@@ -1529,6 +1576,10 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   text=text..string.format("Marker assignments  = %s\n", tostring(self.markallow))
   text=text..string.format("Marker auth. key    = %s\n", tostring(self.markkey))
   text=text..string.format("Marker readonly     = %s\n", tostring(self.markreadonly))
+  text=text..string.format("Clusters:\n")
+  for _,cluster in pairs(self.clusters) do
+    text=text..string.format("- %s\n", tostring(cluster))
+  end
   text=text..string.format("******************************************************\n")
   text=text..string.format("Targets:\n")
   for _, target in pairs(self.targets) do
@@ -1810,10 +1861,10 @@ function ARTY:onEvent(Event)
   end
 
   -- Set battery and coalition.
-  local batteryname=self.groupname
-  local batterycoalition=self.Controllable:GetCoalition()
+  --local batteryname=self.groupname
+  --local batterycoalition=self.Controllable:GetCoalition()
   
-  self:T2(string.format("Event captured  = %s", tostring(batteryname)))
+  self:T2(string.format("Event captured  = %s", tostring(self.groupname)))
   self:T2(string.format("Event id        = %s", tostring(Event.id)))
   self:T2(string.format("Event time      = %s", tostring(Event.time)))
   self:T2(string.format("Event idx       = %s", tostring(Event.idx)))
@@ -1822,20 +1873,20 @@ function ARTY:onEvent(Event)
   self:T2(string.format("Event text      = %s", tostring(Event.text)))
   if Event.initiator~=nil then
     local _unitname=Event.initiator:getName()
-    self:T(string.format("Event ini unit name = %s", tostring(_unitname)))
+    self:T2(string.format("Event ini unit name = %s", tostring(_unitname)))
   end
   
   if Event.id==world.event.S_EVENT_MARK_ADDED then
-    self:E({event="S_EVENT_MARK_ADDED", battery=batteryname, vec3=Event.pos})
+    self:T2({event="S_EVENT_MARK_ADDED", battery=self.groupname, vec3=Event.pos})
     
   elseif Event.id==world.event.S_EVENT_MARK_CHANGE then
-    self:E({event="S_EVENT_MARK_CHANGE", battery=batteryname, vec3=Event.pos})
+    self:T({event="S_EVENT_MARK_CHANGE", battery=self.groupname, vec3=Event.pos})
     
     -- Handle event.
     self:_OnEventMarkChange(Event)
        
   elseif Event.id==world.event.S_EVENT_MARK_REMOVED then
-    self:E({event="S_EVENT_MARK_REMOVED", battery=batteryname, vec3=Event.pos})
+    self:T2({event="S_EVENT_MARK_REMOVED", battery=self.groupname, vec3=Event.pos})
     
     -- Hande event.
     self:_OnEventMarkRemove(Event)
@@ -1938,16 +1989,38 @@ function ARTY:_OnEventMarkChange(Event)
         return
       end
                     
-      -- Check if job is assigned to this ARTY group. Default is for all ARTY groups.
-      local _assigned=true
-      if #_assign.battery>0 then
-        _assigned=false
+      -- Check if job is assigned to this ARTY group. Default is for all ARTY groups.      
+      local _assigned=false
+      
+      -- If any array is filled something has been assigned.
+      if #_assign.battery>0 or #_assign.aliases>0 or #_assign.cluster>0 then
+
+        -- Loop over batteries.        
         for _,bat in pairs(_assign.battery) do
-          self:T3(ARTY.id..string.format("Compare battery names %s=%s ==> %s",batteryname, bat, tostring(batteryname==bat)))
-          if batteryname==bat then
+          if self.groupname==bat then
             _assigned=true
           end
         end
+        
+        -- Loop over aliases.        
+        for _,alias in pairs(_assign.aliases) do
+          if self.alias==alias then
+            _assigned=true
+          end
+        end
+    
+        -- Loop over clusters.
+        for _,bat in pairs(_assign.cluster) do
+          for _,cluster in pairs(self.clusters) do
+            if cluster==bat then
+              _assigned=true
+            end
+          end
+        end
+        
+      else
+        -- No one explicitly assigned ==> we assume to be assigned.
+        _assigned=true
       end
             
       -- We were not addressed.
@@ -1995,6 +2068,7 @@ function ARTY:_OnEventMarkChange(Event)
             self:Winchester()
           end
         end
+        -- Cancels Done ==> End of story!
         return
       end
       
@@ -2027,7 +2101,7 @@ function ARTY:_OnEventMarkChange(Event)
           -- Create a new name. This determins the string we search when deleting a move!
           local _name=self:_MarkMoveName(_id)
         
-          local text=string.format("%s, received new relocation assignment.", batteryname)
+          local text=string.format("%s, received new relocation assignment.", self.alias)
           text=text..string.format("\nCoordinates %s",_coord:ToStringLLDMS())
           MESSAGE:New(text, 10):ToCoalitionIf(batterycoalition, self.report or self.Debug)
                 
@@ -2046,7 +2120,7 @@ function ARTY:_OnEventMarkChange(Event)
             local _randomcoord=_coord:GetRandomCoordinateInRadius(100)
             _randomcoord:MarkToCoalition(_markertext, batterycoalition, self.markreadonly or _assign.readonly)
           else
-            local text=string.format("%s, relocation not possible.", batteryname)
+            local text=string.format("%s, relocation not possible.", self.alias)
             MESSAGE:New(text, 10):ToCoalitionIf(batterycoalition, self.report or self.Debug)
           end           
         
@@ -2055,7 +2129,7 @@ function ARTY:_OnEventMarkChange(Event)
           -- Create a new name.
           local _name=self:_MarkTargetName(_id)
                                   
-          local text=string.format("%s, received new target assignment.", batteryname)
+          local text=string.format("%s, received new target assignment.", self.alias)
           text=text..string.format("\nCoordinates %s",_coord:ToStringLLDMS())
           if _assign.time then
             text=text..string.format("\nTime %s",_assign.time)
@@ -3374,11 +3448,11 @@ function ARTY:_MarkerKeyAuthentification(text)
     -- Send message
     local text=""
     if mykey==nil then
-      text=string.format("%s, authorization required but did not receive a key!", batteryname)
+      text=string.format("%s, authorization required but did not receive a key!", self.alias)
     elseif _validkey==false then
-      text=string.format("%s, authorization required but did receive an incorrect key (key=%s)!", batteryname, tostring(mykey))
+      text=string.format("%s, authorization required but did receive an incorrect key (key=%s)!", self.alias, tostring(mykey))
     elseif _validkey==true then
-      text=string.format("%s, authentification successful!", batteryname)
+      text=string.format("%s, authentification successful!", self.alias)
     end
     MESSAGE:New(text, 10):ToCoalitionIf(batterycoalition, self.report or self.Debug)
   end
@@ -3396,6 +3470,8 @@ function ARTY:_Markertext(text)
   -- Assignment parameters. 
   local assignment={}
   assignment.battery={}
+  assignment.aliases={}
+  assignment.cluster={}
   assignment.move=false
   assignment.engage=false
   assignment.request=false
@@ -3442,6 +3518,24 @@ function ARTY:_Markertext(text)
       for i=2,#v,2 do        
         table.insert(assignment.battery, v[i])
         self:T2(ARTY.id..string.format("Key Battery=%s.", v[i]))
+      end
+
+    elseif key:lower():find("alias") then
+      
+      local v=self:_split(keyphrase, '"')
+      
+      for i=2,#v,2 do        
+        table.insert(assignment.aliases, v[i])
+        self:T2(ARTY.id..string.format("Key Aliases=%s.", v[i]))
+      end
+
+    elseif key:lower():find("cluster") then
+      
+      local v=self:_split(keyphrase, '"')
+      
+      for i=2,#v,2 do        
+        table.insert(assignment.cluster, v[i])
+        self:T2(ARTY.id..string.format("Key Cluster=%s.", v[i]))
       end
                 
     elseif (assignment.engage or assignment.move) and key:lower():find("time") then
