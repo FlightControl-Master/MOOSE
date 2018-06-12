@@ -1980,6 +1980,14 @@ function ARTY:_OnEventMarkChange(Event)
 
   -- Check if marker has a text and the "arty" keyword.
   if Event.text~=nil and Event.text:lower():find("arty") then
+ 
+    -- Convert (wrong x-->z, z-->x) vec3
+    -- TODO: This needs to be "fixed", once DCS gives the correct numbers for x and z.
+    -- local vec3={y=Event.pos.y, x=Event.pos.x, z=Event.pos.z}
+    local vec3={y=Event.pos.y, x=Event.pos.z, z=Event.pos.x}
+    
+    -- Get coordinate from vec3.
+    local _coord=COORDINATE:NewFromVec3(vec3)
   
     -- Get battery coalition and name.
     local batterycoalition=self.Controllable:GetCoalition()
@@ -1992,8 +2000,8 @@ function ARTY:_OnEventMarkChange(Event)
       local _assign=self:_Markertext(Event.text)
 
       -- Check if ENGAGE or MOVE or REQUEST keywords were found.
-      if _assign==nil or not (_assign.engage or _assign.move or _assign.request or _assign.cancel) then
-          self:T(ARTY.id..string.format("WARNING: %s, no keyword ENGAGE, MOVE, REQUEST or CANCEL in mark text! Command will not be executed. Text:\n%s", self.groupname, Event.text))
+      if _assign==nil or not (_assign.engage or _assign.move or _assign.request or _assign.cancel or _assign.set) then
+          self:T(ARTY.id..string.format("WARNING: %s, no keyword ENGAGE, MOVE, REQUEST, CANCEL or SET in mark text! Command will not be executed. Text:\n%s", self.groupname, Event.text))
         return
       end
                     
@@ -2001,9 +2009,11 @@ function ARTY:_OnEventMarkChange(Event)
       local _assigned=false
       
       -- If any array is filled something has been assigned.
-      if _assign.everyone then 
+      if _assign.everyone then
+       
         -- Everyone was addressed.
         _assigned=true
+        
       else --#_assign.battery>0 or #_assign.aliases>0 or #_assign.cluster>0 then
 
         -- Loop over batteries.        
@@ -2036,7 +2046,12 @@ function ARTY:_OnEventMarkChange(Event)
         self:T3(ARTY.id..string.format("INFO: ARTY group %s was not addressed! Mark text:\n%s", self.groupname, Event.text))
         return
       end
-            
+
+      -- Coordinate was given in text, e.g. as lat, long.
+      if _assign.coord then
+        _coord=_assign.coord
+      end
+                  
       -- Check if the authorization key is required and if it is valid.
       local _validkey=self:_MarkerKeyAuthentification(Event.text)
       
@@ -2061,7 +2076,7 @@ function ARTY:_OnEventMarkChange(Event)
         return
       end
       
-      -- Cancel current target and return.
+      -- Cancel stuff and return.
       if _assign.cancel and _validkey then
         if _assign.cancelmove and self.currentMove then
           self.Controllable:ClearTasks()
@@ -2080,26 +2095,36 @@ function ARTY:_OnEventMarkChange(Event)
         -- Cancels Done ==> End of story!
         return
       end
+
+      -- Set stuff and return.
+      if _assign.set and _validkey then
+        if _assign.setrearmingplace then
+          self:SetRearmingPlace(_coord)
+          _coord:RemoveMark(Event.idx)
+          _coord:MarkToCoalition(string.format("Rearming place for battery %s", self.groupname), self.Controllable:GetCoalition(), false, string.format("New rearming place for battery %s defined.", self.groupname))
+          if self.Debug then
+            _coord:SmokeOrange()
+          end
+        end
+        if _assign.setrearminggroup then
+          _coord:RemoveMark(Event.idx)
+          local rearminggroupcoord=_assign.setrearminggroup:GetCoordinate()
+          rearminggroupcoord:MarkToCoalition(string.format("Rearming group for battery %s", self.groupname), self.Controllable:GetCoalition(), false, string.format("New rearming group for battery %s defined.", self.groupname))          
+          self:SetRearmingGroup(_assign.setrearminggroup)
+          if self.Debug then
+            rearminggroupcoord:SmokeOrange()
+          end
+        end
+        -- Set stuff Done ==> End of story!
+        return
+      end
       
       -- Handle engagements and relocations.
       if _validkey then
-      
-        -- Convert (wrong x-->z, z-->x) vec3
-        -- TODO: This needs to be "fixed", once DCS gives the correct numbers for x and z.
-        -- local vec3={y=Event.pos.y, x=Event.pos.x, z=Event.pos.z}
-        local vec3={y=Event.pos.y, x=Event.pos.z, z=Event.pos.x}
-        
-        -- Get coordinate from vec3.
-        local _coord=COORDINATE:NewFromVec3(vec3)
         
         -- Remove old mark because it might contain confidential data such as the key.
         -- Also I don't know who can see the mark which was created.
         _coord:RemoveMark(Event.idx)
-        
-        -- Coordinate was given in text, e.g. as lat, long.
-        if _assign.coord then
-          _coord=_assign.coord
-        end
         
         -- Anticipate marker ID.
         -- WARNING: Make sure, no marks are set until the COORDINATE:MarkToCoalition() is called or the target/move name will be wrong and target cannot be removed by deleting its marker.
@@ -3486,11 +3511,14 @@ function ARTY:_Markertext(text)
   assignment.engage=false
   assignment.request=false
   assignment.cancel=false
+  assignment.set=false
   assignment.readonly=false
   assignment.movecanceltarget=false
   assignment.cancelmove=false
   assignment.canceltarget=false
   assignment.cancelrearm=false
+  assignment.setrearmingplace=false
+  assignment.setrearminggroup=false
   
   -- Check for correct keywords.
   if text:lower():find("arty engage") or text:lower():find("arty attack") then
@@ -3500,9 +3528,11 @@ function ARTY:_Markertext(text)
   elseif text:lower():find("arty request") then
     assignment.request=true
   elseif text:lower():find("arty cancel") then
-    assignment.cancel=true    
+    assignment.cancel=true
+  elseif text:lower():find("arty set") then
+    assignment.set=true    
   else
-    self:E(ARTY.id..'ERROR: Neither "ARTY ENGAGE" nor "ARTY MOVE" nor "ARTY RELOCATE" nor "ARTY REQUEST" nor "ARTY CANCEL" keyword specified!')
+    self:E(ARTY.id..'ERROR: Neither "ARTY ENGAGE" nor "ARTY MOVE" nor "ARTY RELOCATE" nor "ARTY REQUEST" nor "ARTY CANCEL" nor "ARTY SET" keyword specified!')
     return nil
   end
     
@@ -3551,8 +3581,13 @@ function ARTY:_Markertext(text)
     elseif keyphrase:lower():find("everyone") or keyphrase:lower():find("all batteries") or keyphrase:lower():find("allbatteries") then
     
       assignment.everyone=true
-      self:T(ARTY.id..string.format("Key Everyone=true."))    
-                
+      self:T(ARTY.id..string.format("Key Everyone=true."))
+      
+    elseif keyphrase:lower():find("irrevocable") or keyphrase:lower():find("readonly") then
+    
+      assignment.readonly=true
+      self:T2(ARTY.id..string.format("Key Readonly=true."))
+              
     elseif (assignment.engage or assignment.move) and key:lower():find("time") then
     
       if val:lower():find("now") then
@@ -3597,21 +3632,16 @@ function ARTY:_Markertext(text)
       end        
       self:T2(ARTY.id..string.format("Key Weapon=%s.", val))
       
-    elseif assignment.move and key:lower():find("speed") then
+    elseif (assignment.move or assignment.set) and key:lower():find("speed") then
     
       assignment.speed=tonumber(val)
       self:T2(ARTY.id..string.format("Key Speed=%s.", val))
       
-    elseif assignment.move and (keyphrase:lower():find("on road") or keyphrase:lower():find("onroad") or keyphrase:lower():find("use road")) then
+    elseif (assignment.move or assignment.set) and (keyphrase:lower():find("on road") or keyphrase:lower():find("onroad") or keyphrase:lower():find("use road")) then
     
       assignment.onroad=true
       self:T2(ARTY.id..string.format("Key Onroad=true."))
               
-    elseif keyphrase:lower():find("irrevocable") or keyphrase:lower():find("readonly") then
-    
-      assignment.readonly=true
-      self:T2(ARTY.id..string.format("Key Readonly=true."))
-
     elseif assignment.move and (keyphrase:lower():find("cancel target") or keyphrase:lower():find("canceltarget")) then
     
       assignment.movecanceltarget=true
@@ -3656,6 +3686,24 @@ function ARTY:_Markertext(text)
     
       assignment.cancelrearm=true
       self:T2(ARTY.id..string.format("Key Cancel Rearm=true."))
+
+    elseif assignment.set and keyphrase:lower():find("rearming place") then
+    
+      assignment.setrearmingplace=true
+      self:T(ARTY.id..string.format("Key Set Rearming Place=true."))
+
+    elseif assignment.set and keyphrase:lower():find("rearming group") then
+
+      local v=self:_split(keyphrase, '"')
+      local groupname=v[2]
+      env.info("FF v2 groupname = "..tostring(v[2]))
+      
+      local group=GROUP:FindByName(groupname)
+      if group and group:IsAlive() then
+        assignment.setrearminggroup=group
+      end
+ 
+      self:T2(ARTY.id..string.format("Key Set Rearming Group = %s.", tostring(groupname)))
           
     elseif key:lower():find("lldms") then
       
