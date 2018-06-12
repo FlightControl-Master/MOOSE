@@ -285,33 +285,40 @@
 -- ARTY group are able to assign targets and moves without a key.
 -- 
 -- ### Target Assignments
--- A new target can be assigned by writing **arty engage** in the marker text. This can be followed by a **comma separated list** of optional keywords and parameters:
+-- A new target can be assigned by writing **arty engage** in the marker text.
+-- This is followed by a **comma separated list** of (optional) keywords and parameters.
+-- First, it is important to address the ARTY group or groups that should engage. This can be done in numrous ways. The keywords are *battery*, *alias*, *cluster*.
+-- It is also possible to address all ARTY groups by the keyword *everyone* or *allbatteries*. These two can be used synonymously.
+-- **Note that**, if no battery is assigned nothing will happen.
 -- 
+-- * *everyone* or *allbatteries* The target is assigned to all batteries.
+-- * *battery* Name of the ARTY group that the target is assigned to. Note that **the name is case sensitive** and has to be given in quotation marks. Default is all ARTY groups of the right coalition.
+-- * *alias* Alias of the ARTY group that the target is assigned to. The alias is **case sensitive** and needs to be in quotation marks.
+-- * *cluster* The cluster of ARTY groups that is addessed. Clusters can be defined by the function @{#ARTY.AddToCluster}(*clusters*). Names are **case sensitive** and need to be in quotation marks.
+-- * *key* A number to authorize the target assignment. Only specifing the correct number will trigger an engagement.
 -- * *time* Time for which which the engagement is schedules, e.g. 08:42. Default is as soon as possible.
 -- * *prio*  Priority of the engagement as number between 1 (high prio) and 100 (low prio). Default is 50, i.e. medium priority.
 -- * *shots* Number of shots (shells, rockets or missiles) fired at each engagement. Default is 5.
 -- * *maxengage* Number of times the target is engaged. Default is 1.
 -- * *radius* Scattering radius of the fired shots in meters. Default is 100 m.
 -- * *weapon* Type of weapon to be used. Valid parameters are *cannon*, *rocket*, *missile*, *nuke*. Default is automatic selection.
--- * *battery* Name of the ARTY group that the target is assigned to. Note that **the name is case sensitive** and has to be given in quotation marks. Default is all ARTY groups of the right coalition.
--- * *alias* Alias of the ARTY group that the target is assigned to. The alias is **case sensitive** and needs to be in quotation marks.
--- * *cluster* The cluster of ARTY groups that is addessed. Clusters can be defined by the function @{#ARTY.AddToCluster}(*clusters*). Names are **case sensitive** and need to be in quotation marks.
--- * *key* A number to authorize the target assignment. Only specifing the correct number will trigger an engagement.
 -- * *lldms* Specify the coordinates in Lat/Long degrees, minutes and seconds format. The actual location of the marker is unimportant here. The group will engage the coordinates given in the lldms keyword.
 -- Format is DD:MM:SS[N,S] DD:MM:SS[W,E]. See example below. This can be useful when coordinates in this format are obtained from elsewhere.
 -- * *readonly* The marker is readonly and cannot be deleted by users. Hence, assignment cannot be cancelled by removing the marker.
 -- 
 -- Here are examples of valid marker texts:
---      arty engage
+--      arty engage, battery "Blue Paladin Alpha"
+--      arty engage, everyone
+--      arty engage, allbatteries
+--      arty engage, alias "Bob", weapon missiles
+--      arty engage, cluster "All Mortas"
+--      arty engage, cluster "Northern Batteries" "Southern Batteries"
+--      arty engage, cluster "Northern Batteries", cluster "Southern Batteries"
 --      arty engage, shots 20, prio 10, time 08:15, weapon cannons
 --      arty engage, battery "Blue Paladin 1" "Blue MRLS 1", shots 10, time 10:15
 --      arty engage, battery "Blue MRLS 1", key 666
 --      arty engage, battery "Paladin Alpha", weapon nukes, shots 1, time 20:15
 --      arty engage, lldms 41:51:00N 41:47:58E
---      arty engage, alias "Bob", weapon missiles
---      arty engage, cluster "All Mortas"
---      arty engage, cluster "Northern Batteries" "Southern Batteries"
---      arty engage, cluster "Northern Batteries", cluster "Southern Batteries"
 --      
 -- Note that the keywords and parameters are *case insensitve*. Only exception are the battery, alias and cluster names.
 -- These must be exactly the same as the names of the goups defined in the mission editor or the aliases and cluster names defined in the script.
@@ -333,15 +340,14 @@
 -- * *readonly* Marker cannot be deleted by users any more. Hence, assignment cannot be cancelled by removing the marker.
 -- 
 -- Here are some examples:
---      arty move
---      arty move, time 23:45, speed 50, on road
 --      arty move, battery "Blue Paladin"
 --      arty move, battery "Blue MRLS", canceltarget, speed 10, on road
---      arty move, lldms 41:51:00N 41:47:58E
+--      arty move, cluster "mobile", lldms 41:51:00N 41:47:58E
 --      arty move, alias "Bob", weapon missiles
 --      arty move, cluster "All Howitzer"
 --      arty move, cluster "Northern Batteries" "Southern Batteries"
 --      arty move, cluster "Northern Batteries", cluster "Southern Batteries"
+--      arty move, everyone
 --      
 -- ### Requests
 -- 
@@ -352,7 +358,7 @@
 -- * *ammo* Current ammunition status is reported.
 -- 
 -- For example
---      arty request, ammo
+--      arty request, everyone, ammo
 --      arty request, battery "Paladin Bravo", targets
 --      arty request, cluster "All Mortars", move
 -- 
@@ -586,7 +592,7 @@ ARTY.id="ARTY | "
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="1.0.1"
+ARTY.version="1.0.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -614,6 +620,7 @@ ARTY.version="1.0.1"
 -- TODO: Add set commands via markers. E.g. set rearming place.
 -- DONE: Test stationary types like mortas ==> rearming etc.
 -- TODO: Add hit event and make the arty group relocate.
+-- TODO: Add illumination and smoke.
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -1901,7 +1908,7 @@ function ARTY:_OnEventMarkRemove(Event)
 
   -- Get battery coalition and name.
   local batterycoalition=self.Controllable:GetCoalition()
-  local batteryname=self.groupname
+  --local batteryname=self.groupname
   
   if Event.text~=nil and Event.text:find("BATTERY") then
   
@@ -1986,6 +1993,7 @@ function ARTY:_OnEventMarkChange(Event)
 
       -- Check if ENGAGE or MOVE or REQUEST keywords were found.
       if _assign==nil or not (_assign.engage or _assign.move or _assign.request or _assign.cancel) then
+          self:T(ARTY.id..string.format("WARNING: %s, no keyword ENGAGE, MOVE, REQUEST or CANCEL in mark text! Command will not be executed. Text:\n%s", self.groupname, Event.text))
         return
       end
                     
@@ -1993,7 +2001,10 @@ function ARTY:_OnEventMarkChange(Event)
       local _assigned=false
       
       -- If any array is filled something has been assigned.
-      if #_assign.battery>0 or #_assign.aliases>0 or #_assign.cluster>0 then
+      if _assign.everyone then 
+        -- Everyone was addressed.
+        _assigned=true
+      else --#_assign.battery>0 or #_assign.aliases>0 or #_assign.cluster>0 then
 
         -- Loop over batteries.        
         for _,bat in pairs(_assign.battery) do
@@ -2017,14 +2028,12 @@ function ARTY:_OnEventMarkChange(Event)
             end
           end
         end
-        
-      else
-        -- No one explicitly assigned ==> we assume to be assigned.
-        _assigned=true
+
       end
             
       -- We were not addressed.
       if not _assigned then
+        self:T3(ARTY.id..string.format("INFO: ARTY group %s was not addressed! Mark text:\n%s", self.groupname, Event.text))
         return
       end
             
@@ -3411,7 +3420,7 @@ end
 function ARTY:_MarkerKeyAuthentification(text)
 
   -- Set battery and coalition.
-  local batteryname=self.groupname
+  --local batteryname=self.groupname
   local batterycoalition=self.Controllable:GetCoalition()
 
   -- Get assignment.
@@ -3443,7 +3452,7 @@ function ARTY:_MarkerKeyAuthentification(text)
     if mykey~=nil then
       _validkey=self.markkey==mykey            
     end    
-    self:T2(ARTY.id..string.format("%s, authkey=%s == %s=playerkey ==> valid=%s", batteryname, tostring(self.markkey), tostring(mykey), tostring(_validkey)))
+    self:T2(ARTY.id..string.format("%s, authkey=%s == %s=playerkey ==> valid=%s", self.groupname, tostring(self.markkey), tostring(mykey), tostring(_validkey)))
     
     -- Send message
     local text=""
@@ -3472,6 +3481,7 @@ function ARTY:_Markertext(text)
   assignment.battery={}
   assignment.aliases={}
   assignment.cluster={}
+  assignment.everyone=false
   assignment.move=false
   assignment.engage=false
   assignment.request=false
@@ -3537,6 +3547,11 @@ function ARTY:_Markertext(text)
         table.insert(assignment.cluster, v[i])
         self:T2(ARTY.id..string.format("Key Cluster=%s.", v[i]))
       end
+      
+    elseif keyphrase:lower():find("everyone") or keyphrase:lower():find("all batteries") or keyphrase:lower():find("allbatteries") then
+    
+      assignment.everyone=true
+      self:T(ARTY.id..string.format("Key Everyone=true."))    
                 
     elseif (assignment.engage or assignment.move) and key:lower():find("time") then
     
