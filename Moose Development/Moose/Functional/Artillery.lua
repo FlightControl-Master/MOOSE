@@ -55,6 +55,8 @@
 -- @field #number Nrockets0 Initial amount of rockets of the whole group.
 -- @field #number Nmissiles0 Initial amount of missiles of the whole group.
 -- @field #number Nukes0 Initial amount of tactical nukes of the whole group. Default is 0.
+-- @field #number Nillu0 Initial amount of illumination shells of the whole group. Default is 0.
+-- @field #number Nsmoke0 Initial amount of smoke shells of the whole group. Default is 0.
 -- @field #number StatusInterval Update interval in seconds between status updates. Default 10 seconds.
 -- @field #number WaitForShotTime Max time in seconds to wait until fist shot event occurs after target is assigned. If time is passed without shot, the target is deleted. Default is 300 seconds.
 -- @field #table DCSdesc DCS descriptors of the ARTY group.
@@ -84,7 +86,9 @@
 -- @field #number minrange Minimum firing range in kilometers. Targets closer than this distance are not engaged. Default 0.1 km.
 -- @field #number maxrange Maximum firing range in kilometers. Targets further away than this distance are not engaged. Default 10000 km.
 -- @field #number nukewarhead Explosion strength of tactical nuclear warhead in kg TNT. Default 75000.
--- @field #number Nukes Number of nuclear shells, the group has available. Default is same number as normal shells. Note that if normal shells are empty, firing nukes is also not possible any more.
+-- @field #number Nukes Number of nuclear shells, the group has available. Note that if normal shells are empty, firing nukes is also not possible any more.
+-- @field #number Nillu Number of illumination shells the group has available. Note that if normal shells are empty, firing illumination shells is also not possible any more.
+-- @filed #number Nsmoke Number of smoke shells the group has available. Note that if normal shells are empty, firing smoke shells is also not possible any more.
 -- @field #number nukerange Demolition range of tactical nuclear explostions.
 -- @field #boolean nukefire Ignite additional fires and smoke for nuclear explosions Default true.
 -- @field #number nukefires Number of nuclear fires and subexplosions.
@@ -226,6 +230,8 @@
 -- * @{#ARTY.WeaponType}.Rockets: Only unguided are used during the attack. Corresponding ammo type are rockets/nurs and can be defined by @{#ARTY.SetRocketTypes}.
 -- * @{#ARTY.WeaponType}.CruiseMissile: Only cruise missiles are used during the attack. Corresponding ammo type are missiles and can be defined by @{#ARTY.SetMissileTypes}.
 -- * @{#ARTY.WeaponType}.TacticalNukes: Use tactical nuclear shells. This works only with units that have shells and is described below.
+-- * @{#ARTY.WeaponType}.IlluminationShells: Use illumination shells. This works only with units that have shells and is described below.
+-- * @{#ARTY.WeaponType}.SmokeShells: Use smoke shells. This works only with units that have shells and is described below.
 -- 
 -- ## Assigning Moves
 -- The ARTY group can be commanded to move. This is done by the @{#ARTY.AssignMoveCoord}(*coord*,*time*,*speed*,*onroad*,*cancel*,*name*) function.
@@ -471,6 +477,8 @@ ARTY={
   Nrockets0=0,
   Nmissiles0=0,
   Nukes0=0,
+  Nillu0=0,
+  Nsmoke0=0,
   StatusInterval=10,
   WaitForShotTime=300,
   DCSdesc=nil,
@@ -499,6 +507,8 @@ ARTY={
   maxrange=1000000,
   nukewarhead=75000,
   Nukes=nil,
+  Nillu=nil,
+  Nsmoke=nil,
   nukefire=false,
   nukefires=nil,
   nukerange=nil,
@@ -519,11 +529,10 @@ ARTY.WeaponType={
   Auto=1073741822,
   Cannon=805306368,
   Rockets=30720,
-  --UnguidedAny=805339120,
-  --GuidedMissile=268402688,
   CruiseMissile=2097152,
-  --AntiShipMissile=65536,
   TacticalNukes=666,
+  IlluminationShells=667,
+  SmokeShells=668,
 }
 
 --- Database of common artillery unit properties.
@@ -1440,6 +1449,22 @@ function ARTY:SetTacNukeWarhead(strength)
   self.nukewarhead=self.nukewarhead*1000*1000 -- convert to kg TNT.
 end
 
+--- Set number of illumination shells available to the group.
+-- Note that it can be max the number of normal shells. Also if all normal shells are empty, firing illumination shells is also not possible any more until group gets rearmed.
+-- @param #ARTY self
+-- @param #number n Number of warheads for the whole group.
+function ARTY:SetIlluminationShells(n)
+  self.Nillu=n
+end
+
+--- Set number of smoke shells available to the group.
+-- Note that it can be max the number of normal shells. Also if all normal shells are empty, firing smoke shells is also not possible any more until group gets rearmed.
+-- @param #ARTY self
+-- @param #number n Number of warheads for the whole group.
+function ARTY:SetSmokeShells(n)
+  self.Nsmoke=n
+end
+
 --- Set nuclear fires and extra demolition explosions.
 -- @param #ARTY self
 -- @param #number nfires (Optional) Number of big smoke and fire objects created in the demolition zone.
@@ -1497,6 +1522,8 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   if self.nukefires==nil then
     self.nukefires=20/1000/1000*self.nukerange*self.nukerange
   end
+  
+  -- Init nuclear shells.
   if self.Nukes~=nil then
     self.Nukes0=math.min(self.Nukes, self.Nshells0)
   else
@@ -1504,6 +1531,22 @@ function ARTY:onafterStart(Controllable, From, Event, To)
     self.Nukes0=0
   end
   
+  -- Init illumination shells.
+  if self.Nillu~=nil then
+    self.Nillu0=math.min(self.Nillu, self.Nshells0)
+  else
+    self.Nillu=0
+    self.Nillu0=0
+  end
+  
+  -- Init smoke shells.
+  if self.Nsmoke~=nil then
+    self.Nsmoke0=math.min(self.Nsmoke, self.Nshells0)
+  else
+    self.Nsmoke=0
+    self.Nsmoke0=0
+  end  
+      
   -- Check if we have and arty type that is in the DB.
   local _dbproperties=self:_CheckDB(self.DisplayName)
   self:T({dbproperties=_dbproperties})
@@ -1561,6 +1604,8 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   text=text..string.format("Nuclear warhead     = %d tons TNT\n", self.nukewarhead/1000)
   text=text..string.format("Nuclear demolition  = %d m\n", self.nukerange)
   text=text..string.format("Nuclear fires       = %d (active=%s)\n", self.nukefires, tostring(self.nukefire))
+  text=text..string.format("Number of illum.    = %d\n", self.Nillu0)
+  text=text..string.format("Number of smoke     = %d\n", self.Nsmoke0)
   if self.RearmingGroup or self.RearmingPlaceCoord then
   text=text..string.format("Rearming safe dist. = %d m\n", self.RearmingDistance)
   end
@@ -1668,6 +1713,8 @@ function ARTY:_StatusReport(display)
   -- Get Ammo.
   local Nammo, Nshells, Nrockets, Nmissiles=self:GetAmmo()
   local Nnukes=self.Nukes
+  local Nillu=self.Nillu
+  local Nsmoke=self.Nsmoke
   
   local Tnow=timer.getTime()
   local Clock=self:_SecondsToClock(timer.getAbsTime())
@@ -1681,6 +1728,8 @@ function ARTY:_StatusReport(display)
   text=text..string.format("Number of rockets   = %d\n", Nrockets)
   text=text..string.format("Number of missiles  = %d\n", Nmissiles)
   text=text..string.format("Number of nukes     = %d\n", Nnukes)
+  text=text..string.format("Number of illum.    = %d\n", Nillu)
+  text=text..string.format("Number of smoke     = %d\n", Nsmoke)    
   if self.currentTarget then
   text=text..string.format("Current Target      = %s\n", tostring(self.currentTarget.name))
   text=text..string.format("Curr. Tgt assigned  = %d\n", Tnow-self.currentTarget.Tassigned)
@@ -1747,9 +1796,15 @@ function ARTY:_OnEventShot(EventData)
         -- Last known position of the weapon fired.
         local _lastpos={x=0, y=0, z=0}
         
-        --- Track the position of the weapon if it is supposed to model a tac nuke. 
+        --- Track the position of the weapon if it is supposed to model a tac nuke, illumination or smoke shell.
         -- @param #table _weapon
         local function _TrackWeapon(_weapon)
+        
+          -- Coordinate of the target
+          local _targetcoord=self.currentTarget.coord -- Core.Point#COORDINATE
+          self.illuMinalt=400
+          self.illuMaxalt=1000
+          self.illuPower=1000
         
           -- When the pcall status returns false the weapon has hit.
           local _status,_currpos =  pcall(
@@ -1758,31 +1813,94 @@ function ARTY:_OnEventShot(EventData)
           end)
           
           self:T(ARTY.id..string.format("ARTY %s: Weapon still in air: %s", self.groupname, tostring(_status)))
+          local _destroyweapon=false
           
           if _status then
             
             -- Update last position.
             _lastpos={x=_currpos.x, y=_currpos.y, z=_currpos.z}
+--[[            
+            -- Coordinate and distance to target.
+            local _coord=COORDINATE:NewFromVec3(_lastpos)            
+            local _dist=_coord:Get2DDistance(self.currentTarget.coord)    
             
-            -- Check again in 0.05 seconds.
-            --return timer.getTime() + self.dtBombtrack
+            env.info("FF dist = ".._dist)        
+            
+            if self.currentTarget.weapontype==ARTY.WeaponType.IlluminationShells then
+            
+              -- Check if within distace.
+              if _dist<self.currentTarget.radius then
+                env.info("FF in range dist = ".._dist)
+              
+                -- Get random coordinate within certain radius of the target.
+                local _cr=_targetcoord:GetRandomCoordinateInRadius(self.currentTarget.radius)
+                
+                -- Get random altitude over target.
+                local _alt=_cr:GetLandHeight()+math.random(self.illuMinalt,self.illumMaxalt)
+                
+                -- Adjust explosion height of coordinate.
+                local _ci=COORDINATE:New(_cr.x,_alt,_cr.z)
+                
+                -- Create illumination flare.
+                _ci:IlluminationBomb(self.illuPower)
+                
+                -- Destroy actual shell.
+                _destroyweapon=true     
+              end
+              
+            elseif self.currentTarget.weapontype==ARTY.WeaponType.SmokeShells then              
+            
+              if _dist<self.currentTarget.radius then
+                env.info("FF in range dist = ".._dist)
+              
+                -- Get random coordinate within a certain radius.
+                local _cr=_coord:GetRandomCoordinateInRadius(self.currentTarget.radius)
+                
+                -- Fire smoke at this coordinate.
+                _cr:SmokeRed()
+                
+                -- Destroy actual shell.
+                _destroyweapon=true         
+              end              
+              
+            end
+            
+            if _destroyweapon then
+            
+              -- Destroy weapon and stop timer.
+              _weapon:destroy()
+              --return nil
+            
+            else
+            
+              -- Check again in 0.05 seconds.
+              -- TODO: Make dt input parameter.
+              --return timer.getTime() + 0.05
+              
+            end
+]]            
             return timer.getTime() + 0.05
             
           else
         
             local _impactcoord=COORDINATE:NewFromVec3(_lastpos)
-            
-            -- Create a "nuclear" explosion and blast at the impact point.
-            SCHEDULER:New(nil, ARTY._NuclearBlast, {self,_impactcoord}, 1.0)
+        
+            if self.currentTarget.weapontype==ARTY.WeaponType.TacticalNukes then    
+              -- Create a "nuclear" explosion and blast at the impact point.
+              SCHEDULER:New(nil, ARTY._NuclearBlast, {self,_impactcoord}, 1.0)
+            end
         
           end
         
         end
         
         -- Start track the shell if we want to model a tactical nuke.
-        if self.currentTarget.weapontype==ARTY.WeaponType.TacticalNukes and self.Nukes>0 then
-            self:T(ARTY.id..string.format("ARTY %s: Tracking of weapon starts in two seconds.", self.groupname))
-            timer.scheduleFunction(_TrackWeapon, EventData.weapon, timer.getTime() + 2.0)
+        local _tracknuke  = self.currentTarget.weapontype==ARTY.WeaponType.TacticalNukes and self.Nukes>0
+        local _trackillu  = self.currentTarget.weapontype==ARTY.WeaponType.IlluminationShells and self.Nillu>0
+        local _tracksmoke = self.currentTarget.weapontype==ARTY.WeaponType.SmokeShells and self.Nsmoke>0
+        if _tracknuke or _trackillu or _tracksmoke then
+            self:T(ARTY.id..string.format("ARTY %s: Tracking of weapon starts in one second.", self.groupname))
+            timer.scheduleFunction(_TrackWeapon, EventData.weapon, timer.getTime() + 1.0)
         end
                
         -- Get current ammo.
@@ -1791,6 +1909,16 @@ function ARTY:_OnEventShot(EventData)
         -- Decrease available nukes because we just fired one.
         if self.currentTarget.weapontype==ARTY.WeaponType.TacticalNukes then
           self.Nukes=self.Nukes-1
+        end
+
+        -- Decrease available illuminatin shells because we just fired one.
+        if self.currentTarget.weapontype==ARTY.WeaponType.IlluminationShells then
+          self.Nillu=self.Nillu-1
+        end
+
+        -- Decrease available illuminatin shells because we just fired one.
+        if self.currentTarget.weapontype==ARTY.WeaponType.SmokeShells then
+          self.Nsmoke=self.Nsmoke-1
         end
         
         -- Check if we are completely out of ammo.
@@ -2463,6 +2591,12 @@ function ARTY:onafterOpenFire(Controllable, From, Event, To, target)
   elseif target.weapontype==ARTY.WeaponType.TacticalNukes then
     nfire=self.Nukes
     _type="nuclear shells"
+  elseif target.weapontype==ARTY.WeaponType.IlluminationShells then
+    nfire=self.Nillu
+    _type="illumination shells"
+  elseif target.weapontype==ARTY.WeaponType.SmokeShells then
+    nfire=self.Nsmoke
+    _type="smoke shells"
   elseif target.weapontype==ARTY.WeaponType.Rockets then
     nfire=Nrockets
     _type="rockets"
@@ -2704,6 +2838,8 @@ function ARTY:onafterRearmed(Controllable, From, Event, To)
   
   -- "Rearm" tactical nukes as well.
   self.Nukes=self.Nukes0
+  self.Nillu=self.Nillu0
+  self.Nsmoke=self.Nsmoke0
   
   -- Route ARTY group back to where it came from (if distance is > 100 m).
   local dist=self.Controllable:GetCoordinate():Get2DDistance(self.InitialCoord)
@@ -2960,7 +3096,7 @@ function ARTY:_FireAtCoord(coord, radius, nshells, weapontype)
   local group=self.Controllable --Wrapper.Group#GROUP
   
   -- Tactical nukes are actually cannon shells.
-  if weapontype==ARTY.WeaponType.TacticalNukes then
+  if weapontype==ARTY.WeaponType.TacticalNukes or weapontype==ARTY.WeaponType.IlluminationShells or weapontype==ARTY.WeaponType.SmokeShells then
     weapontype=ARTY.WeaponType.Cannon
   end
 
@@ -3627,6 +3763,10 @@ function ARTY:_Markertext(text)
         assignment.weapontype=ARTY.WeaponType.CruiseMissile
       elseif val:lower():find("nuke") then
         assignment.weapontype=ARTY.WeaponType.TacticalNukes
+      elseif val:lower():find("illu") then
+        assignment.weapontype=ARTY.WeaponType.IlluminationShells
+      elseif val:lower():find("smoke") then
+        assignment.weapontype=ARTY.WeaponType.SmokeShells        
       else
         assignment.weapontype=ARTY.WeaponType.Auto
       end        
@@ -4223,6 +4363,16 @@ function ARTY:_CheckOutOfAmmo(targets)
     
       self:T(ARTY.id..string.format("Group %s, tactical nukes requested for target %s but nukes empty.", self.groupname, Target.name))
       _partlyoutofammo=true
+
+    elseif Target.weapontype==ARTY.WeaponType.IlluminationShells and self.Nillu<=0 then
+    
+      self:T(ARTY.id..string.format("Group %s, illumination shells requested for target %s but illumination shells empty.", self.groupname, Target.name))
+      _partlyoutofammo=true
+
+    elseif Target.weapontype==ARTY.WeaponType.SmokeShells and self.Nsmoke<=0 then
+    
+      self:T(ARTY.id..string.format("Group %s, smoke shells requested for target %s but smoke shells empty.", self.groupname, Target.name))
+      _partlyoutofammo=true
     
     elseif Target.weapontype==ARTY.WeaponType.Rockets and _nrockets==0 then
     
@@ -4258,6 +4408,10 @@ function ARTY:_CheckWeaponTypeAvailable(target)
     nfire=Nshells
   elseif target.weapontype==ARTY.WeaponType.TacticalNukes then
     nfire=self.Nukes
+  elseif target.weapontype==ARTY.WeaponType.IlluminationShells then
+    nfire=self.Nillu
+  elseif target.weapontype==ARTY.WeaponType.SmokeShells then
+    nfire=self.Nsmoke
   elseif target.weapontype==ARTY.WeaponType.Rockets then
     nfire=Nrockets
   elseif target.weapontype==ARTY.WeaponType.CruiseMissile then
@@ -4280,6 +4434,10 @@ function ARTY:_CheckWeaponTypePossible(target)
     possible=self.Nshells0>0
   elseif target.weapontype==ARTY.WeaponType.TacticalNukes then
     possible=self.Nukes0>0
+  elseif target.weapontype==ARTY.WeaponType.IlluminationShells then
+    possible=self.Nillus0>0
+  elseif target.weapontype==ARTY.WeaponType.SmokeShells then
+    possible=self.Nsmoke0>0
   elseif target.weapontype==ARTY.WeaponType.Rockets then
     possible=self.Nrockets0>0
   elseif target.weapontype==ARTY.WeaponType.CruiseMissile then
@@ -4420,7 +4578,11 @@ function ARTY:_WeaponTypeName(tnumber)
   elseif tnumber==ARTY.WeaponType.CruiseMissile then
     name="Cruise Missiles"
   elseif tnumber==ARTY.WeaponType.TacticalNukes then
-    name="Tactical Nukes"    
+    name="Tactical Nukes"
+  elseif tnumber==ARTY.WeaponType.IlluminationShells then
+    name="Illumination Shells"
+  elseif tnumber==ARTY.WeaponType.SmokeShells then
+    name="Smoke Shells"        
   end
   return name
 end

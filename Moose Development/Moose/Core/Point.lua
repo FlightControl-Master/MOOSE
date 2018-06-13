@@ -998,9 +998,10 @@ do -- COORDINATE
 
   --- Creates an illumination bomb at the point.
   -- @param #COORDINATE self
-  function COORDINATE:IlluminationBomb()
+  -- @param #number power
+  function COORDINATE:IlluminationBomb(power)
     self:F2()
-    trigger.action.illuminationBomb( self:GetVec3() )
+    trigger.action.illuminationBomb( self:GetVec3(), power )
   end
 
 
