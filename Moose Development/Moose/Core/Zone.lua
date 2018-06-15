@@ -976,12 +976,24 @@ ZONE_UNIT = {
 -- @param Dcs.DCSTypes#Distance Radius The radius of the zone.
 -- @param Dcs.DCSTypes#Distance dx The offset in X direction, +x is north.
 -- @param Dcs.DCSTypes#Distance dy The offset in Y direction, +y is east.
+-- @param Dcs.DCSTypes#Distance rho The distance of the zone from the unit
+-- @param Dcs.DCSTypes#Angle theta The azimuth of the zone relative to unit
+-- @param Dcs.DCSTypes#Boolean relative_to_unit if true, theta is measured clockwise from unit's direction else clockwise from north.
 -- @return #ZONE_UNIT self
-function ZONE_UNIT:New( ZoneName, ZoneUNIT, Radius, dx, dy )
+function ZONE_UNIT:New( ZoneName, ZoneUNIT, Radius, dx, dy, rho, theta, relative_to_unit)
 
   self.dy = dy or 0.0
   self.dx = dx or 0.0
+  self.rho = rho or 0.0
+  self.theta = theta * math.pi / 180.0 or 0.0
+  self.relative_to_unit = relative_to_unit or false
   
+  -- check if the inputs was reasonable, either (dx, dy) or (rho, theta) can be given, else raise an exception.
+  
+  if (dx or dy) and (rho or theta) then
+    error("Cannot use arguments (dx, dy) with (rho, theta)")  
+  end
+   
   local self = BASE:Inherit( self, ZONE_RADIUS:New( ZoneName, ZoneUNIT:GetVec2(), Radius ) )
 
   self:F( { ZoneName, ZoneUNIT:GetVec2(), Radius } )
@@ -1001,11 +1013,23 @@ function ZONE_UNIT:GetVec2()
   
   local ZoneVec2 = self.ZoneUNIT:GetVec2()
   if ZoneVec2 then
-    env.info(self.dx .. " " .. self.dy)
-    
     -- update the zone position with the offsets.
-    ZoneVec2.x = ZoneVec2.x + self.dx
-    ZoneVec2.y = ZoneVec2.y + self.dy
+    if (self.dx or self.dy) then
+      ZoneVec2.x = ZoneVec2.x + self.dx
+      ZoneVec2.y = ZoneVec2.y + self.dy
+    end
+    
+    if (self.rho or self.theta) then
+      -- check if theta is relative to unit or relative to north
+      if self.relative_to_unit then
+        heading = self.ZoneUNIT:GetHeading() * math.pi / 180.0 or 0.0
+      else
+        heading = 0.0
+      end
+                   
+       ZoneVec2.x = ZoneVec2.x + self.rho * math.cos( self.theta + heading )
+       ZoneVec2.y = ZoneVec2.y + self.rho * math.sin( self.theta + heading )
+    end
     
     self.LastVec2 = ZoneVec2
     return ZoneVec2
