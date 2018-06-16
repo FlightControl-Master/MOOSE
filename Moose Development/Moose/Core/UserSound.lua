@@ -10,7 +10,8 @@
 -- 
 -- ===
 -- 
--- @module UserSound
+-- @module Core.UserSound
+-- @image Core_Usersound.JPG
 
 do -- UserSound
 
@@ -18,11 +19,9 @@ do -- UserSound
   -- @extends Core.Base#BASE
 
 
-  --- # USERSOUND class, extends @{Base#BASE}
+  --- Management of DCS User Sound.
   -- 
-  -- Management of DCS User Sound.
-  -- 
-  -- ## 1. USERSOUND constructor
+  -- ## USERSOUND constructor
   --   
   --   * @{#USERSOUND.New}(): Creates a new USERSOUND object.
   -- 
@@ -80,7 +79,7 @@ do -- UserSound
   
   --- Play the usersound to the given coalition.
   -- @param #USERSOUND self
-  -- @param Dcs.DCScoalition#coalition Coalition The coalition to play the usersound to.
+  -- @param DCS#coalition Coalition The coalition to play the usersound to.
   -- @return #USERSOUND The usersound instance.
   -- @usage
   --   local BlueVictory = USERSOUND:New( "BlueVictory.ogg" )
@@ -96,7 +95,7 @@ do -- UserSound
 
   --- Play the usersound to the given country.
   -- @param #USERSOUND self
-  -- @param Dcs.DCScountry#country Country The country to play the usersound to.
+  -- @param DCS#country Country The country to play the usersound to.
   -- @return #USERSOUND The usersound instance.
   -- @usage
   --   local BlueVictory = USERSOUND:New( "BlueVictory.ogg" )
@@ -110,9 +109,9 @@ do -- UserSound
   end  
 
 
-  --- Play the usersound to the given @{Group}.
+  --- Play the usersound to the given @{Wrapper.Group}.
   -- @param #USERSOUND self
-  -- @param Wrapper.Group#GROUP Group The @{Group} to play the usersound to.
+  -- @param Wrapper.Group#GROUP Group The @{Wrapper.Group} to play the usersound to.
   -- @return #USERSOUND The usersound instance.
   -- @usage
   --   local BlueVictory = USERSOUND:New( "BlueVictory.ogg" )

@@ -1,7 +1,5 @@
 --- **Core** -- SET_ classes define **collections** of objects to perform **bulk actions** and logically **group** objects.
 -- 
--- ![Banner Image](..\Presentations\SET\Dia1.JPG)
--- 
 -- ===
 -- 
 -- SET_ classes group objects of the same type into a collection, which is either:
@@ -11,10 +9,10 @@
 --   
 -- Various types of SET_ classes are available:
 -- 
---   * @{#SET_UNIT}: Defines a colleciton of @{Unit}s filtered by filter criteria.
---   * @{#SET_GROUP}: Defines a collection of @{Group}s filtered by filter criteria.
+--   * @{#SET_UNIT}: Defines a colleciton of @{Wrapper.Unit}s filtered by filter criteria.
+--   * @{#SET_GROUP}: Defines a collection of @{Wrapper.Group}s filtered by filter criteria.
 --   * @{#SET_CLIENT}: Defines a collection of @{Client}s filterd by filter criteria.
---   * @{#SET_AIRBASE}: Defines a collection of @{Airbase}s filtered by filter criteria.
+--   * @{#SET_AIRBASE}: Defines a collection of @{Wrapper.Airbase}s filtered by filter criteria.
 -- 
 -- These classes are derived from @{#SET_BASE}, which contains the main methods to manage SETs.
 -- 
@@ -30,7 +28,8 @@
 -- 
 -- ===
 -- 
--- @module Set
+-- @module Core.Set
+-- @image Core_Sets.JPG
 
 
 --- @type SET_BASE
@@ -41,20 +40,19 @@
 -- @extends Core.Base#BASE
 
 
---- # 1) SET_BASE class, extends @{Base#BASE}
--- The @{Set#SET_BASE} class defines the core functions that define a collection of objects.
+--- The @{Core.Set#SET_BASE} class defines the core functions that define a collection of objects.
 -- A SET provides iterators to iterate the SET, but will **temporarily** yield the ForEach interator loop at defined **"intervals"** to the mail simulator loop.
 -- In this way, large loops can be done while not blocking the simulator main processing loop.
 -- The default **"yield interval"** is after 10 objects processed.
 -- The default **"time interval"** is after 0.001 seconds.
 -- 
--- ## 1.1) Add or remove objects from the SET
+-- ## Add or remove objects from the SET
 -- 
--- Some key core functions are @{Set#SET_BASE.Add} and @{Set#SET_BASE.Remove} to add or remove objects from the SET in your logic.
+-- Some key core functions are @{Core.Set#SET_BASE.Add} and @{Core.Set#SET_BASE.Remove} to add or remove objects from the SET in your logic.
 -- 
--- ## 1.2) Define the SET iterator **"yield interval"** and the **"time interval"**
+-- ## Define the SET iterator **"yield interval"** and the **"time interval"**
 -- 
--- Modify the iterator intervals with the @{Set#SET_BASE.SetInteratorIntervals} method.
+-- Modify the iterator intervals with the @{Core.Set#SET_BASE.SetInteratorIntervals} method.
 -- You can set the **"yield interval"**, and the **"time interval"**. (See above).
 -- 
 -- @field #SET_BASE SET_BASE 
@@ -76,9 +74,34 @@ SET_BASE = {
 function SET_BASE:New( Database )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, BASE:New() ) -- Core.Set#SET_BASE
+  local self = BASE:Inherit( self, FSM:New() ) -- Core.Set#SET_BASE
   
   self.Database = Database
+
+  self:SetStartState( "Started" )
+  
+  --- Added Handler OnAfter for SET_BASE
+  -- @function [parent=#SET_BASE] OnAfterAdded
+  -- @param #SET_BASE self
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  -- @param #string ObjectName The name of the object.
+  -- @param Object The object.
+  
+  
+  self:AddTransition( "*",  "Added", "*" )
+  
+  --- Removed Handler OnAfter for SET_BASE
+  -- @function [parent=#SET_BASE] OnAfterRemoved
+  -- @param #SET_BASE self
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  -- @param #string ObjectName The name of the object.
+  -- @param Object The object.
+  
+  self:AddTransition( "*",  "Removed", "*" )
 
   self.YieldInterval = 10
   self.TimeInterval = 0.001
@@ -93,7 +116,7 @@ function SET_BASE:New( Database )
   return self
 end
 
---- Finds an @{Base#BASE} object based on the object Name.
+--- Finds an @{Core.Base#BASE} object based on the object Name.
 -- @param #SET_BASE self
 -- @param #string ObjectName
 -- @return Core.Base#BASE The Object found.
@@ -145,10 +168,12 @@ function SET_BASE:GetSetObjects()  -- R2.3
 end
 
 
---- Removes a @{Base#BASE} object from the @{Set#SET_BASE} and derived classes, based on the Object Name.
+--- Removes a @{Core.Base#BASE} object from the @{Core.Set#SET_BASE} and derived classes, based on the Object Name.
 -- @param #SET_BASE self
 -- @param #string ObjectName
-function SET_BASE:Remove( ObjectName )
+-- @param NoTriggerEvent (optional) When `true`, the :Remove() method will not trigger a **Removed** event.
+function SET_BASE:Remove( ObjectName, NoTriggerEvent )
+  self:F2( { ObjectName = ObjectName } )
 
   local Object = self.Set[ObjectName]
   
@@ -157,33 +182,36 @@ function SET_BASE:Remove( ObjectName )
       if Key == ObjectName then
         table.remove( self.Index, Index )
         self.Set[ObjectName] = nil
-        self:Flush(self)
         break
       end
     end
-    
+    -- When NoTriggerEvent is true, then no Removed event will be triggered.
+    if not NoTriggerEvent then
+      self:Removed( ObjectName, Object )
+    end
   end
-  
 end
 
 
---- Adds a @{Base#BASE} object in the @{Set#SET_BASE}, using a given ObjectName as the index.
+--- Adds a @{Core.Base#BASE} object in the @{Core.Set#SET_BASE}, using a given ObjectName as the index.
 -- @param #SET_BASE self
 -- @param #string ObjectName
 -- @param Core.Base#BASE Object
 -- @return Core.Base#BASE The added BASE Object.
 function SET_BASE:Add( ObjectName, Object )
-  self:F3( { ObjectName = ObjectName, Object = Object } )
+  self:F2( { ObjectName = ObjectName, Object = Object } )
 
   -- Ensure that the existing element is removed from the Set before a new one is inserted to the Set
   if self.Set[ObjectName] then
-    self:Remove( ObjectName )
+    self:Remove( ObjectName, true )
   end
   self.Set[ObjectName] = Object
   table.insert( self.Index, ObjectName )
+  
+  self:Added( ObjectName, Object )
 end
 
---- Adds a @{Base#BASE} object in the @{Set#SET_BASE}, using the Object Name as the index.
+--- Adds a @{Core.Base#BASE} object in the @{Core.Set#SET_BASE}, using the Object Name as the index.
 -- @param #SET_BASE self
 -- @param Wrapper.Object#OBJECT Object
 -- @return Core.Base#BASE The added BASE Object.
@@ -199,7 +227,7 @@ end
 
 
 
---- Gets a @{Base#BASE} object from the @{Set#SET_BASE} and derived classes, based on the Object Name.
+--- Gets a @{Core.Base#BASE} object from the @{Core.Set#SET_BASE} and derived classes, based on the Object Name.
 -- @param #SET_BASE self
 -- @param #string ObjectName
 -- @return Core.Base#BASE
@@ -212,7 +240,7 @@ function SET_BASE:Get( ObjectName )
   return Object
 end
 
---- Gets the first object from the @{Set#SET_BASE} and derived classes.
+--- Gets the first object from the @{Core.Set#SET_BASE} and derived classes.
 -- @param #SET_BASE self
 -- @return Core.Base#BASE
 function SET_BASE:GetFirst()
@@ -223,7 +251,7 @@ function SET_BASE:GetFirst()
   return FirstObject 
 end
 
---- Gets the last object from the @{Set#SET_BASE} and derived classes.
+--- Gets the last object from the @{Core.Set#SET_BASE} and derived classes.
 -- @param #SET_BASE self
 -- @return Core.Base#BASE
 function SET_BASE:GetLast()
@@ -234,7 +262,7 @@ function SET_BASE:GetLast()
   return LastObject 
 end
 
---- Gets a random object from the @{Set#SET_BASE} and derived classes.
+--- Gets a random object from the @{Core.Set#SET_BASE} and derived classes.
 -- @param #SET_BASE self
 -- @return Core.Base#BASE
 function SET_BASE:GetRandom()
@@ -245,7 +273,7 @@ function SET_BASE:GetRandom()
 end
 
 
---- Retrieves the amount of objects in the @{Set#SET_BASE} and derived classes.
+--- Retrieves the amount of objects in the @{Core.Set#SET_BASE} and derived classes.
 -- @param #SET_BASE self
 -- @return #number Count
 function SET_BASE:Count()
@@ -313,10 +341,6 @@ function SET_BASE:_FilterStart()
     end
   end
   
-  self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
-  self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
-  self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
-  
   -- Follow alive players and clients
   --self:HandleEvent( EVENTS.PlayerEnterUnit, self._EventOnPlayerEnterUnit )
   --self:HandleEvent( EVENTS.PlayerLeaveUnit, self._EventOnPlayerLeaveUnit )
@@ -357,9 +381,9 @@ function SET_BASE:FilterStop()
   return self
 end
 
---- Iterate the SET_BASE while identifying the nearest object from a @{Point#POINT_VEC2}.
+--- Iterate the SET_BASE while identifying the nearest object from a @{Core.Point#POINT_VEC2}.
 -- @param #SET_BASE self
--- @param Core.Point#POINT_VEC2 PointVec2 A @{Point#POINT_VEC2} object from where to evaluate the closest object in the set.
+-- @param Core.Point#POINT_VEC2 PointVec2 A @{Core.Point#POINT_VEC2} object from where to evaluate the closest object in the set.
 -- @return Core.Base#BASE The closest object.
 function SET_BASE:FindNearestObjectFromPointVec2( PointVec2 )
   self:F2( PointVec2 )
@@ -429,7 +453,7 @@ end
 -- @param #SET_BASE self
 -- @param Core.Event#EVENTDATA Event
 function SET_BASE:_EventOnDeadOrCrash( Event )
-  self:F3( { Event } )
+  self:F( { Event } )
 
   if Event.IniDCSUnit then
     local ObjectName, Object = self:FindInDatabase( Event )
@@ -621,27 +645,25 @@ end
 --- @type SET_GROUP
 -- @extends Core.Set#SET_BASE
 
---- # SET_GROUP class, extends @{Set#SET_BASE}
--- 
--- Mission designers can use the @{Set#SET_GROUP} class to build sets of groups belonging to certain:
+--- Mission designers can use the @{Core.Set#SET_GROUP} class to build sets of groups belonging to certain:
 -- 
 --  * Coalitions
 --  * Categories
 --  * Countries
 --  * Starting with certain prefix strings.
 --  
--- ## 1. SET_GROUP constructor
+-- ## SET_GROUP constructor
 -- 
 -- Create a new SET_GROUP object with the @{#SET_GROUP.New} method:
 -- 
 --    * @{#SET_GROUP.New}: Creates a new SET_GROUP object.
 -- 
--- ## 2. Add or Remove GROUP(s) from SET_GROUP
+-- ## Add or Remove GROUP(s) from SET_GROUP
 -- 
--- GROUPS can be added and removed using the @{Set#SET_GROUP.AddGroupsByName} and @{Set#SET_GROUP.RemoveGroupsByName} respectively. 
+-- GROUPS can be added and removed using the @{Core.Set#SET_GROUP.AddGroupsByName} and @{Core.Set#SET_GROUP.RemoveGroupsByName} respectively. 
 -- These methods take a single GROUP name or an array of GROUP names to be added or removed from SET_GROUP.
 -- 
--- ## 3. SET_GROUP filter criteria
+-- ## SET_GROUP filter criteria
 -- 
 -- You can set filter criteria to define the set of groups within the SET_GROUP.
 -- Filter criteria are defined by:
@@ -666,9 +688,9 @@ end
 -- 
 -- Planned filter criteria within development are (so these are not yet available):
 -- 
---    * @{#SET_GROUP.FilterZones}: Builds the SET_GROUP with the groups within a @{Zone#ZONE}.
+--    * @{#SET_GROUP.FilterZones}: Builds the SET_GROUP with the groups within a @{Core.Zone#ZONE}.
 -- 
--- ## 4. SET_GROUP iterators
+-- ## SET_GROUP iterators
 -- 
 -- Once the filters have been defined and the SET_GROUP has been built, you can iterate the SET_GROUP with the available iterator methods.
 -- The iterator methods will walk the SET_GROUP set, and call for each element within the set a function that you provide.
@@ -679,6 +701,52 @@ end
 --   * @{#SET_GROUP.ForEachGroupPartlyInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence partly in a @{Zone}, providing the GROUP and optional parameters to the called function.
 --   * @{#SET_GROUP.ForEachGroupNotInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence not in a @{Zone}, providing the GROUP and optional parameters to the called function.
 --
+--
+-- ## SET_GROUP trigger events on the GROUP objects.
+-- 
+-- The SET is derived from the FSM class, which provides extra capabilities to track the contents of the GROUP objects in the SET_GROUP.
+-- 
+-- ### When a GROUP object crashes or is dead, the SET_GROUP will trigger a **Dead** event.
+-- 
+-- You can handle the event using the OnBefore and OnAfter event handlers. 
+-- The event handlers need to have the paramters From, Event, To, GroupObject.
+-- The GroupObject is the GROUP object that is dead and within the SET_GROUP, and is passed as a parameter to the event handler.
+-- See the following example:
+-- 
+--        -- Create the SetCarrier SET_GROUP collection.
+--
+--        local SetHelicopter = SET_GROUP:New():FilterPrefixes( "Helicopter" ):FilterStart()
+-- 
+--        -- Put a Dead event handler on SetCarrier, to ensure that when a carrier is destroyed, that all internal parameters are reset.
+--
+--        function SetHelicopter:OnAfterDead( From, Event, To, GroupObject )
+--          self:F( { GroupObject = GroupObject:GetName() } )
+--        end
+-- 
+-- While this is a good example, there is a catch.
+-- Imageine you want to execute the code above, the the self would need to be from the object declared outside (above) the OnAfterDead method.
+-- So, the self would need to contain another object. Fortunately, this can be done, but you must use then the **`.`** notation for the method.
+-- See the modified example:
+-- 
+--        -- Now we have a constructor of the class AI_CARGO_DISPATCHER, that receives the SetHelicopter as a parameter.
+--        -- Within that constructor, we want to set an enclosed event handler OnAfterDead for SetHelicopter.
+--        -- But within the OnAfterDead method, we want to refer to the self variable of the AI_CARGO_DISPATCHER.
+-- 
+--        function AI_CARGO_DISPATCHER:New( SetCarrier, SetCargo, SetDeployZones )
+--         
+--          local self = BASE:Inherit( self, FSM:New() ) -- #AI_CARGO_DISPATCHER
+-- 
+--          -- Put a Dead event handler on SetCarrier, to ensure that when a carrier is destroyed, that all internal parameters are reset.
+--          -- Note the "." notation, and the explicit declaration of SetHelicopter, which would be using the ":" notation the implicit self variable declaration.
+--
+--          function SetHelicopter.OnAfterDead( SetHelicopter, From, Event, To, GroupObject )
+--            SetHelicopter:F( { GroupObject = GroupObject:GetName() } )
+--            self.PickupCargo[GroupObject] = nil  -- So here I clear the PickupCargo table entry of the self object AI_CARGO_DISPATCHER.
+--            self.CarrierHome[GroupObject] = nil
+--          end
+--        
+--        end
+-- 
 -- ===
 -- @field #SET_GROUP SET_GROUP 
 SET_GROUP = {
@@ -784,9 +852,9 @@ function SET_GROUP:FindGroup( GroupName )
   return GroupFound
 end
 
---- Iterate the SET_GROUP while identifying the nearest object from a @{Point#POINT_VEC2}.
+--- Iterate the SET_GROUP while identifying the nearest object from a @{Core.Point#POINT_VEC2}.
 -- @param #SET_GROUP self
--- @param Core.Point#POINT_VEC2 PointVec2 A @{Point#POINT_VEC2} object from where to evaluate the closest object in the set.
+-- @param Core.Point#POINT_VEC2 PointVec2 A @{Core.Point#POINT_VEC2} object from where to evaluate the closest object in the set.
 -- @return Wrapper.Group#GROUP The closest group.
 function SET_GROUP:FindNearestGroupFromPointVec2( PointVec2 )
   self:F2( PointVec2 )
@@ -935,6 +1003,9 @@ function SET_GROUP:FilterStart()
 
   if _DATABASE then
     self:_FilterStart()
+    self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
+    self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
+    self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
   end
   
   
@@ -947,7 +1018,7 @@ end
 -- @param #SET_GROUP self
 -- @param Core.Event#EVENTDATA Event
 function SET_GROUP:_EventOnDeadOrCrash( Event )
-  self:F3( { Event } )
+  self:F( { Event } )
 
   if Event.IniDCSUnit then
     local ObjectName, Object = self:FindInDatabase( Event )
@@ -1348,9 +1419,7 @@ do -- SET_UNIT
   --- @type SET_UNIT
   -- @extends Core.Set#SET_BASE
   
-  --- # 3) SET_UNIT class, extends @{Set#SET_BASE}
-  -- 
-  -- Mission designers can use the SET_UNIT class to build sets of units belonging to certain:
+  --- Mission designers can use the SET_UNIT class to build sets of units belonging to certain:
   -- 
   --  * Coalitions
   --  * Categories
@@ -1358,18 +1427,18 @@ do -- SET_UNIT
   --  * Unit types
   --  * Starting with certain prefix strings.
   --  
-  -- ## 3.1) SET_UNIT constructor
+  -- ## SET_UNIT constructor
   --
   -- Create a new SET_UNIT object with the @{#SET_UNIT.New} method:
   -- 
   --    * @{#SET_UNIT.New}: Creates a new SET_UNIT object.
   --   
-  -- ## 3.2) Add or Remove UNIT(s) from SET_UNIT
+  -- ## Add or Remove UNIT(s) from SET_UNIT
   --
-  -- UNITs can be added and removed using the @{Set#SET_UNIT.AddUnitsByName} and @{Set#SET_UNIT.RemoveUnitsByName} respectively. 
+  -- UNITs can be added and removed using the @{Core.Set#SET_UNIT.AddUnitsByName} and @{Core.Set#SET_UNIT.RemoveUnitsByName} respectively. 
   -- These methods take a single UNIT name or an array of UNIT names to be added or removed from SET_UNIT.
   -- 
-  -- ## 3.3) SET_UNIT filter criteria
+  -- ## SET_UNIT filter criteria
   -- 
   -- You can set filter criteria to define the set of units within the SET_UNIT.
   -- Filter criteria are defined by:
@@ -1386,9 +1455,9 @@ do -- SET_UNIT
   -- 
   -- Planned filter criteria within development are (so these are not yet available):
   -- 
-  --    * @{#SET_UNIT.FilterZones}: Builds the SET_UNIT with the units within a @{Zone#ZONE}.
+  --    * @{#SET_UNIT.FilterZones}: Builds the SET_UNIT with the units within a @{Core.Zone#ZONE}.
   -- 
-  -- ## 3.4) SET_UNIT iterators
+  -- ## SET_UNIT iterators
   -- 
   -- Once the filters have been defined and the SET_UNIT has been built, you can iterate the SET_UNIT with the available iterator methods.
   -- The iterator methods will walk the SET_UNIT set, and call for each element within the set a function that you provide.
@@ -1404,12 +1473,65 @@ do -- SET_UNIT
   --   * @{#SET_UNIT.ForEachUnitCompletelyInZone}: Iterate and call an iterator function for each **alive** UNIT presence completely in a @{Zone}, providing the UNIT and optional parameters to the called function.
   --   * @{#SET_UNIT.ForEachUnitNotInZone}: Iterate and call an iterator function for each **alive** UNIT presence not in a @{Zone}, providing the UNIT and optional parameters to the called function.
   -- 
-  -- ## 3.5 ) SET_UNIT atomic methods
+  -- ## SET_UNIT atomic methods
   -- 
   -- Various methods exist for a SET_UNIT to perform actions or calculations and retrieve results from the SET_UNIT:
   -- 
-  --   * @{#SET_UNIT.GetTypeNames}(): Retrieve the type names of the @{Unit}s in the SET, delimited by a comma.
+  --   * @{#SET_UNIT.GetTypeNames}(): Retrieve the type names of the @{Wrapper.Unit}s in the SET, delimited by a comma.
   -- 
+  -- ## SET_UNIT iterators
+  -- 
+  -- Once the filters have been defined and the SET_UNIT has been built, you can iterate the SET_UNIT with the available iterator methods.
+  -- The iterator methods will walk the SET_UNIT set, and call for each element within the set a function that you provide.
+  -- The following iterator methods are currently available within the SET_UNIT:
+  -- 
+  --   * @{#SET_UNIT.ForEachUnit}: Calls a function for each alive group it finds within the SET_UNIT.
+  --   * @{#SET_UNIT.ForEachUnitInZone}: Iterate the SET_UNIT and call an iterator function for each **alive** UNIT object presence completely in a @{Zone}, providing the UNIT object and optional parameters to the called function.
+  --   * @{#SET_UNIT.ForEachUnitNotInZone}: Iterate the SET_UNIT and call an iterator function for each **alive** UNIT object presence not in a @{Zone}, providing the UNIT object and optional parameters to the called function.
+  --
+  -- ## SET_UNIT trigger events on the UNIT objects.
+  -- 
+  -- The SET is derived from the FSM class, which provides extra capabilities to track the contents of the UNIT objects in the SET_UNIT.
+  -- 
+  -- ### When a UNIT object crashes or is dead, the SET_UNIT will trigger a **Dead** event.
+  -- 
+  -- You can handle the event using the OnBefore and OnAfter event handlers. 
+  -- The event handlers need to have the paramters From, Event, To, GroupObject.
+  -- The GroupObject is the UNIT object that is dead and within the SET_UNIT, and is passed as a parameter to the event handler.
+  -- See the following example:
+  -- 
+  --        -- Create the SetCarrier SET_UNIT collection.
+  --
+  --        local SetHelicopter = SET_UNIT:New():FilterPrefixes( "Helicopter" ):FilterStart()
+  -- 
+  --        -- Put a Dead event handler on SetCarrier, to ensure that when a carrier unit is destroyed, that all internal parameters are reset.
+  --
+  --        function SetHelicopter:OnAfterDead( From, Event, To, UnitObject )
+  --          self:F( { UnitObject = UnitObject:GetName() } )
+  --        end
+  -- 
+  -- While this is a good example, there is a catch.
+  -- Imageine you want to execute the code above, the the self would need to be from the object declared outside (above) the OnAfterDead method.
+  -- So, the self would need to contain another object. Fortunately, this can be done, but you must use then the **`.`** notation for the method.
+  -- See the modified example:
+  -- 
+  --        -- Now we have a constructor of the class AI_CARGO_DISPATCHER, that receives the SetHelicopter as a parameter.
+  --        -- Within that constructor, we want to set an enclosed event handler OnAfterDead for SetHelicopter.
+  --        -- But within the OnAfterDead method, we want to refer to the self variable of the AI_CARGO_DISPATCHER.
+  -- 
+  --        function ACLASS:New( SetCarrier, SetCargo, SetDeployZones )
+  --         
+  --          local self = BASE:Inherit( self, FSM:New() ) -- #AI_CARGO_DISPATCHER
+  -- 
+  --          -- Put a Dead event handler on SetCarrier, to ensure that when a carrier is destroyed, that all internal parameters are reset.
+  --          -- Note the "." notation, and the explicit declaration of SetHelicopter, which would be using the ":" notation the implicit self variable declaration.
+  --
+  --          function SetHelicopter.OnAfterDead( SetHelicopter, From, Event, To, UnitObject )
+  --            SetHelicopter:F( { UnitObject = UnitObject:GetName() } )
+  --            self.array[UnitObject] = nil  -- So here I clear the array table entry of the self object ACLASS.
+  --          end
+  --        
+  --        end
   -- ===
   -- @field #SET_UNIT SET_UNIT
   SET_UNIT = {
@@ -1643,10 +1765,15 @@ do -- SET_UNIT
   
     if _DATABASE then
       self:_FilterStart()
+      self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
+      self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
+      self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
     end
     
     return self
   end
+
+  
   
   --- Handles the Database to check on an event (birth) that the Object was added in the Database.
   -- This is required, because sometimes the _DATABASE birth event gets called later than the SET_BASE birth event!
@@ -2059,7 +2186,7 @@ do -- SET_UNIT
   
   --- Returns if the @{Set} has targets having a radar (of a given type).
   -- @param #SET_UNIT self
-  -- @param Dcs.DCSWrapper.Unit#Unit.RadarType RadarType
+  -- @param DCS#Unit.RadarType RadarType
   -- @return #number The amount of radars in the Set with the given type
   function SET_UNIT:HasRadar( RadarType )
     self:F2( RadarType )
@@ -2259,10 +2386,10 @@ do -- SET_UNIT
   end
   
   
-  --- Retrieve the type names of the @{Unit}s in the SET, delimited by an optional delimiter.
+  --- Retrieve the type names of the @{Wrapper.Unit}s in the SET, delimited by an optional delimiter.
   -- @param #SET_UNIT self
   -- @param #string Delimiter (optional) The delimiter, which is default a comma.
-  -- @return #string The types of the @{Unit}s delimited.
+  -- @return #string The types of the @{Wrapper.Unit}s delimited.
   function SET_UNIT:GetTypeNames( Delimiter )
   
     Delimiter = Delimiter or ", "
@@ -2290,9 +2417,7 @@ do -- SET_STATIC
   --- @type SET_STATIC
   -- @extends Core.Set#SET_BASE
   
-  --- # 3) SET_STATIC class, extends @{Set#SET_BASE}
-  -- 
-  -- Mission designers can use the SET_STATIC class to build sets of Statics belonging to certain:
+  --- Mission designers can use the SET_STATIC class to build sets of Statics belonging to certain:
   -- 
   --  * Coalitions
   --  * Categories
@@ -2300,18 +2425,18 @@ do -- SET_STATIC
   --  * Static types
   --  * Starting with certain prefix strings.
   --  
-  -- ## 3.1) SET_STATIC constructor
+  -- ## SET_STATIC constructor
   --
   -- Create a new SET_STATIC object with the @{#SET_STATIC.New} method:
   -- 
   --    * @{#SET_STATIC.New}: Creates a new SET_STATIC object.
   --   
-  -- ## 3.2) Add or Remove STATIC(s) from SET_STATIC
+  -- ## Add or Remove STATIC(s) from SET_STATIC
   --
-  -- STATICs can be added and removed using the @{Set#SET_STATIC.AddStaticsByName} and @{Set#SET_STATIC.RemoveStaticsByName} respectively. 
+  -- STATICs can be added and removed using the @{Core.Set#SET_STATIC.AddStaticsByName} and @{Core.Set#SET_STATIC.RemoveStaticsByName} respectively. 
   -- These methods take a single STATIC name or an array of STATIC names to be added or removed from SET_STATIC.
   -- 
-  -- ## 3.3) SET_STATIC filter criteria
+  -- ## SET_STATIC filter criteria
   -- 
   -- You can set filter criteria to define the set of units within the SET_STATIC.
   -- Filter criteria are defined by:
@@ -2328,9 +2453,9 @@ do -- SET_STATIC
   -- 
   -- Planned filter criteria within development are (so these are not yet available):
   -- 
-  --    * @{#SET_STATIC.FilterZones}: Builds the SET_STATIC with the units within a @{Zone#ZONE}.
+  --    * @{#SET_STATIC.FilterZones}: Builds the SET_STATIC with the units within a @{Core.Zone#ZONE}.
   -- 
-  -- ## 3.4) SET_STATIC iterators
+  -- ## SET_STATIC iterators
   -- 
   -- Once the filters have been defined and the SET_STATIC has been built, you can iterate the SET_STATIC with the available iterator methods.
   -- The iterator methods will walk the SET_STATIC set, and call for each element within the set a function that you provide.
@@ -2346,7 +2471,7 @@ do -- SET_STATIC
   --   * @{#SET_STATIC.ForEachStaticCompletelyInZone}: Iterate and call an iterator function for each **alive** STATIC presence completely in a @{Zone}, providing the STATIC and optional parameters to the called function.
   --   * @{#SET_STATIC.ForEachStaticNotInZone}: Iterate and call an iterator function for each **alive** STATIC presence not in a @{Zone}, providing the STATIC and optional parameters to the called function.
   -- 
-  -- ## 3.5 ) SET_STATIC atomic methods
+  -- ## SET_STATIC atomic methods
   -- 
   -- Various methods exist for a SET_STATIC to perform actions or calculations and retrieve results from the SET_STATIC:
   -- 
@@ -2559,6 +2684,9 @@ do -- SET_STATIC
   
     if _DATABASE then
       self:_FilterStart()
+      self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
+      self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
+      self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
     end
     
     return self
@@ -2963,9 +3091,7 @@ end
 
 
 
---- # 4) SET_CLIENT class, extends @{Set#SET_BASE}
--- 
--- Mission designers can use the @{Set#SET_CLIENT} class to build sets of units belonging to certain:
+--- Mission designers can use the @{Core.Set#SET_CLIENT} class to build sets of units belonging to certain:
 -- 
 --  * Coalitions
 --  * Categories
@@ -2973,18 +3099,18 @@ end
 --  * Client types
 --  * Starting with certain prefix strings.
 --  
--- ## 4.1) SET_CLIENT constructor
+-- ## SET_CLIENT constructor
 -- 
 -- Create a new SET_CLIENT object with the @{#SET_CLIENT.New} method:
 -- 
 --    * @{#SET_CLIENT.New}: Creates a new SET_CLIENT object.
 --   
--- ## 4.2) Add or Remove CLIENT(s) from SET_CLIENT 
+-- ## Add or Remove CLIENT(s) from SET_CLIENT 
 -- 
--- CLIENTs can be added and removed using the @{Set#SET_CLIENT.AddClientsByName} and @{Set#SET_CLIENT.RemoveClientsByName} respectively. 
+-- CLIENTs can be added and removed using the @{Core.Set#SET_CLIENT.AddClientsByName} and @{Core.Set#SET_CLIENT.RemoveClientsByName} respectively. 
 -- These methods take a single CLIENT name or an array of CLIENT names to be added or removed from SET_CLIENT.
 -- 
--- ## 4.3) SET_CLIENT filter criteria
+-- ## SET_CLIENT filter criteria
 -- 
 -- You can set filter criteria to define the set of clients within the SET_CLIENT.
 -- Filter criteria are defined by:
@@ -3001,9 +3127,9 @@ end
 -- 
 -- Planned filter criteria within development are (so these are not yet available):
 -- 
---    * @{#SET_CLIENT.FilterZones}: Builds the SET_CLIENT with the clients within a @{Zone#ZONE}.
+--    * @{#SET_CLIENT.FilterZones}: Builds the SET_CLIENT with the clients within a @{Core.Zone#ZONE}.
 -- 
--- ## 4.4) SET_CLIENT iterators
+-- ## SET_CLIENT iterators
 -- 
 -- Once the filters have been defined and the SET_CLIENT has been built, you can iterate the SET_CLIENT with the available iterator methods.
 -- The iterator methods will walk the SET_CLIENT set, and call for each element within the set a function that you provide.
@@ -3200,6 +3326,9 @@ function SET_CLIENT:FilterStart()
 
   if _DATABASE then
     self:_FilterStart()
+    self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
+    self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
+    self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
   end
   
   return self
@@ -3373,17 +3502,15 @@ end
 
 
 
---- # 4) SET_PLAYER class, extends @{Set#SET_BASE}
+--- Mission designers can use the @{Core.Set#SET_PLAYER} class to build sets of units belonging to alive players:
 -- 
--- Mission designers can use the @{Set#SET_PLAYER} class to build sets of units belonging to alive players:
--- 
--- ## 4.1) SET_PLAYER constructor
+-- ## SET_PLAYER constructor
 -- 
 -- Create a new SET_PLAYER object with the @{#SET_PLAYER.New} method:
 -- 
 --    * @{#SET_PLAYER.New}: Creates a new SET_PLAYER object.
 --   
--- ## 4.3) SET_PLAYER filter criteria
+-- ## SET_PLAYER filter criteria
 -- 
 -- You can set filter criteria to define the set of clients within the SET_PLAYER.
 -- Filter criteria are defined by:
@@ -3400,9 +3527,9 @@ end
 -- 
 -- Planned filter criteria within development are (so these are not yet available):
 -- 
---    * @{#SET_PLAYER.FilterZones}: Builds the SET_PLAYER with the clients within a @{Zone#ZONE}.
+--    * @{#SET_PLAYER.FilterZones}: Builds the SET_PLAYER with the clients within a @{Core.Zone#ZONE}.
 -- 
--- ## 4.4) SET_PLAYER iterators
+-- ## SET_PLAYER iterators
 -- 
 -- Once the filters have been defined and the SET_PLAYER has been built, you can iterate the SET_PLAYER with the available iterator methods.
 -- The iterator methods will walk the SET_PLAYER set, and call for each element within the set a function that you provide.
@@ -3599,6 +3726,9 @@ function SET_PLAYER:FilterStart()
 
   if _DATABASE then
     self:_FilterStart()
+    self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
+    self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
+    self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
   end
   
   return self
@@ -3767,24 +3897,22 @@ end
 --- @type SET_AIRBASE
 -- @extends Core.Set#SET_BASE
 
---- # 5) SET_AIRBASE class, extends @{Set#SET_BASE}
--- 
--- Mission designers can use the @{Set#SET_AIRBASE} class to build sets of airbases optionally belonging to certain:
+--- Mission designers can use the @{Core.Set#SET_AIRBASE} class to build sets of airbases optionally belonging to certain:
 -- 
 --  * Coalitions
 --  
--- ## 5.1) SET_AIRBASE constructor
+-- ## SET_AIRBASE constructor
 -- 
 -- Create a new SET_AIRBASE object with the @{#SET_AIRBASE.New} method:
 -- 
 --    * @{#SET_AIRBASE.New}: Creates a new SET_AIRBASE object.
 --   
--- ## 5.2) Add or Remove AIRBASEs from SET_AIRBASE 
+-- ## Add or Remove AIRBASEs from SET_AIRBASE 
 -- 
--- AIRBASEs can be added and removed using the @{Set#SET_AIRBASE.AddAirbasesByName} and @{Set#SET_AIRBASE.RemoveAirbasesByName} respectively. 
+-- AIRBASEs can be added and removed using the @{Core.Set#SET_AIRBASE.AddAirbasesByName} and @{Core.Set#SET_AIRBASE.RemoveAirbasesByName} respectively. 
 -- These methods take a single AIRBASE name or an array of AIRBASE names to be added or removed from SET_AIRBASE.
 -- 
--- ## 5.3) SET_AIRBASE filter criteria 
+-- ## SET_AIRBASE filter criteria 
 -- 
 -- You can set filter criteria to define the set of clients within the SET_AIRBASE.
 -- Filter criteria are defined by:
@@ -3795,7 +3923,7 @@ end
 -- 
 --   * @{#SET_AIRBASE.FilterStart}: Starts the filtering of the airbases within the SET_AIRBASE.
 -- 
--- ## 5.4) SET_AIRBASE iterators
+-- ## SET_AIRBASE iterators
 -- 
 -- Once the filters have been defined and the SET_AIRBASE has been built, you can iterate the SET_AIRBASE with the available iterator methods.
 -- The iterator methods will walk the SET_AIRBASE set, and call for each airbase within the set a function that you provide.
@@ -3997,10 +4125,10 @@ function SET_AIRBASE:ForEachAirbase( IteratorFunction, ... )
   return self
 end
 
---- Iterate the SET_AIRBASE while identifying the nearest @{Airbase#AIRBASE} from a @{Point#POINT_VEC2}.
+--- Iterate the SET_AIRBASE while identifying the nearest @{Wrapper.Airbase#AIRBASE} from a @{Core.Point#POINT_VEC2}.
 -- @param #SET_AIRBASE self
--- @param Core.Point#POINT_VEC2 PointVec2 A @{Point#POINT_VEC2} object from where to evaluate the closest @{Airbase#AIRBASE}.
--- @return Wrapper.Airbase#AIRBASE The closest @{Airbase#AIRBASE}.
+-- @param Core.Point#POINT_VEC2 PointVec2 A @{Core.Point#POINT_VEC2} object from where to evaluate the closest @{Wrapper.Airbase#AIRBASE}.
+-- @return Wrapper.Airbase#AIRBASE The closest @{Wrapper.Airbase#AIRBASE}.
 function SET_AIRBASE:FindNearestAirbaseFromPointVec2( PointVec2 )
   self:F2( PointVec2 )
   
@@ -4056,9 +4184,7 @@ end
 --- @type SET_CARGO
 -- @extends Core.Set#SET_BASE
 
---- # (R2.1) SET_CARGO class, extends @{Set#SET_BASE}
--- 
--- Mission designers can use the @{Set#SET_CARGO} class to build sets of cargos optionally belonging to certain:
+--- Mission designers can use the @{Core.Set#SET_CARGO} class to build sets of cargos optionally belonging to certain:
 -- 
 --  * Coalitions
 --  * Types
@@ -4072,7 +4198,7 @@ end
 --   
 -- ## Add or Remove CARGOs from SET_CARGO 
 -- 
--- CARGOs can be added and removed using the @{Set#SET_CARGO.AddCargosByName} and @{Set#SET_CARGO.RemoveCargosByName} respectively. 
+-- CARGOs can be added and removed using the @{Core.Set#SET_CARGO.AddCargosByName} and @{Core.Set#SET_CARGO.RemoveCargosByName} respectively. 
 -- These methods take a single CARGO name or an array of CARGO names to be added or removed from SET_CARGO.
 -- 
 -- ## SET_CARGO filter criteria 
@@ -4118,7 +4244,7 @@ SET_CARGO = {
 }
 
 
---- (R2.1) Creates a new SET_CARGO object, building a set of cargos belonging to a coalitions and categories.
+--- Creates a new SET_CARGO object, building a set of cargos belonging to a coalitions and categories.
 -- @param #SET_CARGO self
 -- @return #SET_CARGO
 -- @usage
@@ -4130,6 +4256,19 @@ function SET_CARGO:New() --R2.1
 
   return self
 end
+
+
+--- (R2.1) Add CARGO to SET_CARGO.
+-- @param Core.Set#SET_CARGO self
+-- @param Cargo.Cargo#CARGO Cargo A single cargo.
+-- @return self
+function SET_CARGO:AddCargo( Cargo ) --R2.4
+
+  self:Add( Cargo:GetName(), Cargo )
+    
+  return self
+end
+
 
 --- (R2.1) Add CARGOs to SET_CARGO.
 -- @param Core.Set#SET_CARGO self
@@ -4257,10 +4396,9 @@ function SET_CARGO:FilterStart() --R2.1
 
   if _DATABASE then
     self:_FilterStart()
+    self:HandleEvent( EVENTS.NewCargo )
+    self:HandleEvent( EVENTS.DeleteCargo )
   end
-
-  self:HandleEvent( EVENTS.NewCargo )
-  self:HandleEvent( EVENTS.DeleteCargo )
   
   return self
 end
@@ -4302,16 +4440,81 @@ function SET_CARGO:ForEachCargo( IteratorFunction, ... ) --R2.1
   return self
 end
 
---- (R2.1) Iterate the SET_CARGO while identifying the nearest @{Cargo#CARGO} from a @{Point#POINT_VEC2}.
+--- (R2.1) Iterate the SET_CARGO while identifying the nearest @{Cargo.Cargo#CARGO} from a @{Core.Point#POINT_VEC2}.
 -- @param #SET_CARGO self
--- @param Core.Point#POINT_VEC2 PointVec2 A @{Point#POINT_VEC2} object from where to evaluate the closest @{Cargo#CARGO}.
--- @return Wrapper.Cargo#CARGO The closest @{Cargo#CARGO}.
+-- @param Core.Point#POINT_VEC2 PointVec2 A @{Core.Point#POINT_VEC2} object from where to evaluate the closest @{Cargo.Cargo#CARGO}.
+-- @return Wrapper.Cargo#CARGO The closest @{Cargo.Cargo#CARGO}.
 function SET_CARGO:FindNearestCargoFromPointVec2( PointVec2 ) --R2.1
   self:F2( PointVec2 )
   
   local NearestCargo = self:FindNearestObjectFromPointVec2( PointVec2 )
   return NearestCargo
 end
+
+function SET_CARGO:FirstCargoWithState( State )
+  
+  local FirstCargo = nil
+  
+  for CargoName, Cargo in pairs( self.Set ) do
+    if Cargo:Is( State ) then
+      FirstCargo = Cargo
+      break
+    end
+  end
+  
+  return FirstCargo
+end
+
+function SET_CARGO:FirstCargoWithStateAndNotDeployed( State )
+  
+  local FirstCargo = nil
+  
+  for CargoName, Cargo in pairs( self.Set ) do
+    if Cargo:Is( State ) and not Cargo:IsDeployed() then
+      FirstCargo = Cargo
+      break
+    end
+  end
+  
+  return FirstCargo
+end
+
+
+--- Iterate the SET_CARGO while identifying the first @{Cargo.Cargo#CARGO} that is UnLoaded.
+-- @param #SET_CARGO self
+-- @return Cargo.Cargo#CARGO The first @{Cargo.Cargo#CARGO}.
+function SET_CARGO:FirstCargoUnLoaded()
+  local FirstCargo = self:FirstCargoWithState( "UnLoaded" )
+  return FirstCargo
+end
+
+
+--- Iterate the SET_CARGO while identifying the first @{Cargo.Cargo#CARGO} that is UnLoaded and not Deployed.
+-- @param #SET_CARGO self
+-- @return Cargo.Cargo#CARGO The first @{Cargo.Cargo#CARGO}.
+function SET_CARGO:FirstCargoUnLoadedAndNotDeployed()
+  local FirstCargo = self:FirstCargoWithStateAndNotDeployed( "UnLoaded" )
+  return FirstCargo
+end
+
+
+--- Iterate the SET_CARGO while identifying the first @{Cargo.Cargo#CARGO} that is Loaded.
+-- @param #SET_CARGO self
+-- @return Cargo.Cargo#CARGO The first @{Cargo.Cargo#CARGO}.
+function SET_CARGO:FirstCargoLoaded()
+  local FirstCargo = self:FirstCargoWithState( "Loaded" )
+  return FirstCargo
+end
+
+
+--- Iterate the SET_CARGO while identifying the first @{Cargo.Cargo#CARGO} that is Deployed.
+-- @param #SET_CARGO self
+-- @return Cargo.Cargo#CARGO The first @{Cargo.Cargo#CARGO}.
+function SET_CARGO:FirstCargoDeployed()
+  local FirstCargo = self:FirstCargoWithState( "Deployed" )
+  return FirstCargo
+end
+
 
 
 
@@ -4336,7 +4539,7 @@ function SET_CARGO:IsIncludeObject( MCargo ) --R2.1
           MCargoCoalition = true
         end
       end
-      self:T( { "Evaluated Coalition", MCargoCoalition } )
+      self:F( { "Evaluated Coalition", MCargoCoalition } )
       MCargoInclude = MCargoInclude and MCargoCoalition
     end
 
@@ -4348,7 +4551,7 @@ function SET_CARGO:IsIncludeObject( MCargo ) --R2.1
           MCargoType = true
         end
       end
-      self:T( { "Evaluated Type", MCargoType } )
+      self:F( { "Evaluated Type", MCargoType } )
       MCargoInclude = MCargoInclude and MCargoType
     end
     
@@ -4360,7 +4563,7 @@ function SET_CARGO:IsIncludeObject( MCargo ) --R2.1
           MCargoPrefix = true
         end
       end
-      self:T( { "Evaluated Prefix", MCargoPrefix } )
+      self:F( { "Evaluated Prefix", MCargoPrefix } )
       MCargoInclude = MCargoInclude and MCargoPrefix
     end
   end
@@ -4373,6 +4576,8 @@ end
 -- @param #SET_CARGO self
 -- @param Core.Event#EVENTDATA EventData
 function SET_CARGO:OnEventNewCargo( EventData ) --R2.1
+
+  self:F( { "New Cargo", EventData } )
 
   if EventData.Cargo then
     if EventData.Cargo and self:IsIncludeObject( EventData.Cargo ) then
@@ -4390,8 +4595,307 @@ function SET_CARGO:OnEventDeleteCargo( EventData ) --R2.1
   if EventData.Cargo then
     local Cargo = _DATABASE:FindCargo( EventData.Cargo.Name )
     if Cargo and Cargo.Name then
-      self:Remove( Cargo.Name )
+
+    -- When cargo was deleted, it may probably be because of an S_EVENT_DEAD.
+    -- However, in the loading logic, an S_EVENT_DEAD is also generated after a Destroy() call.
+    -- And this is a problem because it will remove all entries from the SET_CARGOs.
+    -- To prevent this from happening, the Cargo object has a flag NoDestroy.
+    -- When true, the SET_CARGO won't Remove the Cargo object from the set.
+    -- This flag is switched off after the event handlers have been called in the EVENT class.
+      self:F( { CargoNoDestroy=Cargo.NoDestroy } )
+      if Cargo.NoDestroy then
+      else
+        self:Remove( Cargo.Name )
+      end
     end
   end
 end
 
+
+
+--- @type SET_ZONE
+-- @extends Core.Set#SET_BASE
+
+--- Mission designers can use the @{Core.Set#SET_ZONE} class to build sets of zones of various types.
+-- 
+-- ## SET_ZONE constructor
+-- 
+-- Create a new SET_ZONE object with the @{#SET_ZONE.New} method:
+-- 
+--    * @{#SET_ZONE.New}: Creates a new SET_ZONE object.
+--   
+-- ## Add or Remove ZONEs from SET_ZONE 
+-- 
+-- ZONEs can be added and removed using the @{Core.Set#SET_ZONE.AddZonesByName} and @{Core.Set#SET_ZONE.RemoveZonesByName} respectively. 
+-- These methods take a single ZONE name or an array of ZONE names to be added or removed from SET_ZONE.
+-- 
+-- ## SET_ZONE filter criteria 
+-- 
+-- You can set filter criteria to build the collection of zones in SET_ZONE.
+-- Filter criteria are defined by:
+-- 
+--    * @{#SET_ZONE.FilterPrefixes}: Builds the SET_ZONE with the zones having a certain text pattern of prefix.
+--   
+-- Once the filter criteria have been set for the SET_ZONE, you can start filtering using:
+-- 
+--   * @{#SET_ZONE.FilterStart}: Starts the filtering of the zones within the SET_ZONE.
+-- 
+-- ## SET_ZONE iterators
+-- 
+-- Once the filters have been defined and the SET_ZONE has been built, you can iterate the SET_ZONE with the available iterator methods.
+-- The iterator methods will walk the SET_ZONE set, and call for each airbase within the set a function that you provide.
+-- The following iterator methods are currently available within the SET_ZONE:
+-- 
+--   * @{#SET_ZONE.ForEachZone}: Calls a function for each zone it finds within the SET_ZONE.
+-- 
+-- ===
+-- @field #SET_ZONE SET_ZONE
+SET_ZONE = {
+  ClassName = "SET_ZONE",
+  Zones = {},
+  Filter = {
+    Prefixes = nil,
+  },
+  FilterMeta = {
+  },
+}
+
+
+--- Creates a new SET_ZONE object, building a set of zones.
+-- @param #SET_ZONE self
+-- @return #SET_ZONE self
+-- @usage
+-- -- Define a new SET_ZONE Object. The DatabaseSet will contain a reference to all Zones.
+-- DatabaseSet = SET_ZONE:New()
+function SET_ZONE:New()
+  -- Inherits from BASE
+  local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.ZONES ) )
+
+  return self
+end
+
+--- Add ZONEs to SET_ZONE.
+-- @param Core.Set#SET_ZONE self
+-- @param #string AddZoneNames A single name or an array of ZONE_BASE names.
+-- @return self
+function SET_ZONE:AddZonesByName( AddZoneNames )
+
+  local AddZoneNamesArray = ( type( AddZoneNames ) == "table" ) and AddZoneNames or { AddZoneNames }
+  
+  for AddAirbaseID, AddZoneName in pairs( AddZoneNamesArray ) do
+    self:Add( AddZoneName, ZONE:FindByName( AddZoneName ) )
+  end
+    
+  return self
+end
+
+--- Remove ZONEs from SET_ZONE.
+-- @param Core.Set#SET_ZONE self
+-- @param Core.Zone#ZONE_BASE RemoveZoneNames A single name or an array of ZONE_BASE names.
+-- @return self
+function SET_ZONE:RemoveZonesByName( RemoveZoneNames )
+
+  local RemoveZoneNamesArray = ( type( RemoveZoneNames ) == "table" ) and RemoveZoneNames or { RemoveZoneNames }
+  
+  for RemoveZoneID, RemoveZoneName in pairs( RemoveZoneNamesArray ) do
+    self:Remove( RemoveZoneName )
+  end
+    
+  return self
+end
+
+
+--- Finds a Zone based on the Zone Name.
+-- @param #SET_ZONE self
+-- @param #string ZoneName
+-- @return Core.Zone#ZONE_BASE The found Zone.
+function SET_ZONE:FindZone( ZoneName )
+
+  local ZoneFound = self.Set[ZoneName]
+  return ZoneFound
+end
+
+
+--- Get a random zone from the set.
+-- @param #SET_ZONE self
+-- @return Core.Zone#ZONE_BASE The random Zone.
+-- @return #nil if no zone in the collection.
+function SET_ZONE:GetRandomZone()
+
+  if self:Count() ~= 0 then
+
+    local Index = self.Index
+    local ZoneFound = nil -- Core.Zone#ZONE_BASE
+
+    -- Loop until a zone has been found.
+    -- The :GetZoneMaybe() call will evaluate the probability for the zone to be selected.
+    -- If the zone is not selected, then nil is returned by :GetZoneMaybe() and the loop continues!  
+    while not ZoneFound do
+      local ZoneRandom = math.random( 1, #Index )
+      ZoneFound = self.Set[Index[ZoneRandom]]:GetZoneMaybe() 
+    end
+  
+    return ZoneFound
+  end
+  
+  return nil
+end
+
+
+--- Set a zone probability.
+-- @param #SET_ZONE self
+-- @param #string ZoneName The name of the zone.
+function SET_ZONE:SetZoneProbability( ZoneName, ZoneProbability )
+  local Zone = self:FindZone( ZoneName )
+  Zone:SetZoneProbability( ZoneProbability )
+end
+
+
+
+
+--- Builds a set of zones of defined zone prefixes.
+-- All the zones starting with the given prefixes will be included within the set.
+-- @param #SET_ZONE self
+-- @param #string Prefixes The prefix of which the zone name starts with.
+-- @return #SET_ZONE self
+function SET_ZONE:FilterPrefixes( Prefixes )
+  if not self.Filter.Prefixes then
+    self.Filter.Prefixes = {}
+  end
+  if type( Prefixes ) ~= "table" then
+    Prefixes = { Prefixes }
+  end
+  for PrefixID, Prefix in pairs( Prefixes ) do
+    self.Filter.Prefixes[Prefix] = Prefix
+  end
+  return self
+end
+
+
+--- Starts the filtering.
+-- @param #SET_ZONE self
+-- @return #SET_ZONE self
+function SET_ZONE:FilterStart()
+
+  if _DATABASE then
+  
+    -- We initialize the first set.
+    for ObjectName, Object in pairs( self.Database ) do
+      if self:IsIncludeObject( Object ) then
+        self:Add( ObjectName, Object )
+      else
+        self:RemoveZonesByName( ObjectName )
+      end
+    end
+  end
+
+  self:HandleEvent( EVENTS.NewZone )
+  self:HandleEvent( EVENTS.DeleteZone )
+  
+  return self
+end
+
+--- Handles the Database to check on an event (birth) that the Object was added in the Database.
+-- This is required, because sometimes the _DATABASE birth event gets called later than the SET_BASE birth event!
+-- @param #SET_ZONE self
+-- @param Core.Event#EVENTDATA Event
+-- @return #string The name of the AIRBASE
+-- @return #table The AIRBASE
+function SET_ZONE:AddInDatabase( Event )
+  self:F3( { Event } )
+
+  return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
+end
+
+--- Handles the Database to check on any event that Object exists in the Database.
+-- This is required, because sometimes the _DATABASE event gets called later than the SET_BASE event or vise versa!
+-- @param #SET_ZONE self
+-- @param Core.Event#EVENTDATA Event
+-- @return #string The name of the AIRBASE
+-- @return #table The AIRBASE
+function SET_ZONE:FindInDatabase( Event )
+  self:F3( { Event } )
+
+  return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
+end
+
+--- Iterate the SET_ZONE and call an interator function for each ZONE, providing the ZONE and optional parameters.
+-- @param #SET_ZONE self
+-- @param #function IteratorFunction The function that will be called when there is an alive ZONE in the SET_ZONE. The function needs to accept a AIRBASE parameter.
+-- @return #SET_ZONE self
+function SET_ZONE:ForEachZone( IteratorFunction, ... )
+  self:F2( arg )
+  
+  self:ForEach( IteratorFunction, arg, self:GetSet() )
+
+  return self
+end
+
+
+---
+-- @param #SET_ZONE self
+-- @param Core.Zone#ZONE_BASE MZone
+-- @return #SET_ZONE self
+function SET_ZONE:IsIncludeObject( MZone )
+  self:F2( MZone )
+
+  local MZoneInclude = true
+
+  if MZone then
+    local MZoneName = MZone:GetName()
+  
+    if self.Filter.Prefixes then
+      local MZonePrefix = false
+      for ZonePrefixId, ZonePrefix in pairs( self.Filter.Prefixes ) do
+        self:T3( { "Prefix:", string.find( MZoneName, ZonePrefix, 1 ), ZonePrefix } )
+        if string.find( MZoneName, ZonePrefix, 1 ) then
+          MZonePrefix = true
+        end
+      end
+      self:T( { "Evaluated Prefix", MZonePrefix } )
+      MZoneInclude = MZoneInclude and MZonePrefix
+    end
+  end
+   
+  self:T2( MZoneInclude )
+  return MZoneInclude
+end
+
+--- Handles the OnEventNewZone event for the Set.
+-- @param #SET_ZONE self
+-- @param Core.Event#EVENTDATA EventData
+function SET_ZONE:OnEventNewZone( EventData ) --R2.1
+
+  self:F( { "New Zone", EventData } )
+
+  if EventData.Zone then
+    if EventData.Zone and self:IsIncludeObject( EventData.Zone ) then
+      self:Add( EventData.Zone.ZoneName , EventData.Zone  )
+    end
+  end
+end
+
+--- Handles the OnDead or OnCrash event for alive units set.
+-- @param #SET_ZONE self
+-- @param Core.Event#EVENTDATA EventData
+function SET_ZONE:OnEventDeleteZone( EventData ) --R2.1
+  self:F3( { EventData } )
+
+  if EventData.Zone then
+    local Zone = _DATABASE:FindZone( EventData.Zone.ZoneName )
+    if Zone and Zone.ZoneName then
+
+    -- When cargo was deleted, it may probably be because of an S_EVENT_DEAD.
+    -- However, in the loading logic, an S_EVENT_DEAD is also generated after a Destroy() call.
+    -- And this is a problem because it will remove all entries from the SET_ZONEs.
+    -- To prevent this from happening, the Zone object has a flag NoDestroy.
+    -- When true, the SET_ZONE won't Remove the Zone object from the set.
+    -- This flag is switched off after the event handlers have been called in the EVENT class.
+      self:F( { ZoneNoDestroy=Zone.NoDestroy } )
+      if Zone.NoDestroy then
+      else
+        self:Remove( Zone.ZoneName )
+      end
+    end
+  end
+end

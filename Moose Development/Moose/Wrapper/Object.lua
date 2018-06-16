@@ -8,7 +8,8 @@
 -- 
 -- ===
 -- 
--- @module Object
+-- @module Wrapper.Object
+-- @image MOOSE.JPG
 
 
 --- @type OBJECT
@@ -16,9 +17,7 @@
 -- @field #string ObjectName The name of the Object.
 
 
---- # OBJECT class, extends @{Base#BASE}
--- 
--- OBJECT handles the DCS Object objects:
+--- Wrapper class to hendle the DCS Object objects.
 --
 --  * Support all DCS Object APIs.
 --  * Enhance with Object specific APIs not in the DCS Object API set.
@@ -28,7 +27,7 @@
 -- 
 -- The OBJECT class provides the following functions to construct a OBJECT instance:
 --
---  * @{Object#OBJECT.New}(): Create a OBJECT instance.
+--  * @{Wrapper.Object#OBJECT.New}(): Create a OBJECT instance.
 --
 -- @field #OBJECT
 OBJECT = {
@@ -42,7 +41,7 @@ OBJECT = {
 
 --- Create a new OBJECT from a DCSObject
 -- @param #OBJECT self
--- @param Dcs.DCSWrapper.Object#Object ObjectName The Object name
+-- @param DCS#Object ObjectName The Object name
 -- @return #OBJECT self
 function OBJECT:New( ObjectName, Test )
   local self = BASE:Inherit( self, BASE:New() )
@@ -55,7 +54,7 @@ end
 
 --- Returns the unit's unique identifier.
 -- @param Wrapper.Object#OBJECT self
--- @return Dcs.DCSWrapper.Object#Object.ID ObjectID
+-- @return DCS#Object.ID ObjectID
 -- @return #nil The DCS Object is not existing or alive.  
 function OBJECT:GetID()
 
@@ -73,6 +72,7 @@ end
 
 --- Destroys the OBJECT.
 -- @param #OBJECT self
+-- @return #boolean true if the object is destroyed.
 -- @return #nil The DCS Unit is not existing or alive.  
 function OBJECT:Destroy()
 
@@ -80,13 +80,16 @@ function OBJECT:Destroy()
   
   if DCSObject then
     --BASE:CreateEventCrash( timer.getTime(), DCSObject )
-    DCSObject:destroy()
+    DCSObject:destroy( false )
+    return true
   end
 
   BASE:E( { "Cannot Destroy", Name = self.ObjectName, Class = self:GetClassName() } )
 
   return nil
 end
+
+
 
 
 

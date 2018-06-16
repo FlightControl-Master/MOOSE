@@ -11,7 +11,8 @@
 -- 
 -- ===
 -- 
--- @module ZoneGoalCargo
+-- @module Functional.ZoneGoalCargo
+-- @image MOOSE.JPG
 
 do -- ZoneGoal
 
@@ -19,9 +20,7 @@ do -- ZoneGoal
   -- @extends Functional.ZoneGoal#ZONE_GOAL
 
 
-  --- # ZONE_GOAL_CARGO class, extends @{ZoneGoal#ZONE_GOAL}
-  -- 
-  -- ZONE_GOAL_CARGO models processes that have a Goal with a defined achievement involving a Zone and Cargo.  
+  --- Models processes that have a Goal with a defined achievement involving a Zone and Cargo.  
   -- Derived classes implement the ways how the achievements can be realized.
   -- 
   -- ## 1. ZONE_GOAL_CARGO constructor

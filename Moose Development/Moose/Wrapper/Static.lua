@@ -8,17 +8,17 @@
 -- 
 -- ===
 -- 
--- @module Static
+-- @module Wrapper.Static
+-- @image Wrapper_Static.JPG
 
 
 --- @type STATIC
 -- @extends Wrapper.Positionable#POSITIONABLE
 
---- # STATIC class, extends @{Positionable#POSITIONABLE}
+--- Wrapper class to handle Static objects.
 -- 
--- Statics are **Static Units** defined within the Mission Editor.
 -- Note that Statics are almost the same as Units, but they don't have a controller.
--- The @{Static#STATIC} class is a wrapper class to handle the DCS Static objects:
+-- The @{Wrapper.Static#STATIC} class is a wrapper class to handle the DCS Static objects:
 -- 
 --  * Wraps the DCS Static objects.
 --  * Support all DCS Static APIs.
@@ -48,6 +48,24 @@ STATIC = {
 }
 
 
+function STATIC:Register( StaticName )
+  local self = BASE:Inherit( self, POSITIONABLE:New( StaticName ) )
+  self.StaticName = StaticName
+  return self
+end
+
+
+--- Finds a STATIC from the _DATABASE using a DCSStatic object.
+-- @param #STATIC self
+-- @param DCS#StaticObject DCSStatic An existing DCS Static object reference.
+-- @return #STATIC self
+function STATIC:Find( DCSStatic )
+
+  local StaticName = DCSStatic:getName()
+  local StaticFound = _DATABASE:FindStatic( StaticName )
+  return StaticFound
+end
+
 --- Finds a STATIC from the _DATABASE using the relevant Static Name.
 -- As an optional parameter, a briefing text can be given also.
 -- @param #STATIC self
@@ -71,12 +89,6 @@ function STATIC:FindByName( StaticName, RaiseError )
   return nil
 end
 
-function STATIC:Register( StaticName )
-  local self = BASE:Inherit( self, POSITIONABLE:New( StaticName ) )
-  self.StaticName = StaticName
-  return self
-end
-
 
 function STATIC:GetDCSObject()
   local DCSStatic = StaticObject.getByName( self.StaticName )
@@ -88,21 +100,62 @@ function STATIC:GetDCSObject()
   return nil
 end
 
+--- Returns a list of one @{Static}.
+-- @param #STATIC self
+-- @return #list<Wrapper.Static#STATIC> A list of one @{Static}.
+function STATIC:GetUnits()
+  self:F2( { self.StaticName } )
+  local DCSStatic = self:GetDCSObject()
+
+  local Statics = {}
+  
+  if DCSStatic then
+    Statics[1] = STATIC:Find( DCSStatic )
+    self:T3( Statics )
+    return Statics
+  end
+
+  return nil
+end
+
+
+
+
 function STATIC:GetThreatLevel()
 
   return 1, "Static"
 end
 
---- Respawn the @{Unit} using a (tweaked) template of the parent Group.
--- @param #UNIT self
+--- Respawn the @{Wrapper.Unit} using a (tweaked) template of the parent Group.
+-- @param #STATIC self
 -- @param Core.Point#COORDINATE Coordinate The coordinate where to spawn the new Static.
 -- @param #number Heading The heading of the unit respawn.
-function STATIC:ReSpawn( Coordinate, Heading )
+function STATIC:SpawnAt( Coordinate, Heading )
 
-
-  -- todo: need to fix country
-  local SpawnStatic = SPAWNSTATIC:NewFromStatic( self.StaticName, country.id.USA )
+  local SpawnStatic = SPAWNSTATIC:NewFromStatic( self.StaticName )
   
   SpawnStatic:SpawnFromPointVec2( Coordinate, Heading, self.StaticName )
 end
 
+
+--- Respawn the @{Wrapper.Unit} at the same location with the same properties.
+-- This is useful to respawn a cargo after it has been destroyed.
+-- @param #STATIC self
+function STATIC:ReSpawn()
+
+  local SpawnStatic = SPAWNSTATIC:NewFromStatic( self.StaticName )
+  
+  SpawnStatic:ReSpawn()
+end
+
+
+--- Respawn the @{Wrapper.Unit} at a defined Coordinate with an optional heading.
+-- @param #STATIC self
+-- @param Core.Point#COORDINATE Coordinate The coordinate where to spawn the new Static.
+-- @param #number Heading The heading of the unit respawn.
+function STATIC:ReSpawnAt( Coordinate, Heading )
+
+  local SpawnStatic = SPAWNSTATIC:NewFromStatic( self.StaticName )
+  
+  SpawnStatic:ReSpawnAt( Coordinate, Heading )
+end

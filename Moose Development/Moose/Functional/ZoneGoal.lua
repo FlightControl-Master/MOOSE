@@ -11,7 +11,8 @@
 -- 
 -- ===
 -- 
--- @module ZoneGoal
+-- @module Functional.ZoneGoal
+-- @image MOOSE.JPG
 
 do -- Zone
 
@@ -19,9 +20,7 @@ do -- Zone
   -- @extends Core.Fsm#FSM
 
 
-  --- # ZONE_GOAL class, extends @{Fsm#FSM}
-  -- 
-  -- ZONE_GOAL models processes that have a Goal with a defined achievement involving a Zone. 
+  -- Models processes that have a Goal with a defined achievement involving a Zone. 
   -- Derived classes implement the ways how the achievements can be realized.
   -- 
   -- ## 1. ZONE_GOAL constructor
@@ -36,7 +35,7 @@ do -- Zone
   -- 
   -- ### 2.2 ZONE_GOAL Events
   -- 
-  --   * DestroyedUnit: A @{Unit} is destroyed in the Zone. The event will only get triggered if the method @{#ZONE_GOAL.MonitorDestroyedUnits}() is used.
+  --   * DestroyedUnit: A @{Wrapper.Unit} is destroyed in the Zone. The event will only get triggered if the method @{#ZONE_GOAL.MonitorDestroyedUnits}() is used.
   -- 
   -- @field #ZONE_GOAL
   ZONE_GOAL = {

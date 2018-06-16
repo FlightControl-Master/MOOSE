@@ -1,14 +1,13 @@
 --- **AI** -- (R2.2) - Models the process of air operations for airplanes.
 -- 
--- This is a class used in the @{AI_A2A_Dispatcher}.
--- 
 -- ===
 -- 
 -- ### Author: **FlightControl**
 -- 
 -- ===
 -- 
--- @module AI_A2A
+-- @module AI.AI_A2A
+-- @image AI_Air_To_Air_Dispatching.JPG
 
 --BASE:TraceClass("AI_A2A")
 
@@ -16,9 +15,7 @@
 --- @type AI_A2A
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
---- # AI_A2A class, extends @{Fsm#FSM_CONTROLLABLE}
--- 
--- The AI_A2A class implements the core functions to operate an AI @{Group} A2A tasking.
+--- The AI_A2A class implements the core functions to operate an AI @{Wrapper.Group} A2A tasking.
 -- 
 -- 
 -- ## AI_A2A constructor
@@ -295,8 +292,8 @@ end
 
 --- Sets (modifies) the minimum and maximum speed of the patrol.
 -- @param #AI_A2A self
--- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
--- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
+-- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.
+-- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Controllable} in km/h.
 -- @return #AI_A2A self
 function AI_A2A:SetSpeed( PatrolMinSpeed, PatrolMaxSpeed )
   self:F2( { PatrolMinSpeed, PatrolMaxSpeed } )
@@ -308,8 +305,8 @@ end
 
 --- Sets the floor and ceiling altitude of the patrol.
 -- @param #AI_A2A self
--- @param Dcs.DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
--- @param Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+-- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+-- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
 -- @return #AI_A2A self
 function AI_A2A:SetAltitude( PatrolFloorAltitude, PatrolCeilingAltitude )
   self:F2( { PatrolFloorAltitude, PatrolCeilingAltitude } )

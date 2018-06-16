@@ -1,4 +1,4 @@
-version: 3.9.1.{build}
+version: 2.4.a.{build}
 shallow_clone: true
 skip_branch_with_pr: false
 skip_commits:
@@ -16,6 +16,7 @@ environment:
 
 platform:
   - x64
+
 
 init:
   - ps: if ($env:APPVEYOR_PULL_REQUEST_NUMBER -and $env:APPVEYOR_BUILD_NUMBER -ne ((Invoke-RestMethod `
@@ -48,7 +49,7 @@ install:
 
 build_script:
    - ps: | 
-       if( $env:appveyor_repo_branch -eq 'master' )     
+       if( $env:appveyor_repo_branch -eq 'master' -or $env:appveyor_repo_branch -eq 'develop' )     
        {
          $apiUrl = 'https://ci.appveyor.com/api'
          $token = 'qts80b5kpq0ooj4x6vvw'
@@ -56,12 +57,12 @@ build_script:
            "Authorization" = "Bearer $token"
            "Content-type" = "application/json"
            }
-         $RequestBody = @{ accountName = 'FlightControl-Master'; projectSlug = 'moose-include'; branch = 'master'; environmentVariables = @{} } | ConvertTo-Json
-         # get project with last build details
+         $RequestBody = @{ accountName = 'FlightControl-Master'; projectSlug = 'moose-include'; branch = "$env:appveyor_repo_branch"; environmentVariables = @{} } | ConvertTo-Json
+         # Generate the new version ...
          $project = Invoke-RestMethod -method Post -Uri "$apiUrl/builds" -Headers $headers -Body $RequestBody
        }
    - ps: | 
-       if( $env:appveyor_repo_branch -eq 'master' )     
+       if( $env:appveyor_repo_branch -eq 'master' -or $env:appveyor_repo_branch -eq 'develop' )     
        {
          $apiUrl = 'https://ci.appveyor.com/api'
          $token = 'qts80b5kpq0ooj4x6vvw'
@@ -69,11 +70,10 @@ build_script:
            "Authorization" = "Bearer $token"
            "Content-type" = "application/json"
            }
-         $RequestBody = @{ accountName = 'FlightControl-Master'; projectSlug = 'moose-docs'; branch = 'master'; environmentVariables = @{} } | ConvertTo-Json
+         $RequestBody = @{ accountName = 'FlightControl-Master'; projectSlug = 'moose-docs'; branch = "$env:appveyor_repo_branch"; environmentVariables = @{} } | ConvertTo-Json
          # get project with last build details
          $project = Invoke-RestMethod -method Post -Uri "$apiUrl/builds" -Headers $headers -Body $RequestBody
        }
-
 
 
 test: off

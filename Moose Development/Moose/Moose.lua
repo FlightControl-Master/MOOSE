@@ -13,3 +13,6 @@ _DATABASE = DATABASE:New() -- Core.Database#DATABASE
 _SETTINGS = SETTINGS:Set()
 _SETTINGS:SetPlayerMenuOn()
 
+_DATABASE:_RegisterCargos()
+_DATABASE:_RegisterZones()
+

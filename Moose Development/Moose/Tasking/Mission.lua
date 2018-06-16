@@ -1,4 +1,12 @@
---- **Tasking** -- A MISSION is the main owner of a Mission orchestration within MOOSE.
+--- **Tasking** -- A mission models a goal to be achieved through the execution and completion of tasks by human players.
+-- 
+-- **Features:**
+-- 
+--   * A mission has a goal to be achieved, through the execution and completion of tasks of different categories by human players.
+--   * A mission manages these tasks.
+--   * A mission has a state, that indicates the fase of the mission.
+--   * A mission has a menu structure, that facilitates mission reports and tasking menus.
+--   * A mission can assign a task to a player.
 -- 
 -- ===
 -- 
@@ -8,7 +16,8 @@
 -- 
 -- ===
 -- 
--- @module Mission
+-- @module Tasking.Mission
+-- @image Task_Mission.JPG
 
 --- The MISSION class
 -- @type MISSION
@@ -29,7 +38,7 @@ MISSION = {
 -- @param #string MissionName is the name of the mission. This name will be used to reference the status of each mission by the players.
 -- @param #string MissionPriority is a string indicating the "priority" of the Mission. f.e. "Primary", "Secondary" or "First", "Second". It is free format and up to the Mission designer to choose. There are no rules behind this field.
 -- @param #string MissionBriefing is a string indicating the mission briefing to be shown when a player joins a @{CLIENT}.
--- @param Dcs.DCSCoalitionWrapper.Object#coalition MissionCoalition is a string indicating the coalition or party to which this mission belongs to. It is free format and can be chosen freely by the mission designer. Note that this field is not to be confused with the coalition concept of the ME. Examples of a Mission Coalition could be "NATO", "CCCP", "Intruders", "Terrorists"...
+-- @param #string MissionCoalition is a string indicating the coalition or party to which this mission belongs to. It is free format and can be chosen freely by the mission designer. Note that this field is not to be confused with the coalition concept of the ME. Examples of a Mission Coalition could be "NATO", "CCCP", "Intruders", "Terrorists"...
 -- @return #MISSION self
 function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefing, MissionCoalition )
 
@@ -265,6 +274,8 @@ function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefi
 end
 
 
+
+
 --- FSM function for a MISSION
 -- @param #MISSION self
 -- @param #string From
@@ -375,24 +386,30 @@ function MISSION:GetScoring()
   return self.Scoring
 end
 
---- Get the groups for which TASKS are given in the mission
+--- Gets the groups for which TASKS are given in the mission
 -- @param #MISSION self
+-- @param Core.Set#SET_GROUP GroupSet
 -- @return Core.Set#SET_GROUP
 function MISSION:GetGroups()
   
-  local SetGroup = SET_GROUP:New()
+  return self:AddGroups()
+  
+end
+
+--- Adds the groups for which TASKS are given in the mission
+-- @param #MISSION self
+-- @param Core.Set#SET_GROUP GroupSet
+-- @return Core.Set#SET_GROUP
+function MISSION:AddGroups( GroupSet )
+  
+  GroupSet = GroupSet or SET_GROUP:New()
   
   for TaskID, Task in pairs( self:GetTasks() ) do
     local Task = Task -- Tasking.Task#TASK
-    local GroupSet = Task:GetGroups()
-    GroupSet:ForEachGroup(
-      function( TaskGroup )
-        SetGroup:Add( TaskGroup, TaskGroup )
-      end
-    )
+    GroupSet = Task:AddGroups( GroupSet )
   end
   
-  return SetGroup
+  return GroupSet
   
 end
 
@@ -441,16 +458,16 @@ do -- Group Assignment
     local MissionGroupName = MissionGroup:GetName()
     
     if self.AssignedGroups[MissionGroupName] == MissionGroup then
-      self:T( { "Mission is assigned to:", MissionGroup:GetName() } )
+      self:T2( { "Mission is assigned to:", MissionGroup:GetName() } )
       return true
     end
     
-    self:T( { "Mission is not assigned to:", MissionGroup:GetName() } )
+    self:T2( { "Mission is not assigned to:", MissionGroup:GetName() } )
     return false
   end
   
   
-  --- Set @{Group} assigned to the @{Mission}.
+  --- Set @{Wrapper.Group} assigned to the @{Mission}.
   -- @param #MISSION self
   -- @param Wrapper.Group#GROUP MissionGroup
   -- @return #MISSION
@@ -465,7 +482,7 @@ do -- Group Assignment
     return self
   end
   
-  --- Clear the @{Group} assignment from the @{Mission}.
+  --- Clear the @{Wrapper.Group} assignment from the @{Mission}.
   -- @param #MISSION self
   -- @param Wrapper.Group#GROUP MissionGroup
   -- @return #MISSION
@@ -522,17 +539,12 @@ end
 function MISSION:GetMenu( TaskGroup ) -- R2.1 -- Changed Menu Structure
 
   local CommandCenter = self:GetCommandCenter()
-  local CommandCenterMenu = CommandCenter:GetMenu()
+  local CommandCenterMenu = CommandCenter:GetMenu( TaskGroup )
 
-  --local MissionMenu = CommandCenterMenu:GetMenu( MissionName )
-  
   self.MissionGroupMenu = self.MissionGroupMenu or {}
   self.MissionGroupMenu[TaskGroup] = self.MissionGroupMenu[TaskGroup] or {}
   
   local GroupMenu = self.MissionGroupMenu[TaskGroup]
-  
-  local CommandCenterText = CommandCenter:GetText()
-  CommandCenterMenu = MENU_GROUP:New( TaskGroup, CommandCenterText )
   
   local MissionText = self:GetText()
   self.MissionMenu = MENU_GROUP:New( TaskGroup, MissionText, CommandCenterMenu )
@@ -562,7 +574,7 @@ end
 -- @param #string TaskName The Name of the @{Task} within the @{Mission}.
 -- @return Tasking.Task#TASK The Task
 -- @return #nil Returns nil if no task was found.
-function MISSION:GetTask( TaskName  )
+function MISSION:GetTask( TaskName )
   self:F( { TaskName } )
 
   return self.Tasks[TaskName]
@@ -1003,8 +1015,27 @@ end
 -- env.info( "Task 2 Completion = " .. Tasks[2]:GetGoalPercentage() .. "%" )
 function MISSION:GetTasks()
 
-	return self.Tasks
+	return self.Tasks or {}
 end
+
+--- Get the relevant tasks of a TaskGroup.
+-- @param #MISSION
+-- @param Wrapper.Group#GROUP TaskGroup
+-- @return #list<Tasking.Task#TASK>
+function MISSION:GetGroupTasks( TaskGroup )
+
+  local Tasks = {}
+  
+  for TaskID, Task in pairs( self:GetTasks() ) do
+    local Task = Task -- Tasking.Task#TASK
+    if Task:HasGroup( TaskGroup ) then
+      Tasks[#Tasks+1] = Task
+    end
+  end
+  
+  return Tasks
+end
+
 
 --- Reports the briefing.
 -- @param #MISSION self
