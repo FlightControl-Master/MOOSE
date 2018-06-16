@@ -974,26 +974,27 @@ ZONE_UNIT = {
 -- @param #string ZoneName Name of the zone.
 -- @param Wrapper.Unit#UNIT ZoneUNIT The unit as the center of the zone.
 -- @param Dcs.DCSTypes#Distance Radius The radius of the zone.
--- @param Dcs.DCSTypes#Distance dx The offset in X direction, +x is north.
--- @param Dcs.DCSTypes#Distance dy The offset in Y direction, +y is east.
--- @param Dcs.DCSTypes#Distance rho The distance of the zone from the unit
--- @param Dcs.DCSTypes#Angle theta The azimuth of the zone relative to unit
--- @param Dcs.DCSTypes#Boolean relative_to_unit if true, theta is measured clockwise from unit's direction else clockwise from north.
+-- @param #table Offset A table specifying the offset. The offset table may have the following elements:
+--  dx The offset in X direction, +x is north.
+--  dy The offset in Y direction, +y is east.
+--  rho The distance of the zone from the unit
+--  theta The azimuth of the zone relative to unit
+--  relative_to_unit If true, theta is measured clockwise from unit's direction else clockwise from north. If using dx, dy setting this to true makes +x parallel to unit heading.
+--  dx, dy OR rho, theta may be used, not both.
 -- @return #ZONE_UNIT self
-function ZONE_UNIT:New( ZoneName, ZoneUNIT, Radius, dx, dy, rho, theta, relative_to_unit)
-
-  self.dy = dy or 0.0
-  self.dx = dx or 0.0
-  self.rho = rho or 0.0
-  self.theta = theta * math.pi / 180.0 or 0.0
-  self.relative_to_unit = relative_to_unit or false
+function ZONE_UNIT:New( ZoneName, ZoneUNIT, Radius, Offset)
   
-  -- check if the inputs was reasonable, either (dx, dy) or (rho, theta) can be given, else raise an exception.
-  
-  if (dx or dy) and (rho or theta) then
-    error("Cannot use arguments (dx, dy) with (rho, theta)")  
+  -- check if the inputs was reasonable, either (dx, dy) or (rho, theta) can be given, else raise an exception.  
+  if (Offset.dx or Offset.dy) and (Offset.rho or Offset.theta) then
+    error("Cannot use (dx, dy) with (rho, theta)")  
   end
-   
+  
+  self.dy = Offset.dy or 0.0
+  self.dx = Offset.dx or 0.0
+  self.rho = Offset.rho or 0.0
+  self.theta = (Offset.theta or 0.0) * math.pi / 180.0
+  self.relative_to_unit = Offset.relative_to_unit or false
+  
   local self = BASE:Inherit( self, ZONE_RADIUS:New( ZoneName, ZoneUNIT:GetVec2(), Radius ) )
 
   self:F( { ZoneName, ZoneUNIT:GetVec2(), Radius } )
@@ -1013,20 +1014,24 @@ function ZONE_UNIT:GetVec2()
   
   local ZoneVec2 = self.ZoneUNIT:GetVec2()
   if ZoneVec2 then
-    -- update the zone position with the offsets.
-    if (self.dx or self.dy) then
-      ZoneVec2.x = ZoneVec2.x + self.dx
-      ZoneVec2.y = ZoneVec2.y + self.dy
-    end
-    
-    if (self.rho or self.theta) then
-      -- check if theta is relative to unit or relative to north
-      if self.relative_to_unit then
-        heading = self.ZoneUNIT:GetHeading() * math.pi / 180.0 or 0.0
+  
+    if self.relative_to_unit then
+        heading = ( self.ZoneUNIT:GetHeading() or 0.0 ) * math.pi / 180.0
       else
         heading = 0.0
-      end
-                   
+    end
+    
+    -- update the zone position with the offsets.
+    if (self.dx or self.dy) then
+    
+      -- use heading to rotate offset relative to unit using rotation matrix in 2D.
+      -- see: https://en.wikipedia.org/wiki/Rotation_matrix
+      ZoneVec2.x = ZoneVec2.x + self.dx * math.cos( -heading ) + self.dy * math.sin( -heading ) 
+      ZoneVec2.y = ZoneVec2.y - self.dx * math.sin( -heading ) + self.dy * math.cos( -heading ) 
+    end
+    
+    -- if using the polar coordinates
+    if (self.rho or self.theta) then               
        ZoneVec2.x = ZoneVec2.x + self.rho * math.cos( self.theta + heading )
        ZoneVec2.y = ZoneVec2.y + self.rho * math.sin( self.theta + heading )
     end
