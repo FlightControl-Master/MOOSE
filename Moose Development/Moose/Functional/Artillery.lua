@@ -14,7 +14,7 @@
 -- * Automatic rearming once the artillery is out of ammo (optional).
 -- * Automatic relocation after each firing engagement to prevent counter strikes (optional).
 -- * Automatic relocation movements to get the battery within firing range (optional).
--- * Simulation of tactical nuclear shells.
+-- * Simulation of tactical nuclear shells as well as illumination and smoke shells.
 -- * New targets can be added during the mission, e.g. when they are detected by recon units.
 -- * Targets and relocations can be assigned by placing markers on the F10 map.
 -- * Finite state machine implementation. Mission designer can interact when certain events occur.
@@ -383,6 +383,16 @@
 --      arty cancel, everyone, move
 --      arty cancel, rearming, battery "MRLS Charly"
 -- 
+-- ### Settings
+-- 
+-- A few options can be set by marks. The corresponding keyword is **arty set**. This can be used to define the rearming place and group for a battery.
+-- 
+-- To set the reamring place of a group at the marker position type
+--      arty set, battery "Paladin Alpha", rearming place
+-- 
+-- Setting the rearming group is independent of the position of the mark. Just create one anywhere on the map and type
+--      arty set, battery "Mortar Bravo", rearming group "Ammo Truck M818"
+-- Note that the name of the rearming group has to be given in quotation marks and spellt exactly as the group name defined in the mission editor.   
 -- 
 -- ## Fine Tuning
 -- 
@@ -517,7 +527,7 @@ ARTY={
   Nillu=nil,
   illuPower=1000000,
   illuMinalt=500,
-  illuMaxalt=1500,
+  illuMaxalt=1000,
   Nsmoke=nil,
   smokeColor=SMOKECOLOR.Red,
   relocateafterfire=false,
@@ -609,7 +619,7 @@ ARTY.id="ARTY | "
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="1.0.2"
+ARTY.version="1.0.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -1469,13 +1479,13 @@ function ARTY:SetIlluminationShells(n, power)
 end
 
 --- Set minimum and maximum detotation altitude for illumination shells. A value between min/max is selected randomly.
--- The illumination bomb will burn for 300 seconds (5 minutes). Assuming a descent rate of 5 m/s the "optimal" altitude would be 1500 m. 
+-- The illumination bomb will burn for 300 seconds (5 minutes). Assuming a descent rate of ~3 m/s the "optimal" altitude would be 900 m. 
 -- @param #ARTY self
 -- @param #number minalt (Optional) Minium altitude in meters. Default 500 m.
--- @param #number maxalt (Optional) Maximum altitude in meters. Default 1500 m.
+-- @param #number maxalt (Optional) Maximum altitude in meters. Default 1000 m.
 function ARTY:SetIlluminationMinMaxAlt(minalt, maxalt)
   self.illuMinalt=minalt or 500
-  self.illuMaxalt=maxalt or 1500
+  self.illuMaxalt=maxalt or 1000
   
   if self.illuMinalt>self.illuMaxalt then
     self.illuMinalt=self.illuMaxalt
@@ -2153,6 +2163,9 @@ function ARTY:_OnEventMarkChange(Event)
     
     -- Get coordinate from vec3.
     local _coord=COORDINATE:NewFromVec3(vec3)
+    
+    -- Adjust y component to actual land height. When a coordinate is create it uses y=5 m!
+    _coord.y=_coord:GetLandHeight()
   
     -- Get battery coalition and name.
     local batterycoalition=self.Controllable:GetCoalition()
@@ -2263,7 +2276,7 @@ function ARTY:_OnEventMarkChange(Event)
 
       -- Set stuff and return.
       if _assign.set and _validkey then
-        if _assign.setrearmingplace then
+        if _assign.setrearmingplace and self.ismobile then
           self:SetRearmingPlace(_coord)
           _coord:RemoveMark(Event.idx)
           _coord:MarkToCoalition(string.format("Rearming place for battery %s", self.groupname), self.Controllable:GetCoalition(), false, string.format("New rearming place for battery %s defined.", self.groupname))
@@ -3873,7 +3886,6 @@ function ARTY:_Markertext(text)
 
       local v=self:_split(keyphrase, '"')
       local groupname=v[2]
-      env.info("FF v2 groupname = "..tostring(v[2]))
       
       local group=GROUP:FindByName(groupname)
       if group and group:IsAlive() then

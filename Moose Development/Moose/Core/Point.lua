@@ -268,6 +268,8 @@ do -- COORDINATE
     -- Adjust height
     if altitude==nil then
       _coord.y=altitude
+    else
+      _coord.y=self:GetLandHeight()
     end
 
     return _coord
