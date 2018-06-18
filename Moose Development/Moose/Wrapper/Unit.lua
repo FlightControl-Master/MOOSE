@@ -571,6 +571,26 @@ function UNIT:GetFuel()
   return nil
 end
 
+--- Returns relative amount of fuel (from 0.0 to 1.0) the UNIT has in its internal tanks. If there are additional fuel tanks the value may be greater than 1.0.
+-- @param #UNIT self
+-- @return #number The relative amount of fuel (from 0.0 to 1.0).
+-- @return #nil The DCS Unit is not existing or alive.  
+function UNIT:GetFuelMin()
+  self:F( self.UnitName )
+
+  self:GetFuel()
+end
+
+--- Returns relative amount of fuel (from 0.0 to 1.0) the UNIT has in its internal tanks. If there are additional fuel tanks the value may be greater than 1.0.
+-- @param #UNIT self
+-- @return #number The relative amount of fuel (from 0.0 to 1.0).
+-- @return #nil The DCS Unit is not existing or alive.  
+function UNIT:GetFuelAve()
+  self:F( self.UnitName )
+
+  self:GetFuel()
+end
+
 --- Returns a list of one @{Wrapper.Unit}.
 -- @param #UNIT self
 -- @return #list<Wrapper.Unit#UNIT> A list of one @{Wrapper.Unit}.

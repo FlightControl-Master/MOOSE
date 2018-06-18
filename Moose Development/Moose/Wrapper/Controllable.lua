@@ -259,6 +259,26 @@ function CONTROLLABLE:GetLife0()
   return nil
 end
 
+--- Returns relative minimum amount of fuel (from 0.0 to 1.0) a unit or group has in its internal tanks.
+-- This method returns nil to ensure polymorphic behaviour! This method needs to be overridden by GROUP or UNIT.
+-- @param #CONTROLLABLE self
+-- @return #nil The CONTROLLABLE is not existing or alive.  
+function CONTROLLABLE:GetFuelMin()
+  self:F( self.ControllableName )
+
+  return nil
+end
+
+--- Returns relative average amount of fuel (from 0.0 to 1.0) a unit or group has in its internal tanks.
+-- This method returns nil to ensure polymorphic behaviour! This method needs to be overridden by GROUP or UNIT.
+-- @param #CONTROLLABLE self
+-- @return #nil The CONTROLLABLE is not existing or alive.  
+function CONTROLLABLE:GetFuelAve()
+  self:F( self.ControllableName )
+
+  return nil
+end
+
 --- Returns relative amount of fuel (from 0.0 to 1.0) the unit has in its internal tanks.
 -- This method returns nil to ensure polymorphic behaviour! This method needs to be overridden by GROUP or UNIT.
 -- @param #CONTROLLABLE self
@@ -268,8 +288,6 @@ function CONTROLLABLE:GetFuel()
 
   return nil
 end
-
-
 
 
 -- Tasks
