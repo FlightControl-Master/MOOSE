@@ -356,7 +356,7 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia9.JPG)
   -- 
-  -- If it’s a cold war then the **borders of red and blue territory** need to be defined using a @{zone} object derived from @{Core.Zone#ZONE_BASE}.
+  -- If it's a cold war then the **borders of red and blue territory** need to be defined using a @{zone} object derived from @{Core.Zone#ZONE_BASE}.
   -- If a hot war is chosen then **no borders** actually need to be defined using the helicopter units other than 
   -- it makes it easier sometimes for the mission maker to envisage where the red and blue territories roughly are. 
   -- In a hot war the borders are effectively defined by the ground based radar coverage of a coalition.
@@ -557,15 +557,15 @@ do -- AI_A2A_DISPATCHER
   --   * CAP zones can be of any type, and are derived from the @{Core.Zone#ZONE_BASE} class. Zones can be @{Core.Zone#ZONE}, @{Core.Zone#ZONE_POLYGON}, @{Core.Zone#ZONE_UNIT}, @{Core.Zone#ZONE_GROUP}, etc.
   --   This allows to setup **static, moving and/or complex zones** wherein aircraft will perform the CAP.
   --   
-  --   * Typically 20000-50000 metres width is used and they are spaced so that aircraft in the zone waiting for tasks don’t have to far to travel to protect their coalitions important targets. 
+  --   * Typically 20000-50000 metres width is used and they are spaced so that aircraft in the zone waiting for tasks don't have to far to travel to protect their coalitions important targets. 
   --   These targets are chosen as part of the mission design and might be an important airfield or town etc. 
   --   Zone size is also determined somewhat by territory size, plane types 
   --   (eg WW2 aircraft might mean smaller zones or more zones because they are slower and take longer to intercept enemy aircraft).
   --   
-  --   * In a **cold war** it is important to make sure a CAP zone doesn’t intrude into enemy territory as otherwise CAP flights will likely cross borders 
+  --   * In a **cold war** it is important to make sure a CAP zone doesn't intrude into enemy territory as otherwise CAP flights will likely cross borders 
   --   and spark a full scale conflict which will escalate rapidly.
   --   
-  --   * CAP flights do not need to be in the CAP zone before they are “on station” and ready for tasking. 
+  --   * CAP flights do not need to be in the CAP zone before they are "on station" and ready for tasking. 
   --   
   --   * Typically if a CAP flight is tasked and therefore leaves their zone empty while they go off and intercept their target another CAP flight will spawn to take their place.
   --  
@@ -805,11 +805,11 @@ do -- AI_A2A_DISPATCHER
   -- For example because the mission calls for a EWR radar on the blue side the Ukraine might be chosen as a blue country 
   -- so that the 55G6 EWR radar unit is available to blue.  
   -- Some countries assign different tasking to aircraft, for example Germany assigns the CAP task to F-4E Phantoms but the USA does not.  
-  -- Therefore if F4s are wanted as a coalition’s CAP or GCI aircraft Germany will need to be assigned to that coalition. 
+  -- Therefore if F4s are wanted as a coalition's CAP or GCI aircraft Germany will need to be assigned to that coalition. 
   -- 
   -- ### 11.2. Country, type, load out, skill and skins for CAP and GCI aircraft?
   -- 
-  --   * Note these can be from any countries within the coalition but must be an aircraft with one of the main tasks being “CAP”.
+  --   * Note these can be from any countries within the coalition but must be an aircraft with one of the main tasks being "CAP".
   --   * Obviously skins which are selected must be available to all players that join the mission otherwise they will see a default skin.
   --   * Load outs should be appropriate to a CAP mission eg perhaps drop tanks for CAP flights and extra missiles for GCI flights. 
   --   * These decisions will eventually lead to template aircraft units being placed as late activation units that the script will use as templates for spawning CAP and GCI flights. Up to 4 different aircraft configurations can be chosen for each coalition. The spawned aircraft will inherit the characteristics of the template aircraft.
@@ -1152,7 +1152,7 @@ do -- AI_A2A_DISPATCHER
   --- Define a border area to simulate a **cold war** scenario.
   -- A **cold war** is one where CAP aircraft patrol their territory but will not attack enemy aircraft or launch GCI aircraft unless enemy aircraft enter their territory. In other words the EWR may detect an enemy aircraft but will only send aircraft to attack it if it crosses the border.
   -- A **hot war** is one where CAP aircraft will intercept any detected enemy aircraft and GCI aircraft will launch against detected enemy aircraft without regard for territory. In other words if the ground radar can detect the enemy aircraft then it will send CAP and GCI aircraft to attack it.
-  -- If it’s a cold war then the **borders of red and blue territory** need to be defined using a @{zone} object derived from @{Core.Zone#ZONE_BASE}. This method needs to be used for this.
+  -- If it's a cold war then the **borders of red and blue territory** need to be defined using a @{zone} object derived from @{Core.Zone#ZONE_BASE}. This method needs to be used for this.
   -- If a hot war is chosen then **no borders** actually need to be defined using the helicopter units other than it makes it easier sometimes for the mission maker to envisage where the red and blue territories roughly are. In a hot war the borders are effectively defined by the ground based radar coverage of a coalition. Set the noborders parameter to 1
   -- @param #AI_A2A_DISPATCHER self
   -- @param Core.Zone#ZONE_BASE BorderZone An object derived from ZONE_BASE, or a list of objects derived from ZONE_BASE.
@@ -3031,7 +3031,7 @@ do -- AI_A2A_DISPATCHER
         for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
           local Defender = Defender -- Wrapper.Group#GROUP
            if DefenderTask.Target and DefenderTask.Target.Index == DetectedItem.Index then
-             local Fuel = Defender:GetFuel() * 100
+             local Fuel = Defender:GetFuelMin() * 100
              local Damage = Defender:GetLife() / Defender:GetLife0() * 100
              Report:Add( string.format( "   - %s ( %s - %s ): ( #%d ) F: %3d, D:%3d - %s", 
                                         Defender:GetName(), 
@@ -3054,7 +3054,7 @@ do -- AI_A2A_DISPATCHER
         local Defender = Defender -- Wrapper.Group#GROUP
         if not DefenderTask.Target then
           local DefenderHasTask = Defender:HasTask()
-          local Fuel = Defender:GetFuel() * 100
+          local Fuel = Defender:GetFuelMin() * 100
           local Damage = Defender:GetLife() / Defender:GetLife0() * 100
           Report:Add( string.format( "   - %s ( %s - %s ): ( #%d ) F: %3d, D:%3d - %s", 
                                      Defender:GetName(), 
