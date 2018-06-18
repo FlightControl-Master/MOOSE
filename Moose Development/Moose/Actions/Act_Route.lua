@@ -2,7 +2,7 @@
 -- 
 -- ===
 -- 
--- # @{#ACT_ROUTE} FSM class, extends @{Fsm#FSM_PROCESS}
+-- # @{#ACT_ROUTE} FSM class, extends @{Core.Fsm#FSM_PROCESS}
 -- 
 -- ## ACT_ROUTE state machine:
 -- 
@@ -60,9 +60,9 @@
 -- 
 -- ===
 -- 
--- # 1) @{#ACT_ROUTE_ZONE} class, extends @{Fsm.Route#ACT_ROUTE}
+-- # 1) @{#ACT_ROUTE_ZONE} class, extends @{Core.Fsm.Route#ACT_ROUTE}
 -- 
--- The ACT_ROUTE_ZONE class implements the core functions to route an AIR @{Controllable} player @{Unit} to a @{Zone}.
+-- The ACT_ROUTE_ZONE class implements the core functions to route an AIR @{Wrapper.Controllable} player @{Wrapper.Unit} to a @{Zone}.
 -- The player receives on perioding times messages with the coordinates of the route to follow. 
 -- Upon arrival at the zone, a confirmation of arrival is sent, and the process will be ended.
 -- 
@@ -72,7 +72,8 @@
 -- 
 -- ===
 -- 
--- @module Route
+-- @module Actions.Route
+-- @image MOOSE.JPG
 
 
 do -- ACT_ROUTE
@@ -123,16 +124,20 @@ do -- ACT_ROUTE
   --- Set a Cancel Menu item.
   -- @param #ACT_ROUTE self
   -- @return #ACT_ROUTE
-  function ACT_ROUTE:SetMenuCancel( MenuGroup, MenuText, ParentMenu, MenuTime )
+  function ACT_ROUTE:SetMenuCancel( MenuGroup, MenuText, ParentMenu, MenuTime, MenuTag )
     
-    MENU_GROUP_COMMAND:New(
+    self.CancelMenuGroupCommand = MENU_GROUP_COMMAND:New(
       MenuGroup,
       MenuText,
       ParentMenu,
       self.MenuCancel,
       self
-    ):SetTime(MenuTime)
+    ):SetTime( MenuTime ):SetTag( MenuTag )
+
+    ParentMenu:SetTime( MenuTime )
     
+    ParentMenu:Remove( MenuTime, MenuTag )
+
     return self
   end
   
@@ -206,7 +211,9 @@ do -- ACT_ROUTE
 
   
   function ACT_ROUTE:MenuCancel()
-    self:Cancel()
+    self:F("Cancelled")
+    self.CancelMenuGroupCommand:Remove()
+    self:__Cancel( 1 )
   end
 
   --- Task Events
@@ -238,10 +245,8 @@ do -- ACT_ROUTE
   -- @param #string From
   -- @param #string To
   function ACT_ROUTE:onbeforeRoute( ProcessUnit, From, Event, To )
-    self:F( { "BeforeRoute 1", self.DisplayCount, self.DisplayInterval } )
   
     if ProcessUnit:IsAlive() then
-      self:F( "BeforeRoute 2" )
       local HasArrived = self:onfuncHasArrived( ProcessUnit ) -- Polymorphic
       if self.DisplayCount >= self.DisplayInterval then
         self:T( { HasArrived = HasArrived } )
@@ -252,8 +257,6 @@ do -- ACT_ROUTE
       else
         self.DisplayCount = self.DisplayCount + 1
       end
-      
-      self:T( { DisplayCount = self.DisplayCount } )
       
       if HasArrived then
         self:__Arrive( 1 )
@@ -337,7 +340,7 @@ do -- ACT_ROUTE_POINT
   -- @param #ACT_ROUTE_POINT self
   -- @param #number Range The Range to consider the arrival. Default is 10000 meters.
   function ACT_ROUTE_POINT:SetRange( Range )
-    self:F2( { self.Range } )
+    self:F2( { Range } )
     self.Range = Range or 10000
   end  
   
@@ -345,6 +348,7 @@ do -- ACT_ROUTE_POINT
   -- @param #ACT_ROUTE_POINT self
   -- @return #number The Range to consider the arrival. Default is 10000 meters.
   function ACT_ROUTE_POINT:GetRange()
+    self:F2( { self.Range } )
     return self.Range
   end  
   

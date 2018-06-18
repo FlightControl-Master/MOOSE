@@ -1,11 +1,24 @@
 --- **AI** - (R2.2) - Manages the process of an automatic A2A defense system based on an EWR network targets and coordinating CAP and GCI.
 -- 
--- ===
 -- 
--- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia1.JPG)
+-- Features:
 -- 
--- ===
---
+--    * Setup quickly an A2A defense system for a coalition.
+--    * Setup (CAP) Control Air Patrols at defined zones to enhance your A2A defenses.
+--    * Setup (GCI) Ground Control Intercept at defined airbases to enhance your A2A defenses.
+--    * Define and use an EWR (Early Warning Radar) network.
+--    * Define squadrons at airbases.
+--    * Enable airbases for A2A defenses.
+--    * Add different plane types to different squadrons.
+--    * Add multiple squadrons to different airbases.
+--    * Define different ranges to engage upon intruders.
+--    * Establish an automatic in air refuel process for CAP using refuel tankers.
+--    * Setup default settings for all squadrons and A2A defenses.
+--    * Setup specific settings for specific squadrons.
+--    * Quickly setup an A2A defense system using @{#AI_A2A_GCICAP}.
+--    * Setup a more advanced defense system using @{#AI_A2A_DISPATCHER}.
+-- 
+-- 
 -- # QUICK START GUIDE
 -- 
 -- There are basically two classes available to model an A2A defense system.
@@ -155,7 +168,8 @@
 -- ### Authors: **FlightControl** rework of GCICAP + introduction of new concepts (squadrons).
 -- ### Authors: **Stonehouse**, **SNAFU** in terms of the advice, documentation, and the original GCICAP script.
 -- 
--- @module AI_A2A_Dispatcher
+-- @module AI.AI_A2A_Dispatcher
+-- @image AI_Air_To_Air_Dispatching.JPG
 
 
 
@@ -165,11 +179,7 @@ do -- AI_A2A_DISPATCHER
   -- @type AI_A2A_DISPATCHER
   -- @extends Tasking.DetectionManager#DETECTION_MANAGER
 
-  --- # AI\_A2A\_DISPATCHER class, extends @{Tasking#DETECTION_MANAGER}
-  -- 
-  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia1.JPG)
-  -- 
-  -- The @{#AI_A2A_DISPATCHER} class is designed to create an automatic air defence system for a coalition. 
+  --- Create an automatic air defence system for a coalition. 
   -- 
   -- ===
   -- 
@@ -229,7 +239,7 @@ do -- AI_A2A_DISPATCHER
   -- therefore less CAP and GCI flights will spawn and this will tend to make just the border area active rather than a melee over the whole map. 
   -- It all depends on what the desired effect is. 
   -- 
-  -- EWR networks are **dynamically constructed**, that is, they form part of the @{Functional#DETECTION_BASE} object that is given as the input parameter of the AI\_A2A\_DISPATCHER class.
+  -- EWR networks are **dynamically constructed**, that is, they form part of the @{Functional.Detection#DETECTION_BASE} object that is given as the input parameter of the AI\_A2A\_DISPATCHER class.
   -- By defining in a **smart way the names or name prefixes of the groups** with EWR capable units, these groups will be **automatically added or deleted** from the EWR network, 
   -- increasing or decreasing the radar coverage of the Early Warning System.
   -- 
@@ -346,7 +356,7 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia9.JPG)
   -- 
-  -- If it’s a cold war then the **borders of red and blue territory** need to be defined using a @{zone} object derived from @{Zone#ZONE_BASE}.
+  -- If it’s a cold war then the **borders of red and blue territory** need to be defined using a @{zone} object derived from @{Core.Zone#ZONE_BASE}.
   -- If a hot war is chosen then **no borders** actually need to be defined using the helicopter units other than 
   -- it makes it easier sometimes for the mission maker to envisage where the red and blue territories roughly are. 
   -- In a hot war the borders are effectively defined by the ground based radar coverage of a coalition.
@@ -544,7 +554,7 @@ do -- AI_A2A_DISPATCHER
   --   * As the CAP flights wander around within the zone waiting to be tasked, these zones need to be large enough that the aircraft are not constantly turning 
   --   but do not have to be big and numerous enough to completely cover a border.
   --   
-  --   * CAP zones can be of any type, and are derived from the @{Zone#ZONE_BASE} class. Zones can be @{Zone#ZONE}, @{Zone#ZONE_POLYGON}, @{Zone#ZONE_UNIT}, @{Zone#ZONE_GROUP}, etc.
+  --   * CAP zones can be of any type, and are derived from the @{Core.Zone#ZONE_BASE} class. Zones can be @{Core.Zone#ZONE}, @{Core.Zone#ZONE_POLYGON}, @{Core.Zone#ZONE_UNIT}, @{Core.Zone#ZONE_GROUP}, etc.
   --   This allows to setup **static, moving and/or complex zones** wherein aircraft will perform the CAP.
   --   
   --   * Typically 20000-50000 metres width is used and they are spaced so that aircraft in the zone waiting for tasks don’t have to far to travel to protect their coalitions important targets. 
@@ -740,7 +750,7 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- In the mission editor, setup a group with task Refuelling. A tanker unit of the correct coalition will be automatically selected.
   -- Then, use the method @{#AI_A2A_DISPATCHER.SetDefaultTanker}() to set the tanker for the dispatcher.
-  -- Use the method @{#AI_A2A_DISPATCHER.SetDefaultFuelTreshold}() to set the %-tage left in the defender airplane tanks when a refuel action is needed.
+  -- Use the method @{#AI_A2A_DISPATCHER.SetDefaultFuelThreshold}() to set the %-tage left in the defender airplane tanks when a refuel action is needed.
   -- 
   -- When the tanker specified is alive and in the air, the tanker will be used for refuelling.
   -- 
@@ -830,7 +840,7 @@ do -- AI_A2A_DISPATCHER
   
   --- AI_A2A_DISPATCHER constructor.
   -- This is defining the A2A DISPATCHER for one coaliton.
-  -- The Dispatcher works with a @{Functional#Detection} object that is taking of the detection of targets using the EWR units.
+  -- The Dispatcher works with a @{Functional.Detection#DETECTION_BASE} object that is taking of the detection of targets using the EWR units.
   -- The Detection object is polymorphic, depending on the type of detection object choosen, the detection will work differently.
   -- @param #AI_A2A_DISPATCHER self
   -- @param Functional.Detection#DETECTION_BASE Detection The DETECTION object that will detects targets using the the Early Warning Radar network.
@@ -1142,7 +1152,7 @@ do -- AI_A2A_DISPATCHER
   --- Define a border area to simulate a **cold war** scenario.
   -- A **cold war** is one where CAP aircraft patrol their territory but will not attack enemy aircraft or launch GCI aircraft unless enemy aircraft enter their territory. In other words the EWR may detect an enemy aircraft but will only send aircraft to attack it if it crosses the border.
   -- A **hot war** is one where CAP aircraft will intercept any detected enemy aircraft and GCI aircraft will launch against detected enemy aircraft without regard for territory. In other words if the ground radar can detect the enemy aircraft then it will send CAP and GCI aircraft to attack it.
-  -- If it’s a cold war then the **borders of red and blue territory** need to be defined using a @{zone} object derived from @{Zone#ZONE_BASE}. This method needs to be used for this.
+  -- If it’s a cold war then the **borders of red and blue territory** need to be defined using a @{zone} object derived from @{Core.Zone#ZONE_BASE}. This method needs to be used for this.
   -- If a hot war is chosen then **no borders** actually need to be defined using the helicopter units other than it makes it easier sometimes for the mission maker to envisage where the red and blue territories roughly are. In a hot war the borders are effectively defined by the ground based radar coverage of a coalition. Set the noborders parameter to 1
   -- @param #AI_A2A_DISPATCHER self
   -- @param Core.Zone#ZONE_BASE BorderZone An object derived from ZONE_BASE, or a list of objects derived from ZONE_BASE.
@@ -1276,7 +1286,7 @@ do -- AI_A2A_DISPATCHER
   --- Calculates which AI friendlies are nearby the area
   -- @param #AI_A2A_DISPATCHER self
   -- @param DetectedItem
-  -- @return #number, Core.CommandCenter#REPORT
+  -- @return #table A list of the friendlies nearby.
   function AI_A2A_DISPATCHER:GetAIFriendliesNearBy( DetectedItem )
   
     local FriendliesNearBy = self.Detection:GetFriendliesDistance( DetectedItem )
@@ -1423,11 +1433,11 @@ do -- AI_A2A_DISPATCHER
   -- You need to specify here EXACTLY the name of the airbase as you see it in the mission editor. 
   -- Examples are `"Batumi"` or `"Tbilisi-Lochini"`. 
   -- EXACTLY the airbase name, between quotes `""`.
-  -- To ease the airbase naming when using the LDT editor and IntelliSense, the @{Airbase#AIRBASE} class contains enumerations of the airbases of each map.
+  -- To ease the airbase naming when using the LDT editor and IntelliSense, the @{Wrapper.Airbase#AIRBASE} class contains enumerations of the airbases of each map.
   --    
-  --    * Caucasus: @{Airbase#AIRBASE.Caucaus}
-  --    * Nevada or NTTR: @{Airbase#AIRBASE.Nevada}
-  --    * Normandy: @{Airbase#AIRBASE.Normandy}
+  --    * Caucasus: @{Wrapper.Airbase#AIRBASE.Caucaus}
+  --    * Nevada or NTTR: @{Wrapper.Airbase#AIRBASE.Nevada}
+  --    * Normandy: @{Wrapper.Airbase#AIRBASE.Normandy}
   -- 
   -- @param #string TemplatePrefixes A string or an array of strings specifying the **prefix names of the templates** (not going to explain what is templates here again). 
   -- Examples are `{ "104th", "105th" }` or `"104th"` or `"Template 1"` or `"BLUE PLANES"`. 
@@ -1512,7 +1522,7 @@ do -- AI_A2A_DISPATCHER
   --- Set a CAP for a Squadron.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The squadron name.
-  -- @param Core.Zone#ZONE_BASE Zone The @{Zone} object derived from @{Zone#ZONE_BASE} that defines the zone wherein the CAP will be executed.
+  -- @param Core.Zone#ZONE_BASE Zone The @{Zone} object derived from @{Core.Zone#ZONE_BASE} that defines the zone wherein the CAP will be executed.
   -- @param #number FloorAltitude The minimum altitude at which the cap can be executed.
   -- @param #number CeilingAltitude the maximum altitude at which the cap can be executed.
   -- @param #number PatrolMinSpeed The minimum speed at which the cap can be executed.
@@ -2391,7 +2401,7 @@ do -- AI_A2A_DISPATCHER
 
   --- Set the default tanker where defenders will Refuel in the air.
   -- @param #AI_A2A_DISPATCHER self
-  -- @param #strig TankerName A string defining the group name of the Tanker as defined within the Mission Editor.
+  -- @param #string TankerName A string defining the group name of the Tanker as defined within the Mission Editor.
   -- @return #AI_A2A_DISPATCHER
   -- @usage
   -- 
@@ -2414,7 +2424,7 @@ do -- AI_A2A_DISPATCHER
   --- Set the squadron tanker where defenders will Refuel in the air.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The name of the squadron.
-  -- @param #strig TankerName A string defining the group name of the Tanker as defined within the Mission Editor.
+  -- @param #string TankerName A string defining the group name of the Tanker as defined within the Mission Editor.
   -- @return #AI_A2A_DISPATCHER
   -- @usage
   -- 
@@ -2470,7 +2480,7 @@ do -- AI_A2A_DISPATCHER
   --- Creates an SWEEP task when there are targets for it.
   -- @param #AI_A2A_DISPATCHER self
   -- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
-  -- @return Set#SET_UNIT TargetSetUnit: The target set of units.
+  -- @return Core.Set#SET_UNIT TargetSetUnit: The target set of units.
   -- @return #nil If there are no targets to be set.
   function AI_A2A_DISPATCHER:EvaluateSWEEP( DetectedItem )
     self:F( { DetectedItem.ItemID } )
@@ -2890,8 +2900,8 @@ do -- AI_A2A_DISPATCHER
 
   --- Creates an ENGAGE task when there are human friendlies airborne near the targets.
   -- @param #AI_A2A_DISPATCHER self
-  -- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
-  -- @return Set#SET_UNIT TargetSetUnit: The target set of units.
+  -- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem The detected item.
+  -- @return Core.Set#SET_UNIT TargetSetUnit: The target set of units.
   -- @return #nil If there are no targets to be set.
   function AI_A2A_DISPATCHER:EvaluateENGAGE( DetectedItem )
     self:F( { DetectedItem.ItemID } )
@@ -2917,8 +2927,8 @@ do -- AI_A2A_DISPATCHER
   
   --- Creates an GCI task when there are targets for it.
   -- @param #AI_A2A_DISPATCHER self
-  -- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
-  -- @return Set#SET_UNIT TargetSetUnit: The target set of units.
+  -- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem The detected item.
+  -- @return Core.Set#SET_UNIT TargetSetUnit: The target set of units.
   -- @return #nil If there are no targets to be set.
   function AI_A2A_DISPATCHER:EvaluateGCI( DetectedItem )
     self:F( { DetectedItem.ItemID } )
@@ -2944,7 +2954,7 @@ do -- AI_A2A_DISPATCHER
 
   --- Assigns A2A AI Tasks in relation to the detected items.
   -- @param #AI_A2A_DISPATCHER self
-  -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Detection#DETECTION_BASE} derived object.
+  -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Functional.Detection#DETECTION_BASE} derived object.
   -- @return #boolean Return true if you want the task assigning to continue... false will cancel the loop.
   function AI_A2A_DISPATCHER:ProcessDetected( Detection )
   
@@ -3069,10 +3079,10 @@ end
 
 do
 
-  --- Calculates which HUMAN friendlies are nearby the area
+  --- Calculates which HUMAN friendlies are nearby the area.
   -- @param #AI_A2A_DISPATCHER self
-  -- @param DetectedItem
-  -- @return #number, Core.CommandCenter#REPORT
+  -- @param DetectedItem The detected item.
+  -- @return #number, Core.Report#REPORT The amount of friendlies and a text string explaining which friendlies of which type.
   function AI_A2A_DISPATCHER:GetPlayerFriendliesNearBy( DetectedItem )
   
     local DetectedSet = DetectedItem.Set
@@ -3115,14 +3125,14 @@ do
     return PlayersCount, PlayerTypesReport
   end
 
-  --- Calculates which friendlies are nearby the area
+  --- Calculates which friendlies are nearby the area.
   -- @param #AI_A2A_DISPATCHER self
-  -- @param DetectedItem
-  -- @return #number, Core.CommandCenter#REPORT
-  function AI_A2A_DISPATCHER:GetFriendliesNearBy( Target )
+  -- @param DetectedItem The detected item.
+  -- @return #number, Core.Report#REPORT The amount of friendlies and a text string explaining which friendlies of which type.
+  function AI_A2A_DISPATCHER:GetFriendliesNearBy( DetectedItem )
   
-    local DetectedSet = Target.Set
-    local FriendlyUnitsNearBy = self.Detection:GetFriendliesNearBy( Target )
+    local DetectedSet = DetectedItem.Set
+    local FriendlyUnitsNearBy = self.Detection:GetFriendliesNearBy( DetectedItem )
     
     local FriendlyTypes = {}
     local FriendliesCount = 0
@@ -3159,8 +3169,8 @@ do
     return FriendliesCount, FriendlyTypesReport
   end
 
-  ---
-  -- @param AI_A2A_DISPATCHER
+  --- Schedules a new CAP for the given SquadronName.
+  -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The squadron name.
   function AI_A2A_DISPATCHER:SchedulerCAP( SquadronName )
     self:CAP( SquadronName )
@@ -3173,12 +3183,8 @@ do
   --- @type AI_A2A_GCICAP
   -- @extends #AI_A2A_DISPATCHER
 
-  --- # AI\_A2A\_GCICAP class, extends @{AI_A2A_Dispatcher#AI_A2A_DISPATCHER}
-  -- 
-  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia1.JPG)
-  -- 
-  -- The AI_A2A_GCICAP class is designed to create an automatic air defence system for a coalition setting up GCI and CAP air defenses. 
-  -- The class derives from @{AI#AI_A2A_DISPATCHER} and thus, all the methods that are defined in the @{AI#AI_A2A_DISPATCHER} class, can be used also in AI\_A2A\_GCICAP.
+  --- Create an automatic air defence system for a coalition setting up GCI and CAP air defenses. 
+  -- The class derives from @{#AI_A2A_DISPATCHER} and thus, all the methods that are defined in the @{#AI_A2A_DISPATCHER} class, can be used also in AI\_A2A\_GCICAP.
   -- 
   -- ===
   -- 
@@ -3281,7 +3287,7 @@ do
   -- 
   -- **The place of the helicopter is important, as the airbase closest to the helicopter will be the airbase from where the CAP planes will take off for CAP.**
   -- 
-  -- ## 2) There are a lot of defaults set, which can be further modified using the methods in @{AI#AI_A2A_DISPATCHER}:
+  -- ## 2) There are a lot of defaults set, which can be further modified using the methods in @{#AI_A2A_DISPATCHER}:
   -- 
   -- ### 2.1) Planes are taking off in the air from the airbases.
   -- 

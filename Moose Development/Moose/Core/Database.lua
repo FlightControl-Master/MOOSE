@@ -7,13 +7,14 @@
 -- 
 -- ===
 -- 
--- @module Database
+-- @module Core.Database
+-- @image Core_Database.JPG
 
 
 --- @type DATABASE
 -- @extends Core.Base#BASE
 
---- # DATABASE class, extends @{Base#BASE}
+--- Contains collections of wrapper objects defined within MOOSE that reflect objects within the simulator.
 -- 
 -- Mission designers can use the DATABASE class to refer to:
 -- 
@@ -58,6 +59,7 @@ DATABASE = {
   ZONENAMES = {},
   HITS = {},
   DESTROYS = {},
+  ZONES = {},
 }
 
 local _DATABASECoalition =
@@ -95,6 +97,8 @@ function DATABASE:New()
   self:HandleEvent( EVENTS.Hit, self.AccountHits )
   self:HandleEvent( EVENTS.NewCargo )
   self:HandleEvent( EVENTS.DeleteCargo )
+  self:HandleEvent( EVENTS.NewZone )
+  self:HandleEvent( EVENTS.DeleteZone )
   
   -- Follow alive players and clients
   --self:HandleEvent( EVENTS.PlayerEnterUnit, self._EventOnPlayerEnterUnit ) -- This is not working anymore!, handling this through the birth event.
@@ -242,35 +246,178 @@ function DATABASE:FindAirbase( AirbaseName )
   return AirbaseFound
 end
 
---- Adds a Cargo based on the Cargo Name in the DATABASE.
--- @param #DATABASE self
--- @param #string CargoName The name of the airbase
-function DATABASE:AddCargo( Cargo )
 
-  if not self.CARGOS[Cargo.Name] then
-    self.CARGOS[Cargo.Name] = Cargo
+do -- Zones
+
+  --- Finds a @{Zone} based on the zone name.
+  -- @param #DATABASE self
+  -- @param #string ZoneName The name of the zone.
+  -- @return Core.Zone#ZONE_BASE The found ZONE.
+  function DATABASE:FindZone( ZoneName )
+  
+    local ZoneFound = self.ZONES[ZoneName]
+    return ZoneFound
   end
-end
+  
+  --- Adds a @{Zone} based on the zone name in the DATABASE.
+  -- @param #DATABASE self
+  -- @param #string ZoneName The name of the zone.
+  -- @param Core.Zone#ZONE_BASE Zone The zone.
+  function DATABASE:AddZone( ZoneName, Zone )
+  
+    if not self.ZONES[ZoneName] then
+      self.ZONES[ZoneName] = Zone
+    end
+  end
+  
+  
+  --- Deletes a @{Zone} from the DATABASE based on the zone name.
+  -- @param #DATABASE self
+  -- @param #string ZoneName The name of the zone.
+  function DATABASE:DeleteZone( ZoneName )
+  
+    self.ZONES[ZoneName] = nil 
+  end
+  
+  --- Finds an @{Zone} based on the zone name in the DATABASE.
+  -- @param #DATABASE self
+  -- @param #string ZoneName
+  -- @return Core.Zone#ZONE_BASE The found @{Zone}.
+  function DATABASE:FindZone( ZoneName )
+  
+    local ZoneFound = self.ZONES[ZoneName]
+    return ZoneFound
+  end
 
 
---- Deletes a Cargo from the DATABASE based on the Cargo Name.
--- @param #DATABASE self
--- @param #string CargoName The name of the airbase
-function DATABASE:DeleteCargo( CargoName )
+  --- Private method that registers new ZONE_BASE derived objects within the DATABASE Object.
+  -- @param #DATABASE self
+  -- @return #DATABASE self
+  function DATABASE:_RegisterZones()
 
-  self.CARGOS[CargoName] = nil 
-end
+    for ZoneID, ZoneData in pairs( env.mission.triggers.zones ) do
+      local ZoneName = ZoneData.name
 
---- Finds an CARGO based on the CargoName.
--- @param #DATABASE self
--- @param #string CargoName
--- @return Wrapper.Cargo#CARGO The found CARGO.
-function DATABASE:FindCargo( CargoName )
+      self:I( { "Register ZONE:", Name = ZoneName } )
+      local Zone = ZONE:New( ZoneName )
+      self.ZONENAMES[ZoneName] = ZoneName
+      self:AddZone( ZoneName, Zone )
+    end
+  
+    for ZoneGroupName, ZoneGroup in pairs( self.GROUPS ) do
+      if ZoneGroupName:match("~ZONE_POLYGON") then
+        local ZoneName1 = ZoneGroupName:match("(.*)~ZONE_POLYGON")
+        local ZoneName2 = ZoneGroupName:match(".*~ZONE_POLYGON(.*)")
+        local ZoneName = ZoneName1 .. ( ZoneName2 or "" )
+        
+        self:I( { "Register ZONE_POLYGON:", Name = ZoneName } )
+        local Zone_Polygon = ZONE_POLYGON:New( ZoneName, ZoneGroup )
+        self.ZONENAMES[ZoneName] = ZoneName
+        self:AddZone( ZoneName, Zone_Polygon )
+      end
+    end
+    
+  end
 
-  local CargoFound = self.CARGOS[CargoName]
-  return CargoFound
-end
 
+end -- zone
+
+
+do -- cargo
+
+  --- Adds a Cargo based on the Cargo Name in the DATABASE.
+  -- @param #DATABASE self
+  -- @param #string CargoName The name of the airbase
+  function DATABASE:AddCargo( Cargo )
+  
+    if not self.CARGOS[Cargo.Name] then
+      self.CARGOS[Cargo.Name] = Cargo
+    end
+  end
+  
+  
+  --- Deletes a Cargo from the DATABASE based on the Cargo Name.
+  -- @param #DATABASE self
+  -- @param #string CargoName The name of the airbase
+  function DATABASE:DeleteCargo( CargoName )
+  
+    self.CARGOS[CargoName] = nil 
+  end
+  
+  --- Finds an CARGO based on the CargoName.
+  -- @param #DATABASE self
+  -- @param #string CargoName
+  -- @return Wrapper.Cargo#CARGO The found CARGO.
+  function DATABASE:FindCargo( CargoName )
+  
+    local CargoFound = self.CARGOS[CargoName]
+    return CargoFound
+  end
+  
+  --- Checks if the Template name has a ~CARGO tag.
+  -- If yes, the group is a cargo.
+  -- @param #DATABASE self
+  -- @param #string TemplateName
+  -- @return #boolean
+  function DATABASE:IsCargo( TemplateName )
+
+    TemplateName = env.getValueDictByKey( TemplateName )
+  
+    local Cargo = TemplateName:match( "~(CARGO)" )
+
+    return Cargo and Cargo == "CARGO"    
+  end
+
+  --- Private method that registers new Static Templates within the DATABASE Object.
+  -- @param #DATABASE self
+  -- @return #DATABASE self
+  function DATABASE:_RegisterCargos()
+
+  
+    for CargoGroupName, CargoGroup in pairs( self.GROUPS ) do
+      if self:IsCargo( CargoGroupName ) then
+        local CargoInfo = CargoGroupName:match("~CARGO(.*)")
+        local CargoParam = CargoInfo and CargoInfo:match( "%((.*)%)")
+        local CargoName1 = CargoGroupName:match("(.*)~CARGO%(.*%)")
+        local CargoName2 = CargoGroupName:match(".*~CARGO%(.*%)(.*)")
+        self:E({CargoName1 = CargoName1, CargoName2 = CargoName2 })
+        local CargoName = CargoName1 .. ( CargoName2 or "" )
+        local Type = CargoParam and CargoParam:match( "T=([%a%d ]+),?")
+        local Name = CargoParam and CargoParam:match( "N=([%a%d]+),?") or CargoName
+        local LoadRadius = CargoParam and tonumber( CargoParam:match( "RR=([%a%d]+),?") )
+        local NearRadius = CargoParam and tonumber( CargoParam:match( "NR=([%a%d]+),?") )
+        
+        self:I({"Register CargoGroup:",Type=Type,Name=Name,LoadRadius=LoadRadius,NearRadius=NearRadius})
+        CARGO_GROUP:New( CargoGroup, Type, Name, LoadRadius, NearRadius )
+      end
+    end
+    
+    for CargoStaticName, CargoStatic in pairs( self.STATICS ) do
+      if self:IsCargo( CargoStaticName ) then
+        local CargoInfo = CargoStaticName:match("~CARGO(.*)")
+        local CargoParam = CargoInfo and CargoInfo:match( "%((.*)%)")
+        local CargoName = CargoStaticName:match("(.*)~CARGO")
+        local Type = CargoParam and CargoParam:match( "T=([%a%d ]+),?")
+        local Category = CargoParam and CargoParam:match( "C=([%a%d ]+),?")
+        local Name = CargoParam and CargoParam:match( "N=([%a%d]+),?") or CargoName
+        local LoadRadius = CargoParam and tonumber( CargoParam:match( "RR=([%a%d]+),?") )
+        local NearRadius = CargoParam and tonumber( CargoParam:match( "NR=([%a%d]+),?") )
+        
+        if Category == "SLING" then
+          self:I({"Register CargoSlingload:",Type=Type,Name=Name,LoadRadius=LoadRadius,NearRadius=NearRadius})
+          CARGO_SLINGLOAD:New( CargoStatic, Type, Name, LoadRadius, NearRadius )
+        else
+          if Category == "CRATE" then
+            self:I({"Register CargoCrate:",Type=Type,Name=Name,LoadRadius=LoadRadius,NearRadius=NearRadius})
+            CARGO_CRATE:New( CargoStatic, Type, Name, LoadRadius, NearRadius )
+          end
+        end
+      end
+    end
+    
+  end
+
+end -- cargo
 
 --- Finds a CLIENT based on the ClientName.
 -- @param #DATABASE self
@@ -442,16 +589,14 @@ end
 --- Private method that registers new Group Templates within the DATABASE Object.
 -- @param #DATABASE self
 -- @param #table GroupTemplate
--- @param Dcs.DCScoalition#coalition.side CoalitionSide The coalition.side of the object.
--- @param Dcs.DCSObject#Object.Category CategoryID The Object.category of the object.
--- @param Dcs.DCScountry#country.id CountryID the country.id of the object
+-- @param DCS#coalition.side CoalitionSide The coalition.side of the object.
+-- @param DCS#Object.Category CategoryID The Object.category of the object.
+-- @param DCS#country.id CountryID the country.id of the object
 -- @return #DATABASE self
 function DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionSide, CategoryID, CountryID, GroupName )
 
   local GroupTemplateName = GroupName or env.getValueDictByKey( GroupTemplate.name )
   
-  local TraceTable = {}
-
   if not self.Templates.Groups[GroupTemplateName] then
     self.Templates.Groups[GroupTemplateName] = {}
     self.Templates.Groups[GroupTemplateName].Status = nil
@@ -475,18 +620,7 @@ function DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionSide, Category
   self.Templates.Groups[GroupTemplateName].CoalitionID = CoalitionSide
   self.Templates.Groups[GroupTemplateName].CountryID = CountryID
 
-  
-  TraceTable[#TraceTable+1] = "Group"
-  TraceTable[#TraceTable+1] = self.Templates.Groups[GroupTemplateName].GroupName
-
-  TraceTable[#TraceTable+1] = "Coalition"
-  TraceTable[#TraceTable+1] = self.Templates.Groups[GroupTemplateName].CoalitionID
-  TraceTable[#TraceTable+1] = "Category"
-  TraceTable[#TraceTable+1] = self.Templates.Groups[GroupTemplateName].CategoryID
-  TraceTable[#TraceTable+1] = "Country"
-  TraceTable[#TraceTable+1] = self.Templates.Groups[GroupTemplateName].CountryID
-
-  TraceTable[#TraceTable+1] = "Units"
+  local UnitNames = {}
 
   for unit_num, UnitTemplate in pairs( GroupTemplate.units ) do
 
@@ -510,10 +644,16 @@ function DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionSide, Category
       self.Templates.ClientsByID[UnitTemplate.unitId] = UnitTemplate
     end
     
-    TraceTable[#TraceTable+1] = self.Templates.Units[UnitTemplate.name].UnitName 
+    UnitNames[#UnitNames+1] = self.Templates.Units[UnitTemplate.name].UnitName 
   end
 
-  self:E( TraceTable )
+  self:I( { Group = self.Templates.Groups[GroupTemplateName].GroupName,
+            Coalition = self.Templates.Groups[GroupTemplateName].CoalitionID,
+            Category = self.Templates.Groups[GroupTemplateName].CategoryID,
+            Country = self.Templates.Groups[GroupTemplateName].CountryID,
+            Units = UnitNames
+          }
+        )
 end
 
 function DATABASE:GetGroupTemplate( GroupName )
@@ -530,8 +670,6 @@ end
 -- @return #DATABASE self
 function DATABASE:_RegisterStaticTemplate( StaticTemplate, CoalitionID, CategoryID, CountryID )
 
-  local TraceTable = {}
-
   local StaticTemplateName = env.getValueDictByKey(StaticTemplate.name)
   
   self.Templates.Statics[StaticTemplateName] = self.Templates.Statics[StaticTemplateName] or {}
@@ -547,28 +685,22 @@ function DATABASE:_RegisterStaticTemplate( StaticTemplate, CoalitionID, Category
   self.Templates.Statics[StaticTemplateName].CoalitionID = CoalitionID
   self.Templates.Statics[StaticTemplateName].CountryID = CountryID
 
+  self:I( { Static = self.Templates.Statics[StaticTemplateName].StaticName,
+            Coalition = self.Templates.Statics[StaticTemplateName].CoalitionID,
+            Category = self.Templates.Statics[StaticTemplateName].CategoryID,
+            Country = self.Templates.Statics[StaticTemplateName].CountryID 
+          }
+        )
+        
+  self:AddStatic( StaticTemplateName )
   
-  TraceTable[#TraceTable+1] = "Static"
-  TraceTable[#TraceTable+1] = self.Templates.Statics[StaticTemplateName].StaticName
-
-  TraceTable[#TraceTable+1] = "Coalition"
-  TraceTable[#TraceTable+1] = self.Templates.Statics[StaticTemplateName].CoalitionID
-  TraceTable[#TraceTable+1] = "Category"
-  TraceTable[#TraceTable+1] = self.Templates.Statics[StaticTemplateName].CategoryID
-  TraceTable[#TraceTable+1] = "Country"
-  TraceTable[#TraceTable+1] = self.Templates.Statics[StaticTemplateName].CountryID
-
-  self:E( TraceTable )
 end
 
 
 --- @param #DATABASE self
 function DATABASE:GetStaticUnitTemplate( StaticName )
   local StaticTemplate = self.Templates.Statics[StaticName].UnitTemplate
-  StaticTemplate.SpawnCoalitionID = self.Templates.Statics[StaticName].CoalitionID
-  StaticTemplate.SpawnCategoryID = self.Templates.Statics[StaticName].CategoryID
-  StaticTemplate.SpawnCountryID = self.Templates.Statics[StaticName].CountryID
-  return StaticTemplate
+  return StaticTemplate, self.Templates.Statics[StaticName].CoalitionID, self.Templates.Statics[StaticName].CategoryID, self.Templates.Statics[StaticName].CountryID
 end
 
 
@@ -703,7 +835,7 @@ function DATABASE:_RegisterAirbases()
 
       local DCSAirbaseName = DCSAirbase:getName()
 
-      self:E( { "Register Airbase:", DCSAirbaseName } )
+      self:E( { "Register Airbase:", DCSAirbaseName, DCSAirbase:getID() } )
       self:AddAirbase( DCSAirbaseName )
     end
   end
@@ -734,7 +866,7 @@ function DATABASE:_EventOnBirth( Event )
       Event.IniGroup = self:FindGroup( Event.IniDCSGroupName )
       local PlayerName = Event.IniUnit:GetPlayerName()
       self:E( { "PlayerName:", PlayerName } )
-      if PlayerName ~= "" then
+      if PlayerName then
         self:E( { "Player Joined:", PlayerName } )
         if not self.PLAYERS[PlayerName] then
           self:AddPlayer( Event.IniUnitName, PlayerName )
@@ -803,7 +935,7 @@ function DATABASE:_EventOnPlayerLeaveUnit( Event )
   if Event.IniUnit then
     if Event.IniObjectCategory == 1 then
       local PlayerName = Event.IniUnit:GetPlayerName()
-      if self.PLAYERS[PlayerName] then
+      if PlayerName and self.PLAYERS[PlayerName] then
         self:E( { "Player Left:", PlayerName } )
         local Settings = SETTINGS:Set( PlayerName )
         Settings:RemovePlayerMenu( Event.IniUnit )
@@ -988,6 +1120,31 @@ function DATABASE:OnEventDeleteCargo( EventData )
 end
 
 
+--- Handles the OnEventNewZone event.
+-- @param #DATABASE self
+-- @param Core.Event#EVENTDATA EventData
+function DATABASE:OnEventNewZone( EventData )
+  self:F2( { EventData } )
+
+  if EventData.Zone then
+    self:AddZone( EventData.Zone )
+  end
+end
+
+
+--- Handles the OnEventDeleteZone.
+-- @param #DATABASE self
+-- @param Core.Event#EVENTDATA EventData
+function DATABASE:OnEventDeleteZone( EventData )
+  self:F2( { EventData } )
+
+  if EventData.Zone then
+    self:DeleteZone( EventData.Zone.ZoneName )
+  end
+end
+
+
+
 --- Gets the player settings
 -- @param #DATABASE self
 -- @param #string PlayerName
@@ -1025,7 +1182,6 @@ function DATABASE:_RegisterTemplates()
       
       local CoalitionSide = coalition.side[string.upper(CoalitionName)]
 
-      ----------------------------------------------
       -- build nav points DB
       self.Navpoints[CoalitionName] = {}
       if coa_data.nav_points then --navpoints
@@ -1040,8 +1196,9 @@ function DATABASE:_RegisterTemplates()
             self.Navpoints[CoalitionName][nav_ind]['point']['y'] = 0
             self.Navpoints[CoalitionName][nav_ind]['point']['z'] = nav_data.y
           end
+        end
       end
-      end
+
       -------------------------------------------------
       if coa_data.country then --there is a country table
         for cntry_id, cntry_data in pairs(coa_data.country) do
@@ -1093,11 +1250,6 @@ function DATABASE:_RegisterTemplates()
       end --if coa_data.country then --there is a country table
     end --if coa_name == 'red' or coa_name == 'blue' and type(coa_data) == 'table' then
   end --for coa_name, coa_data in pairs(mission.coalition) do
-
-  for ZoneID, ZoneData in pairs( env.mission.triggers.zones ) do
-    local ZoneName = ZoneData.name
-    self.ZONENAMES[ZoneName] = ZoneName
-  end
 
   return self
 end

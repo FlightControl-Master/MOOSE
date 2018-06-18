@@ -2,7 +2,7 @@
 -- 
 -- ===
 -- 
--- # @{#ACT_ASSIGN} FSM template class, extends @{Fsm#FSM_PROCESS}
+-- # @{#ACT_ASSIGN} FSM template class, extends @{Core.Fsm#FSM_PROCESS}
 -- 
 -- ## ACT_ASSIGN state machine:
 -- 
@@ -54,7 +54,7 @@
 -- 
 -- ===
 -- 
--- # 1) @{#ACT_ASSIGN_ACCEPT} class, extends @{Fsm.Assign#ACT_ASSIGN}
+-- # 1) @{#ACT_ASSIGN_ACCEPT} class, extends @{Core.Fsm.Assign#ACT_ASSIGN}
 -- 
 -- The ACT_ASSIGN_ACCEPT class accepts by default a task for a player. No player intervention is allowed to reject the task.
 -- 
@@ -64,7 +64,7 @@
 -- 
 -- ===
 -- 
--- # 2) @{#ACT_ASSIGN_MENU_ACCEPT} class, extends @{Fsm.Assign#ACT_ASSIGN}
+-- # 2) @{#ACT_ASSIGN_MENU_ACCEPT} class, extends @{Core.Fsm.Assign#ACT_ASSIGN}
 -- 
 -- The ACT_ASSIGN_MENU_ACCEPT class accepts a task when the player accepts the task through an added menu option.
 -- This assignment type is useful to conditionally allow the player to choose whether or not he would accept the task.
@@ -77,7 +77,8 @@
 -- 
 -- ===
 -- 
--- @module Assign
+-- @module Actions.Assign
+-- @image MOOSE.JPG
 
 
 do -- ACT_ASSIGN
@@ -155,8 +156,7 @@ do -- ACT_ASSIGN_ACCEPT
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function ACT_ASSIGN_ACCEPT:onafterStart( ProcessUnit, From, Event, To )
-    self:F( { ProcessUnit, From, Event, To } )
+  function ACT_ASSIGN_ACCEPT:onafterStart( ProcessUnit, Task, From, Event, To )
   
     self:__Assign( 1 )   
   end
@@ -167,11 +167,8 @@ do -- ACT_ASSIGN_ACCEPT
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function ACT_ASSIGN_ACCEPT:onenterAssigned( ProcessUnit, From, Event, To )
-    self:F( { ProcessUnit, From, Event, To } )
+  function ACT_ASSIGN_ACCEPT:onenterAssigned( ProcessUnit, Task, From, Event, To )
   
-    local ProcessGroup = ProcessUnit:GetGroup()
-
     self.Task:Assign( ProcessUnit, ProcessUnit:GetPlayerName() )
   end
   
@@ -192,36 +189,26 @@ do -- ACT_ASSIGN_MENU_ACCEPT
 
   --- Init.
   -- @param #ACT_ASSIGN_MENU_ACCEPT self
-  -- @param #string TaskName
   -- @param #string TaskBriefing
   -- @return #ACT_ASSIGN_MENU_ACCEPT self
-  function ACT_ASSIGN_MENU_ACCEPT:New( TaskName, TaskBriefing )
+  function ACT_ASSIGN_MENU_ACCEPT:New( TaskBriefing )
 
     -- Inherits from BASE
     local self = BASE:Inherit( self, ACT_ASSIGN:New() ) -- #ACT_ASSIGN_MENU_ACCEPT
 
-    self.TaskName = TaskName 
     self.TaskBriefing = TaskBriefing
     
     return self
   end
 
-  function ACT_ASSIGN_MENU_ACCEPT:Init( FsmAssign )
-  
-    self.TaskName = FsmAssign.TaskName 
-    self.TaskBriefing = FsmAssign.TaskBriefing  
-  end
-  
-  
+
   --- Creates a new task assignment state machine. The process will request from the menu if it accepts the task, if not, the unit is removed from the simulator.
   -- @param #ACT_ASSIGN_MENU_ACCEPT self
-  -- @param #string TaskName
   -- @param #string TaskBriefing
   -- @return #ACT_ASSIGN_MENU_ACCEPT self
-  function ACT_ASSIGN_MENU_ACCEPT:Init( TaskName, TaskBriefing )
+  function ACT_ASSIGN_MENU_ACCEPT:Init( TaskBriefing )
   
     self.TaskBriefing = TaskBriefing
-    self.TaskName = TaskName
 
     return self
   end
@@ -232,30 +219,31 @@ do -- ACT_ASSIGN_MENU_ACCEPT
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function ACT_ASSIGN_MENU_ACCEPT:onafterStart( ProcessUnit, From, Event, To )
-    self:F( { ProcessUnit, From, Event, To } )
+  function ACT_ASSIGN_MENU_ACCEPT:onafterStart( ProcessUnit, Task, From, Event, To )
 
-    self:GetCommandCenter():MessageTypeToGroup( "Access the radio menu to accept the task. You have 30 seconds or the assignment will be cancelled.", ProcessUnit:GetGroup(), MESSAGE.Type.Information )
+    self:GetCommandCenter():MessageToGroup( "Task " .. self.Task:GetName() .. " has been assigned to you and your group!\nRead the briefing and use the Radio Menu (F10) / Task ... CONFIRMATION menu to accept or reject the task.\nYou have 2 minutes to accept, or the task assignment will be cancelled!", ProcessUnit:GetGroup(), 120 )
    
-    local ProcessGroup = ProcessUnit:GetGroup() 
+    local TaskGroup = ProcessUnit:GetGroup() 
+
+    self.Menu = MENU_GROUP:New( TaskGroup, "Task " .. self.Task:GetName() .. " CONFIRMATION" )
+    self.MenuAcceptTask = MENU_GROUP_COMMAND:New( TaskGroup, "Accept task " .. self.Task:GetName(), self.Menu, self.MenuAssign, self, TaskGroup )
+    self.MenuRejectTask = MENU_GROUP_COMMAND:New( TaskGroup, "Reject task " .. self.Task:GetName(), self.Menu, self.MenuReject, self, TaskGroup )
     
-    self.Menu = MENU_GROUP:New( ProcessGroup, "Task " .. self.TaskName .. " acceptance" )
-    self.MenuAcceptTask = MENU_GROUP_COMMAND:New( ProcessGroup, "Accept task " .. self.TaskName, self.Menu, self.MenuAssign, self )
-    self.MenuRejectTask = MENU_GROUP_COMMAND:New( ProcessGroup, "Reject task " .. self.TaskName, self.Menu, self.MenuReject, self )
+    self:__Reject( 120, TaskGroup )
   end
   
   --- Menu function.
   -- @param #ACT_ASSIGN_MENU_ACCEPT self
-  function ACT_ASSIGN_MENU_ACCEPT:MenuAssign()
+  function ACT_ASSIGN_MENU_ACCEPT:MenuAssign( TaskGroup )
   
-    self:__Assign( 1 )
+    self:__Assign( -1, TaskGroup )
   end
   
   --- Menu function.
   -- @param #ACT_ASSIGN_MENU_ACCEPT self
-  function ACT_ASSIGN_MENU_ACCEPT:MenuReject()
+  function ACT_ASSIGN_MENU_ACCEPT:MenuReject( TaskGroup )
   
-    self:__Reject( 1 )
+    self:__Reject( -1, TaskGroup )
   end
   
   --- StateMachine callback function
@@ -264,8 +252,7 @@ do -- ACT_ASSIGN_MENU_ACCEPT
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function ACT_ASSIGN_MENU_ACCEPT:onafterAssign( ProcessUnit, From, Event, To )
-    self:F( { ProcessUnit.UnitNameFrom, Event, To } )
+  function ACT_ASSIGN_MENU_ACCEPT:onafterAssign( ProcessUnit, Task, From, Event, To, TaskGroup  )
   
     self.Menu:Remove()
   end
@@ -276,13 +263,25 @@ do -- ACT_ASSIGN_MENU_ACCEPT
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function ACT_ASSIGN_MENU_ACCEPT:onafterReject( ProcessUnit, From, Event, To )
-    self:F( { ProcessUnit.UnitName, From, Event, To } )
+  function ACT_ASSIGN_MENU_ACCEPT:onafterReject( ProcessUnit, Task, From, Event, To, TaskGroup )
+    self:F( { TaskGroup = TaskGroup } )
   
     self.Menu:Remove()
     --TODO: need to resolve this problem ... it has to do with the events ...
     --self.Task:UnAssignFromUnit( ProcessUnit )needs to become a callback funtion call upon the event
-    ProcessUnit:Destroy()
+    self.Task:RejectGroup( TaskGroup )
+  end
+
+  --- StateMachine callback function
+  -- @param #ACT_ASSIGN_ACCEPT self
+  -- @param Wrapper.Unit#UNIT ProcessUnit
+  -- @param #string Event
+  -- @param #string From
+  -- @param #string To
+  function ACT_ASSIGN_MENU_ACCEPT:onenterAssigned( ProcessUnit, Task, From, Event, To, TaskGroup )
+  
+    --self.Task:AssignToGroup( TaskGroup )
+    self.Task:Assign( ProcessUnit, ProcessUnit:GetPlayerName() )
   end
 
 end -- ACT_ASSIGN_MENU_ACCEPT

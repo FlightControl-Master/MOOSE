@@ -2,7 +2,7 @@
 --
 -- ===
 --
--- DESIGNATE is orchestrating the designation of potential targets executed by a Recce group, 
+-- Orchestrate the designation of potential targets executed by a Recce group, 
 -- and communicates these to a dedicated attacking group of players, 
 -- so that following a dynamically generated menu system, 
 -- each detected set of potential targets can be lased or smoked...
@@ -28,17 +28,16 @@
 -- 
 --   * **FlightControl**: Design & Programming
 -- 
--- @module Designate
-
+-- @module Functional.Designate
+-- @image Designation.JPG
 
 do -- DESIGNATE
 
   --- @type DESIGNATE
   -- @extends Core.Fsm#FSM_PROCESS
 
-  --- # DESIGNATE class, extends @{Fsm#FSM}
+  --- Manage the designation of detected targets.
   -- 
-  -- DESIGNATE is managing the designation of detected targets.
   -- Targets detected by recce will be communicated to a group of attacking players.  
   -- A menu system is made available that allows to: 
   -- 
@@ -268,7 +267,7 @@ do -- DESIGNATE
   -- 
   -- ## 6. Designate Menu Location for a Mission
   -- 
-  -- You can make DESIGNATE work for a @{Mission#MISSION} object. In this way, the designate menu will not appear in the root of the radio menu, but in the menu of the Mission.
+  -- You can make DESIGNATE work for a @{Tasking.Mission#MISSION} object. In this way, the designate menu will not appear in the root of the radio menu, but in the menu of the Mission.
   -- Use the method @{#DESIGNATE.SetMission}() to set the @{Mission} object for the designate function.
   -- 
   -- ## 7. Status Report

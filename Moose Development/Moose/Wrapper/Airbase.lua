@@ -8,15 +8,14 @@
 -- 
 -- ===
 -- 
--- @module Airbase
+-- @module Wrapper.Airbase
+-- @image Wrapper_Airbase.JPG
 
 
 --- @type AIRBASE
 -- @extends Wrapper.Positionable#POSITIONABLE
 
---- # AIRBASE class, extends @{Positionable#POSITIONABLE}
--- 
--- AIRBASE is a wrapper class to handle the DCS Airbase objects:
+--- Wrapper class to handle the DCS Airbase objects:
 -- 
 --  * Support all DCS Airbase APIs.
 --  * Enhance with Airbase specific APIs not in the DCS Airbase API set.
@@ -239,7 +238,7 @@ end
 
 --- Finds a AIRBASE from the _DATABASE using a DCSAirbase object.
 -- @param #AIRBASE self
--- @param Dcs.DCSWrapper.Airbase#Airbase DCSAirbase An existing DCS Airbase object reference.
+-- @param DCS#Airbase DCSAirbase An existing DCS Airbase object reference.
 -- @return Wrapper.Airbase#AIRBASE self
 function AIRBASE:Find( DCSAirbase )
 
