@@ -367,7 +367,6 @@ end
 -- @return #AI_A2A self
 function AI_A2A:SetFuelThreshold( PatrolFuelThresholdPercentage, PatrolOutOfFuelOrbitTime )
 
-  self.PatrolManageFuel = true
   self.PatrolFuelThresholdPercentage = PatrolFuelThresholdPercentage
   self.PatrolOutOfFuelOrbitTime = PatrolOutOfFuelOrbitTime
   

@@ -590,7 +590,6 @@ end
 -- @return #AI_PATROL_ZONE self
 function AI_PATROL_ZONE:ManageFuel( PatrolFuelThresholdPercentage, PatrolOutOfFuelOrbitTime )
 
-  self.PatrolManageFuel = true
   self.PatrolFuelThresholdPercentage = PatrolFuelThresholdPercentage
   self.PatrolOutOfFuelOrbitTime = PatrolOutOfFuelOrbitTime
   
