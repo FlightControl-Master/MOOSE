@@ -824,7 +824,7 @@ function AI_PATROL_ZONE:onafterStatus()
   
     local RTB = false
     
-    local Fuel = self.Controllable:GetUnit(1):GetFuel()
+    local Fuel = self.Controllable:GetFuelMin()
     if Fuel < self.PatrolFuelThresholdPercentage then
       self:E( self.Controllable:GetName() .. " is out of fuel:" .. Fuel .. ", RTB!" )
       local OldAIControllable = self.Controllable

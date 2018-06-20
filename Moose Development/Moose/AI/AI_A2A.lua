@@ -452,7 +452,7 @@ function AI_A2A:onafterStatus()
     
 
     if not self:Is( "Fuel" ) and not self:Is( "Home" ) then
-      local Fuel = self.Controllable:GetFuel()
+      local Fuel = self.Controllable:GetFuelMin()
       self:F({Fuel=Fuel})
       if Fuel < self.PatrolFuelThresholdPercentage then
         if self.TankerName then
