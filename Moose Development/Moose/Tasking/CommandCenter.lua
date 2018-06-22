@@ -30,19 +30,93 @@
 
 --- Governs multiple missions, the tasking and the reporting.
 --  
---  The commandcenter communicates important messages between the various groups of human players executing tasks in missions.
+-- Command centers govern missions, communicates the task assignments between human players of the coalition, and manages the menu flow.
+-- It can assign a random task to a player when requested.
+-- The commandcenter provides the facilitites to communicate between human players online, executing a task.
 --  
--- ## COMMANDCENTER constructor
+-- ## 1. Create a command center object.
 --
 --   * @{#COMMANDCENTER.New}(): Creates a new COMMANDCENTER object.
 -- 
--- ## Mission Management
+-- ## 2. Command center mission management.
+-- 
+-- Command centers manage missions. These can be added, removed and provides means to retrieve missions.
+-- These methods are heavily used by the task dispatcher classes.
 -- 
 --   * @{#COMMANDCENTER.AddMission}(): Adds a mission to the commandcenter control.
 --   * @{#COMMANDCENTER.RemoveMission}(): Removes a mission to the commandcenter control.
 --   * @{#COMMANDCENTER.GetMissions}(): Retrieves the missions table controlled by the commandcenter.
 -- 
--- ## Reference Zones
+-- ## 3. Communication management between players. 
+-- 
+-- Command center provide means of communication between players. 
+-- Because a command center is a central object governing multiple missions,  
+-- there are several levels at which communication needs to be done.
+-- Within MOOSE, communication is facilitated using the message system within the DCS simulator.
+-- 
+-- Messages can be sent between players at various levels:
+-- 
+--   - On a global level, to all players.
+--   - On a coalition level, only to the players belonging to the same coalition.
+--   - On a group level, to the players belonging to the same group.
+--   
+-- Messages can be sent to **all players** by the command center using the method @{Tasking.CommandCenter#COMMANDCENTER.MessageToAll}().
+-- 
+-- To send messages to **the coalition of the command center**, there are two methods available:
+--  
+--   - Use the method @{Tasking.CommandCenter#COMMANDCENTER.MessageToCoalition}() to send a specific message to the coalition, with a given message display duration.
+--   - You can send a specific type of message using the method @{Tasking.CommandCenter#COMMANDCENTER.MessageTypeToCoalition}().
+--     This will send a message of a specific type to the coalition, and as a result its display duration will be flexible according the message display time selection by the human player.
+--     
+-- To send messages **to the group** of human players, there are also two methods available:
+-- 
+--   - Use the method @{Tasking.CommandCenter#COMMANDCENTER.MessageToGroup}() to send a specific message to a group, with a given message display duration.
+--   - You can send a specific type of message using the method @{Tasking.CommandCenter#COMMANDCENTER.MessageTypeToGroup}().
+--     This will send a message of a specific type to the group, and as a result its display duration will be flexible according the message display time selection by the human player .
+--     
+-- Messages are considered to be sometimes disturbing for human players, therefore, the settings menu provides the means to activate or deactivate messages.
+-- For more information on the message types and display timings that can be selected and configured using the menu, refer to the @{Core.Settings} menu description.
+--     
+-- ## 4. Command center detailed methods.
+-- 
+-- Various methods are added to manage command centers.
+-- 
+-- ### 4.1. Naming and description.
+-- 
+-- There are 3 methods that can be used to retrieve the description of a command center:
+-- 
+--   - Use the method @{Tasking.CommandCenter#COMMANDCENTER.GetName}() to retrieve the name of the command center. 
+--     This is the name given as part of the @{Tasking.CommandCenter#COMMANDCENTER.New}() constructor.
+--     The returned name using this method, is not to be used for message communication.
+-- 
+-- A textual description can be retrieved that provides the command center name to be used within message communication:
+-- 
+--   - @{Tasking.CommandCenter#COMMANDCENTER.GetShortText}() returns the command center name as `CC [CommandCenterName]`.
+--   - @{Tasking.CommandCenter#COMMANDCENTER.GetText}() returns the command center name as `Command Center [CommandCenterName]`.
+-- 
+-- ### 4.2. The coalition of the command center.
+-- 
+-- The method @{Tasking.CommandCenter#COMMANDCENTER.GetCoalition}() returns the coalition of the command center.
+-- The return value is an enumeration of the type @{DCS#coalition.side}, which contains the RED, BLUE and NEUTRAL coalition. 
+-- 
+-- ### 4.3. The command center is a real object.
+-- 
+-- The command center must be represented by a live object within the DCS simulator. As a result, the command center   
+-- can be a @{Wrapper.Unit}, a @{Wrapper.Group}, an @{Wrapper.Airbase} or a @{Wrapper.Static} object.
+-- 
+-- Using the method @{Tasking.CommandCenter#COMMANDCENTER.GetPositionable}() you retrieve the polymorphic positionable object representing
+-- the command center, but just be aware that you should be able to use the representable object derivation methods.
+-- 
+-- ### 5. Command center reports.
+-- 
+-- Because a command center giverns multiple missions, there are several reports available that are generated by command centers.
+-- These reports are generated using the following methods:
+-- 
+--   - @{Tasking.CommandCenter#COMMANDCENTER.ReportSummary}(): Creates a summary report of all missions governed by the command center.
+--   - @{Tasking.CommandCenter#COMMANDCENTER.ReportDetails}(): Creates a detailed report of all missions governed by the command center.
+--   - @{Tasking.CommandCenter#COMMANDCENTER.ReportMissionPlayers}(): Creates a report listing the players active at the missions governed by the command center.
+--   
+-- ## 6. Reference Zones.
 -- 
 -- Command Centers may be aware of certain Reference Zones within the battleground. These Reference Zones can refer to
 -- known areas, recognizable buildings or sites, or any other point of interest.

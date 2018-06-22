@@ -19,12 +19,106 @@
 -- @module Tasking.Mission
 -- @image Task_Mission.JPG
 
---- The MISSION class
--- @type MISSION
+--- @type MISSION
 -- @field #MISSION.Clients _Clients
 -- @field Core.Menu#MENU_COALITION MissionMenu
 -- @field #string MissionBriefing
 -- @extends Core.Fsm#FSM
+
+--- Models goals to be achieved and can contain multiple tasks to be executed to achieve the goals.
+-- 
+-- A mission contains multiple tasks and can be of different task types.
+-- These tasks need to be assigned to human players to be executed.
+-- 
+-- A mission can have multiple states, which will evolve as the mission progresses during the DCS simulation.
+-- 
+--   - **IDLE**: The mission is defined, but not started yet. No task has yet been joined by a human player as part of the mission.
+--   - **ENGAGED**: The mission is ongoing, players have joined tasks to be executed.
+--   - **COMPLETED**: The goals of the mission has been successfully reached, and the mission is flagged as completed.
+--   - **FAILED**: For a certain reason, the goals of the mission has not been reached, and the mission is flagged as failed.
+--   - **HOLD**: The mission was enaged, but for some reason it has been put on hold.
+--   
+-- Note that a mission goals need to be checked by a goal check trigger: @{#MISSION.OnBeforeMissionGoals}(), which may return false if the goal has not been reached.
+-- This goal is checked automatically by the mission object every x seconds.
+-- 
+--   - @{#MISSION.Start}() or @{#MISSION.__Start}() will start the mission, and will bring it from **IDLE** state to **ENGAGED** state.
+--   - @{#MISSION.Stop}() or @{#MISSION.__Stop}() will stop the mission, and will bring it from **ENGAGED** state to **IDLE** state.
+--   - @{#MISSION.Complete}() or @{#MISSION.__Complete}() will complete the mission, and will bring the mission state to **COMPLETED**.
+--     Note that the mission must be in state **ENGAGED** to be able to complete the mission.
+--   - @{#MISSION.Fail}() or @{#MISSION.__Fail}() will fail the mission, and will bring the mission state to **FAILED**.
+--     Note that the mission must be in state **ENGAGED** to be able to fail the mission.
+--   - @{#MISSION.Hold}() or @{#MISSION.__Hold}() will hold the mission, and will bring the mission state to **HOLD**.
+--     Note that the mission must be in state **ENGAGED** to be able to hold the mission.
+--     Re-engage the mission using the engage trigger.
+-- 
+-- The following sections provide an overview of the most important methods that can be used as part of a mission object.
+-- Note that the @{Tasking.CommandCenter} system is using most of these methods to manage the missions in its system.
+-- 
+-- ## 1. Create a mission object.
+--
+--   - @{#MISSION.New}(): Creates a new MISSION object.
+-- 
+-- ## 2. Mission task management.
+-- 
+-- Missions maintain tasks, which can be added or removed, or enquired.
+-- 
+--   - @{#MISSION.AddTask}(): Adds a task to the mission.
+--   - @{#MISSION.RemoveTask}(): Removes a task from the mission.
+-- 
+-- ## 3. Mission detailed methods.
+-- 
+-- Various methods are added to manage missions.
+-- 
+-- ### 3.1. Naming and description.
+-- 
+-- There are several methods that can be used to retrieve the properties of a mission:
+-- 
+--   - Use the method @{#MISSION.GetName}() to retrieve the name of the mission. 
+--     This is the name given as part of the @{#MISSION.New}() constructor.
+-- 
+-- A textual description can be retrieved that provides the mission name to be used within message communication:
+-- 
+--   - @{#MISSION.GetShortText}() returns the mission name as `Mission "MissionName"`.
+--   - @{#MISSION.GetText}() returns the mission  name as `Mission "MissionName (MissionPriority)"`. A longer version including the priority text of the mission.
+-- 
+-- ### 3.2. Get task information.
+-- 
+--   - @{#MISSION.GetTasks}(): Retrieves a list of the tasks controlled by the mission.
+--   - @{#MISSION.GetTask}(): Retrieves a specific task controlled by the mission.
+--   - @{#MISSION.GetTasksRemaining}(): Retrieve a list of the tasks that aren't finished or failed, and are governed by the mission.
+--   - @{#MISSION.GetGroupTasks}(): Retrieve a list of the tasks that can be asigned to a @{Wrapper.Group}.
+--   - @{#MISSION.GetTaskTypes}(): Retrieve a list of the different task types governed by the mission.
+-- 
+-- ### 3.3. Get the command center.
+-- 
+--   - @{#MISSION.GetCommandCenter}(): Retrieves the @{Tasking.CommandCenter} governing the mission.
+-- 
+-- ### 3.4. Get the groups active in the mission as a @{Core.Set}.
+-- 
+--   - @{#MISSION.GetGroups}(): Retrieves a @{Core.Set#SET_GROUP} of all the groups active in the mission (as part of the tasks).
+--   
+-- ### 3.5. Get the names of the players.
+-- 
+--   - @{#MISSION.GetPlayerNames}(): Retrieves the list of the players that were active within th mission..
+-- 
+-- ## 4. Menu management.
+-- 
+-- A mission object is able to manage its own menu structure. Use the @{#MISSION.GetMenu}() and @{#MISSION.SetMenu}() to manage the underlying submenu
+-- structure managing the tasks of the mission.
+-- 
+-- ## 5. Reporting management.
+--  
+-- Several reports can be generated for a mission, and will return a text string that can be used to display using the @{Core.Message} system.
+-- 
+--   - @{#MISSION.ReportBriefing}(): Generates the briefing for the mission.
+--   - @{#MISSION.ReportOverview}(): Generates an overview of the tasks and status of the mission.
+--   - @{#MISSION.ReportDetails}(): Generates a detailed report of the tasks of the mission.
+--   - @{#MISSION.ReportSummary}(): Generates a summary report of the tasks of the mission.
+--   - @{#MISSION.ReportPlayersPerTask}(): Generates a report showing the active players per task.
+--   - @{#MISSION.ReportPlayersProgress}(): Generates a report showing the task progress per player.
+-- 
+-- 
+-- @field #MISSION 
 MISSION = {
 	ClassName = "MISSION",
 	Name = "",
