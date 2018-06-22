@@ -237,8 +237,8 @@
 -- * @{#ARTY.WeaponType}.IlluminationShells: Use illumination shells. This works only with units that have shells and is described below.
 -- * @{#ARTY.WeaponType}.SmokeShells: Use smoke shells. This works only with units that have shells and is described below.
 -- 
--- ## Assigning Moves
--- The ARTY group can be commanded to move. This is done by the @{#ARTY.AssignMoveCoord}(*coord*,*time*,*speed*,*onroad*,*cancel*,*name*) function.
+-- ## Assigning Relocation Movements
+-- The ARTY group can be commanded to move. This is done by the @{#ARTY.AssignMoveCoord}(*coord*, *time*, *speed*, *onroad*, *cancel*, *name*) function.
 -- With this multiple timed moves of the group can be scheduled easily. By default, these moves will only be executed if the group is state **CombatReady**.
 -- 
 -- ### Parameters
@@ -274,7 +274,11 @@
 -- 
 -- After the rearming is complete, both groups will move back to their original positions.
 -- 
--- ## Tactical Nukes
+-- ## Simulated Weapons
+-- 
+-- In addtion to the standard weapons a group has available some special weapon types that are not possible to use in the native DCS environment are simulated.
+-- 
+-- ### Tactical Nukes
 -- 
 -- ARTY groups that can fire shells can also be used to fire tactical nukes. This is achieved by setting the weapon type to **ARTY.WeaponType.TacticalNukes** in the
 -- @{#ARTY.AssignTargetCoord}() function.
@@ -284,6 +288,27 @@
 -- Note that the group must always have convenctional shells left in order to fire a nuclear shell. 
 -- 
 -- The default explostion strength is 0.075 kilo tons TNT. The can be changed with the @{#ARTY.SetTacNukeWarhead}(*strength*), where *strength* is given in kilo tons TNT.
+-- 
+-- ### Illumination Shells
+-- 
+-- ARTY groups that possess shells can fire shells with illumination bombs. First, the group needs to be equipped with this weapon. This is done by the 
+-- function @{ARTY.SetIlluminationShells}(*n*, *power*), where *n* is the number of shells the group has available and *power* the illumination power in mega candela (mcd).
+-- 
+-- In order to execute an engagement with illumination shells one has to use the weapon type *ARTY.WeaponType.IlluminationShells* in the
+-- @{#ARTY.AssignTargetCoord}() function.
+-- 
+-- In the simulation, the explosive shell that is fired is destroyed once it gets close to the target point but before it can actually impact.
+-- At this position an illumination bomb is triggered at a random altitude between 500 and 1000 meters. This interval can be set by the function
+-- @{ARTY.SetIlluminationMinMaxAlt}(*minalt*, *maxalt*).
+-- 
+-- ### Smoke Shells
+-- 
+-- In a similar way to illumination shells, ARTY groups can also employ smoke shells. The numer of smoke shells the group has available is set by the function
+-- @{#ARTY.SetSmokeShells}(*n*, *color*), where *n* is the number of shells and *color* defines the smoke color. Default is SMOKECOLOR.Red.
+-- 
+-- The weapon type to be used in the @{#ARTY.AssignTargetCoord}() function is *ARTY.WeaponType.SmokeShells*.
+-- 
+-- The explosive shell the group fired is destroyed shortly before its impact on the ground and smoke of the speficied color is triggered at that position.
 --
 -- 
 -- ## Assignments via Markers on F10 Map
@@ -403,6 +428,7 @@
 -- * @{#ARTY.SetAutoRelocateAfterEngagement}(*rmax*, *rmin*) will cause the ARTY group to change its position after each firing assignment.
 -- Optional parameters *rmax*, *rmin* define the max/min distance for relocation of the group. Default distance is randomly between 300 and 800 m.
 -- * @{#ARTY.AddToCluster}(*clusters*) Can be used to add the ARTY group to one or more clusters. All groups in a cluster can be addressed simultaniously with one marker command.
+-- * @{#ARTY.SetSpeed}(*speed*) sets the speed in km/h the group moves at if not explicitly stated otherwise.
 -- * @{#ARTY.RemoveAllTargets}() removes all targets from the target queue.
 -- * @{#ARTY.RemoveTarget}(*name*) deletes the target with *name* from the target queue.
 -- * @{#ARTY.SetMaxFiringRange}(*range*) defines the maximum firing range. Targets further away than this distance are not engaged.
@@ -1355,6 +1381,13 @@ function ARTY:SetDebugOFF()
   self.Debug=false
 end
 
+--- Set default speed the group is moving at if not specified otherwise.
+-- @param #ARTY self
+-- @param #number speed Speed in km/h.
+function ARTY:SetSpeed(speed)
+  self.Speed=speed
+end
+
 --- Delete a target from target list. If the target is currently engaged, it is cancelled.
 -- @param #ARTY self
 -- @param #string name Name of the target.
@@ -1601,6 +1634,9 @@ function ARTY:onafterStart(Controllable, From, Event, To)
     self.autorelocate=false
     self.RearmingGroupSpeed=20
   end
+  
+  -- Check that default speed is below max speed.
+  self.Speed=math.min(self.Speed, self.SpeedMax)
 
   -- Set Rearming group speed if not specified by user
   if self.RearmingGroup then

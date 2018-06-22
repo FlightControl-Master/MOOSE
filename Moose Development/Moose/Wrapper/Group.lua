@@ -768,11 +768,41 @@ function GROUP:GetHeading()
   
 end
 
---- Returns relative amount of fuel (from 0.0 to 1.0) the group has in its internal tanks. If there are additional fuel tanks the value may be greater than 1.0.
+--- Return the fuel state and unit reference for the unit with the least
+-- amount of fuel in the group.
+-- @param #GROUP self
+-- @return #number The fuel state of the unit with the least amount of fuel
+-- @return #Unit reference to #Unit object for further processing
+function GROUP:GetFuelMin()
+  self:F(self.ControllableName)
+
+  if not self:GetDCSObject() then
+    BASE:E( { "Cannot GetFuel", Group = self, Alive = self:IsAlive() } )
+    return 0
+  end
+
+  local min  = 65535  -- some sufficiently large number to init with
+  local unit = nil
+  local tmp  = nil
+
+  for UnitID, UnitData in pairs( self:GetUnits() ) do
+    tmp = UnitData:GetFuel()
+    if tmp < min then
+      min = tmp
+      unit = UnitData
+    end
+  end
+
+  return min, unit
+end
+
+--- Returns relative amount of fuel (from 0.0 to 1.0) the group has in its
+--  internal tanks. If there are additional fuel tanks the value may be
+--  greater than 1.0.
 -- @param #GROUP self
 -- @return #number The relative amount of fuel (from 0.0 to 1.0).
--- @return #nil The GROUP is not existing or alive.  
-function GROUP:GetFuel()
+-- @return #nil The GROUP is not existing or alive.
+function GROUP:GetFuelAvg()
   self:F( self.ControllableName )
 
   local DCSControllable = self:GetDCSObject()
@@ -793,6 +823,14 @@ function GROUP:GetFuel()
   BASE:E( { "Cannot GetFuel", Group = self, Alive = self:IsAlive() } )
 
   return 0
+end
+
+--- Returns relative amount of fuel (from 0.0 to 1.0) the group has in its internal tanks. If there are additional fuel tanks the value may be greater than 1.0.
+-- @param #GROUP self
+-- @return #number The relative amount of fuel (from 0.0 to 1.0).
+-- @return #nil The GROUP is not existing or alive.
+function GROUP:GetFuel()
+  return self:GetFuelAvg()
 end
 
 
