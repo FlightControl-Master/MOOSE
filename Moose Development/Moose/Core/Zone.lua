@@ -1040,20 +1040,21 @@ ZONE_UNIT = {
 --  theta The azimuth of the zone relative to unit
 --  relative_to_unit If true, theta is measured clockwise from unit's direction else clockwise from north. If using dx, dy setting this to true makes +x parallel to unit heading.
 --  dx, dy OR rho, theta may be used, not both.
-
 -- @return #ZONE_UNIT self
 function ZONE_UNIT:New( ZoneName, ZoneUNIT, Radius, Offset)
   
-  -- check if the inputs was reasonable, either (dx, dy) or (rho, theta) can be given, else raise an exception.  
-  if (Offset.dx or Offset.dy) and (Offset.rho or Offset.theta) then
-    error("Cannot use (dx, dy) with (rho, theta)")  
+  if Offset then
+    -- check if the inputs was reasonable, either (dx, dy) or (rho, theta) can be given, else raise an exception.  
+    if (Offset.dx or Offset.dy) and (Offset.rho or Offset.theta) then
+      error("Cannot use (dx, dy) with (rho, theta)")  
+    end
+    
+    self.dy = Offset.dy or 0.0
+    self.dx = Offset.dx or 0.0
+    self.rho = Offset.rho or 0.0
+    self.theta = (Offset.theta or 0.0) * math.pi / 180.0
+    self.relative_to_unit = Offset.relative_to_unit or false
   end
-  
-  self.dy = Offset.dy or 0.0
-  self.dx = Offset.dx or 0.0
-  self.rho = Offset.rho or 0.0
-  self.theta = (Offset.theta or 0.0) * math.pi / 180.0
-  self.relative_to_unit = Offset.relative_to_unit or false
   
   local self = BASE:Inherit( self, ZONE_RADIUS:New( ZoneName, ZoneUNIT:GetVec2(), Radius ) )
 
