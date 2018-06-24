@@ -74,7 +74,7 @@ CLIENT = {
 --- Finds a CLIENT from the _DATABASE using the relevant DCS Unit.
 -- @param #CLIENT self
 -- @param #string ClientName Name of the DCS **Unit** as defined within the Mission Editor.
--- @param #boolean Error Flag indicating whether or not to throw an error if the CLIENT cannot be found. True by default. Returns `nil` if `Error` is false and no Client was found.
+-- @param #string ClientBriefing Text that describes the briefing of the mission when a Player logs into the Client.
 -- @return #CLIENT
 -- @usage
 -- -- Create new Clients.
@@ -94,7 +94,7 @@ function CLIENT:Find( DCSUnit, Error )
     return ClientFound
   end
   
-  if Error or Error == nil then
+  if not Error then
     error( "CLIENT not found for: " .. ClientName )
   end
 end
@@ -105,7 +105,7 @@ end
 -- @param #CLIENT self
 -- @param #string ClientName Name of the DCS **Unit** as defined within the Mission Editor.
 -- @param #string ClientBriefing Text that describes the briefing of the mission when a Player logs into the Client.
--- @param #boolean Error Flag indicating whether or not to throw an error if the CLIENT cannot be found. True by default. Returns `nil` if `Error` is false and no Client was found.
+-- @param #boolean Error A flag that indicates whether an error should be raised if the CLIENT cannot be found. By default an error will be raised.
 -- @return #CLIENT
 -- @usage
 -- -- Create new Clients.
@@ -127,7 +127,7 @@ function CLIENT:FindByName( ClientName, ClientBriefing, Error )
   	return ClientFound
   end
   
-  if Error or Error == nil then
+  if not Error then
     error( "CLIENT not found for: " .. ClientName )
   end
 end
