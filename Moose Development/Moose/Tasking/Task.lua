@@ -1,4 +1,13 @@
---- **Tasking** -- This module contains the TASK class, the main engine to run human taskings.
+--- **Tasking** -- A task object governs the main engine to administer human taskings.
+-- 
+-- **Features:**
+-- 
+--   * Manage the overall task execution, following-up the progression made by the pilots and actors.
+--   * Provide a mechanism to set a task status, depending on the progress made within the task.
+--   * Manage a task briefing.
+--   * Manage the players executing the task.
+--   * Manage the task menu system.
+--   * Manage the task goal and scoring.
 -- 
 -- ===
 -- 
@@ -21,43 +30,127 @@
 -- @field Tasking.TaskInfo#TASKINFO TaskInfo
 -- @extends Core.Fsm#FSM_TASK
 
---- 
--- # TASK class, extends @{Core.Base#BASE}
+--- Governs the main engine to administer human taskings.
 -- 
--- ## The TASK class implements the methods for task orchestration within MOOSE. 
+-- A task is governed by a @{Tasking.Mission} object. Tasks are of different types.
+-- The @{#TASK} object is used or derived by more detailed tasking classes that will implement the task execution mechanisms
+-- and goals. The following TASK_ classes are derived from @{#TASK}.
 -- 
--- The class provides a couple of methods to:
 -- 
---   * @{#TASK.AssignToGroup}():Assign a task to a group (of players).
---   * @{#TASK.AddProcess}():Add a @{Process} to a task.
---   * @{#TASK.RemoveProcesses}():Remove a running @{Process} from a running task.
---   * @{#TASK.SetStateMachine}():Set a @{Core.Fsm} to a task.
---   * @{#TASK.RemoveStateMachine}():Remove @{Core.Fsm} from a task.
---   * @{#TASK.HasStateMachine}():Enquire if the task has a @{Core.Fsm}
---   * @{#TASK.AssignToUnit}(): Assign a task to a unit. (Needs to be implemented in the derived classes from @{#TASK}.
---   * @{#TASK.UnAssignFromUnit}(): Unassign the task from a unit.
---   * @{#TASK.SetTimeOut}(): Set timer in seconds before task gets cancelled if not assigned.
+--      TASK
+--        TASK_A2A
+--          TASK_A2A_ENGAGE
+--          TASK_A2A_INTERCEPT
+--          TASK_A2A_SWEEP
+--        TASK_A2G
+--          TASK_A2G_SEAD
+--          TASK_A2G_CAS
+--          TASK_A2G_BAI
+--        TASK_CARGO
+--          TASK_CARGO_TRANSPORT
+--          TASK_CARGO_CSAR
+-- 
+-- 
+-- 
+-- #### A2A Tasks
+-- 
+--   - @{Tasking.Task_A2A#TASK_A2A_ENGAGE} - Models an A2A engage task of a target group of airborne intruders mid-air.
+--   - @{Tasking.Task_A2A#TASK_A2A_INTERCEPT} - Models an A2A ground intercept task of a target group of airborne intruders mid-air.
+--   - @{Tasking.Task_A2A#TASK_A2A_SWEEP} - Models an A2A sweep task to clean an area of previously detected intruders mid-air.
+-- 
+-- #### A2G Tasks
+-- 
+--   - @{Tasking.Task_A2G#TASK_A2G_SEAD} - Models an A2G Suppression or Extermination of Air Defenses task to clean an area of air to ground defense threats.
+--   - @{Tasking.Task_A2G#TASK_A2G_CAS} - Models an A2G Close Air Support task to provide air support to nearby friendlies near the front-line.
+--   - @{Tasking.Task_A2G#TASK_A2G_BAI} - Models an A2G Battlefield Air Interdiction task to provide air support to nearby friendlies near the front-line.
+-- 
+-- #### Cargo Tasks  
+-- 
+--   - @{Tasking.Task_Cargo#TASK_CARGO_TRANSPORT} - Models the transportation of cargo to deployment zones. 
+--   - @{Tasking.Task_Cargo#TASK_CARGO_CSAR} - Models the rescue of downed friendly pilots from behind enemy lines.    
+-- 
+-- The above task objects take care of the **progress** and **completion** of the task **goal(s)**.
+-- Tasks are executed by **human pilots** and actors within a DCS simulation.
+-- Pilots can use a **menu system** to engage or abort a task, and provides means to
+-- understand the **task briefing** and goals, and the relevant **task locations** on the map and 
+-- obtain **various reports** related to the task.
+-- 
+-- As the task progresses, the **task status** will change over time, from Planned state to Completed state.
+-- **Multiple pilots** can execute the same task, as such, the tasking system provides a **co-operative model** for joint task execution.
+-- Depending on the task progress, a **scoring** can be allocated to award pilots of the achievements made.
+-- The scoring is fully flexible, and different levels of awarding can be provided depending on the task type and complexity.
+-- 
+-- ## 1. Task Statuses
+-- 
+-- ### 1.1. Task status overview.
+-- 
+-- A task has a state, reflecting the progress and completion of the task:
+-- 
+--   - **Planned**: Expresses that the task is created, but not yet in execution and is not assigned yet to a pilot.
+--   - **Assigned**: Expresses that the task is assigned to a group of pilots, and that the task is in execution mode.
+--   - **Success**: Expresses the successful execution and finalization of the task.
+--   - **Failed**: Expresses the failure of a task.
+--   - **Abort**: Expresses that the task is aborted by by the player using the abort menu.
+--   - **Cancelled**: Expresses that the task is cancelled by HQ or through a logical situation where a cancellation of the task is required.
+-- 
+-- A normal flow of task status would evolve from the **Planned** state, to the **Assigned** state ending either in a **Success** or a **Failed** state.
+-- The state completion is by default set to **Success**, if the goals of the task have been reached, but can be overruled by a goal method.
+-- 
+-- Depending on the tactical situation, a task can be **Rejected** or **Cancelled** by the mission governer.
+-- It is actually the mission designer who has the flexibility to decide at which conditions a task would be set to **Success**, **Failed** or **Cancelled**.
+-- It all depends on the task goals, and the phase/evolution of the task conditions that would accomplish the goals.
+-- For example, if the task goal is to merely destroy a target, and the target is mid-mission destroyed by another event than the pilot destroying the target,
+-- the task goal could be set to **Failed**, or .. **Cancelled** ...
+-- However, it could very well be also acceptable that the task would be flagged as **Success**.
+-- 
+-- The tasking mechanism governs beside the progress also a scoring mechanism, and in case of goal completion without any active pilot involved
+-- in the execution of the task, could result in a **Success** task completion status, but no score would be awared, as there were no players involved. 
+-- 
+-- ### 1.2. Task status events.
+-- 
+-- The task statuses can be set by using the following methods:
+-- 
+--   - @{#TASK.Success}() - Set the task to **Success** state.
+--   - @{#TASK.Fail}() - Set the task to **Failed** state.
+--   - @{#TASK.Hold}() - Set the task to **Hold** state.
+--   - @{#TASK.Abort}() - Set the task to **Aborted** state, aborting the task. The task may be replanned.
+--   - @{#TASK.Cancel}() - Set the task to **Cancelled** state, cancelling the task.
+-- 
+-- The mentioned derived TASK_ classes are implementing the task status transitions out of the box.
+-- So no extra logic needs to be written.
 --   
--- ## 1.2) Set and enquire task status (beyond the task state machine processing).
+-- ## 2. Goal conditions for a task.
 -- 
--- A task needs to implement as a minimum the following task states:
+-- Every 30 seconds, a @{#Task.Goal} trigger method is fired. 
+-- You as a mission designer, can capture the **Goal** event trigger to check your own task goal conditions and take action!
 -- 
---   * **Success**: Expresses the successful execution and finalization of the task.
---   * **Failed**: Expresses the failure of a task.
---   * **Planned**: Expresses that the task is created, but not yet in execution and is not assigned yet.
---   * **Assigned**: Expresses that the task is assigned to a Group of players, and that the task is in execution mode.
+-- ### 2.1. Goal event handler `OnAfterGoal()`.
 -- 
--- A task may also implement the following task states:
---
---   * **Rejected**: Expresses that the task is rejected by a player, who was requested to accept the task.
---   * **Cancelled**: Expresses that the task is cancelled by HQ or through a logical situation where a cancellation of the task is required.
---
--- A task can implement more statusses than the ones outlined above. Please consult the documentation of the specific tasks to understand the different status modelled.
---
--- The status of tasks can be set by the methods **State** followed by the task status. An example is `StateAssigned()`.
--- The status of tasks can be enquired by the methods **IsState** followed by the task status name. An example is `if IsStateAssigned() then`.
+-- And this is a really great feature! Imagine a task which has **several conditions to check** before the task can move into **Success** state.
+-- You can do this with the OnAfterGoal method.
 -- 
--- ## 1.3) Add scoring when reaching a certain task status:
+-- The following code provides an example of such a goal condition check implementation.
+-- 
+--      function Task:OnAfterGoal()
+--        if condition == true then
+--          self:Success() -- This will flag the task to Succcess when the condition is true.
+--        else
+--          if condition2 == true and condition3 == true then
+--            self:Fail() -- This will flag the task to Failed, when condition2 and condition3 would be true.
+--          end
+--        end
+--      end
+-- 
+-- So the @{#TASK.OnAfterGoal}() event handler would be called every 30 seconds automatically, and within this method, you can now check the conditions and take respective action.
+-- 
+-- ### 2.2. Goal event trigger `Goal()`.
+-- 
+-- If you would need to check a goal at your own defined event timing, then just call the @{#TASK.Goal}() method within your logic.
+-- The @{#TASK.OnAfterGoal}() event handler would then directly be called and would execute the logic. 
+-- Note that you can also delay the goal check by using the delayed event trigger syntax `:__Goal( Dalay )`. 
+-- 
+-- 
+-- ## 3) Add scoring when reaching a certain task status:
 -- 
 -- Upon reaching a certain task status in a task, additional scoring can be given. If the Mission has a scoring system attached, the scores will be added to the mission scoring.
 -- Use the method @{#TASK.AddScore}() to add scores when a status is reached.

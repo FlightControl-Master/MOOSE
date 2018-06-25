@@ -44,10 +44,10 @@ do -- TASK_CARGO
   -- ## 2. Task execution experience from the player perspective
   -- 
   -- A human player can join the battle field in a client airborne slot or a ground vehicle within the CA module (ALT-J).
-  -- The player needs to accept the task from the task overview list within the mission, using the radio menus.
+  -- The player needs to accept the task from the task overview list within the mission, using the menus.
   -- 
   -- Once the TASK_CARGO is assigned to the player and accepted by the player, the player will obtain 
-  -- an extra **Cargo Handling Radio Menu** that contains the CARGO objects that need to be transported.
+  -- an extra **Cargo (Radio) Menu** that contains the CARGO objects that need to be transported.
   -- 
   -- Each CARGO object has a certain state:
   -- 
@@ -56,9 +56,9 @@ do -- TASK_CARGO
   --   * **Boarding**: The CARGO is running or moving towards your Carrier for loading.
   --   * **UnBoarding**: The CARGO is driving or jumping out of your Carrier and moves to a location in the Deployment Zone.
   -- 
-  -- Cargo must be transported towards different **Deployment @{Zone}s**.
+  -- Cargo must be transported towards different Deployment @{Zone}s.
   -- 
-  -- The Cargo Handling Radio Menu system allows to execute **various actions** to handle the cargo.
+  -- The Cargo Menu system allows to execute **various actions** to transport the cargo.
   -- In the menu, you'll find for each CARGO, that is part of the scope of the task, various actions that can be completed.
   -- Depending on the location of your Carrier unit, the menu options will vary.
   -- 
@@ -86,7 +86,7 @@ do -- TASK_CARGO
   --  
   -- ### 2.2. Task Action Menu.
   -- 
-  -- When a player has joined a task, for that player only, it's carrier radio menu will show an additional menu option.
+  -- When a player has joined a task, for that player only, it's carrier Menu will show an additional menu option.
   -- It has the name of the task you currently joined and @ player name.
   -- 
   -- ![Task_Types](../Tasking/Task_Briefing.JPG).
@@ -116,7 +116,7 @@ do -- TASK_CARGO
   -- 
   --   - **Loading**: Stationary cargo (like crates), which are heavy, can only be loaded or sling loaded, meaning, 
   --     your carrier must be close enough to the cargo to be able to load the cargo within the carrier bays.
-  --     Moose provides you with an additional menu system to load stationary cargo into your carrier bays using the radio menu.
+  --     Moose provides you with an additional menu system to load stationary cargo into your carrier bays using the menu.
   --     These menu options will become available, when the carrier is within loading range.
   --     The Moose cargo will report to the carrier when the range is close enough. The load range is set by the mission designer.
   --   
@@ -147,7 +147,7 @@ do -- TASK_CARGO
   -- 
   -- The routing messages are formulated in the coordinate format that is currently active as configured in your settings profile.  
   -- ![Task_Types](../Tasking/Task_Cargo_Settings.JPG)  
-  -- Use the Settings Menu to select the coordinate format that you would like to use for location determination.
+  -- Use the **Settings Menu** to select the coordinate format that you would like to use for location determination.
   -- 
   --     
   -- #### 2.3.1. Pickup Cargo.
@@ -210,11 +210,11 @@ do -- TASK_CARGO
   --   - **Unboarding**: Moveable cargo (like infantry or vehicles), can be unboarded, that means, 
   --     the cargo will step out of the carrier and will run to a group location.
   --     Moose provides you with an additional menu system to unload stationary cargo from the carrier bays,
-  --     using the radio menu. These menu options will become available, when the carrier is within the deploy zone.
+  --     using the menu. These menu options will become available, when the carrier is within the deploy zone.
   -- 
   --   - **Unloading**: Stationary cargo (like crates), which are heavy, can only be unloaded or sling loaded. 
   --     Moose provides you with an additional menu system to unload stationary cargo from the carrier bays,
-  --     using the radio menu. These menu options will become available, when the carrier is within the deploy zone.
+  --     using the menu. These menu options will become available, when the carrier is within the deploy zone.
   --   
   --   - **Sling Deploying**: Stationary cargo (like crates), which are heavy, can also be sling deployed. 
   --     Once the cargo is within the deploy zone, the cargo can be deployed from the sling onto the ground.
@@ -235,12 +235,12 @@ do -- TASK_CARGO
   -- 
   -- The routing messages are formulated in the coordinate format that is currently active as configured in your settings profile.  
   -- ![Task_Types](../Tasking/Task_Cargo_Settings.JPG)  
-  -- Use the Settings Menu to select the coordinate format that you would like to use for location determination.
+  -- Use the **Settings Menu** to select the coordinate format that you would like to use for location determination.
   -- 
   -- ### 2.4. Deploy Cargo.
   -- 
   -- Various Deployment Zones can be foreseen in the scope of the Cargo transportation. Each deployment zone can be of varying @{Zone} type.
-  -- The Cargo Handling Radio Menu provides with menu options to execute an action to steer your Carrier to a specific Zone.
+  -- The Cargo menu provides with menu options to execute an action to steer your Carrier to a specific Zone.
   -- 
   -- In order to deploy cargo, use the task action menu to select a cargo to route to.
   -- When selected, the HQ will send you routing messages indicating the location of the deploy zone.
@@ -285,7 +285,7 @@ do -- TASK_CARGO
   -- 
   -- ### Specific TASK_CARGO Events
   -- 
-  -- Specific Cargo Handling event can be captured, that allow to trigger specific actions!
+  -- Specific Cargo event can be captured, that allow to trigger specific actions!
   -- 
   --   * **Boarded**: Triggered when the Cargo has been Boarded into your Carrier.
   --   * **UnBoarded**: Triggered when the cargo has been Unboarded from your Carrier and has arrived at the Deployment Zone.

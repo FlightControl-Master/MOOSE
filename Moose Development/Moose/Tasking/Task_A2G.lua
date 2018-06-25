@@ -457,7 +457,7 @@ do -- TASK_A2G_BAI
   -- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 
-  -- Defines an Battlefield Air Interdiction task for a human player to be executed.
+  --- Defines a Battlefield Air Interdiction task for a human player to be executed.
   -- These tasks are more strategic in nature and are most of the time further away from friendly forces.
   -- BAI tasks can also be used to express the abscence of friendly forces near the vicinity.
   -- 
@@ -551,7 +551,7 @@ do -- TASK_A2G_CAS
   -- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 
-  -- Defines an Close Air Support task for a human player to be executed.
+  --- Defines an Close Air Support task for a human player to be executed.
   -- Friendly forces will be in the vicinity within 6km from the enemy.
   -- 
   -- The TASK_A2G_CAS is used by the @{Tasking.Task_A2G_Dispatcher#TASK_A2G_DISPATCHER} to automatically create CAS tasks 
