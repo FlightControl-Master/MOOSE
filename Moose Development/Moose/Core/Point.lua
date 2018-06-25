@@ -292,8 +292,76 @@ do -- COORDINATE
     return x - Precision <= self.x and x + Precision >= self.x and z - Precision <= self.z and z + Precision >= self.z   
   end
   
-  
+  --- Returns if the 2 coordinates are at the same 2D position.
+  -- @param #COORDINATE self
+  -- @param #number radius Scan radius in meters.
+  -- @return True if units were found.
+  -- @return True if statics were found.
+  -- @return True if scenery objects were found.
+  -- @return Unit objects found.
+  -- @return Static objects found.
+  -- @return Scenery objects found.
+  function COORDINATE:ScanObjects(radius)
+    env.info(string.format("FF Scanning in radius %.1f m.", radius))
 
+    local SphereSearch = {
+      id = world.VolumeType.SPHERE,
+        params = {
+        point = self:GetVec3(),
+        radius = radius,
+        }
+      }
+
+    -- Found stuff.
+    local Units = {}
+    local Statics = {}
+    local Scenery = {}
+    local gotstatics=false
+    local gotunits=false
+    local gotscenery=false
+    
+    local function EvaluateZone( ZoneObject )
+    
+      if ZoneObject then
+      
+        -- Get category of scanned object.
+        local ObjectCategory = ZoneObject:getCategory()
+        
+        -- Check for unit or static objects
+        if (ObjectCategory == Object.Category.UNIT and ZoneObject:isExist() and ZoneObject:isActive()) then
+        
+          table.insert(Units, ZoneObject)
+          gotunits=true
+          
+        elseif (ObjectCategory == Object.Category.STATIC and ZoneObject:isExist()) then
+        
+          table.insert(Statics, ZoneObject)
+          gotstatics=true
+          
+        elseif ObjectCategory == Object.Category.SCENERY then
+        
+          table.insert(Scenery, ZoneObject)
+          gotscenery=true
+          
+        end
+        
+      end
+      
+      return true
+    end
+  
+    -- Search the world.
+    world.searchObjects({Object.Category.UNIT, Object.Category.STATIC, Object.Category.SCENERY}, SphereSearch, EvaluateZone)
+    
+    for _,unit in pairs(Units) do
+      env.info(string.format("FF found unit %s", unit:getName()))
+    end
+    for _,static in pairs(Statics) do
+      env.info(string.format("FF found unit %s", static:getName()))
+    end
+    
+    return gotunits, gotstatics, gotscenery, Units, Statics, Scenery   
+  end
   --- Calculate the distance from a reference @{#COORDINATE}.
   -- @param #COORDINATE self
   -- @param #COORDINATE PointVec2Reference The reference @{#COORDINATE}.
@@ -946,6 +1014,71 @@ do -- COORDINATE
     return RoutePoint
   end
   
+  --- Gets the nearest parking spot.
+  -- @param #COORDINATE self
+  -- @param #boolean free (Optional) Only look for free parking spots. By default the closest parking spot is returned regardless of whether it is free or not.
+  -- @param Wrapper.Airbase#AIRBASE airbase (Optional) Search only parking spots at that airbase.
+  -- @param Wrapper.Airbase#Terminaltype terminaltype Type of the terminal.
+  -- @return Core.Point#COORDINATE Coordinate of the nearest parking spot.
+  -- @return #number Distance to closest parking spot.
+  function COORDINATE:GetClosestParkingSpot(free, airbase, terminaltype)
+  
+    local airbases={}
+    if airbase then
+      table.insert(airbases,airbase)
+    else
+      airbases=AIRBASE:GetAllAirbases()
+    end
+    
+    local _closest=nil --Core.Point#COORDINATE
+    local _distmin=nil
+    for _,_airbase in pairs(airbases) do
+    
+      local mybase=_airbase --Wrapper.Airbase#AIRBASE
+      local parkingdata=mybase:GetParkingSpotsTable(terminaltype)
+      
+      for _,_spot in pairs(parkingdata) do
+        
+        -- Get coordinate if it matches the requirements.
+        local _coord=nil --Core.Point#COORDINATE
+        if (free and _spot.Free) or  free==nil then
+          if (terminaltype and _spot.TerminalType==terminaltype) or terminaltype==nil then
+            _coord=_spot.Coordinate
+          end
+        end
+      
+        -- Compare distance to closest one found so far.
+        if _coord then
+          local _dist=self:Get2DDistance(_coord)
+          if _distmin==nil then
+            _closest=_coord
+            _distmin=_dist
+          else
+            local _dist=self:Get2DDistance(_coord)    
+            if _dist<_distmin then
+              _distmin=_dist
+              _closest=_coord
+            end
+          end
+            
+        end
+        
+      end
+    end
+  
+    return _closest, _distmin
+  end
+
+  --- Gets the nearest free parking spot.
+  -- @param #COORDINATE self
+  -- @param Wrapper.Airbase#AIRBASE airbase (Optional) Search only parking spots at that airbase.
+  -- @param Wrapper.Airbase#Terminaltype terminaltype Type of the terminal.
+  -- @return #COORDINATE Coordinate of the nearest free parking spot.
+  -- @return #number Distance to closest free parking spot.
+  function COORDINATE:GetClosestFreeParkingSpot(airbase, terminaltype)
+    return self:GetClosestParkingSpot(true, airbase, terminaltype)
+  end
+    
   --- Gets the nearest coordinate to a road.
   -- @param #COORDINATE self
   -- @return #COORDINATE Coordinate of the nearest road.

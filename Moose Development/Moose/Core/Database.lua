@@ -66,6 +66,7 @@ local _DATABASECoalition =
   {
     [1] = "Red",
     [2] = "Blue",
+    [3] = "Neutral",
   }
 
 local _DATABASECategory =
@@ -116,7 +117,7 @@ function DATABASE:New()
   --- @param #DATABASE self
   local function CheckPlayers( self )
   
-    local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ) }
+    local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ), AlivePlayersNeutral = coalition.getPlayers( coalition.side.NEUTRAL )}
     for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
       --self:E( { "CoalitionData:", CoalitionData } )
       for UnitId, UnitData in pairs( CoalitionData ) do
@@ -741,7 +742,7 @@ end
 -- @return #DATABASE self
 function DATABASE:_RegisterPlayers()
 
-  local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ) }
+  local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ), AlivePlayersNeutral = coalition.getPlayers( coalition.side.NEUTRAL ) }
   for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
     for UnitId, UnitData in pairs( CoalitionData ) do
       self:T3( { "UnitData:", UnitData } )
@@ -765,7 +766,7 @@ end
 -- @return #DATABASE self
 function DATABASE:_RegisterGroupsAndUnits()
 
-  local CoalitionsData = { GroupsRed = coalition.getGroups( coalition.side.RED ), GroupsBlue = coalition.getGroups( coalition.side.BLUE ) }
+  local CoalitionsData = { GroupsRed = coalition.getGroups( coalition.side.RED ), GroupsBlue = coalition.getGroups( coalition.side.BLUE ),  GroupsNeutral = coalition.getGroups( coalition.side.NEUTRAL ) }
   for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
     for DCSGroupId, DCSGroup in pairs( CoalitionData ) do
 
@@ -1176,11 +1177,19 @@ function DATABASE:_RegisterTemplates()
   self.UNITS = {}
   --Build routines.db.units and self.Navpoints
   for CoalitionName, coa_data in pairs(env.mission.coalition) do
+    self:T({CoalitionName=CoalitionName})
 
-    if (CoalitionName == 'red' or CoalitionName == 'blue') and type(coa_data) == 'table' then
+    if (CoalitionName == 'red' or CoalitionName == 'blue' or CoalitionName == 'neutrals') and type(coa_data) == 'table' then
       --self.Units[coa_name] = {}
       
       local CoalitionSide = coalition.side[string.upper(CoalitionName)]
+      if CoalitionName=="red" then
+        CoalitionSide=coalition.side.NEUTRAL
+      elseif CoalitionName=="blue" then
+        CoalitionSide=coalition.side.BLUE
+      else
+        CoalitionSide=coalition.side.NEUTRAL
+      end
 
       -- build nav points DB
       self.Navpoints[CoalitionName] = {}

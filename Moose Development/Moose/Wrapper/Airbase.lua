@@ -106,7 +106,7 @@ AIRBASE.Caucasus = {
   ["Mozdok"] = "Mozdok",
   ["Beslan"] = "Beslan",
   }
-  
+--  
 --- @field Nevada
 -- 
 -- These are all airbases of Nevada:
@@ -150,7 +150,7 @@ AIRBASE.Nevada = {
   ["Tonopah_Airport"] = "Tonopah Airport",
   ["Tonopah_Test_Range_Airfield"] = "Tonopah Test Range Airfield",
   }
-
+--
 --- @field Normandy
 -- 
 -- These are all airbases of Normandy:
@@ -219,6 +219,56 @@ AIRBASE.Normandy = {
   ["Tangmere"] = "Tangmere",
   ["Ford"] = "Ford",
   }
+--
+--- @field PersianGulf
+-- 
+-- These are all airbases of the Persion Gulf Map:
+-- 
+--  * AIRBASE.PersianGulf.Fujairah_Intl
+--  * AIRBASE.PersianGulf.Qeshm_Island
+--  * AIRBASE.PersianGulf.Sir_Abu_Nuayr
+--  * AIRBASE.PersianGulf.Abu_Musa_Island_Airport
+--  * AIRBASE.PersianGulf.Bandar_Abbas_Intl
+--  * AIRBASE.PersianGulf.Bandar_Lengeh
+--  * AIRBASE.PersianGulf.Tunb_Island_AFB
+--  * AIRBASE.PersianGulf.Havadarya
+--  * AIRBASE.PersianGulf.Lar_Airbase
+--  * AIRBASE.PersianGulf.Sirri_Island
+--  * AIRBASE.PersianGulf.Tunb_Kochak
+--  * AIRBASE.PersianGulf.Al_Dhafra_AB
+--  * AIRBASE.PersianGulf.Dubai_Intl
+--  * AIRBASE.PersianGulf.Al_Maktoum_Intl
+--  * AIRBASE.PersianGulf.Khasab
+--  * AIRBASE.PersianGulf.Al_Minhad_AB
+ -- * AIRBASE.PersianGulf.Sharjah_Intl
+AIRBASE.PersianGulf = {
+  ["Fujairah_Intl"] = "Fujairah Intl",
+  ["Qeshm_Island"] = "Qeshm Island",
+  ["Sir_Abu_Nuayr"] = "Sir Abu Nuayr",
+  ["Abu_Musa_Island_Airport"] = "Abu Musa Island Airport",
+  ["Bandar_Abbas_Intl"] = "Bandar Abbas Intl",
+  ["Bandar_Lengeh"] = "Bandar Lengeh",
+  ["Tunb_Island_AFB"] = "Tunb Island AFB",
+  ["Havadarya"] = "Havadarya",
+  ["Lar_Airbase"] = "Lar Airbase",
+  ["Sirri_Island"] = "Sirri Island",
+  ["Tunb_Kochak"] = "Tunb Kochak",
+  ["Al_Dhafra_AB"] = "Al Dhafra AB",
+  ["Dubai_Intl"] = "Dubai Intl",
+  ["Al_Maktoum_Intl"] = "Al Maktoum Intl",
+  ["Khasab"] = "Khasab",
+  ["Al_Minhad_AB"] = "Al Minhad AB",
+  ["Sharjah_Intl"] = "Sharjah Intl",
+  }
+--
+--- @field Terminal Types of parking spots.
+AIRBASE.TerminalType = {
+  Runway=16,
+  Helicopter=40,
+  HardenedShelter=68,
+  OpenOrShelter=72,
+  OpenAir=104,
+}
 
 -- Registration.
   
@@ -257,6 +307,9 @@ function AIRBASE:FindByName( AirbaseName )
   return AirbaseFound
 end
 
+--- Get the DCS object of an airbase
+-- @param #AIRBASE self
+-- @return DCS#Airbase DCS airbase object.
 function AIRBASE:GetDCSObject()
   local DCSAirbase = Airbase.getByName( self.AirbaseName )
   
@@ -274,5 +327,231 @@ function AIRBASE:GetZone()
   return self.AirbaseZone
 end
 
+--- Get all airbases of the current map. This includes ships and FARPS.
+-- @param #AIRBASE self
+-- @param DCS#Coalition coalition (Optional) Return only airbases belonging to the specified coalition. By default, all airbases of the map are returned.
+-- @return #table Table containing all airbase objects of the current map.
+function AIRBASE:GetAllAirbases(coalition)
+  
+  local airbases={}
+  for _,airbase in pairs(_DATABASE.AIRBASES) do
+    if (coalition~=nil and self:GetCoalition()==coalition) or coalition==nil then
+      table.insert(airbases, airbase)
+    end
+  end
+  
+  return airbases
+end
+
+--- Returns a table of parking data for a given airbase. If the optional parameter *available* is true only available parking will be returned, otherwise all parking at the base is returned. Term types have the following enumerated values:
+-- 
+-- * 16 : Valid spawn points on runway
+-- * 40 : Helicopter only spawn  
+-- * 68 : Hardened Air Shelter
+-- * 72 : Open/Shelter air airplane only
+-- * 104: Open air spawn
+-- 
+-- Note that only Caucuses will return 68 as it is the only map currently with hardened air shelters.
+-- 104 are also generally larger, but does not guarantee a large aircraft like the B-52 or a C-130 are capable of spawning there.
+-- 
+-- Table entries:
+-- 
+-- * Term_index is the id for the parking
+-- * vTerminal pos is its vec3 position in the world
+-- * fDistToRW is the distance to the take-off position for the active runway from the parking.
+-- 
+-- @param #AIRBASE self
+-- @param #boolean available If true, only available parking spots will be returned.
+-- @return #table Table with parking data. See https://wiki.hoggitworld.com/view/DCS_func_getParking
+function AIRBASE:GetParkingData(available)
+
+  -- Get DCS airbase object.
+  local DCSAirbase=self:GetDCSObject()
+  
+  -- Get parking data.
+  local parkingdata=nil
+  if DCSAirbase then
+    parkingdata=DCSAirbase:getParking(available)
+  end
+  
+  return parkingdata
+end
+
+--- Get number parking spots at an airbase. Optionally, for a specific terminal type. Spots on runway are exculded if not explicitly requested by terminal type
+-- @param #AIRBASE self
+-- @param #number termtype Terminal type.
+-- @return #number Number of free parking spots at this airbase.
+function AIRBASE:GetParkingSpotsNumber(termtype)
+
+  -- Get free parking spots data.
+  local parkingdata=self:GetParkingData(false)
+  
+  local nfree=0
+  for _,parkingspot in pairs(parkingdata) do
+    -- Spots on runway are not counted unless explicitly requested.
+    if (termtype~=nil and parkingspot.Term_Type==termtype) or (termtype==nil and parkingspot.Term_Type~=AIRBASE.TerminalType.Runway) then
+      nfree=nfree+1
+    end
+  end
+  
+  return nfree
+end
+
+--- Get number of free parking spots at an airbase.
+-- @param #AIRBASE self
+-- @param #number termtype Terminal type.
+-- @param #boolean allowTOAC If true, spots are considered free even though TO_AC is true. Default is off which is saver to avoid spawning aircraft on top of each other. Option might be enabled for FARPS and ships. 
+-- @return #number Number of free parking spots at this airbase.
+function AIRBASE:GetFreeParkingSpotsNumber(termtype, allowTOAC)
+
+  -- Get free parking spots data.
+  local parkingdata=self:GetParkingData(true)
+  
+  local nfree=0
+  for _,parkingspot in pairs(parkingdata) do
+    -- Spots on runway are not counted unless explicitly requested.
+    if (termtype~=nil and parkingspot.Term_Type==termtype) or (termtype==nil and parkingspot.Term_Type~=AIRBASE.TerminalType.Runway) then
+      if (allowTOAC and allowTOAC==true) or parkingspot.TO_AC==false then
+        nfree=nfree+1
+      end
+    end
+  end
+  
+  return nfree
+end
+
+--- Get the coordinates of free parking spots at an airbase.
+-- @param #AIRBASE self
+-- @param #number termtype Terminal type.
+-- @param #boolean allowTOAC If true, spots are considered free even though TO_AC is true. Default is off which is saver to avoid spawning aircraft on top of each other. Option might be enabled for FARPS and ships.
+-- @return #table Table of coordinates of the free parking spots.
+function AIRBASE:GetFreeParkingSpotsCoordinates(termtype, allowTOAC)
+
+  -- Get free parking spots data.
+  local parkingdata=self:GetParkingData(true)
+  
+  -- Put coordinates of free spots into table.
+  local spots={}
+  for _,parkingspot in pairs(parkingdata) do
+    -- Coordinates on runway are not returned unless explicitly requested.
+    if (termtype and parkingspot.Term_Type==termtype) or (termtype==nil and parkingspot.Term_Type~=AIRBASE.TerminalType.Runway) then
+      if (allowTOAC and allowTOAC==true) or parkingspot.TO_AC==false then
+        table.insert(spots, COORDINATE:NewFromVec3(parkingspot.vTerminalPos))
+      end
+    end
+  end
+  
+  return spots
+end
+
+--- Get the coordinates of all parking spots at an airbase. Optionally only those of a specific terminal type. Spots on runways are excluded if not explicitly requested by terminal type.
+-- @param #AIRBASE self
+-- @param #number termtype (Optional) Terminal type. Default all.
+-- @return #table Table of coordinates of parking spots.
+function AIRBASE:GetParkingSpotsCoordinates(termtype)
+
+  -- Get all parking spots data.
+  local parkingdata=self:GetParkingData(false)
+  
+  -- Put coordinates of free spots into table.
+  local spots={}
+  for _,parkingspot in pairs(parkingdata) do
+    -- Coordinates on runway are not returned unless explicitly requested.
+    if (termtype and parkingspot.Term_Type==termtype) or (termtype==nil and parkingspot.Term_Type~=AIRBASE.TerminalType.Runway) then
+      local _coord=COORDINATE:NewFromVec3(parkingspot.vTerminalPos)
+      local gotunits,gotstatics,gotscenery,_,statics,_=_coord:ScanObjects(.5)
+      env.info(string.format("FF scan: terminal index %03d, type = %03d, gotunits=%s, gotstatics=%s, gotscenery=%s", parkingspot.Term_Index+1, parkingspot.Term_Type, tostring(gotunits), tostring(gotstatics), tostring(gotscenery)))
+      if gotstatics then
+        for _,static in pairs(statics) do
+          env.info(string.format("FF Static name= %s", tostring(static:getName())))
+        end
+      end
+      table.insert(spots, _coord)
+    end
+  end
+  
+  return spots
+end
 
 
+--- Get a table containing the coordinates, terminal index and terminal type of free parking spots at an airbase.
+-- @param #AIRBASE self
+-- @param #number termtype Terminal type.
+-- @return #table Table free parking spots. Table has the elements ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
+function AIRBASE:GetParkingSpotsTable(termtype)
+
+  -- Get parking data of all spots (free or occupied) 
+  local parkingdata=self:GetParkingData(false)
+  -- Get parking data of all free spots.
+  local parkingfree=self:GetParkingData(true)
+  
+  -- Function to ckeck if any parking spot is free.
+  local function _isfree(_tocheck)
+    for _,_spot in pairs(parkingfree) do
+      if _spot.Term_Index==_tocheck.Term_Index then
+        return true
+      end
+    end
+    return false
+  end
+  
+  -- Put coordinates of free spots into table.
+  local freespots={}
+  for _,_spot in pairs(parkingdata) do
+    if (termtype and _spot.Term_Type==termtype) or (termtype==nil and _spot.Term_Type~=AIRBASE.TerminalType.Runway) then
+      local _free=_isfree(_spot)
+      local _coord=COORDINATE:NewFromVec3(_spot.vTerminalPos)
+      table.insert(freespots, {Coordinate=_coord, TerminalID=_spot.Term_Index, TerminalType=_spot.Term_Type, TOAC=_spot.TO_AC, Free=_free, TerminalID0=_spot.Term_Index_0, DistToRwy=_spot.fDistToRW})
+    end
+  end
+  
+  return freespots
+end
+
+--- Get a table containing the coordinates, terminal index and terminal type of free parking spots at an airbase.
+-- @param #AIRBASE self
+-- @param #number termtype Terminal type.
+-- @param #boolean allowTOAC If true, spots are considered free even though TO_AC is true. Default is off which is saver to avoid spawning aircraft on top of each other. Option might be enabled for FARPS and ships. 
+-- @return #table Table free parking spots. Table has the elements ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
+function AIRBASE:GetFreeParkingSpotsTable(termtype, allowTOAC)
+
+  -- Get parking data of all free spots.
+  local parkingfree=self:GetParkingData(true)
+    
+  -- Put coordinates of free spots into table.
+  local freespots={}
+  for _,_spot in pairs(parkingfree) do
+    if (termtype and _spot.Term_Type==termtype) or (termtype==nil and _spot.Term_Type~=AIRBASE.TerminalType.Runway) then
+      if (allowTOAC and allowTOAC==true) or _spot.TO_AC==false then
+        local _coord=COORDINATE:NewFromVec3(_spot.vTerminalPos)
+        table.insert(freespots, {Coordinate=_coord, TerminalID=_spot.Term_Index, TerminalType=_spot.Term_Type, TOAC=_spot.TO_AC, Free=true, TerminalID0=_spot.Term_Index_0, DistToRwy=_spot.fDistToRW})
+      end
+    end
+  end
+  
+  return freespots
+end
+
+--- Place markers of parking spots on the F10 map.
+-- @param #AIRBASE self
+-- @param #number termtype Terminal type for which marks should be placed.
+function AIRBASE:MarkParkingSpots(termtype)
+
+  local parkingdata=self:GetParkingSpotsTable(termtype)
+
+  local airbasename=self:GetName()
+  self:E(string.format("Parking spots at %s for termial type %s:", airbasename, tostring(termtype)))
+  
+  for _,_spot in pairs(parkingdata) do
+    
+    -- Mark text.
+    local _text=string.format("%s, Term Index = %3d, Term Type = %03d, Free = %5s, TOAC = %5s, Term ID0 = %3d, Dist2Rwy = %.1f",
+    airbasename, _spot.TerminalID, _spot.TerminalType,tostring(_spot.Free),tostring(_spot.TOAC),_spot.TerminalID0,_spot.DistToRwy)
+    
+    -- Create mark on the F10 map.
+    _spot.Coordinate:MarkToAll(_text)
+    
+    -- Info to DCS.log file.
+    self:E(_text)
+  end
+end

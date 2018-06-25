@@ -70,6 +70,7 @@
 -- @field #number coalition Coalition of spawn group template.
 -- @field #number country Country of spawn group template.
 -- @field #string category Category of aircarft: "plane" or "heli".
+-- @field #number groupsize Number of aircraft in group.
 -- @field #string friendly Possible departure/destination airport: all=blue+red+neutral, same=spawn+neutral, spawnonly=spawn, blue=blue+neutral, blueonly=blue, red=red+neutral, redonly=red.
 -- @field #table ctable Table with the valid coalitons from choice self.friendly.
 -- @field #table aircraft Table which holds the basic aircraft properties (speed, range, ...).
@@ -146,6 +147,9 @@
 -- @field #boolean checkontop Aircraft are checked if they were accidentally spawned on top of another unit. Default is true.
 -- @field #number rbug_maxretry Number of respawn retries (on ground) at other airports if a group gets accidentally spawned on the runway. Default is 3.
 -- @field #boolean useparkingdb Parking spots are added to data base once an aircraft has used it. These spots can later be used by other aircraft. Default is true.
+-- @field #number termtype Type of terminal to be used when spawning at an airbase.
+-- @field #boolean starshape If true, aircraft travel A-->B-->A-->C-->A-->D... for commute. 
+-- @field #string homebase Home base for commute and return zone. Aircraft will always return to this base but otherwise travel in a star shaped way.
 -- @extends Core.Spawn#SPAWN
 
 --- Implements an easy to use way to randomly fill your map with AI aircraft.
@@ -302,6 +306,7 @@ RAT={
   coalition = nil,          -- Coalition of spawn group template.
   country = nil,            -- Country of the group template.
   category = nil,           -- Category of aircarft: "plane" or "heli".
+  groupsize=nil,            -- Number of aircraft in the group.
   friendly = "same",        -- Possible departure/destination airport: same=spawn+neutral, spawnonly=spawn, blue=blue+neutral, blueonly=blue, red=red+neutral, redonly=red, neutral.
   ctable = {},              -- Table with the valid coalitons from choice self.friendly.
   aircraft = {},            -- Table which holds the basic aircraft properties (speed, range, ...).
@@ -353,7 +358,7 @@ RAT={
   respawn_after_takeoff=false, -- Aircraft will be respawned directly after takeoff.
   respawn_after_crash=true, -- Aircraft will be respawned after a crash.
   respawn_inair=true,        -- Aircraft are spawned in air if there is no free parking spot on the ground.
-  respawn_delay=nil,        -- Delay in seconds until repawn happens after landing.
+  respawn_delay=0,        -- Delay in seconds until repawn happens after landing.
   markerids={},             -- Array with marker IDs.
   waypointdescriptions={},  -- Array with descriptions for waypoint markers.
   waypointstatus={},        -- Array with status info on waypoints.
@@ -377,8 +382,11 @@ RAT={
   onboardnum0=1,            -- (Optional) Starting value of the automatically appended numbering of aircraft within a flight. Default is one.
   rbug_maxretry=3,          -- Number of respawn retries (on ground) at other airports if a group gets accidentally spawned on the runway.
   checkonrunway=true,       -- Check whether aircraft have been spawned on the runway.
-  checkontop=true,          -- Check whether aircraft have been spawned on top of another unit.
-  useparkingdb=true,        -- Put known parking spots into a data base.
+  checkontop=false,         -- Check whether aircraft have been spawned on top of another unit.
+  useparkingdb=false,       -- Put known parking spots into a data base.
+  termtype=nil,             -- Terminal type.
+  starshape=false,          -- If true, aircraft travel A-->B-->A-->C-->A-->D... for commute.
+  homebase=nil,             -- Home base for commute and return zone.
 }
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -501,7 +509,7 @@ RAT.id="RAT | "
 --- RAT version.
 -- @list version
 RAT.version={
-  version = "2.2.2",
+  version = "2.3.0",
   print = true,
 }
 
@@ -565,7 +573,7 @@ function RAT:New(groupname, alias)
   end
 
   -- Welcome message.
-  self:F(RAT.id.."Creating new RAT object from template: "..groupname)
+  self:F(RAT.id..string.format("Creating new RAT object from template: %s.", groupname))
   
   -- Set alias.
   alias=alias or groupname
@@ -578,12 +586,15 @@ function RAT:New(groupname, alias)
   
   -- Check the group actually exists.
   if DCSgroup==nil then
-    self:E(RAT.id.."ERROR: Group with name "..groupname.." does not exist in the mission editor!")
+    self:E(RAT.id..string.format("ERROR: Group with name %s does not exist in the mission editor!", groupname))
     return nil
   end
   
   -- Store template group.
   self.templategroup=GROUP:FindByName(groupname)
+
+  -- Get number of aircraft in group.
+  self.groupsize=self.templategroup:GetSize()
 
   -- Set own coalition.
   self.coalition=DCSgroup:getCoalition()
@@ -690,6 +701,7 @@ function RAT:Spawn(naircraft)
   end
   text=text..string.format("Min dist to destination: %4.1f\n", self.mindist)
   text=text..string.format("Max dist to destination: %4.1f\n", self.maxdist)
+  text=text..string.format("Terminal type: %s\n", tostring(self.termtype))
   text=text..string.format("Takeoff type: %i\n", self.takeoff)
   text=text..string.format("Landing type: %i\n", self.landing)
   text=text..string.format("Commute: %s\n", tostring(self.commute))
@@ -814,12 +826,12 @@ function RAT:_CheckConsistency()
     -- Only zones but not takeoff air == > Enable takeoff air.
     if self.Ndeparture_Zones>0 and self.takeoff~=RAT.wp.air then
       self.takeoff=RAT.wp.air
-      self:E(RAT.id.."ERROR: At least one zone defined as departure and takeoff is NOT set to air. Enabling air start!")
+      self:E(RAT.id..string.format("ERROR: At least one zone defined as departure and takeoff is NOT set to air. Enabling air start for RAT group %s!", self.alias))
     end
     -- No airport and no zone specified.
     if self.Ndeparture_Airports==0 and self.Ndeparture_Zone==0 then
       self.random_departure=true
-      local text="No airports or zones found given in SetDeparture(). Enabling random departure airports!"
+      local text=string.format("No airports or zones found given in SetDeparture(). Enabling random departure airports for RAT group %s!", self.alias)
       self:E(RAT.id.."ERROR: "..text)
       MESSAGE:New(text, 30):ToAll()
     end
@@ -949,6 +961,14 @@ end
 function RAT:SetCountry(id)
   self:F2(id)
   self.country=id
+end
+
+--- Set the terminal type the aircraft use when spawning at an airbase. Cf. https://wiki.hoggitworld.com/view/DCS_func_getParking
+-- @param #RAT self
+-- @param #number termtype Type of terminal. Use enumerator AIRBASE.TerminalType.XXX or check https://wiki.hoggitworld.com/view/DCS_func_getParking for valid numbers.
+function RAT:SetTerminalType(termtype)
+  self:F2(termtype)
+  self.termtype=termtype
 end
 
 --- Set takeoff type. Starting cold at airport, starting hot at airport, starting at runway, starting in the air.
@@ -1177,10 +1197,16 @@ end
 
 --- Aircraft will commute between their departure and destination airports or zones.
 -- @param #RAT self
-function RAT:Commute()
+-- @param #boolean starshape If true, keep homebase, i.e. travel A-->B-->A-->C-->A-->D... instead of A-->B-->A-->B-->A...
+function RAT:Commute(starshape)
   self:F2()
   self.commute=true
   self.continuejourney=false
+  if starshape then
+    self.starshape=starshape
+  else
+    self.starshape=false
+  end
 end
 
 --- Set the delay before first group is spawned. 
@@ -1203,12 +1229,12 @@ end
 
 --- Make aircraft respawn the moment they land rather than at engine shut down.
 -- @param #RAT self
--- @param #number delay (Optional) Delay in seconds until respawn happens after landing. Default is 180 seconds. Minimum is 0.5 seconds.
+-- @param #number delay (Optional) Delay in seconds until respawn happens after landing. Default is 180 seconds. Minimum is 1.0 seconds.
 function RAT:RespawnAfterLanding(delay)
   self:F2(delay)
   delay = delay or 180
   self.respawn_at_landing=true
-  delay=math.max(0.5, delay)
+  delay=math.max(1.0, delay)
   self.respawn_delay=delay
 end
 
@@ -1217,7 +1243,7 @@ end
 -- @param #number delay Delay in seconds until respawn happens. Default is 1 second. Minimum is 1 second.
 function RAT:SetRespawnDelay(delay)
   self:F2(delay)
-  delay = delay or 1
+  delay = delay or 1.0
   delay=math.max(1.0, delay)
   self.respawn_delay=delay
 end
@@ -1786,9 +1812,9 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
 
   -- Find parking spot in RAT parking DB. Category 4 should be airports and farps. Ships would be caterory 1.
   local _spawnpos=_lastpos
-  if self.useparkingdb and (takeoff==RAT.wp.cold or takeoff==RAT.wp.hot) and departure:GetCategory()==4 and  _spawnpos==nil then
-    _spawnpos=self:_FindParkingSpot(departure)
-  end
+--  if self.useparkingdb and (takeoff==RAT.wp.cold or takeoff==RAT.wp.hot) and departure:GetCategory()==4 and _spawnpos==nil then
+--    _spawnpos=self:_FindParkingSpot(departure)
+--  end
   
   -- Set (another) livery.
   local livery
@@ -1805,7 +1831,7 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   end
   
   -- Modify the spawn template to follow the flight plan.
-  self:_ModifySpawnTemplate(waypoints, livery, _spawnpos)
+  self:_ModifySpawnTemplate(waypoints, livery, _spawnpos, departure, takeoff)
   
   -- Actually spawn the group.
   local group=self:SpawnWithIndex(self.SpawnIndex) -- Wrapper.Group#GROUP
@@ -1889,7 +1915,6 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   self.ratcraft[self.SpawnIndex].nrespawn=nrespawn
   
   -- If we start at a parking position, we memorize the parking spot position for future use (DCS bug).
-  -- TODO: Check for ships and FARPS.
   if self.useparkingdb and (takeoff==RAT.wp.cold or takeoff==RAT.wp.hot) and departure:GetCategory()==4 then
     self:_AddParkingSpot(departure, group)
   end
@@ -1930,11 +1955,13 @@ end
 
 --- Respawn a group.
 -- @param #RAT self
--- @param Wrapper.Group#GROUP group Group to be repawned.
-function RAT:_Respawn(group)
+-- @param #number index Spawn index.
+-- @param Core.Point#COORDINATE lastpos Last known position of the group.
+-- @param #number delay Delay before respawn
+function RAT:_Respawn(index, lastpos, delay)
   
   -- Get the spawn index from group
-  local index=self:GetSpawnIndexFromGroup(group)
+  --local index=self:GetSpawnIndexFromGroup(group)
   
   -- Get departure and destination from previous journey.
   local departure=self.ratcraft[index].departure
@@ -1943,7 +1970,7 @@ function RAT:_Respawn(group)
   local landing=self.ratcraft[index].landing
   local livery=self.ratcraft[index].livery
   local lastwp=self.ratcraft[index].waypoints[#self.ratcraft[index].waypoints]
-  local lastpos=group:GetCoordinate()
+  --local lastpos=group:GetCoordinate()
   
   local _departure=nil
   local _destination=nil
@@ -2004,8 +2031,22 @@ function RAT:_Respawn(group)
   elseif self.commute then
   
     -- We commute between departure and destination.
-    _departure=destination:GetName()
-    _destination=departure:GetName()
+    
+    if self.starshape==true then
+      if destination:GetName()==self.homebase then
+        -- We are at our home base ==> destination is again randomly selected.
+        _departure=self.homebase
+        _destination=nil -- destination will be set anew
+      else
+        -- We are not a our home base ==> we fly back to our home base.
+        _departure=destination:GetName()
+        _destination=self.homebase
+      end
+    else
+      -- Simply switch departure and destination.
+      _departure=destination:GetName()
+      _destination=departure:GetName()
+    end
     
     -- Use the same livery for next aircraft.
     _livery=livery
@@ -2067,6 +2108,16 @@ function RAT:_Respawn(group)
   
   -- Debug
   self:T2({departure=_departure, destination=_destination, takeoff=_takeoff, landing=_landing, livery=_livery, lastwp=_lastwp})
+  
+  -- We should give it at least 3 sec since this seems to be the time until free parking spots after despawn are available again (Sirri Island test).
+  local respawndelay
+  if delay then
+    respawndelay=delay
+  elseif self.respawn_delay then
+    respawndelay=self.respawn_delay+3  -- despawn happens after self.respawndelay. We add another 3 sec for free parking.
+  else
+    respawndelay=3
+  end
       
   -- Spawn new group.
   local arg={}
@@ -2078,7 +2129,8 @@ function RAT:_Respawn(group)
   arg.livery=_livery
   arg.lastwp=_lastwp
   arg.lastpos=_lastpos
-  SCHEDULER:New(nil, self._SpawnWithRouteTimer, {arg}, self.respawn_delay or 1)
+  self:T(RAT.id..string.format("%s delayed respawn in %.1f seconds.", self.alias, respawndelay))
+  SCHEDULER:New(nil, self._SpawnWithRouteTimer, {arg}, respawndelay)
   
 end
 
@@ -2166,6 +2218,9 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
     
   else
     departure=self:_PickDeparture(takeoff)
+    if self.commute and self.starshape==true and self.homebase==nil then
+      self.homebase=departure:GetName()
+    end
   end
    
   -- Return nil if no departure could be found.
@@ -3031,14 +3086,18 @@ function RAT:Status(message, forID)
   
   -- Current time.
   local Tnow=timer.getTime()
+  
+  -- Alive counter.
+  local nalive=0
     
-  -- Loop over all ratcraft.  
+  -- Loop over all ratcraft.
   for spawnindex,ratcraft in ipairs(self.ratcraft) do
   
     -- Get group.
     local group=ratcraft.group  --Wrapper.Group#GROUP
     
     if group and group:IsAlive() then
+      nalive=nalive+1
             
       -- Gather some information.
       local prefix=self:_GetPrefixFromGroup(group)
@@ -3143,7 +3202,7 @@ function RAT:Status(message, forID)
           text=text..string.format("\nTime on ground  = %6.0f seconds\n", Tg)
           text=text..string.format("Position change = %8.1f m since %3.0f seconds.", Dg, dTlast)
         end
-        self:T2(RAT.id..text)
+        self:T(RAT.id..text)
         if message then
           MESSAGE:New(text, 20):ToAll()
         end
@@ -3158,23 +3217,29 @@ function RAT:Status(message, forID)
           self:T(RAT.id..text)
           self:_Despawn(group)
         end
+        
         -- Despawn group if life is < 10% and distance travelled < 100 m.
         if life<10 and Dtravel<100 then
           local text=string.format("Damaged group %s is despawned. Life = %3.0f", self.alias, life)
           self:T(RAT.id..text)
           self:_Despawn(group)
         end
+        
       end
       
       -- Despawn groups after they have reached their destination zones.
       if ratcraft.despawnme then
+      
         local text=string.format("Flight %s will be despawned NOW!", self.alias)
         self:T(RAT.id..text)
         -- Despawn old group.
-        if (not self.norespawn) and (not self.respawn_after_takeoff) then  
-          self:_Respawn(group)
+        if (not self.norespawn) and (not self.respawn_after_takeoff) then
+          local idx=self:GetSpawnIndexFromGroup(group)
+          local coord=group:GetCoordinate()  
+          self:_Respawn(idx, coord, 0)
         end
-        self:_Despawn(group)
+        self:_Despawn(group, 0)
+        
       end
 
     else
@@ -3185,11 +3250,10 @@ function RAT:Status(message, forID)
        
   end
   
-  if (message and not forID) then
-    local text=string.format("Alive groups of %s: %d", self.alias, self.alive)
-    self:T(RAT.id..text)
-    MESSAGE:New(text, 20):ToAll()
-  end  
+  -- Alive groups.
+  local text=string.format("Alive groups of %s: %d, nalive=%d/%d", self.alias, self.alive, nalive, self.ngroups)
+  self:T(RAT.id..text)
+  MESSAGE:New(text, 20):ToAllIf(message and not forID)
   
 end
 
@@ -3236,7 +3300,7 @@ function RAT:_SetStatus(group, status)
       local text=string.format("Flight %s: %s.", group:GetName(), status)
       self:T(RAT.id..text)
       
-      if (not (no1 or no2 or no3)) then
+      if not (no1 or no2 or no3) then
         MESSAGE:New(text, 10):ToAllIf(self.reportstatus)
       end
       
@@ -3244,6 +3308,30 @@ function RAT:_SetStatus(group, status)
     
   end
 end
+
+--- Get status of group.
+-- @param #RAT self
+-- @param Wrapper.Group#GROUP group Group.
+-- @return #string status Status of group.
+function RAT:GetStatus(group)
+
+  if group and group:IsAlive() then
+
+    -- Get index from groupname.
+    local index=self:GetSpawnIndexFromGroup(group)
+    
+    if self.ratcraft[index] then
+    
+      -- Set new status.
+      return self.ratcraft[index].status
+            
+    end
+    
+  end
+  
+  return "nonexistant"
+end
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -3344,7 +3432,7 @@ function RAT:_OnBirth(EventData)
         -- Check if any unit of the group was spawned on top of another unit in the MOOSE data base.
         local ontop=false
         if self.checkontop then
-          ontop=self:_CheckOnTop(SpawnGroup)
+          ontop=self:_CheckOnTop(SpawnGroup, 2)
         end
         
         if ontop then
@@ -3429,12 +3517,11 @@ function RAT:_OnTakeoff(EventData)
         self:_SetStatus(SpawnGroup, status)
         
         if self.respawn_after_takeoff then
-          text="Event: Group "..SpawnGroup:GetName().." will be respawned."
+          text="Event: Group "..SpawnGroup:GetName().." will be respawned after takeoff."
           self:T(RAT.id..text)
         
           -- Respawn group. We respawn with no parameters from the old flight.
           self:_SpawnWithRoute(nil, nil, nil, nil, nil, nil, nil, nil)
-          --self:_Respawn(SpawnGroup)
         end
         
       end
@@ -3479,7 +3566,9 @@ function RAT:_OnLand(EventData)
           self:T(RAT.id..text)
         
           -- Respawn group.
-          self:_Respawn(SpawnGroup)
+          local idx=self:GetSpawnIndexFromGroup(SpawnGroup)
+          local coord=SpawnGroup:GetCoordinate()
+          self:_Respawn(idx, coord)
         end
         
       end
@@ -3492,6 +3581,7 @@ end
 
 --- Function is executed when a unit shuts down its engines.
 -- @param #RAT self
+-- @param Core.Event#EVENTDATA EventData
 function RAT:_OnEngineShutdown(EventData)
   self:F3(EventData)
   self:T3(RAT.id.."Captured event EngineShutdown!")
@@ -3503,35 +3593,42 @@ function RAT:_OnEngineShutdown(EventData)
     -- Get the template name of the group. This can be nil if this was not a spawned group.
     local EventPrefix = self:_GetPrefixFromGroup(SpawnGroup)
     
-    if EventPrefix then
-    
-      -- Check that the template name actually belongs to this object.
-      if EventPrefix == self.alias then
-  
-        -- Despawn group only if it on the ground.
-        if not SpawnGroup:InAir() then
-        
-          local text="Event: Group "..SpawnGroup:GetName().." shut down its engines."
-          self:T(RAT.id..text)
+    -- Check that the template name actually belongs to this object.
+    if EventPrefix and EventPrefix == self.alias then
       
+      -- Despawn group only if it on the ground.
+      if not SpawnGroup:InAir() then
+      
+        -- Current status.
+        local currentstate=self:GetStatus(SpawnGroup)
+      
+        local text=string.format("Event: Unit %s of group %s shut down its engines. Current state %s.", EventData.IniUnitName, SpawnGroup:GetName(), currentstate)
+        self:T(RAT.id..text)
+
+        -- Check that this is not the second unit of the group so that we dont trigger re- and despawns twice.        
+        if currentstate~=RAT.status.EventEngineShutdown and currentstate~="Dead" then
+    
           -- Set status.
           local status=RAT.status.EventEngineShutdown
           self:_SetStatus(SpawnGroup, status)
           
           if not self.respawn_at_landing and not self.norespawn then
-            text="Event: Group "..SpawnGroup:GetName().." will be respawned."
+            text=string.format("Event: Group %s will be respawned. Current state %s => new state %s.", SpawnGroup:GetName(), currentstate, status)
             self:T(RAT.id..text)
           
             -- Respawn group.
-            self:_Respawn(SpawnGroup)
+            local idx=self:GetSpawnIndexFromGroup(SpawnGroup)
+            local coord=SpawnGroup:GetCoordinate()
+            self:_Respawn(idx, coord)
           end
-                   
+
           -- Despawn group.
           text="Event: Group "..SpawnGroup:GetName().." will be destroyed now."
           self:T(RAT.id..text)
-          self:_Despawn(SpawnGroup)
+          self:_Despawn(SpawnGroup)                   
 
         end
+
       end
     end
     
@@ -3547,22 +3644,20 @@ function RAT:_OnHit(EventData)
   self:F3(EventData)
   self:T(RAT.id..string.format("Captured event Hit by %s! Initiator %s. Target %s", self.alias, tostring(EventData.IniUnitName), tostring(EventData.TgtUnitName)))
   
-  local SpawnGroup = EventData.IniGroup --Wrapper.Group#GROUP
+  local SpawnGroup = EventData.TgtGroup --Wrapper.Group#GROUP
   
   if SpawnGroup then
   
     -- Get the template name of the group. This can be nil if this was not a spawned group.
     local EventPrefix = self:_GetPrefixFromGroup(SpawnGroup)
     
-    if EventPrefix then
-    
-      -- Check that the template name actually belongs to this object.
-      if EventPrefix == self.alias then
+    -- Check that the template name actually belongs to this object.
+    if EventPrefix and EventPrefix == self.alias then
+      -- Debug info.
+      self:T(RAT.id..string.format("Event: Group %s was hit. Unit %s.", SpawnGroup:GetName(), tostring(EventData.TgtUnitName)))
       
-        -- Debug info.
-        self:T(RAT.id..string.format("Event: Group %s was hit. Unit %s.", SpawnGroup:GetName(), EventData.IniUnitName))
-        
-      end
+      local text=string.format("%s, unit %s was hit!", self.alias, EventData.TgtUnitName)
+      MESSAGE:New(text, 10):ToAllIf(self.reportstatus or self.Debug)
     end
   end
 end
@@ -3658,36 +3753,33 @@ function RAT:_OnCrash(EventData)
     -- Get the template name of the group. This can be nil if this was not a spawned group.
     local EventPrefix = self:_GetPrefixFromGroup(SpawnGroup)
     
-    if EventPrefix then
+    -- Check that the template name actually belongs to this object.
+    if EventPrefix and EventPrefix == self.alias then
     
-      -- Check that the template name actually belongs to this object.
-      if EventPrefix == self.alias then
-          
-        -- Update number of alive units in the group.
-        local _i=self:GetSpawnIndexFromGroup(SpawnGroup)
-        self.ratcraft[_i].nunits=self.ratcraft[_i].nunits-1
-        local _n=self.ratcraft[_i].nunits
-        local _n0=SpawnGroup:GetInitialSize()
-       
-        -- Debug info. 
-        local text=string.format("Event: Group %s crashed. Unit %s. Units still alive %d of %d.", SpawnGroup:GetName(), EventData.IniUnitName, _n, _n0)
+      -- Update number of alive units in the group.
+      local _i=self:GetSpawnIndexFromGroup(SpawnGroup)
+      self.ratcraft[_i].nunits=self.ratcraft[_i].nunits-1
+      local _n=self.ratcraft[_i].nunits
+      local _n0=SpawnGroup:GetInitialSize()
+     
+      -- Debug info. 
+      local text=string.format("Event: Group %s crashed. Unit %s. Units still alive %d of %d.", SpawnGroup:GetName(), EventData.IniUnitName, _n, _n0)
+      self:T(RAT.id..text)
+     
+      -- Set status.
+      local status=RAT.status.EventCrash
+      self:_SetStatus(SpawnGroup, status)
+      
+      -- Respawn group if all units are dead.
+      if _n==0 and self.respawn_after_crash and not self.norespawn then
+        local text=string.format("No units left of group %s. Group will be respawned now.", SpawnGroup:GetName())
         self:T(RAT.id..text)
-       
-        -- Set status.
-        local status=RAT.status.EventCrash
-        self:_SetStatus(SpawnGroup, status)
-        
-        -- Respawn group if all units are dead.
-        if _n==0 and self.respawn_after_crash and not self.norespawn then
-          local text=string.format("No units left of group %s. Group will be respawned now.", SpawnGroup:GetName())
-          self:T(RAT.id..text)
-          -- Respawn group.
-          self:_Respawn(SpawnGroup)
-        end
-
-        --TODO: Maybe spawn some people at the crash site and send a distress call.
-        --      And define them as cargo which can be rescued.
+        -- Respawn group.
+        local idx=self:GetSpawnIndexFromGroup(SpawnGroup)
+        local coord=SpawnGroup:GetCoordinate()
+        self:_Respawn(idx, coord)
       end
+
     end
     
   else
@@ -3701,7 +3793,8 @@ end
 -- Index of ratcraft array is taken from spawned group name.
 -- @param #RAT self
 -- @param Wrapper.Group#GROUP group Group to be despawned.
-function RAT:_Despawn(group)
+-- @param #number delay Delay in seconds before the despawn happens.
+function RAT:_Despawn(group, delay)
 
   if group ~= nil then
   
@@ -3741,8 +3834,23 @@ function RAT:_Despawn(group)
       --table.remove(self.ratcraft, index)
       
       
-      -- This will destroy the DCS group and create a single DEAD event.
-      self:_Destroy(group)
+       -- We should give it at least 3 sec since this seems to be the time until free parking spots after despawn are available again (Sirri Island test).
+      local despawndelay=0
+      if delay then
+        -- Explicitly requested delay time.
+        despawndelay=delay
+      elseif self.respawn_delay then
+        -- Despawn afer respawn_delay. Actual respawn happens in +3 seconds to allow for free parking.
+        despawndelay=self.respawn_delay
+      end
+      
+      -- This will destroy the DCS group and create a single DEAD event.      
+      --if despawndelay>0.5 then
+        self:T(RAT.id..string.format("%s delayed despawn in %.1f seconds.", self.alias, despawndelay))
+        SCHEDULER:New(nil, self._Destroy, {self, group}, despawndelay)
+      --else
+        --self:_Destroy(group)
+      --end  
 
       -- Remove submenu for this group.
       if self.f10menu and self.SubMenuName ~= nil then
@@ -3764,11 +3872,6 @@ function RAT:_Destroy(group)
   local DCSGroup = group:GetDCSObject() -- DCS#Group
 
   if DCSGroup and DCSGroup:isExist() then
-  
-    --local DCSUnit = DCSGroup:getUnit(1) -- DCS#Unit
-    --if DCSUnit then
-    --  self:_CreateEventDead(timer.getTime(), DCSUnit)
-    --end
     
     -- Cread one single Dead event and delete units from database.
     local triggerdead=true
@@ -4421,11 +4524,11 @@ end
 --- Find aircraft that have accidentally been spawned on top of each other.
 -- @param #RAT self
 -- @param Wrapper.Group#GROUP group Units of this group will be checked.
+-- @param #number distmin Allowed distance in meters between units. Units with a distance smaller than this number are considered to be on top of each other.
 -- @return #boolean True if group was destroyed because it was on top of another unit. False if otherwise.
-function RAT:_CheckOnTop(group)
+function RAT:_CheckOnTop(group, distmin)
 
-  -- Minimum allowed distance between two units
-  local distmin=5
+  distmin=distmin or 2
   
   for i,uniti in pairs(group:GetUnits()) do
     local uniti=uniti --Wrapper.Unit#UNIT
@@ -4448,15 +4551,13 @@ function RAT:_CheckOnTop(group)
             if DCSuniti and DCSuniti:isExist() and DCSunitj and DCSunitj:isExist() then
             
               -- Distance between units.
-              local _dist=uniti:GetCoordinate():Get2DDistance(unitj:GetCoordinate())
+              local _dist=uniti:GetCoordinate():Get3DDistance(unitj:GetCoordinate())
               
               -- Check for min distance.
               if _dist < distmin then
                 if not uniti:InAir() and not unitj:InAir() then
-                  --uniti:Destroy()
-                  --self:_CreateEventDead(timer.getTime(), uniti)
-                  --unitj:Destroy()
-                  --self:_CreateEventDead(timer.getTime(), unitj)
+                  -- Trigger immidiate destuction of unit.
+                  self:T(RAT.id..string.format("Unit %s is on top of unit %s. Distance %.2f m.", namei, namej,_dist))
                   return true
                 end
               end
@@ -4807,7 +4908,6 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-
 --- Modifies the template of the group to be spawned.
 -- In particular, the waypoints of the group's flight plan are copied into the spawn template.
 -- This allows to spawn at airports and also land at other airports, i.e. circumventing the DCS "landing bug".
@@ -4815,22 +4915,52 @@ end
 -- @param #table waypoints The waypoints of the AI flight plan.
 -- @param #string livery (Optional) Livery of the aircraft. All members of a flight will get the same livery.
 -- @param Core.Point#COORDINATE spawnplace (Optional) Place where spawning should happen. If not present, first waypoint is taken.
-function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace)
+-- @param Wrapper.Airbase#AIRBASE departure Departure airbase or zone.
+-- @param #number takeoff Takeoff type.
+function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace, departure, takeoff)
   self:F2({waypoints=waypoints, livery=livery, spawnplace=spawnplace})
 
   -- The 3D vector of the first waypoint, i.e. where we actually spawn the template group.
-  local PointVec3 = {x=waypoints[1].x, y=waypoints[1].alt, z=waypoints[1].y}
+  local PointVec3 = COORDINATE:New(waypoints[1].x, waypoints[1].alt, waypoints[1].y)
   if spawnplace then
-    PointVec3 = spawnplace:GetVec3()
-    self:T({spawnplace=PointVec3})
+    PointVec3 = COORDINATE:NewFromCoordinate(spawnplace)
   end
   
+  -- Check if we spawn on ground. 
+  local spawnonground=takeoff==RAT.wp.cold or takeoff==RAT.wp.hot or takeoff==RAT.wp.runway
+  
+  -- Check where we actually spawn if we spawn on ground.
+  local spawnonship=false
+  local spawnonfarp=false
+  local spawnonrunway=false
+  local spawnonairport=false  
+  if spawnonground then
+  
+    -- Spawning at a ship
+    spawnonship=departure:GetCategory()==1 -- Catetory 1 are ships.
+    
+    -- Spawning at a FARP. Catetory 4 are airbases so we need to check that type is FARP as well.
+    spawnonfarp=departure:GetCategory()==4 and departure:GetTypeName()=="FARP"
+    
+    -- Spawning at an airport.
+    spawnonairport=departure:GetCategory()==4 and departure:GetTypeName()~="FARP"
+    
+    -- Spawning on the runway.
+    spawnonrunway=takeoff==RAT.wp.runway
+  end
+  
+  local automatic=false
+  if automatic and spawnonground then
+    PointVec3=PointVec3:GetClosestParkingSpot(true, departure)
+  end
+    
   -- Heading from first to seconds waypoints to align units in case of air start.
   local course  = self:_Course(waypoints[1], waypoints[2])
   local heading = self:_Heading(course)
 
   if self:_GetSpawnIndex(self.SpawnIndex+1) then
   
+    -- Get template from group.
     local SpawnTemplate = self.SpawnGroups[self.SpawnIndex].SpawnTemplate
   
     if SpawnTemplate then
@@ -4841,27 +4971,139 @@ function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace)
         -- This is used in the SPAWN:SpawnWithIndex() function. Some values are overwritten there!
         self.SpawnUnControlled=true
       end
+      
+      -- Array with parking spots coordinates.
+      local parkingspots={}
+      local parkingindex={}
+      local spots
+      
+      -- Spawn happens on ground, i.e. at an airbase, a FARP or a ship.
+      if spawnonground then
         
+        -- Number of free parking spots.
+        local nfree=0
+        
+        -- Set terminal type.
+        local termtype=self.termtype
+        if spawnonrunway then
+          termtype=AIRBASE.TerminalType.Runway
+        end
+        
+        -- Number of free parking spots at the airbase.
+        nfree=departure:GetFreeParkingSpotsNumber(termtype, spawnonship or spawnonfarp or spawnonrunway)
+        spots=departure:GetFreeParkingSpotsTable(termtype, spawnonship or spawnonfarp or spawnonrunway)
+      
+        -- Get parking data.
+        local parkingdata=departure:GetParkingSpotsTable(termtype)
+
+        self:E(RAT.id..string.format("Parking at %s, terminal type %s:", departure:GetName(), tostring(termtype)))
+        for _,_spot in pairs(parkingdata) do        
+          self:E(RAT.id..string.format("%s, Termin Index = %3d, Term Type = %03d, Free = %5s, TOAC = %5s, Term ID0 = %3d, Dist2Rwy = %4d", 
+          departure:GetName(), _spot.TerminalID, _spot.TerminalType,tostring(_spot.Free),tostring(_spot.TOAC),_spot.TerminalID0,_spot.DistToRwy))
+        end
+        self:E(RAT.id..string.format("%s at %s: free parking spots = %d - number of units = %d", self.alias, departure:GetName(), nfree, #SpawnTemplate.units))
+
+        
+        -- Put parking spots in table. These spots are only used if 
+        if nfree >= #SpawnTemplate.units or (spawnonrunway and nfree>0) then
+          
+          for i=1,#SpawnTemplate.units do
+            table.insert(parkingspots, spots[i].Coordinate)
+            table.insert(parkingindex, spots[i].TerminalID)
+          end
+          
+          
+          if spawnonrunway then
+            --PointVec3=spots[1]
+          end
+          
+        else
+          self:E(RAT.id..string.format("RAT group %s has no parking spots at %s ==> air start!", self.alias, departure:GetName()))
+        
+          -- Not enough parking spots at the airport ==> Spawn in air.
+          spawnonground=false
+          spawnonship=false
+          spawnonfarp=false
+          spawnonrunway=false
+          
+          -- Set waypoint type/action to turning point.
+          waypoints[1].type   = GROUPTEMPLATE.Takeoff[GROUP.Takeoff.Air][1] -- type = Turning Point
+          waypoints[1].action = GROUPTEMPLATE.Takeoff[GROUP.Takeoff.Air][2] -- action = Turning Point
+          
+          -- Adjust altitude to be 500-1000 m above the airbase.
+          PointVec3.y=PointVec3:GetLandHeight()+math.random(500,1000)
+          
+        end
+        
+      end
+                    
       -- Translate the position of the Group Template to the Vec3.
       for UnitID = 1, #SpawnTemplate.units do
-        self:T('Before Translation SpawnTemplate.units['..UnitID..'].x = '..SpawnTemplate.units[UnitID].x..', SpawnTemplate.units['..UnitID..'].y = '..SpawnTemplate.units[UnitID].y)
+        self:T2('Before Translation SpawnTemplate.units['..UnitID..'].x = '..SpawnTemplate.units[UnitID].x..', SpawnTemplate.units['..UnitID..'].y = '..SpawnTemplate.units[UnitID].y)
         
-        -- Tranlate position.
+        -- Template of the current unit.
         local UnitTemplate = SpawnTemplate.units[UnitID]
+        
+        -- Tranlate position and preserve the relative position/formation of all aircraft.  
         local SX = UnitTemplate.x
         local SY = UnitTemplate.y 
         local BX = SpawnTemplate.route.points[1].x
         local BY = SpawnTemplate.route.points[1].y
         local TX = PointVec3.x + (SX-BX)
         local TY = PointVec3.z + (SY-BY)
-        SpawnTemplate.units[UnitID].x   = TX
-        SpawnTemplate.units[UnitID].y   = TY
-        SpawnTemplate.units[UnitID].alt = PointVec3.y
+               
+        if spawnonground then
+          
+          -- Shíps and FARPS seem to have a build in queue.
+          if spawnonship or spawnonfarp or spawnonrunway or automatic then
+          
+            self:T(RAT.id..string.format("RAT group %s spawning at farp, ship or runway %s.", self.alias, departure:GetName()))
+
+            -- Spawn on ship. We take only the position of the ship.
+            SpawnTemplate.units[UnitID].x   = PointVec3.x --TX
+            SpawnTemplate.units[UnitID].y   = PointVec3.z --TY
+            SpawnTemplate.units[UnitID].alt = PointVec3.y
+          
+          else
+
+            self:T(RAT.id..string.format("RAT group %s spawning at airbase %s on parking spot id %d", self.alias, departure:GetName(), parkingindex[UnitID]))
+            
+            -- Get coordinates of parking spot.
+            SpawnTemplate.units[UnitID].x   = parkingspots[UnitID].x
+            SpawnTemplate.units[UnitID].y   = parkingspots[UnitID].z
+            SpawnTemplate.units[UnitID].alt = parkingspots[UnitID].y
+            
+          end
+                 
+        else
         
-        if self.Debug then
-          local unitspawn=COORDINATE:New(TX,PointVec3.y,TY)
-          unitspawn:MarkToAll(string.format("Spawnplace unit #%d", UnitID))
+          self:T(RAT.id..string.format("RAT group %s spawning in air at %s.", self.alias, departure:GetName()))
+          
+          -- Spawn in air as requested initially. Original template orientation is perserved, altitude is already correctly set.
+          SpawnTemplate.units[UnitID].x   = TX
+          SpawnTemplate.units[UnitID].y   = TY
+          SpawnTemplate.units[UnitID].alt = PointVec3.y
+          
         end
+             
+        -- Place marker at spawn position.   
+        if self.Debug then
+          local unitspawn=COORDINATE:New(SpawnTemplate.units[UnitID].x, SpawnTemplate.units[UnitID].alt, SpawnTemplate.units[UnitID].y)
+          unitspawn:MarkToAll(string.format("RAT %s Spawnplace unit #%d", self.alias, UnitID))
+        end
+        
+        -- Parking spot id.
+        UnitTemplate.parking = nil
+        UnitTemplate.parking_id = nil
+        if parkingindex[UnitID] and not automatic then
+          UnitTemplate.parking = parkingindex[UnitID]
+        end
+        
+        self:T2(RAT.id..string.format("RAT group %s unit number %d: Parking    = %s",self.alias, UnitID, tostring(UnitTemplate.parking)))
+        self:T2(RAT.id..string.format("RAT group %s unit number %d: Parking ID = %s",self.alias, UnitID, tostring(UnitTemplate.parking_id)))
+        
+
+        -- Set initial heading.
         SpawnTemplate.units[UnitID].heading = heading
         SpawnTemplate.units[UnitID].psi = -heading
         
@@ -4889,15 +5131,7 @@ function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace)
           SpawnTemplate.CountryID=self.country
         end
         
-        -- Parking spot.
-        UnitTemplate.parking = nil
-        UnitTemplate.parking_id = self.parking_id
-        --self:T(RAT.id.."Parking ID "..tostring(self.parking_id))
-        
-        -- Initial altitude
-        UnitTemplate.alt=PointVec3.y
-        
-        self:T('After Translation SpawnTemplate.units['..UnitID..'].x = '..SpawnTemplate.units[UnitID].x..', SpawnTemplate.units['..UnitID..'].y = '..SpawnTemplate.units[UnitID].y)
+        self:T2('After Translation SpawnTemplate.units['..UnitID..'].x = '..SpawnTemplate.units[UnitID].x..', SpawnTemplate.units['..UnitID..'].y = '..SpawnTemplate.units[UnitID].y)
       end
       
       -- Copy waypoints into spawntemplate. By this we avoid the nasty DCS "landing bug" :)
