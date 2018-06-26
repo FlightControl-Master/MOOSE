@@ -1831,7 +1831,10 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   end
   
   -- Modify the spawn template to follow the flight plan.
-  self:_ModifySpawnTemplate(waypoints, livery, _spawnpos, departure, takeoff)
+  local successful=self:_ModifySpawnTemplate(waypoints, livery, _spawnpos, departure, takeoff)
+  if not successful then
+    return nil
+  end
   
   -- Actually spawn the group.
   local group=self:SpawnWithIndex(self.SpawnIndex) -- Wrapper.Group#GROUP
@@ -4925,30 +4928,30 @@ function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace, departure, take
   if spawnplace then
     PointVec3 = COORDINATE:NewFromCoordinate(spawnplace)
   end
+
+  -- Template group and unit.
+  local TemplateGroup = GROUP:FindByName(self.SpawnTemplatePrefix)
   
   -- Check if we spawn on ground. 
   local spawnonground=takeoff==RAT.wp.cold or takeoff==RAT.wp.hot or takeoff==RAT.wp.runway
-  
+
   -- Check where we actually spawn if we spawn on ground.
   local spawnonship=false
   local spawnonfarp=false
   local spawnonrunway=false
-  local spawnonairport=false  
+  local spawnonairport=false
   if spawnonground then
-  
-    -- Spawning at a ship
-    spawnonship=departure:GetCategory()==1 -- Catetory 1 are ships.
-    
-    -- Spawning at a FARP. Catetory 4 are airbases so we need to check that type is FARP as well.
-    spawnonfarp=departure:GetCategory()==4 and departure:GetTypeName()=="FARP"
-    
-    -- Spawning at an airport.
-    spawnonairport=departure:GetCategory()==4 and departure:GetTypeName()~="FARP"
-    
-    -- Spawning on the runway.
+    local AirbaseCategory = departure:GetDesc().category      
+    if AirbaseCategory == Airbase.Category.SHIP then
+      spawnonship=true
+    elseif AirbaseCategory == Airbase.Category.HELIPAD then
+      spawnonfarp=true
+    elseif AirbaseCategory == Airbase.Category.AIRDROME then
+      spawnonairport=true
+    end
     spawnonrunway=takeoff==RAT.wp.runway
   end
-  
+
   local automatic=false
   if automatic and spawnonground then
     PointVec3=PointVec3:GetClosestParkingSpot(true, departure)
@@ -4990,19 +4993,37 @@ function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace, departure, take
         end
         
         -- Number of free parking spots at the airbase.
-        nfree=departure:GetFreeParkingSpotsNumber(termtype, spawnonship or spawnonfarp or spawnonrunway)
-        spots=departure:GetFreeParkingSpotsTable(termtype, spawnonship or spawnonfarp or spawnonrunway)
-      
+        if  spawnonship or spawnonfarp or spawnonrunway then
+          -- These places work procedural and have some kind of build in queue ==> Less effort.
+          nfree=departure:GetFreeParkingSpotsNumber(termtype, spawnonship or spawnonfarp or spawnonrunway)
+          spots=departure:GetFreeParkingSpotsTable(termtype, spawnonship or spawnonfarp or spawnonrunway)
+        else
+          if self.category==RAT.cat.heli and termtype==nil then
+            -- Helo is spawned.
+            -- Try helo spots first.
+            spots=departure:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.HelicopterOnly)
+            nfree=#spots
+            if nfree<#SpawnTemplate.units then
+              -- Not enough helo ports. Let's try all terminal types.
+              spots=departure:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.HelicopterUsable)
+              nfree=#spots
+            end
+          else
+            -- Fixed wing aircraft is spawned.
+            --TODO: Add some default cases for transport, bombers etc. if no explicit terminal type is provided.
+            spots=departure:FindFreeParkingSpotForAircraft(TemplateGroup, termtype)
+            nfree=#spots
+          end
+        end
+        
         -- Get parking data.
         local parkingdata=departure:GetParkingSpotsTable(termtype)
-
-        self:E(RAT.id..string.format("Parking at %s, terminal type %s:", departure:GetName(), tostring(termtype)))
+        self:T(RAT.id..string.format("Parking at %s, terminal type %s:", departure:GetName(), tostring(termtype)))
         for _,_spot in pairs(parkingdata) do        
-          self:E(RAT.id..string.format("%s, Termin Index = %3d, Term Type = %03d, Free = %5s, TOAC = %5s, Term ID0 = %3d, Dist2Rwy = %4d", 
+          self:T(RAT.id..string.format("%s, Termin Index = %3d, Term Type = %03d, Free = %5s, TOAC = %5s, Term ID0 = %3d, Dist2Rwy = %4d", 
           departure:GetName(), _spot.TerminalID, _spot.TerminalType,tostring(_spot.Free),tostring(_spot.TOAC),_spot.TerminalID0,_spot.DistToRwy))
         end
-        self:E(RAT.id..string.format("%s at %s: free parking spots = %d - number of units = %d", self.alias, departure:GetName(), nfree, #SpawnTemplate.units))
-
+        self:T(RAT.id..string.format("%s at %s: free parking spots = %d - number of units = %d", self.alias, departure:GetName(), nfree, #SpawnTemplate.units))
         
         -- Put parking spots in table. These spots are only used if 
         if nfree >= #SpawnTemplate.units or (spawnonrunway and nfree>0) then
@@ -5011,28 +5032,31 @@ function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace, departure, take
             table.insert(parkingspots, spots[i].Coordinate)
             table.insert(parkingindex, spots[i].TerminalID)
           end
-          
-          
+                    
           if spawnonrunway then
             --PointVec3=spots[1]
           end
           
         else
-          self:E(RAT.id..string.format("RAT group %s has no parking spots at %s ==> air start!", self.alias, departure:GetName()))
-        
-          -- Not enough parking spots at the airport ==> Spawn in air.
-          spawnonground=false
-          spawnonship=false
-          spawnonfarp=false
-          spawnonrunway=false
+          if self.respawn_inair or self.uncontrolled then
+            self:E(RAT.id..string.format("WARNING: RAT group %s has no parking spots at %s ==> air start!", self.alias, departure:GetName()))
           
-          -- Set waypoint type/action to turning point.
-          waypoints[1].type   = GROUPTEMPLATE.Takeoff[GROUP.Takeoff.Air][1] -- type = Turning Point
-          waypoints[1].action = GROUPTEMPLATE.Takeoff[GROUP.Takeoff.Air][2] -- action = Turning Point
-          
-          -- Adjust altitude to be 500-1000 m above the airbase.
-          PointVec3.y=PointVec3:GetLandHeight()+math.random(500,1000)
-          
+            -- Not enough parking spots at the airport ==> Spawn in air.
+            spawnonground=false
+            spawnonship=false
+            spawnonfarp=false
+            spawnonrunway=false
+            
+            -- Set waypoint type/action to turning point.
+            waypoints[1].type   = GROUPTEMPLATE.Takeoff[GROUP.Takeoff.Air][1] -- type = Turning Point
+            waypoints[1].action = GROUPTEMPLATE.Takeoff[GROUP.Takeoff.Air][2] -- action = Turning Point
+            
+            -- Adjust altitude to be 500-1000 m above the airbase.
+            PointVec3.y=PointVec3:GetLandHeight()+math.random(500,1000)
+          else
+            self:E(RAT.id..string.format("WARNING: RAT group %s has no parking spots at %s. Air start deactivated or uncontrolled AC!", self.alias, departure:GetName()))
+            return nil
+          end          
         end
         
       end
@@ -5160,6 +5184,8 @@ function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace, departure, take
       self:T(SpawnTemplate)
     end
   end
+  
+  return true
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

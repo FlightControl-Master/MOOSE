@@ -1219,8 +1219,7 @@ end
 -- @param #SPAWN.Takeoff Takeoff (optional) The location and takeoff method. Default is Hot.
 -- @param #number TakeoffAltitude (optional) The altitude above the ground.
 -- @param #number TerminalType (optional) The terminal type the aircraft should be spawned at.
--- @return Wrapper.Group#GROUP that was spawned.
--- @return #nil Nothing was spawned.
+-- @return Wrapper.Group#GROUP that was spawned or nil when nothing was spawned.
 -- @usage
 --   Spawn_Plane = SPAWN:New( "Plane" )
 --   Spawn_Plane:SpawnAtAirbase( AIRBASE:FindByName( AIRBASE.Caucasus.Krymsk ), SPAWN.Takeoff.Cold )
@@ -1237,9 +1236,11 @@ end
 --   Spawn_Heli:SpawnAtAirbase( AIRBASE:FindByName( "FARP Air" ), SPAWN.Takeoff.Air )
 --   
 --   Spawn_Heli:SpawnAtAirbase( AIRBASE:FindByName( "Carrier" ), SPAWN.Takeoff.Cold )
+--   
+--   Spawn_Plane:SpawnAtAirbase( AIRBASE:FindByName( AIRBASE.Caucasus.Krymsk ), SPAWN.Takeoff.Cold, nil, AIRBASE.TerminalType.OpenBig )
 -- 
 function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalType ) -- R2.2, R2.4
-  self:F( { self.SpawnTemplatePrefix, SpawnAirbase, Takeoff, TakeoffAltitude } )
+  self:F( { self.SpawnTemplatePrefix, SpawnAirbase, Takeoff, TakeoffAltitude, TerminalType } )
 
   -- Get position of airbase.
   local PointVec3 = SpawnAirbase:GetCoordinate()
@@ -1257,6 +1258,10 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
 
       -- Debug output
       self:T( { "Current point of ", self.SpawnTemplatePrefix, SpawnAirbase } )
+      
+      -- Template group and unit.
+      local TemplateGroup = GROUP:FindByName(self.SpawnTemplatePrefix)
+      local ishelo=TemplateGroup:GetUnit(1):HasAttribute("Helicopters")
 
       -- First waypoint of the group.
       local SpawnPoint = SpawnTemplate.route.points[1] 
@@ -1282,36 +1287,31 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
         SpawnPoint.airdromeId = AirbaseID
       end
 
+      -- Set waypoint type/action.
       SpawnPoint.alt    = 0
       SpawnPoint.type   = GROUPTEMPLATE.Takeoff[Takeoff][1] -- type
       SpawnPoint.action = GROUPTEMPLATE.Takeoff[Takeoff][2] -- action
       
-
       -- Check if we spawn on ground. 
       local spawnonground=not (Takeoff==SPAWN.Takeoff.Air)
-      self:E({spawnonground=spawnonground, takeoff=Takeoff, toair=Takeoff==SPAWN.Takeoff.Air})
+      self:T({spawnonground=spawnonground, TOtype=Takeoff, TOair=Takeoff==SPAWN.Takeoff.Air})
       
       -- Check where we actually spawn if we spawn on ground.
       local spawnonship=false
       local spawnonfarp=false
       local spawnonrunway=false
-      local spawnonairport=false  
-      if spawnonground then
-      
-        -- Spawning at a ship
-        spawnonship=SpawnAirbase:GetCategory()==1 -- Catetory 1 are ships.
-        
-        -- Spawning at a FARP. Catetory 4 are airbases so we need to check that type is FARP as well.
-        spawnonfarp=SpawnAirbase:GetCategory()==4 and SpawnAirbase:GetTypeName()=="FARP"
-        
-        -- Spawning at an airport.
-        spawnonairport=SpawnAirbase:GetCategory()==4 and SpawnAirbase:GetTypeName()~="FARP"
-        
-        -- Spawning on the runway.
+      local spawnonairport=false
+      if spawnonground then      
+        if AirbaseCategory == Airbase.Category.SHIP then
+          spawnonship=true
+        elseif AirbaseCategory == Airbase.Category.HELIPAD then
+          spawnonfarp=true
+        elseif AirbaseCategory == Airbase.Category.AIRDROME then
+          spawnonairport=true
+        end
         spawnonrunway=Takeoff==SPAWN.Takeoff.Runway
       end
-
-
+      
       -- Array with parking spots coordinates.
       local parkingspots={}
       local parkingindex={}
@@ -1330,20 +1330,39 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
         end
         
         -- Number of free parking spots at the airbase.
-        nfree=SpawnAirbase:GetFreeParkingSpotsNumber(termtype, spawnonship or spawnonfarp or spawnonrunway)
-        spots=SpawnAirbase:GetFreeParkingSpotsTable(termtype, spawnonship or spawnonfarp or spawnonrunway)
+        if spawnonship or spawnonfarp or spawnonrunway then
+          -- These places work procedural and have some kind of build in queue ==> Less effort.
+          nfree=SpawnAirbase:GetFreeParkingSpotsNumber(termtype, spawnonship or spawnonfarp or spawnonrunway)
+          spots=SpawnAirbase:GetFreeParkingSpotsTable(termtype, spawnonship or spawnonfarp or spawnonrunway)
+        else
+          if ishelo and termtype==nil then
+            -- Helo is spawned.
+            -- Try helo spots first.
+            spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.HelicopterOnly)
+            nfree=#spots
+            if nfree<#SpawnTemplate.units then
+              -- Not enough helo ports. Let's try all terminal types.
+              spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.HelicopterUsable)
+              nfree=#spots
+            end
+          else
+            -- Fixed wing aircraft is spawned.
+            --TODO: Add some default cases for transport, bombers etc. if no explicit terminal type is provided.
+            spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, termtype)
+            nfree=#spots
+          end
+        end
       
         -- Get parking data.
         local parkingdata=SpawnAirbase:GetParkingSpotsTable(termtype)
-
-        self:E(string.format("Parking at %s, terminal type %s:", SpawnAirbase:GetName(), tostring(termtype)))
+        self:T(string.format("Parking at %s, terminal type %s:", SpawnAirbase:GetName(), tostring(termtype)))
         for _,_spot in pairs(parkingdata) do        
-          self:E(string.format("%s, Termin Index = %3d, Term Type = %03d, Free = %5s, TOAC = %5s, Term ID0 = %3d, Dist2Rwy = %4d", 
+          self:T(string.format("%s, Termin Index = %3d, Term Type = %03d, Free = %5s, TOAC = %5s, Term ID0 = %3d, Dist2Rwy = %4d", 
           SpawnAirbase:GetName(), _spot.TerminalID, _spot.TerminalType,tostring(_spot.Free),tostring(_spot.TOAC),_spot.TerminalID0,_spot.DistToRwy))
         end
-        self:E(string.format("%s at %s: free parking spots = %d - number of units = %d", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), nfree, #SpawnTemplate.units))
+        self:T(string.format("%s at %s: free parking spots = %d - number of units = %d", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), nfree, #SpawnTemplate.units))
         
-        -- Put parking spots in table. These spots are only used if 
+        -- Put parking spots in table. These spots are only used if spawing at an airbase. 
         if nfree >= #SpawnTemplate.units or (spawnonrunway and nfree>0) then
           
           for i=1,#SpawnTemplate.units do
@@ -1352,22 +1371,34 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
           end
           
         else
-          self:E(string.format("Group %s has no parking spots at %s ==> air start!", self.SpawnTemplatePrefix, SpawnAirbase:GetName()))
-        
-          -- Not enough parking spots at the airport ==> Spawn in air.
-          spawnonground=false
-          spawnonship=false
-          spawnonfarp=false
-          spawnonrunway=false
+          if not self.SpawnUnControlled then 
+            self:E(string.format("WARNING: Group %s has no parking spots at %s ==> air start!", self.SpawnTemplatePrefix, SpawnAirbase:GetName()))
           
-          -- Set waypoint type/action to turning point.
-          SpawnPoint.type   = GROUPTEMPLATE.Takeoff[GROUP.Takeoff.Air][1] -- type   = Turning Point
-          SpawnPoint.action = GROUPTEMPLATE.Takeoff[GROUP.Takeoff.Air][2] -- action = Turning Point
-          
-          -- Adjust altitude to be 500-1000 m above the airbase.
-          PointVec3.y=PointVec3:GetLandHeight()+math.random(200,1200)
-          
-          Takeoff=GROUP.Takeoff.Air
+            -- Not enough parking spots at the airport ==> Spawn in air.
+            spawnonground=false
+            spawnonship=false
+            spawnonfarp=false
+            spawnonrunway=false
+            
+            -- Set waypoint type/action to turning point.
+            SpawnPoint.type   = GROUPTEMPLATE.Takeoff[GROUP.Takeoff.Air][1] -- type   = Turning Point
+            SpawnPoint.action = GROUPTEMPLATE.Takeoff[GROUP.Takeoff.Air][2] -- action = Turning Point
+            
+            -- Adjust altitude to be 500-1000 m above the airbase.
+            PointVec3.x=PointVec3.x+math.random(-500,500)
+            PointVec3.z=PointVec3.z+math.random(-500,500)            
+            if ishelo then
+              PointVec3.y=PointVec3:GetLandHeight()+math.random(200,1200)
+            else
+              -- Randomize position so that multiple AC wont be spawned on top even in air.
+              PointVec3.y=PointVec3:GetLandHeight()+math.random(500,5000)
+            end
+            
+            Takeoff=GROUP.Takeoff.Air
+          else
+            self:E(string.format("WARNING: Group %s has no parking spots at %s ==> Uncontrolled spawning ==> No spawn!", self.SpawnTemplatePrefix, SpawnAirbase:GetName()))
+            return nil
+          end
         end
         
       end
@@ -1428,16 +1459,9 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
           UnitTemplate.parking = parkingindex[UnitID]
         end
         
-        
-        -- Place marker at spawn position.   
-        --if self.Debug then
-        local unitspawn=COORDINATE:New(SpawnTemplate.units[UnitID].x, SpawnTemplate.units[UnitID].alt, SpawnTemplate.units[UnitID].y)
-        unitspawn:MarkToAll(string.format("%s Spawnplace unit #%d, terminal %s", self.SpawnTemplatePrefix, UnitID, tostring(UnitTemplate.parking)))
-        --end
-        
+        -- Debug output.
         self:T2(string.format("Group %s unit number %d: Parking    = %s",self.SpawnTemplatePrefix, UnitID, tostring(UnitTemplate.parking)))
-        self:T2(string.format("Group %s unit number %d: Parking ID = %s",self.SpawnTemplatePrefix, UnitID, tostring(UnitTemplate.parking_id)))
-        
+        self:T2(string.format("Group %s unit number %d: Parking ID = %s",self.SpawnTemplatePrefix, UnitID, tostring(UnitTemplate.parking_id)))        
         self:T2('After Translation SpawnTemplate.units['..UnitID..'].x = '..SpawnTemplate.units[UnitID].x..', SpawnTemplate.units['..UnitID..'].y = '..SpawnTemplate.units[UnitID].y)
       end
       

@@ -302,7 +302,7 @@ do -- COORDINATE
   -- @return Static objects found.
   -- @return Scenery objects found.
   function COORDINATE:ScanObjects(radius)
-    env.info(string.format("FF Scanning in radius %.1f m.", radius))
+    self:T(string.format("Scanning in radius %.1f m.", radius))
 
     local SphereSearch = {
       id = world.VolumeType.SPHERE,
@@ -328,7 +328,8 @@ do -- COORDINATE
         local ObjectCategory = ZoneObject:getCategory()
         
         -- Check for unit or static objects
-        if (ObjectCategory == Object.Category.UNIT and ZoneObject:isExist() and ZoneObject:isActive()) then
+        --if (ObjectCategory == Object.Category.UNIT and ZoneObject:isExist() and ZoneObject:isActive()) then
+        if (ObjectCategory == Object.Category.UNIT and ZoneObject:isExist()) then
         
           table.insert(Units, ZoneObject)
           gotunits=true
@@ -354,14 +355,18 @@ do -- COORDINATE
     world.searchObjects({Object.Category.UNIT, Object.Category.STATIC, Object.Category.SCENERY}, SphereSearch, EvaluateZone)
     
     for _,unit in pairs(Units) do
-      env.info(string.format("FF found unit %s", unit:getName()))
+      self:T(string.format("Scan found unit %s", unit:getName()))
     end
     for _,static in pairs(Statics) do
-      env.info(string.format("FF found unit %s", static:getName()))
+      self:T(string.format("Scan found static %s", static:getName()))
+    end
+    for _,scenery in pairs(Scenery) do
+      self:T(string.format("Scan found scenery %s", scenery:getName()))
     end
     
-    return gotunits, gotstatics, gotscenery, Units, Statics, Scenery   
+    return gotunits, gotstatics, gotscenery, Units, Statics, Scenery
   end
+ 
   --- Calculate the distance from a reference @{#COORDINATE}.
   -- @param #COORDINATE self
   -- @param #COORDINATE PointVec2Reference The reference @{#COORDINATE}.
