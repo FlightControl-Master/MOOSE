@@ -294,15 +294,18 @@ do -- COORDINATE
   
   --- Returns if the 2 coordinates are at the same 2D position.
   -- @param #COORDINATE self
-  -- @param #number radius Scan radius in meters.
+  -- @param #number radius (Optional) Scan radius in meters. Default 100 m.
+  -- @param #boolean scanunits (Optional) If true scan for units. Default true.
+  -- @param #boolean scanstatics (Optional) If true scan for static objects. Default true.
+  -- @param #boolean scanscenery (Optional) If true scan for scenery objects. Default false.
   -- @return True if units were found.
   -- @return True if statics were found.
   -- @return True if scenery objects were found.
   -- @return Unit objects found.
   -- @return Static objects found.
   -- @return Scenery objects found.
-  function COORDINATE:ScanObjects(radius)
-    self:T(string.format("Scanning in radius %.1f m.", radius))
+  function COORDINATE:ScanObjects(radius, scanunits, scanstatics, scanscenery)
+    self:F(string.format("Scanning in radius %.1f m.", radius))
 
     local SphereSearch = {
       id = world.VolumeType.SPHERE,
@@ -312,6 +315,30 @@ do -- COORDINATE
         }
       }
 
+    -- Defaults
+    radius=radius or 100
+    if scanunits==nil then
+      scanunits=true
+    end
+    if scanstatics==nil then
+      scanstatics=true
+    end
+    if scanscenery==nil then
+      scanscenery=false
+    end
+    
+    --{Object.Category.UNIT, Object.Category.STATIC, Object.Category.SCENERY}
+    local scanobjects={}
+    if scanunits then
+      table.insert(scanobjects, Object.Category.UNIT)
+    end
+    if scanstatics then
+      table.insert(scanobjects, Object.Category.STATIC)
+    end
+    if scanscenery then
+      table.insert(scanobjects, Object.Category.SCENERY)
+    end
+    
     -- Found stuff.
     local Units = {}
     local Statics = {}
@@ -352,7 +379,7 @@ do -- COORDINATE
     end
   
     -- Search the world.
-    world.searchObjects({Object.Category.UNIT, Object.Category.STATIC, Object.Category.SCENERY}, SphereSearch, EvaluateZone)
+    world.searchObjects(scanobjects, SphereSearch, EvaluateZone)
     
     for _,unit in pairs(Units) do
       self:T(string.format("Scan found unit %s", unit:getName()))
@@ -361,7 +388,7 @@ do -- COORDINATE
       self:T(string.format("Scan found static %s", static:getName()))
     end
     for _,scenery in pairs(Scenery) do
-      self:T(string.format("Scan found scenery %s", scenery:getName()))
+      self:T(string.format("Scan found scenery %s", scenery:getTypeName()))
     end
     
     return gotunits, gotstatics, gotscenery, Units, Statics, Scenery
@@ -1021,22 +1048,28 @@ do -- COORDINATE
   
   --- Gets the nearest parking spot.
   -- @param #COORDINATE self
-  -- @param #boolean free (Optional) Only look for free parking spots. By default the closest parking spot is returned regardless of whether it is free or not.
-  -- @param Wrapper.Airbase#AIRBASE airbase (Optional) Search only parking spots at that airbase.
-  -- @param Wrapper.Airbase#Terminaltype terminaltype Type of the terminal.
+  -- @param Wrapper.Airbase#AIRBASE airbase (Optional) Search only parking spots at this airbase.
+  -- @param Wrapper.Airbase#Terminaltype terminaltype (Optional) Type of the terminal. Default any execpt valid spawn points on runway.
+  -- @param #boolean free (Optional) If true, returns the closest free spot. If false, returns the closest occupied spot. If nil, returns the closest spot regardless of free or occupied.
   -- @return Core.Point#COORDINATE Coordinate of the nearest parking spot.
-  -- @return #number Distance to closest parking spot.
-  function COORDINATE:GetClosestParkingSpot(free, airbase, terminaltype)
-  
+  -- @return #number Terminal ID.
+  -- @return #number Distance to closest parking spot in meters.
+  function COORDINATE:GetClosestParkingSpot(airbase, terminaltype, free)
+    
+    -- Get airbase table.
     local airbases={}
     if airbase then
       table.insert(airbases,airbase)
     else
-      airbases=AIRBASE:GetAllAirbases()
+      airbases=AIRBASE.GetAllAirbases()
     end
     
+    -- Init.
     local _closest=nil --Core.Point#COORDINATE
+    local _termID=nil
     local _distmin=nil
+
+    -- Loop over all airbases.
     for _,_airbase in pairs(airbases) do
     
       local mybase=_airbase --Wrapper.Airbase#AIRBASE
@@ -1044,44 +1077,51 @@ do -- COORDINATE
       
       for _,_spot in pairs(parkingdata) do
         
-        -- Get coordinate if it matches the requirements.
-        local _coord=nil --Core.Point#COORDINATE
-        if (free and _spot.Free) or  free==nil then
-          if (terminaltype and _spot.TerminalType==terminaltype) or terminaltype==nil then
-            _coord=_spot.Coordinate
-          end
-        end
-      
-        -- Compare distance to closest one found so far.
-        if _coord then
+        -- Check for parameters.        
+        if (free==true and _spot.Free==true) or (free==false and _spot.Free==false) or free==nil then
+          
+          local _coord=_spot.Coordinate --Core.Point#COORDINATE
+            
           local _dist=self:Get2DDistance(_coord)
           if _distmin==nil then
             _closest=_coord
             _distmin=_dist
-          else
-            local _dist=self:Get2DDistance(_coord)    
+            _termID=_spot.TerminalID
+          else    
             if _dist<_distmin then
               _distmin=_dist
               _closest=_coord
+              _termID=_spot.TerminalID
             end
           end
-            
-        end
-        
+                          
+        end         
       end
     end
-  
-    return _closest, _distmin
+   
+    return _closest, _termID, _distmin
   end
 
   --- Gets the nearest free parking spot.
   -- @param #COORDINATE self
   -- @param Wrapper.Airbase#AIRBASE airbase (Optional) Search only parking spots at that airbase.
-  -- @param Wrapper.Airbase#Terminaltype terminaltype Type of the terminal.
+  -- @param Wrapper.Airbase#Terminaltype terminaltype (Optional) Type of the terminal.
   -- @return #COORDINATE Coordinate of the nearest free parking spot.
-  -- @return #number Distance to closest free parking spot.
+  -- @return #number Terminal ID.
+  -- @return #number Distance to closest free parking spot in meters.
   function COORDINATE:GetClosestFreeParkingSpot(airbase, terminaltype)
-    return self:GetClosestParkingSpot(true, airbase, terminaltype)
+    return self:GetClosestParkingSpot(airbase, terminaltype, true)
+  end
+
+  --- Gets the nearest occupied parking spot.
+  -- @param #COORDINATE self
+  -- @param Wrapper.Airbase#AIRBASE airbase (Optional) Search only parking spots at that airbase.
+  -- @param Wrapper.Airbase#Terminaltype terminaltype (Optional) Type of the terminal.
+  -- @return #COORDINATE Coordinate of the nearest occupied parking spot.
+  -- @return #number Terminal ID.
+  -- @return #number Distance to closest occupied parking spot in meters.
+  function COORDINATE:GetClosestOccupiedParkingSpot(airbase, terminaltype)
+    return self:GetClosestParkingSpot(airbase, terminaltype, false)
   end
     
   --- Gets the nearest coordinate to a road.

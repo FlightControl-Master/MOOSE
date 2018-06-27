@@ -339,10 +339,9 @@ function AIRBASE:GetZone()
 end
 
 --- Get all airbases of the current map. This includes ships and FARPS.
--- @param #AIRBASE self
 -- @param DCS#Coalition coalition (Optional) Return only airbases belonging to the specified coalition. By default, all airbases of the map are returned.
 -- @return #table Table containing all airbase objects of the current map.
-function AIRBASE:GetAllAirbases(coalition)
+function AIRBASE.GetAllAirbases(coalition)
   
   local airbases={}
   for _,airbase in pairs(_DATABASE.AIRBASES) do
@@ -402,7 +401,7 @@ function AIRBASE:GetParkingSpotsNumber(termtype)
   
   local nspots=0
   for _,parkingspot in pairs(parkingdata) do
-    if self:_CheckTerminalType(parkingspot.Term_Type, termtype) then
+    if AIRBASE._CheckTerminalType(parkingspot.Term_Type, termtype) then
       nspots=nspots+1
     end
   end
@@ -423,7 +422,7 @@ function AIRBASE:GetFreeParkingSpotsNumber(termtype, allowTOAC)
   local nfree=0
   for _,parkingspot in pairs(parkingdata) do
     -- Spots on runway are not counted unless explicitly requested.
-    if self:_CheckTerminalType(parkingspot.Term_Type, termtype) then
+    if AIRBASE._CheckTerminalType(parkingspot.Term_Type, termtype) then
       if (allowTOAC and allowTOAC==true) or parkingspot.TO_AC==false then
         nfree=nfree+1
       end
@@ -447,7 +446,7 @@ function AIRBASE:GetFreeParkingSpotsCoordinates(termtype, allowTOAC)
   local spots={}
   for _,parkingspot in pairs(parkingdata) do
     -- Coordinates on runway are not returned unless explicitly requested.
-    if self:_CheckTerminalType(parkingspot.Term_Type, termtype) then
+    if AIRBASE._CheckTerminalType(parkingspot.Term_Type, termtype) then
       if (allowTOAC and allowTOAC==true) or parkingspot.TO_AC==false then
         table.insert(spots, COORDINATE:NewFromVec3(parkingspot.vTerminalPos))
       end
@@ -471,7 +470,7 @@ function AIRBASE:GetParkingSpotsCoordinates(termtype)
   for _,parkingspot in pairs(parkingdata) do
   
     -- Coordinates on runway are not returned unless explicitly requested.
-    if self:_CheckTerminalType(parkingspot.Term_Type, termtype) then
+    if AIRBASE._CheckTerminalType(parkingspot.Term_Type, termtype) then
     
       -- Get coordinate from Vec3 terminal position.
       local _coord=COORDINATE:NewFromVec3(parkingspot.vTerminalPos)
@@ -510,7 +509,7 @@ function AIRBASE:GetParkingSpotsTable(termtype)
   -- Put coordinates of parking spots into table.
   local spots={}
   for _,_spot in pairs(parkingdata) do
-    if self:_CheckTerminalType(_spot.Term_Type, termtype) then
+    if AIRBASE._CheckTerminalType(_spot.Term_Type, termtype) then
       local _free=_isfree(_spot)
       local _coord=COORDINATE:NewFromVec3(_spot.vTerminalPos)
       table.insert(spots, {Coordinate=_coord, TerminalID=_spot.Term_Index, TerminalType=_spot.Term_Type, TOAC=_spot.TO_AC, Free=_free, TerminalID0=_spot.Term_Index_0, DistToRwy=_spot.fDistToRW})
@@ -533,7 +532,7 @@ function AIRBASE:GetFreeParkingSpotsTable(termtype, allowTOAC)
   -- Put coordinates of free spots into table.
   local freespots={}
   for _,_spot in pairs(parkingfree) do
-    if self:_CheckTerminalType(_spot.Term_Type, termtype) then
+    if AIRBASE._CheckTerminalType(_spot.Term_Type, termtype) then
       if (allowTOAC and allowTOAC==true) or _spot.TO_AC==false then
         local _coord=COORDINATE:NewFromVec3(_spot.vTerminalPos)
         table.insert(freespots, {Coordinate=_coord, TerminalID=_spot.Term_Index, TerminalType=_spot.Term_Type, TOAC=_spot.TO_AC, Free=true, TerminalID0=_spot.Term_Index_0, DistToRwy=_spot.fDistToRW})
@@ -572,55 +571,8 @@ function AIRBASE:MarkParkingSpots(termtype)
   end
 end
 
-
---- Helper function to check for the correct terminal type including "artificial" ones.
--- @param #AIRBASE self
--- @param #number Term_Type Termial type from getParking routine.
--- @param #number termtype Terminal type from AIRBASE.TerminalType enumerator.
--- @return True if terminal types match.
-function AIRBASE:_CheckTerminalType(Term_Type, termtype)
-
-  -- Nill check for Term_Type.
-  if Term_Type==nil then
-    return false
-  end
-
-  -- If no terminal type is requested, we return true. BUT runways are excluded unless explicitly requested.
-  if termtype==nil then
-    if Term_Type==AIRBASE.TerminalType.Runway then
-      return false
-    else
-      return true
-    end
-  end
-  
-  -- Init no match.
-  local match=false
-  
-  -- Standar case.  
-  if Term_Type==termtype then
-    match=true
-  end
-  
-  -- Artificial cases. Combination of terminal types.
-  if termtype==AIRBASE.TerminalType.OpenMedOrBig then
-    if Term_Type==AIRBASE.TerminalType.OpenMed or Term_Type==AIRBASE.TerminalType.OpenBig then
-      match=true
-    end
-  elseif termtype==AIRBASE.TerminalType.HelicopterUsable then
-    if Term_Type==AIRBASE.TerminalType.OpenMed or Term_Type==AIRBASE.TerminalType.OpenBig or Term_Type==AIRBASE.TerminalType.HelicopterOnly then
-      match=true
-     end
-  elseif termtype==AIRBASE.TerminalType.FighterAircraft then
-    if Term_Type==AIRBASE.TerminalType.OpenMed or Term_Type==AIRBASE.TerminalType.OpenBig or Term_Type==AIRBASE.TerminalType.Shelter then
-      match=true
-    end
-  end
-  
-  return match
-end
-
---- Seach an unoccupied parking spot at a specific airport and for a specific aircraft.
+--- Seach unoccupied parking spots at the airbase for a specific group of aircraft. The routine also optionally checks for other unit, static and scenery options in a certain radius around the parking spot.
+-- The dimension of the spawned aircraft and of the potential obstacle are taken into account. Note that the routine can only return so many spots that are free.
 -- @param #AIRBASE self
 -- @param Wrapper.Group#GROUP group Aircraft group for which the parking spots are requested.
 -- @param #number terminaltype (Optional) Only search spots at a specific terminal type. Default is all types execpt on runway.
@@ -628,7 +580,7 @@ end
 -- @param #boolean scanunits (Optional) Scan for units as obstacles. Default true.
 -- @param #boolean scanstatics (Optional) Scan for statics as obstacles. Default true.
 -- @param #boolean scanscenery (Optional) Scan for scenery as obstacles. Default false. Can cause problems with e.g. shelters.
--- @return #table Table of coordinates and terminal IDs of the parking spots or nil, if no valid parking spots for the whole group could be found.
+-- @return #table Table of coordinates and terminal IDs of free parking spots. Each table entry has the elements .Coordinate and .TerminalID.
 function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius, scanunits, scanstatics, scanscenery)
 
   -- Init default
@@ -642,6 +594,9 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
   if scanscenery==nil then
     scanscenery=false
   end
+  
+  -- Mark all found obstacles on F10 map.
+  local markobstacles=false
   
   -- Get the size of an object.
   local function _GetObjectSize(unit,mooseobject)
@@ -681,7 +636,7 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
   local _aircraftsize, ax,ay,az=_GetObjectSize(aircraft, true)
   
   -- Debug info.
-  self:T(string.format("Looking for %d parking spot(s) at %s for aircraft of size %.1f m (x=%.1f,y=%.1f,z=%.1f) at termial type %s.", nspots, airport, _aircraftsize, ax,ay,az, tostring(terminaltype)))
+  self:E(string.format("Looking for %d parking spot(s) at %s for aircraft of size %.1f m (x=%.1f,y=%.1f,z=%.1f) at termial type %s.", nspots, airport, _aircraftsize, ax, ay, az, tostring(terminaltype)))
   
   -- Table of valid spots.
   local validspots={}
@@ -691,74 +646,81 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
   for _,parkingspot in pairs(parkingdata) do
     
     -- Check for requested terminal type if any.
-    if self:_CheckTerminalType(parkingspot.TerminalType, terminaltype) then
-    end
+    if AIRBASE._CheckTerminalType(parkingspot.TerminalType, terminaltype) then
   
-    -- Coordinate of the parking spot.
-    local _spot=parkingspot.Coordinate --Core.Point#COORDINATE
+      -- Coordinate of the parking spot.
+      local _spot=parkingspot.Coordinate   -- Core.Point#COORDINATE
+      local _termid=parkingspot.TerminalID
+          
+      -- Scan a radius of 50 meters around the spot.
+      local _,_,_,_units,_statics,_sceneries=_spot:ScanObjects(scanradius, scanunits, scanstatics, scanscenery)
+    
+      -- Loop over objects within scan radius.
+      local occupied=false
+  
+      -- Check all units.    
+      for _,unit in pairs(_units) do
+      
+        local _vec3=unit:getPoint()
+        local _coord=COORDINATE:NewFromVec3(_vec3)
+        local _dist=_coord:Get2DDistance(_spot)      
+        local _safe=_overlap(aircraft, unit, _dist)
         
-    -- Scan a radius of 50 meters around the spot.
-    local _,_,_,_units,_statics,_sceneries=_spot:ScanObjects(scanradius)
-
-
-    -- Loop over objects within scan radius.
-    local occupied=false
-
-    -- Check all units.    
-    for _,unit in pairs(_units) do
-    
-      local _vec3=unit:getPoint()
-      local _coord=COORDINATE:NewFromVec3(_vec3)
-      local _dist=_coord:Get2DDistance(_spot)      
-      local _safe=_overlap(aircraft, unit, _dist)
-      
-      --local l,x,y,z=_GetObjectSize(unit)      
-      --_coord:MarkToAll(string.format("scan found unit %s\nx=%.2f y=%.2f z=%.2f\nl=%.2f d=%.2f safe=%s", unit:getName(), x, y, z, l, _dist, tostring(_safe)))
-      
-      if scanunits and not _safe then
-        occupied=true
-      end      
-    end
-  
-    -- Check all statics.
-    for _,static in pairs(_statics) do
-      local _vec3=static:getPoint()
-      local _coord=COORDINATE:NewFromVec3(_vec3)
-      local _dist=_coord:Get2DDistance(_spot)      
-      local _safe=_overlap(aircraft, static, _dist)
-      
-      --local l,x,y,z=_GetObjectSize(static)
-      --_coord:MarkToAll(string.format("scan found static %s\nx=%.2f y=%.2f z=%.2f\nl=%.2f d=%.2f safe=%s", static:getName(),x,y,z,l,_dist, tostring(_safe)))
-      
-      if scanstatics and not _safe then
-        occupied=true
-      end            
-    end
-    
-    -- Check all scenery.
-    for _,scenery in pairs(_sceneries) do
-      local _vec3=scenery:getPoint()
-      local _coord=COORDINATE:NewFromVec3(_vec3)
-      local _dist=_coord:Get2DDistance(_spot)      
-      local _safe=_overlap(aircraft, scenery, _dist)
-      
-      --local l,x,y,z=_GetObjectSize(scenery)
-      --_coord:MarkToAll(string.format("scan found scenery %s\nx=%.2f y=%.2f z=%.2f\nl=%.2f d=%.2f", scenery:getName(),x,y,z,l,_dist))
-      
-      if scanscenery and not _safe then
-        occupied=true
-      end                  
-    end
-    
-    --_spot:MarkToAll(string.format("Parking spot %d free=%s", parkingspot.TerminalID, tostring(not occupied)))
-    if occupied then
-      self:T(string.format("%s: Parking spot id %d occupied.", airport, parkingspot.TerminalID))
-    else
-      self:T(string.format("%s: Parking spot id %d free.", airport, parkingspot.TerminalID))      
-      if nvalid<nspots then
-        table.insert(validspots, {Coordinate=_spot, TerminalID=parkingspot.TerminalID})
+        if markobstacles then
+          local l,x,y,z=_GetObjectSize(unit)      
+          _coord:MarkToAll(string.format("Unit %s\nx=%.1f y=%.1f z=%.1f\nl=%.1f d=%.1f\nspot %d safe=%s", unit:getName(),x,y,z,l,_dist, _termid, tostring(_safe)))
+        end
+        
+        if scanunits and not _safe then
+          occupied=true
+        end      
       end
-      nvalid=nvalid+1
+    
+      -- Check all statics.
+      for _,static in pairs(_statics) do
+        local _vec3=static:getPoint()
+        local _coord=COORDINATE:NewFromVec3(_vec3)
+        local _dist=_coord:Get2DDistance(_spot)      
+        local _safe=_overlap(aircraft, static, _dist)
+        
+        if markobstacles then
+          local l,x,y,z=_GetObjectSize(static)
+          _coord:MarkToAll(string.format("Static %s\nx=%.1f y=%.1f z=%.1f\nl=%.1f d=%.1f\nspot %d safe=%s", static:getName(),x,y,z,l,_dist, _termid, tostring(_safe)))
+        end
+        
+        if scanstatics and not _safe then
+          occupied=true
+        end            
+      end
+      
+      -- Check all scenery.
+      for _,scenery in pairs(_sceneries) do
+        local _vec3=scenery:getPoint()
+        local _coord=COORDINATE:NewFromVec3(_vec3)
+        local _dist=_coord:Get2DDistance(_spot)      
+        local _safe=_overlap(aircraft, scenery, _dist)
+        
+        if markobstacles then
+          local l,x,y,z=_GetObjectSize(scenery)
+          _coord:MarkToAll(string.format("Scenery %s\nx=%.1f y=%.1f z=%.1f\nl=%.1f d=%.1f\nspot %d safe=%s", scenery:getTypeName(),x,y,z,l,_dist, _termid, tostring(_safe)))
+        end
+        
+        if scanscenery and not _safe then
+          occupied=true
+        end                  
+      end
+      
+      --_spot:MarkToAll(string.format("Parking spot %d free=%s", parkingspot.TerminalID, tostring(not occupied)))
+      if occupied then
+        self:T(string.format("%s: Parking spot id %d occupied.", airport, parkingspot.TerminalID))
+      else
+        self:E(string.format("%s: Parking spot id %d free.", airport, parkingspot.TerminalID))      
+        if nvalid<nspots then
+          table.insert(validspots, {Coordinate=_spot, TerminalID=parkingspot.TerminalID})
+        end
+        nvalid=nvalid+1
+      end
+    
     end
        
     -- We found enough spots.
@@ -768,4 +730,115 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
   end  
     
   return validspots
+end
+
+--- Helper function that checks if a group is close to a spawn point on the runway.
+-- @param #AIRBASE self
+-- @param Wrapper.Group#GROUP group Group to be checked.
+-- @param #number radius Radius around the spawn point to be checked. Default is 25 m.
+-- @param #boolean despawn If true, the group is destroyed. 
+-- @return #boolean True if group is within radius around spawn points on runway.
+function AIRBASE:CheckOnRunWay(group, radius, despawn)
+
+  -- Default radius.
+  radius=radius or 25
+  
+  -- Debug.
+  self:T(string.format("%s, checking if group %s is on runway?",self:GetName(), group:GetName()))
+
+  if group and group:IsAlive() then
+  
+    -- Get coordinates on runway.
+    local runwaypoints=self:GetParkingSpotsCoordinates(AIRBASE.TerminalType.Runway)
+    
+    --[[
+    for _i,_coord in pairs(runwaypoints) do
+      _coord:MarkToAll(string.format("runway %d",_i))
+    end
+    ]]
+    
+    -- Get units of group.
+    local units=group:GetUnits()
+    
+    -- Loop over units.
+    for _,_unit in pairs(units) do
+      local unit=_unit --Wrapper.Unit#UNIT
+      if unit and unit:IsAlive() then
+        self:T(string.format("%s, checking if unit %s is on runway?",self:GetName(), unit:GetName()))
+        
+        -- Loop over runway spawn points.
+        for _i,_coord in pairs(runwaypoints) do
+
+          -- Distance between unit and spawn pos.
+          local dist=unit:GetCoordinate():Get2DDistance(_coord)
+          
+          -- Check if unit is withing radius.
+          if dist<radius and not unit:InAir() then
+            self:T(string.format("%s, unit %s of group %s was spawned on runway #%d. Distance %.1f < radius %.1f m. Despawn = %s.", self:GetName(), unit:GetName(), group:GetName(),_i, dist, radius, tostring(despawn)))
+            --unit:FlareRed()
+            if despawn then
+              group:Destroy(true)
+            end
+            return true
+          else
+            self:T(string.format("%s, unit %s of group %s was NOT spawned on runway #%d. Distance %.1f > radius %.1f m. Despawn = %s.", self:GetName(), unit:GetName(), group:GetName(),_i, dist, radius, tostring(despawn)))
+            --unit:FlareGreen()
+          end
+                    
+        end
+      else
+        self:T(string.format("%s, checking if unit %s of group %s is on runway. Unit is NOT alive.",self:GetName(), unit:GetName(), group:GetName()))  
+      end      
+    end
+  else
+    self:T(string.format("%s, checking if group %s is on runway. Group is NOT alive.",self:GetName(), group:GetName()))
+  end
+  
+  return false
+end
+
+--- Helper function to check for the correct terminal type including "artificial" ones.
+-- @param #number Term_Type Termial type from getParking routine.
+-- @param #number termtype Terminal type from AIRBASE.TerminalType enumerator.
+-- @return #boolean True if terminal types match.
+function AIRBASE._CheckTerminalType(Term_Type, termtype)
+
+  -- Nill check for Term_Type.
+  if Term_Type==nil then
+    return false
+  end
+
+  -- If no terminal type is requested, we return true. BUT runways are excluded unless explicitly requested.
+  if termtype==nil then
+    if Term_Type==AIRBASE.TerminalType.Runway then
+      return false
+    else
+      return true
+    end
+  end
+  
+  -- Init no match.
+  local match=false
+  
+  -- Standar case.  
+  if Term_Type==termtype then
+    match=true
+  end
+  
+  -- Artificial cases. Combination of terminal types.
+  if termtype==AIRBASE.TerminalType.OpenMedOrBig then
+    if Term_Type==AIRBASE.TerminalType.OpenMed or Term_Type==AIRBASE.TerminalType.OpenBig then
+      match=true
+    end
+  elseif termtype==AIRBASE.TerminalType.HelicopterUsable then
+    if Term_Type==AIRBASE.TerminalType.OpenMed or Term_Type==AIRBASE.TerminalType.OpenBig or Term_Type==AIRBASE.TerminalType.HelicopterOnly then
+      match=true
+     end
+  elseif termtype==AIRBASE.TerminalType.FighterAircraft then
+    if Term_Type==AIRBASE.TerminalType.OpenMed or Term_Type==AIRBASE.TerminalType.OpenBig or Term_Type==AIRBASE.TerminalType.Shelter then
+      match=true
+    end
+  end
+  
+  return match
 end

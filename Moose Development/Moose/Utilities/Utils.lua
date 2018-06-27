@@ -496,3 +496,99 @@ function UTILS.BeaufortScale(speed)
   end
   return bn,bd
 end
+
+--- Split string at seperators. C.f. http://stackoverflow.com/questions/1426954/split-string-in-lua
+-- @param #string str Sting to split.
+-- @param #string sep Speparator for split.
+-- @return #table Split text.
+function UTILS.Split(str, sep)
+  local result = {}
+  local regex = ("([^%s]+)"):format(sep)
+  for each in str:gmatch(regex) do
+    table.insert(result, each)
+  end
+  return result
+end
+
+--- Convert time in seconds to hours, minutes and seconds.
+-- @param #number seconds Time in seconds, e.g. from timer.getAbsTime() function.
+-- @return #string Time in format Hours:Minutes:Seconds+Days (HH:MM:SS+D).
+function UTILS.SecondsToClock(seconds)
+  
+  -- Nil check.
+  if seconds==nil then
+    return nil
+  end
+  
+  -- Seconds
+  local seconds = tonumber(seconds)
+  
+  -- Seconds of this day.
+  local _seconds=seconds%(60*60*24)
+
+  if seconds <= 0 then
+    return nil
+  else
+    local hours = string.format("%02.f", math.floor(_seconds/3600))
+    local mins  = string.format("%02.f", math.floor(_seconds/60 - (hours*60)))
+    local secs  = string.format("%02.f", math.floor(_seconds - hours*3600 - mins *60))
+    local days  = string.format("%d", seconds/(60*60*24))
+    return hours..":"..mins..":"..secs.."+"..days
+  end
+end
+
+--- Convert clock time from hours, minutes and seconds to seconds.
+-- @param #string clock String of clock time. E.g., "06:12:35" or "5:1:30+1". Format is (H)H:(M)M:((S)S)(+D) H=Hours, M=Minutes, S=Seconds, D=Days.
+-- @param #number Seconds. Corresponds to what you cet from timer.getAbsTime() function.
+function UTILS.ClockToSeconds(clock)
+  
+  -- Nil check.
+  if clock==nil then
+    return nil
+  end
+  
+  -- Seconds init.
+  local seconds=0
+  
+  -- Split additional days.
+  local dsplit=UTILS.split(clock, "+")
+  
+  -- Convert days to seconds.
+  if #dsplit>1 then
+    seconds=seconds+tonumber(dsplit[2])*60*60*24
+  end
+
+  -- Split hours, minutes, seconds    
+  local tsplit=UTILS.Split(dsplit[1], ":")
+
+  -- Get time in seconds
+  local i=1
+  for _,time in ipairs(tsplit) do
+    if i==1 then
+      -- Hours
+      seconds=seconds+tonumber(time)*60*60
+    elseif i==2 then
+      -- Minutes
+      seconds=seconds+tonumber(time)*60
+    elseif i==3 then
+      -- Seconds
+      seconds=seconds+tonumber(time)
+    end
+    i=i+1
+  end
+  
+  return seconds
+end
+
+--- Display clock and mission time on screen as a message to all.
+-- @param #number duration Duration in seconds how long the time is displayed. Default is 5 seconds.
+function UTILS.DisplayMissionTime(duration)
+  duration=duration or 5
+  local Tnow=timer.getAbsTime()
+  local mission_time=Tnow-timer.getTime0()
+  local mission_time_minutes=mission_time/60
+  local mission_time_seconds=mission_time%60
+  local local_time=UTILS.SecondsToClock(Tnow)  
+  local text=string.format("Time: %s - %02d:%02d", local_time, mission_time_minutes, mission_time_seconds)
+  MESSAGE:New(text, duration):ToAll()
+end
