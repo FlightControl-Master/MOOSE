@@ -1033,10 +1033,6 @@ do -- AI_A2A_DISPATCHER
         DefenderUnit:Destroy()
         return
       end
-      if DefenderUnit:GetFuel() <= self.DefenderDefault.FuelThreshold then
-        DefenderUnit:Destroy()
-        return
-      end
     end 
   end
   
