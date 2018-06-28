@@ -20,7 +20,7 @@
 --  * When a unit is removed a new unit with a different flight plan is respawned.
 --  * Aircraft can report their status during the route.
 --  * All of the above can be customized by the user if necessary.
---  * All current (Caucasus, Nevada, Normandy) and future maps are supported.
+--  * All current (Caucasus, Nevada, Normandy, Persian Gulf) and future maps are supported.
 --  
 --  The RAT class creates an entry in the F10 radio menu which allows to
 --  
@@ -62,7 +62,7 @@
 -- @type RAT
 -- @field #string ClassName Name of the Class.
 -- @field #boolean Debug Turn debug messages on or off.
--- @field Core.Group#GROUP templategroup Group serving as template for the RAT aircraft.
+-- @field Wrapper.Group#GROUP templategroup Group serving as template for the RAT aircraft.
 -- @field #string alias Alias for spawned group.
 -- @field #boolean spawninitialized If RAT:Spawn() was already called this RAT object is set to true to prevent users to call it again.
 -- @field #number spawndelay Delay time in seconds before first spawning happens.
@@ -111,6 +111,8 @@
 -- @field #number FLminuser Minimum flight level set by user.
 -- @field #number FLmaxuser Maximum flight level set by user.
 -- @field #boolean commute Aircraft commute between departure and destination, i.e. when respawned the departure airport becomes the new destiation.
+-- @field #boolean starshape If true, aircraft travel A-->B-->A-->C-->A-->D... for commute. 
+-- @field #string homebase Home base for commute and return zone. Aircraft will always return to this base but otherwise travel in a star shaped way.
 -- @field #boolean continuejourney Aircraft will continue their journey, i.e. get respawned at their destination with a new random destination.
 -- @field #number ngroups Number of groups to be spawned in total.
 -- @field #number alive Number of groups which are alive.
@@ -143,12 +145,14 @@
 -- @field #string onboardnum Sets the onboard number prefix. Same as setting "TAIL #" in the mission editor.
 -- @field #number onboardnum0 (Optional) Starting value of the automatically appended numbering of aircraft within a flight. Default is 1.
 -- @field #boolean checkonrunway Aircraft are checked if they were accidentally spawned on the runway. Default is true.
+-- @field #number onrunwayradius Distance (in meters) from a runway spawn point until a unit is considered to have accidentally been spawned on a runway. Default is 75 m.
+-- @field #number onrunwaymaxretry Number of respawn retries (on ground) at other airports if a group gets accidentally spawned on the runway. Default is 3. 
 -- @field #boolean checkontop Aircraft are checked if they were accidentally spawned on top of another unit. Default is true.
--- @field #number rbug_maxretry Number of respawn retries (on ground) at other airports if a group gets accidentally spawned on the runway. Default is 3.
--- @field #boolean useparkingdb Parking spots are added to data base once an aircraft has used it. These spots can later be used by other aircraft. Default is true.
--- @field #number termtype Type of terminal to be used when spawning at an airbase.
--- @field #boolean starshape If true, aircraft travel A-->B-->A-->C-->A-->D... for commute. 
--- @field #string homebase Home base for commute and return zone. Aircraft will always return to this base but otherwise travel in a star shaped way.
+-- @field #number ontopradius Radius in meters until which a unit is considered to be on top of another. Default is 2 m.
+-- @field Wrapper.Airbase#AIRBASE.TerminalType termtype Type of terminal to be used when spawning at an airbase.
+-- @field #number  parkingscanradius Radius in meters until which parking spots are scanned for obstacles like other units, statics or scenery.
+-- @field #boolean parkingscanscenery If true, area around parking spots is scanned for scenery objects. Default is false.
+-- @field #boolean parkingverysafe If true, parking spots are considered as non-free until a possible aircraft has left and taken off. Default false.
 -- @extends Core.Spawn#SPAWN
 
 --- Implements an easy to use way to randomly fill your map with AI aircraft.
@@ -346,6 +350,8 @@ RAT={
   FLmaxuser=nil,            -- Maximum flight level set by user.
   FLuser=nil,               -- Flight level set by users explicitly.
   commute=false,            -- Aircraft commute between departure and destination, i.e. when respawned the departure airport becomes the new destiation.
+  starshape=false,          -- If true, aircraft travel A-->B-->A-->C-->A-->D... for commute.
+  homebase=nil,             -- Home base for commute.
   continuejourney=false,    -- Aircraft will continue their journey, i.e. get respawned at their destination with a new random destination.
   alive=0,                  -- Number of groups which are alive.
   ngroups=nil,              -- Number of groups to be spawned in total. 
@@ -378,13 +384,15 @@ RAT={
   activate_max=1,           -- Max number of uncontrolle aircraft, which will be activated at a time. 
   onboardnum=nil,           -- Tail number.
   onboardnum0=1,            -- (Optional) Starting value of the automatically appended numbering of aircraft within a flight. Default is one.
-  rbug_maxretry=3,          -- Number of respawn retries (on ground) at other airports if a group gets accidentally spawned on the runway.
   checkonrunway=true,       -- Check whether aircraft have been spawned on the runway.
+  onrunwayradius=75,       -- Distance from a runway spawn point until a unit is considered to have accidentally been spawned on a runway.
+  onrunwaymaxretry=3,       -- Number of respawn retries (on ground) at other airports if a group gets accidentally spawned on the runway.
   checkontop=false,         -- Check whether aircraft have been spawned on top of another unit.
-  useparkingdb=false,       -- Put known parking spots into a data base.
+  ontopradius=2,            -- Radius in meters until which a unit is considered to be on top of another.
   termtype=nil,             -- Terminal type.
-  starshape=false,          -- If true, aircraft travel A-->B-->A-->C-->A-->D... for commute.
-  homebase=nil,             -- Home base for commute and return zone.
+  parkingscanradius=50,     -- Scan radius.
+  parkingscanscenery=false, -- Scan parking spots for scenery obstacles.
+  parkingverysafe=false,    -- Very safe option.
 }
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -496,10 +504,6 @@ RAT.markerid=0
 -- @field #string MenuF10
 RAT.MenuF10=nil
 
---- RAT parking spots data base.
--- @list parking
-RAT.parking={}
-
 --- Some ID to identify who we are in output of the DCS.log file.
 -- @field #string id
 RAT.id="RAT | "
@@ -510,7 +514,6 @@ RAT.version={
   version = "2.3.0",
   print = true,
 }
-
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -549,13 +552,14 @@ RAT.version={
 --TODO: Check that same alias is not given twice. Need to store previous ones and compare.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Constructor New
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a new RAT object.
 -- @param #RAT self
 -- @param #string groupname Name of the group as defined in the mission editor. This group is serving as a template for all spawned units.
 -- @param #string alias (Optional) Alias of the group. This is and optional parameter but must(!) be used if the same template group is used for more than one RAT object.  
--- @return #RAT Object of RAT class.
--- @return #nil If the group does not exist in the mission editor.
+-- @return #RAT Object of RAT class or nil if the group does not exist in the mission editor.
 -- @usage yak1:RAT("RAT_YAK") will create a RAT object called "yak1". The template group in the mission editor must have the name "RAT_YAK".
 -- @usage yak2:RAT("RAT_YAK", "Yak2") will create a RAT object "yak2". The template group in the mission editor must have the name "RAT_YAK" but the group will be called "Yak2" in e.g. the F10 menu.
 function RAT:New(groupname, alias)
@@ -607,10 +611,13 @@ function RAT:New(groupname, alias)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Spawn function
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Triggers the spawning of AI aircraft. Note that all additional options should be set before giving the spawn command.
 -- @param #RAT self
 -- @param #number naircraft (Optional) Number of aircraft to spawn. Default is one aircraft.
+-- @return #boolean True if spawning was successful or nil if nothing was spawned.
 -- @usage yak:Spawn(5) will spawn five aircraft. By default aircraft will spawn at neutral and red airports if the template group is part of the red coaliton.
 function RAT:Spawn(naircraft)
 
@@ -737,9 +744,8 @@ function RAT:Spawn(naircraft)
   text=text..string.format("Radio modulation : %s\n", tostring(self.frequency))
   text=text..string.format("Tail # prefix    : %s\n", tostring(self.onboardnum))
   text=text..string.format("Check on runway: %s\n", tostring(self.checkonrunway))
+  text=text..string.format("Max respawn attempts: %s\n", tostring(self.onrunwaymaxretry))
   text=text..string.format("Check on top: %s\n", tostring(self.checkontop))
-  text=text..string.format("Max respawn attempts: %s\n", tostring(self.rbug_maxretry))
-  text=text..string.format("Parking DB: %s\n", tostring(self.useparkingdb))
   text=text..string.format("Uncontrolled: %s\n", tostring(self.uncontrolled))
   if self.uncontrolled and self.activate_uncontrolled then
     text=text..string.format("Uncontrolled max  : %4.1f\n", self.activate_max)
@@ -799,8 +805,12 @@ function RAT:Spawn(naircraft)
   if self.uncontrolled and self.activate_uncontrolled then
     SCHEDULER:New(nil, self._ActivateUncontrolled, {self}, self.activate_delay, self.activate_delta, self.activate_frand)
   end
+  
+  return true
 end
 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Consistency Check
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Function checks consistency of user input and automatically adjusts parameters if necessary.
@@ -916,10 +926,15 @@ function RAT:_CheckConsistency()
   end
 end
 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- User functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 --- Set the friendly coalitions from which the airports can be used as departure and destination.
 -- @param #RAT self
 -- @param #string friendly "same"=own coalition+neutral (default), "sameonly"=own coalition only, "neutral"=all neutral airports.
 -- Default is "same", so aircraft will use airports of the coalition their spawn template has plus all neutral airports.
+-- @return #RAT RAT self object.
 -- @usage yak:SetCoalition("neutral") will spawn aircraft randomly on all neutral airports.
 -- @usage yak:SetCoalition("sameonly") will spawn aircraft randomly on airports belonging to the same coalition only as the template.
 function RAT:SetCoalition(friendly)
@@ -931,11 +946,21 @@ function RAT:SetCoalition(friendly)
   else
     self.friendly=RAT.coal.same
   end
+  return self
 end
 
 --- Set coalition of RAT group. You can make red templates blue and vice versa.
+-- Note that a country is also set automatically if it has not done before via RAT:SetCountry.
+-- 
+-- * For blue, the country is set to USA.
+-- * For red, the country is set to RUSSIA.
+-- * For neutral, the country is set to SWITZERLAND.
+-- 
+-- This is important, since it is ultimately the COUNTRY that determines the coalition of the aircraft.
+-- You can set the country explicitly via the RAT:SetCountry() function if necessary.
 -- @param #RAT self
--- @param #string color Color of coalition, i.e. "red" or blue".
+-- @param #string color Color of coalition, i.e. "red" or blue" or "neutral".
+-- @return #RAT RAT self object.
 function RAT:SetCoalitionAircraft(color)
   self:F2(color)
   if color:lower()=="blue" then
@@ -950,29 +975,87 @@ function RAT:SetCoalitionAircraft(color)
     end
   elseif color:lower()=="neutral" then
     self.coalition=coalition.side.NEUTRAL
+    if not self.country then
+      self.country=country.id.SWITZERLAND
+    end    
   end
+  return self
 end
 
---- Set country of RAT group. This overrules the coalition settings.
+--- Set country of RAT group.
+-- See https://wiki.hoggitworld.com/view/DCS_enum_country
+-- 
+-- This overrules the coalition settings. So if you want your group to be of a specific coalition, you have to set a country that is part of that coalition.
 -- @param #RAT self
--- @param #number id DCS country enumerator ID. For example country.id.USA or country.id.RUSSIA.
+-- @param #DCS.country.id id DCS country enumerator ID. For example country.id.USA or country.id.RUSSIA.
+-- @return #RAT RAT self object.
 function RAT:SetCountry(id)
   self:F2(id)
   self.country=id
+  return self
 end
 
 --- Set the terminal type the aircraft use when spawning at an airbase. Cf. https://wiki.hoggitworld.com/view/DCS_func_getParking
 -- @param #RAT self
--- @param #number termtype Type of terminal. Use enumerator AIRBASE.TerminalType.XXX or check https://wiki.hoggitworld.com/view/DCS_func_getParking for valid numbers.
+-- @param Wrapper.Airbase#AIRBASE.TerminalType termtype Type of terminal. Use enumerator AIRBASE.TerminalType.XXX.
+-- @return #RAT RAT self object.
 function RAT:SetTerminalType(termtype)
   self:F2(termtype)
   self.termtype=termtype
+  return self
+end
+
+--- Set the scan radius around parking spots. Parking spot is considered to be occupied if any obstacle is found with the radius.
+-- @param #RAT self
+-- @param #number radius Radius in meters. Default 50 m.
+-- @return #RAT RAT self object.
+function RAT:SetParkingScanRadius(radius)
+  self:F2(radius)
+  self.parkingscanradius=radius or 50
+  return self
+end
+
+--- Enables scanning for scenery objects around parking spots which might block the spot.
+-- @param #RAT self
+-- @return #RAT RAT self object.
+function RAT:SetParkingScanSceneryON()
+  self:F2()
+  self.parkingscanscenery=true
+  return self
+end
+
+--- Disables scanning for scenery objects around parking spots which might block the spot. This is also the default setting.
+-- @param #RAT self
+-- @return #RAT RAT self object.
+function RAT:SetParkingScanSceneryOFF()
+  self:F2()
+  self.parkingscanscenery=false
+  return self
+end
+
+--- A parking spot is not free until a possible aircraft has left and taken off.
+-- @param #RAT self
+-- @return #RAT RAT self object.
+function RAT:SetParkingSpotSafeON()
+  self:F2()
+  self.parkingverysafe=true
+  return self
+end
+
+--- A parking spot is free as soon as possible aircraft has left the place. This is the default.
+-- @param #RAT self
+-- @return #RAT RAT self object.
+function RAT:SetParkingSpotSafeOFF()
+  self:F2()
+  self.parkingverysafe=false
+  return self
 end
 
 --- Set takeoff type. Starting cold at airport, starting hot at airport, starting at runway, starting in the air.
 -- Default is "takeoff-coldorhot". So there is a 50% chance that the aircraft starts with cold engines and 50% that it starts with hot engines. 
 -- @param #RAT self
 -- @param #string type Type can be "takeoff-cold" or "cold", "takeoff-hot" or "hot", "takeoff-runway" or "runway", "air".
+-- @return #RAT RAT self object.
 -- @usage RAT:Takeoff("hot") will spawn RAT objects at airports with engines started.
 -- @usage RAT:Takeoff("cold") will spawn RAT objects at airports with engines off.
 -- @usage RAT:Takeoff("air") will spawn RAT objects in air over random airports or within pre-defined zones. 
@@ -993,41 +1076,54 @@ function RAT:SetTakeoff(type)
   end
   
   self.takeoff=_Type
+  
+  return self
 end
 
 --- Set takeoff type cold. Aircraft will spawn at a parking spot with engines off. 
 -- @param #RAT self
+-- @return #RAT RAT self object.
 function RAT:SetTakeoffCold()
   self.takeoff=RAT.wp.cold
+  return self
 end
 
 --- Set takeoff type to hot. Aircraft will spawn at a parking spot with engines on. 
 -- @param #RAT self
+-- @return #RAT RAT self object.
 function RAT:SetTakeoffHot()
   self.takeoff=RAT.wp.hot
+  return self
 end
 
 --- Set takeoff type to runway. Aircraft will spawn directly on the runway. 
 -- @param #RAT self
+-- @return #RAT RAT self object.
 function RAT:SetTakeoffRunway()
   self.takeoff=RAT.wp.runway
+  return self
 end
 
 --- Set takeoff type to cold or hot. Aircraft will spawn at a parking spot with 50:50 change of engines on or off. 
 -- @param #RAT self
+-- @return #RAT RAT self object.
 function RAT:SetTakeoffColdOrHot()
   self.takeoff=RAT.wp.coldorhot
+  return self
 end
 
 --- Set takeoff type to air. Aircraft will spawn in the air. 
 -- @param #RAT self
+-- @return #RAT RAT self object.
 function RAT:SetTakeoffAir()
   self.takeoff=RAT.wp.air
+  return self
 end
 
 --- Set possible departure ports. This can be an airport or a zone defined in the mission editor.
 -- @param #RAT self
 -- @param #string departurenames Name or table of names of departure airports or zones.
+-- @return #RAT RAT self object.
 -- @usage RAT:SetDeparture("Sochi-Adler") will spawn RAT objects at Sochi-Adler airport.
 -- @usage RAT:SetDeparture({"Sochi-Adler", "Gudauta"}) will spawn RAT aircraft radomly at Sochi-Adler or Gudauta airport.
 -- @usage RAT:SetDeparture({"Zone A", "Gudauta"}) will spawn RAT aircraft in air randomly within Zone A, which has to be defined in the mission editor, or within a zone around Gudauta airport. Note that this also requires RAT:takeoff("air") to be set.
@@ -1063,11 +1159,13 @@ function RAT:SetDeparture(departurenames)
     
   end
   
+  return self
 end
 
 --- Set name of destination airports or zones for the AI aircraft.
 -- @param #RAT self
 -- @param #string destinationnames Name of the destination airport or table of destination airports.
+-- @return #RAT RAT self object.
 -- @usage RAT:SetDestination("Krymsk") makes all aircraft of this RAT oject fly to Krymsk airport.
 function RAT:SetDestination(destinationnames)
   self:F2(destinationnames)
@@ -1101,10 +1199,12 @@ function RAT:SetDestination(destinationnames)
     
   end
 
+  return self
 end
 
 --- Destinations are treated as zones. Aircraft will not land but rather be despawned when they reach a random point in the zone.
 -- @param #RAT self
+-- @return #RAT RAT self object.
 function RAT:DestinationZone()
   self:F2()
   
@@ -1113,20 +1213,25 @@ function RAT:DestinationZone()
   
   -- Landing type is "air" because we don't actually land at the airport.
   self.landing=RAT.wp.air
+  
+  return self
 end
 
 --- Aircraft will fly to a random point within a zone and then return to its departure airport or zone.
 -- @param #RAT self
+-- @return #RAT RAT self object.
 function RAT:ReturnZone()
   self:F2()
   -- Destination is a zone. Needs special care.
   self.returnzone=true
+  return self
 end
 
 
 --- Include all airports which lie in a zone as possible destinations.
 -- @param #RAT self
 -- @param Core.Zone#ZONE zone Zone in which the departure airports lie. Has to be a MOOSE zone.
+-- @return #RAT RAT self object.
 function RAT:SetDestinationsFromZone(zone)
   self:F2(zone)
 
@@ -1135,11 +1240,14 @@ function RAT:SetDestinationsFromZone(zone)
   
   -- Set zone.
   self.destination_Azone=zone
+  
+  return self
 end
 
 --- Include all airports which lie in a zone as possible destinations.
 -- @param #RAT self
 -- @param Core.Zone#ZONE zone Zone in which the destination airports lie. Has to be a MOOSE zone.
+-- @return #RAT RAT self object.
 function RAT:SetDeparturesFromZone(zone)
   self:F2(zone)
   
@@ -1148,25 +1256,32 @@ function RAT:SetDeparturesFromZone(zone)
 
   -- Set zone.
   self.departure_Azone=zone
+  
+  return self
 end
 
 --- Add all friendly airports to the list of possible departures.
 -- @param #RAT self
+-- @return #RAT RAT self object.
 function RAT:AddFriendlyAirportsToDepartures()
   self:F2()
   self.addfriendlydepartures=true
+  return self
 end
 
 --- Add all friendly airports to the list of possible destinations
 -- @param #RAT self
+-- @return #RAT RAT self object.
 function RAT:AddFriendlyAirportsToDestinations()
   self:F2()
   self.addfriendlydestinations=true
+  return self
 end
 
 --- Airports, FARPs and ships explicitly excluded as departures and destinations.
 -- @param #RAT self
 -- @param #string ports Name or table of names of excluded airports.
+-- @return #RAT RAT self object.
 function RAT:ExcludedAirports(ports)
   self:F2(ports)
   if type(ports)=="string" then
@@ -1174,11 +1289,13 @@ function RAT:ExcludedAirports(ports)
   else
     self.excluded_ports=ports
   end
+  return self
 end
 
 --- Set skill of AI aircraft. Default is "High". 
 -- @param #RAT self
 -- @param #string skill Skill, options are "Average", "Good", "High", "Excellent" and "Random". Parameter is case insensitive.
+-- @return #RAT RAT self object.
 function RAT:SetAISkill(skill)
   self:F2(skill)
   if skill:lower()=="average" then
@@ -1192,11 +1309,13 @@ function RAT:SetAISkill(skill)
   else
     self.skill="High"
   end
+  return self
 end
 
 --- Set livery of aircraft. If more than one livery is specified in a table, the actually used one is chosen randomly from the selection.
 -- @param #RAT self
 -- @param #table skins Name of livery or table of names of liveries.
+-- @return #RAT RAT self object.
 function RAT:Livery(skins)
   self:F2(skins)
   if type(skins)=="string" then
@@ -1204,28 +1323,34 @@ function RAT:Livery(skins)
   else
     self.livery=skins
   end
+  return self
 end
 
 --- Change aircraft type. This is a dirty hack which allows to change the aircraft type of the template group.
 -- Note that all parameters like cruise speed, climb rate, range etc are still taken from the template group which likely leads to strange behaviour.
 -- @param #RAT self
 -- @param #string actype Type of aircraft which is spawned independent of the template group. Use with care and expect problems!
+-- @return #RAT RAT self object.
 function RAT:ChangeAircraft(actype)
   self:F2(actype)
   self.actype=actype
+  return self
 end
 
 --- Aircraft will continue their journey from their destination. This means they are respawned at their destination and get a new random destination.
 -- @param #RAT self
+-- @return #RAT RAT self object.
 function RAT:ContinueJourney()
   self:F2()
   self.continuejourney=true
   self.commute=false
+  return self
 end
 
 --- Aircraft will commute between their departure and destination airports or zones.
 -- @param #RAT self
 -- @param #boolean starshape If true, keep homebase, i.e. travel A-->B-->A-->C-->A-->D... instead of A-->B-->A-->B-->A...
+-- @return #RAT RAT self object.
 function RAT:Commute(starshape)
   self:F2()
   self.commute=true
@@ -1235,188 +1360,248 @@ function RAT:Commute(starshape)
   else
     self.starshape=false
   end
+  return self
 end
 
 --- Set the delay before first group is spawned. 
 -- @param #RAT self
 -- @param #number delay Delay in seconds. Default is 5 seconds. Minimum delay is 0.5 seconds.
+-- @return #RAT RAT self object.
 function RAT:SetSpawnDelay(delay)
   self:F2(delay)
   delay=delay or 5
   self.spawndelay=math.max(0.5, delay)
+  return self
 end
 
 --- Set the interval between spawnings of the template group.
 -- @param #RAT self
 -- @param #number interval Interval in seconds. Default is 5 seconds. Minimum is 0.5 seconds.
+-- @return #RAT RAT self object.
 function RAT:SetSpawnInterval(interval)
   self:F2(interval)
   interval=interval or 5
   self.spawninterval=math.max(0.5, interval)
+  return self
 end
 
 --- Make aircraft respawn the moment they land rather than at engine shut down.
 -- @param #RAT self
 -- @param #number delay (Optional) Delay in seconds until respawn happens after landing. Default is 180 seconds. Minimum is 1.0 seconds.
+-- @return #RAT RAT self object.
 function RAT:RespawnAfterLanding(delay)
   self:F2(delay)
   delay = delay or 180
   self.respawn_at_landing=true
   delay=math.max(1.0, delay)
   self.respawn_delay=delay
+  return self
 end
 
 --- Sets the delay between despawning and respawning aircraft.
 -- @param #RAT self
 -- @param #number delay Delay in seconds until respawn happens. Default is 1 second. Minimum is 1 second.
+-- @return #RAT RAT self object.
 function RAT:SetRespawnDelay(delay)
   self:F2(delay)
   delay = delay or 1.0
   delay=math.max(1.0, delay)
   self.respawn_delay=delay
+  return self
 end
 
 --- Aircraft will not get respawned when they finished their route.
 -- @param #RAT self
+-- @return #RAT RAT self object.
 function RAT:NoRespawn()
   self:F2()
   self.norespawn=true
+  return self
 end
 
 --- Number of tries to respawn an aircraft in case it has accitentally been spawned on runway.
 -- @param #RAT self
 -- @param #number n Number of retries. Default is 3.
+-- @return #RAT RAT self object.
 function RAT:SetMaxRespawnTriedWhenSpawnedOnRunway(n)
   self:F2(n)
   n=n or 3
-  self.rbug_maxretry=n
+  self.onrunwaymaxretry=n
+  return self
 end
 
 --- Aircraft will be respawned directly after take-off.
 -- @param #RAT self
+-- @return #RAT RAT self object.
 function RAT:RespawnAfterTakeoff()
   self:F2()
   self.respawn_after_takeoff=true
+  return self
 end
 
 --- Aircraft will be respawned after they crashed or get shot down. This is the default behavior.
 -- @param #RAT self
+-- @return #RAT RAT self object.
 function RAT:RespawnAfterCrashON()
   self:F2()
   self.respawn_after_crash=true
+  return self
 end
 
 --- Aircraft will not be respawned after they crashed or get shot down.
 -- @param #RAT self
+-- @return #RAT RAT self object.
 function RAT:RespawnAfterCrashOFF()
   self:F2()
   self.respawn_after_crash=false
+  return self
 end
 
 --- If aircraft cannot be spawned on parking spots, it is allowed to spawn them in air above the same airport. Note that this is also the default behavior.
 -- @param #RAT self
+-- @return #RAT RAT self object.
 function RAT:RespawnInAirAllowed()
   self:F2()
   self.respawn_inair=true
+  return self
 end
 
 --- If aircraft cannot be spawned on parking spots, it is NOT allowed to spawn them in air. This has only impact if aircraft are supposed to be spawned on the ground (and not in a zone).
 -- @param #RAT self
+-- @return #RAT RAT self object.
 function RAT:RespawnInAirNotAllowed()
   self:F2()
   self.respawn_inair=false
+  return self
 end
 
 --- Check if aircraft have accidentally been spawned on the runway. If so they will be removed immediatly.
 -- @param #RAT self
 -- @param #boolean switch If true, check is performed. If false, this check is omitted.
-function RAT:CheckOnRunway(switch)
+-- @param #number radius Distance in meters until a unit is considered to have spawned accidentally on the runway. Default is 75 m. 
+-- @return #RAT RAT self object.
+function RAT:CheckOnRunway(switch, distance)
   self:F2(switch)
   if switch==nil then
     switch=true
   end
   self.checkonrunway=switch
+  self.onrunwayradius=distance or 75
+  return self
 end
 
 --- Check if aircraft have accidentally been spawned on top of each other. If yes, they will be removed immediately.
 -- @param #RAT self
 -- @param #boolean switch If true, check is performed. If false, this check is omitted.
-function RAT:CheckOnTop(switch)
+-- @param #number radius Radius in meters until which a unit is considered to be on top of each other. Default is 2 m.
+-- @return #RAT RAT self object.
+function RAT:CheckOnTop(switch, radius)
   self:F2(switch)
   if switch==nil then
     switch=true
   end
   self.checkontop=switch
+  self.ontopradius=radius or 2
+  return self
 end
 
---- Put parking spot coordinates in a data base for future use of aircraft.
+--- Put parking spot coordinates in a data base for future use of aircraft. (Obsolete! API function will be removed soon.)
 -- @param #RAT self
 -- @param #boolean switch If true, parking spots are memorized. This is also the default setting.
+-- @return #RAT RAT self object.
 function RAT:ParkingSpotDB(switch)
-  self:F2(switch)
-  if switch==nil then
-    switch=true
-  end
-  self.useparkingdb=switch
+  self:E("RAT ParkingSpotDB function is obsolete and will be removed soon!")
+  return self
 end
 
 --- Enable Radio. Overrules the ME setting.
 -- @param #RAT self
+-- @return #RAT RAT self object.
 function RAT:RadioON()
   self:F2()
   self.radio=true
+  return self
 end
 
 --- Disable Radio. Overrules the ME setting.
 -- @param #RAT self
+-- @return #RAT RAT self object.
 function RAT:RadioOFF()
   self:F2()
   self.radio=false
+  return self
 end
 
 --- Set radio frequency.
 -- @param #RAT self
 -- @param #number frequency Radio frequency.
+-- @return #RAT RAT self object.
 function RAT:RadioFrequency(frequency)
   self:F2(frequency)
   self.frequency=frequency
+  return self
 end
 
---- Spawn aircraft in uncontrolled state. Aircraft will only sit at their parking spots. They can be activated randomly by the RAT:ActivateUncontrolled() function.
+--- Set radio modulation. Default is AM.
 -- @param #RAT self
-function RAT:Uncontrolled()
-  self:F2()
-  self.uncontrolled=true
-end
-
---- Aircraft are invisible. 
--- @param #RAT self
-function RAT:Invisible()
-  self:F2()
-  self.invisible=true
-end
-
---- Aircraft are immortal. 
--- @param #RAT self
-function RAT:Immortal()
-  self:F2()
-  self.immortal=true
+-- @param #string modulation Either "FM" or "AM". If no value is given, modulation is set to AM.
+-- @return #RAT RAT self object.
+function RAT:RadioModulation(modulation)
+  self:F2(modulation)
+  if modulation=="AM" then
+    self.modulation=radio.modulation.AM
+  elseif modulation=="FM" then
+    self.modulation=radio.modulation.FM
+  else
+    self.modulation=radio.modulation.AM
+  end
+  return self
 end
 
 --- Radio menu On. Default is off. 
 -- @param #RAT self
+-- @return #RAT RAT self object.
 function RAT:RadioMenuON()
   self:F2()
   self.f10menu=true
+  return self
 end
 
 --- Radio menu Off. This is the default setting. 
 -- @param #RAT self
+-- @return #RAT RAT self object.
 function RAT:RadioMenuOFF()
   self:F2()
   self.f10menu=false
+  return self
 end
 
+--- Aircraft are invisible. 
+-- @param #RAT self
+-- @return #RAT RAT self object.
+function RAT:Invisible()
+  self:F2()
+  self.invisible=true
+  return self
+end
+
+--- Aircraft are immortal. 
+-- @param #RAT self
+-- @return #RAT RAT self object.
+function RAT:Immortal()
+  self:F2()
+  self.immortal=true
+  return self
+end
+
+--- Spawn aircraft in uncontrolled state. Aircraft will only sit at their parking spots. They can be activated randomly by the RAT:ActivateUncontrolled() function.
+-- @param #RAT self
+-- @return #RAT RAT self object.
+function RAT:Uncontrolled()
+  self:F2()
+  self.uncontrolled=true
+  return self
+end
 
 --- Activate uncontrolled aircraft. 
 -- @param #RAT self
@@ -1424,6 +1609,7 @@ end
 -- @param #number delay Time delay in seconds before (first) aircraft is activated. Default is 1 second.
 -- @param #number delta Time difference in seconds before next aircraft is activated. Default is 1 second.
 -- @param #number frand Factor [0,...,1] for randomization of time difference between aircraft activations. Default is 0, i.e. no randomization.
+-- @return #RAT RAT self object.
 function RAT:ActivateUncontrolled(maxactivated, delay, delta, frand)
   self:F2({max=maxactivated, delay=delay, delta=delta, rand=frand})
 
@@ -1442,66 +1628,63 @@ function RAT:ActivateUncontrolled(maxactivated, delay, delta, frand)
   -- Ensure frand is in [0,...,1]
   self.activate_frand=math.max(self.activate_frand,0)
   self.activate_frand=math.min(self.activate_frand,1)
-end
-
---- Set radio modulation. Default is AM.
--- @param #RAT self
--- @param #string modulation Either "FM" or "AM". If no value is given, modulation is set to AM.
-function RAT:RadioModulation(modulation)
-  self:F2(modulation)
-  if modulation=="AM" then
-    self.modulation=radio.modulation.AM
-  elseif modulation=="FM" then
-    self.modulation=radio.modulation.FM
-  else
-    self.modulation=radio.modulation.AM
-  end
+  
+  return self
 end
 
 --- Set the time after which inactive groups will be destroyed. 
 -- @param #RAT self
 -- @param #number time Time in seconds. Default is 600 seconds = 10 minutes. Minimum is 60 seconds.
+-- @return #RAT RAT self object.
 function RAT:TimeDestroyInactive(time)
   self:F2(time)
   time=time or self.Tinactive
   time=math.max(time, 60)
   self.Tinactive=time
+  return self
 end
 
 --- Set the maximum cruise speed of the aircraft.
 -- @param #RAT self
 -- @param #number speed Speed in km/h.
+-- @return #RAT RAT self object.
 function RAT:SetMaxCruiseSpeed(speed)
   self:F2(speed)
   -- Convert to m/s.
   self.Vcruisemax=speed/3.6
+  return self
 end
 
 --- Set the climb rate. This automatically sets the climb angle.
 -- @param #RAT self
 -- @param #number rate Climb rate in ft/min. Default is 1500 ft/min. Minimum is 100 ft/min. Maximum is 15,000 ft/min.
+-- @return #RAT RAT self object.
 function RAT:SetClimbRate(rate)
   self:F2(rate)
   rate=rate or self.Vclimb
   rate=math.max(rate, 100)
   rate=math.min(rate, 15000)
   self.Vclimb=rate
+  return self
 end
 
 --- Set the angle of descent. Default is 3.6 degrees, which corresponds to 3000 ft descent after one mile of travel.
 -- @param #RAT self
 -- @param #number angle Angle of descent in degrees. Minimum is 0.5 deg. Maximum 50 deg.
+-- @return #RAT RAT self object.
 function RAT:SetDescentAngle(angle)
   self:F2(angle)
   angle=angle or self.AlphaDescent
   angle=math.max(angle, 0.5)
   angle=math.min(angle, 50)
   self.AlphaDescent=angle
+  return self
 end
 
 --- Set rules of engagement (ROE). Default is weapon hold. This is a peaceful class.
 -- @param #RAT self
 -- @param #string roe "hold" = weapon hold, "return" = return fire, "free" = weapons free.
+-- @return #RAT RAT self object.
 function RAT:SetROE(roe)
   self:F2(roe)
   if roe=="return" then 
@@ -1511,11 +1694,13 @@ function RAT:SetROE(roe)
   else
     self.roe=RAT.ROE.weaponhold
   end
+  return self
 end
 
 --- Set reaction to threat (ROT). Default is no reaction, i.e. aircraft will simply ignore all enemies.
 -- @param #RAT self
 -- @param #string rot "noreaction" = no reaction to threats, "passive" = passive defence, "evade" = evade enemy attacks.
+-- @return #RAT RAT self object.
 function RAT:SetROT(rot)
   self:F2(rot)
   if rot=="passive" then
@@ -1525,184 +1710,225 @@ function RAT:SetROT(rot)
   else
     self.rot=RAT.ROT.noreaction
   end
+  return self
 end
 
 --- Set the name of the F10 submenu. Default is the name of the template group.
 -- @param #RAT self
 -- @param #string name Submenu name.
+-- @return #RAT RAT self object.
 function RAT:MenuName(name)
   self:F2(name)
   self.SubMenuName=tostring(name)
+  return self
 end
 
 --- Enable ATC, which manages the landing queue for RAT aircraft if they arrive simultaniously at the same airport.
 -- @param #RAT self
--- @param #boolean switch Enable ATC (true) or Disable ATC (false). No argument means ATC enabled. 
+-- @param #boolean switch Enable ATC (true) or Disable ATC (false). No argument means ATC enabled.
+-- @return #RAT RAT self object.
 function RAT:EnableATC(switch)
   self:F2(switch)
   if switch==nil then
     switch=true
   end
   self.ATCswitch=switch
+  return self
 end
 
 --- Turn messages from ATC on or off. Default is on. This setting effects all RAT objects and groups!
 -- @param #RAT self
--- @param #boolean switch Enable (true) or disable (false) messages from ATC. 
+-- @param #boolean switch Enable (true) or disable (false) messages from ATC.
+-- @return #RAT RAT self object. 
 function RAT:ATC_Messages(switch)
   self:F2(switch)
   if switch==nil then
     switch=true
   end
   RAT.ATC.messages=switch
+  return self
 end
 
 --- Max number of planes that get landing clearance of the RAT ATC. This setting effects all RAT objects and groups! 
 -- @param #RAT self
 -- @param #number n Number of aircraft that are allowed to land simultaniously. Default is 2.
+-- @return #RAT RAT self object.
 function RAT:ATC_Clearance(n)
   self:F2(n)
   RAT.ATC.Nclearance=n or 2
+  return self
 end
 
 --- Delay between granting landing clearance for simultanious landings. This setting effects all RAT objects and groups! 
 -- @param #RAT self
 -- @param #number time Delay time when the next aircraft will get landing clearance event if the previous one did not land yet. Default is 240 sec.
+-- @return #RAT RAT self object.
 function RAT:ATC_Delay(time)
   self:F2(time)
   RAT.ATC.delay=time or 240
+  return self
 end
 
 --- Set minimum distance between departure and destination. Default is 5 km.
 -- Minimum distance should not be smaller than maybe ~500 meters to ensure that departure and destination are different.
 -- @param #RAT self
 -- @param #number dist Distance in km.
+-- @return #RAT RAT self object.
 function RAT:SetMinDistance(dist)
   self:F2(dist)
   -- Distance in meters. Absolute minimum is 500 m.
   self.mindist=math.max(500, dist*1000)
+  return self
 end
 
 --- Set maximum distance between departure and destination. Default is 5000 km but aircarft range is also taken into account automatically.
 -- @param #RAT self
 -- @param #number dist Distance in km.
+-- @return #RAT RAT self object.
 function RAT:SetMaxDistance(dist)
   self:F2(dist)
   -- Distance in meters.
   self.maxdist=dist*1000
+  return self
 end
 
 --- Turn debug messages on or off. Default is off.
 -- @param #RAT self
 -- @param #boolean switch Turn debug on=true or off=false. No argument means on.
+-- @return #RAT RAT self object.
 function RAT:_Debug(switch)
   self:F2(switch)
   if switch==nil then
     switch=true
   end
   self.Debug=switch
+  return self
 end
 
 --- Enable debug mode. More output in dcs.log file and onscreen messages to all.
 -- @param #RAT self
+-- @return #RAT RAT self object.
 function RAT:Debugmode()
   self:F2()
   self.Debug=true
+  return self
 end
 
 --- Aircraft report status update messages along the route.
 -- @param #RAT self
 -- @param #boolean switch Swtich reports on (true) or off (false). No argument is on.
+-- @return #RAT RAT self object.
 function RAT:StatusReports(switch)
   self:F2(switch)
   if switch==nil then
     switch=true
   end
   self.reportstatus=switch
+  return self
 end
 
 --- Place markers of waypoints on the F10 map. Default is off.
 -- @param #RAT self
 -- @param #boolean switch true=yes, false=no.
+-- @return #RAT RAT self object.
 function RAT:PlaceMarkers(switch)
   self:F2(switch)
   if switch==nil then
     switch=true
   end
   self.placemarkers=switch
+  return self
 end
 
 --- Set flight level. Setting this value will overrule all other logic. Aircraft will try to fly at this height regardless.
 -- @param #RAT self
 -- @param #number FL Fight Level in hundrets of feet. E.g. FL200 = 20000 ft ASL.
+-- @return #RAT RAT self object.
 function RAT:SetFL(FL)
   self:F2(FL)
   FL=FL or self.FLcruise
   FL=math.max(FL,0)
   self.FLuser=FL*RAT.unit.FL2m
+  return self
 end
 
 --- Set max flight level. Setting this value will overrule all other logic. Aircraft will try to fly at less than this FL regardless.
 -- @param #RAT self
 -- @param #number FL Maximum Fight Level in hundrets of feet.
+-- @return #RAT RAT self object.
 function RAT:SetFLmax(FL)
   self:F2(FL)
   self.FLmaxuser=FL*RAT.unit.FL2m
+  return self
 end
 
 --- Set max cruising altitude above sea level.
 -- @param #RAT self
 -- @param #number alt Altitude ASL in meters.
+-- @return #RAT RAT self object.
 function RAT:SetMaxCruiseAltitude(alt)
   self:F2(alt)
   self.FLmaxuser=alt
+  return self
 end
 
 --- Set min flight level. Setting this value will overrule all other logic. Aircraft will try to fly at higher than this FL regardless.
 -- @param #RAT self
 -- @param #number FL Maximum Fight Level in hundrets of feet.
+-- @return #RAT RAT self object.
 function RAT:SetFLmin(FL)
   self:F2(FL)
   self.FLminuser=FL*RAT.unit.FL2m
+  return self
 end
 
 --- Set min cruising altitude above sea level.
 -- @param #RAT self
 -- @param #number alt Altitude ASL in meters.
+-- @return #RAT RAT self object.
 function RAT:SetMinCruiseAltitude(alt)
   self:F2(alt)
   self.FLminuser=alt
+  return self
 end
 
 --- Set flight level of cruising part. This is still be checked for consitancy with selected route and prone to radomization.
 -- Default is FL200 for planes and FL005 for helicopters.
 -- @param #RAT self
 -- @param #number FL Flight level in hundrets of feet. E.g. FL200 = 20000 ft ASL.
+-- @return #RAT RAT self object.
 function RAT:SetFLcruise(FL)
   self:F2(FL)
   self.FLcruise=FL*RAT.unit.FL2m
+  return self
 end
 
 --- Set cruising altitude. This is still be checked for consitancy with selected route and prone to radomization.
 -- @param #RAT self
 -- @param #number alt Cruising altitude ASL in meters.
+-- @return #RAT RAT self object.
 function RAT:SetCruiseAltitude(alt)
   self:F2(alt)
   self.FLcruise=alt
+  return self
 end
 
 --- Set onboard number prefix. Same as setting "TAIL #" in the mission editor. Note that if you dont use this function, the values defined in the template group of the ME are taken.
 -- @param #RAT self
 -- @param #string tailnumprefix String of the tail number prefix. If flight consists of more than one aircraft, two digits are appended automatically, i.e. <tailnumprefix>001, <tailnumprefix>002, ... 
 -- @param #number zero (Optional) Starting value of the automatically appended numbering of aircraft within a flight. Default is 0.
+-- @return #RAT RAT self object.
 function RAT:SetOnboardNum(tailnumprefix, zero)
   self:F2({tailnumprefix=tailnumprefix, zero=zero})
   self.onboardnum=tailnumprefix
   if zero ~= nil then
     self.onboardnum0=zero
   end
+  return self
 end
 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Private functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Initialize basic parameters of the aircraft based on its (template) group in the mission editor.
@@ -1828,12 +2054,6 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   if not (departure and destination and waypoints) then
     return nil
   end
-
-  -- Find parking spot in RAT parking DB. Category 4 should be airports and farps. Ships would be caterory 1.
-  local _spawnpos=_lastpos
---  if self.useparkingdb and (takeoff==RAT.wp.cold or takeoff==RAT.wp.hot) and departure:GetCategory()==4 and _spawnpos==nil then
---    _spawnpos=self:_FindParkingSpot(departure)
---  end
   
   -- Set (another) livery.
   local livery
@@ -1850,7 +2070,7 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   end
   
   -- Modify the spawn template to follow the flight plan.
-  local successful=self:_ModifySpawnTemplate(waypoints, livery, _spawnpos, departure, takeoff)
+  local successful=self:_ModifySpawnTemplate(waypoints, livery, _lastpos, departure, takeoff)
   if not successful then
     return nil
   end
@@ -1935,11 +2155,6 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   
   -- Number of preformed spawn attempts for this group.
   self.ratcraft[self.SpawnIndex].nrespawn=nrespawn
-  
-  -- If we start at a parking position, we memorize the parking spot position for future use (DCS bug).
-  if self.useparkingdb and (takeoff==RAT.wp.cold or takeoff==RAT.wp.hot) and departure:GetCategory()==4 then
-    self:_AddParkingSpot(departure, group)
-  end
  
   -- Create submenu for this group.
   if self.f10menu then
@@ -3399,25 +3614,26 @@ function RAT:_OnBirth(EventData)
         local _landing=self.ratcraft[i].landing
         local _livery=self.ratcraft[i].livery
         
+        -- Some is only useful for an actual airbase (not a zone).
+        local _airbase=AIRBASE:FindByName(_departure)
+        
         -- Check if aircraft group was accidentally spawned on the runway.
         -- This can happen due to no parking slots available and other DCS bugs.
         local onrunway=false
-        if _takeoff ~= RAT.wp.runway and self.checkonrunway then
-          for _,unit in pairs(SpawnGroup:GetUnits()) do
-            local _onrunway=self:_CheckOnRunway(unit, _departure)
-            if _onrunway then
-              onrunway=true
-            end
-          end
-        end     
+        if _airbase then
+          -- Check that we did not want to spawn at a runway or in air.
+          if self.checkonrunway and _takeoff ~= RAT.wp.runway and _takeoff ~= RAT.wp.air then
+            onrunway=_airbase:CheckOnRunWay(SpawnGroup, self.onrunwayradius, false)
+          end        
+        end
         
         -- Workaround if group was spawned on runway.
         if onrunway then
              
           -- Error message.
-          local text=string.format("ERROR: RAT group of %s was spawned on runway (DCS bug). Group #%d will be despawned immediately!", self.alias, i)
+          local text=string.format("ERROR: RAT group of %s was spawned on runway. Group #%d will be despawned immediately!", self.alias, i)
           MESSAGE:New(text,30):ToAllIf(self.Debug)
-          self:T(RAT.id..text)
+          self:E(RAT.id..text)
           if self.Debug then
             SpawnGroup:FlareRed()
           end
@@ -3426,12 +3642,12 @@ function RAT:_OnBirth(EventData)
           self:_Despawn(SpawnGroup)
           
           -- Try to respawn the group if there is at least another airport or random airport selection is used.
-          if (self.Ndeparture_Airports>=2 or self.random_departure) and _nrespawn<self.rbug_maxretry then
+          if (self.Ndeparture_Airports>=2 or self.random_departure) and _nrespawn<self.onrunwaymaxretry then
             -- Increase counter.
             _nrespawn=_nrespawn+1
           
             -- This creates a completely new group, i.e. livery etc from earlier flights (continuejourney, commute) is not taken over.
-            text=string.format("Try spawning new aircraft of group %s at another location. Attempt %d of max %d.", self.alias,_nrespawn,self.rbug_maxretry)
+            text=string.format("Try spawning new aircraft of group %s at another location. Attempt %d of max %d.", self.alias,_nrespawn,self.onrunwaymaxretry)
             MESSAGE:New(text,10):ToAllIf(self.Debug)
             self:T(RAT.id..text)
             
@@ -3453,8 +3669,8 @@ function RAT:_OnBirth(EventData)
         
         -- Check if any unit of the group was spawned on top of another unit in the MOOSE data base.
         local ontop=false
-        if self.checkontop then
-          ontop=self:_CheckOnTop(SpawnGroup, 2)
+        if self.checkontop and (_airbase and _airbase:GetDesc().category==Airbase.Category.AIRDROME) then
+          ontop=self:_CheckOnTop(SpawnGroup, self.ontopradius)
         end
         
         if ontop then
@@ -4406,125 +4622,6 @@ function RAT:_CommandImmortal(group, switch)
   group:SetCommand(SetImmortal)
 end
 
---- Adds a parking spot at an airport when it has been used by a spawned RAT aircraft to the RAT parking data base.
--- This is mainly to circumvent (not perfectly) the DCS parking spot bug.
--- @param #RAT self
--- @param Wrapper.Airbase#AIRBASE airbase Airbase at which we add a parking spot.
--- @param Wrapper.Group#GROUP group Group to check for parking positions.
-function RAT:_AddParkingSpot(airbase, group)
-
-  -- Name of the airport.
-  local airport=airbase:GetName()
-  
-  -- Radius of the parking spot in meters.
-  local spotradius=15
-    
-  -- Init array for this airport if it does not exist.
-  if not RAT.parking[airport] then
-    RAT.parking[airport]={}
-  end
-  
-  -- Debug info.
-  self:T(RAT.id..string.format("Searching parking spot at airport %s. Number of currently known = %d.", airport, #RAT.parking[airport]))
-    
-  -- Loop over all units in the group.
-  for _,_unit in pairs(group:GetUnits()) do
-
-    -- Check if unit is on the runway.
-    local onrunway=self:_CheckOnRunway(_unit, airport)
-
-    if not onrunway then
-      
-      -- Coordinate of unit.    
-      local coord=_unit:GetCoordinate()
-
-      -- Loop over all known spots.
-      local gotit=false    
-      for _,_spot in pairs(RAT.parking[airport]) do
-        local _spot=_spot -- Core.Point#COORDINATE
-        local _dist=_spot:Get2DDistance(coord)
-        
-        -- Check if this spot is already known.
-        if _dist < spotradius then
-          gotit=true
-          break
-        end
-      end
-      
-      -- Add spot spot if it not known already.
-      if not gotit then
-        table.insert(RAT.parking[airport], coord)
-        -- Place marker for debugging.
-        if self.Debug then
-          coord:MarkToAll(string.format("%s parking spot #%d", airport, #RAT.parking[airport]))
-        end
-      end
-    end
-  end
-end
-
---- Seach an unoccupied parking spot at a specific airport in the RAT parking data base.
--- @param #RAT self
--- @param Wrapper.Airbase#AIRBASE airbase The airbase where we want to find a parking position.
--- @return Core.Point#COORDINATE Coordinate of the parking spot.
-function RAT:_FindParkingSpot(airbase)
-
-  -- Get airport name.
-  local airport=airbase:GetName()
-  
-  self:T(RAT.id..string.format("Checking spawn position DB for airport %s.", airport))
-
-  if RAT.parking[airport] then
-   self:T(RAT.id..string.format("Number of parking spots in DB for %s: %d", airport, #RAT.parking[airport]))
-    
-    local parkingspot --Core.Point#COORDINATE
-  
-    -- Loop over all known parking spots
-    for _i,spawnplace in pairs(RAT.parking[airport]) do
-    
-      -- Loop over ALL units present.
-      local occupied=false
-      for _,unit in pairs(_DATABASE.UNITS) do
-        local unit=unit --Wrapper.Unit#UNIT
-        if unit then
-          local _upos=unit:GetCoordinate() --Core.Point#COORDINATE
-          if _upos then
-            local _dist=_upos:Get2DDistance(spawnplace)
-            
-            -- We need two times the size of the aircraft to be "safe" and not spawn on top of each other.
-            local safe=_dist > self.aircraft.box*2
-            -- Or (if possible) even better to take our and the other object's size (plus 10% safety margin)
-            local size=self:_GetObjectSize(unit)
-            if size then
-              safe=_dist > (self.aircraft.box+size)*1.1
-            end
-            self:T2(RAT.id..string.format("RAT aircraft size = %.1f m, other object size = %.1f m", self.aircraft.box, size or 0))
-            if not safe then
-              occupied=true
-            end
-            self:T2(RAT.id..string.format("Unit %s to parking spot %d: distance = %.1f m (occupied = %s).", unit:GetName(), _i, _dist, tostring(safe)))
-          end
-        end
-      end
-      
-      if occupied then
-        self:T(RAT.id..string.format("Parking spot #%d occupied at %s.", _i, airport))
-      else
-        parkingspot=spawnplace
-        self:T(RAT.id..string.format("Found free parking spot in DB at airport %s.", airport))
-        break
-      end
-      
-    end
-    
-    return parkingspot
-  else
-    self:T2(RAT.id..string.format("No parking position in DB yet for %s.", airport))  
-  end
-  
-  self:T(RAT.id..string.format("No free parking position found in DB at airport %s.", airport))  
-  return nil
-end
 
 --- Get aircraft dimensions length, width, height.
 -- @param #RAT self
@@ -4535,9 +4632,9 @@ function RAT:_GetObjectSize(unit)
   if DCSunit then
     local DCSdesc=DCSunit:getDesc()
     -- dimensions
-    local length=DCSdesc.box.max.x
-    local height=DCSdesc.box.max.y
-    local width=DCSdesc.box.max.z
+    local length=DCSdesc.box.max.x+math.abs(DCSdesc.box.min.x)
+    local height=DCSdesc.box.max.y+math.abs(DCSdesc.box.max.y)
+    local width =DCSdesc.box.max.z+math.abs(DCSdesc.box.min.z)
     return math.max(length,width)
   end
   return nil
@@ -4577,7 +4674,7 @@ function RAT:_CheckOnTop(group, distmin)
               
               -- Check for min distance.
               if _dist < distmin then
-                if not uniti:InAir() and not unitj:InAir() then
+                if (not uniti:InAir()) and (not unitj:InAir()) then
                   -- Trigger immidiate destuction of unit.
                   self:T(RAT.id..string.format("Unit %s is on top of unit %s. Distance %.2f m.", namei, namej,_dist))
                   return true
@@ -4592,67 +4689,6 @@ function RAT:_CheckOnTop(group, distmin)
   end -- for i,uniti in
   
   return false
-end
-
---- Function to check whether an aircraft is on the runway.
--- @param #RAT self
--- @param Wrapper.Unit#UNIT unit The unit to be checked.
--- @param #string airport The name of the airport we want to check.
--- @return #boolean True if aircraft is on the runway and on the ground.
-function RAT:_CheckOnRunway(unit, airport)
-
-  -- We use the tabulated points in the ATC_GROUND classes to find out if the group is on the runway.
-  -- Note that land.SurfaceType.RUNWAY also is true for the parking areas etc. Hence, not useful.
-  -- This is useful to check if an aircraft was accidentally spawned on the runway due to missing parking spots.
-  --BASE:E(ATC_GROUND_CAUCASUS.Airbases[AIRBASE.Caucasus.Batumi].PointsRunways)
-  
-  -- Table holding the points around the runway.
-  local pointsrwy={}
-  
-  -- Loop over all airports on Caucaus map.
-  for id,name in pairs(AIRBASE.Caucasus) do
-    if name==airport then
-      --pointsrwy=ATC_GROUND_CAUCASUS.Airbases[AIRBASE.Caucasus.Batumi].PointsRunways
-      pointsrwy=ATC_GROUND_CAUCASUS.Airbases[name].PointsRunways
-      self:T2({name=name, points=pointsrwy})
-    end
-  end
-  -- Loop over all airports on NTTR map.
-  for id,name in pairs(AIRBASE.Nevada) do
-    if name==airport then
-      pointsrwy=ATC_GROUND_NEVADA.Airbases[name].PointsRunways
-      self:T2({name=name, points=pointsrwy})
-    end
-  end
-  -- Loop over all airports on Normandy map.
-  for id,name in pairs(AIRBASE.Normandy) do
-    if name==airport then
-      pointsrwy=ATC_GROUND_NORMANDY.Airbases[name].PointsRunways
-      self:T2({name=name, points=pointsrwy})
-    end
-  end
-  
-  -- Assume we are not on the runway.
-  local onrunway=false
-  
-  -- Loop over all runways. Some airports have more than one.
-  for PointsRunwayID, PointsRunway in pairs(pointsrwy) do
-    -- Create zone around runway.
-    local runway = ZONE_POLYGON_BASE:New("Runway "..PointsRunwayID, PointsRunway)
-
-    -- Check if unit is in on the runway.
-    if runway:IsVec3InZone(unit:GetVec3()) then
-      onrunway=true
-    end
-  end
-  
-  -- Check that aircraft is on ground.
-  onrunway=onrunway and unit:InAir()==false
-  
-  -- Debug
-  self:T(RAT.id..string.format("Check on runway of %s airport for unit %s = %s", airport, unit:GetName(),tostring(onrunway)))
-  
-  return onrunway
 end
 
 
@@ -4929,7 +4965,6 @@ end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-
 --- Modifies the template of the group to be spawned.
 -- In particular, the waypoints of the group's flight plan are copied into the spawn template.
 -- This allows to spawn at airports and also land at other airports, i.e. circumventing the DCS "landing bug".
@@ -5012,6 +5047,13 @@ function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace, departure, take
         if spawnonrunway then
           termtype=AIRBASE.TerminalType.Runway
         end
+
+        -- Scan options. Might make that input somehow.
+        local scanradius=self.parkingscanradius
+        local scanunits=true
+        local scanstatics=true
+        local scanscenery=self.parkingscanscenery
+        local verysafe=self.parkingverysafe
         
         -- Get free parking spots depending on where we spawn.
         if  spawnonship or spawnonfarp or spawnonrunway then
@@ -5025,18 +5067,18 @@ function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace, departure, take
             if termtype==nil then
               -- Try exclusive helo spots first.
               self:T(RAT.id..string.format("Helo group %s is spawned at %s using terminal type %d.", self.alias, departure:GetName(), AIRBASE.TerminalType.HelicopterOnly))
-              spots=departure:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.HelicopterOnly)
+              spots=departure:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.HelicopterOnly, scanradius, scanunits, scanstatics, scanscenery, verysafe)
               nfree=#spots
               if nfree<#SpawnTemplate.units then
                 -- Not enough helo ports. Let's try also other terminal types.
                 self:T(RAT.id..string.format("Helo group %s is spawned at %s using terminal type %d.", self.alias, departure:GetName(), AIRBASE.TerminalType.HelicopterOnly))
-                spots=departure:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.HelicopterUsable)
+                spots=departure:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.HelicopterUsable, scanradius, scanunits, scanstatics, scanscenery, verysafe)
                 nfree=#spots
               end
             else
               -- Terminal type specified explicitly.
               self:T(RAT.id..string.format("Helo group %s is at %s using terminal type %d.", self.alias, departure:GetName(), termtype))
-              spots=departure:FindFreeParkingSpotForAircraft(TemplateGroup, termtype)
+              spots=departure:FindFreeParkingSpotForAircraft(TemplateGroup, termtype, scanradius, scanunits, scanstatics, scanscenery, verysafe)
               nfree=#spots              
             end
           else
@@ -5050,23 +5092,23 @@ function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace, departure, take
               if bomber or transport then
                 -- First we fill the potentially bigger spots.
                 self:T(RAT.id..string.format("Transport/bomber group %s is spawned at %s using terminal type %d.", self.alias, departure:GetName(), AIRBASE.TerminalType.OpenBig))
-                spots=departure:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.OpenBig)
+                spots=departure:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.OpenBig, scanradius, scanunits, scanstatics, scanscenery, verysafe)
                 nfree=#spots
                 if nfree<#SpawnTemplate.units then
                   -- Now we try the smaller ones.
                   self:T(RAT.id..string.format("Transport/bomber group %s is at %s using terminal type %d.", self.alias, departure:GetName(), AIRBASE.TerminalType.OpenMed))         
-                  spots=departure:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.OpenMed)
+                  spots=departure:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.OpenMed, scanradius, scanunits, scanstatics, scanscenery, verysafe)
                   nfree=#spots
                 end                
               else
                 self:T(RAT.id..string.format("Fighter group %s is spawned at %s using terminal type %d.", self.alias, departure:GetName(), AIRBASE.TerminalType.FighterAircraft))
-                spots=departure:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.FighterAircraft)
+                spots=departure:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.FighterAircraft, scanradius, scanunits, scanstatics, scanscenery, verysafe)
                 nfree=#spots                
               end            
             else
               -- Terminal type explicitly given.
               self:T(RAT.id..string.format("Plane group %s is spawned at %s using terminal type %d.", self.alias, departure:GetName(), termtype))
-              spots=departure:FindFreeParkingSpotForAircraft(TemplateGroup, termtype)
+              spots=departure:FindFreeParkingSpotForAircraft(TemplateGroup, termtype, scanradius, scanunits, scanstatics, scanscenery, verysafe)
               nfree=#spots
             end
           end
@@ -5090,7 +5132,7 @@ function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace, departure, take
           end
           
         else
-          if self.respawn_inair or self.uncontrolled then
+          if self.respawn_inair and not self.uncontrolled then
             self:E(RAT.id..string.format("WARNING: RAT group %s has no parking spots at %s ==> air start!", self.alias, departure:GetName()))
           
             -- Not enough parking spots at the airport ==> Spawn in air.
@@ -5621,6 +5663,7 @@ end
 -- @param #RATMANAGER self
 -- @param #RAT ratobject RAT object to be managed.
 -- @param #number min Minimum number of groups for this RAT object. Default is 1.
+-- @return #RATMANAGER RATMANAGER self object.
 function RATMANAGER:Add(ratobject,min)
 
   --Automatic respawning is disabled.
@@ -5640,11 +5683,14 @@ function RATMANAGER:Add(ratobject,min)
   
   -- Call spawn to initialize RAT parameters.
   ratobject:Spawn(0)
+  
+  return self
 end
 
 --- Starts the RAT manager and spawns the initial random number RAT groups for each RAT object.
 -- @param #RATMANAGER self
 -- @param #number delay Time delay in seconds after which the RAT manager is started. Default is 5 seconds.
+-- @return #RATMANAGER RATMANAGER self object.
 function RATMANAGER:Start(delay)
 
   -- Time delay.
@@ -5661,10 +5707,13 @@ function RATMANAGER:Start(delay)
 
   -- Start scheduler.
   SCHEDULER:New(nil, self._Start, {self}, delay)
+  
+  return self
 end
 
 --- Instantly starts the RAT manager and spawns the initial random number RAT groups for each RAT object.
 -- @param #RATMANAGER self
+-- @return #RATMANAGER RATMANAGER self object.
 function RATMANAGER:_Start()
 
   -- Ensure that ntot is at least sum of min RAT groups.
@@ -5695,29 +5744,36 @@ function RATMANAGER:_Start()
   local text=string.format(RATMANAGER.id.."Starting RAT manager with scheduler ID %s.", self.managerid)
   self:E(text)
   
+  return self
 end
 
 --- Stops the RAT manager.
 -- @param #RATMANAGER self
 -- @param #number delay Delay in seconds before the manager is stopped. Default is 1 second.
+-- @return #RATMANAGER RATMANAGER self object.
 function RATMANAGER:Stop(delay)
   delay=delay or 1
   self:E(string.format(RATMANAGER.id.."Manager will be stopped in %d seconds.", delay))
   SCHEDULER:New(nil, self._Stop, {self}, delay)
+  return self
 end
 
 --- Instantly stops the RAT manager by terminating its scheduler.
 -- @param #RATMANAGER self
+-- @return #RATMANAGER RATMANAGER self object.
 function RATMANAGER:_Stop()
   self:E(string.format(RATMANAGER.id.."Stopping manager with scheduler ID %s.", self.managerid))
   self.manager:Stop(self.managerid)
+  return self
 end
 
 --- Sets the time interval between checks of alive RAT groups. Default is 30 seconds.
 -- @param #RATMANAGER self
 -- @param #number dt Time interval in seconds.
+-- @return #RATMANAGER RATMANAGER self object.
 function RATMANAGER:SetTcheck(dt)
   self.Tcheck=dt or 30
+  return self
 end
 
 --- Manager function. Calculating the number of current groups and respawning new groups if necessary.
