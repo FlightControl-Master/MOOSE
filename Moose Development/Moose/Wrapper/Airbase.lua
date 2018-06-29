@@ -589,8 +589,9 @@ end
 -- @param #boolean scanstatics (Optional) Scan for statics as obstacles. Default true.
 -- @param #boolean scanscenery (Optional) Scan for scenery as obstacles. Default false. Can cause problems with e.g. shelters.
 -- @param #boolean verysafe (Optional) If true, wait until an aircraft has taken off until the parking spot is considered to be free. Defaul false.
+-- @param #number nspots (Optional) Number of freeparking spots requested. Default is the number of aircraft in the group. 
 -- @return #table Table of coordinates and terminal IDs of free parking spots. Each table entry has the elements .Coordinate and .TerminalID.
-function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius, scanunits, scanstatics, scanscenery, verysafe)
+function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius, scanunits, scanstatics, scanscenery, verysafe, nspots)
 
   -- Init default
   scanradius=scanradius or 50
@@ -646,11 +647,13 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
   
   -- Get the aircraft size, i.e. it's longest side of x,z.
   local aircraft=group:GetUnit(1)
-  local nspots=group:GetSize()
   local _aircraftsize, ax,ay,az=_GetObjectSize(aircraft, true)
   
+  -- Number of spots we are looking for. Note that, e.g. grouping can require a number different from the group size!
+  local _nspots=nspots or group:GetSize()
+  
   -- Debug info.
-  self:E(string.format("Looking for %d parking spot(s) at %s for aircraft of size %.1f m (x=%.1f,y=%.1f,z=%.1f) at termial type %s.", nspots, airport, _aircraftsize, ax, ay, az, tostring(terminaltype)))
+  self:E(string.format("%s: Looking for %d parking spot(s) for aircraft of size %.1f m (x=%.1f,y=%.1f,z=%.1f) at termial type %s.", airport, _nspots, _aircraftsize, ax, ay, az, tostring(terminaltype)))
   
   -- Table of valid spots.
   local validspots={}
@@ -743,7 +746,7 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
         self:T(string.format("%s: Parking spot id %d occupied.", airport, _termid))
       else
         self:E(string.format("%s: Parking spot id %d free.", airport, _termid))      
-        if nvalid<nspots then
+        if nvalid<_nspots then
           table.insert(validspots, {Coordinate=_spot, TerminalID=_termid})
         end
         nvalid=nvalid+1
@@ -752,7 +755,7 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
     end
        
     -- We found enough spots.
-    if nvalid>=nspots then
+    if nvalid>=_nspots then
       return validspots
     end
   end  
