@@ -1102,10 +1102,21 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
           end
         end
         
+        -- Get correct heading.
+        local function _Heading(course)
+          local h
+          if course<=180 then
+            h=math.rad(course)
+          else
+            h=-math.rad(360-course)
+          end
+          return h 
+        end        
+        
         -- If Heading is given, point all the units towards the given Heading.
         if self.SpawnInitHeadingMin then
           for UnitID = 1, #SpawnTemplate.units do
-            SpawnTemplate.units[UnitID].heading = self.SpawnInitHeadingMax and math.random( self.SpawnInitHeadingMin, self.SpawnInitHeadingMax ) or self.SpawnInitHeadingMin
+            SpawnTemplate.units[UnitID].heading = _Heading(self.SpawnInitHeadingMax and math.random( self.SpawnInitHeadingMin, self.SpawnInitHeadingMax ) or self.SpawnInitHeadingMin)
             SpawnTemplate.units[UnitID].psi = -SpawnTemplate.units[UnitID].heading
           end
         end
