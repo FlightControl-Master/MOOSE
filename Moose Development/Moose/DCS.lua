@@ -155,6 +155,7 @@ do -- country
   -- @field UK
   -- @field FRANCE
   -- @field GERMANY
+  -- @field AGGRESSORS
   -- @field CANADA
   -- @field SPAIN
   -- @field THE_NETHERLANDS
@@ -167,6 +168,60 @@ do -- country
   -- @field ABKHAZIA
   -- @field SOUTH_OSETIA
   -- @field ITALY
+  -- @field AUSTRALIA
+  -- @field SWITZERLAND
+  -- @field AUSTRIA
+  -- @field BELARUS
+  -- @field BULGARIA
+  -- @field CHEZH_REPUBLIC
+  -- @field CHINA
+  -- @field CROATIA
+  -- @field EGYPT
+  -- @field FINLAND
+  -- @field GREECE
+  -- @field HUNGARY
+  -- @field INDIA
+  -- @field IRAN
+  -- @field IRAQ
+  -- @field JAPAN
+  -- @field KAZAKHSTAN
+  -- @field NORTH_KOREA
+  -- @field PAKISTAN
+  -- @field POLAND
+  -- @field ROMANIA
+  -- @field SAUDI_ARABIA
+  -- @field SERBIA
+  -- @field SLOVAKIA
+  -- @field SOUTH_KOREA
+  -- @field SWEDEN
+  -- @field SYRIA
+  -- @field YEMEN
+  -- @field VIETNAM
+  -- @field VENEZUELA
+  -- @field TUNISIA
+  -- @field THAILAND
+  -- @field SUDAN
+  -- @field PHILIPPINES
+  -- @field MOROCCO
+  -- @field MEXICO
+  -- @field MALAYSIA
+  -- @field LIBYA
+  -- @field JORDAN
+  -- @field INDONESIA
+  -- @field HONDURAS
+  -- @field ETHIOPIA
+  -- @field CHILE
+  -- @field BRAZIL 
+  -- @field BAHRAIN
+  -- @field THIRDREICH
+  -- @field YUGOSLAVIA
+  -- @field USSR
+  -- @field ITALIAN_SOCIAL_REPUBLIC
+  -- @field ALGERIA
+  -- @field KUWAIT
+  -- @field QATAR
+  -- @field OMAN
+  -- @field UNITED_ARAB_EMIRATES
 
   country = {} -- #country
 

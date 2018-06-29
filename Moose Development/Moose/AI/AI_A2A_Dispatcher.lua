@@ -1033,10 +1033,6 @@ do -- AI_A2A_DISPATCHER
         DefenderUnit:Destroy()
         return
       end
-      if DefenderUnit:GetFuel() <= self.DefenderDefault.FuelThreshold then
-        DefenderUnit:Destroy()
-        return
-      end
     end 
   end
   
@@ -1049,7 +1045,8 @@ do -- AI_A2A_DISPATCHER
     if Squadron then
       self:F( { SquadronName = Squadron.Name } )
       local LandingMethod = self:GetSquadronLanding( Squadron.Name )
-      if LandingMethod == AI_A2A_DISPATCHER.Landing.AtEngineShutdown then
+      if LandingMethod == AI_A2A_DISPATCHER.Landing.AtEngineShutdown and
+        not DefenderUnit:InAir() then
         local DefenderSize = Defender:GetSize()
         if DefenderSize == 1 then
           self:RemoveDefenderFromSquadron( Squadron, Defender )
