@@ -295,7 +295,9 @@ function SPAWN:New( SpawnTemplatePrefix )
     self.SpawnUnControlled = false
     self.SpawnInitKeepUnitNames = false             -- Overwrite unit names by default with group name.
     self.DelayOnOff = false                         -- No intial delay when spawning the first group.
-    self.Grouping = nil                             -- No grouping
+    self.Grouping = nil                             -- No grouping.
+    self.SpawnInitLivery = nil                      -- No special livery.
+    self.SpawnInitSkill = nil                       -- No special skill.
 
 		self.SpawnGroups = {}														-- Array containing the descriptions of each Group to be Spawned.
 	else
@@ -341,7 +343,9 @@ function SPAWN:NewWithAlias( SpawnTemplatePrefix, SpawnAliasPrefix )
     self.SpawnUnControlled = false
     self.SpawnInitKeepUnitNames = false             -- Overwrite unit names by default with group name.
     self.DelayOnOff = false                         -- No intial delay when spawning the first group.
-    self.Grouping = nil
+    self.Grouping = nil                             -- No grouping.
+    self.SpawnInitLivery = nil                      -- No special livery.
+    self.SpawnInitSkill = nil                       -- No special skill.
 
 		self.SpawnGroups = {}														-- Array containing the descriptions of each Group to be Spawned.
 	else
@@ -390,7 +394,9 @@ function SPAWN:NewFromTemplate( SpawnTemplate, SpawnTemplatePrefix, SpawnAliasPr
     self.SpawnUnControlled = false
     self.SpawnInitKeepUnitNames = false             -- Overwrite unit names by default with group name.
     self.DelayOnOff = false                         -- No intial delay when spawning the first group.
-    self.Grouping = nil
+    self.Grouping = nil                             -- No grouping.
+    self.SpawnInitLivery = nil                      -- No special livery.
+    self.SpawnInitSkill = nil                       -- No special skill.
 
     self.SpawnGroups = {}                           -- Array containing the descriptions of each Group to be Spawned.
   else
@@ -488,15 +494,23 @@ function SPAWN:InitHeading( HeadingMin, HeadingMax )
 end
 
 
+--- Sets the coalition of the spawned group. Note that it might be necessary to also set the country explicitly!
+-- @param #SPAWN self 
+-- @param #DCS.coalition Coaliton Coaliton of the group as number of enumerator, i.e. 0=coaliton.side.NEUTRAL, 1=coaliton.side.RED, 2=coalition.side.BLUE.
+-- @return #SPAWN self
 function SPAWN:InitCoalition( Coalition )
-  self:F( )
+  self:F({coalition=Coalition})
 
   self.SpawnInitCoalition = Coalition
   
   return self
 end
 
-
+--- Sets the country of the spawn group. Note that the country determins the coalition of the group depending on which country is defined to be on which side for each specific mission!
+-- See https://wiki.hoggitworld.com/view/DCS_enum_country for country enumerators.
+-- @param #SPAWN self 
+-- @param #DCS.country Country Country id as number or enumerator, e.g. country.id.RUSSIA=0, county.id.USA=2 etc.
+-- @return #SPAWN self
 function SPAWN:InitCountry( Country )
   self:F( )
 
@@ -506,6 +520,10 @@ function SPAWN:InitCountry( Country )
 end
 
 
+--- Sets category ID of the group.
+-- @param #SPAWN self 
+-- @param #number Category Category id.
+-- @return #SPAWN self
 function SPAWN:InitCategory( Category )
   self:F( )
 
@@ -513,6 +531,40 @@ function SPAWN:InitCategory( Category )
   
   return self
 end
+
+--- Sets livery of the group.
+-- @param #SPAWN self 
+-- @param #string Livery Livery name. Note that this is not necessarily the same name as displayed in the mission edior.
+-- @return #SPAWN self
+function SPAWN:InitLivery( Livery )
+  self:F({livery=Livery} )
+
+  self.SpawnInitLivery = Livery
+  
+  return self
+end
+
+--- Sets skill of the group.
+-- @param #SPAWN self 
+-- @param #string Skill Skill, possible values "Average", "Good", "High", "Excellent" or "Random".
+-- @return #SPAWN self
+function SPAWN:InitSkill( Skill )
+  self:F({skill=Skill})
+  if Skill:lower()=="average" then
+    self.SpawnInitSkill="Average"
+  elseif Skill:lower()=="good" then
+    self.SpawnInitSkill="Good"
+  elseif Skill:lower()=="excellent" then
+    self.SpawnInitSkill="Excellent"
+  elseif Skill:lower()=="random" then
+    self.SpawnInitSkill="Random"
+  else
+    self.SpawnInitSkill="High"
+  end
+  
+  return self
+end
+
 
 --- Randomizes the defined route of the SpawnTemplatePrefix group in the ME. This is very useful to define extra variation of the behaviour of groups.
 -- @param #SPAWN self
@@ -1050,13 +1102,40 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
           end
         end
         
+        -- Get correct heading.
+        local function _Heading(course)
+          local h
+          if course<=180 then
+            h=math.rad(course)
+          else
+            h=-math.rad(360-course)
+          end
+          return h 
+        end        
+        
         -- If Heading is given, point all the units towards the given Heading.
         if self.SpawnInitHeadingMin then
           for UnitID = 1, #SpawnTemplate.units do
-            SpawnTemplate.units[UnitID].heading = self.SpawnInitHeadingMax and math.random( self.SpawnInitHeadingMin, self.SpawnInitHeadingMax ) or self.SpawnInitHeadingMin
+            SpawnTemplate.units[UnitID].heading = _Heading(self.SpawnInitHeadingMax and math.random( self.SpawnInitHeadingMin, self.SpawnInitHeadingMax ) or self.SpawnInitHeadingMin)
+            SpawnTemplate.units[UnitID].psi = -SpawnTemplate.units[UnitID].heading
           end
         end
         
+        -- Set livery.
+        if self.SpawnInitLivery then
+          for UnitID = 1, #SpawnTemplate.units do
+            SpawnTemplate.units[UnitID].livery_id = self.SpawnInitLivery
+          end
+        end
+
+        -- Set skill.
+        if self.SpawnInitSkill then
+          for UnitID = 1, #SpawnTemplate.units do
+            SpawnTemplate.units[UnitID].skill = self.SpawnInitSkill
+          end
+        end
+        
+        -- Set country, coaliton and categroy.
         SpawnTemplate.CategoryID = self.SpawnInitCategory or SpawnTemplate.CategoryID 
         SpawnTemplate.CountryID = self.SpawnInitCountry or SpawnTemplate.CountryID 
         SpawnTemplate.CoalitionID = self.SpawnInitCoalition or SpawnTemplate.CoalitionID 
@@ -1272,9 +1351,12 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
       local isbomber=TemplateUnit:HasAttribute("Bombers")
       local istransport=TemplateUnit:HasAttribute("Transports")
       local isfighter=TemplateUnit:HasAttribute("Battleplanes")
+      
+      -- Number of units in the group. With grouping this can actually differ from the template group size!
+      local nunits=#SpawnTemplate.units
 
       -- First waypoint of the group.
-      local SpawnPoint = SpawnTemplate.route.points[1] 
+      local SpawnPoint = SpawnTemplate.route.points[1]
 
       -- These are only for ships and FARPS.
       SpawnPoint.linkUnit = nil
@@ -1350,25 +1432,25 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
         if spawnonship or spawnonfarp or spawnonrunway then
           -- These places work procedural and have some kind of build in queue ==> Less effort.
           self:T(string.format("Group %s is spawned on farp/ship/runway %s.", self.SpawnTemplatePrefix, SpawnAirbase:GetName()))
-          nfree=SpawnAirbase:GetFreeParkingSpotsNumber(termtype, spawnonship or spawnonfarp or spawnonrunway)
-          spots=SpawnAirbase:GetFreeParkingSpotsTable(termtype, spawnonship or spawnonfarp or spawnonrunway)
+          nfree=SpawnAirbase:GetFreeParkingSpotsNumber(termtype, true)
+          spots=SpawnAirbase:GetFreeParkingSpotsTable(termtype, true)
         else
           if ishelo then
             if termtype==nil then
               -- Helo is spawned. Try exclusive helo spots first.
               self:T(string.format("Helo group %s is at %s using terminal type %d.", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), AIRBASE.TerminalType.HelicopterOnly))
-              spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.HelicopterOnly, scanradius, scanunits, scanstatics, scanscenery, verysafe)
+              spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.HelicopterOnly, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits)
               nfree=#spots
-              if nfree<#SpawnTemplate.units then
+              if nfree<nunits then
                 -- Not enough helo ports. Let's try also other terminal types.
                 self:T(string.format("Helo group %s is at %s using terminal type %d.", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), AIRBASE.TerminalType.HelicopterUsable))
-                spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.HelicopterUsable, scanradius, scanunits, scanstatics, scanscenery, verysafe)
+                spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.HelicopterUsable, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits)
                 nfree=#spots
               end
             else
               -- No terminal type specified. We try all spots except shelters.
               self:T(string.format("Helo group %s is at %s using terminal type %d.", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), termtype))
-              spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, termtype, scanradius, scanunits, scanstatics, scanscenery, verysafe)
+              spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, termtype, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits)
               nfree=#spots              
             end
           else
@@ -1380,23 +1462,23 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
               if isbomber or istransport then
                 -- First we fill the potentially bigger spots.
                 self:T(string.format("Transport/bomber group %s is at %s using terminal type %d.", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), AIRBASE.TerminalType.OpenBig))
-                spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.OpenBig, scanradius, scanunits, scanstatics, scanscenery, verysafe)
+                spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.OpenBig, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits)
                 nfree=#spots
-                if nfree<#SpawnTemplate.units then
+                if nfree<nunits then
                   -- Now we try the smaller ones.
                   self:T(string.format("Transport/bomber group %s is at %s using terminal type %d.", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), AIRBASE.TerminalType.OpenMedOrBig))         
-                  spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.OpenMedOrBig, scanradius, scanunits, scanstatics, scanscenery, verysafe)
+                  spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.OpenMedOrBig, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits)
                   nfree=#spots
                 end
               else
                 self:T(string.format("Fighter group %s is at %s using terminal type %d.", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), AIRBASE.TerminalType.FighterAircraft))
-                spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.FighterAircraft, scanradius, scanunits, scanstatics, scanscenery, verysafe)
+                spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.FighterAircraft, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits)
                 nfree=#spots              
               end            
             else
               -- Terminal type explicitly given.
               self:T(string.format("Plane group %s is at %s using terminal type %s.", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), tostring(termtype)))
-              spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, termtype, scanradius, scanunits, scanstatics, scanscenery, verysafe)
+              spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, termtype, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits)
               nfree=#spots
             end
           end
@@ -1409,17 +1491,48 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
           self:T2(string.format("%s, Termin Index = %3d, Term Type = %03d, Free = %5s, TOAC = %5s, Term ID0 = %3d, Dist2Rwy = %4d", 
           SpawnAirbase:GetName(), _spot.TerminalID, _spot.TerminalType,tostring(_spot.Free),tostring(_spot.TOAC),_spot.TerminalID0,_spot.DistToRwy))
         end
-        self:T(string.format("%s at %s: free parking spots = %d - number of units = %d", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), nfree, #SpawnTemplate.units))
+        self:T(string.format("%s at %s: free parking spots = %d - number of units = %d", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), nfree, nunits))
         
-        -- Put parking spots in table. These spots are only used if spawing at an airbase. 
-        if nfree >= #SpawnTemplate.units or (spawnonrunway and nfree>0) then
-          
-          for i=1,#SpawnTemplate.units do
-            table.insert(parkingspots, spots[i].Coordinate)
-            table.insert(parkingindex, spots[i].TerminalID)
+        -- Set this to true if not enough spots are available for emergency air start.
+        local _notenough=false
+
+        -- Need to differentiate some cases again.
+        if spawnonship or spawnonfarp or spawnonrunway then
+        
+          -- On free spot required in these cases. 
+          if nfree >=1 then
+            
+            -- All units get the same spot. DCS takes care of the rest.
+            for i=1,nunits do
+              table.insert(parkingspots, spots[1].Coordinate)
+              table.insert(parkingindex, spots[1].TerminalID)
+            end
+            -- This is actually used...
+            PointVec3=spots[1].Coordinate
+            
+          else
+            -- If there is absolutely not spot ==> air start!
+            _notenough=true
           end
+        
+        elseif spawnonairport then
+        
+          if nfree>=nunits then
           
-        else
+            for i=1,nunits do
+              table.insert(parkingspots, spots[i].Coordinate)
+              table.insert(parkingindex, spots[i].TerminalID)
+            end
+            
+          else
+            -- Not enough spots for the whole group ==> air start!
+            _notenough=true                    
+          end        
+        end
+        
+        -- Not enough spots ==> Prepare airstart.
+        if _notenough then
+        
           if EmergencyAirSpawn and not self.SpawnUnControlled then 
             self:E(string.format("WARNING: Group %s has no parking spots at %s ==> air start!", self.SpawnTemplatePrefix, SpawnAirbase:GetName()))
           
@@ -1449,11 +1562,25 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
             return nil
           end
         end
-        
+      
+      else
+      
+        -- Air start requested initially ==> Set altitude. 
+        if TakeoffAltitude then
+          PointVec3.y=TakeoffAltitude
+        else
+          if ishelo then
+            PointVec3.y=PointVec3:GetLandHeight()+math.random(100,1000)
+          else
+            -- Randomize position so that multiple AC wont be spawned on top even in air.
+            PointVec3.y=PointVec3:GetLandHeight()+math.random(500,2500)
+          end
+        end
+             
       end
 
       -- Translate the position of the Group Template to the Vec3.
-      for UnitID = 1, #SpawnTemplate.units do
+      for UnitID = 1, nunits do
         self:T2('Before Translation SpawnTemplate.units['..UnitID..'].x = '..SpawnTemplate.units[UnitID].x..', SpawnTemplate.units['..UnitID..'].y = '..SpawnTemplate.units[UnitID].y)
         
         -- Template of the current unit.

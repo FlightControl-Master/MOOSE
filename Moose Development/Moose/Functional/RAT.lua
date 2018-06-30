@@ -511,7 +511,7 @@ RAT.id="RAT | "
 --- RAT version.
 -- @list version
 RAT.version={
-  version = "2.3.0",
+  version = "2.3.1",
   print = true,
 }
 
@@ -5031,6 +5031,9 @@ function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace, departure, take
         self.SpawnUnControlled=true
       end
       
+      -- Number of units in the group. With grouping this can actually differ from the template group size!
+      local nunits=#SpawnTemplate.units
+      
       -- Array with parking spots coordinates.
       local parkingspots={}
       local parkingindex={}
@@ -5059,26 +5062,26 @@ function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace, departure, take
         if  spawnonship or spawnonfarp or spawnonrunway then
           -- These places work procedural and have some kind of build in queue ==> Less effort.
           self:T(RAT.id..string.format("Group %s is spawned on farp/ship/runway %s.", self.alias, departure:GetName()))
-          nfree=departure:GetFreeParkingSpotsNumber(termtype, spawnonship or spawnonfarp or spawnonrunway)
-          spots=departure:GetFreeParkingSpotsTable(termtype, spawnonship or spawnonfarp or spawnonrunway)
+          nfree=departure:GetFreeParkingSpotsNumber(termtype, true)
+          spots=departure:GetFreeParkingSpotsTable(termtype, true)
         else
           -- Helo is spawned.
           if self.category==RAT.cat.heli then
             if termtype==nil then
               -- Try exclusive helo spots first.
               self:T(RAT.id..string.format("Helo group %s is spawned at %s using terminal type %d.", self.alias, departure:GetName(), AIRBASE.TerminalType.HelicopterOnly))
-              spots=departure:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.HelicopterOnly, scanradius, scanunits, scanstatics, scanscenery, verysafe)
+              spots=departure:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.HelicopterOnly, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits)
               nfree=#spots
-              if nfree<#SpawnTemplate.units then
+              if nfree<nunits then
                 -- Not enough helo ports. Let's try also other terminal types.
                 self:T(RAT.id..string.format("Helo group %s is spawned at %s using terminal type %d.", self.alias, departure:GetName(), AIRBASE.TerminalType.HelicopterOnly))
-                spots=departure:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.HelicopterUsable, scanradius, scanunits, scanstatics, scanscenery, verysafe)
+                spots=departure:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.HelicopterUsable, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits)
                 nfree=#spots
               end
             else
               -- Terminal type specified explicitly.
               self:T(RAT.id..string.format("Helo group %s is at %s using terminal type %d.", self.alias, departure:GetName(), termtype))
-              spots=departure:FindFreeParkingSpotForAircraft(TemplateGroup, termtype, scanradius, scanunits, scanstatics, scanscenery, verysafe)
+              spots=departure:FindFreeParkingSpotForAircraft(TemplateGroup, termtype, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits)
               nfree=#spots              
             end
           else
@@ -5092,23 +5095,23 @@ function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace, departure, take
               if bomber or transport then
                 -- First we fill the potentially bigger spots.
                 self:T(RAT.id..string.format("Transport/bomber group %s is spawned at %s using terminal type %d.", self.alias, departure:GetName(), AIRBASE.TerminalType.OpenBig))
-                spots=departure:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.OpenBig, scanradius, scanunits, scanstatics, scanscenery, verysafe)
+                spots=departure:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.OpenBig, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits)
                 nfree=#spots
-                if nfree<#SpawnTemplate.units then
+                if nfree<nunits then
                   -- Now we try the smaller ones.
                   self:T(RAT.id..string.format("Transport/bomber group %s is at %s using terminal type %d.", self.alias, departure:GetName(), AIRBASE.TerminalType.OpenMed))         
-                  spots=departure:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.OpenMed, scanradius, scanunits, scanstatics, scanscenery, verysafe)
+                  spots=departure:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.OpenMed, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits)
                   nfree=#spots
                 end                
               else
                 self:T(RAT.id..string.format("Fighter group %s is spawned at %s using terminal type %d.", self.alias, departure:GetName(), AIRBASE.TerminalType.FighterAircraft))
-                spots=departure:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.FighterAircraft, scanradius, scanunits, scanstatics, scanscenery, verysafe)
+                spots=departure:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.FighterAircraft, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits)
                 nfree=#spots                
               end            
             else
               -- Terminal type explicitly given.
               self:T(RAT.id..string.format("Plane group %s is spawned at %s using terminal type %d.", self.alias, departure:GetName(), termtype))
-              spots=departure:FindFreeParkingSpotForAircraft(TemplateGroup, termtype, scanradius, scanunits, scanstatics, scanscenery, verysafe)
+              spots=departure:FindFreeParkingSpotForAircraft(TemplateGroup, termtype, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits)
               nfree=#spots
             end
           end
@@ -5121,19 +5124,51 @@ function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace, departure, take
           self:T2(RAT.id..string.format("%s, Termin Index = %3d, Term Type = %03d, Free = %5s, TOAC = %5s, Term ID0 = %3d, Dist2Rwy = %4d", 
           departure:GetName(), _spot.TerminalID, _spot.TerminalType,tostring(_spot.Free),tostring(_spot.TOAC),_spot.TerminalID0,_spot.DistToRwy))
         end
-        self:T(RAT.id..string.format("%s at %s: free parking spots = %d - number of units = %d", self.alias, departure:GetName(), nfree, #SpawnTemplate.units))
+        self:T(RAT.id..string.format("%s at %s: free parking spots = %d - number of units = %d", self.alias, departure:GetName(), nfree, nunits))
         
-        -- Put parking spots in table. These spots are only used if 
-        if nfree >= #SpawnTemplate.units or (spawnonrunway and nfree>0) then
-          
-          for i=1,#SpawnTemplate.units do
-            table.insert(parkingspots, spots[i].Coordinate)
-            table.insert(parkingindex, spots[i].TerminalID)
+
+        -- Set this to true if not enough spots are available for emergency air start.
+        local _notenough=false
+
+        -- Need to differentiate some cases again.
+        if spawnonship or spawnonfarp or spawnonrunway then
+        
+          -- On free spot required in these cases. 
+          if nfree >=1 then
+            
+            -- All units get the same spot. DCS takes care of the rest.
+            for i=1,nunits do
+              table.insert(parkingspots, spots[1].Coordinate)
+              table.insert(parkingindex, spots[1].TerminalID)
+            end
+            -- This is actually used...
+            PointVec3=spots[1].Coordinate
+            
+          else
+            -- If there is absolutely not spot ==> air start!
+            _notenough=true
           end
+        
+        elseif spawnonairport then
+        
+          if nfree>=nunits then
           
-        else
-          if self.respawn_inair and not self.uncontrolled then
-            self:E(RAT.id..string.format("WARNING: RAT group %s has no parking spots at %s ==> air start!", self.alias, departure:GetName()))
+            for i=1,nunits do
+              table.insert(parkingspots, spots[i].Coordinate)
+              table.insert(parkingindex, spots[i].TerminalID)
+            end
+            
+          else
+            -- Not enough spots for the whole group ==> air start!
+            _notenough=true                    
+          end        
+        end
+        
+        -- Not enough spots ==> Prepare airstart.
+        if _notenough then
+        
+          if self.respawn_inair and not self.SpawnUnControlled then 
+            self:E(RAT.id..string.format("WARNING: Group %s has no parking spots at %s ==> air start!", self.SpawnTemplatePrefix, departure:GetName()))
           
             -- Not enough parking spots at the airport ==> Spawn in air.
             spawnonground=false
@@ -5142,27 +5177,37 @@ function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace, departure, take
             spawnonrunway=false
             
             -- Set waypoint type/action to turning point.
-            waypoints[1].type   = GROUPTEMPLATE.Takeoff[GROUP.Takeoff.Air][1] -- type = Turning Point
+            waypoints[1].type   = GROUPTEMPLATE.Takeoff[GROUP.Takeoff.Air][1] -- type   = Turning Point
             waypoints[1].action = GROUPTEMPLATE.Takeoff[GROUP.Takeoff.Air][2] -- action = Turning Point
             
-            -- Adjust and randomize position and altitude of the spawn point.
+            -- Adjust altitude to be 500-1000 m above the airbase.
             PointVec3.x=PointVec3.x+math.random(-500,500)
-            PointVec3.z=PointVec3.z+math.random(-500,500)
+            PointVec3.z=PointVec3.z+math.random(-500,500)            
             if self.category==RAT.cat.heli then
               PointVec3.y=PointVec3:GetLandHeight()+math.random(100,1000)
             else
+              -- Randomize position so that multiple AC wont be spawned on top even in air.
               PointVec3.y=PointVec3:GetLandHeight()+math.random(500,2500)
             end
           else
-            self:E(RAT.id..string.format("WARNING: RAT group %s has no parking spots at %s. Air start deactivated or uncontrolled AC!", self.alias, departure:GetName()))
+            self:E(RAT.id..string.format("WARNING: Group %s has no parking spots at %s ==> No emergency air start or uncontrolled spawning ==> No spawn!", self.SpawnTemplatePrefix, departure:GetName()))
             return nil
-          end          
+          end
         end
+      
+      else
+      
+        -- Air start requested initially!
         
+        --PointVec3.y is already set from first waypoint here!
+             
       end
-                    
+
+
+--- new
+                   
       -- Translate the position of the Group Template to the Vec3.
-      for UnitID = 1, #SpawnTemplate.units do
+      for UnitID = 1, nunits do
         
         -- Template of the current unit.
         local UnitTemplate = SpawnTemplate.units[UnitID]
