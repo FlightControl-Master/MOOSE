@@ -1,4 +1,4 @@
---- **Tasking** -- Orchestrates the task for players to execute CSAR for downed pilots @{Cargo.Cargo}.
+--- **Tasking** -- Orchestrates the task for players to execute CSAR for downed pilots.
 -- 
 -- **Specific features:**
 -- 

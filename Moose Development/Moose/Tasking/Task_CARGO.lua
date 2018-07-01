@@ -1,10 +1,10 @@
---- **Tasking** -- Base class to model tasks for players to transport @{Cargo.Cargo}.
+--- **Tasking** -- Base class to model tasks for players to transport cargo.
 -- 
 -- ===
 --
 -- # 1) Tasking system.
 -- 
--- If you are not yet aware what the MOOSE tasking system is about, read FIRST the explanation on tasking **@{Tasking.Task}**.
+-- #### If you are not yet aware what the MOOSE tasking system is about, read FIRST the explanation on tasking **@{Tasking.Task}**.
 -- 
 -- ===
 -- 
@@ -48,20 +48,13 @@
 -- 
 -- ## 3.1) Joining a Cargo Transport Task
 -- 
--- If you are unfamiliar with the tasking menu mechanism, it is highly recommended to read through
--- chapter 1 of the @{Tasking} description from a player perspective.
--- 
--- This chapter explains all the different menu items that are available to control the tasking as a player.
--- Using the menu structure, you can join tasks either manually or automatically, and various
--- menu options are available to obtain more information and various reports on the tasks and mission statistics.
--- 
--- From this moment on, you can Pickup cargo from a pickup location and Deploy cargo in deployment zones, using the **Task Action Menu**.
+-- Once you've joined a task, using the **Join Planned Task Menu**, 
+-- you can Pickup cargo from a pickup location and Deploy cargo in deployment zones, using the **Task Action Menu**.
 --  
 -- ## 3.2) Task Action Menu.
 -- 
 -- When a player has joined a **`CARGO`** task (type), for that player only, 
 -- it's **Task Action Menu** will show an additional menu options.
--- The task action menu will have the name of the task you currently joined and **`@ player name`**.
 -- 
 -- From within this menu, you will be able to route to a cargo location, deploy zone, and load/unload cargo.
 -- 
@@ -87,29 +80,65 @@
 --     it is within sling loading range. 
 --     
 -- In order to be able to pickup cargo, you'll need to know where the cargo is located, right?
--- Fortunately, if your Carrier is not within the reporting range of the cargo, the HQ can help to route you to the locations of cargo.
+-- 
+-- Fortunately, if your Carrier is not within the reporting range of the cargo, 
+-- **the HQ can help to route you to the locations of cargo**.
+-- 
+-- ![Task_Types](../Tasking/Task_Cargo_Main_Menu.JPG)
+-- 
 -- Use the task action menu to receive HQ help for this.
 -- 
--- ![Task_Types](../Tasking/Task_Cargo_Actions.JPG)
+-- ![Task_Types](../Tasking/Task_Cargo_Action_Menu.JPG)
 --  
 -- Depending on the location within the battlefield, the task action menu will contain **Route options** that can be selected
 -- to start the HQ sending you routing messages.
+-- The **route options will vary**, depending on the position of your carrier, and the location of the cargo and the deploy zones.
+-- Note that the route options will **only be created** for cargo that is **in scope of your cargo transportation task**,
+-- so there may be other cargo objects within the DCS simulation, but if those belong to other cargo transportations tasks,
+-- then no routing options will be shown for these cargo.
+-- This is done to ensure that **different teams** have a **defined scope** for defined cargo, and that **multiple teams** can join
+-- **multiple tasks**, transporting cargo **simultaneously** in a **cooperation**.
+-- 
+-- In this example, there is a menu option to **Route to pickup cargo...".
+-- Use this menu to route towards cargo locations for pickup into your carrier.
+-- 
+-- ![Task_Types](../Tasking/Task_Cargo_Types_Menu.JPG)
+-- 
+-- When you select this menu, you'll see a new menu listing the different cargo types that are out there in the dcs simulator.
+-- These cargo types are symbolic names that are assigned by the mission designer, like oil, liquid, engineers, food, workers etc.
+-- MOOSE has introduced this concept to allow mission designers to make different cargo types for different purposes.
+-- Only the creativity of the mission designer limits now the things that can be done with cargo ...
+-- Okay, let's continue ..., and let's select Oil ...
 -- 
 -- When selected, the HQ will send you routing messages.
 -- 
--- ![Task_Types](../Tasking/Task_Cargo_Routing_LL.JPG)  
--- An example of routing in LL mode.
--- 
 -- ![Task_Types](../Tasking/Task_Cargo_Routing_BR.JPG)  
+-- 
 -- An example of routing in BR mode.
 -- 
--- Possible coordinate formats are: Bearing Range (BR), Lattitude Longitude (LL) or Military Grid System (MGRS).
--- Note that for LL, there are two sub formats.
+-- Note that the coordinate display format in the message can be switched between LL DMS, LL DDM, MGRS and BR.
 -- 
--- The routing messages are formulated in the coordinate format that is currently active as configured in your settings profile.  
--- ![Task_Types](../Tasking/Task_Cargo_Settings.JPG)  
--- Use the **Settings Menu** to select the coordinate format that you would like to use for location determination.
+-- ![Task_Types](../Tasking/Main_Settings.JPG)
+--   
+-- Use the @{Core.Settings} menu to change your display format preferences. 
 -- 
+-- ![Task_Types](../Tasking/Settings_A2G_Coordinate.JPG)
+-- 
+-- There you can change the display format to another format that suits your need.
+-- Because cargo transportation is Air 2 Ground oriented, you need to select the A2G coordinate format display options.
+-- Note that the main settings menu contains much more
+-- options to control your display formats, like switch to metric and imperial, or change the duration of the display messages.
+-- 
+-- ![Task_Types](../Tasking/Task_Cargo_Routing_LL.JPG)  
+-- 
+-- Here I changed the routing display format to LL DMS.
+-- 
+-- One important thing to know, is that the routing messages will flash at regular time intervals.
+-- When using BR coordinate display format, the **distance and angle will change accordingly** from your carrier position and the location of the cargo.
+-- 
+-- Another important note is the routing towards deploy zones.
+-- These routing options will only be shown, when your carrier bays have cargo loaded.
+-- So, only when there is something to be deployed from your carrier, the deploy options will be shown.
 --     
 -- ### 3.3.1) Pickup Cargo.
 -- 
@@ -126,16 +155,33 @@
 -- It takes a bit of skill to land a helicopter near a cargo to be loaded, but that is part of the game, isn't it?
 -- Expecially when you are landing in a "hot" zone, so when cargo is under immediate threat of fire.
 -- 
--- ### 3.3.2) Board Cargo.
+-- ### 3.3.2) Board Cargo (infantry).
+-- 
+-- ![Task_Types](../Tasking/Boarding_Ready.JPG)  
 -- 
 -- If your Carrier is within the **Reporting Range of the cargo**, and the cargo is **moveable**, the **cargo can be boarded**!
+-- This type of cargo will be most of the time be infantry.
 -- 
--- Select the task action menu and now a **Board or Load option** will be listed with the cargo name next to it!
--- Select the option from the action menu, and the cargo will start moving towards your carrier.
+-- ![Boarding](../Tasking/Boarding_Menu.JPG)  
+-- 
+-- A board menu has appeared, because your carrier is in boarding range of the cargo (infantry).
+-- 
+-- ![Boarding](../Tasking/Boarding_Started.JPG)  
+-- 
+-- Select the option from the action menu, then select the cargo to be boarded, and the cargo will start moving towards your carrier.
+-- Note that a message is displayed by the infantry cargo that boarding has started.
+-- 
+-- ![Boarding](../Tasking/Boarding_Ongoing.JPG)  
 -- 
 -- The moveable cargo will run in formation to your carrier, and will board one by one, depending on the near range set by the mission designer.
 -- The near range as added because carriers can be large or small, depending on the object size of the carrier.
+-- 
+-- ![Boarding](../Tasking/Boarding_Almost_Done.JPG)  
+-- 
 -- Note that multiple units may need to board your Carrier, so it is required to await the full boarding process.
+-- 
+-- ![Boarding](../Tasking/Boarding_Done.JPG)  
+-- 
 -- Once the cargo is fully boarded within your Carrier, you will be notified of this.
 -- 
 -- Note that for airborne Carriers, it is required to land first before the Boarding process can be initiated.
