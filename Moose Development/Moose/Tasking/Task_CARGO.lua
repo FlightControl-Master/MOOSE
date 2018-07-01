@@ -168,6 +168,7 @@
 -- 
 -- ![Boarding](../Tasking/Boarding_Started.JPG)  
 -- 
+-- 
 -- Select the option from the action menu, then select the cargo to be boarded, and the cargo will start moving towards your carrier.
 -- Note that a message is displayed by the infantry cargo that boarding has started.
 -- 
