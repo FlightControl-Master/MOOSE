@@ -511,7 +511,7 @@ RAT.id="RAT | "
 --- RAT version.
 -- @list version
 RAT.version={
-  version = "2.3.1",
+  version = "2.3.2",
   print = true,
 }
 
@@ -2124,10 +2124,16 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   if group:InAir() then
     self.ratcraft[self.SpawnIndex]["Tground"]=nil
     self.ratcraft[self.SpawnIndex]["Pground"]=nil
+    self.ratcraft[self.SpawnIndex]["Uground"]=nil
     self.ratcraft[self.SpawnIndex]["Tlastcheck"]=nil
   else
     self.ratcraft[self.SpawnIndex]["Tground"]=timer.getTime()
     self.ratcraft[self.SpawnIndex]["Pground"]=group:GetCoordinate()
+    self.ratcraft[self.SpawnIndex]["Uground"]={}
+    for _,_unit in pairs(group:GetUnits()) do
+      local _unitname=_unit:GetName()
+      self.ratcraft[self.SpawnIndex]["Uground"][_unitname]=_unit:GetCoordinate()
+    end
     self.ratcraft[self.SpawnIndex]["Tlastcheck"]=timer.getTime()
   end
   -- Initial and current position. For calculating the travelled distance.
@@ -3361,6 +3367,7 @@ function RAT:Status(message, forID)
         -- Aircraft is airborne.
         ratcraft["Tground"]=nil
         ratcraft["Pground"]=nil
+        ratcraft["Uground"]=nil
         ratcraft["Tlastcheck"]=nil
       else
         --Aircraft is on ground.
@@ -3377,16 +3384,39 @@ function RAT:Status(message, forID)
           -- If more than Tinactive seconds passed since last check ==> check how much we moved meanwhile.
           if dTlast > self.Tinactive then
                   
-            -- If aircraft did not move more than 50 m since last check, we call it stationary and despawn it.
-            -- Aircraft which are spawned uncontrolled or starting their engines are not counted. 
+            --[[
             if Dg<50 and active and status~=RAT.status.EventBirth then
-            --if Dg<50 and active then
               stationary=true
             end
+            ]]
             
-             -- Set the current time to know when the next check is necessary.
+            -- Loop over all units.
+            for _,_unit in pairs(group:GetUnits()) do
+            
+              if _unit and _unit:IsAlive() then
+              
+                -- Unit name, coord and distance since last check.
+                local unitname=_unit:GetName()
+                local unitcoord=_unit:GetCoordinate()
+                local Ug=unitcoord:Get2DDistance(ratcraft.Uground[unitname])
+                
+                -- Debug info
+                self:T2(RAT.id..string.format("Unit %s travelled distance on ground %.1f m since %d seconds.", unitname, Ug, dTlast))
+                
+                -- If aircraft did not move more than 50 m since last check, we call it stationary and despawn it.
+                -- Aircraft which are spawned uncontrolled or starting their engines are not counted. 
+                if Ug<50 and active and status~=RAT.status.EventBirth then
+                  stationary=true
+                end
+                
+                -- Update coords.
+                ratcraft["Uground"][unitname]=unitcoord
+              end
+            end
+            
+            -- Set the current time to know when the next check is necessary.
             ratcraft["Tlastcheck"]=Tnow
-            ratcraft["Pground"]=coords
+            ratcraft["Pground"]=coords            
           end
           
         else
@@ -3394,6 +3424,11 @@ function RAT:Status(message, forID)
           ratcraft["Tground"]=Tnow
           ratcraft["Tlastcheck"]=Tnow
           ratcraft["Pground"]=coords
+          ratcraft["Uground"]={}
+          for _,_unit in pairs(group:GetUnits()) do
+            local unitname=_unit:GetName()
+            ratcraft.Uground[unitname]=_unit:GetCoordinate()
+          end
         end
       end
       

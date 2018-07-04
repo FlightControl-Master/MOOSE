@@ -626,9 +626,9 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
   end
   
   -- Function calculating the overlap of two (square) objects.
-  local function _overlap(mooseobject, dcsobject, dist)
-    local l1=_GetObjectSize(mooseobject, true)
-    local l2=_GetObjectSize(dcsobject)
+  local function _overlap(object1, mooseobject1, object2, mooseobject2, dist)
+    local l1=_GetObjectSize(object1, mooseobject1)
+    local l2=_GetObjectSize(object2, mooseobject2)
     local safedist=(l1/2+l2/2)*1.1    
     local safe = (dist > safedist)
     self:T3(string.format("l1=%.1f l2=%.1f s=%.1f d=%.1f ==> safe=%s", l1,l2,safedist,dist,tostring(safe)))
@@ -676,10 +676,10 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
     local _termid=parkingspot.TerminalID
     
     -- Very safe uses the DCS getParking() info to check if a spot is free. Unfortunately, the function returns free=false until the aircraft has actually taken-off.
-    if verysafe and parkingspot.Free==false then
+    if verysafe and (parkingspot.Free==false or parkingspot.TOAC==true) then
         
       -- DCS getParking() routine returned that spot is not free.
-      self:T(string.format("%s: Parking spot id %d NOT free (or aircraft has not taken off yet).", airport, parkingspot.TerminalID))
+      self:E(string.format("%s: Parking spot id %d NOT free (or aircraft has not taken off yet). Free=%s, TOAC=%s.", airport, parkingspot.TerminalID, tostring(parkingspot.Free), tostring(parkingspot.TOAC)))
   
     else
           
@@ -695,7 +695,7 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
         local _vec3=unit:getPoint()
         local _coord=COORDINATE:NewFromVec3(_vec3)
         local _dist=_coord:Get2DDistance(_spot)      
-        local _safe=_overlap(aircraft, unit, _dist)
+        local _safe=_overlap(aircraft, true, unit, false,_dist)
         
         if markobstacles then
           local l,x,y,z=_GetObjectSize(unit)      
@@ -712,7 +712,7 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
         local _vec3=static:getPoint()
         local _coord=COORDINATE:NewFromVec3(_vec3)
         local _dist=_coord:Get2DDistance(_spot)      
-        local _safe=_overlap(aircraft, static, _dist)
+        local _safe=_overlap(aircraft, true, static, false,_dist)
         
         if markobstacles then
           local l,x,y,z=_GetObjectSize(static)
@@ -728,8 +728,8 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
       for _,scenery in pairs(_sceneries) do
         local _vec3=scenery:getPoint()
         local _coord=COORDINATE:NewFromVec3(_vec3)
-        local _dist=_coord:Get2DDistance(_spot)      
-        local _safe=_overlap(aircraft, scenery, _dist)
+        local _dist=_coord:Get2DDistance(_spot)
+        local _safe=_overlap(aircraft, true, scenery, false,_dist)
         
         if markobstacles then
           local l,x,y,z=_GetObjectSize(scenery)
@@ -741,6 +741,15 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
         end                  
       end
       
+      -- Now check the already given spots so that we do not put a large aircraft next to one we already assigned a nearby spot.
+      for _,_takenspot in pairs(validspots) do
+        local _dist=_takenspot.Coordinate:Get2DDistance(_spot)
+        local _safe=_overlap(aircraft, true, aircraft, true,_dist)
+        if not _safe then
+          occupied=true
+        end
+      end
+            
       --_spot:MarkToAll(string.format("Parking spot %d free=%s", parkingspot.TerminalID, tostring(not occupied)))
       if occupied then
         self:T(string.format("%s: Parking spot id %d occupied.", airport, _termid))
@@ -752,12 +761,13 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
         nvalid=nvalid+1
       end
       
-    end
+    end -- loop over units
        
     -- We found enough spots.
     if nvalid>=_nspots then
       return validspots
     end
+    
   end  
     
   -- Retrun spots we found, even if there were not enough.
