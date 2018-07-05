@@ -2,6 +2,191 @@
 --
 -- ===
 -- 
+-- # 1) MOOSE Cargo System.
+-- 
+-- #### Those who have used the mission editor, know that the DCS mission editor provides cargo facilities.
+-- However, these are merely static objects. Wouldn't it be nice if cargo could bring a new dynamism into your
+-- simulations? Where various objects of various types could be treated also as cargo?
+-- 
+-- This is what MOOSE brings to you, a complete new cargo object model that used the cargo capabilities of 
+-- DCS world, but enhances it.
+-- 
+-- MOOSE Cargo introduces also a new concept, called a "carrier". These can be:
+-- 
+--   - Helicopters
+--   - Planes
+--   - Ground Vehicles
+--   - Ships
+-- 
+-- With the MOOSE Cargo system, you can:
+-- 
+--   - Take full control of the cargo as objects within your script (see below).
+--   - Board/Unboard infantry into carriers. Also other objects can be boarded, like mortars.
+--   - Load/Unload dcs world cargo objects into carriers.
+--   - Load/Unload other static objects into carriers (like tires etc).
+--   - Slingload cargo objects.
+--   - Board units one by one...
+--   
+-- # 2) MOOSE Cargo Objects.
+-- 
+-- In order to make use of the MOOSE cargo system, you need to **declare** the DCS objects as MOOSE cargo objects!
+-- 
+-- This sounds complicated, but it is actually quite simple.
+-- 
+-- See here an example:
+-- 
+--     local EngineerCargoGroup = CARGO_GROUP:New( GROUP:FindByName( "Engineers" ), "Workmaterials", "Engineers", 250 )
+--     
+-- The above code declares a MOOSE cargo object called `EngineerCargoGroup`.
+-- It actually just refers to an infantry group created within the sim called `"Engineers"`.
+-- The infantry group now becomes controlled by the MOOSE cargo object `EngineerCargoGroup`.
+-- A MOOSE cargo object also has properties, like the type of cargo, the logical name, and the reporting range.
+-- 
+-- There are 4 types of MOOSE cargo objects possible, each represented by its own class:
+-- 
+--   - @{Cargo.CargoGroup#CARGO_GROUP}: A MOOSE cargo that is represented by a DCS world GROUP object.
+--   - @{Cargo.CargoCrate#CARGO_CRATE}: A MOOSE cargo that is represented by a DCS world cargo object (static object).
+--   - @{Cargo.CargoUnit#CARGO_UNIT}: A MOOSE cargo that is represented by a DCS world unit object or static object.
+--   - @{Cargo.CargoSlingload#CARGO_SLINGLOAD}: A MOOSE cargo that is represented by a DCS world cargo object (static object), that can be slingloaded.
+--   
+-- Note that a CARGO crate is not meant to be slingloaded (it can, but it is not **meant** to be handled like that.
+-- Instead, a CARGO_CRATE is able to load itself into the bays of a carrier.
+-- 
+-- Each of these MOOSE cargo objects behave in its own way, and have methods to be handled.
+-- 
+--     local InfantryGroup = GROUP:FindByName( "Infantry" )
+--     local InfantryCargo = CARGO_GROUP:New( InfantryGroup, "Engineers", "Infantry Engineers", 2000 )
+--     local CargoCarrier = UNIT:FindByName( "Carrier" )
+--     -- This call will make the Cargo run to the CargoCarrier.
+--     -- Upon arrival at the CargoCarrier, the Cargo will be Loaded into the Carrier.
+--     -- This process is now fully automated.
+--     InfantryCargo:Board( CargoCarrier, 25 ) 
+-- 
+-- The above would create a MOOSE cargo object called `InfantryCargo`, and using that object,
+-- you can board the cargo into the carrier `CargoCarrier`.
+-- Simple, isn't it? Told you, and this is only the beginning.
+-- 
+-- The boarding, unboarding, loading, unloading of cargo is however something that is not meant to be coded manualy by mission designers.
+-- It would be too low-level and not end-user friendly to deal with cargo handling complexity.
+-- Things can become really complex if you want to make cargo being handled and behave in multiple scenarios.
+-- 
+-- # 3) Cargo Handling Classes, the main engines for mission designers!
+-- 
+-- For this reason, the MOOSE Cargo System is heavily used by 3 important **cargo handling class hierarchies** within MOOSE,
+-- that make cargo come "alive" within your mission in a full automatic manner!
+-- 
+-- ## 3.1) AI Cargo handlers.
+-- 
+--   - @{AI.AI_Cargo_APC} will create for you the capatility to make an APC group handle cargo.
+--   - @{AI.AI_Cargo_Helicopter} will create for you the capatility to make a Helicopter group handle cargo.
+--   
+--   
+-- ## 3.2) AI Cargo transportation dispatchers.
+-- 
+-- There are also dispatchers that make AI work together to transport cargo automatically!!!
+--   
+--   - @{AI.AI_Cargo_Dispatcher_APC} derived classes will create for your dynamic cargo handlers controlled by AI ground vehicle groups (APCs) to transport cargo between sites.
+--   - @{AI.AI_Cargo_Dispatcher_Helicopters} derived classes will create for your dynamic cargo handlers controlled by AI helicpter groups to transport cargo between sites.
+-- 
+-- ## 3.3) Cargo transportation tasking.
+--   
+-- And there is cargo transportation tasking for human players.
+--   
+--   - @{Tasking.Task_CARGO} derived classes will create for you cargo transportation tasks, that allow human players to interact with MOOSE cargo objects to complete tasks.
+-- 
+-- Please refer to the documentation reflected within these modules to understand the detailed capabilties.
+-- 
+-- # 4) Cargo SETs.
+-- 
+-- To make life a bit more easy, MOOSE cargo objects can be grouped into a @{Core.Set#SET_CARGO}.
+-- This is a collection of MOOSE cargo objects.
+-- 
+-- This would work as follows:
+-- 
+--      -- Define the cargo set.
+--      local CargoSetWorkmaterials = SET_CARGO:New():FilterTypes( "Workmaterials" ):FilterStart()
+--      
+--      -- Now add cargo the cargo set.
+--      local EngineerCargoGroup = CARGO_GROUP:New( GROUP:FindByName( "Engineers" ), "Workmaterials", "Engineers", 250 )
+--      local ConcreteCargo = CARGO_SLINGLOAD:New( STATIC:FindByName( "Concrete" ), "Workmaterials", "Concrete", 150, 50 )
+--      local CrateCargo = CARGO_CRATE:New( STATIC:FindByName( "Crate" ), "Workmaterials", "Crate", 150, 50 )
+--      local EnginesCargo = CARGO_CRATE:New( STATIC:FindByName( "Engines" ), "Workmaterials", "Engines", 150, 50 )
+--      local MetalCargo = CARGO_CRATE:New( STATIC:FindByName( "Metal" ), "Workmaterials", "Metal", 150, 50 )
+-- 
+-- This is a very powerful concept!
+-- Instead of having to deal with multiple MOOSE cargo objects yourself, the cargo set capability will group cargo objects into one set.
+-- The key is the **cargo type** name given at each cargo declaration!
+-- In the above example, the cargo type name is `"Workmaterials"`. Each cargo object declared is given that type name. (the 2nd parameter).
+-- What happens now is that the cargo set `CargoSetWorkmaterials` will be added with each cargo object **dynamically** when the cargo object is created.
+-- In other words, the cargo set `CargoSetWorkmaterials` will incorporate any `"Workmaterials"` dynamically into its set.
+-- 
+-- The cargo sets are extremely important for the AI cargo transportation dispatchers and the cargo transporation tasking.
+-- 
+-- # 5) Declare MOOSE cargo within the mission editor!!!
+-- 
+-- But I am not finished! There is something more, that is even more great!
+-- Imagine the mission designers having to code all these lines every time it wants to embed cargo within a mission.
+--  
+--      -- Now add cargo the cargo set.
+--      local EngineerCargoGroup = CARGO_GROUP:New( GROUP:FindByName( "Engineers" ), "Workmaterials", "Engineers", 250 )
+--      local ConcreteCargo = CARGO_SLINGLOAD:New( STATIC:FindByName( "Concrete" ), "Workmaterials", "Concrete", 150, 50 )
+--      local CrateCargo = CARGO_CRATE:New( STATIC:FindByName( "Crate" ), "Workmaterials", "Crate", 150, 50 )
+--      local EnginesCargo = CARGO_CRATE:New( STATIC:FindByName( "Engines" ), "Workmaterials", "Engines", 150, 50 )
+--      local MetalCargo = CARGO_CRATE:New( STATIC:FindByName( "Metal" ), "Workmaterials", "Metal", 150, 50 )
+-- 
+-- This would be extremely tiring and a huge overload.
+-- However, the MOOSE framework allows to declare MOOSE cargo objects within the mission editor!!!
+-- 
+-- So, at mission startup, MOOSE will search for objects following a special naming convention, and will create for you dynamically
+-- cargo objects at mission start!!!
+-- These cargo objects can then be automatically incorporated within cargo set(s)!!!
+-- In other words, your mission would be reduced to about a few lines of code, providing you with a full dynamic cargo handling mission!
+-- 
+-- What I talk about is this:
+-- 
+--      HQ = GROUP:FindByName( "HQ", "Bravo" )
+--      
+--      CommandCenter = COMMANDCENTER
+--        :New( HQ, "Lima" )
+--      
+--      Mission = MISSION
+--        :New( CommandCenter, "Operation Cargo Fun", "Tactical", "Transport Cargo", coalition.side.RED )
+--      
+--      TransportGroups = SET_GROUP:New():FilterCoalitions( "blue" ):FilterPrefixes( "Transport" ):FilterStart()
+--      
+--      TaskDispatcher = TASK_CARGO_DISPATCHER:New( Mission, TransportGroups )
+--      
+--      
+--      -- This is the most important now. You setup a new SET_CARGO filtering the relevant type.
+--      -- The actual cargo objects are now created by MOOSE in the background.
+--      -- Each cargo is setup in the Mission Editor using the ~CARGO tag in the group name.
+--      -- This allows a truly dynamic setup.
+--      local CargoSetWorkmaterials = SET_CARGO:New():FilterTypes( "Workmaterials" ):FilterStart()
+--      
+--      local WorkplaceTask = TaskDispatcher:AddTransportTask( "Build a Workplace", CargoSetWorkmaterials, "Transport the workers, engineers and the equipment near the Workplace." )
+--      TaskDispatcher:SetTransportDeployZone( WorkplaceTask, ZONE:New( "Workplace" ) )
+--      
+--      Helos = { SPAWN:New( "Helicopters 1" ), SPAWN:New( "Helicopters 2" ), SPAWN:New( "Helicopters 3" ), SPAWN:New( "Helicopters 4" ), SPAWN:New( "Helicopters 5" ) }
+--      
+--      EnemyHelos = { SPAWN:New( "Enemy Helicopters 1" ), SPAWN:New( "Enemy Helicopters 2" ), SPAWN:New( "Enemy Helicopters 3" ) }
+--      
+--      function WorkplaceTask:OnAfterCargoDeployed( From, Event, To, TaskUnit, Cargo, DeployZone )
+--        Helos[ math.random(1,#Helos) ]:Spawn()
+--        EnemyHelos[ math.random(1,#EnemyHelos) ]:Spawn()
+--      
+--      end
+-- 
+-- Here the `CargoSetWorkmaterials` is provided as a parameter to the cargo task dispatcher object WorkplaceTask`.
+-- And there is NO cargo object actually declared within the script! However, if you would open the mission, there would be hundreds of cargo objects...
+-- 
+-- HOW? => Through a naming convention introduced. Name infantry groups in a special manner, and it can behave as MOOSE cargo!
+-- 
+-- 5.1) Name MOOSE cargo objects within the mission editor!
+-- 
+-- 
+-- 
+-- ===
+-- 
 -- ### Author: **FlightControl**
 -- ### Contributions: 
 -- 
