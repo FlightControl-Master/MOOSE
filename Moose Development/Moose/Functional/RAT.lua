@@ -385,12 +385,12 @@ RAT={
   onboardnum=nil,           -- Tail number.
   onboardnum0=1,            -- (Optional) Starting value of the automatically appended numbering of aircraft within a flight. Default is one.
   checkonrunway=true,       -- Check whether aircraft have been spawned on the runway.
-  onrunwayradius=75,       -- Distance from a runway spawn point until a unit is considered to have accidentally been spawned on a runway.
+  onrunwayradius=75,        -- Distance from a runway spawn point until a unit is considered to have accidentally been spawned on a runway.
   onrunwaymaxretry=3,       -- Number of respawn retries (on ground) at other airports if a group gets accidentally spawned on the runway.
   checkontop=false,         -- Check whether aircraft have been spawned on top of another unit.
   ontopradius=2,            -- Radius in meters until which a unit is considered to be on top of another.
   termtype=nil,             -- Terminal type.
-  parkingscanradius=50,     -- Scan radius.
+  parkingscanradius=40,     -- Scan radius.
   parkingscanscenery=false, -- Scan parking spots for scenery obstacles.
   parkingverysafe=false,    -- Very safe option.
 }
@@ -511,7 +511,7 @@ RAT.id="RAT | "
 --- RAT version.
 -- @list version
 RAT.version={
-  version = "2.3.1",
+  version = "2.3.2",
   print = true,
 }
 
@@ -2124,10 +2124,16 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   if group:InAir() then
     self.ratcraft[self.SpawnIndex]["Tground"]=nil
     self.ratcraft[self.SpawnIndex]["Pground"]=nil
+    self.ratcraft[self.SpawnIndex]["Uground"]=nil
     self.ratcraft[self.SpawnIndex]["Tlastcheck"]=nil
   else
     self.ratcraft[self.SpawnIndex]["Tground"]=timer.getTime()
     self.ratcraft[self.SpawnIndex]["Pground"]=group:GetCoordinate()
+    self.ratcraft[self.SpawnIndex]["Uground"]={}
+    for _,_unit in pairs(group:GetUnits()) do
+      local _unitname=_unit:GetName()
+      self.ratcraft[self.SpawnIndex]["Uground"][_unitname]=_unit:GetCoordinate()
+    end
     self.ratcraft[self.SpawnIndex]["Tlastcheck"]=timer.getTime()
   end
   -- Initial and current position. For calculating the travelled distance.
@@ -3361,6 +3367,7 @@ function RAT:Status(message, forID)
         -- Aircraft is airborne.
         ratcraft["Tground"]=nil
         ratcraft["Pground"]=nil
+        ratcraft["Uground"]=nil
         ratcraft["Tlastcheck"]=nil
       else
         --Aircraft is on ground.
@@ -3377,16 +3384,39 @@ function RAT:Status(message, forID)
           -- If more than Tinactive seconds passed since last check ==> check how much we moved meanwhile.
           if dTlast > self.Tinactive then
                   
-            -- If aircraft did not move more than 50 m since last check, we call it stationary and despawn it.
-            -- Aircraft which are spawned uncontrolled or starting their engines are not counted. 
+            --[[
             if Dg<50 and active and status~=RAT.status.EventBirth then
-            --if Dg<50 and active then
               stationary=true
             end
+            ]]
             
-             -- Set the current time to know when the next check is necessary.
+            -- Loop over all units.
+            for _,_unit in pairs(group:GetUnits()) do
+            
+              if _unit and _unit:IsAlive() then
+              
+                -- Unit name, coord and distance since last check.
+                local unitname=_unit:GetName()
+                local unitcoord=_unit:GetCoordinate()
+                local Ug=unitcoord:Get2DDistance(ratcraft.Uground[unitname])
+                
+                -- Debug info
+                self:T2(RAT.id..string.format("Unit %s travelled distance on ground %.1f m since %d seconds.", unitname, Ug, dTlast))
+                
+                -- If aircraft did not move more than 50 m since last check, we call it stationary and despawn it.
+                -- Aircraft which are spawned uncontrolled or starting their engines are not counted. 
+                if Ug<50 and active and status~=RAT.status.EventBirth then
+                  stationary=true
+                end
+                
+                -- Update coords.
+                ratcraft["Uground"][unitname]=unitcoord
+              end
+            end
+            
+            -- Set the current time to know when the next check is necessary.
             ratcraft["Tlastcheck"]=Tnow
-            ratcraft["Pground"]=coords
+            ratcraft["Pground"]=coords            
           end
           
         else
@@ -3394,6 +3424,11 @@ function RAT:Status(message, forID)
           ratcraft["Tground"]=Tnow
           ratcraft["Tlastcheck"]=Tnow
           ratcraft["Pground"]=coords
+          ratcraft["Uground"]={}
+          for _,_unit in pairs(group:GetUnits()) do
+            local unitname=_unit:GetName()
+            ratcraft.Uground[unitname]=_unit:GetCoordinate()
+          end
         end
       end
       
@@ -3605,7 +3640,7 @@ function RAT:_OnBirth(EventData)
         end
         self:_SetStatus(SpawnGroup, status)
                
-        -- Get some info ablout this flight. 
+        -- Get some info ablout this flight.
         local i=self:GetSpawnIndexFromGroup(SpawnGroup)
         local _departure=self.ratcraft[i].departure:GetName()
         local _destination=self.ratcraft[i].destination:GetName()
@@ -3674,7 +3709,7 @@ function RAT:_OnBirth(EventData)
         end
         
         if ontop then
-          local text=string.format("ERROR: RAT group of %s was spawned on top of another unit. Group #%d will be despawned immediately!", self.alias, i)
+          local text=string.format("ERROR: Group of %s was spawned on top of another unit. Group #%d will be despawned immediately!", self.alias, i)
           MESSAGE:New(text,30):ToAllIf(self.Debug)
           self:T(RAT.id..text)
           if self.Debug then
@@ -4283,16 +4318,13 @@ function RAT:_Waypoint(index, description, Type, Coord, Speed, Altitude, Airport
     if AirbaseCategory == Airbase.Category.SHIP then
       RoutePoint.linkUnit = AirbaseID
       RoutePoint.helipadId = AirbaseID
-      --self:T(RAT.id.."WP: Ship id = "..AirbaseID)
     elseif AirbaseCategory == Airbase.Category.HELIPAD then
       RoutePoint.linkUnit = AirbaseID
       RoutePoint.helipadId = AirbaseID
-      --self:T(RAT.id.."WP: Helipad id = "..AirbaseID)
     elseif AirbaseCategory == Airbase.Category.AIRDROME then
       RoutePoint.airdromeId = AirbaseID
-      --self:T(RAT.id.."WP: Airdrome id = "..AirbaseID)
     else
-      --self:E(RAT.id.."Unknown Airport categoryin _Waypoint()!")
+      self:T(RAT.id.."Unknown Airport category in _Waypoint()!")
     end  
   end
   -- properties
@@ -5074,7 +5106,7 @@ function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace, departure, take
               nfree=#spots
               if nfree<nunits then
                 -- Not enough helo ports. Let's try also other terminal types.
-                self:T(RAT.id..string.format("Helo group %s is spawned at %s using terminal type %d.", self.alias, departure:GetName(), AIRBASE.TerminalType.HelicopterOnly))
+                self:T(RAT.id..string.format("Helo group %s is spawned at %s using terminal type %d.", self.alias, departure:GetName(), AIRBASE.TerminalType.HelicopterUsable))
                 spots=departure:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.HelicopterUsable, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits)
                 nfree=#spots
               end
@@ -5181,13 +5213,13 @@ function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace, departure, take
             waypoints[1].action = GROUPTEMPLATE.Takeoff[GROUP.Takeoff.Air][2] -- action = Turning Point
             
             -- Adjust altitude to be 500-1000 m above the airbase.
-            PointVec3.x=PointVec3.x+math.random(-500,500)
-            PointVec3.z=PointVec3.z+math.random(-500,500)            
+            PointVec3.x=PointVec3.x+math.random(-1500,1500)
+            PointVec3.z=PointVec3.z+math.random(-1500,1500)            
             if self.category==RAT.cat.heli then
               PointVec3.y=PointVec3:GetLandHeight()+math.random(100,1000)
             else
               -- Randomize position so that multiple AC wont be spawned on top even in air.
-              PointVec3.y=PointVec3:GetLandHeight()+math.random(500,2500)
+              PointVec3.y=PointVec3:GetLandHeight()+math.random(500,3000)
             end
           else
             self:E(RAT.id..string.format("WARNING: Group %s has no parking spots at %s ==> No emergency air start or uncontrolled spawning ==> No spawn!", self.SpawnTemplatePrefix, departure:GetName()))
@@ -5625,7 +5657,8 @@ end
 -- @field #table min Minimum number of RAT groups alive.
 -- @field #number nrat Number of RAT objects.
 -- @field #number ntot Total number of active RAT groups.
--- @field #number Tcheck Time interval between checking of alive groups.
+-- @field #number Tcheck Time interval in seconds between checking of alive groups.
+-- @field #number dTspawn Time interval in seconds between spawns of groups.
 -- @field Core.Scheduler#SCHEDULER manager Scheduler managing the RAT objects.
 -- @field #number managerid Managing scheduler id.
 -- @extends Core.Base#BASE
@@ -5676,7 +5709,8 @@ RATMANAGER={
   min={},
   nrat=0,
   ntot=nil,
-  Tcheck=30,
+  Tcheck=60,
+  dTspawn=1.0,
   manager=nil,
   managerid=nil,
 }
@@ -5772,21 +5806,31 @@ function RATMANAGER:_Start()
   local N=self:_RollDice(self.nrat, self.ntot, self.min, self.alive)
   
   -- Loop over all RAT objects and spawn groups.
+  local time=0.0
   for i=1,self.nrat do
     for j=1,N[i] do
-      self.rat[i]:_SpawnWithRoute()
-    end
-    -- Start activation scheduler for uncontrolled aircraft.
-    if self.rat[i].uncontrolled and self.rat[i].activate_uncontrolled then
-      SCHEDULER:New(nil, self.rat[i]._ActivateUncontrolled, {self.rat[i]}, self.rat[i].activate_delay, self.rat[i].activate_delta, self.rat[i].activate_frand)
+      time=time+self.dTspawn
+      SCHEDULER:New(nil, RAT._SpawnWithRoute, {self.rat[i]}, time)
     end
   end
   
+  -- Start activation scheduler for uncontrolled aircraft.
+  for i=1,self.nrat do      
+    if self.rat[i].uncontrolled and self.rat[i].activate_uncontrolled then
+      -- Start activating stuff but not before the latest spawn has happend.
+      local Tactivate=math.max(time+1, self.rat[i].activate_delay)    
+      SCHEDULER:New(self.rat[i], self.rat[i]._ActivateUncontrolled, {self.rat[i]}, Tactivate, self.rat[i].activate_delta, self.rat[i].activate_frand)
+    end
+  end
+  
+  -- Start the manager. But not earlier than the latest spawn has happened!
+  local TstartManager=math.max(time+1, self.Tcheck)
+  
   -- Start manager scheduler.
-  self.manager, self.managerid = SCHEDULER:New(nil, self._Manage, {self}, 5, self.Tcheck) --Core.Scheduler#SCHEDULER
+  self.manager, self.managerid = SCHEDULER:New(self, self._Manage, {self}, TstartManager, self.Tcheck) --Core.Scheduler#SCHEDULER
   
   -- Info
-  local text=string.format(RATMANAGER.id.."Starting RAT manager with scheduler ID %s.", self.managerid)
+  local text=string.format(RATMANAGER.id.."Starting RAT manager with scheduler ID %s in %d seconds. Repeat interval %d seconds.", self.managerid, TstartManager, self.Tcheck)
   self:E(text)
   
   return self
@@ -5812,14 +5856,24 @@ function RATMANAGER:_Stop()
   return self
 end
 
---- Sets the time interval between checks of alive RAT groups. Default is 30 seconds.
+--- Sets the time interval between checks of alive RAT groups. Default is 60 seconds.
 -- @param #RATMANAGER self
 -- @param #number dt Time interval in seconds.
 -- @return #RATMANAGER RATMANAGER self object.
 function RATMANAGER:SetTcheck(dt)
-  self.Tcheck=dt or 30
+  self.Tcheck=dt or 60
   return self
 end
+
+--- Sets the time interval between spawning of groups.
+-- @param #RATMANAGER self
+-- @param #number dt Time interval in seconds. Default is 1 second.
+-- @return #RATMANAGER RATMANAGER self object.
+function RATMANAGER:SetTspawn(dt)
+  self.dTspawn=dt or 1.0
+  return self
+end
+
 
 --- Manager function. Calculating the number of current groups and respawning new groups if necessary.
 -- @param #RATMANAGER self
@@ -5829,18 +5883,18 @@ function RATMANAGER:_Manage()
   local ntot=self:_Count()
   
   -- Debug info.
-  if self.Debug then
-    local text=string.format("Number of alive groups %d. New groups to be spawned %d.", ntot, self.ntot-ntot)
-    self:T(RATMANAGER.id..text)
-  end
+  local text=string.format("Number of alive groups %d. New groups to be spawned %d.", ntot, self.ntot-ntot)
+  self:T(RATMANAGER.id..text)
   
   -- Get number of necessary spawns.
   local N=self:_RollDice(self.nrat, self.ntot, self.min, self.alive)
   
   -- Loop over all RAT objects and spawn new groups if necessary.
+  local time=0.0
   for i=1,self.nrat do
     for j=1,N[i] do
-      self.rat[i]:_SpawnWithRoute()
+      time=time+self.dTspawn
+      SCHEDULER:New(nil, RAT._SpawnWithRoute, {self.rat[i]}, time)
     end
   end
 end
@@ -5873,10 +5927,8 @@ function RATMANAGER:_Count()
     ntotal=ntotal+n
     
     -- Debug output.
-    if self.Debug then
-      local text=string.format("Number of alive groups of %s = %d", self.name[i], n)
-      self:T(RATMANAGER.id..text)
-    end
+    local text=string.format("Number of alive groups of %s = %d", self.name[i], n)
+    self:T(RATMANAGER.id..text)
   end
   
   -- Return grand total.
@@ -5969,14 +6021,12 @@ function RATMANAGER:_RollDice(nrat,ntot,min,alive)
   table.insert(done,j)
   
   -- Debug info
-  if self.Debug then
-    local text=RATMANAGER.id.."\n"
-    for i=1,nrat do
-      text=text..string.format("%s: i=%d, alive=%d, min=%d, mini=%d, maxi=%d, add=%d\n", self.name[i], i, alive[i], min[i], mini[i], maxi[i], N[i])
-    end
-    text=text..string.format("Total # of groups to add = %d", sum(N, done))
-    self:T2(text)
+  local text=RATMANAGER.id.."\n"
+  for i=1,nrat do
+    text=text..string.format("%s: i=%d, alive=%d, min=%d, mini=%d, maxi=%d, add=%d\n", self.name[i], i, alive[i], min[i], mini[i], maxi[i], N[i])
   end
+  text=text..string.format("Total # of groups to add = %d", sum(N, done))
+  self:T(text)
   
   -- Return number of groups to be spawned.
   return N
