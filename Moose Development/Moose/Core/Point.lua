@@ -1211,6 +1211,7 @@ do -- COORDINATE
       -- Include all points on road.      
       for _,_vec2 in ipairs(path) do
         Path[#Path+1]=COORDINATE:NewFromVec2(_vec2)
+        --COORDINATE:NewFromVec2(_vec2):SmokeGreen()
       end
             
     else

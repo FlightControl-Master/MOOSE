@@ -1990,7 +1990,7 @@ do -- Route methods
   -- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
   -- @param #number Speed (Optional) Speed in km/h. The default speed is 20 km/h.
   -- @param #string OffRoadFormation (Optional) The formation at initial and final waypoint. Default is "Off Road".
-  -- @param #boolean Shortcut (Optional) If true, controllable will take the direct route if the path on road is 10x longer.
+  -- @param #boolean Shortcut (Optional) If true, controllable will take the direct route if the path on road is 10x longer or path on road is less than 5% of total path.
   -- @return Task
   function CONTROLLABLE:TaskGroundOnRoad( ToCoordinate, Speed, OffRoadFormation, Shortcut )
     self:F2({ToCoordinate=ToCoordinate, Speed=Speed, OffRoadFormation=OffRoadFormation})
@@ -2005,18 +2005,27 @@ do -- Route methods
     -- Get path and path length on road including the end points (From and To).
     local PathOnRoad, LengthOnRoad=FromCoordinate:GetPathOnRoad(ToCoordinate, true)
     
+    -- Get the length only(!) on the road.
+    local _,LengthRoad=FromCoordinate:GetPathOnRoad(ToCoordinate, false)
+
+    -- Off road part of the rout: Total=OffRoad+OnRoad.    
+    local LengthOffRoad=LengthOnRoad-LengthRoad
+    
     -- Calculate the direct distance between the initial and final points.
     local LengthDirect=FromCoordinate:Get2DDistance(ToCoordinate)
     
-    env.info(string.format("FF length on road  = %.1f", LengthOnRoad/1000))
-    env.info(string.format("FF length directly = %.1f", LengthDirect/1000))
-    env.info(string.format("FF length fraction = %.1f", LengthOnRoad/LengthDirect))
+    env.info(string.format("FF length on road   = %.1f km", LengthOnRoad/1000))
+    env.info(string.format("FF length directly  = %.1f km", LengthDirect/1000))
+    env.info(string.format("FF length fraction  = %.1f km", LengthOnRoad/LengthDirect))
+    env.info(string.format("FF length only road = %.1f km", LengthRoad/1000))
+    env.info(string.format("FF length off road  = %.1f km", LengthOffRoad/1000))
+    env.info(string.format("FF percent on road  = %.1f", LengthRoad/LengthOnRoad*100))
     
     -- Route, ground waypoints along road.
     local route={}
-    
-    -- Length on road is 10 times longer than direct route.
-    local LongRoad=LengthOnRoad and (LengthOnRoad > LengthDirect*10)
+        
+    -- Length on road is 10 times longer than direct route or path on road is very short (<5% of total path).
+    local LongRoad=LengthOnRoad and ((LengthOnRoad > LengthDirect*10) or (LengthRoad/LengthOnRoad*100<5))
     
     -- Check if a valid path on road could be found.
     if PathOnRoad then
