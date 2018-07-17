@@ -968,7 +968,7 @@ function AI_FORMATION:onenterFollowing( FollowGroupSet ) --R2.1
             local Alpha_R = ( Alpha_T < 0 ) and Alpha_T + 2 * math.pi or Alpha_T
             local Position = math.cos( Alpha_R )
             local GD = ( ( GDv.x )^2 + ( GDv.z )^2 ) ^ 0.5
-            local Distance = GD * Position + - CS * 0,5
+            local Distance = GD * Position + - CS * 0.5
       
             -- Calculate the group direction vector
             local GV = { x = GV2.x - CV2.x, y = GV2.y - CV2.y, z = GV2.z - CV2.z  }
