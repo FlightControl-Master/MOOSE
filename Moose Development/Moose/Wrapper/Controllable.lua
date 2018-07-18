@@ -2014,12 +2014,13 @@ do -- Route methods
     -- Calculate the direct distance between the initial and final points.
     local LengthDirect=FromCoordinate:Get2DDistance(ToCoordinate)
     
-    env.info(string.format("FF length on road   = %.1f km", LengthOnRoad/1000))
-    env.info(string.format("FF length directly  = %.1f km", LengthDirect/1000))
-    env.info(string.format("FF length fraction  = %.1f km", LengthOnRoad/LengthDirect))
-    env.info(string.format("FF length only road = %.1f km", LengthRoad/1000))
-    env.info(string.format("FF length off road  = %.1f km", LengthOffRoad/1000))
-    env.info(string.format("FF percent on road  = %.1f", LengthRoad/LengthOnRoad*100))
+    -- Debug info.
+    self:T(string.format("Length on road   = %.3f km", LengthOnRoad/1000))
+    self:T(string.format("Length directly  = %.3f km", LengthDirect/1000))
+    self:T(string.format("Length fraction  = %.3f km", LengthOnRoad/LengthDirect))
+    self:T(string.format("Length only road = %.3f km", LengthRoad/1000))
+    self:T(string.format("Length off road  = %.3f km", LengthOffRoad/1000))
+    self:T(string.format("Percent on road  = %.1f", LengthRoad/LengthOnRoad*100))
     
     -- Route, ground waypoints along road.
     local route={}
@@ -2032,13 +2033,13 @@ do -- Route methods
 
       -- Check whether the road is very long compared to direct path.
       if LongRoad and Shortcut then
-        env.info(string.format("FF longroad and shortcut"))
+
         -- Road is long ==> we take the short cut.
         table.insert(route, FromCoordinate:WaypointGround(Speed, OffRoadFormation))
         table.insert(route, ToCoordinate:WaypointGround(Speed, OffRoadFormation))
               
       else
-        env.info(string.format("FF longroad and shortcut else"))
+
         -- Create waypoints.
         table.insert(route, FromCoordinate:WaypointGround(Speed, OffRoadFormation))
         table.insert(route, PathOnRoad[2]:WaypointGround(Speed, "On Road"))
@@ -2047,7 +2048,6 @@ do -- Route methods
         -- Add the final coordinate because the final might not be on the road.
         local dist=ToCoordinate:Get2DDistance(PathOnRoad[#PathOnRoad-1])
         if dist>10 then
-          env.info(string.format("FF longroad and shortcut else dist>10"))
           table.insert(route, ToCoordinate:WaypointGround(Speed, OffRoadFormation))
         end
         
