@@ -604,7 +604,7 @@ function AI_CARGO_APC:onafterPickup( APC, From, Event, To, Coordinate )
     if Coordinate then
       self.RoutePickup = true
       
-      local Waypoints = APC:TaskGroundOnRoad( Coordinate, APC:GetSpeedMax()*0.5, "Line abreast" )
+      local Waypoints = APC:TaskGroundOnRoad( Coordinate, APC:GetSpeedMax()*0.5, "Line abreast", true )
   
       local TaskFunction = APC:TaskFunction( "AI_CARGO_APC._Pickup", self )
       
@@ -635,7 +635,7 @@ function AI_CARGO_APC:onafterDeploy( APC, From, Event, To, Coordinate )
 
     self.RouteDeploy = true
      
-    local Waypoints = APC:TaskGroundOnRoad( Coordinate, APC:GetSpeedMax()*0.5, "Line abreast" )
+    local Waypoints = APC:TaskGroundOnRoad( Coordinate, APC:GetSpeedMax()*0.5, "Line abreast", true )
 
     local TaskFunction = APC:TaskFunction( "AI_CARGO_APC._Deploy", self )
     
@@ -661,7 +661,7 @@ function AI_CARGO_APC:onafterHome( APC, From, Event, To, Coordinate )
 
     self.RouteHome = true
      
-    local Waypoints = APC:TaskGroundOnRoad( Coordinate, APC:GetSpeedMax()*0.5, "Line abreast" )
+    local Waypoints = APC:TaskGroundOnRoad( Coordinate, APC:GetSpeedMax()*0.5, "Line abreast", true )
 
     self:F({Waypoints = Waypoints})
     local Waypoint = Waypoints[#Waypoints]

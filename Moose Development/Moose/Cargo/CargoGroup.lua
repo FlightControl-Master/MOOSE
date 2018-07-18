@@ -364,7 +364,7 @@ do -- CARGO_GROUP
   -- @param #string From
   -- @param #string To
   function CARGO_GROUP:onenterUnBoarding( From, Event, To, ToPointVec2, NearRadius, ... )
-    --self:F( {From, Event, To, ToPointVec2, NearRadius } )
+    self:F( {From, Event, To, ToPointVec2, NearRadius } )
   
     NearRadius = NearRadius or 25
   
@@ -381,7 +381,13 @@ do -- CARGO_GROUP
         --- @param Cargo.Cargo#CARGO Cargo
         function( Cargo, NearRadius )
           if not Cargo:IsDestroyed() then
-            Cargo:__UnBoard( Timer, ToPointVec2, NearRadius )
+            local ToVec=nil
+            if ToPointVec2==nil then
+              ToVec=self.CargoCarrier:GetPointVec2():GetRandomPointVec2InRadius(2*NearRadius, NearRadius)
+            else
+              ToVec=ToPointVec2
+            end
+            Cargo:__UnBoard( Timer, ToVec, NearRadius )
             Timer = Timer + 3
           end
         end, { NearRadius }

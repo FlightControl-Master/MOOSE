@@ -1990,8 +1990,9 @@ do -- Route methods
   -- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
   -- @param #number Speed (Optional) Speed in km/h. The default speed is 20 km/h.
   -- @param #string OffRoadFormation (Optional) The formation at initial and final waypoint. Default is "Off Road".
+  -- @param #boolean Shortcut (Optional) If true, controllable will take the direct route if the path on road is 10x longer or path on road is less than 5% of total path.
   -- @return Task
-  function CONTROLLABLE:TaskGroundOnRoad( ToCoordinate, Speed, OffRoadFormation )
+  function CONTROLLABLE:TaskGroundOnRoad( ToCoordinate, Speed, OffRoadFormation, Shortcut )
     self:F2({ToCoordinate=ToCoordinate, Speed=Speed, OffRoadFormation=OffRoadFormation})
     
     -- Defaults.
@@ -2001,26 +2002,65 @@ do -- Route methods
     -- Current coordinate.
     local FromCoordinate = self:GetCoordinate()
     
-    -- First point on road.
-    local FromOnRoad = FromCoordinate:GetClosestPointToRoad()
+    -- Get path and path length on road including the end points (From and To).
+    local PathOnRoad, LengthOnRoad=FromCoordinate:GetPathOnRoad(ToCoordinate, true)
     
-    -- Last Point on road.
-    local ToOnRoad = ToCoordinate:GetClosestPointToRoad()
-           
+    -- Get the length only(!) on the road.
+    local _,LengthRoad=FromCoordinate:GetPathOnRoad(ToCoordinate, false)
+
+    -- Off road part of the rout: Total=OffRoad+OnRoad.    
+    local LengthOffRoad=LengthOnRoad-LengthRoad
+    
+    -- Calculate the direct distance between the initial and final points.
+    local LengthDirect=FromCoordinate:Get2DDistance(ToCoordinate)
+    
+    -- Debug info.
+    self:T(string.format("Length on road   = %.3f km", LengthOnRoad/1000))
+    self:T(string.format("Length directly  = %.3f km", LengthDirect/1000))
+    self:T(string.format("Length fraction  = %.3f km", LengthOnRoad/LengthDirect))
+    self:T(string.format("Length only road = %.3f km", LengthRoad/1000))
+    self:T(string.format("Length off road  = %.3f km", LengthOffRoad/1000))
+    self:T(string.format("Percent on road  = %.1f", LengthRoad/LengthOnRoad*100))
+    
     -- Route, ground waypoints along road.
     local route={}
-    
-    -- Create waypoints.
-    table.insert(route, FromCoordinate:WaypointGround(Speed, OffRoadFormation))
-    table.insert(route, FromOnRoad:WaypointGround(Speed, "On Road"))
-    table.insert(route, ToOnRoad:WaypointGround(Speed, "On Road"))
         
-    -- Add the final coordinate because the final might not be on the road.
-    local dist=ToCoordinate:Get2DDistance(ToOnRoad)
-    if dist>10 then
-      table.insert(route, ToCoordinate:WaypointGround(Speed, OffRoadFormation))
-    end  
+    -- Length on road is 10 times longer than direct route or path on road is very short (<5% of total path).
+    local LongRoad=LengthOnRoad and ((LengthOnRoad > LengthDirect*10) or (LengthRoad/LengthOnRoad*100<5))
     
+    -- Check if a valid path on road could be found.
+    if PathOnRoad then
+
+      -- Check whether the road is very long compared to direct path.
+      if LongRoad and Shortcut then
+
+        -- Road is long ==> we take the short cut.
+        table.insert(route, FromCoordinate:WaypointGround(Speed, OffRoadFormation))
+        table.insert(route, ToCoordinate:WaypointGround(Speed, OffRoadFormation))
+              
+      else
+
+        -- Create waypoints.
+        table.insert(route, FromCoordinate:WaypointGround(Speed, OffRoadFormation))
+        table.insert(route, PathOnRoad[2]:WaypointGround(Speed, "On Road"))
+        table.insert(route, PathOnRoad[#PathOnRoad-1]:WaypointGround(Speed, "On Road"))
+            
+        -- Add the final coordinate because the final might not be on the road.
+        local dist=ToCoordinate:Get2DDistance(PathOnRoad[#PathOnRoad-1])
+        if dist>10 then
+          table.insert(route, ToCoordinate:WaypointGround(Speed, OffRoadFormation))
+        end
+        
+      end
+      
+    else
+    
+      -- No path on road could be found (can happen!) ==> Route group directly from A to B.
+      table.insert(route, FromCoordinate:WaypointGround(Speed, OffRoadFormation))
+      table.insert(route, ToCoordinate:WaypointGround(Speed, OffRoadFormation))
+            
+    end
+
     return route 
   end
 

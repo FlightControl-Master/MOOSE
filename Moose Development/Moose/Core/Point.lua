@@ -1184,29 +1184,56 @@ do -- COORDINATE
   end
 
   --- Returns a table of coordinates to a destination using only roads.
-  -- The first point is the closest point on road of the given coordinate. The last point is the closest point on road of the ToCoord. Hence, the coordinate itself and the final ToCoord are not necessarily included in the path.
+  -- The first point is the closest point on road of the given coordinate.
+  -- By default, the last point is the closest point on road of the ToCoord. Hence, the coordinate itself and the final ToCoord are not necessarily included in the path.
   -- @param #COORDINATE self
   -- @param #COORDINATE ToCoord Coordinate of destination.
-  -- @return #table Table of coordinates on road. If no path on road can be found, nil is returned.
-  function COORDINATE:GetPathOnRoad(ToCoord)
+  -- @param #boolean IncludeEndpoints (Optional) Include the coordinate itself and the ToCoordinate in the path.
+  -- @return #table Table of coordinates on road. If no path on road can be found, nil is returned or just the endpoints.
+  -- @return #number The length of the total path.
+  function COORDINATE:GetPathOnRoad(ToCoord, IncludeEndpoints)
 
     -- DCS API function returning a table of vec2.
     local path = land.findPathOnRoads("roads", self.x, self.z, ToCoord.x, ToCoord.z)
     
+    -- Array holding the path coordinates.
     local Path={}
+    local Way=0
     
-    if path then
-      --Path[#Path+1]=self
-      for i, v in ipairs(path) do
-        Path[#Path+1]=COORDINATE:NewFromVec2(v)
-      end
-      --Path[#Path+1]=ToCoord
-    else
-      -- There are cases where no path on road can be found.
-      return nil
+    -- Include currrent position.
+    if IncludeEndpoints then
+      Path[1]=self
     end
         
-    return Path
+    -- Check that DCS routine actually returned a path. There are situations where this is not the case.
+    if path then
+    
+      -- Include all points on road.      
+      for _,_vec2 in ipairs(path) do
+        Path[#Path+1]=COORDINATE:NewFromVec2(_vec2)
+        --COORDINATE:NewFromVec2(_vec2):SmokeGreen()
+      end
+            
+    else
+      self:E("Path is nil. No valid path on road could be found.")
+    end
+ 
+    -- Include end point, which might not be on road.
+    if IncludeEndpoints then
+      Path[#Path+1]=ToCoord
+    end
+    
+    -- Sum up distances.
+    if #Path>=2 then
+      for i=1,#Path-1 do
+        Way=Way+Path[i+1]:Get2DDistance(Path[i])
+      end
+    else
+      -- There are cases where no path on road can be found.
+      return nil,nil
+    end 
+        
+    return Path, Way
   end
 
   --- Gets the surface type at the coordinate.
