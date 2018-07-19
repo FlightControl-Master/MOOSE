@@ -236,6 +236,8 @@ AIRBASE.Normandy = {
 -- * AIRBASE.PersianGulf.Khasab
 -- * AIRBASE.PersianGulf.Al_Minhad_AB
 -- * AIRBASE.PersianGulf.Sharjah_Intl
+-- * AIRBASE.PersianGulf.Shiraz_International_Airport
+-- * AIRBASE.PersianGulf.Kerman_Airport
 -- @field PersianGulf
 AIRBASE.PersianGulf = {
   ["Fujairah_Intl"] = "Fujairah Intl",
@@ -255,6 +257,8 @@ AIRBASE.PersianGulf = {
   ["Khasab"] = "Khasab",
   ["Al_Minhad_AB"] = "Al Minhad AB",
   ["Sharjah_Intl"] = "Sharjah Intl",
+  ["Shiraz_International_Airport"] = "Shiraz International Airport",
+  ["Kerman_Airport"] = "Kerman Airport",
   }
  
 --- Terminal Types of parking spots. See also https://wiki.hoggitworld.com/view/DCS_func_getParking
