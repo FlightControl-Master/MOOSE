@@ -1632,7 +1632,7 @@ function ARTY:onafterStart(Controllable, From, Event, To)
     self.RearmingPlaceCoord=nil
     self.relocateafterfire=false
     self.autorelocate=false
-    self.RearmingGroupSpeed=20
+    --self.RearmingGroupSpeed=20
   end
   
   -- Check that default speed is below max speed.

@@ -859,15 +859,16 @@ end
 function SET_GROUP:FindNearestGroupFromPointVec2( PointVec2 )
   self:F2( PointVec2 )
   
-  local NearestGroup = nil
+  local NearestGroup = nil --Wrapper.Group#GROUP
   local ClosestDistance = nil
   
   for ObjectID, ObjectData in pairs( self.Set ) do
     if NearestGroup == nil then
-      NearestGroup = ObjectData
-      ClosestDistance = PointVec2:DistanceFromVec2( ObjectData:GetVec2() )
+      NearestGroup = ObjectData 
+      NearestGroup:GetVec2()
+      ClosestDistance = PointVec2:DistanceFromPointVec2( ObjectData:GetCoordinate() )
     else
-      local Distance = PointVec2:DistanceFromVec2( ObjectData:GetVec2() )
+      local Distance = PointVec2:DistanceFromPointVec2( ObjectData:GetCoordinate() )
       if Distance < ClosestDistance then
         NearestGroup = ObjectData
         ClosestDistance = Distance
