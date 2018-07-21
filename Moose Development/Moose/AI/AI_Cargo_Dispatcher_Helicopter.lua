@@ -90,7 +90,7 @@ AI_CARGO_DISPATCHER_HELICOPTER = {
 -- @param #AI_CARGO_DISPATCHER_HELICOPTER self
 -- @param Core.Set#SET_GROUP SetHelicopter The collection of Helicopter @{Wrapper.Group}s.
 -- @param Core.Set#SET_CARGO SetCargo The collection of @{Cargo} derived objects.
--- @param Core.Set#SET_ZONE SetDeployZone The collection of deploy @{Zone}s, which are used to where the cargo will be deployed by the Helicopters. 
+-- @param Core.Set#SET_ZONE SetDeployZones The collection of deploy @{Zone}s, which are used to where the cargo will be deployed by the Helicopters. 
 -- @return #AI_CARGO_DISPATCHER_HELICOPTER
 -- @usage
 -- 

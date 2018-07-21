@@ -596,15 +596,18 @@ end
 -- @param From
 -- @param Event
 -- @param To
--- @param Core.Point#COORDINATE Coordinate
-function AI_CARGO_APC:onafterPickup( APC, From, Event, To, Coordinate )
+-- @param Core.Point#COORDINATE Coordinate of the pickup point.
+-- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+function AI_CARGO_APC:onafterPickup( APC, From, Event, To, Coordinate, Speed )
 
   if APC and APC:IsAlive() then
 
     if Coordinate then
       self.RoutePickup = true
       
-      local Waypoints = APC:TaskGroundOnRoad( Coordinate, APC:GetSpeedMax()*0.5, "Line abreast", true )
+      local _speed=Speed or APC:GetSpeedMax()*0.5
+      
+      local Waypoints = APC:TaskGroundOnRoad( Coordinate, _speed, "Line abreast", true )
   
       local TaskFunction = APC:TaskFunction( "AI_CARGO_APC._Pickup", self )
       
@@ -629,13 +632,16 @@ end
 -- @param Event
 -- @param To
 -- @param Core.Point#COORDINATE Coordinate
-function AI_CARGO_APC:onafterDeploy( APC, From, Event, To, Coordinate )
+-- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+function AI_CARGO_APC:onafterDeploy( APC, From, Event, To, Coordinate, Speed )
 
   if APC and APC:IsAlive() then
 
     self.RouteDeploy = true
+    
+    local _speed=Speed or APC:GetSpeedMax()*0.5
      
-    local Waypoints = APC:TaskGroundOnRoad( Coordinate, APC:GetSpeedMax()*0.5, "Line abreast", true )
+    local Waypoints = APC:TaskGroundOnRoad( Coordinate, _speed, "Line abreast", true )
 
     local TaskFunction = APC:TaskFunction( "AI_CARGO_APC._Deploy", self )
     
@@ -655,13 +661,16 @@ end
 -- @param Event
 -- @param To
 -- @param Core.Point#COORDINATE Coordinate
-function AI_CARGO_APC:onafterHome( APC, From, Event, To, Coordinate )
+-- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+function AI_CARGO_APC:onafterHome( APC, From, Event, To, Coordinate, Speed )
 
   if APC and APC:IsAlive() ~= nil then
 
     self.RouteHome = true
-     
-    local Waypoints = APC:TaskGroundOnRoad( Coordinate, APC:GetSpeedMax()*0.5, "Line abreast", true )
+    
+    local _speed=Speed or APC:GetSpeedMax()*0.5
+    
+    local Waypoints = APC:TaskGroundOnRoad( Coordinate, _speed, "Line abreast", true )
 
     self:F({Waypoints = Waypoints})
     local Waypoint = Waypoints[#Waypoints]
