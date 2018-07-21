@@ -25,7 +25,6 @@ AI_CARGO_AIRPLANE = {
 -- @param #AI_CARGO_AIRPLANE self
 -- @param Wrapper.Group#GROUP Airplane
 -- @param Core.Set#SET_CARGO CargoSet
--- @param #number CombatRadius
 -- @return #AI_CARGO_AIRPLANE
 function AI_CARGO_AIRPLANE:New( Airplane, CargoSet )
 

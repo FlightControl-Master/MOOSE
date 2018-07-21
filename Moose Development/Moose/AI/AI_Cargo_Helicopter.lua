@@ -29,7 +29,6 @@ AI_CARGO_QUEUE = {}
 -- @param #AI_CARGO_HELICOPTER self
 -- @param Wrapper.Group#GROUP Helicopter
 -- @param Core.Set#SET_CARGO CargoSet
--- @param #number CombatRadius
 -- @return #AI_CARGO_HELICOPTER
 function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
 
@@ -530,15 +529,17 @@ end
 -- @param Event
 -- @param To
 -- @param Core.Point#COORDINATE Coordinate
--- @param #number Speed
-function AI_CARGO_HELICOPTER:onafterPickup( Helicopter, From, Event, To, Coordinate )
+-- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+function AI_CARGO_HELICOPTER:onafterPickup( Helicopter, From, Event, To, Coordinate, Speed )
 
   if Helicopter and Helicopter:IsAlive() ~= nil then
 
     Helicopter:Activate()
 
     self.RoutePickup = true
-    Coordinate.y = math.random( 50, 200 )        
+    Coordinate.y = math.random( 50, 200 )
+    
+    local _speed=Speed or Helicopter:GetSpeedMax()*0.5        
      
     local Route = {}
     
@@ -551,7 +552,7 @@ function AI_CARGO_HELICOPTER:onafterPickup( Helicopter, From, Event, To, Coordin
       "RADIO", 
       POINT_VEC3.RoutePointType.TurningPoint, 
       POINT_VEC3.RoutePointAction.TurningPoint, 
-      150, 
+      _speed, 
       true 
     )
 
@@ -560,7 +561,7 @@ function AI_CARGO_HELICOPTER:onafterPickup( Helicopter, From, Event, To, Coordin
       "RADIO", 
       POINT_VEC3.RoutePointType.TurningPoint, 
       POINT_VEC3.RoutePointAction.TurningPoint, 
-      150, 
+      _speed, 
       true 
     )
 
@@ -596,8 +597,8 @@ end
 -- @param Event
 -- @param To
 -- @param Core.Point#COORDINATE Coordinate
--- @param #number Speed
-function AI_CARGO_HELICOPTER:onafterDeploy( Helicopter, From, Event, To, Coordinate )
+-- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+function AI_CARGO_HELICOPTER:onafterDeploy( Helicopter, From, Event, To, Coordinate, Speed )
 
   if Helicopter and Helicopter:IsAlive() ~= nil then
 
@@ -608,7 +609,9 @@ function AI_CARGO_HELICOPTER:onafterDeploy( Helicopter, From, Event, To, Coordin
     
     --- Calculate the target route point.
 
-    Coordinate.y = math.random( 50, 200 )        
+    Coordinate.y = math.random( 50, 200 )  
+    
+    local _speed=Speed or Helicopter:GetSpeedMax()*0.5      
 
     --- Create a route point of type air.
     local CoordinateFrom = Helicopter:GetCoordinate()
@@ -616,7 +619,7 @@ function AI_CARGO_HELICOPTER:onafterDeploy( Helicopter, From, Event, To, Coordin
       "RADIO", 
       POINT_VEC3.RoutePointType.TurningPoint, 
       POINT_VEC3.RoutePointAction.TurningPoint, 
-      150, 
+      _speed, 
       true 
     )
     Route[#Route+1] = WaypointFrom
@@ -628,7 +631,7 @@ function AI_CARGO_HELICOPTER:onafterDeploy( Helicopter, From, Event, To, Coordin
       "RADIO", 
       POINT_VEC3.RoutePointType.TurningPoint, 
       POINT_VEC3.RoutePointAction.TurningPoint, 
-      150, 
+      _speed, 
       true 
     )
 
@@ -641,7 +644,7 @@ function AI_CARGO_HELICOPTER:onafterDeploy( Helicopter, From, Event, To, Coordin
     local Tasks = {}
     
     Tasks[#Tasks+1] = Helicopter:TaskFunction( "AI_CARGO_HELICOPTER._Deploy", self, Coordinate )
-    Tasks[#Tasks+1] = Helicopter:TaskOrbitCircle( math.random( 30, 100 ), 150, CoordinateTo:GetRandomCoordinateInRadius( 800, 500 ) )
+    Tasks[#Tasks+1] = Helicopter:TaskOrbitCircle( math.random( 30, 100 ), _speed, CoordinateTo:GetRandomCoordinateInRadius( 800, 500 ) )
     
     --Tasks[#Tasks+1] = Helicopter:TaskLandAtVec2( CoordinateTo:GetVec2() )
     Route[#Route].task = Helicopter:TaskCombo( Tasks )
@@ -662,8 +665,8 @@ end
 -- @param Event
 -- @param To
 -- @param Core.Point#COORDINATE Coordinate
--- @param #number Speed
-function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinate )
+-- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinate, Speed )
 
   if Helicopter and Helicopter:IsAlive() ~= nil then
 
@@ -673,7 +676,9 @@ function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinat
     
     --- Calculate the target route point.
 
-    Coordinate.y = math.random( 50, 200 )        
+    Coordinate.y = math.random( 50, 200 )    
+    
+    local _speed=Speed or Helicopter:GetSpeedMax()*0.5          
 
     --- Create a route point of type air.
     local CoordinateFrom = Helicopter:GetCoordinate()
@@ -681,7 +686,7 @@ function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinat
       "RADIO", 
       POINT_VEC3.RoutePointType.TurningPoint, 
       POINT_VEC3.RoutePointAction.TurningPoint, 
-      150, 
+      _speed, 
       true 
     )
     Route[#Route+1] = WaypointFrom
@@ -692,7 +697,7 @@ function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinat
       "RADIO", 
       POINT_VEC3.RoutePointType.TurningPoint, 
       POINT_VEC3.RoutePointAction.TurningPoint, 
-      150, 
+      _speed, 
       true 
     )
 
