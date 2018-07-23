@@ -175,7 +175,7 @@ do -- DESIGNATE
   -- Smoke will fire for 5 minutes.
   -- Each available recce within range will smoke a target.
   -- Smoking can be requested while lasing targets.
-  -- Smoke will appear “around” the targets, because of accuracy limitations.
+  -- Smoke will appear "around" the targets, because of accuracy limitations.
   -- 
   -- 
   -- Have FUN!
@@ -952,7 +952,8 @@ do -- DESIGNATE
         local MissionMenu = nil
         
         if self.Mission then
-          MissionMenu = self.Mission:GetRootMenu( AttackGroup )
+          --MissionMenu = self.Mission:GetRootMenu( AttackGroup )
+          MissionMenu = self.Mission:GetMenu( AttackGroup )
         end
         
         local MenuTime = timer.getTime()

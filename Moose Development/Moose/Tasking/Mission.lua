@@ -611,13 +611,14 @@ function MISSION:RemoveTaskMenu( Task )
 end
 
 
---- Gets the root mission menu for the TaskGroup.
+--- Gets the root mission menu for the TaskGroup. Obsolete?! Originally no reference to TaskGroup parameter!
 -- @param #MISSION self
+-- @param Wrapper.Group#GROUP TaskGroup Task group.
 -- @return Core.Menu#MENU_COALITION self
 function MISSION:GetRootMenu( TaskGroup ) -- R2.2
 
   local CommandCenter = self:GetCommandCenter()
-  local CommandCenterMenu = CommandCenter:GetMenu()
+  local CommandCenterMenu = CommandCenter:GetMenu( TaskGroup )
 
   local MissionName = self:GetText()
   --local MissionMenu = CommandCenterMenu:GetMenu( MissionName )
@@ -629,6 +630,7 @@ end
 
 --- Gets the mission menu for the TaskGroup.
 -- @param #MISSION self
+-- @param Wrapper.Group#GROUP TaskGroup Task group.
 -- @return Core.Menu#MENU_COALITION self
 function MISSION:GetMenu( TaskGroup ) -- R2.1 -- Changed Menu Structure
 
