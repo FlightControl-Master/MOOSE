@@ -89,11 +89,14 @@ function MENU_INDEX:PrepareCoalition( CoalitionSide )
     self.Coalition[CoalitionSide].Menus = self.Coalition[CoalitionSide].Menus or {}
 end
 
-
+---
+-- @param Wrapper.Group#GROUP Group
 function MENU_INDEX:PrepareGroup( Group )
+  if Group and Group:IsAlive()  then
     local GroupName = Group:GetName()
     self.Group[GroupName] = self.Group[GroupName] or {}
     self.Group[GroupName].Menus = self.Group[GroupName].Menus or {}
+  end
 end
 
 
@@ -133,9 +136,11 @@ end
 
 
 function MENU_INDEX:HasGroupMenu( Group, Path )
-
-  local MenuGroupName = Group:GetName()
-  return self.Group[MenuGroupName].Menus[Path]
+  if Group and Group:IsAlive() then
+    local MenuGroupName = Group:GetName()
+    return self.Group[MenuGroupName].Menus[Path]
+  end
+  return nil
 end
 
 function MENU_INDEX:SetGroupMenu( Group, Path, Menu )

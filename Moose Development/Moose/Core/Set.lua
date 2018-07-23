@@ -798,6 +798,7 @@ function SET_GROUP:GetAliveSet()
   
   -- Clean the Set before returning with only the alive Groups.
   for GroupName, GroupObject in pairs( self.Set ) do
+    local GroupObject=GroupObject --Wrapper.Group#GROUP
     if GroupObject then
       if GroupObject:IsAlive() then
         AliveSet:Add( GroupName, GroupObject )

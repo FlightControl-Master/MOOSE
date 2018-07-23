@@ -426,6 +426,7 @@ end
 
 --- Gets the commandcenter menu structure governed by the HQ command center.
 -- @param #COMMANDCENTER self
+-- @param Wrapper.Group#Group TaskGroup Task Group.
 -- @return Core.Menu#MENU_COALITION
 function COMMANDCENTER:GetMenu( TaskGroup )
 
