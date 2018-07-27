@@ -485,6 +485,8 @@ do -- TASK_CARGO_DISPATCHER
     else
       error( "Task does not exist" )
     end
+
+    self:ManageTasks()
   
     return self
   end
@@ -503,6 +505,8 @@ do -- TASK_CARGO_DISPATCHER
     else
       error( "Task does not exist" )
     end
+
+    self:ManageTasks()
   
     return self
   end
@@ -584,12 +588,6 @@ do -- TASK_CARGO_DISPATCHER
           Transport.Task = TASK_CARGO_TRANSPORT:New( Mission, self.SetGroup, TransportName, Transport.SetCargo, Transport.Briefing )
           Mission:AddTask( Transport.Task )
           TaskReport:Add( TransportName )
-          if Transport.DeployZones then
-            Transport.Task:SetDeployZones( Transport.DeployZones or {} )
-          else
-            Transport.Task:SetDeployZones( self.DefaultDeployZones or {} )
-          end
-
           function Transport.Task.OnEnterSuccess( Task, From, Event, To )
             self:Success( Task )
           end
@@ -605,9 +603,14 @@ do -- TASK_CARGO_DISPATCHER
           function Transport.Task.onenterAborted( Task, From, Event, To )
             self:Aborted( Task )
           end
-            
-
         end
+        
+        if Transport.DeployZones then
+          Transport.Task:SetDeployZones( Transport.DeployZones or {} )
+        else
+          Transport.Task:SetDeployZones( self.DefaultDeployZones or {} )
+        end
+        
       end
       
       
