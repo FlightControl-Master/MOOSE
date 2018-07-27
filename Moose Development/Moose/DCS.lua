@@ -1,15 +1,19 @@
 --- DCS API prototypes
+-- See [https://wiki.hoggitworld.com/view/Simulator_Scripting_Engine_Documentation](https://wiki.hoggitworld.com/view/Simulator_Scripting_Engine_Documentation) 
+-- for further explanation and examples.
 -- @module DCS
 -- @image MOOSE.JPG
 
 do -- world
 
-  --- @type world
+  --- [DCS Enum world](https://wiki.hoggitworld.com/view/DCS_enum_world)
+  -- @type world
   -- @field #world.event event
   
-  --- @type world.event
+  --- [https://wiki.hoggitworld.com/view/DCS_enum_world](https://wiki.hoggitworld.com/view/DCS_enum_world)
+  -- @type world.event
   -- @field S_EVENT_INVALID
-  -- @field S_EVENT_SHOT
+  -- @field S_EVENT_SHOT [https://wiki.hoggitworld.com/view/DCS_event_shot](https://wiki.hoggitworld.com/view/DCS_event_shot)
   -- @field S_EVENT_HIT
   -- @field S_EVENT_TAKEOFF
   -- @field S_EVENT_LAND
@@ -41,36 +45,38 @@ end -- world
 
 do -- env
 
-  --- @type env
+  --- [DCS Singleton env](https://wiki.hoggitworld.com/view/DCS_singleton_env)
+  -- @type env
+
   
   --- Add message to simulator log with caption "INFO". Message box is optional.
   -- @function [parent=#env] info
-  -- @field #string message message string to add to log.
-  -- @field #boolean showMessageBox If the parameter is true Message Box will appear. Optional.
+  -- @param #string message message string to add to log.
+  -- @param #boolean showMessageBox If the parameter is true Message Box will appear. Optional.
   
   --- Add message to simulator log with caption "WARNING". Message box is optional. 
   -- @function [parent=#env] warning
-  -- @field #string message message string to add to log.
-  -- @field #boolean showMessageBox If the parameter is true Message Box will appear. Optional.
+  -- @param #string message message string to add to log.
+  -- @param #boolean showMessageBox If the parameter is true Message Box will appear. Optional.
   
   --- Add message to simulator log with caption "ERROR". Message box is optional.
   -- @function [parent=#env] error
-  -- @field #string message message string to add to log.
-  -- @field #boolean showMessageBox If the parameter is true Message Box will appear. Optional.
+  -- @param #string message message string to add to log.
+  -- @param #boolean showMessageBox If the parameter is true Message Box will appear. Optional.
   
   --- Enables/disables appearance of message box each time lua error occurs.
   -- @function [parent=#env] setErrorMessageBoxEnabled
-  -- @field #boolean on if true message box appearance is enabled.
-  
-  env = {} --#env
+  -- @param #boolean on if true message box appearance is enabled.
+
+  env = {} --#env 
   
 end -- env
 
 
 do -- timer
 
-  --- @type timer
-  
+  --- [DCS Singleton timer](https://wiki.hoggitworld.com/view/DCS_singleton_timer)
+  -- @type timer
   
   --- Returns model time in seconds.
   -- @function [parent=#timer] getTime
@@ -117,11 +123,12 @@ end
 
 do -- land
 
-  --- @type land
+  --- [DCS Singleton land](https://wiki.hoggitworld.com/view/DCS_singleton_land)
+  -- @type land
   -- @field #land.SurfaceType SurfaceType
   
-  
-  --- @type land.SurfaceType
+  --- [Type of surface enumerator](https://wiki.hoggitworld.com/view/DCS_singleton_land)
+  -- @type land.SurfaceType
   -- @field LAND
   -- @field SHALLOW_WATER
   -- @field WATER
@@ -144,10 +151,16 @@ end -- land
 
 do -- country
 
-  --- @type country
-  -- @field #country.id id
+  --- [DCS Enum country](https://wiki.hoggitworld.com/view/DCS_enum_country)
+  -- @type country
+  -- @field #country.id id 
   
-  --- @type country.id
+  --- [DCS Enum country](https://wiki.hoggitworld.com/view/DCS_enum_country)
+  -- @field #country
+  country = {}
+  
+  --- [DCS enumerator country](https://wiki.hoggitworld.com/view/DCS_enum_country)
+  -- @type country.id
   -- @field RUSSIA
   -- @field UKRAINE
   -- @field USA
@@ -223,9 +236,8 @@ do -- country
   -- @field OMAN
   -- @field UNITED_ARAB_EMIRATES
 
-  country = {} -- #country
-
 end -- country
+
 
 do -- Command
 
@@ -239,10 +251,12 @@ end -- Command
 
 do -- coalition
 
-  --- @type coalition
+  --- [DCS Enum coalition](https://wiki.hoggitworld.com/view/DCS_enum_coalition)
+  -- @type coalition
   -- @field #coalition.side side
   
-  --- @type coalition.side
+  --- [DCS Enum coalition.side](https://wiki.hoggitworld.com/view/DCS_enum_coalition)
+  -- @type coalition.side
   -- @field NEUTRAL
   -- @field RED
   -- @field BLUE
@@ -349,7 +363,8 @@ do -- Types
   --- @type Time
   -- @extends #number
   
-  --- A task descriptor (internal structure for DCS World)
+  --- A task descriptor (internal structure for DCS World). See [https://wiki.hoggitworld.com/view/Category:Tasks](https://wiki.hoggitworld.com/view/Category:Tasks).
+  -- In MOOSE, these tasks can be accessed via @{Wrapper.Controllable#CONTROLLABLE}.
   -- @type Task
   -- @field #string id
   -- @field #Task.param param
@@ -365,11 +380,13 @@ end --
 
 do -- Object
 
-  --- @type Object
+  --- [DCS Class Object](https://wiki.hoggitworld.com/view/DCS_Class_Object)
+  -- @type Object
   -- @field #Object.Category Category
   -- @field #Object.Desc Desc
   
-  --- @type Object.Category
+  --- [DCS Enum Object.Category](https://wiki.hoggitworld.com/view/DCS_Class_Object)
+  -- @type Object.Category
   -- @field UNIT
   -- @field WEAPON
   -- @field STATIC
@@ -439,9 +456,9 @@ end -- Object
 
 do -- CoalitionObject
 
-  --- @type CoalitionObject
+  --- [DCS Class CoalitionObject](https://wiki.hoggitworld.com/view/DCS_Class_Coalition_Object)
+  -- @type CoalitionObject
   -- @extends #Object
-  
   
   --- Returns coalition of the object.
   -- @function [parent=#CoalitionObject] getCoalition
@@ -453,14 +470,15 @@ do -- CoalitionObject
   -- @param #CoalitionObject self
   -- @return #country.id
 
-CoalitionObject = {} --#CoalitionObject
+  CoalitionObject = {} --#CoalitionObject
 
 end -- CoalitionObject
 
 
 do -- Airbase
 
-  --- Represents airbases: airdromes, helipads and ships with flying decks or landing pads.  
+  --- [DCS Class Airbase](https://wiki.hoggitworld.com/view/DCS_Class_Airbase)
+  -- Represents airbases: airdromes, helipads and ships with flying decks or landing pads.  
   -- @type Airbase
   -- @extends #CoalitionObject
   -- @field #Airbase.ID ID Identifier of an airbase. It assigned to an airbase by the Mission Editor automatically. This identifier is used in AI tasks to refer an airbase that exists (spawned and not dead) or not. 
@@ -962,12 +980,14 @@ end -- Group
 
 do -- AI
 
-  --- @type AI
+  --- [https://wiki.hoggitworld.com/view/DCS_enum_AI](https://wiki.hoggitworld.com/view/DCS_enum_AI)
+  -- @type AI
   -- @field #AI.Skill Skill
   -- @field #AI.Task Task
   -- @field #AI.Option Option
   
-  --- @type AI.Skill
+  --- [https://wiki.hoggitworld.com/view/DCS_enum_AI](https://wiki.hoggitworld.com/view/DCS_enum_AI)
+  -- @type AI.Skill
   -- @field AVERAGE
   -- @field GOOD
   -- @field HIGH
@@ -975,7 +995,8 @@ do -- AI
   -- @field PLAYER
   -- @field CLIENT
   
-  --- @type AI.Task
+  --- [https://wiki.hoggitworld.com/view/DCS_enum_AI](https://wiki.hoggitworld.com/view/DCS_enum_AI)
+  -- @type AI.Task
   -- @field #AI.Task.WeaponExpend WeaponExpend
   -- @field #AI.Task.OrbitPattern OrbitPattern
   -- @field #AI.Task.Designation Designation
@@ -984,7 +1005,8 @@ do -- AI
   -- @field #AI.Task.AltitudeType AltitudeType
   -- @field #AI.Task.VehicleFormation VehicleFormation
   
-  --- @type AI.Task.WeaponExpend
+  --- [https://wiki.hoggitworld.com/view/DCS_enum_AI](https://wiki.hoggitworld.com/view/DCS_enum_AI)
+  -- @type AI.Task.WeaponExpend
   -- @field ONE
   -- @field TWO
   -- @field FOUR
@@ -992,11 +1014,13 @@ do -- AI
   -- @field HALF
   -- @field ALL
   
-  --- @type AI.Task.OrbitPattern
+  --- [https://wiki.hoggitworld.com/view/DCS_enum_AI](https://wiki.hoggitworld.com/view/DCS_enum_AI)
+  -- @type AI.Task.OrbitPattern
   -- @field CIRCLE
   -- @field RACE_TRACK
   
-  --- @type AI.Task.Designation
+  --- [https://wiki.hoggitworld.com/view/DCS_enum_AI](https://wiki.hoggitworld.com/view/DCS_enum_AI)
+  -- @type AI.Task.Designation
   -- @field NO
   -- @field AUTO
   -- @field WP

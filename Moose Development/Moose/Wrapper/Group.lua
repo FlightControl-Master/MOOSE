@@ -856,7 +856,7 @@ function GROUP:IsCompletelyInZone( Zone )
   return true
 end
 
---- Returns true if some units of the group are within a @{Zone}.
+--- Returns true if some but NOT ALL units of the group are within a @{Zone}.
 -- @param #GROUP self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
 -- @return #boolean Returns true if the Group is partially within the @{Core.Zone#ZONE_BASE}
@@ -882,6 +882,14 @@ function GROUP:IsPartlyInZone( Zone )
   else
     return false
   end
+end
+
+--- Returns true if part or all units of the group are within a @{Zone}.
+-- @param #GROUP self
+-- @param Core.Zone#ZONE_BASE Zone The zone to test.
+-- @return #boolean Returns true if the Group is partially or completely within the @{Core.Zone#ZONE_BASE}.
+function GROUP:IsPartlyOrCompletelyInZone( Zone )
+  return self:IsPartlyInZone(Zone) or self:IsCompletelyInZone(Zone)
 end
 
 --- Returns true if none of the group units of the group are within a @{Zone}.

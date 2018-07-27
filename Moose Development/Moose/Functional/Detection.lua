@@ -526,6 +526,7 @@ do -- DETECTION_BASE
     -- @param #string Event The Event string.
     -- @param #string To The To State string.
     -- @param Wrapper.Group#GROUP DetectionGroup The Group detecting.
+    -- @param #number DetectionTimeStamp Time stamp of detection event.
     function DETECTION_BASE:onafterDetectionGroup( From, Event, To, DetectionGroup, DetectionTimeStamp  )
       
       self.DetectionRun = self.DetectionRun + 1
