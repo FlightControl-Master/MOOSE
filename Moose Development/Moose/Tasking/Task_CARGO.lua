@@ -99,7 +99,7 @@
 -- This is done to ensure that **different teams** have a **defined scope** for defined cargo, and that **multiple teams** can join
 -- **multiple tasks**, transporting cargo **simultaneously** in a **cooperation**.
 -- 
--- In this example, there is a menu option to **Route to pickup cargo...".
+-- In this example, there is a menu option to **Route to pickup cargo...**.
 -- Use this menu to route towards cargo locations for pickup into your carrier.
 -- 
 -- ![Task_Types](../Tasking/Task_Cargo_Types_Menu.JPG)
@@ -157,46 +157,73 @@
 -- 
 -- ### 3.3.2) Board Cargo (infantry).
 -- 
--- ![Task_Types](../Tasking/Boarding_Ready.JPG)  
+-- ![](../Tasking/Boarding_Ready.png)  
 -- 
 -- If your Carrier is within the **Reporting Range of the cargo**, and the cargo is **moveable**, the **cargo can be boarded**!
 -- This type of cargo will be most of the time be infantry.
 -- 
--- ![Boarding](../Tasking/Boarding_Menu.JPG)  
+-- ![](../Tasking/Boarding_Menu.png)  
 -- 
--- A board menu has appeared, because your carrier is in boarding range of the cargo (infantry).
+-- A **Board cargo...** sub menu has appeared, because your carrier is in boarding range of the cargo (infantry).
+-- Select the **Board cargo...** menu.
 -- 
--- ![Boarding](../Tasking/Boarding_Started.JPG)  
+-- ![](../Tasking/Boarding_Menu_Engineers.png)  
 -- 
+-- Any cargo that can be boarded (thus movable cargo), within boarding range of the carrier, will be listed here!
+-- In this example, the cargo **Engineers** can be boarded, by selecting the menu option.
 -- 
--- Select the option from the action menu, then select the cargo to be boarded, and the cargo will start moving towards your carrier.
--- Note that a message is displayed by the infantry cargo that boarding has started.
+-- ![](../Tasking/Boarding_Started.png)  
 -- 
--- ![Boarding](../Tasking/Boarding_Ongoing.JPG)  
+-- After the menu option to board the cargo has been selected, the boarding process is started.
+-- A message from the cargo is communicated to the pilot, that boarding is started.
+-- 
+-- ![](../Tasking/Boarding_Ongoing.png)  
+-- 
+-- **The pilot must wait at the exact position until all cargo has been boarded!**  
 -- 
 -- The moveable cargo will run in formation to your carrier, and will board one by one, depending on the near range set by the mission designer.
 -- The near range as added because carriers can be large or small, depending on the object size of the carrier.
 -- 
--- ![Boarding](../Tasking/Boarding_Almost_Done.JPG)  
+-- ![](../Tasking/Boarding_In_Progress.png)  
+-- 
+-- ![](../Tasking/Boarding_Almost_Done.png)  
 -- 
 -- Note that multiple units may need to board your Carrier, so it is required to await the full boarding process.
 -- 
--- ![Boarding](../Tasking/Boarding_Done.JPG)  
+-- ![](../Tasking/Boarding_Done.png)  
 -- 
 -- Once the cargo is fully boarded within your Carrier, you will be notified of this.
 -- 
--- Note that for airborne Carriers, it is required to land first before the Boarding process can be initiated.
--- If during boarding the Carrier gets airborne, the boarding process will be cancelled.
+-- **Remarks:**
+-- 
+--   * For airborne Carriers, it is required to land first before the Boarding process can be initiated.
+--     If during boarding the Carrier gets airborne, the boarding process will be cancelled.
+--   * The carrier must remain stationary when the boarding sequence has started until further notified.
 -- 
 -- ### 3.3.3) Load Cargo.
 -- 
--- If your Carrier is within the **Loading Range of the cargo**, and the cargo is **stationary**, the **cargo can be loaded**, but not boarded!
+-- Cargo can be loaded into vehicles or helicopters or airplanes, as long as the carrier is sufficiently near to the cargo object.
 -- 
--- Select the task action menu and now a **Load option** will be listed with the cargo name next to it!
--- Select the option from the action menu, and the cargo will loaded into your carrier.
+-- ![](../Tasking/Loading_Ready.png)  
+-- 
+-- If your Carrier is within the **Loading Range of the cargo**, thus, sufficiently near to the cargo, and the cargo is **stationary**, the **cargo can be loaded**, but not boarded!
+-- 
+-- ![](../Tasking/Loading_Menu.png)  
+-- 
+-- Select the task action menu and now a **Load cargo...** sub menu will be listed.
+-- Select the **Load cargo...** sub menu, and a further detailed menu will be shown.
+-- 
+-- ![](../Tasking/Loading_Menu_Crate.png)  
+-- 
+-- For each non-moveable cargo object (crates etc), **within loading range of the carrier**, the cargo will be listed and can be loaded into the carrier!
+-- 
+-- ![](../Tasking/Loading_Cargo_Loaded.png)  
+-- 
 -- Once the cargo is loaded within your Carrier, you will be notified of this.
 -- 
--- Note that for airborne Carriers, it is required to land first right near the cargo, before the loading process can be initiated.
+-- **Remarks:**
+--  
+--   * For airborne Carriers, it is required to **land first right near the cargo**, before the loading process can be initiated.
 -- As stated, this requires some pilot skills :-)
 -- 
 -- ### 3.3.4) Sling Load Cargo (helicopters only).
@@ -212,6 +239,8 @@
 -- 
 -- 
 -- ## 3.4) Deploy cargo by Unboarding, Unloading and Sling Deploying.
+-- 
+-- #### **Deploying the relevant cargo within deploy zones, will make you achieve cargo transportation tasks!!!**
 -- 
 -- There are two different ways how cargo can be deployed:
 -- 
@@ -231,53 +260,103 @@
 -- Fortunately, the HQ can help to route you to the locations of deploy zone.
 -- Use the task action menu to receive HQ help for this.
 -- 
--- ![Task_Types](../Tasking/Task_Cargo_Actions.JPG)
+-- ![](../Tasking/Routing_Deploy_Zone_Menu.png)
 --  
 -- Depending on the location within the battlefield, the task action menu will contain **Route options** that can be selected
 -- to start the HQ sending you routing messages. Also, if the carrier cargo bays contain cargo, 
 -- then beside **Route options** there will also be **Deploy options** listed.
 -- These **Deploy options** are meant to route you to the deploy zone locations.
 -- 
+-- ![](../Tasking/Routing_Deploy_Zone_Menu_Workplace.png)
+-- 
+-- Depending on the task that you have selected, the deploy zones will be listed.
+-- **There may be multiple deploy zones within the mission, but only the deploy zones relevant for your task will be available in the menu!**
+--  
+-- ![](../Tasking/Routing_Deploy_Zone_Message.png)
+-- 
+-- When a routing option is selected, you are sent routing messages in a selected coordinate format.
 -- Possible routing coordinate formats are: Bearing Range (BR), Lattitude Longitude (LL) or Military Grid System (MGRS).
--- Note that for LL, there are two sub formats.
+-- Note that for LL, there are two sub formats. (See pickup).
+-- 
+-- ![](../Tasking/Routing_Deploy_Zone_Arrived.png)
+-- 
+-- When you are within the range of the deploy zone (can be also a polygon!), a message is communicated by HQ that you have arrived within the zone!
 -- 
 -- The routing messages are formulated in the coordinate format that is currently active as configured in your settings profile.  
 -- ![Task_Types](../Tasking/Task_Cargo_Settings.JPG)  
 -- Use the **Settings Menu** to select the coordinate format that you would like to use for location determination.
 -- 
--- ## 3.4) Deploy Cargo.
--- 
--- Various Deployment Zones can be foreseen in the scope of the Cargo transportation. Each deployment zone can be of varying @{Zone} type.
--- The Cargo menu provides with menu options to execute an action to steer your Carrier to a specific Zone.
--- 
--- In order to deploy cargo, use the task action menu to select a cargo to route to.
--- When selected, the HQ will send you routing messages indicating the location of the deploy zone.
---  
--- Upon arrival at the deploy zone, the HQ will contact you and further instructions will be given.
--- 
 -- ### 3.4.1) Unboard Cargo.
 -- 
--- If your Carrier is within the **deploy zone**, and the cargo is **moveable**, the **cargo can be unboarded**!
+-- If your carrier contains cargo, and the cargo is **moveable**, the **cargo can be unboarded**!
+-- You can only unload cargo if there is cargo within your cargo bays within the carrier.
 -- 
--- Select the task action menu and now an **Unboard option** will be listed with the cargo name next to it!
--- Select the option from the action menu, and the cargo will step out of your carrier and will move towards a grouping point.
+-- ![](../Tasking/Unboarding_Menu.png)
+-- 
+-- Select the task action menu and now an **Unboard cargo...** sub menu will be listed!
+-- Again, this option will only be listed if there is a non moveable cargo within your cargo bays.
+-- 
+-- ![](../Tasking/Unboarding_Menu_Engineers.png)
+-- 
+-- Now you will see a menu option to unload the non-moveable cargo.
+-- In this example, you can unload the **Engineers** that was loaded within your carrier cargo bays.
+-- Depending on the cargo loaded within your cargo bays, you will see other options here!
+-- Select the relevant menu option from the cargo unload menu, and the cargo will unloaded from your carrier.
+-- 
+-- ![](../Tasking/Unboarding_Started.png)
+-- 
+-- **The cargo will step out of your carrier and will move towards a grouping point.**
+-- When the unboarding process has started, you will be notified by a message to your carrier.
+-- 
+-- ![](../Tasking/Unboarding_In_Progress.png)
 -- 
 -- The moveable cargo will unboard one by one, so note that multiple units may need to unboard your Carrier, 
 -- so it is required to await the full completion of the unboarding process.
--- Once the cargo is fully unboarded from your Carrier, you will be notified of this.
 -- 
--- Note that for airborne Carriers, it is required to land first before the unboarding process can be initiated.
--- If during unboarding the Carrier gets airborne, the unboarding process will be cancelled.
+-- ![](../Tasking/Unboarding_Done.png)
+-- 
+-- Once the cargo is fully unboarded from your carrier, you will be notified of this.
+--
+-- **Remarks:**
+-- 
+--   * For airborne carriers, it is required to land first before the unboarding process can be initiated.
+--     If during unboarding the Carrier gets airborne, the unboarding process will be cancelled.
+--   * Once the moveable cargo is unboarded, they will start moving towards a specified gathering point.
+--   * The moveable cargo will send a message to your carrier with unboarding status updates.
+-- 
+-- **Deploying a cargo within a deployment zone, may complete a deployment task! So ensure that you deploy the right cargo at the right deployment zone!**
 -- 
 -- ### 3.4.2) Unload Cargo.
 -- 
--- If your Carrier is within the **deploy zone**, and the cargo is **stationary**, the **cargo can be unloaded**, but not unboarded!
+-- If your carrier contains cargo, and the cargo is **stationary**, the **cargo can be unloaded**, but not unboarded!
+-- You can only unload cargo if there is cargo within your cargo bays within the carrier.
 -- 
--- Select the task action menu and now an **Unload option** will be listed with the cargo name next to it!
--- Select the option from the action menu, and the cargo will unloaded from your carrier.
--- Once the cargo is unloaded fom your Carrier, you will be notified of this.
+-- ![](../Tasking/Unloading_Menu.png)
 -- 
--- Note that for airborne Carriers, it is required to land first at the deploy zone, before the unloading process can be initiated.
+-- Select the task action menu and now an **Unload cargo...** sub menu will be listed! 
+-- Again, this option will only be listed if there is a non moveable cargo within your cargo bays.
+-- 
+-- ![](../Tasking/Unloading_Menu_Crate.png)
+-- 
+-- Now you will see a menu option to unload the non-moveable cargo.
+-- In this example, you can unload the **Crate** that was loaded within your carrier cargo bays.
+-- Depending on the cargo loaded within your cargo bays, you will see other options here!
+-- Select the relevant menu option from the cargo unload menu, and the cargo will unloaded from your carrier.
+-- 
+-- ![](../Tasking/Unloading_Done.png)
+-- 
+-- Once the cargo is unloaded fom your Carrier, you may be notified of this, when there is a truck near to the cargo.
+-- If there is no truck near to the unload area, no message will be sent to your carrier!
+-- 
+-- **Remarks:**
+-- 
+--   * For airborne Carriers, it is required to land first, before the unloading process can be initiated.
+--   * A truck must be near the unload area to get messages to your carrier of the unload event!
+--   * Unloading is only for non-moveable cargo.
+--   * The non-moveable cargo must be within your cargo bays, or no unload option will be available.
+--   
+-- **Deploying a cargo within a deployment zone, may complete a deployment task! So ensure that you deploy the right cargo at the right deployment zone!**
+-- 
 -- 
 -- ### 3.4.3) Sling Deploy Cargo (helicopters only).
 -- 
@@ -285,6 +364,8 @@
 -- Note that this is only possible for helicopters.
 -- 
 -- To sling deploy cargo, there is no task action menu required. Just follow the normal sling deploying procedure.
+-- 
+-- **Deploying a cargo within a deployment zone, may complete a deployment task! So ensure that you deploy the right cargo at the right deployment zone!**
 -- 
 -- ===
 -- 
