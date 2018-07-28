@@ -65,6 +65,8 @@
 -- @field #number IniGroupStrength Inital number of units in the ARTY group.
 -- @field #boolean IsArtillery If true, ARTY group has attribute "Artillery". This is automatically derived from the DCS descriptor table.
 -- @field #boolean ismobile If true, ARTY group can move.
+-- @field #boolean iscargo If true, ARTY group is defined as possible cargo. If it is immobile, targets out of range are not deleted from the queue.
+-- @field Cargo.CargoGroup#CARGO_GROUP cargogroup Cargo group object if ARTY group is a cargo that will be transported to another place.
 -- @field #string groupname Name of the ARTY group as defined in the mission editor.
 -- @field #string alias Name of the ARTY group.
 -- @field #table clusters Table of names of clusters the group belongs to. Can be used to address all groups within the cluster simultaniously.
@@ -417,7 +419,15 @@
 -- 
 -- Setting the rearming group is independent of the position of the mark. Just create one anywhere on the map and type
 --      arty set, battery "Mortar Bravo", rearming group "Ammo Truck M818"
--- Note that the name of the rearming group has to be given in quotation marks and spellt exactly as the group name defined in the mission editor.   
+-- Note that the name of the rearming group has to be given in quotation marks and spellt exactly as the group name defined in the mission editor.
+-- 
+-- ## Transporting
+-- 
+-- ARTY groups can be transported to another location as @{Cargo.Cargo} by means of classes such as @{AI.AI_Cargo_APC}, @{AI.AI_Cargo_Dispatcher_APC}, 
+-- @{AI.AI_Cargo_Helicopter}, @{AI.AI_Cargo_Dispatcher_Helicopter} or @{AI.AI_Cargo_Airplane}.
+-- 
+-- In order to do this, one needs to define an ARTY object via the @{#ARTY.NewFromCargoGroup}(*cargogroup*, *alias*) function.
+-- The first argument *cargogroup* has to be a @{Cargo.CargoGroup#CARGO_GROUP} object. The second argument *alias* is a string which can be freely chosen by the user.
 -- 
 -- ## Fine Tuning
 -- 
@@ -503,7 +513,25 @@
 --     -- Start ARTY process.
 --     normandy:Start()
 --
--- 
+-- ### Transportation as Cargo
+-- This example demonstates how an ARTY group can be transported to another location as cargo.
+--      -- Define a group as CARGO_GROUP
+--      CargoGroupMortars=CARGO_GROUP:New(GROUP:FindByName("Mortars"), "Mortars", "Mortar Platoon Alpha", 100 , 10)
+--      
+--      -- Define the mortar CARGO GROUP as ARTY object
+--      mortars=ARTY:NewFromCargoGroup(CargoGroupMortars, "Mortar Platoon Alpha")
+--      
+--      -- Start ARTY process
+--      mortars:Start()
+--      
+--      -- Setup AI cargo dispatcher for e.g. helos
+--      SetHeloCarriers = SET_GROUP:New():FilterPrefixes("CH-47D"):FilterStart()
+--      SetCargoMortars = SET_CARGO:New():FilterTypes("Mortars"):FilterStart()
+--      SetZoneDepoly   = SET_ZONE:New():FilterPrefixes("Deploy"):FilterStart()
+--      CargoHelo=AI_CARGO_DISPATCHER_HELICOPTER:New(SetHeloCarriers, SetCargoMortars, SetZoneDepoly)
+--      CargoHelo:Start()
+-- The ARTY group will be transported and resume its normal operation after it has been deployed. New targets can be assigned at any time also during the transportation process.
+--
 -- @field #ARTY
 ARTY={
   ClassName="ARTY",
@@ -528,6 +556,8 @@ ARTY={
   alias=nil,
   clusters={},
   ismobile=true,
+  iscargo=false,
+  cargogroup=nil,
   IniGroupStrength=0,
   IsArtillery=nil,
   RearmingDistance=100,
@@ -645,7 +675,7 @@ ARTY.id="ARTY | "
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="1.0.4"
+ARTY.version="1.0.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -677,13 +707,43 @@ ARTY.version="1.0.4"
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Creates a new ARTY object.
+--- Creates a new ARTY object from a MOOSE CARGO_GROUP object.
+-- @param #ARTY self
+-- @param Cargo.CargoGroup#CARGO_GROUP cargogroup The CARGO GROUP object for which artillery tasks should be assigned.
+-- @param alias (Optional) Alias name the group will be calling itself when sending messages. Default is the group name.
+-- @return #ARTY ARTY object or nil if group does not exist or is not a ground or naval group.
+function ARTY:NewFromCargoGroup(cargogroup, alias)
+  BASE:F2({cargogroup=cargogroup, alias=alias})
+  
+  if cargogroup then
+    BASE:T(ARTY.id..string.format("ARTY script version %s. Added CARGO group %s.", ARTY.version, cargogroup:GetName()))
+  else
+    BASE:E(ARTY.id.."ERROR: Requested ARTY CARGO GROUP does not exist! (Has to be a MOOSE CARGO(!) group.)")
+    return nil
+  end
+
+  -- Get group belonging to the cargo group.
+  local group=cargogroup:GetObject()
+  
+  -- Create ARTY object.
+  local arty=ARTY:New(group,alias)
+  
+  -- Set iscargo flag.
+  arty.iscargo=true
+
+  -- Set cargo group object.
+  arty.cargogroup=cargogroup
+
+  return arty
+end
+
+--- Creates a new ARTY object from a MOOSE group object.
 -- @param #ARTY self
 -- @param Wrapper.Group#GROUP group The GROUP object for which artillery tasks should be assigned.
 -- @param alias (Optional) Alias name the group will be calling itself when sending messages. Default is the group name.
 -- @return #ARTY ARTY object or nil if group does not exist or is not a ground or naval group.
 function ARTY:New(group, alias)
-  BASE:F2(group)
+  BASE:F2({group=group, alias=alias})
 
   -- Inherits from FSM_CONTROLLABLE
   local self=BASE:Inherit(self, FSM_CONTROLLABLE:New()) -- #ARTY
@@ -697,7 +757,7 @@ function ARTY:New(group, alias)
   end
   
   -- Check that we actually have a GROUND group.
-  if group:IsGround()==false and group:IsShip()==false then
+  if not (group:IsGround() or group:IsShip()) then
     self:E(ARTY.id..string.format("ERROR: ARTY group %s has to be a GROUND or SHIP group!", group:GetName()))
     return nil
   end
@@ -784,6 +844,10 @@ function ARTY:New(group, alias)
   self:AddTransition("*",           "Status",      "*")
   self:AddTransition("*",           "NewMove",     "*")
   self:AddTransition("*",           "Dead",        "*")
+  
+  -- Transport as cargo (not in diagram).
+  self:AddTransition("*",           "Loaded",      "InTransit")
+  self:AddTransition("InTransit",   "UnLoaded",    "CombatReady")
   
   -- Unknown transitons. To be checked if adding these causes problems.
   self:AddTransition("Rearming",    "Arrived",     "Rearming")
@@ -1667,6 +1731,7 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   text=text..string.format("Speed max           = %d km/h\n", self.SpeedMax)
   text=text..string.format("Speed default       = %d km/h\n", self.Speed)
   text=text..string.format("Is mobile           = %s\n", tostring(self.ismobile))
+  text=text..string.format("Is cargo            = %s\n", tostring(self.iscargo))
   text=text..string.format("Min range           = %.1f km\n", self.minrange/1000)
   text=text..string.format("Max range           = %.1f km\n", self.maxrange/1000)
   text=text..string.format("Total ammo count    = %d\n", self.Nammo0)
@@ -2458,9 +2523,28 @@ end
 function ARTY:onafterStatus(Controllable, From, Event, To)
   self:_EventFromTo("onafterStatus", Event, From, To)
   
+  -- We have a cargo group ==> check if group was loaded into a carrier.
+  if self.cargogroup then
+    if self.cargogroup:IsLoaded() and not self:is("InTransit")  then
+      -- Group is now InTransit state. Current target is canceled.
+      self:T(ARTY.id..string.format("Group %s has been loaded into a carrier and is now transported.", self.alias))
+      self:Loaded()
+    elseif self.cargogroup:IsUnLoaded() then
+      -- Group has been unloaded and is combat ready again.
+      self:T(ARTY.id..string.format("Group %s has been unloaded from the carrier.", self.alias))      
+      self:UnLoaded()
+    end
+  end
+
   -- Debug current status info.
   if self.Debug then
     self:_StatusReport()
+  end
+
+  -- Group is being transported as cargo ==> skip everything and check again in 5 seconds.  
+  if self:is("InTransit") then
+    self:__Status(-5)
+    return
   end
   
   -- Group on the move.
@@ -2578,6 +2662,34 @@ function ARTY:onafterStatus(Controllable, From, Event, To)
 
   -- Call status again in ~10 sec.
   self:__Status(self.StatusInterval)
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Before "Loaded" event. Checks if group is currently firing and removes the target by calling CeaseFire.
+-- @param #ARTY self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @return #boolean If true, proceed to onafterLoaded.
+function ARTY:onbeforeLoaded(Controllable, From, Event, To)
+  if self.currentTarget then
+    self:CeaseFire(self.currentTarget)
+  end
+  
+  return true
+end
+
+--- After "UnLoaded" event. Group is combat ready again.
+-- @param #ARTY self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @return #boolean If true, proceed to onafterLoaded.
+function ARTY:onafterUnLoaded(Controllable, From, Event, To)
+  self:CombatReady()
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2840,7 +2952,7 @@ function ARTY:onafterRearm(Controllable, From, Event, To)
       self.RearmingGroupCoord=coordRARM
     end
     
-    if self.RearmingGroup and self.RearmingPlaceCoord and self.SpeedMax>0 then
+    if self.RearmingGroup and self.RearmingPlaceCoord and self.ismobile then
     
       -- CASE 1: Rearming unit and ARTY group meet at rearming place.
       
@@ -4615,6 +4727,7 @@ function ARTY:_TargetInRange(target, message)
   end
 
   -- Distance between ARTY group and target.
+  self:E({controllable=self.Controllable, targetcoord=target.coord})
   local _dist=self.Controllable:GetCoordinate():Get2DDistance(target.coord)
   
   -- Assume we are in range.
@@ -4639,8 +4752,8 @@ function ARTY:_TargetInRange(target, message)
     MESSAGE:New(text, 5):ToCoalitionIf(self.Controllable:GetCoalition(), (self.report and message) or (self.Debug and message))
   end
     
-  -- Remove target if ARTY group cannot move, e.g. Mortas. No chance to be ever in range.
-  if not self.ismobile and _inrange==false then
+  -- Remove target if ARTY group cannot move, e.g. Mortas. No chance to be ever in range - unless they are cargo.
+  if not (self.ismobile or self.iscargo) and _inrange==false then
     self:RemoveTarget(target.name)
   end
 

@@ -526,8 +526,7 @@ end
 --- Returns the average group height in meters.
 -- @param Wrapper.Group#GROUP self
 -- @param #boolean FromGround Measure from the ground or from sea level. Provide **true** for measuring from the ground. **false** or **nil** if you measure from sea level. 
--- @return DCS#Vec3 The height of the group.
--- @return #nil The GROUP is not existing or alive.  
+-- @return DCS#Vec3 The height of the group or nil if is not existing or alive.  
 function GROUP:GetHeight( FromGround )
   self:F2( self.GroupName )
 

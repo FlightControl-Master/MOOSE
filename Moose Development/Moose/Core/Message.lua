@@ -161,6 +161,7 @@ end
 --- Sends a MESSAGE to a Client Group. Note that the Group needs to be defined within the ME with the skillset "Client" or "Player".
 -- @param #MESSAGE self
 -- @param Wrapper.Client#CLIENT Client is the Group of the Client.
+-- @param Core.Settings#SETTINGS Settings Settings used to display the message.
 -- @return #MESSAGE
 -- @usage
 -- -- Send the 2 messages created with the @{New} method to the Client Group.
@@ -200,8 +201,8 @@ end
 
 --- Sends a MESSAGE to a Group. 
 -- @param #MESSAGE self
--- @param Wrapper.Group#GROUP Group is the Group.
--- @return #MESSAGE
+-- @param Wrapper.Group#GROUP Group to which the message is displayed.
+-- @return #MESSAGE Message object.
 function MESSAGE:ToGroup( Group, Settings )
   self:F( Group.GroupName )
 
@@ -261,8 +262,9 @@ end
 
 --- Sends a MESSAGE to a Coalition. 
 -- @param #MESSAGE self
--- @param CoalitionSide needs to be filled out by the defined structure of the standard scripting engine @{coalition.side}. 
--- @return #MESSAGE
+-- @param #DCS.coalition.side CoalitionSide @{#DCS.coalition.side} to which the message is displayed.
+-- @param Core.Settings#SETTINGS Settings (Optional) Settings for message display.
+-- @return #MESSAGE Message object.
 -- @usage
 -- -- Send a message created with the @{New} method to the RED coalition.
 -- MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" ):ToCoalition( coalition.side.RED )
@@ -306,6 +308,7 @@ end
 
 --- Sends a MESSAGE to all players. 
 -- @param #MESSAGE self
+-- @param Core.Settings#Settings (Optional) Settings for message display
 -- @return #MESSAGE
 -- @usage
 -- -- Send a message created to all players.
@@ -315,7 +318,7 @@ end
 -- or
 -- MessageAll = MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", "End of Mission", 25, "Win" )
 -- MessageAll:ToAll()
-function MESSAGE:ToAll()
+function MESSAGE:ToAll(Settings)
   self:F()
 
   if self.MessageType then

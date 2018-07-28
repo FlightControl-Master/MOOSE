@@ -8,38 +8,89 @@ do -- world
 
   --- [DCS Enum world](https://wiki.hoggitworld.com/view/DCS_enum_world)
   -- @type world
-  -- @field #world.event event
+  -- @field #world.event event [https://wiki.hoggitworld.com/view/DCS_enum_world](https://wiki.hoggitworld.com/view/DCS_enum_world)
+  -- @field #world.BirthPlace BirthPlace The birthplace enumerator is used to define where an aircraft or helicopter has spawned in association with birth events.
+  -- @field #world.VolumeType VolumeType The volumeType enumerator defines the types of 3d geometery used within the [world.searchObjects](https://wiki.hoggitworld.com/view/DCS_func_searchObjects) function.
+
+  --- The world singleton contains functions centered around two different but extremely useful functions.
+  -- * Events and event handlers are all governed within world.
+  -- * A number of functions to get information about the game world.
+  -- 
+  -- See [https://wiki.hoggitworld.com/view/DCS_singleton_world](https://wiki.hoggitworld.com/view/DCS_singleton_world)
+  -- @field #world world
+  world = {}
   
   --- [https://wiki.hoggitworld.com/view/DCS_enum_world](https://wiki.hoggitworld.com/view/DCS_enum_world)
   -- @type world.event
-  -- @field S_EVENT_INVALID
+  -- @field S_EVENT_INVALID 
   -- @field S_EVENT_SHOT [https://wiki.hoggitworld.com/view/DCS_event_shot](https://wiki.hoggitworld.com/view/DCS_event_shot)
-  -- @field S_EVENT_HIT
-  -- @field S_EVENT_TAKEOFF
-  -- @field S_EVENT_LAND
-  -- @field S_EVENT_CRASH
-  -- @field S_EVENT_EJECTION
-  -- @field S_EVENT_REFUELING
-  -- @field S_EVENT_DEAD
-  -- @field S_EVENT_PILOT_DEAD
-  -- @field S_EVENT_BASE_CAPTURED
-  -- @field S_EVENT_MISSION_START
-  -- @field S_EVENT_MISSION_END
-  -- @field S_EVENT_TOOK_CONTROL
-  -- @field S_EVENT_REFUELING_STOP
-  -- @field S_EVENT_BIRTH
-  -- @field S_EVENT_HUMAN_FAILURE
-  -- @field S_EVENT_ENGINE_STARTUP
-  -- @field S_EVENT_ENGINE_SHUTDOWN
-  -- @field S_EVENT_PLAYER_ENTER_UNIT
-  -- @field S_EVENT_PLAYER_LEAVE_UNIT
-  -- @field S_EVENT_PLAYER_COMMENT
-  -- @field S_EVENT_SHOOTING_START
-  -- @field S_EVENT_SHOOTING_END
+  -- @field S_EVENT_HIT [https://wiki.hoggitworld.com/view/DCS_event_hit](https://wiki.hoggitworld.com/view/DCS_event_hit)
+  -- @field S_EVENT_TAKEOFF [https://wiki.hoggitworld.com/view/DCS_event_takeoff](https://wiki.hoggitworld.com/view/DCS_event_takeoff)
+  -- @field S_EVENT_LAND [https://wiki.hoggitworld.com/view/DCS_event_land](https://wiki.hoggitworld.com/view/DCS_event_land)
+  -- @field S_EVENT_CRASH [https://wiki.hoggitworld.com/view/DCS_event_crash](https://wiki.hoggitworld.com/view/DCS_event_crash)
+  -- @field S_EVENT_EJECTION [https://wiki.hoggitworld.com/view/DCS_event_ejection](https://wiki.hoggitworld.com/view/DCS_event_ejection)
+  -- @field S_EVENT_REFUELING [https://wiki.hoggitworld.com/view/DCS_event_refueling](https://wiki.hoggitworld.com/view/DCS_event_refueling)
+  -- @field S_EVENT_DEAD [https://wiki.hoggitworld.com/view/DCS_event_dead](https://wiki.hoggitworld.com/view/DCS_event_dead)
+  -- @field S_EVENT_PILOT_DEAD [https://wiki.hoggitworld.com/view/DCS_event_pilot_dead](https://wiki.hoggitworld.com/view/DCS_event_pilot_dead)
+  -- @field S_EVENT_BASE_CAPTURED [https://wiki.hoggitworld.com/view/DCS_event_base_captured](https://wiki.hoggitworld.com/view/DCS_event_base_captured)
+  -- @field S_EVENT_MISSION_START [https://wiki.hoggitworld.com/view/DCS_event_mission_start](https://wiki.hoggitworld.com/view/DCS_event_mission_start)
+  -- @field S_EVENT_MISSION_END [https://wiki.hoggitworld.com/view/DCS_event_mission_end](https://wiki.hoggitworld.com/view/DCS_event_mission_end)
+  -- @field S_EVENT_TOOK_CONTROL 
+  -- @field S_EVENT_REFUELING_STOP [https://wiki.hoggitworld.com/view/DCS_event_refueling_stop](https://wiki.hoggitworld.com/view/DCS_event_refueling_stop)
+  -- @field S_EVENT_BIRTH [https://wiki.hoggitworld.com/view/DCS_event_birth](https://wiki.hoggitworld.com/view/DCS_event_birth)
+  -- @field S_EVENT_HUMAN_FAILURE [https://wiki.hoggitworld.com/view/DCS_event_human_failure](https://wiki.hoggitworld.com/view/DCS_event_human_failure)
+  -- @field S_EVENT_ENGINE_STARTUP [https://wiki.hoggitworld.com/view/DCS_event_engine_startup](https://wiki.hoggitworld.com/view/DCS_event_engine_startup)
+  -- @field S_EVENT_ENGINE_SHUTDOWN [https://wiki.hoggitworld.com/view/DCS_event_engine_shutdown](https://wiki.hoggitworld.com/view/DCS_event_engine_shutdown)
+  -- @field S_EVENT_PLAYER_ENTER_UNIT [https://wiki.hoggitworld.com/view/DCS_event_player_enter_unit](https://wiki.hoggitworld.com/view/DCS_event_player_enter_unit)
+  -- @field S_EVENT_PLAYER_LEAVE_UNIT [https://wiki.hoggitworld.com/view/DCS_event_player_leave_unit](https://wiki.hoggitworld.com/view/DCS_event_player_leave_unit)
+  -- @field S_EVENT_PLAYER_COMMENT 
+  -- @field S_EVENT_SHOOTING_START [https://wiki.hoggitworld.com/view/DCS_event_shooting_start](https://wiki.hoggitworld.com/view/DCS_event_shooting_start)
+  -- @field S_EVENT_SHOOTING_END [https://wiki.hoggitworld.com/view/DCS_event_shooting_end](https://wiki.hoggitworld.com/view/DCS_event_shooting_end)
+  -- @field S_EVENT_MARK ADDED [https://wiki.hoggitworld.com/view/DCS_event_mark_added](https://wiki.hoggitworld.com/view/DCS_event_mark_added)
+  -- @field S_EVENT_MARK CHANGE [https://wiki.hoggitworld.com/view/DCS_event_mark_change](https://wiki.hoggitworld.com/view/DCS_event_mark_change)
+  -- @field S_EVENT_MARK REMOVE [https://wiki.hoggitworld.com/view/DCS_event_mark_remove](https://wiki.hoggitworld.com/view/DCS_event_mark_remove)
   -- @field S_EVENT_MAX
   
-  world = {} --#world
+  --- The birthplace enumerator is used to define where an aircraft or helicopter has spawned in association with birth events.
+  -- @type world.BirthPlace
+  -- @field wsBirthPlace_Air
+  -- @field wsBirthPlace_RunWay
+  -- @field wsBirthPlace_Park
+  -- @field wsBirthPlace_Heliport_Hot
+  -- @field wsBirthPlace_Heliport_Cold
+
+  --- The volumeType enumerator defines the types of 3d geometery used within the #world.searchObjects function.
+  -- @type world.VolumeType
+  -- @field SEGMENT
+  -- @field BOX
+  -- @field SPHERE
+  -- @field PYRAMID
+
+  --- Adds a function as an event handler that executes whenever a simulator event occurs. See [hoggit](https://wiki.hoggitworld.com/view/DCS_func_addEventHandler).
+  -- @function [parent=#world] addEventHandler
+  -- @param #table handler Event handler table.
   
+  --- Removes the specified event handler from handling events.
+  -- @function [parent=#world] removeEventHandler
+  -- @param #table handler Event handler table.
+  
+  --- Returns a table of the single unit object in the game who's skill level is set as "Player". See [hoggit](https://wiki.hoggitworld.com/view/DCS_func_getPlayer).
+  -- There is only a single player unit in a mission and in single player the user will always spawn into this unit automatically unless other client or Combined Arms slots are available.
+  -- @function [parent=#world] getPlayer
+  -- @return DCS#Unit  
+  
+  --- Searches a defined volume of 3d space for the specified objects within it and then can run function on each returned object. See [hoggit](https://wiki.hoggitworld.com/view/DCS_func_searchObjects).
+  -- @function [parent=#world] searchObjects
+  -- @param #DCS.Object.Category objectcategory Category (can be a table) of objects to search.
+  -- @param #DCS word.VolumeType volume Shape of the search area/volume.
+  -- @param #ObjectSeachHandler handler A function that handles the search.
+  -- @param #table any Additional data.
+  -- @return #DCS.unit  
+  
+  --- Returns a table of mark panels indexed numerically that are present within the mission. See [hoggit](https://wiki.hoggitworld.com/view/DCS_func_getMarkPanels)
+  -- @function [parent=#world] getMarkPanels
+  -- @return #table Table of marks.
+ 
 end -- world
 
 
@@ -48,7 +99,6 @@ do -- env
   --- [DCS Singleton env](https://wiki.hoggitworld.com/view/DCS_singleton_env)
   -- @type env
 
-  
   --- Add message to simulator log with caption "INFO". Message box is optional.
   -- @function [parent=#env] info
   -- @param #string message message string to add to log.
@@ -68,6 +118,7 @@ do -- env
   -- @function [parent=#env] setErrorMessageBoxEnabled
   -- @param #boolean on if true message box appearance is enabled.
 
+  --- [DCS Singleton env](https://wiki.hoggitworld.com/view/DCS_singleton_env)
   env = {} --#env 
   
 end -- env
@@ -116,6 +167,7 @@ do -- timer
   -- @function [parent=#timer] removeFunction
   -- @param functionId Function identifier to remove from schedule 
   
+  --- [DCS Singleton timer](https://wiki.hoggitworld.com/view/DCS_singleton_timer)
   timer = {} --#timer
 
 end 
@@ -145,6 +197,7 @@ do -- land
   -- @param #Vec2 point Point on the land. 
   -- @return #land.SurfaceType
   
+  --- [DCS Singleton land](https://wiki.hoggitworld.com/view/DCS_singleton_land)
   land = {} --#land
 
 end -- land

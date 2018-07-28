@@ -129,10 +129,10 @@ MISSION = {
 --- This is the main MISSION declaration method. Each Mission is like the master or a Mission orchestration between, Clients, Tasks, Stages etc.
 -- @param #MISSION self
 -- @param Tasking.CommandCenter#COMMANDCENTER CommandCenter
--- @param #string MissionName is the name of the mission. This name will be used to reference the status of each mission by the players.
--- @param #string MissionPriority is a string indicating the "priority" of the Mission. f.e. "Primary", "Secondary" or "First", "Second". It is free format and up to the Mission designer to choose. There are no rules behind this field.
--- @param #string MissionBriefing is a string indicating the mission briefing to be shown when a player joins a @{CLIENT}.
--- @param #string MissionCoalition is a string indicating the coalition or party to which this mission belongs to. It is free format and can be chosen freely by the mission designer. Note that this field is not to be confused with the coalition concept of the ME. Examples of a Mission Coalition could be "NATO", "CCCP", "Intruders", "Terrorists"...
+-- @param #string MissionName Name of the mission. This name will be used to reference the status of each mission by the players.
+-- @param #string MissionPriority String indicating the "priority" of the Mission. e.g. "Primary", "Secondary". It is free format and up to the Mission designer to choose. There are no rules behind this field.
+-- @param #string MissionBriefing String indicating the mission briefing to be shown when a player joins a @{CLIENT}.
+-- @param DCS#coaliton.side MissionCoalition Side of the coalition, i.e. and enumerator @{#DCS.coalition.side} corresponding to RED, BLUE or NEUTRAL.
 -- @return #MISSION self
 function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefing, MissionCoalition )
 

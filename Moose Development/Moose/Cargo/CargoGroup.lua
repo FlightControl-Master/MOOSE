@@ -55,12 +55,12 @@ do -- CARGO_GROUP
   -- This make a new CARGO_GROUP from a @{Wrapper.Group} object.
   -- It will "ungroup" the group object within the sim, and will create a @{Set} of individual Unit objects.
   -- @param #CARGO_GROUP self
-  -- @param Wrapper.Group#GROUP CargoGroup
-  -- @param #string Type
-  -- @param #string Name
-  -- @param #number LoadRadius (optional)
-  -- @param #number NearRadius (optional)
-  -- @return #CARGO_GROUP
+  -- @param Wrapper.Group#GROUP CargoGroup Group to be transported as cargo.
+  -- @param #string Type Cargo type, e.g. "Infantry". This is the type used in SET_CARGO:New():FilterTypes("Infantry") to define the valid cargo groups of the set.
+  -- @param #string Name Some user defined name of the cargo group.
+  -- @param #number LoadRadius (optional) Distance in meters until which a cargo is loaded into the carrier. Cargo outside this radius has to be routed by other means to within the radius to be loaded.
+  -- @param #number NearRadius (optional) Once the units are within this radius of the carrier, they are actually loaded, i.e. disappear from the scene.
+  -- @return #CARGO_GROUP Cargo group object.
   function CARGO_GROUP:New( CargoGroup, Type, Name, LoadRadius )
     local self = BASE:Inherit( self, CARGO_REPORTABLE:New( Type, Name, 0, LoadRadius ) ) -- #CARGO_GROUP
     self:F( { Type, Name, LoadRadius } )

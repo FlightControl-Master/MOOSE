@@ -200,8 +200,6 @@ end
 -- @param From
 -- @param Event
 -- @param To
--- @param Core.Point#COORDINATE Coordinate
--- @param #number Speed
 function AI_CARGO_HELICOPTER:onafterLanded( Helicopter, From, Event, To )
 
   Helicopter:F( { Name = Helicopter:GetName() } )
@@ -245,7 +243,7 @@ end
 -- @param To
 -- @param Core.Point#COORDINATE Coordinate
 -- @param #number Speed
-function AI_CARGO_HELICOPTER:onafterQueue( Helicopter, From, Event, To, Coordinate )
+function AI_CARGO_HELICOPTER:onafterQueue( Helicopter, From, Event, To, Coordinate, Speed )
 
   local HelicopterInZone = false
 
@@ -359,10 +357,13 @@ function AI_CARGO_HELICOPTER:onafterOrbit( Helicopter, From, Event, To, Coordina
 end
 
 
-
---- @param #AI_CARGO_HELICOPTER self
+--- On Before event Load.
+-- @param #AI_CARGO_HELICOPTER self
 -- @param Wrapper.Group#GROUP Helicopter
-function AI_CARGO_HELICOPTER:onbeforeLoad( Helicopter, From, Event, To, Coordinate )
+-- @param #string From From state.
+-- @param #string Event Event
+-- @param #string To To state.
+function AI_CARGO_HELICOPTER:onbeforeLoad( Helicopter, From, Event, To)
 
   local Boarding = false
 
@@ -400,10 +401,15 @@ function AI_CARGO_HELICOPTER:onbeforeLoad( Helicopter, From, Event, To, Coordina
   
 end
 
---- @param #AI_CARGO_HELICOPTER self
+--- On after Board event.
+-- @param #AI_CARGO_HELICOPTER self
 -- @param Wrapper.Group#GROUP Helicopter
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Cargo.Cargo#CARGO Cargo Cargo object.
 function AI_CARGO_HELICOPTER:onafterBoard( Helicopter, From, Event, To, Cargo )
-  self:F( { APC, From, Event, To, Cargo } )
+  self:F( { Helicopter, From, Event, To, Cargo } )
 
   if Helicopter and Helicopter:IsAlive() then
     self:F({ IsLoaded = Cargo:IsLoaded() } )
@@ -416,10 +422,16 @@ function AI_CARGO_HELICOPTER:onafterBoard( Helicopter, From, Event, To, Cargo )
   
 end
 
---- @param #AI_CARGO_HELICOPTER self
+--- On before Land event.
+-- @param #AI_CARGO_HELICOPTER self
 -- @param Wrapper.Group#GROUP Helicopter
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Cargo.Cargo#CARGO Cargo Cargo object.
+-- @return #boolean Cargo is loaded.
 function AI_CARGO_HELICOPTER:onbeforeLoaded( Helicopter, From, Event, To, Cargo )
-  self:F( { APC, From, Event, To } )
+  self:F( { Helicopter, From, Event, To, Cargo } )
   
   local Loaded = true
 
@@ -439,8 +451,12 @@ function AI_CARGO_HELICOPTER:onbeforeLoaded( Helicopter, From, Event, To, Cargo 
 end
 
 
---- @param #AI_CARGO_HELICOPTER self
+--- On after Unload event.
+-- @param #AI_CARGO_HELICOPTER self
 -- @param Wrapper.Group#GROUP Helicopter
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #boolean Deployed Cargo is deployed.
 function AI_CARGO_HELICOPTER:onafterUnload( Helicopter, From, Event, To, Deployed )
 
   if Helicopter and Helicopter:IsAlive() then
@@ -457,8 +473,14 @@ function AI_CARGO_HELICOPTER:onafterUnload( Helicopter, From, Event, To, Deploye
   
 end
 
---- @param #AI_CARGO_HELICOPTER self
+--- On after Unboard event.
+-- @param #AI_CARGO_HELICOPTER self
 -- @param Wrapper.Group#GROUP Helicopter
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Cargo.Cargo#CARGO Cargo Cargo object.
+-- @param #boolean Deployed Cargo is deployed.
 function AI_CARGO_HELICOPTER:onafterUnboard( Helicopter, From, Event, To, Cargo, Deployed )
 
   if Helicopter and Helicopter:IsAlive() then
@@ -471,8 +493,15 @@ function AI_CARGO_HELICOPTER:onafterUnboard( Helicopter, From, Event, To, Cargo,
   
 end
 
---- @param #AI_CARGO_HELICOPTER self
+--- On before Unloaded event.
+-- @param #AI_CARGO_HELICOPTER self
 -- @param Wrapper.Group#GROUP Helicopter
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Cargo.Cargo#CARGO Cargo Cargo object.
+-- @param #boolean Deployed Cargo is deployed.
+-- @return #boolean True if all cargo has been unloaded.
 function AI_CARGO_HELICOPTER:onbeforeUnloaded( Helicopter, From, Event, To, Cargo, Deployed )
   self:F( { APC, From, Event, To, Cargo:GetName(), Deployed = Deployed } )
 
@@ -508,8 +537,14 @@ function AI_CARGO_HELICOPTER:onbeforeUnloaded( Helicopter, From, Event, To, Carg
   
 end
 
---- @param #AI_CARGO_HELICOPTER self
+--- On after Unloaded event.
+-- @param #AI_CARGO_HELICOPTER self
 -- @param Wrapper.Group#GROUP Helicopter
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Cargo.Cargo#CARGO Cargo Cargo object.
+-- @param #boolean Deployed Cargo is deployed.
 function AI_CARGO_HELICOPTER:onafterUnloaded( Helicopter, From, Event, To, Cargo, Deployed )
 
   self:Orbit( Helicopter:GetCoordinate(), 50 )
@@ -523,12 +558,13 @@ function AI_CARGO_HELICOPTER:onafterUnloaded( Helicopter, From, Event, To, Cargo
 
 end
 
---- @param #AI_CARGO_HELICOPTER self
+--- On after Pickup event.
+-- @param #AI_CARGO_HELICOPTER self
 -- @param Wrapper.Group#GROUP Helicopter
 -- @param From
 -- @param Event
 -- @param To
--- @param Core.Point#COORDINATE Coordinate
+-- @param Core.Point#COORDINATE Coordinate Pickup place.
 -- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
 function AI_CARGO_HELICOPTER:onafterPickup( Helicopter, From, Event, To, Coordinate, Speed )
 
@@ -537,7 +573,7 @@ function AI_CARGO_HELICOPTER:onafterPickup( Helicopter, From, Event, To, Coordin
     Helicopter:Activate()
 
     self.RoutePickup = true
-    Coordinate.y = math.random( 50, 200 )
+    Coordinate.y = math.random( 50, 500 )
     
     local _speed=Speed or Helicopter:GetSpeedMax()*0.5        
      
@@ -586,12 +622,16 @@ function AI_CARGO_HELICOPTER:onafterPickup( Helicopter, From, Event, To, Coordin
   
 end
 
-
+--- Depoloy function and queue.
+-- @param #AI_CARGO_HELICOPTER self
+-- @param Wrapper.Group#GROUP AICargoHelicopter
+-- @param Core.Point#COORDINATE Coordinate Coordinate
 function AI_CARGO_HELICOPTER:_Deploy( AICargoHelicopter, Coordinate )
   AICargoHelicopter:__Queue( -10, Coordinate, 100 )
 end
 
---- @param #AI_CARGO_HELICOPTER self
+--- On after Deploy event.
+-- @param #AI_CARGO_HELICOPTER self
 -- @param Wrapper.Group#GROUP Helicopter
 -- @param From
 -- @param Event
@@ -609,7 +649,7 @@ function AI_CARGO_HELICOPTER:onafterDeploy( Helicopter, From, Event, To, Coordin
     
     --- Calculate the target route point.
 
-    Coordinate.y = math.random( 50, 200 )  
+    Coordinate.y = math.random( 50, 500 )
     
     local _speed=Speed or Helicopter:GetSpeedMax()*0.5      
 
@@ -659,12 +699,13 @@ function AI_CARGO_HELICOPTER:onafterDeploy( Helicopter, From, Event, To, Coordin
 end
 
 
---- @param #AI_CARGO_HELICOPTER self
+--- On after Home event.
+-- @param #AI_CARGO_HELICOPTER self
 -- @param Wrapper.Group#GROUP Helicopter
 -- @param From
 -- @param Event
 -- @param To
--- @param Core.Point#COORDINATE Coordinate
+-- @param Core.Point#COORDINATE Coordinate Home place.
 -- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
 function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinate, Speed )
 
