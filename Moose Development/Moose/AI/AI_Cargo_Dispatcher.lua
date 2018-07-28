@@ -90,7 +90,7 @@ AI_CARGO_DISPATCHER.PickupCargo = {}
 -- @param #AI_CARGO_DISPATCHER self
 -- @param Core.Set#SET_GROUP SetCarrier
 -- @param Core.Set#SET_CARGO SetCargo
--- @param Core.Set#SET_ZONE SetDeployZone
+-- @param Core.Set#SET_ZONE SetDeployZones
 -- @return #AI_CARGO_DISPATCHER
 -- @usage
 -- 
@@ -434,11 +434,11 @@ end
 --- Loaded Handler OnAfter for AI_CARGO_DISPATCHER
 -- @function [parent=#AI_CARGO_DISPATCHER] OnAfterLoaded
 -- @param #AI_CARGO_DISPATCHER self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param Wrapper.Group#GROUP Carrier
--- @param Cargo.Cargo#CARGO Cargo
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Wrapper.Group#GROUP Carrier Carrier object.
+-- @param Cargo.Cargo#CARGO Cargo Cargo object.
 
 --- Unloaded Handler OnAfter for AI_CARGO_DISPATCHER
 -- @function [parent=#AI_CARGO_DISPATCHER] OnAfterUnloaded

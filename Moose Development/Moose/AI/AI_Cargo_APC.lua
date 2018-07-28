@@ -117,6 +117,7 @@ function AI_CARGO_APC:New( APC, CargoSet, CombatRadius )
   -- @param #string Event
   -- @param #string To
   -- @param Core.Point#COORDINATE Coordinate
+  -- @param #number Speed Speed in km/h. Default is 50% of max possible speed the group can do. 
   -- @return #boolean
   
   --- Pickup Handler OnAfter for AI_CARGO_APC
@@ -126,17 +127,20 @@ function AI_CARGO_APC:New( APC, CargoSet, CombatRadius )
   -- @param #string Event
   -- @param #string To
   -- @param Core.Point#COORDINATE Coordinate
+  -- @param #number Speed Speed in km/h. Default is 50% of max possible speed the group can do.
   
   --- Pickup Trigger for AI_CARGO_APC
   -- @function [parent=#AI_CARGO_APC] Pickup
   -- @param #AI_CARGO_APC self
   -- @param Core.Point#COORDINATE Coordinate
+  -- @param #number Speed Speed in km/h. Default is 50% of max possible speed the group can do.
   
   --- Pickup Asynchronous Trigger for AI_CARGO_APC
   -- @function [parent=#AI_CARGO_APC] __Pickup
   -- @param #AI_CARGO_APC self
   -- @param #number Delay
   -- @param Core.Point#COORDINATE Coordinate
+  -- @param #number Speed Speed in km/h. Default is 50% of max possible speed the group can do.
   
   --- Deploy Handler OnBefore for AI_CARGO_APC
   -- @function [parent=#AI_CARGO_APC] OnBeforeDeploy
@@ -145,6 +149,7 @@ function AI_CARGO_APC:New( APC, CargoSet, CombatRadius )
   -- @param #string Event
   -- @param #string To
   -- @param Core.Point#COORDINATE Coordinate
+  -- @param #number Speed Speed in km/h. Default is 50% of max possible speed the group can do.
   -- @return #boolean
   
   --- Deploy Handler OnAfter for AI_CARGO_APC
@@ -154,17 +159,20 @@ function AI_CARGO_APC:New( APC, CargoSet, CombatRadius )
   -- @param #string Event
   -- @param #string To
   -- @param Core.Point#COORDINATE Coordinate
+  -- @param #number Speed Speed in km/h. Default is 50% of max possible speed the group can do.
   
   --- Deploy Trigger for AI_CARGO_APC
   -- @function [parent=#AI_CARGO_APC] Deploy
   -- @param #AI_CARGO_APC self
   -- @param Core.Point#COORDINATE Coordinate
+  -- @param #number Speed Speed in km/h. Default is 50% of max possible speed the group can do.
   
   --- Deploy Asynchronous Trigger for AI_CARGO_APC
   -- @function [parent=#AI_CARGO_APC] __Deploy
   -- @param #AI_CARGO_APC self
   -- @param Core.Point#COORDINATE Coordinate
   -- @param #number Delay
+  -- @param #number Speed Speed in km/h. Default is 50% of max possible speed the group can do.
 
   
   --- Loaded Handler OnAfter for AI_CARGO_APC
@@ -335,8 +343,12 @@ function AI_CARGO_APC:FollowToCarrier( Me, APCUnit, CargoGroup )
 end
 
 
---- @param #AI_CARGO_APC self
+--- On after Monitor event.
+-- @param #AI_CARGO_APC self
 -- @param Wrapper.Group#GROUP APC
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
 function AI_CARGO_APC:onafterMonitor( APC, From, Event, To )
   self:F( { APC, From, Event, To } )
 
@@ -389,8 +401,12 @@ function AI_CARGO_APC:onafterMonitor( APC, From, Event, To )
 end
 
 
---- @param #AI_CARGO_APC self
+--- On before Load event.
+-- @param #AI_CARGO_APC self
 -- @param Wrapper.Group#GROUP APC
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
 function AI_CARGO_APC:onbeforeLoad( APC, From, Event, To )
   self:F( { APC, From, Event, To } )
 
@@ -427,8 +443,13 @@ function AI_CARGO_APC:onbeforeLoad( APC, From, Event, To )
   
 end
 
---- @param #AI_CARGO_APC self
+--- On after Board event.
+-- @param #AI_CARGO_APC self
 -- @param Wrapper.Group#GROUP APC
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #string Cargo.Cargo#CARGO Cargo Cargo object.
 function AI_CARGO_APC:onafterBoard( APC, From, Event, To, Cargo )
   self:F( { APC, From, Event, To, Cargo } )
 
@@ -443,8 +464,13 @@ function AI_CARGO_APC:onafterBoard( APC, From, Event, To, Cargo )
   
 end
 
---- @param #AI_CARGO_APC self
+--- On before Loaded event.
+-- @param #AI_CARGO_APC self
 -- @param Wrapper.Group#GROUP APC
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @return #boolean Cargo loaded.
 function AI_CARGO_APC:onbeforeLoaded( APC, From, Event, To )
   self:F( { APC, From, Event, To } )
 
@@ -470,8 +496,13 @@ function AI_CARGO_APC:onbeforeLoaded( APC, From, Event, To )
 end
 
 
---- @param #AI_CARGO_APC self
+--- On after Unload event.
+-- @param #AI_CARGO_APC self
 -- @param Wrapper.Group#GROUP APC
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #boolean Deployed Cargo is deployed.
 function AI_CARGO_APC:onafterUnload( APC, From, Event, To, Deployed )
   self:F( { APC, From, Event, To, Deployed } )
 
@@ -488,8 +519,14 @@ function AI_CARGO_APC:onafterUnload( APC, From, Event, To, Deployed )
   
 end
 
---- @param #AI_CARGO_APC self
+--- On after Unboard event.
+-- @param #AI_CARGO_APC self
 -- @param Wrapper.Group#GROUP APC
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #string Cargo.Cargo#CARGO Cargo Cargo object.
+-- @param #boolean Deployed Cargo is deployed.
 function AI_CARGO_APC:onafterUnboard( APC, From, Event, To, Cargo, Deployed )
   self:F( { APC, From, Event, To, Cargo:GetName() } )
 
@@ -503,8 +540,15 @@ function AI_CARGO_APC:onafterUnboard( APC, From, Event, To, Cargo, Deployed )
   
 end
 
---- @param #AI_CARGO_APC self
+--- On before Unloaded event.
+-- @param #AI_CARGO_APC self
 -- @param Wrapper.Group#GROUP APC
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #string Cargo.Cargo#CARGO Cargo Cargo object.
+-- @param #boolean Deployed Cargo is deployed.
+-- @return #boolean All cargo unloaded.
 function AI_CARGO_APC:onbeforeUnloaded( APC, From, Event, To, Cargo, Deployed )
   self:F( { APC, From, Event, To, Cargo:GetName(), Deployed = Deployed } )
 
@@ -544,8 +588,12 @@ function AI_CARGO_APC:onbeforeUnloaded( APC, From, Event, To, Cargo, Deployed )
 end
 
 
---- @param #AI_CARGO_APC self
+--- On after Follow event.
+-- @param #AI_CARGO_APC self
 -- @param Wrapper.Group#GROUP APC
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
 function AI_CARGO_APC:onafterFollow( APC, From, Event, To )
   self:F( { APC, From, Event, To } )
 
@@ -591,7 +639,8 @@ end
 
 
 
---- @param #AI_CARGO_APC self
+--- On after Pickup event.
+-- @param #AI_CARGO_APC self
 -- @param Wrapper.Group#GROUP APC
 -- @param From
 -- @param Event
@@ -626,13 +675,14 @@ function AI_CARGO_APC:onafterPickup( APC, From, Event, To, Coordinate, Speed )
 end
 
 
---- @param #AI_CARGO_APC self
+--- On after Deploy event.
+-- @param #AI_CARGO_APC self
 -- @param Wrapper.Group#GROUP APC
 -- @param From
 -- @param Event
 -- @param To
--- @param Core.Point#COORDINATE Coordinate
--- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+-- @param Core.Point#COORDINATE Coordinate Deploy place.
+-- @param #number Speed Speed in km/h to drive to the depoly coordinate. Default is 50% of max possible speed the unit can go.
 function AI_CARGO_APC:onafterDeploy( APC, From, Event, To, Coordinate, Speed )
 
   if APC and APC:IsAlive() then
@@ -655,12 +705,13 @@ function AI_CARGO_APC:onafterDeploy( APC, From, Event, To, Coordinate, Speed )
 end
 
 
---- @param #AI_CARGO_APC self
+--- On after Home event.
+-- @param #AI_CARGO_APC self
 -- @param Wrapper.Group#GROUP APC
 -- @param From
 -- @param Event
 -- @param To
--- @param Core.Point#COORDINATE Coordinate
+-- @param Core.Point#COORDINATE Coordinate Home place.
 -- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
 function AI_CARGO_APC:onafterHome( APC, From, Event, To, Coordinate, Speed )
 

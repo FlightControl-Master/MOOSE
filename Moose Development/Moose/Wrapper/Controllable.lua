@@ -356,6 +356,8 @@ end
 
 --- Clearing the Task Queue and Setting the Task on the queue from the controllable.
 -- @param #CONTROLLABLE self
+-- @param #DCS.Task DCSTask DCS Task array.
+-- @param #number WaitTime Time in seconds, before the task is set.
 -- @return Wrapper.Controllable#CONTROLLABLE self
 function CONTROLLABLE:SetTask( DCSTask, WaitTime )
   self:F2( { DCSTask = DCSTask } )
@@ -423,6 +425,17 @@ end
 -- return DCS#Task
 function CONTROLLABLE:TaskCondition( time, userFlag, userFlagValue, condition, duration, lastWayPoint )
   self:F2( { time, userFlag, userFlagValue, condition, duration, lastWayPoint } )
+
+--[[
+ StopCondition = { 
+   time = Time, 
+   userFlag = string, 
+   userFlagValue = boolean, 
+   condition = string, 
+   duration = Time, 
+   lastWaypoint = number, 
+ }
+--]]
 
   local DCSStopCondition = {}
   DCSStopCondition.time = time

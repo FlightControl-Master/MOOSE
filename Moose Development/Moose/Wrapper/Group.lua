@@ -526,8 +526,7 @@ end
 --- Returns the average group height in meters.
 -- @param Wrapper.Group#GROUP self
 -- @param #boolean FromGround Measure from the ground or from sea level. Provide **true** for measuring from the ground. **false** or **nil** if you measure from sea level. 
--- @return DCS#Vec3 The height of the group.
--- @return #nil The GROUP is not existing or alive.  
+-- @return DCS#Vec3 The height of the group or nil if is not existing or alive.  
 function GROUP:GetHeight( FromGround )
   self:F2( self.GroupName )
 
@@ -856,7 +855,7 @@ function GROUP:IsCompletelyInZone( Zone )
   return true
 end
 
---- Returns true if some units of the group are within a @{Zone}.
+--- Returns true if some but NOT ALL units of the group are within a @{Zone}.
 -- @param #GROUP self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
 -- @return #boolean Returns true if the Group is partially within the @{Core.Zone#ZONE_BASE}
@@ -882,6 +881,14 @@ function GROUP:IsPartlyInZone( Zone )
   else
     return false
   end
+end
+
+--- Returns true if part or all units of the group are within a @{Zone}.
+-- @param #GROUP self
+-- @param Core.Zone#ZONE_BASE Zone The zone to test.
+-- @return #boolean Returns true if the Group is partially or completely within the @{Core.Zone#ZONE_BASE}.
+function GROUP:IsPartlyOrCompletelyInZone( Zone )
+  return self:IsPartlyInZone(Zone) or self:IsCompletelyInZone(Zone)
 end
 
 --- Returns true if none of the group units of the group are within a @{Zone}.

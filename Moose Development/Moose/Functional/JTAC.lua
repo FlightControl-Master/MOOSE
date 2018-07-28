@@ -49,7 +49,7 @@
 -- 
 -- 
 -- 
--- @field #ARTY
+-- @field #JTAC
 JTAC={
   ClassName="JTAC",
   Debug=false,
@@ -68,12 +68,13 @@ JTAC.version="0.0.1"
 -- TODO list:
 -- TODO: a lot.
 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Creates a new JTAC object.
 -- @param #JTAC self
 -- @param Wrapper.Group#GROUP group The GROUP object for which artillery tasks should be assigned.
 -- @param alias (Optional) Alias name the group will be calling itself when sending messages. Default is the group name.
--- @return #ARTY ARTY object or nil if group does not exist or is not a ground or naval group.
+-- @return #JTAC JTAC object or nil if group does not exist or is not a ground or naval group.
 function JTAC:New(group, alias)
   BASE:F2(group)
 
@@ -98,6 +99,7 @@ function JTAC:New(group, alias)
   -- Entry.
   self:AddTransition("*", "Start", "Ready")
   self:AddTransition("Ready", "LaserOn", "Lasing")
+  self:AddTransition("Lasing", "Lasing", "Lasing")
   self:AddTransition("Lasing", "LaserOff", "Ready")
 
 end
@@ -128,13 +130,17 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function JTAC:onafterLaserOn(Controllable, From, Event, To)
+-- @param Wrapper.Unit#UNIT Target Target that should be lased.
+function JTAC:onafterLaserOn(Controllable, From, Event, To, Target)
   --self:_EventFromTo("onafterStart", Event, From, To)
   
   -- Debug output.
-  local text=string.format("Started JTAC version %s for group %s.", JTAC.version, Controllable:GetName())
+  local text=string.format("JTAC %s lasing target %s.", Controllable:GetName(), Target:GetName())
   self:E(JTAC.id..text)
   MESSAGE:New(text, 5):ToAllIf(self.Debug)
+  
+  -- Start lasing.
+  Controllable:LaseUnit(Target, self.LaserCode, self.Duration)
   
 end
 
@@ -149,9 +155,12 @@ function JTAC:onafterLaserOff(Controllable, From, Event, To)
   --self:_EventFromTo("onafterStart", Event, From, To)
   
   -- Debug output.
-  local text=string.format("Started JTAC version %s for group %s.", JTAC.version, Controllable:GetName())
+  local text=string.format("JTAC %s stoped lasing.", Controllable:GetName())
   self:E(JTAC.id..text)
   MESSAGE:New(text, 5):ToAllIf(self.Debug)
+  
+  -- Turn of laser.
+  Controllable:LaseOff()
   
 end
 
