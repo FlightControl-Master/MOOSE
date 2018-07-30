@@ -40,14 +40,7 @@ do -- AI_G2G_DISPATCHER
   -- 
   -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia3.JPG)
   -- 
-  -- It includes automatic spawning of Combat Air Patrol aircraft (CAP) and Ground Controlled Intercept aircraft (GCI) in response to enemy air movements that are detected by a ground based radar network. 
-  -- CAP flights will take off and proceed to designated CAP zones where they will remain on station until the ground radars direct them to intercept detected enemy aircraft or they run short of fuel and must return to base (RTB). When a CAP flight leaves their zone to perform an interception or return to base a new CAP flight will spawn to take their place.
-  -- If all CAP flights are engaged or RTB then additional GCI interceptors will scramble to intercept unengaged enemy aircraft under ground radar control.
-  -- With a little time and with a little work it provides the mission designer with a convincing and completely automatic air defence system. 
-  -- In short it is a plug in very flexible and configurable air defence module for DCS World.
-  -- 
-  -- Note that in order to create a two way A2A defense system, two AI\_A2A\_DISPATCHER defense system may need to be created, for each coalition one.
-  -- This is a good implementation, because maybe in the future, more coalitions may become available in DCS world.
+  -- Blabla. 
   -- 
   -- ===
   --
@@ -59,6 +52,7 @@ do -- AI_G2G_DISPATCHER
   AI_G2G_DISPATCHER = {
     ClassName = "AI_G2G_DISPATCHER",
     Detection = nil,
+    Homebase  = {},
   }
 
 
@@ -85,9 +79,16 @@ do -- AI_G2G_DISPATCHER
   -- @param #AI_G2G_DISPATCHER self  
   -- @param Wrapper.Group#GROUP group APC group.
   -- @return #AI_G2G_DISPATCHER self
-  function AI_G2G_DISPATCHER:SetTransportAPC(group)
+  function AI_G2G_DISPATCHER:AddTransportAPC(group, homebase, resources)
+    self.TransportAPC[group]={}
+    self.TransportAPC[group].group=group
+    self.TransportAPC[group].homebase=homebase
+    self.TransportAPC[group].resources=resources
     
-    
+    -- Add homebase
+    if not self:GetHomebase(homebase) then
+      self:AddHomebase(homebase)
+    end
   end
 
   --- Adds an APC group to transport troops to the front line.
@@ -96,6 +97,12 @@ do -- AI_G2G_DISPATCHER
   function AI_G2G_DISPATCHER:EvaluateDetectedItem(DetectedItem)
     local _coord=DetectedItem.Coordinate
     _coord:MarkToAll("detected")
+    
+    
+    local _id=DetectedItem.ID
+    
+    
+    
   end
 
   --- Adds an APC group to transport troops to the front line.
@@ -125,7 +132,106 @@ do -- AI_G2G_DISPATCHER
       
       
     end
+    
   end
 
 end
+
+
+
+do
+
+  --- WAREHOUSE class.
+  -- @type WAREHOUSE
+  -- @field #string ClassName Name of the class.
+  -- @extends Core.Fsm#FSM
+
+  --- Create an automatic ground . 
+  -- 
+  -- ===
+  -- 
+  -- # Demo Missions
+  -- 
+  -- ### None.
+  -- 
+  -- ===
+  -- 
+  -- # YouTube Channel
+  -- 
+  -- ### None.
+  -- 
+  -- ===
+  -- 
+  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia3.JPG)
+  -- 
+  -- Warehouse
+  -- 
+  -- ===
+  --
+  -- # USAGE GUIDE
+  -- 
+  -- 
+  -- 
+  -- @field #WAREHOUSE
+  WAREHOUSE = {
+    ClassName = "WAREHOUSE",
+    Homebase  = nil,
+    plane = {},
+    helicopter = {},
+    artillery={},
+    tank = {},
+    apcs = {},
+    infantry={},
+  }
+  
+  WAREHOUSE.category= {
+    Transport=1,
+    Figherplane=1,
+    AWACS=1,
+    Tanker=1,
+    
+  }
+
+  --- WAREHOUSE constructor. Creates a new WAREHOUSE object.
+  -- @param #WAREHOUSE self
+  -- @param Wrapper.Airbase#AIRBASE airbase Airbase.
+  -- @return #WAREHOUSE self
+  function WAREHOUSE:NewAirbase(airbase)
+
+    -- Inherits from DETECTION_MANAGER
+    local self = BASE:Inherit( self, FSM:New() ) -- #WAREHOUSE
+    
+    self.Homebase=airbase
+    
+    return self
+  end
+  
+  --- Add an airplane group to the warehouse stock.
+  -- @param #WAREHOUSE self
+  -- @param #string templateprefix Name of the late activated template group as defined in the mission editor.
+  -- @param #number n Number of groups to add to the warehouse stock.
+  -- @return #WAREHOUSE self
+  function WAREHOUSE:AddAirplane(templateprefix, n, warehousetype)
+    
+    local group=GROUP:FindByName(templateprefix)
+    local typename=group:GetDesc().typeName
+    local displayname=group:GetDesc().displayName
+    
+    -- Create a table with properties.
+    self.airplane[templateprefix]=self.airplane[templateprefix] or {}
+    
+    -- Increase number in stock.
+    if self.airplane[templateprefix].nstock then
+      self.airplane[templateprefix].nstock=self.airplane[templateprefix].nstock+n
+    else
+      self.airplane[templateprefix].nstock=n
+    end
+    
+    self.airplane[templateprefix].nstock=n
+    
+  end
+
+end
+
+
 
