@@ -175,13 +175,14 @@ do
   -- @field #WAREHOUSE
   WAREHOUSE = {
     ClassName = "WAREHOUSE",
-    Homebase  = nil,
-    plane = {},
-    helicopter = {},
-    artillery={},
-    tank = {},
-    apcs = {},
-    infantry={},
+    coalition = nil,
+    homebase  = nil,
+    plane    = {},
+    helo     = {},
+    arty     = {},
+    tank     = {},
+    apc      = {},
+    infantry = {},
   }
   
   WAREHOUSE.category= {
@@ -198,12 +199,130 @@ do
   -- @return #WAREHOUSE self
   function WAREHOUSE:NewAirbase(airbase)
 
-    -- Inherits from DETECTION_MANAGER
+    -- Inherits from FSM
     local self = BASE:Inherit( self, FSM:New() ) -- #WAREHOUSE
     
-    self.Homebase=airbase
+    self.homebase=airbase
+    self.coordinate=airbase:GetCoordinate()
+    self.coalition=airbase:GetCoalition()
+    
+    
+    self:AddTransition("*", "Start", "Idle")
+    self:AddTransition("*", "Status", "*")
+    self:AddTransition("*", "Request", "*")
+    
+    --- Triggers the FSM event "Start".
+    -- @function [parent=#WAREHOUSE] Start
+    -- @param #WAREHOUSE self
+  
+    --- Triggers the FSM event "Start" after a delay.
+    -- @function [parent=#WAREHOUSE] __Start
+    -- @param #WAREHOUSE self
+    -- @param #number delay Delay in seconds.
+
+  
+    --- Triggers the FSM event "Status".
+    -- @function [parent=#WAREHOUSE] Status
+    -- @param #WAREHOUSE self
+  
+    --- Triggers the FSM event "Status" after a delay.
+    -- @function [parent=#WAREHOUSE] __Status
+    -- @param #WAREHOUSE self
+    -- @param #number delay Delay in seconds.
+          
+
+    --- Triggers the FSM event "Request".
+    -- @function [parent=#WAREHOUSE] Request
+    -- @param #WAREHOUSE self
+    -- @param Wrapper.Airbase#AIRBASE Airbase Airbase requesting supply.
+    -- @param #string Asset Asset that is requested.
+    -- @param #string TransportType Type of transport: "Plane", "Helicopter", "APC"
+  
+    --- Triggers the FSM event "Request" after a delay.
+    -- @function [parent=#WAREHOUSE] __Request
+    -- @param #WAREHOUSE self
+    -- @param #number delay Delay in seconds.
+    -- @param Wrapper.Airbase#AIRBASE Airbase Airbase requesting supply.
+    -- @param #string Asset Asset that is requested.
+    -- @param #string TransportType Type of transport: "Plane", "Helicopter", "APC"
     
     return self
+  end
+
+  --- Warehouse
+  -- @param #WAREHOUSE self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  function WAREHOUSE:onafterStart(From, Event, To)
+    env.info("FF starting warehouse of airbase of "..self.homebase:GetName())
+    
+    -- handle events
+    -- event takeoff
+    -- event landing
+    -- event crash/dead
+    -- event base captured
+    self:__Status(-5)
+  end
+  
+
+  --- Warehouse
+  -- @param #WAREHOUSE self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  function WAREHOUSE:onafterStatus(From, Event, To)
+    env.info("FF checking warehouse status of "..self.homebase:GetName())
+    
+    env.info(string.format("FF warehouse at %s: number of transport planes = %d", self.homebase:GetName(), #self.plane))
+    
+    self:__Status(-30)
+  end
+
+  --- Warehouse
+  -- @param #WAREHOUSE self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Wrapper.Airbase#AIRBASE Airbase Airbase requesting supply.
+  -- @param #string Asset Asset that is requested.
+  -- @param #number nAssed Number of groups of that asset requested.
+  -- @param #string TransportType Type of transport: "Plane", "Helicopter", "APC"
+  function WAREHOUSE:onafterRequest(From, Event, To, Airbase, Asset, nAsset, TransportType)
+    env.info(string.format("FF airbase %s is requesting asset %s from warehouse %s", Airbase:GetName(), Asset, self.homebase:GetName()))
+    
+    local nAsset=nAsset or 1
+    
+    if TransportType=="Air" then
+    
+      local template=self.plane[math.random(#self.plane)]
+      
+      if template then
+      
+        local Plane=SPAWN:New(template):SpawnAtAirbase(Airbase, nil, nil, nil, false)
+        
+        local CargoGroups = SET_CARGO:New()
+        
+        local spawn=SPAWN:New("Infantry Platoon Alpha")
+        
+        for i=1,nAsset do
+          local spawngroup=spawn:SpawnFromVec3(self.homebase:GetZone():GetRandomPointVec3(100,500))
+          local cargogroup = CARGO_GROUP:New(spawngroup, "Infantry", string.format( "Infantry Platoon %d", i), 5000, 35)
+          CargoGroups:AddCargo(cargogroup)  
+        end
+        
+        local CargoPlane  = AI_CARGO_AIRPLANE:New(Plane, CargoGroups)
+        
+        CargoPlane:__Pickup(5, self.homebase)
+        
+        function CargoPlane:onafterLoaded( Airplane, From, Event, To, Cargo)
+          CargoPlane:__Deploy(10, Airbase, 500)
+        end
+        
+                
+      end
+    end
+    
   end
   
   --- Add an airplane group to the warehouse stock.
@@ -211,12 +330,21 @@ do
   -- @param #string templateprefix Name of the late activated template group as defined in the mission editor.
   -- @param #number n Number of groups to add to the warehouse stock.
   -- @return #WAREHOUSE self
-  function WAREHOUSE:AddAirplane(templateprefix, n, warehousetype)
+  function WAREHOUSE:AddTransportPlane(templateprefix, n)
+  
+    local n=n or 1
     
     local group=GROUP:FindByName(templateprefix)
-    local typename=group:GetDesc().typeName
-    local displayname=group:GetDesc().displayName
+    local DCSgroup=group:GetDCSObject()
+    local DCSunit=DCSgroup:getUnit(1)
+    local DCSdesc=DCSunit:getDesc()
+    local DCSdisplay=DCSunit:getDesc().displayName
+    local DCScategory=DCSgroup:getCategory()
+    local DCStype=DCSunit:getTypeName()
     
+    --env.info(string.format("FF adding %d transport plane template %s type %s, display %s", n, tostring(templateprefix), tostring(typename), tostring(displayname)))
+
+    --[[    
     -- Create a table with properties.
     self.airplane[templateprefix]=self.airplane[templateprefix] or {}
     
@@ -228,6 +356,11 @@ do
     end
     
     self.airplane[templateprefix].nstock=n
+    ]]
+    
+    for i=1,n do
+      table.insert(self.plane, templateprefix)
+    end
     
   end
 
