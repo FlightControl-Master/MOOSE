@@ -1,5 +1,47 @@
 --- **Tasking** - Creates and manages player TASK_CARGO tasks.
 -- 
+-- **Specific features:**
+-- 
+--   * Creates a task to transport @{Cargo.Cargo} to and between deployment zones.
+--   * Derived from the TASK_CARGO class, which is derived from the TASK class.
+--   * Orchestrate the task flow, so go from Planned to Assigned to Success, Failed or Cancelled.
+--   * Co-operation tasking, so a player joins a group of players executing the same task.
+-- 
+-- 
+-- **A complete task menu system to allow players to:**
+--   
+--   * Join the task, abort the task.
+--   * Mark the task location on the map.
+--   * Provide details of the target.
+--   * Route to the cargo.
+--   * Route to the deploy zones.
+--   * Load/Unload cargo.
+--   * Board/Unboard cargo.
+--   * Slingload cargo.
+--   * Display the task briefing.
+--   
+--   
+-- **A complete mission menu system to allow players to:**
+--   
+--   * Join a task, abort the task.
+--   * Display task reports.
+--   * Display mission statistics.
+--   * Mark the task locations on the map.
+--   * Provide details of the targets.
+--   * Display the mission briefing.
+--   * Provide status updates as retrieved from the command center.
+--   * Automatically assign a random task as part of a mission.
+--   * Manually assign a specific task as part of a mission.
+--   
+--   
+--  **A settings system, using the settings menu:**
+--  
+--   * Tweak the duration of the display of messages.
+--   * Switch between metric and imperial measurement system.
+--   * Switch between coordinate formats used in messages: BR, BRA, LL DMS, LL DDM, MGRS.
+--   * Different settings modes for A2G and A2A operations.
+--   * Various other options.
+--   
 -- ===
 -- 
 -- ### Author: **FlightControl**
