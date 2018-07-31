@@ -185,12 +185,12 @@ do
     infantry = {},
   }
   
+  -- @field category
   WAREHOUSE.category= {
     Transport=1,
-    Figherplane=1,
+    Fighter=1,
     AWACS=1,
-    Tanker=1,
-    
+    Tanker=1,    
   }
 
   --- WAREHOUSE constructor. Creates a new WAREHOUSE object.
@@ -205,11 +205,11 @@ do
     self.homebase=airbase
     self.coordinate=airbase:GetCoordinate()
     self.coalition=airbase:GetCoalition()
-    
-    
-    self:AddTransition("*", "Start", "Idle")
-    self:AddTransition("*", "Status", "*")
-    self:AddTransition("*", "Request", "*")
+        
+    self:AddTransition("*", "Start",     "Running")
+    self:AddTransition("*", "Status",    "*")
+    self:AddTransition("*", "Request",   "*")
+    self:AddTransition("*", "Delivered", "*")
     
     --- Triggers the FSM event "Start".
     -- @function [parent=#WAREHOUSE] Start
@@ -236,6 +236,7 @@ do
     -- @param #WAREHOUSE self
     -- @param Wrapper.Airbase#AIRBASE Airbase Airbase requesting supply.
     -- @param #string Asset Asset that is requested.
+    -- @param #number nAsset Number of assets requested. Default 1.
     -- @param #string TransportType Type of transport: "Plane", "Helicopter", "APC"
   
     --- Triggers the FSM event "Request" after a delay.
@@ -244,7 +245,19 @@ do
     -- @param #number delay Delay in seconds.
     -- @param Wrapper.Airbase#AIRBASE Airbase Airbase requesting supply.
     -- @param #string Asset Asset that is requested.
+    -- @param #number nAsset Number of assets requested. Default 1.
     -- @param #string TransportType Type of transport: "Plane", "Helicopter", "APC"
+
+    --- Triggers the FSM event "Delivered".
+    -- @function [parent=#WAREHOUSE] Delivered
+    -- @param #WAREHOUSE self
+    -- @param Wrapper.Group#GROUP group Group that was delivered.
+
+    --- Triggers the FSM event "Delivered" after a delay.
+    -- @function [parent=#WAREHOUSE] __Delivered
+    -- @param #number delay Delay in seconds.
+    -- @param #WAREHOUSE self
+    -- @param Wrapper.Group#GROUP group Group that was delivered.
     
     return self
   end
@@ -255,7 +268,7 @@ do
   -- @param #string Event Event.
   -- @param #string To To state.
   function WAREHOUSE:onafterStart(From, Event, To)
-    env.info("FF starting warehouse of airbase of "..self.homebase:GetName())
+    env.info("FF starting warehouse at airbase "..self.homebase:GetName())
     
     -- handle events
     -- event takeoff
@@ -272,7 +285,7 @@ do
   -- @param #string Event Event.
   -- @param #string To To state.
   function WAREHOUSE:onafterStatus(From, Event, To)
-    env.info("FF checking warehouse status of "..self.homebase:GetName())
+    env.info("FF checking warehouse status of airbase "..self.homebase:GetName())
     
     env.info(string.format("FF warehouse at %s: number of transport planes = %d", self.homebase:GetName(), #self.plane))
     
@@ -295,34 +308,79 @@ do
     
     if TransportType=="Air" then
     
-      local template=self.plane[math.random(#self.plane)]
+      -- Get a random template from the stock list.
+      local _chosenone=math.random(#self.plane)
       
+      -- Select template group name.
+      local template=self.plane[_chosenone]
+            
       if template then
       
+        -- Spawn plane at warehouse homebase.
         local Plane=SPAWN:New(template):SpawnAtAirbase(Airbase, nil, nil, nil, false)
         
+        if Plane==nil then
+          -- Plane was not spawned correctly. Try again in 60 seconds.
+          self:__Request( 60, Airbase, Asset, nAsset, TransportType)
+          return
+        else
+          -- Remove chosen plane from list.
+          table.remove(self.plane,_chosenone)
+        end
+        
+        -- New empty cargo set.
         local CargoGroups = SET_CARGO:New()
         
+        -- Spawn requested assets.
         local spawn=SPAWN:New("Infantry Platoon Alpha")
         
         for i=1,nAsset do
           local spawngroup=spawn:SpawnFromVec3(self.homebase:GetZone():GetRandomPointVec3(100,500))
           local cargogroup = CARGO_GROUP:New(spawngroup, "Infantry", string.format( "Infantry Platoon %d", i), 5000, 35)
-          CargoGroups:AddCargo(cargogroup)  
+          CargoGroups:AddCargo(cargogroup)
         end
         
-        local CargoPlane  = AI_CARGO_AIRPLANE:New(Plane, CargoGroups)
+        -- Define cargo airplane.
+        local CargoPlane = AI_CARGO_AIRPLANE:New(Plane, CargoGroups)
         
+        -- Pickup cargo at homebase.
         CargoPlane:__Pickup(5, self.homebase)
         
-        function CargoPlane:onafterLoaded( Airplane, From, Event, To, Cargo)
+        -- Set warehouse state so that we can retreive it later.
+        Plane:SetState(Plane, "WAREHOUSE", self)
+        
+        -- Once the cargo was loaded start off to deploy airbase.
+        function CargoPlane:OnAfterLoaded(Airplane, From, Event, To)
           CargoPlane:__Deploy(10, Airbase, 500)
         end
         
-                
+        --- Function
+        -- @param Wrapper.Group#GROUP Airplane
+        function CargoPlane:OnAfterUnloaded(Airplane, From, Event, To)
+          local group=CargoPlane.Cargo:GetObject()
+          local Airplane=Airplane --Wrapper.Group#GROUP
+          local warehouse Airplane:GetState(Airplane, "WAREHOUSE") --#WAREHOUSE
+          warehouse:__Delivered(1, group)
+        end
+                        
       end
     end
     
+  end
+
+  --- Warehouse
+  -- @param #WAREHOUSE self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Wrapper.Group#GROUP Group The group that was delivered.
+  -- @param #string Asset Asset that is requested.
+  -- @param #number nAssed Number of groups of that asset requested.
+  -- @param #string TransportType Type of transport: "Plane", "Helicopter", "APC"
+  function WAREHOUSE:onafterDelivered(From, Event, To, Group)
+    local road=Group:GetCoordinate():GetClosestPointToRoad()
+    local speed=Group:GetSpeedMax()*0.5
+    Group:RouteGroundTo(road, speed, "Off Road")
   end
   
   --- Add an airplane group to the warehouse stock.
@@ -341,27 +399,44 @@ do
     local DCSdisplay=DCSunit:getDesc().displayName
     local DCScategory=DCSgroup:getCategory()
     local DCStype=DCSunit:getTypeName()
-    
-    --env.info(string.format("FF adding %d transport plane template %s type %s, display %s", n, tostring(templateprefix), tostring(typename), tostring(displayname)))
-
-    --[[    
-    -- Create a table with properties.
-    self.airplane[templateprefix]=self.airplane[templateprefix] or {}
-    
-    -- Increase number in stock.
-    if self.airplane[templateprefix].nstock then
-      self.airplane[templateprefix].nstock=self.airplane[templateprefix].nstock+n
-    else
-      self.airplane[templateprefix].nstock=n
-    end
-    
-    self.airplane[templateprefix].nstock=n
-    ]]
-    
+       
+    -- Add this n times to the table.
     for i=1,n do
       table.insert(self.plane, templateprefix)
     end
     
+    return self
+  end
+  
+  
+  --- Add an airplane group to the warehouse stock.
+  -- @param #WAREHOUSE self
+  -- @param #string templateprefix Name of the late activated template group as defined in the mission editor.
+  -- @param #number n Number of groups to add to the warehouse stock.
+  -- @return #WAREHOUSE self
+  function WAREHOUSE:AddInfantry(templateprefix, n)
+  
+    local n=n or 1
+    
+    local group=GROUP:FindByName(templateprefix)
+    
+    if group then
+    
+      local DCSgroup=group:GetDCSObject()
+      local DCSunit=DCSgroup:getUnit(1)
+      local DCSdesc=DCSunit:getDesc()
+      local DCSdisplay=DCSunit:getDesc().displayName
+      local DCScategory=DCSgroup:getCategory()
+      local DCStype=DCSunit:getTypeName()
+         
+      -- Add this n times to the table.
+      for i=1,n do
+        table.insert(self.infantry, {templatename=templateprefix, category=DCScategory, typename=DCStype})
+      end
+      
+    end
+        
+    return self
   end
 
 end
