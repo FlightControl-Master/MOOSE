@@ -335,8 +335,7 @@ end
 
 --- Returns the country of the DCS Group.
 -- @param #GROUP self
--- @return DCS#country.id The country identifier.
--- @return #nil The DCS Group is not existing or alive.
+-- @return DCS#country.id The country identifier or nil if the DCS Group is not existing or alive.
 function GROUP:GetCountry()
   self:F2( self.GroupName )
 
@@ -348,6 +347,40 @@ function GROUP:GetCountry()
   end
 
   return nil
+end
+
+
+--- Check if at least one (or all) unit(s) has (have) a certain attribute.
+-- See [hoggit documentation](https://wiki.hoggitworld.com/view/DCS_func_hasAttribute).
+-- @param #GROUP self
+-- @param #string attribute The name of the attribute the group is supposed to have. Valid attributes can be found in the "db_attributes.lua" file which is located at in "C:\Program Files\Eagle Dynamics\DCS World\Scripts\Database".
+-- @param #boolean all If true, all units of the group must have the attribute in order to return true. Default is only one unit of a heterogenious group needs to have the attribute.
+-- @return #boolean Group has this attribute.
+function GROUP:HasAttribute(attribute, all)
+
+  -- Get all units of the group.
+  local _units=self:GetUnits()
+  
+  local _allhave=true
+  local _onehas=false
+  
+  for _,_unit in pairs(_units) do
+    local _unit=_unit --Wrapper.Unit#UNIT
+    if _unit then
+      local _hastit=_unit:HasAttribute(attribute)
+      if _hastit==true then
+        _onehas=true
+      else
+        _allhave=false
+      end
+    end 
+  end
+  
+  if all==true then
+    return _allhave
+  else
+    return _onehas
+  end
 end
 
 --- Returns the maximum speed of the group.

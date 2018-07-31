@@ -959,6 +959,7 @@ do -- Group
   -- @field HELICOPTER
   -- @field GROUND
   -- @field SHIP
+  -- @field TRAIN
   
   -- Static Functions
   
