@@ -81,13 +81,13 @@ do -- TASK_CARGO_DISPATCHER
   -- The **TASK_CARGO_DISPATCHER** allows you to setup various tasks for let human
   -- players transport cargo as part of a task. 
   -- 
-  -- There are currently two types of tasks that can be constructed:
+  -- There are currently **two types of tasks** that can be constructed:
   -- 
-  --   * A normal cargo transport task, which tasks humans to transport cargo from a location towards a deploy zone.
-  --   * A CSAR cargo transport task. CSAR tasks are automatically generated when a pilot is downed... 
-  --   It is created when a fiendly pilot has ejected from a plane, and needs to be rescued (sometimes behind enemy lines).
+  --   * A **normal cargo transport** task, which tasks humans to transport cargo from a location towards a deploy zone.
+  --   * A **CSAR** cargo transport task. CSAR tasks are **automatically generated** when a friendly (AI) plane is downed and the friendly pilot ejects... 
+  --   You as a player (the helo pilot) can go out in the battlefield, fly behind enemy lines, and rescue the pilot (back to a deploy zone).
   -- 
-  -- Let's explore step by step how to setup the task dispatcher.
+  -- Let's explore **step by step** how to setup the task cargo dispatcher.
   -- 
   -- # 1. Setup a mission environment.
   -- 
@@ -127,21 +127,21 @@ do -- TASK_CARGO_DISPATCHER
   -- 
   --     -- Here we define the "cargo set", which is a collection of cargo objects.
   --     -- The cargo set will be the input for the cargo transportation task.
-  --     -- So a transportation object is handling a cargo set, which is automatically refreshed when new cargo is added/deleted.
+  --     -- So a transportation object is handling a cargo set, which is automatically updated when new cargo is added/deleted.
   --     local WorkmaterialsCargoSet = SET_CARGO:New():FilterTypes( "Workmaterials" ):FilterStart()
   --    
   --     -- Now we add cargo into the battle scene.
   --     local PilotGroup = GROUP:FindByName( "Engineers" )
   --      
   --     -- CARGO_GROUP can be used to setup cargo with a GROUP object underneath.
-  --     -- We name this group Engineers.
-  --     -- Note that the name of the cargo is "Engineers".
-  --     -- The cargoset "CargoSet" will embed all defined cargo of type "Pilots" (prefix) into its set.
+  --     -- We name the type of this group "Workmaterials", so that this cargo group will be included within the WorkmaterialsCargoSet.
+  --     -- Note that the name of the cargo is "Engineer Team 1".
   --     local CargoGroup = CARGO_GROUP:New( PilotGroup, "Workmaterials", "Engineer Team 1", 500 )
   -- 
   -- What is also needed, is to have a set of @{Core.Group}s defined that contains the clients of the players.
   -- 
-  --     -- Allocate the Transport, which are the helicopter to retrieve the pilot, that can be manned by players.
+  --     -- Allocate the Transport, which are the helicopters to retrieve the pilot, that can be manned by players.
+  --     -- The name of these helicopter groups containing one client begins with "Transport", as modelled within the mission editor.
   --     local PilotGroupSet = SET_GROUP:New():FilterPrefixes( "Transport" ):FilterStart()
   -- 
   -- ## 2.2. Setup the cargo transport task.
@@ -152,15 +152,19 @@ do -- TASK_CARGO_DISPATCHER
   -- 
   -- So, the variable `TaskDispatcher` will contain the object of class TASK_CARGO_DISPATCHER, which will allow you to dispatch cargo transport tasks:
   --  
-  --   * for mission `Mission`
-  --   * for the pilots `PilotGroupSet`.
+  --   * for mission `Mission`.
+  --   * for the group set `PilotGroupSet`.
   -- 
-  -- Now that we have `TaskDispatcher` object, we can now create the TransportTask manually, using the @{#TASK_CARGO_DISPATCHER.AddTransportTask}() method!
+  -- Now that we have `TaskDispatcher` object, we can now **create the TransportTask**, using the @{#TASK_CARGO_DISPATCHER.AddTransportTask}() method!
   -- 
   --     local TransportTask = TaskDispatcher:AddTransportTask( 
   --       "Transport workmaterials", 
   --       WorkmaterialsCargoSet, 
   --       "Transport the workers, engineers and the equipment near the Workplace." )
+  -- 
+  -- As a result of this code, the `TransportTask` (returned) variable will contain an object of @{#TASK_CARGO_TRANSPORT}!
+  -- We pass to the method the title of the task, and the `WorkmaterialsCargoSet`, which is the set of cargo groups to be transported!
+  -- This object can also be used to setup additional things, or to control this specific task with special actions.
   -- 
   -- And you're done! As you can see, it is a bit of work, but the reward is great.
   -- And, because all this is done using program interfaces, you can build a mission with a **dynamic cargo transport task mechanism** yourself!
@@ -228,7 +232,34 @@ do -- TASK_CARGO_DISPATCHER
   --       "Bring the pilot back!"
   --     )
   -- 
+  -- As a result of this code, the `CSARTask` (returned) variable will contain an object of @{#TASK_CARGO_CSAR}!
+  -- We pass to the method the title of the task, and the `WorkmaterialsCargoSet`, which is the set of cargo groups to be transported!
+  -- This object can also be used to setup additional things, or to control this specific task with special actions.
   -- Note that when you declare a CSAR task manually, you'll still need to specify a deployment zone!
+  -- 
+  -- # 4. Setup the deploy zone(s).
+  -- 
+  -- The task cargo dispatcher also foresees methods to setup the deployment zones to where the cargo needs to be transported!
+  -- 
+  -- There are two levels on which deployment zones can be configured:
+  -- 
+  --   * Default deploy zones: The TASK_CARGO_DISPATCHER object can have default deployment zones, which will apply over all tasks active in the task dispatcher.
+  --   * Task specific deploy zones: The TASK_CARGO_DISPATCHER object can have specific deployment zones which apply to a specific task only!
+  -- 
+  -- Note that for Task specific deployment zones, there are separate deployment zone creation methods per task type!
+  -- 
+  -- ## 4.1. Setup default deploy zones.
+  -- 
+  -- Use the @{#TASK_CARGO_DISPATCHER.SetDefaultDeployZone}() to setup one deployment zone, and @{#TASK_CARGO_DISPATCHER.SetDefaultDeployZones}() to setup multiple default deployment zones in one call.
+  -- 
+  -- ## 4.2. Setup task specific deploy zones for a **transport task**.
+  -- 
+  -- Use the @{#TASK_CARGO_DISPATCHER.SetTransportDeployZone}() to setup one deployment zone, and @{#TASK_CARGO_DISPATCHER.SetTransportDeployZones}() to setup multiple default deployment zones in one call.
+  -- 
+  -- ## 4.3. Setup task specific deploy zones for a **CSAR task**. 
+  -- 
+  -- Use the @{#TASK_CARGO_DISPATCHER.SetCSARDeployZone}() to setup one deployment zone, and @{#TASK_CARGO_DISPATCHER.SetCSARDeployZones}() to setup multiple default deployment zones in one call.
+  -- 
   -- 
   -- 
   -- @field #TASK_CARGO_DISPATCHER
