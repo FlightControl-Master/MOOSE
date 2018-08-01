@@ -17,6 +17,10 @@
 --- WAREHOUSE class.
 -- @type WAREHOUSE
 -- @field #string ClassName Name of the class.
+-- @field DCS#Coalition coalition Coalition the warehouse belongs to.
+-- @field Core.Point#COORDINATE coordinate Coordinate of the warehouse.
+-- @field Wrapper.Airbase#AIRBASE airbase Airbase the warehouse belongs to.
+-- @field #table stock Table holding all assets in stock. Table entries are of type @{#WAREHOUSE.Stock}.
 -- @extends Core.Fsm#FSM
 
 --- Manages ground assets of an airbase and offers the possibility to transport them to another airbase or warehouse.
@@ -47,10 +51,11 @@
 -- 
 -- @field #WAREHOUSE
 WAREHOUSE = {
-  ClassName = "WAREHOUSE",
-  coalition = nil,
-  homebase  = nil,
-  stock     = {},
+  ClassName  = "WAREHOUSE",
+  coalition  = nil,
+  homebase   = nil,
+  coordinate = nil,
+  stock      = {},
 }
 
 --- Type Warehouse stock table. table.insert(self.stock, {templatename=templategroupname, category=DCScategory, type=DCStype, transport=transport, fighther=fighter, tanker=tanker, awacs=awacs, artillery=artillery})
@@ -59,10 +64,19 @@ WAREHOUSE = {
 -- @field DCS#Category category Category of the group. Airplane, helicopter, ...
 -- @field #string type Type of the group
 -- @field #boolean fighter If true, group is a fighter airplane.
+-- @field #boolean attackhelo If true, group is an attack helicopter.
 -- @field #boolean transport If truie, group can transport other units either by air or ground.
 -- @field #boolean tanker If true, group is a tanker and can refuel other air units.
 -- @field #boolean awacs If true, group has AWACS capabilities.
 -- @field #boolean artillery If true, group is an artillery unit.
+
+--- Asset descriptor.
+-- @field Warehouse.AssetDescriptor Assetdescriptor
+WAREHOUSE.Descriptor = {
+  TEMPLATENAME="templatename",
+  CATEGORY="category",
+  
+}
 
 --- Warehouse classes.
 -- @field Warehouse.Class Class
@@ -72,16 +86,18 @@ WAREHOUSE.Class = {
   TANKER=3,
   AWACS=4,
   ARTY=5,
+  ATTACKHELO=6,
 }
 
 --- Warehouse categories
 -- @field Category
 WAREHOUSE.Category = {
-  AIRPLANE      = 0,
-  HELICOPTER    = 1,
-  GROUND        = 2,
-  SHIP          = 3,
-  TRAIN         = 4,
+  AIRPLANE      = "plane",
+  HELICOPTER    = "helo",
+  GROUND        = "apc",
+  SHIP          = "ship",
+  TRAIN         = "train",
+  SELF          = "self",
 }
 
 --- Warehouse class version.
@@ -207,12 +223,63 @@ function WAREHOUSE:onafterStatus(From, Event, To)
   
   env.info(string.format("FF warehouse at %s: number of stock = %d", self.homebase:GetName(), #self.stock))
   
-  self:__Status(-30)
+  self:__Status(30)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--- On before "Request" event. Checks if the request can be fullfilled.
+-- @param #WAREHOUSE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Wrapper.Airbase#AIRBASE Airbase Airbase requesting supply.
+-- @param #string AssetDescriptor Asset that is requested. Can be "templatename", ...
+-- @param depends AssetDescriptorvalue Value of the asset descriptor. Type depends on descriptor, i.e. could be a string, 
+-- @param #number nAssed Number of groups of that asset requested.
+-- @param #string TransportType Type of transport: "Plane", "Helicopter", "APC"
+-- @return boolean If true, request is granted.
+-- 
+-- @usage mywarehouse:Request(AIRBASE:)...
+function WAREHOUSE:onbeforeRequest(From, Event, To, Airbase, AssetDescriptor, AssetDescriptorValue, nAsset, TransportType)
 
---- Warehouse
+  -- Distance from warehouse to 
+  local distance=self.coordinate:Get2DDistance(Airbase:GetCoordinate())
+  
+  -- 
+  local _stockrequest=self._FilterStock(self.stock, AssetDescriptor, AssetDescriptorValue)
+  
+  -- Asset is not in stock ==> request denied.
+  if #_stockrequest==0 then
+    self:E(self.wid..string.format("Request denied! Asset is currently not in stock."))
+    return false
+  end
+  
+  local _TT=TransportType:lower()
+  if _TT==nil then
+    if AssetDescriptor=="" then
+    end
+  end
+  
+  if TransportType:lower() == "plane" then
+  
+  elseif TransportType:lower() == "helicopter" then
+  
+  elseif TransportType:lower() == "apc" then
+  
+  elseif TransportType:lower() == "train" then
+  
+  elseif TransportType:lower() == "ship" then
+  
+  elseif TransportType:lower() == "self" then
+  
+  else
+    self:E(self.wid..string.format("ERROR: unknown transport type requested! type = %s", tostring(TransportType)))
+  end
+
+end
+
+
+--- On after "Request" event. 
 -- @param #WAREHOUSE self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -229,10 +296,12 @@ function WAREHOUSE:onafterRequest(From, Event, To, Airbase, Asset, nAsset, Trans
   if TransportType=="Air" then
   
     -- Get a random template from the stock list.
-    local _chosenone=math.random(#self.stock)
+    local _chosenone=math.random(#self.stock) --#WAREHOUSE.Stock
+    
+    
     
     -- Select template group name.
-    --TODO: FILTER HERE'!
+    --TODO: FILTER HERE!
     local template=self.stock[_chosenone].templatename
           
     if template then
@@ -270,17 +339,19 @@ function WAREHOUSE:onafterRequest(From, Event, To, Airbase, Asset, nAsset, Trans
       -- Set warehouse state so that we can retreive it later.
       Plane:SetState(Plane, "WAREHOUSE", self)
       
-      -- Once the cargo was loaded start off to deploy airbase.
+      --- Once the cargo was loaded start off to deploy airbase.
       function CargoPlane:OnAfterLoaded(Airplane, From, Event, To)
         CargoPlane:__Deploy(10, Airbase, 500)
       end
       
-      --- Function
-      -- @param Wrapper.Group#GROUP Airplane
+      --- Function called when cargo has arrived and was unloaded.
       function CargoPlane:OnAfterUnloaded(Airplane, From, Event, To)
+        
         local group=CargoPlane.Cargo:GetObject()
         local Airplane=Airplane --Wrapper.Group#GROUP
-        local warehouse Airplane:GetState(Airplane, "WAREHOUSE") --#WAREHOUSE
+        local warehouse=Airplane:GetState(Airplane, "WAREHOUSE") --#WAREHOUSE
+        
+        -- Trigger Delivered event.
         warehouse:__Delivered(1, group)
       end
                       
@@ -370,11 +441,20 @@ end
 
 --- Filter stock assets by table entry.
 -- @param #WAREHOUSE self
--- @param #WAREHOUSE.Stock entry 
-function WAREHOUSE:_FilterStock(entry)
-  --entry.artillery
+-- @param #WAREHOUSE.Stock stock
+-- @param #string item Descriptor
+-- @param depends value
+function WAREHOUSE:_FilterStock(stock, item, value)
 
-  return 
+  local filtered={}
+  
+  for _,_stock in pairs(stock) do
+    if _stock[item]==value then
+      table.insert(filtered, _stock)
+    end
+  end
+  
+  return filtered
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
