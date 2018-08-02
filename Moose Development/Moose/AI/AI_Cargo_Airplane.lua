@@ -274,7 +274,8 @@ end
 -- @param Wrapper.Point#COORDINATE Coordinate 
 function AI_CARGO_AIRPLANE:onafterLoad( Airplane, From, Event, To, Coordinate )
 
-  if Airplane and Airplane:IsAlive() then
+  if Airplane and Airplane:IsAlive()==true or Airplane:IsAlive()==false then
+  --if Airplane then
   
     for _, Cargo in pairs( self.CargoSet:GetSet() ) do
       local Cargo=Cargo --Cargo.Cargo#CARGO
@@ -472,6 +473,8 @@ function AI_CARGO_AIRPLANE:Route( Airplane, Airbase, Speed )
       
       self:T3( Points )
       Template.route.points = Points
+      
+      Template.uncontrolled=false
 
       --self:Respawn( Template )
 
