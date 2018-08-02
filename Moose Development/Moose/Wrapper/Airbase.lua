@@ -349,7 +349,7 @@ function AIRBASE.GetAllAirbases(coalition)
   
   local airbases={}
   for _,airbase in pairs(_DATABASE.AIRBASES) do
-    if (coalition~=nil and self:GetCoalition()==coalition) or coalition==nil then
+    if (coalition~=nil and airbase:GetCoalition()==coalition) or coalition==nil then
       table.insert(airbases, airbase)
     end
   end
