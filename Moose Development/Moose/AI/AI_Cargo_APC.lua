@@ -139,7 +139,7 @@ function AI_CARGO_APC:New( APC, CargoSet, CombatRadius )
   -- @function [parent=#AI_CARGO_APC] __Pickup
   -- @param #AI_CARGO_APC self
   -- @param #number Delay
-  -- @param Core.Point#COORDINATE Coordinate
+  -- @param Core.Point#COORDINATE Coordinate Pickup place. If not given, loading starts at the current location.
   -- @param #number Speed Speed in km/h. Default is 50% of max possible speed the group can do.
   
   --- Deploy Handler OnBefore for AI_CARGO_APC
@@ -170,8 +170,8 @@ function AI_CARGO_APC:New( APC, CargoSet, CombatRadius )
   --- Deploy Asynchronous Trigger for AI_CARGO_APC
   -- @function [parent=#AI_CARGO_APC] __Deploy
   -- @param #AI_CARGO_APC self
-  -- @param Core.Point#COORDINATE Coordinate
   -- @param #number Delay
+  -- @param Core.Point#COORDINATE Coordinate
   -- @param #number Speed Speed in km/h. Default is 50% of max possible speed the group can do.
 
   

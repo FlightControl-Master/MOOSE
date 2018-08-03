@@ -124,7 +124,13 @@ WAREHOUSE.version="0.1.0"
 -- TODO: Warehuse todo list.
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: A lot!
+-- TODO: Add event handlers.
+-- TODO: Add AI_APC
+-- TODO: Add AI_HELICOPTER
+-- TODO: Write documentation.
+-- TODO: Put active groups into the warehouse.
+-- TODO: Spawn warehouse assets as uncontrolled or AI off and activate them when requested.
+-- TODO: Handle cases with immobile units.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor(s)
@@ -388,32 +394,46 @@ function WAREHOUSE:onafterRequest(From, Event, To, Airbase, AssetDescriptor, Ass
     table.insert(_delid,_assetitem.id)
     
     -- Find a random point within the spawn zone.
-    local spawnvec3=self.spawnzone:GetRandomVec3()
-    local spawncoord=COORDINATE:NewFromVec3(spawnvec3)
+    --local spawnvec3=self.spawnzone:GetRandomVec3
+    local spawncoord=self.spawnzone:GetRandomCoordinate()
     spawncoord:MarkToAll(string.format("spawnpoint %d",i))
 
     -- Spawn with ALIAS here or DCS crashes!
-    _spawngroups[i]=SPAWN:NewWithAlias(_assetitem.templatename,string.format("%s_%d", _assetitem.templatename,i)):SpawnFromVec3(spawnvec3)
+    _spawngroups[i]=SPAWN:NewWithAlias(_assetitem.templatename,string.format("%s_%d", _assetitem.templatename,i)):SpawnFromCoordinate(spawncoord) --:SpawnFromVec3(spawnvec3)
   end
-  
-  -- Add spawned groups to cargo group object.
-  for _i,_spawngroup in pairs(_spawngroups) do
-    --TODO: check near and load radius.
-    local cargogroup = CARGO_GROUP:New(_spawngroup, AssetDescriptorValue, string.format("%s %d",AssetDescriptorValue, _i), 5000, 35)
-    CargoGroups:AddCargo(cargogroup)
-  end  
-  
+
   -- Delete spawned items from warehouse stock.
   for _,_id in pairs(_delid) do
     self:_DeleteStockItem(_id)
   end
   
+  if TransportType==WAREHOUSE.TransportType.SELFPROPELLED then
+    for _i,_spawngroup in pairs(_spawngroups) do
+      local group=_spawngroup --Wrapper.Group#GROUP
+      local ToCoordinate=Airbase:GetZone():GetRandomCoordinate()
+      group:RouteGroundOnRoad(ToCoordinate)
+    end
+  end
+  
+  
+  --TODO: naje nearradius depended on types.
+  local _loadradius=5000
+  local _nearradius=35
+  
+  -- Add spawned groups to cargo group object.
+  for _i,_spawngroup in pairs(_spawngroups) do
+    --TODO: check near and load radius.
+    local cargogroup = CARGO_GROUP:New(_spawngroup, AssetDescriptorValue, string.format("%s %d",AssetDescriptorValue, _i), _loadradius, _nearradius)
+    CargoGroups:AddCargo(cargogroup)
+  end  
+  
+
+  
   
   -- Filter the requested assets.
-  local _transportstock
   local _transportitem --#WAREHOUSE.Stockitem
-  if TransportType~=WAREHOUSE.TransportType.SELFPROPELLED then
-    _transportstock=self:_FilterStock(self.stock, WAREHOUSE.Descriptor.ATTRIBUTE, TransportType)
+  if TransportType ~= WAREHOUSE.TransportType.SELFPROPELLED then
+    local _transportstock=self:_FilterStock(self.stock, WAREHOUSE.Descriptor.ATTRIBUTE, TransportType)
     local _chosenone=math.random(#_transportstock)
     -- Select asset template group name.
     _transportitem=_transportstock[_chosenone]
@@ -434,7 +454,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Airbase, AssetDescriptor, Ass
       return
     else
       -- Remove chosen transport asset from list.
-      self:_DeleteStockItem()
+      self:_DeleteStockItem(_transportitem.id)
     end
     
     -- Define cargo airplane object.
@@ -442,8 +462,6 @@ function WAREHOUSE:onafterRequest(From, Event, To, Airbase, AssetDescriptor, Ass
     CargoPlane.Airbase=self.homebase
     
     -- Pickup cargo at homebase.
-    --CargoPlane:Pickup(self.homebase)
-    --CargoPlane:__Landed(1)
     CargoPlane:__Load(1, Plane:GetCoordinate())
     
     -- Set warehouse state so that we can retreive it later.
@@ -467,11 +485,75 @@ function WAREHOUSE:onafterRequest(From, Event, To, Airbase, AssetDescriptor, Ass
     
   elseif TransportType==WAREHOUSE.TransportType.HELICOPTER then
   
+    local Helo=SPAWN:New(_transportitem.templatename):SpawnAtAirbase(self.homebase, SPAWN.Takeoff.Cold, nil, AIRBASE.TerminalType.HelicopterUsable, false)
+  
+    if Helo==nil then
+      -- Plane was not spawned correctly. Try again in 60 seconds.
+      local text="Technical problems with the transport helicopter occurred. Request was cancelled! Try again later."
+      return
+    else
+      -- Remove chosen transport asset from list.
+      self:_DeleteStockItem(_transportitem.id)
+    end
+    
+    -- Define cargo airplane object.
+    local CargoHelo = AI_CARGO_HELICOPTER:New(Helo, CargoGroups)
+    
+    -- Pickup cargo from the spawn zone.
+    CargoHelo:__Pickup(5, self.spawnzone:GetCoordinate())
+    
+    --- Once the cargo was loaded start off to deploy airbase.
+    function CargoHelo:OnAfterLoaded(Carrier, From, Event, To)
+      CargoHelo:__Deploy(10, Airbase:GetZone():GetRandomCoordinate())
+    end
+    
+    --- Function called when cargo has arrived and was unloaded.
+    function CargoHelo:OnAfterUnloaded(Airplane, From, Event, To)
+      
+      local group=CargoHelo.Cargo:GetObject()
+      local Airplane=Airplane --Wrapper.Group#GROUP
+      local warehouse=Airplane:GetState(Airplane, "WAREHOUSE") --#WAREHOUSE
+      
+      -- Trigger Delivered event.
+      warehouse:__Delivered(1, group)
+    end    
+    
+    
   elseif TransportType==WAREHOUSE.TransportType.APC then
+    
+    -- Spawn APC in spawn zone.
+    local APC=SPAWN:New(_transportitem.templatename):SpawnFromCoordinate(self.spawnzone:GetCoordinate())
+    
+    -- Set up cargo APC.
+    local CargoAPC=AI_CARGO_APC:New(APC, CargoGroups, 0)
+    
+    -- Init pickup/loading of cargo. (No drive-to coordinate given, since we are already at in the spawn zone.)
+    CargoAPC:__Pickup(5)
+    
+    --- Once the cargo was loaded start off to deploy airbase.
+    function CargoAPC:OnAfterLoaded(Airplane, From, Event, To)
+      CargoAPC:__Deploy(5, Airbase:GetZone():GetCoordinate())
+    end
+    
+    --- Function called when cargo has arrived and was unloaded.
+    function CargoAPC:OnAfterUnloaded(Airplane, From, Event, To)
+      
+      local group=CargoAPC.Cargo:GetObject()
+      local Airplane=Airplane --Wrapper.Group#GROUP
+      local warehouse=Airplane:GetState(Airplane, "WAREHOUSE") --#WAREHOUSE
+      
+      -- Trigger Delivered event.
+      warehouse:__Delivered(1, group)
+    end    
+    
   
   elseif TransportType==WAREHOUSE.TransportType.TRAIN then
   
+    self:E(self.wid.."ERROR: transport by train not supported yet!")
+  
   elseif TransportType==WAREHOUSE.TransportType.SHIP then
+  
+    self:E(self.wid.."ERROR: transport by ship not supported yet!")
     
   elseif TransportType==WAREHOUSE.TransportType.SELFPROPELLED then
         
