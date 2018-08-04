@@ -89,31 +89,31 @@ WAREHOUSE.Descriptor = {
 --- Warehouse unit categories. These are used for
 -- @type WAREHOUSE.Attribute
 WAREHOUSE.Attribute = {
-  TRANSPORT_PLANE="transportplane",
-  TRANSPORT_HELO="transporthelo",
-  TRANSPORT_APC="transportapc",
-  FIGHTER="fighter",
-  TANKER="tanker",
-  AWACS="awacs",
-  ARTILLERY="artillery",
-  ATTACKHELICOPTER="attackhelicopter",
-  INFANTRY="infantry",
-  BOMBER="bomber",
-  TANK="tank",
-  TRUCK="truck",
-  OTHER="other",
+  TRANSPORT_PLANE="Transport_Plane",
+  TRANSPORT_HELO="Transport_Helo",
+  TRANSPORT_APC="Transport_APC",
+  FIGHTER="Fighter",
+  TANKER="Tanker",
+  AWACS="AWACS",
+  ARTILLERY="Artillery",
+  ATTACKHELICOPTER="Attackhelicopter",
+  INFANTRY="Infantry",
+  BOMBER="Bomber",
+  TANK="Tank",
+  TRUCK="Truck",
+  SHIP="Ship",
+  OTHER="Other",
 }
 
 --- Cargo transport type.
 -- @type WAREHOUSE.TransportType
--- @field #string AIRPLANE plane blabla
 WAREHOUSE.TransportType = {
-  AIRPLANE      = "transportplane",
-  HELICOPTER    = "transporthelo",
-  APC           = "transportapc",
-  SHIP          = "ship",
-  TRAIN         = "train",
-  SELFPROPELLED = "selfporpelled",
+  AIRPLANE      = "Transport_Plane",
+  HELICOPTER    = "Transport_Helo",
+  APC           = "Transport_APC",
+  SHIP          = "Ship",
+  TRAIN         = "Train",
+  SELFPROPELLED = "Selfporpelled",
 }
 
 --- Warehouse class version.
@@ -131,6 +131,7 @@ WAREHOUSE.version="0.1.0"
 -- TODO: Put active groups into the warehouse.
 -- TODO: Spawn warehouse assets as uncontrolled or AI off and activate them when requested.
 -- TODO: Handle cases with immobile units.
+-- TODO: Add queue.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor(s)
@@ -209,9 +210,7 @@ function WAREHOUSE:NewAirbase(airbase)
   --- Triggers the FSM event "Request" after a delay.
   -- @function [parent=#WAREHOUSE] __Request
   -- @param #WAREHOUSE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
+  -- @param #number Delay Delay in seconds.
   -- @param Wrapper.Airbase#AIRBASE Airbase Airbase requesting supply.
   -- @param #WAREHOUSE.Descriptor AssetDescriptor Descriptor describing the asset that is requested.
   -- @param AssetDescriptorValue Value of the asset descriptor. Type depends on descriptor, i.e. could be a string, etc.
@@ -225,8 +224,8 @@ function WAREHOUSE:NewAirbase(airbase)
 
   --- Triggers the FSM event "Delivered" after a delay.
   -- @function [parent=#WAREHOUSE] __Delivered
-  -- @param #number delay Delay in seconds.
   -- @param #WAREHOUSE self
+  -- @param #number delay Delay in seconds.
   -- @param Wrapper.Group#GROUP group Group that was delivered.
   
   return self
@@ -423,9 +422,13 @@ function WAREHOUSE:onafterRequest(From, Event, To, Airbase, AssetDescriptor, Ass
   -- Add spawned groups to cargo group object.
   for _i,_spawngroup in pairs(_spawngroups) do
     --TODO: check near and load radius.
-    local cargogroup = CARGO_GROUP:New(_spawngroup, AssetDescriptorValue, string.format("%s %d",AssetDescriptorValue, _i), _loadradius, _nearradius)
+    local _name=string.format("%s %d",AssetDescriptorValue, _i)
+    env.info(string.format("FF cargo group %d: %s",_i,_name))
+    local cargogroup = CARGO_GROUP:New(_spawngroup, AssetDescriptorValue, _name, _loadradius, _nearradius)
     CargoGroups:AddCargo(cargogroup)
-  end  
+  end
+  
+  env.info(string.format("FF cargo set object names %s", CargoGroups:GetObjectNames()))
   
 
   
