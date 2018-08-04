@@ -16,8 +16,8 @@
 --- Brings a dynamic cargo handling capability for AI groups.
 -- 
 -- Airplanes can be mobilized to intelligently transport infantry and other cargo within the simulation.
--- The AI\_CARGO\_DISPATCHER\_AIRPLANE module uses the @{Cargo} capabilities within the MOOSE framework.
--- CARGO derived objects must be declared within the mission to make the AI\_CARGO\_DISPATCHER\_AIRPLANE object recognize the cargo.
+-- The AI_CARGO_DISPATCHER_AIRPLANE module uses the @{Cargo} capabilities within the MOOSE framework.
+-- CARGO derived objects must be declared within the mission to make the AI_CARGO_DISPATCHER_AIRPLANE object recognize the cargo.
 -- Please consult the @{Cargo} module for more information. 
 -- 
 -- 
@@ -29,23 +29,33 @@ AI_CARGO_DISPATCHER_AIRPLANE = {
 
 --- Creates a new AI_CARGO_DISPATCHER_AIRPLANE object.
 -- @param #AI_CARGO_DISPATCHER_AIRPLANE self
--- @param Core.Set#SET_GROUP SetAirplane
--- @param Core.Set#SET_CARGO SetCargo
--- @param Core.Set#SET_ZONE SetDeployZone
+-- @param Core.Set#SET_GROUP SetAirplanes
+-- @param Core.Set#SET_CARGO SetCargos
+-- @param Core.Set#SET_AIRBASE PickupAirbasesSet
+-- @param Core.Set#SET_AIRBASE DeployAirbasesSet
 -- @return #AI_CARGO_DISPATCHER_AIRPLANE
 -- @usage
 -- 
 -- -- Create a new cargo dispatcher
--- SetAirplane = SET_GROUP:New():FilterPrefixes( "Airplane" ):FilterStart()
--- SetCargo = SET_CARGO:New():FilterTypes( "Infantry" ):FilterStart()
--- SetDeployZone = SET_ZONE:New():FilterPrefixes( "Deploy" ):FilterStart()
--- AICargoDispatcher = AI_CARGO_DISPATCHER_AIRPLANE:New( SetAirplane, SetCargo )
+-- SetAirplanes = SET_GROUP:New():FilterPrefixes( "Airplane" ):FilterStart()
+-- SetCargos = SET_CARGO:New():FilterTypes( "Infantry" ):FilterStart()
+-- PickupAirbasesSet = SET_AIRBASE:New()
+-- DeployAirbasesSet = SET_AIRBASE:New()
+-- AICargoDispatcher = AI_CARGO_DISPATCHER_AIRPLANE:New( SetAirplanes, SetCargos, PickupAirbasesSet, DeployAirbasesSet )
 -- 
-function AI_CARGO_DISPATCHER_AIRPLANE:New( SetAirplane, SetCargo, SetDeployZones )
+function AI_CARGO_DISPATCHER_AIRPLANE:New( SetAirplanes, SetCargos, PickupAirbasesSet, DeployAirbasesSet )
 
-  local self = BASE:Inherit( self, AI_CARGO_DISPATCHER:New( SetAirplane, SetCargo, SetDeployZones ) ) -- #AI_CARGO_DISPATCHER_AIRPLANE
+  local self = BASE:Inherit( self, AI_CARGO_DISPATCHER:NewWithAirbases( SetAirplanes, SetCargos, PickupAirbasesSet, DeployAirbasesSet ) ) -- #AI_CARGO_DISPATCHER_AIRPLANE
+
+  self:SetDeploySpeed( 200, 150 )
+  self:SetPickupSpeed( 200, 150 )
+  self:SetPickupRadius( 0, 0 )
+  self:SetDeployRadius( 0, 0 )
 
   return self
 end
 
+function AI_CARGO_DISPATCHER_AIRPLANE:AICargo( Airplane, SetCargo )
 
+  return AI_CARGO_AIRPLANE:New( Airplane, SetCargo )
+end
