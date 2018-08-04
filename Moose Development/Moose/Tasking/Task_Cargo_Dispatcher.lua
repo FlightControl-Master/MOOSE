@@ -1,5 +1,58 @@
 --- **Tasking** - Creates and manages player TASK_CARGO tasks.
 -- 
+-- The **TASK_CARGO_DISPATCHER** allows you to setup various tasks for let human
+-- players transport cargo as part of a task. 
+--  
+-- The cargo dispatcher will implement for you mechanisms to create cargo transportation tasks:
+--  
+--   * As setup by the mission designer.
+--   * Dynamically create CSAR missions (when a pilot is downed as part of a downed plane).
+--   * Dynamically spawn new cargo and create cargo taskings!
+--   
+-- 
+--   
+-- **Specific features:**
+-- 
+--   * Creates a task to transport @{Cargo.Cargo} to and between deployment zones.
+--   * Derived from the TASK_CARGO class, which is derived from the TASK class.
+--   * Orchestrate the task flow, so go from Planned to Assigned to Success, Failed or Cancelled.
+--   * Co-operation tasking, so a player joins a group of players executing the same task.
+-- 
+-- 
+-- **A complete task menu system to allow players to:**
+--   
+--   * Join the task, abort the task.
+--   * Mark the task location on the map.
+--   * Provide details of the target.
+--   * Route to the cargo.
+--   * Route to the deploy zones.
+--   * Load/Unload cargo.
+--   * Board/Unboard cargo.
+--   * Slingload cargo.
+--   * Display the task briefing.
+--   
+--   
+-- **A complete mission menu system to allow players to:**
+--   
+--   * Join a task, abort the task.
+--   * Display task reports.
+--   * Display mission statistics.
+--   * Mark the task locations on the map.
+--   * Provide details of the targets.
+--   * Display the mission briefing.
+--   * Provide status updates as retrieved from the command center.
+--   * Automatically assign a random task as part of a mission.
+--   * Manually assign a specific task as part of a mission.
+--   
+--   
+--  **A settings system, using the settings menu:**
+--  
+--   * Tweak the duration of the display of messages.
+--   * Switch between metric and imperial measurement system.
+--   * Switch between coordinate formats used in messages: BR, BRA, LL DMS, LL DDM, MGRS.
+--   * Different settings modes for A2G and A2A operations.
+--   * Various other options.
+--   
 -- ===
 -- 
 -- ### Author: **FlightControl**
@@ -9,7 +62,7 @@
 -- ===
 -- 
 -- @module Tasking.Task_Cargo_Dispatcher
--- @image MOOSE.JPG
+-- @image Task_Cargo_Dispatcher.JPG
 
 do -- TASK_CARGO_DISPATCHER
 
@@ -25,148 +78,189 @@ do -- TASK_CARGO_DISPATCHER
 
   --- Implements the dynamic dispatching of cargo tasks.
   -- 
-  -- ![Banner Image](..\Presentations\TASK_CARGO_DISPATCHER\Dia3.JPG)
+  -- The **TASK_CARGO_DISPATCHER** allows you to setup various tasks for let human
+  -- players transport cargo as part of a task. 
   -- 
-  -- The EWR will detect units, will group them, and will dispatch @{Task}s to groups. Depending on the type of target detected, different tasks will be dispatched.
-  -- Find a summary below describing for which situation a task type is created:
+  -- There are currently **two types of tasks** that can be constructed:
   -- 
-  -- ![Banner Image](..\Presentations\TASK_CARGO_DISPATCHER\Dia9.JPG)
+  --   * A **normal cargo transport** task, which tasks humans to transport cargo from a location towards a deploy zone.
+  --   * A **CSAR** cargo transport task. CSAR tasks are **automatically generated** when a friendly (AI) plane is downed and the friendly pilot ejects... 
+  --   You as a player (the helo pilot) can go out in the battlefield, fly behind enemy lines, and rescue the pilot (back to a deploy zone).
   -- 
-  --   * **CSAR Task**: Is created when a fiendly pilot has ejected from a plane, and needs to be rescued (sometimes behind enemy lines).
+  -- Let's explore **step by step** how to setup the task cargo dispatcher.
   -- 
-  -- ## 1. TASK\_A2A\_DISPATCHER constructor:
+  -- # 1. Setup a mission environment.
   -- 
-  -- The @{#TASK_CARGO_DISPATCHER.New}() method creates a new TASK\_A2A\_DISPATCHER instance.
+  -- It is easy, as it works just like any other task setup, so setup a command center and a mission.
   -- 
-  -- ### 1.1. Define or set the **Mission**:
+  -- ## 1.1. Create a command center.
   -- 
-  -- Tasking is executed to accomplish missions. Therefore, a MISSION object needs to be given as the first parameter.
+  -- First you need to create a command center using the @{Tasking.CommandCenter#COMMANDCENTER.New}() constructor.
   -- 
-  --     local HQ = GROUP:FindByName( "HQ", "Bravo" )
-  --     local CommandCenter = COMMANDCENTER:New( HQ, "Lima" )
-  --     local Mission = MISSION:New( CommandCenter, "A2A Mission", "High", "Watch the air enemy units being detected.", coalition.side.RED )
-  -- 
-  -- Missions are governed by COMMANDCENTERS, so, ensure you have a COMMANDCENTER object installed and setup within your mission.
-  -- Create the MISSION object, and hook it under the command center.
-  -- 
-  -- ### 1.2. Build a set of the groups seated by human players:
-  -- 
-  -- ![Banner Image](..\Presentations\TASK_CARGO_DISPATCHER\Dia6.JPG)
-  -- 
-  -- A set or collection of the groups wherein human players can be seated, these can be clients or units that can be joined as a slot or jumping into.
+  --     local CommandCenter = COMMANDCENTER
+  --        :New( HQ, "Lima" ) -- Create the CommandCenter.
   --     
-  --     local AttackGroups = SET_GROUP:New():FilterCoalitions( "red" ):FilterPrefixes( "Defender" ):FilterStart()
-  --     
-  -- The set is built using the SET_GROUP class. Apply any filter criteria to identify the correct groups for your mission.
-  -- Only these slots or units will be able to execute the mission and will receive tasks for this mission, once available.
+  -- ## 1.2. Create a mission.
   -- 
-  -- ### 1.3. Define the **EWR network**:
+  -- Tasks work in a mission, which groups these tasks to achieve a joint mission goal.
+  -- A command center can govern multiple missions.
+  -- Create a new mission, using the @{Tasking.Mission#MISSION.New}() constructor.
   -- 
-  -- As part of the TASK\_A2A\_DISPATCHER constructor, an EWR network must be given as the third parameter.
-  -- An EWR network, or, Early Warning Radar network, is used to early detect potential airborne targets and to understand the position of patrolling targets of the enemy.
+  --     -- Declare the Mission for the Command Center.
+  --     local Mission = MISSION
+  --       :New( CommandCenter, 
+  --             "Overlord", 
+  --             "High", 
+  --             "Transport the cargo.", 
+  --             coalition.side.RED 
+  --           ) 
   -- 
-  -- ![Banner Image](..\Presentations\TASK_CARGO_DISPATCHER\Dia5.JPG)
   -- 
-  -- Typically EWR networks are setup using 55G6 EWR, 1L13 EWR, Hawk sr and Patriot str ground based radar units. 
-  -- These radars have different ranges and 55G6 EWR and 1L13 EWR radars are Eastern Bloc units (eg Russia, Ukraine, Georgia) while the Hawk and Patriot radars are Western (eg US).
-  -- Additionally, ANY other radar capable unit can be part of the EWR network! Also AWACS airborne units, planes, helicopters can help to detect targets, as long as they have radar.
-  -- The position of these units is very important as they need to provide enough coverage 
-  -- to pick up enemy aircraft as they approach so that CAP and GCI flights can be tasked to intercept them.
+  -- # 2. Dispatch a **transport cargo** task.
   -- 
-  -- ![Banner Image](..\Presentations\TASK_CARGO_DISPATCHER\Dia7.JPG)
+  -- So, now that we have a command center and a mission, we now create the transport task.
+  -- We create the transport task using the @{#TASK_CARGO_DISPATCHER.AddTransportTask}() constructor.
+  -- 
+  -- ## 2.1. Create the cargo in the mission.
+  -- 
+  -- Because a transport task will not generate the cargo itself, you'll need to create it first.
+  -- 
+  --     -- Here we define the "cargo set", which is a collection of cargo objects.
+  --     -- The cargo set will be the input for the cargo transportation task.
+  --     -- So a transportation object is handling a cargo set, which is automatically updated when new cargo is added/deleted.
+  --     local WorkmaterialsCargoSet = SET_CARGO:New():FilterTypes( "Workmaterials" ):FilterStart()
+  --    
+  --     -- Now we add cargo into the battle scene.
+  --     local PilotGroup = GROUP:FindByName( "Engineers" )
+  --      
+  --     -- CARGO_GROUP can be used to setup cargo with a GROUP object underneath.
+  --     -- We name the type of this group "Workmaterials", so that this cargo group will be included within the WorkmaterialsCargoSet.
+  --     -- Note that the name of the cargo is "Engineer Team 1".
+  --     local CargoGroup = CARGO_GROUP:New( PilotGroup, "Workmaterials", "Engineer Team 1", 500 )
+  -- 
+  -- What is also needed, is to have a set of @{Core.Group}s defined that contains the clients of the players.
+  -- 
+  --     -- Allocate the Transport, which are the helicopters to retrieve the pilot, that can be manned by players.
+  --     -- The name of these helicopter groups containing one client begins with "Transport", as modelled within the mission editor.
+  --     local PilotGroupSet = SET_GROUP:New():FilterPrefixes( "Transport" ):FilterStart()
+  -- 
+  -- ## 2.2. Setup the cargo transport task.
+  -- 
+  -- First, we need to create a TASK_CARGO_DISPATCHER object.
+  -- 
+  --     TaskDispatcher = TASK_CARGO_DISPATCHER:New( Mission, PilotGroupSet )
+  -- 
+  -- So, the variable `TaskDispatcher` will contain the object of class TASK_CARGO_DISPATCHER, which will allow you to dispatch cargo transport tasks:
   --  
-  -- Additionally in a hot war situation where the border is no longer respected the placement of radars has a big effect on how fast the war escalates. 
-  -- For example if they are a long way forward and can detect enemy planes on the ground and taking off 
-  -- they will start to vector CAP and GCI flights to attack them straight away which will immediately draw a response from the other coalition. 
-  -- Having the radars further back will mean a slower escalation because fewer targets will be detected and 
-  -- therefore less CAP and GCI flights will spawn and this will tend to make just the border area active rather than a melee over the whole map. 
-  -- It all depends on what the desired effect is. 
+  --   * for mission `Mission`.
+  --   * for the group set `PilotGroupSet`.
   -- 
-  -- EWR networks are **dynamically constructed**, that is, they form part of the @{Functional.Detection#DETECTION_BASE} object that is given as the input parameter of the TASK\_A2A\_DISPATCHER class.
-  -- By defining in a **smart way the names or name prefixes of the groups** with EWR capable units, these groups will be **automatically added or deleted** from the EWR network, 
-  -- increasing or decreasing the radar coverage of the Early Warning System.
+  -- Now that we have `TaskDispatcher` object, we can now **create the TransportTask**, using the @{#TASK_CARGO_DISPATCHER.AddTransportTask}() method!
   -- 
-  -- See the following example to setup an EWR network containing EWR stations and AWACS.
+  --     local TransportTask = TaskDispatcher:AddTransportTask( 
+  --       "Transport workmaterials", 
+  --       WorkmaterialsCargoSet, 
+  --       "Transport the workers, engineers and the equipment near the Workplace." )
   -- 
-  --     local EWRSet = SET_GROUP:New():FilterPrefixes( "EWR" ):FilterCoalitions("red"):FilterStart()
-  --
-  --     local EWRDetection = DETECTION_AREAS:New( EWRSet, 6000 )
-  --     EWRDetection:SetFriendliesRange( 10000 )
-  --     EWRDetection:SetRefreshTimeInterval(30)
-  --
-  --     -- Setup the A2A dispatcher, and initialize it.
-  --     A2ADispatcher = TASK_CARGO_DISPATCHER:New( Mission, AttackGroups, EWRDetection )
+  -- As a result of this code, the `TransportTask` (returned) variable will contain an object of @{#TASK_CARGO_TRANSPORT}!
+  -- We pass to the method the title of the task, and the `WorkmaterialsCargoSet`, which is the set of cargo groups to be transported!
+  -- This object can also be used to setup additional things, or to control this specific task with special actions.
   -- 
-  -- The above example creates a SET_GROUP instance, and stores this in the variable (object) **EWRSet**.
-  -- **EWRSet** is then being configured to filter all active groups with a group name starting with **EWR** to be included in the Set.
-  -- **EWRSet** is then being ordered to start the dynamic filtering. Note that any destroy or new spawn of a group with the above names will be removed or added to the Set.
-  -- Then a new **EWRDetection** object is created from the class DETECTION_AREAS. A grouping radius of 6000 is choosen, which is 6km.
-  -- The **EWRDetection** object is then passed to the @{#TASK_CARGO_DISPATCHER.New}() method to indicate the EWR network configuration and setup the A2A tasking and detection mechanism.
+  -- And you're done! As you can see, it is a bit of work, but the reward is great.
+  -- And, because all this is done using program interfaces, you can build a mission with a **dynamic cargo transport task mechanism** yourself!
+  -- Based on events happening within your mission, you can use the above methods to create new cargo, and setup a new task for cargo transportation to a group of players!
   -- 
-  -- ### 2. Define the detected **target grouping radius**:
-  -- 
-  -- ![Banner Image](..\Presentations\TASK_CARGO_DISPATCHER\Dia8.JPG)
-  -- 
-  -- The target grouping radius is a property of the Detection object, that was passed to the AI\_A2A\_DISPATCHER object, but can be changed.
-  -- The grouping radius should not be too small, but also depends on the types of planes and the era of the simulation.
-  -- Fast planes like in the 80s, need a larger radius than WWII planes.  
-  -- Typically I suggest to use 30000 for new generation planes and 10000 for older era aircraft.
-  -- 
-  -- Note that detected targets are constantly re-grouped, that is, when certain detected aircraft are moving further than the group radius, then these aircraft will become a separate
-  -- group being detected. This may result in additional GCI being started by the dispatcher! So don't make this value too small!
-  -- 
-  -- ## 3. Set the **Engage radius**:
-  -- 
-  -- Define the radius to engage any target by airborne friendlies, which are executing cap or returning from an intercept mission.
-  -- 
-  -- ![Banner Image](..\Presentations\TASK_CARGO_DISPATCHER\Dia11.JPG)
-  -- 
-  -- So, if there is a target area detected and reported, 
-  -- then any friendlies that are airborne near this target area, 
-  -- will be commanded to (re-)engage that target when available (if no other tasks were commanded).
-  -- For example, if 100000 is given as a value, then any friendly that is airborne within 100km from the detected target, 
-  -- will be considered to receive the command to engage that target area.
-  -- You need to evaluate the value of this parameter carefully.
-  -- If too small, more intercept missions may be triggered upon detected target areas.
-  -- If too large, any airborne cap may not be able to reach the detected target area in time, because it is too far.
-  -- 
-  -- ## 4. Set **Scoring** and **Messages**:
-  -- 
-  -- The TASK\_A2A\_DISPATCHER is a state machine. It triggers the event Assign when a new player joins a @{Task} dispatched by the TASK\_A2A\_DISPATCHER.
-  -- An _event handler_ can be defined to catch the **Assign** event, and add **additional processing** to set _scoring_ and to _define messages_,
-  -- when the player reaches certain achievements in the task.
-  -- 
-  -- The prototype to handle the **Assign** event needs to be developed as follows:
-  -- 
-  --      TaskDispatcher = TASK_CARGO_DISPATCHER:New( ... )
-  -- 
-  --      --- @param #TaskDispatcher self
-  --      -- @param #string From Contains the name of the state from where the Event was triggered.
-  --      -- @param #string Event Contains the name of the event that was triggered. In this case Assign.
-  --      -- @param #string To Contains the name of the state that will be transitioned to.
-  --      -- @param Tasking.Task_A2A#TASK_A2A Task The Task object, which is any derived object from TASK_A2A.
-  --      -- @param Wrapper.Unit#UNIT TaskUnit The Unit or Client that contains the Player.
-  --      -- @param #string PlayerName The name of the Player that joined the TaskUnit.
-  --      function TaskDispatcher:OnAfterAssign( From, Event, To, Task, TaskUnit, PlayerName )
-  --        Task:SetScoreOnProgress( PlayerName, 20, TaskUnit )
-  --        Task:SetScoreOnSuccess( PlayerName, 200, TaskUnit )
-  --        Task:SetScoreOnFail( PlayerName, -100, TaskUnit )
-  --      end
-  -- 
-  -- The **OnAfterAssign** method (function) is added to the TaskDispatcher object.
-  -- This method will be called when a new player joins a unit in the set of groups in scope of the dispatcher.
-  -- So, this method will be called only **ONCE** when a player joins a unit in scope of the task.
-  -- 
-  -- The TASK class implements various methods to additional **set scoring** for player achievements:
-  -- 
-  --   * @{Tasking.Task#TASK.SetScoreOnProgress}() will add additional scores when a player achieves **Progress** while executing the task.
-  --     Examples of **task progress** can be destroying units, arriving at zones etc.
-  --   
-  --   * @{Tasking.Task#TASK.SetScoreOnSuccess}() will add additional scores when the task goes into **Success** state. 
-  --     This means the **task has been successfully completed**.
   --     
-  --   * @{Tasking.Task#TASK.SetScoreOnSuccess}() will add additional (negative) scores when the task goes into **Failed** state. 
-  --     This means the **task has not been successfully completed**, and the scores must be given with a negative value!
+  -- # 3. Dispatch CSAR tasks.
+  -- 
+  -- CSAR tasks can be dynamically created when a friendly pilot ejects, or can be created manually.
+  -- We'll explore both options.
+  -- 
+  -- ## 3.1. CSAR task dynamic creation.
+  -- 
+  -- Because there is an "event" in a running simulation that creates CSAR tasks, the method @{#TASK_CARGO_DISPATCHER.StartCSARTasks}() will create automatically:
+  -- 
+  --   1. a new downed pilot at the location where the plane was shot
+  --   2. declare that pilot as cargo
+  --   3. creates a CSAR task automatically to retrieve that pilot
+  --   4. requires deploy zones to be specified where to transport the downed pilot to, in order to complete that task.
+  -- 
+  -- You create a CSAR task dynamically in a very easy way:
+  -- 
+  --     TaskDispatcher:StartCSARTasks( 
+  --       "CSAR", 
+  --       { ZONE_UNIT:New( "Hospital", STATIC:FindByName( "Hospital" ), 100 ) }, 
+  --       "One of our pilots has ejected. Go out to Search and Rescue our pilot!\n" .. 
+  --       "Use the radio menu to let the command center assist you with the CSAR tasking."
+  --     )
+  -- 
+  -- The method @{#TASK_CARGO_DISPATCHER.StopCSARTasks}() will automatically stop with the creation of CSAR tasks when friendly pilots eject.
+  -- 
+  -- **Remarks:** 
+  --   
+  --   * the ZONE_UNIT can also be a ZONE, or a ZONE_POLYGON object, or any other ZONE_ object!
+  --   * you can declare the array of zones in another variable, or course!
+  -- 
+  -- 
+  -- ## 3.2. CSAR task manual creation.
+  -- 
+  -- We create the CSAR task using the @{#TASK_CARGO_DISPATCHER.AddCSARTask}() constructor.
+  -- 
+  -- The method will create a new CSAR task, and will generate the pilots cargo itself, at the specified coordinate.
+  -- 
+  -- What is first needed, is to have a set of @{Core.Group}s defined that contains the clients of the players.
+  -- 
+  --     -- Allocate the Transport, which are the helicopter to retrieve the pilot, that can be manned by players.
+  --     local GroupSet = SET_GROUP:New():FilterPrefixes( "Transport" ):FilterStart()
+  -- 
+  -- We need to create a TASK_CARGO_DISPATCHER object.
+  -- 
+  --     TaskDispatcher = TASK_CARGO_DISPATCHER:New( Mission, GroupSet )
+  -- 
+  -- So, the variable `TaskDispatcher` will contain the object of class TASK_CARGO_DISPATCHER, which will allow you to dispatch cargo CSAR tasks:
+  --  
+  --   * for mission `Mission`.
+  --   * for the group of players (pilots) captured within the `GroupSet` (those groups with a name starting with `"Transport"`).
+  -- 
+  -- Now that we have a PilotsCargoSet and a GroupSet, we can now create the CSAR task manually.
+  -- 
+  --     -- Declare the CSAR task.
+  --     local CSARTask = TaskDispatcher:AddCSARTask( 
+  --       "CSAR Task",
+  --       Coordinate,
+  --       270,
+  --       "Bring the pilot back!"
+  --     )
+  -- 
+  -- As a result of this code, the `CSARTask` (returned) variable will contain an object of @{#TASK_CARGO_CSAR}!
+  -- We pass to the method the title of the task, and the `WorkmaterialsCargoSet`, which is the set of cargo groups to be transported!
+  -- This object can also be used to setup additional things, or to control this specific task with special actions.
+  -- Note that when you declare a CSAR task manually, you'll still need to specify a deployment zone!
+  -- 
+  -- # 4. Setup the deploy zone(s).
+  -- 
+  -- The task cargo dispatcher also foresees methods to setup the deployment zones to where the cargo needs to be transported!
+  -- 
+  -- There are two levels on which deployment zones can be configured:
+  -- 
+  --   * Default deploy zones: The TASK_CARGO_DISPATCHER object can have default deployment zones, which will apply over all tasks active in the task dispatcher.
+  --   * Task specific deploy zones: The TASK_CARGO_DISPATCHER object can have specific deployment zones which apply to a specific task only!
+  -- 
+  -- Note that for Task specific deployment zones, there are separate deployment zone creation methods per task type!
+  -- 
+  -- ## 4.1. Setup default deploy zones.
+  -- 
+  -- Use the @{#TASK_CARGO_DISPATCHER.SetDefaultDeployZone}() to setup one deployment zone, and @{#TASK_CARGO_DISPATCHER.SetDefaultDeployZones}() to setup multiple default deployment zones in one call.
+  -- 
+  -- ## 4.2. Setup task specific deploy zones for a **transport task**.
+  -- 
+  -- Use the @{#TASK_CARGO_DISPATCHER.SetTransportDeployZone}() to setup one deployment zone, and @{#TASK_CARGO_DISPATCHER.SetTransportDeployZones}() to setup multiple default deployment zones in one call.
+  -- 
+  -- ## 4.3. Setup task specific deploy zones for a **CSAR task**. 
+  -- 
+  -- Use the @{#TASK_CARGO_DISPATCHER.SetCSARDeployZone}() to setup one deployment zone, and @{#TASK_CARGO_DISPATCHER.SetCSARDeployZones}() to setup multiple default deployment zones in one call.
+  -- 
+  -- 
   -- 
   -- @field #TASK_CARGO_DISPATCHER
   TASK_CARGO_DISPATCHER = {
@@ -321,11 +415,11 @@ do -- TASK_CARGO_DISPATCHER
   -- 
   --   -- Add a CSAR task to rescue a downed pilot from within a coordinate.
   --   local Coordinate = PlaneUnit:GetPointVec2()
-  --   TaskA2ADispatcher:AddCSARTask( Coordinate )
+  --   TaskA2ADispatcher:AddCSARTask( "CSAR Task", Coordinate )
   --   
   --   -- Add a CSAR task to rescue a downed pilot from within a coordinate of country RUSSIA, which is pointing to the west (270°).
   --   local Coordinate = PlaneUnit:GetPointVec2()
-  --   TaskA2ADispatcher:AddCSARTask( Coordinate, 270, Country.RUSSIA )
+  --   TaskA2ADispatcher:AddCSARTask( "CSAR Task", Coordinate, 270, Country.RUSSIA )
   --   
   function TASK_CARGO_DISPATCHER:AddCSARTask( CSARTaskPrefix, CSARCoordinate, CSARHeading, CSARCountry, CSARBriefing )
 

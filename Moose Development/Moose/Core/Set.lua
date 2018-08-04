@@ -4010,6 +4010,45 @@ function SET_AIRBASE:FindAirbase( AirbaseName )
 end
 
 
+--- Finds an Airbase in range of a coordinate.
+-- @param #SET_AIRBASE self
+-- @param Core.Point#COORDINATE Coordinate
+-- @param #number Range
+-- @return Wrapper.Airbase#AIRBASE The found Airbase.
+function SET_AIRBASE:FindAirbaseInRange( Coordinate, Range )
+
+  local AirbaseFound = nil
+
+  for AirbaseName, AirbaseObject in pairs( self.Set ) do
+  
+    local AirbaseCoordinate = AirbaseObject:GetCoordinate()
+    local Distance = Coordinate:Get2DDistance( AirbaseCoordinate )
+    
+    self:F({Distance=Distance})
+  
+    if Distance <= Range then
+      AirbaseFound = AirbaseObject
+      break
+    end
+      
+  end
+
+  return AirbaseFound
+end
+
+
+--- Finds a random Airbase in the set.
+-- @param #SET_AIRBASE self
+-- @return Wrapper.Airbase#AIRBASE The found Airbase.
+function SET_AIRBASE:GetRandomAirbase()
+
+  local RandomAirbase = self:GetRandom()
+  self:F( { RandomAirbase = RandomAirbase:GetName() } )
+
+  return RandomAirbase
+end
+
+
 
 --- Builds a set of airbases of coalitions.
 -- Possible current coalitions are red, blue and neutral.

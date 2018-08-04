@@ -114,6 +114,18 @@ function AI_CARGO_AIRPLANE:New( Airplane, CargoSet )
 end
 
 
+function AI_CARGO_AIRPLANE:IsTransporting()
+
+  return self.Transporting == true
+end
+
+function AI_CARGO_AIRPLANE:IsRelocating()
+
+  return self.Relocating == true
+end
+
+
+
 --- Set the Carrier.
 -- @param #AI_CARGO_AIRPLANE self
 -- @param Wrapper.Group#GROUP Airplane
@@ -158,7 +170,8 @@ function AI_CARGO_AIRPLANE:SetCarrier( Airplane )
   
   
   function Airplane:OnEventEngineShutdown( EventData )
-    AICargo:Landed()
+    self:F("Calling")
+    AICargo:Landed( self.Airplane )
   end
   
   self.Coalition = self.Airplane:GetCoalition()
@@ -201,6 +214,10 @@ end
 -- @param To
 function AI_CARGO_AIRPLANE:onafterLanded( Airplane, From, Event, To )
 
+  self:F({Airplane, From, Event, To})
+  self:F({IsAlive=Airplane:IsAlive()})
+  self:F({RoutePickup=self.RoutePickup})
+
   if Airplane and Airplane:IsAlive() then
 
     if self.RoutePickup == true then
@@ -240,6 +257,8 @@ function AI_CARGO_AIRPLANE:onafterPickup( Airplane, From, Event, To, Airbase, Sp
     
     -- Set airbase as starting point in the next Route() call.
     self.Airbase = Airbase
+    self.Transporting = true
+    self.Relocating = false
   end
   
 end
@@ -260,6 +279,8 @@ function AI_CARGO_AIRPLANE:onafterDeploy( Airplane, From, Event, To, Airbase, Sp
     self:Route( Airplane, Airbase, Speed )
     self.RouteDeploy = true
     self.Airbase = Airbase
+    self.Transporting = false
+    self.Relocating = false
   end
   
 end
@@ -278,8 +299,9 @@ function AI_CARGO_AIRPLANE:onafterLoad( Airplane, From, Event, To, Coordinate )
   --if Airplane then
   
     for _, Cargo in pairs( self.CargoSet:GetSet() ) do
-      local Cargo=Cargo --Cargo.Cargo#CARGO
-      if Cargo:IsInLoadRadius( Coordinate ) then
+      self:F({Cargo:GetName()})
+      local InRadius = Cargo:IsInLoadRadius( Coordinate )
+      if InRadius then
         self:__Board( 5 )
         Cargo:Board( Airplane, 25 )
         self.Cargo = Cargo
@@ -399,6 +421,7 @@ function AI_CARGO_AIRPLANE:Route( Airplane, Airbase, Speed )
         FromWaypoint.helipadId = nil
         FromWaypoint.airdromeId = nil
     
+        local ParkingSpots = self.Airbase:FindFreeParkingSpotForAircraft( Airplane, AIRBASE.TerminalType.OpenBig )
         local AirbaseID = self.Airbase:GetID()
         local AirbaseCategory = self.Airbase:GetDesc().category
         
@@ -417,8 +440,8 @@ function AI_CARGO_AIRPLANE:Route( Airplane, Airbase, Speed )
           -- These cause a lot of confusion.
           local UnitTemplate = Template.units[UnitID]
     
-          UnitTemplate.parking = 15
-          UnitTemplate.parking_id = "1"
+          UnitTemplate.parking = nil
+          UnitTemplate.parking_id = nil
           UnitTemplate.alt = 0
     
           local SX = UnitTemplate.x

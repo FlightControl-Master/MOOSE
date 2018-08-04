@@ -7,7 +7,7 @@
 -- ===       
 --
 -- @module AI.AI_Cargo_Dispatcher
--- @image AI_Cargo_Dispatching_For_Helicopters.JPG
+-- @image AI_Cargo_Dispatcher.JPG
 
 --- @type AI_CARGO_DISPATCHER
 -- @extends Core.Fsm#FSM
@@ -74,7 +74,7 @@
 AI_CARGO_DISPATCHER = {
   ClassName = "AI_CARGO_DISPATCHER",
   SetCarrier = nil,
-  SetDeployZones = nil,
+  DeployZonesSet = nil,
   AI_Cargo = {},
   PickupCargo = {}
 }
@@ -90,23 +90,21 @@ AI_CARGO_DISPATCHER.PickupCargo = {}
 -- @param #AI_CARGO_DISPATCHER self
 -- @param Core.Set#SET_GROUP SetCarrier
 -- @param Core.Set#SET_CARGO SetCargo
--- @param Core.Set#SET_ZONE SetDeployZones
 -- @return #AI_CARGO_DISPATCHER
 -- @usage
 -- 
 -- -- Create a new cargo dispatcher
--- SetCarrier = SET_GROUP:New():FilterPrefixes( "APC" ):FilterStart()
--- SetCargo = SET_CARGO:New():FilterTypes( "Infantry" ):FilterStart()
+-- SetCarriers = SET_GROUP:New():FilterPrefixes( "APC" ):FilterStart()
+-- SetCargos = SET_CARGO:New():FilterTypes( "Infantry" ):FilterStart()
 -- SetDeployZone = SET_ZONE:New():FilterPrefixes( "Deploy" ):FilterStart()
--- AICargoDispatcher = AI_CARGO_DISPATCHER:New( SetCarrier, SetCargo, SetDeployZone )
+-- AICargoDispatcher = AI_CARGO_DISPATCHER:New( SetCarrier, SetCargo )
 -- 
-function AI_CARGO_DISPATCHER:New( SetCarrier, SetCargo, SetDeployZones )
+function AI_CARGO_DISPATCHER:New( SetCarrier, SetCargo )
 
   local self = BASE:Inherit( self, FSM:New() ) -- #AI_CARGO_DISPATCHER
 
   self.SetCarrier = SetCarrier -- Core.Set#SET_GROUP
   self.SetCargo = SetCargo -- Core.Set#SET_CARGO
-  self.SetDeployZones = SetDeployZones -- Core.Set#SET_ZONE
 
   self:SetStartState( "Idle" ) 
   
@@ -142,6 +140,58 @@ function AI_CARGO_DISPATCHER:New( SetCarrier, SetCargo, SetDeployZones )
   
   return self
 end
+
+
+--- Creates a new AI_CARGO_DISPATCHER object.
+-- @param #AI_CARGO_DISPATCHER self
+-- @param Core.Set#SET_GROUP SetCarrier
+-- @param Core.Set#SET_CARGO SetCargo
+-- @param Core.Set#SET_ZONE DeployZonesSet
+-- @return #AI_CARGO_DISPATCHER
+-- @usage
+-- 
+-- -- Create a new cargo dispatcher
+-- SetCarriers = SET_GROUP:New():FilterPrefixes( "APC" ):FilterStart()
+-- SetCargos = SET_CARGO:New():FilterTypes( "Infantry" ):FilterStart()
+-- DeployZonesSet = SET_ZONE:New():FilterPrefixes( "Deploy" ):FilterStart()
+-- AICargoDispatcher = AI_CARGO_DISPATCHER:New( SetCarrier, SetCargo, SetDeployZone )
+-- 
+function AI_CARGO_DISPATCHER:NewWithZones( SetCarriers, SetCargos, DeployZonesSet )
+
+  local self = AI_CARGO_DISPATCHER:New( SetCarriers, SetCargos ) -- #AI_CARGO_DISPATCHER
+  
+  self.DeployZonesSet = DeployZonesSet
+  
+  return self
+end
+
+
+--- Creates a new AI_CARGO_DISPATCHER object.
+-- @param #AI_CARGO_DISPATCHER self
+-- @param Core.Set#SET_GROUP SetCarrier
+-- @param Core.Set#SET_CARGO SetCargo
+-- @param Core.Set#SET_AIRBASE PickupAirbasesSet
+-- @param Core.Set#SET_AIRBASE DeployAirbasesSet
+-- @return #AI_CARGO_DISPATCHER
+-- @usage
+-- 
+-- -- Create a new cargo dispatcher
+-- SetCarriers = SET_GROUP:New():FilterPrefixes( "APC" ):FilterStart()
+-- SetCargos = SET_CARGO:New():FilterTypes( "Infantry" ):FilterStart()
+-- PickupAirbasesSet = SET_AIRBASES:New()
+-- DeployAirbasesSet = SET_AIRBASES:New()
+-- AICargoDispatcher = AI_CARGO_DISPATCHER:New( SetCarrier, SetCargo, PickupAirbasesSet, DeployAirbasesSet )
+-- 
+function AI_CARGO_DISPATCHER:NewWithAirbases( SetCarriers, SetCargos, PickupAirbasesSet, DeployAirbasesSet )
+
+  local self = AI_CARGO_DISPATCHER:New( SetCarriers, SetCargos ) -- #AI_CARGO_DISPATCHER
+  
+  self.DeployAirbasesSet = DeployAirbasesSet
+  self.PickupAirbasesSet = PickupAirbasesSet
+  
+  return self
+end
+
 
 
 --- Set the home zone.
@@ -361,7 +411,16 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
       if PickupCargo then
         self.CarrierHome[Carrier] = nil
         local PickupCoordinate = PickupCargo:GetCoordinate():GetRandomCoordinateInRadius( self.PickupOuterRadius, self.PickupInnerRadius )
-        AI_Cargo:Pickup( PickupCoordinate, math.random( self.PickupMinSpeed, self.PickupMaxSpeed ) )
+         
+        if self.PickupAirbasesSet then
+          -- Find airbase within 2km from the cargo with the set.
+          local PickupAirbase = self.PickupAirbasesSet:FindAirbaseInRange( PickupCoordinate, 4000 )
+          if PickupAirbase then
+            AI_Cargo:Pickup( PickupAirbase, math.random( self.PickupMinSpeed, self.PickupMaxSpeed ) )
+          end
+        else  
+          AI_Cargo:Pickup( PickupCoordinate, math.random( self.PickupMinSpeed, self.PickupMaxSpeed ) )
+        end
         break
       else
         if self.HomeZone then
@@ -464,12 +523,22 @@ end
 -- @return #AI_CARGO_DISPATCHER
 function AI_CARGO_DISPATCHER:OnAfterLoaded( From, Event, To, Carrier, Cargo )
 
-  local DeployZone = self.SetDeployZones:GetRandomZone()
+  if self.DeployZonesSet then
   
-  local DeployCoordinate = DeployZone:GetCoordinate():GetRandomCoordinateInRadius( self.DeployOuterRadius, self.DeployInnerRadius )
-  self.AI_Cargo[Carrier]:Deploy( DeployCoordinate, math.random( self.DeployMinSpeed, self.DeployMaxSpeed ) )
+    local DeployZone = self.DeployZonesSet:GetRandomZone()
+    
+    local DeployCoordinate = DeployZone:GetCoordinate():GetRandomCoordinateInRadius( self.DeployOuterRadius, self.DeployInnerRadius )
+    self.AI_Cargo[Carrier]:Deploy( DeployCoordinate, math.random( self.DeployMinSpeed, self.DeployMaxSpeed ) )
   
-  self.PickupCargo[Carrier] = nil
+  end
+  
+  if self.DeployAirbasesSet then
+
+    local DeployAirbase = self.DeployAirbasesSet:GetRandomAirbase()
+    self.AI_Cargo[Carrier]:Deploy( DeployAirbase, math.random( self.DeployMinSpeed, self.DeployMaxSpeed ) )
+  end
+  
+   self.PickupCargo[Carrier] = nil
 end
 
 
