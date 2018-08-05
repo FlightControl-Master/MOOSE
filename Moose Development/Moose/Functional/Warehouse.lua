@@ -328,28 +328,8 @@ function WAREHOUSE:onbeforeRequest(From, Event, To, Airbase, AssetDescriptor, As
   local _stockitem=_stockrequest[1] --#WAREHOUSE.Stockitem
   local _assetattribute=self:_GetAttribute(_stockitem.templatename)
 
-  -- Shortcut
+  -- Get assets in stock which are of the right type. 
   local _instock=self:_FilterStock(self.stock, WAREHOUSE.Descriptor.ATTRIBUTE, TransportType)
-  
-  --[[
-  -- Check the availability of transport units.
-  if _TT == WAREHOUSE.TransportType.AIRPLANE then
-    _instock=self:_FilterStock(self.stock, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.TRANSPORT_PLANE)
-  elseif _TT == WAREHOUSE.TransportType.HELICOPTER then
-    _instock=self:_FilterStock(self.stock, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.TRANSPORT_HELO)
-  elseif _TT == WAREHOUSE.TransportType.GROUND then
-    _instock=self:_FilterStock(self.stock, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.TRANSPORT_APC)
-  elseif _TT == WAREHOUSE.TransportType.SHIP then
-    _instock=0
-  elseif _TT == WAREHOUSE.TransportType.TRAIN then
-    _instock=0
-  elseif _TT == WAREHOUSE.TransportType.SELFPROPELLED then
-    _instock=_stockrequest
-  else
-    self:E(self.wid..string.format("ERROR: unknown transport type requested! type = %s", tostring(TransportType)))
-    return false
-  end
-  ]]
   
   -- Check that a transport unit is available.
   if #_instock==0 and TransportType~=WAREHOUSE.TransportType.SELFPROPELLED then
@@ -358,6 +338,8 @@ function WAREHOUSE:onbeforeRequest(From, Event, To, Airbase, AssetDescriptor, As
     self:E(self.wid..text)
     return false
   end
+  
+  -- TODO: For aircraft check that a parking spot is available.
   
   return true
 end
@@ -406,6 +388,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Airbase, AssetDescriptor, Ass
     self:_DeleteStockItem(_id)
   end
   
+  -- No transport unit requested. Assets go by themselfes.
   if TransportType==WAREHOUSE.TransportType.SELFPROPELLED then
     for _i,_spawngroup in pairs(_spawngroups) do
       local group=_spawngroup --Wrapper.Group#GROUP
@@ -415,13 +398,12 @@ function WAREHOUSE:onafterRequest(From, Event, To, Airbase, AssetDescriptor, Ass
   end
   
   
-  --TODO: naje nearradius depended on types.
+  --TODO: make nearradius depended on transport type and asset type.
   local _loadradius=5000
   local _nearradius=35
   
   -- Add spawned groups to cargo group object.
   for _i,_spawngroup in pairs(_spawngroups) do
-    --TODO: check near and load radius.
     local _name=string.format("%s %d",AssetDescriptorValue, _i)
     env.info(string.format("FF cargo group %d: %s",_i,_name))
     local cargogroup = CARGO_GROUP:New(_spawngroup, AssetDescriptorValue, _name, _loadradius, _nearradius)
@@ -429,8 +411,6 @@ function WAREHOUSE:onafterRequest(From, Event, To, Airbase, AssetDescriptor, Ass
   end
   
   env.info(string.format("FF cargo set object names %s", CargoGroups:GetObjectNames()))
-  
-
   
   
   -- Filter the requested assets.
@@ -452,8 +432,8 @@ function WAREHOUSE:onafterRequest(From, Event, To, Airbase, AssetDescriptor, Ass
     if Plane==nil then
       -- Plane was not spawned correctly. Try again in 60 seconds.
       local text="Technical problems with the transport plane occurred. Request was cancelled! Try again later."
-      --self:__Request(60, Airbase, AssetDescriptor, AssetDescriptorValue, nAsset, TransportType)
-      --TODO: despawn units and but them back into the warehouse.
+      MESSAGE:New(text, 10):ToCoalitionIf(self.coalition, self.Report or self.Debug)
+      --TODO: Despawn asset units and but them back into the warehouse.
       return
     else
       -- Remove chosen transport asset from list.
@@ -472,7 +452,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Airbase, AssetDescriptor, Ass
     
     --- Once the cargo was loaded start off to deploy airbase.
     function CargoPlane:OnAfterLoaded(Airplane, From, Event, To)
-      CargoPlane:__Deploy(10, Airbase, 500)
+      CargoPlane:__Deploy(10, Airbase)
     end
     
     --- Function called when cargo has arrived and was unloaded.
@@ -520,8 +500,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Airbase, AssetDescriptor, Ass
       -- Trigger Delivered event.
       warehouse:__Delivered(1, group)
     end    
-    
-    
+        
   elseif TransportType==WAREHOUSE.TransportType.APC then
     
     -- Spawn APC in spawn zone.
@@ -574,12 +553,10 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Wrapper.Group#GROUP Group The group that was delivered.
--- @param #string Asset Asset that is requested.
--- @param #number nAssed Number of groups of that asset requested.
--- @param #string TransportType Type of transport: "Plane", "Helicopter", "APC"
 function WAREHOUSE:onafterDelivered(From, Event, To, Group)
+  env.info("FF warehouse cargo delivered! Croutine to closest point on road")
   local road=Group:GetCoordinate():GetClosestPointToRoad()
-  local speed=Group:GetSpeedMax()*0.5
+  local speed=Group:GetSpeedMax()*0.6
   Group:RouteGroundTo(road, speed, "Off Road")
 end
 

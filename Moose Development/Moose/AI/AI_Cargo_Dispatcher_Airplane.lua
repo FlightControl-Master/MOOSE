@@ -29,11 +29,11 @@ AI_CARGO_DISPATCHER_AIRPLANE = {
 
 --- Creates a new AI_CARGO_DISPATCHER_AIRPLANE object.
 -- @param #AI_CARGO_DISPATCHER_AIRPLANE self
--- @param Core.Set#SET_GROUP SetAirplanes
--- @param Core.Set#SET_CARGO SetCargos
--- @param Core.Set#SET_AIRBASE PickupAirbasesSet
--- @param Core.Set#SET_AIRBASE DeployAirbasesSet
--- @return #AI_CARGO_DISPATCHER_AIRPLANE
+-- @param Core.Set#SET_GROUP SetAirplanes Set of cargo transport airplanes.
+-- @param Core.Set#SET_CARGO SetCargos Set of cargo, which is supposed to be transported.
+-- @param Core.Set#SET_AIRBASE PickupAirbasesSet Set of airbases where the cargo has to be picked up.
+-- @param Core.Set#SET_AIRBASE DeployAirbasesSet Set of airbases where the cargo is deployed. Choice for each cargo is random.
+-- @return #AI_CARGO_DISPATCHER_AIRPLANE self
 -- @usage
 -- 
 -- -- Create a new cargo dispatcher

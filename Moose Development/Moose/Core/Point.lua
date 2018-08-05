@@ -1095,6 +1095,37 @@ do -- COORDINATE
 
     return RoutePoint
   end
+
+  --- Gets the nearest airbase with respect to the current coordinates.
+  -- @param #COORDINATE self
+  -- @param #number AirbaseCategory Category of the airbase.
+  -- @return Wrapper.Airbase#AIRBASE Closest Airbase to the given coordinate.
+  -- @return #number Distance to the closest airbase in meters.
+  function COORDINATE:GetClosestAirbase(AirbaseCategory)
+    local airbases=AIRBASE.GetAllAirbases()
+    
+    local closest=nil
+    local distmin=nil
+    -- Loop over all airbases.
+    for _,_airbase in pairs(airbases) do
+      local airbase=_airbase --Wrapper.Airbase#AIRBASE
+      local category=airbase:GetDesc().category
+      if AirbaseCategory and AirbaseCategory==category or AirbaseCategory==nil then
+        local dist=self:Get2DDistance(airbase:GetCoordinate())
+        if closest==nil then
+          distmin=dist
+          closest=airbase
+        else
+          if dist<distmin then
+            distmin=dist
+            closest=airbase
+          end 
+        end
+      end
+    end
+    
+    return closest,distmin
+  end
   
   --- Gets the nearest parking spot.
   -- @param #COORDINATE self

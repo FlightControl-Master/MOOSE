@@ -42,9 +42,9 @@ do -- CARGO_UNIT
   -- @param #number LoadRadius (optional)
   -- @param #number NearRadius (optional)
   -- @return #CARGO_UNIT
-  function CARGO_UNIT:New( CargoUnit, Type, Name, Weight, NearRadius )
-    local self = BASE:Inherit( self, CARGO_REPRESENTABLE:New( CargoUnit, Type, Name, Weight, NearRadius ) ) -- #CARGO_UNIT
-    self:I( { Type, Name, Weight, NearRadius } )
+  function CARGO_UNIT:New( CargoUnit, Type, Name, Weight, LoadRadius, NearRadius )
+    local self = BASE:Inherit( self, CARGO_REPRESENTABLE:New( CargoUnit, Type, Name, Weight, LoadRadius, NearRadius ) ) -- #CARGO_UNIT
+    self:I( { Type, Name, Weight, LoadRadius, NearRadius } )
   
     self:T( CargoUnit )
     self.CargoObject = CargoUnit
@@ -62,6 +62,7 @@ do -- CARGO_UNIT
   -- @param #string From
   -- @param #string To
   -- @param Core.Point#POINT_VEC2 ToPointVec2
+  -- @param #number NearRadius (optional) Defaut 25 m.
   function CARGO_UNIT:onenterUnBoarding( From, Event, To, ToPointVec2, NearRadius )
     self:F( { From, Event, To, ToPointVec2, NearRadius } )
   
@@ -131,6 +132,7 @@ do -- CARGO_UNIT
   -- @param #string From
   -- @param #string To
   -- @param Core.Point#POINT_VEC2 ToPointVec2
+  -- @param #number NearRadius (optional) Defaut 100 m.
   function CARGO_UNIT:onleaveUnBoarding( From, Event, To, ToPointVec2, NearRadius )
     self:F( { From, Event, To, ToPointVec2, NearRadius } )
   
@@ -158,6 +160,7 @@ do -- CARGO_UNIT
   -- @param #string From
   -- @param #string To
   -- @param Core.Point#POINT_VEC2 ToPointVec2
+  -- @param #number NearRadius (optional) Defaut 100 m.
   function CARGO_UNIT:onafterUnBoarding( From, Event, To, ToPointVec2, NearRadius )
     self:F( { From, Event, To, ToPointVec2, NearRadius } )
   
@@ -281,7 +284,7 @@ do -- CARGO_UNIT
   -- @param #string From
   -- @param #string To
   -- @param Wrapper.Client#CLIENT CargoCarrier
-  -- @param #number NearRadius
+  -- @param #number NearRadius Default 25 m.
   function CARGO_UNIT:onafterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
     --self:F( { From, Event, To, CargoCarrier.UnitName, NearRadius } )
     
@@ -338,6 +341,7 @@ do -- CARGO_UNIT
   -- @param #string From
   -- @param #string To
   -- @param Wrapper.Unit#UNIT CargoCarrier
+  -- @param #number NearRadius Default 25 m.
   function CARGO_UNIT:onenterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
     --self:F( { From, Event, To, CargoCarrier.UnitName, NearRadius } )
     

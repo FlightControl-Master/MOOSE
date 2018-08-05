@@ -1203,6 +1203,10 @@ end
 -- @param #string From
 -- @param #string To
 -- @param Wrapper.Unit#UNIT CargoCarrier
+-- @param #number Speed
+-- @param #number BoardDistance
+-- @param #number LoadDistance
+-- @param #number Angle
 function CARGO_PACKAGE:onafterOnBoarded( From, Event, To, CargoCarrier, Speed, BoardDistance, LoadDistance, Angle )
   self:F()
 
@@ -1218,6 +1222,7 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
+-- @param Wrapper.Unit#UNIT CargoCarrier
 -- @param #number Speed
 -- @param #number UnLoadDistance
 -- @param #number UnBoardDistance
@@ -1261,6 +1266,7 @@ end
 -- @param #string From
 -- @param #string To
 -- @param Wrapper.Unit#UNIT CargoCarrier
+-- @param #number Speed
 function CARGO_PACKAGE:onafterUnBoarded( From, Event, To, CargoCarrier, Speed )
   self:F()
 
@@ -1304,6 +1310,8 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
+-- @param Wrapper.Unit#UNIT CargoCarrier
+-- @param #number Speed
 -- @param #number Distance
 -- @param #number Angle
 function CARGO_PACKAGE:onafterUnLoad( From, Event, To, CargoCarrier, Speed, Distance, Angle )

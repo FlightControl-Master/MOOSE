@@ -77,7 +77,6 @@ AI/AI_Cargo_Dispatcher.lua
 AI/AI_Cargo_Dispatcher_APC.lua
 AI/AI_Cargo_Dispatcher_Helicopter.lua
 AI/AI_Cargo_Dispatcher_Airplane.lua
-AI/AI_G2G_Dispatcher.lua
 
 Actions/Act_Assign.lua
 Actions/Act_Route.lua
