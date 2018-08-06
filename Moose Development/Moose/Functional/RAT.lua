@@ -1021,7 +1021,7 @@ function RAT:SetCoalitionAircraft(color)
 end
 
 --- Set country of RAT group.
--- See [DCS_enum_country](https://wiki.hoggitworld.com/view/DCS_enum_country)
+-- See [DCS_enum_country](https://wiki.hoggitworld.com/view/DCS_enum_country).
 -- 
 -- This overrules the coalition settings. So if you want your group to be of a specific coalition, you have to set a country that is part of that coalition.
 -- @param #RAT self

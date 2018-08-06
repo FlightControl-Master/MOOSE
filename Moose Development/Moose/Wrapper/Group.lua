@@ -1438,7 +1438,8 @@ function GROUP:RespawnAtCurrentAirbase(SpawnTemplate, Takeoff, Uncontrolled) -- 
       --Parkingspot:MarkToAll("parking spot")
       self:T2(string.format("Closest parking spot distance = %s, terminal ID=%s", tostring(Distance), tostring(TermialID)))
 
-      -- TODO: Hmm, maybe this mixes up heterogenious groups since the order of the units is not the same as in the template. 
+      -- Get unit coordinates for respawning position.
+      local uc=unit:GetCoordinate()
       SpawnTemplate.units[UnitID].x   = Parkingspot.x
       SpawnTemplate.units[UnitID].y   = Parkingspot.z
       SpawnTemplate.units[UnitID].alt = Parkingspot.y

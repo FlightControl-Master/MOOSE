@@ -25,7 +25,8 @@
 -- @field Core.Zone#ZONE spawnzone Zone in which assets are spawned.
 -- @field #number markerid ID of the warehouse marker at the airbase.
 -- @field #number assetid Unique id of asset items in stock. Essentially a running number starting at one and incremented when a new asset is added.
--- @field #table stock Table holding all assets in stock. Table entries are of type @{#WAREHOUSE.Stock}.
+-- @field #table stock Table holding all assets in stock. Table entries are of type @{#WAREHOUSE.Stockitem}.
+-- @field #table queue Table holding all queued requests. Table entries are of type @{#WAREHOUSE.Queueitem}.
 -- @extends Core.Fsm#FSM
 
 --- Manages ground assets of an airbase and offers the possibility to transport them to another airbase or warehouse.
@@ -65,7 +66,9 @@ WAREHOUSE = {
   spawnzone  = nil,
   markerid   = nil,
   assetid    = 0,
+  queueid    = 0,
   stock      = {},
+  queue      = {},
 }
 
 --- Item of the warehouse stock table.
@@ -74,7 +77,19 @@ WAREHOUSE = {
 -- @field #string templatename Name of the template group.  
 -- @field DCS#Group.Category category Category of the group.
 -- @field #string unittype Type of the first unit of the group as obtained by the Object.getTypeName() DCS API function.
--- @field #WAREHOUSE.Attribute attribute Generalized attribute of the group. 
+-- @field #WAREHOUSE.Attribute attribute Generalized attribute of the group.
+
+--- Item of the warehouse queue table.
+-- queueitem={uid=self.qid, prio=Prio, airbase=Airbase, assetdesc=AssetDescriptor, assetdescval=AssetDescriptorValue, nasset=nAsset, transporttype=TransportType, ntransport=nTransport}
+-- @type WAREHOUSE.Queueitem
+-- @field #number uid Unique id of the queue item.
+-- @field #number prio Priority of the request.
+-- @field Wrapper.Airbase#AIRBASE airbase Requesting airbase.
+-- @field #WAREHOUSE.Descriptor assetdesc Descriptor of the requested asset.
+-- @field assetdescval Value of the asset descriptor. Type depends on descriptor.
+-- @field #number nasset Number of asset groups requested.
+-- @field #WAREHOUSE.TransportType transporttype Transport unit type.
+-- @field #number ntransport Number of transport units requested.
 
 --- Descriptors enumerator describing the type of the asset in stock.
 -- @type WAREHOUSE.Descriptor
@@ -196,15 +211,11 @@ function WAREHOUSE:NewAirbase(airbase)
   --- Triggers the FSM event "Request".
   -- @function [parent=#WAREHOUSE] Request
   -- @param #WAREHOUSE self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
   -- @param Wrapper.Airbase#AIRBASE Airbase Airbase requesting supply.
   -- @param #WAREHOUSE.Descriptor AssetDescriptor Descriptor describing the asset that is requested.
   -- @param AssetDescriptorValue Value of the asset descriptor. Type depends on descriptor, i.e. could be a string, etc.
   -- @param #number nAsset Number of groups requested that match the asset specification.
   -- @param #WAREHOUSE.TransportType TransportType Type of transport.
-  -- @return boolean If true, request is granted.
   -- 
   -- @usage mywarehouse:Request(AIRBASE:)...
 
@@ -248,7 +259,7 @@ function WAREHOUSE:onafterStart(From, Event, To)
   -- event takeoff
   -- event landing
   -- event crash/dead
-  -- event base captured
+  -- event base captured ==> change coalition ==> add assets to other coalition.
   
   self:__Status(5)
 end
@@ -286,12 +297,88 @@ function WAREHOUSE:onafterStatus(From, Event, To)
     --self:_DisplayStockItems(self.stock)
   end
   
+  -- Print queue.
+  env.info(self.wid.."Queue:")
+  for _,_qitem in ipairs(self.queue) do
+    local qitem=_qitem --#WAREHOUSE.Queueitem
+    local text=string.format("uid=%d, prio=%d, airbase=%s, descriptor: %s=%s, nasssets=%d, transport=%s, ntransport=%d",
+    qitem.uid, qitem.prio, qitem.airbase:GetName(), qitem.assetdesc,tostring(qitem.assetdescval),qitem.nasset,qitem.transporttype,qitem.ntransport)
+    env.info(text)
+  end
+  
+  -- Check queue and handle requests if possible.
+  self:_WorkQueue()
+  
   -- Call status again in 30 sec.
-  self:__Status(30)
+  --self:__Status(10)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- On before "Request" event. Checks if the request can be fullfilled.
+-- @param #WAREHOUSE self
+-- @param Wrapper.Airbase#AIRBASE Airbase Airbase requesting supply.
+-- @param #WAREHOUSE.Descriptor AssetDescriptor Descriptor describing the asset that is requested.
+-- @param AssetDescriptorValue Value of the asset descriptor. Type depends on descriptor, i.e. could be a string, etc.
+-- @param #number nAsset Number of groups requested that match the asset specification.
+-- @param #WAREHOUSE.TransportType TransportType Type of transport.
+-- @param #number nTransport Number of transport units requested.
+-- @param #number Prio Priority of the request. Number ranging from 1=high to 100=low.
+function WAREHOUSE:AddRequest(Airbase, AssetDescriptor, AssetDescriptorValue, nAsset, TransportType, nTransport, Prio)
+
+  nTransport=nTransport or 1
+  Prio=Prio or 50
+
+  -- Increase id.
+  self.queueid=self.queueid+1
+  
+  -- Request queue table item.
+  local request={uid=self.queueid, prio=Prio, airbase=Airbase, assetdesc=AssetDescriptor, assetdescval=AssetDescriptorValue, nasset=nAsset, transporttype=TransportType, ntransport=nTransport}
+  
+  -- Add request to queue.
+  table.insert(self.queue, request)
+
+end
+
+--- On before "Request" event. Checks if the request can be fullfilled.
+-- @param #WAREHOUSE self
+function WAREHOUSE:_WorkQueue()
+
+  -- sort queue by prio and uid
+  
+  ---@param #WAREHOUSE.Queueitem qitem
+  --@return #boolean True if request is okay.
+  local function checkrequest(qitem)
+    local okay=true
+    -- Check if number of requested assets is in stock.
+    local _instock=#self:_FilterStock(self.stock, qitem.assetdesc, qitem.assetdescval)
+    if qitem.nasset > _instock then
+      okay=false      
+    end
+    -- Check if enough transport units are in stock.
+    _instock=#self:_FilterStock(self.stock, WAREHOUSE.Descriptor.ATTRIBUTE, qitem.transporttype)
+    if qitem.ntransport > _instock then
+      okay=false      
+    end
+    return okay    
+  end
+  
+  -- Search for a request we can execute.
+  local request=nil --#WAREHOUSE.Queueitem
+  for _,_qitem in ipairs(self.queue) do
+    local qitem=_qitem --#WAREHOUSE.Queueitem
+    local okay=checkrequest(qitem)
+    if okay==true then
+      request=qitem
+      break
+    end
+  end
+  
+  -- Execute request.
+  if request then
+    self:Request(request.airbase, request.assetdesc, request.assetdescval, request.nasset, request.transporttype)
+  end
+end
 
 --- On before "Request" event. Checks if the request can be fullfilled.
 -- @param #WAREHOUSE self
@@ -359,7 +446,6 @@ end
 function WAREHOUSE:onafterRequest(From, Event, To, Airbase, AssetDescriptor, AssetDescriptorValue, nAsset, TransportType)
   env.info(self.wid..string.format("Airbase %s requesting asset %s = %s.", Airbase:GetName(), tostring(AssetDescriptor), tostring(AssetDescriptorValue)))
 
- 
   -- Filter the requested assets.
   local _assetstock=self:_FilterStock(self.stock, AssetDescriptor, AssetDescriptorValue)  
   
@@ -376,12 +462,12 @@ function WAREHOUSE:onafterRequest(From, Event, To, Airbase, AssetDescriptor, Ass
     table.insert(_delid,_assetitem.id)
     
     -- Find a random point within the spawn zone.
-    --local spawnvec3=self.spawnzone:GetRandomVec3
     local spawncoord=self.spawnzone:GetRandomCoordinate()
     spawncoord:MarkToAll(string.format("spawnpoint %d",i))
 
     -- Spawn with ALIAS here or DCS crashes!
-    _spawngroups[i]=SPAWN:NewWithAlias(_assetitem.templatename,string.format("%s_%d", _assetitem.templatename,i)):SpawnFromCoordinate(spawncoord) --:SpawnFromVec3(spawnvec3)
+    local _alias=string.format("%s_%d", _assetitem.templatename,_assetitem.id)
+    _spawngroups[i]=SPAWN:NewWithAlias(_assetitem.templatename, _alias):SpawnFromCoordinate(spawncoord)
   end
 
   -- Delete spawned items from warehouse stock.
@@ -411,8 +497,6 @@ function WAREHOUSE:onafterRequest(From, Event, To, Airbase, AssetDescriptor, Ass
     CargoGroups:AddCargo(cargogroup)
   end
   
-  env.info(string.format("FF cargo set object names %s", CargoGroups:GetObjectNames()))
-  
   
   -- Filter the requested assets.
   local _transportitem --#WAREHOUSE.Stockitem
@@ -423,7 +507,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Airbase, AssetDescriptor, Ass
     _transportitem=_transportstock[_chosenone]
   end
   
-  
+  -- Dependent on transport type, spawn the transports and set up the dispatchers.
   if TransportType==WAREHOUSE.TransportType.AIRPLANE then
     
     -- Spawn plane at warehouse homebase.
@@ -440,9 +524,11 @@ function WAREHOUSE:onafterRequest(From, Event, To, Airbase, AssetDescriptor, Ass
       -- Remove chosen transport asset from list.
       self:_DeleteStockItem(_transportitem.id)
     end
-    
+
+    --[[    
     -- Define cargo airplane object.
     local CargoPlane = AI_CARGO_AIRPLANE:New(Plane, CargoGroups)
+    
     CargoPlane.Airbase=self.homebase
     
     -- Pickup cargo at homebase.
@@ -455,7 +541,19 @@ function WAREHOUSE:onafterRequest(From, Event, To, Airbase, AssetDescriptor, Ass
     function CargoPlane:OnAfterLoaded(Airplane, From, Event, To)
       CargoPlane:__Deploy(10, Airbase)
     end
+    ]]
     
+    local TransportSet      = SET_GROUP:New():AddGroupsByName(Plane:GetName())
+    local PickupAirbasesSet = SET_AIRBASE:New():AddAirbasesByName(self.homebase:GetName())
+    local DeployAirbasesSet = SET_AIRBASE:New():AddAirbasesByName(Airbase:GetName())
+    
+    -- Define dispatcher for this task.
+    local CargoPlane = AI_CARGO_DISPATCHER_AIRPLANE:New(TransportSet, CargoGroups, PickupAirbasesSet, DeployAirbasesSet)
+    
+    -- Cargo set.
+    CargoPlane:Start()
+    
+    --[[
     --- Function called when cargo has arrived and was unloaded.
     function CargoPlane:OnAfterUnloaded(Airplane, From, Event, To)
       
@@ -466,6 +564,17 @@ function WAREHOUSE:onafterRequest(From, Event, To, Airbase, AssetDescriptor, Ass
       -- Trigger Delivered event.
       warehouse:__Delivered(1, group)
     end
+    ]]
+    --- Function called when cargo has arrived and was unloaded.
+    function CargoPlane:OnAfterUnloaded(From, Event, To, Carrier, Cargo)
+      
+      local group=Cargo:GetObject() --Wrapper.Group#GROUP
+      local warehouse=Carrier:GetState(Carrier, "WAREHOUSE") --#WAREHOUSE
+      
+      -- Trigger Delivered event.
+      warehouse:__Delivered(1, group)
+    end
+    
     
   elseif TransportType==WAREHOUSE.TransportType.HELICOPTER then
   
@@ -482,6 +591,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Airbase, AssetDescriptor, Ass
     
     -- Define cargo airplane object.
     local CargoHelo = AI_CARGO_HELICOPTER:New(Helo, CargoGroups)
+    
     
     -- Pickup cargo from the spawn zone.
     CargoHelo:__Pickup(5, self.spawnzone:GetCoordinate())
@@ -779,6 +889,17 @@ function WAREHOUSE:_DeleteStockItem(uid)
   for _i,_item in pairs(self.stock) do
     if _item.id==uid then
       self.stock[_i]=nil
+    end
+  end
+end
+
+--- Delete item from queue.
+-- @param #WAREHOUSE self
+-- @param #number _uid The id of the item to be deleted.
+function WAREHOUSE:_DeleteStockItem(_uid)
+  for _i,_item in pairs(self.queue) do
+    if _item.uid==_uid then
+      self.queue[_i]=nil
     end
   end
 end
