@@ -1381,15 +1381,15 @@ end
 -- @param #boolean Uncontrolled (Optional) If true, spawn in uncontrolled state.
 -- @return Wrapper.Group#GROUP Group spawned at airbase or nil if group could not be spawned.
 function GROUP:RespawnAtCurrentAirbase(SpawnTemplate, Takeoff, Uncontrolled) -- R2.4
-  self:F( { Airbase, Takeoff} )
+  self:F2( { SpawnTemplate, Takeoff, Uncontrolled} )
 
-  -- Get closest airbase. Should be the one we care currently on.
+  -- Get closest airbase. Should be the one we are currently on.
   local airbase=self:GetCoordinate():GetClosestAirbase()
   
   if airbase then
-    env.info("FF closest airbase = "..airbase:GetName())
+    self:F2("Closest airbase = "..airbase:GetName())
   else
-    env.info("FF could not find closest airbase!")
+    self:E("ERROR: could not find closest airbase!")
     return nil
   end
   -- Takeoff type. Default hot.
@@ -1410,10 +1410,9 @@ function GROUP:RespawnAtCurrentAirbase(SpawnTemplate, Takeoff, Uncontrolled) -- 
     SpawnPoint.helipadId = nil
     SpawnPoint.airdromeId = nil
 
+    -- Aibase id and category.
     local AirbaseID       = airbase:GetID()
     local AirbaseCategory = airbase:GetDesc().category
-    
-    self:F( { AirbaseCategory = AirbaseCategory, Ship = Airbase.Category.SHIP, Helipad = Airbase.Category.HELIPAD, Airdrome = Airbase.Category.AIRDROME } )
     
     if AirbaseCategory == Airbase.Category.SHIP or AirbaseCategory == Airbase.Category.HELIPAD then
       SpawnPoint.linkUnit  = AirbaseID
@@ -1427,7 +1426,7 @@ function GROUP:RespawnAtCurrentAirbase(SpawnTemplate, Takeoff, Uncontrolled) -- 
     SpawnPoint.action = GROUPTEMPLATE.Takeoff[Takeoff][2] -- action
     
     -- Get the units of the group.
-    local units=self:GetUnits() 
+    local units=self:GetUnits()
 
     for UnitID,_unit in pairs(units) do
         
@@ -1436,8 +1435,8 @@ function GROUP:RespawnAtCurrentAirbase(SpawnTemplate, Takeoff, Uncontrolled) -- 
       -- Get closest parking spot of current unit. Note that we look for occupied spots since the unit is currently sitting on it!
       local Parkingspot, TermialID, Distance=unit:GetCoordinate():GetClosestParkingSpot(airbase)
       
-      Parkingspot:MarkToAll("parking spot")
-      env.info(string.format("FF closest parking spot distance = %s, terminal ID=%s", tostring(Distance), tostring(TermialID)))
+      --Parkingspot:MarkToAll("parking spot")
+      self:T2(string.format("Closest parking spot distance = %s, terminal ID=%s", tostring(Distance), tostring(TermialID)))
 
       -- TODO: Hmm, maybe this mixes up heterogenious groups since the order of the units is not the same as in the template. 
       SpawnTemplate.units[UnitID].x   = Parkingspot.x
@@ -1455,15 +1454,16 @@ function GROUP:RespawnAtCurrentAirbase(SpawnTemplate, Takeoff, Uncontrolled) -- 
     SpawnTemplate.x = AirbaseCoord.x
     SpawnTemplate.y = AirbaseCoord.z
     
+    -- Set uncontrolled state.
     SpawnTemplate.uncontrolled=Uncontrolled
     
+    -- Destroy and respawn.
     self:Destroy()
     _DATABASE:Spawn( SpawnTemplate )
   
+    -- Reset events.
     self:ResetEvents()
-    
-    --local GroupSpawned = self:Respawn( SpawnTemplate )
-    
+
     return self
   end
   

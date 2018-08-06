@@ -219,6 +219,44 @@
 -- Hence, the default flight plan for a RAT aircraft will be: Fly from airport A to B, get respawned at C and fly to D, get respawned at E and fly to F, ...
 -- This ensures that you always have a constant number of AI aircraft on your map.
 -- 
+-- ## Parking Problems
+-- 
+-- One big issue in DCS is that not all aircraft can be spawned on every airport or airbase. In particular, bigger aircraft might not have a valid parking spot at smaller airports and 
+-- airstripes. This can lead to multiple problems in DCS.
+-- 
+-- * Landing: When an aircraft tries to land at an airport where it does not have a valid parking spot, it is immidiately despawned the moment its wheels touch the runway, i.e.
+-- when a landing event is triggered. This leads to the loss of the RAT aircraft. On possible way to circumvent the this problem is to let another RAT aircraft spawn at landing
+-- and not when it shuts down its engines. See the @{RAT.RespawnAfterLanding}() function.
+-- * Spawning: When a big aircraft is dynamically spawned on a small airbase a few things can go wrong. For example, it could be spawned at a parking spot with a shelter.
+-- Or it could be damaged by a scenery object when it is taxiing out to the runway, or it could overlap with other aircraft on parking spots near by.
+-- 
+-- You can check yourself if an aircraft has a valid parking spot at an airbase by dragging its group on the airport in the mission editor and set it to start from ramp.
+-- If it stays at the airport, it has a valid parking spot, if it jumps to another airport, it does not have a valid parking spot on that airbase.
+-- 
+-- ### Setting the Terminal Type
+-- Each parking spot has a specific type depending on its size or if a helicopter spot or a shelter etc. The classification is not perfect but it is the best we have.
+-- If you encounter problems described above, you can request a specific terminal type for the RAT aircraft. This can be done by the @{#RAT.SetTerminalType}(*terminaltype*)
+-- function. The parameter *terminaltype* can be set as follows
+-- 
+-- * AIRBASE.TerminalType.HelicopterOnly: Special spots for Helicopers.
+-- * AIRBASE.TerminalType.Shelter: Hardened Air Shelter. Currently only on Caucaus map.
+-- * AIRBASE.TerminalType.OpenMed: Open/Shelter air airplane only.
+-- * AIRBASE.TerminalType.OpenBig: Open air spawn points. Generally larger but does not guarantee large aircraft are capable of spawning there.
+-- * AIRBASE.TerminalType.OpenMedOrBig: Combines OpenMed and OpenBig spots.
+-- * AIRBASE.TerminalType.HelicopterUnsable: Combines HelicopterOnly, OpenMed and OpenBig.
+-- * AIRBASE.TerminalType.FighterAircraft: Combines Shelter, OpenMed and OpenBig spots. So effectively all spots usable by fixed wing aircraft.
+-- 
+-- So for example
+--      c17=RAT:New("C-17")
+--      c17:SetTerminalType(AIRBASE.TerminalType.OpenBig)
+--      c17:Spawn(5)
+--      
+-- This would randomly spawn five C-17s but only on airports which have big open air parking spots. Note that also only destination airports are allowed
+-- which do have this type of parking spot. This should ensure that the aircraft is able to land at the destination without beeing despawned immidiately.
+-- 
+-- Also, the aircraft are spawned only on the requested parking spot types and not on any other type. If no parking spot of this type is availabe at the
+-- moment of spawning, the group is automatically spawned in air above the selected airport.
+-- 
 -- ## Examples
 -- 
 -- Here are a few examples, how you can modify the default settings of RAT class objects.
@@ -511,7 +549,7 @@ RAT.id="RAT | "
 --- RAT version.
 -- @list version
 RAT.version={
-  version = "2.3.2",
+  version = "2.3.3",
   print = true,
 }
 
@@ -983,11 +1021,11 @@ function RAT:SetCoalitionAircraft(color)
 end
 
 --- Set country of RAT group.
--- See https://wiki.hoggitworld.com/view/DCS_enum_country
+-- See [DCS_enum_country](https://wiki.hoggitworld.com/view/DCS_enum_country)
 -- 
 -- This overrules the coalition settings. So if you want your group to be of a specific coalition, you have to set a country that is part of that coalition.
 -- @param #RAT self
--- @param #DCS.country.id id DCS country enumerator ID. For example country.id.USA or country.id.RUSSIA.
+-- @param DCS#country.id id DCS country enumerator ID. For example country.id.USA or country.id.RUSSIA.
 -- @return #RAT RAT self object.
 function RAT:SetCountry(id)
   self:F2(id)
@@ -995,10 +1033,17 @@ function RAT:SetCountry(id)
   return self
 end
 
---- Set the terminal type the aircraft use when spawning at an airbase. Cf. https://wiki.hoggitworld.com/view/DCS_func_getParking
+--- Set the terminal type the aircraft use when spawning at an airbase. See [DCS_func_getParking](https://wiki.hoggitworld.com/view/DCS_func_getParking).
+-- Note that some additional terminal types have been introduced. Check @{Wrapper.Airbase#AIRBASE} class for details.
+-- Also note that only airports which have this kind of terminal are possible departures and/or destinations.
 -- @param #RAT self
 -- @param Wrapper.Airbase#AIRBASE.TerminalType termtype Type of terminal. Use enumerator AIRBASE.TerminalType.XXX.
 -- @return #RAT RAT self object.
+-- 
+-- @usage
+-- c17=RAT:New("C-17 BIG Plane")
+-- c17:SetTerminalType(AIRBASE.TerminalType.OpenBig) -- Only very big parking spots are used.
+-- c17:Spawn(5)
 function RAT:SetTerminalType(termtype)
   self:F2(termtype)
   self.termtype=termtype
@@ -3010,14 +3055,27 @@ function RAT:_PickDeparture(takeoff)
   if self.random_departure then
   
     -- Airports of friendly coalitions.
-    for _,airport in pairs(self.airports) do
+    for _,_airport in pairs(self.airports) do
     
+      local airport=_airport --Wrapper.Airbase#AIRBASE
+      
       local name=airport:GetName()
       if not self:_Excluded(name) then
         if takeoff==RAT.wp.air then
+        
           table.insert(departures, airport:GetZone())  -- insert zone object.
+          
         else
-          table.insert(departures, airport)            -- insert airport object.
+        
+          -- Check if airbase has the right terminals.
+          local nspots=1
+          if self.termtype~=nil then
+            nspots=airport:GetParkingSpotsNumber(self.termtype)
+          end
+          
+          if nspots>0 then
+            table.insert(departures, airport)            -- insert airport object.
+          end
         end
       end
       
@@ -3034,6 +3092,14 @@ function RAT:_PickDeparture(takeoff)
           dep=AIRBASE:FindByName(name):GetZone()
         else
           dep=AIRBASE:FindByName(name)
+          -- Check if the airport has a valid parking spot
+          if self.termtype~=nil and dep~=nil then
+            local _dep=dep --Wrapper.Airbase#AIRBASE
+            local nspots=_dep:GetParkingSpotsNumber(self.termtype)
+            if nspots==0 then
+              dep=nil
+            end
+          end
         end
       elseif self:_ZoneExists(name) then
         if takeoff==RAT.wp.air then
@@ -3098,7 +3164,8 @@ function RAT:_PickDestination(departure, q, minrange, maxrange, random, landing)
   if random then
   
     -- Airports of friendly coalitions.
-    for _,airport in pairs(self.airports) do
+    for _,_airport in pairs(self.airports) do
+      local airport=_airport --Wrapper.Airbase#AIRBASE
       local name=airport:GetName()
       if self:_IsFriendly(name) and not self:_Excluded(name) and name~=departure:GetName() then
       
@@ -3110,7 +3177,14 @@ function RAT:_PickDestination(departure, q, minrange, maxrange, random, landing)
           if landing==RAT.wp.air then
             table.insert(destinations, airport:GetZone())  -- insert zone object.
           else
-            table.insert(destinations, airport)            -- insert airport object.
+            -- Check if the requested terminal type is available.
+            local nspot=1
+            if self.termtype then
+              nspot=airport:GetParkingSpotsNumber(self.termtype)
+            end
+            if nspot>0 then
+              table.insert(destinations, airport)            -- insert airport object.
+            end
           end
         end
       end
@@ -3130,6 +3204,14 @@ function RAT:_PickDestination(departure, q, minrange, maxrange, random, landing)
             dest=AIRBASE:FindByName(name):GetZone()
           else
             dest=AIRBASE:FindByName(name)
+            -- Check if the requested terminal type is available.
+            local nspot=1
+            if self.termtype then
+              nspot=dest:GetParkingSpotsNumber(self.termtype)
+            end
+            if nspot==0 then
+              dest=nil
+            end
           end
         elseif self:_ZoneExists(name) then
           if landing==RAT.wp.air then
@@ -3287,16 +3369,31 @@ function RAT:_GetAirportsOfMap()
   end
 end
 
---- Get all "friendly" airports of the current map.
+--- Get all "friendly" airports of the current map. Fills the self.airports{} table.
 -- @param #RAT self
 function RAT:_GetAirportsOfCoalition()
   for _,coalition in pairs(self.ctable) do
-    for _,airport in pairs(self.airports_map) do
+    for _,_airport in pairs(self.airports_map) do
+      local airport=_airport --Wrapper.Airbase#AIRBASE
+      local category=airport:GetDesc().category
       if airport:GetCoalition()==coalition then
         -- Planes cannot land on FARPs.
-        local condition1=self.category==RAT.cat.plane and airport:GetTypeName()=="FARP"
+        --local condition1=self.category==RAT.cat.plane and airport:GetTypeName()=="FARP"
+        local condition1=self.category==RAT.cat.plane and category==Airbase.Category.HELIPAD
         -- Planes cannot land on ships.
-        local condition2=self.category==RAT.cat.plane and airport:GetCategory()==1
+        --local condition2=self.category==RAT.cat.plane and airport:GetCategory()==1
+        local condition2=self.category==RAT.cat.plane and category==Airbase.Category.SHIP
+        
+        -- Check that airport has the requested terminal types.
+        -- NOT good here because we would also not allow any airport zones!
+        --[[
+        local nspots=1
+        if self.termtype then
+          nspots=airport:GetParkingSpotsNumber(self.termtype)
+        end
+        local condition3 = nspots==0
+        ]]
+        
         if not (condition1 or condition2) then
           table.insert(self.airports, airport)
         end
@@ -3305,8 +3402,8 @@ function RAT:_GetAirportsOfCoalition()
   end
     
   if #self.airports==0 then
-    local text="ERROR! No possible departure/destination airports found."
-    MESSAGE:New(text, 30):ToAll()
+    local text=string.format("No possible departure/destination airports found for RAT %s.", tostring(self.alias))
+    MESSAGE:New(text, 10):ToAll()
     self:E(RAT.id..text)
   end
 end
@@ -5254,7 +5351,7 @@ function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace, departure, take
                
         if spawnonground then
           
-          -- Shíps and FARPS seem to have a build in queue.
+          -- Shï¿½ps and FARPS seem to have a build in queue.
           if spawnonship or spawnonfarp or spawnonrunway or automatic then
             self:T(RAT.id..string.format("RAT group %s spawning at farp, ship or runway %s.", self.alias, departure:GetName()))
 

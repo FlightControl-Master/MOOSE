@@ -429,7 +429,7 @@ function AI_CARGO_HELICOPTER:onafterBoard( Helicopter, From, Event, To, Cargo )
   
 end
 
---- On before Land event.
+--- On before Loaded event. Check if cargo is loaded.
 -- @param #AI_CARGO_HELICOPTER self
 -- @param Wrapper.Group#GROUP Helicopter
 -- @param #string From From state.

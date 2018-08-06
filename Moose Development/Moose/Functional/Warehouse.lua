@@ -44,7 +44,7 @@
 -- 
 -- ===
 -- 
--- ![Banner Image](..\Presentations\WAREHOUSE\Warehouse_pic.JPG)
+-- ![Banner Image](..\Presentations\WAREHOUSE\Warehouse_Main.JPG)
 -- 
 -- Warehouse
 -- 
@@ -132,6 +132,7 @@ WAREHOUSE.version="0.1.0"
 -- TODO: Spawn warehouse assets as uncontrolled or AI off and activate them when requested.
 -- TODO: Handle cases with immobile units.
 -- TODO: Add queue.
+-- TODO: How to handle multiple units in a transport group?
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor(s)
