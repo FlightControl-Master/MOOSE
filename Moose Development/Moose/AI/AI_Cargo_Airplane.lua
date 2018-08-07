@@ -45,6 +45,7 @@ function AI_CARGO_AIRPLANE:New( Airplane, CargoSet )
   self:AddTransition( "Unboarding", "Unloaded", "Unloaded" )
 
   self:AddTransition( "*", "Landed", "*" )
+  self:AddTransition( "*", "Home" ,  "*" ) 
   
   self:AddTransition( "*", "Destroyed", "Destroyed" )
 
@@ -528,4 +529,3 @@ function AI_CARGO_AIRPLANE:Route( Airplane, Airbase, Speed, Uncontrolled )
     end
   end
 end
-

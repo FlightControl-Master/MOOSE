@@ -532,8 +532,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Airbase, AssetDescriptor, Ass
   -- Pickup and depoly locations.
   local PickupAirbaseSet = SET_AIRBASE:New():AddAirbase(self.homebase)
   local DeployAirbaseSet = SET_AIRBASE:New():AddAirbase(Airbase)
-  local DeployZoneSet    = SET_ZONE:New():AddZonesByName(Airbase:GetZone():GetName())
-    
+  local DeployZoneSet    = SET_ZONE:New():FilterPrefixes( "Deploy" ):FilterStart()
   local CargoTransport --AI.AI_Cargo_Dispatcher#AI_CARGO_DISPATCHER
 
   -- Filter the requested transport assets.
@@ -634,7 +633,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Airbase, AssetDescriptor, Ass
       
       -- Spawn plane at airport in uncontrolled state.
       -- TODO: check terminal type.
-      local spawngroup=SPAWN:NewWithAlias(_assetitem.templatename,_alias):InitUnControlled(false):SpawnAtAirbase(self.homebase, SPAWN.Takeoff.Cold, nil, AIRBASE.TerminalType.HelicopterUsable, false)
+      local spawngroup=SPAWN:NewWithAlias(_assetitem.templatename,_alias):InitUnControlled(false):SpawnAtAirbase(self.homebase, SPAWN.Takeoff.Hot, nil, AIRBASE.TerminalType.HelicopterUsable, false)
       
       if spawngroup then
         -- Set state of warehouse so we can retrieve it later.
@@ -779,6 +778,13 @@ function WAREHOUSE:onafterRequest(From, Event, To, Airbase, AssetDescriptor, Ass
 
   --- Function called when cargo has arrived and was unloaded.
   function CargoTransport:OnAfterUnloaded(From, Event, To, Carrier, Cargo)
+  
+    env.info("FF: OnAfterUnloaded")
+    self:E({From=From})
+    self:E({Event=Event})
+    self:E({To=To})
+    self:E({Carrier=Carrier})
+    self:E({Cargo=Cargo})
     
     -- Get group obejet.
     local group=Cargo:GetObject() --Wrapper.Group#GROUP
