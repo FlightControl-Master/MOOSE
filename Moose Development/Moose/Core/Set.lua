@@ -809,6 +809,16 @@ function SET_GROUP:GetAliveSet()
   return AliveSet.Set or {}
 end
 
+--- Add a GROUP to SET_GROUP.
+-- @param Core.Set#SET_GROUP self
+-- @param Wrapper.Group#GROUP group The group which should be added to the set.
+-- @return self
+function SET_GROUP:AddGroup( group )
+
+  self:Add( group:GetName(), group )
+    
+  return self
+end
 
 --- Add GROUP(s) to SET_GROUP.
 -- @param Core.Set#SET_GROUP self
@@ -3965,6 +3975,17 @@ function SET_AIRBASE:New()
   -- Inherits from BASE
   local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.AIRBASES ) )
 
+  return self
+end
+
+--- Add an AIRBASE object to SET_AIRBASE.
+-- @param Core.Set#SET_AIRBASE self
+-- @param Wrapper.Airbase#AIRBASE airbase Airbase that should be added to the set.
+-- @return self
+function SET_AIRBASE:AddAirbase( airbase )
+
+  self:Add( airbase:GetName(), airbase )
+  
   return self
 end
 

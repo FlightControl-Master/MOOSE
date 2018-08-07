@@ -266,25 +266,36 @@ function AI_CARGO_AIRPLANE:onafterPickup( Airplane, From, Event, To, Airbase, Sp
 
   if Airplane and Airplane:IsAlive() then
   
+    -- Get closest airbase of current position.
+    local ClosestAirbase, DistToAirbase=Airplane:GetCoordinate():GetClosestAirbase()
+  
     -- Two cases. Aircraft spawned in air or at an airbase.
     if Airplane:InAir() then
-      self.Airbase=nil
-    else
-      self.Airbase=Airplane:GetCoordinate():GetClosestAirbase()
+      self.Airbase=nil  --> route will start in air
+    else      
+      self.Airbase=ClosestAirbase
     end
     
-    -- Route aircraft to pickup airbase.
-    self:Route( Airplane, Airbase, Speed ) 
-        
-    -- Set airbase as starting point in the next Route() call.
-    self.Airbase = Airbase
+    if Airplane:InAir() or Airbase:GetCoordinate():Get2DDistance(ClosestAirbase:GetCoordinate())>100 then
     
-    -- Aircraft is on a pickup mission.
-    self.RoutePickup = true
+      -- Route aircraft to pickup airbase.
+      self:Route( Airplane, Airbase, Speed ) 
+          
+      -- Set airbase as starting point in the next Route() call.
+      self.Airbase = Airbase
+      
+      -- Aircraft is on a pickup mission.
+      self.RoutePickup = true
+      
+      -- Unclear!?
+      self.Transporting = true
+      self.Relocating = false
+    else
     
-    -- Unclear!?
-    self.Transporting = true
-    self.Relocating = false
+      -- We are already at the right airbase ==> Landed ==> triggers loading of troops. Is usually called at engine shutdown event.
+      self:Landed()
+      
+    end
   end
   
 end
