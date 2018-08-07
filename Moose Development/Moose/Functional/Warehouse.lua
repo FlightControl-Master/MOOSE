@@ -535,6 +535,9 @@ function WAREHOUSE:onafterRequest(From, Event, To, Airbase, AssetDescriptor, Ass
   local DeployZoneSet    = SET_ZONE:New():AddZonesByName(Airbase:GetZone():GetName())
     
   local CargoTransport --AI.AI_Cargo_Dispatcher#AI_CARGO_DISPATCHER
+
+  -- Filter the requested transport assets.
+  local _assetstock=self:_FilterStock(self.stock, WAREHOUSE.Descriptor.ATTRIBUTE, TransportType)  
   
   -- Dependent on transport type, spawn the transports and set up the dispatchers.
   if TransportType==WAREHOUSE.TransportType.AIRPLANE then

@@ -216,6 +216,31 @@ function AI_CARGO_DISPATCHER:SetHomeZone( HomeZone )
   return self
 end
 
+--- Set the home airbase. This is for air units, i.e. helicopters and airplanes.
+-- When there is nothing anymore to pickup, the carriers will go back to their home base. They will await here new orders.
+-- @param #AI_CARGO_DISPATCHER self
+-- @param Wrapper.Airbase#AIRBASE HomeBase Airbase where the carriers will go after all pickup assignments are done.
+-- @return #AI_CARGO_DISPATCHER self
+function AI_CARGO_DISPATCHER:SetHomeBase( HomeBase )
+
+  self.HomeBase = HomeBase
+  
+  return self
+end
+
+
+--- Set the home base.
+-- When there is nothing anymore to pickup, the carriers will return to their home airbase. There they will await new orders.
+-- @param #AI_CARGO_DISPATCHER self
+-- @param Wrapper.Airbase#AIRBASE HomeBase The airbase where the carrier will go to, once they completed all pending assignments.
+-- @return #AI_CARGO_DISPATCHER self
+function AI_CARGO_DISPATCHER:SetHomeBase( HomeBase )
+
+  self.HomeBase = HomeBase
+  
+  return self
+end
+
 
 --- Sets or randomizes the pickup location for the carrier around the cargo coordinate in a radius defined an outer and optional inner radius.
 -- This radius is influencing the location where the carrier will land to pickup the cargo.
@@ -408,6 +433,7 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
           end
         end
       end
+      
       if PickupCargo then
         self.CarrierHome[Carrier] = nil
         local PickupCoordinate = PickupCargo:GetCoordinate():GetRandomCoordinateInRadius( self.PickupOuterRadius, self.PickupInnerRadius )

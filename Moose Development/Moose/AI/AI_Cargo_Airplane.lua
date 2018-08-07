@@ -235,11 +235,12 @@ function AI_CARGO_AIRPLANE:onafterLanded( Airplane, From, Event, To )
   self:F({IsAlive=Airplane:IsAlive()})
   self:F({RoutePickup=self.RoutePickup})
 
-  if Airplane and Airplane:IsAlive() then
+  if Airplane and Airplane:IsAlive()~=nil then
 
     -- Aircraft was sent to this airbase to pickup troops. Initiate loadling.
     if self.RoutePickup == true then
-      self:Load( Airplane:GetPointVec2() )
+      env.info("FF load airplane "..Airplane:GetName())
+      self:Load( Airplane:GetCoordinate() )
       self.RoutePickup = false
     end
     
@@ -264,10 +265,13 @@ end
 -- @param #number Speed in km/h for travelling to pickup base.
 function AI_CARGO_AIRPLANE:onafterPickup( Airplane, From, Event, To, Airbase, Speed )
 
-  if Airplane and Airplane:IsAlive() then
+  if Airplane and Airplane:IsAlive()~=nil then
+    env.info("FF onafterpick aircraft alive")
   
     -- Get closest airbase of current position.
     local ClosestAirbase, DistToAirbase=Airplane:GetCoordinate():GetClosestAirbase()
+    
+    env.info("FF onafterpickup closest airbase "..ClosestAirbase:GetName())
   
     -- Two cases. Aircraft spawned in air or at an airbase.
     if Airplane:InAir() then
@@ -276,7 +280,13 @@ function AI_CARGO_AIRPLANE:onafterPickup( Airplane, From, Event, To, Airbase, Sp
       self.Airbase=ClosestAirbase
     end
     
-    if Airplane:InAir() or Airbase:GetCoordinate():Get2DDistance(ClosestAirbase:GetCoordinate())>100 then
+    -- Distance from closest to pickup airbase ==> we need to know if we are already at the pickup airbase. 
+    local Dist=Airbase:GetCoordinate():Get2DDistance(ClosestAirbase:GetCoordinate())
+    env.info("Distance closest to pickup airbase = "..Dist)
+    
+    if Airplane:InAir() or Dist>500 then
+    
+      env.info("FF onafterpickup routing to airbase "..ClosestAirbase:GetName())
     
       -- Route aircraft to pickup airbase.
       self:Route( Airplane, Airbase, Speed ) 
@@ -291,11 +301,15 @@ function AI_CARGO_AIRPLANE:onafterPickup( Airplane, From, Event, To, Airbase, Sp
       self.Transporting = true
       self.Relocating = false
     else
+      env.info("FF onafterpick calling landed")
     
       -- We are already at the right airbase ==> Landed ==> triggers loading of troops. Is usually called at engine shutdown event.
+      self.RoutePickup=true
       self:Landed()
       
     end
+  else
+    env.info("FF onafterpick aircraft not alive")
   end
   
 end
@@ -345,8 +359,9 @@ function AI_CARGO_AIRPLANE:onafterLoad( Airplane, From, Event, To, Coordinate )
 
   if Airplane and Airplane:IsAlive()~=nil then
   
-    for _, Cargo in pairs( self.CargoSet:GetSet() ) do
-      self:F({Cargo:GetName()})
+    for _,_Cargo in pairs( self.CargoSet:GetSet() ) do
+      self:F({_Cargo:GetName()})
+      local Cargo=_Cargo --Cargo.Cargo#CARGO
       local InRadius = Cargo:IsInLoadRadius( Coordinate )
       if InRadius then
         self:__Board( 5 )
