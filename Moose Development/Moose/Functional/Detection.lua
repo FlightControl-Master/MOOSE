@@ -515,6 +515,7 @@ do -- DETECTION_BASE
       
       for DetectionGroupID, DetectionGroupData in pairs( self.DetectionSetGroup:GetSet() ) do
         --self:F( { DetectionGroupData } )
+        self:F( {"FF", DetectionGroupData } )
         self:__DetectionGroup( DetectDelay, DetectionGroupData, DetectionTimeStamp ) -- Process each detection asynchronously.
         self.DetectionCount = self.DetectionCount + 1
         DetectDelay = DetectDelay + 1
@@ -1877,7 +1878,7 @@ do -- DETECTION_UNITS
   -- @param #DETECTION_UNITS self
   -- @return #DETECTION_UNITS self
   function DETECTION_UNITS:CreateDetectionItems()
-  
+    env.info("FF createdetectionitmes")
     -- Loop the current detected items, and check if each object still exists and is detected.
     
     for DetectedItemKey, DetectedItem in pairs( self.DetectedItems ) do

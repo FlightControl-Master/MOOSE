@@ -81,11 +81,11 @@ do -- world
   
   --- Searches a defined volume of 3d space for the specified objects within it and then can run function on each returned object. See [hoggit](https://wiki.hoggitworld.com/view/DCS_func_searchObjects).
   -- @function [parent=#world] searchObjects
-  -- @param #DCS.Object.Category objectcategory Category (can be a table) of objects to search.
-  -- @param #DCS word.VolumeType volume Shape of the search area/volume.
-  -- @param #ObjectSeachHandler handler A function that handles the search.
+  -- @param DCS#Object.Category objectcategory Category (can be a table) of objects to search.
+  -- @param DCS#word.VolumeType volume Shape of the search area/volume.
+  -- @param ObjectSeachHandler handler A function that handles the search.
   -- @param #table any Additional data.
-  -- @return #DCS.unit  
+  -- @return DCS#Unit  
   
   --- Returns a table of mark panels indexed numerically that are present within the mission. See [hoggit](https://wiki.hoggitworld.com/view/DCS_func_getMarkPanels)
   -- @function [parent=#world] getMarkPanels
@@ -959,6 +959,7 @@ do -- Group
   -- @field HELICOPTER
   -- @field GROUND
   -- @field SHIP
+  -- @field TRAIN
   
   -- Static Functions
   

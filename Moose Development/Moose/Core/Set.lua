@@ -809,6 +809,16 @@ function SET_GROUP:GetAliveSet()
   return AliveSet.Set or {}
 end
 
+--- Add a GROUP to SET_GROUP.
+-- @param Core.Set#SET_GROUP self
+-- @param Wrapper.Group#GROUP group The group which should be added to the set.
+-- @return self
+function SET_GROUP:AddGroup( group )
+
+  self:Add( group:GetName(), group )
+    
+  return self
+end
 
 --- Add GROUP(s) to SET_GROUP.
 -- @param Core.Set#SET_GROUP self
@@ -3968,6 +3978,17 @@ function SET_AIRBASE:New()
   return self
 end
 
+--- Add an AIRBASE object to SET_AIRBASE.
+-- @param Core.Set#SET_AIRBASE self
+-- @param Wrapper.Airbase#AIRBASE airbase Airbase that should be added to the set.
+-- @return self
+function SET_AIRBASE:AddAirbase( airbase )
+
+  self:Add( airbase:GetName(), airbase )
+  
+  return self
+end
+
 --- Add AIRBASEs to SET_AIRBASE.
 -- @param Core.Set#SET_AIRBASE self
 -- @param #string AddAirbaseNames A single name or an array of AIRBASE names.
@@ -4007,6 +4028,45 @@ function SET_AIRBASE:FindAirbase( AirbaseName )
 
   local AirbaseFound = self.Set[AirbaseName]
   return AirbaseFound
+end
+
+
+--- Finds an Airbase in range of a coordinate.
+-- @param #SET_AIRBASE self
+-- @param Core.Point#COORDINATE Coordinate
+-- @param #number Range
+-- @return Wrapper.Airbase#AIRBASE The found Airbase.
+function SET_AIRBASE:FindAirbaseInRange( Coordinate, Range )
+
+  local AirbaseFound = nil
+
+  for AirbaseName, AirbaseObject in pairs( self.Set ) do
+  
+    local AirbaseCoordinate = AirbaseObject:GetCoordinate()
+    local Distance = Coordinate:Get2DDistance( AirbaseCoordinate )
+    
+    self:F({Distance=Distance})
+  
+    if Distance <= Range then
+      AirbaseFound = AirbaseObject
+      break
+    end
+      
+  end
+
+  return AirbaseFound
+end
+
+
+--- Finds a random Airbase in the set.
+-- @param #SET_AIRBASE self
+-- @return Wrapper.Airbase#AIRBASE The found Airbase.
+function SET_AIRBASE:GetRandomAirbase()
+
+  local RandomAirbase = self:GetRandom()
+  self:F( { RandomAirbase = RandomAirbase:GetName() } )
+
+  return RandomAirbase
 end
 
 

@@ -308,7 +308,7 @@ end
 
 --- Sends a MESSAGE to all players. 
 -- @param #MESSAGE self
--- @param Core.Settings#Settings (Optional) Settings for message display
+-- @param Core.Settings#Settings Settings (Optional) Settings for message display.
 -- @return #MESSAGE
 -- @usage
 -- -- Send a message created to all players.

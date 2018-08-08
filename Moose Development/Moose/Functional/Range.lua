@@ -68,6 +68,8 @@
 -- @field #number dtBombtrack Time step [sec] used for tracking released bomb/rocket positions. Default 0.005 seconds.
 -- @field #number BombtrackThreshold Bombs/rockets/missiles are only tracked if player-range distance is smaller than this threashold [m]. Default 25000 m.
 -- @field #number Tmsg Time [sec] messages to players are displayed. Default 30 sec.
+-- @field #string examinergroupname Name of the examiner group which should get all messages.
+-- @field #boolean examinerexclusive If true, only the examiner gets messages. If false, clients and examiner get messages.
 -- @field #number strafemaxalt Maximum altitude above ground for registering for a strafe run. Default is 914 m = 3000 ft. 
 -- @field #number ndisplayresult Number of (player) results that a displayed. Default is 10.
 -- @field Utilities.Utils#SMOKECOLOR BombSmokeColor Color id used for smoking bomb targets.
@@ -234,6 +236,8 @@ RANGE={
   dtBombtrack=0.005,
   BombtrackThreshold=25000,
   Tmsg=30,
+  examinergroupname=nil,
+  examinerexclusive=nil,
   strafemaxalt=914,
   ndisplayresult=10,
   BombSmokeColor=SMOKECOLOR.Red,
@@ -279,8 +283,8 @@ RANGE.MenuF10={}
 RANGE.id="RANGE | "
 
 --- Range script version.
--- @field #number version
-RANGE.version="1.2.0"
+-- @field #string version
+RANGE.version="1.2.1"
 
 --TODO list:
 --TODO: Add custom weapons, which can be specified by the user.
@@ -432,6 +436,15 @@ end
 -- @param #number time Time in seconds. Default is 30 s.
 function RANGE:SetMessageTimeDuration(time)
   self.Tmsg=time or RANGE.Defaults.Tmsg
+end
+
+--- Set messages to examiner. The examiner will receive messages from all clients.
+-- @param #RANGE self
+-- @param #string examinergroupname Name of the group of the examiner.
+-- @param #boolean exclusively If true, messages are send exclusively to the examiner, i.e. not to the clients.
+function RANGE:SetMessageToExaminer(examinergroupname, exclusively)
+  self.examinergroupname=examinergroupname
+  self.examinerexclusive=exclusively
 end
 
 --- Set max number of player results that are displayed.
@@ -2119,12 +2132,23 @@ function RANGE:_DisplayMessageToGroup(_unit, _text, _time, _clear)
   -- Group ID.
   local _gid=_unit:GetGroup():GetID()
   
-  if _gid then
+  if _gid and not self.examinerexclusive then
     if _clear == true then
       trigger.action.outTextForGroup(_gid, _text, _time, _clear)
     else
       trigger.action.outTextForGroup(_gid, _text, _time)
     end
+  end
+
+  if self.examinergroupname~=nil then
+    local _examinerid=GROUP:FindByName(self.examinergroupname):GetID()
+    if _examinerid then
+      if _clear == true then
+        trigger.action.outTextForGroup(_examinerid, _text, _time, _clear)
+      else
+        trigger.action.outTextForGroup(_examinerid, _text, _time)
+      end
+    end  
   end
   
 end

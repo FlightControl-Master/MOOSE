@@ -265,14 +265,14 @@ AIRBASE.PersianGulf = {
 -- 
 -- Supported types are:
 -- 
--- * AIRBASE.TerminalType.Runway: Valid spawn points on runway.
--- * AIRBASE.TerminalType.HelicopterOnly: Special spots for Helicopers.
--- * AIRBASE.TerminalType.Shelter: Hardened Air Shelter. Currently only on Caucaus map.
--- * AIRBASE.TerminalType.OpenMed: Open/Shelter air airplane only.
--- * AIRBASE.TerminalType.OpenBig: Open air spawn points. Generally larger but does not guarantee large aircraft are capable of spawning there.
--- * AIRBASE.TerminalType.OpenMedOrBig: Combines OpenMed and OpenBig spots.
--- * AIRBASE.TerminalType.HelicopterUnsable: Combines HelicopterOnly, OpenMed and OpenBig.
--- * AIRBASE.TerminalType.FighterAircraft: Combines Shelter. OpenMed and OpenBig spots. So effectively all spots usable by fixed wing aircraft.
+-- * AIRBASE.TerminalType.Runway = 16: Valid spawn points on runway.
+-- * AIRBASE.TerminalType.HelicopterOnly = 40: Special spots for Helicopers.
+-- * AIRBASE.TerminalType.Shelter = 68: Hardened Air Shelter. Currently only on Caucaus map.
+-- * AIRBASE.TerminalType.OpenMed = 72: Open/Shelter air airplane only.
+-- * AIRBASE.TerminalType.OpenBig = 104: Open air spawn points. Generally larger but does not guarantee large aircraft are capable of spawning there.
+-- * AIRBASE.TerminalType.OpenMedOrBig = 176: Combines OpenMed and OpenBig spots.
+-- * AIRBASE.TerminalType.HelicopterUnsable = 216: Combines HelicopterOnly, OpenMed and OpenBig.
+-- * AIRBASE.TerminalType.FighterAircraft = 244: Combines Shelter. OpenMed and OpenBig spots. So effectively all spots usable by fixed wing aircraft.
 -- @field TerminalType
 AIRBASE.TerminalType = {
   Runway=16,
@@ -349,7 +349,7 @@ function AIRBASE.GetAllAirbases(coalition)
   
   local airbases={}
   for _,airbase in pairs(_DATABASE.AIRBASES) do
-    if (coalition~=nil and self:GetCoalition()==coalition) or coalition==nil then
+    if (coalition~=nil and airbase:GetCoalition()==coalition) or coalition==nil then
       table.insert(airbases, airbase)
     end
   end
