@@ -188,7 +188,6 @@ function AI_CARGO_AIRPLANE:SetCarrier( Airplane )
   
   
   function Airplane:OnEventEngineShutdown( EventData )
-    self:F("Calling")
     AICargo:Landed( self.Airplane )
   end
   
@@ -233,8 +232,6 @@ end
 function AI_CARGO_AIRPLANE:onafterLanded( Airplane, From, Event, To )
 
   self:F({Airplane, From, Event, To})
-  self:F({IsAlive=Airplane:IsAlive()})
-  self:F({RoutePickup=self.RoutePickup})
 
   if Airplane and Airplane:IsAlive()~=nil then
 
@@ -406,6 +403,7 @@ function AI_CARGO_AIRPLANE:onafterLoaded( Airplane, From, Event, To )
   env.info("FF troops loaded into cargo plane")
   
   if Airplane and Airplane:IsAlive() then
+    -- Check if another cargo can be loaded into the airplane.
   end
   
 end

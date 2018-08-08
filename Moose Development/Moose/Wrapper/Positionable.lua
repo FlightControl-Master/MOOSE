@@ -798,56 +798,99 @@ function POSITIONABLE:GetLaserCode() --R2.1
   return self.LaserCode
 end
 
---- Add cargo.
--- @param #POSITIONABLE self
--- @param Core.Cargo#CARGO Cargo
--- @return #POSITIONABLE
-function POSITIONABLE:AddCargo( Cargo )
-  self.__.Cargo[Cargo] = Cargo
-  return self
-end
+do -- Cargo
 
---- Get all contained cargo.
--- @param #POSITIONABLE self
--- @return #POSITIONABLE
-function POSITIONABLE:GetCargo()
-  return self.__.Cargo
-end
-
-
-
---- Remove cargo.
--- @param #POSITIONABLE self
--- @param Core.Cargo#CARGO Cargo
--- @return #POSITIONABLE
-function POSITIONABLE:RemoveCargo( Cargo )
-  self.__.Cargo[Cargo] = nil
-  return self
-end
-
---- Returns if carrier has given cargo.
--- @param #POSITIONABLE self
--- @return Core.Cargo#CARGO Cargo
-function POSITIONABLE:HasCargo( Cargo )
-  return self.__.Cargo[Cargo]
-end
-
---- Clear all cargo.
--- @param #POSITIONABLE self
-function POSITIONABLE:ClearCargo()
-  self.__.Cargo = {}
-end
-
---- Get cargo item count.
--- @param #POSITIONABLE self
--- @return Core.Cargo#CARGO Cargo
-function POSITIONABLE:CargoItemCount()
-  local ItemCount = 0
-  for CargoName, Cargo in pairs( self.__.Cargo ) do
-    ItemCount = ItemCount + Cargo:GetCount()
+  --- Add cargo.
+  -- @param #POSITIONABLE self
+  -- @param Core.Cargo#CARGO Cargo
+  -- @return #POSITIONABLE
+  function POSITIONABLE:AddCargo( Cargo )
+    self.__.Cargo[Cargo] = Cargo
+    return self
   end
-  return ItemCount
-end
+  
+  --- Get all contained cargo.
+  -- @param #POSITIONABLE self
+  -- @return #POSITIONABLE
+  function POSITIONABLE:GetCargo()
+    return self.__.Cargo
+  end
+  
+  
+  
+  --- Remove cargo.
+  -- @param #POSITIONABLE self
+  -- @param Core.Cargo#CARGO Cargo
+  -- @return #POSITIONABLE
+  function POSITIONABLE:RemoveCargo( Cargo )
+    self.__.Cargo[Cargo] = nil
+    return self
+  end
+  
+  --- Returns if carrier has given cargo.
+  -- @param #POSITIONABLE self
+  -- @return Core.Cargo#CARGO Cargo
+  function POSITIONABLE:HasCargo( Cargo )
+    return self.__.Cargo[Cargo]
+  end
+  
+  --- Clear all cargo.
+  -- @param #POSITIONABLE self
+  function POSITIONABLE:ClearCargo()
+    self.__.Cargo = {}
+  end
+  
+  --- Get cargo item count.
+  -- @param #POSITIONABLE self
+  -- @return Core.Cargo#CARGO Cargo
+  function POSITIONABLE:CargoItemCount()
+    local ItemCount = 0
+    for CargoName, Cargo in pairs( self.__.Cargo ) do
+      ItemCount = ItemCount + Cargo:GetCount()
+    end
+    return ItemCount
+  end
+  
+  --- Get Cargo Bay Free Volume in m3.
+  -- @param #POSITIONABLE self
+  -- @return #number CargoBayFreeVolume
+  function POSITIONABLE:GetCargoBayFreeVolume()
+    local CargoVolume = 0
+    for CargoName, Cargo in pairs( self.__.Cargo ) do
+      CargoVolume = CargoVolume + Cargo:GetVolume()
+    end
+    return self.__.CargoBayVolumeLimit - CargoVolume
+  end
+  
+  --- Get Cargo Bay Free Weight in kg.
+  -- @param #POSITIONABLE self
+  -- @return #number CargoBayFreeWeight
+  function POSITIONABLE:GetCargoBayFreeWeight()
+    local CargoWeight = 0
+    for CargoName, Cargo in pairs( self.__.Cargo ) do
+      CargoWeight = CargoWeight + Cargo:GetWeight()
+    end
+    return self.__.CargoBayWeightLimit - CargoWeight
+  end
+
+  --- Get Cargo Bay Volume Limit in m3.
+  -- @param #POSITIONABLE self
+  -- @param #number VolumeLimit
+  function POSITIONABLE:SetCargoBayVolumeLimit( VolumeLimit )
+    self.__.CargoBayVolumeLimit = VolumeLimit
+  end
+  
+  --- Get Cargo Bay Weight Limit in kg.
+  -- @param #POSITIONABLE self
+  -- @param #number WeightLimit
+  function POSITIONABLE:GetCargoBayFreeWeightLimit( WeightLimit )
+    self.__.CargoBayWeightLimit = WeightLimit
+  end
+  
+  
+  
+
+end --- Cargo
 
 --- Signal a flare at the position of the POSITIONABLE.
 -- @param #POSITIONABLE self
