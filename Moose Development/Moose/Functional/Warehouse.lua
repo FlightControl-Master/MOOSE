@@ -252,6 +252,15 @@ function WAREHOUSE:NewAirbase(airbase)
   return self
 end
 
+--- Set a zone where the (ground) assets of the warehouse are spawned once requested.
+-- @param #WAREHOUSE self
+-- @param Core.Zone#ZONE zone The spawn zone.
+-- @return #WAREHOUSE self
+function WAREHOUSE:SetSpawnZone(zone)
+  self.spawnzone=zone
+  return self
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM states
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -262,7 +271,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function WAREHOUSE:onafterStart(From, Event, To)
-  self:E(self.wid..string.format("Starting warehouse at airbase %s.", self.homebase:GetName()))
+  self:E(self.wid..string.format("Starting warehouse at airbase %s, category %d, coalition %d.", self.homebase:GetName(), self.category, self.coalition))
 
   -- handle events
   -- event takeoff
@@ -307,13 +316,7 @@ function WAREHOUSE:onafterStatus(From, Event, To)
   end
 
   -- Print queue.
-  env.info(self.wid.."Queue:")
-  for _,_qitem in ipairs(self.queue) do
-    local qitem=_qitem --#WAREHOUSE.Queueitem
-    local text=string.format("uid=%d, prio=%d, airbase=%s, descriptor: %s=%s, nasssets=%d, transport=%s, ntransport=%d",
-      qitem.uid, qitem.prio, qitem.airbase:GetName(), qitem.assetdesc,tostring(qitem.assetdescval),qitem.nasset,qitem.transporttype,qitem.ntransport)
-    env.info(text)
-  end
+  self:_PrintQueue()
 
   -- Check queue and handle requests if possible.
   local request=self:_CheckQueue()
@@ -325,7 +328,7 @@ function WAREHOUSE:onafterStatus(From, Event, To)
   end
 
   -- Call status again in 30 sec.
-  self:__Status(30)
+  self:__Status(10)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -384,12 +387,15 @@ function WAREHOUSE:_CheckQueue()
     local okay=true
     -- Check if number of requested assets is in stock.
     local _instock=#self:_FilterStock(self.stock, qitem.assetdesc, qitem.assetdescval)
+    env.info(string.format("FF desc = %s val=%s number=%d", qitem.assetdesc, tostring(qitem.assetdescval),_instock))
     if qitem.nasset > _instock then
+      env.info("FF check queue nasset > instock okay=false")
       okay=false
     end
     -- Check if enough transport units are in stock.
     _instock=#self:_FilterStock(self.stock, WAREHOUSE.Descriptor.ATTRIBUTE, qitem.transporttype)
     if qitem.ntransport > _instock then
+      env.info("FF check queue ntransport > instock okay=false")
       okay=false
     end
     return okay
@@ -468,6 +474,13 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
   ----------------------------------------------------------------
 
+  -- New empty cargo set in case we need it.
+  local CargoGroups = SET_CARGO:New()
+
+  --TODO: make nearradius depended on transport type and asset type.
+  local _loadradius=5000
+  local _nearradius=35
+
   -- Filter the requested assets.
   local _assetstock=self:_FilterStock(self.stock, Request.assetdesc, Request.assetdescval)
 
@@ -482,17 +495,20 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     local _assetitem=_assetstock[i] --#WAREHOUSE.Stockitem
 
     -- Find a random point within the spawn zone.
-    local spawncoord=self.spawnzone:GetRandomCoordinate()
-    
-    spawncoord:MarkToAll(string.format("spawnpoint %d",i))
+    local spawncoord=self.spawnzone:GetRandomCoordinate()    
     
     -- Alias of the group. Spawn with ALIAS here or DCS crashes!
-    local _alias=string.format("%s_WHID%04d", _assetitem.templatename,_assetitem.id)
+    local _alias=string.format("%s_AssetID-%04d_RequestID-%04d", _assetitem.templatename,_assetitem.id,Request.uid)
     local _spawn=SPAWN:NewWithAlias(_assetitem.templatename,_alias)
-    local _group  
+    local _group=nil --Wrapper.Group#GROUP
+    
+    -- Set a marker for the spawned group.
+    spawncoord:MarkToAll(string.format("Spawnpoint %s",_alias))
+      
     if _assetitem.category==Group.Category.GROUND then
       -- Spawn ground troops.      
-      _group=_spawn:SpawnFromCoordinate(spawncoord)      
+      _group=_spawn:SpawnFromCoordinate(spawncoord)
+      env.info(string.format("FF spawning group %s", _alias))  
     elseif _assetitem.category==Group.Category.AIRPLANE or _assetitem.category==Group.Category.HELICOPTER then
       -- Spawn air units.
       local _takeoff=SPAWN.Takeoff.Cold
@@ -512,6 +528,12 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
       _cargotype=_assetitem.attribute
       _cargocategory=_assetitem.category
       table.insert(_delid,_assetitem.id)
+
+      if Request.transporttype ~= WAREHOUSE.TransportType.SELFPROPELLED then
+        local cargogroup = CARGO_GROUP:New(_group, _alias, _alias, _loadradius, _nearradius)
+        CargoGroups:AddCargo(cargogroup)
+      end
+
     end
   end
 
@@ -551,22 +573,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     return
   end
 
-  ----------------------------------------------------------------
-  -- New empty cargo set.
-  local CargoGroups = SET_CARGO:New()
-
-  --TODO: make nearradius depended on transport type and asset type.
-  local _loadradius=5000
-  local _nearradius=35
-
-  -- Add spawned groups to cargo group object.
-  for _i,_spawngroup in pairs(_spawngroups) do
-    local _name=string.format("%s %d", Request.assetdescval, _i)
-    env.info(string.format("FF cargo group %d: %s",_i,_name))
-    local cargogroup = CARGO_GROUP:New(_spawngroup, Request.assetdescval, _name, _loadradius, _nearradius)
-    CargoGroups:AddCargo(cargogroup)
-  end
-
+  env.info("FF cargo set name(s) = "..CargoGroups:GetObjectNames())
   ----------------------------------------------------------------
 
   local TransportSet = SET_GROUP:New() --:AddGroupsByName(Plane:GetName())
@@ -574,7 +581,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   -- Pickup and depoly locations.
   local PickupAirbaseSet = SET_AIRBASE:New():AddAirbase(self.homebase)
   local DeployAirbaseSet = SET_AIRBASE:New():AddAirbase(Request.airbase)
-  local DeployZoneSet    = SET_ZONE:New():FilterPrefixes( "Deploy" ):FilterStart()
+  local DeployZoneSet    = SET_ZONE:New():FilterPrefixes("Deploy"):FilterStart()
   --local bla=SET_ZONE:New():AddZonesByName(AddZoneNames)
   local CargoTransport --AI.AI_Cargo_Dispatcher#AI_CARGO_DISPATCHER
 
@@ -764,9 +771,8 @@ end
 -- @param #WAREHOUSE self
 -- @param #string templategroupname Name of the late activated template group as defined in the mission editor.
 -- @param #number ngroups Number of groups to add to the warehouse stock. Default is 1.
--- @param #boolean istransport If true, this group will act as transport unit to transport other assets to another airbase. If false, this unit will not be used as transport unit. By default the behavior is determined for the group's attributes.
 -- @return #WAREHOUSE self
-function WAREHOUSE:AddAsset(templategroupname, ngroups, istransport)
+function WAREHOUSE:AddAsset(templategroupname, ngroups)
 
   -- Set default.
   local n=ngroups or 1
@@ -1069,10 +1075,11 @@ end
 -- @param #WAREHOUSE self
 -- @param #number _uid The unique id of the item to be deleted.
 function WAREHOUSE:_DeleteStockItem(_uid)
-  for _i,_item in pairs(self.stock) do
-    local item=_item --#WAREHOUSE.Stockitem
+  for i=1,#self.stock do
+    local item=self.stock[i] --#WAREHOUSE.Stockitem
     if item.id==_uid then
-      self.stock[_i]=nil
+      table.remove(self.stock,i)
+      break
     end
   end
 end
@@ -1081,27 +1088,41 @@ end
 -- @param #WAREHOUSE self
 -- @param #number _uid The id of the item to be deleted.
 function WAREHOUSE:_DeleteQueueItem(_uid)
-  for _i,_item in pairs(self.queue) do
-    local item=_item --#WAREHOUSE.Queueitem
+  env.info("FF BEFORE delete queue")
+  self:_PrintQueue()
+  for i=1,#self.queue do
+    local item=self.queue[i] --#WAREHOUSE.Queueitem
     if item.uid==_uid then
-      self.queue[_i]=nil
+      table.remove(self.queue,i)
+      break
     end
   end
+  env.info("FF AFTER delete queue")
+  self:_PrintQueue()
 end
 
 --- Sort requests queue wrt prio and request uid.
 -- @param #WAREHOUSE self
 function WAREHOUSE:_SortQueue()
-  self:F2()
-
-  -- Sort results table wrt times they have already been engaged.
+  self:F3()
+  -- Sort.
   local function _sort(a, b)
     return (a.prio < b.prio) or (a.prio==b.prio and a.uid < b.uid)
   end
   table.sort(self.queue, _sort)
-
 end
 
+--- Prints the queue to DCS.log file.
+-- @param #WAREHOUSE self
+function WAREHOUSE:_PrintQueue()
+  env.info(self.wid.."Queue:")
+  for _,_qitem in ipairs(self.queue) do
+    local qitem=_qitem --#WAREHOUSE.Queueitem
+    local text=string.format("uid=%d, prio=%d, airbase=%s (category=%d), descriptor: %s=%s, nasssets=%d, transport=%s, ntransport=%d",
+      qitem.uid, qitem.prio, qitem.airbase:GetName(),qitem.category, qitem.assetdesc,tostring(qitem.assetdescval),qitem.nasset,qitem.transporttype,qitem.ntransport)
+    env.info(text)
+  end
+end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -224,7 +224,8 @@ function AI_CARGO_HELICOPTER:onafterLanded( Helicopter, From, Event, To )
 
     if self.RoutePickup == true then
       if Helicopter:GetHeight( true ) <= 5 and Helicopter:GetVelocityKMH() < 10 then
-        self:Load( Helicopter:GetPointVec2() )
+        --self:Load( Helicopter:GetPointVec2() )
+        self:Load()
         self.RoutePickup = false
         self.Relocating = true
       end
