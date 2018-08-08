@@ -117,8 +117,10 @@ WAREHOUSE.Descriptor = {
   ATTRIBUTE="attribute",
 }
 
---- Warehouse unit categories. These are used for
+--- Warehouse generalited categories.
 -- @type WAREHOUSE.Attribute
+-- @field #string TRANSPORT_PLANE Airplane with transport capability. Usually bigger.
+-- @field #string TRANSPORT_HELO Helicopter with transport capability.
 WAREHOUSE.Attribute = {
   TRANSPORT_PLANE="Transport_Plane",
   TRANSPORT_HELO="Transport_Helo",
@@ -132,6 +134,7 @@ WAREHOUSE.Attribute = {
   BOMBER="Bomber",
   TANK="Tank",
   TRUCK="Truck",
+  TRAIN="Train",
   SHIP="Ship",
   OTHER="Other",
 }
@@ -504,23 +507,30 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     
     -- Set a marker for the spawned group.
     spawncoord:MarkToAll(string.format("Spawnpoint %s",_alias))
+    
+    local _attribute=_assetitem.attribute
       
     if _assetitem.category==Group.Category.GROUND then
       -- Spawn ground troops.      
       _group=_spawn:SpawnFromCoordinate(spawncoord)
-      env.info(string.format("FF spawning group %s", _alias))  
+      env.info(string.format("FF spawning group %s", _alias))
     elseif _assetitem.category==Group.Category.AIRPLANE or _assetitem.category==Group.Category.HELICOPTER then
       -- Spawn air units.
       local _takeoff=SPAWN.Takeoff.Cold
       local _terminal=AIRBASE.TerminalType.OpenBig
-      if _assetitem.attribute==WAREHOUSE.Attribute.FIGHTER then
+      if _attribute==WAREHOUSE.Attribute.FIGHTER then
         _terminal=AIRBASE.TerminalType.FighterAircraft
-      elseif _assetitem.attribute==WAREHOUSE.Attribute.BOMBER then
+      elseif _attribute==WAREHOUSE.Attribute.BOMBER or _attribute==WAREHOUSE.Attribute.TRANSPORT_PLANE or _attribute==WAREHOUSE.Attribute.TANKER or _attribute==WAREHOUSE.Attribute.AWACS then
         _terminal=AIRBASE.TerminalType.OpenBig
+      elseif _attribute==WAREHOUSE.Attribute.TRANSPORT_HELO or _attribute==WAREHOUSE.Attribute.ATTACKHELICOPTER then
+        _terminal=AIRBASE.TerminalType.HelicopterUsable
       end
       _group=_spawn:InitUnControlled(true):SpawnAtAirbase(self.homebase,_takeoff, nil,_terminal, true)
     elseif _assetitem.category==Group.Category.TRAIN then
-      
+      local _railroad=self.coordinate:GetClosestPointToRoad(true)
+      if _railroad then     
+        _group=_spawn:SpawnFromCoordinate(_railroad)
+      end
     end
 
     if _group then
@@ -561,7 +571,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
       elseif _cargocategory==Group.Category.SHIP then
       
       elseif _cargocategory==Group.Category.TRAIN then
-      
+        self:_RouteTrain(group, ToCoordinate)
       end
 
     end
@@ -581,8 +591,10 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   -- Pickup and depoly locations.
   local PickupAirbaseSet = SET_AIRBASE:New():AddAirbase(self.homebase)
   local DeployAirbaseSet = SET_AIRBASE:New():AddAirbase(Request.airbase)
-  local DeployZoneSet    = SET_ZONE:New():FilterPrefixes("Deploy"):FilterStart()
-  --local bla=SET_ZONE:New():AddZonesByName(AddZoneNames)
+  --local DeployZoneSet    = SET_ZONE:New():FilterPrefixes("Deploy"):FilterStart()
+  --local DeployZoneSet    = SET_ZONE:New():AddZonesByName(Request.airbase:GetZone():GetName())
+  local DeployZoneSet    = SET_ZONE:New():AddZone(Request.airbase:GetZone())
+  
   local CargoTransport --AI.AI_Cargo_Dispatcher#AI_CARGO_DISPATCHER
 
   -- Filter the requested transport assets.
@@ -651,6 +663,8 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
         TransportSet:AddGroup(spawngroup)
 
         table.insert(_delid,_assetitem.id)
+      else
+        env.info("FF error spawngroup helo transport does not exist!")
       end
     end
 
@@ -918,6 +932,32 @@ function WAREHOUSE:_RouteAir(Aircraft, ToAirbase, Speed)
   end
 end
 
+--- Route trains to their destination - or at least to the closest point on rail of the desired final destination.
+-- @param #WAREHOUSE self
+-- @param Wrapper.Group#GROUP Group The train group.
+-- @param Core.Point#COORDINATE Coordinate of the destination. Tail will be routed to the closest point
+-- @param #number Speed Speed in km/h to drive to the destination coordinate. Default is 60% of max possible speed the unit can go.
+function WAREHOUSE:_RouteTrain(Group, Coordinate, Speed)
+
+  if Group and Group:IsAlive() then
+
+    local _speed=Speed or Group:GetSpeedMax()*0.6
+
+    -- Create a
+    local Waypoints = Group:TaskGroundOnRailRoads(Coordinate, Speed)
+
+    -- Task function triggering the arrived event.
+    local TaskFunction = Group:TaskFunction("WAREHOUSE._Arrived", self)
+
+    -- Put task function on last waypoint.
+    local Waypoint = Waypoints[#Waypoints]
+    Group:SetTaskWaypoint( Waypoint, TaskFunction )
+
+    -- Route group to destination.
+    Group:Route(Waypoints, 1)
+  end
+end
+
 --- Filter stock assets by table entry.
 -- @param #WAREHOUSE self
 -- @param #table stock Table holding all assets in stock of the warehouse. Each entry is of type @{#WAREHOUSE.Stockitem}.
@@ -997,7 +1037,8 @@ function WAREHOUSE:_GetAttribute(groupname)
     local attackhelicopter=group:HasAttribute("Attack helicopters")
     local bomber=group:HasAttribute("Bombers")
     local tank=group:HasAttribute("Old Tanks") or group:HasAttribute("Modern Tanks")
-    local truck=group:HasAttribute("Trucks")
+    local truck=group:HasAttribute("Trucks") and not group:GetCategory()==Group.Category.TRAIN
+    local train=group:GetCategory()==Group.Category.TRAIN
 
     -- Debug output.
     --[[
@@ -1039,6 +1080,8 @@ function WAREHOUSE:_GetAttribute(groupname)
       attribute=WAREHOUSE.Attribute.TANK
     elseif truck then
       attribute=WAREHOUSE.Attribute.TRUCK
+    elseif train then
+      attribute=WAREHOUSE.Attribute.TRAIN
     else
       attribute=WAREHOUSE.Attribute.OTHER
     end

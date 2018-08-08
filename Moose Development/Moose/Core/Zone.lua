@@ -317,7 +317,8 @@ end
 
 --- Set the randomization probability of a zone to be selected.
 -- @param #ZONE_BASE self
--- @param ZoneProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
+-- @param #number ZoneProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
+-- @return #ZONE_BASE self
 function ZONE_BASE:SetZoneProbability( ZoneProbability )
   self:F( { self:GetName(), ZoneProbability = ZoneProbability } )
   

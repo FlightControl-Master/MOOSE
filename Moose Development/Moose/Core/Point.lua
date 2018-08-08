@@ -1205,13 +1205,18 @@ do -- COORDINATE
     return self:GetClosestParkingSpot(airbase, terminaltype, false)
   end
     
-  --- Gets the nearest coordinate to a road.
+  --- Gets the nearest coordinate to a road (or railroad).
   -- @param #COORDINATE self
+  -- @param #boolean Railroad (Optional) If true, closest point to railroad is returned rather than closest point to conventional road. Default false. 
   -- @return #COORDINATE Coordinate of the nearest road.
-  function COORDINATE:GetClosestPointToRoad()
-   local x,y = land.getClosestPointOnRoads("roads", self.x, self.z)
-   local vec2={ x = x, y = y }
-   return COORDINATE:NewFromVec2(vec2)
+  function COORDINATE:GetClosestPointToRoad(Railroad)
+    local roadtype="roads"
+    if Railroad==true then
+      roadtype="railroads"
+    end
+    local x,y = land.getClosestPointOnRoads(roadtype, self.x, self.z)
+    local vec2={ x = x, y = y }
+    return COORDINATE:NewFromVec2(vec2)
   end
   
 

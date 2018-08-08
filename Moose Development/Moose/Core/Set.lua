@@ -4735,10 +4735,20 @@ function SET_ZONE:New()
   return self
 end
 
+--- Add ZONE to SET_ZONE.
+-- @param Core.Set#SET_ZONE self
+-- @param Core.Zone#ZONE Zone Zone to add to the set.
+-- @return #SET_ZONE self
+function SET_ZONE:AddZone(Zone)
+  self:Add(Zone:GetName(), Zone)
+  return self
+end
+
+
 --- Add ZONEs to SET_ZONE.
 -- @param Core.Set#SET_ZONE self
 -- @param #string AddZoneNames A single name or an array of ZONE_BASE names.
--- @return self
+-- @return #SET_ZONE self
 function SET_ZONE:AddZonesByName( AddZoneNames )
 
   local AddZoneNamesArray = ( type( AddZoneNames ) == "table" ) and AddZoneNames or { AddZoneNames }
@@ -4753,7 +4763,7 @@ end
 --- Remove ZONEs from SET_ZONE.
 -- @param Core.Set#SET_ZONE self
 -- @param Core.Zone#ZONE_BASE RemoveZoneNames A single name or an array of ZONE_BASE names.
--- @return self
+-- @return #SET_ZONE self
 function SET_ZONE:RemoveZonesByName( RemoveZoneNames )
 
   local RemoveZoneNamesArray = ( type( RemoveZoneNames ) == "table" ) and RemoveZoneNames or { RemoveZoneNames }
@@ -4779,8 +4789,7 @@ end
 
 --- Get a random zone from the set.
 -- @param #SET_ZONE self
--- @return Core.Zone#ZONE_BASE The random Zone.
--- @return #nil if no zone in the collection.
+-- @return Core.Zone#ZONE_BASE The random Zone or #nil if no zone in the collection.
 function SET_ZONE:GetRandomZone()
 
   if self:Count() ~= 0 then
@@ -4806,6 +4815,7 @@ end
 --- Set a zone probability.
 -- @param #SET_ZONE self
 -- @param #string ZoneName The name of the zone.
+-- @param #number ZoneProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
 function SET_ZONE:SetZoneProbability( ZoneName, ZoneProbability )
   local Zone = self:FindZone( ZoneName )
   Zone:SetZoneProbability( ZoneProbability )

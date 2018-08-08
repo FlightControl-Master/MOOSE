@@ -1996,6 +1996,28 @@ do -- Route methods
   
     return self
   end
+  
+  --- Make the TRAIN Controllable to drive towards a specific point using railroads.
+  -- @param #CONTROLLABLE self
+  -- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
+  -- @param #number Speed (Optional) Speed in km/h. The default speed is 20 km/h.
+  -- @param #number DelaySeconds (Optional) Wait for the specified seconds before executing the Route. Default is one second.
+  -- @return #CONTROLLABLE The CONTROLLABLE.
+  function CONTROLLABLE:RouteGroundOnRailRoads( ToCoordinate, Speed, DelaySeconds)
+  
+    -- Defaults.
+    Speed=Speed or 20
+    DelaySeconds=DelaySeconds or 1
+  
+    -- Get the route task.
+    local route=self:TaskGroundOnRailRoads(ToCoordinate, Speed)
+    
+    -- Route controllable to destination.
+    self:Route( route, DelaySeconds )
+  
+    return self
+  end  
+  
 
   
   --- Make a task for a GROUND Controllable to drive towards a specific point using (mostly) roads.
@@ -2077,7 +2099,40 @@ do -- Route methods
     return route 
   end
 
+  --- Make a task for a TRAIN Controllable to drive towards a specific point using railroad.
+  -- @param #CONTROLLABLE self
+  -- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
+  -- @param #number Speed (Optional) Speed in km/h. The default speed is 20 km/h.
+  -- @return Task
+  function CONTROLLABLE:TaskGroundOnRailRoads(ToCoordinate, Speed)
+    self:F2({ToCoordinate=ToCoordinate, Speed=Speed})
+    
+    -- Defaults.
+    Speed=Speed or 20
   
+    -- Current coordinate.
+    local FromCoordinate = self:GetCoordinate()
+    
+    -- Get path and path length on railroad.
+    local PathOnRail, LengthOnRail=FromCoordinate:GetPathOnRoad(ToCoordinate, false, true)
+        
+    -- Debug info.
+    self:T(string.format("Length on railroad = %.3f km", LengthOnRail/1000))
+    
+    -- Route, ground waypoints along road.
+    local route={}
+            
+    -- Check if a valid path on railroad could be found.
+    if PathOnRail then
+
+      table.insert(route, PathOnRail[1]:WaypointGround(Speed, "On Railroad"))
+      table.insert(route, PathOnRail[2]:WaypointGround(Speed, "On Railroad"))
+                        
+    end
+
+    return route 
+  end
+
   --- Make the AIR Controllable fly towards a specific point.
   -- @param #CONTROLLABLE self
   -- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
