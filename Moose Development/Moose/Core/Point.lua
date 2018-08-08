@@ -1213,19 +1213,27 @@ do -- COORDINATE
    local vec2={ x = x, y = y }
    return COORDINATE:NewFromVec2(vec2)
   end
+  
 
-  --- Returns a table of coordinates to a destination using only roads.
+  --- Returns a table of coordinates to a destination using only roads or railroads.
   -- The first point is the closest point on road of the given coordinate.
   -- By default, the last point is the closest point on road of the ToCoord. Hence, the coordinate itself and the final ToCoord are not necessarily included in the path.
   -- @param #COORDINATE self
   -- @param #COORDINATE ToCoord Coordinate of destination.
   -- @param #boolean IncludeEndpoints (Optional) Include the coordinate itself and the ToCoordinate in the path.
+  -- @param #boolean Railroad (Optional) If true, path on railroad is returned. Default false.
   -- @return #table Table of coordinates on road. If no path on road can be found, nil is returned or just the endpoints.
   -- @return #number The length of the total path.
-  function COORDINATE:GetPathOnRoad(ToCoord, IncludeEndpoints)
-
+  function COORDINATE:GetPathOnRoad(ToCoord, IncludeEndpoints, Railroad)
+  
+    -- Set road type.
+    local RoadType="roads"
+    if Railroad==true then
+      RoadType="railroads"
+    end
+    
     -- DCS API function returning a table of vec2.
-    local path = land.findPathOnRoads("roads", self.x, self.z, ToCoord.x, ToCoord.z)
+    local path = land.findPathOnRoads(RoadType, self.x, self.z, ToCoord.x, ToCoord.z)
     
     -- Array holding the path coordinates.
     local Path={}
