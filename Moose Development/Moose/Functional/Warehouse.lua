@@ -152,22 +152,24 @@ WAREHOUSE.TransportType = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.1.0"
+WAREHOUSE.version="0.1.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehuse todo list.
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: Add event handlers.
--- TODO: Add AI_APC
--- TODO: Add AI_HELICOPTER
+-- DONE: Add AI_CARGO_AIRPLANE
+-- DONE: Add AI_CARGO_APC
+-- DONE: Add AI_CARGO_HELICOPTER
 -- TODO: Write documentation.
--- TODO: Put active groups into the warehouse.
+-- TODO: Put active groups into the warehouse, e.g. when they were transported to this warehouse.
 -- TODO: Spawn warehouse assets as uncontrolled or AI off and activate them when requested.
 -- TODO: Handle cases with immobile units.
--- TODO: Add queue.
+-- DONE: Add queue.
 -- TODO: How to handle multiple units in a transport group?
--- TODO: Switch to AI_XXX_DISPATCHER
+-- DONE: Switch to AI_CARGO_XXX_DISPATCHER
+-- TODO: Add phyical object, if destroyed asssets are gone.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor(s)
@@ -178,7 +180,7 @@ WAREHOUSE.version="0.1.0"
 -- @param Wrapper.Airbase#AIRBASE airbase The airbase at which the warehouse is constructed.
 -- @return #WAREHOUSE self
 function WAREHOUSE:NewAirbase(airbase)
-  BASE:E({airbase=airbase})
+  BASE:E({airbase=airbase:GetName()})
 
   -- Print version.
   env.info(string.format("Adding warehouse v%s for airbase %s", WAREHOUSE.version, airbase:GetName()))
@@ -200,8 +202,6 @@ function WAREHOUSE:NewAirbase(airbase)
 
   -- Define the default spawn zone.
   self.spawnzone=ZONE_RADIUS:New("Spawnzone",_road, 200)
-  self.spawnzone:BoundZone(60,country.id.GERMANY)
-  self.spawnzone:GetCoordinate():MarkToAll("Spawnzone")
 
   -- Add FSM transitions.
   self:AddTransition("*", "Start",     "Running")
@@ -275,6 +275,10 @@ end
 -- @param #string To To state.
 function WAREHOUSE:onafterStart(From, Event, To)
   self:E(self.wid..string.format("Starting warehouse at airbase %s, category %d, coalition %d.", self.homebase:GetName(), self.category, self.coalition))
+  
+  -- Debug mark spawn zone.
+  self.spawnzone:BoundZone(60,country.id.GERMANY)
+  self.spawnzone:GetCoordinate():MarkToAll("Spawnzone of warehouse "..self.homebase:GetName())
 
   -- handle events
   -- event takeoff
@@ -326,7 +330,6 @@ function WAREHOUSE:onafterStatus(From, Event, To)
 
   -- Execute the request. If the request is really executed, it is also deleted from the queue.
   if request then
-    --self:Request(request.airbase, request.assetdesc, request.assetdescval, request.nasset, request.transporttype, request.ntransport)
     self:Request(request)
   end
 
@@ -390,15 +393,12 @@ function WAREHOUSE:_CheckQueue()
     local okay=true
     -- Check if number of requested assets is in stock.
     local _instock=#self:_FilterStock(self.stock, qitem.assetdesc, qitem.assetdescval)
-    env.info(string.format("FF desc = %s val=%s number=%d", qitem.assetdesc, tostring(qitem.assetdescval),_instock))
     if qitem.nasset > _instock then
-      env.info("FF check queue nasset > instock okay=false")
       okay=false
     end
     -- Check if enough transport units are in stock.
     _instock=#self:_FilterStock(self.stock, WAREHOUSE.Descriptor.ATTRIBUTE, qitem.transporttype)
     if qitem.ntransport > _instock then
-      env.info("FF check queue ntransport > instock okay=false")
       okay=false
     end
     return okay
@@ -449,7 +449,6 @@ function WAREHOUSE:onbeforeRequest(From, Event, To, Request)
   local _assetattribute=self:_GetAttribute(_stockitem.templatename)
 
 
-
   -- Check that a transport unit is available.
   if Request.transporttype~=WAREHOUSE.TransportType.SELFPROPELLED then
     local _instock=self:_FilterStock(self.stock, WAREHOUSE.Descriptor.ATTRIBUTE, Request.transporttype)
@@ -466,6 +465,25 @@ function WAREHOUSE:onbeforeRequest(From, Event, To, Request)
   return true
 end
 
+--- Get the proper terminal type based on generalized attribute of the group.
+--@param #WAREHOUSE self
+--@param #WAREHOUSE.Attribute _attribute Generlized attibute of unit.
+function WAREHOUSE:_GetTerminal(_attribute)
+
+  local _terminal=AIRBASE.TerminalType.OpenBig
+  if _attribute==WAREHOUSE.Attribute.FIGHTER then
+    -- Fighter ==> small.
+    _terminal=AIRBASE.TerminalType.FighterAircraft
+  elseif _attribute==WAREHOUSE.Attribute.BOMBER or _attribute==WAREHOUSE.Attribute.TRANSPORT_PLANE or _attribute==WAREHOUSE.Attribute.TANKER or _attribute==WAREHOUSE.Attribute.AWACS then
+    -- Bigger aircraft.
+    _terminal=AIRBASE.TerminalType.OpenBig
+  elseif _attribute==WAREHOUSE.Attribute.TRANSPORT_HELO or _attribute==WAREHOUSE.Attribute.ATTACKHELICOPTER then
+    -- Helicopter.
+    _terminal=AIRBASE.TerminalType.HelicopterUsable
+  end
+  
+end
+
 --- On after "Request" event. Initiates the transport of the assets to the requesting airbase.
 -- @param #WAREHOUSE self
 -- @param #string From From state.
@@ -475,7 +493,9 @@ end
 function WAREHOUSE:onafterRequest(From, Event, To, Request)
   --env.info(self.wid..string.format("Airbase %s requesting asset %s = %s.", Airbase:GetName(), tostring(AssetDescriptor), tostring(AssetDescriptorValue)))
 
-  ----------------------------------------------------------------
+  ------------------------------------------------------------------------------------------------------------------------------------
+  -- Cargo assets.
+  ------------------------------------------------------------------------------------------------------------------------------------
 
   -- New empty cargo set in case we need it.
   local CargoGroups = SET_CARGO:New()
@@ -487,11 +507,56 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   -- Filter the requested assets.
   local _assetstock=self:_FilterStock(self.stock, Request.assetdesc, Request.assetdescval)
 
+  -- General type and category (GROUND,...)
+  local _cargotype=_assetstock[1].attribute    --#WAREHOUSE.Attribute
+  local _cargocategory=_assetstock[1].category --DCS#Group.Category
+  
+  --_cargotype.
+
   -- Spawn the assets.
   local _delid={}
   local _spawngroups={}
   local _cargotype
   local _cargocategory
+
+
+  -- Now we try to find all parking spots for all cargo groups in advance. Due to the for loop, the parking spots do not get updated while spawning.
+  local Parking={}
+  
+  if  _cargocategory==Group.Category.AIRPLANE or _cargocategory==Group.Category.HELICOPTER then
+    
+    -- Count total number of units that will be spawned.
+    local ntotal=0
+    for i=1,Request.ntransport do
+      local _assetitem=_assetstock[i] --#WAREHOUSE.Stockitem
+      local group=GROUP:FindByName(_assetitem.templatename)
+      ntotal=ntotal + #group:GetUnits()
+    end
+    
+    -- All spots are based on the same template group which must not be the case.
+    -- But I cant think of a better way to fetch all parking spots in advance.
+    local group=GROUP:FindByName(_assetstock[1].templatename)
+    local terminaltype=self:_GetTerminal(_assetstock[1].attribute)
+    local allspots=self.homebase:FindFreeParkingSpotForAircraft(group, terminaltype, 50, true, true, false, false, ntotal)
+    
+    env.info("FF allspots = "..#allspots)
+    env.info("FF notal    = "..ntotal)
+    
+    -- No rearrange them again for each asset
+    local k=1
+    for i=1,Request.ntransport do
+      local _assetitem=_assetstock[i] --#WAREHOUSE.Stockitem
+      local spots={}
+      local nunits=#GROUP:FindByName(_assetitem.templatename):GetUnits()
+      for j=1,nunits do
+        table.insert(spots,allspots[k])
+        k=k+1
+      end
+      table.insert(Parking, spots)
+    end
+  end
+  
+  -- Loop over cargo requests.
   for i=1,Request.nasset do
 
     -- Get stock item.
@@ -503,6 +568,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     -- Alias of the group. Spawn with ALIAS here or DCS crashes!
     local _alias=string.format("%s_AssetID-%04d_RequestID-%04d", _assetitem.templatename,_assetitem.id,Request.uid)
     local _spawn=SPAWN:NewWithAlias(_assetitem.templatename,_alias)
+
     local _group=nil --Wrapper.Group#GROUP
     
     -- Set a marker for the spawned group.
@@ -511,39 +577,39 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     local _attribute=_assetitem.attribute
       
     if _assetitem.category==Group.Category.GROUND then
+    
       -- Spawn ground troops.      
       _group=_spawn:SpawnFromCoordinate(spawncoord)
       env.info(string.format("FF spawning group %s", _alias))
+      
     elseif _assetitem.category==Group.Category.AIRPLANE or _assetitem.category==Group.Category.HELICOPTER then
+    
       -- Spawn air units.
       local _takeoff=SPAWN.Takeoff.Cold
-      local _terminal=AIRBASE.TerminalType.OpenBig
-      if _attribute==WAREHOUSE.Attribute.FIGHTER then
-        _terminal=AIRBASE.TerminalType.FighterAircraft
-      elseif _attribute==WAREHOUSE.Attribute.BOMBER or _attribute==WAREHOUSE.Attribute.TRANSPORT_PLANE or _attribute==WAREHOUSE.Attribute.TANKER or _attribute==WAREHOUSE.Attribute.AWACS then
-        _terminal=AIRBASE.TerminalType.OpenBig
-      elseif _attribute==WAREHOUSE.Attribute.TRANSPORT_HELO or _attribute==WAREHOUSE.Attribute.ATTACKHELICOPTER then
-        _terminal=AIRBASE.TerminalType.HelicopterUsable
-      end
-      _group=_spawn:InitUnControlled(true):SpawnAtAirbase(self.homebase,_takeoff, nil,_terminal, true)
+
+      _group=_spawn:InitUnControlled(true):SpawnAtAirbase(self.homebase,_takeoff, nil, nil, true, Parking[i])
+      
     elseif _assetitem.category==Group.Category.TRAIN then
+    
+      -- Spawn train.
       local _railroad=self.coordinate:GetClosestPointToRoad(true)
       if _railroad then     
         _group=_spawn:SpawnFromCoordinate(_railroad)
       end
+      
     end
 
     if _group then
       _spawngroups[i]=_group
-      _cargotype=_assetitem.attribute
-      _cargocategory=_assetitem.category
       table.insert(_delid,_assetitem.id)
 
+      -- Add groups to cargo.
       if Request.transporttype ~= WAREHOUSE.TransportType.SELFPROPELLED then
         local cargogroup = CARGO_GROUP:New(_group, _alias, _alias, _loadradius, _nearradius)
         CargoGroups:AddCargo(cargogroup)
       end
-
+    else
+      self:E(self.wid.."ERROR: cargo asset could not be spawned!")
     end
   end
 
@@ -552,7 +618,9 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     self:_DeleteStockItem(_id)
   end
 
-  ----------------------------------------------------------------
+  ------------------------------------------------------------------------------------------------------------------------------------
+  -- Self propelled assets.
+  ------------------------------------------------------------------------------------------------------------------------------------
 
   -- No transport unit requested. Assets go by themselfes.
   if Request.transporttype==WAREHOUSE.TransportType.SELFPROPELLED then
@@ -562,6 +630,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
       local group=_spawngroup --Wrapper.Group#GROUP
       local ToCoordinate=Request.airbase:GetZone():GetRandomCoordinate()
       
+      -- Route cargo to their destination.
       if _cargocategory==Group.Category.GROUND then        
         self:_RouteGround(group, ToCoordinate)
       elseif _cargocategory==Group.Category.AIRPLANE then
@@ -569,7 +638,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
       elseif _cargocategory==Group.Category.HELICOPTER then
         self:_RouteAir(group, Request.airbase)
       elseif _cargocategory==Group.Category.SHIP then
-      
+        self:E("ERROR: self propelled ship not implemented yet!")
       elseif _cargocategory==Group.Category.TRAIN then
         self:_RouteTrain(group, ToCoordinate)
       end
@@ -582,19 +651,22 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     -- No cargo transport necessary.
     return
   end
+  
+  ------------------------------------------------------------------------------------------------------------------------------------
+  -- Transport assets and dispachers
+  ------------------------------------------------------------------------------------------------------------------------------------
 
   env.info("FF cargo set name(s) = "..CargoGroups:GetObjectNames())
   ----------------------------------------------------------------
 
-  local TransportSet = SET_GROUP:New() --:AddGroupsByName(Plane:GetName())
+  local TransportSet = SET_GROUP:New()
 
-  -- Pickup and depoly locations.
+  -- Pickup and deploy zones/bases.
   local PickupAirbaseSet = SET_AIRBASE:New():AddAirbase(self.homebase)
   local DeployAirbaseSet = SET_AIRBASE:New():AddAirbase(Request.airbase)
-  --local DeployZoneSet    = SET_ZONE:New():FilterPrefixes("Deploy"):FilterStart()
-  --local DeployZoneSet    = SET_ZONE:New():AddZonesByName(Request.airbase:GetZone():GetName())
   local DeployZoneSet    = SET_ZONE:New():AddZone(Request.airbase:GetZone())
   
+  -- Cargo dispatcher.
   local CargoTransport --AI.AI_Cargo_Dispatcher#AI_CARGO_DISPATCHER
 
   -- Filter the requested transport assets.
@@ -602,6 +674,15 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
   -- Dependent on transport type, spawn the transports and set up the dispatchers.
   if Request.transporttype==WAREHOUSE.TransportType.AIRPLANE then
+  
+    -- Now we try to find all parking spots for all transport groups in advance. Due to the for loop, the parking spots do not get updated while spawning.
+    local Parking={}
+    for i=1,Request.ntransport do
+      local _assetitem=_assetstock[i] --#WAREHOUSE.Stockitem
+      local group=GROUP:FindByName(_assetitem.templatename)
+      local spots=self.homebase:FindFreeParkingSpotForAircraft(group, AIRBASE.TerminalType.OpenBig)
+      table.insert(Parking, spots)
+    end
 
     -- Spawn the transport groups.
     local _delid={}
@@ -609,14 +690,14 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
       -- Get stock item.
       local _assetitem=_assetstock[i] --#WAREHOUSE.Stockitem
+      local _parking=Parking[i]
 
       -- Spawn with ALIAS here or DCS crashes!
       local _alias=string.format("%s_%d", _assetitem.templatename,_assetitem.id)
 
       -- Spawn plane at airport in uncontrolled state.
       local _takeoff=SPAWN.Takeoff.Cold
-      local _terminal=AIRBASE.TerminalType.OpenBig
-      local spawngroup=SPAWN:NewWithAlias(_assetitem.templatename,_alias):InitUnControlled(true):SpawnAtAirbase(self.homebase,_takeoff, nil,_terminal, false)
+      local spawngroup=SPAWN:NewWithAlias(_assetitem.templatename,_alias):InitUnControlled(true):SpawnAtAirbase(self.homebase,_takeoff, nil, nil, false, _parking)
 
       if spawngroup then
         -- Set state of warehouse so we can retrieve it later.
@@ -638,6 +719,16 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     CargoTransport = AI_CARGO_DISPATCHER_AIRPLANE:New(TransportSet, CargoGroups, PickupAirbaseSet, DeployAirbaseSet)
 
   elseif Request.transporttype==WAREHOUSE.TransportType.HELICOPTER then
+  
+    -- Now we try to find all parking spots for all transport groups in advance. Due to the for loop, the parking spots do not get updated while spawning.
+    -- Note that not all assest need to be of the same type. Therefore, do
+    local Parking={}
+    for i=1,Request.ntransport do
+      local _assetitem=_assetstock[i] --#WAREHOUSE.Stockitem
+      local group=GROUP:FindByName(_assetitem.templatename)
+      local spots=self.homebase:FindFreeParkingSpotForAircraft(group, AIRBASE.TerminalType.HelicopterUsable)
+      table.insert(Parking, spots)
+    end  
 
     -- Spawn the transport groups.
     local _delid={}
@@ -645,15 +736,14 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
       -- Get stock item.
       local _assetitem=_assetstock[i] --#WAREHOUSE.Stockitem
-
+      local _parking=Parking[i]
+      
       -- Spawn with ALIAS here or DCS crashes!
       local _alias=string.format("%s_%d", _assetitem.templatename,_assetitem.id)
 
-      -- Spawn plane at airport in uncontrolled state.
-      -- TODO: check terminal type.
+      -- Spawn helo at airport.
       local _takeoff=SPAWN.Takeoff.Hot
-      local _terminal=AIRBASE.TerminalType.HelicopterUsable      
-      local spawngroup=SPAWN:NewWithAlias(_assetitem.templatename,_alias):InitUnControlled(false):SpawnAtAirbase(self.homebase,_takeoff, nil,_terminal, false)
+      local spawngroup=SPAWN:NewWithAlias(_assetitem.templatename,_alias):InitUnControlled(false):SpawnAtAirbase(self.homebase,_takeoff, nil, nil, false, _parking)
 
       if spawngroup then
         -- Set state of warehouse so we can retrieve it later.
