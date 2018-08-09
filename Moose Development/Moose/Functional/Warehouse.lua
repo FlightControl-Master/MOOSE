@@ -152,7 +152,7 @@ WAREHOUSE.TransportType = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.1.1"
+WAREHOUSE.version="0.1.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehuse todo list.
@@ -379,6 +379,83 @@ function WAREHOUSE:AddRequest(airbase, AssetDescriptor, AssetDescriptorValue, nA
   table.insert(self.queue, request)
 end
 
+---Checks if the request can be fullfilled.
+-- @param #WAREHOUSE self
+-- @param #WAREHOUSE.Queueitem qitem The request to be checked.
+-- @return #boolean If true, request can be executed. If false, something is not right.
+function WAREHOUSE:_CheckRequest(request)
+    
+  local okay=true
+  
+  -- Check if number of requested assets is in stock.
+  local _assets=self:_FilterStock(self.stock, request.assetdesc, request.assetdescval, request.nasset)
+  
+  -- Get the attibute of the requested asset.
+  local _assetattribute=_assets[1].attribute
+  local _assetcategory=_assets[1].category  
+  
+  -- Check if enough assets are in stock.
+  if request.nasset > #_assets then
+    local text=string.format("Request denied! Not enough assets currently available.")
+    MESSAGE:New(text, 5):ToCoalitionIf(self.coalition, self.Report or self.Debug)
+    self:E(self.wid..text)
+    okay=false
+  end
+
+  -- Check available parking for asset units.
+  local Parkingdata=self.homebase:GetParkingSpotsTable()
+  env.info("FF number parking data before "..#Parkingdata)
+  local Parking
+  if  _assetcategory==Group.Category.AIRPLANE or _assetcategory==Group.Category.HELICOPTER then
+    Parking, Parkingdata=self:_GetParkingForAssets(_assets, Parkingdata)
+    env.info("FF number parking data after assets "..#Parkingdata)
+    if Parking==nil then
+      local text=string.format("Request denied! Not enough free parking spots for all assets at the moment.")
+      MESSAGE:New(text, 5):ToCoalitionIf(self.coalition, self.Report or self.Debug)
+      self:E(self.wid..text)
+      okay=false
+    end
+  end      
+  
+  
+  -- Check that a transport units.
+  if request.transporttype~=WAREHOUSE.TransportType.SELFPROPELLED then
+  
+    -- Transports in stock.
+    local _transports=self:_FilterStock(self.stock, WAREHOUSE.Descriptor.ATTRIBUTE, request.transporttype, request.ntransport)
+    
+    -- Get the attibute of the transport units.
+    local _transportattribute=_transports[1].attribute
+    local _transportcategory=_transports[1].category
+    
+    -- Check if enough transport units are available.
+    if request.ntransport > #_transports then
+      local text=string.format("Request denied! Not enough transport units currently available.")
+      MESSAGE:New(text, 5):ToCoalitionIf(self.coalition, self.Report or self.Debug)
+      self:E(self.wid..text)
+      okay=false
+    end
+
+    -- Check available parking for transport units.
+    if  _transportcategory==Group.Category.AIRPLANE or _transportcategory==Group.Category.HELICOPTER then
+      Parking, Parkingdata=self:_GetParkingForAssets(_transports, Parkingdata)
+      env.info("FF number parking data after transport "..#Parkingdata)
+      if Parking==nil then
+        local text=string.format("Request denied! Not enough free parking spots for all transports at the moment.")
+        MESSAGE:New(text, 5):ToCoalitionIf(self.coalition, self.Report or self.Debug)
+        self:E(self.wid..text)
+        okay=false
+      end
+    end
+        
+  else
+    -- self propelled case.
+  
+  end
+    
+  return okay  
+end
+
 ---Sorts the queue and checks if the request can be fullfilled.
 -- @param #WAREHOUSE self
 -- @return #WAREHOUSE.Queueitem Chosen request.
@@ -387,28 +464,11 @@ function WAREHOUSE:_CheckQueue()
   -- Sort queue wrt to first prio and then qid.
   self:_SortQueue()
 
-  ---@param #WAREHOUSE.Queueitem qitem
-  --@return #boolean True if request is okay.
-  local function checkrequest(qitem)
-    local okay=true
-    -- Check if number of requested assets is in stock.
-    local _instock=#self:_FilterStock(self.stock, qitem.assetdesc, qitem.assetdescval)
-    if qitem.nasset > _instock then
-      okay=false
-    end
-    -- Check if enough transport units are in stock.
-    _instock=#self:_FilterStock(self.stock, WAREHOUSE.Descriptor.ATTRIBUTE, qitem.transporttype)
-    if qitem.ntransport > _instock then
-      okay=false
-    end
-    return okay
-  end
-
   -- Search for a request we can execute.
   local request=nil --#WAREHOUSE.Queueitem
   for _,_qitem in ipairs(self.queue) do
     local qitem=_qitem --#WAREHOUSE.Queueitem
-    local okay=checkrequest(qitem)
+    local okay=self:_CheckRequest(qitem)
     if okay==true then
       request=qitem
       break
@@ -428,61 +488,26 @@ end
 -- @param #WAREHOUSE.Queueitem Request Information table of the request.
 -- @return #boolean If true, request is granted.
 function WAREHOUSE:onbeforeRequest(From, Event, To, Request)
-  --env.info(self.wid..string.format("Airbase %s requesting asset %s = %s.", Airbase:GetName(), tostring(AssetDescriptor), tostring(AssetDescriptorValue)))
+  env.info(self.wid..string.format("Airbase %s requesting %d assets of %s=%s by transport %s", 
+  Request.airbase:GetName(), Request.nasset, tostring(Request.assetdesc), tostring(Request.assetdescval), tostring(Request.transporttype)))
 
   -- Distance from warehouse to requesting airbase.
   local distance=self.coordinate:Get2DDistance(Request.airbase:GetCoordinate())
 
   -- Filter the requested assets.
-  local _stockrequest=self:_FilterStock(self.stock, Request.assetdesc, Request.assetdescval)
+  local _assets=self:_FilterStock(self.stock, Request.assetdesc, Request.assetdescval, Request.nasset)
 
   -- Asset is not in stock ==> request denied.
-  if #_stockrequest < Request.nasset then
-    local text=string.format("Request denied! Not enough assets currently in stock. Requested %d < %d in stock.", Request.nasset, #_stockrequest)
+  if #_assets < Request.nasset then
+    local text=string.format("Request denied! Not enough assets currently in stock. Requested %d < %d in stock.", Request.nasset, #_assets)
     MESSAGE:New(text, 10):ToCoalitionIf(self.coalition, self.Report or self.Debug)
     self:E(self.wid..text)
     return false
   end
 
-  -- Get the attibute of the requested asset.
-  local _stockitem=_stockrequest[1] --#WAREHOUSE.Stockitem
-  local _assetattribute=self:_GetAttribute(_stockitem.templatename)
-
-
-  -- Check that a transport unit is available.
-  if Request.transporttype~=WAREHOUSE.TransportType.SELFPROPELLED then
-    local _instock=self:_FilterStock(self.stock, WAREHOUSE.Descriptor.ATTRIBUTE, Request.transporttype)
-    if #_instock==0 then
-      local text=string.format("Request denied! No transport unit currently available.")
-      MESSAGE:New(text, 10):ToCoalitionIf(self.coalition, self.Report or self.Debug)
-      self:E(self.wid..text)
-      return false
-    end
-  end
-
-  -- TODO: For aircraft check that a parking spot is available.
-
   return true
 end
 
---- Get the proper terminal type based on generalized attribute of the group.
---@param #WAREHOUSE self
---@param #WAREHOUSE.Attribute _attribute Generlized attibute of unit.
-function WAREHOUSE:_GetTerminal(_attribute)
-
-  local _terminal=AIRBASE.TerminalType.OpenBig
-  if _attribute==WAREHOUSE.Attribute.FIGHTER then
-    -- Fighter ==> small.
-    _terminal=AIRBASE.TerminalType.FighterAircraft
-  elseif _attribute==WAREHOUSE.Attribute.BOMBER or _attribute==WAREHOUSE.Attribute.TRANSPORT_PLANE or _attribute==WAREHOUSE.Attribute.TANKER or _attribute==WAREHOUSE.Attribute.AWACS then
-    -- Bigger aircraft.
-    _terminal=AIRBASE.TerminalType.OpenBig
-  elseif _attribute==WAREHOUSE.Attribute.TRANSPORT_HELO or _attribute==WAREHOUSE.Attribute.ATTACKHELICOPTER then
-    -- Helicopter.
-    _terminal=AIRBASE.TerminalType.HelicopterUsable
-  end
-  
-end
 
 --- On after "Request" event. Initiates the transport of the assets to the requesting airbase.
 -- @param #WAREHOUSE self
@@ -504,57 +529,22 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   local _loadradius=5000
   local _nearradius=35
 
-  -- Filter the requested assets.
-  local _assetstock=self:_FilterStock(self.stock, Request.assetdesc, Request.assetdescval)
+  -- Filter the requested cargo assets.
+  local _assetstock=self:_FilterStock(self.stock, Request.assetdesc, Request.assetdescval, Request.nasset)
 
-  -- General type and category (GROUND,...)
+  -- General type and category.
   local _cargotype=_assetstock[1].attribute    --#WAREHOUSE.Attribute
   local _cargocategory=_assetstock[1].category --DCS#Group.Category
   
-  --_cargotype.
+  -- Now we try to find all parking spots for all cargo groups in advance. Due to the for loop, the parking spots do not get updated while spawning.
+  local Parking={}
+  if  _cargocategory==Group.Category.AIRPLANE or _cargocategory==Group.Category.HELICOPTER then
+    Parking=self:_GetParkingForAssets(_assetstock)    
+  end
 
   -- Spawn the assets.
   local _delid={}
   local _spawngroups={}
-  local _cargotype
-  local _cargocategory
-
-
-  -- Now we try to find all parking spots for all cargo groups in advance. Due to the for loop, the parking spots do not get updated while spawning.
-  local Parking={}
-  
-  if  _cargocategory==Group.Category.AIRPLANE or _cargocategory==Group.Category.HELICOPTER then
-    
-    -- Count total number of units that will be spawned.
-    local ntotal=0
-    for i=1,Request.ntransport do
-      local _assetitem=_assetstock[i] --#WAREHOUSE.Stockitem
-      local group=GROUP:FindByName(_assetitem.templatename)
-      ntotal=ntotal + #group:GetUnits()
-    end
-    
-    -- All spots are based on the same template group which must not be the case.
-    -- But I cant think of a better way to fetch all parking spots in advance.
-    local group=GROUP:FindByName(_assetstock[1].templatename)
-    local terminaltype=self:_GetTerminal(_assetstock[1].attribute)
-    local allspots=self.homebase:FindFreeParkingSpotForAircraft(group, terminaltype, 50, true, true, false, false, ntotal)
-    
-    env.info("FF allspots = "..#allspots)
-    env.info("FF notal    = "..ntotal)
-    
-    -- No rearrange them again for each asset
-    local k=1
-    for i=1,Request.ntransport do
-      local _assetitem=_assetstock[i] --#WAREHOUSE.Stockitem
-      local spots={}
-      local nunits=#GROUP:FindByName(_assetitem.templatename):GetUnits()
-      for j=1,nunits do
-        table.insert(spots,allspots[k])
-        k=k+1
-      end
-      table.insert(Parking, spots)
-    end
-  end
   
   -- Loop over cargo requests.
   for i=1,Request.nasset do
@@ -670,20 +660,24 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   local CargoTransport --AI.AI_Cargo_Dispatcher#AI_CARGO_DISPATCHER
 
   -- Filter the requested transport assets.
-  local _assetstock=self:_FilterStock(self.stock, WAREHOUSE.Descriptor.ATTRIBUTE, Request.transporttype)
+  local _assetstock=self:_FilterStock(self.stock, WAREHOUSE.Descriptor.ATTRIBUTE, Request.transporttype, Request.ntransport)
+  
+  -- General type and category.
+  local _transporttype=_assetstock[1].attribute    --#WAREHOUSE.Attribute
+  local _transportcategory=_assetstock[1].category --DCS#Group.Category
+
+  -- Now we try to find all parking spots for all transport groups in advance. Due to the for loop, the parking spots do not get updated while spawning.
+  local Parking={}
+  
+  -- Now we try to find all parking spots for all cargo groups in advance. Due to the for loop, the parking spots do not get updated while spawning.
+  local Parking={}
+  if  _transportcategory==Group.Category.AIRPLANE or _transportcategory==Group.Category.HELICOPTER then
+    Parking=self:_GetParkingForAssets(_assetstock)    
+  end  
 
   -- Dependent on transport type, spawn the transports and set up the dispatchers.
   if Request.transporttype==WAREHOUSE.TransportType.AIRPLANE then
   
-    -- Now we try to find all parking spots for all transport groups in advance. Due to the for loop, the parking spots do not get updated while spawning.
-    local Parking={}
-    for i=1,Request.ntransport do
-      local _assetitem=_assetstock[i] --#WAREHOUSE.Stockitem
-      local group=GROUP:FindByName(_assetitem.templatename)
-      local spots=self.homebase:FindFreeParkingSpotForAircraft(group, AIRBASE.TerminalType.OpenBig)
-      table.insert(Parking, spots)
-    end
-
     -- Spawn the transport groups.
     local _delid={}
     for i=1,Request.ntransport do
@@ -719,16 +713,6 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     CargoTransport = AI_CARGO_DISPATCHER_AIRPLANE:New(TransportSet, CargoGroups, PickupAirbaseSet, DeployAirbaseSet)
 
   elseif Request.transporttype==WAREHOUSE.TransportType.HELICOPTER then
-  
-    -- Now we try to find all parking spots for all transport groups in advance. Due to the for loop, the parking spots do not get updated while spawning.
-    -- Note that not all assest need to be of the same type. Therefore, do
-    local Parking={}
-    for i=1,Request.ntransport do
-      local _assetitem=_assetstock[i] --#WAREHOUSE.Stockitem
-      local group=GROUP:FindByName(_assetitem.templatename)
-      local spots=self.homebase:FindFreeParkingSpotForAircraft(group, AIRBASE.TerminalType.HelicopterUsable)
-      table.insert(Parking, spots)
-    end  
 
     -- Spawn the transport groups.
     local _delid={}
@@ -754,7 +738,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
         table.insert(_delid,_assetitem.id)
       else
-        env.info("FF error spawngroup helo transport does not exist!")
+        self:E(self.wid.."ERROR: spawngroup helo transport does not exist!")
       end
     end
 
@@ -767,7 +751,8 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     CargoTransport = AI_CARGO_DISPATCHER_HELICOPTER:New(TransportSet, CargoGroups, DeployZoneSet)
 
     -- Home zone.
-    CargoTransport:SetHomeZone(self.spawnzone)
+    CargoTransport:SetHomeBase(self.homebase)
+    --CargoTransport:SetHomeZone(self.spawnzone)
 
   elseif Request.transporttype==WAREHOUSE.TransportType.APC then
 
@@ -802,6 +787,9 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
     -- Define dispatcher for this task.
     CargoTransport = AI_CARGO_DISPATCHER_APC:NewWithZones(TransportSet, CargoGroups, DeployZoneSet, 0)
+    
+    -- Set home zone.
+    CargoTransport:SetHomeZone(self.spawnzone)
     
   elseif Request.transporttype==WAREHOUSE.TransportType.TRAIN then
 
@@ -1048,13 +1036,83 @@ function WAREHOUSE:_RouteTrain(Group, Coordinate, Speed)
   end
 end
 
+--- Get the proper terminal type based on generalized attribute of the group.
+--@param #WAREHOUSE self
+--@param #WAREHOUSE.Attribute _attribute Generlized attibute of unit.
+function WAREHOUSE:_GetTerminal(_attribute)
+
+  local _terminal=AIRBASE.TerminalType.OpenBig
+  if _attribute==WAREHOUSE.Attribute.FIGHTER then
+    -- Fighter ==> small.
+    _terminal=AIRBASE.TerminalType.FighterAircraft
+  elseif _attribute==WAREHOUSE.Attribute.BOMBER or _attribute==WAREHOUSE.Attribute.TRANSPORT_PLANE or _attribute==WAREHOUSE.Attribute.TANKER or _attribute==WAREHOUSE.Attribute.AWACS then
+    -- Bigger aircraft.
+    _terminal=AIRBASE.TerminalType.OpenBig
+  elseif _attribute==WAREHOUSE.Attribute.TRANSPORT_HELO or _attribute==WAREHOUSE.Attribute.ATTACKHELICOPTER then
+    -- Helicopter.
+    _terminal=AIRBASE.TerminalType.HelicopterUsable
+  end
+  
+end
+
+--- Get parking data for all air assets that need to be spawned at an airbase.
+--@param #WAREHOUSE self
+--@param #table assetlist A list of assets for which parking spots are required.
+--@param #table parkingdata Table of the complete parking data to check. Default is to take it from the @{Wrapper.Airbase#AIRBASE.GetParkingSpotsTable}() function.
+--@return #table A table with parking spots for each asset group.
+--@return #table The reduced parking data table of the spots that have not been assigned.
+function WAREHOUSE:_GetParkingForAssets(assetlist, parkingdata)
+  
+  --- Remove selected spots from parking data table.
+  local function removeparking(parkingdata,spots)
+    for j=1,#spots do
+      for i=1,#parkingdata do      
+        if parkingdata[i].TerminalID==spots[j].TerminalID then
+          table.remove(parkingdata,j)
+          break
+        end
+      end
+    end
+  end
+  
+  -- Get complete parking data of the airbase.
+  parkingdata=parkingdata or self.homebase:GetParkingSpotsTable()
+  
+  local assetparking={}
+  for i=1,#assetlist do
+  
+    -- Asset specifics.
+    local asset=assetlist[i] --#WAREHOUSE.Stockitem
+    local group=GROUP:FindByName(asset.templatename)
+    local nunits=#group:GetUnits()
+    local terminal=self:_GetTerminal(asset.attribute)
+    
+    -- Find appropiate parking spots for this group.
+    local spots=self.homebase:FindFreeParkingSpotForAircraft(group, terminal, nil, nil, nil, nil, nil, nil, parkingdata)
+    
+    -- Not enough parking spots for this group.
+    if #spots<nunits then
+      return nil,nil
+    end
+    
+    -- Put result in table.
+    table.insert(assetparking, spots)
+    
+    -- Remove parking spots from table so that will not be available in the next iteration.
+    removeparking(parkingdata,spots)
+  end
+  
+  return assetparking, parkingdata
+end
+
 --- Filter stock assets by table entry.
 -- @param #WAREHOUSE self
 -- @param #table stock Table holding all assets in stock of the warehouse. Each entry is of type @{#WAREHOUSE.Stockitem}.
 -- @param #string item Descriptor
 -- @param value Value of the descriptor.
+-- @param #number nmax (Optional) Maximum number of items that will be returned. Default is all matching items are returned.
 -- @return #table Filtered stock items table.
-function WAREHOUSE:_FilterStock(stock, item, value)
+function WAREHOUSE:_FilterStock(stock, item, value, nmax)
 
   -- Filtered array.
   local filtered={}
@@ -1064,6 +1122,9 @@ function WAREHOUSE:_FilterStock(stock, item, value)
     if _stock[item]==value then
       _stock.pos=_i
       table.insert(filtered, _stock)
+      if nmax~=nil and #filtered>=nmax then
+        return filtered
+      end
     end
   end
 
@@ -1221,8 +1282,6 @@ end
 -- @param #WAREHOUSE self
 -- @param #number _uid The id of the item to be deleted.
 function WAREHOUSE:_DeleteQueueItem(_uid)
-  env.info("FF BEFORE delete queue")
-  self:_PrintQueue()
   for i=1,#self.queue do
     local item=self.queue[i] --#WAREHOUSE.Queueitem
     if item.uid==_uid then
@@ -1230,8 +1289,6 @@ function WAREHOUSE:_DeleteQueueItem(_uid)
       break
     end
   end
-  env.info("FF AFTER delete queue")
-  self:_PrintQueue()
 end
 
 --- Sort requests queue wrt prio and request uid.

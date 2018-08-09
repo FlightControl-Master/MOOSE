@@ -144,8 +144,8 @@ end
 
 --- Creates a new AI_CARGO_DISPATCHER object.
 -- @param #AI_CARGO_DISPATCHER self
--- @param Core.Set#SET_GROUP SetCarrier
--- @param Core.Set#SET_CARGO SetCargo
+-- @param Core.Set#SET_GROUP SetCarriers
+-- @param Core.Set#SET_CARGO SetCargos
 -- @param Core.Set#SET_ZONE DeployZonesSet
 -- @return #AI_CARGO_DISPATCHER
 -- @usage
@@ -454,6 +454,11 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
             self.CarrierHome[Carrier] = true
             AI_Cargo:__Home( 60, self.HomeZone:GetRandomPointVec2() )
           end
+        elseif self.HomeBase then
+          if not self.CarrierHome[Carrier] then
+            self.CarrierHome[Carrier] = true
+            AI_Cargo:__RTB( 60, self.HomeBase )
+          end        
         end
       end
     end
@@ -548,11 +553,12 @@ end
 -- @param Cargo.Cargo#CARGO Cargo
 -- @return #AI_CARGO_DISPATCHER
 function AI_CARGO_DISPATCHER:OnAfterLoaded( From, Event, To, Carrier, Cargo )
+  
 
   if self.DeployZonesSet then
-  
+
     local DeployZone = self.DeployZonesSet:GetRandomZone()
-    
+  
     local DeployCoordinate = DeployZone:GetCoordinate():GetRandomCoordinateInRadius( self.DeployOuterRadius, self.DeployInnerRadius )
     self.AI_Cargo[Carrier]:Deploy( DeployCoordinate, math.random( self.DeployMinSpeed, self.DeployMaxSpeed ) )
   

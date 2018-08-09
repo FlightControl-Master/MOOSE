@@ -53,7 +53,9 @@ function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
   self:AddTransition( "*", "Landed", "*" )
   self:AddTransition( "*", "Queue", "*" )
   self:AddTransition( "*", "Orbit" , "*" ) 
-  self:AddTransition( "*", "Home" , "*" ) 
+  self:AddTransition( "*", "Home" , "*" )
+  self:AddTransition( "*", "RTB" , "*" )
+  self:AddTransition( "*", "BackHome" , "*" ) 
   
   self:AddTransition( "*", "Destroyed", "Destroyed" )
 
@@ -714,7 +716,7 @@ end
 -- @param Event
 -- @param To
 -- @param Core.Point#COORDINATE Coordinate Home place.
--- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+-- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 80% of max possible speed the unit can go.
 function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinate, Speed )
 
   if Helicopter and Helicopter:IsAlive() ~= nil then
@@ -725,9 +727,9 @@ function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinat
     
     --- Calculate the target route point.
 
-    Coordinate.y = math.random( 50, 200 )    
+    Coordinate.y = math.random( 100, 500 )    
     
-    local _speed=Speed or Helicopter:GetSpeedMax()*0.5          
+    local _speed=Speed or Helicopter:GetSpeedMax()*0.8         
 
     --- Create a route point of type air.
     local CoordinateFrom = Helicopter:GetCoordinate()
@@ -756,11 +758,14 @@ function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinat
     Helicopter:WayPointInitialize( Route )
   
     local Tasks = {}
-    
+        
     Tasks[#Tasks+1] = Helicopter:TaskLandAtVec2( CoordinateTo:GetVec2() )
+    Tasks[#Tasks+1] = Helicopter:TaskFunction("AI_CARGO_HELICOPTER._BackHome", self)
+    
     Route[#Route].task = Helicopter:TaskCombo( Tasks )
 
     Route[#Route+1] = WaypointTo
+    
 
     -- Now route the helicopter
     Helicopter:Route( Route, 0 )
@@ -769,3 +774,103 @@ function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinat
   
 end
 
+
+--- On after RTB event. Route the helicopter from one airport or it's current position to another airbase.
+-- @param #AI_CARGO_HELICOPTER self
+-- @param Wrapper.Group#GROUP Helicopter Cargo helicopter.
+-- @param From
+-- @param Event
+-- @param To
+-- @param Wrapper.Airbase#AIRBASE Airbase Destination airbase.
+-- @param #number Speed Speed in km/h. Default is 80% of max possible speed the group can do.
+function AI_CARGO_HELICOPTER:onafterRTB( Helicopter, From, Event, To, Airbase, Speed)
+
+  if Helicopter and Helicopter:IsAlive() then
+
+    -- Set takeoff type.
+    local Takeoff = SPAWN.Takeoff.Hot
+    
+    -- Get template of group.
+    local Template = Helicopter:GetTemplate()
+    
+    -- Nil check
+    if Template==nil then
+      return
+    end
+
+    -- Waypoints of the route.
+    local Points={}
+    
+    -- To point.
+    local AirbasePointVec2 = Airbase:GetPointVec2()
+    local ToWaypoint = AirbasePointVec2:WaypointAir(
+      POINT_VEC3.RoutePointAltType.BARO,
+      "Land",
+      "Landing", 
+      Speed or Helicopter:GetSpeedMax()*0.8
+    )    
+    ToWaypoint["airdromeId"]   = Airbase:GetID()
+    ToWaypoint["speed_locked"] = true
+    
+    -- Task function triggering the arrived event.
+    local TaskFunction = Helicopter:TaskFunction("AI_CARGO_HELICOPTER._BackHome", self)
+
+    -- Put task function on last waypoint.
+    Helicopter:SetTaskWaypoint( ToWaypoint, TaskFunction )
+    
+
+    -- If self.Airbase~=nil then group is currently at an airbase, where it should be respawned.        
+    if self.Airbase then
+    
+      -- Second point of the route. First point is done in RespawnAtCurrentAirbase() routine.
+      Template.route.points[2] = ToWaypoint
+    
+      -- Respawn group at the current airbase.
+      Helicopter:RespawnAtCurrentAirbase(Template, Takeoff, false)
+      
+    else
+  
+      -- From point.
+      local GroupPoint = Helicopter:GetVec2()
+      local FromWaypoint = {}
+      FromWaypoint.x      = GroupPoint.x
+      FromWaypoint.y      = GroupPoint.y
+      FromWaypoint.type   = "Turning Point"
+      FromWaypoint.action = "Turning Point"
+      FromWaypoint.speed  = Helicopter:GetSpeedMax()*0.8
+ 
+      -- The two route points. 
+      Points[1] = FromWaypoint
+      Points[2] = ToWaypoint
+
+      local PointVec3 = Helicopter:GetPointVec3()
+      Template.x = PointVec3.x
+      Template.y = PointVec3.z
+ 
+      Template.route.points = Points
+            
+      local GroupSpawned = Helicopter:Respawn(Template)
+    
+    end
+  end
+end
+
+--- Function called when transport is back home and nothing more to do. Triggering the event BackHome.
+-- @param Wrapper.Group#GROUP Helicopter Cargo helicopter.
+-- @param #AI_CARGO_HELICOPTER self
+function AI_CARGO_HELICOPTER._BackHome(Group, self)
+  --Trigger BackHome event.
+  Group:SmokeRed()
+  self:__BackHome(1)
+end
+
+
+--- On after BackHome event.
+-- @param #AI_CARGO_HELICOPTER self
+-- @param Wrapper.Group#GROUP Helicopter Cargo helo.
+-- @param From
+-- @param Event
+-- @param To
+function AI_CARGO_HELICOPTER:onafterBackHome( Helicopter, From, Event, To )
+  Helicopter:SmokeRed()
+end

@@ -106,6 +106,7 @@ function AI_CARGO_APC:New( APC, CargoSet, CombatRadius )
   self:AddTransition( "*", "Follow", "Following" )
   self:AddTransition( "*", "Guard", "Unloaded" )
   self:AddTransition( "*", "Home", "*" )
+  self:AddTransition( "*", "BackHome" , "*" ) 
   
   self:AddTransition( "*", "Destroyed", "Destroyed" )
 
@@ -725,9 +726,34 @@ function AI_CARGO_APC:onafterHome( APC, From, Event, To, Coordinate, Speed )
 
     self:F({Waypoints = Waypoints})
     local Waypoint = Waypoints[#Waypoints]
+    
+    -- Task function triggering the arrived event.
+    local TaskFunction = APC:TaskFunction("AI_CARGO_APC._BackHome", self)
+
+    -- Put task function on last waypoint.
+    APC:SetTaskWaypoint( Waypoint, TaskFunction )
   
     APC:Route( Waypoints, 1 ) -- Move after a random seconds to the Route. See the Route method for details.
     
   end
   
+end
+
+--- Function called when transport is back home and nothing more to do. Triggering the event BackHome.
+-- @param Wrapper.Group#GROUP APC Cargo carrier.
+-- @param #AI_CARGO_APC self
+function AI_CARGO_APC._BackHome(APC, self)
+  --Trigger BackHome event.
+  APC:SmokeGreen()
+  self:__BackHome(1)
+end
+
+--- On after BackHome event.
+-- @param #AI_CARGO_APC self
+-- @param Wrapper.Group#GROUP APC
+-- @param From
+-- @param Event
+-- @param To
+function AI_CARGO_APC:onafterBackHome( APC, From, Event, To )
+  APC:SmokeRed()
 end
