@@ -123,6 +123,8 @@ function AI_CARGO_DISPATCHER:New( SetCarrier, SetCargo )
   self:AddTransition( "*", "Unloaded", "*" )
   
   self:AddTransition( "*", "Home", "*" )
+  self:AddTransition( "*", "RTB", "*" ) --FF
+  self:AddTransition( "*", "BackHome", "*" ) --FF
   
   self.MonitorTimeInterval = 30
   self.DeployRadiusInner = 200
