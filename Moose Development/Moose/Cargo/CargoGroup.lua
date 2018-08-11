@@ -73,6 +73,7 @@ do -- CARGO_GROUP
     self:SetDeployed( false )
     
     local WeightGroup = 0
+    local VolumeGroup = 0
     
     self.CargoGroup:Destroy()
 
@@ -96,10 +97,7 @@ do -- CARGO_GROUP
       
       -- And we register the spawned unit as part of the CargoSet.
       local Unit = UNIT:Register( CargoUnitName )
-      --local WeightUnit = Unit:GetDesc().massEmpty
-      --WeightGroup = WeightGroup + WeightUnit
-      local CargoUnit = CARGO_UNIT:New( Unit, Type, CargoUnitName, 10, LoadRadius, NearRadius )
-      self.CargoSet:Add( CargoUnitName, CargoUnit )
+      
     end
 
     -- Then we register the new group in the database
@@ -107,6 +105,31 @@ do -- CARGO_GROUP
     
     -- Now we spawn the new group based on the template created.
     self.CargoObject = _DATABASE:Spawn( GroupTemplate )
+    
+    for CargoUnitID, CargoUnit in pairs( self.CargoObject:GetUnits() ) do
+      local Desc = CargoUnit:GetDesc()
+      self:I( { Desc = Desc } )
+      local WeightUnit = math.random( 80, 120 )
+      if Desc then
+        WeightUnit = Desc.massEmpty
+      end
+      
+      local Box = CargoUnit:GetBoundingBox()
+      local VolumeUnit = ( Box.max.x - Box.min.x ) * ( Box.max.y - Box.min.y ) * ( Box.max.z - Box.min.z ) 
+      self:I( { VolumeUnit = VolumeUnit, WeightUnit = WeightUnit } )
+      
+
+      local CargoUnitName = CargoUnit:GetName()
+
+      local Cargo = CARGO_UNIT:New( CargoUnit, Type, CargoUnitName, 0, LoadRadius, NearRadius )
+      Cargo:SetWeight( WeightUnit )
+      Cargo:SetVolume( VolumeUnit )
+      self.CargoSet:Add( CargoUnitName, Cargo )
+
+      WeightGroup = WeightGroup + WeightUnit
+      VolumeGroup = VolumeGroup + VolumeUnit
+
+    end
   
     self:SetWeight( WeightGroup )
     self.CargoLimit = 10

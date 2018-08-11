@@ -875,12 +875,35 @@ do -- CARGO
     return self.CargoObject:GetCoordinate()
   end
   
+  --- Get the weight of the cargo.
+  -- @param #CARGO self
+  -- @return #number Weight The weight in kg.
+  function CARGO:GetWeight()
+    return self.Weight 
+  end
+  
   --- Set the weight of the cargo.
   -- @param #CARGO self
   -- @param #number Weight The weight in kg.
   -- @return #CARGO
   function CARGO:SetWeight( Weight )
     self.Weight = Weight
+    return self
+  end
+  
+  --- Get the volume of the cargo.
+  -- @param #CARGO self
+  -- @return #number Volume The volume in kg.
+  function CARGO:GetVolume()
+    return self.Volume 
+  end
+  
+  --- Set the volume of the cargo.
+  -- @param #CARGO self
+  -- @param #number Volume The volume in kg.
+  -- @return #CARGO
+  function CARGO:SetVolume( Volume )
+    self.Volume = Volume
     return self
   end
   

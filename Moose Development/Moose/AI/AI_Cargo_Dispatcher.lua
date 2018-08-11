@@ -404,8 +404,8 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
     -- The Pickup sequence ...
     -- Check if this Carrier need to go and Pickup something...
     -- So, if the cargo bay is not full yet with cargo to be loaded ...
-    self:I( { IsTransporting = AI_Cargo:IsTransporting() } )
-    if AI_Cargo:IsTransporting() == false then
+    self:I( { IsRelocating = AI_Cargo:IsRelocating() } )
+    if AI_Cargo:IsRelocating() == false then
       -- ok, so there is a free Carrier
       -- now find the first cargo that is Unloaded
       
@@ -560,9 +560,11 @@ function AI_CARGO_DISPATCHER:OnAfterLoaded( From, Event, To, Carrier, Cargo )
   end
   
   if self.DeployAirbasesSet then
-
-    local DeployAirbase = self.DeployAirbasesSet:GetRandomAirbase()
-    self.AI_Cargo[Carrier]:Deploy( DeployAirbase, math.random( self.DeployMinSpeed, self.DeployMaxSpeed ) )
+  
+    if self.AI_Cargo[Carrier]:IsTransporting() == true then
+      local DeployAirbase = self.DeployAirbasesSet:GetRandomAirbase()
+      self.AI_Cargo[Carrier]:Deploy( DeployAirbase, math.random( self.DeployMinSpeed, self.DeployMaxSpeed ) )
+    end
   end
   
    self.PickupCargo[Carrier] = nil
