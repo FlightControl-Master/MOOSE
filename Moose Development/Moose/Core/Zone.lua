@@ -933,7 +933,7 @@ end
 function ZONE_RADIUS:GetRandomCoordinate( inner, outer )
   self:F( self.ZoneName, inner, outer )
 
-  local Coordinate = COORDINATE:NewFromVec2( self:GetRandomVec2() )
+  local Coordinate = COORDINATE:NewFromVec2( self:GetRandomVec2(inner, outer) )
 
   self:T3( { Coordinate = Coordinate } )
   

@@ -496,7 +496,7 @@ end
 
 --- Sets the coalition of the spawned group. Note that it might be necessary to also set the country explicitly!
 -- @param #SPAWN self 
--- @param #DCS.coalition Coaliton Coaliton of the group as number of enumerator, i.e. 0=coaliton.side.NEUTRAL, 1=coaliton.side.RED, 2=coalition.side.BLUE.
+-- @param DCS#coalition.side Coalition Coalition of the group as number of enumerator, i.e. 0=coaliton.side.NEUTRAL, 1=coaliton.side.RED, 2=coalition.side.BLUE.
 -- @return #SPAWN self
 function SPAWN:InitCoalition( Coalition )
   self:F({coalition=Coalition})

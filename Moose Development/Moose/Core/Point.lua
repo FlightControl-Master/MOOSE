@@ -1098,11 +1098,14 @@ do -- COORDINATE
 
   --- Gets the nearest airbase with respect to the current coordinates.
   -- @param #COORDINATE self
-  -- @param #number AirbaseCategory Category of the airbase.
+  -- @param #number Category (Optional) Category of the airbase. Enumerator of @{Wrapper.Airbase#AIRBASE.Category}.
+  -- @param #number Coalition (Optional) Coalition of the airbase.
   -- @return Wrapper.Airbase#AIRBASE Closest Airbase to the given coordinate.
   -- @return #number Distance to the closest airbase in meters.
-  function COORDINATE:GetClosestAirbase(AirbaseCategory)
-    local airbases=AIRBASE.GetAllAirbases()
+  function COORDINATE:GetClosestAirbase(Category, Coalition)
+  
+    -- Get all airbases of the map.
+    local airbases=AIRBASE.GetAllAirbases(Coalition)
     
     local closest=nil
     local distmin=nil
@@ -1110,7 +1113,7 @@ do -- COORDINATE
     for _,_airbase in pairs(airbases) do
       local airbase=_airbase --Wrapper.Airbase#AIRBASE
       local category=airbase:GetDesc().category
-      if AirbaseCategory and AirbaseCategory==category or AirbaseCategory==nil then
+      if Category and Category==category or Category==nil then
         local dist=self:Get2DDistance(airbase:GetCoordinate())
         if closest==nil then
           distmin=dist
@@ -1257,6 +1260,8 @@ do -- COORDINATE
         Path[#Path+1]=COORDINATE:NewFromVec2(_vec2)
         --COORDINATE:NewFromVec2(_vec2):SmokeGreen()
       end
+      --COORDINATE:NewFromVec2(path[1]):SmokeBlue()
+      --COORDINATE:NewFromVec2(path[#path]):SmokeBlue()
             
     else
       self:E("Path is nil. No valid path on road could be found.")

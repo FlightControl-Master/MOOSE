@@ -413,6 +413,38 @@ function GROUP:GetSpeedMax()
   return nil
 end
 
+--- Returns the maximum range of the group.
+-- If the group is heterogenious and consists of different units, the smallest range of all units is returned.
+-- @param #GROUP self
+-- @return #number Range in meters.
+function GROUP:GetRange()
+  self:F2( self.GroupName )
+
+  local DCSGroup = self:GetDCSObject()
+  if DCSGroup then
+  
+    local Units=self:GetUnits()
+    
+    local Rangemin=nil
+    
+    for _,unit in pairs(Units) do
+      local unit=unit --Wrapper.Unit#UNIT
+      local range=unit:GetRange()
+      if range then
+        if Rangemin==nil then
+          Rangemin=range
+        elseif range<Rangemin then
+          Rangemin=range
+        end
+      end
+    end
+    
+    return Rangemin
+  end
+  
+  return nil
+end
+
 
 --- Returns a list of @{Wrapper.Unit} objects of the @{Wrapper.Group}.
 -- @param #GROUP self
@@ -1457,7 +1489,7 @@ function GROUP:RespawnAtCurrentAirbase(SpawnTemplate, Takeoff, Uncontrolled) -- 
     
     -- Set uncontrolled state.
     SpawnTemplate.uncontrolled=Uncontrolled
-    
+
     -- Destroy and respawn.
     self:Destroy()
     _DATABASE:Spawn( SpawnTemplate )

@@ -416,6 +416,28 @@ function UNIT:GetSpeedMax()
   return nil
 end
 
+--- Returns the unit's max range in meters derived from the DCS descriptors.
+-- For ground units it will return a range of 10,000 km as they have no real range.
+-- @param #UNIT self
+-- @return #number Range in meters.
+function UNIT:GetRange()
+  self:F2( self.UnitName )
+
+  local Desc = self:GetDesc()
+  
+  if Desc then
+    local Range = Desc.range --This is in nautical miles for some reason.
+    if Range then
+      Range=UTILS.NMToMeters(Range)
+    else
+      Range=10000000 --10.000 km if no range
+    end
+    return Range
+  end
+
+  return nil
+end
+
 --- Returns the unit's group if it exist and nil otherwise.
 -- @param Wrapper.Unit#UNIT self
 -- @return Wrapper.Group#GROUP The Group of the Unit.
