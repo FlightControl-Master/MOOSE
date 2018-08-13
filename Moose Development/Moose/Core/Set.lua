@@ -3984,7 +3984,9 @@ end
 -- @return self
 function SET_AIRBASE:AddAirbase( airbase )
 
-  self:Add( airbase:GetName(), airbase )
+  if airbase then
+    self:Add( airbase:GetName(), airbase )
+  end
   
   return self
 end
