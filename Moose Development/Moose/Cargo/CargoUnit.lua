@@ -42,9 +42,9 @@ do -- CARGO_UNIT
   -- @param #number LoadRadius (optional)
   -- @param #number NearRadius (optional)
   -- @return #CARGO_UNIT
-  function CARGO_UNIT:New( CargoUnit, Type, Name, Weight, LoadRadius, NearRadius )
-    local self = BASE:Inherit( self, CARGO_REPRESENTABLE:New( CargoUnit, Type, Name, Weight, LoadRadius, NearRadius ) ) -- #CARGO_UNIT
-    self:I( { Type, Name, Weight, LoadRadius, NearRadius } )
+  function CARGO_UNIT:New( CargoUnit, Type, Name, LoadRadius, NearRadius )
+    local self = BASE:Inherit( self, CARGO_REPRESENTABLE:New( CargoUnit, Type, Name, LoadRadius, NearRadius ) ) -- #CARGO_UNIT
+    self:I( { Type, Name, LoadRadius, NearRadius } )
   
     self:T( CargoUnit )
     self.CargoObject = CargoUnit

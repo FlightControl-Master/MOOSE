@@ -1020,13 +1020,27 @@ do -- CARGO_REPRESENTABLE
   -- @param #CARGO_REPRESENTABLE self
   -- @param #string Type
   -- @param #string Name
-  -- @param #number Weight
   -- @param #number LoadRadius (optional)
   -- @param #number NearRadius (optional)
   -- @return #CARGO_REPRESENTABLE
-  function CARGO_REPRESENTABLE:New( CargoObject, Type, Name, Weight, LoadRadius, NearRadius )
-    local self = BASE:Inherit( self, CARGO:New( Type, Name, Weight, LoadRadius, NearRadius ) ) -- #CARGO_REPRESENTABLE
-    self:F( { Type, Name, Weight, LoadRadius, NearRadius } )
+  function CARGO_REPRESENTABLE:New( CargoObject, Type, Name, LoadRadius, NearRadius )
+    local self = BASE:Inherit( self, CARGO:New( Type, Name, 0, LoadRadius, NearRadius ) ) -- #CARGO_REPRESENTABLE
+    self:F( { Type, Name, LoadRadius, NearRadius } )
+
+    local Desc = CargoObject:GetDesc()
+    self:I( { Desc = Desc } )
+    local Weight = math.random( 80, 120 )
+    if Desc then
+      Weight = Desc.massEmpty
+    end
+
+    self:SetWeight( Weight )      
+
+--      local Box = CargoUnit:GetBoundingBox()
+--      local VolumeUnit = ( Box.max.x - Box.min.x ) * ( Box.max.y - Box.min.y ) * ( Box.max.z - Box.min.z ) 
+--      self:I( { VolumeUnit = VolumeUnit, WeightUnit = WeightUnit } )
+    --self:SetVolume( VolumeUnit )
+
     
     return self
   end

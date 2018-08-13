@@ -405,7 +405,7 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
     -- Check if this Carrier need to go and Pickup something...
     -- So, if the cargo bay is not full yet with cargo to be loaded ...
     self:I( { IsRelocating = AI_Cargo:IsRelocating() } )
-    if AI_Cargo:IsRelocating() == false then
+    if AI_Cargo:IsRelocating() == false and AI_Cargo:IsTransporting() == false then
       -- ok, so there is a free Carrier
       -- now find the first cargo that is Unloaded
       

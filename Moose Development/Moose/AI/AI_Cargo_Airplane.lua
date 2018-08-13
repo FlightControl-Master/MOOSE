@@ -37,7 +37,7 @@ function AI_CARGO_AIRPLANE:New( Airplane, CargoSet )
   self:AddTransition( { "Unloaded", "Loaded" }, "Pickup", "*" )
   self:AddTransition( "Loaded", "Deploy", "*" )
   
-  self:AddTransition( { "Unloaded", "Loaded" }, "Load", "Boarding" )
+  self:AddTransition( { "Unloaded", "Boarding" }, "Load", "Boarding" )
   self:AddTransition( "Boarding", "Board", "Boarding" )
   self:AddTransition( "Boarding", "Loaded", "Loaded" )
   self:AddTransition( "Loaded", "Unload", "Unboarding" )
@@ -128,8 +128,13 @@ function AI_CARGO_AIRPLANE:New( Airplane, CargoSet )
   -- Set carrier. 
   self:SetCarrier( Airplane )
   
-  Airplane:SetCargoBayWeightLimit( 5000 )
-  Airplane:SetCargoBayVolumeLimit( 15 )
+  local Desc = Airplane:GetUnit(1):GetDesc()
+  
+  self:F({Desc=Desc})
+  
+  
+  Airplane:SetCargoBayWeightLimit( Desc.massMax - ( Desc.massEmpty + Desc.fuelMassMax ) )
+  --Airplane:SetCargoBayVolumeLimit( 15 )
   
   self.Relocating = true
   
@@ -344,8 +349,7 @@ function AI_CARGO_AIRPLANE:onafterDeploy( Airplane, From, Event, To, Airbase, Sp
     -- Set destination airbase for next :Route() command.
     self.Airbase = Airbase
     
-    -- Unclear?!
-    self.Transporting = false
+    self.Transporting = true
     self.Relocating = false
   end
   
@@ -398,6 +402,38 @@ function AI_CARGO_AIRPLANE:onafterBoard( Airplane, From, Event, To, Cargo )
     if not Cargo:IsLoaded() then
       self:__Board( 10, Cargo )
     else
+      -- Check if another cargo can be loaded into the airplane.
+      for _,_Cargo in pairs( self.CargoSet:GetSet() ) do
+        
+        self:F({_Cargo:GetName()})
+        local Cargo =_Cargo --Cargo.Cargo#CARGO
+        
+        -- Is there a cargo still unloaded?
+        if Cargo:IsUnLoaded() == true then
+        
+          -- Only when the cargo is within load radius.
+          local InRadius = Cargo:IsInLoadRadius( Airplane:GetCoordinate() )
+          if InRadius then
+            
+            local CargoBayFreeWeight = Airplane:GetCargoBayFreeWeight()
+            --local CargoBayFreeVolume = Airplane:GetCargoBayFreeVolume()
+            
+            local CargoWeight = Cargo:GetWeight()
+            --local CargoVolume = Cargo:GetVolume()
+            
+            -- Only when there is space within the bay to load the next cargo item!
+            if CargoBayFreeWeight > CargoWeight then --and CargoBayFreeVolume > CargoVolume then
+            
+              -- ok, board.
+              self:__Load( 5, Airplane:GetCoordinate() )
+              
+              -- And start the boarding loop for the AI_CARGO_AIRPLANE object until the cargo is boarded.
+              --Cargo:Board( Airplane, 25 )
+              return
+            end
+          end
+        end
+      end
       self:__Loaded( 1, Cargo )
     end
   end
@@ -415,41 +451,8 @@ function AI_CARGO_AIRPLANE:onafterLoaded( Airplane, From, Event, To, Cargo )
   env.info("FF troops loaded into cargo plane")
   
   if Airplane and Airplane:IsAlive() then
-    
-    -- Check if another cargo can be loaded into the airplane.
-    for _,_Cargo in pairs( self.CargoSet:GetSet() ) do
-      
-      self:F({_Cargo:GetName()})
-      local Cargo =_Cargo --Cargo.Cargo#CARGO
-      
-      -- Is there a cargo still unloaded?
-      if Cargo:IsUnLoaded() == true then
-      
-        -- Only when the cargo is within load radius.
-        local InRadius = Cargo:IsInLoadRadius( Airplane:GetCoordinate() )
-        if InRadius then
-          
-          local CargoBayFreeWeight = Airplane:GetCargoBayFreeWeight()
-          local CargoBayFreeVolume = Airplane:GetCargoBayFreeVolume()
-          
-          local CargoWeight = Cargo:GetWeight()
-          local CargoVolume = Cargo:GetVolume()
-          
-          -- Only when there is space within the bay to load the next cargo item!
-          if CargoBayFreeWeight > CargoWeight and CargoBayFreeVolume > CargoVolume then
-          
-            -- ok, board.
-            self:__Load( 5, Airplane:GetCoordinate() )
-            
-            -- And start the boarding loop for the AI_CARGO_AIRPLANE object until the cargo is boarded.
-            --Cargo:Board( Airplane, 25 )
-            return
-          end
-        end
-      end
-    end
-    self:F( { "Transporting" } )
-    self.Transporting = true -- This will only be executed when there is no cargo boarded anymore. The dispatcher will then kick-off the deploy cycle!
+      self:F( { "Transporting" } )
+      self.Transporting = true -- This will only be executed when there is no cargo boarded anymore. The dispatcher will then kick-off the deploy cycle!
   end
   
 end

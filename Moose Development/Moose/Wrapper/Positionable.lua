@@ -851,17 +851,17 @@ do -- Cargo
     return ItemCount
   end
   
-  --- Get Cargo Bay Free Volume in m3.
-  -- @param #POSITIONABLE self
-  -- @return #number CargoBayFreeVolume
-  function POSITIONABLE:GetCargoBayFreeVolume()
-    local CargoVolume = 0
-    for CargoName, Cargo in pairs( self.__.Cargo ) do
-      CargoVolume = CargoVolume + Cargo:GetVolume()
-    end
-    return self.__.CargoBayVolumeLimit - CargoVolume
-  end
-  
+--  --- Get Cargo Bay Free Volume in m3.
+--  -- @param #POSITIONABLE self
+--  -- @return #number CargoBayFreeVolume
+--  function POSITIONABLE:GetCargoBayFreeVolume()
+--    local CargoVolume = 0
+--    for CargoName, Cargo in pairs( self.__.Cargo ) do
+--      CargoVolume = CargoVolume + Cargo:GetVolume()
+--    end
+--    return self.__.CargoBayVolumeLimit - CargoVolume
+--  end
+--  
   --- Get Cargo Bay Free Weight in kg.
   -- @param #POSITIONABLE self
   -- @return #number CargoBayFreeWeight
@@ -874,13 +874,13 @@ do -- Cargo
     return self.__.CargoBayWeightLimit - CargoWeight
   end
 
-  --- Get Cargo Bay Volume Limit in m3.
-  -- @param #POSITIONABLE self
-  -- @param #number VolumeLimit
-  function POSITIONABLE:SetCargoBayVolumeLimit( VolumeLimit )
-    self.__.CargoBayVolumeLimit = VolumeLimit
-  end
-  
+--  --- Get Cargo Bay Volume Limit in m3.
+--  -- @param #POSITIONABLE self
+--  -- @param #number VolumeLimit
+--  function POSITIONABLE:SetCargoBayVolumeLimit( VolumeLimit )
+--    self.__.CargoBayVolumeLimit = VolumeLimit
+--  end
+
   --- Get Cargo Bay Weight Limit in kg.
   -- @param #POSITIONABLE self
   -- @param #number WeightLimit

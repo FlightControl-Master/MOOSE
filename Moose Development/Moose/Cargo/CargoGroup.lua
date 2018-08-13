@@ -107,32 +107,19 @@ do -- CARGO_GROUP
     self.CargoObject = _DATABASE:Spawn( GroupTemplate )
     
     for CargoUnitID, CargoUnit in pairs( self.CargoObject:GetUnits() ) do
-      local Desc = CargoUnit:GetDesc()
-      self:I( { Desc = Desc } )
-      local WeightUnit = math.random( 80, 120 )
-      if Desc then
-        WeightUnit = Desc.massEmpty
-      end
-      
-      local Box = CargoUnit:GetBoundingBox()
-      local VolumeUnit = ( Box.max.x - Box.min.x ) * ( Box.max.y - Box.min.y ) * ( Box.max.z - Box.min.z ) 
-      self:I( { VolumeUnit = VolumeUnit, WeightUnit = WeightUnit } )
       
 
       local CargoUnitName = CargoUnit:GetName()
 
-      local Cargo = CARGO_UNIT:New( CargoUnit, Type, CargoUnitName, 0, LoadRadius, NearRadius )
-      Cargo:SetWeight( WeightUnit )
-      Cargo:SetVolume( VolumeUnit )
+      local Cargo = CARGO_UNIT:New( CargoUnit, Type, CargoUnitName, LoadRadius, NearRadius )
       self.CargoSet:Add( CargoUnitName, Cargo )
 
-      WeightGroup = WeightGroup + WeightUnit
-      VolumeGroup = VolumeGroup + VolumeUnit
+      WeightGroup = WeightGroup + Cargo:GetWeight()
+      --VolumeGroup = VolumeGroup + VolumeUnit
 
     end
   
     self:SetWeight( WeightGroup )
-    self.CargoLimit = 10
     
     self:T( { "Weight Cargo", WeightGroup } )
   
