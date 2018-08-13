@@ -29,7 +29,7 @@
 -- @field DCS#Airbase.Category category Category of the home airbase, i.e. airdrome, helipad/farp or ship.
 -- @field Core.Point#COORDINATE coordinate Coordinate of the warehouse.
 -- @field Core.Point#COORDINATE road Closest point to warehouse on road.
--- @field Core.Point#COORDINATE road Closest point to warehouse on rail.
+-- @field Core.Point#COORDINATE rail Closest point to warehouse on rail.
 -- @field Core.Zone#ZONE spawnzone Zone in which assets are spawned.
 -- @field #string wid Identifier of the warehouse printed before other output to DCS.log file.
 -- @field #number uid Unit identifier of the warehouse. Derived from the associated airbase.
@@ -59,13 +59,19 @@
 -- ![Banner Image](..\Presentations\WAREHOUSE\Warehouse_Main.JPG)
 --
 -- # What is a warehouse?
--- A warehouse is an abstract object that can hold virtual assets in stock. It is usually associated with a particular airbase.
--- If another airbase or warehouse requests assets, the corresponding troops are spawned at the warehouse and being transported to the requestor.
+-- A warehouse is an abstract object represented by a physical (static) building that can hold virtual assets in stock.
+-- It can but it must not be associated with a particular airbase. The associated airbase can be an airdrome, a Helipad/FARP or a ship.
+-- 
+-- If another another warehouse requests assets, the corresponding troops are spawned at the warehouse and being transported to the requestor or go their
+-- by themselfs. Once arrived at the requesting warehouse, the assets go into the stock of the requestor and can be reactivated when necessary.
 --
 -- ## What assets can be stored?
 -- Any kind of ground or airborn asset can be stored. Ships not supported at the moment due to the fact that airbases are bound to airbases which are
 -- normally not located near the sea.
+-- 
+-- # Adding Assets
 --
+-- # Requests
 --
 --
 -- ===
@@ -83,7 +89,7 @@ WAREHOUSE = {
   coalition  = nil,
   country    = nil,
   airbase    = nil,
-  category   = nil,
+  category   = -1,
   coordinate = nil,
   road       = nil,
   rail       = nil,
@@ -171,10 +177,10 @@ WAREHOUSE.TransportType = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.1.4"
+WAREHOUSE.version="0.1.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- TODO: Warehuse todo list.
+-- TODO: Warehouse todo list.
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: Add event handlers.
@@ -197,10 +203,13 @@ WAREHOUSE.version="0.1.4"
 --- WAREHOUSE constructor. Creates a new WAREHOUSE object accociated with an airbase.
 -- @param #WAREHOUSE self
 -- @param Wrapper.Static#STATIC warehouse The physical structure of the warehouse.
+-- @param Core.Zone#ZONE spawnzone (Optional) The zone in which units are spawned and despawned when they leave or arrive the warehouse. Default is a zone of 200 meters around the warehouse.
+-- @param Wrapper.Airbase#AIRBASE airbase (Optional) The airbase belonging to the warehouse. Default is the closest airbase to the warehouse structure as long as it within a range of 3 km. 
 -- @return #WAREHOUSE self
-function WAREHOUSE:New(warehouse)
+function WAREHOUSE:New(warehouse, spawnzone, airbase)
   BASE:E({warehouse=warehouse:GetName()})
   
+  -- Nil check.
   if warehouse==nil then
     BASE:E("ERROR: Warehouse does not exist!")
     return nil
@@ -222,29 +231,35 @@ function WAREHOUSE:New(warehouse)
   self.country=warehouse:GetCountry()
   self.coordinate=warehouse:GetCoordinate()
   
-  --TODO: Add max range parameter to check if airbase is close enough. Range should be? ~3 km maybe?
-  local _airbase=self.coordinate:GetClosestAirbase(nil, self.coalition)
-  
-  if _airbase and _airbase:GetCoordinate():Get2DDistance(self.coordinate) < 2500 then
-    self.airbase=_airbase
-    self.category=self.airbase:GetDesc().category
+  -- Set airbase.
+  if airbase then
+    -- User requested.
+    self.airbase=airbase
+  else
+    -- Closest of the same coalition but within a certain range.
+    local _airbase=self.coordinate:GetClosestAirbase(nil, self.coalition)
+    if _airbase and _airbase:GetCoordinate():Get2DDistance(self.coordinate) < 3000 then
+      self.airbase=_airbase
+      self.category=self.airbase:GetDesc().category
+    end
   end
-  
-  
+      
   -- Get the closest point on road and rail.
   local _road=self.coordinate:GetClosestPointToRoad()
   local _rail=self.coordinate:GetClosestPointToRoad(true)
-  
-  if _road and _road:Get2DDistance(self.coordinate) < 2500 then
-    self.road=_road
-  end
-  if _rail and _rail:Get2DDistance(self.coordinate) < 2500 then
-    self.rail=_rail
-  end
 
+  -- Set connections.  
+  if _road and _road:Get2DDistance(self.coordinate) < 3000 then
+    self.road=_road
+    _road:MarkToAll(string.format("%s road connection.", self.warehouse:GetName()), true)
+  end
+  if _rail and _rail:Get2DDistance(self.coordinate) < 3000 then
+    self.rail=_rail
+    _rail:MarkToAll(string.format("%s rail connection.", self.warehouse:GetName()), true)
+  end
 
   -- Define the default spawn zone.
-  self.spawnzone=ZONE_RADIUS:New("Spawnzone", warehouse:GetVec2(), 200)
+  self.spawnzone=ZONE_RADIUS:New(string.format("Spawnzone %s",warehouse:GetName()), warehouse:GetVec2(), 200)
 
   -- Add FSM transitions.
   self:AddTransition("*", "Start",     "Running")
@@ -312,6 +327,137 @@ function WAREHOUSE:New(warehouse)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- User functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Add an airplane group to the warehouse stock.
+-- @param #WAREHOUSE self
+-- @param #string templategroupname Name of the late activated template group as defined in the mission editor.
+-- @param #number ngroups Number of groups to add to the warehouse stock. Default is 1.
+-- @return #WAREHOUSE self
+function WAREHOUSE:AddAsset(templategroupname, ngroups)
+
+  -- Set default.
+  local n=ngroups or 1
+
+  local group=GROUP:FindByName(templategroupname)
+
+  if group then
+
+    local DCSgroup=group:GetDCSObject()
+    local DCSunit=DCSgroup:getUnit(1)
+    local DCSdesc=DCSunit:getDesc()
+    local DCSdisplay=DCSdesc.displayName
+    local DCScategory=DCSgroup:getCategory()
+    local DCStype=DCSunit:getTypeName()
+    local SpeedMax=group:GetSpeedMax()
+    local RangeMin=group:GetRange()
+
+    env.info(string.format("group name   = %s", group:GetName()))
+    env.info(string.format("display name = %s", DCSdisplay))
+    env.info(string.format("category     = %s", DCScategory))
+    env.info(string.format("type         = %s", DCStype))
+    env.info(string.format("speed max    = %s", tostring(SpeedMax)))
+    env.info(string.format("range min    = %s", tostring(RangeMin)))
+    self:E({fullassetdesc=DCSdesc})
+
+    local attribute=self:_GetAttribute(templategroupname)
+
+    -- Add this n times to the table.
+    for i=1,n do
+      local stockitem={} --#WAREHOUSE.Stockitem
+      
+      self.assetid=self.assetid+1
+      
+      stockitem.uid=self.assetid
+      stockitem.templatename=templategroupname
+      stockitem.template=UTILS.DeepCopy(_DATABASE.Templates.Groups[templategroupname].Template)
+      stockitem.category=DCScategory
+      stockitem.unittype=DCStype
+      stockitem.attribute=attribute
+      stockitem.range=RangeMin
+      stockitem.speedmax=SpeedMax
+      
+      -- Modify the template so that the group is spawned with the right coalition.
+      stockitem.template.CoalitionID=self.coalition
+      stockitem.template.CountryID=self.country
+      
+      table.insert(self.stock, stockitem)
+    end
+    
+    -- Destroy group if it is alive.
+    if group:IsAlive()==true then
+      group:Destroy()
+    end
+
+  else
+    -- Group name does not exist!
+    self:E(string.format("ERROR: Template group name not defined in the mission editor. Check the spelling! templategroupname=%s",tostring(templategroupname)))
+  end
+
+  return self
+end
+
+--- Add a request for the warehouse.
+-- @param #WAREHOUSE self
+-- @param #WAREHOUSE warehouse The warehouse requesting supply.
+-- @param #WAREHOUSE.Descriptor AssetDescriptor Descriptor describing the asset that is requested.
+-- @param AssetDescriptorValue Value of the asset descriptor. Type depends on descriptor, i.e. could be a string, etc.
+-- @param #number nAsset Number of groups requested that match the asset specification.
+-- @param #WAREHOUSE.TransportType TransportType Type of transport.
+-- @param #number nTransport Number of transport units requested.
+-- @param #number Prio Priority of the request. Number ranging from 1=high to 100=low.
+function WAREHOUSE:AddRequest(warehouse, AssetDescriptor, AssetDescriptorValue, nAsset, TransportType, nTransport, Prio)
+
+  nAsset=nAsset or 1
+  TransportType=TransportType or WAREHOUSE.TransportType.SELFPROPELLED
+  nTransport=nTransport or 1
+  Prio=Prio or 50
+  
+  -- Increase id.
+  self.queueid=self.queueid+1
+
+  -- Request queue table item.
+  local request={
+  uid=self.queueid,
+  prio=Prio,
+  warehouse=warehouse,
+  airbase=warehouse.airbase,
+  category=warehouse.category,
+  assetdesc=AssetDescriptor,
+  assetdescval=AssetDescriptorValue,
+  nasset=nAsset,
+  transporttype=TransportType,
+  ntransport=nTransport}
+  
+  -- Add request to queue.
+  table.insert(self.queue, request)
+end
+
+--- Add a delayed request for the warehouse.
+-- @param #WAREHOUSE self
+-- @param #number delay Delay before the request is made in seconds.
+-- @param #WAREHOUSE warehouse The warehouse requesting supply.
+-- @param #WAREHOUSE.Descriptor AssetDescriptor Descriptor describing the asset that is requested.
+-- @param AssetDescriptorValue Value of the asset descriptor. Type depends on descriptor, i.e. could be a string, etc.
+-- @param #number nAsset Number of groups requested that match the asset specification.
+-- @param #WAREHOUSE.TransportType TransportType Type of transport.
+-- @param #number nTransport Number of transport units requested.
+-- @param #number Prio Priority of the request. Number ranging from 1=high to 100=low.
+function WAREHOUSE:__AddRequest(delay, warehouse, AssetDescriptor, AssetDescriptorValue, nAsset, TransportType, nTransport, Prio)
+  SCHEDULER:New(nil,WAREHOUSE.AddRequest,{self, warehouse, AssetDescriptor, AssetDescriptorValue, nAsset, TransportType, nTransport, Prio}, delay)
+end
+
+--- Set a zone where the (ground) assets of the warehouse are spawned once requested.
+-- @param #WAREHOUSE self
+-- @param Core.Zone#ZONE zone The spawn zone.
+-- @return #WAREHOUSE self
+function WAREHOUSE:SetSpawnZone(zone)
+  self.spawnzone=zone
+  return self
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM states
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -341,6 +487,11 @@ function WAREHOUSE:onafterStart(From, Event, To)
   -- event landing
   -- event crash/dead
   -- event base captured ==> change coalition ==> add assets to other coalition
+  
+  -- Handle event that airbase was captured.
+  if self.airbase then
+    --self.airbase:HandleEvent(EVENTS.BaseCaptured, self._BaseCaptured)
+  end
   
   self:__Status(5)
 end
@@ -404,97 +555,6 @@ end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Spawns requested asset at warehouse or associated airbase.
--- @param #WAREHOUSE self
--- @param #WAREHOUSE.Queueitem Request Information table of the request.
--- @return Core.Set#SET_GROUP Set of groups that were spawned.
--- @return #WAREHOUSE.Attribute Generalized attribute of asset.
--- @return DCS#Group.Category Category of asset, i.e. ground, air, ship, ...
-function WAREHOUSE:_SpawnAssetRequest(Request)
-
-  -- Filter the requested cargo assets.
-  local _assetstock=self:_FilterStock(self.stock, Request.assetdesc, Request.assetdescval, Request.nasset)
-  
-  if #_assetstock==0 then
-    return nil,nil,nil
-  end
-
-  -- General type and category.
-  local _cargotype=_assetstock[1].attribute    --#WAREHOUSE.Attribute
-  local _cargocategory=_assetstock[1].category --DCS#Group.Category
-  
-  -- Now we try to find all parking spots for all cargo groups in advance. Due to the for loop, the parking spots do not get updated while spawning.
-  local Parking={}
-  if  _cargocategory==Group.Category.AIRPLANE or _cargocategory==Group.Category.HELICOPTER then
-    Parking=self:_GetParkingForAssets(_assetstock)    
-  end
-  
-  -- Create an empty set.
-  local groupset=SET_GROUP:New():FilterDeads()
-
-  -- Spawn the assets.
-  local _delid={}
-  local _spawngroups={}
-  
-  -- Loop over cargo requests.
-  for i=1,Request.nasset do
-
-    -- Get stock item.
-    local _assetitem=_assetstock[i] --#WAREHOUSE.Stockitem
-
-    -- Find a random point within the spawn zone.
-    local spawncoord=self.spawnzone:GetRandomCoordinate()    
-    
-    -- Alias of the group.
-    local _alias=self:_Alias(_assetitem,Request)
-    
-    -- Spawn object. Spawn with ALIAS here or DCS crashes!
-    --local _spawn=SPAWN:NewFromTemplate(_assetitem.template,_assetitem.templatename,_alias):InitCoalition(self.coalition):InitCountry(self.country)
-    local _spawn=SPAWN:NewWithAlias(_assetitem.templatename,_alias):InitCoalition(self.coalition):InitCountry(self.country)
-
-    local _group=nil --Wrapper.Group#GROUP    
-    local _attribute=_assetitem.attribute
-      
-    if _assetitem.category==Group.Category.GROUND then
-    
-      -- Spawn ground troops.      
-      _group=_spawn:SpawnFromCoordinate(spawncoord)
-      
-    elseif _assetitem.category==Group.Category.AIRPLANE or _assetitem.category==Group.Category.HELICOPTER then
-    
-      --TODO: spawn only so many groups as there are parking spots. Adjust request and create a new one with the reduced number!
-    
-      -- Spawn air units.
-      _group=_spawn:SpawnAtAirbase(self.airbase, SPAWN.Takeoff.Cold, nil, nil, true, Parking[i])
-      
-    elseif _assetitem.category==Group.Category.TRAIN then
-    
-      -- Spawn train.
-      local _railroad=self.coordinate:GetClosestPointToRoad(true)
-      if _railroad then     
-        _group=_spawn:SpawnFromCoordinate(_railroad)
-      end
-      
-    end
-
-    if _group then
-      --_spawngroups[i]=_group
-      groupset:AddGroup(_group)
-      table.insert(_delid,_assetitem.uid)
-    else
-      self:E(self.wid.."ERROR: cargo asset could not be spawned!")
-    end
-    
-  end
-
-  -- Delete spawned items from warehouse stock.
-  for _,_id in pairs(_delid) do
-    self:_DeleteStockItem(_id)
-  end
-
-  return groupset,_cargotype,_cargocategory
-end
-
 --- On before "Request" event. Checks if the request can be fullfilled.
 -- @param #WAREHOUSE self
 -- @param #string From From state.
@@ -520,7 +580,7 @@ function WAREHOUSE:onbeforeRequest(From, Event, To, Request)
     MESSAGE:New(text, 10):ToCoalitionIf(self.coalition, self.Report or self.Debug)
     self:E(self.wid..text)
     --TODO Delete request from queue because it will never be possible!
-    return false      
+    return false
     end
   end
 
@@ -536,7 +596,7 @@ function WAREHOUSE:onbeforeRequest(From, Event, To, Request)
 end
 
 
---- On after "Request" event. Initiates the transport of the assets to the requesting airbase.
+--- On after "Request" event. Initiates the transport of the assets to the requesting warehouse.
 -- @param #WAREHOUSE self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -565,7 +625,6 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     end
   end
 
-
   ------------------------------------------------------------------------------------------------------------------------------------
   -- Self propelled assets.
   ------------------------------------------------------------------------------------------------------------------------------------
@@ -573,19 +632,14 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   -- No transport unit requested. Assets go by themselfes.
   if Request.transporttype==WAREHOUSE.TransportType.SELFPROPELLED then
     env.info("FF selfpropelled")
-    --for _i,_spawngroup in pairs(_spawngroups) do
+
     for _,_spawngroup in pairs(_spawngroups:GetSetObjects()) do
       
       local group=_spawngroup --Wrapper.Group#GROUP
             
       local ToCoordinate=Request.warehouse.spawnzone:GetRandomCoordinate(50)      
       ToCoordinate:MarkToAll("Destination")
-      
-      local dist=Request.airbase:GetCoordinate():Get2DDistance(ToCoordinate)
-      
-      env.info("Dist to warehouse = "..dist)
-      env.info("FF group "..group:GetName())
-      
+            
       -- Route cargo to their destination.
       if _cargocategory==Group.Category.GROUND then
         env.info("FF route ground "..group:GetName())
@@ -615,6 +669,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     
     -- Add request to pending queue.
     table.insert(self.pending, Request)
+    
     -- Delete request from queue.
     self:_DeleteQueueItem(Request.uid)
     
@@ -626,9 +681,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   -- Transport assets and dispachers
   ------------------------------------------------------------------------------------------------------------------------------------
 
-  env.info("FF cargo set name(s) = "..CargoGroups:GetObjectNames())
-  ----------------------------------------------------------------
-
+  -- Set of cargo carriers.
   local TransportSet = SET_GROUP:New():FilterDeads()
 
   -- Pickup and deploy zones/bases.
@@ -646,9 +699,6 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   local _transporttype=_assetstock[1].attribute    --#WAREHOUSE.Attribute
   local _transportcategory=_assetstock[1].category --DCS#Group.Category
 
-  -- Now we try to find all parking spots for all transport groups in advance. Due to the for loop, the parking spots do not get updated while spawning.
-  local Parking={}
-  
   -- Now we try to find all parking spots for all cargo groups in advance. Due to the for loop, the parking spots do not get updated while spawning.
   local Parking={}
   if  _transportcategory==Group.Category.AIRPLANE or _transportcategory==Group.Category.HELICOPTER then
@@ -750,7 +800,6 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
       local _assetitem=_assetstock[i] --#WAREHOUSE.Stockitem
 
       -- Spawn with ALIAS here or DCS crashes!
-      --local _alias=string.format("%s_%d", _assetitem.templatename,_assetitem.id)
       local _alias=self:_Alias(_assetitem, Request)
 
       -- Spawn plane at airport in uncontrolled state.
@@ -782,12 +831,12 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     
   elseif Request.transporttype==WAREHOUSE.TransportType.TRAIN then
 
-    self:E(self.wid.."ERROR: transport by train not supported yet!")
+    self:E(self.wid.."ERROR: cargo transport by train not supported yet!")
     return
 
   elseif Request.transporttype==WAREHOUSE.TransportType.SHIP then
 
-    self:E(self.wid.."ERROR: transport by ship not supported yet!")
+    self:E(self.wid.."ERROR: cargo transport by ship not supported yet!")
     return
 
   elseif Request.transporttype==WAREHOUSE.TransportType.SELFPROPELLED then
@@ -836,11 +885,105 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   -- Start dispatcher.
   CargoTransport:__Start(5)
 
-  -- Delete request from queue.
+  -- Add request to pending queue.
   table.insert(self.pending, Request)
+
+  -- Delete request from queue.
   self:_DeleteQueueItem(Request.uid)
 
 end
+
+
+--- Spawns requested asset at warehouse or associated airbase.
+-- @param #WAREHOUSE self
+-- @param #WAREHOUSE.Queueitem Request Information table of the request.
+-- @return Core.Set#SET_GROUP Set of groups that were spawned.
+-- @return #WAREHOUSE.Attribute Generalized attribute of asset.
+-- @return DCS#Group.Category Category of asset, i.e. ground, air, ship, ...
+function WAREHOUSE:_SpawnAssetRequest(Request)
+
+  -- Filter the requested cargo assets.
+  local _assetstock=self:_FilterStock(self.stock, Request.assetdesc, Request.assetdescval, Request.nasset)
+  
+  if #_assetstock==0 then
+    return nil,nil,nil
+  end
+
+  -- General type and category.
+  local _cargotype=_assetstock[1].attribute    --#WAREHOUSE.Attribute
+  local _cargocategory=_assetstock[1].category --DCS#Group.Category
+  
+  -- Now we try to find all parking spots for all cargo groups in advance. Due to the for loop, the parking spots do not get updated while spawning.
+  local Parking={}
+  if  _cargocategory==Group.Category.AIRPLANE or _cargocategory==Group.Category.HELICOPTER then
+    Parking=self:_GetParkingForAssets(_assetstock)    
+  end
+  
+  -- Create an empty set.
+  local groupset=SET_GROUP:New():FilterDeads()
+
+  -- Spawn the assets.
+  local _delid={}
+  local _spawngroups={}
+  
+  -- Loop over cargo requests.
+  for i=1,Request.nasset do
+
+    -- Get stock item.
+    local _assetitem=_assetstock[i] --#WAREHOUSE.Stockitem
+
+    -- Find a random point within the spawn zone.
+    local spawncoord=self.spawnzone:GetRandomCoordinate()    
+    
+    -- Alias of the group.
+    local _alias=self:_Alias(_assetitem, Request)
+    
+    -- Spawn object. Spawn with ALIAS here or DCS crashes!
+    --local _spawn=SPAWN:NewFromTemplate(_assetitem.template,_assetitem.templatename,_alias):InitCoalition(self.coalition):InitCountry(self.country)
+    local _spawn=SPAWN:NewWithAlias(_assetitem.templatename,_alias):InitCoalition(self.coalition):InitCountry(self.country)
+
+    local _group=nil --Wrapper.Group#GROUP    
+    local _attribute=_assetitem.attribute
+      
+    if _assetitem.category==Group.Category.GROUND then
+    
+      -- Spawn ground troops.      
+      _group=_spawn:SpawnFromCoordinate(spawncoord)
+      
+    elseif _assetitem.category==Group.Category.AIRPLANE or _assetitem.category==Group.Category.HELICOPTER then
+    
+      --TODO: spawn only so many groups as there are parking spots. Adjust request and create a new one with the reduced number!
+    
+      -- Spawn air units.
+      _group=_spawn:SpawnAtAirbase(self.airbase, SPAWN.Takeoff.Cold, nil, nil, true, Parking[i])
+      
+    elseif _assetitem.category==Group.Category.TRAIN then
+    
+      -- Spawn train.
+      if self.rail then
+        --TODO: Rail should only get one asset because they would spawn on top!
+        _group=_spawn:SpawnFromCoordinate(self.rail)
+      end
+      
+    end
+
+    if _group then
+      --_spawngroups[i]=_group
+      groupset:AddGroup(_group)
+      table.insert(_delid,_assetitem.uid)
+    else
+      self:E(self.wid.."ERROR: cargo asset could not be spawned!")
+    end
+    
+  end
+
+  -- Delete spawned items from warehouse stock.
+  for _,_id in pairs(_delid) do
+    self:_DeleteStockItem(_id)
+  end
+
+  return groupset,_cargotype,_cargocategory
+end 
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -858,16 +1001,6 @@ function WAREHOUSE:onafterArrived(From, Event, To, group)
   -- Update pending request.
   self:_UpdatePending(group)
   
-  -- Update pending
-  
-  --[[
-  -- Route a ground group to the closest point on road.
-  if group:IsGround() and group:GetSpeedMax()>0 then
-    local road=group:GetCoordinate():GetClosestPointToRoad()
-    local speed=group:GetSpeedMax()*0.6
-    group:RouteGroundTo(road, speed, "Off Road")
-  end
-  ]]
 end
 
 --- Update the pending requests by removing assets that have arrived.
@@ -876,77 +1009,21 @@ end
 function WAREHOUSE:_UpdatePending(group)
   
   -- Get request from group name.
-  local request=self:_GetRequestOfGroup(group)
+  local request=self:_GetRequestOfGroup(group, self.pending)
     
   -- Increase number of delivered assets.
   request.ndelivered=request.ndelivered+1
   
+  -- Number of alive groups.
+  local nalive=request.cargogroupset:Count()
+  
   -- TODO: Well this does not handle the case when a group that has been delivered was killed!
-  if request.ndelivered>=request.cargogroupset:Count() then
-    self:__Delivered(5, request.cargogroupset)
+  if request.ndelivered>=nalive then
+    self:__Delivered(5, request.cargogroupset, request)
   end
 end
 
---- Get the request from the group.
--- @param #WAREHOUSE self
--- @param Wrapper.Group#GROUP group The group from which the info is gathered.
--- @return #WAREHOUSE.Queueitem The request belonging to this group.
-function WAREHOUSE:_GetRequestOfGroup(group)
 
-  local wid,aid,rid=self:_GetInfoFromGroup(group)
-  
-  for _,_request in pairs(self.pending) do
-    local request=_request --#WAREHOUSE.Queueitem
-    if request.uid==rid then
-      return request
-    end
-  end
-    
-end
-
---- Get warehouse id, asset id and request id from group name.
--- @param #WAREHOUSE self
--- @param Wrapper.Group#GROUP group The group from which the info is gathered.
-function WAREHOUSE:_GetInfoFromGroup(group)
-
-  ---@param #string text The text to analyse.
-  local function analyse(text)
-  
-    -- Get rid of #0001 tail from spawn.
-    local unspawned=UTILS.Split(text, "#")[1]
-  
-    -- Split keywords.  
-    local keywords=UTILS.Split(unspawned, "_")
-    
-    local _wid=nil
-    local _aid=nil
-    local _rid=nil
-    
-    -- loop
-    for _,keys in pairs(keywords) do
-      local str=UTILS.Split(keys,"-")
-      local key=str[1]
-      local val=str[2]
-      if key:find("WID") then
-        _wid=tonumber(val)
-      elseif key:find("AID") then
-        _aid=tonumber(val)
-      elseif key:find("RID") then
-        _rid=tonumber(val)
-      end      
-    end
-    
-    return _wid,_aid,_rid
-  end
-  
-  local name=group:GetName()
-  env.info("FF Name = "..tostring(name))
-  local wid,aid,rid=analyse(name)
-  env.info("FF warehouse id = %s"..tostring(wid))
-  env.info("FF asset     id = %s"..tostring(aid))
-  env.info("FF request   id = %s"..tostring(rid))
-  
-end
 
 --- On after "Delivered" event.
 -- @param #WAREHOUSE self
@@ -954,293 +1031,17 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Core.Set#SET_GROUP groupset The set of cargo groups that was delivered.
-function WAREHOUSE:onafterDelivered(From, Event, To, groupset)
+-- @param #WAREHOUSE.Queueitem request
+function WAREHOUSE:onafterDelivered(From, Event, To, groupset, request)
 
   env.info("FF all assets delivered!")
   
-end
-
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- User functions
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
---- Add an airplane group to the warehouse stock.
--- @param #WAREHOUSE self
--- @param #string templategroupname Name of the late activated template group as defined in the mission editor.
--- @param #number ngroups Number of groups to add to the warehouse stock. Default is 1.
--- @return #WAREHOUSE self
-function WAREHOUSE:AddAsset(templategroupname, ngroups)
-
-  -- Set default.
-  local n=ngroups or 1
-
-  local group=GROUP:FindByName(templategroupname)
-
-  if group then
-
-    local DCSgroup=group:GetDCSObject()
-    local DCSunit=DCSgroup:getUnit(1)
-    local DCSdesc=DCSunit:getDesc()
-    local DCSdisplay=DCSdesc.displayName
-    local DCScategory=DCSgroup:getCategory()
-    local DCStype=DCSunit:getTypeName()
-    local SpeedMax=group:GetSpeedMax()
-    local RangeMin=group:GetRange()
-
-    env.info(string.format("group name   = %s", group:GetName()))
-    env.info(string.format("display name = %s", DCSdisplay))
-    env.info(string.format("category     = %s", DCScategory))
-    env.info(string.format("type         = %s", DCStype))
-    env.info(string.format("speed max    = %s", tostring(SpeedMax)))
-    env.info(string.format("range min    = %s", tostring(RangeMin)))
-    self:E({fullassetdesc=DCSdesc})
-
-    local attribute=self:_GetAttribute(templategroupname)
-
-    -- Add this n times to the table.
-    for i=1,n do
-      local stockitem={} --#WAREHOUSE.Stockitem
-      
-      self.assetid=self.assetid+1
-      
-      stockitem.uid=self.assetid
-      stockitem.templatename=templategroupname
-      stockitem.template=UTILS.DeepCopy(_DATABASE.Templates.Groups[templategroupname].Template)
-      stockitem.category=DCScategory
-      stockitem.unittype=DCStype
-      stockitem.attribute=attribute
-      stockitem.range=RangeMin
-      stockitem.speedmax=SpeedMax
-      
-      -- Modify the template so that the group is spawned with the right coalition.
-      stockitem.template.CoalitionID=self.coalition
-      stockitem.template.CountryID=self.country
-      
-      table.insert(self.stock, stockitem)
-    end
-    
-    -- Destroy group if it is alive.
-    if group:IsAlive()==true then
-      group:Destroy()
-    end
-
-  else
-    -- Group name does not exist!
-    self:E(string.format("ERROR: Template group name not defined in the mission editor. Check the spelling! templategroupname=%s",tostring(templategroupname)))
-  end
-
-  return self
-end
-
---- Set a zone where the (ground) assets of the warehouse are spawned once requested.
--- @param #WAREHOUSE self
--- @param Core.Zone#ZONE zone The spawn zone.
--- @return #WAREHOUSE self
-function WAREHOUSE:SetSpawnZone(zone)
-  self.spawnzone=zone
-  return self
-end
-
---- Add a delayed request for the warehouse.
--- @param #WAREHOUSE self
--- @param #number delay Delay before the request is made in seconds.
--- @param #WAREHOUSE warehouse The warehouse requesting supply.
--- @param #WAREHOUSE.Descriptor AssetDescriptor Descriptor describing the asset that is requested.
--- @param AssetDescriptorValue Value of the asset descriptor. Type depends on descriptor, i.e. could be a string, etc.
--- @param #number nAsset Number of groups requested that match the asset specification.
--- @param #WAREHOUSE.TransportType TransportType Type of transport.
--- @param #number nTransport Number of transport units requested.
--- @param #number Prio Priority of the request. Number ranging from 1=high to 100=low.
-function WAREHOUSE:__AddRequest(delay, warehouse, AssetDescriptor, AssetDescriptorValue, nAsset, TransportType, nTransport, Prio)
-  SCHEDULER:New(nil,WAREHOUSE.AddRequest,{self, warehouse, AssetDescriptor, AssetDescriptorValue, nAsset, TransportType, nTransport, Prio}, delay)
-end
-
-
---- Add a request for the warehouse.
--- @param #WAREHOUSE self
--- @param #WAREHOUSE warehouse The warehouse requesting supply.
--- @param #WAREHOUSE.Descriptor AssetDescriptor Descriptor describing the asset that is requested.
--- @param AssetDescriptorValue Value of the asset descriptor. Type depends on descriptor, i.e. could be a string, etc.
--- @param #number nAsset Number of groups requested that match the asset specification.
--- @param #WAREHOUSE.TransportType TransportType Type of transport.
--- @param #number nTransport Number of transport units requested.
--- @param #number Prio Priority of the request. Number ranging from 1=high to 100=low.
-function WAREHOUSE:AddRequest(warehouse, AssetDescriptor, AssetDescriptorValue, nAsset, TransportType, nTransport, Prio)
-
-  nAsset=nAsset or 1
-  TransportType=TransportType or WAREHOUSE.TransportType.SELFPROPELLED
-  nTransport=nTransport or 1
-  Prio=Prio or 50
-  
-  --TODO: check that
-  -- if warehouse or requestor is a FARP, plane asset and transport not possible.
-  -- if requestor or warehouse is a SHIP, APC transport not possible, SELFPROPELLED only for AIR/SHIP
-  -- etc. etc...
- 
-  --[[ 
-  local warehouse=nil --#WAREHOUSE
-  local airbase=nil   --Wrapper.Airbase#AIRBASE
-  if requestor:IsInstanceOf("AIRBASE") then
-    airbase=requestor
-  elseif requestor:IsInstanceOf("WAREHOUSE") then
-    warehouse=requestor
-    airbase=warehouse.airbase
-  end
-  ]]
-    
-  local request_air=false
-  local request_plane=false
-  local request_helo=false
-  local request_ground=false
-  local request_naval=false
-  local request_category=warehouse.category or -1  --DCS#Airbase.Category
-  
-  -- Check if category is matching
-  if AssetDescriptor==WAREHOUSE.Descriptor.CATEGORY then
-  
-    if AssetDescriptorValue==Group.Category.AIRPLANE then
-      request_plane=true
-    elseif AssetDescriptorValue==Group.Category.HELICOPTER then
-      request_helo=true
-    elseif AssetDescriptorValue==Group.Category.GROUND then
-      request_ground=true
-    elseif AssetDescriptorValue==Group.Category.SHIP then
-      request_naval=true
-    elseif AssetDescriptorValue==Group.Category.TRAIN then
-      request_ground=true
-    else
-      self:E("ERROR: incorrect request. Asset Descriptor missmatch! Has to be Group.Cagetory.AIRPLANE, ...")
-      return
-    end
-    
+  -- Put assets in new warehouse.
+  for _,_group in pairs(groupset:GetSetObjects()) do
+    local group=_group --Wrapper.Group#GROUP
+    request.warehouse:AddAsset(group:GetTemplate(), 1)
   end
   
-  -- Check attribute is matching
-  if AssetDescriptor==WAREHOUSE.Descriptor.ATTRIBUTE then
-    if AssetDescriptorValue==WAREHOUSE.Attribute.ARTILLERY then
-      request_ground=true
-    elseif AssetDescriptorValue==WAREHOUSE.Attribute.ATTACKHELICOPTER then
-      request_helo=true
-    elseif AssetDescriptorValue==WAREHOUSE.Attribute.AWACS then
-      request_plane=true
-    elseif AssetDescriptorValue==WAREHOUSE.Attribute.BOMBER then
-      request_plane=true
-    elseif AssetDescriptorValue==WAREHOUSE.Attribute.FIGHTER then
-      request_plane=true
-    elseif AssetDescriptorValue==WAREHOUSE.Attribute.INFANTRY then
-      request_ground=true
-    elseif AssetDescriptorValue==WAREHOUSE.Attribute.OTHER then
-      self:E("ERROR: incorrect request. Asset attribute WAREHOUSE.Attribute.OTHER is not valid!")
-      return          
-    elseif AssetDescriptorValue==WAREHOUSE.Attribute.SHIP then
-      request_naval=true
-    elseif AssetDescriptorValue==WAREHOUSE.Attribute.TANK then
-      request_ground=true
-    elseif AssetDescriptorValue==WAREHOUSE.Attribute.TANKER then
-      request_plane=true
-    elseif AssetDescriptorValue==WAREHOUSE.Attribute.TRAIN then
-      request_ground=true
-    elseif AssetDescriptorValue==WAREHOUSE.Attribute.TRANSPORT_APC then
-      request_ground=true
-    elseif AssetDescriptorValue==WAREHOUSE.Attribute.TRANSPORT_HELO then
-      request_helo=true
-    elseif AssetDescriptorValue==WAREHOUSE.Attribute.TRANSPORT_PLANE then
-      request_plane=true
-    elseif AssetDescriptorValue==WAREHOUSE.Attribute.TRUCK then
-      request_ground=true
-    else
-      self:E("ERROR: incorrect request. Unknown asset attribute!")
-      return    
-    end
-  end
-  
-  -- General air request.
-  request_air=request_helo or request_plane
-  
-  if request_air then
-  
-    if request_plane then
-      -- No airplane to or from FARPS.
-      if request_category==Airbase.Category.HELIPAD or self.category==Airbase.Category.HELIPAD then
-        self:E("ERROR: incorrect request. Asset aircraft requestst but warehouse or requestor is HELIPAD/FARP!")
-        return
-      end
-    elseif request_helo then
-      
-    end
-    
-  elseif request_ground then
-    
-    -- No ground assets directly to ships.
-    if (request_category==Airbase.Category.SHIP or self.category==Airbase.Category.SHIP)
-    and not (TransportType==WAREHOUSE.TransportType.AIRPLANE or TransportType==WAREHOUSE.TransportType.HELICOPTER) then
-      self:E("ERROR: incorrect request. Ground asset requested but warehouse or requestor is SHIP!")
-      return
-    end
-    
-  elseif request_naval then
-  
-  end
-  
-  -- Check if transport is possible.
-  if TransportType~=nil then
-    if TransportType==WAREHOUSE.TransportType.AIRPLANE then
-    
-      -- No airplanes from or to FARPS.
-      if self.category==Airbase.Category.HELIPAD or request_category==Airbase.Category.HELIPAD then
-        self:E("ERROR: incorrect request. Warehouse or requestor is FARP. No transport by plane possible!")
-        return
-      end  
-        
-    elseif TransportType==WAREHOUSE.TransportType.APC then
-    
-      -- Transport by ground units.
-    
-    elseif TransportType==WAREHOUSE.TransportType.HELICOPTER then
-    
-      -- Transport by helicopters ==> need FARP or AIRBASE, well not really...
-    
-    elseif TransportType==WAREHOUSE.TransportType.SELFPROPELLED then
-    
-    
-    elseif TransportType==WAREHOUSE.TransportType.SHIP then
-    
-      -- Transport by ship.
-      self:E("ERROR: incorrect request. Transport by SHIP not implemented yet!")
-      return
-    
-    elseif TransportType==WAREHOUSE.TransportType.TRAIN then
-    
-      -- Transport by train.
-      self:E("ERROR: incorrect request. Transport by TRAIN not implemented yet!")
-      return    
-     
-    else
-      -- No match.
-      self:E("ERROR: incorrect request. Transport type unknown!")
-      return        
-    end
-
-  end  
-
-  -- Increase id.
-  self.queueid=self.queueid+1
-
-  -- Request queue table item.
-  local request={
-  uid=self.queueid,
-  prio=Prio,
-  warehouse=warehouse,
-  airbase=warehouse.airbase,
-  category=request_category,
-  assetdesc=AssetDescriptor,
-  assetdescval=AssetDescriptorValue,
-  nasset=nAsset,
-  transporttype=TransportType,
-  ntransport=nTransport}
-
-  -- Add request to queue.
-  table.insert(self.queue, request)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1256,9 +1057,10 @@ function WAREHOUSE:_RouteGround(Group, Coordinate, Speed)
 
   if Group and Group:IsAlive() then
 
+    -- Set speed.
     local _speed=Speed or Group:GetSpeedMax()*0.6
 
-    -- Create a
+    -- Create task.
     local Waypoints, canroad = Group:TaskGroundOnRoad(Coordinate, _speed, "Off Road", true)
 
     -- Task function triggering the arrived event.
@@ -1409,11 +1211,215 @@ end
 -- Helper functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Checks if the request can be fullfilled.
+--- Checks if the request can be fulfilled in general. If not, it is removed from the queue.
+-- Check if departure and destination bases are of the right type. 
 -- @param #WAREHOUSE self
 -- @param #WAREHOUSE.Queueitem qitem The request to be checked.
 -- @return #boolean If true, request can be executed. If false, something is not right.
-function WAREHOUSE:_CheckRequest(request)
+function WAREHOUSE:_CheckRequestValid()
+
+  -- Requests to delete.
+  local delid={}
+  
+  for _,_request in pairs(self.queue) do
+    local request=_request --#WAREHOUSE.Queueitem
+    
+    local valid=true
+    
+  --TODO: check that
+  -- if warehouse or requestor is a FARP, plane asset and transport not possible.
+  -- if requestor or warehouse is a SHIP, APC transport not possible, SELFPROPELLED only for AIR/SHIP
+  -- etc. etc...
+ 
+    local asset_air=false
+    local asset_plane=false
+    local asset_helo=false
+    local asset_ground=false
+    local asset_train=false
+    local asset_naval=false
+    
+    -- Check if category was provided.
+    if request.assetdesc==WAREHOUSE.Descriptor.CATEGORY then
+    
+      if request.assetdescval==Group.Category.AIRPLANE then
+        asset_plane=true
+      elseif request.assetdescval==Group.Category.HELICOPTER then
+        asset_helo=true
+      elseif request.assetdescval==Group.Category.GROUND then
+        asset_ground=true
+      elseif request.assetdescval==Group.Category.SHIP then
+        asset_naval=true
+      elseif request.assetdescval==Group.Category.TRAIN then
+        asset_ground=true
+        asset_train=true
+        -- Only one train due to finding spawn placen on rail!
+        --nAsset=1
+      else
+        self:E("ERROR: incorrect request. Asset Descriptor missmatch! Has to be Group.Cagetory.AIRPLANE, ...")
+        valid=false
+      end
+      
+    end
+    
+    -- Check attribute is matching
+    if request.assetdesc==WAREHOUSE.Descriptor.ATTRIBUTE then
+      if request.assetdescval==WAREHOUSE.Attribute.ARTILLERY then
+        asset_ground=true
+      elseif request.assetdescval==WAREHOUSE.Attribute.ATTACKHELICOPTER then
+        asset_helo=true
+      elseif request.assetdescval==WAREHOUSE.Attribute.AWACS then
+        asset_plane=true
+      elseif request.assetdescval==WAREHOUSE.Attribute.BOMBER then
+        asset_plane=true
+      elseif request.assetdescval==WAREHOUSE.Attribute.FIGHTER then
+        asset_plane=true
+      elseif request.assetdescval==WAREHOUSE.Attribute.INFANTRY then
+        asset_ground=true
+      elseif request.assetdescval==WAREHOUSE.Attribute.OTHER then
+        self:E("ERROR: incorrect request. Asset attribute WAREHOUSE.Attribute.OTHER is not valid!")
+        valid=false      
+      elseif request.assetdescval==WAREHOUSE.Attribute.SHIP then
+        asset_naval=true
+      elseif request.assetdescval==WAREHOUSE.Attribute.TANK then
+        asset_ground=true
+      elseif request.assetdescval==WAREHOUSE.Attribute.TANKER then
+        asset_plane=true
+      elseif request.assetdescval==WAREHOUSE.Attribute.TRAIN then
+        asset_ground=true
+      elseif request.assetdescval==WAREHOUSE.Attribute.TRANSPORT_APC then
+        asset_ground=true
+      elseif request.assetdescval==WAREHOUSE.Attribute.TRANSPORT_HELO then
+        asset_helo=true
+      elseif request.assetdescval==WAREHOUSE.Attribute.TRANSPORT_PLANE then
+        asset_plane=true
+      elseif request.assetdescval==WAREHOUSE.Attribute.TRUCK then
+        asset_ground=true
+      else
+        self:E("ERROR: incorrect request. Unknown asset attribute!")
+        valid=false 
+      end
+    end
+    
+    -- General air request.
+    asset_air=asset_helo or asset_plane
+    
+    if request.transporttype==WAREHOUSE.TransportType.SELFPROPELLED then
+    
+      if asset_air then
+      
+        if asset_plane then
+        
+          -- No airplane to or from FARPS.
+          if request.category==Airbase.Category.HELIPAD or self.category==Airbase.Category.HELIPAD then
+            self:E("ERROR: incorrect request. Asset aircraft requestst but warehouse or requestor is HELIPAD/FARP!")
+            valid=false
+          end
+          
+          -- Category SHIP is not general enough! Fighters can go to carriers. Which fighters, is there an attibute?
+          -- Also for carriers, attibute?
+          
+        elseif asset_helo then
+        
+          -- Helos need a FARP or AIRBASE or SHIP for spawning. Event if they go there they "cannot" be spawned again.
+          -- Unless I allow spawning of helos in the the spawn zone. But one should place at least a FARP there.
+          if self.category==-1 or request.category==-1 then
+            self:E("ERROR: incorrect request. Helos need a AIRBASE/HELIPAD/SHIP as home/destinaion base!")
+            valid=false     
+          end
+          
+        end
+        
+      elseif asset_ground then
+        
+        -- No ground assets directly to or from ships.
+        -- TODO: May needs refinement if warehouse is on land and requestor is ship in harbour?!
+        if (request.category==Airbase.Category.SHIP or self.category==Airbase.Category.SHIP) then
+          self:E("ERROR: incorrect request. Ground asset requested but warehouse or requestor is SHIP!")
+          valid=false
+        end
+        
+      elseif asset_naval then
+    
+        self:E("ERROR: incorrect request. Naval units not supported yet!")
+        valid=false
+      
+      end
+      
+    else
+      
+      -- Assests need a transport.
+        
+      if request.transporttype==WAREHOUSE.TransportType.AIRPLANE then
+      
+        -- Airplanes only to AND from airdromes.
+        if self.category~=Airbase.Category.AIRDROME or request.category~=Airbase.Category.AIRDROME then
+          self:E("ERROR: incorrect request. Warehouse or requestor does not have an airdrome. No transport by plane possible!")
+          valid=false
+        end
+        
+        --TODO: Not sure if there are any transport planes that can land on a carrier?
+          
+      elseif request.transporttype==WAREHOUSE.TransportType.APC then
+      
+        -- Transport by ground units.
+        
+        -- No transport to or from ships
+        if self.category==Airbase.Category.SHIP or request.category==Airbase.Category.SHIP then
+          self:E("ERROR: incorrect request. Warehouse or requestor is SHIP. No transport by APC possible!")
+          valid=false
+        end
+
+      elseif request.transporttype==WAREHOUSE.TransportType.HELICOPTER then
+      
+        -- Transport by helicopters ==> need airbase for spawning but not for delivering to the zone.
+        if self.category==-1 then
+          self:E("ERROR: incorrect request. Warehouse has no airbase. Transport by helicopter not possible!")
+          valid=false
+        end
+      
+      elseif request.transporttype==WAREHOUSE.TransportType.SHIP then
+      
+        -- Transport by ship.
+        self:E("ERROR: incorrect request. Transport by SHIP not implemented yet!")
+        valid=false
+      
+      elseif request.transporttype==WAREHOUSE.TransportType.TRAIN then
+      
+        -- Only one train due to limited spawn place.
+        --nTransport=1
+      
+        -- Transport by train.
+        self:E("ERROR: incorrect request. Transport by TRAIN not implemented yet!")
+        valid=false
+       
+      else
+        -- No match.
+        self:E("ERROR: incorrect request. Transport type unknown!")
+        valid=false
+      end
+  
+    end
+    
+    if not valid then
+      table.insert(delid, request.id)
+    end   
+ 
+  end -- loop queue items.
+
+
+   -- Delete invalid requests.
+  for _,_uid in pairs(delid) do
+    self:_DeleteQueueItem(_uid)
+  end   
+ 
+end
+
+--- Checks if the request can be fullfilled right now.
+-- Check for current parking situation, number of assets and transports currently in stock
+-- @param #WAREHOUSE self
+-- @param #WAREHOUSE.Queueitem request The request to be checked.
+-- @return #boolean If true, request can be executed. If false, something is not right.
+function WAREHOUSE:_CheckRequestNow(request)
     
   local okay=true
   
@@ -1518,7 +1524,7 @@ function WAREHOUSE:_CheckQueue()
   local request=nil --#WAREHOUSE.Queueitem
   for _,_qitem in ipairs(self.queue) do
     local qitem=_qitem --#WAREHOUSE.Queueitem
-    local okay=self:_CheckRequest(qitem)
+    local okay=self:_CheckRequestNow(qitem)
     if okay==true then
       request=qitem
       break
@@ -1635,6 +1641,71 @@ function WAREHOUSE:_GetParkingForAssets(assetlist, parkingdata)
   end
   
   return assetparking, parkingdata
+end
+
+--- Get the request belonging to a group.
+-- @param #WAREHOUSE self
+-- @param Wrapper.Group#GROUP group The group from which the info is gathered.
+-- @param #table queue Queue holding all requests.
+-- @return #WAREHOUSE.Queueitem The request belonging to this group.
+function WAREHOUSE:_GetRequestOfGroup(group, queue)
+
+  -- Get warehouse, asset and request ID from group name.
+  local wid,aid,rid=self:_GetInfoFromGroup(group)
+  
+  -- Find the request.
+  for _,_request in pairs(queue) do
+    local request=_request --#WAREHOUSE.Queueitem
+    if request.uid==rid then
+      return request
+    end
+  end
+    
+end
+
+--- Get warehouse id, asset id and request id from group name.
+-- @param #WAREHOUSE self
+-- @param Wrapper.Group#GROUP group The group from which the info is gathered.
+function WAREHOUSE:_GetInfoFromGroup(group)
+
+  ---@param #string text The text to analyse.
+  local function analyse(text)
+  
+    -- Get rid of #0001 tail from spawn.
+    local unspawned=UTILS.Split(text, "#")[1]
+  
+    -- Split keywords.  
+    local keywords=UTILS.Split(unspawned, "_")
+    
+    local _wid=nil  -- warehouse UID
+    local _aid=nil  -- asset UID
+    local _rid=nil  -- request UID
+    
+    -- Loop over keys.
+    for _,keys in pairs(keywords) do
+      local str=UTILS.Split(keys, "-")
+      local key=str[1]
+      local val=str[2]
+      if key:find("WID") then
+        _wid=tonumber(val)
+      elseif key:find("AID") then
+        _aid=tonumber(val)
+      elseif key:find("RID") then
+        _rid=tonumber(val)
+      end      
+    end
+    
+    return _wid,_aid,_rid
+  end
+  
+  local name=group:GetName()
+  env.info("FF Name = "..tostring(name))
+  
+  local wid,aid,rid=analyse(name)
+  env.info("FF warehouse id = %s"..tostring(wid))
+  env.info("FF asset     id = %s"..tostring(aid))
+  env.info("FF request   id = %s"..tostring(rid))
+  
 end
 
 --- Filter stock assets by table entry.
