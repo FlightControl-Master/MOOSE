@@ -42,7 +42,7 @@ function AI_CARGO_AIRPLANE:New( Airplane, CargoSet )
   self:AddTransition( "Boarding", "Loaded", "Loaded" )
   self:AddTransition( "Loaded", "Unload", "Unboarding" )
   self:AddTransition( "Unboarding", "Unboard", "Unboarding" )
-  self:AddTransition( "Unboarding", "Unloaded", "Unloaded" )
+  self:AddTransition( "Unboarding" , "Unloaded", "Unloaded" )
 
   self:AddTransition( "*", "Landed", "*" )
   self:AddTransition( "*", "Home" ,  "*" ) 
@@ -469,7 +469,15 @@ function AI_CARGO_AIRPLANE:onafterUnload( Airplane, From, Event, To )
   if Airplane and Airplane:IsAlive() then
     local Cargos = Airplane:GetCargo()
     for CargoID, Cargo in pairs( Cargos ) do
-       Cargo:UnBoard()
+    
+      local Angle = 180
+      local CargoCarrierHeading = Airplane:GetHeading() -- Get Heading of object in degrees.
+      local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
+      self:T( { CargoCarrierHeading, CargoDeployHeading } )
+      local CargoDeployCoordinate = Airplane:GetPointVec2():Translate( 150, CargoDeployHeading )
+    
+       Cargo:UnBoard( CargoDeployCoordinate )
+       Cargo:SetDeployed( true )
        self:__Unboard( 10, Cargo ) 
     end
   end
@@ -484,14 +492,30 @@ end
 -- @param #string To To state.
 function AI_CARGO_AIRPLANE:onafterUnboard( Airplane, From, Event, To, Cargo )
 
+  self:E( { "Unboard", Cargo } )
+
   if Airplane and Airplane:IsAlive() then
     if not Cargo:IsUnLoaded() then
       self:__Unboard( 10, Cargo ) 
     else
+      local Cargos = Airplane:GetCargo()
+      for CargoID, Cargo in pairs( Cargos ) do
+        if Cargo:IsLoaded() then
+          local Angle = 180
+          local CargoCarrierHeading = Airplane:GetHeading() -- Get Heading of object in degrees.
+          local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
+          self:T( { CargoCarrierHeading, CargoDeployHeading } )
+          local CargoDeployCoordinate = Airplane:GetPointVec2():Translate( 150, CargoDeployHeading )
+          Cargo:UnBoard( CargoDeployCoordinate )
+          Cargo:SetDeployed( true )
+          
+          self:__Unboard( 10, Cargo )
+          return
+        end
+      end  
       self:__Unloaded( 1, Cargo )
     end
   end
-  
 end
 
 --- On after Unloaded event. Cargo has been unloaded, i.e. the unboarding process is finished.
@@ -500,12 +524,15 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
+-- @param Cargo.Cargo#CARGO Cargo
 function AI_CARGO_AIRPLANE:onafterUnloaded( Airplane, From, Event, To, Cargo )
+
+  self:E( { "Unloaded", Cargo } )
 
   if Airplane and Airplane:IsAlive() then
     self.Airplane = Airplane
+    self.Transporting = false -- This will only be executed when there is no cargo onboard anymore. The dispatcher will then kick-off the pickup cycle!
   end
-  
 end
 
 --- Route the airplane from one airport or it's current position to another airbase.

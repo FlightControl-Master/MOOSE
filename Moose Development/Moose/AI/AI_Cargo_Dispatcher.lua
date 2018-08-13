@@ -414,7 +414,7 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
       for CargoName, Cargo in pairs( self.SetCargo:GetSet() ) do
         local Cargo = Cargo -- Cargo.Cargo#CARGO
         self:F( { Cargo = Cargo:GetName(), UnLoaded = Cargo:IsUnLoaded(), Deployed = Cargo:IsDeployed(), PickupCargo = self.PickupCargo[Carrier] ~= nil } )
-        if Cargo:IsUnLoaded() and not Cargo:IsDeployed() then
+        if Cargo:IsUnLoaded() == true and Cargo:IsDeployed() == false then
           local CargoCoordinate = Cargo:GetCoordinate()
           local CoordinateFree = true
           for CarrierPickup, Coordinate in pairs( self.PickupCargo ) do
