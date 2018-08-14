@@ -89,7 +89,7 @@ do -- CARGO_GROUP
     
     for UnitID, UnitTemplate in pairs( self.CargoTemplate.units ) do
       UnitTemplate.name = UnitTemplate.name .. "#CARGO"
-      local CargoUnitName = UnitTemplate.name 
+      local CargoUnitName = UnitTemplate.name
       self.CargoUnitTemplate[CargoUnitName] = UnitTemplate      
 
        GroupTemplate.units[#GroupTemplate.units+1] = self.CargoUnitTemplate[CargoUnitName]
@@ -101,7 +101,7 @@ do -- CARGO_GROUP
     end
 
     -- Then we register the new group in the database
-    self.CargoGroup = GROUP:NewTemplate( GroupTemplate, GroupTemplate.CoalitionID, GroupTemplate.CategoryID, GroupTemplate.CountryID)
+    GROUP:NewTemplate( GroupTemplate, GroupTemplate.CoalitionID, GroupTemplate.CategoryID, GroupTemplate.CountryID )
     
     -- Now we spawn the new group based on the template created.
     self.CargoObject = _DATABASE:Spawn( GroupTemplate )

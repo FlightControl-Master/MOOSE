@@ -121,13 +121,16 @@ GROUPTEMPLATE.Takeoff = {
 -- @return #GROUP self
 function GROUP:NewTemplate( GroupTemplate, CoalitionSide, CategoryID, CountryID )
   local GroupName = GroupTemplate.name
+
   _DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionSide, CategoryID, CountryID, GroupName )
-  self = BASE:Inherit( self, CONTROLLABLE:New( GroupName ) )
-  self:F2( GroupName )
+
+  local self = BASE:Inherit( self, CONTROLLABLE:New( GroupName ) )
   self.GroupName = GroupName
-  
-  _DATABASE:AddGroup( GroupName )
-  
+
+  if not _DATABASE.GROUPS[GroupName] then
+    _DATABASE.GROUPS[GroupName] = self
+  end  
+
   self:SetEventPriority( 4 )
   return self
 end
@@ -140,7 +143,6 @@ end
 -- @return #GROUP self
 function GROUP:Register( GroupName )
   local self = BASE:Inherit( self, CONTROLLABLE:New( GroupName ) ) -- #GROUP
-  self:F( GroupName )
   self.GroupName = GroupName
   
   self:SetEventPriority( 4 )
