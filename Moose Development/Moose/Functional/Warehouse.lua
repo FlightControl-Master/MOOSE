@@ -2053,19 +2053,26 @@ function WAREHOUSE:_GetIDsFromGroup(group)
     return _wid,_aid,_rid
   end
   
-  -- Group name
-  local name=group:GetName()
-    
-  -- Get ids
-  local wid,aid,rid=analyse(name)
+  if group then
   
-  -- Debug info
-  self:E(self.wid..string.format("Group Name   = %s", tostring(name)))  
-  self:E(self.wid..string.format("Warehouse ID = %s", tostring(wid)))
-  self:E(self.wid..string.format("Asset     ID = %s", tostring(aid)))
-  self:E(self.wid..string.format("Request   ID = %s", tostring(rid)))
+    -- Group name
+    local name=group:GetName()
+      
+    -- Get ids
+    local wid,aid,rid=analyse(name)
     
-  return wid,aid,rid
+    -- Debug info
+    self:E(self.wid..string.format("Group Name   = %s", tostring(name)))  
+    self:E(self.wid..string.format("Warehouse ID = %s", tostring(wid)))
+    self:E(self.wid..string.format("Asset     ID = %s", tostring(aid)))
+    self:E(self.wid..string.format("Request   ID = %s", tostring(rid)))
+    
+    return wid,aid,rid
+  else
+    self:E("WARNING: Group not found in GetIDsFromGroup() function!")
+  end
+      
+  
 end
 
 --- Filter stock assets by table entry.

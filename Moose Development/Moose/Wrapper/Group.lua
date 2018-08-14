@@ -1460,9 +1460,11 @@ function GROUP:RespawnAtCurrentAirbase(SpawnTemplate, Takeoff, Uncontrolled) -- 
     -- Get the units of the group.
     local units=self:GetUnits()
 
-    for UnitID,_unit in pairs(units) do
+    local x
+    local y
+    for UnitID=1,#units do
         
-      local unit=_unit --Wrapper.Unit#UNIT
+      local unit=units[UnitID] --Wrapper.Unit#UNIT
 
       -- Get closest parking spot of current unit. Note that we look for occupied spots since the unit is currently sitting on it!
       local Parkingspot, TermialID, Distance=unit:GetCoordinate():GetClosestParkingSpot(airbase)
@@ -1472,20 +1474,27 @@ function GROUP:RespawnAtCurrentAirbase(SpawnTemplate, Takeoff, Uncontrolled) -- 
 
       -- Get unit coordinates for respawning position.
       local uc=unit:GetCoordinate()
-      SpawnTemplate.units[UnitID].x   = Parkingspot.x
-      SpawnTemplate.units[UnitID].y   = Parkingspot.z
-      SpawnTemplate.units[UnitID].alt = Parkingspot.y
+      
+      
+      SpawnTemplate.units[UnitID].x   = uc.x --Parkingspot.x
+      SpawnTemplate.units[UnitID].y   = uc.z --Parkingspot.z
+      SpawnTemplate.units[UnitID].alt = uc.y --Parkingspot.y
 
       SpawnTemplate.units[UnitID].parking    = TermialID
       SpawnTemplate.units[UnitID].parking_id = nil
+      
+      if UnitID==1 then
+        x=uc.x
+        y=uc.z
+      end
                   
     end
     
-    SpawnPoint.x = AirbaseCoord.x
-    SpawnPoint.y = AirbaseCoord.z
+    SpawnPoint.x = x --AirbaseCoord.x
+    SpawnPoint.y = y --AirbaseCoord.z
     
-    SpawnTemplate.x = AirbaseCoord.x
-    SpawnTemplate.y = AirbaseCoord.z
+    SpawnTemplate.x = x --AirbaseCoord.x
+    SpawnTemplate.y = y --AirbaseCoord.z
     
     -- Set uncontrolled state.
     SpawnTemplate.uncontrolled=Uncontrolled
