@@ -257,6 +257,10 @@ EVENTS = {
 -- @field DCS#Unit.Category TgtCategory (UNIT) The category of the target.
 -- @field #string TgtTypeName (UNIT) The type name of the target.
 -- 
+-- @field DCS#Airbase place The @{DCS#Airbase}
+-- @field Wrapper.Airbase#AIRBASE Place The MOOSE airbase object.
+-- @field #string PlaceName The name of the airbase.
+-- 
 -- @field weapon The weapon used during the event.
 -- @field Weapon
 -- @field WeaponName
@@ -932,6 +936,12 @@ function EVENT:onEvent( Event )
       Event.WeaponCategory = Event.WeaponUNIT and Event.Weapon:getDesc().category
       Event.WeaponTypeName = Event.WeaponUNIT and Event.Weapon:getTypeName()
       --Event.WeaponTgtDCSUnit = Event.Weapon:getTarget()
+    end
+    
+    -- Place should be given for takeoff and landing events as well as base captured. It should be a DCS airbase. 
+    if Event.place then      
+      Event.Place=AIRBASE:Find(Event.place)
+      Event.PlaceName=Event.Place:GetName()
     end
 
 --  @FC: something like this should be added.
