@@ -129,10 +129,7 @@ function AI_CARGO_AIRPLANE:New( Airplane, CargoSet )
   self:SetCarrier( Airplane )
   
   local Desc = Airplane:GetUnit(1):GetDesc()
-  
   self:F({Desc=Desc})
-  
-  
   Airplane:SetCargoBayWeightLimit( Desc.massMax - ( Desc.massEmpty + Desc.fuelMassMax ) )
   --Airplane:SetCargoBayVolumeLimit( 15 )
   
@@ -251,12 +248,15 @@ function AI_CARGO_AIRPLANE:onafterLanded( Airplane, From, Event, To )
       env.info("FF load airplane "..Airplane:GetName())
       self:Load( Airplane:GetCoordinate() )
       self.RoutePickup = false
+      self.Relocating = true
     end
     
     -- Aircraft was send to this airbase to deploy troops. Initiate unloading.
     if self.RouteDeploy == true then
       self:Unload()
       self.RouteDeploy = false
+      self.Transporting = false
+      self.Relocating = false
     end
      
   end
@@ -451,10 +451,9 @@ function AI_CARGO_AIRPLANE:onafterLoaded( Airplane, From, Event, To, Cargo )
   env.info("FF troops loaded into cargo plane")
   
   if Airplane and Airplane:IsAlive() then
-      self:F( { "Transporting" } )
-      self.Transporting = true -- This will only be executed when there is no cargo boarded anymore. The dispatcher will then kick-off the deploy cycle!
+    self:F( { "Transporting" } )
+    self.Transporting = true -- This will only be executed when there is no cargo boarded anymore. The dispatcher will then kick-off the deploy cycle!
   end
-  
 end
 
 

@@ -840,6 +840,17 @@ do -- Cargo
     self.__.Cargo = {}
   end
   
+  --- Is cargo bay empty.
+  -- @param #POSITIONABLE self
+  function POSITIONABLE:IsCargoEmpty()
+    local IsEmpty = true
+    for _, Cargo in pairs( self.__.Cargo ) do
+      IsEmpty = false
+      break
+    end
+    return IsEmpty
+  end
+  
   --- Get cargo item count.
   -- @param #POSITIONABLE self
   -- @return Core.Cargo#CARGO Cargo

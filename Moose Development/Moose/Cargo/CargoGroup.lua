@@ -101,7 +101,7 @@ do -- CARGO_GROUP
     end
 
     -- Then we register the new group in the database
-    GROUP:NewTemplate( GroupTemplate, GroupTemplate.CoalitionID, GroupTemplate.CategoryID, GroupTemplate.CountryID )
+    self.CargoGroup = GROUP:NewTemplate( GroupTemplate, GroupTemplate.CoalitionID, GroupTemplate.CategoryID, GroupTemplate.CountryID )
     
     -- Now we spawn the new group based on the template created.
     self.CargoObject = _DATABASE:Spawn( GroupTemplate )

@@ -43,7 +43,7 @@ function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
   self:AddTransition( "Unloaded", "Pickup", "*" )
   self:AddTransition( "Loaded", "Deploy", "*" )
   
-  self:AddTransition( "Unloaded", "Load", "Boarding" )
+  self:AddTransition( { "Unloaded", "Loading" }, "Load", "Boarding" )
   self:AddTransition( "Boarding", "Board", "Boarding" )
   self:AddTransition( "Boarding", "Loaded", "Loaded" )
   self:AddTransition( "Loaded", "Unload", "Unboarding" )
@@ -143,6 +143,16 @@ function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
       )
     end
   )
+
+  for _, HelicopterUnit in pairs( Helicopter:GetUnits() ) do
+    local Desc = HelicopterUnit:GetDesc()
+    self:F({Desc=Desc})
+    HelicopterUnit:SetCargoBayWeightLimit( Desc.massMax - ( Desc.massEmpty + Desc.fuelMassMax ) )
+    --Airplane:SetCargoBayVolumeLimit( 15 )
+  end
+  
+  self.Relocating = false
+  self.Transporting = false
 
   self:SetCarrier( Helicopter )
   
@@ -380,7 +390,6 @@ function AI_CARGO_HELICOPTER:onbeforeLoad( Helicopter, From, Event, To)
     self.BoardingCount = 0
   
     if Helicopter and Helicopter:IsAlive() then
-      self.Helicopter_Cargo = {}
       for _, HelicopterUnit in pairs( Helicopter:GetUnits() ) do
         local HelicopterUnit = HelicopterUnit -- Wrapper.Unit#UNIT
         for _, Cargo in pairs( self.CargoSet:GetSet() ) do
@@ -393,10 +402,6 @@ function AI_CARGO_HELICOPTER:onbeforeLoad( Helicopter, From, Event, To)
               Cargo:Board( HelicopterUnit, 25 )
               self:__Board( 1, Cargo )
               Boarding = true
-              
-              -- So now this APCUnit has Cargo that is being loaded.
-              -- This will be used further in the logic to follow and to check cargo status.
-              self.Helicopter_Cargo[HelicopterUnit] = Cargo
               break
             end
           end
@@ -424,7 +429,27 @@ function AI_CARGO_HELICOPTER:onafterBoard( Helicopter, From, Event, To, Cargo )
     if not Cargo:IsLoaded() then
       self:__Board( 10, Cargo )
     else
-      self:__Loaded( 1, Cargo )
+      for _, HelicopterUnit in pairs( Helicopter:GetUnits() ) do
+        local HelicopterUnit = HelicopterUnit -- Wrapper.Unit#UNIT
+        for _, Cargo in pairs( self.CargoSet:GetSet() ) do
+          local Cargo = Cargo -- Cargo.Cargo#CARGO
+          if Cargo:IsUnLoaded() then
+            if Cargo:IsInLoadRadius( HelicopterUnit:GetCoordinate() ) then
+              local CargoBayFreeWeight = HelicopterUnit:GetCargoBayFreeWeight()
+              local CargoWeight = Cargo:GetWeight()
+
+              -- Only when there is space within the bay to load the next cargo item!
+              if CargoBayFreeWeight > CargoWeight then --and CargoBayFreeVolume > CargoVolume then
+              
+                Cargo:Board( HelicopterUnit, 25 )
+                self:__Board( 10, Cargo )
+                return
+              end
+            end
+          end
+        end
+      end
+      self:__Loaded( 1, Cargo ) -- Will only be executed when no more cargo is boarded.
     end
   end
   
@@ -438,24 +463,12 @@ end
 -- @param #string To To state.
 -- @param Cargo.Cargo#CARGO Cargo Cargo object.
 -- @return #boolean Cargo is loaded.
-function AI_CARGO_HELICOPTER:onbeforeLoaded( Helicopter, From, Event, To, Cargo )
+function AI_CARGO_HELICOPTER:onafterLoaded( Helicopter, From, Event, To, Cargo )
   self:F( { Helicopter, From, Event, To, Cargo } )
   
-  local Loaded = true
-
   if Helicopter and Helicopter:IsAlive() then
-    for HelicopterUnit, Cargo in pairs( self.Helicopter_Cargo ) do
-      local Cargo = Cargo -- Cargo.Cargo#CARGO
-      self:F( { IsLoaded = Cargo:IsLoaded(), IsDestroyed = Cargo:IsDestroyed() } )
-      if not Cargo:IsLoaded() and not Cargo:IsDestroyed() then
-        Loaded = false
-      end
-    end
-    
+    self.Transporting = true
   end
-  
-  return Loaded
-
 end
 
 
@@ -471,9 +484,11 @@ function AI_CARGO_HELICOPTER:onafterUnload( Helicopter, From, Event, To, Deploye
     for _, HelicopterUnit in pairs( Helicopter:GetUnits() ) do
       local HelicopterUnit = HelicopterUnit -- Wrapper.Unit#UNIT
       for _, Cargo in pairs( HelicopterUnit:GetCargo() ) do
-        Cargo:UnBoard()
-        Cargo:SetDeployed( true )
-        self:__Unboard( 10, Cargo, Deployed )
+        if Cargo:IsLoaded() then
+          Cargo:UnBoard()
+          Cargo:SetDeployed( true )
+          self:__Unboard( 10, Cargo, Deployed )
+        end
       end 
     end
   end
@@ -495,6 +510,17 @@ function AI_CARGO_HELICOPTER:onafterUnboard( Helicopter, From, Event, To, Cargo,
     if not Cargo:IsUnLoaded() then
       self:__Unboard( 10, Cargo, Deployed ) 
     else
+      for _, HelicopterUnit in pairs( Helicopter:GetUnits() ) do
+        local HelicopterUnit = HelicopterUnit -- Wrapper.Unit#UNIT
+        for _, Cargo in pairs( HelicopterUnit:GetCargo() ) do
+          if Cargo:IsLoaded() then
+            Cargo:UnBoard()
+            Cargo:SetDeployed( true )
+            self:__Unboard( 10, Cargo, Deployed )
+            return
+          end
+        end 
+      end
       self:__Unloaded( 1, Cargo, Deployed )
     end
   end
@@ -519,21 +545,16 @@ function AI_CARGO_HELICOPTER:onbeforeUnloaded( Helicopter, From, Event, To, Carg
 
   if Helicopter and Helicopter:IsAlive() then
     for _, HelicopterUnit in pairs( Helicopter:GetUnits() ) do
-      local CargoCheck = self.Helicopter_Cargo[HelicopterUnit] -- Cargo.Cargo#CARGO
-      if CargoCheck then
-        self:F( { CargoCheck:GetName(), IsUnLoaded = CargoCheck:IsUnLoaded() } )
-        if CargoCheck:IsUnLoaded() == false then
+      local IsEmpty = HelicopterUnit:IsCargoEmpty()
+      self:I({ IsEmpty = IsEmpty })
+      if not IsEmpty then
           AllUnloaded = false
           break
-        end
       end
     end
     
     if AllUnloaded == true then
       if Deployed == true then
-        for HelicopterUnit, Cargo in pairs( self.Helicopter_Cargo ) do
-          local Cargo = Cargo -- Cargo.Cargo#CARGO
-        end
         self.Helicopter_Cargo = {}
       end
       self.Helicopter = Helicopter
