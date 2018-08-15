@@ -4,9 +4,9 @@
 -- Features:
 --
 --    * Holds (virtual) assests such as intrantry groups in stock.
---    * Manages requests of assets from other airbases or warehouses.
---    * Take care of transportation to other airbases.
---    * Different means of automatic transportation (planes, helicopters, selfpropelled).
+--    * Manages requests of assets from other warehouses.
+--    * Take care of transportation to other warehouses and its accociated airbases.
+--    * Different means of automatic transportation (planes, helicopters, APCs, selfpropelled).
 --
 -- # QUICK START GUIDE
 --
@@ -32,6 +32,7 @@
 -- @field Core.Point#COORDINATE road Closest point to warehouse on road.
 -- @field Core.Point#COORDINATE rail Closest point to warehouse on rail.
 -- @field Core.Zone#ZONE spawnzone Zone in which assets are spawned.
+-- @field Functional.ZoneCaptureCoalition#ZONE_CAPTURE_COALITION capturezone Zone capture object handling the capturing of the warehouse spawn zone.
 -- @field #string wid Identifier of the warehouse printed before other output to DCS.log file.
 -- @field #number uid Unit identifier of the warehouse. Derived from the associated airbase.
 -- @field #number markerid ID of the warehouse marker at the airbase.
@@ -96,6 +97,7 @@ WAREHOUSE = {
   road       = nil,
   rail       = nil,
   spawnzone  = nil,
+  capturezone = nil,
   wid        = nil,
   uid        = nil,
   markerid   = nil,
@@ -458,6 +460,23 @@ function WAREHOUSE:onafterStart(From, Event, To)
   -- Debug mark spawn zone.
   self.spawnzone:BoundZone(60, self.country)
   self.spawnzone:GetCoordinate():MarkToAll("Spawnzone of warehouse "..self.warehouse:GetName())
+  
+  -- Create a zone capture object.
+  self.capturezone=ZONE_CAPTURE_COALITION:New(self.spawnzone, self.coalition)
+  
+  -- Add warehouse to zone capture object. Does this work?
+  self.capturezone.warehouse=self
+  
+  -- Start capturing monitoring.
+  self.capturezone:Start(10, 60)
+
+  -- Handle capturing.
+  function self.capturezone:OnEnterCaptured()
+    local coalition = self:GetCoalition()
+    self:E(string.format("Warehouse %s was captured by coalition %d", tostring(self.warehouse:GetName()), coalition))
+    self.warehouse.coalition=coalition --:SetCoalition(coalition)
+    self:Guard()
+  end
 
   -- Handle events:
   self:HandleEvent(EVENTS.Birth,          self._OnEventBirth)
@@ -469,6 +488,7 @@ function WAREHOUSE:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.Dead,           self._OnEventCrashOrDead)
   self:HandleEvent(EVENTS.BaseCaptured,   self._OnEventBaseCaptured)
   
+  -- Start the status monitoring.
   self:__Status(5)
 end
 
@@ -550,6 +570,14 @@ function WAREHOUSE:onafterStatus(From, Event, To)
   self:_PrintQueue(self.queue, "Queue:")
   self:_PrintQueue(self.pending, "Pending:")
   
+  -- Check if requests are valid and remove invalid one.
+  self:_CheckRequestConsistancy(self.queue)
+  
+  -- Print queue.
+  self:_PrintQueue(self.queue, "Queue after consitancy:")
+  self:_PrintQueue(self.pending, "Pending after consistancy:")
+  
+  
   -- Check queue and handle requests if possible.
   local request=self:_CheckQueue()
 
@@ -559,8 +587,8 @@ function WAREHOUSE:onafterStatus(From, Event, To)
   end
 
   -- Print queue.
-  self:_PrintQueue(self.queue, "Queue2:")
-  self:_PrintQueue(self.pending, "Pending2:")
+  self:_PrintQueue(self.queue, "Queue after request:")
+  self:_PrintQueue(self.pending, "Pending after request:")
 
   -- Call status again in 30 sec.
   self:__Status(30)
@@ -750,13 +778,17 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   local Pending=Request  --#WAREHOUSE.Pendingitem
 
   -- Spawn assets.    
-  local _spawngroups,_cargotype,_cargocategory,_cargoassets=self:_SpawnAssetRequest(Request) --Core.Set#SET_GROUP
+  local _spawngroups,_cargoassets=self:_SpawnAssetRequest(Request) --Core.Set#SET_GROUP
+  
+    -- General type and category.
+  local _cargotype=_cargoassets[1].attribute    --#WAREHOUSE.Attribute
+  local _cargocategory=_cargoassets[1].category --DCS#Group.Category
   
   -- Add cargo groups to request.
   Pending.cargogroupset=_spawngroups
   Pending.cargoassets=_cargoassets
-  --Request.cargogroupset=_spawngroups
-  --Request.ndelivered=0  
+  Pending.cargoattribute=_cargotype
+  Pending.cargocategory=_cargocategory
   
   -- Add groups to cargo if they don't go by themselfs.
   local CargoGroups --Core.Set#SET_CARGO
@@ -832,10 +864,10 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     end
     
     -- Add request to pending queue.
-    table.insert(self.pending, Request)
+    table.insert(self.pending, Pending)
     
     -- Delete request from queue.
-    self:_DeleteQueueItem(Request.uid)
+    self:_DeleteQueueItem(Request, self.queue)
     
     -- No cargo transport necessary.
     return
@@ -868,12 +900,14 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   if  _transportcategory==Group.Category.AIRPLANE or _transportcategory==Group.Category.HELICOPTER then
     Parking=self:_GetParkingForAssets(_assetstock)    
   end  
+  
+  -- Transport assets table.
+  local _transportassets={}
 
   -- Dependent on transport type, spawn the transports and set up the dispatchers.
   if Request.transporttype==WAREHOUSE.TransportType.AIRPLANE then
   
-    -- Spawn the transport groups.
-    local _delid={}
+    -- Spawn the transport groups.    
     for i=1,Request.ntransport do
 
       -- Get stock item.
@@ -897,13 +931,13 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
         -- Add group to transportset.
         TransportSet:AddGroup(spawngroup)
 
-        table.insert(_delid,_assetitem.uid)
+        table.insert(_transportassets,_assetitem)
       end
     end
 
     -- Delete spawned items from warehouse stock.
-    for _,_id in pairs(_delid) do
-      self:_DeleteStockItem(_id)
+    for _,_item in pairs(_transportassets) do
+      self:_DeleteStockItem(_item)
     end
 
     -- Define dispatcher for this task.
@@ -912,7 +946,6 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   elseif Request.transporttype==WAREHOUSE.TransportType.HELICOPTER then
 
     -- Spawn the transport groups.
-    local _delid={}
     for i=1,Request.ntransport do
 
       -- Get stock item.
@@ -936,15 +969,15 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
         -- Add group to transportset.
         TransportSet:AddGroup(spawngroup)
 
-        table.insert(_delid,_assetitem.uid)
+        table.insert(_transportassets,_assetitem)
       else
         self:E(self.wid.."ERROR: spawngroup helo transport does not exist!")
       end
     end
 
     -- Delete spawned items from warehouse stock.
-    for _,_id in pairs(_delid) do
-      self:_DeleteStockItem(_id)
+    for _,_item in pairs(_transportassets) do
+      self:_DeleteStockItem(_item)
     end
 
     -- Define dispatcher for this task.
@@ -957,7 +990,6 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   elseif Request.transporttype==WAREHOUSE.TransportType.APC then
 
     -- Spawn the transport groups.
-    local _delid={}
     for i=1,Request.ntransport do
 
       -- Get stock item.
@@ -978,13 +1010,13 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
         -- Add group to transportset.
         TransportSet:AddGroup(spawngroup)
 
-        table.insert(_delid,_assetitem.uid)
+        table.insert(_transportassets,_assetitem)
       end
     end
 
     -- Delete spawned items from warehouse stock.
-    for _,_id in pairs(_delid) do
-      self:_DeleteStockItem(_id)
+    for _,_item in pairs(_transportassets) do
+      self:_DeleteStockItem(_item)
     end
 
     -- Define dispatcher for this task.
@@ -1048,12 +1080,21 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
   -- Start dispatcher.
   CargoTransport:__Start(5)
+  
+  -- Add transportassets to pending queue item.
+  Pending.transportassets=_transportassets
+  
+  -- Add cargo groups to request.
+  Pending.transportgroupset=_transportgroups
+  Pending.transportassets=_transportassets
+  Pending.transportattribute=_transporttype
+  Pending.transportcategory=_transportcategory
 
   -- Add request to pending queue.
-  table.insert(self.pending, Request)
+  table.insert(self.pending, Pending)
 
   -- Delete request from queue.
-  self:_DeleteQueueItem(Request.uid)
+  self:_DeleteQueueItem(Request, self.queue)
 
 end
 
@@ -1062,8 +1103,7 @@ end
 -- @param #WAREHOUSE self
 -- @param #WAREHOUSE.Queueitem Request Information table of the request.
 -- @return Core.Set#SET_GROUP Set of groups that were spawned.
--- @return #WAREHOUSE.Attribute Generalized attribute of asset.
--- @return DCS#Group.Category Category of asset, i.e. ground, air, ship, ...
+-- @return #table List of spawned assets.
 function WAREHOUSE:_SpawnAssetRequest(Request)
 
   -- Filter the requested cargo assets.
@@ -1093,10 +1133,9 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
   end
   
   -- Create an empty set.
-  local groupset=SET_GROUP:New():FilterDeads()
+  local _groupset=SET_GROUP:New():FilterDeads()
 
   -- Spawn the assets.
-  local _delid={}
   local _spawngroups={}
   local _assets={}
   
@@ -1143,9 +1182,8 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
 
     if _group then
       --_spawngroups[i]=_group
-      groupset:AddGroup(_group)
+      _groupset:AddGroup(_group)
       table.insert(_assets, _assetitem)
-      table.insert(_delid,_assetitem.uid)
     else
       self:E(self.wid.."ERROR: cargo asset could not be spawned!")
     end
@@ -1153,11 +1191,11 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
   end
 
   -- Delete spawned items from warehouse stock.
-  for _,_id in pairs(_delid) do
-    self:_DeleteStockItem(_id)
+  for _,_item in pairs(_assets) do
+    self:_DeleteStockItem(_item)
   end
 
-  return groupset,_cargotype,_cargocategory,_assets
+  return _groupset,_assets
 end 
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1455,7 +1493,7 @@ end
 
 --- Warehouse event handling function.
 -- @param #WAREHOUSE self
--- @param Core.Event#EVENTDATA Eventdata Event data.
+-- @param Core.Event#EVENTDATA EventData Event data.
 function WAREHOUSE:_OnEventBirth(EventData)
   self:E(self.wid..string.format("Warehouse %s captured event birth!",self.warehouse:GetName()))
   
@@ -1469,42 +1507,55 @@ end
 
 --- Warehouse event handling function.
 -- @param #WAREHOUSE self
--- @param Core.Event#EVENTDATA Eventdata Event data.
+-- @param Core.Event#EVENTDATA EventData Event data.
 function WAREHOUSE:_OnEventEngineStartup(EventData)
   self:E(self.wid..string.format("Warehouse %s captured event engine startup!",self.warehouse:GetName()))
 end
 
 --- Warehouse event handling function.
 -- @param #WAREHOUSE self
--- @param Core.Event#EVENTDATA Eventdata Event data.
+-- @param Core.Event#EVENTDATA EventData Event data.
 function WAREHOUSE:_OnEventTakeOff(EventData)
   self:E(self.wid..string.format("Warehouse %s captured event takeoff!",self.warehouse:GetName()))
 end
 
 --- Warehouse event handling function.
 -- @param #WAREHOUSE self
--- @param Core.Event#EVENTDATA Eventdata Event data.
+-- @param Core.Event#EVENTDATA EventData Event data.
 function WAREHOUSE:_OnEventLanding(EventData)
   self:E(self.wid..string.format("Warehouse %s captured event landing!",self.warehouse:GetName()))
 end
 
 --- Warehouse event handling function.
 -- @param #WAREHOUSE self
--- @param Core.Event#EVENTDATA Eventdata Event data.
+-- @param Core.Event#EVENTDATA EventData Event data.
 function WAREHOUSE:_OnEventEngineShutdown(EventData)
   self:E(self.wid..string.format("Warehouse %s captured event engine shutdown!",self.warehouse:GetName()))
 end
 
 --- Warehouse event handling function.
 -- @param #WAREHOUSE self
--- @param Core.Event#EVENTDATA Eventdata Event data.
+-- @param Core.Event#EVENTDATA EventData Event data.
 function WAREHOUSE:_OnEventCrashOrDead(EventData)
-  self:E(self.wid..string.format("Warehouse %s captured event birth!",self.warehouse:GetName()))
+  self:E(self.wid..string.format("Warehouse %s captured event dead or crash!",self.warehouse:GetName()))
+  
+  if EventData and EventData.IniUnit then
+  
+    -- Check if warehouse was destroyed.
+    local warehousename=self.warehouse:GetName()
+    if EventData.IniUnitName==warehousename then
+      env.info(self.wid..string.format("Warehouse %s was destroyed!", warehousename))
+      --TODO: Add destroy event.
+      self:__Stop(1)
+    end
+  end
+  
 end
 
 --- Warehouse event handling function.
+-- Handles the case when the airbase associated with the warehous is captured.
 -- @param #WAREHOUSE self
--- @param Core.Event#EVENTDATA Eventdata Event data.
+-- @param Core.Event#EVENTDATA EventData Event data.
 function WAREHOUSE:_OnEventBaseCaptured(EventData)
   self:E(self.wid..string.format("Warehouse %s captured event base captured!",self.warehouse:GetName()))
   
@@ -1515,7 +1566,8 @@ function WAREHOUSE:_OnEventBaseCaptured(EventData)
   
   if EventData and EventData.id==world.event.S_EVENT_BASE_CAPTURED then
     if EventData.Place then
-    
+      
+      -- Place is the airbase that was captured.
       local airbase=EventData.Place --Wrapper.Airbase#AIRBASE
       
       if EventData.PlaceName==self.airbasename then
@@ -1548,16 +1600,24 @@ end
 -- Helper functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Count number of troups in spawn zone of the warehouse.
+-- If only enemy troops are captured.
+-- @param #WAREHOUSE self
+function WAREHOUSE:_CheckSpawnZone()
+
+  --self.spawnzone:IsAllInZoneOfCoalition(Coalition)
+
+end
+
 --- Checks if the request can be fulfilled in general. If not, it is removed from the queue.
 -- Check if departure and destination bases are of the right type. 
 -- @param #WAREHOUSE self
 -- @param #table queue The queue which is holding the requests to check.
--- @param #WAREHOUSE.Queueitem qitem The request to be checked.
 -- @return #boolean If true, request can be executed. If false, something is not right.
-function WAREHOUSE:_CheckRequestValid(queue)
+function WAREHOUSE:_CheckRequestConsistancy(queue)
 
   -- Requests to delete.
-  local delid={}
+  local invalid={}
   
   for _,_request in pairs(queue) do
     local request=_request --#WAREHOUSE.Queueitem
@@ -1740,15 +1800,15 @@ function WAREHOUSE:_CheckRequestValid(queue)
     
     -- Add request as unvalid and delete it later.
     if not valid then
-      table.insert(delid, request.id)
+      table.insert(invalid, request)
     end   
  
   end -- loop queue items.
 
 
    -- Delete invalid requests.
-  for _,_uid in pairs(delid) do
-    self:_DeleteQueueItem(_uid)
+  for _,_request in pairs(invalid) do
+    self:_DeleteQueueItem(_request, self.queue)
   end   
  
 end
@@ -2235,13 +2295,13 @@ function WAREHOUSE:GetStockInfo(stock)
   return _data
 end
 
---- Delete item from stock.
+--- Delete an asset item from stock.
 -- @param #WAREHOUSE self
--- @param #number _uid The unique id of the item to be deleted.
-function WAREHOUSE:_DeleteStockItem(_uid)
+-- @param #WAREHOUSE.Stockitem stockitem Asset item to delete from stock table.
+function WAREHOUSE:_DeleteStockItem(stockitem)
   for i=1,#self.stock do
     local item=self.stock[i] --#WAREHOUSE.Stockitem
-    if item.uid==_uid then
+    if item.uid==stockitem.uid then
       table.remove(self.stock,i)
       break
     end
@@ -2250,12 +2310,13 @@ end
 
 --- Delete item from queue.
 -- @param #WAREHOUSE self
--- @param #number _uid The id of the item to be deleted.
-function WAREHOUSE:_DeleteQueueItem(_uid)
-  for i=1,#self.queue do
-    local item=self.queue[i] --#WAREHOUSE.Queueitem
-    if item.uid==_uid then
-      table.remove(self.queue,i)
+-- @param #WAREHOUSE.Queueitem qitem Item of queue to be removed.
+-- @param #table queue The queue from which the item should be deleted.
+function WAREHOUSE:_DeleteQueueItem(qitem, queue)
+  for i=1,#queue do
+    local _item=queue[i] --#WAREHOUSE.Queueitem
+    if _item.uid==qitem.uid then
+      table.remove(queue,i)
       break
     end
   end
@@ -2280,8 +2341,8 @@ function WAREHOUSE:_PrintQueue(queue, name)
   env.info(self.wid..name)
   for _,_qitem in ipairs(queue) do
     local qitem=_qitem --#WAREHOUSE.Queueitem
-    local text=string.format("uid=%d, prio=%d, airbase=%s (category=%d), descriptor: %s=%s, nasssets=%d, transport=%s, ntransport=%d",
-    qitem.uid, qitem.prio, qitem.airbase:GetName(),qitem.category, qitem.assetdesc,tostring(qitem.assetdescval),qitem.nasset,qitem.transporttype,qitem.ntransport)
+    local text=self.wid..string.format("UID=%d, Prio=%d, Warehouse=%s, Airbase=%s (category=%d), Descriptor: %s=%s, Nasssets=%d, Transport=%s, Ntransport=%d",
+    qitem.uid, qitem.prio, qitem.warehouse:GetName(), qitem.airbase:GetName(),qitem.category, qitem.assetdesc,tostring(qitem.assetdescval),qitem.nasset,qitem.transporttype,qitem.ntransport)
     env.info(text)
   end
 end
