@@ -1085,7 +1085,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   Pending.transportassets=_transportassets
   
   -- Add cargo groups to request.
-  Pending.transportgroupset=_transportgroups
+  Pending.transportgroupset=Transportset
   Pending.transportassets=_transportassets
   Pending.transportattribute=_transporttype
   Pending.transportcategory=_transportcategory
