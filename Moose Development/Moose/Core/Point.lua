@@ -1439,7 +1439,7 @@ do -- COORDINATE
   --- Flares the point in a color.
   -- @param #COORDINATE self
   -- @param Utilities.Utils#FLARECOLOR FlareColor
-  -- @param DCS#Azimuth (optional) Azimuth The azimuth of the flare direction. The default azimuth is 0.
+  -- @param DCS#Azimuth Azimuth (optional) The azimuth of the flare direction. The default azimuth is 0.
   function COORDINATE:Flare( FlareColor, Azimuth )
     self:F2( { FlareColor } )
     trigger.action.signalFlare( self:GetVec3(), FlareColor, Azimuth and Azimuth or 0 )
@@ -1447,7 +1447,7 @@ do -- COORDINATE
 
   --- Flare the COORDINATE White.
   -- @param #COORDINATE self
-  -- @param DCS#Azimuth (optional) Azimuth The azimuth of the flare direction. The default azimuth is 0.
+  -- @param DCS#Azimuth Azimuth (optional) The azimuth of the flare direction. The default azimuth is 0.
   function COORDINATE:FlareWhite( Azimuth )
     self:F2( Azimuth )
     self:Flare( FLARECOLOR.White, Azimuth )
@@ -1455,7 +1455,7 @@ do -- COORDINATE
 
   --- Flare the COORDINATE Yellow.
   -- @param #COORDINATE self
-  -- @param DCS#Azimuth (optional) Azimuth The azimuth of the flare direction. The default azimuth is 0.
+  -- @param DCS#Azimuth Azimuth (optional) The azimuth of the flare direction. The default azimuth is 0.
   function COORDINATE:FlareYellow( Azimuth )
     self:F2( Azimuth )
     self:Flare( FLARECOLOR.Yellow, Azimuth )
@@ -1463,7 +1463,7 @@ do -- COORDINATE
 
   --- Flare the COORDINATE Green.
   -- @param #COORDINATE self
-  -- @param DCS#Azimuth (optional) Azimuth The azimuth of the flare direction. The default azimuth is 0.
+  -- @param DCS#Azimuth Azimuth (optional) The azimuth of the flare direction. The default azimuth is 0.
   function COORDINATE:FlareGreen( Azimuth )
     self:F2( Azimuth )
     self:Flare( FLARECOLOR.Green, Azimuth )
