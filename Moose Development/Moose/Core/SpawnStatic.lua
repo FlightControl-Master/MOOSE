@@ -191,19 +191,17 @@ function SPAWNSTATIC:SpawnFromPointVec2( PointVec2, Heading, NewName ) --R2.1
 end
 
 
---- Creates the original @{Static} at a POINT_VEC2.
+--- Respawns the original @{Static}.
 -- @param #SPAWNSTATIC self
--- @param Core.Point#POINT_VEC2 PointVec2 The 2D coordinate where to spawn the static.
--- @param #number Heading The heading of the static, which is a number in degrees from 0 to 360.
--- @param #string (optional) The name of the new static.
+-- @param DCS#country.id (Optional) The country ID of the static after respawning..
 -- @return #SPAWNSTATIC
-function SPAWNSTATIC:ReSpawn()
+function SPAWNSTATIC:ReSpawn(countryid)
   
   local StaticTemplate = _DATABASE:GetStaticUnitTemplate( self.SpawnTemplatePrefix )
   
   if StaticTemplate then
 
-    local CountryID = self.CountryID
+    local CountryID = countryid or self.CountryID
     local CountryName = _DATABASE.COUNTRY_NAME[CountryID]
     
     StaticTemplate.units = nil

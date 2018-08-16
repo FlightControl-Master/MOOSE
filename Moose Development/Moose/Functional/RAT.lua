@@ -2064,8 +2064,9 @@ end
 -- @param #table _waypoint First waypoint to be used (for continue journey, commute, etc).
 -- @param Core.Point#COORDINATE _lastpos (Optional) Position where the aircraft will be spawned.
 -- @param #number _nrespawn Number of already performed respawn attempts (e.g. spawning on runway bug).
+-- @param #table parkingdata Explicitly specify the parking spots when spawning at an airport.
 -- @return #number Spawn index.
-function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _livery, _waypoint, _lastpos, _nrespawn)
+function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _livery, _waypoint, _lastpos, _nrespawn, parkingdata)
   self:F({rat=RAT.id, departure=_departure, destination=_destination, takeoff=_takeoff, landing=_landing, livery=_livery, waypoint=_waypoint, lastpos=_lastpos, nrespawn=_nrespawn})
 
   -- Set takeoff type.
@@ -5103,9 +5104,10 @@ end
 -- @param Core.Point#COORDINATE spawnplace (Optional) Place where spawning should happen. If not present, first waypoint is taken.
 -- @param Wrapper.Airbase#AIRBASE departure Departure airbase or zone.
 -- @param #number takeoff Takeoff type.
+-- @param #table parkingdata Parking data, i.e. parking spot coordinates and terminal ids for all units of the group.
 -- @return #boolean True if modification was successful or nil if not, e.g. when no parking space was found and spawn in air is disabled.
-function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace, departure, takeoff)
-  self:F2({waypoints=waypoints, livery=livery, spawnplace=spawnplace, departure=departure, takeoff=takeoff})
+function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace, departure, takeoff, parkingdata)
+  self:F2({waypoints=waypoints, livery=livery, spawnplace=spawnplace, departure=departure, takeoff=takeoff, parking=parkingdata})
 
   -- The 3D vector of the first waypoint, i.e. where we actually spawn the template group.
   local PointVec3 = COORDINATE:New(waypoints[1].x, waypoints[1].alt, waypoints[1].y)
@@ -5193,6 +5195,10 @@ function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace, departure, take
           self:T(RAT.id..string.format("Group %s is spawned on farp/ship/runway %s.", self.alias, departure:GetName()))
           nfree=departure:GetFreeParkingSpotsNumber(termtype, true)
           spots=departure:GetFreeParkingSpotsTable(termtype, true)
+        elseif parkingdata~=nil then
+          -- Parking data explicitly set by user as input parameter.
+          nfree=#parkingdata
+          spots=parkingdata
         else
           -- Helo is spawned.
           if self.category==RAT.cat.heli then

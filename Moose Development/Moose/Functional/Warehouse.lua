@@ -96,7 +96,7 @@ WAREHOUSE = {
   zone        = nil,
   airbase     = nil,
   airbasename = nil,
-  category    = -1,
+  category    =  -1,
   coordinate  = nil,
   road        = nil,
   rail        = nil,
@@ -191,7 +191,7 @@ WAREHOUSE.TransportType = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.1.8"
+WAREHOUSE.version="0.1.8w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -204,11 +204,11 @@ WAREHOUSE.version="0.1.8"
 -- DONE: Switch to AI_CARGO_XXX_DISPATCHER
 -- DONE: Add queue.
 -- TODO: Write documentation.
--- TODO: Put active groups into the warehouse, e.g. when they were transported to this warehouse.
--- TODO: Spawn warehouse assets as uncontrolled or AI off and activate them when requested.
+-- DONE: Put active groups into the warehouse, e.g. when they were transported to this warehouse.
+-- NOGO: Spawn warehouse assets as uncontrolled or AI off and activate them when requested.
 -- TODO: Handle cases with immobile units.
--- TODO: How to handle multiple units in a transport group?
--- DONE: Add phyical object
+-- DONE: How to handle multiple units in a transport group? <== Cargo dispatchers.
+-- DONE: Add phyical object.
 -- TODO: If warehouse is destoyed, all asssets are gone.
 -- TODO: If warehosue is captured, change warehouse and assets to other coalition.
 -- TODO: Handle cases for aircraft carriers and other ships. Place warehouse on carrier possible? On others probably not - exclude them?
@@ -221,7 +221,7 @@ WAREHOUSE.version="0.1.8"
 -- Constructor(s)
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- WAREHOUSE constructor. Creates a new WAREHOUSE object accociated with an airbase.
+--- The WAREHOUSE constructor. Creates a new WAREHOUSE object from a static object. Parameters like the coalition and country are taken from the static object structure.
 -- @param #WAREHOUSE self
 -- @param Wrapper.Static#STATIC warehouse The physical structure of the warehouse.
 -- @param #string alias (Optional) Alias of the warehouse, i.e. the name it will be called when sending messages etc. Default is the name of the static  
@@ -282,11 +282,12 @@ function WAREHOUSE:New(warehouse, alias)
   self:AddTransition("*",       "Unloaded",    "*")       -- Cargo has been unloaded from the carrier.
   self:AddTransition("*",       "Arrived",     "*")       -- Cargo group has arrived at destination.
   self:AddTransition("*",       "Delivered",   "*")       -- All cargo groups of a request have been delivered to the requesting warehouse.
-  self:AddTransition("*",       "SelfRequest", "*")       -- Request to warehouse itself. Requested assets are only spawned but not delivered anywhere.
+  self:AddTransition("Running", "SelfRequest", "*")       -- Request to warehouse itself. Requested assets are only spawned but not delivered anywhere.
   self:AddTransition("Running", "Pause",       "Paused")  -- TODO Pause the processing of new requests. Still possible to add assets and requests. 
   self:AddTransition("Paused",  "Unpause",     "Running") -- TODO Unpause the warehouse. Queued requests are processed again. 
   self:AddTransition("*",       "Stop",        "Stopped") -- TODO Stop the warehouse.
   self:AddTransition("*",       "Save",        "*")       -- TODO Save the warehouse state to disk.
+  self:AddTransition("*",       "Attacked",    "*")       -- TODO Warehouse is under attack by enemy coalitin.
   self:AddTransition("*",       "Captured",    "*")       -- TODO Warehouse was captured by another coalition.
   self:AddTransition("*",       "Destroyed",   "*")       -- TODO Warehouse was destoryed. All assets are gone and warehouse is stopped.
   
@@ -430,9 +431,18 @@ function WAREHOUSE:SetSpawnZone(zone)
   return self
 end
 
+--- Set a warehouse zone. If this zone is captured, the warehouse and all its assets fall into the hands of the enemy.
+-- @param #WAREHOUSE self
+-- @param Core.Zone#ZONE zone The warehouse zone. Note that this **cannot** be a polygon zone!
+-- @return #WAREHOUSE self
+function WAREHOUSE:SetWarehouseZone(zone)
+  self.zone=zone
+  return self
+end
 
 --- Set the airbase belonging to this warehouse.
--- Be reasonable and do not put it too far from the phyiscal warehouse structure because you troops might have a long way to get to their transports.
+-- Note that it has to be of the same coalition as the warehouse.
+-- Also, be reasonable and do not put it too far from the phyiscal warehouse structure because you troops might have a long way to get to their transports.
 -- @param #WAREHOUSE self
 -- @param Wrapper.Airbase#AIRBASE airbase The airbase object associated to this warehouse.
 -- @return #WAREHOUSE self
@@ -440,6 +450,51 @@ function WAREHOUSE:SetAirbase(airbase)
   self.airbase=airbase
   return self
 end
+
+--- Set the connection of the warehouse to the road.
+-- Ground assets spawned in the warehouse spawn zone will first go to this point and from there travel on road to the requesting warehouse.
+-- Note that by default the road connection is set to the closest point on road from the center of the spawn zone if it is withing 3000 meters.
+-- Also note, that if the parameter "coordinate" is passed as nil, any road connection is disabled and ground assets cannot travel of be transportet on the ground.  
+-- @param #WAREHOUSE self
+-- @param Core.Point#COORDINATE coordinate The road connection. Technically, the closest point on road from this coordinate is determined by DCS API function. So this point must not be exactly on the road.
+-- @return #WAREHOUSE self
+function WAREHOUSE:SetRoadConnection(coordinate)
+  if coordinate then
+    self.road=coordinate:GetClosestPointToRoad()
+  else
+    self.road=false
+  end
+  return self
+end
+
+--- Set the connection of the warehouse to the railroad.
+-- This is the place where train assets or transports will be spawned.
+-- @param #WAREHOUSE self
+-- @param Core.Point#COORDINATE coordinate The railroad connection. Technically, the closest point on rails from this coordinate is determined by DCS API function. So this point must not be exactly on the a railroad connection.
+-- @return #WAREHOUSE self
+function WAREHOUSE:SetRailConnection(coordinate)
+  if coordinate then
+    self.rail=coordinate:GetClosestPointToRoad(true)
+  else
+    self.rail=false
+  end
+  return self
+end
+
+--- Check if the warehouse is running.
+-- @param #WAREHOUSE self
+-- @return #boolean If true, the warehouse is running and requests are processed.
+function WAREHOUSE:IsRunning()
+  return self:is("Running")
+end
+
+--- Check if the warehouse is paused. In this state, requests are not processed.
+-- @param #WAREHOUSE self
+-- @return #boolean If true, the warehouse is paused.
+function WAREHOUSE:IsPaused()
+  return self:is("Paused")
+end
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM states
@@ -474,22 +529,36 @@ function WAREHOUSE:onafterStart(From, Event, To)
   -- Debug mark warehouse & spawn zone.
   self.zone:BoundZone(30, self.country)
   self.spawnzone:BoundZone(30, self.country)
+  
   --self.spawnzone:GetCoordinate():MarkToAll("Spawnzone of warehouse "..self.alias)
   
-  -- Get the closest point on road and rail wrt spawnzone of ground assets.
-  -- TODO: Make road/rail connection input parameter.
+  -- Get the closest point on road wrt spawnzone of ground assets.
   local _road=self.spawnzone:GetCoordinate():GetClosestPointToRoad()
-  local _rail=self.spawnzone:GetCoordinate():GetClosestPointToRoad(true)
-
-  -- Set connections.  
-  if _road and _road:Get2DDistance(self.coordinate) < 3000 then
-    self.road=_road
-    _road:MarkToAll(string.format("%s road connection.", self.alias), true)
+  if _road and self.road==nil then  
+    -- Set connection to road if distance is less than 3 km.
+    local _Droad=_road:Get2DDistance(self.spawnzone:GetCoordinate())      
+    if _Droad < 3000 then
+      self.road=_road
+    end
   end
-  if _rail and _rail:Get2DDistance(self.coordinate) < 3000 then
-    self.rail=_rail
-    _rail:MarkToAll(string.format("%s rail connection.", self.alias), true)
-  end  
+  -- Mark point at road connection.
+  if self.road then
+    self.road:MarkToAll(string.format("%s road connection.", self.alias), true)
+  end
+  
+  -- Get the closest point on railroad wrt spawnzone of ground assets.
+  local _rail=self.spawnzone:GetCoordinate():GetClosestPointToRoad(true)
+  if _rail and self.rail==nil then
+    -- Set rail conection if it is less than 3 km away. 
+    local _Drail=_rail:Get2DDistance(self.spawnzone:GetCoordinate())
+    if _Drail < 3000 then
+      self.rail=_rail
+    end
+  end
+  -- Mark point at rail connection.
+  if self.rail then
+    self.rail:MarkToAll(string.format("%s rail connection.", self.alias), true)
+  end 
    
   -- Create a zone capture object.
   self.capturezone=ZONE_CAPTURE_COALITION:New(self.zone, self.coalition)
@@ -500,11 +569,20 @@ function WAREHOUSE:onafterStart(From, Event, To)
   -- Start capturing monitoring.
   self.capturezone:Start(10, 60)
 
+  -- Handle attack.
+  function self.capturezone:OnEnterAttacked()
+    local coalition = self:GetCoalition()
+    self:E(string.format("Warehouse %s is under attack!", tostring(self.warehouse.alias)))
+    -- Trigger FSM Attacked event.
+    self.warehouse:Attacked()
+  end
+
   -- Handle capturing.
   function self.capturezone:OnEnterCaptured()
     local coalition = self:GetCoalition()
-    self:E(string.format("Warehouse %s was captured by coalition %d!", tostring(self.alias), coalition))
+    self:E(string.format("Warehouse %s was captured by coalition %d!", tostring(self.warehouse.alias), coalition))
     self.warehouse.coalition=coalition --:SetCoalition(coalition)
+    self.warehouse:Captured(coalition)
     self:Guard()
   end
 
@@ -520,6 +598,8 @@ function WAREHOUSE:onafterStart(From, Event, To)
   
   -- This event triggers the arrived event for air assets.
   -- TODO Might need to make this landing or optional!
+  -- In fact, it would be better if the type could be defined for only for the warehouse which receives stuff,
+  -- since there will be warehouses with small airbases and little space or other problems!
   self:HandleEvent(EVENTS.EngineShutdown, self._OnEventArrived)
   
   -- Start the status monitoring.
@@ -563,7 +643,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function WAREHOUSE:onafterUnpause(From, Event, To)
-  self:E(self.wid..string.format("Warehouse unpaused! Processing of requests is resumed again."))
+  self:E(self.wid..string.format("Warehouse %s unpaused! Processing of requests is resumed.", self.alias))
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -615,12 +695,15 @@ function WAREHOUSE:onafterStatus(From, Event, To)
   self:_PrintQueue(self.pending, "Pending after consistancy:")
   
   
-  -- Check queue and handle requests if possible.
-  local request=self:_CheckQueue()
+  -- If warehouse is running than requests can be processed.
+  if self:IsRunning() then
+    -- Check queue and handle requests if possible.
+    local request=self:_CheckQueue()
 
-  -- Execute the request. If the request is really executed, it is also deleted from the queue.
-  if request then
-    self:Request(request)
+    -- Execute the request. If the request is really executed, it is also deleted from the queue.
+    if request then
+      self:Request(request)
+    end
   end
 
   -- Print queue.
@@ -897,7 +980,9 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
         self:_RouteGround(group, ToCoordinate)
       elseif _cargocategory==Group.Category.AIRPLANE then
         env.info("FF route plane "..group:GetName())
-        self:_RouteAir(group, Request.airbase)
+        --self:_RouteAir(group, Request.airbase)
+        -- TEST!
+        group=self:_RouteAirRat(group, Request.airbase)
       elseif _cargocategory==Group.Category.HELICOPTER then
         env.info("FF route helo "..group:GetName())
         self:_RouteAir(group, Request.airbase)
@@ -1134,7 +1219,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   Pending.transportassets=_transportassets
   
   -- Add cargo groups to request.
-  Pending.transportgroupset=Transportset
+  Pending.transportgroupset=TransportSet
   Pending.transportassets=_transportassets
   Pending.transportattribute=_transporttype
   Pending.transportcategory=_transportcategory
@@ -1402,6 +1487,42 @@ function WAREHOUSE:onafterSelfRequest(From, Event, To, groupset, request)
   
 end
 
+--- On after "Attacked" event. Warehouse is under attack by an another coalition.
+-- @param #WAREHOUSE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function WAREHOUSE:onafterAttacked(From, Event, To)
+  self:E(self.wid..string.format("Out warehouse is under attack!"))
+end
+
+--- On after "Captured" event. Warehouse has been captured by another coalition.
+-- @param #WAREHOUSE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param DCS#coalition.side Coalition which captured the warehouse.
+function WAREHOUSE:onafterCaptured(From, Event, To, Coalition)
+  self:E(self.wid..string.format("Our warehouse was captured by coalition %d!", Coalition))
+  
+  --TODO: Need to get a way to get the correct country.
+  local Country
+  if Coalition==coalition.side.BLUE then
+    Country=country.id.USA
+  elseif Coalition==coalition.side.RED then
+    Country=country.id.USSR
+  else
+    Country=country.id.SWITZERLAND
+  end
+  
+  -- Respawn warehouse with new coalition/country.
+  self.warehouse:ReSpawn(Country)
+  self.coalition=Coalition
+  self.country=Country
+  self.airbase=nil
+  self.category=-1
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Routing functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1431,6 +1552,53 @@ function WAREHOUSE:_RouteGround(Group, Coordinate, Speed)
     -- Route group to destination.
     Group:Route(Waypoints, 1)
   end
+end
+
+--- Route the airplane from one airbase another.
+-- @param #WAREHOUSE self
+-- @param Wrapper.Group#GROUP Aircraft Airplane group to be routed.
+-- @param Wrapper.Airbase#AIRBASE ToAirbase Destination airbase.
+-- @param #number Speed Speed in km/h. Default is 80% of max possible speed the group can do.
+-- @return Wrapper.Group#GROUP Group that was spawned by RAT.
+function WAREHOUSE:_RouteAirRat(Aircraft, ToAirbase, Speed)
+
+  if Aircraft and Aircraft:IsAlive()~=nil then
+    -- Get parking data of all units.
+    local parkingdata={}
+    local units=Aircraft:GetUnits()
+    for _,_unit in pairs(units) do
+      local unit=_unit --Wrapper.Unit#UNIT
+      local _spot,_terminal,_distance=unit:GetCoordinate():GetClosestOccupiedParkingSpot(self.airbase)
+      table.insert(parkingdata, {spot=_spot, TerminalID=_terminal})
+    end
+    
+    -- Create a RAT object to use its flight plan.
+    local rat=RAT:New(Aircraft)
+    
+    -- Init some parameters.
+    rat:SetDeparture(self.airbase:GetName())
+    rat:SetDestination(ToAirbase:GetName())
+    --rat:SetCoalitionAircraft(color)
+    rat:SetCountry(self.country) 
+    rat:NoRespawn()
+    
+    -- Init spawn but do not actually spawn.
+    rat:Spawn(0)
+    --rat:_SpawnWithRoute(_departure,_destination,_takeoff,_landing,_livery,_waypoint,_lastpos,_nrespawn,parkingdata)
+    
+    -- Destroy the original aircraft.
+    Aircraft:Destroy()
+    
+    -- Spawn RAT aircraft at specific parking sports.
+    local spawnindex=rat:_SpawnWithRoute(self.airbase:GetName(), ToAirbase:GetName(), RAT.wp.cold, nil, nil, nil, nil, nil, parkingdata)
+    
+    -- Get the group and check it's name.
+    local group=rat.ratcraft[spawnindex].group --Wrapper.Group#GROUP
+    self:E(self.wid..string.format("Spawned new RAT aircraft as group %s", group:GetName()))
+    
+    return group
+  end
+
 end
 
 --- Route the airplane from one airbase another.
@@ -1705,15 +1873,6 @@ end
 -- Helper functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Count number of troups in spawn zone of the warehouse.
--- If only enemy troops are captured.
--- @param #WAREHOUSE self
-function WAREHOUSE:_CheckSpawnZone()
-
-  --self.spawnzone:IsAllInZoneOfCoalition(Coalition)
-
-end
-
 --- Checks if the request can be fulfilled in general. If not, it is removed from the queue.
 -- Check if departure and destination bases are of the right type. 
 -- @param #WAREHOUSE self
@@ -1808,7 +1967,9 @@ function WAREHOUSE:_CheckRequestConsistancy(queue)
     asset_air=asset_helo or asset_plane
     
     if request.transporttype==WAREHOUSE.TransportType.SELFPROPELLED then
-    
+      -------------------------------------------
+      -- Case where the units go my themselves --
+      -------------------------------------------
       if asset_air then
       
         if asset_plane then
@@ -1833,6 +1994,12 @@ function WAREHOUSE:_CheckRequestConsistancy(queue)
           
         end
         
+        -- All aircraft need an airbase of any type as depature or destination.
+        if self.airbase==nil or request.airbase==nil then
+          self:E("ERROR: incorrect request. Either warehouse or requesting warehouse does not have any kind of airbase!")
+          valid=false     
+        end
+        
       elseif asset_ground then
         
         -- No ground assets directly to or from ships.
@@ -1842,6 +2009,31 @@ function WAREHOUSE:_CheckRequestConsistancy(queue)
           valid=false
         end
         
+        if asset_train then
+          -- Check if there is a valid path on rail.
+          if self.rail and request.warehouse.rail then
+            local onrail=self.rail:GetPathOnRoad(request.warehouse.rail, false, true)
+            if onrail==nil then
+              self:E("ERROR: incorrect request. No valid path on rail for train assets!")
+              valid=false
+            end
+          else
+            self:E("ERROR: incorrect request. Either warehouse or requesting warehouse have no connection to rail!")
+            valid=false          
+          end
+        else
+          -- Check if there is a valid path on road.
+          if self.road and request.warehouse.road then
+            local onroad=self.road:GetPathOnRoad(request.warehouse.road, false, false)
+            if onroad==nil then
+              self:E("ERROR: incorrect request. No valid path on road for ground assets!")
+              valid=false
+            end
+          else
+            self:E("ERROR: incorrect request. Either warehouse or requesting warehouse have no connection to road!")
+            valid=false          
+          end        
+        end        
       elseif asset_naval then
     
         self:E("ERROR: incorrect request. Naval units not supported yet!")
