@@ -680,99 +680,101 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
     local _spot=parkingspot.Coordinate   -- Core.Point#COORDINATE
     local _termid=parkingspot.TerminalID
     
-    -- Very safe uses the DCS getParking() info to check if a spot is free. Unfortunately, the function returns free=false until the aircraft has actually taken-off.
-    if verysafe and (parkingspot.Free==false or parkingspot.TOAC==true) then
-        
-      -- DCS getParking() routine returned that spot is not free.
-      self:E(string.format("%s: Parking spot id %d NOT free (or aircraft has not taken off yet). Free=%s, TOAC=%s.", airport, parkingspot.TerminalID, tostring(parkingspot.Free), tostring(parkingspot.TOAC)))
-  
-    else
+    if AIRBASE._CheckTerminalType(parkingspot.TerminalType, terminaltype) then
+    
+      -- Very safe uses the DCS getParking() info to check if a spot is free. Unfortunately, the function returns free=false until the aircraft has actually taken-off.
+      if verysafe and (parkingspot.Free==false or parkingspot.TOAC==true) then
           
-      -- Scan a radius of 50 meters around the spot.
-      local _,_,_,_units,_statics,_sceneries=_spot:ScanObjects(scanradius, scanunits, scanstatics, scanscenery)
+        -- DCS getParking() routine returned that spot is not free.
+        self:E(string.format("%s: Parking spot id %d NOT free (or aircraft has not taken off yet). Free=%s, TOAC=%s.", airport, parkingspot.TerminalID, tostring(parkingspot.Free), tostring(parkingspot.TOAC)))
     
-      -- Loop over objects within scan radius.
-      local occupied=false
-  
-      -- Check all units.    
-      for _,unit in pairs(_units) do
-      
-        local _vec3=unit:getPoint()
-        local _coord=COORDINATE:NewFromVec3(_vec3)
-        local _dist=_coord:Get2DDistance(_spot)      
-        local _safe=_overlap(aircraft, true, unit, false,_dist)
-        
-        if markobstacles then
-          local l,x,y,z=_GetObjectSize(unit)      
-          _coord:MarkToAll(string.format("Unit %s\nx=%.1f y=%.1f z=%.1f\nl=%.1f d=%.1f\nspot %d safe=%s", unit:getName(),x,y,z,l,_dist, _termid, tostring(_safe)))
-        end
-        
-        if scanunits and not _safe then
-          occupied=true
-        end      
-      end
-    
-      -- Check all statics.
-      for _,static in pairs(_statics) do
-        local _vec3=static:getPoint()
-        local _coord=COORDINATE:NewFromVec3(_vec3)
-        local _dist=_coord:Get2DDistance(_spot)      
-        local _safe=_overlap(aircraft, true, static, false,_dist)
-        
-        if markobstacles then
-          local l,x,y,z=_GetObjectSize(static)
-          _coord:MarkToAll(string.format("Static %s\nx=%.1f y=%.1f z=%.1f\nl=%.1f d=%.1f\nspot %d safe=%s", static:getName(),x,y,z,l,_dist, _termid, tostring(_safe)))
-        end
-        
-        if scanstatics and not _safe then
-          occupied=true
-        end            
-      end
-      
-      -- Check all scenery.
-      for _,scenery in pairs(_sceneries) do
-        local _vec3=scenery:getPoint()
-        local _coord=COORDINATE:NewFromVec3(_vec3)
-        local _dist=_coord:Get2DDistance(_spot)
-        local _safe=_overlap(aircraft, true, scenery, false,_dist)
-        
-        if markobstacles then
-          local l,x,y,z=_GetObjectSize(scenery)
-          _coord:MarkToAll(string.format("Scenery %s\nx=%.1f y=%.1f z=%.1f\nl=%.1f d=%.1f\nspot %d safe=%s", scenery:getTypeName(),x,y,z,l,_dist, _termid, tostring(_safe)))
-        end
-        
-        if scanscenery and not _safe then
-          occupied=true
-        end                  
-      end
-      
-      -- Now check the already given spots so that we do not put a large aircraft next to one we already assigned a nearby spot.
-      for _,_takenspot in pairs(validspots) do
-        local _dist=_takenspot.Coordinate:Get2DDistance(_spot)
-        local _safe=_overlap(aircraft, true, aircraft, true,_dist)
-        if not _safe then
-          occupied=true
-        end
-      end
-            
-      --_spot:MarkToAll(string.format("Parking spot %d free=%s", parkingspot.TerminalID, tostring(not occupied)))
-      if occupied then
-        self:T(string.format("%s: Parking spot id %d occupied.", airport, _termid))
       else
-        self:E(string.format("%s: Parking spot id %d free.", airport, _termid))      
-        if nvalid<_nspots then
-          table.insert(validspots, {Coordinate=_spot, TerminalID=_termid})
-        end
-        nvalid=nvalid+1
-      end
+            
+        -- Scan a radius of 50 meters around the spot.
+        local _,_,_,_units,_statics,_sceneries=_spot:ScanObjects(scanradius, scanunits, scanstatics, scanscenery)
       
-    end -- loop over units
-       
-    -- We found enough spots.
-    if nvalid>=_nspots then
-      return validspots
-    end
+        -- Loop over objects within scan radius.
+        local occupied=false
     
+        -- Check all units.    
+        for _,unit in pairs(_units) do
+        
+          local _vec3=unit:getPoint()
+          local _coord=COORDINATE:NewFromVec3(_vec3)
+          local _dist=_coord:Get2DDistance(_spot)      
+          local _safe=_overlap(aircraft, true, unit, false,_dist)
+          
+          if markobstacles then
+            local l,x,y,z=_GetObjectSize(unit)      
+            _coord:MarkToAll(string.format("Unit %s\nx=%.1f y=%.1f z=%.1f\nl=%.1f d=%.1f\nspot %d safe=%s", unit:getName(),x,y,z,l,_dist, _termid, tostring(_safe)))
+          end
+          
+          if scanunits and not _safe then
+            occupied=true
+          end      
+        end
+      
+        -- Check all statics.
+        for _,static in pairs(_statics) do
+          local _vec3=static:getPoint()
+          local _coord=COORDINATE:NewFromVec3(_vec3)
+          local _dist=_coord:Get2DDistance(_spot)      
+          local _safe=_overlap(aircraft, true, static, false,_dist)
+          
+          if markobstacles then
+            local l,x,y,z=_GetObjectSize(static)
+            _coord:MarkToAll(string.format("Static %s\nx=%.1f y=%.1f z=%.1f\nl=%.1f d=%.1f\nspot %d safe=%s", static:getName(),x,y,z,l,_dist, _termid, tostring(_safe)))
+          end
+          
+          if scanstatics and not _safe then
+            occupied=true
+          end            
+        end
+        
+        -- Check all scenery.
+        for _,scenery in pairs(_sceneries) do
+          local _vec3=scenery:getPoint()
+          local _coord=COORDINATE:NewFromVec3(_vec3)
+          local _dist=_coord:Get2DDistance(_spot)
+          local _safe=_overlap(aircraft, true, scenery, false,_dist)
+          
+          if markobstacles then
+            local l,x,y,z=_GetObjectSize(scenery)
+            _coord:MarkToAll(string.format("Scenery %s\nx=%.1f y=%.1f z=%.1f\nl=%.1f d=%.1f\nspot %d safe=%s", scenery:getTypeName(),x,y,z,l,_dist, _termid, tostring(_safe)))
+          end
+          
+          if scanscenery and not _safe then
+            occupied=true
+          end                  
+        end
+        
+        -- Now check the already given spots so that we do not put a large aircraft next to one we already assigned a nearby spot.
+        for _,_takenspot in pairs(validspots) do
+          local _dist=_takenspot.Coordinate:Get2DDistance(_spot)
+          local _safe=_overlap(aircraft, true, aircraft, true,_dist)
+          if not _safe then
+            occupied=true
+          end
+        end
+              
+        --_spot:MarkToAll(string.format("Parking spot %d free=%s", parkingspot.TerminalID, tostring(not occupied)))
+        if occupied then
+          self:T(string.format("%s: Parking spot id %d occupied.", airport, _termid))
+        else
+          self:E(string.format("%s: Parking spot id %d free.", airport, _termid))      
+          if nvalid<_nspots then
+            table.insert(validspots, {Coordinate=_spot, TerminalID=_termid})
+          end
+          nvalid=nvalid+1
+        end
+        
+      end -- loop over units
+         
+      -- We found enough spots.
+      if nvalid>=_nspots then
+        return validspots
+      end
+    end -- check terminal type
   end  
     
   -- Retrun spots we found, even if there were not enough.

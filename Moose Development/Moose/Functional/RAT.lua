@@ -2116,7 +2116,7 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   end
   
   -- Modify the spawn template to follow the flight plan.
-  local successful=self:_ModifySpawnTemplate(waypoints, livery, _lastpos, departure, takeoff)
+  local successful=self:_ModifySpawnTemplate(waypoints, livery, _lastpos, departure, takeoff, parkingdata)
   if not successful then
     return nil
   end

@@ -119,10 +119,12 @@ end
 -- @param DCS#Unit DCSUnit An existing DCS Unit object reference.
 -- @return #UNIT self
 function UNIT:Find( DCSUnit )
-
-  local UnitName = DCSUnit:getName()
-  local UnitFound = _DATABASE:FindUnit( UnitName )
-  return UnitFound
+  if DCSUnit then
+    local UnitName = DCSUnit:getName()
+    local UnitFound = _DATABASE:FindUnit( UnitName )
+    return UnitFound
+  end
+  return nil
 end
 
 --- Find a UNIT in the _DATABASE using the name of an existing DCS Unit.

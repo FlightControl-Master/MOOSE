@@ -191,7 +191,7 @@ WAREHOUSE.TransportType = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.1.8w"
+WAREHOUSE.version="0.1.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -1118,7 +1118,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     CargoTransport = AI_CARGO_DISPATCHER_HELICOPTER:New(TransportSet, CargoGroups, DeployZoneSet)
 
     -- Home zone.
-    CargoTransport:Setairbase(self.airbase)
+    --CargoTransport:Setairbase(self.airbase)
     --CargoTransport:SetHomeZone(self.spawnzone)
 
   elseif Request.transporttype==WAREHOUSE.TransportType.APC then
@@ -1563,24 +1563,28 @@ end
 function WAREHOUSE:_RouteAirRat(Aircraft, ToAirbase, Speed)
 
   if Aircraft and Aircraft:IsAlive()~=nil then
+  
     -- Get parking data of all units.
     local parkingdata={}
+    
     local units=Aircraft:GetUnits()
     for _,_unit in pairs(units) do
       local unit=_unit --Wrapper.Unit#UNIT
       local _spot,_terminal,_distance=unit:GetCoordinate():GetClosestOccupiedParkingSpot(self.airbase)
-      table.insert(parkingdata, {spot=_spot, TerminalID=_terminal})
+      table.insert(parkingdata, {Coordinate=_spot, TerminalID=_terminal})
     end
+    env.info("FF parking data")
+    self:E(parkingdata)
     
     -- Create a RAT object to use its flight plan.
-    local rat=RAT:New(Aircraft)
+    local rat=RAT:New(Aircraft:GetName())
     
     -- Init some parameters.
     rat:SetDeparture(self.airbase:GetName())
     rat:SetDestination(ToAirbase:GetName())
     --rat:SetCoalitionAircraft(color)
-    rat:SetCountry(self.country) 
-    rat:NoRespawn()
+    rat:SetCountry(self.country)
+    rat:NoRespawn() 
     
     -- Init spawn but do not actually spawn.
     rat:Spawn(0)
@@ -1590,12 +1594,16 @@ function WAREHOUSE:_RouteAirRat(Aircraft, ToAirbase, Speed)
     Aircraft:Destroy()
     
     -- Spawn RAT aircraft at specific parking sports.
-    local spawnindex=rat:_SpawnWithRoute(self.airbase:GetName(), ToAirbase:GetName(), RAT.wp.cold, nil, nil, nil, nil, nil, parkingdata)
+    local spawnindex=rat:_SpawnWithRoute(self.airbase:GetName(), ToAirbase:GetName(), RAT.wp.hot, nil, nil, nil, nil, nil, parkingdata)
     
     -- Get the group and check it's name.
     local group=rat.ratcraft[spawnindex].group --Wrapper.Group#GROUP
     self:E(self.wid..string.format("Spawned new RAT aircraft as group %s", group:GetName()))
     
+    group:SmokeBlue()
+    -- Activate group.
+    local bla=group:SetCommand({id='Start', params={}})
+    self:E({bla=bla})    
     return group
   end
 
