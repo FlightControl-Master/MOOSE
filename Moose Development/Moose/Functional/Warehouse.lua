@@ -34,10 +34,10 @@
 -- @field Core.Point#COORDINATE road Closest point to warehouse on road.
 -- @field Core.Point#COORDINATE rail Closest point to warehouse on rail.
 -- @field Core.Zone#ZONE spawnzone Zone in which assets are spawned.
--- @field Functional.ZoneCaptureCoalition#ZONE_CAPTURE_COALITION capturezone Zone capture object handling the capturing of the warehouse spawn zone.
 -- @field #string wid Identifier of the warehouse printed before other output to DCS.log file.
 -- @field #number uid Unit identifier of the warehouse. Derived from the associated airbase.
 -- @field #number markerid ID of the warehouse marker at the airbase.
+-- @field #number dTstatus Time interval in seconds of updating the warehouse status and processing new events. Default 30 seconds.
 -- @field #number assetid Unique id of asset items in stock. Essentially a running number starting at one and incremented when a new asset is added.
 -- @field #table stock Table holding all assets in stock. Table entries are of type @{#WAREHOUSE.Stockitem}.
 -- @field #table queue Table holding all queued requests. Table entries are of type @{#WAREHOUSE.Queueitem}.
@@ -88,28 +88,28 @@
 WAREHOUSE = {
   ClassName   = "WAREHOUSE",
   Debug       = false,
-  Report      = true,
-  warehouse   = nil,
-  coalition   = nil,
-  country     = nil,
-  alias       = nil,
-  zone        = nil,
-  airbase     = nil,
-  airbasename = nil,
-  category    =  -1,
-  coordinate  = nil,
-  road        = nil,
-  rail        = nil,
-  spawnzone   = nil,
-  capturezone = nil,
-  wid         = nil,
-  uid         = nil,
-  markerid    = nil,
-  assetid     = 0,
-  queueid     = 0,
-  stock       = {},
-  queue       = {},
-  pending     = {},
+  Report      =  true,
+  warehouse   =   nil,
+  coalition   =   nil,
+  country     =   nil,
+  alias       =   nil,
+  zone        =   nil,
+  airbase     =   nil,
+  airbasename =   nil,
+  category    =    -1,
+  coordinate  =   nil,
+  road        =   nil,
+  rail        =   nil,
+  spawnzone   =   nil,
+  wid         =   nil,
+  uid         =   nil,
+  markerid    =   nil,
+  dTstatus    =    30,
+  assetid     =     0,
+  queueid     =     0,
+  stock       =    {},
+  queue       =    {},
+  pending     =    {},
 }
 
 --- Item of the warehouse stock table.
@@ -196,7 +196,7 @@ WAREHOUSE.TransportType = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.1.9w"
+WAREHOUSE.version="0.2.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -230,8 +230,6 @@ WAREHOUSE.version="0.1.9w"
 -- @param #WAREHOUSE self
 -- @param Wrapper.Static#STATIC warehouse The physical structure of the warehouse.
 -- @param #string alias (Optional) Alias of the warehouse, i.e. the name it will be called when sending messages etc. Default is the name of the static  
--- @param Core.Zone#ZONE spawnzone (Optional) The zone in which units are spawned and despawned when they leave or arrive the warehouse. Default is a zone of 200 meters around the warehouse.
--- @param Wrapper.Airbase#AIRBASE airbase (Optional) The airbase belonging to the warehouse. Default is the closest airbase to the warehouse structure as long as it within a range of 3 km. 
 -- @return #WAREHOUSE self
 function WAREHOUSE:New(warehouse, alias)
   BASE:E({warehouse=warehouse:GetName()})
@@ -279,15 +277,16 @@ function WAREHOUSE:New(warehouse, alias)
   -- Add FSM transitions.
   self:AddTransition("Stopped",  "Load",        "Stopped")  -- TODO Load the warehouse state. No sure if it should be in stopped state.
   self:AddTransition("Stopped",  "Start",       "Running")  -- Start the warehouse.
-  self:AddTransition("Running",  "Status",      "*")        -- Status update in running mode. Requests are processed.
-  self:AddTransition("Paused",   "Status",      "*")        -- TODO Status update in paused mode. Requests are not processed.
+  self:AddTransition("*",        "Status",      "*")        -- Status update.
   self:AddTransition("*",        "AddAsset",    "*")        -- Add asset to warehouse stock.
   self:AddTransition("*",        "AddRequest",  "*")        -- New request from other warehouse.
   self:AddTransition("Running",  "Request",     "*")        -- Process a request. Only in running mode.
+  self:AddTransition("Attacked", "Request",     "*")        -- Process a request. Only in running mode.
   self:AddTransition("*",        "Unloaded",    "*")        -- Cargo has been unloaded from the carrier.
   self:AddTransition("*",        "Arrived",     "*")        -- Cargo group has arrived at destination.
   self:AddTransition("*",        "Delivered",   "*")        -- All cargo groups of a request have been delivered to the requesting warehouse.
   self:AddTransition("Running",  "SelfRequest", "*")        -- Request to warehouse itself. Requested assets are only spawned but not delivered anywhere.
+  self:AddTransition("Attacked", "SelfRequest", "*")        -- Request to warehouse itself. Also possible when warehouse is under attack!
   self:AddTransition("Running",  "Pause",       "Paused")   -- TODO Pause the processing of new requests. Still possible to add assets and requests. 
   self:AddTransition("Paused",   "Unpause",     "Running")  -- TODO Unpause the warehouse. Queued requests are processed again. 
   self:AddTransition("*",        "Stop",        "Stopped")  -- TODO Stop the warehouse.
@@ -427,6 +426,15 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- User functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Set interval of status updates
+-- @param #WAREHOUSE self
+-- @param #number timeinterval Time interval in seconds.
+-- @return #WAREHOUSE self
+function WAREHOUSE:SetSpawnZone(timeinterval)
+  self.dTstatus=timeinterval
+  return self
+end
 
 --- Set a zone where the (ground) assets of the warehouse are spawned once requested.
 -- @param #WAREHOUSE self
@@ -572,32 +580,6 @@ function WAREHOUSE:onafterStart(From, Event, To)
   if self.rail then
     self.rail:MarkToAll(string.format("%s rail connection.", self.alias), true)
   end 
-   
-  -- Create a zone capture object.
-  self.capturezone=ZONE_CAPTURE_COALITION:New(self.zone, self.coalition)
-  
-  -- Add warehouse to zone capture object. Does this work?
-  self.capturezone.warehouse=self
-  
-  -- Start capturing monitoring.
-  self.capturezone:Start(10, 60)
-
-  -- Handle attack.
-  function self.capturezone:OnEnterAttacked()
-    local coalition = self:GetCoalition()
-    self:E(string.format("Warehouse %s is under attack!", tostring(self.warehouse.alias)))
-    -- Trigger FSM Attacked event.
-    self.warehouse:Attacked()
-  end
-
-  -- Handle capturing.
-  function self.capturezone:OnEnterCaptured()
-    local coalition = self:GetCoalition()
-    self:E(string.format("Warehouse %s was captured by coalition %d!", tostring(self.warehouse.alias), coalition))
-    self.warehouse.coalition=coalition --:SetCoalition(coalition)
-    self.warehouse:Captured(coalition)
-    self:Guard()
-  end
 
   -- Handle events:
   self:HandleEvent(EVENTS.Birth,          self._OnEventBirth)
@@ -616,7 +598,7 @@ function WAREHOUSE:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.EngineShutdown, self._OnEventArrived)
   
   -- Start the status monitoring.
-  self:__Status(5)
+  self:__Status(1)
 end
 
 --- On after "Stop" event. Stops the warehouse, unhandles all events.
@@ -637,8 +619,6 @@ function WAREHOUSE:onafterStop(From, Event, To)
   self:UnHandleEvent(EVENTS.Dead)
   self:UnHandleEvent(EVENTS.BaseCaptured)
   
-  -- Stop capture zone FSM.
-  self.capturezone:Stop()
 end
 
 --- On after "Pause" event. Pauses the warehouse, i.e. no requests are processed. However, new requests and new assets can be added in this state.
@@ -669,32 +649,11 @@ end
 function WAREHOUSE:onafterStatus(From, Event, To)
   self:E(self.wid..string.format("Checking warehouse status of %s", self.alias))
   
-    -- Print queue.
-  self:_PrintQueue(self.queue, "Queue0:")
-  self:_PrintQueue(self.pending, "Pending0:")
-
-  -- Create a mark with the current assets in stock.
-  if self.markerid~=nil then
-    trigger.action.removeMark(self.markerid)
-  end
-  local marktext="Warehouse stock:\n"
-  local text="Warehouse stock:\n"
-
-  local _data=self:GetStockInfo(self.stock)
-  for _attribute,_count in pairs(_data) do
-    marktext=marktext..string.format("%s=%d, ", _attribute,_count) -- Dont use \n because too many make DCS crash!
-    text=text..string.format("%s = %d\n", _attribute,_count)
-  end
-  self.markerid=self.coordinate:MarkToCoalition(marktext, self.coalition, true)
-
-  -- Debug output.
-  self:E(self.wid..text)
-  MESSAGE:New(text, 10):ToAllIf(self.Debug)
-
-  -- Display complete list of stock itmes.
-  if self.Debug then
-  --self:_DisplayStockItems(self.stock)
-  end
+  -- Print status.
+  self:_DisplayStatus()
+    
+  -- Check if warehouse is being attacked or has even been captured.
+  self:_CheckConquered()
 
   -- Print queue.
   self:_PrintQueue(self.queue, "Queue:")
@@ -702,14 +661,9 @@ function WAREHOUSE:onafterStatus(From, Event, To)
   
   -- Check if requests are valid and remove invalid one.
   self:_CheckRequestConsistancy(self.queue)
-  
-  -- Print queue.
-  self:_PrintQueue(self.queue, "Queue after consitancy:")
-  self:_PrintQueue(self.pending, "Pending after consistancy:")
-  
-  
+    
   -- If warehouse is running than requests can be processed.
-  if self:IsRunning() then
+  if self:IsRunning() or self:IsAttacked() then
     -- Check queue and handle requests if possible.
     local request=self:_CheckQueue()
 
@@ -719,12 +673,16 @@ function WAREHOUSE:onafterStatus(From, Event, To)
     end
   end
 
-  -- Print queue.
-  self:_PrintQueue(self.queue, "Queue after request:")
-  self:_PrintQueue(self.pending, "Pending after request:")
+  -- Update warhouse marker on F10 map.
+  self:_UpdateWarehouseMarkText()
+  
+  -- Display complete list of stock itmes.
+  if self.Debug then
+  --self:_DisplayStockItems(self.stock)
+  end  
 
-  -- Call status again in 30 sec.
-  self:__Status(30)
+  -- Call status again in ~30 sec (user choice).
+  self:__Status(self.dTstatus)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -874,7 +832,7 @@ function WAREHOUSE:onbeforeRequest(From, Event, To, Request)
   local distance=self.coordinate:Get2DDistance(Request.warehouse.coordinate)
 
   -- Filter the requested assets.
-  local _assets=self:_FilterStock(self.stock, Request.assetdesc, Request.assetdescval, Request.nasset)
+  local _assets,_nasset,_enough=self:_FilterStock(self.stock, Request.assetdesc, Request.assetdescval, Request.nasset)
   
   -- Check if destination is in range for all requested assets.
   for _,_asset in pairs(_assets) do
@@ -896,8 +854,8 @@ function WAREHOUSE:onbeforeRequest(From, Event, To, Request)
   end
 
   -- Asset is not in stock ==> request denied.
-  if #_assets < Request.nasset then
-    local text=string.format("Request denied! Not enough assets currently in stock. Requested %d < %d in stock.", Request.nasset, #_assets)
+  if not _enough then
+    local text=string.format("Request denied! Not enough assets currently in stock. Requested %s < %d in stock.", tostring(Request.nasset), _nasset)
     MESSAGE:New(text, 10):ToCoalitionIf(self.coalition, self.Report or self.Debug)
     self:E(self.wid..text)
     return false
@@ -967,8 +925,8 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
   -- Self request! Assets are only spawned but not routed or transported anywhere.  
   if self.warehouse:GetName()==Request.warehouse.warehouse:GetName() then
-    env.info("FF selfrequest!")
-    self:__SelfRequest(_spawngroups)
+    self:E(self.wid..string.format("Selfrequest! Current status %s", self:GetState()))
+    self:__SelfRequest(1,_spawngroups, Pending)
     return
   end
 
@@ -1254,10 +1212,10 @@ end
 function WAREHOUSE:_SpawnAssetRequest(Request)
 
   -- Filter the requested cargo assets.
-  local _assetstock=self:_FilterStock(self.stock, Request.assetdesc, Request.assetdescval, Request.nasset)
+  local _assetstock,_nasset,_enough=self:_FilterStock(self.stock, Request.assetdesc, Request.assetdescval, Request.nasset)
   
   -- No assets in stock :(
-  if #_assetstock==0 then
+  if not _enough then
     return nil,nil,nil
   end
 
@@ -1287,7 +1245,7 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
   local _assets={}
   
   -- Loop over cargo requests.
-  for i=1,Request.nasset do
+  for i=1,#_assetstock do
 
     -- Get stock item.
     local _assetitem=_assetstock[i] --#WAREHOUSE.Stockitem
@@ -1405,7 +1363,7 @@ function WAREHOUSE:onafterArrived(From, Event, To, group)
     local ncargo=request.cargogroupset:Count()
     
     -- Info
-    self:E(self.wid..string.format("Cargo %d of %d arrived at warehouse %s. Assets still to deliver %d.",request.ndelivered, request.nasset, request.warehouse.alias, ncargo))
+    self:E(self.wid..string.format("Cargo %d of %s arrived at warehouse %s. Assets still to deliver %d.",request.ndelivered, tostring(request.nasset), request.warehouse.alias, ncargo))
     
     -- Move asset into new warehouse.
     -- TODO: need to figure out which template group name I best take.
@@ -1508,8 +1466,9 @@ end
 -- @param DCS#coalition.side Coalition which is attacking the warehouse.
 -- @param DCS#country.id Country which is attacking the warehouse.
 function WAREHOUSE:onafterAttacked(From, Event, To, Coalition, Country)
-  self:E(self.wid..string.format("Out warehouse is under attack!"))
+  self:E(self.wid..string.format("Our warehouse is under attack!"))
   --TODO: Spawn all ground units in the spawnzone?
+  self:AddRequest(self, WAREHOUSE.Descriptor.CATEGORY, Group.Category.GROUND, "all", nil, nil , 0)
 end
 
 --- On after "Defeated" event. Warehouse defeated an attack by another coalition. 
@@ -1911,6 +1870,7 @@ end
 --- Checks if the warehouse zone was conquered by antoher coalition.
 -- @param #WAREHOUSE self
 function WAREHOUSE:_CheckConquered()
+  env.info("FF checking conq")
 
   local coord=self.zone:GetCoordinate()
   local radius=self.zone:GetRadius()
@@ -1949,6 +1909,9 @@ function WAREHOUSE:_CheckConquered()
       
     end
   end
+  
+  -- Debug info.
+  self:E(self.wid..string.format("Troops at warehouse: blue=%d, red=%d, neutral=%d", Nblue, Nred, Nneutral))
  
  
   -- Figure out the new coalition if any.
@@ -1979,7 +1942,7 @@ function WAREHOUSE:_CheckConquered()
   if self.coalition==coalition.side.BLUE then
     -- Blue warehouse is running and we have red units in the zone.
     if self:IsRunning() and Nred>0 then
-      self:__Attacked(coalition.side.RED, CountryRed)
+      self:Attacked(coalition.side.RED, CountryRed)
     end
     -- Blue warehouse was under attack by blue but no more blue units in zone.
     if self:IsAttacked() and Nred==0 then
@@ -1988,7 +1951,7 @@ function WAREHOUSE:_CheckConquered()
   elseif self.coalition==coalition.side.RED then
     -- Red Warehouse is running and we have blue units in the zone.
     if self:IsRunning() and Nblue>0 then
-      self:__Attacked(coalition.side.BLUE, CountryBlue)
+      self:Attacked(coalition.side.BLUE, CountryBlue)
     end
     -- Red warehouse was under attack by blue but no more blue units in zone.
     if self:IsAttacked() and Nblue==0 then
@@ -2248,10 +2211,10 @@ function WAREHOUSE:_CheckRequestNow(request)
   local okay=true
   
   -- Check if number of requested assets is in stock.
-  local _assets=self:_FilterStock(self.stock, request.assetdesc, request.assetdescval, request.nasset)
+  local _assets,_nassets,_enough=self:_FilterStock(self.stock, request.assetdesc, request.assetdescval, request.nasset)
   
   -- Nothing in stock.
-  if #_assets==0 then
+  if _nassets==0 then
     local text=string.format("Request denied! No assets for this request currently available.")
     MESSAGE:New(text, 5):ToCoalitionIf(self.coalition, self.Report or self.Debug)
     self:E(self.wid..text)
@@ -2263,7 +2226,7 @@ function WAREHOUSE:_CheckRequestNow(request)
   local _assetcategory=_assets[1].category  
   
   -- Check if enough assets are in stock.
-  if request.nasset > #_assets then
+  if not _enough then
     local text=string.format("Request denied! Not enough assets currently available.")
     MESSAGE:New(text, 5):ToCoalitionIf(self.coalition, self.Report or self.Debug)
     self:E(self.wid..text)
@@ -2566,12 +2529,42 @@ end
 -- @param #table stock Table holding all assets in stock of the warehouse. Each entry is of type @{#WAREHOUSE.Stockitem}.
 -- @param #string item Descriptor
 -- @param value Value of the descriptor.
--- @param #number nmax (Optional) Maximum number of items that will be returned. Default is all matching items are returned.
+-- @param #number nmax (Optional) Maximum number of items that will be returned. Default nmax=nil is all matching items are returned.
 -- @return #table Filtered stock items table.
+-- @return #number Total number of (requested) assets available.
+-- @return #boolean Enough assets are available.
 function WAREHOUSE:_FilterStock(stock, item, value, nmax)
+
+  -- Default all.
+  nmax=nmax or "all"
 
   -- Filtered array.
   local filtered={}
+
+  -- Count total number in stock.
+  local ntot=0
+  for _,_stock in ipairs(stock) do
+    if _stock[item]==value then
+      ntot=ntot+1
+    end
+  end
+  
+  -- Handle string input for nmax.
+  if type(nmax)=="string" then
+    if nmax:lower()=="all" then
+      nmax=ntot
+    elseif nmax:lower()=="half" then
+      nmax=ntot/2
+    elseif nmax:lower()=="third" then
+      nmax=ntot/3      
+    elseif namx:lower()=="quarter" then
+      nmax=ntot/4
+    elseif namx:lower()=="fivth" then
+      nmax=ntot/5
+    else
+      nmax=math.min(1,ntot)
+    end
+  end
 
   -- Loop over stock items.
   for _i,_stock in ipairs(stock) do
@@ -2579,27 +2572,12 @@ function WAREHOUSE:_FilterStock(stock, item, value, nmax)
       _stock.pos=_i
       table.insert(filtered, _stock)
       if nmax~=nil and #filtered>=nmax then
-        return filtered
+        return filtered, ntot, true
       end
     end
   end
 
-  return filtered
-end
-
---- Filter stock assets by table entry.
--- @param #WAREHOUSE self
--- @param #table stock Table holding all assets in stock of the warehouse. Each entry is of type @{#WAREHOUSE.Stockitem}.
-function WAREHOUSE:_DisplayStockItems(stock)
-
-  local text=self.wid..string.format("Warehouse %s stock assets:\n", self.airbase:GetName())
-  for _,_stock in pairs(stock) do
-    local mystock=_stock --#WAREHOUSE.Stockitem
-    text=text..string.format("template = %s, category = %d, unittype = %s, attribute = %s\n", mystock.templatename, mystock.category, mystock.unittype, mystock.attribute)
-  end
-
-  env.info(text)
-  MESSAGE:New(text, 10):ToAll()
+  return filtered, ntot, nmax>=ntot
 end
 
 --- Check if a group has a generalized attribute.
@@ -2768,13 +2746,97 @@ function WAREHOUSE:_PrintQueue(queue, name)
   self:E(self.wid..name)
   for _,_qitem in ipairs(queue) do
     local qitem=_qitem --#WAREHOUSE.Queueitem
-    local text=self.wid..string.format("UID=%d, Prio=%d, Requestor=%s, Airbase=%s (category=%d), Descriptor: %s=%s, Nasssets=%d, Transport=%s, Ntransport=%d",
-    qitem.uid, qitem.prio, qitem.warehouse.alias, qitem.airbase:GetName(),qitem.category, qitem.assetdesc,tostring(qitem.assetdescval),qitem.nasset,qitem.transporttype,qitem.ntransport)
+    local text=self.wid..string.format("UID=%d, Prio=%d, Requestor=%s, Airbase=%s (category=%d), Descriptor: %s=%s, Nasssets=%s, Transport=%s, Ntransport=%d",
+    qitem.uid, qitem.prio, qitem.warehouse.alias, qitem.airbase:GetName(),qitem.category, qitem.assetdesc,tostring(qitem.assetdescval), tostring(qitem.nasset),qitem.transporttype,qitem.ntransport)
     self:E(text)
   end
 end
 
+--- Display status of warehouse.
+-- @param #WAREHOUSE self
+function WAREHOUSE:_DisplayStatus()
 
+  -- Set airbase name.
+  local airbasename="none"
+  if self.airbase then
+    airbasename=self.airbase:GetName()
+  end
+  
+  local text=string.format("\n------------------------------------------------------\n")
+  text=text..string.format("Warehouse %s status:\n", self.alias)
+  text=text..string.format("------------------------------------------------------\n")
+  text=text..string.format("Current status   = %s\n", self:GetState())
+  text=text..string.format("Coalition side   = %d\n", self.coalition)
+  text=text..string.format("Country name     = %d\n", self.country)
+  text=text..string.format("Airbase name     = %s\n", airbasename)
+  text=text..string.format("Queued requests  = %d\n", #self.queue)
+  text=text..string.format("Pending requests = %d\n", #self.pending)
+  text=text..string.format("------------------------------------------------------\n")
+  text=text..self:_GetStockAssetsText()
+  env.info(text)
+  --TODO: number of ground, air, naval assets.
+end
+
+--- Get text about warehouse stock.
+-- @param #WAREHOUSE self
+-- @param #boolean messagetoall If true, send message to all.
+-- @return #string Text about warehouse stock
+function WAREHOUSE:_GetStockAssetsText(messagetoall)
+
+  -- Get assets in stock.
+  local _data=self:GetStockInfo(self.stock)
+  
+  -- Text.  
+  local text="Stock:\n"
+  for _attribute,_count in pairs(_data) do
+    text=text..string.format("%s = %d\n", _attribute,_count)
+  end
+  text=text..string.format("------------------------------------------------------\n")
+  
+  -- Send message?
+  MESSAGE:New(text, 10):ToAllIf(messagetoall)
+  
+  return text
+end
+
+--- Create or update mark text at warehouse, which is displayed in F10 map.
+-- Only the coaliton of the warehouse owner is able to see it.
+-- @param #WAREHOUSE self
+-- @return #string Text about warehouse stock
+function WAREHOUSE:_UpdateWarehouseMarkText()
+
+  -- Create a mark with the current assets in stock.
+  if self.markerid~=nil then
+    trigger.action.removeMark(self.markerid)
+  end
+  
+  -- Get assets in stock.
+  local _data=self:GetStockInfo(self.stock)
+  
+  -- Create mark text.
+  local marktext="Warehouse stock:\n"
+  for _attribute,_count in pairs(_data) do
+    marktext=marktext..string.format("%s=%d, ", _attribute,_count) -- Dont use \n because too many make DCS crash!
+  end
+
+  -- Create/update marker at warehouse in F10 map.
+  self.markerid=self.coordinate:MarkToCoalition(marktext, self.coalition, true)
+end
+
+--- Display stock items of warehouse.
+-- @param #WAREHOUSE self
+-- @param #table stock Table holding all assets in stock of the warehouse. Each entry is of type @{#WAREHOUSE.Stockitem}.
+function WAREHOUSE:_DisplayStockItems(stock)
+
+  local text=self.wid..string.format("Warehouse %s stock assets:\n", self.airbase:GetName())
+  for _,_stock in pairs(stock) do
+    local mystock=_stock --#WAREHOUSE.Stockitem
+    text=text..string.format("template = %s, category = %d, unittype = %s, attribute = %s\n", mystock.templatename, mystock.category, mystock.unittype, mystock.attribute)
+  end
+
+  env.info(text)
+  MESSAGE:New(text, 10):ToAll()
+end
 
 --- Make a flight plan from a departure to a destination airport. 
 -- @param #WAREHOUSE self

@@ -397,7 +397,7 @@ do -- COORDINATE
     local gotunits=false
     local gotscenery=false
     
-    local function EvaluateZone( ZoneObject )
+    local function EvaluateZone(ZoneObject)
     
       if ZoneObject then
       
@@ -408,7 +408,7 @@ do -- COORDINATE
         --if (ObjectCategory == Object.Category.UNIT and ZoneObject:isExist() and ZoneObject:isActive()) then
         if (ObjectCategory == Object.Category.UNIT and ZoneObject:isExist()) then
         
-          table.insert(Units, ZoneObject)
+          table.insert(Units, UNIT:Find(ZoneObject))
           gotunits=true
           
         elseif (ObjectCategory == Object.Category.STATIC and ZoneObject:isExist()) then
@@ -432,7 +432,7 @@ do -- COORDINATE
     world.searchObjects(scanobjects, SphereSearch, EvaluateZone)
     
     for _,unit in pairs(Units) do
-      self:T(string.format("Scan found unit %s", unit:getName()))
+      self:T(string.format("Scan found unit %s", unit:GetName()))
     end
     for _,static in pairs(Statics) do
       self:T(string.format("Scan found static %s", static:getName()))
