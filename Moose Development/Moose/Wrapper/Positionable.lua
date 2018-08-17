@@ -879,7 +879,6 @@ do -- Cargo
   function POSITIONABLE:GetCargoBayFreeWeight()
     local CargoWeight = 0
     for CargoName, Cargo in pairs( self.__.Cargo ) do
-      self:F( { Cargo = Cargo } )
       CargoWeight = CargoWeight + Cargo:GetWeight()
     end
     return self.__.CargoBayWeightLimit - CargoWeight

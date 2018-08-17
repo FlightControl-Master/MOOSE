@@ -779,7 +779,8 @@ do -- CARGO
   
     local Distance = 0
     if self:IsUnLoaded() then
-      Distance = Coordinate:Get2DDistance( self.CargoObject:GetCoordinate() )
+      local CargoCoordinate = self.CargoObject:GetCoordinate()
+      Distance = Coordinate:Get2DDistance( CargoCoordinate )
       self:T( Distance )
       if Distance <= self.LoadRadius then
         return true

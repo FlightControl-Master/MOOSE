@@ -500,8 +500,6 @@ do -- CARGO_GROUP
   -- @return Core.Point#COORDINATE The current Coordinate of the first Cargo of the CargoGroup.
   -- @return #nil There is no valid Cargo in the CargoGroup.
   function CARGO_GROUP:GetCoordinate()
-    self:F()
-
     local Cargo = self:GetFirstAlive() -- Cargo.Cargo#CARGO
     
     if Cargo then
@@ -635,11 +633,18 @@ do -- CARGO_GROUP
 
     if Cargo then
       local Distance = 0
+      local CargoCoordinate
       if Cargo:IsLoaded() then
-        Distance = Coordinate:Get2DDistance( Cargo.CargoCarrier:GetCoordinate() )
+        CargoCoordinate = Cargo.CargoCarrier:GetCoordinate()
       else
-        Distance = Coordinate:Get2DDistance( Cargo.CargoObject:GetCoordinate() )
+        CargoCoordinate = Cargo.CargoObject:GetCoordinate()
       end
+      
+--      if CargoCoordinate then
+        Distance = Coordinate:Get2DDistance( CargoCoordinate )
+--      else
+--        return false
+--      end
       
       self:F( { Distance = Distance, LoadRadius = self.LoadRadius } )
       if Distance <= self.LoadRadius then

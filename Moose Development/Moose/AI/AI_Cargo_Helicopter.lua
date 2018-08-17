@@ -395,7 +395,7 @@ function AI_CARGO_HELICOPTER:onbeforeLoad( Helicopter, From, Event, To)
         for _, Cargo in pairs( self.CargoSet:GetSet() ) do
           local Cargo = Cargo -- Cargo.Cargo#CARGO
           self:F( { IsUnLoaded = Cargo:IsUnLoaded() } )
-          if Cargo:IsUnLoaded() then
+          if Cargo:IsUnLoaded() and not Cargo:IsDeployed() then
             if Cargo:IsInLoadRadius( HelicopterUnit:GetCoordinate() ) then
               self:F( { "In radius", HelicopterUnit:GetName() } )
               --Cargo:Ungroup()
@@ -440,7 +440,6 @@ function AI_CARGO_HELICOPTER:onafterBoard( Helicopter, From, Event, To, Cargo )
 
               -- Only when there is space within the bay to load the next cargo item!
               if CargoBayFreeWeight > CargoWeight then --and CargoBayFreeVolume > CargoVolume then
-              
                 Cargo:Board( HelicopterUnit, 25 )
                 self:__Board( 10, Cargo )
                 return
@@ -455,7 +454,7 @@ function AI_CARGO_HELICOPTER:onafterBoard( Helicopter, From, Event, To, Cargo )
   
 end
 
---- On before Loaded event. Check if cargo is loaded.
+--- On after Loaded event. Check if cargo is loaded.
 -- @param #AI_CARGO_HELICOPTER self
 -- @param Wrapper.Group#GROUP Helicopter
 -- @param #string From From state.
