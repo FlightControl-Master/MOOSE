@@ -729,6 +729,20 @@ do -- COORDINATE
     return nil
   end
   
+  --- Returns the heading from this to another coordinate.
+  -- @param #COORDINATE self
+  -- @param #COORDINATE ToCoordinate
+  -- @return #number Heading in degrees. 
+  function COORDINATE:HeadingTo(ToCoordinate)
+    local dz=ToCoordinate.z-self.z
+    local dx=ToCoordinate.x-self.x
+    local heading=math.deg(math.atan2(dz, dx))
+    if heading < 0 then
+      heading = 360 + heading
+    end
+    return heading
+  end
+  
   --- Returns the wind direction (from) and strength.
   -- @param #COORDINATE self
   -- @param height (Optional) parameter specifying the height ASL. The minimum height will be always be the land height since the wind is zero below the ground.
@@ -949,21 +963,53 @@ do -- COORDINATE
   -- @param #COORDINATE.WaypointAction Action The route point action.
   -- @param DCS#Speed Speed Airspeed in km/h. Default is 500 km/h.
   -- @param #boolean SpeedLocked true means the speed is locked.
+  -- @param Wrapper.Airbase#AIRBASE airbase The airbase for takeoff and landing points.
+  -- @param #table DCSTasks A table of DCS#Task items which are executed at the waypoint.
+  -- @param #string description A text description of the waypoint, which will be shown on the F10 map.
   -- @return #table The route point.
-  function COORDINATE:WaypointAir( AltType, Type, Action, Speed, SpeedLocked )
+  function COORDINATE:WaypointAir( AltType, Type, Action, Speed, SpeedLocked, airbase, DCSTasks, description )
     self:F2( { AltType, Type, Action, Speed, SpeedLocked } )
-
+    
+    -- Defaults
+    AltType=AltType or "RADIO"
+    if SpeedLocked==nil then
+      SpeedLocked=true
+    end
+    Speed=Speed or 500
+    
+    -- Waypoint array.
     local RoutePoint = {}
+    
+    -- Coordinates.
     RoutePoint.x = self.x
     RoutePoint.y = self.z
+    -- Altitude.
     RoutePoint.alt = self.y
-    RoutePoint.alt_type = AltType or "RADIO"
-
+    RoutePoint.alt_type = AltType
+    -- Waypoint type.
     RoutePoint.type = Type or nil
     RoutePoint.action = Action or nil
-
-    RoutePoint.speed = ( Speed and Speed / 3.6 ) or ( 500 / 3.6 )
-    RoutePoint.speed_locked = true
+    -- Set speed/ETA.
+    RoutePoint.speed = Speed/3.6
+    RoutePoint.speed_locked = SpeedLocked
+    RoutePoint.ETA=nil
+    RoutePoint.ETA_locked = false    
+    -- Waypoint description.
+    RoutePoint.name=description
+    -- Airbase parameters for takeoff and landing points.
+    if airbase then
+      local AirbaseID = airbase:GetID()
+      local AirbaseCategory = airbase:GetDesc().category
+      if AirbaseCategory == Airbase.Category.SHIP or AirbaseCategory == Airbase.Category.HELIPAD then
+        RoutePoint.linkUnit = AirbaseID
+        RoutePoint.helipadId = AirbaseID
+      elseif AirbaseCategory == Airbase.Category.AIRDROME then
+        RoutePoint.airdromeId = AirbaseID       
+      else
+        self:T("ERROR: Unknown airbase category in COORDINATE:WaypointAir()!")
+      end  
+    end        
+    
 
     --  ["task"] =
     --  {
@@ -976,12 +1022,11 @@ do -- COORDINATE
     --      }, -- end of ["params"]
     --  }, -- end of ["task"]
 
-
+    -- Waypoint tasks.
     RoutePoint.task = {}
     RoutePoint.task.id = "ComboTask"
     RoutePoint.task.params = {}
-    RoutePoint.task.params.tasks = {}
-
+    RoutePoint.task.params.tasks = DCSTasks or {}
 
     return RoutePoint
   end

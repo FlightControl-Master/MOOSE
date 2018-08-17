@@ -1620,6 +1620,23 @@ function GROUP:InAir()
   return nil
 end
 
+--- Returns the DCS descriptor table of the nth unit of the group.
+-- @param #GROUP self
+-- @param #number n (Optional) The number of the unit for which the dscriptor is returned.
+-- @return DCS#Object.Desc The descriptor of the first unit of the group or #nil if the group does not exist any more.   
+function GROUP:GetDCSDesc(n)
+  -- Default.
+  n=n or 1
+  
+  local unit=self:GetUnit(n)
+  if unit and unit:IsAlive()~=nil then
+    local desc=unit:GetDesc()
+    return desc
+  end
+  
+  return nil
+end
+
 do -- Route methods
 
   --- (AIR) Return the Group to an @{Wrapper.Airbase#AIRBASE}.  

@@ -2459,7 +2459,7 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
   local VxCruiseMin = math.min(VxCruiseMax*0.70, 166)
   
   -- Cruise speed (randomized). Expectation value at midpoint between min and max.
-  local VxCruise = self:_Random_Gaussian((VxCruiseMax-VxCruiseMin)/2+VxCruiseMin, (VxCruiseMax-VxCruiseMax)/4, VxCruiseMin, VxCruiseMax)
+  local VxCruise = UTILS.RandomGaussian((VxCruiseMax-VxCruiseMin)/2+VxCruiseMin, (VxCruiseMax-VxCruiseMax)/4, VxCruiseMin, VxCruiseMax)
   
   -- Climb speed 90% ov Vmax but max 720 km/h.
   local VxClimb = math.min(self.aircraft.Vmax*0.90, 200)
@@ -2817,7 +2817,7 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
   end
     
   -- Set cruise altitude. Selected from Gaussian distribution but limited to FLmin and FLmax.
-  local FLcruise=self:_Random_Gaussian(FLcruise_expect, math.abs(FLmax-FLmin)/4, FLmin, FLmax)
+  local FLcruise=UTILS.RandomGaussian(FLcruise_expect, math.abs(FLmax-FLmin)/4, FLmin, FLmax)
     
   -- Overrule setting if user specified a flight level explicitly.
   if self.FLuser then
@@ -5014,38 +5014,6 @@ function RAT:_Randomize(value, fac, lower, upper)
   return r
 end
 
---- Generate Gaussian pseudo-random numbers.
--- @param #number x0 Expectation value of distribution.
--- @param #number sigma (Optional) Standard deviation. Default 10.
--- @param #number xmin (Optional) Lower cut-off value.
--- @param #number xmax (Optional) Upper cut-off value.
--- @return #number Gaussian random number.
-function RAT:_Random_Gaussian(x0, sigma, xmin, xmax)
-
-  -- Standard deviation. Default 10 if not given.
-  sigma=sigma or 10
-    
-  local r
-  local gotit=false
-  local i=0
-  while not gotit do
-  
-    -- Uniform numbers in [0,1). We need two.
-    local x1=math.random()
-    local x2=math.random()
-  
-    -- Transform to Gaussian exp(-(x-x0)²/(2*sigma²).
-    r = math.sqrt(-2*sigma*sigma * math.log(x1)) * math.cos(2*math.pi * x2) + x0
-    
-    i=i+1
-    if (r>=xmin and r<=xmax) or i>100 then
-      gotit=true
-    end
-  end
-  
-  return r
-
-end
 
 --- Place markers of the waypoints. Note we assume a very specific number and type of waypoints here.
 -- @param #RAT self

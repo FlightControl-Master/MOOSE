@@ -140,11 +140,16 @@ WAREHOUSE = {
 --- Item of the warehouse pending queue table.
 -- @type WAREHOUSE.Pendingitem
 -- @extends #WAREHOUSE.Queueitem
--- @field #table assetlist Table of assets to be delivered. Each element of the table is a @{#WAREHOUSE.Stockitem}.
--- @field #number ndelivered Number of groups delivered to destination. Is managed automatically.
--- @field #number ntransporthome Number of transports back home. Is managed automatically.
--- @field Core.Set#SET_GROUP cargogroupset Set of cargo groups do be delivered. Is managed automatically.
--- @field Core.Set#SET_GROUP transportgroupset Set of cargo transport groups. Is managed automatically.
+-- @field #table cargoassets Table of assets to be delivered. Each element of the table is a @{#WAREHOUSE.Stockitem}.
+-- @field Core.Set#SET_GROUP cargogroupset Set of cargo groups do be delivered.
+-- @field #number ndelivered Number of groups delivered to destination.
+-- @field #number cargoattribute Attribute of cargo assets of type @{#WAREHOUSE.Attribute}.
+-- @field #number cargocategory Category of cargo assets of type @{#WAREHOUSE.Category}.
+-- @field #table transportassets Table of assets to be delivered. Each element of the table is a @{#WAREHOUSE.Stockitem}.
+-- @field Core.Set#SET_GROUP transportgroupset Set of cargo transport groups.
+-- @field #number transportattribute Attribute of transport assets of type @{#WAREHOUSE.Attribute}.
+-- @field #number transportcategory Category of transport assets of type @{#WAREHOUSE.Category}.
+-- @field #number ntransporthome Number of transports back home. transportattribute
 
 --- Descriptors enumerator describing the type of the asset in stock.
 -- @type WAREHOUSE.Descriptor
@@ -191,7 +196,7 @@ WAREHOUSE.TransportType = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.1.9"
+WAREHOUSE.version="0.1.9w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -272,24 +277,25 @@ function WAREHOUSE:New(warehouse, alias)
   self:SetStartState("Stopped")
 
   -- Add FSM transitions.
-  self:AddTransition("Stopped", "Load",        "Stopped") -- TODO Load the warehouse state. No sure if it should be in stopped state.
-  self:AddTransition("Stopped", "Start",       "Running") -- Start the warehouse.
-  self:AddTransition("Running", "Status",      "*")       -- Status update in running mode. Requests are processed.
-  self:AddTransition("Paused",  "Status",      "*")       -- TODO Status update in paused mode. Requests are not processed.
-  self:AddTransition("*",       "AddAsset",    "*")       -- Add asset to warehouse stock.
-  self:AddTransition("*",       "AddRequest",  "*")       -- New request from other warehouse.
-  self:AddTransition("Running", "Request",     "*")       -- Process a request. Only in running mode.
-  self:AddTransition("*",       "Unloaded",    "*")       -- Cargo has been unloaded from the carrier.
-  self:AddTransition("*",       "Arrived",     "*")       -- Cargo group has arrived at destination.
-  self:AddTransition("*",       "Delivered",   "*")       -- All cargo groups of a request have been delivered to the requesting warehouse.
-  self:AddTransition("Running", "SelfRequest", "*")       -- Request to warehouse itself. Requested assets are only spawned but not delivered anywhere.
-  self:AddTransition("Running", "Pause",       "Paused")  -- TODO Pause the processing of new requests. Still possible to add assets and requests. 
-  self:AddTransition("Paused",  "Unpause",     "Running") -- TODO Unpause the warehouse. Queued requests are processed again. 
-  self:AddTransition("*",       "Stop",        "Stopped") -- TODO Stop the warehouse.
-  self:AddTransition("*",       "Save",        "*")       -- TODO Save the warehouse state to disk.
-  self:AddTransition("*",       "Attacked",    "*")       -- TODO Warehouse is under attack by enemy coalitin.
-  self:AddTransition("*",       "Captured",    "*")       -- TODO Warehouse was captured by another coalition.
-  self:AddTransition("*",       "Destroyed",   "*")       -- TODO Warehouse was destoryed. All assets are gone and warehouse is stopped.
+  self:AddTransition("Stopped",  "Load",        "Stopped")  -- TODO Load the warehouse state. No sure if it should be in stopped state.
+  self:AddTransition("Stopped",  "Start",       "Running")  -- Start the warehouse.
+  self:AddTransition("Running",  "Status",      "*")        -- Status update in running mode. Requests are processed.
+  self:AddTransition("Paused",   "Status",      "*")        -- TODO Status update in paused mode. Requests are not processed.
+  self:AddTransition("*",        "AddAsset",    "*")        -- Add asset to warehouse stock.
+  self:AddTransition("*",        "AddRequest",  "*")        -- New request from other warehouse.
+  self:AddTransition("Running",  "Request",     "*")        -- Process a request. Only in running mode.
+  self:AddTransition("*",        "Unloaded",    "*")        -- Cargo has been unloaded from the carrier.
+  self:AddTransition("*",        "Arrived",     "*")        -- Cargo group has arrived at destination.
+  self:AddTransition("*",        "Delivered",   "*")        -- All cargo groups of a request have been delivered to the requesting warehouse.
+  self:AddTransition("Running",  "SelfRequest", "*")        -- Request to warehouse itself. Requested assets are only spawned but not delivered anywhere.
+  self:AddTransition("Running",  "Pause",       "Paused")   -- TODO Pause the processing of new requests. Still possible to add assets and requests. 
+  self:AddTransition("Paused",   "Unpause",     "Running")  -- TODO Unpause the warehouse. Queued requests are processed again. 
+  self:AddTransition("*",        "Stop",        "Stopped")  -- TODO Stop the warehouse.
+  self:AddTransition("*",        "Save",        "*")        -- TODO Save the warehouse state to disk.
+  self:AddTransition("*",        "Attacked",    "Attacked") -- TODO Warehouse is under attack by enemy coalition.
+  self:AddTransition("Attacked", "Defeated",    "Running")  -- TODO Attack by other coalition was defeated!
+  self:AddTransition("Attacked", "Captured",    "Running")  -- TODO Warehouse was captured by another coalition. It must have been attacked first.
+  self:AddTransition("*",        "Destroyed",   "*")        -- TODO Warehouse was destoryed. All assets in stock are gone and warehouse is stopped.
   
   
   -- Pseudo Functions
@@ -493,6 +499,13 @@ end
 -- @return #boolean If true, the warehouse is paused.
 function WAREHOUSE:IsPaused()
   return self:is("Paused")
+end
+
+--- Check if the warehouse is under attack by another coalition.
+-- @param #WAREHOUSE self
+-- @return #boolean If true, the warehouse is attacked.
+function WAREHOUSE:IsAttacked()
+  return self:is("Attacked")
 end
 
 
@@ -1492,8 +1505,21 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function WAREHOUSE:onafterAttacked(From, Event, To)
+-- @param DCS#coalition.side Coalition which is attacking the warehouse.
+-- @param DCS#country.id Country which is attacking the warehouse.
+function WAREHOUSE:onafterAttacked(From, Event, To, Coalition, Country)
   self:E(self.wid..string.format("Out warehouse is under attack!"))
+  --TODO: Spawn all ground units in the spawnzone?
+end
+
+--- On after "Defeated" event. Warehouse defeated an attack by another coalition. 
+-- @param #WAREHOUSE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function WAREHOUSE:onafterDefeated(From, Event, To)
+  self:E(self.wid..string.format("Attack was defeated!"))
+  --TODO Put all ground assets back in stock? How to remember which? Request id. Don't delete from pending?
 end
 
 --- On after "Captured" event. Warehouse has been captured by another coalition.
@@ -1502,18 +1528,9 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param DCS#coalition.side Coalition which captured the warehouse.
-function WAREHOUSE:onafterCaptured(From, Event, To, Coalition)
+-- @param DCS#country.id Country which has captured the warehouse.
+function WAREHOUSE:onafterCaptured(From, Event, To, Coalition, Country)
   self:E(self.wid..string.format("Our warehouse was captured by coalition %d!", Coalition))
-  
-  --TODO: Need to get a way to get the correct country.
-  local Country
-  if Coalition==coalition.side.BLUE then
-    Country=country.id.USA
-  elseif Coalition==coalition.side.RED then
-    Country=country.id.USSR
-  else
-    Country=country.id.SWITZERLAND
-  end
   
   -- Respawn warehouse with new coalition/country.
   self.warehouse:ReSpawn(Country)
@@ -1521,6 +1538,7 @@ function WAREHOUSE:onafterCaptured(From, Event, To, Coalition)
   self.country=Country
   self.airbase=nil
   self.category=-1
+  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1540,6 +1558,8 @@ function WAREHOUSE:_RouteGround(Group, Coordinate, Speed)
     local _speed=Speed or Group:GetSpeedMax()*0.6
 
     -- Create task.
+    -- TODO: It might be necessary to ALWAYS route the group to the road connection first.
+    -- At the moment, the random spawn point might give another first road point which could also be a dead end like in Kobuliti(?).  
     local Waypoints, canroad = Group:TaskGroundOnRoad(Coordinate, _speed, "Off Road", true)
 
     -- Task function triggering the arrived event.
@@ -1630,6 +1650,9 @@ function WAREHOUSE:_RouteAir(Aircraft, ToAirbase, Speed)
       return
     end
 
+    local Waypoints,Coordinates=self:_GetFlightplan(Aircraft,self.airbase,ToAirbase)
+
+    --[[
     -- Waypoints of the route.
     local Points={}
 
@@ -1660,7 +1683,11 @@ function WAREHOUSE:_RouteAir(Aircraft, ToAirbase, Speed)
     
     -- Second point of the route. First point is done in RespawnAtCurrentAirbase() routine.
     Template.route.points[2] = ToWaypoint
-        
+       ]]
+       
+    -- Set waypoints.
+    Template.route.points=Waypoints
+    
     -- Respawn group at the current airbase.    
     env.info("FF Respawn at current airbase group = "..Aircraft:GetName().." name before")
     local newAC=Aircraft:RespawnAtCurrentAirbase(Template, Takeoff, false)
@@ -1881,8 +1908,100 @@ end
 -- Helper functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Checks if the warehouse zone was conquered by antoher coalition.
+-- @param #WAREHOUSE self
+function WAREHOUSE:_CheckConquered()
+
+  local coord=self.zone:GetCoordinate()
+  local radius=self.zone:GetRadius()
+  
+  -- Scan units in zone.
+  --TODO: need to check if scan radius does what it should!
+  local gotunits,_,_,units,_,_=coord:ScanObjects(radius, true, false, false)
+  
+  local Nblue=0
+  local Nred=0
+  local Nneutral=0
+  
+  local CountryBlue=nil
+  local CountryRed=nil
+  local CountryNeutral=nil
+  
+  if gotunits then
+    -- Loop over all units.
+    for _,_unit in pairs(units) do
+      local unit=_unit --Wrapper.Unit#UNIT
+      
+      -- Get coalition and country.
+      local _coalition=unit:GetCoalition()
+      local _country=unit:GetCountry()
+      
+      if _coalition==coalition.side.BLUE then
+        Nblue=Nblue+1
+        CountryBlue=_country
+      elseif _coalition==coalition.side.RED then
+        Nred=Nred+1
+        CountryRed=_country
+      else
+        Nneutral=Nneutral+1
+        CountryNeutral=_country
+      end
+      
+    end
+  end
+ 
+ 
+  -- Figure out the new coalition if any.
+  -- Condition is that only units of one coalition are within the zone.
+  local newcoalition=self.coalition
+  local newcountry=self.country
+  if Nblue>0 and Nred==0 and Nneutral==0 then
+    -- Only blue units in zone ==> Zone goes to blue.
+    newcoalition=coalition.side.BLUE
+    newcountry=CountryBlue
+  elseif Nblue==0 and Nred>0 and Nneutral==0 then
+    -- Only red units in zone ==> Zone goes to red.
+    newcoalition=coalition.side.RED
+    newcountry=CountryRed
+  elseif Nblue==0 and Nred==0 and Nneutral>0 then
+    -- Only neutral units in zone but neutrals do not attack or even capture!
+    --newcoalition=coalition.side.NEUTRAL
+    newcountry=CountryNeutral
+  end
+
+  -- Coalition has changed ==> warehouse was captured!
+  if self:IsAttacked() and newcoalition ~= self.coalition then
+    self:Captured(newcoalition, newcountry)  
+  end
+  
+  -- Before a warehouse can be captured, it has to be attacked.
+  -- That is, even if only enemy units are present it is not immediately captured in order to spawn all ground assets for defence.
+  if self.coalition==coalition.side.BLUE then
+    -- Blue warehouse is running and we have red units in the zone.
+    if self:IsRunning() and Nred>0 then
+      self:__Attacked(coalition.side.RED, CountryRed)
+    end
+    -- Blue warehouse was under attack by blue but no more blue units in zone.
+    if self:IsAttacked() and Nred==0 then
+      self:Defeated()
+    end    
+  elseif self.coalition==coalition.side.RED then
+    -- Red Warehouse is running and we have blue units in the zone.
+    if self:IsRunning() and Nblue>0 then
+      self:__Attacked(coalition.side.BLUE, CountryBlue)
+    end
+    -- Red warehouse was under attack by blue but no more blue units in zone.
+    if self:IsAttacked() and Nblue==0 then
+      self:Defeated()
+    end
+  elseif self.coalition==coalition.side.NEUTRAL then
+    -- Neutrals dont attack!
+  end
+  
+end
+
 --- Checks if the request can be fulfilled in general. If not, it is removed from the queue.
--- Check if departure and destination bases are of the right type. 
+-- Check if departure and destination bases are of the right type.
 -- @param #WAREHOUSE self
 -- @param #table queue The queue which is holding the requests to check.
 -- @return #boolean If true, request can be executed. If false, something is not right.
@@ -2654,6 +2773,249 @@ function WAREHOUSE:_PrintQueue(queue, name)
     self:E(text)
   end
 end
+
+
+
+--- Make a flight plan from a departure to a destination airport. 
+-- @param #WAREHOUSE self
+-- @param Wrapper.Group#GROUP group
+-- @param Wrapper.Airbase#AIRBASE _departure Departure airbase.
+-- @param Wrapper.Airbase#AIRBASE _destination Destination airbase.
+-- @return #table Table of flightplan waypoints.
+-- @return #table Table of flightplan coordinates. 
+function WAREHOUSE:_GetFlightplan(group,_departure,_destination)
+
+  -- Group parameters.
+  local Vmax=group:GetSpeedMax()/3.6
+  local Range=group:GetRange()
+  local _category=group:GetCategory()
+  local DCSDesc=group:GetDCSDesc()
+  local ceiling=DCSDesc.Hmax
+  local Vymax=DCSDesc.VyMax
+    
+  -- Max cruise speed 90% of max speed.
+  local VxCruiseMax=0.90*Vmax
+
+  -- Min cruise speed 70% of max cruise or 600 km/h whichever is lower.
+  local VxCruiseMin = math.min(VxCruiseMax*0.70, 166)
+  
+  -- Cruise speed (randomized). Expectation value at midpoint between min and max.
+  local VxCruise = UTILS.RandomGaussian((VxCruiseMax-VxCruiseMin)/2+VxCruiseMin, (VxCruiseMax-VxCruiseMax)/4, VxCruiseMin, VxCruiseMax)
+  
+  -- Climb speed 90% ov Vmax but max 720 km/h.
+  local VxClimb = math.min(Vmax*0.90, 200)
+  
+  -- Descent speed 60% of Vmax but max 500 km/h.
+  local VxDescent = math.min(Vmax*0.60, 140)
+  
+  -- Holding speed is 90% of descent speed.
+  local VxHolding = VxDescent*0.9
+  
+  -- Final leg is 90% of holding speed.
+  local VxFinal = VxHolding*0.9
+  
+  -- Reasonably civil climb speed Vy=1500 ft/min = 7.6 m/s but max aircraft specific climb rate.
+  local VyClimb=math.min(7.6, Vymax)
+  
+  -- Climb angle in rad.
+  local AlphaClimb=math.asin(VyClimb/VxClimb)
+  
+  -- Descent angle in rad. Moderate 4 degrees.
+  local AlphaDescent=math.rad(4)
+  
+  -- Expected cruise level (peak of Gaussian distribution)
+  local FLcruise_expect=200*RAT.unit.FL2m
+  
+  --- DEPARTURE AIRPORT
+  
+  -- Coordinates of departure point.
+  local Pdeparture=_departure:GetCoordinate()
+  
+  -- Height ASL of departure point.
+  local H_departure=Pdeparture.y
+   
+  --- DESTINATION AIRPORT
+  
+  -- Position of destination airport.
+  local Pdestination=_destination:GetCoordinate()
+  
+  -- Height ASL of destination airport/zone.
+  local H_destination=Pdestination.y
+    
+  --- DESCENT/HOLDING POINT
+
+  -- Get a random point between 5 and 20 km away from the destination.
+  local Rhmin=8000
+  local Rhmax=20000
+  if _category==Group.Category.HELICOPTER then
+    -- For helos we set a distance between 500 to 1000 m.
+    Rhmin=500
+    Rhmax=1000
+  end
+  
+  -- Coordinates of the holding point. y is the land height at that point.
+  local Vholding=Pdestination:GetRandomVec2InRadius(Rhmax, Rhmin)
+  local Pholding=COORDINATE:NewFromVec2(Vholding)
+  
+  -- AGL height of holding point.
+  local H_holding=Pholding.y
+  
+  -- Holding point altitude. For planes between 1600 and 2400 m AGL. For helos 160 to 240 m AGL.
+  local h_holding=1200
+  if _category==Group.Category.HELICOPTER then
+    h_holding=150
+  end
+  h_holding=UTILS.Randomize(h_holding, 0.2)
+  
+  -- This is the actual height ASL of the holding point we want to fly to
+  local Hh_holding=H_holding+h_holding
+    
+  -- Distance from holding point to final destination.
+  local d_holding=Pholding:Get2DDistance(Pdestination)
+  
+  -- GENERAL
+  local heading=Pdeparture:HeadingTo(Pdestination)
+  local d_total=Pdeparture:Get2DDistance(Pholding)
+
+  --------------------------------------------
+  
+  -- Height difference between departure and destination.
+  local deltaH=math.abs(H_departure-Hh_holding)
+  
+  -- Slope between departure and destination.
+  local phi = math.atan(deltaH/d_total)
+  
+  -- Adjusted climb/descent angles.
+  local phi_climb
+  local phi_descent
+  if (H_departure > Hh_holding) then
+    phi_climb=AlphaClimb+phi
+    phi_descent=AlphaDescent-phi
+  else
+    phi_climb=AlphaClimb-phi
+    phi_descent=AlphaDescent+phi
+  end
+
+  -- Total distance including slope.
+  local D_total=math.sqrt(deltaH*deltaH+d_total*d_total)
+  
+  -- SSA triangle for sloped case.
+  local gamma=math.rad(180)-phi_climb-phi_descent
+  local a = D_total*math.sin(phi_climb)/math.sin(gamma)
+  local b = D_total*math.sin(phi_descent)/math.sin(gamma)
+  local hphi_max  = b*math.sin(phi_climb)
+  local hphi_max2 = a*math.sin(phi_descent)
+  
+  -- Height of triangle.
+  local h_max1 = b*math.sin(AlphaClimb)
+  local h_max2 = a*math.sin(AlphaDescent)
+  
+  -- Max height relative to departure or destination.
+  local h_max
+  if (H_departure > Hh_holding) then
+    h_max=math.min(h_max1, h_max2)
+  else
+    h_max=math.max(h_max1, h_max2)
+  end
+  
+  -- Max flight level aircraft can reach for given angles and distance.
+  local FLmax = h_max+H_departure
+      
+  --CRUISE  
+  -- Min cruise alt is just above holding point at destination or departure height, whatever is larger.
+  local FLmin=math.max(H_departure, Hh_holding)
+   
+  -- For helicopters we take cruise alt between 50 to 1000 meters above ground. Default cruise alt is ~150 m.
+  if _category==Group.Category.HELICOPTER then  
+    FLmin=math.max(H_departure, H_destination)+50
+    FLmax=math.max(H_departure, H_destination)+1000
+  end
+  
+  -- Ensure that FLmax not above its service ceiling.
+  FLmax=math.min(FLmax, ceiling)
+  
+  -- If the route is very short we set FLmin a bit lower than FLmax.
+  if FLmin>FLmax then
+    FLmin=FLmax
+  end
+  
+  -- Expected cruise altitude - peak of gaussian distribution.
+  if FLcruise_expect<FLmin then
+    FLcruise_expect=FLmin
+  end
+  if FLcruise_expect>FLmax then
+    FLcruise_expect=FLmax
+  end
+    
+  -- Set cruise altitude. Selected from Gaussian distribution but limited to FLmin and FLmax.
+  local FLcruise=UTILS.RandomGaussian(FLcruise_expect, math.abs(FLmax-FLmin)/4, FLmin, FLmax)
+
+  -- Climb and descent heights.
+  local h_climb   = FLcruise - H_departure
+  local h_descent = FLcruise - Hh_holding
+  
+  -- Distances.
+  local d_climb   = h_climb/math.tan(AlphaClimb)
+  local d_descent = h_descent/math.tan(AlphaDescent)
+  local d_cruise  = d_total-d_climb-d_descent  
+  
+  -- Ensure that cruise distance is positve. Can be slightly negative in special cases. And we don't want to turn back.
+  if d_cruise<0 then
+    d_cruise=100
+  end
+
+  -- Waypoints and coordinates
+  local wp={}
+  local c={}
+  
+  --- Departure/Take-off
+  c[#c+1]=Pdeparture
+  wp[#wp+1]=Pdeparture:WaypointAir("RADIO", COORDINATE.WaypointType.TakeOffParking, COORDINATE.WaypointAction.FromParkingArea, VxClimb, true,_departure, nil, "Departure")
+  --wp[#wp+1]=self:_Waypoint(#wp+1, "Departure", takeoff, c[#wp+1], VxClimb, H_departure, departure)
+  
+  --- Climb 
+  local Pclimb=Pdeparture:Translate(d_climb/2, heading)
+  Pclimb.y=H_departure+(FLcruise-H_departure)/2
+  c[#c+1]=Pclimb
+  wp[#wp+1]=Pclimb:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, VxClimb, true, nil, nil, "Climb")
+  --wp[#wp+1]=self:_Waypoint(#wp+1, "Climb", RAT.wp.climb,  c[#wp+1], VxClimb, )
+  
+  --- Begin of Cruise
+  local Pcruise1=Pclimb:Translate(d_climb/2, heading)
+  Pcruise1.y=FLcruise
+  c[#c+1]=Pcruise1
+  wp[#wp+1]=Pcruise1:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, VxCruise, true, nil, nil, "Begin of Cruise")
+  --wp[#wp+1]=self:_Waypoint(#wp+1, "Begin of Cruise", RAT.wp.cruise, c[#wp+1], VxCruise, FLcruise)
+
+  --- End of Cruise    
+  local Pcruise2=Pcruise1:Translate(d_cruise, heading)
+  Pcruise2.y=FLcruise
+  c[#c+1]=Pcruise2
+  wp[#wp+1]=Pcruise2:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, VxCruise, true, nil, nil, "End of Cruise")
+  --wp[#wp+1]=self:_Waypoint(#wp+1, "End of Cruise", RAT.wp.cruise, c[#wp+1], VxCruise,  FLcruise)
+
+  --- Descent  
+  local Pdescent=Pcruise2:Translate(d_descent/2, heading)
+  Pdescent.y=FLcruise-(FLcruise-(h_holding+H_holding))/2
+  c[#c+1]=Pdescent
+  wp[#wp+1]=Pcruise2:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, VxDescent, true, nil, nil, "Descent")
+  --wp[#wp+1]=self:_Waypoint(#wp+1, "Descent", RAT.wp.descent, c[#wp+1], VxDescent, FLcruise-(FLcruise-(h_holding+H_holding))/2)
+    
+  --- Holding point
+   Pholding.y=H_holding+h_holding  
+  c[#c+1]=Pholding
+  wp[#wp+1]=Pholding:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, VxHolding, true, nil, nil, "Holding")  
+  --wp[#wp+1]=self:_Waypoint(#wp+1, "Holding Point", RAT.wp.holding, c[#wp+1], VxHolding, H_holding+h_holding)
+
+  --- Final destination.  
+  c[#c+1]=Pdestination
+  wp[#wp+1]=Pcruise2:WaypointAir("BARO", COORDINATE.WaypointType.Land, COORDINATE.WaypointAction.Landing, VxFinal, true, nil, nil, "Final Destination")
+  --wp[#wp+1]=self:_Waypoint(#wp+1, "Final Destination", landing, c[#wp+1], VxFinal, H_destination, destination)
+    
+  return wp,c
+end
+
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

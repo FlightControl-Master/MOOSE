@@ -428,7 +428,7 @@ function UNIT:GetRange()
   local Desc = self:GetDesc()
   
   if Desc then
-    local Range = Desc.range --This is in nautical miles for some reason.
+    local Range = Desc.range --This is in nautical miles for some reason. But should check again!
     if Range then
       Range=UTILS.NMToMeters(Range)
     else
