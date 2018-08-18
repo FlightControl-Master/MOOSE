@@ -698,11 +698,12 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
     
         -- Check all units.    
         for _,unit in pairs(_units) do
-        
-          local _vec3=unit:getPoint()
-          local _coord=COORDINATE:NewFromVec3(_vec3)
+          -- Unis are now returned as MOOSE units not DCS units!
+          --local _vec3=unit:getPoint()
+          --local _coord=COORDINATE:NewFromVec3(_vec3)
+          local _coord=unit:GetCoordinate()
           local _dist=_coord:Get2DDistance(_spot)      
-          local _safe=_overlap(aircraft, true, unit, false,_dist)
+          local _safe=_overlap(aircraft, true, unit, true,_dist)
           
           if markobstacles then
             local l,x,y,z=_GetObjectSize(unit)      

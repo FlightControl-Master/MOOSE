@@ -1275,9 +1275,12 @@ do -- COORDINATE
   -- @param #COORDINATE ToCoord Coordinate of destination.
   -- @param #boolean IncludeEndpoints (Optional) Include the coordinate itself and the ToCoordinate in the path.
   -- @param #boolean Railroad (Optional) If true, path on railroad is returned. Default false.
+  -- @param #boolean MarkPath (Optional) If true, place markers on F10 map along the path.
+  -- @param #boolean SmokePath (Optional) If true, put (green) smoke along the  
   -- @return #table Table of coordinates on road. If no path on road can be found, nil is returned or just the endpoints.
-  -- @return #number The length of the total path.
-  function COORDINATE:GetPathOnRoad(ToCoord, IncludeEndpoints, Railroad)
+  -- @return #number Tonal length of path.
+  -- @return #boolean If true a valid path on road/rail was found. If false, only the direct way is possible. 
+  function COORDINATE:GetPathOnRoad(ToCoord, IncludeEndpoints, Railroad, MarkPath, SmokePath)
   
     -- Set road type.
     local RoadType="roads"
@@ -1296,20 +1299,43 @@ do -- COORDINATE
     if IncludeEndpoints then
       Path[1]=self
     end
+    
+    -- Assume we could get a valid path.
+    local GotPath=true
         
     -- Check that DCS routine actually returned a path. There are situations where this is not the case.
     if path then
     
       -- Include all points on road.      
-      for _,_vec2 in ipairs(path) do
-        Path[#Path+1]=COORDINATE:NewFromVec2(_vec2)
-        --COORDINATE:NewFromVec2(_vec2):SmokeGreen()
+      for _i,_vec2 in ipairs(path) do
+      
+        local coord=COORDINATE:NewFromVec2(_vec2)
+        
+        Path[#Path+1]=coord
+        
+        if MarkPath then
+          coord:MarkToAll(string.format("Path segment %d.", _i))
+        end
+        if SmokePath then
+          coord:SmokeGreen()
+        end
       end
-      --COORDINATE:NewFromVec2(path[1]):SmokeBlue()
-      --COORDINATE:NewFromVec2(path[#path]):SmokeBlue()
+            
+      -- Mark/smoke endpoints
+      if IncludeEndpoints then
+        if MarkPath then
+          COORDINATE:NewFromVec2(path[1]):MarkToAll("Path Initinal Point")
+          COORDINATE:NewFromVec2(path[1]):MarkToAll("Path Final Point")        
+        end
+        if SmokePath then
+          COORDINATE:NewFromVec2(path[1]):SmokeBlue()
+          COORDINATE:NewFromVec2(path[#path]):SmokeBlue()
+        end
+      end
             
     else
       self:E("Path is nil. No valid path on road could be found.")
+      GotPath=false
     end
  
     -- Include end point, which might not be on road.
@@ -1327,7 +1353,7 @@ do -- COORDINATE
       return nil,nil
     end 
         
-    return Path, Way
+    return Path, Way, GotPath
   end
 
   --- Gets the surface type at the coordinate.

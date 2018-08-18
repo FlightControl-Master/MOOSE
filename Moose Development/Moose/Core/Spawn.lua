@@ -1613,13 +1613,14 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
           
           else
 
-            self:T(string.format("Group %s spawning at airbase %s on parking spot id %d", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), parkingindex[UnitID]))
+            self:E(string.format("Group %s spawning at airbase %s on parking spot id %d", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), parkingindex[UnitID]))
             
             -- Get coordinates of parking spot.
             SpawnTemplate.units[UnitID].x   = parkingspots[UnitID].x
             SpawnTemplate.units[UnitID].y   = parkingspots[UnitID].z
             SpawnTemplate.units[UnitID].alt = parkingspots[UnitID].y
             
+            parkingspots[UnitID]:MarkToAll(string.format("Group %s spawning at airbase %s on parking spot id %d", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), parkingindex[UnitID]))
           end
                  
         else
