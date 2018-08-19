@@ -1453,7 +1453,7 @@ function GROUP:RespawnAtCurrentAirbase(SpawnTemplate, Takeoff, Uncontrolled) -- 
       SpawnPoint.airdromeId = AirbaseID
     end
 
-    SpawnPoint.alt    = AirbaseCoord:GetLandHeight()           
+    
     SpawnPoint.type   = GROUPTEMPLATE.Takeoff[Takeoff][1] -- type
     SpawnPoint.action = GROUPTEMPLATE.Takeoff[Takeoff][2] -- action
     
@@ -1474,7 +1474,7 @@ function GROUP:RespawnAtCurrentAirbase(SpawnTemplate, Takeoff, Uncontrolled) -- 
 
       -- Get unit coordinates for respawning position.
       local uc=unit:GetCoordinate()
-      
+      uc:MarkToAll(string.format("re-spawnplace %s terminal %d", unit:GetName(), TermialID))
       
       SpawnTemplate.units[UnitID].x   = uc.x --Parkingspot.x
       SpawnTemplate.units[UnitID].y   = uc.z --Parkingspot.z
@@ -1483,24 +1483,26 @@ function GROUP:RespawnAtCurrentAirbase(SpawnTemplate, Takeoff, Uncontrolled) -- 
       SpawnTemplate.units[UnitID].parking    = TermialID
       SpawnTemplate.units[UnitID].parking_id = nil
       
-      if UnitID==1 then
-        x=uc.x
-        y=uc.z
-      end
-                  
+      --SpawnTemplate.units[UnitID].unitId=nil
     end
     
-    SpawnPoint.x = x --AirbaseCoord.x
-    SpawnPoint.y = y --AirbaseCoord.z
+    --SpawnTemplate.groupId=nil
     
-    SpawnTemplate.x = x --AirbaseCoord.x
-    SpawnTemplate.y = y --AirbaseCoord.z
+    SpawnPoint.x   = SpawnTemplate.units[1].x   --x --AirbaseCoord.x
+    SpawnPoint.y   = SpawnTemplate.units[1].y   --y --AirbaseCoord.z
+    SpawnPoint.alt = SpawnTemplate.units[1].alt --AirbaseCoord:GetLandHeight()
+               
+    SpawnTemplate.x = SpawnTemplate.units[1].x  --x --AirbaseCoord.x
+    SpawnTemplate.y = SpawnTemplate.units[1].y  --y --AirbaseCoord.z
     
     -- Set uncontrolled state.
     SpawnTemplate.uncontrolled=Uncontrolled
 
-    -- Destroy and respawn.
+    -- Destroy old group.
     self:Destroy()
+    
+    
+    --SCHEDULER:New(nil, DATABASE.Spawn, {_DATABASE, SpawnTemplate}, 0.00001)
     _DATABASE:Spawn( SpawnTemplate )
   
     -- Reset events.

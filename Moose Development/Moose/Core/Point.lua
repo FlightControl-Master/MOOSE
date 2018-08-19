@@ -1028,6 +1028,7 @@ do -- COORDINATE
     RoutePoint.task.params = {}
     RoutePoint.task.params.tasks = DCSTasks or {}
 
+    self:E({RoutePoint=RoutePoint})
     return RoutePoint
   end
 
