@@ -416,7 +416,6 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
         self:F( { Cargo = Cargo:GetName(), UnLoaded = Cargo:IsUnLoaded(), Deployed = Cargo:IsDeployed(), PickupCargo = self.PickupCargo[Carrier] ~= nil } )
         if Cargo:IsUnLoaded() == true and Cargo:IsDeployed() == false then
           local CargoCoordinate = Cargo:GetCoordinate()
-          self:F({CargoCoordinate = CargoCoordinate })
           local CoordinateFree = true
           for CarrierPickup, Coordinate in pairs( self.PickupCargo ) do
             if CarrierPickup:IsAlive() == true then
@@ -428,7 +427,6 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
               self.PickupCargo[CarrierPickup] = nil
             end
           end
-          self:F({CoordinateFree = CoordinateFree})
           if CoordinateFree == true then
             self.PickupCargo[Carrier] = CargoCoordinate
             PickupCargo = Cargo
@@ -436,8 +434,6 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
           end
         end
       end
-      
-      self:F( { PickupCargo = PickupCargo} )
       
       if PickupCargo then
         self.CarrierHome[Carrier] = nil
@@ -571,10 +567,6 @@ function AI_CARGO_DISPATCHER:OnAfterLoaded( From, Event, To, Carrier, Cargo )
     end
   end
   
-   self:F({Carrier=Carrier})
    self.PickupCargo[Carrier] = nil
 end
-
-
-
 

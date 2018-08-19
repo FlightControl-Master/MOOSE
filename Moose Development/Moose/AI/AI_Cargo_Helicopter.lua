@@ -20,7 +20,8 @@
 -- @field #AI_CARGO_HELICOPTER
 AI_CARGO_HELICOPTER = {
   ClassName = "AI_CARGO_HELICOPTER",
-  Coordinate = nil -- Core.Point#COORDINATE,
+  Coordinate = nil, -- Core.Point#COORDINATE,
+  Helicopter_Cargo = {},
 }
 
 AI_CARGO_QUEUE = {}
@@ -148,7 +149,6 @@ function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
     local Desc = HelicopterUnit:GetDesc()
     self:F({Desc=Desc})
     HelicopterUnit:SetCargoBayWeightLimit( Desc.massMax - ( Desc.massEmpty + Desc.fuelMassMax ) )
-    --Airplane:SetCargoBayVolumeLimit( 15 )
   end
   
   self.Relocating = false
@@ -398,11 +398,22 @@ function AI_CARGO_HELICOPTER:onbeforeLoad( Helicopter, From, Event, To)
           if Cargo:IsUnLoaded() and not Cargo:IsDeployed() then
             if Cargo:IsInLoadRadius( HelicopterUnit:GetCoordinate() ) then
               self:F( { "In radius", HelicopterUnit:GetName() } )
-              --Cargo:Ungroup()
-              Cargo:Board( HelicopterUnit, 25 )
-              self:__Board( 1, Cargo )
-              Boarding = true
-              break
+              
+              local CargoBayFreeWeight = HelicopterUnit:GetCargoBayFreeWeight()
+              local CargoWeight = Cargo:GetWeight()
+              
+              self:F({CargoBayFreeWeight=CargoBayFreeWeight})
+  
+              -- Only when there is space within the bay to load the next cargo item!
+              if CargoBayFreeWeight > CargoWeight then --and CargoBayFreeVolume > CargoVolume then
+              
+                --Cargo:Ungroup()
+                Cargo:Board( HelicopterUnit, 25 )
+                self:__Board( 1, Cargo )
+                self.Helicopter_Cargo[HelicopterUnit] = Cargo
+                Boarding = true
+                break
+              end
             end
           end
         end
@@ -438,10 +449,13 @@ function AI_CARGO_HELICOPTER:onafterBoard( Helicopter, From, Event, To, Cargo )
               local CargoBayFreeWeight = HelicopterUnit:GetCargoBayFreeWeight()
               local CargoWeight = Cargo:GetWeight()
 
+              self:F({CargoBayFreeWeight=CargoBayFreeWeight})
+
               -- Only when there is space within the bay to load the next cargo item!
               if CargoBayFreeWeight > CargoWeight then --and CargoBayFreeVolume > CargoVolume then
                 Cargo:Board( HelicopterUnit, 25 )
                 self:__Board( 10, Cargo )
+                self.Helicopter_Cargo[HelicopterUnit] = Cargo
                 return
               end
             end
@@ -453,6 +467,36 @@ function AI_CARGO_HELICOPTER:onafterBoard( Helicopter, From, Event, To, Cargo )
   end
   
 end
+
+
+--- On before Loaded event.
+-- @param #AI_CARGO_HELICOPTER self
+-- @param Wrapper.Group#GROUP Helicopter
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @return #boolean Cargo loaded.
+function AI_CARGO_HELICOPTER:onbeforeLoaded( Helicopter, From, Event, To, Cargo )
+  self:F( { Helicopter, From, Event, To } )
+
+  local Loaded = true
+
+  if Helicopter and Helicopter:IsAlive() then
+    for HelicopterUnit, Cargo in pairs( self.Helicopter_Cargo ) do
+      local Cargo = Cargo -- Cargo.Cargo#CARGO
+      self:F( { IsLoaded = Cargo:IsLoaded(), IsDestroyed = Cargo:IsDestroyed(), Cargo:GetName(), Helicopter:GetName() } )
+      if not Cargo:IsLoaded() and not Cargo:IsDestroyed() then
+        Loaded = false
+      end
+    end
+  end
+  
+  return Loaded
+  
+end
+
+
+
 
 --- On after Loaded event. Check if cargo is loaded.
 -- @param #AI_CARGO_HELICOPTER self

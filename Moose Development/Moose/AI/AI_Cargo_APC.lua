@@ -198,14 +198,41 @@ function AI_CARGO_APC:New( APC, CargoSet, CombatRadius )
   
   for _, APCUnit in pairs( APC:GetUnits() ) do
     local Desc = APCUnit:GetDesc()
-    self:F({Desc=Desc})
---    local Box = CargoUnit:GetBoundingBox()
+
     local VolumeUnit = ( Desc.box.max.x - Desc.box.min.x ) * ( Desc.box.max.y - Desc.box.min.y ) * ( Desc.box.max.z - Desc.box.min.z ) 
-    self:F({VolumeUnit=VolumeUnit})
-    local CargoBayWeightLimit = 1250
+    
+    local Weights = { 
+      ["M1126 Stryker ICV"] = 9,
+      ["M-113"] = 9,
+      ["AAV7"] = 25,
+      ["M2A1_halftrack"] = 9,
+      ["BMD-1"] = 9,
+      ["BMP-1"] = 8,
+      ["BMP-2"] = 7,
+      ["BMP-3"] = 8,
+      ["Boman"] = 25,
+      ["BTR-80"] = 9,
+      ["BTR_D"] = 12,
+      ["Cobra"] = 8,
+      ["LAV-25"] = 6,
+      ["M-2 Bradley"] = 6,
+      ["M1043 HMMWV Armament"] = 4,
+      ["M1045 HMMWV TOW"] = 4,
+      ["M1126 Stryker ICV"] = 9,
+      ["M1134 Stryker ATGM"] = 9,
+      ["Marder"] = 6,
+      ["MCV-80"] = 9,
+      ["MLRS FDDM"] = 4,
+      ["MTLB"] = 25,
+      ["TPZ"] = 10,
+    }
+    
+    local CargoBayWeightLimit = ( Weights[Desc.typeName] or 0 ) * 70
+    
     APCUnit:SetCargoBayWeightLimit( CargoBayWeightLimit )
-    self:F({CargoBayWeightLimit=CargoBayWeightLimit})
     --Airplane:SetCargoBayVolumeLimit( 15 )
+
+    self:F( {TypeName = Desc.typeName, Desc = Desc, WeightLimit = CargoBayWeightLimit } )
   end
   
   self.Transporting = false
@@ -434,16 +461,25 @@ function AI_CARGO_APC:onbeforeLoad( APC, From, Event, To )
         if Cargo:IsUnLoaded() and not Cargo:IsDeployed() then
           if Cargo:IsInLoadRadius( APCUnit:GetCoordinate() ) then
             self:F( { "In radius", APCUnit:GetName() } )
-            APC:RouteStop()
-            --Cargo:Ungroup()
-            Cargo:Board( APCUnit, 25 )
-            self:__Board( 1, Cargo )
+            
+            local CargoBayFreeWeight = APCUnit:GetCargoBayFreeWeight()
+            local CargoWeight = Cargo:GetWeight()
+            
+            self:F({CargoBayFreeWeight=CargoBayFreeWeight})
 
-            -- So now this APCUnit has Cargo that is being loaded.
-            -- This will be used further in the logic to follow and to check cargo status.
-            self.APC_Cargo[APCUnit] = Cargo
-            Boarding = true
-            break
+            -- Only when there is space within the bay to load the next cargo item!
+            if CargoBayFreeWeight > CargoWeight then --and CargoBayFreeVolume > CargoVolume then
+              APC:RouteStop()
+              --Cargo:Ungroup()
+              Cargo:Board( APCUnit, 25 )
+              self:__Board( 1, Cargo )
+  
+              -- So now this APCUnit has Cargo that is being loaded.
+              -- This will be used further in the logic to follow and to check cargo status.
+              self.APC_Cargo[APCUnit] = Cargo
+              Boarding = true
+              break
+            end
           end
         end
       end
@@ -548,10 +584,12 @@ function AI_CARGO_APC:onafterUnload( APC, From, Event, To, Deployed )
       local APCUnit = APCUnit -- Wrapper.Unit#UNIT
       APC:RouteStop()
       for _, Cargo in pairs( APCUnit:GetCargo() ) do
-        Cargo:UnBoard()
-        Cargo:SetDeployed( true )
-        self:__Unboard( 10, Cargo, Deployed )
-      end 
+        if Cargo:IsLoaded() then
+          Cargo:UnBoard()
+          Cargo:SetDeployed( true )
+          self:__Unboard( 10, Cargo, Deployed )
+        end 
+      end
     end
   end
   
