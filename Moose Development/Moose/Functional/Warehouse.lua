@@ -210,7 +210,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.2.2w"
+WAREHOUSE.version="0.2.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -233,7 +233,7 @@ WAREHOUSE.version="0.2.2w"
 -- TODO: Handle cases for aircraft carriers and other ships. Place warehouse on carrier possible? On others probably not - exclude them?
 -- TODO: Handle cargo crates.
 -- TODO: Add general message function for sending to coaliton or debug.
--- TODO: Use RAT for routing air units. Should be possible but might need some modifications of RAT, e.g. explit spawn place. But flight plan should be better.
+-- NOGO: Use RAT for routing air units. Should be possible but might need some modifications of RAT, e.g. explit spawn place. But flight plan should be better.
 -- TODO: Can I make a request with specific assets? E.g., once delivered, make a request for exactly those assests that were in the original request.
 -- TODO: Handle the case when units of a group die during the transfer. Adjust template?! See Grouping in SPAWN.
 
@@ -365,14 +365,14 @@ function WAREHOUSE:New(warehouse, alias)
   --- Trigger the FSM event "AddAsset". Add an airplane group to the warehouse stock.
   -- @function [parent=#WAREHOUSE] AddAsset
   -- @param #WAREHOUSE self
-  -- @param #string templategroupname Name of the late activated template group as defined in the mission editor.
+  -- @param Wrapper.Group#GROUP group Group to be added as new asset.
   -- @param #number ngroups Number of groups to add to the warehouse stock. Default is 1.
 
   --- Trigger the FSM event "AddAsset" with a delay. Add an airplane group to the warehouse stock.
   -- @function [parent=#WAREHOUSE] __AddAsset
   -- @param #WAREHOUSE self
   -- @param #number delay Delay in seconds.
-  -- @param #string templategroupname Name of the late activated template group as defined in the mission editor.
+  -- @param Wrapper.Group#GROUP group Group to be added as new asset.
   -- @param #number ngroups Number of groups to add to the warehouse stock. Default is 1.
 
 
@@ -704,6 +704,7 @@ end
 -- @param #string To To state.
 function WAREHOUSE:onafterStatus(From, Event, To)
   self:E(self.wid..string.format("Checking status of warehouse %s.", self.alias))
+  env.info(string.format("FF number of global assets = %d, current asset id = %d", #WAREHOUSE.db.Assets, WAREHOUSE.db.AssetID))
   
   -- Print status.
   self:_DisplayStatus()
@@ -712,8 +713,8 @@ function WAREHOUSE:onafterStatus(From, Event, To)
   self:_CheckConquered()
 
   -- Print queue.
-  self:_PrintQueue(self.queue, "Queue:")
-  self:_PrintQueue(self.pending, "Pending:")
+  self:_PrintQueue(self.queue, "Queue waiting")
+  self:_PrintQueue(self.pending, "Queue pending")
   
   -- Check if requests are valid and remove invalid one.
   self:_CheckRequestConsistancy(self.queue)
@@ -755,24 +756,38 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups)
   -- Set default.
   local n=ngroups or 1
   
+  -- Handle case where just a string is passed.
+  if type(group)=="string" then
+    group=GROUP:FindByName(group)
+  end
+  
+  env.info(string.format("Adding asset group %s", group:GetName()))
+  
   if group then
     
     -- Get unique ids from group name.
     local wid,aid,rid=self:_GetIDsFromGroup(group)
   
     -- Check if this is an known or a new asset group.
-    
     if aid~=nil and wid~=nil then
+      env.info(string.format("Adding known! asset group %s with id %d", group:GetName(), aid))
+    
       -- We got a warehouse and asset id ==> this is an "old" group.
       local asset=self:_FindAssetInDB(group)
+      
+      env.info(string.format("Adding known! asset group %s with id %d", group:GetName(), aid))
       
       -- Note the group is only added once, i.e. the ngroups parameter is ignored here.
       -- This is because usually these request comes from an asset that has been transfered from another warehouse and hence should only be added once.
       if asset~=nil then
+        env.info(string.format("Adding new asset to stock. asset id = %d, attribute = %s", asset.uid, asset.attribute))
         table.insert(self.stock, asset)
+      else
+        env.error("ERROR known asset could not be found in global warehouse db!")
       end
       
     else
+      env.info("Asset unkonwn ==> registering in DB!")
     
       -- This is a group that is not in the db yet. Add it n times.
       local assets=self:_RegisterAsset(group, n)
@@ -787,6 +802,7 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups)
     -- TODO: This causes a problem, when a completely new asset is added, i.e. not from a template group.
     -- Need to create a "zombie" template group maybe?
     if group:IsAlive()==true then
+      env.info("FF destorying group "..group:GetName())
       group:Destroy()
     end
     
@@ -799,11 +815,14 @@ end
 -- @param Wrapper.Group#GROUP group The group from which it is assumed that it has a registered asset.
 -- @return #WAREHOUSE.Assetitem The asset from the data base or nil if it could not be found.
 function WAREHOUSE:_FindAssetInDB(group)
+
   -- Get unique ids from group name.
   local wid,aid,rid=self:_GetIDsFromGroup(group)
   
   if aid~=nil then
+  
     local asset=WAREHOUSE.db.Assets[aid]
+    self:E({asset=asset})
     if asset==nil then
       self:E(string.format("ERROR: Asset for group %s not found in the data base!", group:GetName()))
     end
@@ -827,9 +846,9 @@ function WAREHOUSE:_RegisterAsset(group, ngroups)
   -- Get the size of an object.
   local function _GetObjectSize(DCSdesc)
     if DCSdesc.box then
-      local x=DCSdesc.box.max.x+math.abs(DCSdesc.box.min.x)
+      local x=DCSdesc.box.max.x+math.abs(DCSdesc.box.min.x)  --length
       local y=DCSdesc.box.max.y+math.abs(DCSdesc.box.min.y)  --height
-      local z=DCSdesc.box.max.z+math.abs(DCSdesc.box.min.z)
+      local z=DCSdesc.box.max.z+math.abs(DCSdesc.box.min.z)  --width
       return math.max(x,z), x , y, z
     end
     return 0,0,0,0
@@ -876,20 +895,13 @@ function WAREHOUSE:_RegisterAsset(group, ngroups)
     asset.DCSdesc=DCSdesc
     
     if i==1 then
-      env.info(string.format("New asset for warehouse %s:", self.alias))
-      env.info(string.format("Group name   = %s", group:GetName()))
-      env.info(string.format("Display name = %s", DCSdisplay))
-      env.info(string.format("Category     = %s", DCScategory))
-      env.info(string.format("Type         = %s", DCStype))
-      env.info(string.format("Size  max    = %s", asset.size))
-      env.info(string.format("Speed max    = %s km/h", SpeedMax))
-      env.info(string.format("Range min    = %s m", RangeMin))
-      self:E({fullassetdesc=DCSdesc})      
+      self:_AssetItemInfo(asset)
     end
     
     -- Add asset to global db.
-    table.insert(WAREHOUSE.db.Assets, {uid=asset.uid, asset=asset})
+    WAREHOUSE.db.Assets[asset.uid]=asset
     
+    -- Add asset to the table that is retured.
     table.insert(assets,asset)
   end
 
@@ -900,7 +912,19 @@ end
 -- @param #WAREHOUSE self
 -- @param #WAREHOUSE.Assetitem asset
 function WAREHOUSE:_AssetItemInfo(asset)
-
+  -- Info about asset:
+  local text=string.format("\nNew asset with id=%d for warehouse %s:\n", asset.uid, self.alias)
+  text=text..string.format("Template name = %s\n", asset.templatename)
+  text=text..string.format("Unit type     = %s\n", asset.unittype)
+  text=text..string.format("Attribute     = %s\n", asset.attribute)
+  text=text..string.format("Category      = %d\n", asset.category)
+  text=text..string.format("Units #       = %d\n", asset.nunits)
+  text=text..string.format("Size  max     = %5.2f m\n", asset.size)
+  text=text..string.format("Speed max     = %5.2f km/h\n", asset.speedmax)
+  text=text..string.format("Range max     = %5.2f km\n", asset.range/1000)
+  self:E(self.wid..text)
+  self:E({DCSdesc=asset.DCSdesc})
+  self:E({Template=asset.template})
 end
 
 --- On after "AddAsset" event. Add a group to the warehouse stock. If the group is alive, it is destroyed.
@@ -1871,12 +1895,13 @@ function WAREHOUSE:onafterSelfRequest(From, Event, To, groupset, request)
     --group:SmokeGreen()
   end
   
-  -- Remove pending request unless warehouse is under attack in which case we assume
+  -- Add a "defender request" to be able to despawn all assets once defeated.
   if self:IsAttacked() then
-    self.defenderrequest=request
-    self:_DeleteQueueItem(request, self.pending)
+    self.defenderrequest=request    
   end
   
+  -- Remove pending request.
+  self:_DeleteQueueItem(request, self.pending)
 end
 
 --- On after "Attacked" event. Warehouse is under attack by an another coalition.
@@ -1899,13 +1924,30 @@ end
 -- @param #string To To state.
 function WAREHOUSE:onafterDefeated(From, Event, To)
   self:E(self.wid..string.format("Attack was defeated!"))
-  --TODO Put all ground assets back in stock? How to remember which? Request id. Don't delete from pending?
-  local request=self.defenderrequest --#WAREHOUSE.Pendingitem
-  for _,group in pairs(request.cargogroupset:GetSetObjects()) do
-    -- Add assets back to stock.
-    self:__AddAsset(1,group)
+
+  if self.defenderrequest then
+    
+    -- Get all assets that were deployed for defending the warehouse.
+    local request=self.defenderrequest --#WAREHOUSE.Pendingitem
+  
+    -- Route defenders back to warehoue (for visual reasons only) and put them back into stock.  
+    for _,_group in pairs(request.cargogroupset:GetSetObjects()) do
+      local group=_group --Wrapper.Group#GROUP
+      
+      -- Get max speed of group and route it back slowly to the warehouse.
+      local speed=group:GetSpeedMax()
+      if group:IsGround() and speed>1 then
+        group:RouteGroundTo(self.coordinate, speed*0.3)
+      end 
+      
+      -- Add asset group back to stock after 60 seconds.
+      self:__AddAsset(60, group)
+    end
+    
+    -- Set defender request back to nil. 
+    self.defenderrequest=nil
+    
   end
-  self.defenderrequest=nil
 end
 
 --- On after "Captured" event. Warehouse has been captured by another coalition.
@@ -2139,13 +2181,13 @@ end
 -- @param #WAREHOUSE self
 -- @param Core.Event#EVENTDATA EventData Event data.
 function WAREHOUSE:_OnEventBirth(EventData)
-  self:T3(self.wid..string.format("Warehouse %s captured event birth!",self.alias))
+  self:T3(self.wid..string.format("Warehouse %s captured event birth!", self.alias))
   
-  if EventData and EventData.id==world.event.S_EVENT_BIRTH then
-    if EventData.IniGroup then
-      local group=EventData.IniGroup
-      --local asset=self:_FindAssetInDB(group)
-      --if asset.
+  if EventData and EventData.IniGroup then
+    local group=EventData.IniGroup
+    local wid,aid,rid=self:_GetIDsFromGroup(group)
+    if wid==self.uid then
+      self:E(self.wid..string.format("Warehouse %s captured event birth of its asset unit %s", self.alias, EventData.IniUnitName))
     end
   end
 end
@@ -2255,6 +2297,7 @@ function WAREHOUSE:_CheckConquered()
   
   -- Scan units in zone.
   --TODO: need to check if scan radius does what it should!
+  -- It seems to return units that are further away than the radius.
   local gotunits,_,_,units,_,_=coord:ScanObjects(radius, true, false, false)
   
   local Nblue=0
@@ -2270,13 +2313,19 @@ function WAREHOUSE:_CheckConquered()
     for _,_unit in pairs(units) do
       local unit=_unit --Wrapper.Unit#UNIT
       
-      -- Filter only groud units.
-      if unit:IsGround() then
+      local distance=coord:Get2DDistance(unit:GetCoordinate())
+      
+      -- Filter only alive groud units. Also check distance again, because the scan routine might give some larger distances.
+      if unit:IsGround() and unit:IsAlive() and distance<= radius then
       
         -- Get coalition and country.
         local _coalition=unit:GetCoalition()
         local _country=unit:GetCountry()
         
+        -- Debug info.
+        self:E(self.wid..string.format("Unit %s in warehouse zone of radius=%d m. Coalition=%d, country=%d. Distance = %d m.",unit:GetName(), radius,_coalition,_country, distance))
+        
+        -- Add up units for each side.
         if _coalition==coalition.side.BLUE then
           Nblue=Nblue+1
           CountryBlue=_country
@@ -2809,12 +2858,13 @@ function WAREHOUSE:_GetParkingForAssets(assetlist, parkingdata)
     local nunits=#group:GetUnits()
     local terminal=self:_GetTerminal(asset.attribute)
     
-
-    env.info("asset name      = "..tostring(asset.templatename))
-    env.info("asset attribute = "..tostring(asset.attribute))
-    env.info("terminal type   = "..tostring(terminal))
-    env.info("parking spots   = "..tostring(nunits))
-    env.info("parking spots   = "..tostring(#parkingdata))
+    -- Debug info
+    env.info(string.format("Parking spot search:"))
+    env.info(string.format("Asset name      = %s", asset.templatename))
+    env.info(string.format("Asset attribute = %s", asset.attribute))
+    env.info(string.format("Terminal type   = %d", terminal))
+    env.info(string.format("Unit number     = %d", nunits))
+    env.info(string.format("Parking spots   = %d", #parkingdata))
     
     -- Find appropiate parking spots for this group.
     local spots=self.airbase:FindFreeParkingSpotForAircraft(group, terminal, nil, nil, nil, nil, nil, nil, parkingdata)
@@ -3173,13 +3223,21 @@ end
 -- @param #table queue Queue to print.
 -- @param #string name Name of the queue for info reasons.
 function WAREHOUSE:_PrintQueue(queue, name)
-  self:E(self.wid..name)
+  local text=string.format("%s at %s: ",name, self.alias)
   for _,_qitem in ipairs(queue) do
     local qitem=_qitem --#WAREHOUSE.Queueitem
-    local text=self.wid..string.format("UID=%d, Prio=%d, Requestor=%s, Airbase=%s (category=%d), Descriptor: %s=%s, Nasssets=%s, Transport=%s, Ntransport=%d",
-    qitem.uid, qitem.prio, qitem.warehouse.alias, qitem.airbase:GetName(),qitem.category, qitem.assetdesc,tostring(qitem.assetdescval), tostring(qitem.nasset),qitem.transporttype,qitem.ntransport)
-    self:E(text)
+    -- Set airbase:
+    local airbasename="none"
+    if qitem.airbase then
+      airbasename=qitem.airbase:GetName()
+    end      
+    local text=text..string.format("\nUID=%d, Prio=%d, Requestor=%s, Airbase=%s (category=%d), Descriptor: %s=%s, Nasssets=%s, Transport=%s, Ntransport=%d.",
+    qitem.uid, qitem.prio, qitem.warehouse.alias, airbasename, qitem.category, qitem.assetdesc,tostring(qitem.assetdescval), tostring(qitem.nasset), qitem.transporttype, qitem.ntransport)
   end
+  if #queue==0 then
+    text=text.."Empty."
+  end
+  self:E(self.wid..text)
 end
 
 --- Display status of warehouse.
@@ -3282,7 +3340,7 @@ function WAREHOUSE:_GetFlightplan(asset, departure, destination)
   local Range=asset.range
   local _category=asset.category
   local ceiling=asset.DCSdesc.Hmax
-  local Vymax=asset.DCSDesc.VyMax
+  local Vymax=asset.DCSdesc.VyMax
     
   -- Max cruise speed 90% of max speed.
   local VxCruiseMax=0.90*Vmax
