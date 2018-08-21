@@ -38,7 +38,7 @@
 -- @field #number uid Unit identifier of the warehouse. Derived from the associated airbase.
 -- @field #number markerid ID of the warehouse marker at the airbase.
 -- @field #number dTstatus Time interval in seconds of updating the warehouse status and processing new events. Default 30 seconds.
--- @field #number assetid Unique id of asset items in stock. Essentially a running number starting at one and incremented when a new asset is added.
+-- @field #number queueid Unit id of each request in the queue. Essentially a running number starting at one and incremented when a new request is added.
 -- @field #table stock Table holding all assets in stock. Table entries are of type @{#WAREHOUSE.Assetitem}.
 -- @field #table queue Table holding all queued requests. Table entries are of type @{#WAREHOUSE.Queueitem}.
 -- @field #table pending Table holding all pending requests, i.e. those that are currently in progress. Table entries are of type @{#WAREHOUSE.Pendingitem}.
@@ -105,7 +105,6 @@ WAREHOUSE = {
   uid         =   nil,
   markerid    =   nil,
   dTstatus    =    30,
-  assetid     =     0,
   queueid     =     0,
   stock       =    {},
   queue       =    {},
@@ -210,7 +209,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.2.3"
+WAREHOUSE.version="0.2.3w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -673,8 +672,7 @@ function WAREHOUSE:onafterStop(From, Event, To)
   self:UnHandleEvent(EVENTS.BaseCaptured)
   
   -- Clear all pending schedules.
-  self.CallScheduler:Clear()
-  
+  self.CallScheduler:Clear()  
 end
 
 --- On after "Pause" event. Pauses the warehouse, i.e. no requests are processed. However, new requests and new assets can be added in this state.
@@ -703,8 +701,8 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function WAREHOUSE:onafterStatus(From, Event, To)
-  self:E(self.wid..string.format("Checking status of warehouse %s.", self.alias))
-  env.info(string.format("FF number of global assets = %d, current asset id = %d", #WAREHOUSE.db.Assets, WAREHOUSE.db.AssetID))
+  self:E(self.wid..string.format("Checking status of warehouse %s. Current FSM state %s. Global warehouse asssets = %d.", self.alias, self:GetState(), #WAREHOUSE.db.Assets))
+  --env.info(string.format("FF number of global assets = %d, current asset id = %d", #WAREHOUSE.db.Assets, WAREHOUSE.db.AssetID))
   
   -- Print status.
   self:_DisplayStatus()
@@ -713,14 +711,15 @@ function WAREHOUSE:onafterStatus(From, Event, To)
   self:_CheckConquered()
 
   -- Print queue.
-  self:_PrintQueue(self.queue, "Queue waiting")
-  self:_PrintQueue(self.pending, "Queue pending")
+  self:_PrintQueue(self.queue, "Queue waiting - before request")
+  self:_PrintQueue(self.pending, "Queue pending - before request")
   
   -- Check if requests are valid and remove invalid one.
   self:_CheckRequestConsistancy(self.queue)
     
   -- If warehouse is running than requests can be processed.
   if self:IsRunning() or self:IsAttacked() then
+  
     -- Check queue and handle requests if possible.
     local request=self:_CheckQueue()
 
@@ -728,6 +727,11 @@ function WAREHOUSE:onafterStatus(From, Event, To)
     if request then
       self:Request(request)
     end
+    
+    -- Print queue after processing requests.
+    self:_PrintQueue(self.queue, "Queue waiting - after request")
+    self:_PrintQueue(self.pending, "Queue pending - after request")
+    
   end
 
   -- Update warhouse marker on F10 map.
@@ -761,7 +765,7 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups)
     group=GROUP:FindByName(group)
   end
   
-  env.info(string.format("Adding asset group %s", group:GetName()))
+  self:E(string.format("Adding %d assets of group %s.", n, group:GetName()))
   
   if group then
     
@@ -770,24 +774,20 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups)
   
     -- Check if this is an known or a new asset group.
     if aid~=nil and wid~=nil then
-      env.info(string.format("Adding known! asset group %s with id %d", group:GetName(), aid))
     
       -- We got a warehouse and asset id ==> this is an "old" group.
       local asset=self:_FindAssetInDB(group)
       
-      env.info(string.format("Adding known! asset group %s with id %d", group:GetName(), aid))
-      
       -- Note the group is only added once, i.e. the ngroups parameter is ignored here.
       -- This is because usually these request comes from an asset that has been transfered from another warehouse and hence should only be added once.
       if asset~=nil then
-        env.info(string.format("Adding new asset to stock. asset id = %d, attribute = %s", asset.uid, asset.attribute))
+        self:E(string.format("Adding new asset with id = %d, attribute = %s to warehouse stock.", asset.uid, asset.attribute))
         table.insert(self.stock, asset)
       else
         env.error("ERROR known asset could not be found in global warehouse db!")
       end
       
     else
-      env.info("Asset unkonwn ==> registering in DB!")
     
       -- This is a group that is not in the db yet. Add it n times.
       local assets=self:_RegisterAsset(group, n)
@@ -878,7 +878,6 @@ function WAREHOUSE:_RegisterAsset(group, ngroups)
     local asset={} --#WAREHOUSE.Assetitem
     
     -- Increase asset unique id counter.
-    self.assetid=self.assetid+1
     WAREHOUSE.db.AssetID=WAREHOUSE.db.AssetID+1
     
     -- Set parameters.
@@ -1036,12 +1035,7 @@ function WAREHOUSE:_SpawnAssetAircraft(asset, request, parking)
       spawnpoint.helipadId  = nil      
     end
 
-    -- Get the right terminal type for this kind of aircraft.
-    --local terminaltype=self:_GetTerminal(asset.attribute)
-    
-    -- Get parking data.
-    --local parking=self.airbase:GetFreeParkingSpotsTable(terminaltype)
-    
+    -- Check enough parking spots.
     if AirbaseCategory == Airbase.Category.HELIPAD or AirbaseCategory == Airbase.Category.SHIP then
       --TODO Figure out what's necessary in this case.
     
@@ -1421,7 +1415,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   -- Now we try to find all parking spots for all cargo groups in advance. Due to the for loop, the parking spots do not get updated while spawning.
   local Parking={}
   if  _transportcategory==Group.Category.AIRPLANE or _transportcategory==Group.Category.HELICOPTER then
-    Parking=self:_GetParkingForAssets(_assetstock)    
+    Parking=self:_FindParkingForAssets(self.airbase,_assetstock)
   end  
   
   -- Transport assets table.
@@ -1440,12 +1434,9 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
       -- Spawn with ALIAS here or DCS crashes!
       --local _alias=string.format("%s_%d", _assetitem.templatename,_assetitem.id)
       local _alias=self:_Alias(_assetitem, Request)
-
-      -- Spawn plane at airport in uncontrolled state.
-      local _takeoff=SPAWN.Takeoff.Cold
-      --local spawn=SPAWN:NewWithAlias(_assetitem.templatename,_alias)
-      local spawn=SPAWN:NewFromTemplate(_assetitem.template,_assetitem.templatename,_alias):InitCoalition(self.coalition):InitCountry(self.country)
-      local spawngroup=spawn:InitUnControlled(true):SpawnAtAirbase(self.airbase,_takeoff, nil, nil, false, _parking)
+      
+      -- Spawn plane at airport in uncontrolled state. 
+      local spawngroup=self:_SpawnAssetAircraft(_assetitem, Pending, Parking[_assetitem.uid])
 
       if spawngroup then
         -- Set state of warehouse so we can retrieve it later.
@@ -1474,17 +1465,12 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
       -- Get stock item.
       local _assetitem=_assetstock[i] --#WAREHOUSE.Assetitem
-      local _parking=Parking[i]
       
       -- Spawn with ALIAS here or DCS crashes!
-      --local _alias=string.format("%s_%d", _assetitem.templatename,_assetitem.id)
       local _alias=self:_Alias(_assetitem, Request)
 
-      -- Spawn helo at airport.
-      local _takeoff=SPAWN.Takeoff.Hot
-      --local spawn=SPAWN:NewWithAlias(_assetitem.templatename,_alias)
-      local spawn=SPAWN:NewFromTemplate(_assetitem.template,_assetitem.templatename,_alias):InitCoalition(self.coalition):InitCountry(self.country)
-      local spawngroup=spawn:InitUnControlled(false):SpawnAtAirbase(self.airbase,_takeoff, nil, nil, false, _parking)
+      -- Spawn plane at airport in uncontrolled state. 
+      local spawngroup=self:_SpawnAssetAircraft(_assetitem, Pending, Parking[_assetitem.uid])      
 
       if spawngroup then
         -- Set state of warehouse so we can retrieve it later.
@@ -1523,10 +1509,8 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
       -- Spawn with ALIAS here or DCS crashes!
       local _alias=self:_Alias(_assetitem, Request)
 
-      -- Spawn plane at airport in uncontrolled state.
-      --local spawn=SPAWN:NewWithAlias(_assetitem.templatename,_alias)
-      local spawn=SPAWN:NewFromTemplate(_assetitem.template,_assetitem.templatename,_alias):InitCoalition(self.coalition):InitCountry(self.country)
-      local spawngroup=spawn:SpawnFromCoordinate(self.spawnzone:GetRandomCoordinate())
+      -- Spawn ground asset.      
+      local spawngroup=self:_SpawnAssetGround(_assetitem, Request)
 
       if spawngroup then
         -- Set state of warehouse so we can retrieve it later.
@@ -1600,7 +1584,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     Carrier:SmokeRed()
     
     -- Add carrier back to warehouse stock. Actual unit is destroyed.
-    warehouse:AddAsset(Carrier, 1)
+    warehouse:AddAsset(Carrier)
     
   end  
 
@@ -1643,7 +1627,8 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
   -- Now we try to find all parking spots for all cargo groups in advance. Due to the for loop, the parking spots do not get updated while spawning.
   local Parking={}
   if  _cargocategory==Group.Category.AIRPLANE or _cargocategory==Group.Category.HELICOPTER then
-    Parking=self:_GetParkingForAssets(_assetstock) 
+    Parking=self:_FindParkingForAssets(self.airbase,_assetstock)
+    --Parking=self:_GetParkingForAssets(_assetstock) 
   end
   
   -- Spawn aircraft in uncontrolled state if request comes from the same warehouse.
@@ -1665,24 +1650,15 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
 
     -- Get stock item.
     local _assetitem=_assetstock[i] --#WAREHOUSE.Assetitem
-
-    -- Find a random point within the spawn zone.
-    local spawncoord=self.spawnzone:GetRandomCoordinate()    
     
     -- Alias of the group.
     local _alias=self:_Alias(_assetitem, Request)
-    
-    -- Spawn object. Spawn with ALIAS here or DCS crashes!
-    --local _spawn=SPAWN:NewFromTemplate(_assetitem.template,_assetitem.templatename,_alias):InitCoalition(self.coalition):InitCountry(self.country)
-    --local _spawn=SPAWN:NewWithAlias(_assetitem.templatename,_alias):InitCoalition(self.coalition):InitCountry(self.country):InitUnControlled(UnControlled):InitAIOnOff(AIOnOff)
 
-    local _group=nil --Wrapper.Group#GROUP    
-    local _attribute=_assetitem.attribute
-      
+    -- Spawn an asset group.
+    local _group=nil --Wrapper.Group#GROUP          
     if _assetitem.category==Group.Category.GROUND then
     
       -- Spawn ground troops.      
-      --_group=_spawn:SpawnFromCoordinate(spawncoord)
       _group=self:_SpawnAssetGround(_assetitem, Request)
       
     elseif _assetitem.category==Group.Category.AIRPLANE or _assetitem.category==Group.Category.HELICOPTER then
@@ -1690,7 +1666,6 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
       --TODO: spawn only so many groups as there are parking spots. Adjust request and create a new one with the reduced number!
     
       -- Spawn air units.
-      --_group=_spawn:SpawnAtAirbase(self.airbase, SPAWN.Takeoff.Cold, nil, nil, true, Parking[i])
       _group=self:_SpawnAssetAircraft(_assetitem, Request, Parking[i])
       
     elseif _assetitem.category==Group.Category.TRAIN then
@@ -1708,7 +1683,7 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
       _groupset:AddGroup(_group)
       table.insert(_assets, _assetitem)
     else
-      self:E(self.wid.."ERROR: cargo asset could not be spawned!")
+      self:E(self.wid.."ERROR: Cargo asset could not be spawned!")
     end
     
   end
@@ -1792,7 +1767,7 @@ function WAREHOUSE:onafterArrived(From, Event, To, group)
     end
     
     -- Move asset from pending queue into new warehouse.
-    request.warehouse:__AddAsset(60, group, 1)
+    request.warehouse:__AddAsset(60, group)
     
     -- All cargo delivered.
     if request and ncargo==0 then
@@ -1913,7 +1888,8 @@ end
 -- @param DCS#country.id Country which is attacking the warehouse.
 function WAREHOUSE:onafterAttacked(From, Event, To, Coalition, Country)
   self:E(self.wid..string.format("Our warehouse is under attack!"))
-  --TODO: Spawn all ground units in the spawnzone?
+  
+  -- Spawn all ground units in the spawnzone?
   self:AddRequest(self, WAREHOUSE.Descriptor.CATEGORY, Group.Category.GROUND, "all", nil, nil , 0)
 end
 
@@ -1967,6 +1943,17 @@ function WAREHOUSE:onafterCaptured(From, Event, To, Coalition, Country)
   self.airbase=nil
   self.category=-1
   
+end
+
+--- On after "Destroyed" event. Warehouse was destroyed. Service is stopped.
+-- @param #WAREHOUSE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function WAREHOUSE:onafterDestroyed(From, Event, To)
+  self:E(self.wid..string.format("Our warehouse was destroyed!"))
+  -- Stop warehouse FSM.
+  self:Stop()
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2187,7 +2174,7 @@ function WAREHOUSE:_OnEventBirth(EventData)
     local group=EventData.IniGroup
     local wid,aid,rid=self:_GetIDsFromGroup(group)
     if wid==self.uid then
-      self:E(self.wid..string.format("Warehouse %s captured event birth of its asset unit %s", self.alias, EventData.IniUnitName))
+      self:E(self.wid..string.format("Warehouse %s captured event birth of its asset unit %s.", self.alias, EventData.IniUnitName))
     end
   end
 end
@@ -2196,21 +2183,45 @@ end
 -- @param #WAREHOUSE self
 -- @param Core.Event#EVENTDATA EventData Event data.
 function WAREHOUSE:_OnEventEngineStartup(EventData)
-  self:E(self.wid..string.format("Warehouse %s captured event engine startup!",self.alias))
+  self:T3(self.wid..string.format("Warehouse %s captured event engine startup!",self.alias))
+
+  if EventData and EventData.IniGroup then
+    local group=EventData.IniGroup
+    local wid,aid,rid=self:_GetIDsFromGroup(group)
+    if wid==self.uid then
+      self:E(self.wid..string.format("Warehouse %s captured event engine startup of its asset unit %s.", self.alias, EventData.IniUnitName))
+    end
+  end  
 end
 
 --- Warehouse event handling function.
 -- @param #WAREHOUSE self
 -- @param Core.Event#EVENTDATA EventData Event data.
 function WAREHOUSE:_OnEventTakeOff(EventData)
-  self:E(self.wid..string.format("Warehouse %s captured event takeoff!",self.alias))
+  self:T3(self.wid..string.format("Warehouse %s captured event takeoff!",self.alias))
+  
+  if EventData and EventData.IniGroup then
+    local group=EventData.IniGroup
+    local wid,aid,rid=self:_GetIDsFromGroup(group)
+    if wid==self.uid then
+      self:E(self.wid..string.format("Warehouse %s captured event takeoff of its asset unit %s.", self.alias, EventData.IniUnitName))
+    end
+  end  
 end
 
 --- Warehouse event handling function.
 -- @param #WAREHOUSE self
 -- @param Core.Event#EVENTDATA EventData Event data.
 function WAREHOUSE:_OnEventLanding(EventData)
-  self:E(self.wid..string.format("Warehouse %s captured event landing!",self.alias))
+  self:T3(self.wid..string.format("Warehouse %s captured event landing!",self.alias))
+  
+  if EventData and EventData.IniGroup then
+    local group=EventData.IniGroup
+    local wid,aid,rid=self:_GetIDsFromGroup(group)
+    if wid==self.uid then
+      self:E(self.wid..string.format("Warehouse %s captured event landing of its asset unit %s.", self.alias, EventData.IniUnitName))
+    end
+  end
 end
 
 --- Warehouse event handling function.
@@ -2232,8 +2243,7 @@ function WAREHOUSE:_OnEventCrashOrDead(EventData)
     local warehousename=self.warehouse:GetName()
     if EventData.IniUnitName==warehousename then
       env.info(self.wid..string.format("Warehouse %s alias %s was destroyed!", warehousename, self.alias))
-      --TODO: Add destroy event.
-      self:__Stop(1)
+      self:Destroyed()
     end
   end
   
@@ -2251,34 +2261,34 @@ function WAREHOUSE:_OnEventBaseCaptured(EventData)
     return
   end
   
-  if EventData and EventData.id==world.event.S_EVENT_BASE_CAPTURED then
-    if EventData.Place then
+  if EventData and EventData.Place then
       
-      -- Place is the airbase that was captured.
-      local airbase=EventData.Place --Wrapper.Airbase#AIRBASE
+    -- Place is the airbase that was captured.
+    local airbase=EventData.Place --Wrapper.Airbase#AIRBASE
+    
+    if EventData.PlaceName==self.airbasename then
+      -- Okay, this airbase belongs or did belong to this warehouse.
       
-      if EventData.PlaceName==self.airbasename then
-        -- Okay, this airbase belongs or did belong to this warehouse.
-        
-        -- New coalition of airbase after it was captured.
-        local coalitionAirbase=airbase:GetCoalition()
-        
-        -- So what can happen?
-        -- Warehouse is blue, airbase is blue and belongs to warehouse and red captures it  ==> self.airbase=nil
-        -- Warehouse is blue, airbase is blue self.airbase is nil and blue (re-)captures it ==> self.airbase=Event.Place        
-        if self.airbase==nil then
-          -- Warehouse lost this airbase previously and not it was re-captured.
-          if coalitionAirbase == self.coalition then
-            self.airbase=airbase
-          end
-        else
-          -- Captured airbase belongs to this warehouse but was captured by other coaltion.
-          if coalitionAirbase ~= self.coalition then
-            self.airbase=nil
-          end
+      -- New coalition of airbase after it was captured.
+      local coalitionAirbase=airbase:GetCoalition()
+      
+      -- So what can happen?
+      -- Warehouse is blue, airbase is blue and belongs to warehouse and red captures it  ==> self.airbase=nil
+      -- Warehouse is blue, airbase is blue self.airbase is nil and blue (re-)captures it ==> self.airbase=Event.Place        
+      if self.airbase==nil then
+        -- Warehouse lost this airbase previously and not it was re-captured.
+        env.info("FF airbase of warehouse is nil")
+        if coalitionAirbase == self.coalition then
+          self.airbase=airbase
+          env.info("FF air")
         end
-        
+      else
+        -- Captured airbase belongs to this warehouse but was captured by other coaltion.
+        if coalitionAirbase ~= self.coalition then
+          self.airbase=nil
+        end
       end
+        
     end
   end
 end
@@ -2702,12 +2712,9 @@ function WAREHOUSE:_CheckRequestNow(request)
     local _assetattribute=_assets[1].attribute
     local _assetcategory=_assets[1].category  
     
-    -- Check available parking for asset units.
-    local Parkingdata
-    local Parking
+    -- Check available parking for air asset units.    
     if self.airbase and (_assetcategory==Group.Category.AIRPLANE or _assetcategory==Group.Category.HELICOPTER) then
-      Parkingdata=self.airbase:GetParkingSpotsTable()
-      Parking, Parkingdata=self:_GetParkingForAssets(_assets, Parkingdata)
+      local Parking=self:_FindParkingForAssets(self.airbase,_assets)
       if Parking==nil then
         local text=string.format("Request denied! Not enough free parking spots for all assets at the moment.")
         MESSAGE:New(text, 5):ToCoalitionIf(self.coalition, self.Report or self.Debug)
@@ -2741,7 +2748,7 @@ function WAREHOUSE:_CheckRequestNow(request)
       
       -- Check available parking for transport units.
       if self.airbase and (_transportcategory==Group.Category.AIRPLANE or _transportcategory==Group.Category.HELICOPTER) then
-        Parking, Parkingdata=self:_GetParkingForAssets(_transports, Parkingdata)
+        local Parking=self:_FindParkingForAssets(self.airbase,_transports)
         if Parking==nil then
           local text=string.format("Request denied! Not enough free parking spots for all transports at the moment.")
           MESSAGE:New(text, 5):ToCoalitionIf(self.coalition, self.Report or self.Debug)
@@ -2892,6 +2899,148 @@ function WAREHOUSE:_GetParkingForAssets(assetlist, parkingdata)
   
   return assetparking, parkingdata
 end
+
+----------------
+
+--- Seach unoccupied parking spots at the airbase for a list of assets. For each asset group a list of parking spots is returned.
+-- During the search also the not yet spawned asset aircraft are considered.
+-- If not enough spots for all asset units could be found, the routine returns nil!
+-- @param #WAREHOUSE self
+-- @param Wrapper.Airbase#AIRBASE airbase The airbase where we search for parking spots.
+-- @param #table assets A table of assets for which the parking spots are needed.
+-- @return #table Table of coordinates and terminal IDs of free parking spots. Each table entry has the elements .Coordinate and .TerminalID.
+function WAREHOUSE:_FindParkingForAssets(airbase, assets)
+
+  -- Init default
+  local scanradius=50
+  local scanunits=true
+  local scanstatics=true
+  local scanscenery=false
+  local verysafe=false
+
+  -- Function calculating the overlap of two (square) objects.
+  local function _overlap(l1,l2,dist)
+    local safedist=(l1/2+l2/2)*1.1
+    local safe = (dist > safedist)
+    self:T3(string.format("l1=%.1f l2=%.1f s=%.1f d=%.1f ==> safe=%s", l1,l2,safedist,dist,tostring(safe)))
+    return safe    
+  end
+  
+  -- Get parking spot data table. This contains all free and "non-free" spots.
+  local parkingdata=airbase:GetParkingSpotsTable()
+  
+  -- List of obstacles.
+  local obstacles={}
+  
+  -- Loop over all parking spots and get the obstacles.
+  -- TODO: How long does this take on very large airbases, i.e. those with hundereds of parking spots?
+  for _,parkingspot in pairs(parkingdata) do
+  
+    -- Coordinate of the parking spot.
+    local _spot=parkingspot.Coordinate   -- Core.Point#COORDINATE
+    local _termid=parkingspot.TerminalID
+    
+    -- Obstacles at or around this parking spot.
+    obstacles[_termid]={}
+            
+    -- Scan a radius of 50 meters around the spot.
+    local _,_,_,_units,_statics,_sceneries=_spot:ScanObjects(scanradius, scanunits, scanstatics, scanscenery)
+
+    -- Check all units.    
+    for _,_unit in pairs(_units) do
+      local unit=_unit --Wrapper.Unit#UNIT
+      local _coord=unit:GetCoordinate()
+      local _size=self:_GetObjectSize(unit:GetDCSObject())
+      local _name=unit:GetName()
+      table.insert(obstacles[_termid],{coord=_coord, size=_size, name=_name, type="unit"})  
+    end
+  
+    -- Check all statics.
+    for _,static in pairs(_statics) do
+      local _vec3=static:getPoint()
+      local _coord=COORDINATE:NewFromVec3(_vec3)
+      local _name=static:getName()
+      local _size=self:_GetObjectSize(static:GetDCSObject())
+      table.insert(obstacles[_termid],{coord=_coord, size=_size, name=_name, type="static"})  
+    end
+    
+    -- Check all scenery.
+    for _,scenery in pairs(_sceneries) do
+      local _vec3=scenery:getPoint()
+      local _coord=COORDINATE:NewFromVec3(_vec3)
+      local _name=scenery:getTypeName()
+      local _size=self:_GetObjectSize(scenery:GetDCSObject())
+      table.insert(obstacles[_termid],{coord=_coord, size=_size, name=_name, type="scenery"})
+    end
+    
+    -- TODO Clients? Unoccupied client aircraft are also important! Are they already included in scanned units maybe?
+             
+  end
+  
+  -- Parking data for all assets.
+  local parking={}
+
+  -- Loop over all assets that need a parking psot.
+  for _,asset in pairs(assets) do
+  
+    local _asset=asset --#WAREHOUSE.Assetitem
+    
+    local terminaltype=self:_GetTerminal(asset.attribute)
+    
+    -- Asset specific parking.
+    parking[_asset.uid]={}
+    
+    -- Loop over all units - each one needs a spot.
+    for i=1,_asset.nunits do
+  
+      -- Loop over all parking spots.
+      for _,parkingspot in pairs(parkingdata) do
+      
+        -- Check correct terminal type for asset. We don't want helos in shelters etc.
+        if AIRBASE._CheckTerminalType(parkingspot.TerminalType,terminaltype) then
+  
+          -- Coordinate of the parking spot.
+          local _spot=parkingspot.Coordinate   -- Core.Point#COORDINATE
+          local _termid=parkingspot.TerminalID
+           
+          -- Loop over all obstacles.
+          local free=true
+          for _,obstacle in pairs(obstacles[_termid]) do
+          
+            -- Check if aircraft overlaps with any obstacle.
+            local safe=_overlap(_asset.size, obstacle.size, _spot:Get2DDistance(obstacle.coord))
+            
+            -- Spot is blocked.
+            if not safe then
+              free=false
+              break
+            end
+          
+          end
+          
+          if free then
+          
+            -- Add parkingspot for this asset unit.
+            table.insert(parking[_asset.uid], parkingspot)
+            
+            -- Add the unit as obstacle so that this spot will not be available for the next unit.
+            -- TODO Alternatively, I could remove this parking spot from the table, right?
+            obstacles[_termid]={coord=_spot, size=_asset.size, name=_asset.templatename, type="asset"}
+            
+          else
+            -- Not enough parking available!
+            return nil
+          end
+          
+        end -- check terminal type
+      end -- loop over parking spots
+    end -- loop over asset units
+  end -- loop over asset groups
+    
+  return parking
+end
+
+-----------------
 
 --- Get the request belonging to a group.
 -- @param #WAREHOUSE self
@@ -3153,6 +3302,21 @@ function WAREHOUSE:_GetAttribute(groupname)
 
   return attribute
 end
+
+--- Size of the bounding box of a DCS object derived from the DCS descriptor table. If boundinb box is nil, a size of zero is returned.
+-- @param #WAREHOUSE self
+-- @param DCS#Object DCSobject The DCS object for which the size is needed.
+-- @return #number Max size of object in meters.
+function WAREHOUSE:_GetObjectSize(DCSobject)
+  local DCSdesc=DCSobject:getDesc()
+  if DCSdesc.box then
+    local x=DCSdesc.box.max.x+math.abs(DCSdesc.box.min.x)  --length
+    local y=DCSdesc.box.max.y+math.abs(DCSdesc.box.min.y)  --height
+    local z=DCSdesc.box.max.z+math.abs(DCSdesc.box.min.z)  --width
+    return math.max(x,z), x , y, z
+  end
+  return 0,0,0,0
+end  
 
 --- Returns the number of assets for each generalized attribute.
 -- @param #WAREHOUSE self
