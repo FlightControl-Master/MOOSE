@@ -41,7 +41,8 @@
 -- @field #number queueid Unit id of each request in the queue. Essentially a running number starting at one and incremented when a new request is added.
 -- @field #table stock Table holding all assets in stock. Table entries are of type @{#WAREHOUSE.Assetitem}.
 -- @field #table queue Table holding all queued requests. Table entries are of type @{#WAREHOUSE.Queueitem}.
--- @field #table pending Table holding all pending requests, i.e. those that are currently in progress. Table entries are of type @{#WAREHOUSE.Pendingitem}.
+-- @field #table pending Table holding all pending requests, i.e. those that are currently in progress. Table elements are of type @{#WAREHOUSE.Pendingitem}.
+-- @field #table defending Table holding all defending requests, i.e. self requests that were if the warehouse is under attack. Table elements are of type @{#WAREHOUSE.Pendingitem}.
 -- @extends Core.Fsm#FSM
 
 --- Manages ground assets of an airbase and offers the possibility to transport them to another airbase or warehouse.
@@ -109,6 +110,7 @@ WAREHOUSE = {
   stock       =    {},
   queue       =    {},
   pending     =    {},
+  defending   =    {},
 }
 
 --- Item of the warehouse stock table.
@@ -209,7 +211,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.2.3w"
+WAREHOUSE.version="0.2.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -729,8 +731,8 @@ function WAREHOUSE:onafterStatus(From, Event, To)
     end
     
     -- Print queue after processing requests.
-    self:_PrintQueue(self.queue, "Queue waiting - after request")
-    self:_PrintQueue(self.pending, "Queue pending - after request")
+    self:_PrintQueue(self.queue, "Queue waiting - after  request")
+    self:_PrintQueue(self.pending, "Queue pending - after  request")
     
   end
 
@@ -1429,10 +1431,8 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
       -- Get stock item.
       local _assetitem=_assetstock[i] --#WAREHOUSE.Assetitem
-      local _parking=Parking[i]
 
       -- Spawn with ALIAS here or DCS crashes!
-      --local _alias=string.format("%s_%d", _assetitem.templatename,_assetitem.id)
       local _alias=self:_Alias(_assetitem, Request)
       
       -- Spawn plane at airport in uncontrolled state. 
@@ -1666,7 +1666,7 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
       --TODO: spawn only so many groups as there are parking spots. Adjust request and create a new one with the reduced number!
     
       -- Spawn air units.
-      _group=self:_SpawnAssetAircraft(_assetitem, Request, Parking[i])
+      _group=self:_SpawnAssetAircraft(_assetitem, Request, Parking[_assetitem.uid])
       
     elseif _assetitem.category==Group.Category.TRAIN then
     
@@ -1872,7 +1872,8 @@ function WAREHOUSE:onafterSelfRequest(From, Event, To, groupset, request)
   
   -- Add a "defender request" to be able to despawn all assets once defeated.
   if self:IsAttacked() then
-    self.defenderrequest=request    
+    --self.defenderrequest=request    
+    table.insert(self.defending, request)
   end
   
   -- Remove pending request.
@@ -1901,10 +1902,11 @@ end
 function WAREHOUSE:onafterDefeated(From, Event, To)
   self:E(self.wid..string.format("Attack was defeated!"))
 
-  if self.defenderrequest then
+  --if self.defenderrequest then
+  for _,request in pairs(self.defending) do
     
     -- Get all assets that were deployed for defending the warehouse.
-    local request=self.defenderrequest --#WAREHOUSE.Pendingitem
+    --local request=self.defenderrequest --#WAREHOUSE.Pendingitem
   
     -- Route defenders back to warehoue (for visual reasons only) and put them back into stock.  
     for _,_group in pairs(request.cargogroupset:GetSetObjects()) do
@@ -1921,9 +1923,13 @@ function WAREHOUSE:onafterDefeated(From, Event, To)
     end
     
     -- Set defender request back to nil. 
-    self.defenderrequest=nil
-    
+    --self.defenderrequest=nil
+  
+    --self:_DeleteQueueItem(request, self.defending)  
   end
+  
+  self.defending=nil
+  self.defending={}
 end
 
 --- On after "Captured" event. Warehouse has been captured by another coalition.
@@ -1942,7 +1948,7 @@ function WAREHOUSE:onafterCaptured(From, Event, To, Coalition, Country)
   self.country=Country
   self.airbase=nil
   self.category=-1
-  
+    
 end
 
 --- On after "Destroyed" event. Warehouse was destroyed. Service is stopped.
@@ -2974,7 +2980,17 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
     end
     
     -- TODO Clients? Unoccupied client aircraft are also important! Are they already included in scanned units maybe?
-             
+    --[[
+    local clients=_DATABASE.CLIENTS
+    for _,_client in pairs(clients) do
+      local client=_client --Wrapper.Client#CLIENT
+      local unit=client:GetClientGroupUnit()      
+      local _coord=unit:GetCoordinate()
+      local _name=unit:GetName()
+      local _size=self:_GetObjectSize(client:GetClientGroupDCSUnit())
+      table.insert(obstacles[_termid],{coord=_coord, size=_size, name=_name, type="client"})
+    end
+    ]]     
   end
   
   -- Parking data for all assets.
@@ -2994,25 +3010,31 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
     for i=1,_asset.nunits do
   
       -- Loop over all parking spots.
+      local gotit=false
       for _,parkingspot in pairs(parkingdata) do
       
         -- Check correct terminal type for asset. We don't want helos in shelters etc.
-        if AIRBASE._CheckTerminalType(parkingspot.TerminalType,terminaltype) then
+        if AIRBASE._CheckTerminalType(parkingspot.TerminalType, terminaltype) then
   
           -- Coordinate of the parking spot.
           local _spot=parkingspot.Coordinate   -- Core.Point#COORDINATE
           local _termid=parkingspot.TerminalID
+          local _toac=parkingspot.TOAC
            
           -- Loop over all obstacles.
           local free=true
+          local problem=nil
           for _,obstacle in pairs(obstacles[_termid]) do
           
             -- Check if aircraft overlaps with any obstacle.
-            local safe=_overlap(_asset.size, obstacle.size, _spot:Get2DDistance(obstacle.coord))
+            local dist=_spot:Get2DDistance(obstacle.coord)
+            local safe=_overlap(_asset.size, obstacle.size, dist)
             
             -- Spot is blocked.
             if not safe then
               free=false
+              problem=obstacle
+              problem.dist=dist
               break
             end
           
@@ -3023,17 +3045,29 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
             -- Add parkingspot for this asset unit.
             table.insert(parking[_asset.uid], parkingspot)
             
+            self:E(self.wid..string.format("Parking spot #%d is free for asset id=%d!", _termid, _asset.uid))
+            
             -- Add the unit as obstacle so that this spot will not be available for the next unit.
             -- TODO Alternatively, I could remove this parking spot from the table, right?
-            obstacles[_termid]={coord=_spot, size=_asset.size, name=_asset.templatename, type="asset"}
+            table.insert(obstacles[_termid], {coord=_spot, size=_asset.size, name=_asset.templatename, type="asset"})
             
+            gotit=true
+            break
           else
-            -- Not enough parking available!
-            return nil
+            self:E(self.wid..string.format("Parking spot #%d is occupied or not big enough!", _termid))
+            local coord=problem.coord --Core.Point#COORDINATE
+            local text=string.format("Obstacle blocking spot #%d is %s type %s with size=%.1f m and distance=%.1f m.", _termid, problem.name, problem.type, problem.size, problem.dist)
+            coord:MarkToAll(string.format(text))
           end
           
         end -- check terminal type
       end -- loop over parking spots
+      
+      
+      if not gotit then
+        self:E(self.wid..string.format("WARNING: No free parking spot for asset id=%d",_asset.uid))
+        return nil
+      end      
     end -- loop over asset units
   end -- loop over asset groups
     
@@ -3127,7 +3161,6 @@ function WAREHOUSE:_GetIDsFromGroup(group)
     return _wid,_aid,_rid
   end
   
-  self:E({_function="getids", group=group})
   if group then
   
     -- Group name
@@ -3137,10 +3170,10 @@ function WAREHOUSE:_GetIDsFromGroup(group)
     local wid,aid,rid=analyse(name)
     
     -- Debug info
-    self:E(self.wid..string.format("Group Name   = %s", tostring(name)))  
-    self:E(self.wid..string.format("Warehouse ID = %s", tostring(wid)))
-    self:E(self.wid..string.format("Asset     ID = %s", tostring(aid)))
-    self:E(self.wid..string.format("Request   ID = %s", tostring(rid)))
+    self:T3(self.wid..string.format("Group Name   = %s", tostring(name)))  
+    self:T3(self.wid..string.format("Warehouse ID = %s", tostring(wid)))
+    self:T3(self.wid..string.format("Asset     ID = %s", tostring(aid)))
+    self:T3(self.wid..string.format("Request   ID = %s", tostring(rid)))
     
     return wid,aid,rid
   else
@@ -3395,7 +3428,7 @@ function WAREHOUSE:_PrintQueue(queue, name)
     if qitem.airbase then
       airbasename=qitem.airbase:GetName()
     end      
-    local text=text..string.format("\nUID=%d, Prio=%d, Requestor=%s, Airbase=%s (category=%d), Descriptor: %s=%s, Nasssets=%s, Transport=%s, Ntransport=%d.",
+    text=text..string.format("\nUID=%d, Prio=%d, Requestor=%s, Airbase=%s (category=%d), Descriptor: %s=%s, Nasssets=%s, Transport=%s, Ntransport=%d.",
     qitem.uid, qitem.prio, qitem.warehouse.alias, airbasename, qitem.category, qitem.assetdesc,tostring(qitem.assetdescval), tostring(qitem.nasset), qitem.transporttype, qitem.ntransport)
   end
   if #queue==0 then

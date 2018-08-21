@@ -4,7 +4,7 @@
 -- 
 -- ### Author: **FlightControl**
 -- 
--- ### Contributions: 
+-- ### Contributions: **funkyfranky**
 -- 
 -- ===
 -- 
@@ -260,6 +260,16 @@ AIRBASE.PersianGulf = {
   ["Shiraz_International_Airport"] = "Shiraz International Airport",
   ["Kerman_Airport"] = "Kerman Airport",
   }
+  
+--- AIRBASE.ParkingSpot ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
+-- @type AIRBASE.ParkingSpot
+-- @field Core.Point#COORDINATE Coordinate Coordinate of the parking spot.
+-- @field #number TerminalID Terminal ID of the spot. Generally, this is not the same number as displayed in the mission editor.
+-- @field #AIRBASE.TerminalType TerminalType Type of the spot, i.e. for which type of aircraft it can be used.
+-- @field #boolean TOAC Takeoff or landing aircarft. I.e. this stop is occupied currently by an aircraft until it took of or until it landed.
+-- @field #boolean Free This spot is currently free, i.e. there is no alive aircraft on it at the present moment.
+-- @field #number TerminalID0 Unknown what this means. If you know, please tell us!
+-- @field #number DistToRwy Distance to runway in meters. Currently bugged and giving the same number as the TerminalID.
  
 --- Terminal Types of parking spots. See also https://wiki.hoggitworld.com/view/DCS_func_getParking
 -- 
@@ -273,7 +283,16 @@ AIRBASE.PersianGulf = {
 -- * AIRBASE.TerminalType.OpenMedOrBig = 176: Combines OpenMed and OpenBig spots.
 -- * AIRBASE.TerminalType.HelicopterUnsable = 216: Combines HelicopterOnly, OpenMed and OpenBig.
 -- * AIRBASE.TerminalType.FighterAircraft = 244: Combines Shelter. OpenMed and OpenBig spots. So effectively all spots usable by fixed wing aircraft.
--- @field TerminalType
+-- 
+-- @type AIRBASE.TerminalType
+-- @field #number Runway 16: Valid spawn points on runway.
+-- @field #number HelicopterOnly 40: Special spots for Helicopers.
+-- @field #number Shelter 68: Hardened Air Shelter. Currently only on Caucaus map.
+-- @field #number OpenMed 72: Open/Shelter air airplane only.
+-- @field #number OpenBig 104: Open air spawn points. Generally larger but does not guarantee large aircraft are capable of spawning there.
+-- @field #number OpenMedOrBig 176: Combines OpenMed and OpenBig spots.
+-- @field #number HelicopterUnsable 216: Combines HelicopterOnly, OpenMed and OpenBig.
+-- @field #number FighterAircraft 244: Combines Shelter. OpenMed and OpenBig spots. So effectively all spots usable by fixed wing aircraft.
 AIRBASE.TerminalType = {
   Runway=16,
   HelicopterOnly=40,
