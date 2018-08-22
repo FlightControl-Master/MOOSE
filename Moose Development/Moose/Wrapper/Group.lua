@@ -121,13 +121,16 @@ GROUPTEMPLATE.Takeoff = {
 -- @return #GROUP self
 function GROUP:NewTemplate( GroupTemplate, CoalitionSide, CategoryID, CountryID )
   local GroupName = GroupTemplate.name
+
   _DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionSide, CategoryID, CountryID, GroupName )
-  self = BASE:Inherit( self, CONTROLLABLE:New( GroupName ) )
-  self:F2( GroupName )
+
+  local self = BASE:Inherit( self, CONTROLLABLE:New( GroupName ) )
   self.GroupName = GroupName
-  
-  _DATABASE:AddGroup( GroupName )
-  
+
+  if not _DATABASE.GROUPS[GroupName] then
+    _DATABASE.GROUPS[GroupName] = self
+  end  
+
   self:SetEventPriority( 4 )
   return self
 end
@@ -140,7 +143,6 @@ end
 -- @return #GROUP self
 function GROUP:Register( GroupName )
   local self = BASE:Inherit( self, CONTROLLABLE:New( GroupName ) ) -- #GROUP
-  self:F( GroupName )
   self.GroupName = GroupName
   
   self:SetEventPriority( 4 )
@@ -335,8 +337,7 @@ end
 
 --- Returns the country of the DCS Group.
 -- @param #GROUP self
--- @return DCS#country.id The country identifier.
--- @return #nil The DCS Group is not existing or alive.
+-- @return DCS#country.id The country identifier or nil if the DCS Group is not existing or alive.
 function GROUP:GetCountry()
   self:F2( self.GroupName )
 
@@ -348,6 +349,40 @@ function GROUP:GetCountry()
   end
 
   return nil
+end
+
+
+--- Check if at least one (or all) unit(s) has (have) a certain attribute.
+-- See [hoggit documentation](https://wiki.hoggitworld.com/view/DCS_func_hasAttribute).
+-- @param #GROUP self
+-- @param #string attribute The name of the attribute the group is supposed to have. Valid attributes can be found in the "db_attributes.lua" file which is located at in "C:\Program Files\Eagle Dynamics\DCS World\Scripts\Database".
+-- @param #boolean all If true, all units of the group must have the attribute in order to return true. Default is only one unit of a heterogenious group needs to have the attribute.
+-- @return #boolean Group has this attribute.
+function GROUP:HasAttribute(attribute, all)
+
+  -- Get all units of the group.
+  local _units=self:GetUnits()
+  
+  local _allhave=true
+  local _onehas=false
+  
+  for _,_unit in pairs(_units) do
+    local _unit=_unit --Wrapper.Unit#UNIT
+    if _unit then
+      local _hastit=_unit:HasAttribute(attribute)
+      if _hastit==true then
+        _onehas=true
+      else
+        _allhave=false
+      end
+    end 
+  end
+  
+  if all==true then
+    return _allhave
+  else
+    return _onehas
+  end
 end
 
 --- Returns the maximum speed of the group.
@@ -1339,97 +1374,100 @@ function GROUP:Respawn( Template, Reset )
 end
 
 
---- @param Wrapper.Group#GROUP self
-function GROUP:RespawnAtAirbase( AirbaseRespawn, Takeoff, TakeoffAltitude ) -- R2.4
-  self:F( { AirbaseRespawn, Takeoff, TakeoffAltitude } )
+--- Respawn a group at an airbase.
+-- Note that the group has to be on parking spots at the airbase already in order for this to work.
+-- So each unit of the group is respawned at exactly the same parking spot as it currently occupies.
+-- @param Wrapper.Group#GROUP self
+-- @param #table SpawnTemplate (Optional) The spawn template for the group. If no template is given it is exacted from the group.
+-- @param Core.Spawn#SPAWN.Takeoff Takeoff (Optional) Takeoff type. Sould be either SPAWN.Takeoff.Cold or SPAWN.Takeoff.Hot. Default is SPAWN.Takeoff.Hot.
+-- @param #boolean Uncontrolled (Optional) If true, spawn in uncontrolled state.
+-- @return Wrapper.Group#GROUP Group spawned at airbase or nil if group could not be spawned.
+function GROUP:RespawnAtCurrentAirbase(SpawnTemplate, Takeoff, Uncontrolled) -- R2.4
+  self:F2( { SpawnTemplate, Takeoff, Uncontrolled} )
 
-  local PointVec3 = AirbaseRespawn:GetPointVec3()
-
+  -- Get closest airbase. Should be the one we are currently on.
+  local airbase=self:GetCoordinate():GetClosestAirbase()
+  
+  if airbase then
+    self:F2("Closest airbase = "..airbase:GetName())
+  else
+    self:E("ERROR: could not find closest airbase!")
+    return nil
+  end
+  -- Takeoff type. Default hot.
   Takeoff = Takeoff or SPAWN.Takeoff.Hot
   
-  local SpawnTemplate = self:GetTemplate()
+  -- Coordinate of the airbase.
+  local AirbaseCoord=airbase:GetCoordinate()
+  
+  -- Spawn template.  
+  SpawnTemplate = SpawnTemplate or self:GetTemplate()
 
   if SpawnTemplate then
 
-    local SpawnPoint = SpawnTemplate.route.points[1] 
+    local SpawnPoint = SpawnTemplate.route.points[1]
 
     -- These are only for ships.
     SpawnPoint.linkUnit = nil
     SpawnPoint.helipadId = nil
     SpawnPoint.airdromeId = nil
 
-    local AirbaseID = AirbaseRespawn:GetID()
-    local AirbaseCategory = AirbaseRespawn:GetDesc().category
-    self:F( { AirbaseCategory = AirbaseCategory, Ship = Airbase.Category.SHIP, Helipad = Airbase.Category.HELIPAD, Airdrome = Airbase.Category.AIRDROME } )
+    -- Aibase id and category.
+    local AirbaseID       = airbase:GetID()
+    local AirbaseCategory = airbase:GetDesc().category
     
-    if AirbaseCategory == Airbase.Category.SHIP then
-      SpawnPoint.linkUnit = AirbaseID
-      SpawnPoint.helipadId = AirbaseID
-    elseif AirbaseCategory == Airbase.Category.HELIPAD then
-      SpawnPoint.linkUnit = AirbaseID
+    if AirbaseCategory == Airbase.Category.SHIP or AirbaseCategory == Airbase.Category.HELIPAD then
+      SpawnPoint.linkUnit  = AirbaseID
       SpawnPoint.helipadId = AirbaseID
     elseif AirbaseCategory == Airbase.Category.AIRDROME then
       SpawnPoint.airdromeId = AirbaseID
     end
 
-    SpawnPoint.alt = 0
-            
-    SpawnPoint.type = GROUPTEMPLATE.Takeoff[Takeoff][1] -- type
+    SpawnPoint.alt    = AirbaseCoord:GetLandHeight()           
+    SpawnPoint.type   = GROUPTEMPLATE.Takeoff[Takeoff][1] -- type
     SpawnPoint.action = GROUPTEMPLATE.Takeoff[Takeoff][2] -- action
     
+    -- Get the units of the group.
+    local units=self:GetUnits()
 
-    -- Translate the position of the Group Template to the Vec3.
-    for UnitID = 1, #SpawnTemplate.units do
-      self:T( 'Before Translation SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
+    for UnitID,_unit in pairs(units) do
+        
+      local unit=_unit --Wrapper.Unit#UNIT
 
-      -- These cause a lot of confusion.
-      local UnitTemplate = SpawnTemplate.units[UnitID]
-
-      UnitTemplate.parking = 15
-      UnitTemplate.parking_id = "30"
-      UnitTemplate.alt = 0
-
-      local SX = UnitTemplate.x
-      local SY = UnitTemplate.y 
-      local BX = SpawnPoint.x
-      local BY = SpawnPoint.y
-      local TX = PointVec3.x + ( SX - BX )
-      local TY = PointVec3.z + ( SY - BY )
+      -- Get closest parking spot of current unit. Note that we look for occupied spots since the unit is currently sitting on it!
+      local Parkingspot, TermialID, Distance=unit:GetCoordinate():GetClosestParkingSpot(airbase)
       
-      UnitTemplate.x = TX
-      UnitTemplate.y = TY
-      
-      if Takeoff == GROUP.Takeoff.Air then
-        UnitTemplate.alt = PointVec3.y + ( TakeoffAltitude or 200 )
-      --else
-      --  UnitTemplate.alt = PointVec3.y + 10
-      end
-      self:T( 'After Translation SpawnTemplate.units['..UnitID..'].x = ' .. UnitTemplate.x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. UnitTemplate.y )
-    end
-    
-    SpawnPoint.x = PointVec3.x
-    SpawnPoint.y = PointVec3.z
-    
-    if Takeoff == GROUP.Takeoff.Air then
-      SpawnPoint.alt = PointVec3.y + ( TakeoffAltitude or 200 )
-    --else
-    --  SpawnPoint.alt = PointVec3.y + 10
-    end
+      --Parkingspot:MarkToAll("parking spot")
+      self:T2(string.format("Closest parking spot distance = %s, terminal ID=%s", tostring(Distance), tostring(TermialID)))
 
-    SpawnTemplate.x = PointVec3.x
-    SpawnTemplate.y = PointVec3.z
-    
-    local GroupSpawned = self:Respawn( SpawnTemplate )
-    
-    -- When spawned in the air, we need to generate a Takeoff Event
-    
-    if Takeoff == GROUP.Takeoff.Air then
-      for UnitID, UnitSpawned in pairs( GroupSpawned:GetUnits() ) do
-        SCHEDULER:New( nil, BASE.CreateEventTakeoff, { GroupSpawned, timer.getTime(), UnitSpawned:GetDCSObject() } , 1 )
-      end
-    end
+      -- Get unit coordinates for respawning position.
+      local uc=unit:GetCoordinate()
+      SpawnTemplate.units[UnitID].x   = Parkingspot.x
+      SpawnTemplate.units[UnitID].y   = Parkingspot.z
+      SpawnTemplate.units[UnitID].alt = Parkingspot.y
 
-    return GroupSpawned
+      SpawnTemplate.units[UnitID].parking    = TermialID
+      SpawnTemplate.units[UnitID].parking_id = nil
+                  
+    end
+    
+    SpawnPoint.x = AirbaseCoord.x
+    SpawnPoint.y = AirbaseCoord.z
+    
+    SpawnTemplate.x = AirbaseCoord.x
+    SpawnTemplate.y = AirbaseCoord.z
+    
+    -- Set uncontrolled state.
+    SpawnTemplate.uncontrolled=Uncontrolled
+    
+    -- Destroy and respawn.
+    self:Destroy()
+    _DATABASE:Spawn( SpawnTemplate )
+  
+    -- Reset events.
+    self:ResetEvents()
+
+    return self
   end
   
   return nil

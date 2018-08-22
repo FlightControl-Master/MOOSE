@@ -103,7 +103,7 @@ AI_CARGO_DISPATCHER_APC = {
 -- 
 function AI_CARGO_DISPATCHER_APC:New( SetAPC, SetCargo, SetDeployZone, CombatRadius )
 
-  local self = BASE:Inherit( self, AI_CARGO_DISPATCHER:New( SetAPC, SetCargo, SetDeployZone ) ) -- #AI_CARGO_DISPATCHER_APC
+  local self = BASE:Inherit( self, AI_CARGO_DISPATCHER:NewWithZones( SetAPC, SetCargo, SetDeployZone ) ) -- #AI_CARGO_DISPATCHER_APC
 
   self.CombatRadius = CombatRadius or 500
 

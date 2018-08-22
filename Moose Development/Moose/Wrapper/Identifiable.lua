@@ -216,7 +216,7 @@ end
 function IDENTIFIABLE:GetDesc()
   self:F2( self.IdentifiableName )
 
-  local DCSIdentifiable = self:GetDCSObject()
+  local DCSIdentifiable = self:GetDCSObject() -- DCS#Object
   
   if DCSIdentifiable then
     local IdentifiableDesc = DCSIdentifiable:getDesc()

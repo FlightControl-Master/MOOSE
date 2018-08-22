@@ -589,6 +589,12 @@ do -- TASK_CARGO
     Fsm:AddTransition( "Rejected", "Reject", "Aborted" )
     Fsm:AddTransition( "Failed", "Fail", "Failed" )
 
+    for _, Group in pairs( SetGroup:GetSet() ) do
+      for __, Unit in pairs( Group:GetUnits() ) do
+        local Unit = Unit -- Wrapper.Unit#UNIT
+        Unit:SetCargoBayWeightLimit()
+      end
+    end
 
     ---- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
@@ -610,7 +616,6 @@ do -- TASK_CARGO
       local TaskUnitName = TaskUnit:GetName()
       local MenuTime = Task:InitTaskControlMenu( TaskUnit )
       local MenuControl = Task:GetTaskControlMenu( TaskUnit )
-      local CargoItemCount = TaskUnit:CargoItemCount()
       
       Task.SetCargo:ForEachCargo(
         
@@ -635,7 +640,13 @@ do -- TASK_CARGO
             local TaskGroup = TaskUnit:GetGroup()
             
             if Cargo:IsUnLoaded() then
-              if CargoItemCount < 1 then 
+              local CargoBayFreeWeight = TaskUnit:GetCargoBayFreeWeight()
+              local CargoWeight = Cargo:GetWeight()
+              
+              self:F({CargoBayFreeWeight=CargoBayFreeWeight})
+  
+              -- Only when there is space within the bay to load the next cargo item!
+              if CargoBayFreeWeight > CargoWeight then 
                 if Cargo:IsInReportRadius( TaskUnit:GetPointVec2() ) then
                   local NotInDeployZones = true
                   for DeployZoneName, DeployZone in pairs( Task.DeployZones ) do

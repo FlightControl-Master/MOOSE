@@ -854,51 +854,7 @@ end
 
 
 
--- Is methods
 
---- Returns if the unit is of an air category.
--- If the unit is a helicopter or a plane, then this method will return true, otherwise false.
--- @param #UNIT self
--- @return #boolean Air category evaluation result.
-function UNIT:IsAir()
-  self:F2()
-  
-  local DCSUnit = self:GetDCSObject()
-  
-  if DCSUnit then
-    local UnitDescriptor = DCSUnit:getDesc()
-    self:T3( { UnitDescriptor.category, Unit.Category.AIRPLANE, Unit.Category.HELICOPTER } )
-    
-    local IsAirResult = ( UnitDescriptor.category == Unit.Category.AIRPLANE ) or ( UnitDescriptor.category == Unit.Category.HELICOPTER )
-  
-    self:T3( IsAirResult )
-    return IsAirResult
-  end
-  
-  return nil
-end
-
---- Returns if the unit is of an ground category.
--- If the unit is a ground vehicle or infantry, this method will return true, otherwise false.
--- @param #UNIT self
--- @return #boolean Ground category evaluation result.
-function UNIT:IsGround()
-  self:F2()
-  
-  local DCSUnit = self:GetDCSObject()
-  
-  if DCSUnit then
-    local UnitDescriptor = DCSUnit:getDesc()
-    self:T3( { UnitDescriptor.category, Unit.Category.GROUND_UNIT } )
-    
-    local IsGroundResult = ( UnitDescriptor.category == Unit.Category.GROUND_UNIT )
-  
-    self:T3( IsGroundResult )
-    return IsGroundResult
-  end
-  
-  return nil
-end
 
 --- Returns if the unit is a friendly unit.
 -- @param #UNIT self

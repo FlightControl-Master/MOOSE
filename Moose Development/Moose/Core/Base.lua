@@ -798,8 +798,7 @@ end
 -- @param Object The object that will hold the Value set by the Key.
 -- @param Key The key that is used as a reference of the value. Note that the key can be a #string, but it can also be any other type!
 -- @param Value The value to is stored in the object.
--- @return The Value set.
--- @return #nil The Key was not found and thus the Value could not be retrieved.
+-- @return The Value set. 
 function BASE:SetState( Object, Key, Value )
 
   local ClassNameAndID = Object:GetClassNameAndID()
@@ -816,7 +815,7 @@ end
 -- @param #BASE self
 -- @param Object The object that holds the Value set by the Key.
 -- @param Key The key that is used to retrieve the value. Note that the key can be a #string, but it can also be any other type!
--- @return The Value retrieved.
+-- @return The Value retrieved or nil if the Key was not found and thus the Value could not be retrieved.
 function BASE:GetState( Object, Key )
 
   local ClassNameAndID = Object:GetClassNameAndID()
@@ -829,6 +828,10 @@ function BASE:GetState( Object, Key )
   return nil
 end
 
+--- Clear the state of an object.
+-- @param #BASE self
+-- @param Object The object that holds the Value set by the Key.
+-- @param StateName The key that is should be cleared.
 function BASE:ClearState( Object, StateName )
 
   local ClassNameAndID = Object:GetClassNameAndID()

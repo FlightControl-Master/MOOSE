@@ -1095,6 +1095,37 @@ do -- COORDINATE
 
     return RoutePoint
   end
+
+  --- Gets the nearest airbase with respect to the current coordinates.
+  -- @param #COORDINATE self
+  -- @param #number AirbaseCategory Category of the airbase.
+  -- @return Wrapper.Airbase#AIRBASE Closest Airbase to the given coordinate.
+  -- @return #number Distance to the closest airbase in meters.
+  function COORDINATE:GetClosestAirbase(AirbaseCategory)
+    local airbases=AIRBASE.GetAllAirbases()
+    
+    local closest=nil
+    local distmin=nil
+    -- Loop over all airbases.
+    for _,_airbase in pairs(airbases) do
+      local airbase=_airbase --Wrapper.Airbase#AIRBASE
+      local category=airbase:GetDesc().category
+      if AirbaseCategory and AirbaseCategory==category or AirbaseCategory==nil then
+        local dist=self:Get2DDistance(airbase:GetCoordinate())
+        if closest==nil then
+          distmin=dist
+          closest=airbase
+        else
+          if dist<distmin then
+            distmin=dist
+            closest=airbase
+          end 
+        end
+      end
+    end
+    
+    return closest,distmin
+  end
   
   --- Gets the nearest parking spot.
   -- @param #COORDINATE self
@@ -1182,19 +1213,27 @@ do -- COORDINATE
    local vec2={ x = x, y = y }
    return COORDINATE:NewFromVec2(vec2)
   end
+  
 
-  --- Returns a table of coordinates to a destination using only roads.
+  --- Returns a table of coordinates to a destination using only roads or railroads.
   -- The first point is the closest point on road of the given coordinate.
   -- By default, the last point is the closest point on road of the ToCoord. Hence, the coordinate itself and the final ToCoord are not necessarily included in the path.
   -- @param #COORDINATE self
   -- @param #COORDINATE ToCoord Coordinate of destination.
   -- @param #boolean IncludeEndpoints (Optional) Include the coordinate itself and the ToCoordinate in the path.
+  -- @param #boolean Railroad (Optional) If true, path on railroad is returned. Default false.
   -- @return #table Table of coordinates on road. If no path on road can be found, nil is returned or just the endpoints.
   -- @return #number The length of the total path.
-  function COORDINATE:GetPathOnRoad(ToCoord, IncludeEndpoints)
-
+  function COORDINATE:GetPathOnRoad(ToCoord, IncludeEndpoints, Railroad)
+  
+    -- Set road type.
+    local RoadType="roads"
+    if Railroad==true then
+      RoadType="railroads"
+    end
+    
     -- DCS API function returning a table of vec2.
-    local path = land.findPathOnRoads("roads", self.x, self.z, ToCoord.x, ToCoord.z)
+    local path = land.findPathOnRoads(RoadType, self.x, self.z, ToCoord.x, ToCoord.z)
     
     -- Array holding the path coordinates.
     local Path={}

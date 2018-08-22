@@ -374,14 +374,15 @@ do -- cargo
   -- @return #DATABASE self
   function DATABASE:_RegisterCargos()
 
+    local Groups = UTILS.DeepCopy( self.GROUPS ) -- This is a very important statement. CARGO_GROUP:New creates a new _DATABASE.GROUP entry, which will confuse the loop. I searched 4 hours on this to find the bug!
   
-    for CargoGroupName, CargoGroup in pairs( self.GROUPS ) do
+    for CargoGroupName, CargoGroup in pairs( Groups ) do
+      self:I( { Cargo = CargoGroupName } )
       if self:IsCargo( CargoGroupName ) then
         local CargoInfo = CargoGroupName:match("~CARGO(.*)")
         local CargoParam = CargoInfo and CargoInfo:match( "%((.*)%)")
         local CargoName1 = CargoGroupName:match("(.*)~CARGO%(.*%)")
         local CargoName2 = CargoGroupName:match(".*~CARGO%(.*%)(.*)")
-        self:E({CargoName1 = CargoName1, CargoName2 = CargoName2 })
         local CargoName = CargoName1 .. ( CargoName2 or "" )
         local Type = CargoParam and CargoParam:match( "T=([%a%d ]+),?")
         local Name = CargoParam and CargoParam:match( "N=([%a%d]+),?") or CargoName
@@ -459,7 +460,7 @@ end
 function DATABASE:AddGroup( GroupName )
 
   if not self.GROUPS[GroupName] then
-    self:E( { "Add GROUP:", GroupName } )
+    self:I( { "Add GROUP:", GroupName } )
     self.GROUPS[GroupName] = GROUP:Register( GroupName )
   end  
   
@@ -471,7 +472,7 @@ end
 function DATABASE:AddPlayer( UnitName, PlayerName )
 
   if PlayerName then
-    self:E( { "Add player for unit:", UnitName, PlayerName } )
+    self:I( { "Add player for unit:", UnitName, PlayerName } )
     self.PLAYERS[PlayerName] = UnitName
     self.PLAYERUNITS[PlayerName] = self:FindUnit( UnitName )
     self.PLAYERSJOINED[PlayerName] = PlayerName
@@ -483,7 +484,7 @@ end
 function DATABASE:DeletePlayer( UnitName, PlayerName )
 
   if PlayerName then
-    self:E( { "Clean player:", PlayerName } )
+    self:I( { "Clean player:", PlayerName } )
     self.PLAYERS[PlayerName] = nil
     self.PLAYERUNITS[PlayerName] = nil
   end
@@ -750,7 +751,7 @@ function DATABASE:_RegisterPlayers()
         local UnitName = UnitData:getName()
         local PlayerName = UnitData:getPlayerName()
         if not self.PLAYERS[PlayerName] then
-          self:E( { "Add player for unit:", UnitName, PlayerName } )
+          self:I( { "Add player for unit:", UnitName, PlayerName } )
           self:AddPlayer( UnitName, PlayerName )
         end
       end
@@ -773,13 +774,13 @@ function DATABASE:_RegisterGroupsAndUnits()
       if DCSGroup:isExist() then
         local DCSGroupName = DCSGroup:getName()
   
-        self:E( { "Register Group:", DCSGroupName } )
+        self:I( { "Register Group:", DCSGroupName } )
         self:AddGroup( DCSGroupName )
 
         for DCSUnitId, DCSUnit in pairs( DCSGroup:getUnits() ) do
   
           local DCSUnitName = DCSUnit:getName()
-          self:E( { "Register Unit:", DCSUnitName } )
+          self:I( { "Register Unit:", DCSUnitName } )
           self:AddUnit( DCSUnitName )
         end
       else
@@ -787,6 +788,11 @@ function DATABASE:_RegisterGroupsAndUnits()
       end
       
     end
+  end
+  
+  self:I("Groups:")
+  for GroupName, Group in pairs( self.GROUPS ) do
+    self:I( { "Group:", GroupName } )
   end
 
   return self
@@ -798,7 +804,7 @@ end
 function DATABASE:_RegisterClients()
 
   for ClientName, ClientTemplate in pairs( self.Templates.ClientsByName ) do
-    self:E( { "Register Client:", ClientName } )
+    self:I( { "Register Client:", ClientName } )
     self:AddClient( ClientName )
   end
   
@@ -809,14 +815,14 @@ end
 function DATABASE:_RegisterStatics()
 
   local CoalitionsData = { GroupsRed = coalition.getStaticObjects( coalition.side.RED ), GroupsBlue = coalition.getStaticObjects( coalition.side.BLUE ) }
-  self:E( { Statics = CoalitionsData } )
+  self:I( { Statics = CoalitionsData } )
   for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
     for DCSStaticId, DCSStatic in pairs( CoalitionData ) do
 
       if DCSStatic:isExist() then
         local DCSStaticName = DCSStatic:getName()
   
-        self:E( { "Register Static:", DCSStaticName } )
+        self:I( { "Register Static:", DCSStaticName } )
         self:AddStatic( DCSStaticName )
       else
         self:E( { "Static does not exist: ",  DCSStatic } )
@@ -836,7 +842,7 @@ function DATABASE:_RegisterAirbases()
 
       local DCSAirbaseName = DCSAirbase:getName()
 
-      self:E( { "Register Airbase:", DCSAirbaseName, DCSAirbase:getID() } )
+      self:I( { "Register Airbase:", DCSAirbaseName, DCSAirbase:getID() } )
       self:AddAirbase( DCSAirbaseName )
     end
   end
@@ -866,9 +872,8 @@ function DATABASE:_EventOnBirth( Event )
       Event.IniUnit = self:FindUnit( Event.IniDCSUnitName )
       Event.IniGroup = self:FindGroup( Event.IniDCSGroupName )
       local PlayerName = Event.IniUnit:GetPlayerName()
-      self:E( { "PlayerName:", PlayerName } )
       if PlayerName then
-        self:E( { "Player Joined:", PlayerName } )
+        self:I( { "Player Joined:", PlayerName } )
         if not self.PLAYERS[PlayerName] then
           self:AddPlayer( Event.IniUnitName, PlayerName )
         end
@@ -937,7 +942,7 @@ function DATABASE:_EventOnPlayerLeaveUnit( Event )
     if Event.IniObjectCategory == 1 then
       local PlayerName = Event.IniUnit:GetPlayerName()
       if PlayerName and self.PLAYERS[PlayerName] then
-        self:E( { "Player Left:", PlayerName } )
+        self:I( { "Player Left:", PlayerName } )
         local Settings = SETTINGS:Set( PlayerName )
         Settings:RemovePlayerMenu( Event.IniUnit )
         self:DeletePlayer( Event.IniUnit, PlayerName )
