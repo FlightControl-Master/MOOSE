@@ -74,14 +74,86 @@
 -- Any kind of ground or airborn asset can be stored. Ships not supported at the moment due to the fact that airbases are bound to airbases which are
 -- normally not located near the sea.
 -- 
+-- # Creating a new warehouse
+-- 
+-- A MOOSE warehouse must be represented in game by a phyical static object. For example, the mission editor already has warehouse as static object available.
+-- This would be a good first choice but any static object will do.
+-- 
+-- The positioning of the warehouse static object is very important for a couple of reasons. Firtly, a warehouse needs a good infrastructure so that spawned assets
+-- have a proper road connection or can reach the associated airbase easily.
+-- 
+-- Once the static warehouse object is placed in the mission editor it can be used as a MOOSE warehouse by the @{#WAREHOUSE.New}(*warehousestatic*, *alias*) constructor,
+-- like for example:
+-- 
+--      warehouse=WAREHOUSE:New(STATIC:FindByName("Warehouse Static Batumi"), "My Warehouse Alias")
+--      warehouse:Start()
+-- 
+-- So the first parameter *warehousestatic* is the static MOOSE object. By default, the name of the warehouse will be the same as the name given to the static object.
+-- The second parameter *alias* can be used to choose a more convenient name if desired. This will be the name the warehouse calls itself when reporting messages. 
+-- 
 -- # Adding Assets
+-- 
+-- Assets can be added to the warehouse stock by using the @{#WAREHOUSE.AddAsset}(*group*, *ngroups*) function. The parameter *group* has to be a MOOSE @{Wrapper.Group#GROUP}.
+-- The parameter *ngroups* specifies how many clones of this group are added to the stock.
+-- 
+-- Note that the group should be a late activated template group, which was defined in the mission editor.
+-- 
+--      infrantry=GROUP:FindByName("Some Infantry Group")
+--      warehouse:AddAsset(infantry, 5)
+-- 
+-- This will add five infantry groups to the warehouse stock.
+-- 
+-- Note that you can also add assets with a delay by using the @{#WAREHOUSE.__AddAsset}(*delay*, *group*, *ngroups*), where *delay* is the delay in seconds before the asset is added.
 --
--- # Requests
+-- # Requesting Assets
+-- 
+-- Assets of the warehouse can be requested by other MOOSE warehouses. A request will first be scrutinize to check if can be fullfilled at all. If the request is valid, it is
+-- put into the warehouse queue and processed as soon as possible.
+-- 
+-- A request can be assed by the @{#WAREHOUSE.AddRequest}(*warehouse*, *AssetDescriptor*, *AssetDescriptorValue*, *nAsset*, *TransportType*, *nTransport*, *Prio*) function.
+-- The parameters are
+-- 
+-- * *warehouse*: The requesting MOOSE @{#WAREHOUSE}. Assets will be delivered there.
+-- * *AssetDescriptor*: The descriptor to describe the asset "type". See the @{#WAREHOUSE.Descriptor} enumerator. For example, assets requested by their generalized attibute. 
+-- * *AssetDescriptorValue*: The value of the asset descriptor.
+-- * *nAsset*: (Optional) Number of asset group requested. Default is one group.
+-- * *TransportType*: (Optional) The transport method used to deliver the assets to the requestor. Default is that assets go to the requesting warehouse on their own.
+-- * *nTransport*: (Optional) Number of asset groups used to transport the cargo assets from A to B. Default is one group.
+-- * *Prio*: A number between 1 (high) and 100 (low) describing the priority of the request. Request with high priority are processed first. Default is 50, i.e. medium priority.
+-- 
+--  So for example:
+--  
+--       warehouseBatumi:AddRequest(warehouseKobuleti, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.INFANTRY, 5, WAREHOUSE.TransportType.APC, 2, 20)
 --
+-- Here, warehouse Kobuleti requests 5 infantry groups from warehouse Batumi. These "cargo" assets should be transported from Batumi to Kobuleti by 2 APCS.
+-- Note that the warehouse at Batumi needs to have at least five infantry groups and two APC groups in their stock if the request can be processed.
+-- If either to few infantry or APC groups are available when the request is made, the request is held in the warehouse queue until enough cargo and
+-- transport assets are available.
+-- 
+-- Also not that the above request is for five infantry units. So any group in stock that has the generalized attribute "INFANTRY" can be selected.
+-- 
+-- A more specific request could look like:
+-- 
+--      warehouseBatumi:AddRequest(warehouseKobuleti, WAREHOUSE.Descriptor.UNITTYPE, "A-10C", 2)
+--      
+-- Here, Kobuleti requests a specific unit type, in particular two groups of A-10Cs. Note that the spelling is important as it must exacly be the same as
+-- what one get's when using the DCS unit type.
+-- 
+-- An even more specific request would be:
+-- 
+--      warehouseBatumi:AddRequest(warehouseKobuleti, WAREHOUSE.Descriptor.TEMPLATENAME, "Group Name as in ME", 3)
+--      
+-- In this case three groups named "Group Name as in ME" are requested. So this explicitly request the groups named like that in the Mission Editor.
+-- 
+-- On the other hand, very general unspecifc requests can be made as
+-- 
+--      warehouseBatumi:AddRequest(warehouseKobuleti, WAREHOUSE.Descriptor.CATEGORY, Group.Category.Ground, 10)
+--      
+-- Here, Kubuleti requests 10 ground groups and does not care which ones. This could be a mix of infantry, APCs, trucks etc.
 --
 -- ===
 --
--- # USAGE GUIDE
+-- # Examples
 --
 --
 --
@@ -156,7 +228,7 @@ WAREHOUSE = {
 --- Descriptors enumerator describing the type of the asset.
 -- @type WAREHOUSE.Descriptor
 -- @field #string TEMPLATENAME Name of the asset template.
--- @field #string UNITTYPE Typename of the DCS unit.
+-- @field #string UNITTYPE Typename of the DCS unit, e.g. "A-10C".
 -- @field #string ATTRIBUTE Generalized attribute @{#WAREHOUSE.Attribute}.
 -- @field #string CATEGORY Asset category of type DCS#Group.Category, i.e. GROUND, AIRPLANE, HELICOPTER, SHIP, TRAIN.
 WAREHOUSE.Descriptor = {
@@ -167,10 +239,22 @@ WAREHOUSE.Descriptor = {
   CATEGORY="category",
 }
 
---- Warehouse generalited categories.
+--- Generalized asset attributes. Can be used to request assets with certain general characteristics.
 -- @type WAREHOUSE.Attribute
 -- @field #string TRANSPORT_PLANE Airplane with transport capability. Usually bigger, i.e. needs larger airbases and parking spots.
 -- @field #string TRANSPORT_HELO Helicopter with transport capability.
+-- @field #string TRANSPORT_APC Amoured Personell Carrier.
+-- @field #string FIGHER Fighter, interceptor, ... airplane.
+-- @field #string TANKER Airplane which can refuel other aircraft.
+-- @field #string AWACS Airborne Early Warning and Control System.
+-- @field #string ARTILLERY Artillery assets.
+-- @field #string INFANTRY Ground infantry assets.
+-- @field #string BOMBER Aircraft which can be used for bombing.
+-- @field #string TANK Tanks.
+-- @field #string TRUCK Unarmed ground vehicles.
+-- @field #string TRAIN Trains.
+-- @field #string SHIP Naval assets.
+-- @field #string OTHER Anything that does not fall into any other category.
 WAREHOUSE.Attribute = {
   TRANSPORT_PLANE="Transport_Plane",
   TRANSPORT_HELO="Transport_Helo",
@@ -189,8 +273,14 @@ WAREHOUSE.Attribute = {
   OTHER="Other",
 }
 
---- Cargo transport type.
+--- Cargo transport type. Defines how assets are transported to their destination.
 -- @type WAREHOUSE.TransportType
+-- @field #string AIRPLANE Transports are conducted by airplanes.
+-- @field #string HELICOPTER Transports are conducted by helicopters.
+-- @field #string APC Transports are conducted by APCs.
+-- @field #string SHIP Transports are conducted by ships.
+-- @field #string TRAIN Transports are conducted by trains.
+-- @field #string SELFPROPELLED Assets go to their destination by themselves. No transport carrier needed.
 WAREHOUSE.TransportType = {
   AIRPLANE      = "Transport_Plane",
   HELICOPTER    = "Transport_Helo",
@@ -211,7 +301,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.2.4"
+WAREHOUSE.version="0.2.4w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -237,6 +327,7 @@ WAREHOUSE.version="0.2.4"
 -- NOGO: Use RAT for routing air units. Should be possible but might need some modifications of RAT, e.g. explit spawn place. But flight plan should be better.
 -- TODO: Can I make a request with specific assets? E.g., once delivered, make a request for exactly those assests that were in the original request.
 -- TODO: Handle the case when units of a group die during the transfer. Adjust template?! See Grouping in SPAWN.
+-- TODO: Set ROE for spawned groups.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor(s)
@@ -315,38 +406,38 @@ function WAREHOUSE:New(warehouse, alias)
   
   -- Pseudo Functions
   
-  --- Triggers the FSM event "Start". Starts the warehouse.
+  --- Triggers the FSM event "Start". Starts the warehouse. Initializes parameters and starts event handlers.
   -- @function [parent=#WAREHOUSE] Start
   -- @param #WAREHOUSE self
 
-  --- Triggers the FSM event "Start" after a delay. Starts the warehouse.
+  --- Triggers the FSM event "Start" after a delay. Starts the warehouse. Initializes parameters and starts event handlers.
   -- @function [parent=#WAREHOUSE] __Start
   -- @param #WAREHOUSE self
   -- @param #number delay Delay in seconds.
 
-  --- Triggers the FSM event "Stop". Stops the warehouse.
+  --- Triggers the FSM event "Stop". Stops the warehouse and all its event handlers.
   -- @function [parent=#WAREHOUSE] Stop
   -- @param #WAREHOUSE self
 
-  --- Triggers the FSM event "Stop" after a delay. Stops the warehouse.
+  --- Triggers the FSM event "Stop" after a delay. Stops the warehouse and all its event handlers.
   -- @function [parent=#WAREHOUSE] __Stop
   -- @param #WAREHOUSE self
   -- @param #number delay Delay in seconds.
 
-  --- Triggers the FSM event "Pause". Pauses the warehouse.
+  --- Triggers the FSM event "Pause". Pauses the warehouse. Assets can still be added and requests be made. However, requests are not processed.
   -- @function [parent=#WAREHOUSE] Pauses
   -- @param #WAREHOUSE self
 
-  --- Triggers the FSM event "Pause" after a delay. Pause the warehouse.
+  --- Triggers the FSM event "Pause" after a delay. Pauses the warehouse. Assets can still be added and requests be made. However, requests are not processed.
   -- @function [parent=#WAREHOUSE] __Pause
   -- @param #WAREHOUSE self
   -- @param #number delay Delay in seconds.
 
-  --- Triggers the FSM event "Unpause". Pauses the warehouse.
+  --- Triggers the FSM event "Unpause". Unpauses the warehouse. Processing of queued requests is resumed.
   -- @function [parent=#WAREHOUSE] UnPause
   -- @param #WAREHOUSE self
 
-  --- Triggers the FSM event "Unpause" after a delay. Pause the warehouse.
+  --- Triggers the FSM event "Unpause" after a delay. Unpauses the warehouse. Processing of queued requests is resumed.
   -- @function [parent=#WAREHOUSE] __Unpause
   -- @param #WAREHOUSE self
   -- @param #number delay Delay in seconds.
@@ -428,13 +519,83 @@ function WAREHOUSE:New(warehouse, alias)
   --- Triggers the FSM event "Delivered". A group has been delivered from the warehouse to another airbase or warehouse.
   -- @function [parent=#WAREHOUSE] Delivered
   -- @param #WAREHOUSE self
-  -- @param Core.Set#SET_GROUP groupset Set of groups that were delivered.
+  -- @param #WAREHOUSE.Pendingitem request Pending request that was now delivered.
 
   --- Triggers the FSM event "Delivered" after a delay. A group has been delivered from the warehouse to another airbase or warehouse.
   -- @function [parent=#WAREHOUSE] __Delivered
   -- @param #WAREHOUSE self
   -- @param #number delay Delay in seconds.
-  -- @param Core.Set#SET_GROUP groupset Set of groups that were delivered.
+  -- @param #WAREHOUSE.Pendingitem request Pending request that was now delivered.
+
+
+  --- Triggers the FSM event "SelfRequest". Request was initiated to the warehouse itself. Groups are just spawned at the warehouse or the associated airbase.
+  -- If the warehouse is currently under attack when the self request is made, the self request is added to the defending table. One the attack is defeated,
+  -- this request is used to put the groups back into the warehouse stock.
+  -- @function [parent=#WAREHOUSE] SelfRequest
+  -- @param #WAREHOUSE self
+  -- @param Core.Set#SET_GROUP groupset The set of cargo groups that was delivered to the warehouse itself.
+  -- @param #WAREHOUSE.Pendingitem request Pending self request.
+
+  --- Triggers the FSM event "SelfRequest" with a delay. Request was initiated to the warehouse itself. Groups are just spawned at the warehouse or the associated airbase.
+  -- If the warehouse is currently under attack when the self request is made, the self request is added to the defending table. One the attack is defeated,
+  -- this request is used to put the groups back into the warehouse stock.
+  -- @function [parent=#WAREHOUSE] __SelfRequest
+  -- @param #WAREHOUSE self
+  -- @param #number delay Delay in seconds.
+  -- @param Core.Set#SET_GROUP groupset The set of cargo groups that was delivered to the warehouse itself.
+  -- @param #WAREHOUSE.Pendingitem request Pending self request.
+
+
+  --- Triggers the FSM event "Attacked" when a warehouse is under attack by an another coalition.
+  -- @param #WAREHOUSE self
+  -- @function [parent=#WAREHOUSE] Attacked
+  -- @param DCS#coalition.side Coalition which is attacking the warehouse.
+  -- @param DCS#country.id Country which is attacking the warehouse.
+
+  --- Triggers the FSM event "Attacked" with a delay when a warehouse is under attack by an another coalition.
+  -- @param #WAREHOUSE self
+  -- @function [parent=#WAREHOUSE] __Attacked
+  -- @param #number delay Delay in seconds.
+  -- @param DCS#coalition.side Coalition which is attacking the warehouse.
+  -- @param DCS#country.id Country which is attacking the warehouse.
+
+
+  --- Triggers the FSM event "Defeated" when an attack from an enemy was defeated.
+  -- @param #WAREHOUSE self
+  -- @function [parent=#WAREHOUSE] Defeated
+  -- @param DCS#coalition.side Coalition which is attacking the warehouse.
+  -- @param DCS#country.id Country which is attacking the warehouse.
+
+  --- Triggers the FSM event "Defeated" with a delay when an attack from an enemy was defeated.
+  -- @param #WAREHOUSE self
+  -- @function [parent=#WAREHOUSE] __Defeated
+  -- @param #number delay Delay in seconds.
+  -- @param DCS#coalition.side Coalition which is attacking the warehouse.
+  -- @param DCS#country.id Country which is attacking the warehouse.
+
+
+  --- Triggers the FSM event "Captured" when a warehouse has been captured by another coalition.
+  -- @param #WAREHOUSE self
+  -- @function [parent=#WAREHOUSE] Captured
+  -- @param DCS#coalition.side Coalition which captured the warehouse.
+  -- @param DCS#country.id Country which has captured the warehouse.
+  
+  --- Triggers the FSM event "Captured" with a delay when a warehouse has been captured by another coalition.
+  -- @param #WAREHOUSE self
+  -- @function [parent=#WAREHOUSE] __Captured
+  -- @param #number delay Delay in seconds.
+  -- @param DCS#coalition.side Coalition which captured the warehouse.
+  -- @param DCS#country.id Country which has captured the warehouse.
+
+
+  --- Triggers the FSM event "Destroyed" when the warehouse was destroyed. All services are stopped.
+  -- @param #WAREHOUSE self
+  -- @function [parent=#WAREHOUSE] Destroyed
+  
+  --- Triggers the FSM event "Destroyed" with a delay when the warehouse was destroyed. All services are stopped.
+  -- @param #WAREHOUSE self
+  -- @function [parent=#WAREHOUSE] Destroyed
+  -- @param #number delay Delay in seconds.
 
   return self
 end
@@ -1327,24 +1488,32 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
       
       local group=_spawngroup --Wrapper.Group#GROUP
             
-      local ToCoordinate=Request.warehouse.spawnzone:GetRandomCoordinate(50)      
-      ToCoordinate:MarkToAll("Destination")
             
       -- Route cargo to their destination.
-      if _cargocategory==Group.Category.GROUND then
+      if _cargocategory==Group.Category.GROUND then      
         env.info("FF route ground "..group:GetName())
-        self:_RouteGround(group, ToCoordinate)
-      elseif _cargocategory==Group.Category.AIRPLANE then
-        env.info("FF route plane "..group:GetName())
+
+        -- Random place in the spawn zone of the requesting warehouse.
+        local ToCoordinate=Request.warehouse.spawnzone:GetRandomCoordinate()
+        ToCoordinate:MarkToAll("Destination")
+
+        -- Route ground.
+        self:_RouteGround(group, Request)
+        
+      elseif _cargocategory==Group.Category.AIRPLANE or _cargocategory==Group.Category.HELICOPTER then      
+        env.info("FF route aircraft "..group:GetName())
+        
+        -- Route plane the the requesting warehouses airbase.
+        -- Actually, the route is already set. We only need to activate the uncontrolled group.
         self:_RouteAir(group, Request.airbase)
-      elseif _cargocategory==Group.Category.HELICOPTER then
-        env.info("FF route helo "..group:GetName())
-        self:_RouteAir(group, Request.airbase)
+        
       elseif _cargocategory==Group.Category.SHIP then
         self:E("ERROR: self propelled ship not implemented yet!")
       elseif _cargocategory==Group.Category.TRAIN then
         env.info("FF route train "..group:GetName())
-        self:_RouteTrain(group, ToCoordinate)
+        
+        -- Route train to the rail connection of the requesting warehouse.
+        self:_RouteTrain(group, Request.warehouse.rail)
       else
         self:E(self.wid..string.format("ERROR: unknown category %s for self propelled cargo %s!",tostring(_cargocategory), tostring(group:GetName())))
       end
@@ -1627,8 +1796,7 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
   -- Now we try to find all parking spots for all cargo groups in advance. Due to the for loop, the parking spots do not get updated while spawning.
   local Parking={}
   if  _cargocategory==Group.Category.AIRPLANE or _cargocategory==Group.Category.HELICOPTER then
-    Parking=self:_FindParkingForAssets(self.airbase,_assetstock)
-    --Parking=self:_GetParkingForAssets(_assetstock) 
+    Parking=self:_FindParkingForAssets(self.airbase,_assetstock) 
   end
   
   -- Spawn aircraft in uncontrolled state if request comes from the same warehouse.
@@ -1828,12 +1996,12 @@ function WAREHOUSE:_UpdatePending(group)
 end
 
 
---- On after "Delivered" event.
+--- On after "Delivered" event. Triggered when all asset groups have reached their destination. Corresponding request is deleted from the pending queue.
 -- @param #WAREHOUSE self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #WAREHOUSE.Pendingitem request
+-- @param #WAREHOUSE.Pendingitem request The pending request that is finished and deleted from the pending queue.
 function WAREHOUSE:onafterDelivered(From, Event, To, request)
 
   -- Debug info
@@ -1851,11 +2019,13 @@ function WAREHOUSE:onafterDelivered(From, Event, To, request)
 end
 
 --- On after "SelfRequest" event. Request was initiated to the warehouse itself. Groups are just spawned at the warehouse or the associated airbase.
+-- If the warehouse is currently under attack when the self request is made, the self request is added to the defending table. One the attack is defeated,
+-- this request is used to put the groups back into the warehouse stock.
 -- @param #WAREHOUSE self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Core.Set#SET_GROUP groupset The set of cargo groups that was delivered.
+-- @param Core.Set#SET_GROUP groupset The set of cargo groups that was delivered to the warehouse itself.
 -- @param #WAREHOUSE.Pendingitem request Pending self request.
 function WAREHOUSE:onafterSelfRequest(From, Event, To, groupset, request)
 
@@ -1894,7 +2064,7 @@ function WAREHOUSE:onafterAttacked(From, Event, To, Coalition, Country)
   self:AddRequest(self, WAREHOUSE.Descriptor.CATEGORY, Group.Category.GROUND, "all", nil, nil , 0)
 end
 
---- On after "Defeated" event. Warehouse defeated an attack by another coalition. 
+--- On after "Defeated" event. Warehouse defeated an attack by another coalition. Defender assets are added back to warehouse stock.
 -- @param #WAREHOUSE self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -1951,7 +2121,7 @@ function WAREHOUSE:onafterCaptured(From, Event, To, Coalition, Country)
     
 end
 
---- On after "Destroyed" event. Warehouse was destroyed. Service is stopped.
+--- On after "Destroyed" event. Warehouse was destroyed. All services are stopped.
 -- @param #WAREHOUSE self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -1968,30 +2138,41 @@ end
 
 --- Route ground units to destination.
 -- @param #WAREHOUSE self
--- @param Wrapper.Group#GROUP Group The ground group.
--- @param Core.Point#COORDINATE Coordinate of the destination.
+-- @param Wrapper.Group#GROUP group The ground group to be routed
+-- @param #WAREHOUSE.Queueitem request The request for this group.
 -- @param #number Speed Speed in km/h to drive to the destination coordinate. Default is 60% of max possible speed the unit can go.
-function WAREHOUSE:_RouteGround(Group, Coordinate, Speed)
+function WAREHOUSE:_RouteGround(group, request)
 
-  if Group and Group:IsAlive() then
+  if group and group:IsAlive() then
 
-    -- Set speed.
-    local _speed=Speed or Group:GetSpeedMax()*0.6
+    -- Set speed to 70% of max possible.
+    local _speed=group:GetSpeedMax()*0.7
 
     -- Create task.
-    -- TODO: It might be necessary to ALWAYS route the group to the road connection first.
-    -- At the moment, the random spawn point might give another first road point which could also be a dead end like in Kobuliti(?).  
-    local Waypoints, canroad = Group:TaskGroundOnRoad(Coordinate, _speed, "Off Road", true)
+    -- DONE: It might be necessary to ALWAYS route the group to the road connection first.
+    -- At the moment, the random spawn point might give another first road point which could also be a dead end like in Kobuliti(?).
+    -- TODO: Might be necessary to include the current coordinate as first waypoint?!
+    
+    -- Waypoints for road-to-road connection.
+    local Waypoints, canroad = group:TaskGroundOnRoad(request.warehouse.road, _speed, "Off Road", false, self.road)
+    
+    -- First waypoint = current position of the group.
+    local FromWP=group:GetCoordinate():WaypointGround(_speed, "Off Road")
+    table.insert(Waypoints, FromWP, 1)
+    
+    -- Final coordinate.
+    local ToWP=request.warehouse.spawnzone:GetRandomCoordinate():WaypointGround(_speed, "Off Road")
+    table.insert(Waypoints, ToWP, #Waypoints)
 
     -- Task function triggering the arrived event.
-    local TaskFunction = Group:TaskFunction("WAREHOUSE._Arrived", self)
+    local TaskFunction = group:TaskFunction("WAREHOUSE._Arrived", self)
 
     -- Put task function on last waypoint.
     local Waypoint = Waypoints[#Waypoints]
-    Group:SetTaskWaypoint(Waypoint, TaskFunction)
+    group:SetTaskWaypoint(Waypoint, TaskFunction)
 
     -- Route group to destination.
-    Group:Route(Waypoints, 1)
+    group:Route(Waypoints, 1)
   end
 end
 
@@ -2839,74 +3020,6 @@ function WAREHOUSE:_GetTerminal(_attribute)
   return _terminal
 end
 
---- Get parking data for all air assets that need to be spawned at an airbase.
---@param #WAREHOUSE self
---@param #table assetlist A list of assets for which parking spots are required.
---@param #table parkingdata Table of the complete parking data to check. Default is to take it from the @{Wrapper.Airbase#AIRBASE.GetParkingSpotsTable}() function.
---@return #table A table with parking spots for each asset group.
---@return #table The reduced parking data table of the spots that have not been assigned.
-function WAREHOUSE:_GetParkingForAssets(assetlist, parkingdata)
-  
-  --- Remove selected spots from parking data table.
-  local function removeparking(parkingdata,spots)
-    for j=1,#spots do
-      for i=1,#parkingdata do      
-        if parkingdata[i].TerminalID==spots[j].TerminalID then
-          table.remove(parkingdata, i)
-          break
-        end
-      end
-    end
-  end
-  
-  -- Get complete parking data of the airbase.
-  parkingdata=parkingdata or self.airbase:GetParkingSpotsTable()
-  
-  local assetparking={}
-  for i=1,#assetlist do
-  
-    -- Asset specifics.
-    local asset=assetlist[i] --#WAREHOUSE.Assetitem
-    local group=GROUP:FindByName(asset.templatename)
-    local nunits=#group:GetUnits()
-    local terminal=self:_GetTerminal(asset.attribute)
-    
-    -- Debug info
-    env.info(string.format("Parking spot search:"))
-    env.info(string.format("Asset name      = %s", asset.templatename))
-    env.info(string.format("Asset attribute = %s", asset.attribute))
-    env.info(string.format("Terminal type   = %d", terminal))
-    env.info(string.format("Unit number     = %d", nunits))
-    env.info(string.format("Parking spots   = %d", #parkingdata))
-    
-    -- Find appropiate parking spots for this group.
-    local spots=self.airbase:FindFreeParkingSpotForAircraft(group, terminal, nil, nil, nil, nil, nil, nil, parkingdata)
-    
-    for _,spot in pairs(spots) do
-      if spot then
-        local coord=spot.Coordinate --Core.Point#COORDINATE
-        local text=string.format("Parking spot for %s:\nAsset id=%d, Terminal id=%d", asset.templatename, asset.uid, spot.TerminalID)
-        --coord:MarkToAll(text)
-        self:E(self.wid..text)
-      end
-    end
-    
-    -- Not enough parking spots for this group.
-    if #spots<nunits then
-      return nil,nil
-    end
-    
-    -- Put result in table.
-    table.insert(assetparking, spots)
-    
-    -- Remove parking spots from table so that will not be available in the next iteration.
-    removeparking(parkingdata,spots)
-  end
-  
-  return assetparking, parkingdata
-end
-
-----------------
 
 --- Seach unoccupied parking spots at the airbase for a list of assets. For each asset group a list of parking spots is returned.
 -- During the search also the not yet spawned asset aircraft are considered.
@@ -3074,7 +3187,6 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
   return parking
 end
 
------------------
 
 --- Get the request belonging to a group.
 -- @param #WAREHOUSE self
@@ -3096,20 +3208,16 @@ function WAREHOUSE:_GetRequestOfGroup(group, queue)
     
 end
 
---- Creates a unique name for spawned assets.
+--- Creates a unique name for spawned assets. From the group name the original warehouse, global asset and the request can be derived. 
 -- @param #WAREHOUSE self
 -- @param #WAREHOUSE.Assetitem _assetitem Asset for which the name is created.
 -- @param #WAREHOUSE.Queueitem _queueitem (Optional) Request specific name.
 -- @return #string Alias name "UnitType\_WID-%d\_AID-%d\_RID-%d"
 function WAREHOUSE:_Alias(_assetitem,_queueitem)
-  local _alias=string.format("%s_WID-%d_AID-%d", _assetitem.unittype, self.uid,_assetitem.uid)
-  if _queueitem then
-    _alias=_alias..string.format("_RID-%d",_queueitem.uid)
-  end
-  return _alias
+  return self:_alias(_assetitem.unittype, self.uid, _assetitem.uid,_queueitem.uid)
 end
 
---- Creates a unique name for spawned assets.
+--- Creates a unique name for spawned assets. From the group name the original warehouse, global asset and the request can be derived.
 -- @param #WAREHOUSE self
 -- @param #string unittype Type of unit.
 -- @param #number wid Warehouse id.
