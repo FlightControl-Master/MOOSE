@@ -301,7 +301,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.2.4w"
+WAREHOUSE.version="0.2.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -382,26 +382,28 @@ function WAREHOUSE:New(warehouse, alias)
   self:SetStartState("Stopped")
 
   -- Add FSM transitions.
-  self:AddTransition("Stopped",  "Load",        "Stopped")  -- TODO Load the warehouse state. No sure if it should be in stopped state.
-  self:AddTransition("Stopped",  "Start",       "Running")  -- Start the warehouse.
-  self:AddTransition("*",        "Status",      "*")        -- Status update.
-  self:AddTransition("*",        "AddAsset",    "*")        -- Add asset to warehouse stock.
-  self:AddTransition("*",        "AddRequest",  "*")        -- New request from other warehouse.
-  self:AddTransition("Running",  "Request",     "*")        -- Process a request. Only in running mode.
-  self:AddTransition("Attacked", "Request",     "*")        -- Process a request. Only in running mode.
-  self:AddTransition("*",        "Unloaded",    "*")        -- Cargo has been unloaded from the carrier.
-  self:AddTransition("*",        "Arrived",     "*")        -- Cargo group has arrived at destination.
-  self:AddTransition("*",        "Delivered",   "*")        -- All cargo groups of a request have been delivered to the requesting warehouse.
-  self:AddTransition("Running",  "SelfRequest", "*")        -- Request to warehouse itself. Requested assets are only spawned but not delivered anywhere.
-  self:AddTransition("Attacked", "SelfRequest", "*")        -- Request to warehouse itself. Also possible when warehouse is under attack!
-  self:AddTransition("Running",  "Pause",       "Paused")   -- TODO Pause the processing of new requests. Still possible to add assets and requests. 
-  self:AddTransition("Paused",   "Unpause",     "Running")  -- TODO Unpause the warehouse. Queued requests are processed again. 
-  self:AddTransition("*",        "Stop",        "Stopped")  -- TODO Stop the warehouse.
-  self:AddTransition("*",        "Save",        "*")        -- TODO Save the warehouse state to disk.
-  self:AddTransition("*",        "Attacked",    "Attacked") -- TODO Warehouse is under attack by enemy coalition.
-  self:AddTransition("Attacked", "Defeated",    "Running")  -- TODO Attack by other coalition was defeated!
-  self:AddTransition("Attacked", "Captured",    "Running")  -- TODO Warehouse was captured by another coalition. It must have been attacked first.
-  self:AddTransition("*",        "Destroyed",   "*")        -- TODO Warehouse was destoryed. All assets in stock are gone and warehouse is stopped.
+  self:AddTransition("Stopped",  "Load",             "Stopped")   -- TODO Load the warehouse state. No sure if it should be in stopped state.
+  self:AddTransition("Stopped",  "Start",            "Running")   -- Start the warehouse.
+  self:AddTransition("*",        "Status",           "*")         -- Status update.
+  self:AddTransition("*",        "AddAsset",         "*")         -- Add asset to warehouse stock.
+  self:AddTransition("*",        "AddRequest",       "*")         -- New request from other warehouse.
+  self:AddTransition("Running",  "Request",          "*")         -- Process a request. Only in running mode.
+  self:AddTransition("Attacked", "Request",          "*")         -- Process a request. Only in running mode.
+  self:AddTransition("*",        "Unloaded",         "*")         -- Cargo has been unloaded from the carrier.
+  self:AddTransition("*",        "Arrived",          "*")         -- Cargo group has arrived at destination.
+  self:AddTransition("*",        "Delivered",        "*")         -- All cargo groups of a request have been delivered to the requesting warehouse.
+  self:AddTransition("Running",  "SelfRequest",      "*")         -- Request to warehouse itself. Requested assets are only spawned but not delivered anywhere.
+  self:AddTransition("Attacked", "SelfRequest",      "*")         -- Request to warehouse itself. Also possible when warehouse is under attack!
+  self:AddTransition("Running",  "Pause",            "Paused")    -- TODO Pause the processing of new requests. Still possible to add assets and requests. 
+  self:AddTransition("Paused",   "Unpause",          "Running")   -- TODO Unpause the warehouse. Queued requests are processed again. 
+  self:AddTransition("*",        "Stop",             "Stopped")   -- TODO Stop the warehouse.
+  self:AddTransition("*",        "Save",             "*")         -- TODO Save the warehouse state to disk.
+  self:AddTransition("*",        "Attacked",         "Attacked")  -- TODO Warehouse is under attack by enemy coalition.
+  self:AddTransition("Attacked", "Defeated",         "Running")   -- TODO Attack by other coalition was defeated!
+  self:AddTransition("Attacked", "Captured",          "Running")  -- TODO Warehouse was captured by another coalition. It must have been attacked first.
+  self:AddTransition("*",        "AirbaseCaptured",   "*")        -- TODO Airbase was captured by other coalition.
+  self:AddTransition("*",        "AirbaseRecaptured", "*")        -- TODO Airbase was re-captured from other coalition. 
+  self:AddTransition("*",        "Destroyed",         "*")        -- TODO Warehouse was destoryed. All assets in stock are gone and warehouse is stopped.
   
   
   -- Pseudo Functions
@@ -586,6 +588,30 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #number delay Delay in seconds.
   -- @param DCS#coalition.side Coalition which captured the warehouse.
   -- @param DCS#country.id Country which has captured the warehouse.
+
+
+  --- Triggers the FSM event "AirbaseCaptured" when the airbase of the warehouse has been captured by another coalition.
+  -- @param #WAREHOUSE self
+  -- @function [parent=#WAREHOUSE] AirbaseCaptured
+  -- @param DCS#coalition.side Coalition which captured the airbase.
+  
+  --- Triggers the FSM event "AirbaseCaptured" with a delay when the airbase of the warehouse has been captured by another coalition.
+  -- @param #WAREHOUSE self
+  -- @function [parent=#WAREHOUSE] __AirbaseCaptured
+  -- @param #number delay Delay in seconds.
+  -- @param DCS#coalition.side Coalition which captured the airbase.
+
+
+  --- Triggers the FSM event "AirbaseRecaptured" when the airbase of the warehouse has been re-captured from the other coalition.
+  -- @param #WAREHOUSE self
+  -- @function [parent=#WAREHOUSE] AirbaseRecaptured
+  -- @param DCS#coalition.side Coalition which re-captured the airbase.
+  
+  --- Triggers the FSM event "AirbaseRecaptured" with a delay when the airbase of the warehouse has been re-captured from the other coalition.
+  -- @param #WAREHOUSE self
+  -- @function [parent=#WAREHOUSE] __AirbaseRecaptured
+  -- @param #number delay Delay in seconds.
+  -- @param DCS#coalition.side Coalition which re-captured the airbase.
 
 
   --- Triggers the FSM event "Destroyed" when the warehouse was destroyed. All services are stopped.
@@ -864,8 +890,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function WAREHOUSE:onafterStatus(From, Event, To)
-  self:E(self.wid..string.format("Checking status of warehouse %s. Current FSM state %s. Global warehouse asssets = %d.", self.alias, self:GetState(), #WAREHOUSE.db.Assets))
-  --env.info(string.format("FF number of global assets = %d, current asset id = %d", #WAREHOUSE.db.Assets, WAREHOUSE.db.AssetID))
+  self:E(self.wid..string.format("Checking status of warehouse %s. Current FSM state %s. Global warehouse assets = %d.", self.alias, self:GetState(), #WAREHOUSE.db.Assets))
   
   -- Print status.
   self:_DisplayStatus()
@@ -1390,6 +1415,13 @@ function WAREHOUSE:onbeforeRequest(From, Event, To, Request)
   -- Filter the requested assets.
   local _assets,_nasset,_enough=self:_FilterStock(self.stock, Request.assetdesc, Request.assetdescval, Request.nasset)
   
+  if Request.nasset==0 then
+    local text=string.format("Request denied! Zero assets were requested.")
+    MESSAGE:New(text, 10):ToCoalitionIf(self.coalition, self.Report or self.Debug)
+    self:E(self.wid..text)  
+    return false
+  end
+  
   -- Check if destination is in range for all requested assets.
   for _,_asset in pairs(_assets) do
     local asset=_asset --#WAREHOUSE.Assetitem
@@ -1780,9 +1812,12 @@ end
 -- @return Core.Set#SET_GROUP Set of groups that were spawned.
 -- @return #table List of spawned assets.
 function WAREHOUSE:_SpawnAssetRequest(Request)
+  self:E({requestUID=Request.uid})
 
   -- Filter the requested cargo assets.
   local _assetstock,_nasset,_enough=self:_FilterStock(self.stock, Request.assetdesc, Request.assetdescval, Request.nasset)
+  
+  self:E({num_assetstoc=#_assetstock, nasset=_nasset, enough=_enough})
   
   -- No assets in stock :(
   if not _enough then
@@ -2007,16 +2042,21 @@ function WAREHOUSE:onafterDelivered(From, Event, To, request)
   -- Debug info
   self:E(self.wid..string.format("All assets from warehouse %s delivered to warehouse %s!", self.alias, request.warehouse.alias))
   
+  self:_Fireworks(request.warehouse.coordinate)
+
+  --[[
   -- Fireworks!
   for i=1,91 do
     local color=math.random(0,3)
     request.warehouse.coordinate:Flare(color, i-1)
   end
+  ]]
   
   -- Remove pending request:
   self:_DeleteQueueItem(request, self.pending)
   
 end
+
 
 --- On after "SelfRequest" event. Request was initiated to the warehouse itself. Groups are just spawned at the warehouse or the associated airbase.
 -- If the warehouse is currently under attack when the self request is made, the self request is added to the defending table. One the attack is defeated,
@@ -2114,12 +2154,61 @@ function WAREHOUSE:onafterCaptured(From, Event, To, Coalition, Country)
   
   -- Respawn warehouse with new coalition/country.
   self.warehouse:ReSpawn(Country)
+  
+  -- Set new country and coalition
   self.coalition=Coalition
   self.country=Country
-  self.airbase=nil
-  self.category=-1
+  
+  -- Delete all waiting requests because they are not valid any more
+  self.queue=nil
+  self.queue={}
+  
+  --TODO: What about pending items? Is there any problem due to the coalition change?
+  --TODO: Maybe if the receiving warehouse gets captured! Oh, oh :(
+  --      What to do? send the items back? Impossible.
+    
+  -- Airbase could have been captured before and already belongs to the new coalition.
+  local airbase=AIRBASE:FindByName(self.airbasename)
+  local airbasecoaltion=airbase:GetCoalition()
+  
+  if self.coalition==airbasecoaltion then
+    -- Airbase already owned by the coalition that captured the warehouse. Airbase can be used by this warehouse.
+    self.airbase=airbase
+    self.category=airbase:GetDesc().category
+  else
+    -- Airbase is owned by other coalition. So this warehouse does not have an airbase unil it is captured.
+    self.airbase=nil
+    self.category=-1
+  end
     
 end
+
+--- On after "AirbaseCaptured" event. Airbase of warehouse has been captured by another coalition.
+-- @param #WAREHOUSE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param DCS#coalition.side Coalition which captured the warehouse.
+function WAREHOUSE:onafterAirbaseCaptured(From, Event, To, Coalition)
+  self:E(self.wid..string.format("Our airbase %s was captured by coalition %d!", self.airbasename, Coalition))
+  self.airbase:GetCoordinate():SmokeRed()
+  self.airbase=nil
+  self.category=-1  -- -1 indicates no airbase.
+end
+
+--- On after "AirbaseRecaptured" event. Airbase of warehouse has been re-captured from other coalition.
+-- @param #WAREHOUSE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param DCS#coalition.side Coalition which captured the warehouse.
+function WAREHOUSE:onafterAirbaseRecaptured(From, Event, To, Coalition)
+  self:E(self.wid..string.format("We re-capturd our airbase %s from coalition %d!", self.airbasename, Coalition))
+  self.airbase=AIRBASE:FindByName(self.airbasename)
+  self.category=self.airbase:GetDesc().category
+  self.airbase:GetCoordinate():SmokeGreen()
+end
+
 
 --- On after "Destroyed" event. Warehouse was destroyed. All services are stopped.
 -- @param #WAREHOUSE self
@@ -2158,11 +2247,11 @@ function WAREHOUSE:_RouteGround(group, request)
     
     -- First waypoint = current position of the group.
     local FromWP=group:GetCoordinate():WaypointGround(_speed, "Off Road")
-    table.insert(Waypoints, FromWP, 1)
+    table.insert(Waypoints, 1, FromWP)
     
     -- Final coordinate.
     local ToWP=request.warehouse.spawnzone:GetRandomCoordinate():WaypointGround(_speed, "Off Road")
-    table.insert(Waypoints, ToWP, #Waypoints)
+    table.insert(Waypoints, #Waypoints+1, ToWP)
 
     -- Task function triggering the arrived event.
     local TaskFunction = group:TaskFunction("WAREHOUSE._Arrived", self)
@@ -2441,12 +2530,14 @@ end
 -- @param #WAREHOUSE self
 -- @param Core.Event#EVENTDATA EventData Event data.
 function WAREHOUSE:_OnEventBaseCaptured(EventData)
-  self:E(self.wid..string.format("Warehouse %s captured event base captured!",self.alias))
   
   -- This warehouse does not have an airbase and never had one. So i could not be captured.
   if self.airbasename==nil then
+    -- This warehouse never had an airbase so I cannot have been captured.
     return
   end
+  
+  self:E(self.wid..string.format("Warehouse %s captured event base captured!",self.alias))
   
   if EventData and EventData.Place then
       
@@ -2455,6 +2546,8 @@ function WAREHOUSE:_OnEventBaseCaptured(EventData)
     
     if EventData.PlaceName==self.airbasename then
       -- Okay, this airbase belongs or did belong to this warehouse.
+      
+      self:E(self.wid..string.format("Airbase of warehouse %s was captured! ",self.alias))
       
       -- New coalition of airbase after it was captured.
       local coalitionAirbase=airbase:GetCoalition()
@@ -2466,13 +2559,14 @@ function WAREHOUSE:_OnEventBaseCaptured(EventData)
         -- Warehouse lost this airbase previously and not it was re-captured.
         env.info("FF airbase of warehouse is nil")
         if coalitionAirbase == self.coalition then
-          self.airbase=airbase
-          env.info("FF air")
+          self:AirbaseRecaptured(coalitionAirbase)
+          --self.airbase=airbase
         end
       else
         -- Captured airbase belongs to this warehouse but was captured by other coaltion.
         if coalitionAirbase ~= self.coalition then
-          self.airbase=nil
+          self:AirbaseCaptured(coalitionAirbase)
+          --self.airbase=nil
         end
       end
         
@@ -2628,6 +2722,7 @@ end
 -- @param #table queue The queue which is holding the requests to check.
 -- @return #boolean If true, request can be executed. If false, something is not right.
 function WAREHOUSE:_CheckRequestConsistancy(queue)
+  env.info("FF checking request consistancy!")
 
   -- Requests to delete.
   local invalid={}
@@ -2642,6 +2737,12 @@ function WAREHOUSE:_CheckRequestConsistancy(queue)
     -- if warehouse or requestor is a FARP, plane asset and transport not possible.
     -- if requestor or warehouse is a SHIP, APC transport not possible, SELFPROPELLED only for AIR/SHIP
     -- etc. etc...
+    
+    -- Check if at least one asset was requested.
+    if request.nasset==0 then
+      self:E(self.wid..string.format("ERROR: Incorrect request. Request for zero assets not possible. Can happen when, e.g. \"all\" ground assets are requests but none in stock."))
+      valid=false
+    end
   
     -- Request from enemy coalition?
     if self.coalition~=request.warehouse.coalition then
@@ -2858,7 +2959,7 @@ function WAREHOUSE:_CheckRequestConsistancy(queue)
     end
     
     -- Add request as unvalid and delete it later.
-    if not valid then
+    if not valid then      
       table.insert(invalid, request)
     end   
  
@@ -2867,8 +2968,9 @@ function WAREHOUSE:_CheckRequestConsistancy(queue)
 
    -- Delete invalid requests.
   for _,_request in pairs(invalid) do
+    self:E(self.wid..string.format("Deleting invalid request %d",_request.uid))
     self:_DeleteQueueItem(_request, self.queue)
-  end   
+  end
  
 end
 
@@ -3316,6 +3418,11 @@ function WAREHOUSE:_FilterStock(stock, item, value, nmax)
     end
   end
   
+  -- Treat case where ntot=0, i.e. no assets at all.
+  if ntot==0 then
+    return filtered, ntot, false
+  end
+  
   -- Handle string input for nmax.
   if type(nmax)=="string" then
     if nmax:lower()=="all" then
@@ -3629,6 +3736,21 @@ function WAREHOUSE:_DisplayStockItems(stock)
 
   env.info(text)
   MESSAGE:New(text, 10):ToAll()
+end
+
+--- Fireworks!
+-- @param #WAREHOUSE self
+-- @param Core.Point#COORDINATE coord
+function WAREHOUSE:_Fireworks(coord)
+
+  -- Place.
+  coord=coord or self.coordinate
+
+  -- Fireworks!
+  for i=1,91 do
+    local color=math.random(0,3)
+    coord:Flare(color, i-1)
+  end
 end
 
 --- Make a flight plan from a departure to a destination airport. 
