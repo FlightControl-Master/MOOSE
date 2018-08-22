@@ -128,10 +128,7 @@ function AI_CARGO_AIRPLANE:New( Airplane, CargoSet )
   -- Set carrier. 
   self:SetCarrier( Airplane )
   
-  local Desc = Airplane:GetUnit(1):GetDesc()
-  self:F({Desc=Desc})
-  Airplane:SetCargoBayWeightLimit( Desc.massMax - ( Desc.massEmpty + Desc.fuelMassMax ) )
-  --Airplane:SetCargoBayVolumeLimit( 15 )
+  Airplane:SetCargoBayWeightLimit()
   
   self.Relocating = true
   

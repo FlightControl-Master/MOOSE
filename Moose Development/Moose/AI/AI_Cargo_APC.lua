@@ -197,42 +197,7 @@ function AI_CARGO_APC:New( APC, CargoSet, CombatRadius )
   self:SetCarrier( APC )
   
   for _, APCUnit in pairs( APC:GetUnits() ) do
-    local Desc = APCUnit:GetDesc()
-
-    local VolumeUnit = ( Desc.box.max.x - Desc.box.min.x ) * ( Desc.box.max.y - Desc.box.min.y ) * ( Desc.box.max.z - Desc.box.min.z ) 
-    
-    local Weights = { 
-      ["M1126 Stryker ICV"] = 9,
-      ["M-113"] = 9,
-      ["AAV7"] = 25,
-      ["M2A1_halftrack"] = 9,
-      ["BMD-1"] = 9,
-      ["BMP-1"] = 8,
-      ["BMP-2"] = 7,
-      ["BMP-3"] = 8,
-      ["Boman"] = 25,
-      ["BTR-80"] = 9,
-      ["BTR_D"] = 12,
-      ["Cobra"] = 8,
-      ["LAV-25"] = 6,
-      ["M-2 Bradley"] = 6,
-      ["M1043 HMMWV Armament"] = 4,
-      ["M1045 HMMWV TOW"] = 4,
-      ["M1126 Stryker ICV"] = 9,
-      ["M1134 Stryker ATGM"] = 9,
-      ["Marder"] = 6,
-      ["MCV-80"] = 9,
-      ["MLRS FDDM"] = 4,
-      ["MTLB"] = 25,
-      ["TPZ"] = 10,
-    }
-    
-    local CargoBayWeightLimit = ( Weights[Desc.typeName] or 0 ) * 70
-    
-    APCUnit:SetCargoBayWeightLimit( CargoBayWeightLimit )
-    --Airplane:SetCargoBayVolumeLimit( 15 )
-
-    self:F( {TypeName = Desc.typeName, Desc = Desc, WeightLimit = CargoBayWeightLimit } )
+    APCUnit:SetCargoBayWeightLimit()
   end
   
   self.Transporting = false

@@ -811,7 +811,7 @@ do -- CARGO
   end
 
 
-  --- Check if CargoCarrier is near the Cargo to be Loaded.
+  --- Check if CargoCarrier is near the coordinate within NearRadius.
   -- @param #CARGO self
   -- @param Core.Point#COORDINATE Coordinate
   -- @param #number NearRadius The radius when the cargo will board the Carrier (to avoid collision).

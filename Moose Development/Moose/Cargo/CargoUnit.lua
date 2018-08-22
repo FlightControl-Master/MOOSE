@@ -226,8 +226,6 @@ do -- CARGO_UNIT
   function CARGO_UNIT:onafterBoard( From, Event, To, CargoCarrier, NearRadius, ... )
     self:F( { From, Event, To, CargoCarrier, NearRadius } )
   
-    local NearRadius = NearRadius or 25
-    
     self.CargoInAir = self.CargoObject:InAir()
     
     local Desc = self.CargoObject:GetDesc()
@@ -239,6 +237,9 @@ do -- CARGO_UNIT
     -- Only move the group to the carrier when the cargo is not in the air
     -- (eg. cargo can be on a oil derrick, moving the cargo on the oil derrick will drop the cargo on the sea).
     if not self.CargoInAir then
+      -- If NearRadius is given, then use the given NearRadius, otherwise calculate the NearRadius 
+      -- based upon the Carrier bounding radius, which is calculated from the bounding rectangle on the Y axis.
+      local NearRadius = CargoCarrier:GetBoundingRadius( NearRadius )
       if self:IsNear( CargoCarrier:GetPointVec2(), NearRadius ) then
         self:Load( CargoCarrier, NearRadius, ... )
       else
@@ -250,8 +251,6 @@ do -- CARGO_UNIT
           local Angle = 180
           local Distance = 5
           
-          NearRadius = NearRadius or 25
-        
           local CargoCarrierPointVec2 = CargoCarrier:GetPointVec2()
           local CargoCarrierHeading = CargoCarrier:GetHeading() -- Get Heading of object in degrees.
           local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
@@ -302,8 +301,6 @@ do -- CARGO_UNIT
             local Angle = 180
             local Distance = 5
             
-            NearRadius = NearRadius or 25
-          
             local CargoCarrierPointVec2 = CargoCarrier:GetPointVec2()
             local CargoCarrierHeading = CargoCarrier:GetHeading() -- Get Heading of object in degrees.
             local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
@@ -349,8 +346,6 @@ do -- CARGO_UNIT
     local Angle = 180
     local Distance = 5
     
-    local NearRadius = NearRadius or 25
-  
     if From == "UnLoaded" or From == "Boarding" then
     
     end

@@ -146,9 +146,7 @@ function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
   )
 
   for _, HelicopterUnit in pairs( Helicopter:GetUnits() ) do
-    local Desc = HelicopterUnit:GetDesc()
-    self:F({Desc=Desc})
-    HelicopterUnit:SetCargoBayWeightLimit( Desc.massMax - ( Desc.massEmpty + Desc.fuelMassMax ) )
+    HelicopterUnit:SetCargoBayWeightLimit()
   end
   
   self.Relocating = false
