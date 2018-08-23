@@ -301,33 +301,35 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.2.5"
+WAREHOUSE.version="0.2.5w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Add event handlers.
+-- TODO: Set ROE for spawned groups.
+-- TODO: Add possibility to add active groups. Need to create a pseudo template before destroy.
+-- DONE: If warehouse is destoyed, all asssets are gone.
+-- TODO: Write documentation.
+-- TODO: Handle the case when units of a group die during the transfer. Adjust template?! See Grouping in SPAWN.
+-- TODO: Handle cases with immobile units.
+-- TODO: Handle cargo crates.
+-- TODO: Handle cases for aircraft carriers and other ships. Place warehouse on carrier possible? On others probably not - exclude them?
+-- TODO: Add general message function for sending to coaliton or debug.
+-- TODO: Fine tune event handlers.
+-- DONE: Add event handlers.
 -- DONE: Add AI_CARGO_AIRPLANE
 -- DONE: Add AI_CARGO_APC
 -- DONE: Add AI_CARGO_HELICOPTER
 -- DONE: Switch to AI_CARGO_XXX_DISPATCHER
 -- DONE: Add queue.
--- TODO: Write documentation.
 -- DONE: Put active groups into the warehouse, e.g. when they were transported to this warehouse.
 -- NOGO: Spawn warehouse assets as uncontrolled or AI off and activate them when requested.
--- TODO: Handle cases with immobile units.
 -- DONE: How to handle multiple units in a transport group? <== Cargo dispatchers.
 -- DONE: Add phyical object.
--- TODO: If warehouse is destoyed, all asssets are gone.
--- TODO: If warehosue is captured, change warehouse and assets to other coalition.
--- TODO: Handle cases for aircraft carriers and other ships. Place warehouse on carrier possible? On others probably not - exclude them?
--- TODO: Handle cargo crates.
--- TODO: Add general message function for sending to coaliton or debug.
+-- DONE: If warehosue is captured, change warehouse and assets to other coalition.
 -- NOGO: Use RAT for routing air units. Should be possible but might need some modifications of RAT, e.g. explit spawn place. But flight plan should be better.
--- TODO: Can I make a request with specific assets? E.g., once delivered, make a request for exactly those assests that were in the original request.
--- TODO: Handle the case when units of a group die during the transfer. Adjust template?! See Grouping in SPAWN.
--- TODO: Set ROE for spawned groups.
+-- DONE: Can I make a request with specific assets? E.g., once delivered, make a request for exactly those assests that were in the original request.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor(s)
@@ -2262,6 +2264,10 @@ function WAREHOUSE:_RouteGround(group, request)
 
     -- Route group to destination.
     group:Route(Waypoints, 1)
+    
+    -- Set ROE and alaram state.
+    group:OptionROEReturnFire()
+    group:OptionAlarmStateGreen()
   end
 end
 
@@ -2269,73 +2275,18 @@ end
 --- Route the airplane from one airbase another.
 -- @param #WAREHOUSE self
 -- @param Wrapper.Group#GROUP Aircraft Airplane group to be routed.
--- @param Wrapper.Airbase#AIRBASE ToAirbase Destination airbase.
--- @param #number Speed Speed in km/h. Default is 80% of max possible speed the group can do.
-function WAREHOUSE:_RouteAir(Aircraft, ToAirbase, Speed)
+function WAREHOUSE:_RouteAir(aircraft)
 
-  if Aircraft and Aircraft:IsAlive()~=nil then
+  if aircraft and aircraft:IsAlive()~=nil then
     
     -- Start command.
-    if true then
-      local StartCommand = {id = 'Start', params = {}}
-      Aircraft:SetCommand(StartCommand)
-      return
-    end
+    local StartCommand = {id = 'Start', params = {}}
+    aircraft:SetCommand(StartCommand)
 
-    -- Set takeoff type.
-    local Takeoff = SPAWN.Takeoff.Cold
-
-    -- Get template of group.
-    local Template = Aircraft:GetTemplate()
-
-    -- Nil check
-    if Template==nil then
-      self:E(self.wid.."ERROR: Template nil in RouteAir!")
-      return
-    end
-
-    local Waypoints,Coordinates=self:_GetFlightplan(Aircraft,self.airbase,ToAirbase)
-
-    --[[
-    -- Waypoints of the route.
-    local Points={}
-
-    -- To point.
-    local AirbasePointVec2 = ToAirbase:GetPointVec2()
-    local ToWaypoint = AirbasePointVec2:WaypointAir(
-      POINT_VEC3.RoutePointAltType.BARO,
-      "Land",
-      "Landing",
-      Speed or Aircraft:GetSpeedMax()*0.8
-    )
-    ToWaypoint["airdromeId"]   = ToAirbase:GetID()
-    ToWaypoint["speed_locked"] = true
-
-    -- Aibase id and category.
-    local AirbaseID       = ToAirbase:GetID()
-    local AirbaseCategory = ToAirbase:GetDesc().category
-
-    if AirbaseCategory == Airbase.Category.SHIP or AirbaseCategory == Airbase.Category.HELIPAD then
-      ToWaypoint.linkUnit   = AirbaseID
-      ToWaypoint.helipadId  = AirbaseID
-      ToWaypoint.airdromeId = nil
-    elseif AirbaseCategory == Airbase.Category.AIRDROME then
-      ToWaypoint.airdromeId = AirbaseID
-      ToWaypoint.helipadId  = nil
-      ToWaypoint.linkUnit   = nil
-    end
+    -- Set ROE and alaram state.
+    aircraft:OptionROEReturnFire()
+    aircraft:OptionROTPassiveDefense()
     
-    -- Second point of the route. First point is done in RespawnAtCurrentAirbase() routine.
-    Template.route.points[2] = ToWaypoint
-       ]]
-       
-    -- Set waypoints.
-    Template.route.points=Waypoints
-    
-    -- Respawn group at the current airbase.    
-    env.info("FF Respawn at current airbase group = "..Aircraft:GetName().." name before")
-    local newAC=Aircraft:RespawnAtCurrentAirbase(Template, Takeoff, false)
-    env.info("FF Respawn at current airbase group = "..newAC:GetName().." name after")
     
   else
     self:E(string.format("ERROR: aircraft %s cannot be routed since it does not exist or is not alive %s!", tostring(Aircraft:GetName()), tostring(Aircraft:IsAlive())))
@@ -2432,6 +2383,7 @@ function WAREHOUSE:_OnEventArrived(EventData)
         local nunits=#group:GetUnits()
         local dt=10*(nunits-1)+1  -- one unit = 1 sec, two units = 11 sec, three units = 21 sec before we call the group arrived.
         self:__Arrived(dt, group)
+        
       else
         self:E(string.format("Group that arrived did not belong to a warehouse. Warehouse ID=%s, Asset ID=%s, Request ID=%s.", tostring(wid), tostring(aid), tostring(rid)))
       end
@@ -2504,7 +2456,15 @@ end
 -- @param #WAREHOUSE self
 -- @param Core.Event#EVENTDATA EventData Event data.
 function WAREHOUSE:_OnEventEngineShutdown(EventData)
-  self:E(self.wid..string.format("Warehouse %s captured event engine shutdown!",self.alias))
+  self:T3(self.wid..string.format("Warehouse %s captured event engine shutdown!", self.alias))
+  
+  if EventData and EventData.IniGroup then
+    local group=EventData.IniGroup
+    local wid,aid,rid=self:_GetIDsFromGroup(group)
+    if wid==self.uid then
+      self:E(self.wid..string.format("Warehouse %s captured event engine shutdown of its asset unit %s.", self.alias, EventData.IniUnitName))
+    end
+  end  
 end
 
 --- Warehouse event handling function.
@@ -2547,7 +2507,7 @@ function WAREHOUSE:_OnEventBaseCaptured(EventData)
     if EventData.PlaceName==self.airbasename then
       -- Okay, this airbase belongs or did belong to this warehouse.
       
-      self:E(self.wid..string.format("Airbase of warehouse %s was captured! ",self.alias))
+      self:I(self.wid..string.format("Airbase of warehouse %s was captured! ",self.alias))
       
       -- New coalition of airbase after it was captured.
       local coalitionAirbase=airbase:GetCoalition()
@@ -2557,16 +2517,13 @@ function WAREHOUSE:_OnEventBaseCaptured(EventData)
       -- Warehouse is blue, airbase is blue self.airbase is nil and blue (re-)captures it ==> self.airbase=Event.Place        
       if self.airbase==nil then
         -- Warehouse lost this airbase previously and not it was re-captured.
-        env.info("FF airbase of warehouse is nil")
         if coalitionAirbase == self.coalition then
           self:AirbaseRecaptured(coalitionAirbase)
-          --self.airbase=airbase
         end
       else
         -- Captured airbase belongs to this warehouse but was captured by other coaltion.
         if coalitionAirbase ~= self.coalition then
           self:AirbaseCaptured(coalitionAirbase)
-          --self.airbase=nil
         end
       end
         
@@ -2607,7 +2564,7 @@ function WAREHOUSE:_CheckConquered()
       local distance=coord:Get2DDistance(unit:GetCoordinate())
       
       -- Filter only alive groud units. Also check distance again, because the scan routine might give some larger distances.
-      if unit:IsGround() and unit:IsAlive() and distance<= radius then
+      if unit:IsGround() and unit:IsAlive() and distance <= radius then
       
         -- Get coalition and country.
         local _coalition=unit:GetCoalition()
