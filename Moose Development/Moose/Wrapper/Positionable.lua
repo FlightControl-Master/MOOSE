@@ -243,7 +243,7 @@ end
 
 --- Get the bounding box of the underlying POSITIONABLE DCS Object.
 -- @param #POSITIONABLE self
--- @return DCS#Distance The bounding box of the POSITIONABLE.
+-- @return DCS#Box3 The bounding box of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetBoundingBox() --R2.1
   self:F2()
@@ -263,6 +263,29 @@ function POSITIONABLE:GetBoundingBox() --R2.1
   return nil
 end
 
+
+--- Get the bounding radius of the underlying POSITIONABLE DCS Object.
+-- @param #POSITIONABLE self
+-- @return DCS#Distance The bounding radius of the POSITIONABLE.
+-- @return #nil The POSITIONABLE is not existing or alive.  
+function POSITIONABLE:GetBoundingRadius()
+  self:F2()
+
+  local Box = self:GetBoundingBox()
+  
+
+  if Box then
+    local X = Box.max.x - Box.min.x
+    local Z = Box.max.z - Box.min.z
+    local CX = X / 2
+    local CZ = Z / 2
+    return math.max( CX, CZ )
+  end
+  
+  BASE:E( { "Cannot GetBoundingRadius", Positionable = self, Alive = self:IsAlive() } )
+
+  return nil
+end
 
 --- Returns the altitude of the POSITIONABLE.
 -- @param Wrapper.Positionable#POSITIONABLE self
@@ -323,7 +346,7 @@ end
 
 --- Returns the POSITIONABLE heading in degrees.
 -- @param Wrapper.Positionable#POSITIONABLE self
--- @return #number The POSTIONABLE heading
+-- @return #number The POSITIONABLE heading
 -- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetHeading()
   local DCSPositionable = self:GetDCSObject()
@@ -344,6 +367,52 @@ function POSITIONABLE:GetHeading()
   
   BASE:E( { "Cannot GetHeading", Positionable = self, Alive = self:IsAlive() } )
 
+  return nil
+end
+
+-- Is Methods
+
+--- Returns if the unit is of an air category.
+-- If the unit is a helicopter or a plane, then this method will return true, otherwise false.
+-- @param #POSITIONABLE self
+-- @return #boolean Air category evaluation result.
+function POSITIONABLE:IsAir()
+  self:F2()
+  
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+    local UnitDescriptor = DCSUnit:getDesc()
+    self:T3( { UnitDescriptor.category, Unit.Category.AIRPLANE, Unit.Category.HELICOPTER } )
+    
+    local IsAirResult = ( UnitDescriptor.category == Unit.Category.AIRPLANE ) or ( UnitDescriptor.category == Unit.Category.HELICOPTER )
+  
+    self:T3( IsAirResult )
+    return IsAirResult
+  end
+  
+  return nil
+end
+
+--- Returns if the unit is of an ground category.
+-- If the unit is a ground vehicle or infantry, this method will return true, otherwise false.
+-- @param #POSITIONABLE self
+-- @return #boolean Ground category evaluation result.
+function POSITIONABLE:IsGround()
+  self:F2()
+  
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+    local UnitDescriptor = DCSUnit:getDesc()
+    self:T3( { UnitDescriptor.category, Unit.Category.GROUND_UNIT } )
+    
+    local IsGroundResult = ( UnitDescriptor.category == Unit.Category.GROUND_UNIT )
+  
+    self:T3( IsGroundResult )
+    return IsGroundResult
+  end
+  
   return nil
 end
 
@@ -798,56 +867,148 @@ function POSITIONABLE:GetLaserCode() --R2.1
   return self.LaserCode
 end
 
---- Add cargo.
--- @param #POSITIONABLE self
--- @param Core.Cargo#CARGO Cargo
--- @return #POSITIONABLE
-function POSITIONABLE:AddCargo( Cargo )
-  self.__.Cargo[Cargo] = Cargo
-  return self
-end
+do -- Cargo
 
---- Get all contained cargo.
--- @param #POSITIONABLE self
--- @return #POSITIONABLE
-function POSITIONABLE:GetCargo()
-  return self.__.Cargo
-end
-
-
-
---- Remove cargo.
--- @param #POSITIONABLE self
--- @param Core.Cargo#CARGO Cargo
--- @return #POSITIONABLE
-function POSITIONABLE:RemoveCargo( Cargo )
-  self.__.Cargo[Cargo] = nil
-  return self
-end
-
---- Returns if carrier has given cargo.
--- @param #POSITIONABLE self
--- @return Core.Cargo#CARGO Cargo
-function POSITIONABLE:HasCargo( Cargo )
-  return self.__.Cargo[Cargo]
-end
-
---- Clear all cargo.
--- @param #POSITIONABLE self
-function POSITIONABLE:ClearCargo()
-  self.__.Cargo = {}
-end
-
---- Get cargo item count.
--- @param #POSITIONABLE self
--- @return Core.Cargo#CARGO Cargo
-function POSITIONABLE:CargoItemCount()
-  local ItemCount = 0
-  for CargoName, Cargo in pairs( self.__.Cargo ) do
-    ItemCount = ItemCount + Cargo:GetCount()
+  --- Add cargo.
+  -- @param #POSITIONABLE self
+  -- @param Core.Cargo#CARGO Cargo
+  -- @return #POSITIONABLE
+  function POSITIONABLE:AddCargo( Cargo )
+    self.__.Cargo[Cargo] = Cargo
+    return self
   end
-  return ItemCount
-end
+  
+  --- Get all contained cargo.
+  -- @param #POSITIONABLE self
+  -- @return #POSITIONABLE
+  function POSITIONABLE:GetCargo()
+    return self.__.Cargo
+  end
+  
+  
+  
+  --- Remove cargo.
+  -- @param #POSITIONABLE self
+  -- @param Core.Cargo#CARGO Cargo
+  -- @return #POSITIONABLE
+  function POSITIONABLE:RemoveCargo( Cargo )
+    self.__.Cargo[Cargo] = nil
+    return self
+  end
+  
+  --- Returns if carrier has given cargo.
+  -- @param #POSITIONABLE self
+  -- @return Core.Cargo#CARGO Cargo
+  function POSITIONABLE:HasCargo( Cargo )
+    return self.__.Cargo[Cargo]
+  end
+  
+  --- Clear all cargo.
+  -- @param #POSITIONABLE self
+  function POSITIONABLE:ClearCargo()
+    self.__.Cargo = {}
+  end
+  
+  --- Is cargo bay empty.
+  -- @param #POSITIONABLE self
+  function POSITIONABLE:IsCargoEmpty()
+    local IsEmpty = true
+    for _, Cargo in pairs( self.__.Cargo ) do
+      IsEmpty = false
+      break
+    end
+    return IsEmpty
+  end
+  
+  --- Get cargo item count.
+  -- @param #POSITIONABLE self
+  -- @return Core.Cargo#CARGO Cargo
+  function POSITIONABLE:CargoItemCount()
+    local ItemCount = 0
+    for CargoName, Cargo in pairs( self.__.Cargo ) do
+      ItemCount = ItemCount + Cargo:GetCount()
+    end
+    return ItemCount
+  end
+  
+--  --- Get Cargo Bay Free Volume in m3.
+--  -- @param #POSITIONABLE self
+--  -- @return #number CargoBayFreeVolume
+--  function POSITIONABLE:GetCargoBayFreeVolume()
+--    local CargoVolume = 0
+--    for CargoName, Cargo in pairs( self.__.Cargo ) do
+--      CargoVolume = CargoVolume + Cargo:GetVolume()
+--    end
+--    return self.__.CargoBayVolumeLimit - CargoVolume
+--  end
+--  
+  --- Get Cargo Bay Free Weight in kg.
+  -- @param #POSITIONABLE self
+  -- @return #number CargoBayFreeWeight
+  function POSITIONABLE:GetCargoBayFreeWeight()
+    local CargoWeight = 0
+    for CargoName, Cargo in pairs( self.__.Cargo ) do
+      CargoWeight = CargoWeight + Cargo:GetWeight()
+    end
+    return self.__.CargoBayWeightLimit - CargoWeight
+  end
+
+--  --- Get Cargo Bay Volume Limit in m3.
+--  -- @param #POSITIONABLE self
+--  -- @param #number VolumeLimit
+--  function POSITIONABLE:SetCargoBayVolumeLimit( VolumeLimit )
+--    self.__.CargoBayVolumeLimit = VolumeLimit
+--  end
+
+  --- Get Cargo Bay Weight Limit in kg.
+  -- @param #POSITIONABLE self
+  -- @param #number WeightLimit
+  function POSITIONABLE:SetCargoBayWeightLimit( WeightLimit )
+    if WeightLimit then
+      self.__.CargoBayWeightLimit = WeightLimit
+    else
+      -- If weightlimit is not provided, we will calculate it depending on the type of unit.
+      
+      -- When an airplane or helicopter, we calculate the weightlimit based on the descriptor.
+      if self:IsAir() then
+        local Desc = self:GetDesc()
+        self:F({Desc=Desc})
+        self.__.CargoBayWeightLimit = Desc.massMax - ( Desc.massEmpty + Desc.fuelMassMax )
+      else
+        local Desc = self:GetDesc()
+
+        local Weights = { 
+          ["M1126 Stryker ICV"] = 9,
+          ["M-113"] = 9,
+          ["AAV7"] = 25,
+          ["M2A1_halftrack"] = 9,
+          ["BMD-1"] = 9,
+          ["BMP-1"] = 8,
+          ["BMP-2"] = 7,
+          ["BMP-3"] = 8,
+          ["Boman"] = 25,
+          ["BTR-80"] = 9,
+          ["BTR_D"] = 12,
+          ["Cobra"] = 8,
+          ["LAV-25"] = 6,
+          ["M-2 Bradley"] = 6,
+          ["M1043 HMMWV Armament"] = 4,
+          ["M1045 HMMWV TOW"] = 4,
+          ["M1126 Stryker ICV"] = 9,
+          ["M1134 Stryker ATGM"] = 9,
+          ["Marder"] = 6,
+          ["MCV-80"] = 9,
+          ["MLRS FDDM"] = 4,
+          ["MTLB"] = 25,
+          ["TPZ"] = 10,
+        }
+    
+        local CargoBayWeightLimit = ( Weights[Desc.typeName] or 0 ) * 70
+        self.__.CargoBayWeightLimit = CargoBayWeightLimit
+      end
+    end
+  end
+end --- Cargo
 
 --- Signal a flare at the position of the POSITIONABLE.
 -- @param #POSITIONABLE self

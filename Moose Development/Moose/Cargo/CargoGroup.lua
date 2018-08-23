@@ -73,6 +73,7 @@ do -- CARGO_GROUP
     self:SetDeployed( false )
     
     local WeightGroup = 0
+    local VolumeGroup = 0
     
     self.CargoGroup:Destroy()
 
@@ -88,7 +89,7 @@ do -- CARGO_GROUP
     
     for UnitID, UnitTemplate in pairs( self.CargoTemplate.units ) do
       UnitTemplate.name = UnitTemplate.name .. "#CARGO"
-      local CargoUnitName = UnitTemplate.name 
+      local CargoUnitName = UnitTemplate.name
       self.CargoUnitTemplate[CargoUnitName] = UnitTemplate      
 
        GroupTemplate.units[#GroupTemplate.units+1] = self.CargoUnitTemplate[CargoUnitName]
@@ -96,20 +97,29 @@ do -- CARGO_GROUP
       
       -- And we register the spawned unit as part of the CargoSet.
       local Unit = UNIT:Register( CargoUnitName )
-      --local WeightUnit = Unit:GetDesc().massEmpty
-      --WeightGroup = WeightGroup + WeightUnit
-      local CargoUnit = CARGO_UNIT:New( Unit, Type, CargoUnitName, 10, LoadRadius, NearRadius )
-      self.CargoSet:Add( CargoUnitName, CargoUnit )
+      
     end
 
     -- Then we register the new group in the database
-    self.CargoGroup = GROUP:NewTemplate( GroupTemplate, GroupTemplate.CoalitionID, GroupTemplate.CategoryID, GroupTemplate.CountryID)
+    self.CargoGroup = GROUP:NewTemplate( GroupTemplate, GroupTemplate.CoalitionID, GroupTemplate.CategoryID, GroupTemplate.CountryID )
     
     -- Now we spawn the new group based on the template created.
     self.CargoObject = _DATABASE:Spawn( GroupTemplate )
+    
+    for CargoUnitID, CargoUnit in pairs( self.CargoObject:GetUnits() ) do
+      
+
+      local CargoUnitName = CargoUnit:GetName()
+
+      local Cargo = CARGO_UNIT:New( CargoUnit, Type, CargoUnitName, LoadRadius, NearRadius )
+      self.CargoSet:Add( CargoUnitName, Cargo )
+
+      WeightGroup = WeightGroup + Cargo:GetWeight()
+      --VolumeGroup = VolumeGroup + VolumeUnit
+
+    end
   
     self:SetWeight( WeightGroup )
-    self.CargoLimit = 10
     
     self:T( { "Weight Cargo", WeightGroup } )
   
@@ -490,8 +500,6 @@ do -- CARGO_GROUP
   -- @return Core.Point#COORDINATE The current Coordinate of the first Cargo of the CargoGroup.
   -- @return #nil There is no valid Cargo in the CargoGroup.
   function CARGO_GROUP:GetCoordinate()
-    self:F()
-
     local Cargo = self:GetFirstAlive() -- Cargo.Cargo#CARGO
     
     if Cargo then
@@ -625,11 +633,18 @@ do -- CARGO_GROUP
 
     if Cargo then
       local Distance = 0
+      local CargoCoordinate
       if Cargo:IsLoaded() then
-        Distance = Coordinate:Get2DDistance( Cargo.CargoCarrier:GetCoordinate() )
+        CargoCoordinate = Cargo.CargoCarrier:GetCoordinate()
       else
-        Distance = Coordinate:Get2DDistance( Cargo.CargoObject:GetCoordinate() )
+        CargoCoordinate = Cargo.CargoObject:GetCoordinate()
       end
+      
+--      if CargoCoordinate then
+        Distance = Coordinate:Get2DDistance( CargoCoordinate )
+--      else
+--        return false
+--      end
       
       self:F( { Distance = Distance, LoadRadius = self.LoadRadius } )
       if Distance <= self.LoadRadius then

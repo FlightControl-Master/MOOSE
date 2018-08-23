@@ -101,7 +101,7 @@ AI_CARGO_DISPATCHER_APC = {
 -- SetDeployZone = SET_ZONE:New():FilterPrefixes( "Deploy" ):FilterStart()
 -- AICargoDispatcher = AI_CARGO_DISPATCHER_APC:New( SetAPC, SetCargo, SetDeployZone, 500 )
 -- 
-function AI_CARGO_DISPATCHER_APC:NewWithZones( SetAPC, SetCargo, SetDeployZone, CombatRadius )
+function AI_CARGO_DISPATCHER_APC:New( SetAPC, SetCargo, SetDeployZone, CombatRadius )
 
   local self = BASE:Inherit( self, AI_CARGO_DISPATCHER:NewWithZones( SetAPC, SetCargo, SetDeployZone ) ) -- #AI_CARGO_DISPATCHER_APC
 

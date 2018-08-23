@@ -405,8 +405,9 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
 
     -- The Pickup sequence ...
     -- Check if this Carrier need to go and Pickup something...
-    self:I( { IsTransporting = AI_Cargo:IsTransporting() } )
-    if AI_Cargo:IsTransporting() == false then
+    -- So, if the cargo bay is not full yet with cargo to be loaded ...
+    self:I( { IsRelocating = AI_Cargo:IsRelocating(), IsTransporting = AI_Cargo:IsTransporting() } )
+    if AI_Cargo:IsRelocating() == false and AI_Cargo:IsTransporting() == false then
       -- ok, so there is a free Carrier
       -- now find the first cargo that is Unloaded
       
@@ -415,7 +416,7 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
       for CargoName, Cargo in pairs( self.SetCargo:GetSet() ) do
         local Cargo = Cargo -- Cargo.Cargo#CARGO
         self:F( { Cargo = Cargo:GetName(), UnLoaded = Cargo:IsUnLoaded(), Deployed = Cargo:IsDeployed(), PickupCargo = self.PickupCargo[Carrier] ~= nil } )
-        if Cargo:IsUnLoaded() and not Cargo:IsDeployed() then
+        if Cargo:IsUnLoaded() == true and Cargo:IsDeployed() == false then
           local CargoCoordinate = Cargo:GetCoordinate()
           local CoordinateFree = true
           for CarrierPickup, Coordinate in pairs( self.PickupCargo ) do
@@ -567,14 +568,13 @@ function AI_CARGO_DISPATCHER:OnAfterLoaded( From, Event, To, Carrier, Cargo )
   end
   
   if self.DeployAirbasesSet then
-
-    local DeployAirbase = self.DeployAirbasesSet:GetRandomAirbase()
-    self.AI_Cargo[Carrier]:Deploy( DeployAirbase, math.random( self.DeployMinSpeed, self.DeployMaxSpeed ) )
+  
+    if self.AI_Cargo[Carrier]:IsTransporting() == true then
+      local DeployAirbase = self.DeployAirbasesSet:GetRandomAirbase()
+      self.AI_Cargo[Carrier]:Deploy( DeployAirbase, math.random( self.DeployMinSpeed, self.DeployMaxSpeed ) )
+    end
   end
   
    self.PickupCargo[Carrier] = nil
 end
-
-
-
 
