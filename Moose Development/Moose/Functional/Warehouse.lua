@@ -1628,6 +1628,9 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
   -- Dependent on transport type, spawn the transports and set up the dispatchers.
   if Request.transporttype==WAREHOUSE.TransportType.AIRPLANE then
+    ----------------
+    --- AIRPLANE ---
+    ----------------
   
     -- Spawn the transport groups.    
     for i=1,Request.ntransport do
@@ -1662,6 +1665,9 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     CargoTransport = AI_CARGO_DISPATCHER_AIRPLANE:New(TransportSet, CargoGroups, PickupAirbaseSet, DeployAirbaseSet)
 
   elseif Request.transporttype==WAREHOUSE.TransportType.HELICOPTER then
+    ------------------
+    --- HELICOPTER ---
+    ------------------
 
     -- Spawn the transport groups.
     for i=1,Request.ntransport do
@@ -1702,6 +1708,9 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     --CargoTransport:SetHomeZone(self.spawnzone)
 
   elseif Request.transporttype==WAREHOUSE.TransportType.APC then
+    -----------
+    --- APC ---
+    -----------
 
     -- Spawn the transport groups.
     for i=1,Request.ntransport do
@@ -1733,7 +1742,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     end
 
     -- Define dispatcher for this task.
-    CargoTransport = AI_CARGO_DISPATCHER_APC:NewWithZones(TransportSet, CargoGroups, DeployZoneSet, 0)
+    CargoTransport = AI_CARGO_DISPATCHER_APC:New(TransportSet, CargoGroups, DeployZoneSet, 0)
     
     -- Set home zone.
     CargoTransport:SetHomeZone(self.spawnzone)

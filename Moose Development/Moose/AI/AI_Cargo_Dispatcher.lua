@@ -368,6 +368,8 @@ end
 -- @param #AI_CARGO_DISPATCHER self
 function AI_CARGO_DISPATCHER:onafterMonitor()
 
+  env.info("FF number of cargo set = "..self.SetCargo:Count())
+
   for CarrierGroupName, Carrier in pairs( self.SetCarrier:GetSet() ) do
     local Carrier = Carrier -- Wrapper.Group#GROUP
     local AI_Cargo = self.AI_Cargo[Carrier]

@@ -642,7 +642,11 @@ function AI_CARGO_HELICOPTER:onafterPickup( Helicopter, From, Event, To, Coordin
 
   if Helicopter and Helicopter:IsAlive() ~= nil then
 
-    Helicopter:Activate()
+    --Helicopter:Activate()
+    
+    env.info("FF route pickup")
+    
+    Coordinate:MarkToAll("helo pickupcoord")
 
     self.RoutePickup = true
     Coordinate.y = math.random( 50, 500 )
