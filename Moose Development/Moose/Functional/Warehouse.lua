@@ -194,7 +194,7 @@
 -- 
 -- # Strategic Tasks
 -- 
--- Due to the fact that a warehouse holds (or can hold) a lot of valuable assets, it makes a jucy task for enemy attacks.
+-- Due to the fact that a warehouse holds (or can hold) a lot of valuable assets, it makes a juicy task for enemy attacks.
 -- There are several interesting situations, which can occurr.
 -- 
 -- ## Capturing a Warehouse' Airbase
@@ -213,13 +213,24 @@
 -- 
 -- ## Capturing the Warehouse
 -- 
--- A warehouse can also be captured by the enemy coaltion. If enemy groups enter the warehouse zone the event "Attacked" is triggered which can be captured by the
+-- A warehouse can also be captured by the enemy coaltion. If enemy groups enter the warehouse zone the event **Attacked** is triggered which can be captured by the
 -- @{#WAREHOUSE.OnAfterAttacked} event.
 -- 
 -- If a warehouse is attacked it will spawn all its ground assets in the spawn zone which can than be used to defend the warehouse zone.
 -- 
 -- If only ground troops of the enemy coalition are present in the warehouse zone, the warehouse and all its assets falls into the hands of the enemy.
--- This event triggered in this case is  
+-- In this case the event **Captured** is triggered which can be captured by the @{#WAREHOUSE.OnAfterCaptured} function.
+-- 
+-- The warehouse turn to the capturing coalition, i.e. its physical representation, and all assets as well. In paticular, all requests to the warehouse will
+-- spawn assets beloning to the new owner.
+-- 
+-- ## Destroying a Warehouse
+-- 
+-- If an enemy destroy the physical warehouse structure, the warehouse will of course stop all its services. In priciple, all assets contained in the warehouse are
+-- gone as well. So a warehouse should be properly defended.
+-- 
+-- Upon destruction of the warehouse, the event **Destroyed** is triggered, which can be captured by the @{#WAREHOUSE.OnAfterDestroyed} function.
+-- So the mission designer can invene at this point and for example choose to spawn all or paricular types of assets before the warehouse is gone for good.
 --
 -- ===
 --
