@@ -132,6 +132,8 @@
 -- 
 -- Also not that the above request is for five infantry units. So any group in stock that has the generalized attribute "INFANTRY" can be selected.
 -- 
+-- ### Requesting a Specific Unit Type
+-- 
 -- A more specific request could look like:
 -- 
 --      warehouseBatumi:AddRequest(warehouseKobuleti, WAREHOUSE.Descriptor.UNITTYPE, "A-10C", 2)
@@ -139,17 +141,96 @@
 -- Here, Kobuleti requests a specific unit type, in particular two groups of A-10Cs. Note that the spelling is important as it must exacly be the same as
 -- what one get's when using the DCS unit type.
 -- 
+-- ### Requesting a Specifc Group
+-- 
 -- An even more specific request would be:
 -- 
 --      warehouseBatumi:AddRequest(warehouseKobuleti, WAREHOUSE.Descriptor.TEMPLATENAME, "Group Name as in ME", 3)
 --      
 -- In this case three groups named "Group Name as in ME" are requested. So this explicitly request the groups named like that in the Mission Editor.
 -- 
+-- ### Requesting a general category
+-- 
 -- On the other hand, very general unspecifc requests can be made as
 -- 
 --      warehouseBatumi:AddRequest(warehouseKobuleti, WAREHOUSE.Descriptor.CATEGORY, Group.Category.Ground, 10)
 --      
 -- Here, Kubuleti requests 10 ground groups and does not care which ones. This could be a mix of infantry, APCs, trucks etc.
+-- 
+-- # Employing Assets
+-- 
+-- Assets in the warehouse' stock can used for user defined tasks realtively easily. They can be spawned into the game by a "self request", i.e. the warehouse
+-- requests the assets from itself:
+-- 
+--      warehouseBatumi:AddRequest(warehouseBatumi, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.INFANTRY, 5)
+--      
+-- This would simply spawn five infantry groups in the spawn zone of the Batumi warehouse if/when they are available.
+-- 
+-- ## Accessing the Assets
+-- 
+-- If a warehouse requests assets from itself, it triggers the event **SelfReqeuest**. The mission designer can capture this event with the associated 
+-- @{#WAREHOUSE.OnAfterSelfRequest}(*From*, *Event*, *To*, *groupset*, *request*) function.
+-- 
+--      --- OnAfterSelfRequest user function. Access groups spawned from the warehouse for further tasking.
+--      -- @param #WAREHOUSE self
+--      -- @param #string From From state.
+--      -- @param #string Event Event.
+--      -- @param #string To To state.
+--      -- @param Core.Set#SET_GROUP groupset The set of cargo groups that was delivered to the warehouse itself.
+--      -- @param #WAREHOUSE.Pendingitem request Pending self request.
+--      function WAREHOUSE:onafterSelfRequest(From, Event, To, groupset, request)
+--       
+--        for _,_group in pairs(groupset:GetSetObjects()) do
+--          local group=_group --Wrapper.Group#GROUP
+--          group:SmokeGreen()
+--        end
+--        
+--      end
+--       
+-- The variable *groupset* is a @{Core.Set#SET_GOUP} object and holds all asset groups from the request. The code above shows, how the mission designer can access the groups
+-- for further tasking. Here, the groups are only smoked but, of course, you can use them for whatever task you imagine.
+-- 
+-- Note that airborn groups are spawned in uncontrolled state and need to be activated first before they can start their assigned mission.
+-- 
+-- # Strategic Tasks
+-- 
+-- Due to the fact that a warehouse holds (or can hold) a lot of valuable assets, it makes a juicy task for enemy attacks.
+-- There are several interesting situations, which can occurr.
+-- 
+-- ## Capturing a Warehouse' Airbase
+-- 
+-- If a warehouse has an associated airbase, it can be captured by the enemy. In this case, the warehouse looses it ability so employ all airborn assets and is also cut-off
+-- from supply by airborn units.
+-- 
+-- Technically, the capturing of the airbase is triggered by the DCS S_EVENT_CAPTURE_BASE event. So the capturing takes place when only enemy ground units are in the 
+-- airbase zone whilst no ground units of the present airbase owner are in that zone.
+-- 
+-- The warehouse will also create an event named "AirbaseCaptured", which can be captured by the @{#WAREHOUSE.OnAfterAirbaseCaptured} function. So the warehouse can react on
+-- this attack and for example spawn ground groups to re-capture its airbase.
+-- 
+-- When an airbase is re-captured the event "AirbaseRecaptured" is triggered and can be captured by the @{#WAREHOUSE.OnAfterAirbaseRecaptured} function.
+-- This can be used to put the defending assets back into the warehouse stock.
+-- 
+-- ## Capturing the Warehouse
+-- 
+-- A warehouse can also be captured by the enemy coaltion. If enemy groups enter the warehouse zone the event **Attacked** is triggered which can be captured by the
+-- @{#WAREHOUSE.OnAfterAttacked} event.
+-- 
+-- If a warehouse is attacked it will spawn all its ground assets in the spawn zone which can than be used to defend the warehouse zone.
+-- 
+-- If only ground troops of the enemy coalition are present in the warehouse zone, the warehouse and all its assets falls into the hands of the enemy.
+-- In this case the event **Captured** is triggered which can be captured by the @{#WAREHOUSE.OnAfterCaptured} function.
+-- 
+-- The warehouse turn to the capturing coalition, i.e. its physical representation, and all assets as well. In paticular, all requests to the warehouse will
+-- spawn assets beloning to the new owner.
+-- 
+-- ## Destroying a Warehouse
+-- 
+-- If an enemy destroy the physical warehouse structure, the warehouse will of course stop all its services. In priciple, all assets contained in the warehouse are
+-- gone as well. So a warehouse should be properly defended.
+-- 
+-- Upon destruction of the warehouse, the event **Destroyed** is triggered, which can be captured by the @{#WAREHOUSE.OnAfterDestroyed} function.
+-- So the mission designer can invene at this point and for example choose to spawn all or paricular types of assets before the warehouse is gone for good.
 --
 -- ===
 --
@@ -301,7 +382,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.2.5w"
+WAREHOUSE.version="0.2.6w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -547,6 +628,15 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #WAREHOUSE self
   -- @param #number delay Delay in seconds.
   -- @param Core.Set#SET_GROUP groupset The set of cargo groups that was delivered to the warehouse itself.
+  -- @param #WAREHOUSE.Pendingitem request Pending self request.
+
+  --- On after "SelfRequest" event. Request was initiated to the warehouse itself. Groups are just spawned at the warehouse or the associated airbase.
+  -- @function [parent=#WAREHOUSE] OnAfterSelfRequest
+  -- @param #WAREHOUSE self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Core.Set#SET_GROUP groupset The set of (cargo) groups that was delivered to the warehouse itself.
   -- @param #WAREHOUSE.Pendingitem request Pending self request.
 
 
