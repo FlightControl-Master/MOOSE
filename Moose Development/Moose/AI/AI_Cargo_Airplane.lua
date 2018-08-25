@@ -128,8 +128,10 @@ function AI_CARGO_AIRPLANE:New( Airplane, CargoSet )
   -- Set carrier. 
   self:SetCarrier( Airplane )
   
-  Airplane:SetCargoBayWeightLimit()
-  
+  for _, AirplaneUnit in pairs( Airplane:GetUnits() ) do
+    AirplaneUnit:SetCargoBayWeightLimit()
+  end
+    
   self.Relocating = true
   
   return self
