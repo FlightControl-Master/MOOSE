@@ -1078,6 +1078,7 @@ function ZONE_UNIT:GetVec2()
   local ZoneVec2 = self.ZoneUNIT:GetVec2()
   if ZoneVec2 then
   
+    local heading
     if self.relative_to_unit then
         heading = ( self.ZoneUNIT:GetHeading() or 0.0 ) * math.pi / 180.0
       else

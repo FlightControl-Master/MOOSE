@@ -241,8 +241,11 @@ function AI_CARGO_HELICOPTER:onafterLanded( Helicopter, From, Event, To )
       end
     end
     
-    if self.RouteDeploy == true then
-      if Helicopter:GetHeight( true ) <= 5 and Helicopter:GetVelocityKMH() < 10 then
+    if self.RouteDeploy == true then      
+      local height=Helicopter:GetHeight( true )
+      local velocity=Helicopter:GetVelocityKMH()
+      env.info(string.format("FF helo in air %s, height = %d m, velocity = %d km/h", tostring(Helicopter:InAir()), height, velocity))
+      if  height <= 10 and  velocity < 10 then
         self:Unload( true )
         self.RouteDeploy = false
         self.Transporting = false
@@ -823,15 +826,21 @@ function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinat
     --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
     Helicopter:WayPointInitialize( Route )
   
-    local Tasks = {}
-        
+    local Tasks = {}        
     Tasks[#Tasks+1] = Helicopter:TaskLandAtVec2( CoordinateTo:GetVec2() )
-    Tasks[#Tasks+1] = Helicopter:TaskFunction("AI_CARGO_HELICOPTER._BackHome", self)
-    
     Route[#Route].task = Helicopter:TaskCombo( Tasks )
-
-    Route[#Route+1] = WaypointTo
     
+    -- FF
+    --[[
+    local Tasks2 = {}        
+    Tasks2[#Tasks2+1] = Helicopter:TaskFunction("AI_CARGO_HELICOPTER._BackHome", self)
+    
+    Route[#Route+1] = WaypointTo
+    Route[#Route].task = Helicopter:TaskCombo( Tasks2 )
+    -- FF
+    ]]
+    
+    Route[#Route+1] = WaypointTo
 
     -- Now route the helicopter
     Helicopter:Route( Route, 0 )

@@ -804,6 +804,7 @@ end
 -- @param #AI_CARGO_APC self
 function AI_CARGO_APC._BackHome(APC, self)
   --Trigger BackHome event.
+  env.info(string.format("FF APC %s is back home task function!",APC:GetName()))
   APC:SmokeGreen()
   self:__BackHome(1)
 end
@@ -815,5 +816,6 @@ end
 -- @param Event
 -- @param To
 function AI_CARGO_APC:onafterBackHome( APC, From, Event, To )
+  env.info(string.format("FF APC %s is back home event!",APC:GetName()))
   APC:SmokeRed()
 end

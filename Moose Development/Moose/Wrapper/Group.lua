@@ -1606,8 +1606,7 @@ end
 
 --- Returns true if the first unit of the GROUP is in the air.
 -- @param Wrapper.Group#GROUP self
--- @return #boolean true if in the first unit of the group is in the air.
--- @return #nil The GROUP is not existing or not alive.  
+-- @return #boolean true if in the first unit of the group is in the air or #nil if the GROUP is not existing or not alive.   
 function GROUP:InAir()
   self:F2( self.GroupName )
 

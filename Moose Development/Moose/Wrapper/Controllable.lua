@@ -1605,7 +1605,7 @@ end
 --    RouteToZone( GroundGroup, ZoneList[1] )
 -- 
 function CONTROLLABLE:TaskFunction( FunctionString, ... )
-  self:F2( { FunctionString, arg } )
+  self:E({TaskFunction=FunctionString, arguments=arg})
 
   local DCSTask
 
@@ -1616,17 +1616,12 @@ function CONTROLLABLE:TaskFunction( FunctionString, ... )
     local ArgumentKey = '_' .. tostring( arg ):match("table: (.*)")
     self:SetState( self, ArgumentKey, arg )
     DCSScript[#DCSScript+1] = "local Arguments = MissionControllable:GetState( MissionControllable, '" .. ArgumentKey .. "' ) "
-    --DCSScript[#DCSScript+1] = "MissionControllable:ClearState( MissionControllable, '" .. ArgumentKey .. "' ) "
     DCSScript[#DCSScript+1] = FunctionString .. "( MissionControllable, unpack( Arguments ) )"
   else
     DCSScript[#DCSScript+1] = FunctionString .. "( MissionControllable )"
   end
 
-  DCSTask = self:TaskWrappedAction(
-    self:CommandDoScript(
-      table.concat( DCSScript )
-    )
-  )
+  DCSTask = self:TaskWrappedAction(self:CommandDoScript(table.concat( DCSScript )))
 
   self:T( DCSTask )
 

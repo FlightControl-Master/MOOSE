@@ -402,7 +402,12 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
 
       function AI_Cargo.OnAfterUnloaded( AI_Cargo, Carrier, From, Event, To, Cargo )
         self:Unloaded( Carrier, Cargo )
-      end      
+      end
+      
+      -- FF added back home event.
+      function AI_Cargo.OnAfterBackHome( AI_Cargo, Carrier, From, Event, To)
+        self:BackHome( Carrier )
+      end
     end
 
     -- The Pickup sequence ...
