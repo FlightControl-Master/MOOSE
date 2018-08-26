@@ -946,6 +946,12 @@ do -- Cargo
   -- @param #POSITIONABLE self
   -- @return #number CargoBayFreeWeight
   function POSITIONABLE:GetCargoBayFreeWeight()
+  
+    -- When there is no cargo bay weight limit set, then calculate this for this positionable!
+    if not self.__.CargoBayWeightLimit then
+      self:SetCargoBayWeightLimit()
+    end
+    
     local CargoWeight = 0
     for CargoName, Cargo in pairs( self.__.Cargo ) do
       CargoWeight = CargoWeight + Cargo:GetWeight()
@@ -1007,6 +1013,7 @@ do -- Cargo
         self.__.CargoBayWeightLimit = CargoBayWeightLimit
       end
     end
+    self:F({CargoBayWeightLimit = self.__.CargoBayWeightLimit})
   end
 end --- Cargo
 

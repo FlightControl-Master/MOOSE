@@ -810,12 +810,18 @@ function SET_GROUP:GetAliveSet()
 end
 
 --- Add a GROUP to SET_GROUP.
+-- Note that for each unit in the group that is set, a default cargo bay limit is initialized.
 -- @param Core.Set#SET_GROUP self
 -- @param Wrapper.Group#GROUP group The group which should be added to the set.
 -- @return self
 function SET_GROUP:AddGroup( group )
 
   self:Add( group:GetName(), group )
+  
+  -- I set the default cargo bay weight limit each time a new group is added to the set.
+  for UnitID, UnitData in pairs( group:GetUnits() ) do
+    UnitData:SetCargoBayWeightLimit()
+  end
     
   return self
 end
@@ -1425,6 +1431,24 @@ function SET_GROUP:IsIncludeObject( MooseGroup )
 end
 
 
+--- Iterate the SET_GROUP and set for each unit the default cargo bay weight limit.
+-- Because within a group, the type of carriers can differ, each cargo bay weight limit is set on @{Wrapper.Unit} level.
+-- @param #SET_GROUP self
+-- @usage
+-- -- Set the default cargo bay weight limits of the carrier units.
+-- local MySetGroup = SET_GROUP:New()
+-- MySetGroup:SetCargoBayWeightLimit()
+function SET_GROUP:SetCargoBayWeightLimit()
+  local Set = self:GetSet()
+  for GroupID, GroupData in pairs( Set ) do -- For each GROUP in SET_GROUP
+    for UnitName, UnitData in pairs( GroupData:GetUnits() ) do
+      --local UnitData = UnitData -- Wrapper.Unit#UNIT
+      UnitData:SetCargoBayWeightLimit()
+    end
+  end
+end
+
+
 do -- SET_UNIT
 
   --- @type SET_UNIT
@@ -1593,12 +1617,15 @@ do -- SET_UNIT
   
   --- Add UNIT(s) to SET_UNIT.
   -- @param #SET_UNIT self
-  -- @param #string AddUnit A single UNIT.
+  -- @param Wrapper.Unit#UNIT Unit A single UNIT.
   -- @return #SET_UNIT self
-  function SET_UNIT:AddUnit( AddUnit )
-    self:F2( AddUnit:GetName() )
+  function SET_UNIT:AddUnit( Unit )
+    self:F2( Unit:GetName() )
   
-    self:Add( AddUnit:GetName(), AddUnit )
+    self:Add( Unit:GetName(), Unit )
+    
+    -- Set the default cargo bay limit each time a new unit is added to the set.
+    Unit:SetCargoBayWeightLimit()
       
     return self
   end
@@ -2420,6 +2447,22 @@ do -- SET_UNIT
     
     return TypeReport:Text( Delimiter )
   end
+
+  --- Iterate the SET_UNIT and set for each unit the default cargo bay weight limit.
+  -- @param #SET_UNIT self
+  -- @usage
+  -- -- Set the default cargo bay weight limits of the carrier units.
+  -- local MySetUnit = SET_UNIT:New()
+  -- MySetUnit:SetCargoBayWeightLimit()
+  function SET_UNIT:SetCargoBayWeightLimit()
+    local Set = self:GetSet()
+    for UnitID, UnitData in pairs( Set ) do -- For each UNIT in SET_UNIT
+      --local UnitData = UnitData -- Wrapper.Unit#UNIT
+      UnitData:SetCargoBayWeightLimit()
+    end
+  end
+
+
   
 end
 
