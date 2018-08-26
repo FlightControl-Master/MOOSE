@@ -589,13 +589,6 @@ do -- TASK_CARGO
     Fsm:AddTransition( "Rejected", "Reject", "Aborted" )
     Fsm:AddTransition( "Failed", "Fail", "Failed" )
 
-    for _, Group in pairs( SetGroup:GetSet() ) do
-      for __, Unit in pairs( Group:GetUnits() ) do
-        local Unit = Unit -- Wrapper.Unit#UNIT
-        Unit:SetCargoBayWeightLimit()
-      end
-    end
-
     ---- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param #TASK_CARGO Task
