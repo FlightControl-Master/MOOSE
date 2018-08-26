@@ -54,8 +54,7 @@ end
 
 --- Returns the unit's unique identifier.
 -- @param Wrapper.Object#OBJECT self
--- @return DCS#Object.ID ObjectID
--- @return #nil The DCS Object is not existing or alive.  
+-- @return DCS#Object.ID ObjectID or #nil if the DCS Object is not existing or alive. Note that the ID is passed as a string and not a number. 
 function OBJECT:GetID()
 
   local DCSObject = self:GetDCSObject()

@@ -661,8 +661,9 @@ function GROUP:GetDCSUnits()
 end
 
 
---- Activates a GROUP.
+--- Activates a late activated GROUP.
 -- @param #GROUP self
+-- @return #GROUP self
 function GROUP:Activate()
   self:F2( { self.GroupName } )
   trigger.action.activateGroup( self:GetDCSObject() )
