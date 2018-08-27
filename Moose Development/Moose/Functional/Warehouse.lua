@@ -358,42 +358,49 @@ WAREHOUSE.Descriptor = {
 
 --- Generalized asset attributes. Can be used to request assets with certain general characteristics.
 -- @type WAREHOUSE.Attribute
--- @field #string TRANSPORT_PLANE Airplane with transport capability. Usually bigger, i.e. needs larger airbases and parking spots.
--- @field #string TRANSPORT_HELO Helicopter with transport capability.
--- @field #string TRANSPORT_APC Amoured Personell Carrier.
--- @field #string TRANSPORT_SHIP Ship defined for troop transport. Since most ships can, this attribute must be manually requestet in the AddAddet() function.
--- @field #string FIGHTER Fighter, interceptor, ... airplane.
--- @field #string TANKER Airplane which can refuel other aircraft.
--- @field #string AWACS Airborne Early Warning and Control System.
--- @field #string ARTILLERY Artillery assets.
--- @field #string INFANTRY Ground infantry assets.
--- @field #string BOMBER Aircraft which can be used for bombing.
--- @field #string TANK Tanks.
--- @field #string TRUCK Unarmed ground vehicles.
--- @field #string TRAIN Trains. Not that trains are **not** yet properly implemented in DCS and cannot be used currently.
--- @field #string AIRCRAFTCARRIER Ship able to carrier aircraft.
--- @field #string WARSHIP Armed war ship, e.g. cruisers, destroyers, firgates and corvettes.
--- @filed #string UNARMED_SHIP Any unarmed naval vessel.
--- @field #string OTHER Anything that does not fall into any other category.
+-- @field #string AIR_TRANSPORTPLANE Airplane with transport capability. This can be used to transport other assets.
+-- @field #string AIR_AWACS Airborne Early Warning and Control System.
+-- @field #string AIR_FIGHTER Fighter, interceptor, ... airplane.
+-- @field #string AIR_BOMBER Aircraft which can be used for strategic bombing.
+-- @field #string AIR_TANKER Airplane which can refuel other aircraft.
+-- @field #string AIR_TRANSPORTHELO Helicopter with transport capability. This can be used to transport other assets.
+-- @field #string AIR_ATTACKHELO Attack helicopter.
+-- @field #string AIR_OTHER Any airborne unit that does not fall into any other airborne category.
+-- @field #string GROUND_APC Infantry carriers, in particular Amoured Personell Carrier. This can be used to transport other assets.
+-- @field #string GROUND_TRUCK Unarmed ground vehicles.
+-- @field #string GROUND_INFANTRY Ground infantry assets.
+-- @field #string GROUND_ARTILLERY Artillery assets.
+-- @field #string GROUND_TANK Tanks (modern or old).
+-- @field #string GROUND_TRAIN Trains. Not that trains are **not** yet properly implemented in DCS and cannot be used currently.
+-- @field #string GROUND_OTHER Any ground unit that does not fall into any other ground category.
+-- @field #string NAVAL_AIRCRAFTCARRIER Aircraft carrier.
+-- @field #string NAVAL_WARSHIP War ship, i.e. cruisers, destroyers, firgates and corvettes.
+-- @field #string NAVAL_ARMEDSHIP Any armed ship that is not an aircraft carrier, a cruiser, destroyer, firgatte or corvette.
+-- @field #string NAVAL_UNARMEDSHIP Any unarmed naval vessel.
+-- @field #string NAVAL_OTHER Any naval unit that does not fall into any other naval category.
+-- @field #string UNKNOWN Anything that does not fall into any other category.
 WAREHOUSE.Attribute = {
-  TRANSPORT_PLANE="Transport_Plane",
-  TRANSPORT_HELO="Transport_Helo",
-  TRANSPORT_APC="Transport_APC",
-  TRANSPORT_SHIP="Transport_Ship",
-  FIGHTER="Fighter",
-  TANKER="Tanker",
-  AWACS="AWACS",
-  ARTILLERY="Artillery",
-  ATTACKHELICOPTER="Attackhelicopter",
-  INFANTRY="Infantry",
-  BOMBER="Bomber",
-  TANK="Tank",
-  TRUCK="Truck",
-  TRAIN="Train",
-  AIRCRAFTCARRIER="Aircraftcarrier",
-  WAR_SHIP="Warship",
-  UNARMED_SHIP="Unarmedship",
-  OTHER="Other",
+  AIR_TRANSPORTPLANE="Air_TransportPlane",
+  AIR_AWACS="Air_AWACS",
+  AIR_FIGHTER="Air_Fighter",
+  AIR_BOMBER="Air_Bomber",
+  AIR_TANKER="Air_Tanker",
+  AIR_TRANSPORTHELO="Air_TransportHelo",
+  AIR_ATTACKHELO="Air_AttackHelo",
+  AIR_OTHER="Air_Other",
+  GROUND_APC="Ground_APC",
+  GROUND_TRUCK="Ground_Truck",
+  GROUND_INFANTRY="Ground_Infantry",
+  GROUND_ARTILLERY="Ground_Artillery",
+  GROUND_TANK="Ground_Tank",
+  GROUND_TRAIN="Ground_Train",
+  GROUND_OTHER="Ground_Other",
+  NAVAL_AIRCRAFTCARRIER="Naval_AircraftCarrier",
+  NAVAL_WARSHIP="Naval_WarShip",
+  NAVAL_ARMEDSHIP="Naval_ArmedShip",
+  NAVAL_UNARMEDSHIP="Naval_UnarmedShip",
+  NAVAL_OTHER="Naval_Other",
+  UNKNOWN="Unknown",
 }
 
 --- Cargo transport type. Defines how assets are transported to their destination.
@@ -405,11 +412,11 @@ WAREHOUSE.Attribute = {
 -- @field #string TRAIN Transports are conducted by trains. Not yet implemented.
 -- @field #string SELFPROPELLED Assets go to their destination by themselves. No transport carrier needed.
 WAREHOUSE.TransportType = {
-  AIRPLANE      = "Transport_Plane",
-  HELICOPTER    = "Transport_Helo",
-  APC           = "Transport_APC",
-  SHIP          = "Ship",
-  TRAIN         = "Train",
+  AIRPLANE      = "Air_TransportPlane",
+  HELICOPTER    = "Air_TransportHelo",
+  APC           = "Ground_APC",
+  TRAIN         = "Ground_Train",
+  SHIP          = "Naval_UnarmedShip",
   SELFPROPELLED = "Selfpropelled",
 }
 
@@ -424,7 +431,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.2.7w"
+WAREHOUSE.version="0.2.8"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -844,7 +851,7 @@ end
 --- Set the port zone for this warehouse.
 -- The port zone is the zone, where all naval assets of the warehouse are spawned. 
 -- @param #WAREHOUSE self
--- @param Core.Zone#ZONE The zone defining the naval port of the warehouse.
+-- @param Core.Zone#ZONE zone The zone defining the naval port of the warehouse.
 -- @return #WAREHOUSE self
 function WAREHOUSE:SetPortZone(zone)
   self.portzone=zone
@@ -884,31 +891,32 @@ function WAREHOUSE:AddShippingLane(remotewarehouse, group)
   
   -- Add the shipping lane. Need to take care of the wrong "direction".
   local lane={}
-  lane.towarehouse=remotewarehouse.warehouse:GetName()
-  lane.coordinates={}
+  --lane.towarehouse=remotewarehouse.warehouse:GetName()
+  --lane.coordinates={}
   if distF<distL then
     for i=1,#lanepoints do
       local point=lanepoints[i]
       local coord=COORDINATE:New(point.x,0, point.y)
-      table.insert(lane.coordinate, coord)
+      table.insert(lane, coord)
     end
   else
     for i=#lanepoints,1,-1 do
       local point=lanepoints[i]
       local coord=COORDINATE:New(point.x,0, point.y)
-      table.insert(lane.coordinate, coord)
+      table.insert(lane, coord)
     end     
   end
   
   -- Debug info. Marks along shipping lane.
-  for i=1,#lane.coordinates do
-    local coord=lane.coordinates[i] --Core.Point#COORDINATE
+  for i=1,#lane do
+    local coord=lane[i] --Core.Point#COORDINATE
     local text=string.format("Shipping lane %s to %s. Point %d.", self.alias, remotewarehouse.alias, i)
     coord:MarkToCoalition(text, self.coalition)
   end
   
   -- Add shipping lane.
-  table.insert(self.shippinglanes, lane)
+  self.shippinglanes[remotewarehouse.warehouse:GetName()]=lane
+  --table.insert(self.shippinglanes, lane)
   
   return self
 end
@@ -980,6 +988,31 @@ function WAREHOUSE:HasConnectionRail(warehouse, markpath, smokepath)
   end
   return nil, -1
 end
+
+--- Check if the warehouse has a shipping lane defined to another warehouse.
+-- @param #WAREHOUSE self
+-- @param #WAREHOUSE warehouse The remote warehose to where the connection is checked.
+-- @param #boolean markpath If true, place markers of path segments on the F10 map.
+-- @param #boolean smokepath If true, put green smoke on path segments.
+-- @return #boolean If true, the two warehouses are connected by road.
+-- @return #number Path length in meters. Negative distance -1 meter indicates no connection.
+function WAREHOUSE:HasConnectionNaval(warehouse, markpath, smokepath)
+
+  if warehouse then
+
+    local shippinglane=self.shippinglanes[warehouse.warehouse:GetName()]
+    
+    if shippinglane then
+      return true,1
+    else
+      env.info("FF no shipping lane!")
+    end
+  
+  end
+  
+  return nil, -1
+end
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM states
@@ -1347,19 +1380,20 @@ end
 -- @param #string templategroupname Name of the late activated template group as defined in the mission editor.
 -- @param #number ngroups Number of groups to add to the warehouse stock. Default is 1.
 function WAREHOUSE:_AddAssetFromZombie(group, ngroups)
-
+  --TODO
 end
 
 
---- Spawn a ground asset in the spawnzone of the warehouse.
+--- Spawn a ground or naval asset in the corresponding spawn zone of the warehouse.
 -- @param #WAREHOUSE self
 -- @param #WAREHOUSE.Assetitem asset Ground asset that will be spawned.
 -- @param #WAREHOUSE.Queueitem request Request belonging to this asset. Needed for the name/alias.
+-- @param Core.Zone#ZONE spawnzone Zone where the assets should be spawned.
 -- @param boolean aioff If true, AI of ground units are set to off.
 -- @return Wrapper.Group#GROUP The spawned group or nil if the group could not be spawned.
-function WAREHOUSE:_SpawnAssetGround(asset, request, aioff)
+function WAREHOUSE:_SpawnAssetGroundNaval(asset, request, spawnzone, aioff)
 
-  if asset and asset.category==Group.Category.GROUND then
+  if asset and (asset.category==Group.Category.GROUND or asset.category==Group.Category.SHIP) then
   
     -- Prepare spawn template.
     local template=self:_SpawnAssetPrepareTemplate(asset, request)  
@@ -1368,7 +1402,7 @@ function WAREHOUSE:_SpawnAssetGround(asset, request, aioff)
     template.route.points[1]={} 
     
     -- Get a random coordinate in the spawn zone.
-    local coord=self.spawnzone:GetRandomCoordinate()
+    local coord=spawnzone:GetRandomCoordinate()
 
     -- Translate the position of the units.
     for i=1,#template.units do
@@ -1542,7 +1576,6 @@ function WAREHOUSE:_SpawnAssetPrepareTemplate(asset, request)
 
   -- Create an own copy of the template!
   local template=UTILS.DeepCopy(asset.template)
-  --local template=asset.template
   
   -- Set unique name.
   template.name=self:_Alias(asset, request)
@@ -1776,19 +1809,22 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
       elseif _cargocategory==Group.Category.AIRPLANE or _cargocategory==Group.Category.HELICOPTER then
         self:I(self.wid..string.format("Route airborne group %s.", group:GetName()))
         
-        -- Route plane the the requesting warehouses airbase.
+        -- Route plane to the requesting warehouses airbase.
         -- Actually, the route is already set. We only need to activate the uncontrolled group.
         self:_RouteAir(group, Request.airbase)
         
       elseif _cargocategory==Group.Category.SHIP then
+        self:I(self.wid..string.format("Route naval group %s.", group:GetName()))
       
-        self:E("ERROR: self propelled ship not implemented yet!")
+        -- Route plane to the requesting warehouses airbase.
+        self:_RouteNaval(group, Request)
         
       elseif _cargocategory==Group.Category.TRAIN then
         self:I(self.wid..string.format("Route train group %s.", group:GetName()))
         
         -- Route train to the rail connection of the requesting warehouse.
         self:_RouteTrain(group, Request.warehouse.rail)
+        
       else
         self:E(self.wid..string.format("ERROR: unknown category %s for self propelled cargo %s!", tostring(_cargocategory), tostring(group:GetName())))
       end
@@ -1963,7 +1999,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
       local _alias=self:_Alias(_assetitem, Request)
 
       -- Spawn ground asset.      
-      local spawngroup=self:_SpawnAssetGround(_assetitem, Request)
+      local spawngroup=self:_SpawnAssetGround(_assetitem, Request, self.spawnzone)
 
       if spawngroup then
         -- Set state of warehouse so we can retrieve it later.
@@ -2122,7 +2158,7 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
     if _assetitem.category==Group.Category.GROUND then
     
       -- Spawn ground troops.      
-      _group=self:_SpawnAssetGround(_assetitem, Request)
+      _group=self:_SpawnAssetGroundNaval(_assetitem, Request, self.spawnzone)
       
     elseif _assetitem.category==Group.Category.AIRPLANE or _assetitem.category==Group.Category.HELICOPTER then
     
@@ -2142,9 +2178,12 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
       self:E(self.wid.."ERROR: Spawning of TRAIN assets not possible yet!")
       
     elseif _assetitem.category==Group.Category.SHIP then
-      self:E(self.wid.."ERROR: Spawning of SHIP assets not possible yet!")
-    else
+    
+      -- Spawn naval assets.
+      _group=self:_SpawnAssetGroundNaval(_assetitem, Request, self.portzone)
       
+    else
+      self:E(self.wid.."ERROR: Unknown asset category!")
     end
 
     -- Add group to group set and asset list.
@@ -2532,8 +2571,6 @@ function WAREHOUSE:_RouteGround(group, request)
 
     -- Set speed to 70% of max possible.
     local _speed=group:GetSpeedMax()*0.7
-
-    -- Create task.
     
     -- Waypoints for road-to-road connection.
     local Waypoints, canroad = group:TaskGroundOnRoad(request.warehouse.road, _speed, "Off Road", false, self.road)
@@ -2559,6 +2596,61 @@ function WAREHOUSE:_RouteGround(group, request)
     -- Set ROE and alaram state.
     group:OptionROEReturnFire()
     group:OptionAlarmStateGreen()
+  end
+end
+
+--- Route naval units along user defined shipping lanes to destination warehouse.
+-- @param #WAREHOUSE self
+-- @param Wrapper.Group#GROUP group The naval group to be routed
+-- @param #WAREHOUSE.Queueitem request The request for this group.
+function WAREHOUSE:_RouteNaval(group, request)
+
+  -- Check if we have a group and it is alive.
+  if group and group:IsAlive() then
+
+    -- Set speed to 80% of max possible.
+    local _speed=group:GetSpeedMax()*0.8
+    
+    -- Get shipping lane to remote warehouse.
+    local lane=self.shippinglanes[request.warehouse.warehouse:GetName()]
+    
+    if lane then
+      
+      -- Route waypoints.
+      local Waypoints={}
+      
+      -- Loop over user defined shipping lanes.
+      for i=1,#lane do
+      
+        -- Shortcut and coordinate intellisense.
+        local coord=lane[i] --Core.Point#COORDINATE
+        
+        -- Get waypoint for coordinate.
+        -- TODO: Might need optimization for Naval.
+        local Waypoint=coord:WaypointGround(_speed)
+        
+        -- Add waypoint to route.
+        table.insert(Waypoints, Waypoint)      
+      end
+      
+      -- Task function triggering the arrived event at the last waypoint.
+      local TaskFunction = group:TaskFunction("WAREHOUSE._Arrived", self)
+  
+      -- Put task function on last waypoint.
+      local Waypoint = Waypoints[#Waypoints]
+      group:SetTaskWaypoint(Waypoint, TaskFunction)
+  
+      -- Route group to destination.
+      group:Route(Waypoints, 1)      
+      
+      -- Set ROE (Naval units dont have and alaram state.)
+      group:OptionROEReturnFire()
+    
+    else
+      -- This should not happen! Existance of shipping lane was checked before executing this request.
+      self:E(self.wid..string.format("ERROR: No shipping lane defined for Naval asset!"))
+    end
+    
   end
 end
 
@@ -2629,11 +2721,9 @@ end
 -- @param #WAREHOUSE self
 -- @param Wrapper.Group#GROUP group The group that arrived.
 function WAREHOUSE:_ArrivedSimple(group)
-
-  if group then
-    --local self:_GetIDsFromGroup(group)
-    env.info(self.wid..string.format("Group %s arrived at warehouse ", tostring(group:GetName())))
+  env.info(string.format("Group %s arrived (simple)!", tostring(group:GetName())))
   
+  if group then
     --Trigger "Arrived event.
     self:__Arrived(1, group)
   end
@@ -3045,221 +3135,7 @@ function WAREHOUSE:_CheckRequestConsistancy(queue)
       self:_DeleteQueueItem(_request, self.queue)
     end
     
-    -- Stuff below is probably obsolete.
-    if true then
-      return
-    end  
-    
-    -- Asset is air, ground etc.
-    local asset_air=false
-    local asset_plane=false
-    local asset_helo=false
-    local asset_ground=false
-    local asset_train=false
-    local asset_naval=false
-    
-    -- Check if category was provided.
-    if request.assetdesc==WAREHOUSE.Descriptor.CATEGORY then
-    
-      if request.assetdescval==Group.Category.AIRPLANE then
-        asset_plane=true
-      elseif request.assetdescval==Group.Category.HELICOPTER then
-        asset_helo=true
-      elseif request.assetdescval==Group.Category.GROUND then
-        asset_ground=true
-      elseif request.assetdescval==Group.Category.SHIP then
-        asset_naval=true
-      elseif request.assetdescval==Group.Category.TRAIN then
-        asset_ground=true
-        asset_train=true
-      else
-        self:E("ERROR: Incorrect request. Asset Descriptor missmatch! Has to be Group.Cagetory.AIRPLANE, ...")
-        valid=false
-      end
-      
-    end
-    
-    -- Check attribute is matching
-    if request.assetdesc==WAREHOUSE.Descriptor.ATTRIBUTE then
-      if request.assetdescval==WAREHOUSE.Attribute.ARTILLERY then
-        asset_ground=true
-      elseif request.assetdescval==WAREHOUSE.Attribute.ATTACKHELICOPTER then
-        asset_helo=true
-      elseif request.assetdescval==WAREHOUSE.Attribute.AWACS then
-        asset_plane=true
-      elseif request.assetdescval==WAREHOUSE.Attribute.BOMBER then
-        asset_plane=true
-      elseif request.assetdescval==WAREHOUSE.Attribute.FIGHTER then
-        asset_plane=true
-      elseif request.assetdescval==WAREHOUSE.Attribute.INFANTRY then
-        asset_ground=true
-      elseif request.assetdescval==WAREHOUSE.Attribute.OTHER then
-        self:E("ERROR: Incorrect request. Asset attribute WAREHOUSE.Attribute.OTHER is not valid!")
-        valid=false      
-      elseif request.assetdescval==WAREHOUSE.Attribute.SHIP then
-        asset_naval=true
-      elseif request.assetdescval==WAREHOUSE.Attribute.TANK then
-        asset_ground=true
-      elseif request.assetdescval==WAREHOUSE.Attribute.TANKER then
-        asset_plane=true
-      elseif request.assetdescval==WAREHOUSE.Attribute.TRAIN then
-        asset_ground=true
-        asset_train=true
-      elseif request.assetdescval==WAREHOUSE.Attribute.TRANSPORT_APC then
-        asset_ground=true
-      elseif request.assetdescval==WAREHOUSE.Attribute.TRANSPORT_HELO then
-        asset_helo=true
-      elseif request.assetdescval==WAREHOUSE.Attribute.TRANSPORT_PLANE then
-        asset_plane=true
-      elseif request.assetdescval==WAREHOUSE.Attribute.TRUCK then
-        asset_ground=true
-      else
-        self:E("ERROR: Incorrect request. Unknown asset attribute!")
-        valid=false 
-      end
-    end
-    
-    -- General air request.
-    asset_air=asset_helo or asset_plane
-    
-    if request.transporttype==WAREHOUSE.TransportType.SELFPROPELLED then
-      -------------------------------------------
-      -- Case where the units go my themselves --
-      -------------------------------------------
-
-      if asset_air then
-      
-        if asset_plane then
-        
-          -- No airplane to or from FARPS.
-          if request.category==Airbase.Category.HELIPAD or self.category==Airbase.Category.HELIPAD then
-            self:E("ERROR: Incorrect request. Asset airplane requested but warehouse or requestor is HELIPAD/FARP!")
-            valid=false
-          end
-          
-          -- Category SHIP is not general enough! Fighters can go to carriers. Which fighters, is there an attibute?
-          -- Also for carriers, attibute?
-          
-        elseif asset_helo then
-        
-          -- Helos need a FARP or AIRBASE or SHIP for spawning. Also at the the receiving warehouse. So even if they could go there they "cannot" be spawned again.
-          -- Unless I allow spawning of helos in the the spawn zone. But one should place at least a FARP there.
-          if self.category==-1 or request.category==-1 then
-            self:E("ERROR: Incorrect request. Helos need a AIRBASE/HELIPAD/SHIP as home/destination base!")
-            valid=false     
-          end
-          
-        end
-        
-        -- All aircraft need an airbase of any type as depature or destination.
-        if self.airbase==nil or request.airbase==nil then
-          self:E("ERROR: Incorrect request. Either warehouse or requesting warehouse does not have any kind of airbase!")
-          valid=false     
-        end
-        
-      elseif asset_ground then
-        
-        -- No ground assets directly to or from ships.
-        -- TODO: May needs refinement if warehouse is on land and requestor is ship in harbour?!
-        if (request.category==Airbase.Category.SHIP or self.category==Airbase.Category.SHIP) then
-          self:E("ERROR: Incorrect request. Ground asset requested but warehouse or requestor is SHIP!")
-          --valid=false
-        end
-        
-        if asset_train then
-          -- Check if there is a valid path on rail.
-          local hasrail=self:HasConnectionRail(request.warehouse)
-          if not hasrail then
-            self:E("ERROR: Incorrect request. No valid path on rail for train assets!")
-            valid=false
-          end
-        else
-          if self.warehouse:GetName()~=request.warehouse.warehouse:GetName() then
-            -- Check if there is a valid path on road.
-            local hasroad=self:HasConnectionRoad(request.warehouse)
-            if not hasroad then
-              self:E("ERROR: Incorrect request. No valid path on road for ground assets!")
-              valid=false
-            end
-          end
-        end        
-      elseif asset_naval then
-    
-        self:E("ERROR: Incorrect request. Naval units not supported yet!")
-        valid=false
-      
-      end
-      
-    else     
-      -------------------------------
-      -- Assests need a transport ---
-      -------------------------------
-
-      if request.transporttype==WAREHOUSE.TransportType.AIRPLANE then
-      
-        -- Airplanes only to AND from airdromes.
-        if self.category~=Airbase.Category.AIRDROME or request.category~=Airbase.Category.AIRDROME then
-          self:E("ERROR: Incorrect request. Warehouse or requestor does not have an airdrome. No transport by plane possible!")
-          valid=false
-        end
-        
-        --TODO: Not sure if there are any transport planes that can land on a carrier?
-          
-      elseif request.transporttype==WAREHOUSE.TransportType.APC then
-      
-        -- Transport by ground units.
-        
-        -- No transport to or from ships
-        if self.category==Airbase.Category.SHIP or request.category==Airbase.Category.SHIP then
-          self:E("ERROR: Incorrect request. Warehouse or requestor is SHIP. No transport by APC possible!")
-          valid=false
-        end
-        
-        -- Check if there is a valid path on road.
-        local hasroad=self:HasConnectionRoad(request.warehouse)
-        if not hasroad then
-          self:E("ERROR: Incorrect request. No valid path on road for ground transport assets!")
-          valid=false
-        end
-
-      elseif request.transporttype==WAREHOUSE.TransportType.HELICOPTER then
-      
-        -- Transport by helicopters ==> need airbase for spawning but not for delivering to the spawn zone of the receiver.
-        if self.category==-1 then
-          self:E("ERROR: Incorrect request. Warehouse has no airbase. Transport by helicopter not possible!")
-          valid=false
-        end
-      
-      elseif request.transporttype==WAREHOUSE.TransportType.SHIP then
-      
-        -- Transport by ship.
-        self:E("ERROR: Incorrect request. Transport by SHIP not implemented yet!")
-        valid=false
-      
-      elseif request.transporttype==WAREHOUSE.TransportType.TRAIN then
-      
-        -- Transport by train.
-        self:E("ERROR: Incorrect request. Transport by TRAIN not implemented yet!")
-        valid=false
-       
-      else
-        -- No match.
-        self:E("ERROR: Incorrect request. Transport type unknown!")
-        valid=false
-      end
-  
-    end
-    
-    -- Add request as unvalid and delete it later.
-    if valid==false then
-      self:E(self.wid..string.format("Got invalid request id=%d.", request.uid)) 
-      table.insert(invalid, request)
-    else
-      self:T3(self.wid..string.format("Got valid request id=%d.", request.uid))
-    end   
- 
-  end -- loop queue items.
- 
+  end
 end
 
 --- Check if a request is valid in general. If not, it will be removed from the queue.
@@ -3339,13 +3215,16 @@ function WAREHOUSE:_CheckRequestValid(request)
       end
       
       if asset_train then
+      
         -- Check if there is a valid path on rail.
         local hasrail=self:HasConnectionRail(request.warehouse)
         if not hasrail then
           self:E("ERROR: Incorrect request. No valid path on rail for train assets!")
           valid=false
         end
+        
       else
+      
         if self.warehouse:GetName()~=request.warehouse.warehouse:GetName() then
           -- Check if there is a valid path on road.
           local hasroad=self:HasConnectionRoad(request.warehouse)
@@ -3354,11 +3233,17 @@ function WAREHOUSE:_CheckRequestValid(request)
             valid=false
           end
         end
-      end        
+        
+      end
+           
     elseif asset_naval then
   
-      self:E("ERROR: Incorrect request. Naval units not supported yet!")
-      valid=false
+        local shippinglane=self:HasConnectionNaval(request.warehouse)
+        
+        if not shippinglane then
+          self:E("ERROR: Incorrect request. No shipping lane has been defined between warehouses!")
+          valid=false
+        end      
     
     end
     
@@ -3597,14 +3482,17 @@ end
 --@return Wrapper.Airbase#AIRBASE.TerminalType Terminal type for this group.
 function WAREHOUSE:_GetTerminal(_attribute)
 
+  -- Default terminal is "large".
   local _terminal=AIRBASE.TerminalType.OpenBig
-  if _attribute==WAREHOUSE.Attribute.FIGHTER then
+  
+  
+  if _attribute==WAREHOUSE.Attribute.AIR_FIGHTER then
     -- Fighter ==> small.
     _terminal=AIRBASE.TerminalType.FighterAircraft
-  elseif _attribute==WAREHOUSE.Attribute.BOMBER or _attribute==WAREHOUSE.Attribute.TRANSPORT_PLANE or _attribute==WAREHOUSE.Attribute.TANKER or _attribute==WAREHOUSE.Attribute.AWACS then
+  elseif _attribute==WAREHOUSE.Attribute.AIR_BOMBER or _attribute==WAREHOUSE.Attribute.AIR_TRANSPORTPLANE or _attribute==WAREHOUSE.Attribute.AIR_TANKER or _attribute==WAREHOUSE.Attribute.AIR_AWACS then
     -- Bigger aircraft.
     _terminal=AIRBASE.TerminalType.OpenBig
-  elseif _attribute==WAREHOUSE.Attribute.TRANSPORT_HELO or _attribute==WAREHOUSE.Attribute.ATTACKHELICOPTER then
+  elseif _attribute==WAREHOUSE.Attribute.AIR_TRANSPORTHELO or _attribute==WAREHOUSE.Attribute.AIR_ATTACKHELO then
     -- Helicopter.
     _terminal=AIRBASE.TerminalType.HelicopterUsable
   end
@@ -3963,6 +3851,7 @@ function WAREHOUSE:_HasAttribute(groupname, attribute)
 end
 
 --- Get the generalized attribute of a group.
+-- Note that for a heterogenious group, the attribute is determined from the attribute of the first unit!
 -- @param #WAREHOUSE self
 -- @param #string groupname Name of the group.
 -- @return #WAREHOUSE.Attribute Generalized attribute of the group.
@@ -3978,61 +3867,76 @@ function WAREHOUSE:_GetAttribute(groupname)
     -- TODO: need to work on ships and trucks and SAMs and ...
     -- Also the Yak-52 for example is OTHER since it only has the attribute "Battleplanes".
     
-    -- Airplanes
+    -----------
+    --- Air ---
+    -----------   
+    -- Planes
     local transportplane=group:HasAttribute("Transports") and group:HasAttribute("Planes")
-    local fighter=group:HasAttribute("Fighters") or group:HasAttribute("Interceptors") or group:HasAttribute("Multirole fighters")
-    local tanker=group:HasAttribute("Tankers")
     local awacs=group:HasAttribute("AWACS")
+    local fighter=group:HasAttribute("Fighters") or group:HasAttribute("Interceptors") or group:HasAttribute("Multirole fighters")
     local bomber=group:HasAttribute("Bombers")
-    
+    local tanker=group:HasAttribute("Tankers")    
     -- Helicopters
     local transporthelo=group:HasAttribute("Transport helicopters")
     local attackhelicopter=group:HasAttribute("Attack helicopters")
-    
+
+    --------------
+    --- Ground ---
+    --------------    
     -- Ground
-    local transportapc=group:HasAttribute("Infantry carriers")
-    local artillery=group:HasAttribute("Artillery")
-    local infantry=group:HasAttribute("Infantry")    
-    local tank=group:HasAttribute("Old Tanks") or group:HasAttribute("Modern Tanks")
+    local apc=group:HasAttribute("Infantry carriers")
     local truck=group:HasAttribute("Trucks") and not group:GetCategory()==Group.Category.TRAIN
-    
-    -- Naval
-    local aircraftcarrier=group:HasAttribute("Aircraft Carriers")
-    local warship=group:HasAttribute("Armed ships")
-    local ship=group:HasAttribute("Ships")
-    
+    local infantry=group:HasAttribute("Infantry")
+    local artillery=group:HasAttribute("Artillery")
+    local tank=group:HasAttribute("Old Tanks") or group:HasAttribute("Modern Tanks")
     -- Train
     local train=group:GetCategory()==Group.Category.TRAIN
 
+    -------------
+    --- Naval ---
+    -------------        
+    -- Ships
+    local aircraftcarrier=group:HasAttribute("Aircraft Carriers")
+    local warship=group:HasAttribute("Heavy armed ships")
+    local armedship=group:HasAttribute("Armed ships")
+    local unarmedship=group:HasAttribute("Unarmed ships")
+    
 
+    -- Define attribute. Order is important.
     if transportplane then
-      attribute=WAREHOUSE.Attribute.TRANSPORT_PLANE
-    elseif transporthelo then
-      attribute=WAREHOUSE.Attribute.TRANSPORT_HELO
-    elseif transportapc then
-      attribute=WAREHOUSE.Attribute.TRANSPORT_APC
-    elseif fighter then
-      attribute=WAREHOUSE.Attribute.FIGHTER
-    elseif tanker then
-      attribute=WAREHOUSE.Attribute.TANKER
+      attribute=WAREHOUSE.Attribute.AIR_TRANSPORTPLANE
     elseif awacs then
-      attribute=WAREHOUSE.Attribute.AWACS
+      attribute=WAREHOUSE.Attribute.AIR_AWACS
+    elseif fighter then
+      attribute=WAREHOUSE.Attribute.AIR_FIGHTER
     elseif bomber then
-      attribute=WAREHOUSE.Attribute.BOMBER
-    elseif artillery then
-      attribute=WAREHOUSE.Attribute.ARTILLERY
-    elseif infantry then
-      attribute=WAREHOUSE.Attribute.INFANTRY
-    elseif attackhelicopter then
-      attribute=WAREHOUSE.Attribute.ATTACKHELICOPTER
-    elseif tank then
-      attribute=WAREHOUSE.Attribute.TANK
+      attribute=WAREHOUSE.Attribute.AIR_BOMBER
+    elseif tanker then
+      attribute=WAREHOUSE.Attribute.AIR_TANKER
+    elseif transporthelo then
+      attribute=WAREHOUSE.Attribute.AIR_TRANSPORTHELO      
+    elseif apc then
+      attribute=WAREHOUSE.Attribute.GROUND_APC
     elseif truck then
-      attribute=WAREHOUSE.Attribute.TRUCK
+      attribute=WAREHOUSE.Attribute.GROUND_TRUCK
+    elseif infantry then
+      attribute=WAREHOUSE.Attribute.GROUND_INFANTRY
+    elseif artillery then
+      attribute=WAREHOUSE.Attribute.GROUND_ARTILLERY
+    elseif tank then
+      attribute=WAREHOUSE.Attribute.GROUND_TANK
     elseif train then
-      attribute=WAREHOUSE.Attribute.TRAIN
+      attribute=WAREHOUSE.Attribute.GROUND_TRAIN
+    elseif aircraftcarrier then
+      attribute=WAREHOUSE.Attribute.NAVAL_AIRCRAFTCARRIER
+    elseif warship then
+      attribute=WAREHOUSE.Attribute.NAVAL_WARSHIP
+    elseif armedship then
+      attribute=WAREHOUSE.Attribute.NAVAL_ARMEDSHIP    
+    elseif unarmedship then
+      attribute=WAREHOUSE.Attribute.NAVAL_UNARMEDSHIP
     else
-      attribute=WAREHOUSE.Attribute.OTHER
+      attribute=WAREHOUSE.Attribute.UNKNOWN
     end
 
   end
