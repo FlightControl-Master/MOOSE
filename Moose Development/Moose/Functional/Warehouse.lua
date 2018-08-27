@@ -45,6 +45,8 @@
 -- @field #table queue Table holding all queued requests. Table entries are of type @{#WAREHOUSE.Queueitem}.
 -- @field #table pending Table holding all pending requests, i.e. those that are currently in progress. Table elements are of type @{#WAREHOUSE.Pendingitem}.
 -- @field #table defending Table holding all defending requests, i.e. self requests that were if the warehouse is under attack. Table elements are of type @{#WAREHOUSE.Pendingitem}.
+-- @field Core.Zone#ZONE portzone Zone defining the port of a warehouse. This is where naval assets are spawned.
+-- @field #table shippinglanes Table holding the user defined shipping between warehouses. 
 -- @extends Core.Fsm#FSM
 
 --- Manages ground assets of an airbase and offers the possibility to transport them to another airbase or warehouse.
@@ -71,10 +73,6 @@
 -- to another in a realistic and highly automatic fashion. In contrast to a "DCS warehouse" these assets have a physical representation in game. In particular,
 -- this means they can be destroyed during the transport and add more life to the DCS world.
 -- 
--- Or, in other words, on a scale between 1 and 10, how important do you reckon it is to have the right assets at the right place in a conflict?
--- 
--- The warehouse adresses exactly this "problem" by simulating it in a realistic way while at the same time adding more life and dynamics to the DCS World. 
--- 
 -- This comes along with some additional interesting stategic aspects since capturing/defending and destroying/protecting an enemy or your
 -- own warehous becomes of critical importance for the development of a conflict.
 -- 
@@ -83,23 +81,22 @@
 -- 
 -- ## What is a warehouse?
 -- A warehouse is an abstract object represented by a physical (static) building that can hold virtual assets in stock.
--- It can but it must not be associated with a particular airbase. The associated airbase can be an airdrome, a Helipad/FARP or a ship.
+-- It can (but it must not) be associated with a particular airbase. The associated airbase can be an airdrome, a Helipad/FARP or a ship.
 -- 
 -- If another warehouse requests assets, the corresponding troops are spawned at the warehouse and being transported to the requestor or go their
 -- by themselfs. Once arrived at the requesting warehouse, the assets go into the stock of the requestor and can be activated/deployed when necessary.
 -- 
 -- ## What assets can be stored?
--- Any kind of ground or airborne asset can be stored. Ships not supported at the moment due to the fact that airbases are bound to airbases which are
--- normally not located near the sea.
+-- Any kind of ground, airborne or naval asset can be stored.
 -- 
 -- ## What means of transportation are available?
 -- Firstly, all mobile assets can be send from warehouse to another on their own.
 -- 
--- * Ground vehicles will use the road infrastructure
--- * Airborne units are get a flightplan from the airbase the sending warehouse to the airbase of the receiving warehouse. This already implies that for airborne
--- assets both warehouses need an airbase. If either one of the warehouses does not have an associated airbase, transportation of airborne assest is not possible.
+-- * Ground vehicles will use the road infrastructure. So a good road connection for both warehouses is important.
+-- * Airborne units get a flightplan from the airbase of the sending warehouse to the airbase of the receiving warehouse. This already implies that for airborne
+-- assets both warehouses need an airbase. If either one of the warehouses does not have an associated airbase, direct transportation of airborne assest is not possible.
 -- * Naval units can be exchanged between warehouses which posses a port/habour. Also shipping lanes must be specified manually but the user since DCS does not provide these.
--- * Trains use the available railroad infrastructure and both warehouses must have a connection to the railroad. Unfortunately, however, trains are not yet implemented to 
+-- * Trains (would) use the available railroad infrastructure and both warehouses must have a connection to the railroad. Unfortunately, however, trains are not yet implemented to 
 -- a reasonable degree in DCS at the moment and hence cannot be used yet.
 -- 
 -- Furthermore, ground assets can be transferred between warehouses by transport units. These are APCs, helicopters and airplanes. The transportation process is modelled
@@ -111,7 +108,7 @@
 -- A MOOSE warehouse must be represented in game by a phyical *static* object. For example, the mission editor already has warehouse as static object available.
 -- This would be a good first choice but any static object will do.
 -- 
--- The positioning of the warehouse static object is very important for a couple of reasons. Firtly, a warehouse needs a good infrastructure so that spawned assets
+-- The positioning of the warehouse static object is very important for a couple of reasons. Firstly, a warehouse needs a good infrastructure so that spawned assets
 -- have a proper road connection or can reach the associated airbase easily.
 -- 
 -- Once the static warehouse object is placed in the mission editor it can be used as a MOOSE warehouse by the @{#WAREHOUSE.New}(*warehousestatic*, *alias*) constructor,
@@ -138,7 +135,8 @@
 -- Note that you can also add assets with a delay by using the @{#WAREHOUSE.__AddAsset}(*delay*, *group*, *ngroups*, *foceattribute*), where *delay* is the delay in seconds before the asset is added.
 -- 
 -- By default, the generalized attribute of the asset is determined automatically from the DCS descriptor attributes. However, this might not always result in the desired outcome.
--- Therefore, it is possible, to force a generalized attribute for the asset with the third optional parameter *forceattribute*, which is of type @{#WAREHOUSE.Attribute}. 
+-- Therefore, it is possible, to force a generalized attribute for the asset with the third optional parameter *forceattribute*, which is of type @{#WAREHOUSE.Attribute}.
+-- 
 --
 -- # Requesting Assets
 -- 
@@ -223,7 +221,7 @@
 --      end
 --       
 -- The variable *groupset* is a @{Core.Set#SET_GOUP} object and holds all asset groups from the request. The code above shows, how the mission designer can access the groups
--- for further tasking. Here, the groups are only smoked but, of course, you can use them for whatever task you imagine.
+-- for further tasking. Here, the groups are only smoked but, of course, you can use them for whatever task you fancy.
 -- 
 -- Note that airborne groups are spawned in uncontrolled state and need to be activated first before they can start their assigned mission.
 -- 
@@ -300,6 +298,8 @@ WAREHOUSE = {
   queue       =    {},
   pending     =    {},
   defending   =    {},
+  portzone    =   nil,
+  shippinglanes =  {},
 }
 
 --- Item of the warehouse stock table.
@@ -315,6 +315,7 @@ WAREHOUSE = {
 -- @field #number speedmax Maximum speed in km/h the unit can do.
 -- @field DCS#Object.Desc DCSdesc All DCS descriptors.
 -- @field #WAREHOUSE.Attribute attribute Generalized attribute of the group.
+-- @field #boolean istransport If true, the asset is able to transport troops.
 
 --- Item of the warehouse queue table.
 -- @type WAREHOUSE.Queueitem
@@ -360,7 +361,8 @@ WAREHOUSE.Descriptor = {
 -- @field #string TRANSPORT_PLANE Airplane with transport capability. Usually bigger, i.e. needs larger airbases and parking spots.
 -- @field #string TRANSPORT_HELO Helicopter with transport capability.
 -- @field #string TRANSPORT_APC Amoured Personell Carrier.
--- @field #string FIGHER Fighter, interceptor, ... airplane.
+-- @field #string TRANSPORT_SHIP Ship defined for troop transport. Since most ships can, this attribute must be manually requestet in the AddAddet() function.
+-- @field #string FIGHTER Fighter, interceptor, ... airplane.
 -- @field #string TANKER Airplane which can refuel other aircraft.
 -- @field #string AWACS Airborne Early Warning and Control System.
 -- @field #string ARTILLERY Artillery assets.
@@ -368,13 +370,16 @@ WAREHOUSE.Descriptor = {
 -- @field #string BOMBER Aircraft which can be used for bombing.
 -- @field #string TANK Tanks.
 -- @field #string TRUCK Unarmed ground vehicles.
--- @field #string TRAIN Trains.
--- @field #string SHIP Naval assets.
+-- @field #string TRAIN Trains. Not that trains are **not** yet properly implemented in DCS and cannot be used currently.
+-- @field #string AIRCRAFTCARRIER Ship able to carrier aircraft.
+-- @field #string WARSHIP Armed war ship, e.g. cruisers, destroyers, firgates and corvettes.
+-- @filed #string UNARMED_SHIP Any unarmed naval vessel.
 -- @field #string OTHER Anything that does not fall into any other category.
 WAREHOUSE.Attribute = {
   TRANSPORT_PLANE="Transport_Plane",
   TRANSPORT_HELO="Transport_Helo",
   TRANSPORT_APC="Transport_APC",
+  TRANSPORT_SHIP="Transport_Ship",
   FIGHTER="Fighter",
   TANKER="Tanker",
   AWACS="AWACS",
@@ -385,7 +390,9 @@ WAREHOUSE.Attribute = {
   TANK="Tank",
   TRUCK="Truck",
   TRAIN="Train",
-  SHIP="Ship",
+  AIRCRAFTCARRIER="Aircraftcarrier",
+  WAR_SHIP="Warship",
+  UNARMED_SHIP="Unarmedship",
   OTHER="Other",
 }
 
@@ -395,7 +402,7 @@ WAREHOUSE.Attribute = {
 -- @field #string HELICOPTER Transports are conducted by helicopters.
 -- @field #string APC Transports are conducted by APCs.
 -- @field #string SHIP Transports are conducted by ships.
--- @field #string TRAIN Transports are conducted by trains.
+-- @field #string TRAIN Transports are conducted by trains. Not yet implemented.
 -- @field #string SELFPROPELLED Assets go to their destination by themselves. No transport carrier needed.
 WAREHOUSE.TransportType = {
   AIRPLANE      = "Transport_Plane",
@@ -417,7 +424,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.2.7"
+WAREHOUSE.version="0.2.7w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -831,6 +838,78 @@ function WAREHOUSE:SetRailConnection(coordinate)
   else
     self.rail=false
   end
+  return self
+end
+
+--- Set the port zone for this warehouse.
+-- The port zone is the zone, where all naval assets of the warehouse are spawned. 
+-- @param #WAREHOUSE self
+-- @param Core.Zone#ZONE The zone defining the naval port of the warehouse.
+-- @return #WAREHOUSE self
+function WAREHOUSE:SetPortZone(zone)
+  self.portzone=zone
+  return self
+end
+
+--- Add a shipping lane to another warehouse.
+-- Note that both warehouses must have a port zone defined before a shipping lane can be added.
+-- Shipping lane is taken from the waypoints of a (late activated) template group. So set up a group, e.g. a ship or a helicopter, and place its
+-- waypoints along the shipping lane you want to add.
+-- @param #WAREHOUSE self
+-- @param #WAREHOUSE remotewarehouse The remote warehouse to where the shipping lane is added
+-- @param Wrapper.Group#GROUP group Waypoints of this group will define the shipping lane between to warehouses.
+-- @return #WAREHOUSE self
+function WAREHOUSE:AddShippingLane(remotewarehouse, group)
+
+  -- Check that port zones are defined.
+  if self.portzone==nil or remotewarehouse.portzone==nil then
+    self:E(self.wid..string.format("ERROR: Sending or receiving warehouse does not have a port zone defined. Adding shipping lane not possible!"))
+    return
+  end
+
+  -- Get route from template.
+  local lanepoints=group:GetTemplateRoutePoints()
+  
+  -- First and last waypoints
+  local laneF=lanepoints[1]
+  local laneL=lanepoints[#lanepoints]
+  
+  -- Get corresponding coordinates.
+  local coordF=COORDINATE:New(laneF.x, 0, laneF.y)
+  local coordL=COORDINATE:New(laneL.x, 0, laneL.y)
+  
+  -- Figure out which point is closer to the port of this warehouse.
+  local distF=self.portzone:GetCoordinate():Get2DDistance(coordF)
+  local distL=self.portzone:GetCoordinate():Get2DDistance(coordL)
+  
+  -- Add the shipping lane. Need to take care of the wrong "direction".
+  local lane={}
+  lane.towarehouse=remotewarehouse.warehouse:GetName()
+  lane.coordinates={}
+  if distF<distL then
+    for i=1,#lanepoints do
+      local point=lanepoints[i]
+      local coord=COORDINATE:New(point.x,0, point.y)
+      table.insert(lane.coordinate, coord)
+    end
+  else
+    for i=#lanepoints,1,-1 do
+      local point=lanepoints[i]
+      local coord=COORDINATE:New(point.x,0, point.y)
+      table.insert(lane.coordinate, coord)
+    end     
+  end
+  
+  -- Debug info. Marks along shipping lane.
+  for i=1,#lane.coordinates do
+    local coord=lane.coordinates[i] --Core.Point#COORDINATE
+    local text=string.format("Shipping lane %s to %s. Point %d.", self.alias, remotewarehouse.alias, i)
+    coord:MarkToCoalition(text, self.coalition)
+  end
+  
+  -- Add shipping lane.
+  table.insert(self.shippinglanes, lane)
+  
   return self
 end
 
@@ -1519,7 +1598,8 @@ end
 -- @param #WAREHOUSE.TransportType TransportType Type of transport.
 -- @param #number nTransport Number of transport units requested.
 -- @param #number Prio Priority of the request. Number ranging from 1=high to 100=low.
-function WAREHOUSE:onafterAddRequest(From, Event, To, warehouse, AssetDescriptor, AssetDescriptorValue, nAsset, TransportType, nTransport, Prio)
+-- @param #string Assignment A keyword or text that 
+function WAREHOUSE:onafterAddRequest(From, Event, To, warehouse, AssetDescriptor, AssetDescriptorValue, nAsset, TransportType, nTransport, Assignment, Prio)
 
   -- Defaults.
   nAsset=nAsset or 1
@@ -2232,7 +2312,7 @@ function WAREHOUSE:onafterDelivered(From, Event, To, request)
   MESSAGE:New(text, 5):ToCoalitionIf(self.coalition, self.Report or self.Debug)
   self:I(self.wid..text)
 
-  -- Make some noice :)  
+  -- Make some noise :)  
   self:_Fireworks(request.warehouse.coordinate)
 
   -- Remove pending request:
@@ -2941,11 +3021,6 @@ function WAREHOUSE:_CheckRequestConsistancy(queue)
     -- Let's assume everything is fine.
     local valid=true
     
-    --TODO: check that
-    -- if warehouse or requestor is a FARP, plane asset and transport not possible.
-    -- if requestor or warehouse is a SHIP, APC transport not possible, SELFPROPELLED only for AIR/SHIP
-    -- etc. etc...
-    
     -- Check if at least one asset was requested.
     if request.nasset==0 then
       self:E(self.wid..string.format("ERROR: Incorrect request. Request for zero assets not possible. Can happen when, e.g. \"all\" ground assets are requests but none in stock."))
@@ -2958,12 +3033,22 @@ function WAREHOUSE:_CheckRequestConsistancy(queue)
       valid=false
     end
     
-    -- Is receiving warehouse stopped? Actually, running state is checked later. So I leave this for now in case the warehouse was not started yet.
-    -- TODO: Introduce another FSM start state to be able to distinguish between a warehouse that was not started yet or was started and then stopped!
+    -- Is receiving warehouse stopped?
     if request.warehouse:IsStopped() then
       self:E(self.wid..string.format("ERROR: Incorrect request. Requesting warehouse is stopped!"))
       valid=false    
     end
+    
+     -- Delete invalid requests.
+    for _,_request in pairs(invalid) do
+      self:E(self.wid..string.format("Deleting invalid request id=%d.",_request.uid))
+      self:_DeleteQueueItem(_request, self.queue)
+    end
+    
+    -- Stuff below is probably obsolete.
+    if true then
+      return
+    end  
     
     -- Asset is air, ground etc.
     local asset_air=false
@@ -2987,8 +3072,6 @@ function WAREHOUSE:_CheckRequestConsistancy(queue)
       elseif request.assetdescval==Group.Category.TRAIN then
         asset_ground=true
         asset_train=true
-        -- Only one train due to finding spawn placen on rail!
-        --nAsset=1
       else
         self:E("ERROR: Incorrect request. Asset Descriptor missmatch! Has to be Group.Cagetory.AIRPLANE, ...")
         valid=false
@@ -3021,6 +3104,7 @@ function WAREHOUSE:_CheckRequestConsistancy(queue)
         asset_plane=true
       elseif request.assetdescval==WAREHOUSE.Attribute.TRAIN then
         asset_ground=true
+        asset_train=true
       elseif request.assetdescval==WAREHOUSE.Attribute.TRANSPORT_APC then
         asset_ground=true
       elseif request.assetdescval==WAREHOUSE.Attribute.TRANSPORT_HELO then
@@ -3175,15 +3259,179 @@ function WAREHOUSE:_CheckRequestConsistancy(queue)
     end   
  
   end -- loop queue items.
-
-
-   -- Delete invalid requests.
-  for _,_request in pairs(invalid) do
-    self:E(self.wid..string.format("Deleting invalid request id=%d.",_request.uid))
-    self:_DeleteQueueItem(_request, self.queue)
-  end
  
 end
+
+--- Check if a request is valid in general. If not, it will be removed from the queue.
+-- This routine needs to have at least one asset in stock that matches the request descriptor in order to determine whether the request category of troops.
+-- If no asset is in stock, the request will remain in the queue but cannot be executed.
+-- @param #WAREHOUSE self
+-- @param #WAREHOUSE.Queueitem request The request to be checked.
+-- @return #boolean If true, request can be executed. If false, something is not right.
+function WAREHOUSE:_CheckRequestValid(request)
+
+  -- Check if number of requested assets is in stock.
+  local _assets,_nassets,_enough=self:_FilterStock(self.stock, request.assetdesc, request.assetdescval, request.nasset)
+   
+  if #_assets==0 then
+    return true
+  end
+  
+  -- First asset. Is representative for all filtered items in stock.
+  local asset=_assets[1] --#WAREHOUSE.Assetitem
+  
+  -- Asset is air, ground etc.
+  local asset_air=false
+  local asset_plane=asset.category==Group.Category.AIRPLANE
+  local asset_helo=asset.category==Group.Category.HELICOPTER
+  local asset_ground=asset.category==Group.Category.GROUND
+  local asset_train=asset.category==Group.Category.TRAIN
+  local asset_naval=asset.category==Group.Category.SHIP
+
+  -- General air request.
+  asset_air=asset_helo or asset_plane
+
+  -- Assume everything is okay.
+  local valid=true
+  
+  if request.transporttype==WAREHOUSE.TransportType.SELFPROPELLED then
+    -------------------------------------------
+    -- Case where the units go my themselves --
+    -------------------------------------------
+
+    if asset_air then
+    
+      if asset_plane then
+      
+        -- No airplane to or from FARPS.
+        if request.category==Airbase.Category.HELIPAD or self.category==Airbase.Category.HELIPAD then
+          self:E("ERROR: Incorrect request. Asset airplane requested but warehouse or requestor is HELIPAD/FARP!")
+          valid=false
+        end
+        
+        -- Category SHIP is not general enough! Fighters can go to carriers. Which fighters, is there an attibute?
+        -- Also for carriers, attibute?
+        
+      elseif asset_helo then
+      
+        -- Helos need a FARP or AIRBASE or SHIP for spawning. Also at the the receiving warehouse. So even if they could go there they "cannot" be spawned again.
+        -- Unless I allow spawning of helos in the the spawn zone. But one should place at least a FARP there.
+        if self.category==-1 or request.category==-1 then
+          self:E("ERROR: Incorrect request. Helos need a AIRBASE/HELIPAD/SHIP as home/destination base!")
+          valid=false     
+        end
+        
+      end
+      
+      -- All aircraft need an airbase of any type as depature or destination.
+      if self.airbase==nil or request.airbase==nil then
+        self:E("ERROR: Incorrect request. Either warehouse or requesting warehouse does not have any kind of airbase!")
+        valid=false     
+      end
+      
+    elseif asset_ground then
+      
+      -- No ground assets directly to or from ships.
+      -- TODO: May needs refinement if warehouse is on land and requestor is ship in harbour?!
+      if (request.category==Airbase.Category.SHIP or self.category==Airbase.Category.SHIP) then
+        self:E("ERROR: Incorrect request. Ground asset requested but warehouse or requestor is SHIP!")
+        --valid=false
+      end
+      
+      if asset_train then
+        -- Check if there is a valid path on rail.
+        local hasrail=self:HasConnectionRail(request.warehouse)
+        if not hasrail then
+          self:E("ERROR: Incorrect request. No valid path on rail for train assets!")
+          valid=false
+        end
+      else
+        if self.warehouse:GetName()~=request.warehouse.warehouse:GetName() then
+          -- Check if there is a valid path on road.
+          local hasroad=self:HasConnectionRoad(request.warehouse)
+          if not hasroad then
+            self:E("ERROR: Incorrect request. No valid path on road for ground assets!")
+            valid=false
+          end
+        end
+      end        
+    elseif asset_naval then
+  
+      self:E("ERROR: Incorrect request. Naval units not supported yet!")
+      valid=false
+    
+    end
+    
+  else     
+    -------------------------------
+    -- Assests need a transport ---
+    -------------------------------
+
+    if request.transporttype==WAREHOUSE.TransportType.AIRPLANE then
+    
+      -- Airplanes only to AND from airdromes.
+      if self.category~=Airbase.Category.AIRDROME or request.category~=Airbase.Category.AIRDROME then
+        self:E("ERROR: Incorrect request. Warehouse or requestor does not have an airdrome. No transport by plane possible!")
+        valid=false
+      end
+      
+      --TODO: Not sure if there are any transport planes that can land on a carrier?
+        
+    elseif request.transporttype==WAREHOUSE.TransportType.APC then
+    
+      -- Transport by ground units.
+      
+      -- No transport to or from ships
+      if self.category==Airbase.Category.SHIP or request.category==Airbase.Category.SHIP then
+        self:E("ERROR: Incorrect request. Warehouse or requestor is SHIP. No transport by APC possible!")
+        valid=false
+      end
+      
+      -- Check if there is a valid path on road.
+      local hasroad=self:HasConnectionRoad(request.warehouse)
+      if not hasroad then
+        self:E("ERROR: Incorrect request. No valid path on road for ground transport assets!")
+        valid=false
+      end
+
+    elseif request.transporttype==WAREHOUSE.TransportType.HELICOPTER then
+    
+      -- Transport by helicopters ==> need airbase for spawning but not for delivering to the spawn zone of the receiver.
+      if self.category==-1 then
+        self:E("ERROR: Incorrect request. Warehouse has no airbase. Transport by helicopter not possible!")
+        valid=false
+      end
+    
+    elseif request.transporttype==WAREHOUSE.TransportType.SHIP then
+    
+      -- Transport by ship.
+      self:E("ERROR: Incorrect request. Transport by SHIP not implemented yet!")
+      valid=false
+    
+    elseif request.transporttype==WAREHOUSE.TransportType.TRAIN then
+    
+      -- Transport by train.
+      self:E("ERROR: Incorrect request. Transport by TRAIN not implemented yet!")
+      valid=false
+     
+    else
+      -- No match.
+      self:E("ERROR: Incorrect request. Transport type unknown!")
+      valid=false
+    end
+
+  end
+  
+  -- Add request as unvalid and delete it later.
+  if valid==false then
+    self:E(self.wid..string.format("Got invalid request id=%d.", request.uid)) 
+  else
+    self:T3(self.wid..string.format("Got valid request id=%d.", request.uid))
+  end
+  
+  return valid
+end
+
 
 --- Checks if the request can be fullfilled right now.
 -- Check for current parking situation, number of assets and transports currently in stock.
@@ -3285,14 +3533,36 @@ function WAREHOUSE:_CheckQueue()
 
   -- Search for a request we can execute.
   local request=nil --#WAREHOUSE.Queueitem
+  
+  local invalid={}
+  local gotit=false
   for _,_qitem in ipairs(self.queue) do
     local qitem=_qitem --#WAREHOUSE.Queueitem
+    
+    -- Check if request is valid in general.
+    local valid=self:_CheckRequestValid(qitem)
+    
+    -- Check if request is possible now.
     local okay=self:_CheckRequestNow(qitem)
-    if okay==true then
+    
+    -- Remember invalid request and delete later in order not to confuse the loop.
+    if not valid then
+      table.insert(invalid,request)
+    end
+    
+    -- Get the first valid request that can be executed now.
+    if okay and valid and not gotit then
       request=qitem
-      break
+      gotit=true
+      --break
     end
   end
+  
+  -- Delete invalid requests.
+  for _,_request in pairs(invalid) do
+    self:E(self.wid..string.format("Deleting invalid request id=%d.",_request.uid))
+    self:_DeleteQueueItem(_request, self.queue)
+  end  
 
   -- Execute request.
   return request
@@ -3685,7 +3955,7 @@ function WAREHOUSE:_HasAttribute(groupname, attribute)
   local group=GROUP:FindByName(groupname)
 
   if group then
-    local groupattribute=self:_HasAttribute(groupname,attribute)
+    local groupattribute=self:_GetAttribute(groupname)
     return groupattribute==attribute
   end
 
@@ -3707,35 +3977,33 @@ function WAREHOUSE:_GetAttribute(groupname)
     -- Get generalized attributes.
     -- TODO: need to work on ships and trucks and SAMs and ...
     -- Also the Yak-52 for example is OTHER since it only has the attribute "Battleplanes".
+    
+    -- Airplanes
     local transportplane=group:HasAttribute("Transports") and group:HasAttribute("Planes")
-    local transporthelo=group:HasAttribute("Transport helicopters")
-    local transportapc=group:HasAttribute("Infantry carriers")
     local fighter=group:HasAttribute("Fighters") or group:HasAttribute("Interceptors") or group:HasAttribute("Multirole fighters")
     local tanker=group:HasAttribute("Tankers")
     local awacs=group:HasAttribute("AWACS")
-    local artillery=group:HasAttribute("Artillery")
-    local infantry=group:HasAttribute("Infantry")
-    local attackhelicopter=group:HasAttribute("Attack helicopters")
     local bomber=group:HasAttribute("Bombers")
+    
+    -- Helicopters
+    local transporthelo=group:HasAttribute("Transport helicopters")
+    local attackhelicopter=group:HasAttribute("Attack helicopters")
+    
+    -- Ground
+    local transportapc=group:HasAttribute("Infantry carriers")
+    local artillery=group:HasAttribute("Artillery")
+    local infantry=group:HasAttribute("Infantry")    
     local tank=group:HasAttribute("Old Tanks") or group:HasAttribute("Modern Tanks")
     local truck=group:HasAttribute("Trucks") and not group:GetCategory()==Group.Category.TRAIN
+    
+    -- Naval
+    local aircraftcarrier=group:HasAttribute("Aircraft Carriers")
+    local warship=group:HasAttribute("Armed ships")
+    local ship=group:HasAttribute("Ships")
+    
+    -- Train
     local train=group:GetCategory()==Group.Category.TRAIN
 
-    -- Debug output.
-    --[[
-    env.info(string.format("transport pane = %s", tostring(transportplane)))    
-    env.info(string.format("transport helo = %s", tostring(transporthelo)))
-    env.info(string.format("transport apc  = %s", tostring(transportapc)))
-    env.info(string.format("figther        = %s", tostring(fighter)))
-    env.info(string.format("tanker         = %s", tostring(tanker)))
-    env.info(string.format("awacs          = %s", tostring(awacs)))
-    env.info(string.format("artillery      = %s", tostring(artillery)))
-    env.info(string.format("infantry       = %s", tostring(infantry)))
-    env.info(string.format("attack helo    = %s", tostring(attackhelicopter)))
-    env.info(string.format("bomber         = %s", tostring(bomber)))
-    env.info(string.format("tank           = %s", tostring(tank)))
-    env.info(string.format("truck          = %s", tostring(truck)))
-    ]]
 
     if transportplane then
       attribute=WAREHOUSE.Attribute.TRANSPORT_PLANE
