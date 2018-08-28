@@ -643,14 +643,14 @@ function ZONE_RADIUS:Scan( ObjectCategories )
         local CoalitionDCSUnit = ZoneObject:getCoalition()
         self.ScanData.Coalitions[CoalitionDCSUnit] = true
         self.ScanData.Units[ZoneObject] = ZoneObject
-        self:F( { Name = ZoneObject:getName(), Coalition = CoalitionDCSUnit } )
+        self:F2( { Name = ZoneObject:getName(), Coalition = CoalitionDCSUnit } )
       end
       if ObjectCategory == Object.Category.SCENERY then
         local SceneryType = ZoneObject:getTypeName()
         local SceneryName = ZoneObject:getName()
         self.ScanData.Scenery[SceneryType] = self.ScanData.Scenery[SceneryType] or {}
         self.ScanData.Scenery[SceneryType][SceneryName] = SCENERY:Register( SceneryName, ZoneObject )
-        self:F( { SCENERY =  self.ScanData.Scenery[SceneryType][SceneryName] } )
+        self:F2( { SCENERY =  self.ScanData.Scenery[SceneryType][SceneryName] } )
       end
     end
     return true
@@ -1174,6 +1174,7 @@ function ZONE_GROUP:New( ZoneName, ZoneGROUP, Radius )
   self:F( { ZoneName, ZoneGROUP:GetVec2(), Radius } )
 
   self._.ZoneGROUP = ZoneGROUP
+  self._.ZoneVec2Cache = self._.ZoneGROUP:GetVec2()
 
   -- Zone objects are added to the _DATABASE and SET_ZONE objects.
   _EVENTDISPATCHER:CreateEventNewZone( self )
@@ -1188,7 +1189,14 @@ end
 function ZONE_GROUP:GetVec2()
   self:F( self.ZoneName )
   
-  local ZoneVec2 = self._.ZoneGROUP:GetVec2()
+  local ZoneVec2 = nil
+  
+  if self._.ZoneGROUP:IsAlive() then
+    ZoneVec2 = self._.ZoneGROUP:GetVec2()
+    self._.ZoneVec2Cache = ZoneVec2
+  else
+    ZoneVec2 = self._.ZoneVec2Cache
+  end
 
   self:T( { ZoneVec2 } )
   

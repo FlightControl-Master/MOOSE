@@ -279,7 +279,7 @@ function POSITIONABLE:GetBoundingRadius()
     local Z = Box.max.z - Box.min.z
     local CX = X / 2
     local CZ = Z / 2
-    return math.max( CX, CZ ) + 3
+    return math.max( CX, CZ )
   end
   
   BASE:E( { "Cannot GetBoundingRadius", Positionable = self, Alive = self:IsAlive() } )
