@@ -139,7 +139,7 @@
 --
 -- # Requesting Assets
 -- 
--- Assets of the warehouse can be requested by other MOOSE warehouses. A request will first be scrutinize to check if can be fullfilled at all. If the request is valid, it is
+-- Assets of the warehouse can be requested by other MOOSE warehouses. A request will first be scrutinize to check if can be fulfilled at all. If the request is valid, it is
 -- put into the warehouse queue and processed as soon as possible.
 -- 
 -- A request can be assed by the @{#WAREHOUSE.AddRequest}(*warehouse*, *AssetDescriptor*, *AssetDescriptorValue*, *nAsset*, *TransportType*, *nTransport*, *Prio*) function.
@@ -488,7 +488,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.2.8w"
+WAREHOUSE.version="0.2.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -1376,17 +1376,19 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute)
   local smax,sx,sy,sz=_GetObjectSize(DCSdesc)
   
   -- Get weight in kg
+  env.info("FF get weight")
   local weight=0
-  local DCSunits=DCSgroup:getUnits()
-  for _,unit in pairs(DCSunits) do
-    local desc=unit:getDesc()
-    local unitweight=desc.emptyWeight
-    weight=weight+unitweight
-  end
-  
+  local cargobay=0
   for _,_unit in pairs(group:GetUnits()) do
     local unit=_unit --Wrapper.Unit#UNIT
-    unit:GetCargoBayFreeWeight()
+    local Desc=unit:GetDesc()
+    self:E({UnitDesc=Desc})
+    local unitweight=Desc.massEmpty
+    if unitweight then
+      weight=weight+unitweight
+      env.info("FF weight = "..weight)
+    end    
+    cargobay=unit:GetCargoBayFreeWeight()
   end
 
   -- Set/get the generalized attribute.
@@ -1416,6 +1418,7 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute)
     asset.DCSdesc=DCSdesc
     asset.attribute=attribute
     asset.transporter=false  -- not used yet
+    asset.cargobay=cargobay
     
     if i==1 then
       self:_AssetItemInfo(asset)
@@ -1696,6 +1699,87 @@ end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- On before "AddRequest" event. Checks some basic properties of the given parameters.
+-- @param #WAREHOUSE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #WAREHOUSE warehouse The warehouse requesting supply.
+-- @param #WAREHOUSE.Descriptor AssetDescriptor Descriptor describing the asset that is requested.
+-- @param AssetDescriptorValue Value of the asset descriptor. Type depends on descriptor, i.e. could be a string, etc.
+-- @param #number nAsset Number of groups requested that match the asset specification.
+-- @param #WAREHOUSE.TransportType TransportType Type of transport.
+-- @param #number nTransport Number of transport units requested.
+-- @param #number Prio Priority of the request. Number ranging from 1=high to 100=low.
+-- @param #string Assignment A keyword or text that
+-- @return #boolean If true, request is okay at first glance.
+function WAREHOUSE:onbeforeAddRequest(From, Event, To, warehouse, AssetDescriptor, AssetDescriptorValue, nAsset, TransportType, nTransport, Assignment, Prio)
+
+  -- Defaults.
+  nAsset=nAsset or 1
+  TransportType=TransportType or WAREHOUSE.TransportType.SELFPROPELLED
+  Prio=Prio or 50
+  if nTransport==nil then
+    if TransportType==WAREHOUSE.TransportType.SELFPROPELLED then
+      nTransport=0
+    else
+      nTransport=1
+    end
+  end
+  
+  -- Request is okay.
+  local okay=true
+  
+  if AssetDescriptor==WAREHOUSE.Descriptor.ATTRIBUTE then
+  
+    -- Check if a valid attibute was given.
+    local gotit=false
+    for _,attribute in pairs(WAREHOUSE.Attribute) do
+      if AssetDescriptorValue==attribute then
+        gotit=true
+      end
+    end
+    if not gotit then
+      self:E(self.wid.."ERROR: Invalid request. Asset attribute is unknown!")
+      okay=false
+    end
+  
+  elseif AssetDescriptor==WAREHOUSE.Descriptor.CATEGORY then
+
+    -- Check if a valid category was given.
+    local gotit=false
+    for _,category in pairs(Group.Category) do
+      if AssetDescriptorValue==category then
+        gotit=true
+      end
+    end
+    if not gotit then
+      self:E(self.wid.."ERROR: Invalid request. Asset category is unknown!")
+      okay=false
+    end
+    
+  elseif AssetDescriptor==WAREHOUSE.Descriptor.TEMPLATENAME then
+  
+    if type(AssetDescriptorValue)~="string" then
+      self:E(self.wid.."ERROR: Invalid request. Asset template name must be passed as a string!")
+      okay=false    
+    end
+  
+  elseif AssetDescriptor==WAREHOUSE.Descriptor.UNITTYPE then
+
+    if type(AssetDescriptorValue)~="string" then
+      self:E(self.wid.."ERROR: Invalid request. Asset unit type must be passed as a string!")
+      okay=false    
+    end
+  
+  else
+    self:E(self.wid.."ERROR: Invalid request. Asset descriptor is not ATTRIBUTE, CATEGORY, TEMPLATENAME or UNITTYPE!")
+    okay=false
+  end
+  
+  return okay
+end
+
 --- On after "AddRequest" event. Add a request to the warehouse queue, which is processed when possible.
 -- @param #WAREHOUSE self
 -- @param #string From From state.
@@ -1749,7 +1833,7 @@ end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- On before "Request" event. Checks if the request can be fullfilled.
+--- On before "Request" event. Checks if the request can be fulfilled.
 -- @param #WAREHOUSE self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -2076,7 +2160,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
       local _alias=self:_Alias(_assetitem, Request)
 
       -- Spawn ground asset.      
-      local spawngroup=self:_SpawnAssetGround(_assetitem, Request, self.spawnzone)
+      local spawngroup=self:_SpawnAssetGroundNaval(_assetitem, Request, self.spawnzone)
 
       if spawngroup then
         -- Set state of warehouse so we can retrieve it later.
@@ -3431,10 +3515,10 @@ function WAREHOUSE:_CheckRequestValid(request)
 end
 
 
---- Checks if the request can be fullfilled right now.
+--- Checks if the request can be fulfilled right now.
 -- Check for current parking situation, number of assets and transports currently in stock.
 -- @param #WAREHOUSE self
--- @param #WAREHOUSE.Queueitem request The request to be checked.
+-- @param #WAREHOUSE.Pendingitem request The request to be checked.
 -- @return #boolean If true, request can be executed. If false, something is not right.
 function WAREHOUSE:_CheckRequestNow(request)
     
@@ -3478,10 +3562,22 @@ function WAREHOUSE:_CheckRequestNow(request)
       end
     end
     
+    request.assets=_assets
+    --request.
+    
   end  
   
   -- Check that a transport units.
   if request.transporttype ~= WAREHOUSE.TransportType.SELFPROPELLED then
+
+
+    
+    
+    _transports=self:_GetTransportsForAssets(request)
+  
+   
+  
+  elseif false then
   
     -- Transports in stock.
     local _transports,_ntransports,_enough=self:_FilterStock(self.stock, WAREHOUSE.Descriptor.ATTRIBUTE, request.transporttype, request.ntransport)
@@ -3521,7 +3617,70 @@ function WAREHOUSE:_CheckRequestNow(request)
   return okay  
 end
 
----Sorts the queue and checks if the request can be fullfilled.
+---Get (optimized) transport carriers for the given assets to be transported. 
+-- @param #WAREHOUSE self
+-- @param #WAREHOUSE.Pendingitem Chosen request.
+function WAREHOUSE:_GetTransportsForAssets(request)
+
+  -- Get all transports of the requested type in stock.
+  local transports=self:_FilterStock(self.stock, WAREHOUSE.Descriptor.ATTRIBUTE, request.transporttype)
+  
+  local cargoassets=request.assets
+  
+  -- Problems/questions
+  -- 1. Do we have at least one carrier big enough to transport the largest group?
+  --    If not ==> No transport possible since groups cannot be split!
+  --    If yes ==> Tranport possible.
+  -- 2. How many carriers do we need?
+  --    ntransport should be the max number.
+  
+  -- Example 8, 8, 5, 3
+  -- Carriers:
+  -- 2 that can take 8  can be used for 3, 5, 8 
+  -- 1 that can take 6  can be used for 3, 5, -
+  -- 3 that can take 4  can be used for 3, -, -
+  -- 1 that can take 2  can be used for -, -, -
+   
+  -- So the problem becomes:
+  -- How do I minimize the number of "ways" with the constraint of a fixed number of carriers?
+  -- Extreme cases:
+  -- Use just one carrier that can carrier the largest group. I would have to drive n times to get all cargo from A to B.
+  -- 
+   
+  -- The most simple way is to sort the transports in descending order wrt. to their cargo bay size.
+  -- Use largest carriers available until either number of cargo is done in one run or we hit max number of carriers available.
+   
+  -- sort transport carriers w.r.t. cargo bay size.
+  local function sort_transports(a,b)
+    return a.cargobay>b.cargobay
+  end
+  
+  -- sort cargo assets w.r.t. weight in assending order
+  local function sort_cargoassets(a,b)
+    return a.weight>b.weight
+  end
+  
+  table.sort(transports, sort_transports)
+  table.sort(cargoassets, sort_cargoassets)
+
+  -- Very simple! Only take the largest transports that can carrier the largest cargo.
+  local used_transports={}
+  local maxcargoweight=cargoassets[1]
+  for i=1,#transports do
+    local transport=transports[i]  --#WAREHOUSE.Assetitem
+    if transport.cargobay>maxcargoweight and #used_transports<=request.ntransport then
+      table.insert(used_transports, transport)
+    end
+  end
+  
+  for _,_transport in ipairs(used_transports) do
+    local transport=_transport --#WAREHOUSE.Assetitem
+    --env.info("transport used = ", transport.)
+  end
+ 
+end
+
+---Sorts the queue and checks if the request can be fulfilled.
 -- @param #WAREHOUSE self
 -- @return #WAREHOUSE.Queueitem Chosen request.
 function WAREHOUSE:_CheckQueue()

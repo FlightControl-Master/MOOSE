@@ -1010,7 +1010,7 @@ do -- Cargo
           ["TPZ"] = 10,
         }
     
-        local CargoBayWeightLimit = ( Weights[Desc.typeName] or 0 ) * 70
+        local CargoBayWeightLimit = ( Weights[Desc.typeName] or 0 ) * 90
         self.__.CargoBayWeightLimit = CargoBayWeightLimit
       end
     end
