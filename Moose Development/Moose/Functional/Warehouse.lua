@@ -3,14 +3,11 @@
 --
 -- Features:
 --
---    * Holds (virtual) assests such as intrantry groups in stock.
+--    * Holds (virtual) assests in stock.
 --    * Manages requests of assets from other warehouses.
---    * Take care of transportation to other warehouses and its accociated airbases.
+--    * Realistic transportation of assets between warehouses.
 --    * Different means of automatic transportation (planes, helicopters, APCs, selfpropelled).
---
--- # QUICK START GUIDE
--- 
--- **WIP**
+--    * Strategic components such as capturing, defending and destroying warehouses and their associated infrastructure.
 --
 -- ===
 --
@@ -65,7 +62,7 @@
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\WAREHOUSE\Warehouse_Main.JPG)
+-- ![Banner Image](..\Presentations\WAREHOUSE\Warehouse_Main.jpg)
 --
 -- # The Warehouse Concept
 -- 
@@ -107,6 +104,8 @@
 -- 
 -- A MOOSE warehouse must be represented in game by a phyical *static* object. For example, the mission editor already has warehouse as static object available.
 -- This would be a good first choice but any static object will do.
+-- 
+-- ![Banner Image](..\Presentations\WAREHOUSE\Warehouse_Static.png)
 -- 
 -- The positioning of the warehouse static object is very important for a couple of reasons. Firstly, a warehouse needs a good infrastructure so that spawned assets
 -- have a proper road connection or can reach the associated airbase easily.
@@ -156,7 +155,7 @@
 -- 
 --  So for example:
 --  
---       warehouseBatumi:AddRequest(warehouseKobuleti, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.INFANTRY, 5, WAREHOUSE.TransportType.APC, 2, 20)
+--       warehouseBatumi:AddRequest(warehouseKobuleti, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_INFANTRY, 5, WAREHOUSE.TransportType.APC, 2, 20)
 --
 -- Here, warehouse Kobuleti requests 5 infantry groups from warehouse Batumi. These "cargo" assets should be transported from Batumi to Kobuleti by 2 APCS.
 -- Note that the warehouse at Batumi needs to have at least five infantry groups and two APC groups in their stock if the request can be processed.
@@ -195,7 +194,7 @@
 -- Assets in the warehouse' stock can used for user defined tasks realtively easily. They can be spawned into the game by a "self request", i.e. the warehouse
 -- requests the assets from itself:
 -- 
---      warehouseBatumi:AddRequest(warehouseBatumi, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.INFANTRY, 5)
+--      warehouseBatumi:AddRequest(warehouseBatumi, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_INFANTRY, 5)
 --      
 -- This would simply spawn five infantry groups in the spawn zone of the Batumi warehouse if/when they are available.
 -- 
@@ -224,6 +223,62 @@
 -- for further tasking. Here, the groups are only smoked but, of course, you can use them for whatever task you fancy.
 -- 
 -- Note that airborne groups are spawned in uncontrolled state and need to be activated first before they can start their assigned mission.
+-- 
+-- # Infrastructure
+-- 
+-- A good infrastructure is important for a warehouse to be efficient. Therefore, the location of a warehouse should be chosen with care.
+-- This can also help to avoid many DCS related issues such as units getting stuck in buildings, blocking taxi ways etc.
+-- 
+-- ## Spawn Zone
+-- 
+-- By default, the zone were ground assets are spawned is a circular zone around the physical location of the warehouse with a radius of 200 meters. However, the location of the
+-- spawn zone can be set by the @{#WAREHOUSE.SetSpawnZone}(*zone*) functions. It is advisable to choose a zone which is clear of obstacles.
+-- 
+-- The parameter *zone* is a MOOSE @{Core.Zone#ZONE} object. So one can, e.g., use trigger zones defined in the mission editor. If a cicular zone is not desired, one
+-- can use a polygon zone (see @{Core.Zone#ZONE_POLYGON}).
+-- 
+-- ## Road Connections
+-- 
+-- Ground assets will use a road connection to travel from one warehouse to another. Therefore, a proper road connection is necessary.
+-- 
+-- By default, the closest point on road to the center of the spawn zone is choses as road connection automatically. But only, if distance between the spawn zone
+-- and the road connection is less than 3 km.
+-- 
+-- The user can set the road connection manually with the @{#WAREHOUSE.SetRoadConnection} function.
+-- 
+-- ## Rail Connections
+-- 
+-- A rail connection is automatically defined as the closest point on a railway measured from the center of the spawn zone. But only, if the distance is less than 3 km.
+-- 
+-- The mission designer can manually specify a rail connection with the @{#WAREHOUSE.SetRailConnection} function.
+-- 
+-- **NOTE** however, that trains in DCS are currently not implemented in a way so that they can be used.
+-- 
+-- ## Air Connections
+-- 
+-- In order to use airborne assets, a warehouse needs to have an associated airbase. This can be an airdrome or a FARP/HELOPAD.
+-- 
+-- If there is an airbase within 3 km range of the warehouse it is automatically set as the associated airbase. A user can set an airbase manually
+-- with the @{#WAREHOUSE.SetAirbase} function. Keep in mind, that sometimes, ground units need to walk/drive from the spawn zone to the airport
+-- to get to their transport carriers.
+-- 
+-- ## Naval Connections
+-- 
+-- Natively, DCS does not have the concept of a port/habour or shipping lanes. So in order to have a meaningful transfer of naval units between warehouses, these have to be
+-- defined by the mission designer.
+-- 
+-- ### Defining a Port
+-- 
+-- A port in this context is the zone where all naval assets are spawned. This zone can be defined with the function @{#WAREHOUSE.SetPortZone}(*zone*), where the parameter
+-- *zone* is a MOOSE zone. So again, this can be create from a trigger zone defined in the mission editor or if a general shape is desired by a @{Core.Zone#ZONE_POLYGON}.
+-- 
+-- ### Defining Shipping Lanes
+-- 
+-- A shipping lane between to warehouses can be defined by the @{#WAREHOUSE.AddShippingLane}(*remotewarehouse*, *group*) function. The first parameter *remotewarehouse*
+-- is the warehouse which should be connected to the present warehouse.
+-- 
+-- The parameter *group* should be a late activated group defined in the mission editor. The waypoints of this group are used as waypoints of the shipping lane. 
+-- 
 -- 
 -- # Strategic Considerations
 -- 
@@ -311,11 +366,13 @@ WAREHOUSE = {
 -- @field #string unittype Type of the first unit of the group as obtained by the Object.getTypeName() DCS API function.
 -- @field #number nunits Number of units in the group.
 -- @field #number range Range of the unit in meters.
+-- @field #number speedmax Maximum speed in km/h the group can do.
 -- @field #number size Maximum size in length and with of the asset in meters.
--- @field #number speedmax Maximum speed in km/h the unit can do.
+-- @field #number weight The weight of the whole asset group in kilo gramms.
 -- @field DCS#Object.Desc DCSdesc All DCS descriptors.
 -- @field #WAREHOUSE.Attribute attribute Generalized attribute of the group.
--- @field #boolean istransport If true, the asset is able to transport troops.
+-- @field #boolean transporter If true, the asset is able to transport troops.
+-- @field #number cargobay Weight in kg that fits in the cargo bay of one asset unit.
 
 --- Item of the warehouse queue table.
 -- @type WAREHOUSE.Queueitem
@@ -431,15 +488,17 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.2.8"
+WAREHOUSE.version="0.2.8w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Take cargo weight into consideration, when selecting 
 -- TODO: Add transport units from dispatchers back to warehouse stock once they completed their mission.
--- TODO: Add harbours and ports.
--- TODO: Add shipping lanes between warehouses.
+-- DONE: Add ports for spawning naval assets.
+-- TODO: Added habours as interface for transport to from warehouses? 
+-- DONE: Add shipping lanes between warehouses.
 -- TODO: Set ROE for spawned groups.
 -- TODO: Add possibility to add active groups. Need to create a pseudo template before destroy.
 -- TODO: Write documentation.
@@ -450,7 +509,7 @@ WAREHOUSE.version="0.2.8"
 -- TODO: Add general message function for sending to coaliton or debug.
 -- TODO: Fine tune event handlers.
 -- TODO: Add save/load capability of warehouse <==> percistance after mission restart.
--- TODO: Improve generalized attributes.
+-- DONE: Improve generalized attributes.
 -- TODO: Add a time stamp when an asset is added to the stock and for requests
 -- DONE: If warehouse is destoyed, all asssets are gone.
 -- DONE: Add event handlers.
@@ -1315,6 +1374,20 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute)
   local SpeedMax=group:GetSpeedMax()
   local RangeMin=group:GetRange()
   local smax,sx,sy,sz=_GetObjectSize(DCSdesc)
+  
+  -- Get weight in kg
+  local weight=0
+  local DCSunits=DCSgroup:getUnits()
+  for _,unit in pairs(DCSunits) do
+    local desc=unit:getDesc()
+    local unitweight=desc.emptyWeight
+    weight=weight+unitweight
+  end
+  
+  for _,_unit in pairs(group:GetUnits()) do
+    local unit=_unit --Wrapper.Unit#UNIT
+    unit:GetCargoBayFreeWeight()
+  end
 
   -- Set/get the generalized attribute.
   local attribute=forceattribute or self:_GetAttribute(templategroupname)
@@ -1335,12 +1408,14 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute)
     asset.template=UTILS.DeepCopy(_DATABASE.Templates.Groups[templategroupname].Template)
     asset.category=DCScategory
     asset.unittype=DCStype
-    asset.nunits=#asset.template.units
-    asset.attribute=attribute
+    asset.nunits=#asset.template.units    
     asset.range=RangeMin
     asset.speedmax=SpeedMax
-    asset.size=smax
+    asset.size=smax    
+    asset.weight=weight
     asset.DCSdesc=DCSdesc
+    asset.attribute=attribute
+    asset.transporter=false  -- not used yet
     
     if i==1 then
       self:_AssetItemInfo(asset)
@@ -1367,9 +1442,11 @@ function WAREHOUSE:_AssetItemInfo(asset)
   text=text..string.format("Attribute     = %s\n", asset.attribute)
   text=text..string.format("Category      = %d\n", asset.category)
   text=text..string.format("Units #       = %d\n", asset.nunits)
-  text=text..string.format("Size  max     = %5.2f m\n", asset.size)
   text=text..string.format("Speed max     = %5.2f km/h\n", asset.speedmax)
   text=text..string.format("Range max     = %5.2f km\n", asset.range/1000)
+  text=text..string.format("Size  max     = %5.2f m\n", asset.size)
+  text=text..string.format("Weight total  = %5.2f kg\n", asset.weight)
+  text=text..string.format("Cargo bay     = %5.2f kg\n", asset.cargobay)
   self:E(self.wid..text)
   self:E({DCSdesc=asset.DCSdesc})
   self:E({Template=asset.template})
@@ -1701,7 +1778,7 @@ function WAREHOUSE:onbeforeRequest(From, Event, To, Request)
 
     -- Check if destination is in range.    
     if asset.range<distance then
-      local text=string.format("Request denied! Destination %s is out of range for asset %s", Request.airbase:GetName(), asset.templatename)
+      local text=string.format("Request denied! Destination %s is out of range for asset %s.", Request.airbase:GetName(), asset.templatename)
       MESSAGE:New(text, 10):ToCoalitionIf(self.coalition, self.Report or self.Debug)
       self:E(self.wid..text)
       
@@ -3129,13 +3206,21 @@ function WAREHOUSE:_CheckRequestConsistancy(queue)
       valid=false    
     end
     
-     -- Delete invalid requests.
-    for _,_request in pairs(invalid) do
-      self:E(self.wid..string.format("Deleting invalid request id=%d.",_request.uid))
-      self:_DeleteQueueItem(_request, self.queue)
-    end
-    
+    -- Add request as unvalid and delete it later.
+    if valid==false then
+      self:E(self.wid..string.format("Got invalid request id=%d.", request.uid))
+      table.insert(invalid, request) 
+    else
+      self:T3(self.wid..string.format("Got valid request id=%d.", request.uid))
+    end    
   end
+
+  -- Delete invalid requests.
+  for _,_request in pairs(invalid) do
+    self:E(self.wid..string.format("Deleting invalid request id=%d.",_request.uid))
+    self:_DeleteQueueItem(_request, self.queue)
+  end
+    
 end
 
 --- Check if a request is valid in general. If not, it will be removed from the queue.
@@ -3149,6 +3234,7 @@ function WAREHOUSE:_CheckRequestValid(request)
   -- Check if number of requested assets is in stock.
   local _assets,_nassets,_enough=self:_FilterStock(self.stock, request.assetdesc, request.assetdescval, request.nasset)
    
+  -- No assets in stock? Checks cannot be performed.
   if #_assets==0 then
     return true
   end
@@ -3157,15 +3243,14 @@ function WAREHOUSE:_CheckRequestValid(request)
   local asset=_assets[1] --#WAREHOUSE.Assetitem
   
   -- Asset is air, ground etc.
-  local asset_air=false
-  local asset_plane=asset.category==Group.Category.AIRPLANE
-  local asset_helo=asset.category==Group.Category.HELICOPTER
-  local asset_ground=asset.category==Group.Category.GROUND
-  local asset_train=asset.category==Group.Category.TRAIN
-  local asset_naval=asset.category==Group.Category.SHIP
+  local asset_plane  = asset.category==Group.Category.AIRPLANE
+  local asset_helo   = asset.category==Group.Category.HELICOPTER
+  local asset_ground = asset.category==Group.Category.GROUND
+  local asset_train  = asset.category==Group.Category.TRAIN
+  local asset_naval  = asset.category==Group.Category.SHIP
 
   -- General air request.
-  asset_air=asset_helo or asset_plane
+  local asset_air=asset_helo or asset_plane
 
   -- Assume everything is okay.
   local valid=true
@@ -3199,10 +3284,35 @@ function WAREHOUSE:_CheckRequestValid(request)
         
       end
       
-      -- All aircraft need an airbase of any type as depature or destination.
+      -- All aircraft need an airbase of any type at depature and destination.
       if self.airbase==nil or request.airbase==nil then
+      
         self:E("ERROR: Incorrect request. Either warehouse or requesting warehouse does not have any kind of airbase!")
-        valid=false     
+        valid=false
+        
+      else
+      
+        -- Check if enough parking spots are available
+        
+        -- Get necessary terminal type.
+        local termtype=self:_GetTerminal(asset.attribute)
+        
+        -- Get number of parking spots.
+        local np_departure=self.airbase:GetParkingSpotsNumber(termtype)
+        local np_destination=request.airbase:GetParkingSpotsNumber(termtype)
+        
+        -- Not enough parking at sending warehouse.
+        if np_departure < request.nasset then
+          self:E("ERROR: Incorrect request. No enough parking spots of terminal type at warehouse.")
+          valid=false    
+        end
+
+        -- Not enough parking at requesting warehouse.
+        if np_destination < request.nasset then
+          self:E("ERROR: Incorrect request. No enough parking spots of terminal type at requesting warehouse.")
+          valid=false    
+        end        
+        
       end
       
     elseif asset_ground then
@@ -3226,18 +3336,21 @@ function WAREHOUSE:_CheckRequestValid(request)
       else
       
         if self.warehouse:GetName()~=request.warehouse.warehouse:GetName() then
+        
           -- Check if there is a valid path on road.
           local hasroad=self:HasConnectionRoad(request.warehouse)
           if not hasroad then
             self:E("ERROR: Incorrect request. No valid path on road for ground assets!")
             valid=false
           end
+          
         end
         
       end
            
     elseif asset_naval then
   
+        -- Check shipping lane.
         local shippinglane=self:HasConnectionNaval(request.warehouse)
         
         if not shippinglane then
@@ -3309,7 +3422,7 @@ function WAREHOUSE:_CheckRequestValid(request)
   
   -- Add request as unvalid and delete it later.
   if valid==false then
-    self:E(self.wid..string.format("Got invalid request id=%d.", request.uid)) 
+    self:E(self.wid..string.format("Got invalid request id=%d.", request.uid))
   else
     self:T3(self.wid..string.format("Got valid request id=%d.", request.uid))
   end
@@ -3347,7 +3460,7 @@ function WAREHOUSE:_CheckRequestNow(request)
     okay=false
   end
 
-  -- Check if at least one transport asset is available.
+  -- Check if at least one (cargo) asset is available.
   if _nassets>0 then
 
     -- Get the attibute of the requested asset.
@@ -3859,7 +3972,7 @@ function WAREHOUSE:_GetAttribute(groupname)
 
   local group=GROUP:FindByName(groupname)
 
-  local attribute=WAREHOUSE.Attribute.OTHER --#WAREHOUSE.Attribute
+  local attribute=WAREHOUSE.Attribute.UNKNOWN --#WAREHOUSE.Attribute
 
   if group then
 

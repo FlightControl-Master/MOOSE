@@ -941,7 +941,8 @@ do -- Cargo
 --    end
 --    return self.__.CargoBayVolumeLimit - CargoVolume
 --  end
---  
+-- 
+ 
   --- Get Cargo Bay Free Weight in kg.
   -- @param #POSITIONABLE self
   -- @return #number CargoBayFreeWeight
