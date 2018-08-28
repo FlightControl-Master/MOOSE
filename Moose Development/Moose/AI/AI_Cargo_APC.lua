@@ -423,7 +423,7 @@ function AI_CARGO_APC:onbeforeLoad( APC, From, Event, To )
       for _, Cargo in pairs( self.CargoSet:GetSet() ) do
         local Cargo = Cargo -- Cargo.Cargo#CARGO
         self:F( { IsUnLoaded = Cargo:IsUnLoaded(), IsDeployed = Cargo:IsDeployed(), Cargo:GetName(), APC:GetName() } )
-        if Cargo:IsUnLoaded() and not Cargo:IsDeployed() then
+        if Cargo:IsUnLoaded() then -- and not Cargo:IsDeployed() then
           if Cargo:IsInLoadRadius( APCUnit:GetCoordinate() ) then
             self:F( { "In radius", APCUnit:GetName() } )
             
@@ -551,7 +551,6 @@ function AI_CARGO_APC:onafterUnload( APC, From, Event, To, Deployed )
       for _, Cargo in pairs( APCUnit:GetCargo() ) do
         if Cargo:IsLoaded() then
           Cargo:UnBoard()
-          Cargo:SetDeployed( true )
           self:__Unboard( 10, Cargo, Deployed )
         end 
       end
@@ -580,7 +579,6 @@ function AI_CARGO_APC:onafterUnboard( APC, From, Event, To, Cargo, Deployed )
         for _, Cargo in pairs( APCUnit:GetCargo() ) do
           if Cargo:IsLoaded() then
             Cargo:UnBoard()
-            Cargo:SetDeployed( true )
             self:__Unboard( 10, Cargo, Deployed )
             return
           end
@@ -605,6 +603,7 @@ function AI_CARGO_APC:onbeforeUnloaded( APC, From, Event, To, Cargo, Deployed )
   self:F( { APC, From, Event, To, Cargo:GetName(), Deployed = Deployed } )
 
   local AllUnloaded = true
+  Cargo:SetDeployed( true )
 
   --Cargo:Regroup()
 

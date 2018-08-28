@@ -239,7 +239,7 @@ do -- CARGO_UNIT
     if not self.CargoInAir then
       -- If NearRadius is given, then use the given NearRadius, otherwise calculate the NearRadius 
       -- based upon the Carrier bounding radius, which is calculated from the bounding rectangle on the Y axis.
-      local NearRadius = CargoCarrier:GetBoundingRadius( NearRadius )
+      local NearRadius = CargoCarrier:GetBoundingRadius( NearRadius ) + 5
       if self:IsNear( CargoCarrier:GetPointVec2(), NearRadius ) then
         self:Load( CargoCarrier, NearRadius, ... )
       else
