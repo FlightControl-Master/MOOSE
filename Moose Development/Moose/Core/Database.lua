@@ -355,7 +355,7 @@ do -- cargo
     return CargoFound
   end
   
-  --- Checks if the Template name has a ~CARGO tag.
+  --- Checks if the Template name has a #CARGO tag.
   -- If yes, the group is a cargo.
   -- @param #DATABASE self
   -- @param #string TemplateName
@@ -364,7 +364,7 @@ do -- cargo
 
     TemplateName = env.getValueDictByKey( TemplateName )
   
-    local Cargo = TemplateName:match( "~(CARGO)" )
+    local Cargo = TemplateName:match( "#(CARGO)" )
 
     return Cargo and Cargo == "CARGO"    
   end
@@ -379,10 +379,10 @@ do -- cargo
     for CargoGroupName, CargoGroup in pairs( Groups ) do
       self:I( { Cargo = CargoGroupName } )
       if self:IsCargo( CargoGroupName ) then
-        local CargoInfo = CargoGroupName:match("~CARGO(.*)")
+        local CargoInfo = CargoGroupName:match("#CARGO(.*)")
         local CargoParam = CargoInfo and CargoInfo:match( "%((.*)%)")
-        local CargoName1 = CargoGroupName:match("(.*)~CARGO%(.*%)")
-        local CargoName2 = CargoGroupName:match(".*~CARGO%(.*%)(.*)")
+        local CargoName1 = CargoGroupName:match("(.*)#CARGO%(.*%)")
+        local CargoName2 = CargoGroupName:match(".*#CARGO%(.*%)(.*)")
         local CargoName = CargoName1 .. ( CargoName2 or "" )
         local Type = CargoParam and CargoParam:match( "T=([%a%d ]+),?")
         local Name = CargoParam and CargoParam:match( "N=([%a%d]+),?") or CargoName
@@ -396,9 +396,9 @@ do -- cargo
     
     for CargoStaticName, CargoStatic in pairs( self.STATICS ) do
       if self:IsCargo( CargoStaticName ) then
-        local CargoInfo = CargoStaticName:match("~CARGO(.*)")
+        local CargoInfo = CargoStaticName:match("#CARGO(.*)")
         local CargoParam = CargoInfo and CargoInfo:match( "%((.*)%)")
-        local CargoName = CargoStaticName:match("(.*)~CARGO")
+        local CargoName = CargoStaticName:match("(.*)#CARGO")
         local Type = CargoParam and CargoParam:match( "T=([%a%d ]+),?")
         local Category = CargoParam and CargoParam:match( "C=([%a%d ]+),?")
         local Name = CargoParam and CargoParam:match( "N=([%a%d]+),?") or CargoName

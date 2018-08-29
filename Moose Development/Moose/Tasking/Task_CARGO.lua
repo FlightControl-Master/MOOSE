@@ -667,9 +667,12 @@ do -- TASK_CARGO
                             Cargo:Report( "Load at " .. Cargo:GetCoordinate():ToString( TaskUnit:GetGroup() ) .. " within " .. Cargo.NearRadius .. ".", "reporting", TaskUnit:GetGroup() )
                           end
                         else
+                          --local Cargo = Cargo -- Cargo.CargoSlingload#CARGO_SLINGLOAD
                           if Cargo:CanSlingload() == true then
                             if Cargo:IsInLoadRadius( TaskUnit:GetPointVec2() ) then
-                              Cargo:Report( "Ready for slingloading.", "slingload", TaskUnit:GetGroup() )
+                              Cargo:Report( "Ready for sling loading.", "slingload", TaskUnit:GetGroup() )
+                              local SlingloadMenu = MENU_GROUP:New( TaskGroup, "Slingload cargo", MenuControl ):SetTime( MenuTime ):SetTag( "Cargo" )
+                              MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), Cargo.Name, SlingloadMenu, self.MenuLoadCargo, self, Cargo ):SetTime(MenuTime):SetTag("Cargo"):SetRemoveParent()
                             else
                               Cargo:Report( "Slingload at " .. Cargo:GetCoordinate():ToString( TaskUnit:GetGroup() ) .. ".", "reporting", TaskUnit:GetGroup() )
                             end
@@ -683,8 +686,29 @@ do -- TASK_CARGO
                 else
                   if not Cargo:IsDeployed() == true then
                     local RouteToPickupMenu = MENU_GROUP:New( TaskGroup, "Route to pickup cargo", MenuControl ):SetTime( MenuTime ):SetTag( "Cargo" )
-                    MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), Cargo.Name, RouteToPickupMenu, self.MenuRouteToPickup, self, Cargo ):SetTime(MenuTime):SetTag("Cargo"):SetRemoveParent()
+                    --MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), Cargo.Name, RouteToPickupMenu, self.MenuRouteToPickup, self, Cargo ):SetTime(MenuTime):SetTag("Cargo"):SetRemoveParent()
                     Cargo:ReportResetAll( TaskUnit:GetGroup() )
+                    if Cargo:CanBoard() == true then
+                      if not Cargo:IsInLoadRadius( TaskUnit:GetPointVec2() ) then
+                        local BoardMenu = MENU_GROUP:New( TaskGroup, "Board cargo", RouteToPickupMenu ):SetTime( MenuTime ):SetTag( "Cargo" )
+                        MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), Cargo.Name, BoardMenu, self.MenuRouteToPickup, self, Cargo ):SetTime(MenuTime):SetTag("Cargo"):SetRemoveParent()
+                      end
+                    else
+                      if Cargo:CanLoad() == true then
+                        if not Cargo:IsInLoadRadius( TaskUnit:GetPointVec2() ) then
+                          local LoadMenu = MENU_GROUP:New( TaskGroup, "Load cargo", RouteToPickupMenu ):SetTime( MenuTime ):SetTag( "Cargo" )
+                          MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), Cargo.Name, LoadMenu, self.MenuRouteToPickup, self, Cargo ):SetTime(MenuTime):SetTag("Cargo"):SetRemoveParent()
+                        end
+                      else
+                        --local Cargo = Cargo -- Cargo.CargoSlingload#CARGO_SLINGLOAD
+                        if Cargo:CanSlingload() == true then
+                          if not Cargo:IsInLoadRadius( TaskUnit:GetPointVec2() ) then
+                            local SlingloadMenu = MENU_GROUP:New( TaskGroup, "Slingload cargo", RouteToPickupMenu ):SetTime( MenuTime ):SetTag( "Cargo" )
+                            MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), Cargo.Name, SlingloadMenu, self.MenuRouteToPickup, self, Cargo ):SetTime(MenuTime):SetTag("Cargo"):SetRemoveParent()
+                          end
+                        end
+                      end
+                    end
                   end
                 end
               end
