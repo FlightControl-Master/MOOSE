@@ -488,7 +488,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.2.9"
+WAREHOUSE.version="0.2.9w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -3562,21 +3562,19 @@ function WAREHOUSE:_CheckRequestNow(request)
       end
     end
     
+    -- Set chosen assets.
     request.assets=_assets
-    --request.
+    request.cargoattribute=_assetattribute
+    request.cargocategory=_assetcategory
     
   end  
   
   -- Check that a transport units.
   if request.transporttype ~= WAREHOUSE.TransportType.SELFPROPELLED then
 
-
     
+    local _transports=self:_GetTransportsForAssets(request)
     
-    _transports=self:_GetTransportsForAssets(request)
-  
-   
-  
   elseif false then
   
     -- Transports in stock.
