@@ -159,6 +159,12 @@ do -- CARGO_CRATE
     return false
   end
 
+  --- Check if the cargo can be sling loaded.
+  -- @param #CARGO_CRATE self
+  function CARGO_CRATE:CanSlingload()
+    return false
+  end
+
   --- Check if Cargo Crate is in the radius for the Cargo to be reported.
   -- @param #CARGO_CRATE self
   -- @param Core.Point#COORDINATE Coordinate
