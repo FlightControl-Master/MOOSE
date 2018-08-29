@@ -420,7 +420,8 @@ function AI_CARGO_APC:onbeforeLoad( APC, From, Event, To )
     self.APC_Cargo = {}
     for _, APCUnit in pairs( APC:GetUnits() ) do
       local APCUnit = APCUnit -- Wrapper.Unit#UNIT
-      for _, Cargo in pairs( self.CargoSet:GetSet() ) do
+      --for _, Cargo in pairs( self.CargoSet:GetSet() ) do
+      for _, Cargo in UTILS.spairs( self.CargoSet:GetSet(), function( t, a, b ) return t[a]:GetWeight() > t[b]:GetWeight() end ) do
         local Cargo = Cargo -- Cargo.Cargo#CARGO
         self:F( { IsUnLoaded = Cargo:IsUnLoaded(), IsDeployed = Cargo:IsDeployed(), Cargo:GetName(), APC:GetName() } )
         if Cargo:IsUnLoaded() then -- and not Cargo:IsDeployed() then
@@ -472,7 +473,7 @@ function AI_CARGO_APC:onafterBoard( APC, From, Event, To, Cargo )
     else
       for _, APCUnit in pairs( APC:GetUnits() ) do
         local APCUnit = APCUnit -- Wrapper.Unit#UNIT
-        for _, Cargo in pairs( self.CargoSet:GetSet() ) do
+        for _, Cargo in UTILS.spairs( self.CargoSet:GetSet(), function( t, a, b ) return t[a]:GetWeight() > t[b]:GetWeight() end ) do
           local Cargo = Cargo -- Cargo.Cargo#CARGO
           if Cargo:IsUnLoaded() then
             if Cargo:IsInLoadRadius( APCUnit:GetCoordinate() ) then
