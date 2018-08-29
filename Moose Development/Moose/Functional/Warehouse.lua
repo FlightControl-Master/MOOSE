@@ -1,5 +1,8 @@
 --- **Functional** - (R2.5) - Simulation of logistics.
---
+-- 
+-- The MOOSE warehouse concept simulates the organization and implementation of complex operations regarding the flow of assets between the point of origin and the point of consumption 
+-- in order to meet requirements of a potential conflict. In particular, this class is concerned with maintaining army supply lines while disrupting those of the enemy, since an armed 
+-- force without resources and transportation is defenseless.
 --
 -- Features:
 --
@@ -8,6 +11,7 @@
 --    * Realistic transportation of assets between warehouses.
 --    * Different means of automatic transportation (planes, helicopters, APCs, selfpropelled).
 --    * Strategic components such as capturing, defending and destroying warehouses and their associated infrastructure.
+--    * Can be coupled to other MOOSE classes.
 --
 -- ===
 --
@@ -46,7 +50,7 @@
 -- @field #table shippinglanes Table holding the user defined shipping between warehouses. 
 -- @extends Core.Fsm#FSM
 
---- Manages ground assets of an airbase and offers the possibility to transport them to another airbase or warehouse.
+--- Have your assets at the right place at the right time - or not!
 --
 -- ===
 --
@@ -381,24 +385,27 @@ WAREHOUSE = {
 -- @field #WAREHOUSE warehouse Requesting warehouse.
 -- @field Wrapper.Airbase#AIRBASE airbase Requesting airbase or airbase beloning to requesting warehouse.
 -- @field DCS#Airbase.Category category Category of the requesting airbase, i.e. airdrome, helipad/farp or ship.
--- @field #WAREHOUSE.Descriptor assetdesc Descriptor of the requested asset.
--- @field assetdescval Value of the asset descriptor. Type depends on descriptor.
+-- @field #WAREHOUSE.Descriptor assetdesc Descriptor of the requested asset. Enumerator of type @{#WAREHOUSE.Descriptor}.
+-- @field assetdescval Value of the asset descriptor. Type depends on "assetdesc" descriptor.
 -- @field #number nasset Number of asset groups requested.
 -- @field #WAREHOUSE.TransportType transporttype Transport unit type.
--- @field #number ntransport Number of transport units requested.
+-- @field #number ntransport Max. number of transport units requested.
+-- @field #boolean toself Self request, i.e. warehouse requests assets from itself.
+-- @field #table assets Table of self propelled (or cargo) and transport assets. Each element of the table is a @{#WAREHOUSE.Assetitem} and can be accessed by their asset ID.
+-- @field #table cargoassets Table of cargo (or self propelled) assets. Each element of the table is a @{#WAREHOUSE.Assetitem}.
+-- @field #number cargoattribute Attribute of cargo assets of type @{#WAREHOUSE.Attribute}.
+-- @field #number cargocategory Category of cargo assets of type @{#WAREHOUSE.Category}.
+-- @field #table transportassets Table of transport carrier assets. Each element of the table is a @{#WAREHOUSE.Assetitem}.
+-- @field #number transportattribute Attribute of transport assets of type @{#WAREHOUSE.Attribute}.
+-- @field #number transportcategory Category of transport assets of type @{#WAREHOUSE.Category}.
 
 --- Item of the warehouse pending queue table.
 -- @type WAREHOUSE.Pendingitem
 -- @extends #WAREHOUSE.Queueitem
--- @field #table assets Table of assets - cargo or transport. Each element of the table is a @{#WAREHOUSE.Assetitem}.
 -- @field Core.Set#SET_GROUP cargogroupset Set of cargo groups do be delivered.
 -- @field #number ndelivered Number of groups delivered to destination.
--- @field #number cargoattribute Attribute of cargo assets of type @{#WAREHOUSE.Attribute}.
--- @field #number cargocategory Category of cargo assets of type @{#WAREHOUSE.Category}.
 -- @field Core.Set#SET_GROUP transportgroupset Set of cargo transport groups.
--- @field #number transportattribute Attribute of transport assets of type @{#WAREHOUSE.Attribute}.
--- @field #number transportcategory Category of transport assets of type @{#WAREHOUSE.Category}.
--- @field #number ntransporthome Number of transports back home. transportattribute
+-- @field #number ntransporthome Number of transports back home.
 
 --- Descriptors enumerator describing the type of the asset.
 -- @type WAREHOUSE.Descriptor
@@ -488,13 +495,15 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.2.9w"
+WAREHOUSE.version="0.3.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Take cargo weight into consideration, when selecting 
+-- TODO: Warehouse re-capturing not working?!
+-- TODO: Naval assets dont go back into stock once arrived.
+-- TODO: Take cargo weight into consideration, when selecting transport assets.
 -- TODO: Add transport units from dispatchers back to warehouse stock once they completed their mission.
 -- DONE: Add ports for spawning naval assets.
 -- TODO: Added habours as interface for transport to from warehouses? 
@@ -1846,8 +1855,8 @@ function WAREHOUSE:onbeforeRequest(From, Event, To, Request)
   -- Distance from warehouse to requesting warehouse.
   local distance=self.coordinate:Get2DDistance(Request.warehouse.coordinate)
 
-  -- Filter the requested assets.
-  local _assets,_nasset,_enough=self:_FilterStock(self.stock, Request.assetdesc, Request.assetdescval, Request.nasset)
+  -- Shortcut to cargoassets.
+  local _assets=Request.cargoassets
   
   if Request.nasset==0 then
     local text=string.format("Request denied! Zero assets were requested.")
@@ -1875,12 +1884,14 @@ function WAREHOUSE:onbeforeRequest(From, Event, To, Request)
     
   end
 
-  -- Asset is not in stock ==> request denied.
-  if not _enough then
-    local text=string.format("Request denied! Not enough assets currently in stock. Requested %s < %d in stock.", tostring(Request.nasset), _nasset)
-    MESSAGE:New(text, 10):ToCoalitionIf(self.coalition, self.Report or self.Debug)
-    self:E(self.wid..text)
-    return false
+  -- Init asset table.
+  Request.assets={}
+  
+  -- Init self request.
+  if self.warehouse:GetName()==Request.warehouse.warehouse:GetName() then
+    Request.toself=true
+  else
+    Request.toself=false
   end
 
   return true
@@ -1901,33 +1912,31 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
  -- Pending request. Add cargo groups to request.
   local Pending=Request  --#WAREHOUSE.Pendingitem
-  Pending.assets={}
   
   -- Spawn assets of this request.
-  local _spawngroups,_cargoassets=self:_SpawnAssetRequest(Pending) --Core.Set#SET_GROUP
+  local _spawngroups=self:_SpawnAssetRequest(Pending) --Core.Set#SET_GROUP
   
   -- Check if any group was spawned. If not, delete the request.
   if _spawngroups:Count()==0 then
-    -- Delete request from queue.
-    self:_DeleteQueueItem(Request, self.queue)
     self:E(self.wid..string.format("ERROR: Groups or request %d could not be spawned. Request is rejected and deleted from queue!", Request.uid))
+    -- Delete request from queue.
+    self:_DeleteQueueItem(Request, self.queue)    
     return
   end
   
   -- General type and category.
-  local _cargotype=_cargoassets[1].attribute    --#WAREHOUSE.Attribute
-  local _cargocategory=_cargoassets[1].category --DCS#Group.Category
+  local _cargotype=Request.cargoattribute    --#WAREHOUSE.Attribute
+  local _cargocategory=Request.cargocategory --DCS#Group.Category
    
+  -- Add groups to pending item.
   Pending.cargogroupset=_spawngroups
-  Pending.cargoattribute=_cargotype
-  Pending.cargocategory=_cargocategory
 
   ------------------------------------------------------------------------------------------------------------------------------------
   -- Self request: assets are spawned at warehouse but not transported anywhere.
   ------------------------------------------------------------------------------------------------------------------------------------  
   
   -- Self request! Assets are only spawned but not routed or transported anywhere.  
-  if self.warehouse:GetName()==Request.warehouse.warehouse:GetName() then
+  if Request.toself then
     self:E(self.wid..string.format("Selfrequest! Current status %s", self:GetState()))
     
     -- Add request to pending queue.
@@ -2011,7 +2020,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   
   --TODO: make nearradius depended on transport type and asset type.
   local _loadradius=5000
-  local _nearradius=35
+  local _nearradius=nil
   
   if Request.transporttype==WAREHOUSE.TransportType.AIRPLANE then
     _loadradius=5000
@@ -2048,12 +2057,12 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   -- Cargo dispatcher.
   local CargoTransport --AI.AI_Cargo_Dispatcher#AI_CARGO_DISPATCHER
 
-  -- Filter the requested transport assets.
-  local _assetstock=self:_FilterStock(self.stock, WAREHOUSE.Descriptor.ATTRIBUTE, Request.transporttype, Request.ntransport)
+  -- Shortcut to transport assets.  
+  local _assetstock=Request.transportassets
   
   -- General type and category.
-  local _transporttype=_assetstock[1].attribute    --#WAREHOUSE.Attribute
-  local _transportcategory=_assetstock[1].category --DCS#Group.Category
+  local _transporttype=Request.transportattribute
+  local _transportcategory=Request.transportcategory
 
   -- Now we try to find all parking spots for all cargo groups in advance. Due to the for loop, the parking spots do not get updated while spawning.
   local Parking={}
@@ -2251,8 +2260,6 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     
   -- Add cargo groups to request.
   Pending.transportgroupset=TransportSet
-  Pending.transportattribute=_transporttype
-  Pending.transportcategory=_transportcategory
 
   -- Add request to pending queue.
   table.insert(self.pending, Pending)
@@ -2267,34 +2274,26 @@ end
 -- @param #WAREHOUSE self
 -- @param #WAREHOUSE.Queueitem Request Information table of the request.
 -- @return Core.Set#SET_GROUP Set of groups that were spawned.
--- @return #table List of spawned assets.
 function WAREHOUSE:_SpawnAssetRequest(Request)
   self:E({requestUID=Request.uid})
 
-  -- Filter the requested cargo assets.
-  local _assetstock,_nasset,_enough=self:_FilterStock(self.stock, Request.assetdesc, Request.assetdescval, Request.nasset)
-  
-  self:E({num_assetstoc=#_assetstock, nasset=_nasset, enough=_enough})
-  
-  -- No assets in stock :(
-  if not _enough then
-    return nil,nil,nil
-  end
+  -- Shortcut to cargo assets.  
+  local _assetstock=Request.cargoassets
 
   -- General type and category.
-  local _cargotype=_assetstock[1].attribute    --#WAREHOUSE.Attribute
-  local _cargocategory=_assetstock[1].category --DCS#Group.Category
+  local _cargotype=Request.cargoattribute    --#WAREHOUSE.Attribute
+  local _cargocategory=Request.cargocategory --DCS#Group.Category
   
   -- Now we try to find all parking spots for all cargo groups in advance. Due to the for loop, the parking spots do not get updated while spawning.
   local Parking={}
   if  _cargocategory==Group.Category.AIRPLANE or _cargocategory==Group.Category.HELICOPTER then
-    Parking=self:_FindParkingForAssets(self.airbase,_assetstock) 
+    Parking=self:_FindParkingForAssets(self.airbase,_assetstock)
   end
   
   -- Spawn aircraft in uncontrolled state if request comes from the same warehouse.
   local UnControlled=false
   local AIOnOff=true
-  if self.warehouse:GetName()==Request.warehouse.warehouse:GetName() then
+  if Request.toself then
     UnControlled=true
     AIOnOff=false
   end
@@ -2363,8 +2362,11 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
     Request.assets[asset.uid]=asset
     self:_DeleteStockItem(asset)
   end
+  
+  -- Overwrite the assets with the actually spawned ones.
+  Request.cargoassets=_assets
 
-  return _groupset,_assets
+  return _groupset
 end 
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2795,7 +2797,8 @@ function WAREHOUSE:_RouteNaval(group, request)
       end
       
       -- Task function triggering the arrived event at the last waypoint.
-      local TaskFunction = group:TaskFunction("WAREHOUSE._Arrived", self)
+      --local TaskFunction = group:TaskFunction("WAREHOUSE._Arrived", self)
+      local TaskFunction = self:_SimpleTaskFunction("WAREHOUSE:_ArrivedSimple", group)
   
       -- Put task function on last waypoint.
       local Waypoint = Waypoints[#Waypoints]
@@ -2869,7 +2872,7 @@ end
 
 --- Task function for last waypoint. Triggering the "Arrived" event.
 -- @param Wrapper.Group#GROUP group The group that arrived.
--- @param #WAREHOUSE self
+-- @param #WAREHOUSE warehouse Warehouse self.
 function WAREHOUSE._Arrived(group, warehouse)
   env.info(warehouse.wid..string.format("Group %s arrived at destination.", tostring(group:GetName())))
   
@@ -3530,7 +3533,8 @@ function WAREHOUSE:_CheckRequestNow(request)
     local text=string.format("Warehouse %s: Request denied! Receiving warehouse %s is not running. Current state %s.", self.alias, request.warehouse.alias, request.warehouse:GetState())
     MESSAGE:New(text, 5):ToCoalitionIf(self.coalition, self.Report or self.Debug)
     self:E(self.wid..text)
-    okay=false
+    
+    return false
   end
     
   -- Check if number of requested assets is in stock.
@@ -3541,7 +3545,8 @@ function WAREHOUSE:_CheckRequestNow(request)
     local text=string.format("Warehouse %s: Request denied! Not enough (cargo) assets currently available.", self.alias)
     MESSAGE:New(text, 5):ToCoalitionIf(self.coalition, self.Report or self.Debug)
     self:E(self.wid..text)
-    okay=false
+    
+    return false
   end
 
   -- Check if at least one (cargo) asset is available.
@@ -3558,12 +3563,13 @@ function WAREHOUSE:_CheckRequestNow(request)
         local text=string.format("Warehouse %s: Request denied! Not enough free parking spots for all assets at the moment.", self.alias)
         MESSAGE:New(text, 5):ToCoalitionIf(self.coalition, self.Report or self.Debug)
         self:E(self.wid..text)
-        okay=false
+        
+        return false
       end
     end
     
     -- Set chosen assets.
-    request.assets=_assets
+    request.cargoassets=_assets
     request.cargoattribute=_assetattribute
     request.cargocategory=_assetcategory
     
@@ -3575,6 +3581,51 @@ function WAREHOUSE:_CheckRequestNow(request)
     
     local _transports=self:_GetTransportsForAssets(request)
     
+    -- Check if enough transport units are available.
+    if _transports==0 then
+      local text=string.format("Warehouse %s: Request denied! Not enough transport assets currently available.", self.alias)
+      MESSAGE:New(text, 5):ToCoalitionIf(self.coalition, self.Report or self.Debug)
+      self:E(self.wid..text)
+      
+      return false
+    end    
+    
+    -- Check if at least one transport asset is available.
+    if #_transports>0 then
+    
+      -- Get the attibute of the transport units.
+      local _transportattribute=_transports[1].attribute
+      local _transportcategory=_transports[1].category
+      
+      -- Check available parking for transport units.
+      if self.airbase and (_transportcategory==Group.Category.AIRPLANE or _transportcategory==Group.Category.HELICOPTER) then
+        local Parking=self:_FindParkingForAssets(self.airbase,_transports)
+        if Parking==nil then
+          local text=string.format("Warehouse %s: Request denied! Not enough free parking spots for all transports at the moment.", self.alias)
+          MESSAGE:New(text, 5):ToCoalitionIf(self.coalition, self.Report or self.Debug)
+          self:E(self.wid..text)
+          
+          return false
+        end
+      end
+      
+      -- Set chosen assets.
+      request.transportassets=_transports
+      request.transportattribute=_transportattribute
+      request.transportcategory=_transportcategory
+    
+    else
+
+      -- Not enough or the right transport carriers.
+      local text=string.format("Warehouse %s: Request denied! Not enough transport carriers available at the moment.", self.alias)
+      MESSAGE:New(text, 5):ToCoalitionIf(self.coalition, self.Report or self.Debug)
+      self:E(self.wid..text)
+      
+      return false
+
+    
+    end        
+    
   elseif false then
   
     -- Transports in stock.
@@ -3585,7 +3636,8 @@ function WAREHOUSE:_CheckRequestNow(request)
       local text=string.format("Warehouse %s: Request denied! Not enough transport assets currently available.", self.alias)
       MESSAGE:New(text, 5):ToCoalitionIf(self.coalition, self.Report or self.Debug)
       self:E(self.wid..text)
-      okay=false
+      
+      return false
     end
     
     -- Check if at least one transport asset is available.
@@ -3602,7 +3654,8 @@ function WAREHOUSE:_CheckRequestNow(request)
           local text=string.format("Warehouse %s: Request denied! Not enough free parking spots for all transports at the moment.", self.alias)
           MESSAGE:New(text, 5):ToCoalitionIf(self.coalition, self.Report or self.Debug)
           self:E(self.wid..text)
-          okay=false
+          
+          return false
         end
       end
       
@@ -3612,7 +3665,7 @@ function WAREHOUSE:_CheckRequestNow(request)
   
   end
     
-  return okay  
+  return true
 end
 
 ---Get (optimized) transport carriers for the given assets to be transported. 
@@ -3623,7 +3676,7 @@ function WAREHOUSE:_GetTransportsForAssets(request)
   -- Get all transports of the requested type in stock.
   local transports=self:_FilterStock(self.stock, WAREHOUSE.Descriptor.ATTRIBUTE, request.transporttype)
   
-  local cargoassets=request.assets
+  local cargoassets=request.cargoassets
   
   -- Problems/questions
   -- 1. Do we have at least one carrier big enough to transport the largest group?
@@ -3647,6 +3700,7 @@ function WAREHOUSE:_GetTransportsForAssets(request)
    
   -- The most simple way is to sort the transports in descending order wrt. to their cargo bay size.
   -- Use largest carriers available until either number of cargo is done in one run or we hit max number of carriers available.
+  
    
   -- sort transport carriers w.r.t. cargo bay size.
   local function sort_transports(a,b)
@@ -3663,7 +3717,9 @@ function WAREHOUSE:_GetTransportsForAssets(request)
 
   -- Very simple! Only take the largest transports that can carrier the largest cargo.
   local used_transports={}
-  local maxcargoweight=cargoassets[1]
+  
+  local maxcargoweight=cargoassets[1].weight
+  
   for i=1,#transports do
     local transport=transports[i]  --#WAREHOUSE.Assetitem
     if transport.cargobay>maxcargoweight and #used_transports<=request.ntransport then
@@ -3675,7 +3731,8 @@ function WAREHOUSE:_GetTransportsForAssets(request)
     local transport=_transport --#WAREHOUSE.Assetitem
     --env.info("transport used = ", transport.)
   end
- 
+  
+  return used_transports
 end
 
 ---Sorts the queue and checks if the request can be fulfilled.
@@ -3726,17 +3783,20 @@ end
 --- Simple task function. Can be used to call a function which has the warehouse and the executing group as parameters.
 -- @param #WAREHOUSE self
 -- @param #string Function The name of the function to call passed as string.
-function WAREHOUSE:_SimpleTaskFunction(Function)
+-- @param Wrapper.Group#GROUP group The group which is meant.
+function WAREHOUSE:_SimpleTaskFunction(Function, group)
   self:F2({Function})
 
   -- Name of the warehouse (static) object.
   local warehouse=self.warehouse:GetName()
+  local groupname=group:GetName()
 
   -- Task script.
   local DCSScript = {}
-  DCSScript[#DCSScript+1] = string.format('env.info("WAREHOUSE: Simple task function called!") ')
-  DCSScript[#DCSScript+1] = string.format('local mygroup = GROUP:Find( ... ) ')                         -- The group that executes the task function. Very handy with the "...".
-  DCSScript[#DCSScript+1] = string.format('local mystatic=STATIC:FindByName(%s) ', warehouse)           -- The static that holds the warehouse self object.
+  --DCSScript[#DCSScript+1] = string.format('env.info("WAREHOUSE: Simple task function called!") ')
+  --DCSScript[#DCSScript+1] = string.format('local mygroup   = GROUP:Find( ... ) ')                         -- The group that executes the task function. Very handy with the "...".
+  DCSScript[#DCSScript+1] = string.format('local mygroup   = GROUP:FindByName(%s) ', groupname)           -- The group that executes the task function. Very handy with the "...".
+  DCSScript[#DCSScript+1] = string.format('local mystatic  = STATIC:FindByName(%s) ', warehouse)           -- The static that holds the warehouse self object.
   DCSScript[#DCSScript+1] = string.format('local warehouse = mygroup:GetState(mystatic, "WAREHOUSE") ') -- Get the warehouse self object from the static.
   DCSScript[#DCSScript+1] = string.format('%s(warehouse, mygroup)', Function)                           -- Call the function, e.g. myfunction.(warehouse,mygroup)  
 
