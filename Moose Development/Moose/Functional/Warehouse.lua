@@ -54,18 +54,6 @@
 --
 -- ===
 --
--- # Demo Missions
---
--- ### None.
---
--- ===
---
--- # YouTube Channel
---
--- ### None.
---
--- ===
---
 -- ![Banner Image](..\Presentations\WAREHOUSE\Warehouse_Main.jpg)
 --
 -- # The Warehouse Concept
@@ -495,7 +483,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.3.0"
+WAREHOUSE.version="0.3.0w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -1804,17 +1792,11 @@ end
 -- @param #string Assignment A keyword or text that 
 function WAREHOUSE:onafterAddRequest(From, Event, To, warehouse, AssetDescriptor, AssetDescriptorValue, nAsset, TransportType, nTransport, Assignment, Prio)
 
-  -- Defaults.
-  nAsset=nAsset or 1
-  TransportType=TransportType or WAREHOUSE.TransportType.SELFPROPELLED
-  Prio=Prio or 50
-  if nTransport==nil then
-    if TransportType==WAREHOUSE.TransportType.SELFPROPELLED then
-      nTransport=0
-    else
-      nTransport=1
-    end
-  end
+  -- Self request?
+  local toself=false
+  if self.warehouse:GetName()==warehouse:GetName() then
+    toself=true
+  end  
   
   -- Increase id.
   self.queueid=self.queueid+1
@@ -1832,7 +1814,9 @@ function WAREHOUSE:onafterAddRequest(From, Event, To, warehouse, AssetDescriptor
   transporttype=TransportType,
   ntransport=nTransport,
   ndelivered=0,
-  ntransporthome=0
+  ntransporthome=0,
+  assets={},
+  toself=toself,
   } --#WAREHOUSE.Queueitem
   
   -- Add request to queue.
@@ -1882,16 +1866,6 @@ function WAREHOUSE:onbeforeRequest(From, Event, To, Request)
       return false
     end
     
-  end
-
-  -- Init asset table.
-  Request.assets={}
-  
-  -- Init self request.
-  if self.warehouse:GetName()==Request.warehouse.warehouse:GetName() then
-    Request.toself=true
-  else
-    Request.toself=false
   end
 
   return true
