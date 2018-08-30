@@ -428,7 +428,7 @@ function AI_CARGO_AIRPLANE:onafterBoard( Airplane, From, Event, To, Cargo, Airpl
           local InRadius = Cargo:IsInLoadRadius( Airplane:GetCoordinate() )
           if InRadius then
             
-            local CargoBayFreeWeight = Airplane:GetCargoBayFreeWeight()
+            local CargoBayFreeWeight = AirplaneUnit:GetCargoBayFreeWeight()
             --local CargoBayFreeVolume = Airplane:GetCargoBayFreeVolume()
             
             local CargoWeight = Cargo:GetWeight()
