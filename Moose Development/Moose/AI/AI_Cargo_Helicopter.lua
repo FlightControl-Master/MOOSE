@@ -390,6 +390,9 @@ function AI_CARGO_HELICOPTER:onbeforeLoad( Helicopter, From, Event, To)
     if Helicopter and Helicopter:IsAlive() then
       for _, HelicopterUnit in pairs( Helicopter:GetUnits() ) do
         local HelicopterUnit = HelicopterUnit -- Wrapper.Unit#UNIT
+        local CargoBayFreeWeight = HelicopterUnit:GetCargoBayFreeWeight()
+        self:F({CargoBayFreeWeight=CargoBayFreeWeight})
+ 
         for _, Cargo in pairs( self.CargoSet:GetSet() ) do
           local Cargo = Cargo -- Cargo.Cargo#CARGO
           self:F( { IsUnLoaded = Cargo:IsUnLoaded() } )
@@ -397,17 +400,14 @@ function AI_CARGO_HELICOPTER:onbeforeLoad( Helicopter, From, Event, To)
             if Cargo:IsInLoadRadius( HelicopterUnit:GetCoordinate() ) then
               self:F( { "In radius", HelicopterUnit:GetName() } )
               
-              local CargoBayFreeWeight = HelicopterUnit:GetCargoBayFreeWeight()
               local CargoWeight = Cargo:GetWeight()
               
-              self:F({CargoBayFreeWeight=CargoBayFreeWeight})
-  
               -- Only when there is space within the bay to load the next cargo item!
               if CargoBayFreeWeight > CargoWeight then --and CargoBayFreeVolume > CargoVolume then
               
                 --Cargo:Ungroup()
                 Cargo:Board( HelicopterUnit, 25 )
-                self:__Board( 1, Cargo )
+                self:__Board( 1, Cargo, HelicopterUnit )
                 self.Helicopter_Cargo[HelicopterUnit] = Cargo
                 Boarding = true
                 break
@@ -430,32 +430,29 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Cargo.Cargo#CARGO Cargo Cargo object.
-function AI_CARGO_HELICOPTER:onafterBoard( Helicopter, From, Event, To, Cargo )
-  self:F( { Helicopter, From, Event, To, Cargo } )
+-- @param Wrapper.Unit#UNIT HelicopterUnit
+function AI_CARGO_HELICOPTER:onafterBoard( Helicopter, From, Event, To, Cargo, HelicopterUnit )
+  self:F( { Helicopter, From, Event, To, Cargo, HelicopterUnit } )
 
   if Helicopter and Helicopter:IsAlive() then
     self:F({ IsLoaded = Cargo:IsLoaded() } )
     if not Cargo:IsLoaded() then
-      self:__Board( 10, Cargo )
+      self:__Board( 10, Cargo, HelicopterUnit )
     else
-      for _, HelicopterUnit in pairs( Helicopter:GetUnits() ) do
-        local HelicopterUnit = HelicopterUnit -- Wrapper.Unit#UNIT
-        for _, Cargo in pairs( self.CargoSet:GetSet() ) do
-          local Cargo = Cargo -- Cargo.Cargo#CARGO
-          if Cargo:IsUnLoaded() then
-            if Cargo:IsInLoadRadius( HelicopterUnit:GetCoordinate() ) then
-              local CargoBayFreeWeight = HelicopterUnit:GetCargoBayFreeWeight()
-              local CargoWeight = Cargo:GetWeight()
+      local CargoBayFreeWeight = HelicopterUnit:GetCargoBayFreeWeight()
+      self:F({CargoBayFreeWeight=CargoBayFreeWeight})
+      for _, Cargo in pairs( self.CargoSet:GetSet() ) do
+        local Cargo = Cargo -- Cargo.Cargo#CARGO
+        if Cargo:IsUnLoaded() then
+          if Cargo:IsInLoadRadius( HelicopterUnit:GetCoordinate() ) then
+            local CargoWeight = Cargo:GetWeight()
 
-              self:F({CargoBayFreeWeight=CargoBayFreeWeight})
-
-              -- Only when there is space within the bay to load the next cargo item!
-              if CargoBayFreeWeight > CargoWeight then --and CargoBayFreeVolume > CargoVolume then
-                Cargo:Board( HelicopterUnit, 25 )
-                self:__Board( 10, Cargo )
-                self.Helicopter_Cargo[HelicopterUnit] = Cargo
-                return
-              end
+            -- Only when there is space within the bay to load the next cargo item!
+            if CargoBayFreeWeight > CargoWeight then --and CargoBayFreeVolume > CargoVolume then
+              Cargo:Board( HelicopterUnit, 25 )
+              self:__Board( 10, Cargo, HelicopterUnit )
+              self.Helicopter_Cargo[HelicopterUnit] = Cargo
+              return
             end
           end
         end
