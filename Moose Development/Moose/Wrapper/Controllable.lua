@@ -2089,6 +2089,8 @@ do -- Route methods
         local dist=ToCoordinate:Get2DDistance(PathOnRoad[#PathOnRoad-1])
         if dist>10 then
           table.insert(route, ToCoordinate:WaypointGround(Speed, OffRoadFormation))
+          table.insert(route, ToCoordinate:GetRandomCoordinateInRadius(10,5):WaypointGround(5, OffRoadFormation))
+          table.insert(route, ToCoordinate:GetRandomCoordinateInRadius(10,5):WaypointGround(5, OffRoadFormation))
         end
         
       end

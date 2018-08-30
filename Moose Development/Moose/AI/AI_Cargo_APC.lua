@@ -419,16 +419,21 @@ function AI_CARGO_APC:onbeforeLoad( APC, From, Event, To )
 
   if APC and APC:IsAlive() then
     self.APC_Cargo = {}
+    self.APC_Cargo_Weight = {}
     for _, APCUnit in pairs( APC:GetUnits() ) do
       local APCUnit = APCUnit -- Wrapper.Unit#UNIT
-      for _, Cargo in pairs( self.CargoSet:GetSet() ) do
+      
+      self.APC_Cargo_Weight[APCUnit] = APCUnit:GetCargoBayFreeWeight()
+      
+      --for _, Cargo in pairs( self.CargoSet:GetSet() ) do
+      for _, Cargo in UTILS.spairs( self.CargoSet:GetSet(), function( t, a, b ) return t[a]:GetWeight() > t[b]:GetWeight() end ) do
         local Cargo = Cargo -- Cargo.Cargo#CARGO
         self:F( { IsUnLoaded = Cargo:IsUnLoaded(), IsDeployed = Cargo:IsDeployed(), Cargo:GetName(), APC:GetName() } )
         if Cargo:IsUnLoaded() then -- and not Cargo:IsDeployed() then
           if Cargo:IsInLoadRadius( APCUnit:GetCoordinate() ) then
             self:F( { "In radius", APCUnit:GetName() } )
             
-            local CargoBayFreeWeight = APCUnit:GetCargoBayFreeWeight()
+            local CargoBayFreeWeight = self.APC_Cargo_Weight[APCUnit]
             local CargoWeight = Cargo:GetWeight()
             
             self:F({CargoBayFreeWeight=CargoBayFreeWeight})
@@ -438,11 +443,12 @@ function AI_CARGO_APC:onbeforeLoad( APC, From, Event, To )
               APC:RouteStop()
               --Cargo:Ungroup()
               Cargo:Board( APCUnit, 25 )
-              self:__Board( 1, Cargo )
+              self:__Board( 1, Cargo, APCUnit )
   
               -- So now this APCUnit has Cargo that is being loaded.
               -- This will be used further in the logic to follow and to check cargo status.
               self.APC_Cargo[APCUnit] = Cargo
+              self.APC_Cargo_Weight[APCUnit] = self.APC_Cargo_Weight[APCUnit] - CargoWeight
               Boarding = true
               break
             end
@@ -462,35 +468,34 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #string Cargo.Cargo#CARGO Cargo Cargo object.
-function AI_CARGO_APC:onafterBoard( APC, From, Event, To, Cargo )
-  self:F( { APC, From, Event, To, Cargo } )
+-- @param Cargo.Cargo#CARGO Cargo Cargo object.
+-- @param Wrapper.Unit#UNIT APCUnit
+function AI_CARGO_APC:onafterBoard( APC, From, Event, To, Cargo, APCUnit )
+  self:F( { APC, From, Event, To, Cargo, APCUnit:GetName() } )
 
   if APC and APC:IsAlive() then
     self:F({ IsLoaded = Cargo:IsLoaded(), Cargo:GetName(), APC:GetName() } )
     if not Cargo:IsLoaded() then
-      self:__Board( 10, Cargo )
+      self:__Board( 10, Cargo, APCUnit )
     else
-      for _, APCUnit in pairs( APC:GetUnits() ) do
-        local APCUnit = APCUnit -- Wrapper.Unit#UNIT
-        for _, Cargo in pairs( self.CargoSet:GetSet() ) do
-          local Cargo = Cargo -- Cargo.Cargo#CARGO
-          if Cargo:IsUnLoaded() then
-            if Cargo:IsInLoadRadius( APCUnit:GetCoordinate() ) then
-              local CargoBayFreeWeight = APCUnit:GetCargoBayFreeWeight()
-              local CargoWeight = Cargo:GetWeight()
-              
-              self:F({CargoBayFreeWeight=CargoBayFreeWeight})
+      for _, Cargo in UTILS.spairs( self.CargoSet:GetSet(), function( t, a, b ) return t[a]:GetWeight() > t[b]:GetWeight() end ) do
+        local Cargo = Cargo -- Cargo.Cargo#CARGO
+        if Cargo:IsUnLoaded() then
+          if Cargo:IsInLoadRadius( APCUnit:GetCoordinate() ) then
+            local CargoBayFreeWeight = self.APC_Cargo_Weight[APCUnit]
+            local CargoWeight = Cargo:GetWeight()
+            
+            self:F({CargoBayFreeWeight=CargoBayFreeWeight})
 
-              -- Only when there is space within the bay to load the next cargo item!
-              if CargoBayFreeWeight > CargoWeight then --and CargoBayFreeVolume > CargoVolume then
-                Cargo:Board( APCUnit, 25 )
-                self:__Board( 10, Cargo )
-                -- So now this APCUnit has Cargo that is being loaded.
-                -- This will be used further in the logic to follow and to check cargo status.
-                self.APC_Cargo[APCUnit] = Cargo
-                return
-              end
+            -- Only when there is space within the bay to load the next cargo item!
+            if CargoBayFreeWeight > CargoWeight then --and CargoBayFreeVolume > CargoVolume then
+              Cargo:Board( APCUnit, 25 )
+              self:__Board( 10, Cargo, APCUnit )
+              -- So now this APCUnit has Cargo that is being loaded.
+              -- This will be used further in the logic to follow and to check cargo status.
+              self.APC_Cargo[APCUnit] = Cargo
+              self.APC_Cargo_Weight[APCUnit] = self.APC_Cargo_Weight[APCUnit] - CargoWeight
+              return
             end
           end
         end
@@ -552,6 +557,7 @@ function AI_CARGO_APC:onafterUnload( APC, From, Event, To, Deployed )
       for _, Cargo in pairs( APCUnit:GetCargo() ) do
         if Cargo:IsLoaded() then
           Cargo:UnBoard()
+          Cargo:SetDeployed( true )
           self:__Unboard( 10, Cargo, Deployed )
         end 
       end
@@ -580,6 +586,7 @@ function AI_CARGO_APC:onafterUnboard( APC, From, Event, To, Cargo, Deployed )
         for _, Cargo in pairs( APCUnit:GetCargo() ) do
           if Cargo:IsLoaded() then
             Cargo:UnBoard()
+            Cargo:SetDeployed( true )
             self:__Unboard( 10, Cargo, Deployed )
             return
           end
@@ -604,7 +611,6 @@ function AI_CARGO_APC:onbeforeUnloaded( APC, From, Event, To, Cargo, Deployed )
   self:F( { APC, From, Event, To, Cargo:GetName(), Deployed = Deployed } )
 
   local AllUnloaded = true
-  Cargo:SetDeployed( true )
 
   --Cargo:Regroup()
 

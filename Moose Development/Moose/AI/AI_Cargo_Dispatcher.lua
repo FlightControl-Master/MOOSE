@@ -420,7 +420,7 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
       
       local PickupCargo = nil
       
-      for CargoName, Cargo in pairs( self.SetCargo:GetSet() ) do
+      for CargoName, Cargo in UTILS.spairs( self.SetCargo:GetSet(), function( t, a, b ) return t[a]:GetWeight() < t[b]:GetWeight() end ) do
         local Cargo = Cargo -- Cargo.Cargo#CARGO
         self:F( { Cargo = Cargo:GetName(), UnLoaded = Cargo:IsUnLoaded(), Deployed = Cargo:IsDeployed(), PickupCargo = self.PickupCargo[Carrier] ~= nil } )
         if Cargo:IsUnLoaded() == true and Cargo:IsDeployed() == false then
@@ -437,9 +437,23 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
             end
           end
           if CoordinateFree == true then
-            self.PickupCargo[Carrier] = CargoCoordinate
-            PickupCargo = Cargo
-            break
+            -- Check if this cargo can be picked-up by at least one carrier unit of AI_Cargo.
+            local LargestLoadCapacity = 0
+            for _, Carrier in pairs( Carrier:GetUnits() ) do
+              local LoadCapacity = Carrier:GetCargoBayFreeWeight()
+              if LargestLoadCapacity < LoadCapacity then
+                LargestLoadCapacity = LoadCapacity
+              end
+            end
+            -- So if there is aa carrier that has the required load capacity to load the total weight of the cargo, dispatch the carrier.
+            -- Otherwise break and go to the next carrier.
+            -- This will skip cargo which is too large to be able to be loaded by carriers
+            -- and will secure an efficient dispatching scheme.
+            if LargestLoadCapacity >= Cargo:GetWeight() then
+              self.PickupCargo[Carrier] = CargoCoordinate
+              PickupCargo = Cargo
+              break
+            end
           end
         end
       end
