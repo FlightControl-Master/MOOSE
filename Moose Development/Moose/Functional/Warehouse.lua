@@ -48,6 +48,7 @@
 -- @field #table defending Table holding all defending requests, i.e. self requests that were if the warehouse is under attack. Table elements are of type @{#WAREHOUSE.Pendingitem}.
 -- @field Core.Zone#ZONE portzone Zone defining the port of a warehouse. This is where naval assets are spawned.
 -- @field #table shippinglanes Table holding the user defined shipping between warehouses. 
+-- @field #boolean selfdefence When the warehouse is under attack, automatically spawn assets to defend the warehouse.
 -- @extends Core.Fsm#FSM
 
 --- Have your assets at the right place at the right time - or not!
@@ -321,32 +322,33 @@
 --
 -- @field #WAREHOUSE
 WAREHOUSE = {
-  ClassName   = "WAREHOUSE",
-  Debug       = false,
-  Report      =  true,
-  warehouse   =   nil,
-  coalition   =   nil,
-  country     =   nil,
-  alias       =   nil,
-  zone        =   nil,
-  airbase     =   nil,
-  airbasename =   nil,
-  category    =    -1,
-  coordinate  =   nil,
-  road        =   nil,
-  rail        =   nil,
-  spawnzone   =   nil,
-  wid         =   nil,
-  uid         =   nil,
-  markerid    =   nil,
-  dTstatus    =    30,
-  queueid     =     0,
-  stock       =    {},
-  queue       =    {},
-  pending     =    {},
-  defending   =    {},
-  portzone    =   nil,
-  shippinglanes =  {},
+  ClassName     = "WAREHOUSE",
+  Debug         = false,
+  Report        =  true,
+  warehouse     =   nil,
+  coalition     =   nil,
+  country       =   nil,
+  alias         =   nil,
+  zone          =   nil,
+  airbase       =   nil,
+  airbasename   =   nil,
+  category      =    -1,
+  coordinate    =   nil,
+  road          =   nil,
+  rail          =   nil,
+  spawnzone     =   nil,
+  wid           =   nil,
+  uid           =   nil,
+  markerid      =   nil,
+  dTstatus      =    30,
+  queueid       =     0,
+  stock         =    {},
+  queue         =    {},
+  pending       =    {},
+  defending     =    {},
+  portzone      =   nil,
+  shippinglanes =    {},
+  selfdefence   = false,  
 }
 
 --- Item of the warehouse stock table.
@@ -369,15 +371,16 @@ WAREHOUSE = {
 --- Item of the warehouse queue table.
 -- @type WAREHOUSE.Queueitem
 -- @field #number uid Unique id of the queue item.
--- @field #number prio Priority of the request.
 -- @field #WAREHOUSE warehouse Requesting warehouse.
--- @field Wrapper.Airbase#AIRBASE airbase Requesting airbase or airbase beloning to requesting warehouse.
--- @field DCS#Airbase.Category category Category of the requesting airbase, i.e. airdrome, helipad/farp or ship.
 -- @field #WAREHOUSE.Descriptor assetdesc Descriptor of the requested asset. Enumerator of type @{#WAREHOUSE.Descriptor}.
 -- @field assetdescval Value of the asset descriptor. Type depends on "assetdesc" descriptor.
 -- @field #number nasset Number of asset groups requested.
 -- @field #WAREHOUSE.TransportType transporttype Transport unit type.
 -- @field #number ntransport Max. number of transport units requested.
+-- @field #string assignment A keyword or text that later be used to identify this request and postprocess the assets.
+-- @field #number prio Priority of the request. Number between 1 (high) and 100 (low).
+-- @field Wrapper.Airbase#AIRBASE airbase The airbase beloning to requesting warehouse if any.
+-- @field DCS#Airbase.Category category Category of the requesting airbase, i.e. airdrome, helipad/farp or ship.
 -- @field #boolean toself Self request, i.e. warehouse requests assets from itself.
 -- @field #table assets Table of self propelled (or cargo) and transport assets. Each element of the table is a @{#WAREHOUSE.Assetitem} and can be accessed by their asset ID.
 -- @field #table cargoassets Table of cargo (or self propelled) assets. Each element of the table is a @{#WAREHOUSE.Assetitem}.
@@ -483,14 +486,16 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.3.0w"
+WAREHOUSE.version="0.3.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Warehouse re-capturing not working?!
--- TODO: Naval assets dont go back into stock once arrived.
+-- TODO: How to get a specific request once the cargo is delivered? Make addrequest addasset non FSM function? Callback for requests like in SPAWN?
+-- TODO: Add autoselfdefence switch and user function. Default should be off.
+-- DONE: Warehouse re-capturing not working?!
+-- DONE: Naval assets dont go back into stock once arrived.
 -- TODO: Take cargo weight into consideration, when selecting transport assets.
 -- TODO: Add transport units from dispatchers back to warehouse stock once they completed their mission.
 -- DONE: Add ports for spawning naval assets.
@@ -500,14 +505,14 @@ WAREHOUSE.version="0.3.0w"
 -- TODO: Add possibility to add active groups. Need to create a pseudo template before destroy.
 -- TODO: Write documentation.
 -- TODO: Handle the case when units of a group die during the transfer. Adjust template?! See Grouping in SPAWN.
--- TODO: Handle cases with immobile units.
+-- DONE: Handle cases with immobile units <== should be handled by dispatcher classes.
 -- TODO: Handle cargo crates.
 -- TODO: Handle cases for aircraft carriers and other ships. Place warehouse on carrier possible? On others probably not - exclude them?
 -- TODO: Add general message function for sending to coaliton or debug.
 -- TODO: Fine tune event handlers.
 -- TODO: Add save/load capability of warehouse <==> percistance after mission restart.
 -- DONE: Improve generalized attributes.
--- TODO: Add a time stamp when an asset is added to the stock and for requests
+-- TODO: Add a time stamp when an asset is added to the stock and for requests.
 -- DONE: If warehouse is destoyed, all asssets are gone.
 -- DONE: Add event handlers.
 -- DONE: Add AI_CARGO_AIRPLANE
@@ -676,6 +681,7 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #number nAsset Number of groups requested that match the asset specification.
   -- @param #WAREHOUSE.TransportType TransportType Type of transport.
   -- @param #number nTransport Number of transport units requested.
+  -- @param #string Assignment A keyword or text that later be used to identify this request and postprocess the assets.
   -- @param #number Prio Priority of the request. Number ranging from 1=high to 100=low.
 
   --- Triggers the FSM event "AddRequest" with a delay. Add a request to the warehouse queue, which is processed when possible.
@@ -688,6 +694,7 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #number nAsset Number of groups requested that match the asset specification.
   -- @param #WAREHOUSE.TransportType TransportType Type of transport.
   -- @param #number nTransport Number of transport units requested.
+  -- @param #string Assignment A keyword or text that later be used to identify this request and postprocess the assets.
   -- @param #number Prio Priority of the request. Number ranging from 1=high to 100=low.
 
 
@@ -1708,21 +1715,9 @@ end
 -- @param #WAREHOUSE.TransportType TransportType Type of transport.
 -- @param #number nTransport Number of transport units requested.
 -- @param #number Prio Priority of the request. Number ranging from 1=high to 100=low.
--- @param #string Assignment A keyword or text that
+-- @param #string Assignment A keyword or text that later be used to identify this request and postprocess the assets.
 -- @return #boolean If true, request is okay at first glance.
 function WAREHOUSE:onbeforeAddRequest(From, Event, To, warehouse, AssetDescriptor, AssetDescriptorValue, nAsset, TransportType, nTransport, Assignment, Prio)
-
-  -- Defaults.
-  nAsset=nAsset or 1
-  TransportType=TransportType or WAREHOUSE.TransportType.SELFPROPELLED
-  Prio=Prio or 50
-  if nTransport==nil then
-    if TransportType==WAREHOUSE.TransportType.SELFPROPELLED then
-      nTransport=0
-    else
-      nTransport=1
-    end
-  end
   
   -- Request is okay.
   local okay=true
@@ -1788,16 +1783,33 @@ end
 -- @param #number nAsset Number of groups requested that match the asset specification.
 -- @param #WAREHOUSE.TransportType TransportType Type of transport.
 -- @param #number nTransport Number of transport units requested.
+-- @param #string Assignment A keyword or text that later be used to identify this request and postprocess the assets. 
 -- @param #number Prio Priority of the request. Number ranging from 1=high to 100=low.
--- @param #string Assignment A keyword or text that 
 function WAREHOUSE:onafterAddRequest(From, Event, To, warehouse, AssetDescriptor, AssetDescriptorValue, nAsset, TransportType, nTransport, Assignment, Prio)
+
+  -- Defaults.
+  nAsset=nAsset or 1
+  TransportType=TransportType or WAREHOUSE.TransportType.SELFPROPELLED
+  Prio=Prio or 50
+  if nTransport==nil then
+    if TransportType==WAREHOUSE.TransportType.SELFPROPELLED then
+      nTransport=0
+    else
+      nTransport=1
+    end
+  end
+  
+  -- Not more transports than assets.
+  --if type(nAsset)=="number" then
+  --  nTransport=math.min(nAsset, nTransport)
+  --end
 
   -- Self request?
   local toself=false
-  if self.warehouse:GetName()==warehouse:GetName() then
+  if self.warehouse:GetName()==warehouse.warehouse:GetName() then
     toself=true
-  end  
-  
+  end   
+ 
   -- Increase id.
   self.queueid=self.queueid+1
 
@@ -1806,13 +1818,14 @@ function WAREHOUSE:onafterAddRequest(From, Event, To, warehouse, AssetDescriptor
   uid=self.queueid,
   prio=Prio,
   warehouse=warehouse,
-  airbase=warehouse.airbase,
-  category=warehouse.category,
   assetdesc=AssetDescriptor,
   assetdescval=AssetDescriptorValue,
   nasset=nAsset,
   transporttype=TransportType,
   ntransport=nTransport,
+  assignment=tostring(Assignment),
+  airbase=warehouse.airbase,
+  category=warehouse.category,  
   ndelivered=0,
   ntransporthome=0,
   assets={},
@@ -2544,7 +2557,9 @@ function WAREHOUSE:onafterAttacked(From, Event, To, Coalition, Country)
   self:I(self.wid..text)
   
   -- Spawn all ground units in the spawnzone?
-  self:AddRequest(self, WAREHOUSE.Descriptor.CATEGORY, Group.Category.GROUND, "all", nil, nil , 0)
+  if self.selfdefence then
+    self:AddRequest(self, WAREHOUSE.Descriptor.CATEGORY, Group.Category.GROUND, "all", nil, nil , 0)
+  end
 end
 
 --- On after "Defeated" event. Warehouse defeated an attack by another coalition. Defender assets are added back to warehouse stock.
@@ -2561,10 +2576,7 @@ function WAREHOUSE:onafterDefeated(From, Event, To)
 
   --if self.defenderrequest then
   for _,request in pairs(self.defending) do
-    
-    -- Get all assets that were deployed for defending the warehouse.
-    --local request=self.defenderrequest --#WAREHOUSE.Pendingitem
-  
+      
     -- Route defenders back to warehoue (for visual reasons only) and put them back into stock.  
     for _,_group in pairs(request.cargogroupset:GetSetObjects()) do
       local group=_group --Wrapper.Group#GROUP
@@ -2579,9 +2591,6 @@ function WAREHOUSE:onafterDefeated(From, Event, To)
       self:__AddAsset(60, group)
     end
     
-    -- Set defender request back to nil. 
-    --self.defenderrequest=nil
-  
     --self:_DeleteQueueItem(request, self.defending)  
   end
   
@@ -2664,7 +2673,7 @@ end
 function WAREHOUSE:onafterAirbaseRecaptured(From, Event, To, Coalition)
 
   -- Message.
-  local text=string.format("Warehouse %s: We recaptured our airbase %d from the enemy (coalition=%d)!", self.alias, self.airbasename, Coalition)
+  local text=string.format("Warehouse %s: We recaptured our airbase %s from the enemy (coalition=%d)!", self.alias, self.airbasename, Coalition)
   MESSAGE:New(text, 20):ToCoalitionIf(self.coalition, self.Report or self.Debug)
   self:I(self.wid..text)
 
@@ -2771,9 +2780,8 @@ function WAREHOUSE:_RouteNaval(group, request)
       end
       
       -- Task function triggering the arrived event at the last waypoint.
-      --local TaskFunction = group:TaskFunction("WAREHOUSE._Arrived", self)
-      local TaskFunction = self:_SimpleTaskFunction("WAREHOUSE:_ArrivedSimple", group)
-  
+      local TaskFunction = self:_SimpleTaskFunction("warehouse:_ArrivedSimple", group)
+      
       -- Put task function on last waypoint.
       local Waypoint = Waypoints[#Waypoints]
       group:SetTaskWaypoint(Waypoint, TaskFunction)
@@ -3046,40 +3054,39 @@ end
 -- @param #WAREHOUSE self
 -- @param Core.Event#EVENTDATA EventData Event data.
 function WAREHOUSE:_OnEventBaseCaptured(EventData)
+  self:T3(self.wid..string.format("Warehouse %s captured event base captured!",self.alias))
   
-  -- This warehouse does not have an airbase and never had one. So i could not be captured.
+  -- This warehouse does not have an airbase and never had one. So it could not have been captured.
   if self.airbasename==nil then
-    -- This warehouse never had an airbase so I cannot have been captured.
     return
   end
-  
-  self:E(self.wid..string.format("Warehouse %s captured event base captured!",self.alias))
   
   if EventData and EventData.Place then
       
     -- Place is the airbase that was captured.
     local airbase=EventData.Place --Wrapper.Airbase#AIRBASE
     
+    -- Check that this airbase belongs or did belong to this warehouse.
     if EventData.PlaceName==self.airbasename then
-      -- Okay, this airbase belongs or did belong to this warehouse.
-      
-      self:I(self.wid..string.format("Airbase of warehouse %s was captured! ",self.alias))
-      
+            
       -- New coalition of airbase after it was captured.
-      local coalitionAirbase=airbase:GetCoalition()
+      local NewCoalitionAirbase=airbase:GetCoalition()
       
+      -- Debug info
+      self:I(self.wid..string.format("Airbase of warehouse %s (coalition = %d) was captured! New owner coalition = %d.",self.alias, self.coalition, NewCoalitionAirbase))
+            
       -- So what can happen?
       -- Warehouse is blue, airbase is blue and belongs to warehouse and red captures it  ==> self.airbase=nil
       -- Warehouse is blue, airbase is blue self.airbase is nil and blue (re-)captures it ==> self.airbase=Event.Place        
       if self.airbase==nil then
-        -- Warehouse lost this airbase previously and not it was re-captured.
-        if coalitionAirbase == self.coalition then
-          self:AirbaseRecaptured(coalitionAirbase)
+        -- New coalition is the same as of the warehouse ==> warehouse previously lost this airbase and now it was re-captured.
+        if NewCoalitionAirbase == self.coalition then
+          self:AirbaseRecaptured(NewCoalitionAirbase)
         end
       else
         -- Captured airbase belongs to this warehouse but was captured by other coaltion.
-        if coalitionAirbase ~= self.coalition then
-          self:AirbaseCaptured(coalitionAirbase)
+        if NewCoalitionAirbase ~= self.coalition then
+          self:AirbaseCaptured(NewCoalitionAirbase)
         end
       end
         
@@ -3353,7 +3360,9 @@ function WAREHOUSE:_CheckRequestValid(request)
         
       else
       
-        -- Check if enough parking spots are available
+        -- Check if enough parking spots are available. This checks the spots available in general, i.e. not the free spots.
+        -- TODO: For FARPS/ships, is it possible to send more assets than parking spots? E.g. a FARPS has only four (or even one).
+        -- TODO: maybe only check if spots > 0 for the necessary terminal type? At least for FARPS.
         
         -- Get necessary terminal type.
         local termtype=self:_GetTerminal(asset.attribute)
@@ -3362,15 +3371,18 @@ function WAREHOUSE:_CheckRequestValid(request)
         local np_departure=self.airbase:GetParkingSpotsNumber(termtype)
         local np_destination=request.airbase:GetParkingSpotsNumber(termtype)
         
+        -- Debug info.
+        self:E(string.format("Asset attribute = %s, terminal type = %d, spots at departure = %d, destination = %d", asset.attribute, termtype, np_departure, np_destination))
+        
         -- Not enough parking at sending warehouse.
         if np_departure < request.nasset then
-          self:E("ERROR: Incorrect request. No enough parking spots of terminal type at warehouse.")
+          self:E(string.format("ERROR: Incorrect request. Not enough parking spots of terminal type %d at warehouse. Available spots = %d.", termtype, np_departure))
           valid=false    
         end
 
         -- Not enough parking at requesting warehouse.
         if np_destination < request.nasset then
-          self:E("ERROR: Incorrect request. No enough parking spots of terminal type at requesting warehouse.")
+          self:E(string.format("ERROR: Incorrect request. Not enough parking spots of terminal type %d at requesting warehouse. Available spots = %d.", termtype, np_destination))
           valid=false    
         end        
         
@@ -3483,7 +3495,7 @@ function WAREHOUSE:_CheckRequestValid(request)
   
   -- Add request as unvalid and delete it later.
   if valid==false then
-    self:E(self.wid..string.format("Got invalid request id=%d.", request.uid))
+    self:E(self.wid..string.format("ERROR: Got invalid request id=%d.", request.uid))
   else
     self:T3(self.wid..string.format("Got valid request id=%d.", request.uid))
   end
@@ -3733,7 +3745,7 @@ function WAREHOUSE:_CheckQueue()
     
     -- Remember invalid request and delete later in order not to confuse the loop.
     if not valid then
-      table.insert(invalid,request)
+      table.insert(invalid, qitem)
     end
     
     -- Get the first valid request that can be executed now.
@@ -3748,7 +3760,7 @@ function WAREHOUSE:_CheckQueue()
   for _,_request in pairs(invalid) do
     self:E(self.wid..string.format("Deleting invalid request id=%d.",_request.uid))
     self:_DeleteQueueItem(_request, self.queue)
-  end  
+  end
 
   -- Execute request.
   return request
@@ -3767,12 +3779,11 @@ function WAREHOUSE:_SimpleTaskFunction(Function, group)
 
   -- Task script.
   local DCSScript = {}
-  --DCSScript[#DCSScript+1] = string.format('env.info("WAREHOUSE: Simple task function called!") ')
-  --DCSScript[#DCSScript+1] = string.format('local mygroup   = GROUP:Find( ... ) ')                         -- The group that executes the task function. Very handy with the "...".
-  DCSScript[#DCSScript+1] = string.format('local mygroup   = GROUP:FindByName(%s) ', groupname)           -- The group that executes the task function. Very handy with the "...".
-  DCSScript[#DCSScript+1] = string.format('local mystatic  = STATIC:FindByName(%s) ', warehouse)           -- The static that holds the warehouse self object.
-  DCSScript[#DCSScript+1] = string.format('local warehouse = mygroup:GetState(mystatic, "WAREHOUSE") ') -- Get the warehouse self object from the static.
-  DCSScript[#DCSScript+1] = string.format('%s(warehouse, mygroup)', Function)                           -- Call the function, e.g. myfunction.(warehouse,mygroup)  
+  --DCSScript[#DCSScript+1] = string.format('env.info(\"WAREHOUSE: Simple task function called!\") ')
+  DCSScript[#DCSScript+1] = string.format('local mygroup   = GROUP:FindByName(\"%s\") ', groupname)        -- The group that executes the task function. Very handy with the "...".
+  DCSScript[#DCSScript+1] = string.format("local mystatic  = STATIC:FindByName(\"%s\") ", warehouse)       -- The static that holds the warehouse self object.
+  DCSScript[#DCSScript+1] = string.format('local warehouse = mystatic:GetState(mystatic, \"WAREHOUSE\") ') -- Get the warehouse self object from the static.
+  DCSScript[#DCSScript+1] = string.format('%s(mygroup)', Function)                                         -- Call the function, e.g. myfunction.(warehouse,mygroup)  
 
   -- Create task.
   local DCSTask = CONTROLLABLE.TaskWrappedAction(self, CONTROLLABLE.CommandDoScript(self, table.concat(DCSScript)))
@@ -4218,7 +4229,9 @@ function WAREHOUSE:_GetAttribute(groupname)
     elseif tanker then
       attribute=WAREHOUSE.Attribute.AIR_TANKER
     elseif transporthelo then
-      attribute=WAREHOUSE.Attribute.AIR_TRANSPORTHELO      
+      attribute=WAREHOUSE.Attribute.AIR_TRANSPORTHELO
+    elseif attackhelicopter then
+      attribute=WAREHOUSE.Attribute.AIR_ATTACKHELO
     elseif apc then
       attribute=WAREHOUSE.Attribute.GROUND_APC
     elseif truck then
