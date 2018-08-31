@@ -355,34 +355,43 @@ function AI_CARGO_AIRPLANE:onafterDeploy( Airplane, From, Event, To, Airbase, Sp
 end
 
 
---- On after Load event. Checks if cargo is inside the load radius and if so starts the boarding process.
+--- On before Load event. Checks if cargo is inside the load radius and if so starts the boarding process.
 -- @param #AI_CARGO_AIRPLANE self
 -- @param Wrapper.Group#GROUP Airplane Transport plane.
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Wrapper.Point#COORDINATE Coordinate Place where the cargo is guided to if it is inside the load radius.
-function AI_CARGO_AIRPLANE:onafterLoad( Airplane, From, Event, To, Coordinate )
+function AI_CARGO_AIRPLANE:onbeforeLoad( Airplane, From, Event, To, Coordinate )
 
+
+  local Boarding = false
+  
   if Airplane and Airplane:IsAlive() ~= nil then
   
-    for _,_Cargo in pairs( self.CargoSet:GetSet() ) do
-      self:F({_Cargo:GetName()})
-      local Cargo=_Cargo --Cargo.Cargo#CARGO
-      local InRadius = Cargo:IsInLoadRadius( Coordinate )
-      if InRadius then
-
-        -- Is there a cargo still unloaded?
-        if Cargo:IsUnLoaded() == true then
-      
-          self:__Board( 5, Cargo )
-          Cargo:Board( Airplane, 25 )
-          break
+    for _, AirplaneUnit in pairs( Airplane:GetUnits() ) do
+      local AirplaneUnit = AirplaneUnit -- Wrapper.Unit#UNIT
+      for _,_Cargo in pairs( self.CargoSet:GetSet() ) do
+        self:F({_Cargo:GetName()})
+        local Cargo=_Cargo --Cargo.Cargo#CARGO
+        local InRadius = Cargo:IsInLoadRadius( Coordinate )
+        if InRadius then
+  
+          -- Is there a cargo still unloaded?
+          if Cargo:IsUnLoaded() == true then
+        
+            Cargo:Board( AirplaneUnit, 25 )
+            self:__Board( 5, Cargo, AirplaneUnit )
+            Boarding = true
+            break
+          end
         end
+        
       end
-      
     end
   end
+  
+  return Boarding
   
 end
 
@@ -392,17 +401,22 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function AI_CARGO_AIRPLANE:onafterBoard( Airplane, From, Event, To, Cargo )
+-- @param Cargo.Cargo#CARGO Cargo Cargo object.
+-- @param Wrapper.Unit#UNIT AirplaneUnit
+function AI_CARGO_AIRPLANE:onafterBoard( Airplane, From, Event, To, Cargo, AirplaneUnit )
 
   if Airplane and Airplane:IsAlive() then
     
     self:F({ IsLoaded = Cargo:IsLoaded() } )
     
     if not Cargo:IsLoaded() then
-      self:__Board( 10, Cargo )
+      self:__Board( 10, Cargo, AirplaneUnit )
     else
+      local CargoBayFreeWeight = AirplaneUnit:GetCargoBayFreeWeight()
+      self:F({CargoBayFreeWeight=CargoBayFreeWeight})
+
       -- Check if another cargo can be loaded into the airplane.
-      for _,_Cargo in pairs( self.CargoSet:GetSet() ) do
+      for _,_Cargo in UTILS.spairs( self.CargoSet:GetSet(), function( t, a, b ) return t[a]:GetWeight() > t[b]:GetWeight() end ) do
         
         self:F({_Cargo:GetName()})
         local Cargo =_Cargo --Cargo.Cargo#CARGO
@@ -414,7 +428,7 @@ function AI_CARGO_AIRPLANE:onafterBoard( Airplane, From, Event, To, Cargo )
           local InRadius = Cargo:IsInLoadRadius( Airplane:GetCoordinate() )
           if InRadius then
             
-            local CargoBayFreeWeight = Airplane:GetCargoBayFreeWeight()
+            local CargoBayFreeWeight = AirplaneUnit:GetCargoBayFreeWeight()
             --local CargoBayFreeVolume = Airplane:GetCargoBayFreeVolume()
             
             local CargoWeight = Cargo:GetWeight()
@@ -465,18 +479,20 @@ end
 function AI_CARGO_AIRPLANE:onafterUnload( Airplane, From, Event, To )
 
   if Airplane and Airplane:IsAlive() then
-    local Cargos = Airplane:GetCargo()
-    for CargoID, Cargo in pairs( Cargos ) do
-    
-      local Angle = 180
-      local CargoCarrierHeading = Airplane:GetHeading() -- Get Heading of object in degrees.
-      local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
-      self:T( { CargoCarrierHeading, CargoDeployHeading } )
-      local CargoDeployCoordinate = Airplane:GetPointVec2():Translate( 150, CargoDeployHeading )
-    
-       Cargo:UnBoard( CargoDeployCoordinate )
-       Cargo:SetDeployed( true )
-       self:__Unboard( 10, Cargo ) 
+    for _, AirplaneUnit in pairs( Airplane:GetUnits() ) do
+      local Cargos = AirplaneUnit:GetCargo()
+      for CargoID, Cargo in pairs( Cargos ) do
+      
+        local Angle = 180
+        local CargoCarrierHeading = Airplane:GetHeading() -- Get Heading of object in degrees.
+        local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
+        self:T( { CargoCarrierHeading, CargoDeployHeading } )
+        local CargoDeployCoordinate = Airplane:GetPointVec2():Translate( 150, CargoDeployHeading )
+      
+         Cargo:UnBoard( CargoDeployCoordinate )
+         Cargo:SetDeployed( true )
+         self:__Unboard( 10, Cargo ) 
+      end
     end
   end
   
@@ -496,22 +512,24 @@ function AI_CARGO_AIRPLANE:onafterUnboard( Airplane, From, Event, To, Cargo )
     if not Cargo:IsUnLoaded() then
       self:__Unboard( 10, Cargo ) 
     else
-      local Cargos = Airplane:GetCargo()
-      for CargoID, Cargo in pairs( Cargos ) do
-        if Cargo:IsLoaded() then
-          local Angle = 180
-          local CargoCarrierHeading = Airplane:GetHeading() -- Get Heading of object in degrees.
-          local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
-          self:T( { CargoCarrierHeading, CargoDeployHeading } )
-          local CargoDeployCoordinate = Airplane:GetPointVec2():Translate( 150, CargoDeployHeading )
-          Cargo:UnBoard( CargoDeployCoordinate )
-          Cargo:SetDeployed( true )
-          
-          self:__Unboard( 10, Cargo )
-          return
-        end
-      end  
-      self:__Unloaded( 1, Cargo )
+      for _, AirplaneUnit in pairs( Airplane:GetUnits() ) do
+        local Cargos = AirplaneUnit:GetCargo()
+        for CargoID, Cargo in pairs( Cargos ) do
+          if Cargo:IsLoaded() then
+            local Angle = 180
+            local CargoCarrierHeading = Airplane:GetHeading() -- Get Heading of object in degrees.
+            local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
+            self:T( { CargoCarrierHeading, CargoDeployHeading } )
+            local CargoDeployCoordinate = Airplane:GetPointVec2():Translate( 150, CargoDeployHeading )
+            Cargo:UnBoard( CargoDeployCoordinate )
+            Cargo:SetDeployed( true )
+            
+            self:__Unboard( 10, Cargo )
+            return
+          end
+        end  
+        self:__Unloaded( 1, Cargo )
+      end
     end
   end
 end
