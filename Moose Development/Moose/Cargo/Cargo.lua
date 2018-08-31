@@ -1032,7 +1032,11 @@ do -- CARGO_REPRESENTABLE
     self:I( { Desc = Desc } )
     local Weight = math.random( 80, 120 )
     if Desc then
-      Weight = Desc.massEmpty
+      if Desc.typeName == "2B11 mortar" then
+        Weight = 210
+      else
+        Weight = Desc.massEmpty
+      end
     end
 
     self:SetWeight( Weight )      
