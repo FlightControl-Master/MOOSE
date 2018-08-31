@@ -486,7 +486,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.3.1"
+WAREHOUSE.version="0.3.1w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -3564,17 +3564,8 @@ function WAREHOUSE:_CheckRequestNow(request)
   -- Check that a transport units.
   if request.transporttype ~= WAREHOUSE.TransportType.SELFPROPELLED then
 
-    
+    -- Get best transports for this asset pack.
     local _transports=self:_GetTransportsForAssets(request)
-    
-    -- Check if enough transport units are available.
-    if _transports==0 then
-      local text=string.format("Warehouse %s: Request denied! Not enough transport assets currently available.", self.alias)
-      MESSAGE:New(text, 5):ToCoalitionIf(self.coalition, self.Report or self.Debug)
-      self:E(self.wid..text)
-      
-      return false
-    end    
     
     -- Check if at least one transport asset is available.
     if #_transports>0 then
@@ -3607,47 +3598,12 @@ function WAREHOUSE:_CheckRequestNow(request)
       MESSAGE:New(text, 5):ToCoalitionIf(self.coalition, self.Report or self.Debug)
       self:E(self.wid..text)
       
-      return false
-
-    
+      return false    
     end        
-    
-  elseif false then
-  
-    -- Transports in stock.
-    local _transports,_ntransports,_enough=self:_FilterStock(self.stock, WAREHOUSE.Descriptor.ATTRIBUTE, request.transporttype, request.ntransport)
 
-    -- Check if enough transport units are available.
-    if not _enough then
-      local text=string.format("Warehouse %s: Request denied! Not enough transport assets currently available.", self.alias)
-      MESSAGE:New(text, 5):ToCoalitionIf(self.coalition, self.Report or self.Debug)
-      self:E(self.wid..text)
-      
-      return false
-    end
-    
-    -- Check if at least one transport asset is available.
-    if _ntransports>0 then
-    
-      -- Get the attibute of the transport units.
-      local _transportattribute=_transports[1].attribute
-      local _transportcategory=_transports[1].category
-      
-      -- Check available parking for transport units.
-      if self.airbase and (_transportcategory==Group.Category.AIRPLANE or _transportcategory==Group.Category.HELICOPTER) then
-        local Parking=self:_FindParkingForAssets(self.airbase,_transports)
-        if Parking==nil then
-          local text=string.format("Warehouse %s: Request denied! Not enough free parking spots for all transports at the moment.", self.alias)
-          MESSAGE:New(text, 5):ToCoalitionIf(self.coalition, self.Report or self.Debug)
-          self:E(self.wid..text)
-          
-          return false
-        end
-      end
-      
-    end        
   else
-    -- self propelled case.
+  
+    -- Self propelled case. Nothing to do for now.
   
   end
     
@@ -3661,63 +3617,119 @@ function WAREHOUSE:_GetTransportsForAssets(request)
 
   -- Get all transports of the requested type in stock.
   local transports=self:_FilterStock(self.stock, WAREHOUSE.Descriptor.ATTRIBUTE, request.transporttype)
-  
-  local cargoassets=request.cargoassets
-  
-  -- Problems/questions
-  -- 1. Do we have at least one carrier big enough to transport the largest group?
-  --    If not ==> No transport possible since groups cannot be split!
-  --    If yes ==> Tranport possible.
-  -- 2. How many carriers do we need?
-  --    ntransport should be the max number.
-  
-  -- Example 8, 8, 5, 3
-  -- Carriers:
-  -- 2 that can take 8  can be used for 3, 5, 8 
-  -- 1 that can take 6  can be used for 3, 5, -
-  -- 3 that can take 4  can be used for 3, -, -
-  -- 1 that can take 2  can be used for -, -, -
-   
-  -- So the problem becomes:
-  -- How do I minimize the number of "ways" with the constraint of a fixed number of carriers?
-  -- Extreme cases:
-  -- Use just one carrier that can carrier the largest group. I would have to drive n times to get all cargo from A to B.
-  -- 
-   
-  -- The most simple way is to sort the transports in descending order wrt. to their cargo bay size.
-  -- Use largest carriers available until either number of cargo is done in one run or we hit max number of carriers available.
-  
-   
-  -- sort transport carriers w.r.t. cargo bay size.
+
+ -- Copy asset.
+ local cargoassets=UTILS.DeepCopy(request.cargoassets)
+     
+  -- Sort transport carriers w.r.t. cargo bay size.
   local function sort_transports(a,b)
-    return a.cargobay>b.cargobay
+    return a.cargobaymax>b.cargobaymax
   end
   
-  -- sort cargo assets w.r.t. weight in assending order
+  -- Sort cargo assets w.r.t. weight in assending order.
   local function sort_cargoassets(a,b)
     return a.weight>b.weight
   end
   
+  -- Sort tables.
   table.sort(transports, sort_transports)
   table.sort(cargoassets, sort_cargoassets)
+  
+  -- Total cargo bay size of all groups.
+  env.info("Transport capability:")
+  local totalbay=0
+  for i=1,#transports do
+    local transport=transports[i] --#WAREHOUSE.Assetitem
+    for j=1,transport.nunits do 
+      totalbay=totalbay+transport.cargobay[j]
+      env.info(string.format("Cargo bay = %d  (unit=%d)", transport.cargobay[j], j))
+    end
+  end
+  env.info(string.format("Total capacity = %d", totalbay))
 
-  -- Very simple! Only take the largest transports that can carrier the largest cargo.
+  -- Total cargo weight.
+  env.info("Cargo weight:")
+  local totalweight=0
+  for i=1,#cargoassets do
+    local asset=cargoassets[i] --#WAREHOUSE.Assetitem
+    totalweight=totalweight+asset.weight
+    env.info(string.format("weight = %d", asset.weight))
+  end    
+  env.info(string.format("Total weight = %d", totalweight))
+  
+  -- Transports used.
   local used_transports={}
   
-  local maxcargoweight=cargoassets[1].weight
-  
+  -- Loop over all transport groups, largest cargobaymax to smallest.
   for i=1,#transports do
-    local transport=transports[i]  --#WAREHOUSE.Assetitem
-    if transport.cargobay>maxcargoweight and #used_transports<=request.ntransport then
+  
+    -- Shortcut for carrier and cargo bay
+    local transport=transports[i]
+
+    -- Cargo put into carrier.       
+    local putintocarrier={}
+    
+    -- Cargo assigned to this transport group?
+    local used=false
+    
+    -- Loop over all units
+    for k=1,transport.nunits do
+    
+      -- Get cargo bay of this carrier.
+      local cargobay=transport.cargobay[k]
+      
+      -- Loop over cargo assets.
+      for j,asset in pairs(cargoassets) do
+        
+        -- How many times does the cargo fit into the carrier?
+        local n=cargobay/asset.weight
+        
+        -- Cargo fits into carrier
+        if n>=1 then
+          -- Reduce remaining cargobay.
+          cargobay=cargobay-asset.weight
+          env.info(string.format("%s unit %d loads cargo uid=%d: bayempty=%02d, bayloaded = %02d - weight=%02d", transport.templatename, k, asset.uid, transport.cargobay[k], cargobay, asset.weight))
+          
+          -- Remember this cargo and remove it so it does not get loaded into other carriers.
+          table.insert(putintocarrier, j)
+         
+          -- This transport group is used.
+          used=true
+        end
+      
+      end -- loop over assets      
+    end   -- loop over units
+    
+    -- Remove cargo assets from list. Needs to be done back-to-front in oder not to confuse the loop.
+    for j=#putintocarrier,1, -1 do
+      local nput=putintocarrier[j]
+      
+      local cargo=cargoassets[nput]
+      env.info(string.format("cargo id=%d assigned for carrier id=%d", cargo.uid, transport.uid)) 
+      
+      table.remove(cargoassets, nput)
+    end
+    
+    -- Cargo was assined for this carrier.
+    if used then
       table.insert(used_transports, transport)
+    end
+    
+    -- Max number of transport groups reached?
+    if #used_transports>=request.ntransport then
+      break
     end
   end
   
-  for _,_transport in ipairs(used_transports) do
-    local transport=_transport --#WAREHOUSE.Assetitem
-    --env.info("transport used = ", transport.)
-  end
-  
+  -- Debug info.
+  env.info("Used Transports:")
+  for _,transport in pairs(used_transports) do
+    env.info(string.format("%s, cargobaymax=%d, nunits=%d", transport.templatename, transport.cargobaymax, transport.nunits))
+    for _,cargobay in pairs(transport.cargobay) do
+      env.info(string.format("cargobay %d", cargobay))
+    end
+  end  
+
   return used_transports
 end
 
