@@ -1007,6 +1007,17 @@ do -- Cargo
           ["MLRS FDDM"] = 4,
           ["MTLB"] = 25,
           ["TPZ"] = 10,
+          ["Ural-4320 APA-5D"] = 10,
+          ["GAZ-66"] = 8,
+          ["GAZ-3307"] = 12,
+          ["GAZ-3308"] = 14,
+          ["Tigr_233036"] = 6,
+          ["KAMAZ Truck"] = 12,
+          ["KrAZ6322"] = 12,
+          ["M 818"] = 12,
+          ["Ural-375"] = 12,
+          ["Ural-4320-31"] = 14,
+          ["Ural-4320T"] = 14,
         }
     
         local CargoBayWeightLimit = ( Weights[Desc.typeName] or 0 ) * 95
