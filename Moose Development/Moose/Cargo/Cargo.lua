@@ -142,7 +142,16 @@
 -- These cargo objects can then be automatically incorporated within cargo set(s)!!!
 -- In other words, your mission would be reduced to about a few lines of code, providing you with a full dynamic cargo handling mission!
 -- 
+-- MOOSE can create automatically cargo objects, if the name of the cargo contains the **\#CARGO** tag.
+-- When a mission starts, MOOSE will scan all group and static objects it found for the presence of the \#CARGO tag.
+-- When found, MOOSE will declare the object as cargo (create in the background a CARGO_ object, like CARGO_GROUP, CARGO_CRATE or CARGO_SLINGLOAD.
+-- The creation of these CARGO_ objects will allow to be filtered and automatically added in SET_CARGO objects.
+-- In other words, with very minimal code as explained in the above code section, you are able to create vast amounts of cargo objects just from within the editor.
+-- 
 -- What I talk about is this:
+-- 
+--      -- BEFORE THIS SCRIPT STARTS, MOOSE WILL ALREADY HAVE SCANNED FOR OBJECTS WITH THE #CARGO TAG IN THE NAME.
+--      -- FOR EACH OF THESE OBJECT, MOOSE WILL HAVE CREATED CARGO_ OBJECTS LIKE CARGO_GROUP, CARGO_CRATE AND CARGO_SLINGLOAD.
 -- 
 --      HQ = GROUP:FindByName( "HQ", "Bravo" )
 --      
@@ -156,34 +165,40 @@
 --      
 --      TaskDispatcher = TASK_CARGO_DISPATCHER:New( Mission, TransportGroups )
 --      
---      
 --      -- This is the most important now. You setup a new SET_CARGO filtering the relevant type.
 --      -- The actual cargo objects are now created by MOOSE in the background.
---      -- Each cargo is setup in the Mission Editor using the ~CARGO tag in the group name.
+--      -- Each cargo is setup in the Mission Editor using the #CARGO tag in the group name.
 --      -- This allows a truly dynamic setup.
 --      local CargoSetWorkmaterials = SET_CARGO:New():FilterTypes( "Workmaterials" ):FilterStart()
 --      
 --      local WorkplaceTask = TaskDispatcher:AddTransportTask( "Build a Workplace", CargoSetWorkmaterials, "Transport the workers, engineers and the equipment near the Workplace." )
 --      TaskDispatcher:SetTransportDeployZone( WorkplaceTask, ZONE:New( "Workplace" ) )
 --      
---      Helos = { SPAWN:New( "Helicopters 1" ), SPAWN:New( "Helicopters 2" ), SPAWN:New( "Helicopters 3" ), SPAWN:New( "Helicopters 4" ), SPAWN:New( "Helicopters 5" ) }
---      
---      EnemyHelos = { SPAWN:New( "Enemy Helicopters 1" ), SPAWN:New( "Enemy Helicopters 2" ), SPAWN:New( "Enemy Helicopters 3" ) }
---      
---      function WorkplaceTask:OnAfterCargoDeployed( From, Event, To, TaskUnit, Cargo, DeployZone )
---        Helos[ math.random(1,#Helos) ]:Spawn()
---        EnemyHelos[ math.random(1,#EnemyHelos) ]:Spawn()
---      
---      end
--- 
--- Here the `CargoSetWorkmaterials` is provided as a parameter to the cargo task dispatcher object WorkplaceTask`.
+-- The above code example has the `CargoSetWorkmaterials`, which is a SET_CARGO collection and will include the CARGO_ objects of the type "Workmaterials".    
 -- And there is NO cargo object actually declared within the script! However, if you would open the mission, there would be hundreds of cargo objects...
 -- 
--- HOW? => Through a naming convention introduced. Name infantry groups in a special manner, and it can behave as MOOSE cargo!
+-- The \#CARGO tag even allows for several options to be specified, which are important to learn.
+-- For example, the following #CARGO naming in the group name of the object, will create a group cargo object for MOOSE.
 -- 
--- 5.1) Name MOOSE cargo objects within the mission editor!
+--   `Infantry #CARGO(T=Workmaterials,RR=500,NR=25)´
 -- 
+-- This will create a cargo object:
 -- 
+--    * with the group name `Infantry #CARGO`
+--    * is of type `Workmaterials`
+--    * will report when a carrier is within 500 meters
+--    * will board to carriers when the carrier is within 500 meters from the cargo object
+--    * will dissapear when the cargo is within 25 meters from the carrier during boarding
+-- 
+-- So the overall syntax of the #CARGO naming tag and arguments are:
+-- 
+--   `GroupName #CARGO(T=CargoTypeName,RR=Range,NR=Range)`
+-- 
+--    * **T=** Provide a text that contains the type name of the cargo object. This type name can be used to filter cargo within a SET_CARGO object.
+--    * **RR=** Provide the minimal range in meters when the report to the carrier, and board to the carrier.
+--      Note that this option is optional, so can be omitted. The default value of the RR is 250 meters.
+--    * **NR=** Provide the maximum range in meters when the cargo units will be boarded within the carrier during boarding.
+--      Note that this option is optional, so can be omitted. The default value of the RR is 10 meters.
 -- 
 -- ===
 -- 
