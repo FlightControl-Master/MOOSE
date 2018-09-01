@@ -366,7 +366,9 @@ WAREHOUSE = {
 -- @field DCS#Object.Desc DCSdesc All DCS descriptors.
 -- @field #WAREHOUSE.Attribute attribute Generalized attribute of the group.
 -- @field #boolean transporter If true, the asset is able to transport troops.
--- @field #number cargobay Weight in kg that fits in the cargo bay of one asset unit.
+-- @field #table cargobay Array of cargo bays of all units in an asset group.
+-- @field #number cargobaytot Total weight in kg that fits in the cargo bay of all asset group units.
+-- @field #number cargobaymax Largest cargo bay of all units in the group.
 
 --- Item of the warehouse queue table.
 -- @type WAREHOUSE.Queueitem
@@ -442,19 +444,19 @@ WAREHOUSE.Attribute = {
   AIR_TANKER="Air_Tanker",
   AIR_TRANSPORTHELO="Air_TransportHelo",
   AIR_ATTACKHELO="Air_AttackHelo",
-  AIR_OTHER="Air_Other",
+  AIR_OTHER="Air_OtherAir",
   GROUND_APC="Ground_APC",
   GROUND_TRUCK="Ground_Truck",
   GROUND_INFANTRY="Ground_Infantry",
   GROUND_ARTILLERY="Ground_Artillery",
   GROUND_TANK="Ground_Tank",
   GROUND_TRAIN="Ground_Train",
-  GROUND_OTHER="Ground_Other",
+  GROUND_OTHER="Ground_OtherGround",
   NAVAL_AIRCRAFTCARRIER="Naval_AircraftCarrier",
   NAVAL_WARSHIP="Naval_WarShip",
   NAVAL_ARMEDSHIP="Naval_ArmedShip",
   NAVAL_UNARMEDSHIP="Naval_UnarmedShip",
-  NAVAL_OTHER="Naval_Other",
+  NAVAL_OTHER="Naval_OtherNaval",
   UNKNOWN="Unknown",
 }
 
@@ -486,7 +488,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.3.1w"
+WAREHOUSE.version="0.3.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -1276,7 +1278,8 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
     group=GROUP:FindByName(group)
   end
   
-  self:E(string.format("Adding %d assets of group %s.", n, group:GetName()))
+  -- Debug info.
+  self:I(self.wid..string.format("Adding %d assets of group %s to warehouse %s.", n, tostring(group:GetName()), self.alias))
   
   if group then
     
@@ -1314,7 +1317,7 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
     -- Need to create a "zombie" template group maybe?
     if group:IsAlive()==true then
       self:E(self.wid..string.format("Destroying group %s.", group:GetName()))
-      group:Destroy()
+      group:Destroy(true)
     end
     
   end
@@ -1382,8 +1385,10 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute)
   -- Get weight in kg
   env.info("FF get weight")
   local weight=0
-  local cargobay=0
-  for _,_unit in pairs(group:GetUnits()) do
+  local cargobay={}
+  local cargobaytot=0
+  local cargobaymax=0
+  for _i,_unit in pairs(group:GetUnits()) do
     local unit=_unit --Wrapper.Unit#UNIT
     local Desc=unit:GetDesc()
     self:E({UnitDesc=Desc})
@@ -1391,8 +1396,14 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute)
     if unitweight then
       weight=weight+unitweight
       env.info("FF weight = "..weight)
-    end    
-    cargobay=unit:GetCargoBayFreeWeight()
+    end
+    local bay=unit:GetCargoBayFreeWeight()
+    env.info("FF cargo bay = "..bay)
+    table.insert(cargobay, bay)
+    cargobaytot=cargobaytot+bay
+    if bay>cargobaymax then
+      cargobaymax=bay
+    end
   end
 
   -- Set/get the generalized attribute.
@@ -1423,6 +1434,8 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute)
     asset.attribute=attribute
     asset.transporter=false  -- not used yet
     asset.cargobay=cargobay
+    asset.cargobaytot=cargobaytot
+    asset.cargobaymax=cargobaymax
     
     if i==1 then
       self:_AssetItemInfo(asset)
@@ -1453,7 +1466,8 @@ function WAREHOUSE:_AssetItemInfo(asset)
   text=text..string.format("Range max     = %5.2f km\n", asset.range/1000)
   text=text..string.format("Size  max     = %5.2f m\n", asset.size)
   text=text..string.format("Weight total  = %5.2f kg\n", asset.weight)
-  text=text..string.format("Cargo bay     = %5.2f kg\n", asset.cargobay)
+  text=text..string.format("Cargo bay tot = %5.2f kg\n", asset.cargobaytot)
+  text=text..string.format("Cargo bay max = %5.2f kg\n", asset.cargobaymax)
   self:E(self.wid..text)
   self:E({DCSdesc=asset.DCSdesc})
   self:E({Template=asset.template})
@@ -1575,7 +1589,7 @@ function WAREHOUSE:_SpawnAssetAircraft(asset, request, parking, uncontrolled)
     local AirbaseCategory = self.category
     
     -- Check enough parking spots.
-    if AirbaseCategory == Airbase.Category.HELIPAD or AirbaseCategory == Airbase.Category.SHIP then
+    if AirbaseCategory==Airbase.Category.HELIPAD or AirbaseCategory==Airbase.Category.SHIP then
       --TODO Figure out what's necessary in this case.
     
     else
@@ -1585,6 +1599,7 @@ function WAREHOUSE:_SpawnAssetAircraft(asset, request, parking, uncontrolled)
         self:E(text)
         return nil
       end
+      
     end
         
     -- Position the units.
@@ -2010,15 +2025,15 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   local _nearradius=nil
   
   if Request.transporttype==WAREHOUSE.TransportType.AIRPLANE then
-    _loadradius=5000
+    _loadradius=10000
   elseif Request.transporttype==WAREHOUSE.TransportType.HELICOPTER then
-    _loadradius=500
+    _loadradius=1000
   elseif Request.transporttype==WAREHOUSE.TransportType.APC then
-    _loadradius=100
+    _loadradius=1000
   end
   
   -- Empty cargo group set.
-  CargoGroups = SET_CARGO:New()
+  CargoGroups = SET_CARGO:New():FilterDeads()
   
   -- Add cargo groups to set.
   for _i,_group in pairs(_spawngroups:GetSetObjects()) do
@@ -2214,6 +2229,8 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
     -- Get group obejet.
     local group=Cargo:GetObject() --Wrapper.Group#GROUP
+    
+    --Cargo:Load()
 
     -- Get warehouse state.
     local warehouse=Carrier:GetState(Carrier, "WAREHOUSE") --#WAREHOUSE
@@ -2273,8 +2290,8 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
   
   -- Now we try to find all parking spots for all cargo groups in advance. Due to the for loop, the parking spots do not get updated while spawning.
   local Parking={}
-  if  _cargocategory==Group.Category.AIRPLANE or _cargocategory==Group.Category.HELICOPTER then
-    Parking=self:_FindParkingForAssets(self.airbase,_assetstock)
+  if _cargocategory==Group.Category.AIRPLANE or _cargocategory==Group.Category.HELICOPTER then
+    Parking=self:_FindParkingForAssets(self.airbase,_assetstock) or {}
   end
   
   -- Spawn aircraft in uncontrolled state if request comes from the same warehouse.
@@ -2312,7 +2329,11 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
       --TODO: spawn only so many groups as there are parking spots. Adjust request and create a new one with the reduced number!
     
       -- Spawn air units.
-      _group=self:_SpawnAssetAircraft(_assetitem, Request, Parking[_assetitem.uid], UnControlled)
+      if Parking[_assetitem.uid] then
+        _group=self:_SpawnAssetAircraft(_assetitem, Request, Parking[_assetitem.uid], UnControlled)
+      else
+        _group=self:_SpawnAssetAircraft(_assetitem, Request, nil, UnControlled)
+      end
       
     elseif _assetitem.category==Group.Category.TRAIN then
     
@@ -2905,17 +2926,22 @@ function WAREHOUSE:_OnEventArrived(EventData)
       -- If all IDs are good we can assume it is a warehouse asset.
       if wid~=nil and aid~=nil and rid~=nil then
       
-        -- Debug info.
-        local text=string.format("Air asset group %s arrived at warehouse %s.", group:GetName(), self.alias)
-        --MESSAGE:New
-        self:E(self.wid..text)
-        
-        -- Trigger arrived event for this group. Note that each unit of a group will trigger this event. So the onafterArrived function needs to take care of that.
-        -- Actually, we only take the first unit of the group that arrives. If it does, we assume the whole group arrived, which might not be the case, since
-        -- some units might still be taxiing or whatever. Therefore, we add 10 seconds for each additional unit of the group until the first arrived event is triggered.
-        local nunits=#group:GetUnits()
-        local dt=10*(nunits-1)+1  -- one unit = 1 sec, two units = 11 sec, three units = 21 sec before we call the group arrived.
-        self:__Arrived(dt, group)
+        -- Check that warehouse ID is right.
+        if self.uid==wid then
+      
+          -- Debug info.
+          local text=string.format("Air asset group %s arrived at warehouse %s.", group:GetName(), self.alias)
+          MESSAGE:New(text, 20):ToCoalitionIf(self.coalition, self.Report or self.Debug)
+          self:I(self.wid..text)
+          
+          -- Trigger arrived event for this group. Note that each unit of a group will trigger this event. So the onafterArrived function needs to take care of that.
+          -- Actually, we only take the first unit of the group that arrives. If it does, we assume the whole group arrived, which might not be the case, since
+          -- some units might still be taxiing or whatever. Therefore, we add 10 seconds for each additional unit of the group until the first arrived event is triggered.
+          local nunits=#group:GetUnits()
+          local dt=10*(nunits-1)+1  -- one unit = 1 sec, two units = 11 sec, three units = 21 sec before we call the group arrived.
+          self:__Arrived(dt, group)
+          
+        end
         
       else
         self:T3(string.format("Group that arrived did not belong to a warehouse. Warehouse ID=%s, Asset ID=%s, Request ID=%s.", tostring(wid), tostring(aid), tostring(rid)))
@@ -3375,13 +3401,15 @@ function WAREHOUSE:_CheckRequestValid(request)
         self:E(string.format("Asset attribute = %s, terminal type = %d, spots at departure = %d, destination = %d", asset.attribute, termtype, np_departure, np_destination))
         
         -- Not enough parking at sending warehouse.
+        --if (np_departure < request.nasset) and not (self.category==Airbase.Category.SHIP or self.category==Airbase.Category.HELIPAD) then
         if np_departure < request.nasset then
           self:E(string.format("ERROR: Incorrect request. Not enough parking spots of terminal type %d at warehouse. Available spots = %d.", termtype, np_departure))
           valid=false    
         end
 
         -- Not enough parking at requesting warehouse.
-        if np_destination < request.nasset then
+        --if np_destination < request.nasset then
+        if np_destination == 0 then -- TODO: maybe this is just right for FAPS/SHIPS
           self:E(string.format("ERROR: Incorrect request. Not enough parking spots of terminal type %d at requesting warehouse. Available spots = %d.", termtype, np_destination))
           valid=false    
         end        
@@ -3544,7 +3572,10 @@ function WAREHOUSE:_CheckRequestNow(request)
     
     -- Check available parking for air asset units.    
     if self.airbase and (_assetcategory==Group.Category.AIRPLANE or _assetcategory==Group.Category.HELICOPTER) then
+    
       local Parking=self:_FindParkingForAssets(self.airbase,_assets)
+      
+      --if Parking==nil and not (self.category==Airbase.Category.HELIPAD) then
       if Parking==nil then
         local text=string.format("Warehouse %s: Request denied! Not enough free parking spots for all assets at the moment.", self.alias)
         MESSAGE:New(text, 5):ToCoalitionIf(self.coalition, self.Report or self.Debug)
@@ -3552,6 +3583,7 @@ function WAREHOUSE:_CheckRequestNow(request)
         
         return false
       end
+      
     end
     
     -- Set chosen assets.
@@ -3636,26 +3668,26 @@ function WAREHOUSE:_GetTransportsForAssets(request)
   table.sort(cargoassets, sort_cargoassets)
   
   -- Total cargo bay size of all groups.
-  env.info("Transport capability:")
+  self:T2(self.wid.."Transport capability:")
   local totalbay=0
   for i=1,#transports do
     local transport=transports[i] --#WAREHOUSE.Assetitem
     for j=1,transport.nunits do 
       totalbay=totalbay+transport.cargobay[j]
-      env.info(string.format("Cargo bay = %d  (unit=%d)", transport.cargobay[j], j))
+      self:T2(self.wid..string.format("Cargo bay = %d  (unit=%d)", transport.cargobay[j], j))
     end
   end
-  env.info(string.format("Total capacity = %d", totalbay))
+  self:T2(self.wid..string.format("Total capacity = %d", totalbay))
 
-  -- Total cargo weight.
-  env.info("Cargo weight:")
-  local totalweight=0
+  -- Total cargo weight of all assets to transports.
+  self:T2(self.wid.."Cargo weight:")
+  local totalcargoweight=0
   for i=1,#cargoassets do
     local asset=cargoassets[i] --#WAREHOUSE.Assetitem
-    totalweight=totalweight+asset.weight
-    env.info(string.format("weight = %d", asset.weight))
+    totalcargoweight=totalcargoweight+asset.weight
+    self:T2(self.wid..string.format("weight = %d", asset.weight))
   end    
-  env.info(string.format("Total weight = %d", totalweight))
+  self:T2(self.wid..string.format("Total weight = %d", totalcargoweight))
   
   -- Transports used.
   local used_transports={}
@@ -3688,7 +3720,7 @@ function WAREHOUSE:_GetTransportsForAssets(request)
         if n>=1 then
           -- Reduce remaining cargobay.
           cargobay=cargobay-asset.weight
-          env.info(string.format("%s unit %d loads cargo uid=%d: bayempty=%02d, bayloaded = %02d - weight=%02d", transport.templatename, k, asset.uid, transport.cargobay[k], cargobay, asset.weight))
+          self:T3(self.wid..string.format("%s unit %d loads cargo uid=%d: bayempty=%02d, bayloaded = %02d - weight=%02d", transport.templatename, k, asset.uid, transport.cargobay[k], cargobay, asset.weight))
           
           -- Remember this cargo and remove it so it does not get loaded into other carriers.
           table.insert(putintocarrier, j)
@@ -3705,7 +3737,7 @@ function WAREHOUSE:_GetTransportsForAssets(request)
       local nput=putintocarrier[j]
       
       local cargo=cargoassets[nput]
-      env.info(string.format("cargo id=%d assigned for carrier id=%d", cargo.uid, transport.uid)) 
+      self:T2(self.wid..string.format("Cargo id=%d assigned for carrier id=%d", cargo.uid, transport.uid)) 
       
       table.remove(cargoassets, nput)
     end
@@ -3716,19 +3748,26 @@ function WAREHOUSE:_GetTransportsForAssets(request)
     end
     
     -- Max number of transport groups reached?
-    if #used_transports>=request.ntransport then
+    if #used_transports >= request.ntransport then
       break
     end
   end
   
   -- Debug info.
-  env.info("Used Transports:")
-  for _,transport in pairs(used_transports) do
-    env.info(string.format("%s, cargobaymax=%d, nunits=%d", transport.templatename, transport.cargobaymax, transport.nunits))
-    for _,cargobay in pairs(transport.cargobay) do
-      env.info(string.format("cargobay %d", cargobay))
-    end
-  end  
+  local text=string.format("Used Transports for request %d to warehouse %s:\n", request.uid, request.warehouse.alias)
+  local totalcargobay=0  
+  for _i,_transport in pairs(used_transports) do
+    local transport=_transport --#WAREHOUSE.Assetitem
+    text=text..string.format("%d) %s: cargobay tot = %d kg, cargobay max = %d kg, nunits=%d\n", _i, transport.unittype, transport.cargobaytot, transport.cargobaymax, transport.nunits)
+    totalcargobay=totalcargobay+transport.cargobaytot
+    --for _,cargobay in pairs(transport.cargobay) do
+    --  env.info(string.format("cargobay %d", cargobay))
+    --end
+  end
+  text=text..string.format("Total cargo bay capacity = %.1f kg\n", totalcargobay)
+  text=text..string.format("Total cargo weight       = %.1f kg\n", totalcargoweight)
+  text=text..string.format("Minimum number of runs   = %.1f", totalcargoweight/totalcargobay)
+  self:I(self.wid..text)  
 
   return used_transports
 end
@@ -3753,10 +3792,11 @@ function WAREHOUSE:_CheckQueue()
     local valid=self:_CheckRequestValid(qitem)
     
     -- Check if request is possible now.
-    local okay=self:_CheckRequestNow(qitem)
-    
-    -- Remember invalid request and delete later in order not to confuse the loop.
-    if not valid then
+    local okay=false
+    if valid then      
+      okay=self:_CheckRequestNow(qitem)
+    else
+      -- Remember invalid request and delete later in order not to confuse the loop.
       table.insert(invalid, qitem)
     end
     
@@ -4408,11 +4448,23 @@ function WAREHOUSE:_GetStockAssetsText(messagetoall)
   -- Get assets in stock.
   local _data=self:GetStockInfo(self.stock)
   
+  --[[
+  local function _sort(a,b)
+    return a<b
+  end  
+  table.sort(_data, _sort)
+  ]]
+  
   -- Text.  
   local text="Stock:\n"
+  local total=0
   for _attribute,_count in pairs(_data) do
-    text=text..string.format("%s = %d\n", _attribute,_count)
+    local attribute=tostring(UTILS.Split(_attribute, "_")[2])
+    text=text..string.format("%s = %d\n", attribute,_count)
+    total=total+_count
   end
+  text=text..string.format("===================\n")
+  text=text..string.format("Total = %d\n", total)
   text=text..string.format("------------------------------------------------------\n")
   
   -- Send message?
@@ -4477,6 +4529,79 @@ end
 
 --- Make a flight plan from a departure to a destination airport. 
 -- @param #WAREHOUSE self
+-- @param #number D Total distance in meters from Departure to holding point at destination.
+-- @param #number alphaC Climb angle in rad.
+-- @param #number alphaD Descent angle in rad.
+-- @param #number Hdep AGL altitude of departure point.
+-- @param #number Hdest AGL altitude of destination point.
+-- @param #number Deltahhold Relative altitude of holding point above destination.
+function WAREHOUSE:_MakeFlightplan(D, alphaC, alphaD, Hdep, Hdest, Deltahhold)
+
+  local Hhold=Hdest+Deltahhold
+  local hdest=Hdest-Hdep
+  local hhold=hdest+Deltahhold
+  
+  local Dp=math.sqrt(D^2 + hhold^2)
+  
+  local alphaS=math.atan(hdest/D) -- slope angle
+  local alphaH=math.atan(hhold/D) -- angle to holding point (could be necative!)
+  
+  local alphaCp=alphaC-alphaH  -- climb angle with slope
+  local alphaDp=alphaD+alphaH  -- descent angle with slope
+  
+  -- ASA triangle.
+  local gammap=math.pi-alphaCp-alphaDp
+  local sCp=Dp*math.sin(alphaDp)/math.sin(gammap)
+  local sDp=Dp*math.sin(alphaCp)/math.sin(gammap)
+  
+  -- Max height from departure.
+  local hmax=sCp*math.sin(alphaC)
+  
+  -- Debug info.
+  if self.Debug then
+    env.info(string.format("Hdep    = %.3f km", Hdep/1000))
+    env.info(string.format("Hdest   = %.3f km", Hdest/1000))
+    env.info(string.format("DetaHold= %.3f km", Deltahhold/1000))
+    env.info()
+    env.info(string.format("D       = %.3f km", D/1000))
+    env.info(string.format("Dp      = %.3f km", Dp/1000))
+    env.info()
+    env.info(string.format("alphaC  = %.3f Deg", math.deg(alphaC)))
+    env.info(string.format("alphaCp = %.3f Deg", math.deg(alphaCp)))
+    env.info()
+    env.info(string.format("alphaD  = %.3f Deg", math.deg(alphaD)))
+    env.info(string.format("alphaDp = %.3f Deg", math.deg(alphaDp)))
+    env.info()
+    env.info(string.format("alphaS  = %.3f Deg", math.deg(alphaS)))
+    env.info(string.format("alphaH  = %.3f Deg", math.deg(alphaH)))
+    env.info()
+    env.info(string.format("sCp      = %.3f km", sCp/1000))
+    env.info(string.format("sDp      = %.3f km", sDp/1000))
+    env.info()
+    env.info(string.format("hmax     = %.3f km", hmax/1000))
+    env.info()
+    
+    -- Descent height
+    local hdescent=hmax-hhold
+    
+    local dClimb   = hmax/math.tan(alphaC)
+    local dDescent = (hmax-hhold)/math.tan(alphaD)
+    local dCruise  = D-dClimb-dDescent
+    
+    env.info(string.format("hmax     = %.3f km", hmax/1000))
+    env.info(string.format("hdescent = %.3f km", hdescent/1000))
+    env.info(string.format("Dclimb   = %.3f km", dClimb/1000))
+    env.info(string.format("Dcruise  = %.3f km", dCruise/1000))
+    env.info(string.format("Ddescent = %.3f km", dDescent/1000))
+    env.info()
+  end
+  
+  return hmax
+end
+
+
+--- Make a flight plan from a departure to a destination airport. 
+-- @param #WAREHOUSE self
 -- @param #WAREHOUSE.Assetitem asset 
 -- @param Wrapper.Airbase#AIRBASE departure Departure airbase.
 -- @param Wrapper.Airbase#AIRBASE destination Destination airbase.
@@ -4484,10 +4609,10 @@ end
 -- @return #table Table of flightplan coordinates. 
 function WAREHOUSE:_GetFlightplan(asset, departure, destination)
   
-  -- Parameters in SI units.
+  -- Parameters in SI units (m/s, m).
   local Vmax=asset.speedmax/3.6
   local Range=asset.range
-  local _category=asset.category
+  local category=asset.category
   local ceiling=asset.DCSdesc.Hmax
   local Vymax=asset.DCSdesc.VyMax
     
@@ -4516,119 +4641,103 @@ function WAREHOUSE:_GetFlightplan(asset, departure, destination)
   local VyClimb=math.min(7.6, Vymax)
   
   -- Climb angle in rad.
-  local AlphaClimb=math.asin(VyClimb/VxClimb)
+  --local AlphaClimb=math.asin(VyClimb/VxClimb)
+  local AlphaClimb=math.rad(4)
   
   -- Descent angle in rad. Moderate 4 degrees.
   local AlphaDescent=math.rad(4)
   
   -- Expected cruise level (peak of Gaussian distribution)
   local FLcruise_expect=150*RAT.unit.FL2m
+  if category==Group.Category.HELICOPTER then 
+    FLcruise_expect=1000 -- 1000 m ASL
+  end
   
-  --- DEPARTURE AIRPORT
+  -------------------------
+  --- DEPARTURE AIRPORT ---
+  -------------------------
   
   -- Coordinates of departure point.
   local Pdeparture=departure:GetCoordinate()
   
   -- Height ASL of departure point.
   local H_departure=Pdeparture.y
-   
-  --- DESTINATION AIRPORT
+  
+  --------------------------- 
+  --- DESTINATION AIRPORT ---
+  ---------------------------
   
   -- Position of destination airport.
   local Pdestination=destination:GetCoordinate()
   
   -- Height ASL of destination airport/zone.
   local H_destination=Pdestination.y
-    
-  --- DESCENT/HOLDING POINT
+   
+  -----------------------------
+  --- DESCENT/HOLDING POINT ---
+  -----------------------------
 
   -- Get a random point between 5 and 10 km away from the destination.
   local Rhmin=5000
   local Rhmax=10000
-  if _category==Group.Category.HELICOPTER then
-    -- For helos we set a distance between 500 to 1000 m.
+  
+  -- For helos we set a distance between 500 to 1000 m.
+  if category==Group.Category.HELICOPTER then    
     Rhmin=500
     Rhmax=1000
   end
   
   -- Coordinates of the holding point. y is the land height at that point.
-  --local Vholding=Pdestination:GetRandomVec2InRadius(Rhmax, Rhmin)
-  --local Pholding=COORDINATE:NewFromVec2(Vholding)
   local Pholding=Pdestination:GetRandomCoordinateInRadius(Rhmax, Rhmin)
+
+  -- Distance from holding point to final destination (not used).
+  local d_holding=Pholding:Get2DDistance(Pdestination)
   
   -- AGL height of holding point.
   local H_holding=Pholding.y
   
+  ---------------
+  --- GENERAL ---
+  ---------------
+  
+  -- We go directly to the holding point not the destination airport. From there, planes are guided by DCS to final approach.
+  local heading=Pdeparture:HeadingTo(Pholding)
+  local d_total=Pdeparture:Get2DDistance(Pholding)
+
+  ------------------------------
+  --- Holding Point Altitude ---
+  ------------------------------
+  
   -- Holding point altitude. For planes between 1600 and 2400 m AGL. For helos 160 to 240 m AGL.
   local h_holding=1200
-  if _category==Group.Category.HELICOPTER then
+  if category==Group.Category.HELICOPTER then
     h_holding=150
   end
   h_holding=UTILS.Randomize(h_holding, 0.2)
   
-  -- This is the actual height ASL of the holding point we want to fly to
+  -- Max holding altitude.
+  local DeltaholdingMax=self:_MakeFlightplan(d_total, AlphaClimb, AlphaDescent, H_departure, H_holding, 0)
+  
+  if h_holding>DeltaholdingMax then
+    h_holding=math.abs(DeltaholdingMax)
+  end
+  
+  -- This is the height ASL of the holding point we want to fly to.
   local Hh_holding=H_holding+h_holding
-    
-  -- Distance from holding point to final destination.
-  local d_holding=Pholding:Get2DDistance(Pdestination)
   
-  -- GENERAL
-  local heading=Pdeparture:HeadingTo(Pdestination)
-  local d_total=Pdeparture:Get2DDistance(Pholding)
+  ---------------------------
+  --- Max Flight Altitude ---
+  ---------------------------  
+  
+  -- Get max flight altitude relative to H_departure.
+  local h_max=self:_MakeFlightplan(d_total, AlphaClimb, AlphaDescent, H_departure, H_holding, h_holding)
 
-  --------------------------------------------
-  
-  -- Height difference between departure and destination.
-  local deltaH=math.abs(H_departure-Hh_holding)
-  
-  -- Slope between departure and destination.
-  local phi = math.atan(deltaH/d_total)
-  
-  -- Adjusted climb/descent angles.
-  local phi_climb
-  local phi_descent
-  if (H_departure > Hh_holding) then
-    phi_climb=AlphaClimb+phi
-    phi_descent=AlphaDescent-phi
-  else
-    phi_climb=AlphaClimb-phi
-    phi_descent=AlphaDescent+phi
-  end
-
-  -- Total distance including slope.
-  local D_total=math.sqrt(deltaH*deltaH+d_total*d_total)
-  
-  -- SSA triangle for sloped case.
-  local gamma=math.rad(180)-phi_climb-phi_descent
-  local a = D_total*math.sin(phi_climb)/math.sin(gamma)
-  local b = D_total*math.sin(phi_descent)/math.sin(gamma)
-  local hphi_max  = b*math.sin(phi_climb)
-  local hphi_max2 = a*math.sin(phi_descent)
-  
-  -- Height of triangle.
-  local h_max1 = b*math.sin(AlphaClimb)
-  local h_max2 = a*math.sin(AlphaDescent)
-  
-  -- Max height relative to departure or destination.
-  local h_max
-  if (H_departure > Hh_holding) then
-    h_max=math.min(h_max1, h_max2)
-  else
-    h_max=math.max(h_max1, h_max2)
-  end
-  
-  -- Max flight level aircraft can reach for given angles and distance.
+  -- Max flight level ASL aircraft can reach for given angles and distance.
   local FLmax = h_max+H_departure
       
   --CRUISE  
   -- Min cruise alt is just above holding point at destination or departure height, whatever is larger.
   local FLmin=math.max(H_departure, Hh_holding)
-   
-  -- For helicopters we take cruise alt between 50 to 1000 meters above ground. Default cruise alt is ~150 m.
-  if _category==Group.Category.HELICOPTER then  
-    FLmin=math.max(H_departure, H_destination)+50
-    FLmax=math.max(H_departure, H_destination)+1000
-  end
   
   -- Ensure that FLmax not above its service ceiling.
   FLmax=math.min(FLmax, ceiling)
@@ -4652,34 +4761,48 @@ function WAREHOUSE:_GetFlightplan(asset, departure, destination)
   -- Climb and descent heights.
   local h_climb   = FLcruise - H_departure
   local h_descent = FLcruise - Hh_holding
-  
-  -- Distances.
+    
+  -- Get distances.
   local d_climb   = h_climb/math.tan(AlphaClimb)
   local d_descent = h_descent/math.tan(AlphaDescent)
   local d_cruise  = d_total-d_climb-d_descent
   
   -- Debug.
   local text=string.format("Flight plan:\n")
-  text=text..string.format("Vx max       = %d\n", Vmax)
-  text=text..string.format("Vx climb     = %d\n", VxClimb)
-  text=text..string.format("Vx cruise    = %d\n", VxCruise)
-  text=text..string.format("Vx descent   = %d\n", VxDescent)
-  text=text..string.format("Vx holding   = %d\n", VxHolding)
-  text=text..string.format("Vx final     = %d\n", VxFinal)
-  text=text..string.format("Dist climb   = %d\n", d_climb)
-  text=text..string.format("Dist cruise  = %d\n", d_cruise)
-  text=text..string.format("Dist descent = %d\n", d_descent)
-  text=text..string.format("Dist total   = %d\n", d_total)
-  text=text..string.format("FL min       = %d\n", FLmin)
-  text=text..string.format("FL cruise *  = %d\n", FLcruise)
-  text=text..string.format("FL max       = %d\n", FLmax)
-  text=text..string.format("Ceiling      = %d\n", ceiling)
+  text=text..string.format("Vx max        = %.2f km/h\n", Vmax*3.6)
+  text=text..string.format("Vx climb      = %.2f km/h\n", VxClimb*3.6)
+  text=text..string.format("Vx cruise     = %.2f km/h\n", VxCruise*3.6)
+  text=text..string.format("Vx descent    = %.2f km/h\n", VxDescent*3.6)
+  text=text..string.format("Vx holding    = %.2f km/h\n", VxHolding*3.6)
+  text=text..string.format("Vx final      = %.2f km/h\n", VxFinal*3.6)
+  text=text..string.format("Vy max        = %.2f m/s\n",  Vymax)
+  text=text..string.format("Vy climb      = %.2f m/s\n",  VyClimb)
+  text=text..string.format("Alpha Climb   = %.2f Deg\n",  math.deg(AlphaClimb))
+  text=text..string.format("Alpha Descent = %.2f Deg\n",  math.deg(AlphaDescent))
+  text=text..string.format("Dist climb    = %.3f km\n",   d_climb/1000)
+  text=text..string.format("Dist cruise   = %.3f km\n",   d_cruise/1000)
+  text=text..string.format("Dist descent  = %.3f km\n",   d_descent/1000)
+  text=text..string.format("Dist total    = %.3f km\n",   d_total/1000)
+  text=text..string.format("h_climb       = %.3f km\n",   h_climb/1000)
+  text=text..string.format("h_desc        = %.3f km\n",   h_descent/1000)
+  text=text..string.format("h_holding     = %.3f km\n",   h_holding/1000)
+  text=text..string.format("h_max         = %.3f km\n",   h_max/1000)
+  text=text..string.format("FL min        = %.3f km\n",   FLmin/1000)
+  text=text..string.format("FL expect     = %.3f km\n",   FLcruise_expect/1000)
+  text=text..string.format("FL cruise *   = %.3f km\n",   FLcruise/1000)
+  text=text..string.format("FL max        = %.3f km\n",   FLmax/1000)
+  text=text..string.format("Ceiling       = %.3f km\n",   ceiling/1000)
+  text=text..string.format("Max range     = %.3f km\n",   Range/1000)
   env.info(text)
     
   -- Ensure that cruise distance is positve. Can be slightly negative in special cases. And we don't want to turn back.
   if d_cruise<0 then
     d_cruise=100
   end
+
+  ------------------------
+  --- Create Waypoints ---
+  ------------------------
 
   -- Waypoints and coordinates
   local wp={}
@@ -4721,7 +4844,21 @@ function WAREHOUSE:_GetFlightplan(asset, departure, destination)
   --- Final destination.  
   c[#c+1]=Pdestination
   wp[#wp+1]=Pcruise2:WaypointAir("RADIO", COORDINATE.WaypointType.Land, COORDINATE.WaypointAction.Landing, VxFinal, true,  destination, nil, "Final Destination")
-    
+  
+
+  -- Mark points at waypoints for debugging.
+  if self.Debug then
+    for i,coord in pairs(c) do
+      local coord=coord --Core.Point#COORDINATE
+      env.info(i)
+      local dist=0
+      if i>1 then
+        dist=coord:Get2DDistance(c[i-1])
+      end
+      coord:MarkToAll(string.format("Waypoint %i, dist = %.2f km",i, dist/1000))
+    end  
+  end
+      
   return wp,c
 end
 
