@@ -827,16 +827,6 @@ function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinat
     Tasks[#Tasks+1] = Helicopter:TaskLandAtVec2( CoordinateTo:GetVec2() )
     Route[#Route].task = Helicopter:TaskCombo( Tasks )
     
-    -- FF
-    --[[
-    local Tasks2 = {}        
-    Tasks2[#Tasks2+1] = Helicopter:TaskFunction("AI_CARGO_HELICOPTER._BackHome", self)
-    
-    Route[#Route+1] = WaypointTo
-    Route[#Route].task = Helicopter:TaskCombo( Tasks2 )
-    -- FF
-    ]]
-    
     Route[#Route+1] = WaypointTo
 
     -- Now route the helicopter
@@ -930,9 +920,10 @@ end
 --- Function called when transport is back home and nothing more to do. Triggering the event BackHome.
 -- @param Wrapper.Group#GROUP Helicopter Cargo helicopter.
 -- @param #AI_CARGO_HELICOPTER self
-function AI_CARGO_HELICOPTER._BackHome(Group, self)
-  --Trigger BackHome event.
+function AI_CARGO_HELICOPTER._BackHome(Group, self)  
+  env.info("FF ai cargo helicopter back home task function")
   Group:SmokeRed()
+  --Trigger BackHome event.
   self:__BackHome(1)
 end
 
@@ -944,5 +935,6 @@ end
 -- @param Event
 -- @param To
 function AI_CARGO_HELICOPTER:onafterBackHome( Helicopter, From, Event, To )
+  env.info("FF ai cargo helicopter back home event")
   Helicopter:SmokeRed()
 end

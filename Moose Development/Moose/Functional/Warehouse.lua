@@ -48,7 +48,7 @@
 -- @field #table defending Table holding all defending requests, i.e. self requests that were if the warehouse is under attack. Table elements are of type @{#WAREHOUSE.Pendingitem}.
 -- @field Core.Zone#ZONE portzone Zone defining the port of a warehouse. This is where naval assets are spawned.
 -- @field #table shippinglanes Table holding the user defined shipping between warehouses. 
--- @field #boolean selfdefence When the warehouse is under attack, automatically spawn assets to defend the warehouse.
+-- @field #boolean autodefence When the warehouse is under attack, automatically spawn assets to defend the warehouse.
 -- @extends Core.Fsm#FSM
 
 --- Have your assets at the right place at the right time - or not!
@@ -135,7 +135,7 @@
 -- Assets of the warehouse can be requested by other MOOSE warehouses. A request will first be scrutinize to check if can be fulfilled at all. If the request is valid, it is
 -- put into the warehouse queue and processed as soon as possible.
 -- 
--- A request can be assed by the @{#WAREHOUSE.AddRequest}(*warehouse*, *AssetDescriptor*, *AssetDescriptorValue*, *nAsset*, *TransportType*, *nTransport*, *Prio*) function.
+-- A request can be assed by the @{#WAREHOUSE.AddRequest}(*warehouse*, *AssetDescriptor*, *AssetDescriptorValue*, *nAsset*, *TransportType*, *nTransport*, *Prio*, *Assignment*) function.
 -- The parameters are
 -- 
 -- * *warehouse*: The requesting MOOSE @{#WAREHOUSE}. Assets will be delivered there.
@@ -144,7 +144,8 @@
 -- * *nAsset*: (Optional) Number of asset group requested. Default is one group.
 -- * *TransportType*: (Optional) The transport method used to deliver the assets to the requestor. Default is that assets go to the requesting warehouse on their own.
 -- * *nTransport*: (Optional) Number of asset groups used to transport the cargo assets from A to B. Default is one group.
--- * *Prio*: A number between 1 (high) and 100 (low) describing the priority of the request. Request with high priority are processed first. Default is 50, i.e. medium priority.
+-- * *Prio*: (Optional) A number between 1 (high) and 100 (low) describing the priority of the request. Request with high priority are processed first. Default is 50, i.e. medium priority.
+-- * *Assignment*: (Optional) A free to choose string describing the assignment. For self requests, this can be used to assign the spawned groups to specific tasks. 
 -- 
 --  So for example:
 --  
@@ -348,7 +349,7 @@ WAREHOUSE = {
   defending     =    {},
   portzone      =   nil,
   shippinglanes =    {},
-  selfdefence   = false,  
+  autodefence   = false,  
 }
 
 --- Item of the warehouse stock table.
@@ -488,7 +489,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.3.2"
+WAREHOUSE.version="0.3.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -498,7 +499,7 @@ WAREHOUSE.version="0.3.2"
 -- TODO: Add autoselfdefence switch and user function. Default should be off.
 -- DONE: Warehouse re-capturing not working?!
 -- DONE: Naval assets dont go back into stock once arrived.
--- TODO: Take cargo weight into consideration, when selecting transport assets.
+-- DONE: Take cargo weight into consideration, when selecting transport assets.
 -- TODO: Add transport units from dispatchers back to warehouse stock once they completed their mission.
 -- DONE: Add ports for spawning naval assets.
 -- TODO: Added habours as interface for transport to from warehouses? 
@@ -683,8 +684,8 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #number nAsset Number of groups requested that match the asset specification.
   -- @param #WAREHOUSE.TransportType TransportType Type of transport.
   -- @param #number nTransport Number of transport units requested.
-  -- @param #string Assignment A keyword or text that later be used to identify this request and postprocess the assets.
   -- @param #number Prio Priority of the request. Number ranging from 1=high to 100=low.
+  -- @param #string Assignment A keyword or text that later be used to identify this request and postprocess the assets.
 
   --- Triggers the FSM event "AddRequest" with a delay. Add a request to the warehouse queue, which is processed when possible.
   -- @function [parent=#WAREHOUSE] __AddRequest
@@ -696,8 +697,8 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #number nAsset Number of groups requested that match the asset specification.
   -- @param #WAREHOUSE.TransportType TransportType Type of transport.
   -- @param #number nTransport Number of transport units requested.
-  -- @param #string Assignment A keyword or text that later be used to identify this request and postprocess the assets.
   -- @param #number Prio Priority of the request. Number ranging from 1=high to 100=low.
+  -- @param #string Assignment A keyword or text that later be used to identify this request and postprocess the assets.
 
 
   --- Triggers the FSM event "Request". Executes a request from the queue if possible.
@@ -845,7 +846,39 @@ end
 -- User functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Set interval of status updates
+--- Set debug mode on. Error messages will be displayed on screen, units will be smoked at some events.
+-- @param #WAREHOUSE self
+-- @return #WAREHOUSE self
+function WAREHOUSE:SetDebugOn()
+  self.Debug=true
+  return self
+end
+
+--- Set debug mode off. This is the default
+-- @param #WAREHOUSE self
+-- @return #WAREHOUSE self
+function WAREHOUSE:SetDebugOff()
+  self.Debug=false
+  return self
+end
+
+--- Set report on. Messages at events will be displayed on screen to the coalition owning the warehouse.
+-- @param #WAREHOUSE self
+-- @return #WAREHOUSE self
+function WAREHOUSE:SetReportOn()
+  self.Report=true
+  return self
+end
+
+--- Set report off. Warehouse does not report about its status and at certain events.
+-- @param #WAREHOUSE self
+-- @return #WAREHOUSE self
+function WAREHOUSE:SetReportOff()
+  self.Report=false
+  return self
+end
+
+--- Set interval of status updates. Note that only one request can be processed per time interval.
 -- @param #WAREHOUSE self
 -- @param #number timeinterval Time interval in seconds.
 -- @return #WAREHOUSE self
@@ -871,6 +904,23 @@ function WAREHOUSE:SetWarehouseZone(zone)
   self.zone=zone
   return self
 end
+
+--- Set auto defence on. When the warehouse is under attack, all ground assets are spawned automatically and will defend the warehouse zone. 
+-- @param #WAREHOUSE self
+-- @return #WAREHOUSE self
+function WAREHOUSE:SetAutoDefenceOn()
+  self.autodefence=true
+  return self
+end
+
+--- Set auto defence off. This is the default. 
+-- @param #WAREHOUSE self
+-- @return #WAREHOUSE self
+function WAREHOUSE:SetAutoDefenceOff()
+  self.autodefence=false
+  return self
+end
+
 
 --- Set the airbase belonging to this warehouse.
 -- Note that it has to be of the same coalition as the warehouse.
@@ -956,8 +1006,6 @@ function WAREHOUSE:AddShippingLane(remotewarehouse, group)
   
   -- Add the shipping lane. Need to take care of the wrong "direction".
   local lane={}
-  --lane.towarehouse=remotewarehouse.warehouse:GetName()
-  --lane.coordinates={}
   if distF<distL then
     for i=1,#lanepoints do
       local point=lanepoints[i]
@@ -981,7 +1029,6 @@ function WAREHOUSE:AddShippingLane(remotewarehouse, group)
   
   -- Add shipping lane.
   self.shippinglanes[remotewarehouse.warehouse:GetName()]=lane
-  --table.insert(self.shippinglanes, lane)
   
   return self
 end
@@ -1078,6 +1125,23 @@ function WAREHOUSE:HasConnectionNaval(warehouse, markpath, smokepath)
   return nil, -1
 end
 
+--- Get number of assets in warehouse stock.
+-- @param #WAREHOUSE self
+-- @param #string Descriptor (Optional) Descriptor return the number of a specifc asset type. See @{#WAREHOUSE.Descriptor} for possible values.
+-- @param DescriptorValue (Optional) Descriptor value selecting the type of assets.
+-- @return #number Number of assets in stock.
+function WAREHOUSE:GetNumberOfAssets(Descriptor, DescriptorValue)
+
+  if Descriptor==nil or DescriptorValue==nil then
+    -- Selected assets.
+    local _stock,_nstock=self:_FilterStock(self.stock, Descriptor, DescriptorValue)
+    return _nstock
+  else
+    -- All assets.
+    return #self.stock
+  end
+
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM states
@@ -1172,7 +1236,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function WAREHOUSE:onafterStop(From, Event, To)
-  self:E(self.wid..string.format("Warehouse stopped!"))
+  self:I(self.wid..string.format("Warehouse %s stopped!", self.alias))
   
   -- Unhandle event.
   self:UnHandleEvent(EVENTS.Birth)
@@ -1194,7 +1258,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function WAREHOUSE:onafterPause(From, Event, To)
-  self:E(self.wid..string.format("Warehouse %s paused! Queued requests are not processed in this state.", self.alias))
+  self:I(self.wid..string.format("Warehouse %s paused! Queued requests are not processed in this state.", self.alias))
 end
 
 --- On after "Unpause" event. Unpauses the warehouse, i.e. requests in queue are processed again.
@@ -1203,7 +1267,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function WAREHOUSE:onafterUnpause(From, Event, To)
-  self:E(self.wid..string.format("Warehouse %s unpaused! Processing of requests is resumed.", self.alias))
+  self:I(self.wid..string.format("Warehouse %s unpaused! Processing of requests is resumed.", self.alias))
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1214,7 +1278,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function WAREHOUSE:onafterStatus(From, Event, To)
-  self:E(self.wid..string.format("Checking status of warehouse %s. Current FSM state %s. Global warehouse assets = %d.", self.alias, self:GetState(), #WAREHOUSE.db.Assets))
+  self:I(self.wid..string.format("Checking status of warehouse %s. Current FSM state %s. Global warehouse assets = %d.", self.alias, self:GetState(), #WAREHOUSE.db.Assets))
   
   -- Print status.
   self:_DisplayStatus()
@@ -1382,8 +1446,7 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute)
   local RangeMin=group:GetRange()
   local smax,sx,sy,sz=_GetObjectSize(DCSdesc)
   
-  -- Get weight in kg
-  env.info("FF get weight")
+  -- Get weight and cargo bay size in kg.
   local weight=0
   local cargobay={}
   local cargobaytot=0
@@ -1391,14 +1454,15 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute)
   for _i,_unit in pairs(group:GetUnits()) do
     local unit=_unit --Wrapper.Unit#UNIT
     local Desc=unit:GetDesc()
-    self:E({UnitDesc=Desc})
+    
+    -- Weight. We sum up all units in the group.
     local unitweight=Desc.massEmpty
     if unitweight then
       weight=weight+unitweight
-      env.info("FF weight = "..weight)
     end
+    
+    -- Cargo bay size.
     local bay=unit:GetCargoBayFreeWeight()
-    env.info("FF cargo bay = "..bay)
     table.insert(cargobay, bay)
     cargobaytot=cargobaytot+bay
     if bay>cargobaymax then
@@ -1468,9 +1532,9 @@ function WAREHOUSE:_AssetItemInfo(asset)
   text=text..string.format("Weight total  = %5.2f kg\n", asset.weight)
   text=text..string.format("Cargo bay tot = %5.2f kg\n", asset.cargobaytot)
   text=text..string.format("Cargo bay max = %5.2f kg\n", asset.cargobaymax)
-  self:E(self.wid..text)
-  self:E({DCSdesc=asset.DCSdesc})
-  self:E({Template=asset.template})
+  self:T(self.wid..text)
+  self:T({DCSdesc=asset.DCSdesc})
+  self:T3({Template=asset.template})
 end
 
 --- On after "AddAsset" event. Add a group to the warehouse stock. If the group is alive, it is destroyed.
@@ -1637,12 +1701,6 @@ function WAREHOUSE:_SpawnAssetAircraft(asset, request, parking, uncontrolled)
       end
     end
     
-    -- Set general spawnpoint position.
-    --local abc=self.airbase:GetCoordinate()
-    --spawnpoint.x   = template.units[1].x
-    --spawnpoint.y   = template.units[1].y
-    --spawnpoint.alt = template.units[1].alt
-    
     -- And template position.
     template.x = template.units[1].x
     template.y = template.units[1].y
@@ -1688,7 +1746,7 @@ function WAREHOUSE:_SpawnAssetPrepareTemplate(asset, request)
 
   -- For group units, visible needs to be false.
   if asset.category==Group.Category.GROUND then
-    template.visible=false
+    --template.visible=false
   end
   
   -- No late activation.
@@ -1797,10 +1855,10 @@ end
 -- @param AssetDescriptorValue Value of the asset descriptor. Type depends on descriptor, i.e. could be a string, etc.
 -- @param #number nAsset Number of groups requested that match the asset specification.
 -- @param #WAREHOUSE.TransportType TransportType Type of transport.
--- @param #number nTransport Number of transport units requested.
--- @param #string Assignment A keyword or text that later be used to identify this request and postprocess the assets. 
+-- @param #number nTransport Number of transport units requested. 
 -- @param #number Prio Priority of the request. Number ranging from 1=high to 100=low.
-function WAREHOUSE:onafterAddRequest(From, Event, To, warehouse, AssetDescriptor, AssetDescriptorValue, nAsset, TransportType, nTransport, Assignment, Prio)
+-- @param #string Assignment A keyword or text that later be used to identify this request and postprocess the assets.
+function WAREHOUSE:onafterAddRequest(From, Event, To, warehouse, AssetDescriptor, AssetDescriptorValue, nAsset, TransportType, nTransport, Prio, Assignment)
 
   -- Defaults.
   nAsset=nAsset or 1
@@ -2077,6 +2135,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
   -- Dependent on transport type, spawn the transports and set up the dispatchers.
   if Request.transporttype==WAREHOUSE.TransportType.AIRPLANE then
+  
     ----------------
     --- AIRPLANE ---
     ----------------
@@ -2112,8 +2171,9 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
     -- Define dispatcher for this task.
     CargoTransport = AI_CARGO_DISPATCHER_AIRPLANE:New(TransportSet, CargoGroups, PickupAirbaseSet, DeployAirbaseSet)
-
+    
   elseif Request.transporttype==WAREHOUSE.TransportType.HELICOPTER then
+  
     ------------------
     --- HELICOPTER ---
     ------------------
@@ -2151,11 +2211,18 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
     -- Define dispatcher for this task.
     CargoTransport = AI_CARGO_DISPATCHER_HELICOPTER:New(TransportSet, CargoGroups, DeployZoneSet)
+    
+    --TODO: Need to check/optimize if/how this works with polygon zones!
+    -- The 20 m inner radius are to ensure that the helo does not land on the warehouse itself in the middle of the default spawn zone.
+    CargoTransport:SetPickupRadius(self.spawnzone:GetRadius(), 20)
+    CargoTransport:SetDeployRadius(Request.warehouse.spawnzone:GetRadius(), 20)
 
     -- Home zone.
-    --CargoTransport:Setairbase(self.airbase)
     CargoTransport:SetHomeZone(self.spawnzone)
-
+    
+    -- Home airbase (not working).
+    --CargoTransport:SetHomeBase(self.airbase)
+    
   elseif Request.transporttype==WAREHOUSE.TransportType.APC then
     -----------
     --- APC ---
@@ -2195,6 +2262,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     
     -- Set home zone.
     CargoTransport:SetHomeZone(self.spawnzone)
+    --CargoTransport:SetHomeBase(self.airbase)
     
   elseif Request.transporttype==WAREHOUSE.TransportType.TRAIN then
 
@@ -2387,7 +2455,7 @@ end
 -- @param Wrapper.Group#GROUP group The group that was delivered.
 function WAREHOUSE:onafterUnloaded(From, Event, To, group)
   -- Debug info.
-  self:E(self.wid..string.format("Cargo %s unloaded!", tostring(group:GetName())))
+  self:I(self.wid..string.format("Cargo %s unloaded!", tostring(group:GetName())))
   
   if group and group:IsAlive() then
 
@@ -2577,9 +2645,27 @@ function WAREHOUSE:onafterAttacked(From, Event, To, Coalition, Country)
   MESSAGE:New(text, 20):ToCoalitionIf(self.coalition, self.Report or self.Debug)
   self:I(self.wid..text)
   
+  -- Debug smoke.
+  if self.Debug then
+    self.coordinate:SmokeOrange()
+  end    
+  
   -- Spawn all ground units in the spawnzone?
-  if self.selfdefence then
-    self:AddRequest(self, WAREHOUSE.Descriptor.CATEGORY, Group.Category.GROUND, "all", nil, nil , 0)
+  if self.autodefence then
+    local nground=self:GetNumberOfAssets(WAREHOUSE.Descriptor.CATEGORY, Group.Category.GROUND)
+    local text=string.format("Warehouse auto defence activated. Deploying all %d ground assets.", nground)
+    MESSAGE:New(text, 20):ToCoalitionIf(self.coalition, self.Report or self.Debug)
+    self:I(self.wid..text)
+    if nground>0 then
+      self:AddRequest(self, WAREHOUSE.Descriptor.CATEGORY, Group.Category.GROUND, "all", nil, nil , 0)
+    else
+      local text=string.format("No ground assets currently available.")
+      MESSAGE:New(text, 20):ToCoalitionIf(self.coalition, self.Report or self.Debug)
+      self:I(self.wid..text)    
+    end
+  else
+    local text=string.format("Warehouse auto defence inactive.")
+    self:I(self.wid..text)    
   end
 end
 
@@ -2595,28 +2681,35 @@ function WAREHOUSE:onafterDefeated(From, Event, To)
   MESSAGE:New(text, 20):ToCoalitionIf(self.coalition, self.Report or self.Debug)
   self:I(self.wid..text)
 
-  --if self.defenderrequest then
-  for _,request in pairs(self.defending) do
+  -- Debug smoke.
+  if self.Debug then
+    self.coordinate:SmokeGreen()
+  end  
+
+  -- Auto defence: put assets back into stock.
+  if self.autodefence then
+    for _,request in pairs(self.defending) do
+        
+      -- Route defenders back to warehoue (for visual reasons only) and put them back into stock.  
+      for _,_group in pairs(request.cargogroupset:GetSetObjects()) do
+        local group=_group --Wrapper.Group#GROUP
+        
+        -- Get max speed of group and route it back slowly to the warehouse.
+        local speed=group:GetSpeedMax()
+        if group:IsGround() and speed>1 then
+          group:RouteGroundTo(self.coordinate, speed*0.3)
+        end 
+        
+        -- Add asset group back to stock after 60 seconds.
+        self:__AddAsset(60, group)
+      end
       
-    -- Route defenders back to warehoue (for visual reasons only) and put them back into stock.  
-    for _,_group in pairs(request.cargogroupset:GetSetObjects()) do
-      local group=_group --Wrapper.Group#GROUP
-      
-      -- Get max speed of group and route it back slowly to the warehouse.
-      local speed=group:GetSpeedMax()
-      if group:IsGround() and speed>1 then
-        group:RouteGroundTo(self.coordinate, speed*0.3)
-      end 
-      
-      -- Add asset group back to stock after 60 seconds.
-      self:__AddAsset(60, group)
+      --self:_DeleteQueueItem(request, self.defending)  
     end
     
-    --self:_DeleteQueueItem(request, self.defending)  
+    self.defending=nil
+    self.defending={}
   end
-  
-  self.defending=nil
-  self.defending={}
 end
 
 --- On after "Captured" event. Warehouse has been captured by another coalition.
@@ -2643,10 +2736,6 @@ function WAREHOUSE:onafterCaptured(From, Event, To, Coalition, Country)
   -- Delete all waiting requests because they are not valid any more
   self.queue=nil
   self.queue={}
-  
-  --TODO: What about pending items? Is there any problem due to the coalition change?
-  --TODO: Maybe if the receiving warehouse gets captured! Oh, oh :(
-  --      What to do? send the items back? Impossible.
     
   -- Airbase could have been captured before and already belongs to the new coalition.
   local airbase=AIRBASE:FindByName(self.airbasename)
@@ -2660,6 +2749,15 @@ function WAREHOUSE:onafterCaptured(From, Event, To, Coalition, Country)
     -- Airbase is owned by other coalition. So this warehouse does not have an airbase unil it is captured.
     self.airbase=nil
     self.category=-1
+  end
+  
+  -- Debug smoke.
+  if self.Debug then
+    if Coalition==coalition.side.RED then
+      self.coordinate:SmokeRed()
+    elseif Coalition==coalition.side.BLUE then
+      self.coordinate:SmokeBlue()
+    end
   end
     
 end
@@ -2678,8 +2776,14 @@ function WAREHOUSE:onafterAirbaseCaptured(From, Event, To, Coalition)
   self:I(self.wid..text)
 
   -- Debug smoke.
-  self.airbase:GetCoordinate():SmokeRed()
-  
+  if self.Debug then
+    if Coalition==coalition.side.RED then
+      self.airbase:GetCoordinate():SmokeRed()
+    elseif Coalition==coalition.side.BLUE then
+      self.airbase:GetCoordinate():SmokeBlue()
+    end
+  end
+    
   -- Set airbase to nil and category to no airbase.
   self.airbase=nil
   self.category=-1  -- -1 indicates no airbase.
@@ -2703,7 +2807,14 @@ function WAREHOUSE:onafterAirbaseRecaptured(From, Event, To, Coalition)
   self.category=self.airbase:GetDesc().category
   
   -- Debug smoke.
-  self.airbase:GetCoordinate():SmokeGreen()
+  if self.Debug then
+    if Coalition==coalition.side.RED then
+      self.airbase:GetCoordinate():SmokeRed()
+    elseif Coalition==coalition.side.BLUE then
+      self.airbase:GetCoordinate():SmokeBlue()
+    end
+  end
+  
 end
 
 
@@ -2959,7 +3070,6 @@ function WAREHOUSE:_OnEventBirth(EventData)
   
   if EventData and EventData.IniGroup then
     local group=EventData.IniGroup
-    -- env.info(string.format("FF birth of group %s (alive=%s) unit %s", tostring(EventData.IniGroupName), tostring(EventData.IniGroup:IsAlive()), tostring(EventData.IniUnitName)))
     -- Note: Remember, group:IsAlive might(?) not return true here.
     local wid,aid,rid=self:_GetIDsFromGroup(group)
     if wid==self.uid then
@@ -2980,7 +3090,7 @@ function WAREHOUSE:_OnEventEngineStartup(EventData)
     local group=EventData.IniGroup
     local wid,aid,rid=self:_GetIDsFromGroup(group)
     if wid==self.uid then
-      self:E(self.wid..string.format("Warehouse %s captured event engine startup of its asset unit %s.", self.alias, EventData.IniUnitName))
+      self:I(self.wid..string.format("Warehouse %s captured event engine startup of its asset unit %s.", self.alias, EventData.IniUnitName))
     end
   end  
 end
@@ -2995,7 +3105,7 @@ function WAREHOUSE:_OnEventTakeOff(EventData)
     local group=EventData.IniGroup
     local wid,aid,rid=self:_GetIDsFromGroup(group)
     if wid==self.uid then
-      self:E(self.wid..string.format("Warehouse %s captured event takeoff of its asset unit %s.", self.alias, EventData.IniUnitName))
+      self:I(self.wid..string.format("Warehouse %s captured event takeoff of its asset unit %s.", self.alias, EventData.IniUnitName))
     end
   end  
 end
@@ -3010,7 +3120,7 @@ function WAREHOUSE:_OnEventLanding(EventData)
     local group=EventData.IniGroup
     local wid,aid,rid=self:_GetIDsFromGroup(group)
     if wid==self.uid then
-      self:E(self.wid..string.format("Warehouse %s captured event landing of its asset unit %s.", self.alias, EventData.IniUnitName))
+      self:I(self.wid..string.format("Warehouse %s captured event landing of its asset unit %s.", self.alias, EventData.IniUnitName))
       
       -- Get request of this group
       local request=self:_GetRequestOfGroup(group,self.pending)
@@ -3019,7 +3129,7 @@ function WAREHOUSE:_OnEventLanding(EventData)
       -- TODO: I might need to add a delivered table, to be better able to get this right.
       if request==nil then
       
-        -- Check if helicopter landed in spawn zone. If so, we call it a day and add it back to stock. 
+        -- Check if helicopter landed in spawn zone. If so, we call it a day and add it back to stock.
         if group:GetCategory()==Group.Category.HELICOPTER then
           if self.spawnzone:IsCoordinateInZone(EventData.IniUnit:GetCoordinate()) then
             group:SmokeWhite()
@@ -3542,11 +3652,11 @@ function WAREHOUSE:_CheckRequestNow(request)
   -- Assume request is okay and check scenarios.
   local okay=true
   
-  -- Check if receiving warehouse is running.
-  if not request.warehouse:IsRunning() then
+  -- Check if receiving warehouse is running. We do allow self requests if the warehouse is under attack though!
+  if (not request.warehouse:IsRunning()) and (not request.toself and self:IsAttacked()) then
     local text=string.format("Warehouse %s: Request denied! Receiving warehouse %s is not running. Current state %s.", self.alias, request.warehouse.alias, request.warehouse:GetState())
     MESSAGE:New(text, 5):ToCoalitionIf(self.coalition, self.Report or self.Debug)
-    self:E(self.wid..text)
+    self:I(self.wid..text)
     
     return false
   end
@@ -3558,7 +3668,7 @@ function WAREHOUSE:_CheckRequestNow(request)
   if not _enough then
     local text=string.format("Warehouse %s: Request denied! Not enough (cargo) assets currently available.", self.alias)
     MESSAGE:New(text, 5):ToCoalitionIf(self.coalition, self.Report or self.Debug)
-    self:E(self.wid..text)
+    self:I(self.wid..text)
     
     return false
   end
@@ -3577,9 +3687,9 @@ function WAREHOUSE:_CheckRequestNow(request)
       
       --if Parking==nil and not (self.category==Airbase.Category.HELIPAD) then
       if Parking==nil then
-        local text=string.format("Warehouse %s: Request denied! Not enough free parking spots for all assets at the moment.", self.alias)
+        local text=string.format("Warehouse %s: Request denied! Not enough free parking spots for all requested assets at the moment.", self.alias)
         MESSAGE:New(text, 5):ToCoalitionIf(self.coalition, self.Report or self.Debug)
-        self:E(self.wid..text)
+        self:I(self.wid..text)
         
         return false
       end
@@ -3612,7 +3722,7 @@ function WAREHOUSE:_CheckRequestNow(request)
         if Parking==nil then
           local text=string.format("Warehouse %s: Request denied! Not enough free parking spots for all transports at the moment.", self.alias)
           MESSAGE:New(text, 5):ToCoalitionIf(self.coalition, self.Report or self.Debug)
-          self:E(self.wid..text)
+          self:I(self.wid..text)
           
           return false
         end
@@ -3628,7 +3738,7 @@ function WAREHOUSE:_CheckRequestNow(request)
       -- Not enough or the right transport carriers.
       local text=string.format("Warehouse %s: Request denied! Not enough transport carriers available at the moment.", self.alias)
       MESSAGE:New(text, 5):ToCoalitionIf(self.coalition, self.Report or self.Debug)
-      self:E(self.wid..text)
+      self:I(self.wid..text)
       
       return false    
     end        
@@ -4173,16 +4283,16 @@ function WAREHOUSE:_FilterStock(stock, item, value, nmax)
   if type(nmax)=="string" then
     if nmax:lower()=="all" then
       nmax=ntot
+    elseif nmax:lower()=="threequarter" then
+      nmax=ntot*3/4
     elseif nmax:lower()=="half" then
       nmax=ntot/2
     elseif nmax:lower()=="third" then
-      nmax=ntot/3      
+      nmax=ntot/3    
     elseif nmax:lower()=="quarter" then
       nmax=ntot/4
-    elseif nmax:lower()=="fivth" then
-      nmax=ntot/5
     else
-      nmax=math.min(1,ntot)
+      nmax=math.min(1, ntot)
     end
   end
 
@@ -4229,10 +4339,6 @@ function WAREHOUSE:_GetAttribute(groupname)
   local attribute=WAREHOUSE.Attribute.UNKNOWN --#WAREHOUSE.Attribute
 
   if group then
-
-    -- Get generalized attributes.
-    -- TODO: need to work on ships and trucks and SAMs and ...
-    -- Also the Yak-52 for example is OTHER since it only has the attribute "Battleplanes".
     
     -----------
     --- Air ---
@@ -4486,15 +4592,18 @@ function WAREHOUSE:_UpdateWarehouseMarkText()
   
   -- Get assets in stock.
   local _data=self:GetStockInfo(self.stock)
-  
-  -- Create mark text.
-  local marktext="Warehouse stock:\n"
-  for _attribute,_count in pairs(_data) do
-    marktext=marktext..string.format("%s=%d, ", _attribute,_count) -- Dont use \n because too many make DCS crash!
-  end
 
+  -- Text.  
+  local text="Warehouse Stock:\n"
+  text=text..string.format("Total assets: %d\n", #_data)
+  local total=0
+  for _attribute,_count in pairs(_data) do
+    local attribute=tostring(UTILS.Split(_attribute, "_")[2])
+    text=text..string.format("%s=%d", attribute,_count)
+  end
+  
   -- Create/update marker at warehouse in F10 map.
-  self.markerid=self.coordinate:MarkToCoalition(marktext, self.coalition, true)
+  self.markerid=self.coordinate:MarkToCoalition(text, self.coalition, true)
 end
 
 --- Display stock items of warehouse.

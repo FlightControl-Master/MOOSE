@@ -132,7 +132,7 @@ function AI_CARGO_AIRPLANE:New( Airplane, CargoSet )
     AirplaneUnit:SetCargoBayWeightLimit()
   end
     
-  self.Relocating = true
+  self.Relocating = false  --FF should be false or set according to state of airplane!
   
   return self
 end

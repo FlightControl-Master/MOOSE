@@ -127,8 +127,8 @@ function AI_CARGO_DISPATCHER:New( SetCarrier, SetCargo )
   self:AddTransition( "*", "BackHome", "*" ) --FF
   
   self.MonitorTimeInterval = 30
-  self.DeployRadiusInner = 200
-  self.DeployRadiusOuter = 500
+  self.DeployInnerRadius   = 200
+  self.DeployOuterRadius   = 500
   
   self.PickupCargo = {}
   self.CarrierHome = {}
@@ -222,19 +222,6 @@ end
 -- When there is nothing anymore to pickup, the carriers will go back to their home base. They will await here new orders.
 -- @param #AI_CARGO_DISPATCHER self
 -- @param Wrapper.Airbase#AIRBASE HomeBase Airbase where the carriers will go after all pickup assignments are done.
--- @return #AI_CARGO_DISPATCHER self
-function AI_CARGO_DISPATCHER:SetHomeBase( HomeBase )
-
-  self.HomeBase = HomeBase
-  
-  return self
-end
-
-
---- Set the home base.
--- When there is nothing anymore to pickup, the carriers will return to their home airbase. There they will await new orders.
--- @param #AI_CARGO_DISPATCHER self
--- @param Wrapper.Airbase#AIRBASE HomeBase The airbase where the carrier will go to, once they completed all pending assignments.
 -- @return #AI_CARGO_DISPATCHER self
 function AI_CARGO_DISPATCHER:SetHomeBase( HomeBase )
 
@@ -368,12 +355,13 @@ end
 -- @param #AI_CARGO_DISPATCHER self
 function AI_CARGO_DISPATCHER:onafterMonitor()
 
-  env.info("FF number of cargo set = "..self.SetCargo:Count())
-
   for CarrierGroupName, Carrier in pairs( self.SetCarrier:GetSet() ) do
+    env.info("FF cargo dispatcher carrier group "..CarrierGroupName)
+  
     local Carrier = Carrier -- Wrapper.Group#GROUP
     local AI_Cargo = self.AI_Cargo[Carrier]
     if not AI_Cargo then
+      env.info("FF not AI CARGO")
     
       -- ok, so this Carrier does not have yet an AI_CARGO handling object...
       -- let's create one and also declare the Loaded and UnLoaded handlers.
@@ -404,9 +392,14 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
         self:Unloaded( Carrier, Cargo )
       end
       
-      -- FF added back home event.
+      -- FF added BackHome event.
       function AI_Cargo.OnAfterBackHome( AI_Cargo, Carrier, From, Event, To)
         self:BackHome( Carrier )
+      end
+      
+      -- FF added RTB event.
+      function AI_Cargo.OnAfterRTB( AI_Cargo, Carrier, From, Event, To, Airbase)
+        self:RTB( Carrier, Airbase )
       end
     end
 
@@ -459,6 +452,7 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
       end
       
       if PickupCargo then
+      
         self.CarrierHome[Carrier] = nil
         local PickupCoordinate = PickupCargo:GetCoordinate():GetRandomCoordinateInRadius( self.PickupOuterRadius, self.PickupInnerRadius )
          
@@ -472,18 +466,34 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
           AI_Cargo:Pickup( PickupCoordinate, math.random( self.PickupMinSpeed, self.PickupMaxSpeed ) )
         end
         break
+        
       else
+      
+        env.info("FF HomeZone or HomeBase?")
         if self.HomeZone then
+        
+          env.info("FF HomeZone! Really?")
           if not self.CarrierHome[Carrier] then
+            env.info("FF Yes!")
             self.CarrierHome[Carrier] = true
             AI_Cargo:__Home( 60, self.HomeZone:GetRandomPointVec2() )
+          else
+            env.info("FF Nope!")
           end
-        elseif self.HomeBase then
+          
+        elseif self.HomeBase2 then
+        
+          env.info("FF HomeBase! Really?")
           if not self.CarrierHome[Carrier] then
+            env.info("FF Yes!")
             self.CarrierHome[Carrier] = true
-            AI_Cargo:__RTB( 60, self.HomeBase )
-          end        
+            AI_Cargo:__RTB( 1, self.HomeBase )
+          else
+            env.info("FF Nope!")
+          end
+          
         end
+        
       end
     end
   end
