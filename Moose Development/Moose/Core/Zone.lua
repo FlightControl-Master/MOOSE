@@ -1118,7 +1118,8 @@ function ZONE_UNIT:GetRandomVec2()
   self:F( self.ZoneName )
 
   local RandomVec2 = {}
-  local Vec2 = self.ZoneUNIT:GetVec2()
+  --local Vec2 = self.ZoneUNIT:GetVec2()  -- FF: This does not take care of the new offset feature!
+  local Vec2 = self:GetVec2()
   
   if not Vec2 then
     Vec2 = self.LastVec2

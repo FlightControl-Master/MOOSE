@@ -458,7 +458,7 @@ WAREHOUSE.Attribute = {
   NAVAL_ARMEDSHIP="Naval_ArmedShip",
   NAVAL_UNARMEDSHIP="Naval_UnarmedShip",
   NAVAL_OTHER="Naval_OtherNaval",
-  UNKNOWN="Unknown",
+  UNKNOWN="Other_Unknown",
 }
 
 --- Cargo transport type. Defines how assets are transported to their destination.
@@ -489,7 +489,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.3.3"
+WAREHOUSE.version="0.3.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -1177,7 +1177,13 @@ end
 function WAREHOUSE:HasConnectionNaval(warehouse, markpath, smokepath)
 
   if warehouse then
-
+  
+    -- Self request
+    if warehouse.warehouse:GetName()==self.warehouse:GetName() then
+      return true,1
+    end
+    
+    -- Get shipping lane.
     local shippinglane=self.shippinglanes[warehouse.warehouse:GetName()]
     
     if shippinglane then
@@ -1354,6 +1360,9 @@ end
 function WAREHOUSE:onafterStatus(From, Event, To)
   self:I(self.wid..string.format("Checking status of warehouse %s. Current FSM state %s. Global warehouse assets = %d.", self.alias, self:GetState(), #WAREHOUSE.db.Assets))
   
+  -- Update coordinate in case we have a "moving" warehouse (e.g. on a carrier).
+  self.coordinate=self.warehouse:GetCoordinate()
+  
   -- Print status.
   self:_DisplayStatus()
     
@@ -1439,7 +1448,7 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
     else
     
       -- Debug info.
-      self:_Debugmessage(self.wid..string.format("Adding %d NEW assets of group %s to warehouse %s.", n, tostring(group:GetName()), self.alias), 5)
+      self:_DebugMessage(self.wid..string.format("Adding %d NEW assets of group %s to warehouse %s.", n, tostring(group:GetName()), self.alias), 5)
     
     
       -- This is a group that is not in the db yet. Add it n times.
@@ -1640,6 +1649,8 @@ function WAREHOUSE:_SpawnAssetGroundNaval(asset, request, spawnzone, aioff)
     
     -- Get a random coordinate in the spawn zone.
     local coord=spawnzone:GetRandomCoordinate()
+    
+    --spawnzone:SmokeZone(1, 30)
 
     -- Translate the position of the units.
     for i=1,#template.units do
@@ -1690,8 +1701,9 @@ end
 -- @param #WAREHOUSE.Queueitem request Request belonging to this asset. Needed for the name/alias.
 -- @param #table parking Parking data for this asset.
 -- @param #boolean uncontrolled Spawn aircraft in uncontrolled state.
+-- @param #boolean hotstart Spawn aircraft with engines already on. Default is a cold start with engines off.
 -- @return Wrapper.Group#GROUP The spawned group or nil if the group could not be spawned.
-function WAREHOUSE:_SpawnAssetAircraft(asset, request, parking, uncontrolled)
+function WAREHOUSE:_SpawnAssetAircraft(asset, request, parking, uncontrolled, hotstart)
 
   if asset and asset.category==Group.Category.AIRPLANE or asset.category==Group.Category.HELICOPTER then
   
@@ -1705,8 +1717,6 @@ function WAREHOUSE:_SpawnAssetAircraft(asset, request, parking, uncontrolled)
       template.route.points=self:_GetFlightplan(asset, self.airbase, request.warehouse.airbase)
       
     else
-    
-      local hotstart=true
       
       -- Cold start (default).
       local _type=COORDINATE.WaypointType.TakeOffParking
@@ -1781,6 +1791,12 @@ function WAREHOUSE:_SpawnAssetAircraft(asset, request, parking, uncontrolled)
     -- And template position.
     template.x = template.units[1].x
     template.y = template.units[1].y
+    
+    -- DCS bug workaround. Spawning helos in uncontrolled state on carriers causes a big spash!
+    -- See https://forums.eagle.ru/showthread.php?t=219550
+    if AirbaseCategory == Airbase.Category.SHIP and asset.category==Group.Category.HELICOPTER then
+      uncontrolled=false
+    end
     
     -- Uncontrolled spawning.
     template.uncontrolled=uncontrolled
@@ -2710,7 +2726,7 @@ function WAREHOUSE:onafterSelfRequest(From, Event, To, groupset, request)
   end
   
   -- Remove pending request.
-  self:_DeleteQueueItem(request, self.pending)
+  --self:_DeleteQueueItem(request, self.pending)
 end
 
 --- On after "Attacked" event. Warehouse is under attack by an another coalition.
@@ -3468,7 +3484,7 @@ function WAREHOUSE:_CheckRequestConsistancy(queue)
     local request=_request --#WAREHOUSE.Queueitem
     
     -- Debug info.
-    self:T2(self.wid..string.format("Checking request = %d.", request.uid))
+    self:T2(self.wid..string.format("Checking request id=%d.", request.uid))
     
     -- Let's assume everything is fine.
     local valid=true
@@ -4632,12 +4648,10 @@ function WAREHOUSE:_GetStockAssetsText(messagetoall)
   -- Get assets in stock.
   local _data=self:GetStockInfo(self.stock)
   
-  --[[
   local function _sort(a,b)
-    return a<b
+    return a[1]<b[1]
   end  
   table.sort(_data, _sort)
-  ]]
   
   -- Text.  
   local text="Stock:\n"
@@ -4677,7 +4691,7 @@ function WAREHOUSE:_UpdateWarehouseMarkText()
   local total=0
   for _attribute,_count in pairs(_data) do
     local attribute=tostring(UTILS.Split(_attribute, "_")[2])
-    text=text..string.format("%s=%d", attribute,_count)
+    text=text..string.format("%s=%d, ", attribute,_count)
   end
   
   -- Create/update marker at warehouse in F10 map.
