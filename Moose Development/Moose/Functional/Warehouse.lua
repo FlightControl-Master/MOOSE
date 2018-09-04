@@ -95,6 +95,8 @@
 -- in a realistic way by using the corresponding cargo dispatcher classes, i.e. @{AI.AI_Cargo_Dispatcher_APC#AI_DISPATCHER_APC}, 
 -- @{AI.AI_Cargo_Dispatcher_Helicopter#AI_DISPATCHER_HELICOPTER} and @{AI.AI_Cargo_Dispatcher_Airplane#AI_DISPATCHER_AIRPLANE}.
 -- 
+-- ===
+-- 
 -- # Creating a Warehouse
 -- 
 -- A MOOSE warehouse must be represented in game by a phyical *static* object. For example, the mission editor already has warehouse as static object available.
@@ -131,6 +133,7 @@
 -- By default, the generalized attribute of the asset is determined automatically from the DCS descriptor attributes. However, this might not always result in the desired outcome.
 -- Therefore, it is possible, to force a generalized attribute for the asset with the third optional parameter *forceattribute*, which is of type @{#WAREHOUSE.Attribute}.
 -- 
+-- ===
 --
 -- # Requesting Assets
 -- 
@@ -160,7 +163,7 @@
 -- 
 -- Also not that the above request is for five infantry units. So any group in stock that has the generalized attribute "INFANTRY" can be selected.
 -- 
--- ### Requesting a Specific Unit Type
+-- ## Requesting a Specific Unit Type
 -- 
 -- A more specific request could look like:
 -- 
@@ -169,7 +172,7 @@
 -- Here, Kobuleti requests a specific unit type, in particular two groups of A-10Cs. Note that the spelling is important as it must exacly be the same as
 -- what one get's when using the DCS unit type.
 -- 
--- ### Requesting a Specifc Group
+-- ## Requesting a Specifc Group
 -- 
 -- An even more specific request would be:
 -- 
@@ -177,7 +180,7 @@
 --      
 -- In this case three groups named "Group Name as in ME" are requested. So this explicitly request the groups named like that in the Mission Editor.
 -- 
--- ### Requesting a general category
+-- ## Requesting a general category
 -- 
 -- On the other hand, very general unspecifc requests can be made as
 -- 
@@ -208,8 +211,8 @@
 --      -- @param #WAREHOUSE.Pendingitem request Pending self request.
 --      function WAREHOUSE:onafterSelfRequest(From, Event, To, groupset, request)
 --       
---        for _,_group in pairs(groupset:GetSetObjects()) do
---          local group=_group --Wrapper.Group#GROUP
+--        for _,group in pairs(groupset:GetSetObjects()) do
+--          local group=group --Wrapper.Group#GROUP
 --          group:SmokeGreen()
 --        end
 --        
@@ -219,6 +222,8 @@
 -- for further tasking. Here, the groups are only smoked but, of course, you can use them for whatever task you fancy.
 -- 
 -- Note that airborne groups are spawned in uncontrolled state and need to be activated first before they can start their assigned mission.
+-- 
+-- ===
 -- 
 -- # Infrastructure
 -- 
@@ -283,6 +288,30 @@
 -- 
 -- ![Banner Image](..\Presentations\WAREHOUSE\Warehouse_ShippingLane.png) 
 -- 
+-- ===
+--
+-- # Why is my request not processed?
+--
+-- For each request, the warehouse class logic does a lot of consistancy and validation checks under the hood.
+-- This means that sometimes a request is deemed to be *invalid* in which case they are deleted from the queue or considered to be valid but cannot be executed at this very moment.
+-- 
+-- ## Invalid Requests
+-- 
+-- Invalid request are requests which cannot be processes **ever** because there is some logical or physical argument for it. Or simply because that feature was not implemented (yet).
+-- 
+-- * One warehuse requests airborne assets from another warehouse but at one (or even both) warehouses do not have an associated airbase.
+-- 
+-- All invalid requests are removed from the warehouse queue!
+--   
+-- ## Temporarily Unprocessable Requests
+-- 
+-- Temporarily unprocessable requests are possible in priciple, but cannot be processed at the given time the warehouse checks its queue.
+-- 
+-- * No enough parking spaces are available for the requests assets but the airbase has enough parking spots in total so that this request is possible once other aircraft have taken off.
+-- 
+-- Temporarily unprocessable requests are held in the queue. If at some point in time, the situation changes so that these requests can be processed, they are executed.
+-- 
+-- ===
 -- 
 -- # Strategic Considerations
 -- 
@@ -327,6 +356,32 @@
 -- ===
 --
 -- # Examples
+-- 
+-- This section shows some examples how the WAREHOUSE class is used in practice. This is one of the best ways to explain things, in my opinion.
+-- 
+-- But first, let me introduce a convenient way to define several warehouses in a table. This is absolutely *not* necessary but quite handy if you have
+-- multiple WAREHOUSE objects in your mission.
+-- 
+-- ## Example 0: Setting up a Warehouse Array
+-- 
+-- If you have multiple warehouses, you can put them in a table. This makes it easier to access them or to loop over them.
+-- 
+--     -- Define Warehouses.
+--     local warehouse={}
+--     warehouse.Senaki   = WAREHOUSE:New(STATIC:FindByName("Warehouse Senaki"),   "Senaki")   --Functional.Warehouse#WAREHOUSE
+--     warehouse.Batumi   = WAREHOUSE:New(STATIC:FindByName("Warehouse Batumi"),   "Batumi")   --Functional.Warehouse#WAREHOUSE
+--     warehouse.Kobuleti = WAREHOUSE:New(STATIC:FindByName("Warehouse Kobuleti"), "Kobuleti") --Functional.Warehouse#WAREHOUSE
+--     warehouse.Kutaisi  = WAREHOUSE:New(STATIC:FindByName("Warehouse Kutaisi"),  "Kutaisi")  --Functional.Warehouse#WAREHOUSE
+--     warehouse.Berlin   = WAREHOUSE:New(STATIC:FindByName("Warehouse Berlin"),   "Berlin")   --Functional.Warehouse#WAREHOUSE
+--     warehouse.London   = WAREHOUSE:New(STATIC:FindByName("Warehouse London"),   "London")   --Functional.Warehouse#WAREHOUSE
+--     warehouse.Stennis  = WAREHOUSE:New(STATIC:FindByName("Warehouse Stennis"),  "Stennis")  --Functional.Warehouse#WAREHOUSE
+--
+-- Remarks:
+-- 
+-- * I defined the array as local, i.e. local warehouse={}. This is personal preference and sometimes causes trouble with the lua garbage collection. You can also define it as a global array/table!
+-- * The "--Functional.Warehouse#WAREHOUSE" at the end is only to have the LDT intellisense working correctly. If you don't use LDT (which you should!), it can be omitted.
+--
+-- **NOTE** that all examples below need this bit or code at the beginning - or at least the warehouses which are used.
 -- 
 -- ## Example 1: Self Request
 -- 
@@ -745,11 +800,12 @@ WAREHOUSE = {
 
 --- Item of the warehouse pending queue table.
 -- @type WAREHOUSE.Pendingitem
--- @extends #WAREHOUSE.Queueitem
+-- @field #number timestamp Absolute mission time in seconds when the request was processed.
 -- @field Core.Set#SET_GROUP cargogroupset Set of cargo groups do be delivered.
 -- @field #number ndelivered Number of groups delivered to destination.
 -- @field Core.Set#SET_GROUP transportgroupset Set of cargo transport groups.
 -- @field #number ntransporthome Number of transports back home.
+-- @extends #WAREHOUSE.Queueitem
 
 --- Descriptors enumerator describing the type of the asset.
 -- @type WAREHOUSE.Descriptor
@@ -786,7 +842,7 @@ WAREHOUSE.Descriptor = {
 -- @field #string NAVAL_ARMEDSHIP Any armed ship that is not an aircraft carrier, a cruiser, destroyer, firgatte or corvette.
 -- @field #string NAVAL_UNARMEDSHIP Any unarmed naval vessel.
 -- @field #string NAVAL_OTHER Any naval unit that does not fall into any other naval category.
--- @field #string UNKNOWN Anything that does not fall into any other category.
+-- @field #string OTHER_UNKNOWN Anything that does not fall into any other category.
 WAREHOUSE.Attribute = {
   AIR_TRANSPORTPLANE="Air_TransportPlane",
   AIR_AWACS="Air_AWACS",
@@ -808,16 +864,16 @@ WAREHOUSE.Attribute = {
   NAVAL_ARMEDSHIP="Naval_ArmedShip",
   NAVAL_UNARMEDSHIP="Naval_UnarmedShip",
   NAVAL_OTHER="Naval_OtherNaval",
-  UNKNOWN="Other_Unknown",
+  OTHER_UNKNOWN="Other_Unknown",
 }
 
 --- Cargo transport type. Defines how assets are transported to their destination.
 -- @type WAREHOUSE.TransportType
--- @field #string AIRPLANE Transports are conducted by airplanes.
--- @field #string HELICOPTER Transports are conducted by helicopters.
+-- @field #string AIRPLANE Transports are carried out by airplanes.
+-- @field #string HELICOPTER Transports are carried out by helicopters.
 -- @field #string APC Transports are conducted by APCs.
--- @field #string SHIP Transports are conducted by ships.
--- @field #string TRAIN Transports are conducted by trains. Not yet implemented.
+-- @field #string SHIP Transports are conducted by ships. Not implemented yet.
+-- @field #string TRAIN Transports are conducted by trains. Not implemented yet. Also trains are buggy in DCS.
 -- @field #string SELFPROPELLED Assets go to their destination by themselves. No transport carrier needed.
 WAREHOUSE.TransportType = {
   AIRPLANE      = "Air_TransportPlane",
@@ -839,7 +895,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.3.4w"
+WAREHOUSE.version="0.3.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -851,7 +907,7 @@ WAREHOUSE.version="0.3.4w"
 -- TODO: Add possibility to add active groups. Need to create a pseudo template before destroy.
 -- TODO: Write documentation.
 -- TODO: Handle the case when units of a group die during the transfer. Adjust template?! See Grouping in SPAWN.
--- TODO: Add save/load capability of warehouse <==> percistance after mission restart.
+-- TODO: Add save/load capability of warehouse <==> percistance after mission restart. Difficult!
 -- TODO: Add a time stamp when an asset is added to the stock and for requests.
 -- DONE: How to get a specific request once the cargo is delivered? Make addrequest addasset non FSM function? Callback for requests like in SPAWN?
 -- DONE: Add autoselfdefence switch and user function. Default should be off.
@@ -1809,8 +1865,7 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
     
       -- Debug info.
       self:_DebugMessage(self.wid..string.format("Adding %d NEW assets of group %s to warehouse %s.", n, tostring(group:GetName()), self.alias), 5)
-    
-    
+       
       -- This is a group that is not in the db yet. Add it n times.
       local assets=self:_RegisterAsset(group, n, forceattribute)
       
@@ -1862,6 +1917,7 @@ end
 -- @param #string forceattribute Forced generalized attribute.
 -- @return #table A table containing all registered assets.
 function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute)
+  self:F({groupname=group:GetName(), ngroups=ngroups, forceattribute=forceattribute})
 
   -- Set default.
   local n=ngroups or 1
@@ -1877,18 +1933,15 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute)
     return 0,0,0,0
   end  
   
+  -- Get name of template group.
   local templategroupname=group:GetName()
-
-  local DCSgroup=group:GetDCSObject()
-    
-  local DCSunit=DCSgroup:getUnit(1)
-  local DCSdesc=DCSunit:getDesc()
-  local DCSdisplay=DCSdesc.displayName
-  local DCScategory=DCSgroup:getCategory()
-  local DCStype=DCSunit:getTypeName()
+  
+  local Descriptors=group:GetUnit(1):GetDesc()
+  local Category=group:GetCategory()
+  local TypeName=group:GetTypeName()
   local SpeedMax=group:GetSpeedMax()
   local RangeMin=group:GetRange()
-  local smax,sx,sy,sz=_GetObjectSize(DCSdesc)
+  local smax,sx,sy,sz=_GetObjectSize(Descriptors)
   
   -- Get weight and cargo bay size in kg.
   local weight=0
@@ -1915,7 +1968,7 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute)
   end
 
   -- Set/get the generalized attribute.
-  local attribute=forceattribute or self:_GetAttribute(templategroupname)
+  local attribute=forceattribute or self:_GetAttribute(group)
 
   -- Table for returned assets.
   local assets={}
@@ -1931,14 +1984,14 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute)
     asset.uid=WAREHOUSE.db.AssetID
     asset.templatename=templategroupname
     asset.template=UTILS.DeepCopy(_DATABASE.Templates.Groups[templategroupname].Template)
-    asset.category=DCScategory
-    asset.unittype=DCStype
+    asset.category=Category
+    asset.unittype=TypeName
     asset.nunits=#asset.template.units    
     asset.range=RangeMin
     asset.speedmax=SpeedMax
     asset.size=smax    
     asset.weight=weight
-    asset.DCSdesc=DCSdesc
+    asset.DCSdesc=Descriptors
     asset.attribute=attribute
     asset.transporter=false  -- not used yet
     asset.cargobay=cargobay
@@ -2423,6 +2476,10 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
  -- Pending request. Add cargo groups to request.
   local Pending=Request  --#WAREHOUSE.Pendingitem
+  
+  -- Set time stamp.
+  Pending.timestamp=timer.getAbsTime()
+  env.info("Timestamp="..Pending.timestamp)
   
   -- Spawn assets of this request.
   local _spawngroups=self:_SpawnAssetRequest(Pending) --Core.Set#SET_GROUP
@@ -2963,7 +3020,7 @@ function WAREHOUSE:onafterArrived(From, Event, To, group)
     local ncargo=request.cargogroupset:Count()
     
     -- Debug message.
-    local text=string.format("Cargo %d of %s arrived at warehouse %s. Assets still to deliver %d.",request.ndelivered, tostring(request.nasset), request.warehouse.alias, ncargo)
+    local text=string.format("Cargo %d of %s arrived at warehouse %s. Assets still to deliver %d.", request.ndelivered, tostring(request.nasset), request.warehouse.alias, ncargo)
     self:_DebugMessage(text, 5)
     
     -- Route mobile ground group to the warehouse. Group has 60 seconds to get there or it is despawned and added as asset to the new warehouse regardless.
@@ -4117,7 +4174,7 @@ end
 --- Checks if the request can be fulfilled right now.
 -- Check for current parking situation, number of assets and transports currently in stock.
 -- @param #WAREHOUSE self
--- @param #WAREHOUSE.Pendingitem request The request to be checked.
+-- @param #WAREHOUSE.Queueitem request The request to be checked.
 -- @return #boolean If true, request can be executed. If false, something is not right.
 function WAREHOUSE:_CheckRequestNow(request)
     
@@ -4714,8 +4771,7 @@ function WAREHOUSE:_GetIDsFromGroup(group)
   else
     self:E("WARNING: Group not found in GetIDsFromGroup() function!")
   end
-      
-  
+
 end
 
 --- Filter stock assets by table entry.
@@ -4781,15 +4837,13 @@ end
 
 --- Check if a group has a generalized attribute.
 -- @param #WAREHOUSE self
--- @param #string groupname Name of the group.
+-- @param Wrapper.Group#GROUP group MOOSE group object.
 -- @param #WAREHOUSE.Attribute attribute Attribute to check.
 -- @return #boolean True if group has the specified attribute.
-function WAREHOUSE:_HasAttribute(groupname, attribute)
-
-  local group=GROUP:FindByName(groupname)
+function WAREHOUSE:_HasAttribute(group, attribute)
 
   if group then
-    local groupattribute=self:_GetAttribute(groupname)
+    local groupattribute=self:_GetAttribute(group)
     return groupattribute==attribute
   end
 
@@ -4799,13 +4853,12 @@ end
 --- Get the generalized attribute of a group.
 -- Note that for a heterogenious group, the attribute is determined from the attribute of the first unit!
 -- @param #WAREHOUSE self
--- @param #string groupname Name of the group.
+-- @param Wrapper.Group#GROUP group MOOSE group object.
 -- @return #WAREHOUSE.Attribute Generalized attribute of the group.
-function WAREHOUSE:_GetAttribute(groupname)
+function WAREHOUSE:_GetAttribute(group)
 
-  local group=GROUP:FindByName(groupname)
-
-  local attribute=WAREHOUSE.Attribute.UNKNOWN --#WAREHOUSE.Attribute
+  -- Default
+  local attribute=WAREHOUSE.Attribute.OTHER_UNKNOWN --#WAREHOUSE.Attribute
 
   if group then
     
@@ -4880,7 +4933,7 @@ function WAREHOUSE:_GetAttribute(groupname)
     elseif unarmedship then
       attribute=WAREHOUSE.Attribute.NAVAL_UNARMEDSHIP
     else
-      attribute=WAREHOUSE.Attribute.UNKNOWN
+      attribute=WAREHOUSE.Attribute.OTHER_UNKNOWN
     end
 
   end
@@ -4972,21 +5025,65 @@ end
 -- @param #table queue Queue to print.
 -- @param #string name Name of the queue for info reasons.
 function WAREHOUSE:_PrintQueue(queue, name)
-  local text=string.format("%s at %s: ",name, self.alias)
-  for _,_qitem in ipairs(queue) do
-    local qitem=_qitem --#WAREHOUSE.Queueitem
+
+  local total="Empty"
+  if #queue>0 then
+    total=string.format("Total = %d", #queue)
+  end
+
+  -- Init string.
+  local text=string.format("%s at %s: %s",name, self.alias, total)
+  
+  for i,qitem in ipairs(queue) do
+    local qitem=qitem --#WAREHOUSE.Pendingitem
+    
     -- Set airbase:
     local airbasename="none"
     if qitem.airbase then
       airbasename=qitem.airbase:GetName()
-    end      
-    text=text..string.format("\nUID=%d, Prio=%d, Requestor=%s, Airbase=%s (category=%d), Descriptor: %s=%s, #Assets=%s, Transport=%s, #Transport=%d.",
-    qitem.uid, qitem.prio, qitem.warehouse.alias, airbasename, qitem.category, qitem.assetdesc,tostring(qitem.assetdescval), tostring(qitem.nasset), qitem.transporttype, qitem.ntransport)
+    end
+    
+    local uid=qitem.uid
+    local prio=qitem.prio
+    local clock="N/A"
+    if qitem.timestamp then 
+      clock=tostring(UTILS.SecondsToClock(qitem.timestamp))
+    end
+    local requestor=qitem.warehouse.alias
+    local requestorAirbaseCat=qitem.category
+    local assetdesc=qitem.assetdesc
+    local assetdescval=qitem.assetdescval
+    local nasset=tostring(qitem.nasset)
+    local ndelivered=tostring(qitem.ndelivered)    
+    local ncargogroupset="N/A"
+    if qitem.cargogroupset then
+      ncargogroupset=tostring(qitem.cargogroupset:Count()) 
+    end        
+    local transporttype="N/A"
+    if qitem.transporttype then
+      transporttype=qitem.transporttype
+    end        
+    local ntransport="N/A"
+    if qitem.ntransport then
+      ntransport=tostring(qitem.ntransport)    
+    end    
+    local ntransportalive="N/A"
+    if qitem.transportgroupset then
+      ntransportalive=tostring(qitem.transportgroupset:Count())
+    end
+    local ntransporthome="N/A"
+    if qitem.ntransporthome then
+      ntransporthome=tostring(qitem.ntransporthome)
+    end    
+      
+    -- Output text:    
+    text=text..string.format(
+    "\n%d) UID=%d, Prio=%d, Clock=%s | Requestor=%s [Airbase=%s, category=%d] | Assets(%s)=%s: #requested=%s / #alive=%s / #delivered=%s | Transport=%s: #requested=%d / #alive=%s / #home=%s",
+    i, uid, prio, clock, requestor, airbasename, requestorAirbaseCat, assetdesc, assetdescval, nasset, ncargogroupset, ndelivered, transporttype, ntransport, ntransportalive, ntransporthome)
+        
   end
-  if #queue==0 then
-    text=text.."Empty."
-  end
-  self:E(self.wid..text)
+  
+  self:I(self.wid..text)
 end
 
 --- Display status of warehouse.
