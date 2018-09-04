@@ -15,7 +15,7 @@
 --
 -- ===
 --
--- ### Authors: **funkyfranky**
+-- ### Authors: **funkyfranky**, FlightControl (cargo dispatcher classes)
 --
 -- @module Functional.Warehouse
 -- @image Warehouse.JPG
@@ -45,6 +45,7 @@
 -- @field #table stock Table holding all assets in stock. Table entries are of type @{#WAREHOUSE.Assetitem}.
 -- @field #table queue Table holding all queued requests. Table entries are of type @{#WAREHOUSE.Queueitem}.
 -- @field #table pending Table holding all pending requests, i.e. those that are currently in progress. Table elements are of type @{#WAREHOUSE.Pendingitem}.
+-- @field #table delivered Table holding all delivered requests.
 -- @field #table defending Table holding all defending requests, i.e. self requests that were if the warehouse is under attack. Table elements are of type @{#WAREHOUSE.Pendingitem}.
 -- @field Core.Zone#ZONE portzone Zone defining the port of a warehouse. This is where naval assets are spawned.
 -- @field #table shippinglanes Table holding the user defined shipping between warehouses. 
@@ -77,7 +78,8 @@
 -- by themselfs. Once arrived at the requesting warehouse, the assets go into the stock of the requestor and can be activated/deployed when necessary.
 -- 
 -- ## What assets can be stored?
--- Any kind of ground, airborne or naval asset can be stored.
+-- Any kind of ground, airborne or naval asset can be stored and are spawned upon request.
+-- The fact that the assets "live" only virtually in the stock has a positive impact on the game performance. 
 -- 
 -- ## What means of transportation are available?
 -- Firstly, all mobile assets can be send from warehouse to another on their own.
@@ -228,8 +230,12 @@
 -- By default, the zone were ground assets are spawned is a circular zone around the physical location of the warehouse with a radius of 200 meters. However, the location of the
 -- spawn zone can be set by the @{#WAREHOUSE.SetSpawnZone}(*zone*) functions. It is advisable to choose a zone which is clear of obstacles.
 -- 
+-- ![Banner Image](..\Presentations\WAREHOUSE\Warehouse_Batumi.png)
+-- 
 -- The parameter *zone* is a MOOSE @{Core.Zone#ZONE} object. So one can, e.g., use trigger zones defined in the mission editor. If a cicular zone is not desired, one
 -- can use a polygon zone (see @{Core.Zone#ZONE_POLYGON}).
+-- 
+-- ![Banner Image](..\Presentations\WAREHOUSE\Warehouse_SpawnPolygon.png)
 -- 
 -- ## Road Connections
 -- 
@@ -266,12 +272,16 @@
 -- A port in this context is the zone where all naval assets are spawned. This zone can be defined with the function @{#WAREHOUSE.SetPortZone}(*zone*), where the parameter
 -- *zone* is a MOOSE zone. So again, this can be create from a trigger zone defined in the mission editor or if a general shape is desired by a @{Core.Zone#ZONE_POLYGON}.
 -- 
+-- ![Banner Image](..\Presentations\WAREHOUSE\Warehouse_PortZone.png)
+-- 
 -- ### Defining Shipping Lanes
 -- 
 -- A shipping lane between to warehouses can be defined by the @{#WAREHOUSE.AddShippingLane}(*remotewarehouse*, *group*) function. The first parameter *remotewarehouse*
 -- is the warehouse which should be connected to the present warehouse.
 -- 
--- The parameter *group* should be a late activated group defined in the mission editor. The waypoints of this group are used as waypoints of the shipping lane. 
+-- The parameter *group* should be a late activated group defined in the mission editor. The waypoints of this group are used as waypoints of the shipping lane.
+-- 
+-- ![Banner Image](..\Presentations\WAREHOUSE\Warehouse_ShippingLane.png) 
 -- 
 -- 
 -- # Strategic Considerations
@@ -317,8 +327,347 @@
 -- ===
 --
 -- # Examples
+-- 
+-- ## Example 1: Self Request
+-- 
+-- Ground troops are taken from the Batumi warehouse stock and spawned in its spawn zone. After a short delay, they are added back to the warehouse stock.
+-- Also a new request is made. Hence, the groups will be spawned, added back to the warehouse, spawned again and so on and so forth...
+--      
+--     -- Start warehouse Batumi.
+--     warehouse.Batumi:Start()
+--     
+--     -- Add five groups of infantry as assets.
+--     warehouse.Batumi:AddAsset(GROUP:FindByName("Infantry Platoon Alpha"), 5)
+--     
+--     -- Add self request for three infantry at Batumi.
+--     warehouse.Batumi:AddRequest(warehouse.Batumi, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_INFANTRY, 3)
+--     
+--     
+--     --- Self request event. Triggered once the assets are spawned in the spawn zone or at the airbase.
+--     function warehouse.Batumi:OnAfterSelfRequest(From, Event, To, groupset, request)
+--       local mygroupset=groupset --Core.Set#SET_GROUP
+--       
+--       -- Loop over all groups spawned from that request.
+--       for _,group in pairs(mygroupset:GetSetObjects()) do
+--         local group=group --Wrapper.Group#GROUP
+--         
+--         -- Gree smoke on spawned group.
+--         group:SmokeGreen()
+--         group:FlareRed()
+--            
+--         -- Put asset back to stock after 10 seconds.
+--         warehouse.Batumi:__AddAsset(10, group)      
+--       end
+--       
+--       -- Add new self request after 20 seconds.
+--       warehouse.Batumi:__AddRequest(20, warehouse.Batumi, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_INFANTRY, 3)
+--          
+--     end
 --
--- **WIP**
+-- ## Example 2: Self propelled Ground Troops
+-- 
+-- Warehouse Berlin, which is a FARP near Batumi, requests infantry and troop transports from the warehouse at Batumi.
+-- The groups are spawned at Batumi and move by themselfs from Batumi to Berlin using the roads.
+-- Once the troops have arrived at Berlin, the troops are automatically added to the warehouse stock of Berlin.
+-- While on the road, Batumi has requested back two APCs from Berlin. Since Berlin does not have the assets in stock,
+-- the request is queued. After the troops have arrived, Berlin is sending back the APCs to Batumi.
+-- 
+--     -- Start Warehouse at Batumi.
+--     warehouse.Batumi:Start()
+--     
+--     -- Add 20 infantry groups as assets at Batumi.
+--     warehouse.Batumi:AddAsset("Infantry Platoon Alpha", 20)
+--     warehouse.Batumi:AddAsset("TPz Fuchs", 5)
+--   
+--     -- Start Warehouse Berlin. 
+--     warehouse.Berlin:Start()
+--   
+--     -- Warehouse Berlin requests 10 infantry groups and 3 APCs from warehouse Batumi.
+--     warehouse.Batumi:AddRequest(warehouse.Berlin, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_INFANTRY, 10)
+--     warehouse.Batumi:AddRequest(warehouse.Berlin, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_APC, 5)
+--     
+--     -- Request from Batumi for 2 APCs. Initially these are not in stock. When they become available, the request is executed.
+--     warehouse.Berlin:AddRequest(warehouse.Batumi, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_APC, 2)  
+--
+-- ## Example 3: Self Propelled Airborne Assets
+-- 
+-- Warehouse Senaki receives requests from Kutaisi for one Yak-52s and from FARP London for three Hueys.
+-- Assets are spawned in Senaki and make their way to the requesting warehouses.
+-- Once the units have arrived they are added to the stock of the receiving warehouses and can be used for further assignments. 
+-- 
+--     -- Start sending warehouse.
+--     warehouse.Senaki:Start()
+--     
+--     -- Add assets.
+--     warehouse.Senaki:AddAsset("Yak-52", 10)
+--     warehouse.Senaki:AddAsset("Huey", 10)
+--       
+--     -- Start receiving warehouses
+--     warehouse.Kutaisi:Start()
+--     warehouse.London:Start()
+--     
+--     -- Kusaisi requests one Yak-52 form Senaki. FARP London requests three UH-1H Huys from Senaki.
+--     warehouse.Senaki:AddRequest(warehouse.Kutaisi, WAREHOUSE.Descriptor.TEMPLATENAME, "Yak-52", 1)
+--     warehouse.Senaki:AddRequest(warehouse.London,  WAREHOUSE.Descriptor.TEMPLATENAME, "Huey", 3)
+--
+-- ## Example 4: Transport of Assets by APCs
+-- 
+-- Warehouse at FARP Berlin requests three infantry groups from Batumi. These assets shall be transported using one APC.
+-- Infantry and APC are spawned in the spawn zone at Batumi. The APC picks up two of the three infantry groups and
+-- drives them to Berlin. There, they unboard and walk to the warehouse where they will be added to the stock.
+-- Meanwhile the APC drives back and picks up the last infantry group and also brings it to Batumi.
+-- The APC will then return to Batumi and be added back to the stock of the Batumi warehouse.
+-- The reason that the APC has to drive twice, it that can only up to ten soldiers.  
+-- 
+--     -- Start Warehouse at Batumi.
+--     warehouse.Batumi:Start()
+--   
+--     -- Start Warehouse Berlin. 
+--     warehouse.Berlin:Start()
+--   
+--     -- Add 20 infantry groups and five APCs as assets at Batumi.
+--     warehouse.Batumi:AddAsset("Infantry Platoon Alpha", 20)
+--     warehouse.Batumi:AddAsset("TPz Fuchs", 5)
+--   
+--     -- Warehouse Berlin requests 3 infantry groups from warehouse Batumi using 1 APC for transport.
+--     warehouse.Batumi:AddRequest(warehouse.Berlin, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_INFANTRY, 3, WAREHOUSE.TransportType.APC, 1)
+--
+--## Example 5: Transport of Assets by Helicopters
+--
+--  Warehouse at FARP Berlin requests 10 infantry groups from Batumi. They shall be transported by one helicopter.
+--  Note that the UH-1H Huey in DCS is an attack and not a transport helo. So the warehouse logic would be default also
+--  register it as an @{#WAREHOUSE.Attribute.AIR_ATTACKHELICOPTER}. In order to use it as a transport we need to force
+--  it to be added as transport helo.
+--
+--     -- Start Warehouses.
+--     warehouse.Batumi:Start()
+--     warehouse.Berlin:Start()
+--   
+--     -- Add 20 infantry groups as assets at Batumi.
+--     warehouse.Batumi:AddAsset("Infantry Platoon Alpha", 20)
+--     
+--     -- Add five Hueys for transport. Note that the Huey in DCS is an attack and not a transport helo. So we force the attribute!
+--     warehouse.Batumi:AddAsset("Huey", 5, WAREHOUSE.Attribute.AIR_TRANSPORTHELO)
+--   
+--     -- Warehouse Berlin requests 10 infantry groups from warehouse Batumi using one huey for transport.
+--     warehouse.Batumi:AddRequest(warehouse.Berlin, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_INFANTRY, 10, WAREHOUSE.TransportType.HELICOPTER, 1)
+--
+--## Example 6: Transport of Assets by Airplanes
+--
+-- Kutaisi requests 20 infantry groups from Senaki. These assets will be loaded into one C-130 cargo plane.
+--
+--     -- Start Warehouses.
+--     warehouse.Senaki:Start()
+--     warehouse.Kutaisi:Start()
+--     
+--     -- Add 20 infantry groups and 5 C-130 transport planes as assets to Senaki warehouse.
+--     warehouse.Senaki:AddAsset("Infantry Platoon Alpha", 20)
+--     warehouse.Senaki:AddAsset("C-130", 5)
+--   
+--     -- Warehouse Berlin requests 10 infantry groups from warehouse Batumi using 3 APCs for transport.
+--     warehouse.Senaki:AddRequest(warehouse.Kutaisi, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_INFANTRY, 20, WAREHOUSE.TransportType.AIRPLANE, 1)
+--
+-- ## Example 7: Capturing Airbase and Warehouse
+-- 
+-- A red BMP has made it through our defence lines and drives towards our unprotected airbase at Senaki.
+-- Once the BMP captures the airbase (DCS S\_EVENT_\BASE_\CAPTURED is evaluated) the warehouse at Senaki lost its air infrastructure and it is not
+-- possible any more to spawn airborne units. All requests for airborne units are rejected and not queued in this case.
+-- 
+-- The red BMP then drives further to the warehouse. Once it enters the warehouse zone (500 m radius around the warehouse building), the warehouse is
+-- considered to be under attack. This triggers the event **Attacked**. The @{#WAREHOUSE.OnAfterAttacked} function can be used to react to this situation.
+-- Here, we only broadcast a distress call and launch a flare. However, it would also be reasonable to spawn all or selected ground troops in order to defend
+-- the warehouse. Note, that the warehouse has a self defence option which can be activated via the @{#WAREHOUSE.SetAutoDefenceOn}() function. If activated,
+-- *all* ground assets are automatically spawned and assigned to defend the warehouse. Once/if the attack is defeated, these assets go automatically back
+-- into the warehouse stock.
+-- 
+-- If the red coalition manages to capture our warehouse, all assets go into their possession. Here, even our airbase has been captured. Therefore, a (self) request
+-- to the warehouse will now spawn the F/A-18 fighters as red units. Note, that the request could also some from another red warehouse. In that case,
+-- the planes would take off and (if they make it) be added to the red warehouse. So you can steal valuable assets from your enemy if he is not careful.
+-- 
+-- Here, we simply activate a blue external unit which drives to the warehouse, destroyes the red intruder and re-captures our warehouse.
+-- 
+--     -- Start warehouse.  
+--     warehouse.Senaki:Start()
+--     
+--     -- Add some assets.
+--     warehouse.Senaki:AddAsset("TPz Fuchs", 5)
+--     warehouse.Senaki:AddAsset("Infantry Platoon Alpha", 10)
+--     warehouse.Senaki:AddAsset("F/A-18C 2ship", 10)
+--     
+--     -- Auto defence! When enabled, all ground troops of the warehouse are spawned automatically to defend the warehouse.
+--     -- warehouse.Senaki:SetAutoDefenceOn()
+--   
+--     -- Red BMP trying to capture the airfield and later the warehouse.
+--     local red1=GROUP:FindByName("Red BMP-80 Senaki")
+--     red1:Activate()
+--   
+--     -- The red BMP first drives to the airbase which gets captured and changes from blue to red. So the warehouse loses its airbase.  
+--     function warehouse.Senaki:OnAfterAirbaseCaptured(From,Event,To,Coalition)
+--       -- This request should not be processed since the warehouse has lost its airbase. In fact it is deleted from the queue.
+--       warehouse.Senaki:AddRequest(warehouse.Senaki,WAREHOUSE.Descriptor.CATEGORY, Group.Category.AIRPLANE, 1)
+--     end
+--     
+--     -- Enemy has entered the warehouse zone. This triggers the "Attacked" event.
+--     function warehouse.Senaki:OnAfterAttacked(From,Event,To,Coalition,Country)
+--       MESSAGE:New(string.format("Warehouse %s: We are under attack!", self.alias), 30):ToCoalition(self.coalition)
+--       self.coordinate:SmokeRed()
+--     end
+--     
+--     -- Now the red BMP also captured the warehouse. So the warehouse and the airbase are both red and planes can be spawned again.
+--     function warehouse.Senaki:OnAfterCaptured(From,Event,To,Coalition,Country)
+--       -- These units will be spawned as red units because the warehouse has just been captured.
+--       warehouse.Senaki:AddRequest(warehouse.Senaki,WAREHOUSE.Descriptor.CATEGORY, Group.Category.AIRPLANE, 1)
+--       
+--       -- Activate Blue Humvee to recapture the warehouse.
+--       local blue1=GROUP:FindByName("blue1")
+--       blue1:Activate()
+--     end
+--
+-- ## Example 8: Destroying a Warehouse
+-- 
+-- After 30 seconds into the mission we create and (artificial) big explosion - or a terrorist attack if you like - which completely destroys the
+-- the warehouse at Batumi. All assets are gone and requests cannot be processed anymore.
+-- 
+--     -- Start Batumi and Berlin warehouses.
+--     warehouse.Batumi:Start()
+--     warehouse.Berlin:Start()
+--     
+--     -- Add some assets.
+--     warehouse.Batumi:AddAsset("Huey", 5, WAREHOUSE.Attribute.AIR_TRANSPORTHELO)
+--     warehouse.Berlin:AddAsset("Huey", 5, WAREHOUSE.Attribute.AIR_TRANSPORTHELO)
+--     
+--     -- Big explosion at the warehose. It has a very nice damage model by the way :)
+--     local function DestroyWarehouse()
+--       warehouse.Batumi.warehouse:GetCoordinate():Explosion(9999)
+--     end
+--     
+--     -- Create and explosion after 30 sec.
+--     SCHEDULER:New(nil, DestroyWarehouse, {}, 30)
+--     
+--     -- These requests should not be processed any more since the warehouse is destroyed.
+--     warehouse.Batumi:__AddRequest(35, warehouse.Berlin, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.AIR_TRANSPORTHELO, 1)
+--     warehouse.Berlin:__AddRequest(40, warehouse.Batumi, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.AIR_TRANSPORTHELO, 1)
+--
+-- ## Example 9: Self Propelled Naval Assets
+-- 
+-- Kobuleti requests a war ship from Batumi. Both warehouses need to have a port, which we define by two polygon zones at a place
+-- in the sea closest to the warehouses. Also a shipping lane between the two warehouses needs to be defined manually.
+-- With this infrastructure it is possible to exachange naval assets between warehouses.
+-- 
+--     -- Start warehouses.
+--     warehouse.Batumi:Start()
+--     warehouse.Kobuleti:Start()
+--     
+--     -- Define ports and shipping lanes.
+--     warehouse.Batumi:SetPortZone(ZONE_POLYGON:NewFromGroupName("Warehouse Batumi Port", "Warehouse Batumi Port"))
+--     warehouse.Kobuleti:SetPortZone(ZONE_POLYGON:NewFromGroupName("Warehouse Kobuleti Port", "Warehouse Kobuleti Port"))
+--     warehouse.Batumi:AddShippingLane(warehouse.Kobuleti, GROUP:FindByName("Warehouse Batumi-Kobuleti Shipping Lane"))
+--     
+--     -- Add five USS Normandy naval assets.
+--     warehouse.Batumi:AddAsset("Normandy", 5)
+--     
+--     -- Kobuleti requests a war ship from Batumi.
+--     warehouse.Batumi:AddRequest(warehouse.Kobuleti, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.NAVAL_WARSHIP)
+--
+-- ## Example 10: Aircraft Carrier - Rescue Helo and Escort
+-- 
+-- This example shows how to spawn assets from a warehouse located on an aircraft carrier.
+-- 
+-- After 10 seconds we make a self request for a rescue helicopter. Note, that the @{#WAREHOUSE.AddRequest} function has a parameter which lets you
+-- specify an "Assignment". This can be later used to identify the request and take the right actions.
+-- 
+-- Once the request is processed, the @{#WAREHOUSE.OnafterSelfRequest} function is called. This is where we hook in and postprocess the spawned assets.
+-- In particular, we use the @{AI.AI_Formation#AI_FORMATION} class to make some nice escorts for our carrier.
+-- 
+-- When the resue helo is spawned, we can check that this is the correct asset and make the helo go into formation with the carrier.
+-- Once the helo runs out of fuel, it will automatically return to the ship and land. For the warehouse, this means that the "cargo", i.e. the helicopter
+-- has been delivered - assets can be delivered to other warehouses and to the same warehouse - hence a *self* request.
+-- When that happens, the **Delivered** event is triggered and the @{#WAREHOUSE.OnAfterDelivered} function called. This can now be used to spawn
+-- a fresh helo. Effectively, there we created an infinite, never ending loop. So a rescue helo will be up at all times.
+-- 
+-- After 30 and 45 seconds requests for five groups of armed speedboats are made. These will be spawned in the port zone right behind the carrier.
+-- The first five groups will go port of the carrier an form a left wing formation. The seconds groups will to the analogue on the starboard side.  
+-- 
+--     -- Start warehouse on USS Stennis.
+--     warehouse.Stennis:Start()
+--     
+--     -- Add speedboat and helo assets.
+--     warehouse.Stennis:AddAsset("Speedboat", 10)
+--     warehouse.Stennis:AddAsset("CH-53E", 3)
+--     
+--     -- Define a "port" at the Stennis to be able to spawn Naval assets. This zone will move behind the Stennis.
+--     local stenniszone=ZONE_UNIT:New("Spawnzone Stennis", UNIT:FindByName("Stennis"), 100, {rho=250, theta=180, relative_to_unit=true})
+--     warehouse.Stennis:SetPortZone(stenniszone)
+--     
+--     -- Self request of rescue helo and speed boats.
+--     warehouse.Stennis:__AddRequest(10, warehouse.Stennis, WAREHOUSE.Descriptor.TEMPLATENAME, "CH-53E", 1, nil, nil, nil, "Rescue Helo")
+--     warehouse.Stennis:__AddRequest(30, warehouse.Stennis, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.NAVAL_ARMEDSHIP, 5, nil, nil, nil, "Speedboats Left")
+--     warehouse.Stennis:__AddRequest(45, warehouse.Stennis, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.NAVAL_ARMEDSHIP, 5, nil, nil, nil, "Speedboats Right")
+--     
+--     --- Function called after self request
+--     function warehouse.Stennis:OnAfterSelfRequest(From,Event,To,groupset,request)
+--     
+--       local groupset=groupset --Core.Set#SET_GROUP
+--       local request=request   --Functional.Warehouse#WAREHOUSE.Pendingitem
+--       
+--       local Mother=UNIT:FindByName("Stennis")
+--       
+--       if request.assignment=="Speedboats Left" then
+--         
+--         -- Define AI Formation object.
+--         -- Note that this has to be a global variable or the garbage collector will remove it for some reason!
+--         CarrierFormationLeft = AI_FORMATION:New(Mother, groupset, "Left Formation with Carrier", "Follow Carrier at given parameters.")
+--   
+--         -- Formation parameters.
+--         CarrierFormationLeft:FormationLeftWing(200 ,50, 0, 0, 500, 50)
+--         
+--         CarrierFormationLeft:__Start(2)
+--         
+--         for _,group in pairs(groupset:GetSetObjects()) do
+--           local group=group --Wrapper.Group#GROUP
+--           group:FlareRed()        
+--         end
+--         
+--       elseif request.assignment=="Speedboats Right" then
+--       
+--         -- Define AI Formation object.
+--         -- Note that this has to be a global variable or the garbage collector will remove it for some reason!
+--         CarrierFormationRight = AI_FORMATION:New(Mother, groupset, "Right Formation with Carrier", "Follow Carrier at given parameters.")
+--   
+--         -- Formation parameters.
+--         CarrierFormationRight:FormationRightWing(200 ,50, 0, 0, 500, 50)
+--         
+--         CarrierFormationRight:__Start(2)
+--         
+--         for _,group in pairs(groupset:GetSetObjects()) do
+--           local group=group --Wrapper.Group#GROUP
+--           group:FlareGreen()        
+--         end    
+--         
+--       elseif request.assignment=="Rescue Helo" then
+--   
+--         -- Define AI Formation object.
+--         CarrierFormationHelo = AI_FORMATION:New(Mother, groupset, "Helo Formation with Carrier", "Follow Carrier at given parameters.")
+--         
+--         -- Formation parameters.
+--         CarrierFormationHelo:FormationCenterWing(-150, 50, 20, 50, 100, 50)
+--   
+--         -- Start formation FSM.
+--         CarrierFormationHelo:__Start(2)
+--         
+--       end
+--       
+--       --- When the helo is out of fuel, it will return to the carrier and should be delivered.
+--       function warehouse.Stennis:OnAfterDelivered(From,Event,To,request)
+--         local request=request   --Functional.Warehouse#WAREHOUSE.Pendingitem
+--         
+--         -- So we start another request.
+--         if request.assignment=="Rescue Helo" then
+--           warehouse.Stennis:__AddRequest(10, warehouse.Stennis, WAREHOUSE.Descriptor.TEMPLATENAME, "CH-53E", 1, nil, nil, nil, "Rescue Helo")
+--         end
+--       end
+--       
+--     end
 --
 --
 -- @field #WAREHOUSE
@@ -346,6 +695,7 @@ WAREHOUSE = {
   stock         =    {},
   queue         =    {},
   pending       =    {},
+  delivered     =    {},
   defending     =    {},
   portzone      =   nil,
   shippinglanes =    {},
@@ -489,33 +839,32 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.3.4"
+WAREHOUSE.version="0.3.4w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: How to get a specific request once the cargo is delivered? Make addrequest addasset non FSM function? Callback for requests like in SPAWN?
--- DONE: Add autoselfdefence switch and user function. Default should be off.
--- DONE: Warehouse re-capturing not working?!
--- DONE: Naval assets dont go back into stock once arrived.
--- DONE: Take cargo weight into consideration, when selecting transport assets.
 -- TODO: Add transport units from dispatchers back to warehouse stock once they completed their mission.
--- DONE: Add ports for spawning naval assets.
--- TODO: Added habours as interface for transport to from warehouses? 
--- DONE: Add shipping lanes between warehouses.
+-- TODO: Added habours as interface for transport to from warehouses?
 -- TODO: Set ROE for spawned groups.
 -- TODO: Add possibility to add active groups. Need to create a pseudo template before destroy.
 -- TODO: Write documentation.
 -- TODO: Handle the case when units of a group die during the transfer. Adjust template?! See Grouping in SPAWN.
--- DONE: Handle cases with immobile units <== should be handled by dispatcher classes.
--- TODO: Handle cargo crates.
--- DONE: Handle cases for aircraft carriers and other ships. Place warehouse on carrier possible? On others probably not - exclude them?
--- TODO: Add general message function for sending to coaliton or debug.
--- TODO: Fine tune event handlers.
 -- TODO: Add save/load capability of warehouse <==> percistance after mission restart.
--- DONE: Improve generalized attributes.
 -- TODO: Add a time stamp when an asset is added to the stock and for requests.
+-- DONE: How to get a specific request once the cargo is delivered? Make addrequest addasset non FSM function? Callback for requests like in SPAWN?
+-- DONE: Add autoselfdefence switch and user function. Default should be off.
+-- DONE: Warehouse re-capturing not working?!
+-- DONE: Naval assets dont go back into stock once arrived.
+-- DONE: Take cargo weight into consideration, when selecting transport assets.
+-- DONE: Add ports for spawning naval assets. 
+-- DONE: Add shipping lanes between warehouses.
+-- DONE: Handle cases with immobile units <== should be handled by dispatcher classes.
+-- DONE: Handle cases for aircraft carriers and other ships. Place warehouse on carrier possible? On others probably not - exclude them?
+-- DONE: Add general message function for sending to coaliton or debug.
+-- DONE: Fine tune event handlers.
+-- DONE: Improve generalized attributes.
 -- DONE: If warehouse is destoyed, all asssets are gone.
 -- DONE: Add event handlers.
 -- DONE: Add AI_CARGO_AIRPLANE
@@ -1087,12 +1436,14 @@ function WAREHOUSE:AddShippingLane(remotewarehouse, group)
   end
   
   -- Debug info. Marks along shipping lane.
-  for i=1,#lane do
-    local coord=lane[i] --Core.Point#COORDINATE
-    local text=string.format("Shipping lane %s to %s. Point %d.", self.alias, remotewarehouse.alias, i)
-    coord:MarkToCoalition(text, self.coalition)
+  if self.Debug then
+    for i=1,#lane do
+      local coord=lane[i] --Core.Point#COORDINATE
+      local text=string.format("Shipping lane %s to %s. Point %d.", self.alias, remotewarehouse.alias, i)
+      coord:MarkToCoalition(text, self.coalition)
+    end
   end
-  
+    
   -- Add shipping lane.
   self.shippinglanes[remotewarehouse.warehouse:GetName()]=lane
   
@@ -1306,7 +1657,7 @@ function WAREHOUSE:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.EngineShutdown, self._OnEventArrived)
   
   -- Start the status monitoring.
-  self:__Status(1)
+  self:__Status(-1)
 
 end
 
@@ -1327,6 +1678,15 @@ function WAREHOUSE:onafterStop(From, Event, To)
   self:UnHandleEvent(EVENTS.Crash)
   self:UnHandleEvent(EVENTS.Dead)
   self:UnHandleEvent(EVENTS.BaseCaptured)
+  
+  self.pending=nil
+  self.pending={}
+  
+  self.queue=nil
+  self.queue={}
+  
+  self.stock=nil
+  self.stock={}
   
   -- Clear all pending schedules.
   self.CallScheduler:Clear()  
@@ -2687,6 +3047,9 @@ function WAREHOUSE:onafterDelivered(From, Event, To, request)
 
   -- Make some noise :)
   self:_Fireworks(request.warehouse.coordinate)
+  
+  -- Add table
+  self.delivered[request.uid]=true
 
   -- Remove pending request:
   self:_DeleteQueueItem(request, self.pending)
@@ -2721,7 +3084,19 @@ function WAREHOUSE:onafterSelfRequest(From, Event, To, groupset, request)
   end
   
   -- Add a "defender request" to be able to despawn all assets once defeated.
-  if self:IsAttacked() then    
+  if self:IsAttacked() then
+
+    -- Route (mobile) ground troops to warehouse zone if they are not alreay there.
+    if self.autodefence then
+      for _,_group in pairs(groupset:GetSetObjects()) do
+        local group=_group --Wrapper.Group#GROUP
+        local speedmax=group:GetSpeedMax()
+        if group:IsGround() and speedmax>1 and group:IsNotInZone(self.zone) then
+          group:RouteGroundTo(self.zone:GetRandomCoordinate(), 0.8*speedmax, "Off Road")
+        end
+      end      
+    end    
+  
     table.insert(self.defending, request)
   end
   
@@ -4605,7 +4980,7 @@ function WAREHOUSE:_PrintQueue(queue, name)
     if qitem.airbase then
       airbasename=qitem.airbase:GetName()
     end      
-    text=text..string.format("\nUID=%d, Prio=%d, Requestor=%s, Airbase=%s (category=%d), Descriptor: %s=%s, Nasssets=%s, Transport=%s, Ntransport=%d.",
+    text=text..string.format("\nUID=%d, Prio=%d, Requestor=%s, Airbase=%s (category=%d), Descriptor: %s=%s, #Assets=%s, Transport=%s, #Transport=%d.",
     qitem.uid, qitem.prio, qitem.warehouse.alias, airbasename, qitem.category, qitem.assetdesc,tostring(qitem.assetdescval), tostring(qitem.nasset), qitem.transporttype, qitem.ntransport)
   end
   if #queue==0 then
@@ -4648,10 +5023,12 @@ function WAREHOUSE:_GetStockAssetsText(messagetoall)
   -- Get assets in stock.
   local _data=self:GetStockInfo(self.stock)
   
+  --[[
   local function _sort(a,b)
     return a[1]<b[1]
   end  
   table.sort(_data, _sort)
+  ]]
   
   -- Text.  
   local text="Stock:\n"
