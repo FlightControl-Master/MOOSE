@@ -28,7 +28,7 @@
 -- The AI_CARGO_DISPATCHER_HELICOPTER module is derived from the AI_CARGO_DISPATCHER module.
 -- 
 -- ## Note! In order to fully understand the mechanisms of the AI_CARGO_DISPATCHER_HELICOPTER class, it is recommended that you
--- ** first consult and READ the documentation of the @{AI.AI_Cargo_Dispatcher#AI_CARGO_DISPATCHER} !!!**
+-- **first consult and READ the documentation of the @{AI.AI_Cargo_Dispatcher} module!!!**
 -- 
 -- Especially to learn how to **Tailor the different cargo handling events**, this will be very useful!
 -- 

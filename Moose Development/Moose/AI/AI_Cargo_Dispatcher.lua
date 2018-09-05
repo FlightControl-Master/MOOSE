@@ -27,8 +27,35 @@
 -- 
 -- # 2) AI_CARGO_DISPATCHER is a FSM
 -- 
--- ![Process](..\Presentations\AI_PATROL\Dia2.JPG)
+-- This section must be read as follows. Each of the rows indicate a state transition, triggered through an event, and with an ending state of the event was executed.
+-- The first column is the **From** state, the second column the **Event**, and the third column the **To** state.
 -- 
+-- So, each of the rows have the following structure.
+-- 
+--  * **From** => **Event** => **To**
+-- 
+-- Important to know is that an event can only be executed if the **current state** is the **From** state.
+-- This, when an **Event** that is being triggered has a **From** state that is equal to the **Current** state of the state machine, the event will be executed,
+-- and the resulting state will be the **To** state.
+-- 
+-- These are the different possible state transitions of this state machine implementation: 
+-- 
+--  * Idle => Start => Monitoring
+--  * Monitoring => Monitor => Monitoring
+--  * Monitoring => Stop => Idle
+--      
+--  * Monitoring => Pickup => Monitoring
+--  * Monitoring => Load => Monitoring
+--  * Monitoring => Loading => Monitoring
+--  * Monitoring => Loaded => Monitoring
+--  * Monitoring => PickedUp => Monitoring
+--  * Monitoring => Deploy => Monitoring
+--  * Monitoring => Unload => Monitoring
+--  * Monitoring => Unloaded => Monitoring
+--  * Monitoring => Deployed => Monitoring
+--  * Monitoring => Home => Monitoring
+-- 
+--      
 -- ## 2.1) AI_CARGO_DISPATCHER States
 -- 
 --   * **Monitoring**: The process is dispatching.
@@ -36,9 +63,10 @@
 -- 
 -- ## 2.2) AI_CARGO_DISPATCHER Events
 -- 
---   * **Monitor**: Monitor and take action.
 --   * **Start**: Start the transport process.
 --   * **Stop**: Stop the transport process.
+--   * **Monitor**: Monitor and take action.
+--   
 --   * **Pickup**: Pickup cargo.
 --   * **Load**: Load the cargo.
 --   * **Loading**: The dispatcher is coordinating the loading of a cargo.
@@ -319,7 +347,7 @@
 --    * @{#AI_CARGO_DISPATCHER.SetDeployRadius}(): Sets or randomizes the deploy location for the carrier around the cargo coordinate in a radius defined an outer and an optional inner radius. 
 --    * @{#AI_CARGO_DISPATCHER.SetDeploySpeed}(): Set the speed or randomizes the speed in km/h to deploy the cargo.
 -- 
--- #) 5. Set the home zone when there isn't any more cargo to pickup.
+-- # 5) Set the home zone when there isn't any more cargo to pickup.
 -- 
 -- A home zone can be specified to where the Carriers will move when there isn't any cargo left for pickup.
 -- Use @{#AI_CARGO_DISPATCHER.SetHomeZone}() to specify the home zone.
@@ -372,19 +400,19 @@ function AI_CARGO_DISPATCHER:New( SetCarrier, SetCargo )
   self:AddTransition( "Monitoring", "Stop", "Idle" )
   
 
-  self:AddTransition( "*", "Pickup", "*" )
-  self:AddTransition( "*", "Load", "*" )
-  self:AddTransition( "*", "Loading", "*" )
-  self:AddTransition( "*", "Loaded", "*" )
-  self:AddTransition( "*", "PickedUp", "*" )
+  self:AddTransition( "Monitoring", "Pickup", "Monitoring" )
+  self:AddTransition( "Monitoring", "Load", "Monitoring" )
+  self:AddTransition( "Monitoring", "Loading", "Monitoring" )
+  self:AddTransition( "Monitoring", "Loaded", "Monitoring" )
+  self:AddTransition( "Monitoring", "PickedUp", "Monitoring" )
 
-  self:AddTransition( "*", "Deploy", "*" )
-  self:AddTransition( "*", "Unload", "*" )
-  self:AddTransition( "*", "Unloading", "*" )
-  self:AddTransition( "*", "Unloaded", "*" )
-  self:AddTransition( "*", "Deployed", "*" )
+  self:AddTransition( "Monitoring", "Deploy", "Monitoring" )
+  self:AddTransition( "Monitoring", "Unload", "Monitoring" )
+  self:AddTransition( "Monitoring", "Unloading", "Monitoring" )
+  self:AddTransition( "Monitoring", "Unloaded", "Monitoring" )
+  self:AddTransition( "Monitoring", "Deployed", "Monitoring" )
   
-  self:AddTransition( "*", "Home", "*" )
+  self:AddTransition( "Monitoring", "Home", "Monitoring" )
   
   self.MonitorTimeInterval = 30
   self.DeployRadiusInner = 200
