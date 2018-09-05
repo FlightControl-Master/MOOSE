@@ -16,25 +16,25 @@
 --- A dynamic cargo handling capability for AI groups.
 -- 
 -- Carrier equipment can be mobilized to intelligently transport infantry and other cargo within the simulation.
--- The AI\_CARGO\_DISPATCHER module uses the @{Cargo} capabilities within the MOOSE framework, to enable Carrier GROUP objects 
+-- The AI_CARGO_DISPATCHER module uses the @{Cargo} capabilities within the MOOSE framework, to enable Carrier GROUP objects 
 -- to transport @{Cargo} towards several deploy zones.
--- CARGO derived objects must be declared within the mission to make the AI\_CARGO\_DISPATCHER object recognize the cargo.
+-- @{Cargo} must be declared within the mission to make the AI_CARGO_DISPATCHER object recognize the cargo.
 -- Please consult the @{Cargo} module for more information. 
 -- 
--- # 1) AI\_CARGO\_DISPATCHER constructor
+-- # 1) AI_CARGO_DISPATCHER constructor
 --   
 --   * @{#AI_CARGO_DISPATCHER.New}(): Creates a new AI\_CARGO\_DISPATCHER object.
 -- 
--- # 2) AI\_CARGO\_DISPATCHER is a FSM
+-- # 2) AI_CARGO_DISPATCHER is a FSM
 -- 
 -- ![Process](..\Presentations\AI_PATROL\Dia2.JPG)
 -- 
--- ## 2.1) AI\_CARGO\_DISPATCHER States
+-- ## 2.1) AI_CARGO_DISPATCHER States
 -- 
 --   * **Monitoring**: The process is dispatching.
 --   * **Idle**: The process is idle.
 -- 
--- ## 2.2) AI\_CARGO\_DISPATCHER Events
+-- ## 2.2) AI_CARGO_DISPATCHER Events
 -- 
 --   * **Monitor**: Monitor and take action.
 --   * **Start**: Start the transport process.
@@ -47,6 +47,7 @@
 --   * **Deploy**: Deploy cargo to a location.
 --   * **Unload**: Unload the cargo.
 --   * **Unloaded**: Flag that the cargo is unloaded.
+--   * **Deployed**: All cargo is unloaded from the carriers in the group.
 --   * **Home**: A Carrier is going home.
 -- 
 -- # 3) Enhance your mission scripts with **Tailored** Event Handling!

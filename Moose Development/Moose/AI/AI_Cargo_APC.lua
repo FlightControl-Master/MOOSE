@@ -1,4 +1,4 @@
---- **AI** -- (R2.3) - Models the intelligent transportation of infantry and other cargo.
+--- **AI** -- (R2.4) - Models the intelligent transportation of infantry and other cargo.
 --
 -- ===
 -- 
@@ -13,11 +13,12 @@
 -- @extends AI.AI_Cargo#AI_CARGO
 
 
---- Brings a dynamic cargo handling capability for AI groups.
+--- Brings a dynamic cargo handling capability for an AI vehicle group.
 -- 
 -- Armoured Personnel Carriers (APC), Trucks, Jeeps and other ground based carrier equipment can be mobilized to intelligently transport infantry and other cargo within the simulation.
--- The AI\_CARGO\APC module uses the @{Cargo} capabilities within the MOOSE framework.
--- CARGO derived objects must be declared within the mission to make the AI\_CARGO\APC object recognize the cargo.
+-- 
+-- The AI_CARGO_APC class uses the @{Cargo} capabilities within the MOOSE framework.
+-- @{Cargo} must be declared within the mission to make the AI_CARGO_APC object recognize the cargo.
 -- Please consult the @{Cargo} module for more information. 
 -- 
 -- ## Cargo loading.

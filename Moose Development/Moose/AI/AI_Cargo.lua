@@ -1,4 +1,4 @@
---- **AI** -- (R2.3) - Models the intelligent transportation of infantry and other cargo.
+--- **AI** -- (R2.4) - Models the intelligent transportation of infantry and other cargo.
 --
 -- ===
 -- 
@@ -7,69 +7,25 @@
 -- ===       
 --
 -- @module AI.AI_Cargo
--- @image AI_Cargo_Dispatching.JPG
+-- @image Cargo.JPG
 
 --- @type AI_CARGO
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
 
---- Brings a dynamic cargo handling capability for AI groups.
+--- Base class for the dynamic cargo handling capability for AI groups.
 -- 
--- Armoured Personnel Carriers (Carrier), Trucks, Jeeps and other ground based carrier equipment can be mobilized to intelligently transport infantry and other cargo within the simulation.
--- The AI\_CARGO\Carrier module uses the @{Cargo} capabilities within the MOOSE framework.
--- CARGO derived objects must be declared within the mission to make the AI\_CARGO\Carrier object recognize the cargo.
+-- Carriers can be mobilized to intelligently transport infantry and other cargo within the simulation.
+-- The AI_CARGO module uses the @{Cargo} capabilities within the MOOSE framework.
+-- CARGO derived objects must be declared within the mission to make the AI_CARGO object recognize the cargo.
 -- Please consult the @{Cargo} module for more information. 
 -- 
--- ## Cargo loading.
+-- The derived classes from this module are:
 -- 
--- The module will load automatically cargo when the Carriers are within boarding or loading range.
--- The boarding or loading range is specified when the cargo is created in the simulation, and therefore, this range depends on the type of cargo
--- and the specified boarding range.
--- 
--- ## Enemies nearby.
---  
--- When the Carriers are approaching enemy units, something special is happening. 
--- The Carriers will stop moving, and the loaded infantry will unboard and follow the Carriers and will help to defend the group.
--- The carrier will hold the route once the unboarded infantry is further than 50 meters from the Carriers, 
--- to ensure that the Carriers are not too far away from the following running infantry.
--- Once all enemies are cleared, the infantry will board again automatically into the Carriers. Once boarded, the Carriers will follow its pre-defined route.
--- 
--- A combat range needs to be specified in meters at the @{#AI_CARGO.New}() method. 
--- This combat range will trigger the unboarding of troops when enemies are within the combat range around the Carriers.
--- During my tests, I've noticed that there is a balance between ensuring that the infantry is within sufficient hit range (effectiveness) versus
--- vulnerability of the infantry. It all depends on the kind of enemies that are expected to be encountered. 
--- A combat range of 350 meters to 500 meters has been proven to be the most effective and efficient.
--- 
--- ## Infantry health.
--- 
--- When infantry is unboarded from the Carriers, the infantry is actually respawned into the battlefield. 
--- As a result, the unboarding infantry is very _healthy_ every time it unboards.
--- This is due to the limitation of the DCS simulator, which is not able to specify the health of new spawned units as a parameter.
--- However, infantry that was destroyed when unboarded and following the Carriers, won't be respawned again. Destroyed is destroyed.
--- As a result, there is some additional strength that is gained when an unboarding action happens, but in terms of simulation balance this has
--- marginal impact on the overall battlefield simulation. Fortunately, the firing strength of infantry is limited, and thus, respacing healthy infantry every
--- time is not so much of an issue ... 
--- 
--- ## Control the Carriers on the map.
--- 
--- It is possible also as a human ground commander to influence the path of the Carriers, by pointing a new path using the DCS user interface on the map.
--- In this case, the Carriers will change the direction towards its new indicated route. However, there is a catch!
--- Once the Carriers are near the enemy, and infantry is unboarded, the Carriers won't be able to hold the route until the infantry could catch up.
--- The Carriers will simply drive on and won't stop! This is a limitation in ED that prevents user actions being controlled by the scripting engine.
--- No workaround is possible on this.
--- 
--- ## Cargo deployment.
---  
--- Using the @{#AI_CARGO.Deploy}() method, you are able to direct the Carriers towards a point on the battlefield to unboard/unload the cargo at the specific coordinate. 
--- The Carriers will follow nearby roads as much as possible, to ensure fast and clean cargo transportation between the objects and villages in the simulation environment.
--- 
--- ## Cargo pickup.
---  
--- Using the @{#AI_CARGO.Pickup}() method, you are able to direct the Carriers towards a point on the battlefield to board/load the cargo at the specific coordinate. 
--- The Carriers will follow nearby roads as much as possible, to ensure fast and clean cargo transportation between the objects and villages in the simulation environment.
--- 
--- 
--- 
+--    * @{AI.AI_Cargo_APC} - Cargo transportation using APCs and other vehicles between zones.
+--    * @{AI.AI_Cargo_Helicopter} - Cargo transportation using helicopters between zones.
+--    * @{AI.AI_Cargo_Airplane} - Cargo transportation using airplanes to and from airbases.
+--    
 -- @field #AI_CARGO
 AI_CARGO = {
   ClassName = "AI_CARGO",

@@ -1,4 +1,4 @@
---- **AI** -- (R2.3) - Models the intelligent transportation of infantry (cargo).
+--- **AI** -- (R2.4) - Models the intelligent transportation of infantry (cargo).
 --
 -- ===
 -- 
@@ -13,7 +13,34 @@
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
 
---- # AI\_CARGO\_TROOPS class, extends @{Core.Fsm#FSM_CONTROLLABLE}
+--- Brings a dynamic cargo handling capability for an AI helicopter group.
+--  
+-- Helicopter carriers can be mobilized to intelligently transport infantry and other cargo within the simulation.
+-- 
+-- The AI_CARGO_HELICOPTER class uses the @{Cargo} capabilities within the MOOSE framework.
+-- @{Cargo} must be declared within the mission to make the AI_CARGO_HELICOPTER object recognize the cargo.
+-- Please consult the @{Cargo} module for more information. 
+-- 
+-- ## Cargo pickup.
+--  
+-- Using the @{#AI_CARGO_HELICOPTER.Pickup}() method, you are able to direct the helicopters towards a point on the battlefield to board/load the cargo at the specific coordinate. 
+-- Ensure that the landing zone is horizontally flat, and that trees cannot be found in the landing vicinity, or the helicopters won't land or will even crash!
+-- 
+-- ## Cargo deployment.
+--  
+-- Using the @{#AI_CARGO_HELICOPTER.Deploy}() method, you are able to direct the helicopters towards a point on the battlefield to unboard/unload the cargo at the specific coordinate. 
+-- Ensure that the landing zone is horizontally flat, and that trees cannot be found in the landing vicinity, or the helicopters won't land or will even crash!
+-- 
+-- ## Infantry health.
+-- 
+-- When infantry is unboarded from the APCs, the infantry is actually respawned into the battlefield. 
+-- As a result, the unboarding infantry is very _healthy_ every time it unboards.
+-- This is due to the limitation of the DCS simulator, which is not able to specify the health of new spawned units as a parameter.
+-- However, infantry that was destroyed when unboarded, won't be respawned again. Destroyed is destroyed.
+-- As a result, there is some additional strength that is gained when an unboarding action happens, but in terms of simulation balance this has
+-- marginal impact on the overall battlefield simulation. Fortunately, the firing strength of infantry is limited, and thus, respacing healthy infantry every
+-- time is not so much of an issue ... 
+-- 
 -- 
 -- ===
 -- 
@@ -34,8 +61,6 @@ function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
 
   local self = BASE:Inherit( self, AI_CARGO:New( Helicopter, CargoSet ) ) -- #AI_CARGO_HELICOPTER
 
-  self.CargoSet = CargoSet -- Cargo.CargoGroup#CARGO_GROUP
-  
   self.Zone = ZONE_GROUP:New( Helicopter:GetName(), Helicopter, 300 )
 
   self:SetStartState( "Unloaded" ) 

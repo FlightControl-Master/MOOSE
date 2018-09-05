@@ -1,4 +1,4 @@
---- **AI** -- Models the intelligent transportation of infantry and other cargo using APCs.
+--- **AI** -- (2.4) - Models the intelligent transportation of infantry and other cargo using APCs.
 --
 -- **Features:**
 -- 
