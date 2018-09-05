@@ -285,15 +285,16 @@ do -- CARGO_UNIT
   -- @param Wrapper.Client#CLIENT CargoCarrier
   -- @param #number NearRadius Default 25 m.
   function CARGO_UNIT:onafterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
-    --self:F( { From, Event, To, CargoCarrier.UnitName, NearRadius } )
+    self:F( { From, Event, To, CargoCarrier:GetName() } )
     
     
     if CargoCarrier and CargoCarrier:IsAlive() and self.CargoObject and self.CargoObject:IsAlive() then 
-      if CargoCarrier:InAir() == false then
+      if (CargoCarrier:IsAir() and not CargoCarrier:InAir()) or true then
+        local NearRadius = CargoCarrier:GetBoundingRadius( NearRadius ) + 5
         if self:IsNear( CargoCarrier:GetPointVec2(), NearRadius ) then
           self:__Load( 1, CargoCarrier, ... )
         else
-          self:__Boarding( -1, CargoCarrier, NearRadius, ... )
+          self:__Boarding( -5, CargoCarrier, NearRadius, ... )
           self.RunCount = self.RunCount + 1
           if self.RunCount >= 40 then
             self.RunCount = 0

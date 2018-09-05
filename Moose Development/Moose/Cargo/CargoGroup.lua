@@ -333,7 +333,7 @@ do -- CARGO_GROUP
   
     -- For each Cargo object within the CARGO_GROUP, route each object to the CargoLoadPointVec2
     for CargoID, Cargo in pairs( self.CargoSet:GetSet() ) do
-      self:T( { Cargo:GetName(), Cargo.current } )
+      --self:T( { Cargo:GetName(), Cargo.current } )
       
       
       if not Cargo:is( "Loaded" ) 
@@ -355,7 +355,7 @@ do -- CARGO_GROUP
   
       if not Cancelled then
         if not Boarded then
-          self:__Boarding( 1, CargoCarrier, NearRadius, ... )
+          self:__Boarding( -5, CargoCarrier, NearRadius, ... )
         else
           self:F("Group Cargo is loaded")
           self:__Load( 1, CargoCarrier, ... )

@@ -4778,7 +4778,7 @@ function SET_ZONE:New()
   return self
 end
 
---- Add ZONEs to SET_ZONE.
+--- Add ZONEs by a search name to SET_ZONE.
 -- @param Core.Set#SET_ZONE self
 -- @param #string AddZoneNames A single name or an array of ZONE_BASE names.
 -- @return self
@@ -4792,6 +4792,18 @@ function SET_ZONE:AddZonesByName( AddZoneNames )
     
   return self
 end
+
+--- Add ZONEs to SET_ZONE.
+-- @param Core.Set#SET_ZONE self
+-- @param Core.Zone#ZONE_BASE Zone A ZONE_BASE object.
+-- @return self
+function SET_ZONE:AddZone( Zone )
+
+  self:Add( Zone:GetName(), Zone )
+    
+  return self
+end
+
 
 --- Remove ZONEs from SET_ZONE.
 -- @param Core.Set#SET_ZONE self
@@ -5002,4 +5014,23 @@ function SET_ZONE:OnEventDeleteZone( EventData ) --R2.1
       end
     end
   end
+end
+
+--- Validate if a coordinate is in one of the zones in the set.
+-- Returns the ZONE object where the coordiante is located.
+-- If zones overlap, the first zone that validates the test is returned.
+-- @param #SET_ZONE self
+-- @param Core.Point#COORDINATE Coordinate The coordinate to be searched.
+-- @return Core.Zone#ZONE_BASE The zone that validates the coordinate location.
+-- @return #nil No zone has been found.
+function SET_ZONE:IsCoordinateInZone( Coordinate )
+
+  for _, Zone in pairs( self:GetSet() ) do
+    local Zone = Zone -- Core.Zone#ZONE_BASE
+    if Zone:IsCoordinateInZone( Coordinate ) then
+      return Zone
+    end
+  end
+
+  return nil
 end
