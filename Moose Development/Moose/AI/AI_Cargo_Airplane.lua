@@ -19,7 +19,6 @@
 AI_CARGO_AIRPLANE = {
   ClassName = "AI_CARGO_AIRPLANE",
   Coordinate = nil, -- Core.Point#COORDINATE
-  Airplane_Cargo = {},
 }
 
 --- Creates a new AI_CARGO_AIRPLANE object.
@@ -29,24 +28,9 @@ AI_CARGO_AIRPLANE = {
 -- @return #AI_CARGO_AIRPLANE
 function AI_CARGO_AIRPLANE:New( Airplane, CargoSet )
 
-  local self = BASE:Inherit( self, FSM_CONTROLLABLE:New() ) -- #AI_CARGO_AIRPLANE
+  local self = BASE:Inherit( self, AI_CARGO:New( Airplane, CargoSet ) ) -- #AI_CARGO_AIRPLANE
 
   self.CargoSet = CargoSet -- Cargo.CargoGroup#CARGO_GROUP
-
-  self:SetStartState( "Unloaded" ) 
-  
-  self:AddTransition( { "Unloaded", "Loaded" }, "Pickup", "*" )
-  self:AddTransition( "Loaded", "Deploy", "*" )
-  
-  self:AddTransition( { "Unloaded", "Boarding" }, "Load", "Boarding" )
-  self:AddTransition( "Boarding", "Board", "Boarding" )
-  self:AddTransition( "Boarding", "Loaded", "Boarding" )
-  self:AddTransition( "Boarding", "PickedUp", "Loaded" )
-  
-  self:AddTransition( "Loaded", "Unload", "Unboarding" )
-  self:AddTransition( "Unboarding", "Unboard", "Unboarding" )
-  self:AddTransition( "Unboarding" , "Unloaded", "Unboarding" )
-  self:AddTransition( "Unboarding" , "Deployed", "Unloaded" )
 
   self:AddTransition( "*", "Landed", "*" )
   self:AddTransition( "*", "Home" ,  "*" ) 
@@ -368,110 +352,6 @@ function AI_CARGO_AIRPLANE:onafterDeploy( Airplane, From, Event, To, Coordinate,
 end
 
 
---- On before Load event. Checks if cargo is inside the load radius and if so starts the boarding process.
--- @param #AI_CARGO_AIRPLANE self
--- @param Wrapper.Group#GROUP Airplane Transport plane.
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
-function AI_CARGO_AIRPLANE:onbeforeLoad( Airplane, From, Event, To, PickupZone )
-
-
-  local Boarding = false
-  
-  local LoadInterval = 10
-  local LoadDelay = 10
-
-  if Airplane and Airplane:IsAlive() ~= nil then
-  
-    for _, AirplaneUnit in pairs( Airplane:GetUnits() ) do
-      local AirplaneUnit = AirplaneUnit -- Wrapper.Unit#UNIT
-      local CargoBayFreeWeight = AirplaneUnit:GetCargoBayFreeWeight()
-      self:F({CargoBayFreeWeight=CargoBayFreeWeight})
-
-      for _, Cargo in UTILS.spairs( self.CargoSet:GetSet(), function( t, a, b ) return t[a]:GetWeight() > t[b]:GetWeight() end ) do
-        self:F({Cargo:GetName()})
-        local Cargo=Cargo --Cargo.Cargo#CARGO
-        if Cargo:IsUnLoaded() and not Cargo:IsDeployed() then
-          
-          if Cargo:IsInLoadRadius( AirplaneUnit:GetCoordinate() ) then
-    
-            local CargoWeight = Cargo:GetWeight()
-          
-            -- Only when there is space within the bay to load the next cargo item!
-            if CargoBayFreeWeight > CargoWeight then --and CargoBayFreeVolume > CargoVolume then
-              Cargo:__Board( LoadDelay, AirplaneUnit, 25 )
-              LoadDelay = LoadDelay + LoadInterval
-              self:__Board( LoadDelay, Cargo, AirplaneUnit, PickupZone )
-              self.Airplane_Cargo[AirplaneUnit] = Cargo
-              Boarding = true
-              CargoBayFreeWeight = CargoBayFreeWeight - CargoWeight
-            end
-          end
-        end 
-      end
-    end
-  end
-  
-  return Boarding
-  
-end
-
---- On after Board event. Cargo is inside the load radius and boarding is performed.
--- @param #AI_CARGO_AIRPLANE self
--- @param Wrapper.Group#GROUP Airplane Cargo transport plane.
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Cargo.Cargo#CARGO Cargo Cargo object.
--- @param Wrapper.Unit#UNIT AirplaneUnit
--- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
-function AI_CARGO_AIRPLANE:onafterBoard( Airplane, From, Event, To, Cargo, AirplaneUnit, PickupZone )
-
-  if Airplane and Airplane:IsAlive() then
-    
-    self:F({ IsLoaded = Cargo:IsLoaded() } )
-    
-    if not Cargo:IsLoaded() then
-      self:__Board( 10, Cargo, AirplaneUnit, PickupZone )
-      return
-    end
-  end
-
-  self:__Loaded( 10, Cargo, AirplaneUnit, PickupZone )
-  
-end
-
-
---- On After Loaded event.
--- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Group#GROUP Helicopter
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @return #boolean Cargo loaded.
--- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
-function AI_CARGO_AIRPLANE:onafterLoaded( AirplaneGroup, From, Event, To, Cargo, AirplaneUnit, PickupZone )
-  self:F( { AirplaneGroup, From, Event, To } )
-
-  local Loaded = true
-
-  if AirplaneGroup and AirplaneGroup:IsAlive() then
-    for AirplaneUnit, Cargo in pairs( self.Airplane_Cargo ) do
-      local Cargo = Cargo -- Cargo.Cargo#CARGO
-      self:F( { IsLoaded = Cargo:IsLoaded(), IsDestroyed = Cargo:IsDestroyed(), Cargo:GetName(), AirplaneGroup:GetName() } )
-      if not Cargo:IsLoaded() and not Cargo:IsDestroyed() then
-        Loaded = false
-      end
-    end
-  end
-  
-  if Loaded then
-    self:PickedUp( PickupZone )
-  end
-  
-end
 
 --- On after PickedUp event. All cargo is inside the carrier and ready to be transported.
 -- @param #AI_CARGO_AIRPLANE self
@@ -521,61 +401,6 @@ function AI_CARGO_AIRPLANE:onafterUnload( Airplane, From, Event, To, DeployZone 
   
 end
 
---- On after Unboard event. Checks if unboarding process is finished.
--- @param #AI_CARGO_AIRPLANE self
--- @param Wrapper.Group#GROUP Airplane Cargo transport plane.
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function AI_CARGO_AIRPLANE:onafterUnboard( Airplane, From, Event, To, Cargo, AirplaneUnit, DeployZone )
-
-  self:E( { "Unboard", Cargo } )
-
-  if Airplane and Airplane:IsAlive() then
-    if not Cargo:IsUnLoaded() then
-      self:__Unboard( 10, Cargo, AirplaneUnit, DeployZone )
-      return
-    end
-  end
-  
-  self:Unloaded( Cargo, AirplaneUnit, DeployZone )
-  
-end
-
---- On after Unloaded event. Cargo has been unloaded, i.e. the unboarding process is finished.
--- @param #AI_CARGO_AIRPLANE self
--- @param Wrapper.Group#GROUP Airplane Cargo transport plane.
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Cargo.Cargo#CARGO Cargo
-function AI_CARGO_AIRPLANE:onafterUnloaded( Airplane, From, Event, To, Cargo, AirplaneUnit, DeployZone )
-
-  local AllUnloaded = true
-
-  if AirplaneUnit and AirplaneUnit:IsAlive() then
-    for _, AirplaneUnit in pairs( AirplaneUnit:GetUnits() ) do
-      local IsEmpty = AirplaneUnit:IsCargoEmpty()
-      self:I({ IsEmpty = IsEmpty })
-      if not IsEmpty then
-          AllUnloaded = false
-          break
-      end
-    end
-    
-    if AllUnloaded == true then
-      if DeployZone then
-        self.Airplane_Cargo = {}
-      end
-      self.Airplane = AirplaneUnit
-    end
-  end
-  
-  if AllUnloaded == true then
-    self:Deployed( DeployZone )
-  end
-  
-end
 
 
 --- On after Deployed event.

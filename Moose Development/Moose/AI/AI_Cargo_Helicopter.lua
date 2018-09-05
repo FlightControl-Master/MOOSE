@@ -21,7 +21,6 @@
 AI_CARGO_HELICOPTER = {
   ClassName = "AI_CARGO_HELICOPTER",
   Coordinate = nil, -- Core.Point#COORDINATE,
-  Helicopter_Cargo = {},
 }
 
 AI_CARGO_QUEUE = {}
@@ -33,7 +32,7 @@ AI_CARGO_QUEUE = {}
 -- @return #AI_CARGO_HELICOPTER
 function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
 
-  local self = BASE:Inherit( self, FSM_CONTROLLABLE:New() ) -- #AI_CARGO_HELICOPTER
+  local self = BASE:Inherit( self, AI_CARGO:New( Helicopter, CargoSet ) ) -- #AI_CARGO_HELICOPTER
 
   self.CargoSet = CargoSet -- Cargo.CargoGroup#CARGO_GROUP
   
@@ -379,115 +378,6 @@ function AI_CARGO_HELICOPTER:onafterOrbit( Helicopter, From, Event, To, Coordina
 end
 
 
---- On Before event Load.
--- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Group#GROUP Helicopter
--- @param #string From From state.
--- @param #string Event Event
--- @param #string To To state.
--- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
-function AI_CARGO_HELICOPTER:onbeforeLoad( Helicopter, From, Event, To, PickupZone )
-
-  local Boarding = false
-  
-  local LoadInterval = 10
-  local LoadDelay = 10
-
-  if Helicopter and Helicopter:IsAlive() then
-  
-    self.BoardingCount = 0
-  
-    for _, HelicopterUnit in pairs( Helicopter:GetUnits() ) do
-      local HelicopterUnit = HelicopterUnit -- Wrapper.Unit#UNIT
-        local CargoBayFreeWeight = HelicopterUnit:GetCargoBayFreeWeight()
-        self:F({CargoBayFreeWeight=CargoBayFreeWeight})
- 
-        for _, Cargo in pairs( self.CargoSet:GetSet() ) do
-          local Cargo = Cargo -- Cargo.Cargo#CARGO
-        self:F( { IsUnLoaded = Cargo:IsUnLoaded() } )
-        if Cargo:IsUnLoaded() and not Cargo:IsDeployed() then
-          if Cargo:IsInLoadRadius( HelicopterUnit:GetCoordinate() ) then
-            self:F( { "In radius", HelicopterUnit:GetName() } )
-            
-            local CargoWeight = Cargo:GetWeight()
-            
-            -- Only when there is space within the bay to load the next cargo item!
-            if CargoBayFreeWeight > CargoWeight then --and CargoBayFreeVolume > CargoVolume then
-            
-              --Cargo:Ungroup()
-              Cargo:__Board( LoadDelay, HelicopterUnit, 25 )
-              LoadDelay = LoadDelay + LoadInterval
-              self:__Board( LoadDelay, Cargo, HelicopterUnit, PickupZone )
-              self.Helicopter_Cargo[HelicopterUnit] = Cargo
-              Boarding = true
-              CargoBayFreeWeight = CargoBayFreeWeight - CargoWeight
-            end
-          end
-        end
-      end
-    end
-  end
-
-  return Boarding
-  
-end
-
---- On after Board event.
--- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Group#GROUP Helicopter
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Cargo.Cargo#CARGO Cargo Cargo object.
--- @param Wrapper.Unit#UNIT HelicopterUnit
--- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
-function AI_CARGO_HELICOPTER:onafterBoard( Helicopter, From, Event, To, Cargo, HelicopterUnit, PickupZone )
-  self:F( { Helicopter, From, Event, To, Cargo, HelicopterUnit } )
-
-  if Helicopter and Helicopter:IsAlive() then
-    self:F({ IsLoaded = Cargo:IsLoaded() } )
-    if not Cargo:IsLoaded() then
-      self:__Board( 10, Cargo, HelicopterUnit, PickupZone )
-      return
-    end
-  end
-
-  self:__Loaded( 10, Cargo, HelicopterUnit, PickupZone ) -- Will only be executed when no more cargo is boarded.
-  
-end
-
-
---- On After Loaded event.
--- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Group#GROUP Helicopter
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @return #boolean Cargo loaded.
--- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
-function AI_CARGO_HELICOPTER:onafterLoaded( Helicopter, From, Event, To, Cargo, HelicopterUnit, PickupZone )
-  self:F( { Helicopter, From, Event, To } )
-
-  local Loaded = true
-
-  if Helicopter and Helicopter:IsAlive() then
-    for HelicopterUnit, Cargo in pairs( self.Helicopter_Cargo ) do
-      local Cargo = Cargo -- Cargo.Cargo#CARGO
-      self:F( { IsLoaded = Cargo:IsLoaded(), IsDestroyed = Cargo:IsDestroyed(), Cargo:GetName(), Helicopter:GetName() } )
-      if not Cargo:IsLoaded() and not Cargo:IsDestroyed() then
-        Loaded = false
-      end
-    end
-  end
-  
-  if Loaded then
-    self:PickedUp( PickupZone )
-  end
-  
-end
-
-
-
 
 --- On after PickedUp event, raised when all cargo has been loaded into the CarrierGroup.
 -- @param #AI_CARGO_HELICOPTER self
@@ -506,95 +396,6 @@ function AI_CARGO_HELICOPTER:onafterPickedUp( Helicopter, From, Event, To, Picku
   end
 end
 
-
---- On after Unload event.
--- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Group#GROUP Helicopter
--- @param #string From From state.
--- @param #string Event Event.
--- @param #boolean Deployed Cargo is deployed.
-function AI_CARGO_HELICOPTER:onafterUnload( Helicopter, From, Event, To, DeployZone )
-
-  local UnboardInterval = 10
-  local UnboardDelay = 10
-
-  if Helicopter and Helicopter:IsAlive() then
-    for _, HelicopterUnit in pairs( Helicopter:GetUnits() ) do
-      local HelicopterUnit = HelicopterUnit -- Wrapper.Unit#UNIT
-      for _, Cargo in pairs( HelicopterUnit:GetCargo() ) do
-        if Cargo:IsLoaded() then
-          Cargo:__UnBoard( UnboardDelay )
-          UnboardDelay = UnboardDelay + UnboardInterval
-          Cargo:SetDeployed( true )
-          self:__Unboard( UnboardDelay, Cargo, HelicopterUnit, DeployZone )
-        end
-      end 
-    end
-  end
-
-  
-end
-
---- On after Unboard event.
--- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Group#GROUP Helicopter
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Cargo.Cargo#CARGO Cargo Cargo object.
--- @param #boolean Deployed Cargo is deployed.
-function AI_CARGO_HELICOPTER:onafterUnboard( Helicopter, From, Event, To, Cargo, HelicopterUnit, DeployZone )
-
-  if Helicopter and Helicopter:IsAlive() then
-    if not Cargo:IsUnLoaded() then
-      self:__Unboard( 10, Cargo, HelicopterUnit, DeployZone )
-      return 
-    end
-  end
-
-  self:Unloaded( Cargo, HelicopterUnit, DeployZone )
-  
-end
-
---- On after Unloaded event.
--- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Group#GROUP Helicopter
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Cargo.Cargo#CARGO Cargo Cargo object.
--- @param #boolean Deployed Cargo is deployed.
--- @return #boolean True if all cargo has been unloaded.
-function AI_CARGO_HELICOPTER:onafterUnloaded( Helicopter, From, Event, To, Cargo, HelicopterUnit, DeployZone )
-  self:F( { Helicopter, From, Event, To, Cargo:GetName(), HelicopterUnit:GetName(), DeployZone = DeployZone } )
-
-  local AllUnloaded = true
-
-  --Cargo:Regroup()
-
-  if Helicopter and Helicopter:IsAlive() then
-    for _, HelicopterUnit in pairs( Helicopter:GetUnits() ) do
-      local IsEmpty = HelicopterUnit:IsCargoEmpty()
-      self:I({ IsEmpty = IsEmpty })
-      if not IsEmpty then
-          AllUnloaded = false
-          break
-      end
-    end
-    
-    if AllUnloaded == true then
-      if DeployZone then
-        self.Helicopter_Cargo = {}
-      end
-      self.Helicopter = Helicopter
-    end
-  end
-  
-  if AllUnloaded == true then
-    self:Deployed( DeployZone )
-  end
-  
-end
 
 
 --- On after Deployed event.

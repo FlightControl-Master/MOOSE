@@ -363,7 +363,6 @@ end
 function AI_CARGO:onafterPickedUp( Carrier, From, Event, To, PickupZone )
   self:F( { Carrier, From, Event, To } )
 
-  self.Transporting = true
   Carrier:RouteResume()
   
 end
@@ -474,7 +473,6 @@ end
 function AI_CARGO:onafterDeployed( Carrier, From, Event, To, DeployZone )
   self:F( { Carrier, From, Event, To, DeployZone = DeployZone } )
 
-    self.Transporting = false
     self:__Guard( 0.1 )
 
 end

@@ -263,6 +263,7 @@ function AI_CARGO_APC:onafterMonitor( APC, From, Event, To )
             if self:Is( "Following" ) then
               for Cargo, APCUnit in pairs( self.Carrier_Cargo ) do
                 local Cargo = Cargo -- Cargo.Cargo#CARGO
+                local APCUnit = APCUnit -- Wrapper.Unit#UNIT
                 if Cargo:IsAlive() then
                   if not Cargo:IsNear( APCUnit, 40 ) then
                     APCUnit:RouteStop()
@@ -323,6 +324,7 @@ function AI_CARGO_APC._Pickup( APC, self, PickupZone )
   if APC:IsAlive() then
     self:Load( PickupZone)
     self.Relocating = false
+    self.Transporting = true
   end
 end
 
@@ -334,6 +336,7 @@ function AI_CARGO_APC._Deploy( APC, self, Coordinate, DeployZone )
   if APC:IsAlive() then
     self:Unload( DeployZone )
     self.Transporting = false
+    self.Relocating = false
   end
 end
 
