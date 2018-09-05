@@ -10,7 +10,7 @@
 -- @image AI_Cargo_Dispatching_For_APC.JPG
 
 --- @type AI_CARGO_APC
--- @extends Core.Fsm#FSM_CONTROLLABLE
+-- @extends AI.AI_Cargo#AI_CARGO
 
 
 --- Brings a dynamic cargo handling capability for AI groups.
@@ -74,7 +74,6 @@
 AI_CARGO_APC = {
   ClassName = "AI_CARGO_APC",
   Coordinate = nil, -- Core.Point#COORDINATE,
-  APC_Cargo = {},
 }
 
 --- Creates a new AI_CARGO_APC object.
@@ -85,26 +84,10 @@ AI_CARGO_APC = {
 -- @return #AI_CARGO_APC
 function AI_CARGO_APC:New( APC, CargoSet, CombatRadius )
 
-  local self = BASE:Inherit( self, FSM_CONTROLLABLE:New() ) -- #AI_CARGO_APC
+  local self = BASE:Inherit( self, AI_CARGO:New( APC, CargoSet ) ) -- #AI_CARGO_APC
 
-  self.CargoSet = CargoSet -- Core.Set#SET_CARGO
   self.CombatRadius = CombatRadius
 
-  self:SetStartState( "Unloaded" )
-  
-  self:AddTransition( "Unloaded", "Pickup", "*" )
-  self:AddTransition( "Loaded", "Deploy", "*" )
-  
-  self:AddTransition( "*", "Load", "Boarding" )
-  self:AddTransition( { "Boarding", "Loaded" }, "Board", "Boarding" )
-  self:AddTransition( "Boarding", "Loaded", "Boarding" )
-  self:AddTransition( "Boarding", "PickedUp", "Loaded" )
-  
-  self:AddTransition( "Loaded", "Unload", "Unboarding" )
-  self:AddTransition( "Unboarding", "Unboard", "Unboarding" )
-  self:AddTransition( "Unboarding", "Unloaded", "Unboarding" )
-  self:AddTransition( "Unboarding", "Deployed", "Unloaded" )
-  
   self:AddTransition( "*", "Monitor", "*" )
   self:AddTransition( "*", "Follow", "Following" )
   self:AddTransition( "*", "Guard", "Unloaded" )
@@ -112,99 +95,9 @@ function AI_CARGO_APC:New( APC, CargoSet, CombatRadius )
   
   self:AddTransition( "*", "Destroyed", "Destroyed" )
 
-
-  --- Pickup Handler OnBefore for AI_CARGO_APC
-  -- @function [parent=#AI_CARGO_APC] OnBeforePickup
-  -- @param #AI_CARGO_APC self
-  -- @param #string From
-  -- @param #string Event
-  -- @param #string To
-  -- @param Core.Point#COORDINATE Coordinate
-  -- @param #number Speed Speed in km/h. Default is 50% of max possible speed the group can do. 
-  -- @return #boolean
-  
-  --- Pickup Handler OnAfter for AI_CARGO_APC
-  -- @function [parent=#AI_CARGO_APC] OnAfterPickup
-  -- @param #AI_CARGO_APC self
-  -- @param #string From
-  -- @param #string Event
-  -- @param #string To
-  -- @param Core.Point#COORDINATE Coordinate
-  -- @param #number Speed Speed in km/h. Default is 50% of max possible speed the group can do.
-  
-  --- Pickup Trigger for AI_CARGO_APC
-  -- @function [parent=#AI_CARGO_APC] Pickup
-  -- @param #AI_CARGO_APC self
-  -- @param Core.Point#COORDINATE Coordinate
-  -- @param #number Speed Speed in km/h. Default is 50% of max possible speed the group can do.
-  
-  --- Pickup Asynchronous Trigger for AI_CARGO_APC
-  -- @function [parent=#AI_CARGO_APC] __Pickup
-  -- @param #AI_CARGO_APC self
-  -- @param #number Delay
-  -- @param Core.Point#COORDINATE Coordinate Pickup place. If not given, loading starts at the current location.
-  -- @param #number Speed Speed in km/h. Default is 50% of max possible speed the group can do.
-  
-  --- Deploy Handler OnBefore for AI_CARGO_APC
-  -- @function [parent=#AI_CARGO_APC] OnBeforeDeploy
-  -- @param #AI_CARGO_APC self
-  -- @param #string From
-  -- @param #string Event
-  -- @param #string To
-  -- @param Core.Point#COORDINATE Coordinate
-  -- @param #number Speed Speed in km/h. Default is 50% of max possible speed the group can do.
-  -- @return #boolean
-  
-  --- Deploy Handler OnAfter for AI_CARGO_APC
-  -- @function [parent=#AI_CARGO_APC] OnAfterDeploy
-  -- @param #AI_CARGO_APC self
-  -- @param #string From
-  -- @param #string Event
-  -- @param #string To
-  -- @param Core.Point#COORDINATE Coordinate
-  -- @param #number Speed Speed in km/h. Default is 50% of max possible speed the group can do.
-  
-  --- Deploy Trigger for AI_CARGO_APC
-  -- @function [parent=#AI_CARGO_APC] Deploy
-  -- @param #AI_CARGO_APC self
-  -- @param Core.Point#COORDINATE Coordinate
-  -- @param #number Speed Speed in km/h. Default is 50% of max possible speed the group can do.
-  
-  --- Deploy Asynchronous Trigger for AI_CARGO_APC
-  -- @function [parent=#AI_CARGO_APC] __Deploy
-  -- @param #AI_CARGO_APC self
-  -- @param #number Delay
-  -- @param Core.Point#COORDINATE Coordinate
-  -- @param #number Speed Speed in km/h. Default is 50% of max possible speed the group can do.
-
-  
-  --- Loaded Handler OnAfter for AI_CARGO_APC
-  -- @function [parent=#AI_CARGO_APC] OnAfterLoaded
-  -- @param #AI_CARGO_APC self
-  -- @param Wrapper.Group#GROUP APC
-  -- @param #string From
-  -- @param #string Event
-  -- @param #string To
-  
-  --- Unloaded Handler OnAfter for AI_CARGO_APC
-  -- @function [parent=#AI_CARGO_APC] OnAfterUnloaded
-  -- @param #AI_CARGO_APC self
-  -- @param Wrapper.Group#GROUP APC
-  -- @param #string From
-  -- @param #string Event
-  -- @param #string To
-  
-
   self:__Monitor( 1 )
 
   self:SetCarrier( APC )
-  
-  for _, APCUnit in pairs( APC:GetUnits() ) do
-    APCUnit:SetCargoBayWeightLimit()
-  end
-  
-  self.Transporting = false
-  self.Relocating = false
   
   return self
 end
@@ -257,16 +150,6 @@ function AI_CARGO_APC:SetCarrier( CargoCarrier )
   return self
 end
 
-
-function AI_CARGO_APC:IsTransporting()
-
-  return self.Transporting == true
-end
-
-function AI_CARGO_APC:IsRelocating()
-
-  return self.Relocating == true
-end
 
 --- Find a free Carrier within a range.
 -- @param #AI_CARGO_APC self
@@ -361,7 +244,7 @@ function AI_CARGO_APC:onafterMonitor( APC, From, Event, To )
 
   if APC and APC:IsAlive() then
     if self.CarrierCoordinate then
-      if self:IsRelocating() == true then
+      if self:IsTransporting() == true then
         local Coordinate = APC:GetCoordinate()
         self.Zone:Scan( { Object.Category.UNIT } )
         if self.Zone:IsAllInZoneOfCoalition( self.Coalition ) then
@@ -378,7 +261,7 @@ function AI_CARGO_APC:onafterMonitor( APC, From, Event, To )
               self:Follow()
             end
             if self:Is( "Following" ) then
-              for Cargo, APCUnit in pairs( self.APC_Cargo ) do
+              for Cargo, APCUnit in pairs( self.Carrier_Cargo ) do
                 local Cargo = Cargo -- Cargo.Cargo#CARGO
                 if Cargo:IsAlive() then
                   if not Cargo:IsNear( APCUnit, 40 ) then
@@ -408,276 +291,6 @@ function AI_CARGO_APC:onafterMonitor( APC, From, Event, To )
 end
 
 
---- On before Load event.
--- @param #AI_CARGO_APC self
--- @param Wrapper.Group#GROUP APC
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
-function AI_CARGO_APC:onbeforeLoad( APC, From, Event, To, PickupZone )
-  self:F( { APC, From, Event, To } )
-
-  local Boarding = false
-
-  local LoadInterval = 10
-  local LoadDelay = 10
-  local APC_List = {}
-  local APC_Weight = {}
-
-  if APC and APC:IsAlive() then
-    self.APC_Cargo = {}
-    for _, APCUnit in pairs( APC:GetUnits() ) do
-      local APCUnit = APCUnit -- Wrapper.Unit#UNIT
-      
-      local CargoBayFreeWeight = APCUnit:GetCargoBayFreeWeight()
-      self:F({CargoBayFreeWeight=CargoBayFreeWeight})
-      
-      APC_List[#APC_List+1] = APCUnit
-      APC_Weight[APCUnit] = CargoBayFreeWeight
-    end
-
-    local APC_Count = #APC_List
-    local APC_Index = 1
-      
-    for _, Cargo in UTILS.spairs( self.CargoSet:GetSet(), function( t, a, b ) return t[a]:GetWeight() > t[b]:GetWeight() end ) do
-      local Cargo = Cargo -- Cargo.Cargo#CARGO
-
-      self:F( { IsUnLoaded = Cargo:IsUnLoaded(), IsDeployed = Cargo:IsDeployed(), Cargo:GetName(), APC:GetName() } )
-
-      local Loaded = false
-
-      -- Try all APCs, but start from the one according the APC_Index
-      for APC_Loop = 1, #APC_List do
-
-        local APCUnit = APC_List[APC_Index] -- Wrapper.Unit#UNIT
-
-        -- This counters loop through the available APCs.
-        APC_Index = APC_Index + 1
-        if APC_Index > APC_Count then
-          APC_Index = 1
-        end
-        
-        if Cargo:IsUnLoaded() then -- and not Cargo:IsDeployed() then
-          if Cargo:IsInLoadRadius( APCUnit:GetCoordinate() ) then
-            self:F( { "In radius", APCUnit:GetName() } )
-            
-            local CargoWeight = Cargo:GetWeight()
-  
-            -- Only when there is space within the bay to load the next cargo item!
-            if APC_Weight[APCUnit] > CargoWeight then --and CargoBayFreeVolume > CargoVolume then
-              APC:RouteStop()
-              --Cargo:Ungroup()
-              Cargo:__Board( LoadDelay, APCUnit, 25 )
-              LoadDelay = LoadDelay + LoadInterval
-              self:__Board( LoadDelay, Cargo, APCUnit, PickupZone )
-  
-              -- So now this APCUnit has Cargo that is being loaded.
-              -- This will be used further in the logic to follow and to check cargo status.
-              self.APC_Cargo[Cargo] = APCUnit
-              Boarding = true
-              APC_Weight[APCUnit] = APC_Weight[APCUnit] - CargoWeight
-              Loaded = true
-              
-              -- Ok, we loaded a cargo, now we can stop the loop.
-              break
-            end
-          end
-        end
-        
-      end
-      
-      if not Loaded then
-        -- If the cargo wasn't loaded in one of the carriers, then we need to stop the loading.
-        break
-      end
-      
-    end
-  end
-
-  return Boarding
-  
-end
-
---- On after Board event.
--- @param #AI_CARGO_APC self
--- @param Wrapper.Group#GROUP APC
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Cargo.Cargo#CARGO Cargo Cargo object.
--- @param Wrapper.Unit#UNIT APCUnit
--- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
-function AI_CARGO_APC:onafterBoard( APC, From, Event, To, Cargo, APCUnit, PickupZone )
-  self:F( { APC, From, Event, To, Cargo, APCUnit:GetName() } )
-
-  if APC and APC:IsAlive() then
-    self:F({ IsLoaded = Cargo:IsLoaded(), Cargo:GetName(), APC:GetName() } )
-    if not Cargo:IsLoaded() then
-      self:__Board( 10, Cargo, APCUnit, PickupZone )
-      return
-    end
-  end
-
-  self:__Loaded( 10, Cargo, APCUnit, PickupZone )
-  
-end
-
---- On after Loaded event.
--- @param #AI_CARGO_APC self
--- @param Wrapper.Group#GROUP APC
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @return #boolean Cargo loaded.
--- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
-function AI_CARGO_APC:onafterLoaded( APC, From, Event, To, Cargo, PickupZone )
-  self:F( { APC, From, Event, To } )
-
-  local Loaded = true
-
-  if APC and APC:IsAlive() then
-    for Cargo, APCUnit in pairs( self.APC_Cargo ) do
-      local Cargo = Cargo -- Cargo.Cargo#CARGO
-      self:F( { IsLoaded = Cargo:IsLoaded(), IsDestroyed = Cargo:IsDestroyed(), Cargo:GetName(), APC:GetName() } )
-      if not Cargo:IsLoaded() and not Cargo:IsDestroyed() then
-        Loaded = false
-      end
-    end
-  end
-  
-  if Loaded then
-    self:PickedUp( PickupZone )
-  end
-  
-end
-
---- On after PickedUp event.
--- @param #AI_CARGO_APC self
--- @param Wrapper.Group#GROUP APC
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
-function AI_CARGO_APC:onafterPickedUp( APC, From, Event, To, PickupZone )
-  self:F( { APC, From, Event, To } )
-
-  self.Transporting = true
-  APC:RouteResume()
-  
-end
-
-
-
-
---- On after Unload event.
--- @param #AI_CARGO_APC self
--- @param Wrapper.Group#GROUP APC
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
-function AI_CARGO_APC:onafterUnload( APC, From, Event, To, DeployZone )
-  self:F( { APC, From, Event, To, DeployZone } )
-
-  local UnboardInterval = 10
-  local UnboardDelay = 10
-
-  if APC and APC:IsAlive() then
-    for _, APCUnit in pairs( APC:GetUnits() ) do
-      local APCUnit = APCUnit -- Wrapper.Unit#UNIT
-      APC:RouteStop()
-      for _, Cargo in pairs( APCUnit:GetCargo() ) do
-        if Cargo:IsLoaded() then
-          Cargo:__UnBoard( UnboardDelay )
-          UnboardDelay = UnboardDelay + UnboardInterval
-          Cargo:SetDeployed( true )
-          self:__Unboard( UnboardDelay, Cargo, APCUnit, DeployZone )
-        end 
-      end
-    end
-  end
-  
-end
-
---- On after Unboard event.
--- @param #AI_CARGO_APC self
--- @param Wrapper.Group#GROUP APC
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #string Cargo.Cargo#CARGO Cargo Cargo object.
--- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
-function AI_CARGO_APC:onafterUnboard( APC, From, Event, To, Cargo, APCUnit, DeployZone )
-  self:F( { APC, From, Event, To, Cargo:GetName() } )
-
-  if APC and APC:IsAlive() then
-    if not Cargo:IsUnLoaded() then
-      self:__Unboard( 10, Cargo, APCUnit, DeployZone ) 
-      return
-    end
-  end
-
-  self:Unloaded( Cargo, APCUnit, DeployZone )
-  
-end
-
---- On after Unloaded event.
--- @param #AI_CARGO_APC self
--- @param Wrapper.Group#GROUP APC
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #string Cargo.Cargo#CARGO Cargo Cargo object.
--- @param #boolean Deployed Cargo is deployed.
--- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
-function AI_CARGO_APC:onafterUnloaded( APC, From, Event, To, Cargo, APCUnit, DeployZone )
-  self:F( { APC, From, Event, To, Cargo:GetName(), DeployZone = DeployZone } )
-
-  local AllUnloaded = true
-
-  --Cargo:Regroup()
-
-  if APC and APC:IsAlive() then
-    for _, APCUnit in pairs( APC:GetUnits() ) do
-      local APCUnit = APCUnit -- Wrapper.Unit#UNIT
-      local IsEmpty = APCUnit:IsCargoEmpty()
-      self:I({ IsEmpty = IsEmpty })
-      if not IsEmpty then
-        AllUnloaded = false
-        break
-      end
-    end
-    
-    if AllUnloaded == true then
-      if DeployZone == true then
-        self.APC_Cargo = {}
-      end
-      self.CargoCarrier = APC
-    end
-  end
-
-  if AllUnloaded == true then
-    self:Deployed( DeployZone )
-  end
-  
-end
-
---- On after Deployed event.
--- @param #AI_CARGO_APC self
--- @param Wrapper.Group#GROUP APC
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
-function AI_CARGO_APC:onafterDeployed( APC, From, Event, To, DeployZone )
-  self:F( { APC, From, Event, To, DeployZone = DeployZone } )
-
-    self.Transporting = false
-    self:__Guard( 0.1 )
-
-end
-
 --- On after Follow event.
 -- @param #AI_CARGO_APC self
 -- @param Wrapper.Group#GROUP APC
@@ -689,7 +302,7 @@ function AI_CARGO_APC:onafterFollow( APC, From, Event, To )
 
   self:F( "Follow" )
   if APC and APC:IsAlive() then
-    for Cargo, APCUnit in pairs( self.APC_Cargo ) do
+    for Cargo, APCUnit in pairs( self.Carrier_Cargo ) do
       local Cargo = Cargo -- Cargo.Cargo#CARGO
       if Cargo:IsUnLoaded() then
         self:FollowToCarrier( self, APCUnit, Cargo )
@@ -709,6 +322,7 @@ function AI_CARGO_APC._Pickup( APC, self, PickupZone )
 
   if APC:IsAlive() then
     self:Load( PickupZone)
+    self.Relocating = false
   end
 end
 
@@ -719,6 +333,7 @@ function AI_CARGO_APC._Deploy( APC, self, Coordinate, DeployZone )
 
   if APC:IsAlive() then
     self:Unload( DeployZone )
+    self.Transporting = false
   end
 end
 

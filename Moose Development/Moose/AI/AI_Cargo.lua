@@ -83,12 +83,12 @@ AI_CARGO = {
 -- @param Core.Set#SET_CARGO CargoSet
 -- @param #number CombatRadius
 -- @return #AI_CARGO
-function AI_CARGO:New( Carrier, CargoSet, CombatRadius )
+function AI_CARGO:New( Carrier, CargoSet )
 
-  local self = BASE:Inherit( self, FSM_CONTROLLABLE:New() ) -- #AI_CARGO
+  local self = BASE:Inherit( self, FSM_CONTROLLABLE:New( Carrier ) ) -- #AI_CARGO
 
   self.CargoSet = CargoSet -- Core.Set#SET_CARGO
-  self.CombatRadius = CombatRadius
+  self.CargoCarrier = Carrier -- Wrapper.Group#GROUP
 
   self:SetStartState( "Unloaded" )
   
@@ -105,14 +105,6 @@ function AI_CARGO:New( Carrier, CargoSet, CombatRadius )
   self:AddTransition( "Unboarding", "Unloaded", "Unboarding" )
   self:AddTransition( "Unboarding", "Deployed", "Unloaded" )
   
-  self:AddTransition( "*", "Monitor", "*" )
-  self:AddTransition( "*", "Follow", "Following" )
-  self:AddTransition( "*", "Guard", "Unloaded" )
-  self:AddTransition( "*", "Home", "*" )
-  
-  self:AddTransition( "*", "Destroyed", "Destroyed" )
-
-
   --- Pickup Handler OnBefore for AI_CARGO
   -- @function [parent=#AI_CARGO] OnBeforePickup
   -- @param #AI_CARGO self
@@ -194,11 +186,6 @@ function AI_CARGO:New( Carrier, CargoSet, CombatRadius )
   -- @param #string Event
   -- @param #string To
   
-
-  self:__Monitor( 1 )
-
-  self:SetCarrier( Carrier )
-  
   for _, CarrierUnit in pairs( Carrier:GetUnits() ) do
     CarrierUnit:SetCargoBayWeightLimit()
   end
@@ -209,53 +196,6 @@ function AI_CARGO:New( Carrier, CargoSet, CombatRadius )
   return self
 end
 
-
---- Set the Carrier.
--- @param #AI_CARGO self
--- @param Wrapper.Group#GROUP CargoCarrier
--- @return #AI_CARGO
-function AI_CARGO:SetCarrier( CargoCarrier )
-
-  self.CargoCarrier = CargoCarrier -- Wrapper.Group#GROUP
-  self.CargoCarrier:SetState( self.CargoCarrier, "AI_CARGO", self )
-
-  CargoCarrier:HandleEvent( EVENTS.Dead )
-  CargoCarrier:HandleEvent( EVENTS.Hit )
-  
-  function CargoCarrier:OnEventDead( EventData )
-    self:F({"dead"})
-    local AICargoTroops = self:GetState( self, "AI_CARGO" )
-    self:F({AICargoTroops=AICargoTroops})
-    if AICargoTroops then
-      self:F({})
-      if not AICargoTroops:Is( "Loaded" ) then
-        -- There are enemies within combat range. Unload the CargoCarrier.
-        AICargoTroops:Destroyed()
-      end
-    end
-  end
-  
-  function CargoCarrier:OnEventHit( EventData )
-    self:F({"hit"})
-    local AICargoTroops = self:GetState( self, "AI_CARGO" )
-    if AICargoTroops then
-      self:F( { OnHitLoaded = AICargoTroops:Is( "Loaded" ) } )
-      if AICargoTroops:Is( "Loaded" ) or AICargoTroops:Is( "Boarding" ) then
-        -- There are enemies within combat range. Unload the CargoCarrier.
-        AICargoTroops:Unload( false )
-      end
-    end
-  end
-  
-  self.Zone = ZONE_UNIT:New( self.CargoCarrier:GetName() .. "-Zone", self.CargoCarrier, self.CombatRadius )
-  self.Coalition = self.CargoCarrier:GetCoalition()
-  
-  self:SetControllable( CargoCarrier )
-
-  self:Guard()
-
-  return self
-end
 
 
 function AI_CARGO:IsTransporting()
@@ -268,144 +208,6 @@ function AI_CARGO:IsRelocating()
   return self.Relocating == true
 end
 
---- Find a free Carrier within a range.
--- @param #AI_CARGO self
--- @param Core.Point#COORDINATE Coordinate
--- @param #number Radius
--- @return Wrapper.Group#GROUP NewCarrier
-function AI_CARGO:FindCarrier( Coordinate, Radius )
-
-  local CoordinateZone = ZONE_RADIUS:New( "Zone" , Coordinate:GetVec2(), Radius )
-  CoordinateZone:Scan( { Object.Category.UNIT } )
-  for _, DCSUnit in pairs( CoordinateZone:GetScannedUnits() ) do
-    local NearUnit = UNIT:Find( DCSUnit )
-    self:F({NearUnit=NearUnit})
-    if not NearUnit:GetState( NearUnit, "AI_CARGO" ) then
-      local Attributes = NearUnit:GetDesc()
-      self:F({Desc=Attributes})
-      if NearUnit:HasAttribute( "Trucks" ) then
-        return NearUnit:GetGroup()
-      end
-    end
-  end
-  
-  return nil
-
-end
-
-
-
---- Follow Infantry to the Carrier.
--- @param #AI_CARGO self
--- @param #AI_CARGO Me
--- @param Wrapper.Unit#UNIT CarrierUnit
--- @param Cargo.CargoGroup#CARGO_GROUP Cargo
--- @return #AI_CARGO
-function AI_CARGO:FollowToCarrier( Me, CarrierUnit, CargoGroup )
-
-  local InfantryGroup = CargoGroup:GetGroup()
-
-  self:F( { self = self:GetClassNameAndID(), InfantryGroup = InfantryGroup:GetName() } )
-  
-  --if self:Is( "Following" ) then
-
-  if CarrierUnit:IsAlive() then
-    -- We check if the Cargo is near to the CargoCarrier.
-    if InfantryGroup:IsPartlyInZone( ZONE_UNIT:New( "Radius", CarrierUnit, 25 ) ) then
-  
-      -- The Cargo does not need to follow the Carrier.
-      Me:Guard()
-    
-    else
-      
-      self:F( { InfantryGroup = InfantryGroup:GetName() } )
-    
-      if InfantryGroup:IsAlive() then
-            
-        self:F( { InfantryGroup = InfantryGroup:GetName() } )
-  
-        local Waypoints = {}
-        
-        -- Calculate the new Route.
-        local FromCoord = InfantryGroup:GetCoordinate()
-        local FromGround = FromCoord:WaypointGround( 10, "Diamond" )
-        self:F({FromGround=FromGround})
-        table.insert( Waypoints, FromGround )
-  
-        local ToCoord = CarrierUnit:GetCoordinate():GetRandomCoordinateInRadius( 10, 5 )
-        local ToGround = ToCoord:WaypointGround( 10, "Diamond" )
-        self:F({ToGround=ToGround})
-        table.insert( Waypoints, ToGround )
-        
-        local TaskRoute = InfantryGroup:TaskFunction( "AI_CARGO.FollowToCarrier", Me, CarrierUnit, CargoGroup )
-        
-        self:F({Waypoints = Waypoints})
-        local Waypoint = Waypoints[#Waypoints]
-        InfantryGroup:SetTaskWaypoint( Waypoint, TaskRoute ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
-      
-        InfantryGroup:Route( Waypoints, 1 ) -- Move after a random seconds to the Route. See the Route method for details.
-      end
-    end
-  end
-end
-
-
---- On after Monitor event.
--- @param #AI_CARGO self
--- @param Wrapper.Group#GROUP Carrier
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function AI_CARGO:onafterMonitor( Carrier, From, Event, To )
-  self:F( { Carrier, From, Event, To } )
-
-  if Carrier and Carrier:IsAlive() then
-    if self.CarrierCoordinate then
-      if self:IsRelocating() == true then
-        local Coordinate = Carrier:GetCoordinate()
-        self.Zone:Scan( { Object.Category.UNIT } )
-        if self.Zone:IsAllInZoneOfCoalition( self.Coalition ) then
-          if self:Is( "Unloaded" ) or self:Is( "Following" ) then
-            -- There are no enemies within combat range. Load the CargoCarrier.
-            self:Load()
-          end
-        else
-          if self:Is( "Loaded" ) then
-            -- There are enemies within combat range. Unload the CargoCarrier.
-            self:__Unload( 1 )
-          else
-            if self:Is( "Unloaded" ) then
-              self:Follow()
-            end
-            if self:Is( "Following" ) then
-              for Cargo, CarrierUnit in pairs( self.Carrier_Cargo ) do
-                local Cargo = Cargo -- Cargo.Cargo#CARGO
-                if Cargo:IsAlive() then
-                  if not Cargo:IsNear( CarrierUnit, 40 ) then
-                    CarrierUnit:RouteStop()
-                    self.CarrierStopped = true
-                  else
-                    if self.CarrierStopped then
-                      if Cargo:IsNear( CarrierUnit, 25 ) then
-                        CarrierUnit:RouteResume()
-                        self.CarrierStopped = nil
-                      end
-                    end
-                  end
-                end
-              end
-            end
-          end
-        end
-      end
-      
-    end
-    self.CarrierCoordinate = Carrier:GetCoordinate()
-  end
-  
-  self:__Monitor( -5 )
-
-end
 
 
 --- On before Load event.
@@ -489,7 +291,6 @@ function AI_CARGO:onbeforeLoad( Carrier, From, Event, To, PickupZone )
       
       if not Loaded then
         -- If the cargo wasn't loaded in one of the carriers, then we need to stop the loading.
-        break
       end
       
     end
@@ -678,146 +479,3 @@ function AI_CARGO:onafterDeployed( Carrier, From, Event, To, DeployZone )
 
 end
 
---- On after Follow event.
--- @param #AI_CARGO self
--- @param Wrapper.Group#GROUP Carrier
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function AI_CARGO:onafterFollow( Carrier, From, Event, To )
-  self:F( { Carrier, From, Event, To } )
-
-  self:F( "Follow" )
-  if Carrier and Carrier:IsAlive() then
-    for Cargo, CarrierUnit in pairs( self.Carrier_Cargo ) do
-      local Cargo = Cargo -- Cargo.Cargo#CARGO
-      if Cargo:IsUnLoaded() then
-        self:FollowToCarrier( self, CarrierUnit, Cargo )
-        CarrierUnit:RouteResume()
-      end
-    end
-  end
-  
-end
-
-
---- @param #AI_CARGO 
--- @param Wrapper.Group#GROUP Carrier
-function AI_CARGO._Pickup( Carrier, self, PickupZone )
-
-  Carrier:F( { "AI_CARGO._Pickup:", Carrier:GetName() } )
-
-  if Carrier:IsAlive() then
-    self:Load( PickupZone)
-  end
-end
-
-
-function AI_CARGO._Deploy( Carrier, self, Coordinate, DeployZone )
-
-  Carrier:F( { "AI_CARGO._Deploy:", Carrier } )
-
-  if Carrier:IsAlive() then
-    self:Unload( DeployZone )
-  end
-end
-
-
-
---- On after Pickup event.
--- @param #AI_CARGO self
--- @param Wrapper.Group#GROUP Carrier
--- @param From
--- @param Event
--- @param To
--- @param Core.Point#COORDINATE Coordinate of the pickup point.
--- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
--- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
-function AI_CARGO:onafterPickup( Carrier, From, Event, To, Coordinate, Speed, PickupZone )
-
-  if Carrier and Carrier:IsAlive() then
-
-    if Coordinate then
-      self.RoutePickup = true
-      
-      local _speed=Speed or Carrier:GetSpeedMax()*0.5
-      
-      local Waypoints = Carrier:TaskGroundOnRoad( Coordinate, _speed, "Line abreast", true )
-  
-      local TaskFunction = Carrier:TaskFunction( "AI_CARGO._Pickup", self, PickupZone )
-      
-      self:F({Waypoints = Waypoints})
-      local Waypoint = Waypoints[#Waypoints]
-      Carrier:SetTaskWaypoint( Waypoint, TaskFunction ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
-    
-      Carrier:Route( Waypoints, 1 ) -- Move after a random seconds to the Route. See the Route method for details.
-    else
-      AI_CARGO._Pickup( Carrier, self, PickupZone )
-    end
-
-    self.Relocating = true
-    self.Transporting = false
-  end
-  
-end
-
-
---- On after Deploy event.
--- @param #AI_CARGO self
--- @param Wrapper.Group#GROUP Carrier
--- @param From
--- @param Event
--- @param To
--- @param Core.Point#COORDINATE Coordinate Deploy place.
--- @param #number Speed Speed in km/h to drive to the depoly coordinate. Default is 50% of max possible speed the unit can go.
-function AI_CARGO:onafterDeploy( Carrier, From, Event, To, Coordinate, Speed, DeployZone )
-
-  if Carrier and Carrier:IsAlive() then
-
-    self.RouteDeploy = true
-    
-    local _speed=Speed or Carrier:GetSpeedMax()*0.5
-     
-    local Waypoints = Carrier:TaskGroundOnRoad( Coordinate, _speed, "Line abreast", true )
-
-    local TaskFunction = Carrier:TaskFunction( "AI_CARGO._Deploy", self, Coordinate, DeployZone )
-    
-    self:F({Waypoints = Waypoints})
-    local Waypoint = Waypoints[#Waypoints]
-    Carrier:SetTaskWaypoint( Waypoint, TaskFunction ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
-  
-    Carrier:Route( Waypoints, 1 ) -- Move after a random seconds to the Route. See the Route method for details.
-
-    self.Relocating = false
-    self.Transporting = true
-  end
-  
-end
-
-
---- On after Home event.
--- @param #AI_CARGO self
--- @param Wrapper.Group#GROUP Carrier
--- @param From
--- @param Event
--- @param To
--- @param Core.Point#COORDINATE Coordinate Home place.
--- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
-function AI_CARGO:onafterHome( Carrier, From, Event, To, Coordinate, Speed )
-
-  if Carrier and Carrier:IsAlive() ~= nil then
-
-    self.RouteHome = true
-    
-    local _speed=Speed or Carrier:GetSpeedMax()*0.5
-    
-    local Waypoints = Carrier:TaskGroundOnRoad( Coordinate, _speed, "Line abreast", true )
-
-    self:F({Waypoints = Waypoints})
-    local Waypoint = Waypoints[#Waypoints]
-  
-    Carrier:Route( Waypoints, 1 ) -- Move after a random seconds to the Route. See the Route method for details.
-    
-  end
-  
-end
