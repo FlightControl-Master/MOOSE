@@ -23,7 +23,10 @@ do -- CARGO_UNIT
   -- @extends Cargo.Cargo#CARGO_REPRESENTABLE
   
   --- Defines a cargo that is represented by a UNIT object within the simulator, and can be transported by a carrier.
-  -- Use the event functions as described above to Load, UnLoad, Board, UnBoard the CARGO\_UNIT objects to and from carriers.
+  -- Use the event functions as described above to Load, UnLoad, Board, UnBoard the CARGO_UNIT objects to and from carriers.
+  -- Note that ground forces behave in a group, and thus, act in formation, regardless if one unit is commanded to move.
+  -- 
+  -- This class is used in CARGO_GROUP, and is not meant to be used by mission designers individually.
   -- 
   -- ===
   -- 

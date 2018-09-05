@@ -25,6 +25,11 @@ do -- CARGO_SLINGLOAD
   
   --- Defines a cargo that is represented by a UNIT object within the simulator, and can be transported by a carrier.
   -- 
+  -- The above cargo classes are also used by the TASK_CARGO_ classes to allow human players to transport cargo as part of a tasking:
+  -- 
+  --   * @{Tasking.Task_Cargo_Transport#TASK_CARGO_TRANSPORT} to transport cargo by human players.
+  --   * @{Tasking.Task_Cargo_Transport#TASK_CARGO_CSAR} to transport downed pilots by human players.
+  -- 
   -- ===
   -- 
   -- @field #CARGO_SLINGLOAD
