@@ -17,9 +17,9 @@
 --  
 -- Airplane carrier equipment can be mobilized to intelligently transport infantry and other cargo within the simulation between airbases.
 -- 
--- The AI_CARGO_AIRPLANE module uses the @{Cargo} capabilities within the MOOSE framework.
--- @{Cargo} must be declared within the mission to make AI_CARGO_AIRPLANE recognize the cargo.
--- Please consult the @{Cargo} module for more information. 
+-- The AI_CARGO_AIRPLANE module uses the @{Cargo.Cargo} capabilities within the MOOSE framework.
+-- @{Cargo.Cargo} must be declared within the mission to make AI_CARGO_AIRPLANE recognize the cargo.
+-- Please consult the @{Cargo.Cargo} module for more information. 
 -- 
 -- ## Cargo pickup.
 --  

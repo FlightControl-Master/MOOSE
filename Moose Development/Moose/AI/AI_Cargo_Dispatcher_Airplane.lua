@@ -29,7 +29,7 @@
 -- 
 -- Especially to learn how to **Tailor the different cargo handling events**, this will be very useful!
 -- 
--- On top, the AI_CARGO_DISPATCHER_AIRPLANE class uses the @{Cargo} capabilities within the MOOSE framework.
+-- On top, the AI_CARGO_DISPATCHER_AIRPLANE class uses the @{Cargo.Cargo} capabilities within the MOOSE framework.
 -- Also ensure that you fully understand how to declare and setup Cargo objects within the MOOSE framework before using this class.
 -- CARGO derived objects must be declared within the mission to make the AI_CARGO_DISPATCHER_HELICOPTER object recognize the cargo.
 -- 

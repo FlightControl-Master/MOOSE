@@ -16,9 +16,9 @@
 --- Base class for the dynamic cargo handling capability for AI groups.
 -- 
 -- Carriers can be mobilized to intelligently transport infantry and other cargo within the simulation.
--- The AI_CARGO module uses the @{Cargo} capabilities within the MOOSE framework.
+-- The AI_CARGO module uses the @{Cargo.Cargo} capabilities within the MOOSE framework.
 -- CARGO derived objects must be declared within the mission to make the AI_CARGO object recognize the cargo.
--- Please consult the @{Cargo} module for more information. 
+-- Please consult the @{Cargo.Cargo} module for more information. 
 -- 
 -- The derived classes from this module are:
 -- 

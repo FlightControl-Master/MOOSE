@@ -16,10 +16,10 @@
 --- A dynamic cargo handling capability for AI groups.
 -- 
 -- Carrier equipment can be mobilized to intelligently transport infantry and other cargo within the simulation.
--- The AI_CARGO_DISPATCHER module uses the @{Cargo} capabilities within the MOOSE framework, to enable Carrier GROUP objects 
--- to transport @{Cargo} towards several deploy zones.
--- @{Cargo} must be declared within the mission to make the AI_CARGO_DISPATCHER object recognize the cargo.
--- Please consult the @{Cargo} module for more information. 
+-- The AI_CARGO_DISPATCHER module uses the @{Cargo.Cargo} capabilities within the MOOSE framework, to enable Carrier GROUP objects 
+-- to transport @{Cargo.Cargo} towards several deploy zones.
+-- @{Cargo.Cargo} must be declared within the mission to make the AI_CARGO_DISPATCHER object recognize the cargo.
+-- Please consult the @{Cargo.Cargo} module for more information. 
 -- 
 -- # 1) AI_CARGO_DISPATCHER constructor
 --   
