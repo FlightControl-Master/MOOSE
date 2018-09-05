@@ -107,14 +107,19 @@
 -- The positioning of the warehouse static object is very important for a couple of reasons. Firstly, a warehouse needs a good infrastructure so that spawned assets
 -- have a proper road connection or can reach the associated airbase easily.
 -- 
+-- ## Constructor and Start
+-- 
 -- Once the static warehouse object is placed in the mission editor it can be used as a MOOSE warehouse by the @{#WAREHOUSE.New}(*warehousestatic*, *alias*) constructor,
 -- like for example:
 -- 
---      warehouse=WAREHOUSE:New(STATIC:FindByName("Warehouse Static Batumi"), "My Warehouse Alias")
---      warehouse:Start()
+--     warehouse=WAREHOUSE:New(STATIC:FindByName("Warehouse Static Batumi"), "My Warehouse Alias")
+--     warehouse:Start()
 -- 
--- So the first parameter *warehousestatic* is the static MOOSE object. By default, the name of the warehouse will be the same as the name given to the static object.
+-- The first parameter *warehousestatic* is the static MOOSE object. By default, the name of the warehouse will be the same as the name given to the static object.
 -- The second parameter *alias* can be used to choose a more convenient name if desired. This will be the name the warehouse calls itself when reporting messages. 
+-- 
+-- Note that a warehouse also needs to be started in order to be in service. This is done with the @{#WAREHOUSE.Start}() or @{#WAREHOUSE.__Start}(*delay*) functions.
+-- The warehouse is now fully operational and requests are being processed.
 -- 
 -- # Adding Assets
 -- 
@@ -123,8 +128,8 @@
 -- 
 -- Note that the group should be a late activated template group, which was defined in the mission editor.
 -- 
---      infrantry=GROUP:FindByName("Some Infantry Group")
---      warehouse:AddAsset(infantry, 5)
+--     infrantry=GROUP:FindByName("Some Infantry Group")
+--     warehouse:AddAsset(infantry, 5)
 -- 
 -- This will add five infantry groups to the warehouse stock.
 -- 
@@ -137,10 +142,10 @@
 --
 -- # Requesting Assets
 -- 
--- Assets of the warehouse can be requested by other MOOSE warehouses. A request will first be scrutinize to check if can be fulfilled at all. If the request is valid, it is
+-- Assets of the warehouse can be requested by other MOOSE warehouses. A request will first be scrutinized to check if can be fulfilled at all. If the request is valid, it is
 -- put into the warehouse queue and processed as soon as possible.
 -- 
--- A request can be assed by the @{#WAREHOUSE.AddRequest}(*warehouse*, *AssetDescriptor*, *AssetDescriptorValue*, *nAsset*, *TransportType*, *nTransport*, *Prio*, *Assignment*) function.
+-- A request can be added by the @{#WAREHOUSE.AddRequest}(*warehouse*, *AssetDescriptor*, *AssetDescriptorValue*, *nAsset*, *TransportType*, *nTransport*, *Prio*, *Assignment*) function.
 -- The parameters are
 -- 
 -- * *warehouse*: The requesting MOOSE @{#WAREHOUSE}. Assets will be delivered there.
@@ -152,22 +157,22 @@
 -- * *Prio*: (Optional) A number between 1 (high) and 100 (low) describing the priority of the request. Request with high priority are processed first. Default is 50, i.e. medium priority.
 -- * *Assignment*: (Optional) A free to choose string describing the assignment. For self requests, this can be used to assign the spawned groups to specific tasks. 
 -- 
---  So for example:
+-- For example:
 --  
---       warehouseBatumi:AddRequest(warehouseKobuleti, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_INFANTRY, 5, WAREHOUSE.TransportType.APC, 2, 20)
+--     warehouseBatumi:AddRequest(warehouseKobuleti, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_INFANTRY, 5, WAREHOUSE.TransportType.APC, 2, 20)
 --
 -- Here, warehouse Kobuleti requests 5 infantry groups from warehouse Batumi. These "cargo" assets should be transported from Batumi to Kobuleti by 2 APCS.
 -- Note that the warehouse at Batumi needs to have at least five infantry groups and two APC groups in their stock if the request can be processed.
 -- If either to few infantry or APC groups are available when the request is made, the request is held in the warehouse queue until enough cargo and
 -- transport assets are available.
 -- 
--- Also not that the above request is for five infantry units. So any group in stock that has the generalized attribute "INFANTRY" can be selected.
+-- Also note that the above request is for five infantry groups. So any group in stock that has the generalized attribute "INFANTRY" can be selected.
 -- 
 -- ## Requesting a Specific Unit Type
 -- 
 -- A more specific request could look like:
 -- 
---      warehouseBatumi:AddRequest(warehouseKobuleti, WAREHOUSE.Descriptor.UNITTYPE, "A-10C", 2)
+--     warehouseBatumi:AddRequest(warehouseKobuleti, WAREHOUSE.Descriptor.UNITTYPE, "A-10C", 2)
 --      
 -- Here, Kobuleti requests a specific unit type, in particular two groups of A-10Cs. Note that the spelling is important as it must exacly be the same as
 -- what one get's when using the DCS unit type.
@@ -176,7 +181,7 @@
 -- 
 -- An even more specific request would be:
 -- 
---      warehouseBatumi:AddRequest(warehouseKobuleti, WAREHOUSE.Descriptor.TEMPLATENAME, "Group Name as in ME", 3)
+--     warehouseBatumi:AddRequest(warehouseKobuleti, WAREHOUSE.Descriptor.TEMPLATENAME, "Group Name as in ME", 3)
 --      
 -- In this case three groups named "Group Name as in ME" are requested. So this explicitly request the groups named like that in the Mission Editor.
 -- 
@@ -184,7 +189,7 @@
 -- 
 -- On the other hand, very general unspecifc requests can be made as
 -- 
---      warehouseBatumi:AddRequest(warehouseKobuleti, WAREHOUSE.Descriptor.CATEGORY, Group.Category.Ground, 10)
+--     warehouseBatumi:AddRequest(warehouseKobuleti, WAREHOUSE.Descriptor.CATEGORY, Group.Category.Ground, 10)
 --      
 -- Here, Kubuleti requests 10 ground groups and does not care which ones. This could be a mix of infantry, APCs, trucks etc.
 -- 
@@ -193,7 +198,7 @@
 -- Assets in the warehouse' stock can used for user defined tasks realtively easily. They can be spawned into the game by a "self request", i.e. the warehouse
 -- requests the assets from itself:
 -- 
---      warehouseBatumi:AddRequest(warehouseBatumi, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_INFANTRY, 5)
+--     warehouseBatumi:AddRequest(warehouseBatumi, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_INFANTRY, 5)
 --      
 -- This would simply spawn five infantry groups in the spawn zone of the Batumi warehouse if/when they are available.
 -- 
@@ -202,21 +207,21 @@
 -- If a warehouse requests assets from itself, it triggers the event **SelfReqeuest**. The mission designer can capture this event with the associated 
 -- @{#WAREHOUSE.OnAfterSelfRequest}(*From*, *Event*, *To*, *groupset*, *request*) function.
 -- 
---      --- OnAfterSelfRequest user function. Access groups spawned from the warehouse for further tasking.
---      -- @param #WAREHOUSE self
---      -- @param #string From From state.
---      -- @param #string Event Event.
---      -- @param #string To To state.
---      -- @param Core.Set#SET_GROUP groupset The set of cargo groups that was delivered to the warehouse itself.
---      -- @param #WAREHOUSE.Pendingitem request Pending self request.
---      function WAREHOUSE:onafterSelfRequest(From, Event, To, groupset, request)
---       
---        for _,group in pairs(groupset:GetSetObjects()) do
---          local group=group --Wrapper.Group#GROUP
---          group:SmokeGreen()
---        end
---        
---      end
+--     --- OnAfterSelfRequest user function. Access groups spawned from the warehouse for further tasking.
+--     -- @param #WAREHOUSE self
+--     -- @param #string From From state.
+--     -- @param #string Event Event.
+--     -- @param #string To To state.
+--     -- @param Core.Set#SET_GROUP groupset The set of cargo groups that was delivered to the warehouse itself.
+--     -- @param #WAREHOUSE.Pendingitem request Pending self request.
+--     function WAREHOUSE:OnAfterSelfRequest(From, Event, To, groupset, request)
+--     
+--       for _,group in pairs(groupset:GetSetObjects()) do
+--         local group=group --Wrapper.Group#GROUP
+--         group:SmokeGreen()
+--       end
+--     
+--     end
 --       
 -- The variable *groupset* is a @{Core.Set#SET_GOUP} object and holds all asset groups from the request. The code above shows, how the mission designer can access the groups
 -- for further tasking. Here, the groups are only smoked but, of course, you can use them for whatever task you fancy.
@@ -297,9 +302,19 @@
 -- 
 -- ## Invalid Requests
 -- 
--- Invalid request are requests which cannot be processes **ever** because there is some logical or physical argument for it. Or simply because that feature was not implemented (yet).
+-- Invalid request are requests which can **never** be processes because there is some logical or physical argument against it. Or simply because that feature was not implemented (yet).
 -- 
--- * One warehuse requests airborne assets from another warehouse but at one (or even both) warehouses do not have an associated airbase.
+-- * All airborne assets need an associated airbase of any kind on the sending *and* receiving warhouse.
+-- * Airplanes need an airdrome at the sending and receiving warehouses.
+-- * Not enough parking spots of the right terminal type at the sending warehouse.
+-- * No parking spots of the right terminal type at the receiving warehouse. 
+-- * Ground assets need a road connection between both warehouses. 
+-- * Ground assets cannot be send directly to ships, i.e. warehouses on ships.
+-- * Naval units need a user defined shipping lane between both warehouses.
+-- * Warehouses need a user defined port zone to spawn naval assets.
+-- * If transport by airplane, both warehouses must have and airdrome.
+-- * If transport by APC, both warehouses must have a road connection.
+-- * If transport by helicopter, the sending airbase must have an associated airbase.
 -- 
 -- All invalid requests are removed from the warehouse queue!
 --   
@@ -308,8 +323,17 @@
 -- Temporarily unprocessable requests are possible in priciple, but cannot be processed at the given time the warehouse checks its queue.
 -- 
 -- * No enough parking spaces are available for the requests assets but the airbase has enough parking spots in total so that this request is possible once other aircraft have taken off.
+-- * Requesting warehouse is not in state "Running" (could be stopped, not yet started or under attack).
+-- * Not enough cargo assets available at this moment.
+-- * Not enough free parking spots for all cargo or transport airborne assets at the moment.
+-- * Not enough transport assets to carry all cargo assets.
 -- 
 -- Temporarily unprocessable requests are held in the queue. If at some point in time, the situation changes so that these requests can be processed, they are executed.
+-- 
+-- ## Processing Speed
+-- 
+-- A warehouse has a limited speed to process requests. Each time the status of the warehouse is updated only one requests is processed.
+-- The time interval between status updates is 30 seconds by default and can be adjusted via the @{#WAREHOUSE.SetStatusUpdate}(*interval*) function.
 -- 
 -- ===
 -- 
@@ -320,11 +344,11 @@
 -- 
 -- ## Capturing a Warehouse' Airbase
 -- 
--- If a warehouse has an associated airbase, it can be captured by the enemy. In this case, the warehouse looses it ability so employ all airborne assets and is also cut-off
--- from supply by airborne units.
+-- If a warehouse has an associated airbase, it can be captured by the enemy. In this case, the warehouse looses its ability so employ all airborne assets and is also cut-off
+-- from supply by airplanes. Supply of ground troops via helicopters is still possible, because they deliver the troops into the spawn zone.
 -- 
--- Technically, the capturing of the airbase is triggered by the DCS S_EVENT_CAPTURE_BASE event. So the capturing takes place when only enemy ground units are in the 
--- airbase zone whilst no ground units of the present airbase owner are in that zone.
+-- Technically, the capturing of the airbase is triggered by the DCS [S\_EVENT\_BASE\_CAPTURED](https://wiki.hoggitworld.com/view/DCS_event_base_captured) event. 
+-- So the capturing takes place when only enemy ground units are in the airbase zone whilst no ground units of the present airbase owner are in that zone.
 -- 
 -- The warehouse will also create an event named "AirbaseCaptured", which can be captured by the @{#WAREHOUSE.OnAfterAirbaseCaptured} function. So the warehouse can react on
 -- this attack and for example spawn ground groups to re-capture its airbase.
@@ -335,15 +359,23 @@
 -- ## Capturing the Warehouse
 -- 
 -- A warehouse can also be captured by the enemy coalition. If enemy ground troops enter the warehouse zone the event **Attacked** is triggered which can be captured by the
--- @{#WAREHOUSE.OnAfterAttacked} event.
+-- @{#WAREHOUSE.OnAfterAttacked} event. By default the warehouse zone circular zone with a radius of 500 meters located at the center of the physical warehouse.
+-- The warehouse zone can be set via the @{#WAREHOUSE.SetWarehouseZone}(*zone*) function. The parameter *zone* must also be a cirular zone. 
 -- 
--- If a warehouse is attacked it will spawn all its ground assets in the spawn zone which can than be used to defend the warehouse zone.
+-- The @{#WAREHOUSE.OnAfterAttacked} function can be used by the mission designer to react to the enemy attack. For example by deploying some or all ground troops
+-- currently in stock to defend the warehouse. Note that the warehouse also has a self defence option which can be enabled by the @{#WAREHOUSE.SetAutoDefenceOn}()
+-- function. In this case, the warehouse will automatically spawn all ground troops. If the spawn zone is further away from the warehouse zone, all mobile troops
+-- are routed to the warehouse zone.
 -- 
 -- If only ground troops of the enemy coalition are present in the warehouse zone, the warehouse and all its assets falls into the hands of the enemy.
 -- In this case the event **Captured** is triggered which can be captured by the @{#WAREHOUSE.OnAfterCaptured} function.
 -- 
--- The warehouse turn to the capturing coalition, i.e. its physical representation, and all assets as well. In paticular, all requests to the warehouse will
+-- The warehouse turns to the capturing coalition, i.e. its physical representation, and all assets as well. In paticular, all requests to the warehouse will
 -- spawn assets beloning to the new owner.
+-- 
+-- If the enemy troops could be defeated, i.e. no more troops of the opposite coalition are in the warehouse zone, the event **Defeated** is triggered and 
+-- the @{#WAREHOUSE.OnAfterDefeated} function can be used to adapt to the new situation. For example putting back all spawned defender troops back into
+-- the warehouse stock. Note that if the automatic defence is enabled, all defenders are automatically put back into the warehouse on the **Defeated** event.
 -- 
 -- ## Destroying a Warehouse
 -- 
@@ -631,7 +663,7 @@
 -- After 10 seconds we make a self request for a rescue helicopter. Note, that the @{#WAREHOUSE.AddRequest} function has a parameter which lets you
 -- specify an "Assignment". This can be later used to identify the request and take the right actions.
 -- 
--- Once the request is processed, the @{#WAREHOUSE.OnafterSelfRequest} function is called. This is where we hook in and postprocess the spawned assets.
+-- Once the request is processed, the @{#WAREHOUSE.OnAfterSelfRequest} function is called. This is where we hook in and postprocess the spawned assets.
 -- In particular, we use the @{AI.AI_Formation#AI_FORMATION} class to make some nice escorts for our carrier.
 -- 
 -- When the resue helo is spawned, we can check that this is the correct asset and make the helo go into formation with the carrier.
@@ -895,20 +927,21 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.3.5"
+WAREHOUSE.version="0.3.5w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Test mortars! Check also general requests like all ground. Is this a problem for self propelled if immobile units are among the assets? Check if transport.
 -- TODO: Add transport units from dispatchers back to warehouse stock once they completed their mission.
 -- TODO: Added habours as interface for transport to from warehouses?
 -- TODO: Set ROE for spawned groups.
--- TODO: Add possibility to add active groups. Need to create a pseudo template before destroy.
+-- DONE: Add possibility to add active groups. Need to create a pseudo template before destroy. <== Does not seem to be necessary any more.
 -- TODO: Write documentation.
 -- TODO: Handle the case when units of a group die during the transfer. Adjust template?! See Grouping in SPAWN.
 -- TODO: Add save/load capability of warehouse <==> percistance after mission restart. Difficult!
--- TODO: Add a time stamp when an asset is added to the stock and for requests.
+-- DONE: Add a time stamp when an asset is added to the stock and for requests.
 -- DONE: How to get a specific request once the cargo is delivered? Make addrequest addasset non FSM function? Callback for requests like in SPAWN?
 -- DONE: Add autoselfdefence switch and user function. Default should be off.
 -- DONE: Warehouse re-capturing not working?!
@@ -1779,6 +1812,9 @@ function WAREHOUSE:onafterStatus(From, Event, To)
   -- Update coordinate in case we have a "moving" warehouse (e.g. on a carrier).
   self.coordinate=self.warehouse:GetCoordinate()
   
+  -- Check if any pending jobs are done and can be deleted from the 
+  self:_JobDone()
+  
   -- Print status.
   self:_DisplayStatus()
     
@@ -1821,6 +1857,39 @@ function WAREHOUSE:onafterStatus(From, Event, To)
   self:__Status(self.dTstatus)
 end
 
+
+--- Function that checks if a pending job is done and can be removed from queue 
+-- @param #WAREHOUSE self
+function WAREHOUSE:_JobDone()
+
+  local done={}
+  for _,request in pairs(self.pending) do  
+    local request=request --#WAREHOUSE.Pendingitem
+
+    local ncargo=0    
+    if request.cargogroupset then
+      ncargo=request.cargogroupset:Count()
+    end
+    
+    local ntransport=0
+    if request.transportgroupset then
+      ntransport=request.transportgroupset:Count()      
+    end
+    
+    --TODO: Check if any transports, e.g. APCs were not used and are still standing around in the spawn  zone.
+    --      Also planes and helos might not be used?
+    
+    if ncargo==0 and ntransport==0 then
+      table.insert(done, request)
+    end
+  
+  end
+
+  -- Remove pending requests if done.
+  for _,request in pairs(done) do
+    self:_DeleteQueueItem(request, self.pending)
+  end
+end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after "AddAsset" event. Add a group to the warehouse stock. If the group is alive, it is destroyed.
@@ -2805,7 +2874,6 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     -- Get group obejet.
     local group=Cargo:GetObject() --Wrapper.Group#GROUP
     
-
     -- Get warehouse state.
     local warehouse=Carrier:GetState(Carrier, "WAREHOUSE") --#WAREHOUSE
 
@@ -2832,7 +2900,10 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     warehouse:I(warehouse.wid..text)
     
     -- Add carrier back to warehouse stock. Actual unit is destroyed.
-    warehouse:AddAsset(Carrier)
+    --warehouse:AddAsset(Carrier)
+    
+    -- Call arrived event for carrier.
+    warehouse:__Arrived(1, Carrier)
     
   end  
 
@@ -3011,17 +3082,38 @@ function WAREHOUSE:onafterArrived(From, Event, To, group)
     group:SmokeOrange()
   end
     
-  -- Update pending request.
-  local request=self:_UpdatePending(group)
+  -- Update pending request. Increase ndelivered/ntransporthome and delete group from corresponding group set.
+  local request, isCargo=self:_UpdatePending(group)
   
   if request then
   
     -- Number of cargo assets still in group set.
-    local ncargo=request.cargogroupset:Count()
+    if isCargo==true then
     
-    -- Debug message.
-    local text=string.format("Cargo %d of %s arrived at warehouse %s. Assets still to deliver %d.", request.ndelivered, tostring(request.nasset), request.warehouse.alias, ncargo)
-    self:_DebugMessage(text, 5)
+      -- Current size of cargo group set.
+      local ncargo=request.cargogroupset:Count()
+      
+      -- Debug message.
+      local text=string.format("Cargo %d of %s arrived at warehouse %s. Assets still to deliver %d.", 
+      request.ndelivered, tostring(request.nasset), request.warehouse.alias, ncargo)
+      self:_DebugMessage(text, 5)
+      
+      -- All cargo delivered.
+      if ncargo==0 then
+        self:__Delivered(5, request)
+      end
+      
+    elseif isCargo==false then
+
+      -- Current size of cargo group set.
+      local ntransport=request.transportgroupset:Count()
+
+      -- Debug message.
+      local text=string.format("Transport %d of %s arrived at warehouse %s. Assets still to deliver %d.", 
+      request.ntransporthome, tostring(request.ntransport), request.warehouse.alias, ntransport)
+      self:_DebugMessage(text, 5)
+    
+    end
     
     -- Route mobile ground group to the warehouse. Group has 60 seconds to get there or it is despawned and added as asset to the new warehouse regardless.
     if group:IsGround() and group:GetSpeedMax()>1 then
@@ -3029,12 +3121,7 @@ function WAREHOUSE:onafterArrived(From, Event, To, group)
     end
     
     -- Move asset from pending queue into new warehouse.
-    request.warehouse:__AddAsset(60, group)
-    
-    -- All cargo delivered.
-    if request and ncargo==0 then
-      self:__Delivered(5, request)
-    end
+    request.warehouse:__AddAsset(60, group)    
     
   end
     
@@ -3058,6 +3145,7 @@ end
 -- @param #WAREHOUSE self
 -- @param Wrapper.Group#GROUP group The group that has arrived at its destination.
 -- @return #WAREHOUSE.Pendingitem The updated request from the pending queue.
+-- @return #boolean If true, group is a cargo asset. If false, group is a transport asset. If nil, group is neither cargo nor transport.
 function WAREHOUSE:_UpdatePending(group)
   
   -- Get request from group name.
@@ -3066,27 +3154,53 @@ function WAREHOUSE:_UpdatePending(group)
   -- Get the IDs for this group. In particular, we use the asset ID to figure out which group was delivered.
   local wid,aid,rid=self:_GetIDsFromGroup(group)
   
+  local isCargo=nil
+  
   if request then
   
-    -- Loop over cargo groups.
-    for _,_cargogroup in pairs(request.cargogroupset:GetSetObjects()) do
-      local cargogroup=_cargogroup --Wrapper.Group#GROUP
-      
-      -- IDs of cargo group.
-      local cwid,caid,crid=self:_GetIDsFromGroup(cargogroup)
-      
-      -- Remove group from cargo group set.
-      if caid==aid then
-        request.cargogroupset:Remove(cargogroup:GetName())
-        request.ndelivered=request.ndelivered+1
-        break
+    -- If this request was already delivered.    
+    if self.delivered[rid]==true then
+    
+      -- Loop over transport groups. 
+      for _,_transportgroup in pairs(request.transportgroupset:GetSetObjects()) do
+        local transportgroup=_transportgroup --Wrapper.Group#GROUP
+        
+        -- IDs of cargo group.
+        local cwid,caid,crid=self:_GetIDsFromGroup(transportgroup)
+        
+        -- Remove group from transport group set and increase home counter.
+        if caid==aid then
+          request.transportgroupset:Remove(transportgroup:GetName())
+          request.ntransporthome=request.ntransporthome+1
+          isCargo=false
+          break
+        end
       end
+       
+    else
+    
+      -- Loop over cargo groups.
+      for _,_cargogroup in pairs(request.cargogroupset:GetSetObjects()) do
+        local cargogroup=_cargogroup --Wrapper.Group#GROUP
+        
+        -- IDs of cargo group.
+        local cwid,caid,crid=self:_GetIDsFromGroup(cargogroup)
+        
+        -- Remove group from cargo group set and increase delivered counter.
+        if caid==aid then
+          request.cargogroupset:Remove(cargogroup:GetName())
+          request.ndelivered=request.ndelivered+1
+          isCargo=true
+          break
+        end
+      end
+          
     end
   else
     self:E(self.wid..string.format("WARNING: pending request could not be updated since request did not exist in pending queue!"))
   end
   
-  return request,wid,aid,rid
+  return request, isCargo 
 end
 
 
@@ -3105,11 +3219,8 @@ function WAREHOUSE:onafterDelivered(From, Event, To, request)
   -- Make some noise :)
   self:_Fireworks(request.warehouse.coordinate)
   
-  -- Add table
+  -- Set delivered status for this request uid.
   self.delivered[request.uid]=true
-
-  -- Remove pending request:
-  self:_DeleteQueueItem(request, self.pending)
   
 end
 
@@ -3923,19 +4034,19 @@ function WAREHOUSE:_CheckRequestConsistancy(queue)
     
     -- Check if at least one asset was requested.
     if request.nasset==0 then
-      self:E(self.wid..string.format("ERROR: Incorrect request. Request for zero assets not possible. Can happen when, e.g. \"all\" ground assets are requests but none in stock."))
+      self:E(self.wid..string.format("ERROR: INVALID request. Request for zero assets not possible. Can happen when, e.g. \"all\" ground assets are requests but none in stock."))
       valid=false
     end
   
     -- Request from enemy coalition?
     if self.coalition~=request.warehouse.coalition then
-      self:E(self.wid..string.format("ERROR: Incorrect request. Requesting warehouse is of wrong coaltion! Own coalition %d. Requesting warehouse %d", self.coalition, request.warehouse.coalition))
+      self:E(self.wid..string.format("ERROR: INVALID request. Requesting warehouse is of wrong coaltion! Own coalition %d. Requesting warehouse %d", self.coalition, request.warehouse.coalition))
       valid=false
     end
     
     -- Is receiving warehouse stopped?
     if request.warehouse:IsStopped() then
-      self:E(self.wid..string.format("ERROR: Incorrect request. Requesting warehouse is stopped!"))
+      self:E(self.wid..string.format("ERROR: INVALID request. Requesting warehouse is stopped!"))
       valid=false    
     end
     
@@ -3950,7 +4061,7 @@ function WAREHOUSE:_CheckRequestConsistancy(queue)
 
   -- Delete invalid requests.
   for _,_request in pairs(invalid) do
-    self:E(self.wid..string.format("Deleting invalid request id=%d.",_request.uid))
+    self:E(self.wid..string.format("Deleting INVALID request id=%d.",_request.uid))
     self:_DeleteQueueItem(_request, self.queue)
   end
     
@@ -4037,7 +4148,7 @@ function WAREHOUSE:_CheckRequestValid(request)
         local np_destination=request.airbase:GetParkingSpotsNumber(termtype)
         
         -- Debug info.
-        self:E(string.format("Asset attribute = %s, terminal type = %d, spots at departure = %d, destination = %d", asset.attribute, termtype, np_departure, np_destination))
+        self:T(string.format("Asset attribute = %s, terminal type = %d, spots at departure = %d, destination = %d", asset.attribute, termtype, np_departure, np_destination))
         
         -- Not enough parking at sending warehouse.
         --if (np_departure < request.nasset) and not (self.category==Airbase.Category.SHIP or self.category==Airbase.Category.HELIPAD) then
@@ -4061,7 +4172,7 @@ function WAREHOUSE:_CheckRequestValid(request)
       -- TODO: May needs refinement if warehouse is on land and requestor is ship in harbour?!
       if (request.category==Airbase.Category.SHIP or self.category==Airbase.Category.SHIP) then
         self:E("ERROR: Incorrect request. Ground asset requested but warehouse or requestor is SHIP!")
-        --valid=false
+        valid=false
       end
       
       if asset_train then
