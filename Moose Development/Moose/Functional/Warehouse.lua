@@ -927,7 +927,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.3.5w"
+WAREHOUSE.version="0.3.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -1912,9 +1912,70 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
     
   if group then
     
+     -- Update pending request. Increase ndelivered/ntransporthome and delete group from corresponding group set.
+    local request, isCargo=self:_UpdatePending(group)
+    
+    if request then
+    
+      -- Number of cargo assets still in group set.
+      if isCargo==true then
+      
+        -- Current size of cargo group set.
+        local ncargo=request.cargogroupset:Count()
+        
+        -- Debug message.
+        local text=string.format("Cargo %d of %s added to warehouse %s stock. Assets still to deliver %d.", 
+        request.ndelivered, tostring(request.nasset), request.warehouse.alias, ncargo)
+        self:_DebugMessage(text, 5)
+        
+        -- All cargo delivered.
+        if ncargo==0 then
+          self:__Delivered(5, request)
+        end
+        
+      elseif isCargo==false then
+  
+        -- Current size of cargo group set.
+        local ntransport=request.transportgroupset:Count()
+  
+        -- Debug message.
+        local text=string.format("Transport %d of %s added to warehouse %s stock. Transports still missing %d.", 
+        request.ntransporthome, tostring(request.ntransport), request.warehouse.alias, ntransport)
+        self:_DebugMessage(text, 5)
+      
+      end
+
+      -- Get the asset from the global DB.
+      local asset=self:_FindAssetInDB(group)
+      
+      -- Note the group is only added once, i.e. the ngroups parameter is ignored here.
+      -- This is because usually these request comes from an asset that has been transfered from another warehouse and hence should only be added once.
+      if asset~=nil then        
+        self:_DebugMessage(string.format("Adding known asset uid=%d, attribute = %s to warehouse stock.", asset.uid, asset.attribute), 5)
+        table.insert(self.stock, asset)
+      else
+        self:_ErrorMessage(string.format("ERROR known asset could not be found in global warehouse db!"), 0)
+      end      
+
+    else
+    
+      -- Debug info.
+      self:_DebugMessage(self.wid..string.format("Adding %d NEW assets of group %s to warehouse %s.", n, tostring(group:GetName()), self.alias), 5)
+       
+      -- This is a group that is not in the db yet. Add it n times.
+      local assets=self:_RegisterAsset(group, n, forceattribute)
+      
+      -- Add created assets to stock of this warehouse.
+      for _,asset in pairs(assets) do
+        table.insert(self.stock, asset)
+      end      
+      
+    end   
+  
+    --[[
     -- Get unique ids from group name.
     local wid,aid,rid=self:_GetIDsFromGroup(group)
-  
+        
     -- Check if this is an known or a new asset group.
     if aid~=nil and wid~=nil then
     
@@ -1943,6 +2004,7 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
         table.insert(self.stock, asset)
       end
     end
+    ]]
     
     -- Destroy group if it is alive.
     -- TODO: This causes a problem, when a completely new asset is added, i.e. not from a template group.
@@ -2548,7 +2610,6 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   
   -- Set time stamp.
   Pending.timestamp=timer.getAbsTime()
-  env.info("Timestamp="..Pending.timestamp)
   
   -- Spawn assets of this request.
   local _spawngroups=self:_SpawnAssetRequest(Pending) --Core.Set#SET_GROUP
@@ -2567,6 +2628,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
    
   -- Add groups to pending item.
   Pending.cargogroupset=_spawngroups
+  --Pending.cargogroupset:FilterStart()
 
   ------------------------------------------------------------------------------------------------------------------------------------
   -- Self request: assets are spawned at warehouse but not transported anywhere.
@@ -3081,39 +3143,11 @@ function WAREHOUSE:onafterArrived(From, Event, To, group)
   if self.Debug then
     group:SmokeOrange()
   end
-    
-  -- Update pending request. Increase ndelivered/ntransporthome and delete group from corresponding group set.
-  local request, isCargo=self:_UpdatePending(group)
   
+  -- Get request from group name.
+  local request=self:_GetRequestOfGroup(group, self.pending)  
+   
   if request then
-  
-    -- Number of cargo assets still in group set.
-    if isCargo==true then
-    
-      -- Current size of cargo group set.
-      local ncargo=request.cargogroupset:Count()
-      
-      -- Debug message.
-      local text=string.format("Cargo %d of %s arrived at warehouse %s. Assets still to deliver %d.", 
-      request.ndelivered, tostring(request.nasset), request.warehouse.alias, ncargo)
-      self:_DebugMessage(text, 5)
-      
-      -- All cargo delivered.
-      if ncargo==0 then
-        self:__Delivered(5, request)
-      end
-      
-    elseif isCargo==false then
-
-      -- Current size of cargo group set.
-      local ntransport=request.transportgroupset:Count()
-
-      -- Debug message.
-      local text=string.format("Transport %d of %s arrived at warehouse %s. Assets still to deliver %d.", 
-      request.ntransporthome, tostring(request.ntransport), request.warehouse.alias, ntransport)
-      self:_DebugMessage(text, 5)
-    
-    end
     
     -- Route mobile ground group to the warehouse. Group has 60 seconds to get there or it is despawned and added as asset to the new warehouse regardless.
     if group:IsGround() and group:GetSpeedMax()>1 then
@@ -3121,7 +3155,7 @@ function WAREHOUSE:onafterArrived(From, Event, To, group)
     end
     
     -- Move asset from pending queue into new warehouse.
-    request.warehouse:__AddAsset(60, group)    
+    request.warehouse:__AddAsset(60, group)
     
   end
     
@@ -3172,6 +3206,7 @@ function WAREHOUSE:_UpdatePending(group)
         if caid==aid then
           request.transportgroupset:Remove(transportgroup:GetName())
           request.ntransporthome=request.ntransporthome+1
+          env.info("FF transport back home # "..request.ntransporthome)
           isCargo=false
           break
         end
@@ -3190,6 +3225,7 @@ function WAREHOUSE:_UpdatePending(group)
         if caid==aid then
           request.cargogroupset:Remove(cargogroup:GetName())
           request.ndelivered=request.ndelivered+1
+          env.info("FF delivered cargo # "..request.ndelivered)
           isCargo=true
           break
         end
@@ -5113,7 +5149,7 @@ function WAREHOUSE:_DeleteQueueItem(qitem, queue)
   for i=1,#queue do
     local _item=queue[i] --#WAREHOUSE.Queueitem
     if _item.uid==qitem.uid then
-      self:E(self.wid..string.format("Deleting queue item %d.", qitem.uid))
+      self:I(self.wid..string.format("Deleting queue item %d.", qitem.uid))
       table.remove(queue,i)
       break
     end
