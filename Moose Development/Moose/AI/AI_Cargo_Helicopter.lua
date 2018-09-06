@@ -1,4 +1,4 @@
---- **AI** -- (R2.3) - Models the intelligent transportation of infantry (cargo).
+--- **AI** -- (R2.4) - Models the intelligent transportation of infantry (cargo).
 --
 -- ===
 -- 
@@ -13,7 +13,34 @@
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
 
---- # AI\_CARGO\_TROOPS class, extends @{Core.Fsm#FSM_CONTROLLABLE}
+--- Brings a dynamic cargo handling capability for an AI helicopter group.
+--  
+-- Helicopter carriers can be mobilized to intelligently transport infantry and other cargo within the simulation.
+-- 
+-- The AI_CARGO_HELICOPTER class uses the @{Cargo.Cargo} capabilities within the MOOSE framework.
+-- @{Cargo.Cargo} must be declared within the mission to make the AI_CARGO_HELICOPTER object recognize the cargo.
+-- Please consult the @{Cargo.Cargo} module for more information. 
+-- 
+-- ## Cargo pickup.
+--  
+-- Using the @{#AI_CARGO_HELICOPTER.Pickup}() method, you are able to direct the helicopters towards a point on the battlefield to board/load the cargo at the specific coordinate. 
+-- Ensure that the landing zone is horizontally flat, and that trees cannot be found in the landing vicinity, or the helicopters won't land or will even crash!
+-- 
+-- ## Cargo deployment.
+--  
+-- Using the @{#AI_CARGO_HELICOPTER.Deploy}() method, you are able to direct the helicopters towards a point on the battlefield to unboard/unload the cargo at the specific coordinate. 
+-- Ensure that the landing zone is horizontally flat, and that trees cannot be found in the landing vicinity, or the helicopters won't land or will even crash!
+-- 
+-- ## Infantry health.
+-- 
+-- When infantry is unboarded from the APCs, the infantry is actually respawned into the battlefield. 
+-- As a result, the unboarding infantry is very _healthy_ every time it unboards.
+-- This is due to the limitation of the DCS simulator, which is not able to specify the health of new spawned units as a parameter.
+-- However, infantry that was destroyed when unboarded, won't be respawned again. Destroyed is destroyed.
+-- As a result, there is some additional strength that is gained when an unboarding action happens, but in terms of simulation balance this has
+-- marginal impact on the overall battlefield simulation. Fortunately, the firing strength of infantry is limited, and thus, respacing healthy infantry every
+-- time is not so much of an issue ... 
+-- 
 -- 
 -- ===
 -- 
@@ -21,7 +48,6 @@
 AI_CARGO_HELICOPTER = {
   ClassName = "AI_CARGO_HELICOPTER",
   Coordinate = nil, -- Core.Point#COORDINATE,
-  Helicopter_Cargo = {},
 }
 
 AI_CARGO_QUEUE = {}
@@ -33,10 +59,8 @@ AI_CARGO_QUEUE = {}
 -- @return #AI_CARGO_HELICOPTER
 function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
 
-  local self = BASE:Inherit( self, FSM_CONTROLLABLE:New() ) -- #AI_CARGO_HELICOPTER
+  local self = BASE:Inherit( self, AI_CARGO:New( Helicopter, CargoSet ) ) -- #AI_CARGO_HELICOPTER
 
-  self.CargoSet = CargoSet -- Cargo.CargoGroup#CARGO_GROUP
-  
   self.Zone = ZONE_GROUP:New( Helicopter:GetName(), Helicopter, 300 )
 
   self:SetStartState( "Unloaded" ) 
@@ -46,17 +70,17 @@ function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
   
   self:AddTransition( { "Unloaded", "Loading" }, "Load", "Boarding" )
   self:AddTransition( "Boarding", "Board", "Boarding" )
-  self:AddTransition( "Boarding", "Loaded", "Loaded" )
+  self:AddTransition( "Boarding", "Loaded", "Boarding" )
+  self:AddTransition( "Boarding", "PickedUp", "Loaded" )
   self:AddTransition( "Loaded", "Unload", "Unboarding" )
   self:AddTransition( "Unboarding", "Unboard", "Unboarding" )
-  self:AddTransition( "Unboarding", "Unloaded", "Unloaded" )
+  self:AddTransition( "Unboarding", "Unloaded", "Unboarding" )
+  self:AddTransition( "Unboarding", "Deployed", "Unloaded" )
 
   self:AddTransition( "*", "Landed", "*" )
   self:AddTransition( "*", "Queue", "*" )
   self:AddTransition( "*", "Orbit" , "*" ) 
-  self:AddTransition( "*", "Home" , "*" )
-  self:AddTransition( "*", "RTB" , "*" )
-  self:AddTransition( "*", "BackHome" , "*" ) 
+  self:AddTransition( "*", "Home" , "*" ) 
   
   self:AddTransition( "*", "Destroyed", "Destroyed" )
 
@@ -235,18 +259,15 @@ function AI_CARGO_HELICOPTER:onafterLanded( Helicopter, From, Event, To )
     if self.RoutePickup == true then
       if Helicopter:GetHeight( true ) <= 5 and Helicopter:GetVelocityKMH() < 10 then
         --self:Load( Helicopter:GetPointVec2() )
-        self:Load()
+        self:Load( self.PickupZone )
         self.RoutePickup = false
         self.Relocating = true
       end
     end
     
-    if self.RouteDeploy == true then      
-      local height=Helicopter:GetHeight( true )
-      local velocity=Helicopter:GetVelocityKMH()
-      env.info(string.format("FF helo in air %s, height = %d m, velocity = %d km/h", tostring(Helicopter:InAir()), height, velocity))
-      if  height <= 10 and  velocity < 10 then
-        self:Unload( true )
+    if self.RouteDeploy == true then
+      if Helicopter:GetHeight( true ) <= 5 and Helicopter:GetVelocityKMH() < 10 then
+        self:Unload( self.DeployZone )
         self.RouteDeploy = false
         self.Transporting = false
         self.Relocating = false
@@ -264,7 +285,7 @@ end
 -- @param To
 -- @param Core.Point#COORDINATE Coordinate
 -- @param #number Speed
-function AI_CARGO_HELICOPTER:onafterQueue( Helicopter, From, Event, To, Coordinate, Speed )
+function AI_CARGO_HELICOPTER:onafterQueue( Helicopter, From, Event, To, Coordinate, Speed, DeployZone )
 
   local HelicopterInZone = false
 
@@ -273,7 +294,7 @@ function AI_CARGO_HELICOPTER:onafterQueue( Helicopter, From, Event, To, Coordina
     local Distance = Coordinate:DistanceFromPointVec2( Helicopter:GetCoordinate() )
     
     if Distance > 2000 then
-      self:__Queue( -10, Coordinate )
+      self:__Queue( -10, Coordinate, Speed, DeployZone )
     else
     
       local ZoneFree = true
@@ -322,8 +343,12 @@ function AI_CARGO_HELICOPTER:onafterQueue( Helicopter, From, Event, To, Coordina
     
         -- Now route the helicopter
         Helicopter:Route( Route, 0 )
+        
+        -- Keep the DeployZone, because when the helo has landed, we want to provide the DeployZone to the mission designer as part of the Unloaded event.
+        self.DeployZone = DeployZone
+        
       else
-        self:__Queue( -10, Coordinate )
+        self:__Queue( -10, Coordinate, Speed, DeployZone )
       end
     end
   else
@@ -378,127 +403,8 @@ function AI_CARGO_HELICOPTER:onafterOrbit( Helicopter, From, Event, To, Coordina
 end
 
 
---- On Before event Load.
--- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Group#GROUP Helicopter
--- @param #string From From state.
--- @param #string Event Event
--- @param #string To To state.
-function AI_CARGO_HELICOPTER:onbeforeLoad( Helicopter, From, Event, To)
 
-  local Boarding = false
-
-  if Helicopter and Helicopter:IsAlive() then
-  
-    self.BoardingCount = 0
-  
-    if Helicopter and Helicopter:IsAlive() then
-      for _, HelicopterUnit in pairs( Helicopter:GetUnits() ) do
-        local HelicopterUnit = HelicopterUnit -- Wrapper.Unit#UNIT
-        local CargoBayFreeWeight = HelicopterUnit:GetCargoBayFreeWeight()
-        self:F({CargoBayFreeWeight=CargoBayFreeWeight})
- 
-        for _, Cargo in pairs( self.CargoSet:GetSet() ) do
-          local Cargo = Cargo -- Cargo.Cargo#CARGO
-          self:F( { IsUnLoaded = Cargo:IsUnLoaded() } )
-          if Cargo:IsUnLoaded() and not Cargo:IsDeployed() then
-            if Cargo:IsInLoadRadius( HelicopterUnit:GetCoordinate() ) then
-              self:F( { "In radius", HelicopterUnit:GetName() } )
-              
-              local CargoWeight = Cargo:GetWeight()
-              
-              -- Only when there is space within the bay to load the next cargo item!
-              if CargoBayFreeWeight > CargoWeight then --and CargoBayFreeVolume > CargoVolume then
-              
-                --Cargo:Ungroup()
-                Cargo:Board( HelicopterUnit, 25 )
-                self:__Board( 1, Cargo, HelicopterUnit )
-                self.Helicopter_Cargo[HelicopterUnit] = Cargo
-                Boarding = true
-                break
-              end
-            end
-          end
-        end
-      end
-    end
-  end
-
-  return Boarding
-  
-end
-
---- On after Board event.
--- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Group#GROUP Helicopter
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Cargo.Cargo#CARGO Cargo Cargo object.
--- @param Wrapper.Unit#UNIT HelicopterUnit
-function AI_CARGO_HELICOPTER:onafterBoard( Helicopter, From, Event, To, Cargo, HelicopterUnit )
-  self:F( { Helicopter, From, Event, To, Cargo, HelicopterUnit } )
-
-  if Helicopter and Helicopter:IsAlive() then
-    self:F({ IsLoaded = Cargo:IsLoaded() } )
-    if not Cargo:IsLoaded() then
-      self:__Board( 10, Cargo, HelicopterUnit )
-    else
-      local CargoBayFreeWeight = HelicopterUnit:GetCargoBayFreeWeight()
-      self:F({CargoBayFreeWeight=CargoBayFreeWeight})
-      for _, Cargo in pairs( self.CargoSet:GetSet() ) do
-        local Cargo = Cargo -- Cargo.Cargo#CARGO
-        if Cargo:IsUnLoaded() then
-          if Cargo:IsInLoadRadius( HelicopterUnit:GetCoordinate() ) then
-            local CargoWeight = Cargo:GetWeight()
-
-            -- Only when there is space within the bay to load the next cargo item!
-            if CargoBayFreeWeight > CargoWeight then --and CargoBayFreeVolume > CargoVolume then
-              Cargo:Board( HelicopterUnit, 25 )
-              self:__Board( 10, Cargo, HelicopterUnit )
-              self.Helicopter_Cargo[HelicopterUnit] = Cargo
-              return
-            end
-          end
-        end
-      end
-      self:__Loaded( 1, Cargo ) -- Will only be executed when no more cargo is boarded.
-    end
-  end
-  
-end
-
-
---- On before Loaded event.
--- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Group#GROUP Helicopter
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @return #boolean Cargo loaded.
-function AI_CARGO_HELICOPTER:onbeforeLoaded( Helicopter, From, Event, To, Cargo )
-  self:F( { Helicopter, From, Event, To } )
-
-  local Loaded = true
-
-  if Helicopter and Helicopter:IsAlive() then
-    for HelicopterUnit, Cargo in pairs( self.Helicopter_Cargo ) do
-      local Cargo = Cargo -- Cargo.Cargo#CARGO
-      self:F( { IsLoaded = Cargo:IsLoaded(), IsDestroyed = Cargo:IsDestroyed(), Cargo:GetName(), Helicopter:GetName() } )
-      if not Cargo:IsLoaded() and not Cargo:IsDestroyed() then
-        Loaded = false
-      end
-    end
-  end
-  
-  return Loaded
-  
-end
-
-
-
-
---- On after Loaded event. Check if cargo is loaded.
+--- On after PickedUp event, raised when all cargo has been loaded into the CarrierGroup.
 -- @param #AI_CARGO_HELICOPTER self
 -- @param Wrapper.Group#GROUP Helicopter
 -- @param #string From From state.
@@ -506,8 +412,9 @@ end
 -- @param #string To To state.
 -- @param Cargo.Cargo#CARGO Cargo Cargo object.
 -- @return #boolean Cargo is loaded.
-function AI_CARGO_HELICOPTER:onafterLoaded( Helicopter, From, Event, To, Cargo )
-  self:F( { Helicopter, From, Event, To, Cargo } )
+-- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
+function AI_CARGO_HELICOPTER:onafterPickedUp( Helicopter, From, Event, To, PickupZone )
+  self:F( { Helicopter, From, Event, To } )
   
   if Helicopter and Helicopter:IsAlive() then
     self.Transporting = true
@@ -515,62 +422,8 @@ function AI_CARGO_HELICOPTER:onafterLoaded( Helicopter, From, Event, To, Cargo )
 end
 
 
---- On after Unload event.
--- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Group#GROUP Helicopter
--- @param #string From From state.
--- @param #string Event Event.
--- @param #boolean Deployed Cargo is deployed.
-function AI_CARGO_HELICOPTER:onafterUnload( Helicopter, From, Event, To, Deployed )
 
-  if Helicopter and Helicopter:IsAlive() then
-    for _, HelicopterUnit in pairs( Helicopter:GetUnits() ) do
-      local HelicopterUnit = HelicopterUnit -- Wrapper.Unit#UNIT
-      for _, Cargo in pairs( HelicopterUnit:GetCargo() ) do
-        if Cargo:IsLoaded() then
-          Cargo:UnBoard()
-          Cargo:SetDeployed( true )
-          self:__Unboard( 10, Cargo, Deployed )
-        end
-      end 
-    end
-  end
-
-  
-end
-
---- On after Unboard event.
--- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Group#GROUP Helicopter
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Cargo.Cargo#CARGO Cargo Cargo object.
--- @param #boolean Deployed Cargo is deployed.
-function AI_CARGO_HELICOPTER:onafterUnboard( Helicopter, From, Event, To, Cargo, Deployed )
-
-  if Helicopter and Helicopter:IsAlive() then
-    if not Cargo:IsUnLoaded() then
-      self:__Unboard( 10, Cargo, Deployed ) 
-    else
-      for _, HelicopterUnit in pairs( Helicopter:GetUnits() ) do
-        local HelicopterUnit = HelicopterUnit -- Wrapper.Unit#UNIT
-        for _, Cargo in pairs( HelicopterUnit:GetCargo() ) do
-          if Cargo:IsLoaded() then
-            Cargo:UnBoard()
-            Cargo:SetDeployed( true )
-            self:__Unboard( 10, Cargo, Deployed )
-            return
-          end
-        end 
-      end
-      self:__Unloaded( 1, Cargo, Deployed )
-    end
-  end
-  
-end
-
---- On before Unloaded event.
+--- On after Deployed event.
 -- @param #AI_CARGO_HELICOPTER self
 -- @param Wrapper.Group#GROUP Helicopter
 -- @param #string From From state.
@@ -579,45 +432,8 @@ end
 -- @param Cargo.Cargo#CARGO Cargo Cargo object.
 -- @param #boolean Deployed Cargo is deployed.
 -- @return #boolean True if all cargo has been unloaded.
-function AI_CARGO_HELICOPTER:onbeforeUnloaded( Helicopter, From, Event, To, Cargo, Deployed )
-  self:F( { APC, From, Event, To, Cargo:GetName(), Deployed = Deployed } )
-
-  local AllUnloaded = true
-
-  --Cargo:Regroup()
-
-  if Helicopter and Helicopter:IsAlive() then
-    for _, HelicopterUnit in pairs( Helicopter:GetUnits() ) do
-      local IsEmpty = HelicopterUnit:IsCargoEmpty()
-      self:I({ IsEmpty = IsEmpty })
-      if not IsEmpty then
-          AllUnloaded = false
-          break
-      end
-    end
-    
-    if AllUnloaded == true then
-      if Deployed == true then
-        self.Helicopter_Cargo = {}
-      end
-      self.Helicopter = Helicopter
-    end
-  end
-  
-  self:F( { AllUnloaded = AllUnloaded } )
-  return AllUnloaded
-  
-end
-
---- On after Unloaded event.
--- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Group#GROUP Helicopter
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Cargo.Cargo#CARGO Cargo Cargo object.
--- @param #boolean Deployed Cargo is deployed.
-function AI_CARGO_HELICOPTER:onafterUnloaded( Helicopter, From, Event, To, Cargo, Deployed )
+function AI_CARGO_HELICOPTER:onafterDeployed( Helicopter, From, Event, To, DeployZone )
+  self:F( { Helicopter, From, Event, To, DeployZone = DeployZone } )
 
   self:Orbit( Helicopter:GetCoordinate(), 50 )
 
@@ -627,7 +443,7 @@ function AI_CARGO_HELICOPTER:onafterUnloaded( Helicopter, From, Event, To, Cargo
       AI_CARGO_QUEUE[Helicopter] = nil
     end, Helicopter
   )
-
+  
 end
 
 --- On after Pickup event.
@@ -638,15 +454,12 @@ end
 -- @param To
 -- @param Core.Point#COORDINATE Coordinate Pickup place.
 -- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
-function AI_CARGO_HELICOPTER:onafterPickup( Helicopter, From, Event, To, Coordinate, Speed )
+-- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
+function AI_CARGO_HELICOPTER:onafterPickup( Helicopter, From, Event, To, Coordinate, Speed, PickupZone )
 
   if Helicopter and Helicopter:IsAlive() ~= nil then
 
-    --Helicopter:Activate()
-    
-    env.info("FF route pickup")
-    
-    Coordinate:MarkToAll("helo pickupcoord")
+    Helicopter:Activate()
 
     self.RoutePickup = true
     Coordinate.y = math.random( 50, 500 )
@@ -692,7 +505,8 @@ function AI_CARGO_HELICOPTER:onafterPickup( Helicopter, From, Event, To, Coordin
 
     -- Now route the helicopter
     Helicopter:Route( Route, 1 )
-
+    
+    self.PickupZone = PickupZone
     self.Transporting = true
   end
   
@@ -702,8 +516,8 @@ end
 -- @param #AI_CARGO_HELICOPTER self
 -- @param Wrapper.Group#GROUP AICargoHelicopter
 -- @param Core.Point#COORDINATE Coordinate Coordinate
-function AI_CARGO_HELICOPTER:_Deploy( AICargoHelicopter, Coordinate )
-  AICargoHelicopter:__Queue( -10, Coordinate, 100 )
+function AI_CARGO_HELICOPTER:_Deploy( AICargoHelicopter, Coordinate, DeployZone )
+  AICargoHelicopter:__Queue( -10, Coordinate, 100, DeployZone )
 end
 
 --- On after Deploy event.
@@ -714,7 +528,7 @@ end
 -- @param To
 -- @param Core.Point#COORDINATE Coordinate Place at which the cargo is deployed.
 -- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
-function AI_CARGO_HELICOPTER:onafterDeploy( Helicopter, From, Event, To, Coordinate, Speed )
+function AI_CARGO_HELICOPTER:onafterDeploy( Helicopter, From, Event, To, Coordinate, Speed, DeployZone )
 
   if Helicopter and Helicopter:IsAlive() ~= nil then
 
@@ -759,7 +573,7 @@ function AI_CARGO_HELICOPTER:onafterDeploy( Helicopter, From, Event, To, Coordin
   
     local Tasks = {}
     
-    Tasks[#Tasks+1] = Helicopter:TaskFunction( "AI_CARGO_HELICOPTER._Deploy", self, Coordinate )
+    Tasks[#Tasks+1] = Helicopter:TaskFunction( "AI_CARGO_HELICOPTER._Deploy", self, Coordinate, DeployZone )
     Tasks[#Tasks+1] = Helicopter:TaskOrbitCircle( math.random( 30, 100 ), _speed, CoordinateTo:GetRandomCoordinateInRadius( 800, 500 ) )
     
     --Tasks[#Tasks+1] = Helicopter:TaskLandAtVec2( CoordinateTo:GetVec2() )
@@ -782,8 +596,9 @@ end
 -- @param Event
 -- @param To
 -- @param Core.Point#COORDINATE Coordinate Home place.
--- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 80% of max possible speed the unit can go.
-function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinate, Speed )
+-- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+-- @param Core.Zone#ZONE HomeZone The zone wherein the carrier will return when all cargo has been transported. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
+function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinate, Speed, HomeZone )
 
   if Helicopter and Helicopter:IsAlive() ~= nil then
 
@@ -793,9 +608,9 @@ function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinat
     
     --- Calculate the target route point.
 
-    Coordinate.y = math.random( 100, 500 )    
+    Coordinate.y = math.random( 50, 200 )    
     
-    local _speed=Speed or Helicopter:GetSpeedMax()*0.8         
+    Speed = Speed or Helicopter:GetSpeedMax()*0.5          
 
     --- Create a route point of type air.
     local CoordinateFrom = Helicopter:GetCoordinate()
@@ -803,7 +618,7 @@ function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinat
       "RADIO", 
       POINT_VEC3.RoutePointType.TurningPoint, 
       POINT_VEC3.RoutePointAction.TurningPoint, 
-      _speed, 
+      Speed , 
       true 
     )
     Route[#Route+1] = WaypointFrom
@@ -814,7 +629,7 @@ function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinat
       "RADIO", 
       POINT_VEC3.RoutePointType.TurningPoint, 
       POINT_VEC3.RoutePointAction.TurningPoint, 
-      _speed, 
+      Speed , 
       true 
     )
 
@@ -823,10 +638,11 @@ function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinat
     --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
     Helicopter:WayPointInitialize( Route )
   
-    local Tasks = {}        
+    local Tasks = {}
+    
     Tasks[#Tasks+1] = Helicopter:TaskLandAtVec2( CoordinateTo:GetVec2() )
     Route[#Route].task = Helicopter:TaskCombo( Tasks )
-    
+
     Route[#Route+1] = WaypointTo
 
     -- Now route the helicopter
@@ -836,105 +652,3 @@ function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinat
   
 end
 
-
---- On after RTB event. Route the helicopter from one airport or it's current position to another airbase.
--- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Group#GROUP Helicopter Cargo helicopter.
--- @param From
--- @param Event
--- @param To
--- @param Wrapper.Airbase#AIRBASE Airbase Destination airbase.
--- @param #number Speed Speed in km/h. Default is 80% of max possible speed the group can do.
-function AI_CARGO_HELICOPTER:onafterRTB( Helicopter, From, Event, To, Airbase, Speed)
-
-  if Helicopter and Helicopter:IsAlive() then
-
-    -- Set takeoff type.
-    local Takeoff = SPAWN.Takeoff.Hot
-    
-    -- Get template of group.
-    local Template = Helicopter:GetTemplate()
-    
-    -- Nil check
-    if Template==nil then
-      return
-    end
-
-    -- Waypoints of the route.
-    local Points={}
-    
-    -- To point.
-    local AirbasePointVec2 = Airbase:GetPointVec2()
-    local ToWaypoint = AirbasePointVec2:WaypointAir(
-      POINT_VEC3.RoutePointAltType.BARO,
-      "Land",
-      "Landing", 
-      Speed or Helicopter:GetSpeedMax()*0.8
-    )    
-    ToWaypoint["airdromeId"]   = Airbase:GetID()
-    ToWaypoint["speed_locked"] = true
-    
-    -- Task function triggering the arrived event.
-    local TaskFunction = Helicopter:TaskFunction("AI_CARGO_HELICOPTER._BackHome", self)
-
-    -- Put task function on last waypoint.
-    Helicopter:SetTaskWaypoint( ToWaypoint, TaskFunction )
-    
-
-    -- If self.Airbase~=nil then group is currently at an airbase, where it should be respawned.        
-    if self.Airbase then
-    
-      -- Second point of the route. First point is done in RespawnAtCurrentAirbase() routine.
-      Template.route.points[2] = ToWaypoint
-    
-      -- Respawn group at the current airbase.
-      Helicopter:RespawnAtCurrentAirbase(Template, Takeoff, false)
-      
-    else
-  
-      -- From point.
-      local GroupPoint = Helicopter:GetVec2()
-      local FromWaypoint = {}
-      FromWaypoint.x      = GroupPoint.x
-      FromWaypoint.y      = GroupPoint.y
-      FromWaypoint.type   = "Turning Point"
-      FromWaypoint.action = "Turning Point"
-      FromWaypoint.speed  = Helicopter:GetSpeedMax()*0.8
- 
-      -- The two route points. 
-      Points[1] = FromWaypoint
-      Points[2] = ToWaypoint
-
-      local PointVec3 = Helicopter:GetPointVec3()
-      Template.x = PointVec3.x
-      Template.y = PointVec3.z
- 
-      Template.route.points = Points
-            
-      local GroupSpawned = Helicopter:Respawn(Template)
-    
-    end
-  end
-end
-
---- Function called when transport is back home and nothing more to do. Triggering the event BackHome.
--- @param Wrapper.Group#GROUP Helicopter Cargo helicopter.
--- @param #AI_CARGO_HELICOPTER self
-function AI_CARGO_HELICOPTER._BackHome(Group, self)  
-  env.info("FF ai cargo helicopter back home task function")
-  Group:SmokeRed()
-  --Trigger BackHome event.
-  self:__BackHome(1)
-end
-
-
---- On after BackHome event.
--- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Group#GROUP Helicopter Cargo helo.
--- @param From
--- @param Event
--- @param To
-function AI_CARGO_HELICOPTER:onafterBackHome( Helicopter, From, Event, To )
-  env.info("FF ai cargo helicopter back home event")
-  Helicopter:SmokeRed()
-end
