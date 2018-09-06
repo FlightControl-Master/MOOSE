@@ -23,7 +23,10 @@ do -- CARGO_UNIT
   -- @extends Cargo.Cargo#CARGO_REPRESENTABLE
   
   --- Defines a cargo that is represented by a UNIT object within the simulator, and can be transported by a carrier.
-  -- Use the event functions as described above to Load, UnLoad, Board, UnBoard the CARGO\_UNIT objects to and from carriers.
+  -- Use the event functions as described above to Load, UnLoad, Board, UnBoard the CARGO_UNIT objects to and from carriers.
+  -- Note that ground forces behave in a group, and thus, act in formation, regardless if one unit is commanded to move.
+  -- 
+  -- This class is used in CARGO_GROUP, and is not meant to be used by mission designers individually.
   -- 
   -- ===
   -- 
@@ -285,15 +288,16 @@ do -- CARGO_UNIT
   -- @param Wrapper.Client#CLIENT CargoCarrier
   -- @param #number NearRadius Default 25 m.
   function CARGO_UNIT:onafterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
-    --self:F( { From, Event, To, CargoCarrier.UnitName, NearRadius } )
+    self:F( { From, Event, To, CargoCarrier:GetName() } )
     
     
     if CargoCarrier and CargoCarrier:IsAlive() and self.CargoObject and self.CargoObject:IsAlive() then 
-      if CargoCarrier:InAir() == false then
+      if (CargoCarrier:IsAir() and not CargoCarrier:InAir()) or true then
+        local NearRadius = CargoCarrier:GetBoundingRadius( NearRadius ) + 5
         if self:IsNear( CargoCarrier:GetPointVec2(), NearRadius ) then
           self:__Load( 1, CargoCarrier, ... )
         else
-          self:__Boarding( -1, CargoCarrier, NearRadius, ... )
+          self:__Boarding( -5, CargoCarrier, NearRadius, ... )
           self.RunCount = self.RunCount + 1
           if self.RunCount >= 40 then
             self.RunCount = 0

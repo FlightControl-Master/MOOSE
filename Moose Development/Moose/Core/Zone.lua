@@ -1592,4 +1592,103 @@ function ZONE_POLYGON:FindByName( ZoneName )
   return ZoneFound
 end
 
+do -- ZONE_AIRBASE
 
+  --- @type ZONE_AIRBASE
+  -- @extends #ZONE_RADIUS
+  
+  
+  --- The ZONE_AIRBASE class defines by a zone around a @{Wrapper.Airbase#AIRBASE} with a radius.
+  -- This class implements the inherited functions from @{Core.Zone#ZONE_RADIUS} taking into account the own zone format and properties.
+  -- 
+  -- @field #ZONE_AIRBASE
+  ZONE_AIRBASE = {
+    ClassName="ZONE_AIRBASE",
+    }
+    
+    
+    
+  --- Constructor to create a ZONE_AIRBASE instance, taking the zone name, a zone @{Wrapper.Airbase#AIRBASE} and a radius.
+  -- @param #ZONE_AIRBASE self
+  -- @param #string ZoneName Name of the zone.
+  -- @param Wrapper.Airbase#AIRBASE ZoneAirbase The @{Wrapper.Airbase} as the center of the zone.
+  -- @param DCS#Distance Radius The radius of the zone.
+  -- @return #ZONE_AIRBASE self
+  function ZONE_AIRBASE:New( AirbaseName )
+  
+  
+    local Airbase = AIRBASE:FindByName( AirbaseName )
+  
+    local self = BASE:Inherit( self, ZONE_RADIUS:New( AirbaseName, Airbase:GetVec2(), 4000 ) )
+  
+    self._.ZoneAirbase = Airbase
+    self._.ZoneVec2Cache = self._.ZoneAirbase:GetVec2()
+  
+    -- Zone objects are added to the _DATABASE and SET_ZONE objects.
+    _EVENTDISPATCHER:CreateEventNewZone( self )
+    
+    return self
+  end
+  
+  --- Get the airbase as part of the ZONE_AIRBASE object.
+  -- @param #ZONE_AIRBASE self
+  -- @return Wrapper.Airbase#AIRBASE The airbase.
+  function ZONE_AIRBASE:GetAirbase()
+    return self._.ZoneAirbase
+  end  
+  
+  --- Returns the current location of the @{Wrapper.Group}.
+  -- @param #ZONE_AIRBASE self
+  -- @return DCS#Vec2 The location of the zone based on the @{Wrapper.Group} location.
+  function ZONE_AIRBASE:GetVec2()
+    self:F( self.ZoneName )
+    
+    local ZoneVec2 = nil
+    
+    if self._.ZoneAirbase:IsAlive() then
+      ZoneVec2 = self._.ZoneAirbase:GetVec2()
+      self._.ZoneVec2Cache = ZoneVec2
+    else
+      ZoneVec2 = self._.ZoneVec2Cache
+    end
+  
+    self:T( { ZoneVec2 } )
+    
+    return ZoneVec2
+  end
+  
+  --- Returns a random location within the zone of the @{Wrapper.Group}.
+  -- @param #ZONE_AIRBASE self
+  -- @return DCS#Vec2 The random location of the zone based on the @{Wrapper.Group} location.
+  function ZONE_AIRBASE:GetRandomVec2()
+    self:F( self.ZoneName )
+  
+    local Point = {}
+    local Vec2 = self._.ZoneAirbase:GetVec2()
+  
+    local angle = math.random() * math.pi*2;
+    Point.x = Vec2.x + math.cos( angle ) * math.random() * self:GetRadius();
+    Point.y = Vec2.y + math.sin( angle ) * math.random() * self:GetRadius();
+    
+    self:T( { Point } )
+    
+    return Point
+  end
+  
+  --- Returns a @{Core.Point#POINT_VEC2} object reflecting a random 2D location within the zone.
+  -- @param #ZONE_AIRBASE self
+  -- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
+  -- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
+  -- @return Core.Point#POINT_VEC2 The @{Core.Point#POINT_VEC2} object reflecting the random 3D location within the zone.
+  function ZONE_AIRBASE:GetRandomPointVec2( inner, outer )
+    self:F( self.ZoneName, inner, outer )
+  
+    local PointVec2 = POINT_VEC2:NewFromVec2( self:GetRandomVec2() )
+  
+    self:T3( { PointVec2 } )
+    
+    return PointVec2
+  end
+
+
+end
