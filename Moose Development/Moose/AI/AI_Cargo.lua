@@ -414,7 +414,7 @@ function AI_CARGO:onafterUnloaded( Carrier, From, Event, To, Cargo, CarrierUnit,
   end
 
   if AllUnloaded == true then
-    self:Deployed( DeployZone )
+    self:__Deployed( 5, DeployZone )
   end
   
 end

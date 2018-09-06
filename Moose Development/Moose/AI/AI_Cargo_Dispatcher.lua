@@ -428,6 +428,8 @@ function AI_CARGO_DISPATCHER:New( SetCarrier, SetCargo )
   self:AddTransition( "Monitoring", "Loaded", "Monitoring" )
   self:AddTransition( "Monitoring", "PickedUp", "Monitoring" )
 
+  self:AddTransition( "Monitoring", "Transport", "Monitoring" )
+
   self:AddTransition( "Monitoring", "Deploy", "Monitoring" )
   self:AddTransition( "Monitoring", "Unload", "Monitoring" )
   self:AddTransition( "Monitoring", "Unloading", "Monitoring" )
@@ -771,6 +773,7 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
       
       function AI_Cargo.OnAfterPickedUp( AI_Cargo, CarrierGroup, From, Event, To, PickupZone )
         self:PickedUp( CarrierGroup, PickupZone )
+        self:Transport( CarrierGroup )
       end
 
 
@@ -1011,7 +1014,7 @@ end
 -- @param Wrapper.Group#GROUP Carrier
 -- @param Cargo.Cargo#CARGO Cargo
 -- @return #AI_CARGO_DISPATCHER
-function AI_CARGO_DISPATCHER:OnAfterLoaded( From, Event, To, Carrier, Cargo )
+function AI_CARGO_DISPATCHER:onafterTransport( From, Event, To, Carrier, Cargo )
 
   if self.DeployZoneSet then
     if self.AI_Cargo[Carrier]:IsTransporting() == true then
