@@ -261,6 +261,7 @@ function AI_CARGO_APC:onafterMonitor( APC, From, Event, To )
             if self:Is( "Unloaded" ) then
               self:Follow()
             end
+            self:F( "I am here" .. self:GetCurrentState() )
             if self:Is( "Following" ) then
               for Cargo, APCUnit in pairs( self.Carrier_Cargo ) do
                 local Cargo = Cargo -- Cargo.Cargo#CARGO
@@ -422,15 +423,15 @@ end
 -- @param To
 -- @param Core.Point#COORDINATE Coordinate Home place.
 -- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
-function AI_CARGO_APC:onafterHome( APC, From, Event, To, Coordinate, Speed )
+function AI_CARGO_APC:onafterHome( APC, From, Event, To, Coordinate, Speed, HomeZone )
 
   if APC and APC:IsAlive() ~= nil then
 
     self.RouteHome = true
     
-    local _speed=Speed or APC:GetSpeedMax()*0.5
+    Speed = Speed or APC:GetSpeedMax()*0.5
     
-    local Waypoints = APC:TaskGroundOnRoad( Coordinate, _speed, "Line abreast", true )
+    local Waypoints = APC:TaskGroundOnRoad( Coordinate, Speed, "Line abreast", true )
 
     self:F({Waypoints = Waypoints})
     local Waypoint = Waypoints[#Waypoints]

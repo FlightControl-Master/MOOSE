@@ -99,13 +99,13 @@
 -- You can use this event handler to post messages to players, or provide status updates etc.
 -- 
 -- 
---      --- Pickup Handler OnAfter for CLASS.
+--      --- Pickup event handler OnAfter for CLASS.
 --      -- Use this event handler to tailor the event when a CarrierGroup is routed towards a new pickup Coordinate and a specified Speed.
 --      -- You can use this event handler to post messages to players, or provide status updates etc.
 --      -- @param #CLASS self
---      -- @param #string From A string that contains the "*from state name*" when the event was fired.
---      -- @param #string Event A string that contains the "*event name*" when the event was fired.
---      -- @param #string To A string that contains the "*to state name*" when the event was fired.
+--      -- @param #string From A string that contains the "*from state name*" when the event was triggered.
+--      -- @param #string Event A string that contains the "*event name*" when the event was triggered.
+--      -- @param #string To A string that contains the "*to state name*" when the event was triggered.
 --      -- @param Wrapper.Group#GROUP CarrierGroup The group object that contains the CarrierUnits.
 --      -- @param Core.Point#COORDINATE Coordinate The coordinate of the pickup location.
 --      -- @param #number Speed The velocity in meters per second on which the CarrierGroup is routed towards the pickup Coordinate.
@@ -123,13 +123,13 @@
 -- You can use this event handler to post messages to players, or provide status updates etc.
 -- 
 -- 
---      --- Load Handler OnAfter for CLASS.
+--      --- Load event handler OnAfter for CLASS.
 --      -- Use this event handler to tailor the event when a CarrierGroup has initiated the loading or boarding of cargo within reporting or near range.
 --      -- You can use this event handler to post messages to players, or provide status updates etc.
 --      -- @param #CLASS self
---      -- @param #string From A string that contains the "*from state name*" when the event was fired.
---      -- @param #string Event A string that contains the "*event name*" when the event was fired.
---      -- @param #string To A string that contains the "*to state name*" when the event was fired.
+--      -- @param #string From A string that contains the "*from state name*" when the event was triggered.
+--      -- @param #string Event A string that contains the "*event name*" when the event was triggered.
+--      -- @param #string To A string that contains the "*to state name*" when the event was triggered.
 --      -- @param Wrapper.Group#GROUP CarrierGroup The group object that contains the CarrierUnits.
 --      -- @param Core.Zone#ZONE_AIRBASE PickupZone (optional) The zone from where the cargo is picked up. Note that the zone is optional and may not be provided, but for AI_CARGO_DISPATCHER_AIRBASE there will always be a PickupZone, as the pickup location is an airbase zone.
 --      function CLASS:OnAfterLoad( From, Event, To, CarrierGroup, PickupZone )
@@ -145,14 +145,14 @@
 -- You can use this event handler to post messages to players, or provide status updates etc.
 -- 
 -- 
---      --- Loading Handler OnAfter for CLASS.
+--      --- Loading event handler OnAfter for CLASS.
 --      -- Use this event handler to tailor the event when a CarrierUnit of a CarrierGroup is in the process of loading or boarding of a cargo object.
 --      -- You can use this event handler to post messages to players, or provide status updates etc.
---      -- Note that this event is fired repeatedly until all cargo (units) have been boarded into the carrier.
+--      -- Note that this event is triggered repeatedly until all cargo (units) have been boarded into the carrier.
 --      -- @param #CLASS self
---      -- @param #string From A string that contains the "*from state name*" when the event was fired.
---      -- @param #string Event A string that contains the "*event name*" when the event was fired.
---      -- @param #string To A string that contains the "*to state name*" when the event was fired.
+--      -- @param #string From A string that contains the "*from state name*" when the event was triggered.
+--      -- @param #string Event A string that contains the "*event name*" when the event was triggered.
+--      -- @param #string To A string that contains the "*to state name*" when the event was triggered.
 --      -- @param Wrapper.Group#GROUP CarrierGroup The group object that contains the CarrierUnits.
 --      -- @param Cargo.Cargo#CARGO Cargo The cargo object.
 --      -- @param Wrapper.Unit#UNIT CarrierUnit The carrier unit that is executing the cargo loading operation.
@@ -168,21 +168,21 @@
 -- 
 -- Use this event handler to tailor the event when a CarrierUnit of a CarrierGroup has loaded a cargo object.
 -- You can use this event handler to post messages to players, or provide status updates etc.
--- Note that if more cargo objects were loading or boarding into the CarrierUnit, then this event can be fired multiple times for each different Cargo/CarrierUnit.
+-- Note that if more cargo objects were loading or boarding into the CarrierUnit, then this event can be triggered multiple times for each different Cargo/CarrierUnit.
 -- 
 -- The function provides the CarrierGroup, which is the main group that was loading the Cargo into the CarrierUnit.
 -- A CarrierUnit is part of the larger CarrierGroup.
 -- 
 -- 
---      --- Loaded Handler OnAfter for CLASS.
+--      --- Loaded event handler OnAfter for CLASS.
 --      -- Use this event handler to tailor the event when a CarrierUnit of a CarrierGroup has loaded a cargo object.
 --      -- You can use this event handler to post messages to players, or provide status updates etc.
---      -- Note that if more cargo objects were loading or boarding into the CarrierUnit, then this event can be fired multiple times for each different Cargo/CarrierUnit.
+--      -- Note that if more cargo objects were loading or boarding into the CarrierUnit, then this event can be triggered multiple times for each different Cargo/CarrierUnit.
 --      -- A CarrierUnit can be part of the larger CarrierGroup.
 --      -- @param #CLASS self
---      -- @param #string From A string that contains the "*from state name*" when the event was fired.
---      -- @param #string Event A string that contains the "*event name*" when the event was fired.
---      -- @param #string To A string that contains the "*to state name*" when the event was fired.
+--      -- @param #string From A string that contains the "*from state name*" when the event was triggered.
+--      -- @param #string Event A string that contains the "*event name*" when the event was triggered.
+--      -- @param #string To A string that contains the "*to state name*" when the event was triggered.
 --      -- @param Wrapper.Group#GROUP CarrierGroup The group object that contains the CarrierUnits.
 --      -- @param Cargo.Cargo#CARGO Cargo The cargo object.
 --      -- @param Wrapper.Unit#UNIT CarrierUnit The carrier unit that is executing the cargo loading operation.
@@ -200,13 +200,13 @@
 -- You can use this event handler to post messages to players, or provide status updates etc.
 --
 --
---      --- PickedUp Handler OnAfter for CLASS.
+--      --- PickedUp event handler OnAfter for CLASS.
 --      -- Use this event handler to tailor the event when a carrier has picked up all cargo objects into the CarrierGroup.
 --      -- You can use this event handler to post messages to players, or provide status updates etc.
 --      -- @param #CLASS self
---      -- @param #string From A string that contains the "*from state name*" when the event was fired.
---      -- @param #string Event A string that contains the "*event name*" when the event was fired.
---      -- @param #string To A string that contains the "*to state name*" when the event was fired.
+--      -- @param #string From A string that contains the "*from state name*" when the event was triggered.
+--      -- @param #string Event A string that contains the "*event name*" when the event was triggered.
+--      -- @param #string To A string that contains the "*to state name*" when the event was triggered.
 --      -- @param Wrapper.Group#GROUP CarrierGroup The group object that contains the CarrierUnits.
 --      -- @param Core.Zone#ZONE_AIRBASE PickupZone (optional) The zone from where the cargo is picked up. Note that the zone is optional and may not be provided, but for AI_CARGO_DISPATCHER_AIRBASE there will always be a PickupZone, as the pickup location is an airbase zone.
 --      function CLASS:OnAfterPickedUp( From, Event, To, CarrierGroup, PickupZone )
@@ -222,13 +222,13 @@
 -- You can use this event handler to post messages to players, or provide status updates etc.
 -- 
 -- 
---      --- Deploy Handler OnAfter for CLASS.
+--      --- Deploy event handler OnAfter for CLASS.
 --      -- Use this event handler to tailor the event when a CarrierGroup is routed to a deploy coordinate, to Unload all cargo objects in each CarrierUnit.
 --      -- You can use this event handler to post messages to players, or provide status updates etc.
 --      -- @param #CLASS self
---      -- @param #string From A string that contains the "*from state name*" when the event was fired.
---      -- @param #string Event A string that contains the "*event name*" when the event was fired.
---      -- @param #string To A string that contains the "*to state name*" when the event was fired.
+--      -- @param #string From A string that contains the "*from state name*" when the event was triggered.
+--      -- @param #string Event A string that contains the "*event name*" when the event was triggered.
+--      -- @param #string To A string that contains the "*to state name*" when the event was triggered.
 --      -- @param Wrapper.Group#GROUP CarrierGroup The group object that contains the CarrierUnits.
 --      -- @param Core.Point#COORDINATE Coordinate The deploy coordinate.
 --      -- @param #number Speed The velocity in meters per second on which the CarrierGroup is routed towards the deploy Coordinate.
@@ -246,13 +246,13 @@
 -- You can use this event handler to post messages to players, or provide status updates etc.
 --
 --
---      --- Unload Handler OnAfter for CLASS.
+--      --- Unload event handler OnAfter for CLASS.
 --      -- Use this event handler to tailor the event when a CarrierGroup has initiated the unloading or unboarding of cargo.
 --      -- You can use this event handler to post messages to players, or provide status updates etc.
 --      -- @param #CLASS self
---      -- @param #string From A string that contains the "*from state name*" when the event was fired.
---      -- @param #string Event A string that contains the "*event name*" when the event was fired.
---      -- @param #string To A string that contains the "*to state name*" when the event was fired.
+--      -- @param #string From A string that contains the "*from state name*" when the event was triggered.
+--      -- @param #string Event A string that contains the "*event name*" when the event was triggered.
+--      -- @param #string To A string that contains the "*to state name*" when the event was triggered.
 --      -- @param Wrapper.Group#GROUP CarrierGroup The group object that contains the CarrierUnits.
 --      -- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
 --      function CLASS:OnAfterUnload( From, Event, To, CarrierGroup, DeployZone )
@@ -265,14 +265,14 @@
 -- ## 3.8) Tailor the **Unloading** event
 -- 
 -- 
---      --- UnLoading Handler OnAfter for CLASS.
+--      --- UnLoading event handler OnAfter for CLASS.
 --      -- Use this event handler to tailor the event when a CarrierUnit of a CarrierGroup is in the process of unloading or unboarding of a cargo object.
 --      -- You can use this event handler to post messages to players, or provide status updates etc.
---      -- Note that this event is fired repeatedly until all cargo (units) have been unboarded from the CarrierUnit.
+--      -- Note that this event is triggered repeatedly until all cargo (units) have been unboarded from the CarrierUnit.
 --      -- @param #CLASS self
---      -- @param #string From A string that contains the "*from state name*" when the event was fired.
---      -- @param #string Event A string that contains the "*event name*" when the event was fired.
---      -- @param #string To A string that contains the "*to state name*" when the event was fired.
+--      -- @param #string From A string that contains the "*from state name*" when the event was triggered.
+--      -- @param #string Event A string that contains the "*event name*" when the event was triggered.
+--      -- @param #string To A string that contains the "*to state name*" when the event was triggered.
 --      -- @param Wrapper.Group#GROUP CarrierGroup The group object that contains the CarrierUnits.
 --      -- @param Cargo.Cargo#CARGO Cargo The cargo object.
 --      -- @param Wrapper.Unit#UNIT CarrierUnit The carrier unit that is executing the cargo unloading operation.
@@ -290,15 +290,15 @@
 -- Use this event handler to tailor the event when a CarrierUnit of a CarrierGroup has unloaded a cargo object.
 -- You can use this event handler to post messages to players, or provide status updates etc.
 -- 
---      --- Unloaded Handler OnAfter for CLASS.
+--      --- Unloaded event handler OnAfter for CLASS.
 --      -- Use this event handler to tailor the event when a CarrierUnit of a CarrierGroup has unloaded a cargo object.
 --      -- You can use this event handler to post messages to players, or provide status updates etc.
---      -- Note that if more cargo objects were unloading or unboarding from the CarrierUnit, then this event can be fired multiple times for each different Cargo/CarrierUnit.
+--      -- Note that if more cargo objects were unloading or unboarding from the CarrierUnit, then this event can be triggered multiple times for each different Cargo/CarrierUnit.
 --      -- A CarrierUnit can be part of the larger CarrierGroup.
 --      -- @param #CLASS self
---      -- @param #string From A string that contains the "*from state name*" when the event was fired.
---      -- @param #string Event A string that contains the "*event name*" when the event was fired.
---      -- @param #string To A string that contains the "*to state name*" when the event was fired.
+--      -- @param #string From A string that contains the "*from state name*" when the event was triggered.
+--      -- @param #string Event A string that contains the "*event name*" when the event was triggered.
+--      -- @param #string To A string that contains the "*to state name*" when the event was triggered.
 --      -- @param Wrapper.Group#GROUP CarrierGroup The group object that contains the CarrierUnits.
 --      -- @param Cargo.Cargo#CARGO Cargo The cargo object.
 --      -- @param Wrapper.Unit#UNIT CarrierUnit The carrier unit that is executing the cargo unloading operation.
@@ -316,14 +316,13 @@
 -- You can use this event handler to post messages to players, or provide status updates etc.
 -- 
 -- 
---      --- Deployed Handler OnAfter for AI_CARGO_DISPATCHER.
+--      --- Deployed event handler OnAfter for CLASS.
 --      -- Use this event handler to tailor the event when a carrier has deployed all cargo objects from the CarrierGroup.
 --      -- You can use this event handler to post messages to players, or provide status updates etc.
---      -- @function [parent=#AI_CARGO_DISPATCHER] OnAfterDeployed
---      -- @param #AI_CARGO_DISPATCHER self
---      -- @param #string From A string that contains the "*from state name*" when the event was fired.
---      -- @param #string Event A string that contains the "*event name*" when the event was fired.
---      -- @param #string To A string that contains the "*to state name*" when the event was fired.
+--      -- @param #CLASS self
+--      -- @param #string From A string that contains the "*from state name*" when the event was triggered.
+--      -- @param #string Event A string that contains the "*event name*" when the event was triggered.
+--      -- @param #string To A string that contains the "*to state name*" when the event was triggered.
 --      -- @param Wrapper.Group#GROUP CarrierGroup The group object that contains the CarrierUnits.
 --      -- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
 --      function CLASS:OnAfterDeployed( From, Event, To, CarrierGroup, DeployZone )
@@ -331,7 +330,30 @@
 --        -- Write here your own code.
 --      
 --      end
+-- 
+-- ## 3.11) Tailor the **Home** event
+-- 
+-- Use this event handler to tailor the event when a CarrierGroup is returning to the HomeZone, after it has deployed all cargo objects from the CarrierGroup.
+-- You can use this event handler to post messages to players, or provide status updates etc.
+-- 
+--      --- Home event handler OnAfter for CLASS.
+--      -- Use this event handler to tailor the event when a CarrierGroup is returning to the HomeZone, after it has deployed all cargo objects from the CarrierGroup.
+--      -- You can use this event handler to post messages to players, or provide status updates etc.
+--      -- If there is no HomeZone is specified, the CarrierGroup will stay at the current location after having deployed all cargo and this event won't be triggered.
+--      -- @param #CLASS self
+--      -- @param #string From A string that contains the "*from state name*" when the event was triggered.
+--      -- @param #string Event A string that contains the "*event name*" when the event was triggered.
+--      -- @param #string To A string that contains the "*to state name*" when the event was triggered.
+--      -- @param Wrapper.Group#GROUP CarrierGroup The group object that contains the CarrierUnits.
+--      -- @param Core.Point#COORDINATE Coordinate The home coordinate the Carrier will arrive and stop it's activities.
+--      -- @param #number Speed The velocity in meters per second on which the CarrierGroup is routed towards the home Coordinate.
+--      -- @param Core.Zone#ZONE HomeZone The zone wherein the carrier will return when all cargo has been transported. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
+--      function CLASS:OnAfterHome( From, Event, To, CarrierGroup, Coordinate, Speed, HomeZone )
+--
+--        -- Write here your own code.
 --      
+--      end      
+-- 
 -- 
 -- # 3) Set the pickup parameters.
 -- 
@@ -668,14 +690,14 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
       self.AI_Cargo[Carrier] = self:AICargo( Carrier, self.SetCargo, self.CombatRadius )
       AI_Cargo = self.AI_Cargo[Carrier]
       
-      --- Pickup Handler OnAfter for AI_CARGO_DISPATCHER.
+      --- Pickup event handler OnAfter for AI_CARGO_DISPATCHER.
       -- Use this event handler to tailor the event when a CarrierGroup is routed towards a new pickup Coordinate and a specified Speed.
       -- You can use this event handler to post messages to players, or provide status updates etc.
       -- @function [parent=#AI_CARGO_DISPATCHER] OnAfterPickup
       -- @param #AI_CARGO_DISPATCHER self
-      -- @param #string From A string that contains the "*from state name*" when the event was fired.
-      -- @param #string Event A string that contains the "*event name*" when the event was fired.
-      -- @param #string To A string that contains the "*to state name*" when the event was fired.
+      -- @param #string From A string that contains the "*from state name*" when the event was triggered.
+      -- @param #string Event A string that contains the "*event name*" when the event was triggered.
+      -- @param #string To A string that contains the "*to state name*" when the event was triggered.
       -- @param Wrapper.Group#GROUP CarrierGroup The group object that contains the CarrierUnits.
       -- @param Core.Point#COORDINATE Coordinate The coordinate of the pickup location.
       -- @param #number Speed The velocity in meters per second on which the CarrierGroup is routed towards the pickup Coordinate.
@@ -684,14 +706,14 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
         self:Pickup( CarrierGroup, Coordinate, Speed, PickupZone )
       end
       
-      --- Load Handler OnAfter for AI_CARGO_DISPATCHER.
+      --- Load event handler OnAfter for AI_CARGO_DISPATCHER.
       -- Use this event handler to tailor the event when a CarrierGroup has initiated the loading or boarding of cargo within reporting or near range.
       -- You can use this event handler to post messages to players, or provide status updates etc.
       -- @function [parent=#AI_CARGO_DISPATCHER] OnAfterLoad
       -- @param #AI_CARGO_DISPATCHER self
-      -- @param #string From A string that contains the "*from state name*" when the event was fired.
-      -- @param #string Event A string that contains the "*event name*" when the event was fired.
-      -- @param #string To A string that contains the "*to state name*" when the event was fired.
+      -- @param #string From A string that contains the "*from state name*" when the event was triggered.
+      -- @param #string Event A string that contains the "*event name*" when the event was triggered.
+      -- @param #string To A string that contains the "*to state name*" when the event was triggered.
       -- @param Wrapper.Group#GROUP CarrierGroup The group object that contains the CarrierUnits.
       -- @param Core.Zone#ZONE_AIRBASE PickupZone (optional) The zone from where the cargo is picked up. Note that the zone is optional and may not be provided, but for AI_CARGO_DISPATCHER_AIRBASE there will always be a PickupZone, as the pickup location is an airbase zone.
       
@@ -699,15 +721,15 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
         self:Load( CarrierGroup, PickupZone )
       end
 
-      --- Loading Handler OnAfter for AI_CARGO_DISPATCHER.
+      --- Loading event handler OnAfter for AI_CARGO_DISPATCHER.
       -- Use this event handler to tailor the event when a CarrierUnit of a CarrierGroup is in the process of loading or boarding of a cargo object.
       -- You can use this event handler to post messages to players, or provide status updates etc.
-      -- Note that this event is fired repeatedly until all cargo (units) have been boarded into the carrier.
+      -- Note that this event is triggered repeatedly until all cargo (units) have been boarded into the carrier.
       -- @function [parent=#AI_CARGO_DISPATCHER] OnAfterLoading
       -- @param #AI_CARGO_DISPATCHER self
-      -- @param #string From A string that contains the "*from state name*" when the event was fired.
-      -- @param #string Event A string that contains the "*event name*" when the event was fired.
-      -- @param #string To A string that contains the "*to state name*" when the event was fired.
+      -- @param #string From A string that contains the "*from state name*" when the event was triggered.
+      -- @param #string Event A string that contains the "*event name*" when the event was triggered.
+      -- @param #string To A string that contains the "*to state name*" when the event was triggered.
       -- @param Wrapper.Group#GROUP CarrierGroup The group object that contains the CarrierUnits.
       -- @param Cargo.Cargo#CARGO Cargo The cargo object.
       -- @param Wrapper.Unit#UNIT CarrierUnit The carrier unit that is executing the cargo loading operation.
@@ -717,16 +739,16 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
         self:Loading( CarrierGroup, Cargo, CarrierUnit, PickupZone )
       end
 
-      --- Loaded Handler OnAfter for AI_CARGO_DISPATCHER.
+      --- Loaded event handler OnAfter for AI_CARGO_DISPATCHER.
       -- Use this event handler to tailor the event when a CarrierUnit of a CarrierGroup has loaded a cargo object.
       -- You can use this event handler to post messages to players, or provide status updates etc.
-      -- Note that if more cargo objects were loading or boarding into the CarrierUnit, then this event can be fired multiple times for each different Cargo/CarrierUnit.
+      -- Note that if more cargo objects were loading or boarding into the CarrierUnit, then this event can be triggered multiple times for each different Cargo/CarrierUnit.
       -- A CarrierUnit can be part of the larger CarrierGroup.
       -- @function [parent=#AI_CARGO_DISPATCHER] OnAfterLoaded
       -- @param #AI_CARGO_DISPATCHER self
-      -- @param #string From A string that contains the "*from state name*" when the event was fired.
-      -- @param #string Event A string that contains the "*event name*" when the event was fired.
-      -- @param #string To A string that contains the "*to state name*" when the event was fired.
+      -- @param #string From A string that contains the "*from state name*" when the event was triggered.
+      -- @param #string Event A string that contains the "*event name*" when the event was triggered.
+      -- @param #string To A string that contains the "*to state name*" when the event was triggered.
       -- @param Wrapper.Group#GROUP CarrierGroup The group object that contains the CarrierUnits.
       -- @param Cargo.Cargo#CARGO Cargo The cargo object.
       -- @param Wrapper.Unit#UNIT CarrierUnit The carrier unit that is executing the cargo loading operation.
@@ -736,14 +758,14 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
         self:Loaded( CarrierGroup, Cargo, CarrierUnit, PickupZone )
       end
 
-      --- PickedUp Handler OnAfter for AI_CARGO_DISPATCHER.
+      --- PickedUp event handler OnAfter for AI_CARGO_DISPATCHER.
       -- Use this event handler to tailor the event when a carrier has picked up all cargo objects into the CarrierGroup.
       -- You can use this event handler to post messages to players, or provide status updates etc.
       -- @function [parent=#AI_CARGO_DISPATCHER] OnAfterPickedUp
       -- @param #AI_CARGO_DISPATCHER self
-      -- @param #string From A string that contains the "*from state name*" when the event was fired.
-      -- @param #string Event A string that contains the "*event name*" when the event was fired.
-      -- @param #string To A string that contains the "*to state name*" when the event was fired.
+      -- @param #string From A string that contains the "*from state name*" when the event was triggered.
+      -- @param #string Event A string that contains the "*event name*" when the event was triggered.
+      -- @param #string To A string that contains the "*to state name*" when the event was triggered.
       -- @param Wrapper.Group#GROUP CarrierGroup The group object that contains the CarrierUnits.
       -- @param Core.Zone#ZONE_AIRBASE PickupZone (optional) The zone from where the cargo is picked up. Note that the zone is optional and may not be provided, but for AI_CARGO_DISPATCHER_AIRBASE there will always be a PickupZone, as the pickup location is an airbase zone.
       
@@ -752,14 +774,14 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
       end
 
 
-      --- Deploy Handler OnAfter for AI_CARGO_DISPATCHER.
+      --- Deploy event handler OnAfter for AI_CARGO_DISPATCHER.
       -- Use this event handler to tailor the event when a CarrierGroup is routed to a deploy coordinate, to Unload all cargo objects in each CarrierUnit.
       -- You can use this event handler to post messages to players, or provide status updates etc.
       -- @function [parent=#AI_CARGO_DISPATCHER] OnAfterDeploy
       -- @param #AI_CARGO_DISPATCHER self
-      -- @param #string From A string that contains the "*from state name*" when the event was fired.
-      -- @param #string Event A string that contains the "*event name*" when the event was fired.
-      -- @param #string To A string that contains the "*to state name*" when the event was fired.
+      -- @param #string From A string that contains the "*from state name*" when the event was triggered.
+      -- @param #string Event A string that contains the "*event name*" when the event was triggered.
+      -- @param #string To A string that contains the "*to state name*" when the event was triggered.
       -- @param Wrapper.Group#GROUP CarrierGroup The group object that contains the CarrierUnits.
       -- @param Core.Point#COORDINATE Coordinate The deploy coordinate.
       -- @param #number Speed The velocity in meters per second on which the CarrierGroup is routed towards the deploy Coordinate.
@@ -770,14 +792,14 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
       end      
 
 
-      --- Unload Handler OnAfter for AI_CARGO_DISPATCHER.
+      --- Unload event handler OnAfter for AI_CARGO_DISPATCHER.
       -- Use this event handler to tailor the event when a CarrierGroup has initiated the unloading or unboarding of cargo.
       -- You can use this event handler to post messages to players, or provide status updates etc.
       -- @function [parent=#AI_CARGO_DISPATCHER] OnAfterUnload
       -- @param #AI_CARGO_DISPATCHER self
-      -- @param #string From A string that contains the "*from state name*" when the event was fired.
-      -- @param #string Event A string that contains the "*event name*" when the event was fired.
-      -- @param #string To A string that contains the "*to state name*" when the event was fired.
+      -- @param #string From A string that contains the "*from state name*" when the event was triggered.
+      -- @param #string Event A string that contains the "*event name*" when the event was triggered.
+      -- @param #string To A string that contains the "*to state name*" when the event was triggered.
       -- @param Wrapper.Group#GROUP CarrierGroup The group object that contains the CarrierUnits.
       -- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
       
@@ -785,15 +807,15 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
         self:Unloading( Carrier, Cargo, CarrierUnit, DeployZone )
       end      
 
-      --- UnLoading Handler OnAfter for AI_CARGO_DISPATCHER.
+      --- UnLoading event handler OnAfter for AI_CARGO_DISPATCHER.
       -- Use this event handler to tailor the event when a CarrierUnit of a CarrierGroup is in the process of unloading or unboarding of a cargo object.
       -- You can use this event handler to post messages to players, or provide status updates etc.
-      -- Note that this event is fired repeatedly until all cargo (units) have been unboarded from the CarrierUnit.
+      -- Note that this event is triggered repeatedly until all cargo (units) have been unboarded from the CarrierUnit.
       -- @function [parent=#AI_CARGO_DISPATCHER] OnAfterUnloading
       -- @param #AI_CARGO_DISPATCHER self
-      -- @param #string From A string that contains the "*from state name*" when the event was fired.
-      -- @param #string Event A string that contains the "*event name*" when the event was fired.
-      -- @param #string To A string that contains the "*to state name*" when the event was fired.
+      -- @param #string From A string that contains the "*from state name*" when the event was triggered.
+      -- @param #string Event A string that contains the "*event name*" when the event was triggered.
+      -- @param #string To A string that contains the "*to state name*" when the event was triggered.
       -- @param Wrapper.Group#GROUP CarrierGroup The group object that contains the CarrierUnits.
       -- @param Cargo.Cargo#CARGO Cargo The cargo object.
       -- @param Wrapper.Unit#UNIT CarrierUnit The carrier unit that is executing the cargo unloading operation.
@@ -804,16 +826,16 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
       end
 
 
-      --- Unloaded Handler OnAfter for AI_CARGO_DISPATCHER.
+      --- Unloaded event handler OnAfter for AI_CARGO_DISPATCHER.
       -- Use this event handler to tailor the event when a CarrierUnit of a CarrierGroup has unloaded a cargo object.
       -- You can use this event handler to post messages to players, or provide status updates etc.
-      -- Note that if more cargo objects were unloading or unboarding from the CarrierUnit, then this event can be fired multiple times for each different Cargo/CarrierUnit.
+      -- Note that if more cargo objects were unloading or unboarding from the CarrierUnit, then this event can be triggered multiple times for each different Cargo/CarrierUnit.
       -- A CarrierUnit can be part of the larger CarrierGroup.
       -- @function [parent=#AI_CARGO_DISPATCHER] OnAfterUnloaded
       -- @param #AI_CARGO_DISPATCHER self
-      -- @param #string From A string that contains the "*from state name*" when the event was fired.
-      -- @param #string Event A string that contains the "*event name*" when the event was fired.
-      -- @param #string To A string that contains the "*to state name*" when the event was fired.
+      -- @param #string From A string that contains the "*from state name*" when the event was triggered.
+      -- @param #string Event A string that contains the "*event name*" when the event was triggered.
+      -- @param #string To A string that contains the "*to state name*" when the event was triggered.
       -- @param Wrapper.Group#GROUP CarrierGroup The group object that contains the CarrierUnits.
       -- @param Cargo.Cargo#CARGO Cargo The cargo object.
       -- @param Wrapper.Unit#UNIT CarrierUnit The carrier unit that is executing the cargo unloading operation.
@@ -823,19 +845,37 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
         self:Unloaded( Carrier, Cargo, CarrierUnit, DeployZone )
       end      
 
-      --- Deployed Handler OnAfter for AI_CARGO_DISPATCHER.
+      --- Deployed event handler OnAfter for AI_CARGO_DISPATCHER.
       -- Use this event handler to tailor the event when a carrier has deployed all cargo objects from the CarrierGroup.
       -- You can use this event handler to post messages to players, or provide status updates etc.
       -- @function [parent=#AI_CARGO_DISPATCHER] OnAfterDeployed
       -- @param #AI_CARGO_DISPATCHER self
-      -- @param #string From A string that contains the "*from state name*" when the event was fired.
-      -- @param #string Event A string that contains the "*event name*" when the event was fired.
-      -- @param #string To A string that contains the "*to state name*" when the event was fired.
+      -- @param #string From A string that contains the "*from state name*" when the event was triggered.
+      -- @param #string Event A string that contains the "*event name*" when the event was triggered.
+      -- @param #string To A string that contains the "*to state name*" when the event was triggered.
       -- @param Wrapper.Group#GROUP CarrierGroup The group object that contains the CarrierUnits.
       -- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
       
       function AI_Cargo.OnAfterDeployed( AI_Cargo, Carrier, From, Event, To, DeployZone )
         self:Deployed( Carrier, DeployZone )
+      end      
+
+      --- Home event handler OnAfter for AI_CARGO_DISPATCHER.
+      -- Use this event handler to tailor the event when a CarrierGroup is returning to the HomeZone, after it has deployed all cargo objects from the CarrierGroup.
+      -- You can use this event handler to post messages to players, or provide status updates etc.
+      -- If there is no HomeZone is specified, the CarrierGroup will stay at the current location after having deployed all cargo.
+      -- @function [parent=#AI_CARGO_DISPATCHER] OnAfterHome
+      -- @param #AI_CARGO_DISPATCHER self
+      -- @param #string From A string that contains the "*from state name*" when the event was triggered.
+      -- @param #string Event A string that contains the "*event name*" when the event was triggered.
+      -- @param #string To A string that contains the "*to state name*" when the event was triggered.
+      -- @param Wrapper.Group#GROUP CarrierGroup The group object that contains the CarrierUnits.
+      -- @param Core.Point#COORDINATE Coordinate The home coordinate the Carrier will arrive and stop it's activities.
+      -- @param #number Speed The velocity in meters per second on which the CarrierGroup is routed towards the home Coordinate.
+      -- @param Core.Zone#ZONE HomeZone The zone wherein the carrier will return when all cargo has been transported. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
+      
+      function AI_Cargo.OnAfterHome( AI_Cargo, Carrier, From, Event, To, Coordinate, Speed, HomeZone )
+        self:Home( Carrier, Coordinate, Speed, HomeZone )
       end      
     end
 
@@ -900,7 +940,7 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
         if self.HomeZone then
           if not self.CarrierHome[Carrier] then
             self.CarrierHome[Carrier] = true
-            AI_Cargo:__Home( 60, self.HomeZone:GetRandomPointVec2() )
+            AI_Cargo:__Home( 60, self.HomeZone:GetRandomPointVec2(), math.random( self.PickupMinSpeed, self.PickupMaxSpeed ), self.HomeZone )
           end
         end
       end
@@ -910,7 +950,7 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
   self:__Monitor( self.MonitorTimeInterval )
 end
 
---- Start Handler OnBefore for AI_CARGO_DISPATCHER
+--- Start event handler OnBefore for AI_CARGO_DISPATCHER
 -- @function [parent=#AI_CARGO_DISPATCHER] OnBeforeStart
 -- @param #AI_CARGO_DISPATCHER self
 -- @param #string From
@@ -918,7 +958,7 @@ end
 -- @param #string To
 -- @return #boolean
 
---- Start Handler OnAfter for AI_CARGO_DISPATCHER
+--- Start event handler OnAfter for AI_CARGO_DISPATCHER
 -- @function [parent=#AI_CARGO_DISPATCHER] OnAfterStart
 -- @param #AI_CARGO_DISPATCHER self
 -- @param #string From
@@ -938,7 +978,7 @@ function AI_CARGO_DISPATCHER:onafterStart( From, Event, To )
   self:__Monitor( -1 )
 end
 
---- Stop Handler OnBefore for AI_CARGO_DISPATCHER
+--- Stop event handler OnBefore for AI_CARGO_DISPATCHER
 -- @function [parent=#AI_CARGO_DISPATCHER] OnBeforeStop
 -- @param #AI_CARGO_DISPATCHER self
 -- @param #string From
@@ -946,7 +986,7 @@ end
 -- @param #string To
 -- @return #boolean
 
---- Stop Handler OnAfter for AI_CARGO_DISPATCHER
+--- Stop event handler OnAfter for AI_CARGO_DISPATCHER
 -- @function [parent=#AI_CARGO_DISPATCHER] OnAfterStop
 -- @param #AI_CARGO_DISPATCHER self
 -- @param #string From
@@ -961,30 +1001,6 @@ end
 -- @function [parent=#AI_CARGO_DISPATCHER] __Stop
 -- @param #AI_CARGO_DISPATCHER self
 -- @param #number Delay
-
-
-
---- Loaded Handler OnAfter for AI_CARGO_DISPATCHER
--- @function [parent=#AI_CARGO_DISPATCHER] OnAfterLoaded
--- @param #AI_CARGO_DISPATCHER self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Wrapper.Group#GROUP Carrier Carrier object.
--- @param Cargo.Cargo#CARGO Cargo Cargo object.
-
---- Unloaded Handler OnAfter for AI_CARGO_DISPATCHER
--- @function [parent=#AI_CARGO_DISPATCHER] OnAfterUnloaded
--- @param #AI_CARGO_DISPATCHER self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @param Wrapper.Group#GROUP Carrier
--- @param Cargo.Cargo#CARGO Cargo
-
-
-
-
 
 
 --- Make a Carrier run for a cargo deploy action after the cargo has been loaded, by default.

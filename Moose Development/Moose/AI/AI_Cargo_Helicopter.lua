@@ -597,7 +597,8 @@ end
 -- @param To
 -- @param Core.Point#COORDINATE Coordinate Home place.
 -- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
-function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinate, Speed )
+-- @param Core.Zone#ZONE HomeZone The zone wherein the carrier will return when all cargo has been transported. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
+function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinate, Speed, HomeZone )
 
   if Helicopter and Helicopter:IsAlive() ~= nil then
 
@@ -609,7 +610,7 @@ function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinat
 
     Coordinate.y = math.random( 50, 200 )    
     
-    local _speed=Speed or Helicopter:GetSpeedMax()*0.5          
+    Speed = Speed or Helicopter:GetSpeedMax()*0.5          
 
     --- Create a route point of type air.
     local CoordinateFrom = Helicopter:GetCoordinate()
@@ -617,7 +618,7 @@ function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinat
       "RADIO", 
       POINT_VEC3.RoutePointType.TurningPoint, 
       POINT_VEC3.RoutePointAction.TurningPoint, 
-      _speed, 
+      Speed , 
       true 
     )
     Route[#Route+1] = WaypointFrom
@@ -628,7 +629,7 @@ function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinat
       "RADIO", 
       POINT_VEC3.RoutePointType.TurningPoint, 
       POINT_VEC3.RoutePointAction.TurningPoint, 
-      _speed, 
+      Speed , 
       true 
     )
 
