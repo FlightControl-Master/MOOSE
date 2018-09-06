@@ -319,12 +319,12 @@ end
 
 --- @param #AI_CARGO_APC 
 -- @param Wrapper.Group#GROUP APC
-function AI_CARGO_APC._Pickup( APC, self, PickupZone )
+function AI_CARGO_APC._Pickup( APC, self, Coordinate, Speed, PickupZone )
 
   APC:F( { "AI_CARGO_APC._Pickup:", APC:GetName() } )
 
   if APC:IsAlive() then
-    self:Load( PickupZone)
+    self:Load( PickupZone )
     self.Relocating = false
     self.Transporting = true
   end
@@ -364,7 +364,7 @@ function AI_CARGO_APC:onafterPickup( APC, From, Event, To, Coordinate, Speed, Pi
       
       local Waypoints = APC:TaskGroundOnRoad( Coordinate, _speed, "Line abreast", true )
   
-      local TaskFunction = APC:TaskFunction( "AI_CARGO_APC._Pickup", self, PickupZone )
+      local TaskFunction = APC:TaskFunction( "AI_CARGO_APC._Pickup", self, Coordinate, Speed, PickupZone )
       
       self:F({Waypoints = Waypoints})
       local Waypoint = Waypoints[#Waypoints]
@@ -372,7 +372,7 @@ function AI_CARGO_APC:onafterPickup( APC, From, Event, To, Coordinate, Speed, Pi
     
       APC:Route( Waypoints, 1 ) -- Move after a random seconds to the Route. See the Route method for details.
     else
-      AI_CARGO_APC._Pickup( APC, self, PickupZone )
+      AI_CARGO_APC._Pickup( APC, self, Coordinate, Speed, PickupZone )
     end
 
     self.Relocating = true

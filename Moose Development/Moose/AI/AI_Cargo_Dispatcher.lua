@@ -900,7 +900,7 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
           if not self.PickupZoneSet or PickupZone then
             for CarrierPickup, Coordinate in pairs( self.PickupCargo ) do
               if CarrierPickup:IsAlive() == true then
-                if CargoCoordinate:Get2DDistance( Coordinate ) <= 25 then
+                if CargoCoordinate:Get2DDistance( Coordinate ) <= 100 then
                   CoordinateFree = false
                   break
                 end
