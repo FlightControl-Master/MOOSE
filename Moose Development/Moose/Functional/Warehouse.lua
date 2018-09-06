@@ -931,7 +931,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.3.6w"
+WAREHOUSE.version="0.3.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -3058,7 +3058,7 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
     elseif _assetitem.category==Group.Category.SHIP then
     
       -- Spawn naval assets.
-      _group=self:_SpawnAssetGroundNaval(_assetitem, Request, self.portzone)
+      _group=self:_SpawnAssetGroundNaval(_alias,_assetitem, Request, self.portzone)
       
     else
       self:E(self.wid.."ERROR: Unknown asset category!")
@@ -4868,16 +4868,19 @@ end
 -- @param #WAREHOUSE.Pendingitem request Request
 -- @return #WAREHOUSE.Pendingitem The request belonging to this group.
 function WAREHOUSE:_GroupIsTransport(group, request)
+
+  if request.transportgroupset then  
   
-  local transporters=request.transportgroupset:GetSetObjects()
+    local transporters=request.transportgroupset:GetSetObjects()
   
-  local groupname=group:GetName()
-  for _,transport in pairs(transporters) do
-    if transport:GetName()==groupname then
-      return true
+    local groupname=group:GetName()
+    for _,transport in pairs(transporters) do
+      if transport:GetName()==groupname then
+        return true
+      end
     end
   end
-
+  
   return false
 end
 
