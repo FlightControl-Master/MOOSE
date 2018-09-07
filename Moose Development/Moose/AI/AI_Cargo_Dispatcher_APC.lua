@@ -109,7 +109,7 @@ AI_CARGO_DISPATCHER_APC = {
 -- APCSet = SET_GROUP:New():FilterPrefixes( "APC" ):FilterStart()
 -- CargoSet = SET_CARGO:New():FilterTypes( "Infantry" ):FilterStart()
 -- DeployZoneSet = SET_ZONE:New():FilterPrefixes( "Deploy" ):FilterStart()
--- AICargoDispatcher = AI_CARGO_DISPATCHER_APC:New( APCSet, SCargoSet, nil, DeployZoneSet, 500 )
+-- AICargoDispatcher = AI_CARGO_DISPATCHER_APC:New( APCSet, CargoSet, nil, DeployZoneSet, 500 )
 -- 
 function AI_CARGO_DISPATCHER_APC:New( APCSet, CargoSet, PickupZoneSet, DeployZoneSet, CombatRadius )
 
@@ -117,8 +117,8 @@ function AI_CARGO_DISPATCHER_APC:New( APCSet, CargoSet, PickupZoneSet, DeployZon
 
   self.CombatRadius = CombatRadius or 500
 
-  self:SetDeploySpeed( 70, 120 )
-  self:SetPickupSpeed( 70, 120 )
+  self:SetDeploySpeed( 120, 70 )
+  self:SetPickupSpeed( 120, 70 )
   self:SetPickupRadius( 0, 0 )
   self:SetDeployRadius( 0, 0 )
 

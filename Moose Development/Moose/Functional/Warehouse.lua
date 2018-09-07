@@ -49,7 +49,8 @@
 -- @field #table delivered Table holding all delivered requests. Table elements are #boolean. If true, all cargo has been delivered.
 -- @field #table defending Table holding all defending requests, i.e. self requests that were if the warehouse is under attack. Table elements are of type @{#WAREHOUSE.Pendingitem}.
 -- @field Core.Zone#ZONE portzone Zone defining the port of a warehouse. This is where naval assets are spawned.
--- @field #table shippinglanes Table holding the user defined shipping between warehouses. 
+-- @field #table shippinglanes Table holding the user defined shipping between warehouses.
+-- @field #table offroadpaths Table holding user defined paths from one warehouse to another. 
 -- @field #boolean autodefence When the warehouse is under attack, automatically spawn assets to defend the warehouse.
 -- @extends Core.Fsm#FSM
 
@@ -257,6 +258,18 @@
 -- 
 -- The user can set the road connection manually with the @{#WAREHOUSE.SetRoadConnection} function.
 -- 
+-- ## Off Road Connections
+-- 
+-- For ground troops it is also possible to define off road paths from between warehouses if no proper road connection is available or should not be used.
+-- 
+-- An off road path can be defined via the @{#WAREHOUSE.AddOffRoadPath}(*remotewarehouse*, *group*, *oneway*) function, where
+-- *remotewarehouse* is the warehouse to which the path leads.
+-- The parameter *group* is a late activated template group. The waypoints of this group are used to define the path between the two warehouses.
+-- By default, the reverse paths is automatically added to get *from* the remote warehouse to this warehouse unless the parameter *oneway* is set to true.
+-- 
+-- **Note** that if an off road connection is defined between two warehouses this becomes the default path, i.e. even if there is a path *on road* possible
+-- this will not be used. 
+-- 
 -- ## Rail Connections
 -- 
 -- A rail connection is automatically defined as the closest point on a railway measured from the center of the spawn zone. But only, if the distance is less than 3 km.
@@ -267,7 +280,7 @@
 -- 
 -- ## Air Connections
 -- 
--- In order to use airborne assets, a warehouse needs to have an associated airbase. This can be an airdrome or a FARP/HELOPAD.
+-- In order to use airborne assets, a warehouse needs to have an associated airbase. This can be an airdrome, a FARP/HELOPAD or a ship.
 -- 
 -- If there is an airbase within 3 km range of the warehouse it is automatically set as the associated airbase. A user can set an airbase manually
 -- with the @{#WAREHOUSE.SetAirbase} function. Keep in mind, that sometimes, ground units need to walk/drive from the spawn zone to the airport
@@ -287,10 +300,12 @@
 -- 
 -- ### Defining Shipping Lanes
 -- 
--- A shipping lane between to warehouses can be defined by the @{#WAREHOUSE.AddShippingLane}(*remotewarehouse*, *group*) function. The first parameter *remotewarehouse*
+-- A shipping lane between to warehouses can be defined by the @{#WAREHOUSE.AddShippingLane}(*remotewarehouse*, *group*, *oneway*) function. The first parameter *remotewarehouse*
 -- is the warehouse which should be connected to the present warehouse.
 -- 
 -- The parameter *group* should be a late activated group defined in the mission editor. The waypoints of this group are used as waypoints of the shipping lane.
+-- 
+-- By default, the reverse lane is automatically added to the remote warehouse. This can be disabled by setting the *oneway* parameter to *false*.
 -- 
 -- ![Banner Image](..\Presentations\WAREHOUSE\Warehouse_ShippingLane.png) 
 -- 
@@ -624,12 +639,12 @@
 --     warehouse.Batumi:AddAsset("Huey", 5, WAREHOUSE.Attribute.AIR_TRANSPORTHELO)
 --     warehouse.Berlin:AddAsset("Huey", 5, WAREHOUSE.Attribute.AIR_TRANSPORTHELO)
 --     
---     -- Big explosion at the warehose. It has a very nice damage model by the way :)
+--     -- Big explosion at the warehouse. It has a very nice damage model by the way :)
 --     local function DestroyWarehouse()
 --       warehouse.Batumi.warehouse:GetCoordinate():Explosion(9999)
 --     end
 --     
---     -- Create and explosion after 30 sec.
+--     -- Create an explosion at the warehouse after 30 sec.
 --     SCHEDULER:New(nil, DestroyWarehouse, {}, 30)
 --     
 --     -- These requests should not be processed any more since the warehouse is destroyed.
@@ -788,6 +803,7 @@ WAREHOUSE = {
   defending     =    {},
   portzone      =   nil,
   shippinglanes =    {},
+  offroadpaths  =    {},
   autodefence   = false,  
 }
 
@@ -931,7 +947,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.3.7"
+WAREHOUSE.version="0.3.7w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -941,6 +957,7 @@ WAREHOUSE.version="0.3.7"
 -- TODO: Add transport units from dispatchers back to warehouse stock once they completed their mission.
 -- TODO: Added habours as interface for transport to from warehouses?
 -- TODO: Set ROE for spawned groups.
+-- TODO: Add offroad lanes between warehouses if road connection is not available.
 -- DONE: Add possibility to add active groups. Need to create a pseudo template before destroy. <== Does not seem to be necessary any more.
 -- TODO: Write documentation.
 -- TODO: Handle the case when units of a group die during the transfer. Adjust template?! See Grouping in SPAWN.
@@ -1037,7 +1054,7 @@ function WAREHOUSE:New(warehouse, alias)
   self:AddTransition("*",               "AddRequest",        "*")           -- New request from other warehouse.
   self:AddTransition("Running",         "Request",           "*")           -- Process a request. Only in running mode.
   self:AddTransition("Attacked",        "Request",           "*")           -- Process a request. Only in running mode.
-  self:AddTransition("*",               "Unloaded",          "*")           -- Cargo has been unloaded from the carrier.
+  self:AddTransition("*",               "Unloaded",          "*")           -- Cargo has been unloaded from the carrier (unused ==> unnecessary?).
   self:AddTransition("*",               "Arrived",           "*")           -- Cargo or transport group has arrived.
   self:AddTransition("*",               "Delivered",         "*")           -- All cargo groups of a request have been delivered to the requesting warehouse.
   self:AddTransition("Running",         "SelfRequest",       "*")           -- Request to warehouse itself. Requested assets are only spawned but not delivered anywhere.
@@ -1051,7 +1068,7 @@ function WAREHOUSE:New(warehouse, alias)
   self:AddTransition("Attacked",        "Captured",          "Running")     -- DONE Warehouse was captured by another coalition. It must have been attacked first.
   self:AddTransition("*",               "AirbaseCaptured",   "*")           -- DONE Airbase was captured by other coalition.
   self:AddTransition("*",               "AirbaseRecaptured", "*")           -- DONE Airbase was re-captured from other coalition. 
-  self:AddTransition("*",               "Destroyed",         "*")           -- DONE Warehouse was destoryed. All assets in stock are gone and warehouse is stopped.
+  self:AddTransition("*",               "Destroyed",         "*")           -- DONE Warehouse was destroyed. All assets in stock are gone and warehouse is stopped.
   
   ------------------------
   --- Pseudo Functions ---
@@ -1158,8 +1175,11 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #WAREHOUSE.Queueitem Request Information table of the request.
 
 
-  --- Triggers the FSM event "Arrived", i.e. when a group has arrived at the destination warehosue.
-  -- This function should always be called from the receiving and not the sending warehouse because assets are added back to the  
+  --- Triggers the FSM event "Arrived", i.e. when a group has arrived at the destination warehouse.
+  -- This function should always be called from the sending and not the receiving warehouse.
+  -- If the group is a cargo asset, it is added to the receiving warehouse. If the group is a transporter it
+  -- is added to the sending warehouse since carriers are supposed to return to their home warehouse once 
+  -- all cargo was delivered.  
   -- @function [parent=#WAREHOUSE] Arrived
   -- @param #WAREHOUSE self
   -- @param Wrapper.Group#GROUP group Group that has arrived.
@@ -1170,7 +1190,7 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #number delay Delay in seconds.
   -- @param Wrapper.Group#GROUP group Group that has arrived.
 
-  --- On after "Arrived" event user function. Called when a groups has arrived.
+  --- On after "Arrived" event user function. Called when a groups has arrived at its destination.
   -- @function [parent=#WAREHOUSE] OnAfterArrived
   -- @param #WAREHOUSE self
   -- @param #string From From state.
@@ -1179,7 +1199,7 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param Wrapper.Group#GROUP group Group that has arrived.
 
 
-  --- Triggers the FSM event "Delivered". A group has been delivered from the warehouse to another warehouse.
+  --- Triggers the FSM event "Delivered". All (cargo) assets of a request have been delivered to the receiving warehouse.
   -- @function [parent=#WAREHOUSE] Delivered
   -- @param #WAREHOUSE self
   -- @param #WAREHOUSE.Pendingitem request Pending request that was now delivered.
@@ -1485,21 +1505,93 @@ function WAREHOUSE:SetPortZone(zone)
   return self
 end
 
---- Add a shipping lane to another warehouse.
--- Note that both warehouses must have a port zone defined before a shipping lane can be added.
+--- Add a shipping lane from this warehouse to another remote warehouse.
+-- Note that both warehouses must have a port zone defined before a shipping lane can be added!
 -- Shipping lane is taken from the waypoints of a (late activated) template group. So set up a group, e.g. a ship or a helicopter, and place its
 -- waypoints along the shipping lane you want to add.
 -- @param #WAREHOUSE self
 -- @param #WAREHOUSE remotewarehouse The remote warehouse to where the shipping lane is added
 -- @param Wrapper.Group#GROUP group Waypoints of this group will define the shipping lane between to warehouses.
+-- @param #boolean oneway (Optional) If true, the lane can only be used from this warehouse to the other but not other way around. Default false.
 -- @return #WAREHOUSE self
-function WAREHOUSE:AddShippingLane(remotewarehouse, group)
+function WAREHOUSE:AddShippingLane(remotewarehouse, group, oneway)
 
   -- Check that port zones are defined.
   if self.portzone==nil or remotewarehouse.portzone==nil then
-    self:E(self.wid..string.format("ERROR: Sending or receiving warehouse does not have a port zone defined. Adding shipping lane not possible!"))
-    return
+    local text=string.format("ERROR: Sending or receiving warehouse does not have a port zone defined. Adding shipping lane not possible!")
+    self:_ErrorMessage(text, 5)
+    return self
   end
+
+  local startcoord=self.portzone:GetRandomCoordinate()
+  local finalcoord=remotewarehouse.portzone:GetRandomCoordinate()
+  
+  local lane=self:_NewLane(group,startcoord,finalcoord)
+  
+  -- Debug info. Marks along shipping lane.
+  if self.Debug then
+    for i=1,#lane do
+      local coord=lane[i] --Core.Point#COORDINATE
+      local text=string.format("Shipping lane %s to %s. Point %d.", self.alias, remotewarehouse.alias, i)
+      coord:MarkToCoalition(text, self.coalition)
+    end
+  end
+    
+  -- Add shipping lane.
+  -- TODO: Maybe add multiple lanes as a table and later randomly select one for the actual route.
+  self.shippinglanes[remotewarehouse.warehouse:GetName()]=lane
+  
+  -- Add shipping lane in the opposite direction.
+  if not oneway then
+    remotewarehouse:AddShippingLane(self, group, false)
+  end
+  
+  return self
+end
+
+
+--- Add an off-road path from this warehouse to another and back.
+-- The start and end points are automatically set to one random point in the respective spawn zones of the two warehouses. 
+-- By default, the reverse path is also added as path from the remote warehouse to this warehouse.
+-- @param #WAREHOUSE self
+-- @param #WAREHOUSE remotewarehouse The remote warehouse to which the path leads.
+-- @param Wrapper.Group#GROUP group Waypoints of this group will define the path between to warehouses.
+-- @param #boolean oneway (Optional) If true, the path can only be used from this warehouse to the other but not other way around. Default false.
+-- @return #WAREHOUSE self
+function WAREHOUSE:AddOffRoadPath(remotewarehouse, group, oneway)
+
+  local startcoord=self.spawnzone:GetRandomCoordinate()
+  local finalcoord=remotewarehouse.spawnzone:GetRandomCoordinate()
+  
+  local lane=self:_NewLane(group,startcoord,finalcoord)
+  
+  -- Debug info. Marks along shipping lane.
+  if self.Debug then
+    for i=1,#lane do
+      local coord=lane[i] --Core.Point#COORDINATE
+      local text=string.format("Off road path from %s to %s. Point %d.", self.alias, remotewarehouse.alias, i)
+      coord:MarkToCoalition(text, self.coalition)
+    end
+  end
+    
+  -- Add shipping lane.
+  self.offroadpaths[remotewarehouse.warehouse:GetName()]=lane
+  
+  -- Add shipping lane in the opposite direction.
+  if not oneway then
+    remotewarehouse:AddOffRoadPath(self, group, false)
+  end
+  
+  return self
+end
+
+--- Create a new path from a template group.
+-- @param #WAREHOUSE self
+-- @param Wrapper.Group#GROUP group Group used for extracting the waypoints.
+-- @param Core.Point#COORDINATE startcoord First coordinate.
+-- @param Core.Point#COORDINATE finalcoord Final coordinate.
+-- @return #table Table with route points.
+function WAREHOUSE:_NewLane(group, startcoord, finalcoord)
 
   -- Get route from template.
   local lanepoints=group:GetTemplateRoutePoints()
@@ -1513,8 +1605,8 @@ function WAREHOUSE:AddShippingLane(remotewarehouse, group)
   local coordL=COORDINATE:New(laneL.x, 0, laneL.y)
   
   -- Figure out which point is closer to the port of this warehouse.
-  local distF=self.portzone:GetCoordinate():Get2DDistance(coordF)
-  local distL=self.portzone:GetCoordinate():Get2DDistance(coordL)
+  local distF=startcoord:Get2DDistance(coordF)
+  local distL=startcoord:GetCoordinate():Get2DDistance(coordL)
   
   -- Add the shipping lane. Need to take care of the wrong "direction".
   local lane={}
@@ -1532,20 +1624,13 @@ function WAREHOUSE:AddShippingLane(remotewarehouse, group)
     end     
   end
   
-  -- Debug info. Marks along shipping lane.
-  if self.Debug then
-    for i=1,#lane do
-      local coord=lane[i] --Core.Point#COORDINATE
-      local text=string.format("Shipping lane %s to %s. Point %d.", self.alias, remotewarehouse.alias, i)
-      coord:MarkToCoalition(text, self.coalition)
-    end
-  end
-    
-  -- Add shipping lane.
-  self.shippinglanes[remotewarehouse.warehouse:GetName()]=lane
+  -- Add beginning and end.
+  table.insert(lane, 1, startcoord)
+  table.insert(lane, #lane, finalcoord)
   
-  return self
+  return lane
 end
+
 
 --- Check if the warehouse is running.
 -- @param #WAREHOUSE self
@@ -1577,7 +1662,7 @@ end
 
 --- Check if the warehouse has a road connection to another warehouse. Both warehouses need to be started!
 -- @param #WAREHOUSE self
--- @param #WAREHOUSE warehouse The remote warehose to where the connection is checked.
+-- @param #WAREHOUSE warehouse The remote warehouse to where the connection is checked.
 -- @param #boolean markpath If true, place markers of path segments on the F10 map.
 -- @param #boolean smokepath If true, put green smoke on path segments.
 -- @return #boolean If true, the two warehouses are connected by road.
@@ -1597,7 +1682,7 @@ end
 
 --- Check if the warehouse has a railroad connection to another warehouse. Both warehouses need to be started!
 -- @param #WAREHOUSE self
--- @param #WAREHOUSE warehouse The remote warehose to where the connection is checked.
+-- @param #WAREHOUSE warehouse The remote warehouse to where the connection is checked.
 -- @param #boolean markpath If true, place markers of path segments on the F10 map.
 -- @param #boolean smokepath If true, put green smoke on path segments.
 -- @return #boolean If true, the two warehouses are connected by road.
@@ -1617,7 +1702,7 @@ end
 
 --- Check if the warehouse has a shipping lane defined to another warehouse.
 -- @param #WAREHOUSE self
--- @param #WAREHOUSE warehouse The remote warehose to where the connection is checked.
+-- @param #WAREHOUSE warehouse The remote warehouse to where the connection is checked.
 -- @param #boolean markpath If true, place markers of path segments on the F10 map.
 -- @param #boolean smokepath If true, put green smoke on path segments.
 -- @return #boolean If true, the two warehouses are connected by road.
@@ -1637,13 +1722,44 @@ function WAREHOUSE:HasConnectionNaval(warehouse, markpath, smokepath)
     if shippinglane then
       return true,1
     else
-      self:_ErrorMessage("No shipping lane!")
+      self:T2(string.format("No shipping lane defined between warehouse %s and %s!", self.alias, warehouse.alias))
     end
   
   end
   
   return nil, -1
 end
+
+--- Check if the warehouse has an off road path defined to another warehouse.
+-- @param #WAREHOUSE self
+-- @param #WAREHOUSE warehouse The remote warehouse to where the connection is checked.
+-- @param #boolean markpath If true, place markers of path segments on the F10 map.
+-- @param #boolean smokepath If true, put green smoke on path segments.
+-- @return #boolean If true, the two warehouses are connected by road.
+-- @return #number Path length in meters. Negative distance -1 meter indicates no connection.
+function WAREHOUSE:HasConnectionOffRoad(warehouse, markpath, smokepath)
+
+  if warehouse then
+  
+    -- Self request
+    if warehouse.warehouse:GetName()==self.warehouse:GetName() then
+      return true,1
+    end
+    
+    -- Get shipping lane.
+    local offroadpath=self.offroadpaths[warehouse.warehouse:GetName()]
+    
+    if offroadpath~=nil then
+      return true,1
+    else
+      self:T2(string.format("No off-road path defined between warehouse %s and %s!", self.alias, warehouse.alias))
+    end
+  
+  end
+  
+  return nil, -1
+end
+
 
 --- Get number of assets in warehouse stock.
 -- @param #WAREHOUSE self
@@ -2740,12 +2856,15 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   ------------------------------------------------------------------------------------------------------------------------------------
 
   -- Set of cargo carriers.
-  local TransportSet = SET_GROUP:New():FilterDeads()
+  local TransportSet = SET_GROUP:New()
 
   -- Pickup and deploy zones/bases.
   local PickupAirbaseSet = SET_AIRBASE:New():AddAirbase(self.airbase)
   local DeployAirbaseSet = SET_AIRBASE:New():AddAirbase(Request.airbase)
   local DeployZoneSet    = SET_ZONE:New():AddZone(Request.warehouse.spawnzone)
+  
+  --local PickupAirbaseSet = SET_AIRBASE:New()
+  --ZONE_AIRBASE:New(ZoneName,ZoneAirbase,Radius,AirbaseName)
   
   -- Cargo dispatcher.
   local CargoTransport --AI.AI_Cargo_Dispatcher#AI_CARGO_DISPATCHER
@@ -3131,6 +3250,9 @@ function WAREHOUSE:onafterUnloaded(From, Event, To, group)
 end
 
 --- On after "Arrived" event. Triggered when a group has arrived at its destination warehouse.
+-- The routine should be called by the warehouse sending this asset and not by the receiving warehouse.
+-- It is checked if this asset is cargo (or self propelled) or transport. If it is cargo it is put into the stock of receiving warehouse.
+-- If it is a transporter it is put back into the sending warehouse since transports are supposed to return their home warehouse. 
 -- @param #WAREHOUSE self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -3143,7 +3265,7 @@ function WAREHOUSE:onafterArrived(From, Event, To, group)
     group:SmokeOrange()
   end
   
-  -- Get request from group.
+  -- Get pending request this group belongs to.
   local request=self:_GetRequestOfGroup(group, self.pending)
 
   if request then
@@ -3155,7 +3277,7 @@ function WAREHOUSE:onafterArrived(From, Event, To, group)
       warehouse=self
     end
     
-    -- Debug message
+    -- Debug message.
     self:_DebugMessage(string.format("Group %s arrived at warehouse %s!", tostring(group:GetName()), warehouse.alias), 5)
   
     -- Route mobile ground group to the warehouse. Group has 60 seconds to get there or it is despawned and added as asset to the new warehouse regardless.
@@ -3167,23 +3289,6 @@ function WAREHOUSE:onafterArrived(From, Event, To, group)
     warehouse:__AddAsset(60, group)
     
   end
-  
-  --[[
-  -- Get request from group name.
-  local request=self:_GetRequestOfGroup(group, self.pending)
-   
-  if request then
-    
-    -- Route mobile ground group to the warehouse. Group has 60 seconds to get there or it is despawned and added as asset to the new warehouse regardless.
-    if group:IsGround() and group:GetSpeedMax()>1 then
-      group:RouteGroundTo(request.warehouse.coordinate, group:GetSpeedMax()*0.3, "Off Road")
-    end
-    
-    -- Move asset from pending queue into new warehouse.
-    request.warehouse:__AddAsset(60, group)
-    
-  end
-  ]]
     
 end
 
@@ -3535,7 +3640,7 @@ end
 -- Routing functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Route ground units to destination.
+--- Route ground units to destination. ROE is set to return fire and alarm state to green.
 -- @param #WAREHOUSE self
 -- @param Wrapper.Group#GROUP group The ground group to be routed
 -- @param #WAREHOUSE.Queueitem request The request for this group.
@@ -3547,19 +3652,50 @@ function WAREHOUSE:_RouteGround(group, request)
     -- Set speed to 70% of max possible.
     local _speed=group:GetSpeedMax()*0.7
     
-    -- Waypoints for road-to-road connection.
-    local Waypoints, canroad = group:TaskGroundOnRoad(request.warehouse.road, _speed, "Off Road", false, self.road)
+    -- Route waypoints.
+    local Waypoints={}
     
-    -- First waypoint = current position of the group.
-    local FromWP=group:GetCoordinate():WaypointGround(_speed, "Off Road")
-    table.insert(Waypoints, 1, FromWP)
+    -- Check if an off road path has been defined.    
+    local hasoffroad=self:HasConnectionOffRoad(request.warehouse, self.Debug)
     
-    -- Final coordinate.
-    local ToWP=request.warehouse.spawnzone:GetRandomCoordinate():WaypointGround(_speed, "Off Road")
-    table.insert(Waypoints, #Waypoints+1, ToWP)
+    if hasoffroad then
+
+      -- Get off road path to remote warehouse.
+      local path=self.offroadpaths[request.warehouse.warehouse:GetName()]
+        
+      -- Loop over user defined shipping lanes.
+      for i=1,#path do
+      
+        -- Shortcut and coordinate intellisense.
+        local coord=path[i] --Core.Point#COORDINATE
+        
+        -- Get waypoint for coordinate.
+        local Waypoint=coord:WaypointGround(_speed, "Off Road")
+        
+        -- Add waypoint to route.
+        table.insert(Waypoints, Waypoint)      
+      end    
+        
+    else
+       
+      -- Waypoints for road-to-road connection.
+      Waypoints = group:TaskGroundOnRoad(request.warehouse.road, _speed, "Off Road", false, self.road)
+      
+      -- First waypoint = current position of the group.
+      local FromWP=group:GetCoordinate():WaypointGround(_speed, "Off Road")
+      table.insert(Waypoints, 1, FromWP)
+      
+      -- Final coordinate.
+      local ToWP=request.warehouse.spawnzone:GetRandomCoordinate():WaypointGround(_speed, "Off Road")
+      table.insert(Waypoints, #Waypoints+1, ToWP)
+    
+    end
 
     -- Task function triggering the arrived event.
-    local TaskFunction = group:TaskFunction("WAREHOUSE._Arrived", self)
+    --local TaskFunction = group:TaskFunction("WAREHOUSE._Arrived", self)
+    
+    -- Task function triggering the arrived event at the last waypoint.
+    local TaskFunction = self:_SimpleTaskFunction("warehouse:_ArrivedSimple", group)    
 
     -- Put task function on last waypoint.
     local Waypoint = Waypoints[#Waypoints]
@@ -3574,7 +3710,7 @@ function WAREHOUSE:_RouteGround(group, request)
   end
 end
 
---- Route naval units along user defined shipping lanes to destination warehouse.
+--- Route naval units along user defined shipping lanes to destination warehouse. ROE is set to return fire.
 -- @param #WAREHOUSE self
 -- @param Wrapper.Group#GROUP group The naval group to be routed
 -- @param #WAREHOUSE.Queueitem request The request for this group.
@@ -3601,7 +3737,6 @@ function WAREHOUSE:_RouteNaval(group, request)
         local coord=lane[i] --Core.Point#COORDINATE
         
         -- Get waypoint for coordinate.
-        -- TODO: Might need optimization for Naval.
         local Waypoint=coord:WaypointGround(_speed)
         
         -- Add waypoint to route.
@@ -3631,6 +3766,7 @@ end
 
 
 --- Route the airplane from one airbase another. Activates uncontrolled aircraft and sets ROE/ROT for ferry flights.
+-- ROE is set to return fire and ROT to passive defence.
 -- @param #WAREHOUSE self
 -- @param Wrapper.Group#GROUP Aircraft Airplane group to be routed.
 function WAREHOUSE:_RouteAir(aircraft)
@@ -3709,7 +3845,7 @@ end
 -- Event handler functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Arrived event if an air unit/group arrived at its destination.
+--- Arrived event if an air unit/group arrived at its destination. This can be an engine shutdown or a landing event.
 -- @param #WAREHOUSE self
 -- @param Core.Event#EVENTDATA EventData Event data table.
 function WAREHOUSE:_OnEventArrived(EventData)
@@ -3735,7 +3871,7 @@ function WAREHOUSE:_OnEventArrived(EventData)
         if self.uid==wid then
       
           -- Debug info.
-          local text=string.format("Air asset group %s arrived at warehouse %s.", group:GetName(), self.alias)
+          local text=string.format("Air asset group %s from warehouse %s arrived at its destination.", group:GetName(), self.alias)
           self:_InfoMessage(text)
           
           -- Trigger arrived event for this group. Note that each unit of a group will trigger this event. So the onafterArrived function needs to take care of that.
@@ -3807,30 +3943,37 @@ end
 -- @param #WAREHOUSE self
 -- @param Core.Event#EVENTDATA EventData Event data.
 function WAREHOUSE:_OnEventLanding(EventData)
-  self:T3(self.wid..string.format("Warehouse %s captured event landing!",self.alias))
+  self:T3(self.wid..string.format("Warehouse %s captured event landing!", self.alias))
   
   if EventData and EventData.IniGroup then
     local group=EventData.IniGroup
+    
+    -- Try to get UIDs from group name.
     local wid,aid,rid=self:_GetIDsFromGroup(group)
-    if wid==self.uid then
+    
+    -- Check that this group belongs to this warehouse.
+    if wid~=nil and wid==self.uid then
+    
+      -- Debug info.
       self:T(self.wid..string.format("Warehouse %s captured event landing of its asset unit %s.", self.alias, EventData.IniUnitName))
-      
-      -- Get request of this group
-      local request=self:_GetRequestOfGroup(group, self.pending)
-      
-      -- If request is nil, the cargo has been delivered.
-      -- TODO: I might need to add a delivered table, to be better able to get this right.
-      if request==nil then
+            
+      -- Check if all cargo was delivered.
+      if self.delivered[rid]==true then
       
         -- Check if helicopter landed in spawn zone. If so, we call it a day and add it back to stock.
         if group:GetCategory()==Group.Category.HELICOPTER then
           if self.spawnzone:IsCoordinateInZone(EventData.IniUnit:GetCoordinate()) then
           
+            -- Debug message.
             self:_DebugMessage("Helicopter landed in spawn zone. No pending request. Putting back into stock.")
             if self.Debug then
               group:SmokeWhite()
             end
-            self:__AddAsset(30, group)
+            
+            -- Group arrived.
+            self:Arrived(group)
+            --self:__AddAsset(30, group)
+            
           end          
         end
         
@@ -4249,8 +4392,12 @@ function WAREHOUSE:_CheckRequestValid(request)
         
           -- Check if there is a valid path on road.
           local hasroad=self:HasConnectionRoad(request.warehouse)
-          if not hasroad then
-            self:E("ERROR: Incorrect request. No valid path on road for ground assets!")
+          
+          -- Check if there is a valid off road path.
+          local hasoffroad=self:HasConnectionOffRoad(request.warehouse)
+          
+          if not (hasroad or hasoffroad) then
+            self:E("ERROR: Incorrect request. No valid path on or off road for ground assets!")
             valid=false
           end
           
@@ -5395,10 +5542,10 @@ function WAREHOUSE:_Fireworks(coord)
   end
 end
 
---- Info Message.
+--- Info Message. Message send to coalition if reports or debug mode activated (and duration > 0). Text self:I(text) added to DCS.log file.
 -- @param #WAREHOUSE self
 -- @param #string text The text of the error message.
--- @param #number duration Message display duration in seconds. Default 20 sec.
+-- @param #number duration Message display duration in seconds. Default 20 sec. If duration is zero, no message is displayed.
 function WAREHOUSE:_InfoMessage(text, duration)
   duration=duration or 20
   if duration>0 then
@@ -5408,10 +5555,10 @@ function WAREHOUSE:_InfoMessage(text, duration)
 end
 
 
---- Debug message.
+--- Debug message. Message send to all if debug mode is activated (and duration > 0). Text self:T(text) added to DCS.log file.
 -- @param #WAREHOUSE self
 -- @param #string text The text of the error message.
--- @param #number duration Message display duration in seconds. Default 20 sec.
+-- @param #number duration Message display duration in seconds. Default 20 sec. If duration is zero, no message is displayed.
 function WAREHOUSE:_DebugMessage(text, duration)
   duration=duration or 20
   if duration>0 then
@@ -5420,14 +5567,14 @@ function WAREHOUSE:_DebugMessage(text, duration)
   self:T(self.wid..text)
 end
 
---- Error message.
+--- Error message. Message send to all (if duration > 0). Text self:E(text) added to DCS.log file.
 -- @param #WAREHOUSE self
 -- @param #string text The text of the error message.
--- @param #number duration Message display duration in seconds. Default 20 sec.
+-- @param #number duration Message display duration in seconds. Default 20 sec. If duration is zero, no message is displayed.
 function WAREHOUSE:_ErrorMessage(text, duration)
   duration=duration or 20
   if duration>0 then
-    MESSAGE:New(text, duration):ToAllIf(self.Debug)
+    MESSAGE:New(text, duration):ToAllIf()
   end
   self:E(self.wid..text)
 end

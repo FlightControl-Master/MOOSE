@@ -471,9 +471,9 @@ end
 -- DeployZoneSet = SET_ZONE:New():FilterPrefixes( "Deploy" ):FilterStart()
 -- AICargoDispatcher = AI_CARGO_DISPATCHER:New( SetCarrier, SetCargo, SetDeployZone )
 -- 
-function AI_CARGO_DISPATCHER:NewWithZones( SetCarriers, SetCargos, PickupZoneSet, DeployZoneSet )
+function AI_CARGO_DISPATCHER:NewWithZones( SetCarrier, SetCargo, PickupZoneSet, DeployZoneSet )
 
-  local self = AI_CARGO_DISPATCHER:New( SetCarriers, SetCargos ) -- #AI_CARGO_DISPATCHER
+  local self = AI_CARGO_DISPATCHER:New( SetCarrier, SetCargo ) -- #AI_CARGO_DISPATCHER
   
   self.PickupZoneSet = PickupZoneSet
   self.DeployZoneSet = DeployZoneSet
