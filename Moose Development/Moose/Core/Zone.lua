@@ -1610,16 +1610,16 @@ do -- ZONE_AIRBASE
     
   --- Constructor to create a ZONE_AIRBASE instance, taking the zone name, a zone @{Wrapper.Airbase#AIRBASE} and a radius.
   -- @param #ZONE_AIRBASE self
-  -- @param #string ZoneName Name of the zone.
-  -- @param Wrapper.Airbase#AIRBASE ZoneAirbase The @{Wrapper.Airbase} as the center of the zone.
-  -- @param DCS#Distance Radius The radius of the zone.
+  -- @param #string AirbaseName Name of the airbase.
+  -- @param DCS#Distance Radius (Optional)The radius of the zone in meters. Default 4000 meters.
   -- @return #ZONE_AIRBASE self
-  function ZONE_AIRBASE:New( AirbaseName )
+  function ZONE_AIRBASE:New( AirbaseName, Radius )
   
+    Radius=Radius or 4000
   
     local Airbase = AIRBASE:FindByName( AirbaseName )
   
-    local self = BASE:Inherit( self, ZONE_RADIUS:New( AirbaseName, Airbase:GetVec2(), 4000 ) )
+    local self = BASE:Inherit( self, ZONE_RADIUS:New( AirbaseName, Airbase:GetVec2(), Radius ) )
   
     self._.ZoneAirbase = Airbase
     self._.ZoneVec2Cache = self._.ZoneAirbase:GetVec2()
