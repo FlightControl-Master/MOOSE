@@ -75,19 +75,19 @@ do -- CARGO_GROUP
     self.CargoName = Name
     self.CargoTemplate = UTILS.DeepCopy( _DATABASE:GetGroupTemplate( GroupName ) )
 
-    local GroupTemplate = UTILS.DeepCopy( self.CargoTemplate )
-    GroupTemplate.name = self.CargoName .. "#CARGO"
-    GroupTemplate.groupId = nil
+    self.GroupTemplate = UTILS.DeepCopy( self.CargoTemplate )
+    self.GroupTemplate.name = self.CargoName .. "#CARGO"
+    self.GroupTemplate.groupId = nil
     
-    GroupTemplate.units = {}
+    self.GroupTemplate.units = {}
     
     for UnitID, UnitTemplate in pairs( self.CargoTemplate.units ) do
       UnitTemplate.name = UnitTemplate.name .. "#CARGO"
       local CargoUnitName = UnitTemplate.name
       self.CargoUnitTemplate[CargoUnitName] = UnitTemplate      
 
-       GroupTemplate.units[#GroupTemplate.units+1] = self.CargoUnitTemplate[CargoUnitName]
-       GroupTemplate.units[#GroupTemplate.units].unitId = nil
+       self.GroupTemplate.units[#self.GroupTemplate.units+1] = self.CargoUnitTemplate[CargoUnitName]
+       self.GroupTemplate.units[#self.GroupTemplate.units].unitId = nil
       
       -- And we register the spawned unit as part of the CargoSet.
       local Unit = UNIT:Register( CargoUnitName )
@@ -95,10 +95,10 @@ do -- CARGO_GROUP
     end
 
     -- Then we register the new group in the database
-    self.CargoGroup = GROUP:NewTemplate( GroupTemplate, GroupTemplate.CoalitionID, GroupTemplate.CategoryID, GroupTemplate.CountryID )
+    self.CargoGroup = GROUP:NewTemplate( self.GroupTemplate, self.GroupTemplate.CoalitionID, self.GroupTemplate.CategoryID, self.GroupTemplate.CountryID )
     
     -- Now we spawn the new group based on the template created.
-    self.CargoObject = _DATABASE:Spawn( GroupTemplate )
+    self.CargoObject = _DATABASE:Spawn( self.GroupTemplate )
     
     for CargoUnitID, CargoUnit in pairs( self.CargoObject:GetUnits() ) do
       
@@ -109,7 +109,6 @@ do -- CARGO_GROUP
       self.CargoSet:Add( CargoUnitName, Cargo )
 
       WeightGroup = WeightGroup + Cargo:GetWeight()
-      --VolumeGroup = VolumeGroup + VolumeUnit
 
     end
   
@@ -129,6 +128,35 @@ do -- CARGO_GROUP
     return self
   end
 
+
+  --- Respawn the CargoGroup.
+  -- @param #CARGO_GROUP self
+  function CARGO_GROUP:Respawn()
+
+    self:F( { "Respawning" } )
+
+    for CargoID, CargoData in pairs( self.CargoSet:GetSet() ) do
+      local Cargo = CargoData -- Cargo.Cargo#CARGO
+      Cargo:Destroy()
+      Cargo:SetStartState( "UnLoaded" )
+    end
+
+    -- Now we spawn the new group based on the template created.
+    _DATABASE:Spawn( self.GroupTemplate )
+      
+    for CargoUnitID, CargoUnit in pairs( self.CargoObject:GetUnits() ) do
+
+      local CargoUnitName = CargoUnit:GetName()
+
+      local Cargo = CARGO_UNIT:New( CargoUnit, self.Type, CargoUnitName, self.LoadRadius )
+      self.CargoSet:Add( CargoUnitName, Cargo )
+
+    end
+  
+    self:SetDeployed( false )
+    self:SetStartState( "UnLoaded" )
+    
+  end
   
   --- Ungroup the cargo group into individual groups with one unit.
   -- This is required because by default a group will move in formation and this is really an issue for group control.
@@ -678,53 +706,6 @@ do -- CARGO_GROUP
   
   end
 
-  --- Respawn the CargoGroup.
-  -- @param #CARGO_GROUP self
-  function CARGO_GROUP:Respawn()
-
-    self:F( { "Respawning" } )
-
-    for CargoID, CargoData in pairs( self.CargoSet:GetSet() ) do
-      local Cargo = CargoData -- Cargo.Cargo#CARGO
-      Cargo:Destroy()
-      Cargo:SetStartState( "UnLoaded" )
-    end
-
-    
-    -- We iterate through the group template and for each unit in the template, we create a new group with one unit.
-    for UnitID, UnitTemplate in pairs( self.CargoTemplate.units ) do
-      
-      local GroupTemplate = UTILS.DeepCopy( self.CargoTemplate )
-      local GroupName = env.getValueDictByKey( GroupTemplate.name )
-      
-      -- We create a new group object with one unit...
-      -- First we prepare the template...
-      GroupTemplate.name = GroupName .. "#CARGO#" .. UnitID
-      GroupTemplate.groupId = nil
-      GroupTemplate.units = {}
-      GroupTemplate.units[1] = UnitTemplate
-      local UnitName = UnitTemplate.name .. "#CARGO"
-      GroupTemplate.units[1].name = UnitTemplate.name .. "#CARGO"
-  
-  
-      -- Then we register the new group in the database
-      local CargoGroup = GROUP:NewTemplate( GroupTemplate, GroupTemplate.CoalitionID, GroupTemplate.CategoryID, GroupTemplate.CountryID)
-      
-      -- Now we spawn the new group based on the template created.
-      _DATABASE:Spawn( GroupTemplate )
-      
-      -- And we register the spawned unit as part of the CargoSet.
-      local Unit = UNIT:FindByName( UnitName )
-      --local WeightUnit = Unit:GetDesc().massEmpty
-      --WeightGroup = WeightGroup + WeightUnit
-      local CargoUnit = CARGO_UNIT:New( Unit, Type, UnitName, 10 )
-      self.CargoSet:Add( UnitName, CargoUnit )
-    end
-
-    self:SetDeployed( false )
-    self:SetStartState( "UnLoaded" )
-    
-  end
 
   --- Signal a flare at the position of the CargoGroup.
   -- @param #CARGO_GROUP self
