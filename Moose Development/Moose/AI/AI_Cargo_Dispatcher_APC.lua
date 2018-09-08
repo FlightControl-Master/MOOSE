@@ -115,18 +115,39 @@ function AI_CARGO_DISPATCHER_APC:New( APCSet, CargoSet, PickupZoneSet, DeployZon
 
   local self = BASE:Inherit( self, AI_CARGO_DISPATCHER:NewWithZones( APCSet, CargoSet, PickupZoneSet, DeployZoneSet ) ) -- #AI_CARGO_DISPATCHER_APC
 
-  self.CombatRadius = CombatRadius or 500
-
   self:SetDeploySpeed( 120, 70 )
   self:SetPickupSpeed( 120, 70 )
   self:SetPickupRadius( 0, 0 )
   self:SetDeployRadius( 0, 0 )
+  
+  self:SetCombatRadius( CombatRadius )
 
   return self
 end
-
 
 function AI_CARGO_DISPATCHER_APC:AICargo( APC, CargoSet )
 
   return AI_CARGO_APC:New( APC, CargoSet, self.CombatRadius )
 end
+
+--- Enable/Disable unboarding of cargo (infantry) when enemies are nearby (to help defend the carrier).
+-- This is only valid for APCs and trucks etc, thus ground vehicles.
+-- @param #AI_CARGO_DISPATCHER_APC self
+-- @param #number CombatRadius Provide the combat radius to defend the carrier by unboarding the cargo when enemies are nearby. 
+-- When the combat radius is 0, no defense will happen of the carrier. 
+-- When the combat radius is not provided, no defense will happen!
+-- @return #AI_CARGO_DISPATCHER_APC
+-- @usage
+-- 
+-- -- Disembark the infantry when the carrier is under attack.
+-- AICargoDispatcher:SetCombatRadius( true )
+-- 
+-- -- Keep the cargo in the carrier when the carrier is under attack.
+-- AICargoDispatcher:SetCombatRadius( false )
+function AI_CARGO_DISPATCHER_APC:SetCombatRadius( CombatRadius )
+
+  self.CombatRadius = CombatRadius or 0
+
+  return self
+end
+

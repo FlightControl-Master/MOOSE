@@ -23,11 +23,13 @@
 -- 
 -- ## Cargo loading.
 -- 
--- The module will load automatically cargo when the APCs are within boarding or loading range.
--- The boarding or loading range is specified when the cargo is created in the simulation, and therefore, this range depends on the type of cargo
--- and the specified boarding range.
+-- The module will load automatically cargo when the APCs are within boarding or loading radius.
+-- The boarding or loading radius is specified when the cargo is created in the simulation, and therefore, this radius depends on the type of cargo
+-- and the specified boarding radius.
 -- 
--- ## Enemies nearby.
+-- ## **Defending** the APCs when enemies nearby.
+-- 
+-- Cargo will defend the carrier with its available arms, and to avoid cargo being lost within the battlefield.
 --  
 -- When the APCs are approaching enemy units, something special is happening. 
 -- The APCs will stop moving, and the loaded infantry will unboard and follow the APCs and will help to defend the group.
@@ -35,13 +37,17 @@
 -- to ensure that the APCs are not too far away from the following running infantry.
 -- Once all enemies are cleared, the infantry will board again automatically into the APCs. Once boarded, the APCs will follow its pre-defined route.
 -- 
--- A combat range needs to be specified in meters at the @{#AI_CARGO_APC.New}() method. 
--- This combat range will trigger the unboarding of troops when enemies are within the combat range around the APCs.
--- During my tests, I've noticed that there is a balance between ensuring that the infantry is within sufficient hit range (effectiveness) versus
+-- A combat radius needs to be specified in meters at the @{#AI_CARGO_APC.New}() method. 
+-- This combat radius will trigger the unboarding of troops when enemies are within the combat radius around the APCs.
+-- During my tests, I've noticed that there is a balance between ensuring that the infantry is within sufficient hit radius (effectiveness) versus
 -- vulnerability of the infantry. It all depends on the kind of enemies that are expected to be encountered. 
--- A combat range of 350 meters to 500 meters has been proven to be the most effective and efficient.
+-- A combat radius of 350 meters to 500 meters has been proven to be the most effective and efficient.
 -- 
--- ## Infantry health.
+-- However, when the defense of the carrier, is not required, it must be switched off.
+-- This is done by disabling the defense of the carrier using the method @{#AI_CARGO_APC.SetCombatRadius}(), and providing a combat radius of 0 meters.
+-- It can be switched on later when required by reenabling the defense using the method and providing a combat radius larger than 0.
+-- 
+-- ## Infantry or cargo **health**.
 -- 
 -- When infantry is unboarded from the APCs, the infantry is actually respawned into the battlefield. 
 -- As a result, the unboarding infantry is very _healthy_ every time it unboards.
@@ -79,15 +85,13 @@ AI_CARGO_APC = {
 
 --- Creates a new AI_CARGO_APC object.
 -- @param #AI_CARGO_APC self
--- @param Wrapper.Group#GROUP APC
--- @param Core.Set#SET_CARGO CargoSet
--- @param #number CombatRadius
+-- @param Wrapper.Group#GROUP APC The carrier APC group.
+-- @param Core.Set#SET_CARGO CargoSet The set of cargo to be transported.
+-- @param #number CombatRadius Provide the combat radius to defend the carrier by unboarding the cargo when enemies are nearby. When the combat radius is 0, no defense will happen of the carrier.
 -- @return #AI_CARGO_APC
 function AI_CARGO_APC:New( APC, CargoSet, CombatRadius )
 
   local self = BASE:Inherit( self, AI_CARGO:New( APC, CargoSet ) ) -- #AI_CARGO_APC
-
-  self.CombatRadius = CombatRadius
 
   self:AddTransition( "*", "Monitor", "*" )
   self:AddTransition( "*", "Follow", "Following" )
@@ -96,7 +100,7 @@ function AI_CARGO_APC:New( APC, CargoSet, CombatRadius )
   
   self:AddTransition( "*", "Destroyed", "Destroyed" )
 
-  self:__Monitor( 1 )
+  self:SetCombatRadius( CombatRadius )
 
   self:SetCarrier( APC )
   
@@ -123,7 +127,7 @@ function AI_CARGO_APC:SetCarrier( CargoCarrier )
     if AICargoTroops then
       self:F({})
       if not AICargoTroops:Is( "Loaded" ) then
-        -- There are enemies within combat range. Unload the CargoCarrier.
+        -- There are enemies within combat radius. Unload the CargoCarrier.
         AICargoTroops:Destroyed()
       end
     end
@@ -135,7 +139,7 @@ function AI_CARGO_APC:SetCarrier( CargoCarrier )
     if AICargoTroops then
       self:F( { OnHitLoaded = AICargoTroops:Is( "Loaded" ) } )
       if AICargoTroops:Is( "Loaded" ) or AICargoTroops:Is( "Boarding" ) then
-        -- There are enemies within combat range. Unload the CargoCarrier.
+        -- There are enemies within combat radius. Unload the CargoCarrier.
         AICargoTroops:Unload( false )
       end
     end
@@ -152,7 +156,7 @@ function AI_CARGO_APC:SetCarrier( CargoCarrier )
 end
 
 
---- Find a free Carrier within a range.
+--- Find a free Carrier within a radius.
 -- @param #AI_CARGO_APC self
 -- @param Core.Point#COORDINATE Coordinate
 -- @param #number Radius
@@ -177,6 +181,30 @@ function AI_CARGO_APC:FindCarrier( Coordinate, Radius )
 
 end
 
+--- Enable/Disable unboarding of cargo (infantry) when enemies are nearby (to help defend the carrier).
+-- This is only valid for APCs and trucks etc, thus ground vehicles.
+-- @param #AI_CARGO_APC self
+-- @param #number CombatRadius Provide the combat radius to defend the carrier by unboarding the cargo when enemies are nearby. 
+-- When the combat radius is 0, no defense will happen of the carrier. 
+-- When the combat radius is not provided, no defense will happen!
+-- @return #AI_CARGO_APC
+-- @usage
+-- 
+-- -- Disembark the infantry when the carrier is under attack.
+-- AICargoAPC:SetCombatRadius( true )
+-- 
+-- -- Keep the cargo in the carrier when the carrier is under attack.
+-- AICargoAPC:SetCombatRadius( false )
+function AI_CARGO_APC:SetCombatRadius( CombatRadius )
+
+  self.CombatRadius = CombatRadius or 0
+
+  if self.CombatRadius > 0 then
+    self:__Monitor( -5 )
+  end
+
+  return self
+end
 
 
 --- Follow Infantry to the Carrier.
@@ -243,38 +271,40 @@ end
 function AI_CARGO_APC:onafterMonitor( APC, From, Event, To )
   self:F( { APC, From, Event, To } )
 
-  if APC and APC:IsAlive() then
-    if self.CarrierCoordinate then
-      if self:IsTransporting() == true then
-        local Coordinate = APC:GetCoordinate()
-        self.Zone:Scan( { Object.Category.UNIT } )
-        if self.Zone:IsAllInZoneOfCoalition( self.Coalition ) then
-          if self:Is( "Unloaded" ) or self:Is( "Following" ) then
-            -- There are no enemies within combat range. Load the CargoCarrier.
-            self:Load()
-          end
-        else
-          if self:Is( "Loaded" ) then
-            -- There are enemies within combat range. Unload the CargoCarrier.
-            self:__Unload( 1 )
-          else
-            if self:Is( "Unloaded" ) then
-              self:Follow()
+  if self.CombatRadius > 0 then
+    if APC and APC:IsAlive() then
+      if self.CarrierCoordinate then
+        if self:IsTransporting() == true then
+          local Coordinate = APC:GetCoordinate()
+          self.Zone:Scan( { Object.Category.UNIT } )
+          if self.Zone:IsAllInZoneOfCoalition( self.Coalition ) then
+            if self:Is( "Unloaded" ) or self:Is( "Following" ) then
+              -- There are no enemies within combat radius. Load the CargoCarrier.
+              self:Load()
             end
-            self:F( "I am here" .. self:GetCurrentState() )
-            if self:Is( "Following" ) then
-              for Cargo, APCUnit in pairs( self.Carrier_Cargo ) do
-                local Cargo = Cargo -- Cargo.Cargo#CARGO
-                local APCUnit = APCUnit -- Wrapper.Unit#UNIT
-                if Cargo:IsAlive() then
-                  if not Cargo:IsNear( APCUnit, 40 ) then
-                    APCUnit:RouteStop()
-                    self.CarrierStopped = true
-                  else
-                    if self.CarrierStopped then
-                      if Cargo:IsNear( APCUnit, 25 ) then
-                        APCUnit:RouteResume()
-                        self.CarrierStopped = nil
+          else
+            if self:Is( "Loaded" ) then
+              -- There are enemies within combat radius. Unload the CargoCarrier.
+              self:__Unload( 1 )
+            else
+              if self:Is( "Unloaded" ) then
+                self:Follow()
+              end
+              self:F( "I am here" .. self:GetCurrentState() )
+              if self:Is( "Following" ) then
+                for Cargo, APCUnit in pairs( self.Carrier_Cargo ) do
+                  local Cargo = Cargo -- Cargo.Cargo#CARGO
+                  local APCUnit = APCUnit -- Wrapper.Unit#UNIT
+                  if Cargo:IsAlive() then
+                    if not Cargo:IsNear( APCUnit, 40 ) then
+                      APCUnit:RouteStop()
+                      self.CarrierStopped = true
+                    else
+                      if self.CarrierStopped then
+                        if Cargo:IsNear( APCUnit, 25 ) then
+                          APCUnit:RouteResume()
+                          self.CarrierStopped = nil
+                        end
                       end
                     end
                   end
@@ -283,14 +313,14 @@ function AI_CARGO_APC:onafterMonitor( APC, From, Event, To )
             end
           end
         end
+        
       end
-      
+      self.CarrierCoordinate = APC:GetCoordinate()
     end
-    self.CarrierCoordinate = APC:GetCoordinate()
+  
+    self:__Monitor( -5 )
   end
   
-  self:__Monitor( -5 )
-
 end
 
 
