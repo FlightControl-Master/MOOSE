@@ -171,13 +171,6 @@ function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
     end
   )
 
-  for _, HelicopterUnit in pairs( Helicopter:GetUnits() ) do
-    HelicopterUnit:SetCargoBayWeightLimit()
-  end
-  
-  self.Relocating = false
-  self.Transporting = false
-
   self:SetCarrier( Helicopter )
   
   return self
