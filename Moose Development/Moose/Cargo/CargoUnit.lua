@@ -297,7 +297,7 @@ do -- CARGO_UNIT
         if self:IsNear( CargoCarrier:GetPointVec2(), NearRadius ) then
           self:__Load( 1, CargoCarrier, ... )
         else
-          self:__Boarding( -5, CargoCarrier, NearRadius, ... )
+          self:__Boarding( -1, CargoCarrier, NearRadius, ... )
           self.RunCount = self.RunCount + 1
           if self.RunCount >= 40 then
             self.RunCount = 0

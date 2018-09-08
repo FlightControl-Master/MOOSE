@@ -69,7 +69,7 @@ do -- CARGO_GROUP
     local WeightGroup = 0
     local VolumeGroup = 0
     
-    self.CargoGroup:Destroy()
+    self.CargoGroup:Destroy( true ) -- generate the crash events, so that the database gets cleaned, and the linked sets get properly cleaned.
 
     local GroupName = CargoGroup:GetName()
     self.CargoName = Name
