@@ -987,7 +987,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.3.9"
+WAREHOUSE.version="0.4.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -3189,8 +3189,32 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     self:E(self.wid.."ERROR: Unknown transporttype!")
   end
 
+  --------------------------------
+  -- Dispatcher Event Functions --
+  --------------------------------
+  
+  function CargoTransport:OnAfterLoaded(From,Event,To,CarrierGroup,Cargo,CarrierUnit,PickupZone)
+    local text=string.format("FF Carrier group %s loaded cargo %s into unit %s in pickup zone %s", CarrierGroup:GetName(), Cargo:GetObject():GetName(), CarrierUnit:GetName(), PickupZone:GetName())
+    env.info(text)
+  end
+  
+  function CargoTransport:OnAfterPickedUp(From,Event,To,CarrierGroup,PickupZone)
+    local text=string.format("FF Carrier group %s picked up event in pickup zone %s.", CarrierGroup:GetName(), PickupZone:GetName())
+    env.info(text)
+  end
+  
+  function CargoTransport:OnAfterDeployed(From,Event,To,CarrierGroup,DeployZone)
+    local text=string.format("FF Carrier group %s deployed event for deploy zone %s.", CarrierGroup:GetName(), DeployZone:GetName())
+    env.info(text)
+  end
+  
+  function CargoTransport:OnAfterHome(From,Event,To,CarrierGroup,Coordinate,Speed,HomeZone)
+    local text=string.format("FF Carrier group %s going home to zone %s.", CarrierGroup:GetName(), HomeZone:GetName())
+    env.info(text)
+  end
+
   --- Function called when cargo has arrived and was unloaded.
-  function CargoTransport:OnAfterUnloaded(From, Event, To, Carrier, Cargo)
+  function CargoTransport:OnAfterUnloaded(From, Event, To, Carrier, Cargo, CarrierUnit, DeployZone)
 
     self:I("FF OnAfterUnloaded:")
     self:I({From=From})
@@ -3923,7 +3947,8 @@ function WAREHOUSE:_RouteAir(aircraft)
     self:T2(self.wid..string.format("RouteAir aircraft group %s alive=%s", aircraft:GetName(), tostring(aircraft:IsAlive())))
     
     -- Give start command to activate uncontrolled aircraft. 
-    aircraft:SetCommand({id='Start', params={}})
+    --aircraft:SetCommand({id='Start', params={}})
+    aircraft:StartUncontrolled()
 
     -- Debug info.
     self:T2(self.wid..string.format("RouteAir aircraft group %s alive=%s (after start command)", aircraft:GetName(), tostring(aircraft:IsAlive())))

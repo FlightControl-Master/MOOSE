@@ -611,6 +611,14 @@ function CONTROLLABLE:CommandStopRoute( StopRoute )
 end
 
 
+--- Give an uncontrolled air controllable the start command.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:StartUncontrolled()
+  self:SetCommand({id='Start', params={}})
+  return self
+end
+
 -- TASKS FOR AIR CONTROLLABLES
 
 
