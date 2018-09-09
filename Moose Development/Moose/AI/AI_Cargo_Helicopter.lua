@@ -254,7 +254,6 @@ function AI_CARGO_HELICOPTER:onafterLanded( Helicopter, From, Event, To )
         --self:Load( Helicopter:GetPointVec2() )
         self:Load( self.PickupZone )
         self.RoutePickup = false
-        self.Relocating = true
       end
     end
     
@@ -262,8 +261,6 @@ function AI_CARGO_HELICOPTER:onafterLanded( Helicopter, From, Event, To )
       if Helicopter:GetHeight( true ) <= 5 and Helicopter:GetVelocityKMH() < 10 then
         self:Unload( self.DeployZone )
         self.RouteDeploy = false
-        self.Transporting = false
-        self.Relocating = false
       end
     end
      
@@ -410,6 +407,7 @@ function AI_CARGO_HELICOPTER:onafterPickedUp( Helicopter, From, Event, To, Picku
   self:F( { Helicopter, From, Event, To } )
   
   if Helicopter and Helicopter:IsAlive() then
+    self.Relocating = false
     self.Transporting = true
   end
 end
@@ -436,6 +434,8 @@ function AI_CARGO_HELICOPTER:onafterDeployed( Helicopter, From, Event, To, Deplo
       AI_CARGO_QUEUE[Helicopter] = nil
     end, Helicopter
   )
+  
+  self.Transporting = false
   
 end
 
@@ -500,7 +500,9 @@ function AI_CARGO_HELICOPTER:onafterPickup( Helicopter, From, Event, To, Coordin
     Helicopter:Route( Route, 1 )
     
     self.PickupZone = PickupZone
-    self.Transporting = true
+
+    self.Relocating = true
+    self.Transporting = false
   end
   
 end
@@ -576,7 +578,9 @@ function AI_CARGO_HELICOPTER:onafterDeploy( Helicopter, From, Event, To, Coordin
 
     -- Now route the helicopter
     Helicopter:Route( Route, 0 )
-    
+
+    self.Relocating = false
+    self.Transporting = true
   end
   
 end
