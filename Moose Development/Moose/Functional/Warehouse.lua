@@ -987,22 +987,23 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.3.8"
+WAREHOUSE.version="0.3.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: Case when all transports are killed and there is still cargo to be delivered. Put cargo back into warehouse.
+-- TODO: Spawn assets only virtually, i.e. remove requested assets from stock but do NOT spawn them ==> Interface to A2A dispatcher! Maybe do a negative sign on asset number?
 -- TODO: Test capturing a neutral warehouse.
--- TODO: Make more examples: ARTY, CAP, 
--- TODO: Add SAMs and UAVs to generalized attributes.
+-- TODO: Make more examples: ARTY, CAP, ...
 -- TODO: Check also general requests like all ground. Is this a problem for self propelled if immobile units are among the assets? Check if transport.
 -- TODO: Add transport units from dispatchers back to warehouse stock once they completed their mission.
--- TODO: Added habours as interface for transport to from warehouses?
--- TODO: Write documentation.
 -- TODO: Handle the case when units of a group die during the transfer.
+-- TODO: Added habours as interface for transport to from warehouses?
 -- TODO: Add save/load capability of warehouse <==> percistance after mission restart. Difficult in lua!
+-- DONE: Write documentation.
+-- DONE: Add AAA, SAMs and UAVs to generalized attributes.
 -- DONE: Add warehouse quantity enumerator.
 -- DONE: Test mortars. Immobile units need a transport.
 -- DONE: Set ROE for spawned groups.
@@ -1095,7 +1096,7 @@ function WAREHOUSE:New(warehouse, alias)
   --                 From State   -->   Event        -->     To State
   self:AddTransition("NotReadyYet",     "Load",              "Loaded")      -- TODO Load the warehouse state. No sure if it should be in stopped state.
   self:AddTransition("NotReadyYet",     "Start",             "Running")     -- Start the warehouse from scratch.
-  self:AddTransition("Loaded",          "Start",             "Running")     -- Start the warehouse when loaded from disk.  
+  self:AddTransition("Loaded",          "Start",             "Running")     -- TODO Start the warehouse when loaded from disk.  
   self:AddTransition("*",               "Status",            "*")           -- Status update.
   self:AddTransition("*",               "AddAsset",          "*")           -- Add asset to warehouse stock.
   self:AddTransition("*",               "AddRequest",        "*")           -- New request from other warehouse.
@@ -1140,7 +1141,7 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Pause". Pauses the warehouse. Assets can still be added and requests be made. However, requests are not processed.
-  -- @function [parent=#WAREHOUSE] Pauses
+  -- @function [parent=#WAREHOUSE] Pause
   -- @param #WAREHOUSE self
 
   --- Triggers the FSM event "Pause" after a delay. Pauses the warehouse. Assets can still be added and requests be made. However, requests are not processed.
@@ -2065,7 +2066,7 @@ function WAREHOUSE:onafterStatus(From, Event, To)
   end  
 
   -- Call status again in ~30 sec (user choice).
-  self:__Status(self.dTstatus)
+  self:__Status(-self.dTstatus)
 end
 
 --- Count alive and filter dead groups. 
@@ -2088,7 +2089,10 @@ function WAREHOUSE:_FilterDead(groupset)
       end
     end
     
-    self:E(string.format("FF FilterDead: Alive=%d, Dead=%d", nalive, #dead))
+    -- TODO: Since the cargo groups are de- and re-spawned, does the counting for cargo groups actually work, when they are transported?
+    
+    -- Debug info.
+    self:T(self.wid..string.format("FilterDead: Alive=%d, Dead=%d", nalive, #dead))
     
     -- Remove dead groups
     local NoTriggerEvent=false
@@ -2294,6 +2298,8 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
     
   end
   
+  -- Update status.
+  self:__Status(-1)
 end
 
 --- Find an asset in the the global warehouse db.
@@ -2788,11 +2794,6 @@ function WAREHOUSE:onafterAddRequest(From, Event, To, warehouse, AssetDescriptor
       nTransport=1
     end
   end
-  
-  -- Not more transports than assets.
-  --if type(nAsset)=="number" then
-  --  nTransport=math.min(nAsset, nTransport)
-  --end
 
   -- Self request?
   local toself=false
@@ -2824,7 +2825,13 @@ function WAREHOUSE:onafterAddRequest(From, Event, To, warehouse, AssetDescriptor
   
   -- Add request to queue.
   table.insert(self.queue, request)
+  
+  local text=string.format("Warehouse %s: New request from %s. Descriptor %s=%s, #assets=%s; Transport=%s, #transports =%s.", 
+  self.alias, warehouse.alias, request.assetdesc, tostring(request.assetdescval), tostring(request.nasset), request.transporttype, tostring(request.ntransport))
+  self:_DebugMessage(text, 5)
 
+  -- Update status
+  self:__Status(-1)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -4650,18 +4657,14 @@ end
 -- @param #WAREHOUSE.Queueitem request The request to be checked.
 -- @return #boolean If true, request can be executed. If false, something is not right.
 function WAREHOUSE:_CheckRequestNow(request)
-    
-  -- Assume request is okay and check scenarios.
-  local okay=true
-  
+
   -- Check if receiving warehouse is running. We do allow self requests if the warehouse is under attack though!
-  if (not request.warehouse:IsRunning()) and (not request.toself and self:IsAttacked()) then
+  if (request.warehouse:IsRunning()==false) and not (request.toself and self:IsAttacked()) then
     local text=string.format("Warehouse %s: Request denied! Receiving warehouse %s is not running. Current state %s.", self.alias, request.warehouse.alias, request.warehouse:GetState())
     self:_InfoMessage(text, 5)
     
     return false
   end
-  
   -- If no transport is requested, assets need to be mobile unless it is a self request.
   local onlymobile=false
   if request.ntransport==0 and not request.toself then
@@ -4706,11 +4709,13 @@ function WAREHOUSE:_CheckRequestNow(request)
     request.cargoattribute=_assetattribute
     request.cargocategory=_assetcategory
 
-    env.info("FF selected cargo assets")    
-    for _,_asset in pairs(_assets) do
+    -- Debug info:
+    local text=string.format("Selected cargo assets, attibute=%s, category=%d:\n", request.cargoattribute, request.cargocategory)        
+    for _i,_asset in pairs(_assets) do
       local asset=_asset --#WAREHOUSE.Assetitem
-      env.info(string.format("- name = %s", asset.templatename))
+      text=text..string.format("%d) asset name=%s, type=%s, category=%d, #units=%d",_i, asset.templatename, asset.unittype, asset.category, asset.nunits)
     end
+    self:T(self.wid..text)
     
   end  
   
@@ -4742,6 +4747,14 @@ function WAREHOUSE:_CheckRequestNow(request)
       request.transportassets=_transports
       request.transportattribute=_transportattribute
       request.transportcategory=_transportcategory
+
+      -- Debug info:
+      local text=string.format("Selected transport assets, attibute=%s, category=%d:\n", request.transportattribute, request.transportcategory)        
+      for _i,_asset in pairs(_assets) do
+        local asset=_asset --#WAREHOUSE.Assetitem
+        text=text..string.format("%d) asset name=%s, type=%s, category=%d, #units=%d",_i, asset.templatename, asset.unittype, asset.category, asset.nunits)
+      end
+      self:T(self.wid..text)
     
     else
 
@@ -5641,9 +5654,9 @@ function WAREHOUSE:_DisplayStatus()
   end
   
   local text=string.format("\n------------------------------------------------------\n")
-  text=text..string.format("Warehouse %s status:\n", self.alias)
+  text=text..string.format("Warehouse %s status: %s\n", self.alias, self:GetState())
   text=text..string.format("------------------------------------------------------\n")
-  text=text..string.format("Current status   = %s\n", self:GetState())
+  --text=text..string.format("Current status   = %s\n", )
   text=text..string.format("Coalition side   = %d\n", self.coalition)
   text=text..string.format("Country name     = %d\n", self.country)
   text=text..string.format("Airbase name     = %s\n", airbasename)
@@ -5652,7 +5665,6 @@ function WAREHOUSE:_DisplayStatus()
   text=text..string.format("------------------------------------------------------\n")
   text=text..self:_GetStockAssetsText()
   self:T(text)
-  --TODO: number of ground, air, naval assets.
 end
 
 --- Get text about warehouse stock.
