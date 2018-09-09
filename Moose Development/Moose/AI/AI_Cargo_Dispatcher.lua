@@ -903,7 +903,8 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
           if not self.PickupZoneSet or PickupZone then
             for CarrierPickup, Coordinate in pairs( self.PickupCargo ) do
               if CarrierPickup:IsAlive() == true then
-                if CargoCoordinate:Get2DDistance( Coordinate ) <= 100 then
+                if CargoCoordinate:Get2DDistance( Coordinate ) <= 25 then
+                  self:F( { "Coordinate not free for ", Cargo = Cargo:GetName(), Carrier:GetName(), PickupCargo = self.PickupCargo[Carrier] ~= nil } )
                   CoordinateFree = false
                   break
                 end
@@ -1025,6 +1026,7 @@ function AI_CARGO_DISPATCHER:onafterTransport( From, Event, To, Carrier, Cargo )
     end
   end
   
+   self:F( { Carrier = Carrier:GetName(), PickupCargo = self.PickupCargo } )
    self.PickupCargo[Carrier] = nil
 end
 
