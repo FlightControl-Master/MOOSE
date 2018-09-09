@@ -686,15 +686,15 @@ do -- TASK_CARGO_DISPATCHER
             self:Success( Task )
           end
 
-          function Transport.Task.onenterCancelled( Task, From, Event, To )
+          function Transport.Task.OnEnterCancelled( Task, From, Event, To )
             self:Cancelled( Task )
           end
           
-          function Transport.Task.onenterFailed( Task, From, Event, To )
+          function Transport.Task.OnEnterFailed( Task, From, Event, To )
             self:Failed( Task )
           end
 
-          function Transport.Task.onenterAborted( Task, From, Event, To )
+          function Transport.Task.OnEnterAborted( Task, From, Event, To )
             self:Aborted( Task )
           end
         end

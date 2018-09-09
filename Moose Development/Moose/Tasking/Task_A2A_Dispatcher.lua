@@ -574,15 +574,15 @@ do -- TASK_A2A_DISPATCHER
               self:Success( Task )
             end
 
-            function Task.onenterCancelled( Task, From, Event, To )
+            function Task.OnEnterCancelled( Task, From, Event, To )
               self:Cancelled( Task )
             end
             
-            function Task.onenterFailed( Task, From, Event, To )
+            function Task.OnEnterFailed( Task, From, Event, To )
               self:Failed( Task )
             end
 
-            function Task.onenterAborted( Task, From, Event, To )
+            function Task.OnEnterAborted( Task, From, Event, To )
               self:Aborted( Task )
             end
             

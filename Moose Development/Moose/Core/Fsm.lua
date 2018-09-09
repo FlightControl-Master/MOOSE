@@ -981,8 +981,9 @@ do -- FSM_PROCESS
         self:T( "*** FSM ***    " .. step .. " *** " .. params[1] .. " --> " .. params[2] .. " --> " .. params[3] .. " *** Task: " .. self.Task:GetName() .. ", TaskUnit: " .. self.Controllable:GetName() )
       end
       self._EventSchedules[EventName] = nil
+      local Result, Value
       if self.Controllable and self.Controllable:IsAlive() == true then
-        local Result, Value = xpcall( function() return self[handler]( self, self.Controllable, self.Task, unpack( params ) ) end, ErrorHandler )
+        Result, Value = xpcall( function() return self[handler]( self, self.Controllable, self.Task, unpack( params ) ) end, ErrorHandler )
       end
       return Value
       --return self[handler]( self, self.Controllable, unpack( params ) )
@@ -1204,10 +1205,22 @@ do -- FSM_TASK
   function FSM_TASK:_call_handler( step, trigger, params, EventName )
     local handler = step .. trigger
     
+    local ErrorHandler = function( errmsg )
+  
+      env.info( "Error in SCHEDULER function:" .. errmsg )
+      if BASE.Debug ~= nil then
+        env.info( BASE.Debug.traceback() )
+      end
+      
+      return errmsg
+    end
+
     if self[handler] then
       self:T( "*** FSM ***    " .. step .. " *** " .. params[1] .. " --> " .. params[2] .. " --> " .. params[3] .. " *** Task: " .. self.TaskName )
       self._EventSchedules[EventName] = nil
-      return self[handler]( self, unpack( params ) )
+      --return self[handler]( self, unpack( params ) )
+      local Result, Value = xpcall( function() return self[handler]( self, unpack( params ) ) end, ErrorHandler )
+      return Value
     end
   end
 
