@@ -987,7 +987,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.4.0"
+WAREHOUSE.version="0.4.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -2114,10 +2114,18 @@ function WAREHOUSE:_JobDone()
     local request=request --#WAREHOUSE.Pendingitem
 
     -- Count number of cargo groups still alive and filter out dead groups.
-    local ncargo=self:_FilterDead(request.cargogroupset)
+    local ncargo=0
+    if request.cargogroupset then
+      ncargo=request.cargogroupset:Count()
+    end
+    --=self:_FilterDead(request.cargogroupset)
     
     -- Count number of transport groups (if any) and filter out dead groups. Dead groups are removed from the set.
-    local ntransport=self:_FilterDead(request.transportgroupset)
+    local ntransport=0
+    if request.transportgroupset then
+      request.transportgroupset:Count()
+    end
+    --self:_FilterDead(request.transportgroupset)
     
     
     if ncargo==0 and ntransport==0 then
@@ -2293,7 +2301,7 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
     -- Destroy group if it is alive.
     if group:IsAlive()==true then
       self:_DebugMessage(string.format("Destroying group %s.", group:GetName()), 5)
-      group:Destroy()
+      group:Destroy(true)
     end
     
   end
@@ -3010,7 +3018,8 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   if Request.transporttype==WAREHOUSE.TransportType.AIRPLANE then
     _loadradius=10000
   elseif Request.transporttype==WAREHOUSE.TransportType.HELICOPTER then
-    _loadradius=1000
+    --_loadradius=1000
+    _loadradius=nil
   elseif Request.transporttype==WAREHOUSE.TransportType.APC then
     _loadradius=1000
   end
@@ -3232,9 +3241,8 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     local text=string.format("FF Group %s was unloaded from carrier %s.", tostring(group:GetName()), tostring(Carrier:GetName()))
     env.info(text)
 
-
     -- Load the cargo in the warehouse.
-    Cargo:Load(warehouse.warehouse)
+    --Cargo:Load(warehouse.warehouse)
 
     -- Trigger Arrived event.
     warehouse:Arrived(group)
@@ -3501,7 +3509,7 @@ function WAREHOUSE:_UpdatePending(group)
         if caid==aid then
           request.transportgroupset:Remove(transportgroup:GetName())
           request.ntransporthome=request.ntransporthome+1
-          env.info("FF transport back home # "..request.ntransporthome)
+          env.info(string.format("Transport back home #%s", request.ntransporthome))
           isCargo=false
           break
         end
@@ -3520,7 +3528,7 @@ function WAREHOUSE:_UpdatePending(group)
         if caid==aid then
           request.cargogroupset:Remove(cargogroup:GetName())
           request.ndelivered=request.ndelivered+1
-          env.info("FF delivered cargo # "..request.ndelivered)
+          env.info(string.format("FF delivered cargo # ", request.ndelivered))
           isCargo=true
           break
         end
@@ -3856,12 +3864,9 @@ function WAREHOUSE:_RouteGround(group, request)
       table.insert(Waypoints, #Waypoints+1, ToWP)
     
     end
-
-    -- Task function triggering the arrived event.
-    --local TaskFunction = group:TaskFunction("WAREHOUSE._Arrived", self)
     
     -- Task function triggering the arrived event at the last waypoint.
-    local TaskFunction = self:_SimpleTaskFunction("warehouse:_ArrivedSimple", group)    
+    local TaskFunction = self:_SimpleTaskFunction("warehouse:_Arrived", group)    
 
     -- Put task function on last waypoint.
     local Waypoint = Waypoints[#Waypoints]
@@ -3893,7 +3898,7 @@ function WAREHOUSE:_RouteNaval(group, request)
     
     -- Get off road path to remote warehouse. If more have been defined, pick one randomly.
     local remotename=request.warehouse.warehouse:GetName()
-    local path=self.shippinglanes[remotename][math.random(#self.ship[remotename])]
+    local lane=self.shippinglanes[remotename][math.random(#self.ship[remotename])]
         
     if lane then
       
@@ -3914,7 +3919,7 @@ function WAREHOUSE:_RouteNaval(group, request)
       end
       
       -- Task function triggering the arrived event at the last waypoint.
-      local TaskFunction = self:_SimpleTaskFunction("warehouse:_ArrivedSimple", group)
+      local TaskFunction = self:_SimpleTaskFunction("warehouse:_Arrived", group)
       
       -- Put task function on last waypoint.
       local Waypoint = Waypoints[#Waypoints]
@@ -3976,8 +3981,8 @@ function WAREHOUSE:_RouteTrain(Group, Coordinate, Speed)
     -- Create a
     local Waypoints = Group:TaskGroundOnRailRoads(Coordinate, Speed)
 
-    -- Task function triggering the arrived event.
-    local TaskFunction = Group:TaskFunction("WAREHOUSE._Arrived", self)
+    -- Task function triggering the arrived event at the last waypoint.
+    local TaskFunction = self:_SimpleTaskFunction("warehouse:_Arrived", Group)
 
     -- Put task function on last waypoint.
     local Waypoint = Waypoints[#Waypoints]
@@ -3989,21 +3994,10 @@ function WAREHOUSE:_RouteTrain(Group, Coordinate, Speed)
 end
 
 --- Task function for last waypoint. Triggering the "Arrived" event.
--- @param Wrapper.Group#GROUP group The group that arrived.
--- @param #WAREHOUSE warehouse Warehouse self.
-function WAREHOUSE._Arrived(group, warehouse)
-  env.info(warehouse.wid..string.format("Group %s arrived at destination.", tostring(group:GetName())))
-  
-  --Trigger "Arrived" event.
-  warehouse:__Arrived(1, group)
-  
-end
-
---- Simple task function for last waypoint. Triggering the "Arrived" event.
 -- @param #WAREHOUSE self
 -- @param Wrapper.Group#GROUP group The group that arrived.
-function WAREHOUSE:_ArrivedSimple(group)
-  self:_DebugMessage(string.format("Group %s arrived (simple)!", tostring(group:GetName())))
+function WAREHOUSE:_Arrived(group)
+  self:_DebugMessage(string.format("Group %s arrived!", tostring(group:GetName())))
   
   if group then
     --Trigger "Arrived event.
@@ -4143,7 +4137,6 @@ function WAREHOUSE:_OnEventLanding(EventData)
             
             -- Group arrived.
             self:Arrived(group)
-            --self:__AddAsset(30, group)
             
           end          
         end
