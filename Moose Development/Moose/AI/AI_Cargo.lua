@@ -179,7 +179,7 @@ function AI_CARGO:onbeforeLoad( Carrier, From, Event, To, PickupZone )
   local Boarding = false
 
   local LoadInterval = 10
-  local LoadDelay = 10
+  local LoadDelay = 0
   local Carrier_List = {}
   local Carrier_Weight = {}
 
@@ -246,7 +246,8 @@ function AI_CARGO:onbeforeLoad( Carrier, From, Event, To, PickupZone )
       end
       
       if not Loaded then
-        -- If the cargo wasn't loaded in one of the carriers, then we need to stop the loading.
+        -- No loading happened, so we need to pickup something else.
+        self.Relocating = false
       end
       
     end
@@ -344,6 +345,7 @@ function AI_CARGO:onafterUnload( Carrier, From, Event, To, DeployZone )
       local CarrierUnit = CarrierUnit -- Wrapper.Unit#UNIT
       Carrier:RouteStop()
       for _, Cargo in pairs( CarrierUnit:GetCargo() ) do
+        self:F( { Cargo = Cargo:GetName(), Isloaded = Cargo:IsLoaded() } )
         if Cargo:IsLoaded() then
           Cargo:__UnBoard( UnboardDelay )
           UnboardDelay = UnboardDelay + UnboardInterval
