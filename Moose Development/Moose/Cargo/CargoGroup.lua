@@ -661,12 +661,13 @@ do -- CARGO_GROUP
       else
         CargoCoordinate = Cargo.CargoObject:GetCoordinate()
       end
-      
---      if CargoCoordinate then
+
+      -- FF check if coordinate could be obtained. This was commented out for some (unknown) reason. But the check seems valid!      
+      if CargoCoordinate then
         Distance = Coordinate:Get2DDistance( CargoCoordinate )
---      else
---        return false
---      end
+      else
+        return false
+      end
       
       self:F( { Distance = Distance, LoadRadius = self.LoadRadius } )
       if Distance <= self.LoadRadius then
