@@ -1,4 +1,4 @@
---- **Functional** - (R2.5) - Simulation of logistics.
+--- **Functional** - (R2.5) - Simulation of logistic operations.
 -- 
 -- The MOOSE warehouse concept simulates the organization and implementation of complex operations regarding the flow of assets between the point of origin and the point of consumption 
 -- in order to meet requirements of a potential conflict. In particular, this class is concerned with maintaining army supply lines while disrupting those of the enemy, since an armed 
@@ -136,14 +136,14 @@
 -- Assets can be added to the warehouse stock by using the @{#WAREHOUSE.AddAsset}(*group*, *ngroups*, *forceattribute*) function. The parameter *group* has to be a MOOSE @{Wrapper.Group#GROUP}.
 -- The parameter *ngroups* specifies how many clones of this group are added to the stock.
 -- 
--- Note that the group should be a late activated template group, which was defined in the mission editor.
 -- 
 --     infrantry=GROUP:FindByName("Some Infantry Group")
 --     warehouse:AddAsset(infantry, 5)
 -- 
--- This will add five infantry groups to the warehouse stock.
+-- This will add five infantry groups to the warehouse stock. Note that the group will normally be a late activated template group, 
+-- which was defined in the mission editor. But you can also add other groups which are already spawned and present in the mission.
 -- 
--- Note that you can also add assets with a delay by using the @{#WAREHOUSE.__AddAsset}(*delay*, *group*, *ngroups*, *foceattribute*), where *delay* is the delay in seconds before the asset is added.
+-- You can add assets with a delay by using the @{#WAREHOUSE.__AddAsset}(*delay*, *group*, *ngroups*, *foceattribute*), where *delay* is the delay in seconds before the asset is added.
 -- 
 -- By default, the generalized attribute of the asset is determined automatically from the DCS descriptor attributes. However, this might not always result in the desired outcome.
 -- Therefore, it is possible, to force a generalized attribute for the asset with the third optional parameter *forceattribute*, which is of type @{#WAREHOUSE.Attribute}.
@@ -233,10 +233,11 @@
 --     
 --     end
 --       
--- The variable *groupset* is a @{Core.Set#SET_GOUP} object and holds all asset groups from the request. The code above shows, how the mission designer can access the groups
+-- The variable *groupset* is a @{Core.Set#SET_GROUP} object and holds all asset groups from the request. The code above shows, how the mission designer can access the groups
 -- for further tasking. Here, the groups are only smoked but, of course, you can use them for whatever task you fancy.
 -- 
 -- Note that airborne groups are spawned in uncontrolled state and need to be activated first before they can start their assigned mission.
+-- This can be done with the @{Wrapper.Controllable#CONTROLLABLE.StartUncontrolled} function.
 -- 
 -- ===
 -- 
@@ -369,6 +370,7 @@
 -- 
 -- A warehouse has a limited speed to process requests. Each time the status of the warehouse is updated only one requests is processed.
 -- The time interval between status updates is 30 seconds by default and can be adjusted via the @{#WAREHOUSE.SetStatusUpdate}(*interval*) function.
+-- However, the status is also updated on other occasions, e.g. when a new request was added.
 -- 
 -- ===
 -- 
@@ -872,7 +874,9 @@ WAREHOUSE = {
 -- @field #number timestamp Absolute mission time in seconds when the request was processed.
 -- @field Core.Set#SET_GROUP cargogroupset Set of cargo groups do be delivered.
 -- @field #number ndelivered Number of groups delivered to destination.
--- @field Core.Set#SET_GROUP transportgroupset Set of cargo transport groups.
+-- @field Core.Set#SET_GROUP transportgroupset Set of cargo transport carrier groups.
+-- @field Core.Set#SET_CARGO transportcargoset Set of cargo objects.
+-- @field #table carriercargo Table holding the cargo groups of each carrier unit.
 -- @field #number ntransporthome Number of transports back home.
 -- @extends #WAREHOUSE.Queueitem
 
@@ -987,7 +991,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.4.1"
+WAREHOUSE.version="0.4.1w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -1107,8 +1111,8 @@ function WAREHOUSE:New(warehouse, alias)
   self:AddTransition("*",               "Delivered",         "*")           -- All cargo groups of a request have been delivered to the requesting warehouse.
   self:AddTransition("Running",         "SelfRequest",       "*")           -- Request to warehouse itself. Requested assets are only spawned but not delivered anywhere.
   self:AddTransition("Attacked",        "SelfRequest",       "*")           -- Request to warehouse itself. Also possible when warehouse is under attack!
-  self:AddTransition("Running",         "Pause",             "Paused")      -- TODO Pause the processing of new requests. Still possible to add assets and requests. 
-  self:AddTransition("Paused",          "Unpause",           "Running")     -- TODO Unpause the warehouse. Queued requests are processed again. 
+  self:AddTransition("Running",         "Pause",             "Paused")      -- DONE Pause the processing of new requests. Still possible to add assets and requests. 
+  self:AddTransition("Paused",          "Unpause",           "Running")     -- DONE Unpause the warehouse. Queued requests are processed again. 
   self:AddTransition("*",               "Stop",              "Stopped")     -- DONE Stop the warehouse.
   self:AddTransition("*",               "Save",              "*")           -- TODO Save the warehouse state to disk.
   self:AddTransition("*",               "Attacked",          "Attacked")    -- DONE Warehouse is under attack by enemy coalition.
@@ -2069,40 +2073,6 @@ function WAREHOUSE:onafterStatus(From, Event, To)
   self:__Status(-self.dTstatus)
 end
 
---- Count alive and filter dead groups. 
--- @param #WAREHOUSE self
--- @param Core.Set#SET_GROUP groupset Set of groups. Dead groups are removed from the set.
--- @return #number Number of alive groups. Returns zero if groupset is nil.
-function WAREHOUSE:_FilterDead(groupset)
-
-  local nalive=0
-  
-  if groupset then
-
-    -- Check if groups are still alive
-    local dead={}
-    for _,group in pairs(groupset:GetSetObjects()) do
-      if group and group:IsAlive() then
-        nalive=nalive+1
-      else
-        table.insert(dead, group)
-      end
-    end
-    
-    -- TODO: Since the cargo groups are de- and re-spawned, does the counting for cargo groups actually work, when they are transported?
-    
-    -- Debug info.
-    self:T(self.wid..string.format("FilterDead: Alive=%d, Dead=%d", nalive, #dead))
-    
-    -- Remove dead groups
-    local NoTriggerEvent=false
-    for _,group in pairs(dead) do
-      groupset:Remove(group, NoTriggerEvent)
-    end
-  end
-  
-  return nalive
-end
 
 --- Function that checks if a pending job is done and can be removed from queue 
 -- @param #WAREHOUSE self
@@ -2113,20 +2083,17 @@ function WAREHOUSE:_JobDone()
   for _,request in pairs(self.pending) do  
     local request=request --#WAREHOUSE.Pendingitem
 
-    -- Count number of cargo groups still alive and filter out dead groups.
+    -- Count number of cargo groups.
     local ncargo=0
     if request.cargogroupset then
       ncargo=request.cargogroupset:Count()
     end
-    --=self:_FilterDead(request.cargogroupset)
     
-    -- Count number of transport groups (if any) and filter out dead groups. Dead groups are removed from the set.
+    -- Count number of transport groups (if any).
     local ntransport=0
     if request.transportgroupset then
       request.transportgroupset:Count()
-    end
-    --self:_FilterDead(request.transportgroupset)
-    
+    end    
     
     if ncargo==0 and ntransport==0 then
     
@@ -3091,21 +3058,21 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     
     elseif Request.transporttype==WAREHOUSE.TransportType.TRAIN then
   
-      self:E(self.wid.."ERROR: cargo transport by train not supported yet!")
+      self:_ErrorMessage("ERROR: Cargo transport by train not supported yet!")
       return
   
     elseif Request.transporttype==WAREHOUSE.TransportType.SHIP then
   
-      self:E(self.wid.."ERROR: cargo transport by ship not supported yet!")
+      self:_ErrorMessage("ERROR: Cargo transport by ship not supported yet!")
       return
   
     elseif Request.transporttype==WAREHOUSE.TransportType.SELFPROPELLED then
   
-      self:E(self.wid.."ERROR: transport type selfpropelled was already handled above. We should not get here!")
+      self:_ErrorMessage("ERROR: Transport type selfpropelled was already handled above. We should not get here!")
       return
   
     else
-      self:E(self.wid.."ERROR: unknown transport type!")
+      self:_ErrorMessage("ERROR: Unknown transport type!")
       return
     end
     
@@ -3130,8 +3097,19 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     self:_DeleteStockItem(_item)
   end
   
-  -- Add cargo groups to request.
+  -- Add transport groups, i.e. the carriers to request.
   Pending.transportgroupset=TransportSet
+  
+  -- Add cargo group set.
+  Pending.transportcargoset=CargoGroups
+  
+  -- Create empty tables which will be filled with the cargo groups of each carrier unit. Needed in case a carrier unit dies.
+  Pending.carriercargo={}  
+  for _,carriergroup in pairs(TransportSet:GetObject()) do
+    for _,carrierunit in pairs(carriergroup:GetUnits()) do
+      Pending.carriercargo[carrierunit:GetName()]={}
+    end
+  end
 
   -- Add request to pending queue.
   table.insert(self.pending, Pending)
@@ -3202,11 +3180,6 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   -- Dispatcher Event Functions --
   --------------------------------
   
-  function CargoTransport:OnAfterLoaded(From,Event,To,CarrierGroup,Cargo,CarrierUnit,PickupZone)
-    local text=string.format("FF Carrier group %s loaded cargo %s into unit %s in pickup zone %s", CarrierGroup:GetName(), Cargo:GetObject():GetName(), CarrierUnit:GetName(), PickupZone:GetName())
-    env.info(text)
-  end
-  
   function CargoTransport:OnAfterPickedUp(From,Event,To,CarrierGroup,PickupZone)
     local text=string.format("FF Carrier group %s picked up event in pickup zone %s.", CarrierGroup:GetName(), PickupZone:GetName())
     env.info(text)
@@ -3220,6 +3193,28 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   function CargoTransport:OnAfterHome(From,Event,To,CarrierGroup,Coordinate,Speed,HomeZone)
     local text=string.format("FF Carrier group %s going home to zone %s.", CarrierGroup:GetName(), HomeZone:GetName())
     env.info(text)
+  end
+
+  --- Function called when a carrier unit has loaded a cargo group.
+  function CargoTransport:OnAfterLoaded(From, Event, To, Carrier, Cargo, CarrierUnit, PickupZone)
+    local text=string.format("FF Carrier group %s loaded cargo %s into unit %s in pickup zone %s", CarrierGroup:GetName(), Cargo:GetObject():GetName(), CarrierUnit:GetName(), PickupZone:GetName())
+    env.info(text)
+    
+    -- Get group object.
+    local group=Cargo:GetObject() --Wrapper.Group#GROUP
+        
+    -- Get warehouse state.
+    local warehouse=Carrier:GetState(Carrier, "WAREHOUSE") --#WAREHOUSE
+
+    local text=string.format("FF Group %s was loaded into carrier %s.", tostring(group:GetName()), tostring(Carrier:GetName()))
+    env.info(text)
+    
+    -- Get request.
+    local request=warehouse:_GetRequestOfGroup(group, warehouse.pending)
+    
+    -- Add cargo group to this carrier.
+    table.insert(request.carriercargo[CarrierUnit:GetName()], group)
+    
   end
 
   --- Function called when cargo has arrived and was unloaded.
@@ -4182,31 +4177,159 @@ function WAREHOUSE:_OnEventCrashOrDead(EventData)
 
   -- Check if an asset unit was destroyed.
   if EventData and EventData.IniGroup then
+  
     local group=EventData.IniGroup
+    
+    -- Get warehouse, asset and request IDs from the group name.
     local wid,aid,rid=self:_GetIDsFromGroup(group)
+    
     if wid==self.uid then
       self:T(self.wid..string.format("Warehouse %s captured event dead or crash of its asset unit %s.", self.alias, EventData.IniUnitName))
       
+      -- Loop over all pending requests and get the one belonging to this unit.
       for _,request in pairs(self.pending) do
         local request=request --#WAREHOUSE.Pendingitem
         
         if request.uid==rid then
-          -- Count number of cargo groups still alive and filter out dead groups. Dead groups are removed from the set.
-          local ncargo=self:_FilterDead(request.cargogroupset)
-    
-          -- Count number of transport groups (if any) and filter out dead groups. Dead groups are removed from the set.
-          local ntransport=self:_FilterDead(request.transportgroupset)
-          
-          self:T(self.wid..string.format("Asset groups left for request id=%d: ncargo=%d, ntransport=%d", rid, ncargo, ntransport))
+        
+          -- Update cargo and transport group sets of this request. We need to know if this job is finished.
+          self:_UnitDead(EventData.IniUnit, request)
+             
+          --[[     
+          if self:_GroupIsTransport(group, request) then
+            -- Count number of transport groups (if any) and filter out dead groups. Dead groups are removed from the set.
+            -- TODO: Now, what about the cargo groups that are inside the transport?! Need to save in which carrier the cargo is?
+            self:_FilterDead(request.transportgroupset)
+          else
+            -- Count number of cargo groups still alive and filter out dead groups. Dead groups are removed from the set.
+            self:_FilterDead(request.cargogroupset)
+          end
+          ]]
         end
       
-      end
-      
-      
+      end      
     end
   end  
-  
 end
+
+--- A unit of a group just died. Update group sets in request.
+-- This is important in order to determine if a job is done and can be removed from the (pending) queue.
+-- @param #WAREHOUSE self
+-- @param Wrapper.Unit#UNIT deadunit Unit that died.
+-- @param #WAREHOUSE.Pendingitem request Request that needs to be updated.
+function WAREHOUSE:_UnitDead(deadunit, request)
+  
+  -- Group the dead unit belongs to.
+  local group=deadunit:GetGroup()
+  
+  -- Check if this was the last unit of the group ==> whole group dead.
+  local isgroupdead=false
+  local nunits=0    
+  if group then
+    local nunits=group:GetSize()    
+    -- One (or less) units in group. 
+    if nunits<=1 then
+      isgroupdead=true
+    end    
+  end
+  
+  local text=string.format("Unit %s died! Group %s: #units=%d, IsAlive=%s", deadunit:GetName(), group:GetName(), nunits, tostring(group:IsAlive()))
+  self:E(self.wid..text)
+  
+  local NoTriggerEvent=false  
+  
+  if request.transporttype==WAREHOUSE.TransportType.SELFPROPELLED then
+  
+    ---
+    -- Easy case: Group can simply be removed from the cargogroupset.
+    ---
+    
+    -- Remove dead group from carg group set.
+    if isgroupdead==true then
+      request.cargogroupset:Remove(group, NoTriggerEvent)      
+    end
+  
+  else
+  
+    ---
+    -- Complicated case: Dead unit could be: 
+    -- 1.) A Cargo unit (e.g. waiting to be picked up).
+    -- 2.) A Transport unit which itself holds cargo groups.
+    --- 
+      
+    if self:_GroupIsTransport(group,request) then
+    
+      -- Get the carrier unit table holding the cargo groups inside this carrier.
+      local carrierunit=request.carriercargo[deadunit:GetName()]
+      
+      if carrierunit then
+      
+        -- Loop over all groups inside the carrier ==> all dead.
+        for _,cargogroup in pairs(carrierunit) do
+        
+          -- TODO: Check if remove really needs the name? Did I not always use the group object?!
+          --request.cargogroupset:Remove(ObjectName,NoTriggerEvent)
+          request.cargogroupset:Remove(cargogroup,NoTriggerEvent)
+        end
+        
+      end
+    
+      -- Whole carrier group is dead. Remove it from the carrier group set.
+      if isgroupdead then
+        request.transportcargoset:Remove(group, NoTriggerEvent)
+      end  
+        
+    else
+      
+      -- This must have been an alive cargo group that was killed outside the carrier, e.g. waiting to be transported or waiting to be put back.
+      -- Remove dead group from cargo group set.
+      if isgroupdead==true then
+
+        request.cargogroupset:Remove(group, NoTriggerEvent)
+        
+        -- TODO: This as well?
+        --request.transportcargoset:RemoveCargosByName(RemoveCargoNames)
+      end      
+      
+    end
+  end
+end
+
+--- Count alive and filter dead groups. 
+-- @param #WAREHOUSE self
+-- @param Core.Set#SET_GROUP groupset Set of groups. Dead groups are removed from the set.
+-- @return #number Number of alive groups. Returns zero if groupset is nil.
+function WAREHOUSE:_FilterDead(groupset)
+
+  local nalive=0
+  
+  if groupset then
+
+    -- Check if groups are still alive
+    local dead={}
+    for _,group in pairs(groupset:GetSetObjects()) do
+      if group and group:IsAlive() then
+        nalive=nalive+1
+      else
+        table.insert(dead, group)
+      end
+    end
+    
+    -- TODO: Since the cargo groups are de- and re-spawned, does the counting for cargo groups actually work, when they are transported?
+    
+    -- Debug info.
+    self:T(self.wid..string.format("FilterDead: Alive=%d, Dead=%d", nalive, #dead))
+    
+    -- Remove dead groups
+    local NoTriggerEvent=false
+    for _,group in pairs(dead) do
+      groupset:Remove(group, NoTriggerEvent)
+    end
+  end
+  
+  return nalive
+end
+
 
 --- Warehouse event handling function.
 -- Handles the case when the airbase associated with the warehous is captured.
@@ -5674,7 +5797,6 @@ function WAREHOUSE:_DisplayStatus()
   local text=string.format("\n------------------------------------------------------\n")
   text=text..string.format("Warehouse %s status: %s\n", self.alias, self:GetState())
   text=text..string.format("------------------------------------------------------\n")
-  --text=text..string.format("Current status   = %s\n", )
   text=text..string.format("Coalition side   = %d\n", self.coalition)
   text=text..string.format("Country name     = %d\n", self.country)
   text=text..string.format("Airbase name     = %s\n", airbasename)
