@@ -69,7 +69,7 @@ do -- CARGO_GROUP
     local WeightGroup = 0
     local VolumeGroup = 0
     
-    self.CargoGroup:Destroy( true ) -- generate the crash events, so that the database gets cleaned, and the linked sets get properly cleaned.
+    self.CargoGroup:Destroy() -- destroy and generate a unit removal event, so that the database gets cleaned, and the linked sets get properly cleaned.
 
     local GroupName = CargoGroup:GetName()
     self.CargoName = Name
@@ -121,6 +121,7 @@ do -- CARGO_GROUP
     
     self:HandleEvent( EVENTS.Dead, self.OnEventCargoDead )
     self:HandleEvent( EVENTS.Crash, self.OnEventCargoDead )
+    self:HandleEvent( EVENTS.RemoveUnit, self.OnEventCargoDead )
     self:HandleEvent( EVENTS.PlayerLeaveUnit, self.OnEventCargoDead )
     
     self:SetEventPriority( 4 )
@@ -137,7 +138,7 @@ do -- CARGO_GROUP
 
     for CargoID, CargoData in pairs( self.CargoSet:GetSet() ) do
       local Cargo = CargoData -- Cargo.Cargo#CARGO
-      Cargo:Destroy()
+      Cargo:Destroy() -- Destroy the cargo and generate a remove unit event to update the sets.
       Cargo:SetStartState( "UnLoaded" )
     end
 

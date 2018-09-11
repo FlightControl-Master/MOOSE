@@ -531,7 +531,7 @@ do -- CARGO
   -- @param #CARGO self
   function CARGO:Destroy()
     if self.CargoObject then
-      self.CargoObject:Destroy( false )
+      self.CargoObject:Destroy()
     end
     self:Destroyed()
   end
