@@ -364,7 +364,6 @@ do -- SETTINGS
   -- @param #SETTINGS self
   -- @return #boolean true if BRA
   function SETTINGS:IsA2A_BRAA()
-    self:E( { BRA = ( self.A2ASystem and self.A2ASystem == "BRAA" ) or ( not self.A2ASystem and _SETTINGS:IsA2A_BRAA() ) } )
     return ( self.A2ASystem and self.A2ASystem == "BRAA" ) or ( not self.A2ASystem and _SETTINGS:IsA2A_BRAA() )
   end
 

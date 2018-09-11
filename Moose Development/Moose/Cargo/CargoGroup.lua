@@ -258,7 +258,6 @@ do -- CARGO_GROUP
   --- @param #CARGO_GROUP self
   -- @param Core.Event#EVENTDATA EventData 
   function CARGO_GROUP:OnEventCargoDead( EventData )
-    self:I( EventData )
 
     local Destroyed = false
   
@@ -424,7 +423,7 @@ do -- CARGO_GROUP
               ToVec=ToPointVec2
             end
             Cargo:__UnBoard( Timer, ToVec, NearRadius )
-            Timer = Timer + 3
+            Timer = Timer + 1
           end
         end, { NearRadius }
       )
