@@ -1023,6 +1023,7 @@ function SET_GROUP:FilterStart()
     self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
     self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
     self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
+    self:HandleEvent( EVENTS.RemoveUnit, self._EventOnDeadOrCrash )
   end
   
   
@@ -1804,8 +1805,9 @@ do -- SET_UNIT
     if _DATABASE then
       self:_FilterStart()
       self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
-      self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
+      self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrashOr )
       self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
+      self:HandleEvent( EVENTS.RemoveUnit, self._EventOnDeadOrCrash )
     end
     
     return self

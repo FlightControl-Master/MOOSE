@@ -69,6 +69,38 @@ function POSITIONABLE:New( PositionableName )
   return self
 end
 
+--- Destroys the POSITIONABLE.
+-- @param #POSITIONABLE self
+-- @param #boolean GenerateEvent (Optional) true if you want to generate a crash or dead event for the unit.
+-- @return #nil The DCS Unit is not existing or alive.  
+function POSITIONABLE:Destroy( GenerateEvent )
+  self:F2( self.ObjectName )
+
+  local DCSObject = self:GetDCSObject()
+  
+  if DCSObject then
+  
+    local UnitGroup = self:GetGroup()
+    local UnitGroupName = UnitGroup:GetName()
+    self:F( { UnitGroupName = UnitGroupName } )
+    
+    if GenerateEvent and GenerateEvent == true then
+      if self:IsAir() then
+        self:CreateEventCrash( timer.getTime(), DCSObject )
+      else
+        self:CreateEventDead( timer.getTime(), DCSObject )
+      end
+    else
+      self:CreateEventRemoveUnit( timer.getTime(), DCSObject )
+    end
+    
+    USERFLAG:New( UnitGroupName ):Set( 100 )
+    DCSObject:destroy()
+  end
+
+  return nil
+end
+
 --- Returns the @{DCS#Position3} position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return DCS#Position The 3D position vectors of the POSITIONABLE.

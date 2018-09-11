@@ -95,6 +95,7 @@ function DATABASE:New()
   self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
   self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
   self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
+  self:HandleEvent( EVENTS.RemoveUnit, self._EventOnDeadOrCrash )
   self:HandleEvent( EVENTS.Hit, self.AccountHits )
   self:HandleEvent( EVENTS.NewCargo )
   self:HandleEvent( EVENTS.DeleteCargo )
@@ -1347,18 +1348,12 @@ end
       self:T( { TargetUnitName, TargetGroupName, TargetPlayerName, TargetCoalition, TargetCategory, TargetType } )
     end
   
-    self:T( "Something got destroyed" )
-
     local Destroyed = false
 
     -- What is the player destroying?
     if self.HITS[Event.IniUnitName] then -- Was there a hit for this unit for this player before registered???
-      
-
       self.DESTROYS[Event.IniUnitName] = self.DESTROYS[Event.IniUnitName] or {}
-      
       self.DESTROYS[Event.IniUnitName] = true
-
     end
   end
 

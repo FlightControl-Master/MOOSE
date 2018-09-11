@@ -656,6 +656,22 @@ function BASE:CreateEventDead( EventTime, Initiator )
   world.onEvent( Event )
 end
 
+--- Creation of a Remove Unit Event.
+-- @param #BASE self
+-- @param DCS#Time EventTime The time stamp of the event.
+-- @param DCS#Object Initiator The initiating object of the event.
+function BASE:CreateEventRemoveUnit( EventTime, Initiator )
+  self:F( { EventTime, Initiator } )
+
+  local Event = {
+    id = EVENTS.RemoveUnit,
+    time = EventTime,
+    initiator = Initiator,
+    }
+
+  world.onEvent( Event )
+end
+
 --- Creation of a Takeoff Event.
 -- @param #BASE self
 -- @param DCS#Time EventTime The time stamp of the event.

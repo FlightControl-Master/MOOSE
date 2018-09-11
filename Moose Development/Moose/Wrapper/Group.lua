@@ -261,13 +261,15 @@ function GROUP:Destroy( GenerateEvent )
   local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
-    if GenerateEvent and GenerateEvent == true then
-      for Index, UnitData in pairs( DCSGroup:getUnits() ) do
+    for Index, UnitData in pairs( DCSGroup:getUnits() ) do
+      if GenerateEvent and GenerateEvent == true then
         if self:IsAir() then
           self:CreateEventCrash( timer.getTime(), UnitData )
         else
           self:CreateEventDead( timer.getTime(), UnitData )
         end
+      else
+        self:CreateEventRemove( timer.getTime(), UnitData )
       end
     end
     USERFLAG:New( self:GetName() ):Set( 100 )
