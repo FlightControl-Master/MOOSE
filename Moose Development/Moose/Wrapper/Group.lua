@@ -269,7 +269,7 @@ function GROUP:Destroy( GenerateEvent )
           self:CreateEventDead( timer.getTime(), UnitData )
         end
       else
-        self:CreateEventRemove( timer.getTime(), UnitData )
+        self:CreateEventRemoveUnit( timer.getTime(), UnitData )
       end
     end
     USERFLAG:New( self:GetName() ):Set( 100 )

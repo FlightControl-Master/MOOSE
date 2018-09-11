@@ -885,7 +885,7 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
     -- The Pickup sequence ...
     -- Check if this Carrier need to go and Pickup something...
     -- So, if the cargo bay is not full yet with cargo to be loaded ...
-    self:I( { IsRelocating = AI_Cargo:IsRelocating(), IsTransporting = AI_Cargo:IsTransporting() } )
+    self:I( { Carrier = CarrierGroupName, IsRelocating = AI_Cargo:IsRelocating(), IsTransporting = AI_Cargo:IsTransporting() } )
     if AI_Cargo:IsRelocating() == false and AI_Cargo:IsTransporting() == false then
       -- ok, so there is a free Carrier
       -- now find the first cargo that is Unloaded
@@ -944,7 +944,7 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
         if self.HomeZone then
           if not self.CarrierHome[Carrier] then
             self.CarrierHome[Carrier] = true
-            AI_Cargo:__Home( 60, self.HomeZone:GetRandomPointVec2(), math.random( self.PickupMinSpeed, self.PickupMaxSpeed ), self.HomeZone )
+            AI_Cargo:Home( self.HomeZone:GetRandomPointVec2(), math.random( self.PickupMinSpeed, self.PickupMaxSpeed ), self.HomeZone )
           end
         end
       end
