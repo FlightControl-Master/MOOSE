@@ -181,6 +181,8 @@ world.event.S_EVENT_NEW_CARGO = world.event.S_EVENT_MAX + 1000
 world.event.S_EVENT_DELETE_CARGO = world.event.S_EVENT_MAX + 1001
 world.event.S_EVENT_NEW_ZONE = world.event.S_EVENT_MAX + 1002
 world.event.S_EVENT_DELETE_ZONE = world.event.S_EVENT_MAX + 1003
+world.event.S_EVENT_REMOVE_UNIT = world.event.S_EVENT_MAX + 1004
+
 
 --- The different types of events supported by MOOSE.
 -- Use this structure to subscribe to events using the @{Core.Base#BASE.HandleEvent}() method.
@@ -216,6 +218,7 @@ EVENTS = {
   DeleteCargo =       world.event.S_EVENT_DELETE_CARGO,
   NewZone =           world.event.S_EVENT_NEW_ZONE,
   DeleteZone =        world.event.S_EVENT_DELETE_ZONE,
+  RemoveUnit =        world.event.S_EVENT_REMOVE_UNIT,
 }
 
 --- The Event structure
@@ -444,6 +447,11 @@ local _EVENTMETA = {
      Order = 1,
      Event = "OnEventDeleteZone",
      Text = "S_EVENT_DELETE_ZONE" 
+   },
+   [EVENTS.RemoveUnit] = {
+     Order = -1,
+     Event = "OnEventRemoveUnit",
+     Text = "S_EVENT_REMOVE_UNIT" 
    },
 }
 
@@ -995,7 +1003,8 @@ function EVENT:onEvent( Event )
             if EventClass:IsAlive() or
                Event.id == EVENTS.PlayerEnterUnit or 
                Event.id == EVENTS.Crash or 
-               Event.id == EVENTS.Dead then
+               Event.id == EVENTS.Dead or 
+               Event.id == EVENTS.RemoveUnit then
             
               local UnitName = EventClass:GetName()
 
@@ -1045,7 +1054,8 @@ function EVENT:onEvent( Event )
               if EventClass:IsAlive() or
                  Event.id == EVENTS.PlayerEnterUnit or
                  Event.id == EVENTS.Crash or
-                 Event.id == EVENTS.Dead then
+                 Event.id == EVENTS.Dead or
+                 Event.id == EVENTS.RemoveUnit then
 
                 -- We can get the name of the EventClass, which is now always a GROUP object.
                 local GroupName = EventClass:GetName()

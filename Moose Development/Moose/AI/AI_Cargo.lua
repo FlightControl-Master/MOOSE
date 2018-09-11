@@ -178,7 +178,7 @@ function AI_CARGO:onbeforeLoad( Carrier, From, Event, To, PickupZone )
 
   local Boarding = false
 
-  local LoadInterval = 10
+  local LoadInterval = 2
   local LoadDelay = 0
   local Carrier_List = {}
   local Carrier_Weight = {}

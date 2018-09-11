@@ -205,18 +205,18 @@ function GROUP:GetPositionVec3() -- Overridden from POSITIONABLE:GetPositionVec3
   return nil
 end
 
---- Returns if the Group is alive.
+--- Returns if the group is alive.
 -- The Group must:
 -- 
 --   * Exist at run-time.
 --   * Has at least one unit.
 -- 
--- When the first @{Wrapper.Unit} of the Group is active, it will return true.
--- If the first @{Wrapper.Unit} of the Group is inactive, it will return false.
+-- When the first @{Wrapper.Unit} of the group is active, it will return true.
+-- If the first @{Wrapper.Unit} of the group is inactive, it will return false.
 -- 
 -- @param #GROUP self
--- @return #boolean true if the Group is alive and active.
--- @return #boolean false if the Group is alive but inactive.
+-- @return #boolean true if the group is alive and active.
+-- @return #boolean false if the group is alive but inactive.
 -- @return #nil if the group does not exist anymore.
 function GROUP:IsAlive()
   self:F2( self.GroupName )
@@ -236,6 +236,26 @@ function GROUP:IsAlive()
 
   return nil
 end
+
+--- Returns if the group is activated.
+-- @param #GROUP self
+-- @return #boolean true if group is activated.
+-- @return #nil The group is not existing or alive.  
+function GROUP:IsActive()
+  self:F2( self.GroupName )
+
+  local DCSGroup = self:GetDCSObject() -- DCS#Group
+  
+  if DCSGroup then
+  
+    local GroupIsActive = DCSGroup:getUnit(1):isActive()
+    return GroupIsActive 
+  end
+
+  return nil
+end
+
+
 
 --- Destroys the DCS Group and all of its DCS Units.
 -- Note that this destroy method also can raise a destroy event at run-time.
@@ -261,13 +281,15 @@ function GROUP:Destroy( GenerateEvent )
   local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
-    if GenerateEvent and GenerateEvent == true then
-      for Index, UnitData in pairs( DCSGroup:getUnits() ) do
+    for Index, UnitData in pairs( DCSGroup:getUnits() ) do
+      if GenerateEvent and GenerateEvent == true then
         if self:IsAir() then
           self:CreateEventCrash( timer.getTime(), UnitData )
         else
           self:CreateEventDead( timer.getTime(), UnitData )
         end
+      else
+        self:CreateEventRemoveUnit( timer.getTime(), UnitData )
       end
     end
     USERFLAG:New( self:GetName() ):Set( 100 )
