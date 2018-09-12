@@ -979,7 +979,7 @@ function EVENT:onEvent( Event )
     local PriorityEnd = PriorityOrder == -1 and 1 or 5
 
     if Event.IniObjectCategory ~= Object.Category.STATIC then
-      self:E( { EventMeta.Text, Event, Event.IniDCSUnitName, Event.TgtDCSUnitName, PriorityOrder } )
+      self:T( { EventMeta.Text, Event, Event.IniDCSUnitName, Event.TgtDCSUnitName, PriorityOrder } )
     end
     
     for EventPriority = PriorityBegin, PriorityEnd, PriorityOrder do

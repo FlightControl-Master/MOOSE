@@ -991,21 +991,22 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.4.2"
+WAREHOUSE.version="0.4.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- DONE: Case when all transports are killed and there is still cargo to be delivered. Put cargo back into warehouse.
+-- TODO: Check overlapping aircraft sometimes.
 -- TODO: Spawn assets only virtually, i.e. remove requested assets from stock but do NOT spawn them ==> Interface to A2A dispatcher! Maybe do a negative sign on asset number?
 -- TODO: Test capturing a neutral warehouse.
 -- TODO: Make more examples: ARTY, CAP, ...
 -- TODO: Check also general requests like all ground. Is this a problem for self propelled if immobile units are among the assets? Check if transport.
--- TODO: Add transport units from dispatchers back to warehouse stock once they completed their mission.
 -- TODO: Handle the case when units of a group die during the transfer.
 -- TODO: Added habours as interface for transport to from warehouses?
 -- TODO: Add save/load capability of warehouse <==> percistance after mission restart. Difficult in lua!
+-- DONE: Case when all transports are killed and there is still cargo to be delivered. Put cargo back into warehouse. Should be done now!
+-- DONE: Add transport units from dispatchers back to warehouse stock once they completed their mission.
 -- DONE: Write documentation.
 -- DONE: Add AAA, SAMs and UAVs to generalized attributes.
 -- DONE: Add warehouse quantity enumerator.
@@ -2131,8 +2132,16 @@ function WAREHOUSE:_JobDone()
         ---------------
         -- Job done! --
         ---------------
-      
-        self:I(string.format("Request id=%d done! No more cargo or transport assets alive.", request.uid))
+        
+        -- Info on job.
+        local text=string.format("Warehouse %s: Job on request id=%d done!\n", self.alias, request.uid)
+        text=text..string.format("- %d of %d assets delivered to %s. Casualties %d.", ncargodelivered, ncargotot, request.warehouse.alias, ncargodead)
+        if request.ntransport>0 then
+          text=text..string.format("\n- %d of %d transports returned home. Casualties %d.", ntransporthome, ntransporttot, ntransportdead)
+        end
+        self:_InfoMessage(text, 20)
+        
+        -- Mark request for deletion.
         table.insert(done, request)
         
       else
@@ -2141,6 +2150,7 @@ function WAREHOUSE:_JobDone()
         -----------------------------------
         
         -- This is difficult! How do I know if transports were unused? They could also be just on their way back home.
+        -- ==> Need to do a lot of checks.
       
         -- All transports are dead but there is still cargo left ==> Put cargo back into stock.
         for _,_group in pairs(request.transportgroupset:GetSetObjects()) do
@@ -2224,7 +2234,6 @@ function WAREHOUSE:_JobDone()
                 group:SmokeBlue()
               end            
               -- Add asset group back to stock.
-              --env.info(string.format("FF add asset group %s in function JobDone", group:GetName()))
               self:AddAsset(group)
             end
           end
@@ -2261,7 +2270,6 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
     group=GROUP:FindByName(group)
   end
   
-  --TODO: What happens if the name of the group is wrong? Saw strange behaviour!
     
   if group then
   
@@ -2284,13 +2292,13 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
           if istransport==true then
             request.ntransporthome=request.ntransporthome+1
             request.transportgroupset:Remove(group:GetName(), true)
-            self:I(warehouse.wid..string.format("FF Transport %d of %s returned home.", request.ntransporthome, tostring(request.ntransport)))
+            self:T3(warehouse.wid..string.format("Transport %d of %s returned home.", request.ntransporthome, tostring(request.ntransport)))
           elseif istransport==false then
             request.ndelivered=request.ndelivered+1
             request.cargogroupset:Remove(self:_GetNameWithOut(group), true)
-            self:I(warehouse.wid..string.format("FF Cargo %d of %s delivered.", request.ndelivered, tostring(request.nasset)))
+            self:T3(warehouse.wid..string.format("Cargo %d of %s delivered.", request.ndelivered, tostring(request.nasset)))
           else
-            self:E(warehouse.wid..string.format("ERROR: Group %s is neither cargo nor transport!", group:GetName()))
+            self:T(warehouse.wid..string.format("WARNING: Group %s is neither cargo nor transport!", group:GetName()))
           end
           
         end
@@ -2329,13 +2337,15 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
     -- Destroy group if it is alive.
     if group:IsAlive()==true then
       self:_DebugMessage(string.format("Destroying group %s.", group:GetName()), 5)
-      group:Destroy(true)
+      group:Destroy()
     end
-    
+  
+  else
+    self:E(self.wid.."ERROR: Unknown group added as asset!")
   end
   
   -- Update status.
-  --self:__Status(-1)
+  self:__Status(-1)
 end
 
 
@@ -2666,7 +2676,7 @@ function WAREHOUSE:onbeforeRequest(From, Event, To, Request)
       
       -- Delete request from queue because it will never be possible.
       --TODO: Unless(!) this is a moving warehouse which could, e.g., be an aircraft carrier. 
-      self:_DeleteQueueItem(Request, self.queue)
+      --self:_DeleteQueueItem(Request, self.queue)
       
       return false
     end
@@ -2852,7 +2862,6 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   ----------------------------
 
   -- Spawn the transport groups.
-  env.info("FF Request ntransport = "..Request.ntransport)
   for i=1,Request.ntransport do
 
     -- Get stock item.
@@ -2949,20 +2958,19 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
   if Request.transporttype==WAREHOUSE.TransportType.AIRPLANE then
   
-    -- Pickup and deloay zones.
+    -- Pickup and deploy zones.
     local PickupAirbaseSet = SET_ZONE:New():AddZone(ZONE_AIRBASE:New(self.airbase:GetName()))
     local DeployAirbaseSet = SET_ZONE:New():AddZone(ZONE_AIRBASE:New(Request.airbase:GetName()))
 
     -- Define dispatcher for this task.
     CargoTransport = AI_CARGO_DISPATCHER_AIRPLANE:New(TransportSet, CargoGroups, PickupAirbaseSet, DeployAirbaseSet)
+    
+    -- Set home zone.
+    CargoTransport:SetHomeZone(ZONE_AIRBASE:New(self.airbase:GetName()))
 
   elseif Request.transporttype==WAREHOUSE.TransportType.HELICOPTER then
   
-    -- Pickup and deloay zones.
-    --local PickupAirbaseSet = SET_ZONE:New():AddZone(ZONE_AIRBASE:New(self.airbase:GetName()))
-    --local DeployAirbaseSet = SET_ZONE:New():AddZone(ZONE_AIRBASE:New(Request.airbase:GetName()))  
-
-    -- Pickup and deloay zones.
+    -- Pickup and deploy zones.
     local PickupZoneSet = SET_ZONE:New():AddZone(self.spawnzone)
     local DeployZoneSet = SET_ZONE:New():AddZone(Request.warehouse.spawnzone)
 
@@ -2979,7 +2987,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
   elseif Request.transporttype==WAREHOUSE.TransportType.APC then
   
-    -- Pickup and deloay zones.
+    -- Pickup and deploy zones.
     local PickupZoneSet = SET_ZONE:New():AddZone(self.spawnzone)
     local DeployZoneSet = SET_ZONE:New():AddZone(Request.warehouse.spawnzone)
 
@@ -2994,7 +3002,6 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     CargoTransport:SetPickupRadius(self.spawnzone:GetRadius(), 20)
     CargoTransport:SetDeployRadius(Request.warehouse.spawnzone:GetRadius(), 20)    
         
-
   else
     self:E(self.wid.."ERROR: Unknown transporttype!")
   end
@@ -3196,20 +3203,17 @@ function WAREHOUSE:onafterArrived(From, Event, To, group)
     if istransport==true then
       request.ntransporthome=request.ntransporthome+1
       request.transportgroupset:Remove(group:GetName(), true)
-      self:I(warehouse.wid..string.format("FF Transport %d of %s returned home.", request.ntransporthome, tostring(request.ntransport)))
+      self:T2(warehouse.wid..string.format("Transport %d of %s returned home.", request.ntransporthome, tostring(request.ntransport)))
     elseif istransport==false then
       request.ndelivered=request.ndelivered+1
       request.cargogroupset:Remove(self:_GetNameWithOut(group), true)
-      self:I(warehouse.wid..string.format("FF Cargo %d of %s delivered.", request.ndelivered, tostring(request.nasset)))
+      self:T2(warehouse.wid..string.format("Cargo %d of %s delivered.", request.ndelivered, tostring(request.nasset)))
     else
       self:E(warehouse.wid..string.format("ERROR: Group %s is neither cargo nor transport!", group:GetName()))
     end    
   
     -- Move asset from pending queue into new warehouse.
     warehouse:__AddAsset(60, group)
-    env.info(string.format("FF add asset group %s in function onafterArrived in 60 seconds", group:GetName()))
-    --warehouse:AddAsset(group)
-    
   end
     
 end
@@ -4183,20 +4187,28 @@ function WAREHOUSE:_OnEventArrived(EventData)
       
       -- If all IDs are good we can assume it is a warehouse asset.
       if wid~=nil and aid~=nil and rid~=nil then
-      
+            
         -- Check that warehouse ID is right.
         if self.uid==wid then
+        
+          local request=self:_GetRequestOfGroup(group, self.pending)
+          local istransport=self:_GroupIsTransport(group,request)
+    
+          -- Check that group is cargo and not transport.
+          if istransport==false then    
       
-          -- Debug info.
-          local text=string.format("Air asset group %s from warehouse %s arrived at its destination.", group:GetName(), self.alias)
-          self:_InfoMessage(text)
-          
-          -- Trigger arrived event for this group. Note that each unit of a group will trigger this event. So the onafterArrived function needs to take care of that.
-          -- Actually, we only take the first unit of the group that arrives. If it does, we assume the whole group arrived, which might not be the case, since
-          -- some units might still be taxiing or whatever. Therefore, we add 10 seconds for each additional unit of the group until the first arrived event is triggered.
-          local nunits=#group:GetUnits()
-          local dt=10*(nunits-1)+1  -- one unit = 1 sec, two units = 11 sec, three units = 21 sec before we call the group arrived.
-          self:__Arrived(dt, group)
+            -- Debug info.
+            local text=string.format("Air asset group %s from warehouse %s arrived at its destination.", group:GetName(), self.alias)
+            self:_InfoMessage(text)
+            
+            -- Trigger arrived event for this group. Note that each unit of a group will trigger this event. So the onafterArrived function needs to take care of that.
+            -- Actually, we only take the first unit of the group that arrives. If it does, we assume the whole group arrived, which might not be the case, since
+            -- some units might still be taxiing or whatever. Therefore, we add 10 seconds for each additional unit of the group until the first arrived event is triggered.
+            local nunits=#group:GetUnits()
+            local dt=10*(nunits-1)+1  -- one unit = 1 sec, two units = 11 sec, three units = 21 sec before we call the group arrived.
+            self:__Arrived(dt, group)
+            
+          end
           
         end
         
@@ -4445,8 +4457,6 @@ function WAREHOUSE:_CheckConquered()
   local radius=self.zone:GetRadius()
   
   -- Scan units in zone.
-  --TODO: need to check if scan radius does what it should!
-  -- It seems to return units that are further away than the radius.
   local gotunits,_,_,units,_,_=coord:ScanObjects(radius, true, false, false)
   
   local Nblue=0
@@ -4639,12 +4649,22 @@ function WAREHOUSE:_CheckRequestValid(request)
 
   -- Check if number of requested assets is in stock.
   local _assets,_nassets,_enough=self:_FilterStock(self.stock, request.assetdesc, request.assetdescval, request.nasset)
-   
+  
   -- No assets in stock? Checks cannot be performed.
   if #_assets==0 then
     return true
   end
   
+  -- Convert relative to absolute number if necessary.
+  local nasset=request.nasset
+  if type(request.nasset)=="string" then
+    nasset=self:_QuantityRel2Abs(request.nasset,_nassets)
+  end
+
+  -- Debug check, request.nasset might be a string Quantity enumerator.
+  local text=string.format("Request valid? Number of assets: requested=%s=%d, selected=%d, total=%d, enough=%s.", tostring(request.nasset), nasset,#_assets,_nassets, tostring(_enough))
+  self:T(text)
+   
   -- First asset. Is representative for all filtered items in stock.
   local asset=_assets[1] --#WAREHOUSE.Assetitem
   
@@ -4714,15 +4734,14 @@ function WAREHOUSE:_CheckRequestValid(request)
         
         -- Not enough parking at sending warehouse.
         --if (np_departure < request.nasset) and not (self.category==Airbase.Category.SHIP or self.category==Airbase.Category.HELIPAD) then
-        if np_departure < request.nasset then
-          self:E(string.format("ERROR: Incorrect request. Not enough parking spots of terminal type %d at warehouse. Available spots = %d.", termtype, np_departure))
+        if np_departure < nasset then
+          self:E(string.format("ERROR: Incorrect request. Not enough parking spots of terminal type %d at warehouse. Available spots %d < %d necessary.", termtype, np_departure, nasset))
           valid=false    
         end
 
-        -- Not enough parking at requesting warehouse.
-        --if np_destination < request.nasset then
-        if np_destination == 0 then -- TODO: maybe this is just right for FAPS/SHIPS
-          self:E(string.format("ERROR: Incorrect request. Not enough parking spots of terminal type %d at requesting warehouse. Available spots = %d.", termtype, np_destination))
+        -- No parking at requesting warehouse.
+        if np_destination == 0 then
+          self:E(string.format("ERROR: Incorrect request. No parking spots of terminal type %d at requesting warehouse. Available spots = %d!", termtype, np_destination))
           valid=false    
         end        
         
@@ -4834,6 +4853,57 @@ function WAREHOUSE:_CheckRequestValid(request)
       self:E("ERROR: Incorrect request. Transport type unknown!")
       valid=false
     end
+    
+    -- Airborne assets: check parking situation.
+    if request.transporttype==WAREHOUSE.TransportType.AIRPLANE or request.transporttype==WAREHOUSE.TransportType.HELICOPTER then
+    
+      -- Check if number of requested assets is in stock.
+      local _assets,_nassets,_enough=self:_FilterStock(self.stock, WAREHOUSE.Descriptor.ATTRIBUTE, request.transporttype, request.ntransport)
+      
+      -- Convert relative to absolute number if necessary.
+      local nasset=request.ntransport
+      if type(request.nasset)=="string" then
+        nasset=self:_QuantityRel2Abs(request.ntransport,_nassets)
+      end
+
+      -- Debug check, request.nasset might be a string Quantity enumerator.
+      local text=string.format("Request valid? Number of transports: requested=%s=%d, selected=%d, total=%d, enough=%s.", tostring(request.ntransport), nasset,#_assets,_nassets, tostring(_enough))
+      self:T(text)
+
+      -- Get necessary terminal type for helos or transport aircraft.
+      local termtype=self:_GetTerminal(request.transporttype)
+      
+      -- Get number of parking spots.
+      local np_departure=self.airbase:GetParkingSpotsNumber(termtype)
+                   
+      -- Debug info.
+      self:T(self.wid..string.format("Transport attribute = %s, terminal type = %d, spots at departure = %d.", request.transporttype, termtype, np_departure))
+      
+      -- Not enough parking at sending warehouse.
+      --if (np_departure < request.nasset) and not (self.category==Airbase.Category.SHIP or self.category==Airbase.Category.HELIPAD) then
+      if np_departure < nasset then
+        self:E(self.wid..string.format("ERROR: Incorrect request. Not enough parking spots of terminal type %d at warehouse. Available spots %d < %d necessary.", termtype, np_departure, nasset))
+        valid=false
+      end
+      
+      -- Planes also need parking at the receiving warehouse.
+      if request.transporttype==WAREHOUSE.TransportType.AIRPLANE then
+      
+        -- Total number of parking spots for transport planes at destination.
+        local np_destination=request.airbase:GetParkingSpotsNumber(termtype)
+
+        -- Debug info.
+        self:T(self.wid..string.format("Transport attribute = %s: total # of spots (type=%d) at destination = %d.", asset.attribute, termtype, np_destination))
+                  
+        -- No parking at requesting warehouse.
+        if np_destination == 0 then
+          self:E(string.format("ERROR: Incorrect request. No parking spots of terminal type %d at requesting warehouse for transports. Available spots = %d!", termtype, np_destination))
+          valid=false    
+        end
+      end
+      
+    end
+    
 
   end
   
@@ -4841,7 +4911,7 @@ function WAREHOUSE:_CheckRequestValid(request)
   if valid==false then
     self:E(self.wid..string.format("ERROR: Got invalid request id=%d.", request.uid))
   else
-    self:T3(self.wid..string.format("Got valid request id=%d.", request.uid))
+    self:T3(self.wid..string.format("Request id=%d valid :)", request.uid))
   end
   
   return valid
@@ -5054,6 +5124,7 @@ function WAREHOUSE:_GetTransportsForAssets(request)
       
       -- Loop over cargo assets.
       for j,asset in pairs(cargoassets) do
+        local asset=asset --#WAREHOUSE.Assetitem
         
         -- How many times does the cargo fit into the carrier?
         local delta=cargobay-asset.weight
@@ -5071,21 +5142,26 @@ function WAREHOUSE:_GetTransportsForAssets(request)
          
           -- This transport group is used.
           used=true
-        else
-          env.info("FF not used! n="..delta)
+        else          
+          self:T2(self.wid..string.format("Carrier unit %s too small for cargo asset %s ==> cannot be not used! Cargo bay - asset weight = %d kg", transport.templatename, asset.templatename, delta))
         end
       
       end -- loop over assets      
     end   -- loop over units
     
-    -- Remove cargo assets from list. Needs to be done back-to-front in oder not to confuse the loop.
+    -- Remove cargo assets from list. Needs to be done back-to-front in order not to confuse the loop.
     for j=#putintocarrier,1, -1 do
+      
       local nput=putintocarrier[j]
-      
       local cargo=cargoassets[nput]
-      self:T(self.wid..string.format("Cargo id=%d assigned for carrier id=%d", cargo.uid, transport.uid)) 
       
-      table.remove(cargoassets, nput)
+      -- Need to check if multiple units in a group and the group has already been removed!
+      -- TODO: This might need to be improved but is working okay so far.
+      if cargo then
+        -- Remove this group because it was used.
+        self:T2(self.wid..string.format("Cargo id=%d assigned for carrier id=%d", cargo.uid, transport.uid))      
+        table.remove(cargoassets, nput)
+      end
     end
     
     -- Cargo was assined for this carrier.
@@ -5094,9 +5170,7 @@ function WAREHOUSE:_GetTransportsForAssets(request)
     end
     
     -- Convert relative quantity (all, half) to absolute number if necessary.
-    local ntrans=self:_Rel2AbsQuantity(request.ntransport, #transports)
-    env.info("FF ntrans = "..ntrans)
-    env.info("FF #trans = "..#transports)
+    local ntrans=self:_QuantityRel2Abs(request.ntransport, #transports)
     
     -- Max number of transport groups reached?
     if #used_transports >= ntrans then
@@ -5129,7 +5203,7 @@ end
 -- @param #string relative Relative number in terms of @{#WAREHOUSE.Quantity}.
 -- @param #number ntot Total number.
 -- @return #number Absolute number.
-function WAREHOUSE:_Rel2AbsQuantity(relative, ntot)
+function WAREHOUSE:_QuantityRel2Abs(relative, ntot)
 
   local nabs=0
 
@@ -5138,19 +5212,21 @@ function WAREHOUSE:_Rel2AbsQuantity(relative, ntot)
     if relative==WAREHOUSE.Quantity.ALL then
       nabs=ntot
     elseif relative==WAREHOUSE.Quantity.THREEQUARTERS then
-      nabs=ntot*3/4
+      nabs=UTILS.Round(ntot*3/4)
     elseif relative==WAREHOUSE.Quantity.HALF then
-      nabs=ntot/2
+      nabs=UTILS.Round(ntot/2)
     elseif relative==WAREHOUSE.Quantity.THIRD then
-      nabs=ntot/3    
+      nabs=UTILS.Round(ntot/3)    
     elseif relative==WAREHOUSE.Quantity.QUARTER then
-      nabs=ntot/4
+      nabs=UTILS.Round(ntot/4)
     else
       nabs=math.min(1, ntot)
     end
   else
     nabs=relative
   end
+  
+  self:T2(self.wid..string.format("Relative %s: tot=%d, abs=%.2f", tostring(relative), ntot, nabs))
 
   return nabs
 end
@@ -5187,7 +5263,7 @@ function WAREHOUSE:_CheckQueue()
     if okay and valid and not gotit then
       request=qitem
       gotit=true
-      --break
+      break
     end
   end
   
@@ -5282,7 +5358,7 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
   local obstacles={}
   
   -- Loop over all parking spots and get the obstacles.
-  -- TODO: How long does this take on very large airbases, i.e. those with hundereds of parking spots?
+  -- How long does this take on very large airbases, i.e. those with hundereds of parking spots? Seems to be okay!
   for _,parkingspot in pairs(parkingdata) do
   
     -- Coordinate of the parking spot.
@@ -5309,7 +5385,6 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
       local _vec3=static:getPoint()
       local _coord=COORDINATE:NewFromVec3(_vec3)
       local _name=static:getName()
-      --env.info("FF static name = "..tostring(_name))
       local _size=self:_GetObjectSize(static)
       table.insert(obstacles[_termid],{coord=_coord, size=_size, name=_name, type="static"})  
     end
@@ -5613,22 +5688,8 @@ function WAREHOUSE:_FilterStock(stock, descriptor, attribute, nmax, mobile)
     return filtered, ntot, false
   end
   
-  -- Handle string input for nmax.
-  if type(nmax)=="string" then
-    if nmax:lower()==WAREHOUSE.Quantity.ALL then
-      nmax=ntot
-    elseif nmax==WAREHOUSE.Quantity.THREEQUARTERS then
-      nmax=ntot*3/4
-    elseif nmax==WAREHOUSE.Quantity.HALF then
-      nmax=ntot/2
-    elseif nmax==WAREHOUSE.Quantity.THIRD then
-      nmax=ntot/3    
-    elseif nmax==WAREHOUSE.Quantity.QUARTER then
-      nmax=ntot/4
-    else
-      nmax=math.min(1, ntot)
-    end
-  end
+  -- Convert relative to absolute number if necessary.
+  nmax=self:_QuantityRel2Abs(nmax,ntot)
 
   -- Loop over stock items.
   for _i,_asset in ipairs(stock) do
