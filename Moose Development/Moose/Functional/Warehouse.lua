@@ -991,7 +991,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.4.3"
+WAREHOUSE.version="0.4.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -4862,7 +4862,7 @@ function WAREHOUSE:_CheckRequestValid(request)
       
       -- Convert relative to absolute number if necessary.
       local nasset=request.ntransport
-      if type(request.nasset)=="string" then
+      if type(request.ntransport)=="string" then
         nasset=self:_QuantityRel2Abs(request.ntransport,_nassets)
       end
 

@@ -288,6 +288,8 @@ function GROUP:Destroy( GenerateEvent )
         else
           self:CreateEventDead( timer.getTime(), UnitData )
         end
+      elseif GenerateEvent==false then
+        -- Do nothing!
       else
         self:CreateEventRemoveUnit( timer.getTime(), UnitData )
       end
@@ -1524,7 +1526,7 @@ function GROUP:RespawnAtCurrentAirbase(SpawnTemplate, Takeoff, Uncontrolled) -- 
     SpawnTemplate.uncontrolled=Uncontrolled
 
     -- Destroy old group.
-    self:Destroy()
+    self:Destroy(false)
     
     
     --SCHEDULER:New(nil, DATABASE.Spawn, {_DATABASE, SpawnTemplate}, 0.00001)
