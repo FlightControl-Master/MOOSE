@@ -274,7 +274,13 @@ end
 -- @usage
 -- -- Ship unit example: destroy the Ship silently.
 -- Ship = GROUP:FindByName( "Ship" )
--- Ship:Destroy( true )
+-- Ship:Destroy()
+-- 
+-- @usage
+-- -- Destroy without event generation example.
+-- Ship = GROUP:FindByName( "Boat" )
+-- Ship:Destroy( false ) -- Don't generate an event upon destruction.
+-- 
 function GROUP:Destroy( GenerateEvent )
   self:F2( self.GroupName )
 
@@ -288,6 +294,8 @@ function GROUP:Destroy( GenerateEvent )
         else
           self:CreateEventDead( timer.getTime(), UnitData )
         end
+      elseif GenerateEvent == false then
+        -- Do nothing!
       else
         self:CreateEventRemoveUnit( timer.getTime(), UnitData )
       end
