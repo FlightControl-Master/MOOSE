@@ -56,7 +56,7 @@ do -- CARGO_SLINGLOAD
     
     self:HandleEvent( EVENTS.Dead, self.OnEventCargoDead )
     self:HandleEvent( EVENTS.Crash, self.OnEventCargoDead )
-    self:HandleEvent( EVENTS.RemoveUnit, self.OnEventCargoDead )
+    --self:HandleEvent( EVENTS.RemoveUnit, self.OnEventCargoDead )
     self:HandleEvent( EVENTS.PlayerLeaveUnit, self.OnEventCargoDead )
     
     self:SetEventPriority( 4 )
