@@ -993,6 +993,7 @@ do -- AI_A2A_DISPATCHER
     
     self:HandleEvent( EVENTS.Crash, self.OnEventCrashOrDead )
     self:HandleEvent( EVENTS.Dead, self.OnEventCrashOrDead )
+    --self:HandleEvent( EVENTS.RemoveUnit, self.OnEventCrashOrDead )
     
     self:HandleEvent( EVENTS.Land )
     self:HandleEvent( EVENTS.EngineShutdown )
@@ -2548,8 +2549,12 @@ do -- AI_A2A_DISPATCHER
         local SquadronOverhead = Squadron.Overhead or self.DefenderDefault.Overhead
         
         local DefenderSize = Defender:GetInitialSize()
-        DefenderCount = DefenderCount + DefenderSize / SquadronOverhead
-        self:F( "Defender Group Name: " .. Defender:GetName() .. ", Size: " .. DefenderSize )
+        if DefenderSize then
+          DefenderCount = DefenderCount + DefenderSize / SquadronOverhead
+          self:F( "Defender Group Name: " .. Defender:GetName() .. ", Size: " .. DefenderSize )
+        else
+          DefenderCount = 0
+        end
       end
     end
 
@@ -2991,6 +2996,8 @@ do -- AI_A2A_DISPATCHER
 
     local Report = REPORT:New( "\nTactical Overview" )
 
+    local DefenderGroupCount = 0
+
     -- Now that all obsolete tasks are removed, loop through the detected targets.
     for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
     
@@ -3028,16 +3035,19 @@ do -- AI_A2A_DISPATCHER
         for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
           local Defender = Defender -- Wrapper.Group#GROUP
            if DefenderTask.Target and DefenderTask.Target.Index == DetectedItem.Index then
-             local Fuel = Defender:GetFuelMin() * 100
-             local Damage = Defender:GetLife() / Defender:GetLife0() * 100
-             Report:Add( string.format( "   - %s ( %s - %s ): ( #%d ) F: %3d, D:%3d - %s", 
-                                        Defender:GetName(), 
-                                        DefenderTask.Type, 
-                                        DefenderTask.Fsm:GetState(), 
-                                        Defender:GetSize(), 
-                                        Fuel,
-                                        Damage, 
-                                        Defender:HasTask() == true and "Executing" or "Idle" ) )
+             if Defender:IsAlive() then
+               DefenderGroupCount = DefenderGroupCount + 1
+               local Fuel = Defender:GetFuelMin() * 100
+               local Damage = Defender:GetLife() / Defender:GetLife0() * 100
+               Report:Add( string.format( "   - %s ( %s - %s ): ( #%d ) F: %3d, D:%3d - %s", 
+                                          Defender:GetName(), 
+                                          DefenderTask.Type, 
+                                          DefenderTask.Fsm:GetState(), 
+                                          Defender:GetSize(), 
+                                          Fuel,
+                                          Damage, 
+                                          Defender:HasTask() == true and "Executing" or "Idle" ) )
+             end
            end
         end
       end
@@ -3050,20 +3060,23 @@ do -- AI_A2A_DISPATCHER
         TaskCount = TaskCount + 1
         local Defender = Defender -- Wrapper.Group#GROUP
         if not DefenderTask.Target then
-          local DefenderHasTask = Defender:HasTask()
-          local Fuel = Defender:GetFuelMin() * 100
-          local Damage = Defender:GetLife() / Defender:GetLife0() * 100
-          Report:Add( string.format( "   - %s ( %s - %s ): ( #%d ) F: %3d, D:%3d - %s", 
-                                     Defender:GetName(), 
-                                     DefenderTask.Type, 
-                                     DefenderTask.Fsm:GetState(), 
-                                     Defender:GetSize(),
-                                     Fuel,
-                                     Damage, 
-                                     Defender:HasTask() == true and "Executing" or "Idle" ) )
+          if Defender:IsAlive() then
+            local DefenderHasTask = Defender:HasTask()
+            local Fuel = Defender:GetFuelMin() * 100
+            local Damage = Defender:GetLife() / Defender:GetLife0() * 100
+            DefenderGroupCount = DefenderGroupCount + 1
+            Report:Add( string.format( "   - %s ( %s - %s ): ( #%d ) F: %3d, D:%3d - %s", 
+                                       Defender:GetName(), 
+                                       DefenderTask.Type, 
+                                       DefenderTask.Fsm:GetState(), 
+                                       Defender:GetSize(),
+                                       Fuel,
+                                       Damage, 
+                                       Defender:HasTask() == true and "Executing" or "Idle" ) )
+          end
         end
       end
-      Report:Add( string.format( "\n - %d Tasks", TaskCount ) )
+      Report:Add( string.format( "\n - %d Tasks - %d Defender Groups", TaskCount, DefenderGroupCount ) )
   
       self:F( Report:Text( "\n" ) )
       trigger.action.outText( Report:Text( "\n" ), 25 )
@@ -3556,23 +3569,23 @@ do
 
     -- Setup squadrons
     
-    self:F( { Airbases = AirbaseNames  } )
+    self:I( { Airbases = AirbaseNames  } )
 
-    self:F( "Defining Templates for Airbases ..." )    
+    self:I( "Defining Templates for Airbases ..." )    
     for AirbaseID, AirbaseName in pairs( AirbaseNames ) do
       local Airbase = _DATABASE:FindAirbase( AirbaseName ) -- Wrapper.Airbase#AIRBASE
       local AirbaseName = Airbase:GetName()
       local AirbaseCoord = Airbase:GetCoordinate()
       local AirbaseZone = ZONE_RADIUS:New( "Airbase", AirbaseCoord:GetVec2(), 3000 )
       local Templates = nil
-      self:F( { Airbase = AirbaseName } )    
+      self:I( { Airbase = AirbaseName } )    
       for TemplateID, Template in pairs( self.Templates:GetSet() ) do
         local Template = Template -- Wrapper.Group#GROUP
         local TemplateCoord = Template:GetCoordinate()
         if AirbaseZone:IsVec2InZone( TemplateCoord:GetVec2() ) then
           Templates = Templates or {}
           table.insert( Templates, Template:GetName() )
-          self:F( { Template = Template:GetName() } )
+          self:I( { Template = Template:GetName() } )
         end
       end
       if Templates then
@@ -3588,13 +3601,13 @@ do
     self.CAPTemplates:FilterPrefixes( CapPrefixes )
     self.CAPTemplates:FilterOnce()
     
-    self:F( "Setting up CAP ..." )    
+    self:I( "Setting up CAP ..." )    
     for CAPID, CAPTemplate in pairs( self.CAPTemplates:GetSet() ) do
       local CAPZone = ZONE_POLYGON:New( CAPTemplate:GetName(), CAPTemplate )
       -- Now find the closest airbase from the ZONE (start or center)
       local AirbaseDistance = 99999999
       local AirbaseClosest = nil -- Wrapper.Airbase#AIRBASE
-      self:F( { CAPZoneGroup = CAPID } )    
+      self:I( { CAPZoneGroup = CAPID } )    
       for AirbaseID, AirbaseName in pairs( AirbaseNames ) do
         local Airbase = _DATABASE:FindAirbase( AirbaseName ) -- Wrapper.Airbase#AIRBASE
         local AirbaseName = Airbase:GetName()
@@ -3602,7 +3615,7 @@ do
         local Squadron = self.DefenderSquadrons[AirbaseName]
         if Squadron then
           local Distance = AirbaseCoord:Get2DDistance( CAPZone:GetCoordinate() )
-          self:F( { AirbaseDistance = Distance } )    
+          self:I( { AirbaseDistance = Distance } )    
           if Distance < AirbaseDistance then
             AirbaseDistance = Distance
             AirbaseClosest = Airbase
@@ -3610,7 +3623,7 @@ do
         end
       end
       if AirbaseClosest then
-        self:F( { CAPAirbase = AirbaseClosest:GetName() } )    
+        self:I( { CAPAirbase = AirbaseClosest:GetName() } )    
         self:SetSquadronCap( AirbaseClosest:GetName(), CAPZone, 6000, 10000, 500, 800, 800, 1200, "RADIO" )
         self:SetSquadronCapInterval( AirbaseClosest:GetName(), CapLimit, 300, 600, 1 )
       end          
@@ -3618,14 +3631,14 @@ do
 
     -- Setup GCI.
     -- GCI is setup for all Squadrons.
-    self:F( "Setting up GCI ..." )    
+    self:I( "Setting up GCI ..." )    
     for AirbaseID, AirbaseName in pairs( AirbaseNames ) do
       local Airbase = _DATABASE:FindAirbase( AirbaseName ) -- Wrapper.Airbase#AIRBASE
       local AirbaseName = Airbase:GetName()
       local Squadron = self.DefenderSquadrons[AirbaseName]
       self:F( { Airbase = AirbaseName } )    
       if Squadron then
-        self:F( { GCIAirbase = AirbaseName } )    
+        self:I( { GCIAirbase = AirbaseName } )    
         self:SetSquadronGci( AirbaseName, 800, 1200 )
       end
     end
@@ -3634,6 +3647,7 @@ do
     
     self:HandleEvent( EVENTS.Crash, self.OnEventCrashOrDead )
     self:HandleEvent( EVENTS.Dead, self.OnEventCrashOrDead )
+    --self:HandleEvent( EVENTS.RemoveUnit, self.OnEventCrashOrDead )
     
     self:HandleEvent( EVENTS.Land )
     self:HandleEvent( EVENTS.EngineShutdown )

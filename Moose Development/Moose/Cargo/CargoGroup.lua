@@ -121,7 +121,7 @@ do -- CARGO_GROUP
     
     self:HandleEvent( EVENTS.Dead, self.OnEventCargoDead )
     self:HandleEvent( EVENTS.Crash, self.OnEventCargoDead )
-    self:HandleEvent( EVENTS.RemoveUnit, self.OnEventCargoDead )
+    --self:HandleEvent( EVENTS.RemoveUnit, self.OnEventCargoDead )
     self:HandleEvent( EVENTS.PlayerLeaveUnit, self.OnEventCargoDead )
     
     self:SetEventPriority( 4 )
@@ -138,7 +138,7 @@ do -- CARGO_GROUP
 
     for CargoID, CargoData in pairs( self.CargoSet:GetSet() ) do
       local Cargo = CargoData -- Cargo.Cargo#CARGO
-      Cargo:Destroy(false) -- Destroy the cargo and generate a remove unit event to update the sets.
+      Cargo:Destroy() -- Destroy the cargo and generate a remove unit event to update the sets.
       Cargo:SetStartState( "UnLoaded" )
     end
 
@@ -258,6 +258,8 @@ do -- CARGO_GROUP
   --- @param #CARGO_GROUP self
   -- @param Core.Event#EVENTDATA EventData 
   function CARGO_GROUP:OnEventCargoDead( EventData )
+  
+    self:E(EventData)
 
     local Destroyed = false
   
