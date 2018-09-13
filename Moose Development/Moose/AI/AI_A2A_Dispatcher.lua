@@ -993,6 +993,7 @@ do -- AI_A2A_DISPATCHER
     
     self:HandleEvent( EVENTS.Crash, self.OnEventCrashOrDead )
     self:HandleEvent( EVENTS.Dead, self.OnEventCrashOrDead )
+    --self:HandleEvent( EVENTS.RemoveUnit, self.OnEventCrashOrDead )
     
     self:HandleEvent( EVENTS.Land )
     self:HandleEvent( EVENTS.EngineShutdown )
@@ -2548,8 +2549,12 @@ do -- AI_A2A_DISPATCHER
         local SquadronOverhead = Squadron.Overhead or self.DefenderDefault.Overhead
         
         local DefenderSize = Defender:GetInitialSize()
-        DefenderCount = DefenderCount + DefenderSize / SquadronOverhead
-        self:F( "Defender Group Name: " .. Defender:GetName() .. ", Size: " .. DefenderSize )
+        if DefenderSize then
+          DefenderCount = DefenderCount + DefenderSize / SquadronOverhead
+          self:F( "Defender Group Name: " .. Defender:GetName() .. ", Size: " .. DefenderSize )
+        else
+          DefenderCount = 0
+        end
       end
     end
 
@@ -2991,6 +2996,8 @@ do -- AI_A2A_DISPATCHER
 
     local Report = REPORT:New( "\nTactical Overview" )
 
+    local DefenderGroupCount = 0
+
     -- Now that all obsolete tasks are removed, loop through the detected targets.
     for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
     
@@ -3028,16 +3035,19 @@ do -- AI_A2A_DISPATCHER
         for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
           local Defender = Defender -- Wrapper.Group#GROUP
            if DefenderTask.Target and DefenderTask.Target.Index == DetectedItem.Index then
-             local Fuel = Defender:GetFuelMin() * 100
-             local Damage = Defender:GetLife() / Defender:GetLife0() * 100
-             Report:Add( string.format( "   - %s ( %s - %s ): ( #%d ) F: %3d, D:%3d - %s", 
-                                        Defender:GetName(), 
-                                        DefenderTask.Type, 
-                                        DefenderTask.Fsm:GetState(), 
-                                        Defender:GetSize(), 
-                                        Fuel,
-                                        Damage, 
-                                        Defender:HasTask() == true and "Executing" or "Idle" ) )
+             if Defender:IsAlive() then
+               DefenderGroupCount = DefenderGroupCount + 1
+               local Fuel = Defender:GetFuelMin() * 100
+               local Damage = Defender:GetLife() / Defender:GetLife0() * 100
+               Report:Add( string.format( "   - %s ( %s - %s ): ( #%d ) F: %3d, D:%3d - %s", 
+                                          Defender:GetName(), 
+                                          DefenderTask.Type, 
+                                          DefenderTask.Fsm:GetState(), 
+                                          Defender:GetSize(), 
+                                          Fuel,
+                                          Damage, 
+                                          Defender:HasTask() == true and "Executing" or "Idle" ) )
+             end
            end
         end
       end
@@ -3050,20 +3060,23 @@ do -- AI_A2A_DISPATCHER
         TaskCount = TaskCount + 1
         local Defender = Defender -- Wrapper.Group#GROUP
         if not DefenderTask.Target then
-          local DefenderHasTask = Defender:HasTask()
-          local Fuel = Defender:GetFuelMin() * 100
-          local Damage = Defender:GetLife() / Defender:GetLife0() * 100
-          Report:Add( string.format( "   - %s ( %s - %s ): ( #%d ) F: %3d, D:%3d - %s", 
-                                     Defender:GetName(), 
-                                     DefenderTask.Type, 
-                                     DefenderTask.Fsm:GetState(), 
-                                     Defender:GetSize(),
-                                     Fuel,
-                                     Damage, 
-                                     Defender:HasTask() == true and "Executing" or "Idle" ) )
+          if Defender:IsAlive() then
+            local DefenderHasTask = Defender:HasTask()
+            local Fuel = Defender:GetFuelMin() * 100
+            local Damage = Defender:GetLife() / Defender:GetLife0() * 100
+            DefenderGroupCount = DefenderGroupCount + 1
+            Report:Add( string.format( "   - %s ( %s - %s ): ( #%d ) F: %3d, D:%3d - %s", 
+                                       Defender:GetName(), 
+                                       DefenderTask.Type, 
+                                       DefenderTask.Fsm:GetState(), 
+                                       Defender:GetSize(),
+                                       Fuel,
+                                       Damage, 
+                                       Defender:HasTask() == true and "Executing" or "Idle" ) )
+          end
         end
       end
-      Report:Add( string.format( "\n - %d Tasks", TaskCount ) )
+      Report:Add( string.format( "\n - %d Tasks - %d Defender Groups", TaskCount, DefenderGroupCount ) )
   
       self:F( Report:Text( "\n" ) )
       trigger.action.outText( Report:Text( "\n" ), 25 )
@@ -3634,6 +3647,7 @@ do
     
     self:HandleEvent( EVENTS.Crash, self.OnEventCrashOrDead )
     self:HandleEvent( EVENTS.Dead, self.OnEventCrashOrDead )
+    --self:HandleEvent( EVENTS.RemoveUnit, self.OnEventCrashOrDead )
     
     self:HandleEvent( EVENTS.Land )
     self:HandleEvent( EVENTS.EngineShutdown )
