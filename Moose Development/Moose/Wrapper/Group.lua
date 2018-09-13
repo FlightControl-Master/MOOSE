@@ -1491,7 +1491,7 @@ function GROUP:RespawnAtCurrentAirbase(SpawnTemplate, Takeoff, Uncontrolled) -- 
     SpawnTemplate.uncontrolled=Uncontrolled
     
     -- Destroy and respawn.
-    self:Destroy()
+    self:Destroy( false )
     _DATABASE:Spawn( SpawnTemplate )
   
     -- Reset events.
