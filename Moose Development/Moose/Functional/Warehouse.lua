@@ -506,7 +506,7 @@
 --     -- Start Warehouse Berlin. 
 --     warehouse.Berlin:Start()
 --   
---     -- Warehouse Berlin requests 10 infantry groups and 3 APCs from warehouse Batumi.
+--     -- Warehouse Berlin requests 10 infantry groups and 5 APCs from warehouse Batumi.
 --     warehouse.Batumi:AddRequest(warehouse.Berlin, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_INFANTRY, 10)
 --     warehouse.Batumi:AddRequest(warehouse.Berlin, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_APC, 5)
 --     
@@ -991,7 +991,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.4.4"
+WAREHOUSE.version="0.4.4w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -1243,7 +1243,7 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #number delay Delay in seconds.
   -- @param Wrapper.Group#GROUP group Group that has arrived.
 
-  --- On after "Arrived" event user function. Called when a groups has arrived at its destination.
+  --- On after "Arrived" event user function. Called when a group has arrived at its destination.
   -- @function [parent=#WAREHOUSE] OnAfterArrived
   -- @param #WAREHOUSE self
   -- @param #string From From state.
@@ -1302,15 +1302,15 @@ function WAREHOUSE:New(warehouse, alias)
   --- Triggers the FSM event "Attacked" when a warehouse is under attack by an another coalition.
   -- @param #WAREHOUSE self
   -- @function [parent=#WAREHOUSE] Attacked
-  -- @param DCS#coalition.side Coalition which is attacking the warehouse.
-  -- @param DCS#country.id Country which is attacking the warehouse.
+  -- @param DCS#coalition.side Coalition Coalition side which is attacking the warehouse, i.e. a number of @{DCS#coalition.side} enumerator.
+  -- @param DCS#country.id Country Country ID, which is attacking the warehouse, i.e. a number @{DCS#country.id} enumerator.
 
   --- Triggers the FSM event "Attacked" with a delay when a warehouse is under attack by an another coalition.
   -- @param #WAREHOUSE self
   -- @function [parent=#WAREHOUSE] __Attacked
   -- @param #number delay Delay in seconds.
-  -- @param DCS#coalition.side Coalition which is attacking the warehouse.
-  -- @param DCS#country.id Country which is attacking the warehouse.
+  -- @param DCS#coalition.side Coalition Coalition side which is attacking the warehouse, i.e. a number of @{DCS#coalition.side} enumerator.
+  -- @param DCS#country.id Country Country ID, which is attacking the warehouse, i.e. a number @{DCS#country.id} enumerator.
 
   --- On after "Attacked" event user function. Called when a warehouse (zone) is under attack by an enemy.
   -- @param #WAREHOUSE self
@@ -1318,8 +1318,8 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  -- @param DCS#coalition.side Coalition which is attacking the warehouse.
-  -- @param DCS#country.id Country which is attacking the warehouse.
+  -- @param DCS#coalition.side Coalition Coalition side which is attacking the warehouse, i.e. a number of @{DCS#coalition.side} enumerator.
+  -- @param DCS#country.id Country Country ID, which is attacking the warehouse, i.e. a number @{DCS#country.id} enumerator.
 
 
   --- Triggers the FSM event "Defeated" when an attack from an enemy was defeated.
