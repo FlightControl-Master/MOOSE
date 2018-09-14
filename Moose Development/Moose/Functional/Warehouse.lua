@@ -26,14 +26,10 @@
 -- @field #boolean Debug If true, send debug messages to all.
 -- @field #boolean Report If true, send status messages to coalition.
 -- @field Wrapper.Static#STATIC warehouse The phyical warehouse structure. 
--- @field DCS#coalition.side coalition Coalition side the warehouse belongs to.
--- @field DCS#country.id country Country ID the warehouse belongs to.
 -- @field #string alias Alias of the warehouse. Name its called when sending messages.
 -- @field Core.Zone#ZONE zone Zone around the warehouse. If this zone is captured, the warehouse and all its assets goes to the capturing coaliton.
 -- @field Wrapper.Airbase#AIRBASE airbase Airbase the warehouse belongs to.
 -- @field #string airbasename Name of the airbase associated to the warehouse.
--- @field DCS#Airbase.Category category Category of the home airbase, i.e. airdrome, helipad/farp or ship.
--- @field Core.Point#COORDINATE coordinate Coordinate of the warehouse.
 -- @field Core.Point#COORDINATE road Closest point to warehouse on road.
 -- @field Core.Point#COORDINATE rail Closest point to warehouse on rail.
 -- @field Core.Zone#ZONE spawnzone Zone in which assets are spawned.
@@ -89,10 +85,10 @@
 -- ## What means of transportation are available?
 -- Firstly, all mobile assets can be send from warehouse to another on their own.
 -- 
--- * Ground vehicles will use the road infrastructure. So a good road connection for both warehouses is important.
+-- * Ground vehicles will use the road infrastructure. So a good road connection for both warehouses is important but also off road connections can be added if necessary.
 -- * Airborne units get a flightplan from the airbase of the sending warehouse to the airbase of the receiving warehouse. This already implies that for airborne
 -- assets both warehouses need an airbase. If either one of the warehouses does not have an associated airbase, direct transportation of airborne assest is not possible.
--- * Naval units can be exchanged between warehouses which posses a port/habour. Also shipping lanes must be specified manually but the user since DCS does not provide these.
+-- * Naval units can be exchanged between warehouses which possess a port, which can be defined by the user. Also shipping lanes must be specified manually but the user since DCS does not provide these.
 -- * Trains (would) use the available railroad infrastructure and both warehouses must have a connection to the railroad. Unfortunately, however, trains are not yet implemented to 
 -- a reasonable degree in DCS at the moment and hence cannot be used yet.
 -- 
@@ -103,7 +99,8 @@
 -- * @{AI.AI_Cargo_Dispatcher_Helicopter#AI_DISPATCHER_HELICOPTER} and 
 -- * @{AI.AI_Cargo_Dispatcher_Airplane#AI_DISPATCHER_AIRPLANE}.
 -- 
--- Depending on which cargo dispatcher is used (ground or airbore), similar considerations like in the self propelled case are necessary.
+-- Depending on which cargo dispatcher is used (ground or airbore), similar considerations like in the self propelled case are necessary. Howver, note that
+-- the dispatchers as of yet cannot use user defined off road paths for example since they are classes of their own and use a different routing logic.
 -- 
 -- ===
 -- 
@@ -298,7 +295,7 @@
 -- In order to use airborne assets, a warehouse needs to have an associated airbase. This can be an airdrome, a FARP/HELOPAD or a ship.
 -- 
 -- If there is an airbase within 3 km range of the warehouse it is automatically set as the associated airbase. A user can set an airbase manually
--- with the @{#WAREHOUSE.SetAirbase} function. Keep in mind, that sometimes, ground units need to walk/drive from the spawn zone to the airport
+-- with the @{#WAREHOUSE.SetAirbase} function. Keep in mind that sometimes ground units need to walk/drive from the spawn zone to the airport
 -- to get to their transport carriers.
 -- 
 -- ## Naval Connections
@@ -633,8 +630,8 @@
 --     
 --     -- Enemy has entered the warehouse zone. This triggers the "Attacked" event.
 --     function warehouse.Senaki:OnAfterAttacked(From,Event,To,Coalition,Country)
---       MESSAGE:New(string.format("Warehouse %s: We are under attack!", self.alias), 30):ToCoalition(self.coalition)
---       self.coordinate:SmokeRed()
+--       MESSAGE:New(string.format("Warehouse %s: We are under attack!", self.alias), 30):ToCoalition(self:GetCoalition())
+--       self:GetCoordinate():SmokeRed()
 --     end
 --     
 --     -- Now the red BMP also captured the warehouse. So the warehouse and the airbase are both red and planes can be spawned again.
@@ -695,7 +692,11 @@
 --
 -- ## Example 10: Aircraft Carrier - Rescue Helo and Escort
 -- 
--- This example shows how to spawn assets from a warehouse located on an aircraft carrier.
+-- This example shows how to spawn assets from a warehouse located on an aircraft carrier. The warehouse must still be represented by a 
+-- physical static object. However, on a carrier space is limit so we take a smaller static. In priciple one could also take something 
+-- like a windsock.
+-- 
+-- ![Banner Image](..\Presentations\WAREHOUSE\Warehouse_Carrier.png)
 -- 
 -- After 10 seconds we make a self request for a rescue helicopter. Note, that the @{#WAREHOUSE.AddRequest} function has a parameter which lets you
 -- specify an "Assignment". This can be later used to identify the request and take the right actions.
@@ -710,7 +711,9 @@
 -- a fresh helo. Effectively, there we created an infinite, never ending loop. So a rescue helo will be up at all times.
 -- 
 -- After 30 and 45 seconds requests for five groups of armed speedboats are made. These will be spawned in the port zone right behind the carrier.
--- The first five groups will go port of the carrier an form a left wing formation. The seconds groups will to the analogue on the starboard side.  
+-- The first five groups will go port of the carrier an form a left wing formation. The seconds groups will to the analogue on the starboard side.
+-- **Note** that in order to spawn naval assets a warehouse needs a port (zone). Since the carrier and hence the warehouse is mobile, we define a moving
+-- zone as @{Core.Zone#ZONE_UNIT} with the carrier as reference unit. The "port" of the Stennis at its stern so all naval assets are spawned behing the carrier.
 -- 
 --     -- Start warehouse on USS Stennis.
 --     warehouse.Stennis:Start()
@@ -734,17 +737,20 @@
 --       local groupset=groupset --Core.Set#SET_GROUP
 --       local request=request   --Functional.Warehouse#WAREHOUSE.Pendingitem
 --       
+--       -- USS Stennis is the mother ship.
 --       local Mother=UNIT:FindByName("Stennis")
 --       
---       if request.assignment=="Speedboats Left" then
+--       -- Get assignment for this request.
+--       local assignment=warehouse.Stennis:GetAssignment(request)
+--       
+--       if assignment=="Speedboats Left" then
 --         
 --         -- Define AI Formation object.
 --         -- Note that this has to be a global variable or the garbage collector will remove it for some reason!
---         CarrierFormationLeft = AI_FORMATION:New(Mother, groupset, "Left Formation with Carrier", "Follow Carrier at given parameters.")
+--         CarrierFormationLeft = AI_FORMATION:New(Mother, groupset, "Port Formation with Carrier", "Follow Carrier at given parameters.")
 --   
---         -- Formation parameters.
---         CarrierFormationLeft:FormationLeftWing(200 ,50, 0, 0, 500, 50)
---         
+--         -- Formation parameters and start.
+--         CarrierFormationLeft:FormationLeftWing(200 ,50, 0, 0, 500, 50)  
 --         CarrierFormationLeft:__Start(2)
 --         
 --         for _,group in pairs(groupset:GetSetObjects()) do
@@ -752,41 +758,33 @@
 --           group:FlareRed()        
 --         end
 --         
---       elseif request.assignment=="Speedboats Right" then
+--       elseif assignment=="Speedboats Right" then
 --       
 --         -- Define AI Formation object.
 --         -- Note that this has to be a global variable or the garbage collector will remove it for some reason!
---         CarrierFormationRight = AI_FORMATION:New(Mother, groupset, "Right Formation with Carrier", "Follow Carrier at given parameters.")
+--         CarrierFormationRight = AI_FORMATION:New(Mother, groupset, "Starboard Formation with Carrier", "Follow Carrier at given parameters.")
 --   
---         -- Formation parameters.
+--         -- Formation parameters and start.
 --         CarrierFormationRight:FormationRightWing(200 ,50, 0, 0, 500, 50)
+--         CarrierFormationRight:__Start(2)    
 --         
---         CarrierFormationRight:__Start(2)
---         
---         for _,group in pairs(groupset:GetSetObjects()) do
---           local group=group --Wrapper.Group#GROUP
---           group:FlareGreen()        
---         end    
---         
---       elseif request.assignment=="Rescue Helo" then
+--       elseif assignment=="Rescue Helo" then
 --   
 --         -- Define AI Formation object.
 --         CarrierFormationHelo = AI_FORMATION:New(Mother, groupset, "Helo Formation with Carrier", "Follow Carrier at given parameters.")
 --         
---         -- Formation parameters.
+--         -- Formation parameters and start.
 --         CarrierFormationHelo:FormationCenterWing(-150, 50, 20, 50, 100, 50)
---   
---         -- Start formation FSM.
 --         CarrierFormationHelo:__Start(2)
 --         
 --       end
 --       
---       --- When the helo is out of fuel, it will return to the carrier and should be delivered.
+--       --- When the helo is out of fuel, it will return to the carrier. The asset is considered as delivered.
 --       function warehouse.Stennis:OnAfterDelivered(From,Event,To,request)
 --         local request=request   --Functional.Warehouse#WAREHOUSE.Pendingitem
 --         
 --         -- So we start another request.
---         if request.assignment=="Rescue Helo" then
+--         if warehouse.Stennis:GetAssignment(request)=="Rescue Helo" then
 --           warehouse.Stennis:__AddRequest(10, warehouse.Stennis, WAREHOUSE.Descriptor.TEMPLATENAME, "CH-53E", 1, nil, nil, nil, "Rescue Helo")
 --         end
 --       end
@@ -800,14 +798,10 @@ WAREHOUSE = {
   Debug         = false,
   Report        =  true,
   warehouse     =   nil,
-  coalition     =   nil,
-  country       =   nil,
   alias         =   nil,
   zone          =   nil,
   airbase       =   nil,
   airbasename   =   nil,
-  category      =    -1,
-  coordinate    =   nil,
   road          =   nil,
   rail          =   nil,
   spawnzone     =   nil,
@@ -1052,7 +1046,12 @@ WAREHOUSE.version="0.4.4w"
 -- @param #string alias (Optional) Alias of the warehouse, i.e. the name it will be called when sending messages etc. Default is the name of the static  
 -- @return #WAREHOUSE self
 function WAREHOUSE:New(warehouse, alias)
-  BASE:E({warehouse=warehouse:GetName()})
+  BASE:T({warehouse=warehouse})
+  
+  -- Check if just a string was given and convert to static.
+  if type(warehouse)=="string" then
+    warehouse=STATIC:FindByName(warehouse, true)
+  end
   
   -- Nil check.
   if warehouse==nil then
@@ -1075,16 +1074,12 @@ function WAREHOUSE:New(warehouse, alias)
   -- Set some variables.
   self.warehouse=warehouse
   self.uid=tonumber(warehouse:GetID())
-  self.coalition=warehouse:GetCoalition()
-  self.country=warehouse:GetCountry()
-  self.coordinate=warehouse:GetCoordinate()
 
   -- Closest of the same coalition but within a certain range.
-  local _airbase=self.coordinate:GetClosestAirbase(nil, self.coalition)
-  if _airbase and _airbase:GetCoordinate():Get2DDistance(self.coordinate) < 3000 then
+  local _airbase=self:GetCoordinate():GetClosestAirbase(nil, self:GetCoalition())
+  if _airbase and _airbase:GetCoordinate():Get2DDistance(self:GetCoordinate()) < 3000 then
     self.airbase=_airbase
     self.airbasename=self.airbase:GetName()
-    self.category=self.airbase:GetDesc().category
   end
       
   -- Define warehouse and default spawn zone.
@@ -1174,14 +1169,14 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #number delay Delay in seconds.
 
 
-  --- Trigger the FSM event "AddAsset". Add an airplane group to the warehouse stock.
+  --- Trigger the FSM event "AddAsset". Add a group to the warehouse stock.
   -- @function [parent=#WAREHOUSE] AddAsset
   -- @param #WAREHOUSE self
   -- @param Wrapper.Group#GROUP group Group to be added as new asset.
   -- @param #number ngroups Number of groups to add to the warehouse stock. Default is 1.
   -- @param #WAREHOUSE.Attribute forceattribute (Optional) Explicitly force a generalized attribute for the asset. This has to be an @{#WAREHOUSE.Attribute}.
 
-  --- Trigger the FSM event "AddAsset" with a delay. Add an airplane group to the warehouse stock.
+  --- Trigger the FSM event "AddAsset" with a delay. Add a group to the warehouse stock.
   -- @function [parent=#WAREHOUSE] __AddAsset
   -- @param #WAREHOUSE self
   -- @param #number delay Delay in seconds.
@@ -1228,7 +1223,7 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #WAREHOUSE.Queueitem Request Information table of the request.
 
 
-  --- Triggers the FSM event "Arrived", i.e. when a group has arrived at the destination warehouse.
+  --- Triggers the FSM event "Arrived" when a group has arrived at the destination warehouse.
   -- This function should always be called from the sending and not the receiving warehouse.
   -- If the group is a cargo asset, it is added to the receiving warehouse. If the group is a transporter it
   -- is added to the sending warehouse since carriers are supposed to return to their home warehouse once 
@@ -1237,7 +1232,10 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #WAREHOUSE self
   -- @param Wrapper.Group#GROUP group Group that has arrived.
 
-  --- Triggers the FSM event "Arrived" after a delay, i.e. when a group has arrived at the destination.
+  --- Triggers the FSM event "Arrived" after a delay when a group has arrived at the destination.
+  -- This function should always be called from the sending and not the receiving warehouse.
+  -- If the group is a cargo asset, it is added to the receiving warehouse. If the group is a transporter it
+  -- is added to the sending warehouse since carriers are supposed to return to their home warehouse once 
   -- @function [parent=#WAREHOUSE] __Arrived
   -- @param #WAREHOUSE self
   -- @param #number delay Delay in seconds.
@@ -1272,7 +1270,7 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #WAREHOUSE.Pendingitem request Pending request that was now delivered.
 
 
-  --- Triggers the FSM event "SelfRequest". Request was initiated to the warehouse itself. Groups are just spawned at the warehouse or the associated airbase.
+  --- Triggers the FSM event "SelfRequest". Request was initiated from the warehouse to itself. Groups are just spawned at the warehouse or the associated airbase.
   -- If the warehouse is currently under attack when the self request is made, the self request is added to the defending table. One the attack is defeated,
   -- this request is used to put the groups back into the warehouse stock.
   -- @function [parent=#WAREHOUSE] SelfRequest
@@ -1280,7 +1278,7 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param Core.Set#SET_GROUP groupset The set of cargo groups that was delivered to the warehouse itself.
   -- @param #WAREHOUSE.Pendingitem request Pending self request.
 
-  --- Triggers the FSM event "SelfRequest" with a delay. Request was initiated to the warehouse itself. Groups are just spawned at the warehouse or the associated airbase.
+  --- Triggers the FSM event "SelfRequest" with a delay. Request was initiated from the warehouse to itself. Groups are just spawned at the warehouse or the associated airbase.
   -- If the warehouse is currently under attack when the self request is made, the self request is added to the defending table. One the attack is defeated,
   -- this request is used to put the groups back into the warehouse stock.
   -- @function [parent=#WAREHOUSE] __SelfRequest
@@ -1289,7 +1287,27 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param Core.Set#SET_GROUP groupset The set of cargo groups that was delivered to the warehouse itself.
   -- @param #WAREHOUSE.Pendingitem request Pending self request.
 
-  --- On after "SelfRequest" event. Request was initiated to the warehouse itself. Groups are just spawned at the warehouse or the associated airbase.
+  --- On after "SelfRequest" event. Request was initiated from the warehouse to itself. Groups are simply spawned at the warehouse or the associated airbase.
+  -- All requested assets are passed as a @{Core.Set#SET_GROUP} and can be used for further tasks or in other MOOSE classes.
+  -- Note that airborne assets are spawned in uncontrolled state so they do not simply "fly away" after spawning.
+  -- 
+  -- @usage
+  -- --- Self request event. Triggered once the assets are spawned in the spawn zone or at the airbase.
+  -- function mywarehouse:OnAfterSelfRequest(From, Event, To, groupset, request)
+  --   local groupset=groupset --Core.Set#SET_GROUP
+  --  
+  --   -- Loop over all groups spawned from that request.
+  --   for _,group in pairs(groupset:GetSetObjects()) do
+  --     local group=group --Wrapper.Group#GROUP
+  --    
+  --     -- Gree smoke on spawned group.
+  --     group:SmokeGreen()
+  --    
+  --     -- Activate uncontrolled airborne group if necessary.
+  --     group:StartUncontrolled()
+  --   end
+  -- end 
+  --  
   -- @function [parent=#WAREHOUSE] OnAfterSelfRequest
   -- @param #WAREHOUSE self
   -- @param #string From From state.
@@ -1325,15 +1343,11 @@ function WAREHOUSE:New(warehouse, alias)
   --- Triggers the FSM event "Defeated" when an attack from an enemy was defeated.
   -- @param #WAREHOUSE self
   -- @function [parent=#WAREHOUSE] Defeated
-  -- @param DCS#coalition.side Coalition which is attacking the warehouse.
-  -- @param DCS#country.id Country which is attacking the warehouse.
 
   --- Triggers the FSM event "Defeated" with a delay when an attack from an enemy was defeated.
   -- @param #WAREHOUSE self
   -- @function [parent=#WAREHOUSE] __Defeated
   -- @param #number delay Delay in seconds.
-  -- @param DCS#coalition.side Coalition which is attacking the warehouse.
-  -- @param DCS#country.id Country which is attacking the warehouse.
 
   --- On after "Defeated" event user function. Called when an enemy attack was defeated.
   -- @param #WAREHOUSE self
@@ -1341,8 +1355,6 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  -- @param DCS#coalition.side Coalition which is attacking the warehouse.
-  -- @param DCS#country.id Country which is attacking the warehouse.
 
 
   --- Triggers the FSM event "Captured" when a warehouse has been captured by another coalition.
@@ -1358,26 +1370,26 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param DCS#coalition.side Coalition which captured the warehouse.
   -- @param DCS#country.id Country which has captured the warehouse.
 
- --- On after "Captured" event user function. Called when the warehouse has been captured by an enemy coalition.
+  --- On after "Captured" event user function. Called when the warehouse has been captured by an enemy coalition.
   -- @param #WAREHOUSE self
   -- @function [parent=#WAREHOUSE] OnAfterCaptured
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  -- @param DCS#coalition.side Coalition which captured the warehouse.
-  -- @param DCS#country.id Country which has captured the warehouse.
+  -- @param DCS#coalition.side Coalition Coalition side which captured the warehouse, i.e. a number of @{DCS#coalition.side} enumerator.
+  -- @param DCS#country.id Country Country id which has captured the warehouse, i.e. a number @{DCS#country.id} enumerator.
   -- 
 
   --- Triggers the FSM event "AirbaseCaptured" when the airbase of the warehouse has been captured by another coalition.
   -- @param #WAREHOUSE self
   -- @function [parent=#WAREHOUSE] AirbaseCaptured
-  -- @param DCS#coalition.side Coalition which captured the airbase.
+  -- @param DCS#coalition.side Coalition Coalition side which captured the airbase, i.e. a number of @{DCS#coalition.side} enumerator.
   
   --- Triggers the FSM event "AirbaseCaptured" with a delay when the airbase of the warehouse has been captured by another coalition.
   -- @param #WAREHOUSE self
   -- @function [parent=#WAREHOUSE] __AirbaseCaptured
   -- @param #number delay Delay in seconds.
-  -- @param DCS#coalition.side Coalition which captured the airbase.
+  -- @param DCS#coalition.side Coalition Coalition side which captured the airbase, i.e. a number of @{DCS#coalition.side} enumerator.
 
   --- On after "AirbaseCaptured" even user function. Called when the airbase of the warehouse has been captured by another coalition.
   -- @param #WAREHOUSE self
@@ -1385,19 +1397,19 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  -- @param DCS#coalition.side Coalition which captured the airbase.
+  -- @param DCS#coalition.side Coalition Coalition side which captured the airbase, i.e. a number of @{DCS#coalition.side} enumerator.
 
 
   --- Triggers the FSM event "AirbaseRecaptured" when the airbase of the warehouse has been re-captured from the other coalition.
   -- @param #WAREHOUSE self
   -- @function [parent=#WAREHOUSE] AirbaseRecaptured
-  -- @param DCS#coalition.side Coalition which re-captured the airbase.
+  -- @param DCS#coalition.side Coalition Coalition which re-captured the airbase, i.e. the same as the current warehouse owner coalition.
   
   --- Triggers the FSM event "AirbaseRecaptured" with a delay when the airbase of the warehouse has been re-captured from the other coalition.
   -- @param #WAREHOUSE self
   -- @function [parent=#WAREHOUSE] __AirbaseRecaptured
   -- @param #number delay Delay in seconds.
-  -- @param DCS#coalition.side Coalition which re-captured the airbase.
+  -- @param DCS#coalition.side Coalition Coalition which re-captured the airbase, i.e. the same as the current warehouse owner coalition.
 
   --- On after "AirbaseRecaptured" event user function. Called when the airbase of the warehouse has been re-captured from the other coalition.
   -- @param #WAREHOUSE self
@@ -1405,7 +1417,7 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  -- @param DCS#coalition.side Coalition which re-captured the airbase.
+  -- @param DCS#coalition.side Coalition Coalition which re-captured the airbase, i.e. the same as the current warehouse owner coalition.
 
 
   --- Triggers the FSM event "Destroyed" when the warehouse was destroyed. All services are stopped.
@@ -1463,7 +1475,7 @@ function WAREHOUSE:SetReportOff()
   return self
 end
 
---- Set interval of status updates. Note that only one request can be processed per time interval.
+--- Set interval of status updates. Note that normally only one request can be processed per time interval.
 -- @param #WAREHOUSE self
 -- @param #number timeinterval Time interval in seconds.
 -- @return #WAREHOUSE self
@@ -1515,6 +1527,7 @@ end
 -- @return #WAREHOUSE self
 function WAREHOUSE:SetAirbase(airbase)
   self.airbase=airbase
+  self.airbasename=airbase:GetName()
   return self
 end
 
@@ -1588,7 +1601,7 @@ function WAREHOUSE:AddShippingLane(remotewarehouse, group, oneway)
     for i=1,#lane do
       local coord=lane[i] --Core.Point#COORDINATE
       local text=string.format("Shipping lane %s to %s. Point %d.", self.alias, remotewarehouse.alias, i)
-      coord:MarkToCoalition(text, self.coalition)
+      coord:MarkToCoalition(text, self:GetCoalition())
     end
   end
   
@@ -1634,7 +1647,7 @@ function WAREHOUSE:AddOffRoadPath(remotewarehouse, group, oneway)
     for i=1,#path do
       local coord=path[i] --Core.Point#COORDINATE
       local text=string.format("Off road path from %s to %s. Point %d.", self.alias, remotewarehouse.alias, i)
-      coord:MarkToCoalition(text, self.coalition)
+      coord:MarkToCoalition(text, self:GetCoalition())
     end
   end
   
@@ -1872,12 +1885,118 @@ function WAREHOUSE:GetNumberOfAssets(Descriptor, DescriptorValue)
 
 end
 
+--- Get coordinate of warehouse static.
+-- @param #WAREHOUSE self
+-- @return Core.Point#COORDINATE The coordinate of the warehouse.  
+function WAREHOUSE:GetCoordinate()
+  return self.warehouse:GetCoordinate()
+end
+
+--- Get coalition side of warehouse static.
+-- @param #WAREHOUSE self
+-- @return #number Coalition side, i.e. number of @{DCS#coalition.side}.  
+function WAREHOUSE:GetCoalition()
+  return self.warehouse:GetCoalition()
+end
+
+--- Get coalition name of warehouse static.
+-- @param #WAREHOUSE self
+-- @return #number Coalition side, i.e. number of @{DCS#coalition.side}.  
+function WAREHOUSE:GetCoalitionName()
+  return self.warehouse:GetCoalitionName()
+end
+
+--- Get country id of warehouse static.
+-- @param #WAREHOUSE self
+-- @return #number Country id, i.e. number of @{DCS#country.id}.  
+function WAREHOUSE:GetCountry()
+  return self.warehouse:GetCountry()
+end
+
+--- Get country name of warehouse static.
+-- @param #WAREHOUSE self
+-- @return #number Country id, i.e. number of @{DCS#coalition.side}.  
+function WAREHOUSE:GetCountryName()
+  return self.warehouse:GetCountryName()
+end
+
+--- Get airbase associated to the warehouse.
+-- @param #WAREHOUSE self
+-- @return Wrapper.Airbase#AIRBASE Airbase object or nil if warehouse has no airbase connection.  
+function WAREHOUSE:GetAirbase()
+  return self.airbase
+end
+
+--- Get name airbase associated to the warehouse.
+-- @param #WAREHOUSE self
+-- @return #string name of the airbase assosicated to the warehouse or "none" if the airbase has not airbase connection currently.  
+function WAREHOUSE:GetAirbaseName()
+  local name="none"
+  if self.airbase then
+    name=self.airbase:GetName()
+  end
+  return name
+end
+
+--- Get category of airbase associated to the warehouse.
+-- @param #WAREHOUSE self
+-- @return #number Category of airbase or -1 if warehouse has (currently) no airbase.
+function WAREHOUSE:GetAirbaseCategory()
+  local category=-1
+  if self.airbase then
+    category=self.airbase:GetDesc().category
+  end
+  return category
+end
+
 --- Get assignment of a request.
 -- @param #WAREHOUSE self
 -- @param #WAREHOUSE.Pendingitem request The request from which the assignment is extracted.
 -- @return #string The assignment text. 
 function WAREHOUSE:GetAssignment(request)
   return tostring(request.assignment)
+end
+
+--- Get warehouse unique ID from static warehouse object. This is the ID under which you find the @{#WAREHOUSE} object in the global data base.
+-- @param #WAREHOUSE self
+-- @param #string staticname Name of the warehouse static object.
+-- @return #number Warehouse unique ID.  
+function WAREHOUSE:GetWarehouseID(staticname)
+  local warehouse=STATIC:FindByName(staticname, true)
+  local uid=tonumber(warehouse:GetID())
+  return uid
+end
+
+--- Find a warehouse in the global warehouse data base.
+-- @param #WAREHOUSE self
+-- @param #number uid The unique ID of the warehouse.
+-- @return #WAREHOUSE The warehouse object or nil if no warehouse exists.
+function WAREHOUSE:FindWarehouseInDB(uid)
+  return WAREHOUSE.db.Warehouses[uid]
+end
+
+--- Find an asset in the the global warehouse data base. Parameter is the MOOSE group object.
+-- Note that the group name must contain they "AID" keyword. 
+-- @param #WAREHOUSE self
+-- @param Wrapper.Group#GROUP group The group from which it is assumed that it has a registered asset.
+-- @return #WAREHOUSE.Assetitem The asset from the data base or nil if it could not be found.
+function WAREHOUSE:FindAssetInDB(group)
+
+  -- Get unique ids from group name.
+  local wid,aid,rid=self:_GetIDsFromGroup(group)
+  
+  if aid~=nil then
+  
+    local asset=WAREHOUSE.db.Assets[aid]
+    self:E({asset=asset})
+    if asset==nil then
+      self:_ErrorMessage(string.format("ERROR: Asset for group %s not found in the data base!", group:GetName()), 0)
+    end
+    return asset
+  end
+  
+  self:_ErrorMessage(string.format("ERROR: Group %s does not contain an asset ID in its name!", group:GetName()), 0)
+  return nil  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1893,21 +2012,19 @@ function WAREHOUSE:onafterStart(From, Event, To)
 
   -- Short info.  
   local text=string.format("Starting warehouse %s alias %s:\n",self.warehouse:GetName(), self.alias)
-  text=text..string.format("Coaliton = %d\n", self.coalition)
-  text=text..string.format("Country  = %d\n", self.country)
-  text=text..string.format("Airbase  = %s (%s)\n", tostring(self.airbase:GetName()), tostring(self.category))
+  text=text..string.format("Coaliton = %s\n", self:GetCoalitionName())
+  text=text..string.format("Country  = %s\n", self:GetCountryName())
+  text=text..string.format("Airbase  = %s (category=%d)\n", self:GetAirbaseName(), self:GetAirbaseCategory())
   env.info(text)
 
   -- Save self in static object. Easier to retrieve later.
   self.warehouse:SetState(self.warehouse, "WAREHOUSE", self)
  
   -- Set airbase name and category.
-  if self.airbase and self.airbase:GetCoalition()==self.coalition then
+  if self.airbase and self.airbase:GetCoalition()==self:GetCoalition() then
     self.airbasename=self.airbase:GetName()
-    self.category=self.airbase:GetDesc().category
   else
     self.airbasename=nil
-    self.category=-1  -- The -1 indicates that we dont have an airbase at this warehouse.
   end
 
   -- THIS! caused aircraft to be spawned and started but they would never begin their route!
@@ -2025,9 +2142,6 @@ end
 -- @param #string To To state.
 function WAREHOUSE:onafterStatus(From, Event, To)
   self:I(self.wid..string.format("Checking status of warehouse %s. Current FSM state %s. Global warehouse assets = %d.", self.alias, self:GetState(), #WAREHOUSE.db.Assets))
-  
-  -- Update coordinate in case we have a "moving" warehouse (e.g. on a carrier).
-  self.coordinate=self.warehouse:GetCoordinate()
   
   -- Check if any pending jobs are done and can be deleted from the 
   self:_JobDone()
@@ -2282,7 +2396,7 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
       ---------------------------
       
       -- Get the original warehouse this group belonged to.
-      local warehouse=self:_FindWarehouseInDB(wid)
+      local warehouse=self:FindWarehouseInDB(wid)
       if warehouse then
         local request=warehouse:_GetRequestOfGroup(group, warehouse.pending)
         if request then
@@ -2305,7 +2419,7 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
       end
 
       -- Get the asset from the global DB.
-      local asset=self:_FindAssetInDB(group)
+      local asset=self:FindAssetInDB(group)
         
       -- Note the group is only added once, i.e. the ngroups parameter is ignored here.
       -- This is because usually these request comes from an asset that has been transfered from another warehouse and hence should only be added once.
@@ -2346,38 +2460,6 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
   
   -- Update status.
   self:__Status(-1)
-end
-
-
---- Find an asset in the the global warehouse db.
--- @param #WAREHOUSE self
--- @param Wrapper.Group#GROUP group The group from which it is assumed that it has a registered asset.
--- @return #WAREHOUSE.Assetitem The asset from the data base or nil if it could not be found.
-function WAREHOUSE:_FindAssetInDB(group)
-
-  -- Get unique ids from group name.
-  local wid,aid,rid=self:_GetIDsFromGroup(group)
-  
-  if aid~=nil then
-  
-    local asset=WAREHOUSE.db.Assets[aid]
-    self:E({asset=asset})
-    if asset==nil then
-      self:_ErrorMessage(string.format("ERROR: Asset for group %s not found in the data base!", group:GetName()), 0)
-    end
-    return asset
-  end
-  
-  self:_ErrorMessage(string.format("ERROR: Group %s does not contain an asset ID in its name!", group:GetName()), 0)
-  return nil  
-end
-
---- Find a warehouse in the global warehouse data base.
--- @param #WAREHOUSE self
--- @param #number uid The unique ID of the warehouse.
--- @return #WAREHOUSE The warehouse object or nil if no warehouse exists.
-function WAREHOUSE:_FindWarehouseInDB(uid)
-  return WAREHOUSE.db.Warehouses[uid]
 end
 
 --- Register new asset in globase warehouse data base.
@@ -2484,7 +2566,7 @@ end
 
 --- Asset item characteristics.
 -- @param #WAREHOUSE self
--- @param #WAREHOUSE.Assetitem asset
+-- @param #WAREHOUSE.Assetitem asset The asset for which info in printed in trace mode.
 function WAREHOUSE:_AssetItemInfo(asset)
   -- Info about asset:
   local text=string.format("\nNew asset with id=%d for warehouse %s:\n", asset.uid, self.alias)
@@ -2622,8 +2704,8 @@ function WAREHOUSE:onafterAddRequest(From, Event, To, warehouse, AssetDescriptor
   transporttype=TransportType,
   ntransport=nTransport,
   assignment=tostring(Assignment),
-  airbase=warehouse.airbase,
-  category=warehouse.category,  
+  airbase=warehouse:GetAirbase(),
+  category=warehouse:GetAirbaseCategory(),  
   ndelivered=0,
   ntransporthome=0,
   assets={},
@@ -2654,7 +2736,7 @@ function WAREHOUSE:onbeforeRequest(From, Event, To, Request)
   self:T3({warehouse=self.alias, request=Request})
 
   -- Distance from warehouse to requesting warehouse.
-  local distance=self.coordinate:Get2DDistance(Request.warehouse.coordinate)
+  local distance=self:GetCoordinate():Get2DDistance(Request.warehouse:GetCoordinate())
 
   -- Shortcut to cargoassets.
   local _assets=Request.cargoassets
@@ -3195,7 +3277,7 @@ function WAREHOUSE:onafterArrived(From, Event, To, group)
   
     -- Route mobile ground group to the warehouse. Group has 60 seconds to get there or it is despawned and added as asset to the new warehouse regardless.
     if group:IsGround() and group:GetSpeedMax()>1 then
-      group:RouteGroundTo(warehouse.coordinate, group:GetSpeedMax()*0.3, "Off Road")
+      group:RouteGroundTo(warehouse:GetCoordinate(), group:GetSpeedMax()*0.3, "Off Road")
     end
     
     -- Increase number of cargo delivered and transports home.
@@ -3248,7 +3330,7 @@ function WAREHOUSE:onafterDelivered(From, Event, To, request)
   self:_InfoMessage(text, 5)
 
   -- Make some noise :)
-  self:_Fireworks(request.warehouse.coordinate)
+  self:_Fireworks(request.warehouse:GetCoordinate())
   
   -- Set delivered status for this request uid.
   self.delivered[request.uid]=true
@@ -3318,7 +3400,7 @@ function WAREHOUSE:onafterAttacked(From, Event, To, Coalition, Country)
   
   -- Debug smoke.
   if self.Debug then
-    self.coordinate:SmokeOrange()
+    self:GetCoordinate():SmokeOrange()
   end    
   
   -- Spawn all ground units in the spawnzone?
@@ -3354,7 +3436,7 @@ function WAREHOUSE:onafterDefeated(From, Event, To)
 
   -- Debug smoke.
   if self.Debug then
-    self.coordinate:SmokeGreen()
+    self:GetCoordinate():SmokeGreen()
   end  
 
   -- Auto defence: put assets back into stock.
@@ -3368,7 +3450,7 @@ function WAREHOUSE:onafterDefeated(From, Event, To)
         -- Get max speed of group and route it back slowly to the warehouse.
         local speed=group:GetSpeedMax()
         if group:IsGround() and speed>1 then
-          group:RouteGroundTo(self.coordinate, speed*0.3)
+          group:RouteGroundTo(self:GetCoordinate(), speed*0.3)
         end 
         
         -- Add asset group back to stock after 60 seconds.
@@ -3392,15 +3474,11 @@ end
 function WAREHOUSE:onafterCaptured(From, Event, To, Coalition, Country)
 
   -- Message.
-  local text=string.format("Warehouse %s: We were captured by enemy coalition (%d)!", self.alias, Coalition)
+  local text=string.format("Warehouse %s: We were captured by enemy coalition (ID=%d)!", self.alias, Coalition)
   self:_InfoMessage(text)
   
   -- Respawn warehouse with new coalition/country.
   self.warehouse:ReSpawn(Country)
-  
-  -- Set new country and coalition
-  self.coalition=Coalition
-  self.country=Country
   
   -- Delete all waiting requests because they are not valid any more
   self.queue=nil
@@ -3410,22 +3488,20 @@ function WAREHOUSE:onafterCaptured(From, Event, To, Coalition, Country)
   local airbase=AIRBASE:FindByName(self.airbasename)
   local airbasecoaltion=airbase:GetCoalition()
   
-  if self.coalition==airbasecoaltion then
+  if Coalition==airbasecoaltion then
     -- Airbase already owned by the coalition that captured the warehouse. Airbase can be used by this warehouse.
     self.airbase=airbase
-    self.category=airbase:GetDesc().category
   else
     -- Airbase is owned by other coalition. So this warehouse does not have an airbase unil it is captured.
     self.airbase=nil
-    self.category=-1
   end
   
   -- Debug smoke.
   if self.Debug then
     if Coalition==coalition.side.RED then
-      self.coordinate:SmokeRed()
+      self:GetCoordinate():SmokeRed()
     elseif Coalition==coalition.side.BLUE then
-      self.coordinate:SmokeBlue()
+      self:GetCoordinate():SmokeBlue()
     end
   end
     
@@ -3454,7 +3530,6 @@ function WAREHOUSE:onafterAirbaseCaptured(From, Event, To, Coalition)
     
   -- Set airbase to nil and category to no airbase.
   self.airbase=nil
-  self.category=-1  -- -1 indicates no airbase.
 end
 
 --- On after "AirbaseRecaptured" event. Airbase of warehouse has been re-captured from other coalition.
@@ -3462,7 +3537,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param DCS#coalition.side Coalition which captured the warehouse.
+-- @param DCS#coalition.side Coalition Coalition side which originally captured the warehouse.
 function WAREHOUSE:onafterAirbaseRecaptured(From, Event, To, Coalition)
 
   -- Message.
@@ -3471,7 +3546,6 @@ function WAREHOUSE:onafterAirbaseRecaptured(From, Event, To, Coalition)
 
   -- Set airbase and category.  
   self.airbase=AIRBASE:FindByName(self.airbasename)
-  self.category=self.airbase:GetDesc().category
   
   -- Debug smoke.
   if self.Debug then
@@ -3713,7 +3787,7 @@ function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrol
     
     -- Get airbase ID and category.
     local AirbaseID = self.airbase:GetID()
-    local AirbaseCategory = self.category
+    local AirbaseCategory = self:GetAirbaseCategory()
     
     -- Check enough parking spots.
     if AirbaseCategory==Airbase.Category.HELIPAD or AirbaseCategory==Airbase.Category.SHIP then
@@ -3809,8 +3883,8 @@ function WAREHOUSE:_SpawnAssetPrepareTemplate(asset, alias)
   template.name=alias
   
   -- Set current(!) coalition and country. 
-  template.CoalitionID=self.coalition
-  template.CountryID=self.country
+  template.CoalitionID=self:GetCoalition()
+  template.CountryID=self:GetCountry()
   
   -- Nillify the group ID.
   template.groupId=nil
@@ -4423,19 +4497,19 @@ function WAREHOUSE:_OnEventBaseCaptured(EventData)
       local NewCoalitionAirbase=airbase:GetCoalition()
       
       -- Debug info
-      self:T(self.wid..string.format("Airbase of warehouse %s (coalition = %d) was captured! New owner coalition = %d.",self.alias, self.coalition, NewCoalitionAirbase))
+      self:T(self.wid..string.format("Airbase of warehouse %s (coalition ID=%d) was captured! New owner coalition ID=%d.",self.alias, self:GetCoalition(), NewCoalitionAirbase))
             
       -- So what can happen?
       -- Warehouse is blue, airbase is blue and belongs to warehouse and red captures it  ==> self.airbase=nil
       -- Warehouse is blue, airbase is blue self.airbase is nil and blue (re-)captures it ==> self.airbase=Event.Place        
       if self.airbase==nil then
         -- New coalition is the same as of the warehouse ==> warehouse previously lost this airbase and now it was re-captured.
-        if NewCoalitionAirbase == self.coalition then
+        if NewCoalitionAirbase == self:GetCoalition() then
           self:AirbaseRecaptured(NewCoalitionAirbase)
         end
       else
         -- Captured airbase belongs to this warehouse but was captured by other coaltion.
-        if NewCoalitionAirbase ~= self.coalition then
+        if NewCoalitionAirbase ~= self:GetCoalition() then
           self:AirbaseCaptured(NewCoalitionAirbase)
         end
       end
@@ -4506,8 +4580,8 @@ function WAREHOUSE:_CheckConquered()
  
   -- Figure out the new coalition if any.
   -- Condition is that only units of one coalition are within the zone.
-  local newcoalition=self.coalition
-  local newcountry=self.country
+  local newcoalition=self:GetCoalition()
+  local newcountry=self:GetCountry()
   if Nblue>0 and Nred==0 and Nneutral==0 then
     -- Only blue units in zone ==> Zone goes to blue.
     newcoalition=coalition.side.BLUE
@@ -4523,14 +4597,14 @@ function WAREHOUSE:_CheckConquered()
   end
 
   -- Coalition has changed ==> warehouse was captured! This should be before the attack check.
-  if self:IsAttacked() and newcoalition ~= self.coalition then
+  if self:IsAttacked() and newcoalition ~= self:GetCoalition() then
     self:Captured(newcoalition, newcountry)
     return
   end
   
   -- Before a warehouse can be captured, it has to be attacked.
   -- That is, even if only enemy units are present it is not immediately captured in order to spawn all ground assets for defence.
-  if self.coalition==coalition.side.BLUE then
+  if self:GetCoalition()==coalition.side.BLUE then
     -- Blue warehouse is running and we have red units in the zone.
     if self:IsRunning() and Nred>0 then
       self:Attacked(coalition.side.RED, CountryRed)
@@ -4539,7 +4613,7 @@ function WAREHOUSE:_CheckConquered()
     if self:IsAttacked() and Nred==0 then
       self:Defeated()
     end    
-  elseif self.coalition==coalition.side.RED then
+  elseif self:GetCoalition()==coalition.side.RED then
     -- Red Warehouse is running and we have blue units in the zone.
     if self:IsRunning() and Nblue>0 then
       self:Attacked(coalition.side.BLUE, CountryBlue)
@@ -4548,7 +4622,7 @@ function WAREHOUSE:_CheckConquered()
     if self:IsAttacked() and Nblue==0 then
       self:Defeated()
     end
-  elseif self.coalition==coalition.side.NEUTRAL then
+  elseif self:GetCoalition()==coalition.side.NEUTRAL then
     -- Neutrals dont attack!
   end
   
@@ -4566,17 +4640,15 @@ function WAREHOUSE:_CheckAirbaseOwner()
     if self.airbase then
     
       -- Warehouse has lost its airbase.
-      if self.coalition~=airbasecurrentcoalition then
+      if self:GetCoalition()~=airbasecurrentcoalition then
         self.airbase=nil
-        self.category=-1
       end
       
     else
       
       -- Warehouse has re-captured the airbase.
-      if self.coalition==airbasecurrentcoalition then
+      if self:GetCoalition()==airbasecurrentcoalition then
         self.airbase=airbase
-        self.category=airbase:GetDesc().category
       end      
       
     end
@@ -4611,8 +4683,8 @@ function WAREHOUSE:_CheckRequestConsistancy(queue)
     end
   
     -- Request from enemy coalition?
-    if self.coalition~=request.warehouse.coalition then
-      self:E(self.wid..string.format("ERROR: INVALID request. Requesting warehouse is of wrong coaltion! Own coalition %d != %d of requesting warehouse.", self.coalition, request.warehouse.coalition))
+    if self:GetCoalition()~=request.warehouse:GetCoalition() then
+      self:E(self.wid..string.format("ERROR: INVALID request. Requesting warehouse is of wrong coaltion! Own coalition %s != %s of requesting warehouse.", self:GetCoalitionName(), request.warehouse:GetCoalitionName()))
       valid=false
     end
     
@@ -4681,6 +4753,9 @@ function WAREHOUSE:_CheckRequestValid(request)
   -- Assume everything is okay.
   local valid=true
   
+  -- Category of the requesting warehouse airbase.
+  local requestcategory=request.warehouse:GetAirbaseCategory()
+  
   if request.transporttype==WAREHOUSE.TransportType.SELFPROPELLED then
     -------------------------------------------
     -- Case where the units go my themselves --
@@ -4691,7 +4766,7 @@ function WAREHOUSE:_CheckRequestValid(request)
       if asset_plane then
       
         -- No airplane to or from FARPS.
-        if request.category==Airbase.Category.HELIPAD or self.category==Airbase.Category.HELIPAD then
+        if requestcategory==Airbase.Category.HELIPAD or self:GetAirbaseCategory()==Airbase.Category.HELIPAD then
           self:E("ERROR: Incorrect request. Asset airplane requested but warehouse or requestor is HELIPAD/FARP!")
           valid=false
         end
@@ -4703,7 +4778,7 @@ function WAREHOUSE:_CheckRequestValid(request)
       
         -- Helos need a FARP or AIRBASE or SHIP for spawning. Also at the the receiving warehouse. So even if they could go there they "cannot" be spawned again.
         -- Unless I allow spawning of helos in the the spawn zone. But one should place at least a FARP there.
-        if self.category==-1 or request.category==-1 then
+        if self:GetAirbaseCategory()==-1 or requestcategory==-1 then
           self:E("ERROR: Incorrect request. Helos need a AIRBASE/HELIPAD/SHIP as home/destination base!")
           valid=false     
         end
@@ -4751,7 +4826,7 @@ function WAREHOUSE:_CheckRequestValid(request)
       
       -- No ground assets directly to or from ships.
       -- TODO: May needs refinement if warehouse is on land and requestor is ship in harbour?!
-      if (request.category==Airbase.Category.SHIP or self.category==Airbase.Category.SHIP) then
+      if (requestcategory==Airbase.Category.SHIP or self:GetAirbaseCategory()==Airbase.Category.SHIP) then
         self:E("ERROR: Incorrect request. Ground asset requested but warehouse or requestor is SHIP!")
         valid=false
       end
@@ -4804,7 +4879,7 @@ function WAREHOUSE:_CheckRequestValid(request)
     if request.transporttype==WAREHOUSE.TransportType.AIRPLANE then
     
       -- Airplanes only to AND from airdromes.
-      if self.category~=Airbase.Category.AIRDROME or request.category~=Airbase.Category.AIRDROME then
+      if self:GetAirbaseCategory()~=Airbase.Category.AIRDROME or requestcategory~=Airbase.Category.AIRDROME then
         self:E("ERROR: Incorrect request. Warehouse or requestor does not have an airdrome. No transport by plane possible!")
         valid=false
       end
@@ -4816,7 +4891,7 @@ function WAREHOUSE:_CheckRequestValid(request)
       -- Transport by ground units.
       
       -- No transport to or from ships
-      if self.category==Airbase.Category.SHIP or request.category==Airbase.Category.SHIP then
+      if self:GetAirbaseCategory()==Airbase.Category.SHIP or requestcategory==Airbase.Category.SHIP then
         self:E("ERROR: Incorrect request. Warehouse or requestor is SHIP. No transport by APC possible!")
         valid=false
       end
@@ -4831,7 +4906,7 @@ function WAREHOUSE:_CheckRequestValid(request)
     elseif request.transporttype==WAREHOUSE.TransportType.HELICOPTER then
     
       -- Transport by helicopters ==> need airbase for spawning but not for delivering to the spawn zone of the receiver.
-      if self.category==-1 then
+      if self:GetAirbaseCategory()==-1 then
         self:E("ERROR: Incorrect request. Warehouse has no airbase. Transport by helicopter not possible!")
         valid=false
       end
@@ -5933,13 +6008,7 @@ function WAREHOUSE:_PrintQueue(queue, name)
   
   for i,qitem in ipairs(queue) do
     local qitem=qitem --#WAREHOUSE.Pendingitem
-    
-    -- Set airbase:
-    local airbasename="none"
-    if qitem.airbase then
-      airbasename=qitem.airbase:GetName()
-    end
-    
+       
     local uid=qitem.uid
     local prio=qitem.prio
     local clock="N/A"
@@ -5948,7 +6017,8 @@ function WAREHOUSE:_PrintQueue(queue, name)
     end
     local assignment=tostring(qitem.assignment)
     local requestor=qitem.warehouse.alias
-    local requestorAirbaseCat=qitem.category
+    local airbasename=qitem.warehouse:GetAirbaseName()
+    local requestorAirbaseCat=qitem.warehouse:GetAirbaseCategory()
     local assetdesc=qitem.assetdesc
     local assetdescval=qitem.assetdescval
     local nasset=tostring(qitem.nasset)
@@ -5986,20 +6056,13 @@ end
 
 --- Display status of warehouse.
 -- @param #WAREHOUSE self
-function WAREHOUSE:_DisplayStatus()
-
-  -- Set airbase name.
-  local airbasename="none"
-  if self.airbase then
-    airbasename=self.airbase:GetName()
-  end
-  
+function WAREHOUSE:_DisplayStatus()  
   local text=string.format("\n------------------------------------------------------\n")
   text=text..string.format("Warehouse %s status: %s\n", self.alias, self:GetState())
   text=text..string.format("------------------------------------------------------\n")
-  text=text..string.format("Coalition side   = %d\n", self.coalition)
-  text=text..string.format("Country name     = %d\n", self.country)
-  text=text..string.format("Airbase name     = %s\n", airbasename)
+  text=text..string.format("Coalition name   = %d\n", self:GetCoalitionName())
+  text=text..string.format("Country name     = %d\n", self:GetCountryName())
+  text=text..string.format("Airbase name     = %s\n", self:GetAirbaseName())
   text=text..string.format("Queued requests  = %d\n", #self.queue)
   text=text..string.format("Pending requests = %d\n", #self.pending)
   text=text..string.format("------------------------------------------------------\n")
@@ -6015,13 +6078,6 @@ function WAREHOUSE:_GetStockAssetsText(messagetoall)
 
   -- Get assets in stock.
   local _data=self:GetStockInfo(self.stock)
-  
-  --[[
-  local function _sort(a,b)
-    return a[1]<b[1]
-  end  
-  table.sort(_data, _sort)
-  ]]
   
   -- Text.  
   local text="Stock:\n"
@@ -6068,7 +6124,7 @@ function WAREHOUSE:_UpdateWarehouseMarkText()
   end
   
   -- Create/update marker at warehouse in F10 map.
-  self.markerid=self.coordinate:MarkToCoalition(text, self.coalition, true)
+  self.markerid=self:GetCoordinate():MarkToCoalition(text, self:GetCoalition(), true)
 end
 
 --- Display stock items of warehouse.
@@ -6092,7 +6148,7 @@ end
 function WAREHOUSE:_Fireworks(coord)
 
   -- Place.
-  coord=coord or self.coordinate
+  coord=coord or self:GetCoordinate()
 
   -- Fireworks!
   for i=1,91 do
@@ -6108,7 +6164,7 @@ end
 function WAREHOUSE:_InfoMessage(text, duration)
   duration=duration or 20
   if duration>0 then
-    MESSAGE:New(text, duration):ToCoalitionIf(self.coalition, self.Debug or self.Report)
+    MESSAGE:New(text, duration):ToCoalitionIf(self:GetCoalition(), self.Debug or self.Report)
   end
   self:I(self.wid..text)
 end
