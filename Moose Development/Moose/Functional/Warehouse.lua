@@ -985,13 +985,12 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.4.4w"
+WAREHOUSE.version="0.4.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Check overlapping aircraft sometimes.
 -- TODO: Spawn assets only virtually, i.e. remove requested assets from stock but do NOT spawn them ==> Interface to A2A dispatcher! Maybe do a negative sign on asset number?
 -- TODO: Test capturing a neutral warehouse.
 -- TODO: Make more examples: ARTY, CAP, ...
@@ -999,6 +998,7 @@ WAREHOUSE.version="0.4.4w"
 -- TODO: Handle the case when units of a group die during the transfer.
 -- TODO: Added habours as interface for transport to from warehouses?
 -- TODO: Add save/load capability of warehouse <==> percistance after mission restart. Difficult in lua!
+-- DONE: Check overlapping aircraft sometimes.
 -- DONE: Case when all transports are killed and there is still cargo to be delivered. Put cargo back into warehouse. Should be done now!
 -- DONE: Add transport units from dispatchers back to warehouse stock once they completed their mission.
 -- DONE: Write documentation.
@@ -3355,10 +3355,6 @@ function WAREHOUSE:onafterSelfRequest(From, Event, To, groupset, request)
   -- Debug info.
   for _,_group in pairs(groupset:GetSetObjects()) do
     local group=_group --Wrapper.Group#GROUP
-    
-    --local text=string.format("Group name = %s, IsAlive=%s.", tostring(group:GetName()), tostring(group:IsAlive()))
-    --env.info(text)
-    
     if self.Debug then
       group:FlareGreen()
     end
@@ -3378,11 +3374,10 @@ function WAREHOUSE:onafterSelfRequest(From, Event, To, groupset, request)
       end      
     end    
   
+    -- Add request to defenders.
     table.insert(self.defending, request)
   end
   
-  -- Remove pending request.
-  --self:_DeleteQueueItem(request, self.pending)
 end
 
 --- On after "Attacked" event. Warehouse is under attack by an another coalition.
@@ -5412,7 +5407,7 @@ end
 function WAREHOUSE:_FindParkingForAssets(airbase, assets)
 
   -- Init default
-  local scanradius=50
+  local scanradius=100
   local scanunits=true
   local scanstatics=true
   local scanscenery=false
@@ -5420,7 +5415,7 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
 
   -- Function calculating the overlap of two (square) objects.
   local function _overlap(l1,l2,dist)
-    local safedist=(l1/2+l2/2)*1.1
+    local safedist=(l1/2+l2/2)*1.1  -- 10% safety margine added to safe distance!
     local safe = (dist > safedist)
     self:T3(string.format("l1=%.1f l2=%.1f s=%.1f d=%.1f ==> safe=%s", l1,l2,safedist,dist,tostring(safe)))
     return safe    
@@ -5432,18 +5427,15 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
   -- List of obstacles.
   local obstacles={}
   
-  -- Loop over all parking spots and get the obstacles.
+  -- Loop over all parking spots and get the currently present obstacles.
   -- How long does this take on very large airbases, i.e. those with hundereds of parking spots? Seems to be okay!
   for _,parkingspot in pairs(parkingdata) do
   
     -- Coordinate of the parking spot.
     local _spot=parkingspot.Coordinate   -- Core.Point#COORDINATE
     local _termid=parkingspot.TerminalID
-    
-    -- Obstacles at or around this parking spot.
-    obstacles[_termid]={}
             
-    -- Scan a radius of 50 meters around the spot.
+    -- Scan a radius of 100 meters around the spot.
     local _,_,_,_units,_statics,_sceneries=_spot:ScanObjects(scanradius, scanunits, scanstatics, scanscenery)
 
     -- Check all units.    
@@ -5452,7 +5444,7 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
       local _coord=unit:GetCoordinate()
       local _size=self:_GetObjectSize(unit:GetDCSObject())
       local _name=unit:GetName()
-      table.insert(obstacles[_termid],{coord=_coord, size=_size, name=_name, type="unit"})  
+      table.insert(obstacles, {coord=_coord, size=_size, name=_name, type="unit"})
     end
   
     -- Check all statics.
@@ -5461,7 +5453,7 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
       local _coord=COORDINATE:NewFromVec3(_vec3)
       local _name=static:getName()
       local _size=self:_GetObjectSize(static)
-      table.insert(obstacles[_termid],{coord=_coord, size=_size, name=_name, type="static"})  
+      table.insert(obstacles, {coord=_coord, size=_size, name=_name, type="static"})
     end
     
     -- Check all scenery.
@@ -5470,21 +5462,23 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
       local _coord=COORDINATE:NewFromVec3(_vec3)
       local _name=scenery:getTypeName()
       local _size=self:_GetObjectSize(scenery)
-      table.insert(obstacles[_termid],{coord=_coord, size=_size, name=_name, type="scenery"})
+      table.insert(obstacles,{coord=_coord, size=_size, name=_name, type="scenery"})
     end
     
-    -- TODO Clients? Unoccupied client aircraft are also important! Are they already included in scanned units maybe?
     --[[
+    -- TODO Clients? Unoccupied client aircraft are also important! Are they already included in scanned units maybe?
     local clients=_DATABASE.CLIENTS
     for _,_client in pairs(clients) do
       local client=_client --Wrapper.Client#CLIENT
-      local unit=client:GetClientGroupUnit()      
+      env.info(string.format("FF Client name %s", client:GetName()))
+      local unit=UNIT:FindByName(client:GetName())
+      --local unit=client:GetClientGroupUnit()      
       local _coord=unit:GetCoordinate()
       local _name=unit:GetName()
       local _size=self:_GetObjectSize(client:GetClientGroupDCSUnit())
-      table.insert(obstacles[_termid],{coord=_coord, size=_size, name=_name, type="client"})
-    end
-    ]]     
+      table.insert(obstacles,{coord=_coord, size=_size, name=_name, type="client"})
+    end 
+    ]]    
   end
   
   -- Parking data for all assets.
@@ -5492,9 +5486,9 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
 
   -- Loop over all assets that need a parking psot.
   for _,asset in pairs(assets) do
-  
     local _asset=asset --#WAREHOUSE.Assetitem
     
+    -- Get terminal type of this asset
     local terminaltype=self:_GetTerminal(asset.attribute)
     
     -- Asset specific parking.
@@ -5505,20 +5499,23 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
   
       -- Loop over all parking spots.
       local gotit=false
-      for _,parkingspot in pairs(parkingdata) do
+      for _,_parkingspot in pairs(parkingdata) do      
+        local parkingspot=_parkingspot --Wrapper.Airbase#AIRBASE.ParkingSpot
       
         -- Check correct terminal type for asset. We don't want helos in shelters etc.
-        if AIRBASE._CheckTerminalType(parkingspot.TerminalType, terminaltype) then
+        if AIRBASE._CheckTerminalType(parkingspot.TerminalType, terminaltype) then          
   
           -- Coordinate of the parking spot.
           local _spot=parkingspot.Coordinate   -- Core.Point#COORDINATE
           local _termid=parkingspot.TerminalID
           local _toac=parkingspot.TOAC
+          
+          --env.info(string.format("FF asset=%s (id=%d): needs terminal type=%d, id=%d, #obstacles=%d", _asset.templatename, _asset.uid, terminaltype, _termid, #obstacles))
            
           -- Loop over all obstacles.
           local free=true
           local problem=nil
-          for _,obstacle in pairs(obstacles[_termid]) do
+          for _,obstacle in pairs(obstacles) do
           
             -- Check if aircraft overlaps with any obstacle.
             local dist=_spot:Get2DDistance(obstacle.coord)
@@ -5526,14 +5523,18 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
             
             -- Spot is blocked.
             if not safe then
+              --env.info(string.format("FF asset=%s (id=%d): spot id=%d dist=%.1fm is NOT SAFE", _asset.templatename, _asset.uid, _termid, dist))
               free=false
               problem=obstacle
               problem.dist=dist
               break
+            else
+              --env.info(string.format("FF asset=%s (id=%d): spot id=%d dist=%.1fm is SAFE", _asset.templatename, _asset.uid, _termid, dist))
             end
           
           end
           
+          -- Check if spot is free
           if free then
           
             -- Add parkingspot for this asset unit.
@@ -5543,23 +5544,27 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
             
             -- Add the unit as obstacle so that this spot will not be available for the next unit.
             -- TODO Alternatively, I could remove this parking spot from the table, right?
-            table.insert(obstacles[_termid], {coord=_spot, size=_asset.size, name=_asset.templatename, type="asset"})
+            table.insert(obstacles, {coord=_spot, size=_asset.size, name=_asset.templatename, type="asset"})
             
             gotit=true
             break
+            
           else
+          
+            -- Debug output for occupied spots.
             self:T(self.wid..string.format("Parking spot #%d is occupied or not big enough!", _termid))
             if self.Debug then
               local coord=problem.coord --Core.Point#COORDINATE
               local text=string.format("Obstacle blocking spot #%d is %s type %s with size=%.1f m and distance=%.1f m.", _termid, problem.name, problem.type, problem.size, problem.dist)
               coord:MarkToAll(string.format(text))
             end
+            
           end
           
         end -- check terminal type
       end -- loop over parking spots
       
-      
+      -- No parking spot for at least one asset :(
       if not gotit then
         self:T(self.wid..string.format("WARNING: No free parking spot for asset id=%d",_asset.uid))
         return nil
@@ -5916,7 +5921,10 @@ end
 --- Size of the bounding box of a DCS object derived from the DCS descriptor table. If boundinb box is nil, a size of zero is returned.
 -- @param #WAREHOUSE self
 -- @param DCS#Object DCSobject The DCS object for which the size is needed.
--- @return #number Max size of object in meters.
+-- @return #number Max size of object in meters (length (x) or width (z) components not including height (y)).
+-- @return #number Length (x component) of size.
+-- @return #number Height (y component) of size.
+-- @return #number Width (z component) of size.
 function WAREHOUSE:_GetObjectSize(DCSobject)
   local DCSdesc=DCSobject:getDesc()
   if DCSdesc.box then
@@ -6060,9 +6068,9 @@ function WAREHOUSE:_DisplayStatus()
   local text=string.format("\n------------------------------------------------------\n")
   text=text..string.format("Warehouse %s status: %s\n", self.alias, self:GetState())
   text=text..string.format("------------------------------------------------------\n")
-  text=text..string.format("Coalition name   = %d\n", self:GetCoalitionName())
-  text=text..string.format("Country name     = %d\n", self:GetCountryName())
-  text=text..string.format("Airbase name     = %s\n", self:GetAirbaseName())
+  text=text..string.format("Coalition name   = %s\n", self:GetCoalitionName())
+  text=text..string.format("Country name     = %s\n", self:GetCountryName())
+  text=text..string.format("Airbase name     = %s (category=%d)\n", self:GetAirbaseName(), self:GetAirbaseCategory())
   text=text..string.format("Queued requests  = %d\n", #self.queue)
   text=text..string.format("Pending requests = %d\n", #self.pending)
   text=text..string.format("------------------------------------------------------\n")

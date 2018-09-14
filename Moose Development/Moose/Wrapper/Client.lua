@@ -376,8 +376,8 @@ end
 -- @param #CLIENT self
 -- @return Wrapper.Unit#UNIT
 function CLIENT:GetClientGroupUnit()
-	self:F2()
-
+  self:F2()
+  
 	local ClientDCSUnit = Unit.getByName( self.ClientName )
 
   self:T( self.ClientDCSUnit )
