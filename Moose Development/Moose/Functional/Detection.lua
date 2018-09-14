@@ -287,6 +287,7 @@ do -- DETECTION_BASE
   -- @list <#DETECTION_BASE.DetectedItem>
   
   --- @type DETECTION_BASE.DetectedItem
+  -- @field #boolean IsDetected Indicates if the DetectedItem has been detected or not.
   -- @field Core.Set#SET_UNIT Set
   -- @field Core.Set#SET_UNIT Set -- The Set of Units in the detected area.
   -- @field Core.Zone#ZONE_UNIT Zone -- The Zone of the detected area.
@@ -445,7 +446,16 @@ do -- DETECTION_BASE
     -- @param #DETECTION_BASE self
     -- @param #number Delay The delay in seconds.
     
+    self:AddTransition( "Detecting", "DetectedItem", "Detecting" )
     
+    --- OnAfter Transition Handler for Event DetectedItem.
+    -- @function [parent=#DETECTION_BASE] OnAfterDetectedItem
+    -- @param #DETECTION_BASE self
+    -- @param #string From The From State string.
+    -- @param #string Event The Event string.
+    -- @param #string To The To State string.
+    -- @param #table DetectedItem The DetectedItem.
+      
     self:AddTransition( "*", "Stop", "Stopped" )
     
     --- OnBefore Transition Handler for Event Stop.
@@ -782,6 +792,9 @@ do -- DETECTION_BASE
         for DetectedItemID, DetectedItem in pairs( self.DetectedItems ) do
           self:UpdateDetectedItemDetection( DetectedItem )
           self:CleanDetectionItem( DetectedItem, DetectedItemID ) -- Any DetectionItem that has a Set with zero elements in it, must be removed from the DetectionItems list.
+          if DetectedItem then
+            self:__DetectedItem( 0.1, DetectedItem )
+          end
         end
  
         self:__Detect( self.RefreshTimeInterval )
@@ -2400,6 +2413,7 @@ do -- DETECTION_AREAS
       Report:Add(DetectedItemID .. ", " .. DetectedItemCoordText)
       Report:Add( string.format( "Threat: [%s]", string.rep(  "■", ThreatLevelA2G ), string.rep(  "□", 10-ThreatLevelA2G ) ) )
       Report:Add( string.format("Type: %2d of %s", DetectedItemsCount, DetectedItemsTypes ) )
+      Report:Add( string.format("Detected: %s", DetectedItem.IsDetected and "yes" or "no" ) )
       
       return Report
     end
