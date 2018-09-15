@@ -964,7 +964,7 @@ do -- COORDINATE
   -- @param DCS#Speed Speed Airspeed in km/h. Default is 500 km/h.
   -- @param #boolean SpeedLocked true means the speed is locked.
   -- @param Wrapper.Airbase#AIRBASE airbase The airbase for takeoff and landing points.
-  -- @param #table DCSTasks A table of DCS#Task items which are executed at the waypoint.
+  -- @param #table DCSTasks A table of @{DCS#Task} items which are executed at the waypoint.
   -- @param #string description A text description of the waypoint, which will be shown on the F10 map.
   -- @return #table The route point.
   function COORDINATE:WaypointAir( AltType, Type, Action, Speed, SpeedLocked, airbase, DCSTasks, description )
@@ -1028,7 +1028,7 @@ do -- COORDINATE
     RoutePoint.task.params = {}
     RoutePoint.task.params.tasks = DCSTasks or {}
 
-    self:E({RoutePoint=RoutePoint})
+    self:T({RoutePoint=RoutePoint})
     return RoutePoint
   end
 
@@ -1037,9 +1037,11 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param #COORDINATE.WaypointAltType AltType The altitude type.
   -- @param DCS#Speed Speed Airspeed in km/h.
+  -- @param #table DCSTasks (Optional) A table of @{DCS#Task} items which are executed at the waypoint.
+  -- @param #string description (Optional) A text description of the waypoint, which will be shown on the F10 map.
   -- @return #table The route point.
-  function COORDINATE:WaypointAirTurningPoint( AltType, Speed )
-    return self:WaypointAir( AltType, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, Speed )
+  function COORDINATE:WaypointAirTurningPoint( AltType, Speed, DCSTasks, description )
+    return self:WaypointAir( AltType, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, Speed, true, nil, DCSTasks, description )
   end
 
   

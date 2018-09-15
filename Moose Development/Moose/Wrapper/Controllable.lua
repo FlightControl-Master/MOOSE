@@ -726,28 +726,56 @@ end
 -- @param DCS#Azimuth Direction (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
 -- @param #number Altitude (optional) The altitude from where to attack.
 -- @param #number WeaponType (optional) The WeaponType.
+-- @param #boolean Divebomb (optional) Perform dive bombing. Default false.
 -- @return DCS#Task The DCS task structure.
-function CONTROLLABLE:TaskBombing( Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType )
-  self:F2( { self.ControllableName, Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType } )
+function CONTROLLABLE:TaskBombing( Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType, Divebomb )
+  self:E( { self.ControllableName, Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType, Divebomb } )
+  
+  local _groupattack=false
+  if GroupAttack then
+    _groupattack=GroupAttack
+  end
+  
+  local _direction=0
+  local _directionenabled=false
+  if Direction then
+    _direction=math.rad(Direction)
+    _directionenabled=true
+  end
+  
+  local _altitude=5000
+  local _altitudeenabled=false
+  if Altitude then
+    _altitude=Altitude
+    _altitudeenabled=true
+  end
+  
+  local _attacktype=nil
+  if Divebomb then
+    _attacktype="Dive"
+  end
+  
 
   local DCSTask
   DCSTask = { 
     id = 'Bombing',
     params = {
-      point = Vec2,
-      groupAttack = GroupAttack or false,
+      x = Vec2.x,
+      y = Vec2.y,
+      groupAttack = _groupattack,
       expend = WeaponExpend or "Auto",
-      attackQtyLimit = AttackQty and true or false,
-      attackQty = AttackQty, 
-      directionEnabled = Direction and true or false,
-      direction = Direction, 
-      altitudeEnabled = Altitude and true or false,
-      altitude = Altitude or 30,
+      attackQtyLimit = false, --AttackQty and true or false,
+      attackQty = AttackQty or 1,
+      directionEnabled = _directionenabled,
+      direction = _direction, 
+      altitudeEnabled = _altitudeenabled,
+      altitude = _altitude,
       weaponType = WeaponType, 
+      --attackType=_attacktype,
       },
-  },
+  }
 
-  self:T3( { DCSTask } )
+  self:E( { TaskBombing=DCSTask } )
   return DCSTask
 end
 

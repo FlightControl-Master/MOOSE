@@ -985,7 +985,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.4.5"
+WAREHOUSE.version="0.4.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -5415,7 +5415,7 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
 
   -- Function calculating the overlap of two (square) objects.
   local function _overlap(l1,l2,dist)
-    local safedist=(l1/2+l2/2)*1.1  -- 10% safety margine added to safe distance!
+    local safedist=(l1/2+l2/2)*1.05  -- 5% safety margine added to safe distance!
     local safe = (dist > safedist)
     self:T3(string.format("l1=%.1f l2=%.1f s=%.1f d=%.1f ==> safe=%s", l1,l2,safedist,dist,tostring(safe)))
     return safe    
@@ -5543,7 +5543,6 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
             self:T(self.wid..string.format("Parking spot #%d is free for asset id=%d!", _termid, _asset.uid))
             
             -- Add the unit as obstacle so that this spot will not be available for the next unit.
-            -- TODO Alternatively, I could remove this parking spot from the table, right?
             table.insert(obstacles, {coord=_spot, size=_asset.size, name=_asset.templatename, type="asset"})
             
             gotit=true
