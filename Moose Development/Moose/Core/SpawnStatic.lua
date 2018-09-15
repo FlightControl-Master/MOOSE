@@ -183,8 +183,8 @@ function SPAWNSTATIC:SpawnFromPointVec2( PointVec2, Heading, NewName ) --R2.1
     local Static = coalition.addStaticObject( CountryID, StaticTemplate )
     
     self.SpawnIndex = self.SpawnIndex + 1
-  
-    return Static
+    
+    return _DATABASE:AddStatic(Static:getName())
   end
   
   return nil
@@ -214,7 +214,7 @@ function SPAWNSTATIC:ReSpawn(countryid)
     
     local Static = coalition.addStaticObject( CountryID, StaticTemplate )
     
-    return Static
+    return _DATABASE:AddStatic(Static:getName())
   end
   
   return nil
@@ -245,7 +245,7 @@ function SPAWNSTATIC:ReSpawnAt( Coordinate, Heading )
     
     local Static = coalition.addStaticObject( CountryID, StaticTemplate )
     
-    return Static
+    return _DATABASE:AddStatic(Static:getName())
   end
   
   return nil
@@ -263,6 +263,6 @@ function SPAWNSTATIC:SpawnFromZone( Zone, Heading, NewName ) --R2.1
 
   local Static = self:SpawnFromPointVec2( Zone:GetPointVec2(), Heading, NewName )
   
-  return Static
+  return _DATABASE:AddStatic(Static:getName())
 end
 

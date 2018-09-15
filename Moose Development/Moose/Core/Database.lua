@@ -188,7 +188,10 @@ function DATABASE:AddStatic( DCSStaticName )
 
   if not self.STATICS[DCSStaticName] then
     self.STATICS[DCSStaticName] = STATIC:Register( DCSStaticName )
+    return self.STATICS[DCSStaticName]
   end
+  
+  return nil
 end
 
 
