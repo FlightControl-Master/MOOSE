@@ -425,7 +425,7 @@
 -- 
 -- This section shows some examples how the WAREHOUSE class is used in practice. This is one of the best ways to explain things, in my opinion.
 -- 
--- But first, let me introduce a convenient way to define several warehouses in a table. This is absolutely *not* necessary but quite handy if you have
+-- But first, let me introduce a convenient way to define several warehouses in a table. This is absolutely *not necessary* but quite handy if you have
 -- multiple WAREHOUSE objects in your mission.
 -- 
 -- ## Example 0: Setting up a Warehouse Array
@@ -899,11 +899,12 @@ WAREHOUSE.Descriptor = {
 -- @field #string AIR_UAV Unpiloted Aerial Vehicle, e.g. drones.
 -- @field #string AIR_OTHER Any airborne unit that does not fall into any other airborne category.
 -- @field #string GROUND_APC Infantry carriers, in particular Amoured Personell Carrier. This can be used to transport other assets.
--- @field #string GROUND_TRUCK Unarmed ground vehicles.
+-- @field #string GROUND_TRUCK Unarmed ground vehicles, which has the DCS "Truck" attribute.
 -- @field #string GROUND_INFANTRY Ground infantry assets.
 -- @field #string GROUND_ARTILLERY Artillery assets.
 -- @field #string GROUND_TANK Tanks (modern or old).
 -- @field #string GROUND_TRAIN Trains. Not that trains are **not** yet properly implemented in DCS and cannot be used currently.
+-- @field #string GROUND_EWR Early Warning Radar.
 -- @field #string GROUND_AAA Anti-Aircraft Artillery.
 -- @field #string GROUND_SAM Surface-to-Air Missile system or components.
 -- @field #string GROUND_OTHER Any ground unit that does not fall into any other ground category.
@@ -929,6 +930,7 @@ WAREHOUSE.Attribute = {
   GROUND_ARTILLERY="Ground_Artillery",
   GROUND_TANK="Ground_Tank",
   GROUND_TRAIN="Ground_Train",
+  GROUND_EWR="Ground_EWR",
   GROUND_AAA="Ground_AAA",
   GROUND_SAM="Ground_SAM",
   GROUND_OTHER="Ground_OtherGround",
@@ -985,7 +987,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.4.6"
+WAREHOUSE.version="0.4.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -1710,7 +1712,7 @@ function WAREHOUSE:_NewLane(group, startcoord, finalcoord)
   end
   
   -- Add beginning and end.
-  table.insert(lane, 1, startcoord)
+  --table.insert(lane, 1, startcoord)
   table.insert(lane, #lane, finalcoord)
   
   return lane
@@ -4000,12 +4002,9 @@ function WAREHOUSE:_RouteNaval(group, request)
     -- Set speed to 80% of max possible.
     local _speed=group:GetSpeedMax()*0.8
     
-    -- Get shipping lane to remote warehouse.
-    --local lane=self.shippinglanes[request.warehouse.warehouse:GetName()]
-    
-    -- Get off road path to remote warehouse. If more have been defined, pick one randomly.
+    -- Get shipping lane to remote warehouse. If more have been defined, pick one randomly.
     local remotename=request.warehouse.warehouse:GetName()
-    local lane=self.shippinglanes[remotename][math.random(#self.ship[remotename])]
+    local lane=self.shippinglanes[remotename][math.random(#self.shippinglanes[remotename])]
         
     if lane then
       
@@ -4189,29 +4188,6 @@ function WAREHOUSE:_OnEventLanding(EventData)
       -- Debug info.
       self:T(self.wid..string.format("Warehouse %s captured event landing of its asset unit %s.", self.alias, EventData.IniUnitName))
             
-      --[[
-      -- Check if all cargo was delivered.
-      if self.delivered[rid]==true then
-      
-        -- Check if helicopter landed in spawn zone. If so, we call it a day and add it back to stock.
-        if group:GetCategory()==Group.Category.HELICOPTER then
-          if self.spawnzone:IsCoordinateInZone(EventData.IniUnit:GetCoordinate()) then
-          
-            -- Debug message.
-            self:_DebugMessage("Helicopter landed in spawn zone. No pending request. Putting back into stock.")
-            if self.Debug then
-              group:SmokeWhite()
-            end
-            
-            -- Group arrived.
-            self:Arrived(group)
-            
-          end          
-        end
-        
-      end
-      ]]
-      
     end
   end
 end
@@ -4262,9 +4238,12 @@ function WAREHOUSE:_OnEventArrived(EventData)
         
           local request=self:_GetRequestOfGroup(group, self.pending)
           local istransport=self:_GroupIsTransport(group,request)
+          
+          -- Check if engine shutdown happend at right airbase because the event is also triggered in other situations.
+          local rightairbase=group:GetCoordinate():GetClosestAirbase():GetName()==request.warehouse:GetAirbase():GetName()
     
           -- Check that group is cargo and not transport.
-          if istransport==false then    
+          if istransport==false and rightairbase then    
       
             -- Debug info.
             local text=string.format("Air asset group %s from warehouse %s arrived at its destination.", group:GetName(), self.alias)
@@ -4456,14 +4435,6 @@ function WAREHOUSE:_UnitDead(deadunit, request)
     end
   end
   
-end
-
---- Remove group.
--- @param #WAREHOUSE self
--- @param Wrapper.Group#GROUP group The group to be removed.
-function WAREHOUSE:_RemoveGroup(group)
-
-
 end
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -5828,10 +5799,10 @@ function WAREHOUSE:_GetAttribute(group)
     -- Planes
     local transportplane=group:HasAttribute("Transports") and group:HasAttribute("Planes")
     local awacs=group:HasAttribute("AWACS")
-    local fighter=group:HasAttribute("Fighters") or group:HasAttribute("Interceptors") or group:HasAttribute("Multirole fighters")
-    local bomber=group:HasAttribute("Bombers")
+    local fighter=group:HasAttribute("Fighters") or group:HasAttribute("Interceptors") or group:HasAttribute("Multirole fighters") or (group:HasAttribute("Bombers") and not group:HasAttribute("Strategic bombers")) 
+    local bomber=group:HasAttribute("Strategic bombers")
     local tanker=group:HasAttribute("Tankers")  
-    local uav=group:HasAttribute("UAV")  
+    local uav=group:HasAttribute("UAVs")  
     -- Helicopters
     local transporthelo=group:HasAttribute("Transport helicopters")
     local attackhelicopter=group:HasAttribute("Attack helicopters")
@@ -5841,12 +5812,13 @@ function WAREHOUSE:_GetAttribute(group)
     --------------    
     -- Ground
     local apc=group:HasAttribute("Infantry carriers")
-    local truck=group:HasAttribute("Trucks") and not group:GetCategory()==Group.Category.TRAIN
+    local truck=group:HasAttribute("Trucks") and group:GetCategory()==Group.Category.GROUND
     local infantry=group:HasAttribute("Infantry")
     local artillery=group:HasAttribute("Artillery")
     local tank=group:HasAttribute("Old Tanks") or group:HasAttribute("Modern Tanks")
     local aaa=group:HasAttribute("AAA")
-    local sam=group:HasAttribute("SAM")
+    local ewr=group:HasAttribute("EWR")
+    local sam=group:HasAttribute("SAM elements") and (not group:HasAttribute("AAA"))
     -- Train
     local train=group:GetCategory()==Group.Category.TRAIN
 
@@ -5879,8 +5851,6 @@ function WAREHOUSE:_GetAttribute(group)
       attribute=WAREHOUSE.Attribute.AIR_UAV
     elseif apc then
       attribute=WAREHOUSE.Attribute.GROUND_APC
-    elseif truck then
-      attribute=WAREHOUSE.Attribute.GROUND_TRUCK
     elseif infantry then
       attribute=WAREHOUSE.Attribute.GROUND_INFANTRY
     elseif artillery then
@@ -5889,8 +5859,12 @@ function WAREHOUSE:_GetAttribute(group)
       attribute=WAREHOUSE.Attribute.GROUND_TANK
     elseif aaa then
       attribute=WAREHOUSE.Attribute.GROUND_AAA
+    elseif ewr then
+      attribute=WAREHOUSE.Attribute.GROUND_EWR
     elseif sam then
-      attribute=WAREHOUSE.Attribute.GROUND_SAM    
+      attribute=WAREHOUSE.Attribute.GROUND_SAM
+    elseif truck then
+      attribute=WAREHOUSE.Attribute.GROUND_TRUCK    
     elseif train then
       attribute=WAREHOUSE.Attribute.GROUND_TRAIN
     elseif aircraftcarrier then
