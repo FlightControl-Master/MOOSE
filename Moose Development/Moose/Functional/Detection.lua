@@ -2027,7 +2027,7 @@ do -- DETECTION_UNITS
       local DetectedFirstUnitCoord = DetectedFirstUnit:GetCoordinate()
       self:SetDetectedItemCoordinate( DetectedItem, DetectedFirstUnitCoord, DetectedFirstUnit )
 
-      --self:ReportFriendliesNearBy( { DetectedItem = DetectedItem, ReportSetGroup = self.DetectionSetGroup } ) -- Fill the Friendlies table
+      self:ReportFriendliesNearBy( { DetectedItem = DetectedItem, ReportSetGroup = self.DetectionSetGroup } ) -- Fill the Friendlies table
       self:SetDetectedItemThreatLevel( DetectedItem )
       self:NearestRecce( DetectedItem )
       
