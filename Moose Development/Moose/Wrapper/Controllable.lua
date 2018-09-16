@@ -26,13 +26,13 @@
 --  * Handle local Controllable Controller.
 --  * Manage the "state" of the DCS Controllable.
 --
--- ## CONTROLLABLE constructor
+-- # 1) CONTROLLABLE constructor
 -- 
 -- The CONTROLLABLE class provides the following functions to construct a CONTROLLABLE instance:
 --
 --  * @{#CONTROLLABLE.New}(): Create a CONTROLLABLE instance.
 --
--- ## CONTROLLABLE Task methods
+-- # 2) CONTROLLABLE Task methods
 -- 
 -- Several controllable task methods are available that help you to prepare tasks. 
 -- These methods return a string consisting of the task description, which can then be given to either a @{Wrapper.Controllable#CONTROLLABLE.PushTask} or @{Wrapper.Controllable#SetTask} method to assign the task to the CONTROLLABLE.
@@ -40,7 +40,7 @@
 -- Each task description where applicable indicates for which controllable category the task is valid.
 -- There are 2 main subdivisions of tasks: Assigned tasks and EnRoute tasks.
 -- 
--- ### Task assignment
+-- ## 2.1) Task assignment
 -- 
 -- Assigned task methods make the controllable execute the task where the location of the (possible) targets of the task are known before being detected.
 -- This is different from the EnRoute tasks, where the targets of the task need to be detected before the task can be executed.
@@ -71,7 +71,7 @@
 --   * @{#CONTROLLABLE.TaskRouteToZone}: (AIR + GROUND) Route the controllable to a given zone.
 --   * @{#CONTROLLABLE.TaskReturnToBase}: (AIR) Route the controllable to an airbase.
 --
--- ### EnRoute assignment
+-- ## 2.2) EnRoute assignment
 -- 
 -- EnRoute tasks require the targets of the task need to be detected by the controllable (using its sensors) before the task can be executed:
 -- 
@@ -84,7 +84,7 @@
 --   * @{#CONTROLLABLE.EnRouteTaskFAC_EngageControllable}: (AIR + GROUND) The task makes the controllable/unit a FAC and lets the FAC to choose the target (enemy ground controllable) as well as other assigned targets.
 --   * @{#CONTROLLABLE.EnRouteTaskTanker}: (AIR) Aircraft will act as a tanker for friendly units. No parameters.
 -- 
--- ### Task preparation
+-- ## 2.3) Task preparation
 -- 
 -- There are certain task methods that allow to tailor the task behaviour:
 --
@@ -93,7 +93,7 @@
 --   * @{#CONTROLLABLE.TaskCondition}: Return a condition section for a controlled task.
 --   * @{#CONTROLLABLE.TaskControlled}: Return a Controlled Task taking a Task and a TaskCondition.
 -- 
--- ### Call a function as a Task
+-- ## 2.4) Call a function as a Task
 -- 
 -- A function can be called which is part of a Task. The method @{#CONTROLLABLE.TaskFunction}() prepares
 -- a Task that can call a GLOBAL function from within the Controller execution.
@@ -102,27 +102,27 @@
 -- 
 -- Demonstration Mission: [GRP-502 - Route at waypoint to random point](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/release-2-2-pre/GRP - Group Commands/GRP-502 - Route at waypoint to random point)
 -- 
--- ### Tasks at Waypoints
+-- ## 2.5) Tasks at Waypoints
 -- 
 -- Special Task methods are available to set tasks at certain waypoints.
 -- The method @{#CONTROLLABLE.SetTaskWaypoint}() helps preparing a Route, embedding a Task at the Waypoint of the Route.
 -- 
 -- This creates a Task element, with an action to call a function as part of a Wrapped Task.
 -- 
--- ### Obtain the mission from controllable templates
+-- ## 2.6) Obtain the mission from controllable templates
 -- 
 -- Controllable templates contain complete mission descriptions. Sometimes you want to copy a complete mission from a controllable and assign it to another:
 -- 
 --   * @{#CONTROLLABLE.TaskMission}: (AIR + GROUND) Return a mission task from a mission template.
 --
--- ## CONTROLLABLE Command methods
+-- # 3) Command methods
 -- 
 -- Controllable **command methods** prepare the execution of commands using the @{#CONTROLLABLE.SetCommand} method:
 -- 
 --   * @{#CONTROLLABLE.CommandDoScript}: Do Script command.
 --   * @{#CONTROLLABLE.CommandSwitchWayPoint}: Perform a switch waypoint command.
 -- 
--- ## Routing of Controllables
+-- # 4) Routing of Controllables
 -- 
 -- Different routing methods exist to route GROUPs and UNITs to different locations:
 --   
@@ -130,11 +130,11 @@
 --   * @{#CONTROLLABLE.RouteGroundTo}(): Make the GROUND Controllable to drive towards a specific coordinate.
 --   * @{#CONTROLLABLE.RouteAirTo}(): Make the AIR Controllable to fly towards a specific coordinate. 
 -- 
--- ## Option methods
+-- # 5) Option methods
 -- 
 -- Controllable **Option methods** change the behaviour of the Controllable while being alive.
 -- 
--- ### Rule of Engagement:
+-- ## 5.1) Rule of Engagement:
 -- 
 --   * @{#CONTROLLABLE.OptionROEWeaponFree} 
 --   * @{#CONTROLLABLE.OptionROEOpenFire}
@@ -148,7 +148,7 @@
 --   * @{#CONTROLLABLE.OptionROEReturnFirePossible}
 --   * @{#CONTROLLABLE.OptionROEEvadeFirePossible}
 -- 
--- ### Rule on thread:
+-- ## 5.2) Rule on thread:
 -- 
 --   * @{#CONTROLLABLE.OptionROTNoReaction}
 --   * @{#CONTROLLABLE.OptionROTPassiveDefense}
@@ -161,6 +161,12 @@
 --   * @{#CONTROLLABLE.OptionROTPassiveDefensePossible}
 --   * @{#CONTROLLABLE.OptionROTEvadeFirePossible}
 --   * @{#CONTROLLABLE.OptionROTVerticalPossible}
+-- 
+-- ## 5.3) Alarm state:
+-- 
+--   * @{#CONTROLLABLE.OptionAlarmStateAuto}
+--   * @{#CONTROLLABLE.OptionAlarmStateGreen}
+--   * @{#CONTROLLABLE.OptionAlarmStateRed}
 -- 
 -- @field #CONTROLLABLE
 CONTROLLABLE = {
