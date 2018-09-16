@@ -986,7 +986,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.4.8"
+WAREHOUSE.version="0.4.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -1090,6 +1090,10 @@ function WAREHOUSE:New(warehouse, alias)
   -- Add warehouse to database.
   WAREHOUSE.db.Warehouses[self.uid]=self
   
+  -----------------------
+  --- FSM Transitions ---
+  -----------------------
+  
   -- Start State.
   self:SetStartState("NotReadyYet")
 
@@ -1176,6 +1180,8 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param Wrapper.Group#GROUP group Group to be added as new asset.
   -- @param #number ngroups Number of groups to add to the warehouse stock. Default is 1.
   -- @param #WAREHOUSE.Attribute forceattribute (Optional) Explicitly force a generalized attribute for the asset. This has to be an @{#WAREHOUSE.Attribute}.
+  -- @param #number forcecargobay (Optional) Explicitly force cargobay weight limit in kg for cargo carriers. This is for each *unit* of the group.
+  -- @param #number forceweight (Optional) Explicitly force weight in kg of each unit in the group.
 
   --- Trigger the FSM event "AddAsset" with a delay. Add a group to the warehouse stock.
   -- @function [parent=#WAREHOUSE] __AddAsset
@@ -1184,6 +1190,8 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param Wrapper.Group#GROUP group Group to be added as new asset.
   -- @param #number ngroups Number of groups to add to the warehouse stock. Default is 1.
   -- @param #WAREHOUSE.Attribute forceattribute (Optional) Explicitly force a generalized attribute for the asset. This has to be an @{#WAREHOUSE.Attribute}.
+  -- @param #number forcecargobay (Optional) Explicitly force cargobay weight limit in kg for cargo carriers. This is for each *unit* of the group.
+  -- @param #number forceweight (Optional) Explicitly force weight in kg of each unit in the group.
 
 
   --- Triggers the FSM event "AddRequest". Add a request to the warehouse queue, which is processed when possible.
@@ -2178,7 +2186,7 @@ function WAREHOUSE:onafterStatus(From, Event, To)
   
   -- Display complete list of stock itmes.
   if self.Debug then
-  --self:_DisplayStockItems(self.stock)
+    self:_DisplayStockItems(self.stock)
   end  
 
   -- Call status again in ~30 sec (user choice).
@@ -2374,7 +2382,9 @@ end
 -- @param Wrapper.Group#GROUP group Group or template group to be added to the warehouse stock.
 -- @param #number ngroups Number of groups to add to the warehouse stock. Default is 1.
 -- @param #WAREHOUSE.Attribute forceattribute (Optional) Explicitly force a generalized attribute for the asset. This has to be an @{#WAREHOUSE.Attribute}.
-function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribute)
+-- @param #number forcecargobay (Optional) Explicitly force cargobay weight limit in kg for cargo carriers. This is for each *unit* of the group.
+-- @param #number forceweight (Optional) Explicitly force weight in kg of each unit in the group.
+function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribute, forcecargobay, forceweight)
 
   -- Set default.
   local n=ngroups or 1
@@ -2439,7 +2449,7 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
       self:_DebugMessage(self.wid..string.format("Warehouse %s: Adding %d NEW assets of group %s to stock.", self.alias, n, tostring(group:GetName())), 5)
        
       -- This is a group that is not in the db yet. Add it n times.
-      local assets=self:_RegisterAsset(group, n, forceattribute)
+      local assets=self:_RegisterAsset(group, n, forceattribute, forcecargobay, forceweight)
       
       -- Add created assets to stock of this warehouse.
       for _,asset in pairs(assets) do
@@ -2468,8 +2478,10 @@ end
 -- @param Wrapper.Group#GROUP group The group that will be added to the warehouse stock.
 -- @param #number ngroups Number of groups to be added.
 -- @param #string forceattribute Forced generalized attribute.
+-- @param #number forcecargobay Cargo bay weight limit in kg.
+-- @param #number forceweight Weight of units in kg.
 -- @return #table A table containing all registered assets.
-function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute)
+function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute, forcecargobay, forceweight)
   self:F({groupname=group:GetName(), ngroups=ngroups, forceattribute=forceattribute})
 
   -- Set default.
@@ -2506,15 +2518,30 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute)
     local Desc=unit:GetDesc()
     
     -- Weight. We sum up all units in the group.
-    local unitweight=Desc.massEmpty
+    local unitweight=forceweight or Desc.massEmpty
     if unitweight then
       weight=weight+unitweight
     end
     
+    local cargomax=0
+    local massfuel=Desc.fuelMassMax or 0
+    local massempty=Desc.massEmpty or 0
+    local massmax=Desc.massMax or 0
+    
+    -- Calcuate cargo bay limit value.
+    cargomax=massmax-massfuel-massempty
+    self:T3(self.wid..string.format("Unit name=%s: mass empty=%.1f kg, fuel=%.1f kg, max=%.1f kg ==> cargo=%.1f kg", unit:GetName(), unitweight, massfuel, massmax, cargomax))
+    
     -- Cargo bay size.
-    local bay=unit:GetCargoBayFreeWeight()
+    local bay=forcecargobay or unit:GetCargoBayFreeWeight()
+    
+    -- Add bay size to table.
     table.insert(cargobay, bay)
+    
+    -- Sum up total bay size.
     cargobaytot=cargobaytot+bay
+    
+    -- Get max bay size.
     if bay>cargobaymax then
       cargobaymax=bay
     end
@@ -2912,9 +2939,26 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   -- Empty cargo group set.
   CargoGroups = SET_CARGO:New()
   
+  local function getasset(group)
+    local _,aid,_=self:_GetIDsFromGroup(group)
+    self:FindAssetInDB(group)
+  end
+  
   -- Add cargo groups to set.
   for _i,_group in pairs(_spawngroups:GetSetObjects()) do
-    CargoGroups:AddCargo(CARGO_GROUP:New(_group, _cargotype,_group:GetName(),_loadradius,_nearradius))
+  
+    -- New cargo group object.
+    local cargogroup=CARGO_GROUP:New(_group, _cargotype,_group:GetName(),_loadradius,_nearradius)
+    
+    -- Find asset belonging to this group.
+    local asset=self:FindAssetInDB(_group)
+    if asset then
+      -- Set weight for this group.
+      cargogroup:SetWeight(asset.weight)
+    end
+    
+    -- Add group to group set.
+    CargoGroups:AddCargo(cargogroup)
   end
   
   ------------------------------------------------------------------------------------------------------------------------------------
@@ -3017,20 +3061,31 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   
   -- Add cargo group set.
   Pending.transportcargoset=CargoGroups
-  
-  -- Create empty tables which will be filled with the cargo groups of each carrier unit. Needed in case a carrier unit dies.
-  Pending.carriercargo={}  
-  for _,carriergroup in pairs(TransportSet:GetSetObjects()) do
-    for _,carrierunit in pairs(carriergroup:GetUnits()) do
-      Pending.carriercargo[carrierunit:GetName()]={}
-    end
-  end
 
   -- Add request to pending queue.
   table.insert(self.pending, Pending)
 
   -- Delete request from queue.
-  self:_DeleteQueueItem(Request, self.queue)  
+  self:_DeleteQueueItem(Request, self.queue)
+  
+  -- Adjust carrier units. This has to come AFTER the dispatchers have been defined because they set the cargobay free weight!
+  Pending.carriercargo={}  
+  for _,carriergroup in pairs(TransportSet:GetSetObjects()) do
+    local asset=self:FindAssetInDB(carriergroup)
+    for _i,_carrierunit in pairs(carriergroup:GetUnits()) do
+      local carrierunit=_carrierunit --Wrapper.Unit#UNIT
+      
+      -- Create empty tables which will be filled with the cargo groups of each carrier unit. Needed in case a carrier unit dies.
+      Pending.carriercargo[carrierunit:GetName()]={}
+      
+      -- Adjust cargo bay of carrier unit.
+      local cargobay=asset.cargobay[_i]
+      carrierunit:SetCargoBayWeightLimit(cargobay)
+      
+      -- Debug info.
+      self:T2(self.wid..string.format("Cargo bay weight limit ofcarrier unit %s: %.1f kg.", carrierunit:GetName(), carrierunit:GetCargoBayFreeWeight()))      
+    end
+  end    
   
   ------------------------
   -- Create Dispatchers --
@@ -3656,7 +3711,7 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
     -- Add group to group set and asset list.
     if _group then
       _groupset:AddGroup(_group)
-      table.insert(_assets, _assetitem)
+      table.insert(_assets, _assetitem)      
     else
       self:E(self.wid.."ERROR: Cargo asset could not be spawned!")
     end
@@ -4989,7 +5044,8 @@ function WAREHOUSE:_CheckRequestNow(request)
   if not _enough then
     local text=string.format("Warehouse %s: Request denied! Not enough (cargo) assets currently available.", self.alias)
     self:_InfoMessage(text, 5)
-    
+    text=string.format("Enough=%s, #_assets=%d, _nassets=%d, request.nasset=%s", tostring(_enough), #_assets,_nassets, tostring(request.nasset))
+    env.info(text)
     return false
   end
 
@@ -5178,7 +5234,7 @@ function WAREHOUSE:_GetTransportsForAssets(request)
         --self:E(self.wid..string.format("%s unit %d loads cargo uid=%d: bayempty=%02d, bayloaded = %02d - weight=%02d", transport.templatename, k, asset.uid, transport.cargobay[k], cargobay, asset.weight))
         
         -- Cargo fits into carrier
-        if delta>0 then
+        if delta>=0 then
           -- Reduce remaining cargobay.
           cargobay=cargobay-asset.weight
           self:T3(self.wid..string.format("%s unit %d loads cargo uid=%d: bayempty=%02d, bayloaded = %02d - weight=%02d", transport.templatename, k, asset.uid, transport.cargobay[k], cargobay, asset.weight))
@@ -5189,7 +5245,7 @@ function WAREHOUSE:_GetTransportsForAssets(request)
           -- This transport group is used.
           used=true
         else          
-          self:T2(self.wid..string.format("Carrier unit %s too small for cargo asset %s ==> cannot be not used! Cargo bay - asset weight = %d kg", transport.templatename, asset.templatename, delta))
+          self:T2(self.wid..string.format("Carrier unit %s too small for cargo asset %s ==> cannot be used! Cargo bay - asset weight = %d kg", transport.templatename, asset.templatename, delta))
         end
       
       end -- loop over assets      
@@ -6118,14 +6174,26 @@ end
 -- @param #table stock Table holding all assets in stock of the warehouse. Each entry is of type @{#WAREHOUSE.Assetitem}.
 function WAREHOUSE:_DisplayStockItems(stock)
 
-  local text=self.wid..string.format("Warehouse %s stock assets:\n", self.airbase:GetName())
-  for _,_stock in pairs(stock) do
+  local text=self.wid..string.format("Warehouse %s stock assets:", self.airbase:GetName())
+  for _i,_stock in pairs(stock) do
     local mystock=_stock --#WAREHOUSE.Assetitem
-    text=text..string.format("template = %s, category = %d, unittype = %s, attribute = %s\n", mystock.templatename, mystock.category, mystock.unittype, mystock.attribute)
+    local name=mystock.templatename
+    local category=mystock.category
+    local cargobaymax=mystock.cargobaymax
+    local cargobaytot=mystock.cargobaytot
+    local nunits=mystock.nunits
+    local range=mystock.range
+    local size=mystock.size
+    local speed=mystock.speedmax
+    local uid=mystock.uid
+    local unittype=mystock.unittype
+    local weight=mystock.weight    
+    local attribute=mystock.attribute
+    text=text..string.format("\n%02d) uid=%d, name=%s, unittype=%s, category=%d, attribute=%s, nunits=%d, speed=%.1f km/h, range=%.1f km, size=%.1f m, weight=%.1f kg, cargobax max=%.1f kg tot=%.1f kg",
+    _i, uid, name, unittype, category, attribute, nunits, speed, range/1000, size, weight, cargobaymax, cargobaytot)
   end
 
-  env.info(text)
-  MESSAGE:New(text, 10):ToAll()
+  self:T3(text)
 end
 
 --- Fireworks!

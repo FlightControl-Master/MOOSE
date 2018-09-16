@@ -142,9 +142,11 @@ function AI_CARGO:New( Carrier, CargoSet )
   -- @param #string Event
   -- @param #string To
   
-  for _, CarrierUnit in pairs( Carrier:GetUnits() ) do
-    CarrierUnit:SetCargoBayWeightLimit()
-  end
+  -- FF "Workaround" for not being able to set the cargo bay limit manually for the carrier group.
+  -- FF Moreover, the carrier group is an input parameter and should not be overwritten here.
+  --for _, CarrierUnit in pairs( Carrier:GetUnits() ) do    
+    --CarrierUnit:SetCargoBayWeightLimit()
+  --end
   
   self.Transporting = false
   self.Relocating = false
