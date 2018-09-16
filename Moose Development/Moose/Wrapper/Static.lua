@@ -89,6 +89,59 @@ function STATIC:FindByName( StaticName, RaiseError )
   return nil
 end
 
+--- Destroys the STATIC.
+-- @param #STATIC self
+-- @param #boolean GenerateEvent (Optional) true if you want to generate a crash or dead event for the static.
+-- @return #nil The DCS StaticObject is not existing or alive.  
+-- @usage
+-- -- Air static example: destroy the static Helicopter and generate a S_EVENT_CRASH.
+-- Helicopter = STATIC:FindByName( "Helicopter" )
+-- Helicopter:Destroy( true )
+-- 
+-- @usage
+-- -- Ground static example: destroy the static Tank and generate a S_EVENT_DEAD.
+-- Tanks = UNIT:FindByName( "Tank" )
+-- Tanks:Destroy( true )
+-- 
+-- @usage
+-- -- Ship static example: destroy the Ship silently.
+-- Ship = STATIC:FindByName( "Ship" )
+-- Ship:Destroy()
+-- 
+-- @usage
+-- -- Destroy without event generation example.
+-- Ship = STATIC:FindByName( "Boat" )
+-- Ship:Destroy( false ) -- Don't generate an event upon destruction.
+-- 
+function STATIC:Destroy( GenerateEvent )
+  self:F2( self.ObjectName )
+
+  local DCSObject = self:GetDCSObject()
+  
+  if DCSObject then
+  
+    local StaticName = DCSObject:getName()
+    self:F( { StaticName = StaticName } )
+    
+    if GenerateEvent and GenerateEvent == true then
+      if self:IsAir() then
+        self:CreateEventCrash( timer.getTime(), DCSObject )
+      else
+        self:CreateEventDead( timer.getTime(), DCSObject )
+      end
+    elseif GenerateEvent == false then
+      -- Do nothing!
+    else
+      self:CreateEventRemoveUnit( timer.getTime(), DCSObject )
+    end
+    
+    DCSObject:destroy()
+  end
+
+  return nil
+end
+
+
 
 function STATIC:GetDCSObject()
   local DCSStatic = StaticObject.getByName( self.StaticName )

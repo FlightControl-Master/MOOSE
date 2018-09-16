@@ -672,9 +672,11 @@ end
 
 --- Private method that registers new Static Templates within the DATABASE Object.
 -- @param #DATABASE self
--- @param #table GroupTemplate
+-- @param #table StaticTemplate
 -- @return #DATABASE self
 function DATABASE:_RegisterStaticTemplate( StaticTemplate, CoalitionID, CategoryID, CountryID )
+
+  local StaticTemplate = UTILS.DeepCopy( StaticTemplate )
 
   local StaticTemplateName = env.getValueDictByKey(StaticTemplate.name)
   
@@ -704,9 +706,15 @@ end
 
 
 --- @param #DATABASE self
-function DATABASE:GetStaticUnitTemplate( StaticName )
-  local StaticTemplate = self.Templates.Statics[StaticName].UnitTemplate
+function DATABASE:GetStaticGroupTemplate( StaticName )
+  local StaticTemplate = self.Templates.Statics[StaticName].GroupTemplate
   return StaticTemplate, self.Templates.Statics[StaticName].CoalitionID, self.Templates.Statics[StaticName].CategoryID, self.Templates.Statics[StaticName].CountryID
+end
+
+--- @param #DATABASE self
+function DATABASE:GetStaticUnitTemplate( StaticName )
+  local UnitTemplate = self.Templates.Statics[StaticName].UnitTemplate
+  return UnitTemplate, self.Templates.Statics[StaticName].CoalitionID, self.Templates.Statics[StaticName].CategoryID, self.Templates.Statics[StaticName].CountryID
 end
 
 

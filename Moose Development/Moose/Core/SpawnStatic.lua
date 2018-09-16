@@ -82,7 +82,7 @@ function SPAWNSTATIC:NewFromStatic( SpawnTemplatePrefix, SpawnCountryID ) --R2.1
 	local self = BASE:Inherit( self, BASE:New() ) -- #SPAWNSTATIC
 	self:F( { SpawnTemplatePrefix } )
   
-	local TemplateStatic, CoalitionID, CategoryID, CountryID = _DATABASE:GetStaticUnitTemplate( SpawnTemplatePrefix )
+	local TemplateStatic, CoalitionID, CategoryID, CountryID = _DATABASE:GetStaticGroupTemplate( SpawnTemplatePrefix )
 	if TemplateStatic then
 		self.SpawnTemplatePrefix = SpawnTemplatePrefix
 		self.CountryID = SpawnCountryID or CountryID
@@ -90,7 +90,7 @@ function SPAWNSTATIC:NewFromStatic( SpawnTemplatePrefix, SpawnCountryID ) --R2.1
 		self.CoalitionID = CoalitionID
 		self.SpawnIndex = 0
 	else
-		error( "SPAWNSTATIC:New: There is no group declared in the mission editor with SpawnTemplatePrefix = '" .. SpawnTemplatePrefix .. "'" )
+		error( "SPAWNSTATIC:New: There is no static declared in the mission editor with SpawnTemplatePrefix = '" .. SpawnTemplatePrefix .. "'" )
 	end
 
   self:SetEventPriority( 5 )
@@ -124,25 +124,22 @@ end
 function SPAWNSTATIC:Spawn( Heading, NewName ) --R2.3
   self:F( { Heading, NewName  } )
   
-  local StaticTemplate = _DATABASE:GetStaticUnitTemplate( self.SpawnTemplatePrefix )
+  local StaticTemplate, CoalitionID, CategoryID, CountryID = _DATABASE:GetStaticGroupTemplate( self.SpawnTemplatePrefix )
   
   if StaticTemplate then
   
-    local CountryID = self.CountryID
-    local CountryName = _DATABASE.COUNTRY_NAME[CountryID]
+    local StaticUnitTemplate = StaticTemplate.units[1]
   
     StaticTemplate.name = NewName or string.format("%s#%05d", self.SpawnTemplatePrefix, self.SpawnIndex )
     StaticTemplate.heading = ( Heading / 180 ) * math.pi
     
-    StaticTemplate.CountryID = nil
-    StaticTemplate.CoalitionID = nil
-    StaticTemplate.CategoryID = nil
-    
-    local Static = coalition.addStaticObject( CountryID, StaticTemplate )
+    _DATABASE:_RegisterStaticTemplate( StaticTemplate, CoalitionID, CategoryID, CountryID )
+
+    local Static = coalition.addStaticObject( CountryID, StaticTemplate.units[1] )
     
     self.SpawnIndex = self.SpawnIndex + 1
   
-    return Static
+    return _DATABASE:FindStatic(Static:getName())
   end
   
   return nil
@@ -159,32 +156,31 @@ end
 function SPAWNSTATIC:SpawnFromPointVec2( PointVec2, Heading, NewName ) --R2.1
   self:F( { PointVec2, Heading, NewName  } )
   
-  local StaticTemplate = _DATABASE:GetStaticUnitTemplate( self.SpawnTemplatePrefix )
+  local StaticTemplate, CoalitionID, CategoryID, CountryID = _DATABASE:GetStaticGroupTemplate( self.SpawnTemplatePrefix )
   
   if StaticTemplate then
-
-    local CountryID = self.CountryID
-    local CountryName = _DATABASE.COUNTRY_NAME[CountryID]
-    
-    StaticTemplate.x = PointVec2.x
-    StaticTemplate.y = PointVec2.z
   
-    StaticTemplate.units = nil
+    local StaticUnitTemplate = StaticTemplate.units[1]
+  
+    StaticUnitTemplate.x = PointVec2.x
+    StaticUnitTemplate.y = PointVec2.z
+  
     StaticTemplate.route = nil
     StaticTemplate.groupId = nil
     
     StaticTemplate.name = NewName or string.format("%s#%05d", self.SpawnTemplatePrefix, self.SpawnIndex )
-    StaticTemplate.heading = ( Heading / 180 ) * math.pi
+    StaticUnitTemplate.name = StaticTemplate.name
+    StaticUnitTemplate.heading = ( Heading / 180 ) * math.pi
     
-    StaticTemplate.CountryID = nil
-    StaticTemplate.CoalitionID = nil
-    StaticTemplate.CategoryID = nil
+    _DATABASE:_RegisterStaticTemplate( StaticTemplate, CoalitionID, CategoryID, CountryID)
     
-    local Static = coalition.addStaticObject( CountryID, StaticTemplate )
+    self:F({StaticTemplate = StaticTemplate})
+
+    local Static = coalition.addStaticObject( CountryID, StaticTemplate.units[1] )
     
     self.SpawnIndex = self.SpawnIndex + 1
     
-    return _DATABASE:AddStatic(Static:getName())
+    return _DATABASE:FindStatic(Static:getName())
   end
   
   return nil
@@ -199,24 +195,18 @@ end
 -- @return #SPAWNSTATIC
 function SPAWNSTATIC:ReSpawn()
   
-  local StaticTemplate = _DATABASE:GetStaticUnitTemplate( self.SpawnTemplatePrefix )
+  local StaticTemplate, CoalitionID, CategoryID, CountryID = _DATABASE:GetStaticGroupTemplate( self.SpawnTemplatePrefix )
   
   if StaticTemplate then
 
-    local CountryID = self.CountryID
-    local CountryName = _DATABASE.COUNTRY_NAME[CountryID]
-    
-    StaticTemplate.units = nil
+    local StaticUnitTemplate = StaticTemplate.units[1]
+      
     StaticTemplate.route = nil
     StaticTemplate.groupId = nil
     
-    StaticTemplate.CountryID = nil
-    StaticTemplate.CoalitionID = nil
-    StaticTemplate.CategoryID = nil
+    local Static = coalition.addStaticObject( CountryID, StaticTemplate.units[1] )
     
-    local Static = coalition.addStaticObject( CountryID, StaticTemplate )
-    
-    return _DATABASE:AddStatic(Static:getName())
+    return _DATABASE:FindStatic(Static:getName())
   end
   
   return nil
@@ -230,24 +220,20 @@ end
 -- @return #SPAWNSTATIC
 function SPAWNSTATIC:ReSpawnAt( Coordinate, Heading )
   
-  local StaticTemplate = _DATABASE:GetStaticUnitTemplate( self.SpawnTemplatePrefix )
+  local StaticTemplate, CoalitionID, CategoryID, CountryID = _DATABASE:GetStaticGroupTemplate( self.SpawnTemplatePrefix )
   
   if StaticTemplate then
 
-    local CountryID = self.CountryID
-    
-    StaticTemplate.x = Coordinate.x
-    StaticTemplate.y = Coordinate.z
+    local StaticUnitTemplate = StaticTemplate.units[1]
+  
+    StaticUnitTemplate.x = Coordinate.x
+    StaticUnitTemplate.y = Coordinate.z
 
-    StaticTemplate.heading = Heading and ( ( Heading / 180 ) * math.pi ) or StaticTemplate.heading
-
-    StaticTemplate.CountryID = nil
-    StaticTemplate.CoalitionID = nil
-    StaticTemplate.CategoryID = nil
+    StaticUnitTemplate.heading = Heading and ( ( Heading / 180 ) * math.pi ) or StaticTemplate.heading
     
-    local Static = coalition.addStaticObject( CountryID, StaticTemplate )
+    local Static = coalition.addStaticObject( CountryID, StaticTemplate.units[1] )
     
-    return _DATABASE:AddStatic(Static:getName())
+    return _DATABASE:FindStatic(Static:getName())
   end
   
   return nil
@@ -265,6 +251,6 @@ function SPAWNSTATIC:SpawnFromZone( Zone, Heading, NewName ) --R2.1
 
   local Static = self:SpawnFromPointVec2( Zone:GetPointVec2(), Heading, NewName )
   
-  return _DATABASE:AddStatic(Static:getName())
+  return Static
 end
 

@@ -154,7 +154,7 @@ do -- CARGO_CRATE
     if self.CargoObject then
       self:T("Destroying")
       self.NoDestroy = true
-      self.CargoObject:Destroy()
+      self.CargoObject:Destroy( false ) -- Do not generate a remove unit event, because we want to keep the template for later respawn in the database.
       --local Coordinate = self.CargoObject:GetCoordinate():GetRandomCoordinateInRadius( 50, 20 )
       --self.CargoObject:ReSpawnAt( Coordinate, 0 )
     end

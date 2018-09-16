@@ -1,4 +1,4 @@
---- **Core** -- SPAWN class dynamically spawns new groups of units in your missions.
+--- **Core** --Spawn dynamically new GROUPs of UNITs in your missions.
 --  
 -- ===
 -- 
