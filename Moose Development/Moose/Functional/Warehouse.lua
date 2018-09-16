@@ -18,7 +18,7 @@
 -- ### Authors: **funkyfranky**, FlightControl (cargo dispatcher classes)
 --
 -- @module Functional.Warehouse
--- @image Warehouse.JPG
+-- @image MOOSE.JPG
 
 --- WAREHOUSE class.
 -- @type WAREHOUSE
@@ -281,7 +281,6 @@
 -- added two times while Path_2(A->B) was added only once. Hence, the group will choose Path_1 with a probability of 66.6 % while  Path_2 is only chosen with
 -- a probability of 33.3 %. 
 -- 
--- 
 -- ## Rail Connections
 -- 
 -- A rail connection is automatically defined as the closest point on a railway measured from the center of the spawn zone. But only, if the distance is less than 3 km.
@@ -384,15 +383,15 @@
 -- Technically, the capturing of the airbase is triggered by the DCS [S\_EVENT\_BASE\_CAPTURED](https://wiki.hoggitworld.com/view/DCS_event_base_captured) event. 
 -- So the capturing takes place when only enemy ground units are in the airbase zone whilst no ground units of the present airbase owner are in that zone.
 -- 
--- The warehouse will also create an event named "AirbaseCaptured", which can be captured by the @{#WAREHOUSE.OnAfterAirbaseCaptured} function. So the warehouse can react on
--- this attack and for example spawn ground groups to re-capture its airbase.
+-- The warehouse will also create an event **AirbaseCaptured**, which can be captured by the @{#WAREHOUSE.OnAfterAirbaseCaptured} function. So the warehouse chief can react on
+-- this attack and for example deploy ground groups to re-capture its airbase.
 -- 
--- When an airbase is re-captured the event "AirbaseRecaptured" is triggered and can be captured by the @{#WAREHOUSE.OnAfterAirbaseRecaptured} function.
+-- When an airbase is re-captured the event **AirbaseRecaptured** is triggered and can be captured by the @{#WAREHOUSE.OnAfterAirbaseRecaptured} function.
 -- This can be used to put the defending assets back into the warehouse stock.
 -- 
 -- ## Capturing the Warehouse
 -- 
--- A warehouse can also be captured by the enemy coalition. If enemy ground troops enter the warehouse zone the event **Attacked** is triggered which can be captured by the
+-- A warehouse can be captured by the enemy coalition. If enemy ground troops enter the warehouse zone the event **Attacked** is triggered which can be captured by the
 -- @{#WAREHOUSE.OnAfterAttacked} event. By default the warehouse zone circular zone with a radius of 500 meters located at the center of the physical warehouse.
 -- The warehouse zone can be set via the @{#WAREHOUSE.SetWarehouseZone}(*zone*) function. The parameter *zone* must also be a cirular zone. 
 -- 
@@ -723,7 +722,7 @@
 --     warehouse.Stennis:AddAsset("CH-53E", 3)
 --     
 --     -- Define a "port" at the Stennis to be able to spawn Naval assets. This zone will move behind the Stennis.
---     local stenniszone=ZONE_UNIT:New("Spawnzone Stennis", UNIT:FindByName("Stennis"), 100, {rho=250, theta=180, relative_to_unit=true})
+--     local stenniszone=ZONE_UNIT:New("Spawnzone Stennis", UNIT:FindByName("USS Stennis"), 100, {rho=250, theta=180, relative_to_unit=true})
 --     warehouse.Stennis:SetPortZone(stenniszone)
 --     
 --     -- Self request of rescue helo and speed boats.
@@ -738,7 +737,7 @@
 --       local request=request   --Functional.Warehouse#WAREHOUSE.Pendingitem
 --       
 --       -- USS Stennis is the mother ship.
---       local Mother=UNIT:FindByName("Stennis")
+--       local Mother=UNIT:FindByName("USS Stennis")
 --       
 --       -- Get assignment for this request.
 --       local assignment=warehouse.Stennis:GetAssignment(request)
@@ -987,12 +986,13 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.4.7"
+WAREHOUSE.version="0.4.8"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+-- TODO: Get cargo bay and weight from CARGO_GROUP and GROUP.
+-- TODO: Add possibility to set weight and cargo bay manually in AddAsset function as optional parameters.
 -- TODO: Spawn assets only virtually, i.e. remove requested assets from stock but do NOT spawn them ==> Interface to A2A dispatcher! Maybe do a negative sign on asset number?
 -- TODO: Test capturing a neutral warehouse.
 -- TODO: Make more examples: ARTY, CAP, ...
@@ -1080,13 +1080,12 @@ function WAREHOUSE:New(warehouse, alias)
   -- Closest of the same coalition but within a certain range.
   local _airbase=self:GetCoordinate():GetClosestAirbase(nil, self:GetCoalition())
   if _airbase and _airbase:GetCoordinate():Get2DDistance(self:GetCoordinate()) < 3000 then
-    self.airbase=_airbase
-    self.airbasename=self.airbase:GetName()
+    self:SetAirbase(_airbase)
   end
       
   -- Define warehouse and default spawn zone.
   self.zone=ZONE_RADIUS:New(string.format("Warehouse zone %s", self.warehouse:GetName()), warehouse:GetVec2(), 500)
-  self.spawnzone=ZONE_RADIUS:New(string.format("Warehouse %s spawn zone", self.warehouse:GetName()), warehouse:GetVec2(), 200)
+  self.spawnzone=ZONE_RADIUS:New(string.format("Warehouse %s spawn zone", self.warehouse:GetName()), warehouse:GetVec2(), 250)
   
   -- Add warehouse to database.
   WAREHOUSE.db.Warehouses[self.uid]=self
@@ -1422,16 +1421,16 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param DCS#coalition.side Coalition Coalition which re-captured the airbase, i.e. the same as the current warehouse owner coalition.
 
 
-  --- Triggers the FSM event "Destroyed" when the warehouse was destroyed. All services are stopped.
+  --- Triggers the FSM event "Destroyed" when the warehouse was destroyed. Services are stopped.
   -- @param #WAREHOUSE self
   -- @function [parent=#WAREHOUSE] Destroyed
   
-  --- Triggers the FSM event "Destroyed" with a delay when the warehouse was destroyed. All services are stopped.
+  --- Triggers the FSM event "Destroyed" with a delay when the warehouse was destroyed. Services are stopped.
   -- @param #WAREHOUSE self
   -- @function [parent=#WAREHOUSE] Destroyed
   -- @param #number delay Delay in seconds.
 
-  --- On after "Destroyed" event user function. Called when the warehouse was destroyed. All services are stopped.
+  --- On after "Destroyed" event user function. Called when the warehouse was destroyed. Services are stopped.
   -- @param #WAREHOUSE self
   -- @function [parent=#WAREHOUSE] OnAfterDestroyed
   -- @param #string From From state.
@@ -1529,7 +1528,11 @@ end
 -- @return #WAREHOUSE self
 function WAREHOUSE:SetAirbase(airbase)
   self.airbase=airbase
-  self.airbasename=airbase:GetName()
+  if airbase~=nil then
+    self.airbasename=airbase:GetName()
+  else
+    self.airbasename=nil
+  end
   return self
 end
 
@@ -1695,7 +1698,7 @@ function WAREHOUSE:_NewLane(group, startcoord, finalcoord)
   local distF=startcoord:Get2DDistance(coordF)
   local distL=startcoord:Get2DDistance(coordL)
   
-  -- Add the shipping lane. Need to take care of the wrong "direction".
+  -- Add the lane. Need to take care of the wrong "direction".
   local lane={}
   if distF<distL then
     for i=1,#lanepoints do
@@ -1711,8 +1714,7 @@ function WAREHOUSE:_NewLane(group, startcoord, finalcoord)
     end     
   end
   
-  -- Add beginning and end.
-  --table.insert(lane, 1, startcoord)
+  -- Automatically add end point which is a random point inside the final port zone.
   table.insert(lane, #lane, finalcoord)
   
   return lane
@@ -2021,13 +2023,6 @@ function WAREHOUSE:onafterStart(From, Event, To)
 
   -- Save self in static object. Easier to retrieve later.
   self.warehouse:SetState(self.warehouse, "WAREHOUSE", self)
- 
-  -- Set airbase name and category.
-  if self.airbase and self.airbase:GetCoalition()==self:GetCoalition() then
-    self.airbasename=self.airbase:GetName()
-  else
-    self.airbasename=nil
-  end
 
   -- THIS! caused aircraft to be spawned and started but they would never begin their route!
   -- VERY strange. Need to test more.
@@ -2039,7 +2034,7 @@ function WAREHOUSE:onafterStart(From, Event, To)
   
   -- Get the closest point on road wrt spawnzone of ground assets.
   local _road=self.spawnzone:GetCoordinate():GetClosestPointToRoad()
-  if _road and self.road==nil then  
+  if _road and self.road==nil then
     -- Set connection to road if distance is less than 3 km.
     local _Droad=_road:Get2DDistance(self.spawnzone:GetCoordinate())      
     if _Droad < 3000 then
@@ -2291,7 +2286,8 @@ function WAREHOUSE:_JobDone()
             
             -- In spawn zone.
             local inspawnzone=group:IsPartlyOrCompletelyInZone(self.spawnzone)
-                        
+                     
+            -- Check conditions for being back home.   
             local ishome=false
             if category==Group.Category.GROUND or category==Group.Category.HELICOPTER then
               -- Units go back to the spawn zone, helicopters land and they should not move any more.
@@ -2303,13 +2299,15 @@ function WAREHOUSE:_JobDone()
             
             -- Debug text.
             local text=string.format("Group %s: speed=%d km/h, onground=%s , airbase=%s, spawnzone=%s ==> ishome=%s", group:GetName(), speed, tostring(onground), airbase, tostring(inspawnzone), tostring(ishome))
-            self:E(self.wid..text)
+            self:T(self.wid..text)
             
             if ishome then
 
               -- Info message.
-              self:_InfoMessage(string.format("Warehouse %s: No cargo assets left for request id=%s. Remaining %s transport assets go back into stock!", self.alias, request.uid, ntransport))            
+              local text=string.format("Warehouse %s: Transport group arrived back home and no cargo left for request id=%d.\nSending transport group %s back to stock.", self.alias, request.uid, group:GetName())
+              self:_InfoMessage(text)            
   
+              -- Debug smoke.
               if self.Debug then
                 group:SmokeRed()
               end
@@ -2453,7 +2451,8 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
     -- Destroy group if it is alive.
     if group:IsAlive()==true then
       self:_DebugMessage(string.format("Destroying group %s.", group:GetName()), 5)
-      group:Destroy()
+      -- Setting parameter to false, i.e. creating NO dead or remove unit event, seems to not confuse the dispatcher logic.
+      group:Destroy(false)
     end
   
   else
@@ -2894,7 +2893,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   -- Add groups to cargo if they don't go by themselfs.
   local CargoGroups --Core.Set#SET_CARGO
   
-  --TODO: make nearradius depended on transport type and asset type.
+  -- Load radius and near radius.
   local _loadradius=5000
   local _nearradius=nil
   
@@ -2904,7 +2903,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     --_loadradius=1000
     _loadradius=nil
   elseif Request.transporttype==WAREHOUSE.TransportType.APC then
-    _loadradius=1000
+    _loadradius=nil
   end
   
   --_loadradius=nil
@@ -3568,7 +3567,8 @@ function WAREHOUSE:onafterDestroyed(From, Event, To)
   self:_InfoMessage(text)
 
   -- Stop warehouse FSM in one minute.
-  self:__Stop(60)
+  -- Maybe dont stop it or pending requests are not updated any more.
+  --self:__Stop(60)
 end
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3580,7 +3580,7 @@ end
 -- @param #WAREHOUSE.Queueitem Request Information table of the request.
 -- @return Core.Set#SET_GROUP Set of groups that were spawned.
 function WAREHOUSE:_SpawnAssetRequest(Request)
-  self:E({requestUID=Request.uid})
+  self:F2({requestUID=Request.uid})
 
   -- Shortcut to cargo assets.  
   local _assetstock=Request.cargoassets
@@ -5103,8 +5103,13 @@ function WAREHOUSE:_GetTransportsForAssets(request)
   -- Get all transports of the requested type in stock.
   local transports=self:_FilterStock(self.stock, WAREHOUSE.Descriptor.ATTRIBUTE, request.transporttype)
 
- -- Copy asset.
- local cargoassets=UTILS.DeepCopy(request.cargoassets)
+  -- Copy asset.
+  local cargoassets=UTILS.DeepCopy(request.cargoassets)
+  local cargoset=request.transportcargoset
+
+  -- TODO: Get weight and cargo bay from CARGO_GROUP
+  --local cargogroup=CARGO_GROUP:New(CargoGroup,Type,Name,LoadRadius,NearRadius) 
+  --cargogroup:GetWeight()
      
   -- Sort transport carriers w.r.t. cargo bay size.
   local function sort_transports(a,b)
@@ -5955,7 +5960,7 @@ function WAREHOUSE:_DeleteQueueItem(qitem, queue)
   for i=1,#queue do
     local _item=queue[i] --#WAREHOUSE.Queueitem
     if _item.uid==qitem.uid then
-      self:I(self.wid..string.format("Deleting queue item %d.", qitem.uid))
+      self:T(self.wid..string.format("Deleting queue item id=%d.", qitem.uid))
       table.remove(queue,i)
       break
     end
