@@ -197,9 +197,9 @@ end
 -- @param DCS#country.id countryid The country ID used for spawning the new static.
 function STATIC:ReSpawn(countryid)
 
-  local SpawnStatic = SPAWNSTATIC:NewFromStatic( self.StaticName )
+  local SpawnStatic = SPAWNSTATIC:NewFromStatic( self.StaticName, countryid )
   
-  SpawnStatic:ReSpawn(countryid)
+  SpawnStatic:ReSpawn()
 end
 
 

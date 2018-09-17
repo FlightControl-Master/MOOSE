@@ -200,10 +200,8 @@ function SPAWNSTATIC:ReSpawn(countryid)
   
   if StaticTemplate then
 
-    local CountryID = countryid or self.CountryID
-    local CountryName = _DATABASE.COUNTRY_NAME[CountryID]
+    --local CountryID = countryid or (self.CountryID or CountryID)
     
-    StaticTemplate.units = nil
     StaticTemplate.route = nil
     StaticTemplate.groupId = nil
     
