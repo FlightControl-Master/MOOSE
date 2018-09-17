@@ -143,6 +143,7 @@ function AI_CARGO:New( Carrier, CargoSet )
   -- @param #string To
   
   for _, CarrierUnit in pairs( Carrier:GetUnits() ) do
+    local CarrierUnit = CarrierUnit -- Wrapper.Unit#UNIT
     CarrierUnit:SetCargoBayWeightLimit()
   end
   
