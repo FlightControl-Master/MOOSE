@@ -1023,8 +1023,9 @@ do -- Cargo
   -- @param #POSITIONABLE self
   -- @param #number WeightLimit
   function POSITIONABLE:SetCargoBayWeightLimit( WeightLimit )
+    
     if WeightLimit then
-      self.__.CargoBayWeightLimit = WeightLimit
+      self.__.CargoBayWeightLimit = self.__.CargoBayWeightLimit or WeightLimit
     else
       -- If weightlimit is not provided, we will calculate it depending on the type of unit.
       
@@ -1032,7 +1033,13 @@ do -- Cargo
       if self:IsAir() then
         local Desc = self:GetDesc()
         self:F({Desc=Desc})
-        self.__.CargoBayWeightLimit = Desc.massMax - ( Desc.massEmpty + Desc.fuelMassMax )
+
+        local Weights = { 
+          ["C-17A"] = 35000,   --77519 cannot be used, because it loads way too much apcs and infantry.,
+          ["C-130"] = 22000    --The real value cannot be used, because it loads way too much apcs and infantry.,
+        } 
+
+        self.__.CargoBayWeightLimit = Weights[Desc.typeName] or ( Desc.massMax - ( Desc.massEmpty + Desc.fuelMassMax ) )
       else
         local Desc = self:GetDesc()
 
