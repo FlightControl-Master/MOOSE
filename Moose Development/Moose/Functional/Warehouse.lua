@@ -164,9 +164,11 @@
 -- * *Prio*: (Optional) A number between 1 (high) and 100 (low) describing the priority of the request. Request with high priority are processed first. Default is 50, i.e. medium priority.
 -- * *Assignment*: (Optional) A free to choose string describing the assignment. For self requests, this can be used to assign the spawned groups to specific tasks. 
 -- 
+-- ## Requesting by Generalized Attribute
+-- 
 -- For example:
 --  
---     warehouseBatumi:AddRequest(warehouseKobuleti, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_INFANTRY, 5, WAREHOUSE.TransportType.APC, 2, 20)
+--     warehouseBatumi:AddRequest(warehouseKobuleti, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_INFANTRY, 5, WAREHOUSE.TransportType.APC, 2)
 --
 -- Here, warehouse Kobuleti requests 5 infantry groups from warehouse Batumi. These "cargo" assets should be transported from Batumi to Kobuleti by 2 APCS.
 -- Note that the warehouse at Batumi needs to have at least five infantry groups and two APC groups in their stock if the request can be processed.
@@ -184,7 +186,7 @@
 -- Here, Kobuleti requests a specific unit type, in particular two groups of A-10Cs. Note that the spelling is important as it must exacly be the same as
 -- what one get's when using the DCS unit type.
 -- 
--- ## Requesting a Specifc Group
+-- ## Requesting a Specific Group
 -- 
 -- An even more specific request would be:
 -- 
@@ -192,13 +194,15 @@
 --      
 -- In this case three groups named "Group Name as in ME" are requested. So this explicitly request the groups named like that in the Mission Editor.
 -- 
--- ## Requesting a general category
+-- ## Requesting a General Category
 -- 
 -- On the other hand, very general unspecifc requests can be made as
 -- 
 --     warehouseBatumi:AddRequest(warehouseKobuleti, WAREHOUSE.Descriptor.CATEGORY, Group.Category.Ground, 10)
 --      
 -- Here, Kubuleti requests 10 ground groups and does not care which ones. This could be a mix of infantry, APCs, trucks etc.
+-- 
+-- **Note** that these general requests should be made with *great care* due to the fact, that depending on what a warehouse has in stock a lot of different unit types can be spawned.
 -- 
 -- # Employing Assets
 -- 
@@ -1655,8 +1659,13 @@ function WAREHOUSE:AddOffRoadPath(remotewarehouse, group, oneway)
   -- Create new path from template group waypoints.
   local path=self:_NewLane(group, startcoord, finalcoord)
   
+  if path==nil then
+    self:E(self.wid.."ERROR: Offroad path could not be added. Group present in ME?")
+    return
+  end
+  
   -- Debug info. Marks along path.
-  if self.Debug then
+  if path and self.Debug then
     for i=1,#path do
       local coord=path[i] --Core.Point#COORDINATE
       local text=string.format("Off road path from %s to %s. Point %d.", self.alias, remotewarehouse.alias, i)
@@ -1691,39 +1700,45 @@ end
 -- @return #table Table with route points.
 function WAREHOUSE:_NewLane(group, startcoord, finalcoord)
 
-  -- Get route from template.
-  local lanepoints=group:GetTemplateRoutePoints()
-  
-  -- First and last waypoints
-  local laneF=lanepoints[1]
-  local laneL=lanepoints[#lanepoints]
-  
-  -- Get corresponding coordinates.
-  local coordF=COORDINATE:New(laneF.x, 0, laneF.y)
-  local coordL=COORDINATE:New(laneL.x, 0, laneL.y)
-  
-  -- Figure out which point is closer to the port of this warehouse.
-  local distF=startcoord:Get2DDistance(coordF)
-  local distL=startcoord:Get2DDistance(coordL)
-  
-  -- Add the lane. Need to take care of the wrong "direction".
-  local lane={}
-  if distF<distL then
-    for i=1,#lanepoints do
-      local point=lanepoints[i]
-      local coord=COORDINATE:New(point.x,0, point.y)
-      table.insert(lane, coord)
+  local lane=nil
+
+  if group then
+
+    -- Get route from template.
+    local lanepoints=group:GetTemplateRoutePoints()
+    
+    -- First and last waypoints
+    local laneF=lanepoints[1]
+    local laneL=lanepoints[#lanepoints]
+    
+    -- Get corresponding coordinates.
+    local coordF=COORDINATE:New(laneF.x, 0, laneF.y)
+    local coordL=COORDINATE:New(laneL.x, 0, laneL.y)
+    
+    -- Figure out which point is closer to the port of this warehouse.
+    local distF=startcoord:Get2DDistance(coordF)
+    local distL=startcoord:Get2DDistance(coordL)
+    
+    -- Add the lane. Need to take care of the wrong "direction".
+    lane={}
+    if distF<distL then
+      for i=1,#lanepoints do
+        local point=lanepoints[i]
+        local coord=COORDINATE:New(point.x,0, point.y)
+        table.insert(lane, coord)
+      end
+    else
+      for i=#lanepoints,1,-1 do
+        local point=lanepoints[i]
+        local coord=COORDINATE:New(point.x,0, point.y)
+        table.insert(lane, coord)
+      end     
     end
-  else
-    for i=#lanepoints,1,-1 do
-      local point=lanepoints[i]
-      local coord=COORDINATE:New(point.x,0, point.y)
-      table.insert(lane, coord)
-    end     
+    
+    -- Automatically add end point which is a random point inside the final port zone.
+    table.insert(lane, #lane, finalcoord)
+
   end
-  
-  -- Automatically add end point which is a random point inside the final port zone.
-  table.insert(lane, #lane, finalcoord)
   
   return lane
 end
@@ -6174,7 +6189,7 @@ end
 -- @param #table stock Table holding all assets in stock of the warehouse. Each entry is of type @{#WAREHOUSE.Assetitem}.
 function WAREHOUSE:_DisplayStockItems(stock)
 
-  local text=self.wid..string.format("Warehouse %s stock assets:", self.airbase:GetName())
+  local text=self.wid..string.format("Warehouse %s stock assets:", self.alias)
   for _i,_stock in pairs(stock) do
     local mystock=_stock --#WAREHOUSE.Assetitem
     local name=mystock.templatename
