@@ -77,8 +77,10 @@ SPAWNSTATIC = {
 --- Creates the main object to spawn a @{Static} defined in the ME.
 -- @param #SPAWNSTATIC self
 -- @param #string SpawnTemplatePrefix is the name of the Group in the ME that defines the Template.  Each new group will have the name starting with SpawnTemplatePrefix.
+-- @param DCS#country.id SpawnCountryID The ID of the country.
+-- @param DCS#coalition.side SpawnCoalitionID The ID of the coalition.
 -- @return #SPAWNSTATIC
-function SPAWNSTATIC:NewFromStatic( SpawnTemplatePrefix, SpawnCountryID ) --R2.1
+function SPAWNSTATIC:NewFromStatic( SpawnTemplatePrefix, SpawnCountryID, SpawnCoalitionID )
 	local self = BASE:Inherit( self, BASE:New() ) -- #SPAWNSTATIC
 	self:F( { SpawnTemplatePrefix } )
   
@@ -87,7 +89,7 @@ function SPAWNSTATIC:NewFromStatic( SpawnTemplatePrefix, SpawnCountryID ) --R2.1
 		self.SpawnTemplatePrefix = SpawnTemplatePrefix
 		self.CountryID = SpawnCountryID or CountryID
 		self.CategoryID = CategoryID
-		self.CoalitionID = CoalitionID
+		self.CoalitionID = SpawnCoalitionID or CoalitionID
 		self.SpawnIndex = 0
 	else
 		error( "SPAWNSTATIC:New: There is no static declared in the mission editor with SpawnTemplatePrefix = '" .. SpawnTemplatePrefix .. "'" )
@@ -102,12 +104,13 @@ end
 -- @param #SPAWNSTATIC self
 -- @param #string SpawnTypeName is the name of the type.
 -- @return #SPAWNSTATIC
-function SPAWNSTATIC:NewFromType( SpawnTypeName, SpawnShapeName, SpawnCategory, CountryID ) --R2.1
+function SPAWNSTATIC:NewFromType( SpawnTypeName, SpawnShapeName, SpawnCategory, SpawnCountryID, SpawnCoalitionID ) 
   local self = BASE:Inherit( self, BASE:New() ) -- #SPAWNSTATIC
   self:F( { SpawnTypeName } )
   
   self.SpawnTypeName = SpawnTypeName
-  self.CountryID = CountryID
+  self.CountryID = SpawnCountryID
+  self.CoalitionID = SpawnCoalitionID
   self.SpawnIndex = 0
 
   self:SetEventPriority( 5 )
@@ -135,7 +138,7 @@ function SPAWNSTATIC:Spawn( Heading, NewName ) --R2.3
     
     _DATABASE:_RegisterStaticTemplate( StaticTemplate, CoalitionID, CategoryID, CountryID )
 
-    local Static = coalition.addStaticObject( CountryID, StaticTemplate.units[1] )
+    local Static = coalition.addStaticObject( self.CountryID or CountryID, StaticTemplate.units[1] )
     
     self.SpawnIndex = self.SpawnIndex + 1
   
@@ -176,7 +179,7 @@ function SPAWNSTATIC:SpawnFromPointVec2( PointVec2, Heading, NewName ) --R2.1
     
     self:F({StaticTemplate = StaticTemplate})
 
-    local Static = coalition.addStaticObject( CountryID, StaticTemplate.units[1] )
+    local Static = coalition.addStaticObject( self.CountryID or CountryID, StaticTemplate.units[1] )
     
     self.SpawnIndex = self.SpawnIndex + 1
     
@@ -204,7 +207,7 @@ function SPAWNSTATIC:ReSpawn()
     StaticTemplate.route = nil
     StaticTemplate.groupId = nil
     
-    local Static = coalition.addStaticObject( CountryID, StaticTemplate.units[1] )
+    local Static = coalition.addStaticObject( self.CountryID or CountryID, StaticTemplate.units[1] )
     
     return _DATABASE:FindStatic(Static:getName())
   end
@@ -231,7 +234,7 @@ function SPAWNSTATIC:ReSpawnAt( Coordinate, Heading )
 
     StaticUnitTemplate.heading = Heading and ( ( Heading / 180 ) * math.pi ) or StaticTemplate.heading
     
-    local Static = coalition.addStaticObject( CountryID, StaticTemplate.units[1] )
+    local Static = coalition.addStaticObject( self.CountryID or CountryID, StaticTemplate.units[1] )
     
     return _DATABASE:FindStatic(Static:getName())
   end
