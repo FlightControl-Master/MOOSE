@@ -1622,7 +1622,7 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
             SpawnTemplate.units[UnitID].y   = parkingspots[UnitID].z
             SpawnTemplate.units[UnitID].alt = parkingspots[UnitID].y
             
-            parkingspots[UnitID]:MarkToAll(string.format("Group %s spawning at airbase %s on parking spot id %d", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), parkingindex[UnitID]))
+            --parkingspots[UnitID]:MarkToAll(string.format("Group %s spawning at airbase %s on parking spot id %d", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), parkingindex[UnitID]))
           end
                  
         else

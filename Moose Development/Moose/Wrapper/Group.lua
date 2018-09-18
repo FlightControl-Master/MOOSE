@@ -1507,7 +1507,7 @@ function GROUP:RespawnAtCurrentAirbase(SpawnTemplate, Takeoff, Uncontrolled) -- 
 
       -- Get unit coordinates for respawning position.
       local uc=unit:GetCoordinate()
-      uc:MarkToAll(string.format("re-spawnplace %s terminal %d", unit:GetName(), TermialID))
+      --uc:MarkToAll(string.format("re-spawnplace %s terminal %d", unit:GetName(), TermialID))
       
       SpawnTemplate.units[UnitID].x   = uc.x --Parkingspot.x
       SpawnTemplate.units[UnitID].y   = uc.z --Parkingspot.z
