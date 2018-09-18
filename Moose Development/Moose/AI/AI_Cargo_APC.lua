@@ -355,8 +355,6 @@ function AI_CARGO_APC._Pickup( APC, self, Coordinate, Speed, PickupZone )
 
   if APC:IsAlive() then
     self:Load( PickupZone )
-    self.Relocating = false
-    self.Transporting = true
   end
 end
 
@@ -367,8 +365,6 @@ function AI_CARGO_APC._Deploy( APC, self, Coordinate, DeployZone )
 
   if APC:IsAlive() then
     self:Unload( DeployZone )
-    self.Transporting = false
-    self.Relocating = false
   end
 end
 
@@ -405,8 +401,7 @@ function AI_CARGO_APC:onafterPickup( APC, From, Event, To, Coordinate, Speed, Pi
       AI_CARGO_APC._Pickup( APC, self, Coordinate, Speed, PickupZone )
     end
 
-    self.Relocating = true
-    self.Transporting = false
+    self:GetParent( self, AI_CARGO_APC ).onafterPickup( self, APC, From, Event, To, Coordinate, Speed, PickupZone )
   end
   
 end
@@ -438,11 +433,12 @@ function AI_CARGO_APC:onafterDeploy( APC, From, Event, To, Coordinate, Speed, De
   
     APC:Route( Waypoints, 1 ) -- Move after a random seconds to the Route. See the Route method for details.
 
-    self.Relocating = false
-    self.Transporting = true
+    self:GetParent( self, AI_CARGO_APC ).onafterDeploy( self, APC, From, Event, To, Coordinate, Speed, DeployZone )
+
   end
   
 end
+
 
 
 --- On after Home event.

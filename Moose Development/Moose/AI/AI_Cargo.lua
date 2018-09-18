@@ -166,6 +166,37 @@ function AI_CARGO:IsRelocating()
 end
 
 
+--- On after Pickup event.
+-- @param #AI_CARGO self
+-- @param Wrapper.Group#GROUP APC
+-- @param From
+-- @param Event
+-- @param To
+-- @param Core.Point#COORDINATE Coordinate of the pickup point.
+-- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+-- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
+function AI_CARGO:onafterPickup( APC, From, Event, To, Coordinate, Speed, PickupZone )
+
+  self.Transporting = false
+  self.Relocating = true
+  
+end
+
+
+--- On after Deploy event.
+-- @param #AI_CARGO self
+-- @param Wrapper.Group#GROUP APC
+-- @param From
+-- @param Event
+-- @param To
+-- @param Core.Point#COORDINATE Coordinate Deploy place.
+-- @param #number Speed Speed in km/h to drive to the depoly coordinate. Default is 50% of max possible speed the unit can go.
+function AI_CARGO:onafterDeploy( APC, From, Event, To, Coordinate, Speed, DeployZone )
+
+  self.Relocating = false
+  self.Transporting = true
+  
+end
 
 --- On before Load event.
 -- @param #AI_CARGO self
@@ -322,6 +353,9 @@ function AI_CARGO:onafterPickedUp( Carrier, From, Event, To, PickupZone )
   self:F( { Carrier, From, Event, To } )
 
   Carrier:RouteResume()
+
+  self.Relocating = false
+  self.Transporting = true
   
 end
 
@@ -433,6 +467,8 @@ function AI_CARGO:onafterDeployed( Carrier, From, Event, To, DeployZone )
   self:F( { Carrier, From, Event, To, DeployZone = DeployZone } )
 
     self:__Guard( 0.1 )
+
+    self.Transporting = false
 
 end
 
