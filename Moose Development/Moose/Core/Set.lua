@@ -2543,6 +2543,7 @@ do -- SET_UNIT
   
 end
 
+
 do -- SET_STATIC
 
   --- @type SET_STATIC
@@ -3214,8 +3215,6 @@ do -- SET_STATIC
 end
 
 
-
-
 do -- SET_CLIENT
 
 
@@ -3667,8 +3666,6 @@ do -- SET_CLIENT
 end
 
 
-
-
 do -- SET_PLAYER
 
   --- @type SET_PLAYER
@@ -4071,8 +4068,6 @@ do -- SET_PLAYER
 end
 
 
-
-
 do -- SET_AIRBASE
 
   --- @type SET_AIRBASE
@@ -4413,8 +4408,6 @@ do -- SET_AIRBASE
   end
 
 end
-
-
 
 
 do -- SET_CARGO

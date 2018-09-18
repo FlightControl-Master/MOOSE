@@ -149,7 +149,6 @@ function SPAWNSTATIC:Spawn( Heading, NewName ) --R2.3
 end
 
 
-
 --- Creates a new @{Static} from a POINT_VEC2.
 -- @param #SPAWNSTATIC self
 -- @param Core.Point#POINT_VEC2 PointVec2 The 2D coordinate where to spawn the static.
