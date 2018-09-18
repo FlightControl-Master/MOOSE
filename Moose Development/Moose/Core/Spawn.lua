@@ -496,7 +496,7 @@ end
 
 --- Sets the coalition of the spawned group. Note that it might be necessary to also set the country explicitly!
 -- @param #SPAWN self 
--- @param #DCS.coalition Coaliton Coaliton of the group as number of enumerator, i.e. 0=coaliton.side.NEUTRAL, 1=coaliton.side.RED, 2=coalition.side.BLUE.
+-- @param DCS#coalition.side Coalition Coalition of the group as number of enumerator, i.e. 0=coaliton.side.NEUTRAL, 1=coaliton.side.RED, 2=coalition.side.BLUE.
 -- @return #SPAWN self
 function SPAWN:InitCoalition( Coalition )
   self:F({coalition=Coalition})
@@ -1301,6 +1301,7 @@ end
 -- @param #number TakeoffAltitude (optional) The altitude above the ground.
 -- @param Wrapper.Airbase#AIRBASE.TerminalType TerminalType (optional) The terminal type the aircraft should be spawned at. See @{Wrapper.Airbase#AIRBASE.TerminalType}.
 -- @param #boolean EmergencyAirSpawn (optional) If true (default), groups are spawned in air if there is no parking spot at the airbase. If false, nothing is spawned if no parking spot is available.
+-- @param #table Parkingdata (optional) Table holding the coordinates and terminal ids for all units of the group. Spawning will be forced to happen at exactily these spots!
 -- @return Wrapper.Group#GROUP that was spawned or nil when nothing was spawned.
 -- @usage
 --   Spawn_Plane = SPAWN:New( "Plane" )
@@ -1321,7 +1322,7 @@ end
 --   
 --   Spawn_Plane:SpawnAtAirbase( AIRBASE:FindByName( AIRBASE.Caucasus.Krymsk ), SPAWN.Takeoff.Cold, nil, AIRBASE.TerminalType.OpenBig )
 -- 
-function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalType, EmergencyAirSpawn ) -- R2.2, R2.4
+function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalType, EmergencyAirSpawn, Parkingdata ) -- R2.2, R2.4
   self:F( { self.SpawnTemplatePrefix, SpawnAirbase, Takeoff, TakeoffAltitude, TerminalType } )
 
   -- Get position of airbase.
@@ -1436,6 +1437,10 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
           self:T(string.format("Group %s is spawned on farp/ship/runway %s.", self.SpawnTemplatePrefix, SpawnAirbase:GetName()))
           nfree=SpawnAirbase:GetFreeParkingSpotsNumber(termtype, true)
           spots=SpawnAirbase:GetFreeParkingSpotsTable(termtype, true)
+        elseif Parkingdata~=nil then
+          -- Parking data explicitly set by user as input parameter.
+          nfree=#Parkingdata
+          spots=Parkingdata
         else
           if ishelo then
             if termtype==nil then
@@ -1513,7 +1518,7 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
             PointVec3=spots[1].Coordinate
             
           else
-            -- If there is absolutely not spot ==> air start!
+            -- If there is absolutely no spot ==> air start!
             _notenough=true
           end
         
@@ -1617,6 +1622,7 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
             SpawnTemplate.units[UnitID].y   = parkingspots[UnitID].z
             SpawnTemplate.units[UnitID].alt = parkingspots[UnitID].y
             
+            --parkingspots[UnitID]:MarkToAll(string.format("Group %s spawning at airbase %s on parking spot id %d", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), parkingindex[UnitID]))
           end
                  
         else

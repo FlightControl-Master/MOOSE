@@ -133,8 +133,8 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @return #SET_BASE self
   function SET_BASE:GetSet()
-  	self:F2()
-  	
+    self:F2()
+    
     return self.Set
   end
   

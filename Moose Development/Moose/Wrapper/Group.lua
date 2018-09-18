@@ -445,6 +445,38 @@ function GROUP:GetSpeedMax()
   return nil
 end
 
+--- Returns the maximum range of the group.
+-- If the group is heterogenious and consists of different units, the smallest range of all units is returned.
+-- @param #GROUP self
+-- @return #number Range in meters.
+function GROUP:GetRange()
+  self:F2( self.GroupName )
+
+  local DCSGroup = self:GetDCSObject()
+  if DCSGroup then
+  
+    local Units=self:GetUnits()
+    
+    local Rangemin=nil
+    
+    for _,unit in pairs(Units) do
+      local unit=unit --Wrapper.Unit#UNIT
+      local range=unit:GetRange()
+      if range then
+        if Rangemin==nil then
+          Rangemin=range
+        elseif range<Rangemin then
+          Rangemin=range
+        end
+      end
+    end
+    
+    return Rangemin
+  end
+  
+  return nil
+end
+
 
 --- Returns a list of @{Wrapper.Unit} objects of the @{Wrapper.Group}.
 -- @param #GROUP self
@@ -659,8 +691,9 @@ function GROUP:GetDCSUnits()
 end
 
 
---- Activates a GROUP.
+--- Activates a late activated GROUP.
 -- @param #GROUP self
+-- @return #GROUP self
 function GROUP:Activate()
   self:F2( { self.GroupName } )
   trigger.action.activateGroup( self:GetDCSObject() )
@@ -1453,16 +1486,18 @@ function GROUP:RespawnAtCurrentAirbase(SpawnTemplate, Takeoff, Uncontrolled) -- 
       SpawnPoint.airdromeId = AirbaseID
     end
 
-    SpawnPoint.alt    = AirbaseCoord:GetLandHeight()           
+    
     SpawnPoint.type   = GROUPTEMPLATE.Takeoff[Takeoff][1] -- type
     SpawnPoint.action = GROUPTEMPLATE.Takeoff[Takeoff][2] -- action
     
     -- Get the units of the group.
     local units=self:GetUnits()
 
-    for UnitID,_unit in pairs(units) do
+    local x
+    local y
+    for UnitID=1,#units do
         
-      local unit=_unit --Wrapper.Unit#UNIT
+      local unit=units[UnitID] --Wrapper.Unit#UNIT
 
       -- Get closest parking spot of current unit. Note that we look for occupied spots since the unit is currently sitting on it!
       local Parkingspot, TermialID, Distance=unit:GetCoordinate():GetClosestParkingSpot(airbase)
@@ -1472,26 +1507,33 @@ function GROUP:RespawnAtCurrentAirbase(SpawnTemplate, Takeoff, Uncontrolled) -- 
 
       -- Get unit coordinates for respawning position.
       local uc=unit:GetCoordinate()
-      SpawnTemplate.units[UnitID].x   = Parkingspot.x
-      SpawnTemplate.units[UnitID].y   = Parkingspot.z
-      SpawnTemplate.units[UnitID].alt = Parkingspot.y
+      --uc:MarkToAll(string.format("re-spawnplace %s terminal %d", unit:GetName(), TermialID))
+      
+      SpawnTemplate.units[UnitID].x   = uc.x --Parkingspot.x
+      SpawnTemplate.units[UnitID].y   = uc.z --Parkingspot.z
+      SpawnTemplate.units[UnitID].alt = uc.y --Parkingspot.y
 
       SpawnTemplate.units[UnitID].parking    = TermialID
       SpawnTemplate.units[UnitID].parking_id = nil
-                  
+      
+      --SpawnTemplate.units[UnitID].unitId=nil
     end
     
-    SpawnPoint.x = AirbaseCoord.x
-    SpawnPoint.y = AirbaseCoord.z
+    --SpawnTemplate.groupId=nil
     
-    SpawnTemplate.x = AirbaseCoord.x
-    SpawnTemplate.y = AirbaseCoord.z
+    SpawnPoint.x   = SpawnTemplate.units[1].x   --x --AirbaseCoord.x
+    SpawnPoint.y   = SpawnTemplate.units[1].y   --y --AirbaseCoord.z
+    SpawnPoint.alt = SpawnTemplate.units[1].alt --AirbaseCoord:GetLandHeight()
+               
+    SpawnTemplate.x = SpawnTemplate.units[1].x  --x --AirbaseCoord.x
+    SpawnTemplate.y = SpawnTemplate.units[1].y  --y --AirbaseCoord.z
     
     -- Set uncontrolled state.
     SpawnTemplate.uncontrolled=Uncontrolled
+
+    -- Destroy old group.
+    self:Destroy(false)
     
-    -- Destroy and respawn.
-    self:Destroy( false )
     _DATABASE:Spawn( SpawnTemplate )
   
     -- Reset events.
@@ -1592,8 +1634,7 @@ end
 
 --- Returns true if the first unit of the GROUP is in the air.
 -- @param Wrapper.Group#GROUP self
--- @return #boolean true if in the first unit of the group is in the air.
--- @return #nil The GROUP is not existing or not alive.  
+-- @return #boolean true if in the first unit of the group is in the air or #nil if the GROUP is not existing or not alive.   
 function GROUP:InAir()
   self:F2( self.GroupName )
 
@@ -1606,6 +1647,23 @@ function GROUP:InAir()
       self:T3( GroupInAir )
       return GroupInAir
     end
+  end
+  
+  return nil
+end
+
+--- Returns the DCS descriptor table of the nth unit of the group.
+-- @param #GROUP self
+-- @param #number n (Optional) The number of the unit for which the dscriptor is returned.
+-- @return DCS#Object.Desc The descriptor of the first unit of the group or #nil if the group does not exist any more.   
+function GROUP:GetDCSDesc(n)
+  -- Default.
+  n=n or 1
+  
+  local unit=self:GetUnit(n)
+  if unit and unit:IsAlive()~=nil then
+    local desc=unit:GetDesc()
+    return desc
   end
   
   return nil

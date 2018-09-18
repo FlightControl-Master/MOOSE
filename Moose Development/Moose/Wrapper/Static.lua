@@ -194,9 +194,10 @@ end
 --- Respawn the @{Wrapper.Unit} at the same location with the same properties.
 -- This is useful to respawn a cargo after it has been destroyed.
 -- @param #STATIC self
-function STATIC:ReSpawn()
+-- @param DCS#country.id countryid The country ID used for spawning the new static.
+function STATIC:ReSpawn(countryid)
 
-  local SpawnStatic = SPAWNSTATIC:NewFromStatic( self.StaticName )
+  local SpawnStatic = SPAWNSTATIC:NewFromStatic( self.StaticName, countryid )
   
   SpawnStatic:ReSpawn()
 end

@@ -650,7 +650,7 @@ function AI_FORMATION:onafterFormationLine( FollowGroupSet, From , Event , To, X
   
   local FollowSet = FollowGroupSet:GetSet()
   
-  local i = 0
+  local i = 1  --FF i=0 caused first unit to have no XSpace! Probably needs further adjustments. This is just a quick work around.
   
   for FollowID, FollowGroup in pairs( FollowSet ) do
   

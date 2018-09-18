@@ -617,6 +617,14 @@ function CONTROLLABLE:CommandStopRoute( StopRoute )
 end
 
 
+--- Give an uncontrolled air controllable the start command.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:StartUncontrolled()
+  self:SetCommand({id='Start', params={}})
+  return self
+end
+
 -- TASKS FOR AIR CONTROLLABLES
 
 
@@ -724,28 +732,56 @@ end
 -- @param DCS#Azimuth Direction (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
 -- @param #number Altitude (optional) The altitude from where to attack.
 -- @param #number WeaponType (optional) The WeaponType.
+-- @param #boolean Divebomb (optional) Perform dive bombing. Default false.
 -- @return DCS#Task The DCS task structure.
-function CONTROLLABLE:TaskBombing( Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType )
-  self:F2( { self.ControllableName, Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType } )
+function CONTROLLABLE:TaskBombing( Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType, Divebomb )
+  self:E( { self.ControllableName, Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType, Divebomb } )
+  
+  local _groupattack=false
+  if GroupAttack then
+    _groupattack=GroupAttack
+  end
+  
+  local _direction=0
+  local _directionenabled=false
+  if Direction then
+    _direction=math.rad(Direction)
+    _directionenabled=true
+  end
+  
+  local _altitude=5000
+  local _altitudeenabled=false
+  if Altitude then
+    _altitude=Altitude
+    _altitudeenabled=true
+  end
+  
+  local _attacktype=nil
+  if Divebomb then
+    _attacktype="Dive"
+  end
+  
 
   local DCSTask
   DCSTask = { 
     id = 'Bombing',
     params = {
-      point = Vec2,
-      groupAttack = GroupAttack or false,
+      x = Vec2.x,
+      y = Vec2.y,
+      groupAttack = _groupattack,
       expend = WeaponExpend or "Auto",
-      attackQtyLimit = AttackQty and true or false,
-      attackQty = AttackQty, 
-      directionEnabled = Direction and true or false,
-      direction = Direction, 
-      altitudeEnabled = Altitude and true or false,
-      altitude = Altitude or 30,
+      attackQtyLimit = false, --AttackQty and true or false,
+      attackQty = AttackQty or 1,
+      directionEnabled = _directionenabled,
+      direction = _direction, 
+      altitudeEnabled = _altitudeenabled,
+      altitude = _altitude,
       weaponType = WeaponType, 
+      --attackType=_attacktype,
       },
-  },
+  }
 
-  self:T3( { DCSTask } )
+  self:E( { TaskBombing=DCSTask } )
   return DCSTask
 end
 
@@ -1611,7 +1647,7 @@ end
 --    RouteToZone( GroundGroup, ZoneList[1] )
 -- 
 function CONTROLLABLE:TaskFunction( FunctionString, ... )
-  self:F2( { FunctionString, arg } )
+  self:E({TaskFunction=FunctionString, arguments=arg})
 
   local DCSTask
 
@@ -1622,17 +1658,12 @@ function CONTROLLABLE:TaskFunction( FunctionString, ... )
     local ArgumentKey = '_' .. tostring( arg ):match("table: (.*)")
     self:SetState( self, ArgumentKey, arg )
     DCSScript[#DCSScript+1] = "local Arguments = MissionControllable:GetState( MissionControllable, '" .. ArgumentKey .. "' ) "
-    --DCSScript[#DCSScript+1] = "MissionControllable:ClearState( MissionControllable, '" .. ArgumentKey .. "' ) "
     DCSScript[#DCSScript+1] = FunctionString .. "( MissionControllable, unpack( Arguments ) )"
   else
     DCSScript[#DCSScript+1] = FunctionString .. "( MissionControllable )"
   end
 
-  DCSTask = self:TaskWrappedAction(
-    self:CommandDoScript(
-      table.concat( DCSScript )
-    )
-  )
+  DCSTask = self:TaskWrappedAction(self:CommandDoScript(table.concat( DCSScript )))
 
   self:T( DCSTask )
 
@@ -2002,6 +2033,28 @@ do -- Route methods
   
     return self
   end
+  
+  --- Make the TRAIN Controllable to drive towards a specific point using railroads.
+  -- @param #CONTROLLABLE self
+  -- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
+  -- @param #number Speed (Optional) Speed in km/h. The default speed is 20 km/h.
+  -- @param #number DelaySeconds (Optional) Wait for the specified seconds before executing the Route. Default is one second.
+  -- @return #CONTROLLABLE The CONTROLLABLE.
+  function CONTROLLABLE:RouteGroundOnRailRoads( ToCoordinate, Speed, DelaySeconds)
+  
+    -- Defaults.
+    Speed=Speed or 20
+    DelaySeconds=DelaySeconds or 1
+  
+    -- Get the route task.
+    local route=self:TaskGroundOnRailRoads(ToCoordinate, Speed)
+    
+    -- Route controllable to destination.
+    self:Route( route, DelaySeconds )
+  
+    return self
+  end  
+  
 
   
   --- Make a task for a GROUND Controllable to drive towards a specific point using (mostly) roads.
@@ -2010,16 +2063,18 @@ do -- Route methods
   -- @param #number Speed (Optional) Speed in km/h. The default speed is 20 km/h.
   -- @param #string OffRoadFormation (Optional) The formation at initial and final waypoint. Default is "Off Road".
   -- @param #boolean Shortcut (Optional) If true, controllable will take the direct route if the path on road is 10x longer or path on road is less than 5% of total path.
-  -- @return Task
-  function CONTROLLABLE:TaskGroundOnRoad( ToCoordinate, Speed, OffRoadFormation, Shortcut )
+  -- @param Core.Point#COORDINATE FromCoordinate (Optional) Explicit initial coordinate. Default is the position of the controllable.
+  -- @return DCS#Task Task.
+  -- @return #boolean If true, path on road is possible. If false, task will route the group directly to its destination.
+  function CONTROLLABLE:TaskGroundOnRoad( ToCoordinate, Speed, OffRoadFormation, Shortcut, FromCoordinate )
     self:F2({ToCoordinate=ToCoordinate, Speed=Speed, OffRoadFormation=OffRoadFormation})
     
     -- Defaults.
     Speed=Speed or 20
     OffRoadFormation=OffRoadFormation or "Off Road"
   
-    -- Current coordinate.
-    local FromCoordinate = self:GetCoordinate()
+    -- Initial (current) coordinate.
+    FromCoordinate = FromCoordinate or self:GetCoordinate()
     
     -- Get path and path length on road including the end points (From and To).
     local PathOnRoad, LengthOnRoad=FromCoordinate:GetPathOnRoad(ToCoordinate, true)
@@ -2028,28 +2083,36 @@ do -- Route methods
     local _,LengthRoad=FromCoordinate:GetPathOnRoad(ToCoordinate, false)
 
     -- Off road part of the rout: Total=OffRoad+OnRoad.    
-    local LengthOffRoad=LengthOnRoad-LengthRoad
+    local LengthOffRoad
+    local LongRoad
     
     -- Calculate the direct distance between the initial and final points.
     local LengthDirect=FromCoordinate:Get2DDistance(ToCoordinate)
     
-    -- Debug info.
-    self:T(string.format("Length on road   = %.3f km", LengthOnRoad/1000))
-    self:T(string.format("Length directly  = %.3f km", LengthDirect/1000))
-    self:T(string.format("Length fraction  = %.3f km", LengthOnRoad/LengthDirect))
-    self:T(string.format("Length only road = %.3f km", LengthRoad/1000))
-    self:T(string.format("Length off road  = %.3f km", LengthOffRoad/1000))
-    self:T(string.format("Percent on road  = %.1f", LengthRoad/LengthOnRoad*100))
+    if PathOnRoad then
     
+      -- Off road part of the rout: Total=OffRoad+OnRoad.
+      LengthOffRoad=LengthOnRoad-LengthRoad
+
+      -- Length on road is 10 times longer than direct route or path on road is very short (<5% of total path).
+      LongRoad=LengthOnRoad and ((LengthOnRoad > LengthDirect*10) or (LengthRoad/LengthOnRoad*100<5))
+    
+      -- Debug info.
+      self:T(string.format("Length on road   = %.3f km", LengthOnRoad/1000))
+      self:T(string.format("Length directly  = %.3f km", LengthDirect/1000))
+      self:T(string.format("Length fraction  = %.3f km", LengthOnRoad/LengthDirect))
+      self:T(string.format("Length only road = %.3f km", LengthRoad/1000))
+      self:T(string.format("Length off road  = %.3f km", LengthOffRoad/1000))
+      self:T(string.format("Percent on road  = %.1f", LengthRoad/LengthOnRoad*100))
+      
+    end
+        
     -- Route, ground waypoints along road.
     local route={}
-        
-    -- Length on road is 10 times longer than direct route or path on road is very short (<5% of total path).
-    local LongRoad=LengthOnRoad and ((LengthOnRoad > LengthDirect*10) or (LengthRoad/LengthOnRoad*100<5))
-    
+    local canroad=false
+                
     -- Check if a valid path on road could be found.
     if PathOnRoad then
-
       -- Check whether the road is very long compared to direct path.
       if LongRoad and Shortcut then
 
@@ -2074,6 +2137,7 @@ do -- Route methods
         
       end
       
+      canroad=true
     else
     
       -- No path on road could be found (can happen!) ==> Route group directly from A to B.
@@ -2082,10 +2146,43 @@ do -- Route methods
             
     end
 
+    return route, canroad
+  end
+
+  --- Make a task for a TRAIN Controllable to drive towards a specific point using railroad.
+  -- @param #CONTROLLABLE self
+  -- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
+  -- @param #number Speed (Optional) Speed in km/h. The default speed is 20 km/h.
+  -- @return Task
+  function CONTROLLABLE:TaskGroundOnRailRoads(ToCoordinate, Speed)
+    self:F2({ToCoordinate=ToCoordinate, Speed=Speed})
+    
+    -- Defaults.
+    Speed=Speed or 20
+  
+    -- Current coordinate.
+    local FromCoordinate = self:GetCoordinate()
+    
+    -- Get path and path length on railroad.
+    local PathOnRail, LengthOnRail=FromCoordinate:GetPathOnRoad(ToCoordinate, false, true)
+        
+    -- Debug info.
+    self:T(string.format("Length on railroad = %.3f km", LengthOnRail/1000))
+    
+    -- Route, ground waypoints along road.
+    local route={}
+            
+    -- Check if a valid path on railroad could be found.
+    if PathOnRail then
+
+      table.insert(route, PathOnRail[1]:WaypointGround(Speed, "On Railroad"))
+      table.insert(route, PathOnRail[2]:WaypointGround(Speed, "On Railroad"))
+                        
+    end
+
     return route 
   end
 
-  
   --- Make the AIR Controllable fly towards a specific point.
   -- @param #CONTROLLABLE self
   -- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.

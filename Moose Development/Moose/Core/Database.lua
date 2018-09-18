@@ -538,8 +538,8 @@ end
 -- SpawnCountryID, SpawnCategoryID
 -- This method is used by the SPAWN class.
 -- @param #DATABASE self
--- @param #table SpawnTemplate
--- @return #DATABASE self
+-- @param #table SpawnTemplate Template of the group to spawn.
+-- @return Wrapper.Group#GROUP Spawned group.
 function DATABASE:Spawn( SpawnTemplate )
   self:F( SpawnTemplate.name )
 

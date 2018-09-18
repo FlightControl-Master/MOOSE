@@ -206,8 +206,19 @@ function IDENTIFIABLE:GetCountry()
   self:F( self.ClassName .. " " .. self.IdentifiableName .. " not found!" )
   return nil
 end
- 
 
+--- Returns country name of the Identifiable.
+-- @param #IDENTIFIABLE self
+-- @return #string Name of the country.  
+function IDENTIFIABLE:GetCountryName()
+  self:F2( self.IdentifiableName ) 
+  local countryid=self:GetCountry()
+  for name,id in pairs(country.id) do
+    if countryid==id then
+      return name
+    end
+  end
+end
 
 --- Returns Identifiable descriptor. Descriptor type depends on Identifiable category.
 -- @param #IDENTIFIABLE self

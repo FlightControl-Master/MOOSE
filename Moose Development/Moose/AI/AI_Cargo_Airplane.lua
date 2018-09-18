@@ -239,7 +239,6 @@ function AI_CARGO_AIRPLANE:onafterLanded( Airplane, From, Event, To )
 
     -- Aircraft was sent to this airbase to pickup troops. Initiate loadling.
     if self.RoutePickup == true then
-      env.info("FF load airplane "..Airplane:GetName())
       self:Load( self.PickupZone )
     end
     
@@ -265,15 +264,15 @@ end
 -- @param Core.Zone#ZONE_AIRBASE PickupZone
 function AI_CARGO_AIRPLANE:onafterPickup( Airplane, From, Event, To, Coordinate, Speed, PickupZone )
 
-  if Airplane and Airplane:IsAlive()~=nil then
-    env.info("FF onafterpick aircraft alive")
+  if Airplane and Airplane:IsAlive() then
+    --env.info("FF onafterpick aircraft alive")
     
     self.PickupZone = PickupZone
   
     -- Get closest airbase of current position.
     local ClosestAirbase, DistToAirbase=Airplane:GetCoordinate():GetClosestAirbase()
     
-    env.info("FF onafterpickup closest airbase "..ClosestAirbase:GetName())
+    --env.info("FF onafterpickup closest airbase "..ClosestAirbase:GetName())
   
     -- Two cases. Aircraft spawned in air or at an airbase.
     if Airplane:InAir() then
@@ -282,15 +281,16 @@ function AI_CARGO_AIRPLANE:onafterPickup( Airplane, From, Event, To, Coordinate,
       self.Airbase=ClosestAirbase
     end
     
+    -- Set pickup airbase.
     local Airbase = PickupZone:GetAirbase()
     
     -- Distance from closest to pickup airbase ==> we need to know if we are already at the pickup airbase. 
     local Dist = Airbase:GetCoordinate():Get2DDistance(ClosestAirbase:GetCoordinate())
-    env.info("Distance closest to pickup airbase = "..Dist)
+    --env.info("Distance closest to pickup airbase = "..Dist)
     
     if Airplane:InAir() or Dist>500 then
     
-      env.info("FF onafterpickup routing to airbase "..ClosestAirbase:GetName())
+      --env.info("FF onafterpickup routing to airbase "..ClosestAirbase:GetName())
     
       -- Route aircraft to pickup airbase.
       self:Route( Airplane, Airbase, Speed ) 
@@ -302,7 +302,7 @@ function AI_CARGO_AIRPLANE:onafterPickup( Airplane, From, Event, To, Coordinate,
       self.RoutePickup = true
       
     else
-      env.info("FF onafterpick calling landed")
+      --env.info("FF onafterpick calling landed")
     
       -- We are already at the right airbase ==> Landed ==> triggers loading of troops. Is usually called at engine shutdown event.
       self.RoutePickup=true
@@ -312,7 +312,7 @@ function AI_CARGO_AIRPLANE:onafterPickup( Airplane, From, Event, To, Coordinate,
 
     self:GetParent( self, AI_CARGO_AIRPLANE ).onafterPickup( self, Airplane, From, Event, To, Coordinate, Speed, PickupZone )
   else
-    env.info("FF onafterpick aircraft not alive")
+    --env.info("FF onafterpick aircraft not alive")
   end
 
   
@@ -396,7 +396,7 @@ end
 -- @param #boolean Uncontrolled If true, spawn group in uncontrolled state.
 function AI_CARGO_AIRPLANE:Route( Airplane, Airbase, Speed, Uncontrolled )
 
-  if Airplane and Airplane:IsAlive()~=nil then
+  if Airplane and Airplane:IsAlive() then
 
     -- Set takeoff type.
     local Takeoff = SPAWN.Takeoff.Cold

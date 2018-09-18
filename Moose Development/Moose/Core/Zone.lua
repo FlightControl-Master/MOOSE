@@ -312,12 +312,13 @@ end
 -- @param Utilities.Utils#SMOKECOLOR SmokeColor The smoke color.
 function ZONE_BASE:SmokeZone( SmokeColor )
   self:F2( SmokeColor )
-
+  
 end
 
 --- Set the randomization probability of a zone to be selected.
 -- @param #ZONE_BASE self
--- @param ZoneProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
+-- @param #number ZoneProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
+-- @return #ZONE_BASE self
 function ZONE_BASE:SetZoneProbability( ZoneProbability )
   self:F( { self:GetName(), ZoneProbability = ZoneProbability } )
   
@@ -329,7 +330,7 @@ end
 -- @param #ZONE_BASE self
 -- @return #number A value between 0 and 1. 0 = 0% and 1 = 100% probability.
 function ZONE_BASE:GetZoneProbability()
-  self:F2()
+  self:F2()  
   
   return self.ZoneProbability
 end
@@ -934,7 +935,7 @@ end
 function ZONE_RADIUS:GetRandomCoordinate( inner, outer )
   self:F( self.ZoneName, inner, outer )
 
-  local Coordinate = COORDINATE:NewFromVec2( self:GetRandomVec2() )
+  local Coordinate = COORDINATE:NewFromVec2( self:GetRandomVec2(inner, outer) )
 
   self:T3( { Coordinate = Coordinate } )
   
@@ -1079,6 +1080,7 @@ function ZONE_UNIT:GetVec2()
   local ZoneVec2 = self.ZoneUNIT:GetVec2()
   if ZoneVec2 then
   
+    local heading
     if self.relative_to_unit then
         heading = ( self.ZoneUNIT:GetHeading() or 0.0 ) * math.pi / 180.0
       else
@@ -1118,7 +1120,8 @@ function ZONE_UNIT:GetRandomVec2()
   self:F( self.ZoneName )
 
   local RandomVec2 = {}
-  local Vec2 = self.ZoneUNIT:GetVec2()
+  --local Vec2 = self.ZoneUNIT:GetVec2()  -- FF: This does not take care of the new offset feature!
+  local Vec2 = self:GetVec2()
   
   if not Vec2 then
     Vec2 = self.LastVec2
@@ -1609,16 +1612,16 @@ do -- ZONE_AIRBASE
     
   --- Constructor to create a ZONE_AIRBASE instance, taking the zone name, a zone @{Wrapper.Airbase#AIRBASE} and a radius.
   -- @param #ZONE_AIRBASE self
-  -- @param #string ZoneName Name of the zone.
-  -- @param Wrapper.Airbase#AIRBASE ZoneAirbase The @{Wrapper.Airbase} as the center of the zone.
-  -- @param DCS#Distance Radius The radius of the zone.
+  -- @param #string AirbaseName Name of the airbase.
+  -- @param DCS#Distance Radius (Optional)The radius of the zone in meters. Default 4000 meters.
   -- @return #ZONE_AIRBASE self
-  function ZONE_AIRBASE:New( AirbaseName )
+  function ZONE_AIRBASE:New( AirbaseName, Radius )
   
+    Radius=Radius or 4000
   
     local Airbase = AIRBASE:FindByName( AirbaseName )
   
-    local self = BASE:Inherit( self, ZONE_RADIUS:New( AirbaseName, Airbase:GetVec2(), 4000 ) )
+    local self = BASE:Inherit( self, ZONE_RADIUS:New( AirbaseName, Airbase:GetVec2(), Radius ) )
   
     self._.ZoneAirbase = Airbase
     self._.ZoneVec2Cache = self._.ZoneAirbase:GetVec2()

@@ -119,10 +119,12 @@ end
 -- @param DCS#Unit DCSUnit An existing DCS Unit object reference.
 -- @return #UNIT self
 function UNIT:Find( DCSUnit )
-
-  local UnitName = DCSUnit:getName()
-  local UnitFound = _DATABASE:FindUnit( UnitName )
-  return UnitFound
+  if DCSUnit then
+    local UnitName = DCSUnit:getName()
+    local UnitFound = _DATABASE:FindUnit( UnitName )
+    return UnitFound
+  end
+  return nil
 end
 
 --- Find a UNIT in the _DATABASE using the name of an existing DCS Unit.
@@ -383,6 +385,28 @@ function UNIT:GetSpeedMax()
   if Desc then
     local SpeedMax = Desc.speedMax
     return SpeedMax*3.6
+  end
+
+  return nil
+end
+
+--- Returns the unit's max range in meters derived from the DCS descriptors.
+-- For ground units it will return a range of 10,000 km as they have no real range.
+-- @param #UNIT self
+-- @return #number Range in meters.
+function UNIT:GetRange()
+  self:F2( self.UnitName )
+
+  local Desc = self:GetDesc()
+  
+  if Desc then
+    local Range = Desc.range --This is in nautical miles for some reason. But should check again!
+    if Range then
+      Range=UTILS.NMToMeters(Range)
+    else
+      Range=10000000 --10.000 km if no range
+    end
+    return Range
   end
 
   return nil

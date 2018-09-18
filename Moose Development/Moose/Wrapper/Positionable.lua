@@ -993,7 +993,8 @@ do -- Cargo
 --    end
 --    return self.__.CargoBayVolumeLimit - CargoVolume
 --  end
---  
+-- 
+ 
   --- Get Cargo Bay Free Weight in kg.
   -- @param #POSITIONABLE self
   -- @return #number CargoBayFreeWeight
@@ -1018,7 +1019,7 @@ do -- Cargo
 --    self.__.CargoBayVolumeLimit = VolumeLimit
 --  end
 
-  --- Get Cargo Bay Weight Limit in kg.
+  --- Set Cargo Bay Weight Limit in kg.
   -- @param #POSITIONABLE self
   -- @param #number WeightLimit
   function POSITIONABLE:SetCargoBayWeightLimit( WeightLimit )

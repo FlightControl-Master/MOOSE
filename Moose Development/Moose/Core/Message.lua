@@ -294,8 +294,9 @@ end
 
 --- Sends a MESSAGE to a Coalition if the given Condition is true. 
 -- @param #MESSAGE self
--- @param CoalitionSide needs to be filled out by the defined structure of the standard scripting engine @{coalition.side}. 
--- @return #MESSAGE
+-- @param CoalitionSide needs to be filled out by the defined structure of the standard scripting engine @{coalition.side}.
+-- @param #boolean Condition Sends the message only if the condition is true. 
+-- @return #MESSAGE self
 function MESSAGE:ToCoalitionIf( CoalitionSide, Condition )
   self:F( CoalitionSide )
 
