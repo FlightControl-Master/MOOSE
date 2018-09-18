@@ -355,8 +355,6 @@ function AI_CARGO_APC._Pickup( APC, self, Coordinate, Speed, PickupZone )
 
   if APC:IsAlive() then
     self:Load( PickupZone )
-    self.Relocating = false
-    self.Transporting = true
   end
 end
 
@@ -367,8 +365,6 @@ function AI_CARGO_APC._Deploy( APC, self, Coordinate, DeployZone )
 
   if APC:IsAlive() then
     self:Unload( DeployZone )
-    self.Transporting = false
-    self.Relocating = false
   end
 end
 
@@ -405,8 +401,7 @@ function AI_CARGO_APC:onafterPickup( APC, From, Event, To, Coordinate, Speed, Pi
       AI_CARGO_APC._Pickup( APC, self, Coordinate, Speed, PickupZone )
     end
 
-    self.Relocating = true
-    self.Transporting = false
+    self:GetParent( self, AI_CARGO_APC ).onafterPickup( self, APC, From, Event, To, Coordinate, Speed, PickupZone )
   end
   
 end
@@ -438,10 +433,26 @@ function AI_CARGO_APC:onafterDeploy( APC, From, Event, To, Coordinate, Speed, De
   
     APC:Route( Waypoints, 1 ) -- Move after a random seconds to the Route. See the Route method for details.
 
-    self.Relocating = false
-    self.Transporting = true
+    self:GetParent( self, AI_CARGO_APC ).onafterDeploy( self, APC, From, Event, To, Coordinate, Speed, DeployZone )
+
   end
   
+end
+
+--- On after Deployed event.
+-- @param #AI_CARGO_APC self
+-- @param Wrapper.Group#GROUP Carrier
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
+function AI_CARGO_APC:onafterDeployed( APC, From, Event, To, DeployZone )
+  self:F( { APC, From, Event, To, DeployZone = DeployZone } )
+
+  self:__Guard( 0.1 )
+
+  self:GetParent( self, AI_CARGO_APC ).onafterDeployed( self, APC, From, Event, To, DeployZone )
+
 end
 
 
