@@ -983,8 +983,6 @@ do -- Group
   -- @param #Group self 
   -- @return #Group.Category
   
-  --TODO check coalition.side
-  
   --- Returns the coalition of the group.
   -- @function [parent=#Group] getCoalition
   -- @param #Group self 

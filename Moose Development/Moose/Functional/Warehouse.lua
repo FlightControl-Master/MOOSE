@@ -1094,6 +1094,9 @@
 --     warehouse.Kobuleti:Start()
 --     warehouse.London:Start()
 --     
+--     -- Define a polygon zone as spawn zone at Kobuleti.
+--     warehouse.Kobuleti:SetSpawnZone(ZONE_POLYGON:New("Warehouse Kobuleti Spawn Zone", GROUP:FindByName("Warehouse Kobuleti Spawn Zone")))
+--     
 --     warehouse.Kobuleti:AddAsset("M978", 20)
 --     warehouse.London:AddAsset("M818", 20)
 --     

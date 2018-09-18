@@ -367,6 +367,15 @@
 -- 
 -- **Deploying a cargo within a deployment zone, may complete a deployment task! So ensure that you deploy the right cargo at the right deployment zone!**
 -- 
+-- ## 4) Cargo tasking from a mission designer perspective.
+-- 
+-- Please consult the documentation how to implement the derived classes of SET_CARGO in:
+-- 
+--   - @{Tasking.Task_Cargo#TASK_CARGO}: Documents the main methods how to handle the cargo tasking from a mission designer perspective.
+--   - @{Tasking.Task_Cargo#TASK_CARGO_TRANSPORT}: Documents the specific methods how to handle the cargo transportation tasking from a mission designer perspective.
+--   - @{Tasking.Task_Cargo#TASK_CARGO_CSAR}: Documents the specific methods how to handle the cargo CSAR tasking from a mission designer perspective.
+--   
+-- 
 -- ===
 -- 
 -- ### Author: **FlightControl**
@@ -444,6 +453,8 @@ do -- TASK_CARGO
   --   * **Assigned**: The cargo task is assigned to a @{Wrapper.Group#GROUP}.
   --   * **Success**: The cargo task is successfully completed.
   --   * **Failed**: The cargo task has failed. This will happen if the player exists the task early, without communicating a possible cancellation to HQ.
+  -- 
+  -- 
   -- 
   -- ===
   -- 
@@ -716,11 +727,11 @@ do -- TASK_CARGO
               -- Cargo in deployzones are flagged as deployed.
               for DeployZoneName, DeployZone in pairs( Task.DeployZones ) do
                 if Cargo:IsInZone( DeployZone ) then
-                  Task:E( { CargoIsDeployed = Task.CargoDeployed and "true" or "false" } )
+                  Task:I( { CargoIsDeployed = Task.CargoDeployed and "true" or "false" } )
                   if Cargo:IsDeployed() == false then
                     Cargo:SetDeployed( true )
                     -- Now we call a callback method to handle the CargoDeployed event.
-                    Task:E( { CargoIsAlive = Cargo:IsAlive() and "true" or "false" } )
+                    Task:I( { CargoIsAlive = Cargo:IsAlive() and "true" or "false" } )
                     if Cargo:IsAlive() then
                       Task:CargoDeployed( TaskUnit, Cargo, DeployZone )
                     end

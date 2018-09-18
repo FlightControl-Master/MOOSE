@@ -507,7 +507,6 @@ function EVENT:RemoveEvent( EventClass, EventID  )
   self.Events = self.Events or {}
   self.Events[EventID] = self.Events[EventID] or {}
   self.Events[EventID][EventPriority] = self.Events[EventID][EventPriority] or {}  
-  self.Events[EventID][EventPriority][EventClass] = self.Events[EventID][EventPriority][EventClass]
     
   self.Events[EventID][EventPriority][EventClass] = nil
   

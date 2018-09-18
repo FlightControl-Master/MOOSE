@@ -180,7 +180,7 @@ function CLEANUP_AIRBASE.__:DestroyUnit( CleanUpUnit )
 	if CleanUpUnit then
 	  local CleanUpUnitName = CleanUpUnit:GetName()
 		local CleanUpGroup = CleanUpUnit:GetGroup()
-    -- TODO Client bug in 1.5.3
+    -- TODO DCS BUG - Client bug in 1.5.3
 		if CleanUpGroup:IsAlive() then
 			local CleanUpGroupUnits = CleanUpGroup:GetUnits()
 			if #CleanUpGroupUnits == 1 then
@@ -229,7 +229,7 @@ end
 function CLEANUP_AIRBASE.__:OnEventCrash( Event )
 	self:F( { Event } )
 
-  --TODO: This stuff is not working due to a DCS bug. Burning units cannot be destroyed.
+  --TODO: DCS BUG - This stuff is not working due to a DCS bug. Burning units cannot be destroyed.
 	-- self:T("before getGroup")
 	-- local _grp = Unit.getGroup(event.initiator)-- Identify the group that fired 
 	-- self:T("after getGroup")
