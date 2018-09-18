@@ -312,6 +312,7 @@ end
 -- @param Utilities.Utils#SMOKECOLOR SmokeColor The smoke color.
 function ZONE_BASE:SmokeZone( SmokeColor )
   self:F2( SmokeColor )
+  
 end
 
 --- Set the randomization probability of a zone to be selected.
@@ -330,6 +331,7 @@ end
 -- @return #number A value between 0 and 1. 0 = 0% and 1 = 100% probability.
 function ZONE_BASE:GetZoneProbability()
   self:F2()  
+  
   return self.ZoneProbability
 end
 

@@ -640,7 +640,7 @@
 -- 
 -- A red BMP has made it through our defence lines and drives towards our unprotected airbase at Senaki.
 -- Once the BMP captures the airbase (DCS S\_EVENT_\BASE_\CAPTURED is evaluated) the warehouse at Senaki lost its air infrastructure and it is not
--- possible any more to spawn airborne units. All requests for airborne units are rejected and not queued in this case.
+-- possible any more to spawn airborne units. All requests for airborne units are rejected and cancelled in this case.
 -- 
 -- The red BMP then drives further to the warehouse. Once it enters the warehouse zone (500 m radius around the warehouse building), the warehouse is
 -- considered to be under attack. This triggers the event **Attacked**. The @{#WAREHOUSE.OnAfterAttacked} function can be used to react to this situation.
@@ -649,11 +649,10 @@
 -- *all* ground assets are automatically spawned and assigned to defend the warehouse. Once/if the attack is defeated, these assets go automatically back
 -- into the warehouse stock.
 -- 
--- If the red coalition manages to capture our warehouse, all assets go into their possession. Here, even our airbase has been captured. Therefore, a (self) request
--- to the warehouse will now spawn the F/A-18 fighters as red units. Note, that the request could also some from another red warehouse. In that case,
--- the planes would take off and (if they make it) be added to the red warehouse. So you can steal valuable assets from your enemy if he is not careful.
+-- If the red coalition manages to capture our warehouse, all assets go into their possession. Now red tries to steal three F/A-18 flights and send them to 
+-- Sukhumi. These aircraft will be spawned and begin to taxi. However, ...
 -- 
--- Here, we simply activate a blue external unit which drives to the warehouse, destroyes the red intruder and re-captures our warehouse.
+-- A blue Bradley is in the area and will attemt to recapture the warehouse. It might also catch the red F/A-18s before they take off. 
 -- 
 --     -- Start warehouses.  
 --     warehouse.Senaki:Start()
@@ -685,6 +684,9 @@
 --         -- Sukhumi tries to "steals" three F/A-18 from Senaki and brings them to Sukhumi.
 --         -- Well, actually the aircraft wont make it because blue1 will kill it on the taxi way leaving a blood bath. But that's life!
 --         warehouse.Senaki:AddRequest(warehouse.Sukhumi, WAREHOUSE.Descriptor.CATEGORY, Group.Category.AIRPLANE, 3)
+--         warehouse.Senaki.warehouse:SmokeRed()
+--       elseif Coalition==coalition.side.BLUE then
+--         warehouse.Senaki.warehouse:SmokeBlue()
 --       end
 --       
 --       -- Activate a blue vehicle to re-capture the warehouse. It will drive to the warehouse zone and kill the red intruder.
@@ -1306,7 +1308,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.5.0"
+WAREHOUSE.version="0.5.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -3145,6 +3147,12 @@ end
 -- @param #WAREHOUSE.Queueitem Request Information table of the request.
 function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
+  -- Info message.
+  local text=string.format("Warehouse %s: Processing request id=%d from warehouse %s.\n", self.alias, Request.uid, Request.warehouse.alias)
+  text=text..string.format("Requested %s assets of %s=%s.\n", tostring(Request.nasset), Request.assetdesc, Request.assetdescval)
+  text=text..string.format("Transports %s of type %s.", tostring(Request.ntransport), tostring(Request.transporttype))
+  self:_InfoMessage(text, 5)
+
   ------------------------------------------------------------------------------------------------------------------------------------
   -- Cargo assets.
   ------------------------------------------------------------------------------------------------------------------------------------
@@ -3213,7 +3221,11 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
         -- Random place in the spawn zone of the requesting warehouse.
         local ToCoordinate=Request.warehouse.spawnzone:GetRandomCoordinate()
-        ToCoordinate:MarkToAll(string.format("Destination of group %s", group:GetName()))
+        
+        -- Debug marker.
+        if self.Debug then
+          ToCoordinate:MarkToAll(string.format("Destination of group %s", group:GetName()))
+        end
 
         -- Route ground.
         self:_RouteGround(group, Request)
@@ -5402,8 +5414,8 @@ function WAREHOUSE:_CheckRequestNow(request)
   if not _enough then
     local text=string.format("Warehouse %s: Request denied! Not enough (cargo) assets currently available.", self.alias)
     self:_InfoMessage(text, 5)
-    text=string.format("Enough=%s, #_assets=%d, _nassets=%d, request.nasset=%s", tostring(_enough), #_assets,_nassets, tostring(request.nasset))
-    env.info(text)
+    --text=string.format("Enough=%s, #_assets=%d, _nassets=%d, request.nasset=%s", tostring(_enough), #_assets,_nassets, tostring(request.nasset))
+    --env.info(text)
     return false
   end
 
@@ -6514,7 +6526,7 @@ function WAREHOUSE:_UpdateWarehouseMarkText()
   local _data=self:GetStockInfo(self.stock)
 
   -- Text.  
-  local text=string.format("Warehouse state: %s\nStock - total assets %d:\n", self:GetState(), #self.stock)
+  local text=string.format("Warehouse state: %s\nTotal assets in stock %d:\n", self:GetState(), #self.stock)
 
   for _attribute,_count in pairs(_data) do
     if _count>0 then

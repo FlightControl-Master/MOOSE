@@ -191,16 +191,14 @@ end
 
 --- Respawns the original @{Static}.
 -- @param #SPAWNSTATIC self
--- @param DCS#country.id (Optional) The country ID of the static after respawning..
 -- @return #SPAWNSTATIC
-function SPAWNSTATIC:ReSpawn(countryid)
+function SPAWNSTATIC:ReSpawn()
   
   local StaticTemplate, CoalitionID, CategoryID, CountryID = _DATABASE:GetStaticGroupTemplate( self.SpawnTemplatePrefix )
   
   if StaticTemplate then
 
-    --local CountryID = countryid or (self.CountryID or CountryID)
-    
+    local StaticUnitTemplate = StaticTemplate.units[1]
     StaticTemplate.route = nil
     StaticTemplate.groupId = nil
     
