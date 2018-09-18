@@ -3199,7 +3199,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
   -- No transport unit requested. Assets go by themselfes.
   if Request.transporttype==WAREHOUSE.TransportType.SELFPROPELLED then
-    self:I(self.wid..string.format("Got selfpropelled request for %d assets.",_spawngroups:Count()))    
+    self:T2(self.wid..string.format("Got selfpropelled request for %d assets.",_spawngroups:Count()))    
 
     for _,_spawngroup in pairs(_spawngroups:GetSetObjects()) do
       
@@ -3209,7 +3209,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
             
       -- Route cargo to their destination.
       if _cargocategory==Group.Category.GROUND then      
-        self:I(self.wid..string.format("Route ground group %s.", group:GetName()))
+        self:T2(self.wid..string.format("Route ground group %s.", group:GetName()))
 
         -- Random place in the spawn zone of the requesting warehouse.
         local ToCoordinate=Request.warehouse.spawnzone:GetRandomCoordinate()
@@ -3219,20 +3219,20 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
         self:_RouteGround(group, Request)
         
       elseif _cargocategory==Group.Category.AIRPLANE or _cargocategory==Group.Category.HELICOPTER then
-        self:I(self.wid..string.format("Route airborne group %s.", group:GetName()))
+        self:T2(self.wid..string.format("Route airborne group %s.", group:GetName()))
         
         -- Route plane to the requesting warehouses airbase.
         -- Actually, the route is already set. We only need to activate the uncontrolled group.
         self:_RouteAir(group, Request.airbase)
         
       elseif _cargocategory==Group.Category.SHIP then
-        self:I(self.wid..string.format("Route naval group %s.", group:GetName()))
+        self:T2(self.wid..string.format("Route naval group %s.", group:GetName()))
       
         -- Route plane to the requesting warehouses airbase.
         self:_RouteNaval(group, Request)
         
       elseif _cargocategory==Group.Category.TRAIN then
-        self:I(self.wid..string.format("Route train group %s.", group:GetName()))
+        self:T2(self.wid..string.format("Route train group %s.", group:GetName()))
         
         -- Route train to the rail connection of the requesting warehouse.
         self:_RouteTrain(group, Request.warehouse.rail)
