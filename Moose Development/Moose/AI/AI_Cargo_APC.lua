@@ -439,6 +439,21 @@ function AI_CARGO_APC:onafterDeploy( APC, From, Event, To, Coordinate, Speed, De
   
 end
 
+--- On after Deployed event.
+-- @param #AI_CARGO_APC self
+-- @param Wrapper.Group#GROUP Carrier
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
+function AI_CARGO_APC:onafterDeployed( APC, From, Event, To, DeployZone )
+  self:F( { APC, From, Event, To, DeployZone = DeployZone } )
+
+  self:__Guard( 0.1 )
+
+  self:GetParent( self, AI_CARGO_APC ).onafterDeployed( self, APC, From, Event, To, DeployZone )
+
+end
 
 
 --- On after Home event.

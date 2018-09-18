@@ -13,7 +13,8 @@
 --
 -- @module AI.AI_Cargo_Dispatcher_Airplane
 -- @image AI_Cargo_Dispatching_For_Airplanes.JPG
--- 
+
+
 --- @type AI_CARGO_DISPATCHER_AIRPLANE
 -- @extends AI.AI_Cargo_Dispatcher#AI_CARGO_DISPATCHER
 
@@ -62,8 +63,8 @@ function AI_CARGO_DISPATCHER_AIRPLANE:New( AirplaneSet, CargoSet, PickupZoneSet,
 
   local self = BASE:Inherit( self, AI_CARGO_DISPATCHER:NewWithZones( AirplaneSet, CargoSet, PickupZoneSet, DeployZoneSet ) ) -- #AI_CARGO_DISPATCHER_AIRPLANE
 
-  self:SetDeploySpeed( 200, 150 )
-  self:SetPickupSpeed( 200, 150 )
+  self:SetDeploySpeed( 1200, 600 )
+  self:SetPickupSpeed( 1200, 600 )
   self:SetPickupRadius( 0, 0 )
   self:SetDeployRadius( 0, 0 )
 

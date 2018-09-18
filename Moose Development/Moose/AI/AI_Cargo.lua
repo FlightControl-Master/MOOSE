@@ -354,8 +354,18 @@ function AI_CARGO:onafterPickedUp( Carrier, From, Event, To, PickupZone )
 
   Carrier:RouteResume()
 
+  local HasCargo = false
+  if Carrier and Carrier :IsAlive() then
+    for Cargo, CarrierUnit in pairs( self.Carrier_Cargo ) do
+      HasCargo = true
+      break
+    end
+  end
+
   self.Relocating = false
-  self.Transporting = true
+    if HasCargo then
+      self.Transporting = true
+    end
   
 end
 
@@ -465,8 +475,6 @@ end
 -- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
 function AI_CARGO:onafterDeployed( Carrier, From, Event, To, DeployZone )
   self:F( { Carrier, From, Event, To, DeployZone = DeployZone } )
-
-    self:__Guard( 0.1 )
 
     self.Transporting = false
 

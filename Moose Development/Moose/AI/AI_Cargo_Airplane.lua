@@ -145,18 +145,6 @@ function AI_CARGO_AIRPLANE:New( Airplane, CargoSet )
 end
 
 
-function AI_CARGO_AIRPLANE:IsTransporting()
-
-  return self.Transporting == true
-end
-
-function AI_CARGO_AIRPLANE:IsRelocating()
-
-  return self.Relocating == true
-end
-
-
-
 --- Set the Carrier (controllable). Also initializes events for carrier and defines the coalition.
 -- @param #AI_CARGO_AIRPLANE self
 -- @param Wrapper.Group#GROUP Airplane Transport plane.
@@ -253,16 +241,12 @@ function AI_CARGO_AIRPLANE:onafterLanded( Airplane, From, Event, To )
     if self.RoutePickup == true then
       env.info("FF load airplane "..Airplane:GetName())
       self:Load( self.PickupZone )
-      self.RoutePickup = false
-      self.Relocating = true
     end
     
     -- Aircraft was send to this airbase to deploy troops. Initiate unloading.
     if self.RouteDeploy == true then
       self:Unload()
       self.RouteDeploy = false
-      self.Transporting = false
-      self.Relocating = false
     end
      
   end
@@ -326,8 +310,7 @@ function AI_CARGO_AIRPLANE:onafterPickup( Airplane, From, Event, To, Coordinate,
       
     end
 
-    self.Transporting = false
-    self.Relocating = true
+    self:GetParent( self, AI_CARGO_AIRPLANE ).onafterPickup( self, Airplane, From, Event, To, Coordinate, Speed, PickupZone )
   else
     env.info("FF onafterpick aircraft not alive")
   end
@@ -364,27 +347,9 @@ function AI_CARGO_AIRPLANE:onafterDeploy( Airplane, From, Event, To, Coordinate,
     -- Set destination airbase for next :Route() command.
     self.Airbase = Airbase
     
-    self.Transporting = true
-    self.Relocating = false
+    self:GetParent( self, AI_CARGO_AIRPLANE ).onafterDeploy( self, Airplane, From, Event, To, Coordinate, Speed, DeployZone )
   end
   
-end
-
-
-
---- On after PickedUp event. All cargo is inside the carrier and ready to be transported.
--- @param #AI_CARGO_AIRPLANE self
--- @param Wrapper.Group#GROUP Airplane Cargo transport plane.
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
-function AI_CARGO_AIRPLANE:onafterPickedUp( Airplane, From, Event, To, PickupZone )
-  self:F( { AirplaneGroup, From, Event, To } )
-
-  if Airplane and Airplane:IsAlive() then
-    self.Transporting = true -- This will only be executed when there is no cargo boarded anymore. The dispatcher will then kick-off the deploy cycle!
-  end
 end
 
 
@@ -418,22 +383,6 @@ function AI_CARGO_AIRPLANE:onafterUnload( Airplane, From, Event, To, DeployZone 
     end
   end
   
-end
-
-
-
---- On after Deployed event.
--- @param #AI_CARGO_AIRPLANE self
--- @param Wrapper.Group#GROUP Airplane Cargo transport plane.
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Cargo.Cargo#CARGO Cargo
-function AI_CARGO_AIRPLANE:onafterDeployed( Airplane, From, Event, To, DeployZone )
-
-  if Airplane and Airplane:IsAlive() then
-    self.Transporting = false -- This will only be executed when there is no cargo onboard anymore. The dispatcher will then kick-off the pickup cycle!
-  end
 end
 
 
@@ -509,4 +458,30 @@ function AI_CARGO_AIRPLANE:Route( Airplane, Airbase, Speed, Uncontrolled )
     
     end
   end
+end
+
+--- On after Home event. Aircraft will be routed to their home base.
+-- @param #AI_CARGO_AIRPLANE self
+-- @param Wrapper.Group#GROUP Airplane The cargo plane.
+-- @param From From state.
+-- @param Event Event.
+-- @param To To State.
+-- @param Core.Point#COORDINATE Coordinate Home place (not used).
+-- @param #number Speed Speed in km/h to fly to the home airbase (zone). Default is 80% of max possible speed the unit can go.
+-- @param Core.Zone#ZONE_AIRBASE HomeZone The home airbase (zone) where the plane should return to.
+function AI_CARGO_AIRPLANE:onafterHome(Airplane, From, Event, To, Coordinate, Speed, HomeZone )
+  if Airplane and Airplane:IsAlive() then
+
+    -- We are going home!
+    self.RouteHome = true
+       
+    -- Home Base.
+    local HomeBase=HomeZone:GetAirbase()
+    self.Airbase=HomeBase
+    
+    -- Now route the airplane home
+   self:Route(Airplane, HomeBase, Speed)
+    
+  end
+  
 end

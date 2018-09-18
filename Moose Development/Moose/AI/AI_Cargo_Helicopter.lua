@@ -176,16 +176,6 @@ function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
   return self
 end
 
-function AI_CARGO_HELICOPTER:IsTransporting()
-
-  return self.Transporting == true
-end
-
-function AI_CARGO_HELICOPTER:IsRelocating()
-
-  return self.Relocating == true
-end
-
 
 --- Set the Carrier.
 -- @param #AI_CARGO_HELICOPTER self
@@ -392,33 +382,6 @@ end
 
 
 
---- On after PickedUp event, raised when all cargo has been loaded into the CarrierGroup.
--- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Group#GROUP Helicopter
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Cargo.Cargo#CARGO Cargo Cargo object.
--- @return #boolean Cargo is loaded.
--- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
-function AI_CARGO_HELICOPTER:onafterPickedUp( Helicopter, From, Event, To, PickupZone )
-  self:F( { Helicopter, From, Event, To } )
-  
-  local HasCargo = false
-  if Helicopter and Helicopter:IsAlive() then
-    for Cargo, CarrierUnit in pairs( self.Carrier_Cargo ) do
-      HasCargo = true
-      break
-    end
-    self.Relocating = false
-    if HasCargo then
-      self.Transporting = true
-    end
-  end
-end
-
-
-
 --- On after Deployed event.
 -- @param #AI_CARGO_HELICOPTER self
 -- @param Wrapper.Group#GROUP Helicopter
@@ -440,7 +403,8 @@ function AI_CARGO_HELICOPTER:onafterDeployed( Helicopter, From, Event, To, Deplo
     end, Helicopter
   )
   
-  self.Transporting = false
+  self:GetParent( self, AI_CARGO_HELICOPTER ).onafterDeployed( self, Helicopter, From, Event, To, DeployZone )
+  
   
 end
 
@@ -506,8 +470,8 @@ function AI_CARGO_HELICOPTER:onafterPickup( Helicopter, From, Event, To, Coordin
     
     self.PickupZone = PickupZone
 
-    self.Relocating = true
-    self.Transporting = false
+    self:GetParent( self, AI_CARGO_HELICOPTER ).onafterPickup( self, Helicopter, From, Event, To, Coordinate, Speed, PickupZone )
+
   end
   
 end
@@ -584,8 +548,7 @@ function AI_CARGO_HELICOPTER:onafterDeploy( Helicopter, From, Event, To, Coordin
     -- Now route the helicopter
     Helicopter:Route( Route, 0 )
 
-    self.Relocating = false
-    self.Transporting = true
+    self:GetParent( self, AI_CARGO_HELICOPTER ).onafterDeploy( self, Helicopter, From, Event, To, Coordinate, Speed, DeployZone )
   end
   
 end
