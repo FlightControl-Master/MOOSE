@@ -67,6 +67,8 @@ function AI_CARGO_DISPATCHER_AIRPLANE:New( AirplaneSet, CargoSet, PickupZoneSet,
   self:SetPickupSpeed( 1200, 600 )
   self:SetPickupRadius( 0, 0 )
   self:SetDeployRadius( 0, 0 )
+  
+  self:SetMonitorTimeInterval( 600 )
 
   return self
 end

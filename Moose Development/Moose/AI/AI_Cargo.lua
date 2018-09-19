@@ -230,12 +230,12 @@ function AI_CARGO:onbeforeLoad( Carrier, From, Event, To, PickupZone )
     local Carrier_Count = #Carrier_List
     local Carrier_Index = 1
       
+    local Loaded = false
+
     for _, Cargo in UTILS.spairs( self.CargoSet:GetSet(), function( t, a, b ) return t[a]:GetWeight() > t[b]:GetWeight() end ) do
       local Cargo = Cargo -- Cargo.Cargo#CARGO
 
       self:F( { IsUnLoaded = Cargo:IsUnLoaded(), IsDeployed = Cargo:IsDeployed(), Cargo:GetName(), Carrier:GetName() } )
-
-      local Loaded = false
 
       -- Try all Carriers, but start from the one according the Carrier_Index
       for Carrier_Loop = 1, #Carrier_List do
@@ -248,7 +248,7 @@ function AI_CARGO:onbeforeLoad( Carrier, From, Event, To, PickupZone )
           Carrier_Index = 1
         end
         
-        if Cargo:IsUnLoaded() then -- and not Cargo:IsDeployed() then
+        if Cargo:IsUnLoaded() and not Cargo:IsDeployed() then
           if Cargo:IsInLoadRadius( CarrierUnit:GetCoordinate() ) then
             self:F( { "In radius", CarrierUnit:GetName() } )
             
@@ -277,11 +277,12 @@ function AI_CARGO:onbeforeLoad( Carrier, From, Event, To, PickupZone )
         
       end
       
-      if not Loaded then
-        -- No loading happened, so we need to pickup something else.
-        self.Relocating = false
-      end
       
+    end
+    
+    if not Loaded == true then
+      -- No loading happened, so we need to pickup something else.
+      self.Relocating = false
     end
   end
 
@@ -309,7 +310,7 @@ function AI_CARGO:onafterBoard( Carrier, From, Event, To, Cargo, CarrierUnit, Pi
     end
   end
 
-  self:__Loaded( 10, Cargo, CarrierUnit, PickupZone )
+  self:__Loaded( 0.1, Cargo, CarrierUnit, PickupZone )
   
 end
 
@@ -337,7 +338,7 @@ function AI_CARGO:onafterLoaded( Carrier, From, Event, To, Cargo, PickupZone )
   end
   
   if Loaded then
-    self:PickedUp( PickupZone )
+    self:__PickedUp( 0.1, PickupZone )
   end
   
 end
@@ -363,9 +364,9 @@ function AI_CARGO:onafterPickedUp( Carrier, From, Event, To, PickupZone )
   end
 
   self.Relocating = false
-    if HasCargo then
-      self.Transporting = true
-    end
+  if HasCargo then
+    self.Transporting = true
+  end
   
 end
 

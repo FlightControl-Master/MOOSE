@@ -269,7 +269,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function AI_CARGO_APC:onafterMonitor( APC, From, Event, To )
-  self:F( { APC, From, Event, To } )
+  self:F( { APC, From, Event, To, IsTransporting = self:IsTransporting() } )
 
   if self.CombatRadius > 0 then
     if APC and APC:IsAlive() then

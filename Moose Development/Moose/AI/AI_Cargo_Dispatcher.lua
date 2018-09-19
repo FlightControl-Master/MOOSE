@@ -438,7 +438,8 @@ function AI_CARGO_DISPATCHER:New( SetCarrier, SetCargo )
   
   self:AddTransition( "Monitoring", "Home", "Monitoring" )
   
-  self.MonitorTimeInterval = 30
+  self:SetMonitorTimeInterval( 30 )
+  
   self.DeployRadiusInner = 200
   self.DeployRadiusOuter = 500
   
@@ -481,29 +482,13 @@ function AI_CARGO_DISPATCHER:NewWithZones( SetCarrier, SetCargo, PickupZoneSet, 
   return self
 end
 
-
---- Creates a new AI_CARGO_DISPATCHER object.
+--- Set the monitor time interval.
 -- @param #AI_CARGO_DISPATCHER self
--- @param Core.Set#SET_GROUP SetCarrier
--- @param Core.Set#SET_CARGO SetCargo
--- @param Core.Set#SET_AIRBASE PickupAirbasesSet
--- @param Core.Set#SET_AIRBASE DeployAirbasesSet
+-- @param #number MonitorTimeInterval
 -- @return #AI_CARGO_DISPATCHER
--- @usage
--- 
--- -- Create a new cargo dispatcher
--- SetCarriers = SET_GROUP:New():FilterPrefixes( "APC" ):FilterStart()
--- SetCargos = SET_CARGO:New():FilterTypes( "Infantry" ):FilterStart()
--- PickupAirbasesSet = SET_AIRBASES:New()
--- DeployAirbasesSet = SET_AIRBASES:New()
--- AICargoDispatcher = AI_CARGO_DISPATCHER:New( SetCarrier, SetCargo, PickupAirbasesSet, DeployAirbasesSet )
--- 
-function AI_CARGO_DISPATCHER:NewWithAirbases( SetCarriers, SetCargos, PickupAirbasesSet, DeployAirbasesSet )
+function AI_CARGO_DISPATCHER:SetMonitorTimeInterval( MonitorTimeInterval )
 
-  local self = AI_CARGO_DISPATCHER:New( SetCarriers, SetCargos ) -- #AI_CARGO_DISPATCHER
-  
-  self.DeployAirbasesSet = DeployAirbasesSet
-  self.PickupAirbasesSet = PickupAirbasesSet
+  self.MonitorTimeInterval = MonitorTimeInterval
   
   return self
 end
@@ -532,30 +517,8 @@ function AI_CARGO_DISPATCHER:SetHomeZone( HomeZone )
   return self
 end
 
---- Set the home airbase. This is for air units, i.e. helicopters and airplanes.
--- When there is nothing anymore to pickup, the carriers will go back to their home base. They will await here new orders.
--- @param #AI_CARGO_DISPATCHER self
--- @param Wrapper.Airbase#AIRBASE HomeBase Airbase where the carriers will go after all pickup assignments are done.
--- @return #AI_CARGO_DISPATCHER self
-function AI_CARGO_DISPATCHER:SetHomeBase( HomeBase )
-
-  self.HomeBase = HomeBase
-  
-  return self
-end
 
 
---- Set the home base.
--- When there is nothing anymore to pickup, the carriers will return to their home airbase. There they will await new orders.
--- @param #AI_CARGO_DISPATCHER self
--- @param Wrapper.Airbase#AIRBASE HomeBase The airbase where the carrier will go to, once they completed all pending assignments.
--- @return #AI_CARGO_DISPATCHER self
-function AI_CARGO_DISPATCHER:SetHomeBase( HomeBase )
-
-  self.HomeBase = HomeBase
-  
-  return self
-end
 
 
 --- Sets or randomizes the pickup location for the carrier around the cargo coordinate in a radius defined an outer and optional inner radius.
@@ -1022,7 +985,7 @@ function AI_CARGO_DISPATCHER:onafterTransport( From, Event, To, Carrier, Cargo )
       local DeployZone = self.DeployZoneSet:GetRandomZone()
       
       local DeployCoordinate = DeployZone:GetCoordinate():GetRandomCoordinateInRadius( self.DeployOuterRadius, self.DeployInnerRadius )
-      self.AI_Cargo[Carrier]:Deploy( DeployCoordinate, math.random( self.DeployMinSpeed, self.DeployMaxSpeed ), DeployZone )
+      self.AI_Cargo[Carrier]:__Deploy( 0.1, DeployCoordinate, math.random( self.DeployMinSpeed, self.DeployMaxSpeed ), DeployZone )
     end
   end
   

@@ -1974,7 +1974,7 @@ do -- Route methods
   -- @param #CONTROLLABLE self
   -- @return #CONTROLLABLE
   function CONTROLLABLE:RouteStop()
-    self:F(self:GetName() .. "RouteStop")
+    self:F(self:GetName() .. " RouteStop")
     
     local CommandStop = self:CommandStopRoute( true )
     self:SetCommand( CommandStop )
