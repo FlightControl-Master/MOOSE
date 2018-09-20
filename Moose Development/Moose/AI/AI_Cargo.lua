@@ -174,8 +174,9 @@ end
 -- @param To
 -- @param Core.Point#COORDINATE Coordinate of the pickup point.
 -- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+-- @param #number Height Height in meters to move to the home coordinate.
 -- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
-function AI_CARGO:onafterPickup( APC, From, Event, To, Coordinate, Speed, PickupZone )
+function AI_CARGO:onafterPickup( APC, From, Event, To, Coordinate, Speed, Height, PickupZone )
 
   self.Transporting = false
   self.Relocating = true
@@ -191,7 +192,9 @@ end
 -- @param To
 -- @param Core.Point#COORDINATE Coordinate Deploy place.
 -- @param #number Speed Speed in km/h to drive to the depoly coordinate. Default is 50% of max possible speed the unit can go.
-function AI_CARGO:onafterDeploy( APC, From, Event, To, Coordinate, Speed, DeployZone )
+-- @param #number Height Height in meters to move to the deploy coordinate.
+-- @param Core.Zone#ZONE DeployZone The zone where the cargo will be deployed.
+function AI_CARGO:onafterDeploy( APC, From, Event, To, Coordinate, Speed, Height, DeployZone )
 
   self.Relocating = false
   self.Transporting = true

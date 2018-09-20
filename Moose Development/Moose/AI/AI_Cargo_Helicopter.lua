@@ -177,6 +177,9 @@ function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
 end
 
 
+
+
+
 --- Set the Carrier.
 -- @param #AI_CARGO_HELICOPTER self
 -- @param Wrapper.Group#GROUP Helicopter
@@ -416,15 +419,16 @@ end
 -- @param To
 -- @param Core.Point#COORDINATE Coordinate Pickup place.
 -- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+-- @param #number Height Height in meters to move to the pickup coordinate. This parameter is ignored for APCs.
 -- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
-function AI_CARGO_HELICOPTER:onafterPickup( Helicopter, From, Event, To, Coordinate, Speed, PickupZone )
+function AI_CARGO_HELICOPTER:onafterPickup( Helicopter, From, Event, To, Coordinate, Speed, Height, PickupZone )
 
   if Helicopter and Helicopter:IsAlive() ~= nil then
 
     Helicopter:Activate()
 
     self.RoutePickup = true
-    Coordinate.y = math.random( 50, 500 )
+    Coordinate.y = Height
     
     local _speed=Speed or Helicopter:GetSpeedMax()*0.5        
      
@@ -470,7 +474,7 @@ function AI_CARGO_HELICOPTER:onafterPickup( Helicopter, From, Event, To, Coordin
     
     self.PickupZone = PickupZone
 
-    self:GetParent( self, AI_CARGO_HELICOPTER ).onafterPickup( self, Helicopter, From, Event, To, Coordinate, Speed, PickupZone )
+    self:GetParent( self, AI_CARGO_HELICOPTER ).onafterPickup( self, Helicopter, From, Event, To, Coordinate, Speed, Height, PickupZone )
 
   end
   
@@ -492,7 +496,8 @@ end
 -- @param To
 -- @param Core.Point#COORDINATE Coordinate Place at which the cargo is deployed.
 -- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
-function AI_CARGO_HELICOPTER:onafterDeploy( Helicopter, From, Event, To, Coordinate, Speed, DeployZone )
+-- @param #number Height Height in meters to move to the deploy coordinate.
+function AI_CARGO_HELICOPTER:onafterDeploy( Helicopter, From, Event, To, Coordinate, Speed, Height, DeployZone )
 
   if Helicopter and Helicopter:IsAlive() ~= nil then
 
@@ -503,7 +508,7 @@ function AI_CARGO_HELICOPTER:onafterDeploy( Helicopter, From, Event, To, Coordin
     
     --- Calculate the target route point.
 
-    Coordinate.y = math.random( 50, 500 )
+    Coordinate.y = Height
     
     local _speed=Speed or Helicopter:GetSpeedMax()*0.5      
 
@@ -548,7 +553,7 @@ function AI_CARGO_HELICOPTER:onafterDeploy( Helicopter, From, Event, To, Coordin
     -- Now route the helicopter
     Helicopter:Route( Route, 0 )
 
-    self:GetParent( self, AI_CARGO_HELICOPTER ).onafterDeploy( self, Helicopter, From, Event, To, Coordinate, Speed, DeployZone )
+    self:GetParent( self, AI_CARGO_HELICOPTER ).onafterDeploy( self, Helicopter, From, Event, To, Coordinate, Speed, Height, DeployZone )
   end
   
 end
@@ -562,8 +567,9 @@ end
 -- @param To
 -- @param Core.Point#COORDINATE Coordinate Home place.
 -- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+-- @param #number Height Height in meters to move to the home coordinate.
 -- @param Core.Zone#ZONE HomeZone The zone wherein the carrier will return when all cargo has been transported. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
-function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinate, Speed, HomeZone )
+function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinate, Speed, Height, HomeZone )
 
   if Helicopter and Helicopter:IsAlive() ~= nil then
 
@@ -573,7 +579,7 @@ function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinat
     
     --- Calculate the target route point.
 
-    Coordinate.y = math.random( 50, 200 )    
+    Coordinate.y = Height
     
     Speed = Speed or Helicopter:GetSpeedMax()*0.5          
 

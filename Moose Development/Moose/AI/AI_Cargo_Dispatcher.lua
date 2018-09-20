@@ -109,8 +109,9 @@
 --      -- @param Wrapper.Group#GROUP CarrierGroup The group object that contains the CarrierUnits.
 --      -- @param Core.Point#COORDINATE Coordinate The coordinate of the pickup location.
 --      -- @param #number Speed The velocity in meters per second on which the CarrierGroup is routed towards the pickup Coordinate.
+--      -- @param #number Height Height in meters to move to the pickup coordinate.
 --      -- @param Core.Zone#ZONE_AIRBASE PickupZone (optional) The zone from where the cargo is picked up. Note that the zone is optional and may not be provided, but for AI_CARGO_DISPATCHER_AIRBASE there will always be a PickupZone, as the pickup location is an airbase zone.
---      function CLASS:OnAfterPickup( From, Event, To, CarrierGroup, Coordinate, Speed, PickupZone )
+--      function CLASS:OnAfterPickup( From, Event, To, CarrierGroup, Coordinate, Speed, Height, PickupZone )
 --      
 --        -- Write here your own code.
 --      
@@ -232,8 +233,9 @@
 --      -- @param Wrapper.Group#GROUP CarrierGroup The group object that contains the CarrierUnits.
 --      -- @param Core.Point#COORDINATE Coordinate The deploy coordinate.
 --      -- @param #number Speed The velocity in meters per second on which the CarrierGroup is routed towards the deploy Coordinate.
+--      -- @param #number Height Height in meters to move to the deploy coordinate.
 --      -- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
---      function CLASS:OnAfterDeploy( From, Event, To, CarrierGroup, Coordinate, Speed, DeployZone )
+--      function CLASS:OnAfterDeploy( From, Event, To, CarrierGroup, Coordinate, Speed, Height, DeployZone )
 --      
 --        -- Write here your own code.
 --      
@@ -347,8 +349,9 @@
 --      -- @param Wrapper.Group#GROUP CarrierGroup The group object that contains the CarrierUnits.
 --      -- @param Core.Point#COORDINATE Coordinate The home coordinate the Carrier will arrive and stop it's activities.
 --      -- @param #number Speed The velocity in meters per second on which the CarrierGroup is routed towards the home Coordinate.
+--      -- @param #number Height Height in meters to move to the home coordinate.
 --      -- @param Core.Zone#ZONE HomeZone The zone wherein the carrier will return when all cargo has been transported. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
---      function CLASS:OnAfterHome( From, Event, To, CarrierGroup, Coordinate, Speed, HomeZone )
+--      function CLASS:OnAfterHome( From, Event, To, CarrierGroup, Coordinate, Speed, Height, HomeZone )
 --
 --        -- Write here your own code.
 --      
@@ -361,6 +364,7 @@
 -- 
 --    * @{#AI_CARGO_DISPATCHER.SetPickupRadius}(): Sets or randomizes the pickup location for the carrier around the cargo coordinate in a radius defined an outer and optional inner radius. 
 --    * @{#AI_CARGO_DISPATCHER.SetPickupSpeed}(): Set the speed or randomizes the speed in km/h to pickup the cargo.
+--    * @{#AI_CARGO_DISPATCHER.SetPickupHeight}(): Set the height or randomizes the height in meters to pickup the cargo.
 --    
 -- # 4) Set the deploy parameters.
 -- 
@@ -368,6 +372,7 @@
 -- 
 --    * @{#AI_CARGO_DISPATCHER.SetDeployRadius}(): Sets or randomizes the deploy location for the carrier around the cargo coordinate in a radius defined an outer and an optional inner radius. 
 --    * @{#AI_CARGO_DISPATCHER.SetDeploySpeed}(): Set the speed or randomizes the speed in km/h to deploy the cargo.
+--    * @{#AI_CARGO_DISPATCHER.SetDeployHeight}(): Set the height or randomizes the height in meters to deploy the cargo.
 -- 
 -- # 5) Set the home zone when there isn't any more cargo to pickup.
 -- 
@@ -640,6 +645,55 @@ function AI_CARGO_DISPATCHER:SetDeploySpeed( MaxSpeed, MinSpeed )
 end
 
 
+--- Set the height or randomizes the height in meters to fly and pickup the cargo. The default height is 200 meters.
+-- @param #AI_CARGO_DISPATCHER self
+-- @param #number MaxHeight (optional) The maximum height to fly to the cargo pickup location.
+-- @param #number MinHeight (optional) The minimum height to fly to the cargo pickup location.
+-- @return #AI_CARGO_DISPATCHER
+-- @usage
+-- 
+-- -- Create a new cargo dispatcher
+-- AICargoDispatcherHelicopter = AI_CARGO_DISPATCHER_HELICOPTER:New( SetCarrier, SetCargo, SetDeployZone )
+-- 
+-- -- Set the minimum pickup fly height to be 50 meters and the maximum height to be 200 meters.
+-- AICargoDispatcherHelicopter:SetPickupHeight( 200, 50 )
+-- 
+function AI_CARGO_DISPATCHER:SetPickupHeight( MaxHeight, MinHeight )
+
+  MaxHeight = MaxHeight or 200
+  MinHeight = MinHeight or MaxHeight
+
+  self.PickupMinHeight = MinHeight
+  self.PickupMaxHeight = MaxHeight
+  
+  return self
+end
+
+
+--- Set the height or randomizes the height in meters to fly and deploy the cargo.  The default height is 200 meters.
+-- @param #AI_CARGO_DISPATCHER self
+-- @param #number MaxHeight (optional) The maximum height to fly to the cargo deploy location.
+-- @param #number MinHeight (optional) The minimum height to fly to the cargo deploy location.
+-- @return #AI_CARGO_DISPATCHER
+-- @usage
+-- 
+-- -- Create a new cargo dispatcher
+-- AICargoDispatcherHelicopter = AI_CARGO_DISPATCHER_HELICOPTER:New( SetCarrier, SetCargo, SetDeployZone )
+-- 
+-- -- Set the minimum deploy fly height to be 50 meters and the maximum height to be 200 meters.
+-- AICargoDispatcherHelicopter:SetDeployHeight( 200, 50 )
+-- 
+function AI_CARGO_DISPATCHER:SetDeployHeight( MaxHeight, MinHeight )
+
+  MaxHeight = MaxHeight or 200
+  MinHeight = MinHeight or MaxHeight
+
+  self.DeployMinHeight = MinHeight
+  self.DeployMaxHeight = MaxHeight
+  
+  return self
+end
+
 
 --- The Start trigger event, which actually takes action at the specified time interval.
 -- @param #AI_CARGO_DISPATCHER self
@@ -666,9 +720,10 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
       -- @param Wrapper.Group#GROUP CarrierGroup The group object that contains the CarrierUnits.
       -- @param Core.Point#COORDINATE Coordinate The coordinate of the pickup location.
       -- @param #number Speed The velocity in meters per second on which the CarrierGroup is routed towards the pickup Coordinate.
+      -- @param #number Height Height in meters to move to the pickup coordinate.
       -- @param Core.Zone#ZONE_AIRBASE PickupZone (optional) The zone from where the cargo is picked up. Note that the zone is optional and may not be provided, but for AI_CARGO_DISPATCHER_AIRBASE there will always be a PickupZone, as the pickup location is an airbase zone.
-      function AI_Cargo.OnAfterPickup( AI_Cargo, CarrierGroup, From, Event, To, Coordinate, Speed, PickupZone )
-        self:Pickup( CarrierGroup, Coordinate, Speed, PickupZone )
+      function AI_Cargo.OnAfterPickup( AI_Cargo, CarrierGroup, From, Event, To, Coordinate, Speed, Height, PickupZone )
+        self:Pickup( CarrierGroup, Coordinate, Speed, Height, PickupZone )
       end
       
       --- Load event handler OnAfter for AI_CARGO_DISPATCHER.
@@ -751,10 +806,11 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
       -- @param Wrapper.Group#GROUP CarrierGroup The group object that contains the CarrierUnits.
       -- @param Core.Point#COORDINATE Coordinate The deploy coordinate.
       -- @param #number Speed The velocity in meters per second on which the CarrierGroup is routed towards the deploy Coordinate.
+      -- @param #number Height Height in meters to move to the deploy coordinate.
       -- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
       
-      function AI_Cargo.OnAfterDeploy( AI_Cargo, CarrierGroup, From, Event, To, Coordinate, Speed, DeployZone )
-        self:Deploy( CarrierGroup, Coordinate, Speed, DeployZone )
+      function AI_Cargo.OnAfterDeploy( AI_Cargo, CarrierGroup, From, Event, To, Coordinate, Speed, Height, DeployZone )
+        self:Deploy( CarrierGroup, Coordinate, Speed, Height, DeployZone )
       end      
 
 
@@ -838,10 +894,11 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
       -- @param Wrapper.Group#GROUP CarrierGroup The group object that contains the CarrierUnits.
       -- @param Core.Point#COORDINATE Coordinate The home coordinate the Carrier will arrive and stop it's activities.
       -- @param #number Speed The velocity in meters per second on which the CarrierGroup is routed towards the home Coordinate.
+      -- @param #number Height Height in meters to move to the home coordinate.
       -- @param Core.Zone#ZONE HomeZone The zone wherein the carrier will return when all cargo has been transported. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
       
-      function AI_Cargo.OnAfterHome( AI_Cargo, Carrier, From, Event, To, Coordinate, Speed, HomeZone )
-        self:Home( Carrier, Coordinate, Speed, HomeZone )
+      function AI_Cargo.OnAfterHome( AI_Cargo, Carrier, From, Event, To, Coordinate, Speed, Height, HomeZone )
+        self:Home( Carrier, Coordinate, Speed, Height, HomeZone )
       end      
     end
 
@@ -862,6 +919,7 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
         if Cargo:IsUnLoaded() == true and Cargo:IsDeployed() == false then
           local CargoCoordinate = Cargo:GetCoordinate()
           local CoordinateFree = true
+          self.PickupZoneSet:Flush()
           PickupZone = self.PickupZoneSet and self.PickupZoneSet:IsCoordinateInZone( CargoCoordinate )
           if not self.PickupZoneSet or PickupZone then
             for CarrierPickup, Coordinate in pairs( self.PickupCargo ) do
@@ -901,13 +959,13 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
       if PickupCargo then
         self.CarrierHome[Carrier] = nil
         local PickupCoordinate = PickupCargo:GetCoordinate():GetRandomCoordinateInRadius( self.PickupOuterRadius, self.PickupInnerRadius )
-        AI_Cargo:Pickup( PickupCoordinate, math.random( self.PickupMinSpeed, self.PickupMaxSpeed ), PickupZone )
+        AI_Cargo:Pickup( PickupCoordinate, math.random( self.PickupMinSpeed, self.PickupMaxSpeed ), math.random( self.PickupMinHeight, self.PickupMaxHeight ), PickupZone )
         break
       else
         if self.HomeZone then
           if not self.CarrierHome[Carrier] then
             self.CarrierHome[Carrier] = true
-            AI_Cargo:Home( self.HomeZone:GetRandomPointVec2(), math.random( self.PickupMinSpeed, self.PickupMaxSpeed ), self.HomeZone )
+            AI_Cargo:Home( self.HomeZone:GetRandomPointVec2(), math.random( self.PickupMinSpeed, self.PickupMaxSpeed ), math.random( self.PickupMinHeight, self.PickupMaxHeight ), self.HomeZone )
           end
         end
       end
@@ -985,7 +1043,7 @@ function AI_CARGO_DISPATCHER:onafterTransport( From, Event, To, Carrier, Cargo )
       local DeployZone = self.DeployZoneSet:GetRandomZone()
       
       local DeployCoordinate = DeployZone:GetCoordinate():GetRandomCoordinateInRadius( self.DeployOuterRadius, self.DeployInnerRadius )
-      self.AI_Cargo[Carrier]:__Deploy( 0.1, DeployCoordinate, math.random( self.DeployMinSpeed, self.DeployMaxSpeed ), DeployZone )
+      self.AI_Cargo[Carrier]:__Deploy( 0.1, DeployCoordinate, math.random( self.DeployMinSpeed, self.DeployMaxSpeed ), math.random( self.DeployMinHeight, self.DeployMaxHeight ), DeployZone )
     end
   end
   

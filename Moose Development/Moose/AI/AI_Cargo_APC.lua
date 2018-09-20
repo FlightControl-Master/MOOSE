@@ -378,8 +378,9 @@ end
 -- @param To
 -- @param Core.Point#COORDINATE Coordinate of the pickup point.
 -- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+-- @param #number Height Height in meters to move to the pickup coordinate. This parameter is ignored for APCs.
 -- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
-function AI_CARGO_APC:onafterPickup( APC, From, Event, To, Coordinate, Speed, PickupZone )
+function AI_CARGO_APC:onafterPickup( APC, From, Event, To, Coordinate, Speed, Height, PickupZone )
 
   if APC and APC:IsAlive() then
 
@@ -401,7 +402,7 @@ function AI_CARGO_APC:onafterPickup( APC, From, Event, To, Coordinate, Speed, Pi
       AI_CARGO_APC._Pickup( APC, self, Coordinate, Speed, PickupZone )
     end
 
-    self:GetParent( self, AI_CARGO_APC ).onafterPickup( self, APC, From, Event, To, Coordinate, Speed, PickupZone )
+    self:GetParent( self, AI_CARGO_APC ).onafterPickup( self, APC, From, Event, To, Coordinate, Speed, Height, PickupZone )
   end
   
 end
@@ -415,7 +416,9 @@ end
 -- @param To
 -- @param Core.Point#COORDINATE Coordinate Deploy place.
 -- @param #number Speed Speed in km/h to drive to the depoly coordinate. Default is 50% of max possible speed the unit can go.
-function AI_CARGO_APC:onafterDeploy( APC, From, Event, To, Coordinate, Speed, DeployZone )
+-- @param #number Height Height in meters to move to the deploy coordinate. This parameter is ignored for APCs.
+-- @param Core.Zone#ZONE DeployZone The zone where the cargo will be deployed.
+function AI_CARGO_APC:onafterDeploy( APC, From, Event, To, Coordinate, Speed, Height, DeployZone )
 
   if APC and APC:IsAlive() then
 
@@ -433,7 +436,7 @@ function AI_CARGO_APC:onafterDeploy( APC, From, Event, To, Coordinate, Speed, De
   
     APC:Route( Waypoints, 1 ) -- Move after a random seconds to the Route. See the Route method for details.
 
-    self:GetParent( self, AI_CARGO_APC ).onafterDeploy( self, APC, From, Event, To, Coordinate, Speed, DeployZone )
+    self:GetParent( self, AI_CARGO_APC ).onafterDeploy( self, APC, From, Event, To, Coordinate, Speed, Height, DeployZone )
 
   end
   
@@ -464,7 +467,8 @@ end
 -- @param To
 -- @param Core.Point#COORDINATE Coordinate Home place.
 -- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
-function AI_CARGO_APC:onafterHome( APC, From, Event, To, Coordinate, Speed, HomeZone )
+-- @param #number Height Height in meters to move to the home coordinate. This parameter is ignored for APCs.
+function AI_CARGO_APC:onafterHome( APC, From, Event, To, Coordinate, Speed, Height, HomeZone )
 
   if APC and APC:IsAlive() ~= nil then
 

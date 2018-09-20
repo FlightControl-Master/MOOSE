@@ -120,6 +120,9 @@ function AI_CARGO_DISPATCHER_APC:New( APCSet, CargoSet, PickupZoneSet, DeployZon
   self:SetPickupRadius( 0, 0 )
   self:SetDeployRadius( 0, 0 )
   
+  self:SetPickupHeight()
+  self:SetDeployHeight()
+  
   self:SetCombatRadius( CombatRadius )
 
   return self

@@ -1561,6 +1561,9 @@ function ZONE_POLYGON:New( ZoneName, ZoneGroup )
   local self = BASE:Inherit( self, ZONE_POLYGON_BASE:New( ZoneName, GroupPoints ) )
   self:F( { ZoneName, ZoneGroup, self._.Polygon } )
 
+  -- Zone objects are added to the _DATABASE and SET_ZONE objects.
+  _EVENTDISPATCHER:CreateEventNewZone( self )
+
   return self
 end
 
@@ -1568,7 +1571,6 @@ end
 --- Constructor to create a ZONE_POLYGON instance, taking the zone name and the **name** of the @{Wrapper.Group#GROUP} defined within the Mission Editor.
 -- The @{Wrapper.Group#GROUP} waypoints define the polygon corners. The first and the last point are automatically connected by ZONE_POLYGON.
 -- @param #ZONE_POLYGON self
--- @param #string ZoneName Name of the zone.
 -- @param #string GroupName The group name of the GROUP defining the waypoints within the Mission Editor to define the polygon shape.
 -- @return #ZONE_POLYGON self
 function ZONE_POLYGON:NewFromGroupName( GroupName )
@@ -1579,6 +1581,9 @@ function ZONE_POLYGON:NewFromGroupName( GroupName )
 
   local self = BASE:Inherit( self, ZONE_POLYGON_BASE:New( GroupName, GroupPoints ) )
   self:F( { GroupName, ZoneGroup, self._.Polygon } )
+
+  -- Zone objects are added to the _DATABASE and SET_ZONE objects.
+  _EVENTDISPATCHER:CreateEventNewZone( self )
 
   return self
 end
