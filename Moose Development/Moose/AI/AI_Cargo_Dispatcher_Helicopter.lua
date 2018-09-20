@@ -38,33 +38,71 @@
 -- 
 -- ---
 -- 
--- ## 1. AI\_CARGO\_DISPATCHER\_HELICOPTER constructor
+-- # 1. AI\_CARGO\_DISPATCHER\_HELICOPTER constructor.
 --   
 --   * @{#AI_CARGO_DISPATCHER\_HELICOPTER.New}(): Creates a new AI\_CARGO\_DISPATCHER\_HELICOPTER object.
 -- 
 -- ---
 -- 
--- ## 2. AI\_CARGO\_DISPATCHER\_HELICOPTER is a FSM
+-- # 2. AI\_CARGO\_DISPATCHER\_HELICOPTER is a Finite State Machine.
 -- 
--- ![Process](..\Presentations\AI_CARGO_DISPATCHER_HELICOPTER\Dia3.JPG)
+-- This section must be read as follows. Each of the rows indicate a state transition, triggered through an event, and with an ending state of the event was executed.
+-- The first column is the **From** state, the second column the **Event**, and the third column the **To** state.
 -- 
--- ### 2.1. AI\_CARGO\_DISPATCHER\_HELICOPTER States
+-- So, each of the rows have the following structure.
+-- 
+--   * **From** => **Event** => **To**
+-- 
+-- Important to know is that an event can only be executed if the **current state** is the **From** state.
+-- This, when an **Event** that is being triggered has a **From** state that is equal to the **Current** state of the state machine, the event will be executed,
+-- and the resulting state will be the **To** state.
+-- 
+-- These are the different possible state transitions of this state machine implementation: 
+-- 
+--   * Idle => Start => Monitoring
+--   * Monitoring => Monitor => Monitoring
+--   * Monitoring => Stop => Idle
+--      
+--   * Monitoring => Pickup => Monitoring
+--   * Monitoring => Load => Monitoring
+--   * Monitoring => Loading => Monitoring
+--   * Monitoring => Loaded => Monitoring
+--   * Monitoring => PickedUp => Monitoring
+--   * Monitoring => Deploy => Monitoring
+--   * Monitoring => Unload => Monitoring
+--   * Monitoring => Unloaded => Monitoring
+--   * Monitoring => Deployed => Monitoring
+--   * Monitoring => Home => Monitoring
+-- 
+--      
+-- ## 2.1) AI_CARGO_DISPATCHER States.
 -- 
 --   * **Monitoring**: The process is dispatching.
 --   * **Idle**: The process is idle.
 -- 
--- ### 2.2. AI\_CARGO\_DISPATCHER\_HELICOPTER Events
+-- ## 2.2) AI_CARGO_DISPATCHER Events.
 -- 
---   * **Monitor**: Monitor and take action.
 --   * **Start**: Start the transport process.
 --   * **Stop**: Stop the transport process.
+--   * **Monitor**: Monitor and take action.
+--   
 --   * **Pickup**: Pickup cargo.
 --   * **Load**: Load the cargo.
+--   * **Loading**: The dispatcher is coordinating the loading of a cargo.
 --   * **Loaded**: Flag that the cargo is loaded.
+--   * **PickedUp**: The dispatcher has loaded all requested cargo into the CarrierGroup.
 --   * **Deploy**: Deploy cargo to a location.
 --   * **Unload**: Unload the cargo.
 --   * **Unloaded**: Flag that the cargo is unloaded.
---   * **Home**: A Helicopter is going home.
+--   * **Deployed**: All cargo is unloaded from the carriers in the group.
+--   * **Home**: A Carrier is going home.
+-- 
+-- ## 2.3) Enhance your mission scripts with **Tailored** Event Handling!
+-- 
+-- Within your mission, you can capture these events when triggered, and tailor the events with your own code!
+-- Check out the @{AI.AI_Cargo_Dispatcher_APC#AI_CARGO_DISPATCHER} class at chapter 3 for details on the different event handlers that are available and how to use them.
+-- 
+-- **There are a lot of templates available that allows you to quickly setup an event handler for a specific event type!**
 -- 
 -- ---
 -- 
@@ -72,8 +110,9 @@
 -- 
 -- Several parameters can be set to pickup cargo:
 -- 
---    * @{#AI_CARGO_DISPATCHER\_HELICOPTER.SetPickupRadius}(): Sets or randomizes the pickup location for the helicopter around the cargo coordinate in a radius defined an outer and optional inner radius. 
---    * @{#AI_CARGO_DISPATCHER\_HELICOPTER.SetPickupSpeed}(): Set the speed or randomizes the speed in km/h to pickup the cargo.
+--    * @{#AI_CARGO_DISPATCHER_HELICOPTER.SetPickupRadius}(): Sets or randomizes the pickup location for the helicopter around the cargo coordinate in a radius defined an outer and optional inner radius. 
+--    * @{#AI_CARGO_DISPATCHER_HELICOPTER.SetPickupSpeed}(): Set the speed or randomizes the speed in km/h to pickup the cargo.
+--    * @{#AI_CARGO_DISPATCHER_HELICOPTER.SetPickupHeight}(): Set the height or randomizes the height in meters to pickup the cargo.
 -- 
 -- ---   
 --    
@@ -81,15 +120,16 @@
 -- 
 -- Several parameters can be set to deploy cargo:
 -- 
---    * @{#AI_CARGO_DISPATCHER\_HELICOPTER.SetDeployRadius}(): Sets or randomizes the deploy location for the helicopter around the cargo coordinate in a radius defined an outer and an optional inner radius. 
---    * @{#AI_CARGO_DISPATCHER\_HELICOPTER.SetDeploySpeed}(): Set the speed or randomizes the speed in km/h to deploy the cargo.
+--    * @{#AI_CARGO_DISPATCHER_HELICOPTER.SetDeployRadius}(): Sets or randomizes the deploy location for the helicopter around the cargo coordinate in a radius defined an outer and an optional inner radius. 
+--    * @{#AI_CARGO_DISPATCHER_HELICOPTER.SetDeploySpeed}(): Set the speed or randomizes the speed in km/h to deploy the cargo.
+--    * @{#AI_CARGO_DISPATCHER_HELICOPTER.SetDeployHeight}(): Set the height or randomizes the height in meters to deploy the cargo.
 -- 
 -- ---
 -- 
 -- ## 5. Set the home zone when there isn't any more cargo to pickup.
 -- 
 -- A home zone can be specified to where the Helicopters will move when there isn't any cargo left for pickup.
--- Use @{#AI_CARGO_DISPATCHER\_HELICOPTER.SetHomeZone}() to specify the home zone.
+-- Use @{#AI_CARGO_DISPATCHER_HELICOPTER.SetHomeZone}() to specify the home zone.
 -- 
 -- If no home zone is specified, the helicopters will wait near the deploy zone for a new pickup command.   
 -- 
@@ -102,10 +142,10 @@ AI_CARGO_DISPATCHER_HELICOPTER = {
 
 --- Creates a new AI_CARGO_DISPATCHER_HELICOPTER object.
 -- @param #AI_CARGO_DISPATCHER_HELICOPTER self
--- @param Core.Set#SET_GROUP HelicopterSet The collection of Helicopter @{Wrapper.Group}s.
--- @param Core.Set#SET_CARGO CargoSet The collection of @{Cargo.Cargo} derived objects.
--- @param Core.Set#SET_ZONE PickupZoneSet (optional) The collection of pickup @{Zone}s, which are used to where the cargo can be picked up by the APCs. If nil, then cargo can be picked up everywhere. 
--- @param Core.Set#SET_ZONE DeployZoneSet The collection of deploy @{Zone}s, which are used to where the cargo will be deployed by the Helicopters. 
+-- @param Core.Set#SET_GROUP HelicopterSet The set of @{Wrapper.Group#GROUP} objects of helicopters that will transport the cargo.
+-- @param Core.Set#SET_CARGO CargoSet The set of @{Cargo.Cargo#CARGO} objects, which can be CARGO_GROUP, CARGO_CRATE, CARGO_SLINGLOAD objects.
+-- @param Core.Set#SET_ZONE PickupZoneSet (optional) The set of pickup zones, which are used to where the cargo can be picked up by the APCs. If nil, then cargo can be picked up everywhere. 
+-- @param Core.Set#SET_ZONE DeployZoneSet The set of deploy zones, which are used to where the cargo will be deployed by the Helicopters. 
 -- @return #AI_CARGO_DISPATCHER_HELICOPTER
 -- @usage
 -- 

@@ -15,17 +15,27 @@
 
 --- A dynamic cargo handling capability for AI groups.
 -- 
+-- AI_CARGO_DISPATCHER is the **base class** for:
+-- 
+--    * @{AI.AI_Cargo_Dispatcher_APC#AI_CARGO_DISPATCHER_APC}
+--    * @{AI.AI_Cargo_Dispatcher_Helicopter#AI_CARGO_DISPATCHER_HELICOPTER}
+--    * @{AI.AI_Cargo_Dispatcher_Airplane#AI_CARGO_DISPATCHER_AIRPLANE}
+-- 
+-- ---   
+-- 
 -- Carrier equipment can be mobilized to intelligently transport infantry and other cargo within the simulation.
 -- The AI_CARGO_DISPATCHER module uses the @{Cargo.Cargo} capabilities within the MOOSE framework, to enable Carrier GROUP objects 
 -- to transport @{Cargo.Cargo} towards several deploy zones.
 -- @{Cargo.Cargo} must be declared within the mission to make the AI_CARGO_DISPATCHER object recognize the cargo.
 -- Please consult the @{Cargo.Cargo} module for more information. 
 -- 
--- # 1) AI_CARGO_DISPATCHER constructor
+-- # 1) AI_CARGO_DISPATCHER constructor.
 --   
 --   * @{#AI_CARGO_DISPATCHER.New}(): Creates a new AI\_CARGO\_DISPATCHER object.
 -- 
--- # 2) AI_CARGO_DISPATCHER is a FSM
+-- ---
+-- 
+-- # 2) AI_CARGO_DISPATCHER is a Finite State Machine.
 -- 
 -- This section must be read as follows. Each of the rows indicate a state transition, triggered through an event, and with an ending state of the event was executed.
 -- The first column is the **From** state, the second column the **Event**, and the third column the **To** state.
@@ -40,28 +50,27 @@
 -- 
 -- These are the different possible state transitions of this state machine implementation: 
 -- 
---  * Idle => Start => Monitoring
---  * Monitoring => Monitor => Monitoring
---  * Monitoring => Stop => Idle
+--   * Idle => Start => Monitoring
+--   * Monitoring => Monitor => Monitoring
+--   * Monitoring => Stop => Idle
 --      
---  * Monitoring => Pickup => Monitoring
---  * Monitoring => Load => Monitoring
---  * Monitoring => Loading => Monitoring
---  * Monitoring => Loaded => Monitoring
---  * Monitoring => PickedUp => Monitoring
---  * Monitoring => Deploy => Monitoring
---  * Monitoring => Unload => Monitoring
---  * Monitoring => Unloaded => Monitoring
---  * Monitoring => Deployed => Monitoring
---  * Monitoring => Home => Monitoring
--- 
---      
--- ## 2.1) AI_CARGO_DISPATCHER States
+--   * Monitoring => Pickup => Monitoring
+--   * Monitoring => Load => Monitoring
+--   * Monitoring => Loading => Monitoring
+--   * Monitoring => Loaded => Monitoring
+--   * Monitoring => PickedUp => Monitoring
+--   * Monitoring => Deploy => Monitoring
+--   * Monitoring => Unload => Monitoring
+--   * Monitoring => Unloaded => Monitoring
+--   * Monitoring => Deployed => Monitoring
+--   * Monitoring => Home => Monitoring
+--
+-- ## 2.1) AI_CARGO_DISPATCHER States.
 -- 
 --   * **Monitoring**: The process is dispatching.
 --   * **Idle**: The process is idle.
 -- 
--- ## 2.2) AI_CARGO_DISPATCHER Events
+-- ## 2.2) AI_CARGO_DISPATCHER Events.
 -- 
 --   * **Start**: Start the transport process.
 --   * **Stop**: Stop the transport process.
@@ -77,6 +86,8 @@
 --   * **Unloaded**: Flag that the cargo is unloaded.
 --   * **Deployed**: All cargo is unloaded from the carriers in the group.
 --   * **Home**: A Carrier is going home.
+-- 
+-- ---
 -- 
 -- # 3) Enhance your mission scripts with **Tailored** Event Handling!
 -- 
