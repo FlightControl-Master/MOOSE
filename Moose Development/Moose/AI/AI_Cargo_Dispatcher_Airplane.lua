@@ -96,7 +96,7 @@
 -- ## 2.3) Enhance your mission scripts with **Tailored** Event Handling!
 -- 
 -- Within your mission, you can capture these events when triggered, and tailor the events with your own code!
--- Check out the @{AI.AI_Cargo_Dispatcher_AIRPLANE#AI_CARGO_DISPATCHER} class at chapter 3 for details on the different event handlers that are available and how to use them.
+-- Check out the @{AI.AI_Cargo_Dispatcher#AI_CARGO_DISPATCHER} class at chapter 3 for details on the different event handlers that are available and how to use them.
 -- 
 -- **There are a lot of templates available that allows you to quickly setup an event handler for a specific event type!**
 -- 

@@ -1,5 +1,14 @@
 --- **AI** -- (R2.4) - Models the intelligent transportation of infantry and other cargo.
 --
+-- AI_CARGO_DISPATCHER is the **base class** for:
+-- 
+--    * @{AI.AI_Cargo_Dispatcher_APC#AI_CARGO_DISPATCHER_APC}
+--    * @{AI.AI_Cargo_Dispatcher_Helicopter#AI_CARGO_DISPATCHER_HELICOPTER}
+--    * @{AI.AI_Cargo_Dispatcher_Airplane#AI_CARGO_DISPATCHER_AIRPLANE}
+-- 
+-- These classes use the functionality of AI_CARGO_DISPATCHER.
+-- Also, the methods contained in AI_CARGO_DISPATCHER are available for use in the three classes above.
+--
 -- ===
 -- 
 -- ### Author: **FlightControl**
@@ -14,12 +23,6 @@
 
 
 --- A dynamic cargo handling capability for AI groups.
--- 
--- AI_CARGO_DISPATCHER is the **base class** for:
--- 
---    * @{AI.AI_Cargo_Dispatcher_APC#AI_CARGO_DISPATCHER_APC}
---    * @{AI.AI_Cargo_Dispatcher_Helicopter#AI_CARGO_DISPATCHER_HELICOPTER}
---    * @{AI.AI_Cargo_Dispatcher_Airplane#AI_CARGO_DISPATCHER_AIRPLANE}
 -- 
 -- ---   
 -- 
