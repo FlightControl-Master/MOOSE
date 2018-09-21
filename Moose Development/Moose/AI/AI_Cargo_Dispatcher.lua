@@ -123,38 +123,38 @@
 -- 
 --   * An AI dispatcher object for a helicopter squadron, moving infantry from pickup zones to deploy zones.
 -- 
---      local SetCargoInfantry = SET_CARGO:New():FilterTypes( "Infantry" ):FilterStart()
---      local SetHelicopter = SET_GROUP:New():FilterPrefixes( "Helicopter" ):FilterStart()
---      local SetPickupZones = SET_ZONE:New():FilterPrefixes( "Pickup" ):FilterStart()
---      local SetDeployZones = SET_ZONE:New():FilterPrefixes( "Deploy" ):FilterStart()
+--        local SetCargoInfantry = SET_CARGO:New():FilterTypes( "Infantry" ):FilterStart()
+--        local SetHelicopter = SET_GROUP:New():FilterPrefixes( "Helicopter" ):FilterStart()
+--        local SetPickupZones = SET_ZONE:New():FilterPrefixes( "Pickup" ):FilterStart()
+--        local SetDeployZones = SET_ZONE:New():FilterPrefixes( "Deploy" ):FilterStart()
 --      
---      AICargoDispatcherHelicopter = AI_CARGO_DISPATCHER_HELICOPTER:New( SetHelicopter, SetCargoInfantry, SetPickupZones, SetDeployZones ) 
---      AICargoDispatcherHelicopter:SetHomeZone( ZONE:FindByName( "Home" ) )
+--        AICargoDispatcherHelicopter = AI_CARGO_DISPATCHER_HELICOPTER:New( SetHelicopter, SetCargoInfantry, SetPickupZones, SetDeployZones ) 
+--        AICargoDispatcherHelicopter:SetHomeZone( ZONE:FindByName( "Home" ) )
 -- 
 --   * An AI dispatcher object for a vehicle squadron, moving infantry from pickup zones to deploy zones.
 -- 
---      local SetCargoInfantry = SET_CARGO:New():FilterTypes( "Infantry" ):FilterStart()
---      local SetAPC = SET_GROUP:New():FilterPrefixes( "APC" ):FilterStart()
---      local SetDeployZones = SET_ZONE:New():FilterPrefixes( "Deploy" ):FilterStart()
+--        local SetCargoInfantry = SET_CARGO:New():FilterTypes( "Infantry" ):FilterStart()
+--        local SetAPC = SET_GROUP:New():FilterPrefixes( "APC" ):FilterStart()
+--        local SetDeployZones = SET_ZONE:New():FilterPrefixes( "Deploy" ):FilterStart()
 --      
---      AICargoDispatcherAPC = AI_CARGO_DISPATCHER_APC:New( SetAPC, SetCargoInfantry, nil, SetDeployZones ) 
---      AICargoDispatcherAPC:Start()
+--        AICargoDispatcherAPC = AI_CARGO_DISPATCHER_APC:New( SetAPC, SetCargoInfantry, nil, SetDeployZones ) 
+--        AICargoDispatcherAPC:Start()
 -- 
 --   * An AI dispatcher object for an airplane squadron, moving infantry and vehicles from pickup airbases to deploy airbases.
 --   
---      local CargoInfantrySet = SET_CARGO:New():FilterTypes( "Infantry" ):FilterStart()
---      local AirplanesSet = SET_GROUP:New():FilterPrefixes( "Airplane" ):FilterStart()
---      local PickupZoneSet = SET_ZONE:New()
---      local DeployZoneSet = SET_ZONE:New()
+--        local CargoInfantrySet = SET_CARGO:New():FilterTypes( "Infantry" ):FilterStart()
+--        local AirplanesSet = SET_GROUP:New():FilterPrefixes( "Airplane" ):FilterStart()
+--        local PickupZoneSet = SET_ZONE:New()
+--        local DeployZoneSet = SET_ZONE:New()
 --      
---      PickupZoneSet:AddZone( ZONE_AIRBASE:New( AIRBASE.Caucasus.Gudauta ) )
---      DeployZoneSet:AddZone( ZONE_AIRBASE:New( AIRBASE.Caucasus.Sochi_Adler ) )
---      DeployZoneSet:AddZone( ZONE_AIRBASE:New( AIRBASE.Caucasus.Maykop_Khanskaya ) )
---      DeployZoneSet:AddZone( ZONE_AIRBASE:New( AIRBASE.Caucasus.Mineralnye_Vody ) )
---      DeployZoneSet:AddZone( ZONE_AIRBASE:New( AIRBASE.Caucasus.Vaziani ) )
+--        PickupZoneSet:AddZone( ZONE_AIRBASE:New( AIRBASE.Caucasus.Gudauta ) )
+--        DeployZoneSet:AddZone( ZONE_AIRBASE:New( AIRBASE.Caucasus.Sochi_Adler ) )
+--        DeployZoneSet:AddZone( ZONE_AIRBASE:New( AIRBASE.Caucasus.Maykop_Khanskaya ) )
+--        DeployZoneSet:AddZone( ZONE_AIRBASE:New( AIRBASE.Caucasus.Mineralnye_Vody ) )
+--        DeployZoneSet:AddZone( ZONE_AIRBASE:New( AIRBASE.Caucasus.Vaziani ) )
 --      
---      AICargoDispatcherAirplanes = AI_CARGO_DISPATCHER_AIRPLANE:New( AirplanesSet, CargoInfantrySet, PickupZoneSet, DeployZoneSet ) 
---      AICargoDispatcherAirplanes:SetHomeZone( ZONE_AIRBASE:New( AIRBASE.Caucasus.Kobuleti ) )
+--        AICargoDispatcherAirplanes = AI_CARGO_DISPATCHER_AIRPLANE:New( AirplanesSet, CargoInfantrySet, PickupZoneSet, DeployZoneSet ) 
+--        AICargoDispatcherAirplanes:SetHomeZone( ZONE_AIRBASE:New( AIRBASE.Caucasus.Kobuleti ) )
 -- 
 -- ---
 -- 
