@@ -1,14 +1,95 @@
 --- **AI** -- (R2.4) - Models the intelligent transportation of infantry and other cargo.
 --
--- AI_CARGO_DISPATCHER is the **base class** for:
+-- **Features:**
 -- 
---    * @{AI.AI_Cargo_Dispatcher_APC#AI_CARGO_DISPATCHER_APC}
---    * @{AI.AI_Cargo_Dispatcher_Helicopter#AI_CARGO_DISPATCHER_HELICOPTER}
---    * @{AI.AI_Cargo_Dispatcher_Airplane#AI_CARGO_DISPATCHER_AIRPLANE}
+--   * AI_CARGO_DISPATCHER is the **base class** for:
+--   
+--     * @{AI.AI_Cargo_Dispatcher_APC#AI_CARGO_DISPATCHER_APC}
+--     * @{AI.AI_Cargo_Dispatcher_Helicopter#AI_CARGO_DISPATCHER_HELICOPTER}
+--     * @{AI.AI_Cargo_Dispatcher_Airplane#AI_CARGO_DISPATCHER_AIRPLANE}
+--     
+--   * Provides the facilities to transport cargo over the battle field for the above classes.
+--   * Dispatches transport tasks to a common set of cargo transporting groups.
+--   * Different options can be setup to tweak the cargo transporation behaviour.
 -- 
--- These classes use the functionality of AI_CARGO_DISPATCHER.
--- Also, the methods contained in AI_CARGO_DISPATCHER are available for use in the three classes above.
---
+-- ## The dispatcher concept
+-- 
+-- Carrier equipment can be mobilized to intelligently transport infantry and other cargo within the simulation.
+-- The AI_CARGO_DISPATCHER module uses the @{Cargo.Cargo} capabilities within the MOOSE framework, to enable Carrier GROUP objects 
+-- to transport @{Cargo.Cargo} towards several deploy zones.
+-- @{Cargo.Cargo} must be declared within the mission to make the AI_CARGO_DISPATCHER object recognize the cargo.
+-- Please consult the @{Cargo.Cargo} module for more information. 
+-- 
+-- # Why cargo dispatching?
+-- 
+-- It provides a realistic way of distributing your army forces around the battlefield, and to provide a quick means of cargo transportation.
+-- Instead of having troops or cargo to "appear" suddenly at certain locations, the dispatchers will pickup the cargo and transport it.
+-- It also allows to enforce or retreat your army from certain zones when needed, using helicopters or APCs.
+-- Airplanes can transport cargo over larger distances between the airfields.
+-- 
+-- ## What is a cargo object then?
+-- 
+-- In order to make use of the MOOSE cargo system, you need to **declare** the DCS objects as MOOSE cargo objects!
+-- This sounds complicated, but it is actually quite simple.
+-- 
+-- See here an example:
+-- 
+--     local EngineerCargoGroup = CARGO_GROUP:New( GROUP:FindByName( "Engineers" ), "Workmaterials", "Engineers", 250 )
+--     
+-- The above code declares a MOOSE cargo object called `EngineerCargoGroup`.
+-- It actually just refers to an infantry group created within the sim called `"Engineers"`.
+-- The infantry group now becomes controlled by the MOOSE cargo object `EngineerCargoGroup`.
+-- A MOOSE cargo object also has properties, like the type of cargo, the logical name, and the reporting range.
+-- 
+-- For more information, please consult the @{Cargo.Cargo} module documentation. Please read through it, because it will explain how to setup the cargo objects for use
+-- within your dispatchers.
+-- 
+-- ## Do I need to do a lot of coding to setup a dispatcher?
+-- 
+-- No! It requires a bit of studying to set it up, but once you understand the different components that use the cargo dispatcher, it becomes very easy.
+-- Also, the dispatchers work in a true dynamic environment. The carriers and cargo, pickup and deploy zones can be created dynamically in your mission,
+-- and will automatically be recognized by the dispatcher.
+-- 
+-- ## Is the dispatcher causing a lot of CPU overhead?
+-- 
+-- A little yes, but once the cargo is properly loaded into the carrier, the CPU consumption is very little.
+-- When infantry or vehicles board into a carrier, or unboard from a carrier, you may perceive certain performance lags.
+-- We are working to minimize the impact of those.
+-- That being said, the DCS simulator is limited. It is just impossible to deploy hundreds of cargo over the battlefield, hundreds of helicopters transporting, 
+-- without any performance impact. The amount of helicopters that are active and flying in your simulation influences more the performance than the dispatchers.
+-- It really comes down to trying it out and getting experienced with what is possible and what is not (or too much).
+-- 
+-- ## Are the dispatchers a "black box" in terms of the logic?
+-- 
+-- No. You can tailor the dispatcher mechanisms using event handlers, and create additional logic to enhance the behaviour and dynamism in your own mission.
+-- The events are listed below, and so are the options, but here are a couple of examples of what is possible:
+-- 
+--    * You could handle the **Deployed** event, when all the cargo is unloaded from a carrier in the dispatcher.
+--      Adding your own code to the event handler, you could move the deployed cargo (infantry) to specific points to engage in the battlefield.
+--    
+--    * When a carrier is picking up cargo, the *Pickup** event is triggered, and you can inform the coalition of this event, 
+--      because it is an indication that troops are planned to join.
+--    
+-- ## Are there options that you can set to modify the behaviour of the carries?
+-- 
+-- Yes, there are options to configure:
+-- 
+--    * the location where carriers will park or land near the cargo for pickup. 
+--    * the location where carriers will park or land in the deploy zone for cargo deployment.
+--    * the height for airborne carriers when they fly to and from pickup and deploy zones.
+--    * the speed of the carriers. This is an important parameter, because depending on the tactication situation, speed will influence the detection by radars.
+-- 
+-- ## Can the zones be of any zone type?
+-- 
+-- Yes, please ensure that the zones are declared using the @{Core.Zone} classes.
+-- Possible zones that function at the moment are ZONE, ZONE_GROUP, ZONE_UNIT, ZONE_POLYGON.
+-- 
+-- ===
+-- 
+-- ### Test Missions
+-- 
+-- [AI Cargo Dispatcher test missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/AID%20-%20AI%20Dispatching/AID-CGO%20-%20AI%20Cargo%20Dispatching)
+-- 
 -- ===
 -- 
 -- ### Author: **FlightControl**
@@ -17,6 +98,7 @@
 --
 -- @module AI.AI_Cargo_Dispatcher
 -- @image AI_Cargo_Dispatcher.JPG
+
 
 --- @type AI_CARGO_DISPATCHER
 -- @extends Core.Fsm#FSM
@@ -34,7 +116,44 @@
 -- 
 -- # 1) AI_CARGO_DISPATCHER constructor.
 --   
---   * @{#AI_CARGO_DISPATCHER.New}(): Creates a new AI\_CARGO\_DISPATCHER object.
+--   * @{#AI_CARGO_DISPATCHER.New}(): Creates a new AI_CARGO_DISPATCHER object.
+-- 
+-- This are some example of AI cargo dispatcher objects created.
+-- 
+--   * An AI dispatcher object for a helicopter squadron, moving infantry from pickup zones to deploy zones.
+-- 
+--      local SetCargoInfantry = SET_CARGO:New():FilterTypes( "Infantry" ):FilterStart()
+--      local SetHelicopter = SET_GROUP:New():FilterPrefixes( "Helicopter" ):FilterStart()
+--      local SetPickupZones = SET_ZONE:New():FilterPrefixes( "Pickup" ):FilterStart()
+--      local SetDeployZones = SET_ZONE:New():FilterPrefixes( "Deploy" ):FilterStart()
+--      
+--      AICargoDispatcherHelicopter = AI_CARGO_DISPATCHER_HELICOPTER:New( SetHelicopter, SetCargoInfantry, SetPickupZones, SetDeployZones ) 
+--      AICargoDispatcherHelicopter:SetHomeZone( ZONE:FindByName( "Home" ) )
+-- 
+--   * An AI dispatcher object for a vehicle squadron, moving infantry from pickup zones to deploy zones.
+-- 
+--      local SetCargoInfantry = SET_CARGO:New():FilterTypes( "Infantry" ):FilterStart()
+--      local SetAPC = SET_GROUP:New():FilterPrefixes( "APC" ):FilterStart()
+--      local SetDeployZones = SET_ZONE:New():FilterPrefixes( "Deploy" ):FilterStart()
+--      
+--      AICargoDispatcherAPC = AI_CARGO_DISPATCHER_APC:New( SetAPC, SetCargoInfantry, nil, SetDeployZones ) 
+--      AICargoDispatcherAPC:Start()
+-- 
+--   * An AI dispatcher object for an airplane squadron, moving infantry and vehicles from pickup airbases to deploy airbases.
+--   
+--      local CargoInfantrySet = SET_CARGO:New():FilterTypes( "Infantry" ):FilterStart()
+--      local AirplanesSet = SET_GROUP:New():FilterPrefixes( "Airplane" ):FilterStart()
+--      local PickupZoneSet = SET_ZONE:New()
+--      local DeployZoneSet = SET_ZONE:New()
+--      
+--      PickupZoneSet:AddZone( ZONE_AIRBASE:New( AIRBASE.Caucasus.Gudauta ) )
+--      DeployZoneSet:AddZone( ZONE_AIRBASE:New( AIRBASE.Caucasus.Sochi_Adler ) )
+--      DeployZoneSet:AddZone( ZONE_AIRBASE:New( AIRBASE.Caucasus.Maykop_Khanskaya ) )
+--      DeployZoneSet:AddZone( ZONE_AIRBASE:New( AIRBASE.Caucasus.Mineralnye_Vody ) )
+--      DeployZoneSet:AddZone( ZONE_AIRBASE:New( AIRBASE.Caucasus.Vaziani ) )
+--      
+--      AICargoDispatcherAirplanes = AI_CARGO_DISPATCHER_AIRPLANE:New( AirplanesSet, CargoInfantrySet, PickupZoneSet, DeployZoneSet ) 
+--      AICargoDispatcherAirplanes:SetHomeZone( ZONE_AIRBASE:New( AIRBASE.Caucasus.Kobuleti ) )
 -- 
 -- ---
 -- 
@@ -45,7 +164,7 @@
 -- 
 -- So, each of the rows have the following structure.
 -- 
---  * **From** => **Event** => **To**
+--   * **From** => **Event** => **To**
 -- 
 -- Important to know is that an event can only be executed if the **current state** is the **From** state.
 -- This, when an **Event** that is being triggered has a **From** state that is equal to the **Current** state of the state machine, the event will be executed,
@@ -106,6 +225,27 @@
 --     but you need to declare them as they are automatically provided by the event handling system of MOOSE.
 -- 
 -- You can send messages or fire off any other events within the code section. The sky is the limit!
+-- 
+-- Mission AID-CGO-140, AID-CGO-240 and AID-CGO-340 contain examples how these events can be tailored.
+-- 
+-- For those who don't have the time to check the test missions, find the underlying example of a Deployed event that is tailored.
+-- 
+--      --- Deployed Handler OnAfter for AI_CARGO_DISPATCHER.
+--      -- Use this event handler to tailor the event when a carrier has deployed all cargo objects from the CarrierGroup.
+--      -- You can use this event handler to post messages to players, or provide status updates etc.
+--      -- @function OnAfterDeployed
+--      -- @param #AICargoDispatcherHelicopter self
+--      -- @param #string From A string that contains the "*from state name*" when the event was fired.
+--      -- @param #string Event A string that contains the "*event name*" when the event was fired.
+--      -- @param #string To A string that contains the "*to state name*" when the event was fired.
+--      -- @param Wrapper.Group#GROUP CarrierGroup The group object that contains the CarrierUnits.
+--      -- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
+--      function AICargoDispatcherHelicopter:OnAfterDeployed( From, Event, To, CarrierGroup, DeployZone )
+--      
+--        MESSAGE:NewType( "Group " .. CarrierGroup:GetName() .. " deployed all cargo in zone " .. DeployZone:GetName(), MESSAGE.Type.Information ):ToAll()
+--      
+--      end 
+-- 
 -- 
 -- ## 3.1) Tailor the **Pickup** event
 -- 
@@ -420,11 +560,44 @@ AI_CARGO_DISPATCHER.PickupCargo = {}
 -- @return #AI_CARGO_DISPATCHER
 -- @usage
 -- 
--- -- Create a new cargo dispatcher
--- SetCarriers = SET_GROUP:New():FilterPrefixes( "APC" ):FilterStart()
--- SetCargos = SET_CARGO:New():FilterTypes( "Infantry" ):FilterStart()
--- SetDeployZone = SET_ZONE:New():FilterPrefixes( "Deploy" ):FilterStart()
--- AICargoDispatcher = AI_CARGO_DISPATCHER:New( SetCarrier, SetCargo )
+--      -- An AI dispatcher object for a helicopter squadron, moving infantry from pickup zones to deploy zones.
+-- 
+--      local SetCargoInfantry = SET_CARGO:New():FilterTypes( "Infantry" ):FilterStart()
+--      local SetHelicopter = SET_GROUP:New():FilterPrefixes( "Helicopter" ):FilterStart()
+--      local SetPickupZones = SET_ZONE:New():FilterPrefixes( "Pickup" ):FilterStart()
+--      local SetDeployZones = SET_ZONE:New():FilterPrefixes( "Deploy" ):FilterStart()
+--      
+--      AICargoDispatcherHelicopter = AI_CARGO_DISPATCHER_HELICOPTER:New( SetHelicopter, SetCargoInfantry, SetPickupZones, SetDeployZones ) 
+--      AICargoDispatcherHelicopter:SetHomeZone( ZONE:FindByName( "Home" ) )
+-- 
+-- @usage
+-- 
+--      -- An AI dispatcher object for a vehicle squadron, moving infantry from pickup zones to deploy zones.
+-- 
+--      local SetCargoInfantry = SET_CARGO:New():FilterTypes( "Infantry" ):FilterStart()
+--      local SetAPC = SET_GROUP:New():FilterPrefixes( "APC" ):FilterStart()
+--      local SetDeployZones = SET_ZONE:New():FilterPrefixes( "Deploy" ):FilterStart()
+--      
+--      AICargoDispatcherAPC = AI_CARGO_DISPATCHER_APC:New( SetAPC, SetCargoInfantry, nil, SetDeployZones ) 
+--      AICargoDispatcherAPC:Start()
+-- 
+-- @usage
+-- 
+--      -- An AI dispatcher object for an airplane squadron, moving infantry and vehicles from pickup airbases to deploy airbases.
+--   
+--      local CargoInfantrySet = SET_CARGO:New():FilterTypes( "Infantry" ):FilterStart()
+--      local AirplanesSet = SET_GROUP:New():FilterPrefixes( "Airplane" ):FilterStart()
+--      local PickupZoneSet = SET_ZONE:New()
+--      local DeployZoneSet = SET_ZONE:New()
+--      
+--      PickupZoneSet:AddZone( ZONE_AIRBASE:New( AIRBASE.Caucasus.Gudauta ) )
+--      DeployZoneSet:AddZone( ZONE_AIRBASE:New( AIRBASE.Caucasus.Sochi_Adler ) )
+--      DeployZoneSet:AddZone( ZONE_AIRBASE:New( AIRBASE.Caucasus.Maykop_Khanskaya ) )
+--      DeployZoneSet:AddZone( ZONE_AIRBASE:New( AIRBASE.Caucasus.Mineralnye_Vody ) )
+--      DeployZoneSet:AddZone( ZONE_AIRBASE:New( AIRBASE.Caucasus.Vaziani ) )
+--      
+--      AICargoDispatcherAirplanes = AI_CARGO_DISPATCHER_AIRPLANE:New( AirplanesSet, CargoInfantrySet, PickupZoneSet, DeployZoneSet ) 
+--      AICargoDispatcherAirplanes:SetHomeZone( ZONE_AIRBASE:New( AIRBASE.Caucasus.Kobuleti ) )
 -- 
 function AI_CARGO_DISPATCHER:New( SetCarrier, SetCargo )
 
@@ -459,8 +632,7 @@ function AI_CARGO_DISPATCHER:New( SetCarrier, SetCargo )
   
   self:SetMonitorTimeInterval( 30 )
   
-  self.DeployRadiusInner = 200
-  self.DeployRadiusOuter = 500
+  self:SetDeployRadius( 500, 200 )
   
   self.PickupCargo = {}
   self.CarrierHome = {}
@@ -501,6 +673,7 @@ function AI_CARGO_DISPATCHER:NewWithZones( SetCarrier, SetCargo, PickupZoneSet, 
   return self
 end
 
+
 --- Set the monitor time interval.
 -- @param #AI_CARGO_DISPATCHER self
 -- @param #number MonitorTimeInterval
@@ -511,7 +684,6 @@ function AI_CARGO_DISPATCHER:SetMonitorTimeInterval( MonitorTimeInterval )
   
   return self
 end
-
 
 
 --- Set the home zone.
@@ -535,9 +707,6 @@ function AI_CARGO_DISPATCHER:SetHomeZone( HomeZone )
   
   return self
 end
-
-
-
 
 
 --- Sets or randomizes the pickup location for the carrier around the cargo coordinate in a radius defined an outer and optional inner radius.
@@ -989,20 +1158,6 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
   self:__Monitor( self.MonitorTimeInterval )
 end
 
---- Start event handler OnBefore for AI_CARGO_DISPATCHER
--- @function [parent=#AI_CARGO_DISPATCHER] OnBeforeStart
--- @param #AI_CARGO_DISPATCHER self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @return #boolean
-
---- Start event handler OnAfter for AI_CARGO_DISPATCHER
--- @function [parent=#AI_CARGO_DISPATCHER] OnAfterStart
--- @param #AI_CARGO_DISPATCHER self
--- @param #string From
--- @param #string Event
--- @param #string To
 
 --- Start Trigger for AI_CARGO_DISPATCHER
 -- @function [parent=#AI_CARGO_DISPATCHER] Start
@@ -1017,20 +1172,6 @@ function AI_CARGO_DISPATCHER:onafterStart( From, Event, To )
   self:__Monitor( -1 )
 end
 
---- Stop event handler OnBefore for AI_CARGO_DISPATCHER
--- @function [parent=#AI_CARGO_DISPATCHER] OnBeforeStop
--- @param #AI_CARGO_DISPATCHER self
--- @param #string From
--- @param #string Event
--- @param #string To
--- @return #boolean
-
---- Stop event handler OnAfter for AI_CARGO_DISPATCHER
--- @function [parent=#AI_CARGO_DISPATCHER] OnAfterStop
--- @param #AI_CARGO_DISPATCHER self
--- @param #string From
--- @param #string Event
--- @param #string To
 
 --- Stop Trigger for AI_CARGO_DISPATCHER
 -- @function [parent=#AI_CARGO_DISPATCHER] Stop
