@@ -1097,13 +1097,14 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
       local PickupCargo = nil
       local PickupZone = nil
       
+      --self.SetCargo:Flush()
       for CargoName, Cargo in UTILS.spairs( self.SetCargo:GetSet(), function( t, a, b ) return t[a]:GetWeight() < t[b]:GetWeight() end ) do
         local Cargo = Cargo -- Cargo.Cargo#CARGO
         self:F( { Cargo = Cargo:GetName(), UnLoaded = Cargo:IsUnLoaded(), Deployed = Cargo:IsDeployed(), PickupCargo = self.PickupCargo[Carrier] ~= nil } )
         if Cargo:IsUnLoaded() == true and Cargo:IsDeployed() == false then
           local CargoCoordinate = Cargo:GetCoordinate()
           local CoordinateFree = true
-          self.PickupZoneSet:Flush()
+          --self.PickupZoneSet:Flush()
           PickupZone = self.PickupZoneSet and self.PickupZoneSet:IsCoordinateInZone( CargoCoordinate )
           if not self.PickupZoneSet or PickupZone then
             for CarrierPickup, Coordinate in pairs( self.PickupCargo ) do

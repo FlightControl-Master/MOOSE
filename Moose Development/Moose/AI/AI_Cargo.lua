@@ -213,7 +213,7 @@ function AI_CARGO:onbeforeLoad( Carrier, From, Event, To, PickupZone )
 
   local Boarding = false
 
-  local LoadInterval = 2
+  local LoadInterval = 5
   local LoadDelay = 0
   local Carrier_List = {}
   local Carrier_Weight = {}
@@ -261,8 +261,8 @@ function AI_CARGO:onbeforeLoad( Carrier, From, Event, To, PickupZone )
             if Carrier_Weight[CarrierUnit] > CargoWeight then --and CargoBayFreeVolume > CargoVolume then
               Carrier:RouteStop()
               --Cargo:Ungroup()
-              Cargo:__Board( LoadDelay, CarrierUnit, 25 )
-              LoadDelay = LoadDelay + LoadInterval
+              Cargo:__Board( -LoadDelay, CarrierUnit, 25 )
+              LoadDelay = LoadDelay + Cargo:GetCount() * LoadInterval
               self:__Board( LoadDelay, Cargo, CarrierUnit, PickupZone )
   
               -- So now this CarrierUnit has Cargo that is being loaded.
@@ -308,7 +308,7 @@ function AI_CARGO:onafterBoard( Carrier, From, Event, To, Cargo, CarrierUnit, Pi
   if Carrier and Carrier:IsAlive() then
     self:F({ IsLoaded = Cargo:IsLoaded(), Cargo:GetName(), Carrier:GetName() } )
     if not Cargo:IsLoaded() then
-      self:__Board( 10, Cargo, CarrierUnit, PickupZone )
+      self:__Board( -10, Cargo, CarrierUnit, PickupZone )
       return
     end
   end
@@ -397,7 +397,7 @@ function AI_CARGO:onafterUnload( Carrier, From, Event, To, DeployZone )
         self:F( { Cargo = Cargo:GetName(), Isloaded = Cargo:IsLoaded() } )
         if Cargo:IsLoaded() then
           Cargo:__UnBoard( UnboardDelay )
-          UnboardDelay = UnboardDelay + UnboardInterval
+          UnboardDelay = UnboardDelay + Cargo:GetCount() * UnboardInterval
           Cargo:SetDeployed( true )
           self:__Unboard( UnboardDelay, Cargo, CarrierUnit, DeployZone )
         end 
