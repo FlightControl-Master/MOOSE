@@ -1,19 +1,35 @@
 --- **Tasking** -- Base class to model tasks for players to transport cargo.
 -- 
+-- ## Features:
+-- 
+--   * TASK_CARGO is the **base class** for:
+--   
+--     * @{Tasking.Task_Cargo_Transport#TASK_CARGO_TRANSPORT}
+--     * @{Tasking.Task_Cargo_CSAR#TASK_CARGO_CSAR}
+-- 
+-- 
+-- ===
+-- 
+-- ## Test Missions:
+-- 
+-- Test missions can be located on the main GITHUB site.
+-- 
+-- [FlightControl-Master/MOOSE_MISSIONS/TAD - Task Dispatching/CGO - Cargo Dispatching/](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/TAD%20-%20Task%20Dispatching/CGO%20-%20Cargo%20Dispatching)
+-- 
 -- ===
 --
--- # 1) Tasking system.
+-- ## Tasking system.
 -- 
--- #### If you are not yet aware what the MOOSE tasking system is about, read FIRST the explanation on tasking **@{Tasking.Task}**.
+-- #### If you are not yet aware what the MOOSE tasking system is about, read FIRST the explanation on the @{Tasking.Task} module.
 -- 
 -- ===
 -- 
--- # 2) Context of cargo tasking.
+-- ## Context of cargo tasking.
 -- 
 -- The Moose framework provides various CARGO classes that allow DCS physical or logical objects to be transported or sling loaded by Carriers.
 -- The CARGO_ classes, as part of the MOOSE core, are able to Board, Load, UnBoard and UnLoad cargo between Carrier units.
 -- 
--- The TASK\_CARGO class is not meant to use within your missions as a mission designer. It is a base class, and other classes are derived from it.
+-- The TASK_CARGO class is not meant to use within your missions as a mission designer. It is a base class, and other classes are derived from it.
 -- 
 -- The following TASK_CARGO_ classes are important, as they implement the CONCRETE tasks:
 -- 
@@ -25,7 +41,7 @@
 -- 
 -- ===
 -- 
--- # 3) Cargo tasking from a player perspective.
+-- ## Cargo tasking from a player perspective.
 -- 
 -- A human player can join the battle field in a client airborne slot or a ground vehicle within the CA module (ALT-J).
 -- The player needs to accept the task from the task overview list within the mission, using the menus.
@@ -46,19 +62,19 @@
 -- In the menu, you'll find for each CARGO, that is part of the scope of the task, various actions that can be completed.
 -- Depending on the location of your Carrier unit, the menu options will vary.
 -- 
--- ## 3.1) Joining a Cargo Transport Task
+-- ### Joining a Cargo Transport Task
 -- 
 -- Once you've joined a task, using the **Join Planned Task Menu**, 
 -- you can Pickup cargo from a pickup location and Deploy cargo in deployment zones, using the **Task Action Menu**.
 --  
--- ## 3.2) Task Action Menu.
+-- ### Task Action Menu.
 -- 
 -- When a player has joined a **`CARGO`** task (type), for that player only, 
 -- it's **Task Action Menu** will show an additional menu options.
 -- 
 -- From within this menu, you will be able to route to a cargo location, deploy zone, and load/unload cargo.
 -- 
--- ## 3.3) Pickup cargo by Boarding, Loading and Sling Loading.
+-- ### Pickup cargo by Boarding, Loading and Sling Loading.
 -- 
 -- There are three different ways how cargo can be picked up:
 -- 
@@ -140,7 +156,7 @@
 -- These routing options will only be shown, when your carrier bays have cargo loaded.
 -- So, only when there is something to be deployed from your carrier, the deploy options will be shown.
 --     
--- ### 3.3.1) Pickup Cargo.
+-- #### Pickup Cargo.
 -- 
 -- In order to pickup cargo, use the **task action menu** to **route to a specific cargo**.
 -- When a cargo route is selected, the HQ will send you routing messages indicating the location of the cargo.
@@ -155,7 +171,7 @@
 -- It takes a bit of skill to land a helicopter near a cargo to be loaded, but that is part of the game, isn't it?
 -- Expecially when you are landing in a "hot" zone, so when cargo is under immediate threat of fire.
 -- 
--- ### 3.3.2) Board Cargo (infantry).
+-- #### Board Cargo (infantry).
 -- 
 -- ![](../Tasking/Boarding_Ready.png)  
 -- 
@@ -200,7 +216,7 @@
 --     If during boarding the Carrier gets airborne, the boarding process will be cancelled.
 --   * The carrier must remain stationary when the boarding sequence has started until further notified.
 -- 
--- ### 3.3.3) Load Cargo.
+-- #### Load Cargo.
 -- 
 -- Cargo can be loaded into vehicles or helicopters or airplanes, as long as the carrier is sufficiently near to the cargo object.
 -- 
@@ -226,7 +242,7 @@
 --   * For airborne Carriers, it is required to **land first right near the cargo**, before the loading process can be initiated.
 -- As stated, this requires some pilot skills :-)
 -- 
--- ### 3.3.4) Sling Load Cargo (helicopters only).
+-- #### Sling Load Cargo (helicopters only).
 -- 
 -- If your Carrier is within the **Loading Range of the cargo**, and the cargo is **stationary**, the **cargo can also be sling loaded**!
 -- Note that this is only possible for helicopters.
@@ -238,7 +254,7 @@
 -- As stated, this requires some pilot skills :-)
 -- 
 -- 
--- ## 3.4) Deploy cargo by Unboarding, Unloading and Sling Deploying.
+-- ### Deploy cargo by Unboarding, Unloading and Sling Deploying.
 -- 
 -- #### **Deploying the relevant cargo within deploy zones, will make you achieve cargo transportation tasks!!!**
 -- 
@@ -286,7 +302,7 @@
 -- ![Task_Types](../Tasking/Task_Cargo_Settings.JPG)  
 -- Use the **Settings Menu** to select the coordinate format that you would like to use for location determination.
 -- 
--- ### 3.4.1) Unboard Cargo.
+-- #### Unboard Cargo.
 -- 
 -- If your carrier contains cargo, and the cargo is **moveable**, the **cargo can be unboarded**!
 -- You can only unload cargo if there is cargo within your cargo bays within the carrier.
@@ -326,7 +342,7 @@
 -- 
 -- **Deploying a cargo within a deployment zone, may complete a deployment task! So ensure that you deploy the right cargo at the right deployment zone!**
 -- 
--- ### 3.4.2) Unload Cargo.
+-- #### Unload Cargo.
 -- 
 -- If your carrier contains cargo, and the cargo is **stationary**, the **cargo can be unloaded**, but not unboarded!
 -- You can only unload cargo if there is cargo within your cargo bays within the carrier.
@@ -358,7 +374,7 @@
 -- **Deploying a cargo within a deployment zone, may complete a deployment task! So ensure that you deploy the right cargo at the right deployment zone!**
 -- 
 -- 
--- ### 3.4.3) Sling Deploy Cargo (helicopters only).
+-- #### Sling Deploy Cargo (helicopters only).
 -- 
 -- If your Carrier is within the **deploy zone**, and the cargo is **stationary**, the **cargo can also be sling deploying**!
 -- Note that this is only possible for helicopters.
@@ -367,7 +383,7 @@
 -- 
 -- **Deploying a cargo within a deployment zone, may complete a deployment task! So ensure that you deploy the right cargo at the right deployment zone!**
 -- 
--- ## 4) Cargo tasking from a mission designer perspective.
+-- ## Cargo tasking from a mission designer perspective.
 -- 
 -- Please consult the documentation how to implement the derived classes of SET_CARGO in:
 -- 
