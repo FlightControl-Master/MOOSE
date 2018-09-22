@@ -1,10 +1,19 @@
 --- **AI** -- (R2.4) - Models the intelligent transportation of infantry and other cargo using Planes.
 --
--- **Features:**
+-- ## Features:
 --
 --   * The airplanes will fly towards the pickup airbases to pickup the cargo.
 --   * The airplanes will fly towards the deploy airbases to deploy the cargo.
 --   
+-- ===
+-- 
+-- ## Test Missions:
+-- 
+-- Test missions can be located on the main GITHUB site.
+-- 
+-- [FlightControl-Master/MOOSE_MISSIONS/AID - AI Dispatching/AID-CGO - AI Cargo Dispatching/]  
+-- (https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/AID%20-%20AI%20Dispatching/AID-CGO%20-%20AI%20Cargo%20Dispatching)
+-- 
 -- ===
 -- 
 -- ### Author: **FlightControl**

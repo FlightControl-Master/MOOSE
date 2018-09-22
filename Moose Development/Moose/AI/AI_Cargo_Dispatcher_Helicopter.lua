@@ -1,12 +1,21 @@
 --- **AI** -- (2.4) - Models the intelligent transportation of infantry and other cargo using Helicopters.
 --
--- **Features:**
+-- ## Features:
 -- 
 --   * The helicopters will fly towards the pickup locations to pickup the cargo.
 --   * The helicopters will fly towards the deploy zones to deploy the cargo.
 --   * Precision deployment as well as randomized deployment within the deploy zones are possible.
 --   * Helicopters will orbit the deploy zones when there is no space for landing until the deploy zone is free.
 --   
+-- ===
+-- 
+-- ## Test Missions:
+-- 
+-- Test missions can be located on the main GITHUB site.
+-- 
+-- [FlightControl-Master/MOOSE_MISSIONS/AID - AI Dispatching/AID-CGO - AI Cargo Dispatching/]  
+-- (https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/AID%20-%20AI%20Dispatching/AID-CGO%20-%20AI%20Cargo%20Dispatching)
+-- 
 -- ===
 -- 
 -- ### Author: **FlightControl**

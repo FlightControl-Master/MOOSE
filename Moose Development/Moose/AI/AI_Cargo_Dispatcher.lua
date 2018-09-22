@@ -1,6 +1,6 @@
 --- **AI** -- (R2.4) - Models the intelligent transportation of infantry and other cargo.
 --
--- **Features:**
+-- ## Features:
 -- 
 --   * AI_CARGO_DISPATCHER is the **base class** for:
 --   
@@ -12,6 +12,17 @@
 --   * Dispatches transport tasks to a common set of cargo transporting groups.
 --   * Different options can be setup to tweak the cargo transporation behaviour.
 -- 
+-- ===
+-- 
+-- ## Test Missions:
+-- 
+-- Test missions can be located on the main GITHUB site.
+-- 
+-- [FlightControl-Master/MOOSE_MISSIONS/AID - AI Dispatching/AID-CGO - AI Cargo Dispatching/]  
+-- (https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/AID%20-%20AI%20Dispatching/AID-CGO%20-%20AI%20Cargo%20Dispatching)
+-- 
+-- ===
+-- 
 -- ## The dispatcher concept
 -- 
 -- Carrier equipment can be mobilized to intelligently transport infantry and other cargo within the simulation.
@@ -20,12 +31,14 @@
 -- @{Cargo.Cargo} must be declared within the mission to make the AI_CARGO_DISPATCHER object recognize the cargo.
 -- Please consult the @{Cargo.Cargo} module for more information. 
 -- 
--- # Why cargo dispatching?
+-- 
+-- ## Why cargo dispatching?
 -- 
 -- It provides a realistic way of distributing your army forces around the battlefield, and to provide a quick means of cargo transportation.
 -- Instead of having troops or cargo to "appear" suddenly at certain locations, the dispatchers will pickup the cargo and transport it.
 -- It also allows to enforce or retreat your army from certain zones when needed, using helicopters or APCs.
 -- Airplanes can transport cargo over larger distances between the airfields.
+-- 
 -- 
 -- ## What is a cargo object then?
 -- 
@@ -44,11 +57,13 @@
 -- For more information, please consult the @{Cargo.Cargo} module documentation. Please read through it, because it will explain how to setup the cargo objects for use
 -- within your dispatchers.
 -- 
+-- 
 -- ## Do I need to do a lot of coding to setup a dispatcher?
 -- 
 -- No! It requires a bit of studying to set it up, but once you understand the different components that use the cargo dispatcher, it becomes very easy.
 -- Also, the dispatchers work in a true dynamic environment. The carriers and cargo, pickup and deploy zones can be created dynamically in your mission,
 -- and will automatically be recognized by the dispatcher.
+-- 
 -- 
 -- ## Is the dispatcher causing a lot of CPU overhead?
 -- 
@@ -58,6 +73,7 @@
 -- That being said, the DCS simulator is limited. It is just impossible to deploy hundreds of cargo over the battlefield, hundreds of helicopters transporting, 
 -- without any performance impact. The amount of helicopters that are active and flying in your simulation influences more the performance than the dispatchers.
 -- It really comes down to trying it out and getting experienced with what is possible and what is not (or too much).
+-- 
 -- 
 -- ## Are the dispatchers a "black box" in terms of the logic?
 -- 
@@ -69,6 +85,7 @@
 --    
 --    * When a carrier is picking up cargo, the *Pickup** event is triggered, and you can inform the coalition of this event, 
 --      because it is an indication that troops are planned to join.
+-- 
 --    
 -- ## Are there options that you can set to modify the behaviour of the carries?
 -- 
@@ -79,16 +96,11 @@
 --    * the height for airborne carriers when they fly to and from pickup and deploy zones.
 --    * the speed of the carriers. This is an important parameter, because depending on the tactication situation, speed will influence the detection by radars.
 -- 
+-- 
 -- ## Can the zones be of any zone type?
 -- 
 -- Yes, please ensure that the zones are declared using the @{Core.Zone} classes.
 -- Possible zones that function at the moment are ZONE, ZONE_GROUP, ZONE_UNIT, ZONE_POLYGON.
--- 
--- ===
--- 
--- ### Test Missions
--- 
--- [AI Cargo Dispatcher test missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/AID%20-%20AI%20Dispatching/AID-CGO%20-%20AI%20Cargo%20Dispatching)
 -- 
 -- ===
 -- 
