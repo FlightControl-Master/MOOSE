@@ -2,7 +2,6 @@
 --
 -- **Features:**
 -- 
--- 
 --   * AI_CARGO_DISPATCHER is the **base class** for:
 --   
 --     * @{AI.AI_Cargo_Dispatcher_APC#AI_CARGO_DISPATCHER_APC}
@@ -119,9 +118,9 @@
 --   
 --   * @{#AI_CARGO_DISPATCHER.New}(): Creates a new AI_CARGO_DISPATCHER object.
 -- 
--- This are some example of AI cargo dispatcher objects created.
+-- Find below some examples of AI cargo dispatcher objects created.
 -- 
---   * An AI dispatcher object for a helicopter squadron, moving infantry from pickup zones to deploy zones.
+-- ### An AI dispatcher object for a helicopter squadron, moving infantry from pickup zones to deploy zones.
 -- 
 --        local SetCargoInfantry = SET_CARGO:New():FilterTypes( "Infantry" ):FilterStart()
 --        local SetHelicopter = SET_GROUP:New():FilterPrefixes( "Helicopter" ):FilterStart()
@@ -131,7 +130,7 @@
 --        AICargoDispatcherHelicopter = AI_CARGO_DISPATCHER_HELICOPTER:New( SetHelicopter, SetCargoInfantry, SetPickupZones, SetDeployZones ) 
 --        AICargoDispatcherHelicopter:SetHomeZone( ZONE:FindByName( "Home" ) )
 -- 
---   * An AI dispatcher object for a vehicle squadron, moving infantry from pickup zones to deploy zones.
+-- ### An AI dispatcher object for a vehicle squadron, moving infantry from pickup zones to deploy zones.
 -- 
 --        local SetCargoInfantry = SET_CARGO:New():FilterTypes( "Infantry" ):FilterStart()
 --        local SetAPC = SET_GROUP:New():FilterPrefixes( "APC" ):FilterStart()
@@ -140,7 +139,7 @@
 --        AICargoDispatcherAPC = AI_CARGO_DISPATCHER_APC:New( SetAPC, SetCargoInfantry, nil, SetDeployZones ) 
 --        AICargoDispatcherAPC:Start()
 -- 
---   * An AI dispatcher object for an airplane squadron, moving infantry and vehicles from pickup airbases to deploy airbases.
+-- ### An AI dispatcher object for an airplane squadron, moving infantry and vehicles from pickup airbases to deploy airbases.
 --   
 --        local CargoInfantrySet = SET_CARGO:New():FilterTypes( "Infantry" ):FilterStart()
 --        local AirplanesSet = SET_GROUP:New():FilterPrefixes( "Airplane" ):FilterStart()
