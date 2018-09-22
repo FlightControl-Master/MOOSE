@@ -23,7 +23,7 @@
 -- 
 -- ===
 -- 
--- ## The dispatcher concept
+-- ## The dispatcher concept.
 -- 
 -- Carrier equipment can be mobilized to intelligently transport infantry and other cargo within the simulation.
 -- The AI_CARGO_DISPATCHER module uses the @{Cargo.Cargo} capabilities within the MOOSE framework, to enable Carrier GROUP objects 
@@ -523,8 +523,9 @@
 --      
 --      end      
 -- 
+-- ---
 -- 
--- # 3) Set the pickup parameters.
+-- # 4) Set the pickup parameters.
 -- 
 -- Several parameters can be set to pickup cargo:
 -- 
@@ -532,7 +533,9 @@
 --    * @{#AI_CARGO_DISPATCHER.SetPickupSpeed}(): Set the speed or randomizes the speed in km/h to pickup the cargo.
 --    * @{#AI_CARGO_DISPATCHER.SetPickupHeight}(): Set the height or randomizes the height in meters to pickup the cargo.
 --    
--- # 4) Set the deploy parameters.
+-- ---   
+--    
+-- # 5) Set the deploy parameters.
 -- 
 -- Several parameters can be set to deploy cargo:
 -- 
@@ -540,7 +543,9 @@
 --    * @{#AI_CARGO_DISPATCHER.SetDeploySpeed}(): Set the speed or randomizes the speed in km/h to deploy the cargo.
 --    * @{#AI_CARGO_DISPATCHER.SetDeployHeight}(): Set the height or randomizes the height in meters to deploy the cargo.
 -- 
--- # 5) Set the home zone when there isn't any more cargo to pickup.
+-- ---
+-- 
+-- # 6) Set the home zone when there isn't any more cargo to pickup.
 -- 
 -- A home zone can be specified to where the Carriers will move when there isn't any cargo left for pickup.
 -- Use @{#AI_CARGO_DISPATCHER.SetHomeZone}() to specify the home zone.
