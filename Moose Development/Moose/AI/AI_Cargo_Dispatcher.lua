@@ -22,7 +22,7 @@
 -- 
 -- ===
 -- 
--- ## The dispatcher concept.
+-- # The dispatcher concept.
 -- 
 -- Carrier equipment can be mobilized to intelligently transport infantry and other cargo within the simulation.
 -- The AI_CARGO_DISPATCHER module uses the @{Cargo.Cargo} capabilities within the MOOSE framework, to enable Carrier GROUP objects 
