@@ -115,18 +115,25 @@ AI_CARGO_DISPATCHER_AIRPLANE = {
 -- @return #AI_CARGO_DISPATCHER_AIRPLANE self
 -- @usage
 -- 
--- -- Create a new cargo dispatcher
--- AirplaneSet = SET_GROUP:New():FilterPrefixes( "Airplane" ):FilterStart()
--- CargoSet = SET_CARGO:New():FilterTypes( "Infantry" ):FilterStart()
--- PickupZoneSet = SET_AIRBASE:New()
--- DeployZoneSet = SET_AIRBASE:New()
--- PickupZoneSet:AddZone( ZONE_AIRBASE:New( "Gudauta", AIRBASE:FindByName( AIRBASE.Caucasus.Gudauta ), 3000 ) )
--- DeployZoneSet:AddZone( ZONE_AIRBASE:New( "Sochi", AIRBASE:FindByName( AIRBASE.Caucasus.Sochi_Adler ), 3000 ) )
--- AICargoDispatcher = AI_CARGO_DISPATCHER_AIRPLANE:New( AirplaneSet, CargoSet, PickupZoneSet, DeployZoneSet )
+--      -- An AI dispatcher object for an airplane squadron, moving infantry and vehicles from pickup airbases to deploy airbases.
+--   
+--      local CargoInfantrySet = SET_CARGO:New():FilterTypes( "Infantry" ):FilterStart()
+--      local AirplanesSet = SET_GROUP:New():FilterPrefixes( "Airplane" ):FilterStart()
+--      local PickupZoneSet = SET_ZONE:New()
+--      local DeployZoneSet = SET_ZONE:New()
+--      
+--      PickupZoneSet:AddZone( ZONE_AIRBASE:New( AIRBASE.Caucasus.Gudauta ) )
+--      DeployZoneSet:AddZone( ZONE_AIRBASE:New( AIRBASE.Caucasus.Sochi_Adler ) )
+--      DeployZoneSet:AddZone( ZONE_AIRBASE:New( AIRBASE.Caucasus.Maykop_Khanskaya ) )
+--      DeployZoneSet:AddZone( ZONE_AIRBASE:New( AIRBASE.Caucasus.Mineralnye_Vody ) )
+--      DeployZoneSet:AddZone( ZONE_AIRBASE:New( AIRBASE.Caucasus.Vaziani ) )
+--      
+--      AICargoDispatcherAirplanes = AI_CARGO_DISPATCHER_AIRPLANE:New( AirplanesSet, CargoInfantrySet, PickupZoneSet, DeployZoneSet ) 
+--      AICargoDispatcherAirplanes:Start()
 -- 
 function AI_CARGO_DISPATCHER_AIRPLANE:New( AirplaneSet, CargoSet, PickupZoneSet, DeployZoneSet )
 
-  local self = BASE:Inherit( self, AI_CARGO_DISPATCHER:NewWithZones( AirplaneSet, CargoSet, PickupZoneSet, DeployZoneSet ) ) -- #AI_CARGO_DISPATCHER_AIRPLANE
+  local self = BASE:Inherit( self, AI_CARGO_DISPATCHER:New( AirplaneSet, CargoSet, PickupZoneSet, DeployZoneSet ) ) -- #AI_CARGO_DISPATCHER_AIRPLANE
 
   self:SetPickupSpeed( 1200, 600 )
   self:SetDeploySpeed( 1200, 600 )

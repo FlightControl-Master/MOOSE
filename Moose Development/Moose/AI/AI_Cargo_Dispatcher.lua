@@ -568,7 +568,7 @@ AI_CARGO_DISPATCHER.PickupCargo = {}
 --      local SetDeployZones = SET_ZONE:New():FilterPrefixes( "Deploy" ):FilterStart()
 --      
 --      AICargoDispatcherHelicopter = AI_CARGO_DISPATCHER_HELICOPTER:New( SetHelicopter, SetCargoInfantry, SetPickupZones, SetDeployZones ) 
---      AICargoDispatcherHelicopter:SetHomeZone( ZONE:FindByName( "Home" ) )
+--      AICargoDispatcherHelicopter:Start()
 -- 
 -- @usage
 -- 
@@ -597,7 +597,7 @@ AI_CARGO_DISPATCHER.PickupCargo = {}
 --      DeployZoneSet:AddZone( ZONE_AIRBASE:New( AIRBASE.Caucasus.Vaziani ) )
 --      
 --      AICargoDispatcherAirplanes = AI_CARGO_DISPATCHER_AIRPLANE:New( AirplanesSet, CargoInfantrySet, PickupZoneSet, DeployZoneSet ) 
---      AICargoDispatcherAirplanes:SetHomeZone( ZONE_AIRBASE:New( AIRBASE.Caucasus.Kobuleti ) )
+--      AICargoDispatcherAirplanes:Start()
 -- 
 function AI_CARGO_DISPATCHER:New( SetCarrier, SetCargo )
 
@@ -648,32 +648,6 @@ function AI_CARGO_DISPATCHER:New( SetCarrier, SetCargo )
 end
 
 
---- Creates a new AI_CARGO_DISPATCHER object.
--- @param #AI_CARGO_DISPATCHER self
--- @param Core.Set#SET_GROUP SetCarrier
--- @param Core.Set#SET_CARGO SetCargo
--- @param Core.Set#SET_ZONE PickupZoneSet
--- @param Core.Set#SET_ZONE DeployZoneSet
--- @return #AI_CARGO_DISPATCHER
--- @usage
--- 
--- -- Create a new cargo dispatcher
--- SetCarriers = SET_GROUP:New():FilterPrefixes( "APC" ):FilterStart()
--- SetCargos = SET_CARGO:New():FilterTypes( "Infantry" ):FilterStart()
--- DeployZoneSet = SET_ZONE:New():FilterPrefixes( "Deploy" ):FilterStart()
--- AICargoDispatcher = AI_CARGO_DISPATCHER:New( SetCarrier, SetCargo, SetDeployZone )
--- 
-function AI_CARGO_DISPATCHER:NewWithZones( SetCarrier, SetCargo, PickupZoneSet, DeployZoneSet )
-
-  local self = AI_CARGO_DISPATCHER:New( SetCarrier, SetCargo ) -- #AI_CARGO_DISPATCHER
-  
-  self.PickupZoneSet = PickupZoneSet
-  self.DeployZoneSet = DeployZoneSet
-  
-  return self
-end
-
-
 --- Set the monitor time interval.
 -- @param #AI_CARGO_DISPATCHER self
 -- @param #number MonitorTimeInterval
@@ -695,11 +669,11 @@ end
 -- @usage
 -- 
 -- -- Create a new cargo dispatcher
--- AICargoDispatcher = AI_CARGO_DISPATCHER:New( SetCarrier, SetCargo, SetDeployZone )
+-- AICargoDispatcherHelicopter = AI_CARGO_DISPATCHER_HELICOPTER:New( SetHelicopter, SetCargoInfantry, SetPickupZones, SetDeployZones ) 
 -- 
 -- -- Set the home coordinate
 -- local HomeZone = ZONE:New( "Home" )
--- AICargoDispatcher:SetHomeZone( HomeZone )
+-- AICargoDispatcherHelicopter:SetHomeZone( HomeZone )
 -- 
 function AI_CARGO_DISPATCHER:SetHomeZone( HomeZone )
 
@@ -728,10 +702,10 @@ end
 -- @usage
 -- 
 -- -- Create a new cargo dispatcher
--- AICargoDispatcher = AI_CARGO_DISPATCHER:New( SetCarrier, SetCargo, SetDeployZone )
+-- AICargoDispatcherHelicopter = AI_CARGO_DISPATCHER_HELICOPTER:New( SetHelicopter, SetCargoInfantry, SetPickupZones, SetDeployZones ) 
 -- 
 -- -- Set the carrier to land within a band around the cargo coordinate between 500 and 300 meters!
--- AICargoDispatcher:SetPickupRadius( 500, 300 )
+-- AICargoDispatcherHelicopter:SetPickupRadius( 500, 300 )
 -- 
 function AI_CARGO_DISPATCHER:SetPickupRadius( OuterRadius, InnerRadius )
 
@@ -753,10 +727,10 @@ end
 -- @usage
 -- 
 -- -- Create a new cargo dispatcher
--- AICargoDispatcher = AI_CARGO_DISPATCHER:New( SetCarrier, SetCargo, SetDeployZone )
+-- AICargoDispatcherHelicopter = AI_CARGO_DISPATCHER_HELICOPTER:New( SetHelicopter, SetCargoInfantry, SetPickupZones, SetDeployZones ) 
 -- 
 -- -- Set the minimum pickup speed to be 100 km/h and the maximum speed to be 200 km/h.
--- AICargoDispatcher:SetPickupSpeed( 200, 100 )
+-- AICargoDispatcherHelicopter:SetPickupSpeed( 200, 100 )
 -- 
 function AI_CARGO_DISPATCHER:SetPickupSpeed( MaxSpeed, MinSpeed )
 
@@ -786,10 +760,10 @@ end
 -- @usage
 -- 
 -- -- Create a new cargo dispatcher
--- AICargoDispatcher = AI_CARGO_DISPATCHER:New( SetCarrier, SetCargo, SetDeployZone )
+-- AICargoDispatcherHelicopter = AI_CARGO_DISPATCHER_HELICOPTER:New( SetHelicopter, SetCargoInfantry, SetPickupZones, SetDeployZones ) 
 -- 
 -- -- Set the carrier to land within a band around the cargo coordinate between 500 and 300 meters!
--- AICargoDispatcher:SetDeployRadius( 500, 300 )
+-- AICargoDispatcherHelicopter:SetDeployRadius( 500, 300 )
 -- 
 function AI_CARGO_DISPATCHER:SetDeployRadius( OuterRadius, InnerRadius )
 
@@ -811,10 +785,10 @@ end
 -- @usage
 -- 
 -- -- Create a new cargo dispatcher
--- AICargoDispatcher = AI_CARGO_DISPATCHER:New( SetCarrier, SetCargo, SetDeployZone )
+-- AICargoDispatcherHelicopter = AI_CARGO_DISPATCHER_HELICOPTER:New( SetHelicopter, SetCargoInfantry, SetPickupZones, SetDeployZones ) 
 -- 
 -- -- Set the minimum deploy speed to be 100 km/h and the maximum speed to be 200 km/h.
--- AICargoDispatcher:SetDeploySpeed( 200, 100 )
+-- AICargoDispatcherHelicopter:SetDeploySpeed( 200, 100 )
 -- 
 function AI_CARGO_DISPATCHER:SetDeploySpeed( MaxSpeed, MinSpeed )
 
@@ -836,7 +810,7 @@ end
 -- @usage
 -- 
 -- -- Create a new cargo dispatcher
--- AICargoDispatcherHelicopter = AI_CARGO_DISPATCHER_HELICOPTER:New( SetCarrier, SetCargo, SetDeployZone )
+-- AICargoDispatcherHelicopter = AI_CARGO_DISPATCHER_HELICOPTER:New( SetHelicopter, SetCargoInfantry, SetPickupZones, SetDeployZones ) 
 -- 
 -- -- Set the minimum pickup fly height to be 50 meters and the maximum height to be 200 meters.
 -- AICargoDispatcherHelicopter:SetPickupHeight( 200, 50 )
@@ -861,7 +835,7 @@ end
 -- @usage
 -- 
 -- -- Create a new cargo dispatcher
--- AICargoDispatcherHelicopter = AI_CARGO_DISPATCHER_HELICOPTER:New( SetCarrier, SetCargo, SetDeployZone )
+-- AICargoDispatcherHelicopter = AI_CARGO_DISPATCHER_HELICOPTER:New( SetHelicopter, SetCargoInfantry, SetPickupZones, SetDeployZones ) 
 -- 
 -- -- Set the minimum deploy fly height to be 50 meters and the maximum height to be 200 meters.
 -- AICargoDispatcherHelicopter:SetDeployHeight( 200, 50 )

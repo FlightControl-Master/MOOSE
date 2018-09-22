@@ -148,15 +148,19 @@ AI_CARGO_DISPATCHER_HELICOPTER = {
 -- @return #AI_CARGO_DISPATCHER_HELICOPTER
 -- @usage
 -- 
--- -- Create a new cargo dispatcher
--- HelicopterSet = SET_GROUP:New():FilterPrefixes( "Helicopter" ):FilterStart()
--- CargoSet = SET_CARGO:New():FilterTypes( "Infantry" ):FilterStart()
--- DeployZoneSet = SET_ZONE:New():FilterPrefixes( "Deploy" ):FilterStart()
--- AICargoDispatcher = AI_CARGO_DISPATCHER_HELICOPTER:New( HelicopterSet, SetCargo, nil, DeployZoneSet )
+--      -- An AI dispatcher object for a helicopter squadron, moving infantry from pickup zones to deploy zones.
+-- 
+--      local SetCargoInfantry = SET_CARGO:New():FilterTypes( "Infantry" ):FilterStart()
+--      local SetHelicopter = SET_GROUP:New():FilterPrefixes( "Helicopter" ):FilterStart()
+--      local SetPickupZones = SET_ZONE:New():FilterPrefixes( "Pickup" ):FilterStart()
+--      local SetDeployZones = SET_ZONE:New():FilterPrefixes( "Deploy" ):FilterStart()
+--      
+--      AICargoDispatcherHelicopter = AI_CARGO_DISPATCHER_HELICOPTER:New( SetHelicopter, SetCargoInfantry, SetPickupZones, SetDeployZones ) 
+--      AICargoDispatcherHelicopter:Start()
 -- 
 function AI_CARGO_DISPATCHER_HELICOPTER:New( HelicopterSet, CargoSet, PickupZoneSet, DeployZoneSet )
 
-  local self = BASE:Inherit( self, AI_CARGO_DISPATCHER:NewWithZones( HelicopterSet, CargoSet, PickupZoneSet, DeployZoneSet ) ) -- #AI_CARGO_DISPATCHER_HELICOPTER
+  local self = BASE:Inherit( self, AI_CARGO_DISPATCHER:New( HelicopterSet, CargoSet, PickupZoneSet, DeployZoneSet ) ) -- #AI_CARGO_DISPATCHER_HELICOPTER
 
   self:SetPickupSpeed( 350, 150 )
   self:SetDeploySpeed( 350, 150 )

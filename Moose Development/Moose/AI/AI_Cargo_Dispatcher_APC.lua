@@ -146,15 +146,18 @@ AI_CARGO_DISPATCHER_APC = {
 -- @return #AI_CARGO_DISPATCHER_APC
 -- @usage
 -- 
--- -- Create a new cargo dispatcher for the set of APCs, with a combatradius of 500.
--- APCSet = SET_GROUP:New():FilterPrefixes( "APC" ):FilterStart()
--- CargoSet = SET_CARGO:New():FilterTypes( "Infantry" ):FilterStart()
--- DeployZoneSet = SET_ZONE:New():FilterPrefixes( "Deploy" ):FilterStart()
--- AICargoDispatcher = AI_CARGO_DISPATCHER_APC:New( APCSet, CargoSet, nil, DeployZoneSet, 500 )
+--      -- An AI dispatcher object for a vehicle squadron, moving infantry from pickup zones to deploy zones.
+-- 
+--      local SetCargoInfantry = SET_CARGO:New():FilterTypes( "Infantry" ):FilterStart()
+--      local SetAPC = SET_GROUP:New():FilterPrefixes( "APC" ):FilterStart()
+--      local SetDeployZones = SET_ZONE:New():FilterPrefixes( "Deploy" ):FilterStart()
+--      
+--      AICargoDispatcherAPC = AI_CARGO_DISPATCHER_APC:New( SetAPC, SetCargoInfantry, nil, SetDeployZones ) 
+--      AICargoDispatcherAPC:Start()
 -- 
 function AI_CARGO_DISPATCHER_APC:New( APCSet, CargoSet, PickupZoneSet, DeployZoneSet, CombatRadius )
 
-  local self = BASE:Inherit( self, AI_CARGO_DISPATCHER:NewWithZones( APCSet, CargoSet, PickupZoneSet, DeployZoneSet ) ) -- #AI_CARGO_DISPATCHER_APC
+  local self = BASE:Inherit( self, AI_CARGO_DISPATCHER:New( APCSet, CargoSet, PickupZoneSet, DeployZoneSet ) ) -- #AI_CARGO_DISPATCHER_APC
 
   self:SetDeploySpeed( 120, 70 )
   self:SetPickupSpeed( 120, 70 )
