@@ -938,6 +938,21 @@ do -- COORDINATE
   end
 
 
+  --- Set altitude.
+  -- @param #COORDINATE self
+  -- @param #number altitude New altitude in meters.
+  -- @param #boolean asl Altitude above sea level. Default is above ground level.
+  -- @return #COORDINATE The COORDINATE with adjusted altitude.
+  function COORDINATE:SetAltitude(altitude, asl)
+    local alt=altitude
+    if asl then
+      alt=altitude
+    else
+      alt=self:GetLandHeight()+altitude
+    end
+    self.y=alt
+    return self
+  end
 
   --- Add a Distance in meters from the COORDINATE horizontal plane, with the given angle, and calculate the new COORDINATE.
   -- @param #COORDINATE self

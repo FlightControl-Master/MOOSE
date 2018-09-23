@@ -318,20 +318,20 @@ end
 
 --- Get the bounding radius of the underlying POSITIONABLE DCS Object.
 -- @param #POSITIONABLE self
--- @return DCS#Distance The bounding radius of the POSITIONABLE.
--- @return #nil The POSITIONABLE is not existing or alive.  
-function POSITIONABLE:GetBoundingRadius()
+-- @param #number mindist (Optional) If bounding box is smaller than this value, mindist is returned. 
+-- @return DCS#Distance The bounding radius of the POSITIONABLE or #nil if the POSITIONABLE is not existing or alive.  
+function POSITIONABLE:GetBoundingRadius(mindist)
   self:F2()
 
   local Box = self:GetBoundingBox()
   
-
+  local boxmin=mindist or 0
   if Box then
     local X = Box.max.x - Box.min.x
     local Z = Box.max.z - Box.min.z
     local CX = X / 2
     local CZ = Z / 2
-    return math.max( CX, CZ )
+    return math.max( math.max( CX, CZ ), boxmin )
   end
   
   BASE:E( { "Cannot GetBoundingRadius", Positionable = self, Alive = self:IsAlive() } )
@@ -1025,7 +1025,9 @@ do -- Cargo
   function POSITIONABLE:SetCargoBayWeightLimit( WeightLimit )
     
     if WeightLimit then
-      self.__.CargoBayWeightLimit = self.__.CargoBayWeightLimit or WeightLimit
+      self.__.CargoBayWeightLimit = WeightLimit
+    elseif self.__.CargoBayWeightLimit~=nil then
+      -- Value already set ==> Do nothing!
     else
       -- If weightlimit is not provided, we will calculate it depending on the type of unit.
       

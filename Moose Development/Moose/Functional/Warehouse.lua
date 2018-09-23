@@ -11,6 +11,7 @@
 --    * Realistic transportation of assets between warehouses.
 --    * Different means of automatic transportation (planes, helicopters, APCs, self propelled).
 --    * Strategic components such as capturing, defending and destroying warehouses and their associated infrastructure.
+--    * Intelligent spawning of aircraft on airports (only if enough parking spots are available).
 --    * Can be easily interfaced to other MOOSE classes.
 --
 -- Please not that his class is work in progress and in an **alpha** stage.
@@ -121,8 +122,8 @@
 -- Once the static warehouse object is placed in the mission editor it can be used as a MOOSE warehouse by the @{#WAREHOUSE.New}(*warehousestatic*, *alias*) constructor,
 -- like for example:
 -- 
---     warehouse=WAREHOUSE:New(STATIC:FindByName("Warehouse Static Batumi"), "My Warehouse Alias")
---     warehouse:Start()
+--     warehouseBatumi=WAREHOUSE:New(STATIC:FindByName("Warehouse Batumi"), "My Warehouse Alias")
+--     warehouseBatumi:Start()
 -- 
 -- The first parameter *warehousestatic* is the static MOOSE object. By default, the name of the warehouse will be the same as the name given to the static object.
 -- The second parameter *alias* can be used to choose a more convenient name if desired. This will be the name the warehouse calls itself when reporting messages. 
@@ -137,7 +138,7 @@
 -- 
 -- 
 --     infrantry=GROUP:FindByName("Some Infantry Group")
---     warehouse:AddAsset(infantry, 5)
+--     warehouseBatumi:AddAsset(infantry, 5)
 -- 
 -- This will add five infantry groups to the warehouse stock. Note that the group will normally be a late activated template group, 
 -- which was defined in the mission editor. But you can also add other groups which are already spawned and present in the mission.
@@ -158,19 +159,19 @@
 -- For example, a UH-1H Huey has in DCS the attibute of an attack helicopter. But of course, it can also transport cargo. If you want to use it for transportation, you can specify this
 -- manually when the asset is added
 -- 
---     warehouse.Batumi:AddAsset("Huey", 5, WAREHOUSE.Attribute.AIR_TRANSPORTHELO)
+--     warehouseBatumi:AddAsset("Huey", 5, WAREHOUSE.Attribute.AIR_TRANSPORTHELO)
 -- 
 -- ### Setting the Cargo Bay Weight Limit    
 -- You can also ajust the cargo bay weight limit, in case it is not calculated correctly automatically. For example, the cargo bay of a C-17A is much smaller in DCS than that of a C-130, which is
 -- unrealistic. This can be corrected by the *forcecargobay* parmeter which is here set to 77,000 kg
 -- 
---     warehouse.Batumi:AddAsset("C-17A", nil, 77000)
+--     warehouseBatumi:AddAsset("C-17A", nil, nil, 77000)
 --     
 -- ### Setting the Weight
 -- In the current version of DCS a mortar unit has a weight of 5 tons. This confuses the transporter logic, because it appears to be too have for, e.g. all APCs. You can manually adjust the weight
 -- by the *forceweight* parameter and set it to 210 kg for each unit in the group
 -- 
---     warehouse.Batumi:AddAsset("Mortar Alpha", nil, nil, nil, 210)
+--     warehouseBatumi:AddAsset("Mortar Alpha", nil, nil, nil, 210)
 -- 
 -- ===
 --
@@ -195,7 +196,7 @@
 -- 
 -- For example:
 --  
---     warehouse.Batumi:AddRequest(warehouse.Kobuleti, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_INFANTRY, 5, WAREHOUSE.TransportType.APC, 2)
+--     warehouseBatumi:AddRequest(warehouseKobuleti, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_INFANTRY, 5, WAREHOUSE.TransportType.APC, 2)
 --
 -- Here, warehouse Kobuleti requests 5 infantry groups from warehouse Batumi. These "cargo" assets should be transported from Batumi to Kobuleti by 2 APCS.
 -- Note that the warehouse at Batumi needs to have at least five infantry groups and two APC groups in their stock if the request can be processed.
@@ -209,7 +210,7 @@
 -- 
 -- A more specific request could look like:
 -- 
---     warehouse.Batumi:AddRequest(warehouse.Kobuleti, WAREHOUSE.Descriptor.UNITTYPE, "A-10C", 2)
+--     warehouseBatumi:AddRequest(warehouseKobuleti, WAREHOUSE.Descriptor.UNITTYPE, "A-10C", 2)
 --      
 -- Here, Kobuleti requests a specific unit type, in particular two groups of A-10Cs. Note that the spelling is important as it must exacly be the same as
 -- what one get's when using the DCS unit type.
@@ -218,7 +219,7 @@
 -- 
 -- An even more specific request would be:
 -- 
---     warehouse.Batumi:AddRequest(warehouse.Kobuleti, WAREHOUSE.Descriptor.TEMPLATENAME, "Group Name as in ME", 3)
+--     warehouseBatumi:AddRequest(warehouseKobuleti, WAREHOUSE.Descriptor.TEMPLATENAME, "Group Name as in ME", 3)
 --      
 -- In this case three groups named "Group Name as in ME" are requested. This explicitly request the groups named like that in the Mission Editor.
 -- 
@@ -226,7 +227,7 @@
 -- 
 -- On the other hand, very general unspecifc requests can be made as
 -- 
---     warehouse.Batumi:AddRequest(warehouse.Kobuleti, WAREHOUSE.Descriptor.CATEGORY, Group.Category.Ground, 10)
+--     warehouseBatumi:AddRequest(warehouseKobuleti, WAREHOUSE.Descriptor.CATEGORY, Group.Category.Ground, 10)
 --      
 -- Here, Kubuleti requests 10 ground groups and does not care which ones. This could be a mix of infantry, APCs, trucks etc.
 -- 
@@ -237,7 +238,7 @@
 -- Assets in the warehouse' stock can used for user defined tasks realtively easily. They can be spawned into the game by a "*self request*", i.e. the warehouse
 -- requests the assets from itself:
 -- 
---     warehouse.Batumi:AddRequest(warehouse.Batumi, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_INFANTRY, 5)
+--     warehouseBatumi:AddRequest(warehouseBatumi, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_INFANTRY, 5)
 --      
 -- This would simply spawn five infantry groups in the spawn zone of the Batumi warehouse if/when they are available.
 -- 
@@ -365,7 +366,9 @@
 -- # Why is my request not processed?
 --
 -- For each request, the warehouse class logic does a lot of consistancy and validation checks under the hood.
--- This means that sometimes a request is deemed to be *invalid* in which case they are deleted from the queue or considered to be valid but cannot be executed at this very moment.
+-- This helps to circumvent a lot of DCS issues and shortcomings. For example, it is checked that enough free
+-- parking spots at an airport are available *before* the assets are spawned.
+-- However, this also means that sometimes a request is deemed to be *invalid* in which case they are deleted from the queue or considered to be valid but cannot be executed at this very moment.
 -- 
 -- ## Invalid Requests
 -- 
@@ -1308,7 +1311,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.5.1"
+WAREHOUSE.version="0.5.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -1427,6 +1430,7 @@ function WAREHOUSE:New(warehouse, alias)
   self:AddTransition("Loaded",          "Start",             "Running")     -- TODO Start the warehouse when loaded from disk.  
   self:AddTransition("*",               "Status",            "*")           -- Status update.
   self:AddTransition("*",               "AddAsset",          "*")           -- Add asset to warehouse stock.
+  self:AddTransition("*",               "NewAsset",          "*")           -- New asset was added to warehouse stock.
   self:AddTransition("*",               "AddRequest",        "*")           -- New request from other warehouse.
   self:AddTransition("Running",         "Request",           "*")           -- Process a request. Only in running mode.
   self:AddTransition("Attacked",        "Request",           "*")           -- Process a request. Only in running mode.
@@ -1515,6 +1519,26 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #WAREHOUSE.Attribute forceattribute (Optional) Explicitly force a generalized attribute for the asset. This has to be an @{#WAREHOUSE.Attribute}.
   -- @param #number forcecargobay (Optional) Explicitly force cargobay weight limit in kg for cargo carriers. This is for each *unit* of the group.
   -- @param #number forceweight (Optional) Explicitly force weight in kg of each unit in the group.
+
+
+  --- Triggers the FSM event "NewAsset" when a new asset has been added to the warehouse stock.
+  -- @function [parent=#WAREHOUSE] NewAsset
+  -- @param #WAREHOUSE self
+  -- @param #number delay Delay in seconds.
+  -- @param #WAREHOUSE.Assetitem asset The new asset.
+
+  --- Triggers the FSM delayed event "NewAsset" when a new asset has been added to the warehouse stock.
+  -- @function [parent=#WAREHOUSE] NewAsset
+  -- @param #WAREHOUSE self
+  -- @param #WAREHOUSE.Assetitem asset The new asset.
+
+  --- On after "NewAsset" event user function. A new asset has been added to the warehouse stock.
+  -- @function [parent=#WAREHOUSE] OnAfterNewAsset
+  -- @param #WAREHOUSE self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #WAREHOUSE.Assetitem asset The asset that has just been added
 
 
   --- Triggers the FSM event "AddRequest". Add a request to the warehouse queue, which is processed when possible.
@@ -2715,6 +2739,7 @@ end
 -- @param #number forcecargobay (Optional) Explicitly force cargobay weight limit in kg for cargo carriers. This is for each *unit* of the group.
 -- @param #number forceweight (Optional) Explicitly force weight in kg of each unit in the group.
 function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribute, forcecargobay, forceweight)
+  self:T({group=group, ngroups=ngroups, forceattribute=forceattribute, forcecargobay=forcecargobay, forceweight=forceweight})
 
   -- Set default.
   local n=ngroups or 1
@@ -2766,6 +2791,7 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
       if asset~=nil then        
         self:_DebugMessage(string.format("Warehouse %s: Adding KNOWN asset uid=%d with attribute=%s to stock.", self.alias, asset.uid, asset.attribute), 5)
         table.insert(self.stock, asset)
+        self:NewAsset(asset)
       else
         self:_ErrorMessage(string.format("ERROR: Known asset could not be found in global warehouse db!"), 0)
       end      
@@ -2784,6 +2810,7 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
       -- Add created assets to stock of this warehouse.
       for _,asset in pairs(assets) do
         table.insert(self.stock, asset)
+        self:NewAsset(asset)
       end      
       
     end   
@@ -2812,7 +2839,7 @@ end
 -- @param #number forceweight Weight of units in kg.
 -- @return #table A table containing all registered assets.
 function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute, forcecargobay, forceweight)
-  self:F({groupname=group:GetName(), ngroups=ngroups, forceattribute=forceattribute})
+  self:F({groupname=group:GetName(), ngroups=ngroups, forceattribute=forceattribute, forcecargobay=forcecargobay, forceweight=forceweight})
 
   -- Set default.
   local n=ngroups or 1
@@ -2864,6 +2891,7 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute, forcecargobay,
     
     -- Cargo bay size.
     local bay=forcecargobay or unit:GetCargoBayFreeWeight()
+    env.info(string.format("FF unit %s bay=%d", unit:GetName(), bay))
     
     -- Add bay size to table.
     table.insert(cargobay, bay)
@@ -2942,6 +2970,15 @@ function WAREHOUSE:_AssetItemInfo(asset)
   self:T(self.wid..text)
   self:T({DCSdesc=asset.DCSdesc})
   self:T3({Template=asset.template})
+end
+
+--- On after "NewAsset" event. A new asset has been added to the warehouse stock.
+-- @param #WAREHOUSE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #WAREHOUSE.Assetitem asset The asset that has just been added
+function WAREHOUSE:onafterNewAsset(From, Event, To, asset)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3278,6 +3315,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   
   if Request.transporttype==WAREHOUSE.TransportType.AIRPLANE then
     _loadradius=10000
+    _nearradius=500
   elseif Request.transporttype==WAREHOUSE.TransportType.HELICOPTER then
     --_loadradius=1000
     _loadradius=nil
@@ -5412,10 +5450,10 @@ function WAREHOUSE:_CheckRequestNow(request)
   
   -- Check if enough assets are in stock.
   if not _enough then
-    local text=string.format("Warehouse %s: Request denied! Not enough (cargo) assets currently available.", self.alias)
+    local text=string.format("Warehouse %s: Request ID=%d denied! Not enough (cargo) assets currently available.", self.alias, request.uid)
     self:_InfoMessage(text, 5)
-    --text=string.format("Enough=%s, #_assets=%d, _nassets=%d, request.nasset=%s", tostring(_enough), #_assets,_nassets, tostring(request.nasset))
-    --env.info(text)
+    text=string.format("Enough=%s, #_assets=%d, _nassets=%d, request.nasset=%s", tostring(_enough), #_assets,_nassets, tostring(request.nasset))
+    self:T(self.wid..text)
     return false
   end
 
@@ -5600,6 +5638,7 @@ function WAREHOUSE:_GetTransportsForAssets(request)
         
         -- How many times does the cargo fit into the carrier?
         local delta=cargobay-asset.weight
+        env.info(string.format("k=%d, j=%d delta=%d  cargobay=%d  weight=%d", k, j, delta, cargobay, asset.weight))
         
         --self:E(self.wid..string.format("%s unit %d loads cargo uid=%d: bayempty=%02d, bayloaded = %02d - weight=%02d", transport.templatename, k, asset.uid, transport.cargobay[k], cargobay, asset.weight))
         

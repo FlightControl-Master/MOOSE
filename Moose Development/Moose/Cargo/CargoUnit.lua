@@ -242,7 +242,9 @@ do -- CARGO_UNIT
     if not self.CargoInAir then
       -- If NearRadius is given, then use the given NearRadius, otherwise calculate the NearRadius 
       -- based upon the Carrier bounding radius, which is calculated from the bounding rectangle on the Y axis.
+      env.info(string.format("FF nearradius = %d (before)", NearRadius))
       local NearRadius = CargoCarrier:GetBoundingRadius( NearRadius ) + 5
+      env.info(string.format("FF nearradius = %d isnear=%s", NearRadius, tostring(self:IsNear( CargoCarrier:GetPointVec2(), NearRadius )) ))
       if self:IsNear( CargoCarrier:GetPointVec2(), NearRadius ) then
         self:Load( CargoCarrier, NearRadius, ... )
       else
@@ -288,7 +290,7 @@ do -- CARGO_UNIT
   -- @param Wrapper.Client#CLIENT CargoCarrier
   -- @param #number NearRadius Default 25 m.
   function CARGO_UNIT:onafterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
-    self:F( { From, Event, To, CargoCarrier:GetName() } )
+    self:F( { From, Event, To, CargoCarrier:GetName(), NearRadius } )
     
     
     if CargoCarrier and CargoCarrier:IsAlive() and self.CargoObject and self.CargoObject:IsAlive() then 

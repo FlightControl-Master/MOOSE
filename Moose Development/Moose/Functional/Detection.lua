@@ -1897,7 +1897,7 @@ do -- DETECTION_UNITS
 
   --- Make text documenting the changes of the detected zone.
   -- @param #DETECTION_UNITS self
-  -- @param #DETECTION_UNITS.DetectedItem DetectedItem
+  -- @param #DETECTION_BASE.DetectedItem DetectedItem
   -- @return #string The Changes text
   function DETECTION_UNITS:GetChangeText( DetectedItem )
     self:F( DetectedItem )
@@ -2149,7 +2149,7 @@ do -- DETECTION_TYPES
 
   --- Make text documenting the changes of the detected zone.
   -- @param #DETECTION_TYPES self
-  -- @param #DETECTION_TYPES.DetectedItem DetectedItem
+  -- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
   -- @return #string The Changes text
   function DETECTION_TYPES:GetChangeText( DetectedItem )
     self:F( DetectedItem )
