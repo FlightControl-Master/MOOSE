@@ -273,7 +273,7 @@ do -- CARGO_UNIT
           
           local TaskRoute = self.CargoObject:TaskRoute( Points )
           self.CargoObject:SetTask( TaskRoute, 2 )
-          self:__Boarding( -1, CargoCarrier, NearRadius )
+          self:__Boarding( -5, CargoCarrier, NearRadius )
           self.RunCount = 0
         end
       end
@@ -299,8 +299,13 @@ do -- CARGO_UNIT
         if self:IsNear( CargoCarrier:GetPointVec2(), NearRadius ) then
           self:__Load( 1, CargoCarrier, ... )
         else
-          self:__Boarding( -1, CargoCarrier, NearRadius, ... )
-          self.RunCount = self.RunCount + 1
+          if self:IsNear( CargoCarrier:GetPointVec2(), 20 ) then
+            self:__Boarding( -2, CargoCarrier, NearRadius, ... )
+            self.RunCount = self.RunCount + 2
+          else
+            self:__Boarding( -10, CargoCarrier, NearRadius, ... )
+            self.RunCount = self.RunCount + 10
+          end
           if self.RunCount >= 40 then
             self.RunCount = 0
             local Speed = 90

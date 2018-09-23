@@ -174,8 +174,9 @@ end
 -- @param To
 -- @param Core.Point#COORDINATE Coordinate of the pickup point.
 -- @param #number Speed Speed in km/h to drive to the pickup coordinate. Default is 50% of max possible speed the unit can go.
+-- @param #number Height Height in meters to move to the home coordinate.
 -- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
-function AI_CARGO:onafterPickup( APC, From, Event, To, Coordinate, Speed, PickupZone )
+function AI_CARGO:onafterPickup( APC, From, Event, To, Coordinate, Speed, Height, PickupZone )
 
   self.Transporting = false
   self.Relocating = true
@@ -191,7 +192,9 @@ end
 -- @param To
 -- @param Core.Point#COORDINATE Coordinate Deploy place.
 -- @param #number Speed Speed in km/h to drive to the depoly coordinate. Default is 50% of max possible speed the unit can go.
-function AI_CARGO:onafterDeploy( APC, From, Event, To, Coordinate, Speed, DeployZone )
+-- @param #number Height Height in meters to move to the deploy coordinate.
+-- @param Core.Zone#ZONE DeployZone The zone where the cargo will be deployed.
+function AI_CARGO:onafterDeploy( APC, From, Event, To, Coordinate, Speed, Height, DeployZone )
 
   self.Relocating = false
   self.Transporting = true
@@ -210,7 +213,7 @@ function AI_CARGO:onbeforeLoad( Carrier, From, Event, To, PickupZone )
 
   local Boarding = false
 
-  local LoadInterval = 2
+  local LoadInterval = 5
   local LoadDelay = 0
   local Carrier_List = {}
   local Carrier_Weight = {}
@@ -258,8 +261,8 @@ function AI_CARGO:onbeforeLoad( Carrier, From, Event, To, PickupZone )
             if Carrier_Weight[CarrierUnit] > CargoWeight then --and CargoBayFreeVolume > CargoVolume then
               Carrier:RouteStop()
               --Cargo:Ungroup()
-              Cargo:__Board( LoadDelay, CarrierUnit, 25 )
-              LoadDelay = LoadDelay + LoadInterval
+              Cargo:__Board( -LoadDelay, CarrierUnit, 25 )
+              LoadDelay = LoadDelay + Cargo:GetCount() * LoadInterval
               self:__Board( LoadDelay, Cargo, CarrierUnit, PickupZone )
   
               -- So now this CarrierUnit has Cargo that is being loaded.
@@ -305,7 +308,7 @@ function AI_CARGO:onafterBoard( Carrier, From, Event, To, Cargo, CarrierUnit, Pi
   if Carrier and Carrier:IsAlive() then
     self:F({ IsLoaded = Cargo:IsLoaded(), Cargo:GetName(), Carrier:GetName() } )
     if not Cargo:IsLoaded() then
-      self:__Board( 10, Cargo, CarrierUnit, PickupZone )
+      self:__Board( -10, Cargo, CarrierUnit, PickupZone )
       return
     end
   end
@@ -394,7 +397,7 @@ function AI_CARGO:onafterUnload( Carrier, From, Event, To, DeployZone )
         self:F( { Cargo = Cargo:GetName(), Isloaded = Cargo:IsLoaded() } )
         if Cargo:IsLoaded() then
           Cargo:__UnBoard( UnboardDelay )
-          UnboardDelay = UnboardDelay + UnboardInterval
+          UnboardDelay = UnboardDelay + Cargo:GetCount() * UnboardInterval
           Cargo:SetDeployed( true )
           self:__Unboard( UnboardDelay, Cargo, CarrierUnit, DeployZone )
         end 
