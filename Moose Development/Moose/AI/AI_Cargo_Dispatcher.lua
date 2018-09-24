@@ -112,6 +112,24 @@
 
 
 --- @type AI_CARGO_DISPATCHER
+-- @field Core.Set#SET_GROUP CarrierSet The set of @{Wrapper.Group#GROUP} objects of carriers that will transport the cargo. 
+-- @field Core.Set#SET_CARGO CargoSet The set of @{Cargo.Cargo#CARGO} objects, which can be CARGO_GROUP, CARGO_CRATE, CARGO_SLINGLOAD objects.
+-- @field Core.Zone#SET_ZONE PickupZoneSet The set of pickup zones, which are used to where the cargo can be picked up by the carriers. If nil, then cargo can be picked up everywhere. 
+-- @field Core.Zone#SET_ZONE DeployZoneSet The set of deploy zones, which are used to where the cargo will be deployed by the carriers. 
+-- @field #number PickupMaxSpeed The maximum speed to move to the cargo pickup location.
+-- @field #number PickupMinSpeed The minimum speed to move to the cargo pickup location.
+-- @field #number DeployMaxSpeed The maximum speed to move to the cargo deploy location.
+-- @field #number DeployMinSpeed The minimum speed to move to the cargo deploy location.
+-- @field #number PickupMaxHeight The maximum height to fly to the cargo pickup location.
+-- @field #number PickupMinHeight The minimum height to fly to the cargo pickup location.
+-- @field #number DeployMaxHeight The maximum height to fly to the cargo deploy location.
+-- @field #number DeployMinHeight The minimum height to fly to the cargo deploy location.
+-- @field #number PickupOuterRadius The outer radius in meters around the cargo coordinate to pickup the cargo.
+-- @field #number PickupInnerRadius The inner radius in meters around the cargo coordinate to pickup the cargo.
+-- @field #number DeployOuterRadius The outer radius in meters around the cargo coordinate to deploy the cargo.
+-- @field #number DeployInnerRadius The inner radius in meters around the cargo coordinate to deploy the cargo.
+-- @field Core.Zone#ZONE_BASE HomeZone The home zone where the carriers will return when there is no more cargo to pickup.
+-- @field #number MonitorTimeInterval The interval in seconds when the cargo dispatcher will search for new cargo to be picked up.
 -- @extends Core.Fsm#FSM
 
 
@@ -556,23 +574,23 @@
 -- @field #AI_CARGO_DISPATCHER
 AI_CARGO_DISPATCHER = {
   ClassName = "AI_CARGO_DISPATCHER",
-  SetCarrier = nil,
-  DeployZoneSet = nil,
   AI_Cargo = {},
   PickupCargo = {}
 }
 
---- @field #AI_CARGO_DISPATCHER.AI_Cargo 
+--- @field #list 
 AI_CARGO_DISPATCHER.AI_Cargo = {}
 
---- @field #AI_CARGO_DISPATCHER.PickupCargo
+--- @field #list
 AI_CARGO_DISPATCHER.PickupCargo = {}
 
 
 --- Creates a new AI_CARGO_DISPATCHER object.
 -- @param #AI_CARGO_DISPATCHER self
--- @param Core.Set#SET_GROUP SetCarrier
--- @param Core.Set#SET_CARGO SetCargo
+-- @param Core.Set#SET_GROUP CarrierSet The set of @{Wrapper.Group#GROUP} objects of carriers that will transport the cargo. 
+-- @param Core.Set#SET_CARGO CargoSet The set of @{Cargo.Cargo#CARGO} objects, which can be CARGO_GROUP, CARGO_CRATE, CARGO_SLINGLOAD objects.
+-- @param Core.Set#SET_ZONE PickupZoneSet (optional) The set of pickup zones, which are used to where the cargo can be picked up by the carriers. If nil, then cargo can be picked up everywhere. 
+-- @param Core.Set#SET_ZONE DeployZoneSet The set of deploy zones, which are used to where the cargo will be deployed by the carriers. 
 -- @return #AI_CARGO_DISPATCHER
 -- @usage
 -- 
@@ -615,12 +633,16 @@ AI_CARGO_DISPATCHER.PickupCargo = {}
 --      AICargoDispatcherAirplanes = AI_CARGO_DISPATCHER_AIRPLANE:New( AirplanesSet, CargoInfantrySet, PickupZoneSet, DeployZoneSet ) 
 --      AICargoDispatcherAirplanes:Start()
 -- 
-function AI_CARGO_DISPATCHER:New( SetCarrier, SetCargo )
+function AI_CARGO_DISPATCHER:New( CarrierSet, CargoSet, PickupZoneSet, DeployZoneSet )
 
   local self = BASE:Inherit( self, FSM:New() ) -- #AI_CARGO_DISPATCHER
 
-  self.SetCarrier = SetCarrier -- Core.Set#SET_GROUP
-  self.SetCargo = SetCargo -- Core.Set#SET_CARGO
+  self.SetCarrier = CarrierSet -- Core.Set#SET_GROUP
+  self.SetCargo = CargoSet -- Core.Set#SET_CARGO
+  
+  self.PickupZoneSet = PickupZoneSet
+  self.DeployZoneSet = DeployZoneSet
+  
 
   self:SetStartState( "Idle" ) 
   
@@ -654,7 +676,7 @@ function AI_CARGO_DISPATCHER:New( SetCarrier, SetCargo )
   self.CarrierHome = {}
   
   -- Put a Dead event handler on SetCarrier, to ensure that when a carrier is destroyed, that all internal parameters are reset.
-  function SetCarrier.OnAfterRemoved( SetCarrier, From, Event, To, CarrierName, Carrier )
+  function self.SetCarrier.OnAfterRemoved( SetCarrier, From, Event, To, CarrierName, Carrier )
     self:F( { Carrier = Carrier:GetName() } )
     self.PickupCargo[Carrier] = nil
     self.CarrierHome[Carrier] = nil
@@ -666,7 +688,7 @@ end
 
 --- Set the monitor time interval.
 -- @param #AI_CARGO_DISPATCHER self
--- @param #number MonitorTimeInterval
+-- @param #number MonitorTimeInterval The interval in seconds when the cargo dispatcher will search for new cargo to be picked up.
 -- @return #AI_CARGO_DISPATCHER
 function AI_CARGO_DISPATCHER:SetMonitorTimeInterval( MonitorTimeInterval )
 
@@ -680,7 +702,7 @@ end
 -- When there is nothing anymore to pickup, the carriers will go to a random coordinate in this zone.
 -- They will await here new orders.
 -- @param #AI_CARGO_DISPATCHER self
--- @param Core.Zone#ZONE_BASE HomeZone
+-- @param Core.Zone#ZONE_BASE HomeZone The home zone where the carriers will return when there is no more cargo to pickup.
 -- @return #AI_CARGO_DISPATCHER
 -- @usage
 -- 

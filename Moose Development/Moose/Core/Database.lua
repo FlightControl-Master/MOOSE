@@ -310,9 +310,9 @@ do -- Zones
     end
   
     for ZoneGroupName, ZoneGroup in pairs( self.GROUPS ) do
-      if ZoneGroupName:match("~ZONE_POLYGON") then
-        local ZoneName1 = ZoneGroupName:match("(.*)~ZONE_POLYGON")
-        local ZoneName2 = ZoneGroupName:match(".*~ZONE_POLYGON(.*)")
+      if ZoneGroupName:match("#ZONE_POLYGON") then
+        local ZoneName1 = ZoneGroupName:match("(.*)#ZONE_POLYGON")
+        local ZoneName2 = ZoneGroupName:match(".*#ZONE_POLYGON(.*)")
         local ZoneName = ZoneName1 .. ( ZoneName2 or "" )
         
         self:I( { "Register ZONE_POLYGON:", Name = ZoneName } )
