@@ -640,9 +640,6 @@ function AI_CARGO_DISPATCHER:New( CarrierSet, CargoSet, PickupZoneSet, DeployZon
   self.SetCarrier = CarrierSet -- Core.Set#SET_GROUP
   self.SetCargo = CargoSet -- Core.Set#SET_CARGO
   
-  self.PickupZoneSet = PickupZoneSet
-  self.DeployZoneSet = DeployZoneSet
-  
 
   self.PickupZoneSet=PickupZoneSet
   self.DeployZoneSet=DeployZoneSet
@@ -1119,8 +1116,8 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
           local CargoCoordinate = Cargo:GetCoordinate()
           local CoordinateFree = true
           --self.PickupZoneSet:Flush()
-          PickupZone = self.PickupZoneSet:GetRandomZone()
-          --PickupZone = self.PickupZoneSet and self.PickupZoneSet:IsCoordinateInZone( CargoCoordinate )
+          --PickupZone = self.PickupZoneSet:GetRandomZone()
+          PickupZone = self.PickupZoneSet and self.PickupZoneSet:IsCoordinateInZone( CargoCoordinate )
           if not self.PickupZoneSet or PickupZone then
             for CarrierPickup, Coordinate in pairs( self.PickupCargo ) do
               if CarrierPickup:IsAlive() == true then
