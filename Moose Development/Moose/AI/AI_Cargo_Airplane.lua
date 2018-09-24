@@ -272,7 +272,7 @@ function AI_CARGO_AIRPLANE:onafterPickup( Airplane, From, Event, To, Coordinate,
   
     -- Get closest airbase of current position.
     local ClosestAirbase, DistToAirbase=Airplane:GetCoordinate():GetClosestAirbase()
-    
+        
     --env.info("FF onafterpickup closest airbase "..ClosestAirbase:GetName())
   
     -- Two cases. Aircraft spawned in air or at an airbase.

@@ -112,6 +112,8 @@
 
 
 --- @type AI_CARGO_DISPATCHER
+-- @field Core.Set#SET_ZONE PickupZoneSet
+-- @field Core.Set#SET_ZONE DeployZoneSet
 -- @extends Core.Fsm#FSM
 
 
@@ -557,6 +559,7 @@
 AI_CARGO_DISPATCHER = {
   ClassName = "AI_CARGO_DISPATCHER",
   SetCarrier = nil,
+  PickupZoneSet = nil,
   DeployZoneSet = nil,
   AI_Cargo = {},
   PickupCargo = {}
@@ -1097,10 +1100,8 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
           local CargoCoordinate = Cargo:GetCoordinate()
           local CoordinateFree = true
           --self.PickupZoneSet:Flush()
-          env.info("FF pickupzoneset")
-          self:E(self.PickupZoneSet)
-          PickupZone = self.PickupZoneSet and self.PickupZoneSet:GetRandomZone():IsCoordinateInZone( CargoCoordinate )
-          self:E(PickupZone)
+          PickupZone = self.PickupZoneSet:GetRandomZone()
+          --PickupZone = self.PickupZoneSet and self.PickupZoneSet:IsCoordinateInZone( CargoCoordinate )
           if not self.PickupZoneSet or PickupZone then
             for CarrierPickup, Coordinate in pairs( self.PickupCargo ) do
               if CarrierPickup:IsAlive() == true then
@@ -1139,7 +1140,6 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
       if PickupCargo then
         self.CarrierHome[Carrier] = nil
         local PickupCoordinate = PickupCargo:GetCoordinate():GetRandomCoordinateInRadius( self.PickupOuterRadius, self.PickupInnerRadius )
-        env.info("FF pickup zone = "..tostring(PickupZone:GetName()))
         AI_Cargo:Pickup( PickupCoordinate, math.random( self.PickupMinSpeed, self.PickupMaxSpeed ), math.random( self.PickupMinHeight, self.PickupMaxHeight ), PickupZone )
         break
       else
