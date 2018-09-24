@@ -6,12 +6,14 @@
 --
 -- Features:
 --
---    * Holds (virtual) assests in stock.
+--    * Holds (virtual) assests in stock and spawns them upon request.
 --    * Manages requests of assets from other warehouses.
+--    * Queueing system with optional priorization of requests.
 --    * Realistic transportation of assets between warehouses.
 --    * Different means of automatic transportation (planes, helicopters, APCs, self propelled).
 --    * Strategic components such as capturing, defending and destroying warehouses and their associated infrastructure.
 --    * Intelligent spawning of aircraft on airports (only if enough parking spots are available).
+--    * Possibility to hook into events and customize actions.
 --    * Can be easily interfaced to other MOOSE classes.
 --
 -- Please not that his class is work in progress and in an **alpha** stage.
@@ -86,6 +88,7 @@
 -- It also alliviates the problem of limited parking spots at smaller air bases 
 -- 
 -- ## What means of transportation are available?
+-- 
 -- Firstly, all mobile assets can be send from warehouse to another on their own.
 -- 
 -- * Ground vehicles will use the road infrastructure. So a good road connection for both warehouses is important but also off road connections can be added if necessary.
@@ -133,9 +136,8 @@
 -- 
 -- # Adding Assets
 -- 
--- Assets can be added to the warehouse stock by using the @{#WAREHOUSE.AddAsset}(*group*, *ngroups*, *forceattribute*, *forcecargobay*, *forceweight*) function. The parameter *group* has to be a MOOSE @{Wrapper.Group#GROUP}.
--- The parameter *ngroups* specifies how many clones of this group are added to the stock.
--- 
+-- Assets can be added to the warehouse stock by using the @{#WAREHOUSE.AddAsset}(*group*, *ngroups*, *forceattribute*, *forcecargobay*, *forceweight*, *loadradius*) function.
+-- The parameter *group* has to be a MOOSE @{Wrapper.Group#GROUP}. The parameter *ngroups* specifies how many clones of this group are added to the stock.
 -- 
 --     infrantry=GROUP:FindByName("Some Infantry Group")
 --     warehouseBatumi:AddAsset(infantry, 5)
@@ -143,7 +145,7 @@
 -- This will add five infantry groups to the warehouse stock. Note that the group will normally be a late activated template group, 
 -- which was defined in the mission editor. But you can also add other groups which are already spawned and present in the mission.
 -- 
--- You can add assets with a delay by using the @{#WAREHOUSE.__AddAsset}(*delay*, *group*, *ngroups*, *foceattribute*, *forcecargobay*, *forceweight*), where *delay* 
+-- You can add assets with a delay by using the @{#WAREHOUSE.__AddAsset}(*delay*, *group*, *ngroups*, *foceattribute*, *forcecargobay*, *forceweight*, *loadradius*), where *delay* 
 -- is the delay in seconds before the asset is added.
 -- 
 -- In game, the warehouse will get a mark which is regularly updated and showing the currently available assets in stock.
@@ -235,7 +237,7 @@
 -- 
 -- # Employing Assets
 -- 
--- Assets in the warehouse' stock can used for user defined tasks realtively easily. They can be spawned into the game by a "*self request*", i.e. the warehouse
+-- Assets in the warehouses stock can used for user defined tasks realtively easily. They can be spawned into the game by a "*self request*", i.e. the warehouse
 -- requests the assets from itself:
 -- 
 --     warehouseBatumi:AddRequest(warehouseBatumi, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_INFANTRY, 5)
@@ -255,6 +257,8 @@
 --     -- @param Core.Set#SET_GROUP groupset The set of cargo groups that was delivered to the warehouse itself.
 --     -- @param #WAREHOUSE.Pendingitem request Pending self request.
 --     function WAREHOUSE:OnAfterSelfRequest(From, Event, To, groupset, request)
+--       local groupset=groupset --Core.Set#SET_GROUP
+--       local request=request   --Functional.Warehouse#WAREHOUSE.Pendingitem
 --     
 --       for _,group in pairs(groupset:GetSetObjects()) do
 --         local group=group --Wrapper.Group#GROUP
@@ -266,7 +270,7 @@
 -- The variable *groupset* is a @{Core.Set#SET_GROUP} object and holds all asset groups from the request. The code above shows, how the mission designer can access the groups
 -- for further tasking. Here, the groups are only smoked but, of course, you can use them for whatever task you fancy.
 -- 
--- Note that airborne groups are spawned in uncontrolled state and need to be activated first before they can start their assigned mission.
+-- Note that airborne groups are spawned in **uncontrolled state** and need to be activated first before they can start their assigned mission.
 -- This can be done with the @{Wrapper.Controllable#CONTROLLABLE.StartUncontrolled} function.
 -- 
 -- ===
@@ -368,37 +372,68 @@
 -- For each request, the warehouse class logic does a lot of consistancy and validation checks under the hood.
 -- This helps to circumvent a lot of DCS issues and shortcomings. For example, it is checked that enough free
 -- parking spots at an airport are available *before* the assets are spawned.
--- However, this also means that sometimes a request is deemed to be *invalid* in which case they are deleted from the queue or considered to be valid but cannot be executed at this very moment.
+-- However, this also means that sometimes a request is deemed to be *invalid* in which case they are deleted 
+-- from the queue or considered to be valid but cannot be executed at this very moment.
 -- 
 -- ## Invalid Requests
 -- 
--- Invalid request are requests which can **never** be processes because there is some logical or physical argument against it. Or simply because that feature was not implemented (yet).
+-- Invalid request are requests which can **never** be processes because there is some logical or physical argument against it. 
+-- (Or simply because that feature was not implemented (yet).)
 -- 
 -- * All airborne assets need an associated airbase of any kind on the sending *and* receiving warhouse.
 -- * Airplanes need an airdrome at the sending and receiving warehouses.
--- * Not enough parking spots of the right terminal type at the sending warehouse.
--- * No parking spots of the right terminal type at the receiving warehouse. 
--- * Ground assets need a road connection between both warehouses. 
+-- * Not enough parking spots of the right terminal type at the sending warehouse. This avoids planes spawning on runways or on top of each other.
+-- * No parking spots of the right terminal type at the receiving warehouse. This avoids DCS despawning planes on landing if they have no valid parking spot.
+-- * Ground assets need a road connection between both warehouses or an off-road path needs to be added manually.
 -- * Ground assets cannot be send directly to ships, i.e. warehouses on ships.
 -- * Naval units need a user defined shipping lane between both warehouses.
 -- * Warehouses need a user defined port zone to spawn naval assets.
+-- * The receiving warehouse is destroyed or stopped.
 -- * If transport by airplane, both warehouses must have and airdrome.
 -- * If transport by APC, both warehouses must have a road connection.
--- * If transport by helicopter, the sending airbase must have an associated airbase.
+-- * If transport by helicopter, the sending airbase must have an associated airbase (airdrome or FARP).
 -- 
--- All invalid requests are removed from the warehouse queue!
+-- All invalid requests are cancelled and **removed** from the warehouse queue!
 --   
 -- ## Temporarily Unprocessable Requests
 -- 
 -- Temporarily unprocessable requests are possible in priciple, but cannot be processed at the given time the warehouse checks its queue.
 -- 
--- * No enough parking spaces are available for the requests assets but the airbase has enough parking spots in total so that this request is possible once other aircraft have taken off.
--- * Requesting warehouse is not in state "Running" (could be stopped, not yet started or under attack).
+-- * No enough parking spaces are available for all requested assets but the airbase has enough parking spots in total so that this request is possible once other aircraft have taken off.
+-- * The requesting warehouse is not in state "Running" (could be paused, not yet started or under attack).
 -- * Not enough cargo assets available at this moment.
 -- * Not enough free parking spots for all cargo or transport airborne assets at the moment.
 -- * Not enough transport assets to carry all cargo assets.
 -- 
 -- Temporarily unprocessable requests are held in the queue. If at some point in time, the situation changes so that these requests can be processed, they are executed.
+-- 
+-- ## Cargo Bay and Weight Limitations
+-- 
+-- The transporation of cargo is handled by the AI\_Dispatcher classes. These take the cargo bay of a carrier and the weight of
+-- the cargo into account so that a carrier can only load a realistic amount of cargo.
+-- 
+-- However, if troops are supposed to be transported between warehouses, there is one important limitations one has to keep in mind.
+-- This is that **cargo asset groups cannot be split** and devided into separate carrier units!
+-- 
+-- For example, a TPz Fuchs has a cargo bay large enough to carry up to 10 soldiers at once, which is a realistic number.
+-- If a group consisting of more than ten soldiers needs to be transported, it cannot be loaded into the APC.
+-- Even if two APCs are available, which could in principle carry up to 20 soldiers, a group of, let's say 12 soldiers will not 
+-- be split into a group of ten soldiers using the first APC and a group two soldiers using the second APC.  
+-- 
+-- In other words, **there must be at least one carrier unit available that has a cargo bay large enough to load the heaviest cargo group!**
+-- The warehouse logic will automatically search all available transport assets for a large enough carrier.
+-- But if none is available, the request will be queued until a suitable carrier becomes available.
+-- 
+-- The only realistic solution in this case is to either provide a transport carrier with a larger cargo bay or to reduce the number of soldiers
+-- in the group.
+-- 
+-- A better way would be to have two groups of max. 10 soldiers each and one TPz Fuchs for transport. In this case, the first group is
+-- loaded and transported to the receiving warehouse. Once this is done, the carrier will drive back and pick up the remaining
+-- group.
+-- 
+-- As an artificial workaround one can manually set the cargo bay size to a larger value or alternatively reduce the weight of the cargo
+-- when adding the assets via the @{#WAREHOUSE.AddAsset} function. This might even be unavoidable if, for example, a SAM group
+-- should be transported since SAM sites only work when all units are in the same group.
 -- 
 -- ## Processing Speed
 -- 
@@ -1160,10 +1195,10 @@ WAREHOUSE = {
 -- @field #number weight The weight of the whole asset group in kilo gramms.
 -- @field DCS#Object.Desc DCSdesc All DCS descriptors.
 -- @field #WAREHOUSE.Attribute attribute Generalized attribute of the group.
--- @field #boolean transporter If true, the asset is able to transport troops.
 -- @field #table cargobay Array of cargo bays of all units in an asset group.
 -- @field #number cargobaytot Total weight in kg that fits in the cargo bay of all asset group units.
 -- @field #number cargobaymax Largest cargo bay of all units in the group.
+-- @field #number loadradius Distance when cargo is loaded into the carrier.
 
 --- Item of the warehouse queue table.
 -- @type WAREHOUSE.Queueitem
@@ -1311,7 +1346,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.5.2"
+WAREHOUSE.version="0.5.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -1505,20 +1540,22 @@ function WAREHOUSE:New(warehouse, alias)
   -- @function [parent=#WAREHOUSE] AddAsset
   -- @param #WAREHOUSE self
   -- @param Wrapper.Group#GROUP group Group to be added as new asset.
-  -- @param #number ngroups Number of groups to add to the warehouse stock. Default is 1.
+  -- @param #number ngroups (Optional) Number of groups to add to the warehouse stock. Default is 1.
   -- @param #WAREHOUSE.Attribute forceattribute (Optional) Explicitly force a generalized attribute for the asset. This has to be an @{#WAREHOUSE.Attribute}.
   -- @param #number forcecargobay (Optional) Explicitly force cargobay weight limit in kg for cargo carriers. This is for each *unit* of the group.
   -- @param #number forceweight (Optional) Explicitly force weight in kg of each unit in the group.
+  -- @param #number loadradius (Optional) The distance in meters when the cargo is loaded into the carrier. Default is the bounding box size of the carrier.
 
   --- Trigger the FSM event "AddAsset" with a delay. Add a group to the warehouse stock.
   -- @function [parent=#WAREHOUSE] __AddAsset
   -- @param #WAREHOUSE self
   -- @param #number delay Delay in seconds.
   -- @param Wrapper.Group#GROUP group Group to be added as new asset.
-  -- @param #number ngroups Number of groups to add to the warehouse stock. Default is 1.
+  -- @param #number ngroups (Optional) Number of groups to add to the warehouse stock. Default is 1.
   -- @param #WAREHOUSE.Attribute forceattribute (Optional) Explicitly force a generalized attribute for the asset. This has to be an @{#WAREHOUSE.Attribute}.
   -- @param #number forcecargobay (Optional) Explicitly force cargobay weight limit in kg for cargo carriers. This is for each *unit* of the group.
   -- @param #number forceweight (Optional) Explicitly force weight in kg of each unit in the group.
+  -- @param #number loadradius (Optional) The distance in meters when the cargo is loaded into the carrier. Default is the bounding box size of the carrier.
 
 
   --- Triggers the FSM event "NewAsset" when a new asset has been added to the warehouse stock.
@@ -2738,7 +2775,8 @@ end
 -- @param #WAREHOUSE.Attribute forceattribute (Optional) Explicitly force a generalized attribute for the asset. This has to be an @{#WAREHOUSE.Attribute}.
 -- @param #number forcecargobay (Optional) Explicitly force cargobay weight limit in kg for cargo carriers. This is for each *unit* of the group.
 -- @param #number forceweight (Optional) Explicitly force weight in kg of each unit in the group.
-function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribute, forcecargobay, forceweight)
+-- @param #number loadradius (Optional) Radius in meters when the cargo is loaded into the carrier.
+function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribute, forcecargobay, forceweight, loadradius)
   self:T({group=group, ngroups=ngroups, forceattribute=forceattribute, forcecargobay=forcecargobay, forceweight=forceweight})
 
   -- Set default.
@@ -2805,7 +2843,7 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
       self:_DebugMessage(string.format("Warehouse %s: Adding %d NEW assets of group %s to stock.", self.alias, n, tostring(group:GetName())), 5)
        
       -- This is a group that is not in the db yet. Add it n times.
-      local assets=self:_RegisterAsset(group, n, forceattribute, forcecargobay, forceweight)
+      local assets=self:_RegisterAsset(group, n, forceattribute, forcecargobay, forceweight, loadradius)
       
       -- Add created assets to stock of this warehouse.
       for _,asset in pairs(assets) do
@@ -2837,8 +2875,9 @@ end
 -- @param #string forceattribute Forced generalized attribute.
 -- @param #number forcecargobay Cargo bay weight limit in kg.
 -- @param #number forceweight Weight of units in kg.
+-- @param #number loadradius Radius in meters when cargo is loaded into the carrier.
 -- @return #table A table containing all registered assets.
-function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute, forcecargobay, forceweight)
+function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute, forcecargobay, forceweight, loadradius)
   self:F({groupname=group:GetName(), ngroups=ngroups, forceattribute=forceattribute, forcecargobay=forcecargobay, forceweight=forceweight})
 
   -- Set default.
@@ -2931,10 +2970,10 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute, forcecargobay,
     asset.weight=weight
     asset.DCSdesc=Descriptors
     asset.attribute=attribute
-    asset.transporter=false  -- not used yet
     asset.cargobay=cargobay
     asset.cargobaytot=cargobaytot
     asset.cargobaymax=cargobaymax
+    asset.loadradius=loadradius
     
     if i==1 then
       self:_AssetItemInfo(asset)
@@ -2967,6 +3006,7 @@ function WAREHOUSE:_AssetItemInfo(asset)
   text=text..string.format("Weight total  = %5.2f kg\n", asset.weight)
   text=text..string.format("Cargo bay tot = %5.2f kg\n", asset.cargobaytot)
   text=text..string.format("Cargo bay max = %5.2f kg\n", asset.cargobaymax)
+  text=text..string.format("Load radius   = %s m", tostring(asset.loadradius))
   self:T(self.wid..text)
   self:T({DCSdesc=asset.DCSdesc})
   self:T3({Template=asset.template})
@@ -3309,22 +3349,17 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   -- Add groups to cargo if they don't go by themselfs.
   local CargoGroups --Core.Set#SET_CARGO
   
-  -- Load radius and near radius.
-  local _loadradius=5000
-  local _nearradius=nil
+  -- Board radius, i.e. when the cargo will begin to board the carrier
+  local _boardradius=5000
   
   if Request.transporttype==WAREHOUSE.TransportType.AIRPLANE then
-    _loadradius=10000
-    _nearradius=500
+    _boardradius=5000
   elseif Request.transporttype==WAREHOUSE.TransportType.HELICOPTER then
     --_loadradius=1000
-    _loadradius=nil
+    --_boardradius=nil
   elseif Request.transporttype==WAREHOUSE.TransportType.APC then
-    _loadradius=nil
+    --_boardradius=nil
   end
-  
-  --_loadradius=nil
-  --_nearradius=nil
   
   -- Empty cargo group set.
   CargoGroups = SET_CARGO:New()
@@ -3337,15 +3372,14 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   -- Add cargo groups to set.
   for _i,_group in pairs(_spawngroups:GetSetObjects()) do
   
-    -- New cargo group object.
-    local cargogroup=CARGO_GROUP:New(_group, _cargotype,_group:GetName(),_loadradius,_nearradius)
-    
     -- Find asset belonging to this group.
-    local asset=self:FindAssetInDB(_group)
-    if asset then
-      -- Set weight for this group.
-      cargogroup:SetWeight(asset.weight)
-    end
+    local asset=self:FindAssetInDB(_group)  
+  
+    -- New cargo group object.
+    local cargogroup=CARGO_GROUP:New(_group, _cargotype,_group:GetName(),_boardradius, 500) --asset.loadradius)
+    
+    -- Set weight for this group.
+    cargogroup:SetWeight(asset.weight)
     
     -- Add group to group set.
     CargoGroups:AddCargo(cargogroup)
@@ -3473,7 +3507,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
       carrierunit:SetCargoBayWeightLimit(cargobay)
       
       -- Debug info.
-      self:T2(self.wid..string.format("Cargo bay weight limit ofcarrier unit %s: %.1f kg.", carrierunit:GetName(), carrierunit:GetCargoBayFreeWeight()))      
+      self:T2(self.wid..string.format("Cargo bay weight limit of carrier unit %s: %.1f kg.", carrierunit:GetName(), carrierunit:GetCargoBayFreeWeight()))      
     end
   end    
   
@@ -3508,11 +3542,6 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     -- Home zone.
     CargoTransport:SetHomeZone(self.spawnzone)
     
-    --TODO: Need to check/optimize if/how this works with polygon zones!
-    -- The 20 m inner radius are to ensure that the helo does not land on the warehouse itself in the middle of the default spawn zone.
-    CargoTransport:SetPickupRadius(self.spawnzone:GetRadius(), 20)
-    CargoTransport:SetDeployRadius(Request.warehouse.spawnzone:GetRadius(), 20)    
-
   elseif Request.transporttype==WAREHOUSE.TransportType.APC then
   
     -- Pickup and deploy zones.
@@ -3524,15 +3553,27 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     
     -- Set home zone.
     CargoTransport:SetHomeZone(self.spawnzone)
-    
-    --TODO: Need to check/optimize if/how this works with polygon zones!
-    -- The 20 m inner radius are to ensure that the helo does not land on the warehouse itself in the middle of the default spawn zone.
-    CargoTransport:SetPickupRadius(self.spawnzone:GetRadius(), 20)
-    CargoTransport:SetDeployRadius(Request.warehouse.spawnzone:GetRadius(), 20)    
         
   else
     self:E(self.wid.."ERROR: Unknown transporttype!")
   end
+  
+  -- Set pickup and deploy radii.
+  -- The 20 m inner radius are to ensure that the helo does not land on the warehouse itself in the middle of the default spawn zone.
+  local pickupouter=200
+  local pickupinner=0
+  if self.spawnzone.Radius~=nil then
+    pickupouter=self.spawnzone.Radius
+    pickupinner=20
+  end
+  local deployouter=200
+  local deployinner=0
+  if self.spawnzone.Radius~=nil then
+    deployouter=Request.warehouse.spawnzone.Radius
+    deployinner=20
+  end  
+  CargoTransport:SetPickupRadius(pickupouter, pickupinner)
+  CargoTransport:SetDeployRadius(deployouter, deployinner)    
 
   --------------------------------
   -- Dispatcher Event Functions --
