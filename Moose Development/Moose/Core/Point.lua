@@ -2033,7 +2033,7 @@ do -- POINT_VEC3
   -- @field #POINT_VEC3.RoutePointAltType RoutePointAltType
   -- @field #POINT_VEC3.RoutePointType RoutePointType
   -- @field #POINT_VEC3.RoutePointAction RoutePointAction
-  -- @extends Core.Point#COORDINATE
+  -- @extends #COORDINATE
   
   
   --- Defines a 3D point in the simulator and with its methods, you can use or manipulate the point in 3D space.
