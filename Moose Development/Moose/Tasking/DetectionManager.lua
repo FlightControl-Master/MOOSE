@@ -43,11 +43,13 @@
 
 do -- DETECTION MANAGER
   
-  --- DETECTION_MANAGER class.
-  -- @type DETECTION_MANAGER
+  --- @type DETECTION_MANAGER
   -- @field Core.Set#SET_GROUP SetGroup The groups to which the FAC will report to.
   -- @field Functional.Detection#DETECTION_BASE Detection The DETECTION_BASE object that is used to report the detected objects.
   -- @extends Core.Fsm#FSM
+
+  --- DETECTION_MANAGER class.
+  -- @field #DETECTION_MANAGER
   DETECTION_MANAGER = {
     ClassName = "DETECTION_MANAGER",
     SetGroup = nil,
