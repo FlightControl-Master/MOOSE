@@ -325,7 +325,7 @@ do -- FSM
   --
   -- ===
   -- 
-  -- @field #FSM FSM
+  -- @field #FSM
   -- 
   FSM = {
     ClassName = "FSM",

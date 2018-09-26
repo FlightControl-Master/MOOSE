@@ -297,7 +297,7 @@ do -- CARGO_UNIT
     
     if CargoCarrier and CargoCarrier:IsAlive() and self.CargoObject and self.CargoObject:IsAlive() then 
       if (CargoCarrier:IsAir() and not CargoCarrier:InAir()) or true then
-        local NearRadius = CargoCarrier:GetBoundingRadius( NearRadius ) + 5
+        local NearRadius = NearRadius or CargoCarrier:GetBoundingRadius( NearRadius ) + 5
         if self:IsNear( CargoCarrier:GetPointVec2(), NearRadius ) then
           self:__Load( 1, CargoCarrier, ... )
         else
