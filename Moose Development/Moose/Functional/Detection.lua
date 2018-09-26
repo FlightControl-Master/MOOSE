@@ -1864,14 +1864,16 @@ end
 
 do -- DETECTION_UNITS
 
+  --- @type DETECTION_UNITS
+  -- @field DCS#Distance DetectionRange The range till which targets are detected.
+  -- @extends Functional.Detection#DETECTION_BASE
+
   --- Will detect units within the battle zone.
   -- 
   -- It will build a DetectedItems list filled with DetectedItems. Each DetectedItem will contain a field Set, which contains a @{Core.Set#SET_UNIT} containing ONE @{UNIT} object reference.
   -- Beware that when the amount of units detected is large, the DetectedItems list will be large also. 
   -- 
-  -- @type DETECTION_UNITS
-  -- @field DCS#Distance DetectionRange The range till which targets are detected.
-  -- @extends #DETECTION_BASE
+  -- @field #DETECTION_UNITS
   DETECTION_UNITS = {
     ClassName = "DETECTION_UNITS",
     DetectionRange = nil,
@@ -2117,13 +2119,15 @@ end
 
 do -- DETECTION_TYPES
 
+  --- @type DETECTION_TYPES
+  -- @extends Functional.Detection#DETECTION_BASE
+
   --- Will detect units within the battle zone.
   -- It will build a DetectedItems[] list filled with DetectedItems, grouped by the type of units detected. 
   -- Each DetectedItem will contain a field Set, which contains a @{Core.Set#SET_UNIT} containing ONE @{UNIT} object reference.
   -- Beware that when the amount of different types detected is large, the DetectedItems[] list will be large also. 
   -- 
-  -- @type DETECTION_TYPES
-  -- @extends #DETECTION_BASE
+  -- @field #DETECTION_TYPES
   DETECTION_TYPES = {
     ClassName = "DETECTION_TYPES",
     DetectionRange = nil,
@@ -2324,6 +2328,11 @@ end
 
 do -- DETECTION_AREAS
 
+  --- @type DETECTION_AREAS
+  -- @field DCS#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
+  -- @field #DETECTION_BASE.DetectedItems DetectedItems A list of areas containing the set of @{Wrapper.Unit}s, @{Zone}s, the center @{Wrapper.Unit} within the zone, and ID of each area that was detected within a DetectionZoneRange.
+  -- @extends Functional.Detection#DETECTION_BASE
+
   --- Detect units within the battle zone for a list of @{Wrapper.Group}s detecting targets following (a) detection method(s), 
   -- and will build a list (table) of @{Core.Set#SET_UNIT}s containing the @{Wrapper.Unit#UNIT}s detected.
   -- The class is group the detected units within zones given a DetectedZoneRange parameter.
@@ -2354,10 +2363,7 @@ do -- DETECTION_AREAS
   --   
   -- the detected zones when a new detection has taken place.
   -- 
-  -- @type DETECTION_AREAS
-  -- @field DCS#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
-  -- @field #DETECTION_BASE.DetectedItems DetectedItems A list of areas containing the set of @{Wrapper.Unit}s, @{Zone}s, the center @{Wrapper.Unit} within the zone, and ID of each area that was detected within a DetectionZoneRange.
-  -- @extends #DETECTION_BASE
+  -- @field #DETECTION_AREAS
   DETECTION_AREAS = {
     ClassName = "DETECTION_AREAS",
     DetectionZoneRange = nil,
