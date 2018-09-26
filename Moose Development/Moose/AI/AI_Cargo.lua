@@ -261,7 +261,7 @@ function AI_CARGO:onbeforeLoad( Carrier, From, Event, To, PickupZone )
             if Carrier_Weight[CarrierUnit] > CargoWeight then --and CargoBayFreeVolume > CargoVolume then
               Carrier:RouteStop()
               --Cargo:Ungroup()
-              Cargo:__Board( -LoadDelay, CarrierUnit, 25)
+              Cargo:__Board( -LoadDelay, CarrierUnit )
               LoadDelay = LoadDelay + Cargo:GetCount() * LoadInterval
               self:__Board( LoadDelay, Cargo, CarrierUnit, PickupZone )
   

@@ -270,6 +270,8 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
   self:SetMenu()
   
   _SETTINGS:SetSystemMenu( CommandCenterPositionable )
+  
+  self:SetCommandMenu()
 	
 	return self
 end
@@ -440,10 +442,7 @@ function COMMANDCENTER:GetMenu( TaskGroup )
   self.CommandCenterMenus[TaskGroup] = CommandCenterMenu
 
   if self.AutoAssignTasks == false then
-    local AutoAssignTaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, "Assign Task On", CommandCenterMenu, self.SetAutoAssignTasks, self, true ):SetTime(MenuTime):SetTag("AutoTask")
     local AssignTaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, "Assign Task", CommandCenterMenu, self.AssignRandomTask, self, TaskGroup ):SetTime(MenuTime):SetTag("AutoTask")
-  else
-    local AutoAssignTaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, "Assign Task Off", CommandCenterMenu, self.SetAutoAssignTasks, self, false ):SetTime(MenuTime):SetTag("AutoTask")
   end
   CommandCenterMenu:Remove( MenuTime, "AutoTask" )
     
@@ -475,10 +474,32 @@ function COMMANDCENTER:AssignRandomTask( TaskGroup )
 end
 
 
+--- Sets the menu of the command center.
+-- This command is called within the :New() method.
+-- @param #COMMANDCENTER self
+function COMMANDCENTER:SetCommandMenu()
+
+  local MenuTime = timer.getTime()
+  
+  if self.CommandCenterPositionable and self.CommandCenterPositionable:IsInstanceOf(GROUP) then
+    local CommandCenterText = self:GetText()
+    local CommandCenterMenu = MENU_GROUP:New( self.CommandCenterPositionable, CommandCenterText ):SetTime(MenuTime)
+  
+    if self.AutoAssignTasks == false then
+      local AutoAssignTaskMenu = MENU_GROUP_COMMAND:New( self.CommandCenterPositionable, "Assign Task On", CommandCenterMenu, self.SetAutoAssignTasks, self, true ):SetTime(MenuTime):SetTag("AutoTask")
+    else
+      local AutoAssignTaskMenu = MENU_GROUP_COMMAND:New( self.CommandCenterPositionable, "Assign Task Off", CommandCenterMenu, self.SetAutoAssignTasks, self, false ):SetTime(MenuTime):SetTag("AutoTask")
+    end
+    CommandCenterMenu:Remove( MenuTime, "AutoTask" )
+  end
+
+end
+
+
+
 --- Automatically assigns tasks to all TaskGroups.
 -- @param #COMMANDCENTER self
 -- @param #boolean AutoAssign true for ON and false or nil for OFF.
--- @return #COMMANDCENTER
 function COMMANDCENTER:SetAutoAssignTasks( AutoAssign )
 
   self.AutoAssignTasks = AutoAssign or false
@@ -495,6 +516,8 @@ function COMMANDCENTER:SetAutoAssignTasks( AutoAssign )
   else
     self:ScheduleStop( self.AssignTasks )
   end
+  
+  self:SetCommandCenterMenu()
 
 end
 
@@ -517,12 +540,13 @@ function COMMANDCENTER:AssignTasks()
       end
     end
   end
+
 end
 
 
 --- Get all the Groups active within the command center.
 -- @param #COMMANDCENTER self
--- @return Core.Set#SET_GROUP
+-- @return Core.Set#SET_GROUP The set of groups active within the command center.
 function COMMANDCENTER:AddGroups()
 
   local GroupSet = SET_GROUP:New()
@@ -538,7 +562,7 @@ end
 
 --- Checks of the TaskGroup has a Task.
 -- @param #COMMANDCENTER self
--- @return #boolean
+-- @return #boolean When true, the TaskGroup has a Task, otherwise the returned value will be false.
 function COMMANDCENTER:IsGroupAssigned( TaskGroup )
 
   local Assigned = false
@@ -555,9 +579,9 @@ function COMMANDCENTER:IsGroupAssigned( TaskGroup )
 end
 
 
---- Checks of the COMMANDCENTER has a GROUP.
+--- Checks of the command center has the given MissionGroup.
 -- @param #COMMANDCENTER self
--- @param Wrapper.Group#GROUP
+-- @param Wrapper.Group#GROUP MissionGroup The group active within one of the missions governed by the command center.
 -- @return #boolean
 function COMMANDCENTER:HasGroup( MissionGroup )
 
@@ -574,37 +598,39 @@ function COMMANDCENTER:HasGroup( MissionGroup )
   return Has
 end
 
---- Send a CC message to the coalition of the CC.
+--- Let the command center send a Message to all players.
 -- @param #COMMANDCENTER self
+-- @param #string Message The message text.
 function COMMANDCENTER:MessageToAll( Message )
 
     self:GetPositionable():MessageToAll( Message, 20, self:GetName() )
 
 end
 
---- Send a CC message to a GROUP.
+--- Let the command center send a message to the MessageGroup.
 -- @param #COMMANDCENTER self
--- @param #string Message
--- @param Wrapper.Group#GROUP TaskGroup
-function COMMANDCENTER:MessageToGroup( Message, TaskGroup )
+-- @param #string Message The message text.
+-- @param Wrapper.Group#GROUP MessageGroup The group to receive the message.
+function COMMANDCENTER:MessageToGroup( Message, MessageGroup )
 
-  self:GetPositionable():MessageToGroup( Message, 15, TaskGroup, self:GetShortText() )
+  self:GetPositionable():MessageToGroup( Message, 15, MessageGroup, self:GetShortText() )
 
 end
 
---- Send a CC message of a specified type to a GROUP.
+--- Let the command center send a message to the MessageGroup.
 -- @param #COMMANDCENTER self
--- @param #string Message
--- @param Wrapper.Group#GROUP TaskGroup
+-- @param #string Message The message text.
+-- @param Wrapper.Group#GROUP MessageGroup The group to receive the message.
 -- @param Core.Message#MESSAGE.MessageType MessageType The type of the message, resulting in automatic time duration and prefix of the message.
-function COMMANDCENTER:MessageTypeToGroup( Message, TaskGroup, MessageType )
+function COMMANDCENTER:MessageTypeToGroup( Message, MessageGroup, MessageType )
 
-  self:GetPositionable():MessageTypeToGroup( Message, MessageType, TaskGroup, self:GetShortText() )
+  self:GetPositionable():MessageTypeToGroup( Message, MessageType, MessageGroup, self:GetShortText() )
 
 end
 
---- Send a CC message to the coalition of the CC.
+--- Let the command center send a message to the coalition of the command center.
 -- @param #COMMANDCENTER self
+-- @param #string Message The message text.
 function COMMANDCENTER:MessageToCoalition( Message )
 
   local CCCoalition = self:GetPositionable():GetCoalition()
@@ -615,9 +641,9 @@ function COMMANDCENTER:MessageToCoalition( Message )
 end
 
 
---- Send a CC message of a specified type to the coalition of the CC.
+--- Let the command center send a message of a specified type to the coalition of the command center.
 -- @param #COMMANDCENTER self
--- @param #string Message The message.
+-- @param #string Message The message text.
 -- @param Core.Message#MESSAGE.MessageType MessageType The type of the message, resulting in automatic time duration and prefix of the message.
 function COMMANDCENTER:MessageTypeToCoalition( Message, MessageType )
 
@@ -629,9 +655,10 @@ function COMMANDCENTER:MessageTypeToCoalition( Message, MessageType )
 end
 
 
---- Report the status of all MISSIONs to a GROUP.
+--- Let the command center send a report of the status of all missions to a group.
 -- Each Mission is listed, with an indication how many Tasks are still to be completed.
 -- @param #COMMANDCENTER self
+-- @param Wrapper.Group#GROUP ReportGroup The group to receive the report.
 function COMMANDCENTER:ReportSummary( ReportGroup )
   self:F( ReportGroup )
 
@@ -649,9 +676,10 @@ function COMMANDCENTER:ReportSummary( ReportGroup )
   self:MessageToGroup( Report:Text(), ReportGroup )
 end
 
---- Report the players of all MISSIONs to a GROUP.
+--- Let the command center send a report of the players of all missions to a group.
 -- Each Mission is listed, with an indication how many Tasks are still to be completed.
 -- @param #COMMANDCENTER self
+-- @param Wrapper.Group#GROUP ReportGroup The group to receive the report.
 function COMMANDCENTER:ReportMissionsPlayers( ReportGroup )
   self:F( ReportGroup )
 
@@ -667,9 +695,11 @@ function COMMANDCENTER:ReportMissionsPlayers( ReportGroup )
   self:MessageToGroup( Report:Text(), ReportGroup )
 end
 
---- Report the status of a Task to a Group.
+--- Let the command center send a report of the status of a task to a group.
 -- Report the details of a Mission, listing the Mission, and all the Task details.
 -- @param #COMMANDCENTER self
+-- @param Wrapper.Group#GROUP ReportGroup The group to receive the report.
+-- @param Tasking.Task#TASK Task The task to be reported.
 function COMMANDCENTER:ReportDetails( ReportGroup, Task )
   self:F( ReportGroup )
 
