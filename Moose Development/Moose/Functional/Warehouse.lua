@@ -3350,7 +3350,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   local CargoGroups --Core.Set#SET_CARGO
   
   -- Board radius, i.e. when the cargo will begin to board the carrier
-  local _boardradius=5000
+  local _boardradius=500
   
   if Request.transporttype==WAREHOUSE.TransportType.AIRPLANE then
     _boardradius=5000

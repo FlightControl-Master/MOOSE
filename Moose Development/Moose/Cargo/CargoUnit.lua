@@ -226,6 +226,8 @@ do -- CARGO_UNIT
   -- @param #string Event
   -- @param #string From
   -- @param #string To
+  -- @param Wrapper.Group#GROUP CargoCarrier
+  -- @param #number NearRadius
   function CARGO_UNIT:onafterBoard( From, Event, To, CargoCarrier, NearRadius, ... )
     self:F( { From, Event, To, CargoCarrier, NearRadius } )
   
