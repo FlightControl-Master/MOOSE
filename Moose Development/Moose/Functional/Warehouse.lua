@@ -311,7 +311,7 @@
 -- The parameter *group* is a late activated template group. The waypoints of this group are used to define the path between the two warehouses.
 -- By default, the reverse paths is automatically added to get *from* the remote warehouse to this warehouse unless the parameter *oneway* is set to *true*.
 -- 
--- ![Banner Image](..\Presentations\WAREHOUSE\Warehouse_Off-RoadPaths.png)
+-- ![Banner Image](..\Presentations\WAREHOUSE\Warehouse_Off-Road_Paths.png)
 -- 
 -- **Note** that if an off road connection is defined between two warehouses this becomes the default path, i.e. even if there is a path *on road* possible
 -- this will not be used.
@@ -491,6 +491,39 @@
 -- Upon destruction of the warehouse, the event **Destroyed** is triggered, which can be captured by the @{#WAREHOUSE.OnAfterDestroyed} function.
 -- So the mission designer can intervene at this point and for example choose to spawn all or paricular types of assets before the warehouse is gone for good.
 --
+-- ===
+-- 
+-- # Hook in and Take Control
+-- 
+-- The Finite State Machine implementation allows mission designers to hook into important events and add their own code.
+-- Most of these events have already been mentioned but here is the list at a glance:
+-- 
+-- * "NotReadyYet" --> "Start" --> "Running" (Starting the warehouse)
+-- * "*" --> "Status" --> "*" (status updated in regular intervals)
+-- * "*" --> "AddAsset" --> "*" (adding a new asset to the warehouse stock)
+-- * "*" --> "NewAsset" --> "*" (a new asset has been added to the warehouse stock)
+-- * "*" --> "AddRequest" --> "*" (adding a request for the warehouse assets)
+-- * "Running" --> "Request" --> "*" (a request is processed when the warehouse is running)
+-- * "Attacked" --> "Request" --> "*" (a request is processed when the warehouse is attacked)
+-- * "*" --> "Arrived" --> "*" (asset group has arrived at its destination)
+-- * "*" --> "Delivered" --> "*" (all assets of a request have been delivered)
+-- * "Running" --> "SelfRequest" --> "*" (warehouse is requesting asset from itself when running)
+-- * "Attacked" --> "SelfRequest" --> "*" (warehouse is requesting asset from itself while under attack)
+-- * "*" --> "Attacked" --> "Attacked" (warehouse is being attacked)
+-- * "Attacked" --> "Defeated" --> "Running" (an attack was defeated)
+-- * "Attacked" --> "Captured" --> "Running" (warehouse was captured by the enemy)
+-- * "*" --> "AirbaseCaptured" --> "*" (airbase belonging to the warehouse was captured by the enemy)
+-- * "*" --> "AirbaseRecaptured" --> "*" (airbase was re-captured)
+-- * "*" --> "Destroyed" --> "Destroyed" (warehouse was destroyed)
+-- * "Running" --> "Pause" --> "Paused" (warehouse is paused)
+-- * "Paused" --> "Unpause" --> "Running" (warehouse is unpaused)
+-- * "*" --> "Stop" --> "Stopped" (warehouse is stopped)
+-- 
+-- The transitions are of the general form "From State" --> "Event" --> "To State". The "*" star denotes that the transition is possible from *any* state.
+-- Some transitions, however, are only allowed from certain "From States". For example, no requests can be processed if the warehouse is in "Paused" or "Destroyed" or "Stopped" state.
+--
+-- Mission designers can capture the events with OnAfterEvent functions, e.g. @{#WAREHOUSE.OnAfterDelivered} or @{#WAREHOUSE.OnAfterAirbaseCaptured}.
+-- 
 -- ===
 --
 -- # Examples
@@ -1346,7 +1379,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.5.3"
+WAREHOUSE.version="0.5.3w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
