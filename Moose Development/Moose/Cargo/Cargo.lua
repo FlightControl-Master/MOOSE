@@ -471,7 +471,7 @@ do -- CARGO
     self.CargoLimit = 0
     
     self.LoadRadius = LoadRadius or 500
-    self.NearRadius = NearRadius or 25
+    --self.NearRadius = NearRadius or 25
     
     self:SetDeployed( false )
   

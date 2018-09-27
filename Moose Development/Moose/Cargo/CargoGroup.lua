@@ -64,6 +64,8 @@ do -- CARGO_GROUP
     self.Grouped = true
     self.CargoUnitTemplate = {}
     
+    self.NearRadius = NearRadius
+    
     self:SetDeployed( false )
     
     local WeightGroup = 0
@@ -297,9 +299,9 @@ do -- CARGO_GROUP
   -- @param Wrapper.Unit#UNIT CargoCarrier
   -- @param #number NearRadius If distance is smaller than this number, cargo is loaded into the carrier.
   function CARGO_GROUP:onenterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
-    --self:F( { CargoCarrier.UnitName, From, Event, To } )
+    self:F( { CargoCarrier.UnitName, From, Event, To, NearRadius = NearRadius } )
     
-    local NearRadius = NearRadius or 25
+    NearRadius = NearRadius or self.NearRadius
     
     if From == "UnLoaded" then
   
@@ -346,8 +348,6 @@ do -- CARGO_GROUP
   -- @param #number NearRadius If distance is smaller than this number, cargo is loaded into the carrier.
   function CARGO_GROUP:onafterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
     --self:F( { CargoCarrier.UnitName, From, Event, To } )
-  
-    local NearRadius = NearRadius or 100
   
     local Boarded = true
     local Cancelled = false

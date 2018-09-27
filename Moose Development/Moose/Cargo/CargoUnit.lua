@@ -69,8 +69,6 @@ do -- CARGO_UNIT
   function CARGO_UNIT:onenterUnBoarding( From, Event, To, ToPointVec2, NearRadius )
     self:F( { From, Event, To, ToPointVec2, NearRadius } )
   
-    NearRadius = NearRadius or 25
-  
     local Angle = 180
     local Speed = 60
     local DeployDistance = 9
@@ -139,8 +137,6 @@ do -- CARGO_UNIT
   function CARGO_UNIT:onleaveUnBoarding( From, Event, To, ToPointVec2, NearRadius )
     self:F( { From, Event, To, ToPointVec2, NearRadius } )
   
-    NearRadius = NearRadius or 100
-  
     local Angle = 180
     local Speed = 10
     local Distance = 5
@@ -166,8 +162,6 @@ do -- CARGO_UNIT
   -- @param #number NearRadius (optional) Defaut 100 m.
   function CARGO_UNIT:onafterUnBoarding( From, Event, To, ToPointVec2, NearRadius )
     self:F( { From, Event, To, ToPointVec2, NearRadius } )
-  
-    NearRadius = NearRadius or 100
   
     self.CargoInAir = self.CargoObject:InAir()
   
@@ -227,7 +221,7 @@ do -- CARGO_UNIT
   -- @param #string From
   -- @param #string To
   function CARGO_UNIT:onafterBoard( From, Event, To, CargoCarrier, NearRadius, ... )
-    self:F( { From, Event, To, CargoCarrier, NearRadius } )
+    self:F( { From, Event, To, CargoCarrier, NearRadius = NearRadius } )
   
     self.CargoInAir = self.CargoObject:InAir()
     
@@ -271,7 +265,7 @@ do -- CARGO_UNIT
           
           local TaskRoute = self.CargoObject:TaskRoute( Points )
           self.CargoObject:SetTask( TaskRoute, 2 )
-          self:__Boarding( -5, CargoCarrier, NearRadius )
+          self:__Boarding( -5, CargoCarrier, NearRadius, ... )
           self.RunCount = 0
         end
       end
@@ -288,7 +282,7 @@ do -- CARGO_UNIT
   -- @param Wrapper.Client#CLIENT CargoCarrier
   -- @param #number NearRadius Default 25 m.
   function CARGO_UNIT:onafterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
-    self:F( { From, Event, To, CargoCarrier:GetName() } )
+    self:F( { From, Event, To, CargoCarrier:GetName(), NearRadius = NearRadius } )
     
     
     if CargoCarrier and CargoCarrier:IsAlive() and self.CargoObject and self.CargoObject:IsAlive() then 
@@ -298,11 +292,11 @@ do -- CARGO_UNIT
           self:__Load( 1, CargoCarrier, ... )
         else
           if self:IsNear( CargoCarrier:GetPointVec2(), 20 ) then
-            self:__Boarding( -2, CargoCarrier, NearRadius, ... )
-            self.RunCount = self.RunCount + 2
+            self:__Boarding( -1, CargoCarrier, NearRadius, ... )
+            self.RunCount = self.RunCount + 1
           else
-            self:__Boarding( -10, CargoCarrier, NearRadius, ... )
-            self.RunCount = self.RunCount + 10
+            self:__Boarding( -5, CargoCarrier, NearRadius, ... )
+            self.RunCount = self.RunCount + 5
           end
           if self.RunCount >= 40 then
             self.RunCount = 0
