@@ -1017,7 +1017,7 @@ do -- TASK_CARGO
           else
             Cargo:MessageToGroup( "Boarding ...", TaskUnit:GetGroup() )
             if not Cargo:IsBoarding() then
-              Cargo:Board( TaskUnit, 20, self )
+              Cargo:Board( TaskUnit, nil, self )
             end
           end
         else

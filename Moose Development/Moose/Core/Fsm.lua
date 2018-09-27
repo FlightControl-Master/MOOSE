@@ -805,8 +805,7 @@ do -- FSM_CONTROLLABLE
   -- 
   -- ===
   -- 
-  -- @field #FSM_CONTROLLABLE FSM_CONTROLLABLE
-  -- 
+  -- @field #FSM_CONTROLLABLE
   FSM_CONTROLLABLE = {
     ClassName = "FSM_CONTROLLABLE",
   }

@@ -67,6 +67,8 @@ do -- CARGO_CRATE
     self:HandleEvent( EVENTS.PlayerLeaveUnit, self.OnEventCargoDead )
     
     self:SetEventPriority( 4 )
+    
+    self.NearRadius = NearRadius or 25
   
     return self
   end
