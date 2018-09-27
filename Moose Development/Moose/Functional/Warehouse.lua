@@ -1379,7 +1379,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.5.3w"
+WAREHOUSE.version="0.5.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -3409,7 +3409,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     local asset=self:FindAssetInDB(_group)  
   
     -- New cargo group object.
-    local cargogroup=CARGO_GROUP:New(_group, _cargotype,_group:GetName(),_boardradius, 500) --asset.loadradius)
+    local cargogroup=CARGO_GROUP:New(_group, _cargotype,_group:GetName(),_boardradius, asset.loadradius)
     
     -- Set weight for this group.
     cargogroup:SetWeight(asset.weight)

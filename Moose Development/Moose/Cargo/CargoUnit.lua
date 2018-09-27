@@ -239,7 +239,7 @@ do -- CARGO_UNIT
       -- If NearRadius is given, then use the given NearRadius, otherwise calculate the NearRadius 
       -- based upon the Carrier bounding radius, which is calculated from the bounding rectangle on the Y axis.
       env.info(string.format("FF nearradius = %d (before)", NearRadius))
-      local NearRadius = CargoCarrier:GetBoundingRadius( NearRadius or self.NearRadius) + 5
+      local NearRadius = CargoCarrier:GetBoundingRadius( NearRadius ) + 5
       env.info(string.format("FF nearradius = %d isnear=%s", NearRadius, tostring(self:IsNear( CargoCarrier:GetPointVec2(), NearRadius )) ))
       if self:IsNear( CargoCarrier:GetPointVec2(), NearRadius ) then
         self:Load( CargoCarrier, NearRadius, ... )
