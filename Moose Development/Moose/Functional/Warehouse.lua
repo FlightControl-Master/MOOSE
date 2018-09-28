@@ -1,4 +1,4 @@
---- **Functional** - (R2.5) - Simulation of logistic operations.
+--- **Functional** - (R2.4) - Simulation of logistic operations.
 -- 
 -- The MOOSE warehouse concept simulates the organization and implementation of complex operations regarding the flow of assets between the point of origin and the point of consumption 
 -- in order to meet requirements of a potential conflict. In particular, this class is concerned with maintaining army supply lines while disrupting those of the enemy, since an armed 
@@ -85,7 +85,7 @@
 -- 
 -- Any kind of ground, airborne or naval asset can be stored and are spawned upon request.
 -- The fact that the assets live only virtually in stock and are put into the game only when needed has a positive impact on the game performance.
--- It also alliviates the problem of limited parking spots at smaller air bases 
+-- It also alliviates the problem of limited parking spots at smaller airbases. 
 -- 
 -- ## What means of transportation are available?
 -- 
@@ -112,7 +112,7 @@
 -- 
 -- # Creating a Warehouse
 -- 
--- A MOOSE warehouse must be represented in game by a phyical *static* object. For example, the mission editor already has warehouse as static object available.
+-- A MOOSE warehouse must be represented in game by a physical *static* object. For example, the mission editor already has warehouse as static object available.
 -- This would be a good first choice but any static object will do.
 -- 
 -- ![Banner Image](..\Presentations\WAREHOUSE\Warehouse_Static.png)
@@ -125,11 +125,11 @@
 -- Once the static warehouse object is placed in the mission editor it can be used as a MOOSE warehouse by the @{#WAREHOUSE.New}(*warehousestatic*, *alias*) constructor,
 -- like for example:
 -- 
---     warehouseBatumi=WAREHOUSE:New(STATIC:FindByName("Warehouse Batumi"), "My Warehouse Alias")
+--     warehouseBatumi=WAREHOUSE:New(STATIC:FindByName("Warehouse Batumi"), "My optional Warehouse Alias")
 --     warehouseBatumi:Start()
 -- 
 -- The first parameter *warehousestatic* is the static MOOSE object. By default, the name of the warehouse will be the same as the name given to the static object.
--- The second parameter *alias* can be used to choose a more convenient name if desired. This will be the name the warehouse calls itself when reporting messages. 
+-- The second parameter *alias* is optional and can be used to choose a more convenient name if desired. This will be the name the warehouse calls itself when reporting messages. 
 -- 
 -- Note that a warehouse also needs to be started in order to be in service. This is done with the @{#WAREHOUSE.Start}() or @{#WAREHOUSE.__Start}(*delay*) functions.
 -- The warehouse is now fully operational and requests are being processed.
@@ -137,13 +137,17 @@
 -- # Adding Assets
 -- 
 -- Assets can be added to the warehouse stock by using the @{#WAREHOUSE.AddAsset}(*group*, *ngroups*, *forceattribute*, *forcecargobay*, *forceweight*, *loadradius*) function.
--- The parameter *group* has to be a MOOSE @{Wrapper.Group#GROUP}. The parameter *ngroups* specifies how many clones of this group are added to the stock.
+-- The parameter *group* has to be a MOOSE @{Wrapper.Group#GROUP}. This is also the only mandatory parameters. All other parameters are optional and can be used for fine tuning if
+-- nessary. The parameter *ngroups* specifies how many clones of this group are added to the stock.
 -- 
 --     infrantry=GROUP:FindByName("Some Infantry Group")
 --     warehouseBatumi:AddAsset(infantry, 5)
 -- 
--- This will add five infantry groups to the warehouse stock. Note that the group will normally be a late activated template group, 
+-- This will add five infantry groups to the warehouse stock. Note that the group should normally be a late activated template group, 
 -- which was defined in the mission editor. But you can also add other groups which are already spawned and present in the mission.
+-- 
+-- Also note that the coalition of the template group (red, blue or neutral) does not matter. The coalition of the assets is determined by the coalition of the warehouse owner.
+-- In other words, it is no problem to add red groups to blue warehouses and vice versa. The assets will automatically have the coalition of the warehouse.   
 -- 
 -- You can add assets with a delay by using the @{#WAREHOUSE.__AddAsset}(*delay*, *group*, *ngroups*, *foceattribute*, *forcecargobay*, *forceweight*, *loadradius*), where *delay* 
 -- is the delay in seconds before the asset is added.
@@ -152,7 +156,7 @@
 -- 
 -- ![Banner Image](..\Presentations\WAREHOUSE\Warehouse_Stock-Marker.png)
 -- 
--- ## Options for Fine Tuning
+-- ## Optional Parameters for Fine Tuning
 -- 
 -- By default, the generalized attribute of the asset is determined automatically from the DCS descriptor attributes. However, this might not always result in the desired outcome.
 -- Therefore, it is possible, to force a generalized attribute for the asset with the third optional parameter *forceattribute*, which is of type @{#WAREHOUSE.Attribute}.
@@ -162,19 +166,44 @@
 -- manually when the asset is added
 -- 
 --     warehouseBatumi:AddAsset("Huey", 5, WAREHOUSE.Attribute.AIR_TRANSPORTHELO)
+--     
+-- This becomes important when assets are requested from other warehouses as described below. In this case, the five Hueys are now marked as transport helicopters and 
+-- not attack helicopters.
 -- 
 -- ### Setting the Cargo Bay Weight Limit    
--- You can also ajust the cargo bay weight limit, in case it is not calculated correctly automatically. For example, the cargo bay of a C-17A is much smaller in DCS than that of a C-130, which is
+-- You can ajust the cargo bay weight limit, in case it is not calculated correctly automatically. For example, the cargo bay of a C-17A is much smaller in DCS than that of a C-130, which is
 -- unrealistic. This can be corrected by the *forcecargobay* parmeter which is here set to 77,000 kg
 -- 
 --     warehouseBatumi:AddAsset("C-17A", nil, nil, 77000)
 --     
+-- The size of the cargo bay is only important when the group is used as transport carrier for other assets.
+--     
 -- ### Setting the Weight
--- In the current version of DCS a mortar unit has a weight of 5 tons. This confuses the transporter logic, because it appears to be too have for, e.g. all APCs. You can manually adjust the weight
--- by the *forceweight* parameter and set it to 210 kg for each unit in the group
+-- If an asset shall be transported by a carrier it important to note that - as in real life - a carrier can only carry cargo up to a certain weight. The weight of the
+-- units is automatically determined from the DCS descriptor table.
+-- However, in the current DCS version (2.5.3) a mortar unit has a weight of 5 tons. This confuses the transporter logic, because it appears to be too have for, e.g. all APCs.
+-- 
+-- As a workaround, you can manually adjust the weight by the optional *forceweight* parameter:
 -- 
 --     warehouseBatumi:AddAsset("Mortar Alpha", nil, nil, nil, 210)
 -- 
+--  In this case we set it to 210 kg. Note, the weight value set is meant for *each* unit in the group. Therefore, a group consisting of three mortars will have a total weight
+--  of 630 kg. This is important as groups cannot be split between carrier units when transporting, i.e. the total weight of the whole group must be smaller than the 
+--  cargo bay of the transport carrier.
+--  
+-- ### Setting the Load Radius
+-- Boading and loading of cargo into a carrier is modeled in a realistic fashion in the AI\_CARGO\DISPATCHER classes, which are used inernally by the WAREHOUSE class.
+-- Meaning that troops (cargo) will board, i.e. run or drive to the carrier, and only once they are in close proximity to the transporter they will be loaded (disappear).
+--  
+-- Unfortunately, there are some situations where problems can occur. For example, in DCS tanks have the strong tentendcy not to drive around obstacles but rather to roll over them.
+-- I have seen cases where an aircraft of the same coalition as the tank was in its way and the tank drove right through the plane waiting on a parking spot and destroying it.
+--  
+-- As a workaround it is possible to set a larger load radius so that the cargo units are despawned further away from the carrier via the optional **loadradius** parameter:
+--  
+--     warehouseBatumi:AddAsset("Leopard 2", nil, nil, nil, nil, 250)
+--  
+-- Adding the asset like this will cause the units to be loaded into the carrier already at a distance of 250 meters.
+--  
 -- ===
 --
 -- # Requesting Assets
@@ -196,6 +225,9 @@
 -- 
 -- ## Requesting by Generalized Attribute
 -- 
+-- Generalized attributes are similar to [DCS attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes). However, they are a bit more general and 
+-- an asset can only have one generalized attribute by which it is characterized.
+-- 
 -- For example:
 --  
 --     warehouseBatumi:AddRequest(warehouseKobuleti, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_INFANTRY, 5, WAREHOUSE.TransportType.APC, 2)
@@ -205,9 +237,38 @@
 -- If either to few infantry or APC groups are available when the request is made, the request is held in the warehouse queue until enough cargo and
 -- transport assets are available.
 -- 
--- Also note that the above request is for five infantry groups. So any group in stock that has the generalized attribute "INFANTRY" can be selected.
---  
+-- Also note that the above request is for five infantry groups. So any group in stock that has the generalized attribute "GROUND_INFANTRY" can be selected for the request.
 -- 
+-- ### Generalized Attributes
+-- 
+-- Currently implemented are:
+--
+-- * @{#WAREHOUSE.Attribute.AIR_TRANSPORTPLANE} Airplane with transport capability. This can be used to transport other assets.
+-- * @{#WAREHOUSE.Attribute.AIR_AWACS} Airborne Early Warning and Control System.
+-- * @{#WAREHOUSE.Attribute.AIR_FIGHTER} Fighter, interceptor, ... airplane.
+-- * @{#WAREHOUSE.Attribute.AIR_BOMBER} Aircraft which can be used for strategic bombing.
+-- * @{#WAREHOUSE.Attribute.AIR_TANKER} Airplane which can refuel other aircraft.
+-- * @{#WAREHOUSE.Attribute.AIR_TRANSPORTHELO} Helicopter with transport capability. This can be used to transport other assets.
+-- * @{#WAREHOUSE.Attribute.AIR_ATTACKHELO} Attack helicopter.
+-- * @{#WAREHOUSE.Attribute.AIR_UAV} Unpiloted Aerial Vehicle, e.g. drones.
+-- * @{#WAREHOUSE.Attribute.AIR_OTHER} Any airborne unit that does not fall into any other airborne category.
+-- * @{#WAREHOUSE.Attribute.GROUND_APC} Infantry carriers, in particular Amoured Personell Carrier. This can be used to transport other assets.
+-- * @{#WAREHOUSE.Attribute.GROUND_TRUCK} Unarmed ground vehicles, which has the DCS "Truck" attribute.
+-- * @{#WAREHOUSE.Attribute.GROUND_INFANTRY} Ground infantry assets.
+-- * @{#WAREHOUSE.Attribute.GROUND_ARTILLERY} Artillery assets.
+-- * @{#WAREHOUSE.Attribute.GROUND_TANK} Tanks (modern or old).
+-- * @{#WAREHOUSE.Attribute.GROUND_TRAIN} Trains. Not that trains are **not** yet properly implemented in DCS and cannot be used currently.
+-- * @{#WAREHOUSE.Attribute.GROUND_EWR} Early Warning Radar.
+-- * @{#WAREHOUSE.Attribute.GROUND_AAA} Anti-Aircraft Artillery.
+-- * @{#WAREHOUSE.Attribute.GROUND_SAM} Surface-to-Air Missile system or components.
+-- * @{#WAREHOUSE.Attribute.GROUND_OTHER} Any ground unit that does not fall into any other ground category.
+-- * @{#WAREHOUSE.Attribute.NAVAL_AIRCRAFTCARRIER} Aircraft carrier.
+-- * @{#WAREHOUSE.Attribute.NAVAL_WARSHIP} War ship, i.e. cruisers, destroyers, firgates and corvettes.
+-- * @{#WAREHOUSE.Attribute.NAVAL_ARMEDSHIP} Any armed ship that is not an aircraft carrier, a cruiser, destroyer, firgatte or corvette.
+-- * @{#WAREHOUSE.Attribute.NAVAL_UNARMEDSHIP} Any unarmed naval vessel.
+-- * @{#WAREHOUSE.Attribute.NAVAL_OTHER} Any naval unit that does not fall into any other naval category.
+-- * @{#WAREHOUSE.Attribute.OTHER_UNKNOWN} Anything that does not fall into any other category.
+--
 -- ## Requesting a Specific Unit Type
 -- 
 -- A more specific request could look like:
@@ -221,26 +282,56 @@
 -- 
 -- An even more specific request would be:
 -- 
---     warehouseBatumi:AddRequest(warehouseKobuleti, WAREHOUSE.Descriptor.TEMPLATENAME, "Group Name as in ME", 3)
+--     warehouseBatumi:AddRequest(warehouseKobuleti, WAREHOUSE.Descriptor.GROUPNAME, "Group Name as in ME", 3)
 --      
 -- In this case three groups named "Group Name as in ME" are requested. This explicitly request the groups named like that in the Mission Editor.
 -- 
 -- ## Requesting a General Category
 -- 
--- On the other hand, very general unspecifc requests can be made as
+-- On the other hand, very general and unspecifc requests can be made by the categroy descriptor. The descriptor value parameter can be any [group category](https://wiki.hoggitworld.com/view/DCS_Class_Group), i.e.
 -- 
---     warehouseBatumi:AddRequest(warehouseKobuleti, WAREHOUSE.Descriptor.CATEGORY, Group.Category.Ground, 10)
+-- * Group.Category.AIRPLANE for fixed wing aircraft,
+-- * Group.Category.HELICOPTER for helicopters,
+-- * Group.Category.GROUND for all ground troops,
+-- * Group.Category.SHIP for naval assets,
+-- * Group.Category.TRAIN for trains (not implemented and not working in DCS yet).
+-- 
+-- For example,
+-- 
+--     warehouseBatumi:AddRequest(warehouseKobuleti, WAREHOUSE.Descriptor.CATEGORY, Group.Category.GROUND, 10)
 --      
--- Here, Kubuleti requests 10 ground groups and does not care which ones. This could be a mix of infantry, APCs, trucks etc.
+-- means that Kubuleti requests 10 ground groups and does not care which ones. This could be a mix of infantry, APCs, trucks etc.
 -- 
 -- **Note** that these general requests should be made with *great care* due to the fact, that depending on what a warehouse has in stock a lot of different unit types can be spawned.
 -- 
--- # Employing Assets
+-- ## Requesting Relative Quantities
 -- 
--- Assets in the warehouses stock can used for user defined tasks realtively easily. They can be spawned into the game by a "*self request*", i.e. the warehouse
+-- In addition to requesting absolute numbers of assets it is possible to request relative amounts of assets currently in stock. To this end the @{#WAREHOUSE.Quantity} enumerator 
+-- was introduced:
+-- 
+-- * @{#WAREHOUSE.Quantity.ALL}
+-- * @{#WAREHOUSE.Quantity.HALF}
+-- * @{#WAREHOUSE.Quantity.QUARTER}
+-- * @{#WAREHOUSE.Quantity.THIRD}
+-- * @{#WAREHOUSE.Quantity.THREEQUARTERS}
+-- 
+-- For example,
+-- 
+--     warehouseBatumi:AddRequest(warehouseKobuleti, WAREHOUSE.Descriptor.CATEGORY, Group.Category.HELICOPTER, WAREHOUSE.Quantity.HALF)
+--     
+-- means that Kobuleti warehouse requests half of all available helicopters which Batumi warehouse currently has in stock.
+-- 
+-- # Employing Assets - The Self Request
+-- 
+-- Transferring assets from one warehouse to another is important but of course once the the assets are at the "right" place it is equally important that they 
+-- can be employed for specific tasks and assignments.
+-- 
+-- Assets in the warehouses stock can be used for user defined tasks quite easily. They can be spawned into the game by a "***self request***", i.e. the warehouse
 -- requests the assets from itself:
 -- 
 --     warehouseBatumi:AddRequest(warehouseBatumi, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_INFANTRY, 5)
+-- 
+-- Note that the *sending* and *requesting* warehouses are *identical* in this case.
 --      
 -- This would simply spawn five infantry groups in the spawn zone of the Batumi warehouse if/when they are available.
 -- 
@@ -268,10 +359,10 @@
 --     end
 --       
 -- The variable *groupset* is a @{Core.Set#SET_GROUP} object and holds all asset groups from the request. The code above shows, how the mission designer can access the groups
--- for further tasking. Here, the groups are only smoked but, of course, you can use them for whatever task you fancy.
+-- for further tasking. Here, the groups are only smoked but, of course, you can use them for whatever assignment you fancy.
 -- 
--- Note that airborne groups are spawned in **uncontrolled state** and need to be activated first before they can start their assigned mission.
--- This can be done with the @{Wrapper.Controllable#CONTROLLABLE.StartUncontrolled} function.
+-- Note that airborne groups are spawned in **uncontrolled state** and need to be activated first before they can begin with their assigned tasks and missions.
+-- This can be done with the @{Wrapper.Controllable#CONTROLLABLE.StartUncontrolled} function as demonstrated in the example section below.
 -- 
 -- ===
 -- 
@@ -296,7 +387,7 @@
 -- 
 -- Ground assets will use a road connection to travel from one warehouse to another. Therefore, a proper road connection is necessary.
 -- 
--- By default, the closest point on road to the center of the spawn zone is choses as road connection automatically. But only, if distance between the spawn zone
+-- By default, the closest point on road to the center of the spawn zone is chosen as road connection automatically. But only, if distance between the spawn zone
 -- and the road connection is less than 3 km.
 -- 
 -- The user can set the road connection manually with the @{#WAREHOUSE.SetRoadConnection} function. This is only functional for self propelled assets at the moment
@@ -304,12 +395,12 @@
 -- 
 -- ## Off Road Connections
 -- 
--- For ground troops it is also possible to define off road paths from between warehouses if no proper road connection is available or should not be used.
+-- For ground troops it is also possible to define off road paths between warehouses if no proper road connection is available or should not be used.
 -- 
 -- An off road path can be defined via the @{#WAREHOUSE.AddOffRoadPath}(*remotewarehouse*, *group*, *oneway*) function, where
 -- *remotewarehouse* is the warehouse to which the path leads.
--- The parameter *group* is a late activated template group. The waypoints of this group are used to define the path between the two warehouses.
--- By default, the reverse paths is automatically added to get *from* the remote warehouse to this warehouse unless the parameter *oneway* is set to *true*.
+-- The parameter *group* is a *late activated* template group. The waypoints of this group are used to define the path between the two warehouses.
+-- By default, the reverse paths is automatically added to get *from* the remote warehouse *to* this warehouse unless the parameter *oneway* is set to *true*.
 -- 
 -- ![Banner Image](..\Presentations\WAREHOUSE\Warehouse_Off-Road_Paths.png)
 -- 
@@ -317,8 +408,8 @@
 -- this will not be used.
 -- 
 -- Also note that you can define multiple off road connections between two warehouses. If there are multiple paths defined, the connection is chosen randomly.
--- It is also possible to add the same path multiple times. By this you can influence the probability of the chosen path. For example Path_1(A->B) has been
--- added two times while Path_2(A->B) was added only once. Hence, the group will choose Path_1 with a probability of 66.6 % while  Path_2 is only chosen with
+-- It is also possible to add the same path multiple times. By this you can influence the probability of the chosen path. For example Path1(A->B) has been
+-- added two times while Path2(A->B) was added only once. Hence, the group will choose Path1 with a probability of 66.6 % while Path2 is only chosen with
 -- a probability of 33.3 %. 
 -- 
 -- ## Rail Connections
@@ -642,11 +733,11 @@
 --     warehouse.Senaki:AddAsset("Huey", 6)
 --     
 --     -- Kusaisi requests 3 Yak-52 form Senaki while Kobuleti wants all the rest.
---     warehouse.Senaki:AddRequest(warehouse.Kutaisi,  WAREHOUSE.Descriptor.TEMPLATENAME, "Yak-52", 1, nil, nil, 10)
---     warehouse.Senaki:AddRequest(warehouse.Kobuleti, WAREHOUSE.Descriptor.TEMPLATENAME, "Yak-52", WAREHOUSE.Quantity.HALF,  nil, nil, 70)
+--     warehouse.Senaki:AddRequest(warehouse.Kutaisi,  WAREHOUSE.Descriptor.GROUPNAME, "Yak-52", 1, nil, nil, 10)
+--     warehouse.Senaki:AddRequest(warehouse.Kobuleti, WAREHOUSE.Descriptor.GROUPNAME, "Yak-52", WAREHOUSE.Quantity.HALF,  nil, nil, 70)
 --     
 --     -- FARP London wants 1/3 of the six available Hueys.
---     warehouse.Senaki:AddRequest(warehouse.London,  WAREHOUSE.Descriptor.TEMPLATENAME, "Huey", WAREHOUSE.Quantity.THIRD)
+--     warehouse.Senaki:AddRequest(warehouse.London,  WAREHOUSE.Descriptor.GROUPNAME, "Huey", WAREHOUSE.Quantity.THIRD)
 --
 -- ## Example 4: Transport of Assets by APCs
 -- 
@@ -710,8 +801,8 @@
 -- ## Example 7: Capturing Airbase and Warehouse
 -- 
 -- A red BMP has made it through our defence lines and drives towards our unprotected airbase at Senaki.
--- Once the BMP captures the airbase (DCS S\_EVENT_\BASE_\CAPTURED is evaluated) the warehouse at Senaki lost its air infrastructure and it is not
--- possible any more to spawn airborne units. All requests for airborne units are rejected and cancelled in this case.
+-- Once the BMP captures the airbase (DCS [S\_EVENT\_BASE\_CAPTURED](https://wiki.hoggitworld.com/view/DCS_event_base_captured) is evaluated) 
+-- the warehouse at Senaki lost its air infrastructure and it is not possible any more to spawn airborne units. All requests for airborne units are rejected and cancelled in this case.
 -- 
 -- The red BMP then drives further to the warehouse. Once it enters the warehouse zone (500 m radius around the warehouse building), the warehouse is
 -- considered to be under attack. This triggers the event **Attacked**. The @{#WAREHOUSE.OnAfterAttacked} function can be used to react to this situation.
@@ -868,10 +959,10 @@
 --     warehouse.Batumi:AddAsset("F/A-18C 2ship", 1)
 --     
 --     -- USS Stennis requests F/A-18 from Batumi.
---     warehouse.Batumi:AddRequest(warehouse.Stennis, WAREHOUSE.Descriptor.TEMPLATENAME, "F/A-18C 2ship")
+--     warehouse.Batumi:AddRequest(warehouse.Stennis, WAREHOUSE.Descriptor.GROUPNAME, "F/A-18C 2ship")
 --     
 --     -- Kobuleti requests F/A-18 from USS Stennis.
---     warehouse.Stennis:AddRequest(warehouse.Kobuleti, WAREHOUSE.Descriptor.TEMPLATENAME, "F/A-18C 2ship")
+--     warehouse.Stennis:AddRequest(warehouse.Kobuleti, WAREHOUSE.Descriptor.GROUPNAME, "F/A-18C 2ship")
 --
 -- ## Example 11: Aircraft Carrier - Rescue Helo and Escort
 -- 
@@ -903,7 +994,7 @@
 --     warehouse.Stennis:AddAsset("CH-53E", 1)
 --     
 --     -- Self request of speed boats.
---     warehouse.Stennis:__AddRequest(10, warehouse.Stennis, WAREHOUSE.Descriptor.TEMPLATENAME, "CH-53E", 1, nil, nil, nil, "Rescue Helo")
+--     warehouse.Stennis:__AddRequest(10, warehouse.Stennis, WAREHOUSE.Descriptor.GROUPNAME, "CH-53E", 1, nil, nil, nil, "Rescue Helo")
 --     warehouse.Stennis:__AddRequest(30, warehouse.Stennis, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.NAVAL_ARMEDSHIP, 5, nil, nil, nil, "Speedboats Left")
 --     warehouse.Stennis:__AddRequest(45, warehouse.Stennis, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.NAVAL_ARMEDSHIP, 5, nil, nil, nil, "Speedboats Right")
 --     
@@ -970,15 +1061,15 @@
 --         
 --         -- So we start another request.
 --         if request.assignment=="Rescue Helo" then
---           warehouse.Stennis:__AddRequest(10, warehouse.Stennis, WAREHOUSE.Descriptor.TEMPLATENAME, "CH-53E", 1, nil, nil, nil, "Rescue Helo")
+--           warehouse.Stennis:__AddRequest(10, warehouse.Stennis, WAREHOUSE.Descriptor.GROUPNAME, "CH-53E", 1, nil, nil, nil, "Rescue Helo")
 --         end
 --       end
 --       
 --     end
 --
--- ## Example 12: Pause and Unpause a Warehouse
+-- ## Example 12: Pause a Warehouse
 --
--- This example shows how to pause a warehouse. In paused state, no requests will be processed but assets can be added or be requests made.
+-- This example shows how to pause and unpause a warehouse. In paused state, requests will not be processed but assets can be added and requests be added.
 --
 --    * Warehouse Batumi is paused after 10 seconds.
 --    * Request from Berlin after 15 which will not be processed.
@@ -1022,8 +1113,8 @@
 --
 -- ## Example 13: Battlefield Air Interdiction
 -- 
--- This example show how to couple the WAREHOUSE class with the @{AI.AI_BAI} class.
--- Four enemy targets have been located at the famous Kobuleti X. Three Viggen 2-ship flights are assigned to kill at least one of the BMPs to complete their mission. 
+-- This example show how to couple the WAREHOUSE class with the @{AI.AI_Bai} class.
+-- Four enemy targets have been located at the famous Kobuleti X. All three available Viggen 2-ship flights are assigned to kill at least one of the BMPs to complete their mission. 
 --
 --     -- Start Warehouse at Kobuleti.
 --     warehouse.Kobuleti:Start()
@@ -1032,7 +1123,7 @@
 --     warehouse.Kobuleti:AddAsset("Viggen 2ship", 3)
 --     
 --     -- Self request for all Viggen assets.
---     warehouse.Kobuleti:AddRequest(warehouse.Kobuleti, WAREHOUSE.Descriptor.TEMPLATENAME, "Viggen 2ship", WAREHOUSE.Quantity.ALL, nil, nil, nil, "BAI")
+--     warehouse.Kobuleti:AddRequest(warehouse.Kobuleti, WAREHOUSE.Descriptor.GROUPNAME, "Viggen 2ship", WAREHOUSE.Quantity.ALL, nil, nil, nil, "BAI")
 --     
 --     -- Red targets at Kobuleti X (late activated).
 --     local RedTargets=GROUP:FindByName("Red IVF Alpha")
@@ -1268,12 +1359,12 @@ WAREHOUSE = {
 
 --- Descriptors enumerator describing the type of the asset.
 -- @type WAREHOUSE.Descriptor
--- @field #string TEMPLATENAME Name of the asset template.
+-- @field #string GROUPNAME Name of the asset template.
 -- @field #string UNITTYPE Typename of the DCS unit, e.g. "A-10C".
 -- @field #string ATTRIBUTE Generalized attribute @{#WAREHOUSE.Attribute}.
 -- @field #string CATEGORY Asset category of type DCS#Group.Category, i.e. GROUND, AIRPLANE, HELICOPTER, SHIP, TRAIN.
 WAREHOUSE.Descriptor = {
-  TEMPLATENAME="templatename",
+  GROUPNAME="templatename",
   UNITTYPE="unittype",
   ATTRIBUTE="attribute",
   CATEGORY="category",
@@ -1379,7 +1470,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.5.4"
+WAREHOUSE.version="0.5.4w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -1786,15 +1877,15 @@ function WAREHOUSE:New(warehouse, alias)
   --- Triggers the FSM event "Captured" when a warehouse has been captured by another coalition.
   -- @param #WAREHOUSE self
   -- @function [parent=#WAREHOUSE] Captured
-  -- @param DCS#coalition.side Coalition which captured the warehouse.
-  -- @param DCS#country.id Country which has captured the warehouse.
+  -- @param DCS#coalition.side Coalition Coalition side which captured the warehouse.
+  -- @param DCS#country.id Country Country id which has captured the warehouse.
   
   --- Triggers the FSM event "Captured" with a delay when a warehouse has been captured by another coalition.
   -- @param #WAREHOUSE self
   -- @function [parent=#WAREHOUSE] __Captured
   -- @param #number delay Delay in seconds.
-  -- @param DCS#coalition.side Coalition which captured the warehouse.
-  -- @param DCS#country.id Country which has captured the warehouse.
+  -- @param DCS#coalition.side Coalition Coalition side which captured the warehouse.
+  -- @param DCS#country.id Country Country id which has captured the warehouse.
 
   --- On after "Captured" event user function. Called when the warehouse has been captured by an enemy coalition.
   -- @param #WAREHOUSE self
@@ -3103,7 +3194,7 @@ function WAREHOUSE:onbeforeAddRequest(From, Event, To, warehouse, AssetDescripto
       okay=false
     end
     
-  elseif AssetDescriptor==WAREHOUSE.Descriptor.TEMPLATENAME then
+  elseif AssetDescriptor==WAREHOUSE.Descriptor.GROUPNAME then
   
     if type(AssetDescriptorValue)~="string" then
       self:_ErrorMessage("ERROR: Invalid request. Asset template name must be passed as a string!", 5)
@@ -3118,7 +3209,7 @@ function WAREHOUSE:onbeforeAddRequest(From, Event, To, warehouse, AssetDescripto
     end
   
   else
-    self:_ErrorMessage("ERROR: Invalid request. Asset descriptor is not ATTRIBUTE, CATEGORY, TEMPLATENAME or UNITTYPE!", 5)
+    self:_ErrorMessage("ERROR: Invalid request. Asset descriptor is not ATTRIBUTE, CATEGORY, GROUPNAME or UNITTYPE!", 5)
     okay=false
   end
 
