@@ -496,7 +496,12 @@ end
 
 --- Sets the coalition of the spawned group. Note that it might be necessary to also set the country explicitly!
 -- @param #SPAWN self 
--- @param DCS#coalition.side Coalition Coalition of the group as number of enumerator, i.e. 0=coaliton.side.NEUTRAL, 1=coaliton.side.RED, 2=coalition.side.BLUE.
+-- @param DCS#coalition.side Coalition Coalition of the group as number of enumerator:
+-- 
+--   * @{DCS#coaliton.side.NEUTRAL}
+--   * @{DCS#coaliton.side.RED}
+--   * @{DCS#coalition.side.BLUE}
+--   
 -- @return #SPAWN self
 function SPAWN:InitCoalition( Coalition )
   self:F({coalition=Coalition})
@@ -507,9 +512,12 @@ function SPAWN:InitCoalition( Coalition )
 end
 
 --- Sets the country of the spawn group. Note that the country determins the coalition of the group depending on which country is defined to be on which side for each specific mission!
--- See https://wiki.hoggitworld.com/view/DCS_enum_country for country enumerators.
 -- @param #SPAWN self 
--- @param #DCS.country Country Country id as number or enumerator, e.g. country.id.RUSSIA=0, county.id.USA=2 etc.
+-- @param #DCS.country Country Country id as number or enumerator:
+-- 
+--   * @{DCS#country.id.RUSSIA}
+--   * @{DCS#county.id.USA}
+--   
 -- @return #SPAWN self
 function SPAWN:InitCountry( Country )
   self:F( )
@@ -757,14 +765,20 @@ end
 
 
 
---TODO: Add example.
 --- This method provides the functionality to randomize the spawning of the Groups at a given list of zones of different types.
 -- @param #SPAWN self
 -- @param #table SpawnZoneTable A table with @{Zone} objects. If this table is given, then each spawn will be executed within the given list of @{Zone}s objects. 
 -- @return #SPAWN
 -- @usage
--- -- NATO Tank Platoons invading Gori.
--- -- Choose between 3 different zones for each new SPAWN the Group to be executed, regardless of the zone type. 
+--  -- Create a zone table of the 2 zones.
+--  ZoneTable = { ZONE:New( "Zone1" ), ZONE:New( "Zone2" ) }
+--  
+--  Spawn_Vehicle_1 = SPAWN:New( "Spawn Vehicle 1" )
+--    :InitLimit( 10, 10 )
+--    :InitRandomizeRoute( 1, 1, 200 ) 
+--    :InitRandomizeZones( ZoneTable )
+--    :SpawnScheduled( 5, .5 )
+--    
 function SPAWN:InitRandomizeZones( SpawnZoneTable )
   self:F( { self.SpawnTemplatePrefix, SpawnZoneTable } )
 
@@ -883,10 +897,10 @@ end
 --- Makes the groups visible before start (like a batallion).
 -- The method will take the position of the group as the first position in the array.
 -- @param #SPAWN self
--- @param #number SpawnAngle         The angle in degrees how the groups and each unit of the group will be positioned.
--- @param #number SpawnWidth		     The amount of Groups that will be positioned on the X axis.
--- @param #number SpawnDeltaX        The space between each Group on the X-axis.
--- @param #number SpawnDeltaY		     The space between each Group on the Y-axis.
+-- @param #number SpawnAngle The angle in degrees how the groups and each unit of the group will be positioned.
+-- @param #number SpawnWidth The amount of Groups that will be positioned on the X axis.
+-- @param #number SpawnDeltaX The space between each Group on the X-axis.
+-- @param #number SpawnDeltaY The space between each Group on the Y-axis.
 -- @return #SPAWN self
 -- @usage
 -- -- Define an array of Groups.
@@ -1253,16 +1267,17 @@ end
 -- @param SpawnFunctionArguments A random amount of arguments to be provided to the function when the group spawns.
 -- @return #SPAWN
 -- @usage
--- -- Declare SpawnObject and call a function when a new Group is spawned.
--- local SpawnObject = SPAWN
---   :New( "SpawnObject" )
---   :InitLimit( 2, 10 )
---   :OnSpawnGroup(
---     function( SpawnGroup )
---       SpawnGroup:E( "I am spawned" )
---     end 
---     )
---   :SpawnScheduled( 300, 0.3 )
+--  -- Declare SpawnObject and call a function when a new Group is spawned.
+--  local SpawnObject = SPAWN
+--    :New( "SpawnObject" )
+--    :InitLimit( 2, 10 )
+--    :OnSpawnGroup(
+--      function( SpawnGroup )
+--        SpawnGroup:E( "I am spawned" )
+--      end 
+--      )
+--    :SpawnScheduled( 300, 0.3 )
+--    
 function SPAWN:OnSpawnGroup( SpawnCallBackFunction, ... )
   self:F( "OnSpawnGroup" )
 

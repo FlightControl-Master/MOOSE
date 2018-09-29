@@ -85,7 +85,7 @@ end
 -- @return Data The data of the info.
 function TASKINFO:GetData( Key )
   local Object = self.Info:Get( Key )
-  return Object.Data
+  return Object and Object.Data
 end
 
 
@@ -126,6 +126,19 @@ end
 -- @return #TASKINFO self
 function TASKINFO:AddCoordinate( Coordinate, Order, Detail, Keep )
   self:AddInfo( "Coordinate", Coordinate, Order, Detail, Keep )
+  return self
+end
+
+
+--- Add Coordinates. 
+-- @param #TASKINFO self
+-- @param #list<Core.Point#COORDINATE> Coordinates
+-- @param #number Order The display order, which is a number from 0 to 100.
+-- @param #TASKINFO.Detail Detail The detail Level.
+-- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
+-- @return #TASKINFO self
+function TASKINFO:AddCoordinates( Coordinates, Order, Detail, Keep )
+  self:AddInfo( "Coordinates", Coordinates, Order, Detail, Keep )
   return self
 end
 
@@ -259,6 +272,7 @@ function TASKINFO:AddCargoSet( SetCargo, Order, Detail, Keep )
   )
 
   self:AddInfo( "Cargo", CargoReport:Text(), Order, Detail, Keep )
+  
 
   return self
 end

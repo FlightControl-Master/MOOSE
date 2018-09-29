@@ -670,7 +670,7 @@ function COMMANDCENTER:ReportSummary( ReportGroup )
   
   for MissionID, Mission in pairs( self.Missions ) do
     local Mission = Mission -- Tasking.Mission#MISSION
-    Report:Add( " - " .. Mission:ReportSummary() )
+    Report:Add( " - " .. Mission:ReportSummary( ReportGroup ) )
   end
   
   self:MessageToGroup( Report:Text(), ReportGroup )
