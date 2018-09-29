@@ -20,7 +20,8 @@
 --
 -- ===
 --
--- ### Authors: **funkyfranky**, FlightControl (cargo dispatcher classes)
+-- ### Author: **funkyfranky**
+-- ### Co-author: FlightControl (cargo dispatcher classes)
 --
 -- @module Functional.Warehouse
 -- @image MOOSE.JPG
@@ -1470,18 +1471,20 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.5.4w"
+WAREHOUSE.version="0.5.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Add check if assets "on the move" are stationary. Can happen if ground units get stuck in buildings. If stationary auto complete transport by adding assets to request warehouse? Time?
+-- TODO: Optimize findpathonroad. Do it only once (first time) and safe paths between warehouses similar to off-road paths.
 -- TODO: Spawn assets only virtually, i.e. remove requested assets from stock but do NOT spawn them ==> Interface to A2A dispatcher! Maybe do a negative sign on asset number?
 -- TODO: Test capturing a neutral warehouse.
 -- TODO: Make more examples: ARTY, CAP, ...
 -- TODO: Check also general requests like all ground. Is this a problem for self propelled if immobile units are among the assets? Check if transport.
 -- TODO: Handle the case when units of a group die during the transfer.
--- TODO: Added habours as interface for transport to from warehouses?
+-- TODO: Added habours as interface for transport to from warehouses? Could make a rudimentary shipping dispatcher.
 -- TODO: Add save/load capability of warehouse <==> percistance after mission restart. Difficult in lua!
 -- DONE: Get cargo bay and weight from CARGO_GROUP and GROUP. No necessary any more!
 -- DONE: Add possibility to set weight and cargo bay manually in AddAsset function as optional parameters.
@@ -1606,7 +1609,8 @@ function WAREHOUSE:New(warehouse, alias)
   self:AddTransition("Attacked",        "Defeated",          "Running")     -- Attack by other coalition was defeated!
   self:AddTransition("Attacked",        "Captured",          "Running")     -- Warehouse was captured by another coalition. It must have been attacked first.
   self:AddTransition("*",               "AirbaseCaptured",   "*")           -- Airbase was captured by other coalition.
-  self:AddTransition("*",               "AirbaseRecaptured", "*")           -- Airbase was re-captured from other coalition. 
+  self:AddTransition("*",               "AirbaseRecaptured", "*")           -- Airbase was re-captured from other coalition.
+  self:AddTransition("*",               "AssetDead",         "*")           -- An asset group died.
   self:AddTransition("*",               "Destroyed",         "Destroyed")   -- Warehouse was destroyed. All assets in stock are gone and warehouse is stopped.
   
   ------------------------
@@ -1835,21 +1839,21 @@ function WAREHOUSE:New(warehouse, alias)
 
 
   --- Triggers the FSM event "Attacked" when a warehouse is under attack by an another coalition.
-  -- @param #WAREHOUSE self
   -- @function [parent=#WAREHOUSE] Attacked
+  -- @param #WAREHOUSE self
   -- @param DCS#coalition.side Coalition Coalition side which is attacking the warehouse, i.e. a number of @{DCS#coalition.side} enumerator.
   -- @param DCS#country.id Country Country ID, which is attacking the warehouse, i.e. a number @{DCS#country.id} enumerator.
 
   --- Triggers the FSM event "Attacked" with a delay when a warehouse is under attack by an another coalition.
-  -- @param #WAREHOUSE self
   -- @function [parent=#WAREHOUSE] __Attacked
+  -- @param #WAREHOUSE self
   -- @param #number delay Delay in seconds.
   -- @param DCS#coalition.side Coalition Coalition side which is attacking the warehouse, i.e. a number of @{DCS#coalition.side} enumerator.
   -- @param DCS#country.id Country Country ID, which is attacking the warehouse, i.e. a number @{DCS#country.id} enumerator.
 
   --- On after "Attacked" event user function. Called when a warehouse (zone) is under attack by an enemy.
-  -- @param #WAREHOUSE self
   -- @function [parent=#WAREHOUSE] OnAfterAttacked
+  -- @param #WAREHOUSE self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
@@ -1858,38 +1862,38 @@ function WAREHOUSE:New(warehouse, alias)
 
 
   --- Triggers the FSM event "Defeated" when an attack from an enemy was defeated.
-  -- @param #WAREHOUSE self
   -- @function [parent=#WAREHOUSE] Defeated
+  -- @param #WAREHOUSE self
 
   --- Triggers the FSM event "Defeated" with a delay when an attack from an enemy was defeated.
-  -- @param #WAREHOUSE self
   -- @function [parent=#WAREHOUSE] __Defeated
+  -- @param #WAREHOUSE self
   -- @param #number delay Delay in seconds.
 
   --- On after "Defeated" event user function. Called when an enemy attack was defeated.
+  -- @function [parent=#WAREHOUSE] OnAfterDefeate
   -- @param #WAREHOUSE self
-  -- @function [parent=#WAREHOUSE] OnAfterDefeated
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
 
 
   --- Triggers the FSM event "Captured" when a warehouse has been captured by another coalition.
-  -- @param #WAREHOUSE self
   -- @function [parent=#WAREHOUSE] Captured
+  -- @param #WAREHOUSE self
   -- @param DCS#coalition.side Coalition Coalition side which captured the warehouse.
   -- @param DCS#country.id Country Country id which has captured the warehouse.
   
   --- Triggers the FSM event "Captured" with a delay when a warehouse has been captured by another coalition.
-  -- @param #WAREHOUSE self
   -- @function [parent=#WAREHOUSE] __Captured
+  -- @param #WAREHOUSE self
   -- @param #number delay Delay in seconds.
   -- @param DCS#coalition.side Coalition Coalition side which captured the warehouse.
   -- @param DCS#country.id Country Country id which has captured the warehouse.
 
   --- On after "Captured" event user function. Called when the warehouse has been captured by an enemy coalition.
-  -- @param #WAREHOUSE self
   -- @function [parent=#WAREHOUSE] OnAfterCaptured
+  -- @param #WAREHOUSE self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
@@ -1898,19 +1902,19 @@ function WAREHOUSE:New(warehouse, alias)
   -- 
 
   --- Triggers the FSM event "AirbaseCaptured" when the airbase of the warehouse has been captured by another coalition.
-  -- @param #WAREHOUSE self
   -- @function [parent=#WAREHOUSE] AirbaseCaptured
+  -- @param #WAREHOUSE self
   -- @param DCS#coalition.side Coalition Coalition side which captured the airbase, i.e. a number of @{DCS#coalition.side} enumerator.
   
   --- Triggers the FSM event "AirbaseCaptured" with a delay when the airbase of the warehouse has been captured by another coalition.
-  -- @param #WAREHOUSE self
   -- @function [parent=#WAREHOUSE] __AirbaseCaptured
+  -- @param #WAREHOUSE self
   -- @param #number delay Delay in seconds.
   -- @param DCS#coalition.side Coalition Coalition side which captured the airbase, i.e. a number of @{DCS#coalition.side} enumerator.
 
   --- On after "AirbaseCaptured" even user function. Called when the airbase of the warehouse has been captured by another coalition.
-  -- @param #WAREHOUSE self
   -- @function [parent=#WAREHOUSE] OnAfterAirbaseCaptured
+  -- @param #WAREHOUSE self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
@@ -1923,32 +1927,55 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param DCS#coalition.side Coalition Coalition which re-captured the airbase, i.e. the same as the current warehouse owner coalition.
   
   --- Triggers the FSM event "AirbaseRecaptured" with a delay when the airbase of the warehouse has been re-captured from the other coalition.
-  -- @param #WAREHOUSE self
   -- @function [parent=#WAREHOUSE] __AirbaseRecaptured
+  -- @param #WAREHOUSE self
   -- @param #number delay Delay in seconds.
   -- @param DCS#coalition.side Coalition Coalition which re-captured the airbase, i.e. the same as the current warehouse owner coalition.
 
   --- On after "AirbaseRecaptured" event user function. Called when the airbase of the warehouse has been re-captured from the other coalition.
-  -- @param #WAREHOUSE self
   -- @function [parent=#WAREHOUSE] OnAfterAirbaseRecaptured
+  -- @param #WAREHOUSE self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
   -- @param DCS#coalition.side Coalition Coalition which re-captured the airbase, i.e. the same as the current warehouse owner coalition.
 
 
-  --- Triggers the FSM event "Destroyed" when the warehouse was destroyed. Services are stopped.
+  --- Triggers the FSM event "AssetDead" when an asset group has died.
+  -- @function [parent=#WAREHOUSE] AssetDead
   -- @param #WAREHOUSE self
+  -- @param #WAREHOUSE.Assetitem asset The asset that is dead.
+  -- @param #WAREHOUSE.Pendingitem request The request of the dead asset.
+
+  --- Triggers the delayed FSM event "AssetDead" when an asset group has died.
+  -- @function [parent=#WAREHOUSE] __AssetDead
+  -- @param #WAREHOUSE self
+  -- @param #number delay Delay in seconds.
+  -- @param #WAREHOUSE.Assetitem asset The asset that is dead.
+  -- @param #WAREHOUSE.Pendingitem request The request of the dead asset.
+
+  --- On after "AssetDead" event user function. Called when an asset group died.
+  -- @function [parent=#WAREHOUSE] OnAfterAssetDead
+  -- @param #WAREHOUSE self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #WAREHOUSE.Assetitem asset The asset that is dead.
+  -- @param #WAREHOUSE.Pendingitem request The request of the dead asset.
+
+
+  --- Triggers the FSM event "Destroyed" when the warehouse was destroyed. Services are stopped.
   -- @function [parent=#WAREHOUSE] Destroyed
+  -- @param #WAREHOUSE self
   
   --- Triggers the FSM event "Destroyed" with a delay when the warehouse was destroyed. Services are stopped.
-  -- @param #WAREHOUSE self
   -- @function [parent=#WAREHOUSE] Destroyed
+  -- @param #WAREHOUSE self
   -- @param #number delay Delay in seconds.
 
   --- On after "Destroyed" event user function. Called when the warehouse was destroyed. Services are stopped.
-  -- @param #WAREHOUSE self
   -- @function [parent=#WAREHOUSE] OnAfterDestroyed
+  -- @param #WAREHOUSE self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
@@ -3054,7 +3081,6 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute, forcecargobay,
     
     -- Cargo bay size.
     local bay=forcecargobay or unit:GetCargoBayFreeWeight()
-    env.info(string.format("FF unit %s bay=%d", unit:GetName(), bay))
     
     -- Add bay size to table.
     table.insert(cargobay, bay)
@@ -3436,7 +3462,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
         
         -- Route plane to the requesting warehouses airbase.
         -- Actually, the route is already set. We only need to activate the uncontrolled group.
-        self:_RouteAir(group, Request.airbase)
+        self:_RouteAir(group)
         
       elseif _cargocategory==Group.Category.SHIP then
         self:T2(self.wid..string.format("Route naval group %s.", group:GetName()))
@@ -3557,6 +3583,9 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     
       -- Spawn helos at airport in controlled state. They need to fly to the spawn zone. 
       spawngroup=self:_SpawnAssetAircraft(_alias,_assetitem, Pending, Parking[_assetitem.uid], false)
+      
+      -- Activate helo randomly within the next 10 seconds.
+      --spawngroup:StartUncontrolled(math.random(10))
     
     elseif Request.transporttype==WAREHOUSE.TransportType.APC then
     
@@ -3729,7 +3758,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   end
   
   --- Function called if carrier group is going home.
-  function CargoTransport:OnAfterHome(From, Event, To, Carrier, Coordinate, Speed, HomeZone)
+  function CargoTransport:OnAfterHome(From, Event, To, Carrier, Coordinate, Speed, Height, HomeZone)
   
     -- Get warehouse state.
     local warehouse=Carrier:GetState(Carrier, "WAREHOUSE") --#WAREHOUSE
@@ -3910,23 +3939,6 @@ function WAREHOUSE:onafterArrived(From, Event, To, group)
   end
     
 end
-
---- Get asset from group and request.
--- @param #WAREHOUSE self
--- @param Wrapper.Group#GROUP group The group for which the asset should be obtained.
--- @param #WAREHOUSE.Pendingitem request Pending request.
--- @return #WAREHOUSE.Assetitem The asset.
-function WAREHOUSE:_GetAssetFromGroupRequest(group,request)
-
-  -- Get the IDs for this group. In particular, we use the asset ID to figure out which group was delivered.
-  local wid,aid,rid=self:_GetIDsFromGroup(group)
-  
-  -- Retrieve asset from request.
-  local asset=request.assets[aid]
-end
-
-
-
 
 --- On after "Delivered" event. Triggered when all asset groups have reached their destination. Corresponding request is deleted from the pending queue.
 -- @param #WAREHOUSE self
@@ -4165,6 +4177,20 @@ function WAREHOUSE:onafterAirbaseRecaptured(From, Event, To, Coalition)
 end
 
 
+--- On after "AssetDead" event triggerd when an asset group died.
+-- @param #WAREHOUSE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #WAREHOUSE.Assetitem asset The asset that is dead.
+-- @param #WAREHOUSE.Pendingitem request The request of the dead asset.
+function WAREHOUSE:onafterAssetDead(From, Event, To, asset, request)
+  local text=string.format("Asset %s from request id=%d is dead!", asset.templatename, request.uid)
+  self:T(self.wid..text)
+  self:_DebugMessage(text)
+end
+
+
 --- On after "Destroyed" event. Warehouse was destroyed. All services are stopped. Warehouse is going to "Stopped" state in one minute.
 -- @param #WAREHOUSE self
 -- @param #string From From state.
@@ -4216,13 +4242,8 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
     Parking=self:_FindParkingForAssets(self.airbase,_assetstock) or {}
   end
   
-  -- Spawn aircraft in uncontrolled state if request comes from the same warehouse.
-  local UnControlled=false
-  local AIOnOff=true
-  if Request.toself then
-    UnControlled=true
-    AIOnOff=false
-  end
+  -- Spawn aircraft in uncontrolled state.
+  local UnControlled=true
   
   -- Create an empty group set.
   local _groupset=SET_GROUP:New()
@@ -4303,7 +4324,7 @@ end
 -- @param #WAREHOUSE.Assetitem asset Ground asset that will be spawned.
 -- @param #WAREHOUSE.Queueitem request Request belonging to this asset. Needed for the name/alias.
 -- @param Core.Zone#ZONE spawnzone Zone where the assets should be spawned.
--- @param boolean aioff If true, AI of ground units are set to off.
+-- @param #boolean aioff If true, AI of ground units are set to off.
 -- @return Wrapper.Group#GROUP The spawned group or nil if the group could not be spawned.
 function WAREHOUSE:_SpawnAssetGroundNaval(alias, asset, request, spawnzone, aioff)
 
@@ -4317,8 +4338,6 @@ function WAREHOUSE:_SpawnAssetGroundNaval(alias, asset, request, spawnzone, aiof
     
     -- Get a random coordinate in the spawn zone.
     local coord=spawnzone:GetRandomCoordinate()
-    
-    --spawnzone:SmokeZone(1, 30)
 
     -- Translate the position of the units.
     for i=1,#template.units do
@@ -4344,7 +4363,7 @@ function WAREHOUSE:_SpawnAssetGroundNaval(alias, asset, request, spawnzone, aiof
     
     template.x   = coord.x
     template.y   = coord.z
-    template.alt = coord.y    
+    template.alt = coord.y
   
     -- Spawn group.
     local group=_DATABASE:Spawn(template) --Wrapper.Group#GROUP
@@ -4671,18 +4690,18 @@ end
 --- Route the airplane from one airbase another. Activates uncontrolled aircraft and sets ROE/ROT for ferry flights.
 -- ROE is set to return fire and ROT to passive defence.
 -- @param #WAREHOUSE self
--- @param Wrapper.Group#GROUP Aircraft Airplane group to be routed.
+-- @param Wrapper.Group#GROUP aircraft Airplane group to be routed.
 function WAREHOUSE:_RouteAir(aircraft)
 
   if aircraft and aircraft:IsAlive()~=nil then
     
     -- Debug info.
     self:T2(self.wid..string.format("RouteAir aircraft group %s alive=%s", aircraft:GetName(), tostring(aircraft:IsAlive())))
+        
+    -- Give start command to activate uncontrolled aircraft within the next 60 seconds.
+    local starttime=math.random(60)
+    aircraft:StartUncontrolled(starttime)
     
-    -- Give start command to activate uncontrolled aircraft. 
-    --aircraft:SetCommand({id='Start', params={}})
-    aircraft:StartUncontrolled()
-
     -- Debug info.
     self:T2(self.wid..string.format("RouteAir aircraft group %s alive=%s (after start command)", aircraft:GetName(), tostring(aircraft:IsAlive())))
     
@@ -4977,7 +4996,6 @@ function WAREHOUSE:_UnitDead(deadunit, request)
   local unitname=self:_GetNameWithOut(deadunit)
   local groupname=self:_GetNameWithOut(group)
   
-  
   -- Debug message.
   local text=string.format("Unit %s died! #units=%d/%d ==> Group dead=%s (IsAlive=%s).", unitname, nunits, nunits0, tostring(groupdead), tostring(group:IsAlive()))
   self:T2(self.wid..text)
@@ -4987,9 +5005,15 @@ function WAREHOUSE:_UnitDead(deadunit, request)
     self:E(self.wid.."ERROR: Number of units negative! This should not happen.")
   end
   
+  -- Group is dead!
   if groupdead then
     self:T(self.wid..string.format("Group %s (transport=%s) is dead!", groupname, tostring(self:_GroupIsTransport(group,request))))
-    group:SmokeWhite()
+    if self.Debug then
+      group:SmokeWhite()
+    end
+    -- Trigger AssetDead event.
+    local asset=self:FindAssetInDB(group)
+    self:AssetDead(asset, request)
   end
    
   
@@ -5803,7 +5827,7 @@ function WAREHOUSE:_GetTransportsForAssets(request)
         
         -- How many times does the cargo fit into the carrier?
         local delta=cargobay-asset.weight
-        env.info(string.format("k=%d, j=%d delta=%d  cargobay=%d  weight=%d", k, j, delta, cargobay, asset.weight))
+        --env.info(string.format("k=%d, j=%d delta=%d  cargobay=%d  weight=%d", k, j, delta, cargobay, asset.weight))
         
         --self:E(self.wid..string.format("%s unit %d loads cargo uid=%d: bayempty=%02d, bayloaded = %02d - weight=%02d", transport.templatename, k, asset.uid, transport.cargobay[k], cargobay, asset.weight))
         

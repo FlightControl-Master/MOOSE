@@ -266,14 +266,11 @@ end
 function AI_CARGO_AIRPLANE:onafterPickup( Airplane, From, Event, To, Coordinate, Speed, Height, PickupZone )
 
   if Airplane and Airplane:IsAlive() then
-    --env.info("FF onafterpick aircraft alive")
     
     self.PickupZone = PickupZone
   
     -- Get closest airbase of current position.
     local ClosestAirbase, DistToAirbase=Airplane:GetCoordinate():GetClosestAirbase()
-        
-    --env.info("FF onafterpickup closest airbase "..ClosestAirbase:GetName())
   
     -- Two cases. Aircraft spawned in air or at an airbase.
     if Airplane:InAir() then
@@ -291,8 +288,6 @@ function AI_CARGO_AIRPLANE:onafterPickup( Airplane, From, Event, To, Coordinate,
     
     if Airplane:InAir() or Dist>500 then
     
-      --env.info("FF onafterpickup routing to airbase "..ClosestAirbase:GetName())
-    
       -- Route aircraft to pickup airbase.
       self:Route( Airplane, Airbase, Speed, Height ) 
           
@@ -303,7 +298,6 @@ function AI_CARGO_AIRPLANE:onafterPickup( Airplane, From, Event, To, Coordinate,
       self.RoutePickup = true
       
     else
-      --env.info("FF onafterpick calling landed")
     
       -- We are already at the right airbase ==> Landed ==> triggers loading of troops. Is usually called at engine shutdown event.
       self.RoutePickup=true
@@ -312,8 +306,7 @@ function AI_CARGO_AIRPLANE:onafterPickup( Airplane, From, Event, To, Coordinate,
     end
 
     self:GetParent( self, AI_CARGO_AIRPLANE ).onafterPickup( self, Airplane, From, Event, To, Coordinate, Speed, Height, PickupZone )
-  else
-    --env.info("FF onafterpick aircraft not alive")
+    
   end
 
   
