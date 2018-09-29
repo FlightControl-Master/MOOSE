@@ -1361,10 +1361,19 @@ do -- TASK_CARGO
   end
   
   --- @param #TASK_CARGO self
-  function TASK_CARGO:UpdateTaskInfo( DetectedItem )
+  function TASK_CARGO:UpdateTaskInfo()
   
     if self:IsStatePlanned() or self:IsStateAssigned() then
+      self.TaskInfo:AddTaskName( 0, "MSOD" )
       self.TaskInfo:AddCargoSet( self.SetCargo, 10, "SOD", true )
+      local Coordinates = {}
+      for CargoName, Cargo in pairs( self.SetCargo:GetSet() ) do
+        local Cargo = Cargo -- Cargo.Cargo#CARGO
+        if not Cargo:IsLoaded() then
+          Coordinates[#Coordinates+1] = Cargo:GetCoordinate()
+        end
+      end
+      self.TaskInfo:AddCoordinates( Coordinates, 1, "M" )
     end
   end
 
