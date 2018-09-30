@@ -104,7 +104,7 @@
 -- ## Strafe Pits
 -- Each strafe pit can consist of multiple targets. Often one findes two or three strafe targets next to each other.
 -- 
--- A strafe pit can be added to the range by the @{#RANGE.AddStrafepit}(*targetnames, boxlength, boxwidth, heading, inverseheading, goodpass, foulline*) function.
+-- A strafe pit can be added to the range by the @{#RANGE.AddStrafePit}(*targetnames, boxlength, boxwidth, heading, inverseheading, goodpass, foulline*) function.
 -- 
 -- * The first parameter *targetnames* defines the target or targets. This has to be given as a lua table which contains the names of @{Wrapper.Unit} or @{Static} objects defined in the mission editor. 
 -- * In order to perform a valid pass on the strafe pit, the pilot has to begin his run from the correct direction. Therefore, an "approach box" is defined in front

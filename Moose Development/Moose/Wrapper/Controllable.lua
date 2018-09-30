@@ -619,9 +619,16 @@ end
 
 --- Give an uncontrolled air controllable the start command.
 -- @param #CONTROLLABLE self
+-- @param #number delay (Optional) Delay before start command in seconds.
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:StartUncontrolled()
-  self:SetCommand({id='Start', params={}})
+function CONTROLLABLE:StartUncontrolled(delay)
+  if delay and delay>0 then
+    env.info(string.format("FF %s delayed start after %d seconds", self:GetName(), delay))
+    SCHEDULER:New(nil, CONTROLLABLE.StartUncontrolled, {self}, delay)    
+  else
+    env.info(string.format("FF %s instant start", self:GetName()))
+    self:SetCommand({id='Start', params={}})
+  end
   return self
 end
 

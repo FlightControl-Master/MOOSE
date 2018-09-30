@@ -220,6 +220,8 @@ do -- CARGO_UNIT
   -- @param #string Event
   -- @param #string From
   -- @param #string To
+  -- @param Wrapper.Group#GROUP CargoCarrier
+  -- @param #number NearRadius
   function CARGO_UNIT:onafterBoard( From, Event, To, CargoCarrier, NearRadius, ... )
     self:F( { From, Event, To, CargoCarrier, NearRadius = NearRadius } )
   
@@ -236,7 +238,7 @@ do -- CARGO_UNIT
     if not self.CargoInAir then
       -- If NearRadius is given, then use the given NearRadius, otherwise calculate the NearRadius 
       -- based upon the Carrier bounding radius, which is calculated from the bounding rectangle on the Y axis.
-      local NearRadius = NearRadius or CargoCarrier:GetBoundingRadius( NearRadius ) + 5
+      local NearRadius = NearRadius or CargoCarrier:GetBoundingRadius() + 5
       if self:IsNear( CargoCarrier:GetPointVec2(), NearRadius ) then
         self:Load( CargoCarrier, NearRadius, ... )
       else
