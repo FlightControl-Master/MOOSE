@@ -860,7 +860,7 @@ do -- SET_GROUP
     local RemoveGroupNamesArray = ( type( RemoveGroupNames ) == "table" ) and RemoveGroupNames or { RemoveGroupNames }
     
     for RemoveGroupID, RemoveGroupName in pairs( RemoveGroupNamesArray ) do
-      self:Remove( RemoveGroupName.GroupName )
+      self:Remove( RemoveGroupName )
     end
       
     return self
