@@ -1217,6 +1217,25 @@ end
 function GROUP:GetMinHeight()
   self:F2()
 
+  local DCSGroup = self:GetDCSObject()
+
+  if DCSGroup then
+    local GroupHeightMin = 999999999
+
+    for Index, UnitData in pairs( DCSGroup:getUnits() ) do
+      local UnitData = UnitData -- DCS#Unit
+
+      local UnitHeight = UnitData:getPoint()
+
+      if UnitHeight < GroupHeightMin then
+        GroupHeightMin = UnitHeight
+      end
+    end
+
+    return GroupHeightMin
+  end
+
+  return nil
 end
 
 --- Returns the current maximum height of the group.
@@ -1226,6 +1245,25 @@ end
 function GROUP:GetMaxHeight()
   self:F2()
 
+  local DCSGroup = self:GetDCSObject()
+
+  if DCSGroup then
+    local GroupHeightMax = -999999999
+
+    for Index, UnitData in pairs( DCSGroup:getUnits() ) do
+      local UnitData = UnitData -- DCS#Unit
+
+      local UnitHeight = UnitData:getPoint()
+
+      if UnitHeight > GroupHeightMax then
+        GroupHeightMax = UnitHeight
+      end
+    end
+
+    return GroupHeightMax
+  end
+
+  return nil
 end
 
 -- RESPAWNING

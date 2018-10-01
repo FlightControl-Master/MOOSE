@@ -289,16 +289,6 @@ do -- TASK_CARGO_CSAR
     
     self:F( { CargoDeployed = self.CargoDeployed ~= nil and "true" or "false" } )
     
-      --- OnBefore Transition Handler for Event CargoPickedUp.
-      -- @function [parent=#TASK_CARGO_CSAR] OnBeforeCargoPickedUp
-      -- @param #TASK_CARGO_CSAR self
-      -- @param #string From The From State string.
-      -- @param #string Event The Event string.
-      -- @param #string To The To State string.
-      -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that PickedUp the cargo. You can use this to retrieve the PlayerName etc.
-      -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
-      -- @return #boolean Return false to cancel Transition.
-      
       --- OnAfter Transition Handler for Event CargoPickedUp.
       -- @function [parent=#TASK_CARGO_CSAR] OnAfterCargoPickedUp
       -- @param #TASK_CARGO_CSAR self
@@ -308,30 +298,6 @@ do -- TASK_CARGO_CSAR
       -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that PickedUp the cargo. You can use this to retrieve the PlayerName etc.
       -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
         
-      --- Synchronous Event Trigger for Event CargoPickedUp.
-      -- @function [parent=#TASK_CARGO_CSAR] CargoPickedUp
-      -- @param #TASK_CARGO_CSAR self
-      -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that PickedUp the cargo. You can use this to retrieve the PlayerName etc.
-      -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
-      
-      --- Asynchronous Event Trigger for Event CargoPickedUp.
-      -- @function [parent=#TASK_CARGO_CSAR] __CargoPickedUp
-      -- @param #TASK_CARGO_CSAR self
-      -- @param #number Delay The delay in seconds.
-      -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that PickedUp the cargo. You can use this to retrieve the PlayerName etc.
-      -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
-    
-      --- OnBefore Transition Handler for Event CargoDeployed.
-      -- @function [parent=#TASK_CARGO_CSAR] OnBeforeCargoDeployed
-      -- @param #TASK_CARGO_CSAR self
-      -- @param #string From The From State string.
-      -- @param #string Event The Event string.
-      -- @param #string To The To State string.
-      -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that Deployed the cargo. You can use this to retrieve the PlayerName etc.
-      -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
-      -- @param Core.Zone#ZONE DeployZone The zone where the Cargo got Deployed or UnBoarded.
-      -- @return #boolean Return false to cancel Transition.
-      
       --- OnAfter Transition Handler for Event CargoDeployed.
       -- @function [parent=#TASK_CARGO_CSAR] OnAfterCargoDeployed
       -- @param #TASK_CARGO_CSAR self
@@ -342,21 +308,6 @@ do -- TASK_CARGO_CSAR
       -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
       -- @param Core.Zone#ZONE DeployZone The zone where the Cargo got Deployed or UnBoarded.
         
-      --- Synchronous Event Trigger for Event CargoDeployed.
-      -- @function [parent=#TASK_CARGO_CSAR] CargoDeployed
-      -- @param #TASK_CARGO_CSAR self
-      -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that Deployed the cargo. You can use this to retrieve the PlayerName etc.
-      -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
-      -- @param Core.Zone#ZONE DeployZone The zone where the Cargo got Deployed or UnBoarded.
-      
-      --- Asynchronous Event Trigger for Event CargoDeployed.
-      -- @function [parent=#TASK_CARGO_CSAR] __CargoDeployed
-      -- @param #TASK_CARGO_CSAR self
-      -- @param #number Delay The delay in seconds.
-      -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that Deployed the cargo. You can use this to retrieve the PlayerName etc.
-      -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
-      -- @param Core.Zone#ZONE DeployZone The zone where the Cargo got Deployed or UnBoarded.
-
     local Fsm = self:GetUnitProcess()
 
     local CargoReport = REPORT:New( "Rescue a downed pilot from the following position:")
@@ -379,6 +330,8 @@ do -- TASK_CARGO_CSAR
     
     return self
   end 
+  
+
 
   function TASK_CARGO_CSAR:ReportOrder( ReportGroup ) 
     

@@ -3119,6 +3119,26 @@ do -- SET_STATIC
   
   end
   
+  --- Calculate the maxium A2G threat level of the SET_STATIC.
+  -- @param #SET_STATIC self
+  -- @return #number The maximum threatlevel
+  function SET_STATIC:CalculateThreatLevelA2G()
+  
+  local MaxThreatLevelA2G = 0
+  local MaxThreatText = ""
+  for StaticName, StaticData in pairs( self:GetSet() ) do
+    local ThreatStatic = StaticData -- Wrapper.Static#STATIC
+    local ThreatLevelA2G, ThreatText = ThreatStatic:GetThreatLevel()
+    if ThreatLevelA2G > MaxThreatLevelA2G then
+      MaxThreatLevelA2G = ThreatLevelA2G
+      MaxThreatText = ThreatText
+    end
+  end
+  
+  self:F( { MaxThreatLevelA2G = MaxThreatLevelA2G, MaxThreatText = MaxThreatText } )
+  return MaxThreatLevelA2G, MaxThreatText
+  
+  end
   
   ---
   -- @param #SET_STATIC self
