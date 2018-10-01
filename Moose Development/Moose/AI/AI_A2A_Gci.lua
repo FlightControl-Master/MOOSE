@@ -290,6 +290,7 @@ end
 -- @param #string To The To State string.
 function AI_A2A_GCI:onafterStart( AIIntercept, From, Event, To )
 
+  self:GetParent( self ).onafterStart( self, AIIntercept, From, Event, To )
   AIIntercept:HandleEvent( EVENTS.Takeoff, nil, self )
 
 end

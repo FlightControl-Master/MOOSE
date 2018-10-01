@@ -1654,7 +1654,6 @@ end
 --    RouteToZone( GroundGroup, ZoneList[1] )
 -- 
 function CONTROLLABLE:TaskFunction( FunctionString, ... )
-  self:E({TaskFunction=FunctionString, arguments=arg})
 
   local DCSTask
 

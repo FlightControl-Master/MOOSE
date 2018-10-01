@@ -400,7 +400,6 @@ end
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
 function AI_A2A:onafterStart( Controllable, From, Event, To )
-  self:F2()
 
   self:__Status( 10 ) -- Check status status every 30 seconds.
   
@@ -422,8 +421,6 @@ end
 
 --- @param #AI_A2A self
 function AI_A2A:onafterStatus()
-
-  self:F( " Checking Status" )
 
   if self.Controllable and self.Controllable:IsAlive() then
   
@@ -452,7 +449,7 @@ function AI_A2A:onafterStatus()
 
     if not self:Is( "Fuel" ) and not self:Is( "Home" ) then
       local Fuel = self.Controllable:GetFuelMin()
-      self:F({Fuel=Fuel})
+      self:F({Fuel=Fuel, PatrolFuelThresholdPercentage=self.PatrolFuelThresholdPercentage})
       if Fuel < self.PatrolFuelThresholdPercentage then
         if self.TankerName then
           self:E( self.Controllable:GetName() .. " is out of fuel: " .. Fuel .. " ... Refuelling at Tanker!" )
