@@ -1008,6 +1008,23 @@ function GROUP:IsNotInZone( Zone )
   return true
 end
 
+--- Returns true if any units of the group are within a @{Core.Zone}.
+-- @param #GROUP self
+-- @param Core.Zone#ZONE_BASE Zone The zone to test.
+-- @return #boolean Returns true if any unit of the Group is within the @{Core.Zone#ZONE_BASE}
+function GROUP:IsAnyInZone( Zone )
+
+  if not self:IsAlive() then return false end
+
+  for UnitID, UnitData in pairs( self:GetUnits() ) do
+    local Unit = UnitData -- Wrapper.Unit#UNIT
+    if Zone:IsVec3InZone( Unit:GetVec3() ) then
+      return true
+    end
+  end
+  return false
+end
+
 --- Returns the number of UNITs that are in the @{Zone}
 -- @param #GROUP self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
@@ -1217,6 +1234,25 @@ end
 function GROUP:GetMinHeight()
   self:F2()
 
+  local DCSGroup = self:GetDCSObject()
+
+  if DCSGroup then
+    local GroupHeightMin = 999999999
+
+    for Index, UnitData in pairs( DCSGroup:getUnits() ) do
+      local UnitData = UnitData -- DCS#Unit
+
+      local UnitHeight = UnitData:getPoint()
+
+      if UnitHeight < GroupHeightMin then
+        GroupHeightMin = UnitHeight
+      end
+    end
+
+    return GroupHeightMin
+  end
+
+  return nil
 end
 
 --- Returns the current maximum height of the group.
@@ -1226,6 +1262,25 @@ end
 function GROUP:GetMaxHeight()
   self:F2()
 
+  local DCSGroup = self:GetDCSObject()
+
+  if DCSGroup then
+    local GroupHeightMax = -999999999
+
+    for Index, UnitData in pairs( DCSGroup:getUnits() ) do
+      local UnitData = UnitData -- DCS#Unit
+
+      local UnitHeight = UnitData:getPoint()
+
+      if UnitHeight > GroupHeightMax then
+        GroupHeightMax = UnitHeight
+      end
+    end
+
+    return GroupHeightMax
+  end
+
+  return nil
 end
 
 -- RESPAWNING

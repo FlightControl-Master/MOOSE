@@ -282,13 +282,14 @@ function AI_A2A_CAP:New( AICap, PatrolZone, PatrolFloorAltitude, PatrolCeilingAl
 end
 
 --- onafter State Transition for Event Patrol.
--- @param #AI_A2A_GCI self
+-- @param #AI_A2A_CAP self
 -- @param Wrapper.Group#GROUP AICap The AI Group managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
 function AI_A2A_CAP:onafterStart( AICap, From, Event, To )
 
+  self:GetParent( self ).onafterStart( self, AICap, From, Event, To )
   AICap:HandleEvent( EVENTS.Takeoff, nil, self )
 
 end

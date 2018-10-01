@@ -1929,17 +1929,20 @@ do -- COORDINATE
   -- @param Core.Settings#SETTINGS Settings
   -- @param Tasking.Task#TASK Task The task for which coordinates need to be calculated.
   -- @return #string The coordinate Text in the configured coordinate system.
-  function COORDINATE:ToString( Controllable, Settings, Task ) -- R2.2
+  function COORDINATE:ToString( Controllable, Settings, Task )
   
     self:F2( { Controllable = Controllable and Controllable:GetName() } )
 
     local Settings = Settings or ( Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() ) ) or _SETTINGS
 
     local ModeA2A = false
+    self:E('A2A false')
     
     if Task then
+      self:E('Task ' .. Task.ClassName )
       if Task:IsInstanceOf( TASK_A2A ) then
         ModeA2A = true
+        self:E('A2A true')
       else
         if Task:IsInstanceOf( TASK_A2G ) then
           ModeA2A = false

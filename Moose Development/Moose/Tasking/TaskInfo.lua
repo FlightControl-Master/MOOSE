@@ -284,8 +284,9 @@ end
 -- @param Core.Report#REPORT Report
 -- @param #TASKINFO.Detail Detail The detail Level.
 -- @param Wrapper.Group#GROUP ReportGroup
+-- @param Tasking.Task#TASK Task
 -- @return #TASKINFO self
-function TASKINFO:Report( Report, Detail, ReportGroup )
+function TASKINFO:Report( Report, Detail, ReportGroup, Task )
 
   local Line = 0
   local LineReport = REPORT:New()
@@ -306,7 +307,7 @@ function TASKINFO:Report( Report, Detail, ReportGroup )
       end
       if Key == "Coordinate" then
         local Coordinate = Data.Data -- Core.Point#COORDINATE
-        Text = Coordinate:ToString( ReportGroup:GetUnit(1), nil, self )
+        Text = Coordinate:ToString( ReportGroup:GetUnit(1), nil, Task )
       end
       if Key == "Threat" then
         local DataText = Data.Data -- #string
@@ -322,15 +323,15 @@ function TASKINFO:Report( Report, Detail, ReportGroup )
       end
       if Key == "QFE" then
         local Coordinate = Data.Data -- Core.Point#COORDINATE
-        Text = Coordinate:ToStringPressure( ReportGroup:GetUnit(1), nil, self )
+        Text = Coordinate:ToStringPressure( ReportGroup:GetUnit(1), nil, Task )
       end
       if Key == "Temperature" then
         local Coordinate = Data.Data -- Core.Point#COORDINATE
-        Text = Coordinate:ToStringTemperature( ReportGroup:GetUnit(1), nil, self )
+        Text = Coordinate:ToStringTemperature( ReportGroup:GetUnit(1), nil, Task )
       end
       if Key == "Wind" then
         local Coordinate = Data.Data -- Core.Point#COORDINATE
-        Text = Coordinate:ToStringWind( ReportGroup:GetUnit(1), nil, self )
+        Text = Coordinate:ToStringWind( ReportGroup:GetUnit(1), nil, Task )
       end
       if Key == "Cargo" then
         local DataText = Data.Data -- #string

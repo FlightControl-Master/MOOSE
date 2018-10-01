@@ -70,6 +70,7 @@ do -- TASK_CARGO_DISPATCHER
   -- @type TASK_CARGO_DISPATCHER
   -- @extends Tasking.Task_Manager#TASK_MANAGER
   -- @field TASK_CARGO_DISPATCHER.CSAR CSAR
+  -- @field Core.Set#SET_ZONE SetZonesCSAR
 
   --- @type TASK_CARGO_DISPATCHER.CSAR
   -- @field Wrapper.Unit#UNIT PilotUnit
@@ -260,6 +261,18 @@ do -- TASK_CARGO_DISPATCHER
   -- 
   -- Use the @{#TASK_CARGO_DISPATCHER.SetCSARDeployZone}() to setup one deployment zone, and @{#TASK_CARGO_DISPATCHER.SetCSARDeployZones}() to setup multiple default deployment zones in one call.
   -- 
+  -- ## 4.4. **CSAR ejection zones**. 
+  -- 
+  -- Setup a set of zones where the pilots will only eject and a task is created for CSAR. When such a set of zones is given, any ejection outside those zones will not result in a pilot created for CSAR!
+  -- 
+  -- Use the @{#TASK_CARGO_DISPATCHER.SetCSARZones}() to setup the set of zones.
+  -- 
+  -- ## 4.5. **CSAR ejection maximum**.
+  -- 
+  -- Setup how many pilots will eject the maximum. This to avoid an overload of CSAR tasks being created :-) The default is endless CSAR tasks.
+  -- 
+  -- Use the @{#TASK_CARGO_DISPATCHER.SetMaxCSAR}() to setup the maximum of pilots that will eject for CSAR.
+  -- 
   -- 
   -- # 5) Handle cargo task events.
   -- 
@@ -395,6 +408,9 @@ do -- TASK_CARGO_DISPATCHER
     self:SetCSARRadius()
     self:__StartTasks( 5 )
     
+    self.MaxCSAR = nil
+    self.CountCSAR = 0
+    
     -- For CSAR missions, we process the event when a pilot ejects.
     
     self:HandleEvent( EVENTS.Ejection )
@@ -402,6 +418,47 @@ do -- TASK_CARGO_DISPATCHER
     return self
   end
 
+
+  --- Sets the set of zones were pilots will only be spawned (eject) when the planes crash.  
+  -- Note that because this is a set of zones, the MD can create the zones dynamically within his mission!
+  -- Just provide a set of zones, see usage, but find the tactical situation here:
+  -- 
+  -- ![CSAR Zones](../Tasking/CSAR_Zones.JPG)
+  -- 
+  -- @param #TASK_CARGO_DISPATCHER self
+  -- @param Core.Set#SET_ZONE SetZonesCSAR The set of zones where pilots will only be spawned for CSAR when they eject.
+  -- @usage
+  -- 
+  --      TaskDispatcher = TASK_CARGO_DISPATCHER:New( Mission, AttackGroups )
+  -- 
+  --      -- Use this call to pass the set of zones.
+  --      -- Note that you can create the set of zones inline, because the FilterOnce method (and other SET_ZONE methods return self).
+  --      -- So here the zones can be created as normal trigger zones (MOOSE creates a collection of ZONE objects when teh mission starts of all trigger zones).
+  --      -- Just name them as CSAR zones here.
+  --      TaskDispatcher:SetCSARZones( SET_ZONE:New():FilterPrefixes("CSAR"):FilterOnce() )
+  -- 
+  function TASK_CARGO_DISPATCHER:SetCSARZones( SetZonesCSAR )
+
+    self.SetZonesCSAR = SetZonesCSAR
+  
+  end
+
+
+  --- Sets the maximum of pilots that will be spawned (eject) when the planes crash.  
+  -- @param #TASK_CARGO_DISPATCHER self
+  -- @param #number MaxCSAR The maximum of pilots that will eject for CSAR.
+  -- @usage
+  -- 
+  --      TaskDispatcher = TASK_CARGO_DISPATCHER:New( Mission, AttackGroups )
+  -- 
+  --      -- Use this call to the maximum of CSAR to 10.
+  --      TaskDispatcher:SetMaxCSAR( 10 )
+  -- 
+  function TASK_CARGO_DISPATCHER:SetMaxCSAR( MaxCSAR )
+
+    self.MaxCSAR = MaxCSAR
+  
+  end
 
 
 
@@ -420,8 +477,15 @@ do -- TASK_CARGO_DISPATCHER
       
       -- Only add a CSAR task if the coalition of the mission is equal to the coalition of the ejected unit.
       if CSARCoalition == self.Mission:GetCommandCenter():GetCoalition() then
-        local CSARTaskName = self:AddCSARTask( self.CSARTaskName, CSARCoordinate, CSARHeading, CSARCountry, self.CSARBriefing )     
-        self:SetCSARDeployZones( CSARTaskName, self.CSARDeployZones )
+        -- And only add if the eject is in one of the zones, if defined.
+        if not self.SetZonesCSAR or ( self.SetZonesCSAR and self.SetZonesCSAR:IsCoordinateInZone( CSARCoordinate ) ) then
+          -- And only if the maximum of pilots is not reached that ejected!
+          if not self.MaxCSAR or ( self.MaxCSAR and self.CountCSAR < self.MaxCSAR ) then
+            local CSARTaskName = self:AddCSARTask( self.CSARTaskName, CSARCoordinate, CSARHeading, CSARCountry, self.CSARBriefing )     
+            self:SetCSARDeployZones( CSARTaskName, self.CSARDeployZones )
+            self.CountCSAR = self.CountCSAR + 1
+          end
+        end
       end
     end
     

@@ -1229,6 +1229,29 @@ do -- SET_GROUP
     end
     return true
   end
+
+  --- Iterate the SET_GROUP and call an iterator function for each alive GROUP that has any unit in the @{Core.Zone}, providing the GROUP and optional parameters to the called function.
+  -- @param #SET_GROUP self
+  -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+  -- @param #function IteratorFunction The function that will be called when there is an alive GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
+  -- @return #SET_GROUP self
+  function SET_GROUP:ForEachGroupAnyInZone( ZoneObject, IteratorFunction, ... )
+    self:F2( arg )
+  
+    self:ForEach( IteratorFunction, arg, self:GetSet(),
+      --- @param Core.Zone#ZONE_BASE ZoneObject
+      -- @param Wrapper.Group#GROUP GroupObject
+      function( ZoneObject, GroupObject )
+        if GroupObject:IsAnyInZone( ZoneObject ) then
+          return true
+        else
+          return false
+        end
+      end, { ZoneObject } )
+  
+    return self
+  end
+
   
   --- Iterate the SET_GROUP and return true if at least one of the @{Wrapper.Group#GROUP} is completely inside the @{Core.Zone#ZONE}
   -- @param #SET_GROUP self
@@ -3119,6 +3142,26 @@ do -- SET_STATIC
   
   end
   
+  --- Calculate the maxium A2G threat level of the SET_STATIC.
+  -- @param #SET_STATIC self
+  -- @return #number The maximum threatlevel
+  function SET_STATIC:CalculateThreatLevelA2G()
+  
+  local MaxThreatLevelA2G = 0
+  local MaxThreatText = ""
+  for StaticName, StaticData in pairs( self:GetSet() ) do
+    local ThreatStatic = StaticData -- Wrapper.Static#STATIC
+    local ThreatLevelA2G, ThreatText = ThreatStatic:GetThreatLevel()
+    if ThreatLevelA2G > MaxThreatLevelA2G then
+      MaxThreatLevelA2G = ThreatLevelA2G
+      MaxThreatText = ThreatText
+    end
+  end
+  
+  self:F( { MaxThreatLevelA2G = MaxThreatLevelA2G, MaxThreatText = MaxThreatText } )
+  return MaxThreatLevelA2G, MaxThreatText
+  
+  end
   
   ---
   -- @param #SET_STATIC self
