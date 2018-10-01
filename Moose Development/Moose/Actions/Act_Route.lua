@@ -362,7 +362,7 @@ do -- ACT_ROUTE_POINT
       local Distance = self.Coordinate:Get2DDistance( ProcessUnit:GetCoordinate() )
       
       if Distance <= self.Range then
-        local RouteText = "You have arrived."
+        local RouteText = "Task \"" .. self:GetTask():GetName() .. "\", you have arrived."
         self:GetCommandCenter():MessageTypeToGroup( RouteText, ProcessUnit:GetGroup(), MESSAGE.Type.Information )
         return true
       end
@@ -381,7 +381,7 @@ do -- ACT_ROUTE_POINT
   -- @param #string To
   function ACT_ROUTE_POINT:onafterReport( ProcessUnit, From, Event, To )
   
-    local RouteText = self:GetRouteText( ProcessUnit )
+    local RouteText = "Task \"" .. self:GetTask():GetName() .. "\", " .. self:GetRouteText( ProcessUnit )
     
     self:GetCommandCenter():MessageTypeToGroup( RouteText, ProcessUnit:GetGroup(), MESSAGE.Type.Update )
   end
@@ -453,7 +453,7 @@ do -- ACT_ROUTE_ZONE
   function ACT_ROUTE_ZONE:onfuncHasArrived( ProcessUnit )
 
     if ProcessUnit:IsInZone( self.Zone ) then
-      local RouteText = "You have arrived within the zone."
+      local RouteText = "Task \"" .. self:GetTask():GetName() .. "\", you have arrived within the zone."
       self:GetCommandCenter():MessageTypeToGroup( RouteText, ProcessUnit:GetGroup(), MESSAGE.Type.Information )
     end
 
@@ -471,7 +471,7 @@ do -- ACT_ROUTE_ZONE
   function ACT_ROUTE_ZONE:onafterReport( ProcessUnit, From, Event, To )
     self:F( { ProcessUnit = ProcessUnit } )
   
-    local RouteText = self:GetRouteText( ProcessUnit )
+    local RouteText = "Task \"" .. self:GetTask():GetName() .. "\", " .. self:GetRouteText( ProcessUnit )
     self:GetCommandCenter():MessageTypeToGroup( RouteText, ProcessUnit:GetGroup(), MESSAGE.Type.Update )
   end
 

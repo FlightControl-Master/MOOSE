@@ -1229,6 +1229,29 @@ do -- SET_GROUP
     end
     return true
   end
+
+  --- Iterate the SET_GROUP and call an iterator function for each alive GROUP that has any unit in the @{Core.Zone}, providing the GROUP and optional parameters to the called function.
+  -- @param #SET_GROUP self
+  -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+  -- @param #function IteratorFunction The function that will be called when there is an alive GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
+  -- @return #SET_GROUP self
+  function SET_GROUP:ForEachGroupAnyInZone( ZoneObject, IteratorFunction, ... )
+    self:F2( arg )
+  
+    self:ForEach( IteratorFunction, arg, self:GetSet(),
+      --- @param Core.Zone#ZONE_BASE ZoneObject
+      -- @param Wrapper.Group#GROUP GroupObject
+      function( ZoneObject, GroupObject )
+        if GroupObject:IsAnyInZone( ZoneObject ) then
+          return true
+        else
+          return false
+        end
+      end, { ZoneObject } )
+  
+    return self
+  end
+
   
   --- Iterate the SET_GROUP and return true if at least one of the @{Wrapper.Group#GROUP} is completely inside the @{Core.Zone#ZONE}
   -- @param #SET_GROUP self
