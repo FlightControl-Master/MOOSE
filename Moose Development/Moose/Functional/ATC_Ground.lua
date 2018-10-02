@@ -11,8 +11,8 @@
 --
 -- ===
 -- 
--- @module ATC_Ground
-
+-- @module Functional.ATC_Ground
+-- @image Air_Traffic_Control_Ground_Operations.JPG
 
 --- @type ATC_GROUND
 -- @field Core.Set#SET_CLIENT SetClient
@@ -417,7 +417,7 @@ end
 -- # Airbases monitored
 -- 
 -- The following airbases are monitored at the Caucasus region.
--- Use the @{Airbase#AIRBASE.Caucasus} enumeration to select the airbases to be monitored.
+-- Use the @{Wrapper.Airbase#AIRBASE.Caucasus} enumeration to select the airbases to be monitored.
 -- 
 --   * `AIRBASE.Caucasus.Anapa_Vityazevo`
 --   * `AIRBASE.Caucasus.Batumi`
@@ -1021,7 +1021,7 @@ end
 -- # Airbases monitored
 -- 
 -- The following airbases are monitored at the Nevada region.
--- Use the @{Airbase#AIRBASE.Nevada} enumeration to select the airbases to be monitored.
+-- Use the @{Wrapper.Airbase#AIRBASE.Nevada} enumeration to select the airbases to be monitored.
 -- 
 --    * `AIRBASE.Nevada.Beatty_Airport`
 --    * `AIRBASE.Nevada.Boulder_City_Airport`
@@ -1561,7 +1561,7 @@ end
 -- # Airbases monitored
 -- 
 -- The following airbases are monitored at the Normandy region.
--- Use the @{Airbase#AIRBASE.Normandy} enumeration to select the airbases to be monitored.
+-- Use the @{Wrapper.Airbase#AIRBASE.Normandy} enumeration to select the airbases to be monitored.
 -- 
 --   * `AIRBASE.Normandy.Azeville`
 --   * `AIRBASE.Normandy.Bazenville`

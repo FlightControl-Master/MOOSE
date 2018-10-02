@@ -1,7 +1,5 @@
 --- **Core** -- EVENT models DCS **event dispatching** using a **publish-subscribe** model.
 -- 
--- ![Banner Image](..\Presentations\EVENT\Dia1.JPG)
--- 
 -- ===
 -- 
 -- # 1) Event Handling Overview
@@ -61,8 +59,8 @@
 -- So, when the DCS event occurs, the class will be notified of that event.
 -- There are two functions which you use to subscribe to or unsubscribe from an event.
 -- 
---   * @{Base#BASE.HandleEvent}(): Subscribe to a DCS Event.
---   * @{Base#BASE.UnHandleEvent}(): Unsubscribe from a DCS Event.
+--   * @{Core.Base#BASE.HandleEvent}(): Subscribe to a DCS Event.
+--   * @{Core.Base#BASE.UnHandleEvent}(): Unsubscribe from a DCS Event.
 --   
 -- Note that for a UNIT, the event will be handled **for that UNIT only**!
 -- Note that for a GROUP, the event will be handled **for all the UNITs in that GROUP only**!
@@ -74,7 +72,7 @@
 -- ### 1.3.2 Event Handling of DCS Events
 -- 
 -- Once the class is subscribed to the event, an **Event Handling** method on the object or class needs to be written that will be called
--- when the DCS event occurs. The Event Handling method receives an @{Event#EVENTDATA} structure, which contains a lot of information
+-- when the DCS event occurs. The Event Handling method receives an @{Core.Event#EVENTDATA} structure, which contains a lot of information
 -- about the event that occurred.
 -- 
 -- Find below an example of the prototype how to write an event handling function for two units: 
@@ -112,11 +110,11 @@
 -- # 2) EVENTS type
 -- 
 -- The EVENTS structure contains names for all the different DCS events that objects can subscribe to using the 
--- @{Base#BASE.HandleEvent}() method.
+-- @{Core.Base#BASE.HandleEvent}() method.
 -- 
 -- # 3) EVENTDATA type
 -- 
--- The @{Event#EVENTDATA} structure contains all the fields that are populated with event information before 
+-- The @{Core.Event#EVENTDATA} structure contains all the fields that are populated with event information before 
 -- an Event Handler method is being called by the event dispatcher.
 -- The Event Handler received the EVENTDATA object as a parameter, and can be used to investigate further the different events.
 -- There are basically 4 main categories of information stored in the EVENTDATA structure:
@@ -164,23 +162,30 @@
 -- 
 -- ===
 --
--- @module Event
+-- @module Core.Event
+-- @image Core_Event.JPG
 
 
 --- The EVENT structure
+-- 
 -- @type EVENT
 -- @field #EVENT.Events Events
 -- @extends Core.Base#BASE
 EVENT = {
   ClassName = "EVENT",
   ClassID = 0,
+  MissionEnd = false,
 }
 
 world.event.S_EVENT_NEW_CARGO = world.event.S_EVENT_MAX + 1000
 world.event.S_EVENT_DELETE_CARGO = world.event.S_EVENT_MAX + 1001
+world.event.S_EVENT_NEW_ZONE = world.event.S_EVENT_MAX + 1002
+world.event.S_EVENT_DELETE_ZONE = world.event.S_EVENT_MAX + 1003
+world.event.S_EVENT_REMOVE_UNIT = world.event.S_EVENT_MAX + 1004
+
 
 --- The different types of events supported by MOOSE.
--- Use this structure to subscribe to events using the @{Base#BASE.HandleEvent}() method.
+-- Use this structure to subscribe to events using the @{Core.Base#BASE.HandleEvent}() method.
 -- @type EVENTS
 EVENTS = {
   Shot =              world.event.S_EVENT_SHOT,
@@ -209,9 +214,11 @@ EVENTS = {
   MarkAdded =         world.event.S_EVENT_MARK_ADDED,
   MarkChange =        world.event.S_EVENT_MARK_CHANGE,
   MarkRemoved =       world.event.S_EVENT_MARK_REMOVED,
-  ShootingEnd =       world.event.S_EVENT_SHOOTING_END,
   NewCargo =          world.event.S_EVENT_NEW_CARGO,
   DeleteCargo =       world.event.S_EVENT_DELETE_CARGO,
+  NewZone =           world.event.S_EVENT_NEW_ZONE,
+  DeleteZone =        world.event.S_EVENT_DELETE_ZONE,
+  RemoveUnit =        world.event.S_EVENT_REMOVE_UNIT,
 }
 
 --- The Event structure
@@ -223,35 +230,39 @@ EVENTS = {
 -- @type EVENTDATA
 -- @field #number id The identifier of the event.
 -- 
--- @field Dcs.DCSUnit#Unit initiator (UNIT/STATIC/SCENERY) The initiating @{Dcs.DCSUnit#Unit} or @{Dcs.DCSStaticObject#StaticObject}.
--- @field Dcs.DCSObject#Object.Category IniObjectCategory (UNIT/STATIC/SCENERY) The initiator object category ( Object.Category.UNIT or Object.Category.STATIC ).
--- @field Dcs.DCSUnit#Unit IniDCSUnit (UNIT/STATIC) The initiating @{DCSUnit#Unit} or @{DCSStaticObject#StaticObject}.
+-- @field DCS#Unit initiator (UNIT/STATIC/SCENERY) The initiating @{DCS#Unit} or @{DCS#StaticObject}.
+-- @field DCS#Object.Category IniObjectCategory (UNIT/STATIC/SCENERY) The initiator object category ( Object.Category.UNIT or Object.Category.STATIC ).
+-- @field DCS#Unit IniDCSUnit (UNIT/STATIC) The initiating @{DCS#Unit} or @{DCS#StaticObject}.
 -- @field #string IniDCSUnitName (UNIT/STATIC) The initiating Unit name.
--- @field Wrapper.Unit#UNIT IniUnit (UNIT/STATIC) The initiating MOOSE wrapper @{Unit#UNIT} of the initiator Unit object.
+-- @field Wrapper.Unit#UNIT IniUnit (UNIT/STATIC) The initiating MOOSE wrapper @{Wrapper.Unit#UNIT} of the initiator Unit object.
 -- @field #string IniUnitName (UNIT/STATIC) The initiating UNIT name (same as IniDCSUnitName).
--- @field Dcs.DCSGroup#Group IniDCSGroup (UNIT) The initiating {DCSGroup#Group}.
+-- @field DCS#Group IniDCSGroup (UNIT) The initiating {DCSGroup#Group}.
 -- @field #string IniDCSGroupName (UNIT) The initiating Group name.
--- @field Wrapper.Group#GROUP IniGroup (UNIT) The initiating MOOSE wrapper @{Group#GROUP} of the initiator Group object.
+-- @field Wrapper.Group#GROUP IniGroup (UNIT) The initiating MOOSE wrapper @{Wrapper.Group#GROUP} of the initiator Group object.
 -- @field #string IniGroupName UNIT) The initiating GROUP name (same as IniDCSGroupName).
 -- @field #string IniPlayerName (UNIT) The name of the initiating player in case the Unit is a client or player slot.
--- @field Dcs.DCScoalition#coalition.side IniCoalition (UNIT) The coalition of the initiator.
--- @field Dcs.DCSUnit#Unit.Category IniCategory (UNIT) The category of the initiator.
+-- @field DCS#coalition.side IniCoalition (UNIT) The coalition of the initiator.
+-- @field DCS#Unit.Category IniCategory (UNIT) The category of the initiator.
 -- @field #string IniTypeName (UNIT) The type name of the initiator.
 -- 
--- @field Dcs.DCSUnit#Unit target (UNIT/STATIC) The target @{Dcs.DCSUnit#Unit} or @{DCSStaticObject#StaticObject}.
--- @field Dcs.DCSObject#Object.Category TgtObjectCategory (UNIT/STATIC) The target object category ( Object.Category.UNIT or Object.Category.STATIC ).
--- @field Dcs.DCSUnit#Unit TgtDCSUnit (UNIT/STATIC) The target @{DCSUnit#Unit} or @{DCSStaticObject#StaticObject}.
+-- @field DCS#Unit target (UNIT/STATIC) The target @{DCS#Unit} or @{DCS#StaticObject}.
+-- @field DCS#Object.Category TgtObjectCategory (UNIT/STATIC) The target object category ( Object.Category.UNIT or Object.Category.STATIC ).
+-- @field DCS#Unit TgtDCSUnit (UNIT/STATIC) The target @{DCS#Unit} or @{DCS#StaticObject}.
 -- @field #string TgtDCSUnitName (UNIT/STATIC) The target Unit name.
--- @field Wrapper.Unit#UNIT TgtUnit (UNIT/STATIC) The target MOOSE wrapper @{Unit#UNIT} of the target Unit object.
+-- @field Wrapper.Unit#UNIT TgtUnit (UNIT/STATIC) The target MOOSE wrapper @{Wrapper.Unit#UNIT} of the target Unit object.
 -- @field #string TgtUnitName (UNIT/STATIC) The target UNIT name (same as TgtDCSUnitName).
--- @field Dcs.DCSGroup#Group TgtDCSGroup (UNIT) The target {DCSGroup#Group}.
+-- @field DCS#Group TgtDCSGroup (UNIT) The target {DCSGroup#Group}.
 -- @field #string TgtDCSGroupName (UNIT) The target Group name.
--- @field Wrapper.Group#GROUP TgtGroup (UNIT) The target MOOSE wrapper @{Group#GROUP} of the target Group object.
+-- @field Wrapper.Group#GROUP TgtGroup (UNIT) The target MOOSE wrapper @{Wrapper.Group#GROUP} of the target Group object.
 -- @field #string TgtGroupName (UNIT) The target GROUP name (same as TgtDCSGroupName).
 -- @field #string TgtPlayerName (UNIT) The name of the target player in case the Unit is a client or player slot.
--- @field Dcs.DCScoalition#coalition.side TgtCoalition (UNIT) The coalition of the target.
--- @field Dcs.DCSUnit#Unit.Category TgtCategory (UNIT) The category of the target.
+-- @field DCS#coalition.side TgtCoalition (UNIT) The coalition of the target.
+-- @field DCS#Unit.Category TgtCategory (UNIT) The category of the target.
 -- @field #string TgtTypeName (UNIT) The type name of the target.
+-- 
+-- @field DCS#Airbase place The @{DCS#Airbase}
+-- @field Wrapper.Airbase#AIRBASE Place The MOOSE airbase object.
+-- @field #string PlaceName The name of the airbase.
 -- 
 -- @field weapon The weapon used during the event.
 -- @field Weapon
@@ -427,6 +438,21 @@ local _EVENTMETA = {
      Event = "OnEventDeleteCargo",
      Text = "S_EVENT_DELETE_CARGO" 
    },
+   [EVENTS.NewZone] = {
+     Order = 1,
+     Event = "OnEventNewZone",
+     Text = "S_EVENT_NEW_ZONE" 
+   },
+   [EVENTS.DeleteZone] = {
+     Order = 1,
+     Event = "OnEventDeleteZone",
+     Text = "S_EVENT_DELETE_ZONE" 
+   },
+   [EVENTS.RemoveUnit] = {
+     Order = -1,
+     Event = "OnEventRemoveUnit",
+     Text = "S_EVENT_REMOVE_UNIT" 
+   },
 }
 
 
@@ -444,7 +470,7 @@ end
 
 --- Initializes the Events structure for the event
 -- @param #EVENT self
--- @param Dcs.DCSWorld#world.event EventID
+-- @param DCS#world.event EventID
 -- @param Core.Base#BASE EventClass
 -- @return #EVENT.Events
 function EVENT:Init( EventID, EventClass )
@@ -470,7 +496,7 @@ end
 --- Removes a subscription
 -- @param #EVENT self
 -- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
--- @param Dcs.DCSWorld#world.event EventID
+-- @param DCS#world.event EventID
 -- @return #EVENT.Events
 function EVENT:RemoveEvent( EventClass, EventID  )
 
@@ -481,7 +507,6 @@ function EVENT:RemoveEvent( EventClass, EventID  )
   self.Events = self.Events or {}
   self.Events[EventID] = self.Events[EventID] or {}
   self.Events[EventID][EventPriority] = self.Events[EventID][EventPriority] or {}  
-  self.Events[EventID][EventPriority][EventClass] = self.Events[EventID][EventPriority][EventClass]
     
   self.Events[EventID][EventPriority][EventClass] = nil
   
@@ -490,7 +515,7 @@ end
 --- Resets subscriptions
 -- @param #EVENT self
 -- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
--- @param Dcs.DCSWorld#world.event EventID
+-- @param DCS#world.event EventID
 -- @return #EVENT.Events
 function EVENT:Reset( EventObject ) --R2.1
 
@@ -513,7 +538,7 @@ end
 
 
 
---- Clears all event subscriptions for a @{Base#BASE} derived object.
+--- Clears all event subscriptions for a @{Core.Base#BASE} derived object.
 -- @param #EVENT self
 -- @param Core.Base#BASE EventObject
 function EVENT:RemoveAll( EventObject  )
@@ -705,7 +730,7 @@ do -- Event Creation
   -- @param #EVENT self
   -- @param AI.AI_Cargo#AI_CARGO Cargo The Cargo created.
   function EVENT:CreateEventNewCargo( Cargo )
-    self:F( { Cargo } )
+    self:I( { Cargo } )
   
     local Event = {
       id = EVENTS.NewCargo,
@@ -726,6 +751,36 @@ do -- Event Creation
       id = EVENTS.DeleteCargo,
       time = timer.getTime(),
       cargo = Cargo,
+      }
+  
+    world.onEvent( Event )
+  end
+
+  --- Creation of a New Zone Event.
+  -- @param #EVENT self
+  -- @param Core.Zone#ZONE_BASE Zone The Zone created.
+  function EVENT:CreateEventNewZone( Zone )
+    self:F( { Zone } )
+  
+    local Event = {
+      id = EVENTS.NewZone,
+      time = timer.getTime(),
+      zone = Zone,
+      }
+  
+    world.onEvent( Event )
+  end
+
+  --- Creation of a Zone Deletion Event.
+  -- @param #EVENT self
+  -- @param Core.Zone#ZONE_BASE Zone The Zone created.
+  function EVENT:CreateEventDeleteZone( Zone )
+    self:F( { Zone } )
+  
+    local Event = {
+      id = EVENTS.DeleteZone,
+      time = timer.getTime(),
+      zone = Zone,
       }
   
     world.onEvent( Event )
@@ -770,8 +825,13 @@ function EVENT:onEvent( Event )
   if self and 
      self.Events and 
      self.Events[Event.id] and
+     self.MissionEnd == false and
      ( Event.initiator ~= nil or ( Event.initiator == nil and Event.id ~= EVENTS.PlayerLeaveUnit ) ) then
 
+    if Event.id and Event.id == EVENTS.MissionEnd then
+      self.MissionEnd = true
+    end
+    
     if Event.initiator then    
       
       Event.IniObjectCategory = Event.initiator:getCategory()
@@ -805,6 +865,16 @@ function EVENT:onEvent( Event )
         Event.IniDCSUnitName = Event.IniDCSUnit:getName()
         Event.IniUnitName = Event.IniDCSUnitName
         Event.IniUnit = STATIC:FindByName( Event.IniDCSUnitName, false )
+        Event.IniCoalition = Event.IniDCSUnit:getCoalition()
+        Event.IniCategory = Event.IniDCSUnit:getDesc().category
+        Event.IniTypeName = Event.IniDCSUnit:getTypeName()
+      end
+
+      if Event.IniObjectCategory == Object.Category.CARGO then
+        Event.IniDCSUnit = Event.initiator
+        Event.IniDCSUnitName = Event.IniDCSUnit:getName()
+        Event.IniUnitName = Event.IniDCSUnitName
+        Event.IniUnit = CARGO:FindByName( Event.IniDCSUnitName )
         Event.IniCoalition = Event.IniDCSUnit:getCoalition()
         Event.IniCategory = Event.IniDCSUnit:getDesc().category
         Event.IniTypeName = Event.IniDCSUnit:getTypeName()
@@ -875,9 +945,32 @@ function EVENT:onEvent( Event )
       --Event.WeaponTgtDCSUnit = Event.Weapon:getTarget()
     end
     
+    -- Place should be given for takeoff and landing events as well as base captured. It should be a DCS airbase. 
+    if Event.place then      
+      Event.Place=AIRBASE:Find(Event.place)
+      Event.PlaceName=Event.Place:GetName()
+    end
+
+--  @FC: something like this should be added.
+--[[    
+    if Event.idx then
+      Event.MarkID=Event.idx
+      Event.MarkVec3=Event.pos
+      Event.MarkCoordinate=COORDINATE:NewFromVec3(Event.pos)
+      Event.MarkText=Event.text
+      Event.MarkCoalition=Event.coalition
+      Event.MarkGroupID = Event.groupID
+    end
+]]
+    
     if Event.cargo then
       Event.Cargo = Event.cargo
       Event.CargoName = Event.cargo.Name
+    end
+
+    if Event.zone then
+      Event.Zone = Event.zone
+      Event.ZoneName = Event.zone.ZoneName
     end
     
     local PriorityOrder = EventMeta.Order
@@ -885,7 +978,7 @@ function EVENT:onEvent( Event )
     local PriorityEnd = PriorityOrder == -1 and 1 or 5
 
     if Event.IniObjectCategory ~= Object.Category.STATIC then
-      self:E( { EventMeta.Text, Event, Event.IniDCSUnitName, Event.TgtDCSUnitName, PriorityOrder } )
+      self:T( { EventMeta.Text, Event, Event.IniDCSUnitName, Event.TgtDCSUnitName, PriorityOrder } )
     end
     
     for EventPriority = PriorityBegin, PriorityEnd, PriorityOrder do
@@ -894,7 +987,7 @@ function EVENT:onEvent( Event )
       
         -- Okay, we got the event from DCS. Now loop the SORTED self.EventSorted[] table for the received Event.id, and for each EventData registered, check if a function needs to be called.
         for EventClass, EventData in pairs( self.Events[Event.id][EventPriority] ) do
-
+        
           --if Event.IniObjectCategory ~= Object.Category.STATIC then
           --  self:E( { "Evaluating: ", EventClass:GetClassNameAndID() } )
           --end
@@ -909,7 +1002,8 @@ function EVENT:onEvent( Event )
             if EventClass:IsAlive() or
                Event.id == EVENTS.PlayerEnterUnit or 
                Event.id == EVENTS.Crash or 
-               Event.id == EVENTS.Dead then
+               Event.id == EVENTS.Dead or 
+               Event.id == EVENTS.RemoveUnit then
             
               local UnitName = EventClass:GetName()
 
@@ -959,7 +1053,8 @@ function EVENT:onEvent( Event )
               if EventClass:IsAlive() or
                  Event.id == EVENTS.PlayerEnterUnit or
                  Event.id == EVENTS.Crash or
-                 Event.id == EVENTS.Dead then
+                 Event.id == EVENTS.Dead or
+                 Event.id == EVENTS.RemoveUnit then
 
                 -- We can get the name of the EventClass, which is now always a GROUP object.
                 local GroupName = EventClass:GetName()
@@ -1042,6 +1137,16 @@ function EVENT:onEvent( Event )
           end
         end
       end
+    end
+    
+    -- When cargo was deleted, it may probably be because of an S_EVENT_DEAD.
+    -- However, in the loading logic, an S_EVENT_DEAD is also generated after a Destroy() call.
+    -- And this is a problem because it will remove all entries from the SET_CARGOs.
+    -- To prevent this from happening, the Cargo object has a flag NoDestroy.
+    -- When true, the SET_CARGO won't Remove the Cargo object from the set.
+    -- But we need to switch that flag off after the event handlers have been called.
+    if Event.id == EVENTS.DeleteCargo then
+      Event.Cargo.NoDestroy = nil
     end
   else
     self:T( { EventMeta.Text, Event } )    

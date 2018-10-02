@@ -1,29 +1,24 @@
 --- **AI** -- (R2.2) - Models the process of Combat Air Patrol (CAP) for airplanes.
 --
--- This is a class used in the @{AI_A2A_Dispatcher}.
---
 -- ===
 -- 
 -- ### Author: **FlightControl**
 -- 
 -- ===       
 --
--- @module AI_A2A_Cap
-
---BASE:TraceClass("AI_A2A_CAP")
+-- @module AI.AI_A2A_Cap
+-- @image AI_Combat_Air_Patrol.JPG
 
 --- @type AI_A2A_CAP
 -- @extends AI.AI_A2A_Patrol#AI_A2A_PATROL
 
 
---- # AI_A2A_CAP class, extends @{AI_CAP#AI_PATROL_ZONE}
--- 
--- The AI_A2A_CAP class implements the core functions to patrol a @{Zone} by an AI @{Group} or @{Group} 
+--- The AI_A2A_CAP class implements the core functions to patrol a @{Zone} by an AI @{Wrapper.Group} or @{Wrapper.Group} 
 -- and automatically engage any airborne enemies that are within a certain range or within a certain zone.
 -- 
 -- ![Process](..\Presentations\AI_CAP\Dia3.JPG)
 -- 
--- The AI_A2A_CAP is assigned a @{Group} and this must be done before the AI_A2A_CAP process can be started using the **Start** event.
+-- The AI_A2A_CAP is assigned a @{Wrapper.Group} and this must be done before the AI_A2A_CAP process can be started using the **Start** event.
 -- 
 -- ![Process](..\Presentations\AI_CAP\Dia4.JPG)
 -- 
@@ -66,15 +61,15 @@
 -- 
 -- ### 2.2 AI_A2A_CAP Events
 -- 
---   * **@{AI_Patrol#AI_PATROL_ZONE.Start}**: Start the process.
---   * **@{AI_Patrol#AI_PATROL_ZONE.Route}**: Route the AI to a new random 3D point within the Patrol Zone.
+--   * **@{AI.AI_Patrol#AI_PATROL_ZONE.Start}**: Start the process.
+--   * **@{AI.AI_Patrol#AI_PATROL_ZONE.Route}**: Route the AI to a new random 3D point within the Patrol Zone.
 --   * **@{#AI_A2A_CAP.Engage}**: Let the AI engage the bogeys.
 --   * **@{#AI_A2A_CAP.Abort}**: Aborts the engagement and return patrolling in the patrol zone.
---   * **@{AI_Patrol#AI_PATROL_ZONE.RTB}**: Route the AI to the home base.
---   * **@{AI_Patrol#AI_PATROL_ZONE.Detect}**: The AI is detecting targets.
---   * **@{AI_Patrol#AI_PATROL_ZONE.Detected}**: The AI has detected new targets.
---   * **@{#AI_A2A_CAP.Destroy}**: The AI has destroyed a bogey @{Unit}.
---   * **@{#AI_A2A_CAP.Destroyed}**: The AI has destroyed all bogeys @{Unit}s assigned in the CAS task.
+--   * **@{AI.AI_Patrol#AI_PATROL_ZONE.RTB}**: Route the AI to the home base.
+--   * **@{AI.AI_Patrol#AI_PATROL_ZONE.Detect}**: The AI is detecting targets.
+--   * **@{AI.AI_Patrol#AI_PATROL_ZONE.Detected}**: The AI has detected new targets.
+--   * **@{#AI_A2A_CAP.Destroy}**: The AI has destroyed a bogey @{Wrapper.Unit}.
+--   * **@{#AI_A2A_CAP.Destroyed}**: The AI has destroyed all bogeys @{Wrapper.Unit}s assigned in the CAS task.
 --   * **Status** ( Group ): The AI is checking status (fuel and damage). When the tresholds have been reached, the AI will RTB.
 --
 -- ## 3. Set the Range of Engagement
@@ -85,7 +80,7 @@
 -- that will define when the AI will engage with the detected airborne enemy targets.
 -- The range can be beyond or smaller than the range of the Patrol Zone.
 -- The range is applied at the position of the AI.
--- Use the method @{AI_CAP#AI_A2A_CAP.SetEngageRange}() to define that range.
+-- Use the method @{AI.AI_CAP#AI_A2A_CAP.SetEngageRange}() to define that range.
 --
 -- ## 4. Set the Zone of Engagement
 -- 
@@ -93,7 +88,7 @@
 -- 
 -- An optional @{Zone} can be set, 
 -- that will define when the AI will engage with the detected airborne enemy targets.
--- Use the method @{AI_Cap#AI_A2A_CAP.SetEngageZone}() to define that Zone.
+-- Use the method @{AI.AI_Cap#AI_A2A_CAP.SetEngageZone}() to define that Zone.
 --  
 -- ===
 -- 
@@ -106,13 +101,13 @@ AI_A2A_CAP = {
 -- @param #AI_A2A_CAP self
 -- @param Wrapper.Group#GROUP AICap
 -- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
--- @param Dcs.DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
--- @param Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Group} in km/h.
--- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Group} in km/h.
--- @param Dcs.DCSTypes#Speed  EngageMinSpeed The minimum speed of the @{Group} in km/h when engaging a target.
--- @param Dcs.DCSTypes#Speed  EngageMaxSpeed The maximum speed of the @{Group} in km/h when engaging a target.
--- @param Dcs.DCSTypes#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
+-- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+-- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+-- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Group} in km/h.
+-- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h.
+-- @param DCS#Speed  EngageMinSpeed The minimum speed of the @{Wrapper.Group} in km/h when engaging a target.
+-- @param DCS#Speed  EngageMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h when engaging a target.
+-- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
 -- @return #AI_A2A_CAP
 function AI_A2A_CAP:New( AICap, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageMinSpeed, EngageMaxSpeed, PatrolAltType )
 
@@ -287,13 +282,14 @@ function AI_A2A_CAP:New( AICap, PatrolZone, PatrolFloorAltitude, PatrolCeilingAl
 end
 
 --- onafter State Transition for Event Patrol.
--- @param #AI_A2A_GCI self
+-- @param #AI_A2A_CAP self
 -- @param Wrapper.Group#GROUP AICap The AI Group managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
 function AI_A2A_CAP:onafterStart( AICap, From, Event, To )
 
+  self:GetParent( self ).onafterStart( self, AICap, From, Event, To )
   AICap:HandleEvent( EVENTS.Takeoff, nil, self )
 
 end

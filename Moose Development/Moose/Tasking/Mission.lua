@@ -1,4 +1,12 @@
---- **Tasking** -- A MISSION is the main owner of a Mission orchestration within MOOSE.
+--- **Tasking** -- A mission models a goal to be achieved through the execution and completion of tasks by human players.
+-- 
+-- **Features:**
+-- 
+--   * A mission has a goal to be achieved, through the execution and completion of tasks of different categories by human players.
+--   * A mission manages these tasks.
+--   * A mission has a state, that indicates the fase of the mission.
+--   * A mission has a menu structure, that facilitates mission reports and tasking menus.
+--   * A mission can assign a task to a player.
 -- 
 -- ===
 -- 
@@ -8,14 +16,109 @@
 -- 
 -- ===
 -- 
--- @module Mission
+-- @module Tasking.Mission
+-- @image Task_Mission.JPG
 
---- The MISSION class
--- @type MISSION
+--- @type MISSION
 -- @field #MISSION.Clients _Clients
 -- @field Core.Menu#MENU_COALITION MissionMenu
 -- @field #string MissionBriefing
 -- @extends Core.Fsm#FSM
+
+--- Models goals to be achieved and can contain multiple tasks to be executed to achieve the goals.
+-- 
+-- A mission contains multiple tasks and can be of different task types.
+-- These tasks need to be assigned to human players to be executed.
+-- 
+-- A mission can have multiple states, which will evolve as the mission progresses during the DCS simulation.
+-- 
+--   - **IDLE**: The mission is defined, but not started yet. No task has yet been joined by a human player as part of the mission.
+--   - **ENGAGED**: The mission is ongoing, players have joined tasks to be executed.
+--   - **COMPLETED**: The goals of the mission has been successfully reached, and the mission is flagged as completed.
+--   - **FAILED**: For a certain reason, the goals of the mission has not been reached, and the mission is flagged as failed.
+--   - **HOLD**: The mission was enaged, but for some reason it has been put on hold.
+--   
+-- Note that a mission goals need to be checked by a goal check trigger: @{#MISSION.OnBeforeMissionGoals}(), which may return false if the goal has not been reached.
+-- This goal is checked automatically by the mission object every x seconds.
+-- 
+--   - @{#MISSION.Start}() or @{#MISSION.__Start}() will start the mission, and will bring it from **IDLE** state to **ENGAGED** state.
+--   - @{#MISSION.Stop}() or @{#MISSION.__Stop}() will stop the mission, and will bring it from **ENGAGED** state to **IDLE** state.
+--   - @{#MISSION.Complete}() or @{#MISSION.__Complete}() will complete the mission, and will bring the mission state to **COMPLETED**.
+--     Note that the mission must be in state **ENGAGED** to be able to complete the mission.
+--   - @{#MISSION.Fail}() or @{#MISSION.__Fail}() will fail the mission, and will bring the mission state to **FAILED**.
+--     Note that the mission must be in state **ENGAGED** to be able to fail the mission.
+--   - @{#MISSION.Hold}() or @{#MISSION.__Hold}() will hold the mission, and will bring the mission state to **HOLD**.
+--     Note that the mission must be in state **ENGAGED** to be able to hold the mission.
+--     Re-engage the mission using the engage trigger.
+-- 
+-- The following sections provide an overview of the most important methods that can be used as part of a mission object.
+-- Note that the @{Tasking.CommandCenter} system is using most of these methods to manage the missions in its system.
+-- 
+-- ## 1. Create a mission object.
+--
+--   - @{#MISSION.New}(): Creates a new MISSION object.
+-- 
+-- ## 2. Mission task management.
+-- 
+-- Missions maintain tasks, which can be added or removed, or enquired.
+-- 
+--   - @{#MISSION.AddTask}(): Adds a task to the mission.
+--   - @{#MISSION.RemoveTask}(): Removes a task from the mission.
+-- 
+-- ## 3. Mission detailed methods.
+-- 
+-- Various methods are added to manage missions.
+-- 
+-- ### 3.1. Naming and description.
+-- 
+-- There are several methods that can be used to retrieve the properties of a mission:
+-- 
+--   - Use the method @{#MISSION.GetName}() to retrieve the name of the mission. 
+--     This is the name given as part of the @{#MISSION.New}() constructor.
+-- 
+-- A textual description can be retrieved that provides the mission name to be used within message communication:
+-- 
+--   - @{#MISSION.GetShortText}() returns the mission name as `Mission "MissionName"`.
+--   - @{#MISSION.GetText}() returns the mission  name as `Mission "MissionName (MissionPriority)"`. A longer version including the priority text of the mission.
+-- 
+-- ### 3.2. Get task information.
+-- 
+--   - @{#MISSION.GetTasks}(): Retrieves a list of the tasks controlled by the mission.
+--   - @{#MISSION.GetTask}(): Retrieves a specific task controlled by the mission.
+--   - @{#MISSION.GetTasksRemaining}(): Retrieve a list of the tasks that aren't finished or failed, and are governed by the mission.
+--   - @{#MISSION.GetGroupTasks}(): Retrieve a list of the tasks that can be asigned to a @{Wrapper.Group}.
+--   - @{#MISSION.GetTaskTypes}(): Retrieve a list of the different task types governed by the mission.
+-- 
+-- ### 3.3. Get the command center.
+-- 
+--   - @{#MISSION.GetCommandCenter}(): Retrieves the @{Tasking.CommandCenter} governing the mission.
+-- 
+-- ### 3.4. Get the groups active in the mission as a @{Core.Set}.
+-- 
+--   - @{#MISSION.GetGroups}(): Retrieves a @{Core.Set#SET_GROUP} of all the groups active in the mission (as part of the tasks).
+--   
+-- ### 3.5. Get the names of the players.
+-- 
+--   - @{#MISSION.GetPlayerNames}(): Retrieves the list of the players that were active within th mission..
+-- 
+-- ## 4. Menu management.
+-- 
+-- A mission object is able to manage its own menu structure. Use the @{#MISSION.GetMenu}() and @{#MISSION.SetMenu}() to manage the underlying submenu
+-- structure managing the tasks of the mission.
+-- 
+-- ## 5. Reporting management.
+--  
+-- Several reports can be generated for a mission, and will return a text string that can be used to display using the @{Core.Message} system.
+-- 
+--   - @{#MISSION.ReportBriefing}(): Generates the briefing for the mission.
+--   - @{#MISSION.ReportOverview}(): Generates an overview of the tasks and status of the mission.
+--   - @{#MISSION.ReportDetails}(): Generates a detailed report of the tasks of the mission.
+--   - @{#MISSION.ReportSummary}(): Generates a summary report of the tasks of the mission.
+--   - @{#MISSION.ReportPlayersPerTask}(): Generates a report showing the active players per task.
+--   - @{#MISSION.ReportPlayersProgress}(): Generates a report showing the task progress per player.
+-- 
+-- 
+-- @field #MISSION 
 MISSION = {
 	ClassName = "MISSION",
 	Name = "",
@@ -26,10 +129,10 @@ MISSION = {
 --- This is the main MISSION declaration method. Each Mission is like the master or a Mission orchestration between, Clients, Tasks, Stages etc.
 -- @param #MISSION self
 -- @param Tasking.CommandCenter#COMMANDCENTER CommandCenter
--- @param #string MissionName is the name of the mission. This name will be used to reference the status of each mission by the players.
--- @param #string MissionPriority is a string indicating the "priority" of the Mission. f.e. "Primary", "Secondary" or "First", "Second". It is free format and up to the Mission designer to choose. There are no rules behind this field.
--- @param #string MissionBriefing is a string indicating the mission briefing to be shown when a player joins a @{CLIENT}.
--- @param Dcs.DCSCoalitionWrapper.Object#coalition MissionCoalition is a string indicating the coalition or party to which this mission belongs to. It is free format and can be chosen freely by the mission designer. Note that this field is not to be confused with the coalition concept of the ME. Examples of a Mission Coalition could be "NATO", "CCCP", "Intruders", "Terrorists"...
+-- @param #string MissionName Name of the mission. This name will be used to reference the status of each mission by the players.
+-- @param #string MissionPriority String indicating the "priority" of the Mission. e.g. "Primary", "Secondary". It is free format and up to the Mission designer to choose. There are no rules behind this field.
+-- @param #string MissionBriefing String indicating the mission briefing to be shown when a player joins a @{CLIENT}.
+-- @param DCS#coaliton.side MissionCoalition Side of the coalition, i.e. and enumerator @{#DCS.coalition.side} corresponding to RED, BLUE or NEUTRAL.
 -- @return #MISSION self
 function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefing, MissionCoalition )
 
@@ -265,6 +368,8 @@ function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefi
 end
 
 
+
+
 --- FSM function for a MISSION
 -- @param #MISSION self
 -- @param #string From
@@ -375,24 +480,30 @@ function MISSION:GetScoring()
   return self.Scoring
 end
 
---- Get the groups for which TASKS are given in the mission
+--- Gets the groups for which TASKS are given in the mission
 -- @param #MISSION self
+-- @param Core.Set#SET_GROUP GroupSet
 -- @return Core.Set#SET_GROUP
 function MISSION:GetGroups()
   
-  local SetGroup = SET_GROUP:New()
+  return self:AddGroups()
+  
+end
+
+--- Adds the groups for which TASKS are given in the mission
+-- @param #MISSION self
+-- @param Core.Set#SET_GROUP GroupSet
+-- @return Core.Set#SET_GROUP
+function MISSION:AddGroups( GroupSet )
+  
+  GroupSet = GroupSet or SET_GROUP:New()
   
   for TaskID, Task in pairs( self:GetTasks() ) do
     local Task = Task -- Tasking.Task#TASK
-    local GroupSet = Task:GetGroups()
-    GroupSet:ForEachGroup(
-      function( TaskGroup )
-        SetGroup:Add( TaskGroup, TaskGroup )
-      end
-    )
+    GroupSet = Task:AddGroups( GroupSet )
   end
   
-  return SetGroup
+  return GroupSet
   
 end
 
@@ -441,16 +552,16 @@ do -- Group Assignment
     local MissionGroupName = MissionGroup:GetName()
     
     if self.AssignedGroups[MissionGroupName] == MissionGroup then
-      self:T( { "Mission is assigned to:", MissionGroup:GetName() } )
+      self:T2( { "Mission is assigned to:", MissionGroup:GetName() } )
       return true
     end
     
-    self:T( { "Mission is not assigned to:", MissionGroup:GetName() } )
+    self:T2( { "Mission is not assigned to:", MissionGroup:GetName() } )
     return false
   end
   
   
-  --- Set @{Group} assigned to the @{Mission}.
+  --- Set @{Wrapper.Group} assigned to the @{Mission}.
   -- @param #MISSION self
   -- @param Wrapper.Group#GROUP MissionGroup
   -- @return #MISSION
@@ -465,7 +576,7 @@ do -- Group Assignment
     return self
   end
   
-  --- Clear the @{Group} assignment from the @{Mission}.
+  --- Clear the @{Wrapper.Group} assignment from the @{Mission}.
   -- @param #MISSION self
   -- @param Wrapper.Group#GROUP MissionGroup
   -- @return #MISSION
@@ -500,13 +611,14 @@ function MISSION:RemoveTaskMenu( Task )
 end
 
 
---- Gets the root mission menu for the TaskGroup.
+--- Gets the root mission menu for the TaskGroup. Obsolete?! Originally no reference to TaskGroup parameter!
 -- @param #MISSION self
+-- @param Wrapper.Group#GROUP TaskGroup Task group.
 -- @return Core.Menu#MENU_COALITION self
 function MISSION:GetRootMenu( TaskGroup ) -- R2.2
 
   local CommandCenter = self:GetCommandCenter()
-  local CommandCenterMenu = CommandCenter:GetMenu()
+  local CommandCenterMenu = CommandCenter:GetMenu( TaskGroup )
 
   local MissionName = self:GetText()
   --local MissionMenu = CommandCenterMenu:GetMenu( MissionName )
@@ -518,21 +630,17 @@ end
 
 --- Gets the mission menu for the TaskGroup.
 -- @param #MISSION self
+-- @param Wrapper.Group#GROUP TaskGroup Task group.
 -- @return Core.Menu#MENU_COALITION self
 function MISSION:GetMenu( TaskGroup ) -- R2.1 -- Changed Menu Structure
 
   local CommandCenter = self:GetCommandCenter()
-  local CommandCenterMenu = CommandCenter:GetMenu()
+  local CommandCenterMenu = CommandCenter:GetMenu( TaskGroup )
 
-  --local MissionMenu = CommandCenterMenu:GetMenu( MissionName )
-  
   self.MissionGroupMenu = self.MissionGroupMenu or {}
   self.MissionGroupMenu[TaskGroup] = self.MissionGroupMenu[TaskGroup] or {}
   
   local GroupMenu = self.MissionGroupMenu[TaskGroup]
-  
-  local CommandCenterText = CommandCenter:GetText()
-  CommandCenterMenu = MENU_GROUP:New( TaskGroup, CommandCenterText )
   
   local MissionText = self:GetText()
   self.MissionMenu = MENU_GROUP:New( TaskGroup, MissionText, CommandCenterMenu )
@@ -562,7 +670,7 @@ end
 -- @param #string TaskName The Name of the @{Task} within the @{Mission}.
 -- @return Tasking.Task#TASK The Task
 -- @return #nil Returns nil if no task was found.
-function MISSION:GetTask( TaskName  )
+function MISSION:GetTask( TaskName )
   self:F( { TaskName } )
 
   return self.Tasks[TaskName]
@@ -1003,8 +1111,27 @@ end
 -- env.info( "Task 2 Completion = " .. Tasks[2]:GetGoalPercentage() .. "%" )
 function MISSION:GetTasks()
 
-	return self.Tasks
+	return self.Tasks or {}
 end
+
+--- Get the relevant tasks of a TaskGroup.
+-- @param #MISSION
+-- @param Wrapper.Group#GROUP TaskGroup
+-- @return #list<Tasking.Task#TASK>
+function MISSION:GetGroupTasks( TaskGroup )
+
+  local Tasks = {}
+  
+  for TaskID, Task in pairs( self:GetTasks() ) do
+    local Task = Task -- Tasking.Task#TASK
+    if Task:HasGroup( TaskGroup ) then
+      Tasks[#Tasks+1] = Task
+    end
+  end
+  
+  return Tasks
+end
+
 
 --- Reports the briefing.
 -- @param #MISSION self

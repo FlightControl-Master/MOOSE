@@ -8,15 +8,14 @@
 -- 
 -- ===
 -- 
--- @module Identifiable
+-- @module Wrapper.Identifiable
+-- @image MOOSE.JPG
 
 --- @type IDENTIFIABLE
 -- @extends Wrapper.Object#OBJECT
 -- @field #string IdentifiableName The name of the identifiable.
 
---- # IDENTIFIABLE class, extends @{Object#OBJECT}
--- 
--- The IDENTIFIABLE class is a wrapper class to handle the DCS Identifiable objects:
+--- Wrapper class to handle the DCS Identifiable objects.
 --
 --  * Support all DCS Identifiable APIs.
 --  * Enhance with Identifiable specific APIs not in the DCS Identifiable API set.
@@ -44,7 +43,7 @@ local _CategoryName = {
 
 --- Create a new IDENTIFIABLE from a DCSIdentifiable
 -- @param #IDENTIFIABLE self
--- @param Dcs.DCSWrapper.Identifiable#Identifiable IdentifiableName The DCS Identifiable name
+-- @param #string IdentifiableName The DCS Identifiable name
 -- @return #IDENTIFIABLE self
 function IDENTIFIABLE:New( IdentifiableName )
   local self = BASE:Inherit( self, OBJECT:New( IdentifiableName ) )
@@ -62,7 +61,7 @@ end
 function IDENTIFIABLE:IsAlive()
   self:F3( self.IdentifiableName )
 
-  local DCSIdentifiable = self:GetDCSObject() -- Dcs.DCSObject#Object
+  local DCSIdentifiable = self:GetDCSObject() -- DCS#Object
   
   if DCSIdentifiable then
     local IdentifiableIsAlive  = DCSIdentifiable:isExist()
@@ -110,7 +109,7 @@ end
 
 --- Returns category of the DCS Identifiable.
 -- @param #IDENTIFIABLE self
--- @return Dcs.DCSWrapper.Object#Object.Category The category ID
+-- @return DCS#Object.Category The category ID
 function IDENTIFIABLE:GetCategory()
   self:F2( self.ObjectName )
 
@@ -142,7 +141,7 @@ end
 
 --- Returns coalition of the Identifiable.
 -- @param #IDENTIFIABLE self
--- @return Dcs.DCSCoalitionWrapper.Object#coalition.side The side of the coalition.
+-- @return DCS#coalition.side The side of the coalition.
 -- @return #nil The DCS Identifiable is not existing or alive.  
 function IDENTIFIABLE:GetCoalition()
   self:F2( self.IdentifiableName )
@@ -191,7 +190,7 @@ end
 
 --- Returns country of the Identifiable.
 -- @param #IDENTIFIABLE self
--- @return Dcs.DCScountry#country.id The country identifier.
+-- @return DCS#country.id The country identifier.
 -- @return #nil The DCS Identifiable is not existing or alive.  
 function IDENTIFIABLE:GetCountry()
   self:F2( self.IdentifiableName )
@@ -207,22 +206,53 @@ function IDENTIFIABLE:GetCountry()
   self:F( self.ClassName .. " " .. self.IdentifiableName .. " not found!" )
   return nil
 end
- 
 
+--- Returns country name of the Identifiable.
+-- @param #IDENTIFIABLE self
+-- @return #string Name of the country.  
+function IDENTIFIABLE:GetCountryName()
+  self:F2( self.IdentifiableName ) 
+  local countryid=self:GetCountry()
+  for name,id in pairs(country.id) do
+    if countryid==id then
+      return name
+    end
+  end
+end
 
 --- Returns Identifiable descriptor. Descriptor type depends on Identifiable category.
 -- @param #IDENTIFIABLE self
--- @return Dcs.DCSWrapper.Identifiable#Identifiable.Desc The Identifiable descriptor.
+-- @return DCS#Object.Desc The Identifiable descriptor.
 -- @return #nil The DCS Identifiable is not existing or alive.  
 function IDENTIFIABLE:GetDesc()
   self:F2( self.IdentifiableName )
 
-  local DCSIdentifiable = self:GetDCSObject()
+  local DCSIdentifiable = self:GetDCSObject() -- DCS#Object
   
   if DCSIdentifiable then
     local IdentifiableDesc = DCSIdentifiable:getDesc()
     self:T2( IdentifiableDesc )
     return IdentifiableDesc
+  end
+  
+  self:F( self.ClassName .. " " .. self.IdentifiableName .. " not found!" )
+  return nil
+end
+
+--- Check if the Object has the attribute.
+-- @param #IDENTIFIABLE self
+-- @param #string AttributeName The attribute name.
+-- @return #boolean true if the attribute exists.
+-- @return #nil The DCS Identifiable is not existing or alive.  
+function IDENTIFIABLE:HasAttribute( AttributeName )
+  self:F2( self.IdentifiableName )
+
+  local DCSIdentifiable = self:GetDCSObject()
+  
+  if DCSIdentifiable then
+    local IdentifiableHasAttribute = DCSIdentifiable:hasAttribute( AttributeName )
+    self:T2( IdentifiableHasAttribute )
+    return IdentifiableHasAttribute
   end
   
   self:F( self.ClassName .. " " .. self.IdentifiableName .. " not found!" )

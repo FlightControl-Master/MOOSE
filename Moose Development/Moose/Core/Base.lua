@@ -1,15 +1,12 @@
 --- **Core** -- BASE forms **the basis of the MOOSE framework**. Each class within the MOOSE framework derives from BASE.
 -- 
--- ![Banner Image](..\Presentations\BASE\Dia1.JPG)
--- 
--- ===
--- 
 -- ### Author: **FlightControl**
 -- ### Contributions: 
 -- 
 -- ===
 -- 
--- @module Base
+-- @module Core.Base
+-- @image Core_Base.JPG
 
 
 
@@ -26,9 +23,7 @@ local _ClassID = 0
 -- @field ClassID The ID number of the class.
 -- @field ClassNameAndID The name of the class concatenated with the ID number of the class.
 
---- # 1) #BASE class
--- 
--- All classes within the MOOSE framework are derived from the BASE class. 
+--- All classes within the MOOSE framework are derived from the BASE class. 
 --  
 -- BASE provides facilities for :
 -- 
@@ -42,8 +37,8 @@ local _ClassID = 0
 -- 
 -- ## 1.1) BASE constructor
 -- 
--- Any class derived from BASE, will use the @{Base#BASE.New} constructor embedded in the @{Base#BASE.Inherit} method. 
--- See an example at the @{Base#BASE.New} method how this is done.
+-- Any class derived from BASE, will use the @{Core.Base#BASE.New} constructor embedded in the @{Core.Base#BASE.Inherit} method. 
+-- See an example at the @{Core.Base#BASE.New} method how this is done.
 -- 
 -- ## 1.2) Trace information for debugging
 -- 
@@ -127,7 +122,7 @@ local _ClassID = 0
 -- ### 1.3.2 Event Handling of DCS Events
 -- 
 -- Once the class is subscribed to the event, an **Event Handling** method on the object or class needs to be written that will be called
--- when the DCS event occurs. The Event Handling method receives an @{Event#EVENTDATA} structure, which contains a lot of information
+-- when the DCS event occurs. The Event Handling method receives an @{Core.Event#EVENTDATA} structure, which contains a lot of information
 -- about the event that occurred.
 -- 
 -- Find below an example of the prototype how to write an event handling function for two units: 
@@ -609,8 +604,8 @@ end
 
 --- Creation of a Birth Event.
 -- @param #BASE self
--- @param Dcs.DCSTypes#Time EventTime The time stamp of the event.
--- @param Dcs.DCSWrapper.Object#Object Initiator The initiating object of the event.
+-- @param DCS#Time EventTime The time stamp of the event.
+-- @param DCS#Object Initiator The initiating object of the event.
 -- @param #string IniUnitName The initiating unit name.
 -- @param place
 -- @param subplace
@@ -631,8 +626,8 @@ end
 
 --- Creation of a Crash Event.
 -- @param #BASE self
--- @param Dcs.DCSTypes#Time EventTime The time stamp of the event.
--- @param Dcs.DCSWrapper.Object#Object Initiator The initiating object of the event.
+-- @param DCS#Time EventTime The time stamp of the event.
+-- @param DCS#Object Initiator The initiating object of the event.
 function BASE:CreateEventCrash( EventTime, Initiator )
 	self:F( { EventTime, Initiator } )
 
@@ -645,10 +640,42 @@ function BASE:CreateEventCrash( EventTime, Initiator )
 	world.onEvent( Event )
 end
 
+--- Creation of a Dead Event.
+-- @param #BASE self
+-- @param DCS#Time EventTime The time stamp of the event.
+-- @param DCS#Object Initiator The initiating object of the event.
+function BASE:CreateEventDead( EventTime, Initiator )
+  self:F( { EventTime, Initiator } )
+
+  local Event = {
+    id = world.event.S_EVENT_DEAD,
+    time = EventTime,
+    initiator = Initiator,
+    }
+
+  world.onEvent( Event )
+end
+
+--- Creation of a Remove Unit Event.
+-- @param #BASE self
+-- @param DCS#Time EventTime The time stamp of the event.
+-- @param DCS#Object Initiator The initiating object of the event.
+function BASE:CreateEventRemoveUnit( EventTime, Initiator )
+  self:F( { EventTime, Initiator } )
+
+  local Event = {
+    id = EVENTS.RemoveUnit,
+    time = EventTime,
+    initiator = Initiator,
+    }
+
+  world.onEvent( Event )
+end
+
 --- Creation of a Takeoff Event.
 -- @param #BASE self
--- @param Dcs.DCSTypes#Time EventTime The time stamp of the event.
--- @param Dcs.DCSWrapper.Object#Object Initiator The initiating object of the event.
+-- @param DCS#Time EventTime The time stamp of the event.
+-- @param DCS#Object Initiator The initiating object of the event.
 function BASE:CreateEventTakeoff( EventTime, Initiator )
   self:F( { EventTime, Initiator } )
 
@@ -661,10 +688,10 @@ function BASE:CreateEventTakeoff( EventTime, Initiator )
   world.onEvent( Event )
 end
 
--- TODO: Complete Dcs.DCSTypes#Event structure.                       
+-- TODO: Complete DCS#Event structure.                       
 --- The main event handling function... This function captures all events generated for the class.
 -- @param #BASE self
--- @param Dcs.DCSTypes#Event event
+-- @param DCS#Event event
 function BASE:onEvent(event)
   --self:F( { BaseEventCodes[event.id], event } )
 
@@ -787,8 +814,7 @@ end
 -- @param Object The object that will hold the Value set by the Key.
 -- @param Key The key that is used as a reference of the value. Note that the key can be a #string, but it can also be any other type!
 -- @param Value The value to is stored in the object.
--- @return The Value set.
--- @return #nil The Key was not found and thus the Value could not be retrieved.
+-- @return The Value set. 
 function BASE:SetState( Object, Key, Value )
 
   local ClassNameAndID = Object:GetClassNameAndID()
@@ -805,7 +831,7 @@ end
 -- @param #BASE self
 -- @param Object The object that holds the Value set by the Key.
 -- @param Key The key that is used to retrieve the value. Note that the key can be a #string, but it can also be any other type!
--- @return The Value retrieved.
+-- @return The Value retrieved or nil if the Key was not found and thus the Value could not be retrieved.
 function BASE:GetState( Object, Key )
 
   local ClassNameAndID = Object:GetClassNameAndID()
@@ -818,6 +844,10 @@ function BASE:GetState( Object, Key )
   return nil
 end
 
+--- Clear the state of an object.
+-- @param #BASE self
+-- @param Object The object that holds the Value set by the Key.
+-- @param StateName The key that is should be cleared.
 function BASE:ClearState( Object, StateName )
 
   local ClassNameAndID = Object:GetClassNameAndID()

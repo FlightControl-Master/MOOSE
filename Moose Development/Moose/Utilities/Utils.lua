@@ -10,6 +10,7 @@
 --   * FlightControl : Rework to OO framework 
 -- 
 -- @module Utils
+-- @image MOOSE.JPG
 
 
 --- @type SMOKECOLOR
@@ -28,6 +29,19 @@ SMOKECOLOR = trigger.smokeColor -- #SMOKECOLOR
 -- @field Yellow
 
 FLARECOLOR = trigger.flareColor -- #FLARECOLOR
+
+--- Big smoke preset enum.
+-- @type BIGSMOKEPRESET
+BIGSMOKEPRESET = {
+  SmallSmokeAndFire=0,
+  MediumSmokeAndFire=1,
+  LargeSmokeAndFire=2,
+  HugeSmokeAndFire=3,
+  SmallSmoke=4,
+  MediumSmoke=5,
+  LargeSmoke=6,
+  HugeSmoke=7,
+}
 
 --- Utilities static class.
 -- @type UTILS
@@ -482,3 +496,166 @@ function UTILS.BeaufortScale(speed)
   end
   return bn,bd
 end
+
+--- Split string at seperators. C.f. http://stackoverflow.com/questions/1426954/split-string-in-lua
+-- @param #string str Sting to split.
+-- @param #string sep Speparator for split.
+-- @return #table Split text.
+function UTILS.Split(str, sep)
+  local result = {}
+  local regex = ("([^%s]+)"):format(sep)
+  for each in str:gmatch(regex) do
+    table.insert(result, each)
+  end
+  return result
+end
+
+--- Convert time in seconds to hours, minutes and seconds.
+-- @param #number seconds Time in seconds, e.g. from timer.getAbsTime() function.
+-- @return #string Time in format Hours:Minutes:Seconds+Days (HH:MM:SS+D).
+function UTILS.SecondsToClock(seconds)
+  
+  -- Nil check.
+  if seconds==nil then
+    return nil
+  end
+  
+  -- Seconds
+  local seconds = tonumber(seconds)
+  
+  -- Seconds of this day.
+  local _seconds=seconds%(60*60*24)
+
+  if seconds <= 0 then
+    return nil
+  else
+    local hours = string.format("%02.f", math.floor(_seconds/3600))
+    local mins  = string.format("%02.f", math.floor(_seconds/60 - (hours*60)))
+    local secs  = string.format("%02.f", math.floor(_seconds - hours*3600 - mins *60))
+    local days  = string.format("%d", seconds/(60*60*24))
+    return hours..":"..mins..":"..secs.."+"..days
+  end
+end
+
+--- Convert clock time from hours, minutes and seconds to seconds.
+-- @param #string clock String of clock time. E.g., "06:12:35" or "5:1:30+1". Format is (H)H:(M)M:((S)S)(+D) H=Hours, M=Minutes, S=Seconds, D=Days.
+-- @param #number Seconds. Corresponds to what you cet from timer.getAbsTime() function.
+function UTILS.ClockToSeconds(clock)
+  
+  -- Nil check.
+  if clock==nil then
+    return nil
+  end
+  
+  -- Seconds init.
+  local seconds=0
+  
+  -- Split additional days.
+  local dsplit=UTILS.split(clock, "+")
+  
+  -- Convert days to seconds.
+  if #dsplit>1 then
+    seconds=seconds+tonumber(dsplit[2])*60*60*24
+  end
+
+  -- Split hours, minutes, seconds    
+  local tsplit=UTILS.Split(dsplit[1], ":")
+
+  -- Get time in seconds
+  local i=1
+  for _,time in ipairs(tsplit) do
+    if i==1 then
+      -- Hours
+      seconds=seconds+tonumber(time)*60*60
+    elseif i==2 then
+      -- Minutes
+      seconds=seconds+tonumber(time)*60
+    elseif i==3 then
+      -- Seconds
+      seconds=seconds+tonumber(time)
+    end
+    i=i+1
+  end
+  
+  return seconds
+end
+
+--- Display clock and mission time on screen as a message to all.
+-- @param #number duration Duration in seconds how long the time is displayed. Default is 5 seconds.
+function UTILS.DisplayMissionTime(duration)
+  duration=duration or 5
+  local Tnow=timer.getAbsTime()
+  local mission_time=Tnow-timer.getTime0()
+  local mission_time_minutes=mission_time/60
+  local mission_time_seconds=mission_time%60
+  local local_time=UTILS.SecondsToClock(Tnow)  
+  local text=string.format("Time: %s - %02d:%02d", local_time, mission_time_minutes, mission_time_seconds)
+  MESSAGE:New(text, duration):ToAll()
+end
+
+
+--- Generate a Gaussian pseudo-random number.
+-- @param #number x0 Expectation value of distribution.
+-- @param #number sigma (Optional) Standard deviation. Default 10.
+-- @param #number xmin (Optional) Lower cut-off value.
+-- @param #number xmax (Optional) Upper cut-off value.
+-- @param #number imax (Optional) Max number of tries to get a value between xmin and xmax (if specified). Default 100.
+-- @return #number Gaussian random number.
+function UTILS.RandomGaussian(x0, sigma, xmin, xmax, imax)
+
+  -- Standard deviation. Default 10 if not given.
+  sigma=sigma or 10
+  
+  -- Max attempts.
+  imax=imax or 100
+    
+  local r
+  local gotit=false
+  local i=0
+  while not gotit do
+  
+    -- Uniform numbers in [0,1). We need two.
+    local x1=math.random()
+    local x2=math.random()
+  
+    -- Transform to Gaussian exp(-(x-x0)²/(2*sigma²).
+    r = math.sqrt(-2*sigma*sigma * math.log(x1)) * math.cos(2*math.pi * x2) + x0
+    
+    i=i+1
+    if (r>=xmin and r<=xmax) or i>imax then
+      gotit=true
+    end
+  end
+  
+  return r
+end
+
+--- Randomize a value by a certain amount.
+-- @param #number value The value which should be randomized
+-- @param #number fac Randomization factor.
+-- @param #number lower (Optional) Lower limit of the returned value.
+-- @param #number upper (Optional) Upper limit of the returned value.
+-- @return #number Randomized value.
+-- @usage UTILS.Randomize(100, 0.1) returns a value between 90 and 110, i.e. a plus/minus ten percent variation.
+-- @usage UTILS.Randomize(100, 0.5, nil, 120) returns a value between 50 and 120, i.e. a plus/minus fivty percent variation with upper bound 120.
+function UTILS.Randomize(value, fac, lower, upper)
+  local min
+  if lower then
+    min=math.max(value-value*fac, lower)
+  else
+    min=value-value*fac
+  end
+  local max
+  if upper then
+    max=math.min(value+value*fac, upper)
+  else
+    max=value+value*fac
+  end
+  
+  local r=math.random(min, max)
+  
+  return r
+end
+
+
+

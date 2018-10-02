@@ -1,9 +1,14 @@
---- **AI** -- (R2.1) - Manages the independent process of Close Air Support for airplanes.
+--- **AI** -- Perform Close Air Support (CAS) near friendlies.
 --
--- ===
---
--- ![Banner Image](..\Presentations\AI_CAS\Dia1.JPG)
+-- **Features:**
 -- 
+--   * Hold and standby within a patrol zone.
+--   * Engage upon command the enemies within an engagement zone.
+--   * Loop the zone until all enemies are eliminated.
+--   * Trigger different events upon the results achieved.
+--   * After combat, return to the patrol zone and hold.
+--   * RTB when commanded or after fuel.
+--
 -- ===
 -- 
 -- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/CAS%20-%20Close%20Air%20Support)
@@ -23,25 +28,21 @@
 --
 -- ===
 --
--- @module AI_Cas
-
+-- @module AI.AI_Cas
+-- @image AI_Close_Air_Support.JPG
 
 --- AI_CAS_ZONE class
 -- @type AI_CAS_ZONE
--- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Controllable} patrolling.
+-- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Wrapper.Controllable} patrolling.
 -- @field Core.Zone#ZONE_BASE TargetZone The @{Zone} where the patrol needs to be executed.
 -- @extends AI.AI_Patrol#AI_PATROL_ZONE
 
---- # AI_CAS_ZONE class, extends @{AI_Patrol#AI_PATROL_ZONE}
--- 
--- AI_CAS_ZONE derives from the @{AI_Patrol#AI_PATROL_ZONE}, inheriting its methods and behaviour.
---  
--- The AI_CAS_ZONE class implements the core functions to provide Close Air Support in an Engage @{Zone} by an AIR @{Controllable} or @{Group}.
+--- Implements the core functions to provide Close Air Support in an Engage @{Zone} by an AIR @{Wrapper.Controllable} or @{Wrapper.Group}.
 -- The AI_CAS_ZONE runs a process. It holds an AI in a Patrol Zone and when the AI is commanded to engage, it will fly to an Engage Zone.
 -- 
 -- ![HoldAndEngage](..\Presentations\AI_CAS\Dia3.JPG)
 -- 
--- The AI_CAS_ZONE is assigned a @{Group} and this must be done before the AI_CAS_ZONE process can be started through the **Start** event.
+-- The AI_CAS_ZONE is assigned a @{Wrapper.Group} and this must be done before the AI_CAS_ZONE process can be started through the **Start** event.
 --  
 -- ![Start Event](..\Presentations\AI_CAS\Dia4.JPG)
 -- 
@@ -107,15 +108,15 @@
 -- 
 -- ### 2.2. AI_CAS_ZONE Events
 -- 
---   * **@{AI_Patrol#AI_PATROL_ZONE.Start}**: Start the process.
---   * **@{AI_Patrol#AI_PATROL_ZONE.Route}**: Route the AI to a new random 3D point within the Patrol Zone.
+--   * **@{AI.AI_Patrol#AI_PATROL_ZONE.Start}**: Start the process.
+--   * **@{AI.AI_Patrol#AI_PATROL_ZONE.Route}**: Route the AI to a new random 3D point within the Patrol Zone.
 --   * **@{#AI_CAS_ZONE.Engage}**: Engage the AI to provide CAS in the Engage Zone, destroying any target it finds.
 --   * **@{#AI_CAS_ZONE.Abort}**: Aborts the engagement and return patrolling in the patrol zone.
---   * **@{AI_Patrol#AI_PATROL_ZONE.RTB}**: Route the AI to the home base.
---   * **@{AI_Patrol#AI_PATROL_ZONE.Detect}**: The AI is detecting targets.
---   * **@{AI_Patrol#AI_PATROL_ZONE.Detected}**: The AI has detected new targets.
---   * **@{#AI_CAS_ZONE.Destroy}**: The AI has destroyed a target @{Unit}.
---   * **@{#AI_CAS_ZONE.Destroyed}**: The AI has destroyed all target @{Unit}s assigned in the CAS task.
+--   * **@{AI.AI_Patrol#AI_PATROL_ZONE.RTB}**: Route the AI to the home base.
+--   * **@{AI.AI_Patrol#AI_PATROL_ZONE.Detect}**: The AI is detecting targets.
+--   * **@{AI.AI_Patrol#AI_PATROL_ZONE.Detected}**: The AI has detected new targets.
+--   * **@{#AI_CAS_ZONE.Destroy}**: The AI has destroyed a target @{Wrapper.Unit}.
+--   * **@{#AI_CAS_ZONE.Destroyed}**: The AI has destroyed all target @{Wrapper.Unit}s assigned in the CAS task.
 --   * **Status**: The AI is checking status (fuel and damage). When the tresholds have been reached, the AI will RTB.
 -- 
 -- ===
@@ -130,12 +131,12 @@ AI_CAS_ZONE = {
 --- Creates a new AI_CAS_ZONE object
 -- @param #AI_CAS_ZONE self
 -- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
--- @param Dcs.DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
--- @param Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
--- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
+-- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+-- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+-- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.
+-- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Controllable} in km/h.
 -- @param Core.Zone#ZONE_BASE EngageZone The zone where the engage will happen.
--- @param Dcs.DCSTypes#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
+-- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
 -- @return #AI_CAS_ZONE self
 function AI_CAS_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageZone, PatrolAltType )
 
@@ -171,24 +172,24 @@ function AI_CAS_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude
   -- @function [parent=#AI_CAS_ZONE] Engage
   -- @param #AI_CAS_ZONE self
   -- @param #number EngageSpeed (optional) The speed the Group will hold when engaging to the target zone.
-  -- @param Dcs.DCSTypes#Distance EngageAltitude (optional) Desired altitude to perform the unit engagement.
-  -- @param Dcs.DCSTypes#AI.Task.WeaponExpend EngageWeaponExpend (optional) Determines how much weapon will be released at each attack. 
+  -- @param DCS#Distance EngageAltitude (optional) Desired altitude to perform the unit engagement.
+  -- @param DCS#AI.Task.WeaponExpend EngageWeaponExpend (optional) Determines how much weapon will be released at each attack. 
   -- If parameter is not defined the unit / controllable will choose expend on its own discretion.
-  -- Use the structure @{DCSTypes#AI.Task.WeaponExpend} to define the amount of weapons to be release at each attack.
+  -- Use the structure @{DCS#AI.Task.WeaponExpend} to define the amount of weapons to be release at each attack.
   -- @param #number EngageAttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
-  -- @param Dcs.DCSTypes#Azimuth EngageDirection (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
+  -- @param DCS#Azimuth EngageDirection (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
   
   --- Asynchronous Event Trigger for Event Engage.
   -- @function [parent=#AI_CAS_ZONE] __Engage
   -- @param #AI_CAS_ZONE self
   -- @param #number Delay The delay in seconds.
   -- @param #number EngageSpeed (optional) The speed the Group will hold when engaging to the target zone.
-  -- @param Dcs.DCSTypes#Distance EngageAltitude (optional) Desired altitude to perform the unit engagement.
-  -- @param Dcs.DCSTypes#AI.Task.WeaponExpend EngageWeaponExpend (optional) Determines how much weapon will be released at each attack. 
+  -- @param DCS#Distance EngageAltitude (optional) Desired altitude to perform the unit engagement.
+  -- @param DCS#AI.Task.WeaponExpend EngageWeaponExpend (optional) Determines how much weapon will be released at each attack. 
   -- If parameter is not defined the unit / controllable will choose expend on its own discretion.
-  -- Use the structure @{DCSTypes#AI.Task.WeaponExpend} to define the amount of weapons to be release at each attack.
+  -- Use the structure @{DCS#AI.Task.WeaponExpend} to define the amount of weapons to be release at each attack.
   -- @param #number EngageAttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
-  -- @param Dcs.DCSTypes#Azimuth EngageDirection (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
+  -- @param DCS#Azimuth EngageDirection (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
 
 --- OnLeave Transition Handler for State Engaging.
 -- @function [parent=#AI_CAS_ZONE] OnLeaveEngaging
@@ -430,10 +431,10 @@ end
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
 -- @param #number EngageSpeed (optional) The speed the Group will hold when engaging to the target zone.
--- @param Dcs.DCSTypes#Distance EngageAltitude (optional) Desired altitude to perform the unit engagement.
--- @param Dcs.DCSTypes#AI.Task.WeaponExpend EngageWeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
+-- @param DCS#Distance EngageAltitude (optional) Desired altitude to perform the unit engagement.
+-- @param DCS#AI.Task.WeaponExpend EngageWeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
 -- @param #number EngageAttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
--- @param Dcs.DCSTypes#Azimuth EngageDirection (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
+-- @param DCS#Azimuth EngageDirection (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
 function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To, 
                                     EngageSpeed, 
                                     EngageAltitude, 

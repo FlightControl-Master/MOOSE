@@ -17,16 +17,14 @@
 -- 
 -- ===
 -- 
--- @module Unit
+-- @module Wrapper.Unit
+-- @image Wrapper_Unit.JPG
 
 
 --- @type UNIT
 -- @extends Wrapper.Controllable#CONTROLLABLE
 
---- 
--- # UNIT class, extends @{Controllable#CONTROLLABLE}
--- 
--- For each DCS Unit object alive within a running mission, a UNIT wrapper object (instance) will be created within the _@{DATABASE} object.
+--- For each DCS Unit object alive within a running mission, a UNIT wrapper object (instance) will be created within the _@{DATABASE} object.
 -- This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Unit objects are spawned (using the @{SPAWN} class).
 --  
 -- The UNIT class **does not contain a :New()** method, rather it provides **:Find()** methods to retrieve the object reference
@@ -47,7 +45,7 @@
 -- 
 -- The DCS Unit APIs are used extensively within MOOSE. The UNIT class has for each DCS Unit API a corresponding method.
 -- To be able to distinguish easily in your code the difference between a UNIT API call and a DCS Unit API call,
--- the first letter of the method is also capitalized. So, by example, the DCS Unit method @{DCSWrapper.Unit#Unit.getName}()
+-- the first letter of the method is also capitalized. So, by example, the DCS Unit method @{DCS#Unit.getName}()
 -- is implemented in the UNIT class as @{#UNIT.GetName}().
 -- 
 -- ## Smoke, Flare Units
@@ -75,7 +73,7 @@
 -- 
 -- ### Zones range
 -- 
--- To test whether the Unit is within a **zone**, use the @{#UNIT.IsInZone}() or the @{#UNIT.IsNotInZone}() methods. Any zone can be tested on, but the zone must be derived from @{Zone#ZONE_BASE}. 
+-- To test whether the Unit is within a **zone**, use the @{#UNIT.IsInZone}() or the @{#UNIT.IsNotInZone}() methods. Any zone can be tested on, but the zone must be derived from @{Core.Zone#ZONE_BASE}. 
 -- 
 -- ### Unit range
 -- 
@@ -118,13 +116,15 @@ end
 
 --- Finds a UNIT from the _DATABASE using a DCSUnit object.
 -- @param #UNIT self
--- @param Dcs.DCSWrapper.Unit#Unit DCSUnit An existing DCS Unit object reference.
+-- @param DCS#Unit DCSUnit An existing DCS Unit object reference.
 -- @return #UNIT self
 function UNIT:Find( DCSUnit )
-
-  local UnitName = DCSUnit:getName()
-  local UnitFound = _DATABASE:FindUnit( UnitName )
-  return UnitFound
+  if DCSUnit then
+    local UnitName = DCSUnit:getName()
+    local UnitFound = _DATABASE:FindUnit( UnitName )
+    return UnitFound
+  end
+  return nil
 end
 
 --- Find a UNIT in the _DATABASE using the name of an existing DCS Unit.
@@ -147,7 +147,7 @@ end
 
 
 --- @param #UNIT self
--- @return Dcs.DCSWrapper.Unit#Unit
+-- @return DCS#Unit
 function UNIT:GetDCSObject()
 
   local DCSUnit = Unit.getByName( self.UnitName )
@@ -159,28 +159,10 @@ function UNIT:GetDCSObject()
   return nil
 end
 
---- Destroys the UNIT.
--- @param #UNIT self
--- @return #nil The DCS Unit is not existing or alive.  
-function UNIT:Destroy()
-  self:F2( self.ObjectName )
-
-  local DCSObject = self:GetDCSObject()
-  
-  if DCSObject then
-    local UnitGroup = self:GetGroup()
-    local UnitGroupName = UnitGroup:GetName()
-    self:F( { UnitGroupName = UnitGroupName } )
-    USERFLAG:New( UnitGroupName ):Set( 100 )
-    --BASE:CreateEventCrash( timer.getTime(), DCSObject )
-    DCSObject:destroy()
-  end
-
-  return nil
-end
 
 
---- Respawn the @{Unit} using a (tweaked) template of the parent Group.
+
+--- Respawn the @{Wrapper.Unit} using a (tweaked) template of the parent Group.
 -- 
 -- This function will:
 -- 
@@ -189,20 +171,22 @@ end
 --  * Then it will respawn the re-modelled group.
 --  
 -- @param #UNIT self
--- @param Dcs.DCSTypes#Vec3 SpawnVec3 The position where to Spawn the new Unit at.
+-- @param Core.Point#COORDINATE Coordinate The position where to Spawn the new Unit at.
 -- @param #number Heading The heading of the unit respawn.
-function UNIT:ReSpawn( SpawnVec3, Heading )
+function UNIT:ReSpawnAt( Coordinate, Heading )
 
+  self:T( self:Name() )
   local SpawnGroupTemplate = UTILS.DeepCopy( _DATABASE:GetGroupTemplateFromUnitName( self:Name() ) )
   self:T( SpawnGroupTemplate )
 
   local SpawnGroup = self:GetGroup()
+  self:T( { SpawnGroup = SpawnGroup } )
   
   if SpawnGroup then
   
     local Vec3 = SpawnGroup:GetVec3()
-    SpawnGroupTemplate.x = SpawnVec3.x
-    SpawnGroupTemplate.y = SpawnVec3.z
+    SpawnGroupTemplate.x = Coordinate.x
+    SpawnGroupTemplate.y = Coordinate.z
     
     self:F( #SpawnGroupTemplate.units )
     for UnitID, UnitData in pairs( SpawnGroup:GetUnits() ) do
@@ -221,12 +205,13 @@ function UNIT:ReSpawn( SpawnVec3, Heading )
   end
   
   for UnitTemplateID, UnitTemplateData in pairs( SpawnGroupTemplate.units ) do
-    self:T( UnitTemplateData.name )
+    self:T( { UnitTemplateData.name, self:Name() } )
+    SpawnGroupTemplate.units[UnitTemplateID].unitId = nil
     if UnitTemplateData.name == self:Name() then
       self:T("Adjusting")
-      SpawnGroupTemplate.units[UnitTemplateID].alt = SpawnVec3.y
-      SpawnGroupTemplate.units[UnitTemplateID].x = SpawnVec3.x
-      SpawnGroupTemplate.units[UnitTemplateID].y = SpawnVec3.z
+      SpawnGroupTemplate.units[UnitTemplateID].alt = Coordinate.y
+      SpawnGroupTemplate.units[UnitTemplateID].x = Coordinate.x
+      SpawnGroupTemplate.units[UnitTemplateID].y = Coordinate.z
       SpawnGroupTemplate.units[UnitTemplateID].heading = Heading
       self:F( { UnitTemplateID, SpawnGroupTemplate.units[UnitTemplateID], SpawnGroupTemplate.units[UnitTemplateID] } )
     else
@@ -261,6 +246,10 @@ function UNIT:ReSpawn( SpawnVec3, Heading )
       i = i + 1
     end
   end
+  
+  SpawnGroupTemplate.groupId = nil
+  
+  self:T( SpawnGroupTemplate )
 
   _DATABASE:Spawn( SpawnGroupTemplate )
 end
@@ -296,7 +285,7 @@ end
 function UNIT:IsAlive()
   self:F3( self.UnitName )
 
-  local DCSUnit = self:GetDCSObject() -- Dcs.DCSUnit#Unit
+  local DCSUnit = self:GetDCSObject() -- DCS#Unit
   
   if DCSUnit then
     local UnitIsAlive  = DCSUnit:isExist() and DCSUnit:isActive()
@@ -319,6 +308,9 @@ function UNIT:GetCallsign()
   
   if DCSUnit then
     local UnitCallSign = DCSUnit:getCallsign()
+    if UnitCallSign == "" then
+      UnitCallSign = DCSUnit:getName()
+    end
     return UnitCallSign
   end
   
@@ -334,18 +326,30 @@ end
 function UNIT:GetPlayerName()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSObject()
+  local DCSUnit = self:GetDCSObject() -- DCS#Unit
   
   if DCSUnit then
   
     local PlayerName = DCSUnit:getPlayerName()
-    if PlayerName == nil then
-      PlayerName = ""
-    end
+    -- TODO Workaround DCS-BUG-3 - https://github.com/FlightControl-Master/MOOSE/issues/696
+--    if PlayerName == nil or PlayerName == "" then
+--      local PlayerCategory = DCSUnit:getDesc().category
+--      if PlayerCategory == Unit.Category.GROUND_UNIT or PlayerCategory == Unit.Category.SHIP then
+--        PlayerName = "Player" .. DCSUnit:getID()
+--      end
+--    end
+--    -- Good code
+--    if PlayerName == nil then 
+--      PlayerName = nil
+--    else
+--      if PlayerName == "" then
+--        PlayerName = "Player" .. DCSUnit:getID()
+--      end
+--    end
     return PlayerName
   end
 
-    return nil
+  return nil
 
 end
 
@@ -369,6 +373,45 @@ function UNIT:GetNumber()
   return nil
 end
 
+
+--- Returns the unit's max speed in km/h derived from the DCS descriptors.
+-- @param #UNIT self
+-- @return #number Speed in km/h. 
+function UNIT:GetSpeedMax()
+  self:F2( self.UnitName )
+
+  local Desc = self:GetDesc()
+  
+  if Desc then
+    local SpeedMax = Desc.speedMax
+    return SpeedMax*3.6
+  end
+
+  return nil
+end
+
+--- Returns the unit's max range in meters derived from the DCS descriptors.
+-- For ground units it will return a range of 10,000 km as they have no real range.
+-- @param #UNIT self
+-- @return #number Range in meters.
+function UNIT:GetRange()
+  self:F2( self.UnitName )
+
+  local Desc = self:GetDesc()
+  
+  if Desc then
+    local Range = Desc.range --This is in nautical miles for some reason. But should check again!
+    if Range then
+      Range=UTILS.NMToMeters(Range)
+    else
+      Range=10000000 --10.000 km if no range
+    end
+    return Range
+  end
+
+  return nil
+end
+
 --- Returns the unit's group if it exist and nil otherwise.
 -- @param Wrapper.Unit#UNIT self
 -- @return Wrapper.Group#GROUP The Group of the Unit.
@@ -379,7 +422,7 @@ function UNIT:GetGroup()
   local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
-    local UnitGroup = GROUP:Find( DCSUnit:getGroup() )
+    local UnitGroup = GROUP:FindByName( DCSUnit:getGroup():getName() )
     return UnitGroup
   end
 
@@ -411,7 +454,7 @@ end
 
 --- Returns the Unit's ammunition.
 -- @param #UNIT self
--- @return Dcs.DCSWrapper.Unit#Unit.Ammo
+-- @return DCS#Unit.Ammo
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetAmmo()
   self:F2( self.UnitName )
@@ -428,7 +471,7 @@ end
 
 --- Returns the unit sensors.
 -- @param #UNIT self
--- @return Dcs.DCSWrapper.Unit#Unit.Sensors
+-- @return DCS#Unit.Sensors
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetSensors()
   self:F2( self.UnitName )
@@ -492,7 +535,7 @@ end
 --  * Second value is the object of the radar's interest. Not nil only if at least one radar of the unit is tracking a target.
 -- @param #UNIT self
 -- @return #boolean  Indicates if at least one of the unit's radar(s) is on.
--- @return Dcs.DCSWrapper.Object#Object The object of the radar's interest. Not nil only if at least one radar of the unit is tracking a target.
+-- @return DCS#Object The object of the radar's interest. Not nil only if at least one radar of the unit is tracking a target.
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetRadar()
   self:F2( self.UnitName )
@@ -524,16 +567,16 @@ function UNIT:GetFuel()
   return nil
 end
 
---- Returns the UNIT in a UNIT list of one element.
+--- Returns a list of one @{Wrapper.Unit}.
 -- @param #UNIT self
--- @return #list<Wrapper.Unit#UNIT> The UNITs wrappers.
+-- @return #list<Wrapper.Unit#UNIT> A list of one @{Wrapper.Unit}.
 function UNIT:GetUnits()
   self:F2( { self.UnitName } )
   local DCSUnit = self:GetDCSObject()
 
+  local Units = {}
+  
   if DCSUnit then
-    local DCSUnits = DCSUnit:getUnits()
-    local Units = {}
     Units[1] = UNIT:Find( DCSUnit )
     self:T3( Units )
     return Units
@@ -628,11 +671,8 @@ function UNIT:GetThreatLevel()
   if Descriptor then 
   
     local Attributes = Descriptor.attributes
-    self:T( Attributes )
   
     if self:IsGround() then
-    
-      self:T( "Ground" )
     
       local ThreatLevels = {
         "Unarmed", 
@@ -670,8 +710,6 @@ function UNIT:GetThreatLevel()
     
     if self:IsAir() then
     
-      self:T( "Air" )
-  
       local ThreatLevels = {
         "Unarmed", 
         "Tanker", 
@@ -703,8 +741,6 @@ function UNIT:GetThreatLevel()
     end
     
     if self:IsShip() then
-  
-      self:T( "Ship" )
   
   --["Aircraft Carriers"] = {"Heavy armed ships",},
   --["Cruisers"] = {"Heavy armed ships",},
@@ -743,7 +779,6 @@ function UNIT:GetThreatLevel()
     end
   end
 
-  self:T2( ThreatLevel )
   return ThreatLevel, ThreatText
 
 end
@@ -754,7 +789,7 @@ end
 --- Returns true if the unit is within a @{Zone}.
 -- @param #UNIT self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
--- @return #boolean Returns true if the unit is within the @{Zone#ZONE_BASE}
+-- @return #boolean Returns true if the unit is within the @{Core.Zone#ZONE_BASE}
 function UNIT:IsInZone( Zone )
   self:F2( { self.UnitName, Zone } )
 
@@ -769,7 +804,7 @@ end
 --- Returns true if the unit is not within a @{Zone}.
 -- @param #UNIT self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
--- @return #boolean Returns true if the unit is not within the @{Zone#ZONE_BASE}
+-- @return #boolean Returns true if the unit is not within the @{Core.Zone#ZONE_BASE}
 function UNIT:IsNotInZone( Zone )
   self:F2( { self.UnitName, Zone } )
 
@@ -815,51 +850,7 @@ end
 
 
 
--- Is methods
 
---- Returns if the unit is of an air category.
--- If the unit is a helicopter or a plane, then this method will return true, otherwise false.
--- @param #UNIT self
--- @return #boolean Air category evaluation result.
-function UNIT:IsAir()
-  self:F2()
-  
-  local DCSUnit = self:GetDCSObject()
-  
-  if DCSUnit then
-    local UnitDescriptor = DCSUnit:getDesc()
-    self:T3( { UnitDescriptor.category, Unit.Category.AIRPLANE, Unit.Category.HELICOPTER } )
-    
-    local IsAirResult = ( UnitDescriptor.category == Unit.Category.AIRPLANE ) or ( UnitDescriptor.category == Unit.Category.HELICOPTER )
-  
-    self:T3( IsAirResult )
-    return IsAirResult
-  end
-  
-  return nil
-end
-
---- Returns if the unit is of an ground category.
--- If the unit is a ground vehicle or infantry, this method will return true, otherwise false.
--- @param #UNIT self
--- @return #boolean Ground category evaluation result.
-function UNIT:IsGround()
-  self:F2()
-  
-  local DCSUnit = self:GetDCSObject()
-  
-  if DCSUnit then
-    local UnitDescriptor = DCSUnit:getDesc()
-    self:T3( { UnitDescriptor.category, Unit.Category.GROUND_UNIT } )
-    
-    local IsGroundResult = ( UnitDescriptor.category == Unit.Category.GROUND_UNIT )
-  
-    self:T3( IsGroundResult )
-    return IsGroundResult
-  end
-  
-  return nil
-end
 
 --- Returns if the unit is a friendly unit.
 -- @param #UNIT self

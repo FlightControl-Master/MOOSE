@@ -8,13 +8,14 @@
 -- 
 -- ===
 -- 
--- @module TaskInfo
+-- @module Tasking.TaskInfo
+-- @image MOOSE.JPG
 
 --- @type TASKINFO
 -- @extends Core.Base#BASE
 
 --- 
--- # TASKINFO class, extends @{Base#BASE}
+-- # TASKINFO class, extends @{Core.Base#BASE}
 -- 
 -- ## The TASKINFO class implements the methods to contain information and display information of a task. 
 -- 
@@ -84,7 +85,7 @@ end
 -- @return Data The data of the info.
 function TASKINFO:GetData( Key )
   local Object = self.Info:Get( Key )
-  return Object.Data
+  return Object and Object.Data
 end
 
 
@@ -125,6 +126,19 @@ end
 -- @return #TASKINFO self
 function TASKINFO:AddCoordinate( Coordinate, Order, Detail, Keep )
   self:AddInfo( "Coordinate", Coordinate, Order, Detail, Keep )
+  return self
+end
+
+
+--- Add Coordinates. 
+-- @param #TASKINFO self
+-- @param #list<Core.Point#COORDINATE> Coordinates
+-- @param #number Order The display order, which is a number from 0 to 100.
+-- @param #TASKINFO.Detail Detail The detail Level.
+-- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
+-- @return #TASKINFO self
+function TASKINFO:AddCoordinates( Coordinates, Order, Detail, Keep )
+  self:AddInfo( "Coordinates", Coordinates, Order, Detail, Keep )
   return self
 end
 
@@ -249,17 +263,16 @@ end
 function TASKINFO:AddCargoSet( SetCargo, Order, Detail, Keep )
 
   local CargoReport = REPORT:New()
+  CargoReport:Add( "" )
   SetCargo:ForEachCargo(
-    --- @param Core.Cargo#CARGO Cargo
+    --- @param Cargo.Cargo#CARGO Cargo
     function( Cargo )
-      local CargoType = Cargo:GetType()
-      local CargoName = Cargo:GetName()
-      local CargoCoordinate = Cargo:GetCoordinate()
-      CargoReport:Add( string.format( '"%s" (%s) at %s', CargoName, CargoType, CargoCoordinate:ToStringMGRS() ) )
+      CargoReport:Add( string.format( ' - %s (%s) %s - status %s ', Cargo:GetName(), Cargo:GetType(), Cargo:GetTransportationMethod(), Cargo:GetCurrentState() ) )
     end
   )
 
-  self:AddInfo( "CargoSet", CargoReport:Text(), Order, Detail, Keep )
+  self:AddInfo( "Cargo", CargoReport:Text(), Order, Detail, Keep )
+  
 
   return self
 end
@@ -271,8 +284,9 @@ end
 -- @param Core.Report#REPORT Report
 -- @param #TASKINFO.Detail Detail The detail Level.
 -- @param Wrapper.Group#GROUP ReportGroup
+-- @param Tasking.Task#TASK Task
 -- @return #TASKINFO self
-function TASKINFO:Report( Report, Detail, ReportGroup )
+function TASKINFO:Report( Report, Detail, ReportGroup, Task )
 
   local Line = 0
   local LineReport = REPORT:New()
@@ -293,7 +307,7 @@ function TASKINFO:Report( Report, Detail, ReportGroup )
       end
       if Key == "Coordinate" then
         local Coordinate = Data.Data -- Core.Point#COORDINATE
-        Text = Coordinate:ToString( ReportGroup:GetUnit(1), nil, self )
+        Text = Coordinate:ToString( ReportGroup:GetUnit(1), nil, Task )
       end
       if Key == "Threat" then
         local DataText = Data.Data -- #string
@@ -309,17 +323,17 @@ function TASKINFO:Report( Report, Detail, ReportGroup )
       end
       if Key == "QFE" then
         local Coordinate = Data.Data -- Core.Point#COORDINATE
-        Text = Coordinate:ToStringPressure( ReportGroup:GetUnit(1), nil, self )
+        Text = Coordinate:ToStringPressure( ReportGroup:GetUnit(1), nil, Task )
       end
       if Key == "Temperature" then
         local Coordinate = Data.Data -- Core.Point#COORDINATE
-        Text = Coordinate:ToStringTemperature( ReportGroup:GetUnit(1), nil, self )
+        Text = Coordinate:ToStringTemperature( ReportGroup:GetUnit(1), nil, Task )
       end
       if Key == "Wind" then
         local Coordinate = Data.Data -- Core.Point#COORDINATE
-        Text = Coordinate:ToStringWind( ReportGroup:GetUnit(1), nil, self )
+        Text = Coordinate:ToStringWind( ReportGroup:GetUnit(1), nil, Task )
       end
-      if Key == "CargoSet" then
+      if Key == "Cargo" then
         local DataText = Data.Data -- #string
         Text = DataText
       end

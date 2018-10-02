@@ -8,7 +8,8 @@
 -- 
 -- ===
 -- 
--- @module Client
+-- @module Wrapper.Client
+-- @image Wrapper_Client.JPG
 
 
 --- The CLIENT class
@@ -16,9 +17,8 @@
 -- @extends Wrapper.Unit#UNIT
 
 
---- # CLIENT class, extends @{Unit#UNIT}
+--- Wrapper class of those **Units** defined within the Mission Editor that have the skillset defined as __Client__ or __Player__.
 -- 
--- Clients are those **Units** defined within the Mission Editor that have the skillset defined as __Client__ or __Player__.
 -- Note that clients are NOT the same as Units, they are NOT necessarily alive.
 -- The CLIENT class is a wrapper class to handle the DCS Unit objects that have the skillset defined as __Client__ or __Player__:
 -- 
@@ -179,11 +179,10 @@ function CLIENT:ShowBriefing()
   if not self.ClientBriefingShown then
     self.ClientBriefingShown = true
     local Briefing = ""
-    if self.ClientBriefing then
+    if self.ClientBriefing and self.ClientBriefing ~= "" then
       Briefing = Briefing .. self.ClientBriefing
+      self:Message( Briefing, 60, "Briefing" )
     end
-    Briefing = Briefing .. " Press [LEFT ALT]+[B] to view the complete mission briefing."
-    self:Message( Briefing, 60, "Briefing" )
   end
 
   return self
@@ -275,7 +274,7 @@ end
 --- Return the DCSGroup of a Client.
 -- This function is modified to deal with a couple of bugs in DCS 1.5.3
 -- @param #CLIENT self
--- @return Dcs.DCSWrapper.Group#Group
+-- @return DCS#Group The group of the Client.
 function CLIENT:GetDCSGroup()
   self:F3()
 
@@ -349,10 +348,10 @@ function CLIENT:GetDCSGroup()
 end 
 
 
--- TODO: Check Dcs.DCSTypes#Group.ID
+-- TODO: Check DCS#Group.ID
 --- Get the group ID of the client.
 -- @param #CLIENT self
--- @return Dcs.DCSTypes#Group.ID
+-- @return DCS#Group.ID
 function CLIENT:GetClientGroupID()
 
   local ClientGroup = self:GetDCSGroup()
@@ -377,8 +376,8 @@ end
 -- @param #CLIENT self
 -- @return Wrapper.Unit#UNIT
 function CLIENT:GetClientGroupUnit()
-	self:F2()
-
+  self:F2()
+  
 	local ClientDCSUnit = Unit.getByName( self.ClientName )
 
   self:T( self.ClientDCSUnit )
@@ -391,7 +390,7 @@ end
 
 --- Returns the DCSUnit of the CLIENT.
 -- @param #CLIENT self
--- @return Dcs.DCSTypes#Unit
+-- @return DCS#Unit
 function CLIENT:GetClientGroupDCSUnit()
 	self:F2()
 
@@ -412,8 +411,8 @@ function CLIENT:IsTransport()
 	return self.ClientTransport
 end
 
---- Shows the @{AI_Cargo#CARGO} contained within the CLIENT to the player as a message.
--- The @{AI_Cargo#CARGO} is shown using the @{Message#MESSAGE} distribution system.
+--- Shows the @{AI.AI_Cargo#CARGO} contained within the CLIENT to the player as a message.
+-- The @{AI.AI_Cargo#CARGO} is shown using the @{Core.Message#MESSAGE} distribution system.
 -- @param #CLIENT self
 function CLIENT:ShowCargo()
 	self:F()
@@ -434,11 +433,7 @@ function CLIENT:ShowCargo()
 
 end
 
--- TODO (1) I urgently need to revise this.
---- A local function called by the DCS World Menu system to switch off messages.
-function CLIENT.SwitchMessages( PrmTable )
-	PrmTable[1].MessageSwitch = PrmTable[2]
-end
+
 
 --- The main message driver for the CLIENT.
 -- This function displays various messages to the Player logged into the CLIENT through the DCS World Messaging system.
@@ -446,7 +441,7 @@ end
 -- @param #string Message is the text describing the message.
 -- @param #number MessageDuration is the duration in seconds that the Message should be displayed.
 -- @param #string MessageCategory is the category of the message (the title).
--- @param #number MessageInterval is the interval in seconds between the display of the @{Message#MESSAGE} when the CLIENT is in the air.
+-- @param #number MessageInterval is the interval in seconds between the display of the @{Core.Message#MESSAGE} when the CLIENT is in the air.
 -- @param #string MessageID is the identifier of the message when displayed with intervals.
 function CLIENT:Message( Message, MessageDuration, MessageCategory, MessageInterval, MessageID )
 	self:F( { Message, MessageDuration, MessageCategory, MessageInterval } )

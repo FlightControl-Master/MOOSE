@@ -21,7 +21,6 @@ Core/Radio.lua
 Core/Spawn.lua
 Core/SpawnStatic.lua
 Core/Goal.lua
-Core/Cargo.lua
 Core/Spot.lua
 
 Wrapper/Object.lua
@@ -34,6 +33,12 @@ Wrapper/Client.lua
 Wrapper/Static.lua
 Wrapper/Airbase.lua
 Wrapper/Scenery.lua
+
+Cargo/Cargo.lua
+Cargo/CargoUnit.lua
+Cargo/CargoSlingload.lua
+Cargo/CargoCrate.lua
+Cargo/CargoGroup.lua
 
 Functional/Scoring.lua
 Functional/CleanUp.lua
@@ -49,6 +54,10 @@ Functional/Range.lua
 Functional/ZoneGoal.lua
 Functional/ZoneGoalCoalition.lua
 Functional/ZoneCaptureCoalition.lua
+Functional/Artillery.lua
+Functional/Suppression.lua
+Functional/PseudoATC.lua
+Functional/Warehouse.lua
 
 AI/AI_Balancer.lua
 AI/AI_A2A.lua
@@ -61,6 +70,14 @@ AI/AI_Cap.lua
 AI/AI_Cas.lua
 AI/AI_Bai.lua
 AI/AI_Formation.lua
+AI/AI_Cargo.lua
+AI/AI_Cargo_APC.lua
+AI/AI_Cargo_Helicopter.lua
+AI/AI_Cargo_Airplane.lua
+AI/AI_Cargo_Dispatcher.lua
+AI/AI_Cargo_Dispatcher_APC.lua
+AI/AI_Cargo_Dispatcher_Helicopter.lua
+AI/AI_Cargo_Dispatcher_Airplane.lua
 
 Actions/Act_Assign.lua
 Actions/Act_Route.lua
@@ -71,12 +88,16 @@ Tasking/CommandCenter.lua
 Tasking/Mission.lua
 Tasking/Task.lua
 Tasking/TaskInfo.lua
+Tasking/Task_Manager.lua
 Tasking/DetectionManager.lua
 Tasking/Task_A2G_Dispatcher.lua
 Tasking/Task_A2G.lua
 Tasking/Task_A2A_Dispatcher.lua
 Tasking/Task_A2A.lua
 Tasking/Task_Cargo.lua
+Tasking/Task_Cargo_Transport.lua
+Tasking/Task_Cargo_CSAR.lua
+Tasking/Task_Cargo_Dispatcher.lua
 Tasking/TaskZoneCapture.lua
 
 Moose.lua
