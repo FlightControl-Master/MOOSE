@@ -597,8 +597,15 @@ ARTY={
   autorelocateonroad=false,
 }
 
---- Weapong type ID. http://wiki.hoggit.us/view/DCS_enum_weapon_flag
--- @list WeaponType
+--- Weapong type ID. See [here](http://wiki.hoggit.us/view/DCS_enum_weapon_flag).
+-- @type ARTY.WeaponType
+-- @field #number Auto Automatic selection of weapon type.
+-- @field #number Cannon Cannons using conventional shells.
+-- @field #number Rockets Unguided rockets.
+-- @field #number CruiseMissile Cruise missiles.
+-- @field #number TacticalNukes Tactical nuclear shells (simulated).
+-- @field #number IlluminationShells Illumination shells (simulated).
+-- @field #number SmokeShells Smoke shells (simulated).
 ARTY.WeaponType={
   Auto=1073741822,
   Cannon=805306368,
@@ -610,7 +617,7 @@ ARTY.WeaponType={
 }
 
 --- Database of common artillery unit properties.
--- @list db
+-- @type ARTY.db
 ARTY.db={
   ["2B11 mortar"] = {  -- type "2B11 mortar"
     minrange   = 500,  -- correct?
