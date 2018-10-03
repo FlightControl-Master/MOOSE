@@ -1275,6 +1275,70 @@
 --     -- Kobuleti requests all available trucks from London.
 --     warehouse.London:AddRequest(warehouse.Kobuleti, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_TRUCK, WAREHOUSE.Quantity.HALF)
 --
+--## Example 16 Resupply of Dead Assets
+--
+-- Warehouse at FARP Berlin is located at the front line and sends infantry groups to the battle zone.
+-- Whenever a group dies, a new group is send from the warehouse to the battle zone.
+-- Additionally, for each dead group, Berlin requests resupply from Batumi.
+-- 
+--     -- Start warehouses.
+--     warehouse.Batumi:Start()
+--     warehouse.Berlin:Start()
+--     
+--     -- Front line warehouse.
+--     warehouse.Berlin:AddAsset("Infantry Platoon Alpha", 6)
+--     
+--     -- Resupply warehouse.
+--     warehouse.Batumi:AddAsset("Infantry Platoon Alpha", 50)
+--     
+--     -- Battle zone near FARP Berlin. This is where the action is!
+--     local BattleZone=ZONE:New("Virtual Battle Zone")
+--     
+--     -- Send infantry groups to the battle zone. Two groups every ~60 seconds.
+--     for i=1,2 do
+--       local time=(i-1)*60+10
+--       warehouse.Berlin:__AddRequest(time, warehouse.Berlin, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_INFANTRY, 2, nil, nil, nil, "To Battle Zone")
+--     end
+--     
+--     -- Take care of the spawned units.
+--     function warehouse.Berlin:OnAfterSelfRequest(From,Event,To,groupset,request)
+--       local groupset=groupset --Core.Set#SET_GROUP
+--       local request=request   --Functional.Warehouse#WAREHOUSE.Pendingitem
+--       
+--       -- Get assignment of this request.
+--       local assignment=warehouse.Berlin:GetAssignment(request)
+--       
+--       if assignment=="To Battle Zone" then
+--         
+--         for _,group in pairs(groupset:GetSet()) do
+--           local group=group --Wrapper.Group#GROUP
+--           
+--           -- Route group to Battle zone.
+--           local ToCoord=BattleZone:GetRandomCoordinate()
+--           group:RouteGroundOnRoad(ToCoord, group:GetSpeedMax()*0.8)
+--           
+--           -- After 3-5 minutes we create an explosion to destroy the group.
+--           SCHEDULER:New(nil, Explosion, {group, 50}, math.random(180, 300))
+--         end
+--             
+--       end
+--       
+--     end
+--     
+--     -- An asset has died ==> request resupply for it.
+--     function warehouse.Berlin:OnAfterAssetDead(From, Event, To, asset, request)
+--       local asset=asset       --Functional.Warehouse#WAREHOUSE.Assetitem
+--       local request=request   --Functional.Warehouse#WAREHOUSE.Pendingitem
+--       
+--       -- Get assignment.
+--       local assignment=warehouse.Berlin:GetAssignment(request)
+--     
+--       -- Request resupply for dead asset from Batumi.
+--       warehouse.Batumi:AddRequest(warehouse.Berlin, WAREHOUSE.Descriptor.ATTRIBUTE, asset.attribute, nil, nil, nil, nil, "Resupply")
+--       
+--       -- Send asset to Battle zone either now or when they arrive.
+--       warehouse.Berlin:AddRequest(warehouse.Berlin, WAREHOUSE.Descriptor.ATTRIBUTE, asset.attribute, 1, nil, nil, nil, assignment)
+--     end
 --
 -- @field #WAREHOUSE
 WAREHOUSE = {
@@ -1471,7 +1535,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.5.5"
+WAREHOUSE.version="0.5.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -5236,6 +5300,11 @@ function WAREHOUSE:_CheckConquered()
     end
   elseif self:GetCoalition()==coalition.side.NEUTRAL then
     -- Neutrals dont attack!
+    if self:IsRunning() and Nred>0 then
+      self:Attacked(coalition.side.RED, CountryRed)
+    elseif self:IsRunning() and Nblue>0 then
+      self:Attacked(coalition.side.BLUE, CountryBlue)
+    end
   end
   
 end
