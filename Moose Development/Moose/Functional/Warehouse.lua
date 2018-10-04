@@ -1414,6 +1414,7 @@ WAREHOUSE = {
 --- Item of the warehouse pending queue table.
 -- @type WAREHOUSE.Pendingitem
 -- @field #number timestamp Absolute mission time in seconds when the request was processed.
+-- @field #table assetproblem Table with assets that might have problems (damage or stuck).
 -- @field Core.Set#SET_GROUP cargogroupset Set of cargo groups do be delivered.
 -- @field #number ndelivered Number of groups delivered to destination.
 -- @field Core.Set#SET_GROUP transportgroupset Set of cargo transport carrier groups.
@@ -1535,7 +1536,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.5.6"
+WAREHOUSE.version="0.5.6w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -2978,6 +2979,84 @@ function WAREHOUSE:_JobDone()
     self:_DeleteQueueItem(request, self.pending)
   end
 end
+
+--- Function that checks if an asset group is still okay.
+-- @param #WAREHOUSE self
+function WAREHOUSE:_CheckAssetStatus()
+
+  -- Check if a unit of the group has problems.
+  local function _CheckGroup(_request, _group)
+    local request=_request --#WAREHOUSE.Pendingitem
+    local group=_group     --Wrapper.Group#GROUP
+    
+    if group and group:IsAlive() then
+    
+      -- Category of group.
+      local category=group:GetCategory()
+      
+      for _,_unit in pairs(group:GetUnits()) do
+        local unit=_unit --Wrapper.Unit#UNIT
+        
+        if unit and unit:IsAlive() then
+          local unitid=unit:GetID()
+          local life9=unit:GetLife()
+          local life0=unit:GetLife0()
+          local life=life9/life0*100
+          local speed=unit:GetVelocityMPS()
+          local onground=unit:InAir()
+    
+          local problem=false
+          if life<10 then
+            self:T(string.format("Unit %s is heavily damaged!", unit:GetName()))           
+          end
+          if speed<1 and unit:GetSpeedMax()>1 and onground then
+            self:T(string.format("Unit %s is not moving!", unit:GetName()))
+            problem=true
+          end
+          
+          if problem then
+            if request.assetproblem[unitid] then
+              local deltaT=timer.getAbsTime()-request.assetproblem[unitid]
+              if deltaT>300 then
+                --Todo: which event to generate? Removeunit or Dead/Creash or both?
+                unit:Destroy()
+              end
+            else
+              request.assetproblem[unitid]=timer.getAbsTime()
+            end
+          end
+        end
+             
+      end
+    end
+  end
+
+  
+  for _,request in pairs(self.pending) do
+    local request=request --#WAREHOUSE.Pendingitem
+    
+    -- Cargo groups.
+    if request.cargogroupset then
+      for _,_group in pairs(request.cargogroupset:GetSet()) do
+        local group=_group --Wrapper.Group#GROUP
+        
+        _CheckGroup(request, group)
+  
+      end
+    end
+    
+    -- Transport groups.
+    if request.transportgroupset then
+      for _,group in pairs(request.transportgroupset:GetSet()) do
+                
+        _CheckGroup(request, group)  
+      end
+    end
+            
+  end
+
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after "AddAsset" event. Add a group to the warehouse stock. If the group is alive, it is destroyed.
@@ -3453,6 +3532,9 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   
   -- Set time stamp.
   Pending.timestamp=timer.getAbsTime()
+  
+  -- Init problem table.
+  Pending.assetproblem={}
   
   -- Spawn assets of this request.
   local _spawngroups=self:_SpawnAssetRequest(Pending) --Core.Set#SET_GROUP
