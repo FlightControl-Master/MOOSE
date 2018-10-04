@@ -1383,9 +1383,53 @@ do -- COORDINATE
     return surface
   end
 
+  --- Checks if the surface type is on land.
+  -- @param #COORDINATE self
+  -- @return #boolean If true, the surface type at the coordinate is land.
+  function COORDINATE:IsSurfaceTypeLand()
+    return self:GetSurfaceType()==land.SurfaceType.LAND
+  end
+
+  --- Checks if the surface type is road.
+  -- @param #COORDINATE self
+  -- @return #boolean If true, the surface type at the coordinate is land.
+  function COORDINATE:IsSurfaceTypeLand()
+    return self:GetSurfaceType()==land.SurfaceType.LAND
+  end
+
+
+  --- Checks if the surface type is road.
+  -- @param #COORDINATE self
+  -- @return #boolean If true, the surface type at the coordinate is a road.
+  function COORDINATE:IsSurfaceTypeRoad()
+    return self:GetSurfaceType()==land.SurfaceType.ROAD
+  end
+
+  --- Checks if the surface type is runway.
+  -- @param #COORDINATE self
+  -- @return #boolean If true, the surface type at the coordinate is a runway or taxi way.
+  function COORDINATE:IsSurfaceTypeRunway()
+    return self:GetSurfaceType()==land.SurfaceType.RUNWAY
+  end
+
+  --- Checks if the surface type is shallow water.
+  -- @param #COORDINATE self
+  -- @return #boolean If true, the surface type at the coordinate is a shallow water.
+  function COORDINATE:IsSurfaceTypeShallowWater()
+    return self:GetSurfaceType()==land.SurfaceType.SHALLOW_WATER
+  end
+
+  --- Checks if the surface type is water.
+  -- @param #COORDINATE self
+  -- @return #boolean If true, the surface type at the coordinate is a deep water.
+  function COORDINATE:IsSurfaceTypeWater()
+    return self:GetSurfaceType()==land.SurfaceType.WATER
+  end
+
+
   --- Creates an explosion at the point of a certain intensity.
   -- @param #COORDINATE self
-  -- @param #number ExplosionIntensity
+  -- @param #number ExplosionIntensity Intensity of the explosion in kg TNT.
   function COORDINATE:Explosion( ExplosionIntensity )
     self:F2( { ExplosionIntensity } )
     trigger.action.explosion( self:GetVec3(), ExplosionIntensity )

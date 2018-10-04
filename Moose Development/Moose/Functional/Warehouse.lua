@@ -1414,6 +1414,7 @@ WAREHOUSE = {
 --- Item of the warehouse pending queue table.
 -- @type WAREHOUSE.Pendingitem
 -- @field #number timestamp Absolute mission time in seconds when the request was processed.
+-- @field #table assetproblem Table with assets that might have problems (damage or stuck).
 -- @field Core.Set#SET_GROUP cargogroupset Set of cargo groups do be delivered.
 -- @field #number ndelivered Number of groups delivered to destination.
 -- @field Core.Set#SET_GROUP transportgroupset Set of cargo transport carrier groups.
@@ -1535,7 +1536,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.5.6"
+WAREHOUSE.version="0.5.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -2650,6 +2651,8 @@ function WAREHOUSE:onafterStart(From, Event, To)
   self.spawnzone:BoundZone(30, self.country)
   ]]
   
+  --self.spawnzone:GetCoordinate():MarkToCoalition(string.format("Warehouse %s spawn zone", self.alias), self:GetCoalition())
+  
   -- Get the closest point on road wrt spawnzone of ground assets.
   local _road=self.spawnzone:GetCoordinate():GetClosestPointToRoad()
   if _road and self.road==nil then
@@ -2696,7 +2699,6 @@ function WAREHOUSE:onafterStart(From, Event, To)
   
   -- Start the status monitoring.
   self:__Status(-1)
-
 end
 
 --- On after "Stop" event. Stops the warehouse, unhandles all events.
@@ -2978,6 +2980,84 @@ function WAREHOUSE:_JobDone()
     self:_DeleteQueueItem(request, self.pending)
   end
 end
+
+--- Function that checks if an asset group is still okay.
+-- @param #WAREHOUSE self
+function WAREHOUSE:_CheckAssetStatus()
+
+  -- Check if a unit of the group has problems.
+  local function _CheckGroup(_request, _group)
+    local request=_request --#WAREHOUSE.Pendingitem
+    local group=_group     --Wrapper.Group#GROUP
+    
+    if group and group:IsAlive() then
+    
+      -- Category of group.
+      local category=group:GetCategory()
+      
+      for _,_unit in pairs(group:GetUnits()) do
+        local unit=_unit --Wrapper.Unit#UNIT
+        
+        if unit and unit:IsAlive() then
+          local unitid=unit:GetID()
+          local life9=unit:GetLife()
+          local life0=unit:GetLife0()
+          local life=life9/life0*100
+          local speed=unit:GetVelocityMPS()
+          local onground=unit:InAir()
+    
+          local problem=false
+          if life<10 then
+            self:T(string.format("Unit %s is heavily damaged!", unit:GetName()))           
+          end
+          if speed<1 and unit:GetSpeedMax()>1 and onground then
+            self:T(string.format("Unit %s is not moving!", unit:GetName()))
+            problem=true
+          end
+          
+          if problem then
+            if request.assetproblem[unitid] then
+              local deltaT=timer.getAbsTime()-request.assetproblem[unitid]
+              if deltaT>300 then
+                --Todo: which event to generate? Removeunit or Dead/Creash or both?
+                unit:Destroy()
+              end
+            else
+              request.assetproblem[unitid]=timer.getAbsTime()
+            end
+          end
+        end
+             
+      end
+    end
+  end
+
+  
+  for _,request in pairs(self.pending) do
+    local request=request --#WAREHOUSE.Pendingitem
+    
+    -- Cargo groups.
+    if request.cargogroupset then
+      for _,_group in pairs(request.cargogroupset:GetSet()) do
+        local group=_group --Wrapper.Group#GROUP
+        
+        _CheckGroup(request, group)
+  
+      end
+    end
+    
+    -- Transport groups.
+    if request.transportgroupset then
+      for _,group in pairs(request.transportgroupset:GetSet()) do
+                
+        _CheckGroup(request, group)  
+      end
+    end
+            
+  end
+
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after "AddAsset" event. Add a group to the warehouse stock. If the group is alive, it is destroyed.
@@ -3453,6 +3533,9 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   
   -- Set time stamp.
   Pending.timestamp=timer.getAbsTime()
+  
+  -- Init problem table.
+  Pending.assetproblem={}
   
   -- Spawn assets of this request.
   local _spawngroups=self:_SpawnAssetRequest(Pending) --Core.Set#SET_GROUP
@@ -5510,13 +5593,21 @@ function WAREHOUSE:_CheckRequestValid(request)
       end
       
     elseif asset_ground then
+    
+      -- Check that both spawn zones are not in water.
+      local inwater=self.spawnzone:GetCoordinate():IsSurfaceTypeWater() or request.warehouse.spawnzone:GetCoordinate():IsSurfaceTypeWater()
+      
+      if inwater then
+        self:E("ERROR: Incorrect request. Ground asset requested but at least one spawn zone is in water!")
+        valid=false
+      end
       
       -- No ground assets directly to or from ships.
       -- TODO: May needs refinement if warehouse is on land and requestor is ship in harbour?!
-      if (requestcategory==Airbase.Category.SHIP or self:GetAirbaseCategory()==Airbase.Category.SHIP) then
-        self:E("ERROR: Incorrect request. Ground asset requested but warehouse or requestor is SHIP!")
-        valid=false
-      end
+      --if (requestcategory==Airbase.Category.SHIP or self:GetAirbaseCategory()==Airbase.Category.SHIP) then
+      --  self:E("ERROR: Incorrect request. Ground asset requested but warehouse or requestor is SHIP!")
+      --  valid=false
+      --end
       
       if asset_train then
       
@@ -5778,6 +5869,16 @@ function WAREHOUSE:_CheckRequestNow(request)
   else
   
     -- Self propelled case. Nothing to do for now.
+    
+    --local dist=self.spawnzone:GetCoordinate():Get2DDistance(self:GetCoordinate())
+    local dist=self.warehouse:GetCoordinate():Get2DDistance(request.warehouse.spawnzone:GetCoordinate())
+        
+    if dist>5000 then
+      -- Not enough or the right transport carriers.
+      local text=string.format("Warehouse %s: Request denied! Not close enough to spawn zone. Distance = %d m", self.alias, dist)
+      self:_InfoMessage(text, 5)      
+      return false
+    end
   
   end
 
