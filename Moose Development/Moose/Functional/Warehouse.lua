@@ -1536,7 +1536,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.5.6w"
+WAREHOUSE.version="0.5.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -2651,6 +2651,8 @@ function WAREHOUSE:onafterStart(From, Event, To)
   self.spawnzone:BoundZone(30, self.country)
   ]]
   
+  --self.spawnzone:GetCoordinate():MarkToCoalition(string.format("Warehouse %s spawn zone", self.alias), self:GetCoalition())
+  
   -- Get the closest point on road wrt spawnzone of ground assets.
   local _road=self.spawnzone:GetCoordinate():GetClosestPointToRoad()
   if _road and self.road==nil then
@@ -2697,7 +2699,6 @@ function WAREHOUSE:onafterStart(From, Event, To)
   
   -- Start the status monitoring.
   self:__Status(-1)
-
 end
 
 --- On after "Stop" event. Stops the warehouse, unhandles all events.
@@ -5592,13 +5593,21 @@ function WAREHOUSE:_CheckRequestValid(request)
       end
       
     elseif asset_ground then
+    
+      -- Check that both spawn zones are not in water.
+      local inwater=self.spawnzone:GetCoordinate():IsSurfaceTypeWater() or request.warehouse.spawnzone:GetCoordinate():IsSurfaceTypeWater()
+      
+      if inwater then
+        self:E("ERROR: Incorrect request. Ground asset requested but at least one spawn zone is in water!")
+        valid=false
+      end
       
       -- No ground assets directly to or from ships.
       -- TODO: May needs refinement if warehouse is on land and requestor is ship in harbour?!
-      if (requestcategory==Airbase.Category.SHIP or self:GetAirbaseCategory()==Airbase.Category.SHIP) then
-        self:E("ERROR: Incorrect request. Ground asset requested but warehouse or requestor is SHIP!")
-        valid=false
-      end
+      --if (requestcategory==Airbase.Category.SHIP or self:GetAirbaseCategory()==Airbase.Category.SHIP) then
+      --  self:E("ERROR: Incorrect request. Ground asset requested but warehouse or requestor is SHIP!")
+      --  valid=false
+      --end
       
       if asset_train then
       
@@ -5860,6 +5869,16 @@ function WAREHOUSE:_CheckRequestNow(request)
   else
   
     -- Self propelled case. Nothing to do for now.
+    
+    --local dist=self.spawnzone:GetCoordinate():Get2DDistance(self:GetCoordinate())
+    local dist=self.warehouse:GetCoordinate():Get2DDistance(request.warehouse.spawnzone:GetCoordinate())
+        
+    if dist>5000 then
+      -- Not enough or the right transport carriers.
+      local text=string.format("Warehouse %s: Request denied! Not close enough to spawn zone. Distance = %d m", self.alias, dist)
+      self:_InfoMessage(text, 5)      
+      return false
+    end
   
   end
 
