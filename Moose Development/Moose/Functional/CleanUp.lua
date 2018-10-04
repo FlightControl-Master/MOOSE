@@ -112,6 +112,20 @@ function CLEANUP_AIRBASE:New( AirbaseNames )
   self:HandleEvent( EVENTS.PilotDead, self.__.OnEventCrash )
   self:HandleEvent( EVENTS.Dead, self.__.OnEventCrash )
   self:HandleEvent( EVENTS.Crash, self.__.OnEventCrash )
+  
+  for UnitName, Unit in pairs( _DATABASE.UNITS ) do
+    local Unit = Unit -- Wrapper.Unit#UNIT
+    if Unit:IsAlive() ~= nil then
+      if self:IsInAirbase( Unit:GetVec2() ) then
+        self:F( { UnitName = UnitName } )
+        self.CleanUpList[UnitName] = {}
+        self.CleanUpList[UnitName].CleanUpUnit = Unit
+        self.CleanUpList[UnitName].CleanUpGroup = Unit:GetGroup()
+        self.CleanUpList[UnitName].CleanUpGroupName = Unit:GetGroup():GetName()
+        self.CleanUpList[UnitName].CleanUpUnitName = Unit:GetName()
+      end
+    end
+  end
 	
 	return self
 end
@@ -213,11 +227,15 @@ end
 function CLEANUP_AIRBASE.__:OnEventBirth( EventData )
   self:F( { EventData } )
   
-  self.CleanUpList[EventData.IniDCSUnitName] = {}
-  self.CleanUpList[EventData.IniDCSUnitName].CleanUpUnit = EventData.IniUnit
-  self.CleanUpList[EventData.IniDCSUnitName].CleanUpGroup = EventData.IniGroup
-  self.CleanUpList[EventData.IniDCSUnitName].CleanUpGroupName = EventData.IniDCSGroupName
-  self.CleanUpList[EventData.IniDCSUnitName].CleanUpUnitName = EventData.IniDCSUnitName
+  if EventData.IniUnit:IsAlive() ~= nil then
+    if self:IsInAirbase( EventData.IniUnit:GetVec2() ) then
+      self.CleanUpList[EventData.IniDCSUnitName] = {}
+      self.CleanUpList[EventData.IniDCSUnitName].CleanUpUnit = EventData.IniUnit
+      self.CleanUpList[EventData.IniDCSUnitName].CleanUpGroup = EventData.IniGroup
+      self.CleanUpList[EventData.IniDCSUnitName].CleanUpGroupName = EventData.IniDCSGroupName
+      self.CleanUpList[EventData.IniDCSUnitName].CleanUpUnitName = EventData.IniDCSUnitName
+    end
+  end
 
 end
 
@@ -349,45 +367,50 @@ function CLEANUP_AIRBASE.__:CleanUpSchedule()
 		local CleanUpGroupName = CleanUpListData.CleanUpGroupName
 
 		if CleanUpUnit:IsAlive() ~= nil then
+		
+		  if self:IsInAirbase( CleanUpUnit:GetVec2() ) then
 
-			if _DATABASE:GetStatusGroup( CleanUpGroupName ) ~= "ReSpawn" then
-
-				local CleanUpCoordinate = CleanUpUnit:GetCoordinate()
-
-        self:T( { "CleanUp Scheduler", CleanUpUnitName } )
-        if CleanUpUnit:GetLife() <= CleanUpUnit:GetLife0() * 0.95 then
-					if CleanUpUnit:IsAboveRunway() then
-						if CleanUpUnit:InAir() then
-
-							local CleanUpLandHeight = CleanUpCoordinate:GetLandHeight()
-							local CleanUpUnitHeight = CleanUpCoordinate.y - CleanUpLandHeight
-							
-							if CleanUpUnitHeight < 100 then
-								self:T( { "CleanUp Scheduler", "Destroy " .. CleanUpUnitName .. " because below safe height and damaged." } )
-								self:DestroyUnit( CleanUpUnit )
-							end
-						else
-							self:T( { "CleanUp Scheduler", "Destroy " .. CleanUpUnitName .. " because on runway and damaged." } )
-							self:DestroyUnit( CleanUpUnit )
-						end
-					end
-				end
-				-- Clean Units which are waiting for a very long time in the CleanUpZone.
-				if CleanUpUnit then
-					local CleanUpUnitVelocity = CleanUpUnit:GetVelocityKMH()
-					if CleanUpUnitVelocity < 1 then
-						if CleanUpListData.CleanUpMoved then
-							if CleanUpListData.CleanUpTime + 180 <= timer.getTime() then
-								self:T( { "CleanUp Scheduler", "Destroy due to not moving anymore " .. CleanUpUnitName } )
-								self:DestroyUnit( CleanUpUnit )
-							end
-						end
-					else
-						CleanUpListData.CleanUpTime = timer.getTime()
-						CleanUpListData.CleanUpMoved = true
-					end
-				end
-				
+  			if _DATABASE:GetStatusGroup( CleanUpGroupName ) ~= "ReSpawn" then
+  
+  				local CleanUpCoordinate = CleanUpUnit:GetCoordinate()
+  
+          self:T( { "CleanUp Scheduler", CleanUpUnitName } )
+          if CleanUpUnit:GetLife() <= CleanUpUnit:GetLife0() * 0.95 then
+  					if CleanUpUnit:IsAboveRunway() then
+  						if CleanUpUnit:InAir() then
+  
+  							local CleanUpLandHeight = CleanUpCoordinate:GetLandHeight()
+  							local CleanUpUnitHeight = CleanUpCoordinate.y - CleanUpLandHeight
+  							
+  							if CleanUpUnitHeight < 100 then
+  								self:T( { "CleanUp Scheduler", "Destroy " .. CleanUpUnitName .. " because below safe height and damaged." } )
+  								self:DestroyUnit( CleanUpUnit )
+  							end
+  						else
+  							self:T( { "CleanUp Scheduler", "Destroy " .. CleanUpUnitName .. " because on runway and damaged." } )
+  							self:DestroyUnit( CleanUpUnit )
+  						end
+  					end
+  				end
+  				-- Clean Units which are waiting for a very long time in the CleanUpZone.
+  				if CleanUpUnit and not CleanUpUnit:GetPlayerName() then
+  					local CleanUpUnitVelocity = CleanUpUnit:GetVelocityKMH()
+  					if CleanUpUnitVelocity < 1 then
+  						if CleanUpListData.CleanUpMoved then
+  							if CleanUpListData.CleanUpTime + 180 <= timer.getTime() then
+  								self:T( { "CleanUp Scheduler", "Destroy due to not moving anymore " .. CleanUpUnitName } )
+  								self:DestroyUnit( CleanUpUnit )
+  							end
+  						end
+  					else
+  						CleanUpListData.CleanUpTime = timer.getTime()
+  						CleanUpListData.CleanUpMoved = true
+  					end
+  				end
+        else
+          -- not anymore in an airbase zone, remove from cleanup list.
+          self.CleanUpList[CleanUpUnitName] = nil
+        end
 			else
 				-- Do nothing ...
 				self.CleanUpList[CleanUpUnitName] = nil
