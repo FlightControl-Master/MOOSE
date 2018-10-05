@@ -24,7 +24,7 @@
 -- ### Co-author: FlightControl (cargo dispatcher classes)
 --
 -- @module Functional.Warehouse
--- @image MOOSE.JPG
+-- @image Warehouse.JPG
 
 --- WAREHOUSE class.
 -- @type WAREHOUSE
@@ -59,8 +59,6 @@
 --- Have your assets at the right place at the right time - or not!
 --
 -- ===
---
--- ![Banner Image](..\Presentations\WAREHOUSE\Warehouse_Main.png)
 --
 -- # The Warehouse Concept
 -- 
