@@ -1536,7 +1536,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.5.7"
+WAREHOUSE.version="0.5.8"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -5795,7 +5795,6 @@ function WAREHOUSE:_CheckRequestNow(request)
   -- Check if number of requested assets is in stock.
   local _assets,_nassets,_enough=self:_FilterStock(self.stock, request.assetdesc, request.assetdescval, request.nasset, onlymobile)
   
-  local _transports
   
   -- Check if enough assets are in stock.
   if not _enough then
@@ -5805,13 +5804,17 @@ function WAREHOUSE:_CheckRequestNow(request)
     self:T(self.wid..text)
     return false
   end
-
+  
+  local _transports
+  local _assetattribute
+  local _assetcategory
+  
   -- Check if at least one (cargo) asset is available.
   if _nassets>0 then
 
     -- Get the attibute of the requested asset.
-    local _assetattribute=_assets[1].attribute
-    local _assetcategory=_assets[1].category  
+    _assetattribute=_assets[1].attribute
+    _assetcategory=_assets[1].category  
     
     -- Check available parking for air asset units.    
     if self.airbase and (_assetcategory==Group.Category.AIRPLANE or _assetcategory==Group.Category.HELICOPTER) then
@@ -5870,16 +5873,22 @@ function WAREHOUSE:_CheckRequestNow(request)
   
     -- Self propelled case. Nothing to do for now.
     
-    --local dist=self.spawnzone:GetCoordinate():Get2DDistance(self:GetCoordinate())
-    local dist=self.warehouse:GetCoordinate():Get2DDistance(request.warehouse.spawnzone:GetCoordinate())
-        
-    if dist>5000 then
-      -- Not enough or the right transport carriers.
-      local text=string.format("Warehouse %s: Request denied! Not close enough to spawn zone. Distance = %d m", self.alias, dist)
-      self:_InfoMessage(text, 5)      
-      return false
+    -- Ground asset checks.
+    if _assetcategory==Group.Category.GROUND then
+    
+      -- Distance between warehouse and spawn zone.
+      local dist=self.warehouse:GetCoordinate():Get2DDistance(request.warehouse.spawnzone:GetCoordinate())
+          
+      -- Check min dist to spawn zone.
+      if dist>5000 then
+        -- Not close enough to spawn zone.
+        local text=string.format("Warehouse %s: Request denied! Not close enough to spawn zone. Distance = %d m. We need to be at least within 5000 m range to spawn.", self.alias, dist)
+        self:_InfoMessage(text, 5)      
+        return false
+      end
+      
     end
-  
+      
   end
 
 
