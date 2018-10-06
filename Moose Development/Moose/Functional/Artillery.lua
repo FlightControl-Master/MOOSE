@@ -597,8 +597,15 @@ ARTY={
   autorelocateonroad=false,
 }
 
---- Weapong type ID. http://wiki.hoggit.us/view/DCS_enum_weapon_flag
--- @list WeaponType
+--- Weapong type ID. See [here](http://wiki.hoggit.us/view/DCS_enum_weapon_flag).
+-- @type ARTY.WeaponType
+-- @field #number Auto Automatic selection of weapon type.
+-- @field #number Cannon Cannons using conventional shells.
+-- @field #number Rockets Unguided rockets.
+-- @field #number CruiseMissile Cruise missiles.
+-- @field #number TacticalNukes Tactical nuclear shells (simulated).
+-- @field #number IlluminationShells Illumination shells (simulated).
+-- @field #number SmokeShells Smoke shells (simulated).
 ARTY.WeaponType={
   Auto=1073741822,
   Cannon=805306368,
@@ -610,7 +617,7 @@ ARTY.WeaponType={
 }
 
 --- Database of common artillery unit properties.
--- @list db
+-- @type ARTY.db
 ARTY.db={
   ["2B11 mortar"] = {  -- type "2B11 mortar"
     minrange   = 500,  -- correct?
@@ -675,7 +682,7 @@ ARTY.id="ARTY | "
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="1.0.5"
+ARTY.version="1.0.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -1189,7 +1196,14 @@ function ARTY:AssignTargetCoord(coord, prio, radius, nshells, maxengage, time, w
   end
   
   -- Time in seconds.
-  local _time=self:_ClockToSeconds(time)
+  local _time
+  if type(time)=="string" then
+    _time=self:_ClockToSeconds(time)
+  elseif type(time)=="number" then
+    _time=timer.getAbsTime()+time
+  else
+    _time=timer.getAbsTime()
+  end
   
   -- Prepare target array.
   local _target={name=_name, coord=coord, radius=radius, nshells=nshells, engaged=0, underfire=false, prio=prio, maxengage=maxengage, time=_time, weapontype=weapontype}
@@ -1240,9 +1254,6 @@ function ARTY:AssignMoveCoord(coord, time, speed, onroad, cancel, name, unique)
     return nil
   end
       
-  -- Default is current time if no time was specified.
-  time=time or self:_SecondsToClock(timer.getAbsTime())
-    
   -- Set speed.
   if speed then
     -- Make sure, given speed is less than max physiaclly possible speed of group.
@@ -1264,7 +1275,14 @@ function ARTY:AssignMoveCoord(coord, time, speed, onroad, cancel, name, unique)
   end
   
   -- Time in seconds.
-  local _time=self:_ClockToSeconds(time)
+  local _time
+  if type(time)=="string" then
+    _time=self:_ClockToSeconds(time)
+  elseif type(time)=="number" then
+    _time=timer.getAbsTime()+time
+  else
+    _time=timer.getAbsTime()
+  end
   
   -- Prepare move array.
   local _move={name=_name, coord=coord, time=_time, speed=speed, onroad=onroad, cancel=cancel}

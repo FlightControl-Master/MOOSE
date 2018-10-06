@@ -623,10 +623,8 @@ end
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:StartUncontrolled(delay)
   if delay and delay>0 then
-    env.info(string.format("FF %s delayed start after %d seconds", self:GetName(), delay))
     SCHEDULER:New(nil, CONTROLLABLE.StartUncontrolled, {self}, delay)    
   else
-    env.info(string.format("FF %s instant start", self:GetName()))
     self:SetCommand({id='Start', params={}})
   end
   return self
@@ -1079,10 +1077,10 @@ end
 -- The unit / controllable will follow lead unit of another controllable, wingmens of both controllables will continue following their leaders. 
 -- The unit / controllable will also protect that controllable from threats of specified types.
 -- @param #CONTROLLABLE self
--- @param Wrapper.Controllable#CONTROLLABLE EscortControllable The controllable to be escorted.
+-- @param Wrapper.Controllable#CONTROLLABLE FollowControllable The controllable to be escorted.
 -- @param DCS#Vec3 Vec3 Position of the unit / lead unit of the controllable relative lead unit of another controllable in frame reference oriented by course of lead unit of another controllable. If another controllable is on land the unit / controllable will orbit around.
 -- @param #number LastWaypointIndex Detach waypoint of another controllable. Once reached the unit / controllable Follow task is finished.
--- @param #number EngagementDistanceMax Maximal distance from escorted controllable to threat. If the threat is already engaged by escort escort will disengage if the distance becomes greater than 1.5 * engagementDistMax. 
+-- @param #number EngagementDistance Maximal distance from escorted controllable to threat. If the threat is already engaged by escort escort will disengage if the distance becomes greater than 1.5 * engagementDistMax. 
 -- @param DCS#AttributeNameArray TargetTypes Array of AttributeName that is contains threat categories allowed to engage. 
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskEscort( FollowControllable, Vec3, LastWaypointIndex, EngagementDistance, TargetTypes )
@@ -1104,6 +1102,8 @@ function CONTROLLABLE:TaskEscort( FollowControllable, Vec3, LastWaypointIndex, E
   if LastWaypointIndex then
     LastWaypointIndexFlag = true
   end
+  
+  TargetTypes=TargetTypes or {}
   
   local DCSTask
   DCSTask = { id = 'Escort',

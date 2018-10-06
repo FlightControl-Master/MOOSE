@@ -24,7 +24,7 @@
 -- ### Co-author: FlightControl (cargo dispatcher classes)
 --
 -- @module Functional.Warehouse
--- @image Warehouse.JPG
+-- @image MOOSE.JPG
 
 --- WAREHOUSE class.
 -- @type WAREHOUSE
@@ -59,6 +59,8 @@
 --- Have your assets at the right place at the right time - or not!
 --
 -- ===
+--
+-- ![Banner Image](..\Presentations\WAREHOUSE\Warehouse_Main.png)
 --
 -- # The Warehouse Concept
 -- 
@@ -604,6 +606,7 @@
 -- * "Attacked" --> "Captured" --> "Running" (warehouse was captured by the enemy)
 -- * "*" --> "AirbaseCaptured" --> "*" (airbase belonging to the warehouse was captured by the enemy)
 -- * "*" --> "AirbaseRecaptured" --> "*" (airbase was re-captured)
+-- * "*" --> "AssetDead" --> "*" (a whole asset group is dead)
 -- * "*" --> "Destroyed" --> "Destroyed" (warehouse was destroyed)
 -- * "Running" --> "Pause" --> "Paused" (warehouse is paused)
 -- * "Paused" --> "Unpause" --> "Running" (warehouse is unpaused)
@@ -870,7 +873,7 @@
 --     
 --     -- Big explosion at the warehose. It has a very nice damage model by the way :)
 --     local function DestroyWarehouse()
---       warehouse.Batumi.warehouse:GetCoordinate():Explosion(999)
+--       warehouse.Batumi:GetCoordinate():Explosion(999)
 --     end
 --     SCHEDULER:New(nil, DestroyWarehouse, {}, 30)
 --     
@@ -933,9 +936,9 @@
 --     -- Get Number of ships at Batumi.
 --     local nships=warehouse.Batumi:GetNumberOfAssets(WAREHOUSE.Descriptor.CATEGORY, Group.Category.SHIP)
 --     
---     -- Send one ship every 5 minutes.
+--     -- Send one ship every 3 minutes (ships do not evade each other well, so we need a bit space between them).
 --     for i=1, nships do
---       warehouse.Batumi:__AddRequest(300*(i-1)+10, warehouse.Kobuleti, WAREHOUSE.Descriptor.CATEGORY, Group.Category.SHIP, 1)
+--       warehouse.Batumi:__AddRequest(180*(i-1)+10, warehouse.Kobuleti, WAREHOUSE.Descriptor.CATEGORY, Group.Category.SHIP, 1)
 --     end
 --
 -- ## Example 10: Warehouse on Aircraft Carrier
@@ -998,8 +1001,7 @@
 --     warehouse.Stennis:__AddRequest(45, warehouse.Stennis, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.NAVAL_ARMEDSHIP, 5, nil, nil, nil, "Speedboats Right")
 --     
 --     --- Function called after self request
---     function warehouse.Stennis:OnAfterSelfRequest(From, Event, To,_groupset, request)
---     
+--     function warehouse.Stennis:OnAfterSelfRequest(From, Event, To,_groupset, request)    
 --       local groupset=_groupset --Core.Set#SET_GROUP
 --       local request=request   --Functional.Warehouse#WAREHOUSE.Pendingitem
 --       
@@ -1214,15 +1216,14 @@
 --         for _,_group in pairs(groupset:GetSet()) do
 --           local group=_group --Wrapper.Group#GROUP
 --           
+--           -- Start uncontrolled aircraft.
 --           group:StartUncontrolled()
---           group:SmokeBlue()
 --           
 --           -- Target coordinate!
---           local ToCoord=warehouse.Sukhumi:GetCoordinate()
---           ToCoord.y=5000  -- Adjust altitude
+--           local ToCoord=warehouse.Sukhumi:GetCoordinate():SetAltitude(5000)
 --           
---           local FoCoord=warehouse.Kobuleti:GetCoordinate()
---           FoCoord.y=3000  -- Ajust altitude.
+--           -- Home coordinate.
+--           local HomeCoord=warehouse.Kobuleti:GetCoordinate():SetAltitude(3000)
 --           
 --           -- Task bomb Sukhumi warehouse using all bombs (2032) from direction 180 at altitude 5000 m.
 --           local task=group:TaskBombing(warehouse.Sukhumi:GetCoordinate():GetVec2(), false, "All", nil , 180, 5000, 2032)
@@ -1235,7 +1236,7 @@
 --           -- Begin bombing run 20 km south of target.
 --           WayPoints[2]=ToCoord:Translate(20*1000, 180):WaypointAirTurningPoint(nil, 600, {task}, "Bombing Run")
 --           -- Return to base.
---           WayPoints[3]=FoCoord:WaypointAirTurningPoint()
+--           WayPoints[3]=HomeCoord:WaypointAirTurningPoint()
 --           -- Land at homebase. Bombers are added back to stock and can be employed in later assignments.
 --           WayPoints[4]=warehouse.Kobuleti:GetCoordinate():WaypointAirLanding()
 --           
@@ -1260,6 +1261,7 @@
 --     -- Define a polygon zone as spawn zone at Kobuleti.
 --     warehouse.Kobuleti:SetSpawnZone(ZONE_POLYGON:New("Warehouse Kobuleti Spawn Zone", GROUP:FindByName("Warehouse Kobuleti Spawn Zone")))
 --     
+--     -- Add assets.
 --     warehouse.Kobuleti:AddAsset("M978", 20)
 --     warehouse.London:AddAsset("M818", 20)
 --     
@@ -1273,6 +1275,70 @@
 --     -- Kobuleti requests all available trucks from London.
 --     warehouse.London:AddRequest(warehouse.Kobuleti, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_TRUCK, WAREHOUSE.Quantity.HALF)
 --
+--## Example 16 Resupply of Dead Assets
+--
+-- Warehouse at FARP Berlin is located at the front line and sends infantry groups to the battle zone.
+-- Whenever a group dies, a new group is send from the warehouse to the battle zone.
+-- Additionally, for each dead group, Berlin requests resupply from Batumi.
+-- 
+--     -- Start warehouses.
+--     warehouse.Batumi:Start()
+--     warehouse.Berlin:Start()
+--     
+--     -- Front line warehouse.
+--     warehouse.Berlin:AddAsset("Infantry Platoon Alpha", 6)
+--     
+--     -- Resupply warehouse.
+--     warehouse.Batumi:AddAsset("Infantry Platoon Alpha", 50)
+--     
+--     -- Battle zone near FARP Berlin. This is where the action is!
+--     local BattleZone=ZONE:New("Virtual Battle Zone")
+--     
+--     -- Send infantry groups to the battle zone. Two groups every ~60 seconds.
+--     for i=1,2 do
+--       local time=(i-1)*60+10
+--       warehouse.Berlin:__AddRequest(time, warehouse.Berlin, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_INFANTRY, 2, nil, nil, nil, "To Battle Zone")
+--     end
+--     
+--     -- Take care of the spawned units.
+--     function warehouse.Berlin:OnAfterSelfRequest(From,Event,To,groupset,request)
+--       local groupset=groupset --Core.Set#SET_GROUP
+--       local request=request   --Functional.Warehouse#WAREHOUSE.Pendingitem
+--       
+--       -- Get assignment of this request.
+--       local assignment=warehouse.Berlin:GetAssignment(request)
+--       
+--       if assignment=="To Battle Zone" then
+--         
+--         for _,group in pairs(groupset:GetSet()) do
+--           local group=group --Wrapper.Group#GROUP
+--           
+--           -- Route group to Battle zone.
+--           local ToCoord=BattleZone:GetRandomCoordinate()
+--           group:RouteGroundOnRoad(ToCoord, group:GetSpeedMax()*0.8)
+--           
+--           -- After 3-5 minutes we create an explosion to destroy the group.
+--           SCHEDULER:New(nil, Explosion, {group, 50}, math.random(180, 300))
+--         end
+--             
+--       end
+--       
+--     end
+--     
+--     -- An asset has died ==> request resupply for it.
+--     function warehouse.Berlin:OnAfterAssetDead(From, Event, To, asset, request)
+--       local asset=asset       --Functional.Warehouse#WAREHOUSE.Assetitem
+--       local request=request   --Functional.Warehouse#WAREHOUSE.Pendingitem
+--       
+--       -- Get assignment.
+--       local assignment=warehouse.Berlin:GetAssignment(request)
+--     
+--       -- Request resupply for dead asset from Batumi.
+--       warehouse.Batumi:AddRequest(warehouse.Berlin, WAREHOUSE.Descriptor.ATTRIBUTE, asset.attribute, nil, nil, nil, nil, "Resupply")
+--       
+--       -- Send asset to Battle zone either now or when they arrive.
+--       warehouse.Berlin:AddRequest(warehouse.Berlin, WAREHOUSE.Descriptor.ATTRIBUTE, asset.attribute, 1, nil, nil, nil, assignment)
+--     end
 --
 -- @field #WAREHOUSE
 WAREHOUSE = {
@@ -1348,6 +1414,7 @@ WAREHOUSE = {
 --- Item of the warehouse pending queue table.
 -- @type WAREHOUSE.Pendingitem
 -- @field #number timestamp Absolute mission time in seconds when the request was processed.
+-- @field #table assetproblem Table with assets that might have problems (damage or stuck).
 -- @field Core.Set#SET_GROUP cargogroupset Set of cargo groups do be delivered.
 -- @field #number ndelivered Number of groups delivered to destination.
 -- @field Core.Set#SET_GROUP transportgroupset Set of cargo transport carrier groups.
@@ -1469,7 +1536,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.5.5"
+WAREHOUSE.version="0.5.8"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -2584,6 +2651,8 @@ function WAREHOUSE:onafterStart(From, Event, To)
   self.spawnzone:BoundZone(30, self.country)
   ]]
   
+  --self.spawnzone:GetCoordinate():MarkToCoalition(string.format("Warehouse %s spawn zone", self.alias), self:GetCoalition())
+  
   -- Get the closest point on road wrt spawnzone of ground assets.
   local _road=self.spawnzone:GetCoordinate():GetClosestPointToRoad()
   if _road and self.road==nil then
@@ -2630,7 +2699,6 @@ function WAREHOUSE:onafterStart(From, Event, To)
   
   -- Start the status monitoring.
   self:__Status(-1)
-
 end
 
 --- On after "Stop" event. Stops the warehouse, unhandles all events.
@@ -2912,6 +2980,84 @@ function WAREHOUSE:_JobDone()
     self:_DeleteQueueItem(request, self.pending)
   end
 end
+
+--- Function that checks if an asset group is still okay.
+-- @param #WAREHOUSE self
+function WAREHOUSE:_CheckAssetStatus()
+
+  -- Check if a unit of the group has problems.
+  local function _CheckGroup(_request, _group)
+    local request=_request --#WAREHOUSE.Pendingitem
+    local group=_group     --Wrapper.Group#GROUP
+    
+    if group and group:IsAlive() then
+    
+      -- Category of group.
+      local category=group:GetCategory()
+      
+      for _,_unit in pairs(group:GetUnits()) do
+        local unit=_unit --Wrapper.Unit#UNIT
+        
+        if unit and unit:IsAlive() then
+          local unitid=unit:GetID()
+          local life9=unit:GetLife()
+          local life0=unit:GetLife0()
+          local life=life9/life0*100
+          local speed=unit:GetVelocityMPS()
+          local onground=unit:InAir()
+    
+          local problem=false
+          if life<10 then
+            self:T(string.format("Unit %s is heavily damaged!", unit:GetName()))           
+          end
+          if speed<1 and unit:GetSpeedMax()>1 and onground then
+            self:T(string.format("Unit %s is not moving!", unit:GetName()))
+            problem=true
+          end
+          
+          if problem then
+            if request.assetproblem[unitid] then
+              local deltaT=timer.getAbsTime()-request.assetproblem[unitid]
+              if deltaT>300 then
+                --Todo: which event to generate? Removeunit or Dead/Creash or both?
+                unit:Destroy()
+              end
+            else
+              request.assetproblem[unitid]=timer.getAbsTime()
+            end
+          end
+        end
+             
+      end
+    end
+  end
+
+  
+  for _,request in pairs(self.pending) do
+    local request=request --#WAREHOUSE.Pendingitem
+    
+    -- Cargo groups.
+    if request.cargogroupset then
+      for _,_group in pairs(request.cargogroupset:GetSet()) do
+        local group=_group --Wrapper.Group#GROUP
+        
+        _CheckGroup(request, group)
+  
+      end
+    end
+    
+    -- Transport groups.
+    if request.transportgroupset then
+      for _,group in pairs(request.transportgroupset:GetSet()) do
+                
+        _CheckGroup(request, group)  
+      end
+    end
+            
+  end
+
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after "AddAsset" event. Add a group to the warehouse stock. If the group is alive, it is destroyed.
@@ -3387,6 +3533,9 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   
   -- Set time stamp.
   Pending.timestamp=timer.getAbsTime()
+  
+  -- Init problem table.
+  Pending.assetproblem={}
   
   -- Spawn assets of this request.
   local _spawngroups=self:_SpawnAssetRequest(Pending) --Core.Set#SET_GROUP
@@ -5234,6 +5383,11 @@ function WAREHOUSE:_CheckConquered()
     end
   elseif self:GetCoalition()==coalition.side.NEUTRAL then
     -- Neutrals dont attack!
+    if self:IsRunning() and Nred>0 then
+      self:Attacked(coalition.side.RED, CountryRed)
+    elseif self:IsRunning() and Nblue>0 then
+      self:Attacked(coalition.side.BLUE, CountryBlue)
+    end
   end
   
 end
@@ -5439,13 +5593,21 @@ function WAREHOUSE:_CheckRequestValid(request)
       end
       
     elseif asset_ground then
+    
+      -- Check that both spawn zones are not in water.
+      local inwater=self.spawnzone:GetCoordinate():IsSurfaceTypeWater() or request.warehouse.spawnzone:GetCoordinate():IsSurfaceTypeWater()
+      
+      if inwater then
+        self:E("ERROR: Incorrect request. Ground asset requested but at least one spawn zone is in water!")
+        valid=false
+      end
       
       -- No ground assets directly to or from ships.
       -- TODO: May needs refinement if warehouse is on land and requestor is ship in harbour?!
-      if (requestcategory==Airbase.Category.SHIP or self:GetAirbaseCategory()==Airbase.Category.SHIP) then
-        self:E("ERROR: Incorrect request. Ground asset requested but warehouse or requestor is SHIP!")
-        valid=false
-      end
+      --if (requestcategory==Airbase.Category.SHIP or self:GetAirbaseCategory()==Airbase.Category.SHIP) then
+      --  self:E("ERROR: Incorrect request. Ground asset requested but warehouse or requestor is SHIP!")
+      --  valid=false
+      --end
       
       if asset_train then
       
@@ -5633,7 +5795,6 @@ function WAREHOUSE:_CheckRequestNow(request)
   -- Check if number of requested assets is in stock.
   local _assets,_nassets,_enough=self:_FilterStock(self.stock, request.assetdesc, request.assetdescval, request.nasset, onlymobile)
   
-  local _transports
   
   -- Check if enough assets are in stock.
   if not _enough then
@@ -5643,13 +5804,17 @@ function WAREHOUSE:_CheckRequestNow(request)
     self:T(self.wid..text)
     return false
   end
-
+  
+  local _transports
+  local _assetattribute
+  local _assetcategory
+  
   -- Check if at least one (cargo) asset is available.
   if _nassets>0 then
 
     -- Get the attibute of the requested asset.
-    local _assetattribute=_assets[1].attribute
-    local _assetcategory=_assets[1].category  
+    _assetattribute=_assets[1].attribute
+    _assetcategory=_assets[1].category  
     
     -- Check available parking for air asset units.    
     if self.airbase and (_assetcategory==Group.Category.AIRPLANE or _assetcategory==Group.Category.HELICOPTER) then
@@ -5707,7 +5872,23 @@ function WAREHOUSE:_CheckRequestNow(request)
   else
   
     -- Self propelled case. Nothing to do for now.
-  
+    
+    -- Ground asset checks.
+    if _assetcategory==Group.Category.GROUND then
+    
+      -- Distance between warehouse and spawn zone.
+      local dist=self.warehouse:GetCoordinate():Get2DDistance(request.warehouse.spawnzone:GetCoordinate())
+          
+      -- Check min dist to spawn zone.
+      if dist>5000 then
+        -- Not close enough to spawn zone.
+        local text=string.format("Warehouse %s: Request denied! Not close enough to spawn zone. Distance = %d m. We need to be at least within 5000 m range to spawn.", self.alias, dist)
+        self:_InfoMessage(text, 5)      
+        return false
+      end
+      
+    end
+      
   end
 
 

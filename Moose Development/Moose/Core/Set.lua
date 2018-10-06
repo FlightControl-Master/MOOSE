@@ -2431,92 +2431,98 @@ do -- SET_UNIT
   -- @return #SET_UNIT self
   function SET_UNIT:IsIncludeObject( MUnit )
     self:F2( MUnit )
-    local MUnitInclude = true
+
+    local MUnitInclude = false
+
+    if MUnit:IsAlive() ~= nil then
   
-    if self.Filter.Active ~= nil then
-      local MUnitActive = false
-      if self.Filter.Active == false or ( self.Filter.Active == true and MUnit:IsActive() == true ) then
-        MUnitActive = true
-      end
-      MUnitInclude = MUnitInclude and MUnitActive
-    end
+      MUnitInclude = true
   
-    if self.Filter.Coalitions then
-      local MUnitCoalition = false
-      for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
-        self:F( { "Coalition:", MUnit:GetCoalition(), self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
-        if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == MUnit:GetCoalition() then
-          MUnitCoalition = true
+      if self.Filter.Active ~= nil then
+        local MUnitActive = false
+        if self.Filter.Active == false or ( self.Filter.Active == true and MUnit:IsActive() == true ) then
+          MUnitActive = true
         end
+        MUnitInclude = MUnitInclude and MUnitActive
       end
-      MUnitInclude = MUnitInclude and MUnitCoalition
-    end
     
-    if self.Filter.Categories then
-      local MUnitCategory = false
-      for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
-        self:T3( { "Category:", MUnit:GetDesc().category, self.FilterMeta.Categories[CategoryName], CategoryName } )
-        if self.FilterMeta.Categories[CategoryName] and self.FilterMeta.Categories[CategoryName] == MUnit:GetDesc().category then
-          MUnitCategory = true
-        end
-      end
-      MUnitInclude = MUnitInclude and MUnitCategory
-    end
-    
-    if self.Filter.Types then
-      local MUnitType = false
-      for TypeID, TypeName in pairs( self.Filter.Types ) do
-        self:T3( { "Type:", MUnit:GetTypeName(), TypeName } )
-        if TypeName == MUnit:GetTypeName() then
-          MUnitType = true
-        end
-      end
-      MUnitInclude = MUnitInclude and MUnitType
-    end
-    
-    if self.Filter.Countries then
-      local MUnitCountry = false
-      for CountryID, CountryName in pairs( self.Filter.Countries ) do
-        self:T3( { "Country:", MUnit:GetCountry(), CountryName } )
-        if country.id[CountryName] == MUnit:GetCountry() then
-          MUnitCountry = true
-        end
-      end
-      MUnitInclude = MUnitInclude and MUnitCountry
-    end
-  
-    if self.Filter.UnitPrefixes then
-      local MUnitPrefix = false
-      for UnitPrefixId, UnitPrefix in pairs( self.Filter.UnitPrefixes ) do
-        self:T3( { "Prefix:", string.find( MUnit:GetName(), UnitPrefix, 1 ), UnitPrefix } )
-        if string.find( MUnit:GetName(), UnitPrefix, 1 ) then
-          MUnitPrefix = true
-        end
-      end
-      MUnitInclude = MUnitInclude and MUnitPrefix
-    end
-  
-    if self.Filter.RadarTypes then
-      local MUnitRadar = false
-      for RadarTypeID, RadarType in pairs( self.Filter.RadarTypes ) do
-        self:T3( { "Radar:", RadarType } )
-        if MUnit:HasSensors( Unit.SensorType.RADAR, RadarType ) == true then
-          if MUnit:GetRadar() == true then -- This call is necessary to evaluate the SEAD capability.
-            self:T3( "RADAR Found" )
+      if self.Filter.Coalitions then
+        local MUnitCoalition = false
+        for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
+          self:F( { "Coalition:", MUnit:GetCoalition(), self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
+          if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == MUnit:GetCoalition() then
+            MUnitCoalition = true
           end
-          MUnitRadar = true
         end
+        MUnitInclude = MUnitInclude and MUnitCoalition
       end
-      MUnitInclude = MUnitInclude and MUnitRadar
-    end
-  
-    if self.Filter.SEAD then
-      local MUnitSEAD = false
-      if MUnit:HasSEAD() == true then
-        self:T3( "SEAD Found" )
-        MUnitSEAD = true
+      
+      if self.Filter.Categories then
+        local MUnitCategory = false
+        for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
+          self:T3( { "Category:", MUnit:GetDesc().category, self.FilterMeta.Categories[CategoryName], CategoryName } )
+          if self.FilterMeta.Categories[CategoryName] and self.FilterMeta.Categories[CategoryName] == MUnit:GetDesc().category then
+            MUnitCategory = true
+          end
+        end
+        MUnitInclude = MUnitInclude and MUnitCategory
       end
-      MUnitInclude = MUnitInclude and MUnitSEAD
+      
+      if self.Filter.Types then
+        local MUnitType = false
+        for TypeID, TypeName in pairs( self.Filter.Types ) do
+          self:T3( { "Type:", MUnit:GetTypeName(), TypeName } )
+          if TypeName == MUnit:GetTypeName() then
+            MUnitType = true
+          end
+        end
+        MUnitInclude = MUnitInclude and MUnitType
+      end
+      
+      if self.Filter.Countries then
+        local MUnitCountry = false
+        for CountryID, CountryName in pairs( self.Filter.Countries ) do
+          self:T3( { "Country:", MUnit:GetCountry(), CountryName } )
+          if country.id[CountryName] == MUnit:GetCountry() then
+            MUnitCountry = true
+          end
+        end
+        MUnitInclude = MUnitInclude and MUnitCountry
+      end
+    
+      if self.Filter.UnitPrefixes then
+        local MUnitPrefix = false
+        for UnitPrefixId, UnitPrefix in pairs( self.Filter.UnitPrefixes ) do
+          self:T3( { "Prefix:", string.find( MUnit:GetName(), UnitPrefix, 1 ), UnitPrefix } )
+          if string.find( MUnit:GetName(), UnitPrefix, 1 ) then
+            MUnitPrefix = true
+          end
+        end
+        MUnitInclude = MUnitInclude and MUnitPrefix
+      end
+    
+      if self.Filter.RadarTypes then
+        local MUnitRadar = false
+        for RadarTypeID, RadarType in pairs( self.Filter.RadarTypes ) do
+          self:T3( { "Radar:", RadarType } )
+          if MUnit:HasSensors( Unit.SensorType.RADAR, RadarType ) == true then
+            if MUnit:GetRadar() == true then -- This call is necessary to evaluate the SEAD capability.
+              self:T3( "RADAR Found" )
+            end
+            MUnitRadar = true
+          end
+        end
+        MUnitInclude = MUnitInclude and MUnitRadar
+      end
+    
+      if self.Filter.SEAD then
+        local MUnitSEAD = false
+        if MUnit:HasSEAD() == true then
+          self:T3( "SEAD Found" )
+          MUnitSEAD = true
+        end
+        MUnitInclude = MUnitInclude and MUnitSEAD
+      end
     end
   
     self:T2( MUnitInclude )
