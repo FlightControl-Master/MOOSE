@@ -709,7 +709,7 @@
 -- 
 -- Ground troops are taken from the Batumi warehouse stock and spawned in its spawn zone. After a short delay, they are added back to the warehouse stock.
 -- Also a new request is made. Hence, the groups will be spawned, added back to the warehouse, spawned again and so on and so forth...
---      
+--     
 --     -- Start warehouse Batumi.
 --     warehouse.Batumi:Start()
 --     
@@ -1394,7 +1394,7 @@
 -- Leopard 2 tanks are transported from Kobuleti to Batumi using two C-17As. From there they go be themselfs to Pampa.
 -- Eight infantry groups and two mortar groups are also being transferred from Kobuleti to Batumi by helicopter.
 -- The infantry has a higher priority and will be transported first using all available Mi-8 helicopters.
--- Once infantry has arrived at Batumi, it walk by itself to warehouse Pampa.
+-- Once infantry has arrived at Batumi, it will walk by itself to warehouse Pampa.
 -- The mortars can only be transported once the Mi-8 helos are available again, i.e. when the infantry has been delivered.
 -- Once the mortars arrive at Batumi, they will be transported by APCs to Pampa.
 -- 
@@ -1415,11 +1415,11 @@
 --     warehouse.Batumi:AddAsset("SPz Marder", 2)
 --     warehouse.Batumi:AddAsset("TPz Fuchs", 2)
 --     
---     -- Tanks transported by plane from Batumi to Kobuleti
+--     -- Tanks transported by plane from from Kobuleti to Batumi.
 --     warehouse.Kobuleti:AddRequest(warehouse.Batumi, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_TANK, 2, WAREHOUSE.TransportType.AIRPLANE, 2, 10, "Assets for Pampa")
 --     -- Artillery transported by helicopter from Kobuleti to Batumi.
 --     warehouse.Kobuleti:AddRequest(warehouse.Batumi, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_ARTILLERY, 2, WAREHOUSE.TransportType.HELICOPTER, 2, 30, "Assets for Pampa via APC")
---     -- Infantry transported by helicopter 
+--     -- Infantry transported by helicopter from Kobuleti to Batumi.
 --     warehouse.Kobuleti:AddRequest(warehouse.Batumi, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_INFANTRY, 8, WAREHOUSE.TransportType.HELICOPTER, 2, 20, "Assets for Pampa")
 --     
 --     --- Function handling assets delivered from Kobuleti warehouse.
@@ -1439,7 +1439,7 @@
 --     -- Forward all mobile ground assets to Pampa once they arrived.
 --     function warehouse.Batumi:OnAfterNewAsset(From, Event, To, asset, assignment)
 --       local asset=asset --Functional.Warehouse#WAREHOUSE.Assetitem
---     --       if assignment=="Assets for Pampa" then
+--       if assignment=="Assets for Pampa" then
 --         if asset.category==Group.Category.GROUND and asset.speedmax>0 then
 --           warehouse.Batumi:AddRequest(warehouse.Pampa, WAREHOUSE.Descriptor.GROUPNAME, asset.templatename)
 --         end
@@ -1645,7 +1645,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.5.9"
+WAREHOUSE.version="0.6.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -2608,20 +2608,21 @@ function WAREHOUSE:HasConnectionOffRoad(warehouse, markpath, smokepath)
 end
 
 
---- Get number of assets in warehouse stock.
+--- Get number of assets in warehouse stock. Optionally, only specific assets can be counted.
 -- @param #WAREHOUSE self
 -- @param #string Descriptor (Optional) Descriptor return the number of a specifc asset type. See @{#WAREHOUSE.Descriptor} for possible values.
 -- @param DescriptorValue (Optional) Descriptor value selecting the type of assets.
+-- @param #boolean OnlyMobile (Optional) If true only mobile units are considered.
 -- @return #number Number of assets in stock.
-function WAREHOUSE:GetNumberOfAssets(Descriptor, DescriptorValue)
+function WAREHOUSE:GetNumberOfAssets(Descriptor, DescriptorValue, OnlyMobile)
 
   if Descriptor==nil or DescriptorValue==nil then
-    -- Selected assets.
-    local _stock,_nstock=self:_FilterStock(self.stock, Descriptor, DescriptorValue)
-    return _nstock
-  else
     -- All assets.
     return #self.stock
+  else
+    -- Selected assets.
+    local _stock,_nstock=self:_FilterStock(self.stock, Descriptor, DescriptorValue, nil, OnlyMobile)
+    return _nstock
   end
 
 end
@@ -2715,6 +2716,83 @@ end
 function WAREHOUSE:FindWarehouseInDB(uid)
   return WAREHOUSE.db.Warehouses[uid]
 end
+
+--- Find nearest warehouse in service, i.e. warehouses which are not started, stopped or destroyed are not considered.
+-- Optionally, only warehouses with (specific) assets can be included in the search or warehouses of a certain coalition.
+-- @param #WAREHOUSE self
+-- @param MinAssets (Optional) Minimum number of assets the warehouse should have. Default 0.
+-- @param #string Descriptor (Optional) Descriptor describing the selected assets which should be in stock. See @{#WAREHOUSE.Descriptor} for possible values.
+-- @param DescriptorValue (Optional) Descriptor value selecting the type of assets which should be in stock.
+-- @param DCS#Coalition.side Coalition (Optional) Coalition side of the warehouse. Default is the same coaliton as the present warehouse. Set to false for any coalition.  
+-- @return #WAREHOUSE The the nearest warehouse object. Or nil if no warehouse is found.
+-- @return #number The distance to the nearest warehouse in meters. Or nil if no warehouse is found.
+function WAREHOUSE:FindNearestWarehouse(MinAssets, Descriptor, DescriptorValue, Coalition)
+
+  -- Defaults
+  if Descriptor~=nil and DescriptorValue~=nil then
+    MinAssets=MinAssets or 1
+  else
+    MinAssets=MinAssets or 0
+  end
+  
+  -- Coalition - default only the same as this warehouse.
+  local anycoalition=nil
+  if Coalition~=nil then
+    if Coalition==false then
+      anycoalition=true
+    else
+      -- Nothing to do
+    end
+  else
+    Coalition=self:GetCoalition()
+  end
+
+  -- Coordinate of this warehouse.
+  local coord=self:GetCoordinate()
+
+  -- Loop over all warehouses.
+  local nearest=nil
+  local distmin=nil  
+  for wid,warehouse in pairs(WAREHOUSE.db.Warehouses) do
+    local warehouse=warehouse --#WAREHOUSE
+    
+    -- Check that it is not the same warehouse.
+    if warehouse.uid ~= self.uid then
+    
+      -- Distance from this warehouse to the other warehouse.
+      local dist=coord:Get2DDistance(warehouse:GetCoordinate())
+      
+      -- Check if coalition is right.
+      local samecoalition=anycoalition or Coalition==warehouse:GetCoalition()
+      
+      -- Check that warehouse is in service.
+      if samecoalition and not (warehouse:IsNotReadyYet() or warehouse:IsStopped() or warehouse:IsDestroyed()) then
+      
+        -- Get number of assets. Whole stock is returned if no descriptor/value is given.
+        local nassets=warehouse:GetNumberOfAssets(Descriptor, DescriptorValue)
+        
+        --env.info(string.format("   FF warehouse %s nassets = %d  for %s=%s", warehouse.alias, nassets, tostring(Descriptor), tostring(DescriptorValue)))
+        
+        -- Assume we have enough.
+        local enough=true
+        -- If specifc assets need to be present...
+        if Descriptor and DescriptorValue then
+          -- Check that enough assets (default 1) are available.
+          enough = nassets>=MinAssets
+        end    
+      
+        -- Check distance.
+        if enough and (distmin==nil or dist<distmin) then
+          distmin=dist
+          nearest=warehouse
+        end
+      end
+    end  
+  end
+
+  return nearest, distmin
+end
+
 
 --- Find an asset in the the global warehouse data base. Parameter is the MOOSE group object.
 -- Note that the group name must contain they "AID" keyword. 
