@@ -54,6 +54,7 @@
 -- @field #table shippinglanes Table holding the user defined shipping between warehouses.
 -- @field #table offroadpaths Table holding user defined paths from one warehouse to another. 
 -- @field #boolean autodefence When the warehouse is under attack, automatically spawn assets to defend the warehouse.
+-- @field #number spawnzonemaxdist Max distance between warehouse and spawn zone. Default 5000 meters.
 -- @extends Core.Fsm#FSM
 
 --- Have your assets at the right place at the right time - or not!
@@ -1474,7 +1475,8 @@ WAREHOUSE = {
   portzone      =   nil,
   shippinglanes =    {},
   offroadpaths  =    {},
-  autodefence   = false,  
+  autodefence   = false,
+  spawnzonemaxdist = 5000,
 }
 
 --- Item of the warehouse stock table.
@@ -1645,7 +1647,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.6.0"
+WAREHOUSE.version="0.6.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -2214,11 +2216,14 @@ end
 --- Set a zone where the (ground) assets of the warehouse are spawned once requested.
 -- @param #WAREHOUSE self
 -- @param Core.Zone#ZONE zone The spawn zone.
+-- @param #number maxdist (Optional) Maximum distance in meters between spawn zone and warehouse. Units are not spawned if distance is larger. Default is 5000 m.
 -- @return #WAREHOUSE self
-function WAREHOUSE:SetSpawnZone(zone)
+function WAREHOUSE:SetSpawnZone(zone, maxdist)
   self.spawnzone=zone
+  self.spawnzonemaxdist=maxdist or 5000
   return self
 end
+
 
 --- Set a warehouse zone. If this zone is captured, the warehouse and all its assets fall into the hands of the enemy.
 -- @param #WAREHOUSE self
@@ -2723,10 +2728,11 @@ end
 -- @param MinAssets (Optional) Minimum number of assets the warehouse should have. Default 0.
 -- @param #string Descriptor (Optional) Descriptor describing the selected assets which should be in stock. See @{#WAREHOUSE.Descriptor} for possible values.
 -- @param DescriptorValue (Optional) Descriptor value selecting the type of assets which should be in stock.
--- @param DCS#Coalition.side Coalition (Optional) Coalition side of the warehouse. Default is the same coaliton as the present warehouse. Set to false for any coalition.  
+-- @param DCS#Coalition.side Coalition (Optional) Coalition side of the warehouse. Default is the same coaliton as the present warehouse. Set to false for any coalition.
+-- @param Core.Point#COORDINATE RefCoordinate (Optional) Coordinate to which the closest warehouse is searched. Default is the warehouse calling this function.  
 -- @return #WAREHOUSE The the nearest warehouse object. Or nil if no warehouse is found.
 -- @return #number The distance to the nearest warehouse in meters. Or nil if no warehouse is found.
-function WAREHOUSE:FindNearestWarehouse(MinAssets, Descriptor, DescriptorValue, Coalition)
+function WAREHOUSE:FindNearestWarehouse(MinAssets, Descriptor, DescriptorValue, Coalition, RefCoordinate)
 
   -- Defaults
   if Descriptor~=nil and DescriptorValue~=nil then
@@ -2744,11 +2750,15 @@ function WAREHOUSE:FindNearestWarehouse(MinAssets, Descriptor, DescriptorValue, 
       -- Nothing to do
     end
   else
-    Coalition=self:GetCoalition()
+    if self~=nil then
+      Coalition=self:GetCoalition()
+    else
+      anycoalition=true
+    end 
   end
 
-  -- Coordinate of this warehouse.
-  local coord=self:GetCoordinate()
+  -- Coordinate of this warehouse or user specified reference.
+  local coord=RefCoordinate or self:GetCoordinate()
 
   -- Loop over all warehouses.
   local nearest=nil
@@ -2756,11 +2766,10 @@ function WAREHOUSE:FindNearestWarehouse(MinAssets, Descriptor, DescriptorValue, 
   for wid,warehouse in pairs(WAREHOUSE.db.Warehouses) do
     local warehouse=warehouse --#WAREHOUSE
     
-    -- Check that it is not the same warehouse.
-    if warehouse.uid ~= self.uid then
+    -- Distance from this warehouse to the other warehouse.
+    local dist=coord:Get2DDistance(warehouse:GetCoordinate())
     
-      -- Distance from this warehouse to the other warehouse.
-      local dist=coord:Get2DDistance(warehouse:GetCoordinate())
+    if dist>0 then
       
       -- Check if coalition is right.
       local samecoalition=anycoalition or Coalition==warehouse:GetCoalition()
@@ -6124,9 +6133,9 @@ function WAREHOUSE:_CheckRequestNow(request)
       local dist=self.warehouse:GetCoordinate():Get2DDistance(self.spawnzone:GetCoordinate())
           
       -- Check min dist to spawn zone.
-      if dist>5000 then
+      if dist>self.spawnzonemaxdist then
         -- Not close enough to spawn zone.
-        local text=string.format("Warehouse %s: Request denied! Not close enough to spawn zone. Distance = %d m. We need to be at least within 5000 m range to spawn.", self.alias, dist)
+        local text=string.format("Warehouse %s: Request denied! Not close enough to spawn zone. Distance = %d m. We need to be at least within %d m range to spawn.", self.alias, dist, self.spawnzonemaxdist)
         self:_InfoMessage(text, 5)      
         return false
       end
