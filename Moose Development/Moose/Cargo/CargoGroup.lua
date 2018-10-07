@@ -51,7 +51,7 @@ do -- CARGO_GROUP
   -- @param #CARGO_GROUP self
   -- @param Wrapper.Group#GROUP CargoGroup Group to be transported as cargo.
   -- @param #string Type Cargo type, e.g. "Infantry". This is the type used in SET_CARGO:New():FilterTypes("Infantry") to define the valid cargo groups of the set.
-  -- @param #string Name Some user defined name of the cargo group.
+  -- @param #string Name A user defined name of the cargo group. This name CAN be the same as the group object but can also have a different name. This name MUST be unique!
   -- @param #number LoadRadius (optional) Distance in meters until which a cargo is loaded into the carrier. Cargo outside this radius has to be routed by other means to within the radius to be loaded.
   -- @param #number NearRadius (optional) Once the units are within this radius of the carrier, they are actually loaded, i.e. disappear from the scene.
   -- @return #CARGO_GROUP Cargo group object.
