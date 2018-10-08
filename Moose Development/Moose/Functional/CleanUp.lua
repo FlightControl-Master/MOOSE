@@ -38,9 +38,7 @@
 -- 
 -- ===
 -- 
--- ### Missions:
--- 
--- [](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/CLA%20-%20CleanUp%20Airbase)
+-- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/CLA%20-%20CleanUp%20Airbase)
 -- 
 -- ===
 -- 

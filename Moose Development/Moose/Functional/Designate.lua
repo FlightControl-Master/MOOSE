@@ -159,9 +159,7 @@
 -- 
 -- ===
 -- 
--- ### Missions:
--- 
--- [](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/DES%20-%20Designation)
+-- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/DES%20-%20Designation)
 -- 
 -- ===
 -- 

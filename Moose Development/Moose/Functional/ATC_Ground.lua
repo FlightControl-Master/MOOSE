@@ -10,9 +10,7 @@
 -- 
 -- ===
 -- 
--- ### Missions:
--- 
--- [](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/ABP%20-%20Airbase%20Police)
+-- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/ABP%20-%20Airbase%20Police)
 --
 -- ===
 --
