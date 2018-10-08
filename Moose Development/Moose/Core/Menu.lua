@@ -92,7 +92,7 @@ end
 ---
 -- @param Wrapper.Group#GROUP Group
 function MENU_INDEX:PrepareGroup( Group )
-  if Group and Group:IsAlive()  then
+  if Group and Group:IsAlive() ~= nil  then -- something was changed here!
     local GroupName = Group:GetName()
     self.Group[GroupName] = self.Group[GroupName] or {}
     self.Group[GroupName].Menus = self.Group[GroupName].Menus or {}
@@ -146,6 +146,7 @@ end
 function MENU_INDEX:SetGroupMenu( Group, Path, Menu )
 
   local MenuGroupName = Group:GetName()
+  Group:F({MenuGroupName=MenuGroupName,Path=Path})
   self.Group[MenuGroupName].Menus[Path] = Menu
 end
 

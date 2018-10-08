@@ -1,23 +1,16 @@
---- **Functional** -- The CLEANUP_AIRBASE class keeps an area clean of crashing or colliding airplanes. It also prevents airplanes from firing within this area.
+--- **Functional** -- Keep airbases clean of crashing or colliding airplanes, and kill missiles when being fired at airbases.
 -- 
 -- ===
 -- 
--- ### Author: **FlightControl**
--- ### Contributions: 
+-- ### Features:
+-- 
+-- 
+--  * Try to keep the airbase clean and operational.
+--  * Prevent airplanes from crashing.
+--  * Clean up obstructing airplanes from the runway that are standing still for a period of time.
+--  * Prevent airplanes firing missiles within the airbase zone.
 -- 
 -- ===
--- 
--- @module Functional.CleanUp
--- @image CleanUp_Airbases.JPG
-
---- @type CLEANUP_AIRBASE.__ Methods which are not intended for mission designers, but which are used interally by the moose designer :-)
--- @field #map<#string,Wrapper.Airbase#AIRBASE> Airbases Map of Airbases.
--- @extends Core.Base#BASE
-
---- @type CLEANUP_AIRBASE
--- @extends #CLEANUP_AIRBASE.__
-
---- Keeps airbases clean, and tries to guarantee continuous airbase operations, even under combat.
 -- 
 -- Specific airbases need to be provided that need to be guarded. Each airbase registered, will be guarded within a zone of 8 km around the airbase.
 -- Any unit that fires a missile, or shoots within the zone of an airbase, will be monitored by CLEANUP_AIRBASE.
@@ -43,7 +36,30 @@
 --     
 -- By following the above guidelines, you can add airbase cleanup with acceptable CPU overhead.
 -- 
--- ## 1. CLEANUP_AIRBASE Constructor
+-- ===
+-- 
+-- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/CLA%20-%20CleanUp%20Airbase)
+-- 
+-- ===
+-- 
+-- ### Author: **FlightControl**
+-- ### Contributions: 
+-- 
+-- ===
+-- 
+-- @module Functional.CleanUp
+-- @image CleanUp_Airbases.JPG
+
+--- @type CLEANUP_AIRBASE.__ Methods which are not intended for mission designers, but which are used interally by the moose designer :-)
+-- @field #map<#string,Wrapper.Airbase#AIRBASE> Airbases Map of Airbases.
+-- @extends Core.Base#BASE
+
+--- @type CLEANUP_AIRBASE
+-- @extends #CLEANUP_AIRBASE.__
+
+--- Keeps airbases clean, and tries to guarantee continuous airbase operations, even under combat.
+-- 
+-- # 1. CLEANUP_AIRBASE Constructor
 -- 
 -- Creates the main object which is preventing the airbase to get polluted with debris on the runway, which halts the airbase.
 -- 
@@ -54,12 +70,12 @@
 --      CleanUpTbilisi = CLEANUP_AIRBASE:New( AIRBASE.Caucasus.Tbilisi )
 --      CleanUpKutaisi = CLEANUP_AIRBASE:New( AIRBASE.Caucasus.Kutaisi )
 -- 
--- ## 2. Add or Remove airbases
+-- # 2. Add or Remove airbases
 -- 
 -- The method @{#CLEANUP_AIRBASE.AddAirbase}() to add an airbase to the cleanup validation process.
 -- The method @{#CLEANUP_AIRBASE.RemoveAirbase}() removes an airbase from the cleanup validation process.
 -- 
--- ## 3. Clean missiles and bombs within the airbase zone.
+-- # 3. Clean missiles and bombs within the airbase zone.
 -- 
 -- When missiles or bombs hit the runway, the airbase operations stop.
 -- Use the method @{#CLEANUP_AIRBASE.SetCleanMissiles}() to control the cleaning of missiles, which will prevent airbases to stop.

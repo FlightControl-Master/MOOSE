@@ -54,6 +54,7 @@
 -- @field #table shippinglanes Table holding the user defined shipping between warehouses.
 -- @field #table offroadpaths Table holding user defined paths from one warehouse to another. 
 -- @field #boolean autodefence When the warehouse is under attack, automatically spawn assets to defend the warehouse.
+-- @field #number spawnzonemaxdist Max distance between warehouse and spawn zone. Default 5000 meters.
 -- @extends Core.Fsm#FSM
 
 --- Have your assets at the right place at the right time - or not!
@@ -137,7 +138,7 @@
 -- 
 -- # Adding Assets
 -- 
--- Assets can be added to the warehouse stock by using the @{#WAREHOUSE.AddAsset}(*group*, *ngroups*, *forceattribute*, *forcecargobay*, *forceweight*, *loadradius*) function.
+-- Assets can be added to the warehouse stock by using the @{#WAREHOUSE.AddAsset}(*group*, *ngroups*, *forceattribute*, *forcecargobay*, *forceweight*, *loadradius*, *skill*, *liveries*, *assignment*) function.
 -- The parameter *group* has to be a MOOSE @{Wrapper.Group#GROUP}. This is also the only mandatory parameters. All other parameters are optional and can be used for fine tuning if
 -- nessary. The parameter *ngroups* specifies how many clones of this group are added to the stock.
 -- 
@@ -150,8 +151,8 @@
 -- Also note that the coalition of the template group (red, blue or neutral) does not matter. The coalition of the assets is determined by the coalition of the warehouse owner.
 -- In other words, it is no problem to add red groups to blue warehouses and vice versa. The assets will automatically have the coalition of the warehouse.   
 -- 
--- You can add assets with a delay by using the @{#WAREHOUSE.__AddAsset}(*delay*, *group*, *ngroups*, *foceattribute*, *forcecargobay*, *forceweight*, *loadradius*), where *delay* 
--- is the delay in seconds before the asset is added.
+-- You can add assets with a delay by using the @{#WAREHOUSE.__AddAsset}(*delay*, *group*, *ngroups*, *forceattribute*, *forcecargobay*, *forceweight*, *loadradius*,  *skill*, *liveries*, *assignment*),
+-- where *delay* is the delay in seconds before the asset is added.
 -- 
 -- In game, the warehouse will get a mark which is regularly updated and showing the currently available assets in stock.
 -- 
@@ -204,6 +205,54 @@
 --     warehouseBatumi:AddAsset("Leopard 2", nil, nil, nil, nil, 250)
 --  
 -- Adding the asset like this will cause the units to be loaded into the carrier already at a distance of 250 meters.
+-- 
+-- ### Setting the AI Skill
+-- 
+-- By default, the asset has the skill of its template group. The optional parameter *skill* allows to set a different skill when the asset is added. See the 
+-- [hoggit page](https://wiki.hoggitworld.com/view/DCS_enum_AI) possible values of this enumerator.
+-- For example you can use
+-- 
+--     warehouseBatumi:AddAsset("Leopard 2", nil, nil, nil, nil, nil, AI.Skill.EXCELLENT)
+--     
+-- do set the skill of the asset to excellent.
+--  
+-- ### Setting Liveries
+--  
+-- By default ,the asset uses the livery of its template group. The optional parameter *liveries* allows to define one or multiple liveries.
+-- If multiple liveries are given in form of a table of livery names, each asset gets a random one.
+--  
+-- For example
+--  
+--     warehouseBatumi:AddAsset("Mi-8", nil, nil, nil, nil, nil, nil, "China UN")
+--     
+-- would spawn the asset with a chinese UN livery.
+--  
+-- Or
+--  
+--     warehouseBatumi:AddAsset("Mi-8", nil, nil, nil, nil, nil, nil, {"China UN", "German"})
+--     
+-- would spawn the asset with either a chinese UN or German livery. Mind the curly brackets **{}** when you want to specify multiple liveries.
+--  
+-- Four each unit type, the livery names can be found in the DCS root folder under Bazar\Liveries. You have to use the name of the livery subdirectory. The names of the liveries
+-- as displayed in the mission editor might be different and won't work in general.
+--  
+-- ### Setting an Assignment
+--  
+-- Assets can be added with a specific assignment given as a text, e.g.
+--  
+--     warehouseBatumi:AddAsset("Mi-8", nil, nil, nil, nil, nil, nil, nil, "Go to Warehouse Kobuleti")
+--     
+-- This is helpful to establish supply chains once an asset has arrived at its (first) destination and is meant to be forwarded to another warehouse.
+-- 
+-- ## Retrieving the Asset
+-- 
+-- Once a an asset is added to a warehouse, the @{#WAREHOUSE.NewAsset} event is triggered. You can hook into this event with the @{#WAREHOUSE.OnAfterNewAsset}(*asset*, *assignment*) function.
+-- 
+-- The first parameter *asset* is a table of type @{#WAREHOUSE.Assetitem} and contains a lot of information about the asset. The seconed parameter *assignment* is optional and is the specific
+-- assignment the asset got when it was added.
+-- 
+-- Note that the assignment is can also be the assignment that was specified when adding a request (see next section). Once an asset that was requested from another warehouse and an assignment
+-- was specified in the @{#WAREHOUSE.AddRequest} function, the assignment can be checked when the asset has arrived and is added to the receiving warehouse.
 --  
 -- ===
 --
@@ -661,7 +710,7 @@
 -- 
 -- Ground troops are taken from the Batumi warehouse stock and spawned in its spawn zone. After a short delay, they are added back to the warehouse stock.
 -- Also a new request is made. Hence, the groups will be spawned, added back to the warehouse, spawned again and so on and so forth...
---      
+--     
 --     -- Start warehouse Batumi.
 --     warehouse.Batumi:Start()
 --     
@@ -1275,7 +1324,7 @@
 --     -- Kobuleti requests all available trucks from London.
 --     warehouse.London:AddRequest(warehouse.Kobuleti, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_TRUCK, WAREHOUSE.Quantity.HALF)
 --
---## Example 16 Resupply of Dead Assets
+-- ## Example 16: Resupply of Dead Assets
 --
 -- Warehouse at FARP Berlin is located at the front line and sends infantry groups to the battle zone.
 -- Whenever a group dies, a new group is send from the warehouse to the battle zone.
@@ -1340,6 +1389,65 @@
 --       warehouse.Berlin:AddRequest(warehouse.Berlin, WAREHOUSE.Descriptor.ATTRIBUTE, asset.attribute, 1, nil, nil, nil, assignment)
 --     end
 --
+-- ## Example 17: Supply Chains
+--
+-- Our remote warehouse "Pampa" south of Batumi needs assets but does not have any air infrastructure (FARP or airdrome).
+-- Leopard 2 tanks are transported from Kobuleti to Batumi using two C-17As. From there they go be themselfs to Pampa.
+-- Eight infantry groups and two mortar groups are also being transferred from Kobuleti to Batumi by helicopter.
+-- The infantry has a higher priority and will be transported first using all available Mi-8 helicopters.
+-- Once infantry has arrived at Batumi, it will walk by itself to warehouse Pampa.
+-- The mortars can only be transported once the Mi-8 helos are available again, i.e. when the infantry has been delivered.
+-- Once the mortars arrive at Batumi, they will be transported by APCs to Pampa.
+-- 
+--     -- Start warehouses.
+--     warehouse.Kobuleti:Start()
+--     warehouse.Batumi:Start()
+--     warehouse.Pampa:Start()
+--     
+--     -- Add assets to Kobuleti warehouse, which is our main hub.
+--     warehouse.Kobuleti:AddAsset("C-130",  2)
+--     warehouse.Kobuleti:AddAsset("C-17A",  2, nil, 77000)
+--     warehouse.Kobuleti:AddAsset("Mi-8",  2, WAREHOUSE.Attribute.AIR_TRANSPORTHELO, nil, nil, nil, AI.Skill.EXCELLENT, {"Germany", "United Kingdom"})
+--     warehouse.Kobuleti:AddAsset("Leopard 2", 10, nil, nil, 62000, 500)
+--     warehouse.Kobuleti:AddAsset("Mortar Alpha", 10, nil, nil, 210)
+--     warehouse.Kobuleti:AddAsset("Infantry Platoon Alpha", 20)
+--     
+--     -- Transports at Batumi.
+--     warehouse.Batumi:AddAsset("SPz Marder", 2)
+--     warehouse.Batumi:AddAsset("TPz Fuchs", 2)
+--     
+--     -- Tanks transported by plane from from Kobuleti to Batumi.
+--     warehouse.Kobuleti:AddRequest(warehouse.Batumi, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_TANK, 2, WAREHOUSE.TransportType.AIRPLANE, 2, 10, "Assets for Pampa")
+--     -- Artillery transported by helicopter from Kobuleti to Batumi.
+--     warehouse.Kobuleti:AddRequest(warehouse.Batumi, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_ARTILLERY, 2, WAREHOUSE.TransportType.HELICOPTER, 2, 30, "Assets for Pampa via APC")
+--     -- Infantry transported by helicopter from Kobuleti to Batumi.
+--     warehouse.Kobuleti:AddRequest(warehouse.Batumi, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.GROUND_INFANTRY, 8, WAREHOUSE.TransportType.HELICOPTER, 2, 20, "Assets for Pampa")
+--     
+--     --- Function handling assets delivered from Kobuleti warehouse.
+--     function warehouse.Kobuleti:OnAfterDelivered(From, Event, To, request)
+--       local request=request --Functional.Warehouse#WAREHOUSE.Pendingitem
+--       
+--       -- Get assignment.
+--       local assignment=warehouse.Kobuleti:GetAssignment(request)
+--       
+--       -- Check if these assets were meant for Warehouse Pampa.
+--       if assignment=="Assets for Pampa via APC" then
+--         -- Forward everything that arrived at Batumi to Pampa via APC.
+--         warehouse.Batumi:AddRequest(warehouse.Pampa, WAREHOUSE.Descriptor.ATTRIBUTE, request.cargoattribute, request.ndelivered, WAREHOUSE.TransportType.APC, WAREHOUSE.Quantity.ALL)
+--       end
+--     end
+--     
+--     -- Forward all mobile ground assets to Pampa once they arrived.
+--     function warehouse.Batumi:OnAfterNewAsset(From, Event, To, asset, assignment)
+--       local asset=asset --Functional.Warehouse#WAREHOUSE.Assetitem
+--       if assignment=="Assets for Pampa" then
+--         if asset.category==Group.Category.GROUND and asset.speedmax>0 then
+--           warehouse.Batumi:AddRequest(warehouse.Pampa, WAREHOUSE.Descriptor.GROUPNAME, asset.templatename)
+--         end
+--       end
+--     end
+--
+--
 -- @field #WAREHOUSE
 WAREHOUSE = {
   ClassName     = "WAREHOUSE",
@@ -1367,7 +1475,8 @@ WAREHOUSE = {
   portzone      =   nil,
   shippinglanes =    {},
   offroadpaths  =    {},
-  autodefence   = false,  
+  autodefence   = false,
+  spawnzonemaxdist = 5000,
 }
 
 --- Item of the warehouse stock table.
@@ -1388,6 +1497,8 @@ WAREHOUSE = {
 -- @field #number cargobaytot Total weight in kg that fits in the cargo bay of all asset group units.
 -- @field #number cargobaymax Largest cargo bay of all units in the group.
 -- @field #number loadradius Distance when cargo is loaded into the carrier.
+-- @field DCS#AI.Skill skill Skill of AI unit.
+-- @field #string livery Livery of the asset.
 
 --- Item of the warehouse queue table.
 -- @type WAREHOUSE.Queueitem
@@ -1536,7 +1647,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.5.8"
+WAREHOUSE.version="0.6.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -1738,6 +1849,9 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #number forcecargobay (Optional) Explicitly force cargobay weight limit in kg for cargo carriers. This is for each *unit* of the group.
   -- @param #number forceweight (Optional) Explicitly force weight in kg of each unit in the group.
   -- @param #number loadradius (Optional) The distance in meters when the cargo is loaded into the carrier. Default is the bounding box size of the carrier.
+  -- @param DCS#AI.Skill skill Skill of the asset.
+  -- @param #table liveries Table of livery names. When the asset is spawned one livery is chosen randomly.
+  -- @param #string assignment A free to choose string specifying an assignment for the asset. This can be used with the @{#WAREHOUSE.OnAfterNewAsset} function.
 
   --- Trigger the FSM event "AddAsset" with a delay. Add a group to the warehouse stock.
   -- @function [parent=#WAREHOUSE] __AddAsset
@@ -1749,18 +1863,23 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #number forcecargobay (Optional) Explicitly force cargobay weight limit in kg for cargo carriers. This is for each *unit* of the group.
   -- @param #number forceweight (Optional) Explicitly force weight in kg of each unit in the group.
   -- @param #number loadradius (Optional) The distance in meters when the cargo is loaded into the carrier. Default is the bounding box size of the carrier.
+  -- @param DCS#AI.Skill skill Skill of the asset.
+  -- @param #table liveries Table of livery names. When the asset is spawned one livery is chosen randomly.
+  -- @param #string assignment A free to choose string specifying an assignment for the asset. This can be used with the @{#WAREHOUSE.OnAfterNewAsset} function.
 
-
-  --- Triggers the FSM event "NewAsset" when a new asset has been added to the warehouse stock.
-  -- @function [parent=#WAREHOUSE] NewAsset
-  -- @param #WAREHOUSE self
-  -- @param #number delay Delay in seconds.
-  -- @param #WAREHOUSE.Assetitem asset The new asset.
 
   --- Triggers the FSM delayed event "NewAsset" when a new asset has been added to the warehouse stock.
   -- @function [parent=#WAREHOUSE] NewAsset
   -- @param #WAREHOUSE self
   -- @param #WAREHOUSE.Assetitem asset The new asset.
+  -- @param #string assignment (Optional) Assignment text for the asset.
+
+  --- Triggers the FSM delayed event "NewAsset" when a new asset has been added to the warehouse stock.
+  -- @function [parent=#WAREHOUSE] __NewAsset
+  -- @param #WAREHOUSE self
+  -- @param #number delay Delay in seconds.
+  -- @param #WAREHOUSE.Assetitem asset The new asset.
+  -- @param #string assignment (Optional) Assignment text for the asset.
 
   --- On after "NewAsset" event user function. A new asset has been added to the warehouse stock.
   -- @function [parent=#WAREHOUSE] OnAfterNewAsset
@@ -1768,7 +1887,8 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  -- @param #WAREHOUSE.Assetitem asset The asset that has just been added
+  -- @param #WAREHOUSE.Assetitem asset The asset that has just been added.
+  -- @param #string assignment (Optional) Assignment text for the asset.
 
 
   --- Triggers the FSM event "AddRequest". Add a request to the warehouse queue, which is processed when possible.
@@ -2096,11 +2216,14 @@ end
 --- Set a zone where the (ground) assets of the warehouse are spawned once requested.
 -- @param #WAREHOUSE self
 -- @param Core.Zone#ZONE zone The spawn zone.
+-- @param #number maxdist (Optional) Maximum distance in meters between spawn zone and warehouse. Units are not spawned if distance is larger. Default is 5000 m.
 -- @return #WAREHOUSE self
-function WAREHOUSE:SetSpawnZone(zone)
+function WAREHOUSE:SetSpawnZone(zone, maxdist)
   self.spawnzone=zone
+  self.spawnzonemaxdist=maxdist or 5000
   return self
 end
+
 
 --- Set a warehouse zone. If this zone is captured, the warehouse and all its assets fall into the hands of the enemy.
 -- @param #WAREHOUSE self
@@ -2490,20 +2613,21 @@ function WAREHOUSE:HasConnectionOffRoad(warehouse, markpath, smokepath)
 end
 
 
---- Get number of assets in warehouse stock.
+--- Get number of assets in warehouse stock. Optionally, only specific assets can be counted.
 -- @param #WAREHOUSE self
 -- @param #string Descriptor (Optional) Descriptor return the number of a specifc asset type. See @{#WAREHOUSE.Descriptor} for possible values.
 -- @param DescriptorValue (Optional) Descriptor value selecting the type of assets.
+-- @param #boolean OnlyMobile (Optional) If true only mobile units are considered.
 -- @return #number Number of assets in stock.
-function WAREHOUSE:GetNumberOfAssets(Descriptor, DescriptorValue)
+function WAREHOUSE:GetNumberOfAssets(Descriptor, DescriptorValue, OnlyMobile)
 
   if Descriptor==nil or DescriptorValue==nil then
-    -- Selected assets.
-    local _stock,_nstock=self:_FilterStock(self.stock, Descriptor, DescriptorValue)
-    return _nstock
-  else
     -- All assets.
     return #self.stock
+  else
+    -- Selected assets.
+    local _stock,_nstock=self:_FilterStock(self.stock, Descriptor, DescriptorValue, nil, OnlyMobile)
+    return _nstock
   end
 
 end
@@ -2597,6 +2721,87 @@ end
 function WAREHOUSE:FindWarehouseInDB(uid)
   return WAREHOUSE.db.Warehouses[uid]
 end
+
+--- Find nearest warehouse in service, i.e. warehouses which are not started, stopped or destroyed are not considered.
+-- Optionally, only warehouses with (specific) assets can be included in the search or warehouses of a certain coalition.
+-- @param #WAREHOUSE self
+-- @param MinAssets (Optional) Minimum number of assets the warehouse should have. Default 0.
+-- @param #string Descriptor (Optional) Descriptor describing the selected assets which should be in stock. See @{#WAREHOUSE.Descriptor} for possible values.
+-- @param DescriptorValue (Optional) Descriptor value selecting the type of assets which should be in stock.
+-- @param DCS#Coalition.side Coalition (Optional) Coalition side of the warehouse. Default is the same coaliton as the present warehouse. Set to false for any coalition.
+-- @param Core.Point#COORDINATE RefCoordinate (Optional) Coordinate to which the closest warehouse is searched. Default is the warehouse calling this function.  
+-- @return #WAREHOUSE The the nearest warehouse object. Or nil if no warehouse is found.
+-- @return #number The distance to the nearest warehouse in meters. Or nil if no warehouse is found.
+function WAREHOUSE:FindNearestWarehouse(MinAssets, Descriptor, DescriptorValue, Coalition, RefCoordinate)
+
+  -- Defaults
+  if Descriptor~=nil and DescriptorValue~=nil then
+    MinAssets=MinAssets or 1
+  else
+    MinAssets=MinAssets or 0
+  end
+  
+  -- Coalition - default only the same as this warehouse.
+  local anycoalition=nil
+  if Coalition~=nil then
+    if Coalition==false then
+      anycoalition=true
+    else
+      -- Nothing to do
+    end
+  else
+    if self~=nil then
+      Coalition=self:GetCoalition()
+    else
+      anycoalition=true
+    end 
+  end
+
+  -- Coordinate of this warehouse or user specified reference.
+  local coord=RefCoordinate or self:GetCoordinate()
+
+  -- Loop over all warehouses.
+  local nearest=nil
+  local distmin=nil  
+  for wid,warehouse in pairs(WAREHOUSE.db.Warehouses) do
+    local warehouse=warehouse --#WAREHOUSE
+    
+    -- Distance from this warehouse to the other warehouse.
+    local dist=coord:Get2DDistance(warehouse:GetCoordinate())
+    
+    if dist>0 then
+      
+      -- Check if coalition is right.
+      local samecoalition=anycoalition or Coalition==warehouse:GetCoalition()
+      
+      -- Check that warehouse is in service.
+      if samecoalition and not (warehouse:IsNotReadyYet() or warehouse:IsStopped() or warehouse:IsDestroyed()) then
+      
+        -- Get number of assets. Whole stock is returned if no descriptor/value is given.
+        local nassets=warehouse:GetNumberOfAssets(Descriptor, DescriptorValue)
+        
+        --env.info(string.format("   FF warehouse %s nassets = %d  for %s=%s", warehouse.alias, nassets, tostring(Descriptor), tostring(DescriptorValue)))
+        
+        -- Assume we have enough.
+        local enough=true
+        -- If specifc assets need to be present...
+        if Descriptor and DescriptorValue then
+          -- Check that enough assets (default 1) are available.
+          enough = nassets>=MinAssets
+        end    
+      
+        -- Check distance.
+        if enough and (distmin==nil or dist<distmin) then
+          distmin=dist
+          nearest=warehouse
+        end
+      end
+    end  
+  end
+
+  return nearest, distmin
+end
+
 
 --- Find an asset in the the global warehouse data base. Parameter is the MOOSE group object.
 -- Note that the group name must contain they "AID" keyword. 
@@ -2861,8 +3066,8 @@ function WAREHOUSE:_JobDone()
         ---------------
         
         -- Info on job.
-        local text=string.format("Warehouse %s: Job on request id=%d done!\n", self.alias, request.uid)
-        text=text..string.format("- %d of %d assets delivered to %s. Casualties %d.", ncargodelivered, ncargotot, request.warehouse.alias, ncargodead)
+        local text=string.format("Warehouse %s: Job on request id=%d for warehouse %s done!\n", self.alias, request.uid, request.warehouse.alias)
+        text=text..string.format("- %d of %d assets delivered. Casualties %d.", ncargodelivered, ncargotot, ncargodead)
         if request.ntransport>0 then
           text=text..string.format("\n- %d of %d transports returned home. Casualties %d.", ntransporthome, ntransporttot, ntransportdead)
         end
@@ -2943,9 +3148,8 @@ function WAREHOUSE:_JobDone()
         -- Still cargo but no transports --
         -----------------------------------
         
-        -- Info message.
-        self:_InfoMessage(string.format("Warehouse %s: All transports of request id=%s dead! Putting remaining %s cargo assets back into warehouse!", self.alias, request.uid, ncargo))
-      
+        local ncargoalive=0
+              
         -- All transports are dead but there is still cargo left ==> Put cargo back into stock.
         for _,_group in pairs(request.cargogroupset:GetSetObjects()) do
           --local group=group --Wrapper.Group#GROUP
@@ -2965,12 +3169,16 @@ function WAREHOUSE:_JobDone()
               end            
               -- Add asset group back to stock.
               self:AddAsset(group)
+              ncargoalive=ncargoalive+1
             end
           end
           
         end
+
+        -- Info message.
+        self:_InfoMessage(string.format("Warehouse %s: All transports of request id=%s dead! Putting remaining %s cargo assets back into warehouse!", self.alias, request.uid, ncargoalive))        
       end
-            
+
     end
   
   end -- loop over requests
@@ -3071,7 +3279,10 @@ end
 -- @param #number forcecargobay (Optional) Explicitly force cargobay weight limit in kg for cargo carriers. This is for each *unit* of the group.
 -- @param #number forceweight (Optional) Explicitly force weight in kg of each unit in the group.
 -- @param #number loadradius (Optional) Radius in meters when the cargo is loaded into the carrier.
-function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribute, forcecargobay, forceweight, loadradius)
+-- @param DCS#AI.Skill skill Skill of the asset.
+-- @param #table liveries Table of livery names. When the asset is spawned one livery is chosen randomly.
+-- @param #string assignment A free to choose string specifying an assignment for the asset. This can be used with the @{#WAREHOUSE.OnAfterNewAsset} function.
+function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribute, forcecargobay, forceweight, loadradius, skill, liveries, assignment)
   self:T({group=group, ngroups=ngroups, forceattribute=forceattribute, forcecargobay=forcecargobay, forceweight=forceweight})
 
   -- Set default.
@@ -3082,6 +3293,9 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
     group=GROUP:FindByName(group)
   end
   
+  if liveries and type(liveries)=="string" then
+    liveries={liveries}
+  end
     
   if group then
   
@@ -3114,17 +3328,30 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
           end
           
         end
+        
+        -- If no assignment was given we take the assignment of the request if there is any.
+        if assignment==nil and request.assignment~=nil then
+          assignment=request.assignment
+        end
       end
 
       -- Get the asset from the global DB.
       local asset=self:FindAssetInDB(group)
+
+      -- Set livery.      
+      if liveries then
+        asset.livery=liveries[math.random(#liveries)]
+      end
+      
+      -- Set skill.
+      asset.skill=skill
         
       -- Note the group is only added once, i.e. the ngroups parameter is ignored here.
       -- This is because usually these request comes from an asset that has been transfered from another warehouse and hence should only be added once.
       if asset~=nil then        
         self:_DebugMessage(string.format("Warehouse %s: Adding KNOWN asset uid=%d with attribute=%s to stock.", self.alias, asset.uid, asset.attribute), 5)
         table.insert(self.stock, asset)
-        self:NewAsset(asset)
+        self:NewAsset(asset, assignment or "")
       else
         self:_ErrorMessage(string.format("ERROR: Known asset could not be found in global warehouse db!"), 0)
       end      
@@ -3138,12 +3365,12 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
       self:_DebugMessage(string.format("Warehouse %s: Adding %d NEW assets of group %s to stock.", self.alias, n, tostring(group:GetName())), 5)
        
       -- This is a group that is not in the db yet. Add it n times.
-      local assets=self:_RegisterAsset(group, n, forceattribute, forcecargobay, forceweight, loadradius)
+      local assets=self:_RegisterAsset(group, n, forceattribute, forcecargobay, forceweight, loadradius, liveries, skill)
       
       -- Add created assets to stock of this warehouse.
       for _,asset in pairs(assets) do
         table.insert(self.stock, asset)
-        self:NewAsset(asset)
+        self:NewAsset(asset, assignment or "")
       end      
       
     end   
@@ -3160,7 +3387,7 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
   end
   
   -- Update status.
-  self:__Status(-1)
+  --self:__Status(-1)
 end
 
 --- Register new asset in globase warehouse data base.
@@ -3171,8 +3398,10 @@ end
 -- @param #number forcecargobay Cargo bay weight limit in kg.
 -- @param #number forceweight Weight of units in kg.
 -- @param #number loadradius Radius in meters when cargo is loaded into the carrier.
+-- @param #table liveries Table of liveries.
+-- @param DCS#AI.Skill skill Skill of AI.
 -- @return #table A table containing all registered assets.
-function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute, forcecargobay, forceweight, loadradius)
+function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute, forcecargobay, forceweight, loadradius, liveries, skill)
   self:F({groupname=group:GetName(), ngroups=ngroups, forceattribute=forceattribute, forcecargobay=forcecargobay, forceweight=forceweight})
 
   -- Set default.
@@ -3268,6 +3497,10 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute, forcecargobay,
     asset.cargobaytot=cargobaytot
     asset.cargobaymax=cargobaymax
     asset.loadradius=loadradius
+    if liveries then
+      asset.livery=liveries[math.random(#liveries)]
+    end
+    asset.skill=skill
     
     if i==1 then
       self:_AssetItemInfo(asset)
@@ -3300,7 +3533,9 @@ function WAREHOUSE:_AssetItemInfo(asset)
   text=text..string.format("Weight total  = %5.2f kg\n", asset.weight)
   text=text..string.format("Cargo bay tot = %5.2f kg\n", asset.cargobaytot)
   text=text..string.format("Cargo bay max = %5.2f kg\n", asset.cargobaymax)
-  text=text..string.format("Load radius   = %s m", tostring(asset.loadradius))
+  text=text..string.format("Load radius   = %s m\n", tostring(asset.loadradius))
+  text=text..string.format("Skill         = %s\n", tostring(asset.skill))
+  text=text..string.format("Livery        = %s", tostring(asset.livery))
   self:T(self.wid..text)
   self:T({DCSdesc=asset.DCSdesc})
   self:T3({Template=asset.template})
@@ -3311,8 +3546,10 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #WAREHOUSE.Assetitem asset The asset that has just been added
-function WAREHOUSE:onafterNewAsset(From, Event, To, asset)
+-- @param #WAREHOUSE.Assetitem asset The asset that has just been added.
+-- @parma #string assignment The (optional) assignment for the asset.
+function WAREHOUSE:onafterNewAsset(From, Event, To, asset, assignment)
+  self:T(self.wid..string.format("New asset %s id=%d with assignment %s.", asset.templatename, asset.uid, assignment))
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3461,7 +3698,7 @@ function WAREHOUSE:onafterAddRequest(From, Event, To, warehouse, AssetDescriptor
   self:_DebugMessage(text, 5)
 
   -- Update status
-  self:__Status(-1)
+  --self:__Status(-1)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3923,7 +4160,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     local warehouse=Carrier:GetState(Carrier, "WAREHOUSE") --#WAREHOUSE
   
     -- Debug message.
-    local text=string.format("Carrier group %s loaded cargo %s into unit %s in pickup zone %s", Carrier:GetName(), Cargo:GetObject():GetName(), CarrierUnit:GetName(), PickupZone:GetName())
+    local text=string.format("Carrier group %s loaded cargo %s into unit %s in pickup zone %s", Carrier:GetName(), Cargo:GetName(), CarrierUnit:GetName(), PickupZone:GetName())
     warehouse:T(warehouse.wid..text)
     
     -- Get cargo group object.
@@ -3933,7 +4170,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     local request=warehouse:_GetRequestOfGroup(group, warehouse.pending)
     
     -- Add cargo group to this carrier.
-    table.insert(request.carriercargo[CarrierUnit:GetName()], group)
+    table.insert(request.carriercargo[CarrierUnit:GetName()], warehouse:_GetNameWithOut(Cargo:GetName()))
     
   end
 
@@ -4100,7 +4337,9 @@ function WAREHOUSE:onafterDelivered(From, Event, To, request)
   self:_InfoMessage(text, 5)
 
   -- Make some noise :)
-  self:_Fireworks(request.warehouse:GetCoordinate())
+  if self.Debug then
+    self:_Fireworks(request.warehouse:GetCoordinate())
+  end
   
   -- Set delivered status for this request uid.
   self.delivered[request.uid]=true
@@ -4502,7 +4741,14 @@ function WAREHOUSE:_SpawnAssetGroundNaval(alias, asset, request, spawnzone, aiof
       
       template.units[i].x = TX
       template.units[i].y = TY
-             
+      
+      if asset.livery then
+        unit.livery_id = asset.livery
+      end
+      if asset.skill then
+        unit.skill= asset.skill
+      end
+         
     end
     
     template.route.points[1].x = coord.x
@@ -4622,6 +4868,14 @@ function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrol
         unit.parking    = terminal
         
       end
+      
+      if asset.livery then
+        unit.livery_id = asset.livery
+      end
+      if asset.skill then
+        unit.skill= asset.skill
+      end
+      
     end
     
     -- And template position.
@@ -5165,7 +5419,7 @@ function WAREHOUSE:_UnitDead(deadunit, request)
    
   
   -- Not sure what this does actually and if it would be better to set it to true.
-  local NoTriggerEvent=false  
+  local NoTriggerEvent=true
   
   if request.transporttype==WAREHOUSE.TransportType.SELFPROPELLED then
   
@@ -5193,13 +5447,12 @@ function WAREHOUSE:_UnitDead(deadunit, request)
     if istransport==true then
     
       -- Get the carrier unit table holding the cargo groups inside this carrier.
-      local cargogroups=request.carriercargo[unitname]
+      local cargogroupnames=request.carriercargo[unitname]
       
-      if cargogroups then
+      if cargogroupnames then
       
         -- Loop over all groups inside the destroyed carrier ==> all dead.
-        for _,cargogroup in pairs(cargogroups) do
-          local cargoname=self:_GetNameWithOut(cargogroup)
+        for _,cargoname in pairs(cargogroupnames) do
           request.cargogroupset:Remove(cargoname, NoTriggerEvent)
           self:T(self.wid..string.format("Removed transported cargo %s inside dead carrier %s: ncargo=%d", cargoname, unitname, request.cargogroupset:Count()))
         end
@@ -5877,12 +6130,12 @@ function WAREHOUSE:_CheckRequestNow(request)
     if _assetcategory==Group.Category.GROUND then
     
       -- Distance between warehouse and spawn zone.
-      local dist=self.warehouse:GetCoordinate():Get2DDistance(request.warehouse.spawnzone:GetCoordinate())
+      local dist=self.warehouse:GetCoordinate():Get2DDistance(self.spawnzone:GetCoordinate())
           
       -- Check min dist to spawn zone.
-      if dist>5000 then
+      if dist>self.spawnzonemaxdist then
         -- Not close enough to spawn zone.
-        local text=string.format("Warehouse %s: Request denied! Not close enough to spawn zone. Distance = %d m. We need to be at least within 5000 m range to spawn.", self.alias, dist)
+        local text=string.format("Warehouse %s: Request denied! Not close enough to spawn zone. Distance = %d m. We need to be at least within %d m range to spawn.", self.alias, dist, self.spawnzonemaxdist)
         self:_InfoMessage(text, 5)      
         return false
       end
@@ -6468,7 +6721,12 @@ end
 -- @return #string Name of the object without trailing #...
 function WAREHOUSE:_GetNameWithOut(group)
   if group then
-    local name=group:GetName()
+    local name
+    if type(group)=="string" then
+      name=group
+    else
+      name=group:GetName()
+    end
     local namewithout=UTILS.Split(name, "#")[1]
     if namewithout then
       return namewithout
@@ -6476,7 +6734,11 @@ function WAREHOUSE:_GetNameWithOut(group)
       return name
     end
   end
-  return group:GetName()
+  if type(group)=="string" then
+    return group
+  else
+    return group:GetName()
+  end
 end
 
 
