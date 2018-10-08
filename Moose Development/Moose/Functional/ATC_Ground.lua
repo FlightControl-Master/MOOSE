@@ -1,5 +1,6 @@
---- **Functional** -- The ATC\_GROUND classes monitor airbase traffic and regulate speed while taxiing.
+--- **Functional** -- Monitor airbase traffic and regulate speed while taxiing.
 --
+-- ===
 --
 -- ### Features:
 -- 
