@@ -1,8 +1,32 @@
---- **Core** --Spawn dynamically new GROUPs of UNITs in your missions.
+--- **Core** - Spawn dynamically new groups of units in running missions.
 --  
 -- ===
 -- 
--- The documentation of the SPAWN class can be found further in this document.
+-- ## Features:
+-- 
+--   * Spawn new groups in running missions.
+--   * Schedule spawning of new groups.
+--   * Put limits on the amount of groups that can be spawned, and the amount of units that can be alive at the same time.
+--   * Randomize the spawning location between different zones.
+--   * Randomize the intial positions within the zones.
+--   * Spawn in array formation.
+--   * Spawn uncontrolled (for planes or helos only).
+--   * Clean up inactive helicopters that "crashed".
+--   * Place a hook to capture a spawn event, and tailor with customer code.
+--   * Spawn late activated.
+--   * Spawn with or without an initial delay.
+--   * Respawn after landing, on the runway or at the ramp after engine shutdown.
+--   * Spawn with custom heading.
+--   * Spawn with different skills.
+--   * Spawn with different liveries.
+--   * Spawn with an inner and outer radius to set the initial position.
+--   * Spawn with a randomize route.
+--   * Spawn with a randomized template.
+--   * Spawn with a randomized start points on a route.
+--   * Spawn with an alternative name.
+--   * Spawn and keep the unit names.
+--   * Spawn with a different coalition and country.
+--   * Enquiry methods to check on spawn status.
 -- 
 -- ===
 -- 

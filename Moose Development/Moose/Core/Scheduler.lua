@@ -1,13 +1,14 @@
---- **Core** -- SCHEDULER prepares and handles the **execution of functions over scheduled time (intervals)**.
+--- **Core** - Prepares and handles the execution of functions over scheduled time (intervals).
 --
 -- ===
 -- 
--- SCHEDULER manages the **scheduling of functions**:
+-- ## Features:
 -- 
---    * optionally in an optional specified time interval, 
---    * optionally **repeating** with a specified time repeat interval, 
---    * optionally **randomizing** with a specified time interval randomization factor, 
---    * optionally **stop** the repeating after a specified time interval. 
+--   * Schedule functions over time,
+--   * optionally in an optional specified time interval, 
+--   * optionally **repeating** with a specified time repeat interval, 
+--   * optionally **randomizing** with a specified time interval randomization factor, 
+--   * optionally **stop** the repeating after a specified time interval. 
 --
 -- ===
 -- 

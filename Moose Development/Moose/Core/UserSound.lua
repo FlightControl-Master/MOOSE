@@ -1,5 +1,11 @@
---- **Core (WIP)** -- Manage user sound.
+--- **Core** - Manage user sound.
 --
+-- ===
+-- 
+-- ## Features:
+-- 
+--   * Play sounds wihtin running missions.
+-- 
 -- ===
 -- 
 -- Management of DCS User Sound.

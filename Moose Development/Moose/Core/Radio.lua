@@ -1,6 +1,11 @@
---- **Core** -- The RADIO Module is responsible for everything that is related to radio transmission and you can hear in DCS, be it TACAN beacons, Radio transmissions...
+--- **Core** - Is responsible for everything that is related to radio transmission and you can hear in DCS, be it TACAN beacons, Radio transmissions.
 -- 
 -- ===
+-- 
+-- ## Features:
+-- 
+--   * Provide radio functionality to broadcast radio transmissions.
+--   * Provide beacon functionality to assist pilots.
 --
 -- The Radio contains 2 classes : RADIO and BEACON
 --  

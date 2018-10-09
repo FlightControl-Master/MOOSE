@@ -1,6 +1,23 @@
---- **Core** -- ZONE classes define **zones** within your mission of **various forms**, with **various capabilities**.
+--- **Core** - Define zones within your mission of various forms, with various capabilities.
 -- 
 -- ===
+-- 
+-- ## Features:
+-- 
+--   * Create radius zones.
+--   * Create trigger zones.
+--   * Create polygon zones.
+--   * Create moving zones around a unit.
+--   * Create moving zones around a group.
+--   * Provide the zone behaviour. Some zones are static, while others are moveable.
+--   * Enquiry if a coordinate is within a zone.
+--   * Smoke zones.
+--   * Set a zone probability to control zone selection.
+--   * Get zone coordinates.
+--   * Get zone properties.
+--   * Get zone bounding box.
+--   * Set/get zone name.
+--   
 -- 
 -- There are essentially two core functions that zones accomodate:
 -- 

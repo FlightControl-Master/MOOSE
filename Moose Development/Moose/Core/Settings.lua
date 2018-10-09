@@ -1,5 +1,17 @@
---- **Core** -- Manages various settings for MOOSE classes.
+--- **Core** - Manages various settings for running missions, consumed by moose classes and provides a menu system for players to tweak settings in running missions.
 --
+-- ===
+-- 
+-- ## Features:
+-- 
+--   * Provide a settings menu system to the players.
+--   * Provide a player settings menu and an overall mission settings menu.
+--   * Mission settings provide default settings, while player settings override mission settings.
+--   * Provide a menu to select between different coordinate formats for A2G coordinates.
+--   * Provide a menu to select between different coordinate formats for A2A coordinates.
+--   * Provide a menu to select between different message time duration options.
+--   * Provide a menu to select between different metric systems.
+-- 
 -- ===
 -- 
 -- The documentation of the SETTINGS class can be found further in this document.

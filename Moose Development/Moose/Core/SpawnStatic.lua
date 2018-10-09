@@ -1,8 +1,14 @@
---- **Core** -- Spawn dynamically new STATICs in your missions.
+--- **Core** - Spawn new statics in your running missions.
 --  
 -- ===
 -- 
--- SPAWNSTATIC spawns static structures in your missions dynamically. See below the SPAWNSTATIC class documentation.
+-- ## Features:
+-- 
+--   * Spawn new statics from a static already defined using the mission editor.
+--   * Spawn new statics from a given template.
+--   * Spawn new statics from a given type.
+--   * Spawn with a custom heading and location.
+--   * Spawn within a zone.
 -- 
 -- ===
 -- 

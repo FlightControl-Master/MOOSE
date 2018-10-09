@@ -1,22 +1,35 @@
---- **Core** -- SET_ classes define **collections** of objects to perform **bulk actions** and logically **group** objects.
+--- **Core** - Define collections of objects to perform bulk actions and logically group objects.
 -- 
 -- ===
 -- 
--- SET_ classes group objects of the same type into a collection, which is either:
+-- ## Features:
 -- 
---   * Manually managed using the **:Add...()** or **:Remove...()** methods. The initial SET can be filtered with the **@{#SET_BASE.FilterOnce}()** method
+--   * Dynamically maintain collections of objects.
+--   * Manually modify the collection, by adding or removing objects.
+--   * Collections of different types.
+--   * Validate the presence of objects in the collection.
+--   * Perform bulk actions on collection.
+--   
+-- ===
+-- 
+-- Group objects or data of the same type into a collection, which is either:
+-- 
+--   * Manually managed using the **:Add...()** or **:Remove...()** methods. The initial SET can be filtered with the **@{#SET_BASE.FilterOnce}()** method.
 --   * Dynamically updated when new objects are created or objects are destroyed using the **@{#SET_BASE.FilterStart}()** method.
 --   
 -- Various types of SET_ classes are available:
 -- 
---   * @{#SET_UNIT}: Defines a colleciton of @{Wrapper.Unit}s filtered by filter criteria.
 --   * @{#SET_GROUP}: Defines a collection of @{Wrapper.Group}s filtered by filter criteria.
+--   * @{#SET_UNIT}: Defines a colleciton of @{Wrapper.Unit}s filtered by filter criteria.
+--   * @{#SET_STATIC}: Defines a collection of @{Wrapper.Static}s filtered by filter criteria.
 --   * @{#SET_CLIENT}: Defines a collection of @{Client}s filterd by filter criteria.
 --   * @{#SET_AIRBASE}: Defines a collection of @{Wrapper.Airbase}s filtered by filter criteria.
+--   * @{#SET_CARGO}: Defines a collection of @{Cargo.Cargo}s filtered by filter criteria.
+--   * @{#SET_ZONE}: Defines a collection of @{Core.Zone}s filtered by filter criteria.
 -- 
--- These classes are derived from @{#SET_BASE}, which contains the main methods to manage SETs.
+-- These classes are derived from @{#SET_BASE}, which contains the main methods to manage the collections.
 -- 
--- A multitude of other methods are available in SET_ classes that allow to:
+-- A multitude of other methods are available in the individual set classes that allow to:
 -- 
 --   * Validate the presence of objects in the SET.
 --   * Trigger events when objects in the SET change a zone presence.
