@@ -1,33 +1,31 @@
---- **Functional** - (R2.2) - Create random airtraffic in your missions.
+--- **Functional** - Create random airtraffic in your missions.
 -- 
 -- ===
 -- 
--- The aim of the RAT class is to fill the empty DCS world with randomized air traffic and bring more life to your airports.
--- 
--- In particular, it is designed to spawn AI air units at random airports. These units will be assigned a random flight path to another random airport on the map.
--- 
+-- The aim of the RAT class is to fill the empty DCS world with randomized air traffic and bring more life to your airports.  
+-- In particular, it is designed to spawn AI air units at random airports. These units will be assigned a random flight path to another random airport on the map.  
 -- Even the mission designer will not know where aircraft will be spawned and which route they follow.
 -- 
--- ## Features
+-- ## Features:
 -- 
---  * Very simple interface. Just one unit and two lines of Lua code needed to fill your map.
---  * High degree of randomization. Aircraft will spawn at random airports, have random routes and random destinations.
---  * Specific departure and/or destination airports can be chosen.
---  * Departure and destination airports can be restricted by coalition.
---  * Planes and helicopters supported. Helicopters can also be send to FARPs and ships.
---  * Units can also be spawned in air within pre-defined zones of the map.
---  * Aircraft will be removed when they arrive at their destination (or get stuck on the ground).
---  * When a unit is removed a new unit with a different flight plan is respawned.
---  * Aircraft can report their status during the route.
---  * All of the above can be customized by the user if necessary.
---  * All current (Caucasus, Nevada, Normandy, Persian Gulf) and future maps are supported.
+--   * Very simple interface. Just one unit and two lines of Lua code needed to fill your map.
+--   * High degree of randomization. Aircraft will spawn at random airports, have random routes and random destinations.
+--   * Specific departure and/or destination airports can be chosen.
+--   * Departure and destination airports can be restricted by coalition.
+--   * Planes and helicopters supported. Helicopters can also be send to FARPs and ships.
+--   * Units can also be spawned in air within pre-defined zones of the map.
+--   * Aircraft will be removed when they arrive at their destination (or get stuck on the ground).
+--   * When a unit is removed a new unit with a different flight plan is respawned.
+--   * Aircraft can report their status during the route.
+--   * All of the above can be customized by the user if necessary.
+--   * All current (Caucasus, Nevada, Normandy, Persian Gulf) and future maps are supported.
 --  
---  The RAT class creates an entry in the F10 radio menu which allows to
+-- The RAT class creates an entry in the F10 radio menu which allows to:
 --  
---  * Create new groups on-the-fly, i.e. at run time within the mission,
---  * Destroy specific groups (e.g. if they get stuck or damaged and block a runway),
---  * Request the status of all RAT aircraft or individual groups,
---  * Place markers at waypoints on the F10 map for each group.
+--   * Create new groups on-the-fly, i.e. at run time within the mission,
+--   * Destroy specific groups (e.g. if they get stuck or damaged and block a runway),
+--   * Request the status of all RAT aircraft or individual groups,
+--   * Place markers at waypoints on the F10 map for each group.
 -- 
 -- Note that by its very nature, this class is suited best for civil or transport aircraft. However, it also works perfectly fine for military aircraft of any kind.
 -- 
@@ -35,10 +33,9 @@
 -- 
 -- ===
 -- 
--- # Demo Missions
+-- ## Missions:
 --
--- ### [MOOSE - ALL Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS)
--- ### [MOOSE - RAT Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/RAT%20-%20Random%20Air%20Traffic)
+-- ### [RAT - Random Air Traffic](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/RAT%20-%20Random%20Air%20Traffic)
 -- 
 -- ===
 -- 

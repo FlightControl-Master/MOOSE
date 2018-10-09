@@ -2,7 +2,7 @@
 --
 -- ===
 --
--- ### Features:
+-- ## Features:
 -- 
 --   * Faciliate the communication of detected targets to players.
 --   * Designate targets using lasers, through a menu system.
@@ -13,6 +13,12 @@
 --   * Prioritization on threat levels.
 --   * Reporting system of threats.
 --  
+-- ===
+-- 
+-- ## Missions:
+-- 
+-- [DES - Designation](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/DES%20-%20Designation)
+-- 
 -- ===
 --
 -- Targets detected by recce will be communicated to a group of attacking players.  
@@ -156,10 +162,6 @@
 -- 
 -- 
 -- Have FUN!
--- 
--- ===
--- 
--- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/DES%20-%20Designation)
 -- 
 -- ===
 -- 

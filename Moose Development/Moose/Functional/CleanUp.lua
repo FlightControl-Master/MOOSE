@@ -2,13 +2,19 @@
 -- 
 -- ===
 -- 
--- ### Features:
+-- ## Features:
 -- 
 -- 
 --  * Try to keep the airbase clean and operational.
 --  * Prevent airplanes from crashing.
 --  * Clean up obstructing airplanes from the runway that are standing still for a period of time.
 --  * Prevent airplanes firing missiles within the airbase zone.
+-- 
+-- ===
+-- 
+-- ## Missions:
+-- 
+-- [CLA - CleanUp Airbase](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/CLA%20-%20CleanUp%20Airbase)
 -- 
 -- ===
 -- 
@@ -35,10 +41,6 @@
 --     For these airbases, there is little use to keep them clean, as they will be invaded anyway...
 --     
 -- By following the above guidelines, you can add airbase cleanup with acceptable CPU overhead.
--- 
--- ===
--- 
--- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/CLA%20-%20CleanUp%20Airbase)
 -- 
 -- ===
 -- 

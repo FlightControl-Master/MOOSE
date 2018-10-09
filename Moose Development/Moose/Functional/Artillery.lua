@@ -1,4 +1,4 @@
---- **Functional** - (R2.4) Control artillery units.
+--- **Functional** - Control artillery units.
 -- 
 -- ===
 -- 
@@ -6,30 +6,22 @@
 -- 
 -- ## Features:
 -- 
--- * Multiple targets can be assigned. No restriction on number of targets.
--- * Targets can be given a priority. Engagement of targets is executed a according to their priority.
--- * Engagements can be scheduled, i.e. will be executed at a certain time of the day.
--- * Multiple relocations of the group can be assigned and scheduled via queueing system. 
--- * Special weapon types can be selected for each attack, e.g. cruise missiles for Naval units.
--- * Automatic rearming once the artillery is out of ammo (optional).
--- * Automatic relocation after each firing engagement to prevent counter strikes (optional).
--- * Automatic relocation movements to get the battery within firing range (optional).
--- * Simulation of tactical nuclear shells as well as illumination and smoke shells.
--- * New targets can be added during the mission, e.g. when they are detected by recon units.
--- * Targets and relocations can be assigned by placing markers on the F10 map.
--- * Finite state machine implementation. Mission designer can interact when certain events occur.
+--   * Multiple targets can be assigned. No restriction on number of targets.
+--   * Targets can be given a priority. Engagement of targets is executed a according to their priority.
+--   * Engagements can be scheduled, i.e. will be executed at a certain time of the day.
+--   * Multiple relocations of the group can be assigned and scheduled via queueing system. 
+--   * Special weapon types can be selected for each attack, e.g. cruise missiles for Naval units.
+--   * Automatic rearming once the artillery is out of ammo (optional).
+--   * Automatic relocation after each firing engagement to prevent counter strikes (optional).
+--   * Automatic relocation movements to get the battery within firing range (optional).
+--   * Simulation of tactical nuclear shells as well as illumination and smoke shells.
+--   * New targets can be added during the mission, e.g. when they are detected by recon units.
+--   * Targets and relocations can be assigned by placing markers on the F10 map.
+--   * Finite state machine implementation. Mission designer can interact when certain events occur.
 -- 
 -- ====
 -- 
--- # Demo Missions
---
--- ### [MOOSE - ALL Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS)
--- 
--- ====
--- 
--- # YouTube Channel
--- 
--- ### [MOOSE YouTube Channel](https://www.youtube.com/channel/UCjrA9j5LQoWsG4SpS8i79Qg)
+-- ## [MOOSE YouTube Channel](https://www.youtube.com/channel/UCjrA9j5LQoWsG4SpS8i79Qg)
 -- 
 -- ===
 -- 

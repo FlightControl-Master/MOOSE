@@ -1,4 +1,25 @@
---- **Functional** -- (R2.0) - Administer the scoring of player achievements, and create a CSV file logging the scoring events for use at team or squadron websites.
+--- **Functional** - Administer the scoring of player achievements, and create a CSV file logging the scoring events for use at team or squadron websites.
+-- 
+-- ===
+-- 
+-- ## Features:
+-- 
+--   * Set the scoring scales based on threat level.
+--   * Positive scores and negative scores.
+--   * A contribution model to score achievements.
+--   * Score goals.
+--   * Score specific achievements.
+--   * Score the hits and destroys of units.
+--   * Score the hits and destroys of statics.
+--   * Score the hits and destroys of scenery.
+--   * Log scores into a CSV file.
+--   * Connect to a remote server using JSON and IP.
+--   
+-- ===
+-- 
+-- ## Missions:
+-- 
+-- [SCO - Scoring](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/SCO%20-%20Scoring)
 -- 
 -- ===
 -- 
@@ -52,9 +73,34 @@
 -- Use the radio menu F10 to consult the scores while running the mission. 
 -- Scores can be reported for your user, or an overall score can be reported of all players currently active in the mission.
 -- 
--- # 1) @{Functional.Scoring#SCORING} class, extends @{Core.Base#BASE}
+-- ===
 -- 
--- ## 1.1) Set the destroy score or penalty scale
+-- ### Authors: **FlightControl**
+-- 
+-- ### Contributions:
+-- 
+--   * **Wingthor (TAW)**: Testing & Advice.
+--   * **Dutch-Baron (TAW)**: Testing & Advice.
+--   * **[Whisper](http://forums.eagle.ru/member.php?u=3829): Testing and Advice.
+-- 
+-- ===       
+-- 
+-- @module Functional.Scoring
+-- @image Scoring.JPG
+
+
+--- @type SCORING
+-- @field Players A collection of the current players that have joined the game.
+-- @extends Core.Base#BASE
+
+--- SCORING class
+-- 
+-- # Constructor:
+-- 
+--      local Scoring = SCORING:New( "Scoring File" )
+--       
+-- 
+-- # Set the destroy score or penalty scale:
 -- 
 -- Score scales can be set for scores granted when enemies or friendlies are destroyed.
 -- Use the method @{#SCORING.SetScaleDestroyScore}() to set the scale of enemy destroys (positive destroys). 
@@ -67,7 +113,7 @@
 -- The above sets the scale for valid scores to 10. So scores will be given in a scale from 0 to 10.
 -- The penalties will be given in a scale from 0 to 40.
 -- 
--- ## 1.2) Define special targets that will give extra scores.
+-- # Define special targets that will give extra scores:
 -- 
 -- Special targets can be set that will give extra scores to the players when these are destroyed.
 -- Use the methods @{#SCORING.AddUnitScore}() and @{#SCORING.RemoveUnitScore}() to specify a special additional score for a specific @{Wrapper.Unit}s.  
@@ -84,7 +130,7 @@
 -- 
 --      Scoring:RemoveUnitScore( UNIT:FindByName( "Unit #001" ) )
 -- 
--- ## 1.3) Define destruction zones that will give extra scores.
+-- # Define destruction zones that will give extra scores:
 -- 
 -- Define zones of destruction. Any object destroyed within the zone of the given category will give extra points.
 -- Use the method @{#SCORING.AddZoneScore}() to add a @{Zone} for additional scoring.  
@@ -94,12 +140,12 @@
 -- The other implementation could be to designate a scenery target (a building) in the mission editor surrounded by a @{Zone}, 
 -- just large enough around that building.
 -- 
--- ## 1.4) Add extra Goal scores upon an event or a condition.
+-- # Add extra Goal scores upon an event or a condition:
 -- 
 -- A mission has goals and achievements. The scoring system provides an API to set additional scores when a goal or achievement event happens.
 -- Use the method @{#SCORING.AddGoalScore}() to add a score for a Player at any time in your mission.
 -- 
--- ## 1.5) (Decommissioned) Configure fratricide level.
+-- # (Decommissioned) Configure fratricide level.
 -- 
 -- **This functionality is decomissioned until the DCS bug concerning Unit:destroy() not being functional in multi player for player units has been fixed by ED**.
 -- 
@@ -107,13 +153,13 @@
 -- Use the method @{#SCORING.SetFratricide}() to define the level when a player gets kicked.  
 -- By default, the fratricide level is the default penalty mutiplier * 2 for the penalty score.
 -- 
--- ## 1.6) Penalty score when a player changes the coalition.
+-- # Penalty score when a player changes the coalition.
 -- 
 -- When a player changes the coalition, he can receive a penalty score.
 -- Use the method @{#SCORING.SetCoalitionChangePenalty}() to define the penalty when a player changes coalition.
 -- By default, the penalty for changing coalition is the default penalty scale.  
 -- 
--- ## 1.8) Define output CSV files.
+-- # Define output CSV files.
 -- 
 -- The CSV file is given the name of the string given in the @{#SCORING.New}{} constructor, followed by the .csv extension.
 -- The file is incrementally saved in the **<User>\\Saved Games\\DCS\\Logs** folder, and has a time stamp indicating each mission run.
@@ -150,7 +196,7 @@
 -- The MOOSE designer cannot take any responsibility of any damage inflicted as a result of the de-sanitization.
 -- That being said, I hope that the SCORING class provides you with a great add-on to score your squad mates achievements.
 -- 
--- ## 1.9) Configure messages.
+-- # Configure messages.
 -- 
 -- When players hit or destroy targets, messages are sent.
 -- Various methods exist to configure:
@@ -158,7 +204,7 @@
 --   * Which messages are sent upon the event.
 --   * Which audience receives the message.
 -- 
--- ### 1.9.1) Configure the messages sent upon the event.
+-- ## Configure the messages sent upon the event.
 -- 
 -- Use the following methods to configure when to send messages. By default, all messages are sent.
 -- 
@@ -167,49 +213,16 @@
 --   * @{#SCORING.SetMessagesAddon}(): Configure to send messages for additional score, after a target has been destroyed.
 --   * @{#SCORING.SetMessagesZone}(): Configure to send messages for additional score, after a target has been destroyed within a given zone.
 --   
--- ### 1.9.2) Configure the audience of the messages.
+-- ## Configure the audience of the messages.
 -- 
 -- Use the following methods to configure the audience of the messages. By default, the messages are sent to all players in the mission.
 -- 
 --   * @{#SCORING.SetMessagesToAll}(): Configure to send messages to all players.
 --   * @{#SCORING.SetMessagesToCoalition}(): Configure to send messages to only those players within the same coalition as the player.
--- 
---   
--- ===
---
--- # **API CHANGE HISTORY**
---
--- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
---
---   * **Added** parts are expressed in bold type face.
---   * _Removed_ parts are expressed in italic type face.
---
--- Hereby the change log:
---
--- 2017-02-26: Initial class and API.
 --
 -- ===
---
--- # **AUTHORS and CONTRIBUTIONS**
---
--- ### Contributions:
---
---   * **Wingthor (TAW)**: Testing & Advice.
---   * **Dutch-Baron (TAW)**: Testing & Advice.
---   * **[Whisper](http://forums.eagle.ru/member.php?u=3829): Testing and Advice.
---        
--- ### Authors:
---
---   * **FlightControl**: Concept, Design & Programming.
 -- 
--- @module Functional.Scoring
--- @image Scoring.JPG
-
-
---- The Scoring class
--- @type SCORING
--- @field Players A collection of the current players that have joined the game.
--- @extends Core.Base#BASE
+-- @field #SCORING
 SCORING = {
   ClassName = "SCORING",
   ClassID = 0,
@@ -236,8 +249,10 @@ local _SCORINGCategory =
 -- @param #string GameName The name of the game. This name is also logged in the CSV score file.
 -- @return #SCORING self
 -- @usage
+-- 
 -- -- Define a new scoring object for the mission Gori Valley.
 -- ScoringObject = SCORING:New( "Gori Valley" )
+-- 
 function SCORING:New( GameName )
 
   -- Inherits from BASE
