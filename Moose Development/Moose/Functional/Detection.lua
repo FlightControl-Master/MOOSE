@@ -2,7 +2,7 @@
 -- 
 -- ===
 -- 
--- ### Features:
+-- ## Features:
 -- 
 --   * Detection of targets by recce units.
 --   * Group detected targets per unit, type or area (zone).
@@ -13,12 +13,14 @@
 -- 
 -- ===
 -- 
--- Facilitate the detection of enemy units within the battle zone executed by FACs (Forward Air Controllers) or RECCEs (Reconnassance Units).
--- It uses the in-built detection capabilities of DCS World, but adds new functionalities.
+-- ## Missions:
+-- 
+-- [DET - Detection](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/DET%20-%20Detection)
 -- 
 -- ===
 -- 
--- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/DET%20-%20Detection)
+-- Facilitate the detection of enemy units within the battle zone executed by FACs (Forward Air Controllers) or RECCEs (Reconnassance Units).
+-- It uses the in-built detection capabilities of DCS World, but adds new functionalities.
 -- 
 -- ===
 -- 

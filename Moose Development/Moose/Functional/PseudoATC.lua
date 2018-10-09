@@ -1,4 +1,4 @@
---- **Functional** - (R2.4) Rudimentary ATC.
+--- **Functional** - Rudimentary ATC.
 --  
 -- ![Banner Image](..\Presentations\PSEUDOATC\PSEUDOATC_Main.jpg)
 -- 
@@ -8,7 +8,7 @@
 -- 
 -- In particular, a menu entry "Pseudo ATC" is created in the "F10 Other..." radiomenu.
 -- 
--- ## Features
+-- ## Features:
 -- 
 -- * Weather report at nearby airbases and mission waypoints.
 -- * Report absolute bearing and range to nearest airports and mission waypoints.
@@ -18,12 +18,6 @@
 -- * Player can select the unit system (metric or imperial) in which information is reported.
 -- * All maps supported (Caucasus, NTTR, Normandy, Persian Gulf and all future maps).
 --  
--- ====
--- 
--- # Demo Missions
---
--- ### [MOOSE - ALL Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS)
--- 
 -- ====
 -- 
 -- # YouTube Channel

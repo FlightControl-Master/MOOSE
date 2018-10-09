@@ -1,4 +1,4 @@
---- **Core** -- Management of SPOT logistics, that can be transported from and to transportation carriers.
+--- **Core** - Management of spotting logistics, that can be activated and deactivated upon command.
 --
 -- ===
 -- 

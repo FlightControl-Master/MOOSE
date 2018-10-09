@@ -1,4 +1,4 @@
---- **Functional** -- Limit the MOVEMENT of simulaneous moving ground vehicles.
+--- **Functional** -- Limit the movement of simulaneous moving ground vehicles.
 -- 
 -- ===
 --  
@@ -10,9 +10,11 @@
 -- @module Functional.Movement
 -- @image MOOSE.JPG
 
---- the MOVEMENT class
--- @type MOVEMENT
+--- @type MOVEMENT
 -- @extends Core.Base#BASE
+
+---
+--@field #MOVEMENT
 MOVEMENT = {
 	ClassName = "MOVEMENT",
 }

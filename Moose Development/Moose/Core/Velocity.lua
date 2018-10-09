@@ -1,5 +1,13 @@
---- **Core** -- VELOCITY models a speed, which can be expressed in various formats according the Settings.
+--- **Core** - Models a velocity or speed, which can be expressed in various formats according the settings.
 -- 
+-- ===
+-- 
+-- ## Features:
+-- 
+--   * Convert velocity in various metric systems.
+--   * Set the velocity.
+--   * Create a text in a specific format of a velocity.
+--   
 -- ===
 -- 
 -- ### Author: **FlightControl**

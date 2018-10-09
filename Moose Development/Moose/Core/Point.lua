@@ -1,6 +1,6 @@
---- **Core** -- Defines an **extensive API** to **manage 3D points** in the DCS World 3D simulation space.
+--- **Core** - Defines an extensive API to manage 3D points in the DCS World 3D simulation space.
 --
--- **Features:**
+-- ## Features:
 -- 
 --   * Provides a COORDINATE class, which allows to manage points in 3D space and perform various operations on it.
 --   * Provides a POINT\_VEC2 class, which is derived from COORDINATE, and allows to manage points in 3D space, but from a Lat/Lon and Altitude perspective.

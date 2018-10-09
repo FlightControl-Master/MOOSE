@@ -2,6 +2,27 @@
 -- 
 -- ===
 -- 
+-- ## Features:
+-- 
+--   * Escort navigation commands.
+--   * Escort hold at position commands.
+--   * Escorts reporting detected targets.
+--   * Escorts scanning targets in advance.
+--   * Escorts attacking specific targets.
+--   * Request assistance from other groups for attack.
+--   * Manage rule of engagement of escorts.
+--   * Manage the allowed evasion techniques of escorts.
+--   * Make escort to execute a defined mission or path.
+--   * Escort tactical situation reporting.
+-- 
+-- ===
+-- 
+-- ## Missions:
+-- 
+-- [ESC - Escorting](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/ESC%20-%20Escorting)
+-- 
+-- ===
+-- 
 -- Allows you to interact with escorting AI on your flight and take the lead.
 -- 
 -- Each escorting group can be commanded with a whole set of radio commands (radio menu in your flight, and then F10).
@@ -77,47 +98,18 @@
 -- Escort groups can have their own mission. This menu item will allow the escort group to resume their Mission from a given waypoint.
 -- Note that this is really fantastic, as you now have the dynamic of taking control of the escort groups, and allowing them to resume their path or mission.
 --
--- # ESCORT construction methods.
+-- ===
 -- 
--- Create a new SPAWN object with the @{#ESCORT.New} method:
---
---  * @{#ESCORT.New}: Creates a new ESCORT object from a @{Wrapper.Group#GROUP} for a @{Wrapper.Client#CLIENT}, with an optional briefing text.
---
--- # ESCORT initialization methods.
+-- ### Authors: **FlightControl** 
 -- 
--- The following menus are created within the RADIO MENU (F10) of an active unit hosted by a player:
---
--- * @{#ESCORT.MenuFollowAt}: Creates a menu to make the escort follow the client.
--- * @{#ESCORT.MenuHoldAtEscortPosition}: Creates a menu to hold the escort at its current position.
--- * @{#ESCORT.MenuHoldAtLeaderPosition}: Creates a menu to hold the escort at the client position.
--- * @{#ESCORT.MenuScanForTargets}: Creates a menu so that the escort scans targets.
--- * @{#ESCORT.MenuFlare}: Creates a menu to disperse flares.
--- * @{#ESCORT.MenuSmoke}: Creates a menu to disparse smoke.
--- * @{#ESCORT.MenuReportTargets}: Creates a menu so that the escort reports targets.
--- * @{#ESCORT.MenuReportPosition}: Creates a menu so that the escort reports its current position from bullseye.
--- * @{#ESCORT.MenuAssistedAttack: Creates a menu so that the escort supportes assisted attack from other escorts with the client.
--- * @{#ESCORT.MenuROE: Creates a menu structure to set the rules of engagement of the escort.
--- * @{#ESCORT.MenuEvasion: Creates a menu structure to set the evasion techniques when the escort is under threat.
--- * @{#ESCORT.MenuResumeMission}: Creates a menu structure so that the escort can resume from a waypoint.
--- 
--- 
--- @usage
--- -- Declare a new EscortPlanes object as follows:
--- 
--- -- First find the GROUP object and the CLIENT object.
--- local EscortClient = CLIENT:FindByName( "Unit Name" ) -- The Unit Name is the name of the unit flagged with the skill Client in the mission editor.
--- local EscortGroup = GROUP:FindByName( "Group Name" ) -- The Group Name is the name of the group that will escort the Escort Client.
--- 
--- -- Now use these 2 objects to construct the new EscortPlanes object.
--- EscortPlanes = ESCORT:New( EscortClient, EscortGroup, "Desert", "Welcome to the mission. You are escorted by a plane with code name 'Desert', which can be instructed through the F10 radio menu." )
--- 
---
+-- ===
 --
 -- @module Functional.Escort
 -- @image Escorting.JPG
 
---- ESCORT class
--- @type ESCORT
+
+
+--- @type ESCORT
 -- @extends Core.Base#BASE
 -- @field Wrapper.Client#CLIENT EscortClient
 -- @field Wrapper.Group#GROUP EscortGroup
@@ -129,6 +121,26 @@
 -- @Field DCS#AI.Option.Air.val.ROE OptionROE Which ROE is set to the EscortGroup.
 -- @field DCS#AI.Option.Air.val.REACTION_ON_THREAT OptionReactionOnThreat Which REACTION_ON_THREAT is set to the EscortGroup.
 -- @field FunctionalMENU_GROUPDETECTION_BASE Detection
+
+--- ESCORT class
+-- 
+-- # ESCORT construction methods.
+-- 
+-- Create a new SPAWN object with the @{#ESCORT.New} method:
+--
+--  * @{#ESCORT.New}: Creates a new ESCORT object from a @{Wrapper.Group#GROUP} for a @{Wrapper.Client#CLIENT}, with an optional briefing text.
+--
+-- @usage
+-- -- Declare a new EscortPlanes object as follows:
+-- 
+-- -- First find the GROUP object and the CLIENT object.
+-- local EscortClient = CLIENT:FindByName( "Unit Name" ) -- The Unit Name is the name of the unit flagged with the skill Client in the mission editor.
+-- local EscortGroup = GROUP:FindByName( "Group Name" ) -- The Group Name is the name of the group that will escort the Escort Client.
+-- 
+-- -- Now use these 2 objects to construct the new EscortPlanes object.
+-- EscortPlanes = ESCORT:New( EscortClient, EscortGroup, "Desert", "Welcome to the mission. You are escorted by a plane with code name 'Desert', which can be instructed through the F10 radio menu." )
+--
+-- @field #ESCORT
 ESCORT = {
   ClassName = "ESCORT",
   EscortName = nil, -- The Escort Name

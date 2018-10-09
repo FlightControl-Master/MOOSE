@@ -1,7 +1,18 @@
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
---- **Functional** - (R2.4) Suppress fire of ground units when they get hit.
+--- **Functional** - Suppress fire of ground units when they get hit.
 -- 
--- ====
+-- ===
+-- 
+-- ## Features:
+-- 
+--   * Hold fire of attacked units when being fired upon.
+--
+-- ===
+-- 
+-- ## Missions:
+--
+-- ## [MOOSE - ALL Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS)
+-- 
+-- === 
 -- 
 -- When ground units get hit by (suppressive) enemy fire, they will not be able to shoot back for a certain amount of time.
 -- 
@@ -9,12 +20,6 @@
 -- 
 -- In addition to suppressing the fire, conditions can be specified which let the group retreat to a defined zone, move away from the attacker
 -- or hide at a nearby scenery object.
--- 
--- ====
--- 
--- # Demo Missions
---
--- ### [MOOSE - ALL Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS)
 -- 
 -- ====
 -- 
@@ -28,7 +33,8 @@
 -- 
 -- ### Contributions: [FlightControl](https://forums.eagle.ru/member.php?u=89536)
 -- 
--- ====
+-- ===
+-- 
 -- @module Functional.Suppression
 -- @image Suppression.JPG
 
