@@ -657,5 +657,26 @@ function UTILS.Randomize(value, fac, lower, upper)
   return r
 end
 
+--- Calculate the dot (scalar) product of two vectors.
+-- @param DCS#Vec3 a Vector in 3D with x,y,z components.
+-- @param DCS#Vec3 b Vector in 3D with x,y,z components.
+-- @return #number Scalar product of the two vectors a*b.
+function UTILS.VecDot(a, b)
+  return a.x*b.x + a.y*b.y + a.z*b.z
+end
 
+--- Calculate the eucledian norm (length) of a 3D vector.
+-- @param DCS#Vec3 a Vector in 3D with x,y,z components.
+-- @return #number Norm of the vector.
+function UTILS.VecNorm(a)
+  return math.sqrt(UTILS.DotProduct(a, a))
+end
+
+--- Calculate the cross product of two 3D vectors.
+-- @param DCS#Vec3 a Vector in 3D with x,y,z components.
+-- @param DCS#Vec3 b Vector in 3D with x,y,z components.
+-- @return DCS#Vec3 Vector
+function UTILS.VecCross(a, b)
+  return {x=a.y*b.z - a.z*b.y, y=a.z*b.x - a.x*b.z, z=a.x*b.y - a.y*b.x}
+end
 

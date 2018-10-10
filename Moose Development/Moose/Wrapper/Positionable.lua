@@ -121,6 +121,25 @@ function POSITIONABLE:Destroy( GenerateEvent )
   return nil
 end
 
+--- Returns a pos3 table of the objects current position and orientation in 3D space. X, Y, Z values are unit vectors defining the objects orientation.
+-- Coordinates are dependent on the position of the maps origin.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return DCS#Position Table consisting of the point and orientation tables.
+function POSITIONABLE:GetPosition()
+  self:F2( self.PositionableName )
+
+  local DCSPositionable = self:GetDCSObject()
+  
+  if DCSPositionable then
+    local PositionablePosition = DCSPositionable:getPosition()
+    self:T3( PositionablePosition )
+    return PositionablePosition
+  end
+  
+  BASE:E( { "Cannot GetPositionVec3", Positionable = self, Alive = self:IsAlive() } )
+  return nil  
+end
+
 --- Returns the @{DCS#Position3} position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return DCS#Position The 3D position vectors of the POSITIONABLE.
@@ -580,6 +599,46 @@ function POSITIONABLE:GetVelocityMPS()
   end
   
   return 0
+end
+
+--- Returns the Angle of Attack of a positionable.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return #number Angle of attack in degrees.
+function POSITIONABLE:GetAoA()
+
+  -- Get position of the unit.
+  local unitpos = self:GetPosition()
+  
+  if unitpos then
+  
+    -- Get velocity vector of the unit.
+    local unitvel = self:GetVelocity()
+    
+    if unitvel and UTILS.VecNorm(unitvel)~=0 then
+    
+      -- Unit velocity transformed into aircraft axes directions.
+      local AxialVel = {} 
+  
+      -- Transform velocity components in direction of aircraft axes.
+      AxialVel.x = UTILS.VecDot(unitpos.x, unitvel)
+      AxialVel.y = UTILS.VecDot(unitpos.y, unitvel)
+      AxialVel.z = UTILS.VecDot(unitpos.z, unitvel)
+  
+      -- AoA is angle between unitpos.x and the x and y velocities.
+      local AoA = math.acos(UTILS.VecDot({x = 1, y = 0, z = 0}, {x = AxialVel.x, y = AxialVel.y, z = 0})/UTILS.VecNorm({x = AxialVel.x, y = AxialVel.y, z = 0}))
+  
+      --Set correct direction:
+      if AxialVel.y > 0 then
+        AoA = -AoA
+      end
+      
+      -- Return AoA value in degrees.
+      return math.deg(AoA)
+    end
+    
+  end
+
+  return nil
 end
 
 
