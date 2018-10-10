@@ -10,6 +10,7 @@
 --
 -- Please not that his class is work in progress and in an **alpha** stage.
 -- At the moment training parameters are optimized for F/A-18C Hornet as aircraft and USS Stennis as carrier.
+-- Other aircraft and carriers **might** be possible in future but would need a different set of parameters.
 --
 -- ===
 --
@@ -22,16 +23,19 @@
 --- CARRIERTRAINER class.
 -- @type CARRIERTRAINER
 -- @field #string ClassName Name of the class.
+-- @field #string lid Class id string for output to DCS log file.
+-- @field #boolean Debug Debug mode. Messages to all about status.
 -- @field Wrapper.Unit#UNIT carrier Aircraft carrier unit on which we want to practice.
 -- @field Core.Zone#ZONE_UNIT startZone Zone in which the pattern approach starts.
--- @field Core.Zone#ZONE_UNIT giantZone Zone around the carrier to register a new player. 
+-- @field Core.Zone#ZONE_UNIT giantZone Zone around the carrier to register a new player.
+-- @field #table plyers Table of players. 
 -- @extends Core.Fsm#FSM
 
 --- Practice Carrier Landings
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\WAREHOUSE\Warehouse_Main.png)
+-- ![Banner Image](..\Presentations\CARRIERTRAINER\CarrierTrainer_Main.png)
 --
 -- # The Trainer Concept
 --
@@ -41,8 +45,17 @@
 -- @field #CARRIERTRAINER
 CARRIERTRAINER = {
   ClassName = "CARRIERTRAINER",
+  lid       = nil,
+  Debug     = true,
   carrier   = nil,
+  startZone = nil,
+  giantZone = nil,
+  players   = nil,
 }
+
+--- Carrier trainer class version.
+-- @field #string version
+CARRIERTRAINER.version="0.0.1"
 
 --- Player data.
 -- @type CARRIERTRAINER.PlayerData
@@ -54,10 +67,18 @@ CARRIERTRAINER = {
 -- @field #number highestCarrierXDiff 
 -- @field #number secondsStandingStill Time player does not move after a landing attempt. 
 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Constructor
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create new carrier trainer.
+-- @param #CARRIERTRAINER self
 -- @param carriername Name of the aircraft carrier unit.
+-- @return #CARRIERTRAINER self
 function CARRIERTRAINER:New(carriername)
+
+  -- Inherit everthing from FSM class.
+  local self = BASE:Inherit(self, FSM:New()) -- #WAREHOUSE
 
   -- Set carrier unit.
   self.carrier=UNIT:FindByName(carriername)
@@ -67,8 +88,44 @@ function CARRIERTRAINER:New(carriername)
     self.giantZone = ZONE_UNIT:New("giantZone", self.carrier, 30000, { dx =  0,    dy = 0,   relative_to_unit = true })
   else
     self:E("ERROR: Carrier unit could not be found!")
-  end  
+  end
   
+  -- Set some string id for output to DCS.log file.
+  self.lid=string.format("CARRIERTRAINER %s | ", carriername)  
+  
+  -----------------------
+  --- FSM Transitions ---
+  -----------------------
+  
+  -- Start State.
+  self:SetStartState("Stopped")
+
+  -- Add FSM transitions.
+  --                 From State  -->   Event   -->   To State
+  self:AddTransition("Stopped",       "Start",      "Running")
+  self:AddTransition("Running",       "Status",     "Running")
+  self:AddTransition("Running",       "Stop",       "Stopped")
+
+
+  --- Triggers the FSM event "Start" that starts the carrier trainer. Initializes parameters and starts event handlers.
+  -- @function [parent=#CARRIERTRAINER] Start
+  -- @param #CARRIERTRAINER self
+
+  --- Triggers the FSM event "Start" after a delay that starts the carrier trainer. Initializes parameters and starts event handlers.
+  -- @function [parent=#CARRIERTRAINER] __Start
+  -- @param #CARRIERTRAINER self
+  -- @param #number delay Delay in seconds.
+
+  --- Triggers the FSM event "Stop" that stops the carrier trainer. Event handlers are stopped.
+  -- @function [parent=#CARRIERTRAINER] Stop
+  -- @param #CARRIERTRAINER self
+
+  --- Triggers the FSM event "Stop" that stops the carrier trainer after a delay. Event handlers are stopped.
+  -- @function [parent=#CARRIERTRAINER] __Stop
+  -- @param #CARRIERTRAINER self
+  -- @param #number delay Delay in seconds.
+  
+  return self
 end
 
 
@@ -84,9 +141,37 @@ end
 function CARRIERTRAINER:onafterStart(From, Event, To)
 
   -- Events are handled my MOOSE.
-  self:T(CARRIERTRAINER.id.."Events are handled by MOOSE.")
+  self:I(self.lid..string.format"Starting Carrier Training %s for carrier unit %s.", CARRIERTRAINER.version, self.carrier:GetName())
+  
+  -- Handle events.
   self:HandleEvent(EVENTS.Birth)
 
+
+  -- Init status checkss
+  self:__Status(-1)
+end
+
+--- On after Status event. Checks player status.
+-- @param #CARRIERTRAINER self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function CARRIERTRAINER:onafterStatus(From, Event, To)
+
+  -- Check player status.
+  self:_CheckPlayerStatus()
+
+  -- Call status again in one second.
+  self:_Status(-1)
+end
+
+--- On after Stop event. Unhandle events and stop status updates. 
+-- @param #CARRIERTRAINER self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function CARRIERTRAINER:onafterStop(From, Event, To)
+  self:UnHandleEvent(EVENTS.Birth)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -102,9 +187,9 @@ function CARRIERTRAINER:OnEventBirth(EventData)
   local _unitName=EventData.IniUnitName
   local _unit, _playername=self:_GetPlayerUnitAndName(_unitName)
   
-  self:T3(CARRIERTRAINER.id.."BIRTH: unit   = "..tostring(EventData.IniUnitName))
-  self:T3(CARRIERTRAINER.id.."BIRTH: group  = "..tostring(EventData.IniGroupName))
-  self:T3(CARRIERTRAINER.id.."BIRTH: player = "..tostring(_playername))
+  self:T3(self.lid.."BIRTH: unit   = "..tostring(EventData.IniUnitName))
+  self:T3(self.lid.."BIRTH: group  = "..tostring(EventData.IniGroupName))
+  self:T3(self.lid.."BIRTH: player = "..tostring(_playername))
       
   if _unit and _playername then
   
@@ -114,8 +199,8 @@ function CARRIERTRAINER:OnEventBirth(EventData)
     local _callsign=_unit:GetCallsign()
     
     -- Debug output.
-    local text=string.format("Player %s, callsign %s entered unit %s (UID %d) of group %s (GID %d)", _playername, _callsign, _unitName, _uid, _group:GetName(), _gid)
-    self:T(CARRIERTRAINER.id..text)
+    local text=string.format("Player %s, callsign %s entered unit %s (ID=%d) of group %s", _playername, _callsign, _unitName, _uid, _group:GetName())
+    self:T(self.lid..text)
     MESSAGE:New(text, 5):ToAllIf(self.Debug)
     
     local playerdata={} --#CARRIERTRAINER.PlayerData
@@ -123,7 +208,7 @@ function CARRIERTRAINER:OnEventBirth(EventData)
     playerdata.callsign=_callsign
     
     -- By default, some bomb impact points and do not flare each hit on target.
-    self.Player[_playername]=playerdata
+    self.players[_playername]=playerdata
       
     -- Start check in zone timer.
     if self.planes[_uid] ~= true then
@@ -133,6 +218,70 @@ function CARRIERTRAINER:OnEventBirth(EventData)
   
   end 
 end
+
+--- Initialize player data.
+-- @param #CARRIERTRAINER self
+-- @param #string unitname Name of the player unit.
+-- @return #CARRIERTRAINER.PlayerData Player data.
+function CARRIERTRAINER:_NewPlayer(unitname) 
+  local playerData = nil
+  
+  local existingData = playerDatas[id]
+  if(existingData and existingData.unit:IsAlive()) then
+    playerData = playerDatas[id]
+  else  
+    playerData = PlayerData:New(id)
+  end
+
+  playerData:InitNewRound()
+
+  playerDatas[id] = playerData
+  env.info("Created playerData object for " .. playerData.unit.UnitName)
+  
+  MessageToAll( "Pilot ID: " .. id .. ". Welcome back, " .. playerData.callsign .. "! Cleared for approach! TCN 1X, BRC 354 (MAG HDG).", 5, "InitZoneMessage" )
+  
+  playerData.step = 1 -- 1 !!
+  playerData.highestCarrierXDiff = -9999999
+  playerData.secondsStandingStill = 0
+  playerData.summary = "SUMMARY:\n"
+end
+
+--- Initialize new approach for player
+-- @param #CARRIERTRAINER self
+function CARRIERTRAINER:_InitNewRound(playerData)
+  playerData.score = 0
+  playerData.summary = "SUMMARY:\n"
+  playerData.step = 0
+  playerData.longDownwindDone = false
+  playerData.highestCarrierXDiff = -9999999
+  playerData.secondsStandingStill = 0
+  playerData.lowestAltitude = 999999
+end
+
+--- Increase score for this approach.
+-- @param #CARRIERTRAINER self
+-- @param #CARRIERTRAINER.PlayerData playerData Player data.
+-- @param #number amount Amount by which the score is increased.
+function CARRIERTRAINER:_IncreaseScore(playerData, amount)
+  playerData.score = playerData.score + amount
+end
+
+--- Append text to summary text.
+-- @param #CARRIERTRAINER self
+-- @param #CARRIERTRAINER.PlayerData playerData Player data.
+-- @param #string item Text item appeded to the summary.
+function CARRIERTRAINER:_AddToSummary(playerData, item)
+  playerData.summary = playerData.summary .. item .. "\n"
+end
+
+--- Append text to result text.
+-- @param #CARRIERTRAINER self
+-- @param #CARRIERTRAINER.PlayerData playerData Player data.
+-- @param #string item Text item appeded to the result.
+function CARRIERTRAINER:_AddToCollectedResult(playerData, item)
+  playerData.collectedResultString = playerData.collectedResultString .. item .. "\n"
+end
+
 
 --- Carrier trainer event handler for event birth.
 -- @param #CARRIERTRAINER self
@@ -189,31 +338,6 @@ end
 -- CARRIER TRAINING functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Initialize player data.
--- @param #CARRIERTRAINER self
-function CARRIERTRAINER:_Init(id) 
-  local playerData = nil
-  
-  local existingData = playerDatas[id]
-  if(existingData and existingData.unit:IsAlive()) then
-    playerData = playerDatas[id]
-  else  
-    playerData = PlayerData:New(id)
-  end
-
-  playerData:InitNewRound()
-
-  playerDatas[id] = playerData
-  env.info("Created playerData object for " .. playerData.unit.UnitName)
-  
-  MessageToAll( "Pilot ID: " .. id .. ". Welcome back, " .. playerData.callsign .. "! Cleared for approach! TCN 1X, BRC 354 (MAG HDG).", 5, "InitZoneMessage" )
-  
-  playerData.step = 1 -- 1 !!
-  playerData.highestCarrierXDiff = -9999999
-  playerData.secondsStandingStill = 0
-  playerData.summary = "SUMMARY:\n"
-end
-
 --- Start landing pattern.
 -- @param #CARRIERTRAINER self
 -- @param #CARRIERTRAINER.PlayerData playerData Player data table.
@@ -267,14 +391,18 @@ function CARRIERTRAINER:_Upwind(playerData)
     hint = "Good altitude on the upwind."
   end
 
-  playerData:IncreaseScore(score)
+  -- Increase score.
+  self:_IncreaseScore(playerData, score)
   
   self:_SendMessageToPlayer(hint, 8, playerData)
   
   self:_PrintAltitudeFeedback(altitude, idealAltitude, playerData)
   self:_PrintScore(score, playerData, true)
   
-  playerData:AddToSummary(hint)
+  
+  self:_AddToSummary(playerData, hint)
+  
+  -- Set step.
   playerData.step = 3
 end
 
@@ -325,13 +453,13 @@ function CARRIERTRAINER:_Break(playerData, part)
       hint = "Good altitude in the " .. part .. " break!"
     end
 
-    playerData:IncreaseScore(score)
+    self:_IncreaseScore(playerData, score)
     
     self:_SendMessageToPlayer( hint, 8, playerData )
     self:_PrintAltitudeFeedback(altitude, idealAltitude, playerData)
     self:_PrintScore(score, playerData, true)
     
-    playerData:AddToSummary(hint)
+    self:_AddToSummary(playerData, hint)
 
     if (part == "early") then
       playerData.step = 4
@@ -418,10 +546,10 @@ function CARRIERTRAINER:_Abeam(playerData)
     self:_SendMessageToPlayer( fullHint, 8, playerData )
     self:_SendMessageToPlayer( "(Target: 600 ft and 1.2 nm).", 8, playerData )
 
-    playerData:IncreaseScore(score + distanceScore + onSpeedScore)
+    self:_IncreaseScore(playerData, score + distanceScore + onSpeedScore)
     self:_PrintScore(score + distanceScore + onSpeedScore, playerData, true)
     
-    playerData:AddToSummary(fullHint .. " (" .. aoaFeedback .. ")")
+    self:_AddToSummary(playerData, fullHint .. " (" .. aoaFeedback .. ")")
     playerData.step = 6
   end
 end
@@ -443,9 +571,9 @@ function CARRIERTRAINER:_CheckForLongDownwind(playerData)
       local hint = "Too long downwind. Turn final earlier next time."
       self:_SendMessageToPlayer( hint, 8, playerData )
       local score = -40
-      playerData:IncreaseScore(score)
+      self:_IncreaseScore(playerData, score)
       self:_PrintScore(score, playerData, true)
-      playerData:AddToSummary(hint)
+      self:_AddToSummary(playerData, hint)
       playerData.longDownwindDone = true
     end
   end
@@ -500,10 +628,10 @@ function CARRIERTRAINER:_Ninety(playerData)
     
     local onSpeedScore = self:_GetOnSpeedScore(aoa)
 
-    playerData:IncreaseScore(score + onSpeedScore)
+    self:_IncreaseScore(playerData, score + onSpeedScore)
     self:_PrintScore(score + onSpeedScore, playerData, true)
     
-    playerData:AddToSummary(hint .. " (" .. aoaFeedback .. ")")
+    self:_AddToSummary(playerData, hint .. " (" .. aoaFeedback .. ")")
     
     playerData.longDownwindDone = true
     playerData.step = 7
@@ -557,10 +685,10 @@ function CARRIERTRAINER:_Wake(playerData)
     
     local onSpeedScore = self:_GetOnSpeedScore(aoa)
 
-    playerData:IncreaseScore(score + onSpeedScore)
+    self:_IncreaseScore(playerData, score + onSpeedScore)
     self:_PrintScore(score + onSpeedScore, playerData, true)
-
-    playerData:AddToSummary(hint .. " (" .. aoaFeedback .. ")")
+    self:_AddToSummary(playerData, hint .. " (" .. aoaFeedback .. ")")
+    
     playerData.step = 8
   end
 end
@@ -626,12 +754,12 @@ function CARRIERTRAINER:_Groove(playerData)
       
       local onSpeedScore = self:_GetOnSpeedScore(aoa)
       
-      playerData:IncreaseScore(score + onSpeedScore)
+      self:_IncreaseScore(playerData, score + onSpeedScore)
       self:_PrintScore(score + onSpeedScore, playerData, true)      
       
       local fullHint = hint .. " (" .. aoaFeedback .. ")"
 
-      playerData:AddToSummary(fullHint)
+      self:_AddToSummary(playerData, fullHint)
       
       playerData.step = 9
     end
@@ -688,7 +816,7 @@ function CARRIERTRAINER:_Trap(playerData)
         score = 7
       end
       
-      playerData:IncreaseScore(score)
+      self:_IncreaseScore(playerData, score)
       
       self:_SendMessageToPlayer( "TRAPPED! " .. wire .. "-wire!", 30, playerData )
       self:_PrintScore(score, playerData, false)
@@ -798,7 +926,7 @@ end
 -- @param #CARRIERTRAINER.PlayerData playerData Player data.
 function CARRIERTRAINER:_SendMessageToPlayer(message, duration, playerData)
   if playerData.client then
-    MESSAGE:New( message, duration, ""):ToClient(playerData.client)
+    MESSAGE:New(message, duration):ToClient(playerData.client)
   end
 end
 
@@ -806,7 +934,7 @@ end
 -- @param #CARRIERTRAINER self
 -- @param #number score Score.
 -- @param #CARRIERTRAINER.PlayerData playerData Player data.
-function CARRIERTRAINING:_PrintScore(score, playerData, alsoPrintTotalScore)
+function CARRIERTRAINER:_PrintScore(score, playerData, alsoPrintTotalScore)
   if(alsoPrintTotalScore) then
     self:_SendMessageToPlayer( "Score: " .. score .. " (Total: " .. playerData.score .. ")", 8, playerData )
   else
