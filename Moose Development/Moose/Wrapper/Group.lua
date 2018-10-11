@@ -2,7 +2,9 @@
 -- 
 -- ===
 -- 
--- The @{#GROUP} class is a wrapper class to handle the DCS Group objects:
+-- The @{#GROUP} class is a wrapper class to handle the DCS Group objects.
+-- 
+-- ## Features:
 --
 --  * Support all DCS Group APIs.
 --  * Enhance with Group specific APIs not in the DCS Group API set.
@@ -11,7 +13,16 @@
 --
 -- **IMPORTANT: ONE SHOULD NEVER SANATIZE these GROUP OBJECT REFERENCES! (make the GROUP object references nil).**
 --
--- See the detailed documentation on the GROUP class.
+-- ===
+-- 
+-- For each DCS Group object alive within a running mission, a GROUP wrapper object (instance) will be created within the _@{DATABASE} object.
+-- This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Group objects are spawned (using the @{SPAWN} class).
+-- 
+-- The GROUP class does not contain a :New() method, rather it provides :Find() methods to retrieve the object reference
+-- using the DCS Group or the DCS GroupName.
+--
+-- The GROUP methods will reference the DCS Group object by name when it is needed during API execution.
+-- If the DCS Group object does not exist or is nil, the GROUP methods will return nil and may log an exception in the DCS.log file.
 -- 
 -- ===
 -- 
@@ -34,24 +45,76 @@
 
 --- Wrapper class of the DCS world Group object.
 -- 
--- For each DCS Group object alive within a running mission, a GROUP wrapper object (instance) will be created within the _@{DATABASE} object.
--- This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Group objects are spawned (using the @{SPAWN} class).
---
--- The GROUP class does not contain a :New() method, rather it provides :Find() methods to retrieve the object reference
--- using the DCS Group or the DCS GroupName.
---
--- Another thing to know is that GROUP objects do not "contain" the DCS Group object.
--- The GROUP methods will reference the DCS Group object by name when it is needed during API execution.
--- If the DCS Group object does not exist or is nil, the GROUP methods will return nil and log an exception in the DCS.log file.
---
 -- The GROUP class provides the following functions to retrieve quickly the relevant GROUP instance:
 --
 --  * @{#GROUP.Find}(): Find a GROUP instance from the _DATABASE object using a DCS Group object.
 --  * @{#GROUP.FindByName}(): Find a GROUP instance from the _DATABASE object using a DCS Group name.
 --
--- ## GROUP task methods
+-- # 1. Tasking of groups
 --
--- A GROUP is a @{Wrapper.Controllable}. See the @{Wrapper.Controllable} task methods section for a description of the task methods.
+-- A GROUP is derived from the wrapper class CONTROLLABLE (@{Wrapper.Controllable#CONTROLLABLE}). 
+-- See the @{Wrapper.Controllable} task methods section for a description of the task methods.
+--
+-- But here is an example how a group can be assigned a task.
+-- 
+-- This test demonstrates the use(s) of the SwitchWayPoint method of the GROUP class.
+-- 
+-- First we look up the objects. We create a GROUP object `HeliGroup`, using the @{#GROUP:FindByName}() method, looking up the `"Helicopter"` group object.
+-- Same for the `"AttackGroup"`.
+--          
+--          local HeliGroup = GROUP:FindByName( "Helicopter" )
+--          local AttackGroup = GROUP:FindByName( "AttackGroup" )
+-- 
+-- Now we retrieve the @{Wrapper.Unit#UNIT} objects of the `AttackGroup` object, using the method `:GetUnits()`.   
+--       
+--          local AttackUnits = AttackGroup:GetUnits()
+--          
+-- Tasks are actually text strings that we build using methods of GROUP.
+-- So first, we declare an list of `Tasks`.  
+--        
+--          local Tasks = {}
+-- 
+-- Now we loop over the `AttackUnits` using a for loop.
+-- We retrieve the `AttackUnit` using the `AttackGroup:GetUnit()` method.
+-- Each `AttackUnit` found, will be attacked by `HeliGroup`, using the method `HeliGroup:TaskAttackUnit()`.
+-- This method returns a string containing a command line to execute the task to the `HeliGroup`.
+-- The code will assign the task string command to the next element in the `Task` list, using `Tasks[#Tasks+1]`.
+-- This little code will take the count of `Task` using `#` operator, and will add `1` to the count.
+-- This result will be the index of the `Task` element.
+--          
+--          for i = 1, #AttackUnits do
+--            local AttackUnit = AttackGroup:GetUnit( i )
+--            Tasks[#Tasks+1] = HeliGroup:TaskAttackUnit( AttackUnit )
+--          end
+--          
+-- Once these tasks have been executed, a function `_Resume` will be called ...
+--          
+--          Tasks[#Tasks+1] = HeliGroup:TaskFunction( "_Resume", { "''" } )
+--          
+--          --- @param Wrapper.Group#GROUP HeliGroup
+--          function _Resume( HeliGroup )
+--            env.info( '_Resume' )
+--          
+--            HeliGroup:MessageToAll( "Resuming",10,"Info")
+--          end
+-- 
+-- Now here is where the task gets assigned!
+-- Using `HeliGroup:PushTask`, the task is pushed onto the task queue of the group `HeliGroup`.
+-- Since `Tasks` is an array of tasks, we use the `HeliGroup:TaskCombo` method to execute the tasks.
+-- The `HeliGroup:PushTask` method can receive a delay parameter in seconds.
+-- In the example, `30` is given as a delay.
+-- 
+-- 
+--          HeliGroup:PushTask( 
+--            HeliGroup:TaskCombo(
+--            Tasks
+--            ), 30 
+--          ) 
+-- 
+-- That's it!
+-- But again, please refer to the @{Wrapper.Controllable} task methods section for a description of the different task methods that are available.
+-- 
+-- 
 --
 -- ### Obtain the mission from group templates
 -- 
