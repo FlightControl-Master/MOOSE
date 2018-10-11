@@ -140,6 +140,61 @@ function POSITIONABLE:GetPosition()
   return nil  
 end
 
+--- Returns a {@DCS#Vec3} table of the objects current orientation in 3D space. X, Y, Z values are unit vectors defining the objects orientation.
+-- X is the orientation parallel to the movement of the object, Z perpendicular and Y vertical orientation. 
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return DCS#Vec3 X orientation, i.e. parallel to the direction of movement.
+-- @return DCS#Vec3 Y orientation, i.e. vertical.
+-- @return DCS#Vec3 Z orientation, i.e. perpendicular to the direction of movement.
+function POSITIONABLE:GetOrientation()
+  local position=self:GetPosition()
+  if position then
+    return position.x, position.y, position.z
+  else
+    BASE:E( { "Cannot GetOrientation", Positionable = self, Alive = self:IsAlive() } )
+    return nil, nil, nil
+  end 
+end
+
+--- Returns a {@DCS#Vec3} table of the objects current X orientation in 3D space, i.e. along the direction of movement.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return DCS#Vec3 X orientation, i.e. parallel to the direction of movement.
+function POSITIONABLE:GetOrientationX()
+  local position=self:GetPosition()
+  if position then
+    return position.x
+  else
+    BASE:E( { "Cannot GetOrientationX", Positionable = self, Alive = self:IsAlive() } )
+    return nil
+  end 
+end
+
+--- Returns a {@DCS#Vec3} table of the objects current Y orientation in 3D space, i.e. vertical orientation.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return DCS#Vec3 Y orientation, i.e. vertical.
+function POSITIONABLE:GetOrientationY()
+  local position=self:GetPosition()
+  if position then
+    return position.y
+  else
+    BASE:E( { "Cannot GetOrientationY", Positionable = self, Alive = self:IsAlive() } )
+    return nil
+  end 
+end
+
+--- Returns a {@DCS#Vec3} table of the objects current Z orientation in 3D space, i.e. perpendicular to direction of movement.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return DCS#Vec3 Z orientation, i.e. perpendicular to movement.
+function POSITIONABLE:GetOrientationZ()
+  local position=self:GetPosition()
+  if position then
+    return position.z
+  else
+    BASE:E( { "Cannot GetOrientationZ", Positionable = self, Alive = self:IsAlive() } )
+    return nil
+  end 
+end
+
 --- Returns the @{DCS#Position3} position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return DCS#Position The 3D position vectors of the POSITIONABLE.

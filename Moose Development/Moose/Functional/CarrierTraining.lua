@@ -28,7 +28,7 @@
 -- @field Wrapper.Unit#UNIT carrier Aircraft carrier unit on which we want to practice.
 -- @field Core.Zone#ZONE_UNIT startZone Zone in which the pattern approach starts.
 -- @field Core.Zone#ZONE_UNIT giantZone Zone around the carrier to register a new player.
--- @field #table plyers Table of players. 
+-- @field #table players Table of players. 
 -- @extends Core.Fsm#FSM
 
 --- Practice Carrier Landings
@@ -57,15 +57,20 @@ CARRIERTRAINER = {
 -- @field #string version
 CARRIERTRAINER.version="0.0.1"
 
---- Player data.
+--- Player data table holding all important parameters for each player.
 -- @type CARRIERTRAINER.PlayerData
 -- @field #number id Player ID.
 -- @field #string callsign Callsign of player.
 -- @field #number score Player score.
+-- @field #number totalscore Score of all landing attempts.
+-- @field #number passes Number of passes.
+-- @field #string collectedResultString Results text of all passes.
 -- @field Wrapper.Unit#UNIT unit Aircraft unit of the player.
 -- @field #number lowestAltitude Lowest altitude. 
 -- @field #number highestCarrierXDiff 
 -- @field #number secondsStandingStill Time player does not move after a landing attempt. 
+-- @field #string summary Result summary text.
+-- @field Wrapper.Client#CLIENT Client object of player.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -78,7 +83,7 @@ CARRIERTRAINER.version="0.0.1"
 function CARRIERTRAINER:New(carriername)
 
   -- Inherit everthing from FSM class.
-  local self = BASE:Inherit(self, FSM:New()) -- #WAREHOUSE
+  local self = BASE:Inherit(self, FSM:New()) -- #CARRIERTRAINER
 
   -- Set carrier unit.
   self.carrier=UNIT:FindByName(carriername)
@@ -207,6 +212,12 @@ function CARRIERTRAINER:OnEventBirth(EventData)
     
     playerdata.callsign=_callsign
     
+    if self.player[_playername]==nil then
+      self:_InitNewPlayer(_unitName)
+    else
+      self:_InitNewRound(self.player[_playername])
+    end
+    
     -- By default, some bomb impact points and do not flare each hit on target.
     self.players[_playername]=playerdata
       
@@ -223,31 +234,26 @@ end
 -- @param #CARRIERTRAINER self
 -- @param #string unitname Name of the player unit.
 -- @return #CARRIERTRAINER.PlayerData Player data.
-function CARRIERTRAINER:_NewPlayer(unitname) 
-  local playerData = nil
-  
-  local existingData = playerDatas[id]
-  if(existingData and existingData.unit:IsAlive()) then
-    playerData = playerDatas[id]
-  else  
-    playerData = PlayerData:New(id)
-  end
+function CARRIERTRAINER:_InitNewPlayer(unitname) 
 
-  playerData:InitNewRound()
-
-  playerDatas[id] = playerData
-  env.info("Created playerData object for " .. playerData.unit.UnitName)
+  local playerData={} --#CARRIERTRAINER.PlayerData
   
-  MessageToAll( "Pilot ID: " .. id .. ". Welcome back, " .. playerData.callsign .. "! Cleared for approach! TCN 1X, BRC 354 (MAG HDG).", 5, "InitZoneMessage" )
+  playerData.unit = UNIT:FindByName(unitname)
+  playerData.client = CLIENT:FindByName(self.unit.UnitName, nil, true)  
+  playerData.callsign = self.unit:GetCallsign()
+  playerData.totalScore = 0
+  playerData.passes = 0
+  playerData.collectedResultString = ""
+    
+  playerData=self:_InitNewRound(playerData)
   
-  playerData.step = 1 -- 1 !!
-  playerData.highestCarrierXDiff = -9999999
-  playerData.secondsStandingStill = 0
-  playerData.summary = "SUMMARY:\n"
+  return playerData
 end
 
---- Initialize new approach for player
+--- Initialize new approach for player by resetting parmeters to initial values.
 -- @param #CARRIERTRAINER self
+-- @param #CARRIERTRAINER.PlayerData playerData Player data.
+-- @return #CARRIERTRAINER.PlayerData Initialized player data.
 function CARRIERTRAINER:_InitNewRound(playerData)
   playerData.score = 0
   playerData.summary = "SUMMARY:\n"
@@ -256,6 +262,7 @@ function CARRIERTRAINER:_InitNewRound(playerData)
   playerData.highestCarrierXDiff = -9999999
   playerData.secondsStandingStill = 0
   playerData.lowestAltitude = 999999
+  return playerData
 end
 
 --- Increase score for this approach.
@@ -307,7 +314,9 @@ function CARRIERTRAINER:_CheckPlayerStatus()
           self:_CheckForLongDownwind(playerData)
         end
         
-        if playerData.step == 1 and unit:IsInZone(self.startZone) then
+        if playerData.step==0 and unit:IsInZone(self.giantZone and unit:InAir()) then
+          self:_NewRound(unitname)
+        elseif playerData.step == 1 and unit:IsInZone(self.startZone) then
           self:_Start(playerData)
         elseif playerData.step == 2 and unit:IsInZone(self.giantZone) then
           self:_Upwind(playerData)
@@ -338,6 +347,18 @@ end
 -- CARRIER TRAINING functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Initialize player data.
+-- @param #CARRIERTRAINER self
+-- @param #CARRIERTRAINER.PlayerData playerData Player data.
+function CARRIERTRAINER:_NewRound(playerData) 
+  local playerData = nil
+    
+  MessageToAll( "Welcome back, " .. playerData.callsign .. "! Cleared for approach! TCN 1X, BRC 354 (MAG HDG).", 5, "InitZoneMessage" )
+  
+  self:_InitNewRound(playerData)
+  playerData.step = 1
+end
+
 --- Start landing pattern.
 -- @param #CARRIERTRAINER self
 -- @param #CARRIERTRAINER.PlayerData playerData Player data table.
@@ -359,6 +380,10 @@ function CARRIERTRAINER:_Upwind(playerData)
 
   local diffZ = position.z - carrierPosition.z
   local diffX = position.x - carrierPosition.x
+
+  -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
+  diffZ, diffX = self:_GetDistances(playerData.unit)  
+  
   if(diffZ > 500 or diffZ < 0 or diffX < -4000) then
     self:_AbortPattern(playerData)
     return
@@ -374,10 +399,10 @@ function CARRIERTRAINER:_Upwind(playerData)
   local hint = ""
   local score = 0
 
-  if(altitude > 850) then
+  if (altitude > 850) then
     score = 5
     hint = "You're high on the upwind."
-  elseif(altitude > 830) then
+  elseif (altitude > 830) then
     score = 7
     hint = "You're slightly high on the upwind."
   elseif (altitude < 750) then
@@ -406,6 +431,22 @@ function CARRIERTRAINER:_Upwind(playerData)
   playerData.step = 3
 end
 
+--- Calculate distances between carrier and player unit.
+-- @param #CARRIERTRAINER self 
+-- @param Wrapper.Unit#UNIT unit Player unit
+-- @return #number Distance in the direction of the orientation of the carrier.
+-- @return #number Distance perpendicular to the orientation of the carrier.
+function CARRIERTRAINER:_GetDistances(unit)
+  local a=self.carrier:GetVec3()
+  local b=unit:GetVec3()
+  local c={x=b.x-a.x, y=0, z=b.z-a.z}
+  local x=self.carrier:GetOrientationX()
+  local dz=UTILS.VecDot(x,c)
+  local alpha=math.acos(UTILS.VecDot(c,x)/UTILS.VecNorm(c))
+  local dx=c*math.sin(alpha)
+  return dz,dx
+end  
+
 --- Break.
 -- @param #CARRIERTRAINER self
 -- @param #CARRIERTRAINER.PlayerData playerData Player data table.
@@ -418,6 +459,9 @@ function CARRIERTRAINER:_Break(playerData, part)
   local diffZ = playerPosition.z - carrierPosition.z
   local diffX = playerPosition.x - carrierPosition.x
 
+  -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
+  diffZ, diffX = self:_GetDistances(playerData.unit)
+
   if(diffZ > 1500 or diffZ < -3700 or diffX < -500) then
     self:_AbortPattern(playerData)
     return
@@ -425,7 +469,7 @@ function CARRIERTRAINER:_Break(playerData, part)
 
   local limit = -370
     
-  if (part == "late") then
+  if part == "late" then
     limit = -1470
   end
 
@@ -478,6 +522,10 @@ function CARRIERTRAINER:_Abeam(playerData)
 
   local diffZ = playerPosition.z - carrierPosition.z
   local diffX = playerPosition.x - carrierPosition.x
+  
+  -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
+  diffZ, diffX = self:_GetDistances(playerData.unit)
+  
   if(diffZ > -1000 or diffZ < -3700) then
     self:_AbortPattern(playerData)
     return
@@ -563,6 +611,11 @@ function CARRIERTRAINER:_CheckForLongDownwind(playerData)
 
   local limit = 1500
   
+  -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
+  local diffZ, diffX = self:_GetDistances(playerData.unit)
+  
+  --TODO if diffX
+  
   if carrierPosition.x - playerPosition.x > limit then
     --local heading = math.deg(mist.getHeading(playerData.mistUnit))
     local heading = playerData.unit:GetHeading()
@@ -588,6 +641,10 @@ function CARRIERTRAINER:_Ninety(playerData)
 
   local diffZ = playerPosition.z - carrierPosition.z
   local diffX = playerPosition.x - carrierPosition.x
+  
+  -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
+  diffZ, diffX = self:_GetDistances(playerData.unit)  
+  
   if(diffZ < -3700 or diffX < -3700 or diffX > 0) then
     self:_AbortPattern(playerData)
     return
@@ -643,10 +700,14 @@ end
 -- @param #CARRIERTRAINER.PlayerData playerData Player data table.
 function CARRIERTRAINER:_Wake(playerData) 
   local playerPosition = playerData.unit:GetVec3()
-  local carrierPosition = carrier:GetVec3()
+  local carrierPosition = self.carrier:GetVec3()
 
   local diffZ = playerPosition.z - carrierPosition.z
   local diffX = playerPosition.x - carrierPosition.x
+  
+  -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
+  diffZ, diffX = self:_GetDistances(playerData.unit)
+    
   if(diffZ < -2000 or diffX < -4000 or diffX > 0) then
     self:_AbortPattern(playerData)
     return
@@ -702,6 +763,10 @@ function CARRIERTRAINER:_Groove(playerData)
 
   local diffX = playerPosition.x - (carrierPosition.x - 100)
   local diffZ = playerPosition.z - carrierPosition.z
+
+  --TODO -100?!
+  -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
+  diffZ, diffX = self:_GetDistances(playerData.unit)
   
   if(diffX > 0 or diffX < -4000) then
     self:_AbortPattern(playerData)
@@ -779,6 +844,9 @@ function CARRIERTRAINER:_Trap(playerData)
   local diffZ = playerPosition.z - carrierPosition.z
   local diffX = playerPosition.x - carrierPosition.x
   
+  -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
+  diffZ, diffX = self:_GetDistances(playerData.unit)  
+  
   if(diffZ < -2000 or diffZ > 2000 or diffX < -3000) then
     self:_AbortPattern(playerData)
     return
@@ -837,7 +905,7 @@ function CARRIERTRAINER:_Trap(playerData)
     local wire = 0
     local hint = ""
     local score = 0
-    if(playerData.lowestAltitude < 23) then
+    if (playerData.lowestAltitude < 23) then
       hint = "You boltered."
     else
       hint = "You were waved off."
