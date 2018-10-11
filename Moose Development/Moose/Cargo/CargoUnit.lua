@@ -248,7 +248,7 @@ do -- CARGO_UNIT
           
           local Speed = 90
           local Angle = 180
-          local Distance = 5
+          local Distance = 0
           
           local CargoCarrierPointVec2 = CargoCarrier:GetPointVec2()
           local CargoCarrierHeading = CargoCarrier:GetHeading() -- Get Heading of object in degrees.
@@ -297,14 +297,14 @@ do -- CARGO_UNIT
             self:__Boarding( -1, CargoCarrier, NearRadius, ... )
             self.RunCount = self.RunCount + 1
           else
-            self:__Boarding( -5, CargoCarrier, NearRadius, ... )
-            self.RunCount = self.RunCount + 5
+            self:__Boarding( -2, CargoCarrier, NearRadius, ... )
+            self.RunCount = self.RunCount + 2
           end
           if self.RunCount >= 40 then
             self.RunCount = 0
             local Speed = 90
             local Angle = 180
-            local Distance = 5
+            local Distance = 0
             
             local CargoCarrierPointVec2 = CargoCarrier:GetPointVec2()
             local CargoCarrierHeading = CargoCarrier:GetHeading() -- Get Heading of object in degrees.

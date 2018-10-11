@@ -1,4 +1,25 @@
---- **Core** -- DATABASE manages the database of mission objects. 
+--- **Core** - Manages several databases containing templates, mission objects, and mission information. 
+-- 
+-- ===
+-- 
+-- ## Features:
+-- 
+--   * During mission startup, scan the mission environment, and create / instantiate intelligently the different objects as defined within the mission.
+--   * Manage database of DCS Group templates (as modelled using the mission editor).
+--     - Group templates.
+--     - Unit templates.
+--     - Statics templates.
+--   * Manage database of @{Wrapper.Group#GROUP} objects alive in the mission.
+--   * Manage database of @{Wrapper.Unit#UNIT} objects alive in the mission.
+--   * Manage database of @{Wrapper.Static#STATIC} objects alive in the mission.
+--   * Manage database of players.
+--   * Manage database of client slots defined using the mission editor.
+--   * Manage database of airbases on the map, and from FARPs and ships as defined using the mission editor.
+--   * Manage database of countries.
+--   * Manage database of zone names.
+--   * Manage database of hits to units and statics.
+--   * Manage database of destroys of units and statics.
+--   * Manage database of @{Core.Zone#ZONE_BASE} objects.
 -- 
 -- ===
 -- 

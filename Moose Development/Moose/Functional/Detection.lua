@@ -2,18 +2,25 @@
 -- 
 -- ===
 -- 
+-- ## Features:
+-- 
+--   * Detection of targets by recce units.
+--   * Group detected targets per unit, type or area (zone).
+--   * Keep persistency of detected targets, if when detection is lost.
+--   * Provide an indication of detected targets.
+--   * Report detected targets.
+--   * Refresh detection upon specified time intervals.
+-- 
+-- ===
+-- 
+-- ## Missions:
+-- 
+-- [DET - Detection](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/DET%20-%20Detection)
+-- 
+-- ===
+-- 
 -- Facilitate the detection of enemy units within the battle zone executed by FACs (Forward Air Controllers) or RECCEs (Reconnassance Units).
--- DETECTION uses the in-built detection capabilities of DCS World, but adds new functionalities.
--- 
--- Find the DETECTION classes documentation further in this document in the globals section.
--- 
--- ===
--- 
--- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/DET%20-%20Detection)
--- 
--- ===
--- 
--- ### [YouTube Playlist](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl3Cf5jpI6BS0sBOVWK__tji)
+-- It uses the in-built detection capabilities of DCS World, but adds new functionalities.
 -- 
 -- ===
 -- 
@@ -25,13 +32,11 @@
 -- 
 --   * FlightControl : Analysis, Design, Programming, Testing
 -- 
+-- ===
+-- 
 -- @module Functional.Detection
 -- @image Detection.JPG
 
-----BASE:TraceClass("DETECTION_BASE")
-----BASE:TraceClass("DETECTION_AREAS")
-----BASE:TraceClass("DETECTION_UNITS")
-----BASE:TraceClass("DETECTION_TYPES")
 
 do -- DETECTION_BASE
 

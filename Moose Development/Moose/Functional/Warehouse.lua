@@ -1,10 +1,8 @@
---- **Functional** - (R2.4) - Simulation of logistic operations.
+--- **Functional** - Simulation of logistic operations.
 -- 
--- The MOOSE warehouse concept simulates the organization and implementation of complex operations regarding the flow of assets between the point of origin and the point of consumption 
--- in order to meet requirements of a potential conflict. In particular, this class is concerned with maintaining army supply lines while disrupting those of the enemy, since an armed 
--- force without resources and transportation is defenseless.
---
--- Features:
+-- ===
+-- 
+-- ## Features:
 --
 --    * Holds (virtual) assests in stock and spawns them upon request.
 --    * Manages requests of assets from other warehouses.
@@ -16,12 +14,24 @@
 --    * Possibility to hook into events and customize actions.
 --    * Can be easily interfaced to other MOOSE classes.
 --
--- Please not that his class is work in progress and in an **alpha** stage.
+-- === 
+-- 
+-- ## Missions:
+-- 
+-- ===
+-- 
+-- The MOOSE warehouse concept simulates the organization and implementation of complex operations regarding the flow of assets between the point of origin and the point of consumption 
+-- in order to meet requirements of a potential conflict. In particular, this class is concerned with maintaining army supply lines while disrupting those of the enemy, since an armed 
+-- force without resources and transportation is defenseless.
 --
+-- Please note that his class is work in progress and in an **alpha** stage.
+-- 
 -- ===
 --
 -- ### Author: **funkyfranky**
 -- ### Co-author: FlightControl (cargo dispatcher classes)
+--
+-- ===
 --
 -- @module Functional.Warehouse
 -- @image MOOSE.JPG
@@ -60,8 +70,6 @@
 --- Have your assets at the right place at the right time - or not!
 --
 -- ===
---
--- ![Banner Image](..\Presentations\WAREHOUSE\Warehouse_Main.png)
 --
 -- # The Warehouse Concept
 -- 

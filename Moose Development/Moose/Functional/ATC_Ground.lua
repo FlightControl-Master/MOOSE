@@ -1,9 +1,19 @@
---- **Functional** -- The ATC\_GROUND classes monitor airbase traffic and regulate speed while taxiing.
+--- **Functional** -- Monitor airbase traffic and regulate speed while taxiing.
 --
 -- ===
+--
+-- ## Features:
 -- 
--- ![Banner Image](..\Presentations\ATC_GROUND\Dia1.JPG)
+--   * Monitor speed of the airplanes of players during taxi.
+--   * Communicate ATC ground operations.
+--   * Kick speeding players during taxi.
 -- 
+-- ===
+-- 
+-- ## Missions:
+-- 
+-- [ABP - Airbase Police](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/ABP%20-%20Airbase%20Police)
+--
 -- ===
 --
 -- ### Contributions: Dutch Baron - Concept & Testing

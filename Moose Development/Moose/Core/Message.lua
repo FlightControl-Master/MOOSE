@@ -1,4 +1,15 @@
---- **Core** -- MESSAGE class takes are of the **real-time notifications** and **messages to players** during a simulation.
+--- **Core** - Informs the players using messages during a simulation.
+-- 
+-- ===
+-- 
+-- ## Features:
+-- 
+--   * A more advanced messaging system using the DCS message system.
+--   * Time messages.
+--   * Send messages based on a message type, which has a pre-defined duration that can be tweaked in SETTINGS.
+--   * Send message to all players.
+--   * Send messages to a coalition.
+--   * Send messages to a specific group.
 -- 
 -- ===
 -- 

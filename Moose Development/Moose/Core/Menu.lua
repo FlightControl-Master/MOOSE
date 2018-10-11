@@ -1,6 +1,26 @@
---- **Core** -- MENU_ classes model the definition of **hierarchical menu structures** and **commands for players** within a mission.
+--- **Core** - Manage hierarchical menu structures and commands for players within a mission.
 -- 
 -- ===
+-- 
+-- ### Features:
+-- 
+--   * Setup mission sub menus.
+--   * Setup mission command menus.
+--   * Setup coalition sub menus.
+--   * Setup coalition command menus.
+--   * Setup group sub menus.
+--   * Setup group command menus.
+--   * Manage menu creation intelligently, avoid double menu creation.
+--   * Only create or delete menus when required, and keep existing menus persistent.
+--   * Update menu structures.
+--   * Refresh menu structures intelligently, based on a time stamp of updates.
+--     - Delete obscolete menus.
+--     - Create new one where required.
+--     - Don't touch the existing ones.
+--   * Provide a variable amount of parameters to menus.
+--   * Update the parameters and the receiving methods, without updating the menu within DCS!
+--   * Provide a great performance boost in menu management.
+--   * Provide a great tool to manage menus in your code.
 -- 
 -- DCS Menus can be managed using the MENU classes. 
 -- The advantage of using MENU classes is that it hides the complexity of dealing with menu management in more advanced scanerios where you need to 
@@ -92,7 +112,7 @@ end
 ---
 -- @param Wrapper.Group#GROUP Group
 function MENU_INDEX:PrepareGroup( Group )
-  if Group and Group:IsAlive()  then
+  if Group and Group:IsAlive() ~= nil  then -- something was changed here!
     local GroupName = Group:GetName()
     self.Group[GroupName] = self.Group[GroupName] or {}
     self.Group[GroupName].Menus = self.Group[GroupName].Menus or {}
@@ -146,6 +166,7 @@ end
 function MENU_INDEX:SetGroupMenu( Group, Path, Menu )
 
   local MenuGroupName = Group:GetName()
+  Group:F({MenuGroupName=MenuGroupName,Path=Path})
   self.Group[MenuGroupName].Menus[Path] = Menu
 end
 

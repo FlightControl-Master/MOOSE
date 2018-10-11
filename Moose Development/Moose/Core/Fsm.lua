@@ -1,5 +1,18 @@
---- **Core** -- The **FSM** (**F**inite **S**tate **M**achine) class and derived **FSM\_** classes 
--- are design patterns allowing efficient (long-lasting) processes and workflows.
+--- **Core** - FSM (Finite State Machine) are objects that model and control long lasting business processes and workflow.
+-- 
+-- ===
+-- 
+-- ## Features:
+-- 
+--   * Provide a base class to model your own state machines.
+--   * Trigger events synchronously.
+--   * Trigger events asynchronously.
+--   * Handle events before or after the event was triggered.
+--   * Handle state transitions as a result of event before and after the state change.
+--   * For internal moose purposes, further state machines have been designed:
+--     - to handle controllables (groups and units).
+--     - to handle tasks.
+--     - to handle processes.
 -- 
 -- ===
 -- 
