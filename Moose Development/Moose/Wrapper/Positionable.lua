@@ -667,7 +667,7 @@ function POSITIONABLE:GetAoA()
   if unitpos then
   
     -- Get velocity vector of the unit.
-    local unitvel = self:GetVelocity()
+    local unitvel = self:GetVelocityVec3()
     
     if unitvel and UTILS.VecNorm(unitvel)~=0 then
     

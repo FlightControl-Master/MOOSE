@@ -50,12 +50,12 @@ CARRIERTRAINER = {
   carrier   = nil,
   startZone = nil,
   giantZone = nil,
-  players   = nil,
+  players   = {},
 }
 
 --- Carrier trainer class version.
 -- @field #string version
-CARRIERTRAINER.version="0.0.1"
+CARRIERTRAINER.version="0.0.2"
 
 --- Player data table holding all important parameters for each player.
 -- @type CARRIERTRAINER.PlayerData
@@ -146,14 +146,13 @@ end
 function CARRIERTRAINER:onafterStart(From, Event, To)
 
   -- Events are handled my MOOSE.
-  self:I(self.lid..string.format"Starting Carrier Training %s for carrier unit %s.", CARRIERTRAINER.version, self.carrier:GetName())
+  self:I(self.lid..string.format("Starting Carrier Training %s for carrier unit %s.", CARRIERTRAINER.version, self.carrier:GetName()))
   
   -- Handle events.
   self:HandleEvent(EVENTS.Birth)
 
-
-  -- Init status checkss
-  self:__Status(-1)
+  -- Init status check
+  self:__Status(5)
 end
 
 --- On after Status event. Checks player status.
@@ -167,7 +166,7 @@ function CARRIERTRAINER:onafterStatus(From, Event, To)
   self:_CheckPlayerStatus()
 
   -- Call status again in one second.
-  self:_Status(-1)
+  self:__Status(-1)
 end
 
 --- On after Stop event. Unhandle events and stop status updates. 
@@ -208,25 +207,13 @@ function CARRIERTRAINER:OnEventBirth(EventData)
     self:T(self.lid..text)
     MESSAGE:New(text, 5):ToAllIf(self.Debug)
     
-    local playerdata={} --#CARRIERTRAINER.PlayerData
-    
-    playerdata.callsign=_callsign
-    
-    if self.player[_playername]==nil then
-      self:_InitNewPlayer(_unitName)
+    --     
+    if self.players[_playername]==nil then
+      self.players[_playername]=self:_InitNewPlayer(_unitName)
     else
-      self:_InitNewRound(self.player[_playername])
+      self:_InitNewRound(self.players[_playername])
     end
-    
-    -- By default, some bomb impact points and do not flare each hit on target.
-    self.players[_playername]=playerdata
       
-    -- Start check in zone timer.
-    if self.planes[_uid] ~= true then
-      SCHEDULER:New(nil, self._CheckInZone, {self, EventData.IniUnitName}, 1, 1)
-      self.planes[_uid] = true
-    end
-  
   end 
 end
 
@@ -239,8 +226,8 @@ function CARRIERTRAINER:_InitNewPlayer(unitname)
   local playerData={} --#CARRIERTRAINER.PlayerData
   
   playerData.unit = UNIT:FindByName(unitname)
-  playerData.client = CLIENT:FindByName(self.unit.UnitName, nil, true)  
-  playerData.callsign = self.unit:GetCallsign()
+  playerData.client = CLIENT:FindByName(playerData.unit.UnitName, nil, true)
+  playerData.callsign = playerData.unit:GetCallsign()
   playerData.totalScore = 0
   playerData.passes = 0
   playerData.collectedResultString = ""
@@ -294,11 +281,18 @@ end
 -- @param #CARRIERTRAINER self
 function CARRIERTRAINER:_CheckPlayerStatus()
 
+  if self.players==nil then
+    self:I(self.lid.."No players yet.")
+    return
+  end
+
   -- Loop over all players.
-  for _playerName,_playerData in pairs(self.Player) do  
+  for _playerName,_playerData in pairs(self.players) do  
     local playerData = _playerData --#CARRIERTRAINER.PlayerData
     
     if playerData then
+    
+      self:I("player "..playerData.callsign)
     
       -- Player unit.
       local unit = playerData.unit
@@ -306,7 +300,7 @@ function CARRIERTRAINER:_CheckPlayerStatus()
       if unit:IsAlive() then
 
         if unit:IsInZone(self.giantZone) then
-          --Tick(playerData)
+          self:_DetailedPlayerStatus(playerData)
         end
         
         -- Check long down wind leg.
@@ -314,8 +308,8 @@ function CARRIERTRAINER:_CheckPlayerStatus()
           self:_CheckForLongDownwind(playerData)
         end
         
-        if playerData.step==0 and unit:IsInZone(self.giantZone and unit:InAir()) then
-          self:_NewRound(unitname)
+        if playerData.step==0 and unit:IsInZone(self.giantZone) and unit:InAir() then
+          self:_NewRound(playerData)
         elseif playerData.step == 1 and unit:IsInZone(self.startZone) then
           self:_Start(playerData)
         elseif playerData.step == 2 and unit:IsInZone(self.giantZone) then
@@ -343,6 +337,34 @@ function CARRIERTRAINER:_CheckPlayerStatus()
   
 end
 
+--- Provide info about player status on the fly.
+-- @param #CARRIERTRAINER self
+-- @param #CARRIERTRAINER.PlayerData playerData Player data.
+function CARRIERTRAINER:_DetailedPlayerStatus(playerData)
+
+  local unit=playerData.unit
+  
+  local aoa=unit:GetAoA()
+  local dist=playerData.unit:GetCoordinate():Get2DDistance(self.carrier:GetCoordinate())
+  local dz,dx=self:_GetDistances(unit)
+
+  local text=string.format("%s, current AoA=%.1f\n", playerData.callsign, aoa)
+  text=text..string.format("Carrier distance: d=%d m\n", dist)
+  text=text..string.format("Carrier distance: z=%d m x=%d m sum=%d", dz, dx, math.abs(dz)+math.abs(dx))
+
+  -- Player and carrier position vector.
+  local playerPosition = playerData.unit:GetVec3()  
+  local carrierPosition = self.carrier:GetVec3()
+  
+  local diffZ = playerPosition.z - carrierPosition.z
+  local diffX = playerPosition.x - carrierPosition.x
+  
+  -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
+  diffZ, diffX = self:_GetDistances(playerData.unit)  
+
+  MESSAGE:New(text, 5, nil ,true):ToClient(playerData.client)
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- CARRIER TRAINING functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -351,9 +373,10 @@ end
 -- @param #CARRIERTRAINER self
 -- @param #CARRIERTRAINER.PlayerData playerData Player data.
 function CARRIERTRAINER:_NewRound(playerData) 
-  local playerData = nil
     
-  MessageToAll( "Welcome back, " .. playerData.callsign .. "! Cleared for approach! TCN 1X, BRC 354 (MAG HDG).", 5, "InitZoneMessage" )
+  local text=string.format("Welcome back, %s! Cleared for approach. TCN 1X, BRC 354 (MAG HDG).", playerData.callsign)
+  MESSAGE:New(text, 5):ToClient(playerData.client)
+  --MessageToAll( "Welcome back, " .. playerData.callsign .. "! Cleared for approach! TCN 1X, BRC 354 (MAG HDG).", 5, "InitZoneMessage" )
   
   self:_InitNewRound(playerData)
   playerData.step = 1
@@ -423,8 +446,7 @@ function CARRIERTRAINER:_Upwind(playerData)
   
   self:_PrintAltitudeFeedback(altitude, idealAltitude, playerData)
   self:_PrintScore(score, playerData, true)
-  
-  
+    
   self:_AddToSummary(playerData, hint)
   
   -- Set step.
@@ -443,7 +465,7 @@ function CARRIERTRAINER:_GetDistances(unit)
   local x=self.carrier:GetOrientationX()
   local dz=UTILS.VecDot(x,c)
   local alpha=math.acos(UTILS.VecDot(c,x)/UTILS.VecNorm(c))
-  local dx=c*math.sin(alpha)
+  local dx=UTILS.VecNorm(c)*math.sin(alpha)
   return dz,dx
 end  
 
@@ -526,7 +548,7 @@ function CARRIERTRAINER:_Abeam(playerData)
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
   diffZ, diffX = self:_GetDistances(playerData.unit)
   
-  if(diffZ > -1000 or diffZ < -3700) then
+  if (diffZ > -1000 or diffZ < -3700) then
     self:_AbortPattern(playerData)
     return
   end
@@ -617,10 +639,10 @@ function CARRIERTRAINER:_CheckForLongDownwind(playerData)
   --TODO if diffX
   
   if carrierPosition.x - playerPosition.x > limit then
-    --local heading = math.deg(mist.getHeading(playerData.mistUnit))
+  
     local heading = playerData.unit:GetHeading()
     
-    if(heading > 170) then
+    if (heading > 170) then
       local hint = "Too long downwind. Turn final earlier next time."
       self:_SendMessageToPlayer( hint, 8, playerData )
       local score = -40
@@ -777,7 +799,7 @@ function CARRIERTRAINER:_Groove(playerData)
     local hint = "You're too far left and never reached the groove."
     self:_SendMessageToPlayer( hint, 8, playerData )
     self:_PrintScore(0, playerData, true)
-    playerData:AddToSummary(hint)
+    self:_AddToSummary(playerData, hint)
     playerData.step = 9
   else  
     local limitDeg = 8.0
@@ -893,7 +915,7 @@ function CARRIERTRAINER:_Trap(playerData)
       
       local fullHint = "Trapped catching the " .. wire .. "-wire."
       
-      playerData:AddToSummary(fullHint)
+      self:_AddToSummary(playerData, fullHint)
       
       self:_PrintFinalScore(playerData, 60, wire)
       self:_HandleCollectedResult(playerData, wire)
@@ -916,7 +938,7 @@ function CARRIERTRAINER:_Trap(playerData)
     self:_SendMessageToPlayer( hint, 8, playerData )
     self:_PrintScore(score, playerData, true)
        
-    playerData:AddToSummary(hint)
+    self:_AddToSummary(playerData, hint)
     
     self:_PrintFinalScore(playerData, 60, wire)
     self:_HandleCollectedResult(playerData, wire)
@@ -1064,7 +1086,7 @@ end
 -- @param #CARRIERTRAINER.PlayerData playerData Player data.
 function CARRIERTRAINER:_AbortPattern(playerData)
   self:_SendMessageToPlayer( "You're too far from where you should be. Abort approach!", 15, playerData )
-  playerData:AddToSummary("Approach aborted.")
+  self:_AddToSummary(playerData, "Approach aborted.")
   self:_PrintFinalScore(playerData, 30, -2)
   self:_HandleCollectedResult(playerData, -2)
   playerData.step = 0
