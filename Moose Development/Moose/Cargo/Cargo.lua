@@ -872,7 +872,7 @@ do -- CARGO
       --self:F( { CargoObjectVec2 = self.CargoObject:GetVec2() } )
       --self:F( { PointVec2 = PointVec2:GetVec2() } )
       local Distance = Coordinate:Get2DDistance( self.CargoObject:GetCoordinate() )
-      --self:F( Distance )
+      --self:F( { Distance = Distance, NearRadius = NearRadius or "nil" }  )
       
       if Distance <= NearRadius then
         --self:F( { PointVec2 = PointVec2, NearRadius = NearRadius, IsNear = true } )
