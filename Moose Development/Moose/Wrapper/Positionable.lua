@@ -699,7 +699,7 @@ end
 --- Returns the unit's climb or descent angle.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return #number Climb or descent angle in degrees.
-function POSITIONABLE:GetAoA()
+function POSITIONABLE:GetClimbAnge()
 
   -- Get position of the unit.
   local unitpos = self:GetPosition()

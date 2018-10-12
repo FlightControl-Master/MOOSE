@@ -29,6 +29,7 @@
 -- @field Core.Zone#ZONE_UNIT startZone Zone in which the pattern approach starts.
 -- @field Core.Zone#ZONE_UNIT giantZone Zone around the carrier to register a new player.
 -- @field #table players Table of players. 
+-- @field #table menuadded Table of units where the F10 radio menu was added.
 -- @extends Core.Fsm#FSM
 
 --- Practice Carrier Landings
@@ -48,14 +49,20 @@ CARRIERTRAINER = {
   lid       = nil,
   Debug     = true,
   carrier   = nil,
+  alias     = nil,
   startZone = nil,
   giantZone = nil,
   players   = {},
+  menuadded = {},
 }
+
+--- Main radio menu.
+-- @field #table MenuF10
+CARRIERTRAINER.MenuF10={}
 
 --- Carrier trainer class version.
 -- @field #string version
-CARRIERTRAINER.version="0.0.3"
+CARRIERTRAINER.version="0.0.4"
 
 --- Player data table holding all important parameters for each player.
 -- @type CARRIERTRAINER.PlayerData
@@ -79,9 +86,10 @@ CARRIERTRAINER.version="0.0.3"
 
 --- Create new carrier trainer.
 -- @param #CARRIERTRAINER self
--- @param carriername Name of the aircraft carrier unit.
+-- @param carriername Name of the aircraft carrier unit as defined in the mission editor.
+-- @param alias (Optional) Alias for the carrier. This will be used for radio messages and the F10 radius menu. Default is the carrier name as defined in the mission editor.
 -- @return #CARRIERTRAINER self
-function CARRIERTRAINER:New(carriername)
+function CARRIERTRAINER:New(carriername, alias)
 
   -- Inherit everthing from FSM class.
   local self = BASE:Inherit(self, FSM:New()) -- #CARRIERTRAINER
@@ -97,7 +105,10 @@ function CARRIERTRAINER:New(carriername)
   end
   
   -- Set some string id for output to DCS.log file.
-  self.lid=string.format("CARRIERTRAINER %s | ", carriername)  
+  self.lid=string.format("CARRIERTRAINER %s | ", carriername)
+  
+  -- Set alias.
+  self.alias=alias or carriername
   
   -----------------------
   --- FSM Transitions ---
@@ -200,7 +211,6 @@ function CARRIERTRAINER:OnEventBirth(EventData)
   
     local _uid=_unit:GetID()
     local _group=_unit:GetGroup()
-    local _gid=_group:GetID()
     local _callsign=_unit:GetCallsign()
     
     -- Debug output.
@@ -208,7 +218,10 @@ function CARRIERTRAINER:OnEventBirth(EventData)
     self:T(self.lid..text)
     MESSAGE:New(text, 5):ToAllIf(self.Debug)
     
-    --     
+    -- Add Menu commands.
+    self:_AddF10Commands(_unitName)    
+    
+    -- Init player.
     if self.players[_playername]==nil then
       self.players[_playername]=self:_InitNewPlayer(_unitName)
     else
@@ -296,7 +309,7 @@ function CARRIERTRAINER:_CheckPlayerStatus()
       if unit:IsAlive() then
 
         if unit:IsInZone(self.giantZone) then
-          self:_DetailedPlayerStatus(playerData)
+          --self:_DetailedPlayerStatus(playerData)
         end
         
         if playerData.step==0 and unit:IsInZone(self.giantZone) and unit:InAir() then
@@ -325,6 +338,7 @@ function CARRIERTRAINER:_CheckPlayerStatus()
           self:_Trap(playerData)
         end         
       else
+        -- Unit not alive.
         --playerDatas[i] = nil
       end
     end
@@ -361,6 +375,7 @@ function CARRIERTRAINER:_StepName(step)
     name="trapped"
   end
   
+  return name
 end
 
 --- Provide info about player status on the fly.
@@ -390,10 +405,10 @@ function CARRIERTRAINER:_DetailedPlayerStatus(playerData)
   text=text..string.format("roll=%.1f  yaw=%.1f  pitch=%.1f\n", roll, yaw, pitch)
   text=text..string.format("current step = %d %s\n", playerData.step, self:_StepName(playerData.step))
   text=text..string.format("Carrier distance: d=%d m\n", dist)
-  text=text..string.format("Carrier distance: x=%d m z=%d m sum=%d (old)", diffX, diffZ, math.abs(diffX)+math.abs(diffZ))
+  text=text..string.format("Carrier distance: x=%d m z=%d m sum=%d (old)\n", diffX, diffZ, math.abs(diffX)+math.abs(diffZ))
   text=text..string.format("Carrier distance: x=%d m z=%d m sum=%d (new)", dx, dz, math.abs(dz)+math.abs(dx))  
 
-  MESSAGE:New(text, 1, nil ,true):ToClient(playerData.client)
+  MESSAGE:New(text, 1, nil , true):ToClient(playerData.client)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -407,7 +422,6 @@ function CARRIERTRAINER:_NewRound(playerData)
     
   local text=string.format("Welcome back, %s! Cleared for approach. TCN 1X, BRC 354 (MAG HDG).", playerData.callsign)
   MESSAGE:New(text, 5):ToClient(playerData.client)
-  --MessageToAll( "Welcome back, " .. playerData.callsign .. "! Cleared for approach! TCN 1X, BRC 354 (MAG HDG).", 5, "InitZoneMessage" )
   
   self:_InitNewRound(playerData)
   playerData.step = 1
@@ -436,13 +450,22 @@ function CARRIERTRAINER:_Upwind(playerData)
   local diffX = position.x - carrierPosition.x
 
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
-  diffX, diffZ = self:_GetDistances(playerData.unit)  
+  diffX, diffZ = self:_GetDistances(playerData.unit)
+  
+  self.Upwind={}
+  self.Upwind.Xmin=-4000  -- TODO Should be withing 4 km behind carrier. Why?
+  self.Upwind.Xmax=nil
+  self.Upwind.Zmin=0
+  self.Upwind.Zmax=500
+  self.Upwind.Limit=0
+  self.Upwind.Alitude=UTILS.FeetToMeters(800)
   
   -- Too far away.
-  -- Should be between 0-500 meters right of carrier.
-  -- TODO Should be withing 4 km behind carrier. Why?
-  if (diffZ > 500 or diffZ < 0 or diffX < -4000) then
-    self:_AbortPattern(playerData)
+  -- Should be between 0-500 meters right of carrier.  
+  --if (diffZ > 500 or diffZ < 0 or diffX < -4000) then
+  if self:_CheckAbort(diffX,diffZ, self.Upwind) then
+    --MESSAGE:New(string.format("Abort: diffX=%d (min=-4000, max=nil), diffZ=%d (min=0, max=500)", diffX, diffZ)):ToAllIf(self.Debug)
+    self:_AbortPattern(playerData, diffX, diffZ, self.Upwind)
     return
   end
   
@@ -455,16 +478,16 @@ function CARRIERTRAINER:_Upwind(playerData)
     local hint = ""
     local score = 0
     
-    if (altitude > 850) then
+    if altitude > 850 then
       score = 5
       hint = "You're high on the upwind."
-    elseif (altitude > 830) then
+    elseif altitude > 830 then
       score = 7
       hint = "You're slightly high on the upwind."
-    elseif (altitude < 750) then
+    elseif altitude < 750 then
       score = 5
       hint = "You're low on the upwind."
-    elseif (altitude < 770) then
+    elseif altitude < 770 then
       score = 7
       hint = "You're slightly low on the upwind."
     else
@@ -494,21 +517,110 @@ end
 -- @return #number Distance in the direction of the orientation of the carrier.
 -- @return #number Distance perpendicular to the orientation of the carrier.
 function CARRIERTRAINER:_GetDistances(unit)
+
+  -- Vector to carrier
   local a=self.carrier:GetVec3()
+  
+  -- Vector to player
   local b=unit:GetVec3()
+  
+  -- Vector from carrier to player.
   local c={x=b.x-a.x, y=0, z=b.z-a.z}
+  
+  -- Orientation of carrier.
   local x=self.carrier:GetOrientationX()
-  local dz=UTILS.VecDot(x,c)
-  local alpha=math.acos(UTILS.VecDot(c,x)/UTILS.VecNorm(c))
-  local dx=UTILS.VecNorm(c)*math.sin(alpha)
-  return dz,dx
-end  
+  
+  -- Projection of player pos on x component.
+  local dx=UTILS.VecDot(x,c)
+  
+  -- Orientation of carrier.
+  local z=self.carrier:GetOrientationZ()
+  
+  -- Projection of player pos on z component.  
+  local dz=UTILS.VecDot(z,c)
+  
+  return dx,dz
+end
+
+--- Check if a player is within the right area.
+-- @param #CARRIERTRAINER self
+-- @param #number X X distance player to carrier.
+-- @param #number Z Z distance player to carrier.
+-- @param #table pos Position data limits.
+-- @return #boolean If true, approach should be aborted.
+function CARRIERTRAINER:_CheckAbort(X, Z, pos)
+
+  local abort=false
+  if pos.Xmin and X<pos.Xmin then
+    abort=true
+  elseif pos.Xmax and X>pos.Xmax then
+    abort=true
+  elseif pos.Zmin and Z<pos.Zmin then
+    abort=true
+  elseif pos.Zmax and Z>pos.Zmax then
+    abort=true
+  end
+
+  return abort
+end
+
+--- Generate a text if a player is too far from where he should be.
+-- @param #CARRIERTRAINER self
+-- @param #number X X distance player to carrier.
+-- @param #number Z Z distance player to carrier.
+-- @param #table posData Position data limits.
+function CARRIERTRAINER:_TooFarOutText(X, Z, posData)
+
+  local text="You are too far"
+  
+  local xtext=nil
+  if posData.Xmin and X<posData.Xmin then
+    xtext=" ahead"
+  elseif posData.Xmax and X>posData.Xmax then
+    xtext=" behind"
+  end
+  
+  local ztext=nil
+  if posData.Zmin and Z<posData.Zmin then
+    ztext=" port (left)"
+  elseif posData.Zmax and Z>posData.Zmax then
+    ztext=" starboard (right)"
+  end
+  
+  if xtext and ztext then
+    text=text..xtext.." and"..ztext
+  elseif xtext then
+    text=text..xtext
+  elseif ztext then
+    text=text..ztext
+  end
+  
+  text=text.." of the carrier!"
+  
+  return text
+end
+
+--- Pattern aborted.
+-- @param #CARRIERTRAINER self
+-- @param #CARRIERTRAINER.PlayerData playerData Player data.
+-- @param #number X X distance player to carrier.
+-- @param #number Z Z distance player to carrier.
+-- @param #table posData Position data.
+function CARRIERTRAINER:_AbortPattern(playerData, X, Z, posData)
+  local toofartext=self:_TooFarOutText(X, Z, posData)
+  self:_SendMessageToPlayer(toofartext.." Abort approach!", 15, playerData )
+  MESSAGE:New(string.format("Abort: X=%d Xmin=%s, Xmax=%s | Z=%d Zmin=%s Zmax=%s", X, tostring(posData.Xmin), tostring(posData.Xmax), Z, tostring(posData.Zmin), tostring(posData.Zmax)), 60):ToAllIf(self.Debug)
+  self:_AddToSummary(playerData, "Approach aborted.")
+  self:_PrintFinalScore(playerData, 30, -2)
+  self:_HandleCollectedResult(playerData, -2)
+  playerData.step = 0
+end
 
 --- Break.
 -- @param #CARRIERTRAINER self
 -- @param #CARRIERTRAINER.PlayerData playerData Player data table.
 -- @param #string part Part of the break.
-function CARRIERTRAINER:_Break(playerData, part)  
+function CARRIERTRAINER:_Break(playerData, part)
 
   local playerPosition = playerData.unit:GetVec3()
   local carrierPosition = self.carrier:GetVec3()
@@ -520,11 +632,18 @@ function CARRIERTRAINER:_Break(playerData, part)
   diffX, diffZ = self:_GetDistances(playerData.unit)
 
   -- Abort when
-  -- > 1.5 km right of carrier
-  -- > 3.7 km left of carrier
-  -- > 0.5 km behind carrier
-  if (diffZ > 1500 or diffZ < -3700 or diffX < -500) then
-    self:_AbortPattern(playerData)
+  self.Break={}
+  self.Break.Xmin=-500
+  self.Break.Xmax=nil
+  self.Break.Zmin=-3700
+  self.Break.Zmax=1500
+  self.Break.LimitEarly=-370  --0.2 NM
+  self.Break.LimitLate=-1470  --0.8 NM
+  self.Break.Alitude=UTILS.FeetToMeters(800)
+  
+  --if (diffZ > 1500 or diffZ < -3700 or diffX < -500) then
+  if self:_CheckAbort(diffX, diffZ, self.Break) then
+    self:_AbortPattern(playerData, diffX, diffZ, self.Break)
     return
   end
   
@@ -539,7 +658,7 @@ function CARRIERTRAINER:_Break(playerData, part)
     limit = -1470  -- 0.8 NM
   end
 
-  -- 
+  -- Check if too far left
   if diffZ < limit then
   
     local idealAltitude = 800
@@ -594,11 +713,21 @@ function CARRIERTRAINER:_Abeam(playerData)
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
   diffX, diffZ = self:_GetDistances(playerData.unit)
   
+  self.Abeam={}
+  self.Abeam.Xmin=nil
+  self.Abeam.Xmax=nil
+  self.Abeam.Zmin=-3700
+  self.Abeam.Zmax=-1000
+  self.Abeam.Limit=-200
+  self.Abeam.Alitude=UTILS.FeetToMeters(600)
+  
   -- Abort if
   -- less than 1.0 km left of boat (no closer than 1 km to boat
   -- more than 3.7 km left of boat 
-  if (diffZ > -1000 or diffZ < -3700) then
-    self:_AbortPattern(playerData)
+  --if (diffZ > -1000 or diffZ < -3700) then
+  if self:_CheckAbort(diffX, diffZ, self.Abeam) then
+    --MESSAGE:New(string.format("Abort: diffX=%d (min=nil, max=nil), diffZ=%d (min=-3700, max=-1000)", diffX, diffZ)):ToAllIf(self.Debug)
+    self:_AbortPattern(playerData, diffX, diffZ, self.Abeam)
     return
   end
   
@@ -693,12 +822,14 @@ function CARRIERTRAINER:_CheckForLongDownwind(playerData)
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
   local diffX, diffZ = self:_GetDistances(playerData.unit)
   
-  --if carrierPosition.x - playerPosition.x > limit then
-  if diffX > limit then
+  -- Check we are not too far out w.r.t back of the boat.
+  if diffX < limit then
   
     local headingPlayer  = playerData.unit:GetHeading()
     local headingCarrier = self.carrier:GetHeading()
+    
     --TODO: Take carrier heading != 0 into account!
+    
     if (headingPlayer > 170) then
     
       local hint = "Too long downwind. Turn final earlier next time."
@@ -724,10 +855,20 @@ function CARRIERTRAINER:_Ninety(playerData)
   local diffX = playerPosition.x - carrierPosition.x
   
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
-  diffX, diffZ = self:_GetDistances(playerData.unit)  
+  diffX, diffZ = self:_GetDistances(playerData.unit)
   
-  if(diffZ < -3700 or diffX < -3700 or diffX > 0) then
-    self:_AbortPattern(playerData)
+  self.Ninety={}
+  self.Ninety.Xmin=-3700
+  self.Ninety.Xmax=0
+  self.Ninety.Zmin=-3700
+  self.Ninety.Zmax=nil
+  self.Ninety.Limit=-1111
+  self.Ninety.Altitude=UTILS.FeetToMeters(500)
+  
+  --if(diffZ < -3700 or diffX < -3700 or diffX > 0) then
+  if self:_CheckAbort(diffX, diffZ, self.Ninety) then
+    --MESSAGE:New(string.format("Abort: diffX=%d (min=-3700, max=0), diffZ=%d (min=-3700, max=nil)", diffX, diffZ)):ToAllIf(self.Debug)
+    self:_AbortPattern(playerData, diffX, diffZ, self.Ninety)
     return
   end
   
@@ -788,9 +929,19 @@ function CARRIERTRAINER:_Wake(playerData)
   
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
   diffX, diffZ = self:_GetDistances(playerData.unit)
+  
+  self.Wake={}
+  self.Wake.Xmin=-4000
+  self.Wake.Xmax=0
+  self.Wake.Zmin=-2000
+  self.Wake.Zmax=nil
+  self.Wake.Limit=0
+  self.Wake.Alitude=UTILS.FeetToMeters(370)
     
-  if(diffZ < -2000 or diffX < -4000 or diffX > 0) then
-    self:_AbortPattern(playerData)
+  --if (diffZ < -2000 or diffX < -4000 or diffX > 0) then
+  if self:_CheckAbort(diffX, diffZ, self.Wake) then
+    MESSAGE:New(string.format("Abort: diffX=%d (min=-4000, max=0), diffZ=%d (min=-2000, max=nil)", diffX, diffZ)):ToAllIf(self.Debug)
+    self:_AbortPattern(playerData, diffX, diffZ, self.Wake)
     return
   end
   
@@ -849,11 +1000,17 @@ function CARRIERTRAINER:_Groove(playerData)
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
   diffX, diffZ = self:_GetDistances(playerData.unit)
   
-  diffX=diffX+100
+  --diffX=diffX+100
+  
+  self.Groove={}
+  self.Groove.Xmin=-4000
+  self.Groove.Xmax=100
   
   -- In front of carrier or more than 4 km behind carrier. 
-  if (diffX > 0 or diffX < -4000) then
-    self:_AbortPattern(playerData)
+  --if (diffX > 0 or diffX < -4000) then
+  if self:_CheckAbort(diffX, diffZ, self.Groove) then
+    --MESSAGE:New(string.format("Abort: diffX=%d (min=-4000, max=0), diffZ=%d (min=nil, max=nil)", diffX, diffZ)):ToAllIf(self.Debug)
+    self:_AbortPattern(playerData, diffX, diffZ, self.Groove)
     return
   end
   
@@ -931,18 +1088,27 @@ function CARRIERTRAINER:_Trap(playerData)
   local diffX = playerPosition.x - carrierPosition.x
   
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
-  diffZ, diffX = self:_GetDistances(playerData.unit)  
+  diffZ, diffX = self:_GetDistances(playerData.unit)
   
-  if(diffZ < -2000 or diffZ > 2000 or diffX < -3000) then
-    self:_AbortPattern(playerData)
+  self.Trap={}
+  self.Trap.Xmin=-3000
+  self.Trap.Xmax=nil
+  self.Trap.Zmin=-2000
+  self.Trap.Zmax=2000
+  self.Trap.Limit=nil
+  self.Trap.Alitude=nil
+  
+  --if(diffZ < -2000 or diffZ > 2000 or diffX < -3000) then
+  if self:_CheckAbort(diffX, diffZ, self.Trap) then
+    self:_AbortPattern(playerData, diffX, diffZ, self.Trap)
     return
   end
 
-  if(diffX > playerData.highestCarrierXDiff) then
+  if (diffX > playerData.highestCarrierXDiff) then
     playerData.highestCarrierXDiff = diffX
   end
   
-  if(playerPosition.y < playerData.lowestAltitude) then
+  if (playerPosition.y < playerData.lowestAltitude) then
     playerData.lowestAltitude = playerPosition.y
   end
   
@@ -1011,6 +1177,127 @@ function CARRIERTRAINER:_Trap(playerData)
   end 
 end
 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Menu Functions
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Add menu commands for player.
+-- @param #CARRIERTRAINER self
+-- @param #string _unitName Name of player unit.
+function CARRIERTRAINER:_AddF10Commands(_unitName)
+  self:F(_unitName)
+  
+  -- Get player unit and name.
+  local _unit, playername = self:_GetPlayerUnitAndName(_unitName)
+  
+  -- Check for player unit.
+  if _unit and playername then
+
+    -- Get group and ID.
+    local group=_unit:GetGroup()
+    local _gid=group:GetID()
+  
+    if group and _gid then
+  
+      if not self.menuadded[_gid] then
+      
+        -- Enable switch so we don't do this twice.
+        self.menuadded[_gid] = true
+  
+        -- Main F10 menu: F10/Carrier Trainer/<Carrier Name>/
+        if CARRIERTRAINER.MenuF10[_gid] == nil then
+          CARRIERTRAINER.MenuF10[_gid]=missionCommands.addSubMenuForGroup(_gid, "Carrier Trainer")
+        end
+        local _rangePath    = missionCommands.addSubMenuForGroup(_gid, self.alias, CARRIERTRAINER.MenuF10[_gid])
+        local _statsPath    = missionCommands.addSubMenuForGroup(_gid, "Results",   _rangePath)
+        local _settingsPath = missionCommands.addSubMenuForGroup(_gid, "My Settings",  _rangePath)
+        local _infoPath     = missionCommands.addSubMenuForGroup(_gid, "Carrier Info",   _rangePath)
+
+        -- F10/On the Range/<Range Name>/Stats/
+        --missionCommands.addCommandForGroup(_gid, "All Results",       _statsPath, self._DisplayStrafePitResults, self, _unitName)
+        --missionCommands.addCommandForGroup(_gid, "My Results",        _statsPath, self._DisplayBombingResults, self, _unitName)
+        --missionCommands.addCommandForGroup(_gid, "Reset All Results", _statsPath, self._ResetRangeStats, self, _unitName)
+        -- F10/On the Range/<Range Name>/My Settings/
+        --missionCommands.addCommandForGroup(_gid, "Smoke Delay On/Off",  _settingsPath, self._SmokeBombDelayOnOff, self, _unitName)
+        --missionCommands.addCommandForGroup(_gid, "Smoke Impact On/Off",  _settingsPath, self._SmokeBombImpactOnOff, self, _unitName)
+        --missionCommands.addCommandForGroup(_gid, "Flare Hits On/Off",    _settingsPath, self._FlareDirectHitsOnOff, self, _unitName)        
+        -- F10/On the Range/<Range Name>/Range Information
+        --missionCommands.addCommandForGroup(_gid, "General Info",        _infoPath, self._DisplayRangeInfo, self, _unitName)
+        missionCommands.addCommandForGroup(_gid, "Weather Report",      _infoPath, self._DisplayCarrierWeather, self, _unitName)
+        --missionCommands.addCommandForGroup(_gid, "Bombing Targets",     _infoPath, self._DisplayBombTargets, self, _unitName)
+        --missionCommands.addCommandForGroup(_gid, "Strafe Pits",         _infoPath, self._DisplayStrafePits, self, _unitName)
+      end
+    else
+      self:T(self.lid.."Could not find group or group ID in AddF10Menu() function. Unit name: ".._unitName)
+    end
+  else
+    self:T(self.lid.."Player unit does not exist in AddF10Menu() function. Unit name: ".._unitName)
+  end
+
+end
+
+--- Report weather conditions at range. Temperature, QFE pressure and wind data.
+-- @param #CARRIERTRAINER self
+-- @param #string _unitname Name of the player unit.
+function CARRIERTRAINER:_DisplayCarrierWeather(_unitname)
+  self:F(_unitname)
+
+  -- Get player unit and player name.
+  local unit, playername = self:_GetPlayerUnitAndName(_unitname)
+  
+  -- Check if we have a player.
+  if unit and playername then
+  
+    -- Message text.
+    local text=""
+   
+    -- Current coordinates.
+    local coord=self.carrier:GetCoordinate()
+    
+    -- Get atmospheric data at range location.
+    local position=self.location --Core.Point#COORDINATE
+    local T=position:GetTemperature()
+    local P=position:GetPressure()
+    local Wd,Ws=position:GetWind()
+    
+    -- Get Beaufort wind scale.
+    local Bn,Bd=UTILS.BeaufortScale(Ws)  
+    
+    local WD=string.format('%03d°', Wd)
+    local Ts=string.format("%d°C",T)
+    
+    local hPa2inHg=0.0295299830714
+    local hPa2mmHg=0.7500615613030
+    
+    local settings=_DATABASE:GetPlayerSettings(playername) or _SETTINGS --Core.Settings#SETTINGS
+    local tT=string.format("%d°C",T)
+    local tW=string.format("%.1f m/s", Ws)
+    local tP=string.format("%.1f mmHg", P*hPa2mmHg)
+    if settings:IsImperial() then
+      tT=string.format("%d°F", UTILS.CelciusToFarenheit(T))
+      tW=string.format("%.1f knots", UTILS.MpsToKnots(Ws))
+      tP=string.format("%.2f inHg", P*hPa2inHg)      
+    end
+    
+           
+    -- Message text.
+    text=text..string.format("Weather Report at %s:\n", self.rangename)
+    text=text..string.format("--------------------------------------------------\n")
+    text=text..string.format("Temperature %s\n", tT)
+    text=text..string.format("Wind from %s at %s (%s)\n", WD, tW, Bd)
+    text=text..string.format("QFE %.1f hPa = %s", P, tP)
+
+    
+    -- Send message to player group.
+    --self:_DisplayMessageToGroup(unit, text, nil, true)
+    self:_SendMessageToPlayer(text, 30, self.players[playername])
+    
+    -- Debug output.
+    self:T2(self.lid..text)
+  else
+    self:T(self.lid..string.format("ERROR! Could not find player unit in RangeInfo! Name = %s", _unitname))
+  end      
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- MISC functions
@@ -1081,7 +1368,7 @@ end
 -- @param #CARRIERTRAINER.PlayerData playerData Player data.
 function CARRIERTRAINER:_SendMessageToPlayer(message, duration, playerData)
   if playerData.client then
-    MESSAGE:New(message, duration):ToClient(playerData.client)
+    MESSAGE:New(string.format("%s, %s, ", self.alias, playerData.callsign)..message, duration):ToClient(playerData.client)
   end
 end
 
@@ -1122,6 +1409,7 @@ end
 -- @param #CARRIERTRAINER.PlayerData playerData Player data.
 -- @param #number wire Trapped wire.
 function CARRIERTRAINER:_HandleCollectedResult(playerData, wire)
+
   local newString = ""
   if(wire == -2) then
     newString = playerData.score .. " (Aborted)"
@@ -1136,26 +1424,20 @@ function CARRIERTRAINER:_HandleCollectedResult(playerData, wire)
   playerData.totalScore = playerData.totalScore + playerData.score
   playerData.passes = playerData.passes + 1
   
-  if(playerData.collectedResultString == "") then
+  if playerData.collectedResultString == "" then
     playerData.collectedResultString = newString
   else
     playerData.collectedResultString = playerData.collectedResultString .. ", " .. newString
     MessageToAll( playerData.callsign .. "'s " .. playerData.passes .. " passes: " .. playerData.collectedResultString .. " (TOTAL: " .. playerData.totalScore .. ")"  , 30, "CollectedResult" )
   end
   
-  self:_SendMessageToPlayer( "Return south 4 nm (over the trailing ship), towards WP 1, to restart the pattern.", 20, playerData )
+  local heading=playerData.unit:GetCoordinate():HeadingTo(self.startZone:GetCoordinate())
+  local distance=playerData.unit:GetCoordinate():Get2DDistance(self.startZone:GetCoordinate())
+  local text=string.format("%s, fly heading %d for %d nm to restart the pattern.", playerData.callsign, heading, UTILS.MetersToNM(distance))
+   --"Return south 4 nm (over the trailing ship), towards WP 1, to restart the pattern."
+  self:_SendMessageToPlayer(text, 30, playerData)
 end
 
---- Pattern aborted.
--- @param #CARRIERTRAINER self
--- @param #CARRIERTRAINER.PlayerData playerData Player data.
-function CARRIERTRAINER:_AbortPattern(playerData)
-  self:_SendMessageToPlayer( "You're too far from where you should be. Abort approach!", 15, playerData )
-  self:_AddToSummary(playerData, "Approach aborted.")
-  self:_PrintFinalScore(playerData, 30, -2)
-  self:_HandleCollectedResult(playerData, -2)
-  playerData.step = 0
-end
 
 --- Get the formatted score.
 -- @param #CARRIERTRAINER self
