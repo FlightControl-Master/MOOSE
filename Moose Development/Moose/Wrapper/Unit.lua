@@ -907,6 +907,7 @@ function UNIT:InAir()
   if DCSUnit then
 --    Implementation of workaround. The original code is below.
 --    This to simulate the landing on buildings.
+
 --    local UnitInAir = DCSUnit:inAir()
     local UnitInAir = true
     local VelocityVec3 = DCSUnit:getVelocity()
@@ -914,7 +915,7 @@ function UNIT:InAir()
     local Coordinate = DCSUnit:getPoint()
     local LandHeight = land.getHeight( { x = Coordinate.x, y = Coordinate.z } )
     local Height = Coordinate.y - LandHeight
-    if Velocity < 1 and Height <= 30   then
+    if Velocity < 1 and Height <= 60   then
       UnitInAir = false
     end
     self:T3( UnitInAir )
