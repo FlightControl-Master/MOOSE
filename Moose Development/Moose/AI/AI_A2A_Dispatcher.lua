@@ -1,5 +1,6 @@
 --- **AI** - (R2.2) - Manages the process of an automatic A2A defense system based on an EWR network targets and coordinating CAP and GCI.
 -- 
+-- ===
 -- 
 -- Features:
 -- 
@@ -18,6 +19,19 @@
 --    * Quickly setup an A2A defense system using @{#AI_A2A_GCICAP}.
 --    * Setup a more advanced defense system using @{#AI_A2A_DISPATCHER}.
 -- 
+-- ===
+-- 
+-- ## Missions:
+-- 
+-- [AID-A2A - AI A2A Dispatching](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/AID%20-%20AI%20Dispatching/AID-A2A%20-%20AI%20A2A%20Dispatching)
+-- 
+-- ===
+-- 
+-- ## YouTube Channel:
+-- 
+-- [DCS WORLD - MOOSE - A2A GCICAP - Build an automatic A2A Defense System](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl0S4KMNUUJpaUs6zZHjLKNx)
+-- 
+-- ===
 -- 
 -- # QUICK START GUIDE
 -- 
@@ -180,18 +194,6 @@ do -- AI_A2A_DISPATCHER
   -- @extends Tasking.DetectionManager#DETECTION_MANAGER
 
   --- Create an automatic air defence system for a coalition. 
-  -- 
-  -- ===
-  -- 
-  -- # Demo Missions
-  -- 
-  -- ### [AI\_A2A\_DISPATCHER Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/release-2-2-pre/AID%20-%20AI%20Dispatching)
-  -- 
-  -- ===
-  -- 
-  -- # YouTube Channel
-  -- 
-  -- ### [DCS WORLD - MOOSE - A2A GCICAP - Build an automatic A2A Defense System](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl0S4KMNUUJpaUs6zZHjLKNx)
   -- 
   -- ===
   -- 
