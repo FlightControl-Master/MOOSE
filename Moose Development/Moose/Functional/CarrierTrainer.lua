@@ -15,7 +15,6 @@
 -- ===
 --
 -- ### Author: **Bankler** (original idea and script)
--- ### Co-author: **funkyfranky** (implementation as MOOSE class)
 --
 -- @module Functional.CarrierTrainer
 -- @image MOOSE.JPG
@@ -26,10 +25,18 @@
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #boolean Debug Debug mode. Messages to all about status.
 -- @field Wrapper.Unit#UNIT carrier Aircraft carrier unit on which we want to practice.
+-- @field #string carriertype Type name of aircraft carrier.
 -- @field Core.Zone#ZONE_UNIT startZone Zone in which the pattern approach starts.
 -- @field Core.Zone#ZONE_UNIT giantZone Zone around the carrier to register a new player.
 -- @field #table players Table of players. 
 -- @field #table menuadded Table of units where the F10 radio menu was added.
+-- @field #CARRIER.Checkpoint upwind Upwind checkpoint.
+-- @field #CARRIER.Checkpoint breakearly Early break checkpoint.
+-- @field #CARRIER.Checkpoint breaklate Late brak checkpoint.
+-- @field #CARRIER.Checkpoint abeam Abeam checkpoint.
+-- @field #CARRIER.Checkpoint ninety At the ninety checkpoint.
+-- @field #CARRIER.Checkpoint groove In the groove checkpoint.
+-- @field #CARRIER.Checkpoint trap Landing checkpoint.
 -- @extends Core.Fsm#FSM
 
 --- Practice Carrier Landings
@@ -46,14 +53,23 @@
 -- @field #CARRIERTRAINER
 CARRIERTRAINER = {
   ClassName = "CARRIERTRAINER",
-  lid       = nil,
-  Debug     = true,
-  carrier   = nil,
-  alias     = nil,
-  startZone = nil,
-  giantZone = nil,
-  players   = {},
-  menuadded = {},
+  lid         = nil,
+  Debug       = true,
+  carrier     = nil,
+  carriertype = nil,
+  alias       = nil,
+  startZone   = nil,
+  giantZone   = nil,
+  players     = {},
+  menuadded   = {},
+  upwind      = {},
+  abeam       = {},
+  breakearly  = {},
+  breaklate   = {},
+  ninety      = {},
+  wake        = {},
+  groove      = {},
+  trap        = {},
 }
 
 --- Main radio menu.
@@ -62,7 +78,25 @@ CARRIERTRAINER.MenuF10={}
 
 --- Carrier trainer class version.
 -- @field #string version
-CARRIERTRAINER.version="0.0.4"
+CARRIERTRAINER.version="0.0.5"
+
+--- Carrier types.
+-- @type CARRIERTRAINER.CarrierType
+-- @field #string Stennis CVN-74 John C. Stennis
+-- @field #string CarlVinson CVN-70 Carl Vinson
+-- @field #string Tarawa LHA-1 Tarawa
+-- @field #string Kuznetsov CV 1143.5 Admiral Kuznetsov
+CARRIERTRAINER.CarrierType={
+  STENNIS="Stennis",
+  VINSON="Vinson",
+  TARAWA="LHA_Tarawa",
+  KUZNETSOV="KUZNECOW",
+}
+
+CARRIERTRAINER.AircraftType={
+  AV8B="AV8BNA",
+  HORNET="FA-18C_hornet",
+}
 
 --- Player data table holding all important parameters for each player.
 -- @type CARRIERTRAINER.PlayerData
@@ -78,7 +112,25 @@ CARRIERTRAINER.version="0.0.4"
 -- @field #number secondsStandingStill Time player does not move after a landing attempt. 
 -- @field #string summary Result summary text.
 -- @field Wrapper.Client#CLIENT Client object of player.
+-- @field #string difficulty Difficulty level.
 
+--- Difficulty level.
+-- @field #string easy Easy difficulty: error margin 10% for high score and 20% for low score. No score for deviation >20%.
+-- @field #string normal Normal difficulty: error margin 5% deviation from ideal for high score and 10% for low score. No score for deviation >10%.
+-- @field #string hard Hard difficulty: error margin 2.5% deviation from ideal value for high score and 5% for low score. No score for deviation >5%.
+
+--- Checkpoint
+-- @type CARRIERTRAINER.Checkpoint
+-- @field #number Xmin Minimum allowed longitual distance to carrier.
+-- @field #number Xmax Maximum allowed longitual distance to carrier.
+-- @field #number Zmin Minimum allowed latitudal distance to carrier.
+-- @field #number Zmax Maximum allowed latitudal distance to carrier.
+-- @field #number Xlimit Latitudal threshold for triggering the next step.
+-- @field #number Zlimit Latitudal threshold for triggering the next step.
+-- @field #number Altitude Optimal altitude at this point.
+-- @field #number AoA Optimal AoA at this point.
+-- @field #number Speed Optimal speed at this point.
+-- @field #table Checklist Table of checklist text items to display at this point.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -101,11 +153,17 @@ function CARRIERTRAINER:New(carriername, alias)
     self.startZone = ZONE_UNIT:New("startZone", self.carrier,  1000, { dx = -2000, dy = 100, relative_to_unit = true })
     self.giantZone = ZONE_UNIT:New("giantZone", self.carrier, 30000, { dx =  0,    dy = 0,   relative_to_unit = true })
   else
-    self:E("ERROR: Carrier unit could not be found!")
+    local text=string.format("ERROR: Carrier unit %s could not be found! Make sure this UNIT is defined in the mission editor and check the spelling of the unit name carefully.", carriername)
+    MESSAGE:New(text, 120):ToAll()
+    self:E(self.lid..text)
+    return nil
   end
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("CARRIERTRAINER %s | ", carriername)
+  
+  -- Get carrier type.
+  self.carriertype=self.carrier:GetTypeName()
   
   -- Set alias.
   self.alias=alias or carriername
@@ -158,7 +216,7 @@ end
 function CARRIERTRAINER:onafterStart(From, Event, To)
 
   -- Events are handled my MOOSE.
-  self:I(self.lid..string.format("Starting Carrier Training %s for carrier unit %s.", CARRIERTRAINER.version, self.carrier:GetName()))
+  self:I(self.lid..string.format("Starting Carrier Training %s for carrier unit %s of type %s.", CARRIERTRAINER.version, self.carrier:GetName(), self.carriertype))
   
   -- Handle events.
   self:HandleEvent(EVENTS.Birth)
@@ -290,6 +348,26 @@ function CARRIERTRAINER:_AddToCollectedResult(playerData, item)
   playerData.collectedResultString = playerData.collectedResultString .. item .. "\n"
 end
 
+--- Get relative heading of player wrt carrier.
+-- @param #CARRIERTRAINER self
+-- @param Wrapper.Unit#UNIT unit Player unit.
+-- @return #number Relative heading in degrees.
+function CARRIERTRAINER:_GetRelativeHeading(unit)
+  --local a=self.carrier:GetVec3()
+  --local b=unit:GetVec3()
+  --local c={x=b.x-a.x, y=0, z=b.z-a.z}
+  --local headingCarrier=self.carrier:GetHeading()
+  --local headingPlayer=unit:GetHeading()
+  local vC=self.carrier:GetOrientationX()
+  local vP=unit:GetOrientationX()
+  
+  -- Get angle between the two orientation vectors in rad.
+  local relHead=math.acos(UTILS.VecDot(vC,vP)/UTILS.VecNorm(vC)/UTILS.VecNorm(vP))
+  
+  -- Return heading in degrees.
+  return math.deg(relHead)
+end
+
 
 --- Carrier trainer event handler for event birth.
 -- @param #CARRIERTRAINER self
@@ -344,6 +422,33 @@ function CARRIERTRAINER:_CheckPlayerStatus()
     end
   end
   
+end
+
+--- Init parameters for USS Stennis carrier.
+-- @param #CARRIERTRAINER self
+function CARRIERTRAINMER:_InitStennis()
+
+  self.Upwind.Xmin=1
+
+  self.upwind={}
+  self.upwind.Xmin=-4000  -- TODO Should be withing 4 km behind carrier. Why?
+  self.upwind.Xmax=nil
+  self.upwind.Zmin=0
+  self.upwind.Zmax=500
+  self.upwind.
+  self.upwind.Alitude=UTILS.FeetToMeters(800)
+  
+
+  -- Early break checkpoint parameters.
+  self.breakearly={}
+  self.Breakearly.Xmin=-500
+  self.Breakearly.Xmax=nil
+  self.Breakearly.Zmin=-3700
+  self.Breakearly.Zmax=1500
+  self.Breakearly.LimitEarly=-370  --0.2 NM
+  self.Breakearly.LimitLate=-1470  --0.8 NM
+  self.Breakearly.Alitude=UTILS.FeetToMeters(800)  
+
 end
 
 --- Get name of the current pattern step.
@@ -452,13 +557,7 @@ function CARRIERTRAINER:_Upwind(playerData)
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
   diffX, diffZ = self:_GetDistances(playerData.unit)
   
-  self.Upwind={}
-  self.Upwind.Xmin=-4000  -- TODO Should be withing 4 km behind carrier. Why?
-  self.Upwind.Xmax=nil
-  self.Upwind.Zmin=0
-  self.Upwind.Zmax=500
-  self.Upwind.Limit=0
-  self.Upwind.Alitude=UTILS.FeetToMeters(800)
+
   
   -- Too far away.
   -- Should be between 0-500 meters right of carrier.  
