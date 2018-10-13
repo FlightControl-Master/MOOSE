@@ -1023,11 +1023,14 @@ do -- AI_A2A_DISPATCHER
 
     local AirbaseName = EventData.PlaceName -- The name of the airbase that was captured.
     
+    self:I( "Captured " .. AirbaseName )
+    
     -- Now search for all squadrons located at the airbase, and sanatize them.
     for SquadronName, Squadron in pairs( self.DefenderSquadrons ) do
       if Squadron.AirbaseName == AirbaseName then
         Squadron.Resources = -999 -- The base has been captured, and the resources are eliminated. No more spawning.
         Squadron.Captured = true
+        self:I( "Squadron " .. SquadronName .. " captured." )
       end
     end
   end
@@ -1507,6 +1510,7 @@ do -- AI_A2A_DISPATCHER
     
     DefenderSquadron.Name = SquadronName
     DefenderSquadron.Airbase = AIRBASE:FindByName( AirbaseName )
+    DefenderSquadron.AirbaseName = DefenderSquadron.Airbase:GetName()
     if not DefenderSquadron.Airbase then
       error( "Cannot find airbase with name:" .. AirbaseName )
     end
