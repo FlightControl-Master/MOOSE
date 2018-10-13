@@ -1,5 +1,6 @@
 --- **AI** - (R2.2) - Manages the process of an automatic A2A defense system based on an EWR network targets and coordinating CAP and GCI.
 -- 
+-- ===
 -- 
 -- Features:
 -- 
@@ -18,6 +19,19 @@
 --    * Quickly setup an A2A defense system using @{#AI_A2A_GCICAP}.
 --    * Setup a more advanced defense system using @{#AI_A2A_DISPATCHER}.
 -- 
+-- ===
+-- 
+-- ## Missions:
+-- 
+-- [AID-A2A - AI A2A Dispatching](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/AID%20-%20AI%20Dispatching/AID-A2A%20-%20AI%20A2A%20Dispatching)
+-- 
+-- ===
+-- 
+-- ## YouTube Channel:
+-- 
+-- [DCS WORLD - MOOSE - A2A GCICAP - Build an automatic A2A Defense System](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl0S4KMNUUJpaUs6zZHjLKNx)
+-- 
+-- ===
 -- 
 -- # QUICK START GUIDE
 -- 
@@ -180,18 +194,6 @@ do -- AI_A2A_DISPATCHER
   -- @extends Tasking.DetectionManager#DETECTION_MANAGER
 
   --- Create an automatic air defence system for a coalition. 
-  -- 
-  -- ===
-  -- 
-  -- # Demo Missions
-  -- 
-  -- ### [AI\_A2A\_DISPATCHER Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/release-2-2-pre/AID%20-%20AI%20Dispatching)
-  -- 
-  -- ===
-  -- 
-  -- # YouTube Channel
-  -- 
-  -- ### [DCS WORLD - MOOSE - A2A GCICAP - Build an automatic A2A Defense System](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl0S4KMNUUJpaUs6zZHjLKNx)
   -- 
   -- ===
   -- 
@@ -796,10 +798,17 @@ do -- AI_A2A_DISPATCHER
   --   
   -- Use the method @{#AI_A2A_DISPATCHER.SetDisengageRadius}() to modify the default Disengage Radius to another distance setting.
   -- 
+  -- ## 11. Airbase capture:
   -- 
-  -- ## 11. Q & A:
+  -- Different squadrons can be located at one airbase.
+  -- If the airbase gets captured, that is, when there is an enemy unit near the airbase, and there aren't anymore friendlies at the airbase, the airbase will change coalition ownership.
+  -- As a result, the GCI and CAP will stop!
+  -- However, the squadron will still stay alive. Any airplane that is airborne will continue its operations until all airborne airplanes
+  -- of the squadron will be destroyed. This to keep consistency of air operations not to confuse the players.
   -- 
-  -- ### 11.1. Which countries will be selected for each coalition?
+  -- ## 12. Q & A:
+  -- 
+  -- ### 12.1. Which countries will be selected for each coalition?
   -- 
   -- Which countries are assigned to a coalition influences which units are available to the coalition. 
   -- For example because the mission calls for a EWR radar on the blue side the Ukraine might be chosen as a blue country 
@@ -807,7 +816,7 @@ do -- AI_A2A_DISPATCHER
   -- Some countries assign different tasking to aircraft, for example Germany assigns the CAP task to F-4E Phantoms but the USA does not.  
   -- Therefore if F4s are wanted as a coalition's CAP or GCI aircraft Germany will need to be assigned to that coalition. 
   -- 
-  -- ### 11.2. Country, type, load out, skill and skins for CAP and GCI aircraft?
+  -- ### 12.2. Country, type, load out, skill and skins for CAP and GCI aircraft?
   -- 
   --   * Note these can be from any countries within the coalition but must be an aircraft with one of the main tasks being "CAP".
   --   * Obviously skins which are selected must be available to all players that join the mission otherwise they will see a default skin.
@@ -995,14 +1004,37 @@ do -- AI_A2A_DISPATCHER
     self:HandleEvent( EVENTS.Dead, self.OnEventCrashOrDead )
     --self:HandleEvent( EVENTS.RemoveUnit, self.OnEventCrashOrDead )
     
+    
     self:HandleEvent( EVENTS.Land )
     self:HandleEvent( EVENTS.EngineShutdown )
+    
+    -- Handle the situation where the airbases are captured.
+    self:HandleEvent( EVENTS.BaseCaptured )
     
     self:SetTacticalDisplay( false )
     
     self:__Start( 5 )
     
     return self
+  end
+
+
+  --- @param #AI_A2A_DISPATCHER self
+  -- @param Core.Event#EVENTDATA EventData
+  function AI_A2A_DISPATCHER:OnEventBaseCaptured( EventData )
+
+    local AirbaseName = EventData.PlaceName -- The name of the airbase that was captured.
+    
+    self:I( "Captured " .. AirbaseName )
+    
+    -- Now search for all squadrons located at the airbase, and sanatize them.
+    for SquadronName, Squadron in pairs( self.DefenderSquadrons ) do
+      if Squadron.AirbaseName == AirbaseName then
+        Squadron.Resources = -999 -- The base has been captured, and the resources are eliminated. No more spawning.
+        Squadron.Captured = true
+        self:I( "Squadron " .. SquadronName .. " captured." )
+      end
+    end
   end
 
   --- @param #AI_A2A_DISPATCHER self
@@ -1480,6 +1512,7 @@ do -- AI_A2A_DISPATCHER
     
     DefenderSquadron.Name = SquadronName
     DefenderSquadron.Airbase = AIRBASE:FindByName( AirbaseName )
+    DefenderSquadron.AirbaseName = DefenderSquadron.Airbase:GetName()
     if not DefenderSquadron.Airbase then
       error( "Cannot find airbase with name:" .. AirbaseName )
     end
@@ -1497,6 +1530,7 @@ do -- AI_A2A_DISPATCHER
     end
     DefenderSquadron.Resources = Resources
     DefenderSquadron.TemplatePrefixes = TemplatePrefixes
+    DefenderSquadron.Captured = false -- Not captured. This flag will be set to true, when the airbase where the squadron is located, is captured.
 
     self:F( { Squadron = {SquadronName, AirbaseName, TemplatePrefixes, Resources } } )
     
@@ -1663,16 +1697,19 @@ do -- AI_A2A_DISPATCHER
 
     local DefenderSquadron = self:GetSquadron( SquadronName )
 
-    if ( not DefenderSquadron.Resources ) or ( DefenderSquadron.Resources and DefenderSquadron.Resources > 0  ) then
-
-      local Cap = DefenderSquadron.Cap
-      if Cap then
-        local CapCount = self:CountCapAirborne( SquadronName )
-        self:F( { CapCount = CapCount } )
-        if CapCount < Cap.CapLimit then
-          local Probability = math.random()
-          if Probability <= Cap.Probability then
-            return DefenderSquadron
+    if DefenderSquadron.Captured == false then -- We can only spawn new CAP if the base has not been captured.
+    
+      if ( not DefenderSquadron.Resources ) or ( DefenderSquadron.Resources and DefenderSquadron.Resources > 0  ) then -- And, if there are sufficient resources.
+  
+        local Cap = DefenderSquadron.Cap
+        if Cap then
+          local CapCount = self:CountCapAirborne( SquadronName )
+          self:F( { CapCount = CapCount } )
+          if CapCount < Cap.CapLimit then
+            local Probability = math.random()
+            if Probability <= Cap.Probability then
+              return DefenderSquadron
+            end
           end
         end
       end
@@ -1693,10 +1730,13 @@ do -- AI_A2A_DISPATCHER
 
     local DefenderSquadron = self:GetSquadron( SquadronName )
 
-    if ( not DefenderSquadron.Resources ) or ( DefenderSquadron.Resources and DefenderSquadron.Resources > 0  ) then
-      local Gci = DefenderSquadron.Gci
-      if Gci then
-        return DefenderSquadron
+    if DefenderSquadron.Captured == false then -- We can only spawn new CAP if the base has not been captured.
+    
+      if ( not DefenderSquadron.Resources ) or ( DefenderSquadron.Resources and DefenderSquadron.Resources > 0  ) then -- And, if there are sufficient resources.
+        local Gci = DefenderSquadron.Gci
+        if Gci then
+          return DefenderSquadron
+        end
       end
     end
     return nil

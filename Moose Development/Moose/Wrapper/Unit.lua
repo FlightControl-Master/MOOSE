@@ -896,16 +896,28 @@ function UNIT:IsShip()
 end
 
 --- Returns true if the UNIT is in the air.
--- @param Wrapper.Positionable#UNIT self
+-- @param #UNIT self
 -- @return #boolean true if in the air.
 -- @return #nil The UNIT is not existing or alive.  
 function UNIT:InAir()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSObject()
+  local DCSUnit = self:GetDCSObject() --DCS#Unit
   
   if DCSUnit then
-    local UnitInAir = DCSUnit:inAir()
+--    Implementation of workaround. The original code is below.
+--    This to simulate the landing on buildings.
+
+--    local UnitInAir = DCSUnit:inAir()
+    local UnitInAir = true
+    local VelocityVec3 = DCSUnit:getVelocity()
+    local Velocity = ( VelocityVec3.x ^ 2 + VelocityVec3.y ^ 2 + VelocityVec3.z ^ 2 ) ^ 0.5 -- in meters / sec
+    local Coordinate = DCSUnit:getPoint()
+    local LandHeight = land.getHeight( { x = Coordinate.x, y = Coordinate.z } )
+    local Height = Coordinate.y - LandHeight
+    if Velocity < 1 and Height <= 60   then
+      UnitInAir = false
+    end
     self:T3( UnitInAir )
     return UnitInAir
   end
