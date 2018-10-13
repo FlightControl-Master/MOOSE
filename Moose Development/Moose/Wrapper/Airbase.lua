@@ -334,7 +334,7 @@ end
 --- Find a AIRBASE in the _DATABASE using the name of an existing DCS Airbase.
 -- @param #AIRBASE self
 -- @param #string AirbaseName The Airbase Name.
--- @return Wrapper.Airbase#AIRBASE self
+-- @return #AIRBASE self
 function AIRBASE:FindByName( AirbaseName )
   
   local AirbaseFound = _DATABASE:FindAirbase( AirbaseName )
