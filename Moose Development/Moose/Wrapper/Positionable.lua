@@ -671,8 +671,16 @@ function POSITIONABLE:GetAoA()
     
     if unitvel and UTILS.VecNorm(unitvel)~=0 then
     
+      -- Get wind vector including turbulences.
+      local wind=self:GetCoordinate():GetWindWithTurbulenceVec3()
+    
+      -- Include wind vector.      
+      unitvel.x=unitvel.x-wind.x
+      unitvel.y=unitvel.y-wind.y
+      unitvel.z=unitvel.z-wind.z
+      
       -- Unit velocity transformed into aircraft axes directions.
-      local AxialVel = {} 
+      local AxialVel = {}
   
       -- Transform velocity components in direction of aircraft axes.
       AxialVel.x = UTILS.VecDot(unitpos.x, unitvel)
