@@ -767,6 +767,24 @@ do -- COORDINATE
     -- Return wind direction and strength km/h.
     return direction, strength
   end
+  
+  --- Returns the wind direction (from) and strength.
+  -- @param #COORDINATE self
+  -- @param height (Optional) parameter specifying the height ASL. The minimum height will be always be the land height since the wind is zero below the ground.
+  -- @return Direction the wind is blowing from in degrees.
+  function COORDINATE:GetWindWithTurbulenceVec3(height)
+  
+    -- AGL height if 
+    local landheight=self:GetLandHeight()+0.1 -- we at 0.1 meters to be sure to be above ground since wind is zero below ground level.
+    
+    -- Point at which the wind is evaluated. 
+    local point={x=self.x, y=math.max(height or self.y, landheight), z=self.z}
+    
+    -- Get wind velocity vector including turbulences.
+    local vec3 = atmosphere.getWindWithTurbulence(point)
+    
+    return vec3
+  end  
 
 
   --- Returns a text documenting the wind direction (from) and strength according the measurement system @{Settings}.

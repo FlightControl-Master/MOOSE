@@ -121,6 +121,80 @@ function POSITIONABLE:Destroy( GenerateEvent )
   return nil
 end
 
+--- Returns a pos3 table of the objects current position and orientation in 3D space. X, Y, Z values are unit vectors defining the objects orientation.
+-- Coordinates are dependent on the position of the maps origin.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return DCS#Position Table consisting of the point and orientation tables.
+function POSITIONABLE:GetPosition()
+  self:F2( self.PositionableName )
+
+  local DCSPositionable = self:GetDCSObject()
+  
+  if DCSPositionable then
+    local PositionablePosition = DCSPositionable:getPosition()
+    self:T3( PositionablePosition )
+    return PositionablePosition
+  end
+  
+  BASE:E( { "Cannot GetPositionVec3", Positionable = self, Alive = self:IsAlive() } )
+  return nil  
+end
+
+--- Returns a {@DCS#Vec3} table of the objects current orientation in 3D space. X, Y, Z values are unit vectors defining the objects orientation.
+-- X is the orientation parallel to the movement of the object, Z perpendicular and Y vertical orientation. 
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return DCS#Vec3 X orientation, i.e. parallel to the direction of movement.
+-- @return DCS#Vec3 Y orientation, i.e. vertical.
+-- @return DCS#Vec3 Z orientation, i.e. perpendicular to the direction of movement.
+function POSITIONABLE:GetOrientation()
+  local position=self:GetPosition()
+  if position then
+    return position.x, position.y, position.z
+  else
+    BASE:E( { "Cannot GetOrientation", Positionable = self, Alive = self:IsAlive() } )
+    return nil, nil, nil
+  end 
+end
+
+--- Returns a {@DCS#Vec3} table of the objects current X orientation in 3D space, i.e. along the direction of movement.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return DCS#Vec3 X orientation, i.e. parallel to the direction of movement.
+function POSITIONABLE:GetOrientationX()
+  local position=self:GetPosition()
+  if position then
+    return position.x
+  else
+    BASE:E( { "Cannot GetOrientationX", Positionable = self, Alive = self:IsAlive() } )
+    return nil
+  end 
+end
+
+--- Returns a {@DCS#Vec3} table of the objects current Y orientation in 3D space, i.e. vertical orientation.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return DCS#Vec3 Y orientation, i.e. vertical.
+function POSITIONABLE:GetOrientationY()
+  local position=self:GetPosition()
+  if position then
+    return position.y
+  else
+    BASE:E( { "Cannot GetOrientationY", Positionable = self, Alive = self:IsAlive() } )
+    return nil
+  end 
+end
+
+--- Returns a {@DCS#Vec3} table of the objects current Z orientation in 3D space, i.e. perpendicular to direction of movement.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return DCS#Vec3 Z orientation, i.e. perpendicular to movement.
+function POSITIONABLE:GetOrientationZ()
+  local position=self:GetPosition()
+  if position then
+    return position.z
+  else
+    BASE:E( { "Cannot GetOrientationZ", Positionable = self, Alive = self:IsAlive() } )
+    return nil
+  end 
+end
+
 --- Returns the @{DCS#Position3} position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return DCS#Position The 3D position vectors of the POSITIONABLE.
@@ -580,6 +654,153 @@ function POSITIONABLE:GetVelocityMPS()
   end
   
   return 0
+end
+
+--- Returns the Angle of Attack of a positionable.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return #number Angle of attack in degrees.
+function POSITIONABLE:GetAoA()
+
+  -- Get position of the unit.
+  local unitpos = self:GetPosition()
+  
+  if unitpos then
+  
+    -- Get velocity vector of the unit.
+    local unitvel = self:GetVelocityVec3()
+    
+    if unitvel and UTILS.VecNorm(unitvel)~=0 then
+    
+      -- Get wind vector including turbulences.
+      local wind=self:GetCoordinate():GetWindWithTurbulenceVec3()
+    
+      -- Include wind vector.      
+      unitvel.x=unitvel.x-wind.x
+      unitvel.y=unitvel.y-wind.y
+      unitvel.z=unitvel.z-wind.z
+      
+      -- Unit velocity transformed into aircraft axes directions.
+      local AxialVel = {}
+  
+      -- Transform velocity components in direction of aircraft axes.
+      AxialVel.x = UTILS.VecDot(unitpos.x, unitvel)
+      AxialVel.y = UTILS.VecDot(unitpos.y, unitvel)
+      AxialVel.z = UTILS.VecDot(unitpos.z, unitvel)
+  
+      -- AoA is angle between unitpos.x and the x and y velocities.
+      local AoA = math.acos(UTILS.VecDot({x = 1, y = 0, z = 0}, {x = AxialVel.x, y = AxialVel.y, z = 0})/UTILS.VecNorm({x = AxialVel.x, y = AxialVel.y, z = 0}))
+  
+      --Set correct direction:
+      if AxialVel.y > 0 then
+        AoA = -AoA
+      end
+      
+      -- Return AoA value in degrees.
+      return math.deg(AoA)
+    end
+    
+  end
+
+  return nil
+end
+
+--- Returns the unit's climb or descent angle.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return #number Climb or descent angle in degrees.
+function POSITIONABLE:GetClimbAnge()
+
+  -- Get position of the unit.
+  local unitpos = self:GetPosition()
+  
+  if unitpos then
+  
+    -- Get velocity vector of the unit.
+    local unitvel = self:GetVelocityVec3()
+    
+    if unitvel and UTILS.VecNorm(unitvel)~=0 then
+
+      return math.asin(unitvel.y/UTILS.VecNorm(unitvel))
+
+    end
+  end
+end
+
+--- Returns the pitch angle of a unit.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return #number Pitch ange in degrees.
+function POSITIONABLE:GetPitch()
+
+  -- Get position of the unit.
+  local unitpos = self:GetPosition()
+  
+  if unitpos then
+    return math.deg(math.asin(unitpos.x.y))
+  end
+  
+  return nil
+end
+
+--- Returns the roll angle of a unit.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return #number Pitch ange in degrees.
+function POSITIONABLE:GetRoll()
+
+  -- Get position of the unit.
+  local unitpos = self:GetPosition()
+  
+  if unitpos then
+
+    --first, make a vector that is perpendicular to y and unitpos.x with cross product
+    local cp = UTILS.VecCross(unitpos.x, {x = 0, y = 1, z = 0})
+
+    --now, get dot product of of this cross product with unitpos.z
+    local dp = UTILS.VecDot(cp, unitpos.z)
+
+    --now get the magnitude of the roll (magnitude of the angle between two vectors is acos(vec1.vec2/|vec1||vec2|)
+    local Roll = math.acos(dp/(UTILS.VecNorm(cp)*UTILS.VecNorm(unitpos.z)))
+
+    --now, have to get sign of roll.
+    -- by convention, making right roll positive
+    -- to get sign of roll, use the y component of unitpos.z. For right roll, y component is negative.
+
+    if unitpos.z.y > 0 then -- left roll, flip the sign of the roll
+      Roll = -Roll
+    end
+    
+    return math.deg(Roll)  
+  end
+end
+
+--- Returns the yaw angle of a unit.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return #number Yaw ange in degrees.
+function POSITIONABLE:GetYaw()
+
+  local unitpos = self:GetPosition()
+  if unitpos then
+    -- get unit velocity
+    local unitvel = self:GetVelocityVec3()
+    
+    if unitvel and UTILS.VecNorm(unitvel) ~= 0 then --must have non-zero velocity!
+      local AxialVel = {} --unit velocity transformed into aircraft axes directions
+  
+      --transform velocity components in direction of aircraft axes.
+      AxialVel.x = UTILS.VecDot(unitpos.x, unitvel)
+      AxialVel.y = UTILS.VecDot(unitpos.y, unitvel)
+      AxialVel.z = UTILS.VecDot(unitpos.z, unitvel)
+  
+      --Yaw is the angle between unitpos.x and the x and z velocities
+      --define right yaw as positive
+      local Yaw = math.acos(UTILS.VecDot({x = 1, y = 0, z = 0}, {x = AxialVel.x, y = 0, z = AxialVel.z})/UTILS.VecNorm({x = AxialVel.x, y = 0, z = AxialVel.z}))
+  
+      --now set correct direction:
+      if AxialVel.z > 0 then
+        Yaw = -Yaw
+      end
+      return Yaw
+    end
+  end
+  
 end
 
 

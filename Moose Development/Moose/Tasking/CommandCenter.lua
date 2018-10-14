@@ -687,9 +687,9 @@ function COMMANDCENTER:ReportMissionsPlayers( ReportGroup )
   
   Report:Add( "Players active in all missions." )
 
-  for MissionID, Mission in pairs( self.Missions ) do
-    local Mission = Mission -- Tasking.Mission#MISSION
-    Report:Add( " - " .. Mission:ReportPlayers() )
+  for MissionID, MissionData in pairs( self.Missions ) do
+    local Mission = MissionData -- Tasking.Mission#MISSION
+    Report:Add( " - " .. Mission:ReportPlayersPerTask(ReportGroup) )
   end
   
   self:MessageToGroup( Report:Text(), ReportGroup )
