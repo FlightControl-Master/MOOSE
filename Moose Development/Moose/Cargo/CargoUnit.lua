@@ -231,8 +231,8 @@ do -- CARGO_UNIT
     local MaxSpeed = Desc.speedMaxOffRoad
     local TypeName = Desc.typeName
     
-    self:T( self.CargoInAir )
-  
+    --self:F({Unit=self.CargoObject:GetName()})
+    
     -- Only move the group to the carrier when the cargo is not in the air
     -- (eg. cargo can be on a oil derrick, moving the cargo on the oil derrick will drop the cargo on the sea).
     if not self.CargoInAir then
@@ -286,18 +286,19 @@ do -- CARGO_UNIT
   function CARGO_UNIT:onafterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
     self:F( { From, Event, To, CargoCarrier:GetName(), NearRadius = NearRadius } )
     
+    --self:F({Unit=self.CargoObject:GetName()})
     
-    if CargoCarrier and CargoCarrier:IsAlive() and self.CargoObject and self.CargoObject:IsAlive() then 
+    if CargoCarrier and CargoCarrier:IsAlive() then -- and self.CargoObject and self.CargoObject:IsAlive() then 
       if (CargoCarrier:IsAir() and not CargoCarrier:InAir()) or true then
         local NearRadius = NearRadius or CargoCarrier:GetBoundingRadius( NearRadius ) + 5
         if self:IsNear( CargoCarrier:GetPointVec2(), NearRadius ) then
           self:__Load( 1, CargoCarrier, ... )
         else
           if self:IsNear( CargoCarrier:GetPointVec2(), 20 ) then
-            self:__Boarding( -1, CargoCarrier, NearRadius, ... )
+            self:__Boarding( 1, CargoCarrier, NearRadius, ... )
             self.RunCount = self.RunCount + 1
           else
-            self:__Boarding( -2, CargoCarrier, NearRadius, ... )
+            self:__Boarding( 2, CargoCarrier, NearRadius, ... )
             self.RunCount = self.RunCount + 2
           end
           if self.RunCount >= 40 then
@@ -306,6 +307,8 @@ do -- CARGO_UNIT
             local Angle = 180
             local Distance = 0
             
+            --self:F({Unit=self.CargoObject:GetName()})
+
             local CargoCarrierPointVec2 = CargoCarrier:GetPointVec2()
             local CargoCarrierHeading = CargoCarrier:GetHeading() -- Get Heading of object in degrees.
             local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
@@ -368,10 +371,11 @@ do -- CARGO_UNIT
   
     self.CargoCarrier = CargoCarrier
     
-    -- Only destroy the CargoObject is if there is a CargoObject (packages don't have CargoObjects).
+    --self:F({Unit=self.CargoObject:GetName()})
+    
+    -- Only destroy the CargoObject if there is a CargoObject (packages don't have CargoObjects).
     if self.CargoObject then
-      self:T("Destroying")
-      self.CargoObject:Destroy()
+      self.CargoObject:Destroy( false )
       --self.CargoObject:ReSpawnAt( COORDINATE:NewFromVec2( {x=0,y=0} ), 0 )
     end
   end

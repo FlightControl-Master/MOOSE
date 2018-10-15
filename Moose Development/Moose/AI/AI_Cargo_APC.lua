@@ -285,7 +285,7 @@ function AI_CARGO_APC:onafterMonitor( APC, From, Event, To )
           else
             if self:Is( "Loaded" ) then
               -- There are enemies within combat radius. Unload the CargoCarrier.
-              self:__Unload( 1 )
+              self:__Unload( 1, nil, true ) -- The 2nd parameter is true, which means that the unload is for defending the carrier, not to deploy!
             else
               if self:Is( "Unloaded" ) then
                 self:Follow()
@@ -449,12 +449,12 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
-function AI_CARGO_APC:onafterDeployed( APC, From, Event, To, DeployZone )
-  self:F( { APC, From, Event, To, DeployZone = DeployZone } )
+function AI_CARGO_APC:onafterDeployed( APC, From, Event, To, DeployZone, Defend )
+  self:F( { APC, From, Event, To, DeployZone = DeployZone, Defend = Defend } )
 
   self:__Guard( 0.1 )
 
-  self:GetParent( self, AI_CARGO_APC ).onafterDeployed( self, APC, From, Event, To, DeployZone )
+  self:GetParent( self, AI_CARGO_APC ).onafterDeployed( self, APC, From, Event, To, DeployZone, Defend )
 
 end
 

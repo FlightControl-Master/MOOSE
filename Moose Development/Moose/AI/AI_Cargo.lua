@@ -262,7 +262,6 @@ function AI_CARGO:onbeforeLoad( Carrier, From, Event, To, PickupZone )
               Carrier:RouteStop()
               --Cargo:Ungroup()
               Cargo:__Board( -LoadDelay, CarrierUnit )
-              LoadDelay = LoadDelay + Cargo:GetCount() * LoadInterval
               self:__Board( LoadDelay, Cargo, CarrierUnit, PickupZone )
   
               -- So now this CarrierUnit has Cargo that is being loaded.
@@ -279,6 +278,7 @@ function AI_CARGO:onbeforeLoad( Carrier, From, Event, To, PickupZone )
         end
         
       end
+      LoadDelay = LoadDelay + Cargo:GetCount() * LoadInterval
       
       
     end
@@ -359,7 +359,7 @@ function AI_CARGO:onafterPickedUp( Carrier, From, Event, To, PickupZone )
   Carrier:RouteResume()
 
   local HasCargo = false
-  if Carrier and Carrier :IsAlive() then
+  if Carrier and Carrier:IsAlive() then
     for Cargo, CarrierUnit in pairs( self.Carrier_Cargo ) do
       HasCargo = true
       break
@@ -368,6 +368,7 @@ function AI_CARGO:onafterPickedUp( Carrier, From, Event, To, PickupZone )
 
   self.Relocating = false
   if HasCargo then
+    self:F( "Transporting" )
     self.Transporting = true
   end
   
@@ -383,11 +384,11 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
-function AI_CARGO:onafterUnload( Carrier, From, Event, To, DeployZone )
-  self:F( { Carrier, From, Event, To, DeployZone } )
+function AI_CARGO:onafterUnload( Carrier, From, Event, To, DeployZone, Defend )
+  self:F( { Carrier, From, Event, To, DeployZone, Defend = Defend } )
 
-  local UnboardInterval = 10
-  local UnboardDelay = 10
+  local UnboardInterval = 5
+  local UnboardDelay = 5
 
   if Carrier and Carrier:IsAlive() then
     for _, CarrierUnit in pairs( Carrier:GetUnits() ) do
@@ -398,8 +399,10 @@ function AI_CARGO:onafterUnload( Carrier, From, Event, To, DeployZone )
         if Cargo:IsLoaded() then
           Cargo:__UnBoard( UnboardDelay )
           UnboardDelay = UnboardDelay + Cargo:GetCount() * UnboardInterval
-          Cargo:SetDeployed( true )
-          self:__Unboard( UnboardDelay, Cargo, CarrierUnit, DeployZone )
+          self:__Unboard( UnboardDelay, Cargo, CarrierUnit, DeployZone, Defend )
+          if not Defend == true then
+            Cargo:SetDeployed( true )
+          end
         end 
       end
     end
@@ -415,17 +418,17 @@ end
 -- @param #string To To state.
 -- @param #string Cargo.Cargo#CARGO Cargo Cargo object.
 -- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
-function AI_CARGO:onafterUnboard( Carrier, From, Event, To, Cargo, CarrierUnit, DeployZone )
-  self:F( { Carrier, From, Event, To, Cargo:GetName() } )
+function AI_CARGO:onafterUnboard( Carrier, From, Event, To, Cargo, CarrierUnit, DeployZone, Defend )
+  self:F( { Carrier, From, Event, To, Cargo:GetName(), DeployZone = DeployZone, Defend = Defend } )
 
   if Carrier and Carrier:IsAlive() then
     if not Cargo:IsUnLoaded() then
-      self:__Unboard( 10, Cargo, CarrierUnit, DeployZone ) 
+      self:__Unboard( 10, Cargo, CarrierUnit, DeployZone, Defend ) 
       return
     end
   end
 
-  self:Unloaded( Cargo, CarrierUnit, DeployZone )
+  self:Unloaded( Cargo, CarrierUnit, DeployZone, Defend )
   
 end
 
@@ -438,8 +441,8 @@ end
 -- @param #string Cargo.Cargo#CARGO Cargo Cargo object.
 -- @param #boolean Deployed Cargo is deployed.
 -- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
-function AI_CARGO:onafterUnloaded( Carrier, From, Event, To, Cargo, CarrierUnit, DeployZone )
-  self:F( { Carrier, From, Event, To, Cargo:GetName(), DeployZone = DeployZone } )
+function AI_CARGO:onafterUnloaded( Carrier, From, Event, To, Cargo, CarrierUnit, DeployZone, Defend )
+  self:F( { Carrier, From, Event, To, Cargo:GetName(), DeployZone = DeployZone, Defend = Defend } )
 
   local AllUnloaded = true
 
@@ -465,7 +468,7 @@ function AI_CARGO:onafterUnloaded( Carrier, From, Event, To, Cargo, CarrierUnit,
   end
 
   if AllUnloaded == true then
-    self:__Deployed( 5, DeployZone )
+    self:__Deployed( 5, DeployZone, Defend )
   end
   
 end
@@ -477,10 +480,14 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
-function AI_CARGO:onafterDeployed( Carrier, From, Event, To, DeployZone )
-  self:F( { Carrier, From, Event, To, DeployZone = DeployZone } )
+function AI_CARGO:onafterDeployed( Carrier, From, Event, To, DeployZone, Defend )
+  self:F( { Carrier, From, Event, To, DeployZone = DeployZone, Defend = Defend } )
 
+  if not Defend == true then
     self.Transporting = false
+  else
+    self:F( "Defending" )
+  end
 
 end
 
