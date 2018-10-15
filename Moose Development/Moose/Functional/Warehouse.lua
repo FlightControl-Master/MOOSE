@@ -4612,6 +4612,98 @@ function WAREHOUSE:onafterDestroyed(From, Event, To)
 
 end
 
+
+--- On after "LoadAssets" event. Warehouse assets are loaded from file on disk.
+-- @param #WAREHOUSE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function WAREHOUSE:onafterLoadAssets(From, Event, To, filename)
+
+local function loadfile(filename)
+  local f = assert(io.open(filename, "rb"))
+  local data = f:read("*all")
+  f:close()
+  return data
+end
+
+local function savefile(filename, data)
+  local f = assert(io.open(filename, "wb"))
+  f:write(data)
+  f:close()
+end
+
+--local peter="hallo ich bin peter data"
+local peter={"a", "b", "c"}
+peter="Asset name='Meine Gruppe B';"
+peter=peter.."Asset name='Meine Gruppe A';"
+local filename="paul.dat"
+
+local assets={}
+local asset1={templatename="Meine, Gruppe 1", attribute="Infantry", cargobay="100"}
+local asset2={templatename="Meine Gruppe 2", attribute="Helicopter", cargobay="200"}
+
+table.insert(assets,asset1)
+table.insert(assets,asset2)
+--savefile(filename, peter)
+--local data=loadfile(filename)
+
+--print(data)
+print("Asset:")
+--print(table.concat({1,2,2}))
+--print(table.concat(asset1, ";"))
+local warehouseassets=""
+for _,asset in pairs(assets) do
+  local assetstring=""
+  for key,value in pairs(asset) do
+    --print(key,value)
+    --local name=string.format("%s=\"%s\";", key, value)
+    local name=string.format("%s=%s;", key, value)
+    --print(name)
+    assetstring=assetstring..name
+  end
+  --print(assetstring)
+  warehouseassets=warehouseassets..assetstring.."\n"
+end
+print(warehouseassets)
+
+savefile(filename, warehouseassets)
+local data=loadfile(filename)
+
+--print(data)
+
+data2=UTILS.Split(data,"\n")
+local newassets={}
+for _,asset in pairs(data2) do
+  --print(asset)
+  local descriptors=UTILS.Split(asset,";")
+  local newasset={}
+  for _,descriptor in pairs(descriptors) do
+    local keyval=UTILS.Split(descriptor,"=")
+    if #keyval==2 then
+      local key=keyval[1]
+      local val=keyval[2]    
+      --print(key, val)
+      newasset[key]=val
+    end
+  end
+  table.insert(newassets, newasset)
+--  for k, v in string.gmatch(asset, "(%w+)=([%w%c, ]+)") do
+  --for k, v in string.gmatch(asset, "(%w+)=([^\"]+)") do
+--    print(k,v)
+--  end
+end
+
+for _,myasset in pairs(newassets) do
+  local name=myasset.templatename
+  local attribute=myasset.attribute
+  local cargo=myasset.cargobay
+  print(string.format("name=%s attribute=%s cargobay=%s", name, attribute, cargo))
+end
+
+
+end
+
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Spawn functions
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
