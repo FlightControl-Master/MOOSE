@@ -50,7 +50,7 @@
 -- @field Core.Point#COORDINATE rail Closest point to warehouse on rail.
 -- @field Core.Zone#ZONE spawnzone Zone in which assets are spawned.
 -- @field #string wid Identifier of the warehouse printed before other output to DCS.log file.
--- @field #number uid Unit identifier of the warehouse. Derived from the associated airbase.
+-- @field #number uid Unit identifier of the warehouse. Derived from id of warehouse static element.
 -- @field #number markerid ID of the warehouse marker at the airbase.
 -- @field #number dTstatus Time interval in seconds of updating the warehouse status and processing new events. Default 30 seconds.
 -- @field #number queueid Unit id of each request in the queue. Essentially a running number starting at one and incremented when a new request is added.
@@ -1507,6 +1507,7 @@ WAREHOUSE = {
 -- @field #number loadradius Distance when cargo is loaded into the carrier.
 -- @field DCS#AI.Skill skill Skill of AI unit.
 -- @field #string livery Livery of the asset.
+-- @field #string assignment Assignment of the asset. This could, e.g., be used in the @{#WAREHOUSE.OnAfterNewAsset) funktion.
 
 --- Item of the warehouse queue table.
 -- @type WAREHOUSE.Queueitem
@@ -1655,7 +1656,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.6.1"
+WAREHOUSE.version="0.6.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -1771,9 +1772,10 @@ function WAREHOUSE:New(warehouse, alias)
 
   -- Add FSM transitions.
   --                 From State   -->   Event        -->     To State
-  self:AddTransition("NotReadyYet",     "Load",              "Loaded")      -- TODO Load the warehouse state. No sure if it should be in stopped state.
+  self:AddTransition("NotReadyYet",     "Load",              "Loaded")      -- Load the warehouse state from scatch.
+  self:AddTransition("Stopped",         "Load",              "Loaded")      -- Load the warehouse state stopped state.
   self:AddTransition("NotReadyYet",     "Start",             "Running")     -- Start the warehouse from scratch.
-  self:AddTransition("Loaded",          "Start",             "Running")     -- TODO Start the warehouse when loaded from disk.  
+  self:AddTransition("Loaded",          "Start",             "Running")     -- Start the warehouse when loaded from disk.  
   self:AddTransition("*",               "Status",            "*")           -- Status update.
   self:AddTransition("*",               "AddAsset",          "*")           -- Add asset to warehouse stock.
   self:AddTransition("*",               "NewAsset",          "*")           -- New asset was added to warehouse stock.
@@ -2162,7 +2164,7 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #WAREHOUSE self
   
   --- Triggers the FSM event "Destroyed" with a delay when the warehouse was destroyed. Services are stopped.
-  -- @function [parent=#WAREHOUSE] Destroyed
+  -- @function [parent=#WAREHOUSE] __Destroyed
   -- @param #WAREHOUSE self
   -- @param #number delay Delay in seconds.
 
@@ -2172,6 +2174,53 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
+
+
+  --- Triggers the FSM event "Save" when the warehouse assets are saved to file on disk.
+  -- @function [parent=#WAREHOUSE] Save
+  -- @param #WAREHOUSE self
+  -- @param #string path Path where the file is saved. Default is the DCS installation root directory.
+  -- @param #string filename (Optional) File name. Default is WAREHOUSE-<UID>_<ALIAS>.txt.
+  
+  --- Triggers the FSM event "Save" with a delay when the warehouse assets are saved to a file.
+  -- @function [parent=#WAREHOUSE] __Save
+  -- @param #WAREHOUSE self
+  -- @param #number delay Delay in seconds.
+  -- @param #string path Path where the file is saved. Default is the DCS installation root directory.
+  -- @param #string filename (Optional) File name. Default is WAREHOUSE-<UID>_<ALIAS>.txt.
+
+  --- On after "Save" event user function. Called when the warehouse assets are saved to disk.
+  -- @function [parent=#WAREHOUSE] OnAfterSave
+  -- @param #WAREHOUSE self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #string path Path where the file is saved. Default is the DCS installation root directory.
+  -- @param #string filename (Optional) File name. Default is WAREHOUSE-<UID>_<ALIAS>.txt.
+
+
+  --- Triggers the FSM event "Load" when the warehouse is loaded from a file on disk.
+  -- @function [parent=#WAREHOUSE] Load
+  -- @param #WAREHOUSE self
+  -- @param #string path Path where the file is located. Default is the DCS installation root directory.
+  -- @param #string filename (Optional) File name. Default is WAREHOUSE-<UID>_<ALIAS>.txt.
+  
+  --- Triggers the FSM event "Load" with a delay when the warehouse assets are loaded from disk.
+  -- @function [parent=#WAREHOUSE] __Load
+  -- @param #WAREHOUSE self
+  -- @param #number delay Delay in seconds.
+  -- @param #string path Path where the file is located. Default is the DCS installation root directory.
+  -- @param #string filename (Optional) File name. Default is WAREHOUSE-<UID>_<ALIAS>.txt.
+
+  --- On after "Load" event user function. Called when the warehouse assets are loaded from disk.
+  -- @function [parent=#WAREHOUSE] OnAfterLoad
+  -- @param #WAREHOUSE self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #string path Path where the file is located. Default is the DCS installation root directory.
+  -- @param #string filename (Optional) File name. Default is WAREHOUSE-<UID>_<ALIAS>.txt.
+
 
   return self
 end
@@ -2941,8 +2990,10 @@ function WAREHOUSE:onafterStop(From, Event, To)
   self.stock=nil
   self.stock={}
   
+  self:_UpdateWarehouseMarkText()
+  
   -- Clear all pending schedules.
-  self.CallScheduler:Clear()  
+  --self.CallScheduler:Clear()  
 end
 
 --- On after "Pause" event. Pauses the warehouse, i.e. no requests are processed. However, new requests and new assets can be added in this state.
@@ -4613,93 +4664,144 @@ function WAREHOUSE:onafterDestroyed(From, Event, To)
 end
 
 
---- On after "LoadAssets" event. Warehouse assets are loaded from file on disk.
+--- On after "Save" event. Warehouse assets are saved to file on disk.
 -- @param #WAREHOUSE self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function WAREHOUSE:onafterLoadAssets(From, Event, To, filename)
+-- @param #string path Path where the file is saved. If nil, file is saved in the DCS root installtion directory.
+-- @param #string filename (Optional) Name of the file containing the asset data.
+function WAREHOUSE:onafterSave(From, Event, To, path, filename)
 
-local function loadfile(filename)
-  local f = assert(io.open(filename, "rb"))
-  local data = f:read("*all")
-  f:close()
-  return data
-end
-
-local function savefile(filename, data)
-  local f = assert(io.open(filename, "wb"))
-  f:write(data)
-  f:close()
-end
-
---local peter="hallo ich bin peter data"
-local peter={"a", "b", "c"}
-peter="Asset name='Meine Gruppe B';"
-peter=peter.."Asset name='Meine Gruppe A';"
-local filename="paul.dat"
-
-local assets={}
-local asset1={templatename="Meine, Gruppe 1", attribute="Infantry", cargobay="100"}
-local asset2={templatename="Meine Gruppe 2", attribute="Helicopter", cargobay="200"}
-
-table.insert(assets,asset1)
-table.insert(assets,asset2)
---savefile(filename, peter)
---local data=loadfile(filename)
-
---print(data)
-print("Asset:")
---print(table.concat({1,2,2}))
---print(table.concat(asset1, ";"))
-local warehouseassets=""
-for _,asset in pairs(assets) do
-  local assetstring=""
-  for key,value in pairs(asset) do
-    --print(key,value)
-    --local name=string.format("%s=\"%s\";", key, value)
-    local name=string.format("%s=%s;", key, value)
-    --print(name)
-    assetstring=assetstring..name
+  local function _savefile(filename, data)
+    local f = assert(io.open(filename, "wb"))
+    f:write(data)
+    f:close()
   end
-  --print(assetstring)
-  warehouseassets=warehouseassets..assetstring.."\n"
+  
+  -- Set file name.
+  filename=filename or string.format("WAREHOUSE-%d_%s.txt", self.uid, self.alias)
+  
+  -- Set path.
+  if path~=nil then
+    filename=path.."\\"..filename
+  end
+  
+  -- Info
+  local text=string.format("Saving warehouse assets to file %s", filename)
+  MESSAGE:New(text,30):ToAllIf(self.Debug or self.Report)
+  self:I(self.wid..text)
+  
+  -- Loop over all assets in stock.
+  local warehouseassets=""
+  for _,_asset in pairs(self.stock) do
+    local asset=_asset -- #WAREHOUSE.Assetitem
+     
+    -- Loop over asset parameters.
+    local assetstring=""
+    for key,value in pairs(asset) do
+    
+      -- Only save keys which are needed to restore the asset.
+      if key=="templatename" or key=="attribute" or key=="cargobay" or key=="weight" or key=="loadradius" or key=="livery" or key=="skill" or key=="assignment" then
+        local name
+        if type(value)=="table" then
+          name=string.format("%s=%s;", key, value[1])
+        else
+          name=string.format("%s=%s;", key, value)
+        end
+        env.info(name)
+        assetstring=assetstring..name
+      end
+    end
+    
+    -- Add asset string.
+    warehouseassets=warehouseassets..assetstring.."\n"
+  end
+  --print(warehouseassets)
+
+  -- Save file.
+  _savefile(filename, warehouseassets)  
+
 end
-print(warehouseassets)
 
-savefile(filename, warehouseassets)
-local data=loadfile(filename)
+--- On after "Load" event. Warehouse assets are loaded from file on disk.
+-- @param #WAREHOUSE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #string path Path where the file is loaded from.
+-- @param #string filename (Optional) Name of the file containing the asset data.
+function WAREHOUSE:onafterLoad(From, Event, To, path, filename)
 
---print(data)
+  local function _loadfile(filename)
+    local f = assert(io.open(filename, "rb"))
+    local data = f:read("*all")
+    f:close()
+    return data
+  end
 
-data2=UTILS.Split(data,"\n")
-local newassets={}
-for _,asset in pairs(data2) do
-  --print(asset)
-  local descriptors=UTILS.Split(asset,";")
-  local newasset={}
-  for _,descriptor in pairs(descriptors) do
-    local keyval=UTILS.Split(descriptor,"=")
-    if #keyval==2 then
-      local key=keyval[1]
-      local val=keyval[2]    
-      --print(key, val)
-      newasset[key]=val
+  -- Set file name.
+  filename=filename or string.format("WAREHOUSE-%d_%s.txt", self.uid, self.alias)
+  
+  -- Set path.
+  if path~=nil then
+    filename=path.."\\"..filename
+  end
+  
+  -- Info
+  local text=string.format("Loading warehouse assets from file %s", filename)
+  MESSAGE:New(text,30):ToAllIf(self.Debug or self.Report)
+  self:I(self.wid..text)  
+
+  -- Load asset data from file.
+  local data=_loadfile(filename)
+
+  -- Split by line break.
+  local assetdata=UTILS.Split(data,"\n")
+  
+  -- Loop over asset lines.
+  local assets={}
+  for _,asset in pairs(assetdata) do
+  
+    -- Parameters are separated by semi-colons
+    local descriptors=UTILS.Split(asset,";")
+    
+    local asset={}
+    for _,descriptor in pairs(descriptors) do
+      local keyval=UTILS.Split(descriptor,"=")
+      if #keyval==2 then
+        local key=keyval[1]
+        local val=keyval[2]    
+        
+        -- Livery or skill could be "nil".
+        if val=="nil" then
+          val=nil
+        end
+        
+        -- Convert string to number where necessary.
+        if key=="cargobay" or key=="weight" or key=="loadradius" then
+          asset[key]=tonumber(val)
+        else
+          asset[key]=val
+        end
+        
+      end
+    end
+    
+    -- Add to table.
+    table.insert(assets, asset)
+  end
+  
+  for _,_asset in pairs(assets) do
+    local asset=_asset --#WAREHOUSE.Assetitem
+    
+    local group=GROUP:FindByName(asset.templatename)
+    if group then
+      self:AddAsset(group, 1, asset.attribute, asset.cargobay, asset.weight, asset.loadradius, asset.skill, asset.livery, asset.assignment)
+    else
+      env.info("FF group doest not exit ".. tostring(asset.templatename))
     end
   end
-  table.insert(newassets, newasset)
---  for k, v in string.gmatch(asset, "(%w+)=([%w%c, ]+)") do
-  --for k, v in string.gmatch(asset, "(%w+)=([^\"]+)") do
---    print(k,v)
---  end
-end
-
-for _,myasset in pairs(newassets) do
-  local name=myasset.templatename
-  local attribute=myasset.attribute
-  local cargo=myasset.cargobay
-  print(string.format("name=%s attribute=%s cargobay=%s", name, attribute, cargo))
-end
 
 
 end
