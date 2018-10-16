@@ -12,6 +12,7 @@
 --    * Strategic components such as capturing, defending and destroying warehouses and their associated infrastructure.
 --    * Intelligent spawning of aircraft on airports (only if enough parking spots are available).
 --    * Possibility to hook into events and customize actions.
+--    * Persistance of assets. Warehouse assets can be saved and loaded from file.
 --    * Can be easily interfaced to other MOOSE classes.
 --
 -- === 
@@ -673,6 +674,48 @@
 -- Some transitions, however, are only allowed from certain "From States". For example, no requests can be processed if the warehouse is in "Paused" or "Destroyed" or "Stopped" state.
 --
 -- Mission designers can capture the events with OnAfterEvent functions, e.g. @{#WAREHOUSE.OnAfterDelivered} or @{#WAREHOUSE.OnAfterAirbaseCaptured}.
+-- 
+-- ===
+-- 
+-- # Persistance of Assets
+-- 
+-- Assets in stock of a warehouse can be saved to a file on the hard drive and then loaded from the file at a later point. This enables to restart the mission
+-- and restore the warehouse stock.
+-- 
+-- ## Prerequisite
+-- 
+-- **Important** By default, DCS does not allow for writing data to files. Therefore, one first has to comment out the line "blblba" in the the file "blabla"
+-- 
+-- ## Save Assets
+-- 
+-- Saving asset data to file is achieved by the @{WAREHOUSE.Save}(*path*, *filename*) function. The parameter *path* specifies the path on the file system where the
+-- warehouse data is saved. If you do not specify a path, the file is saved your the DCS installation root directory.
+-- The parameter *filename* is optional and defines the name of the saved file. By default this is automatically created from the warehouse id and name, for example
+-- "Warehouse-1234_Batumi.txt".
+-- 
+--      warehouseBatumi:Save("D:\\My Warehouse Data\\")
+--      
+-- This will save all asset data to as "D:\My Warehouse Data\Warehouse-1234_Batumi.txt".
+-- 
+-- ## Load Assets
+-- 
+-- Loading assets data from file is achieved by the @{WAREHOUSE.Load}(*path*, *filename*) function. The parameter *path* specifies the path on the file system where the
+-- warehouse data is loaded from. If you do not specify a path, the file is loaded from your the DCS installation root directory.
+-- The parameter *filename* is optional and defines the name of the file to load. By default this is automatically generated from the warehouse id and name, for example
+-- "Warehouse-1234_Batumi.txt".
+-- 
+-- Note that the warehouse **must not be started** and in the *Running* state in order to load the assets. In other words, loading should happen after the
+-- @{#WAREHOUSE.New} command is specified in the code but before the @{#WAREHOUSE.Start} command is given.
+-- 
+-- Loading the assets is done by
+-- 
+--      warehouseBatumi:New(STATIC:FindByName("Warehouse Batumi"))
+--      warehouseBatumi:Load("D:\\My Warehouse Data\\")
+--      warehouseBatumi:Start()
+--      
+-- This sequence loads all assets from file. If a warehouse was captured in the last mission, it also respawns the static warehouse structure with the right coaliton.
+-- However, it due to DCS limitations it is not possible to set the airbase coalition. This has to be done manually in the mission editor. Or alternatively, one could
+-- spawn some ground units via a self request and let them capture the airbase.
 -- 
 -- ===
 --
@@ -4692,8 +4735,11 @@ function WAREHOUSE:onafterSave(From, Event, To, path, filename)
   MESSAGE:New(text,30):ToAllIf(self.Debug or self.Report)
   self:I(self.wid..text)
   
-  -- Loop over all assets in stock.
   local warehouseassets=""
+  warehouseassets=warehouseassets..string.format("coalition=%d\n", self:GetCoalition())
+  warehouseassets=warehouseassets..string.format("country=$d\n", self:GetCountry())
+  
+  -- Loop over all assets in stock.
   for _,_asset in pairs(self.stock) do
     local asset=_asset -- #WAREHOUSE.Assetitem
      
@@ -4759,6 +4805,10 @@ function WAREHOUSE:onafterLoad(From, Event, To, path, filename)
   -- Split by line break.
   local assetdata=UTILS.Split(data,"\n")
   
+  -- Coalition and coutrny.
+  local Coalition
+  local Country
+  
   -- Loop over asset lines.
   local assets={}
   for _,asset in pairs(assetdata) do
@@ -4768,21 +4818,33 @@ function WAREHOUSE:onafterLoad(From, Event, To, path, filename)
     
     local asset={}
     for _,descriptor in pairs(descriptors) do
+    
       local keyval=UTILS.Split(descriptor,"=")
+      
       if #keyval==2 then
-        local key=keyval[1]
-        local val=keyval[2]    
+
+        if keyval[1]=="coalition" then
+          -- Get coalition side.
+          Coalition=keyval[2]
+        elseif keyval[1]=="country" then
+          -- Get country id.
+          Country=keyval[2]
+        elseif #keyval==2 then      
         
-        -- Livery or skill could be "nil".
-        if val=="nil" then
-          val=nil
-        end
-        
-        -- Convert string to number where necessary.
-        if key=="cargobay" or key=="weight" or key=="loadradius" then
-          asset[key]=tonumber(val)
-        else
-          asset[key]=val
+          local key=keyval[1]
+          local val=keyval[2]    
+          
+          -- Livery or skill could be "nil".
+          if val=="nil" then
+            val=nil
+          end
+          
+          -- Convert string to number where necessary.
+          if key=="cargobay" or key=="weight" or key=="loadradius" then
+            asset[key]=tonumber(val)
+          else
+            asset[key]=val
+          end
         end
         
       end
@@ -4792,6 +4854,11 @@ function WAREHOUSE:onafterLoad(From, Event, To, path, filename)
     table.insert(assets, asset)
   end
   
+  -- Respawn warehouse with prev coalition if necessary.
+  if Coalition~=self:GetCoalition() then
+    self:Captured(Coalition, Country)
+  end
+  
   for _,_asset in pairs(assets) do
     local asset=_asset --#WAREHOUSE.Assetitem
     
@@ -4799,10 +4866,9 @@ function WAREHOUSE:onafterLoad(From, Event, To, path, filename)
     if group then
       self:AddAsset(group, 1, asset.attribute, asset.cargobay, asset.weight, asset.loadradius, asset.skill, asset.livery, asset.assignment)
     else
-      env.info("FF group doest not exit ".. tostring(asset.templatename))
+      self:E(string.format("ERROR: Group %s doest not exit. Cannot be loaded as asset.", tostring(asset.templatename)))
     end
   end
-
 
 end
 
