@@ -679,12 +679,27 @@
 -- 
 -- # Persistance of Assets
 -- 
--- Assets in stock of a warehouse can be saved to a file on the hard drive and then loaded from the file at a later point. This enables to restart the mission
+-- Assets in stock of a warehouse can be saved to a file on your hard drive and then loaded from that file at a later point. This enables to restart the mission
 -- and restore the warehouse stock.
 -- 
--- ## Prerequisite
+-- ## Prerequisites
 -- 
--- **Important** By default, DCS does not allow for writing data to files. Therefore, one first has to comment out the line "blblba" in the the file "blabla"
+-- **Important** By default, DCS does not allow for writing data to files. Therefore, one first has to comment out the line "sanitizeModule('io')", i.e.
+-- 
+--     do
+--       sanitizeModule('os')
+--       --sanitizeModule('io')
+--       sanitizeModule('lfs')
+--       require = nil
+--       loadlib = nil
+--     end
+--
+-- in the file "MissionScripting.lua", which is located in the subdirectory "Scripts" of your DCS installation root directory.
+-- 
+-- ### Don'ts
+-- 
+-- Do not use **semi-colons** or **equal signs** in the group names of your assets as these are used as separators in the saved and loaded files texts.
+-- If you do, it will cause problems and give you a headache!
 -- 
 -- ## Save Assets
 -- 
@@ -695,7 +710,7 @@
 -- 
 --      warehouseBatumi:Save("D:\\My Warehouse Data\\")
 --      
--- This will save all asset data to as "D:\My Warehouse Data\Warehouse-1234_Batumi.txt".
+-- This will save all asset data to in "D:\\My Warehouse Data\\Warehouse-1234_Batumi.txt".
 -- 
 -- ## Load Assets
 -- 
@@ -1699,7 +1714,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.6.2"
+WAREHOUSE.version="0.6.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -1833,9 +1848,12 @@ function WAREHOUSE:New(warehouse, alias)
   self:AddTransition("Running",         "Pause",             "Paused")      -- Pause the processing of new requests. Still possible to add assets and requests. 
   self:AddTransition("Paused",          "Unpause",           "Running")     -- Unpause the warehouse. Queued requests are processed again. 
   self:AddTransition("*",               "Stop",              "Stopped")     -- Stop the warehouse.
+  self:AddTransition("Stopped",         "Restart",           "Running")     -- Restart the warehouse when it was stopped before.
+  self:AddTransition("Loaded",          "Restart",           "Running")     -- Restart the warehouse when assets were loaded from file before.
   self:AddTransition("*",               "Save",              "*")           -- TODO Save the warehouse state to disk.
   self:AddTransition("*",               "Attacked",          "Attacked")    -- Warehouse is under attack by enemy coalition.
   self:AddTransition("Attacked",        "Defeated",          "Running")     -- Attack by other coalition was defeated!
+  self:AddTransition("*",               "ChangeCountry",     "*")           -- Change country (and coalition) of the warehouse. Warehouse is respawned! 
   self:AddTransition("Attacked",        "Captured",          "Running")     -- Warehouse was captured by another coalition. It must have been attacked first.
   self:AddTransition("*",               "AirbaseCaptured",   "*")           -- Airbase was captured by other coalition.
   self:AddTransition("*",               "AirbaseRecaptured", "*")           -- Airbase was re-captured from other coalition.
@@ -1855,12 +1873,21 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #WAREHOUSE self
   -- @param #number delay Delay in seconds.
 
-  --- Triggers the FSM event "Stop". Stops the warehouse and all its event handlers.
+  --- Triggers the FSM event "Stop". Stops the warehouse and all its event handlers. All waiting and pending queue items are deleted as well and all assets are removed from stock.
   -- @function [parent=#WAREHOUSE] Stop
   -- @param #WAREHOUSE self
 
-  --- Triggers the FSM event "Stop" after a delay. Stops the warehouse and all its event handlers.
+  --- Triggers the FSM event "Stop" after a delay. Stops the warehouse and all its event handlers. All waiting and pending queue items are deleted as well and all assets are removed from stock.
   -- @function [parent=#WAREHOUSE] __Stop
+  -- @param #WAREHOUSE self
+  -- @param #number delay Delay in seconds.
+
+  --- Triggers the FSM event "Restart". Restarts the warehouse from stopped state by reactivating the event handlers *only*.
+  -- @function [parent=#WAREHOUSE] Restart
+  -- @param #WAREHOUSE self
+
+  --- Triggers the FSM event "Restart" after a delay. Restarts the warehouse from stopped state by reactivating the event handlers *only*.
+  -- @function [parent=#WAREHOUSE] __Restart
   -- @param #WAREHOUSE self
   -- @param #number delay Delay in seconds.
 
@@ -2114,6 +2141,26 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
+
+
+  --- Triggers the FSM event "ChangeCountry" so the warehouse is respawned with the new country.
+  -- @function [parent=#WAREHOUSE] ChangeCountry
+  -- @param #WAREHOUSE self
+  -- @param DCS#country.id Country New country id of the warehouse.
+  
+  --- Triggers the FSM event "ChangeCountry" after a delay so the warehouse is respawned with the new country.
+  -- @function [parent=#WAREHOUSE] __ChangeCountry
+  -- @param #WAREHOUSE self
+  -- @param #number delay Delay in seconds.
+  -- @param DCS#country.id Country Country id which has captured the warehouse.
+
+  --- On after "ChangeCountry" event user function. Called when the warehouse has changed its country.
+  -- @function [parent=#WAREHOUSE] OnAfterChangeCountry
+  -- @param #WAREHOUSE self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param DCS#country.id Country New country id of the warehouse, i.e. a number @{DCS#country.id} enumerator.
 
 
   --- Triggers the FSM event "Captured" when a warehouse has been captured by another coalition.
@@ -3004,6 +3051,36 @@ function WAREHOUSE:onafterStart(From, Event, To)
   
   -- Start the status monitoring.
   self:__Status(-1)
+end
+
+--- On after "Restart" event. Restarts the warehouse when it was in stopped state by reactivating the event handlers *only*.
+-- @param #WAREHOUSE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function WAREHOUSE:onafterRestart(From, Event, To)
+
+  self:I(self.wid..string.format("Restarting Warehouse %s.", self.alias))
+
+  -- Handle events:
+  self:HandleEvent(EVENTS.Birth,          self._OnEventBirth)
+  self:HandleEvent(EVENTS.EngineStartup,  self._OnEventEngineStartup)
+  self:HandleEvent(EVENTS.Takeoff,        self._OnEventTakeOff)
+  self:HandleEvent(EVENTS.Land,           self._OnEventLanding)
+  self:HandleEvent(EVENTS.EngineShutdown, self._OnEventEngineShutdown)
+  self:HandleEvent(EVENTS.Crash,          self._OnEventCrashOrDead)
+  self:HandleEvent(EVENTS.Dead,           self._OnEventCrashOrDead)
+  self:HandleEvent(EVENTS.BaseCaptured,   self._OnEventBaseCaptured)
+  
+  -- This event triggers the arrived event for air assets.
+  -- TODO Might need to make this landing or optional!
+  -- In fact, it would be better if the type could be defined for only for the warehouse which receives stuff,
+  -- since there will be warehouses with small airbases and little space or other problems!
+  self:HandleEvent(EVENTS.EngineShutdown, self._OnEventArrived)
+  
+  -- Start the status monitoring.
+  self:__Status(-1)
+
 end
 
 --- On after "Stop" event. Stops the warehouse, unhandles all events.
@@ -4570,6 +4647,73 @@ function WAREHOUSE:onafterDefeated(From, Event, To)
   end
 end
 
+
+--- On before "ChangeCountry" event. Checks whether a change of country is necessary by comparing the actual country to the the requested one.
+-- @param #WAREHOUSE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param DCS#country.id Country which has captured the warehouse.
+function WAREHOUSE:onbeforeChangeCountry(From, Event, To, Country)
+
+  local currentCountry=self:GetCountry()
+
+  -- Message.
+  local text=string.format("Warehouse %s: request to change country %d-->%d", self.alias, currentCountry, Country)
+  self:_DebugMessage(text, 10)
+  
+  -- Check if current or requested coalition or country match. 
+  if currentCountry~=Country then
+    return true
+  end
+
+  return false
+end
+
+
+--- On after "ChangeCountry" event. Warehouse is respawned with the specified country. All queued requests are deleted and the owned airbase is reset if the coalition is changed by changing the
+-- country.
+-- @param #WAREHOUSE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param DCS#country.id Country which has captured the warehouse.
+function WAREHOUSE:onafterChangeCountry(From, Event, To, Country)
+
+  local CoalitionOld=self:GetCoalition()
+
+  -- Respawn warehouse with new coalition/country.
+  self.warehouse:ReSpawn(Country)
+  
+  local CoalitionNew=self:GetCoalition()
+  
+  -- Delete all waiting requests because they are not valid any more.
+  self.queue=nil
+  self.queue={}
+    
+  -- Airbase could have been captured before and already belongs to the new coalition.
+  local airbase=AIRBASE:FindByName(self.airbasename)
+  local airbasecoaltion=airbase:GetCoalition()
+  
+  if CoalitionNew==airbasecoaltion then
+    -- Airbase already owned by the coalition that captured the warehouse. Airbase can be used by this warehouse.
+    self.airbase=airbase
+  else
+    -- Airbase is owned by other coalition. So this warehouse does not have an airbase unil it is captured.
+    self.airbase=nil
+  end
+  
+  -- Debug smoke.
+  if self.Debug then
+    if CoalitionNew==coalition.side.RED then
+      self:GetCoordinate():SmokeRed()
+    elseif CoalitionNew==coalition.side.BLUE then
+      self:GetCoordinate():SmokeBlue()
+    end
+  end
+    
+end
+
 --- On after "Captured" event. Warehouse has been captured by another coalition.
 -- @param #WAREHOUSE self
 -- @param #string From From state.
@@ -4580,38 +4724,14 @@ end
 function WAREHOUSE:onafterCaptured(From, Event, To, Coalition, Country)
 
   -- Message.
-  local text=string.format("Warehouse %s: We were captured by enemy coalition (ID=%d)!", self.alias, Coalition)
+  local text=string.format("Warehouse %s: We were captured by enemy coalition (side=%d)!", self.alias, Coalition)
   self:_InfoMessage(text)
-  
-  -- Respawn warehouse with new coalition/country.
-  self.warehouse:ReSpawn(Country)
-  
-  -- Delete all waiting requests because they are not valid any more
-  self.queue=nil
-  self.queue={}
-    
-  -- Airbase could have been captured before and already belongs to the new coalition.
-  local airbase=AIRBASE:FindByName(self.airbasename)
-  local airbasecoaltion=airbase:GetCoalition()
-  
-  if Coalition==airbasecoaltion then
-    -- Airbase already owned by the coalition that captured the warehouse. Airbase can be used by this warehouse.
-    self.airbase=airbase
-  else
-    -- Airbase is owned by other coalition. So this warehouse does not have an airbase unil it is captured.
-    self.airbase=nil
-  end
-  
-  -- Debug smoke.
-  if self.Debug then
-    if Coalition==coalition.side.RED then
-      self:GetCoordinate():SmokeRed()
-    elseif Coalition==coalition.side.BLUE then
-      self:GetCoordinate():SmokeBlue()
-    end
-  end
-    
+
+  -- Change coalition and country of warehouse static.
+  self:ChangeCoaliton(Coalition, Country)
+
 end
+
 
 --- On after "AirbaseCaptured" event. Airbase of warehouse has been captured by another coalition.
 -- @param #WAREHOUSE self
@@ -4737,7 +4857,7 @@ function WAREHOUSE:onafterSave(From, Event, To, path, filename)
   
   local warehouseassets=""
   warehouseassets=warehouseassets..string.format("coalition=%d\n", self:GetCoalition())
-  warehouseassets=warehouseassets..string.format("country=$d\n", self:GetCountry())
+  warehouseassets=warehouseassets..string.format("country=%d\n", self:GetCountry())
   
   -- Loop over all assets in stock.
   for _,_asset in pairs(self.stock) do
@@ -4755,20 +4875,60 @@ function WAREHOUSE:onafterSave(From, Event, To, path, filename)
         else
           name=string.format("%s=%s;", key, value)
         end
-        env.info(name)
         assetstring=assetstring..name
       end
+      self:I(string.format("Loaded asset: %s", assetstring))
     end
     
     -- Add asset string.
     warehouseassets=warehouseassets..assetstring.."\n"
   end
-  --print(warehouseassets)
 
   -- Save file.
   _savefile(filename, warehouseassets)  
 
 end
+
+
+--- On before "Load" event. Checks if the file the warehouse data should be loaded from exists.
+-- @param #WAREHOUSE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #string path Path where the file is loaded from.
+-- @param #string filename (Optional) Name of the file containing the asset data.
+function WAREHOUSE:onbeforeLoad(From, Event, To, path, filename)
+
+
+  local function _fileexists(name)
+     local f=io.open(name,"r")
+     if f~=nil then 
+      io.close(f)
+      return true 
+    else 
+      return false
+    end
+  end
+
+  -- Set file name.
+  filename=filename or string.format("WAREHOUSE-%d_%s.txt", self.uid, self.alias)
+  
+  -- Set path.
+  if path~=nil then
+    filename=path.."\\"..filename
+  end
+  
+  -- Check if file exists.
+  local exists=_fileexists(filename)
+  
+  if exists then
+    return true
+  else
+    self:_ErrorMessage(string.format("ERROR: file %s does not exist! Cannot load assets.", filename), 60)
+  end
+
+end
+
 
 --- On after "Load" event. Warehouse assets are loaded from file on disk.
 -- @param #WAREHOUSE self
@@ -4825,10 +4985,10 @@ function WAREHOUSE:onafterLoad(From, Event, To, path, filename)
 
         if keyval[1]=="coalition" then
           -- Get coalition side.
-          Coalition=keyval[2]
+          Coalition=tonumber(keyval[2])
         elseif keyval[1]=="country" then
           -- Get country id.
-          Country=keyval[2]
+          Country=tonumber(keyval[2])
         elseif #keyval==2 then      
         
           local key=keyval[1]
@@ -4855,8 +5015,10 @@ function WAREHOUSE:onafterLoad(From, Event, To, path, filename)
   end
   
   -- Respawn warehouse with prev coalition if necessary.
-  if Coalition~=self:GetCoalition() then
-    self:Captured(Coalition, Country)
+  self:E(string.format("Changing country %d-->%d (before)", self:GetCountry(), Country))
+  if Country~=self:GetCountry() then
+    self:E(string.format("Changing country %d-->%d (after)", self:GetCountry(), Country))
+    self:ChangeCountry(Country)
   end
   
   for _,_asset in pairs(assets) do
