@@ -57,8 +57,6 @@ do -- UserFlag
   --   
   function USERFLAG:Set( Number ) --R2.3
   
-    self:F( { Number = Number } )
-    
     trigger.action.setUserFlag( self.UserFlagName, Number )
     
     return self

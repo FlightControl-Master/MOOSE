@@ -98,7 +98,7 @@ PSEUDOATC.id="PseudoATC | "
 
 --- PSEUDOATC version.
 -- @field #number version
-PSEUDOATC.version="0.9.0"
+PSEUDOATC.version="0.9.1"
 
 -----------------------------------------------------------------------------------------------------------------------------------------
 
@@ -743,9 +743,9 @@ function PSEUDOATC:ReportBR(id, position, location)
   local coord=unit:GetCoordinate()
   
   -- Direction vector from current position (coord) to target (position).
-  local pos=coord:Translate(30,90)
-  local vec3=coord:GetDirectionVec3(pos)
-  local angle=coord:GetAngleDegrees(vec3)
+  local angle=coord:HeadingTo(position)
+  
+  -- Range from current to 
   local range=coord:Get2DDistance(position)
   
   -- Bearing string.
