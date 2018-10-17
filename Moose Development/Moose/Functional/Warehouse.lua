@@ -66,6 +66,9 @@
 -- @field #table offroadpaths Table holding user defined paths from one warehouse to another. 
 -- @field #boolean autodefence When the warehouse is under attack, automatically spawn assets to defend the warehouse.
 -- @field #number spawnzonemaxdist Max distance between warehouse and spawn zone. Default 5000 meters.
+-- @field #boolean autosave Automatically save assets to file when mission ends.
+-- @field #string autosavepath Path where the asset file is saved on auto save.
+-- @field #string autosavefilename File name of the auto asset save file. Default is auto generated from warehouse id and name.
 -- @extends Core.Fsm#FSM
 
 --- Have your assets at the right place at the right time - or not!
@@ -1543,6 +1546,9 @@ WAREHOUSE = {
   offroadpaths  =    {},
   autodefence   = false,
   spawnzonemaxdist = 5000,
+  autosave      = false,
+  autosavepath  =   nil,
+  autosavefile  =   nil,
 }
 
 --- Item of the warehouse stock table.
@@ -2397,6 +2403,18 @@ function WAREHOUSE:SetAutoDefenceOff()
   return self
 end
 
+--- Set auto defence off. This is the default. 
+-- @param #WAREHOUSE self
+-- @param #string path Path where to save the asset data file.
+-- @param #string filename File name. Default is generated automatically from warehouse id.
+-- @return #WAREHOUSE self
+function WAREHOUSE:SetSaveOnMissionEnd(path, filename)
+  self.autosave=true
+  self.autosavepath=path
+  self.autosavefile=filename
+  return self
+end
+
 
 --- Set the airbase belonging to this warehouse.
 -- Note that it has to be of the same coalition as the warehouse.
@@ -3042,6 +3060,7 @@ function WAREHOUSE:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.Crash,          self._OnEventCrashOrDead)
   self:HandleEvent(EVENTS.Dead,           self._OnEventCrashOrDead)
   self:HandleEvent(EVENTS.BaseCaptured,   self._OnEventBaseCaptured)
+  self:HandleEvent(EVENTS.MissionEnd,     self._OnEventMissionEnd)
   
   -- This event triggers the arrived event for air assets.
   -- TODO Might need to make this landing or optional!
@@ -5957,6 +5976,18 @@ function WAREHOUSE:_OnEventBaseCaptured(EventData)
       end
         
     end
+  end
+end
+
+--- Warehouse event handling function.
+-- Handles the case when the mission is ended.
+-- @param #WAREHOUSE self
+-- @param Core.Event#EVENTDATA EventData Event data.
+function WAREHOUSE:_OnEventMissionEnd(EventData)
+  self:T3(self.wid..string.format("Warehouse %s captured event mission end!",self.alias))
+  
+  if self.autosave then
+    self:Save(self.autosavepath, self.autosavefile)
   end
 end
 
