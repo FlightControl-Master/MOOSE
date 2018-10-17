@@ -213,8 +213,8 @@ function AI_CARGO:onbeforeLoad( Carrier, From, Event, To, PickupZone )
 
   local Boarding = false
 
-  local LoadInterval = 5
-  local LoadDelay = 0
+  local LoadInterval = 2
+  local LoadDelay = 1
   local Carrier_List = {}
   local Carrier_Weight = {}
 
@@ -263,7 +263,9 @@ function AI_CARGO:onbeforeLoad( Carrier, From, Event, To, PickupZone )
               --Cargo:Ungroup()
               Cargo:__Board( -LoadDelay, CarrierUnit )
               self:__Board( LoadDelay, Cargo, CarrierUnit, PickupZone )
-  
+
+              LoadDelay = LoadDelay + Cargo:GetCount() * LoadInterval
+
               -- So now this CarrierUnit has Cargo that is being loaded.
               -- This will be used further in the logic to follow and to check cargo status.
               self.Carrier_Cargo[Cargo] = CarrierUnit
@@ -278,9 +280,7 @@ function AI_CARGO:onbeforeLoad( Carrier, From, Event, To, PickupZone )
         end
         
       end
-      LoadDelay = LoadDelay + Cargo:GetCount() * LoadInterval
-      
-      
+
     end
     
     if not Loaded == true then
