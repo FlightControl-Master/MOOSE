@@ -144,7 +144,7 @@ CARRIERTRAINER.MenuF10={}
 
 --- Carrier trainer class version.
 -- @field #string version
-CARRIERTRAINER.version="0.0.6"
+CARRIERTRAINER.version="0.0.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -864,41 +864,17 @@ function CARRIERTRAINER:_Abeam(playerData)
     
     local onSpeedScore = self:_GetOnSpeedScore(aoa)
   
-    local idealAltitude = 600
     local score, hint=self:_AltitudeCheck(playerData, self.Abeam)
     
-    local distanceHint = ""
-    local distanceScore
-    local diffEast = carrierPosition.z - playerPosition.z
+    local dscore, dhint=self:_DistanceCheck(diffZ, playerData, self.Abeam)
     
-    local idealDistance = UTILS.NMToMeters(1.2)
-    
-    local roundedNm = UTILS.Round(nm, 2)
-    
-    if (nm < 1.0) then
-      distanceScore = 0
-      distanceHint = "too close to the boat (" .. roundedNm .. " nm)"
-    elseif(nm < 1.1) then
-      distanceScore = 5
-      distanceHint = "slightly too close to the boat (" .. roundedNm .. " nm)"
-    elseif(nm < 1.3) then
-      distanceScore = 10
-      distanceHint = "with perfect distance to the boat (" .. roundedNm .. " nm)"
-    elseif(nm < 1.4) then
-      distanceScore = 5
-      distanceHint = "slightly too far from the boat (" .. roundedNm .. " nm)"
-    else
-      distanceScore = 0
-      distanceHint = "too far from the boat (" .. roundedNm .. " nm)"
-    end
-    
-    local fullHint = hint .. ", " .. distanceHint
+    local fullHint = hint .. ", " .. dhint
     
     self:_SendMessageToPlayer( fullHint, 8, playerData )
     self:_SendMessageToPlayer( "(Target: 600 ft and 1.2 nm).", 8, playerData )
 
-    self:_IncreaseScore(playerData, score + distanceScore + onSpeedScore)
-    self:_PrintScore(score + distanceScore + onSpeedScore, playerData, true)
+    self:_IncreaseScore(playerData, score + dscore + onSpeedScore)
+    self:_PrintScore(score + dscore + onSpeedScore, playerData, true)
     
     self:_AddToSummary(playerData, fullHint .. " (" .. aoaFeedback .. ")")
     
@@ -1024,15 +1000,9 @@ end
 -- @param #CARRIERTRAINER.PlayerData playerData Player data table.
 function CARRIERTRAINER:_Groove(playerData)
 
-  local playerPosition = playerData.unit:GetVec3()
-  local carrierPosition = self.carrier:GetVec3()
-
-  local diffX = playerPosition.x - (carrierPosition.x - 100)
-  local diffZ = playerPosition.z - carrierPosition.z
-
   --TODO -100?!
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
-  diffX, diffZ = self:_GetDistances(playerData.unit)
+  local diffX, diffZ = self:_GetDistances(playerData.unit)
   
   --diffX=diffX+100
   
@@ -1054,21 +1024,19 @@ function CARRIERTRAINER:_Groove(playerData)
   
     local limitDeg = 8.0
       
+    -- TODO: what is this angle? Does not make sense!
     local fraction = diffZ / (-diffX)
     local asinValue = math.asin(fraction)
     local angle = math.deg(asinValue)
     
     if diffZ > -1300 and angle > limitDeg then
-      local idealAltitude = 300
+
+      -- Altitude check.
       local score, hint=self:_AltitudeCheck(playerData, self.Groove)
 
-      self:_SendMessageToPlayer(hint, 8, playerData)
-      self:_PrintAltitudeFeedback(altitude, idealAltitude, playerData)
-
-      --local aoa = math.deg(mist.getAoA(playerData.mistUnit))
+      -- AoA feed back
       local aoa = playerData.unit:GetAoA() 
-      local aoaFeedback = self:_PrintAoAFeedback(aoa, 8.1, playerData)
-      
+      local aoaFeedback = self:_PrintAoAFeedback(aoa, 8.1, playerData)      
       local onSpeedScore = self:_GetOnSpeedScore(aoa)
       
       self:_IncreaseScore(playerData, score + onSpeedScore)
@@ -1087,19 +1055,17 @@ end
 -- @param #CARRIERTRAINER self
 -- @param #CARRIERTRAINER.PlayerData playerData Player data table.
 function CARRIERTRAINER:_Trap(playerData) 
-  local playerPosition = playerData.unit:GetVec3()
-  local carrierPosition = self.carrier:GetVec3()
 
+  -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
+  local diffZ, diffX = self:_GetDistances(playerData.unit)
+  
+  -- Player altitude
+  local alt=playerData.unit:GetAltitude()
+
+  -- Get velocities.
   local playerVelocity = playerData.unit:GetVelocityKMH()
   local carrierVelocity = self.carrier:GetVelocityKMH()
 
-  local diffZ = playerPosition.z - carrierPosition.z
-  local diffX = playerPosition.x - carrierPosition.x
-  
-  -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
-  diffZ, diffX = self:_GetDistances(playerData.unit)
-  
- 
   --if(diffZ < -2000 or diffZ > 2000 or diffX < -3000) then
   if self:_CheckAbort(diffX, diffZ, self.Trap) then
     self:_AbortPattern(playerData, diffX, diffZ, self.Trap)
@@ -1110,11 +1076,12 @@ function CARRIERTRAINER:_Trap(playerData)
     playerData.highestCarrierXDiff = diffX
   end
   
-  if (playerPosition.y < playerData.lowestAltitude) then
-    playerData.lowestAltitude = playerPosition.y
+  if (alt < playerData.lowestAltitude) then
+    playerData.lowestAltitude = alt
   end
   
   if math.abs(playerVelocity-carrierVelocity) < 0.01 then
+  
     playerData.secondsStandingStill = playerData.secondsStandingStill + 1
   
     if diffX < playerData.highestCarrierXDiff or playerData.secondsStandingStill > 5 then
