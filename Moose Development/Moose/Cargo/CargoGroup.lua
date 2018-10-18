@@ -307,6 +307,8 @@ do -- CARGO_GROUP
     self.CargoSet:ForEach(
       function( Cargo, ... )
         self:F( { "Board Unit", Cargo:GetName( ), Cargo:IsDestroyed(), Cargo.CargoObject:IsAlive() } )
+        local CargoGroup = Cargo.CargoObject --Wrapper.Group#GROUP
+        CargoGroup:OptionAlarmStateGreen()
         Cargo:__Board( 1, CargoCarrier, NearRadius, ... )
       end, ...
     )
