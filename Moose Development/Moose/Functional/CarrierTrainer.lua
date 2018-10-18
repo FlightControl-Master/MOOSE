@@ -395,8 +395,6 @@ function CARRIERTRAINER:_CheckPlayerStatus()
     
     if playerData then
     
-      self:I("player "..playerData.callsign)
-    
       -- Player unit.
       local unit = playerData.unit
       
@@ -940,9 +938,6 @@ function CARRIERTRAINER:_Ninety(playerData)
     local idealAltitude = 500
     local score, hint=self:_AltitudeCheck(playerData, self.Ninety)
 
-    self:_SendMessageToPlayer( hint, 8, playerData )
-    self:_PrintAltitudeFeedback(altitude, idealAltitude, playerData)
-
     --local aoa = math.deg(mist.getAoA(playerData.mistUnit))
     local aoa = playerData.unit:GetAoA()
     local aoaFeedback = self:_PrintAoAFeedback(aoa, 8.1, playerData)
@@ -978,9 +973,6 @@ function CARRIERTRAINER:_Wake(playerData)
   
     local idealAltitude = 370
     local score, hint=self:_AltitudeCheck(playerData, self.Wake)
-
-    self:_SendMessageToPlayer( hint, 8, playerData )
-    self:_PrintAltitudeFeedback(altitude, idealAltitude, playerData)
 
     local aoa = playerData.unit:GetAoA()
     

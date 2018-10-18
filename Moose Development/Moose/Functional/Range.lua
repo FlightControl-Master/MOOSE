@@ -276,7 +276,7 @@ RANGE.id="RANGE | "
 
 --- Range script version.
 -- @field #string version
-RANGE.version="1.2.1"
+RANGE.version="1.2.2"
 
 --TODO list:
 --TODO: Add custom weapons, which can be specified by the user.
@@ -1161,10 +1161,12 @@ function RANGE:OnEventShot(EventData)
         local _callsign=self:_myname(_unitName)
                   
         -- Coordinate of impact point.
-        local impactcoord=COORDINATE:NewFromVec3(_lastBombPos)
+        local impactcoord=COORDINATE:NewFromVec3(_lastBombPos)        
         
         -- Distance from range. We dont want to smoke targets outside of the range.
         local impactdist=impactcoord:Get2DDistance(self.location)
+        
+        --impactcoord:MarkToAll("Bomb impact point")
         
         -- Smoke impact point of bomb.
         if self.PlayerSettings[_playername].smokebombimpact and impactdist<self.rangeradius then
@@ -1184,6 +1186,8 @@ function RANGE:OnEventShot(EventData)
           
             -- Distance between bomb and target.
             local _temp = impactcoord:Get2DDistance(_target:GetCoordinate())
+            
+            --env.info(string.format("FF target = %s dist = %d m", _target:GetName(), _temp))
   
             -- Find closest target to last known position of the bomb.
             if _distance == nil or _temp < _distance then
@@ -1225,7 +1229,7 @@ function RANGE:OnEventShot(EventData)
         elseif _distance <= self.rangeradius then
           -- Send message
           local _message=string.format("%s, weapon fell more than %.1f km away from nearest range target. No score!", _callsign, self.scorebombdistance/1000)
-          self:_DisplayMessageToGroup(_unit, _message, nil, true)
+          self:_DisplayMessageToGroup(_unit, _message, nil, false)
         end
         
         --Terminate the timer
