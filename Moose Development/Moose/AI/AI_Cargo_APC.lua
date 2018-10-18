@@ -119,7 +119,6 @@ function AI_CARGO_APC:SetCarrier( CargoCarrier )
   self.CargoCarrier:SetState( self.CargoCarrier, "AI_CARGO_APC", self )
 
   CargoCarrier:HandleEvent( EVENTS.Dead )
-  CargoCarrier:HandleEvent( EVENTS.Hit )
   
   function CargoCarrier:OnEventDead( EventData )
     self:F({"dead"})
@@ -133,18 +132,20 @@ function AI_CARGO_APC:SetCarrier( CargoCarrier )
       end
     end
   end
-  
-  function CargoCarrier:OnEventHit( EventData )
-    self:F({"hit"})
-    local AICargoTroops = self:GetState( self, "AI_CARGO_APC" )
-    if AICargoTroops then
-      self:F( { OnHitLoaded = AICargoTroops:Is( "Loaded" ) } )
-      if AICargoTroops:Is( "Loaded" ) or AICargoTroops:Is( "Boarding" ) then
-        -- There are enemies within combat radius. Unload the CargoCarrier.
-        AICargoTroops:Unload( false )
-      end
-    end
-  end
+
+--  CargoCarrier:HandleEvent( EVENTS.Hit )
+--  
+--  function CargoCarrier:OnEventHit( EventData )
+--    self:F({"hit"})
+--    local AICargoTroops = self:GetState( self, "AI_CARGO_APC" )
+--    if AICargoTroops then
+--      self:F( { OnHitLoaded = AICargoTroops:Is( "Loaded" ) } )
+--      if AICargoTroops:Is( "Loaded" ) or AICargoTroops:Is( "Boarding" ) then
+--        -- There are enemies within combat radius. Unload the CargoCarrier.
+--        AICargoTroops:Unload( false )
+--      end
+--    end
+--  end
   
   self.Zone = ZONE_UNIT:New( self.CargoCarrier:GetName() .. "-Zone", self.CargoCarrier, self.CombatRadius )
   self.Coalition = self.CargoCarrier:GetCoalition()
