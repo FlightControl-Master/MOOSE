@@ -1975,6 +1975,24 @@ do -- Route methods
     return nil
   end
   
+  --- Make the controllable to push follow a given route.
+  -- @param #CONTROLLABLE self
+  -- @param #table Route A table of Route Points.
+  -- @param #number DelaySeconds (Optional) Wait for the specified seconds before executing the Route. Default is one second.
+  -- @return #CONTROLLABLE The CONTROLLABLE.
+  function CONTROLLABLE:RoutePush( Route, DelaySeconds )
+    self:F2( Route )
+  
+    local DCSControllable = self:GetDCSObject()
+    if DCSControllable then
+      local RouteTask = self:TaskRoute( Route ) -- Create a RouteTask, that will route the CONTROLLABLE to the Route.
+      self:PushTask( RouteTask, DelaySeconds or 1 ) -- Execute the RouteTask after the specified seconds (default is 1).
+      return self
+    end
+  
+    return nil
+  end
+  
   
   --- Stops the movement of the vehicle on the route.
   -- @param #CONTROLLABLE self

@@ -12,7 +12,7 @@
 --    * Strategic components such as capturing, defending and destroying warehouses and their associated infrastructure.
 --    * Intelligent spawning of aircraft on airports (only if enough parking spots are available).
 --    * Possibility to hook into events and customize actions.
---    * Persistance of assets. Warehouse assets can be saved and loaded from file.
+--    * Persistence of assets. Warehouse assets can be saved and loaded from file.
 --    * Can be easily interfaced to other MOOSE classes.
 --
 -- === 
@@ -66,6 +66,9 @@
 -- @field #table offroadpaths Table holding user defined paths from one warehouse to another. 
 -- @field #boolean autodefence When the warehouse is under attack, automatically spawn assets to defend the warehouse.
 -- @field #number spawnzonemaxdist Max distance between warehouse and spawn zone. Default 5000 meters.
+-- @field #boolean autosave Automatically save assets to file when mission ends.
+-- @field #string autosavepath Path where the asset file is saved on auto save.
+-- @field #string autosavefilename File name of the auto asset save file. Default is auto generated from warehouse id and name.
 -- @extends Core.Fsm#FSM
 
 --- Have your assets at the right place at the right time - or not!
@@ -677,7 +680,7 @@
 -- 
 -- ===
 -- 
--- # Persistance of Assets
+-- # Persistence of Assets
 -- 
 -- Assets in stock of a warehouse can be saved to a file on your hard drive and then loaded from that file at a later point. This enables to restart the mission
 -- and restore the warehouse stock.
@@ -696,7 +699,7 @@
 --
 -- in the file "MissionScripting.lua", which is located in the subdirectory "Scripts" of your DCS installation root directory.
 -- 
--- ### Don'ts
+-- ### Don't!
 -- 
 -- Do not use **semi-colons** or **equal signs** in the group names of your assets as these are used as separators in the saved and loaded files texts.
 -- If you do, it will cause problems and give you a headache!
@@ -708,9 +711,15 @@
 -- The parameter *filename* is optional and defines the name of the saved file. By default this is automatically created from the warehouse id and name, for example
 -- "Warehouse-1234_Batumi.txt".
 -- 
---      warehouseBatumi:Save("D:\\My Warehouse Data\\")
+--     warehouseBatumi:Save("D:\\My Warehouse Data\\")
 --      
 -- This will save all asset data to in "D:\\My Warehouse Data\\Warehouse-1234_Batumi.txt".
+-- 
+-- ### Automatic Save at Mission End
+-- 
+-- The assets can be saved automatically when the mission is ended via the @{WAREHOUSE.SetSaveOnMissionEnd}(*path*, *filename*) function, i.e.
+-- 
+--     warehouseBatumi:SetSaveOnMissionEnd("D:\\My Warehouse Data\\")
 -- 
 -- ## Load Assets
 -- 
@@ -724,9 +733,9 @@
 -- 
 -- Loading the assets is done by
 -- 
---      warehouseBatumi:New(STATIC:FindByName("Warehouse Batumi"))
---      warehouseBatumi:Load("D:\\My Warehouse Data\\")
---      warehouseBatumi:Start()
+--     warehouseBatumi:New(STATIC:FindByName("Warehouse Batumi"))
+--     warehouseBatumi:Load("D:\\My Warehouse Data\\")
+--     warehouseBatumi:Start()
 --      
 -- This sequence loads all assets from file. If a warehouse was captured in the last mission, it also respawns the static warehouse structure with the right coaliton.
 -- However, it due to DCS limitations it is not possible to set the airbase coalition. This has to be done manually in the mission editor. Or alternatively, one could
@@ -1543,6 +1552,9 @@ WAREHOUSE = {
   offroadpaths  =    {},
   autodefence   = false,
   spawnzonemaxdist = 5000,
+  autosave      = false,
+  autosavepath  =   nil,
+  autosavefile  =   nil,
 }
 
 --- Item of the warehouse stock table.
@@ -1714,7 +1726,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.6.3"
+WAREHOUSE.version="0.6.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -2397,6 +2409,18 @@ function WAREHOUSE:SetAutoDefenceOff()
   return self
 end
 
+--- Set auto defence off. This is the default. 
+-- @param #WAREHOUSE self
+-- @param #string path Path where to save the asset data file.
+-- @param #string filename File name. Default is generated automatically from warehouse id.
+-- @return #WAREHOUSE self
+function WAREHOUSE:SetSaveOnMissionEnd(path, filename)
+  self.autosave=true
+  self.autosavepath=path
+  self.autosavefile=filename
+  return self
+end
+
 
 --- Set the airbase belonging to this warehouse.
 -- Note that it has to be of the same coalition as the warehouse.
@@ -3042,6 +3066,7 @@ function WAREHOUSE:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.Crash,          self._OnEventCrashOrDead)
   self:HandleEvent(EVENTS.Dead,           self._OnEventCrashOrDead)
   self:HandleEvent(EVENTS.BaseCaptured,   self._OnEventBaseCaptured)
+  self:HandleEvent(EVENTS.MissionEnd,     self._OnEventMissionEnd)
   
   -- This event triggers the arrived event for air assets.
   -- TODO Might need to make this landing or optional!
@@ -4925,6 +4950,7 @@ function WAREHOUSE:onbeforeLoad(From, Event, To, path, filename)
     return true
   else
     self:_ErrorMessage(string.format("ERROR: file %s does not exist! Cannot load assets.", filename), 60)
+    return false
   end
 
 end
@@ -4977,6 +5003,7 @@ function WAREHOUSE:onafterLoad(From, Event, To, path, filename)
     local descriptors=UTILS.Split(asset,";")
     
     local asset={}
+    local isasset=false
     for _,descriptor in pairs(descriptors) do
     
       local keyval=UTILS.Split(descriptor,"=")
@@ -4989,15 +5016,20 @@ function WAREHOUSE:onafterLoad(From, Event, To, path, filename)
         elseif keyval[1]=="country" then
           -- Get country id.
           Country=tonumber(keyval[2])
-        elseif #keyval==2 then      
+        else
+        
+          -- This is an asset.
+          isasset=true
         
           local key=keyval[1]
-          local val=keyval[2]    
+          local val=keyval[2]
+          
+          --env.info(string.format("FF asset key=%s val=%s", key, val))  
           
           -- Livery or skill could be "nil".
           if val=="nil" then
             val=nil
-          end
+          end          
           
           -- Convert string to number where necessary.
           if key=="cargobay" or key=="weight" or key=="loadradius" then
@@ -5011,13 +5043,14 @@ function WAREHOUSE:onafterLoad(From, Event, To, path, filename)
     end
     
     -- Add to table.
-    table.insert(assets, asset)
+    if isasset then
+      table.insert(assets, asset)
+    end
   end
   
   -- Respawn warehouse with prev coalition if necessary.
-  self:E(string.format("Changing country %d-->%d (before)", self:GetCountry(), Country))
   if Country~=self:GetCountry() then
-    self:E(string.format("Changing country %d-->%d (after)", self:GetCountry(), Country))
+    self:T(self.wid..string.format("Changing warehouse country %d-->%d on loading assets.", self:GetCountry(), Country))
     self:ChangeCountry(Country)
   end
   
@@ -5957,6 +5990,18 @@ function WAREHOUSE:_OnEventBaseCaptured(EventData)
       end
         
     end
+  end
+end
+
+--- Warehouse event handling function.
+-- Handles the case when the mission is ended.
+-- @param #WAREHOUSE self
+-- @param Core.Event#EVENTDATA EventData Event data.
+function WAREHOUSE:_OnEventMissionEnd(EventData)
+  self:T3(self.wid..string.format("Warehouse %s captured event mission end!",self.alias))
+  
+  if self.autosave then
+    self:Save(self.autosavepath, self.autosavefile)
   end
 end
 
@@ -7712,7 +7757,7 @@ end
 function WAREHOUSE:_ErrorMessage(text, duration)
   duration=duration or 20
   if duration>0 then
-    MESSAGE:New(text, duration):ToAllIf()
+    MESSAGE:New(text, duration):ToAll()
   end
   self:E(self.wid..text)
 end

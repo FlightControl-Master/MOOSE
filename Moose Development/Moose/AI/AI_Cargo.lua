@@ -307,7 +307,7 @@ function AI_CARGO:onafterBoard( Carrier, From, Event, To, Cargo, CarrierUnit, Pi
 
   if Carrier and Carrier:IsAlive() then
     self:F({ IsLoaded = Cargo:IsLoaded(), Cargo:GetName(), Carrier:GetName() } )
-    if not Cargo:IsLoaded() then
+    if not Cargo:IsLoaded() and not Cargo:IsDestroyed() then
       self:__Board( -10, Cargo, CarrierUnit, PickupZone )
       return
     end
@@ -487,6 +487,7 @@ function AI_CARGO:onafterDeployed( Carrier, From, Event, To, DeployZone, Defend 
     self.Transporting = false
   else
     self:F( "Defending" )
+    
   end
 
 end
