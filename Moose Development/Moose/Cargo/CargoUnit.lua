@@ -341,26 +341,6 @@ do -- CARGO_UNIT
   end
   
   
-  --- Enter Boarding State.
-  -- @param #CARGO_UNIT self
-  -- @param #string Event
-  -- @param #string From
-  -- @param #string To
-  -- @param Wrapper.Unit#UNIT CargoCarrier
-  -- @param #number NearRadius Default 25 m.
-  function CARGO_UNIT:onenterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
-    --self:F( { From, Event, To, CargoCarrier.UnitName, NearRadius } )
-    
-    local Speed = 90
-    local Angle = 180
-    local Distance = 5
-    
-    if From == "UnLoaded" or From == "Boarding" then
-    
-    end
-    
-  end
-  
   --- Loaded State.
   -- @param #CARGO_UNIT self
   -- @param #string Event
