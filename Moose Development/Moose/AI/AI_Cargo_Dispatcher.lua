@@ -1143,7 +1143,7 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
                     LargestLoadCapacity = LoadCapacity
                   end
                 end
-                -- So if there is aa carrier that has the required load capacity to load the total weight of the cargo, dispatch the carrier.
+                -- So if there is a carrier that has the required load capacity to load the total weight of the cargo, dispatch the carrier.
                 -- Otherwise break and go to the next carrier.
                 -- This will skip cargo which is too large to be able to be loaded by carriers
                 -- and will secure an efficient dispatching scheme.
