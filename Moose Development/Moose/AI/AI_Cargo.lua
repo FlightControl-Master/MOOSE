@@ -293,6 +293,80 @@ function AI_CARGO:onbeforeLoad( Carrier, From, Event, To, PickupZone )
   
 end
 
+
+--- On before Reload event.
+-- @param #AI_CARGO self
+-- @param Wrapper.Group#GROUP Carrier
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Core.Zone#ZONE PickupZone (optional) The zone where the cargo will be picked up. The PickupZone can be nil, if there wasn't any PickupZoneSet provided.
+function AI_CARGO:onbeforeReload( Carrier, From, Event, To )
+  self:F( { Carrier, From, Event, To } )
+
+  local Boarding = false
+
+  local LoadInterval = 2
+  local LoadDelay = 1
+  local Carrier_List = {}
+  local Carrier_Weight = {}
+
+  if Carrier and Carrier:IsAlive() then
+    for _, CarrierUnit in pairs( Carrier:GetUnits() ) do
+      local CarrierUnit = CarrierUnit -- Wrapper.Unit#UNIT
+      
+      Carrier_List[#Carrier_List+1] = CarrierUnit
+    end
+
+    local Carrier_Count = #Carrier_List
+    local Carrier_Index = 1
+      
+    local Loaded = false
+
+    for Cargo, CarrierUnit in pairs( self.Carrier_Cargo ) do
+      local Cargo = Cargo -- Cargo.Cargo#CARGO
+
+      self:F( { IsUnLoaded = Cargo:IsUnLoaded(), IsDeployed = Cargo:IsDeployed(), Cargo:GetName(), Carrier:GetName() } )
+
+      -- Try all Carriers, but start from the one according the Carrier_Index
+      for Carrier_Loop = 1, #Carrier_List do
+
+        local CarrierUnit = Carrier_List[Carrier_Index] -- Wrapper.Unit#UNIT
+
+        -- This counters loop through the available Carriers.
+        Carrier_Index = Carrier_Index + 1
+        if Carrier_Index > Carrier_Count then
+          Carrier_Index = 1
+        end
+        
+        if Cargo:IsUnLoaded() and not Cargo:IsDeployed() then
+          Carrier:RouteStop()
+          Cargo:__Board( -LoadDelay, CarrierUnit )
+          self:__Board( LoadDelay, Cargo, CarrierUnit )
+
+          LoadDelay = LoadDelay + Cargo:GetCount() * LoadInterval
+
+          -- So now this CarrierUnit has Cargo that is being loaded.
+          -- This will be used further in the logic to follow and to check cargo status.
+          self.Carrier_Cargo[Cargo] = CarrierUnit
+          Boarding = true
+          Loaded = true
+        end
+        
+      end
+
+    end
+    
+    if not Loaded == true then
+      -- No loading happened, so we need to pickup something else.
+      self.Relocating = false
+    end
+  end
+
+  return Boarding
+  
+end
+
 --- On after Board event.
 -- @param #AI_CARGO self
 -- @param Wrapper.Group#GROUP Carrier

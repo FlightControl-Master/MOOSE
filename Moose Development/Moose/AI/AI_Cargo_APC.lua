@@ -97,6 +97,7 @@ function AI_CARGO_APC:New( APC, CargoSet, CombatRadius )
   self:AddTransition( "*", "Follow", "Following" )
   self:AddTransition( "*", "Guard", "Unloaded" )
   self:AddTransition( "*", "Home", "*" )
+  self:AddTransition( "*", "Reload", "Boarding" )
   
   self:AddTransition( "*", "Destroyed", "Destroyed" )
 
@@ -280,8 +281,8 @@ function AI_CARGO_APC:onafterMonitor( APC, From, Event, To )
             self.Zone:Scan( { Object.Category.UNIT } )
             if self.Zone:IsAllInZoneOfCoalition( self.Coalition ) then
               if self:Is( "Unloaded" ) then
-                -- There are no enemies within combat radius. Load the CargoCarrier.
-                self:Load()
+                -- There are no enemies within combat radius. Reload the CargoCarrier.
+                self:Reload()
               end
             else
               if self:Is( "Loaded" ) then
