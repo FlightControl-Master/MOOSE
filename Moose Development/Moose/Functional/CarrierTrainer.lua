@@ -144,7 +144,7 @@ CARRIERTRAINER.MenuF10={}
 
 --- Carrier trainer class version.
 -- @field #string version
-CARRIERTRAINER.version="0.0.7"
+CARRIERTRAINER.version="0.0.8"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -236,6 +236,7 @@ function CARRIERTRAINER:onafterStart(From, Event, To)
   
   -- Handle events.
   self:HandleEvent(EVENTS.Birth)
+  --self:HandleEvent(EVENTS.Lan)
 
   -- Init status check
   self:__Status(5)
@@ -340,14 +341,6 @@ function CARRIERTRAINER:_InitNewRound(playerData)
   return playerData
 end
 
---- Increase score for this approach.
--- @param #CARRIERTRAINER self
--- @param #CARRIERTRAINER.PlayerData playerData Player data.
--- @param #number amount Amount by which the score is increased.
-function CARRIERTRAINER:_IncreaseScore(playerData, amount)
-  playerData.score = playerData.score + amount
-end
-
 --- Append text to summary text.
 -- @param #CARRIERTRAINER self
 -- @param #CARRIERTRAINER.PlayerData playerData Player data.
@@ -429,7 +422,7 @@ function CARRIERTRAINER:_CheckPlayerStatus()
           self:_Groove(playerData)
         elseif playerData.step == 9 and unit:IsInZone(self.giantZone) then
           self:_Trap(playerData)
-        end         
+        end
       else
         -- Unit not alive.
         --playerDatas[i] = nil
@@ -758,22 +751,25 @@ function CARRIERTRAINER:_NewRound(playerData)
   playerData.step = 1
 end
 
---- Start landing pattern.
+--- Start landing pattern, when player enters the start zone.
 -- @param #CARRIERTRAINER self
 -- @param #CARRIERTRAINER.PlayerData playerData Player data table.
 function CARRIERTRAINER:_Start(playerData)
-  local hint = string.format("Entering the pattern, %s! Aim for 800 feet and 350-400 kts on the upwind.", playerData.callsign)
-  self:_SendMessageToPlayer(hint, 8, playerData)
-  playerData.score = 0
-  playerData.step = 2
-end 
 
+
+  local hint = string.format("Entering the pattern, %s! Aim for 800 feet and 350-400 kts in the break entry.", playerData.callsign)
+  self:_SendMessageToPlayer(hint, 8, playerData)
+  
+  -- TODO: Check for correct player heading!
+  playerData.score = 0
+  playerData.step  = 2
+end 
 
 
 --- Upwind leg.
 -- @param #CARRIERTRAINER self
 -- @param #CARRIERTRAINER.PlayerData playerData Player data table.
-function CARRIERTRAINER:_Upwind(playerData) 
+function CARRIERTRAINER:_Upwind(playerData)
 
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
   local diffX, diffZ = self:_GetDistances(playerData.unit)
@@ -787,10 +783,10 @@ function CARRIERTRAINER:_Upwind(playerData)
   -- Check if we are in front of the boat (diffX > 0).
   if self:_CheckLimits(diffX, diffZ, self.Upwind) then
   
-    -- Get 
+    -- Get altutide.
     local score, hint=self:_AltitudeCheck(playerData, self.Upwind)
         
-    self:_SendMessageToPlayer(hint, 8, playerData)
+    
     self:_AddToSummary(playerData, hint)
     
     -- Next step.
@@ -827,8 +823,7 @@ function CARRIERTRAINER:_Break(playerData, part)
     -- Check altitude.
     local score, hint=self:_AltitudeCheck(playerData, self.Upwind)
 
-    
-    self:_SendMessageToPlayer(hint, 8, playerData)
+    -- Add hint to summary.
     self:_AddToSummary(playerData, hint)
 
     if (part == "early") then
@@ -839,7 +834,7 @@ function CARRIERTRAINER:_Break(playerData, part)
   end
 end
 
---- Break.
+--- Abeam.
 -- @param #CARRIERTRAINER self
 -- @param #CARRIERTRAINER.PlayerData playerData Player data table.
 function CARRIERTRAINER:_Abeam(playerData)  
@@ -855,17 +850,23 @@ function CARRIERTRAINER:_Abeam(playerData)
 
   -- Check nest step threshold.  
   if self:_CheckLimits(diffX, diffZ, self.Abeam) then
+  
+    -- Checks:
+    -- AoA
+    -- Altitude
+    -- Distance to carrier.
 
     -- Get AoA.
     local aoa = playerData.unit:GetAoA()
-    local aoaFeedback = self:_PrintAoAFeedback(aoa, 8.1, playerData)
+    self:_AoACheck(aoa, self.Abeam, playerData)
     
-    local onSpeedScore = self:_GetOnSpeedScore(aoa)
-  
+    -- Check Alitude  
     local score, hint=self:_AltitudeCheck(playerData, self.Abeam)
     
+    -- Check distance.
     local dscore, dhint=self:_DistanceCheck(diffZ, playerData, self.Abeam)
     
+    --[[
     local fullHint = hint .. ", " .. dhint
     
     self:_SendMessageToPlayer( fullHint, 8, playerData )
@@ -873,8 +874,10 @@ function CARRIERTRAINER:_Abeam(playerData)
 
     self:_IncreaseScore(playerData, score + dscore + onSpeedScore)
     self:_PrintScore(score + dscore + onSpeedScore, playerData, true)
+    ]]
     
-    self:_AddToSummary(playerData, fullHint .. " (" .. aoaFeedback .. ")")
+    
+    --self:_AddToSummary(playerData, fullHint .. " (" .. aoaFeedback .. ")")
     
     -- Proceed to next step.
     playerData.step = 6
@@ -885,31 +888,34 @@ end
 -- @param #CARRIERTRAINER self
 -- @param #CARRIERTRAINER.PlayerData playerData Player data table.
 function CARRIERTRAINER:_CheckForLongDownwind(playerData)
-
-  local playerPosition = playerData.unit:GetVec3()
-  local carrierPosition = self.carrier:GetVec3()
-
-  local limit = -1500
   
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
   local diffX, diffZ = self:_GetDistances(playerData.unit)
+  
+  local limit = -1500
   
   -- Check we are not too far out w.r.t back of the boat.
   if diffX < limit then
   
     local headingPlayer  = playerData.unit:GetHeading()
     local headingCarrier = self.carrier:GetHeading()
-    
-    --TODO: Take carrier heading != 0 into account!
-    
-    if (headingPlayer > 170) then
+
+    local cx = self.carrier:GetOrientationX()  
+    local px = playerData.unit:GetOrientationX()  
+    local dp = UTILS.VecDot(cx, px)  -- dot > 0 means that we are 90 degrees and about to align
+
+    if dp<-0.98 then
     
       local hint = "Too long downwind. Turn final earlier next time."
-      self:_SendMessageToPlayer( hint, 8, playerData )
+      self:_SendMessageToPlayer(hint, 8, playerData)
+      
+      self:_AddToSummary(playerData, hint)
+      
       local score = -40
       self:_IncreaseScore(playerData, score)
       self:_PrintScore(score, playerData, true)
-      self:_AddToSummary(playerData, hint)
+      
+      -- Long downwind done!
       playerData.longDownwindDone = true
     end
     
@@ -975,13 +981,10 @@ function CARRIERTRAINER:_Wake(playerData)
     local score, hint=self:_AltitudeCheck(playerData, self.Wake)
 
     local aoa = playerData.unit:GetAoA()
+    local score, hint=self:_AoACheck(aoa, self.Wake, playerData)
     
-    local aoaFeedback  = self:_PrintAoAFeedback(aoa, 8.1, playerData)
-    local onSpeedScore = self:_GetOnSpeedScore(aoa)
-
-    self:_IncreaseScore(playerData, score + onSpeedScore)
-    self:_PrintScore(score + onSpeedScore, playerData, true)
-    self:_AddToSummary(playerData, hint .. " (" .. aoaFeedback .. ")")
+    -- TODO make summay
+    --self:_AddToSummary(playerData, hint .. " (" .. aoaFeedback .. ")")
     
     playerData.step = 8
   end
@@ -1007,11 +1010,17 @@ function CARRIERTRAINER:_Groove(playerData)
   
   --TODO: 
   if (diffX > -500) then --Reached in close before groove
+  
     local hint = "You're too far left and never reached the groove."
     self:_SendMessageToPlayer( hint, 8, playerData )
+    
+    -- zero score
     self:_PrintScore(0, playerData, true)
     self:_AddToSummary(playerData, hint)
+    
+    -- Next step.
     playerData.step = 9
+    
   else
   
     local limitDeg = 8.0
@@ -1028,16 +1037,13 @@ function CARRIERTRAINER:_Groove(playerData)
 
       -- AoA feed back
       local aoa = playerData.unit:GetAoA() 
-      local aoaFeedback = self:_PrintAoAFeedback(aoa, 8.1, playerData)      
-      local onSpeedScore = self:_GetOnSpeedScore(aoa)
-      
-      self:_IncreaseScore(playerData, score + onSpeedScore)
-      self:_PrintScore(score + onSpeedScore, playerData, true)      
-      
-      local fullHint = hint .. " (" .. aoaFeedback .. ")"
+      local score, hint=self:_AoACheck(aoa, self.Groove,playerData)
 
-      self:_AddToSummary(playerData, fullHint)
+      -- TODO
+      --local fullHint = hint .. " (" .. aoaFeedback .. ")"
+      --self:_AddToSummary(playerData, fullHint)
       
+      -- Next step.
       playerData.step = 9
     end
   end
@@ -1083,6 +1089,7 @@ function CARRIERTRAINER:_Trap(playerData)
       local wire = 1
       local score = -10
       
+      -- Which wire
       if(diffX < -14) then
         wire = 1
         score = -15
@@ -1115,14 +1122,14 @@ function CARRIERTRAINER:_Trap(playerData)
     
   elseif (diffX > 150) then
     
-    local wire = 0
-    local hint = ""
+    local wire  = 0
+    local hint  = ""
     local score = 0
     if (playerData.lowestAltitude < 23) then
-      hint = "You boltered."
+      hint  = "You boltered."
     else
-      hint = "You were waved off."
-      wire = -1
+      hint  = "You were waved off."
+      wire  = -1
       score = -10
     end
     
@@ -1267,14 +1274,10 @@ end
 --- Evaluate player's altitude at checkpoint.
 -- @param #CARRIERTRAINER self
 -- @param #CARRIERTRAINER.PlayerData playerData Player data table.
--- @param #CARRIERTRAINER.Checkpoint checkpoint Checkpoint.
--- @return #number Score.
--- @return #string Message text.
-function CARRIERTRAINER:_AltitudeCheck(playerData, checkpoint)
+-- @return #number Low score.
+-- @return #number Bad score.
+function CARRIERTRAINER:_GetGoodBadScore(playerData)
 
-  -- Player altitude.
-  local altitude=playerData.unit:GetAltitude()
-  
   local lowscore
   local badscore
   if playerData.difficulty==CARRIERTRAINER.Difficulty.EASY then
@@ -1288,6 +1291,23 @@ function CARRIERTRAINER:_AltitudeCheck(playerData, checkpoint)
     badscore=5
   end
   
+  return lowscore, badscore
+end
+
+--- Evaluate player's altitude at checkpoint.
+-- @param #CARRIERTRAINER self
+-- @param #CARRIERTRAINER.PlayerData playerData Player data table.
+-- @param #CARRIERTRAINER.Checkpoint checkpoint Checkpoint.
+-- @return #number Score.
+-- @return #string Message text.
+function CARRIERTRAINER:_AltitudeCheck(playerData, checkpoint)
+
+  -- Player altitude.
+  local altitude=playerData.unit:GetAltitude()
+  
+  -- Get relative score.
+  local lowscore, badscore = self:_GetGoodBadScore(playerData)
+  
   -- Altitude error +-X%
   local _error=(altitude-checkpoint.Altitude)/checkpoint.Altitude*100
   
@@ -1295,31 +1315,30 @@ function CARRIERTRAINER:_AltitudeCheck(playerData, checkpoint)
   local hint
   local steptext=self:_StepName(playerData.step)
   if _error>badscore then
-    score = 5
-    hint = string.format("You're high %s.", steptext)
+    score = -10
+    hint  = string.format("You're high %s. ", steptext)
   elseif _error>lowscore then
-    score = 7
-    hint = string.format("You're slightly high %s.", steptext)
+    score = -5
+    hint  = string.format("You're slightly high %s. ", steptext)
   elseif _error<badscore then
-    score = 5
-    hint = string.format("You're low %s.", steptext)
+    score = -10
+    hint  = string.format("You're low %s.", steptext)
   elseif _error<lowscore then
-    score = 7
-    hint = string.format("You're slightly %s.", steptext)
+    score = -5
+    hint  = string.format("You're slightly low %s. ", steptext)
   else
-    score = 10
-    hint = string.format("Good altitude %s.", steptext)
+    score = 0
+    hint  = string.format("Good altitude %s. ", steptext)
   end
   
-  -- Increase score.
-  self:_IncreaseScore(playerData, score)
+  hint=hint..string.format(" %d\% deviation from %d ft target alt.", _error, checkpoint.Altitude)
+  
+  -- Set score.
+  playerData.score=playerData.score+score
   
   -- Display feedback.
-  self:_PrintAltitudeFeedback(altitude, checkpoint.Altitude, playerData)
-  
-  -- Display score.
-  self:_PrintScore(score, playerData, true)
-    
+  self:_SendMessageToPlayer(hint, 8,playerData)
+      
   return score, hint
 end
 
@@ -1332,18 +1351,8 @@ end
 -- @return #string Message text.
 function CARRIERTRAINER:_DistanceCheck(distance, playerData, checkpoint)
 
-  local lowscore
-  local badscore
-  if playerData.difficulty==CARRIERTRAINER.Difficulty.EASY then
-    lowscore=10
-    badscore=20    
-  elseif playerData.difficulty==CARRIERTRAINER.Difficulty.NORMAL then
-    lowscore=5
-    badscore=10     
-  elseif playerData.difficulty==CARRIERTRAINER.Difficulty.HARD then
-    lowscore=2.5
-    badscore=5
-  end
+  -- Get relative score.
+  local lowscore, badscore = self:_GetGoodBadScore(playerData)
   
   -- Altitude error +-X%
   local _error=(distance-checkpoint.Distance)/checkpoint.Distance*100
@@ -1353,34 +1362,23 @@ function CARRIERTRAINER:_DistanceCheck(distance, playerData, checkpoint)
   local dnm=UTILS.MetersToNM(distance)
   local steptext=self:_StepName(playerData.step)
   if _error>badscore then
-    score = 0
-    hint = string.format("too far from the boat (%.1f NM)", dnm)
+    score = -10
+    hint  = string.format("too far from the boat (%.1f NM)", dnm)
   elseif _error>lowscore then
-    score = 5
-    hint = string.format("slightly too far from the boat (%.1f NM)", dnm)
+    score =  -5 
+    hint  = string.format("slightly too far from the boat (%.1f NM)", dnm)
   elseif _error<badscore then
-    score = 0
-    hint = string.format( "too close to the boat (%.1f NM)", dnm)
+    score = -10
+    hint  = string.format( "too close to the boat (%.1f NM)", dnm)
   elseif _error<lowscore then
-    score = 5
-    hint = string.format("slightly too far from the boat (%.1f NM)", dnm)
+    score =  -5
+    hint  = string.format("slightly too far from the boat (%.1f NM)", dnm)
   else
-    score = 10
-    hint = string.format("with perfect distance to the boat (%.1f NM)", dnm)
+    score =   0
+    hint  = string.format("with perfect distance to the boat (%.1f NM)", dnm)
   end
   
   --return score, hint
-end
-
-
---- Send message about altitude feedback.
--- @param #CARRIERTRAINER self
--- @param #number altitude Current altitude of the player.
--- @param #number idealAltitude Ideal altitude.
--- @param #CARRIERTRAINER.PlayerData playerData Player data.
-function CARRIERTRAINER:_PrintAltitudeFeedback(altitude, idealAltitude, playerData)
-  local text=string.format("Alt: %d feet (Target: %d feet)", altitude, idealAltitude)
-  self:_SendMessageToPlayer(text, 8, playerData)
 end
 
 --- Score for correct AoA.
@@ -1388,68 +1386,38 @@ end
 -- @param #number AoA Angle of attack.
 -- @param #CARRIERTRAINER.Checkpoint checkpoint Checkpoint.
 -- @param #CARRIERTRAINER.PlayerData playerData Player data.
-function CARRIERTRAINER:_GetOnSpeedScore(AoA, checkpoint, playerData)
+function CARRIERTRAINER:_AoACheck(AoA, checkpoint, playerData)
 
-  local lowscore
-  local badscore
-  if playerData.difficulty==CARRIERTRAINER.Difficulty.EASY then
-    lowscore=10
-    badscore=20    
-  elseif playerData.difficulty==CARRIERTRAINER.Difficulty.NORMAL then
-    lowscore=5
-    badscore=10     
-  elseif playerData.difficulty==CARRIERTRAINER.Difficulty.HARD then
-    lowscore=2.5
-    badscore=5
-  end
+  -- Get relative score.
+  local lowscore, badscore = self:_GetGoodBadScore(playerData)
   
   -- Altitude error +-X%
   local _error=(AoA-checkpoint.AoA)/checkpoint.AoA*100
 
   local score = 0
+  local hint=""
   if _error>badscore then --Slow
-    score = 0
+    score = -10
+    hint  = "You're slow."
   elseif _error>lowscore then --Slightly slow
-    score = 5
+    score = -5
+    hint  = "You're slightly slow."
   elseif _error<badscore then --Fast
-    score = 0
+    score = -10
+    hint  = "You're fast."
   elseif _error<lowscore then --Slightly fast
-    score = 5
+    score = -5
+    hint  = "You're slightly fast."
   else --On speed
-    score = 10
+    score = 0
+    hint  = "You're on speed!"
   end
+  
+  self:_SendMessageToPlayer(hint .. " AOA: " .. roundedAoA .. " (Target: " .. idealAoA .. ")", 8, playerData)
   
   return score
 end
 
-
---- Print AoA feedback.
--- @param #CARRIERTRAINER self
--- @param #number AoA Angle of attack.
--- @param #number idealAoA Ideal AoA.
--- @param #CARRIERTRAINER.PlayerData playerData Player data.
--- @return #string Feedback hint.
-function CARRIERTRAINER:_PrintAoAFeedback(AoA, idealAoA, playerData)
-
-  local hint = ""
-  if(AoA > 9.5) then
-    hint = "You're slow."
-  elseif(AoA > 9) then
-    hint = "You're slightly slow."
-  elseif(AoA > 7.25) then
-    hint = "You're on speed!"
-  elseif(AoA > 6.7) then
-    hint = "You're slightly fast."
-  else
-    hint = "You're fast."
-  end
-  
-  local roundedAoA = UTILS.Round(AoA, 2)
-  
-  self:_SendMessageToPlayer(hint .. " AOA: " .. roundedAoA .. " (Target: " .. idealAoA .. ")", 8, playerData)
-  
-  return hint
-end
 
 --- Send message to playe client.
 -- @param #CARRIERTRAINER self
