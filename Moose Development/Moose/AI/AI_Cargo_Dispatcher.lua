@@ -1151,6 +1151,8 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
                   self.PickupCargo[Carrier] = CargoCoordinate
                   PickupCargo = Cargo
                   break
+                else
+                  self:I( {"Cargo is too large to be loaded on transport group", CargoName = Cargo:GetName(), CargoWeight = Cargo:GetWeight(), LargestLoadCapacity = LargestLoadCapacity, Carrier:GetName()} )
                 end
               end
             end
