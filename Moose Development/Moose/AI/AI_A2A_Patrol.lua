@@ -351,13 +351,12 @@ function AI_A2A_PATROL:onafterRoute( AIPatrol, From, Event, To )
 end
 
 --- @param Wrapper.Group#GROUP AIPatrol
-function AI_A2A_PATROL.Resume( AIPatrol )
+function AI_A2A_PATROL.Resume( AIPatrol, Fsm )
 
-  AIPatrol:F( { "AI_A2A_PATROL.Resume:", AIPatrol:GetName() } )
+  AIPatrol:I( { "AI_A2A_PATROL.Resume:", AIPatrol:GetName() } )
   if AIPatrol:IsAlive() then
-    local _AI_A2A = AIPatrol:GetState( AIPatrol, "AI_A2A" ) -- AI.AI_A2A#AI_A2A
-      _AI_A2A:__Reset( 1 )
-      _AI_A2A:__Route( 5 )
+    Fsm:__Reset( 1 )
+    Fsm:__Route( 5 )
   end
   
 end

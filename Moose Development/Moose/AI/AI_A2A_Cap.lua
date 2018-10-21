@@ -476,13 +476,12 @@ function AI_A2A_CAP:OnEventDead( EventData )
 end
 
 --- @param Wrapper.Group#GROUP AICap
-function AI_A2A_CAP.Resume( AICap )
+function AI_A2A_CAP.Resume( AICap, Fsm )
 
-  AICap:F( { "AI_A2A_CAP.Resume:", AICap:GetName() } )
+  AICap:I( { "AI_A2A_CAP.Resume:", AICap:GetName() } )
   if AICap:IsAlive() then
-    local _AI_A2A = AICap:GetState( AICap, "AI_A2A" ) -- #AI_A2A
-      _AI_A2A:__Reset( 1 )
-      _AI_A2A:__Route( 5 )
+    Fsm:__Reset( 1 )
+    Fsm:__Route( 5 )
   end
   
 end

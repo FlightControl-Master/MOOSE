@@ -635,7 +635,7 @@ end
 --- @param Wrapper.Group#GROUP AIGroup
 function AI_A2A.Resume( AIGroup, Fsm )
 
-  AIGroup:F( { "AI_A2A.Resume:", AIGroup:GetName() } )
+  AIGroup:I( { "AI_A2A.Resume:", AIGroup:GetName() } )
   if AIGroup:IsAlive() then
     Fsm:__RTB( 0.5 )
   end
