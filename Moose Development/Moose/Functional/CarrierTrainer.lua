@@ -125,6 +125,7 @@ CARRIERTRAINER.Difficulty={
 
 --- Checkpoint parameters triggering the next step in the pattern.
 -- @type CARRIERTRAINER.Checkpoint
+-- @field #string name Name of checkpoint.
 -- @field #number Xmin Minimum allowed longitual distance to carrier.
 -- @field #number Xmax Maximum allowed longitual distance to carrier.
 -- @field #number Zmin Minimum allowed latitudal distance to carrier.
@@ -317,7 +318,7 @@ function CARRIERTRAINER:_InitNewPlayer(unitname)
   playerData.unit = UNIT:FindByName(unitname)
   playerData.client = CLIENT:FindByName(playerData.unit.UnitName, nil, true)
   playerData.callsign = playerData.unit:GetCallsign()
-  playerData.totalScore = 0
+  playerData.totalscore = 0
   playerData.passes = 0
   playerData.collectedResultString = ""
     
@@ -364,11 +365,6 @@ end
 -- @param Wrapper.Unit#UNIT unit Player unit.
 -- @return #number Relative heading in degrees.
 function CARRIERTRAINER:_GetRelativeHeading(unit)
-  --local a=self.carrier:GetVec3()
-  --local b=unit:GetVec3()
-  --local c={x=b.x-a.x, y=0, z=b.z-a.z}
-  --local headingCarrier=self.carrier:GetHeading()
-  --local headingPlayer=unit:GetHeading()
   local vC=self.carrier:GetOrientationX()
   local vP=unit:GetOrientationX()
   
@@ -395,7 +391,7 @@ function CARRIERTRAINER:_CheckPlayerStatus()
       
       if unit:IsAlive() then
       
-        self:_SendMessageToPlayer("current step "..self:_StepName(playerData.step),1,playerData)
+        --self:_SendMessageToPlayer("current step "..self:_StepName(playerData.step),1,playerData)
 
         --self:_DetailedPlayerStatus(playerData)
         if unit:IsInZone(self.giantZone) then
@@ -435,36 +431,6 @@ function CARRIERTRAINER:_CheckPlayerStatus()
     end
   end
   
-end
-
-
-
---- Check limits for reaching next step.
--- @param #CARRIERTRAINER self
--- @param #number X X position of player unit.
--- @param #number Z Z position of player unit.
--- @param #CARRIERTRAINER.Checkpoint check Checkpoint.
--- @return #boolean If true, checkpoint condition for next step was reached.
-function CARRIERTRAINER:_CheckLimits(X, Z, check)
-
-  local next=true
-  if check.LimitXmin and X<check.LimitXmin then
-    next=false
-  elseif check.LimitXmax and X>check.LimitXmax then
-    next=false
-  elseif check.LimitZmin and Z<check.LimitZmin then
-    next=false
-  elseif check.LimitZmax and Z>check.LimitZmax then
-    next=false
-  end
-  
-  self:E({X=X, Z=Z, check=check})
-  
-  local text=string.format("next=%s : X=%d Xmin=%s Xmax=%s ||| Z=%d Zmin=%s Zmax=%s", 
-  tostring(next), X, tostring(check.LimitXmin), tostring(check.LimitXmax), Z, tostring(check.LimitZmin), tostring(check.LimitZmax))
-  MESSAGE:New(text,1):ToAllIf(self.Debug)
-
-  return next
 end
 
 --- Get name of the current pattern step.
@@ -600,7 +566,9 @@ function CARRIERTRAINER:_AbortPattern(playerData, X, Z, posData)
   
   self:_SendMessageToPlayer(toofartext.." Abort approach!", 15, playerData )
   
-  MESSAGE:New(string.format("Abort: X=%d Xmin=%s, Xmax=%s | Z=%d Zmin=%s Zmax=%s", X, tostring(posData.Xmin), tostring(posData.Xmax), Z, tostring(posData.Zmin), tostring(posData.Zmax)), 60):ToAllIf(self.Debug)
+  local text=string.format("Abort: X=%d Xmin=%s, Xmax=%s | Z=%d Zmin=%s Zmax=%s", X, tostring(posData.Xmin), tostring(posData.Xmax), Z, tostring(posData.Zmin), tostring(posData.Zmax))
+  self:E(self.lid..text)
+  MESSAGE:New(text, 60):ToAllIf(self.Debug)
   
   self:_AddToSummary(playerData, "Approach aborted.")
   
@@ -658,9 +626,10 @@ end
 function CARRIERTRAINER:_InitStennis()
 
   -- Upwind leg
+  self.Upwind.name="Upwind"
   self.Upwind.Xmin=-4000  -- TODO Should be withing 4 km behind carrier. Why?
   self.Upwind.Xmax=nil
-  self.Upwind.Zmin=-1200
+  self.Upwind.Zmin=0
   self.Upwind.Zmax=1200
   self.Upwind.LimitXmin=0
   self.Upwind.LimitXmax=nil
@@ -671,11 +640,12 @@ function CARRIERTRAINER:_InitStennis()
   self.Upwind.Distance=nil
 
   -- Early break
+  self.BreakEarly.name="Early Break"
   self.BreakEarly.Xmin=-500
   self.BreakEarly.Xmax=nil
   self.BreakEarly.Zmin=-3700
   self.BreakEarly.Zmax=1500
-  self.BreakEarly.LimitXmin=nil
+  self.BreakEarly.LimitXmin=0
   self.BreakEarly.LimitXmax=nil
   self.BreakEarly.LimitZmin=-370   --0.2 NM
   self.BreakEarly.LimitZmax=nil
@@ -684,32 +654,35 @@ function CARRIERTRAINER:_InitStennis()
   self.BreakEarly.Distance=nil
   
   -- Late break
+  self.BreakLate.name="Late Break"
   self.BreakLate.Xmin=-500
   self.BreakLate.Xmax=nil
   self.BreakLate.Zmin=-3700
   self.BreakLate.Zmax=1500
-  self.BreakLate.LimitXmin=nil
-  self.BreakLate.LimitXmax=nil
+  self.BreakLate.LimitXmin=0
+  self.BreakLate.LimitXmax=10000
   self.BreakLate.LimitZmin=-1470  --0.8 NM
-  self.BreakLate.LimitZmax=nil
+  self.BreakLate.LimitZmax=10000
   self.BreakLate.Altitude=UTILS.FeetToMeters(800)
   self.BreakLate.AoA=8.1
   self.BreakLate.Distance=nil  
   
   -- Abeam position
+  self.Abeam.name="Abeam Position"
   self.Abeam.Xmin=nil
   self.Abeam.Xmax=nil
   self.Abeam.Zmin=-3700
   self.Abeam.Zmax=-1000
   self.Abeam.LimitXmin=-200
-  self.Abeam.LimitXmax=nil
-  self.Abeam.LimitZmin=nil
-  self.Abeam.LimitZmax=nil
+  self.Abeam.LimitXmax=10000
+  self.Abeam.LimitZmin=0
+  self.Abeam.LimitZmax=10000
   self.Abeam.Altitude=UTILS.FeetToMeters(600)  
   self.Abeam.AoA=8.1
   self.Abeam.Distance=nil
 
   -- At the ninety
+  self.Ninety.name="Ninety"
   self.Ninety.Xmin=-3700
   self.Ninety.Xmax=0
   self.Ninety.Zmin=-3700
@@ -723,6 +696,7 @@ function CARRIERTRAINER:_InitStennis()
   self.Abeam.Distance=nil
 
   -- Wake position
+  self.Wake.name="Wake"
   self.Wake.Xmin=-4000
   self.Wake.Xmax=0
   self.Wake.Zmin=-2000
@@ -736,10 +710,12 @@ function CARRIERTRAINER:_InitStennis()
   self.Wake.Distance=nil
 
   -- In the groove
+  self.Groove.name="Groove"
   self.Groove.Xmin=-4000
   self.Groove.Xmax=100
   
   -- Landing trap
+  self.Trap.name="Trap"
   self.Trap.Xmin=-3000
   self.Trap.Xmax=nil
   self.Trap.Zmin=-2000
@@ -747,6 +723,50 @@ function CARRIERTRAINER:_InitStennis()
   --self.Trap.Limit=nil
   self.Trap.Altitude=nil  
 
+end
+
+--- Check limits for reaching next step.
+-- @param #CARRIERTRAINER self
+-- @param #number X X position of player unit.
+-- @param #number Z Z position of player unit.
+-- @param #CARRIERTRAINER.Checkpoint check Checkpoint.
+-- @return #boolean If true, checkpoint condition for next step was reached.
+function CARRIERTRAINER:_CheckLimits(X, Z, check)
+
+  --[[
+  local next=true
+  if check.LimitXmin and X<check.LimitXmin then
+    next=false
+  elseif check.LimitXmax and X>check.LimitXmax then
+    next=false
+  elseif check.LimitZmin and Z<check.LimitZmin then
+    next=false
+  elseif check.LimitZmax and Z>check.LimitZmax then
+    next=false
+  end
+
+  
+  local next = ((check.LimitXmin and math.abs(X)>=math.abs(check.LimitXmin)) or check.LimitXmin==nil) and
+               ((check.LimitXmax and math.abs(X)<=math.abs(check.LimitXmax)) or check.LimitXmax==nil) and
+               ((check.LimitZmin and math.abs(Z)>=math.abs(check.LimitZmin)) or check.LimitZmin==nil) and
+               ((check.LimitZmax and math.abs(Z)<=math.abs(check.LimitZmax)) or check.LimitZmax==nil)
+  ]]
+                 
+  local nextXmin=check.LimitXmin==nil or (check.LimitXmin and (check.LimitXmin<0 and X<=check.LimitXmin or check.LimitXmin>=0 and X>=check.LimitXmin))
+  local nextXmax=check.LimitXmax==nil or (check.LimitXmax and (check.LimitXmax<0 and X>=check.LimitXmax or check.LimitXmax>=0 and X<=check.LimitXmax))
+  local nextZmin=check.LimitZmin==nil or (check.LimitZmin and (check.LimitZmin<0 and Z<=check.LimitZmin or check.LimitZmin>=0 and Z>=check.LimitZmin))
+  local nextZmax=check.LimitZmax==nil or (check.LimitZmax and (check.LimitZmax<0 and Z>=check.LimitZmax or check.LimitZmax>=0 and Z<=check.LimitZmax))
+  
+  local next=nextXmin and nextXmax and nextZmin and nextZmax
+  
+  --self:E({next=next, X=X, Z=Z, check=check})
+  
+  local text=string.format("step=%s: next=%s: X=%d Xmin=%s Xmax=%s ||| Z=%d Zmin=%s Zmax=%s", 
+  check.name, tostring(next), X, tostring(check.LimitXmin), tostring(check.LimitXmax), Z, tostring(check.LimitZmin), tostring(check.LimitZmax))
+  self:E(self.lid..text)
+  MESSAGE:New(text,1):ToAllIf(self.Debug)
+
+  return next
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1325,16 +1345,18 @@ function CARRIERTRAINER:_AltitudeCheck(playerData, checkpoint, altitude)
   local score
   local hint
   local steptext=self:_StepName(playerData.step)
+  
+  
   if _error>badscore then
     score = -10
     hint  = string.format("You're high %s. ", steptext)
   elseif _error>lowscore then
     score = -5
     hint  = string.format("You're slightly high %s. ", steptext)
-  elseif _error<badscore then
+  elseif _error<-badscore then
     score = -10
     hint  = string.format("You're low %s.", steptext)
-  elseif _error<lowscore then
+  elseif _error<-lowscore then
     score = -5
     hint  = string.format("You're slightly low %s. ", steptext)
   else
@@ -1374,10 +1396,10 @@ function CARRIERTRAINER:_DistanceCheck(playerData, checkpoint, distance)
   elseif _error>lowscore then
     score =  -5 
     hint  = string.format("You're slightly too far from the boat.")
-  elseif _error<badscore then
+  elseif _error<-badscore then
     score = -10
     hint  = string.format( "You're too close to the boat!")
-  elseif _error<lowscore then
+  elseif _error<-lowscore then
     score =  -5
     hint  = string.format("slightly too far from the boat.")
   else
@@ -1415,10 +1437,10 @@ function CARRIERTRAINER:_AoACheck(playerData, checkpoint, aoa)
   elseif _error>lowscore then --Slightly slow
     score = -5
     hint  = "You're slightly slow."
-  elseif _error<badscore then --Fast
+  elseif _error<-badscore then --Fast
     score = -10
     hint  = "You're fast."
-  elseif _error<lowscore then --Slightly fast
+  elseif _error<-lowscore then --Slightly fast
     score = -5
     hint  = "You're slightly fast."
   else --On speed
