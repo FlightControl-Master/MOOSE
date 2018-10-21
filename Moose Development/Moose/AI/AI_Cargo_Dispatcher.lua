@@ -899,7 +899,7 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
   
   for CarrierGroupName, Carrier in pairs( self.SetCarrier:GetSet() ) do
     local Carrier = Carrier -- Wrapper.Group#GROUP
-    if Carrier:IsAlive() == true then
+    if Carrier:IsAlive() ~= nil then
       local AI_Cargo = self.AI_Cargo[Carrier]
       if not AI_Cargo then
       
