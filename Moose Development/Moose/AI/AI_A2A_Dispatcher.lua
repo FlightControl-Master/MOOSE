@@ -1020,6 +1020,36 @@ do -- AI_A2A_DISPATCHER
 
 
   --- @param #AI_A2A_DISPATCHER self
+  function AI_A2A_DISPATCHER:onafterStart( From, Event, To )
+
+    self:GetParent( self ).onafterStart( self, From, Event, To )
+
+    -- Spawn the resources.
+    for SquadronName, DefenderSquadron in pairs( self.DefenderSquadrons ) do
+      DefenderSquadron.Resource = {}
+      for Resource = 1, DefenderSquadron.Resources do
+        local Spawn = DefenderSquadron.Spawn[ math.random( 1, #DefenderSquadron.Spawn ) ] -- Core.Spawn#SPAWN
+        local DefenderGrouping = DefenderSquadron.Grouping or self.DefenderDefault.Grouping
+        Spawn:InitGrouping( DefenderGrouping )
+        local TakeoffMethod = self:GetSquadronTakeoff( SquadronName )
+        local SpawnGroup
+        if DefenderSquadron.Uncontrolled then
+          SpawnGroup = Spawn:SpawnAtAirbase( DefenderSquadron.Airbase, SPAWN.Takeoff.Cold )
+        end
+      end
+    end
+    for SquadronName, DefenderSquadron in pairs( self.DefenderSquadrons ) do
+      for SpawnId, SpawnData in pairs( DefenderSquadron.Spawn ) do
+        local Spawn = SpawnData -- Core.Spawn#SPAWN
+        Spawn.SpawnIndex = 0
+        Spawn.SpawnCount = 0                             -- The internal counter of the amount of spawning the has happened since SpawnStart.
+        Spawn.AliveUnits = 0                             -- Contains the counter how many units are currently alive
+      end
+    end
+  end
+  
+
+  --- @param #AI_A2A_DISPATCHER self
   -- @param Core.Event#EVENTDATA EventData
   function AI_A2A_DISPATCHER:OnEventBaseCaptured( EventData )
 
@@ -1551,6 +1581,31 @@ do -- AI_A2A_DISPATCHER
   end
 
   
+  --- Set the Squadron visible before startup of the dispatcher.
+  -- All planes will be spawned as uncontrolled on the parking spot.
+  -- They will lock the parking spot.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #string SquadronName The squadron name.
+  -- @return #AI_A2A_DISPATCHER
+  -- @usage
+  -- 
+  --        -- Set the Squadron visible before startup of dispatcher.
+  --        A2ADispatcher:SetSquadronVisible( "Mineralnye" )
+  --        
+  function AI_A2A_DISPATCHER:SetSquadronVisible( SquadronName )
+  
+    self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
+    
+    local DefenderSquadron = self:GetSquadron( SquadronName )
+    
+    DefenderSquadron.Uncontrolled = true
+
+    for SpawnTemplate, DefenderSpawn in pairs( self.DefenderSpawns ) do
+      DefenderSpawn:InitUnControlled()
+    end
+
+  end
+
   --- Set a CAP for a Squadron.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The squadron name.
