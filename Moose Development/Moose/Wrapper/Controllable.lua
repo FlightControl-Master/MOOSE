@@ -870,6 +870,34 @@ function CONTROLLABLE:TaskOrbitCircleAtVec2( Point, Altitude, Speed )
   return DCSTask
 end
 
+--- (AIR) Orbit at a position with at a given altitude and speed. Optionally, a race track pattern can be specified.
+-- @param #CONTROLLABLE self
+-- @param Core.Point#COORDINATE Coord Coordinate at which the CONTROLLABLE orbits.
+-- @param #number Altitude Altitude in meters of the orbit pattern.
+-- @param #number Speed Speed [m/s] flying the orbit pattern
+-- @param Core.Point#COORDINATE CoordRaceTrack (Optional) If this coordinate is specified, the CONTROLLABLE will fly a race-track pattern using this and the initial coordinate. 
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:TaskOrbit(Coord, Altitude, Speed, CoordRaceTrack)
+
+  local Pattern=AI.Task.OrbitPattern.CIRCLE
+  if CoordRaceTrack then
+    Pattern=AI.Task.OrbitPattern.RACE_TRACK
+  end
+
+  local Task = {
+    id = 'Orbit',
+    params = {
+      pattern  = Pattern,
+      point    = Coord:GetVec2(),
+      point2   = CoordRaceTrack:GetVec2(),
+      speed    = Speed,
+      altitude = Altitude,
+    }
+  }
+
+  return Task
+end
+
 --- (AIR) Orbit at the current position of the first unit of the controllable at a specified alititude.
 -- @param #CONTROLLABLE self
 -- @param #number Altitude The altitude [m] to hold the position.
