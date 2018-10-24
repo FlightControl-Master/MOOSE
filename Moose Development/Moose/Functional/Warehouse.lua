@@ -624,7 +624,8 @@
 -- The @{#WAREHOUSE.OnAfterAttacked} function can be used by the mission designer to react to the enemy attack. For example by deploying some or all ground troops
 -- currently in stock to defend the warehouse. Note that the warehouse also has a self defence option which can be enabled by the @{#WAREHOUSE.SetAutoDefenceOn}()
 -- function. In this case, the warehouse will automatically spawn all ground troops. If the spawn zone is further away from the warehouse zone, all mobile troops
--- are routed to the warehouse zone.
+-- are routed to the warehouse zone. The self request which is triggered on an automatic defence has the assignment "AutoDefence". So you can use this to
+-- give orders to the groups that were spawned using the @{#WAREHOUSE.OnAfterSelfRequest} function.
 -- 
 -- If only ground troops of the enemy coalition are present in the warehouse zone, the warehouse and all its assets falls into the hands of the enemy.
 -- In this case the event **Captured** is triggered which can be captured by the @{#WAREHOUSE.OnAfterCaptured} function.
@@ -1726,7 +1727,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.6.4"
+WAREHOUSE.version="0.6.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -1735,12 +1736,12 @@ WAREHOUSE.version="0.6.4"
 -- TODO: Add check if assets "on the move" are stationary. Can happen if ground units get stuck in buildings. If stationary auto complete transport by adding assets to request warehouse? Time?
 -- TODO: Optimize findpathonroad. Do it only once (first time) and safe paths between warehouses similar to off-road paths.
 -- TODO: Spawn assets only virtually, i.e. remove requested assets from stock but do NOT spawn them ==> Interface to A2A dispatcher! Maybe do a negative sign on asset number?
--- TODO: Test capturing a neutral warehouse.
 -- TODO: Make more examples: ARTY, CAP, ...
 -- TODO: Check also general requests like all ground. Is this a problem for self propelled if immobile units are among the assets? Check if transport.
 -- TODO: Handle the case when units of a group die during the transfer.
 -- TODO: Added habours as interface for transport to from warehouses? Could make a rudimentary shipping dispatcher.
--- TODO: Add save/load capability of warehouse <==> percistance after mission restart. Difficult in lua!
+-- DONE: Test capturing a neutral warehouse.
+-- DONE: Add save/load capability of warehouse <==> percistance after mission restart. Difficult in lua!
 -- DONE: Get cargo bay and weight from CARGO_GROUP and GROUP. No necessary any more!
 -- DONE: Add possibility to set weight and cargo bay manually in AddAsset function as optional parameters.
 -- DONE: Check overlapping aircraft sometimes.
@@ -1862,7 +1863,7 @@ function WAREHOUSE:New(warehouse, alias)
   self:AddTransition("*",               "Stop",              "Stopped")     -- Stop the warehouse.
   self:AddTransition("Stopped",         "Restart",           "Running")     -- Restart the warehouse when it was stopped before.
   self:AddTransition("Loaded",          "Restart",           "Running")     -- Restart the warehouse when assets were loaded from file before.
-  self:AddTransition("*",               "Save",              "*")           -- TODO Save the warehouse state to disk.
+  self:AddTransition("*",               "Save",              "*")           -- Save the warehouse state to disk.
   self:AddTransition("*",               "Attacked",          "Attacked")    -- Warehouse is under attack by enemy coalition.
   self:AddTransition("Attacked",        "Defeated",          "Running")     -- Attack by other coalition was defeated!
   self:AddTransition("*",               "ChangeCountry",     "*")           -- Change country (and coalition) of the warehouse. Warehouse is respawned! 
@@ -3530,12 +3531,12 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
           else
             self:T(warehouse.wid..string.format("WARNING: Group %s is neither cargo nor transport!", group:GetName()))
           end
-          
-        end
         
-        -- If no assignment was given we take the assignment of the request if there is any.
-        if assignment==nil and request.assignment~=nil then
-          assignment=request.assignment
+          -- If no assignment was given we take the assignment of the request if there is any.
+          if assignment==nil and request.assignment~=nil then
+            assignment=request.assignment
+          end
+          
         end
       end
 
