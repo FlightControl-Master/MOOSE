@@ -4620,7 +4620,7 @@ function WAREHOUSE:onafterAttacked(From, Event, To, Coalition, Country)
       text=text..string.format("Deploying all %d ground assets.", nground)
       
       -- Add self request.
-      self:AddRequest(self, WAREHOUSE.Descriptor.CATEGORY, Group.Category.GROUND, WAREHOUSE.Quantity.ALL, nil, nil , 0)
+      self:AddRequest(self, WAREHOUSE.Descriptor.CATEGORY, Group.Category.GROUND, WAREHOUSE.Quantity.ALL, nil, nil , 0, "AutoDefence")
     else
       text=text..string.format("No ground assets currently available.")      
     end

@@ -26,6 +26,7 @@
 -- @field #boolean Debug Debug mode. Messages to all about status.
 -- @field Wrapper.Unit#UNIT carrier Aircraft carrier unit on which we want to practice.
 -- @field #string carriertype Type name of aircraft carrier.
+-- @field #string alias Alias of the carrier trainer.
 -- @field Core.Zone#ZONE_UNIT startZone Zone in which the pattern approach starts.
 -- @field Core.Zone#ZONE_UNIT giantZone Large zone around the carrier to welcome players.
 -- @field Core.Zone#ZONE_UNIT registerZone Zone behind the carrier to register for a new approach.
@@ -39,6 +40,7 @@
 -- @field #CARRIERTRAINER.Checkpoint Wake Right behind the carrier.
 -- @field #CARRIERTRAINER.Checkpoint Groove In the groove checkpoint.
 -- @field #CARRIERTRAINER.Checkpoint Trap Landing checkpoint.
+-- @field
 -- @extends Core.Fsm#FSM
 
 --- Practice Carrier Landings
@@ -73,6 +75,8 @@ CARRIERTRAINER = {
   Wake         = {},
   Groove       = {},
   Trap         = {},
+  TACAN        = nil,
+  ICLS         = nil,
 }
 
 --- Aircraft types.
@@ -148,7 +152,7 @@ CARRIERTRAINER.MenuF10={}
 
 --- Carrier trainer class version.
 -- @field #string version
-CARRIERTRAINER.version="0.1.0"
+CARRIERTRAINER.version="0.1.0w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -353,8 +357,11 @@ function CARRIERTRAINER:OnEventLand(EventData)
     
     -- Check if we caught a wire after one second.
     -- TODO: test this!
-    local playerData=self.players[_playername]
-    SCHEDULER:New(nil, self._Trapped,{self, playerData}, 1)
+    local playerData=self.players[_playername] --#CARRIERTRAINER.PlayerData
+    local coord=playerData.unit:GetCoordinate()
+    
+    -- Call trapped function in 5 seconds to make sure we did not bolter.
+    SCHEDULER:New(nil, self._Trapped,{self, playerData, coord}, 5)
       
   end 
 end
@@ -1287,18 +1294,19 @@ end
 --- Trapped?
 -- @param #CARRIERTRAINER self
 -- @param #CARRIERTRAINER.PlayerData playerData Player data table.
-function CARRIERTRAINER:_Trapped(playerData)
+-- @param Core.Point#COORDINATE pos Position of aircraft on landing event.
+function CARRIERTRAINER:_Trapped(playerData, pos)
 
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
-  local diffX, diffZ, rho, phi = self:_GetDistances(playerData.unit)
+  local diffX, diffZ, rho, phi = self:_GetDistances(pos)
   
   -- Get velocities.
   local playerVelocity  = playerData.unit:GetVelocityKMH()
-  local carrierVelocity = self.carrier:GetVelocityKMH()  
+  local carrierVelocity = self.carrier:GetVelocityKMH()
 
-  if math.abs(playerVelocity-carrierVelocity) < 0.01 then
-    env.info("Trap identified! diff " .. diffX .. ",  highestCarrierXDiff" .. playerData.highestCarrierXDiff .. ", secondsStandingStill: " .. playerData.secondsStandingStill)
-      
+  if playerData.unit:InAir()==false then
+    -- Seems we have successfully landed.
+    
     local wire  = 1
     local score = -10
     
@@ -1317,13 +1325,19 @@ function CARRIERTRAINER:_Trapped(playerData)
       score = 7
     end
     
-    self:_SendMessageToPlayer( "TRAPPED! " .. wire .. "-wire!", 30, playerData )
-    self:_PrintScore(score, playerData, false)
+    local text=string.format("TRAPPED! %d-wire.", wire)
+    self:_SendMessageToPlayer(text, 30, playerData)
     
-    env.info("Distance! " .. diffX .. " meters resulted in a " .. wire .. "-wire estimation.");
+    local text2=string.format("Distance %.1f meters resulted in a %d-wire estimate.", diffX, wire)
+    MESSAGE:New(text,30):ToAllIf(self.Debug)
+    env.info(text2)
     
-    local fullHint = "Trapped catching the " .. wire .. "-wire."
     
+    local fullHint = string.format("Trapped catching the %d-wire.", wire)
+    self:_AddToSummary(playerData, fullHint)
+    
+  else
+    --Boltered!
   end
 end
 
@@ -1358,24 +1372,35 @@ function CARRIERTRAINER:_AddF10Commands(_unitName)
         if CARRIERTRAINER.MenuF10[_gid] == nil then
           CARRIERTRAINER.MenuF10[_gid]=missionCommands.addSubMenuForGroup(_gid, "Carrier Trainer")
         end
-        local _rangePath    = missionCommands.addSubMenuForGroup(_gid, self.alias, CARRIERTRAINER.MenuF10[_gid])
-        local _statsPath    = missionCommands.addSubMenuForGroup(_gid, "Results",   _rangePath)
-        local _settingsPath = missionCommands.addSubMenuForGroup(_gid, "My Settings",  _rangePath)
-        local _infoPath     = missionCommands.addSubMenuForGroup(_gid, "Carrier Info",   _rangePath)
+        
+        local playerData=self.players[playername]
+        
+        -- F10/Carrier Trainer/<Carrier Name>
+        local _trainPath    = missionCommands.addSubMenuForGroup(_gid, self.alias, CARRIERTRAINER.MenuF10[_gid])
+        -- F10/Carrier Trainer/<Carrier Name>/Results
+        --local _statsPath    = missionCommands.addSubMenuForGroup(_gid, "Results",      _trainPath)
+        -- F10/Carrier Trainer/<Carrier Name>/My Settings
+        local _settingsPath = missionCommands.addSubMenuForGroup(_gid, "My Settings",  _trainPath)
+        -- F10/Carrier Trainer/<Carrier Name>/My Settings/Difficulty
+        local _difficulPath = missionCommands.addSubMenuForGroup(_gid, "Difficulty",   _settingsPath)
+        -- F10/Carrier Trainer/<Carrier Name>/Carrier Info
+        local _infoPath     = missionCommands.addSubMenuForGroup(_gid, "Carrier Info", _trainPath)
 
-        -- F10/On the Range/<Range Name>/Stats/
+        -- F10/Carrier Trainer/<Carrier Name>/Stats/
         --missionCommands.addCommandForGroup(_gid, "All Results",       _statsPath, self._DisplayStrafePitResults, self, _unitName)
         --missionCommands.addCommandForGroup(_gid, "My Results",        _statsPath, self._DisplayBombingResults, self, _unitName)
         --missionCommands.addCommandForGroup(_gid, "Reset All Results", _statsPath, self._ResetRangeStats, self, _unitName)
-        -- F10/On the Range/<Range Name>/My Settings/
+        -- F10/Carrier Trainer/<Carrier Name>/My Settings/
         --missionCommands.addCommandForGroup(_gid, "Smoke Delay On/Off",  _settingsPath, self._SmokeBombDelayOnOff, self, _unitName)
         --missionCommands.addCommandForGroup(_gid, "Smoke Impact On/Off",  _settingsPath, self._SmokeBombImpactOnOff, self, _unitName)
-        --missionCommands.addCommandForGroup(_gid, "Flare Hits On/Off",    _settingsPath, self._FlareDirectHitsOnOff, self, _unitName)        
-        -- F10/On the Range/<Range Name>/Range Information
-        --missionCommands.addCommandForGroup(_gid, "General Info",        _infoPath, self._DisplayRangeInfo, self, _unitName)
+        --missionCommands.addCommandForGroup(_gid, "Flare Hits On/Off",    _settingsPath, self._FlareDirectHitsOnOff, self, _unitName)
+        -- F10/Carrier Trainer/<Carrier Name>/My Settings/Difficulty
+        missionCommands.addCommandForGroup(_gid, "Flight Student",      _difficulPath, self.SetDifficulty, self, playerData, CARRIERTRAINER.Difficulty.EASY)
+        missionCommands.addCommandForGroup(_gid, "Naval Aviator",       _difficulPath, self.SetDifficulty, self, playerData, CARRIERTRAINER.Difficulty.NORMAL)
+        missionCommands.addCommandForGroup(_gid, "TOPGUN Graduate",     _difficulPath, self.SetDifficulty, self, playerData, CARRIERTRAINER.Difficulty.HARD)
+        -- F10/Carrier Trainer/<Carrier Name>/Carrier Info/
+        missionCommands.addCommandForGroup(_gid, "Carrier Info",        _infoPath, self._DisplayCarrierInfo, self, _unitName)
         missionCommands.addCommandForGroup(_gid, "Weather Report",      _infoPath, self._DisplayCarrierWeather, self, _unitName)
-        --missionCommands.addCommandForGroup(_gid, "Bombing Targets",     _infoPath, self._DisplayBombTargets, self, _unitName)
-        --missionCommands.addCommandForGroup(_gid, "Strafe Pits",         _infoPath, self._DisplayStrafePits, self, _unitName)
       end
     else
       self:T(self.lid.."Could not find group or group ID in AddF10Menu() function. Unit name: ".._unitName)
@@ -1386,11 +1411,55 @@ function CARRIERTRAINER:_AddF10Commands(_unitName)
 
 end
 
---- Report weather conditions at range. Temperature, QFE pressure and wind data.
+--- Report information about carrier.
+-- @param #CARRIERTRAINER self
+-- @param #string _unitname Name of the player unit.
+function CARRIERTRAINER:_DisplayCarrierInfo(_unitname)
+  self:F(_unitname)
+  
+  -- Get player unit and player name.
+  local unit, playername = self:_GetPlayerUnitAndName(_unitname)
+  
+  -- Check if we have a player.
+  if unit and playername then
+  
+    -- Message text.
+    local text=string.format("%s info:\n", self.alias)
+   
+    -- Current coordinates.
+    local coord=self.carrier:GetCoordinate()
+    
+    local playerData=self.players[playername]  --#CARRIERTRAINER.PlayerData
+    
+    local carrierheading=self.carrier:GetHeading()
+    local carrierspeed=UTILS.MpsToKnots(self.carrier:GetVelocity())
+
+    text=text..string.format("BRC %d\n", carrierheading)
+    text=text..string.format("Speed %d kts\n", carrierspeed)
+    
+    
+    local tacan="unknown"
+    local icls="unknown"
+    if self.TACAN~=nil then
+      tacan=tostring(self.TACAN)
+    end
+    if self.ICLS~=nil then
+      icls=tostring(self.ICLS)
+    end
+    
+    text=text..string.format("TACAN Channel %s", tacan)
+    text=text..string.format("ICLS Channel %s", icls)
+   
+  end  
+  
+end
+
+
+--- Report weather conditions at the carrier location. Temperature, QFE pressure and wind data.
 -- @param #CARRIERTRAINER self
 -- @param #string _unitname Name of the player unit.
 function CARRIERTRAINER:_DisplayCarrierWeather(_unitname)
-  self:E(_unitname)
+  self:F(_unitname)
 
   -- Get player unit and player name.
   local unit, playername = self:_GetPlayerUnitAndName(_unitname)
@@ -1677,7 +1746,7 @@ function CARRIERTRAINER:_HandleCollectedResult(playerData, wire)
     playerData.collectedResultString = newString
   else
     playerData.collectedResultString = playerData.collectedResultString .. ", " .. newString
-    MessageToAll( playerData.callsign .. "'s " .. playerData.passes .. " passes: " .. playerData.collectedResultString .. " (TOTAL: " .. playerData.totalScore .. ")"  , 30, "CollectedResult" )
+    MessageToAll( playerData.callsign .. "'s " .. playerData.passes .. " passes: " .. playerData.collectedResultString .. " (TOTAL: " .. playerData.totalscore .. ")"  , 30, "CollectedResult" )
   end
   
   local heading=playerData.unit:GetCoordinate():HeadingTo(self.startZone:GetCoordinate())

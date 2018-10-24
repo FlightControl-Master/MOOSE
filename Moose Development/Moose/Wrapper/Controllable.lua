@@ -3034,6 +3034,3 @@ function CONTROLLABLE:IsAirPlane()
   return nil
 end
 
-
-
--- Message APIs

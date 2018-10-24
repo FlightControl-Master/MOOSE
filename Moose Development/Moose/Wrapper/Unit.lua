@@ -902,22 +902,27 @@ end
 function UNIT:InAir()
   self:F2( self.UnitName )
 
+  -- Get DCS unit object.
   local DCSUnit = self:GetDCSObject() --DCS#Unit
   
   if DCSUnit then
---    Implementation of workaround. The original code is below.
---    This to simulate the landing on buildings.
 
---    local UnitInAir = DCSUnit:inAir()
-    local UnitInAir = true
-    local VelocityVec3 = DCSUnit:getVelocity()
-    local Velocity = ( VelocityVec3.x ^ 2 + VelocityVec3.y ^ 2 + VelocityVec3.z ^ 2 ) ^ 0.5 -- in meters / sec
-    local Coordinate = DCSUnit:getPoint()
-    local LandHeight = land.getHeight( { x = Coordinate.x, y = Coordinate.z } )
-    local Height = Coordinate.y - LandHeight
-    if Velocity < 1 and Height <= 60   then
-      UnitInAir = false
+    -- Get DCS result of whether unit is in air or not.
+    local UnitInAir = DCSUnit:inAir()
+
+    -- If DCS says that it is in air, check if this is really the case, since we might have landed on a building where inAir()=true but actually is not.    
+    if UnitInAir==true then
+      local VelocityVec3 = DCSUnit:getVelocity()
+      --local Velocity = ( VelocityVec3.x ^ 2 + VelocityVec3.y ^ 2 + VelocityVec3.z ^ 2 ) ^ 0.5 -- in meters / sec
+      local Velocity = UTILS.VecNorm(VelocityVec3)
+      local Coordinate = DCSUnit:getPoint()
+      local LandHeight = land.getHeight( { x = Coordinate.x, y = Coordinate.z } )
+      local Height = Coordinate.y - LandHeight
+      if Velocity < 1 and Height <= 60   then
+        UnitInAir = false
+      end
     end
+      
     self:T3( UnitInAir )
     return UnitInAir
   end
