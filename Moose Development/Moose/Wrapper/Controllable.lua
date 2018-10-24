@@ -2101,7 +2101,7 @@ do -- Route methods
     FromCoordinate = FromCoordinate or self:GetCoordinate()
     
     -- Get path and path length on road including the end points (From and To).
-    local PathOnRoad, LengthOnRoad=FromCoordinate:GetPathOnRoad(ToCoordinate, true)
+    local PathOnRoad, LengthOnRoad, GotPath =FromCoordinate:GetPathOnRoad(ToCoordinate, true)
     
     -- Get the length only(!) on the road.
     local _,LengthRoad=FromCoordinate:GetPathOnRoad(ToCoordinate, false)
@@ -2113,7 +2113,7 @@ do -- Route methods
     -- Calculate the direct distance between the initial and final points.
     local LengthDirect=FromCoordinate:Get2DDistance(ToCoordinate)
     
-    if PathOnRoad then
+    if GotPath then
     
       -- Off road part of the rout: Total=OffRoad+OnRoad.
       LengthOffRoad=LengthOnRoad-LengthRoad
@@ -2136,7 +2136,7 @@ do -- Route methods
     local canroad=false
                 
     -- Check if a valid path on road could be found.
-    if PathOnRoad and LengthDirect > 2000 then -- if the length of the movement is less than 1 km, drive directly.
+    if GotPath and LengthDirect > 2000 then -- if the length of the movement is less than 1 km, drive directly.
       -- Check whether the road is very long compared to direct path.
       if LongRoad and Shortcut then
 
