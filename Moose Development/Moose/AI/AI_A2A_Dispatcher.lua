@@ -1030,25 +1030,28 @@ do -- AI_A2A_DISPATCHER
     for SquadronName, DefenderSquadron in pairs( self.DefenderSquadrons ) do
       DefenderSquadron.Resource = {}
       for Resource = 1, DefenderSquadron.ResourceCount do
-        local TemplateID = math.random( 1, #DefenderSquadron.Spawn )
-        local Spawn = DefenderSquadron.Spawn[ TemplateID ] -- Core.Spawn#SPAWN
-        Spawn:InitGrouping( 1 )
-        local SpawnGroup
-        if DefenderSquadron.Uncontrolled then
-          SpawnGroup = Spawn:SpawnAtAirbase( DefenderSquadron.Airbase, SPAWN.Takeoff.Cold )
-        else
-          Spawn:InitLateActivated( true )
-          SpawnGroup = Spawn:SpawnAtAirbase( DefenderSquadron.Airbase, SPAWN.Takeoff.Cold )
-        end
-        local GroupName = SpawnGroup:GetName()
-        DefenderSquadron.Resources = DefenderSquadron.Resources or {}
-        DefenderSquadron.Resources[TemplateID] = DefenderSquadron.Resources[TemplateID] or {}
-        DefenderSquadron.Resources[TemplateID][GroupName] = {}
-        DefenderSquadron.Resources[TemplateID][GroupName] = SpawnGroup
+        self:ParkDefender( DefenderSquadron )
       end
     end
   end
   
+
+  --- @param #AI_A2A_DISPATCHER self
+  function AI_A2A_DISPATCHER:ParkDefender( DefenderSquadron )
+    local TemplateID = math.random( 1, #DefenderSquadron.Spawn )
+    local Spawn = DefenderSquadron.Spawn[ TemplateID ] -- Core.Spawn#SPAWN
+    Spawn:InitGrouping( 1 )
+    local SpawnGroup
+    if self:IsSquadronVisible( DefenderSquadron.Name ) then
+      SpawnGroup = Spawn:SpawnAtAirbase( DefenderSquadron.Airbase, SPAWN.Takeoff.Cold )
+      local GroupName = SpawnGroup:GetName()
+      DefenderSquadron.Resources = DefenderSquadron.Resources or {}
+      DefenderSquadron.Resources[TemplateID] = DefenderSquadron.Resources[TemplateID] or {}
+      DefenderSquadron.Resources[TemplateID][GroupName] = {}
+      DefenderSquadron.Resources[TemplateID][GroupName] = SpawnGroup
+    end
+  end
+
 
   --- @param #AI_A2A_DISPATCHER self
   -- @param Core.Event#EVENTDATA EventData
@@ -1090,6 +1093,7 @@ do -- AI_A2A_DISPATCHER
           self:RemoveDefenderFromSquadron( Squadron, Defender )
         end
         DefenderUnit:Destroy()
+        self:ParkDefender( Squadron, Defender )
         return
       end
       if DefenderUnit:GetLife() ~= DefenderUnit:GetLife0() then
@@ -1116,6 +1120,7 @@ do -- AI_A2A_DISPATCHER
           self:RemoveDefenderFromSquadron( Squadron, Defender )
         end
         DefenderUnit:Destroy()
+        self:ParkDefender( Squadron, Defender )
       end
     end 
   end
@@ -1605,6 +1610,29 @@ do -- AI_A2A_DISPATCHER
       DefenderSpawn:InitUnControlled()
     end
 
+  end
+
+  --- Check if the Squadron is visible before startup of the dispatcher.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #string SquadronName The squadron name.
+  -- @return #bool true if visible.
+  -- @usage
+  -- 
+  --        -- Set the Squadron visible before startup of dispatcher.
+  --        local IsVisible = A2ADispatcher:IsSquadronVisible( "Mineralnye" )
+  --        
+  function AI_A2A_DISPATCHER:IsSquadronVisible( SquadronName )
+  
+    self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
+    
+    local DefenderSquadron = self:GetSquadron( SquadronName )
+
+    if DefenderSquadron then
+      return DefenderSquadron.Uncontrolled == true
+    end
+    
+    return nil
+    
   end
 
   --- Set a CAP for a Squadron.
@@ -2705,57 +2733,75 @@ do -- AI_A2A_DISPATCHER
 
   ---
   -- @param #AI_A2A_DISPATCHER self
-  function AI_A2A_DISPATCHER:ResourceActivate( DefenderSquadron )
+  function AI_A2A_DISPATCHER:ResourceActivate( DefenderSquadron, DefendersNeeded )
   
     local SquadronName = DefenderSquadron.Name
-  
-    -- Here we CAP the new planes.
-    -- The Resources table is filled in advance.
-    local TemplateID = math.random( 1, #DefenderSquadron.Spawn ) -- Choose the template.
-
-    -- We determine the grouping based on the parameters set.
+    DefendersNeeded = DefendersNeeded or 4
     local DefenderGrouping = DefenderSquadron.Grouping or self.DefenderDefault.Grouping
-    self:F( { DefenderGrouping = DefenderGrouping } )
-    --Spawn:InitGrouping( DefenderGrouping )
+    DefenderGrouping = ( DefenderGrouping < DefendersNeeded ) and DefenderGrouping or DefendersNeeded
     
-    -- New we will form the group to spawn in.
-    -- We search for the first free resource matching the template.
-    local DefenderUnitIndex = 1
-    local DefenderCAPTemplate = nil
-    local DefenderName = nil
-    for GroupName, DefenderGroup in pairs( DefenderSquadron.Resources[TemplateID] or {} ) do
-      self:F( { GroupName = GroupName } )
-      local DefenderTemplate = _DATABASE:GetGroupTemplate( GroupName )
-      if DefenderUnitIndex == 1 then
-        DefenderCAPTemplate = UTILS.DeepCopy( DefenderTemplate )
-        self.DefenderCAPIndex = self.DefenderCAPIndex + 1
-        DefenderCAPTemplate.name = SquadronName .. "#" .. self.DefenderCAPIndex .. "#" .. GroupName
-        DefenderName = DefenderCAPTemplate.name
-      else
-        -- Add the unit in the template to the DefenderCAPTemplate.
-        local DefenderUnitTemplate = DefenderTemplate.units[1]
-        DefenderCAPTemplate.units[DefenderUnitIndex] = DefenderUnitTemplate
+    if self:IsSquadronVisible( SquadronName ) then
+    
+      -- Here we CAP the new planes.
+      -- The Resources table is filled in advance.
+      local TemplateID = math.random( 1, #DefenderSquadron.Spawn ) -- Choose the template.
+  
+      -- We determine the grouping based on the parameters set.
+      self:F( { DefenderGrouping = DefenderGrouping } )
+      
+      -- New we will form the group to spawn in.
+      -- We search for the first free resource matching the template.
+      local DefenderUnitIndex = 1
+      local DefenderCAPTemplate = nil
+      local DefenderName = nil
+      for GroupName, DefenderGroup in pairs( DefenderSquadron.Resources[TemplateID] or {} ) do
+        self:F( { GroupName = GroupName } )
+        local DefenderTemplate = _DATABASE:GetGroupTemplate( GroupName )
+        if DefenderUnitIndex == 1 then
+          DefenderCAPTemplate = UTILS.DeepCopy( DefenderTemplate )
+          self.DefenderCAPIndex = self.DefenderCAPIndex + 1
+          DefenderCAPTemplate.name = SquadronName .. "#" .. self.DefenderCAPIndex .. "#" .. GroupName
+          DefenderName = DefenderCAPTemplate.name
+        else
+          -- Add the unit in the template to the DefenderCAPTemplate.
+          local DefenderUnitTemplate = DefenderTemplate.units[1]
+          DefenderCAPTemplate.units[DefenderUnitIndex] = DefenderUnitTemplate
+        end
+        DefenderUnitIndex = DefenderUnitIndex + 1
+        DefenderSquadron.Resources[TemplateID][GroupName] = nil
+        if DefenderUnitIndex > DefenderGrouping then
+          break
+        end
+        
+      end 
+      
+      if DefenderCAPTemplate then
+        local TakeoffMethod = self:GetSquadronTakeoff( SquadronName )
+        local SpawnGroup = GROUP:Register( DefenderName )
+        DefenderCAPTemplate.lateActivation = nil
+        DefenderCAPTemplate.uncontrolled = nil
+        local Takeoff = self:GetSquadronTakeoff( SquadronName )
+        DefenderCAPTemplate.route.points[1].type   = GROUPTEMPLATE.Takeoff[Takeoff][1] -- type
+        DefenderCAPTemplate.route.points[1].action = GROUPTEMPLATE.Takeoff[Takeoff][2] -- action
+        local Defender = _DATABASE:Spawn( DefenderCAPTemplate )
+      
+        self:AddDefenderToSquadron( DefenderSquadron, Defender, DefenderGrouping )
+        return Defender, DefenderGrouping
       end
-      DefenderUnitIndex = DefenderUnitIndex + 1
-      DefenderSquadron.Resources[TemplateID][GroupName] = nil
-      if DefenderUnitIndex > DefenderGrouping then
-        break
+    else
+      local Spawn = DefenderSquadron.Spawn[ math.random( 1, #DefenderSquadron.Spawn ) ] -- Core.Spawn#SPAWN
+      if DefenderGrouping then
+        Spawn:InitGrouping( DefenderGrouping )
+      else
+        Spawn:InitGrouping()
       end
       
-    end 
-    
-    local TakeoffMethod = self:GetSquadronTakeoff( SquadronName )
-    local SpawnGroup = GROUP:Register( DefenderName )
-    DefenderCAPTemplate.lateActivation = nil
-    DefenderCAPTemplate.uncontrolled = nil
-    local Takeoff = self:GetSquadronTakeoff( SquadronName )
-    DefenderCAPTemplate.route.points[1].type   = GROUPTEMPLATE.Takeoff[Takeoff][1] -- type
-    DefenderCAPTemplate.route.points[1].action = GROUPTEMPLATE.Takeoff[Takeoff][2] -- action
-    local Defender = _DATABASE:Spawn( DefenderCAPTemplate )
-  
-    self:AddDefenderToSquadron( DefenderSquadron, Defender, DefenderGrouping )
+      local TakeoffMethod = self:GetSquadronTakeoff( SquadronName )
+      local Defender = Spawn:SpawnAtAirbase( DefenderSquadron.Airbase, TakeoffMethod, DefenderSquadron.TakeoffAltitude or self.DefenderDefault.TakeoffAltitude ) -- Wrapper.Group#GROUP
+      return Defender, DefenderGrouping
+    end
 
-    return Defender, DefenderGrouping
+    return nil, nil
   end
   
   ---
@@ -2824,9 +2870,9 @@ do -- AI_A2A_DISPATCHER
             if Dispatcher:GetSquadronLanding( Squadron.Name ) == AI_A2A_DISPATCHER.Landing.NearAirbase then
               Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
               Defender:Destroy()
+              self:ParkDefender( Squadron, Defender )
             end
           end
-
         end
       end
     end
@@ -2941,19 +2987,7 @@ do -- AI_A2A_DISPATCHER
               
               while ( DefendersNeeded > 0 ) do
             
-                local DefenderGCI, DefenderGrouping = self:ResourceActivate( DefenderSquadron )    
-                
---                local Spawn = DefenderSquadron.Spawn[ math.random( 1, #DefenderSquadron.Spawn ) ] -- Core.Spawn#SPAWN
---                local DefenderGrouping = ( DefenderGrouping < DefendersNeeded ) and DefenderGrouping or DefendersNeeded
---                if DefenderGrouping then
---                  Spawn:InitGrouping( DefenderGrouping )
---                else
---                  Spawn:InitGrouping()
---                end
---                
---                local TakeoffMethod = self:GetSquadronTakeoff( ClosestDefenderSquadronName )
---                local DefenderGCI = Spawn:SpawnAtAirbase( DefenderSquadron.Airbase, TakeoffMethod, DefenderSquadron.TakeoffAltitude or self.DefenderDefault.TakeoffAltitude ) -- Wrapper.Group#GROUP
---                self:F( { GCIDefender = DefenderGCI:GetName() } )
+                local DefenderGCI, DefenderGrouping = self:ResourceActivate( DefenderSquadron, DefendersNeeded )    
   
                 DefendersNeeded = DefendersNeeded - DefenderGrouping
         
@@ -3023,6 +3057,7 @@ do -- AI_A2A_DISPATCHER
                     if Dispatcher:GetSquadronLanding( Squadron.Name ) == AI_A2A_DISPATCHER.Landing.NearAirbase then
                       Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
                       Defender:Destroy()
+                      self:ParkDefender( Squadron, Defender )
                     end
                   end
                 end  -- if DefenderGCI then

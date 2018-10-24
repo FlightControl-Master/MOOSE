@@ -502,9 +502,10 @@ function AI_A2A:onafterStatus()
 
     if RTB == true then
       self:__RTB( 0.5 )
+    else
+      self:__Status( 10 )
     end
     
-    self:__Status( 10 )
   end
 end
 
