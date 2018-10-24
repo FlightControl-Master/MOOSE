@@ -97,6 +97,7 @@ function AI_CARGO_APC:New( APC, CargoSet, CombatRadius )
   self:AddTransition( "*", "Follow", "Following" )
   self:AddTransition( "*", "Guard", "Unloaded" )
   self:AddTransition( "*", "Home", "*" )
+  self:AddTransition( "*", "Reload", "Boarding" )
   
   self:AddTransition( "*", "Destroyed", "Destroyed" )
 
@@ -118,7 +119,6 @@ function AI_CARGO_APC:SetCarrier( CargoCarrier )
   self.CargoCarrier:SetState( self.CargoCarrier, "AI_CARGO_APC", self )
 
   CargoCarrier:HandleEvent( EVENTS.Dead )
-  CargoCarrier:HandleEvent( EVENTS.Hit )
   
   function CargoCarrier:OnEventDead( EventData )
     self:F({"dead"})
@@ -132,18 +132,20 @@ function AI_CARGO_APC:SetCarrier( CargoCarrier )
       end
     end
   end
-  
-  function CargoCarrier:OnEventHit( EventData )
-    self:F({"hit"})
-    local AICargoTroops = self:GetState( self, "AI_CARGO_APC" )
-    if AICargoTroops then
-      self:F( { OnHitLoaded = AICargoTroops:Is( "Loaded" ) } )
-      if AICargoTroops:Is( "Loaded" ) or AICargoTroops:Is( "Boarding" ) then
-        -- There are enemies within combat radius. Unload the CargoCarrier.
-        AICargoTroops:Unload( false )
-      end
-    end
-  end
+
+--  CargoCarrier:HandleEvent( EVENTS.Hit )
+--  
+--  function CargoCarrier:OnEventHit( EventData )
+--    self:F({"hit"})
+--    local AICargoTroops = self:GetState( self, "AI_CARGO_APC" )
+--    if AICargoTroops then
+--      self:F( { OnHitLoaded = AICargoTroops:Is( "Loaded" ) } )
+--      if AICargoTroops:Is( "Loaded" ) or AICargoTroops:Is( "Boarding" ) then
+--        -- There are enemies within combat radius. Unload the CargoCarrier.
+--        AICargoTroops:Unload( false )
+--      end
+--    end
+--  end
   
   self.Zone = ZONE_UNIT:New( self.CargoCarrier:GetName() .. "-Zone", self.CargoCarrier, self.CombatRadius )
   self.Coalition = self.CargoCarrier:GetCoalition()
@@ -276,34 +278,36 @@ function AI_CARGO_APC:onafterMonitor( APC, From, Event, To )
       if self.CarrierCoordinate then
         if self:IsTransporting() == true then
           local Coordinate = APC:GetCoordinate()
-          self.Zone:Scan( { Object.Category.UNIT } )
-          if self.Zone:IsAllInZoneOfCoalition( self.Coalition ) then
-            if self:Is( "Unloaded" ) or self:Is( "Following" ) then
-              -- There are no enemies within combat radius. Load the CargoCarrier.
-              self:Load()
-            end
-          else
-            if self:Is( "Loaded" ) then
-              -- There are enemies within combat radius. Unload the CargoCarrier.
-              self:__Unload( 1, nil, true ) -- The 2nd parameter is true, which means that the unload is for defending the carrier, not to deploy!
-            else
+          if self:Is( "Unloaded" ) or self:Is( "Loaded" ) then
+            self.Zone:Scan( { Object.Category.UNIT } )
+            if self.Zone:IsAllInZoneOfCoalition( self.Coalition ) then
               if self:Is( "Unloaded" ) then
-                self:Follow()
+                -- There are no enemies within combat radius. Reload the CargoCarrier.
+                self:Reload()
               end
-              self:F( "I am here" .. self:GetCurrentState() )
-              if self:Is( "Following" ) then
-                for Cargo, APCUnit in pairs( self.Carrier_Cargo ) do
-                  local Cargo = Cargo -- Cargo.Cargo#CARGO
-                  local APCUnit = APCUnit -- Wrapper.Unit#UNIT
-                  if Cargo:IsAlive() then
-                    if not Cargo:IsNear( APCUnit, 40 ) then
-                      APCUnit:RouteStop()
-                      self.CarrierStopped = true
-                    else
-                      if self.CarrierStopped then
-                        if Cargo:IsNear( APCUnit, 25 ) then
-                          APCUnit:RouteResume()
-                          self.CarrierStopped = nil
+            else
+              if self:Is( "Loaded" ) then
+                -- There are enemies within combat radius. Unload the CargoCarrier.
+                self:__Unload( 1, nil, true ) -- The 2nd parameter is true, which means that the unload is for defending the carrier, not to deploy!
+              else
+                if self:Is( "Unloaded" ) then
+                  --self:Follow()
+                end
+                self:F( "I am here" .. self:GetCurrentState() )
+                if self:Is( "Following" ) then
+                  for Cargo, APCUnit in pairs( self.Carrier_Cargo ) do
+                    local Cargo = Cargo -- Cargo.Cargo#CARGO
+                    local APCUnit = APCUnit -- Wrapper.Unit#UNIT
+                    if Cargo:IsAlive() then
+                      if not Cargo:IsNear( APCUnit, 40 ) then
+                        APCUnit:RouteStop()
+                        self.CarrierStopped = true
+                      else
+                        if self.CarrierStopped then
+                          if Cargo:IsNear( APCUnit, 25 ) then
+                            APCUnit:RouteResume()
+                            self.CarrierStopped = nil
+                          end
                         end
                       end
                     end
@@ -440,6 +444,45 @@ function AI_CARGO_APC:onafterDeploy( APC, From, Event, To, Coordinate, Speed, He
 
   end
   
+end
+
+--- On after Unloaded event.
+-- @param #AI_CARGO_APC self
+-- @param Wrapper.Group#GROUP Carrier
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #string Cargo.Cargo#CARGO Cargo Cargo object.
+-- @param #boolean Deployed Cargo is deployed.
+-- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed. This can be any zone type, like a ZONE, ZONE_GROUP, ZONE_AIRBASE.
+function AI_CARGO_APC:onafterUnloaded( Carrier, From, Event, To, Cargo, CarrierUnit, DeployZone, Defend )
+  self:F( { Carrier, From, Event, To, DeployZone = DeployZone, Defend = Defend } )
+
+
+  self:GetParent( self, AI_CARGO_APC ).onafterUnloaded( self, Carrier, From, Event, To, Cargo, CarrierUnit, DeployZone, Defend  )
+
+  -- If Defend == true then we need to scan for possible enemies within combat zone and engage only ground forces.
+  if Defend == true then
+    self.Zone:Scan( { Object.Category.UNIT } )
+    if not self.Zone:IsAllInZoneOfCoalition( self.Coalition ) then
+      -- OK, enemies nearby, now find the enemies and attack them.
+      local AttackUnits = self.Zone:GetScannedUnits() -- #list<DCS#Unit>
+      local Move = {}
+      local CargoGroup = Cargo.CargoObject -- Wrapper.Group#GROUP
+      Move[#Move+1] = CargoGroup:GetCoordinate():WaypointGround( 70, "Custom" )
+      for UnitId, AttackUnit in pairs( AttackUnits ) do
+        local MooseUnit = UNIT:Find( AttackUnit )
+        if MooseUnit:GetCoalition() ~= CargoGroup:GetCoalition() then
+          Move[#Move+1] = MooseUnit:GetCoordinate():WaypointGround( 70, "Line abreast" )
+          --MoveTo.Task = CargoGroup:TaskCombo( CargoGroup:TaskAttackUnit( MooseUnit, true ) )
+          self:F( { MooseUnit = MooseUnit:GetName(), CargoGroup = CargoGroup:GetName() } )
+        end
+      end
+      CargoGroup:RoutePush( Move, 0.1 )
+    end
+  
+  end
+
 end
 
 --- On after Deployed event.
