@@ -880,6 +880,8 @@ end
 function CONTROLLABLE:TaskOrbit(Coord, Altitude, Speed, CoordRaceTrack)
 
   local Pattern=AI.Task.OrbitPattern.CIRCLE
+  
+  local P1=Coord:GetVec2()
   local P2=nil
   if CoordRaceTrack then
     Pattern=AI.Task.OrbitPattern.RACE_TRACK
@@ -890,7 +892,7 @@ function CONTROLLABLE:TaskOrbit(Coord, Altitude, Speed, CoordRaceTrack)
     id = 'Orbit',
     params = {
       pattern  = Pattern,
-      point    = Coord:GetVec2(),
+      point    = P1,
       point2   = P2,
       speed    = Speed,
       altitude = Altitude,

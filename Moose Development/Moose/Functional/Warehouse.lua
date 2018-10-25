@@ -3589,6 +3589,7 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
   
   else
     self:E(self.wid.."ERROR: Unknown group added as asset!")
+    self:E({unknowngroup=group})
   end
   
   -- Update status.
