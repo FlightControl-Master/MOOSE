@@ -1411,6 +1411,14 @@ function CARRIERTRAINER:_AddF10Commands(_unitName)
 
 end
 
+--- Set difficulty level.
+-- @param #CARRIERTRAINER self
+-- @param #CARRIERTRAINER.PlayerData playerData Player data.
+-- @param #CARRIERTRAINER.Difficulty difficulty Difficulty level.
+function CARRIERTRAINER:SetDifficulty(playerData, difficulty)
+  playerData.difficulty=difficulty
+end
+
 --- Report information about carrier.
 -- @param #CARRIERTRAINER self
 -- @param #string _unitname Name of the player unit.
@@ -1449,6 +1457,8 @@ function CARRIERTRAINER:_DisplayCarrierInfo(_unitname)
     
     text=text..string.format("TACAN Channel %s", tacan)
     text=text..string.format("ICLS Channel %s", icls)
+    
+    self:_SendMessageToPlayer(text, 20, playerData)
    
   end  
   
