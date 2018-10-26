@@ -2005,10 +2005,10 @@ end
 function SPAWN:InitUnControlled( UnControlled )
 	self:F2( { self.SpawnTemplatePrefix, UnControlled } )
 	
-	self.SpawnUnControlled = UnControlled
+	self.SpawnUnControlled = UnControlled or true
 	
 	for SpawnGroupID = 1, self.SpawnMaxGroups do
-		self.SpawnGroups[SpawnGroupID].UnControlled = UnControlled
+		self.SpawnGroups[SpawnGroupID].UnControlled = self.SpawnUnControlled
 	end
 	
 	return self
