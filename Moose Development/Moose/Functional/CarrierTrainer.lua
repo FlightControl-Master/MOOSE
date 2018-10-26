@@ -115,19 +115,20 @@ CARRIERTRAINER.Difficulty={
 --- Player data table holding all important parameters for each player.
 -- @type CARRIERTRAINER.PlayerData
 -- @field #number id Player ID.
--- @field #string callsign Callsign of player.
--- @field #number score Player score.
--- @field #number totalscore Score of all landing attempts.
--- @field #number passes Number of passes.
--- @field #string collectedResultString Results text of all passes.
 -- @field Wrapper.Unit#UNIT unit Aircraft unit of the player.
--- @field #number lowestAltitude Lowest altitude. 
--- @field #number highestCarrierXDiff 
--- @field #number secondsStandingStill Time player does not move after a landing attempt. 
+-- @field #string callsign Callsign of player.
+-- @field #number score Player score of the current pass.
+-- @field #number passes Number of passes.
+-- @field #table debrief Debrief analysis of the current step of this pass.
+-- @field #table results Results of all passes.
 -- @field #string summary Result summary text.
 -- @field Wrapper.Client#CLIENT client object of player.
 -- @field #string difficulty Difficulty level.
 -- @field #boolean inbigzone If true, player is in the big zone.
+-- @field #boolean landed If true, player landed or attempted to land.
+-- @field #boolean boltered If true, player boltered.
+-- @field #boolean calledball If true, player called the ball.
+-- @field #number Tlso Last time the LSO gave an advice.
 
 --- Checkpoint parameters triggering the next step in the pattern.
 -- @type CARRIERTRAINER.Checkpoint
@@ -152,7 +153,7 @@ CARRIERTRAINER.MenuF10={}
 
 --- Carrier trainer class version.
 -- @field #string version
-CARRIERTRAINER.version="0.1.0w"
+CARRIERTRAINER.version="0.1.1w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -374,18 +375,26 @@ function CARRIERTRAINER:_InitNewPlayer(unitname)
 
   local playerData={} --#CARRIERTRAINER.PlayerData
   
+  -- Player unit, client and callsign.
   playerData.unit = UNIT:FindByName(unitname)
   playerData.client = CLIENT:FindByName(playerData.unit.UnitName, nil, true)
   playerData.callsign = playerData.unit:GetCallsign()
-  playerData.totalscore = 0
-  playerData.passes = 0
-  playerData.collectedResultString = ""
-    
-  playerData=self:_InitNewRound(playerData)
   
+  playerData.totalscore = 0
+  
+  -- Number of passes done by player.
+  playerData.passes=0
+    
+  playerData.results={}
+  
+  -- Set difficulty level.
   playerData.difficulty=CARRIERTRAINER.Difficulty.NORMAL
   
+  -- Player is in the big zone around the carrier.
   playerData.inbigzone=playerData.unit:IsInZone(self.giantZone)
+
+  -- Init stuff for this round.
+  playerData=self:_InitNewRound(playerData)
   
   return playerData
 end
@@ -395,22 +404,26 @@ end
 -- @param #CARRIERTRAINER.PlayerData playerData Player data.
 -- @return #CARRIERTRAINER.PlayerData Initialized player data.
 function CARRIERTRAINER:_InitNewRound(playerData)
-  playerData.step = 0
-  playerData.score = 0
+  playerData.step=0
+  playerData.score=100
+  playerData.grade={}
   playerData.summary = "Debriefing:\n"
   playerData.longDownwindDone = false
-  playerData.highestCarrierXDiff = -9999999
-  playerData.secondsStandingStill = 0
-  playerData.lowestAltitude = 999999
+  playerData.boltered=false
+  playerData.landed=false
+  playerData.calledball=false
+  playerData.Tlso=timer.getTime()
   return playerData
 end
 
---- Append text to summary text.
+--- Append text to debrief text.
 -- @param #CARRIERTRAINER self
 -- @param #CARRIERTRAINER.PlayerData playerData Player data.
--- @param #string item Text item appeded to the summary.
-function CARRIERTRAINER:_AddToSummary(playerData, item)
-  playerData.summary = playerData.summary .. item .. "\n"
+-- @param #string step Current step in the pattern.
+-- @param #string item Text item appeded to the debrief.
+function CARRIERTRAINER:_AddToSummary(playerData, step, item)
+  --playerData.summary = playerData.summary .. item .. "\n"
+  table.inser(playerData.debrief, {step=step, hint=item})
 end
 
 --- Append text to result text.
@@ -492,7 +505,9 @@ function CARRIERTRAINER:_CheckPlayerStatus()
           elseif playerData.step == 8 then
             self:_Groove(playerData)
           elseif playerData.step == 9 then
-            self:_Trap(playerData)
+            self:_CallTheBall(playerData)
+          elseif playerData.step == 99 then
+            self:_Debrief(playerData)
           end
           
         else
@@ -866,7 +881,7 @@ function CARRIERTRAINER:_NewRound(playerData)
     self:_InitNewRound(playerData)
   
     -- Next step: start of pattern.
-    playerData.step = 1
+    playerData.step=1
   end
 end
 
@@ -881,8 +896,7 @@ function CARRIERTRAINER:_Start(playerData)
     self:_SendMessageToPlayer(hint, 8, playerData)
   
     -- Next step: upwind.
-    playerData.step  = 2
-    
+    playerData.step=2
   end
   
 end 
@@ -909,12 +923,14 @@ function CARRIERTRAINER:_Upwind(playerData)
     -- Get altitude.
     local hint=self:_AltitudeCheck(playerData, self.Upwind, altitude)
         
+    -- Message to player
     self:_SendMessageToPlayer(hint, 8, playerData)
     
+    -- Debrief.
     self:_AddToSummary(playerData, hint)
     
     -- Next step.
-    playerData.step = 3
+    playerData.step=3
   end
 end
 
@@ -952,7 +968,7 @@ function CARRIERTRAINER:_Break(playerData, part)
     -- Send message to player.
     self:_SendMessageToPlayer(hint, 10, playerData)
 
-    -- Add hint to summary.
+    -- Debrif
     self:_AddToSummary(playerData, hint)
 
     -- Nest step: late break or abeam.
@@ -986,7 +1002,7 @@ function CARRIERTRAINER:_CheckForLongDownwind(playerData)
       local hint = "Your downwind leg is too long. Turn to final earlier next time."
       self:_SendMessageToPlayer(hint, 10, playerData)
       
-      -- Add to debrief.
+      -- Debrief.
       self:_AddToSummary(playerData, hint)
       
       -- Decrease score.
@@ -1042,7 +1058,7 @@ function CARRIERTRAINER:_Abeam(playerData)
     self:_SendMessageToPlayer(hintFull, 10, playerData)
     
     -- Add to debrief.
-    self:_AddToSummary(playerData, hintFull)
+    self:_AddToSummary(playerData, "Abeam", hintFull)
     
     -- Proceed to next step.
     playerData.step = 6
@@ -1085,7 +1101,7 @@ function CARRIERTRAINER:_Ninety(playerData)
     self:_SendMessageToPlayer(hintFull, 10, playerData)
     
     -- Add to debrief.
-    self:_AddToSummary(playerData, hintFull)
+    self:_AddToSummary(playerData, "At the 90:", hintFull)
     
     -- Long downwind not an issue any more
     playerData.longDownwindDone = true
@@ -1128,14 +1144,14 @@ function CARRIERTRAINER:_Wake(playerData)
     self:_SendMessageToPlayer(hintFull, 10, playerData)
     
     -- Add to debrief.
-    self:_AddToSummary(playerData, hintFull)
+    self:_AddToSummary(playerData, "At the wake:", hintFull)
 
     -- Next step: Groove.
     playerData.step = 8
   end
 end
 
---- Groove.
+--- Entering the Groove.
 -- @param #CARRIERTRAINER self
 -- @param #CARRIERTRAINER.PlayerData playerData Player data table.
 function CARRIERTRAINER:_Groove(playerData)
@@ -1179,7 +1195,7 @@ function CARRIERTRAINER:_Groove(playerData)
     self:_SendMessageToPlayer(hintFull, 10, playerData)
 
     -- Add to debrief.
-    self:_AddToSummary(playerData, hintFull)
+    self:_AddToSummary(playerData, "Entering the Groove:", hintFull)
     
     -- Next step.
     playerData.step = 9
@@ -1187,10 +1203,10 @@ function CARRIERTRAINER:_Groove(playerData)
 
 end
 
---- Trap.
+--- Call the ball, i.e. 3/4 NM distance between aircraft and carrier.
 -- @param #CARRIERTRAINER self
 -- @param #CARRIERTRAINER.PlayerData playerData Player data table.
-function CARRIERTRAINER:_Trap(playerData) 
+function CARRIERTRAINER:_CallTheBall(playerData) 
 
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
   local diffX, diffZ, rho, phi = self:_GetDistances(playerData.unit)
@@ -1208,23 +1224,21 @@ function CARRIERTRAINER:_Trap(playerData)
     return
   end
 
-  if (diffX > playerData.highestCarrierXDiff) then
-    playerData.highestCarrierXDiff = diffX
-  end
-  
-  if (alt < playerData.lowestAltitude) then
-    playerData.lowestAltitude = alt
-  end
-  
-  -- Lineup.
+  -- Lineup. We need to correct for the end of the carrier deck and the tilted angle of the runway.
+  -- TODO: make this parameter of the carrier.
   local lineup = math.asin(diffZ/(-(diffX-100)))
   local lineuperror = math.deg(lineup)-10
   
-  -- Glideslope.
+  -- Glideslope. Wee need to correct for the height of the deck. The ideal glide slope is 3.5 degrees.
+  -- TODO: make this parameter of the carrier. 
   local glideslope  = math.atan((playerData.unit:GetAltitude()-22)/(-diffX))  
-  local glideslopeError = math.deg(glideslope) - 3.5  
+  local glideslopeError = math.deg(glideslope) - 3.5
   
-  if diffX<100 then
+  if diffX>-UTILS.NMToMeters(0.75) and diffX<-100 and playerData.calledball==false then
+    
+  
+  -- Check if we are beween 3/4 NM and end of ship.
+  if diffX>-UTILS.NMToMeters(0.75) and diffX<-100 then
   
     local text="Good height."
     if glideslopeError>1 then
@@ -1259,12 +1273,12 @@ function CARRIERTRAINER:_Trap(playerData)
     elseif lineuperror <3 then
       text=text.."Right for lineup!"
     elseif lineuperror <1 then
-      text=text.."Right for lineup.."
+      text=text.."Right for lineup..."
     else
       text=text.."Good on lineup."
     end
     
-    self:_SendMessageToPlayer(text, 8,playerData)
+    self:_SendMessageToPlayer(text, 8, playerData)
     
   elseif (diffX > 150) then
     

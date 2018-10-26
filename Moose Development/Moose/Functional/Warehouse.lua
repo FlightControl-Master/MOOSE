@@ -69,6 +69,7 @@
 -- @field #boolean autosave Automatically save assets to file when mission ends.
 -- @field #string autosavepath Path where the asset file is saved on auto save.
 -- @field #string autosavefilename File name of the auto asset save file. Default is auto generated from warehouse id and name.
+-- @field #boolean safeparking If true, parking spots for aircraft are considered as occupied if e.g. a client aircraft is parked there. Default false.
 -- @extends Core.Fsm#FSM
 
 --- Have your assets at the right place at the right time - or not!
@@ -1556,6 +1557,7 @@ WAREHOUSE = {
   autosave      = false,
   autosavepath  =   nil,
   autosavefile  =   nil,
+  saveparking   = false,
 }
 
 --- Item of the warehouse stock table.
@@ -2363,6 +2365,24 @@ function WAREHOUSE:SetReportOff()
   self.Report=false
   return self
 end
+
+--- Enable safe parking option, i.e. parking spots at an airbase will be considered as occupied when a client aircraft is parked there (even if the client slot is not taken by a player yet).
+-- Note that also incoming aircraft can reserve/occupie parking spaces.
+-- @param #WAREHOUSE self
+-- @return #WAREHOUSE self
+function WAREHOUSE:SetSafeParkingOn()
+  self.safeparking=true
+  return self
+end
+
+--- Disable safe parking option. Note that is the default setting.
+-- @param #WAREHOUSE self
+-- @return #WAREHOUSE self
+function WAREHOUSE:SetSafeParkingOff()
+  self.safeparking=false
+  return self
+end
+
 
 --- Set interval of status updates. Note that normally only one request can be processed per time interval.
 -- @param #WAREHOUSE self
@@ -7004,20 +7024,6 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
       table.insert(obstacles,{coord=_coord, size=_size, name=_name, type="scenery"})
     end
     
-    --[[
-    -- TODO Clients? Unoccupied client aircraft are also important! Are they already included in scanned units maybe?
-    local clients=_DATABASE.CLIENTS
-    for _,_client in pairs(clients) do
-      local client=_client --Wrapper.Client#CLIENT
-      env.info(string.format("FF Client name %s", client:GetName()))
-      local unit=UNIT:FindByName(client:GetName())
-      --local unit=client:GetClientGroupUnit()      
-      local _coord=unit:GetCoordinate()
-      local _name=unit:GetName()
-      local _size=self:_GetObjectSize(client:GetClientGroupDCSUnit())
-      table.insert(obstacles,{coord=_coord, size=_size, name=_name, type="client"})
-    end 
-    ]]    
   end
   
   -- Parking data for all assets.
@@ -7050,10 +7056,17 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
           local _toac=parkingspot.TOAC
           
           --env.info(string.format("FF asset=%s (id=%d): needs terminal type=%d, id=%d, #obstacles=%d", _asset.templatename, _asset.uid, terminaltype, _termid, #obstacles))
-           
-          -- Loop over all obstacles.
+
           local free=true
           local problem=nil
+
+          -- Safe parking using TO_AC from DCS result.
+          if self.safeparking and _toac then
+            free=false
+            self:T("Parking spot %d is occupied by other aircraft taking off or landing.", _termid)
+          end
+           
+          -- Loop over all obstacles.
           for _,obstacle in pairs(obstacles) do
           
             -- Check if aircraft overlaps with any obstacle.
