@@ -911,7 +911,17 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @pram #string To The to state.
-function AI_FORMATION:onbeforeFollowing( FollowGroupSet, From, Event, To ) --R2.1
+function AI_FORMATION:onafterStop(FollowGroupSet, From, Event, To) --R2.1
+  self:E("Stopping formation.")
+end
+
+--- Follow event fuction. Check if coming from state "stopped". If so the transition is rejected.
+-- @param #AI_FORMATION self
+-- @param Core.Set#SET_GROUP FollowGroupSet The following set of groups.
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @pram #string To The to state.
+function AI_FORMATION:onbeforeFollow( FollowGroupSet, From, Event, To ) --R2.1
   if From=="Stopped" then
     return false  -- Deny transition.
   end

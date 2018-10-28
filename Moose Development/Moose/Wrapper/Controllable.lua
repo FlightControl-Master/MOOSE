@@ -990,11 +990,7 @@ function CONTROLLABLE:TaskRefueling()
 --    params = {} 
 --  }
 
-  local DCSTask
-  DCSTask = { id = 'Refueling',
-    params = {
-    },
-  },
+  local DCSTask={id='Refueling', params={}}
 
   self:T3( { DCSTask } )
   return DCSTask

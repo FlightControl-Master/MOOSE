@@ -153,7 +153,7 @@ CARRIERTRAINER.MenuF10={}
 
 --- Carrier trainer class version.
 -- @field #string version
-CARRIERTRAINER.version="0.1.1w"
+CARRIERTRAINER.version="0.1.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -407,6 +407,7 @@ function CARRIERTRAINER:_InitNewRound(playerData)
   playerData.step=0
   playerData.score=100
   playerData.grade={}
+  playerData.debrief={}
   playerData.summary = "Debriefing:\n"
   playerData.longDownwindDone = false
   playerData.boltered=false
@@ -423,7 +424,7 @@ end
 -- @param #string item Text item appeded to the debrief.
 function CARRIERTRAINER:_AddToSummary(playerData, step, item)
   --playerData.summary = playerData.summary .. item .. "\n"
-  table.inser(playerData.debrief, {step=step, hint=item})
+  table.insert(playerData.debrief, {step=step, hint=item})
 end
 
 --- Append text to result text.
@@ -671,7 +672,7 @@ function CARRIERTRAINER:_AbortPattern(playerData, X, Z, posData)
   self:E(self.lid..text)
   --MESSAGE:New(text, 60):ToAllIf(self.Debug)
   
-  self:_AddToSummary(playerData, "Approach aborted.")
+  self:_AddToSummary(playerData, "Abort", "Approach aborted.")
   
   self:_PrintFinalScore(playerData, 30, -2)
   
@@ -805,8 +806,8 @@ function CARRIERTRAINER:_InitStennis()
   self.Wake.Zmax=nil
   self.Wake.LimitXmin=nil
   self.Wake.LimitXmax=nil
-  self.Wake.LimitZmin=nil
-  self.Wake.LimitZmax=0
+  self.Wake.LimitZmin=0
+  self.Wake.LimitZmax=nil
   self.Wake.Altitude=UTILS.FeetToMeters(370)
   self.Wake.AoA=8.1
   self.Wake.Distance=nil
@@ -927,7 +928,7 @@ function CARRIERTRAINER:_Upwind(playerData)
     self:_SendMessageToPlayer(hint, 8, playerData)
     
     -- Debrief.
-    self:_AddToSummary(playerData, hint)
+    self:_AddToSummary(playerData, "Entering the Break", hint)
     
     -- Next step.
     playerData.step=3
@@ -968,8 +969,12 @@ function CARRIERTRAINER:_Break(playerData, part)
     -- Send message to player.
     self:_SendMessageToPlayer(hint, 10, playerData)
 
-    -- Debrif
-    self:_AddToSummary(playerData, hint)
+    -- Debrief
+    if part =="late" then
+      self:_AddToSummary(playerData, "Late Break", hint)
+    else
+      self:_AddToSummary(playerData, "Early Entry", hint)
+    end
 
     -- Nest step: late break or abeam.
     if (part == "early") then
@@ -1003,7 +1008,7 @@ function CARRIERTRAINER:_CheckForLongDownwind(playerData)
       self:_SendMessageToPlayer(hint, 10, playerData)
       
       -- Debrief.
-      self:_AddToSummary(playerData, hint)
+      self:_AddToSummary(playerData, "Long Downwind Leg", hint)
       
       -- Decrease score.
       playerData.score=playerData.score-40
@@ -1058,7 +1063,7 @@ function CARRIERTRAINER:_Abeam(playerData)
     self:_SendMessageToPlayer(hintFull, 10, playerData)
     
     -- Add to debrief.
-    self:_AddToSummary(playerData, "Abeam", hintFull)
+    self:_AddToSummary(playerData, "Abeam Position", hintFull)
     
     -- Proceed to next step.
     playerData.step = 6
@@ -1101,7 +1106,7 @@ function CARRIERTRAINER:_Ninety(playerData)
     self:_SendMessageToPlayer(hintFull, 10, playerData)
     
     -- Add to debrief.
-    self:_AddToSummary(playerData, "At the 90:", hintFull)
+    self:_AddToSummary(playerData, "At the 90", hintFull)
     
     -- Long downwind not an issue any more
     playerData.longDownwindDone = true
@@ -1144,7 +1149,7 @@ function CARRIERTRAINER:_Wake(playerData)
     self:_SendMessageToPlayer(hintFull, 10, playerData)
     
     -- Add to debrief.
-    self:_AddToSummary(playerData, "At the wake:", hintFull)
+    self:_AddToSummary(playerData, "At the Wake", hintFull)
 
     -- Next step: Groove.
     playerData.step = 8
@@ -1195,7 +1200,7 @@ function CARRIERTRAINER:_Groove(playerData)
     self:_SendMessageToPlayer(hintFull, 10, playerData)
 
     -- Add to debrief.
-    self:_AddToSummary(playerData, "Entering the Groove:", hintFull)
+    self:_AddToSummary(playerData, "Entering the Groove", hintFull)
     
     -- Next step.
     playerData.step = 9
@@ -1235,7 +1240,10 @@ function CARRIERTRAINER:_CallTheBall(playerData)
   local glideslopeError = math.deg(glideslope) - 3.5
   
   if diffX>-UTILS.NMToMeters(0.75) and diffX<-100 and playerData.calledball==false then
-    
+    self:_SendMessageToPlayer("Call the ball.", 8, playerData)
+    playerData.calledball=true
+    return
+  end
   
   -- Check if we are beween 3/4 NM and end of ship.
   if diffX>-UTILS.NMToMeters(0.75) and diffX<-100 then
@@ -1296,7 +1304,7 @@ function CARRIERTRAINER:_CallTheBall(playerData)
     self:_SendMessageToPlayer( hint, 8, playerData )
     self:_PrintScore(score, playerData, true)
        
-    self:_AddToSummary(playerData, hint)
+    self:_AddToSummary(playerData, "Calling the Ball", hint)
     
     self:_PrintFinalScore(playerData, 60, wire)
     self:_HandleCollectedResult(playerData, wire)
@@ -1348,7 +1356,7 @@ function CARRIERTRAINER:_Trapped(playerData, pos)
     
     
     local fullHint = string.format("Trapped catching the %d-wire.", wire)
-    self:_AddToSummary(playerData, fullHint)
+    self:_AddToSummary(playerData, "Trapped", fullHint)
     
   else
     --Boltered!
@@ -1766,16 +1774,19 @@ function CARRIERTRAINER:_HandleCollectedResult(playerData, wire)
   playerData.totalscore = playerData.totalscore + playerData.score
   playerData.passes = playerData.passes + 1
   
+  --TODO: collect results
+  --[[
   if playerData.collectedResultString == "" then
     playerData.collectedResultString = newString
   else
     playerData.collectedResultString = playerData.collectedResultString .. ", " .. newString
     MessageToAll( playerData.callsign .. "'s " .. playerData.passes .. " passes: " .. playerData.collectedResultString .. " (TOTAL: " .. playerData.totalscore .. ")"  , 30, "CollectedResult" )
   end
-  
-  local heading=playerData.unit:GetCoordinate():HeadingTo(self.startZone:GetCoordinate())
-  local distance=playerData.unit:GetCoordinate():Get2DDistance(self.startZone:GetCoordinate())
-  local text=string.format("%s, fly heading %d for %d nm to restart the pattern.", playerData.callsign, heading, UTILS.MetersToNM(distance))
+   ]]
+   
+  local heading=playerData.unit:GetCoordinate():HeadingTo(self.registerZone:GetCoordinate())
+  local distance=playerData.unit:GetCoordinate():Get2DDistance(self.registerZone:GetCoordinate())
+  local text=string.format("%s, fly heading %d for %d NM to restart the pattern.", playerData.callsign, heading, UTILS.MetersToNM(distance))
    --"Return south 4 nm (over the trailing ship), towards WP 1, to restart the pattern."
   self:_SendMessageToPlayer(text, 30, playerData)
 end

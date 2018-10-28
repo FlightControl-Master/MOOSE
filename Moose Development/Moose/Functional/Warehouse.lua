@@ -1729,7 +1729,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.6.5"
+WAREHOUSE.version="0.6.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -6318,25 +6318,26 @@ function WAREHOUSE:_CheckRequestValid(request)
         -- TODO: maybe only check if spots > 0 for the necessary terminal type? At least for FARPS.
         
         -- Get necessary terminal type.
-        local termtype=self:_GetTerminal(asset.attribute)
+        local termtype_dep=self:_GetTerminal(asset.attribute, self:GetAirbaseCategory())
+        local termtype_des=self:_GetTerminal(asset.attribute, request.warehouse:GetAirbaseCategory())
         
         -- Get number of parking spots.
-        local np_departure=self.airbase:GetParkingSpotsNumber(termtype)
-        local np_destination=request.airbase:GetParkingSpotsNumber(termtype)
+        local np_departure=self.airbase:GetParkingSpotsNumber(termtype_dep)
+        local np_destination=request.airbase:GetParkingSpotsNumber(termtype_des)
         
         -- Debug info.
-        self:T(string.format("Asset attribute = %s, terminal type = %d, spots at departure = %d, destination = %d", asset.attribute, termtype, np_departure, np_destination))
+        self:T(string.format("Asset attribute = %s, DEPARTURE: terminal type = %d, spots = %d, DESTINATION: terminal type = %d, spots = %d", asset.attribute, termtype_dep, np_departure, termtype_des, np_destination))
         
         -- Not enough parking at sending warehouse.
         --if (np_departure < request.nasset) and not (self.category==Airbase.Category.SHIP or self.category==Airbase.Category.HELIPAD) then
         if np_departure < nasset then
-          self:E(string.format("ERROR: Incorrect request. Not enough parking spots of terminal type %d at warehouse. Available spots %d < %d necessary.", termtype, np_departure, nasset))
+          self:E(string.format("ERROR: Incorrect request. Not enough parking spots of terminal type %d at warehouse. Available spots %d < %d necessary.", termtype_dep, np_departure, nasset))
           valid=false    
         end
 
         -- No parking at requesting warehouse.
         if np_destination == 0 then
-          self:E(string.format("ERROR: Incorrect request. No parking spots of terminal type %d at requesting warehouse. Available spots = %d!", termtype, np_destination))
+          self:E(string.format("ERROR: Incorrect request. No parking spots of terminal type %d at requesting warehouse. Available spots = %d!", termtype_des, np_destination))
           valid=false    
         end        
         
@@ -6474,7 +6475,7 @@ function WAREHOUSE:_CheckRequestValid(request)
       self:T(text)
 
       -- Get necessary terminal type for helos or transport aircraft.
-      local termtype=self:_GetTerminal(request.transporttype)
+      local termtype=self:_GetTerminal(request.transporttype, self:GetAirbaseCategory())
       
       -- Get number of parking spots.
       local np_departure=self.airbase:GetParkingSpotsNumber(termtype)
@@ -6493,6 +6494,7 @@ function WAREHOUSE:_CheckRequestValid(request)
       if request.transporttype==WAREHOUSE.TransportType.AIRPLANE then
       
         -- Total number of parking spots for transport planes at destination.
+        termtype=self:_GetTerminal(request.transporttype, request.warehouse:GetAirbaseCategory())
         local np_destination=request.airbase:GetParkingSpotsNumber(termtype)
 
         -- Debug info.
@@ -6934,13 +6936,13 @@ end
 --- Get the proper terminal type based on generalized attribute of the group.
 --@param #WAREHOUSE self
 --@param #WAREHOUSE.Attribute _attribute Generlized attibute of unit.
+--@param #number _category Airbase category.
 --@return Wrapper.Airbase#AIRBASE.TerminalType Terminal type for this group.
-function WAREHOUSE:_GetTerminal(_attribute)
+function WAREHOUSE:_GetTerminal(_attribute, _category)
 
   -- Default terminal is "large".
   local _terminal=AIRBASE.TerminalType.OpenBig
-  
-  
+    
   if _attribute==WAREHOUSE.Attribute.AIR_FIGHTER then
     -- Fighter ==> small.
     _terminal=AIRBASE.TerminalType.FighterAircraft
@@ -6950,6 +6952,15 @@ function WAREHOUSE:_GetTerminal(_attribute)
   elseif _attribute==WAREHOUSE.Attribute.AIR_TRANSPORTHELO or _attribute==WAREHOUSE.Attribute.AIR_ATTACKHELO then
     -- Helicopter.
     _terminal=AIRBASE.TerminalType.HelicopterUsable
+  else
+    --_terminal=AIRBASE.TerminalType.OpenMedOrBig
+  end
+  
+  -- For ships, we allow medium spots for all fixed wing aircraft. There are smaller tankers and AWACS aircraft that can use a carrier.
+  if _category==Airbase.Category.SHIP then
+    if not (_attribute==WAREHOUSE.Attribute.AIR_TRANSPORTHELO or _attribute==WAREHOUSE.Attribute.AIR_ATTACKHELO) then
+      _terminal=AIRBASE.TerminalType.OpenMedOrBig
+    end
   end
   
   return _terminal
@@ -7034,7 +7045,7 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
     local _asset=asset --#WAREHOUSE.Assetitem
     
     -- Get terminal type of this asset
-    local terminaltype=self:_GetTerminal(asset.attribute)
+    local terminaltype=self:_GetTerminal(asset.attribute, self:GetAirbaseCategory())
     
     -- Asset specific parking.
     parking[_asset.uid]={}
