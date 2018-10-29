@@ -201,7 +201,7 @@ CARRIERTRAINER.MenuF10={}
 
 --- Carrier trainer class version.
 -- @field #string version
-CARRIERTRAINER.version="0.1.2"
+CARRIERTRAINER.version="0.1.2w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -384,6 +384,7 @@ function CARRIERTRAINER:OnEventBirth(EventData)
       self:_InitNewRound(self.players[_playername])
     end
     
+    -- Test
     CARRIERTRAINER.LSOcall.HIGHL:ToGroup(_group)
       
   end 
@@ -839,6 +840,9 @@ function CARRIERTRAINER:_CallTheBall(playerData)
   
   -- Player altitude
   local alt=playerData.unit:GetAltitude()
+  
+  -- Player group.
+  local player=playerData.unit:GetGroup()  
 
   -- Get velocities.
   local playerVelocity  = playerData.unit:GetVelocityKMH()
@@ -849,20 +853,55 @@ function CARRIERTRAINER:_CallTheBall(playerData)
     self:_AbortPattern(playerData, diffX, diffZ, self.Trap)
     return
   end
-
-  -- Lineup. We need to correct for the end of the carrier deck and the tilted angle of the runway.
-  -- TODO: make this parameter of the carrier.
-  local lineup = math.asin(diffZ/(-(diffX-100)))
-  local lineuperror = math.deg(lineup)-10
   
+  -- Runway is at an angle of -10 degrees wrt to carrier X direction.
+  -- TODO: make this carrier dependent
+  local rwyangle=-10
+  local deckheight=22
+  local tailpos=-100
+  
+  -- Position at the end of the deck. From there we calculate the angle.
+  -- TODO: Check exact number and make carrier dependent.
+  local b={}
+  b.x=tailpos
+  b.z=0
+  
+  -- Position of the aircraft wrt carrier coordinates.
+  local a={}
+  a.x=diffX
+  a.z=diffZ
+  
+  --a.x=-200
+  --a.y=  0
+  --a.z=17.632698070846  --(100)*math.tan(math.rad(10))
+  --a.z=20
+  --print(a.z)
+  
+  -- Vector from plane to ref point on boad.
+  local c={}
+  c.x=b.x-a.x
+  c.z=b.z-a.z
+  
+  -- Current line up and error wrt to final heading of the runway.
+  local lineup=math.atan2(c.z, c.x)
+  local lineuperror=math.deg(lineup)-rwyangle
+  
+  if lineuperror<0 then
+    env.info("come left")
+  elseif lineuperror>0 then
+    env.info("Right for lineup")
+  end  
+
   -- Glideslope. Wee need to correct for the height of the deck. The ideal glide slope is 3.5 degrees.
-  -- TODO: make this parameter of the carrier. 
-  local glideslope  = math.atan((playerData.unit:GetAltitude()-22)/(-diffX))  
-  local glideslopeError = math.deg(glideslope) - 3.5
+  local h=playerData.unit:GetAltitude()-deckheight
+  local x=math.abs(diffX-tailpos)
+  local glideslope=math.atan(h/x)  
+  local glideslopeError=math.deg(glideslope) - 3.5
   
   if diffX>-UTILS.NMToMeters(0.75) and diffX<-100 and playerData.calledball==false then
     self:_SendMessageToPlayer("Call the ball.", 8, playerData)
     playerData.calledball=true
+    CARRIERTRAINER.LSOcall.CALLTHEBALL:ToGroup(player)
     return
   end
   
@@ -870,8 +909,6 @@ function CARRIERTRAINER:_CallTheBall(playerData)
   local time=timer.getTime()
   local deltaT=time-playerData.Tlso
   
-  -- Player group.
-  local player=playerData.unit:GetGroup()
   
   -- Check if we are beween 3/4 NM and end of ship.
   if diffX>-UTILS.NMToMeters(0.75) and diffX<-100 and deltaT>=3 then
@@ -896,16 +933,16 @@ function CARRIERTRAINER:_CallTheBall(playerData)
     end
     
     -- Lineup left/right calls.
-    if lineuperror>3 then
+    if lineuperror<3 then
       text=text.."Come left!"
       CARRIERTRAINER.LSOcall.COMELEFTL:ToGroup(player)
-    elseif lineuperror>1 then
+    elseif lineuperror<1 then
       text=text.."Come left."
       CARRIERTRAINER.LSOcall.COMELEFTS:ToGroup(player)
-    elseif lineuperror<3 then
+    elseif lineuperror>3 then
       text=text.."Right for lineup!"
       CARRIERTRAINER.LSOcall.RIGHTFORLINEUPL:ToGroup(player)
-    elseif lineuperror<1 then
+    elseif lineuperror>1 then
       text=text.."Right for lineup."
       CARRIERTRAINER.LSOcall.RIGHTFORLINEUPS:ToGroup(player)
     else
