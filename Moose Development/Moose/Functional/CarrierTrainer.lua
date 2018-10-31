@@ -201,7 +201,7 @@ CARRIERTRAINER.MenuF10={}
 
 --- Carrier trainer class version.
 -- @field #string version
-CARRIERTRAINER.version="0.1.3"
+CARRIERTRAINER.version="0.1.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -333,7 +333,7 @@ function CARRIERTRAINER:onafterStatus(From, Event, To)
   self:_CheckPlayerStatus()
 
   -- Call status again in one second.
-  self:__Status(-1)
+  self:__Status(-0.5)
 end
 
 --- On after Stop event. Unhandle events and stop status updates. 
@@ -374,20 +374,29 @@ function CARRIERTRAINER:OnEventBirth(EventData)
     self:T(self.lid..text)
     MESSAGE:New(text, 5):ToAllIf(self.Debug)
     
+    
+    local rightaircraft=false
+    local aircraft=_unit:GetTypeName()
+    for _,actype in pairs(CARRIERTRAINER.AircraftType) do
+      if actype==aircraft then
+        rightaircraft=true
+      end
+    end
+    if rightaircraft==false then
+      self:E(string.format("Player aircraft %s not supported of CARRIERTRAINTER.", aircraft))
+      return
+    end
+        
     -- Add Menu commands.
-    self:_AddF10Commands(_unitName)    
+    self:_AddF10Commands(_unitName)
     
     -- Init player.
-    if self.players[_playername]==nil then
-      self.players[_playername]=self:_InitNewPlayer(_unitName)
-    else
-      self:_InitNewRound(self.players[_playername])
-    end
-    
+    self.players[_playername]=self:_InitNewPlayer(_unitName)
+        
     -- Test
-    CARRIERTRAINER.LSOcall.HIGHL:ToGroup(_group)
-    CARRIERTRAINER.LSOcall.CALLTHEBALL:ToGroup(_group, 10)
-    MESSAGE:New(CARRIERTRAINER.LSOcall.HIGHT, 5):ToAllIf(self.Debug)
+    --CARRIERTRAINER.LSOcall.HIGHL:ToGroup(_group)
+    --CARRIERTRAINER.LSOcall.CALLTHEBALL:ToGroup(_group, 10)
+    --MESSAGE:New(CARRIERTRAINER.LSOcall.HIGHT, 5):ToAllIf(self.Debug)
       
   end 
 end
@@ -440,20 +449,21 @@ function CARRIERTRAINER:_InitNewPlayer(unitname)
 
   local playerData={} --#CARRIERTRAINER.PlayerData
   
-  -- Player unit, client and callsign.
-  playerData.unit = UNIT:FindByName(unitname)
-  playerData.client = CLIENT:FindByName(playerData.unit.UnitName, nil, true)
+      -- Player unit, client and callsign.
+  playerData.unit     = UNIT:FindByName(unitname)
+  playerData.client   = CLIENT:FindByName(unitname, nil, true)
   playerData.callsign = playerData.unit:GetCallsign()
   
-  playerData.totalscore = 0
+  -- Total score of player.
+  playerData.totalscore = playerData.totalscore or 0
   
   -- Number of passes done by player.
-  playerData.passes=0
+  playerData.passes=playerData.passes or 0
     
-  playerData.results={}
+  playerData.results=playerData.results or {}
   
   -- Set difficulty level.
-  playerData.difficulty=CARRIERTRAINER.Difficulty.NORMAL
+  playerData.difficulty=playerData.difficulty or CARRIERTRAINER.Difficulty.NORMAL
   
   -- Player is in the big zone around the carrier.
   playerData.inbigzone=playerData.unit:IsInZone(self.giantZone)
@@ -1003,37 +1013,48 @@ function CARRIERTRAINER:_LSOcall(playerData, glideslopeError, lineupError)
   
   -- Glideslope high/low calls.
   if glideslopeError>1 then
-    text="You're too high! Throttles back!"
+    text="You're too high! Throttles back!" 
     CARRIERTRAINER.LSOcall.HIGHL:ToGroup(player)
   elseif glideslopeError>0.5 then
     text="You're slightly high. Decrease power."
     CARRIERTRAINER.LSOcall.HIGHS:ToGroup(player)
-  elseif glideslopeError<1.0 then
+  elseif glideslopeError<-1.0 then
     text="Power! You're way too low."
     CARRIERTRAINER.LSOcall.POWERL:ToGroup(player)
-  elseif glideslopeError<0.5 then
+  elseif glideslopeError<-0.5 then
     text="You're slightly low. Increase power."
     CARRIERTRAINER.LSOcall.POWERS:ToGroup(player)
   else
     text="Good altitude."
   end
+
+  text=text..string.format(" Glideslope Error = %.2f %%", glideslopeError)
+  text=text.."\n"
+  
+  local delay=0
+  if math.abs(glideslopeError)>0.5 then
+    --text=text.."\n"
+    delay=1.5
+  end
   
   -- Lineup left/right calls.
-  if lineupError<3 then
+  if lineupError<-3 then
     text=text.."Come left!"
-    CARRIERTRAINER.LSOcall.COMELEFTL:ToGroup(player)
-  elseif lineupError<1 then
+    CARRIERTRAINER.LSOcall.COMELEFTL:ToGroup(player, delay)
+  elseif lineupError<-1 then
     text=text.."Come left."
-    CARRIERTRAINER.LSOcall.COMELEFTS:ToGroup(player)
+    CARRIERTRAINER.LSOcall.COMELEFTS:ToGroup(player, delay)
   elseif lineupError>3 then
     text=text.."Right for lineup!"
-    CARRIERTRAINER.LSOcall.RIGHTFORLINEUPL:ToGroup(player)
+    CARRIERTRAINER.LSOcall.RIGHTFORLINEUPL:ToGroup(player, delay)
   elseif lineupError>1 then
     text=text.."Right for lineup."
-    CARRIERTRAINER.LSOcall.RIGHTFORLINEUPS:ToGroup(player)
+    CARRIERTRAINER.LSOcall.RIGHTFORLINEUPS:ToGroup(player, delay)
   else
     text=text.."Good lineup."
   end
+  
+  text=text..string.format(" Lineup Error = %.1f %%", lineupError)
   
   -- LSO Message to player.
   self:_SendMessageToPlayer(text, 8, playerData, true)
@@ -1178,7 +1199,9 @@ function CARRIERTRAINER:_CheckPlayerStatus()
           end
         
           if playerData.step==0 and unit:InAir() then
-            self:_NewRound(playerData)          
+            self:_NewRound(playerData)
+            -- Jump to Groove for testing.     
+            --playerData.step=8
           elseif playerData.step == 1 then
             self:_Start(playerData)
           elseif playerData.step == 2 then
@@ -1512,8 +1535,8 @@ function CARRIERTRAINER:_InitStennis()
   -- In the groove
   self.Groove.name="Groove"
   self.Groove.Xmin=-4000
-  self.Groove.Xmax=100
-  self.Groove.Zmin=-2000
+  self.Groove.Xmax=  100
+  self.Groove.Zmin=-1000
   self.Groove.Zmax=nil
   self.Groove.LimitXmin=nil
   self.Groove.LimitXmax=nil
@@ -1729,8 +1752,9 @@ end
 -- @param #boolean clear If true, clear screen from previous messages.
 function CARRIERTRAINER:_SendMessageToPlayer(message, duration, playerData, clear)
   if playerData.client then
-    MESSAGE:New(string.format("%s, %s, ", self.alias, playerData.callsign)..message, duration, nil, clear):ToClient(playerData.client)
+    --MESSAGE:New(string.format("%s, %s, ", self.alias, playerData.callsign)..message, duration, nil, clear):ToClient(playerData.client)
   end
+  MESSAGE:New(string.format("%s, %s, ", self.alias, playerData.callsign)..message, duration, nil, clear):ToAll()
 end
 
 --- Display final score.
