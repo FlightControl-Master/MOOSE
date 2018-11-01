@@ -160,6 +160,13 @@ CARRIERTRAINER.Difficulty={
   HARD="TOPGUN Graduate",
 }
 
+--- Groove data.
+-- @type CARRIERTRAINER.GrooveData
+-- @field #number AoA Angle of Attack.
+-- @field #number Alt Altitude in meters.
+-- @field #number GSE Glide slope error in degrees.
+-- @field #number LUE Lineup error in degrees.
+
 --- Player data table holding all important parameters for each player.
 -- @type CARRIERTRAINER.PlayerData
 -- @field #number id Player ID.
@@ -177,6 +184,7 @@ CARRIERTRAINER.Difficulty={
 -- @field #boolean waveoff If true, player was waved off.
 -- @field #boolean calledball If true, player called the ball.
 -- @field #number Tlso Last time the LSO gave an advice.
+-- @field #CARRIERTRAINER.GrooveData Groove data table with elemets of type @{#CARRIERTRAINER.GrooveData}.
 
 --- Checkpoint parameters triggering the next step in the pattern.
 -- @type CARRIERTRAINER.Checkpoint
@@ -201,7 +209,7 @@ CARRIERTRAINER.MenuF10={}
 
 --- Carrier trainer class version.
 -- @field #string version
-CARRIERTRAINER.version="0.1.4"
+CARRIERTRAINER.version="0.1.4w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -503,7 +511,7 @@ function CARRIERTRAINER:_NewRound(playerData)
     
   if playerData.unit:IsInZone(self.registerZone) then
     local text="Cleared for approach."
-    self:_SendMessageToPlayer(text, 10,playerData)
+    self:_SendMessageToPlayer(text, 10, playerData)
   
     self:_InitNewRound(playerData)
   
@@ -512,14 +520,21 @@ function CARRIERTRAINER:_NewRound(playerData)
   end
 end
 
---- Start landing pattern, when player enters the start zone.
+--- Start pattern when player enters the start zone.
 -- @param #CARRIERTRAINER self
 -- @param #CARRIERTRAINER.PlayerData playerData Player data table.
 function CARRIERTRAINER:_Start(playerData)
 
+  -- Check if player is in start zone and about to enter the pattern.
   if playerData.unit:IsInZone(self.startZone) then
   
-    local hint = string.format("Entering the pattern, %s! Aim for 800 feet and 350 kts in the break entry.", playerData.callsign)
+    -- Inform player.
+    local hint = string.format("Entering the pattern.")
+    if playerData.difficulty==CARRIERTRAINER.Difficulty.EASY then
+      hint=hint.."Aim for 800 feet and 350 kts in the break entry."
+    end
+    
+    -- Send message.
     self:_SendMessageToPlayer(hint, 8, playerData)
   
     -- Next step: upwind.
@@ -534,17 +549,18 @@ end
 function CARRIERTRAINER:_Upwind(playerData)
 
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
-  local diffX, diffZ = self:_GetDistances(playerData.unit)
+  local X, Z = self:_GetDistances(playerData.unit)
   
   -- Abort condition check.
-  if self:_CheckAbort(diffX,diffZ, self.Upwind) then
-    self:_AbortPattern(playerData, diffX, diffZ, self.Upwind)
+  if self:_CheckAbort(X, Z, self.Upwind) then
+    self:_AbortPattern(playerData, X, Z, self.Upwind)
     return
   end
   
   -- Check if we are in front of the boat (diffX > 0).
-  if self:_CheckLimits(diffX, diffZ, self.Upwind) then
+  if self:_CheckLimits(X, Z, self.Upwind) then
   
+    -- Get altitiude.
     local altitude=playerData.unit:GetAltitude()
   
     -- Get altitude.
@@ -569,22 +585,22 @@ end
 function CARRIERTRAINER:_Break(playerData, part)
 
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
-  local diffX, diffZ = self:_GetDistances(playerData.unit)
+  local X, Z = self:_GetDistances(playerData.unit)
   
   -- Early or late break.  
   local breakpoint = self.BreakEarly
-  if part == "late" then
+  if part=="late" then
     breakpoint = self.BreakLate
   end
     
   -- Check abort conditions.
-  if self:_CheckAbort(diffX, diffZ, breakpoint) then
-    self:_AbortPattern(playerData, diffX, diffZ, breakpoint)
+  if self:_CheckAbort(X, Z, breakpoint) then
+    self:_AbortPattern(playerData, X, Z, breakpoint)
     return
   end
 
   -- Check limits.
-  if self:_CheckLimits(diffX, diffZ, breakpoint) then
+  if self:_CheckLimits(X, Z, breakpoint) then
   
     -- Get current altitude.
     local altitude=playerData.unit:GetAltitude()
@@ -596,14 +612,14 @@ function CARRIERTRAINER:_Break(playerData, part)
     self:_SendMessageToPlayer(hint, 10, playerData)
 
     -- Debrief
-    if part =="late" then
+    if part=="late" then
       self:_AddToSummary(playerData, "Late Break", hint)
     else
-      self:_AddToSummary(playerData, "Early Entry", hint)
+      self:_AddToSummary(playerData, "Early Break", hint)
     end
 
     -- Nest step: late break or abeam.
-    if (part == "early") then
+    if part=="early" then
       playerData.step = 4
     else
       playerData.step = 5
@@ -617,7 +633,7 @@ end
 function CARRIERTRAINER:_CheckForLongDownwind(playerData)
   
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
-  local diffX, diffZ = self:_GetDistances(playerData.unit)
+  local X, Z = self:_GetDistances(playerData.unit)
 
   -- Get relative heading.
   local relhead=self:_GetRelativeHeading(playerData.unit)
@@ -625,21 +641,21 @@ function CARRIERTRAINER:_CheckForLongDownwind(playerData)
   -- One NM from carrier is way too far.  
   local limit = -UTILS.NMToMeters(1)
   
-  local text=string.format("Long groove check: diffX=%d, relhead=%.1f", diffX, relhead)
+  local text=string.format("Long groove check: X=%d, relhead=%.1f", X, relhead)
   self:T(text)
   --MESSAGE:New(text, 1):ToAllIf(self.Debug)
   
   -- Check we are not too far out w.r.t back of the boat.
-  if diffX<limit and relhead<45 then
+  if X<limit and relhead<45 then
+  
     -- Message to player.
-    local hint = "Your downwind leg is too long. Turn to final earlier next time."
-    self:_SendMessageToPlayer(hint, 10, playerData)
+    self:_SendMessageToPlayer(CARRIERTRAINER.LSOcall.LONGGROOVET, 10, playerData)
     
     -- Sound output.
     CARRIERTRAINER.LSOcall.LONGGROOVE:ToGroup(playerData.unit:GetGroup())
     
     -- Debrief.
-    self:_AddToSummary(playerData, "Long in the groove", hint)
+    self:_AddToSummary(playerData, "Long in the groove", "bla")
     
     -- Decrease score.
     playerData.score=playerData.score-40
@@ -650,8 +666,7 @@ function CARRIERTRAINER:_CheckForLongDownwind(playerData)
     playerData.longDownwindDone = true
     
     -- Next step: Debriefing.
-    playerData.step=999
-    
+    playerData.step=999   
   end
   
 end
@@ -663,23 +678,23 @@ end
 function CARRIERTRAINER:_Abeam(playerData)
 
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
-  local diffX, diffZ = self:_GetDistances(playerData.unit)
+  local X, Z = self:_GetDistances(playerData.unit)
   
   -- Check abort conditions.
-  if self:_CheckAbort(diffX, diffZ, self.Abeam) then
-    self:_AbortPattern(playerData, diffX, diffZ, self.Abeam)
+  if self:_CheckAbort(X, Z, self.Abeam) then
+    self:_AbortPattern(playerData, X, Z, self.Abeam)
     return
   end
 
   -- Check nest step threshold.  
-  if self:_CheckLimits(diffX, diffZ, self.Abeam) then
+  if self:_CheckLimits(X, Z, self.Abeam) then
   
     -- Checks:
     -- AoA
     -- Altitude
     -- Distance to carrier.
 
-    -- Get AoA.
+    -- Get AoA and altitude.
     local aoa = playerData.unit:GetAoA()
     local alt = playerData.unit:GetAltitude()
     
@@ -690,7 +705,7 @@ function CARRIERTRAINER:_Abeam(playerData)
     local hintAlt=self:_AltitudeCheck(playerData, self.Abeam, alt)
     
     -- Grade distance to carrier.
-    local hintDist=self:_DistanceCheck(playerData, self.Abeam, math.abs(diffZ))
+    local hintDist=self:_DistanceCheck(playerData, self.Abeam, math.abs(Z))
     
     -- Compile full hint.
     local hintFull=string.format("%s\n%s\n%s", hintAlt, hintAoA, hintDist)
@@ -712,11 +727,11 @@ end
 function CARRIERTRAINER:_Ninety(playerData) 
   
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
-  local diffX, diffZ = self:_GetDistances(playerData.unit)
+  local X, Z = self:_GetDistances(playerData.unit)
   
-  --if(diffZ < -3700 or diffX < -3700 or diffX > 0) then
-  if self:_CheckAbort(diffX, diffZ, self.Ninety) then
-    self:_AbortPattern(playerData, diffX, diffZ, self.Ninety)
+  --if(Z < -3700 or X < -3700 or X > 0) then
+  if self:_CheckAbort(X, Z, self.Ninety) then
+    self:_AbortPattern(playerData, X, Z, self.Ninety)
     return
   end
   
@@ -726,6 +741,7 @@ function CARRIERTRAINER:_Ninety(playerData)
   -- At the 90, i.e. 90 degrees between player heading and BRC of carrier.
   if relheading<=90 then
   
+    -- Get altitude and aoa.
     local alt=playerData.unit:GetAltitude()
     local aoa=playerData.unit:GetAoA()
     
@@ -745,12 +761,12 @@ function CARRIERTRAINER:_Ninety(playerData)
     self:_AddToSummary(playerData, "At the 90", hintFull)
     
     -- Long downwind not an issue any more
-    playerData.longDownwindDone = true
+    playerData.longDownwindDone=true
     
     -- Next step: wake.
     playerData.step = 7
     
-  elseif relheading>90 and self:_CheckLimits(diffX, diffZ, self.Wake) then
+  elseif relheading>90 and self:_CheckLimits(X, Z, self.Wake) then
     -- Message to player.
     self:_SendMessageToPlayer("You are already at the wake and have not passed the 90! Turn faster next time!", 10, playerData)
   end
@@ -762,16 +778,16 @@ end
 function CARRIERTRAINER:_Wake(playerData) 
 
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
-  local diffX, diffZ = self:_GetDistances(playerData.unit)
+  local X, Z = self:_GetDistances(playerData.unit)
     
   -- Check abort conditions.
-  if self:_CheckAbort(diffX, diffZ, self.Wake) then
-    self:_AbortPattern(playerData, diffX, diffZ, self.Wake)
+  if self:_CheckAbort(X, Z, self.Wake) then
+    self:_AbortPattern(playerData, X, Z, self.Wake)
     return
   end
   
   -- Right behind the wake of the carrier dZ>0.
-  if self:_CheckLimits(diffX, diffZ, self.Wake) then
+  if self:_CheckLimits(X, Z, self.Wake) then
   
     local alt=playerData.unit:GetAltitude()
     local aoa=playerData.unit:GetAoA()
@@ -802,11 +818,11 @@ end
 function CARRIERTRAINER:_Groove(playerData)
 
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
-  local diffX, diffZ, rho, phi = self:_GetDistances(playerData.unit)
+  local X, Z, rho, phi = self:_GetDistances(playerData.unit)
 
   -- In front of carrier or more than 4 km behind carrier. 
-  if self:_CheckAbort(diffX, diffZ, self.Groove) then
-    self:_AbortPattern(playerData, diffX, diffZ, self.Groove)
+  if self:_CheckAbort(X, Z, self.Groove) then
+    self:_AbortPattern(playerData, X, Z, self.Groove)
     return
   end
   
@@ -839,6 +855,14 @@ function CARRIERTRAINER:_Groove(playerData)
     -- Add to debrief.
     self:_AddToSummary(playerData, "Calling the ball", hintFull)
     
+    local groovedata={} --#CARRIERTRAINER.GrooveData
+    groovedata.Alt=alt
+    groovedata.AoA=aoa
+    groovedata.GSE=self:_Glideslope(playerData)-3.5
+    groovedata.LUE=self:_Lineup(playerData)-10
+    groovedata.Step=playerData.step
+    table.insert(playerData.Groove, groovedata)
+    
     -- Next step.
     playerData.step = 90
   end
@@ -849,10 +873,10 @@ end
 --- Call the ball, i.e. 3/4 NM distance between aircraft and carrier.
 -- @param #CARRIERTRAINER self
 -- @param #CARRIERTRAINER.PlayerData playerData Player data table.
-function CARRIERTRAINER:_CallTheBall(playerData) 
+function CARRIERTRAINER:_CallTheBall(playerData)
 
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
-  local diffX, diffZ, rho, phi = self:_GetDistances(playerData.unit)
+  local X, Z, rho, phi = self:_GetDistances(playerData.unit)
   
   -- Player altitude
   local alt=playerData.unit:GetAltitude()
@@ -861,8 +885,8 @@ function CARRIERTRAINER:_CallTheBall(playerData)
   local player=playerData.unit:GetGroup()
 
   -- Check abort conditions.
-  if self:_CheckAbort(diffX, diffZ, self.Trap) then
-    self:_AbortPattern(playerData, diffX, diffZ, self.Trap)
+  if self:_CheckAbort(X, Z, self.Trap) then
+    self:_AbortPattern(playerData, X, Z, self.Trap)
     return
   end
 
@@ -872,20 +896,28 @@ function CARRIERTRAINER:_CallTheBall(playerData)
   local deckheight=22
   local tailpos=-100  
 
+  -- Lineup with runway centerline.
   local lineup=self:_Lineup(playerData)
   local lineupError=lineup-rwyangle
   
-  -- Glideslope. Wee need to correct for the height of the deck. The ideal glide slope is 3.5 degrees.
-  local h=playerData.unit:GetAltitude()-deckheight
-  local x=math.abs(diffX-tailpos)
-  local glideslope=math.atan(h/x)  
-  local glideslopeError=math.deg(glideslope)-3.5
+  -- Glide slope.
+  local glideslope=self:_Glideslope(playerData)
+  local glideslopeError=glideslope-3.5   --TODO: maybe 3.0?
   
   -- Ranges in the groove.
-  local RRB=UTILS.NMToMeters(0.500)
-  local RIM=UTILS.NMToMeters(0.375) --0.75/2
-  local RIC=UTILS.NMToMeters(0.100)
-  local RAR=UTILS.NMToMeters(0.050)
+  local RRB=UTILS.NMToMeters(0.500) -- Roger Ball! call.
+  local RIM=UTILS.NMToMeters(0.375) -- In the Middle 0.75/2.
+  local RIC=UTILS.NMToMeters(0.100) -- In Close.
+  local RAR=UTILS.NMToMeters(0.050) -- At the Ramp.
+
+  -- Data  
+  local groovedata={} --#CARRIERTRAINER.GrooveData
+  groovedata.Alt=alt
+  groovedata.AoA=playerData.unit:GetAoA()
+  groovedata.GSE=glideslopeError
+  groovedata.LUE=lineupError
+  groovedata.Step=playerData.step
+  table.insert(playerData.Groove, groovedata)
   
   if rho<=RRB and playerData.step==90 then
 
@@ -926,7 +958,7 @@ function CARRIERTRAINER:_CallTheBall(playerData)
 
     self:_LSOcall(playerData, glideslopeError, lineupError)
 
-  elseif diffX > 150 then
+  elseif X > 150 then
     
     local wire  = 0
     local hint  = ""
@@ -950,6 +982,29 @@ function CARRIERTRAINER:_CallTheBall(playerData)
   end 
 end
 
+--- Get name of the current pattern step.
+-- @param #CARRIERTRAINER self
+-- @param #number step Step
+-- @return #string Name of the step
+function CARRIERTRAINER:_GS(step)
+  local gp
+  if step==9 then
+    gp="X"
+  elseif step==90 then
+    gp="IM"
+  elseif step==91 then
+    gp="IC"
+  elseif step==92 then
+    gp="AR"
+  elseif step==93 then
+  
+  elseif step==94 then
+  elseif step==95 then
+  elseif step==96 then
+  elseif step==97 then
+  end
+end
+
 --- Trapped?
 -- @param #CARRIERTRAINER self
 -- @param #CARRIERTRAINER.PlayerData playerData Player data table.
@@ -957,7 +1012,7 @@ end
 function CARRIERTRAINER:_Trapped(playerData, pos)
 
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
-  local diffX, diffZ, rho, phi = self:_GetDistances(pos)
+  local X, Z, rho, phi = self:_GetDistances(pos)
   
   -- Get velocities.
   local playerVelocity  = playerData.unit:GetVelocityKMH()
@@ -970,13 +1025,13 @@ function CARRIERTRAINER:_Trapped(playerData, pos)
     local score = -10
     
     -- Which wire
-    if(diffX < -14) then
+    if X < -14 then
       wire = 1
       score = -15
-    elseif(diffX < -3) then
+    elseif X < -3 then
       wire = 2
       score = 10      
-    elseif (diffX < 10) then
+    elseif X < 10 then
       wire = 3
       score = 20
     else
@@ -987,7 +1042,7 @@ function CARRIERTRAINER:_Trapped(playerData, pos)
     local text=string.format("TRAPPED! %d-wire.", wire)
     self:_SendMessageToPlayer(text, 30, playerData)
     
-    local text2=string.format("Distance %.1f meters resulted in a %d-wire estimate.", diffX, wire)
+    local text2=string.format("Distance %.1f meters resulted in a %d-wire estimate.", X, wire)
     MESSAGE:New(text,30):ToAllIf(self.Debug)
     env.info(text2)
        
@@ -1009,7 +1064,7 @@ function CARRIERTRAINER:_LSOcall(playerData, glideslopeError, lineupError)
   local text=""
   
   -- Player group.
-  local player=playerData.unit:GetGroup()  
+  local player=playerData.unit:GetGroup()
   
   -- Glideslope high/low calls.
   if glideslopeError>1 then
@@ -1054,6 +1109,23 @@ function CARRIERTRAINER:_LSOcall(playerData, glideslopeError, lineupError)
     text=text.."Good lineup."
   end
   
+  -- Get AoA.
+  local aoa=playerData.unit:GetAoA()
+  
+  if aoa>=9.3 then
+    text="Your're slow!"
+  elseif aoa>=8.8 and aoa<9.3 then
+    text="Your're slightly slow."
+  elseif aoa>=7.4 and aoa<8.8 then
+    text="You're on speed."
+  elseif aoa>=6.9 and aoa<7.4 then
+    text="You're slightly fast."
+  elseif aoa>=0 and aoa<6.9 then
+    text="You're fast!"
+  else
+    text="Unknown AoA state."
+  end
+  
   text=text..string.format(" Lineup Error = %.1f %%", lineupError)
   
   -- LSO Message to player.
@@ -1064,11 +1136,32 @@ function CARRIERTRAINER:_LSOcall(playerData, glideslopeError, lineupError)
     
 end
 
+--- Get glide slope of aircraft.
+-- @param #CARRIERTRAINER self
+-- @param #CARRIERTRAINER.PlayerData playerData Player data table.
+-- @return #number Glide slope angle in degrees measured from the 
+function CARRIERTRAINER:_Glideslope(playerData)
+
+  -- Carrier parameters.
+  local deckheight=22
+  local tailpos=-100
+
+ -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
+  local X, Z, rho, phi = self:_GetDistances(playerData.unit)
+
+  -- Glideslope. Wee need to correct for the height of the deck. The ideal glide slope is 3.5 degrees.
+  local h=playerData.unit:GetAltitude()-deckheight
+  local x=math.abs(X-tailpos)
+  local glideslope=math.atan(h/x)  
+
+  return math.deg(glideslope)
+end
+
 --- Get line up of player wrt to carrier runway.
 -- @param #CARRIERTRAINER self
 -- @param #CARRIERTRAINER.PlayerData playerData Player data table.
 -- @return #number Line up with runway heading in degrees. 0 degrees = perfect line up. +1 too far left. -1 too far right.
--- @return #number range from Carrier tail to player aircraft in meters.
+-- @return #number Distance from carrier tail to player aircraft in meters.
 function CARRIERTRAINER:_Lineup(playerData) 
 
   -- Runway is at an angle of -10 degrees wrt to carrier X direction.
@@ -1078,18 +1171,14 @@ function CARRIERTRAINER:_Lineup(playerData)
   local tailpos=-100
   
  -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
-  local diffX, diffZ, rho, phi = self:_GetDistances(playerData.unit)  
+  local X, Z, rho, phi = self:_GetDistances(playerData.unit)  
   
   -- Position at the end of the deck. From there we calculate the angle.
   -- TODO: Check exact number and make carrier dependent.
-  local b={}
-  b.x=tailpos
-  b.z=0
+  local b={x=tailpos, z=0}
   
   -- Position of the aircraft wrt carrier coordinates.
-  local a={}
-  a.x=diffX
-  a.z=diffZ
+  local a={x=X, z=Z}
   
   --a.x=-200
   --a.y=  0
@@ -1098,10 +1187,7 @@ function CARRIERTRAINER:_Lineup(playerData)
   --print(a.z)
   
   -- Vector from plane to ref point on boad.
-  local c={}
-  c.x=b.x-a.x
-  c.y=0
-  c.z=b.z-a.z
+  local c={x=b.x-a.x, y=0, z=b.z-a.z}
   
   -- Current line up and error wrt to final heading of the runway.
   local lineup=math.atan2(c.z, c.x)
@@ -1732,7 +1818,7 @@ function CARRIERTRAINER:_AoACheck(playerData, checkpoint, aoa)
     hint  = "You're slightly fast."
   else --On speed
     score = 0
-    hint  = "You're on speed!"
+    hint  = "You're on speed."
   end
   
   hint=hint..string.format(" AoA %.1f = %d %% deviation from %.1f target AoA.", aoa, _error, checkpoint.AoA)
@@ -1754,7 +1840,7 @@ function CARRIERTRAINER:_SendMessageToPlayer(message, duration, playerData, clea
   if playerData.client then
     --MESSAGE:New(string.format("%s, %s, ", self.alias, playerData.callsign)..message, duration, nil, clear):ToClient(playerData.client)
   end
-  MESSAGE:New(string.format("%s, %s, ", self.alias, playerData.callsign)..message, duration, nil, clear):ToAll()
+  MESSAGE:New(string.format("%s, %s, %s", self.alias, playerData.callsign, message), duration, nil, clear):ToAll()
 end
 
 --- Display final score.
