@@ -182,7 +182,6 @@ CARRIERTRAINER.Difficulty={
 -- @field #boolean landed If true, player landed or attempted to land.
 -- @field #boolean boltered If true, player boltered.
 -- @field #boolean waveoff If true, player was waved off.
--- @field #boolean calledball If true, player called the ball.
 -- @field #number Tlso Last time the LSO gave an advice.
 -- @field #CARRIERTRAINER.GrooveData Groove data table with elemets of type @{#CARRIERTRAINER.GrooveData}.
 
@@ -209,7 +208,7 @@ CARRIERTRAINER.MenuF10={}
 
 --- Carrier trainer class version.
 -- @field #string version
-CARRIERTRAINER.version="0.1.4w"
+CARRIERTRAINER.version="0.1.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -327,7 +326,7 @@ function CARRIERTRAINER:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.Land)
 
   -- Init status check
-  self:__Status(5)
+  self:__Status(1)
 end
 
 --- On after Status event. Checks player status.
@@ -352,6 +351,81 @@ end
 function CARRIERTRAINER:onafterStop(From, Event, To)
   self:UnHandleEvent(EVENTS.Birth)
   self:UnHandleEvent(EVENTS.Land)
+end
+
+--- Carrier trainer event handler for event birth.
+-- @param #CARRIERTRAINER self
+function CARRIERTRAINER:_CheckPlayerStatus()
+
+  -- Loop over all players.
+  for _playerName,_playerData in pairs(self.players) do  
+    local playerData = _playerData --#CARRIERTRAINER.PlayerData
+    
+    if playerData then
+    
+      -- Player unit.
+      local unit = playerData.unit
+      
+      if unit:IsAlive() then
+      
+        --self:_SendMessageToPlayer("current step "..self:_StepName(playerData.step),1,playerData)
+        --self:_DetailedPlayerStatus(playerData)
+
+        --self:_DetailedPlayerStatus(playerData)
+        if unit:IsInZone(self.giantZone) then
+          
+          -- Check if player was previously not inside the zone.
+          if playerData.inbigzone==false then
+          
+            local text=string.format("Welcome back, %s! TCN 74X, ICLS 1, BRC 354 (MAG HDG).\n", playerData.callsign)
+            local heading=playerData.unit:GetCoordinate():HeadingTo(self.registerZone:GetCoordinate())
+            local distance=playerData.unit:GetCoordinate():Get2DDistance(self.registerZone:GetCoordinate())
+            text=text..string.format("Fly heading %d for %.1f NM to begin your approach.", heading, distance)
+            MESSAGE:New(text, 5):ToClient(playerData.client)
+          
+          end
+        
+          if playerData.step==0 and unit:InAir() then
+            self:_NewRound(playerData)
+            -- Jump to Groove for testing.     
+            --playerData.step=8
+          elseif playerData.step == 1 then
+            self:_Start(playerData)
+          elseif playerData.step == 2 then
+            self:_Upwind(playerData)
+          elseif playerData.step == 3 then
+            self:_Break(playerData, "early")
+          elseif playerData.step == 4 then
+            self:_Break(playerData, "late")
+          elseif playerData.step == 5 then
+            self:_Abeam(playerData)
+          elseif playerData.step == 6 then
+            -- Check long down wind leg.
+            if playerData.longDownwindDone==false then
+              self:_CheckForLongDownwind(playerData)
+            end
+            self:_Ninety(playerData)
+          elseif playerData.step==7 then
+            self:_Wake(playerData)
+          elseif playerData.step==8 then
+            self:_Groove(playerData)
+          elseif playerData.step>=90 and playerData.step<=99 then
+            self:_CallTheBall(playerData)            
+          elseif playerData.step==999 then
+            self:_Debrief(playerData)
+          end
+          
+        else
+          playerData.inbigzone=false          
+        end
+        
+      else
+        -- Unit not alive.
+        --playerDatas[i] = nil
+      end
+    end
+  end
+  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -495,7 +569,6 @@ function CARRIERTRAINER:_InitNewRound(playerData)
   playerData.boltered=false
   playerData.landed=false
   playerData.waveoff=false
-  playerData.calledball=false
   playerData.Tlso=timer.getTime()
   return playerData
 end
@@ -837,7 +910,6 @@ function CARRIERTRAINER:_Groove(playerData)
     local aoa = playerData.unit:GetAoA()
 
     self:_SendMessageToPlayer("Call the ball.", 8, playerData)
-    playerData.calledball=true
     CARRIERTRAINER.LSOcall.CALLTHEBALL:ToGroup(playerData.unit:GetGroup())    
 
     -- Grade altitude.
@@ -861,6 +933,7 @@ function CARRIERTRAINER:_Groove(playerData)
     groovedata.GSE=self:_Glideslope(playerData)-3.5
     groovedata.LUE=self:_Lineup(playerData)-10
     groovedata.Step=playerData.step
+    playerData.Groove={}
     table.insert(playerData.Groove, groovedata)
     
     -- Next step.
@@ -931,6 +1004,7 @@ function CARRIERTRAINER:_CallTheBall(playerData)
   
     --TODO: grade for IM
     self:_SendMessageToPlayer("IM", 8, playerData)
+    env.info(string.format("FF IM=%d", rho))
     
     playerData.step=92
   
@@ -938,13 +1012,15 @@ function CARRIERTRAINER:_CallTheBall(playerData)
 
     --TODO: grade for IC, call wave off?
     self:_SendMessageToPlayer("IC", 8, playerData)
-  
+    env.info(string.format("FF IC=%d", rho))
+      
     playerData.step=93
     
   elseif rho<=RAR and playerData.step==93 then
   
     --TODO: grade for AR
     self:_SendMessageToPlayer("AR", 8, playerData)
+    env.info(string.format("FF AR=%d", rho))
   
     playerData.step=94
   end
@@ -1109,24 +1185,26 @@ function CARRIERTRAINER:_LSOcall(playerData, glideslopeError, lineupError)
     text=text.."Good lineup."
   end
   
+   text=text..string.format(" Lineup Error = %.1f %%\n", lineupError)
+  
   -- Get AoA.
   local aoa=playerData.unit:GetAoA()
   
   if aoa>=9.3 then
-    text="Your're slow!"
+    text=text.."Your're slow!"
   elseif aoa>=8.8 and aoa<9.3 then
-    text="Your're slightly slow."
+    text=text.."Your're slightly slow."
   elseif aoa>=7.4 and aoa<8.8 then
-    text="You're on speed."
+    text=text.."You're on speed."
   elseif aoa>=6.9 and aoa<7.4 then
-    text="You're slightly fast."
+    text=text.."You're slightly fast."
   elseif aoa>=0 and aoa<6.9 then
-    text="You're fast!"
+    text=text.."You're fast!"
   else
-    text="Unknown AoA state."
+    text=text.."Unknown AoA state."
   end
   
-  text=text..string.format(" Lineup Error = %.1f %%", lineupError)
+ 
   
   -- LSO Message to player.
   self:_SendMessageToPlayer(text, 8, playerData, true)
@@ -1252,80 +1330,7 @@ function CARRIERTRAINER:_GetRelativeHeading(unit)
 end
 
 
---- Carrier trainer event handler for event birth.
--- @param #CARRIERTRAINER self
-function CARRIERTRAINER:_CheckPlayerStatus()
 
-  -- Loop over all players.
-  for _playerName,_playerData in pairs(self.players) do  
-    local playerData = _playerData --#CARRIERTRAINER.PlayerData
-    
-    if playerData then
-    
-      -- Player unit.
-      local unit = playerData.unit
-      
-      if unit:IsAlive() then
-      
-        --self:_SendMessageToPlayer("current step "..self:_StepName(playerData.step),1,playerData)
-        --self:_DetailedPlayerStatus(playerData)
-
-        --self:_DetailedPlayerStatus(playerData)
-        if unit:IsInZone(self.giantZone) then
-          
-          -- Check if player was previously not inside the zone.
-          if playerData.inbigzone==false then
-          
-            local text=string.format("Welcome back, %s! TCN 74X, ICLS 1, BRC 354 (MAG HDG).\n", playerData.callsign)
-            local heading=playerData.unit:GetCoordinate():HeadingTo(self.registerZone:GetCoordinate())
-            local distance=playerData.unit:GetCoordinate():Get2DDistance(self.registerZone:GetCoordinate())
-            text=text..string.format("Fly heading %d for %.1f NM to begin your approach.", heading, distance)
-            MESSAGE:New(text, 5):ToClient(playerData.client)
-          
-          end
-        
-          if playerData.step==0 and unit:InAir() then
-            self:_NewRound(playerData)
-            -- Jump to Groove for testing.     
-            --playerData.step=8
-          elseif playerData.step == 1 then
-            self:_Start(playerData)
-          elseif playerData.step == 2 then
-            self:_Upwind(playerData)
-          elseif playerData.step == 3 then
-            self:_Break(playerData, "early")
-          elseif playerData.step == 4 then
-            self:_Break(playerData, "late")
-          elseif playerData.step == 5 then
-            self:_Abeam(playerData)
-          elseif playerData.step == 6 then
-            -- Check long down wind leg.
-            if playerData.longDownwindDone==false then
-              self:_CheckForLongDownwind(playerData)
-            end
-            self:_Ninety(playerData)
-          elseif playerData.step==7 then
-            self:_Wake(playerData)
-          elseif playerData.step==8 then
-            self:_Groove(playerData)
-          elseif playerData.step>=90 and playerData.step<=99 then
-            self:_CallTheBall(playerData)            
-          elseif playerData.step==999 then
-            self:_Debrief(playerData)
-          end
-          
-        else
-          playerData.inbigzone=false          
-        end
-        
-      else
-        -- Unit not alive.
-        --playerDatas[i] = nil
-      end
-    end
-  end
-  
-end
 
 --- Get name of the current pattern step.
 -- @param #CARRIERTRAINER self
