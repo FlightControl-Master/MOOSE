@@ -160,8 +160,25 @@ CARRIERTRAINER.Difficulty={
   HARD="TOPGUN Graduate",
 }
 
+
+--- Groove data.
+-- @type CARRIERTRAINER.GroovePos
+-- @field #string X At the start.
+-- @field #string RB Roger ball.
+-- @field #string IM In the middle.
+-- @field #string IC In close.
+-- @field #string AR At the ramp.
+CARRIERTRAINER.GroovePos={
+  X="X",
+  RB="RB",
+  IM="IM",
+  IC="IC",
+  AR="AR",
+}
+
 --- Groove data.
 -- @type CARRIERTRAINER.GrooveData
+-- @field #number Step Current step.
 -- @field #number AoA Angle of Attack.
 -- @field #number Alt Altitude in meters.
 -- @field #number GSE Glide slope error in degrees.
@@ -183,7 +200,7 @@ CARRIERTRAINER.Difficulty={
 -- @field #boolean boltered If true, player boltered.
 -- @field #boolean waveoff If true, player was waved off.
 -- @field #number Tlso Last time the LSO gave an advice.
--- @field #CARRIERTRAINER.GrooveData Groove data table with elemets of type @{#CARRIERTRAINER.GrooveData}.
+-- @field #CARRIERTRAINER.GroovePos Groove data table with elemets of type @{#CARRIERTRAINER.GrooveData}.
 
 --- Checkpoint parameters triggering the next step in the pattern.
 -- @type CARRIERTRAINER.Checkpoint
@@ -208,11 +225,19 @@ CARRIERTRAINER.MenuF10={}
 
 --- Carrier trainer class version.
 -- @field #string version
-CARRIERTRAINER.version="0.1.5"
+CARRIERTRAINER.version="0.1.5w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+-- TODO: Fix radio menu.
+-- TODO: Optimized debrief.
+-- TODO: Add automatic grading.
+-- TODO: Get board numbers.
+-- TODO: Add user functions.
+-- TODO: Generalize parameters for other carriers and aircraft.
+-- TODO: CASE III.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -306,6 +331,13 @@ end
 -- User functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Set difficulty level.
+-- @param #CARRIERTRAINER self
+-- @param #CARRIERTRAINER.PlayerData playerData Player data.
+-- @param #CARRIERTRAINER.Difficulty difficulty Difficulty level.
+function CARRIERTRAINER:SetDifficulty(playerData, difficulty)
+  playerData.difficulty=difficulty
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM states
@@ -691,7 +723,7 @@ function CARRIERTRAINER:_Break(playerData, part)
       self:_AddToSummary(playerData, "Early Break", hint)
     end
 
-    -- Nest step: late break or abeam.
+    -- Next step: late break or abeam.
     if part=="early" then
       playerData.step = 4
     else
@@ -719,7 +751,7 @@ function CARRIERTRAINER:_CheckForLongDownwind(playerData)
   --MESSAGE:New(text, 1):ToAllIf(self.Debug)
   
   -- Check we are not too far out w.r.t back of the boat.
-  if X<limit and relhead<45 then
+  if X<limit then --and relhead<45 then
   
     -- Message to player.
     self:_SendMessageToPlayer(CARRIERTRAINER.LSOcall.LONGGROOVET, 10, playerData)
@@ -933,8 +965,10 @@ function CARRIERTRAINER:_Groove(playerData)
     groovedata.GSE=self:_Glideslope(playerData)-3.5
     groovedata.LUE=self:_Lineup(playerData)-10
     groovedata.Step=playerData.step
+    
     playerData.Groove={}
-    table.insert(playerData.Groove, groovedata)
+    playerData.Groove.X=grovedata
+    --table.insert(playerData.Groove, groovedata)
     
     -- Next step.
     playerData.step = 90
@@ -990,7 +1024,7 @@ function CARRIERTRAINER:_CallTheBall(playerData)
   groovedata.GSE=glideslopeError
   groovedata.LUE=lineupError
   groovedata.Step=playerData.step
-  table.insert(playerData.Groove, groovedata)
+  --table.insert(playerData.Groove, groovedata)
   
   if rho<=RRB and playerData.step==90 then
 
@@ -998,6 +1032,10 @@ function CARRIERTRAINER:_CallTheBall(playerData)
     self:_SendMessageToPlayer(CARRIERTRAINER.LSOcall.ROGERBALLT, 8, playerData)
     CARRIERTRAINER.LSOcall.ROGERBALL:ToGroup(player)
     
+    -- Store data.
+    playerData.Groove.RB=groovedata
+    
+    -- Next step: in the middle.
     playerData.step=91
     
   elseif rho<=RIM and playerData.step==91 then
@@ -1006,14 +1044,22 @@ function CARRIERTRAINER:_CallTheBall(playerData)
     self:_SendMessageToPlayer("IM", 8, playerData)
     env.info(string.format("FF IM=%d", rho))
     
+    -- Store data.
+    playerData.Groove.IM=groovedata    
+    
+    -- Next step: in close.
     playerData.step=92
   
-  elseif rho<=RIM and playerData.step==92 then
+  elseif rho<=RIC and playerData.step==92 then
 
     --TODO: grade for IC, call wave off?
     self:_SendMessageToPlayer("IC", 8, playerData)
     env.info(string.format("FF IC=%d", rho))
-      
+    
+    -- Store data.
+    playerData.Groove.IC=groovedata    
+    
+    -- Next step: at the ramp.      
     playerData.step=93
     
   elseif rho<=RAR and playerData.step==93 then
@@ -1021,7 +1067,11 @@ function CARRIERTRAINER:_CallTheBall(playerData)
     --TODO: grade for AR
     self:_SendMessageToPlayer("AR", 8, playerData)
     env.info(string.format("FF AR=%d", rho))
-  
+    
+    -- Store data.
+    playerData.Groove.AR=groovedata    
+    
+    -- Next step: at the ramp.        
     playerData.step=94
   end
   
@@ -1203,9 +1253,7 @@ function CARRIERTRAINER:_LSOcall(playerData, glideslopeError, lineupError)
   else
     text=text.."Unknown AoA state."
   end
-  
- 
-  
+   
   -- LSO Message to player.
   self:_SendMessageToPlayer(text, 8, playerData, true)
 
@@ -1299,8 +1347,8 @@ function CARRIERTRAINER:_Debrief(playerData)
     local step=_data.step
     local comment=_data.hint
     text=text..string.format("* %s:\n",step)
-    text=text..string.format("- %s\n", comment)
-    text=text..string.format("------------------------------------\n\n")
+    text=text..string.format("%s\n", comment)
+    text=text..string.format("------------------------------------------------------------\n")
   end
   
   -- Send debrief message to player
@@ -1328,8 +1376,6 @@ function CARRIERTRAINER:_GetRelativeHeading(unit)
   -- Return heading in degrees.
   return math.deg(relHead)
 end
-
-
 
 
 --- Get name of the current pattern step.
@@ -1412,8 +1458,9 @@ end
 -- @param #number Z Z distance player to carrier.
 -- @param #table pos Position data limits.
 -- @return #boolean If true, approach should be aborted.
-function CARRIERTRAINER:_CheckAbort(X, Z, pos)
+function CARRIERTRAINER:_CheckAbort(X, Z, check)
 
+  --[[
   local abort=false
   if pos.Xmin and X<pos.Xmin then
     abort=true
@@ -1424,6 +1471,16 @@ function CARRIERTRAINER:_CheckAbort(X, Z, pos)
   elseif pos.Zmax and Z>pos.Zmax then
     abort=true
   end
+  ]]
+  
+  -- Abort conditions.
+  local abortXmin=check.Xmin and (check.Xmin<0 and X<=check.Xmin or check.Xmin>=0 and X>=check.Xmin)
+  local abortXmax=check.Xmax and (check.Xmax<0 and X>=check.Xmax or check.Xmax>=0 and X<=check.Xmax)
+  local abortZmin=check.Zmin and (check.Zmin<0 and Z<=check.Zmin or check.Zmin>=0 and Z>=check.Zmin)
+  local abortZmax=check.Zmax and (check.Zmax<0 and Z>=check.Zmax or check.Zmax>=0 and Z<=check.Zmax)
+  
+  -- Check if any of the conditions are met.
+  local abort=abortXmin or abortXmax or abortZmin or abortZmax  
 
   return abort
 end
@@ -1432,10 +1489,10 @@ end
 -- @param #CARRIERTRAINER self
 -- @param #number X X distance player to carrier.
 -- @param #number Z Z distance player to carrier.
--- @param #table posData Position data limits.
+-- @param #CARRIERTRAINER.Checkpoint posData Checkpoint data.
 function CARRIERTRAINER:_TooFarOutText(X, Z, posData)
 
-  local text="You are too far"
+  local text="You are too far "
   
   local xtext=nil
   if posData.Xmin and X<posData.Xmin then
@@ -1446,9 +1503,9 @@ function CARRIERTRAINER:_TooFarOutText(X, Z, posData)
   
   local ztext=nil
   if posData.Zmin and Z<posData.Zmin then
-    ztext=" port (left)"
+    ztext="port (left)"
   elseif posData.Zmax and Z>posData.Zmax then
-    ztext=" starboard (right)"
+    ztext="starboard (right)"
   end
   
   if xtext and ztext then
@@ -1459,7 +1516,7 @@ function CARRIERTRAINER:_TooFarOutText(X, Z, posData)
     text=text..ztext
   end
   
-  text=text.." of the carrier!"
+  text=text.." of the carrier."
   
   return text
 end
@@ -1469,14 +1526,14 @@ end
 -- @param #CARRIERTRAINER.PlayerData playerData Player data.
 -- @param #number X X distance player to carrier.
 -- @param #number Z Z distance player to carrier.
--- @param #table posData Position data.
+-- @param #CARRIERTRAINER.Checkpoint posData Checkpoint data.
 function CARRIERTRAINER:_AbortPattern(playerData, X, Z, posData)
 
   -- Text where we are wrong.
   local toofartext=self:_TooFarOutText(X, Z, posData)
   
   -- Send message to player.
-  self:_SendMessageToPlayer(toofartext.." Abort approach!", 15, playerData, true)
+  self:_SendMessageToPlayer(toofartext.." Depart and reenter!", 15, playerData, true)
   
   -- Debug.
   local text=string.format("Abort: X=%d Xmin=%s, Xmax=%s | Z=%d Zmin=%s Zmax=%s", X, tostring(posData.Xmin), tostring(posData.Xmax), Z, tostring(posData.Zmin), tostring(posData.Zmax))
@@ -1485,6 +1542,9 @@ function CARRIERTRAINER:_AbortPattern(playerData, X, Z, posData)
   
   -- Add to debrief.
   self:_AddToSummary(playerData, "Abort", "Approach aborted.")
+  
+  -- 
+  playerData.waveoff=true
   
   --TODO: set score and grade.
   
@@ -1530,7 +1590,7 @@ function CARRIERTRAINER:_DetailedPlayerStatus(playerData)
   --text=text..string.format("current step = %d %s\n", playerData.step, self:_StepName(playerData.step))
   --text=text..string.format("Carrier distance: d=%d m\n", dist)
   --text=text..string.format("Carrier distance: x=%d m z=%d m sum=%d (old)\n", diffX, diffZ, math.abs(diffX)+math.abs(diffZ))
-  --text=text..string.format("Carrier distance: x=%d m z=%d m sum=%d (new)", dx, dz, math.abs(dz)+math.abs(dx))  
+  --text=text..string.format("Carrier distance: x=%d m z=%d m sum=%d (new)", dx, dz, math.abs(dz)+math.abs(dx))
 
   MESSAGE:New(text, 1, nil , true):ToClient(playerData.client)
 end
@@ -1661,14 +1721,16 @@ end
 -- @return #boolean If true, checkpoint condition for next step was reached.
 function CARRIERTRAINER:_CheckLimits(X, Z, check)
 
+  -- Limits
   local nextXmin=check.LimitXmin==nil or (check.LimitXmin and (check.LimitXmin<0 and X<=check.LimitXmin or check.LimitXmin>=0 and X>=check.LimitXmin))
   local nextXmax=check.LimitXmax==nil or (check.LimitXmax and (check.LimitXmax<0 and X>=check.LimitXmax or check.LimitXmax>=0 and X<=check.LimitXmax))
   local nextZmin=check.LimitZmin==nil or (check.LimitZmin and (check.LimitZmin<0 and Z<=check.LimitZmin or check.LimitZmin>=0 and Z>=check.LimitZmin))
   local nextZmax=check.LimitZmax==nil or (check.LimitZmax and (check.LimitZmax<0 and Z>=check.LimitZmax or check.LimitZmax>=0 and Z<=check.LimitZmax))
   
+  -- Proceed to next step if all conditions are fullfilled.
   local next=nextXmin and nextXmax and nextZmin and nextZmax
   
-  
+  -- Debug info.
   local text=string.format("step=%s: next=%s: X=%d Xmin=%s Xmax=%s | Z=%d Zmin=%s Zmax=%s", 
   check.name, tostring(next), X, tostring(check.LimitXmin), tostring(check.LimitXmax), Z, tostring(check.LimitZmin), tostring(check.LimitZmax))
   self:T(self.lid..text)
@@ -1681,6 +1743,26 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- MISC functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Grade approach.
+-- @param #CARRIERTRAINER self
+-- @param #CARRIERTRAINER.PlayerData playerData Player data table.
+-- @return #string LSO grade.
+function CARRIERTRAINER:_LSOgrade(playerData)
+
+  if playerData.waveoff then
+  
+  elseif playerData.boltered then
+  
+  elseif playerData.landed then
+  
+    local gdata=playerData.Groove.X --#CARRIERTRAINER.GrooveData
+  
+  else
+  
+  end
+
+end
 
 --- Evaluate player's altitude at checkpoint.
 -- @param #CARRIERTRAINER self
@@ -1779,10 +1861,10 @@ function CARRIERTRAINER:_DistanceCheck(playerData, checkpoint, distance)
     hint  = string.format( "You're too close to the boat!")
   elseif _error<-lowscore then
     score =  -5
-    hint  = string.format("slightly too far from the boat.")
+    hint  = string.format("You're slightly too far from the boat.")
   else
     score =   0
-    hint  = string.format("with perfect distance to the boat.")
+    hint  = string.format("perfect distance to the boat.")
   end
   
   hint=hint..string.format(" Distance %.1f NM = %d%% deviation from %.1f NM optimal distance.",UTILS.MetersToNM(distance), _error, UTILS.MetersToNM(checkpoint.Distance))
@@ -2005,14 +2087,6 @@ function CARRIERTRAINER:_AddF10Commands(_unitName)
     self:T(self.lid.."Player unit does not exist in AddF10Menu() function. Unit name: ".._unitName)
   end
 
-end
-
---- Set difficulty level.
--- @param #CARRIERTRAINER self
--- @param #CARRIERTRAINER.PlayerData playerData Player data.
--- @param #CARRIERTRAINER.Difficulty difficulty Difficulty level.
-function CARRIERTRAINER:SetDifficulty(playerData, difficulty)
-  playerData.difficulty=difficulty
 end
 
 --- Report information about carrier.
