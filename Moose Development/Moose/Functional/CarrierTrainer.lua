@@ -14,7 +14,7 @@
 --
 -- ===
 --
--- ### Authors: **Bankler** (original idea and script), **funkyfranky** (MOOSE class implementation and enhancements)
+-- ### Authors: **funkyfranky** (MOOSE class implementation and enhancements), **Bankler** (original idea and script) 
 --
 -- @module Functional.CarrierTrainer
 -- @image MOOSE.JPG
@@ -151,7 +151,7 @@ CARRIERTRAINER.LSOcall={
   BOLTER=USERSOUND:New("LSO - Bolter.ogg"),
   BOLTERT="Bolter, Bolter!",
   LONGGROOVE=USERSOUND:New("LSO - Long in Groove.ogg"),
-  LONGGROOVET="You're lon in the groove. Depart and re-enter.",
+  LONGGROOVET="You're long in the groove. Depart and re-enter.",
 }
 
 --- Difficulty level.
@@ -160,24 +160,28 @@ CARRIERTRAINER.LSOcall={
 -- @field #string NORMAL Normal difficulty: error margin 5 deviation from ideal for high score and 10 for low score. No score for deviation >10.
 -- @field #string HARD Hard difficulty: error margin 2.5 deviation from ideal value for high score and 5 for low score. No score for deviation >5.
 CARRIERTRAINER.Difficulty={
-  EASY="Rookey",
+  EASY="Flight Student",
   NORMAL="Naval Aviator",
   HARD="TOPGUN Graduate",
 }
 
 --- Groove position.
 -- @type CARRIERTRAINER.GroovePos
--- @field #string X At the start.
+-- @field #string X0 Entering the groove.
+-- @field #string XX At the start, i.e. 3/4 from the run down.
 -- @field #string RB Roger ball.
 -- @field #string IM In the middle.
 -- @field #string IC In close.
 -- @field #string AR At the ramp.
+-- @field #string IW In the wires.
 CARRIERTRAINER.GroovePos={
-  X="X",
+  X0="X0",
+  XX="X",
   RB="RB",
   IM="IM",
   IC="IC",
   AR="AR",
+  IW="IW",
 }
 
 --- Groove data.
@@ -187,18 +191,18 @@ CARRIERTRAINER.GroovePos={
 -- @field #number Alt Altitude in meters.
 -- @field #number GSE Glide slope error in degrees.
 -- @field #number LUE Lineup error in degrees.
+-- @field #number Roll Roll angle.
 
---- Player data table holding all important parameters for each player.
+--- Player data table holding all important parameters of each player.
 -- @type CARRIERTRAINER.PlayerData
--- @field #number id Player ID.
--- @field Wrapper.Unit#UNIT unit Aircraft unit of the player.
+-- @field Wrapper.Client#CLIENT client Client object of player.
+-- @field Wrapper.Unit#UNIT unit Aircraft of the player.
 -- @field #string callsign Callsign of player.
+-- @field #string difficulty Difficulty level.
 -- @field #number score Player score of the current pass.
 -- @field #number passes Number of passes.
 -- @field #table debrief Debrief analysis of the current step of this pass.
 -- @field #table results Results of all passes.
--- @field Wrapper.Client#CLIENT client object of player.
--- @field #string difficulty Difficulty level.
 -- @field #boolean inbigzone If true, player is in the big zone.
 -- @field #boolean landed If true, player landed or attempted to land.
 -- @field #boolean bolter If true, LSO told player to bolter.
@@ -206,7 +210,7 @@ CARRIERTRAINER.GroovePos={
 -- @field #boolean waveoff If true, player was waved off during final approach.
 -- @field #boolean patternwo If true, playe was waved of during the pattern.
 -- @field #number Tlso Last time the LSO gave an advice.
--- @field #CARRIERTRAINER.GroovePos Groove data table with elemets of type @{#CARRIERTRAINER.GrooveData}.
+-- @field #CARRIERTRAINER.GroovePos groove Data table at each position in the groove. Elemets are of type @{#CARRIERTRAINER.GrooveData}.
 
 --- Checkpoint parameters triggering the next step in the pattern.
 -- @type CARRIERTRAINER.Checkpoint
@@ -231,7 +235,7 @@ CARRIERTRAINER.MenuF10={}
 
 --- Carrier trainer class version.
 -- @field #string version
-CARRIERTRAINER.version="0.1.6"
+CARRIERTRAINER.version="0.1.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -257,7 +261,7 @@ CARRIERTRAINER.version="0.1.6"
 -- @param #CARRIERTRAINER self
 -- @param carriername Name of the aircraft carrier unit as defined in the mission editor.
 -- @param alias (Optional) Alias for the carrier. This will be used for radio messages and the F10 radius menu. Default is the carrier name as defined in the mission editor.
--- @return #CARRIERTRAINER self
+-- @return #CARRIERTRAINER self or nil if carrier unit does not exist.
 function CARRIERTRAINER:New(carriername, alias)
 
   -- Inherit everthing from FSM class.
@@ -267,13 +271,15 @@ function CARRIERTRAINER:New(carriername, alias)
   self.carrier=UNIT:FindByName(carriername)
   
   if self.carrier then
+    -- Carrier zones.
     self.registerZone = ZONE_UNIT:New("registerZone", self.carrier,  2500, {dx = -5000, dy = 100, relative_to_unit=true})
     self.startZone    = ZONE_UNIT:New("startZone",    self.carrier,  1000, {dx = -2000, dy = 100, relative_to_unit=true})
     self.giantZone    = ZONE_UNIT:New("giantZone",    self.carrier, 30000, {dx =  0,    dy = 0,   relative_to_unit=true})
   else
+    -- Carrier unit does not exist error.
     local text=string.format("ERROR: Carrier unit %s could not be found! Make sure this UNIT is defined in the mission editor and check the spelling of the unit name carefully.", carriername)
     MESSAGE:New(text, 120):ToAll()
-    self:E(self.lid..text)
+    self:E(text)
     return nil
   end
     
@@ -411,46 +417,66 @@ function CARRIERTRAINER:_CheckPlayerStatus()
           -- Check if player was previously not inside the zone.
           if playerData.inbigzone==false then
           
+            -- Welcome player once he enters the carrier zone.
             local text=string.format("Welcome back, %s! TCN 74X, ICLS 1, BRC 354 (MAG HDG).\n", playerData.callsign)
+            
+            -- Heading and distance to register for approach.
             local heading=playerData.unit:GetCoordinate():HeadingTo(self.registerZone:GetCoordinate())
             local distance=playerData.unit:GetCoordinate():Get2DDistance(self.registerZone:GetCoordinate())
+            
+            -- Send message.
             text=text..string.format("Fly heading %d for %.1f NM and turn to BRC.", heading, distance)
             MESSAGE:New(text, 5):ToClient(playerData.client)
           
           end
-       
+                 
           if playerData.step==0 and unit:InAir() then
+            -- New approach.
             self:_NewRound(playerData)
-            -- Jump to Groove for testing.     
-            playerData.step=8
+            
+            -- Jump to Groove for testing.
+            if self.groovedebug then     
+              playerData.step=8
+              self.groovedebug=false
+            end
           elseif playerData.step == 1 then
+            -- Entering the pattern.
             self:_Start(playerData)
           elseif playerData.step == 2 then
+            -- Upwind leg.
             self:_Upwind(playerData)
           elseif playerData.step == 3 then
+            -- Early break.
             self:_Break(playerData, "early")
           elseif playerData.step == 4 then
+            -- Late break.
             self:_Break(playerData, "late")
           elseif playerData.step == 5 then
+            -- Abeam position.
             self:_Abeam(playerData)
           elseif playerData.step == 6 then
             -- Check long down wind leg.
-            if playerData.longDownwindDone==false then
-              self:_CheckForLongDownwind(playerData)
-            end
+            self:_CheckForLongDownwind(playerData)
+            -- At the ninety.
             self:_Ninety(playerData)
           elseif playerData.step==7 then
+            -- In the wake.
             self:_Wake(playerData)
           elseif playerData.step==8 then
+            -- Entering the groove.
             self:_Groove(playerData)
           elseif playerData.step>=90 and playerData.step<=99 then
-            self:_CallTheBall(playerData)            
+            -- In the groove.
+            self:_CallTheBall(playerData)
           elseif playerData.step==999 then
-            self:_Debrief(playerData)
+            -- Debriefing.
+            SCHEDULER:New(nil, self._Debrief, {self,playerData}, 10)
+            --SCHEDULER:New(self:_Debrief(playerData)
+            playerData.step=-1
           end
           
         else
-          playerData.inbigzone=false          
+          playerData.inbigzone=false
         end
         
       else
@@ -508,12 +534,10 @@ function CARRIERTRAINER:OnEventBirth(EventData)
     
     -- Init player data.
     self.players[_playername]=self:_InitPlayer(_unitName)
-        
-    -- Test
-    --CARRIERTRAINER.LSOcall.HIGHL:ToGroup(_group)
-    --CARRIERTRAINER.LSOcall.CALLTHEBALL:ToGroup(_group, 10)
-    --MESSAGE:New(CARRIERTRAINER.LSOcall.HIGHT, 5):ToAllIf(self.Debug)
-      
+    
+    -- Start in the groove for debugging.
+    self.groovedebug=false
+    
   end 
 end
 
@@ -547,18 +571,26 @@ function CARRIERTRAINER:OnEventLand(EventData)
     -- Coordinate at landing event
     local coord=playerData.unit:GetCoordinate()
     
+    -- Debug mark of player landing coord.
+    local lp=coord:MarkToAll("Landing coord.")
+    coord:SmokeGreen()
+    
+    -- Debug marks of wires.
+    local w1=self.carrier:GetCoordinate():Translate(-104, 0):MarkToAll("Wire 1")
+    local w2=self.carrier:GetCoordinate():Translate( -92, 0):MarkToAll("Wire 2")
+    local w3=self.carrier:GetCoordinate():Translate( -80, 0):MarkToAll("Wire 3")
+    local w4=self.carrier:GetCoordinate():Translate( -68, 0):MarkToAll("Wire 4")
+    
     -- We did land.
     playerData.landed=true
     
     --TODO: maybe check that we actually landed on the right carrier.
     
-    -- Call trapped function in 5 seconds to make sure we did not bolter.
-    SCHEDULER:New(nil, self._Trapped,{self, playerData, coord}, 5)
+    -- Call trapped function in 3 seconds to make sure we did not bolter.
+    SCHEDULER:New(nil, self._Trapped,{self, playerData, coord}, 3)
       
   end 
 end
-
-
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- CARRIER TRAINING functions
@@ -570,6 +602,7 @@ end
 -- @return #CARRIERTRAINER.PlayerData Player data.
 function CARRIERTRAINER:_InitPlayer(unitname) 
 
+  -- Player data.
   local playerData={} --#CARRIERTRAINER.PlayerData
   
       -- Player unit, client and callsign.
@@ -602,15 +635,16 @@ end
 -- @param #CARRIERTRAINER.PlayerData playerData Player data.
 -- @return #CARRIERTRAINER.PlayerData Initialized player data.
 function CARRIERTRAINER:_InitNewRound(playerData)
+  self:I(self.lid..string.format("New round for player %s.", playerData.callsign))
   playerData.step=0
   playerData.score=100
-  playerData.grade={}
+  playerData.groove={}  
   playerData.debrief={}
-  playerData.longDownwindDone=false
+  playerData.patternwo=false  
+  playerData.waveoff=false
+  playerData.bolter=false
   playerData.boltered=false
   playerData.landed=false
-  playerData.waveoff=false
-  playerData.patternwo=false
   playerData.Tlso=timer.getTime()
   return playerData
 end
@@ -642,7 +676,7 @@ function CARRIERTRAINER:_Start(playerData)
     -- Inform player.
     local hint = string.format("Entering the pattern.")
     if playerData.difficulty==CARRIERTRAINER.Difficulty.EASY then
-      hint=hint.."Aim for 800 feet and 350 kts in the break entry."
+      hint=hint.."Aim for 800 feet and 350 kts at the break entry."
     end
     
     -- Send message.
@@ -750,7 +784,7 @@ function CARRIERTRAINER:_CheckForLongDownwind(playerData)
   local relhead=self:_GetRelativeHeading(playerData.unit)
 
   -- One NM from carrier is too far.  
-  local limit=-UTILS.NMToMeters(1)
+  local limit=-UTILS.NMToMeters(1.5)
   
   local text=string.format("Long groove check: X=%d, relhead=%.1f", X, relhead)
   self:T(text)
@@ -772,9 +806,6 @@ function CARRIERTRAINER:_CheckForLongDownwind(playerData)
     playerData.score=playerData.score-40
     
     local grade="LIG PATTERN WAVE OFF - CUT 1 PT"
-        
-    -- Long downwind done!
-    playerData.longDownwindDone = true
     
     -- Next step: Debriefing.
     playerData.step=999   
@@ -835,7 +866,7 @@ function CARRIERTRAINER:_Ninety(playerData)
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
   local X, Z = self:_GetDistances(playerData.unit)
   
-  --if(Z < -3700 or X < -3700 or X > 0) then
+  -- Check abort conditions.
   if self:_CheckAbort(X, Z, self.Ninety) then
     self:_AbortPattern(playerData, X, Z, self.Ninety)
     return
@@ -865,9 +896,6 @@ function CARRIERTRAINER:_Ninety(playerData)
     
     -- Add to debrief.
     self:_AddToSummary(playerData, "At the 90", hintFull)
-    
-    -- Long downwind not an issue any more
-    playerData.longDownwindDone=true
     
     -- Next step: wake.
     playerData.step = 7
@@ -932,19 +960,21 @@ function CARRIERTRAINER:_Groove(playerData)
     self:_AbortPattern(playerData, X, Z, self.Groove)
     return
   end
+
+  -- Call the ball distance.
+  local calltheball=UTILS.NMToMeters(0.75)+math.abs(self.sterndist)
+   
+  local relhead=self:_GetRelativeHeading(playerData.unit)+self.rwyangle
+  local lineup=self:_Lineup(playerData)-self.rwyangle
+  local roll=playerData.unit:GetRoll()
   
+  env.info(string.format("FF relhead=%d  lineup=%d  roll=%d", relhead, lineup, roll))
   
-  local calltheball=UTILS.NMToMeters(0.75)
-  
-  if rho<=calltheball then
+  if math.abs(lineup)<5 and math.abs(relhead)<10 then
 
     -- Get player altitude and AoA.
     local alt = playerData.unit:GetAltitude()
     local aoa = playerData.unit:GetAoA()
-
-    
-    self:_SendMessageToPlayer("Call the ball.", 8, playerData)
-    CARRIERTRAINER.LSOcall.CALLTHEBALL:ToGroup(playerData.unit:GetGroup())    
 
     -- Grade altitude.
     local hintAlt=self:_AltitudeCheck(playerData, self.Groove, alt)
@@ -959,22 +989,20 @@ function CARRIERTRAINER:_Groove(playerData)
     self:_SendMessageToPlayer(hintFull, 10, playerData)
 
     -- Add to debrief.
-    self:_AddToSummary(playerData, "Calling the ball", hintFull)
+    self:_AddToSummary(playerData, "Enter Groove", hintFull)
     
+    -- Gather pilot data.
     local groovedata={} --#CARRIERTRAINER.GrooveData
     groovedata.Alt=alt
     groovedata.AoA=aoa
     groovedata.GSE=self:_Glideslope(playerData)-3.5
-    groovedata.LUE=self:_Lineup(playerData)-10
+    groovedata.LUE=self:_Lineup(playerData)-self.rwyangle
     groovedata.Step=playerData.step
     
-    -- Init groove table.
-    playerData.Groove={}
+    -- Groove 
+    playerData.groove.X0=groovedata
     
-    
-    playerData.Groove.X=groovedata
-    
-    -- Next step: roger ball.
+    -- Next step: X call the ball.
     playerData.step=90
   end
 
@@ -1013,51 +1041,63 @@ function CARRIERTRAINER:_CallTheBall(playerData)
   local AoA=playerData.unit:GetAoA()
   
   -- Ranges in the groove.
-  local RRB=UTILS.NMToMeters(0.500) -- Roger Ball! call.
-  local RIM=UTILS.NMToMeters(0.375) -- In the Middle 0.75/2.
-  local RIC=UTILS.NMToMeters(0.100) -- In Close.
-  local RAR=UTILS.NMToMeters(0.050) -- At the Ramp.
+  local RXX=UTILS.NMToMeters(0.750)+math.abs(self.sterndist) -- Start of groove.      0.75  = 1389 m
+  local RRB=UTILS.NMToMeters(0.500)+math.abs(self.sterndist) -- Roger Ball! call.     0.5   =  926 m
+  local RIM=UTILS.NMToMeters(0.375)+math.abs(self.sterndist) -- In the Middle 0.75/2. 0.375 =  695 m 
+  local RIC=UTILS.NMToMeters(0.100)+math.abs(self.sterndist) -- In Close.             0.1   =  185 m
+  local RAR=UTILS.NMToMeters(0.000)+math.abs(self.sterndist) -- At the Ramp.
 
   -- Data  
   local groovedata={} --#CARRIERTRAINER.GrooveData
+  groovedata.Step=playerData.step  
   groovedata.Alt=alt
   groovedata.AoA=AoA
   groovedata.GSE=glideslopeError
   groovedata.LUE=lineupError
-  groovedata.Step=playerData.step
   
-  if rho<=RRB and playerData.step==90 then
+  if rho<=RXX and playerData.step==90 then
+  
+    -- LSO "Call the ball" call.
+    self:_SendMessageToPlayer("Call the ball.", 8, playerData)
+    CARRIERTRAINER.LSOcall.CALLTHEBALL:ToGroup(playerData.unit:GetGroup())
+    playerData.Tlso=timer.getTime()
+    
+    -- Next step: roger ball.
+    playerData.step=91
+  
+  elseif rho<=RRB and playerData.step==91 then
 
-    -- Roger ball!
+    -- Pilot: "Roger ball" call.
     self:_SendMessageToPlayer(CARRIERTRAINER.LSOcall.ROGERBALLT, 8, playerData)
     CARRIERTRAINER.LSOcall.ROGERBALL:ToGroup(player)
+    playerData.Tlso=timer.getTime()+1
     
     -- Store data.
-    playerData.Groove.RB=groovedata
+    playerData.groove.RB=groovedata
     
     -- Next step: in the middle.
-    playerData.step=91
+    playerData.step=92
     
-  elseif rho<=RIM and playerData.step==91 then
+  elseif rho<=RIM and playerData.step==92 then
   
     --TODO: grade for IM
     self:_SendMessageToPlayer("IM", 8, playerData)
     env.info(string.format("FF IM=%d", rho))
     
     -- Store data.
-    playerData.Groove.IM=groovedata    
+    playerData.groove.IM=groovedata    
     
     -- Next step: in close.
-    playerData.step=92
+    playerData.step=93
   
-  elseif rho<=RIC and playerData.step==92 then
+  elseif rho<=RIC and playerData.step==93 then
 
     --TODO: grade for IC, call wave off?
     self:_SendMessageToPlayer("IC", 8, playerData)
     env.info(string.format("FF IC=%d", rho))
     
     -- Store data.
-    playerData.Groove.IC=groovedata
+    playerData.groove.IC=groovedata
     
     -- Check if player should wave off.
     local waveoff=self:_CheckWaveOff(glideslopeError, lineupError, AoA)
@@ -1068,26 +1108,28 @@ function CARRIERTRAINER:_CallTheBall(playerData)
       -- Wave off player.
       self:_SendMessageToPlayer(CARRIERTRAINER.LSOcall.WAVEOFFT, 10, playerData)
       CARRIERTRAINER.LSOcall.WAVEOFF:ToGroup(playerData.unit:GetGroup())
+      playerData.Tlso=timer.getTime()
       
       -- Next step: debrief.
       playerData.step=999
+      
+      return
     else
       -- Next step: at the ramp.      
-      playerData.step=93    
+      playerData.step=94
     end
     
-    
-  elseif rho<=RAR and playerData.step==93 then
+  elseif rho<=RAR and playerData.step==94 then
   
     --TODO: grade for AR
     self:_SendMessageToPlayer("AR", 8, playerData)
     env.info(string.format("FF AR=%d", rho))
     
     -- Store data.
-    playerData.Groove.AR=groovedata
+    playerData.groove.AR=groovedata
     
     -- Next step: at the ramp.        
-    playerData.step=94
+    playerData.step=95
   end
   
   -- Time since last LSO call.
@@ -1095,31 +1137,35 @@ function CARRIERTRAINER:_CallTheBall(playerData)
   local deltaT=time-playerData.Tlso
   
   -- Check if we are beween 3/4 NM and end of ship.
-  if rho<UTILS.NMToMeters(0.75) and deltaT>=3 then
+  if rho>=RAR and rho<RXX and deltaT>=3 then
 
+    -- LSO call if necessary.
     self:_LSOcall(playerData, glideslopeError, lineupError)
 
   elseif X>0 then
-    
-    local wire  = 0
-    local hint  = ""
-    local score = 0
-    
-    
+           
     if playerData.landed then
-      hint  = "You boltered."
+    
+      local hint="You boltered."
+  
+      -- Send message to player.
+      self:_SendMessageToPlayer(hint, 8, playerData)
+      
+      -- Add to debrief.
+      self:_AddToSummary(playerData, "Bolter", hint)
+            
     else
-      hint  = "You were waved off."
-      wire  = -1
-      score = -10
+
+      local hint="You were waved off."
+      
+      -- Send message to player.
+      self:_SendMessageToPlayer(hint, 8, playerData)
+      
+      -- Add to debrief.
+      self:_AddToSummary(playerData, "Wave Off", hint)
+      
     end
-    
-    -- Send message to player.
-    self:_SendMessageToPlayer(hint, 8, playerData)
-    
-    -- Add to debrief.
-    self:_AddToSummary(playerData, "Bolter or wave off", hint)
-        
+            
     -- Next step: debrief.
     playerData.step=999
   end 
@@ -1135,14 +1181,17 @@ function CARRIERTRAINER:_CheckWaveOff(glideslopeError, lineupError, AoA)
 
   local waveoff=false
   
+  -- Too high or too low?
   if math.abs(glideslopeError)>3 then
     waveoff=true
   end
   
+  -- Too far from centerline?
   if math.abs(lineupError)>3 then
     waveoff=true
   end
   
+  -- Too slow or too fast?
   if AoA<6.9 or AoA>9.3 then
     waveoff=true
   end
@@ -1188,25 +1237,26 @@ function CARRIERTRAINER:_Trapped(playerData, pos)
     local wire  = 1
     local score = -10
     
-    -- Which wire
-    if X<-14 then
-      wire  = 1
-      score = -15
-    elseif X<-3 then
-      wire  = 2
-      score = 10      
-    elseif X<10 then
-      wire  = 3
-      score = 20
-    else
-      wire = 4
-      score = 7
-    end
+    -- Little offset for the exact wire positions.
+    local wdx=11
     
+    -- Which wire was caught?
+    if X<-104+wdx then
+      wire=1
+    elseif X<-92+wdx then
+      wire=2
+    elseif X<-80+wdx then
+      wire=3
+    elseif X<68+wdx then
+      wire=4
+    else
+      wire=0
+    end
+       
     local text=string.format("TRAPPED! %d-wire.", wire)
     self:_SendMessageToPlayer(text, 30, playerData)
     
-    local text2=string.format("Distance %.1f meters resulted in a %d-wire estimate.", X, wire)
+    local text2=string.format("Distance X=%.1f meters resulted in a %d-wire estimate.", X, wire)
     MESSAGE:New(text,30):ToAllIf(self.Debug)
     env.info(text2)
        
@@ -1217,6 +1267,9 @@ function CARRIERTRAINER:_Trapped(playerData, pos)
     --Boltered!
     playerData.boltered=true
   end
+  
+  -- Next step: debriefing.
+  playerData.step=999
 end
 
 --- Entering the Groove.
@@ -1371,7 +1424,7 @@ function CARRIERTRAINER:_Debrief(playerData)
 
   -- Debriefing text.
   local text=string.format("Debriefing:\n")
-  text=text..string.format("===========\n\n")
+  text=text..string.format("===================================================\n")
   for _,_data in pairs(playerData.debrief) do
     local step=_data.step
     local comment=_data.hint
@@ -1618,7 +1671,20 @@ end
 -- @param #CARRIERTRAINER self
 function CARRIERTRAINER:_InitStennis()
 
+  -- Carrier Parameters.
+  self.rwyangle     = -10
+  self.sterndist    =-150
+  self.deckheight   =  22
 
+  --[[
+  q0=self.carrier:GetCoordinate():SetAltitude(25)
+  q0:BigSmokeSmall(0.1)
+  q1=self.carrier:GetCoordinate():Translate(-104,0):SetAltitude(22)  --1st wire
+  q1:BigSmokeSmall(0.1)--:SmokeGreen()
+  q2=self.carrier:GetCoordinate():Translate(-68,0):SetAltitude(22)   --4th wire ==> distance between wires 12 m
+  q2:BigSmokeSmall(0.1)--:SmokeBlue()
+  ]]
+  
   -- Upwind leg
   self.Upwind.name="Upwind"
   self.Upwind.Xmin=-4000  -- TODO Should be withing 4 km behind carrier. Why?
@@ -1776,7 +1842,7 @@ function CARRIERTRAINER:_LSOgrade(playerData)
   
   elseif playerData.landed then
   
-    local gdata=playerData.Groove.X --#CARRIERTRAINER.GrooveData
+    local gdata=playerData.groove.X --#CARRIERTRAINER.GrooveData
   
   else
   
@@ -1947,7 +2013,9 @@ function CARRIERTRAINER:_SendMessageToPlayer(message, duration, playerData, clea
   if playerData.client then
     --MESSAGE:New(string.format("%s, %s, ", self.alias, playerData.callsign)..message, duration, nil, clear):ToClient(playerData.client)
   end
-  MESSAGE:New(string.format("%s, %s, %s", self.alias, playerData.callsign, message), duration, nil, clear):ToAll()
+  local text=string.format("%s, %s, %s", self.alias, playerData.callsign, message)
+  MESSAGE:New(text, duration, nil, clear):ToAll()
+  env.info(text)
 end
 
 --- Display final score.

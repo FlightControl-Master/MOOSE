@@ -460,12 +460,12 @@ do -- COORDINATE
   --- Add a Distance in meters from the COORDINATE orthonormal plane, with the given angle, and calculate the new COORDINATE.
   -- @param #COORDINATE self
   -- @param DCS#Distance Distance The Distance to be added in meters.
-  -- @param DCS#Angle Angle The Angle in degrees.
+  -- @param DCS#Angle Angle The Angle in degrees. Defaults to 0 if not specified (nil).
   -- @return #COORDINATE The new calculated COORDINATE.
   function COORDINATE:Translate( Distance, Angle )
     local SX = self.x
     local SY = self.z
-    local Radians = Angle / 180 * math.pi
+    local Radians = (Angle or 0) / 180 * math.pi
     local TX = Distance * math.cos( Radians ) + SX
     local TY = Distance * math.sin( Radians ) + SY
 
