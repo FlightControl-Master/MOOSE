@@ -342,16 +342,26 @@ function CONTROLLABLE:PushTask( DCSTask, WaitTime )
   local DCSControllable = self:GetDCSObject()
 
   if DCSControllable then
-    local Controller = self:_GetController()
+  
+    local DCSControllableName = self:GetName()
 
     -- When a controllable SPAWNs, it takes about a second to get the controllable in the simulator. Setting tasks to unspawned controllables provides unexpected results.
     -- Therefore we schedule the functions to set the mission and options for the Controllable.
-    -- Controller:pushTask( DCSTask )
+    -- Controller:pushTask( DCSTask )    
+    
+    local function PushTask( Controller, DCSTask )
+      if self and self:IsAlive() then
+        local Controller = self:_GetController()
+        Controller:pushTask( DCSTask )
+      else
+        BASE:E( { DCSControllableName .. " is not alive anymore.", DCSTask = DCSTask } )
+      end
+    end
 
-    if WaitTime then
-      self.TaskScheduler:Schedule( Controller, Controller.pushTask, { DCSTask }, WaitTime )
+    if not WaitTime or WaitTime == 0 then
+      PushTask( self, DCSTask )
     else
-      Controller:pushTask( DCSTask )
+      self.TaskScheduler:Schedule( self, PushTask, { DCSTask }, WaitTime )
     end
 
     return self
