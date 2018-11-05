@@ -712,7 +712,7 @@ function CONTROLLABLE:TaskAttackUnit( AttackUnit, GroupAttack, WeaponExpend, Att
       groupAttack = GroupAttack or false,
       visible = Visible or false,
       expend = WeaponExpend or "Auto",
-      directionEnabled = Direction and true or false,
+      directionEnabled = Direction and true or nil,
       direction = Direction,
       altitudeEnabled = Altitude and true or false,
       altitude = Altitude or 30,

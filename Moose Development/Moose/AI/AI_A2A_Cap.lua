@@ -281,6 +281,7 @@ function AI_A2A_CAP:New( AICap, PatrolZone, PatrolFloorAltitude, PatrolCeilingAl
   return self
 end
 
+
 --- onafter State Transition for Event Patrol.
 -- @param #AI_A2A_CAP self
 -- @param Wrapper.Group#GROUP AICap The AI Group managed by the FSM.

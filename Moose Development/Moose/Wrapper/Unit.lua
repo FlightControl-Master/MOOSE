@@ -620,6 +620,24 @@ function UNIT:GetLife0()
   return 0
 end
 
+--- Returns the category of the unit, which is different than the generic category types of objects.
+-- @param #UNIT self
+-- @return DCS#Unit.Category
+function UNIT:GetUnitCategory()
+  self:F3( self.UnitName )
+
+  local DCSUnit = self:GetDCSObject()
+  if DCSUnit then
+    local UnitCategory = DCSUnit:getDesc().category
+    self:T3( UnitCategory )
+
+    return UnitCategory
+  end
+
+  return nil
+end
+
+
 --- Returns the category name of the #UNIT.
 -- @param #UNIT self
 -- @return #string Category name = Helicopter, Airplane, Ground Unit, Ship
@@ -643,6 +661,8 @@ function UNIT:GetCategoryName()
 
   return nil
 end
+
+
 
 
 --- Returns the Unit's A2G threat level on a scale from 1 to 10 ...
