@@ -281,13 +281,6 @@ function AI_A2A_CAP:New( AICap, PatrolZone, PatrolFloorAltitude, PatrolCeilingAl
   return self
 end
 
---- @param Wrapper.Group#GROUP self
--- @param Core.Event#EVENTDATA EventData
-function GROUP:OnEventTakeoff( EventData, Fsm )
-  Fsm:Takeoff()
-  self:UnHandleEvent( EVENTS.Takeoff )
-end
-
 
 --- onafter State Transition for Event Patrol.
 -- @param #AI_A2A_CAP self
