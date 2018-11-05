@@ -252,13 +252,6 @@ function AI_AIR:New( AIGroup )
   return self
 end
 
---- @param Wrapper.Group#GROUP self
--- @param Core.Event#EVENTDATA EventData
-function GROUP:OnEventTakeoff( EventData, Fsm )
-  Fsm:Takeoff()
-  self:UnHandleEvent( EVENTS.Takeoff )
-end
-
 function AI_AIR:SetDispatcher( Dispatcher )
   self.Dispatcher = Dispatcher
 end

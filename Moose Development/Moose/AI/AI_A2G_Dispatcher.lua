@@ -207,6 +207,13 @@ do -- AI_A2G_DISPATCHER
   }
 
 
+  --- List of defense coordinates.
+  -- @type AI_A2G_DISPATCHER.DefenseCoordinates
+  -- @map <#string,Core.Point#COORDINATE> A list of all defense coordinates mapped per defense coordinate name.
+
+  --- @field #AI_A2G_DISPATCHER.DefenseCoordinates DefenseCoordinates
+  AI_A2G_DISPATCHER.DefenseCoordinates = {}
+
   --- Enumerator for spawns at airbases
   -- @type AI_A2G_DISPATCHER.Takeoff
   -- @extends Wrapper.Group#GROUP.Takeoff
@@ -263,7 +270,6 @@ do -- AI_A2G_DISPATCHER
 --    self.Detection:InitDetectVisual( true )
 --    self.Detection:SetRefreshTimeInterval( 30 )
 
-    self:SetEngageRadius()
     self:SetDefenseRadius()
     self:SetIntercept( 300 )  -- A default intercept delay time of 300 seconds.
     self:SetDisengageRadius( 300000 ) -- The default Disengage Radius is 300 km.
@@ -501,6 +507,35 @@ do -- AI_A2G_DISPATCHER
     end 
   end
   
+  do -- Manage the defensive behaviour
+  
+    --- @param #AI_A2G_DISPATCHER self
+    -- @param #string DefenseCoordinateName The name of the coordinate to be defended by A2G defenses.
+    -- @param Core.Point#COORDINATE DefenseCoordinate The coordinate to be defended by A2G defenses.
+    function AI_A2G_DISPATCHER:AddDefenseCoordinate( DefenseCoordinateName, DefenseCoordinate )
+      self.DefenseCoordinates[DefenseCoordinateName] = DefenseCoordinate
+    end
+    
+    --- @param #AI_A2G_DISPATCHER self
+    function AI_A2G_DISPATCHER:SetDefenseReactivityLow()
+      self.DefenseReactivity = 0.05
+      self.DefenseDistance = 20000
+    end
+    
+    --- @param #AI_A2G_DISPATCHER self
+    function AI_A2G_DISPATCHER:SetDefenseReactivityMedium()
+      self.DefenseReactivity = 0.15
+      self.DefenseDistance = 20000
+    end
+    
+    --- @param #AI_A2G_DISPATCHER self
+    function AI_A2G_DISPATCHER:SetDefenseReactivityHigh()
+      self.DefenseReactivity = 0.5
+      self.DefenseDistance = 20000
+    end
+  
+  end
+  
   --- Define the radius to engage any target by airborne friendlies, which are executing cap or returning from an defense mission.
   -- If there is a target area detected and reported, then any friendlies that are airborne near this target area, 
   -- will be commanded to (re-)engage that target when available (if no other tasks were commanded).
@@ -530,7 +565,7 @@ do -- AI_A2G_DISPATCHER
   --   
   function AI_A2G_DISPATCHER:SetEngageRadius( EngageRadius )
 
-    self.Detection:SetFriendliesRange( EngageRadius or 100000 )
+    --self.Detection:SetFriendliesRange( EngageRadius or 100000 )
   
     return self
   end
@@ -2408,22 +2443,25 @@ do -- AI_A2G_DISPATCHER
         self:F( { DefenderSquadrons = self.DefenderSquadrons } )
 
         for SquadronName, DefenderSquadron in pairs( self.DefenderSquadrons or {} ) do
+        
+          if DefenderSquadron[DefenseTaskType] then
 
-          local SpawnCoord = DefenderSquadron.Airbase:GetCoordinate() -- Core.Point#COORDINATE
-          local AttackerCoord = AttackerUnit:GetCoordinate()
-          local InterceptCoord = AttackerDetection.InterceptCoord
-          self:F( { InterceptCoord = InterceptCoord } )
-          if InterceptCoord then
-            local InterceptDistance = SpawnCoord:Get2DDistance( InterceptCoord )
-            local AirbaseDistance = SpawnCoord:Get2DDistance( AttackerCoord )
-            self:F( { InterceptDistance = InterceptDistance, AirbaseDistance = AirbaseDistance, InterceptCoord = InterceptCoord } )
-            
-            if ClosestDistance == 0 or InterceptDistance < ClosestDistance then
+            local SpawnCoord = DefenderSquadron.Airbase:GetCoordinate() -- Core.Point#COORDINATE
+            local AttackerCoord = AttackerUnit:GetCoordinate()
+            local InterceptCoord = AttackerDetection.InterceptCoord
+            self:F( { InterceptCoord = InterceptCoord } )
+            if InterceptCoord then
+              local InterceptDistance = SpawnCoord:Get2DDistance( InterceptCoord )
+              local AirbaseDistance = SpawnCoord:Get2DDistance( AttackerCoord )
+              self:F( { InterceptDistance = InterceptDistance, AirbaseDistance = AirbaseDistance, InterceptCoord = InterceptCoord } )
               
-              -- Only intercept if the distance to target is smaller or equal to the GciRadius limit.
-              if AirbaseDistance <= self.DefenseRadius then
-                ClosestDistance = InterceptDistance
-                ClosestDefenderSquadronName = SquadronName
+              if ClosestDistance == 0 or InterceptDistance < ClosestDistance then
+                
+                -- Only intercept if the distance to target is smaller or equal to the GciRadius limit.
+                if AirbaseDistance <= self.DefenseRadius then
+                  ClosestDistance = InterceptDistance
+                  ClosestDefenderSquadronName = SquadronName
+                end
               end
             end
           end
@@ -2585,10 +2623,13 @@ do -- AI_A2G_DISPATCHER
   
     local AttackerSet = DetectedItem.Set -- Core.Set#SET_UNIT
     local AttackerCount = AttackerSet:Count()
+    local AttackerRadarCount = AttackerSet:HasSEAD()
     local IsFriendliesNearBy = self.Detection:IsFriendliesNearBy( DetectedItem, Unit.Category.GROUND_UNIT )
-    local IsCas = ( AttackerSet:HasSEAD() == 0 ) and IsFriendliesNearBy -- Is the AttackerSet a CAS group?
+    local IsCas = ( AttackerRadarCount == 0 ) and ( IsFriendliesNearBy == true ) -- Is the AttackerSet a CAS group?
     
-    if IsCas then
+    self:F( { Friendlies = self.Detection:GetFriendliesNearBy( DetectedItem, Unit.Category.GROUND_UNIT ) } )
+    
+    if IsCas == true then
     
       -- First, count the active defenders, engaging the DetectedItem.
       local DefenderCount = self:CountDefendersEngaged( DetectedItem )
@@ -2618,10 +2659,11 @@ do -- AI_A2G_DISPATCHER
   
     local AttackerSet = DetectedItem.Set -- Core.Set#SET_UNIT
     local AttackerCount = AttackerSet:Count()
+    local AttackerRadarCount = AttackerSet:HasSEAD()
     local IsFriendliesNearBy = self.Detection:IsFriendliesNearBy( DetectedItem, Unit.Category.GROUND_UNIT )
-    local IsBai = ( AttackerSet:HasSEAD() == 0 ) and not IsFriendliesNearBy -- Is the AttackerSet a BAI group?
+    local IsBai = ( AttackerRadarCount == 0 ) and ( IsFriendliesNearBy == false ) -- Is the AttackerSet a BAI group?
     
-    if IsBai then
+    if IsBai == true then
     
       -- First, count the active defenders, engaging the DetectedItem.
       local DefenderCount = self:CountDefendersEngaged( DetectedItem )
@@ -2684,6 +2726,7 @@ do -- AI_A2G_DISPATCHER
     local Report = REPORT:New( "\nTactical Overview" )
 
     local DefenderGroupCount = 0
+    local Delay = 0 -- We need to implement a delay for each action because the spawning on airbases get confused if done too quick.
 
     -- Now that all obsolete tasks are removed, loop through the detected targets.
     for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
@@ -2700,27 +2743,54 @@ do -- AI_A2G_DISPATCHER
       local DetectionIndex = DetectedItem.Index
       local DetectedItemChanged = DetectedItem.Changed
       
-      do 
-        local DefendersMissing, Friendlies = self:Evaluate_SEAD( DetectedItem ) -- Returns a SET_UNIT with the SEAD targets to be engaged...
-        if DefendersMissing and DefendersMissing > 0 then
-          self:F( { SeadGroups = Friendlies } )
-          self:DEFEND( DetectedItem, DefendersMissing, Friendlies, "SEAD" )
+      local AttackerCoordinate = self.Detection:GetDetectedItemCoordinate( DetectedItem )
+      
+      -- Calculate if for this DetectedItem if a defense needs to be initiated.
+      -- This calculation is based on the distance between the defense point and the attackers, and the defensiveness parameter.
+      -- The attackers closest to the defense coordinates will be handled first, or course!
+      
+      local DefenseCoordinate = nil
+      
+      for DefenseCoordinateName, EvaluateCoordinate in pairs( self.DefenseCoordinates ) do
+      
+        local EvaluateDistance = AttackerCoordinate:Get2DDistance( EvaluateCoordinate )
+        local DistanceProbability = ( self.DefenseDistance / EvaluateDistance * self.DefenseReactivity )
+        local DefenseProbability = math.random()
+        
+        self:F({DistanceProbability=DistanceProbability,DefenseProbability=DefenseProbability})
+        
+        if DefenseProbability <= DistanceProbability / ( 300 / 30 ) then
+          DefenseCoordinate = EvaluateCoordinate
+          break
         end
       end
-
-      do 
-        local DefendersMissing, Friendlies = self:Evaluate_CAS( DetectedItem ) -- Returns a SET_UNIT with the CAS targets to be engaged...
-        if DefendersMissing and DefendersMissing > 0 then
-          self:F( { CasGroups = Friendlies } )
-          self:DEFEND( DetectedItem, DefendersMissing, Friendlies, "CAS" )
+      
+      if DefenseCoordinate then
+        do 
+          local DefendersMissing, Friendlies = self:Evaluate_SEAD( DetectedItem ) -- Returns a SET_UNIT with the SEAD targets to be engaged...
+          if DefendersMissing and DefendersMissing > 0 then
+            self:F( { SeadGroups = Friendlies } )
+            self:__DEFEND( Delay, DetectedItem, DefendersMissing, Friendlies, "SEAD", DefenseCoordinate )
+            Delay = Delay + 1
+          end
         end
-      end
-
-      do 
-        local DefendersMissing, Friendlies = self:Evaluate_BAI( DetectedItem ) -- Returns a SET_UNIT with the CAS targets to be engaged...
-        if DefendersMissing and DefendersMissing > 0 then
-          self:F( { BaiGroups = Friendlies } )
-          self:DEFEND( DetectedItem, DefendersMissing, Friendlies, "BAI" )
+  
+        do 
+          local DefendersMissing, Friendlies = self:Evaluate_CAS( DetectedItem ) -- Returns a SET_UNIT with the CAS targets to be engaged...
+          if DefendersMissing and DefendersMissing > 0 then
+            self:F( { CasGroups = Friendlies } )
+            self:__DEFEND( Delay, DetectedItem, DefendersMissing, Friendlies, "CAS", DefenseCoordinate )
+            Delay = Delay + 1
+          end
+        end
+  
+        do 
+          local DefendersMissing, Friendlies = self:Evaluate_BAI( DetectedItem ) -- Returns a SET_UNIT with the CAS targets to be engaged...
+          if DefendersMissing and DefendersMissing > 0 then
+            self:F( { BaiGroups = Friendlies } )
+            self:__DEFEND( Delay, DetectedItem, DefendersMissing, Friendlies, "BAI", DefenseCoordinate )
+            Delay = Delay + 1
+          end
         end
       end
 
@@ -3248,7 +3318,6 @@ do
 
     local self = BASE:Inherit( self, AI_A2G_DISPATCHER:New( Detection ) ) -- #AI_A2G_GCICAP
     
-    self:SetEngageRadius( EngageRadius )
     self:SetGciRadius( GciRadius )
 
     -- Determine the coalition of the EWRNetwork, this will be the coalition of the GCICAP.

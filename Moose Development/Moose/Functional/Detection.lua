@@ -327,6 +327,8 @@ do -- DETECTION_BASE
     self:InitDetectIRST( nil )
     self:InitDetectDLINK( nil )
     
+    self:SetFriendliesRange( 6000 )
+    
     self:FilterCategories( {
       Unit.Category.AIRPLANE,
       Unit.Category.GROUND_UNIT,
