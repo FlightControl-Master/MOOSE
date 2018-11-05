@@ -235,7 +235,7 @@ CARRIERTRAINER.MenuF10={}
 
 --- Carrier trainer class version.
 -- @field #string version
-CARRIERTRAINER.version="0.1.7"
+CARRIERTRAINER.version="0.1.7w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1064,6 +1064,9 @@ function CARRIERTRAINER:_CallTheBall(playerData)
     
     -- Next step: roger ball.
     playerData.step=91
+    
+    -- Store data.
+    playerData.groove.XX=groovedata    
   
   elseif rho<=RRB and playerData.step==91 then
 
@@ -1128,7 +1131,7 @@ function CARRIERTRAINER:_CallTheBall(playerData)
     -- Store data.
     playerData.groove.AR=groovedata
     
-    -- Next step: at the ramp.        
+    -- Next step: in the wires.
     playerData.step=95
   end
   
@@ -1172,6 +1175,11 @@ function CARRIERTRAINER:_CallTheBall(playerData)
 end
 
 --- LSO check if player needs to wave off.
+-- Wave off conditions are:
+-- 
+-- * Glide slope error > 3 degrees.
+-- * Line up error > 3 degrees.
+-- * AoA<6.9 or AoA>9.3.
 -- @param #CARRIERTRAINER self
 -- @param #number glideslopeError Glide slope error in degrees.
 -- @param #number lineupError Line up error in degrees.
@@ -1205,21 +1213,22 @@ end
 -- @return #string Name of the step
 function CARRIERTRAINER:_GS(step)
   local gp
-  if step==9 then
-    gp="X"
-  elseif step==90 then
-    gp="IM"
+  if step==90 then
+    gp="X0"  -- Entering the groove.
   elseif step==91 then
-    gp="IC"
+    gp="XX"  -- Starting the groove.
   elseif step==92 then
-    gp="AR"
+    gp="RB"  -- Roger ball call.
   elseif step==93 then
-  
+    gp="IM"  -- In the middle.
   elseif step==94 then
+    gp="IC"  -- In close.
   elseif step==95 then
+    gp="AR"  -- At the ramp.
   elseif step==96 then
-  elseif step==97 then
+    gp="IW"  -- In the wires.
   end
+  return gp
 end
 
 --- Trapped?
@@ -1424,7 +1433,7 @@ function CARRIERTRAINER:_Debrief(playerData)
 
   -- Debriefing text.
   local text=string.format("Debriefing:\n")
-  text=text..string.format("===================================================\n")
+  text=text..string.format("================================\n")
   for _,_data in pairs(playerData.debrief) do
     local step=_data.step
     local comment=_data.hint
@@ -1836,18 +1845,121 @@ end
 -- @return #string LSO grade.
 function CARRIERTRAINER:_LSOgrade(playerData)
 
+  local grade=""
+  
+  if playerData.patternwo then
+    return 
+  end
+
   if playerData.waveoff then
   
   elseif playerData.boltered then
   
   elseif playerData.landed then
   
-    local gdata=playerData.groove.X --#CARRIERTRAINER.GrooveData
+    --local gdata=playerData.groove.XX --#CARRIERTRAINER.GrooveData
+    
+    
+    grade=grade..playerData.groove.XX
+    grade=grade..playerData.groove.RB
+    grade=grade..playerData.groove.IM
+    grade=grade..playerData.groove.IC
+    grade=grade..playerData.groove.AR
+    grade=grade..playerData.groove.IW
+    
   
   else
   
   end
 
+end
+
+--- Grade approach.
+-- @param #CARRIERTRAINER self
+-- @param #CARRIERTRAINER.GrooveData fdata Flight data in the groove.
+-- @return #string LSO grade.
+function CARRIERTRAINER:_Flightdata2Text(fdata)
+
+  local function little(text)
+    return string.format("(%s)",text)
+  end
+  local function underline(text)
+    return string.format("_%s_", text)
+  end
+
+  if fdata==nil then
+    return ""
+  end
+
+  local step=fdata.Step
+  local AOA=fdata.AoA
+  local GSE=fdata.GSE
+  local LUE=fdata.LUE
+  local ROL=fdata.Roll
+    
+  local Y=self:_GS(step)
+
+  local S=nil  
+  if AOA>9.3 then
+    S=underline("F")
+  elseif AOA>8.7 then
+    S="F"
+  elseif AOA>8.3 then
+    S=little("F")
+  elseif AOA<6.7 then
+    S=underline("SLO")
+  elseif AOA<7.7 then
+    S="SLO"
+  elseif AOA<7.9 then
+    S=little("SLO")
+  end
+  
+  local A=nil
+  if GSE>1 then
+    A=underline("H")
+  elseif GSE>0.5 then
+    A=little("H")
+  elseif GSE>0.25 then
+    A="H"
+  elseif GSE<-1 then
+    A=underline("LO")
+  elseif GSE<-0.5 then
+    A=little("LO")
+  elseif GSE<-0.25 then
+    A="LO"
+  end
+  
+  local D=nil
+  if LUE>3 then
+    D=underline("LUL")
+  elseif LUE>1 then
+    D="LUL"
+  elseif LUE>0.5 then
+    D=little("LUL")
+  elseif LUE<-3 then
+    D=underline("LUR")
+  elseif LUE<-1 then
+    D="LUR"
+  elseif LUE<-0.5 then
+    D=little("LUL")
+  end
+  
+  local G=""
+  if S then
+    G=G..S
+   end
+  if A then
+    G=G..A
+  end
+  if D then
+    G=G..D
+  end
+  
+  if G~="" then
+    G=G..Y
+  end
+  
+  return G
 end
 
 --- Evaluate player's altitude at checkpoint.
