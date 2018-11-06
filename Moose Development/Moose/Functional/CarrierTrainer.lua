@@ -81,6 +81,8 @@ CARRIERTRAINER = {
   rwyangle     = -10,
   sterndist    =-100,
   deckheight   =  22,
+  Qpattern     =  {},
+  Qmarshal     =  {},
 }
 
 --- Aircraft types.
@@ -103,6 +105,25 @@ CARRIERTRAINER.CarrierType={
   VINSON="Vinson",
   TARAWA="LHA_Tarawa",
   KUZNETSOV="KUZNECOW"
+}
+
+--- Pattern steps.
+-- @type CARRIERTRAINER.PatternStep
+CARRIERTRAINER.PatternStep={
+  UNREGISTERED="Unregistered",
+  PATTERNENTRY="Pattern Entry",
+  EARLYBREAK="Early Break",
+  LATEBREAK="Late Break",
+  ABEAM="Abeam",
+  NINETY="Ninety",
+  WAKE="Wake",
+  GROOVE_X0="Groove Entry",
+  GROOVE_XX="Groove X",
+  GROOVE_RB="Groove Roger Ball",
+  GROOVE_IM="Groove In the Middle",
+  GROOVE_IC="Groove In Close",
+  GROOVE_AR="Groove At the Ramp",
+  GROOVE_IW="Groove In the Wires",
 }
 
 --- LSO calls.
@@ -207,7 +228,7 @@ CARRIERTRAINER.GroovePos={
 -- @field #string difficulty Difficulty level.
 -- @field #number score Player score of the current pass.
 -- @field #number passes Number of passes.
--- @field #boolan attitudemonitor If true, display aircraft attitude and other parameters constantly.
+-- @field #boolean attitudemonitor If true, display aircraft attitude and other parameters constantly.
 -- @field #table debrief Debrief analysis of the current step of this pass.
 -- @field #table grade LSO grade of passes.
 -- @field #boolean inbigzone If true, player is in the big zone.
@@ -1448,7 +1469,7 @@ function CARRIERTRAINER:_Debrief(playerData)
     local comment=_data.hint
     text=text..string.format("* %s:\n",step)
     text=text..string.format("%s\n", comment)
-    text=text..string.format("------------------------------------------------------------\n")
+    --text=text..string.format("------------------------------------------------------------\n")
   end
   
   -- Send debrief message to player
@@ -1492,35 +1513,35 @@ function CARRIERTRAINER:_StepName(step)
   if step==0 then
     name="Unregistered"
   elseif step==1 then
-    name="when entering pattern"
+    name="Pattern Entry"
   elseif step==2 then
-    name="in the break entry"
+    name="Break Entry"
   elseif step==3 then
-    name="at the early break"
+    name="Early break"
   elseif step==4 then
-    name="at the late break"
+    name="Late break"
   elseif step==5 then
-    name="in the abeam position"
+    name="Abeam position"
   elseif step==6 then
-    name="at the ninety"
+    name="Ninety"
   elseif step==7 then
-    name="at the wake"
+    name="Wake"
   elseif step==8 then
     name="unkown"
   elseif step==90 then
-    name="X0: Entering the Groove"
+    name="Entering the Groove"
   elseif step==91 then
-    name="X: At the Start"
+    name="Groove: X At the Start"
   elseif step==92 then
-    name="Roger Ball"
+    name="Groove: Roger Ball"
   elseif step==93 then
-    name="IM: In the Middle"
+    name="Groove: IM In the Middle"
   elseif step==94 then
-    name="IC: In Close"
+    name="Groove: IC In Close"
   elseif step==95 then
-    name="AR: At the Ramp"
+    name="Groove: AR: At the Ramp"
   elseif step==96 then
-    name="IW: In the Wires"
+    name="Groove: IW: In the Wires"
   end
   
   return name
@@ -1601,9 +1622,9 @@ function CARRIERTRAINER:_TooFarOutText(X, Z, posData)
   
   local xtext=nil
   if posData.Xmin and X<posData.Xmin then
-    xtext=" ahead"
+    xtext="ahead"
   elseif posData.Xmax and X>posData.Xmax then
-    xtext=" behind"
+    xtext="behind"
   end
   
   local ztext=nil
@@ -1614,7 +1635,7 @@ function CARRIERTRAINER:_TooFarOutText(X, Z, posData)
   end
   
   if xtext and ztext then
-    text=text..xtext.." and"..ztext
+    text=text..xtext.." and "..ztext
   elseif xtext then
     text=text..xtext
   elseif ztext then
@@ -1638,7 +1659,7 @@ function CARRIERTRAINER:_AbortPattern(playerData, X, Z, posData)
   local toofartext=self:_TooFarOutText(X, Z, posData)
   
   -- Send message to player.
-  self:_SendMessageToPlayer(toofartext.." Depart and reenter!", 15, playerData, true)
+  self:_SendMessageToPlayer(toofartext.." Depart and re-enter!", 15, playerData, true)
   
   -- Debug.
   local text=string.format("Abort: X=%d Xmin=%s, Xmax=%s | Z=%d Zmin=%s Zmax=%s", X, tostring(posData.Xmin), tostring(posData.Xmax), Z, tostring(posData.Zmin), tostring(posData.Zmax))
@@ -1646,7 +1667,7 @@ function CARRIERTRAINER:_AbortPattern(playerData, X, Z, posData)
   --MESSAGE:New(text, 60):ToAllIf(self.Debug)
   
   -- Add to debrief.
-  self:_AddToSummary(playerData, "Abort", "Approach aborted.")
+  self:_AddToSummary(playerData, string.format("Pattern Wave Off (%s)", self:_StepName(playerData.step)), string.format())
   
   -- Pattern wave off!
   playerData.patternwo=true
@@ -1663,27 +1684,33 @@ end
 -- @param #CARRIERTRAINER.PlayerData playerData Player data.
 function CARRIERTRAINER:_DetailedPlayerStatus(playerData)
 
+  -- Player unit.
   local unit=playerData.unit
   
+  -- Aircraft attitude.
   local aoa=unit:GetAoA()
   local yaw=unit:GetYaw()
   local roll=unit:GetRoll()
   local pitch=unit:GetPitch()
+  
+  -- Distance to the boat.
   local dist=playerData.unit:GetCoordinate():Get2DDistance(self.carrier:GetCoordinate())
   local dx,dz,rho,phi=self:_GetDistances(unit)
 
-  local heading=unit:GetCoordinate():HeadingTo(self.startZone:GetCoordinate())
-  
+  -- Wind vector.
   local wind=unit:GetCoordinate():GetWindWithTurbulenceVec3()
+  
+  -- Aircraft veloecity vector.
   local velo=unit:GetVelocityVec3()
   
+  -- Relative heading Aircraft to Carrier.
   local relhead=self:_GetRelativeHeading(playerData.unit)
  
-  
+  -- Output 
   local text=string.format("AoA=%.1f | Vx=%.1f Vy=%.1f Vz=%.1f\n", aoa, velo.x, velo.y, velo.z)  
   text=text..string.format("Pitch=%.1f° | Roll=%.1f° | Yaw=%.1f° | Climb=%.1f°\n", pitch, roll, yaw, unit:GetClimbAngle())
   text=text..string.format("Relheading=%.1f°\n", relhead)
-  text=text..string.format("Distance: X=%d m Z=%d m\n", dx, dz)
+  text=text..string.format("Distance: X=%d m Z=%d m | R=%d m Phi=%.1f\n", dx, dz, rho, phi)
   if playerData.step>=90 and playerData.step<=99 then
     local lineup=self:_Lineup(playerData)-self.rwyangle
     local glideslope=self:_Glideslope(playerData)-3.5
@@ -1691,6 +1718,7 @@ function CARRIERTRAINER:_DetailedPlayerStatus(playerData)
     text=text..string.format("Glideslope Error = %.1f°\n", glideslope)
   end
   text=text..string.format("Current step: %s\n", self:_StepName(playerData.step))
+  
   --text=text..string.format("Wind Vx=%.1f Vy=%.1f Vz=%.1f\n", wind.x, wind.y, wind.z)
   --text=text..string.format("rho=%.1f m phi=%.1f degrees\n", rho,phi)
 
@@ -2069,7 +2097,6 @@ function CARRIERTRAINER:_DistanceCheck(playerData, checkpoint, distance)
   local _error=(distance-checkpoint.Distance)/checkpoint.Distance*100
   
   local hint
-  local steptext=self:_StepName(playerData.step)
   if _error>badscore then
     hint=string.format("You're too far from the boat! ")
   elseif _error>lowscore then 
