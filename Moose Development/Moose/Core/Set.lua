@@ -2367,7 +2367,7 @@ do -- SET_UNIT
         local HasSEAD = UnitSEAD:HasSEAD()
            
         self:T3(HasSEAD)
-        if HasSEAD == true then
+        if HasSEAD then
           SEADCount = SEADCount + 1
         end
       end

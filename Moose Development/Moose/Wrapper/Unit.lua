@@ -620,24 +620,6 @@ function UNIT:GetLife0()
   return 0
 end
 
---- Returns the category of the unit, which is different than the generic category types of objects.
--- @param #UNIT self
--- @return DCS#Unit.Category
-function UNIT:GetUnitCategory()
-  self:F3( self.UnitName )
-
-  local DCSUnit = self:GetDCSObject()
-  if DCSUnit then
-    local UnitCategory = DCSUnit:getDesc().category
-    self:T3( UnitCategory )
-
-    return UnitCategory
-  end
-
-  return nil
-end
-
-
 --- Returns the category name of the #UNIT.
 -- @param #UNIT self
 -- @return #string Category name = Helicopter, Airplane, Ground Unit, Ship
@@ -661,8 +643,6 @@ function UNIT:GetCategoryName()
 
   return nil
 end
-
-
 
 
 --- Returns the Unit's A2G threat level on a scale from 1 to 10 ...
@@ -922,31 +902,29 @@ end
 function UNIT:InAir()
   self:F2( self.UnitName )
 
-  -- Get DCS unit object.
   local DCSUnit = self:GetDCSObject() --DCS#Unit
   
   if DCSUnit then
+--    Implementation of workaround. The original code is below.
+--    This to simulate the landing on buildings.
 
-    -- Get DCS result of whether unit is in air or not.
-    local UnitInAir = DCSUnit:inAir()
-    
-    -- Get unit category.
+    local UnitInAir = true
+
     local UnitCategory = DCSUnit:getDesc().category
-
-    -- If DCS says that it is in air, check if this is really the case, since we might have landed on a building where inAir()=true but actually is not.
-    -- This is a workaround since DCS currently does not acknoledge that helos land on buildings.
-    -- Note however, that the velocity check will fail if the ground is moving, e.g. on an aircraft carrier!    
-    if UnitInAir==true and UnitCategory == Unit.Category.HELICOPTER then
+    if UnitCategory == Unit.Category.HELICOPTER then
       local VelocityVec3 = DCSUnit:getVelocity()
-      local Velocity = UTILS.VecNorm(VelocityVec3)
+      local Velocity = ( VelocityVec3.x ^ 2 + VelocityVec3.y ^ 2 + VelocityVec3.z ^ 2 ) ^ 0.5 -- in meters / sec
       local Coordinate = DCSUnit:getPoint()
       local LandHeight = land.getHeight( { x = Coordinate.x, y = Coordinate.z } )
       local Height = Coordinate.y - LandHeight
       if Velocity < 1 and Height <= 60   then
         UnitInAir = false
       end
+    else
+      UnitInAir = DCSUnit:inAir()
     end
-    
+
+
     self:T3( UnitInAir )
     return UnitInAir
   end

@@ -712,7 +712,7 @@ function CONTROLLABLE:TaskAttackUnit( AttackUnit, GroupAttack, WeaponExpend, Att
       groupAttack = GroupAttack or false,
       visible = Visible or false,
       expend = WeaponExpend or "Auto",
-      directionEnabled = Direction and true or nil,
+      directionEnabled = Direction and true or false,
       direction = Direction,
       altitudeEnabled = Altitude and true or false,
       altitude = Altitude or 30,
@@ -870,38 +870,6 @@ function CONTROLLABLE:TaskOrbitCircleAtVec2( Point, Altitude, Speed )
   return DCSTask
 end
 
---- (AIR) Orbit at a position with at a given altitude and speed. Optionally, a race track pattern can be specified.
--- @param #CONTROLLABLE self
--- @param Core.Point#COORDINATE Coord Coordinate at which the CONTROLLABLE orbits.
--- @param #number Altitude Altitude in meters of the orbit pattern.
--- @param #number Speed Speed [m/s] flying the orbit pattern
--- @param Core.Point#COORDINATE CoordRaceTrack (Optional) If this coordinate is specified, the CONTROLLABLE will fly a race-track pattern using this and the initial coordinate. 
--- @return #CONTROLLABLE self
-function CONTROLLABLE:TaskOrbit(Coord, Altitude, Speed, CoordRaceTrack)
-
-  local Pattern=AI.Task.OrbitPattern.CIRCLE
-  
-  local P1=Coord:GetVec2()
-  local P2=nil
-  if CoordRaceTrack then
-    Pattern=AI.Task.OrbitPattern.RACE_TRACK
-    P2=CoordRaceTrack:GetVec2()
-  end
-
-  local Task = {
-    id = 'Orbit',
-    params = {
-      pattern  = Pattern,
-      point    = P1,
-      point2   = P2,
-      speed    = Speed,
-      altitude = Altitude,
-    }
-  }
-
-  return Task
-end
-
 --- (AIR) Orbit at the current position of the first unit of the controllable at a specified alititude.
 -- @param #CONTROLLABLE self
 -- @param #number Altitude The altitude [m] to hold the position.
@@ -990,7 +958,11 @@ function CONTROLLABLE:TaskRefueling()
 --    params = {} 
 --  }
 
-  local DCSTask={id='Refueling', params={}}
+  local DCSTask
+  DCSTask = { id = 'Refueling',
+    params = {
+    },
+  },
 
   self:T3( { DCSTask } )
   return DCSTask
@@ -2129,7 +2101,7 @@ do -- Route methods
     FromCoordinate = FromCoordinate or self:GetCoordinate()
     
     -- Get path and path length on road including the end points (From and To).
-    local PathOnRoad, LengthOnRoad, GotPath =FromCoordinate:GetPathOnRoad(ToCoordinate, true)
+    local PathOnRoad, LengthOnRoad=FromCoordinate:GetPathOnRoad(ToCoordinate, true)
     
     -- Get the length only(!) on the road.
     local _,LengthRoad=FromCoordinate:GetPathOnRoad(ToCoordinate, false)
@@ -2141,7 +2113,7 @@ do -- Route methods
     -- Calculate the direct distance between the initial and final points.
     local LengthDirect=FromCoordinate:Get2DDistance(ToCoordinate)
     
-    if GotPath then
+    if PathOnRoad then
     
       -- Off road part of the rout: Total=OffRoad+OnRoad.
       LengthOffRoad=LengthOnRoad-LengthRoad
@@ -2164,7 +2136,7 @@ do -- Route methods
     local canroad=false
                 
     -- Check if a valid path on road could be found.
-    if GotPath and LengthDirect > 2000 then -- if the length of the movement is less than 1 km, drive directly.
+    if PathOnRoad and LengthDirect > 2000 then -- if the length of the movement is less than 1 km, drive directly.
       -- Check whether the road is very long compared to direct path.
       if LongRoad and Shortcut then
 
@@ -3052,3 +3024,6 @@ function CONTROLLABLE:IsAirPlane()
   return nil
 end
 
+
+
+-- Message APIs

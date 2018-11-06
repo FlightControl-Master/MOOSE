@@ -327,8 +327,6 @@ do -- DETECTION_BASE
     self:InitDetectIRST( nil )
     self:InitDetectDLINK( nil )
     
-    self:SetFriendliesRange( 6000 )
-    
     self:FilterCategories( {
       Unit.Category.AIRPLANE,
       Unit.Category.GROUND_UNIT,
@@ -1358,6 +1356,7 @@ do -- DETECTION_BASE
           if FoundUnitCoalition ~= EnemyCoalition and FoundUnitInReportSetGroup == false then
             local FriendlyUnit = UNIT:Find( FoundDCSUnit )
             local FriendlyUnitName = FriendlyUnit:GetName()
+            local FriendlyUnitCategory = FriendlyUnit:GetDesc().category
 
             -- Friendlies are sorted per unit category.            
             DetectedItem.FriendliesNearBy = DetectedItem.FriendliesNearBy or {}
@@ -1386,7 +1385,7 @@ do -- DETECTION_BASE
 
             if PlayerUnit and PlayerUnit:IsInZone(DetectionZone) then
 
-              local PlayerUnitCategory = PlayerUnit:GetUnitCategory()
+              local PlayerUnitCategory = PlayerUnit:GetDesc().category
     
               if ( not self.FriendliesCategory ) or ( self.FriendliesCategory and ( self.FriendliesCategory == PlayerUnitCategory ) ) then
 
@@ -1473,7 +1472,7 @@ do -- DETECTION_BASE
         local DetectedUnit = UNIT:FindByName( ObjectName )
         if DetectedUnit and DetectedUnit:IsAlive() then
           if self:IsDetectedObjectIdentified( DetectedObject ) == false then
-            self:F( { DetectedObject = DetectedObject } )
+            --self:F( { DetectedObject = DetectedObject } )
             return DetectedObject
           end
         end

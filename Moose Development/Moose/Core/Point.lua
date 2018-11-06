@@ -1121,9 +1121,6 @@ do -- COORDINATE
   --- Build a Waypoint Air "Landing".
   -- @param #COORDINATE self
   -- @param DCS#Speed Speed Airspeed in km/h.
-  -- @param Wrapper.Airbase#AIRBASE airbase The airbase for takeoff and landing points.
-  -- @param #table DCSTasks A table of @{DCS#Task} items which are executed at the waypoint.
-  -- @param #string description A text description of the waypoint, which will be shown on the F10 map.
   -- @return #table The route point.
   -- @usage
   -- 
@@ -1132,8 +1129,8 @@ do -- COORDINATE
   --    LandingWaypoint = LandingCoord:WaypointAirLanding( 60 )
   --    HeliGroup:Route( { LandWaypoint }, 1 ) -- Start landing the helicopter in one second.
   -- 
-  function COORDINATE:WaypointAirLanding( Speed, airbase, DCSTasks, description )
-    return self:WaypointAir( nil, COORDINATE.WaypointType.Land, COORDINATE.WaypointAction.Landing, Speed, airbase, DCSTasks, description )
+  function COORDINATE:WaypointAirLanding( Speed )
+    return self:WaypointAir( nil, COORDINATE.WaypointType.Land, COORDINATE.WaypointAction.Landing, Speed )
   end
   
   
