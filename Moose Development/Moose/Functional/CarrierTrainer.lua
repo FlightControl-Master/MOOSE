@@ -215,10 +215,10 @@ CARRIERTRAINER.GroovePos={
 -- @field #number Roll Roll angle.
 
 --- LSO grade
--- @type CARRIERDATA.LSOgrade
--- @field #string grade LSO grade string
--- @field #string details Detailed step analysis.
+-- @type CARRIERTRAINER.LSOgrade
+-- @field #string grade LSO grade, i.e. _OK_, OK, (OK), --, CUT
 -- @field #number points Points received.
+-- @field #string details Detailed flight analyis analysis.
 
 --- Player data table holding all important parameters of each player.
 -- @type CARRIERTRAINER.PlayerData
@@ -236,7 +236,8 @@ CARRIERTRAINER.GroovePos={
 -- @field #boolean bolter If true, LSO told player to bolter.
 -- @field #boolean boltered If true, player boltered.
 -- @field #boolean waveoff If true, player was waved off during final approach.
--- @field #boolean patternwo If true, playe was waved of during the pattern.
+-- @field #boolean patternwo If true, player was waved of during the pattern.
+-- @field #boolean lig If true, player was long in the groove.
 -- @field #number Tlso Last time the LSO gave an advice.
 -- @field #CARRIERTRAINER.GroovePos groove Data table at each position in the groove. Elemets are of type @{#CARRIERTRAINER.GrooveData}.
 
@@ -263,7 +264,7 @@ CARRIERTRAINER.MenuF10={}
 
 --- Carrier trainer class version.
 -- @field #string version
-CARRIERTRAINER.version="0.1.8"
+CARRIERTRAINER.version="0.1.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -500,7 +501,7 @@ function CARRIERTRAINER:_CheckPlayerStatus()
             self:_CallTheBall(playerData)
           elseif playerData.step==999 then
             -- Debriefing.
-            SCHEDULER:New(nil, self._Debrief, {self,playerData}, 10)
+            SCHEDULER:New(nil, self._Debrief, {self, playerData}, 10)
             playerData.step=-1
           end
           
@@ -565,7 +566,7 @@ function CARRIERTRAINER:OnEventBirth(EventData)
     self.players[_playername]=self:_InitPlayer(_unitName)
     
     -- Start in the groove for debugging.
-    self.groovedebug=false
+    self.groovedebug=true
     
   end 
 end
@@ -670,7 +671,8 @@ function CARRIERTRAINER:_InitNewRound(playerData)
   playerData.score=100
   playerData.groove={}  
   playerData.debrief={}
-  playerData.patternwo=false  
+  playerData.patternwo=false
+  playerData.lig=false
   playerData.waveoff=false
   playerData.bolter=false
   playerData.boltered=false
@@ -814,7 +816,7 @@ function CARRIERTRAINER:_CheckForLongDownwind(playerData)
   local relhead=self:_GetRelativeHeading(playerData.unit)
 
   -- One NM from carrier is too far.  
-  local limit=-UTILS.NMToMeters(1.5)
+  local limit=UTILS.NMToMeters(-1.5)
   
   local text=string.format("Long groove check: X=%d, relhead=%.1f", X, relhead)
   self:T(text)
@@ -832,7 +834,8 @@ function CARRIERTRAINER:_CheckForLongDownwind(playerData)
     -- Debrief.
     self:_AddToSummary(playerData, "Downwind", "Long in the groove.")
     
-    local grade="LIG PATTERN WAVE OFF - CUT 1 PT"
+    --grade="LIG PATTERN WAVE OFF - CUT 1 PT"
+    playerData.lig=true
     
     -- Next step: Debriefing.
     playerData.step=999   
@@ -1143,6 +1146,8 @@ function CARRIERTRAINER:_CallTheBall(playerData)
       CARRIERTRAINER.LSOcall.WAVEOFF:ToGroup(playerData.unit:GetGroup())
       playerData.Tlso=timer.getTime()
       
+      playerData.waveoff=true
+      
       -- Next step: debrief.
       playerData.step=999
       
@@ -1405,7 +1410,7 @@ function CARRIERTRAINER:_Glideslope(playerData)
 
   -- Glideslope. Wee need to correct for the height of the deck. The ideal glide slope is 3.5 degrees.
   local h=playerData.unit:GetAltitude()-self.deckheight
-  local x=math.abs(X-self.sterndist) --TODO: maybe sterndist should be replaced by position of 3-wire!
+  local x=math.abs(-86-X) --math.abs(self.sterndist-X) --TODO: maybe sterndist should be replaced by position of 3-wire!
   local glideslope=math.atan(h/x)  
 
   return math.deg(glideslope)
@@ -1473,14 +1478,23 @@ function CARRIERTRAINER:_Debrief(playerData)
   end
   
   -- Send debrief message to player
-  self:_SendMessageToPlayer(text, 30, playerData, true)
+  self:_SendMessageToPlayer(text, 30, playerData, true, "Paddles")
+  
+  -- LSO grade, points, and flight data analyis.
+  local grade, points, analysis=self:_LSOgrade(playerData)
+  
+  -- LSO grade message.
+  text=string.format("%s %.1f PT - %s", grade, points, analysis)
+  self:_SendMessageToPlayer(text, 30, playerData, true, "Paddles", 30)
+  
+  --TODO: Add grade to table.
 
   -- New approach.
   if playerData.boltered or playerData.waveoff or playerData.patternwo then
     local heading=playerData.unit:GetCoordinate():HeadingTo(self.registerZone:GetCoordinate())
     local distance=playerData.unit:GetCoordinate():Get2DDistance(self.registerZone:GetCoordinate())
     local text=string.format("fly heading %d for %d NM to restart the pattern.", heading, UTILS.MetersToNM(distance))
-    self:_SendMessageToPlayer(text, 10, playerData)
+    self:_SendMessageToPlayer(text, 10, playerData, false, nil, 20)
   end  
   
   -- Next step.
@@ -1667,7 +1681,7 @@ function CARRIERTRAINER:_AbortPattern(playerData, X, Z, posData)
   --MESSAGE:New(text, 60):ToAllIf(self.Debug)
   
   -- Add to debrief.
-  self:_AddToSummary(playerData, string.format("Pattern Wave Off (%s)", self:_StepName(playerData.step)), string.format())
+  self:_AddToSummary(playerData, string.format("%s", self:_StepName(playerData.step)), string.format("Pattern wave off: %s", toofartext))
   
   -- Pattern wave off!
   playerData.patternwo=true
@@ -1891,38 +1905,88 @@ end
 --- Grade approach.
 -- @param #CARRIERTRAINER self
 -- @param #CARRIERTRAINER.PlayerData playerData Player data table.
--- @return #string LSO grade.
+-- @return #string LSO grade, i.g. _OK_, OK, (OK), --, etc.
+-- @return #number Points.
+-- @return #string LSO analysis of flight path.
 function CARRIERTRAINER:_LSOgrade(playerData)
-
-  local grade=""
   
-  if playerData.patternwo then
-    return 
+  local function count(base, pattern)
+    return select(2, string.gsub(base, pattern, ""))
   end
 
-  if playerData.waveoff then
+  -- Analyse flight data and conver to LSO text.
+  local GXX,nXX=self:_Flightdata2Text(playerData.groove.XX)
+  local GIM,nIM=self:_Flightdata2Text(playerData.groove.IM)
+  local GIC,nIC=self:_Flightdata2Text(playerData.groove.IC)
+  local GAR,nAR=self:_Flightdata2Text(playerData.groove.AR)
   
-  elseif playerData.boltered then
+  -- Put everything together.
+  local G=GXX.." "..GIM.." ".." "..GIC.." "..GAR
   
-  elseif playerData.landed then
+  -- Ground number of minor, normal and major deviations.
+  local N=nXX+nIM+nIC+nAR
+  local nL=count(G, '_')/2
+  local nS=count(G, '%(')
+  local nN=N-nS-nL
   
-    --local gdata=playerData.groove.XX --#CARRIERTRAINER.GrooveData
-    grade=grade..playerData.groove.XX
-    grade=grade..playerData.groove.RB
-    grade=grade..playerData.groove.IM
-    grade=grade..playerData.groove.IC
-    grade=grade..playerData.groove.AR
-    grade=grade..playerData.groove.IW  
+  local grade
+  local points
+  if N==0 then
+    -- No deviations, should be REALLY RARE!
+    grade="_OK_"
+    points=5.0
   else
+    if nL>0 then
+      -- Larger deviations ==> "No grade" 2.0 points.
+      grade="--" 
+      points=2.0
+    elseif nN>0 then
+      -- No larger but average deviations ==>  "Fair Pass" Pass with average deviations and corrections.
+      grade="(OK)"
+      points=3.0
+    else
+      -- Only minor corrections
+      grade="OK"
+      points=4.0
+    end
+  end
   
+  env.info("LSO grade:")
+  env.info(G)
+  G=G:gsub("%)%(", "")
+  G=G:gsub("__","")
+  env.info(G)
+  env.info("Grade = "..grade.." points = "..points)
+  env.info("# of total deviations   = "..N)
+  env.info("# of large deviations _ = "..nL)
+  env.info("# of norma deviations _ = "..nN)
+  env.info("# of small deviations ( = "..nS)
+  env.info()
+  
+  if playerData.patternwo or playerData.waveoff then
+    grade="CUT"
+    points=1.0
+    if playerData.lig then
+      G="LIG PWO"
+    elseif playerData.patternwo then
+      G="PWO "..G
+    end 
+    if playerData.landed then
+      --AIRBOSS wants to talk to you!
+    end
+  elseif playerData.boltered then
+    grade="-- (BOLTER)"
+    points=2.5 
   end
 
+  return grade, points, G
 end
 
 --- Grade flight data.
 -- @param #CARRIERTRAINER self
 -- @param #CARRIERTRAINER.GrooveData fdata Flight data in the groove.
 -- @return #string LSO grade or empty string if flight data table is nil.
+-- @return #number Number of deviations from perfect flight path.
 function CARRIERTRAINER:_Flightdata2Text(fdata)
 
   local function little(text)
@@ -1934,7 +1998,8 @@ function CARRIERTRAINER:_Flightdata2Text(fdata)
 
   -- No flight data ==> return empty string.
   if fdata==nil then
-    return ""
+    env.info("FF fdata nil")
+    return "", 0
   end
 
   -- Flight data.
@@ -1945,19 +2010,19 @@ function CARRIERTRAINER:_Flightdata2Text(fdata)
   local ROL=fdata.Roll
 
   -- Speed.
-  local S=nil  
-  if AOA>9.3 then
-    S=underline("F")
-  elseif AOA>8.7 then
-    S="F"
-  elseif AOA>8.3 then
-    S=little("F")
-  elseif AOA<6.7 then
+  local S=nil
+  if AOA>9.8 then
     S=underline("SLO")
-  elseif AOA<7.7 then
+  elseif AOA>9.3 then
     S="SLO"
-  elseif AOA<7.9 then
+  elseif AOA>8.8 then
     S=little("SLO")
+  elseif AOA<6.4 then
+    S=underline("F")
+  elseif AOA<6.9 then
+    S="F"
+  elseif AOA<7.4 then
+    S=little("F")
   end
   
   -- Alitude.
@@ -1989,19 +2054,23 @@ function CARRIERTRAINER:_Flightdata2Text(fdata)
   elseif LUE<-1 then
     D="LUR"
   elseif LUE<-0.5 then
-    D=little("LUL")
+    D=little("LUR")
   end
   
   -- Compile.
   local G=""
+  local n=0
   if S then
     G=G..S
-   end
+    n=n+1
+  end
   if A then
     G=G..A
+    n=n+1
   end
   if D then
     G=G..D
+    n=n+1
   end
   
   -- Add current step.
@@ -2009,7 +2078,13 @@ function CARRIERTRAINER:_Flightdata2Text(fdata)
     G=G..self:_GS(step)
   end
   
-  return G
+  env.info(string.format("AOA=%.1f",AOA))
+  env.info(string.format("GSE=%.1f",GSE))
+  env.info(string.format("LUE=%.1f",LUE))
+  env.info(string.format("ROL=%.1f",ROL))    
+  env.info(G)
+  
+  return G,n
 end
 
 --- Evaluate player's altitude at checkpoint.
@@ -2174,14 +2249,27 @@ end
 -- @param #number duration Display message duration.
 -- @param #CARRIERTRAINER.PlayerData playerData Player data.
 -- @param #boolean clear If true, clear screen from previous messages.
-function CARRIERTRAINER:_SendMessageToPlayer(message, duration, playerData, clear)
+-- @param #string sender The person who sends the message. Default is carrier alias.
+-- @param #number delay Delay in seconds, before the message is send.
+function CARRIERTRAINER:_SendMessageToPlayer(message, duration, playerData, clear, sender, delay)
   if message then
+  
+    delay=delay or 0
+    sender=sender or self.alias
+  
     if playerData.client then
       --MESSAGE:New(string.format("%s, %s, ", self.alias, playerData.callsign)..message, duration, nil, clear):ToClient(playerData.client)
     end
-    local text=string.format("%s, %s, %s", self.alias, playerData.callsign, message)
-    MESSAGE:New(text, duration, nil, clear):ToAll()
+        
+    local text=string.format("%s, %s, %s", sender, playerData.callsign, message)
     env.info(text)
+      
+    if delay>0 then
+      SCHEDULER:New(nil,self._SendMessageToPlayer, {self, message, duration, playerData, clear, sender}, delay)
+    else    
+      MESSAGE:New(text, duration, nil, clear):ToAll()    
+    end
+    
   end
 end
 
