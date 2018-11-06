@@ -2798,6 +2798,7 @@ do -- AI_A2A_DISPATCHER
       
       local TakeoffMethod = self:GetSquadronTakeoff( SquadronName )
       local Defender = Spawn:SpawnAtAirbase( DefenderSquadron.Airbase, TakeoffMethod, DefenderSquadron.TakeoffAltitude or self.DefenderDefault.TakeoffAltitude ) -- Wrapper.Group#GROUP
+      self:AddDefenderToSquadron( DefenderSquadron, Defender, DefenderGrouping )
       return Defender, DefenderGrouping
     end
 
