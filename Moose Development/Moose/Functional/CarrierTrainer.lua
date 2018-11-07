@@ -230,7 +230,7 @@ CARRIERTRAINER.GroovePos={
 -- @field #number passes Number of passes.
 -- @field #boolean attitudemonitor If true, display aircraft attitude and other parameters constantly.
 -- @field #table debrief Debrief analysis of the current step of this pass.
--- @field #table grade LSO grade of passes.
+-- @field #table grades LSO grades of player passes.
 -- @field #boolean inbigzone If true, player is in the big zone.
 -- @field #boolean landed If true, player landed or attempted to land.
 -- @field #boolean bolter If true, LSO told player to bolter.
@@ -264,7 +264,7 @@ CARRIERTRAINER.MenuF10={}
 
 --- Carrier trainer class version.
 -- @field #string version
-CARRIERTRAINER.version="0.1.9"
+CARRIERTRAINER.version="0.1.9w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1483,6 +1483,14 @@ function CARRIERTRAINER:_Debrief(playerData)
   -- LSO grade, points, and flight data analyis.
   local grade, points, analysis=self:_LSOgrade(playerData)
   
+  
+  local mygrade={} --#CARRIERTRAINER.LSOgrade  
+  mygrade.grade=grade
+  mygrade.points=points
+  mygrade.details=analysis
+  
+  table.insert(playerData.grades, mygrade)
+  
   -- LSO grade message.
   text=string.format("%s %.1f PT - %s", grade, points, analysis)
   self:_SendMessageToPlayer(text, 30, playerData, true, "Paddles", 30)
@@ -2256,17 +2264,16 @@ function CARRIERTRAINER:_SendMessageToPlayer(message, duration, playerData, clea
   
     delay=delay or 0
     sender=sender or self.alias
-  
-    if playerData.client then
-      --MESSAGE:New(string.format("%s, %s, ", self.alias, playerData.callsign)..message, duration, nil, clear):ToClient(playerData.client)
-    end
-        
+          
     local text=string.format("%s, %s, %s", sender, playerData.callsign, message)
     env.info(text)
       
     if delay>0 then
       SCHEDULER:New(nil,self._SendMessageToPlayer, {self, message, duration, playerData, clear, sender}, delay)
-    else    
+    else
+      if playerData.client then
+        --MESSAGE:New(string.format("%s, %s, ", self.alias, playerData.callsign)..message, duration, nil, clear):ToClient(playerData.client)
+      end        
       MESSAGE:New(text, duration, nil, clear):ToAll()    
     end
     
@@ -2343,15 +2350,15 @@ function CARRIERTRAINER:_AddF10Commands(_unitName)
         local _trainPath    = missionCommands.addSubMenuForGroup(_gid, self.alias, CARRIERTRAINER.MenuF10[_gid])
         
         -- F10/Carrier Trainer/<Carrier Name>/Results
-        local _statsPath    = missionCommands.addSubMenuForGroup(_gid, "Results",      _trainPath)
+        local _statsPath    = missionCommands.addSubMenuForGroup(_gid, "LSO Grades",      _trainPath)
         
         -- F10/Carrier Trainer/<Carrier Name>/My Settings/Difficulty
         local _difficulPath = missionCommands.addSubMenuForGroup(_gid, "Difficulty",   _trainPath)
 
         -- F10/Carrier Trainer/<Carrier Name>/Results/
         -- TODO: Add result functions.
-        --missionCommands.addCommandForGroup(_gid, "All Results",         _statsPath, self._DisplayStrafePitResults, self, _unitName)
-        --missionCommands.addCommandForGroup(_gid, "My Results",          _statsPath, self._DisplayBombingResults, self, _unitName)
+        missionCommands.addCommandForGroup(_gid, "Greenie Board", _statsPath, self._DisplayScoreBoard, self, _unitName)
+        missionCommands.addCommandForGroup(_gid, "My Grades",     _statsPath, self._DisplayPlayerGrades, self, _unitName)
         --missionCommands.addCommandForGroup(_gid, "(Clear ALL Results)", _statsPath, self._ResetRangeStats, self, _unitName)
         
         -- F10/Carrier Trainer/<Carrier Name>/Difficulty
@@ -2375,6 +2382,48 @@ function CARRIERTRAINER:_AddF10Commands(_unitName)
 
 end
 
+--- Display top 10 player scores.
+-- @param #CARRIERTRAINER self
+-- @param #string _unitName Name fo the player unit.
+function CARRIERTRAINER:_DisplayPlayerGrades(_unitName)
+  self:F(_unitName)
+  
+  -- Get player unit and name.
+  local _unit, _playername = self:_GetPlayerUnitAndName(_unitName)
+  
+  -- Check if we have a unit which is a player.
+  if _unit and _playername then
+    local playerData=self.players[_playername] --#CARRIERTRAINTER.PlayerData
+    
+    if playerData then
+      local text=string.format("Your grades, %s:", _playername)
+      local p=0
+      for i,_grade in pairs(playerData.grades) do
+        local grade=_grade --#CARRIERTRAINER.LSOgrade
+        
+        text=text..string.format("\n[%d] %s %.1f PT - %s", i, grade.grade, grade.points, grade.details)
+        p=p+grade.points
+      end
+      
+      -- Number of grades.
+      local n=#playerData.grades
+      
+      if n>0 then
+        text=text..string.format("\nAverage points = %.1f", p/n)
+      else
+        text=text..string.format("No data available.")
+      end
+      
+      -- Send message.
+      if playerData.client then
+        --MESSAGE:New(string.format("%s, %s, ", self.alias, playerData.callsign)..message, duration, nil, clear):ToClient(playerData.client)
+      end        
+      MESSAGE:New(text, 30, nil, true):ToAll()
+      
+    end
+  end
+end
+
 
 --- Display top 10 player scores.
 -- @param #CARRIERTRAINER self
@@ -2395,12 +2444,14 @@ function CARRIERTRAINER:_DisplayScoreBoard(_unitName)
     local _message = string.format("Greenie Board:\n")
   
     -- Loop over player results.
-    for _playerName,_results in pairs(self.strafePlayerResults) do
+    for _playerName,_grades in pairs(self.playerGrades) do
+      
   
       -- Get the best result of the player.
       local _best=nil
-      for _,_result in pairs(_results) do  
-        if _best==nil or _result.hits > _best.hits then
+      for _,_grade in pairs(_grades) do
+        local grade=_grade --#CARRIERTRAINTER.LSOgrade  
+        if _best==nil or grade.po > _best.hits then
           _best = _result
         end
       end
@@ -2414,11 +2465,16 @@ function CARRIERTRAINER:_DisplayScoreBoard(_unitName)
     end
   
     --Sort list!
-    local _sort=function(a, b) return a.hits>b.hits end
-    table.sort(_playerResults,_sort)
+    local _sort=function(a, b) return a.points>b.points end
+    table.sort(self.playerGrades,_sort)
+    
+    local _i=0
+    for _playername,_grade in pairs(self.playerGrades) do
+      _message=_message..string.format("\n[%d] %s", _i, _grade)
+    end
   
     -- Add top 10 results.
-    for _i = 1, math.min(#_playerResults, self.ndisplayresult) do
+    for _i = 1, 10 do --math.min(#_playerResults, self.ndisplayresult) do      
       _message = _message..string.format("\n[%d] %s", _i, _playerResults[_i].msg)
     end
     
