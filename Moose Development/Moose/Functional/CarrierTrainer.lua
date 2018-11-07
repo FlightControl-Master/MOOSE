@@ -264,7 +264,7 @@ CARRIERTRAINER.MenuF10={}
 
 --- Carrier trainer class version.
 -- @field #string version
-CARRIERTRAINER.version="0.1.9w"
+CARRIERTRAINER.version="0.2.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -280,6 +280,7 @@ CARRIERTRAINER.version="0.1.9w"
 -- TODO: Generalize parameters for other aircraft.
 -- TODO: CASE II.
 -- TODO: CASE III.
+-- TODO: Foul deck check.
 -- DONE: Fix radio menu.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -566,7 +567,7 @@ function CARRIERTRAINER:OnEventBirth(EventData)
     self.players[_playername]=self:_InitPlayer(_unitName)
     
     -- Start in the groove for debugging.
-    self.groovedebug=true
+    self.groovedebug=false
     
   end 
 end
@@ -612,7 +613,10 @@ function CARRIERTRAINER:OnEventLand(EventData)
     local w4=self.carrier:GetCoordinate():Translate( -68, 0):MarkToAll("Wire 4")
     
     -- We did land.
+    env.info("FF landed")
     playerData.landed=true
+    
+    playerData.step=-1
     
     --TODO: maybe check that we actually landed on the right carrier.
     
@@ -669,7 +673,7 @@ function CARRIERTRAINER:_InitNewRound(playerData)
   self:I(self.lid..string.format("New round for player %s.", playerData.callsign))
   playerData.step=0
   playerData.score=100
-  playerData.groove={}  
+  playerData.groove={}
   playerData.debrief={}
   playerData.patternwo=false
   playerData.lig=false
@@ -838,11 +842,10 @@ function CARRIERTRAINER:_CheckForLongDownwind(playerData)
     playerData.lig=true
     
     -- Next step: Debriefing.
-    playerData.step=999   
+    playerData.step=999
   end
   
 end
-
 
 --- Abeam.
 -- @param #CARRIERTRAINER self
@@ -1128,33 +1131,34 @@ function CARRIERTRAINER:_CallTheBall(playerData)
   
   elseif rho<=RIC and playerData.step==94 then
 
-    --TODO: grade for IC, call wave off?
-    self:_SendMessageToPlayer("IC", 8, playerData)
-    env.info(string.format("FF IC=%d", rho))
-    
-    -- Store data.
-    playerData.groove.IC=groovedata
-    
-    -- Check if player should wave off.
-    local waveoff=self:_CheckWaveOff(glideslopeError, lineupError, AoA)
-    
-    -- Let's see..
-    if waveoff then
-    
-      -- Wave off player.
-      self:_SendMessageToPlayer(CARRIERTRAINER.LSOcall.WAVEOFFT, 10, playerData)
-      CARRIERTRAINER.LSOcall.WAVEOFF:ToGroup(playerData.unit:GetGroup())
-      playerData.Tlso=timer.getTime()
+    if playerData.waveoff==false then
+
+      self:_SendMessageToPlayer("IC", 8, playerData)
+      env.info(string.format("FF IC=%d", rho))
       
-      playerData.waveoff=true
+      -- Store data.
+      playerData.groove.IC=groovedata
       
-      -- Next step: debrief.
-      playerData.step=999
+      -- Check if player should wave off.
+      local waveoff=self:_CheckWaveOff(glideslopeError, lineupError, AoA)
       
-      return
-    else
-      -- Next step: at the ramp.      
-      playerData.step=95
+      -- Let's see..
+      if waveoff then
+              
+        -- Wave off player.
+        self:_SendMessageToPlayer(CARRIERTRAINER.LSOcall.WAVEOFFT, 10, playerData)
+        CARRIERTRAINER.LSOcall.WAVEOFF:ToGroup(playerData.unit:GetGroup())
+        playerData.Tlso=timer.getTime()
+        
+        -- Player was waved off!
+        playerData.waveoff=true
+              
+        return
+      else
+        -- Next step: at the ramp.      
+        playerData.step=95
+      end
+      
     end
     
   elseif rho<=RAR and playerData.step==95 then
@@ -1180,32 +1184,25 @@ function CARRIERTRAINER:_CallTheBall(playerData)
     -- LSO call if necessary.
     self:_LSOcall(playerData, glideslopeError, lineupError)
 
-  elseif X>0 then
+  elseif X>100 then
            
     if playerData.landed then
-    
-      local hint="You boltered."
-  
-      -- Send message to player.
-      self:_SendMessageToPlayer(hint, 8, playerData)
       
       -- Add to debrief.
-      self:_AddToSummary(playerData, "Bolter", hint)
+      if playerData.waveoff then
+        self:_AddToSummary(playerData, "Wave Off", "You were waved off but landed anyway. Airboss wants to talk to you!")
+      else
+        self:_AddToSummary(playerData, "Bolter", "You boltered.")
+      end
             
     else
-
-      local hint="You were waved off."
-      
-      -- Send message to player.
-      self:_SendMessageToPlayer(hint, 8, playerData)
       
       -- Add to debrief.
-      self:_AddToSummary(playerData, "Wave Off", hint)
+      self:_AddToSummary(playerData, "Wave Off", "You were waved off.")
       
+      -- Next step: debrief.
+      playerData.step=999
     end
-            
-    -- Next step: debrief.
-    playerData.step=999
   end 
 end
 
@@ -1225,17 +1222,20 @@ function CARRIERTRAINER:_CheckWaveOff(glideslopeError, lineupError, AoA)
   local waveoff=false
   
   -- Too high or too low?
-  if math.abs(glideslopeError)>3 then
+  if math.abs(glideslopeError)>1 then
+    self:I(self.lid.."Wave off due to glide slope error >1 degrees!")
     waveoff=true
   end
   
   -- Too far from centerline?
   if math.abs(lineupError)>3 then
+    self:I(self.lid.."Wave off due to line up error >3 degrees!")
     waveoff=true
   end
   
   -- Too slow or too fast?
   if AoA<6.9 or AoA>9.3 then
+    self:I(self.lid.."Wave off due to AoA<6.9 or AoA>9.3!")
     waveoff=true
   end
 
@@ -1272,19 +1272,19 @@ end
 -- @param Core.Point#COORDINATE pos Position of aircraft on landing event.
 function CARRIERTRAINER:_Trapped(playerData, pos)
 
+  env.info("FF TRAPPED")
+
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
   local X, Z, rho, phi = self:_GetDistances(pos)
   
   if playerData.unit:InAir()==false then
     -- Seems we have successfully landed.
     
-    local wire  = 1
-    local score = -10
-    
     -- Little offset for the exact wire positions.
     local wdx=11
     
     -- Which wire was caught?
+    local wire
     if X<-104+wdx then
       wire=1
     elseif X<-92+wdx then
@@ -1298,14 +1298,14 @@ function CARRIERTRAINER:_Trapped(playerData, pos)
     end
        
     local text=string.format("TRAPPED! %d-wire.", wire)
-    self:_SendMessageToPlayer(text, 30, playerData)
+    self:_SendMessageToPlayer(text, 10, playerData)
     
     local text2=string.format("Distance X=%.1f meters resulted in a %d-wire estimate.", X, wire)
     MESSAGE:New(text,30):ToAllIf(self.Debug)
     env.info(text2)
        
-    local fullHint = string.format("Trapped catching the %d-wire.", wire)
-    self:_AddToSummary(playerData, "Trapped", fullHint)
+    local hint = string.format("Trapped catching the %d-wire.", wire)
+    self:_AddToSummary(playerData, "Recovered", hint)
     
   else
     --Boltered!
@@ -1323,12 +1323,11 @@ end
 -- @param #number lineupError Error in degrees.
 function CARRIERTRAINER:_LSOcall(playerData, glideslopeError, lineupError)
 
-  local text=""
-  
   -- Player group.
   local player=playerData.unit:GetGroup()
   
   -- Glideslope high/low calls.
+  local text=""
   if glideslopeError>1 then
     text="You're high!" 
     CARRIERTRAINER.LSOcall.HIGHL:ToGroup(player)
@@ -1431,13 +1430,7 @@ function CARRIERTRAINER:_Lineup(playerData)
   
   -- Position of the aircraft wrt carrier coordinates.
   local a={x=X, z=Z}
-  
-  --a.x=-200
-  --a.y=  0
-  --a.z=17.632698070846  --(100)*math.tan(math.rad(10))
-  --a.z=20
-  --print(a.z)
-  
+
   -- Vector from plane to ref point on boad.
   local c={x=b.x-a.x, y=0, z=b.z-a.z}
   
@@ -1465,6 +1458,7 @@ end
 -- @param #CARRIERTRAINER self
 -- @param #CARRIERTRAINER.PlayerData playerData Player data.
 function CARRIERTRAINER:_Debrief(playerData)
+  env.info("FF debrief")
 
   -- Debriefing text.
   local text=string.format("Debriefing:\n")
@@ -1474,7 +1468,6 @@ function CARRIERTRAINER:_Debrief(playerData)
     local comment=_data.hint
     text=text..string.format("* %s:\n",step)
     text=text..string.format("%s\n", comment)
-    --text=text..string.format("------------------------------------------------------------\n")
   end
   
   -- Send debrief message to player
@@ -1482,27 +1475,25 @@ function CARRIERTRAINER:_Debrief(playerData)
   
   -- LSO grade, points, and flight data analyis.
   local grade, points, analysis=self:_LSOgrade(playerData)
-  
-  
+    
   local mygrade={} --#CARRIERTRAINER.LSOgrade  
   mygrade.grade=grade
   mygrade.points=points
   mygrade.details=analysis
   
+  -- Add to table.
   table.insert(playerData.grades, mygrade)
   
   -- LSO grade message.
   text=string.format("%s %.1f PT - %s", grade, points, analysis)
-  self:_SendMessageToPlayer(text, 30, playerData, true, "Paddles", 30)
-  
-  --TODO: Add grade to table.
+  self:_SendMessageToPlayer(text, 10, playerData, true, "Paddles", 30)
 
   -- New approach.
   if playerData.boltered or playerData.waveoff or playerData.patternwo then
     local heading=playerData.unit:GetCoordinate():HeadingTo(self.registerZone:GetCoordinate())
     local distance=playerData.unit:GetCoordinate():Get2DDistance(self.registerZone:GetCoordinate())
     local text=string.format("fly heading %d for %d NM to restart the pattern.", heading, UTILS.MetersToNM(distance))
-    self:_SendMessageToPlayer(text, 10, playerData, false, nil, 20)
+    self:_SendMessageToPlayer(text, 10, playerData, false, nil, 30)
   end  
   
   -- Next step.
@@ -1959,17 +1950,19 @@ function CARRIERTRAINER:_LSOgrade(playerData)
     end
   end
   
-  env.info("LSO grade:")
-  env.info(G)
+  -- Replace" )"( and "__" 
   G=G:gsub("%)%(", "")
-  G=G:gsub("__","")
-  env.info(G)
-  env.info("Grade = "..grade.." points = "..points)
-  env.info("# of total deviations   = "..N)
-  env.info("# of large deviations _ = "..nL)
-  env.info("# of norma deviations _ = "..nN)
-  env.info("# of small deviations ( = "..nS)
-  env.info()
+  G=G:gsub("__","")  
+  
+  -- Debug info
+  local text="LSO grade:\n"
+  text=text..G.."\n"
+  text=text.."Grade = "..grade.." points = "..points.."\n"
+  text=text.."# of total deviations   = "..N.."\n"
+  text=text.."# of large deviations _ = "..nL.."\n"
+  text=text.."# of norma deviations _ = "..nN.."\n"
+  text=text.."# of small deviations ( = "..nS.."\n"
+  self:I(self.lid..text)
   
   if playerData.patternwo or playerData.waveoff then
     grade="CUT"
@@ -1978,7 +1971,7 @@ function CARRIERTRAINER:_LSOgrade(playerData)
       G="LIG PWO"
     elseif playerData.patternwo then
       G="PWO "..G
-    end 
+    end
     if playerData.landed then
       --AIRBOSS wants to talk to you!
     end
@@ -2006,7 +1999,7 @@ function CARRIERTRAINER:_Flightdata2Text(fdata)
 
   -- No flight data ==> return empty string.
   if fdata==nil then
-    env.info("FF fdata nil")
+    self:E(self.lid.."Flight data is nil.")
     return "", 0
   end
 
@@ -2082,15 +2075,20 @@ function CARRIERTRAINER:_Flightdata2Text(fdata)
   end
   
   -- Add current step.
+  local step=self:_GS(step)
+  step=step:gsub("XX","X")
   if G~="" then
-    G=G..self:_GS(step)
+    G=G..step
   end
   
-  env.info(string.format("AOA=%.1f",AOA))
-  env.info(string.format("GSE=%.1f",GSE))
-  env.info(string.format("LUE=%.1f",LUE))
-  env.info(string.format("ROL=%.1f",ROL))    
-  env.info(G)
+  -- Debug info.
+  local text=string.format("LSO Grade at %s:\n", step)
+  text=text..string.format("AOA=%.1f\n",AOA)
+  text=text..string.format("GSE=%.1f\n",GSE)
+  text=text..string.format("LUE=%.1f\n",LUE)
+  text=text..string.format("ROL=%.1f\n",ROL)    
+  text=text..G
+  self:T(self.lid..text)
   
   return G,n
 end
@@ -2151,9 +2149,9 @@ function CARRIERTRAINER:_AltitudeCheck(playerData, checkpoint, altitude)
   
   -- Extend or decrease depending on skill.
   if playerData.difficulty==CARRIERTRAINER.Difficulty.EASY then
-    hint=hint..string.format("Optimal altitude is %d ft.\n", UTILS.MetersToFeet(checkpoint.Altitude))
+    hint=hint..string.format("Optimal altitude is %d ft.", UTILS.MetersToFeet(checkpoint.Altitude))
   elseif playerData.difficulty==CARRIERTRAINER.Difficulty.NORMAL then
-    hint=hint.."\n"
+    --hint=hint.."\n"
   elseif playerData.difficulty==CARRIERTRAINER.Difficulty.HARD then
     hint=""
   end
@@ -2196,7 +2194,7 @@ function CARRIERTRAINER:_DistanceCheck(playerData, checkpoint, distance)
   if playerData.difficulty==CARRIERTRAINER.Difficulty.EASY then
     hint=hint..string.format(" Optimal distance is %d NM.", UTILS.MetersToNM(checkpoint.Distance))
   elseif playerData.difficulty==CARRIERTRAINER.Difficulty.NORMAL then
-    hint=hint.."\n"
+    --hint=hint.."\n"
   elseif playerData.difficulty==CARRIERTRAINER.Difficulty.HARD then
     hint=""
   end
@@ -2239,7 +2237,7 @@ function CARRIERTRAINER:_AoACheck(playerData, checkpoint, aoa)
   if playerData.difficulty==CARRIERTRAINER.Difficulty.EASY then
     hint=hint..string.format(" Optimal AoA is %.1f.", checkpoint.AoA)
   elseif playerData.difficulty==CARRIERTRAINER.Difficulty.NORMAL then
-    hint=hint.."\n"
+    --hint=hint.."\n"
   elseif playerData.difficulty==CARRIERTRAINER.Difficulty.HARD then
     hint=""
   end
@@ -2272,9 +2270,9 @@ function CARRIERTRAINER:_SendMessageToPlayer(message, duration, playerData, clea
       SCHEDULER:New(nil,self._SendMessageToPlayer, {self, message, duration, playerData, clear, sender}, delay)
     else
       if playerData.client then
-        --MESSAGE:New(string.format("%s, %s, ", self.alias, playerData.callsign)..message, duration, nil, clear):ToClient(playerData.client)
+        MESSAGE:New(text, duration, nil, clear):ToClient(playerData.client)
       end        
-      MESSAGE:New(text, duration, nil, clear):ToAll()    
+      --MESSAGE:New(text, duration, nil, clear):ToAll()    
     end
     
   end
@@ -2347,16 +2345,15 @@ function CARRIERTRAINER:_AddF10Commands(_unitName)
         local playerData=self.players[playername]
         
         -- F10/Carrier Trainer/<Carrier Name>
-        local _trainPath    = missionCommands.addSubMenuForGroup(_gid, self.alias, CARRIERTRAINER.MenuF10[_gid])
+        local _trainPath = missionCommands.addSubMenuForGroup(_gid, self.alias, CARRIERTRAINER.MenuF10[_gid])
         
         -- F10/Carrier Trainer/<Carrier Name>/Results
-        local _statsPath    = missionCommands.addSubMenuForGroup(_gid, "LSO Grades",      _trainPath)
+        local _statsPath = missionCommands.addSubMenuForGroup(_gid, "LSO Grades", _trainPath)
         
         -- F10/Carrier Trainer/<Carrier Name>/My Settings/Difficulty
-        local _difficulPath = missionCommands.addSubMenuForGroup(_gid, "Difficulty",   _trainPath)
+        local _difficulPath = missionCommands.addSubMenuForGroup(_gid, "Difficulty", _trainPath)
 
         -- F10/Carrier Trainer/<Carrier Name>/Results/
-        -- TODO: Add result functions.
         missionCommands.addCommandForGroup(_gid, "Greenie Board", _statsPath, self._DisplayScoreBoard, self, _unitName)
         missionCommands.addCommandForGroup(_gid, "My Grades",     _statsPath, self._DisplayPlayerGrades, self, _unitName)
         --missionCommands.addCommandForGroup(_gid, "(Clear ALL Results)", _statsPath, self._ResetRangeStats, self, _unitName)
@@ -2367,11 +2364,12 @@ function CARRIERTRAINER:_AddF10Commands(_unitName)
         missionCommands.addCommandForGroup(_gid, "TOPGUN Graduate", _difficulPath, self._SetDifficulty, self, playername, CARRIERTRAINER.Difficulty.HARD)
         
         -- F10/Carrier Trainer/<Carrier Name>/
-        missionCommands.addCommandForGroup(_gid, "Carrier Info",        _trainPath, self._DisplayCarrierInfo,    self, _unitName)
-        missionCommands.addCommandForGroup(_gid, "Weather Report",      _trainPath, self._DisplayCarrierWeather, self, _unitName)
+        missionCommands.addCommandForGroup(_gid, "Carrier Info",            _trainPath, self._DisplayCarrierInfo,    self, _unitName)
+        missionCommands.addCommandForGroup(_gid, "Weather Report",          _trainPath, self._DisplayCarrierWeather, self, _unitName)
+        missionCommands.addCommandForGroup(_gid, "Attitude Monitor ON/OFF", _trainPath, self._AttitudeMonitor,       self, playername)
         --TODO: Flare carrier.
         
-        missionCommands.addCommandForGroup(_gid, "Attitude Monitor ON/OFF", _trainPath, self._AttitudeMonitor, self, playername)
+        
       end
     else
       self:T(self.lid.."Could not find group or group ID in AddF10Menu() function. Unit name: ".._unitName)
@@ -2396,7 +2394,10 @@ function CARRIERTRAINER:_DisplayPlayerGrades(_unitName)
     local playerData=self.players[_playername] --#CARRIERTRAINTER.PlayerData
     
     if playerData then
+    
+      -- Grades of player:
       local text=string.format("Your grades, %s:", _playername)
+      
       local p=0
       for i,_grade in pairs(playerData.grades) do
         local grade=_grade --#CARRIERTRAINER.LSOgrade
@@ -2411,15 +2412,15 @@ function CARRIERTRAINER:_DisplayPlayerGrades(_unitName)
       if n>0 then
         text=text..string.format("\nAverage points = %.1f", p/n)
       else
-        text=text..string.format("No data available.")
+        text=text..string.format("\nNo data available.")
       end
+      
+      env.info("FF:\n"..text)
       
       -- Send message.
       if playerData.client then
-        --MESSAGE:New(string.format("%s, %s, ", self.alias, playerData.callsign)..message, duration, nil, clear):ToClient(playerData.client)
-      end        
-      MESSAGE:New(text, 30, nil, true):ToAll()
-      
+        MESSAGE:New(text, 30, nil, true):ToClient(playerData.client)
+      end
     end
   end
 end
@@ -2439,52 +2440,40 @@ function CARRIERTRAINER:_DisplayScoreBoard(_unitName)
   
     -- Results table.
     local _playerResults={}
+    
+    -- Player data of requestor.
+    local playerData=self.players[_playername]  --#CARRIERTRAINER.PlayerData
   
     -- Message text.
-    local _message = string.format("Greenie Board:\n")
-  
-    -- Loop over player results.
-    for _playerName,_grades in pairs(self.playerGrades) do
-      
-  
-      -- Get the best result of the player.
-      local _best=nil
-      for _,_grade in pairs(_grades) do
-        local grade=_grade --#CARRIERTRAINTER.LSOgrade  
-        if _best==nil or grade.po > _best.hits then
-          _best = _result
-        end
+    local text = string.format("Greenie Board:")
+    
+    for _playerName,_playerData in pairs(self.players) do
+    
+      local Paverage=0
+      for _,_grade in pairs(_playerData.grades) do
+        Paverage=Paverage+_grade.points
       end
-  
-      -- Add best result to table. 
-      if _best ~= nil then
-        local text=string.format("%s: Hits %i - %s - %s", _playerName, _best.hits, _best.zone.name, _best.text)
-        table.insert(_playerResults,{msg = text, hits = _best.hits})
-      end
-  
+      _playerResults[_playerName]=Paverage
+    
     end
-  
+    
     --Sort list!
-    local _sort=function(a, b) return a.points>b.points end
-    table.sort(self.playerGrades,_sort)
+    local _sort=function(a, b) return a>b end
+    table.sort(_playerResults,_sort)
     
-    local _i=0
-    for _playername,_grade in pairs(self.playerGrades) do
-      _message=_message..string.format("\n[%d] %s", _i, _grade)
-    end
-  
-    -- Add top 10 results.
-    for _i = 1, 10 do --math.min(#_playerResults, self.ndisplayresult) do      
-      _message = _message..string.format("\n[%d] %s", _i, _playerResults[_i].msg)
+    local i=1
+    for _playerName,_points in pairs(_playerResults) do
+      text=text..string.format("\n[%d] %.1f %s", i,_points,_playerName)
+      i=i+1
     end
     
-    -- In case there are no scores yet.
-    if #_playerResults<1 then
-      _message = _message.."No player scored yet."
-    end
-  
+    env.info("FF:\n"..text)
+
     -- Send message.
-    self:_DisplayMessageToGroup(_unit, _message, nil, true)
+    if playerData.client then
+      MESSAGE:New(text, 30, nil, true):ToClient(playerData.client)
+    end
+  
   end
 end
 
