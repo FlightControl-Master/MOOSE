@@ -281,8 +281,8 @@ do -- AI_A2G_DISPATCHER
     self:SetDefaultGrouping( 1 )
     self:SetDefaultFuelThreshold( 0.15, 0 ) -- 15% of fuel remaining in the tank will trigger the airplane to return to base or refuel.
     self:SetDefaultDamageThreshold( 0.4 ) -- When 40% of damage, go RTB.
-    self:SetDefaultCapTimeInterval( 180, 600 ) -- Between 180 and 600 seconds.
-    self:SetDefaultCapLimit( 1 ) -- Maximum one CAP per squadron.
+    self:SetDefaultPatrolTimeInterval( 180, 600 ) -- Between 180 and 600 seconds.
+    self:SetDefaultPatrolLimit( 1 ) -- Maximum one Patrol per squadron.
     
     
     self:AddTransition( "Started", "Assign", "Started" )
@@ -297,33 +297,33 @@ do -- AI_A2G_DISPATCHER
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param #string PlayerName
     
-    self:AddTransition( "*", "CAP", "*" )
+    self:AddTransition( "*", "Patrol", "*" )
 
-    --- CAP Handler OnBefore for AI_A2G_DISPATCHER
-    -- @function [parent=#AI_A2G_DISPATCHER] OnBeforeCAP
+    --- Patrol Handler OnBefore for AI_A2G_DISPATCHER
+    -- @function [parent=#AI_A2G_DISPATCHER] OnBeforePatrol
     -- @param #AI_A2G_DISPATCHER self
     -- @param #string From
     -- @param #string Event
     -- @param #string To
     -- @return #boolean
     
-    --- CAP Handler OnAfter for AI_A2G_DISPATCHER
-    -- @function [parent=#AI_A2G_DISPATCHER] OnAfterCAP
+    --- Patrol Handler OnAfter for AI_A2G_DISPATCHER
+    -- @function [parent=#AI_A2G_DISPATCHER] OnAfterPatrol
     -- @param #AI_A2G_DISPATCHER self
     -- @param #string From
     -- @param #string Event
     -- @param #string To
     
-    --- CAP Trigger for AI_A2G_DISPATCHER
-    -- @function [parent=#AI_A2G_DISPATCHER] CAP
+    --- Patrol Trigger for AI_A2G_DISPATCHER
+    -- @function [parent=#AI_A2G_DISPATCHER] Patrol
     -- @param #AI_A2G_DISPATCHER self
     
-    --- CAP Asynchronous Trigger for AI_A2G_DISPATCHER
-    -- @function [parent=#AI_A2G_DISPATCHER] __CAP
+    --- Patrol Asynchronous Trigger for AI_A2G_DISPATCHER
+    -- @function [parent=#AI_A2G_DISPATCHER] __Patrol
     -- @param #AI_A2G_DISPATCHER self
     -- @param #number Delay
     
-    self:AddTransition( "*", "DEFEND", "*" )
+    self:AddTransition( "*", "Defend", "*" )
 
     --- GCI Handler OnBefore for AI_A2G_DISPATCHER
     -- @function [parent=#AI_A2G_DISPATCHER] OnBeforeGCI
@@ -395,7 +395,7 @@ do -- AI_A2G_DISPATCHER
     
     self:SetTacticalDisplay( false )
     
-    self.DefenderCAPIndex = 0
+    self.DefenderPatrolIndex = 0
     
     self:__Start( 5 )
     
@@ -626,8 +626,8 @@ do -- AI_A2G_DISPATCHER
   
   
   --- Define a border area to simulate a **cold war** scenario.
-  -- A **cold war** is one where CAP aircraft patrol their territory but will not attack enemy aircraft or launch GCI aircraft unless enemy aircraft enter their territory. In other words the EWR may detect an enemy aircraft but will only send aircraft to attack it if it crosses the border.
-  -- A **hot war** is one where CAP aircraft will intercept any detected enemy aircraft and GCI aircraft will launch against detected enemy aircraft without regard for territory. In other words if the ground radar can detect the enemy aircraft then it will send CAP and GCI aircraft to attack it.
+  -- A **cold war** is one where Patrol aircraft patrol their territory but will not attack enemy aircraft or launch GCI aircraft unless enemy aircraft enter their territory. In other words the EWR may detect an enemy aircraft but will only send aircraft to attack it if it crosses the border.
+  -- A **hot war** is one where Patrol aircraft will intercept any detected enemy aircraft and GCI aircraft will launch against detected enemy aircraft without regard for territory. In other words if the ground radar can detect the enemy aircraft then it will send Patrol and GCI aircraft to attack it.
   -- If it's a cold war then the **borders of red and blue territory** need to be defined using a @{zone} object derived from @{Core.Zone#ZONE_BASE}. This method needs to be used for this.
   -- If a hot war is chosen then **no borders** actually need to be defined using the helicopter units other than it makes it easier sometimes for the mission maker to envisage where the red and blue territories roughly are. In a hot war the borders are effectively defined by the ground based radar coverage of a coalition. Set the noborders parameter to 1
   -- @param #AI_A2G_DISPATCHER self
@@ -704,45 +704,45 @@ do -- AI_A2G_DISPATCHER
   end  
 
 
-  --- Set the default CAP time interval for squadrons, which will be used to determine a random CAP timing.
-  -- The default CAP time interval is between 180 and 600 seconds.
+  --- Set the default Patrol time interval for squadrons, which will be used to determine a random Patrol timing.
+  -- The default Patrol time interval is between 180 and 600 seconds.
   -- @param #AI_A2G_DISPATCHER self
-  -- @param #number CapMinSeconds The minimum amount of seconds for the random time interval.
-  -- @param #number CapMaxSeconds The maximum amount of seconds for the random time interval.
+  -- @param #number PatrolMinSeconds The minimum amount of seconds for the random time interval.
+  -- @param #number PatrolMaxSeconds The maximum amount of seconds for the random time interval.
   -- @return #AI_A2G_DISPATCHER
   -- @usage
   -- 
   --   -- Now Setup the A2G dispatcher, and initialize it using the Detection object.
   --   A2GDispatcher = AI_A2G_DISPATCHER:New( Detection )  
   --   
-  --   -- Now Setup the default CAP time interval.
-  --   A2GDispatcher:SetDefaultCapTimeInterval( 300, 1200 ) -- Between 300 and 1200 seconds.
+  --   -- Now Setup the default Patrol time interval.
+  --   A2GDispatcher:SetDefaultPatrolTimeInterval( 300, 1200 ) -- Between 300 and 1200 seconds.
   --   
-  function AI_A2G_DISPATCHER:SetDefaultCapTimeInterval( CapMinSeconds, CapMaxSeconds )
+  function AI_A2G_DISPATCHER:SetDefaultPatrolTimeInterval( PatrolMinSeconds, PatrolMaxSeconds )
     
-    self.DefenderDefault.CapMinSeconds = CapMinSeconds
-    self.DefenderDefault.CapMaxSeconds = CapMaxSeconds
+    self.DefenderDefault.PatrolMinSeconds = PatrolMinSeconds
+    self.DefenderDefault.PatrolMaxSeconds = PatrolMaxSeconds
     
     return self
   end
 
 
-  --- Set the default CAP limit for squadrons, which will be used to determine how many CAP can be airborne at the same time for the squadron.
-  -- The default CAP limit is 1 CAP, which means one CAP group being spawned.
+  --- Set the default Patrol limit for squadrons, which will be used to determine how many Patrol can be airborne at the same time for the squadron.
+  -- The default Patrol limit is 1 Patrol, which means one Patrol group being spawned.
   -- @param #AI_A2G_DISPATCHER self
-  -- @param #number CapLimit The maximum amount of CAP that can be airborne at the same time for the squadron.
+  -- @param #number PatrolLimit The maximum amount of Patrol that can be airborne at the same time for the squadron.
   -- @return #AI_A2G_DISPATCHER
   -- @usage
   -- 
   --   -- Now Setup the A2G dispatcher, and initialize it using the Detection object.
   --   A2GDispatcher = AI_A2G_DISPATCHER:New( Detection )  
   --   
-  --   -- Now Setup the default CAP limit.
-  --   A2GDispatcher:SetDefaultCapLimit( 2 ) -- Maximum 2 CAP per squadron.
+  --   -- Now Setup the default Patrol limit.
+  --   A2GDispatcher:SetDefaultPatrolLimit( 2 ) -- Maximum 2 Patrol per squadron.
   --   
-  function AI_A2G_DISPATCHER:SetDefaultCapLimit( CapLimit )
+  function AI_A2G_DISPATCHER:SetDefaultPatrolLimit( PatrolLimit )
     
-    self.DefenderDefault.CapLimit = CapLimit
+    self.DefenderDefault.PatrolLimit = PatrolLimit
     
     return self
   end  
@@ -1046,115 +1046,45 @@ do -- AI_A2G_DISPATCHER
     
   end
 
-  --- Set a CAP for a Squadron.
+  
+  --- Set the squadron Patrol parameters.  
   -- @param #AI_A2G_DISPATCHER self
   -- @param #string SquadronName The squadron name.
-  -- @param Core.Zone#ZONE_BASE Zone The @{Zone} object derived from @{Core.Zone#ZONE_BASE} that defines the zone wherein the CAP will be executed.
-  -- @param #number FloorAltitude The minimum altitude at which the cap can be executed.
-  -- @param #number CeilingAltitude the maximum altitude at which the cap can be executed.
-  -- @param #number PatrolMinSpeed The minimum speed at which the cap can be executed.
-  -- @param #number PatrolMaxSpeed The maximum speed at which the cap can be executed.
-  -- @param #number EngageMinSpeed The minimum speed at which the engage can be executed.
-  -- @param #number EngageMaxSpeed The maximum speed at which the engage can be executed.
-  -- @param #number AltType The altitude type, which is a string "BARO" defining Barometric or "RADIO" defining radio controlled altitude.
-  -- @return #AI_A2G_DISPATCHER
-  -- @usage
-  -- 
-  --        -- CAP Squadron execution.
-  --        CAPZoneEast = ZONE_POLYGON:New( "CAP Zone East", GROUP:FindByName( "CAP Zone East" ) )
-  --        A2GDispatcher:SetSquadronCap( "Mineralnye", CAPZoneEast, 4000, 10000, 500, 600, 800, 900 )
-  --        A2GDispatcher:SetSquadronCapInterval( "Mineralnye", 2, 30, 60, 1 )
-  --        
-  --        CAPZoneWest = ZONE_POLYGON:New( "CAP Zone West", GROUP:FindByName( "CAP Zone West" ) )
-  --        A2GDispatcher:SetSquadronCap( "Sochi", CAPZoneWest, 4000, 8000, 600, 800, 800, 1200, "BARO" )
-  --        A2GDispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
-  --        
-  --        CAPZoneMiddle = ZONE:New( "CAP Zone Middle")
-  --        A2GDispatcher:SetSquadronCap( "Maykop", CAPZoneMiddle, 4000, 8000, 600, 800, 800, 1200, "RADIO" )
-  --        A2GDispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
-  -- 
-  function AI_A2G_DISPATCHER:SetSquadronCap( SquadronName, Zone, FloorAltitude, CeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageMinSpeed, EngageMaxSpeed, AltType )
-  
-    self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
-    self.DefenderSquadrons[SquadronName].Cap = self.DefenderSquadrons[SquadronName].Cap or {}
-    
-    local DefenderSquadron = self:GetSquadron( SquadronName )
-
-    local Cap = self.DefenderSquadrons[SquadronName].Cap
-    Cap.Name = SquadronName
-    Cap.Zone = Zone
-    Cap.FloorAltitude = FloorAltitude
-    Cap.CeilingAltitude = CeilingAltitude
-    Cap.PatrolMinSpeed = PatrolMinSpeed
-    Cap.PatrolMaxSpeed = PatrolMaxSpeed
-    Cap.EngageMinSpeed = EngageMinSpeed
-    Cap.EngageMaxSpeed = EngageMaxSpeed
-    Cap.AltType = AltType
-
-    self:SetSquadronCapInterval( SquadronName, self.DefenderDefault.CapLimit, self.DefenderDefault.CapMinSeconds, self.DefenderDefault.CapMaxSeconds, 1 )
-
-    self:F( { CAP = { SquadronName, Zone, FloorAltitude, CeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageMinSpeed, EngageMaxSpeed, AltType } } )
-   
-    -- Add the CAP to the EWR network.
-    
-    local RecceSet = self.Detection:GetDetectionSetGroup()
-    RecceSet:FilterPrefixes( DefenderSquadron.TemplatePrefixes )
-    RecceSet:FilterStart()
-    
-    self.Detection:SetFriendlyPrefixes( DefenderSquadron.TemplatePrefixes )
-    
-    return self
-  end
-  
-  --- Set the squadron CAP parameters.  
-  -- @param #AI_A2G_DISPATCHER self
-  -- @param #string SquadronName The squadron name.
-  -- @param #number CapLimit (optional) The maximum amount of CAP groups to be spawned. Note that a CAP is a group, so can consist out of 1 to 4 airplanes. The default is 1 CAP group.
-  -- @param #number LowInterval (optional) The minimum time boundary in seconds when a new CAP will be spawned. The default is 180 seconds.
-  -- @param #number HighInterval (optional) The maximum time boundary in seconds when a new CAP will be spawned. The default is 600 seconds.
+  -- @param #number PatrolLimit (optional) The maximum amount of Patrol groups to be spawned. Note that a Patrol is a group, so can consist out of 1 to 4 airplanes. The default is 1 Patrol group.
+  -- @param #number LowInterval (optional) The minimum time boundary in seconds when a new Patrol will be spawned. The default is 180 seconds.
+  -- @param #number HighInterval (optional) The maximum time boundary in seconds when a new Patrol will be spawned. The default is 600 seconds.
   -- @param #number Probability Is not in use, you can skip this parameter.
   -- @return #AI_A2G_DISPATCHER
   -- @usage
   -- 
-  --        -- CAP Squadron execution.
-  --        CAPZoneEast = ZONE_POLYGON:New( "CAP Zone East", GROUP:FindByName( "CAP Zone East" ) )
-  --        A2GDispatcher:SetSquadronCap( "Mineralnye", CAPZoneEast, 4000, 10000, 500, 600, 800, 900 )
-  --        A2GDispatcher:SetSquadronCapInterval( "Mineralnye", 2, 30, 60, 1 )
-  --        
-  --        CAPZoneWest = ZONE_POLYGON:New( "CAP Zone West", GROUP:FindByName( "CAP Zone West" ) )
-  --        A2GDispatcher:SetSquadronCap( "Sochi", CAPZoneWest, 4000, 8000, 600, 800, 800, 1200, "BARO" )
-  --        A2GDispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
-  --        
-  --        CAPZoneMiddle = ZONE:New( "CAP Zone Middle")
-  --        A2GDispatcher:SetSquadronCap( "Maykop", CAPZoneMiddle, 4000, 8000, 600, 800, 800, 1200, "RADIO" )
-  --        A2GDispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
+  --        -- Patrol Squadron execution.
+  --        PatrolZoneEast = ZONE_POLYGON:New( "Patrol Zone East", GROUP:FindByName( "Patrol Zone East" ) )
+  --        A2GDispatcher:SetSquadronSeadPatrol( "Mineralnye", PatrolZoneEast, 4000, 10000, 500, 600, 800, 900 )
+  --        A2GDispatcher:SetSquadronPatrolInterval( "Mineralnye", 2, 30, 60, 1 )
   -- 
-  function AI_A2G_DISPATCHER:SetSquadronCapInterval( SquadronName, CapLimit, LowInterval, HighInterval, Probability )
+  function AI_A2G_DISPATCHER:SetSquadronPatrolInterval( SquadronName, PatrolLimit, LowInterval, HighInterval, Probability, DefenseTaskType )
   
-    self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
-    self.DefenderSquadrons[SquadronName].Cap = self.DefenderSquadrons[SquadronName].Cap or {}
-
     local DefenderSquadron = self:GetSquadron( SquadronName )
 
-    local Cap = self.DefenderSquadrons[SquadronName].Cap
-    if Cap then
-      Cap.LowInterval = LowInterval or 180
-      Cap.HighInterval = HighInterval or 600
-      Cap.Probability = Probability or 1
-      Cap.CapLimit = CapLimit or 1
-      Cap.Scheduler = Cap.Scheduler or SCHEDULER:New( self ) 
-      local Scheduler = Cap.Scheduler -- Core.Scheduler#SCHEDULER
-      local ScheduleID = Cap.ScheduleID
-      local Variance = ( Cap.HighInterval - Cap.LowInterval ) / 2
-      local Repeat = Cap.LowInterval + Variance
+    local Patrol = DefenderSquadron[DefenseTaskType]
+    if Patrol then
+      Patrol.LowInterval = LowInterval or 180
+      Patrol.HighInterval = HighInterval or 600
+      Patrol.Probability = Probability or 1
+      Patrol.PatrolLimit = PatrolLimit or 1
+      Patrol.Scheduler = Patrol.Scheduler or SCHEDULER:New( self ) 
+      local Scheduler = Patrol.Scheduler -- Core.Scheduler#SCHEDULER
+      local ScheduleID = Patrol.ScheduleID
+      local Variance = ( Patrol.HighInterval - Patrol.LowInterval ) / 2
+      local Repeat = Patrol.LowInterval + Variance
       local Randomization = Variance / Repeat
-      local Start = math.random( 1, Cap.HighInterval )
+      local Start = math.random( 1, Patrol.HighInterval )
       
       if ScheduleID then
         Scheduler:Stop( ScheduleID )
       end
       
-      Cap.ScheduleID = Scheduler:Schedule( self, self.SchedulerCAP, { SquadronName }, Start, Repeat, Randomization )
+      Patrol.ScheduleID = Scheduler:Schedule( self, self.SchedulerPatrol, { SquadronName }, Start, Repeat, Randomization )
     else
       error( "This squadron does not exist:" .. SquadronName )
     end
@@ -1165,16 +1095,16 @@ do -- AI_A2G_DISPATCHER
   -- @param #AI_A2G_DISPATCHER self
   -- @param #string SquadronName The squadron name.
   -- @return #AI_A2G_DISPATCHER
-  function AI_A2G_DISPATCHER:GetCAPDelay( SquadronName )
+  function AI_A2G_DISPATCHER:GetPatrolDelay( SquadronName )
   
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
-    self.DefenderSquadrons[SquadronName].Cap = self.DefenderSquadrons[SquadronName].Cap or {}
+    self.DefenderSquadrons[SquadronName].Patrol = self.DefenderSquadrons[SquadronName].Patrol or {}
 
     local DefenderSquadron = self:GetSquadron( SquadronName )
 
-    local Cap = self.DefenderSquadrons[SquadronName].Cap
-    if Cap then
-      return math.random( Cap.LowInterval, Cap.HighInterval )
+    local Patrol = self.DefenderSquadrons[SquadronName].Patrol
+    if Patrol then
+      return math.random( Patrol.LowInterval, Patrol.HighInterval )
     else
       error( "This squadron does not exist:" .. SquadronName )
     end
@@ -1184,28 +1114,27 @@ do -- AI_A2G_DISPATCHER
   -- @param #AI_A2G_DISPATCHER self
   -- @param #string SquadronName The squadron name.
   -- @return #table DefenderSquadron
-  function AI_A2G_DISPATCHER:CanCAP( SquadronName )
+  function AI_A2G_DISPATCHER:CanPatrol( SquadronName, DefenseTaskType )
     self:F({SquadronName = SquadronName})
   
-    self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
-    self.DefenderSquadrons[SquadronName].Cap = self.DefenderSquadrons[SquadronName].Cap or {}
-
     local DefenderSquadron = self:GetSquadron( SquadronName )
 
-    if DefenderSquadron.Captured == false then -- We can only spawn new CAP if the base has not been captured.
+    if DefenderSquadron.Captured == false then -- We can only spawn new Patrol if the base has not been captured.
     
       if ( not DefenderSquadron.ResourceCount ) or ( DefenderSquadron.ResourceCount and DefenderSquadron.ResourceCount > 0  ) then -- And, if there are sufficient resources.
-  
-        local Cap = DefenderSquadron.Cap
-        if Cap then
-          local CapCount = self:CountCapAirborne( SquadronName )
-          self:F( { CapCount = CapCount } )
-          if CapCount < Cap.CapLimit then
+
+        local Patrol = DefenderSquadron[DefenseTaskType]
+        if Patrol and Patrol.Patrol == true then
+          local PatrolCount = self:CountPatrolAirborne( SquadronName, DefenseTaskType )
+          self:F( { PatrolCount = PatrolCount, PatrolLimit = Patrol.PatrolLimit, PatrolProbability = Patrol.Probability } )
+          if PatrolCount < Patrol.PatrolLimit then
             local Probability = math.random()
-            if Probability <= Cap.Probability then
-              return DefenderSquadron
+            if Probability <= Patrol.Probability then
+              return DefenderSquadron, Patrol
             end
           end
+        else
+          self:F( "No patrol for " .. SquadronName )
         end
       end
     end
@@ -1217,7 +1146,7 @@ do -- AI_A2G_DISPATCHER
   -- @param #AI_A2G_DISPATCHER self
   -- @param #string SquadronName The squadron name.
   -- @return #table DefenderSquadron
-  function AI_A2G_DISPATCHER:CanDEFEND( SquadronName, DefenseTaskType )
+  function AI_A2G_DISPATCHER:CanDefend( SquadronName, DefenseTaskType )
     self:F({SquadronName = SquadronName, DefenseTaskType})
   
     local DefenderSquadron = self:GetSquadron( SquadronName )
@@ -1225,7 +1154,7 @@ do -- AI_A2G_DISPATCHER
     if DefenderSquadron.Captured == false then -- We can only spawn new defense if the home airbase has not been captured.
     
       if ( not DefenderSquadron.ResourceCount ) or ( DefenderSquadron.ResourceCount and DefenderSquadron.ResourceCount > 0  ) then -- And, if there are sufficient resources.
-        if DefenderSquadron[DefenseTaskType] then
+        if DefenderSquadron[DefenseTaskType] and DefenderSquadron[DefenseTaskType].Defend == true then
           return DefenderSquadron, DefenderSquadron[DefenseTaskType]
         end
       end
@@ -1257,8 +1186,52 @@ do -- AI_A2G_DISPATCHER
     Sead.Name = SquadronName
     Sead.EngageMinSpeed = EngageMinSpeed
     Sead.EngageMaxSpeed = EngageMaxSpeed
+    Sead.Defend = true
     
     self:F( { Sead = Sead } )
+  end
+  
+
+  --- Set a Sead patrol for a Squadron.
+  -- The Sead patrol will start a patrol of the aircraft at a specified zone, and will engage when commanded.
+  -- @param #AI_A2G_DISPATCHER self
+  -- @param #string SquadronName The squadron name.
+  -- @param Core.Zone#ZONE_BASE Zone The @{Zone} object derived from @{Core.Zone#ZONE_BASE} that defines the zone wherein the Patrol will be executed.
+  -- @param #number FloorAltitude The minimum altitude at which the cap can be executed.
+  -- @param #number CeilingAltitude the maximum altitude at which the cap can be executed.
+  -- @param #number PatrolMinSpeed The minimum speed at which the cap can be executed.
+  -- @param #number PatrolMaxSpeed The maximum speed at which the cap can be executed.
+  -- @param #number EngageMinSpeed The minimum speed at which the engage can be executed.
+  -- @param #number EngageMaxSpeed The maximum speed at which the engage can be executed.
+  -- @param #number AltType The altitude type, which is a string "BARO" defining Barometric or "RADIO" defining radio controlled altitude.
+  -- @return #AI_A2G_DISPATCHER
+  -- @usage
+  -- 
+  --        -- Sead Patrol Squadron execution.
+  --        PatrolZoneEast = ZONE_POLYGON:New( "Patrol Zone East", GROUP:FindByName( "Patrol Zone East" ) )
+  --        A2GDispatcher:SetSquadronSeadPatrol( "Mineralnye", PatrolZoneEast, 4000, 10000, 500, 600, 800, 900 )
+  --        
+  function AI_A2G_DISPATCHER:SetSquadronSeadPatrol( SquadronName, Zone, FloorAltitude, CeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageMinSpeed, EngageMaxSpeed, AltType )
+  
+    local DefenderSquadron = self:GetSquadron( SquadronName )
+
+    DefenderSquadron.SEAD = DefenderSquadron.SEAD or {}
+    
+    local SeadPatrol = DefenderSquadron.SEAD
+    SeadPatrol.Name = SquadronName
+    SeadPatrol.Zone = Zone
+    SeadPatrol.FloorAltitude = FloorAltitude
+    SeadPatrol.CeilingAltitude = CeilingAltitude
+    SeadPatrol.PatrolMinSpeed = PatrolMinSpeed
+    SeadPatrol.PatrolMaxSpeed = PatrolMaxSpeed
+    SeadPatrol.EngageMinSpeed = EngageMinSpeed
+    SeadPatrol.EngageMaxSpeed = EngageMaxSpeed
+    SeadPatrol.AltType = AltType
+    SeadPatrol.Patrol = true
+
+    self:SetSquadronPatrolInterval( SquadronName, self.DefenderDefault.PatrolLimit, self.DefenderDefault.PatrolMinSeconds, self.DefenderDefault.PatrolMaxSeconds, 1, "SEAD" )
+    
+    self:F( { Sead = SeadPatrol } )
   end
   
 
@@ -1285,8 +1258,52 @@ do -- AI_A2G_DISPATCHER
     Cas.Name = SquadronName
     Cas.EngageMinSpeed = EngageMinSpeed
     Cas.EngageMaxSpeed = EngageMaxSpeed
+    Cas.Defend = true
     
     self:F( { Cas = Cas } )
+  end
+  
+  
+  --- Set a Cas patrol for a Squadron.
+  -- The Cas patrol will start a patrol of the aircraft at a specified zone, and will engage when commanded.
+  -- @param #AI_A2G_DISPATCHER self
+  -- @param #string SquadronName The squadron name.
+  -- @param Core.Zone#ZONE_BASE Zone The @{Zone} object derived from @{Core.Zone#ZONE_BASE} that defines the zone wherein the Patrol will be executed.
+  -- @param #number FloorAltitude The minimum altitude at which the cap can be executed.
+  -- @param #number CeilingAltitude the maximum altitude at which the cap can be executed.
+  -- @param #number PatrolMinSpeed The minimum speed at which the cap can be executed.
+  -- @param #number PatrolMaxSpeed The maximum speed at which the cap can be executed.
+  -- @param #number EngageMinSpeed The minimum speed at which the engage can be executed.
+  -- @param #number EngageMaxSpeed The maximum speed at which the engage can be executed.
+  -- @param #number AltType The altitude type, which is a string "BARO" defining Barometric or "RADIO" defining radio controlled altitude.
+  -- @return #AI_A2G_DISPATCHER
+  -- @usage
+  -- 
+  --        -- Cas Patrol Squadron execution.
+  --        PatrolZoneEast = ZONE_POLYGON:New( "Patrol Zone East", GROUP:FindByName( "Patrol Zone East" ) )
+  --        A2GDispatcher:SetSquadronCasPatrol( "Mineralnye", PatrolZoneEast, 4000, 10000, 500, 600, 800, 900 )
+  --        
+  function AI_A2G_DISPATCHER:SetSquadronCasPatrol( SquadronName, Zone, FloorAltitude, CeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageMinSpeed, EngageMaxSpeed, AltType )
+  
+    local DefenderSquadron = self:GetSquadron( SquadronName )
+
+    DefenderSquadron.CAS = DefenderSquadron.CAS or {}
+    
+    local CasPatrol = DefenderSquadron.CAS
+    CasPatrol.Name = SquadronName
+    CasPatrol.Zone = Zone
+    CasPatrol.FloorAltitude = FloorAltitude
+    CasPatrol.CeilingAltitude = CeilingAltitude
+    CasPatrol.PatrolMinSpeed = PatrolMinSpeed
+    CasPatrol.PatrolMaxSpeed = PatrolMaxSpeed
+    CasPatrol.EngageMinSpeed = EngageMinSpeed
+    CasPatrol.EngageMaxSpeed = EngageMaxSpeed
+    CasPatrol.AltType = AltType
+    CasPatrol.Patrol = true
+
+    self:SetSquadronPatrolInterval( SquadronName, self.DefenderDefault.PatrolLimit, self.DefenderDefault.PatrolMinSeconds, self.DefenderDefault.PatrolMaxSeconds, 1, "CAS" )
+    
+    self:F( { Cas = CasPatrol } )
   end
   
 
@@ -1313,8 +1330,52 @@ do -- AI_A2G_DISPATCHER
     Bai.Name = SquadronName
     Bai.EngageMinSpeed = EngageMinSpeed
     Bai.EngageMaxSpeed = EngageMaxSpeed
+    Bai.Defend = true
     
     self:F( { Bai = Bai } )
+  end
+  
+  
+  --- Set a Bai patrol for a Squadron.
+  -- The Bai patrol will start a patrol of the aircraft at a specified zone, and will engage when commanded.
+  -- @param #AI_A2G_DISPATCHER self
+  -- @param #string SquadronName The squadron name.
+  -- @param Core.Zone#ZONE_BASE Zone The @{Zone} object derived from @{Core.Zone#ZONE_BASE} that defines the zone wherein the Patrol will be executed.
+  -- @param #number FloorAltitude The minimum altitude at which the cap can be executed.
+  -- @param #number CeilingAltitude the maximum altitude at which the cap can be executed.
+  -- @param #number PatrolMinSpeed The minimum speed at which the cap can be executed.
+  -- @param #number PatrolMaxSpeed The maximum speed at which the cap can be executed.
+  -- @param #number EngageMinSpeed The minimum speed at which the engage can be executed.
+  -- @param #number EngageMaxSpeed The maximum speed at which the engage can be executed.
+  -- @param #number AltType The altitude type, which is a string "BARO" defining Barometric or "RADIO" defining radio controlled altitude.
+  -- @return #AI_A2G_DISPATCHER
+  -- @usage
+  -- 
+  --        -- Bai Patrol Squadron execution.
+  --        PatrolZoneEast = ZONE_POLYGON:New( "Patrol Zone East", GROUP:FindByName( "Patrol Zone East" ) )
+  --        A2GDispatcher:SetSquadronBaiPatrol( "Mineralnye", PatrolZoneEast, 4000, 10000, 500, 600, 800, 900 )
+  --        
+  function AI_A2G_DISPATCHER:SetSquadronBaiPatrol( SquadronName, Zone, FloorAltitude, CeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageMinSpeed, EngageMaxSpeed, AltType )
+  
+    local DefenderSquadron = self:GetSquadron( SquadronName )
+
+    DefenderSquadron.BAI = DefenderSquadron.BAI or {}
+    
+    local BaiPatrol = DefenderSquadron.BAI
+    BaiPatrol.Name = SquadronName
+    BaiPatrol.Zone = Zone
+    BaiPatrol.FloorAltitude = FloorAltitude
+    BaiPatrol.CeilingAltitude = CeilingAltitude
+    BaiPatrol.PatrolMinSpeed = PatrolMinSpeed
+    BaiPatrol.PatrolMaxSpeed = PatrolMaxSpeed
+    BaiPatrol.EngageMinSpeed = EngageMinSpeed
+    BaiPatrol.EngageMaxSpeed = EngageMaxSpeed
+    BaiPatrol.AltType = AltType
+    BaiPatrol.Patrol = true
+
+    self:SetSquadronPatrolInterval( SquadronName, self.DefenderDefault.PatrolLimit, self.DefenderDefault.PatrolMinSeconds, self.DefenderDefault.PatrolMaxSeconds, 1, "BAI" )
+    
+    self:F( { Bai = BaiPatrol } )
   end
   
 
@@ -1399,7 +1460,7 @@ do -- AI_A2G_DISPATCHER
   --- Sets the default grouping of new airplanes spawned.
   -- Grouping will trigger how new airplanes will be grouped if more than one airplane is spawned for defense.
   -- @param #AI_A2G_DISPATCHER self
-  -- @param #number Grouping The level of grouping that will be applied of the CAP or GCI defenders. 
+  -- @param #number Grouping The level of grouping that will be applied of the Patrol or GCI defenders. 
   -- @usage:
   -- 
   --   local A2GDispatcher = AI_A2G_DISPATCHER:New( ... )
@@ -1421,7 +1482,7 @@ do -- AI_A2G_DISPATCHER
   -- Grouping will trigger how new airplanes will be grouped if more than one airplane is spawned for defense.
   -- @param #AI_A2G_DISPATCHER self
   -- @param #string SquadronName The name of the squadron.
-  -- @param #number Grouping The level of grouping that will be applied of the CAP or GCI defenders. 
+  -- @param #number Grouping The level of grouping that will be applied of the Patrol or GCI defenders. 
   -- @usage:
   -- 
   --   local A2GDispatcher = AI_A2G_DISPATCHER:New( ... )
@@ -2064,48 +2125,23 @@ do -- AI_A2G_DISPATCHER
   end
 
   
-  --- Creates an SWEEP task when there are targets for it.
-  -- @param #AI_A2G_DISPATCHER self
-  -- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
-  -- @return Core.Set#SET_UNIT TargetSetUnit: The target set of units.
-  -- @return #nil If there are no targets to be set.
-  function AI_A2G_DISPATCHER:EvaluateSWEEP( DetectedItem )
-    self:F( { DetectedItem.ItemID } )
-  
-    local DetectedSet = DetectedItem.Set
-    local DetectedZone = DetectedItem.Zone
-
-
-    if DetectedItem.IsDetected == false then
-
-      -- Here we're doing something advanced... We're copying the DetectedSet.
-      local TargetSetUnit = SET_UNIT:New()
-      TargetSetUnit:SetDatabase( DetectedSet )
-      TargetSetUnit:FilterOnce() -- Filter but don't do any events!!! Elements are added manually upon each detection.
-    
-      return TargetSetUnit
-    end
-    
-    return nil
-  end
-
   ---
   -- @param #AI_A2G_DISPATCHER self
-  function AI_A2G_DISPATCHER:CountCapAirborne( SquadronName )
+  function AI_A2G_DISPATCHER:CountPatrolAirborne( SquadronName, DefenseTaskType )
 
-    local CapCount = 0
+    local PatrolCount = 0
     
     local DefenderSquadron = self.DefenderSquadrons[SquadronName]
     if DefenderSquadron then
       for AIGroup, DefenderTask in pairs( self:GetDefenderTasks() ) do
         if DefenderTask.SquadronName == SquadronName then
-          if DefenderTask.Type == "CAP" then
+          if DefenderTask.Type == DefenseTaskType then
             if AIGroup:IsAlive() then
-              -- Check if the CAP is patrolling or engaging. If not, this is not a valid CAP, even if it is alive!
-              -- The CAP could be damaged, lost control, or out of fuel!
+              -- Check if the Patrol is patrolling or engaging. If not, this is not a valid Patrol, even if it is alive!
+              -- The Patrol could be damaged, lost control, or out of fuel!
               if DefenderTask.Fsm:Is( "Patrolling" ) or DefenderTask.Fsm:Is( "Engaging" ) or DefenderTask.Fsm:Is( "Refuelling" )
                     or DefenderTask.Fsm:Is( "Started" ) then
-                CapCount = CapCount + 1
+                PatrolCount = PatrolCount + 1
               end
             end
           end
@@ -2113,7 +2149,7 @@ do -- AI_A2G_DISPATCHER
       end
     end
 
-    return CapCount
+    return PatrolCount
   end
   
   
@@ -2173,7 +2209,7 @@ do -- AI_A2G_DISPATCHER
           local DefenderTask = self:GetDefenderTask( FriendlyGroup )
           if DefenderTask then
             -- The Task should be SEAD
-            if DefenderTask.Type == "SEAD" or DefenderTask.Type == "CAS" or DefenderTask.Type == "BAI" then
+            if true then -- TODO: fix this to the correct DefenderTaskType
               -- If there is no target, then add the AIGroup to the ResultAIGroups for Engagement to the AttackerSet
               if DefenderTask.Target == nil then
                 if DefenderTask.Fsm:Is( "Returning" )
@@ -2182,50 +2218,6 @@ do -- AI_A2G_DISPATCHER
                   Friendlies[FriendlyGroup] = FriendlyGroup
                   DefenderCount = DefenderCount + FriendlyGroup:GetSize()
                   self:F( { Friendly = FriendlyGroup:GetName(), FriendlyDistance = FriendlyDistance } )
-                end
-              end
-            end
-          end 
-        end
-      else
-        break
-      end
-    end
-
-    return Friendlies
-  end
-
-
-  ---
-  -- @param #AI_A2G_DISPATCHER self
-  function AI_A2G_DISPATCHER:CountDefendersToBeEngaged( AttackerDetection, DefenderCount )
-  
-    local Friendlies = nil
-
-    local AttackerSet = AttackerDetection.Set
-    local AttackerCount = AttackerSet:Count()
-
-    local DefenderFriendlies = self:GetAIFriendliesNearBy( AttackerDetection )
-    
-    for FriendlyDistance, AIFriendly in UTILS.spairs( DefenderFriendlies or {} ) do
-      -- We only allow to ENGAGE targets as long as the Units on both sides are balanced.
-      if AttackerCount > DefenderCount then 
-        local Friendly = AIFriendly:GetGroup() -- Wrapper.Group#GROUP
-        if Friendly and Friendly:IsAlive() then
-          -- Ok, so we have a friendly near the potential target.
-          -- Now we need to check if the AIGroup has a Task.
-          local DefenderTask = self:GetDefenderTask( Friendly )
-          if DefenderTask then
-            -- The Task should be CAP or GCI
-            if DefenderTask.Type == "CAP" or DefenderTask.Type == "GCI" then
-              -- If there is no target, then add the AIGroup to the ResultAIGroups for Engagement to the AttackerSet
-              if DefenderTask.Target == nil then
-                if DefenderTask.Fsm:Is( "Returning" )
-                or DefenderTask.Fsm:Is( "Patrolling" ) then
-                  Friendlies = Friendlies or {}
-                  Friendlies[Friendly] = Friendly
-                  DefenderCount = DefenderCount + Friendly:GetSize()
-                  self:F( { Friendly = Friendly:GetName(), FriendlyDistance = FriendlyDistance } )
                 end
               end
             end
@@ -2251,7 +2243,7 @@ do -- AI_A2G_DISPATCHER
     
     if self:IsSquadronVisible( SquadronName ) then
     
-      -- Here we CAP the new planes.
+      -- Here we Patrol the new planes.
       -- The Resources table is filled in advance.
       local TemplateID = math.random( 1, #DefenderSquadron.Spawn ) -- Choose the template.
   
@@ -2261,20 +2253,20 @@ do -- AI_A2G_DISPATCHER
       -- New we will form the group to spawn in.
       -- We search for the first free resource matching the template.
       local DefenderUnitIndex = 1
-      local DefenderCAPTemplate = nil
+      local DefenderPatrolTemplate = nil
       local DefenderName = nil
       for GroupName, DefenderGroup in pairs( DefenderSquadron.Resources[TemplateID] or {} ) do
         self:F( { GroupName = GroupName } )
         local DefenderTemplate = _DATABASE:GetGroupTemplate( GroupName )
         if DefenderUnitIndex == 1 then
-          DefenderCAPTemplate = UTILS.DeepCopy( DefenderTemplate )
-          self.DefenderCAPIndex = self.DefenderCAPIndex + 1
-          DefenderCAPTemplate.name = SquadronName .. "#" .. self.DefenderCAPIndex .. "#" .. GroupName
-          DefenderName = DefenderCAPTemplate.name
+          DefenderPatrolTemplate = UTILS.DeepCopy( DefenderTemplate )
+          self.DefenderPatrolIndex = self.DefenderPatrolIndex + 1
+          DefenderPatrolTemplate.name = SquadronName .. "#" .. self.DefenderPatrolIndex .. "#" .. GroupName
+          DefenderName = DefenderPatrolTemplate.name
         else
-          -- Add the unit in the template to the DefenderCAPTemplate.
+          -- Add the unit in the template to the DefenderPatrolTemplate.
           local DefenderUnitTemplate = DefenderTemplate.units[1]
-          DefenderCAPTemplate.units[DefenderUnitIndex] = DefenderUnitTemplate
+          DefenderPatrolTemplate.units[DefenderUnitIndex] = DefenderUnitTemplate
         end
         DefenderUnitIndex = DefenderUnitIndex + 1
         DefenderSquadron.Resources[TemplateID][GroupName] = nil
@@ -2284,15 +2276,15 @@ do -- AI_A2G_DISPATCHER
         
       end 
       
-      if DefenderCAPTemplate then
+      if DefenderPatrolTemplate then
         local TakeoffMethod = self:GetSquadronTakeoff( SquadronName )
         local SpawnGroup = GROUP:Register( DefenderName )
-        DefenderCAPTemplate.lateActivation = nil
-        DefenderCAPTemplate.uncontrolled = nil
+        DefenderPatrolTemplate.lateActivation = nil
+        DefenderPatrolTemplate.uncontrolled = nil
         local Takeoff = self:GetSquadronTakeoff( SquadronName )
-        DefenderCAPTemplate.route.points[1].type   = GROUPTEMPLATE.Takeoff[Takeoff][1] -- type
-        DefenderCAPTemplate.route.points[1].action = GROUPTEMPLATE.Takeoff[Takeoff][2] -- action
-        local Defender = _DATABASE:Spawn( DefenderCAPTemplate )
+        DefenderPatrolTemplate.route.points[1].type   = GROUPTEMPLATE.Takeoff[Takeoff][1] -- type
+        DefenderPatrolTemplate.route.points[1].action = GROUPTEMPLATE.Takeoff[Takeoff][2] -- action
+        local Defender = _DATABASE:Spawn( DefenderPatrolTemplate )
       
         self:AddDefenderToSquadron( DefenderSquadron, Defender, DefenderGrouping )
         return Defender, DefenderGrouping
@@ -2316,72 +2308,65 @@ do -- AI_A2G_DISPATCHER
   
   ---
   -- @param #AI_A2G_DISPATCHER self
-  function AI_A2G_DISPATCHER:onafterCAP( From, Event, To, SquadronName )
+  function AI_A2G_DISPATCHER:onafterPatrol( From, Event, To, SquadronName, DefenseTaskType )
   
     self:F({SquadronName = SquadronName})
-    self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
-    self.DefenderSquadrons[SquadronName].Cap = self.DefenderSquadrons[SquadronName].Cap or {}
     
-    local DefenderSquadron = self:CanCAP( SquadronName )
+    local DefenderSquadron, Patrol = self:CanPatrol( SquadronName, DefenseTaskType )
     
-    if DefenderSquadron then
-  
-      local Cap = DefenderSquadron.Cap
-    
-      if Cap then
+    if Patrol then
 
-        local DefenderCAP, DefenderGrouping = self:ResourceActivate( DefenderSquadron )    
-        
-        if DefenderCAP then
-  
-          local Fsm = AI_A2G_CAP:New( DefenderCAP, Cap.Zone, Cap.FloorAltitude, Cap.CeilingAltitude, Cap.PatrolMinSpeed, Cap.PatrolMaxSpeed, Cap.EngageMinSpeed, Cap.EngageMaxSpeed, Cap.AltType )
-          Fsm:SetDispatcher( self )
-          Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
-          Fsm:SetFuelThreshold( DefenderSquadron.FuelThreshold or self.DefenderDefault.FuelThreshold, 60 )
-          Fsm:SetDamageThreshold( self.DefenderDefault.DamageThreshold )
-          Fsm:SetDisengageRadius( self.DisengageRadius )
-          Fsm:SetTanker( DefenderSquadron.TankerName or self.DefenderDefault.TankerName )
-          Fsm:Start()
-  
-          self:SetDefenderTask( SquadronName, DefenderCAP, "CAP", Fsm )
+      local DefenderPatrol, DefenderGrouping = self:ResourceActivate( DefenderSquadron )    
+      
+      if DefenderPatrol then
 
-          function Fsm:onafterTakeoff( Defender, From, Event, To )
-            self:F({"CAP Birth", Defender:GetName()})
-            --self:GetParent(self).onafterBirth( self, Defender, From, Event, To )
-            
-            local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
-            local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
+        local Fsm = AI_A2G_PATROL:New( DefenderPatrol, Patrol.Zone, Patrol.FloorAltitude, Patrol.CeilingAltitude, Patrol.PatrolMinSpeed, Patrol.PatrolMaxSpeed, Patrol.EngageMinSpeed, Patrol.EngageMaxSpeed, Patrol.AltType )
+        Fsm:SetDispatcher( self )
+        Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
+        Fsm:SetFuelThreshold( DefenderSquadron.FuelThreshold or self.DefenderDefault.FuelThreshold, 60 )
+        Fsm:SetDamageThreshold( self.DefenderDefault.DamageThreshold )
+        Fsm:SetDisengageRadius( self.DisengageRadius )
+        Fsm:SetTanker( DefenderSquadron.TankerName or self.DefenderDefault.TankerName )
+        Fsm:Start()
 
-            if Squadron then
-              Fsm:__Patrol( 2 ) -- Start Patrolling
-            end
+        self:SetDefenderTask( SquadronName, DefenderPatrol, DefenseTaskType, Fsm )
+
+        function Fsm:onafterTakeoff( Defender, From, Event, To )
+          self:F({"Patrol Birth", Defender:GetName()})
+          --self:GetParent(self).onafterBirth( self, Defender, From, Event, To )
+          
+          local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
+          local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
+
+          if Squadron then
+            Fsm:__Patrol( 2 ) -- Start Patrolling
           end
-  
-          function Fsm:onafterRTB( Defender, From, Event, To )
-            self:F({"CAP RTB", Defender:GetName()})
-            self:GetParent(self).onafterRTB( self, Defender, From, Event, To )
-            local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
-            Dispatcher:ClearDefenderTaskTarget( Defender )
+        end
+
+        function Fsm:onafterRTB( Defender, From, Event, To )
+          self:F({"Patrol RTB", Defender:GetName()})
+          self:GetParent(self).onafterRTB( self, Defender, From, Event, To )
+          local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
+          Dispatcher:ClearDefenderTaskTarget( Defender )
+        end
+
+        --- @param #AI_A2G_DISPATCHER self
+        function Fsm:onafterHome( Defender, From, Event, To, Action )
+          self:F({"Patrol Home", Defender:GetName()})
+          self:GetParent(self).onafterHome( self, Defender, From, Event, To )
+          
+          local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
+          local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
+
+          if Action and Action == "Destroy" then
+            Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
+            Defender:Destroy()
           end
-  
-          --- @param #AI_A2G_DISPATCHER self
-          function Fsm:onafterHome( Defender, From, Event, To, Action )
-            self:F({"CAP Home", Defender:GetName()})
-            self:GetParent(self).onafterHome( self, Defender, From, Event, To )
-            
-            local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
-            local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-  
-            if Action and Action == "Destroy" then
-              Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
-              Defender:Destroy()
-            end
-            
-            if Dispatcher:GetSquadronLanding( Squadron.Name ) == AI_A2G_DISPATCHER.Landing.NearAirbase then
-              Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
-              Defender:Destroy()
-              self:ParkDefender( Squadron, Defender )
-            end
+          
+          if Dispatcher:GetSquadronLanding( Squadron.Name ) == AI_A2G_DISPATCHER.Landing.NearAirbase then
+            Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
+            Defender:Destroy()
+            self:ParkDefender( Squadron, Defender )
           end
         end
       end
@@ -2392,7 +2377,7 @@ do -- AI_A2G_DISPATCHER
 
   ---
   -- @param #AI_A2G_DISPATCHER self
-  function AI_A2G_DISPATCHER:onafterENGAGE( From, Event, To, AttackerDetection, Defenders )
+  function AI_A2G_DISPATCHER:onafterEngage( From, Event, To, AttackerDetection, Defenders )
   
     if Defenders then
 
@@ -2409,7 +2394,7 @@ do -- AI_A2G_DISPATCHER
 
   ---
   -- @param #AI_A2G_DISPATCHER self
-  function AI_A2G_DISPATCHER:onafterDEFEND( From, Event, To, AttackerDetection, DefendersMissing, DefenderFriendlies, DefenseTaskType )
+  function AI_A2G_DISPATCHER:onafterDefend( From, Event, To, AttackerDetection, DefendersMissing, DefenderFriendlies, DefenseTaskType )
 
     self:F( { From, Event, To, AttackerDetection.Index, DefendersMissing, DefenderFriendlies } )
 
@@ -2469,7 +2454,7 @@ do -- AI_A2G_DISPATCHER
         
         if ClosestDefenderSquadronName then
         
-          local DefenderSquadron, Defense = self:CanDEFEND( ClosestDefenderSquadronName, DefenseTaskType )
+          local DefenderSquadron, Defense = self:CanDefend( ClosestDefenderSquadronName, DefenseTaskType )
           
           if Defense then
   
@@ -2757,7 +2742,7 @@ do -- AI_A2G_DISPATCHER
         local DistanceProbability = ( self.DefenseDistance / EvaluateDistance * self.DefenseReactivity )
         local DefenseProbability = math.random()
         
-        self:F({DistanceProbability=DistanceProbability,DefenseProbability=DefenseProbability})
+        self:F( { DistanceProbability = DistanceProbability, DefenseProbability = DefenseProbability } )
         
         if DefenseProbability <= DistanceProbability / ( 300 / 30 ) then
           DefenseCoordinate = EvaluateCoordinate
@@ -2770,7 +2755,7 @@ do -- AI_A2G_DISPATCHER
           local DefendersMissing, Friendlies = self:Evaluate_SEAD( DetectedItem ) -- Returns a SET_UNIT with the SEAD targets to be engaged...
           if DefendersMissing and DefendersMissing > 0 then
             self:F( { SeadGroups = Friendlies } )
-            self:__DEFEND( Delay, DetectedItem, DefendersMissing, Friendlies, "SEAD", DefenseCoordinate )
+            self:__Defend( Delay, DetectedItem, DefendersMissing, Friendlies, "SEAD", DefenseCoordinate )
             Delay = Delay + 1
           end
         end
@@ -2779,7 +2764,7 @@ do -- AI_A2G_DISPATCHER
           local DefendersMissing, Friendlies = self:Evaluate_CAS( DetectedItem ) -- Returns a SET_UNIT with the CAS targets to be engaged...
           if DefendersMissing and DefendersMissing > 0 then
             self:F( { CasGroups = Friendlies } )
-            self:__DEFEND( Delay, DetectedItem, DefendersMissing, Friendlies, "CAS", DefenseCoordinate )
+            self:__Defend( Delay, DetectedItem, DefendersMissing, Friendlies, "CAS", DefenseCoordinate )
             Delay = Delay + 1
           end
         end
@@ -2788,7 +2773,7 @@ do -- AI_A2G_DISPATCHER
           local DefendersMissing, Friendlies = self:Evaluate_BAI( DetectedItem ) -- Returns a SET_UNIT with the CAS targets to be engaged...
           if DefendersMissing and DefendersMissing > 0 then
             self:F( { BaiGroups = Friendlies } )
-            self:__DEFEND( Delay, DetectedItem, DefendersMissing, Friendlies, "BAI", DefenseCoordinate )
+            self:__Defend( Delay, DetectedItem, DefendersMissing, Friendlies, "BAI", DefenseCoordinate )
             Delay = Delay + 1
           end
         end
@@ -2952,11 +2937,13 @@ do
     return FriendliesCount, FriendlyTypesReport
   end
 
-  --- Schedules a new CAP for the given SquadronName.
+  --- Schedules a new Patrol for the given SquadronName.
   -- @param #AI_A2G_DISPATCHER self
   -- @param #string SquadronName The squadron name.
-  function AI_A2G_DISPATCHER:SchedulerCAP( SquadronName )
-    self:CAP( SquadronName )
+  function AI_A2G_DISPATCHER:SchedulerPatrol( SquadronName )
+    local PatrolTaskTypes = { "SEAD", "CAS", "BAI" }
+    local PatrolTaskType = PatrolTaskTypes[math.random(1,3)]
+    self:Patrol( SquadronName, PatrolTaskType )    
   end
 
 end
@@ -3122,7 +3109,7 @@ do
   --   
   -- You can change or add a CAP zone by using the inherited methods from AI\_A2G\_DISPATCHER:
   -- 
-  -- The method @{#AI_A2G_DISPATCHER.SetSquadronCap}() defines a CAP execution for a squadron.
+  -- The method @{#AI_A2G_DISPATCHER.SetSquadronPatrol}() defines a CAP execution for a squadron.
   -- 
   -- Setting-up a CAP zone also requires specific parameters:
   -- 
@@ -3133,14 +3120,14 @@ do
   -- 
   -- These define how the squadron will perform the CAP while partrolling. Different terrain types requires different types of CAP. 
   -- 
-  -- The @{#AI_A2G_DISPATCHER.SetSquadronCapInterval}() method specifies **how much** and **when** CAP flights will takeoff.
+  -- The @{#AI_A2G_DISPATCHER.SetSquadronPatrolInterval}() method specifies **how much** and **when** CAP flights will takeoff.
   -- 
   -- It is recommended not to overload the air defense with CAP flights, as these will decrease the performance of the overall system. 
   -- 
   -- For example, the following setup will create a CAP for squadron "Sochi":
   -- 
-  --    A2GDispatcher:SetSquadronCap( "Sochi", CAPZoneWest, 4000, 8000, 600, 800, 800, 1200, "BARO" )
-  --    A2GDispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
+  --    A2GDispatcher:SetSquadronPatrol( "Sochi", CAPZoneWest, 4000, 8000, 600, 800, 800, 1200, "BARO" )
+  --    A2GDispatcher:SetSquadronPatrolInterval( "Sochi", 2, 30, 120, 1 )
   -- 
   -- ### 2.4) Each airbase will perform GCI when required, with the following parameters:
   -- 
@@ -3227,8 +3214,8 @@ do
   -- @param #AI_A2G_GCICAP self
   -- @param #string EWRPrefixes A list of prefixes that of groups that setup the Early Warning Radar network.
   -- @param #string TemplatePrefixes A list of template prefixes.
-  -- @param #string CapPrefixes A list of CAP zone prefixes (polygon zones).
-  -- @param #number CapLimit A number of how many CAP maximum will be spawned.
+  -- @param #string PatrolPrefixes A list of CAP zone prefixes (polygon zones).
+  -- @param #number PatrolLimit A number of how many CAP maximum will be spawned.
   -- @param #number GroupingRadius The radius in meters wherein detected planes are being grouped as one target area. 
   -- For airplanes, 6000 (6km) is recommended, and is also the default value of this parameter.
   -- @param #number EngageRadius The radius in meters wherein detected airplanes will be engaged by airborne defenders without a task.
@@ -3308,7 +3295,7 @@ do
   -- 
   --   A2GDispatcher = AI_A2G_GCICAP:New( { "DF CCCP" }, { "SQ CCCP" }, nil, nil, nil, nil, nil, 30 )  
   --   
-  function AI_A2G_GCICAP:New( EWRPrefixes, TemplatePrefixes, CapPrefixes, CapLimit, GroupingRadius, EngageRadius, GciRadius, ResourceCount )
+  function AI_A2G_GCICAP:New( EWRPrefixes, TemplatePrefixes, PatrolPrefixes, PatrolLimit, GroupingRadius, EngageRadius, GciRadius, ResourceCount )
 
     local EWRSetGroup = SET_GROUP:New()
     EWRSetGroup:FilterPrefixes( EWRPrefixes )
@@ -3370,7 +3357,7 @@ do
     -- CAP will be launched from there.
     
     self.CAPTemplates = SET_GROUP:New()
-    self.CAPTemplates:FilterPrefixes( CapPrefixes )
+    self.CAPTemplates:FilterPrefixes( PatrolPrefixes )
     self.CAPTemplates:FilterOnce()
     
     self:I( "Setting up CAP ..." )    
@@ -3396,8 +3383,8 @@ do
       end
       if AirbaseClosest then
         self:I( { CAPAirbase = AirbaseClosest:GetName() } )    
-        self:SetSquadronCap( AirbaseClosest:GetName(), CAPZone, 6000, 10000, 500, 800, 800, 1200, "RADIO" )
-        self:SetSquadronCapInterval( AirbaseClosest:GetName(), CapLimit, 300, 600, 1 )
+        self:SetSquadronPatrol( AirbaseClosest:GetName(), CAPZone, 6000, 10000, 500, 800, 800, 1200, "RADIO" )
+        self:SetSquadronPatrolInterval( AirbaseClosest:GetName(), PatrolLimit, 300, 600, 1 )
       end          
     end    
 
@@ -3432,8 +3419,8 @@ do
   -- @param #string EWRPrefixes A list of prefixes that of groups that setup the Early Warning Radar network.
   -- @param #string TemplatePrefixes A list of template prefixes.
   -- @param #string BorderPrefix A Border Zone Prefix.
-  -- @param #string CapPrefixes A list of CAP zone prefixes (polygon zones).
-  -- @param #number CapLimit A number of how many CAP maximum will be spawned.
+  -- @param #string PatrolPrefixes A list of CAP zone prefixes (polygon zones).
+  -- @param #number PatrolLimit A number of how many CAP maximum will be spawned.
   -- @param #number GroupingRadius The radius in meters wherein detected planes are being grouped as one target area. 
   -- For airplanes, 6000 (6km) is recommended, and is also the default value of this parameter.
   -- @param #number EngageRadius The radius in meters wherein detected airplanes will be engaged by airborne defenders without a task.
@@ -3522,9 +3509,9 @@ do
   -- 
   --   A2GDispatcher = AI_A2G_GCICAP:NewWithBorder( { "DF CCCP" }, { "SQ CCCP" }, "Border", nil, nil, nil, nil, nil, 30 )  
   --   
-  function AI_A2G_GCICAP:NewWithBorder( EWRPrefixes, TemplatePrefixes, BorderPrefix, CapPrefixes, CapLimit, GroupingRadius, EngageRadius, GciRadius, ResourceCount )
+  function AI_A2G_GCICAP:NewWithBorder( EWRPrefixes, TemplatePrefixes, BorderPrefix, PatrolPrefixes, PatrolLimit, GroupingRadius, EngageRadius, GciRadius, ResourceCount )
 
-    local self = AI_A2G_GCICAP:New( EWRPrefixes, TemplatePrefixes, CapPrefixes, CapLimit, GroupingRadius, EngageRadius, GciRadius, ResourceCount )
+    local self = AI_A2G_GCICAP:New( EWRPrefixes, TemplatePrefixes, PatrolPrefixes, PatrolLimit, GroupingRadius, EngageRadius, GciRadius, ResourceCount )
 
     if BorderPrefix then
       self:SetBorderZone( ZONE_POLYGON:New( BorderPrefix, GROUP:FindByName( BorderPrefix ) ) )

@@ -68,6 +68,7 @@ AI/AI_A2A_Gci.lua
 AI/AI_A2A_Dispatcher.lua
 AI/AI_A2G.lua
 AI/AI_A2G_Engage.lua
+AI/AI_A2G_Patrol.lua
 AI/AI_A2G_Dispatcher.lua
 AI/AI_Patrol.lua
 AI/AI_Cap.lua
