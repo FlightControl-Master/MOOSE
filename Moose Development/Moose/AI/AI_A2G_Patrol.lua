@@ -417,7 +417,7 @@ function AI_A2G_PATROL:onafterEngage( AIPatrol, From, Event, To, AttackSetUnit )
       for AttackUnitID, AttackUnit in pairs( self.AttackSetUnit:GetSet() ) do
         local AttackUnit = AttackUnit -- Wrapper.Unit#UNIT
         self:T( { "Attacking Unit:", AttackUnit:GetName(), AttackUnit:IsAlive(), AttackUnit:IsAir() } )
-        if AttackUnit:IsAlive() and AttackUnit:IsAir() then
+        if AttackUnit:IsAlive() and AttackUnit:IsGround() then
           AttackTasks[#AttackTasks+1] = AIPatrol:TaskAttackUnit( AttackUnit )
         end
       end

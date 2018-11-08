@@ -325,53 +325,53 @@ do -- AI_A2G_DISPATCHER
     
     self:AddTransition( "*", "Defend", "*" )
 
-    --- GCI Handler OnBefore for AI_A2G_DISPATCHER
-    -- @function [parent=#AI_A2G_DISPATCHER] OnBeforeGCI
+    --- Defend Handler OnBefore for AI_A2G_DISPATCHER
+    -- @function [parent=#AI_A2G_DISPATCHER] OnBeforeDefend
     -- @param #AI_A2G_DISPATCHER self
     -- @param #string From
     -- @param #string Event
     -- @param #string To
     -- @return #boolean
     
-    --- GCI Handler OnAfter for AI_A2G_DISPATCHER
-    -- @function [parent=#AI_A2G_DISPATCHER] OnAfterGCI
+    --- Defend Handler OnAfter for AI_A2G_DISPATCHER
+    -- @function [parent=#AI_A2G_DISPATCHER] OnAfterDefend
     -- @param #AI_A2G_DISPATCHER self
     -- @param #string From
     -- @param #string Event
     -- @param #string To
     
-    --- GCI Trigger for AI_A2G_DISPATCHER
-    -- @function [parent=#AI_A2G_DISPATCHER] GCI
+    --- Defend Trigger for AI_A2G_DISPATCHER
+    -- @function [parent=#AI_A2G_DISPATCHER] Defend
     -- @param #AI_A2G_DISPATCHER self
     
-    --- GCI Asynchronous Trigger for AI_A2G_DISPATCHER
-    -- @function [parent=#AI_A2G_DISPATCHER] __GCI
+    --- Defend Asynchronous Trigger for AI_A2G_DISPATCHER
+    -- @function [parent=#AI_A2G_DISPATCHER] __Defend
     -- @param #AI_A2G_DISPATCHER self
     -- @param #number Delay
     
-    self:AddTransition( "*", "ENGAGE", "*" )
+    self:AddTransition( "*", "Engage", "*" )
         
-    --- ENGAGE Handler OnBefore for AI_A2G_DISPATCHER
-    -- @function [parent=#AI_A2G_DISPATCHER] OnBeforeENGAGE
+    --- Engage Handler OnBefore for AI_A2G_DISPATCHER
+    -- @function [parent=#AI_A2G_DISPATCHER] OnBeforeEngage
     -- @param #AI_A2G_DISPATCHER self
     -- @param #string From
     -- @param #string Event
     -- @param #string To
     -- @return #boolean
     
-    --- ENGAGE Handler OnAfter for AI_A2G_DISPATCHER
-    -- @function [parent=#AI_A2G_DISPATCHER] OnAfterENGAGE
+    --- Engage Handler OnAfter for AI_A2G_DISPATCHER
+    -- @function [parent=#AI_A2G_DISPATCHER] OnAfterEngage
     -- @param #AI_A2G_DISPATCHER self
     -- @param #string From
     -- @param #string Event
     -- @param #string To
     
-    --- ENGAGE Trigger for AI_A2G_DISPATCHER
-    -- @function [parent=#AI_A2G_DISPATCHER] ENGAGE
+    --- Engage Trigger for AI_A2G_DISPATCHER
+    -- @function [parent=#AI_A2G_DISPATCHER] Engage
     -- @param #AI_A2G_DISPATCHER self
     
-    --- ENGAGE Asynchronous Trigger for AI_A2G_DISPATCHER
-    -- @function [parent=#AI_A2G_DISPATCHER] __ENGAGE
+    --- Engage Asynchronous Trigger for AI_A2G_DISPATCHER
+    -- @function [parent=#AI_A2G_DISPATCHER] __Engage
     -- @param #AI_A2G_DISPATCHER self
     -- @param #number Delay
     
@@ -618,7 +618,7 @@ do -- AI_A2G_DISPATCHER
   --   
   function AI_A2G_DISPATCHER:SetDefenseRadius( DefenseRadius )
 
-    self.DefenseRadius = DefenseRadius or 40000 
+    self.DefenseRadius = DefenseRadius or 100000 
   
     return self
   end
@@ -765,7 +765,24 @@ do -- AI_A2G_DISPATCHER
   -- @return #table A list of the defender friendlies nearby, sorted by distance.
   function AI_A2G_DISPATCHER:GetDefenderFriendliesNearBy( DetectedItem )
   
-    local DefenderFriendliesNearBy = self.Detection:GetFriendliesDistance( DetectedItem )
+--    local DefenderFriendliesNearBy = self.Detection:GetFriendliesDistance( DetectedItem )
+
+    local DefenderFriendliesNearBy = {}
+    
+    local DetectionCoordinate = self.Detection:GetDetectedItemCoordinate( DetectedItem )
+    
+    local ScanZone = ZONE_RADIUS:New( "ScanZone", DetectionCoordinate:GetVec2(), self.DefenseRadius )
+    
+    ScanZone:Scan( Object.Category.UNIT, { Unit.Category.AIRPLANE, Unit.Category.HELICOPTER } )
+    
+    local DefenderUnits = ScanZone:GetScannedUnits()
+    
+    for DefenderUnitID, DefenderUnit in pairs( DefenderUnits ) do
+      local DefenderUnit = UNIT:FindByName( DefenderUnit:getName() )
+      
+      DefenderFriendliesNearBy[#DefenderFriendliesNearBy+1] = DefenderUnit
+    end
+    
     
     return DefenderFriendliesNearBy
   end
@@ -1154,7 +1171,7 @@ do -- AI_A2G_DISPATCHER
     if DefenderSquadron.Captured == false then -- We can only spawn new defense if the home airbase has not been captured.
     
       if ( not DefenderSquadron.ResourceCount ) or ( DefenderSquadron.ResourceCount and DefenderSquadron.ResourceCount > 0  ) then -- And, if there are sufficient resources.
-        if DefenderSquadron[DefenseTaskType] and DefenderSquadron[DefenseTaskType].Defend == true then
+        if DefenderSquadron[DefenseTaskType] and ( DefenderSquadron[DefenseTaskType].Defend == true ) then
           return DefenderSquadron, DefenderSquadron[DefenseTaskType]
         end
       end
@@ -2381,7 +2398,7 @@ do -- AI_A2G_DISPATCHER
   
     if Defenders then
 
-      for DefenderID, Defender in pairs( Defenders ) do
+      for DefenderID, Defender in pairs( Defenders or {} ) do
 
         local Fsm = self:GetDefenderTaskFsm( Defender )
         Fsm:__Engage( 1, AttackerDetection.Set ) -- Engage on the TargetSetUnit
