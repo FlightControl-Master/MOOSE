@@ -60,11 +60,16 @@ Functional/PseudoATC.lua
 Functional/Warehouse.lua
 
 AI/AI_Balancer.lua
+AI/AI_Air.lua
 AI/AI_A2A.lua
 AI/AI_A2A_Patrol.lua
 AI/AI_A2A_Cap.lua
 AI/AI_A2A_Gci.lua
 AI/AI_A2A_Dispatcher.lua
+AI/AI_A2G.lua
+AI/AI_A2G_Engage.lua
+AI/AI_A2G_Patrol.lua
+AI/AI_A2G_Dispatcher.lua
 AI/AI_Patrol.lua
 AI/AI_Cap.lua
 AI/AI_Cas.lua
