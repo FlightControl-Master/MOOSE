@@ -275,7 +275,7 @@ CARRIERTRAINER.MenuF10={}
 
 --- Carrier trainer class version.
 -- @field #string version
-CARRIERTRAINER.version="0.2.0w"
+CARRIERTRAINER.version="0.2.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1297,7 +1297,7 @@ function CARRIERTRAINER:_CheckWaveOff(glideslopeError, lineupError, AoA)
   -- Too slow or too fast?
   if AoA<6.9 or AoA>9.3 then
     self:I(self.lid.."DEACTIVE! Wave off due to AoA<6.9 or AoA>9.3!")
-    waveoff=false
+    --waveoff=true
   end
 
   return waveoff
