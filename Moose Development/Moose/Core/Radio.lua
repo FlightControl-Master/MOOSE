@@ -364,22 +364,28 @@ end
 -- Use @{#BEACON:StopRadioBeacon}() to stop it.
 -- 
 -- @type BEACON
+-- @field #string ClassName Name of the class "BEACON".
+-- @field Wrapper.Positionable#POSITIONABLE Positionable The @{Positionable} that will receive radio capabilities.
 -- @extends Core.Base#BASE
 BEACON = {
   ClassName = "BEACON",
+  Positionable = nil,
 }
 
---- Create a new BEACON Object. This doesn't activate the beacon, though, use @{#BEACON.AATACAN} or @{#BEACON.Generic}
+--- Create a new BEACON Object. This doesn't activate the beacon, though, use @{#BEACON.AATACAN} or @{#BEACON.Generic}.
 -- If you want to create a BEACON, you probably should use @{Wrapper.Positionable#POSITIONABLE.GetBeacon}() instead.
 -- @param #BEACON self
 -- @param Wrapper.Positionable#POSITIONABLE Positionable The @{Positionable} that will receive radio capabilities.
--- @return #BEACON Beacon
--- @return #nil If Positionable is invalid
+-- @return #BEACON Beacon or #nil if Positionable is invalid.
 function BEACON:New(Positionable)
-  local self = BASE:Inherit(self, BASE:New())
+
+  -- Inherit BASE.
+  local self = BASE:Inherit(self, BASE:New()) --#BEACON
   
+  -- Debug.
   self:F(Positionable)
   
+  -- Set positionable.
   if Positionable:GetPointVec2() then -- It's stupid, but the only way I found to make sure positionable is valid
     self.Positionable = Positionable
     return self
@@ -427,6 +433,84 @@ function BEACON:_TACANToFrequency(TACANChannel, TACANMode)
   
   return (A + TACANChannel - B) * 1000000
 end
+
+--- Activates a TACAN BEACON.
+-- @param #BEACON self
+-- @param #number TACANChannel TACAN channel, i.e. the "10" part in "10Y".
+-- @param #string TACANMode TACAN mode, i.e. the "Y" part in "10Y". Note that AA TACAN are only available on Y Channels.
+-- @param #string Message The Message that is going to be coded in Morse and broadcasted by the beacon.
+-- @param #boolean Bearing If true, beacon provides bearing information. If false (or nil), only distance information is available.
+-- @param #number BeaconDuration How long will the beacon last in seconds. Omit for forever.
+-- @return #BEACON self
+-- @usage
+-- -- Let's create a TACAN Beacon for a tanker
+-- local myUnit = UNIT:FindByName("MyUnit") 
+-- local myBeacon = myUnit:GetBeacon() -- Creates the beacon
+-- 
+-- myBeacon:TACAN(20, "Y", "TEXACO", true) -- Activate the beacon
+function BEACON:TACAN(TACANChannel, TACANMode, Message, Bearing, BeaconDuration)
+  self:F({TACANChannel, Message, Bearing, BeaconDuration})
+  
+  -- Get frequency.     
+  local Frequency = self:_TACANToFrequency(TACANChannel, TACANMode)
+  
+  -- Check.
+  if not Frequency then 
+    self:E({"The passed TACAN channel is invalid, the BEACON is not emitting"})
+    return self
+  end
+  
+  if self.Positionable:IsAir() then
+    --TODO: set TACANMode="Y"
+    self:E({"The POSITIONABLE you want to attach the AA Tacan Beacon is not an aircraft ! The BEACON is not emitting", self.Positionable})
+  end
+  
+  
+  -- Using the beacon type 4 (BEACON_TYPE_TACAN). For System, I'm using 5 (TACAN_TANKER_MODE_Y) if the beacon shows its bearing or 14 (TACAN_AA_MODE_Y) if it does not.
+  local System=14
+  if Bearing then
+    System = 5
+  end
+
+  -- Beacon command https://wiki.hoggitworld.com/view/DCS_command_activateBeacon
+  local beaconcommand={
+    id = "ActivateBeacon",
+    params = {
+      type = 4,                --BEACON_TYPE_TACAN
+      system = System,
+      callsign = Message,
+      frequency = Frequency,
+    }
+  }  
+  
+  -- Debug
+  self:T2({"TACAN BEACON started!"})
+  
+  -- Start beacon.
+  self.Positionable:SetCommand(beaconcommand)
+      
+  -- Stop sheduler
+  if BeaconDuration then -- Schedule the stop of the BEACON if asked by the MD
+    SCHEDULER:New(self, self.StopTACAN, {self}, BeaconDuration)
+  end
+  
+  return self
+end
+
+--- Stops the TACAN BEACON.
+-- @param #BEACON self
+-- @return #BEACON self
+function BEACON:StopTACAN()
+  self:F()
+  if self.Positionable==nil then
+    self:E({"Start the beacon first before stoping it !"})
+  else
+    local commandstop={id='DeactivateBeacon', params={}}
+    self.Positionable:SetCommand(commandstop)
+  end
+  return self
+end
+
 
 
 --- Activates a TACAN BEACON on an Aircraft.
@@ -591,4 +675,7 @@ function BEACON:StopRadioBeacon()
   self:F()
   -- The unique name of the transmission is the class ID
   trigger.action.stopRadioTransmission(tostring(self.ID))
+  return self
 end
+
+

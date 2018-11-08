@@ -27,6 +27,11 @@
 -- @field Wrapper.Unit#UNIT carrier Aircraft carrier unit on which we want to practice.
 -- @field #string carriertype Type name of aircraft carrier.
 -- @field #string alias Alias of the carrier trainer.
+-- @field Core.Radio#BEACON beacon Carrier beacon for TACAN and ICLS.
+-- @field #number TACANchannel TACAN channel.
+-- @field #string TACANmode TACAN mode, i.e. "X" or "Y".
+-- @field Core.Radio#RADIO LSOradio Radio for LSO calls.
+-- @field Core.Radio#RADIO Carrierradio Radio for carrier calls.
 -- @field Core.Zone#ZONE_UNIT startZone Zone in which the pattern approach starts.
 -- @field Core.Zone#ZONE_UNIT giantZone Large zone around the carrier to welcome players.
 -- @field Core.Zone#ZONE_UNIT registerZone Zone behind the carrier to register for a new approach.
@@ -63,6 +68,14 @@ CARRIERTRAINER = {
   carrier      = nil,
   carriertype  = nil,
   alias        = nil,
+  beacon       = nil,
+  TACANchannel = nil,
+  TACANmode    = nil,
+  ICLS         = nil,
+  LSOradio     = nil,
+  LSOfreq      = nil,
+  Carrierradio = nil,
+  Carrierfreq  = nil,
   registerZone = nil,
   startZone    = nil,
   giantZone    = nil,
@@ -76,8 +89,6 @@ CARRIERTRAINER = {
   Wake         =  {},
   Groove       =  {},
   Trap         =  {},
-  TACAN        = nil,
-  ICLS         = nil,
   rwyangle     = -10,
   sterndist    =-100,
   deckheight   =  22,
@@ -264,15 +275,15 @@ CARRIERTRAINER.MenuF10={}
 
 --- Carrier trainer class version.
 -- @field #string version
-CARRIERTRAINER.version="0.2.0"
+CARRIERTRAINER.version="0.2.0w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Add scoring to radio menu.
--- TODO: Optimized debrief.
--- TODO: Add automatic grading.
+-- DONE: Add scoring to radio menu.
+-- DONE: Optimized debrief.
+-- DONE: Add automatic grading.
 -- TODO: Get board numbers.
 -- TODO: Get fuel state in pounds.
 -- TODO: Add user functions.
@@ -312,7 +323,7 @@ function CARRIERTRAINER:New(carriername, alias)
     self:E(text)
     return nil
   end
-    
+      
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("CARRIERTRAINER %s | ", carriername)
   
@@ -321,6 +332,16 @@ function CARRIERTRAINER:New(carriername, alias)
   
   -- Set alias.
   self.alias=alias or carriername
+  
+  -- Get carrier group template.
+  local grouptemplate=self.carrier:GetGroup():GetTemplate()
+  -- TODO: Now I need to get TACAN and ICLS if they were set in the ME.
+  
+  -- Create carrier beacon.
+  self.beacon=BEACON:New(self.carrier)
+  
+  self.Carrierradio=RADIO:New(self.carrier)
+  self.LSOradio=RADIO:New(self.carrier)
   
   if self.carriertype==CARRIERTRAINER.CarrierType.STENNIS then
     self:_InitStennis()
@@ -377,6 +398,41 @@ end
 -- User functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Set TACAN channel of carrier.
+-- @param #CARRIERTRAINER self
+-- @param #number channel TACAN channel.
+-- @param #string mode TACAN mode, i.e. "X" or "Y".
+-- @return #CARRIERTRAINER self
+function CARRIERTRAINER:SetTACAN(channel, mode)
+
+  self.TACANchannel=channel
+  self.TACANmode=mode or "X"
+
+  return self
+end
+
+
+--- Set LSO radio frequency.
+-- @param #CARRIERTRAINER self
+-- @param #number freq Frequency in MHz.
+-- @return #CARRIERTRAINER self
+function CARRIERTRAINER:SetLSOradio(freq)
+
+  self.LSOfreq=freq
+
+  return self
+end
+
+--- Set carrier radio frequency.
+-- @param #CARRIERTRAINER self
+-- @param #number freq Frequency in MHz.
+-- @return #CARRIERTRAINER self
+function CARRIERTRAINER:SetCarrierradio(freq)
+
+  self.Carrierfreq=freq
+
+  return self
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM states
@@ -392,9 +448,13 @@ function CARRIERTRAINER:onafterStart(From, Event, To)
   -- Events are handled my MOOSE.
   self:I(self.lid..string.format("Starting Carrier Training %s for carrier unit %s of type %s.", CARRIERTRAINER.version, self.carrier:GetName(), self.carriertype))
   
+  -- Activate TACAN.
+  self.beacon:TACAN(self.TACANchannel, self.TACANmode, "STN", true, nil)  
+  
   -- Handle events.
   self:HandleEvent(EVENTS.Birth)
   self:HandleEvent(EVENTS.Land)
+  --self:HandleEvent(EVENTS.Crash)
 
   -- Init status check
   self:__Status(1)
@@ -672,7 +732,6 @@ end
 function CARRIERTRAINER:_InitNewRound(playerData)
   self:I(self.lid..string.format("New round for player %s.", playerData.callsign))
   playerData.step=0
-  playerData.score=100
   playerData.groove={}
   playerData.debrief={}
   playerData.patternwo=false
@@ -1027,17 +1086,17 @@ function CARRIERTRAINER:_Groove(playerData)
     
     -- Gather pilot data.
     local groovedata={} --#CARRIERTRAINER.GrooveData
+    groovedata.Step=playerData.step
     groovedata.Alt=alt
     groovedata.AoA=aoa
     groovedata.GSE=self:_Glideslope(playerData)-3.5
     groovedata.LUE=self:_Lineup(playerData)-self.rwyangle
     groovedata.Roll=roll
-    groovedata.Step=playerData.step
-    
+        
     -- Groove 
     playerData.groove.X0=groovedata
     
-    -- Next step: X call the ball.
+    -- Next step: X start & call the ball.
     playerData.step=91
   end
 
@@ -1119,7 +1178,7 @@ function CARRIERTRAINER:_CallTheBall(playerData)
     
   elseif rho<=RIM and playerData.step==93 then
   
-    --TODO: grade for IM
+    -- Debug.
     self:_SendMessageToPlayer("IM", 8, playerData)
     env.info(string.format("FF IM=%d", rho))
     
@@ -1131,8 +1190,10 @@ function CARRIERTRAINER:_CallTheBall(playerData)
   
   elseif rho<=RIC and playerData.step==94 then
 
+    -- Check if player was already waved off.
     if playerData.waveoff==false then
 
+      -- Debug
       self:_SendMessageToPlayer("IC", 8, playerData)
       env.info(string.format("FF IC=%d", rho))
       
@@ -1155,7 +1216,7 @@ function CARRIERTRAINER:_CallTheBall(playerData)
               
         return
       else
-        -- Next step: at the ramp.      
+        -- Next step: AR at the ramp.      
         playerData.step=95
       end
       
@@ -1163,7 +1224,7 @@ function CARRIERTRAINER:_CallTheBall(playerData)
     
   elseif rho<=RAR and playerData.step==95 then
   
-    --TODO: grade for AR
+    -- Debug.
     self:_SendMessageToPlayer("AR", 8, playerData)
     env.info(string.format("FF AR=%d", rho))
     
@@ -1235,8 +1296,8 @@ function CARRIERTRAINER:_CheckWaveOff(glideslopeError, lineupError, AoA)
   
   -- Too slow or too fast?
   if AoA<6.9 or AoA>9.3 then
-    self:I(self.lid.."Wave off due to AoA<6.9 or AoA>9.3!")
-    waveoff=true
+    self:I(self.lid.."DEACTIVE! Wave off due to AoA<6.9 or AoA>9.3!")
+    waveoff=false
   end
 
   return waveoff
@@ -1251,7 +1312,7 @@ function CARRIERTRAINER:_GS(step)
   if step==90 then
     gp="X0"  -- Entering the groove.
   elseif step==91 then
-    gp="XX"  -- Starting the groove.
+    gp="X"  -- Starting the groove.
   elseif step==92 then
     gp="RB"  -- Roger ball call.
   elseif step==93 then
@@ -1490,9 +1551,10 @@ function CARRIERTRAINER:_Debrief(playerData)
 
   -- New approach.
   if playerData.boltered or playerData.waveoff or playerData.patternwo then
+    -- Get heading and distance to register zone ~3 NM astern.
     local heading=playerData.unit:GetCoordinate():HeadingTo(self.registerZone:GetCoordinate())
     local distance=playerData.unit:GetCoordinate():Get2DDistance(self.registerZone:GetCoordinate())
-    local text=string.format("fly heading %d for %d NM to restart the pattern.", heading, UTILS.MetersToNM(distance))
+    local text=string.format("fly heading %d for %d NM to re-enter the pattern.", heading, UTILS.MetersToNM(distance))
     self:_SendMessageToPlayer(text, 10, playerData, false, nil, 30)
   end  
   
@@ -1684,9 +1746,7 @@ function CARRIERTRAINER:_AbortPattern(playerData, X, Z, posData)
   
   -- Pattern wave off!
   playerData.patternwo=true
-  
-  --TODO: set score and grade.
-  
+
   -- Next step debrief.  
   playerData.step=999
 end
@@ -1743,9 +1803,13 @@ end
 function CARRIERTRAINER:_InitStennis()
 
   -- Carrier Parameters.
-  self.rwyangle     = -10
-  self.sterndist    =-150
-  self.deckheight   =  22
+  self.rwyangle   = -10
+  self.sterndist  =-150
+  self.deckheight =  22
+  self.wire1      =-100
+  self.wire2      =-90
+  self.wire3      =-80
+  self.wire4      =-70
 
   --[[
   q0=self.carrier:GetCoordinate():SetAltitude(25)
