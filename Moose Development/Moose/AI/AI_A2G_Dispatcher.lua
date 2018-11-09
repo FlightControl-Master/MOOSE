@@ -397,6 +397,9 @@ do -- AI_A2G_DISPATCHER
     
     self.DefenderPatrolIndex = 0
     
+    self:SetDefenseDistance()
+    self:SetDefenseReactivityMedium()
+    
     self:__Start( 5 )
     
     return self
@@ -519,19 +522,22 @@ do -- AI_A2G_DISPATCHER
     --- @param #AI_A2G_DISPATCHER self
     function AI_A2G_DISPATCHER:SetDefenseReactivityLow()
       self.DefenseReactivity = 0.05
-      self.DefenseDistance = 20000
     end
     
     --- @param #AI_A2G_DISPATCHER self
     function AI_A2G_DISPATCHER:SetDefenseReactivityMedium()
       self.DefenseReactivity = 0.15
-      self.DefenseDistance = 20000
     end
     
     --- @param #AI_A2G_DISPATCHER self
     function AI_A2G_DISPATCHER:SetDefenseReactivityHigh()
       self.DefenseReactivity = 0.5
-      self.DefenseDistance = 20000
+    end
+
+    --- @param #AI_A2G_DISPATCHER self
+    -- @param #number DefensiveDistance The distance in meters from where the evaluation of defense reactivity will be calculated.
+    function AI_A2G_DISPATCHER:SetDefenseDistance( DefensiveDistance )
+      self.DefenseDistance = DefensiveDistance or 60000
     end
   
   end
