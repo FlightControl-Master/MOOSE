@@ -474,7 +474,7 @@ do -- DESIGNATE
     self.Designating = {}
     self:SetDesignateName()
     
-    self.LaseDuration = 60
+    self:SetLaseDuration() -- Default is 120 seconds.
     
     self:SetFlashStatusMenu( false )
     self:SetFlashDetectionMessages( true )
@@ -677,6 +677,14 @@ do -- DESIGNATE
     return self
   end
   
+  --- Set the lase duration for designations.
+  -- @param #DESIGNATE self
+  -- @param #number LaseDuration The time in seconds a lase will continue to hold on target. The default is 120 seconds.
+  -- @return #DESIGNATE
+  function DESIGNATE:SetLaseDuration( LaseDuration )
+    self.LaseDuration = LaseDuration or 120
+    return self
+  end
 
   --- Generate an array of possible laser codes.
   -- Each new lase will select a code from this table.
