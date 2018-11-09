@@ -372,7 +372,7 @@ end
 
 --- Clearing the Task Queue and Setting the Task on the queue from the controllable.
 -- @param #CONTROLLABLE self
--- @param #DCS.Task DCSTask DCS Task array.
+-- @param DCS#Task DCSTask DCS Task array.
 -- @param #number WaitTime Time in seconds, before the task is set.
 -- @return Wrapper.Controllable#CONTROLLABLE self
 function CONTROLLABLE:SetTask( DCSTask, WaitTime )
@@ -640,9 +640,102 @@ function CONTROLLABLE:StartUncontrolled(delay)
   return self
 end
 
+--- Give the CONTROLLABLE the command to activate a beacon. See See https://wiki.hoggitworld.com/view/DCS_command_activateBeacon
+-- For specific beacons like TACAN use the more convenient @{#BEACON} class.
+-- @param #CONTROLLABLE self
+-- @param Core.Radio#BEACON.Type Type Beacon type (VOR, DME, TACAN, RSBN, ILS etc).
+-- @param Core.Radio#BEACON.System System Beacon system (VOR, DME, TACAN, RSBN, ILS etc).
+-- @param #number Frequency Frequency in Hz the beacon is running on. Use @{#UTILS.TACANToFrequency} to generate a frequency for TACAN beacons.
+-- @param #number UnitID The ID of the unit the beacon is attached to. Usefull if more units are in one group.
+-- @param #number Channel Channel the beacon is using. For, e.g. TACAN beacons.
+-- @param #string ModeChannel The TACAN mode of the beacon, i.e. "X" or "Y".
+-- @param #boolean AA If true, create and Air-Air beacon. IF nil, automatically set if CONTROLLABLE is an air unit.
+-- @param #string Callsign Morse code identification callsign.
+-- @param #boolean Bearing If true, beacon provides bearing information (if supported).
+-- @param #number Delay (Optional) Delay in seconds before the beacon is activated.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:CommandActivateBeacon(Type, System, Frequency, UnitID, Channel, ModeChannel, AA, Callsign, Bearing, Delay)
+
+  AA=AA or self:IsAir()
+  UnitID=UnitID or self:GetID()
+  
+  -- Command
+  local CommandActivateBeacon= {
+    id = "ActivateBeacon",
+    params = {
+      ["type"] = Type,
+      ["system"] = System,      
+      ["frequency"] = Frequency,
+      ["unitId"] = UnitID,
+      ["channel"] = Channel,
+      ["modeChannel"] = ModeChannel,
+      ["AA"] = AA,
+      ["callsign"] = Callsign,
+      ["bearing"] = Bearing,
+    }
+  }
+  
+  if Delay and Delay>0 then
+    SCHEDULER:New(nil, self.CommandActivateBeacon, {self, Type, System, Frequency, UnitID, Channel, ModeChannel, AA, Callsign, Bearing}, Delay)    
+  else  
+    self:SetCommand(CommandActivateBeacon)
+  end
+    
+  return self
+end
+
+--- Activate ICLS system of the CONTROLLABLE. The controllable should be an aircraft carrier!
+-- @param #CONTROLLABLE self
+-- @param #number Channel ICLS channel.
+-- @param #number UnitID The ID of the unit the ICLS system is attached to. Useful if more units are in one group.
+-- @param #string Callsign Morse code identification callsign.
+-- @param #number Delay (Optional) Delay in seconds before the ICLS is deactivated.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:CommandActivateICLS(Channel, UnitID, Callsign, Delay)
+  self:F()
+
+  -- Command to activate ICLS system.
+  local CommandActivateICLS= {
+    id = "ActivateICLS",
+    params= {
+      ["type"] = BEACON.Type.ICLS,
+      ["channel"] = Channel,
+      ["unitId"] = UnitID,      
+      ["callsign"] = Callsign,
+    }
+  }
+
+  if Delay and Delay>0 then
+    SCHEDULER:New(nil, self.CommandActivateICLS, {self}, Delay)    
+  else  
+    self:SetCommand(CommandActivateICLS)
+  end
+
+  return self
+end
+
+
+--- Deactivate the active beacon of the CONTROLLABLE.
+-- @param #CONTROLLABLE self
+-- @param #number Delay (Optional) Delay in seconds before the beacon is deactivated.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:CommandDeactivateBeacon(Delay)
+  self:F()
+  
+  -- Command to deactivate 
+  local CommandDeactivateBeacon={id='DeactivateBeacon', params={}}
+
+  if Delay and Delay>0 then
+    SCHEDULER:New(nil, self.CommandActivateBeacon, {self}, Delay)    
+  else  
+    self:SetCommand(CommandDeactivateBeacon)
+  end
+
+  return self
+end
+
+
 -- TASKS FOR AIR CONTROLLABLES
-
-
 --- (AIR) Attack a Controllable.
 -- @param #CONTROLLABLE self
 -- @param Wrapper.Controllable#CONTROLLABLE AttackGroup The Controllable to be attacked.

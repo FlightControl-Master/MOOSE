@@ -680,3 +680,41 @@ function UTILS.VecCross(a, b)
   return {x=a.y*b.z - a.z*b.y, y=a.z*b.x - a.x*b.z, z=a.x*b.y - a.y*b.x}
 end
 
+--- Converts a TACAN Channel/Mode couple into a frequency in Hz.
+-- @param #number TACANChannel The TACAN channel, i.e. the 10 in "10X".
+-- @param #string TACANMode The TACAN mode, i.e. the "X" in "10X".
+-- @return #number Frequency in Hz or #nil if parameters are invalid.
+function UTILS.TACANToFrequency(TACANChannel, TACANMode)
+
+  if type(TACANChannel) ~= "number" then
+    return nil -- error in arguments
+  end
+  if TACANMode ~= "X" and TACANMode ~= "Y" then
+    return nil -- error in arguments
+  end  
+  
+-- This code is largely based on ED's code, in DCS World\Scripts\World\Radio\BeaconTypes.lua, line 137.
+-- I have no idea what it does but it seems to work
+  local A = 1151 -- 'X', channel >= 64
+  local B = 64   -- channel >= 64
+  
+  if TACANChannel < 64 then
+    B = 1
+  end
+  
+  if TACANMode == 'Y' then
+    A = 1025
+    if TACANChannel < 64 then
+      A = 1088
+    end
+  else -- 'X'
+    if TACANChannel < 64 then
+      A = 962
+    end
+  end
+  
+  return (A + TACANChannel - B) * 1000000
+end
+
+
+
