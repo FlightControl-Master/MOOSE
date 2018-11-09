@@ -550,9 +550,9 @@ end
 
 
 
---- Executes a command action
+--- Executes a command action for the CONTROLLABLE.
 -- @param #CONTROLLABLE self
--- @param DCS#Command DCSCommand
+-- @param DCS#Command DCSCommand The command to be executed.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:SetCommand( DCSCommand )
   self:F2( DCSCommand )
@@ -640,8 +640,9 @@ function CONTROLLABLE:StartUncontrolled(delay)
   return self
 end
 
---- Give the CONTROLLABLE the command to activate a beacon. See See https://wiki.hoggitworld.com/view/DCS_command_activateBeacon
+--- Give the CONTROLLABLE the command to activate a beacon. See [DCS_command_activateBeacon](https://wiki.hoggitworld.com/view/DCS_command_activateBeacon) on Hoggit.
 -- For specific beacons like TACAN use the more convenient @{#BEACON} class.
+-- Note that a controllable can only have one beacon activated at a time with the execption of ICLS.
 -- @param #CONTROLLABLE self
 -- @param Core.Radio#BEACON.Type Type Beacon type (VOR, DME, TACAN, RSBN, ILS etc).
 -- @param Core.Radio#BEACON.System System Beacon system (VOR, DME, TACAN, RSBN, ILS etc).
@@ -649,9 +650,9 @@ end
 -- @param #number UnitID The ID of the unit the beacon is attached to. Usefull if more units are in one group.
 -- @param #number Channel Channel the beacon is using. For, e.g. TACAN beacons.
 -- @param #string ModeChannel The TACAN mode of the beacon, i.e. "X" or "Y".
--- @param #boolean AA If true, create and Air-Air beacon. IF nil, automatically set if CONTROLLABLE is an air unit.
+-- @param #boolean AA If true, create and Air-Air beacon. IF nil, automatically set if CONTROLLABLE depending on whether unit is and aircraft or not.
 -- @param #string Callsign Morse code identification callsign.
--- @param #boolean Bearing If true, beacon provides bearing information (if supported).
+-- @param #boolean Bearing If true, beacon provides bearing information - if supported by the unit the beacon is attached to.
 -- @param #number Delay (Optional) Delay in seconds before the beacon is activated.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:CommandActivateBeacon(Type, System, Frequency, UnitID, Channel, ModeChannel, AA, Callsign, Bearing, Delay)
@@ -729,6 +730,25 @@ function CONTROLLABLE:CommandDeactivateBeacon(Delay)
     SCHEDULER:New(nil, self.CommandActivateBeacon, {self}, Delay)    
   else  
     self:SetCommand(CommandDeactivateBeacon)
+  end
+
+  return self
+end
+
+--- Deactivate the ICLS of the CONTROLLABLE.
+-- @param #CONTROLLABLE self
+-- @param #number Delay (Optional) Delay in seconds before the ICLS is deactivated.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:CommandDeactivateICLS(Delay)
+  self:F()
+  
+  -- Command to deactivate 
+  local CommandDeactivateICLS={id='DeactivateICLS', params={}}
+
+  if Delay and Delay>0 then
+    SCHEDULER:New(nil, self.CommandDeactivateICLS, {self}, Delay)    
+  else  
+    self:SetCommand(CommandDeactivateICLS)
   end
 
   return self

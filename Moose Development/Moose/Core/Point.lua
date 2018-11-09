@@ -342,18 +342,18 @@ do -- COORDINATE
     return x - Precision <= self.x and x + Precision >= self.x and z - Precision <= self.z and z + Precision >= self.z   
   end
   
-  --- Returns if the 2 coordinates are at the same 2D position.
+  --- Scan/find objects (units, statics, scenery) within a certain radius around the coordinate using the world.searchObjects() DCS API function.
   -- @param #COORDINATE self
   -- @param #number radius (Optional) Scan radius in meters. Default 100 m.
   -- @param #boolean scanunits (Optional) If true scan for units. Default true.
   -- @param #boolean scanstatics (Optional) If true scan for static objects. Default true.
   -- @param #boolean scanscenery (Optional) If true scan for scenery objects. Default false.
-  -- @return True if units were found.
-  -- @return True if statics were found.
-  -- @return True if scenery objects were found.
-  -- @return Unit objects found.
-  -- @return Static objects found.
-  -- @return Scenery objects found.
+  -- @return #boolean True if units were found.
+  -- @return #boolean True if statics were found.
+  -- @return #boolean True if scenery objects were found.
+  -- @return #table Table of MOOSE @[#Wrapper.Unit#UNIT} objects found.
+  -- @return #table Table of DCS static objects found.
+  -- @return #table Table of DCS scenery objects found.
   function COORDINATE:ScanObjects(radius, scanunits, scanstatics, scanscenery)
     self:F(string.format("Scanning in radius %.1f m.", radius))
 
@@ -405,18 +405,17 @@ do -- COORDINATE
         local ObjectCategory = ZoneObject:getCategory()
         
         -- Check for unit or static objects
-        --if (ObjectCategory == Object.Category.UNIT and ZoneObject:isExist() and ZoneObject:isActive()) then
-        if (ObjectCategory == Object.Category.UNIT and ZoneObject:isExist()) then
+        if ObjectCategory==Object.Category.UNIT and ZoneObject:isExist() then
         
           table.insert(Units, UNIT:Find(ZoneObject))
           gotunits=true
           
-        elseif (ObjectCategory == Object.Category.STATIC and ZoneObject:isExist()) then
+        elseif ObjectCategory==Object.Category.STATIC and ZoneObject:isExist() then
         
           table.insert(Statics, ZoneObject)
           gotstatics=true
           
-        elseif ObjectCategory == Object.Category.SCENERY then
+        elseif ObjectCategory==Object.Category.SCENERY then
         
           table.insert(Scenery, ZoneObject)
           gotscenery=true

@@ -14,7 +14,7 @@
 --
 -- ===
 --
--- ### Authors: **funkyfranky** (MOOSE class implementation and enhancements), **Bankler** (original idea and script) 
+-- ### Authors: **funkyfranky**, **Bankler** (Carrier trainer idea and script) 
 --
 -- @module Functional.Airboss
 -- @image MOOSE.JPG
@@ -34,7 +34,7 @@
 -- @field Core.Radio#RADIO LSOradio Radio for LSO calls.
 -- @field Core.Radio#RADIO Carrierradio Radio for carrier calls.
 -- @field Core.Zone#ZONE_UNIT startZone Zone in which the pattern approach starts.
--- @field Core.Zone#ZONE_UNIT giantZone Large zone around the carrier to welcome players.
+-- @field Core.Zone#ZONE_UNIT carrierZone Large zone around the carrier to welcome players.
 -- @field Core.Zone#ZONE_UNIT registerZone Zone behind the carrier to register for a new approach.
 -- @field #table players Table of players. 
 -- @field #table menuadded Table of units where the F10 radio menu was added.
@@ -49,6 +49,8 @@
 -- @field #number rwyangle Angle of the runway wrt to carrier "nose". For the Stennis ~ -10 degrees.
 -- @field #number sterndist Distance in meters from carrier coordinate to the end of the deck.
 -- @field #number deckheight Height of the deck in meters.
+-- @field #table Qmarshal Queue of marshalling aircraft groups.
+-- @field #table Qpattern Queue of aircraft groups in the landing pattern.
 -- @extends Core.Fsm#FSM
 
 --- Practice Carrier Landings
@@ -79,7 +81,7 @@ AIRBOSS = {
   Carrierfreq  = nil,
   registerZone = nil,
   startZone    = nil,
-  giantZone    = nil,
+  carrierZone    = nil,
   players      =  {},
   menuadded    =  {},
   Upwind       =  {},
@@ -90,7 +92,7 @@ AIRBOSS = {
   Wake         =  {},
   Groove       =  {},
   Trap         =  {},
-  rwyangle     = -10,
+  rwyangle     =  -9,
   sterndist    =-100,
   deckheight   =  22,
   Qpattern     =  {},
@@ -276,7 +278,7 @@ AIRBOSS.MenuF10={}
 
 --- Carrier trainer class version.
 -- @field #string version
-AIRBOSS.version="0.2.1w"
+AIRBOSS.version="0.2.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -312,11 +314,14 @@ function AIRBOSS:New(carriername, alias)
   -- Set carrier unit.
   self.carrier=UNIT:FindByName(carriername)
   
+  -- Carrier zones.
   if self.carrier then
-    -- Carrier zones.
-    self.registerZone = ZONE_UNIT:New("registerZone", self.carrier,  2500, {dx = -5000, dy = 100, relative_to_unit=true})
-    self.startZone    = ZONE_UNIT:New("startZone",    self.carrier,  1000, {dx = -2000, dy = 100, relative_to_unit=true})
-    self.giantZone    = ZONE_UNIT:New("giantZone",    self.carrier, 30000, {dx =  0,    dy = 0,   relative_to_unit=true})
+    -- Zone 5 km astern and 100 m starboard of the carrier with radius of 2.5 km.
+    self.registerZone = ZONE_UNIT:New("registerZone", self.carrier,  2.5*1000, {dx = -5000, dy = 100, relative_to_unit=true})
+    -- Zone 2 km astern and 100 m starboard of the carrier with a radius of 1 km.
+    self.startZone    = ZONE_UNIT:New("startZone",    self.carrier,  1.0*1000, {dx = -2000, dy = 100, relative_to_unit=true})
+    -- Zone around the carrier with a radius of 30 km.
+    self.carrierZone  = ZONE_UNIT:New("carrierZone",  self.carrier, 10.0*1000)
   else
     -- Carrier unit does not exist error.
     local text=string.format("ERROR: Carrier unit %s could not be found! Make sure this UNIT is defined in the mission editor and check the spelling of the unit name carefully.", carriername)
@@ -461,7 +466,7 @@ function AIRBOSS:onafterStart(From, Event, To)
   self:I(self.lid..string.format("Starting Carrier Training %s for carrier unit %s of type %s.", AIRBOSS.version, self.carrier:GetName(), self.carriertype))
   
   -- Activate TACAN.
-  if self.TACANchannel~=nil and self.TACANmolde~=nil then
+  if self.TACANchannel~=nil and self.TACANmode~=nil then
     self.beacon:ActivateTACAN(self.TACANchannel, self.TACANmode, "STN", true)
   end
   
@@ -486,6 +491,9 @@ end
 -- @param #string To To state.
 function AIRBOSS:onafterStatus(From, Event, To)
 
+  -- Scan carrier zone for new aircraft.
+  self:_ScanCarrierZone()
+
   -- Check player status.
   self:_CheckPlayerStatus()
 
@@ -503,7 +511,92 @@ function AIRBOSS:onafterStop(From, Event, To)
   self:UnHandleEvent(EVENTS.Land)
 end
 
---- Carrier trainer event handler for event birth.
+--- Check if new aircraft arrived 
+-- @param #AIRBOSS self
+function AIRBOSS:_ScanCarrierZone()
+
+  env.info("FF Scanning Carrier Zone")
+
+  -- Carrier position.
+  local coord=self.carrier:GetCoordinate()
+  
+  -- Scan units in carrier zone.
+  local _,_,_,unitsin =coord:ScanObjects(10*1000, true, false, false)
+  --local _,_,_,unitsout=coord:ScanObjects(15*1000, true, false, false)
+  
+  for _,_unit in pairs(unitsin) do
+    local unit=_unit --Wrapper.Unit#UNIT
+    
+    if unit:IsAir() then
+    
+      local group=unit:GetGroup()
+      local unitname=unit:GetName()
+      local groupname=group:GetName()
+
+      local text=string.format("In carrier zone: unit=%s group=%s", unitname, groupname)
+      --env.info(text)      
+      
+      if self.Qmarshal[groupname]==nil then
+        
+        env.info("FF marshal group="..groupname)
+        self:_Marshal(group)
+        
+      end
+      
+    end
+  end
+  
+--[[  
+  for _,_unitin in pairs(unitsin) do
+    local unitin=_unitin --Wrapper.Unit#UNIT
+    if unit:IsAir()() then
+      local text=string.format("Aircraft in carrier zone = ", unit:GetName())
+      env.info(text)
+    end
+  end
+]]
+
+end
+
+--- Orbit at a specified position at a specified alititude with a specified speed.
+-- @param #AIRBOSS self
+-- @param Wrapper.Group#GROUP group Group
+function AIRBOSS:_Marshal(group)
+
+  local groupname=group:GetName()
+
+  local Coord=self.carrier:GetCoordinate()
+  local Altitude=UTILS.FeetToMeters(2000)
+  local Speed=UTILS.KnotsToMps(272)
+  
+  local DCSTask={}
+  DCSTask.id="ControlledTask"
+  DCSTask.params={}
+  DCSTask.params.task=group:TaskOrbit(Coord, Altitude, Speed)  
+  DCSTask.params.stopCondition={userFlag=groupname, userFlagValue=1}
+
+  -- Set waypoint landing on Carrier.
+  local wp={}
+  wp[1]=self.carrier:GetCoordinate():SetAltitude(Altitude):WaypointAirTurningPoint(nil, Speed, {DCSTask}, string.format("Marshal @ %d ft %d knots", Altitude, Speed))
+  wp[2]=self.carrier:GetCoordinate():WaypointAirLanding(Speed, AIRBASE:FindByName(self.carrier:GetName()), nil, "Landing")
+  group:WayPointInitialize(wp)
+  group:Route(wp, 0)
+  
+  self.Qmarshal[groupname]=group
+end
+
+
+
+--- Check if new aircraft group arrived. 
+-- @param #AIRBOSS self
+-- @param Wrapper.Group#GROUP group Aircraft group.
+function AIRBOSS:_AddGroupMarshall(group)
+  local groupname=group:GetName()
+  self.Qmarshal[groupname]=group
+  
+end
+
+--- Check current player status.
 -- @param #AIRBOSS self
 function AIRBOSS:_CheckPlayerStatus()
 
@@ -523,7 +616,7 @@ function AIRBOSS:_CheckPlayerStatus()
           self:_DetailedPlayerStatus(playerData)
         end
 
-        if unit:IsInZone(self.giantZone) then
+        if unit:IsInZone(self.carrierZone) then
           
           -- Check if player was previously not inside the zone.
           if playerData.inbigzone==false then
@@ -736,7 +829,7 @@ function AIRBOSS:_InitPlayer(unitname)
   playerData.difficulty=playerData.difficulty or AIRBOSS.Difficulty.NORMAL
   
   -- Player is in the big zone around the carrier.
-  playerData.inbigzone=playerData.unit:IsInZone(self.giantZone)
+  playerData.inbigzone=playerData.unit:IsInZone(self.carrierZone)
 
   -- Init stuff for this round.
   playerData=self:_InitNewRound(playerData)

@@ -480,7 +480,7 @@ end
 -- 
 -- myBeacon:TACAN(20, "Y", "TEXACO", true) -- Activate the beacon
 function BEACON:ActivateTACAN(Channel, Mode, Message, Bearing, Duration)
-  self:F({TACANChannel, Message, Bearing, BeaconDuration})
+  self:I({channel=Channel, mode=Mode, callsign=Message, bearing=Bearing, duration=Duration})
   
   -- Get frequency.
   local Frequency=UTILS.TACANToFrequency(Channel, Mode)
@@ -496,12 +496,6 @@ function BEACON:ActivateTACAN(Channel, Mode, Message, Bearing, Duration)
     self:E({"The POSITIONABLE you want to attach the AA Tacan Beacon is not an aircraft! The BEACON is not emitting.", self.Positionable})
   end
   
-  -- Using the beacon type 4 (BEACON_TYPE_TACAN). For System, I'm using 5 (TACAN_TANKER_MODE_Y) if the beacon shows its bearing or 14 (TACAN_AA_MODE_Y) if it does not.
-  local System=14
-  if Bearing then
-    System = 5
-  end
-
   -- Beacon type.
   local Type=BEACON.Type.TACAN
   
@@ -517,14 +511,14 @@ function BEACON:ActivateTACAN(Channel, Mode, Message, Bearing, Duration)
   -- Attached unit.
   local UnitID=self.Positionable:GetID()
   
-  -- Debug
+  -- Debug.
   self:T({"TACAN BEACON started!"})
     
   -- Start beacon.
   self.Positionable:CommandActivateBeacon(Type, System, Frequency, UnitID, Channel, Mode, AA, Message, Bearing)
       
-  -- Stop sheduler
-  if Duration then -- Schedule the stop of the BEACON if asked by the MD
+  -- Stop sheduler.
+  if Duration then
     self.Positionable:DeactivateBeacon(Duration)
   end
   
