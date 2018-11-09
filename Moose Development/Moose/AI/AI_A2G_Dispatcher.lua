@@ -2207,7 +2207,7 @@ do -- AI_A2G_DISPATCHER
   
   ---
   -- @param #AI_A2G_DISPATCHER self
-  function AI_A2G_DISPATCHER:CountDefenders( AttackerDetection, DefenderCount )
+  function AI_A2G_DISPATCHER:CountDefenders( AttackerDetection, DefenderCount, DefenderTaskType )
   
     local Friendlies = nil
 
@@ -2225,8 +2225,8 @@ do -- AI_A2G_DISPATCHER
           -- Now we need to check if the AIGroup has a Task.
           local DefenderTask = self:GetDefenderTask( FriendlyGroup )
           if DefenderTask then
-            -- The Task should be SEAD
-            if true then -- TODO: fix this to the correct DefenderTaskType
+            -- The Task should be of the same type.
+            if DefenderTaskType == DefenderTask.Type then 
               -- If there is no target, then add the AIGroup to the ResultAIGroups for Engagement to the AttackerSet
               if DefenderTask.Target == nil then
                 if DefenderTask.Fsm:Is( "Returning" )
