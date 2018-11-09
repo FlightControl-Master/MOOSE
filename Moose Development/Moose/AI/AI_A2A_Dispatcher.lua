@@ -1024,13 +1024,15 @@ do -- AI_A2A_DISPATCHER
   --- @param #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:onafterStart( From, Event, To )
 
-    self:GetParent( self ).onafterStart( self, From, Event, To )
+    self:GetParent( self, AI_A2A_DISPATCHER ).onafterStart( self, From, Event, To )
 
     -- Spawn the resources.
     for SquadronName, DefenderSquadron in pairs( self.DefenderSquadrons ) do
       DefenderSquadron.Resource = {}
-      for Resource = 1, DefenderSquadron.ResourceCount do
-        self:ParkDefender( DefenderSquadron )
+      if DefenderSquadron.ResourceCount then
+        for Resource = 1, DefenderSquadron.ResourceCount do
+          self:ParkDefender( DefenderSquadron )
+        end
       end
     end
   end
