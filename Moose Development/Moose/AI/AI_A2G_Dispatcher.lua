@@ -1,26 +1,24 @@
---- **AI** - Manages the process of an automatic A2G defense system based on a detection network, coordinating SEAD, BAI and CAP operations.
+--- **AI** - Manages the process of an automatic A2G defense system based on a detection network of reconnaissance vehicles and air units, coordinating SEAD, BAI and CAP operations.
 -- 
 -- ===
 -- 
 -- Features:
 -- 
 --    * Setup quickly an A2G defense system for a coalition.
---    * Setup (SEAD) Suppression at defined zones to enhance your A2G defenses.
---    * Setup (CAS) Controlled Air Support for nearby enemy ground units.
---    * Setup (BAI) Battleground Air Interdiction for remote enemy ground units and targets.
---    * Define and use an detection network setup by recce.
+--    * Setup multiple defense zones to defend specif points in your battlefield.
+--    * Setup (SEAD) suppression of air defenses to enhance the control of enemy airspace.
+--    * Setup (CAS) Controlled Air Support to attack approach enemy ground units.
+--    * Setup (BAI) Battleground Air Interdiction to attack detected remote enemy ground units and targets.
+--    * Define and use a detection network setup by recce.
 --    * Define defense squadrons at airbases, farps and carriers.
 --    * Enable airbases for A2G defenses.
---    * Add different planes and helicopter types to different squadrons.
+--    * Add different planes and helicopter templates to different squadrons.
 --    * Assign squadrons to execute a specific engagement type depending on threat level of the detected ground enemy unit composition.
---    * Add multiple squadrons to different airbases.
+--    * Add multiple squadrons to different airbases, farps or carriers.
 --    * Define different ranges to engage upon.
---    * Define zones of defense. Detected targets nearby these zones are more critical than other detected targets.
 --    * Establish an automatic in air refuel process for planes using refuel tankers.
 --    * Setup default settings for all squadrons and A2G defenses.
 --    * Setup specific settings for specific squadrons.
---    * Quickly setup an A2G defense system using @{#AI_A2G_SEADCAPBAI}.
---    * Setup a more advanced defense system using @{#AI_A2G_DISPATCHER}.
 -- 
 -- ===
 -- 
@@ -38,92 +36,117 @@
 -- 
 -- # QUICK START GUIDE
 -- 
--- There are basically two classes available to model an A2G defense system.
+-- The following class is available to model an A2G defense system.
 -- 
--- AI\_A2G\_DISPATCHER is the main A2G defense class that models the A2G defense system.
--- AI\_A2G\_GCICAP derives or inherits from AI\_A2G\_DISPATCHER and is a more **noob** user friendly class, but is less flexible.
+-- AI_A2G_DISPATCHER is the main A2G defense class that models the A2G defense system.
 -- 
--- Before you start using the AI\_A2G\_DISPATCHER or AI\_A2G\_GCICAP ask youself the following questions.
+-- Before you start using the AI_A2G_DISPATCHER, ask youself the following questions.
+-- -- 
+-- ## 1. Which coalition am I modeling an A2G defense system for? blue or red?
 -- 
--- ## 0. Do I need AI\_A2G\_DISPATCHER or do I need AI\_A2G\_GCICAP?
--- 
--- AI\_A2G\_GCICAP, automates a lot of the below questions using the mission editor and requires minimal lua scripting.
--- But the AI\_A2G\_GCICAP provides less flexibility and a lot of options are defaulted.
--- With AI\_A2G\_DISPATCHER you can setup a much more **fine grained** A2G defense mechanism, but some more (easy) lua scripting is required.
--- 
--- ## 1. Which Coalition am I modeling an A2G defense system for? blue or red?
--- 
--- One AI\_A2G\_DISPATCHER object can create a defense system for **one coalition**, which is blue or red.
--- If you want to create a **mutual defense system**, for both blue and red, then you need to create **two** AI\_A2G\_DISPATCHER **objects**,
--- each governing their defense system.
+-- One AI_A2G_DISPATCHER object can create a defense system for **one coalition**, which is blue or red.
+-- If you want to create a **mutual defense system**, for both blue and red, then you need to create **two** AI_A2G_DISPATCHER **objects**,
+-- each governing their defense system for one coalition.
 -- 
 --      
--- ## 2. Which type of EWR will I setup? Grouping based per AREA, per TYPE or per UNIT? (Later others will follow).
+-- ## 2. Which type of detection will I setup? Grouping based per AREA, per TYPE or per UNIT? (Later others will follow).
 -- 
--- The MOOSE framework leverages the @{Detection} classes to perform the EWR detection.
--- Several types of @{Detection} classes exist, and the most common characteristics of these classes is that they:
+-- The MOOSE framework leverages the @{Functional.Detection} classes to perform the reconnaissance, detecting enemy units and reporting them to the head quarters.
+-- Several types of @{Functional.Detection} classes exist, and the most common characteristics of these classes is that they:
 -- 
---    * Perform detections from multiple FACs as one co-operating entity.
---    * Communicate with a Head Quarters, which consolidates each detection.
+--    * Perform detections from multiple recce as one co-operating entity.
+--    * Communicate with a @{Tasking.CommandCenter}, which consolidates each detection.
 --    * Groups detections based on a method (per area, per type or per unit).
 --    * Communicates detections.
 -- 
--- ## 3. Which EWR units will be used as part of the detection system? Only Ground or also Airborne?
 -- 
--- Typically EWR networks are setup using 55G6 EWR, 1L13 EWR, Hawk sr and Patriot str ground based radar units. 
--- These radars have different ranges and 55G6 EWR and 1L13 EWR radars are Eastern Bloc units (eg Russia, Ukraine, Georgia) while the Hawk and Patriot radars are Western (eg US).
--- Additionally, ANY other radar capable unit can be part of the EWR network! Also AWACS airborne units, planes, helicopters can help to detect targets, as long as they have radar.
--- The position of these units is very important as they need to provide enough coverage 
--- to pick up enemy aircraft as they approach so that CAP and GCI flights can be tasked to intercept them.
+-- ## 3. Which recce units can be used as part of the detection system? Only Ground or also Airborne?
 -- 
--- ## 4. Is a border required?
+-- Depending on the type of mission you want to achieve, different types of units can be applied to detect ground enemy targets.
+-- Ground based units are very useful to act as a reconnaissance, but they lack sometimes the visibility to detect targets at greater range.
+-- Recce are very useful to acquire the position of enemy ground targets when spread out over the battlefield at strategic positions.
+-- Ground units also have varying detectors, and especially the ground units which have laser guiding missiles can be extremely effective at
+-- detecting targets at great range. The terrain elevation characteristics are a big tool in making ground recce to be more effective.
+-- If you succeed to position recce at higher level terrain providing a broad and far overview of the lower terrain in the distance, then
+-- the recce will be very effective at detecting approaching enemy targets. Therefore, always use the terrain very carefully!
 -- 
--- Is this a cold car or a hot war situation? In case of a cold war situation, a border can be set that will only trigger defenses
--- if the border is crossed by enemy units.
+-- Beside ground level units to use for reconnaissance, air units are also very effective. The are capable of patrolling at great speed
+-- covering a large terrain. However, airborne recce can be vulnerable to air to ground attacks, and you need air superiority to make then
+-- effective. Also the instruments available at the air units play a big role in the effectiveness of the reconnaissance.
+-- Air units which have ground detection capabilities will be much more effective than air units with only visual detection capabilities.
+-- For the red coalition, the Mi-28N and for the blue side, the reaper are such effective reconnaissance airborne units.
 -- 
--- ## 5. What maximum range needs to be checked to allow defenses to engage any attacker?
 -- 
--- A good functioning defense will have a "maximum range" evaluated to the enemy when CAP will be engaged or GCI will be spawned.
+-- ## 4. How do defenses decide to engage on approaching enemy units?
 -- 
--- ## 6. Which Airbases, Carrier Ships, Farps will take part in the defense system for the Coalition?
+-- The A2G dispacher needs you to setup defense coordinates, which are specific coordinates that are strategic positions in the battle field
+-- to be defended. Any ground based enemy approaching to such a defense point, will be engaged for defense by A2G defense units.
+-- The A2G dispatcher provides parameters to setup the defensiveness, meaning, when actually A2G units will engage with the approaching enemy.
+-- For this, a probability distribution model has been created, which models an increased probability that a defense will engage an attacker,
+-- depending on the distance of the attacker to the defense coordinate. There are 3 levels of defense reactivity setup, which are Low, Medium and High.
+-- Defenses will start to consider defensive action when an enemy ground unit is within 60km from a defense point, by default.
+-- But you can change this maximum distance using on of the available methods. The close the attacker is to the defense point, the
+-- higher the probability will be that a defense action will be launched!
 -- 
--- Carefully plan which airbases will take part in the coalition. Color each airbase in the color of the coalition.
 -- 
--- ## 7. Which Squadrons will I create and which name will I give each Squadron?
+-- ## 5. Are defense coordinates and defense reactivity the only parameters?
 -- 
--- The defense system works with Squadrons. Each Squadron must be given a unique name, that forms the **key** to the defense system.
+-- No, depending on the target type, and the threat level of the target, the probability of defense will be higher.
+-- In other words, when a SAM-10 radar emitter is detected, its probabilty for defense will be much higher than when a BMP-1 vehicle is
+-- detected, even when both are at the same distance from a defense coordinate.
+-- This will ensure optimal defenses, SEAD tasks will be much more quicker launched agains radar emitters, to ensure air superiority.
+-- Approaching main battle tanks will be much faster defended upon, than a group of approaching trucks.
+-- 
+-- 
+-- ## 6. Which Squadrons will I create and which name will I give each Squadron?
+-- 
+-- The A2G defense system works with **Squadrons**. Each Squadron must be given a unique name, that forms the **key** to the squadron.
 -- Several options and activities can be set per Squadron.
 -- 
--- ## 8. Where will the Squadrons be located? On Airbases? On Carrier Ships? On Farps?
+-- There are mainly 3 types of defenses: SEAD, CAS and BAI.
+-- 
+-- Suppression of Air Defenses (SEAD) are effective agains radar emitters. Close Air Support (CAS) is launched when the enemy is close near friendly units.
+-- Battleground Air Interdiction (BAI) tasks are launched when there are no friendlies around.
+-- 
+-- Depending on the defense type, different payloads will be needed. See further points on squadron definition.
+-- 
+-- ## 7. Where will the Squadrons be located? On Airbases? On Carrier Ships? On Farps?
 -- 
 -- Squadrons are placed as the "home base" on an airfield, carrier or farp.
 -- Carefully plan where each Squadron will be located as part of the defense system.
+-- Any airbase, farp or carrier can act as the launching platform for A2G defenses.
+-- Carefully plan which airbases will take part in the coalition. Color each airbase in the color of the coalition.
 -- 
--- ## 9. Which plane models will I assign for each Squadron? Do I need one plane model or more plane models per squadron?
 -- 
--- Per Squadron, one or multiple plane models can be allocated as **Templates**.
+-- ## 8. Which helicopter or plane models will I assign for each Squadron? Do I need one plane model or more plane models per squadron?
+-- 
+-- Per Squadron, one or multiple helicopter or plane models can be allocated as **Templates**.
 -- These are late activated groups with one airplane or helicopter that start with a specific name, called the **template prefix**.
 -- The A2G defense system will select from the given templates a random template to spawn a new plane (group).
+-- 
+-- A squadron will perform specific task types (SEAD, CAS or BAI). So, squadrons will require specific templates for the
+-- task types it will perform. A squadron executing SEAD defenses, will require a payload with long range anti-radar seeking missiles.
 --  
--- ## 10. Which payloads, skills and skins will these plane models have?
+--  
+-- ## 9. Which payloads, skills and skins will these plane models have?
 -- 
 -- Per Squadron, even if you have one plane model, you can still allocate multiple templates of one plane model, 
 -- each having different payloads, skills and skins. 
 -- The A2G defense system will select from the given templates a random template to spawn a new plane (group).
 -- 
--- ## 11. For each Squadron, which will perform CAP?
 -- 
--- Per Squadron, evaluate which Squadrons will perform CAP.
--- Not all Squadrons need to perform CAP.
+-- ## 10. How to squadrons engage in a defensive action?
 -- 
--- ## 12. For each Squadron doing CAP, in which ZONE(s) will the CAP be performed?
+-- There are two ways how squadrons engage and execute your A2G defenses. 
+-- Squadrons can start the defense directly from the airbase, farp or carrier. When a squadron launches a defensive group, that group
+-- will start directly from the airbase. The other way is to launch early on in the mission a patrolling mechanism.
+-- Squadrons will launch air units to patrol in specific zone(s), so that when ground enemy targets are detected, that the airborne
+-- A2G defenses can come immediately into action.
 -- 
--- Per CAP, evaluate **where** the CAP will be performed, in other words, define the **zone**.
--- Near the border or a bit further away?
 -- 
--- ## 13. For each Squadron doing CAP, which zone types will I create?
+-- ## 11. For each Squadron doing a patrol, which zone types will I create?
 -- 
--- Per CAP zone, evaluate whether you want:
+-- Per zone, evaluate whether you want:
 -- 
 --    * simple trigger zones
 --    * polygon zones
@@ -131,19 +154,36 @@
 -- 
 -- Depending on the type of zone selected, a different @{Zone} object needs to be created from a ZONE_ class.
 -- 
--- ## 14. For each Squadron doing CAP, what are the time intervals and CAP amounts to be performed?
 -- 
--- For each CAP:
+-- ## 12. Are moving defense coordinates possible?
 -- 
---    * **How many** CAP you want to have airborne at the same time?
---    * **How frequent** you want the defense mechanism to check whether to start a new CAP?
+-- Yes, different COORDINATE types are possible to be used.
+-- The COORDINATE_UNIT will help you to specify a defense coodinate that is attached to a moving unit.
 -- 
--- ## 15. For each Squadron, which will perform GCI?
 -- 
--- For each Squadron, evaluate which Squadrons will perform GCI?
--- Not all Squadrons need to perform GCI.
+-- ## 13. How much defense coordinates do I need to create?
 -- 
--- ## 16. For each Squadron, which takeoff method will I use?
+-- It depends, but the idea is to define only the necessary defense points that drive your mission.
+-- If you define too much defense points, the performance of your mission may decrease. Per defense point defined,
+-- all the possible enemies are evaluated. Note that each defense coordinate has a reach depending on the size of the defense radius.
+-- The default defense radius is about 60km, and depending on the defense reactivity, defenses will be launched when the enemy is at
+-- close or greater distance from the defense coordinate.
+-- 
+-- 
+-- ## 14. For each Squadron doing patrols, what are the time intervals and patrol amounts to be performed?
+-- 
+-- For each patrol:
+-- 
+--    * **How many** patrol you want to have airborne at the same time?
+--    * **How frequent** you want the defense mechanism to check whether to start a new patrol?
+-- 
+-- other considerations:   
+-- 
+--    * **How far** is the patrol area from the engagement "hot zone". You want to ensure that the enemy is reached on time!
+--    * **How safe** is the patrol area taking into account air superiority. Is it well defended, are there nearby A2A bases?
+-- 
+-- 
+-- ## 15. For each Squadron, which takeoff method will I use?
 -- 
 -- For each Squadron, evaluate which takeoff method will be used:
 -- 
@@ -153,8 +193,11 @@
 --    * From a parking spot with cold engines
 -- 
 -- **The default takeoff method is staight in the air.**
+-- This takeoff method is the most useful if you want to avoid airplane clutter at airbases!
+-- But it is the least realistic one!
 -- 
--- ## 17. For each Squadron, which landing method will I use?
+-- 
+-- ## 16. For each Squadron, which landing method will I use?
 -- 
 -- For each Squadron, evaluate which landing method will be used:
 -- 
@@ -163,27 +206,36 @@
 --    * Despawn after engine shutdown after landing
 --    
 -- **The default landing method is despawn when near the airbase when returning.**
+-- This landing method is the most useful if you want to avoid airplane clutter at airbases!
+-- But it is the least realistic one!
 -- 
--- ## 18. For each Squadron, which overhead will I use?
 -- 
--- For each Squadron, depending on the airplane type (modern, old) and payload, which overhead is required to provide any defense?
--- In other words, if **X** attacker airplanes are detected, how many **Y** defense airplanes need to be spawned per squadron?
+-- ## 19. For each Squadron, which **defense overhead** will I use?
+-- 
+-- For each Squadron, depending on the helicopter or airplane type (modern, old) and payload, which overhead is required to provide any defense?
+-- 
+-- In other words, if **X** enemy ground units are detected, how many **Y** defense helicpters or airplanes need to engage (per squadron)?
 -- The **Y** is dependent on the type of airplane (era), payload, fuel levels, skills etc.
--- The overhead is a **factor** that will calculate dynamically how many **Y** defenses will be required based on **X** attackers detected.
+-- But the most important factor is the payload, which is the amount of A2G weapons the defense can carry to attack the enemy ground units.
+-- For example, a Ka-50 can carry 16 vikrs, that means, that it potentially can destroy at least 8 ground units without a reload of ammunication.
+-- That means, that one defender can destroy more enemy ground units. 
+-- Thus, the overhead is a **factor** that will calculate dynamically how many **Y** defenses will be required based on **X** attackers detected.
 -- 
--- **The default overhead is 1. A value greater than 1, like 1.5 will increase the overhead with 50%, a value smaller than 1, like 0.5 will decrease the overhead with 50%.**
+-- **The default overhead is 1. A smaller value than 1, like 0.25 will decrease the overhead to a 1 / 4 ratio, meaning, 
+-- one defender for each 4 detected ground enemy units. **
+-- 
 -- 
 -- ## 19. For each Squadron, which grouping will I use?
 -- 
--- When multiple targets are detected, how will defense airplanes be grouped when multiple defense airplanes are spawned for multiple attackers?
+-- When multiple targets are detected, how will defenses be grouped when multiple defense air units are spawned for multiple enemy ground units?
 -- Per one, two, three, four?
 -- 
 -- **The default grouping is 1. That means, that each spawned defender will act individually.**
+-- But you can specify a number between 1 and 4, so that the defenders will act as a group.
 -- 
 -- ===
 -- 
--- ### Authors: **FlightControl** rework of GCICAP + introduction of new concepts (squadrons).
--- ### Authors: **Stonehouse**, **SNAFU** in terms of the advice, documentation, and the original GCICAP script.
+-- ### Author: **FlightControl** rework of GCICAP + introduction of new concepts (squadrons).
 -- 
 -- @module AI.AI_A2G_Dispatcher
 -- @image AI_Air_To_Air_Dispatching.JPG
