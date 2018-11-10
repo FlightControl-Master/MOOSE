@@ -1480,6 +1480,44 @@ do -- AI_A2G_DISPATCHER
   end
 
 
+  --- Gets the overhead of planes as part of the defense system, in comparison with the attackers.
+  -- @param #AI_A2G_DISPATCHER self
+  -- @param #string SquadronName The name of the squadron.
+  -- @return #number The %-tage of Units that dispatching command will allocate to intercept in surplus of detected amount of units.
+  -- The default overhead is 1, so equal balance. The @{#AI_A2G_DISPATCHER.SetOverhead}() method can be used to tweak the defense strength,
+  -- taking into account the plane types of the squadron. For example, a MIG-31 with full long-distance A2G missiles payload, may still be less effective than a F-15C with short missiles...
+  -- So in this case, one may want to use the Overhead method to allocate more defending planes as the amount of detected attacking planes.
+  -- The overhead must be given as a decimal value with 1 as the neutral value, which means that Overhead values: 
+  -- 
+  --   * Higher than 1, will increase the defense unit amounts.
+  --   * Lower than 1, will decrease the defense unit amounts.
+  -- 
+  -- The amount of defending units is calculated by multiplying the amount of detected attacking planes as part of the detected group 
+  -- multiplied by the Overhead and rounded up to the smallest integer. 
+  -- 
+  -- The Overhead value set for a Squadron, can be programmatically adjusted (by using this SetOverhead method), to adjust the defense overhead during mission execution.
+  -- 
+  -- See example below.
+  --  
+  -- @usage:
+  -- 
+  --   local A2GDispatcher = AI_A2G_DISPATCHER:New( ... )
+  --   
+  --   -- An overhead of 1,5 with 1 planes detected, will allocate 2 planes ( 1 * 1,5 ) = 1,5 => rounded up gives 2.
+  --   -- An overhead of 1,5 with 2 planes detected, will allocate 3 planes ( 2 * 1,5 ) = 3 =>  rounded up gives 3.
+  --   -- An overhead of 1,5 with 3 planes detected, will allocate 5 planes ( 3 * 1,5 ) = 4,5 => rounded up gives 5 planes.
+  --   -- An overhead of 1,5 with 4 planes detected, will allocate 6 planes ( 4 * 1,5 ) = 6  => rounded up gives 6 planes.
+  --   
+  --   local SquadronOverhead = A2GDispatcher:GetSquadronOverhead( "SquadronName" )
+  -- 
+  -- @return #AI_A2G_DISPATCHER
+  function AI_A2G_DISPATCHER:GetSquadronOverhead( SquadronName )
+
+    local DefenderSquadron = self:GetSquadron( SquadronName )
+    return DefenderSquadron.Overhead or self.DefenderDefault.Overhead
+  end
+
+
   --- Sets the default grouping of new airplanes spawned.
   -- Grouping will trigger how new airplanes will be grouped if more than one airplane is spawned for defense.
   -- @param #AI_A2G_DISPATCHER self
@@ -2193,12 +2231,10 @@ do -- AI_A2G_DISPATCHER
       local DefenderSquadronName = DefenderTask.SquadronName
       
       if DefenderTaskTarget and DefenderTaskTarget.Index == AttackerDetection.Index then
-        local Squadron = self:GetSquadron( DefenderSquadronName )
-        local SquadronOverhead = Squadron.Overhead or self.DefenderDefault.Overhead
         
         local DefenderSize = Defender:GetInitialSize()
         if DefenderSize then
-          DefenderCount = DefenderCount + DefenderSize / SquadronOverhead
+          DefenderCount = DefenderCount + DefenderSize
           self:F( "Defender Group Name: " .. Defender:GetName() .. ", Size: " .. DefenderSize )
         else
           DefenderCount = 0
@@ -2430,12 +2466,19 @@ do -- AI_A2G_DISPATCHER
   
       for DefenderID, DefenderGroup in pairs( DefenderFriendlies or {} ) do
   
+        local SquadronName = self:GetDefenderTask( DefenderGroup ).SquadronName
+        local SquadronOverhead = self:GetSquadronOverhead( SquadronName )
+  
         local Fsm = self:GetDefenderTaskFsm( DefenderGroup )
         Fsm:__Engage( 1, AttackerSet ) -- Engage on the TargetSetUnit
         
         self:SetDefenderTaskTarget( DefenderGroup, AttackerDetection )
   
-        DefenderCount = DefenderCount + DefenderGroup:GetSize()
+        DefendersMissing = DefendersMissing - DefenderGroup:GetSize() / SquadronOverhead
+        
+        if DefendersMissing <= 0 then
+          break
+        end
       end
   
       self:F( { DefenderCount = DefenderCount, DefendersMissing = DefendersMissing } )
@@ -2599,7 +2642,7 @@ do -- AI_A2G_DISPATCHER
   
     local AttackerSet = DetectedItem.Set -- Core.Set#SET_UNIT
     local AttackerCount = AttackerSet:Count()
-    local IsSEAD = AttackerSet:HasSEAD() -- Is the AttackerSet a SEAD group?
+    local IsSEAD = AttackerSet:HasSEAD() -- Is the AttackerSet a SEAD group?µ
     
     if ( IsSEAD > 0 ) then
     
@@ -2641,7 +2684,7 @@ do -- AI_A2G_DISPATCHER
     
       -- First, count the active defenders, engaging the DetectedItem.
       local DefenderCount = self:CountDefendersEngaged( DetectedItem )
-  
+      
       local DefendersMissing = AttackerCount - DefenderCount
       self:F( { AttackerCount = AttackerCount, DefenderCount = DefenderCount, DefendersMissing = DefendersMissing } )
   
