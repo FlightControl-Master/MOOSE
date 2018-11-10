@@ -2231,10 +2231,13 @@ do -- AI_A2G_DISPATCHER
       local DefenderSquadronName = DefenderTask.SquadronName
       
       if DefenderTaskTarget and DefenderTaskTarget.Index == AttackerDetection.Index then
+      
+        local Squadron = self:GetSquadronFromDefender( Defender )
+        local SquadronOverhead = self:GetSquadronOverhead( Squadron.SquadronName )
         
         local DefenderSize = Defender:GetInitialSize()
         if DefenderSize then
-          DefenderCount = DefenderCount + DefenderSize
+          DefenderCount = DefenderCount + DefenderSize / SquadronOverhead
           self:F( "Defender Group Name: " .. Defender:GetName() .. ", Size: " .. DefenderSize )
         else
           DefenderCount = 0
@@ -2474,7 +2477,7 @@ do -- AI_A2G_DISPATCHER
         
         self:SetDefenderTaskTarget( DefenderGroup, AttackerDetection )
   
-        DefendersMissing = DefendersMissing - DefenderGroup:GetSize() / SquadronOverhead
+        DefendersMissing = DefendersMissing - DefenderGroup:GetSize()
         
         if DefendersMissing <= 0 then
           break
