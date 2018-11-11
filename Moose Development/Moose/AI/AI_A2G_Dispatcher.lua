@@ -41,7 +41,8 @@
 -- AI_A2G_DISPATCHER is the main A2G defense class that models the A2G defense system.
 -- 
 -- Before you start using the AI_A2G_DISPATCHER, ask youself the following questions.
--- -- 
+-- 
+-- 
 -- ## 1. Which coalition am I modeling an A2G defense system for? blue or red?
 -- 
 -- One AI_A2G_DISPATCHER object can create a defense system for **one coalition**, which is blue or red.
