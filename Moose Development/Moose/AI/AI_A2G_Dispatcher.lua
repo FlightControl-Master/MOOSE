@@ -450,7 +450,6 @@ do -- AI_A2G_DISPATCHER
     
     self.DefenderPatrolIndex = 0
     
-    self:SetDefenseDistance()
     self:SetDefenseReactivityMedium()
     
     self:__Start( 5 )
@@ -586,12 +585,6 @@ do -- AI_A2G_DISPATCHER
     function AI_A2G_DISPATCHER:SetDefenseReactivityHigh()
       self.DefenseReactivity = 0.5
     end
-
-    --- @param #AI_A2G_DISPATCHER self
-    -- @param #number DefensiveDistance The distance in meters from where the evaluation of defense reactivity will be calculated.
-    function AI_A2G_DISPATCHER:SetDefenseDistance( DefensiveDistance )
-      self.DefenseDistance = DefensiveDistance or 60000
-    end
   
   end
   
@@ -677,7 +670,9 @@ do -- AI_A2G_DISPATCHER
   --   
   function AI_A2G_DISPATCHER:SetDefenseRadius( DefenseRadius )
 
-    self.DefenseRadius = DefenseRadius or 100000 
+    self.DefenseRadius = DefenseRadius or 100000
+    
+    self.Detection:SetAcceptRange( self.DefenseRadius ) 
   
     return self
   end
@@ -1123,20 +1118,27 @@ do -- AI_A2G_DISPATCHER
   end
 
   
-  --- Set the squadron Patrol parameters.  
+  --- Set the squadron patrol parameters for a specific task type.  
+  -- Mission designers should not use this method, instead use the below methods. This method is used by the below methods.
+  -- 
+  --   - @{#AI_A2G_DISPATCHER:SetSquadronSeadPatrolInterval} for SEAD tasks.
+  --   - @{#AI_A2G_DISPATCHER:SetSquadronSeadPatrolInterval} for CAS tasks.
+  --   - @{#AI_A2G_DISPATCHER:SetSquadronSeadPatrolInterval} for BAI tasks.
+  --   
   -- @param #AI_A2G_DISPATCHER self
   -- @param #string SquadronName The squadron name.
   -- @param #number PatrolLimit (optional) The maximum amount of Patrol groups to be spawned. Note that a Patrol is a group, so can consist out of 1 to 4 airplanes. The default is 1 Patrol group.
   -- @param #number LowInterval (optional) The minimum time boundary in seconds when a new Patrol will be spawned. The default is 180 seconds.
   -- @param #number HighInterval (optional) The maximum time boundary in seconds when a new Patrol will be spawned. The default is 600 seconds.
   -- @param #number Probability Is not in use, you can skip this parameter.
+  -- @param #string DefenseTaskType Should contain "SEAD", "CAS" or "BAI".
   -- @return #AI_A2G_DISPATCHER
   -- @usage
   -- 
   --        -- Patrol Squadron execution.
   --        PatrolZoneEast = ZONE_POLYGON:New( "Patrol Zone East", GROUP:FindByName( "Patrol Zone East" ) )
   --        A2GDispatcher:SetSquadronSeadPatrol( "Mineralnye", PatrolZoneEast, 4000, 10000, 500, 600, 800, 900 )
-  --        A2GDispatcher:SetSquadronPatrolInterval( "Mineralnye", 2, 30, 60, 1 )
+  --        A2GDispatcher:SetSquadronPatrolInterval( "Mineralnye", 2, 30, 60, 1, "SEAD" )
   -- 
   function AI_A2G_DISPATCHER:SetSquadronPatrolInterval( SquadronName, PatrolLimit, LowInterval, HighInterval, Probability, DefenseTaskType )
   
@@ -1166,6 +1168,72 @@ do -- AI_A2G_DISPATCHER
     end
 
   end
+
+  --- Set the squadron Patrol parameters for SEAD tasks.  
+  -- @param #AI_A2G_DISPATCHER self
+  -- @param #string SquadronName The squadron name.
+  -- @param #number PatrolLimit (optional) The maximum amount of Patrol groups to be spawned. Note that a Patrol is a group, so can consist out of 1 to 4 airplanes. The default is 1 Patrol group.
+  -- @param #number LowInterval (optional) The minimum time boundary in seconds when a new Patrol will be spawned. The default is 180 seconds.
+  -- @param #number HighInterval (optional) The maximum time boundary in seconds when a new Patrol will be spawned. The default is 600 seconds.
+  -- @param #number Probability Is not in use, you can skip this parameter.
+  -- @return #AI_A2G_DISPATCHER
+  -- @usage
+  -- 
+  --        -- Patrol Squadron execution.
+  --        PatrolZoneEast = ZONE_POLYGON:New( "Patrol Zone East", GROUP:FindByName( "Patrol Zone East" ) )
+  --        A2GDispatcher:SetSquadronSeadPatrol( "Mineralnye", PatrolZoneEast, 4000, 10000, 500, 600, 800, 900 )
+  --        A2GDispatcher:SetSquadronSeadPatrolInterval( "Mineralnye", 2, 30, 60, 1 )
+  -- 
+  function AI_A2G_DISPATCHER:SetSquadronSeadPatrolInterval( SquadronName, PatrolLimit, LowInterval, HighInterval, Probability )
+
+    self:SetSquadronPatrolInterval( SquadronName, PatrolLimit, LowInterval, HighInterval, Probability, "SEAD" )  
+
+  end
+  
+  
+  --- Set the squadron Patrol parameters for CAS tasks.  
+  -- @param #AI_A2G_DISPATCHER self
+  -- @param #string SquadronName The squadron name.
+  -- @param #number PatrolLimit (optional) The maximum amount of Patrol groups to be spawned. Note that a Patrol is a group, so can consist out of 1 to 4 airplanes. The default is 1 Patrol group.
+  -- @param #number LowInterval (optional) The minimum time boundary in seconds when a new Patrol will be spawned. The default is 180 seconds.
+  -- @param #number HighInterval (optional) The maximum time boundary in seconds when a new Patrol will be spawned. The default is 600 seconds.
+  -- @param #number Probability Is not in use, you can skip this parameter.
+  -- @return #AI_A2G_DISPATCHER
+  -- @usage
+  -- 
+  --        -- Patrol Squadron execution.
+  --        PatrolZoneEast = ZONE_POLYGON:New( "Patrol Zone East", GROUP:FindByName( "Patrol Zone East" ) )
+  --        A2GDispatcher:SetSquadronCasPatrol( "Mineralnye", PatrolZoneEast, 4000, 10000, 500, 600, 800, 900 )
+  --        A2GDispatcher:SetSquadronCasPatrolInterval( "Mineralnye", 2, 30, 60, 1 )
+  -- 
+  function AI_A2G_DISPATCHER:SetSquadronCasPatrolInterval( SquadronName, PatrolLimit, LowInterval, HighInterval, Probability )
+
+    self:SetSquadronPatrolInterval( SquadronName, PatrolLimit, LowInterval, HighInterval, Probability, "CAS" )  
+
+  end
+  
+  
+  --- Set the squadron Patrol parameters for BAI tasks.  
+  -- @param #AI_A2G_DISPATCHER self
+  -- @param #string SquadronName The squadron name.
+  -- @param #number PatrolLimit (optional) The maximum amount of Patrol groups to be spawned. Note that a Patrol is a group, so can consist out of 1 to 4 airplanes. The default is 1 Patrol group.
+  -- @param #number LowInterval (optional) The minimum time boundary in seconds when a new Patrol will be spawned. The default is 180 seconds.
+  -- @param #number HighInterval (optional) The maximum time boundary in seconds when a new Patrol will be spawned. The default is 600 seconds.
+  -- @param #number Probability Is not in use, you can skip this parameter.
+  -- @return #AI_A2G_DISPATCHER
+  -- @usage
+  -- 
+  --        -- Patrol Squadron execution.
+  --        PatrolZoneEast = ZONE_POLYGON:New( "Patrol Zone East", GROUP:FindByName( "Patrol Zone East" ) )
+  --        A2GDispatcher:SetSquadronBaiPatrol( "Mineralnye", PatrolZoneEast, 4000, 10000, 500, 600, 800, 900 )
+  --        A2GDispatcher:SetSquadronBaiPatrolInterval( "Mineralnye", 2, 30, 60, 1 )
+  -- 
+  function AI_A2G_DISPATCHER:SetSquadronBaiPatrolInterval( SquadronName, PatrolLimit, LowInterval, HighInterval, Probability )
+
+    self:SetSquadronPatrolInterval( SquadronName, PatrolLimit, LowInterval, HighInterval, Probability, "BAI" )  
+
+  end
+  
   
   ---
   -- @param #AI_A2G_DISPATCHER self
@@ -2530,7 +2598,7 @@ do -- AI_A2G_DISPATCHER
         
         self:SetDefenderTaskTarget( DefenderGroup, AttackerDetection )
   
-        DefendersMissing = DefendersMissing - DefenderGroup:GetSize()
+        DefendersMissing = DefendersMissing - DefenderGroup:GetSize() / SquadronOverhead
         
         if DefendersMissing <= 0 then
           break
@@ -2859,16 +2927,20 @@ do -- AI_A2G_DISPATCHER
       local DefenseCoordinate = nil
       
       for DefenseCoordinateName, EvaluateCoordinate in pairs( self.DefenseCoordinates ) do
-      
+
         local EvaluateDistance = AttackerCoordinate:Get2DDistance( EvaluateCoordinate )
-        local DistanceProbability = ( self.DefenseDistance / EvaluateDistance * self.DefenseReactivity )
-        local DefenseProbability = math.random()
         
-        self:F( { DistanceProbability = DistanceProbability, DefenseProbability = DefenseProbability } )
+        if EvaluateDistance <= self.DefenseRadius then
         
-        if DefenseProbability <= DistanceProbability / ( 300 / 30 ) then
-          DefenseCoordinate = EvaluateCoordinate
-          break
+          local DistanceProbability = ( self.DefenseRadius / EvaluateDistance * self.DefenseReactivity )
+          local DefenseProbability = math.random()
+          
+          self:F( { DistanceProbability = DistanceProbability, DefenseProbability = DefenseProbability } )
+          
+          if DefenseProbability <= DistanceProbability / ( 300 / 30 ) then
+            DefenseCoordinate = EvaluateCoordinate
+            break
+          end
         end
       end
       
