@@ -239,7 +239,7 @@
 -- ### Author: **FlightControl** rework of GCICAP + introduction of new concepts (squadrons).
 -- 
 -- @module AI.AI_A2G_Dispatcher
--- @image AI_Air_To_Air_Dispatching.JPG
+-- @image AI_Air_To_Ground_Dispatching.JPG
 
 
 
