@@ -127,6 +127,7 @@ AI_FORMATION = {
 -- @param Wrapper.Unit#UNIT FollowUnit The UNIT leading the FolllowGroupSet.
 -- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
 -- @param #string FollowName Name of the escort.
+-- @param #string FollowBriefing Briefing.
 -- @return #AI_FORMATION self
 function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefing ) --R2.1
   local self = BASE:Inherit( self, FSM_SET:New( FollowGroupSet ) )

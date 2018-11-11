@@ -1798,7 +1798,10 @@ function WAREHOUSE:New(warehouse, alias)
   
   -- Check if just a string was given and convert to static.
   if type(warehouse)=="string" then
-    warehouse=STATIC:FindByName(warehouse, true)
+    warehouse=GROUP:FindByName(warehouse)
+    if warehouse==nil then
+      warehouse=STATIC:FindByName(warehouse, true)
+    end
   end
   
   -- Nil check.
