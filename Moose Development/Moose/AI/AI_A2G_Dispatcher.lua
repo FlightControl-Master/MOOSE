@@ -1,4 +1,4 @@
---- **AI** - Manages the process of an automatic A2G defense system based on a detection network of reconnaissance vehicles and air units, coordinating SEAD, BAI and CAP operations.
+--- **AI** - Create an automated A2G defense system based on a detection network of reconnaissance vehicles and air units, coordinating SEAD, BAI and CAP operations.
 -- 
 -- ===
 -- 
@@ -249,9 +249,207 @@ do -- AI_A2G_DISPATCHER
   -- @type AI_A2G_DISPATCHER
   -- @extends Tasking.DetectionManager#DETECTION_MANAGER
 
-  --- Create an automatic air defence system for a coalition. 
+  --- Create an automated A2G defense system based on a detection network of reconnaissance vehicles and air units, coordinating SEAD, BAI and CAP operations.
   -- 
   -- ===
+  -- 
+  -- When your mission is in the need to take control of the AI to automate and setup a process of air to ground defenses, this is the module you need.
+  -- The defense system work through the definition of defense coordinates, which are points in your friendly area within the battle field, that your mission need to have defended.
+  -- Multiple defense coordinates can be setup. Defense coordinates can be strategic or tactical positions or references to strategic units or scenery.
+  -- The A2G dispatcher will evaluate every x seconds the tactical situation around each defense coordinate. When a defense coordinate
+  -- is under threat, it will communicate through the command center that defensive actions need to be taken and will launch groups of air units for defense.
+  -- The level of threat to the defense coordinate varyies upon the strength and types of the enemy units, the distance to the defense point, and the defensiveness parameters.
+  -- Defensive actions are taken through probability, but the closer and the more threat the enemy poses to the defense coordinate, the faster it will be attacked by friendly A2G units.
+  -- 
+  -- Please study carefully the underlying explanations how to setup and use this module, as it has many features.
+  -- It also requires a little study to ensure that you get a good understanding of the defense mechanisms, to ensure a strong
+  -- defense for your missions.
+  -- 
+  -- ===
+  -- 
+  -- # USAGE GUIDE
+  -- 
+  -- ## 1. AI\_A2G\_DISPATCHER constructor:
+  -- 
+  -- ![Banner Image](..\Presentations\AI_A2G_DISPATCHER\AI_A2G_DISPATCHER-ME_1.JPG)
+  -- 
+  -- 
+  -- The @{#AI_A2G_DISPATCHER.New}() method creates a new AI_A2G_DISPATCHER instance.
+  -- 
+  -- ### 1.1. Define the **reconnaissance network**:
+  -- 
+  -- As part of the AI_A2G_DISPATCHER :New() constructor, a reconnaissance network must be given as the first parameter.
+  -- A reconnaissance network is provide through an instance of a @{Functional.Detection} network.
+  -- The most effective reconnaissance for the A2G dispatcher would be to use the @{Functional.Detection#DETECTION_AREAS} object.
+  -- 
+  -- An reconnaissance network, is used to detect enemy ground targets, potentially group them into areas, and to understand the position, level of threat of the enemy.
+  -- 
+  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia5.JPG)
+  -- 
+  -- As explained in the introduction, depending on the type of mission you want to achieve, different types of units can be applied to detect ground enemy targets.
+  -- Ground based units are very useful to act as a reconnaissance, but they lack sometimes the visibility to detect targets at greater range.
+  -- Recce are very useful to acquire the position of enemy ground targets when spread out over the battlefield at strategic positions.
+  -- Ground units also have varying detectors, and especially the ground units which have laser guiding missiles can be extremely effective at
+  -- detecting targets at great range. The terrain elevation characteristics are a big tool in making ground recce to be more effective.
+  -- If you succeed to position recce at higher level terrain providing a broad and far overview of the lower terrain in the distance, then
+  -- the recce will be very effective at detecting approaching enemy targets. Therefore, always use the terrain very carefully!
+  -- 
+  -- Beside ground level units to use for reconnaissance, air units are also very effective. The are capable of patrolling at great speed
+  -- covering a large terrain. However, airborne recce can be vulnerable to air to ground attacks, and you need air superiority to make then
+  -- effective. Also the instruments available at the air units play a big role in the effectiveness of the reconnaissance.
+  -- Air units which have ground detection capabilities will be much more effective than air units with only visual detection capabilities.
+  -- For the red coalition, the Mi-28N and for the blue side, the reaper are such effective reconnaissance airborne units.
+  -- 
+  -- Reconnaissance networks are **dynamically constructed**, that is, they form part of the @{Functional.Detection} instance that is given as the first parameter to the A2G dispatcher.
+  -- By defining in a **smart way the names or name prefixes of the reconnaissance groups**, these groups will be **automatically added or removed** to or from the reconnaissance network, 
+  -- when these groups are spawned in or destroyed during the ongoing battle. 
+  -- By spawning in dynamically additional recce, you can ensure that there is sufficient reconnaissance coverage so the defense mechanism is continuously
+  -- alerted of new enemy ground targets.
+  -- 
+  -- The following example defens a new reconnaissance network using a @{Functional.Detection#DETECTION_AREAS} object.
+  -- 
+  --        -- Define a SET_GROUP object that builds a collection of groups that define the recce network.
+  --        -- Here we build the network with all the groups that have a name starting with CCCP Recce.
+  --        DetectionSetGroup = SET_GROUP:New() -- Defene a set of group objects, caled DetectionSetGroup.
+  --        
+  --        DetectionSetGroup:FilterPrefixes( { "CCCP Recce" } ) -- The DetectionSetGroup will search for groups that start with the name "CCCP Recce".
+  --        
+  --        -- This command will start the dynamic filtering, so when groups spawn in or are destroyed, 
+  --        -- which have a group name starting with "CCCP Recce", then these will be automatically added or removed from the set.
+  --        DetectionSetGroup:FilterStart() 
+  --        
+  --        -- This command defines the reconnaissance network.
+  --        -- It will group any detected ground enemy targets within a radius of 1km.
+  --        -- It uses the DetectionSetGroup, which defines the set of reconnaissance groups to detect for enemy ground targets.
+  --        Detection = DETECTION_AREAS:New( DetectionSetGroup, 1000 )
+  -- 
+  --        -- Setup the A2A dispatcher, and initialize it.
+  --        A2GDispatcher = AI_A2G_DISPATCHER:New( Detection )
+  --        
+  --        
+  -- The above example creates a SET_GROUP instance, and stores this in the variable (object) **DetectionSetGroup**.
+  -- **DetectionSetGroup** is then being configured to filter all active groups with a group name starting with `"CCCP Recce"` to be included in the set.
+  -- **DetectionSetGroup** is then calling `FilterStart()`, which is starting the dynamic filtering or inclusion of these groups. 
+  -- Note that any destroy or new spawn of a group having a name, starting with the above prefix, will be removed or added to the set.
+  -- 
+  -- Then a new detection object is created from the class `DETECTION_AREAS`. A grouping radius of 1000 meters (1km) is choosen.
+  -- 
+  -- The `Detection` object is then passed to the @{#AI_A2G_DISPATCHER.New}() method to indicate the reconnaissance network 
+  -- configuration and setup the A2G defense detection mechanism.
+  -- 
+  -- ### 1.2. Setup the A2G dispatcher for both a red and blue coalition.
+  -- 
+  -- Following the above described procedure, you'll need to create for each coalition an separate detection network, and a separate A2G dispatcher.
+  -- Ensure that while doing so, that you name the objects differently both for red and blue coalition.
+  -- 
+  -- For example like this for the red coalition:
+  -- 
+  --        DetectionRed = DETECTION_AREAS:New( DetectionSetGroupRed, 1000 )
+  --        A2GDispatcherRed = AI_A2G_DISPATCHER:New( DetectionRed )
+  --        
+  -- And for the blue coalition:
+  -- 
+  --        DetectionBlue = DETECTION_AREAS:New( DetectionSetGroupBlue, 1000 )
+  --        A2GDispatcherBlue = AI_A2G_DISPATCHER:New( DetectionBlue )
+  -- 
+  -- 
+  -- Note: Also the SET_GROUP objects should be created for each coalition separately, containing each red and blue recce respectively!
+  -- 
+  -- ### 1.3. Define the enemy ground target **grouping radius**, in case you use DETECTION_AREAS:
+  -- 
+  -- The target grouping radius is a property of the DETECTION_AREAS class, that was passed to the AI_A2G_DISPATCHER:New() method, 
+  -- but can be changed. The grouping radius should not be too small, but also depends on the types of ground forces and the way you want your mission to evolve.
+  -- A large radius will mean large groups of enemy ground targets, while making smaller groups will result in a more fragmented defense system.
+  -- Typically I suggest a grouping radius of 1km. This is the right balance to create efficient defenses.
+  -- 
+  -- Note that detected targets are constantly re-grouped, that is, when certain detected enemy ground units are moving further than the group radius, 
+  -- then these units will become a separate area being detected. This may result in additional defenses being started by the dispatcher! 
+  -- So don't make this value too small! Again, I advise about 1km or 1000 meters.
+  -- 
+  -- ## 2. Setup (a) **Defense Coordinate(s)**.
+  -- 
+  -- As explained above, defense coordinates are the center of your defense operations.
+  -- The more threat to the defense coordinate, the higher it is likely a defensive action will be launched.
+  -- 
+  -- Find below an example how to add defense coordinates:
+  -- 
+  --        -- Add defense coordinates.
+  --        A2GDispatcher:AddDefenseCoordinate( "HQ", GROUP:FindByName( "HQ" ):GetCoordinate() )
+  -- 
+  -- In this example, the coordinate of a group called `"HQ"` is retrieved, using `:GetCoordinate()`
+  -- This returns a COORDINATE object, pointing to the first unit within the GROUP object.
+  -- 
+  -- The method @{#AI_A2G_DISPATCHER.AddDefenseCoordinate}() adds a new defense coordinate to the `A2GDispatcher` object.
+  -- The first parameter is the key of the defense coordinate, the second the coordinate itself.
+  -- 
+  -- Later, a COORDINATE_UNIT will be added to the framework, which can be used to assign "moving" coordinates to an A2G dispatcher.
+  -- 
+  -- **REMEMBER!** 
+  -- 
+  --   - **Defense coordinates are the center of the A2G dispatcher defense system!**
+  --   - **You can define more defense coordinates to defend a larger area.**
+  -- 
+  -- But, there is more to it ...
+  -- 
+  -- 
+  -- ### 2.1. The **Defense Radius**.
+  -- 
+  -- The defense radius defines the maximum radius that a defense will be initiated around each defense coordinate.
+  -- So even when there are targets further away than the defense radius, then these targets won't be engaged upon.
+  -- By default, the defense radius is set to 100km (100.000 meters), but can be changed using the @{#AI_A2G_DISPATCHER.SetDefenseRadius}() method.
+  -- Note that the defense radius influences the defense reactivity also! The larger the defense radius, the more reactive the defenses will be.
+  -- 
+  -- For example:
+  -- 
+  --        A2GDispatcher:SetDefenseRadius( 30000 )
+  -- 
+  -- This defines an A2G dispatcher which will engage on enemy ground targets within 30km radius around the defense coordinate.
+  -- Note that the defense radius **applies to all defense coordinates** defined within the A2G dispatcher.
+  -- 
+  -- ### 2.2. The **Defense Reactivity**.
+  -- 
+  -- There are 5 levels that can be configured to tweak the defense reactivity. As explained above, the threat to a defense coordinate is 
+  -- also determined by the distance of the enemy ground target to the defense coordinate.
+  -- If you want to have a **low** defense reactivity, that is, the probability that an A2G defense will engage to the enemy ground target, then
+  -- use the @{#AI_A2G_DISPATCHER.SetDefenseReactivityLow}() method. For medium and high reactivity, use the methods 
+  -- @{#AI_A2G_DISPATCHER.SetDefenseReactivityMedium}() and @{#AI_A2G_DISPATCHER.SetDefenseReactivityHigh}() respectively.
+  -- 
+  -- Note that the reactivity of defenses is always in relation to the Defense Radius! the shorter the distance, 
+  -- the less reactive the defenses will be in terms of distance to enemy ground targets!
+  -- 
+  -- For example:
+  -- 
+  --        A2GDispatcher:SetDefenseReactivityHigh()
+  --        
+  -- This defines an A2G dispatcher with high defense reactivity.
+  -- 
+  -- ## 3. **Squadrons**.
+  -- 
+  -- The A2G dispatcher works with **Squadrons**, that need to be defined using the different methods available.
+  -- 
+  -- Use the method @{#AI_A2G_DISPATCHER.SetSquadron}() to **setup a new squadron** active at an airfield, farp or carrier, 
+  -- while defining which helicopter or plane **templates** are being used by the squadron and how many **resources** are available.
+  -- 
+  -- **Multiple squadrons** can be defined within one A2G dispatcher, each having specific defense tasks and defense parameter settings!
+  -- 
+  -- Squadrons:
+  -- 
+  --   * Have name (string) that is the identifier or **key** of the squadron.
+  --   * Have specific helicopter or plane **templates**.
+  --   * Are located at **one** airbase, farp or carrier.
+  --   * Optionally have a **limited set of resources**. The default is that squadrons have **unlimited resources**.
+  -- 
+  -- The name of the squadron given acts as the **squadron key** in all `A2GDispatcher:SetSquadron...()` or `A2GDispatcher:GetSquadron...()` methods.
+  -- 
+  -- Additionally, squadrons have specific configuration options to:
+  -- 
+  --   * Control how new helicopters or aircraft are taking off from the airfield, farp or carrier (in the air, cold, hot, at the runway).
+  --   * Control how returning helicopters or aircraft are landing at the airfield, farp or carrier (in the air near the airbase, after landing, after engine shutdown).
+  --   * Control the **grouping** of new helicopters or aircraft spawned at the airfield, farp or carrier. If there is more than one helicopter or aircraft to be spawned, these may be grouped.
+  --   * Control the **overhead** or defensive strength of the squadron. Depending on the types of helicopters, planes, amount of resources and payload (weapon configuration) chosen, 
+  --     the mission designer can choose to increase or reduce the amount of planes spawned.
+  --   
+  -- 
   -- 
   -- @field #AI_A2G_DISPATCHER
   AI_A2G_DISPATCHER = {

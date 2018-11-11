@@ -274,7 +274,7 @@ do -- AI_A2A_DISPATCHER
   --     A2ADispatcher_Red = AI_A2A_DISPATCHER:New( EWR_Red )
   --     A2ADispatcher_Blue = AI_A2A_DISPATCHER:New( EWR_Blue )
   --    
-   -- ### 2. Define the detected **target grouping radius**:
+  -- ### 1.2. Define the detected **target grouping radius**:
   -- 
   -- The target grouping radius is a property of the Detection object, that was passed to the AI\_A2A\_DISPATCHER object, but can be changed.
   -- The grouping radius should not be too small, but also depends on the types of planes and the era of the simulation.
