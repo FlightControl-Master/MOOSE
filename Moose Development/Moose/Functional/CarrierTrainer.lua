@@ -47,12 +47,18 @@
 -- @field #AIRBOSS.Checkpoint Wake Right behind the carrier.
 -- @field #AIRBOSS.Checkpoint Groove In the groove checkpoint.
 -- @field #AIRBOSS.Checkpoint Trap Landing checkpoint.
+-- @field #AIRBOSS.Checkpoint C3Descent4k Case III descent at 4000 ft/min right after leaving holding pattern.
+-- @field #AIRBOSS.Checkpoint C3Descent2k Case III descent at 2000 ft/min at 5000 ft plattform.
+-- @field #AIRBOSS.Checkpoint C3DirtyUp Case III dirty up and on speed position at 1200 ft and 10-12 NM from the carrier.
+-- @field #AIRBOSS.Checkpoint C3BullsEye Case III intercept glideslope and follow ICLS "bullseye". 
 -- @field #number rwyangle Angle of the runway wrt to carrier "nose". For the Stennis ~ -10 degrees.
 -- @field #number sterndist Distance in meters from carrier coordinate to the end of the deck.
 -- @field #number deckheight Height of the deck in meters.
 -- @field #number case Recovery case I, II or III.
 -- @field #table Qmarshal Queue of marshalling aircraft groups.
 -- @field #table Qpattern Queue of aircraft groups in the landing pattern.
+-- @field #RESCUEHELO rescuehelo Rescue helo flying in close formation with the carrier.
+-- @field #CARRIERTANKER tanker Refuelling tanker flying overhead with the carrier.
 -- @extends Core.Fsm#FSM
 
 --- Practice Carrier Landings
@@ -95,12 +101,18 @@ AIRBOSS = {
   Wake         =  {},
   Groove       =  {},
   Trap         =  {},
+  C3Descent4k  =  {},
+  C3Descent2k  =  {},
+  C3DirtyUp    =  {},
+  C3BullsEye   =  {},
   rwyangle     =  -9,
   sterndist    =-100,
   deckheight   =  22,
   case         =   1,
   Qpattern     =  {},
   Qmarshal     =  {},
+  rescuehelo   = nil,
+  tanker       = nil,
 }
 
 --- Aircraft types.
@@ -240,8 +252,9 @@ AIRBOSS.GroovePos={
 
 --- Player data table holding all important parameters of each player.
 -- @type AIRBOSS.PlayerData
--- @field Wrapper.Client#CLIENT client Client object of player.
 -- @field Wrapper.Unit#UNIT unit Aircraft of the player.
+-- @field #string name Player name. 
+-- @field Wrapper.Client#CLIENT client Client object of player.
 -- @field Wrapper.Group#GROUP group Aircraft group the player is in.
 -- @field #string callsign Callsign of player.
 -- @field #string difficulty Difficulty level.
@@ -293,7 +306,7 @@ AIRBOSS.MenuF10={}
 
 --- Carrier trainer class version.
 -- @field #string version
-AIRBOSS.version="0.2.3"
+AIRBOSS.version="0.2.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -329,16 +342,9 @@ function AIRBOSS:New(carriername, alias)
   -- Set carrier unit.
   self.carrier=UNIT:FindByName(carriername)
   
-  -- Carrier zones.
-  if self.carrier then
-    -- Zone 5 km astern and 100 m starboard of the carrier with radius of 2.5 km.
-    self.registerZone = ZONE_UNIT:New("registerZone", self.carrier,  2.5*1000, {dx = -5000, dy = 100, relative_to_unit=true})
-    -- Zone 2 km astern and 100 m starboard of the carrier with a radius of 1 km.
-    self.startZone    = ZONE_UNIT:New("startZone",    self.carrier,  1.0*1000, {dx = -2000, dy = 100, relative_to_unit=true})
-    -- Zone around the carrier with a radius of 30 km.
-    self.carrierZone  = ZONE_UNIT:New("carrierZone",  self.carrier, 10.0*1000)
-  else
-    -- Carrier unit does not exist error.
+  -- Check if carrier unit exists.
+  if self.carrier==nil then
+    -- Error message.
     local text=string.format("ERROR: Carrier unit %s could not be found! Make sure this UNIT is defined in the mission editor and check the spelling of the unit name carefully.", carriername)
     MESSAGE:New(text, 120):ToAll()
     self:E(text)
@@ -381,6 +387,18 @@ function AIRBOSS:New(carriername, alias)
     return nil
   end
   
+  -- Zone 5 km astern and 100 m starboard of the carrier with radius of 2.5 km.
+  self.registerZone = ZONE_UNIT:New("registerZone", self.carrier,  2.5*1000, {dx = -5000, dy = 100, relative_to_unit=true})
+  
+  -- Zone 2 km astern and 100 m starboard of the carrier with a radius of 1 km.
+  self.startZone    = ZONE_UNIT:New("startZone",    self.carrier,  1.0*1000, {dx = -2000, dy = 100, relative_to_unit=true})
+  
+  -- Zone around the carrier with a radius of 30 km.
+  self:SetCarrierControlledZone()
+  
+  -- Default recovery case.
+  self:SetRecoveryCase(3)
+  
   -----------------------
   --- FSM Transitions ---
   -----------------------
@@ -419,6 +437,34 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- User functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Set carrier controlled zone.
+-- This is a zone around the carrier which is constantly updated wrt the carrier position.
+-- @param #AIRBOSS self
+-- @param #number radius Radius of zone in nautical miles (NM). Default 50 NM.
+-- @return #AIRBOSS self
+function AIRBOSS:SetCarrierControlledZone(radius)
+
+  radius=UTILS.NMToMeters(radius or 50)
+
+  self.carrierZone=ZONE_UNIT:New("Carrier Controlled Zone",  self.carrier, radius)
+
+  return self
+end
+
+
+
+--- Set recovery case pattern.
+-- @param #AIRBOSS self
+-- @param #number case Case of recovery. Either 1 or 3.
+-- @return #AIRBOSS self
+function AIRBOSS:SetRecoveryCase(case)
+
+  self.case=case
+
+  return self
+end
+
 
 --- Set TACAN channel of carrier.
 -- @param #AIRBOSS self
@@ -566,11 +612,14 @@ function AIRBOSS:_CheckQueue()
   -- Collapse marshal stack.
   if nmarshal>0 and npattern<1 then
   
-    local flight=self.Qmarshal[1]  --#AIRBOSS.Queueitem
+    -- First flight send to marshal stack.
+    local marshalflight=self.Qmarshal[1]  --#AIRBOSS.Queueitem
     
-    local Tmarshal=timer.getTime()-flight.time
-    env.info(string.format("Marshal time of group %s = %d seconds", flight.groupname, Tmarshal))
+    -- Time flight is marshalling.
+    local Tmarshal=timer.getTime()-marshalflight.time
+    env.info(string.format("Marshal time of group %s = %d seconds", marshalflight.groupname, Tmarshal))
     
+    -- Time (last) flight has entered landing pattern. 
     local Tpattern=999
     if npattern>0 then
       local patternflight=self.Qpattern[#self.Qpattern] --#AIRBOSS.Queueitem
@@ -578,8 +627,15 @@ function AIRBOSS:_CheckQueue()
       env.info(string.format("Pattern time of group %s = %d seconds", patternflight.groupname, Tpattern))
     end
     
+    local TpatternMin=120
+    if self.case==1 then
+      TpatternMin=45
+    end
+    
+    local TmarshalMin=120
+    
     -- Two minutes in pattern at leastand >45 sec interval between pattern flights.
-    if Tmarshal>120 and Tpattern>45 then
+    if Tmarshal>TmarshalMin and Tpattern>TpatternMin then
       self:_CollapseMarshalStack()
     end
     
@@ -681,6 +737,13 @@ function AIRBOSS:_MarshalPlayer(group, stack)
   -- Add group to marshal stack.
   self:_AddMarshallGroup(group, nstacks+1)
   
+  --[[
+  local playerData=self:_GetPlayerDataGroup(group)  
+  if playerData then
+    self:_SendMessageToPlayer(message,duration,playerData,clear,sender,delay)
+  end
+  ]]
+  
   --TODO: playerData set
 end
 
@@ -699,17 +762,15 @@ function AIRBOSS:_MarshalAI(group)
   local Carrier=self.carrier:GetCoordinate()
     
   -- Aircraft speed when flying the pattern.
-  local Speed=UTILS.KnotsToMps(272)
+  local Speed=UTILS.KnotsToMps(250)
   
   --- Create a DCS task to orbit at a certain altitude.
-  local function _taskorbit(coord, alt, speed, stopflag)
-  
+  local function _taskorbit(p1, alt, speed, stopflag, p2)
     local DCSTask={}
     DCSTask.id="ControlledTask"
     DCSTask.params={}
-    DCSTask.params.task=group:TaskOrbit(coord, alt, speed)
-    DCSTask.params.stopCondition={userFlag=groupname, userFlagValue=stopflag}
-    
+    DCSTask.params.task=group:TaskOrbit(p1, alt, speed, p2)        
+    DCSTask.params.stopCondition={userFlag=groupname, userFlagValue=stopflag}    
     return DCSTask
   end
 
@@ -718,21 +779,35 @@ function AIRBOSS:_MarshalAI(group)
   
   -- Set up waypoints including collapsing the stack.
   local n=1  -- Waypoint counter.
-  for i=nstacks+1,1,-1 do
-    --env.info("FF i="..i)
+  for stack=nstacks+1,1,-1 do
+  
+    -- Altitude of first stack. Depends on recovery case.
+    local angels0
+    local Dist
+    local p1=nil  --Core.Point#COORDINATE
+    local p2=nil  --Core.Point#COORDINATE
+    if self.case==1 then
+      angels0=2
+      Dist=UTILS.NMToMeters(5)
+      p1=Carrier:Translate(Dist, 270)
+    else
+      angels0=6
+      Dist=UTILS.NMToMeters((stack-1)*angels0+15)
+      p1=Carrier:Translate(Dist, self:_Radial())
+      p2=Carrier:Translate(Dist+UTILS.NMToMeters(10), self:_Radial())
+    end
     
     -- Pattern altitude.
-    local Altitude=UTILS.FeetToMeters((i-1)*1000+2000)
+    local Altitude=UTILS.FeetToMeters(((stack-1)+angels0)*1000)
     
     -- Orbit task.
-    local TaskOrbit=_taskorbit(Carrier, Altitude, Speed, i-1)
+    local TaskOrbit=_taskorbit(p1, Altitude, Speed, stack-1, p2)
     
     -- Waypoint description.    
-    local text=string.format("Marshal @ %d ft, %d knots", UTILS.MetersToFeet(Altitude), UTILS.MpsToKnots(Speed))    
-    env.info(string.format("FF %s: %s stopFlag=%d", groupname, text, i-1))
+    local text=string.format("Marshal @ alt=%d ft, dist=%.1f NM, speed=%d knots", UTILS.MetersToFeet(Altitude), UTILS.MetersToNM(Dist), UTILS.MpsToKnots(Speed))
     
     -- Waypoint.
-    wp[n]=Carrier:SetAltitude(Altitude):WaypointAirTurningPoint(nil, Speed, {TaskOrbit}, text)
+    wp[n]=p1:SetAltitude(Altitude):WaypointAirTurningPoint(nil, Speed, {TaskOrbit}, text)
     
     -- Increase counter.
     n=n+1
@@ -741,8 +816,20 @@ function AIRBOSS:_MarshalAI(group)
   -- Landing waypoint.
   wp[#wp+1]=Carrier:WaypointAirLanding(Speed, self.airbase, nil, "Landing")
   
+  local angels0
+  if self.case==1 then
+    angels0=2
+    --Dist=UTILS.NMToMeters(5)
+  else
+    angels0=6
+    --Dist=UTILS.NMToMeters(nstacks*angels0+15)
+  end
+  
+  -- Pattern altitude.
+  local Altitude=UTILS.FeetToMeters((nstacks+angels0)*1000)  
+  
   -- Add group to marshal stack.
-  self:_AddMarshallGroup(group, nstacks+1)
+  self:_AddMarshallGroup(group, nstacks+1, Altitude)
   
   -- Reinit waypoints.
   group:WayPointInitialize(wp)
@@ -755,7 +842,8 @@ end
 -- @param #AIRBOSS self
 -- @param Wrapper.Group#GROUP group Aircraft group.
 -- @param #number flagvalue Initial user flag value.
-function AIRBOSS:_AddMarshallGroup(group, flagvalue)
+-- @param #number alt Altitude in feet.
+function AIRBOSS:_AddMarshallGroup(group, flagvalue, alt)
 
   -- Flight group name
   local groupname=group:GetName()
@@ -767,18 +855,18 @@ function AIRBOSS:_AddMarshallGroup(group, flagvalue)
   qitem.nunits=#group:GetUnits()
   qitem.fuel=group:GetFuelMin()
   qitem.time=timer.getTime()
-  qitem.stack=(flagvalue-1)*1000+2000  --TODO: Case III
   qitem.flag=USERFLAG:New(groupname)
   qitem.flag:Set(flagvalue)
   qitem.ai=not self:_IsHuman(group)
-
+  qitem.stack=alt
+  
   -- Pressure.
   local hPa2inHg=0.0295299830714
   local P=self.carrier:GetCoordinate():GetPressure()*hPa2inHg
   
   -- Marshal message.
   local text=string.format("XYZ, Case 1, BRC is 000, hold at %d. Expected Charlie Time XX.\n", qitem.stack)
-  text=text..string.format("Altimeter %.2f. Report see me.")
+  text=text..string.format("Altimeter %.2f. Report see me.", P)
   MESSAGE:New(text, 30):ToAll()
    
   -- Add to marshal queue.
@@ -845,6 +933,36 @@ function AIRBOSS:_InQueue(queue, group)
   return false
 end
 
+--- Get player data from unit object
+-- @param #AIRBOSS self
+-- @param Wrapper.Unit#UNIT unit Unit in question.
+-- @return #AIRBOSS.PlayerData Player data or nil if not player with this name or unit exists.
+function AIRBOSS:_GetPlayerDataUnit(unit)
+  if unit:IsAlive() then
+    local unitname=unit:GetName()
+    local playerunit,playername=self:_GetPlayerUnitAndName(unitname)
+    if playerunit and playername then
+      return self.players[playername]
+    end
+  end
+  return nil
+end
+
+
+--- Get player data from group object.
+-- @param #AIRBOSS self
+-- @param Wrapper.Group#GROUP group Group in question.
+-- -- @return #AIRBOSS.PlayerData Player data or nil if not player with this name or unit exists.
+function AIRBOSS:_GetPlayerDataGroup(group)
+  local units=group:GetUnits()
+  for _,unit in pairs(units) do
+    local playerdata=self:_GetPlayerDataUnit(unit)
+    if playerdata then
+      return playerdata
+    end
+  end
+  return nil
+end
 
 --- Check current player status.
 -- @param #AIRBOSS self
@@ -1083,35 +1201,45 @@ end
 -- @param #AIRBOSS self
 -- @param #string unitname Name of the player unit.
 -- @return #AIRBOSS.PlayerData Player data.
-function AIRBOSS:_InitPlayer(unitname) 
+function AIRBOSS:_InitPlayer(unitname)
 
-  -- Player data.
-  local playerData={} --#AIRBOSS.PlayerData
+  -- Get player unit and name.
+  local playerunit, playername=self:_GetPlayerUnitAndName(unitname)
   
-  -- Player unit, client and callsign.
-  playerData.unit     = UNIT:FindByName(unitname)
-  playerData.client   = CLIENT:FindByName(unitname, nil, true)
-  playerData.callsign = playerData.unit:GetCallsign()
-  
-  -- Number of passes done by player.
-  playerData.passes=playerData.passes or 0
+  if playerunit and playername then
+
+    -- Player data.
+    local playerData={} --#AIRBOSS.PlayerData
     
-  -- LSO grades.
-  playerData.grades=playerData.grades or {}
+    -- Player unit, client and callsign.
+    playerData.unit     = playerunit
+    playerData.name     = playername
+    playerData.callsign = playerData.unit:GetCallsign()
+    playerData.client   = CLIENT:FindByName(unitname, nil, true)
+        
+    -- Number of passes done by player.
+    playerData.passes=playerData.passes or 0
+      
+    -- LSO grades.
+    playerData.grades=playerData.grades or {}
+    
+    -- Attitude monitor.
+    playerData.attitudemonitor=false
+    
+    -- Set difficulty level.
+    playerData.difficulty=playerData.difficulty or AIRBOSS.Difficulty.NORMAL
+    
+    -- Player is in the big zone around the carrier.
+    playerData.inbigzone=playerData.unit:IsInZone(self.carrierZone)
   
-  -- Attitude monitor.
-  playerData.attitudemonitor=false
+    -- Init stuff for this round.
+    playerData=self:_InitNewRound(playerData)
+    
+    -- Return player data table.
+    return playerData    
+  end
   
-  -- Set difficulty level.
-  playerData.difficulty=playerData.difficulty or AIRBOSS.Difficulty.NORMAL
-  
-  -- Player is in the big zone around the carrier.
-  playerData.inbigzone=playerData.unit:IsInZone(self.carrierZone)
-
-  -- Init stuff for this round.
-  playerData=self:_InitNewRound(playerData)
-  
-  return playerData
+  return nil
 end
 
 --- Initialize new approach for player by resetting parmeters to initial values.
@@ -1178,7 +1306,7 @@ end
 function AIRBOSS:_Upwind(playerData)
 
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
-  local X, Z = self:_GetDistances(playerData.unit)
+  local X, Z, rho, phi=self:_GetDistances(playerData.unit)
   
   -- Abort condition check.
   if self:_CheckAbort(X, Z, self.Upwind) then
@@ -1214,7 +1342,7 @@ end
 function AIRBOSS:_Break(playerData, part)
 
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
-  local X, Z = self:_GetDistances(playerData.unit)
+  local X, Z, rho, phi=self:_GetDistances(playerData.unit)
   
   -- Early or late break.  
   local breakpoint = self.BreakEarly
@@ -1890,6 +2018,70 @@ function AIRBOSS:_Lineup(playerData)
   return math.deg(lineup), UTILS.VecNorm(c)
 end
 
+--- Get base recovery course (BRC) of carrier.
+-- @param #AIRBOSS self
+-- @param #boolean True If true, return true bearing. Otherwise (default) return magnetic bearing.
+-- @return #number BRC in degrees.
+function AIRBOSS:_BaseRecoveryCourse(True) 
+
+  -- Current true heading of carrier.
+  local hdg=self.carrier:GetHeading()
+  
+  -- Final (true) bearing.   
+  local brc=hdg
+    
+  -- Magnetic bearing.
+  if True==false then
+    --TODO: Conversion to magnetic, i.e. include magnetic declination of current map.
+  end
+  
+  -- Adjust negative values.
+  if brc<0 then
+    brc=brc+360
+  end
+  
+  return brc
+end
+
+
+--- Get final bearing (FB) of carrier.
+-- By default, the routine returns the magnetic FB depending on the current map (Caucasus, NTTR, Normandy, Persion Gulf etc).
+-- The true bearing can be obtained by setting the *True* parameter to true. 
+-- @param #AIRBOSS self
+-- @param #boolean True If true, return true bearing. Otherwise (default) return magnetic bearing.
+-- @return #number FB in degrees.
+function AIRBOSS:_FinalBearing(True) 
+
+  -- Base Recovery Course of carrier.
+  local brc=self:_BaseRecoveryCourse(True)
+  
+  -- Final baring = BRC including angled deck.
+  local fb=brc+self.rwyangle  
+  
+  -- Adjust negative values.
+  if fb<0 then
+    fb=fb+360
+  end
+  
+  return fb
+end
+
+--- Get radial, i.e. the final bearing FB-180 degrees.
+-- @param #AIRBOSS self
+-- @return #number Radial in degrees.
+function AIRBOSS:_Radial() 
+
+  -- Get radial.
+  local radial=self:_FinalBearing()-180
+  
+  -- Adjust for negative values.
+  if radial<0 then
+    radial=radial+360
+  end
+  
+  return radial
+end
+
 
 ---------
 -- Bla functions
@@ -2192,13 +2384,13 @@ end
 function AIRBOSS:_InitStennis()
 
   -- Carrier Parameters.
-  self.rwyangle   = -10
+  self.rwyangle   =  -9
   self.sterndist  =-150
   self.deckheight =  22
   self.wire1      =-100
-  self.wire2      =-90
-  self.wire3      =-80
-  self.wire4      =-70
+  self.wire2      = -90
+  self.wire3      = -80
+  self.wire4      = -70
 
   --[[
   q0=self.carrier:GetCoordinate():SetAltitude(25)

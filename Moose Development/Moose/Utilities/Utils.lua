@@ -43,6 +43,19 @@ BIGSMOKEPRESET = {
   HugeSmoke=7,
 }
 
+--- DCS map as returned by env.mission.theatre.
+-- @type DCSMAP
+-- @field #string Caucasus Caucasus map.
+-- @field #string Normandy Normandy map.
+-- @field #string NTTR Nevada Test and Training Range map.
+-- @field #string PersionGulf Persian Gulf map.
+DCSMAP = {
+  Caucasus="Caucasus",
+  NTTR="NTTR",
+  Normandy="Normandy",
+  PersianGulf="Persian Gulf"
+}
+
 --- Utilities static class.
 -- @type UTILS
 UTILS = {
@@ -717,4 +730,8 @@ function UTILS.TACANToFrequency(TACANChannel, TACANMode)
 end
 
 
-
+--- Returns the DCS map/theatre as optained by env.mission.theatre.
+-- @return #string DCS map string.
+function UTILS.GetDCSMap()
+  return env.mission.theatre
+end
