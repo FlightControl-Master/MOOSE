@@ -2637,8 +2637,7 @@ do -- AI_A2G_DISPATCHER
       
       if DefenderTaskTarget and DefenderTaskTarget.Index == AttackerDetection.Index then
       
-        local Squadron = self:GetSquadronFromDefender( Defender )
-        local SquadronOverhead = self:GetSquadronOverhead( Squadron.SquadronName )
+        local SquadronOverhead = self:GetSquadronOverhead( DefenderSquadronName )
         
         local DefenderSize = Defender:GetInitialSize()
         if DefenderSize then
