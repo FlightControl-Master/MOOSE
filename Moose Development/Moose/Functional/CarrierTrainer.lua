@@ -26,7 +26,7 @@
 -- @field #boolean Debug Debug mode. Messages to all about status.
 -- @field Wrapper.Unit#UNIT carrier Aircraft carrier unit on which we want to practice.
 -- @field #string carriertype Type name of aircraft carrier.
--- @field #string alias Alias of the carrier trainer.
+-- @field #string alias Alias of the carrier.
 -- @field Wrapper.Airbase#AIRBASE airbase Carrier airbase object.
 -- @field Core.Radio#BEACON beacon Carrier beacon for TACAN and ICLS.
 -- @field #number TACANchannel TACAN channel.
@@ -37,6 +37,7 @@
 -- @field Core.Zone#ZONE_UNIT startZone Zone in which the pattern approach starts.
 -- @field Core.Zone#ZONE_UNIT carrierZone Large zone around the carrier to welcome players.
 -- @field Core.Zone#ZONE_UNIT registerZone Zone behind the carrier to register for a new approach.
+-- @field Core.Zone#ZONE_UNIT zoneHolding Zone where aircraft are holding before entering the landing pattern.
 -- @field #table players Table of players. 
 -- @field #table menuadded Table of units where the F10 radio menu was added.
 -- @field #AIRBOSS.Checkpoint Upwind Upwind checkpoint.
@@ -59,15 +60,16 @@
 -- @field #table Qpattern Queue of aircraft groups in the landing pattern.
 -- @field #RESCUEHELO rescuehelo Rescue helo flying in close formation with the carrier.
 -- @field #CARRIERTANKER tanker Refuelling tanker flying overhead with the carrier.
+-- @field #table recoverytime Time interval where aircraft are recovered.
 -- @extends Core.Fsm#FSM
 
 --- Practice Carrier Landings
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\AIRBOSS\CarrierTrainer_Main.png)
+-- ![Banner Image](..\Presentations\AIRBOSS\Airboss_Main.png)
 --
--- # The Trainer Concept
+-- # The AIRBOSS Concept
 --
 -- bla bla
 --
@@ -91,6 +93,7 @@ AIRBOSS = {
   registerZone = nil,
   startZone    = nil,
   carrierZone  = nil,
+  zoneHolding  = nil,
   players      =  {},
   menuadded    =  {},
   Upwind       =  {},
@@ -113,6 +116,7 @@ AIRBOSS = {
   Qmarshal     =  {},
   rescuehelo   = nil,
   tanker       = nil,
+  recoverytime =  {},
 }
 
 --- Aircraft types.
@@ -216,6 +220,11 @@ AIRBOSS.Difficulty={
   HARD="TOPGUN Graduate",
 }
 
+--- Recovery time.
+-- @type AIRBOSS.Recovery
+-- @field #number START Start of recovery.
+-- @field #number STOP End of recovery.
+
 --- Groove position.
 -- @type AIRBOSS.GroovePos
 -- @field #string X0 Entering the groove.
@@ -279,6 +288,10 @@ AIRBOSS.GroovePos={
 -- @field #number Xmax Maximum allowed longitual distance to carrier.
 -- @field #number Zmin Minimum allowed latitudal distance to carrier.
 -- @field #number Zmax Maximum allowed latitudal distance to carrier.
+-- @field #number Rmin Minimum allowed range to carrier.
+-- @field #number Rmax Maximum allowed range to carrier.
+-- @field #number Amin Minimum allowed angle to carrier.
+-- @field #number Amax Maximum allowed angle to carrier.
 -- @field #number LimitXmin Latitudal threshold for triggering the next step if X<Xmin.
 -- @field #number LimitXmax Latitudal threshold for triggering the next step if X>Xmax.
 -- @field #number LimitZmin Latitudal threshold for triggering the next step if Z<Zmin.
@@ -304,9 +317,9 @@ AIRBOSS.GroovePos={
 -- @field #table MenuF10
 AIRBOSS.MenuF10={}
 
---- Carrier trainer class version.
+--- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.2.4"
+AIRBOSS.version="0.2.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -330,7 +343,7 @@ AIRBOSS.version="0.2.4"
 -- Constructor
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Create new carrier trainer.
+--- Create new AIRBOSS class object.
 -- @param #AIRBOSS self
 -- @param carriername Name of the aircraft carrier unit as defined in the mission editor.
 -- @param alias (Optional) Alias for the carrier. This will be used for radio messages and the F10 radius menu. Default is the carrier name as defined in the mission editor.
@@ -398,7 +411,7 @@ function AIRBOSS:New(carriername, alias)
   self:SetCarrierControlledZone()
   
   -- Default recovery case.
-  self:SetRecoveryCase(3)
+  self:SetRecoveryCase(1)
   
   -----------------------
   --- FSM Transitions ---
@@ -410,24 +423,36 @@ function AIRBOSS:New(carriername, alias)
   -- Add FSM transitions.
   --                 From State  -->   Event   -->   To State
   self:AddTransition("Stopped",       "Start",      "Running")
-  self:AddTransition("Running",       "Status",     "Running")
+  self:AddTransition("Running",       "Recover",    "Recovering")  -- Recover aircraft.
+  self:AddTransition("*",             "Status",     "*")
   self:AddTransition("*",             "Stop",       "Stopped")
 
 
-  --- Triggers the FSM event "Start" that starts the carrier trainer. Initializes parameters and starts event handlers.
+  --- Triggers the FSM event "Start" that starts the airboss. Initializes parameters and starts event handlers.
   -- @function [parent=#AIRBOSS] Start
   -- @param #AIRBOSS self
 
-  --- Triggers the FSM event "Start" after a delay that starts the carrier trainer. Initializes parameters and starts event handlers.
+  --- Triggers the FSM event "Start" that starts the airboss after a delay. Initializes parameters and starts event handlers.
   -- @function [parent=#AIRBOSS] __Start
   -- @param #AIRBOSS self
   -- @param #number delay Delay in seconds.
 
-  --- Triggers the FSM event "Stop" that stops the carrier trainer. Event handlers are stopped.
+
+  --- Triggers the FSM event "Recover" that starts the recovering of aircraft. Marshalling aircraft are send to the landing pattern.
+  -- @function [parent=#AIRBOSS] Recover
+  -- @param #AIRBOSS self
+
+  --- Triggers the FSM event "Recover" that starts the recovering of aircraft after a delay. Marshalling aircraft are send to the landing pattern.
+  -- @function [parent=#AIRBOSS] __Start
+  -- @param #AIRBOSS self
+  -- @param #number delay Delay in seconds.
+
+
+  --- Triggers the FSM event "Stop" that stops the airboss. Event handlers are stopped.
   -- @function [parent=#AIRBOSS] Stop
   -- @param #AIRBOSS self
 
-  --- Triggers the FSM event "Stop" that stops the carrier trainer after a delay. Event handlers are stopped.
+  --- Triggers the FSM event "Stop" that stops the airboss after a delay. Event handlers are stopped.
   -- @function [parent=#AIRBOSS] __Stop
   -- @param #AIRBOSS self
   -- @param #number delay Delay in seconds.
@@ -463,6 +488,24 @@ function AIRBOSS:SetRecoveryCase(case)
 
   self.case=case or 1
 
+  return self
+end
+
+--- Add recovery time slot.
+-- @param #AIRBOSS self
+-- @param #string starttime Start time, e.g. "8:00" for eight o'clock.
+-- @param #string stoptime Stop time, e.g. "9:00" for nine o'clock.
+-- @return #AIRBOSS self
+function AIRBOSS:AddRecoveryTime(starttime, stoptime)
+
+  local Tstart=UTILS.ClockToSeconds(starttime)
+  local Tstop=UTILS.ClockToSeconds(stoptime)
+  
+  local rtime={} --#AIRBOSS.Recovery
+  rtime.START=Tstart
+  rtime.STOP=Tstop
+  
+  table.insert(self.recoverytime, rtime)
   return self
 end
 
@@ -514,6 +557,21 @@ function AIRBOSS:SetCarrierradio(freq)
   return self
 end
 
+
+--- Check if carrier is recovering aircraft.
+-- @param #AIRBOSS self
+-- @return #boolean If true, time slot for recovery is open. 
+function AIRBOSS:IsRecovering()
+  return self:is("Recovering")
+end
+
+--- Check if carrier is operating.
+-- @param #AIRBOSS self
+-- @return #boolean If true, helo is operating. 
+function AIRBOSS:IsRunning()
+  return self:is("Running")
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM states
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -560,6 +618,15 @@ function AIRBOSS:onafterStatus(From, Event, To)
   -- Get current time.
   local time=timer.getTime()
   
+  -- Check if we go into recovery mode.
+  local startrecovery=self:_CheckRecoveryTimes()
+  if startrecovery==true then
+    self:Recover()
+  end
+
+  local text=string.format("AIRBOSS %s: Status %s.", self.alias, self:GetState())
+  self:I(text)  
+  
   -- Update marshal and pattern queue every 30 seconds.
   if time-self.Tqueue>30 then
   
@@ -576,9 +643,53 @@ function AIRBOSS:onafterStatus(From, Event, To)
   -- Check player status.
   self:_CheckPlayerStatus()
 
-  -- Call status again in 0.25 seconds.
+  -- Call status again in one second.
   self:__Status(-1)
 end
+
+--- Check if recovery times.
+-- @param #AIRBOSS self
+-- @return #boolean IF true, start recovery.
+function AIRBOSS:_CheckRecoveryTimes()
+
+  local abstime=timer.getAbsTime()
+  
+  if #self.recoverytime==0 then
+  
+    -- If no recovery times have been specified, we assume any time is okay.
+    self:I("FF Start recovery. No recovery time set!")
+    
+    return true    
+  else
+  
+    local recovery=false
+    for _,_rtime in pairs(self.recoverytime) do
+      local rtime=_rtime --#AIRBOSS.Recovery
+      if abstime>=rtime.START and abstime<=rtime.STOP then
+        if not self:IsRecovering() then
+          self:I("FF Start recovery.")
+          return true
+        else
+          return nil
+        end
+      end    
+    end
+   
+    return false
+  end
+
+end
+
+--- On before "Recover" event.
+-- @param #AIRBOSS self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @return #boolean If true, recovery transition is allowed.
+function AIRBOSS:onbeforeRecover(From, Event, To)
+  return true
+end
+
 
 --- On after Stop event. Unhandle events and stop status updates. 
 -- @param #AIRBOSS self
@@ -636,7 +747,7 @@ function AIRBOSS:_CheckQueue()
     local TmarshalMin=120
     
     -- Two minutes in pattern at leastand >45 sec interval between pattern flights.
-    if Tmarshal>TmarshalMin and Tpattern>TpatternMin then
+    if self:IsRecovering() and Tmarshal>TmarshalMin and Tpattern>TpatternMin then
       self:_CollapseMarshalStack()
     end
     
@@ -788,6 +899,7 @@ function AIRBOSS:_MarshalAI(group)
     local p1=nil  --Core.Point#COORDINATE
     local p2=nil  --Core.Point#COORDINATE
     if self.case==1 then
+      -- CASE I: Holding at 2000 ft on a circular pattern port of the carrier. Interval +1000 ft for next aircraft.
       angels0=2
       Dist=UTILS.NMToMeters(5)
       p1=Carrier:Translate(Dist, 270)
@@ -820,10 +932,8 @@ function AIRBOSS:_MarshalAI(group)
   local angels0
   if self.case==1 then
     angels0=2
-    --Dist=UTILS.NMToMeters(5)
   else
     angels0=6
-    --Dist=UTILS.NMToMeters(nstacks*angels0+15)
   end
   
   -- Pattern altitude.
@@ -890,6 +1000,11 @@ function AIRBOSS:_CollapseMarshalStack()
   -- TODO: better message.
   MESSAGE:New(string.format("Marshal, %s, you are cleared for Case I recovery pattern!", flight.groupname), 15):ToAll()
   
+  if flight.ai==false then
+    local playerData=self:_GetPlayerDataGroup(flight.group)
+    playerData.step=0
+  end
+  
   -- Time stamp.
   flight.time=timer.getTime()
   
@@ -953,7 +1068,7 @@ end
 --- Get player data from group object.
 -- @param #AIRBOSS self
 -- @param Wrapper.Group#GROUP group Group in question.
--- -- @return #AIRBOSS.PlayerData Player data or nil if not player with this name or unit exists.
+-- @return #AIRBOSS.PlayerData Player data or nil if not player with this name or unit exists.
 function AIRBOSS:_GetPlayerDataGroup(group)
   local units=group:GetUnits()
   for _,unit in pairs(units) do
@@ -971,12 +1086,12 @@ function AIRBOSS:_CheckPlayerStatus()
 
   -- Loop over all players.
   for _playerName,_playerData in pairs(self.players) do  
-    local playerData = _playerData --#AIRBOSS.PlayerData
+    local playerData=_playerData --#AIRBOSS.PlayerData
     
     if playerData then
     
       -- Player unit.
-      local unit = playerData.unit
+      local unit=playerData.unit
       
       if unit:IsAlive() then
       
@@ -985,6 +1100,7 @@ function AIRBOSS:_CheckPlayerStatus()
           self:_DetailedPlayerStatus(playerData)
         end
 
+        -- Check if player is in carrier controlled zone.
         if unit:IsInZone(self.carrierZone) then
           
           -- Check if player was previously not inside the zone.
@@ -1014,38 +1130,58 @@ function AIRBOSS:_CheckPlayerStatus()
               self.groovedebug=false
             end
           elseif playerData.step==1 then
+          
             -- Entering the pattern.
             self:_Start(playerData)
+            
           elseif playerData.step==2 then
+          
             -- Upwind leg.
             self:_Upwind(playerData)
+            
           elseif playerData.step==3 then
+          
             -- Early break.
             self:_Break(playerData, "early")
+            
           elseif playerData.step==4 then
+          
             -- Late break.
             self:_Break(playerData, "late")
+            
           elseif playerData.step==5 then
+          
             -- Abeam position.
             self:_Abeam(playerData)
+            
           elseif playerData.step==6 then
+          
             -- Check long down wind leg.
             self:_CheckForLongDownwind(playerData)
             -- At the ninety.
             self:_Ninety(playerData)
+            
           elseif playerData.step==7 then
+          
             -- In the wake.
             self:_Wake(playerData)
+            
           elseif playerData.step==90 then
+          
             -- Entering the groove.
             self:_Groove(playerData)
+            
           elseif playerData.step>=91 and playerData.step<=99 then
+          
             -- In the groove.
             self:_CallTheBall(playerData)
+            
           elseif playerData.step==999 then
+          
             -- Debriefing.
             SCHEDULER:New(nil, self._Debrief, {self, playerData}, 10)
-            playerData.step=-1
+            playerData.step=-999
+            
           end
           
         else
@@ -1065,7 +1201,7 @@ end
 -- EVENT functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Carrier trainer event handler for event birth.
+--- Airboss event handler for event birth.
 -- @param #AIRBOSS self
 -- @param Core.Event#EVENTDATA EventData
 function AIRBOSS:OnEventBirth(EventData)
@@ -1098,7 +1234,7 @@ function AIRBOSS:OnEventBirth(EventData)
       end
     end
     if rightaircraft==false then
-      self:E(string.format("Player aircraft %s not supported of CARRIERTRAINTER.", aircraft))
+      self:E(string.format("Player aircraft %s not supported by AIRBOSS class.", aircraft))
       return
     end
         
@@ -1158,7 +1294,8 @@ function AIRBOSS:OnEventLand(EventData)
     env.info("FF landed")
     playerData.landed=true
     
-    playerData.step=-1
+    -- Unkonwn step.
+    playerData.step=-999
     
     --TODO: maybe check that we actually landed on the right carrier.
     
@@ -1171,6 +1308,24 @@ function AIRBOSS:OnEventLand(EventData)
     self:_RemoveQueue(self.Qpattern, EventData.IniGroup)
   end
   
+end
+
+--- Airboss event handler for event crash.
+-- @param #AIRBOSS self
+-- @param Core.Event#EVENTDATA EventData
+function AIRBOSS:OnEventCrash(EventData)
+  self:F3({eventland = EventData})
+
+  local _unitName=EventData.IniUnitName
+  local _unit, _playername=self:_GetPlayerUnitAndName(_unitName)
+  
+  self:I(self.lid.."CRASH: unit   = "..tostring(EventData.IniUnitName))
+  self:I(self.lid.."CRASH: group  = "..tostring(EventData.IniGroupName))
+  self:I(self.lid.."CARSH: player = "..tostring(_playername))
+      
+  if _unit and _playername then
+  
+  end
 end
 
 --- Airboss event handler for event land.
@@ -1195,7 +1350,7 @@ function AIRBOSS:_RemoveQueue(queue, group)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- CARRIER TRAINING functions
+-- AIRBOSS functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Initialize player data.
@@ -1278,7 +1433,7 @@ function AIRBOSS:_NewRound(playerData)
   end
 end
 
---- Start pattern when player enters the start zone.
+--- Start pattern when player enters the initial zone.
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data table.
 function AIRBOSS:_Start(playerData)
@@ -1370,10 +1525,10 @@ function AIRBOSS:_Break(playerData, part)
     self:_SendMessageToPlayer(hint, 10, playerData)
 
     -- Debrief
-    if part=="late" then
-      self:_AddToSummary(playerData, "Late Break", debrief)
+    if part=="early" then
+      self:_AddToSummary(playerData, "Early Break", debrief)      
     else
-      self:_AddToSummary(playerData, "Early Break", debrief)
+      self:_AddToSummary(playerData, "Late Break", debrief)
     end
 
     -- Next step: late break or abeam.
@@ -3043,34 +3198,34 @@ function AIRBOSS:_AddF10Commands(_unitName)
         -- Enable switch so we don't do this twice.
         self.menuadded[_gid] = true
   
-        -- Main F10 menu: F10/Carrier Trainer/<Carrier Name>/
+        -- Main F10 menu: F10/Airboss/<Carrier Name>/
         if AIRBOSS.MenuF10[_gid] == nil then
-          AIRBOSS.MenuF10[_gid]=missionCommands.addSubMenuForGroup(_gid, "Carrier Trainer")
+          AIRBOSS.MenuF10[_gid]=missionCommands.addSubMenuForGroup(_gid, "Airboss")
         end
         
         -- Player Data.
         local playerData=self.players[playername]
         
-        -- F10/Carrier Trainer/<Carrier Name>
+        -- F10/Airboss/<Carrier Name>
         local _trainPath = missionCommands.addSubMenuForGroup(_gid, self.alias, AIRBOSS.MenuF10[_gid])
         
-        -- F10/Carrier Trainer/<Carrier Name>/Results
+        -- F10/Airboss/<Carrier Name>/Results
         local _statsPath = missionCommands.addSubMenuForGroup(_gid, "LSO Grades", _trainPath)
         
-        -- F10/Carrier Trainer/<Carrier Name>/My Settings/Difficulty
+        -- F10/Airboss/<Carrier Name>/My Settings/Difficulty
         local _difficulPath = missionCommands.addSubMenuForGroup(_gid, "Difficulty", _trainPath)
 
-        -- F10/Carrier Trainer/<Carrier Name>/Results/
+        -- F10/Airboss/<Carrier Name>/Results/
         missionCommands.addCommandForGroup(_gid, "Greenie Board", _statsPath, self._DisplayScoreBoard, self, _unitName)
         missionCommands.addCommandForGroup(_gid, "My Grades",     _statsPath, self._DisplayPlayerGrades, self, _unitName)
         --missionCommands.addCommandForGroup(_gid, "(Clear ALL Results)", _statsPath, self._ResetRangeStats, self, _unitName)
         
-        -- F10/Carrier Trainer/<Carrier Name>/Difficulty
+        -- F10/Airboss/<Carrier Name>/Difficulty
         missionCommands.addCommandForGroup(_gid, "Flight Student",  _difficulPath, self._SetDifficulty, self, playername, AIRBOSS.Difficulty.EASY)
         missionCommands.addCommandForGroup(_gid, "Naval Aviator",   _difficulPath, self._SetDifficulty, self, playername, AIRBOSS.Difficulty.NORMAL)
         missionCommands.addCommandForGroup(_gid, "TOPGUN Graduate", _difficulPath, self._SetDifficulty, self, playername, AIRBOSS.Difficulty.HARD)
         
-        -- F10/Carrier Trainer/<Carrier Name>/
+        -- F10/Airboss/<Carrier Name>/
         missionCommands.addCommandForGroup(_gid, "Carrier Info",            _trainPath, self._DisplayCarrierInfo,    self, _unitName)
         missionCommands.addCommandForGroup(_gid, "Weather Report",          _trainPath, self._DisplayCarrierWeather, self, _unitName)
         missionCommands.addCommandForGroup(_gid, "Attitude Monitor ON/OFF", _trainPath, self._AttitudeMonitor,       self, playername)
@@ -3246,15 +3401,17 @@ function AIRBOSS:_DisplayCarrierInfo(_unitname)
       -- Tacan/ICLS.
       local tacan="unknown"
       local icls="unknown"
-      if self.TACAN~=nil then
-        tacan=tostring(self.TACAN)
+      if self.TACANchannel~=nil then
+        tacan=string.format("%d%s", self.TACANchannel, self.TACANmode)
       end
       if self.ICLSchannel~=nil then
-        icls=tostring(self.ICLS)
+        icls=string.format("%d", self.ICLSchannel)
       end
 
       -- Message text
-      text=text..string.format("BRC %d°\n", carrierheading)
+      text=text..string.format("Case %d Recovery\n", self.case)
+      text=text..string.format("BRC %d°\n", self:_BaseRecoveryCourse())
+      text=text..string.format("FB %d°\n", self:_FinalBearing())
       text=text..string.format("Speed %d kts\n", carrierspeed)      
       text=text..string.format("TACAN Channel %s\n", tacan)
       text=text..string.format("ICLS Channel %s", icls)
@@ -3444,11 +3601,11 @@ function RESCUEHELO:New(carrierunit, helogroupname)
   self:AddTransition("Running",       "Stop",       "Stopped")
 
 
-  --- Triggers the FSM event "Start" that starts the carrier trainer. Initializes parameters and starts event handlers.
+  --- Triggers the FSM event "Start" that starts the rescue helo. Initializes parameters and starts event handlers.
   -- @function [parent=#RESCUEHELO] Start
   -- @param #RESCUEHELO self
 
-  --- Triggers the FSM event "Start" after a delay that starts the carrier trainer. Initializes parameters and starts event handlers.
+  --- Triggers the FSM event "Start" that starts the rescue helo after a delay. Initializes parameters and starts event handlers.
   -- @function [parent=#RESCUEHELO] __Start
   -- @param #RESCUEHELO self
   -- @param #number delay Delay in seconds.
@@ -3873,11 +4030,11 @@ function CARRIERTANKER:New(carrierunit, tankergroupname)
   self:AddTransition("Running",       "Stop",       "Stopped")
 
 
-  --- Triggers the FSM event "Start" that starts the carrier trainer. Initializes parameters and starts event handlers.
+  --- Triggers the FSM event "Start" that starts the carrier tanker. Initializes parameters and starts event handlers.
   -- @function [parent=#CARRIERTANKER] Start
   -- @param #CARRIERTANKER self
 
-  --- Triggers the FSM event "Start" after a delay that starts the carrier trainer. Initializes parameters and starts event handlers.
+  --- Triggers the FSM event "Start" that starts the carrier tanker after a delay. Initializes parameters and starts event handlers.
   -- @function [parent=#CARRIERTANKER] __Start
   -- @param #CARRIERTANKER self
   -- @param #number delay Delay in seconds.
@@ -3891,11 +4048,11 @@ function CARRIERTANKER:New(carrierunit, tankergroupname)
   -- @param #CARRIERTANKER self
   -- @param #number delay Delay in seconds.
 
-  --- Triggers the FSM event "Stop" that stops the carrier trainer. Event handlers are stopped.
+  --- Triggers the FSM event "Stop" that stops the carrier tanker. Event handlers are stopped.
   -- @function [parent=#CARRIERTANKER] Stop
   -- @param #CARRIERTANKER self
 
-  --- Triggers the FSM event "Stop" that stops the carrier trainer after a delay. Event handlers are stopped.
+  --- Triggers the FSM event "Stop" that stops the carrier tanker after a delay. Event handlers are stopped.
   -- @function [parent=#CARRIERTANKER] __Stop
   -- @param #CARRIERTANKER self
   -- @param #number delay Delay in seconds.

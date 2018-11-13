@@ -552,7 +552,7 @@ end
 
 --- Convert clock time from hours, minutes and seconds to seconds.
 -- @param #string clock String of clock time. E.g., "06:12:35" or "5:1:30+1". Format is (H)H:(M)M:((S)S)(+D) H=Hours, M=Minutes, S=Seconds, D=Days.
--- @param #number Seconds. Corresponds to what you cet from timer.getAbsTime() function.
+-- @return #number Seconds. Corresponds to what you cet from timer.getAbsTime() function.
 function UTILS.ClockToSeconds(clock)
   
   -- Nil check.
@@ -564,7 +564,7 @@ function UTILS.ClockToSeconds(clock)
   local seconds=0
   
   -- Split additional days.
-  local dsplit=UTILS.split(clock, "+")
+  local dsplit=UTILS.Split(clock, "+")
   
   -- Convert days to seconds.
   if #dsplit>1 then
