@@ -312,6 +312,7 @@ AIRBOSS.version="0.2.4"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Transmission via radio.
 -- DONE: Add scoring to radio menu.
 -- DONE: Optimized debrief.
 -- DONE: Add automatic grading.
@@ -456,11 +457,11 @@ end
 
 --- Set recovery case pattern.
 -- @param #AIRBOSS self
--- @param #number case Case of recovery. Either 1 or 3.
+-- @param #number case Case of recovery. Either 1 or 3. Default 1.
 -- @return #AIRBOSS self
 function AIRBOSS:SetRecoveryCase(case)
 
-  self.case=case
+  self.case=case or 1
 
   return self
 end
@@ -468,12 +469,12 @@ end
 
 --- Set TACAN channel of carrier.
 -- @param #AIRBOSS self
--- @param #number channel TACAN channel.
--- @param #string mode TACAN mode, i.e. "X" or "Y".
+-- @param #number channel TACAN channel. Default 74.
+-- @param #string mode TACAN mode, i.e. "X" or "Y". Default "X".
 -- @return #AIRBOSS self
 function AIRBOSS:SetTACAN(channel, mode)
 
-  self.TACANchannel=channel
+  self.TACANchannel=channel or 74
   self.TACANmode=mode or "X"
 
   return self
@@ -481,11 +482,11 @@ end
 
 --- Set ICLS channel of carrier.
 -- @param #AIRBOSS self
--- @param #number channel ICLS channel.
+-- @param #number channel ICLS channel. Default 1.
 -- @return #AIRBOSS self
 function AIRBOSS:SetICLS(channel)
 
-  self.ICLSchannel=channel
+  self.ICLSchannel=channel or 1
 
   return self
 end
@@ -493,22 +494,22 @@ end
 
 --- Set LSO radio frequency.
 -- @param #AIRBOSS self
--- @param #number freq Frequency in MHz.
+-- @param #number freq Frequency in MHz. Default 264 MHz.
 -- @return #AIRBOSS self
 function AIRBOSS:SetLSOradio(freq)
 
-  self.LSOfreq=freq
+  self.LSOfreq=(freq or 264)*1000000
 
   return self
 end
 
 --- Set carrier radio frequency.
 -- @param #AIRBOSS self
--- @param #number freq Frequency in MHz.
+-- @param #number freq Frequency in MHz. Default 305.
 -- @return #AIRBOSS self
 function AIRBOSS:SetCarrierradio(freq)
 
-  self.Carrierfreq=freq
+  self.Carrierfreq=(freq or 305)*1000000
 
   return self
 end
@@ -2239,8 +2240,13 @@ function AIRBOSS:_GetDistances(unit)
   if phi<0 then
     phi=phi+360
   end
+  
   -- phi=0 if the plane is directly behind the carrier, phi=180 if the plane is in front of the carrier
   phi=phi-180
+
+  if phi<0 then
+    phi=phi+360
+  end
   
   return dx,dz,rho,phi
 end
@@ -2400,7 +2406,63 @@ function AIRBOSS:_InitStennis()
   q2=self.carrier:GetCoordinate():Translate(-68,0):SetAltitude(22)   --4th wire ==> distance between wires 12 m
   q2:BigSmokeSmall(0.1)--:SmokeBlue()
   ]]
+
+  -- 4k descent from holding pattern to 5k platform
+  self.C3Descent4k.name="4k Descent"
+  self.C3Descent4k.Xmin=-UTILS.NMToMeters(35)
+  self.C3Descent4k.Xmax=-UTILS.NMToMeters(20)
+  self.C3Descent4k.Zmin=-UTILS.NMToMeters(30)
+  self.C3Descent4k.Zmax= UTILS.NMToMeters(30)
+  self.C3Descent4k.LimitXmin=nil
+  self.C3Descent4k.LimitXmax=-UTILS.NMToMeters(20) --TODO: better rho dist. decrease descent 20 2000 ft/min at 5000 ft alt and user rad alt.
+  self.C3Descent4k.LimitZmin=nil
+  self.C3Descent4k.LimitZmax=nil
+  self.C3Descent4k.Altitude=nil --UTILS.FeetToMeters(5000)
+  self.C3Descent4k.AoA=nil
+  self.C3Descent4k.Distance=nil
+
+  -- 2k descent from 5k platform to 1200 dirty up level flight.
+  self.C3Descent2k.name="2k Descent"
+  self.C3Descent2k.Xmin=-UTILS.NMToMeters(21)
+  self.C3Descent2k.Xmax=nil
+  self.C3Descent2k.Zmin=-UTILS.NMToMeters(30)
+  self.C3Descent2k.Zmax= UTILS.NMToMeters(30)
+  self.C3Descent2k.LimitXmin=nil
+  self.C3Descent2k.LimitXmax=-UTILS.NMToMeters(12) --TODO: better rho dist! now switch to dirty up level flight 12 NM.
+  self.C3Descent2k.LimitZmin=nil
+  self.C3Descent2k.LimitZmax=nil 
+  self.C3Descent2k.Altitude=UTILS.FeetToMeters(5000)
+  self.C3Descent2k.AoA=nil
+  self.C3Descent2k.Distance=-UTILS.NMToMeters(20)
   
+  -- Level out at 1200 ft and dirty up.
+  self.C3DirtyUp.name="Dirty Up"
+  self.C3DirtyUp.Xmin=-UTILS.NMToMeters(13)
+  self.C3DirtyUp.Xmax=nil
+  self.C3DirtyUp.Zmin=-UTILS.NMToMeters(30)
+  self.C3DirtyUp.Zmax= UTILS.NMToMeters(30)
+  self.C3DirtyUp.LimitXmin=nil
+  self.C3DirtyUp.LimitXmax=-UTILS.NMToMeters(3) --TODO: better rho dist! Intercept glideslope and follow bullseye.
+  self.C3DirtyUp.LimitZmin=nil
+  self.C3DirtyUp.LimitZmax=nil 
+  self.C3DirtyUp.Altitude=UTILS.FeetToMeters(1200)
+  self.C3DirtyUp.AoA=nil
+  self.C3DirtyUp.Distance=-UTILS.NMToMeters(12)
+  
+  -- Intercept glide slope and follow bullseye.
+  self.C3DirtyUp.name="Bullseye"
+  self.C3DirtyUp.Xmin=-UTILS.NMToMeters(4)
+  self.C3DirtyUp.Xmax=nil
+  self.C3DirtyUp.Zmin=-UTILS.NMToMeters(30)
+  self.C3DirtyUp.Zmax= UTILS.NMToMeters(30)
+  self.C3DirtyUp.LimitXmin=nil
+  self.C3DirtyUp.LimitXmax=-UTILS.NMToMeters(1) --TODO: better rho dist! Call the ball.
+  self.C3DirtyUp.LimitZmin=nil
+  self.C3DirtyUp.LimitZmax=nil 
+  self.C3DirtyUp.Altitude=UTILS.FeetToMeters(1200)
+  self.C3DirtyUp.AoA=nil
+  self.C3DirtyUp.Distance=-UTILS.NMToMeters(3)  
+ 
   -- Upwind leg
   self.Upwind.name="Upwind"
   self.Upwind.Xmin=-4000  -- TODO Should be withing 4 km behind carrier. Why?
