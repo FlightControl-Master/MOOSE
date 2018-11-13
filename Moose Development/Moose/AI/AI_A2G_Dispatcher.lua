@@ -388,6 +388,7 @@ do -- AI_A2G_DISPATCHER
   -- 
   --   - **Defense coordinates are the center of the A2G dispatcher defense system!**
   --   - **You can define more defense coordinates to defend a larger area.**
+  --   - **Detected enemy ground targets are not immediately engaged, but are engaged with a reactivity or probability calculation!**
   -- 
   -- But, there is more to it ...
   -- 
@@ -448,8 +449,93 @@ do -- AI_A2G_DISPATCHER
   --   * Control the **grouping** of new helicopters or aircraft spawned at the airfield, farp or carrier. If there is more than one helicopter or aircraft to be spawned, these may be grouped.
   --   * Control the **overhead** or defensive strength of the squadron. Depending on the types of helicopters, planes, amount of resources and payload (weapon configuration) chosen, 
   --     the mission designer can choose to increase or reduce the amount of planes spawned.
-  --   
   -- 
+  -- The method @{#AI_A2G_DISPATCHER.SetSquadron}() defines for you a new squadron. 
+  -- The provided parameters are the squadron name, airbase name and a list of template prefixe, and a number that indicates the amount of resources.
+  -- 
+  -- For example, this defines 3 new squadrons:
+  -- 
+  --        A2GDispatcher:SetSquadron( "Maykop SEAD", AIRBASE.Caucasus.Maykop_Khanskaya, { "CCCP KA-50" }, 10 )
+  --        A2GDispatcher:SetSquadron( "Maykop CAS", "CAS", { "CCCP KA-50" }, 10 )
+  --        A2GDispatcher:SetSquadron( "Maykop BAI", "BAI", { "CCCP KA-50" }, 10 )
+  -- 
+  -- The latter 2 will depart from FARPs, which bare the name `"CAS"` and `"BAI"`.
+  -- 
+  -- 
+  -- ### 3.1. Squadrons **Tasking**.
+  -- 
+  -- Squadrons can be commanded to execute 3 types of tasks, as explained above:
+  -- 
+  --   - SEAD: Suppression of Air Defenses, which are ground targets that have medium or long range radar emitters.
+  --   - CAS : Close Air Support, when there are enemy ground targets close to friendly units.
+  --   - BAI : Battlefield Air Interdiction, which are targets further away from the frond-line.
+  -- 
+  -- You need to configure each squadron which task types you want it to perform. Read on ...
+  -- 
+  -- ### 3.2. Squadrons enemy ground target **Engagement**.
+  --   
+  -- There are two ways how targets can be engaged: directly upon call from the airfield, farp or carrier, or through a patrol.
+  -- 
+  -- Patrols are extremely handy, as these will airborne your helicopters or airplanes in advance. They will patrol in defined zones outlined, 
+  -- and will engage with the targets once commanded. If the patrol zone is close enough to the enemy ground targets, then the time required
+  -- to engage is heavily minimized!
+  -- 
+  -- However; patrols come with a side effect: since your resources are airborne, they will be vulnerable to incoming air attacks from the enemy.
+  -- 
+  -- The mission designer needs to carefully balance the need for patrols or the need for engagement on call from the airfields.
+  -- 
+  -- ### 3.3. Squadron **on call engagement**.
+  -- 
+  -- So to make squadrons engage targets from the airfields, use the following methods:
+  -- 
+  --   - For SEAD, use the @{#AI_A2G_DISPATCHER.SetSquadronSead}() method.
+  --   - For CAS, use the @{#AI_A2G_DISPATCHER.SetSquadronCas}() method.
+  --   - For BAI, use the @{#AI_A2G_DISPATCHER.SetSquadronBai}() method.
+  -- 
+  -- Note that for the tasks, specific helicopter or airplane templates are required to be used, which you can configure using your mission editor.
+  -- Especially the payload (weapons configuration) is important to get right.
+  -- 
+  -- For example, the following will define for the squadrons different tasks:
+  -- 
+  --        A2GDispatcher:SetSquadron( "Maykop SEAD", AIRBASE.Caucasus.Maykop_Khanskaya, { "CCCP KA-50 SEAD" }, 10 )
+  --        A2GDispatcher:SetSquadronSead( "Maykop SEAD", 120, 250 )
+  --        
+  --        A2GDispatcher:SetSquadron( "Maykop CAS", "CAS", { "CCCP KA-50 CAS" }, 10 )
+  --        A2GDispatcher:SetSquadronCas( "Maykop CAS", 120, 250 )
+  --        
+  --        A2GDispatcher:SetSquadron( "Maykop BAI", "BAI", { "CCCP KA-50 BAI" }, 10 )
+  --        A2GDispatcher:SetSquadronBai( "Maykop BAI", 120, 250 )
+  -- 
+  -- ### 3.4. Squadron **on patrol engagement**.
+  -- 
+  -- Squadrons can be setup to patrol in the air near the engagement hot zone.
+  -- When needed, the A2G defense units will be close to the battle area, and can engage quickly.
+  -- 
+  -- So to make squadrons engage targets from a patrol zone, use the following methods:
+  -- 
+  --   - For SEAD, use the @{#AI_A2G_DISPATCHER.SetSquadronSeadPatrol}() method.
+  --   - For CAS, use the @{#AI_A2G_DISPATCHER.SetSquadronCasPatrol}() method.
+  --   - For BAI, use the @{#AI_A2G_DISPATCHER.SetSquadronBaiPatrol}() method.
+  -- 
+  -- Because a patrol requires more parameters, the following methods must be used to fine-tune the patrols for each squadron.
+  -- 
+  --   - For SEAD, use the @{#AI_A2G_DISPATCHER.SetSquadronSeadPatrolInterval}() method.
+  --   - For CAS, use the @{#AI_A2G_DISPATCHER.SetSquadronCasPatrolInterval}() method.
+  --   - For BAI, use the @{#AI_A2G_DISPATCHER.SetSquadronBaiPatrolInterval}() method.
+  -- 
+  -- Here an example to setup patrols of various task types:
+  -- 
+  --        A2GDispatcher:SetSquadron( "Maykop SEAD", AIRBASE.Caucasus.Maykop_Khanskaya, { "CCCP KA-50 SEAD" }, 10 )
+  --        A2GDispatcher:SetSquadronSeadPatrol( "Maykop SEAD", PatrolZone, 300, 500, 50, 80, 250, 300 )
+  --        A2GDispatcher:SetSquadronPatrolInterval( "Maykop SEAD", 2, 30, 60, 1, "SEAD" )
+  --        
+  --        A2GDispatcher:SetSquadron( "Maykop CAS", "CAS", { "CCCP KA-50 CAS" }, 10 )
+  --        A2GDispatcher:SetSquadronCasPatrol( "Maykop CAS", PatrolZone, 600, 700, 50, 80, 250, 300 )
+  --        A2GDispatcher:SetSquadronPatrolInterval( "Maykop CAS", 2, 30, 60, 1, "CAS" )
+  --        
+  --        A2GDispatcher:SetSquadron( "Maykop BAI", "BAI", { "CCCP KA-50 BAI" }, 10 )
+  --        A2GDispatcher:SetSquadronBaiPatrol( "Maykop BAI", PatrolZone, 800, 900, 50, 80, 250, 300 )
+  --        A2GDispatcher:SetSquadronPatrolInterval( "Maykop BAI", 2, 30, 60, 1, "BAI" )
   -- 
   -- @field #AI_A2G_DISPATCHER
   AI_A2G_DISPATCHER = {
@@ -2551,8 +2637,7 @@ do -- AI_A2G_DISPATCHER
       
       if DefenderTaskTarget and DefenderTaskTarget.Index == AttackerDetection.Index then
       
-        local Squadron = self:GetSquadronFromDefender( Defender )
-        local SquadronOverhead = self:GetSquadronOverhead( Squadron.SquadronName )
+        local SquadronOverhead = self:GetSquadronOverhead( DefenderSquadronName )
         
         local DefenderSize = Defender:GetInitialSize()
         if DefenderSize then
