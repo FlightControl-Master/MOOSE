@@ -4,9 +4,16 @@
 --
 -- Features:
 --
---    * CASE I recovery.
---    * Performance evaluation.
---    * Feedback about performance during flight.
+--    * CASE I and III recovery.
+--    * Supports human and AI pilots.
+--    * Automatic LSO grading.
+--    * Different skill level supporting tipps during for students or complete zip lip for pros.
+--    * Rescue helo option.
+--    * Overhead refuelling tanker option.
+--    * Voice overs for LSO and Airobss calls. Can easily customized by users.
+--    * Automatic TACAN and ICLS channel setting.
+--    * Different radio channels for LSO and airboss calls.
+--    * F10 radio menu including carrier info (weather, radio frequencies, TACAN/ICLS channels, pilot grades).
 --
 -- Please not that his class is work in progress and in an **alpha** stage.
 -- At the moment training parameters are optimized for F/A-18C Hornet as aircraft and USS Stennis as carrier.
@@ -26,6 +33,7 @@
 -- @field #boolean Debug Debug mode. Messages to all about status.
 -- @field Wrapper.Unit#UNIT carrier Aircraft carrier unit on which we want to practice.
 -- @field #string carriertype Type name of aircraft carrier.
+-- @field #AIRBOSS.CarrierParameters carrierparam Carrier specifc parameters.
 -- @field #string alias Alias of the carrier.
 -- @field Wrapper.Airbase#AIRBASE airbase Carrier airbase object.
 -- @field Core.Radio#BEACON beacon Carrier beacon for TACAN and ICLS.
@@ -34,6 +42,7 @@
 -- @field #number ICLSchannel ICLS channel.
 -- @field Core.Radio#RADIO LSOradio Radio for LSO calls.
 -- @field Core.Radio#RADIO Carrierradio Radio for carrier calls.
+-- @field #AIRBOSS.RadioCalls radiocall LSO and Airboss call sound files and texts.
 -- @field Core.Zone#ZONE_UNIT startZone Zone in which the pattern approach starts.
 -- @field Core.Zone#ZONE_UNIT carrierZone Large zone around the carrier to welcome players.
 -- @field Core.Zone#ZONE_UNIT registerZone Zone behind the carrier to register for a new approach.
@@ -80,6 +89,7 @@ AIRBOSS = {
   Debug        = true,
   carrier      = nil,
   carriertype  = nil,
+  carrierparam = nil,
   alias        = nil,
   airbase      = nil,
   beacon       = nil,
@@ -90,6 +100,7 @@ AIRBOSS = {
   LSOfreq      = nil,
   Carrierradio = nil,
   Carrierfreq  = nil,
+  radiocall    =  {},
   registerZone = nil,
   startZone    = nil,
   carrierZone  = nil,
@@ -108,9 +119,7 @@ AIRBOSS = {
   C3Descent2k  =  {},
   C3DirtyUp    =  {},
   C3BullsEye   =  {},
-  rwyangle     =  -9,
-  sterndist    =-100,
-  deckheight   =  22,
+  radiocall    = nil,
   case         =   1,
   Qpattern     =  {},
   Qmarshal     =  {},
@@ -141,73 +150,125 @@ AIRBOSS.CarrierType={
   KUZNETSOV="KUZNECOW"
 }
 
+--- Carrier Parameters.
+-- @type AIRBOSS.CarrierParameter
+-- @field #number rwyangle Runway angle in degrees. for carriers with angled deck. For USS Stennis -9 degrees.
+-- @field #number sterndist Distance in meters from carrier position to stern of carrier. For USS Stennis -150 meters.
+-- @field #number deckheight Height of deck in meters. For USS Stennis ~22 meters.
+-- @field #number wire1 Distance in meters from carrier position to first wire.
+-- @field #number wire2 Distance in meters from carrier position to second wire.
+-- @field #number wire3 Distance in meters from carrier position to third wire.
+-- @field #number wire4 Distance in meters from carrier position to fourth wire.
+
 --- Pattern steps.
 -- @type AIRBOSS.PatternStep
 AIRBOSS.PatternStep={
+  UNDEFINED="Undefined",
   UNREGISTERED="Unregistered",
-  PATTERNENTRY="Pattern Entry",
+  HOLDING="Holding",
+  DESCENT4K="Descent 4000 ft/min",
+  DESCENT2K="Descent 2000 ft/min",
+  DIRTYUP="Leven and Dirty Up",
+  BULLSEYE="Follow Bullseye",
+  INITIAL="Initial",
+  UPWIND="Upwind",
   EARLYBREAK="Early Break",
   LATEBREAK="Late Break",
   ABEAM="Abeam",
   NINETY="Ninety",
   WAKE="Wake",
-  GROOVE_X0="Groove Entry",
+  FINAL="On Final",
   GROOVE_XX="Groove X",
   GROOVE_RB="Groove Roger Ball",
   GROOVE_IM="Groove In the Middle",
   GROOVE_IC="Groove In Close",
   GROOVE_AR="Groove At the Ramp",
   GROOVE_IW="Groove In the Wires",
+  DEBRIEF="Debrief",
 }
 
---- LSO calls.
--- @type AIRBOSS.LSOcall
--- @field Core.UserSound#USERSOUND RIGHTFORLINEUPL "Right for line up!" call (loud).
--- @field Core.UserSound#USERSOUND RIGHTFORLINEUPS "Right for line up." call.
--- @field #string RIGHTFORLINEUPT "Right for line up" text.
--- @field Core.UserSound#USERSOUND COMELEFTL "Come left!" call (loud).
--- @field Core.UserSound#USERSOUND COMELEFTS "Come left." call.
--- @field #string COMELEFTT "Come left" text.
--- @field Core.UserSound#USERSOUND HIGHL "You're high!" call (loud).
--- @field Core.UserSound#USERSOUND HIGHS "You're high." call.
--- @field #string HIGHT "You're high" text.
--- @field Core.UserSound#USERSOUND POWERL "Power!" call (loud).
--- @field Core.UserSound#USERSOUND POWERS "Power." call.
--- @field #string POWERT "Power" text.
--- @field Core.UserSound#USERSOUND CALLTHEBALL "Call the ball." call.
--- @field #string CALLTHEBALLT "Call the ball." text.
--- @field Core.UserSound#USERSOUND ROGERBALL "Roger, ball." call.
--- @field #string ROGERBALLT "Roger, ball." text.
--- @field Core.UserSound#USERSOUND WAVEOFF "Wave off!" call.
--- @field #string WAVEOFFT "Wave off!" text.
--- @field Core.UserSound#USERSOUND BOLTER "Bolter, bolter!" call.
--- @field #string BOLTERT "Bolter, bolter!" text.
--- @field Core.UserSound#USERSOUND LONGGROOVE "You're long in the groove. Depart and re-enter." call.
--- @field #string LONGGROOVET "You're long in the groove. Depart and re-enter." text.
-AIRBOSS.LSOcall={
-  RIGHTFORLINEUPL=USERSOUND:New("LSO - RightLineUp(L).ogg"),
-  RIGHTFORLINEUPS=USERSOUND:New("LSO - RightLineUp(S).ogg"),
-  RIGHTFORLINEUPT="Right for line up",
-  COMELEFTL=USERSOUND:New("LSO - ComeLeft(L).ogg"),
-  COMELEFTS=USERSOUND:New("LSO - ComeLeft(S).ogg"),
-  COMELEFTT="Come left",
-  HIGHL=USERSOUND:New("LSO - High(L).ogg"),
-  HIGHS=USERSOUND:New("LSO - High(S).ogg"),
-  HIGHT="You're high",
-  POWERL=USERSOUND:New("LSO - Power(L).ogg"),
-  POWERS=USERSOUND:New("LSO - Power(S).ogg"),
-  POWERT="Power",
-  CALLTHEBALL=USERSOUND:New("LSO - Call the Ball.ogg"),
-  CALLTHEBALLT="Call the ball.",
-  ROGERBALL=USERSOUND:New("LSO - Roger.ogg"),
-  ROGERBALLT="Roger ball!",
-  WAVEOFF=USERSOUND:New("LSO - WaveOff.ogg"),
-  WAVEOFFT="Wave off!",
-  BOLTER=USERSOUND:New("LSO - Bolter.ogg"),
-  BOLTERT="Bolter, Bolter!",
-  LONGGROOVE=USERSOUND:New("LSO - Long in Groove.ogg"),
-  LONGGROOVET="You're long in the groove. Depart and re-enter.",
+--- Radio sound file and subtitle.
+-- @type AIRBOSS.RadioSound
+-- @field #string normal Sound file normal.
+-- @field #string loud Sound file loud.
+-- @field #string subtitle Subtitle displayed during transmission.
+-- @field #number duration Duration in seconds the subtitle is displayed.
+
+--- LSO and Airboss radio calls.
+-- @type AIRBOSS.RadioCalls
+-- @field #AIRBOSS.RadioSound RIGHTFORLINEUP "Right for line up!" call.
+-- @field #AIRBOSS.RadioSound COMELEFT "Come left!" call.
+-- @field #AIRBOSS.RadioSound HIGH "You're high!" call.
+-- @field #AIRBOSS.RadioSound POWER Sound file "Power!" call.
+-- @field #AIRBOSS.RadioSound SLOW Sound file "You're slow!" call.
+-- @field #AIRBOSS.RadioSound FAST Sound file "You're fast!" call.
+-- @field #AIRBOSS.RadioSound CALLTHEBALL Sound file "Call the ball." call.
+-- @field #AIRBOSS.RadioSound ROGERBALL "Roger, ball." call.
+-- @field #AIRBOSS.RadioSound WAVEOFF "Wave off!" call.
+-- @field #AIRBOSS.RadioSound BOLTER "Bolter, bolter!" call.
+-- @field #AIRBOSS.RadioSound LONGINGROOVE "You're long in the groove. Depart and re-enter." call.
+
+--- Default radio call sound files.
+-- @type AIRBOSS.Soundfile
+-- @field #AIRBOSS.RadioSound RIGHTFORLINEUP
+-- @field #AIRBOSS.RadioSound COMELEFT
+-- @field #AIRBOSS.RadioSound
+-- @field #AIRBOSS.RadioSound
+-- @field #AIRBOSS.RadioSound
+-- @field #AIRBOSS.RadioSound
+-- @field #AIRBOSS.RadioSound
+AIRBOSS.Soundfile={
+  RIGHTFORLINEUP={
+    normal="LSO - RightLineUp(L).ogg",
+    loud="LSO - RightLineUp(S).ogg",
+    subtitle="Right for line up.",
+    duration=3,
+  },
+  COMELEFT={
+    normal="LSO - ComeLeft(S).ogg",
+    loud="LSO - ComeLeft(L).ogg",
+    subtitle="Come left.",
+    duration=3,
+  },
+  HIGH={
+    normal="LSO - High(S).ogg",
+    loud="LSO - High(L).ogg",
+    subtitle="You're high.",
+    duration=3,
+  },
+  POWER={
+    normal="LSO - Power(S).ogg",
+    loud="LSO - Power(L).ogg",
+    subtitle="Power.",
+    duration=3,
+  },
+  CALLTHEBALL={
+    normal="LSO - Call the Ball.ogg",
+    subtitle="Call the ball.",
+    duration=3,
+  },
+  ROGERBALL={
+    normal="LSO - Roger.ogg",
+    subtitle="Roger ball!",
+    duration=3,
+  },  
+  WAVEOFF={
+    normal="LSO - WaveOff.ogg",
+    subtitle="Wave off!",
+    duration=3,
+  },  
+  BOLTER={
+    normal="LSO - Bolter.ogg",
+    subtitle="Bolter, Bolter!",
+    duration=3,
+  },
+  LONGINGROOVE={
+    normal="LSO - Long in Groove.ogg",
+    subtitle="You're long in the groove. Depart and re-enter.",
+    duration=3,
+  }
 }
+
 
 --- Difficulty level.
 -- @type AIRBOSS.Difficulty
@@ -319,16 +380,14 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.2.5"
+AIRBOSS.version="0.2.5w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Handle crash event. Delete ac from queue, send rescue helo, stop carrier?
 -- TODO: Transmission via radio.
--- DONE: Add scoring to radio menu.
--- DONE: Optimized debrief.
--- DONE: Add automatic grading.
 -- TODO: Get board numbers.
 -- TODO: Get fuel state in pounds.
 -- TODO: Add user functions.
@@ -337,6 +396,9 @@ AIRBOSS.version="0.2.5"
 -- TODO: CASE II.
 -- TODO: CASE III.
 -- TODO: Foul deck check.
+-- DONE: Add scoring to radio menu.
+-- DONE: Optimized debrief.
+-- DONE: Add automatic grading.
 -- DONE: Fix radio menu.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -380,8 +442,10 @@ function AIRBOSS:New(carriername, alias)
   -- Create carrier beacon.
   self.beacon=BEACON:New(self.carrier)
   
-  -- Set up airboss and LSO radios
+  -- Set up Airboss radio.
   self.Carrierradio=RADIO:New(self.carrier)
+  
+  -- Set up LSO radio.
   self.LSOradio=RADIO:New(self.carrier)
   
   -- Init carrier parameters.
@@ -541,7 +605,7 @@ end
 -- @return #AIRBOSS self
 function AIRBOSS:SetLSOradio(freq)
 
-  self.LSOfreq=(freq or 264)*1000000
+  self.LSOfreq=freq or 264
 
   return self
 end
@@ -552,7 +616,7 @@ end
 -- @return #AIRBOSS self
 function AIRBOSS:SetCarrierradio(freq)
 
-  self.Carrierfreq=(freq or 305)*1000000
+  self.Carrierfreq=freq or 305
 
   return self
 end
@@ -658,21 +722,31 @@ function AIRBOSS:_CheckRecoveryTimes()
   
     -- If no recovery times have been specified, we assume any time is okay.
     self:I("FF Start recovery. No recovery time set!")
-    
-    return true    
+    if not self:IsRecovering() then
+      return true
+    else
+      return nil
+    end
+        
   else
   
     local recovery=false
+    
     for _,_rtime in pairs(self.recoverytime) do
       local rtime=_rtime --#AIRBOSS.Recovery
+      
       if abstime>=rtime.START and abstime<=rtime.STOP then
+      
         if not self:IsRecovering() then
           self:I("FF Start recovery.")
           return true
         else
+          -- Nothing to do. Return nil.
           return nil
         end
-      end    
+        
+      end
+          
     end
    
     return false
@@ -837,8 +911,8 @@ end
 
 --- Orbit at a specified position at a specified alititude with a specified speed.
 -- @param #AIRBOSS self
--- @param Wrapper.Group#GROUP group Group
-function AIRBOSS:_MarshalPlayer(group, stack)
+-- @param Wrapper.Group#GROUP group Group containing the player unit.
+function AIRBOSS:_MarshalPlayer(group)
 
   -- Flight group name.
   local groupname=group:GetName()
@@ -1000,9 +1074,10 @@ function AIRBOSS:_CollapseMarshalStack()
   -- TODO: better message.
   MESSAGE:New(string.format("Marshal, %s, you are cleared for Case I recovery pattern!", flight.groupname), 15):ToAll()
   
+  -- Set player step to 0.
   if flight.ai==false then
     local playerData=self:_GetPlayerDataGroup(flight.group)
-    playerData.step=0
+    playerData.step=AIRBOSS.PatternStep.UNREGISTERED
   end
   
   -- Time stamp.
@@ -1129,58 +1204,76 @@ function AIRBOSS:_CheckPlayerStatus()
               playerData.step=90
               self.groovedebug=false
             end
-          elseif playerData.step==1 then
+          elseif playerData.step==AIRBOSS.PatternStep.HOLDING then
           
-            -- Entering the pattern.
-            self:_Start(playerData)
+          elseif playerData.step==AIRBOSS.PatternStep.DESCENT4K then
+          
+          elseif playerData.step==AIRBOSS.PatternStep.DESCENT2K then
+          
+          elseif playerData.step==AIRBOSS.PatternStep.DIRTYUP then
+          
+          elseif playerData.step==AIRBOSS.PatternStep.BULLSEYE then
+          
+          elseif playerData.step==AIRBOSS.PatternStep.INITIAL then
+          
+            -- Player is at the initial position entering the landing pattern.
+            self:_Initial(playerData)
             
-          elseif playerData.step==2 then
+          elseif playerData.step==AIRBOSS.PatternStep.UPWIND then
           
-            -- Upwind leg.
+            -- Upwind leg aka break entry.
             self:_Upwind(playerData)
             
-          elseif playerData.step==3 then
+          elseif playerData.step==AIRBOSS.PatternStep.EARLYBREAK then
           
             -- Early break.
             self:_Break(playerData, "early")
             
-          elseif playerData.step==4 then
+          elseif playerData.step==AIRBOSS.PatternStep.LATEBREAK then
           
             -- Late break.
             self:_Break(playerData, "late")
             
-          elseif playerData.step==5 then
+          elseif playerData.step==AIRBOSS.PatternStep.ABEAM then
           
             -- Abeam position.
             self:_Abeam(playerData)
             
-          elseif playerData.step==6 then
+          elseif playerData.step==AIRBOSS.PatternStep.NINETY then
           
             -- Check long down wind leg.
             self:_CheckForLongDownwind(playerData)
+            
             -- At the ninety.
             self:_Ninety(playerData)
             
-          elseif playerData.step==7 then
+          elseif playerData.step==AIRBOSS.PatternStep.WAKE then
           
             -- In the wake.
             self:_Wake(playerData)
             
-          elseif playerData.step==90 then
+          elseif playerData.step==AIRBOSS.PatternStep.FINAL then
           
             -- Entering the groove.
-            self:_Groove(playerData)
+            self:_Final(playerData)
             
-          elseif playerData.step>=91 and playerData.step<=99 then
+          elseif playerData.step==AIRBOSS.PatternStep.GROOVE_XX or
+                 playerData.step==AIRBOSS.PatternStep.GROOVE_RB or
+                 playerData.step==AIRBOSS.PatternStep.GROOVE_IM or
+                 playerData.step==AIRBOSS.PatternStep.GROOVE_IC or
+                 playerData.step==AIRBOSS.PatternStep.GROOVE_AR or
+                 playerData.step==AIRBOSS.PatternStep.GROOVE_IW then
           
             -- In the groove.
-            self:_CallTheBall(playerData)
+            self:_Groove(playerData)
             
-          elseif playerData.step==999 then
+          elseif playerData.step==AIRBOSS.PatternStep.DEBRIEF then
           
-            -- Debriefing.
+            -- Debriefing in 10 seconds.
             SCHEDULER:New(nil, self._Debrief, {self, playerData}, 10)
-            playerData.step=-999
+            
+            -- Undefined status.
+            playerData.step=AIRBOSS.PatternStep.UNDEFINED
             
           end
           
@@ -1295,7 +1388,7 @@ function AIRBOSS:OnEventLand(EventData)
     playerData.landed=true
     
     -- Unkonwn step.
-    playerData.step=-999
+    playerData.step=AIRBOSS.PatternStep.UNDEFINED
     
     --TODO: maybe check that we actually landed on the right carrier.
     
@@ -1436,7 +1529,7 @@ end
 --- Start pattern when player enters the initial zone.
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data table.
-function AIRBOSS:_Start(playerData)
+function AIRBOSS:_Initial(playerData)
 
   -- Check if player is in start zone and about to enter the pattern.
   if playerData.unit:IsInZone(self.startZone) then
@@ -1451,12 +1544,149 @@ function AIRBOSS:_Start(playerData)
     self:_SendMessageToPlayer(hint, 8, playerData)
   
     -- Next step: upwind.
-    playerData.step=2
+    playerData.step=AIRBOSS.PatternStep.UPWIND
   end
   
-end 
+end
 
---- Upwind leg.
+--- Descent at 4k.
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.PlayerData playerData Player data table.
+function AIRBOSS:_Descent4k(playerData)
+
+  -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
+  local X, Z, rho, phi=self:_GetDistances(playerData.unit)
+  
+  -- Abort condition check.
+  if self:_CheckAbort(X, Z, self.C3Descent4k) then
+    self:_AbortPattern(playerData, X, Z, self.C3Descent4k)
+    return
+  end
+  
+  -- Check if we are in front of the boat (diffX > 0).
+  if self:_CheckLimits(X, Z, self.C3Descent4k) then
+  
+    -- Get altitiude.
+    local altitude=playerData.unit:GetAltitude()
+  
+    -- Get altitude.
+    local hint, debrief=self:_AltitudeCheck(playerData, self.C3Descent4k, altitude)
+        
+    -- Message to player
+    self:_SendMessageToPlayer(hint, 10, playerData)
+    
+    -- Debrief.
+    self:_AddToSummary(playerData, "Descent 4k", debrief)
+    
+    -- Next step: Early Break.
+    playerData.step=AIRBOSS.PatternStep.DESCENT2K
+  end
+end
+
+--- Descent at 2k.
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.PlayerData playerData Player data table.
+function AIRBOSS:_Descent2k(playerData)
+
+  -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
+  local X, Z, rho, phi=self:_GetDistances(playerData.unit)
+  
+  -- Abort condition check.
+  if self:_CheckAbort(X, Z, self.C3Descent2k) then
+    self:_AbortPattern(playerData, X, Z, self.C3Descent2k)
+    return
+  end
+  
+  -- Check if we are in front of the boat (diffX > 0).
+  if self:_CheckLimits(X, Z, self.C3Descent2k) then
+  
+    -- Get altitiude.
+    local altitude=playerData.unit:GetAltitude()
+  
+    -- Get altitude.
+    local hint, debrief=self:_AltitudeCheck(playerData, self.C3Descent2k, altitude)
+        
+    -- Message to player
+    self:_SendMessageToPlayer(hint, 10, playerData)
+    
+    -- Debrief.
+    self:_AddToSummary(playerData, "Descent 2k", debrief)
+    
+    -- Next step: Early Break.
+    playerData.step=AIRBOSS.PatternStep.DIRTYUP
+  end
+end
+
+--- Dirty up.
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.PlayerData playerData Player data table.
+function AIRBOSS:_DirtyUp(playerData)
+
+  -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
+  local X, Z, rho, phi=self:_GetDistances(playerData.unit)
+  
+  -- Abort condition check.
+  if self:_CheckAbort(X, Z, self.C3DirtyUp) then
+    self:_AbortPattern(playerData, X, Z, self.C3DirtyUp)
+    return
+  end
+  
+  -- Check if we are in front of the boat (diffX > 0).
+  if self:_CheckLimits(X, Z, self.C3DirtyUp) then
+  
+    -- Get altitiude.
+    local altitude=playerData.unit:GetAltitude()
+  
+    -- Get altitude.
+    local hint, debrief=self:_AltitudeCheck(playerData, self.C3DirtyUp, altitude)
+        
+    -- Message to player
+    self:_SendMessageToPlayer(hint, 10, playerData)
+    
+    -- Debrief.
+    self:_AddToSummary(playerData, "Dirty Up", debrief)
+    
+    -- Next step: Early Break.
+    playerData.step=AIRBOSS.PatternStep.BULLSEYE
+  end
+end
+
+--- Bulls eye.
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.PlayerData playerData Player data table.
+function AIRBOSS:_BullsEye(playerData)
+
+  -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
+  local X, Z, rho, phi=self:_GetDistances(playerData.unit)
+  
+  -- Abort condition check.
+  if self:_CheckAbort(X, Z, self.C3DirtyUp) then
+    self:_AbortPattern(playerData, X, Z, self.C3BullsEye)
+    return
+  end
+  
+  -- Check if we are in front of the boat (diffX > 0).
+  if self:_CheckLimits(X, Z, self.C3BullsEye) then
+  
+    -- Get altitiude.
+    local altitude=playerData.unit:GetAltitude()
+  
+    -- Get altitude.
+    local hint, debrief=self:_AltitudeCheck(playerData, self.C3BullsEye, altitude)
+        
+    -- Message to player
+    self:_SendMessageToPlayer(hint, 10, playerData)
+    
+    -- Debrief.
+    self:_AddToSummary(playerData, "Bulls Eye", debrief)
+    
+    -- Next step: Early Break.
+    playerData.step=AIRBOSS.PatternStep.FINAL
+  end
+end
+ 
+
+--- Upwind leg or break entry.
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data table.
 function AIRBOSS:_Upwind(playerData)
@@ -1485,8 +1715,8 @@ function AIRBOSS:_Upwind(playerData)
     -- Debrief.
     self:_AddToSummary(playerData, "Entering the Break", debrief)
     
-    -- Next step.
-    playerData.step=3
+    -- Next step: Early Break.
+    playerData.step=AIRBOSS.PatternStep.EARLYBREAK
   end
 end
 
@@ -1531,11 +1761,11 @@ function AIRBOSS:_Break(playerData, part)
       self:_AddToSummary(playerData, "Late Break", debrief)
     end
 
-    -- Next step: late break or abeam.
+    -- Next step: Late Break or Abeam.
     if part=="early" then
-      playerData.step = 4
+      playerData.step=AIRBOSS.PatternStep.LATEBREAK
     else
-      playerData.step = 5
+      playerData.step=AIRBOSS.PatternStep.ABEAM
     end
   end
 end
@@ -1574,12 +1804,12 @@ function AIRBOSS:_CheckForLongDownwind(playerData)
     playerData.lig=true
     
     -- Next step: Debriefing.
-    playerData.step=999
+    playerData.step=AIRBOSS.PatternStep.DEBRIEF
   end
   
 end
 
---- Abeam.
+--- Abeam position.
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data table.
 function AIRBOSS:_Abeam(playerData)
@@ -1620,11 +1850,11 @@ function AIRBOSS:_Abeam(playerData)
     self:_AddToSummary(playerData, "Abeam Position", debrief)
     
     -- Next step: ninety.
-    playerData.step=6
+    playerData.step=AIRBOSS.PatternStep.NINETY
   end
 end
 
---- Ninety.
+--- At the Ninety.
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data table.
 function AIRBOSS:_Ninety(playerData) 
@@ -1665,7 +1895,7 @@ function AIRBOSS:_Ninety(playerData)
     self:_AddToSummary(playerData, "At the 90", debrief)
     
     -- Next step: wake.
-    playerData.step=7
+    playerData.step=AIRBOSS.PatternStep.WAKE
     
   elseif relheading>90 and self:_CheckLimits(X, Z, self.Wake) then
     -- Message to player.
@@ -1673,7 +1903,7 @@ function AIRBOSS:_Ninety(playerData)
   end
 end
 
---- Wake.
+--- At the Wake.
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data table.
 function AIRBOSS:_Wake(playerData) 
@@ -1710,15 +1940,15 @@ function AIRBOSS:_Wake(playerData)
     -- Add to debrief.
     self:_AddToSummary(playerData, "At the Wake", debrief)
 
-    -- Next step: Groove.
-    playerData.step=90
+    -- Next step: Final.
+    playerData.step=AIRBOSS.PatternStep.FINAL
   end
 end
 
---- Entering the Groove.
+--- Turn to final.
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data table.
-function AIRBOSS:_Groove(playerData)
+function AIRBOSS:_Final(playerData)
 
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
   local X, Z, rho, phi = self:_GetDistances(playerData.unit)
@@ -1729,8 +1959,8 @@ function AIRBOSS:_Groove(playerData)
     return
   end
    
-  local relhead=self:_GetRelativeHeading(playerData.unit)+self.rwyangle
-  local lineup=self:_Lineup(playerData)-self.rwyangle
+  local relhead=self:_GetRelativeHeading(playerData.unit)+self.carrierparam.rwyangle
+  local lineup=self:_Lineup(playerData)-self.carrierparam.rwyangle
   local roll=playerData.unit:GetRoll()
   
   env.info(string.format("FF relhead=%d  lineup=%d  roll=%d", relhead, lineup, roll))
@@ -1763,23 +1993,23 @@ function AIRBOSS:_Groove(playerData)
     groovedata.Alt=alt
     groovedata.AoA=aoa
     groovedata.GSE=self:_Glideslope(playerData)-3.5
-    groovedata.LUE=self:_Lineup(playerData)-self.rwyangle
+    groovedata.LUE=self:_Lineup(playerData)-self.carrierparam.rwyangle
     groovedata.Roll=roll
         
     -- Groove 
     playerData.groove.X0=groovedata
     
     -- Next step: X start & call the ball.
-    playerData.step=91
+    playerData.step=AIRBOSS.PatternStep.GROOVE_XX
   end
 
 end
 
 
---- Call the ball, i.e. 3/4 NM distance between aircraft and carrier.
+--- In the groove.
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data table.
-function AIRBOSS:_CallTheBall(playerData)
+function AIRBOSS:_Groove(playerData)
 
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
   local X, Z, rho, phi = self:_GetDistances(playerData.unit)
@@ -1798,7 +2028,7 @@ function AIRBOSS:_CallTheBall(playerData)
 
   -- Lineup with runway centerline.
   local lineup=self:_Lineup(playerData)
-  local lineupError=lineup-self.rwyangle
+  local lineupError=lineup-self.carrierparam.rwyangle
   
   -- Glide slope.
   local glideslope=self:_Glideslope(playerData)
@@ -1808,7 +2038,7 @@ function AIRBOSS:_CallTheBall(playerData)
   local AoA=playerData.unit:GetAoA()
   
   -- Ranges in the groove.
-  local RXX=UTILS.NMToMeters(0.750)+math.abs(self.sterndist) -- Start of groove.      0.75  = 1389 m
+  local RXX=UTILS.NMToMeters(0.750)+math.abs(self.carrierparam.sterndist) -- Start of groove.      0.75  = 1389 m
   local RRB=UTILS.NMToMeters(0.500)+math.abs(self.sterndist) -- Roger Ball! call.     0.5   =  926 m
   local RIM=UTILS.NMToMeters(0.375)+math.abs(self.sterndist) -- In the Middle 0.75/2. 0.375 =  695 m 
   local RIC=UTILS.NMToMeters(0.100)+math.abs(self.sterndist) -- In Close.             0.1   =  185 m
@@ -1823,7 +2053,7 @@ function AIRBOSS:_CallTheBall(playerData)
   groovedata.LUE=lineupError
   groovedata.Roll=playerData.unit:GetRoll()
   
-  if rho<=RXX and playerData.step==91 then
+  if rho<=RXX and playerData.step==AIRBOSS.PatternStep.GROOVE_XX then
   
     -- LSO "Call the ball" call.
     self:_SendMessageToPlayer("Call the ball.", 8, playerData)
@@ -1834,9 +2064,9 @@ function AIRBOSS:_CallTheBall(playerData)
     playerData.groove.XX=groovedata
     
     -- Next step: roger ball.
-    playerData.step=92    
+    playerData.step=AIRBOSS.PatternStep.GROOVE_RB
   
-  elseif rho<=RRB and playerData.step==92 then
+  elseif rho<=RRB and playerData.step==AIRBOSS.PatternStep.GROOVE_RB then
 
     -- Pilot: "Roger ball" call.
     self:_SendMessageToPlayer(AIRBOSS.LSOcall.ROGERBALLT, 8, playerData)
@@ -1847,9 +2077,9 @@ function AIRBOSS:_CallTheBall(playerData)
     playerData.groove.RB=groovedata
     
     -- Next step: in the middle.
-    playerData.step=93
+    playerData.step=AIRBOSS.PatternStep.GROOVE_IM
     
-  elseif rho<=RIM and playerData.step==93 then
+  elseif rho<=RIM and playerData.step==AIRBOSS.PatternStep.GROOVE_IM then
   
     -- Debug.
     self:_SendMessageToPlayer("IM", 8, playerData)
@@ -1859,9 +2089,9 @@ function AIRBOSS:_CallTheBall(playerData)
     playerData.groove.IM=groovedata    
     
     -- Next step: in close.
-    playerData.step=94
+    playerData.step=AIRBOSS.PatternStep.GROOVE_IC
   
-  elseif rho<=RIC and playerData.step==94 then
+  elseif rho<=RIC and playerData.step==AIRBOSS.PatternStep.GROOVE_IC then
 
     -- Check if player was already waved off.
     if playerData.waveoff==false then
@@ -1890,12 +2120,12 @@ function AIRBOSS:_CallTheBall(playerData)
         return
       else
         -- Next step: AR at the ramp.      
-        playerData.step=95
+        playerData.step=AIRBOSS.PatternStep.GROOVE_AR
       end
       
     end
     
-  elseif rho<=RAR and playerData.step==95 then
+  elseif rho<=RAR and playerData.step==AIRBOSS.PatternStep.GROOVE_AR then
   
     -- Debug.
     self:_SendMessageToPlayer("AR", 8, playerData)
@@ -1905,7 +2135,7 @@ function AIRBOSS:_CallTheBall(playerData)
     playerData.groove.AR=groovedata
     
     -- Next step: in the wires.
-    playerData.step=96
+    playerData.step=AIRBOSS.PatternStep.GROOVE_IW
   end
   
   -- Time since last LSO call.
@@ -1916,7 +2146,7 @@ function AIRBOSS:_CallTheBall(playerData)
   if rho>=RAR and rho<RXX and deltaT>=3 then
 
     -- LSO call if necessary.
-    self:_LSOcall(playerData, glideslopeError, lineupError)
+    self:_LSOadvice(playerData, glideslopeError, lineupError)
 
   elseif X>100 then
            
@@ -1935,7 +2165,8 @@ function AIRBOSS:_CallTheBall(playerData)
       self:_AddToSummary(playerData, "Wave Off", "You were waved off.")
       
       -- Next step: debrief.
-      playerData.step=999
+      playerData.step=AIRBOSS.PatternStep.DEBRIEF
+      
     end
   end 
 end
@@ -2050,30 +2281,43 @@ function AIRBOSS:_Trapped(playerData, pos)
   playerData.step=999
 end
 
---- Entering the Groove.
+--- LSO advice call.
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data table.
 -- @param #number glideslopeError Error in degrees.
 -- @param #number lineupError Error in degrees.
-function AIRBOSS:_LSOcall(playerData, glideslopeError, lineupError)
+function AIRBOSS:_LSOadvice(playerData, glideslopeError, lineupError)
 
   -- Player group.
   local player=playerData.unit:GetGroup()
   
+  -- List of calls
+  local calls={}
+  
+  local delay=0
+  
   -- Glideslope high/low calls.
   local text=""
   if glideslopeError>1 then
-    text="You're high!" 
-    AIRBOSS.LSOcall.HIGHL:ToGroup(player)
+    --text="You're high!" 
+    --AIRBOSS.LSOcall.HIGHL:ToGroup(player)
+    self:RadioTransmission(self.LSOradio, self.radiocall.HIGH, true, delay)
+    delay=delay+1.5
   elseif glideslopeError>0.5 then
-    text="You're a little high."
-    AIRBOSS.LSOcall.HIGHS:ToGroup(player)
+    --text="You're a little high."
+    --AIRBOSS.LSOcall.HIGHS:ToGroup(player)
+    self:RadioTransmission(self.LSOradio, self.radiocall.HIGH, false, delay)
+    delay=delay+1.5
   elseif glideslopeError<-1.0 then
-    text="Power!"
-    AIRBOSS.LSOcall.POWERL:ToGroup(player)
+    --text="Power!"
+    --AIRBOSS.LSOcall.POWERL:ToGroup(player)
+    self:RadioTransmission(self.LSOradio, self.radiocall.POWER, true, delay)
+    delay=delay+1.5
   elseif glideslopeError<-0.5 then
-    text="You're a little low."
-    AIRBOSS.LSOcall.POWERS:ToGroup(player)
+    --text="You're a little low."
+    --AIRBOSS.LSOcall.POWERS:ToGroup(player)
+    self:RadioTransmission(self.LSOradio, self.radiocall.POWER, false, delay)
+    delay=delay+1.5
   else
     text="Good altitude."
   end
@@ -2081,25 +2325,27 @@ function AIRBOSS:_LSOcall(playerData, glideslopeError, lineupError)
   text=text..string.format(" Glideslope Error = %.2f°", glideslopeError)
   text=text.."\n"
   
-  local delay=0
-  if math.abs(glideslopeError)>0.5 then
-    --text=text.."\n"
-    delay=1.5
-  end
-  
   -- Lineup left/right calls.
   if lineupError<-3 then
-    text=text.."Come left!"
-    AIRBOSS.LSOcall.COMELEFTL:ToGroup(player, delay)
+    --text=text.."Come left!"
+    --AIRBOSS.LSOcall.COMELEFTL:ToGroup(player, delay)
+    self:RadioTransmission(self.LSOradio, self.radiocall.COMELEFT, true, delay)
+    delay=delay+1.5
   elseif lineupError<-1 then
-    text=text.."Come left."
-    AIRBOSS.LSOcall.COMELEFTS:ToGroup(player, delay)
+    --text=text.."Come left."
+    --AIRBOSS.LSOcall.COMELEFTS:ToGroup(player, delay)
+    self:RadioTransmission(self.LSOradio, self.radiocall.COMELEFT, false, delay)
+    delay=delay+1.5    
   elseif lineupError>3 then
-    text=text.."Right for lineup!"
-    AIRBOSS.LSOcall.RIGHTFORLINEUPL:ToGroup(player, delay)
+    --text=text.."Right for lineup!"
+    --AIRBOSS.LSOcall.RIGHTFORLINEUPL:ToGroup(player, delay)
+    self:RadioTransmission(self.LSOradio, self.radiocall.RIGHTFORLINEUP, true, delay)
+    delay=delay+1.5    
   elseif lineupError>1 then
-    text=text.."Right for lineup."
-    AIRBOSS.LSOcall.RIGHTFORLINEUPS:ToGroup(player, delay)
+    --text=text.."Right for lineup."
+    --AIRBOSS.LSOcall.RIGHTFORLINEUPS:ToGroup(player, delay)
+    self:RadioTransmission(self.LSOradio, self.radiocall.RIGHTFORLINEUP, false, delay)
+    delay=delay+1.5    
   else
     text=text.."Good lineup."
   end
@@ -2110,15 +2356,23 @@ function AIRBOSS:_LSOcall(playerData, glideslopeError, lineupError)
   local aoa=playerData.unit:GetAoA()
   
   if aoa>=9.3 then
-    text=text.."Your're slow!"
+    --text=text.."Your're slow!"
+    self:RadioTransmission(self.LSOradio, self.radiocall.SLOW, true, delay)
+    delay=delay+1.5        
   elseif aoa>=8.8 and aoa<9.3 then
-    text=text.."Your're a little slow."
+    self:RadioTransmission(self.LSOradio, self.radiocall.SLOW, false, delay)
+    delay=delay+1.5          
+    --text=text.."Your're a little slow."
   elseif aoa>=7.4 and aoa<8.8 then
     text=text.."You're on speed."
   elseif aoa>=6.9 and aoa<7.4 then
-    text=text.."You're a little fast."
+    --text=text.."You're a little fast."
+    self:RadioTransmission(self.LSOradio, self.radiocall.FAST, false, delay)
+    delay=delay+1.5            
   elseif aoa>=0 and aoa<6.9 then
     text=text.."You're fast!"
+    self:RadioTransmission(self.LSOradio, self.radiocall.FALSE, true, delay)
+    delay=delay+1.5                
   else
     text=text.."Unknown AoA state."
   end
@@ -2127,9 +2381,37 @@ function AIRBOSS:_LSOcall(playerData, glideslopeError, lineupError)
    
   -- LSO Message to player.
   self:_SendMessageToPlayer(text, 5, playerData, false)
-
+  
   -- Set last time.
   playerData.Tlso=timer.getTime()   
+end
+
+--- Radio transmission.
+-- @param #AIRBOSS self
+-- @param Core.Radio#RADIO radio sending transmission.
+-- @param #AIRBOSS.RadioSound call Radio sound files and subtitles.
+-- @param #boolean loud If true, play loud sound file version.
+-- @param #number delay Delay in seconds, before the message is broadcasted.
+function AIRBOSS:RadioTransmission(radio, call, loud, delay)
+
+  if delay==nil or delay and delay==0 then
+  
+    local filename=call.soundfilenormal
+    if loud then
+      filename=call.soundfileloud
+    end
+      
+    -- New transmission.
+    radio:NewUnitTransmission(filename, call.subtitle, call.subtitleduration, radio.Frequency, radio.Modulation, false)
+    
+    -- Broadcast message.
+    radio:Broadcast()
+    
+  else
+  
+    -- Scheduled transmission.
+    SCHEDULER:New(nil, self.RadioCall, {self, radio, call, loud}, delay)
+  end
 end
 
 --- Get glide slope of aircraft.
@@ -2314,51 +2596,6 @@ function AIRBOSS:_GetRelativeHeading(unit)
   return math.deg(relHead)
 end
 
-
---- Get name of the current pattern step.
--- @param #AIRBOSS self
--- @param #number step Step
--- @return #string Name of the step
-function AIRBOSS:_StepName(step)
-
-  local name="unknown"
-  if step==0 then
-    name="Unregistered"
-  elseif step==1 then
-    name="Pattern Entry"
-  elseif step==2 then
-    name="Break Entry"
-  elseif step==3 then
-    name="Early break"
-  elseif step==4 then
-    name="Late break"
-  elseif step==5 then
-    name="Abeam position"
-  elseif step==6 then
-    name="Ninety"
-  elseif step==7 then
-    name="Wake"
-  elseif step==8 then
-    name="unkown"
-  elseif step==90 then
-    name="Entering the Groove"
-  elseif step==91 then
-    name="Groove: X At the Start"
-  elseif step==92 then
-    name="Groove: Roger Ball"
-  elseif step==93 then
-    name="Groove: IM In the Middle"
-  elseif step==94 then
-    name="Groove: IC In Close"
-  elseif step==95 then
-    name="Groove: AR: At the Ramp"
-  elseif step==96 then
-    name="Groove: IW: In the Wires"
-  end
-  
-  return name
-end
-
 --- Calculate distances between carrier and player unit.
 -- @param #AIRBOSS self 
 -- @param Wrapper.Unit#UNIT unit Player unit
@@ -2484,7 +2721,7 @@ function AIRBOSS:_AbortPattern(playerData, X, Z, posData)
   --MESSAGE:New(text, 60):ToAllIf(self.Debug)
   
   -- Add to debrief.
-  self:_AddToSummary(playerData, string.format("%s", self:_StepName(playerData.step)), string.format("Pattern wave off: %s", toofartext))
+  self:_AddToSummary(playerData, string.format("%s", playerData.step), string.format("Pattern wave off: %s", toofartext))
   
   -- Pattern wave off!
   playerData.patternwo=true
@@ -2532,7 +2769,7 @@ function AIRBOSS:_DetailedPlayerStatus(playerData)
     text=text..string.format("Lineup Error = %.1f°\n", lineup)
     text=text..string.format("Glideslope Error = %.1f°\n", glideslope)
   end
-  text=text..string.format("Current step: %s\n", self:_StepName(playerData.step))
+  text=text..string.format("Current step: %s\n", playerData.step)
   
   --text=text..string.format("Wind Vx=%.1f Vy=%.1f Vz=%.1f\n", wind.x, wind.y, wind.z)
   --text=text..string.format("rho=%.1f m phi=%.1f degrees\n", rho,phi)
@@ -2545,13 +2782,13 @@ end
 function AIRBOSS:_InitStennis()
 
   -- Carrier Parameters.
-  self.rwyangle   =  -9
-  self.sterndist  =-150
-  self.deckheight =  22
-  self.wire1      =-100
-  self.wire2      = -90
-  self.wire3      = -80
-  self.wire4      = -70
+  self.carrierparam.rwyangle   =  -9
+  self.carrierparam.sterndist  =-150
+  self.carrierparam.deckheight =  22
+  self.carrierparam.wire1      =-100
+  self.carrierparam.wire2      = -90
+  self.carrierparam.wire3      = -80
+  self.carrierparam.wire4      = -70
 
   --[[
   q0=self.carrier:GetCoordinate():SetAltitude(25)

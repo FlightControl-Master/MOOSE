@@ -290,16 +290,28 @@ end
 function RADIO:NewUnitTransmission(FileName, Subtitle, SubtitleDuration, Frequency, Modulation, Loop)
   self:F({FileName, Subtitle, SubtitleDuration, Frequency, Modulation, Loop})
 
+  -- Set file name.
   self:SetFileName(FileName)
-  local Duration = 5
-  if SubtitleDuration then Duration = SubtitleDuration end
-  -- SubtitleDuration argument was missing, adding it
-  if Subtitle then self:SetSubtitle(Subtitle, Duration) end
-  -- self:SetSubtitleDuration is non existent, removing faulty line
-  -- if SubtitleDuration then self:SetSubtitleDuration(SubtitleDuration) end
-  if Frequency then self:SetFrequency(Frequency) end
-  if Modulation then self:SetModulation(Modulation) end
-  if Loop then self:SetLoop(Loop) end
+
+  -- Set frequency.
+  if Frequency then 
+    self:SetFrequency(Frequency)
+  end
+  
+  -- Set modulation AM/FM.
+  if Modulation then
+    self:SetModulation(Modulation)
+  end
+  
+  -- Set subtitle.
+  if Subtitle then
+    self:SetSubtitle(Subtitle, SubtitleDuration or 0)
+  end
+ 
+  -- Set Looping.
+  if Loop then 
+    self:SetLoop(Loop)
+  end
   
   return self
 end
@@ -313,9 +325,16 @@ end
 -- * If your POSITIONABLE is a UNIT or a GROUP, the Power is ignored.
 -- * If your POSITIONABLE is not a UNIT or a GROUP, the Subtitle, SubtitleDuration are ignored
 -- @param #RADIO self
+-- @param #string filename (Optinal) Sound file name. Default self.FileName.
+-- @param #string subtitle (Optional) Subtitle. Default self.Subtitle.
+-- @param #number subtitleduraction (Optional) Subtitle duraction. Default self.SubtitleDuration.
 -- @return #RADIO self
-function RADIO:Broadcast()
+function RADIO:Broadcast(filename, subtitle, subtitleduration)
   self:F()
+  
+  filename=filename or self.FileName
+  subtitle=subtitle or self.Subtitle
+  subtitleduration=subtitleduration or self.SubtitleDuration
   
   -- If the POSITIONABLE is actually a UNIT or a GROUP, use the more complicated DCS command system
   if self.Positionable.ClassName == "UNIT" or self.Positionable.ClassName == "GROUP" then
@@ -323,9 +342,9 @@ function RADIO:Broadcast()
     self.Positionable:SetCommand({
       id = "TransmitMessage",
       params = {
-        file = self.FileName,
-        duration = self.SubtitleDuration,
-        subtitle = self.Subtitle,
+        file = filename,
+        duration = subtitleduration,
+        subtitle = subtitle,
         loop = self.Loop,
       }
     })
@@ -337,6 +356,8 @@ function RADIO:Broadcast()
   end
   return self
 end
+
+
 
 --- Stops a transmission
 -- This function is especially usefull to stop the broadcast of looped transmissions
