@@ -286,9 +286,9 @@ do -- DESIGNATE
   --   * The status report can be automatically flashed by selecting "Status" -> "Flash Status On".
   --   * The automatic flashing of the status report can be deactivated by selecting "Status" -> "Flash Status Off".
   --   * The flashing of the status menu is disabled by default.
-  --   * The method @{#DESIGNATE.FlashStatusMenu}() can be used to enable or disable to flashing of the status menu.
+  --   * The method @{#DESIGNATE.SetFlashStatusMenu}() can be used to enable or disable to flashing of the status menu.
   --   
-  --     Designate:FlashStatusMenu( true )
+  --     Designate:SetFlashStatusMenu( true )
   --     
   -- The example will activate the flashing of the status menu for this Designate object.
   -- 
