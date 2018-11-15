@@ -381,7 +381,7 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.2.6w"
+AIRBOSS.version="0.2.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -449,12 +449,14 @@ function AIRBOSS:New(carriername, alias)
   self.beacon=BEACON:New(self.carrier)
   
   -- Set up Airboss radio.
-  self.Carrierradio=RADIO:New(self.carrier)
   self:SetCarrierradio()
+  self.Carrierradio=RADIO:New(self.carrier)
+  self.Carrierradio:SetFrequency(self.Carrierfreq)
   
   -- Set up LSO radio.
-  self.LSOradio=RADIO:New(self.carrier)
   self:SetLSOradio()
+  self.LSOradio=RADIO:New(self.carrier)
+  self.LSOradio:SetFrequency(self.LSOfreq)
   
   -- Init carrier parameters.
   if self.carriertype==AIRBOSS.CarrierType.STENNIS then
@@ -709,7 +711,7 @@ function AIRBOSS:onafterStart(From, Event, To)
   -- Handle events.
   self:HandleEvent(EVENTS.Birth)
   self:HandleEvent(EVENTS.Land)
-  --self:HandleEvent(EVENTS.Crash)
+  self:HandleEvent(EVENTS.Crash)
   
   -- Time stamp for checking queues. 
   self.Tqueue=timer.getTime()
@@ -819,6 +821,7 @@ end
 function AIRBOSS:onafterStop(From, Event, To)
   self:UnHandleEvent(EVENTS.Birth)
   self:UnHandleEvent(EVENTS.Land)
+  self:UnHandleEvent(EVENTS.Crash)
 end
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1136,10 +1139,12 @@ function AIRBOSS:_ScanCarrierZone()
         -- Check that it is not already in one of the queues.
         if not (self:_InQueue(self.Qmarshal, group) or self:_InQueue(self.Qpattern, group)) then
           
-          env.info("FF new marshal group="..groupname)
+          
           if self:_IsHuman(group) then
-            self:_MarshalPlayer(group)
+            env.info("FF new HUMAN marshal group (not used, register manually!)="..groupname)
+            --self:_MarshalPlayer(group)
           else
+            env.info("FF new AI marshal group="..groupname)
             self:_MarshalAI(group)
           end
         end        
@@ -1165,10 +1170,12 @@ end
 -- @param Wrapper.Group#GROUP group Aircraft group.
 -- @param #number flagvalue Initial user flag value.
 -- @param #number alt Altitude in feet.
-function AIRBOSS:_AddFlightGroup(group)
+-- @return #AIRBOSS.Queueitem Flight group.
+function AIRBOSS:_CreateFlightGroup(group)
 
   -- Flight group name
   local groupname=group:GetName()
+  local human=self:_IsHuman(group)
   
   -- Queue table item.
   local qitem={} --#AIRBOSS.Queueitem
@@ -1178,14 +1185,15 @@ function AIRBOSS:_AddFlightGroup(group)
   qitem.fuel=group:GetFuelMin()
   qitem.time=timer.getTime()
   qitem.flag=USERFLAG:New(groupname)
-  qitem.flag:Set(-100)  
-  qitem.ai=not self:_IsHuman(group)
+  qitem.flag:Set(-100)
+  qitem.ai=not human
   
   if human then
     local playerData=self:_GetPlayerDataGroup(group)
     qitem.player=playerData
   end
 
+  
 end
 
 --- Orbit at a specified position at a specified alititude with a specified speed.
@@ -1379,6 +1387,25 @@ end
 -- @param #AIRBOSS self
 -- @param #table queue The queue from which the group will be removed.
 -- @param Wrapper.Group#GROUP group Group that will be removed from queue.
+function AIRBOSS:_RemoveGroupFromQueue(queue, group)
+
+  local name=group:GetName()
+  
+  for i,_flight in pairs(queue) do
+    local flight=_flight --#AIRBOSS.Queueitem
+    
+    if flight.groupname==name then
+      env.info(string.format("FF removing group %s from queue.", name))
+      table.remove(queue, i)
+    end
+  end
+  
+end
+
+--- Remove a group from a queue.
+-- @param #AIRBOSS self
+-- @param #table queue The queue from which the group will be removed.
+-- @param Wrapper.Group#GROUP group Group that will be removed from queue.
 function AIRBOSS:_RemoveQueue(queue, group)
 
   local name=group:GetName()
@@ -1449,7 +1476,7 @@ function AIRBOSS:_CheckPlayerStatus()
             self:I("Player status undefined. Waiting for next step.")
             
             -- Jump directly to CASE I straight in approach.
-            playerData.step=AIRBOSS.PatternStep.COMMENCING
+            --playerData.step=AIRBOSS.PatternStep.COMMENCING
             
             -- Jump to final/groove for testing.
             if self.groovedebug then     
@@ -3091,7 +3118,7 @@ function AIRBOSS:_GS(step)
   local gp
   if step==AIRBOSS.PatternStep.FINAL then
     gp="X0"  -- Entering the groove.
-  elseif step==AIRBOSS.PatternStep then
+  elseif step==AIRBOSS.PatternStep.GROOVE_XX then
     gp="X"  -- Starting the groove.
   elseif step==AIRBOSS.PatternStep.GROOVE_RB then
     gp="RB"  -- Roger ball call.
@@ -3438,6 +3465,9 @@ end
 -- @param #boolean loud If true, play loud sound file version.
 -- @param #number delay Delay in seconds, before the message is broadcasted.
 function AIRBOSS:RadioTransmission(radio, call, loud, delay)
+  self:F({radio=radio, call=call, loud=loud, delay=delay})
+  
+  env.info("FF call = "..tostring(call))
 
   if delay==nil or delay and delay==0 then
   
@@ -3447,7 +3477,7 @@ function AIRBOSS:RadioTransmission(radio, call, loud, delay)
     end
       
     -- New transmission.
-    radio:NewUnitTransmission(filename, call.subtitle, call.duration, radio.Frequency, radio.Modulation, false)
+    radio:NewUnitTransmission(filename, call.subtitle, call.duration, radio.Frequency/1000000, radio.Modulation, false)
     
     -- Broadcast message.
     radio:Broadcast()
@@ -3648,7 +3678,7 @@ function AIRBOSS:_AddF10Commands(_unitName)
         missionCommands.addCommandForGroup(_gid, "Weather Report",      _rootPath, self._DisplayCarrierWeather, self, _unitName)
         missionCommands.addCommandForGroup(_gid, "Carrier Info",        _rootPath, self._DisplayCarrierInfo,    self, _unitName)
         missionCommands.addCommandForGroup(_gid, "Request Marshal",     _rootPath, self._RequestMarshal,        self, _unitName)
-        missionCommands.addCommandForGroup(_gid, "Request Straight-In", _rootPath, self._RequestStraight,       self, _unitName)
+        missionCommands.addCommandForGroup(_gid, "Request Straight-In", _rootPath, self._RequestStraightIn,     self, _unitName)
         
         -- TODO: request straight in approach
         -- TODO: request refuelling.
@@ -3663,6 +3693,25 @@ function AIRBOSS:_AddF10Commands(_unitName)
     self:T(self.lid.."Player unit does not exist in AddF10Menu() function. Unit name: ".._unitName)
   end
 
+end
+
+--- Request straight in approach.
+-- @param #AIRBOSS self
+-- @param #string _unitName Name fo the player unit.
+function AIRBOSS:_RequestStraightIn(_unitName)
+  self:F(_unitName)
+  
+  -- Get player unit and name.
+  local _unit, _playername = self:_GetPlayerUnitAndName(_unitName)
+  
+  -- Check if we have a unit which is a player.
+  if _unit and _playername then
+    local playerData=self.players[_playername] --#AIRBOSS.PlayerData
+    
+    if playerData then
+      self:_MarshalPlayer(_unit:GetGroup())
+    end
+  end
 end
 
 --- Request marshal.
@@ -3854,9 +3903,13 @@ function AIRBOSS:_DisplayCarrierInfo(_unitname)
       text=text..string.format("Case %d Recovery\n", self.case)
       text=text..string.format("BRC %d°\n", self:_BaseRecoveryCourse())
       text=text..string.format("FB %d°\n", self:_FinalBearing())
-      text=text..string.format("Speed %d kts\n", carrierspeed)      
+      text=text..string.format("Speed %d kts\n", carrierspeed)
+      text=text..string.format("Airboss radio %.3f MHz AM\n", self.Carrierfreq) --TODO: add modulation
+      text=text..string.format("LSO radio %.3f MHz AM\n", self.LSOfreq)
       text=text..string.format("TACAN Channel %s\n", tacan)
-      text=text..string.format("ICLS Channel %s", icls)
+      text=text..string.format("ICLS Channel %s\n", icls)
+      text=text..string.format("# A/C holding %d\n", #self.Qmarshal)
+      text=text..string.format("# A/C pattern %d", #self.Qpattern)
       
       -- Send message.
       self:_SendMessageToPlayer(text, 20, playerData)
