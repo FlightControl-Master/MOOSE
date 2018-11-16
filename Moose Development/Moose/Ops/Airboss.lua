@@ -1,6 +1,6 @@
 --- **Functional** - (R2.5) - Manages aircraft operations on carriers.
 -- 
--- The Moose AIRBOSS class manages recoveries of human pilots and AI aircraft for aircraft carriers.
+-- The AIRBOSS class manages recoveries of human pilots and AI aircraft on aircraft carriers.
 --
 -- Features:
 --
@@ -9,8 +9,8 @@
 --    * Automatic LSO grading.
 --    * Different skill level supporting tipps during for students or complete zip lip for pros.
 --    * Rescue helo option.
---    * Overhead refuelling tanker option.
---    * Voice overs for LSO and Airobss calls. Can easily customized by users.
+--    * Recovery tanker option.
+--    * Voice overs for LSO and AIRBOSS calls. Can easily customized by users.
 --    * Automatic TACAN and ICLS channel setting.
 --    * Different radio channels for LSO and airboss calls.
 --    * F10 radio menu including carrier info (weather, radio frequencies, TACAN/ICLS channels, pilot grades).
@@ -22,9 +22,10 @@
 --
 -- ===
 --
--- ### Authors: **funkyfranky**, **Bankler** (Carrier trainer idea and script) 
+-- ### Author: **funkyfranky**
+-- ### Co-author: **Bankler** (Carrier trainer idea and script)
 --
--- @module Functional.Airboss
+-- @module Ops.Airboss
 -- @image MOOSE.JPG
 
 --- AIRBOSS class.
@@ -63,18 +64,19 @@
 -- @field #AIRBOSS.Checkpoint C3DirtyUp Case III dirty up and on speed position at 1200 ft and 10-12 NM from the carrier.
 -- @field #AIRBOSS.Checkpoint C3BullsEye Case III intercept glideslope and follow ICLS "bullseye".
 -- @field #number case Recovery case I or III in progress.
+-- @field #table flights List of all flights in the CCA.
 -- @field #table Qmarshal Queue of marshalling aircraft groups.
 -- @field #table Qpattern Queue of aircraft groups in the landing pattern.
 -- @field #RESCUEHELO rescuehelo Rescue helo flying in close formation with the carrier.
--- @field #CARRIERTANKER tanker Refuelling tanker flying overhead with the carrier.
--- @field #table recoverytime Time interval where aircraft are recovered.
+-- @field #RECOVERYTANKER tanker Refuelling tanker flying overhead with the carrier.
+-- @field #table recoverytime List of time intervals when aircraft are recovered.
 -- @extends Core.Fsm#FSM
 
 --- Practice Carrier Landings
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\AIRBOSS\Airboss_Main.png)
+-- ![Banner Image](..\Presentations\AIRBOSS\Airboss_Main.jpg)
 --
 -- # The AIRBOSS Concept
 --
@@ -118,6 +120,7 @@ AIRBOSS = {
   C3DirtyUp    =  {},
   C3BullsEye   =  {},
   case         =   1,
+  flights      =  {},
   Qpattern     =  {},
   Qmarshal     =  {},
   rescuehelo   = nil,
@@ -144,11 +147,11 @@ AIRBOSS.CarrierType={
   STENNIS="Stennis",
   VINSON="Vinson",
   TARAWA="LHA_Tarawa",
-  KUZNETSOV="KUZNECOW"
+  KUZNETSOV="KUZNECOW",
 }
 
 --- Carrier Parameters.
--- @type AIRBOSS.CarrierParameter
+-- @type AIRBOSS.CarrierParameters
 -- @field #number rwyangle Runway angle in degrees. for carriers with angled deck. For USS Stennis -9 degrees.
 -- @field #number sterndist Distance in meters from carrier position to stern of carrier. For USS Stennis -150 meters.
 -- @field #number deckheight Height of deck in meters. For USS Stennis ~22 meters.
@@ -218,8 +221,8 @@ AIRBOSS.PatternStep={
 -- @field #AIRBOSS.RadioSound LONGINGROOVE
 AIRBOSS.Soundfile={
   RIGHTFORLINEUP={
-    normal="LSO - RightLineUp(L).ogg",
-    loud="LSO - RightLineUp(S).ogg",
+    normal="LSO - RightLineUp(S).ogg",
+    loud="LSO - RightLineUp(L).ogg",
     subtitle="Right for line up.",
     duration=3,
   },
@@ -364,7 +367,7 @@ AIRBOSS.GroovePos={
 -- @field #table Checklist Table of checklist text items to display at this point.
 
 --- Marshal and pattern queue items.
--- @type AIRBOSS.Queueitem
+-- @type AIRBOSS.Flightitem
 -- @field Wrapper.Group#GROUP group Flight group.
 -- @field #string groupname Name of the group.
 -- @field #number nunits Number of units in group.
@@ -381,12 +384,13 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.2.7"
+AIRBOSS.version="0.2.7w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Add radio check (LSO, AIRBOSS) to F10 radio menu.
 -- TODO: Monitor holding of players/AI in zoneHolding.
 -- TODO: Right pattern step after bolter/wo/patternWO?
 -- TODO: Handle crash event. Delete A/C from queue, send rescue helo, stop carrier?
@@ -448,15 +452,13 @@ function AIRBOSS:New(carriername, alias)
   -- Create carrier beacon.
   self.beacon=BEACON:New(self.carrier)
   
-  -- Set up Airboss radio.
-  self:SetCarrierradio()
+  -- Set up Airboss radio.  
   self.Carrierradio=RADIO:New(self.carrier)
-  self.Carrierradio:SetFrequency(self.Carrierfreq)
+  self:SetCarrierradio()
   
-  -- Set up LSO radio.
-  self:SetLSOradio()
+  -- Set up LSO radio.  
   self.LSOradio=RADIO:New(self.carrier)
-  self.LSOradio:SetFrequency(self.LSOfreq)
+  self:SetLSOradio()
   
   -- Init carrier parameters.
   if self.carriertype==AIRBOSS.CarrierType.STENNIS then
@@ -574,8 +576,6 @@ function AIRBOSS:SetCarrierControlledZone(radius)
   return self
 end
 
-
-
 --- Set recovery case pattern.
 -- @param #AIRBOSS self
 -- @param #number case Case of recovery. Either 1 or 3. Default 1.
@@ -646,6 +646,9 @@ function AIRBOSS:SetLSOradio(frequency, modulation)
   else
     self.LSOmodulation=radio.modulation.AM
   end
+  
+  self.LSOradio:SetFrequency(self.LSOfreq)
+  self.LSOradio:SetModulation(self.LSOmodulation)
 
   return self
 end
@@ -665,6 +668,9 @@ function AIRBOSS:SetCarrierradio(frequency, modulation)
   else
     self.Carriermodulation=radio.modulation.AM
   end
+  
+  self.Carrierradio:SetFrequency(self.Carrierfreq)
+  self.Carrierradio:SetModulation(self.Carriermodulation)
 
   return self
 end
@@ -672,7 +678,7 @@ end
 
 --- Check if carrier is recovering aircraft.
 -- @param #AIRBOSS self
--- @return #boolean If true, time slot for recovery is open. 
+-- @return #boolean If true, time slot for recovery is open.
 function AIRBOSS:IsRecovering()
   return self:is("Recovering")
 end
@@ -1024,7 +1030,7 @@ end
 -- Queues
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Orbit at a specified position at a specified alititude with a specified speed.
+--- Check marshal and pattern queues.
 -- @param #AIRBOSS self
 function AIRBOSS:_CheckQueue()
 
@@ -1032,7 +1038,7 @@ function AIRBOSS:_CheckQueue()
   local nmarshal=#self.Qmarshal
   
   for _,_flight in pairs(self.Qpattern) do
-    local flight=_flight --#AIRBOSS.Queueitem
+    local flight=_flight --#AIRBOSS.Flightitem
     npattern=npattern+flight.nunits
   end
   
@@ -1047,7 +1053,7 @@ function AIRBOSS:_CheckQueue()
   if nmarshal>0 and npattern<1 then
   
     -- First flight send to marshal stack.
-    local marshalflight=self.Qmarshal[1]  --#AIRBOSS.Queueitem
+    local marshalflight=self.Qmarshal[1]  --#AIRBOSS.Flightitem
     
     -- Time flight is marshalling.
     local Tmarshal=timer.getTime()-marshalflight.time
@@ -1056,7 +1062,7 @@ function AIRBOSS:_CheckQueue()
     -- Time (last) flight has entered landing pattern.
     local Tpattern=999
     if npattern>0 then
-      local patternflight=self.Qpattern[#self.Qpattern] --#AIRBOSS.Queueitem
+      local patternflight=self.Qpattern[#self.Qpattern] --#AIRBOSS.Flightitem
       Tpattern=timer.getTime()-patternflight.time
       env.info(string.format("Pattern time of group %s = %d seconds", patternflight.groupname, Tpattern))
     end
@@ -1089,7 +1095,7 @@ function AIRBOSS:_PrintQueue(queue, name)
     text=text.." empty."
   else
     for i,_flight in pairs(queue) do
-      local flight=_flight --#AIRBOSS.Queueitem
+      local flight=_flight --#AIRBOSS.Flightitem
       local clock=UTILS.SecondsToClock(flight.time)
       text=text..string.format("\n[%d] %s*%d: stack=%d, flag=%d time=%s", i, flight.groupname, flight.nunits, flight.stack, flight.flag:Get(), clock)
     end
@@ -1111,6 +1117,8 @@ function AIRBOSS:_ScanCarrierZone()
   
   -- Scan units in carrier zone.
   local _,_,_,unitscan=coord:ScanObjects(Rout, true, false, false)
+
+  --[[
   
   -- Inside and outside zones.
   local zbig=ZONE_RADIUS:New("Bla1", self.carrier:GetVec2(), Rout)
@@ -1134,7 +1142,7 @@ function AIRBOSS:_ScanCarrierZone()
         local groupname=group:GetName()
   
         local text=string.format("In carrier zone: unit=%s group=%s", unitname, groupname)
-        --env.info(text)  
+        --env.info(text)
         
         -- Check that it is not already in one of the queues.
         if not (self:_InQueue(self.Qmarshal, group) or self:_InQueue(self.Qpattern, group)) then
@@ -1163,14 +1171,67 @@ function AIRBOSS:_ScanCarrierZone()
     end
   end
   
+  ]]
+  
+  -- Make a table with all groups currently in the zone.
+  local insideCCA={}  
+  for _,_unit in pairs(unitscan) do
+    local unit=_unit --Wrapper.Unit#UNIT
+    
+    -- Check if this an aircraft and that it is airborn and closing in.
+    if unit:IsAir() and unit:InAir() and unit:IsInZone(self.zoneCCA)then
+    
+      local group=unit:GetGroup()
+      local groupname=group:GetName()
+      
+      if insideCCA[groupname]==nil then
+        insideCCA[groupname]=group
+      end
+      
+    end
+  end
+  
+  -- Find new flights that are inside CCA.
+  for groupname,_group in pairs(insideCCA) do
+    local group=_group --Wrapper.Group#GROUP
+    
+    -- Loop over all known flight groups.
+    local known=false
+    for _,_flight in pairs(self.flights) do
+      local flight=_flight --#AIRBOSS.Flightitem
+      if flight.groupname==groupname then
+        known=true
+        break
+      end      
+    end
+    
+    -- Create a new flight group
+    if not known then
+      self:_CreateFlightGroup(group)
+    end
+      
+  end
+  
+  -- Find flights that are not in CCA.
+  local remove={}
+  for _,_flight in pairs(self.flights) do
+    local flight=_flight --#AIRBOSS.Flightitem
+    if insideCCA[flight.groupname]==nil then
+      table.insert(remove, flight.group)      
+    end
+  end
+  
+  -- Remove flight groups. 
+  for _,group in pairs(remove) do
+    self:_RemoveFlightGroup(group)
+  end
+  
 end
 
---- Add a flight group.
+--- Create a new flight group. Usually when a flight appears in the CCA.
 -- @param #AIRBOSS self
 -- @param Wrapper.Group#GROUP group Aircraft group.
--- @param #number flagvalue Initial user flag value.
--- @param #number alt Altitude in feet.
--- @return #AIRBOSS.Queueitem Flight group.
+-- @return #AIRBOSS.Flightitem Flight group.
 function AIRBOSS:_CreateFlightGroup(group)
 
   -- Flight group name
@@ -1178,22 +1239,45 @@ function AIRBOSS:_CreateFlightGroup(group)
   local human=self:_IsHuman(group)
   
   -- Queue table item.
-  local qitem={} --#AIRBOSS.Queueitem
+  local qitem={} --#AIRBOSS.Flightitem
   qitem.group=group
   qitem.groupname=group:GetName()
   qitem.nunits=#group:GetUnits()
   qitem.fuel=group:GetFuelMin()
-  qitem.time=timer.getTime()
+  qitem.time=timer.getAbsTime()
   qitem.flag=USERFLAG:New(groupname)
   qitem.flag:Set(-100)
   qitem.ai=not human
   
   if human then
-    local playerData=self:_GetPlayerDataGroup(group)
+  
+    local playerData=self:_GetPlayerDataGroup(group)    
     qitem.player=playerData
+    
+  else
+    
+    -- Send AI to holding pattern.
+    self:_MarshalAI(qitem)
+    
   end
 
-  
+  return qitem
+end
+
+--- Remove a flight group.
+-- @param #AIRBOSS self
+-- @param Wrapper.Group#GROUP group Aircraft group.
+-- @return #AIRBOSS.Flightitem Flight group.
+function AIRBOSS:_RemoveFlightGroup(group)
+  local groupname=group:GetName()
+  for i,_flight in pairs(self.flights) do
+    local flight=_flight --#AIRBOSS.Flightitem
+    if flight.groupname==groupname then
+      self:I(string.format("Removing flight group %s (not in CCA).", groupname))
+      table.remove(self.flights, i)
+      return
+    end
+  end
 end
 
 --- Orbit at a specified position at a specified alititude with a specified speed.
@@ -1220,20 +1304,21 @@ end
 
 --- Tell AI to orbit at a specified position at a specified alititude with a specified speed.
 -- @param #AIRBOSS self
--- @param Wrapper.Group#GROUP group Group
-function AIRBOSS:_MarshalAI(group)
+-- @param #AIRBOSS.Flightitem flight Flight group.
+function AIRBOSS:_MarshalAI(flight)
 
   -- Flight group name.
-  local groupname=group:GetName()
+  local group=flight.group
+  local groupname=flight.groupname
 
-  -- Number of full marshal stacks.
+  -- Number of already full marshal stacks.
   local nstacks=#self.Qmarshal
   
   -- Current carrier position.
   local Carrier=self.carrier:GetCoordinate()
     
   -- Aircraft speed when flying the pattern.
-  local Speed=UTILS.KnotsToMps(250)
+  local Speed=UTILS.KnotsToMps(272)
   
   --- Create a DCS task to orbit at a certain altitude.
   local function _taskorbit(p1, alt, speed, stopflag, p2)
@@ -1252,25 +1337,8 @@ function AIRBOSS:_MarshalAI(group)
   local n=1  -- Waypoint counter.
   for stack=nstacks+1,1,-1 do
   
-    -- Altitude of first stack. Depends on recovery case.
-    local angels0
-    local Dist
-    local p1=nil  --Core.Point#COORDINATE
-    local p2=nil  --Core.Point#COORDINATE
-    if self.case==1 then
-      -- CASE I: Holding at 2000 ft on a circular pattern port of the carrier. Interval +1000 ft for next aircraft.
-      angels0=2
-      Dist=UTILS.NMToMeters(5)
-      p1=Carrier:Translate(Dist, 270)
-    else
-      angels0=6
-      Dist=UTILS.NMToMeters((stack-1)*angels0+15)
-      p1=Carrier:Translate(Dist, self:_Radial())
-      p2=Carrier:Translate(Dist+UTILS.NMToMeters(10), self:_Radial())
-    end
-    
-    -- Pattern altitude.
-    local Altitude=UTILS.FeetToMeters(((stack-1)+angels0)*1000)
+    -- Get altitude and positions.  
+    local Altitude, p1, p2=self:_GetMarshalAltitude(stack)
     
     -- Orbit task.
     local TaskOrbit=_taskorbit(p1, Altitude, Speed, stack-1, p2)
@@ -1287,19 +1355,9 @@ function AIRBOSS:_MarshalAI(group)
   
   -- Landing waypoint.
   wp[#wp+1]=Carrier:WaypointAirLanding(Speed, self.airbase, nil, "Landing")
-  
-  local angels0
-  if self.case==1 then
-    angels0=2
-  else
-    angels0=6
-  end
-  
-  -- Pattern altitude.
-  local Altitude=UTILS.FeetToMeters((nstacks+angels0)*1000)
-  
+    
   -- Add group to marshal stack.
-  self:_AddMarshallGroup(group, nstacks+1, Altitude)
+  self:_AddMarshallGroup(flight, nstacks+1)
   
   -- Reinit waypoints.
   group:WayPointInitialize(wp)
@@ -1308,39 +1366,67 @@ function AIRBOSS:_MarshalAI(group)
   group:Route(wp, 0)
 end
 
+--- Get marshal altitude and position.
+-- @param #AIRBOSS self
+-- @param #number stack Assigned stack number. Counting starts at one, i.e. stack=1 is the first stack.
+-- @return #number Holding altitude in meters.
+-- @return Core.Point#COORDINATE Holding position coordinate.
+-- @return Core.Point#COORDINATE Second holding position coordinate of racetrack pattern for CASE III recoveries.
+function AIRBOSS:_GetMarshalAltitude(stack)
+
+  -- Carrier position.
+  local Carrier=self.carrier:GetCoordinate()
+
+  -- Altitude of first stack. Depends on recovery case.
+  local angels0
+  local Dist
+  local p1=nil  --Core.Point#COORDINATE
+  local p2=nil  --Core.Point#COORDINATE
+  
+  if self.case==1 then
+    -- CASE I: Holding at 2000 ft on a circular pattern port of the carrier. Interval +1000 ft for next stack.
+    angels0=2
+    Dist=UTILS.NMToMeters(5)
+    p1=Carrier:Translate(Dist, 270)
+  else
+    -- CASE III: Holding at 6000 ft on a racetrack pattern astern the carrier.
+    angels0=6
+    Dist=UTILS.NMToMeters((stack-1)*angels0+15)
+    p1=Carrier:Translate(Dist, self:_Radial())
+    p2=Carrier:Translate(Dist+UTILS.NMToMeters(10), self:_Radial())
+  end
+
+  -- Pattern altitude.
+  local altitude=UTILS.FeetToMeters(((stack-1)+angels0)*1000)
+  
+  return altitude, p1, p2
+end
+
 --- Add a flight group to the marshal stack.
 -- @param #AIRBOSS self
--- @param Wrapper.Group#GROUP group Aircraft group.
--- @param #number flagvalue Initial user flag value.
--- @param #number alt Altitude in feet.
-function AIRBOSS:_AddMarshallGroup(group, flagvalue, alt)
+-- @param #AIRBOSS.Flightitem flight Flight group.
+-- @param #number flagvalue Initial user flag value = stack number for holding.
+function AIRBOSS:_AddMarshallGroup(flight, flagvalue)
 
-  -- Flight group name
-  local groupname=group:GetName()
-  
-  -- Queue table item.
-  local qitem={} --#AIRBOSS.Queueitem
-  qitem.group=group
-  qitem.groupname=group:GetName()
-  qitem.nunits=#group:GetUnits()
-  qitem.fuel=group:GetFuelMin()
-  qitem.time=timer.getTime()
-  qitem.flag=USERFLAG:New(groupname)
-  qitem.flag:Set(flagvalue)
-  qitem.ai=not self:_IsHuman(group)
-  qitem.stack=alt
+  -- Set flag value.
+  flight.flag:Set(flagvalue)
   
   -- Pressure.
   local hPa2inHg=0.0295299830714
   local P=self.carrier:GetCoordinate():GetPressure()*hPa2inHg
   
+  -- TODO: Get correct board number if possible?
+  local boardnumber=flight.groupname
+  local alt=self:_GetMarshalAltitude(flagvalue)
+  local brc=self:_BaseRecoveryCourse()
+  
   -- Marshal message.
-  local text=string.format("XYZ, Case 1, BRC is 000, hold at %d. Expected Charlie Time XX.\n", qitem.stack)
+  local text=string.format("%s, Case 1, BRC is %03d, hold at %d. Expected Charlie Time XX.\n", boardnumber, brc, alt)
   text=text..string.format("Altimeter %.2f. Report see me.", P)
   MESSAGE:New(text, 30):ToAll()
    
   -- Add to marshal queue.
-  table.insert(self.Qmarshal, qitem)
+  table.insert(self.Qmarshal, flight)
 end
 
 --- Collapse marshal stack.
@@ -1348,7 +1434,7 @@ end
 function AIRBOSS:_CollapseMarshalStack()
 
   for _,_flight in pairs(self.Qmarshal) do
-    local flight=_flight --#AIRBOSS.Queueitem
+    local flight=_flight --#AIRBOSS.Flightitem
     local flagvalue=flight.flag:Get()
     flight.flag:Set(flagvalue-1)
   end
@@ -1356,11 +1442,11 @@ function AIRBOSS:_CollapseMarshalStack()
   local nmarshal=#self.Qmarshal
   
   for i=nmarshal,1,-1 do
-    local flight=self.Qmarshal[i] --#AIRBOSS.Queueitem
+    local flight=self.Qmarshal[i] --#AIRBOSS.Flightitem
     --flight.
   end
   
-  local flight=self.Qmarshal[1]  --#AIRBOSS.Queueitem
+  local flight=self.Qmarshal[1]  --#AIRBOSS.Flightitem
   
   env.info(string.format("New pattern flight %s.", flight.groupname))
   
@@ -1392,7 +1478,7 @@ function AIRBOSS:_RemoveGroupFromQueue(queue, group)
   local name=group:GetName()
   
   for i,_flight in pairs(queue) do
-    local flight=_flight --#AIRBOSS.Queueitem
+    local flight=_flight --#AIRBOSS.Flightitem
     
     if flight.groupname==name then
       env.info(string.format("FF removing group %s from queue.", name))
@@ -1411,7 +1497,7 @@ function AIRBOSS:_RemoveQueue(queue, group)
   local name=group:GetName()
   
   for i,_flight in pairs(queue) do
-    local flight=_flight --#AIRBOSS.Queueitem
+    local flight=_flight --#AIRBOSS.Flightitem
     
     if flight.groupname==name then
     
@@ -1613,7 +1699,7 @@ function AIRBOSS:OnEventBirth(EventData)
     local _callsign=_unit:GetCallsign()
     
     -- Debug output.
-    local text=string.format("Player %s, callsign %s entered unit %s (ID=%d) of group %s", _playername, _callsign, _unitName, _uid, _group:GetName())
+    local text=string.format("AIRBOSS: Pilot %s, callsign %s entered unit %s of group %s.", _playername, _callsign, _unitName, _group:GetName())
     self:T(self.lid..text)
     MESSAGE:New(text, 5):ToAllIf(self.Debug)
     
@@ -1634,7 +1720,7 @@ function AIRBOSS:OnEventBirth(EventData)
     self:_AddF10Commands(_unitName)
     
     -- Init player data.
-    self.players[_playername]=self:_InitPlayer(_unitName)
+    self.players[_playername]=self:_NewPlayer(_unitName)
     
     -- Start in the groove for debugging.
     self.groovedebug=true
@@ -1734,11 +1820,11 @@ end
 -- PATTERN functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Initialize player data.
+--- Initialize player data after birth event of player unit.
 -- @param #AIRBOSS self
 -- @param #string unitname Name of the player unit.
 -- @return #AIRBOSS.PlayerData Player data.
-function AIRBOSS:_InitPlayer(unitname)
+function AIRBOSS:_NewPlayer(unitname)
 
   -- Get player unit and name.
   local playerunit, playername=self:_GetPlayerUnitAndName(unitname)
@@ -1770,7 +1856,7 @@ function AIRBOSS:_InitPlayer(unitname)
     playerData.inbigzone=playerData.unit:IsInZone(self.zoneCCA)
   
     -- Init stuff for this round.
-    playerData=self:_InitNewApproach(playerData)
+    playerData=self:_InitPlayer(playerData)
     
     -- Return player data table.
     return playerData    
@@ -1779,11 +1865,11 @@ function AIRBOSS:_InitPlayer(unitname)
   return nil
 end
 
---- Initialize new approach for player by resetting parmeters to initial values.
+--- Initialize player data by (re-)setting parmeters to initial values.
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data.
 -- @return #AIRBOSS.PlayerData Initialized player data.
-function AIRBOSS:_InitNewApproach(playerData)
+function AIRBOSS:_InitPlayer(playerData)
   self:I(self.lid..string.format("New approach of player %s.", playerData.callsign))
   
   playerData.step=AIRBOSS.PatternStep.UNDEFINED
@@ -1808,9 +1894,8 @@ function AIRBOSS:_Commencing(playerData)
       
   local text="Commencing."
   
-  
   -- Initialize player data for new approach.
-  self:_InitNewApproach(playerData)
+  self:_InitPlayer(playerData)
 
   -- Next step: depends on case recovery.
   if self.case==1 then
@@ -3546,7 +3631,7 @@ end
 function AIRBOSS:_InQueue(queue, group)
   local name=group:GetName()
   for _,_flight in pairs(queue) do
-    local flight=_flight  --#AIRBOSS.Queueitem
+    local flight=_flight  --#AIRBOSS.Flightitem
     if name==flight.groupname then
       return true
     end
@@ -3987,959 +4072,3 @@ end
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- **Functional** - (R2.5) - Rescue helo.
--- 
--- Recue helicopter on an aircraft carrier
---
--- Features:
---
---    * Formation with carrier.
---    * Automatic respawning on empty fuel.
---
--- Please not that his class is work in progress and in an **alpha** stage.
---
--- ===
---
--- ### Author: **funkyfranky** 
---
--- @module Functional.RescueHelo
--- @image MOOSE.JPG
-
---- RESCUEHELO class.
--- @type RESCUEHELO
--- @field #string ClassName Name of the class.
--- @field Wrapper.Unit#UNIT carrier The carrier the helo is attached to.
--- @field #string carriertype Carrier type.
--- @field #string helogroupname Name of the late activated helo template group.
--- @field Wrapper.Group#GROUP helo Helo group.
--- @field #number takeoff Takeoff type.
--- @field Wrapper.Airbase#AIRBASE airbase The airbase object of the carrier.
--- @field Core.Set#SET_GROUP followset Follow group set.
--- @field AI.AI_Formation#AI_FORMATION formation AI_FORMATION object.
--- @field #number lowfuel Low fuel threshold of helo in percent.
--- @extends Core.Fsm#FSM
-
---- Rescue Helo
---
--- ===
---
--- ![Banner Image](..\Presentations\RESCUEHELO\RescueHelo_Main.png)
---
--- # Recue helo
---
--- bla bla
---
--- @field #RESCUEHELO
-RESCUEHELO = {
-  ClassName = "RESCUEHELO",
-  carrier       = nil,
-  carriertype   = nil,
-  helogroupname = nil,
-  helo          = nil,
-  airbase       = nil,
-  takeoff       = nil,
-  followset     = nil,
-  formation     = nil,
-  lowfuel       = nil,
-}
-
---- Class version.
--- @field #string version
-RESCUEHELO.version="0.9.0"
-
--- TODO: Add rescue event.
--- TODO: Make offset input parameter.
-
---- Constructor.
--- @param #RESCUEHELO self
--- @param Wrapper.Unit#UNIT carrierunit Carrier unit.
--- @param #string helogroupname Name of the late activated rescue helo template group.
--- @return #RESCUEHELO RESCUEHELO object.
-function RESCUEHELO:New(carrierunit, helogroupname)
-
-  -- Inherit everthing from FSM class.
-  local self = BASE:Inherit(self, FSM:New()) -- #RESCUEHELO
-  
-  if type(carrierunit)=="string" then
-    self.carrier=UNIT:FindByName(carrierunit)
-  else
-    self.carrier=carrierunit
-  end
-  
-  -- Carrier type.
-  self.carriertype=self.carrier:GetTypeName()
-  
-  -- Helo group name.
-  self.helogroupname=helogroupname
-  
-  -- Home airbase of helo
-  self.airbase=AIRBASE:FindByName(self.carrier:GetName())
-  
-  -- Init defaults.  
-  self:SetHomeBase(AIRBASE:FindByName(self.carrier:GetName()))
-  self:SetTakeoffHot()
-  self:SetLowFuelThreshold(10)
-
-  -----------------------
-  --- FSM Transitions ---
-  -----------------------
-  
-  -- Start State.
-  self:SetStartState("Stopped")
-
-  -- Add FSM transitions.
-  --                 From State  -->   Event   -->   To State
-  self:AddTransition("Stopped",       "Start",      "Running")
-  self:AddTransition("Running",       "RTB",        "Returning")
-  self:AddTransition("Returning",     "Status",     "*")
-  self:AddTransition("Running",       "Status",     "*")
-  self:AddTransition("Running",       "Stop",       "Stopped")
-
-
-  --- Triggers the FSM event "Start" that starts the rescue helo. Initializes parameters and starts event handlers.
-  -- @function [parent=#RESCUEHELO] Start
-  -- @param #RESCUEHELO self
-
-  --- Triggers the FSM event "Start" that starts the rescue helo after a delay. Initializes parameters and starts event handlers.
-  -- @function [parent=#RESCUEHELO] __Start
-  -- @param #RESCUEHELO self
-  -- @param #number delay Delay in seconds.
-
-  --- Triggers the FSM event "RTB" that sends the helo home.
-  -- @function [parent=#RESCUEHELO] RTB
-  -- @param #RESCUEHELO self
-
-  --- Triggers the FSM event "RTB" that sends the helo home after a delay.
-  -- @function [parent=#RESCUEHELO] __RTB
-  -- @param #RESCUEHELO self
-  -- @param #number delay Delay in seconds.
-
-  --- Triggers the FSM event "Stop" that stops the rescue helo. Event handlers are stopped.
-  -- @function [parent=#RESCUEHELO] Stop
-  -- @param #RESCUEHELO self
-
-  --- Triggers the FSM event "Stop" that stops the rescue helo after a delay. Event handlers are stopped.
-  -- @function [parent=#RESCUEHELO] __Stop
-  -- @param #RESCUEHELO self
-  -- @param #number delay Delay in seconds.
-  
-  return self
-
-end
-
---- Set low fuel state of helo. When fuel is below this threshold, the helo will RTB or be respawned if takeoff type is in air.
--- @param #RESCUEHELO self
--- @param #number threshold Low fuel threshold in percent. Default 10.
--- @return #RESCUEHELO self
-function RESCUEHELO:SetLowFuelThreshold(threshold)
-  self.lowfuel=threshold or 10
-  return self
-end
-
---- Set home airbase of the helo. Default is the carrier.
--- @param #RESCUEHELO self
--- @param Wrapper.Airbase#AIRBASE airbase Homebase of helo.
--- @return #RESCUEHELO self
-function RESCUEHELO:SetHomeBase(airbase)
-  self.airbase=airbase
-  return self
-end
-
---- Set takeoff type.
--- @param #RESCUEHELO self
--- @param #number takeofftype Takeoff type.
--- @return #RESCUEHELO self
-function RESCUEHELO:SetTakeoff(takeofftype)
-  self.takeoff=takeofftype
-  return self
-end
-
---- Set takeoff with engines running (hot).
--- @param #RESCUEHELO self
--- @return #RESCUEHELO self
-function RESCUEHELO:SetTakeoffHot()
-  self:SetTakeoff(SPAWN.Takeoff.Hot)
-  return self
-end
-
---- Set takeoff with engines off (cold).
--- @param #RESCUEHELO self
--- @return #RESCUEHELO self
-function RESCUEHELO:SetTakeoffCold()
-  self:SetTakeoff(SPAWN.Takeoff.Cold)
-  return self
-end
-
---- Set takeoff in air near the carrier.
--- @param #RESCUEHELO self
--- @return #RESCUEHELO self
-function RESCUEHELO:SetTakeoffAir()
-  self:SetTakeoff(SPAWN.Takeoff.Air)
-  return self
-end
-
-
---- Check if tanker is returning to base.
--- @param #RESCUEHELO self
--- @return #boolean If true, helo is returning to base. 
-function RESCUEHELO:IsReturning()
-  return self:is("Returning")
-end
-
---- Check if tanker is operating.
--- @param #RESCUEHELO self
--- @return #boolean If true, helo is operating. 
-function RESCUEHELO:IsRunning()
-  return self:is("Running")
-end
-
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- FSM states
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
---- On after Start event. Starts the warehouse. Addes event handlers and schedules status updates of reqests and queue.
--- @param #RESCUEHELO self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function RESCUEHELO:onafterStart(From, Event, To)
-
-  -- Events are handled my MOOSE.
-  self:I(string.format("Starting Rescue Helo Formation v%s for carrier unit %s of type %s.", RESCUEHELO.version, self.carrier:GetName(), self.carriertype))
-  
-  -- Handle events.
-  --self:HandleEvent(EVENTS.Birth)
-  self:HandleEvent(EVENTS.Land)
-  --self:HandleEvent(EVENTS.Crash)
-  
-  -- Offset [meters] in the direction of travelling. Positive values are in front of Mother.
-  local OffsetX=200
-  -- Offset [meters] perpendicular to travelling. Positive = Starboard (right of Mother), negative = Port (left of Mother).
-  local OffsetZ=200
-  -- Offset altitude. Should (obviously) always be positve.
-  local OffsetY=70
-  
-  -- Delay before formation is started.
-  local delay=120  
-  
-  -- Spawn helo.
-  local Spawn=SPAWN:New(self.helogroupname):InitUnControlled(false)
-  
-  -- Spawn in air or at airbase.
-  if self.takeoff==SPAWN.Takeoff.Air then
-  
-    -- Carrier heading
-    local hdg=self.carrier:GetHeading()
-    
-    -- Spawn distance behind carrier.
-    local dist=UTILS.NMToMeters(0.2)
-    
-    -- Coordinate behind the carrier
-    local Carrier=self.carrier:GetCoordinate():SetAltitude(OffsetY):Translate(dist, hdg)
-    
-    -- Orientation of spawned group.
-    Spawn:InitHeading(hdg)
-    
-    -- Spawn at coordinate.
-    self.helo=Spawn:SpawnFromCoordinate(Carrier)
-    
-    -- Start formation in 1 seconds
-    delay=1
-    
-  else  
-  
-    -- Spawn at airbase.
-    self.helo=Spawn:SpawnAtAirbase(self.airbase, self.takeoff)
-    
-    if self.takeoff==SPAWN.Takeoff.Runway then
-      delay=5
-    elseif self.takeoff==SPAWN.Takeoff.Hot then
-      delay=30
-    elseif self.takeoff==SPAWN.Takeoff.Cold then
-      delay=60
-    end
-    
-  end
-  
-  -- Set of group(s) to follow Mother.
-  self.followset=SET_GROUP:New()
-  self.followset:AddGroup(self.helo)
-  
-  -- Get initial fuel.
-  self.HeloFuel0=self.helo:GetFuel()
-  
-  -- Define AI Formation object.
-  self.formation=AI_FORMATION:New(self.carrier, self.followset, "Helo Formation with Carrier", "Follow Carrier at given parameters.")
-  
-  -- Formation parameters.
-  self.formation:FormationCenterWing(-OffsetX, 50, math.abs(OffsetY), 50, OffsetZ, 50)
-  
-  -- Start formation FSM.
-  self.formation:__Start(delay)
-  
-  -- Start uncontrolled helo.
-  --HeloSpawn:StartUncontrolled(120)
-  
-  -- Init status check
-  self:__Status(1)
-  
-end
-
---- On after Status event. Checks player status.
--- @param #RESCUEHELO self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function RESCUEHELO:onafterStatus(From, Event, To)
-
-  -- Get current time.
-  local time=timer.getTime()
-
-  -- Get relative fuel wrt to initial fuel of helo (DCS bug https://forums.eagle.ru/showthread.php?t=223712)
-  local fuel=self.helo:GetFuel()/self.HeloFuel0*100
-
-  -- Report current fuel.
-  local text=string.format("Rescue Helo %s: state=%s fuel=%.1f", self.helo:GetName(), self:GetState(), fuel)
-  self:I(text)
-
-  -- If fuel < threshold ==> send helo to home base!  
-  if fuel<self.lowfuel then
-    self:RTB()
-  end
-  
-  -- Call status again in one minute.
-  self:__Status(-60)
-end
-
---- On after Stop event. Unhandle events and stop status updates.
--- @param #RESCUEHELO self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function RESCUEHELO:onafterStop(From, Event, To)
-  --self:UnHandleEvent(EVENTS.Birth)
-  self:UnHandleEvent(EVENTS.Land)
-end
-
---- Handle landing event of rescue helo.
--- @param #RESCUEHELO self
--- @param Core.Event#EVENTDATA EventData Event data.
-function RESCUEHELO:OnEventLand(EventData)
-  local group=EventData.IniGroup --Wrapper.Group#GROUP
-  
-  if group:IsAlive() then
-    local groupname=group:GetName()
-  
-    if groupname:match(self.helogroupname) then
-    
-      -- Respawn the Helo.
-      self:I(string.format("Respawning rescue helo group group %s at home base.", groupname))
-      
-      if self.takeoff==SPAWN.Takeoff.Air then
-        
-        self:E("ERROR: Rescue helo %s landed. This should not happen for Takeoff=Air!", groupname)
-      
-      else
-      
-        -- Respawn helo at current airbase.
-        self.helo=group:RespawnAtCurrentAirbase()
-        
-      end
-      
-      -- Restart the formation.
-      self.formation:__Start(10)
-    end
-  end
-end
-
---- On before RTB event. Check if takeoff type is air and if so respawn the helo and deny RTB transition.
--- @param #RESCUEHELO self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @return #boolean If true, transition is allowed.
-function RESCUEHELO:onbeforeRTB(From, Event, To)
-
-  if self.takeoff==SPAWN.Takeoff.Air then
-  
-    -- Debug message.
-    local text=string.format("Respawning rescue helo group %s in air.", self.helo:GetName())
-    self:I(text)  
-    
-    -- Respawn helo.
-    self.helo:InitHeading(self.helo:GetHeading())
-    self.helo=self.helo:Respawn(nil, true)
-        
-    -- Deny transition to RTB.
-    return false
-  end
-  
-  return true
-end
-
---- On after RTB event. Send tanker back to carrier.
--- @param #RESCUEHELO self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function RESCUEHELO:onafterRTB(From, Event, To)
-
-    -- Debug message.
-    local text=string.format("Helo %s returning to airbase %s.", self.helo:GetName(), self.airbase:GetName())
-    self:I(text)
-    
-    local waypoints={}
-    
-    -- Set landingwaypoint
-    local wp=self.carrier:GetCoordinate():WaypointAirLanding(300, self.airbase, nil, "Landing")
-    table.insert(waypoints, wp)
-
-    -- Initialize WP and route tanker.
-    self.helo:WayPointInitialize(waypoints)
-  
-    -- Set task.
-    self.helo:Route(waypoints, 1)
-    
-    -- Stop formation.
-    self.formation:Stop()
-end
-
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
---- **Functional** - (R2.5) - Carrier tanker.
--- 
--- Tanker aircraft flying racetrack pattern over aircraft carrier for refuelling.
---
--- Features:
---
---    * Regular pattern update with respect to carrier positon.
---    * Automatic respawning when tanker runs out of fuel.
---    * Tanker can be spawned cold or hot on the carrier or any other airbase or directly in air.
---
--- Please not that his class is work in progress and in an **alpha** stage.
---
--- ===
---
--- ### Author: **funkyfranky** 
---
--- @module Functional.CarrierTanker
--- @image MOOSE.JPG
-
---- CARRIERTANKER class.
--- @type CARRIERTANKER
--- @field #string ClassName Name of the class.
--- @field Wrapper.Unit#UNIT carrier The carrier the helo is attached to.
--- @field #string carriertype Carrier type.
--- @field #string tankergroupname Name of the late activated tanker template group.
--- @field Wrapper.Group#GROUP tanker Tanker group.
--- @field Wrapper.Airbase#AIRBASE airbase The home airbase object of the tanker. Normally the aircraft carrier.
--- @field #number speed Tanker speed when flying pattern.
--- @field #number altitude Tanker orbit pattern altitude.
--- @field #number distStern Race-track distance astern.
--- @field #number distBow Race-track distance bow.
--- @field #number dTupdate Time interval for updating pattern position wrt new tanker position.
--- @field #number Tupdate Last time the pattern was updated.
--- @field #number takeoff Takeoff type (cold, hot, air).
--- @field #number lowfuel Low fuel threshold in percent.
--- @extends Core.Fsm#FSM
-
---- Carrier Tanker.
---
--- ===
---
--- ![Banner Image](..\Presentations\CARRIERTANKER\CarrierTanker_Main.png)
---
--- # Carrier Tanker
---
--- bla bla
---
--- @field #CARRIERTANKER
-CARRIERTANKER = {
-  ClassName       = "CARRIERTANKER",
-  carrier         = nil,
-  carriertype     = nil,
-  tankergroupname = nil,
-  tanker          = nil,
-  airbase         = nil,
-  altitude        = nil,
-  speed           = nil,
-  distStern       = nil,
-  distBow         = nil,
-  dTupdate        = nil,
-  Tupdate         = nil,
-  takeoff         = nil,
-  lowfuel         = nil,
-}
-
-
---- Class version.
--- @field #string version
-CARRIERTANKER.version="0.9.0"
-
---- Constructor.
--- @param #CARRIERTANKER self
--- @param Wrapper.Unit#UNIT carrierunit Carrier unit.
--- @param #string tankergroupname Name of the late activated tanker aircraft template group.
--- @return #CARRIERTANKER CARRIERTANKER object.
-function CARRIERTANKER:New(carrierunit, tankergroupname)
-
-  -- Inherit everthing from FSM class.
-  local self = BASE:Inherit(self, FSM:New()) -- #CARRIERTANKER
-  
-  if type(carrierunit)=="string" then
-    self.carrier=UNIT:FindByName(carrierunit)
-  else
-    self.carrier=carrierunit
-  end
-  
-  -- Carrier type.
-  self.carriertype=self.carrier:GetTypeName()
-  
-  -- Tanker group name.
-  self.tankergroupname=tankergroupname
-  
-  -- Default parameters.
-  self:SetPatternUpdateInterval(30)
-  self:SetAltitude(6000)
-  self:SetSpeed(272)
-  self:SetRacetrackDistances(6, 8)
-  self:SetHomeBase(AIRBASE:FindByName(self.carrier:GetName()))
-  self:SetTakeoffAir()
-  self:SetLowFuelThreshold(10)
-
-  -----------------------
-  --- FSM Transitions ---
-  -----------------------
-  
-  -- Start State.
-  self:SetStartState("Stopped")
-
-  -- Add FSM transitions.
-  --                 From State  -->   Event   -->   To State
-  self:AddTransition("Stopped",       "Start",      "Running")
-  self:AddTransition("Running",       "RTB",        "Returning")
-  self:AddTransition("Running",       "Status",     "*")
-  self:AddTransition("Returning",     "Status",     "*")
-  self:AddTransition("Running",       "Stop",       "Stopped")
-
-
-  --- Triggers the FSM event "Start" that starts the carrier tanker. Initializes parameters and starts event handlers.
-  -- @function [parent=#CARRIERTANKER] Start
-  -- @param #CARRIERTANKER self
-
-  --- Triggers the FSM event "Start" that starts the carrier tanker after a delay. Initializes parameters and starts event handlers.
-  -- @function [parent=#CARRIERTANKER] __Start
-  -- @param #CARRIERTANKER self
-  -- @param #number delay Delay in seconds.
-
-  --- Triggers the FSM event "RTB" that sends the tanker home.
-  -- @function [parent=#CARRIERTANKER] RTB
-  -- @param #CARRIERTANKER self
-
-  --- Triggers the FSM event "RTB" that sends the tanker home after a delay.
-  -- @function [parent=#CARRIERTANKER] __RTB
-  -- @param #CARRIERTANKER self
-  -- @param #number delay Delay in seconds.
-
-  --- Triggers the FSM event "Stop" that stops the carrier tanker. Event handlers are stopped.
-  -- @function [parent=#CARRIERTANKER] Stop
-  -- @param #CARRIERTANKER self
-
-  --- Triggers the FSM event "Stop" that stops the carrier tanker after a delay. Event handlers are stopped.
-  -- @function [parent=#CARRIERTANKER] __Stop
-  -- @param #CARRIERTANKER self
-  -- @param #number delay Delay in seconds.
-  
-  return self
-end
-
---- Set the speed the tanker flys in its orbit pattern.
--- @param #CARRIERTANKER self
--- @param #number speed Tanker speed in knots.
--- @return #CARRIERTANKER self
-function CARRIERTANKER:SetSpeed(speed)
-  self.speed=UTILS.KnotsToMps(speed)
-  return self
-end
-
---- Set orbit pattern altitude of the tanker.
--- @param #CARRIERTANKER self
--- @param #number altitude Tanker altitude in feet.
--- @return #CARRIERTANKER self
-function CARRIERTANKER:SetAltitude(altitude)
-  self.altitude=UTILS.FeetToMeters(altitude)
-  return self
-end
-
---- Set race-track distances.
--- @param #CARRIERTANKER self
--- @param #number distbow Distance [NM] in front of the carrier. Default 6 NM.
--- @param #number diststern Distance [NM] behind the carrier. Default 8 NM.
--- @return #CARRIERTANKER self
-function CARRIERTANKER:SetRacetrackDistances(distbow, diststern)
-  self.distBow=UTILS.NMToMeters(distbow or 6)
-  self.distStern=-UTILS.NMToMeters(diststern or 8)
-  return self
-end
-
---- Set pattern update interval. Note that this update causes a slight disruption in the race track pattern.
--- Therefore, the interval should be as long as possible but short enough to keep the tanker overhead the carrier.
--- @param #CARRIERTANKER self
--- @param #number interval Interval in minutes. Default is every 30 minutes.
--- @return #CARRIERTANKER self
-function CARRIERTANKER:SetPatternUpdateInterval(interval)
-  self.dTupdate=(interval or 30)*60
-  return self
-end
-
---- Set low fuel state of tanker. When fuel is below this threshold, the tanker will RTB or be respawned if takeoff type is in air.
--- @param #CARRIERTANKER self
--- @param #number threshold Low fuel threshold in percent. Default 10.
--- @return #CARRIERTANKER self
-function CARRIERTANKER:SetLowFuelThreshold(threshold)
-  self.lowfuel=threshold or 10
-  return self
-end
-
---- Set home airbase of the tanker. Default is the carrier.
--- @param #CARRIERTANKER self
--- @param Wrapper.Airbase#AIRBASE airbase
--- @return #CARRIERTANKER self
-function CARRIERTANKER:SetHomeBase(airbase)
-  self.airbase=airbase
-  return self
-end
-
---- Set takeoff type.
--- @param #CARRIERTANKER self
--- @param #number takeofftype Takeoff type.
--- @return #CARRIERTANKER self
-function CARRIERTANKER:SetTakeoff(takeofftype)
-  self.takeoff=takeofftype
-  return self
-end
-
---- Set takeoff with engines running (hot).
--- @param #CARRIERTANKER self
--- @return #CARRIERTANKER self
-function CARRIERTANKER:SetTakeoffHot()
-  self:SetTakeoff(SPAWN.Takeoff.Hot)
-  return self
-end
-
---- Set takeoff with engines off (cold).
--- @param #CARRIERTANKER self
--- @return #CARRIERTANKER self
-function CARRIERTANKER:SetTakeoffCold()
-  self:SetTakeoff(SPAWN.Takeoff.Cold)
-  return self
-end
-
---- Set takeoff in air at pattern altitude 30 NM behind the carrier.
--- @param #CARRIERTANKER self
--- @return #CARRIERTANKER self
-function CARRIERTANKER:SetTakeoffAir()
-  self:SetTakeoff(SPAWN.Takeoff.Air)
-  return self
-end
-
-
---- Check if tanker is returning to base.
--- @param #CARRIERTANKER self
--- @return #boolean If true, tanker is returning to base. 
-function CARRIERTANKER:IsReturning()
-  return self:is("Returning")
-end
-
---- Check if tanker is operating.
--- @param #CARRIERTANKER self
--- @return #boolean If true, tanker is operating. 
-function CARRIERTANKER:IsRunning()
-  return self:is("Running")
-end
-
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- FSM states
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
---- On after Start event. Starts the warehouse. Addes event handlers and schedules status updates of reqests and queue.
--- @param #CARRIERTANKER self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function CARRIERTANKER:onafterStart(From, Event, To)
-
-  -- Info on start.
-  self:I(string.format("Starting Carrier Tanker v%s for carrier unit %s of type %s for tanker group %s.", CARRIERTANKER.version, self.carrier:GetName(), self.carriertype, self.tankergroupname))
-  
-  -- Handle events.
-  self:HandleEvent(EVENTS.EngineShutdown)
-  --TODO: Handle event crash and respawn.
-  
-  -- Spawn tanker.
-  local Spawn=SPAWN:New(self.tankergroupname):InitUnControlled(false)
-  
-  -- Spawn on carrier.
-  if self.takeoff==SPAWN.Takeoff.Air then
-  
-    -- Carrier heading
-    local hdg=self.carrier:GetHeading()
-    
-    local dist=UTILS.NMToMeters(20)
-    
-    -- Coordinate behind the carrier
-    local Carrier=self.carrier:GetCoordinate():SetAltitude(self.altitude):Translate(-dist, hdg)
-    
-    -- Orientation of spawned group.
-    Spawn:InitHeading(hdg)
-    
-    -- Spawn at coordinate.
-    self.tanker=Spawn:SpawnFromCoordinate(Carrier)
-    
-    self:_InitRoute(15, 1, 2)
-  else
-  
-    -- Spawn tanker at airbase.
-    self.tanker=Spawn:SpawnAtAirbase(self.airbase, self.takeoff)
-    self:_InitRoute(30, 10, 1)
-    
-  end  
-  
-  -- Init status check.
-  self:__Status(10)
-end
-
---- On after Status event. Checks player status.
--- @param #CARRIERTANKER self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function CARRIERTANKER:onafterStatus(From, Event, To)
-
-  -- Get current time.
-  local time=timer.getTime()
-  
-  -- Get fuel of tanker.
-  local fuel=self.tanker:GetFuel()*100
-  local text=string.format("Tanker %s: state=%s fuel=%.1f", self.tanker:GetName(), self:GetState(), fuel)
-  self:I(text)
-  
-  
-  if self:IsRunning() then
-  
-    -- Check fuel.
-    if fuel<self.lowfuel then
-    
-      -- Send tanker home if fuel runs low.
-      self:RTB()
-      
-    else
-    
-      if self.Tupdate then
-      
-        --Time since last pattern update.
-        local dt=time-self.Tupdate
-        
-        if dt>self.dTupdate then
-          self:_PatternUpdate()
-        end
-        
-      end
-    end
-    
-  end
-  
-  -- Call status again in 1 minute.
-  self:__Status(-60)
-end
-
---- On after Stop event. Unhandle events and stop status updates. 
--- @param #CARRIERTANKER self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function CARRIERTANKER:onafterStop(From, Event, To)
-  self:UnHandleEvent(EVENTS.EngineShutdown)
-  --self:UnHandleEvent(EVENTS.Land)
-end
-
---- On before RTB event. Check if takeoff type is air and if so respawn the tanker and deny RTB transition.
--- @param #CARRIERTANKER self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @return #boolean If true, transition is allowed.
-function CARRIERTANKER:onbeforeRTB(From, Event, To)
-
-  if self.takeoff==SPAWN.Takeoff.Air then
-  
-    -- Debug message.
-    local text=string.format("Respawning tanker %s.", self.tanker:GetName())
-    self:I(text)  
-    
-    -- Respawn tanker.
-    self.tanker:InitHeading(self.tanker:GetHeading())
-    self.tanker=self.tanker:Respawn(nil, true)
-    
-    -- Update Pattern in 2 seconds. Need to give a bit time so that the respawned group is in the game.
-    SCHEDULER:New(nil, self._PatternUpdate, {self}, 2)
-    
-    -- Deny transition to RTB.
-    return false
-  end
-  
-  return true
-end
-
---- On after RTB event. Send tanker back to carrier.
--- @param #CARRIERTANKER self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function CARRIERTANKER:onafterRTB(From, Event, To)
-
-    -- Debug message.
-    local text=string.format("Tanker %s returning to airbase %s.", self.tanker:GetName(), self.airbase:GetName())
-    self:I(text)
-    
-    local waypoints={}
-    
-    -- Set landingwaypoint
-    local wp=self.carrier:GetCoordinate():WaypointAirLanding(300, self.airbase, nil, "Landing")
-    table.insert(waypoints, wp)
-
-    -- Initialize WP and route tanker.
-    self.tanker:WayPointInitialize(waypoints)
-  
-    -- Set task.
-    self.tanker:Route(waypoints, 1)
-end
-
-
---- Event handler for engine shutdown of carrier tanker.
--- Respawn tanker group once it landed because it was out of fuel.
--- @param #CARRIERTANKER self
--- @param Core.Event#EVENTDATA EventData Event data.
-function CARRIERTANKER:OnEventEngineShutdown(EventData)
-
-  local group=EventData.IniGroup --Wrapper.Group#GROUP
-  
-  if group:IsAlive() then
-  
-    -- Group name. When spawning it will have #001 attached.
-    local groupname=group:GetName()
-    
-    if groupname:match(self.tankergroupname) then
-  
-      -- Debug info.
-      self:I(string.format("CARIERTANKER: Respawning group %s.", group:GetName()))
-      
-      -- Respawn tanker.
-      self.tanker=group:RespawnAtCurrentAirbase()
-      
-      --group:StartUncontrolled(60)
-      
-      -- Initial route.
-      self:_InitRoute()
-    end
-    
-  end
-end
-
-
---- Init waypoint after spawn.
--- @param #CARRIERTANKER self
--- @param #number dist Distance [NM] of initial waypoint astern carrier. Default 30 NM.
--- @param #number Tstart Time in minutes before the tanker starts its pattern. Default 10 min.
--- @param #number delay Delay before routing in seconds. Default 1 second.
-function CARRIERTANKER:_InitRoute(dist, Tstart, delay)
-
-  -- Defaults.
-  dist=UTILS.NMToMeters(dist or 30)
-  Tstart=(Tstart or 10)*60
-  delay=delay or 1
-  
-  -- Debug message.
-  self:I(string.format("Initializing route for tanker %s.", self.tanker:GetName()))
-  
-  -- Carrier position.
-  local Carrier=self.carrier:GetCoordinate()
-  
-  -- Carrier heading.
-  local hdg=self.carrier:GetHeading()
-  
-  -- First waypoint is 50 km behind the boat.
-  local p=Carrier:Translate(-dist, hdg):SetAltitude(self.altitude)
-  
-  -- Debug mark
-  p:MarkToAll(string.format("Init WP: alt=%d ft, speed=%d kts", UTILS.MetersToFeet(self.altitude), UTILS.MpsToKnots(self.speed)))
-
-  -- Waypoints.
-  local wp={}
-  wp[1]=Carrier:WaypointAirTakeOffParking()
-  wp[2]=p:WaypointAirTurningPoint(nil, self.speed, nil, "Stern")
-  
-  -- Set route.
-  self.tanker:Route(wp, delay)
-  
-  -- No update yet.
-  self.Tupdate=nil
-  
-  -- Update pattern in ~10 minutes.
-  SCHEDULER:New(nil, self._PatternUpdate, {self}, Tstart)
-end
-
-
---- Function to update the race-track pattern of the tanker wrt to the carrier position.
--- @param #CARRIERTANKER self
-function CARRIERTANKER:_PatternUpdate()
-    
-  -- Carrier heading.
-  local hdg=self.carrier:GetHeading()
-  
-  -- Carrier position.
-  local Carrier=self.carrier:GetCoordinate()
-  
-  -- Define race-track pattern.
-  local p1=Carrier:SetAltitude(self.altitude):Translate(self.distStern, hdg)
-  local p2=Carrier:SetAltitude(self.altitude):Translate(self.distBow, hdg)
-  
-  -- Set orbit task.
-  local taskorbit=self.tanker:TaskOrbit(p1, self.altitude, self.speed, p2)
-  
-  -- New waypoint.
-  local p0=self.tanker:GetCoordinate():Translate(1000, self.tanker:GetHeading())
-  
-  -- Debug markers.
-  if self.Debug then
-    p0:MarkToAll("p0")
-    p1:MarkToAll("p1")
-    p2:MarkToAll("p2")
-  end
-  
-  -- Debug message.
-  self:I(string.format("Updating tanker %s orbit.", self.tanker:GetName()))
-  
-  -- Waypoints array.
-  local waypoints={}
-    
-  -- New waypoint with orbit pattern task.
-  local wp=p0:WaypointAirTurningPoint(nil, self.speed, {taskorbit}, "Tanker Orbit")      
-  waypoints[1]=wp
-  
-  -- Initialize WP and route tanker.
-  self.tanker:WayPointInitialize(waypoints)
-  
-  -- Task combo.
-  local tasktanker = self.tanker:EnRouteTaskTanker()
-  local taskroute  = self.tanker:TaskRoute(waypoints)
-  local taskcombo  = self.tanker:TaskCombo({tasktanker, taskroute})
-
-  -- Set task.
-  self.tanker:SetTask(taskcombo, 1)
-  
-  -- Set update time.
-  self.Tupdate=timer.getTime()
-end
