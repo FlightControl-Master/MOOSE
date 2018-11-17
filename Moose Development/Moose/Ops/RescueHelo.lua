@@ -28,6 +28,9 @@
 -- @field Core.Set#SET_GROUP followset Follow group set.
 -- @field AI.AI_Formation#AI_FORMATION formation AI_FORMATION object.
 -- @field #number lowfuel Low fuel threshold of helo in percent.
+-- @field #number altitude Altitude of helo in meters.
+-- @field #number offsetX Offset in meters to carrier in longitudinal direction.
+-- @field #number offsetZ Offset in meters to carrier in latitudinal direction.
 -- @extends Core.Fsm#FSM
 
 --- Rescue Helo
@@ -52,16 +55,20 @@ RESCUEHELO = {
   followset     = nil,
   formation     = nil,
   lowfuel       = nil,
+  altitude      = nil,
+  offsetX       = nil,
+  offsetZ       = nil,
 }
 
 --- Class version.
 -- @field #string version
-RESCUEHELO.version="0.9.0w"
+RESCUEHELO.version="0.9.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Possibility to add already present/spawned aircraft, e.g. for warehouse.
 -- TODO: Write documenation.
 -- TODO: Add rescue event when aircraft crashes.
 -- TODO: Make offset input parameter.
@@ -98,7 +105,10 @@ function RESCUEHELO:New(carrierunit, helogroupname)
   -- Init defaults.  
   self:SetHomeBase(AIRBASE:FindByName(self.carrier:GetName()))
   self:SetTakeoffHot()
-  self:SetLowFuelThreshold(10)
+  self:SetLowFuelThreshold()
+  self:SetAltitude()
+  self:SetOffsetX()
+  self:SetOffsetZ()
 
   -----------------------
   --- FSM Transitions ---
@@ -152,10 +162,10 @@ end
 
 --- Set low fuel state of helo. When fuel is below this threshold, the helo will RTB or be respawned if takeoff type is in air.
 -- @param #RESCUEHELO self
--- @param #number threshold Low fuel threshold in percent. Default 10.
+-- @param #number threshold Low fuel threshold in percent. Default 5%.
 -- @return #RESCUEHELO self
 function RESCUEHELO:SetLowFuelThreshold(threshold)
-  self.lowfuel=threshold or 10
+  self.lowfuel=threshold or 5
   return self
 end
 
@@ -201,6 +211,33 @@ function RESCUEHELO:SetTakeoffAir()
   return self
 end
 
+--- Set altitude of helo.
+-- @param #RESCUEHELO self
+-- @param #number alt Altitude in meters. Default 70 m.
+-- @return #RESCUEHELO self
+function RESCUEHELO:SetAltitude(alt)
+  self.altitude=alt or 70
+  return self
+end
+
+--- Set latitudinal offset to carrier.
+-- @param #RESCUEHELO self
+-- @param #number distance Latitual offset distance in meters. Default 200 m.
+-- @return #RESCUEHELO self
+function RESCUEHELO:SetOffsetX(distance)
+  self.offsetX=distance or 200
+  return self
+end
+
+--- Set longitudal offset to carrier.
+-- @param #RESCUEHELO self
+-- @param #number distance Longitual offset distance in meters. Default 200 m.
+-- @return #RESCUEHELO self
+function RESCUEHELO:SetOffsetZ(distance)
+  self.offsetZ=distance or 200
+  return self
+end
+
 
 --- Check if tanker is returning to base.
 -- @param #RESCUEHELO self
@@ -235,13 +272,6 @@ function RESCUEHELO:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.Land)
   --self:HandleEvent(EVENTS.Crash)
   
-  -- Offset [meters] in the direction of travelling. Positive values are in front of Mother.
-  local OffsetX=200
-  -- Offset [meters] perpendicular to travelling. Positive = Starboard (right of Mother), negative = Port (left of Mother).
-  local OffsetZ=200
-  -- Offset altitude. Should (obviously) always be positve.
-  local OffsetY=70
-  
   -- Delay before formation is started.
   local delay=120  
   
@@ -258,7 +288,7 @@ function RESCUEHELO:onafterStart(From, Event, To)
     local dist=UTILS.NMToMeters(0.2)
     
     -- Coordinate behind the carrier
-    local Carrier=self.carrier:GetCoordinate():SetAltitude(OffsetY):Translate(dist, hdg)
+    local Carrier=self.carrier:GetCoordinate():SetAltitude(math.min(100, self.altitude)):Translate(dist, hdg)
     
     -- Orientation of spawned group.
     Spawn:InitHeading(hdg)
@@ -295,7 +325,7 @@ function RESCUEHELO:onafterStart(From, Event, To)
   self.formation=AI_FORMATION:New(self.carrier, self.followset, "Helo Formation with Carrier", "Follow Carrier at given parameters.")
   
   -- Formation parameters.
-  self.formation:FormationCenterWing(-OffsetX, 50, math.abs(OffsetY), 50, OffsetZ, 50)
+  self.formation:FormationCenterWing(-self.offsetX, 50, math.abs(self.altitude), 50, self.offsetZ, 50)
   
   -- Start formation FSM.
   self.formation:__Start(delay)

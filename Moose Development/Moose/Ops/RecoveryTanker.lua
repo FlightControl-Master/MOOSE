@@ -67,12 +67,13 @@ RECOVERYTANKER = {
 
 --- Class version.
 -- @field #string version
-RECOVERYTANKER.version="0.9.0w"
+RECOVERYTANKER.version="0.9.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Possibility to add already present/spawned aircraft, e.g. for warehouse. 
 -- TODO: Write documenation.
 -- TODO: Smarter pattern update function. E.g. (small) zone around carrier. Only update position when carrier leaves zone or changes heading?
 -- TODO: Maybe rework pattern update implementation altogether to make it smoother. 

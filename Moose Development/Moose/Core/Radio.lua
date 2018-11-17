@@ -76,7 +76,7 @@
 --   * Note that if the transmission has a subtitle, it will be readable, regardless of the quality of the transmission. 
 --   
 -- @type RADIO
--- @field Positionable#POSITIONABLE Positionable The transmiter.
+-- @field Wrapper.Controllable#CONTROLLABLE Positionable The @{#CONTROLLABLE} that will transmit the radio calls.
 -- @field #string FileName Name of the sound file played.
 -- @field #number Frequency Frequency of the transmission in Hz.
 -- @field #number Modulation Modulation of the transmission (either radio.modulation.AM or radio.modulation.FM).
@@ -93,7 +93,7 @@ RADIO = {
   Subtitle = "",
   SubtitleDuration = 0,
   Power = 100,
-  Loop = true,
+  Loop = false,
 }
 
 --- Create a new RADIO Object. This doesn't broadcast a transmission, though, use @{#RADIO.Broadcast} to actually broadcast.
@@ -102,9 +102,9 @@ RADIO = {
 -- @param Wrapper.Positionable#POSITIONABLE Positionable The @{Positionable} that will receive radio capabilities.
 -- @return #RADIO The RADIO object or #nil if Positionable is invalid.
 function RADIO:New(Positionable)
+
+  -- Inherit base
   local self = BASE:Inherit( self, BASE:New() ) -- Core.Radio#RADIO
-  
-  self.Loop = true        -- default Loop to true (not sure the above RADIO definition actually is working)
   self:F(Positionable)
   
   if Positionable:GetPointVec2() then -- It's stupid, but the only way I found to make sure positionable is valid
@@ -155,18 +155,23 @@ function RADIO:SetFrequency(Frequency)
       -- Convert frequency from MHz to Hz
       self.Frequency = Frequency * 1000000
       
-      local commandSetFrequency={
-        id = "SetFrequency",
-        params = {
-          frequency  = self.Frequency,
-          modulation = self.Modulation,
-        }
-      }      
+
       
       -- If the RADIO is attached to a UNIT or a GROUP, we need to send the DCS Command "SetFrequency" to change the UNIT or GROUP frequency
       if self.Positionable.ClassName == "UNIT" or self.Positionable.ClassName == "GROUP" then
+      
+        local commandSetFrequency={
+          id = "SetFrequency",
+          params = {
+            frequency  = self.Frequency,
+            modulation = self.Modulation,
+          }
+        }            
+      
+        self:I(commandSetFrequency)
         self.Positionable:SetCommand(commandSetFrequency)
       end
+      
       return self
     end
   end
@@ -280,27 +285,27 @@ end
 -- but it will work for any @{Wrapper.Positionable#POSITIONABLE}. 
 -- Only the RADIO and the Filename are mandatory.
 -- @param #RADIO self
--- @param #string FileName
--- @param #string Subtitle
--- @param #number SubtitleDuration in s
--- @param #number Frequency in MHz
--- @param #number Modulation either radio.modulation.AM or radio.modulation.FM
--- @param #boolean Loop
+-- @param #string FileName Name of sound file.
+-- @param #string Subtitle Subtitle to be displayed with sound file.
+-- @param #number SubtitleDuration Duration of subtitle display in seconds.
+-- @param #number Frequency Frequency in MHz.
+-- @param #number Modulation Modulation which can be either radio.modulation.AM or radio.modulation.FM
+-- @param #boolean Loop If true, loop message.
 -- @return #RADIO self
 function RADIO:NewUnitTransmission(FileName, Subtitle, SubtitleDuration, Frequency, Modulation, Loop)
-  self:F({FileName, Subtitle, SubtitleDuration, Frequency, Modulation, Loop})
+  self:E({FileName, Subtitle, SubtitleDuration, Frequency, Modulation, Loop})
 
   -- Set file name.
   self:SetFileName(FileName)
 
-  -- Set frequency.
-  if Frequency then 
-    self:SetFrequency(Frequency)
-  end
-  
   -- Set modulation AM/FM.
   if Modulation then
     self:SetModulation(Modulation)
+  end
+
+  -- Set frequency.
+  if Frequency then 
+    self:SetFrequency(Frequency)
   end
   
   -- Set subtitle.
@@ -316,7 +321,7 @@ function RADIO:NewUnitTransmission(FileName, Subtitle, SubtitleDuration, Frequen
   return self
 end
 
---- Actually Broadcast the transmission
+--- Broadcast the transmission.
 -- * The Radio has to be populated with the new transmission before broadcasting.
 -- * Please use RADIO setters or either @{#RADIO.NewGenericTransmission} or @{#RADIO.NewUnitTransmission}
 -- * This class is in fact pretty smart, it determines the right DCS function to use depending on the type of POSITIONABLE
@@ -325,35 +330,33 @@ end
 -- * If your POSITIONABLE is a UNIT or a GROUP, the Power is ignored.
 -- * If your POSITIONABLE is not a UNIT or a GROUP, the Subtitle, SubtitleDuration are ignored
 -- @param #RADIO self
--- @param #string filename (Optinal) Sound file name. Default self.FileName.
--- @param #string subtitle (Optional) Subtitle. Default self.Subtitle.
--- @param #number subtitleduraction (Optional) Subtitle duraction. Default self.SubtitleDuration.
+-- @param #boolean trigger Use trigger.action.radioTransmission() in any case, i.e. also for UNITS and GROUPS.
 -- @return #RADIO self
-function RADIO:Broadcast(filename, subtitle, subtitleduration)
-  self:F()
+function RADIO:Broadcast(viatrigger)
+  self:F({viatrigger=viatrigger})
   
-  filename=filename or self.FileName
-  subtitle=subtitle or self.Subtitle
-  subtitleduration=subtitleduration or self.SubtitleDuration
-  
-  -- If the POSITIONABLE is actually a UNIT or a GROUP, use the more complicated DCS command system
-  if self.Positionable.ClassName == "UNIT" or self.Positionable.ClassName == "GROUP" then
-    self:T2("Broadcasting from a UNIT or a GROUP")
-    self.Positionable:SetCommand({
+  -- If the POSITIONABLE is actually a UNIT or a GROUP, use the more complicated DCS command system.
+  if (self.Positionable.ClassName=="UNIT" or self.Positionable.ClassName=="GROUP") and (not viatrigger) then
+    self:I("Broadcasting from a UNIT or a GROUP")
+
+    local commandTransmitMessage={
       id = "TransmitMessage",
       params = {
-        file = filename,
-        duration = subtitleduration,
-        subtitle = subtitle,
+        file = self.FileName,
+        duration = self.SubtitleDuration,
+        subtitle = self.Subtitle,
         loop = self.Loop,
-      }
-    })
+      }}
+    
+    self:I(commandTransmitMessage)
+    self.Positionable:SetCommand(commandTransmitMessage)
   else
     -- If the POSITIONABLE is anything else, we revert to the general singleton function
     -- I need to give it a unique name, so that the transmission can be stopped later. I use the class ID
-    self:T2("Broadcasting from a POSITIONABLE")
+    self:I("Broadcasting from a POSITIONABLE")
     trigger.action.radioTransmission(self.FileName, self.Positionable:GetPositionVec3(), self.Modulation, self.Loop, self.Frequency, self.Power, tostring(self.ID))
   end
+  
   return self
 end
 
@@ -367,10 +370,10 @@ function RADIO:StopBroadcast()
   self:F()
   -- If the POSITIONABLE is a UNIT or a GROUP, stop the transmission with the DCS "StopTransmission" command 
   if self.Positionable.ClassName == "UNIT" or self.Positionable.ClassName == "GROUP" then
-    self.Positionable:SetCommand({
-      id = "StopTransmission",
-      params = {}
-    })
+  
+    local commandStopTransmission={id="StopTransmission", params={}}
+  
+    self.Positionable:SetCommand(commandStopTransmission)
   else
     -- Else, we use the appropriate singleton funciton
     trigger.action.stopRadioTransmission(tostring(self.ID))
