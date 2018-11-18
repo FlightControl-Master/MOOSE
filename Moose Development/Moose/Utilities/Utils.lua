@@ -294,6 +294,20 @@ UTILS.CelciusToFarenheit = function( Celcius )
   return Celcius * 9/5 + 32 
 end
 
+--- Convert pressure from hecto Pascal (hPa) to inches of mercury (inHg).
+-- @param #number hPa Pressure in hPa.
+-- @return #number Pressure in inHg.
+UTILS.hPa2inHg = function( hPa )
+  return hPa * 0.0295299830714
+end
+
+--- Convert pressure from hecto Pascal (hPa) to millimeters of mercury (mmHg).
+-- @param #number hPa Pressure in hPa.
+-- @return #number Pressure in mmHg.
+UTILS.hPa2mmHg = function( hPa )
+  return hPa * 0.7500615613030
+end
+
 
 
 --[[acc:

@@ -15,7 +15,7 @@
 --
 -- ### Author: **funkyfranky** 
 --
--- @module Ops.CarrierTanker
+-- @module Ops.RecoveryTanker
 -- @image MOOSE.JPG
 
 --- RECOVERYTANKER class.
@@ -36,13 +36,13 @@
 -- @field #number lowfuel Low fuel threshold in percent.
 -- @extends Core.Fsm#FSM
 
---- Carrier Tanker.
+--- Recovery Tanker.
 --
 -- ===
 --
 -- ![Banner Image](..\Presentations\RECOVERYTANKER\RecoveryTanker_Main.jpg)
 --
--- # Carrier Tanker
+-- # Recovery Tanker
 --
 -- bla bla
 --
@@ -129,11 +129,11 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   self:AddTransition("Running",       "Stop",       "Stopped")
 
 
-  --- Triggers the FSM event "Start" that starts the carrier tanker. Initializes parameters and starts event handlers.
+  --- Triggers the FSM event "Start" that starts the recovery tanker. Initializes parameters and starts event handlers.
   -- @function [parent=#RECOVERYTANKER] Start
   -- @param #RECOVERYTANKER self
 
-  --- Triggers the FSM event "Start" that starts the carrier tanker after a delay. Initializes parameters and starts event handlers.
+  --- Triggers the FSM event "Start" that starts the recovery tanker after a delay. Initializes parameters and starts event handlers.
   -- @function [parent=#RECOVERYTANKER] __Start
   -- @param #RECOVERYTANKER self
   -- @param #number delay Delay in seconds.
@@ -147,11 +147,11 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   -- @param #RECOVERYTANKER self
   -- @param #number delay Delay in seconds.
 
-  --- Triggers the FSM event "Stop" that stops the carrier tanker. Event handlers are stopped.
+  --- Triggers the FSM event "Stop" that stops the recovery tanker. Event handlers are stopped.
   -- @function [parent=#RECOVERYTANKER] Stop
   -- @param #RECOVERYTANKER self
 
-  --- Triggers the FSM event "Stop" that stops the carrier tanker after a delay. Event handlers are stopped.
+  --- Triggers the FSM event "Stop" that stops the recovery tanker after a delay. Event handlers are stopped.
   -- @function [parent=#RECOVERYTANKER] __Stop
   -- @param #RECOVERYTANKER self
   -- @param #number delay Delay in seconds.
@@ -280,7 +280,7 @@ end
 function RECOVERYTANKER:onafterStart(From, Event, To)
 
   -- Info on start.
-  self:I(string.format("Starting Carrier Tanker v%s for carrier unit %s of type %s for tanker group %s.", RECOVERYTANKER.version, self.carrier:GetName(), self.carriertype, self.tankergroupname))
+  self:I(string.format("Starting Recovery Tanker v%s for carrier unit %s of type %s for tanker group %s.", RECOVERYTANKER.version, self.carrier:GetName(), self.carriertype, self.tankergroupname))
   
   -- Handle events.
   self:HandleEvent(EVENTS.EngineShutdown)
@@ -429,7 +429,7 @@ end
 -- EVENT functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Event handler for engine shutdown of carrier tanker.
+--- Event handler for engine shutdown of recovery tanker.
 -- Respawn tanker group once it landed because it was out of fuel.
 -- @param #RECOVERYTANKER self
 -- @param Core.Event#EVENTDATA EventData Event data.
@@ -445,7 +445,7 @@ function RECOVERYTANKER:OnEventEngineShutdown(EventData)
     if groupname:match(self.tankergroupname) then
   
       -- Debug info.
-      self:I(string.format("CARIERTANKER: Respawning group %s.", group:GetName()))
+      self:I(string.format("Respawning recovery tanker group %s.", group:GetName()))
       
       -- Respawn tanker.
       self.tanker=group:RespawnAtCurrentAirbase()

@@ -84,6 +84,7 @@
 -- @field #number SubtitleDuration Duration of the Subtitle in seconds.
 -- @field #number Power Power of the antenna is Watts.
 -- @field #boolean Loop Transmission is repeated (default true).
+-- @field #string alias Name of the radio transmitter.
 -- @extends Core.Base#BASE
 RADIO = {
   ClassName = "RADIO",
@@ -94,6 +95,7 @@ RADIO = {
   SubtitleDuration = 0,
   Power = 100,
   Loop = false,
+  alias=nil,
 }
 
 --- Create a new RADIO Object. This doesn't broadcast a transmission, though, use @{#RADIO.Broadcast} to actually broadcast.
@@ -114,6 +116,22 @@ function RADIO:New(Positionable)
   
   self:E({error="The passed positionable is invalid, no RADIO created!", positionable=Positionable})
   return nil
+end
+
+--- Set alias of the transmitter.
+-- @param #RADIO self
+-- @param #string alias Name of the radio transmitter.
+-- @return #RADIO self
+function RADIO:SetAlias(alias)
+  self.alias=tostring(alias)
+  return self
+end
+
+--- Get alias of the transmitter.
+-- @param #RADIO self
+-- @return #string Name of the transmitter.
+function RADIO:GetAlias()
+  return tostring(self.alias)
 end
 
 --- Set the file name for the radio transmission.
