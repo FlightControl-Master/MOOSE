@@ -1,11 +1,13 @@
 --- **Functional** - (R2.5) - Rescue helo.
 -- 
--- Recue helicopter on an aircraft carrier.
+-- Recue helicopter for carrier operations.
 --
 -- Features:
 --
---    * Formation with carrier.
---    * Automatic respawning on empty fuel.
+--    * Close formation with carrier.
+--    * Carrier can have any number of waypoints.
+--    * Automatic respawning on empty fuel for 24/7 operations.
+--    * Automatic rescuing of crashed or ejected units in the vicinity.
 --
 -- Please not that his class is work in progress and in an **alpha** stage.
 --
@@ -24,13 +26,14 @@
 -- @field #string helogroupname Name of the late activated helo template group.
 -- @field Wrapper.Group#GROUP helo Helo group.
 -- @field #number takeoff Takeoff type.
--- @field Wrapper.Airbase#AIRBASE airbase The airbase object of the carrier.
+-- @field Wrapper.Airbase#AIRBASE airbase The airbase object acting as home base of the helo.
 -- @field Core.Set#SET_GROUP followset Follow group set.
 -- @field AI.AI_Formation#AI_FORMATION formation AI_FORMATION object.
 -- @field #number lowfuel Low fuel threshold of helo in percent.
 -- @field #number altitude Altitude of helo in meters.
 -- @field #number offsetX Offset in meters to carrier in longitudinal direction.
 -- @field #number offsetZ Offset in meters to carrier in latitudinal direction.
+-- @field Core.Zone#ZONE_RADIUS rescuezone Zone around the carrier in which helo will rescue crashed or ejected units.
 -- @extends Core.Fsm#FSM
 
 --- Rescue Helo
@@ -45,7 +48,7 @@
 --
 -- @field #RESCUEHELO
 RESCUEHELO = {
-  ClassName = "RESCUEHELO",
+  ClassName     = "RESCUEHELO",
   carrier       = nil,
   carriertype   = nil,
   helogroupname = nil,
@@ -58,20 +61,22 @@ RESCUEHELO = {
   altitude      = nil,
   offsetX       = nil,
   offsetZ       = nil,
+  rescuezone    = nil,
 }
 
 --- Class version.
 -- @field #string version
-RESCUEHELO.version="0.9.1"
+RESCUEHELO.version="0.9.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Add option to stop carrier while rescue operation is in progress.
 -- TODO: Possibility to add already present/spawned aircraft, e.g. for warehouse.
 -- TODO: Write documenation.
--- TODO: Add rescue event when aircraft crashes.
--- TODO: Make offset input parameter.
+-- DONE: Add rescue event when aircraft crashes.
+-- DONE: Make offset input parameter.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -87,6 +92,7 @@ function RESCUEHELO:New(carrierunit, helogroupname)
   -- Inherit everthing from FSM class.
   local self = BASE:Inherit(self, FSM:New()) -- #RESCUEHELO
   
+  -- Catch case when just the unit name is passed.
   if type(carrierunit)=="string" then
     self.carrier=UNIT:FindByName(carrierunit)
   else
@@ -98,10 +104,7 @@ function RESCUEHELO:New(carrierunit, helogroupname)
   
   -- Helo group name.
   self.helogroupname=helogroupname
-  
-  -- Home airbase of helo
-  self.airbase=AIRBASE:FindByName(self.carrier:GetName())
-  
+    
   -- Init defaults.  
   self:SetHomeBase(AIRBASE:FindByName(self.carrier:GetName()))
   self:SetTakeoffHot()
@@ -109,6 +112,7 @@ function RESCUEHELO:New(carrierunit, helogroupname)
   self:SetAltitude()
   self:SetOffsetX()
   self:SetOffsetZ()
+  self:SetRescueZone()
 
   -----------------------
   --- FSM Transitions ---
@@ -120,10 +124,11 @@ function RESCUEHELO:New(carrierunit, helogroupname)
   -- Add FSM transitions.
   --                 From State  -->   Event   -->   To State
   self:AddTransition("Stopped",       "Start",      "Running")
+  self:AddTransition("Running",       "Rescue",     "Rescuing")
   self:AddTransition("Running",       "RTB",        "Returning")
-  self:AddTransition("Returning",     "Status",     "*")
-  self:AddTransition("Running",       "Status",     "*")
-  self:AddTransition("Running",       "Stop",       "Stopped")
+  self:AddTransition("*",             "Run",        "Running")
+  self:AddTransition("*",             "Status",     "*")
+  self:AddTransition("*",             "Stop",       "Stopped")
 
 
   --- Triggers the FSM event "Start" that starts the rescue helo. Initializes parameters and starts event handlers.
@@ -135,12 +140,32 @@ function RESCUEHELO:New(carrierunit, helogroupname)
   -- @param #RESCUEHELO self
   -- @param #number delay Delay in seconds.
 
+  --- Triggers the FSM event "Rescue" that sends the helo on a rescue mission to a specifc coordinate.
+  -- @function [parent=#RESCUEHELO] Rescue
+  -- @param #RESCUEHELO self
+  -- @param Core.Point#COORDINATE RescueCoord Coordinate where the resue mission takes place.
+
+  --- Triggers the delayed FSM event "Rescue" that sends the helo on a rescue mission to a specifc coordinate.
+  -- @function [parent=#RESCUEHELO] __Rescue
+  -- @param #RESCUEHELO self
+  -- @param #number delay Delay in seconds.
+  -- @param Core.Point#COORDINATE RescueCoord Coordinate where the resue mission takes place.
+
   --- Triggers the FSM event "RTB" that sends the helo home.
   -- @function [parent=#RESCUEHELO] RTB
   -- @param #RESCUEHELO self
 
   --- Triggers the FSM event "RTB" that sends the helo home after a delay.
   -- @function [parent=#RESCUEHELO] __RTB
+  -- @param #RESCUEHELO self
+  -- @param #number delay Delay in seconds.
+
+  --- Triggers the FSM event "Run".
+  -- @function [parent=#RESCUEHELO] Run
+  -- @param #RESCUEHELO self
+
+  --- Triggers the delayed FSM event "Run".
+  -- @function [parent=#RESCUEHELO] __Run
   -- @param #RESCUEHELO self
   -- @param #number delay Delay in seconds.
 
@@ -178,12 +203,21 @@ function RESCUEHELO:SetHomeBase(airbase)
   return self
 end
 
+--- Set rescue zone radius. Crashed or ejected units inside this radius of the carrier will be rescued.
+-- @param #RESCUEHELO self
+-- @param #number radius Radius of rescue zone in meters. Default is 100000 m = 100 km.
+-- @return #RESCUEHELO self
+function RESCUEHELO:SetRescueZone(radius)
+  self.rescuezone=ZONE_UNIT:New("Rescue Zone", self.carrier, radius or 100000)
+  return self
+end
+
 --- Set takeoff type.
 -- @param #RESCUEHELO self
--- @param #number takeofftype Takeoff type.
+-- @param #number takeofftype Takeoff type. Default SPAWN.Takeoff.Hot.
 -- @return #RESCUEHELO self
 function RESCUEHELO:SetTakeoff(takeofftype)
-  self.takeoff=takeofftype
+  self.takeoff=takeofftype or SPAWN.Takeoff.Hot
   return self
 end
 
@@ -239,18 +273,107 @@ function RESCUEHELO:SetOffsetZ(distance)
 end
 
 
---- Check if tanker is returning to base.
+--- Check if helo is returning to base.
 -- @param #RESCUEHELO self
 -- @return #boolean If true, helo is returning to base. 
 function RESCUEHELO:IsReturning()
   return self:is("Returning")
 end
 
---- Check if tanker is operating.
+--- Check if helo is operating.
 -- @param #RESCUEHELO self
 -- @return #boolean If true, helo is operating. 
 function RESCUEHELO:IsRunning()
   return self:is("Running")
+end
+
+--- Check if helo is on a rescue mission.
+-- @param #RESCUEHELO self
+-- @return #boolean If true, helo is rescuing somebody. 
+function RESCUEHELO:IsRescuing()
+  return self:is("Rescuing")
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- EVENT functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Handle landing event of rescue helo.
+-- @param #RESCUEHELO self
+-- @param Core.Event#EVENTDATA EventData Event data.
+function RESCUEHELO:OnEventLand(EventData)
+  local group=EventData.IniGroup --Wrapper.Group#GROUP
+  
+  if group:IsAlive() then
+    local groupname=group:GetName()
+  
+    if groupname:match(self.helogroupname) then
+    
+      -- Respawn the Helo.
+      self:I(string.format("Respawning rescue helo group %s at home base.", groupname))
+      
+      if self.takeoff==SPAWN.Takeoff.Air then
+        
+        self:E("ERROR: Rescue helo %s landed. This should not happen for Takeoff=Air!", groupname)
+      
+      else
+      
+        -- Respawn helo at current airbase.
+        self.helo=group:RespawnAtCurrentAirbase()
+        
+      end
+      
+      -- Restart the formation.
+      self:__Run(10)
+    end
+  end
+end
+
+--- A unit crashed or a player ejected.
+-- @param #RESCUEHELO self
+-- @param Core.Event#EVENTDATA EventData Event data.
+function RESCUEHELO:_OnEventCrashOrEject(EventData)
+  self:F2({eventdata=EventData})
+  
+  -- NOTE: Careful here. Eject and crash events will probably happen for the same unit!
+  
+  -- Check that there is an initiating unit in the event data.
+  if EventData and EventData.IniUnit then
+
+    -- Crashed or ejected unit.
+    local unit=EventData.IniUnit  
+    local unitname=tostring(EventData.IniUnitName)
+    
+    -- Check that it was not the rescue helo itself that crashed.
+    if EventData.IniGroupName~=self.helo:GetName() then
+    
+      -- Debug.
+      self:T(string.format("Unit %s crashed or ejected.", unitname))
+    
+      -- Unit "alive" and in our rescue zone.
+      if unit:IsAlive() and unit:IsInZone(self.rescuezone) then
+      
+        -- Get coordinate of crashed unit.
+        local coord=unit:GetCoordinate()
+        
+        -- Debug mark on map.
+        coord:MarkToCoalition(string.format("Crash site of unit %s.", unitname), self.helo:GetCoalition())
+      
+        -- Only rescue if helo is "running" and not, e.g., rescuing already.
+        if self:IsRunning() then
+          self:Rescue(coord)
+        end
+      
+      end
+      
+    else
+    
+      self:I(string.format("Rescue helo %s crashed!", unitname))
+    
+    end
+    
+  end
+  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -270,7 +393,8 @@ function RESCUEHELO:onafterStart(From, Event, To)
   -- Handle events.
   --self:HandleEvent(EVENTS.Birth)
   self:HandleEvent(EVENTS.Land)
-  --self:HandleEvent(EVENTS.Crash)
+  self:HandleEvent(EVENTS.Crash, self._OnEventCrashOrEject)
+  self:HandleEvent(EVENTS.Ejection, self._OnEventCrashOrEject)
   
   -- Delay before formation is started.
   local delay=120  
@@ -356,7 +480,7 @@ function RESCUEHELO:onafterStatus(From, Event, To)
   self:I(text)
 
   -- If fuel < threshold ==> send helo to home base!  
-  if fuel<self.lowfuel then
+  if fuel<self.lowfuel and self:IsRunning() then
     self:RTB()
   end
   
@@ -364,46 +488,59 @@ function RESCUEHELO:onafterStatus(From, Event, To)
   self:__Status(-60)
 end
 
---- On after Stop event. Unhandle events and stop status updates.
+--- On after "Run" event. FSM will go to "Running" state. If formation is topped, it will be started again.
 -- @param #RESCUEHELO self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function RESCUEHELO:onafterStop(From, Event, To)
-  --self:UnHandleEvent(EVENTS.Birth)
-  self:UnHandleEvent(EVENTS.Land)
+function RESCUEHELO:onafterRun(From, Event, To)
+  
+  -- Restart formation if stopped.
+  if self.formation:Is("Stopped") then
+    self.formation:Start()
+  end
+  
 end
 
---- Handle landing event of rescue helo.
+--- On after "Rescue" event. Helo will fly to the given coordinate, orbit there for 5 minutes and then return to the carrier.
 -- @param #RESCUEHELO self
--- @param Core.Event#EVENTDATA EventData Event data.
-function RESCUEHELO:OnEventLand(EventData)
-  local group=EventData.IniGroup --Wrapper.Group#GROUP
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Core.Point#COORDINATE RescueCoord Coordinate where the rescue should happen
+function RESCUEHELO:onafterRescue(From, Event, To, RescueCoord)
+
+  -- Debug message.
+  local text=string.format("Helo %s is send to rescue mission.", self.helo:GetName())
+  self:I(text)
   
-  if group:IsAlive() then
-    local groupname=group:GetName()
+  -- Waypoint array.
+  local wp={}
   
-    if groupname:match(self.helogroupname) then
-    
-      -- Respawn the Helo.
-      self:I(string.format("Respawning rescue helo group group %s at home base.", groupname))
-      
-      if self.takeoff==SPAWN.Takeoff.Air then
-        
-        self:E("ERROR: Rescue helo %s landed. This should not happen for Takeoff=Air!", groupname)
-      
-      else
-      
-        -- Respawn helo at current airbase.
-        self.helo=group:RespawnAtCurrentAirbase()
-        
-      end
-      
-      -- Restart the formation.
-      self.formation:__Start(10)
-    end
-  end
+  --local RescueTask=self.helo:TaskControlled(self.helo:TaskOrbitCircle(20, 2, RescueCoord), self.helo:TaskCondition(nil, nil, nil, nil, 5*60, nil))
+   
+  -- Rescue task: Orbit at crash site for 5 minutes.
+  local RescueTask={}
+  RescueTask.id="ControlledTask"
+  RescueTask.params={}
+  RescueTask.params.task=self.helo:TaskOrbit(RescueCoord, 20, 2)
+  RescueTask.params.stopCondition={duration=300}
+  
+  -- Set Waypoints.
+  wp[1]=self.helo:GetCoordinate():WaypointAirTurningPoint(nil, 200, {}, "Current Position")
+  wp[2]=RescueCoord:SetAltitude(50):WaypointAirTurningPoint(nil, 200, {RescueTask}, "Crash Site")
+  wp[3]=self.airbase:GetCoordinate():SetAltitude(70):WaypointAirLanding(200, self.airbase, {}, "Land at Home Base")
+
+  -- Initialize WP and route tanker.
+  self.helo:WayPointInitialize(wp)
+
+  -- Set task.
+  self.helo:Route(wp, 1)
+  
+  -- Stop formation.
+  self.formation:Stop()
 end
+
 
 --- On before RTB event. Check if takeoff type is air and if so respawn the helo and deny RTB transition.
 -- @param #RESCUEHELO self
@@ -414,6 +551,7 @@ end
 function RESCUEHELO:onbeforeRTB(From, Event, To)
 
   if self.takeoff==SPAWN.Takeoff.Air then
+    -- For takeoff in air, we just respawn the helo with full fuel.
   
     -- Debug message.
     local text=string.format("Respawning rescue helo group %s in air.", self.helo:GetName())
@@ -438,24 +576,37 @@ end
 function RESCUEHELO:onafterRTB(From, Event, To)
 
     -- Debug message.
-    local text=string.format("Helo %s returning to airbase %s.", self.helo:GetName(), self.airbase:GetName())
+    local text=string.format("Rescue helo %s is returning to airbase %s.", self.helo:GetName(), self.airbase:GetName())
     self:I(text)
     
-    local waypoints={}
+    -- Waypoint array.
+    local wp={}
     
-    -- Set landingwaypoint
-    local wp=self.carrier:GetCoordinate():WaypointAirLanding(300, self.airbase, nil, "Landing")
-    table.insert(waypoints, wp)
+    -- Set landing waypoint at home base.
+    wp[1]=self.helo:GetCoordinate():WaypointAirTurningPoint(nil, 300, {}, "Current Position")
+    wp[2]=self.airbase:GetCoordinate():SetAltitude(70):WaypointAirLanding(300, self.airbase, {}, "Landing at Home Base")
 
     -- Initialize WP and route tanker.
-    self.helo:WayPointInitialize(waypoints)
+    self.helo:WayPointInitialize(wp)
   
     -- Set task.
-    self.helo:Route(waypoints, 1)
+    self.helo:Route(wp, 1)
     
     -- Stop formation.
     self.formation:Stop()
 end
+
+--- On after Stop event. Unhandle events and stop status updates.
+-- @param #RESCUEHELO self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function RESCUEHELO:onafterStop(From, Event, To)
+  self:UnHandleEvent(EVENTS.Land)
+  self:UnHandleEvent(EVENTS.Crash)
+  self:UnHandleEvent(EVENTS.Ejection)
+end
+
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

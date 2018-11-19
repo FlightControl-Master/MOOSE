@@ -10,11 +10,11 @@
 --    * Different skill levels from tipps on-the-fly for students to complete ziplip for pros.
 --    * Rescue helo option.
 --    * Recovery tanker option.
---    * Voice overs for LSO and AIRBOSS calls. Can easily customized by users.
+--    * Voice overs for LSO and AIRBOSS calls. Can easily be customized by users.
 --    * Automatic TACAN and ICLS channel setting.
 --    * Different radio channels for LSO and airboss calls.
 --    * F10 radio menu including carrier info (weather, radio frequencies, TACAN/ICLS channels, LSO grades).
---    * Multiple carriers supported.
+--    * Multiple carriers supported (due to object oriented approach).
 --
 -- **PLEASE NOTE** that his class is work in progress and in an **alpha** stage.
 -- At the moment training parameters are optimized for F/A-18C Hornet as aircraft and USS John C. Stennis as carrier.
@@ -68,6 +68,7 @@
 -- @field #table Qpattern Queue of aircraft groups in the landing pattern.
 -- @field Ops.RescueHelo#RESCUEHELO rescuehelo Rescue helo flying in close formation with the carrier.
 -- @field Ops.RecoveryTanker#RECOVERYTANKER tanker Recovery tanker flying overhead of carrier.
+-- @field Functional.Warehouse#WAREHOUSE warehouse Warehouse object of the carrier.
 -- @field #table recoverytime List of time intervals when aircraft are recovered.
 -- @extends Core.Fsm#FSM
 
@@ -123,6 +124,7 @@ AIRBOSS = {
   Qmarshal     =  {},
   rescuehelo   = nil,
   tanker       = nil,
+  warehouse    = nil,
   recoverytime =  {},
 }
 
@@ -137,6 +139,8 @@ AIRBOSS.AircraftPlayer={
 
 --- Aircraft types capable of landing on carrier (human+AI).
 -- @type AIRBOSS.AircraftCarrier
+-- @field #string AV8B AV-8B Night Harrier.
+-- @field #string HORNET F/A-18C Lot 20 Hornet.
 -- @field #string S3B Lockheed S-3B Viking.
 -- @field #string S3BTANKER Lockheed S-3B Viking tanker.
 -- @field #string E2D Grumman E-2D Hawkeye AWACS.
@@ -150,7 +154,7 @@ AIRBOSS.AircraftCarrier={
   E2D="E-2C",
   FA18C="F/A-18C",
   F14A="F-14A",
-  --TODO: Add A-A4-E-C
+  --TODO: Add A4-E-C
 }
 
 
@@ -417,12 +421,13 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.2.9"
+AIRBOSS.version="0.3.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Set case II and III times. 
 -- TODO: Get an _OK_ pass if long in groove. Possible other pattern wave offs as well?!
 -- TODO: Add radio transmission queue for LSO and airboss.
 -- TODO: Get correct wire when trapped.
@@ -459,7 +464,10 @@ AIRBOSS.version="0.2.9"
 function AIRBOSS:New(carriername, alias)
 
   -- Inherit everthing from FSM class.
-  local self = BASE:Inherit(self, FSM:New()) -- #AIRBOSS
+  local self=BASE:Inherit(self, FSM:New()) -- #AIRBOSS
+  
+  -- Debug.
+  self:F2({carriername=carriername, alias=alias})
 
   -- Set carrier unit.
   self.carrier=UNIT:FindByName(carriername)
@@ -515,8 +523,8 @@ function AIRBOSS:New(carriername, alias)
     return nil
   end
   
-  -- Zone 3 NM astern and 100 m starboard of the carrier with radius of 2.0 km.
-  self.zoneInitial=ZONE_UNIT:New("Initial Zone", self.carrier, 2.0*1000, {dx=-UTILS.NMToMeters(3), dy=100, relative_to_unit=true})
+  -- Zone 3 NM astern and 100 m starboard of the carrier with radius of 0.5 km.
+  self.zoneInitial=ZONE_UNIT:New("Initial Zone", self.carrier, 0.5*1000, {dx=-UTILS.NMToMeters(3), dy=100, relative_to_unit=true})
   
   -- CCA 50 NM radius zone around the carrier.
   self:SetCarrierControlledArea()
@@ -729,6 +737,35 @@ function AIRBOSS:SetCarrierradio(frequency, modulation)
 end
 
 
+--- Define rescue helicopter associated with the carrier.
+-- @param #AIRBOSS self
+-- @param Ops.RescueHelo#RESCUEHELO rescuehelo Rescue helo object.
+-- @return #ARIBOSS self
+function AIRBOSS:SetRescueHelo(rescuehelo)
+  self.rescuehelo=rescuehelo
+  return self
+end
+
+--- Define recovery tanker associated with the carrier.
+-- @param #AIRBOSS self
+-- @param Ops.RecoveryTanker#RECOVERYTANKER recoverytanker Recovery tanker object.
+-- @return #ARIBOSS self
+function AIRBOSS:SetRecoveryTanker(recoverytanker)
+  self.tanker=recoverytanker
+  return self
+end
+
+
+--- Define warehouse associated with the carrier.
+-- @param #AIRBOSS self
+-- @param Functional.Warehouse#WAREHOUSE warehouse Warehouse object of the carrier.
+-- @return #ARIBOSS self
+function AIRBOSS:SetWarehouse(warehouse)
+  self.warehouse=warehouse
+  return self
+end
+
+
 --- Check if carrier is recovering aircraft.
 -- @param #AIRBOSS self
 -- @return #boolean If true, time slot for recovery is open.
@@ -805,8 +842,8 @@ function AIRBOSS:onafterStatus(From, Event, To)
   -- Update marshal and pattern queue every 30 seconds.
   if time-self.Tqueue>30 then
 
-    local text=string.format("AIRBOSS %s: Status %s.", self.alias, self:GetState())
-    self:I(text)  
+    local text=string.format("Status %s.", self:GetState())
+    self:I(self.lid..text)  
   
     -- Scan carrier zone for new aircraft.
     self:_ScanCarrierZone()
@@ -946,14 +983,15 @@ function AIRBOSS:_InitStennis()
 
   -- 4k descent from holding pattern to 5k platform
   self.C3Descent4k.name="4k Descent"
-  self.C3Descent4k.Xmin=-UTILS.NMToMeters(35)
+  self.C3Descent4k.Xmin=-UTILS.NMToMeters(50)
   self.C3Descent4k.Xmax=-UTILS.NMToMeters(20)
-  self.C3Descent4k.Zmin=-UTILS.NMToMeters(30)
-  self.C3Descent4k.Zmax= UTILS.NMToMeters(30)
+  self.C3Descent4k.Zmin=-UTILS.NMToMeters(10)
+  self.C3Descent4k.Zmax= UTILS.NMToMeters(3)
   self.C3Descent4k.LimitXmin=nil
   self.C3Descent4k.LimitXmax=-UTILS.NMToMeters(20) --TODO: better rho dist. decrease descent 20 2000 ft/min at 5000 ft alt and user rad alt.
   self.C3Descent4k.LimitZmin=nil
   self.C3Descent4k.LimitZmax=nil
+  -- TODO: alt, AoA are more aircraft functions rather than carrier
   self.C3Descent4k.Altitude=nil --UTILS.FeetToMeters(5000)
   self.C3Descent4k.AoA=nil
   self.C3Descent4k.Distance=nil
@@ -1004,7 +1042,7 @@ function AIRBOSS:_InitStennis()
   self.Upwind.name="Upwind"
   self.Upwind.Xmin=-UTILS.NMToMeters(4)
   self.Upwind.Xmax=nil
-  self.Upwind.Zmin=0
+  self.Upwind.Zmin=-100
   self.Upwind.Zmax=1000
   self.Upwind.LimitXmin=0
   self.Upwind.LimitXmax=nil
@@ -1018,8 +1056,8 @@ function AIRBOSS:_InitStennis()
   self.BreakEarly.name="Early Break"
   self.BreakEarly.Xmin=-500
   self.BreakEarly.Xmax=UTILS.NMToMeters(5)
-  self.BreakEarly.Zmin=-3700
-  self.BreakEarly.Zmax=1500
+  self.BreakEarly.Zmin=-UTILS.NMToMeters(2)
+  self.BreakEarly.Zmax=UTILS.NMToMeters(1)
   self.BreakEarly.LimitXmin=0
   self.BreakEarly.LimitXmax=nil
   self.BreakEarly.LimitZmin=-370   -- 0.2 NM port of carrier
@@ -1032,8 +1070,8 @@ function AIRBOSS:_InitStennis()
   self.BreakLate.name="Late Break"
   self.BreakLate.Xmin=-500
   self.BreakLate.Xmax=UTILS.NMToMeters(5)
-  self.BreakLate.Zmin=-3700
-  self.BreakLate.Zmax=1500
+  self.BreakLate.Zmin=-UTILS.NMToMeters(2)
+  self.BreakLate.Zmax=UTILS.NMToMeters(1)
   self.BreakLate.LimitXmin=0
   self.BreakLate.LimitXmax=nil
   self.BreakLate.LimitZmin=-1470  --0.8 NM
@@ -1156,6 +1194,8 @@ function AIRBOSS:_CheckQueue()
     local TpatternMin=120
     if self.case==1 then
       TpatternMin=45
+    else
+      TpatternMin=120
     end
     
     -- Min time in marshal before send to landing pattern.
@@ -1416,6 +1456,12 @@ function AIRBOSS:_MarshalAI(flight)
   -- Flight group name.
   local group=flight.group
   local groupname=flight.groupname
+  
+  -- Check that we do not add a recovery tanker for marshaling.
+  -- TODO: Fix group name.
+  if self.tanker and self.tanker.tanker:GetName()==groupname then    
+    return
+  end
 
   -- Number of already full marshal stacks.
   local nstacks=#self.Qmarshal
@@ -1499,7 +1545,7 @@ function AIRBOSS:_GetMarshalAltitude(stack)
     Dist=UTILS.NMToMeters(2.5)
     p1=Carrier:Translate(Dist, hdg-70)
   else
-    -- CASE III: Holding at 6000 ft on a racetrack pattern astern the carrier.
+    -- CASE II/III: Holding at 6000 ft on a racetrack pattern astern the carrier.
     angels0=6
     Dist=UTILS.NMToMeters((stack-1)*angels0+15)
     p1=Carrier:Translate(-Dist, hdg)
@@ -1688,10 +1734,8 @@ function AIRBOSS:_CheckPlayerStatus()
             -- Status undefined.
             local time=timer.getAbsTime()
             local clock=UTILS.SecondsToClock(time)
-            self:I(string.format("Player status undefined. Waiting for next step. Time %s", clock))
+            self:T3(string.format("Player status undefined. Waiting for next step. Time %s", clock))
             
-            -- Jump directly to CASE I straight in approach.
-            --playerData.step=AIRBOSS.PatternStep.COMMENCING
             
             -- Jump to final/groove for testing.
             if self.groovedebug then     
@@ -1853,7 +1897,7 @@ function AIRBOSS:OnEventBirth(EventData)
     --self:RadioTransmission(self.LSOradio, self.radiocall.LONGINGROOVE, false, 20)
     
     -- Start in the groove for debugging.
-    self.groovedebug=false
+    self.groovedebug=true
     
   end 
 end
@@ -1887,6 +1931,7 @@ function AIRBOSS:OnEventLand(EventData)
   self:T3(self.lid.."LAND: player = "..tostring(_playername))
       
   if _unit and _playername then
+    -- Human Player landed.
   
     local _uid=_unit:GetID()
     local _group=_unit:GetGroup()
@@ -1935,19 +1980,19 @@ function AIRBOSS:OnEventLand(EventData)
     end
     
   else
-  
-    -- TODO: Get landing coodinates of AI hornet for perfect _OK_ 3-wire pass!
-      -- Coordinate at landing event
-      local coord=EventData.IniUnit:GetCoordinate()
-      
-      -- Debug mark of player landing coord.
-      local dist=coord:Get2DDistance(self:GetCoordinate())
-      
-      local text=string.format("AI landing dist=%.1f m", dist)
-      env.info(text)
+    -- AI unit landed.
+    
+    -- Coordinate at landing event
+    local coord=EventData.IniUnit:GetCoordinate()
+    
+    -- Debug mark of player landing coord.
+    local dist=coord:Get2DDistance(self:GetCoordinate())
+    
+    local text=string.format("AI landing dist=%.1f m", dist)
+    env.info(text)
 
-      local lp=coord:MarkToAll(text)
-      coord:SmokeGreen()
+    local lp=coord:MarkToAll(text)
+    coord:SmokeGreen()
 
     -- AI: Decrease number of units in flight and remove group from pattern queue if all units landed.
     if self:_InQueue(self.Qpattern, EventData.IniGroup) then
@@ -1974,10 +2019,11 @@ function AIRBOSS:OnEventCrash(EventData)
   
   
   -- TODO: Update queues!
+  -- TODO: decrease number of units in group
   if _unit and _playername then
     self:I(self.lid.."Player %s crashed!",_playername)
   else
-    self:I(self.lid.."AI unit %s crashed!", EventData.IniUnitName)
+    self:I(self.lid.."AI unit %s crashed!", EventData.IniUnitName) 
   end
 end
 
@@ -2056,16 +2102,25 @@ function AIRBOSS:_InitPlayer(playerData)
   return playerData
 end
 
+local _bla=true
+
 --- Holding.
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data.
 function AIRBOSS:_Holding(playerData)
 
+  -- Player unit and flight.
   local unit=playerData.unit
   local flight=self:_GetFlightFromGroupInQueue(playerData.group, self.flights)
+  
+  -- Current stack.
   local stack=flight.flag:Get()
   
-  local alt, c1, c2=self:_GetMarshalAltitude(stack)
+  -- Pattern alitude.
+  local patternalt, c1, c2=self:_GetMarshalAltitude(stack)
+  
+  -- Player altitude.
+  local playeralt=unit:GetAltitude()
   
   -- Create a holding zone depending on recovery case.
   local zoneHolding  --Core.Zone#ZONE
@@ -2082,52 +2137,87 @@ function AIRBOSS:_Holding(playerData)
     
     -- Create an array of a square!
     local p={}
-    p[1]=c1:GetVec2()
-    p[2]=c2:GetVec2()
-    p[3]=c2:Translate(UTILS.NMToMeters(5), hdg-90):GetVec2()
-    p[4]=c1:Translate(UTILS.NMToMeters(5), hdg-90):GetVec2()
+    p[1]=c1:Translate(UTILS.NMToMeters(1), hdg+90):GetVec2()  --c1 is at (angels+15) NM directly behind the carrier. We translate it 1 NM starboard.
+    p[2]=c2:Translate(UTILS.NMToMeters(1), hdg+90):GetVec2()  --c2 is 10 NM further behind. Also translated 1 NM starboard.
+    p[3]=c2:Translate(UTILS.NMToMeters(7), hdg-90):GetVec2()  --p3 6 NM port of carrier.
+    p[4]=c1:Translate(UTILS.NMToMeters(7), hdg-90):GetVec2()  --p4 6 NM port of carrier.
     
+    -- Square zone length=10NM width=6 NM behind the carrier starting at angels+15 NM behind the carrier.
+    -- So stay 0-5 NM (+1 NM error margin) port of carrier.
     zoneHolding=ZONE_POLYGON_BASE:New("CASE II/III Holding Zone", p)
   end
   
   
-  --if bla then
-  --  zoneHolding:SmokeZone(SMOKECOLOR.Green)
-  --  bla=false
-  --end
+  if _bla then
+    zoneHolding:SmokeZone(SMOKECOLOR.Green)
+    _bla=false
+  end
   
   -- Check if player is in holding zone.
-  local inholdingzone=unit:IsInZone(zoneHolding)  
+  local inholdingzone=unit:IsInZone(zoneHolding)
+  
+  -- Check player alt is +-500 feet of assigned pattern alt.
+  local altdiff=playeralt-patternalt
+  local goodalt=math.abs(altdiff)<UTILS.MetersToFeet(500)
+  
+  -- TODO: check if player is flying counter clockwise. AOB<0.
+
+  local text=""
   
   -- Different cases
   if playerData.holding==true then
     -- Player was in holding zone last time we checked.
+    
     if inholdingzone then
       -- Player is still in holding zone.
       self:I("Player is still in the holding zone. Good job.")
     else
       -- Player left the holding zone.
       self:I("Player just left the holding zone. Come back!")
+      text=text..string.format("You just left the holding zone. Watch your numbers!")
+      playerData.holding=false
     end
+    
   elseif playerData.holding==false then
+  
     -- Player left holding zone
     if inholdingzone then
       -- Player is back in the holding zone.
       self:I("Player is back in the holding zone after leaving it.")
+      text=text..string.format("You are back in the holding zone. Now stay there!")
+      playerData.holding=true
     else
       -- Player is still outside the holding zone.
       self:I("Player still outside the holding zone. What are you doing man?!")
-    end    
+    end
+    
   elseif playerData.holding==nil then
-    -- Player never entered the holding zone 
+    -- Player did not entered the holding zone yet.
+    
     if inholdingzone then
       -- Player arrived in holding zone.
       playerData.holding=true
       self:I("Player entered the holding zone for the first time.")
+      text=text..string.format("You arrived at the holding zone.")
+      if goodalt then
+        text=text..string.format(" Now stay at that altitude.")
+      else
+        if altdiff<0 then
+          text=text..string.format(" But you are too low.")
+        else
+          text=text..string.format(" But you are too high.")
+        end
+        text=text..string.format(" Currently assigned altitude is %d ft.", UTILS.MetersToFeet(patternalt))
+      end
     else
       -- Player did not yet arrive in holding zone.
       self:I("Waiting for player to arrive in the holding zone.")
     end
+    
+  end
+  
+  if text~="" then
+    self:_SendMessageToPlayer(text, 5, playerData, false, "AIRBOSS")
   end
 
 end 
@@ -2276,8 +2366,14 @@ function AIRBOSS:_DirtyUp(playerData)
     -- Debrief.
     self:_AddToSummary(playerData, "Dirty Up", debrief)
     
-    -- Next step: Early Break.
-    playerData.step=AIRBOSS.PatternStep.BULLSEYE
+    -- Next step:
+    if self.case==2 then
+      -- CASE II: Fly to the initial and perform CASE I pattern.
+      playerData.step=AIRBOSS.PatternStep.INITIAL
+    elseif self.case==3 then
+      -- CASE III: Intercept glide slope and follow bullseye (ICLS).
+      playerData.step=AIRBOSS.PatternStep.BULLSEYE
+    end
   end
 end
 
@@ -2429,6 +2525,7 @@ function AIRBOSS:_CheckForLongDownwind(playerData)
     
     --grade="LIG PATTERN WAVE OFF - CUT 1 PT"
     playerData.lig=true
+    playerData.patternwo=true
     
     -- Next step: Debriefing.
     playerData.step=AIRBOSS.PatternStep.DEBRIEF
@@ -2527,6 +2624,7 @@ function AIRBOSS:_Ninety(playerData)
   elseif relheading>90 and self:_CheckLimits(X, Z, self.Wake) then
     -- Message to player.
     self:_SendMessageToPlayer("You are already at the wake and have not passed the 90! Turn faster next time!", 10, playerData)
+    --TODO: pattern WO?
   end
 end
 
@@ -4030,9 +4128,9 @@ function AIRBOSS:_AddF10Commands(_unitName)
         
         -- F10/Airboss/<Carrier Name>/Kneeboard
         missionCommands.addCommandForGroup(_gid, "Attitude Monitor ON/OFF", _kneeboardPath, self._AttitudeMonitor,       self, playername)
-        missionCommands.addCommandForGroup(_gid, "Weather Report",         _kneeboardPath,  self._DisplayCarrierWeather, self, _unitName)
-        missionCommands.addCommandForGroup(_gid, "Carrier Info",           _kneeboardPath,  self._DisplayCarrierInfo,    self, _unitName)
-                
+        missionCommands.addCommandForGroup(_gid, "Weather Report",          _kneeboardPath, self._DisplayCarrierWeather, self, _unitName)
+        missionCommands.addCommandForGroup(_gid, "Carrier Info",            _kneeboardPath, self._DisplayCarrierInfo,    self, _unitName)
+
         -- F10/Airboss/<Carrier Name>/
         missionCommands.addCommandForGroup(_gid, "Request Marshal?",    _rootPath, self._RequestMarshal,    self, _unitName)
         missionCommands.addCommandForGroup(_gid, "Commencing!",         _rootPath, self._RequestStraightIn, self, _unitName)
@@ -4063,6 +4161,8 @@ function AIRBOSS:_RequestStraightIn(_unitName)
     local playerData=self.players[_playername] --#AIRBOSS.PlayerData
     
     if playerData then
+      -- TODO: check if landing pattern is full. If so, display message "AIRBOSS: "Pattern is full." and deny step!
+      -- TODO: check if in marshal stack and flag is 0. If not, give message "AIRBOSS: It's not your turn yet!" and deny step! 
       playerData.step=AIRBOSS.PatternStep.COMMENCING
     end
   end
@@ -4338,4 +4438,3 @@ end
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-

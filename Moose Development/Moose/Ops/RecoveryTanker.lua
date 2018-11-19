@@ -5,9 +5,8 @@
 -- Features:
 --
 --    * Regular pattern update with respect to carrier positon.
---    * Automatic respawning when tanker runs out of fuel.
---    * Tanker can be spawned cold or hot on the carrier or any other airbase or directly in air.
---    * Tanker can operate 24/7.
+--    * Automatic respawning when tanker runs out of fuel for 24/7 operations.
+--    * Tanker can be spawned cold or hot on the carrier or at any other airbase or directly in air.
 --
 -- Please not that his class is work in progress and in an **alpha** stage.
 --
@@ -34,6 +33,9 @@
 -- @field #number Tupdate Last time the pattern was updated.
 -- @field #number takeoff Takeoff type (cold, hot, air).
 -- @field #number lowfuel Low fuel threshold in percent.
+-- @field #boolean respawn If true, tanker be respawned (default). If false, no respawning will happen.
+-- @field #boolean respawninair If true, tanker will always be respawned in air. This has no impact on the initial spawn setting.
+-- @field #boolean uncontrolledac If true, use and uncontrolled tanker group already present in the mission.
 -- @extends Core.Fsm#FSM
 
 --- Recovery Tanker.
@@ -62,21 +64,24 @@ RECOVERYTANKER = {
   Tupdate         = nil,
   takeoff         = nil,
   lowfuel         = nil,
+  respawn         = nil,
+  respawninair    = nil,
+  uncontrolledac  = nil,
 }
 
 
 --- Class version.
 -- @field #string version
-RECOVERYTANKER.version="0.9.1"
+RECOVERYTANKER.version="0.9.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Possibility to add already present/spawned aircraft, e.g. for warehouse. 
--- TODO: Write documenation.
 -- TODO: Smarter pattern update function. E.g. (small) zone around carrier. Only update position when carrier leaves zone or changes heading?
--- TODO: Maybe rework pattern update implementation altogether to make it smoother. 
+-- TODO: Write documenation.
+-- DONE: Add refueling event/state.
+-- DONE: Possibility to add already present/spawned aircraft, e.g. for warehouse.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -104,7 +109,7 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   -- Tanker group name.
   self.tankergroupname=tankergroupname
   
-  -- Default parameters.
+  -- Init default parameters.
   self:SetPatternUpdateInterval()
   self:SetAltitude()
   self:SetSpeed()
@@ -112,6 +117,7 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   self:SetHomeBase(AIRBASE:FindByName(self.carrier:GetName()))
   self:SetTakeoffAir()
   self:SetLowFuelThreshold()
+  self:SetRespawnOnOff()
 
   -----------------------
   --- FSM Transitions ---
@@ -123,10 +129,11 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   -- Add FSM transitions.
   --                 From State  -->   Event   -->   To State
   self:AddTransition("Stopped",       "Start",      "Running")
-  self:AddTransition("Running",       "RTB",        "Returning")
-  self:AddTransition("Running",       "Status",     "*")
-  self:AddTransition("Returning",     "Status",     "*")
-  self:AddTransition("Running",       "Stop",       "Stopped")
+  self:AddTransition("*",             "Refuel",     "Refueling")
+  self:AddTransition("*",             "Run",        "Running")
+  self:AddTransition("Running",       "RTB",        "Returning")  
+  self:AddTransition("*",             "Status",     "*")
+  self:AddTransition("*",             "Stop",       "Stopped")
 
 
   --- Triggers the FSM event "Start" that starts the recovery tanker. Initializes parameters and starts event handlers.
@@ -138,6 +145,29 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   -- @param #RECOVERYTANKER self
   -- @param #number delay Delay in seconds.
 
+
+  --- Triggers the FSM event "Refuel" when the tanker is refueling another aircraft.
+  -- @function [parent=#RECOVERYTANKER] Refuel
+  -- @param Wrapper.Unit#UNIT receiver Unit receiving fuel from the tanker.
+  -- @param #RECOVERYTANKER self
+
+  --- Triggers delayed the FSM event "Refuel" when the tanker is refueling another aircraft.
+  -- @function [parent=#RECOVERYTANKER] __Refuel
+  -- @param #RECOVERYTANKER self
+  -- @param #number delay Delay in seconds.
+  -- @param Wrapper.Unit#UNIT receiver Unit receiving fuel from the tanker.
+
+
+  --- Triggers the FSM event "Run". Simply puts the group into "Running" state, e.g. after refueling ended.
+  -- @function [parent=#RECOVERYTANKER] Run
+  -- @param #RECOVERYTANKER self
+
+  --- Triggers delayed the FSM event "Run". Simply puts the group into "Running" state, e.g. after refueling ended.
+  -- @function [parent=#RECOVERYTANKER] __Run
+  -- @param #RECOVERYTANKER self
+  -- @param #number delay Delay in seconds.
+
+
   --- Triggers the FSM event "RTB" that sends the tanker home.
   -- @function [parent=#RECOVERYTANKER] RTB
   -- @param #RECOVERYTANKER self
@@ -146,6 +176,7 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   -- @function [parent=#RECOVERYTANKER] __RTB
   -- @param #RECOVERYTANKER self
   -- @param #number delay Delay in seconds.
+
 
   --- Triggers the FSM event "Stop" that stops the recovery tanker. Event handlers are stopped.
   -- @function [parent=#RECOVERYTANKER] Stop
@@ -254,6 +285,55 @@ function RECOVERYTANKER:SetTakeoffAir()
 end
 
 
+--- Enable respawning of tanker. Note that this is the default behaviour. 
+-- @param #RECOVERYTANKER self 
+-- @return #RECOVERYTANKER self
+function RECOVERYTANKER:SetRespawnOn()
+  self.respawn=true
+  return self
+end
+
+--- Disable respawning of tanker.
+-- @param #RECOVERYTANKER self 
+-- @return #RECOVERYTANKER self
+function RECOVERYTANKER:SetRespawnOff()
+  self.respawn=false
+  return self
+end
+
+--- Set whether tanker shall be respawned or not.
+-- @param #RECOVERYTANKER self
+-- @param #boolean switch If true (or nil), tanker will be respawned. If false, tanker will not be respawned. 
+-- @return #RECOVERYTANKER self
+function RECOVERYTANKER:SetRespawnOnOff(switch)
+  if switch==nil or switch==true then
+    self.respawn=true
+  else
+    self.respawn=false
+  end
+  return self
+end
+
+--- Tanker will be respawned in air, even it was initially spawned on the carrier.
+-- So only the first spawn will be on the carrier while all subsequent spawns will happen in air.
+-- This allows for undisrupted operations and less problems on the carrier deck.
+-- @param #RECOVERYTANKER self
+-- @return #RECOVERYTANKER self
+function RECOVERYTANKER:SetRespawnInAir()
+  self.respawninair=true
+  return self
+end
+
+--- Use an uncontrolled aircraft already present in the mission rather than spawning a new tanker as initial recovery thanker.
+-- This can be useful when interfaced with, e.g., a warehouse.
+-- The group name is the one specified in the @{#RECOVERYTANKER.New} function.
+-- @param #RECOVERYTANKER self
+-- @return #RECOVERYTANKER self
+function RECOVERYTANKER:SetUseUncontrolledAircraft()
+  self.uncontrolledac=true
+  return self
+end
+
 --- Check if tanker is returning to base.
 -- @param #RECOVERYTANKER self
 -- @return #boolean If true, tanker is returning to base. 
@@ -284,7 +364,9 @@ function RECOVERYTANKER:onafterStart(From, Event, To)
   
   -- Handle events.
   self:HandleEvent(EVENTS.EngineShutdown)
-  --TODO: Handle event crash and respawn.
+  self:HandleEvent(EVENTS.Refueling)
+  self:HandleEvent(EVENTS.RefuelingStop)
+  self:HandleEvent(EVENTS.Crash)
   
   -- Spawn tanker.
   local Spawn=SPAWN:New(self.tankergroupname):InitUnControlled(false)
@@ -295,6 +377,7 @@ function RECOVERYTANKER:onafterStart(From, Event, To)
     -- Carrier heading
     local hdg=self.carrier:GetHeading()
     
+    -- Spawn distance behind the carrier.
     local dist=UTILS.NMToMeters(20)
     
     -- Coordinate behind the carrier
@@ -306,11 +389,32 @@ function RECOVERYTANKER:onafterStart(From, Event, To)
     -- Spawn at coordinate.
     self.tanker=Spawn:SpawnFromCoordinate(Carrier)
     
+    -- Initial route.
     self:_InitRoute(15, 1, 2)
   else
   
-    -- Spawn tanker at airbase.
-    self.tanker=Spawn:SpawnAtAirbase(self.airbase, self.takeoff)
+    -- Check if an uncontrolled tanker group was requested.
+    if self.useuncontrolled then
+    
+      -- Use an uncontrolled aircraft group.
+      self.tanker=GROUP:FindByName(self.tankergroupname)
+      
+      if self.tanker:IsAlive() then
+        -- Start uncontrolled group.
+        self.tanker:StartUncontrolled()
+      else
+        self:E(string.format("ERROR: No uncontrolled (alive) tanker group with name %s could be found!", self.tankergroupname))
+        return
+      end
+      
+    else
+    
+      -- Spawn tanker at airbase.
+      self.tanker=Spawn:SpawnAtAirbase(self.airbase, self.takeoff)
+      
+    end
+    
+    -- Initialize route.
     self:_InitRoute(30, 10, 1)
     
   end  
@@ -331,10 +435,11 @@ function RECOVERYTANKER:onafterStatus(From, Event, To)
   
   -- Get fuel of tanker.
   local fuel=self.tanker:GetFuel()*100
-  local text=string.format("Tanker %s: state=%s fuel=%.1f", self.tanker:GetName(), self:GetState(), fuel)
+  local text=string.format("Recovery tanker %s: state=%s fuel=%.1f", self.tanker:GetName(), self:GetState(), fuel)
   self:I(text)
   
   
+  -- Check if tanker is running and not RTBing.
   if self:IsRunning() then
   
     -- Check fuel.
@@ -350,6 +455,7 @@ function RECOVERYTANKER:onafterStatus(From, Event, To)
         --Time since last pattern update.
         local dt=time-self.Tupdate
         
+        -- Update pattern.
         if dt>self.dTupdate then
           self:_PatternUpdate()
         end
@@ -363,16 +469,6 @@ function RECOVERYTANKER:onafterStatus(From, Event, To)
   self:__Status(-60)
 end
 
---- On after Stop event. Unhandle events and stop status updates. 
--- @param #RECOVERYTANKER self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function RECOVERYTANKER:onafterStop(From, Event, To)
-  self:UnHandleEvent(EVENTS.EngineShutdown)
-  --self:UnHandleEvent(EVENTS.Land)
-end
-
 --- On before RTB event. Check if takeoff type is air and if so respawn the tanker and deny RTB transition.
 -- @param #RECOVERYTANKER self
 -- @param #string From From state.
@@ -381,27 +477,32 @@ end
 -- @return #boolean If true, transition is allowed.
 function RECOVERYTANKER:onbeforeRTB(From, Event, To)
 
+  -- Check if spawn in air is activated.
   if self.takeoff==SPAWN.Takeoff.Air then
   
-    -- Debug message.
-    local text=string.format("Respawning tanker %s.", self.tanker:GetName())
-    self:I(text)  
-    
-    -- Respawn tanker.
-    self.tanker:InitHeading(self.tanker:GetHeading())
-    self.tanker=self.tanker:Respawn(nil, true)
-    
-    -- Update Pattern in 2 seconds. Need to give a bit time so that the respawned group is in the game.
-    SCHEDULER:New(nil, self._PatternUpdate, {self}, 2)
-    
-    -- Deny transition to RTB.
-    return false
+    -- Check that respawn should happen.
+    if self.respawn then
+  
+      -- Debug message.
+      local text=string.format("Respawning tanker %s.", self.tanker:GetName())
+      self:I(text)  
+      
+      -- Respawn tanker.
+      self.tanker:InitHeading(self.tanker:GetHeading())
+      self.tanker=self.tanker:Respawn(nil, true)
+      
+      -- Update Pattern in 2 seconds. Need to give a bit time so that the respawned group is in the game.
+      SCHEDULER:New(nil, self._PatternUpdate, {self}, 2)
+      
+      -- Deny transition to RTB.
+      return false
+    end
   end
   
   return true
 end
 
---- On after RTB event. Send tanker back to carrier.
+--- On after "RTB" event. Send tanker back to carrier.
 -- @param #RECOVERYTANKER self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -412,17 +513,28 @@ function RECOVERYTANKER:onafterRTB(From, Event, To)
     local text=string.format("Tanker %s returning to airbase %s.", self.tanker:GetName(), self.airbase:GetName())
     self:I(text)
     
-    local waypoints={}
+    -- Waypoint array.
+    local wp={}
     
-    -- Set landingwaypoint
-    local wp=self.carrier:GetCoordinate():WaypointAirLanding(300, self.airbase, nil, "Landing")
-    table.insert(waypoints, wp)
+    -- Set landing waypoint.
+    wp[1]=self.tanker:GetCoordinate():WaypointAirTurningPoint(nil, 300, {}, "Current Position")
+    wp[2]=self.carrier:GetCoordinate():WaypointAirLanding(300, self.airbase, nil, "Landing on Carrier")
 
     -- Initialize WP and route tanker.
-    self.tanker:WayPointInitialize(waypoints)
+    self.tanker:WayPointInitialize(wp)
   
     -- Set task.
-    self.tanker:Route(waypoints, 1)
+    self.tanker:Route(wp, 1)
+end
+
+--- On after Stop event. Unhandle events and stop status updates. 
+-- @param #RECOVERYTANKER self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function RECOVERYTANKER:onafterStop(From, Event, To)
+  self:UnHandleEvent(EVENTS.EngineShutdown)
+  --self:UnHandleEvent(EVENTS.Land)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -437,7 +549,8 @@ function RECOVERYTANKER:OnEventEngineShutdown(EventData)
 
   local group=EventData.IniGroup --Wrapper.Group#GROUP
   
-  if group:IsAlive() then
+  -- Check if group is alive and should be respawned.
+  if group:IsAlive() and self.respawn then
   
     -- Group name. When spawning it will have #001 attached.
     local groupname=group:GetName()
@@ -449,15 +562,64 @@ function RECOVERYTANKER:OnEventEngineShutdown(EventData)
       
       -- Respawn tanker.
       self.tanker=group:RespawnAtCurrentAirbase()
-      
-      --group:StartUncontrolled(60)
-      
+
       -- Initial route.
       self:_InitRoute()
     end
     
   end
 end
+
+--- Event handler for refueling started.
+-- @param #RECOVERYTANKER self
+-- @param Core.Event#EVENTDATA EventData Event data.
+function RECOVERYTANKER:OnEventRefuel(EventData)
+
+  if EventData and EventData.IniUnit and EventData.IniUnit:IsAlive() then
+  
+    -- Unit receiving fuel.
+    local unit=EventData.IniUnit
+    
+    -- Get distance to tanker to check that unit is receiving fuel from this tanker.
+    local dist=unit:GetCoordinate():Get2DDistance(self.tanker:GetCoordinate())
+    
+    -- If distance > 100 meters, this should be another tanker.
+    if dist>100 then
+      return
+    end
+  
+    -- Info message.
+    self:I(string.format("Recovery tanker %s started refueling unit %s", self.tanker:GetName(), unit:GetName()))
+  
+  end
+
+end
+
+--- Event handler for refueling stopped.
+-- @param #RECOVERYTANKER self
+-- @param Core.Event#EVENTDATA EventData Event data.
+function RECOVERYTANKER:OnEventRefuelStop(EventData)
+
+  if EventData and EventData.IniUnit and EventData.IniUnit:IsAlive() then
+  
+    -- Unit receiving fuel.
+    local unit=EventData.IniUnit
+    
+    -- Get distance to tanker to check that unit is receiving fuel from this tanker.
+    local dist=unit:GetCoordinate():Get2DDistance(self.tanker:GetCoordinate())
+    
+    -- If distance > 100 meters, this should be another tanker.
+    if dist>100 then
+      return
+    end
+  
+    -- Info message.
+    self:I(string.format("Recovery tanker %s stopped refueling unit %s", self.tanker:GetName(), unit:GetName()))
+  
+  end
+
+end
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ROUTE functions
@@ -476,7 +638,7 @@ function RECOVERYTANKER:_InitRoute(dist, Tstart, delay)
   delay=delay or 1
   
   -- Debug message.
-  self:I(string.format("Initializing route for tanker %s.", self.tanker:GetName()))
+  self:I(string.format("Initializing route for recovery tanker %s.", self.tanker:GetName()))
   
   -- Carrier position.
   local Carrier=self.carrier:GetCoordinate()
@@ -509,6 +671,9 @@ end
 --- Function to update the race-track pattern of the tanker wrt to the carrier position.
 -- @param #RECOVERYTANKER self
 function RECOVERYTANKER:_PatternUpdate()
+
+  -- Debug message.
+  self:I(string.format("Updating recovery tanker %s orbit.", self.tanker:GetName()))
     
   -- Carrier heading.
   local hdg=self.carrier:GetHeading()
@@ -517,38 +682,34 @@ function RECOVERYTANKER:_PatternUpdate()
   local Carrier=self.carrier:GetCoordinate()
   
   -- Define race-track pattern.
+  local p0=self.tanker:GetCoordinate():Translate(1000, self.tanker:GetHeading())
   local p1=Carrier:SetAltitude(self.altitude):Translate(self.distStern, hdg)
   local p2=Carrier:SetAltitude(self.altitude):Translate(self.distBow, hdg)
   
   -- Set orbit task.
   local taskorbit=self.tanker:TaskOrbit(p1, self.altitude, self.speed, p2)
   
-  -- New waypoint.
-  local p0=self.tanker:GetCoordinate():Translate(1000, self.tanker:GetHeading())
-  
   -- Debug markers.
   if self.Debug then
-    p0:MarkToAll("p0")
-    p1:MarkToAll("p1")
-    p2:MarkToAll("p2")
+    p0:MarkToAll("Waypoint P0 " ..self.tanker:GetName())
+    p1:MarkToAll("Racetrack P1 "..self.tanker:GetName())
+    p2:MarkToAll("Racetrack P2 "..self.tanker:GetName())
   end
-  
-  -- Debug message.
-  self:I(string.format("Updating tanker %s orbit.", self.tanker:GetName()))
-  
+    
   -- Waypoints array.
-  local waypoints={}
+  local wp={}
     
   -- New waypoint with orbit pattern task.
-  local wp=p0:WaypointAirTurningPoint(nil, self.speed, {taskorbit}, "Tanker Orbit")      
-  waypoints[1]=wp
+  wp[1]=self.tanker:GetCoordinate():WaypointAirTurningPoint(nil , self.speed, {}, "Current Position")
+  wp[2]=p0:WaypointAirTurningPoint(nil, self.speed, {taskorbit}, "Tanker Orbit")
   
   -- Initialize WP and route tanker.
-  self.tanker:WayPointInitialize(waypoints)
+  self.tanker:WayPointInitialize(wp)
   
   -- Task combo.
   local tasktanker = self.tanker:EnRouteTaskTanker()
-  local taskroute  = self.tanker:TaskRoute(waypoints)
+  local taskroute  = self.tanker:TaskRoute(wp)
+  -- Note that tasktanker has to come first. Otherwise it does not work!
   local taskcombo  = self.tanker:TaskCombo({tasktanker, taskroute})
 
   -- Set task.

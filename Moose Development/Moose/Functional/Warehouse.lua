@@ -1790,7 +1790,7 @@ WAREHOUSE.version="0.6.6"
 
 --- The WAREHOUSE constructor. Creates a new WAREHOUSE object from a static object. Parameters like the coalition and country are taken from the static object structure.
 -- @param #WAREHOUSE self
--- @param Wrapper.Static#STATIC warehouse The physical structure of the warehouse.
+-- @param Wrapper.Static#STATIC warehouse The physical structure representing the warehouse.
 -- @param #string alias (Optional) Alias of the warehouse, i.e. the name it will be called when sending messages etc. Default is the name of the static  
 -- @return #WAREHOUSE self
 function WAREHOUSE:New(warehouse, alias)
@@ -1798,8 +1798,9 @@ function WAREHOUSE:New(warehouse, alias)
   
   -- Check if just a string was given and convert to static.
   if type(warehouse)=="string" then
-    warehouse=GROUP:FindByName(warehouse)
+    warehouse=UNIT:FindByName(warehouse)
     if warehouse==nil then
+      env.info(string.format("FF no warehouse unit with name %s found trying static.", warehouse))
       warehouse=STATIC:FindByName(warehouse, true)
     end
   end

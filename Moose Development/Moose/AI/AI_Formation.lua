@@ -906,7 +906,7 @@ function AI_FORMATION:SetFlightRandomization( FlightRandomization ) --R2.1
 end
 
 
---- Follow event fuction. Check if coming from state "stopped". If so the transition is rejected.
+--- Stop function. Formation will not be updated any more.
 -- @param #AI_FORMATION self
 -- @param Core.Set#SET_GROUP FollowGroupSet The following set of groups.
 -- @param #string From From state.
