@@ -34,6 +34,9 @@
 -- @field #number offsetX Offset in meters to carrier in longitudinal direction.
 -- @field #number offsetZ Offset in meters to carrier in latitudinal direction.
 -- @field Core.Zone#ZONE_RADIUS rescuezone Zone around the carrier in which helo will rescue crashed or ejected units.
+-- @field #boolean respawn If true, helo be respawned (default). If false, no respawning will happen.
+-- @field #boolean respawninair If true, helo will always be respawned in air. This has no impact on the initial spawn setting.
+-- @field #boolean uncontrolledac If true, use and uncontrolled helo group already present in the mission.
 -- @extends Core.Fsm#FSM
 
 --- Rescue Helo
@@ -48,25 +51,28 @@
 --
 -- @field #RESCUEHELO
 RESCUEHELO = {
-  ClassName     = "RESCUEHELO",
-  carrier       = nil,
-  carriertype   = nil,
-  helogroupname = nil,
-  helo          = nil,
-  airbase       = nil,
-  takeoff       = nil,
-  followset     = nil,
-  formation     = nil,
-  lowfuel       = nil,
-  altitude      = nil,
-  offsetX       = nil,
-  offsetZ       = nil,
-  rescuezone    = nil,
+  ClassName      = "RESCUEHELO",
+  carrier        = nil,
+  carriertype    = nil,
+  helogroupname  = nil,
+  helo           = nil,
+  airbase        = nil,
+  takeoff        = nil,
+  followset      = nil,
+  formation      = nil,
+  lowfuel        = nil,
+  altitude       = nil,
+  offsetX        = nil,
+  offsetZ        = nil,
+  rescuezone     = nil,
+  respawn        = nil,
+  respawninair   = nil,
+  uncontrolledac = nil,
 }
 
 --- Class version.
 -- @field #string version
-RESCUEHELO.version="0.9.2"
+RESCUEHELO.version="0.9.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -273,6 +279,56 @@ function RESCUEHELO:SetOffsetZ(distance)
 end
 
 
+--- Enable respawning of helo. Note that this is the default behaviour. 
+-- @param #RESCUEHELO self 
+-- @return #RESCUEHELO self
+function RESCUEHELO:SetRespawnOn()
+  self.respawn=true
+  return self
+end
+
+--- Disable respawning of helo.
+-- @param #RESCUEHELO self 
+-- @return #RESCUEHELO self
+function RESCUEHELO:SetRespawnOff()
+  self.respawn=false
+  return self
+end
+
+--- Set whether helo shall be respawned or not.
+-- @param #RESCUEHELO self
+-- @param #boolean switch If true (or nil), helo will be respawned. If false, helo will not be respawned. 
+-- @return #RESCUEHELO self
+function RESCUEHELO:SetRespawnOnOff(switch)
+  if switch==nil or switch==true then
+    self.respawn=true
+  else
+    self.respawn=false
+  end
+  return self
+end
+
+--- Helo will be respawned in air, even it was initially spawned on the carrier.
+-- So only the first spawn will be on the carrier while all subsequent spawns will happen in air.
+-- This allows for undisrupted operations and less problems on the carrier deck.
+-- @param #RESCUEHELO self
+-- @return #RESCUEHELO self
+function RESCUEHELO:SetRespawnInAir()
+  self.respawninair=true
+  return self
+end
+
+--- Use an uncontrolled aircraft already present in the mission rather than spawning a new helo as initial rescue helo.
+-- This can be useful when interfaced with, e.g., a warehouse.
+-- The group name is the one specified in the @{#RESCUEHELO.New} function.
+-- @param #RESCUEHELO self
+-- @return #RESCUEHELO self
+function RESCUEHELO:SetUseUncontrolledAircraft()
+  self.uncontrolledac=true
+  return self
+end
+
+
 --- Check if helo is returning to base.
 -- @param #RESCUEHELO self
 -- @return #boolean If true, helo is returning to base. 
@@ -312,9 +368,9 @@ function RESCUEHELO:OnEventLand(EventData)
       -- Respawn the Helo.
       self:I(string.format("Respawning rescue helo group %s at home base.", groupname))
       
-      if self.takeoff==SPAWN.Takeoff.Air then
+      if self.takeoff==SPAWN.Takeoff.Air or self.respawninair then
         
-        self:E("ERROR: Rescue helo %s landed. This should not happen for Takeoff=Air!", groupname)
+        self:E("ERROR: Rescue helo %s landed. This should not happen for Takeoff=Air or respawninair=true!", groupname)
       
       else
       
@@ -424,16 +480,41 @@ function RESCUEHELO:onafterStart(From, Event, To)
     delay=1
     
   else  
-  
-    -- Spawn at airbase.
-    self.helo=Spawn:SpawnAtAirbase(self.airbase, self.takeoff)
+ 
+    -- Check if an uncontrolled helo group was requested.
+    if self.useuncontrolled then
     
-    if self.takeoff==SPAWN.Takeoff.Runway then
-      delay=5
-    elseif self.takeoff==SPAWN.Takeoff.Hot then
-      delay=30
-    elseif self.takeoff==SPAWN.Takeoff.Cold then
-      delay=60
+      -- Use an uncontrolled aircraft group.
+      self.helo=GROUP:FindByName(self.helogroupname)
+      
+      if self.helo:IsAlive() then
+      
+        -- Start uncontrolled group.
+        self.helo:StartUncontrolled()
+        
+        -- Delay before formation is started.
+        delay=60
+        
+      else
+        -- No group of that name!
+        self:E(string.format("ERROR: No uncontrolled (alive) rescue helo group with name %s could be found!", self.helogroupname))
+        return
+      end
+       
+    else
+
+      -- Spawn at airbase.
+      self.helo=Spawn:SpawnAtAirbase(self.airbase, self.takeoff)
+      
+      -- Delay before formation is started.
+      if self.takeoff==SPAWN.Takeoff.Runway then
+        delay=5
+      elseif self.takeoff==SPAWN.Takeoff.Hot then
+        delay=30
+      elseif self.takeoff==SPAWN.Takeoff.Cold then
+        delay=60
+      end
+      
     end
     
   end
@@ -453,9 +534,6 @@ function RESCUEHELO:onafterStart(From, Event, To)
   
   -- Start formation FSM.
   self.formation:__Start(delay)
-  
-  -- Start uncontrolled helo.
-  --HeloSpawn:StartUncontrolled(120)
   
   -- Init status check
   self:__Status(1)
@@ -479,7 +557,7 @@ function RESCUEHELO:onafterStatus(From, Event, To)
   local text=string.format("Rescue Helo %s: state=%s fuel=%.1f", self.helo:GetName(), self:GetState(), fuel)
   self:I(text)
 
-  -- If fuel < threshold ==> send helo to home base!  
+  -- If fuel < threshold ==> send helo to home base!
   if fuel<self.lowfuel and self:IsRunning() then
     self:RTB()
   end
@@ -550,9 +628,9 @@ end
 -- @return #boolean If true, transition is allowed.
 function RESCUEHELO:onbeforeRTB(From, Event, To)
 
-  if self.takeoff==SPAWN.Takeoff.Air then
-    -- For takeoff in air, we just respawn the helo with full fuel.
-  
+  -- For takeoff in air, we just respawn the helo with full fuel.
+  if (self.takeoff==SPAWN.Takeoff.Air or self.respawninair) and self.respawn then
+    
     -- Debug message.
     local text=string.format("Respawning rescue helo group %s in air.", self.helo:GetName())
     self:I(text)  

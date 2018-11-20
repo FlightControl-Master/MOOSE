@@ -1800,7 +1800,7 @@ function WAREHOUSE:New(warehouse, alias)
   if type(warehouse)=="string" then
     warehouse=UNIT:FindByName(warehouse)
     if warehouse==nil then
-      env.info(string.format("FF no warehouse unit with name %s found trying static.", warehouse))
+      env.info(string.format("No warehouse unit with name %s found trying static.", warehouse))
       warehouse=STATIC:FindByName(warehouse, true)
     end
   end

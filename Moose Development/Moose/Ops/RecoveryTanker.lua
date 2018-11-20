@@ -25,6 +25,9 @@
 -- @field #string tankergroupname Name of the late activated tanker template group.
 -- @field Wrapper.Group#GROUP tanker Tanker group.
 -- @field Wrapper.Airbase#AIRBASE airbase The home airbase object of the tanker. Normally the aircraft carrier.
+-- @field Core.Radio#BEACON beacon Tanker TACAN beacon.
+-- @field #number TACANchannel TACAN channel. Default 1.
+-- @field #string TACANmode TACAN mode, i.e. "X" or "Y". Default "Y".
 -- @field #number speed Tanker speed when flying pattern.
 -- @field #number altitude Tanker orbit pattern altitude.
 -- @field #number distStern Race-track distance astern.
@@ -56,6 +59,9 @@ RECOVERYTANKER = {
   tankergroupname = nil,
   tanker          = nil,
   airbase         = nil,
+  beacon          = nil,
+  TACANchannel    = nil,
+  TACANmode       = nil,
   altitude        = nil,
   speed           = nil,
   distStern       = nil,
@@ -72,7 +78,7 @@ RECOVERYTANKER = {
 
 --- Class version.
 -- @field #string version
-RECOVERYTANKER.version="0.9.2"
+RECOVERYTANKER.version="0.9.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -80,6 +86,7 @@ RECOVERYTANKER.version="0.9.2"
 
 -- TODO: Smarter pattern update function. E.g. (small) zone around carrier. Only update position when carrier leaves zone or changes heading?
 -- TODO: Write documenation.
+-- DONE: Set AA TACAN.
 -- DONE: Add refueling event/state.
 -- DONE: Possibility to add already present/spawned aircraft, e.g. for warehouse.
 
@@ -118,6 +125,7 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   self:SetTakeoffAir()
   self:SetLowFuelThreshold()
   self:SetRespawnOnOff()
+  self:SetTACAN()
 
   -----------------------
   --- FSM Transitions ---
@@ -334,6 +342,17 @@ function RECOVERYTANKER:SetUseUncontrolledAircraft()
   return self
 end
 
+--- Set TACAN channel of tanker.
+-- @param #RECOVERYTANKER self
+-- @param #number channel TACAN channel. Default 1.
+-- @param #string mode TACAN mode, i.e. "X" or "Y". Default "Y".
+-- @return #RECOVERYTANKER self
+function RECOVERYTANKER:SetTACAN(channel, mode)
+  self.TACANchannel=channel or 1
+  self.TACANmode=mode or "Y"
+  return self
+end
+
 --- Check if tanker is returning to base.
 -- @param #RECOVERYTANKER self
 -- @return #boolean If true, tanker is returning to base. 
@@ -400,9 +419,12 @@ function RECOVERYTANKER:onafterStart(From, Event, To)
       self.tanker=GROUP:FindByName(self.tankergroupname)
       
       if self.tanker:IsAlive() then
+      
         -- Start uncontrolled group.
         self.tanker:StartUncontrolled()
+        
       else
+        -- No group by that name!
         self:E(string.format("ERROR: No uncontrolled (alive) tanker group with name %s could be found!", self.tankergroupname))
         return
       end
@@ -417,7 +439,11 @@ function RECOVERYTANKER:onafterStart(From, Event, To)
     -- Initialize route.
     self:_InitRoute(30, 10, 1)
     
-  end  
+  end
+  
+  -- Create tanker beacon.
+  self.beacon=BEACON:New(self.tanker:GetUnit(1))
+  self.beacon:ActivateTACAN(self.TACANchannel, self.TACANmode, "TKR", true)
   
   -- Init status check.
   self:__Status(10)
@@ -478,7 +504,7 @@ end
 function RECOVERYTANKER:onbeforeRTB(From, Event, To)
 
   -- Check if spawn in air is activated.
-  if self.takeoff==SPAWN.Takeoff.Air then
+  if self.takeoff==SPAWN.Takeoff.Air or self.respawninair then
   
     -- Check that respawn should happen.
     if self.respawn then
@@ -490,6 +516,10 @@ function RECOVERYTANKER:onbeforeRTB(From, Event, To)
       -- Respawn tanker.
       self.tanker:InitHeading(self.tanker:GetHeading())
       self.tanker=self.tanker:Respawn(nil, true)
+      
+      -- Create tanker beacon.
+      self.beacon=BEACON:New(self.tanker:GetUnit(1))
+      self.beacon:ActivateTACAN(self.TACANchannel, self.TACANmode, "TKR", true)
       
       -- Update Pattern in 2 seconds. Need to give a bit time so that the respawned group is in the game.
       SCHEDULER:New(nil, self._PatternUpdate, {self}, 2)
@@ -562,6 +592,10 @@ function RECOVERYTANKER:OnEventEngineShutdown(EventData)
       
       -- Respawn tanker.
       self.tanker=group:RespawnAtCurrentAirbase()
+      
+      -- Create tanker beacon.
+      self.beacon=BEACON:New(self.tanker:GetUnit(1))
+      self.beacon:ActivateTACAN(self.TACANchannel, self.TACANmode, "TKR", true)
 
       -- Initial route.
       self:_InitRoute()
