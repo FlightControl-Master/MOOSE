@@ -595,6 +595,8 @@ do -- AI_A2G_DISPATCHER
     
     self.Detection = Detection -- Functional.Detection#DETECTION_AREAS
     
+    self.Detection:FilterCategories( Unit.Category.GROUND_UNIT )
+    
     -- This table models the DefenderSquadron templates.
     self.DefenderSquadrons = {} -- The Defender Squadrons.
     self.DefenderSpawns = {}
@@ -1086,6 +1088,27 @@ do -- AI_A2G_DISPATCHER
   end  
 
 
+  --- Set the default engage limit for squadrons, which will be used to determine how many air units will engage at the same time with the enemy.
+  -- The default eatrol limit is 1, which means one eatrol group maximum per squadron.
+  -- @param #AI_A2G_DISPATCHER self
+  -- @param #number EngageLimit The maximum engages that can be done at the same time per squadron.
+  -- @return #AI_A2G_DISPATCHER
+  -- @usage
+  -- 
+  --   -- Now Setup the A2G dispatcher, and initialize it using the Detection object.
+  --   A2GDispatcher = AI_A2G_DISPATCHER:New( Detection )  
+  --   
+  --   -- Now Setup the default Patrol limit.
+  --   A2GDispatcher:SetDefaultEngageLimit( 2 ) -- Maximum 2 engagements with the enemy per squadron.
+  --   
+  function AI_A2G_DISPATCHER:SetDefaultEngageLimit( EngageLimit )
+    
+    self.DefenderDefault.EngageLimit = EngageLimit
+    
+    return self
+  end  
+
+
   function AI_A2G_DISPATCHER:SetIntercept( InterceptDelay )
     
     self.DefenderDefault.InterceptDelay = InterceptDelay
@@ -1202,7 +1225,7 @@ do -- AI_A2G_DISPATCHER
   
   ---
   -- @param #AI_A2G_DISPATCHER self
-  function AI_A2G_DISPATCHER:SetDefenderTask( SquadronName, Defender, Type, Fsm, Target )
+  function AI_A2G_DISPATCHER:SetDefenderTask( SquadronName, Defender, Type, Fsm, Target, Size )
   
     self:F( { SquadronName = SquadronName, Defender = Defender:GetName() } )
   
@@ -1210,6 +1233,7 @@ do -- AI_A2G_DISPATCHER
     self.DefenderTasks[Defender].Type = Type
     self.DefenderTasks[Defender].Fsm = Fsm
     self.DefenderTasks[Defender].SquadronName = SquadronName
+    self.DefenderTasks[Defender].Size = Size
 
     if Target then
       self:SetDefenderTaskTarget( Defender, Target )
@@ -1453,6 +1477,8 @@ do -- AI_A2G_DISPATCHER
 
   end
 
+
+
   --- Set the squadron Patrol parameters for SEAD tasks.  
   -- @param #AI_A2G_DISPATCHER self
   -- @param #string SquadronName The squadron name.
@@ -1590,6 +1616,39 @@ do -- AI_A2G_DISPATCHER
     return nil
   end
 
+  --- Set the squadron engage limit for a specific task type.  
+  -- Mission designers should not use this method, instead use the below methods. This method is used by the below methods.
+  -- 
+  --   - @{#AI_A2G_DISPATCHER:SetSquadronSeadEngageLimit} for SEAD tasks.
+  --   - @{#AI_A2G_DISPATCHER:SetSquadronSeadEngageLimit} for CAS tasks.
+  --   - @{#AI_A2G_DISPATCHER:SetSquadronSeadEngageLimit} for BAI tasks.
+  --   
+  -- @param #AI_A2G_DISPATCHER self
+  -- @param #string SquadronName The squadron name.
+  -- @param #number EngageLimit The maximum amount of groups to engage with the enemy for this squadron.
+  -- @param #string DefenseTaskType Should contain "SEAD", "CAS" or "BAI".
+  -- @return #AI_A2G_DISPATCHER
+  -- @usage
+  -- 
+  --        -- Patrol Squadron execution.
+  --        PatrolZoneEast = ZONE_POLYGON:New( "Patrol Zone East", GROUP:FindByName( "Patrol Zone East" ) )
+  --        A2GDispatcher:SetSquadronEngageLimit( "Mineralnye", 2, "SEAD" ) -- Engage maximum 2 groups with the enemy for SEAD defense.
+  -- 
+  function AI_A2G_DISPATCHER:SetSquadronEngageLimit( SquadronName, EngageLimit, DefenseTaskType )
+  
+    local DefenderSquadron = self:GetSquadron( SquadronName )
+
+    local Defense = DefenderSquadron[DefenseTaskType]
+    if Defense then
+      Defense.EngageLimit = EngageLimit or 1
+    else
+      error( "This squadron does not exist:" .. SquadronName )
+    end
+
+  end
+
+
+
   
   ---
   -- @param #AI_A2G_DISPATCHER self
@@ -1618,6 +1677,25 @@ do -- AI_A2G_DISPATCHER
     
     self:F( { Sead = Sead } )
   end
+
+  --- Set the squadron SEAD engage limit.  
+  -- @param #AI_A2G_DISPATCHER self
+  -- @param #string SquadronName The squadron name.
+  -- @param #number EngageLimit The maximum amount of groups to engage with the enemy for this squadron.
+  -- @return #AI_A2G_DISPATCHER
+  -- @usage
+  -- 
+  --        -- Patrol Squadron execution.
+  --        PatrolZoneEast = ZONE_POLYGON:New( "Patrol Zone East", GROUP:FindByName( "Patrol Zone East" ) )
+  --        A2GDispatcher:SetSquadronSeadEngageLimit( "Mineralnye", 2 ) -- Engage maximum 2 groups with the enemy for SEAD defense.
+  -- 
+  function AI_A2G_DISPATCHER:SetSquadronSeadEngageLimit( SquadronName, EngageLimit )
+
+    self:SetSquadronEngageLimit( SquadronName, EngageLimit, "SEAD" )  
+
+  end
+
+
   
 
   --- Set a Sead patrol for a Squadron.
@@ -1690,6 +1768,26 @@ do -- AI_A2G_DISPATCHER
     
     self:F( { Cas = Cas } )
   end
+
+
+  --- Set the squadron CAS engage limit.  
+  -- @param #AI_A2G_DISPATCHER self
+  -- @param #string SquadronName The squadron name.
+  -- @param #number EngageLimit The maximum amount of groups to engage with the enemy for this squadron.
+  -- @return #AI_A2G_DISPATCHER
+  -- @usage
+  -- 
+  --        -- Patrol Squadron execution.
+  --        PatrolZoneEast = ZONE_POLYGON:New( "Patrol Zone East", GROUP:FindByName( "Patrol Zone East" ) )
+  --        A2GDispatcher:SetSquadronCasEngageLimit( "Mineralnye", 2 ) -- Engage maximum 2 groups with the enemy for CAS defense.
+  -- 
+  function AI_A2G_DISPATCHER:SetSquadronCasEngageLimit( SquadronName, EngageLimit )
+
+    self:SetSquadronEngageLimit( SquadronName, EngageLimit, "CAS" )  
+
+  end
+
+
   
   
   --- Set a Cas patrol for a Squadron.
@@ -1761,6 +1859,24 @@ do -- AI_A2G_DISPATCHER
     Bai.Defend = true
     
     self:F( { Bai = Bai } )
+  end
+
+
+  --- Set the squadron BAI engage limit.  
+  -- @param #AI_A2G_DISPATCHER self
+  -- @param #string SquadronName The squadron name.
+  -- @param #number EngageLimit The maximum amount of groups to engage with the enemy for this squadron.
+  -- @return #AI_A2G_DISPATCHER
+  -- @usage
+  -- 
+  --        -- Patrol Squadron execution.
+  --        PatrolZoneEast = ZONE_POLYGON:New( "Patrol Zone East", GROUP:FindByName( "Patrol Zone East" ) )
+  --        A2GDispatcher:SetSquadronBaiEngageLimit( "Mineralnye", 2 ) -- Engage maximum 2 groups with the enemy for BAI defense.
+  -- 
+  function AI_A2G_DISPATCHER:SetSquadronBaiEngageLimit( SquadronName, EngageLimit )
+
+    self:SetSquadronEngageLimit( SquadronName, EngageLimit, "BAI" )  
+
   end
   
   
@@ -2624,9 +2740,12 @@ do -- AI_A2G_DISPATCHER
   function AI_A2G_DISPATCHER:CountDefendersEngaged( AttackerDetection )
 
     -- First, count the active AIGroups Units, targetting the DetectedSet
-    local DefenderCount = 0
+    local DefendersEngaged = 0
+    local DefendersTotal = 0
     
-    local DetectedSet = AttackerDetection.Set
+    local AttackerSet = AttackerDetection.Set
+    local AttackerCount = AttackerSet:Count()
+    local DefendersMissing = AttackerCount
     --DetectedSet:Flush()
     
     local DefenderTasks = self:GetDefenderTasks()
@@ -2634,24 +2753,34 @@ do -- AI_A2G_DISPATCHER
       local Defender = DefenderGroup -- Wrapper.Group#GROUP
       local DefenderTaskTarget = DefenderTask.Target
       local DefenderSquadronName = DefenderTask.SquadronName
-      
-      if DefenderTaskTarget and DefenderTaskTarget.Index == AttackerDetection.Index then
-      
-        local SquadronOverhead = self:GetSquadronOverhead( DefenderSquadronName )
-        
-        local DefenderSize = Defender:GetInitialSize()
-        if DefenderSize then
-          DefenderCount = DefenderCount + DefenderSize / SquadronOverhead
+      local DefenderSize = DefenderTask.Size
+
+      -- Count the total of defenders on the battlefield.
+      --local DefenderSize = Defender:GetInitialSize()
+      if DefenderTask.Target then
+        --if DefenderTask.Fsm:Is( "Engaging" ) then
           self:F( "Defender Group Name: " .. Defender:GetName() .. ", Size: " .. DefenderSize )
-        else
-          DefenderCount = 0
-        end
+          DefendersTotal = DefendersTotal + DefenderSize
+          if DefenderTaskTarget and DefenderTaskTarget.Index == AttackerDetection.Index then
+          
+            local SquadronOverhead = self:GetSquadronOverhead( DefenderSquadronName )
+            if DefenderSize then
+              DefendersEngaged = DefendersEngaged + DefenderSize
+              DefendersMissing = DefendersMissing - DefenderSize / SquadronOverhead
+              self:F( "Defender Group Name: " .. Defender:GetName() .. ", Size: " .. DefenderSize )
+            else
+              DefendersEngaged = 0
+            end
+          end
+        --end
       end
+
+      
     end
 
-    self:F( { DefenderCount = DefenderCount } )
+    self:F( { DefenderCount = DefendersEngaged } )
 
-    return DefenderCount
+    return DefendersTotal, DefendersEngaged, DefendersMissing
   end
   
   ---
@@ -2860,9 +2989,9 @@ do -- AI_A2G_DISPATCHER
 
   ---
   -- @param #AI_A2G_DISPATCHER self
-  function AI_A2G_DISPATCHER:onafterDefend( From, Event, To, AttackerDetection, DefendersMissing, DefenderFriendlies, DefenseTaskType )
+  function AI_A2G_DISPATCHER:onafterDefend( From, Event, To, AttackerDetection, DefendersTotal, DefendersEngaged, DefendersMissing, DefenderFriendlies, DefenseTaskType )
 
-    self:F( { From, Event, To, AttackerDetection.Index, DefendersMissing, DefenderFriendlies } )
+    self:F( { From, Event, To, AttackerDetection.Index, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing, DefenderFriendlies = DefenderFriendlies } )
 
     local AttackerSet = AttackerDetection.Set
     local AttackerUnit = AttackerSet:GetFirst()
@@ -2875,13 +3004,15 @@ do -- AI_A2G_DISPATCHER
   
         local SquadronName = self:GetDefenderTask( DefenderGroup ).SquadronName
         local SquadronOverhead = self:GetSquadronOverhead( SquadronName )
-  
+
         local Fsm = self:GetDefenderTaskFsm( DefenderGroup )
         Fsm:__Engage( 1, AttackerSet ) -- Engage on the TargetSetUnit
         
         self:SetDefenderTaskTarget( DefenderGroup, AttackerDetection )
   
-        DefendersMissing = DefendersMissing - DefenderGroup:GetSize() / SquadronOverhead
+        local DefenderGroupSize = DefenderGroup:GetSize()
+        DefendersMissing = DefendersMissing - DefenderGroupSize / SquadronOverhead
+        DefendersTotal = DefendersTotal + DefenderGroupSize / SquadronOverhead
         
         if DefendersMissing <= 0 then
           break
@@ -2938,6 +3069,22 @@ do -- AI_A2G_DISPATCHER
               self:F( { Overhead = DefenderOverhead, SquadronOverhead = DefenderSquadron.Overhead , DefaultOverhead = self.DefenderDefault.Overhead } )
               self:F( { Grouping = DefenderGrouping, SquadronGrouping = DefenderSquadron.Grouping, DefaultGrouping = self.DefenderDefault.Grouping } )
               self:F( { DefendersCount = DefenderCount, DefendersNeeded = DefendersNeeded } )
+
+              -- Validate that the maximum limit of Defenders has been reached.
+              -- If yes, then cancel the engaging of more defenders.
+              local DefendersLimit = DefenderSquadron.EngageLimit or self.DefenderDefault.EngageLimit
+              if DefendersLimit then
+                if DefendersTotal >= DefendersLimit then
+                  DefendersNeeded = 0
+                  BreakLoop = true
+                else
+                  -- If the total of amount of defenders + the defenders needed, is larger than the limit of defenders,
+                  -- then the defenders needed is the difference between defenders total - defenders limit.
+                  if DefendersTotal + DefendersNeeded > DefendersLimit then
+                    DefendersNeeded =  DefendersLimit - DefendersTotal
+                  end
+                end
+              end
               
               -- DefenderSquadron.ResourceCount can have the value nil, which expresses unlimited resources.
               -- DefendersNeeded cannot exceed DefenderSquadron.ResourceCount!
@@ -2964,9 +3111,7 @@ do -- AI_A2G_DISPATCHER
                   Fsm:SetDisengageRadius( self.DisengageRadius )
                   Fsm:Start()
         
-          
-                  self:SetDefenderTask( ClosestDefenderSquadronName, DefenderGroup, DefenseTaskType, Fsm, AttackerDetection )
-                  
+                  self:SetDefenderTask( ClosestDefenderSquadronName, DefenderGroup, DefenseTaskType, Fsm, AttackerDetection, DefenderGrouping )
                   
                   function Fsm:onafterTakeoff( Defender, From, Event, To )
                     self:F({"Defender Birth", Defender:GetName()})
@@ -3049,25 +3194,24 @@ do -- AI_A2G_DISPATCHER
   
     local AttackerSet = DetectedItem.Set -- Core.Set#SET_UNIT
     local AttackerCount = AttackerSet:Count()
-    local IsSEAD = AttackerSet:HasSEAD() -- Is the AttackerSet a SEAD group?µ
+    local IsSEAD = AttackerSet:HasSEAD() -- Is the AttackerSet a SEAD group?
     
     if ( IsSEAD > 0 ) then
     
       -- First, count the active defenders, engaging the DetectedItem.
-      local DefenderCount = self:CountDefendersEngaged( DetectedItem )
+      local DefendersTotal, DefendersEngaged, DefendersMissing = self:CountDefendersEngaged( DetectedItem )
+      
+      self:F( { AttackerCount = AttackerCount, DefendersTotal = DefendersTotal, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing } )
   
-      local DefendersMissing = AttackerCount - DefenderCount
-      self:F( { AttackerCount = AttackerCount, DefenderCount = DefenderCount, DefendersMissing = DefendersMissing } )
-  
-      local DefenderGroups = self:CountDefenders( DetectedItem, DefenderCount, "SEAD" )
+      local DefenderGroups = self:CountDefenders( DetectedItem, DefendersEngaged, "SEAD" )
   
       if DetectedItem.IsDetected == true then
         
-        return DefendersMissing, DefenderGroups
+        return DefendersTotal, DefendersEngaged, DefendersMissing, DefenderGroups
       end
     end
     
-    return nil, nil
+    return nil, nil, nil
   end
 
 
@@ -3090,20 +3234,19 @@ do -- AI_A2G_DISPATCHER
     if IsCas == true then
     
       -- First, count the active defenders, engaging the DetectedItem.
-      local DefenderCount = self:CountDefendersEngaged( DetectedItem )
+      local DefendersTotal, DefendersEngaged, DefendersMissing = self:CountDefendersEngaged( DetectedItem )
       
-      local DefendersMissing = AttackerCount - DefenderCount
-      self:F( { AttackerCount = AttackerCount, DefenderCount = DefenderCount, DefendersMissing = DefendersMissing } )
+      self:F( { AttackerCount = AttackerCount, DefendersTotal = DefendersTotal, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing } )
   
-      local DefenderGroups = self:CountDefenders( DetectedItem, DefenderCount, "CAS" )
+      local DefenderGroups = self:CountDefenders( DetectedItem, DefendersEngaged, "CAS" )
   
       if DetectedItem.IsDetected == true then
         
-        return DefendersMissing, DefenderGroups
+        return DefendersTotal, DefendersEngaged, DefendersMissing, DefenderGroups
       end
     end
     
-    return nil, nil
+    return nil, nil, nil
   end
 
 
@@ -3124,20 +3267,19 @@ do -- AI_A2G_DISPATCHER
     if IsBai == true then
     
       -- First, count the active defenders, engaging the DetectedItem.
-      local DefenderCount = self:CountDefendersEngaged( DetectedItem )
+      local DefendersTotal, DefendersEngaged, DefendersMissing = self:CountDefendersEngaged( DetectedItem )
   
-      local DefendersMissing = AttackerCount - DefenderCount
-      self:F( { AttackerCount = AttackerCount, DefenderCount = DefenderCount, DefendersMissing = DefendersMissing } )
+      self:F( { AttackerCount = AttackerCount, DefendersTotal = DefendersTotal, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing } )
   
-      local DefenderGroups = self:CountDefenders( DetectedItem, DefenderCount, "BAI" )
+      local DefenderGroups = self:CountDefenders( DetectedItem, DefendersEngaged, "BAI" )
   
       if DetectedItem.IsDetected == true then
         
-        return DefendersMissing, DefenderGroups
+        return DefendersTotal, DefendersEngaged, DefendersMissing, DefenderGroups
       end
     end
     
-    return nil, nil
+    return nil, nil, nil
   end
 
 
@@ -3186,6 +3328,8 @@ do -- AI_A2G_DISPATCHER
     local DefenderGroupCount = 0
     local Delay = 0 -- We need to implement a delay for each action because the spawning on airbases get confused if done too quick.
 
+    local DefendersTotal = 0
+
     -- Now that all obsolete tasks are removed, loop through the detected targets.
     for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
     
@@ -3229,28 +3373,28 @@ do -- AI_A2G_DISPATCHER
       
       if DefenseCoordinate then
         do 
-          local DefendersMissing, Friendlies = self:Evaluate_SEAD( DetectedItem ) -- Returns a SET_UNIT with the SEAD targets to be engaged...
+          local DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies = self:Evaluate_SEAD( DetectedItem ) -- Returns a SET_UNIT with the SEAD targets to be engaged...
           if DefendersMissing and DefendersMissing > 0 then
-            self:F( { SeadGroups = Friendlies } )
-            self:__Defend( Delay, DetectedItem, DefendersMissing, Friendlies, "SEAD", DefenseCoordinate )
+            self:F( { DefendersTotal = DefendersTotal, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing } )
+            self:Defend( DetectedItem, DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies, "SEAD", DefenseCoordinate )
             Delay = Delay + 1
           end
         end
   
         do 
-          local DefendersMissing, Friendlies = self:Evaluate_CAS( DetectedItem ) -- Returns a SET_UNIT with the CAS targets to be engaged...
+          local DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies = self:Evaluate_CAS( DetectedItem ) -- Returns a SET_UNIT with the CAS targets to be engaged...
           if DefendersMissing and DefendersMissing > 0 then
-            self:F( { CasGroups = Friendlies } )
-            self:__Defend( Delay, DetectedItem, DefendersMissing, Friendlies, "CAS", DefenseCoordinate )
+            self:F( { DefendersTotal = DefendersTotal, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing } )
+            self:Defend( DetectedItem, DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies, "CAS", DefenseCoordinate )
             Delay = Delay + 1
           end
         end
   
         do 
-          local DefendersMissing, Friendlies = self:Evaluate_BAI( DetectedItem ) -- Returns a SET_UNIT with the CAS targets to be engaged...
+          local DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies = self:Evaluate_BAI( DetectedItem ) -- Returns a SET_UNIT with the CAS targets to be engaged...
           if DefendersMissing and DefendersMissing > 0 then
-            self:F( { BaiGroups = Friendlies } )
-            self:__Defend( Delay, DetectedItem, DefendersMissing, Friendlies, "BAI", DefenseCoordinate )
+            self:F( { DefendersTotal = DefendersTotal, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing } )
+            self:Defend( DetectedItem, DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies, "BAI", DefenseCoordinate )
             Delay = Delay + 1
           end
         end
