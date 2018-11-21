@@ -58,11 +58,11 @@
 -- @field #AIRBOSS.Checkpoint Wake Right behind the carrier.
 -- @field #AIRBOSS.Checkpoint Groove In the groove checkpoint.
 -- @field #AIRBOSS.Checkpoint Trap Landing checkpoint.
--- @field #AIRBOSS.Checkpoint C3Descent4k Case III descent at 4000 ft/min right after leaving holding pattern.
--- @field #AIRBOSS.Checkpoint C3Descent2k Case III descent at 2000 ft/min at 5000 ft plattform.
--- @field #AIRBOSS.Checkpoint C3DirtyUp Case III dirty up and on speed position at 1200 ft and 10-12 NM from the carrier.
+-- @field #AIRBOSS.Checkpoint C3Descent4k Case II/III descent at 4000 ft/min right after leaving holding pattern.
+-- @field #AIRBOSS.Checkpoint C3Descent2k Case II/III descent at 2000 ft/min at 5000 ft plattform.
+-- @field #AIRBOSS.Checkpoint C3DirtyUp Case II/III dirty up and on speed position at 1200 ft and 10-12 NM from the carrier.
 -- @field #AIRBOSS.Checkpoint C3BullsEye Case III intercept glideslope and follow ICLS "bullseye".
--- @field #number case Recovery case I or III in progress.
+-- @field #number case Recovery case I, II or III in progress.
 -- @field #table flights List of all flights in the CCA.
 -- @field #table Qmarshal Queue of marshalling aircraft groups.
 -- @field #table Qpattern Queue of aircraft groups in the landing pattern.
@@ -122,6 +122,7 @@ AIRBOSS = {
   flights      =  {},
   Qpattern     =  {},
   Qmarshal     =  {},
+  Nmaxpattern  = nil,
   rescuehelo   = nil,
   tanker       = nil,
   warehouse    = nil,
@@ -132,15 +133,18 @@ AIRBOSS = {
 -- @type AIRBOSS.AircraftPlayer
 -- @field #string AV8B AV-8B Night Harrier.
 -- @field #string HORNET F/A-18C Lot 20 Hornet.
+-- @field #string A4EC Community A-4E-C mod.
 AIRBOSS.AircraftPlayer={
   AV8B="AV8BNA",
   HORNET="FA-18C_hornet",
+  A4EC="A-4E-C", --TODO: Correct string?
 }
 
 --- Aircraft types capable of landing on carrier (human+AI).
 -- @type AIRBOSS.AircraftCarrier
 -- @field #string AV8B AV-8B Night Harrier.
 -- @field #string HORNET F/A-18C Lot 20 Hornet.
+-- @field #string A4EC Community A-4E-C mod.
 -- @field #string S3B Lockheed S-3B Viking.
 -- @field #string S3BTANKER Lockheed S-3B Viking tanker.
 -- @field #string E2D Grumman E-2D Hawkeye AWACS.
@@ -149,14 +153,13 @@ AIRBOSS.AircraftPlayer={
 AIRBOSS.AircraftCarrier={
   AV8B="AV8BNA",
   HORNET="FA-18C_hornet",
+  A4EC="A-4E-C", --TODO: Correct string?
   S3B="S-3B",
   S3BTANKER="S-3B Tanker",
   E2D="E-2C",
   FA18C="F/A-18C",
   F14A="F-14A",
-  --TODO: Add A4-E-C
 }
-
 
 --- Carrier types.
 -- @type AIRBOSS.CarrierType
@@ -181,6 +184,13 @@ AIRBOSS.CarrierType={
 -- @field #number wire3 Distance in meters from carrier position to third wire.
 -- @field #number wire4 Distance in meters from carrier position to fourth wire.
 
+--- Aircraft Parameters.
+-- @type AIRBOSS.AircraftParameters
+-- @field #number AoA Onspeed Angle of Attack.
+-- @field #number Dboat Ideal distance to the carrier.
+-- @field #number 
+
+
 --- Pattern steps.
 -- @type AIRBOSS.PatternStep
 AIRBOSS.PatternStep={
@@ -188,8 +198,8 @@ AIRBOSS.PatternStep={
   COMMENCING="Commencing",
   HOLDING="Holding",
   DESCENT4K="Descent 4000 ft/min",
-  DESCENT2K="Descent 2000 ft/min",
-  DIRTYUP="Leven and Dirty Up",
+  DESCENT2K="Platform",
+  DIRTYUP="Level out and Dirty Up",
   BULLSEYE="Follow Bullseye",
   INITIAL="Initial",
   UPWIND="Upwind",
@@ -416,6 +426,7 @@ AIRBOSS.GroovePos={
 -- @field #AIRBOSS.PlayerData player Player data for human pilots.
 -- @field #string actype Aircraft type name.
 -- @field #table onboardnumbers Onboard numbers of aircraft in the group.
+-- @field #number case Recovery case of flight.
 -- @field #table section Other human flight groups belonging to this flight. This flight is the lead.
 
 --- Main radio menu.
@@ -435,12 +446,12 @@ AIRBOSS.version="0.3.1"
 -- TODO: Add radio transmission queue for LSO and airboss.
 -- TODO: Get correct wire when trapped.
 -- TODO: Add radio check (LSO, AIRBOSS) to F10 radio menu.
--- TODO: Monitor holding of players/AI in zoneHolding.
+-- DONE: Monitor holding of players/AI in zoneHolding.
 -- TODO: Right pattern step after bolter/wo/patternWO?
 -- TODO: Handle crash event. Delete A/C from queue, send rescue helo, stop carrier?
 -- TODO: Add aircraft numbers in queue to carrier info F10 radio output.
--- TODO: Transmission via radio.
--- TODO: Get board numbers.
+-- DONE: Transmission via radio.
+-- DONE: Get board numbers.
 -- TODO: Get fuel state in pounds.
 -- TODO: Add user functions.
 -- TODO: Generalize parameters for other carriers.
@@ -609,7 +620,7 @@ function AIRBOSS:New(carriername, alias)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- User functions
+-- USER API Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Set carrier controlled area (CCA).
@@ -846,7 +857,7 @@ function AIRBOSS:onafterStatus(From, Event, To)
   if time-self.Tqueue>30 then
 
     local text=string.format("Status %s.", self:GetState())
-    self:I(self.lid..text)  
+    self:I(self.lid..text)
   
     -- Scan carrier zone for new aircraft.
     self:_ScanCarrierZone()
@@ -994,10 +1005,6 @@ function AIRBOSS:_InitStennis()
   self.C3Descent4k.LimitXmax=-UTILS.NMToMeters(20) --TODO: better rho dist. decrease descent 20 2000 ft/min at 5000 ft alt and user rad alt.
   self.C3Descent4k.LimitZmin=nil
   self.C3Descent4k.LimitZmax=nil
-  -- TODO: alt, AoA are more aircraft functions rather than carrier
-  self.C3Descent4k.Altitude=nil --UTILS.FeetToMeters(5000)
-  self.C3Descent4k.AoA=nil
-  self.C3Descent4k.Distance=nil
 
   -- 2k descent from 5k platform to 1200 dirty up level flight.
   self.C3Descent2k.name="2k Descent"
@@ -1009,9 +1016,6 @@ function AIRBOSS:_InitStennis()
   self.C3Descent2k.LimitXmax=-UTILS.NMToMeters(12) --TODO: better rho dist! now switch to dirty up level flight 12 NM.
   self.C3Descent2k.LimitZmin=nil
   self.C3Descent2k.LimitZmax=nil 
-  self.C3Descent2k.Altitude=UTILS.FeetToMeters(5000)
-  self.C3Descent2k.AoA=nil
-  self.C3Descent2k.Distance=-UTILS.NMToMeters(20)
   
   -- Level out at 1200 ft and dirty up.
   self.C3DirtyUp.name="Dirty Up"
@@ -1023,23 +1027,17 @@ function AIRBOSS:_InitStennis()
   self.C3DirtyUp.LimitXmax=-UTILS.NMToMeters(3) --TODO: better rho dist! Intercept glideslope and follow bullseye.
   self.C3DirtyUp.LimitZmin=nil
   self.C3DirtyUp.LimitZmax=nil 
-  self.C3DirtyUp.Altitude=UTILS.FeetToMeters(1200)
-  self.C3DirtyUp.AoA=nil
-  self.C3DirtyUp.Distance=-UTILS.NMToMeters(12)
   
   -- Intercept glide slope and follow bullseye.
-  self.C3DirtyUp.name="Bullseye"
-  self.C3DirtyUp.Xmin=-UTILS.NMToMeters(4)
-  self.C3DirtyUp.Xmax=nil
-  self.C3DirtyUp.Zmin=-UTILS.NMToMeters(30)
-  self.C3DirtyUp.Zmax= UTILS.NMToMeters(30)
-  self.C3DirtyUp.LimitXmin=nil
-  self.C3DirtyUp.LimitXmax=-UTILS.NMToMeters(1) --TODO: better rho dist! Call the ball.
-  self.C3DirtyUp.LimitZmin=nil
+  self.Bullseye.name="Bullseye"
+  self.Bullseye.Xmin=-UTILS.NMToMeters(4)
+  self.Bullseye.Xmax=nil
+  self.Bullseye.Zmin=-UTILS.NMToMeters(30)
+  self.Bullseye.Zmax= UTILS.NMToMeters(30)
+  self.Bullseye.LimitXmin=nil
+  self.Bullseye.LimitXmax=-UTILS.NMToMeters(1) --TODO: better rho dist! Call the ball.
+  self.Bullseye.LimitZmin=nil
   self.C3DirtyUp.LimitZmax=nil 
-  self.C3DirtyUp.Altitude=UTILS.FeetToMeters(1200)
-  self.C3DirtyUp.AoA=nil
-  self.C3DirtyUp.Distance=-UTILS.NMToMeters(3)  
  
   -- Upwind leg
   self.Upwind.name="Upwind"
@@ -1051,9 +1049,6 @@ function AIRBOSS:_InitStennis()
   self.Upwind.LimitXmax=nil
   self.Upwind.LimitZmin=0
   self.Upwind.LimitZmax=nil
-  self.Upwind.Altitude=UTILS.FeetToMeters(800)
-  self.Upwind.AoA=8.1
-  self.Upwind.Distance=nil
 
   -- Early break
   self.BreakEarly.name="Early Break"
@@ -1065,9 +1060,6 @@ function AIRBOSS:_InitStennis()
   self.BreakEarly.LimitXmax=nil
   self.BreakEarly.LimitZmin=-370   -- 0.2 NM port of carrier
   self.BreakEarly.LimitZmax=nil
-  self.BreakEarly.Altitude=UTILS.FeetToMeters(800)
-  self.BreakEarly.AoA=8.1
-  self.BreakEarly.Distance=nil
   
   -- Late break
   self.BreakLate.name="Late Break"
@@ -1079,9 +1071,6 @@ function AIRBOSS:_InitStennis()
   self.BreakLate.LimitXmax=nil
   self.BreakLate.LimitZmin=-1470  --0.8 NM
   self.BreakLate.LimitZmax=nil
-  self.BreakLate.Altitude=UTILS.FeetToMeters(800)
-  self.BreakLate.AoA=8.1
-  self.BreakLate.Distance=nil  
   
   -- Abeam position
   self.Abeam.name="Abeam Position"
@@ -1093,9 +1082,6 @@ function AIRBOSS:_InitStennis()
   self.Abeam.LimitXmax=nil
   self.Abeam.LimitZmin=nil
   self.Abeam.LimitZmax=nil
-  self.Abeam.Altitude=UTILS.FeetToMeters(600)  
-  self.Abeam.AoA=8.1
-  self.Abeam.Distance=UTILS.NMToMeters(1.2)
 
   -- At the ninety
   self.Ninety.name="Ninety"
@@ -1107,9 +1093,6 @@ function AIRBOSS:_InitStennis()
   self.Ninety.LimitXmax=nil
   self.Ninety.LimitZmin=nil
   self.Ninety.LimitZmax=-1111
-  self.Ninety.Altitude=UTILS.FeetToMeters(500)
-  self.Ninety.AoA=8.1
-  self.Ninety.Distance=nil
 
   -- Wake position
   self.Wake.name="Wake"
@@ -1121,9 +1104,6 @@ function AIRBOSS:_InitStennis()
   self.Wake.LimitXmax=nil
   self.Wake.LimitZmin=0
   self.Wake.LimitZmax=nil
-  self.Wake.Altitude=UTILS.FeetToMeters(370)
-  self.Wake.AoA=8.1
-  self.Wake.Distance=nil
 
   -- In the groove
   self.Groove.name="Groove"
@@ -1135,9 +1115,6 @@ function AIRBOSS:_InitStennis()
   self.Groove.LimitXmax=nil
   self.Groove.LimitZmin=nil
   self.Groove.LimitZmax=nil
-  self.Groove.Altitude=UTILS.FeetToMeters(300)
-  self.Groove.AoA=8.1
-  self.Groove.Distance=nil
   
   -- Landing trap
   self.Trap.name="Trap"
@@ -1149,9 +1126,130 @@ function AIRBOSS:_InitStennis()
   self.Trap.LimitXmax=nil
   self.Trap.LimitZmin=nil
   self.Trap.LimitZmax=nil
-  self.Trap.Altitude=nil
-  self.Trap.AoA=nil
-  self.Trap.Distance=nil 
+
+end
+
+--- Get optimal aircraft flight parameters at checkpoint.
+-- @param #AIRBOSS.PlayerData playerData Player data table.
+-- @param #string step Pattern step.
+-- @return #number Altitude in meters or nil.
+-- @return #number Angle of Attack or nil.
+-- @return #number Distance to carrier in meters or nil.
+-- @return #number Speed in m/s or nil.
+function AIRBOSS:_GetAircraftParameters(playerData, step)
+
+  step=step or playerData.step
+  local hornet=playerData.actype==AIRBOSS.AircraftCarrier.HORNET
+  local skyhawk=playerData.actype==AIRBOSS.AircraftCarrier.A4EC
+  
+  local dist
+  local alt
+  local aoa
+  local speed
+  
+  if step==AIRBOSS.PatternStep.DESCENT4K then
+  
+    speed=UTILS.KnotsToMps(250)
+  
+  elseif step==AIRBOSS.PatternStep.DESCENT2K then
+  
+   alt=UTILS.FeetToMeters(5000)
+   
+   dist=UTILS.NMToMeters(20)
+   
+   speed=UTILS.KnotsToMps(250)
+  
+  elseif step==AIRBOSS.PatternStep.DIRTYUP then
+  
+    alt=UTILS.FeetToMeters(1200)
+    
+    dist=UTILS.NMToMeters(12)
+    
+    speed=UTILS.KnotsToMps(250)
+  
+  elseif step==AIRBOSS.PatternStep.BULLSEYE then
+
+    alt=UTILS.FeetToMeters(1200)
+    
+    dist=-UTILS.NMToMeters(3)  
+  
+  elseif step==AIRBOSS.PatternStep.INITIAL then
+
+    if hornet then     
+      alt=UTILS.FeetToMeters(800)
+      speed=UTILS.KnotsToMps(350)
+    elseif skyhawk then
+      alt=UTILS.FeetToMeters(600)
+      speed=UTILS.KnotsToMps(250)
+    end
+    
+  elseif step==AIRBOSS.PatternStep.UPWIND then
+
+    if hornet then     
+      alt=UTILS.FeetToMeters(800)
+    elseif skyhawk then
+      alt=UTILS.FeetToMeters(600)  
+    end  
+  
+  elseif step==AIRBOSS.PatternStep.EARLYBREAK then
+
+    if hornet then     
+      alt=UTILS.FeetToMeters(800)
+    elseif skyhawk then
+      alt=UTILS.FeetToMeters(600)  
+    end  
+    
+  elseif step==AIRBOSS.PatternStep.LATEBREAK then
+
+    if hornet then     
+      alt=UTILS.FeetToMeters(800)
+    elseif skyhawk then
+      alt=UTILS.FeetToMeters(600)  
+    end  
+    
+  elseif step==AIRBOSS.PatternStep.ABEAM then
+  
+    if hornet then     
+      alt=UTILS.FeetToMeters(600)
+    elseif skyhawk then
+      alt=UTILS.FeetToMeters(500)  
+    end
+    
+    aoa=8.1
+    
+    dist=UTILS.NMToMeters(1.2)
+    
+  elseif step==AIRBOSS.PatternStep.NINETY then
+
+    if hornet then     
+      alt=UTILS.FeetToMeters(500)
+    elseif skyhawk then
+      alt=UTILS.FeetToMeters(500)  
+    end
+    
+    aoa=8.1  
+  
+  elseif step==AIRBOSS.PatternStep.WAKE then
+  
+    if hornet then     
+      alt=UTILS.FeetToMeters(370)
+    elseif skyhawk then
+      alt=UTILS.FeetToMeters(370) --?
+    end
+    
+    aoa=8.1
+    
+  elseif step==AIRBOSS.PatternStep.FINAL then
+
+    if hornet then     
+      alt=UTILS.FeetToMeters(300)
+    elseif skyhawk then
+      alt=UTILS.FeetToMeters(300) --?  
+    end
+    
+    aoa=8.1
+  
+  end
 
 end
 
@@ -1162,19 +1260,17 @@ end
 --- Check marshal and pattern queues.
 -- @param #AIRBOSS self
 function AIRBOSS:_CheckQueue()
-
-  local npattern=0
-  local nmarshal=#self.Qmarshal
-  
-  for _,_flight in pairs(self.Qpattern) do
-    local flight=_flight --#AIRBOSS.Flightitem
-    npattern=npattern+flight.nunits
-  end
   
   -- Print queues.
   self:_PrintQueue(self.flights,  "All Flights")
   self:_PrintQueue(self.Qmarshal, "Marshal")
   self:_PrintQueue(self.Qpattern, "Pattern")
+  
+  -- Get number of aircraft units(!) currently in pattern.
+  local _,npattern=self:_GetQueueInfo(self.Qpattern)
+  
+  -- Get number of flight groups(!) in marshal pattern.
+  local nmarshal=#self.Qmarshal
   
   -- Check if there are flights in marshal strack and if the pattern is free.
   if nmarshal>0 and npattern<1 then
@@ -1227,10 +1323,8 @@ end
 -- @param #string name Queue name.
 function AIRBOSS:_PrintQueue(queue, name)
 
-  local nqueue=#queue
-
   local text=string.format("%s Queue:", name)
-  if nqueue==0 then
+  if #queue==0 then
     text=text.." empty."
   else
     for i,_flight in pairs(queue) do
@@ -1239,8 +1333,10 @@ function AIRBOSS:_PrintQueue(queue, name)
       local stack=flight.flag:Get()
       local alt=UTILS.MetersToFeet(self:_GetMarshalAltitude(stack))
       local fuel=flight.group:GetFuelMin()*100
+      local case=flight.case
       local ai=tostring(flight.ai)
-      text=text..string.format("\n[%d] %s*%d: alt=%d ft, stack(flag)=%d, time=%s, fuel=%d, ai=%s", i, flight.groupname, flight.nunits, alt, stack, clock, fuel, ai)
+      text=text..string.format("\n[%d] %s*%d: stackalt=%d ft, flag=%d, case=%d, time=%s, fuel=%d, ai=%s",
+                                 i, flight.groupname, flight.nunits, alt, stack, case, clock, fuel, ai)
     end
   end
   self:I(self.lid..text)
@@ -1407,6 +1503,7 @@ function AIRBOSS:_CreateFlightGroup(group)
   flight.actype=group:GetTypeName()
   flight.onboardnumbers=self:_GetOnboardNumbers(group)
   flight.section={}
+  flight.case=self.case
   
   if human then
     
@@ -1443,29 +1540,34 @@ function AIRBOSS:_RemoveFlightGroup(group)
   end
 end
 
+
+
 --- Orbit at a specified position at a specified alititude with a specified speed.
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data.
 -- @param #AIRBOSS.Flightitem flight Flight group.
 function AIRBOSS:_MarshalPlayer(playerData, flight)
-
-  -- Number of full marshal stacks.
-  local nstacks=#self.Qmarshal
   
   -- Check if flight is known to the airboss already.
   if playerData and flight then
   
+    -- Number of flight groups in stack.
+    local ngroups,nunits=self:_GetQueueInfo(self.Qmarshal, self.case)
+    
+    -- Assign next free stack to this flight.
+    local mystack=ngroups+1
+    
     -- Add group to marshal stack.
-    self:_AddMarshallGroup(flight, nstacks+1)
+    self:_AddMarshallGroup(flight, mystack)
     
     -- Set step to holding.
     playerData.step=AIRBOSS.PatternStep.HOLDING
     
-    -- Set values for all flights in section.
+    -- Set same stack for all flights in section.
     for _,_flight in pairs(flight.section) do
       local flight=_flight --#AIRBOSS.Flightitem
       flight.player.step=AIRBOSS.PatternStep.HOLDING
-      flight.flag:Set(nstacks+1)
+      flight.flag:Set(mystack)
     end
     
   else
@@ -1553,15 +1655,19 @@ end
 --- Get marshal altitude and position.
 -- @param #AIRBOSS self
 -- @param #number stack Assigned stack number. Counting starts at one, i.e. stack=1 is the first stack.
+-- @param #number case Recovery case. Default is self.case.
 -- @return #number Holding altitude in meters.
 -- @return Core.Point#COORDINATE Holding position coordinate.
 -- @return Core.Point#COORDINATE Second holding position coordinate of racetrack pattern for CASE II/III recoveries.
-function AIRBOSS:_GetMarshalAltitude(stack)
+function AIRBOSS:_GetMarshalAltitude(stack, case)
 
   -- Stack <= 0.
   if stack<=0 then
     return 0,nil,nil
   end
+  
+  -- Recovery case.
+  case=case or self.case
 
   -- Carrier position.
   local Carrier=self:GetCoordinate()
@@ -1573,7 +1679,7 @@ function AIRBOSS:_GetMarshalAltitude(stack)
   local p1=nil  --Core.Point#COORDINATE
   local p2=nil  --Core.Point#COORDINATE
   
-  if self.case==1 then
+  if case==1 then
     -- CASE I: Holding at 2000 ft on a circular pattern port of the carrier. Interval +1000 ft for next stack.
     angels0=2
     Dist=UTILS.NMToMeters(2.5)
@@ -1592,12 +1698,32 @@ function AIRBOSS:_GetMarshalAltitude(stack)
   return altitude, p1, p2
 end
 
+--- Get next free stack.
+-- @param #AIRBOSS self
+-- @param #number case Recovery case
+-- @return #number Smalest (lowest) free stack.
+function AIRBOSS:_GetFreeStack(case)
+  
+  case=case or self.case
+  
+  local stack
+  if case==1 then
+    stack=self:_GetQueueInfo(self.Qmarshal, 1)
+  else
+    stack=self:_GetQueueInfo(self.Qmarshal, 23)
+  end
+  
+  return stack+1
+end
+
+
 --- Get number of groups and units in queue.
 -- @param #AIRBOSS self
 -- @param #table queue The queue. Can me all, marshal or pattern.
--- @return #number Number of aircraft.
--- @return #number Number of flight groups.
-function AIRBOSS:_GetQueueInfo(queue)
+-- @param #number case (Optional) Count only flights which are in a specific recovery case.
+-- @return #number Total Number of flight groups in queue.
+-- @return #number Total number of aircraft in queue.
+function AIRBOSS:_GetQueueInfo(queue, case)
 
   local ngroup=0
   local nunits=0
@@ -1605,8 +1731,17 @@ function AIRBOSS:_GetQueueInfo(queue)
   for _,_flight in pairs(queue) do
     local flight=_flight --#AIRBOSS.Flightitem
     
-    ngroup=ngroup+1
-    nunits=nunits+flight.nunits
+    if case then
+    
+      if flight.case==case or (case==23 and (flight.case==2 or flight.case==3)) then
+        ngroup=ngroup+1
+        nunits=nunits+flight.nunits          
+      end
+      
+    else
+      ngroup=ngroup+1
+      nunits=nunits+flight.nunits    
+    end
     
   end
 
@@ -1622,6 +1757,9 @@ function AIRBOSS:_AddMarshallGroup(flight, flagvalue)
   -- Set flag value. This corresponds to the stack number which starts at 1.
   flight.flag:Set(flagvalue)
   
+  -- Set recovery case.
+  flight.case=self.case
+  
   -- Pressure.
   local P=UTILS.hPa2inHg(self:GetCoordinate():GetPressure())
   
@@ -1629,12 +1767,12 @@ function AIRBOSS:_AddMarshallGroup(flight, flagvalue)
   
   -- TODO: Get correct board number if possible?
   local boardnumber=tostring(flight.onboardnumbers[unitname])
-  local alt=UTILS.MetersToFeet(self:_GetMarshalAltitude(flagvalue))
+  local alt=UTILS.MetersToFeet(self:_GetMarshalAltitude(flagvalue, flight.case))
   local brc=self:_BaseRecoveryCourse()
   
   -- Marshal message.
   -- TODO: Get charlie time estimate.
-  local text=string.format("%s, Case %d, BRC is %03d, hold at %d. Expected Charlie Time XX.\n", boardnumber, self.case, brc, alt)
+  local text=string.format("%s, Case %d, BRC is %03d, hold at %d. Expected Charlie Time XX.\n", boardnumber, flight.case, brc, alt)
   text=text..string.format("Altimeter %.2f. Report see me.", P)
   MESSAGE:New(text, 30):ToAll()
    
@@ -1647,16 +1785,16 @@ end
 -- @param #AIRBOSS self
 function AIRBOSS:_CheckCollapseMarshalStack()
 
-  -- First flight to enter the landing pattern.
+  -- Next flight in line.
   local flight=self.Qmarshal[1]  --#AIRBOSS.Flightitem
 
   -- TODO: better message.
-  local text=string.format("%s, you are cleared for Case %d recovery pattern!", flight.groupname, self.case)
+  local text=string.format("%s, you are cleared for Case %d recovery pattern!", flight.groupname, flight.case)
 
   -- Check if flight is AI or human. If AI, we collapse the stack and commence. If human, we suggest to commence.
   if flight.ai then
     -- Collapse stack and send AI to pattern.
-    self:_CollapseMarshalStack()
+    self:_CollapseMarshalStack(flight.case)
   else
     -- TODO only if skil is not TOPGUN
     text=text..string.format("\nUse F10 radio menu \"Commence!\" command when you are ready!")
@@ -1668,34 +1806,49 @@ end
 
 --- Collapse marshal stack.
 -- @param #AIRBOSS self
-function AIRBOSS:_CollapseMarshalStack()
+-- @param #number case Recovery case.
+function AIRBOSS:_CollapseMarshalStack(case)
 
   -- Decrease flag values of all flight groups in marshal stack.
   for _,_flight in pairs(self.Qmarshal) do
     local flight=_flight --#AIRBOSS.Flightitem
     
-    -- Get current flag/stack value.
-    local flagvalue=flight.flag:Get()
+    -- Only collaps stack of which the flight left. CASE II/III stack is the same.
+    if (case==1 and flight.case==1) or (case>1 and flight.case>1) then
     
-    -- Decrease by one.
-    flight.flag:Set(flagvalue-1)
-    
-    -- Also decrease flag for section members of flight.
-    for _,_sec in pairs(flight.section) do
-      local sec=_sec --#AIRBOSS.Flightitem
-      sec.flag:Set(flagvalue-1)
-    end
-    
+      -- Get current flag/stack value.
+      local stack=flight.flag:Get()
+      
+      -- Decrease by one.
+      flight.flag:Set(stack-1)
+      
+      -- Inform players.
+      if flight.player then
+        local alt=UTILS.MetersToFeet(self:_GetMarshalAltitude(stack-1,case))
+        local text=string.format("descent to next lower stack at %d ft", alt)
+        self:MessageToPlayer(flight.player, text, "MARSHAL", nil, 10)
+      end
+      
+      -- Also decrease flag for section members of flight.
+      for _,_sec in pairs(flight.section) do
+        local sec=_sec --#AIRBOSS.Flightitem
+        sec.flag:Set(stack-1)
+      end
+      
+    end    
   end
   
+  --[[
   -- Number of marshal flight groups.
   local nmarshal=#self.Qmarshal
   
   -- TODO: collapse marshal stack only from N to N-x. For example, when a group in the stack leaves (e.g. for refueling).
   for i=nmarshal,1,-1 do
     local flight=self.Qmarshal[i] --#AIRBOSS.Flightitem
+    
     --flight.
   end
+  ]]
   
   -- First flight to enter the landing pattern.
   local flight=self.Qmarshal[1]  --#AIRBOSS.Flightitem
@@ -2494,7 +2647,7 @@ function AIRBOSS:_BullsEye(playerData)
     return
   end
   
-  -- Check if we are in front of the boat (diffX > 0).
+  -- Check that we reached the position.
   if self:_CheckLimits(X, Z, self.C3BullsEye) then
   
     -- Get altitiude.
@@ -2532,8 +2685,7 @@ function AIRBOSS:_Upwind(playerData)
   -- Check if we are in front of the boat (diffX > 0).
   if self:_CheckLimits(X, Z, self.Upwind) then
   
-    -- Get altitiude.
-    local altitude=playerData.unit:GetAltitude()
+    local alt, aoa, dist, speed=self:_GetAircraftParameters(playerData)
   
     -- Get altitude.
     local hint, debrief=self:_AltitudeCheck(playerData, self.Upwind, altitude)
@@ -2653,18 +2805,16 @@ function AIRBOSS:_Abeam(playerData)
   -- Check nest step threshold.  
   if self:_CheckLimits(X, Z, self.Abeam) then
 
-    -- Get AoA and altitude.
-    local aoa = playerData.unit:GetAoA()
-    local alt = playerData.unit:GetAltitude()
+    local alt, aoa, dist, speed=self:_GetAircraftParameters(playerData)
     
     -- Grade Altitude.
-    local hintAlt, debriefAlt=self:_AltitudeCheck(playerData, self.Abeam, alt)
+    local hintAlt, debriefAlt=self:_AltitudeCheck(playerData, alt)
     
     -- Grade AoA.
-    local hintAoA, debriefAoA=self:_AoACheck(playerData, self.Abeam, aoa)    
+    local hintAoA, debriefAoA=self:_AoACheck(playerData, aoa)    
     
     -- Grade distance to carrier.
-    local hintDist, debriefDist=self:_DistanceCheck(playerData, self.Abeam, math.abs(Z))
+    local hintDist, debriefDist=self:_DistanceCheck(playerData, dist) --math.abs(Z)
     
     -- Compile full hint.
     local hint=string.format("%s\n%s\n%s", hintAlt, hintAoA, hintDist)
@@ -2701,15 +2851,13 @@ function AIRBOSS:_Ninety(playerData)
   -- At the 90, i.e. 90 degrees between player heading and BRC of carrier.
   if relheading<=90 then
   
-    -- Get altitude and aoa.
-    local alt=playerData.unit:GetAltitude()
-    local aoa=playerData.unit:GetAoA()
+    local alt, aoa, dist, speed=self:_GetAircraftParameters(playerData)
     
     -- Grade altitude.
-    local hintAlt, debriefAlt=self:_AltitudeCheck(playerData, self.Ninety, alt)
+    local hintAlt, debriefAlt=self:_AltitudeCheck(playerData, alt)
     
     -- Grade AoA.
-    local hintAoA, debriefAoA=self:_AoACheck(playerData, self.Ninety, aoa)
+    local hintAoA, debriefAoA=self:_AoACheck(playerData, aoa)
     
     -- Compile full hint.
     local hint=string.format("%s\n%s", hintAlt, hintAoA)
@@ -2747,16 +2895,14 @@ function AIRBOSS:_Wake(playerData)
   
   -- Right behind the wake of the carrier dZ>0.
   if self:_CheckLimits(X, Z, self.Wake) then
-  
-    -- Get player altitude and AoA.
-    local alt=playerData.unit:GetAltitude()
-    local aoa=playerData.unit:GetAoA()
+      
+    local alt, aoa, dist, speed=self:_GetAircraftParameters(playerData)
   
     -- Grade altitude.
-    local hintAlt, debriefAlt=self:_AltitudeCheck(playerData, self.Wake, alt)
+    local hintAlt, debriefAlt=self:_AltitudeCheck(playerData, alt)
     
     -- Grade AoA.
-    local hintAoA, debriefAoA=self:_AoACheck(playerData, self.Wake, aoa)
+    local hintAoA, debriefAoA=self:_AoACheck(playerData, aoa)
 
     -- Compile full hint.
     local hint=string.format("%s\n%s", hintAlt, hintAoA)
@@ -2793,15 +2939,13 @@ function AIRBOSS:_Final(playerData)
   
   if math.abs(lineup)<5 and math.abs(relhead)<10 then
 
-    -- Get player altitude and AoA.
-    local alt = playerData.unit:GetAltitude()
-    local aoa = playerData.unit:GetAoA()
+    local alt, aoa, dist, speed=self:_GetAircraftParameters(playerData)
 
     -- Grade altitude.
-    local hintAlt, debriefAlt=self:_AltitudeCheck(playerData, self.Groove, alt)
+    local hintAlt, debriefAlt=self:_AltitudeCheck(playerData, alt)
 
     -- AoA feed back 
-    local hintAoA, debriefAoA=self:_AoACheck(playerData, self.Groove, aoa)
+    local hintAoA, debriefAoA=self:_AoACheck(playerData, aoa)
     
     -- Compile full hint.
     local hint=string.format("%s\n%s", hintAlt, hintAoA)
@@ -3765,16 +3909,17 @@ function AIRBOSS:_GetGoodBadScore(playerData)
   return lowscore, badscore
 end
 
+
+
 --- Evaluate player's altitude at checkpoint.
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data table.
--- @param #AIRBOSS.Checkpoint checkpoint Checkpoint.
--- @param #number altitude Player's current altitude in meters.
+-- @param #number altopt Optimal alitude in meters.
 -- @return #string Feedback text.
 -- @return #string Debriefing text.
-function AIRBOSS:_AltitudeCheck(playerData, checkpoint, altitude)
+function AIRBOSS:_AltitudeCheck(playerData, altopt)
 
-  if checkpoint.Altitude==nil then
+  if altopt==nil then
     return nil, nil
   end
 
@@ -3785,7 +3930,7 @@ function AIRBOSS:_AltitudeCheck(playerData, checkpoint, altitude)
   local lowscore, badscore=self:_GetGoodBadScore(playerData)
   
   -- Altitude error +-X%
-  local _error=(altitude-checkpoint.Altitude)/checkpoint.Altitude*100
+  local _error=(altitude-altopt)/altopt*100
   
   local hint
   if _error>badscore then
@@ -3818,21 +3963,23 @@ end
 --- Evaluate player's altitude at checkpoint.
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data table.
--- @param #AIRBOSS.Checkpoint checkpoint Checkpoint.
--- @param #number distance Player's current distance to the boat in meters.
+-- @param #number optdist Optimal distance in meters.
 -- @return #string Feedback message text.
 -- @return #string Debriefing text.
-function AIRBOSS:_DistanceCheck(playerData, checkpoint, distance)
+function AIRBOSS:_DistanceCheck(playerData, optdist)
 
-  if checkpoint.Distance==nil then
+  if optdist==nil then
     return nil, nil
   end
+  
+  -- Distance to carrier.
+  local distance=playerData.unit:GetCoodinate():Get2DDistance(self:GetCoordinate())
 
   -- Get relative score.
   local lowscore, badscore = self:_GetGoodBadScore(playerData)
   
   -- Altitude error +-X%
-  local _error=(distance-checkpoint.Distance)/checkpoint.Distance*100
+  local _error=(distance-optdist)/optdist*100
   
   local hint
   if _error>badscore then
@@ -3865,21 +4012,23 @@ end
 --- Score for correct AoA.
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data.
--- @param #AIRBOSS.Checkpoint checkpoint Checkpoint.
--- @param #number aoa Player's current Angle of attack.
+-- @param #number optaoa Optimal AoA.
 -- @return #string Feedback message text or easy and normal difficulty level or nil for hard.
 -- @return #string Debriefing text.
-function AIRBOSS:_AoACheck(playerData, checkpoint, aoa)
+function AIRBOSS:_AoACheck(playerData, optaoa)
 
-  if checkpoint.AoA==nil then
+  if optaoa==nil then
     return nil, nil
   end
 
   -- Get relative score.
   local lowscore, badscore = self:_GetGoodBadScore(playerData)
   
+  -- Player AoA
+  local aoa=playerData.unit:GetAoA()
+  
   -- Altitude error +-X%
-  local _error=(aoa-checkpoint.AoA)/checkpoint.AoA*100
+  local _error=(aoa-optaoa)/optaoa*100
 
   local hint
   if _error>badscore then --Slow
@@ -3924,21 +4073,6 @@ end
 function AIRBOSS:_Debrief(playerData)
   self:F("Debriefing")
 
-  -- Debriefing text.
-  local text=string.format("Debriefing:\n")
-  text=text..string.format("================================\n")
-  for _,_data in pairs(playerData.debrief) do
-    local step=_data.step
-    local comment=_data.hint
-    text=text..string.format("* %s:\n",step)
-    text=text..string.format("%s\n", comment)
-  end
-  
-  local text="Your detailed debriefing can now be seen in F10 radio menu."
-  
-  -- Send debrief message to player
-  self:_SendMessageToPlayer(text, 30, playerData, true, "Paddles")
-  
   -- LSO grade, points, and flight data analyis.
   local grade, points, analysis=self:_LSOgrade(playerData)
     
@@ -3951,8 +4085,9 @@ function AIRBOSS:_Debrief(playerData)
   table.insert(playerData.grades, mygrade)
   
   -- LSO grade message.
-  text=string.format("%s %.1f PT - %s", grade, points, analysis)
-  self:_SendMessageToPlayer(text, 10, playerData, true, "Paddles", 30)
+  local text=string.format("%s %.1f PT - %s", grade, points, analysis)
+  text=text..string.format("Your detailed debriefing can now be seen in F10 radio menu.")
+  self:MessageToPlayer(playerData,text, "LSO","" , 30, true)
 
   -- New approach.
   if playerData.boltered or playerData.waveoff or playerData.patternwo then
@@ -4068,11 +4203,11 @@ end
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data.
 -- @param #string message The message to send.
--- @param #string sender The person who sends the message.
--- @param #string receiver The person who receives the message.
--- @param #number duration Display message duration. Default 5 sec.
+-- @param #string sender The person who sends the message or nil.
+-- @param #string receiver The person who receives the message. Default player's onboard number. Set to \"\" for no receiver.
+-- @param #number duration Display message duration. Default 10 seconds.
 -- @param #boolean clear If true, clear screen from previous messages.
--- @param #number delay Delay in seconds, before the message is send.
+-- @param #number delay Delay in seconds, before the message is displayed.
 function AIRBOSS:MessageToPlayer(playerData, message, sender, receiver, duration, clear, delay)
 
   if playerData and message and message~="" then
@@ -4472,7 +4607,7 @@ function AIRBOSS:_RequestStraightIn(_unitName)
       -- Get flight group.
       local flight=self:_GetFlightFromGroupInQueue(playerData.group, self.flights)
 
-      local text      
+      local text
       if flight then
       
         -- Get stack value.
@@ -4484,7 +4619,7 @@ function AIRBOSS:_RequestStraightIn(_unitName)
         else
         
           -- Number of aircraft currently in pattern.
-          local npattern=self:_GetQueueInfo(self.Qpattern)        
+          local _,npattern=self:_GetQueueInfo(self.Qpattern)        
               
           -- TODO: set nmax for pattern. Should be ~6 but let's make this 4.
           if npattern>0 then  
@@ -4498,7 +4633,7 @@ function AIRBOSS:_RequestStraightIn(_unitName)
             playerData.step=AIRBOSS.PatternStep.COMMENCING
             
             -- Collaps marshal stack.
-            self:_CollapseMarshalStack()
+            self:_CollapseMarshalStack(flight.case)
           end
         
         end
