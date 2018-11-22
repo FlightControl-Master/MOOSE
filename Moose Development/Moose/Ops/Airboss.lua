@@ -73,7 +73,7 @@
 -- @field #table recoverytime List of time intervals when aircraft are recovered.
 -- @extends Core.Fsm#FSM
 
---- Practice Carrier Landings
+--- The boss!
 --
 -- ===
 --
@@ -81,7 +81,18 @@
 --
 -- # The AIRBOSS Concept
 --
--- bla bla
+-- On an aircraft carrier, the AIRBOSS is guy who is in charge!
+-- 
+-- # Recovery Cases
+-- 
+-- The AIRBOSS class supports all three commonly used recovery cases, i.e.
+--     * CASE I, which is for daytime and good weather
+--     * CASE II, for daytime but poor visibility conditions and
+--     * CASE III for nighttime recoveries.
+--     
+-- ## CASE I
+-- 
+-- When CASE I recovery is active, 
 --
 -- @field #AIRBOSS
 AIRBOSS = {
@@ -189,7 +200,6 @@ AIRBOSS.CarrierType={
 -- @type AIRBOSS.AircraftParameters
 -- @field #number AoA Onspeed Angle of Attack.
 -- @field #number Dboat Ideal distance to the carrier.
--- @field #number 
 
 
 --- Pattern steps.
@@ -436,23 +446,18 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.3.2"
+AIRBOSS.version="0.3.2w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: Set case II and III times. 
--- TODO: Get an _OK_ pass if long in groove. Possible other pattern wave offs as well?!
 -- TODO: Add radio transmission queue for LSO and airboss.
 -- TODO: Get correct wire when trapped.
 -- TODO: Add radio check (LSO, AIRBOSS) to F10 radio menu.
--- DONE: Monitor holding of players/AI in zoneHolding.
 -- TODO: Right pattern step after bolter/wo/patternWO?
 -- TODO: Handle crash event. Delete A/C from queue, send rescue helo, stop carrier?
--- TODO: Add aircraft numbers in queue to carrier info F10 radio output.
--- DONE: Transmission via radio.
--- DONE: Get board numbers.
 -- TODO: Get fuel state in pounds.
 -- TODO: Add user functions.
 -- TODO: Generalize parameters for other carriers.
@@ -462,6 +467,11 @@ AIRBOSS.version="0.3.2"
 -- TODO: Foul deck check.
 -- TODO: Persistence of results.
 -- TODO: Strike group with helo bringing cargo etc.
+-- DONE: Add aircraft numbers in queue to carrier info F10 radio output.
+-- DONE: Monitor holding of players/AI in zoneHolding.
+-- DONE: Transmission via radio.
+-- DONE: Get board numbers.
+-- DONE: Get an _OK_ pass if long in groove. Possible other pattern wave offs as well?!
 -- DONE: Add scoring to radio menu.
 -- DONE: Optimized debrief.
 -- DONE: Add automatic grading.
@@ -1148,9 +1158,9 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
   local hornet=playerData.actype==AIRBOSS.AircraftCarrier.HORNET
   local skyhawk=playerData.actype==AIRBOSS.AircraftCarrier.A4EC
   
-  local dist
   local alt
   local aoa
+  local dist  
   local speed
   
   if step==AIRBOSS.PatternStep.DESCENT4K then
@@ -1257,6 +1267,7 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
   
   end
 
+  return alt, aoa, dist, speed
 end
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1545,8 +1556,6 @@ function AIRBOSS:_RemoveFlightGroup(group)
     end
   end
 end
-
-
 
 --- Orbit at a specified position at a specified alititude with a specified speed.
 -- @param #AIRBOSS self
@@ -2245,7 +2254,7 @@ function AIRBOSS:OnEventLand(EventData)
     -- AI: Decrease number of units in flight and remove group from pattern queue if all units landed.
     if self:_InQueue(self.Qpattern, EventData.IniGroup) then
       self:_RemoveQueue(self.Qpattern, EventData.IniGroup)
-    end  
+    end
  
   end
     

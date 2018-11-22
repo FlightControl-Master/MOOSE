@@ -45,9 +45,85 @@
 --
 -- ![Banner Image](..\Presentations\RESCUEHELO\RescueHelo_Main.jpg)
 --
--- # Recue helo
+-- # Recue Helo
 --
--- bla bla
+-- The rescue helo will fly in close formation with another unit, which is typically an aircraft carrier.
+-- It's mission is to rescue crashed units or ejected pilots. Well, and to look cool...
+-- 
+-- # Simple Script
+-- 
+-- In the mission editor you have to set up a carrier unit, which will act as "mother". In the following, this unit will be named "USS Stennis".
+-- 
+-- Secondly, you need to define a recue helicopter group in the mission editor and set it to "LATE ACTIVATED". The name of the group we'll use is "Recue Helo".
+-- 
+-- The basic script is very simple and consists of only two lines. 
+-- 
+--      RescueheloStennis=RESCUEHELO:New(UNIT:FindByName("USS Stennis"), "Rescue Helo")
+--      RescueheloStennis:Start()
+--
+-- The first line will create a new RESCUEHELO object and the second line starts the process.
+-- 
+-- **NOTE** that it is *very important* to define the RESCUEHELO object as **global** variable. Otherwise, the lua garbage collector will kill the formation!
+-- 
+-- By default, the helo will be spawned on the USS Stennis with hot engines. Then it will take off and go on station on the starboard side of the boat.
+-- 
+-- Once the helo is out of fuel, it will return to the carrier. When the helo lands, it will be respawned immidiately and go back on station.
+-- 
+-- If a unit crashes or a pilot ejects within a radius of 100 km from the USS Stennis, the helo will automatically fly to the crash side and 
+-- rescue to pilot. This will take around 5 minutes. After that, the helo will return to the Stennis, land there and bring back the poor guy.
+-- When this is done, the helo will go back on station.
+-- 
+-- # Fine Tuning
+-- 
+-- The implementation allows to customize quite a few settings easily
+-- 
+-- ## Adjusting the Takeoff Type
+-- 
+-- By default, the helo is spawned with running engies on the carrier. The mission designer has set option to set the take off type via the @{#RESCUEHELO.SetTakeoff} function.
+-- Or via shortcuts
+-- 
+--    * @{#RESCUEHELO.SetTakeoffHot}(): Will set the takeoff to hot, which is also the default.
+--    * @{#RESCUEHELO.SetTakeoffCold}(): Will set the takeoff type to cold, i.e. with engines off.
+--    * @{#RESCUEHELO.SetTakeoffAir}(): Will set the takeoff type to air, i.e. the helo will be spawned in air near the unit which he follows.  
+-- 
+-- For example,
+--      RescueheloStennis=RESCUEHELO:New(UNIT:FindByName("USS Stennis"), "Rescue Helo")
+--      RescueheloStennis:SetTakeoffAir()
+--      RescueheloStennis:Start()
+-- will spawn the helo near the USS Stennis in air.
+-- 
+-- Spawning in air is not as realsitic but can be useful do avoid DCS bugs and shortcomings like aircraft crashing into each other on the flight deck.
+-- 
+-- **Note** that when spawning in air is set, the helo will also not return to the boat, once it is out of fuel. Instead it will be respawned in air.
+-- 
+-- If only the first spawning should happen on the carrier, one use the @{#RESCUEHELO.SetRespawnInAir}() function to command that all subsequent spawning
+-- will happen in air.
+-- 
+-- If the helo should no be respawned at all, one can set @{#RESCUEHELO.SetRespawnOff}(). 
+-- 
+-- ## Setting a Home Base
+-- 
+-- It is possible to define a "home base" other than the aircaft carrier. For example, one could imagine a strike group, and the helo will be spawned from
+-- another ship which has a helo pad.
+-- 
+--      RescueheloStennis=RESCUEHELO:New(UNIT:FindByName("USS Stennis"), "Rescue Helo")
+--      RescueheloStennis:SetHomeBase(AIRBASE:FindByName("USS Normandy"))
+--      RescueheloStennis:Start()
+-- 
+-- In this case, the helo will be spawned on the USS Normandy and then make its way to the USS Stennis to establish the formation.
+-- Note that the distance to the mother ship should be rather small since the helo will go there very slowly.
+-- 
+-- Once the helo runs out of fuel, it will return to the USS Normandy and not the Stennis for respawning.
+-- 
+-- 
+-- # Adjusting the Formation Positon
+-- 
+-- The position of the helo relative to the mother ship can be tuned via the functions
+-- 
+--    * @{#RESCUEHELO.SetAltitude}(*altitude*), where *altitude* is the altitude the helo flies at in meters. Default is 70 meters.
+--    * @{#RESCUEHELO.SetOffsetX}(*distance*)}, where *distance is the distance in the direction of movement of the carrier. Default is 200 meters.
+--    * @{#RESCUEHELO.SetOffsetZ}(*distance*)}, where *distance is the distance on the starboard side. Default is 200 meters.
+--
 --
 -- @field #RESCUEHELO
 RESCUEHELO = {
@@ -80,6 +156,7 @@ RESCUEHELO.version="0.9.3"
 
 -- TODO: Add option to stop carrier while rescue operation is in progress.
 -- TODO: Possibility to add already present/spawned aircraft, e.g. for warehouse.
+-- TODO: Add option to deactivate the rescueing.
 -- TODO: Write documenation.
 -- DONE: Add rescue event when aircraft crashes.
 -- DONE: Make offset input parameter.

@@ -49,7 +49,65 @@
 --
 -- # Recovery Tanker
 --
--- bla bla
+-- A recovery tanker acts as refueling unit flying overhead an aircraft carrier in order to supply incoming flights with gas if necessary.
+-- 
+-- # Simple Script
+-- 
+-- In the mission editor you have to set up a carrier unit, which will act as "mother". In the following, this unit will be named "USS Stennis".
+-- 
+-- Secondly, you need to define a recovery tanker group in the mission editor and set it to "LATE ACTIVATED". The name of the group we'll use is "Texaco".
+-- 
+-- The basic script is very simple and consists of only two lines. 
+-- 
+--      TexacoStennis=RECOVERYTANKER:New(UNIT:FindByName("USS Stennis"), "Texaco")
+--      TexacoStennis:Start()
+--
+-- The first line will create a new RECOVERYTANKER object and the second line starts the process.
+-- 
+-- With this setup, the tanker will be spawned on the USS Stennis with running engines. After it takes off, it will fly a position astern of the boat and from there start its
+-- pattern. This is a counter clockwise racetrack pattern at angels 6.
+-- 
+-- ![Banner Image](..\Presentations\RECOVERYTANKER\RecoveryTanker_Pattern.jpg)
+-- 
+-- The "downwind" leg of the pattern is normally used for refueling.
+-- 
+-- Once the tanker runs out of fuel itself, it will return to the carrier and be respawned.
+-- 
+-- # Fine Tuning
+-- 
+-- Several parameters can be customized by the mission designer.
+-- 
+-- ## Adjusting the Takeoff Type
+-- 
+-- By default, the tanker is spawned with running engies on the carrier. The mission designer has set option to set the take off type via the @{#RECOVERYTANKER.SetTakeoff} function.
+-- Or via shortcuts
+-- 
+--    * @{#RECOVERYTANKER.SetTakeoffHot}(): Will set the takeoff to hot, which is also the default.
+--    * @{#RECOVERYTANKER.SetTakeoffCold}(): Will set the takeoff type to cold, i.e. with engines off.
+--    * @{#RECOVERYTANKER.SetTakeoffAir}(): Will set the takeoff type to air, i.e. the tanker will be spawned in air relatively far behind the carrier.  
+-- 
+-- For example,
+--      TexacoStennis=RECOVERYTANKER:New(UNIT:FindByName("USS Stennis"), "Texaco")
+--      TexacoStennis:SetTakeoffAir()
+--      TexacoStennis:Start()
+-- will spawn the tanker several nautical miles astern the carrier. From there it will start its pattern.
+-- 
+-- Spawning in air is not as realsitic but can be useful do avoid DCS bugs and shortcomings like aircraft crashing into each other on the flight deck.
+-- 
+-- **Note** that when spawning in air is set, the tanker will also not return to the boat, once it is out of fuel. Instead it will be respawned directly in air.
+-- 
+-- If only the first spawning should happen on the carrier, one use the @{#RECOVERYTANKER.SetRespawnInAir}() function to command that all subsequent spawning
+-- will happen in air.
+-- 
+-- If the helo should no be respawned at all, one can set @{#RECOVERYTANKER.SetRespawnOff}().
+-- 
+-- ## Adjusting the Pattern
+-- 
+-- The racetrack pattern parameters can be fine tuned via the following functions:
+-- 
+--    * @{#RECOVERYTANKER.SetAltitude}(*altitude*), where *altitude* is the pattern altitude in feet. Default 6000 ft.
+--    * @{#RECOVERYTANKER.SetSpeed}(*speed*), where *speed* is the pattern speed in knots. Default is 272 knots.
+--    * @{#RECOVERYTANKER.SetRacetrackDistances}(*distbow*, *diststern*), where *distbow* and *diststern* are the distances ahead and astern the boat, respectively.
 --
 -- @field #RECOVERYTANKER
 RECOVERYTANKER = {
@@ -734,8 +792,8 @@ function RECOVERYTANKER:_PatternUpdate()
   local wp={}
     
   -- New waypoint with orbit pattern task.
-  wp[1]=self.tanker:GetCoordinate():WaypointAirTurningPoint(nil , self.speed, {}, "Current Position")
-  wp[2]=p0:WaypointAirTurningPoint(nil, self.speed, {taskorbit}, "Tanker Orbit")
+  --wp[1]=self.tanker:GetCoordinate():WaypointAirTurningPoint(nil , self.speed, {}, "Current Position")
+  wp[1]=p0:WaypointAirTurningPoint(nil, self.speed, {taskorbit}, "Tanker Orbit")
   
   -- Initialize WP and route tanker.
   self.tanker:WayPointInitialize(wp)
