@@ -446,7 +446,7 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.3.2w"
+AIRBOSS.version="0.3.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -558,7 +558,7 @@ function AIRBOSS:New(carriername, alias)
   self:SetCarrierControlledZone()
   
   -- Default recovery case.
-  self:SetRecoveryCase(1)
+  self:SetRecoveryCase(3)
   
   -- Init default sound files.
   for _name,_sound in pairs(AIRBOSS.Soundfile) do
@@ -2565,6 +2565,10 @@ function AIRBOSS:_Descent4k(playerData)
   
     -- Get optimal altitude, distance and speed.
     local altitude=self:_GetAircraftParameters(playerData)
+    
+    -- TODO: only speed is checked here!
+    
+    MESSAGE:New("Descent 4k step reached", 5):ToAllIf(self.Debug)
   
     -- Get altitude.
     local hint, debrief=self:_AltitudeCheck(playerData, altitude)
@@ -2597,8 +2601,12 @@ function AIRBOSS:_Platform(playerData)
   -- Check if we are in front of the boat (diffX > 0).
   if self:_CheckLimits(X, Z, self.Platform) then
   
+    MESSAGE:New("Platform step reached", 5):ToAllIf(self.Debug)
+  
     -- Get optimal altitiude.
     local altitude=self:_GetAircraftParameters(playerData)
+    
+    --TODO: check speed.
   
     -- Get altitude.
     local hint, debrief=self:_AltitudeCheck(playerData, altitude)
@@ -2630,6 +2638,10 @@ function AIRBOSS:_DirtyUp(playerData)
   
   -- Check if we are in front of the boat (diffX > 0).
   if self:_CheckLimits(X, Z, self.DirtyUp) then
+    
+    MESSAGE:New("Dirty up step reached", 5):ToAllIf(self.Debug)
+    
+    --TODO: speed check
   
     -- Get optimal altitiude.
     local altitude=self:_GetAircraftParameters(playerData)
@@ -2671,6 +2683,8 @@ function AIRBOSS:_Bullseye(playerData)
   -- Check that we reached the position.
   if self:_CheckLimits(X, Z, self.Bullseye) then
   
+    MESSAGE:New("Bullseye step reached", 5):ToAllIf(self.Debug)
+  
     -- Get optimal altitiude.
     local altitude=self:_GetAircraftParameters(playerData)
   
@@ -2681,10 +2695,12 @@ function AIRBOSS:_Bullseye(playerData)
     self:_SendMessageToPlayer(hint, 10, playerData)
     
     -- Debrief.
-    self:_AddToSummary(playerData, "Bulls Eye", debrief)
+    self:_AddToSummary(playerData, "Bullseye", debrief)
     
-    -- Next step: Early Break.
-    playerData.step=AIRBOSS.PatternStep.FINAL
+    -- Next step: Final approach in the groove.
+    --playerData.step=AIRBOSS.PatternStep.FINAL
+    -- Next step: Groove Call the ball.
+    playerData.step=AIRBOSS.PatternStep.GROOVE_XX
   end
 end
  
@@ -3977,7 +3993,7 @@ function AIRBOSS:_AltitudeCheck(playerData, altopt)
   
   -- Extend or decrease depending on skill.
   if playerData.difficulty==AIRBOSS.Difficulty.EASY then
-    hint=hint..string.format("Optimal altitude is %d ft.", UTILS.MetersToFeet(checkpoint.Altitude))
+    hint=hint..string.format("Optimal altitude is %d ft.", UTILS.MetersToFeet(altopt))
   elseif playerData.difficulty==AIRBOSS.Difficulty.NORMAL then
     --hint=hint.."\n"
   elseif playerData.difficulty==AIRBOSS.Difficulty.HARD then
@@ -3985,7 +4001,7 @@ function AIRBOSS:_AltitudeCheck(playerData, altopt)
   end
   
   -- Debrief text.
-  local debrief=string.format("Altitude %d ft = %d%% deviation from %d ft optimum.", UTILS.MetersToFeet(altitude), _error, UTILS.MetersToFeet(checkpoint.Altitude))
+  local debrief=string.format("Altitude %d ft = %d%% deviation from %d ft optimum.", UTILS.MetersToFeet(altitude), _error, UTILS.MetersToFeet(altopt))
   
   return hint, debrief
 end
@@ -4026,7 +4042,7 @@ function AIRBOSS:_DistanceCheck(playerData, optdist)
   
   -- Extend or decrease depending on skill.
   if playerData.difficulty==AIRBOSS.Difficulty.EASY then
-    hint=hint..string.format(" Optimal distance is %d NM.", UTILS.MetersToNM(checkpoint.Distance))
+    hint=hint..string.format(" Optimal distance is %d NM.", UTILS.MetersToNM(optdist))
   elseif playerData.difficulty==AIRBOSS.Difficulty.NORMAL then
     --hint=hint.."\n"
   elseif playerData.difficulty==AIRBOSS.Difficulty.HARD then
@@ -4034,7 +4050,7 @@ function AIRBOSS:_DistanceCheck(playerData, optdist)
   end
 
   -- Debriefing text.
-  local debrief=string.format("Distance %.1f NM = %d%% deviation from %.1f NM optimum.",UTILS.MetersToNM(distance), _error, UTILS.MetersToNM(checkpoint.Distance))
+  local debrief=string.format("Distance %.1f NM = %d%% deviation from %.1f NM optimum.",UTILS.MetersToNM(distance), _error, UTILS.MetersToNM(optdist))
    
   return hint, debrief
 end
@@ -4075,7 +4091,7 @@ function AIRBOSS:_AoACheck(playerData, optaoa)
 
   -- Extend or decrease depending on skill.
   if playerData.difficulty==AIRBOSS.Difficulty.EASY then
-    hint=hint..string.format(" Optimal AoA is %.1f.", checkpoint.AoA)
+    hint=hint..string.format(" Optimal AoA is %.1f.", optaoa)
   elseif playerData.difficulty==AIRBOSS.Difficulty.NORMAL then
     --hint=hint.."\n"
   elseif playerData.difficulty==AIRBOSS.Difficulty.HARD then
@@ -4083,7 +4099,7 @@ function AIRBOSS:_AoACheck(playerData, optaoa)
   end
   
   -- Debriefing text.
-  local debrief=string.format("AoA %.1f = %d%% deviation from %.1f optimum.", aoa, _error, checkpoint.AoA)
+  local debrief=string.format("AoA %.1f = %d%% deviation from %.1f optimum.", aoa, _error, optaoa)
   
   return hint, debrief
 end
