@@ -49,6 +49,9 @@
 -- @field Core.Zone#ZONE_UNIT zoneCCA Carrier controlled area (CCA), i.e. a zone of 50 NM radius around the carrier.
 -- @field Core.Zone#ZONE_UNIT zoneCCZ Carrier controlled zone (CCZ), i.e. a zone of 5 NM radius around the carrier.
 -- @field Core.Zone#ZONE_UNIT zoneInitial Zone usually 3 NM astern of carrier where pilots start their CASE I pattern.
+-- @field Core.Zone#ZONE_UNIT zonePlatform Zone astern the carrier where pilots should hit 5000 ft in CASE II/III.
+-- @field Core.Zone#ZONE_UNIT zoneDirtyup Zone astern the carrier where pilots should hit 1200 ft and dirty up.
+-- @field Core.Zone#ZONE_UNIT zoneBullseye Zone astern the carrier where pilots should intercept the glide slope.
 -- @field #table players Table of players. 
 -- @field #table menuadded Table of units where the F10 radio menu was added.
 -- @field #AIRBOSS.Checkpoint Upwind Upwind checkpoint.
@@ -71,6 +74,7 @@
 -- @field Ops.RecoveryTanker#RECOVERYTANKER tanker Recovery tanker flying overhead of carrier.
 -- @field Functional.Warehouse#WAREHOUSE warehouse Warehouse object of the carrier.
 -- @field #table recoverytime List of time intervals when aircraft are recovered.
+-- @field #number holdingoffset Offset [degrees] of Case II/III holding pattern. Default 0 degrees.
 -- @extends Core.Fsm#FSM
 
 --- The boss!
@@ -116,6 +120,9 @@ AIRBOSS = {
   zoneCCA      = nil,
   zoneCCZ      = nil,
   zoneInitial  = nil,
+  zonePlatform = nil,
+  zoneDirtyup  = nil,
+  zoneBullseye = nil,
   players      =  {},
   menuadded    =  {},
   Upwind       =  {},
@@ -139,6 +146,7 @@ AIRBOSS = {
   tanker       = nil,
   warehouse    = nil,
   recoverytime =  {},
+  holdoffset   =   0,
 }
 
 --- Player aircraft types capable of landing on carriers.
@@ -370,6 +378,7 @@ AIRBOSS.GroovePos={
 -- @field #number GSE Glide slope error in degrees.
 -- @field #number LUE Lineup error in degrees.
 -- @field #number Roll Roll angle.
+-- @field #number Rhdg Relative heading player to carrier. 0=parallel, +-90=perpendicular.
 
 --- LSO grade
 -- @type AIRBOSS.LSOgrade
@@ -446,7 +455,7 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.3.3"
+AIRBOSS.version="0.3.3w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -548,8 +557,13 @@ function AIRBOSS:New(carriername, alias)
     return nil
   end
   
-  -- Zone 3 NM astern and 100 m starboard of the carrier with radius of 0.5 km.
+  -- CASE I/II moving zone: Zone 3 NM astern and 100 m starboard of the carrier with radius of 0.5 km.
   self.zoneInitial=ZONE_UNIT:New("Initial Zone", self.carrier, 0.5*1000, {dx=-UTILS.NMToMeters(3), dy=100, relative_to_unit=true})
+  
+  -- CASE II/III moving zones.
+  self.zonePlatform = ZONE_UNIT:New("Platform Zone", self.carrier, 1.5*1000, {rho=UTILS.NMToMeters(20), theta=-171, relative_to_unit=true})
+  self.zoneDirtyup  = ZONE_UNIT:New("Dirty Up Zone", self.carrier, 1.5*1000, {rho=UTILS.NMToMeters(10), theta=-171, relative_to_unit=true})
+  self.zoneBullseye = ZONE_UNIT:New("Bulleye Zone",  self.carrier, 1.5*1000, {rho=UTILS.NMToMeters( 3), theta=-171, relative_to_unit=true})
   
   -- CCA 50 NM radius zone around the carrier.
   self:SetCarrierControlledArea()
@@ -1783,7 +1797,7 @@ function AIRBOSS:_AddMarshallGroup(flight, flagvalue)
   -- TODO: Get correct board number if possible?
   local boardnumber=tostring(flight.onboardnumbers[unitname])
   local alt=UTILS.MetersToFeet(self:_GetMarshalAltitude(flagvalue, flight.case))
-  local brc=self:_BaseRecoveryCourse()
+  local brc=self:GetBRC()
   
   -- Marshal message.
   -- TODO: Get charlie time estimate.
@@ -2598,8 +2612,11 @@ function AIRBOSS:_Platform(playerData)
     return
   end
   
-  -- Check if we are in front of the boat (diffX > 0).
-  if self:_CheckLimits(X, Z, self.Platform) then
+  -- Check if we are inside the moving zone.
+  local inzone=playerData.unit:IsInZone(self.zonePlatform)
+  
+  -- Check if we are in zone.
+  if inzone then
   
     MESSAGE:New("Platform step reached", 5):ToAllIf(self.Debug)
   
@@ -2636,8 +2653,11 @@ function AIRBOSS:_DirtyUp(playerData)
     return
   end
   
-  -- Check if we are in front of the boat (diffX > 0).
-  if self:_CheckLimits(X, Z, self.DirtyUp) then
+  -- Check if we are inside the moving zone.
+  local inzone=playerData.unit:IsInZone(self.zoneDirtyup)  
+  
+  --if self:_CheckLimits(X, Z, self.DirtyUp) then
+  if inzone then
     
     MESSAGE:New("Dirty up step reached", 5):ToAllIf(self.Debug)
     
@@ -2679,10 +2699,14 @@ function AIRBOSS:_Bullseye(playerData)
     self:_AbortPattern(playerData, X, Z, self.Bullseye)
     return
   end
+
+  -- Check if we are inside the moving zone.
+  local inzone=playerData.unit:IsInZone(self.zoneBullseye)
   
   -- Check that we reached the position.
-  if self:_CheckLimits(X, Z, self.Bullseye) then
-  
+  --if self:_CheckLimits(X, Z, self.Bullseye) then
+  if inzone then
+    
     MESSAGE:New("Bullseye step reached", 5):ToAllIf(self.Debug)
   
     -- Get optimal altitiude.
@@ -2797,15 +2821,8 @@ function AIRBOSS:_CheckForLongDownwind(playerData)
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
   local X, Z=self:_GetDistances(playerData.unit)
 
-  -- Get relative heading.
-  local relhead=self:_GetRelativeHeading(playerData.unit)
-
   -- One NM from carrier is too far.  
   local limit=UTILS.NMToMeters(-1.5)
-  
-  local text=string.format("Long groove check: X=%d, relhead=%.1f", X, relhead)
-  self:T(text)
-  --MESSAGE:New(text, 1):ToAllIf(self.Debug)
   
   -- Check we are not too far out w.r.t back of the boat.
   if X<limit then --and relhead<45 then
@@ -2885,7 +2902,7 @@ function AIRBOSS:_Ninety(playerData)
   end
   
   -- Get Realtive heading player to carrier.
-  local relheading=self:_GetRelativeHeading(playerData.unit)
+  local relheading=self:_GetRelativeHeading(playerData.unit, false)
   
   -- At the 90, i.e. 90 degrees between player heading and BRC of carrier.
   if relheading<=90 then
@@ -2974,11 +2991,17 @@ function AIRBOSS:_Final(playerData)
     return
   end
    
-  local relhead=self:_GetRelativeHeading(playerData.unit)+self.carrierparam.rwyangle
-  local lineup=self:_Lineup(playerData)-self.carrierparam.rwyangle
+  -- Relative heading 0=fly parallel +-90=fly perpendicular
+  local relhead=self:_GetRelativeHeading(playerData.unit, true)
+  
+  -- Line up wrt runway.
+  local lineup=self:_Lineup(playerData, true)
+  
+  -- Player's angle of bank.
   local roll=playerData.unit:GetRoll()
   
-  if math.abs(lineup)<5 and math.abs(relhead)<10 then
+  -- Check if player is in +-5 deg cone and flying towards the runway.
+  if math.abs(lineup)<5 then --and math.abs(relhead)<5 then
 
     -- Get optimal altitude, distance and speed.
     local alt, aoa, dist, speed=self:_GetAircraftParameters(playerData)
@@ -3004,9 +3027,12 @@ function AIRBOSS:_Final(playerData)
     groovedata.Step=playerData.step
     groovedata.Alt=alt
     groovedata.AoA=aoa
-    groovedata.GSE=self:_Glideslope(playerData)-3.5
-    groovedata.LUE=self:_Lineup(playerData)-self.carrierparam.rwyangle
+    groovedata.GSE=self:_Glideslope(playerData, 3.5)
+    groovedata.LUE=self:_Lineup(playerData, true)
     groovedata.Roll=roll
+    groovedata.Rhdg=relhead
+    
+    -- TODO: could add angled approach if lineup<5 and relhead>5. This would mean the player has not tunred in correctly!
         
     -- Groove 
     playerData.groove.X0=groovedata
@@ -3039,12 +3065,10 @@ function AIRBOSS:_Groove(playerData)
   end
 
   -- Lineup with runway centerline.
-  local lineup=self:_Lineup(playerData)
-  local lineupError=lineup-self.carrierparam.rwyangle
+  local lineupError=self:_Lineup(playerData, true)
   
   -- Glide slope.
-  local glideslope=self:_Glideslope(playerData)
-  local glideslopeError=glideslope-3.5   --TODO: maybe 3.0?
+  local glideslopeError=self:_Glideslope(playerData, 3.5)
   
   -- Get AoA.
   local AoA=playerData.unit:GetAoA()
@@ -3064,6 +3088,7 @@ function AIRBOSS:_Groove(playerData)
   groovedata.GSE=glideslopeError
   groovedata.LUE=lineupError
   groovedata.Roll=playerData.unit:GetRoll()
+  groovedata.Rhdg=self:_GetRelativeHeading(playerData.unit, true)
   
   if rho<=RXX and playerData.step==AIRBOSS.PatternStep.GROOVE_XX then
   
@@ -3316,8 +3341,8 @@ function AIRBOSS:_DetailedPlayerStatus(playerData)
      playerData.step==AIRBOSS.PatternStep.GROOVE_IC or
      playerData.step==AIRBOSS.PatternStep.GROOVE_AR or
      playerData.step==AIRBOSS.PatternStep.GROOVE_IW then
-    local lineup=self:_Lineup(playerData)-self.carrierparam.rwyangle
-    local glideslope=self:_Glideslope(playerData)-3.5
+    local lineup=self:_Lineup(playerData, true)
+    local glideslope=self:_Glideslope(playerData, 3.5)
     text=text..string.format("\nLU Error = %.1f° (line up)", lineup)
     text=text..string.format("\nGS Error = %.1f° (glide slope)", glideslope)
   end
@@ -3331,8 +3356,12 @@ end
 --- Get glide slope of aircraft.
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data table.
--- @return #number Glide slope angle in degrees measured from the 
-function AIRBOSS:_Glideslope(playerData)
+-- @pram #number gangle (Optional) Return glide slope relative to this angle, i.e. the error from the optimal glide slope.
+-- @return #number Glide slope angle in degrees measured from the deck of the carrier and third wire.
+function AIRBOSS:_Glideslope(playerData, gangle)
+
+  -- Default is 0.
+  gangle=gangle or 0
 
  -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
   local X, Z, rho, phi = self:_GetDistances(playerData.unit)
@@ -3342,18 +3371,19 @@ function AIRBOSS:_Glideslope(playerData)
   local x=math.abs(self.carrierparam.wire3-X)  --TODO: Check if carrier has wires later.
   local glideslope=math.atan(h/x)  
 
-  return math.deg(glideslope)
+  return math.deg(glideslope)-gangle
 end
 
---- Get line up of player wrt to carrier runway.
+--- Get line up of player wrt to carrier. 
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data table.
+-- @param #boolean runway If true, include angled runway.
 -- @return #number Line up with runway heading in degrees. 0 degrees = perfect line up. +1 too far left. -1 too far right.
 -- @return #number Distance from carrier tail to player aircraft in meters.
-function AIRBOSS:_Lineup(playerData) 
+function AIRBOSS:_Lineup(playerData, runway) 
 
  -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
-  local X, Z, rho, phi = self:_GetDistances(playerData.unit)  
+  local X, Z, rho, phi = self:_GetDistances(playerData.unit)
   
   -- Position at the end of the deck. From there we calculate the angle.
   local b={x=self.carrierparam.sterndist, z=0}
@@ -3365,51 +3395,61 @@ function AIRBOSS:_Lineup(playerData)
   local c={x=b.x-a.x, y=0, z=b.z-a.z}
   
   -- Current line up and error wrt to final heading of the runway.
-  local lineup=math.atan2(c.z, c.x)
+  local lineup=math.det(math.atan2(c.z, c.x))
+  
+  -- Include runway.
+  if runway then
+    lineup=lineup-self.carrierparam.rwyangle
+  end
 
   return math.deg(lineup), UTILS.VecNorm(c)
 end
 
---- Get base recovery course (BRC) of carrier.
+--- Get true (or magnetic) heading of carrier.
 -- @param #AIRBOSS self
--- @param #boolean True If true, return true bearing. Otherwise (default) return magnetic bearing.
--- @return #number BRC in degrees.
-function AIRBOSS:_BaseRecoveryCourse(True) 
-  self:E({TrueBearing=True})
-
-  -- Current true heading of carrier.
-  local hdg=self.carrier:GetHeading()
+-- @param #boolean magnetic If true, calculate magnetic heading. By default true heading is returned.
+-- @return #number Carrier heading in degrees.
+function AIRBOSS:GetHeading(magnetic) 
+  self:F3({magnetic=magnetic})
   
-  -- Final (true) bearing.   
-  local brc=hdg
+  -- Carrier heading
+  local hdg=self.carrier:GetHeading()
     
-  -- Magnetic bearing.
-  if True==false then
-    --TODO: Conversion to magnetic, i.e. include magnetic declination of current map.
+  -- Include magnetic declination.
+  if magnetic then
+    hdg=hdg-UTILS.GetMagneticDeclination()
   end
   
   -- Adjust negative values.
-  if brc<0 then
-    brc=brc+360
-  end
+  if hdg<0 then
+    hdg=hdg+360
+  end  
   
-  return brc
+  return hdg
+end
+
+--- Get base recovery course (BRC) of carrier.
+-- The is the magnetic heading of the carrier.
+-- @param #AIRBOSS self
+-- @return #number BRC in degrees.
+function AIRBOSS:GetBRC()
+  return self:GetHeading(true)
 end
 
 
 --- Get final bearing (FB) of carrier.
 -- By default, the routine returns the magnetic FB depending on the current map (Caucasus, NTTR, Normandy, Persion Gulf etc).
--- The true bearing can be obtained by setting the *True* parameter to true. 
+-- The true bearing can be obtained by setting the *TrueNorth* parameter to true. 
 -- @param #AIRBOSS self
--- @param #boolean True If true, return true bearing. Otherwise (default) return magnetic bearing.
+-- @param #boolean magnetic If true, magnetic FB is returned.
 -- @return #number FB in degrees.
-function AIRBOSS:_FinalBearing(True) 
+function AIRBOSS:GetFinalBearing(magnetic)
 
-  -- Base Recovery Course of carrier.
-  local brc=self:_BaseRecoveryCourse(True)
+  -- First get the heading.  
+  local fb=self:GetHeading(magnetic)  
   
   -- Final baring = BRC including angled deck.
-  local fb=brc+self.carrierparam.rwyangle
+  fb=fb+self.carrierparam.rwyangle
   
   -- Adjust negative values.
   if fb<0 then
@@ -3421,11 +3461,12 @@ end
 
 --- Get radial, i.e. the final bearing FB-180 degrees.
 -- @param #AIRBOSS self
+-- @param #boolean magnetic If true, magnetic FB is returned.
 -- @return #number Radial in degrees.
-function AIRBOSS:_Radial() 
+function AIRBOSS:GetRadial(magnetic) 
 
   -- Get radial.
-  local radial=self:_FinalBearing()-180
+  local radial=self:GetFinalBearing(magnetic)-180
   
   -- Adjust for negative values.
   if radial<0 then
@@ -3436,18 +3477,51 @@ function AIRBOSS:_Radial()
 end
 
 --- Get relative heading of player wrt carrier.
+-- This is the angle between the direction vector of the carrier and the direction vector of the provided unit.
+-- Note that this is calculated in the X-Z plane, i.e. the altitude Y is not taken into account.
 -- @param #AIRBOSS self
 -- @param Wrapper.Unit#UNIT unit Player unit.
--- @return #number Relative heading in degrees.
-function AIRBOSS:_GetRelativeHeading(unit)
+-- @param #boolean runway (Optional) If true, return relative heading of unit wrt to angled runway of the carrier.
+-- @return #number Relative heading in degrees. An angle of 0 means, unit fly parallel to carrier. An angle of + or - 90 degrees means, unit flies perpendicular to carrier. 
+function AIRBOSS:_GetRelativeHeading(unit, runway)
+
+  -- Direction vector of the carrier.
   local vC=self.carrier:GetOrientationX()
+  
+  -- Direction vector of the unit.
   local vP=unit:GetOrientationX()
   
+  -- We only want the X-Z plane. Aircraft could fly parallel but ballistic and we dont want the "pitch" angle. 
+  vC.y=0
+  vP.y=0
+  
   -- Get angle between the two orientation vectors in rad.
-  local relHead=math.acos(UTILS.VecDot(vC,vP)/UTILS.VecNorm(vC)/UTILS.VecNorm(vP))
+  local rhdg=math.deg(math.acos(UTILS.VecDot(vC,vP)/UTILS.VecNorm(vC)/UTILS.VecNorm(vP)))  
+  
+  -- Include runway angle.
+  if runway then
+    rhdg=rhdg-self.carrierparam.rwyangle
+  end
+  
+  -- TODO another way would be to get the heading of the carrier and the heading of the unit and calc difference?
+  -- Heading of unit.
+  local unitheading=unit:GetHeading()
+  
+  -- Heading of carrier.
+  local carrierheading
+  
+  -- Include runway?
+  if runway then
+    carrierheading=self:GetFinalBearing(false)
+  else
+    carrierheading=self:GetHeading(false)
+  end
+  
+  rhdg=unitheading-carrierheading
+    
   
   -- Return heading in degrees.
-  return math.deg(relHead)
+  return rhdg
 end
 
 --- Calculate distances between carrier and player unit.
@@ -4104,6 +4178,55 @@ function AIRBOSS:_AoACheck(playerData, optaoa)
   return hint, debrief
 end
 
+--- Evaluate player's speed.
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.PlayerData playerData Player data table.
+-- @param #number speedopt Optimal speed.
+-- @return #string Feedback text.
+-- @return #string Debriefing text.
+function AIRBOSS:_SpeedCheck(playerData, speedopt)
+
+  if speedopt==nil then
+    return nil, nil
+  end
+
+  -- Player altitude.
+  local speed=playerData.unit:GetVelocityMPS()
+  
+  -- Get relative score.
+  local lowscore, badscore=self:_GetGoodBadScore(playerData)
+  
+  -- Altitude error +-X%
+  local _error=(speed-speedopt)/speedopt*100
+  
+  local hint
+  if _error>badscore then
+    hint=string.format("You're fast.")
+  elseif _error>lowscore then
+    hint= string.format("You're slightly fast.")
+  elseif _error<-badscore then
+    hint=string.format("You're low.")
+  elseif _error<-lowscore then
+    hint=string.format("You're slightly slow.")
+  else
+    hint=string.format("Good speed.")
+  end
+  
+  -- Extend or decrease depending on skill.
+  if playerData.difficulty==AIRBOSS.Difficulty.EASY then
+    hint=hint..string.format(" Optimal altitude is %d ft.", UTILS.MetersToFeet(speedopt))
+  elseif playerData.difficulty==AIRBOSS.Difficulty.NORMAL then
+    --hint=hint.."\n"
+  elseif playerData.difficulty==AIRBOSS.Difficulty.HARD then
+    hint=""
+  end
+  
+  -- Debrief text.
+  local debrief=string.format("Speed %d knots = %d%% deviation from %d knots optimum.", UTILS.MpsToKnots(speed), _error, UTILS.MpsToKnots(speedopt))
+  
+  return hint, debrief
+end
+
 --- Append text to debrief text.
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data.
@@ -4122,6 +4245,7 @@ function AIRBOSS:_Debrief(playerData)
   -- LSO grade, points, and flight data analyis.
   local grade, points, analysis=self:_LSOgrade(playerData)
     
+  -- My grade.
   local mygrade={} --#AIRBOSS.LSOgrade  
   mygrade.grade=grade
   mygrade.points=points
@@ -4133,7 +4257,7 @@ function AIRBOSS:_Debrief(playerData)
   -- LSO grade message.
   local text=string.format("%s %.1f PT - %s", grade, points, analysis)
   text=text..string.format("Your detailed debriefing can now be seen in F10 radio menu.")
-  self:MessageToPlayer(playerData,text, "LSO","" , 30, true)
+  self:MessageToPlayer(playerData,text, "LSO", "", 30, true)
 
   -- New approach.
   if playerData.boltered or playerData.waveoff or playerData.patternwo then
@@ -4146,14 +4270,46 @@ function AIRBOSS:_Debrief(playerData)
     
     local text=string.format("fly heading %d for %d NM to re-enter the pattern.", heading, UTILS.MetersToNM(distance))
     self:_SendMessageToPlayer(text, 10, playerData, false, nil, 30)
+    self:MessageToPlayer(playerData, text, "LSO", nil, 10)
     
     -- Next step?
     -- TODO: CASE I: After bolter/wo turn left and climb to 600 ft and re-enter the pattern. But do not go to initial but reenter earlier?
     -- TODO: CASE I: After pattern wo? go back to initial, I guess?
     -- TODO: CASE III: After bolter/wo turn left and climb to 1200 ft and re-enter pattern?
     -- TODO: CASE III: After pattern wo? No idea...
-    playerData.step=AIRBOSS.PatternStep.COMMENCING
-  end  
+    
+    -- 
+    local flight=self:_GetFlightFromGroupInQueue(playerData.group, self.flight)
+    
+    if flight then
+    
+      if flight.case==1 then
+        -- CASE I
+        if playerData.boltered or playerData.waveoff then
+          -- CASE I bolter or waveoff ==> stay in pattern and try again.
+          playerData.step=AIRBOSS.PatternStep.COMMENCING
+        elseif playerData.patternwo then
+          -- CASE I pattern wave off.
+          -- Ask again? Back to marshal.
+          playerData.step=AIRBOSS.PatternStep.COMMENCING
+        end
+        
+      elseif flight.case==2 then
+      
+        
+      
+      elseif flight.case==3 then
+      
+      end
+    
+    else
+    end
+      playerData.step=AIRBOSS.PatternStep.COMMENCING
+      
+    
+  elseif playerData.landed then
+    
+  end
   
   -- Next step.
   playerData.step=AIRBOSS.PatternStep.UNDEFINED
@@ -4913,8 +5069,8 @@ function AIRBOSS:_DisplayCarrierInfo(_unitname)
       local text=string.format("%s info:\n", self.alias)
       text=text..string.format("Carrier state %s\n", self:GetState())
       text=text..string.format("Case %d Recovery\n", self.case)
-      text=text..string.format("BRC %03d°\n", self:_BaseRecoveryCourse())
-      text=text..string.format("FB %03d°\n", self:_FinalBearing())           
+      text=text..string.format("BRC %03d°\n", self:GetBRC())
+      text=text..string.format("FB %03d°\n", self:GetFinalBearing(true))           
       text=text..string.format("Speed %d kts\n", carrierspeed)
       text=text..string.format("Airboss radio %.3f MHz\n", self.Carrierfreq) --TODO: add modulation
       text=text..string.format("LSO radio %.3f MHz\n", self.LSOfreq)
@@ -5042,9 +5198,12 @@ function AIRBOSS:_DisplayPlayerStatus(_unitName)
       end
       
       if playerData.step==AIRBOSS.PatternStep.INITIAL then
+      
         local flyhdg=playerData.unit:GetCoordinate():HeadingTo(self.zoneInitial:GetCoordinate())
         local flydist=UTILS.MetersToNM(playerData.unit:GetCoordinate():Get2DDistance(self.zoneInitial:GetCoordinate()))
-        local brc=self:_BaseRecoveryCourse()
+        local brc=self:GetBRC()
+        
+        
         text=text..string.format("\nFly heading %03d° for %.1f NM and turn to BRC %03d°.", flyhdg, flydist, brc)
       end
       

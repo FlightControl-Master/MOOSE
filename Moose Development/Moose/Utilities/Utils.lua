@@ -744,8 +744,34 @@ function UTILS.TACANToFrequency(TACANChannel, TACANMode)
 end
 
 
---- Returns the DCS map/theatre as optained by env.mission.theatre.
--- @return #string DCS map string.
+--- Returns the DCS map/theatre as optained by env.mission.theatre
+-- @return #string DCS map name .
 function UTILS.GetDCSMap()
   return env.mission.theatre
 end
+
+--- Returns the magnetic declination of the map.
+-- Returned values for the current maps are:
+-- 
+-- * Caucasus +6
+-- * NTTR ?
+-- * Normandy ?
+-- * Persion Gulf ?
+-- @param #string map (Optional) Map for which the declination is returned. Default is from env.mission.theatre
+-- @return #string Declination in degrees.
+function UTILS.GetMagneticDeclination(map)
+
+  -- Map.
+  map=map or UTILS.GetDCSMap()
+  
+  local declination=0
+  if map=="Caucasus" then
+    declination=6
+  else  
+    declination=0
+  end
+
+  return declination
+end
+
+
