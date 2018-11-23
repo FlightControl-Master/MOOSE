@@ -455,7 +455,7 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.3.3w"
+AIRBOSS.version="0.3.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -572,7 +572,7 @@ function AIRBOSS:New(carriername, alias)
   self:SetCarrierControlledZone()
   
   -- Default recovery case.
-  self:SetRecoveryCase(3)
+  self:SetRecoveryCase(1)
   
   -- Init default sound files.
   for _name,_sound in pairs(AIRBOSS.Soundfile) do
@@ -1023,11 +1023,10 @@ function AIRBOSS:_InitStennis()
   -- 4k descent from holding pattern to 5k platform.
   self.Descent4k.name="Descent 4k"
   self.Descent4k.Xmin=-UTILS.NMToMeters(50)  -- Not more than 50 NM behind the boat.
-  self.Descent4k.Xmax=-UTILS.NMToMeters(20)  -- Not more than 20 NM closer to the boat from behind.
+  self.Descent4k.Xmax=nil -- -UTILS.NMToMeters(20)  -- Not more than 20 NM closer to the boat from behind.
   self.Descent4k.Zmin=-UTILS.NMToMeters(15)  -- Not more than 15 NM port/left of boat.
   self.Descent4k.Zmax= UTILS.NMToMeters(5)   -- Not more than  5 NM starboard/right of boat.
   self.Descent4k.LimitXmin=nil
-  --TODO: better rho dist. decrease descent 20 2000 ft/min at 5000 ft alt and user rad alt.
   self.Descent4k.LimitXmax=-UTILS.NMToMeters(21) -- Check and next step when 21 NM behind the boat.
   self.Descent4k.LimitZmin=nil
   self.Descent4k.LimitZmax=nil
@@ -1068,7 +1067,7 @@ function AIRBOSS:_InitStennis()
   self.Bullseye.LimitZmin=nil
   self.Bullseye.LimitZmax=nil
  
-  -- Upwind leg or break entry.
+  -- Upwind leg (break entry).
   self.Upwind.name="Upwind"
   self.Upwind.Xmin=-UTILS.NMToMeters(4)          -- Not more than 4 NM behind the boat. Check for initial is at 3 NM with a radius of ?.
   self.Upwind.Xmax= nil
@@ -1090,7 +1089,7 @@ function AIRBOSS:_InitStennis()
   self.BreakEarly.LimitZmin=-UTILS.NMToMeters(0.2)  -- -370 m port
   self.BreakEarly.LimitZmax= nil
   
-  -- Late break
+  -- Late break.
   self.BreakLate.name="Late Break"
   self.BreakLate.Xmin=-UTILS.NMToMeters(1)         -- Not more than 1 NM behind the boat. Last check was at 0.
   self.BreakLate.Xmax= UTILS.NMToMeters(5)         -- Not more than 5 NM in front of the boat. Enough for late breaks?
@@ -1101,7 +1100,7 @@ function AIRBOSS:_InitStennis()
   self.BreakLate.LimitZmin=-UTILS.NMToMeters(0.8)  -- -1470 m port
   self.BreakLate.LimitZmax= nil
   
-  -- Abeam position
+  -- Abeam position.
   self.Abeam.name="Abeam Position"
   self.Abeam.Xmin= nil
   self.Abeam.Xmax= nil
@@ -1112,7 +1111,7 @@ function AIRBOSS:_InitStennis()
   self.Abeam.LimitZmin= nil
   self.Abeam.LimitZmax= nil
 
-  -- At the ninety
+  -- At the Ninety.
   self.Ninety.name="Ninety"
   self.Ninety.Xmin=-UTILS.NMToMeters(4)           -- Not more than 4 NM behind the boat. LIG check anyway.
   self.Ninety.Xmax= 0                             -- Must be behind the boat.
@@ -1123,7 +1122,7 @@ function AIRBOSS:_InitStennis()
   self.Ninety.LimitZmin=nil
   self.Ninety.LimitZmax=-UTILS.NMToMeters(0.6)    -- Check and next step when 0.6 NM port. 
 
-  -- Wake position
+  -- At the Wake.
   self.Wake.name="Wake"
   self.Wake.Xmin=-UTILS.NMToMeters(4)           -- Not more than 4 NM behind the boat.
   self.Wake.Xmax= 0                             -- Must be behind the boat.
@@ -1134,7 +1133,7 @@ function AIRBOSS:_InitStennis()
   self.Wake.LimitZmin=0                         -- Check and next step when directly behind the boat.
   self.Wake.LimitZmax=nil
 
-  -- In the groove
+  -- Turn to final.
   self.Groove.name="Groove"
   self.Groove.Xmin=-UTILS.NMToMeters(4)           -- Not more than 4 NM behind the boat.
   self.Groove.Xmax= 0                             -- Must be behind the boat.
@@ -1145,7 +1144,7 @@ function AIRBOSS:_InitStennis()
   self.Groove.LimitZmin=nil
   self.Groove.LimitZmax=nil
   
-  -- Landing trap
+  -- In the Groove.
   self.Trap.name="Trap"
   self.Trap.Xmin=-UTILS.NMToMeters(4)           -- Not more than 4 NM behind the boat.
   self.Trap.Xmax= nil
@@ -1511,66 +1510,6 @@ function AIRBOSS:_GetOnboardNumbers(group, playeronly)
   return numbers
 end
 
---- Create a new flight group. Usually when a flight appears in the CCA.
--- @param #AIRBOSS self
--- @param Wrapper.Group#GROUP group Aircraft group.
--- @return #AIRBOSS.Flightitem Flight group.
-function AIRBOSS:_CreateFlightGroup(group)
-
-  -- Flight group name
-  local groupname=group:GetName()
-  local human=self:_IsHuman(group)
-  
-  -- Queue table item.
-  local flight={} --#AIRBOSS.Flightitem
-  flight.group=group
-  flight.groupname=group:GetName()
-  flight.nunits=#group:GetUnits()
-  flight.time=timer.getAbsTime()
-  flight.dist0=group:GetCoordinate():Get2DDistance(self:GetCoordinate())
-  flight.flag=USERFLAG:New(groupname)
-  flight.flag:Set(-100)
-  flight.ai=not human
-  flight.actype=group:GetTypeName()
-  flight.onboardnumbers=self:_GetOnboardNumbers(group)
-  flight.section={}
-  flight.case=self.case
-  
-  if human then
-    
-    -- Attach player data to flight.
-    local playerData=self:_GetPlayerDataGroup(group)
-    flight.player=playerData
-    
-    -- Message to player.
-    MESSAGE:New(string.format("%s, your flight is registered within CCA.", playerData.name), 10, "MARSHAL"):ToClient(playerData.client)
-    
-  else
-    -- Nothing to do for AI.
-  end
-  
-  -- Add to known flights inside CCA zone.
-  table.insert(self.flights, flight)
-
-  return flight
-end
-
---- Remove a flight group.
--- @param #AIRBOSS self
--- @param Wrapper.Group#GROUP group Aircraft group.
--- @return #AIRBOSS.Flightitem Flight group.
-function AIRBOSS:_RemoveFlightGroup(group)
-  local groupname=group:GetName()
-  for i,_flight in pairs(self.flights) do
-    local flight=_flight --#AIRBOSS.Flightitem
-    if flight.groupname==groupname then
-      self:I(string.format("Removing flight group %s (not in CCA).", groupname))
-      table.remove(self.flights, i)
-      return
-    end
-  end
-end
-
 --- Orbit at a specified position at a specified alititude with a specified speed.
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data.
@@ -1912,25 +1851,123 @@ function AIRBOSS:_CollapseMarshalStack(patternflight, refuel)
   end
 end
 
---- Remove a group from a queue.
--- @param #AIRBOSS self
--- @param #table queue The queue from which the group will be removed.
--- @param Wrapper.Group#GROUP group Group that will be removed from queue.
-function AIRBOSS:_RemoveGroupFromQueue(queue, group)
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- FLIGHT & PLAYER functions
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-  local name=group:GetName()
+--- Create a new flight group. Usually when a flight appears in the CCA.
+-- @param #AIRBOSS self
+-- @param Wrapper.Group#GROUP group Aircraft group.
+-- @return #AIRBOSS.Flightitem Flight group.
+function AIRBOSS:_CreateFlightGroup(group)
+
+  -- Flight group name
+  local groupname=group:GetName()
+  local human=self:_IsHuman(group)
+  
+  -- Queue table item.
+  local flight={} --#AIRBOSS.Flightitem
+  flight.group=group
+  flight.groupname=group:GetName()
+  flight.nunits=#group:GetUnits()
+  flight.time=timer.getAbsTime()
+  flight.dist0=group:GetCoordinate():Get2DDistance(self:GetCoordinate())
+  flight.flag=USERFLAG:New(groupname)
+  flight.flag:Set(-100)
+  flight.ai=not human
+  flight.actype=group:GetTypeName()
+  flight.onboardnumbers=self:_GetOnboardNumbers(group)
+  flight.section={}
+  flight.case=self.case
+  
+  if human then
     
-  for i,_flight in pairs(queue) do
-    local flight=_flight --#AIRBOSS.Flightitem
+    -- Attach player data to flight.
+    local playerData=self:_GetPlayerDataGroup(group)
+    flight.player=playerData
     
-    if flight.groupname==name then
-      self:I(self.lid..string.format("Removing group %s from queue.", name))
-      table.remove(queue, i)
-      return
-    end
+    -- Message to player.
+    MESSAGE:New(string.format("%s, your flight is registered within CCA.", playerData.name), 10, "MARSHAL"):ToClient(playerData.client)
+    
+  else
+    -- Nothing to do for AI.
   end
   
+  -- Add to known flights inside CCA zone.
+  table.insert(self.flights, flight)
+
+  return flight
 end
+
+
+--- Initialize player data after birth event of player unit.
+-- @param #AIRBOSS self
+-- @param #string unitname Name of the player unit.
+-- @return #AIRBOSS.PlayerData Player data.
+function AIRBOSS:_NewPlayer(unitname)
+
+  -- Get player unit and name.
+  local playerunit, playername=self:_GetPlayerUnitAndName(unitname)
+  
+  if playerunit and playername then
+
+    -- Player data.
+    local playerData={} --#AIRBOSS.PlayerData
+    
+    -- Player unit, client and callsign.
+    playerData.unit     = playerunit
+    playerData.name     = playername
+    playerData.group    = playerunit:GetGroup()
+    playerData.callsign = playerData.unit:GetCallsign()
+    playerData.client   = CLIENT:FindByName(unitname, nil, true)
+    playerData.actype   = playerunit:GetTypeName()
+    playerData.onboard  = self:_GetOnboardNumberPlayer(playerData.group)
+    playerData.seclead  = playername
+        
+    -- Number of passes done by player.
+    playerData.passes=playerData.passes or 0
+      
+    -- LSO grades.
+    playerData.grades=playerData.grades or {}
+    
+    -- Attitude monitor.
+    playerData.attitudemonitor=false
+    
+    -- Set difficulty level.
+    playerData.difficulty=playerData.difficulty or AIRBOSS.Difficulty.EASY
+  
+    -- Init stuff for this round.
+    playerData=self:_InitPlayer(playerData)
+    
+    -- Return player data table.
+    return playerData    
+  end
+  
+  return nil
+end
+
+--- Initialize player data by (re-)setting parmeters to initial values.
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.PlayerData playerData Player data.
+-- @return #AIRBOSS.PlayerData Initialized player data.
+function AIRBOSS:_InitPlayer(playerData)
+  self:I(self.lid..string.format("Initializing player data for %s callsign %s.", playerData.name, playerData.callsign))
+  
+  playerData.step=AIRBOSS.PatternStep.UNDEFINED  
+  playerData.groove={}
+  playerData.debrief={}
+  playerData.holding=nil
+  playerData.lig=false
+  playerData.patternwo=false
+  playerData.waveoff=false
+  playerData.bolter=false
+  playerData.boltered=false
+  playerData.landed=false
+  playerData.Tlso=timer.getTime()
+  
+  return playerData
+end
+
 
 --- Get flight from group. 
 -- @param #AIRBOSS self
@@ -1956,27 +1993,117 @@ function AIRBOSS:_GetFlightFromGroupInQueue(group, queue)
   return nil, nil
 end
 
---- Remove a group from a queue when all aircraft of that group have landed.
+--- Check if a group is in a queue.
+-- @param #AIRBOSS self
+-- @param #table queue The queue to check.
+-- @param Wrapper.Group#GROUP group
+-- @return #boolean If true, group is in the queue. False otherwise.
+function AIRBOSS:_InQueue(queue, group)
+  local name=group:GetName()
+  for _,_flight in pairs(queue) do
+    local flight=_flight  --#AIRBOSS.Flightitem
+    if name==flight.groupname then
+      return true
+    end
+  end
+  return false
+end
+
+
+--- Remove a flight group.
+-- @param #AIRBOSS self
+-- @param Wrapper.Group#GROUP group Aircraft group.
+-- @return #AIRBOSS.Flightitem Flight group.
+function AIRBOSS:_RemoveFlightGroup(group)
+  local groupname=group:GetName()
+  for i,_flight in pairs(self.flights) do
+    local flight=_flight --#AIRBOSS.Flightitem
+    if flight.groupname==groupname then
+      self:I(string.format("Removing flight group %s (not in CCA).", groupname))
+      table.remove(self.flights, i)
+      return
+    end
+  end
+end
+
+--- Remove a flight group from a queue.
+-- @param #AIRBOSS self
+-- @param #table queue The queue from which the group will be removed.
+-- @param #AIRBOSS.Flightitem flight Flight group that will be removed from queue.
+function AIRBOSS:_RemoveFlightFromQueue(queue, flight)
+
+  -- Loop over all flights in group.
+  for i,_flight in pairs(queue) do
+    local qflight=_flight --#AIRBOSS.Flightitem
+    
+    -- Check for name.
+    if qflight.groupname==flight.groupname then
+      self:I(self.lid..string.format("Removing flight group %s from queue.", flight.groupname))
+      table.remove(queue, i)
+      return
+    end
+  end
+  
+end
+
+
+--- Remove a group from a queue.
 -- @param #AIRBOSS self
 -- @param #table queue The queue from which the group will be removed.
 -- @param Wrapper.Group#GROUP group Group that will be removed from queue.
-function AIRBOSS:_RemoveQueue(queue, group)
+function AIRBOSS:_RemoveGroupFromQueue(queue, group)
 
+  -- Group name.
   local name=group:GetName()
-  
+    
+  -- Loop over all flights in group.
   for i,_flight in pairs(queue) do
     local flight=_flight --#AIRBOSS.Flightitem
     
+    -- Check for name.
     if flight.groupname==name then
+      self:I(self.lid..string.format("Removing group %s from queue.", name))
+      table.remove(queue, i)
+      return
+    end
+  end
+  
+end
+
+--- Remove a unit from a flight group (e.g. when landed) and update all queues if the whole flight group is gone.
+-- @param #AIRBOSS self
+-- @param Wrapper.Unit#UNIT unit The unit to be removed.
+function AIRBOSS:_RemoveUnitFromFlight(unit)
+
+  -- Check if unit exists.
+  if unit then
+
+    -- Get group.
+    local group=unit:GetGroup()
     
-      -- Decrease number of units in group.
-      flight.nunits=flight.nunits-1
+    -- Check if group exists.
+    if group then
+    
+      -- Get flight.
+      local flight=self:_GetFlightFromGroupInQueue(group, self.flights)
       
-      if flight.nunits==0 then
-        self:I(self.lid..string.format("FF removing group %s from queue.", name))
-        table.remove(queue, i)
-      end
-      
+      -- Check if flight exists.
+      if flight then
+
+        -- TODO: Improve this and remove the explicit unit. Make unit array for flight!
+        -- Decrease number of units in group.
+        flight.nunits=flight.nunits-1
+                
+        -- Check if no units are left.
+        if flight.nunits==0 then
+        
+          -- Remove flight from all queues.
+          self:_RemoveGroupFromQueue(self.flights, group)
+          self:_RemoveGroupFromQueue(self.Qmarshal, group)
+          self:_RemoveGroupFromQueue(self.Qpattern, group)
+        end
+              
+      end    
     end
   end
   
@@ -2159,13 +2286,12 @@ function AIRBOSS:OnEventBirth(EventData)
     self:T(self.lid..text)
     MESSAGE:New(text, 5):ToAllIf(self.Debug)
     
-    
     -- Check if aircraft type the player occupies is carrier capable.
     local rightaircraft=self:_IsCarrierAircraft(_unit)
     if rightaircraft==false then
       local text=string.format("Player aircraft type %s not supported by AIRBOSS class.", _unit:GetTypeName())
-      --MESSAGE:New(text, 30, "ERROR", true):ToGroup(_group)
-      self:E(self.lid..text)
+      MESSAGE:New(text, 30):ToAllIf(self.Debug)
+      self:T(self.lid..text)
       return
     end
         
@@ -2242,12 +2368,11 @@ function AIRBOSS:OnEventLand(EventData)
       -- We did land.
       playerData.landed=true
       
-      -- Unkonwn step.
+      -- Unkonwn step until we now more.
       playerData.step=AIRBOSS.PatternStep.UNDEFINED
 
       -- Call trapped function in 3 seconds to make sure we did not bolter.
-      SCHEDULER:New(nil, self._Trapped,{self, playerData, dist}, 3)
-        
+      SCHEDULER:New(nil, self._Trapped,{self, playerData, dist}, 3)             
     end
     
   else
@@ -2264,12 +2389,9 @@ function AIRBOSS:OnEventLand(EventData)
 
     local lp=coord:MarkToAll(text)
     coord:SmokeGreen()
-
-    -- AI: Decrease number of units in flight and remove group from pattern queue if all units landed.
-    if self:_InQueue(self.Qpattern, EventData.IniGroup) then
-      self:_RemoveQueue(self.Qpattern, EventData.IniGroup)
-    end
- 
+    
+    -- AI always lands ==> remove unit from flight group and queues.
+    self:_RemoveUnitFromFlight(EventData.IniUnit) 
   end
     
 end
@@ -2287,89 +2409,20 @@ function AIRBOSS:OnEventCrash(EventData)
   self:I(self.lid.."CRASH: group  = "..tostring(EventData.IniGroupName))
   self:I(self.lid.."CARSH: player = "..tostring(_playername))
   
-  -- TODO: Update queues!
-  -- TODO: Decrease number of units in group!
   if _unit and _playername then
     self:I(self.lid..string.format("Player %s crashed!",_playername))
   else
     self:I(self.lid..string.format("AI unit %s crashed!", EventData.IniUnitName)) 
   end
+  
+  -- Remove unit from flight and queues.
+  self:_RemoveUnitFromFlight(EventData.IniUnit)  
 end
-
-
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- PATTERN functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Initialize player data after birth event of player unit.
--- @param #AIRBOSS self
--- @param #string unitname Name of the player unit.
--- @return #AIRBOSS.PlayerData Player data.
-function AIRBOSS:_NewPlayer(unitname)
-
-  -- Get player unit and name.
-  local playerunit, playername=self:_GetPlayerUnitAndName(unitname)
-  
-  if playerunit and playername then
-
-    -- Player data.
-    local playerData={} --#AIRBOSS.PlayerData
-    
-    -- Player unit, client and callsign.
-    playerData.unit     = playerunit
-    playerData.name     = playername
-    playerData.group    = playerunit:GetGroup()
-    playerData.callsign = playerData.unit:GetCallsign()
-    playerData.client   = CLIENT:FindByName(unitname, nil, true)
-    playerData.actype   = playerunit:GetTypeName()
-    playerData.onboard  = self:_GetOnboardNumberPlayer(playerData.group)
-    playerData.seclead  = playername
-        
-    -- Number of passes done by player.
-    playerData.passes=playerData.passes or 0
-      
-    -- LSO grades.
-    playerData.grades=playerData.grades or {}
-    
-    -- Attitude monitor.
-    playerData.attitudemonitor=false
-    
-    -- Set difficulty level.
-    playerData.difficulty=playerData.difficulty or AIRBOSS.Difficulty.NORMAL
-  
-    -- Init stuff for this round.
-    playerData=self:_InitPlayer(playerData)
-    
-    -- Return player data table.
-    return playerData    
-  end
-  
-  return nil
-end
-
---- Initialize player data by (re-)setting parmeters to initial values.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data.
--- @return #AIRBOSS.PlayerData Initialized player data.
-function AIRBOSS:_InitPlayer(playerData)
-  self:I(self.lid..string.format("New approach of player %s.", playerData.callsign))
-  
-  playerData.step=AIRBOSS.PatternStep.UNDEFINED
-  
-  playerData.groove={}
-  playerData.debrief={}
-  playerData.patternwo=false
-  playerData.lig=false
-  playerData.waveoff=false
-  playerData.bolter=false
-  playerData.boltered=false
-  playerData.landed=false
-  playerData.holding=nil
-  playerData.Tlso=timer.getTime()
-  
-  return playerData
-end
 
 --- Holding.
 -- @param #AIRBOSS self
@@ -2571,7 +2624,7 @@ function AIRBOSS:_Descent4k(playerData)
   -- Abort condition check.
   if self:_CheckAbort(X, Z, self.Descent4k) then
     self:_AbortPattern(playerData, X, Z, self.Descent4k)
-    return
+    --return
   end
   
   -- Check if we are in front of the boat (diffX > 0).
@@ -2609,7 +2662,7 @@ function AIRBOSS:_Platform(playerData)
   -- Abort condition check.
   if self:_CheckAbort(X, Z, self.Platform) then
     self:_AbortPattern(playerData, X, Z, self.Platform)
-    return
+    --return
   end
   
   -- Check if we are inside the moving zone.
@@ -2650,7 +2703,7 @@ function AIRBOSS:_DirtyUp(playerData)
   -- Abort condition check.
   if self:_CheckAbort(X, Z, self.DirtyUp) then
     self:_AbortPattern(playerData, X, Z, self.DirtyUp)
-    return
+    --return
   end
   
   -- Check if we are inside the moving zone.
@@ -2697,7 +2750,7 @@ function AIRBOSS:_Bullseye(playerData)
   -- Abort condition check.
   if self:_CheckAbort(X, Z, self.Bullseye) then
     self:_AbortPattern(playerData, X, Z, self.Bullseye)
-    return
+    --return
   end
 
   -- Check if we are inside the moving zone.
@@ -2739,7 +2792,7 @@ function AIRBOSS:_Upwind(playerData)
   
   -- Abort condition check.
   if self:_CheckAbort(X, Z, self.Upwind) then
-    self:_AbortPattern(playerData, X, Z, self.Upwind)
+    self:_AbortPattern(playerData, X, Z, self.Upwind, true)
     return
   end
   
@@ -2781,7 +2834,7 @@ function AIRBOSS:_Break(playerData, part)
     
   -- Check abort conditions.
   if self:_CheckAbort(X, Z, breakpoint) then
-    self:_AbortPattern(playerData, X, Z, breakpoint)
+    self:_AbortPattern(playerData, X, Z, breakpoint, true)
     return
   end
 
@@ -2853,7 +2906,7 @@ function AIRBOSS:_Abeam(playerData)
   
   -- Check abort conditions.
   if self:_CheckAbort(X, Z, self.Abeam) then
-    self:_AbortPattern(playerData, X, Z, self.Abeam)
+    self:_AbortPattern(playerData, X, Z, self.Abeam, true)
     return
   end
 
@@ -2897,7 +2950,7 @@ function AIRBOSS:_Ninety(playerData)
   
   -- Check abort conditions.
   if self:_CheckAbort(X, Z, self.Ninety) then
-    self:_AbortPattern(playerData, X, Z, self.Ninety)
+    self:_AbortPattern(playerData, X, Z, self.Ninety, true)
     return
   end
   
@@ -2946,7 +2999,7 @@ function AIRBOSS:_Wake(playerData)
     
   -- Check abort conditions.
   if self:_CheckAbort(X, Z, self.Wake) then
-    self:_AbortPattern(playerData, X, Z, self.Wake)
+    self:_AbortPattern(playerData, X, Z, self.Wake, true)
     return
   end
   
@@ -2987,7 +3040,7 @@ function AIRBOSS:_Final(playerData)
 
   -- In front of carrier or more than 4 km behind carrier. 
   if self:_CheckAbort(X, Z, self.Groove) then
-    self:_AbortPattern(playerData, X, Z, self.Groove)
+    self:_AbortPattern(playerData, X, Z, self.Groove, true)
     return
   end
    
@@ -3060,7 +3113,7 @@ function AIRBOSS:_Groove(playerData)
 
   -- Check abort conditions.
   if self:_CheckAbort(X, Z, self.Trap) then
-    self:_AbortPattern(playerData, X, Z, self.Trap)
+    self:_AbortPattern(playerData, X, Z, self.Trap, true)
     return
   end
 
@@ -3261,21 +3314,21 @@ function AIRBOSS:_Trapped(playerData, X)
     -- Little offset for the exact wire positions.
     local wdx=0
     
-    -- Which wire was caught?
+    -- Which wire was caught? X>0 since calculated as distance!
     local wire
-    if X<self.carrierparam.wire1+wdx then
+    if X>math.abs(self.carrierparam.wire1+wdx) then
       wire=1
-    elseif X<self.carrierparam.wire2+wdx then
+    elseif X>math.abs(self.carrierparam.wire2+wdx) then
       wire=2
-    elseif X<self.carrierparam.wire3+wdx then
+    elseif X>math.abs(self.carrierparam.wire3+wdx) then
       wire=3
-    elseif X<self.carrierparam.wire4+wdx then
+    elseif X>math.abs(self.carrierparam.wire4+wdx) then
       wire=4
     else
       wire=0
     end
        
-    local text=string.format("TRAPPED! %d-wire.", wire)
+    local text=string.format("Trapped! %d-wire.", wire)
     self:_SendMessageToPlayer(text, 10, playerData)
     
     local text2=string.format("Distance X=%.1f meters resulted in a %d-wire estimate.", X, wire)
@@ -3947,22 +4000,42 @@ end
 -- @param #AIRBOSS.Checkpoint posData Checkpoint data.
 function AIRBOSS:_TooFarOutText(X, Z, posData)
 
-  local text="You are too far "
+  -- Intro.
+  local text="you are too "
   
+  -- X text.
   local xtext=nil
   if posData.Xmin and X<posData.Xmin then
-    xtext="ahead"
+    if posData.Xmin<=0 then
+      xtext="far behind "
+    else
+      xtext="close to "
+    end
   elseif posData.Xmax and X>posData.Xmax then
-    xtext="behind"
+    if posData.LimitXmax>=0 then
+      xtext="far ahead of "
+    else
+      xtext="close to "
+    end
   end
   
+  -- Z text.
   local ztext=nil
   if posData.Zmin and Z<posData.Zmin then
-    ztext="port (left) of"
+    if posData.Zmin<=0 then
+      ztext="far port of "
+    else
+      ztext="close to "
+    end
   elseif posData.Zmax and Z>posData.Zmax then
-    ztext="starboard (right) of"
+    if posData.Zmax>=0 then
+      ztext="far starboard of "
+    else
+      ztext="too close to "
+    end
   end
   
+  -- Combine X-Z text.
   if xtext and ztext then
     text=text..xtext.." and "..ztext
   elseif xtext then
@@ -3971,7 +4044,13 @@ function AIRBOSS:_TooFarOutText(X, Z, posData)
     text=text..ztext
   end
   
-  text=text.." the carrier."
+  -- Complete the sentence
+  text=text.."the carrier."
+  
+  -- If no case could be identified.
+  if xtext==nil and ztext==nil then
+    text="you are too far from where you should be!"
+  end
   
   return text
 end
@@ -3981,28 +4060,35 @@ end
 -- @param #AIRBOSS.PlayerData playerData Player data.
 -- @param #number X X distance player to carrier.
 -- @param #number Z Z distance player to carrier.
+-- @param #boolean patternwo (Optional) Pattern wave off.
 -- @param #AIRBOSS.Checkpoint posData Checkpoint data.
-function AIRBOSS:_AbortPattern(playerData, X, Z, posData)
+function AIRBOSS:_AbortPattern(playerData, X, Z, posData, patternwo)
 
   -- Text where we are wrong.
-  local toofartext=self:_TooFarOutText(X, Z, posData)
-  
-  -- Send message to player.
-  self:_SendMessageToPlayer(toofartext.." Depart and re-enter!", 15, playerData, false)
+  local text=self:_TooFarOutText(X, Z, posData)
   
   -- Debug.
-  local text=string.format("Abort: X=%d Xmin=%s, Xmax=%s | Z=%d Zmin=%s Zmax=%s", X, tostring(posData.Xmin), tostring(posData.Xmax), Z, tostring(posData.Zmin), tostring(posData.Zmax))
-  self:E(self.lid..text)
+  local dtext=string.format("Abort: X=%d Xmin=%s, Xmax=%s | Z=%d Zmin=%s Zmax=%s", X, tostring(posData.Xmin), tostring(posData.Xmax), Z, tostring(posData.Zmin), tostring(posData.Zmax))
+  self:E(self.lid..dtext)
   --MESSAGE:New(text, 60):ToAllIf(self.Debug)
   
-  -- Add to debrief.
-  self:_AddToSummary(playerData, string.format("%s", playerData.step), string.format("Pattern wave off: %s", toofartext))
+  if patternwo then
   
-  -- Pattern wave off!
-  playerData.patternwo=true
+    -- Pattern wave off!
+    playerData.patternwo=true
+  
+    -- Tell player to depart.
+    text=text.." Depart and re-enter!"
+  
+    -- Add to debrief.
+    self:_AddToSummary(playerData, string.format("%s", playerData.step), string.format("Pattern wave off: %s", text))
 
-  -- Next step debrief.  
-  playerData.step=AIRBOSS.PatternStep.DEBRIEF
+    -- Next step debrief.  
+    playerData.step=AIRBOSS.PatternStep.DEBRIEF
+  end
+
+  -- Message to player.
+  self:MessageToPlayer(playerData, text, "AIRBOSS", nil, 20)
 end
 
 
@@ -4256,20 +4342,20 @@ function AIRBOSS:_Debrief(playerData)
   
   -- LSO grade message.
   local text=string.format("%s %.1f PT - %s", grade, points, analysis)
-  text=text..string.format("Your detailed debriefing can now be seen in F10 radio menu.")
+  text=text..string.format("Detailed debriefing can be found in the F10 radio menu.")
   self:MessageToPlayer(playerData,text, "LSO", "", 30, true)
 
-  -- New approach.
+  -- Check if boltered or waved off?
   if playerData.boltered or playerData.waveoff or playerData.patternwo then
   
-    -- TODO: can become nil when I crashed and changed to observer.
+    -- TODO: Can become nil when I crashed and changed to observer. Which events are captured? Nil check for unit?
   
     -- Get heading and distance to register zone ~3 NM astern.
     local heading=playerData.unit:GetCoordinate():HeadingTo(self.zoneInitial:GetCoordinate())
     local distance=playerData.unit:GetCoordinate():Get2DDistance(self.zoneInitial:GetCoordinate())
     
+    -- Re-enter message.
     local text=string.format("fly heading %d for %d NM to re-enter the pattern.", heading, UTILS.MetersToNM(distance))
-    self:_SendMessageToPlayer(text, 10, playerData, false, nil, 30)
     self:MessageToPlayer(playerData, text, "LSO", nil, 10)
     
     -- Next step?
@@ -4278,7 +4364,9 @@ function AIRBOSS:_Debrief(playerData)
     -- TODO: CASE III: After bolter/wo turn left and climb to 1200 ft and re-enter pattern?
     -- TODO: CASE III: After pattern wo? No idea...
     
-    -- 
+    -- Get flight.
+    
+    --[[
     local flight=self:_GetFlightFromGroupInQueue(playerData.group, self.flight)
     
     if flight then
@@ -4304,15 +4392,31 @@ function AIRBOSS:_Debrief(playerData)
     
     else
     end
-      playerData.step=AIRBOSS.PatternStep.COMMENCING
+    ]]
+    
+    
+    playerData.step=AIRBOSS.PatternStep.COMMENCING
       
     
-  elseif playerData.landed then
+  elseif playerData.landed and not playerData.unit:InAir() then
+  
+    -- Remove player unit from flight and all queues.
+    self:_RemoveUnitFromFlight(playerData.unit)
+  
+    -- Message to player.
+    self:MessageToPlayer(playerData, "Welcome to the carrier!", "LSO", nil, 10)
     
+  else
+
+    -- Message to player.
+    self:MessageToPlayer(playerData, "Undefined state after landing! Please report.", "ERROR", nil, 10)
+
+    -- Next step.
+    playerData.step=AIRBOSS.PatternStep.UNDEFINED  
   end
   
-  -- Next step.
-  playerData.step=AIRBOSS.PatternStep.UNDEFINED
+  MESSAGE:New(string.format("Player step %s.", playerData.step))
+  
 end
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -4474,21 +4578,6 @@ function AIRBOSS:_IsHuman(group)
   return false
 end
 
---- Check if a group is in the queue.
--- @param #AIRBOSS self
--- @param #table queue The queue to check.
--- @param Wrapper.Group#GROUP group
--- @return #boolean If true, group is in the queue. False otherwise.
-function AIRBOSS:_InQueue(queue, group)
-  local name=group:GetName()
-  for _,_flight in pairs(queue) do
-    local flight=_flight  --#AIRBOSS.Flightitem
-    if name==flight.groupname then
-      return true
-    end
-  end
-  return false
-end
 
 --- Get player data from unit object
 -- @param #AIRBOSS self
