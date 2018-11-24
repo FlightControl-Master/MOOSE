@@ -3556,7 +3556,7 @@ function AIRBOSS:_GetRelativeHeading(unit, runway)
     rhdg=rhdg-self.carrierparam.rwyangle
   end
   
-  -- TODO another way would be to get the heading of the carrier and the heading of the unit and calc difference?
+  --[[
   -- Heading of unit.
   local unitheading=unit:GetHeading()
   
@@ -3570,8 +3570,8 @@ function AIRBOSS:_GetRelativeHeading(unit, runway)
     carrierheading=self:GetHeading(false)
   end
   
-  rhdg=unitheading-carrierheading
-    
+  local rhdg=unitheading-carrierheading
+  ]]
   
   -- Return heading in degrees.
   return rhdg

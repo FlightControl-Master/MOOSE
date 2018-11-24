@@ -533,11 +533,6 @@ function BEACON:ActivateTACAN(Channel, Mode, Message, Bearing, Duration)
     return self
   end
   
-  if self.Positionable:IsAir() then
-    --TODO: set TACANMode="Y"
-    self:E({"The POSITIONABLE you want to attach the AA Tacan Beacon is not an aircraft! The BEACON is not emitting.", self.Positionable})
-  end
-  
   -- Beacon type.
   local Type=BEACON.Type.TACAN
   
@@ -548,6 +543,10 @@ function BEACON:ActivateTACAN(Channel, Mode, Message, Bearing, Duration)
   local AA=self.Positionable:IsAir()
   if AA then
     System=BEACON.System.TACAN_TANKER
+    -- Check if "Y" mode is selected for aircraft.
+    if Mode~="Y" then
+      self:E({"WARNING: The POSITIONABLE you want to attach the AA Tacan Beacon is an aircraft: Mode should Y !The BEACON is not emitting.", self.Positionable})
+    end
   end
   
   -- Attached unit.
