@@ -21,6 +21,7 @@
 --- RESCUEHELO class.
 -- @type RESCUEHELO
 -- @field #string ClassName Name of the class.
+-- @field #boolean Debug Debug mode on/off.
 -- @field Wrapper.Unit#UNIT carrier The carrier the helo is attached to.
 -- @field #string carriertype Carrier type.
 -- @field #string helogroupname Name of the late activated helo template group.
@@ -37,6 +38,12 @@
 -- @field #boolean respawn If true, helo be respawned (default). If false, no respawning will happen.
 -- @field #boolean respawninair If true, helo will always be respawned in air. This has no impact on the initial spawn setting.
 -- @field #boolean uncontrolledac If true, use and uncontrolled helo group already present in the mission.
+-- @field #boolean rescueon If true, helo will rescue crashed pilots. If false, no recuing will happen.
+-- @field #number rescueduration Time the rescue helicopter hovers over the crash site in seconds.
+-- @field #number rescuespeed Speed in m/s the rescue helicopter hovers at over the crash site.
+-- @field #boolean rescuestopboat If true, stop carrier during rescue operations.
+-- @field #boolean carrierstop If true, route of carrier was stopped.
+-- @field #number HeloFuel0 Initial fuel of helo in percent. Necessary due to DCS bug that helo with full tank does not return fuel via API function.
 -- @extends Core.Fsm#FSM
 
 --- Rescue Helo
@@ -128,6 +135,7 @@
 -- @field #RESCUEHELO
 RESCUEHELO = {
   ClassName      = "RESCUEHELO",
+  Debug          = false,
   carrier        = nil,
   carriertype    = nil,
   helogroupname  = nil,
@@ -144,20 +152,26 @@ RESCUEHELO = {
   respawn        = nil,
   respawninair   = nil,
   uncontrolledac = nil,
+  rescueon       = nil,
+  rescueduration = nil,
+  rescuespeed    = nil,
+  rescuestopboat = nil,
+  HeloFuel0      = nil,
+  carrierstop    = false,
 }
 
 --- Class version.
 -- @field #string version
-RESCUEHELO.version="0.9.3"
+RESCUEHELO.version="0.9.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Add option to stop carrier while rescue operation is in progress.
--- TODO: Possibility to add already present/spawned aircraft, e.g. for warehouse.
--- TODO: Add option to deactivate the rescueing.
+-- TODO: Add option to stop carrier while rescue operation is in progress?
 -- TODO: Write documenation.
+-- DONE: Add option to deactivate the rescueing.
+-- DONE: Possibility to add already present/spawned aircraft, e.g. for warehouse.
 -- DONE: Add rescue event when aircraft crashes.
 -- DONE: Make offset input parameter.
 
@@ -195,7 +209,11 @@ function RESCUEHELO:New(carrierunit, helogroupname)
   self:SetAltitude()
   self:SetOffsetX()
   self:SetOffsetZ()
+  self:SetRescueOn()
   self:SetRescueZone()
+  self:SetRescueHoverSpeed()
+  self:SetRescueDuration()
+  self:SetRescueStopBoatOff()
 
   -----------------------
   --- FSM Transitions ---
@@ -294,6 +312,57 @@ function RESCUEHELO:SetRescueZone(radius)
   self.rescuezone=ZONE_UNIT:New("Rescue Zone", self.carrier, radius or 100000)
   return self
 end
+
+--- Set rescue hover speed.
+-- @param #RESCUEHELO self
+-- @param #number speed Speed in km/h. Default 25 km/h.
+-- @return #RESCUEHELO self
+function RESCUEHELO:SetRescueHoverSpeed(speed)
+  self.rescuespeed=UTILS.KmphToMps(speed or 25)
+  return self
+end
+
+--- Set rescue duration. This is the time it takes to rescue a pilot at the crash site.
+-- @param #RESCUEHELO self
+-- @param #number duration Duration in minutes. Default 5 min.
+-- @return #RESCUEHELO self
+function RESCUEHELO:SetRescueDuration(duration)
+  self.rescueduration=(duration or 5)*60
+  return self
+end
+
+--- Activate rescue option. Crashed and ejected pilots will be rescued. This is the default setting.
+-- @param #RESCUEHELO self
+-- @return #RESCUEHELO self
+function RESCUEHELO:SetRescueOn()
+  self.rescueon=true
+  return self
+end
+
+--- Deactivate rescue option. Crashed and ejected pilots will not be rescued.
+-- @param #RESCUEHELO self
+-- @return #RESCUEHELO self
+function RESCUEHELO:SetRescueOff()
+  self.rescueon=false
+  return self
+end
+
+--- Stop carrier during rescue operations. NOT WORKING!
+-- @param #RESCUEHELO self
+-- @return #RESCUEHELO self
+function RESCUEHELO:SetRescueStopBoatOn()
+  self.rescuestopboat=true
+  return self
+end
+
+--- Do not stop carrier during rescue operations. This is the default setting.
+-- @param #RESCUEHELO self
+-- @return #RESCUEHELO self
+function RESCUEHELO:SetRescueStopBoatOff()
+  self.rescuestopboat=false
+  return self
+end
+
 
 --- Set takeoff type.
 -- @param #RESCUEHELO self
@@ -493,7 +562,7 @@ function RESCUEHELO:_OnEventCrashOrEject(EventData)
         coord:MarkToCoalition(string.format("Crash site of unit %s.", unitname), self.helo:GetCoalition())
       
         -- Only rescue if helo is "running" and not, e.g., rescuing already.
-        if self:IsRunning() then
+        if self:IsRunning() and self.rescueon then
           self:Rescue(coord)
         end
       
@@ -652,7 +721,15 @@ function RESCUEHELO:onafterRun(From, Event, To)
   
   -- Restart formation if stopped.
   if self.formation:Is("Stopped") then
+    self:I(string.format("Restarting formation of rescue helo %s.", self.helo:GetName()))
     self.formation:Start()
+  end
+  
+  -- Restart route of carrier if it was stopped.
+  if self.carrierstop then
+    self:I("Carrier resuming route after rescue operation.")
+    self.carrier:RouteResume()
+    self.carrierstop=false
   end
   
 end
@@ -678,8 +755,8 @@ function RESCUEHELO:onafterRescue(From, Event, To, RescueCoord)
   local RescueTask={}
   RescueTask.id="ControlledTask"
   RescueTask.params={}
-  RescueTask.params.task=self.helo:TaskOrbit(RescueCoord, 20, 2)
-  RescueTask.params.stopCondition={duration=300}
+  RescueTask.params.task=self.helo:TaskOrbit(RescueCoord, 20, self.rescuespeed)
+  RescueTask.params.stopCondition={duration=self.rescueduration}
   
   -- Set Waypoints.
   wp[1]=self.helo:GetCoordinate():WaypointAirTurningPoint(nil, 200, {}, "Current Position")
@@ -694,6 +771,13 @@ function RESCUEHELO:onafterRescue(From, Event, To, RescueCoord)
   
   -- Stop formation.
   self.formation:Stop()
+  
+  -- Stop carrier.
+  if self.rescuestopboat then
+    self:I("Stopping carrier for rescue operation.")
+    self.carrier:RouteStop()
+    self.carrierstop=true
+  end
 end
 
 
