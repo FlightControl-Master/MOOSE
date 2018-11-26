@@ -35,7 +35,9 @@
 -- @field #number altitude Tanker orbit pattern altitude.
 -- @field #number distStern Race-track distance astern.
 -- @field #number distBow Race-track distance bow.
--- @field #number dTupdate Time interval for updating pattern position wrt new tanker position.
+-- @field #number Dupdate Pattern update when carrier changes its position by more than this distance (meters).
+-- @field #number Hupdate Pattern update when carrier changes its heading by more than this number (degrees). 
+-- @field #number dTupdate Minimum time interval in seconds before the next pattern update can happen.
 -- @field #number Tupdate Last time the pattern was updated.
 -- @field #number takeoff Takeoff type (cold, hot, air).
 -- @field #number lowfuel Low fuel threshold in percent.
@@ -58,14 +60,14 @@
 -- 
 -- # Simple Script
 -- 
--- In the mission editor you have to set up a carrier unit, which will act as "mother". In the following, this unit will be named "USS Stennis".
+-- In the mission editor you have to set up a carrier unit, which will act as "mother". In the following, this unit will be named **"USS Stennis"**.
 -- 
--- Secondly, you need to define a recovery tanker group in the mission editor and set it to "LATE ACTIVATED". The name of the group we'll use is "Texaco".
+-- Secondly, you need to define a recovery tanker group in the mission editor and set it to **"LATE ACTIVATED"**. The name of the group we'll use is **"Texaco"**.
 -- 
--- The basic script is very simple and consists of only two lines. 
+-- The basic script is very simple and consists of only two lines: 
 -- 
---      TexacoStennis=RECOVERYTANKER:New(UNIT:FindByName("USS Stennis"), "Texaco")
---      TexacoStennis:Start()
+--     TexacoStennis=RECOVERYTANKER:New(UNIT:FindByName("USS Stennis"), "Texaco")
+--     TexacoStennis:Start()
 --
 -- The first line will create a new RECOVERYTANKER object and the second line starts the process.
 -- 
@@ -78,11 +80,11 @@
 -- 
 -- Once the tanker runs out of fuel itself, it will return to the carrier and be respawned.
 -- 
--- # Fine Tuning
+-- # Options and Fine Tuning
 -- 
 -- Several parameters can be customized by the mission designer.
 -- 
--- ## Adjusting the Takeoff Type
+-- ## Takeoff Type
 -- 
 -- By default, the tanker is spawned with running engies on the carrier. The mission designer has set option to set the take off type via the @{#RECOVERYTANKER.SetTakeoff} function.
 -- Or via shortcuts
@@ -92,9 +94,9 @@
 --    * @{#RECOVERYTANKER.SetTakeoffAir}(): Will set the takeoff type to air, i.e. the tanker will be spawned in air relatively far behind the carrier.  
 -- 
 -- For example,
---      TexacoStennis=RECOVERYTANKER:New(UNIT:FindByName("USS Stennis"), "Texaco")
---      TexacoStennis:SetTakeoffAir()
---      TexacoStennis:Start()
+--     TexacoStennis=RECOVERYTANKER:New(UNIT:FindByName("USS Stennis"), "Texaco")
+--     TexacoStennis:SetTakeoffAir()
+--     TexacoStennis:Start()
 -- will spawn the tanker several nautical miles astern the carrier. From there it will start its pattern.
 -- 
 -- Spawning in air is not as realsitic but can be useful do avoid DCS bugs and shortcomings like aircraft crashing into each other on the flight deck.
@@ -104,9 +106,9 @@
 -- If only the first spawning should happen on the carrier, one use the @{#RECOVERYTANKER.SetRespawnInAir}() function to command that all subsequent spawning
 -- will happen in air.
 -- 
--- If the helo should no be respawned at all, one can set @{#RECOVERYTANKER.SetRespawnOff}().
+-- If the helo should not be respawned at all, one can set @{#RECOVERYTANKER.SetRespawnOff}().
 -- 
--- ## Adjusting the Pattern
+-- ## Pattern Parameters
 -- 
 -- The racetrack pattern parameters can be fine tuned via the following functions:
 -- 
@@ -114,10 +116,69 @@
 --    * @{#RECOVERYTANKER.SetSpeed}(*speed*), where *speed* is the pattern speed in knots. Default is 272 knots.
 --    * @{#RECOVERYTANKER.SetRacetrackDistances}(*distbow*, *diststern*), where *distbow* and *diststern* are the distances ahead and astern the boat, respectively.
 --
+-- ## TACAN
+-- 
+-- A TACAN beacon for the tanker can be activated via scripting, i.e. no need to do this within the mission editor.
+-- 
+-- The beacon is create with the @{#RECOVERYTANKER.SetTACAN}(*channel*, *mode*, *morse*) function, where *channel* is the TACAN channel (a number), *mode* the TACAN mode (either "X"
+-- or "Y") and *morse* a three letter string that is send as morse code to identify the tanker:
+-- 
+--     TexacoStennis:SetTACAN(10, "Y", "TKR")
+--     
+-- will activate a TACAN beacon 10Y with more code "TKR".
+-- 
+-- If you do not set a TACAN beacon explicitly, it is automatically create on channel 1, mode "Y" and morse code "TKR".
+-- 
+-- In order to completely disable the TACAN beacon, you can use the @{#RECOVERYTANKER.SetTACANoff}() function in your script.
+-- 
+-- Note to self, I am not sure, if an AA TACAN station *must* be of mode "Y" in order to work. It seems that this was the case in earlier DCS versions.
+-- 
+-- ## Pattern Update
+-- 
+-- The pattern of the tanker is updated if at least one of the two following conditions apply:
+-- 
+--    * The aircraft carrier changes its position by more than ~10 km (see @{#RECOVERYTANKER.SetPatternUpdateDistance}) and/or
+--    * The aircraft carrier changes its heading by more than 5 degrees (see @{#RECOVERYTANKER.SetPatternUpdateHeading})
+-- 
+-- **Note** that updating the pattern always leads to a small disruption in the perfect racetrack pattern of the tanker. This is because a new waypoint and new racetrack points
+-- need to be set as DCS task. This is also the reason why the pattern is not contantly updated but rather when the position or heading of the carrier changes significantly.
+--
+-- The maximum update frequency is set to 15 minutes. You can adjust this by @{#RECOVERYTANKER.SetPatternUpdateInterval}.
+--
+-- # Finite State Model
+-- 
+-- The implementation uses a Finite State Model (FSM). This allows the mission designer to hook in to certain events.
+-- 
+--    * @{#RECOVERYTANKER.Start}: This event starts the FMS process and initialized parameters and spawns the tanker. DCS event handling is started.
+--    * @{#RECOVERYTANKER.Status}: This event is called in regular intervals (~60 seconds) and checks the status of the tanker and carrier. It triggers other events if necessary.
+--    * @{#RECOVERYTANKER.PatternUpdate}: This event commands the tanker to update its pattern
+--    * @{#RECOVERYTANKER.RTB}: This events sends the tanker to its home base (usually the carrier). This is called once the tanker runs low on gas.
+--    * @{#RECOVERYTANKER.RefuelStart}: This event is called when a tanker starts to refuel another unit.
+--    * @{#RECOVERYTANKER.RefuelStop}: This event is called when a tanker stopped to refuel another unit.
+--    * @{#RECOVERYTANKER.Run}: This event is called when the tanker resumes normal operations, e.g. after refueling stopped or tanker finished refueling.
+--    * @{#RECOVERYTANKER.Stop}: This event stops the FSM by unhandling DCS events.
+--
+-- The mission designer can capture these events by RECOVERYTANKER.OnAfter*Eventname* functions, e.g. @{#RECOVERYTANKER.OnAfterPatternUpdate}.
+-- 
+-- # Debugging
+-- 
+-- In case you have problems, it is always a good idea to have a look at your DCS log file. You find it in your "Saved Games" folder, so for example in
+--     C:\Users\<yourname>\Saved Games\DCS\Logs\dcs.log
+-- All output concerning the @{#RECOVERYTANKER} class should have the string "RECOVERYTANKER" in the corresponding line.
+-- Searching for lines that contain the string "error" or "nil" can also give you a hint what's wrong.
+-- 
+-- The verbosity of the output can be increased by adding the following lines to your script:
+-- 
+--     BASE:TraceOnOff(true)
+--     BASE:TraceLevel(1)
+--     BASE:TraceClass("RECOVERYTANKER")
+-- 
+-- To get even more output you can increase the trace level to 2 or even 3, c.f. @{Core.Base#BASE} for more details.
+--
 -- @field #RECOVERYTANKER
 RECOVERYTANKER = {
   ClassName       = "RECOVERYTANKER",
-  Debug           = true,
+  Debug           = false,
   carrier         = nil,
   carriertype     = nil,
   tankergroupname = nil,
@@ -133,6 +194,8 @@ RECOVERYTANKER = {
   distStern       = nil,
   distBow         = nil,
   dTupdate        = nil,
+  Dupdate         = nil,
+  Hupdate         = nil,
   Tupdate         = nil,
   takeoff         = nil,
   lowfuel         = nil,
@@ -145,16 +208,18 @@ RECOVERYTANKER = {
 
 --- Class version.
 -- @field #string version
-RECOVERYTANKER.version="0.9.4"
+RECOVERYTANKER.version="0.9.4w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Check if TACAN mode "X" is allowed for AA TACAN stations.
+-- TODO: Check if tanker is going back to "Running" state after RTB and respawn.
 -- TODO: Is alive check for tanker.
--- TODO: Trace functions self:T instead of self:I for less output.
--- TODO: Make pattern update parameters (distance, orientation) input parameters.
--- TODO: Write documenation.
+-- DONE: Write documenation.
+-- DONE: Trace functions self:T instead of self:I for less output.
+-- DONE: Make pattern update parameters (distance, orientation) input parameters.
 -- DONE: Add FSM event for pattern update.
 -- DONE: Smarter pattern update function. E.g. (small) zone around carrier. Only update position when carrier leaves zone or changes heading?
 -- DONE: Set AA TACAN.
@@ -191,7 +256,6 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   self.carrier:SetState(self.carrier, "RECOVERYTANKER", self)
   
   -- Init default parameters.
-  self:SetPatternUpdateInterval()
   self:SetAltitude()
   self:SetSpeed()
   self:SetRacetrackDistances(6, 8)
@@ -200,6 +264,9 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   self:SetLowFuelThreshold()
   self:SetRespawnOnOff()
   self:SetTACAN()
+  self:SetPatternUpdateDistance()
+  self:SetPatternUpdateHeading()
+  self:SetPatternUpdateInterval()
 
   -----------------------
   --- FSM Transitions ---
@@ -211,7 +278,8 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   -- Add FSM transitions.
   --                 From State  -->   Event   -->   To State
   self:AddTransition("Stopped",       "Start",         "Running")        -- Start the FSM.
-  self:AddTransition("*",             "Refuel",        "Refueling")      -- Tanker starts to refuel.
+  self:AddTransition("*",             "RefuelStart",   "Refueling")      -- Tanker has started to refuel another unit.
+  self:AddTransition("*",             "RefuelStop",    "Running")        -- Tanker starts to refuel.
   self:AddTransition("*",             "Run",           "Running")        -- Tanker starts normal operation again.
   self:AddTransition("Running",       "RTB",           "Returning")      -- Tanker is returning to base (for fuel).
   self:AddTransition("*",             "Status",        "*")              -- Status update.
@@ -229,23 +297,39 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   -- @param #number delay Delay in seconds.
 
 
-  --- Triggers the FSM event "Refuel" when the tanker is refueling another aircraft.
-  -- @function [parent=#RECOVERYTANKER] Refuel
+  --- Triggers the FSM event "RefuelStart" when the tanker starts refueling another aircraft.
+  -- @function [parent=#RECOVERYTANKER] RefuelStart
   -- @param #RECOVERYTANKER self
   -- @param Wrapper.Unit#UNIT receiver Unit receiving fuel from the tanker.
 
-  --- Triggers delayed the FSM event "Refuel" when the tanker is refueling another aircraft.
-  -- @function [parent=#RECOVERYTANKER] __Refuel
+  --- On after "RefuelStart" event user function. Called when a the the tanker started to refuel another unit.
+  -- @function [parent=#RECOVERYTANKER] OnAfterRefuelStart
   -- @param #RECOVERYTANKER self
-  -- @param #number delay Delay in seconds.
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
   -- @param Wrapper.Unit#UNIT receiver Unit receiving fuel from the tanker.
 
 
-  --- Triggers the FSM event "Run". Simply puts the group into "Running" state, e.g. after refueling ended.
+  --- Triggers the FSM event "RefuelStop" when the tanker stops refueling another aircraft.
+  -- @function [parent=#RECOVERYTANKER] RefuelStop
+  -- @param #RECOVERYTANKER self
+  -- @param Wrapper.Unit#UNIT receiver Unit stoped receiving fuel from the tanker.
+
+  --- On after "RefuelStop" event user function. Called when a the the tanker stopped to refuel another unit.
+  -- @function [parent=#RECOVERYTANKER] OnAfterRefuelStop
+  -- @param #RECOVERYTANKER self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Wrapper.Unit#UNIT receiver Unit that received fuel from the tanker.
+
+
+  --- Triggers the FSM event "Run". Simply puts the group into "Running" state.
   -- @function [parent=#RECOVERYTANKER] Run
   -- @param #RECOVERYTANKER self
 
-  --- Triggers delayed the FSM event "Run". Simply puts the group into "Running" state, e.g. after refueling ended.
+  --- Triggers delayed the FSM event "Run". Simply puts the group into "Running" state.
   -- @function [parent=#RECOVERYTANKER] __Run
   -- @param #RECOVERYTANKER self
   -- @param #number delay Delay in seconds.
@@ -260,6 +344,14 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   -- @function [parent=#RECOVERYTANKER] __RTB
   -- @param #RECOVERYTANKER self
   -- @param #number delay Delay in seconds.
+  -- @param Wrapper.Airbase#AIRBASE airbase The airbase where the tanker should return to.
+
+  --- On after "RTB" event user function. Called when a the the tanker returns to its home base.
+  -- @function [parent=#RECOVERYTANKER] OnAfterPatternUpdate
+  -- @param #RECOVERYTANKER self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
   -- @param Wrapper.Airbase#AIRBASE airbase The airbase where the tanker should return to.
 
 
@@ -281,6 +373,13 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   -- @function [parent=#RECOVERYTANKER] __PatternUpdate
   -- @param #RECOVERYTANKER self
   -- @param #number delay Delay in seconds.
+
+  --- On after "PatternEvent" event user function. Called when a the pattern of the tanker is updated.
+  -- @function [parent=#RECOVERYTANKER] OnAfterPatternUpdate
+  -- @param #RECOVERYTANKER self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
 
 
   --- Triggers the FSM event "Stop" that stops the recovery tanker. Event handlers are stopped.
@@ -328,22 +427,39 @@ function RECOVERYTANKER:SetRacetrackDistances(distbow, diststern)
   return self
 end
 
---- Set pattern update interval. Note that this update causes a slight disruption in the race track pattern.
--- Therefore, the interval should be as long as possible but short enough to keep the tanker overhead the carrier.
+--- Set minimum pattern update interval. After a pattern update this time interval has to pass before the next update is allowed.
 -- @param #RECOVERYTANKER self
--- @param #number interval Interval in minutes. Default is every 30 minutes.
+-- @param #number interval Min interval in minutes. Default is 15 minutes.
 -- @return #RECOVERYTANKER self
 function RECOVERYTANKER:SetPatternUpdateInterval(interval)
-  self.dTupdate=(interval or 30)*60
+  self.dTupdate=(interval or 15)*60
+  return self
+end
+
+--- Set pattern update distance. Tanker will update its pattern when the carrier changes its position by more than this distance.
+-- @param #RECOVERYTANKER self
+-- @param #number distancechange Distance threshold in km. Default 9.62 km (= 5 NM).
+-- @return #RECOVERYTANKER self
+function RECOVERYTANKER:SetPatternUpdateDistance(distancechange)
+  self.Dupdate=(distancechange or 9.62)*1000
+  return self
+end
+
+--- Set pattern update heading. Tanker will update its pattern when the carrier changes its heading by more than this value.
+-- @param #RECOVERYTANKER self
+-- @param #number headingchange Heading threshold in degrees. Default 5 degrees.
+-- @return #RECOVERYTANKER self
+function RECOVERYTANKER:SetPatternUpdateHeading(headingchange)
+  self.Hupdate=headingchange or 5
   return self
 end
 
 --- Set low fuel state of tanker. When fuel is below this threshold, the tanker will RTB or be respawned if takeoff type is in air.
 -- @param #RECOVERYTANKER self
--- @param #number threshold Low fuel threshold in percent. Default 10.
+-- @param #number fuelthreshold Low fuel threshold in percent. Default 10 %.
 -- @return #RECOVERYTANKER self
-function RECOVERYTANKER:SetLowFuelThreshold(threshold)
-  self.lowfuel=threshold or 10
+function RECOVERYTANKER:SetLowFuelThreshold(fuelthreshold)
+  self.lowfuel=fuelthreshold or 10
   return self
 end
 
@@ -381,14 +497,13 @@ function RECOVERYTANKER:SetTakeoffCold()
   return self
 end
 
---- Set takeoff in air at pattern altitude 30 NM behind the carrier.
+--- Set takeoff in air at the defined pattern altitude and 20 NM astern the carrier.
 -- @param #RECOVERYTANKER self
 -- @return #RECOVERYTANKER self
 function RECOVERYTANKER:SetTakeoffAir()
   self:SetTakeoff(SPAWN.Takeoff.Air)
   return self
 end
-
 
 --- Enable respawning of tanker. Note that this is the default behaviour. 
 -- @param #RECOVERYTANKER self 
@@ -483,6 +598,13 @@ function RECOVERYTANKER:IsRefueling()
   return self:is("Refueling")
 end
 
+--- Check if FMS was stopped.
+-- @param #RECOVERYTANKER self
+-- @return #boolean If true, is stopped. 
+function RECOVERYTANKER:IsStopped()
+  return self:is("Stopped")
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM states
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -524,8 +646,6 @@ function RECOVERYTANKER:onafterStart(From, Event, To)
     -- Spawn at coordinate.
     self.tanker=Spawn:SpawnFromCoordinate(Carrier)
     
-    -- Initial route.
-    self:_InitRoute(15, 1)
   else
   
     -- Check if an uncontrolled tanker group was requested.
@@ -552,10 +672,10 @@ function RECOVERYTANKER:onafterStart(From, Event, To)
       
     end
     
-    -- Initialize route.
-    self:_InitRoute(15, 1)
-    
   end
+
+  -- Initialize route.
+  self:_InitRoute(15, 1)
   
   -- Create tanker beacon.
   if self.TACANon then
@@ -566,7 +686,7 @@ function RECOVERYTANKER:onafterStart(From, Event, To)
   self.orientation=self.carrier:GetOrientationX()
   self.position=self.carrier:GetCoordinate()
 
-  -- Init status check.
+  -- Init status updates in 10 seconds.
   self:__Status(10)
 end
 
@@ -584,7 +704,7 @@ function RECOVERYTANKER:onafterStatus(From, Event, To)
   -- Get fuel of tanker.
   local fuel=self.tanker:GetFuel()*100
   local text=string.format("Recovery tanker %s: state=%s fuel=%.1f", self.tanker:GetName(), self:GetState(), fuel)
-  self:I(text)
+  self:T(text)
   
   -- Check if tanker is running and not RTBing or refueling.
   if self:IsRunning() then
@@ -599,8 +719,8 @@ function RECOVERYTANKER:onafterStatus(From, Event, To)
         if self.respawn then
       
           -- Debug message.
-          local text=string.format("Respawning tanker %s.", self.tanker:GetName())
-          self:I(text)  
+          local text=string.format("Respawning recovery tanker %s in air.", self.tanker:GetName())
+          self:T(text)  
           
           -- Respawn tanker.
           self.tanker:InitHeading(self.tanker:GetHeading())
@@ -643,7 +763,9 @@ function RECOVERYTANKER:onafterStatus(From, Event, To)
   end
   
   -- Call status again in 1 minute.
-  self:__Status(-60)
+  if not self:IsStopped() then
+    self:__Status(-60)
+  end
 end
 
 --- On after "PatternUpdate" event. Updates the racetrack pattern of the tanker wrt the carrier position.
@@ -654,7 +776,7 @@ end
 function RECOVERYTANKER:onafterPatternUpdate(From, Event, To)
 
   -- Debug message.
-  self:I(string.format("Updating recovery tanker %s orbit.", self.tanker:GetName()))
+  self:T(string.format("Updating recovery tanker %s orbit.", self.tanker:GetName()))
     
   -- Carrier heading.
   local hdg=self.carrier:GetHeading()
@@ -675,7 +797,6 @@ function RECOVERYTANKER:onafterPatternUpdate(From, Event, To)
     p0:MarkToAll("Waypoint P0 " ..self.tanker:GetName())
     p1:MarkToAll("Racetrack P1 "..self.tanker:GetName())
     p2:MarkToAll("Racetrack P2 "..self.tanker:GetName())
-    self.tanker:SmokeRed()
   end
     
   -- Waypoints array.
@@ -713,15 +834,15 @@ function RECOVERYTANKER:onafterRTB(From, Event, To, airbase)
   airbase=airbase or self.airbase
 
   -- Debug message.
-  local text=string.format("Tanker %s returning to airbase %s.", self.tanker:GetName(), airbase:GetName())
-  self:I(text)
+  local text=string.format("Recoery tanker %s returning to airbase %s.", self.tanker:GetName(), airbase:GetName())
+  self:T(text)
   
   -- Waypoint array.
   local wp={}
   
   -- Set landing waypoint.
   wp[1]=self.tanker:GetCoordinate():WaypointAirTurningPoint(nil, 300, {}, "Current Position")
-  wp[2]=airbase:GetCoordinate():WaypointAirLanding(300, airbase, nil, "Land at airbase")
+  wp[2]=airbase:GetCoordinate():SetAltitude(500):WaypointAirLanding(300, airbase, nil, "Land at airbase")
   
   -- Initialize WP and route tanker.
   self.tanker:WayPointInitialize(wp)
@@ -763,7 +884,7 @@ function RECOVERYTANKER:OnEventEngineShutdown(EventData)
     if groupname:match(self.tankergroupname) then
   
       -- Debug info.
-      self:I(string.format("Respawning recovery tanker group %s.", group:GetName()))
+      self:T(string.format("Respawning recovery tanker group %s.", group:GetName()))
       
       -- Respawn tanker.
       self.tanker=group:RespawnAtCurrentAirbase()
@@ -799,10 +920,10 @@ function RECOVERYTANKER:_RefuelingStart(EventData)
     end
   
     -- Info message.
-    self:I(string.format("Recovery tanker %s started refueling unit %s", self.tanker:GetName(), unit:GetName()))
+    self:T(string.format("Recovery tanker %s started refueling unit %s", self.tanker:GetName(), unit:GetName()))
     
     -- FMS state "Refueling".
-    self:Refuel(unit)
+    self:RefuelStart(receiver)
   
   end
 
@@ -827,10 +948,10 @@ function RECOVERYTANKER:_RefuelingStop(EventData)
     end
   
     -- Info message.
-    self:I(string.format("Recovery tanker %s stopped refueling unit %s", self.tanker:GetName(), unit:GetName()))
+    self:T(string.format("Recovery tanker %s stopped refueling unit %s", self.tanker:GetName(), unit:GetName()))
     
     -- FSM state "Running".
-    self:Run()
+    self:RefuelStop(unit)
   end
 
 end
@@ -871,7 +992,7 @@ function RECOVERYTANKER:_InitRoute(dist, delay)
   delay=delay or 1
   
   -- Debug message.
-  self:I(string.format("Initializing route for recovery tanker %s.", self.tanker:GetName()))
+  self:T(string.format("Initializing route for recovery tanker %s.", self.tanker:GetName()))
   
   -- Carrier position.
   local Carrier=self.carrier:GetCoordinate()
@@ -902,6 +1023,9 @@ function RECOVERYTANKER:_InitRoute(dist, delay)
   -- Set route.
   self.tanker:Route(wp, delay)
   
+  -- Set state to Running. Necessary when tanker was RTB and respawned since it is probably in state "Returning".
+  self:__Run(1)
+  
   -- No update yet, wait until the function is called (avoids checks if pattern update is needed).
   self.Tupdate=nil
 end
@@ -920,7 +1044,7 @@ function RECOVERYTANKER:_CheckPatternUpdate(dt)
   local vC=self.carrier:GetOrientationX()
   
   -- Check if tanker is running and last updated is more than 10 minutes ago.
-  if self:IsRunning() and dt>10*60 then
+  if self:IsRunning() and dt>self.dTupdate then
 
     -- Last saved orientation of carrier.
     local vP=self.orientation
@@ -932,19 +1056,17 @@ function RECOVERYTANKER:_CheckPatternUpdate(dt)
     local rhdg=math.deg(math.acos(UTILS.VecDot(vC,vP)/UTILS.VecNorm(vC)/UTILS.VecNorm(vP)))
   
     -- Check if orientation changed.
-    -- TODO: make 5 deg input variable.
-    if math.abs(rhdg)>5 then
-      self:I(string.format("Carrier heading changed by %d degrees. Updating recovery tanker pattern.", rhdg))
+    if math.abs(rhdg)>self.Hupdate then
+      self:T(string.format("Carrier heading changed by %d degrees. Updating recovery tanker pattern.", rhdg))
       update=true
     end
     
     -- Get distance to saved position.
     local dist=pos:Get2DDistance(self.position)
     
-    -- Check if carrier moved more than 10 km.
-    -- TODO: make 10 km input variable.
-    if dist/1000>10 then
-      self:I(string.format("Carrier position changed by %.1f km. Updating recovery tanker pattern.", dist/1000))
+    -- Check if carrier moved more than ~10 km.
+    if dist>self.Dupdate then
+      self:T(string.format("Carrier position changed by %.1f km. Updating recovery tanker pattern.", dist/1000))
       update=true
     end
     
@@ -979,7 +1101,7 @@ function RECOVERYTANKER:_ActivateTACAN(delay)
     if unit:IsAlive() then
     
       -- Debug message.
-      self:I(string.format("Activating recovery tanker TACAN beacon: channel=%d mode=%s, morse=%s.", self.TACANchannel, self.TACANmode, self.TACANmorse))
+      self:T(string.format("Activating recovery tanker TACAN beacon: channel=%d mode=%s, morse=%s.", self.TACANchannel, self.TACANmode, self.TACANmorse))
     
       -- Create a new beacon and activate TACAN.
       self.beacon=BEACON:New(unit)

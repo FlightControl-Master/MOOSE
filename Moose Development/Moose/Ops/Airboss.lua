@@ -432,6 +432,7 @@ AIRBOSS.GroovePos={
 -- @field #string onboard Onboard number.
 -- @field #string difficulty Difficulty level.
 -- @field #string step Coming pattern step.
+-- @field #boolean warning Set true once the player got a warning.
 -- @field #number passes Number of passes.
 -- @field #boolean attitudemonitor If true, display aircraft attitude and other parameters constantly.
 -- @field #table debrief Debrief analysis of the current step of this pass.
@@ -455,7 +456,7 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.3.5"
+AIRBOSS.version="0.3.5w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1211,6 +1212,8 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
     alt=UTILS.FeetToMeters(1200)
     
     dist=-UTILS.NMToMeters(3)
+    
+    aoa=8.1
   
   elseif step==AIRBOSS.PatternStep.INITIAL then
 
@@ -1226,9 +1229,11 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
 
     if hornet then     
       alt=UTILS.FeetToMeters(800)
+      speed=UTILS.KnotsToMps(350)
     elseif skyhawk then
-      alt=UTILS.FeetToMeters(600)  
-    end  
+      alt=UTILS.FeetToMeters(600)
+      speed=UTILS.KnotsToMps(250)
+    end
   
   elseif step==AIRBOSS.PatternStep.EARLYBREAK then
 
@@ -1971,6 +1976,7 @@ function AIRBOSS:_InitPlayer(playerData)
   playerData.step=AIRBOSS.PatternStep.UNDEFINED  
   playerData.groove={}
   playerData.debrief={}
+  playerData.warning=nil
   playerData.holding=nil
   playerData.lig=false
   playerData.patternwo=false
@@ -2123,18 +2129,19 @@ end
 
 --- Remove a flight from all queues. Also set player step to undefined if applicable.
 -- @param #AIRBOSS self
--- @param #AIRBOSS.Flightitem flight The flight to be removed.
+-- @param #AIRBOSS.PlayerData flight The flight to be removed.
 function AIRBOSS:_RemoveFlight(flight)
 
   -- Remove flight from all queues.
   self:_RemoveFlightFromQueue(self.Qmarshal, flight)
   self:_RemoveFlightFromQueue(self.Qpattern, flight)
   
-  -- Set Playerstep to undefined.
+  -- Check if player or AI
   if flight.player then
+    -- Set Playerstep to undefined.
     flight.step=AIRBOSS.PatternStep.UNDEFINED
   else
-    -- Remove flight completely
+    -- Remove AI flight completely.
     self:_RemoveFlightFromQueue(self.flights, flight)
   end
   
@@ -2668,10 +2675,10 @@ function AIRBOSS:_Commencing(playerData)
   self:_InitPlayer(playerData)
     
   -- Commence
-  local text=string.format("Commencing. Case %d.", self.case)
+  local text=string.format("Commencing. (Case %d)", self.case)
   
-  -- Message to player.
-  self:_SendMessageToPlayer(text, 10, playerData)
+  -- Message to all players.
+  self:MessageToAll(text, playerData.onboard, "", 5)
   
   -- Next step: depends on case recovery.
   if self.case==1 then
@@ -2694,11 +2701,11 @@ function AIRBOSS:_Initial(playerData)
     -- Inform player.
     local hint=string.format("Entering the pattern.")
     if playerData.difficulty==AIRBOSS.Difficulty.EASY then
-      hint=hint.."Aim for 800 feet and 350 kts at the break entry."
+      hint=hint.."\nAim for 800 feet and 350 kts at the break entry."
     end
     
     -- Send message.
-    self:_SendMessageToPlayer(hint, 10, playerData)
+    self:MessageToPlayer(playerData, hint, "MARSHAL")
   
     -- Next step: upwind.
     playerData.step=AIRBOSS.PatternStep.UPWIND
@@ -2722,23 +2729,6 @@ function AIRBOSS:_Descent4k(playerData)
   
   -- Check if we are in front of the boat (diffX > 0).
   if self:_CheckLimits(X, Z, self.Descent4k) then
-  
-    -- Get optimal altitude, distance and speed.
-    local altitude=self:_GetAircraftParameters(playerData)
-    
-    -- TODO: only speed is checked here!
-    
-    MESSAGE:New("Descent 4k step reached", 5):ToAllIf(self.Debug)
-  
-    -- Get altitude.
-    local hint, debrief=self:_AltitudeCheck(playerData, altitude)
-        
-    -- Message to player
-    self:_SendMessageToPlayer(hint, 10, playerData)
-    
-    -- Debrief.
-    self:_AddToSummary(playerData, "Descent 4k", debrief)
-    
     -- Next step: Platform at 5k
     playerData.step=AIRBOSS.PatternStep.PLATFORM
   end
@@ -2748,43 +2738,46 @@ end
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data table.
 function AIRBOSS:_Platform(playerData)
-
-  -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
-  local X, Z, rho, phi=self:_GetDistances(playerData.unit)
   
-  -- Abort condition check.
-  if self:_CheckAbort(X, Z, self.Platform) then
-    self:_AbortPattern(playerData, X, Z, self.Platform)
-    --return
+  -- Check if player is in valid zone
+  local validzone=self:_GetCase23ValidZone()
+  
+  -- Check if we are inside the moving zone.
+  local invalid=playerData.unit:IsNotInZone(validzone)
+  
+  -- Issue warning.
+  if invalid and not playerData.warning then
+    self:MessageToPlayer(playerData, "You left the valid pattern zone!", "AIRBOSS")
+    playerData.warning=true  
   end
-  
+    
   -- Check if we are inside the moving zone.
   local inzone=playerData.unit:IsInZone(self.zonePlatform)
   
   -- Check if we are in zone.
   if inzone then
   
+    -- Debug message.
     MESSAGE:New("Platform step reached", 5):ToAllIf(self.Debug)
   
     -- Get optimal altitiude.
     local altitude, aoa, distance, speed =self:_GetAircraftParameters(playerData)
-    
-    --TODO: check speed.
   
     -- Get altitude hint.
-    local hintAlt, debriefAlt=self:_AltitudeCheck(playerData, altitude)
+    local hintAlt=self:_AltitudeCheck(playerData, altitude)
     
     -- Get altitude hint.
-    local hintSpeed, debriefSpeed=self:_AltitudeCheck(playerData, altitude)    
+    local hintSpeed=self:_SpeedCheck(playerData, speed)    
+    
+    -- Message to player.
+    if playerData.difficulty~=AIRBOSS.Difficulty.HARD then
+      local hint=string.format("%s\n%s\n%s", playerData.step, hintAlt, hintSpeed)
+      self:MessageToPlayer(playerData, hint, "MARSHAL", "")
+    end
         
-    -- Message to player
-    self:_SendMessageToPlayer(hint, 10, playerData)
-    
-    -- Debrief.
-    --self:_AddToSummary(playerData, "Platform 5k", debrief)
-    
     -- Next step: Dirty up and level out at 1200 ft.
     playerData.step=AIRBOSS.PatternStep.DIRTYUP
+    playerData.warning=nil
   end
 end
 
@@ -2793,13 +2786,16 @@ end
 -- @param #AIRBOSS.PlayerData playerData Player data table.
 function AIRBOSS:_DirtyUp(playerData)
 
-  -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
-  local X, Z, rho, phi=self:_GetDistances(playerData.unit)
+  -- Check if player is in valid zone
+  local validzone=self:_GetCase23ValidZone()
   
-  -- Abort condition check.
-  if self:_CheckAbort(X, Z, self.DirtyUp) then
-    self:_AbortPattern(playerData, X, Z, self.DirtyUp)
-    --return
+  -- Check if we are inside the moving zone.
+  local invalid=playerData.unit:IsNotInZone(validzone)
+  
+  -- Issue warning.
+  if invalid and not playerData.warning then
+    self:MessageToPlayer(playerData, "You left the valid pattern zone!", "AIRBOSS")
+    playerData.warning=true  
   end
   
   -- Check if we are inside the moving zone.
@@ -2808,30 +2804,34 @@ function AIRBOSS:_DirtyUp(playerData)
   --if self:_CheckLimits(X, Z, self.DirtyUp) then
   if inzone then
     
+    -- Debug message.
     MESSAGE:New("Dirty up step reached", 5):ToAllIf(self.Debug)
-    
-    --TODO: speed check
   
     -- Get optimal altitiude.
-    local altitude=self:_GetAircraftParameters(playerData)
+    local altitude, aoa, distance, speed=self:_GetAircraftParameters(playerData)
   
-    -- Get altitude.
-    local hint, debrief=self:_AltitudeCheck(playerData, altitude)
+    -- Get altitude hint.
+    local hintAlt, debrief=self:_AltitudeCheck(playerData, altitude)
+
+    -- Get speed hint.
+    -- TODO: Not sure if we already need to be onspeed AoA at this point?
+    local hintSpeed=self:_SpeedCheck(playerData, speed)        
+
+    -- Message to player.
+    if playerData.difficulty~=AIRBOSS.Difficulty.HARD then
+      local hint=string.format("%s\n%s\n%s", playerData.step, hintAlt, hintSpeed)
+      self:MessageToPlayer(playerData, hint, "MARSHAL", "")
+    end
         
-    -- Message to player
-    self:_SendMessageToPlayer(hint, 10, playerData)
-    
-    -- Debrief.
-    self:_AddToSummary(playerData, "Dirty Up", debrief)
-    
     -- Next step:
     if self.case==2 then
       -- CASE II: Fly to the initial and perform CASE I pattern.
-      playerData.step=AIRBOSS.PatternStep.INITIAL
+      playerData.step=AIRBOSS.PatternStep.INITIAL      
     elseif self.case==3 then
       -- CASE III: Intercept glide slope and follow bullseye (ICLS).
       playerData.step=AIRBOSS.PatternStep.BULLSEYE
     end
+    playerData.warning=nil
   end
 end
 
@@ -2840,13 +2840,16 @@ end
 -- @param #AIRBOSS.PlayerData playerData Player data table.
 function AIRBOSS:_Bullseye(playerData)
 
-  -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
-  local X, Z, rho, phi=self:_GetDistances(playerData.unit)
+  -- Check if player is in valid zone
+  local validzone=self:_GetCase23ValidZone()
   
-  -- Abort condition check.
-  if self:_CheckAbort(X, Z, self.Bullseye) then
-    self:_AbortPattern(playerData, X, Z, self.Bullseye)
-    --return
+  -- Check if we are inside the moving zone.
+  local invalid=playerData.unit:IsNotInZone(validzone)
+  
+  -- Issue warning.
+  if invalid and not playerData.warning then
+    self:MessageToPlayer(playerData, "You left the valid pattern zone!", "AIRBOSS")
+    playerData.warning=true  
   end
 
   -- Check if we are inside the moving zone.
@@ -2856,24 +2859,27 @@ function AIRBOSS:_Bullseye(playerData)
   --if self:_CheckLimits(X, Z, self.Bullseye) then
   if inzone then
     
+    -- Debug message.
     MESSAGE:New("Bullseye step reached", 5):ToAllIf(self.Debug)
   
     -- Get optimal altitiude.
-    local altitude=self:_GetAircraftParameters(playerData)
+    local altitude, aoa, distance, speed=self:_GetAircraftParameters(playerData)
   
-    -- Get altitude.
-    local hint, debrief=self:_AltitudeCheck(playerData, altitude)
-        
-    -- Message to player
-    self:_SendMessageToPlayer(hint, 10, playerData)
+    -- Get altitude hint.
+    local hintAlt=self:_AltitudeCheck(playerData, altitude)
+
+    -- Get altitude hint.
+    local hintAoA=self:_AoACheck(playerData, aoa)
     
-    -- Debrief.
-    self:_AddToSummary(playerData, "Bullseye", debrief)
+    -- Message to player.
+    if playerData.difficulty~=AIRBOSS.Difficulty.HARD then
+      local hint=string.format("%s\n%s\n%s", playerData.step, hintAlt, hintAoA)
+      self:MessageToPlayer(playerData, hint, "MARSHAL", "")
+    end
     
-    -- Next step: Final approach in the groove.
-    --playerData.step=AIRBOSS.PatternStep.FINAL
     -- Next step: Groove Call the ball.
     playerData.step=AIRBOSS.PatternStep.GROOVE_XX
+    playerData.warning=nil
   end
 end
  
@@ -2898,14 +2904,20 @@ function AIRBOSS:_Upwind(playerData)
     -- Get optimal altitude, distance and speed.
     local alt, aoa, dist, speed=self:_GetAircraftParameters(playerData)
   
-    -- Get altitude.
-    local hint, debrief=self:_AltitudeCheck(playerData, alt)
-        
-    -- Message to player
-    self:_SendMessageToPlayer(hint, 10, playerData)
+    -- Get altitude hint.
+    local hintAlt=self:_AltitudeCheck(playerData, alt)
     
+    -- Get speed hint.
+    local hintSpeed=self:_AltitudeCheck(playerData, speed)
+    
+    -- Message to player.
+    if playerData.difficulty~=AIRBOSS.Difficulty.HARD then
+      local hint=string.format("%s\n%s\n%s", playerData.step, hintAlt, hintSpeed)
+      self:MessageToPlayer(playerData, hint, "MARSHAL", "")
+    end
+        
     -- Debrief.
-    self:_AddToSummary(playerData, "Entering the Break", debrief)
+    --self:_AddToSummary(playerData, "Entering the Break", debrief)
     
     -- Next step: Early Break.
     playerData.step=AIRBOSS.PatternStep.EARLYBREAK
@@ -2943,8 +2955,11 @@ function AIRBOSS:_Break(playerData, part)
     -- Grade altitude.
     local hint, debrief=self:_AltitudeCheck(playerData, altitude)
     
-    -- Send message to player.
-    self:_SendMessageToPlayer(hint, 10, playerData)
+    -- Message to player.
+    if playerData.difficulty~=AIRBOSS.Difficulty.HARD then
+      local hint=string.format("%s %s", playerData.step, hint)
+      self:MessageToPlayer(playerData, hint, "MARSHAL", "")
+    end
 
     -- Debrief
     if part=="early" then
@@ -2980,7 +2995,7 @@ function AIRBOSS:_CheckForLongDownwind(playerData)
     self:RadioTransmission(self.LSOradio, self.radiocall.LONGINGROOVE)
     
     -- Debrief.
-    self:_AddToSummary(playerData, "Downwind", "Long in the groove.")
+    self:_AddToSummary(playerData, "Downwind", "Long in the groove - Pattern Wave Off!")
     
     --grade="LIG PATTERN WAVE OFF - CUT 1 PT"
     playerData.lig=true
@@ -3021,13 +3036,19 @@ function AIRBOSS:_Abeam(playerData)
     -- Grade distance to carrier.
     local hintDist, debriefDist=self:_DistanceCheck(playerData, dist) --math.abs(Z)
     
-    -- Compile full hint.
-    local hint=string.format("%s\n%s\n%s", hintAlt, hintAoA, hintDist)
+    -- Paddles contact.
+    -- TODO: radio message.
+    self:MessageToPlayer(playerData, "Paddles, contact.", "LSO", "")
+    
+    -- Message to player.
+    if playerData.difficulty~=AIRBOSS.Difficulty.HARD then
+      local hint=string.format("%s\n%s\n%s\n%s", playerData.step, hintAlt, hintAoA, hintDist)
+      self:MessageToPlayer(playerData, hint, "LSO", "")
+    end
+
+    -- Compile full hint.    
     local debrief=string.format("%s\n%s\n%s", debriefAlt, debriefAoA, debriefDist)
-    
-    -- Send message to playerr.
-    self:_SendMessageToPlayer(hint, 10, playerData)
-    
+
     -- Add to debrief.
     self:_AddToSummary(playerData, "Abeam Position", debrief)
     
@@ -3064,13 +3085,15 @@ function AIRBOSS:_Ninety(playerData)
     
     -- Grade AoA.
     local hintAoA, debriefAoA=self:_AoACheck(playerData, aoa)
-    
-    -- Compile full hint.
-    local hint=string.format("%s\n%s", hintAlt, hintAoA)
-    local debrief=string.format("%s\n%s", debriefAlt, debriefAoA)
-    
+
     -- Message to player.
-    self:_SendMessageToPlayer(hint, 10, playerData)
+    if playerData.difficulty~=AIRBOSS.Difficulty.HARD then
+      local hint=string.format("%s\n%s\n%s", playerData.step, hintAlt, hintAoA)
+      self:MessageToPlayer(playerData, hint, "LSO", "")
+    end
+    
+    -- Debrief.
+    local debrief=string.format("%s\n%s", debriefAlt, debriefAoA)
     
     -- Add to debrief.
     self:_AddToSummary(playerData, "At the 90", debrief)
@@ -3080,7 +3103,7 @@ function AIRBOSS:_Ninety(playerData)
     
   elseif relheading>90 and self:_CheckLimits(X, Z, self.Wake) then
     -- Message to player.
-    self:_SendMessageToPlayer("You are already at the wake and have not passed the 90! Turn faster next time!", 10, playerData)
+    self:MessageToPlayer(playerData, "You are already at the wake and have not passed the 90! Turn faster next time!", "LSO", "")
     --TODO: pattern WO?
   end
 end
@@ -3111,12 +3134,14 @@ function AIRBOSS:_Wake(playerData)
     -- Grade AoA.
     local hintAoA, debriefAoA=self:_AoACheck(playerData, aoa)
 
-    -- Compile full hint.
-    local hint=string.format("%s\n%s", hintAlt, hintAoA)
-    local debrief=string.format("%s\n%s", debriefAlt, debriefAoA)
-    
     -- Message to player.
-    self:_SendMessageToPlayer(hint, 10, playerData)
+    if playerData.difficulty~=AIRBOSS.Difficulty.HARD then
+      local hint=string.format("%s\n%s\n%s", playerData.step, hintAlt, hintAoA)
+      self:MessageToPlayer(playerData, hint, "LSO", "")
+    end    
+    
+    -- Debrief.
+    local debrief=string.format("%s\n%s", debriefAlt, debriefAoA)
     
     -- Add to debrief.
     self:_AddToSummary(playerData, "At the Wake", debrief)
@@ -3161,14 +3186,14 @@ function AIRBOSS:_Final(playerData)
     -- AoA feed back 
     local hintAoA, debriefAoA=self:_AoACheck(playerData, aoa)
     
-    -- Compile full hint.
-    local hint=string.format("%s\n%s", hintAlt, hintAoA)
-    local debrief=string.format("%s\n%s", debriefAlt, debriefAoA)
-    
     -- Message to player.
-    self:_SendMessageToPlayer(hint, 10, playerData)
+    if playerData.difficulty~=AIRBOSS.Difficulty.HARD then
+      local hint=string.format("%s\n%s\n%s", playerData.step, hintAlt, hintAoA)
+      self:MessageToPlayer(playerData, hint, "LSO", "")
+    end        
 
     -- Add to debrief.
+    local debrief=string.format("%s\n%s", debriefAlt, debriefAoA)
     self:_AddToSummary(playerData, "Enter Groove", debrief)
     
     -- Gather pilot data.
@@ -3266,7 +3291,8 @@ function AIRBOSS:_Groove(playerData)
   elseif rho<=RIM and playerData.step==AIRBOSS.PatternStep.GROOVE_IM then
   
     -- Debug.
-    self:_SendMessageToPlayer("IM", 5, playerData)
+    local text=string.format("FF IM=%d", rho)
+    MESSAGE:New(text, 5):ToAllIf(self.Debug)
     self:I(self.lid..string.format("FF IM=%d", rho))
     
     -- Store data.
@@ -3281,8 +3307,9 @@ function AIRBOSS:_Groove(playerData)
     if playerData.waveoff==false then
 
       -- Debug
-      self:_SendMessageToPlayer("IC", 5, playerData)
-      self:I(self.lid..string.format("FF IC=%d", rho))
+      local text=string.format("FF IC=%d", rho)
+      MESSAGE:New(text, 5):ToAllIf(self.Debug)
+      self:I(self.lid..text)      
       
       -- Store data.
       playerData.groove.IC=groovedata
@@ -3311,9 +3338,10 @@ function AIRBOSS:_Groove(playerData)
   elseif rho<=RAR and playerData.step==AIRBOSS.PatternStep.GROOVE_AR then
   
     -- Debug.
-    self:_SendMessageToPlayer("AR", 8, playerData)
-    self:I(self.lid..string.format("FF AR=%d", rho))
-    
+    local text=string.format("FF AR=%d", rho)
+    MESSAGE:New(text, 5):ToAllIf(self.Debug)
+    self:I(self.lid..text)
+        
     -- Store data.
     playerData.groove.AR=groovedata
     
@@ -3435,14 +3463,16 @@ function AIRBOSS:_Trapped(playerData, X)
        
     -- Info to player.
     local text=string.format("Trapped! %d-wire.", wire)
-    self:_SendMessageToPlayer(text, 10, playerData)
+    self:MessageToPlayer(playerData, text, "LSO", "")
     
-    local text2=string.format("Distance X=%.1f meters resulted in a %d-wire estimate.", X, wire)
-    MESSAGE:New(text,30):ToAllIf(self.Debug)
-    self:I(self.lid..text2)
+    -- Debug message.
+    local text=string.format("Distance X=%.1f meters resulted in a %d-wire estimate.", X, wire)
+    MESSAGE:New(text, 30):ToAllIf(self.Debug)
+    self:I(self.lid..text)
        
+    -- Debrief.
     local hint = string.format("Trapped catching the %d-wire.", wire)
-    self:_AddToSummary(playerData, "Recovered", hint)
+    self:_AddToSummary(playerData, "Goove: IW", hint)
     
   else
     --Boltered!
@@ -3868,11 +3898,9 @@ function AIRBOSS:_LSOadvice(playerData, glideslopeError, lineupError)
     text=text.."Unknown AoA state."
   end
   
+  -- Text not used.
   text=text..string.format(" AoA = %.1f", aoa)
    
-  -- LSO Message to player.
-  --self:_SendMessageToPlayer(text, 5, playerData, false)
-  
   -- Set last time.
   playerData.Tlso=timer.getTime()   
 end
@@ -4266,13 +4294,13 @@ function AIRBOSS:_AltitudeCheck(playerData, altopt)
   
   local hint
   if _error>badscore then
-    hint=string.format("You're high. ")
+    hint=string.format("You're high.")
   elseif _error>lowscore then
-    hint= string.format("You're slightly high. ")
+    hint= string.format("You're slightly high.")
   elseif _error<-badscore then
     hint=string.format("You're low. ")
   elseif _error<-lowscore then
-    hint=string.format("You're slightly low. ")
+    hint=string.format("You're slightly low.")
   else
     hint=string.format("Good altitude. ")
   end
@@ -4315,15 +4343,15 @@ function AIRBOSS:_DistanceCheck(playerData, optdist)
   
   local hint
   if _error>badscore then
-    hint=string.format("You're too far from the boat! ")
+    hint=string.format("You're too far from the boat!")
   elseif _error>lowscore then 
-    hint=string.format("You're slightly too far from the boat. ")
+    hint=string.format("You're slightly too far from the boat.")
   elseif _error<-badscore then
-    hint=string.format( "You're too close to the boat! ")
+    hint=string.format( "You're too close to the boat!")
   elseif _error<-lowscore then
-    hint=string.format("You're slightly too far from the boat. ")
+    hint=string.format("You're slightly too far from the boat.")
   else
-    hint=string.format("Perfect distance to the boat. ")
+    hint=string.format("Good distance to the boat.")
   end
   
   -- Extend or decrease depending on skill.
@@ -4583,10 +4611,7 @@ function AIRBOSS:RadioTransmission(radio, call, loud, delay)
     radio:Broadcast(true)
     
     -- "Subtitle".
-    for _,_player in pairs(self.players) do
-      local playerData=_player --#AIRBOSS.PlayerData
-      self:_SendMessageToPlayer(call.subtitle, call.duration, playerData)
-    end
+    self:MessageToAll(call.subtitle, radio:GetAlias(), "", call.duration)
     
   else
   
@@ -4602,34 +4627,6 @@ function AIRBOSS:RadioTransmission(radio, call, loud, delay)
     -- Scheduled transmission.
     SCHEDULER:New(nil, self.RadioTransmission, {self, radio, call, loud}, delay)
   end
-end
-
---- Send message to player client.
--- @param #AIRBOSS self
--- @param #string message The message to send.
--- @param #number duration Display message duration.
--- @param #AIRBOSS.PlayerData playerData Player data.
--- @param #boolean clear If true, clear screen from previous messages.
--- @param #string sender The person who sends the message. Default is carrier alias.
--- @param #number delay Delay in seconds, before the message is send.
-function AIRBOSS:_SendMessageToPlayer(message, duration, playerData, clear, sender, delay)
-
-  if playerData and message and message~="" then
-
-    -- Format message.          
-    local text=string.format("%s, %s", playerData.callsign, message)
-    self:I(self.lid..text)
-      
-    if delay and delay>0 then
-      SCHEDULER:New(nil, self._SendMessageToPlayer, {self, message, duration, playerData, clear, sender}, delay)
-    else
-      if playerData.client then
-        MESSAGE:New(text, duration, sender, clear):ToClient(playerData.client)
-      end
-    end
-    
-  end
-  
 end
 
 --- Send text message to player client.
@@ -4669,6 +4666,26 @@ function AIRBOSS:MessageToPlayer(playerData, message, sender, receiver, duration
     
   end
   
+end
+
+--- Send text message to all players in the CCA.
+-- Message format will be "SENDER: RECCEIVER, MESSAGE".
+-- @param #AIRBOSS self
+-- @param #string message The message to send.
+-- @param #string sender The person who sends the message or nil.
+-- @param #string receiver The person who receives the message. Default player's onboard number. Set to "" for no receiver.
+-- @param #number duration Display message duration. Default 10 seconds.
+-- @param #boolean clear If true, clear screen from previous messages.
+-- @param #number delay Delay in seconds, before the message is displayed.
+function AIRBOSS:MessageToAll(message, sender, receiver, duration, clear, delay)
+
+  for _,_player in pairs(self.players) do
+    local player=_player --#AIRBOSS.PlayerData
+    if player.unit:IsInZone(self.zoneCCA) then
+      self:MessageToPlayer(player,message,sender,receiver,duration,clear,delay)
+    end 
+  end
+
 end
 
 --- Check if aircraft is capable of landing on an aircraft carrier.

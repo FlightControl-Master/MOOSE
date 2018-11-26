@@ -84,7 +84,7 @@
 -- 
 -- The implementation allows to customize quite a few settings easily
 -- 
--- ## Adjusting the Takeoff Type
+-- ## Takeoff Type
 -- 
 -- By default, the helo is spawned with running engies on the carrier. The mission designer has set option to set the take off type via the @{#RESCUEHELO.SetTakeoff} function.
 -- Or via shortcuts
@@ -108,7 +108,7 @@
 -- 
 -- If the helo should no be respawned at all, one can set @{#RESCUEHELO.SetRespawnOff}(). 
 -- 
--- ## Setting a Home Base
+-- ## Home Base
 -- 
 -- It is possible to define a "home base" other than the aircaft carrier. For example, one could imagine a strike group, and the helo will be spawned from
 -- another ship which has a helo pad.
@@ -123,7 +123,7 @@
 -- Once the helo runs out of fuel, it will return to the USS Normandy and not the Stennis for respawning.
 -- 
 -- 
--- # Adjusting the Formation Positon
+-- ## Formation Positon
 -- 
 -- The position of the helo relative to the mother ship can be tuned via the functions
 -- 
@@ -162,14 +162,14 @@ RESCUEHELO = {
 
 --- Class version.
 -- @field #string version
-RESCUEHELO.version="0.9.4"
+RESCUEHELO.version="0.9.4w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Add option to stop carrier while rescue operation is in progress?
 -- TODO: Write documenation.
+-- TODO: Add option to stop carrier while rescue operation is in progress? Done but NOT working!
 -- DONE: Add option to deactivate the rescueing.
 -- DONE: Possibility to add already present/spawned aircraft, e.g. for warehouse.
 -- DONE: Add rescue event when aircraft crashes.
