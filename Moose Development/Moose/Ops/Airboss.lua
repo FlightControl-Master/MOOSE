@@ -8,7 +8,6 @@
 --    * Supports human pilots as well as AI flight groups.
 --    * Automatic LSO grading.
 --    * Different skill levels from tipps on-the-fly for students to complete ziplip for pros.
---    * Rescue helo option.
 --    * Recovery tanker option.
 --    * Voice overs for LSO and AIRBOSS calls. Can easily be customized by users.
 --    * Automatic TACAN and ICLS channel setting.
@@ -70,7 +69,7 @@
 -- @field #table flights List of all flights in the CCA.
 -- @field #table Qmarshal Queue of marshalling aircraft groups.
 -- @field #table Qpattern Queue of aircraft groups in the landing pattern.
--- @field Ops.RescueHelo#RESCUEHELO rescuehelo Rescue helo flying in close formation with the carrier.
+-- @field #number Nmaxpattern Max number of aircraft in landing pattern.
 -- @field Ops.RecoveryTanker#RECOVERYTANKER tanker Recovery tanker flying overhead of carrier.
 -- @field Functional.Warehouse#WAREHOUSE warehouse Warehouse object of the carrier.
 -- @field #table recoverytime List of time intervals when aircraft are recovered.
@@ -142,11 +141,10 @@ AIRBOSS = {
   Qpattern     =  {},
   Qmarshal     =  {},
   Nmaxpattern  = nil,
-  rescuehelo   = nil,
   tanker       = nil,
   warehouse    = nil,
   recoverytime =  {},
-  holdingoffset=   0,
+  holdingoffset= nil,
 }
 
 --- Player aircraft types capable of landing on carriers.
@@ -456,7 +454,7 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.3.5w"
+AIRBOSS.version="0.3.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -466,17 +464,17 @@ AIRBOSS.version="0.3.5w"
 -- TODO: Add radio transmission queue for LSO and airboss.
 -- TODO: Get correct wire when trapped.
 -- TODO: Add radio check (LSO, AIRBOSS) to F10 radio menu.
--- TODO: Right pattern step after bolter/wo/patternWO?
--- TODO: Handle crash event. Delete A/C from queue, send rescue helo, stop carrier?
--- TODO: Get fuel state in pounds.
 -- TODO: Add user functions.
 -- TODO: Generalize parameters for other carriers.
 -- TODO: Generalize parameters for other aircraft.
--- TODO: CASE II.
--- TODO: CASE III.
 -- TODO: Foul deck check.
 -- TODO: Persistence of results.
 -- TODO: Strike group with helo bringing cargo etc.
+-- TODO: Right pattern step after bolter/wo/patternWO?
+-- TODO: CASE II.
+-- TODO: CASE III.
+-- DONE: Handle crash event. Delete A/C from queue, send rescue helo.
+-- DONE: Get fuel state in pounds. (working for the hornet, did not check others)
 -- DONE: Add aircraft numbers in queue to carrier info F10 radio output.
 -- DONE: Monitor holding of players/AI in zoneHolding.
 -- DONE: Transmission via radio.
@@ -530,7 +528,9 @@ function AIRBOSS:New(carriername, alias)
   
   -- Create carrier beacon.
   self.beacon=BEACON:New(self.carrier)
-  
+    
+  -- Defaults:
+
   -- Set up Airboss radio.  
   self.Carrierradio=RADIO:New(self.carrier)
   self.Carrierradio:SetAlias("AIRBOSS")
@@ -540,6 +540,28 @@ function AIRBOSS:New(carriername, alias)
   self.LSOradio=RADIO:New(self.carrier)
   self.LSOradio:SetAlias("LSO")
   self:SetLSOradio()
+  
+  -- Set ICSL to channel 1.
+  self:SetICLS()
+  
+  -- Set TACAN to channel 74X
+  self:SetTACAN()
+
+  -- Set max aircraft in landing pattern.
+  self:SetMaxLandingPattern(1)  
+  
+  -- Set holding offset to 0 degrees.
+  self:SetHoldingOffsetAngle(30)
+
+  -- Default recovery case.
+  self:SetRecoveryCase(1)
+    
+  -- CCA 50 NM radius zone around the carrier.
+  self:SetCarrierControlledArea()
+  
+  -- CCZ 5 NM radius zone around the carrier.
+  self:SetCarrierControlledZone()
+  
   
   -- Init carrier parameters.
   if self.carriertype==AIRBOSS.CarrierType.STENNIS then
@@ -562,10 +584,13 @@ function AIRBOSS:New(carriername, alias)
   self.zoneInitial=ZONE_UNIT:New("Initial Zone", self.carrier, 0.5*1000, {dx=-UTILS.NMToMeters(3), dy=100, relative_to_unit=true})
   
   -- CASE II/III moving zones.
-  local angle=180+self.carrierparam.rwyangle
-  self.zonePlatform = ZONE_UNIT:New("Platform Zone", self.carrier, 1.5*1000, {rho=UTILS.NMToMeters(20), theta=angle, relative_to_unit=true})
-  self.zoneDirtyup  = ZONE_UNIT:New("Dirty Up Zone", self.carrier, 1.5*1000, {rho=UTILS.NMToMeters(10), theta=angle, relative_to_unit=true})
-  self.zoneBullseye = ZONE_UNIT:New("Bulleye Zone",  self.carrier, 1.5*1000, {rho=UTILS.NMToMeters( 3), theta=angle, relative_to_unit=true})
+  local radial=180+self.carrierparam.rwyangle
+  local radius=UTILS.NMToMeters(1)
+  self.zonePlatform = ZONE_UNIT:New("Platform Zone", self.carrier, radius, {rho=UTILS.NMToMeters(19), theta=radial+self.holdingoffset, relative_to_unit=true})
+  self.zoneArcturn1 = ZONE_UNIT:New("ArcTurn1 Zone", self.carrier, radius, {rho=UTILS.NMToMeters(14), theta=radial+self.holdingoffset, relative_to_unit=true})
+  self.zoneArcturn2 = ZONE_UNIT:New("ArcTurn2 Zone", self.carrier, radius, {rho=UTILS.NMToMeters(12), theta=radial,                    relative_to_unit=true})
+  self.zoneDirtyup  = ZONE_UNIT:New("DirtyUp Zone",  self.carrier, radius, {rho=UTILS.NMToMeters( 9), theta=radial,                    relative_to_unit=true})
+  self.zoneBullseye = ZONE_UNIT:New("Bulleye Zone",  self.carrier, radius, {rho=UTILS.NMToMeters( 3), theta=radial,                    relative_to_unit=true})
   
   -- Smoke zones.
   if self.Debug then
@@ -575,15 +600,6 @@ function AIRBOSS:New(carriername, alias)
     --self.zoneBullseye:SmokeZone(SMOKECOLOR.Red, 90)
     --local zp=self:_GetCase23ValidZone():SmokeZone(SMOKECOLOR.Green, 45)
   end
-  
-  -- CCA 50 NM radius zone around the carrier.
-  self:SetCarrierControlledArea()
-  
-  -- CCZ 5 NM radius zone around the carrier.
-  self:SetCarrierControlledZone()
-  
-  -- Default recovery case.
-  self:SetRecoveryCase(1)
   
   -- Init default sound files.
   for _name,_sound in pairs(AIRBOSS.Soundfile) do
@@ -698,6 +714,18 @@ function AIRBOSS:SetRecoveryCase(case)
   return self
 end
 
+--- Set holding pattern offset from final bearing for Case II/III recoveries.
+-- Usually, this is +-15 or +-30 degrees.
+-- @param #AIRBOSS self
+-- @param #number offset Offset angle in degrees. Default 0.
+-- @return #AIRBOSS self
+function AIRBOSS:SetHoldingOffsetAngle(offset)
+
+  self.holdingoffset=offset or 0
+
+  return self
+end
+
 --- Add recovery time slot.
 -- @param #AIRBOSS self
 -- @param #string starttime Start time, e.g. "8:00" for eight o'clock.
@@ -787,12 +815,12 @@ function AIRBOSS:SetCarrierradio(frequency, modulation)
 end
 
 
---- Define rescue helicopter associated with the carrier.
+--- Set number of aircraft units which can be in the landing pattern before the pattern is full.
 -- @param #AIRBOSS self
--- @param Ops.RescueHelo#RESCUEHELO rescuehelo Rescue helo object.
+-- @param #number nmax Max number. Default 4.
 -- @return #ARIBOSS self
-function AIRBOSS:SetRescueHelo(rescuehelo)
-  self.rescuehelo=rescuehelo
+function AIRBOSS:SetMaxLandingPattern(nmax)
+  self.Nmaxpattern=nmax or 4
   return self
 end
 
@@ -862,12 +890,12 @@ function AIRBOSS:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.Birth)
   self:HandleEvent(EVENTS.Land)
   self:HandleEvent(EVENTS.Crash)
-  --self:HandleEvent(EVENTS.Ejection)
+  self:HandleEvent(EVENTS.Ejection)
   
   -- Time stamp for checking queues. 
   self.Tqueue=timer.getTime()
 
-  -- Init status check
+  -- Start status check in 1 second.
   self:__Status(1)
 end
 
@@ -994,7 +1022,7 @@ function AIRBOSS:onbeforeRecover(From, Event, To)
 end
 
 
---- On after Stop event. Unhandle events and stop status updates. 
+--- On after Stop event. Unhandle events. 
 -- @param #AIRBOSS self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -1003,6 +1031,7 @@ function AIRBOSS:onafterStop(From, Event, To)
   self:UnHandleEvent(EVENTS.Birth)
   self:UnHandleEvent(EVENTS.Land)
   self:UnHandleEvent(EVENTS.Crash)
+  self:UnHandleEvent(EVENTS.Ejection)
 end
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1178,10 +1207,14 @@ end
 -- @return #number Speed in m/s or nil.
 function AIRBOSS:_GetAircraftParameters(playerData, step)
 
+  -- Get parameters depended on step.
   step=step or playerData.step
+  
+  -- Get AC type.
   local hornet=playerData.actype==AIRBOSS.AircraftCarrier.HORNET
   local skyhawk=playerData.actype==AIRBOSS.AircraftCarrier.A4EC
   
+  -- Return values.
   local alt
   local aoa
   local dist  
@@ -1271,7 +1304,7 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
       alt=UTILS.FeetToMeters(500)  
     end
     
-    aoa=8.1  
+    aoa=8.1
   
   elseif step==AIRBOSS.PatternStep.WAKE then
   
@@ -1318,7 +1351,7 @@ function AIRBOSS:_CheckQueue()
   local nmarshal,_=self:_GetQueueInfo(self.Qmarshal)
   
   -- Check if there are flights in marshal strack and if the pattern is free.
-  if nmarshal>0 and npattern<1 then
+  if nmarshal>0 and npattern<self.Nmaxpattern then
   
     -- Next flight in line to be send from marshal to pattern.
     local marshalflight=self.Qmarshal[1]  --#AIRBOSS.Flightitem
@@ -2343,8 +2376,12 @@ function AIRBOSS:OnEventBirth(EventData)
     --self:RadioTransmission(self.LSOradio, self.radiocall["LONGINGROOVE"], false, 5)
     --self:RadioTransmission(self.LSOradio, self.radiocall.LONGINGROOVE, false, 20)
     
+    if self.Debug then
+      self:_MarkCase23Zones(_unit:GetName())
+    end
+    
     -- Start in the groove for debugging.
-    self.groovedebug=true
+    self.groovedebug=false
     
   end 
 end
@@ -2379,7 +2416,7 @@ function AIRBOSS:OnEventLand(EventData)
     local airbasename=tostring(airbase:GetName())
     
     -- Check if player landed on the right airbase.
-    if airbasename==self.airbase:GetName() then 
+    if airbasename==self.airbase:GetName() then
     
       -- Debug output.
       local text=string.format("Player %s, callsign %s unit %s (ID=%d) of group %s landed at airbase %s", _playername, _callsign, _unitName, _uid, _group:GetName(), airbasename)
@@ -2477,7 +2514,30 @@ function AIRBOSS:OnEventCrash(EventData)
   end
   
   -- Remove unit from flight and queues.
-  self:_RemoveUnitFromFlight(EventData.IniUnit)  
+  self:_RemoveUnitFromFlight(EventData.IniUnit)
+end
+
+--- Airboss event handler for event Ejection.
+-- @param #AIRBOSS self
+-- @param Core.Event#EVENTDATA EventData
+function AIRBOSS:OnEventEjection(EventData)
+  self:F3({eventland = EventData})
+
+  local _unitName=EventData.IniUnitName
+  local _unit, _playername=self:_GetPlayerUnitAndName(_unitName)
+  
+  self:I(self.lid.."EJECT: unit   = "..tostring(EventData.IniUnitName))
+  self:I(self.lid.."EJECT: group  = "..tostring(EventData.IniGroupName))
+  self:I(self.lid.."EJECT: player = "..tostring(_playername))
+  
+  if _unit and _playername then
+    self:I(self.lid..string.format("Player %s ejected!",_playername))
+  else
+    self:I(self.lid..string.format("AI unit %s ejected!", EventData.IniUnitName)) 
+  end
+  
+  -- Remove unit from flight and queues.
+  self:_RemoveUnitFromFlight(EventData.IniUnit)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2579,7 +2639,9 @@ end
 function AIRBOSS:_GetCase23ValidZone()
 
   -- Radial.
-  local hdg=self:GetRadialCase3(false)
+  local hdg=self:GetRadialCase3(false, false)
+  local off=self:GetRadialCase3(false, true)
+  
   
   self:I("FF radial case 3 = "..hdg)
 
@@ -2597,14 +2659,28 @@ function AIRBOSS:_GetCase23ValidZone()
   local c4=c0:Translate(w, hdg-90)  -- Port close
   local c3=c4:Translate(l, hdg)     -- Port far
 
-      
+  local beta=hdg-self.holdingoffset
+  env.info("FF beta = "..beta)
+  local x=(50-9)/math.cos(math.rad(beta))
+  env.info("FF x [NM] = "..x)
+
+  local c={}
+  c[1]=self:GetCoordinate()
+  c[2]=c[1]:Translate( UTILS.NMToMeters( 5), hdg-90)
+  c[3]=c[2]:Translate( UTILS.NMToMeters( 9), hdg)  
+  c[4]=c[3]:Translate( UTILS.NMToMeters( x), -beta)
+--[[
+  c[5]=c[4]:Translate( UTILS.NMToMeters(10), hdg+90)
+  c[6]=c[5]:Translate(-UTILS.NMToMeters( x), beta)
+  c[7]=c[6]:Translate(-UTILS.NMToMeters( 5), hdg-90)
+  ]]
+  
   -- Create an array of a square!
   local p={}
-  p[1]=c1:GetVec2()
-  p[2]=c2:GetVec2()
-  p[3]=c3:GetVec2()
-  p[4]=c4:GetVec2()
-  
+  for _i,_c in ipairs(c) do
+    p[_i]=_c:GetVec2()
+  end
+
   -- Square zone length=10NM width=6 NM behind the carrier starting at angels+15 NM behind the carrier.
   -- So stay 0-5 NM (+1 NM error margin) port of carrier.
   local zone=ZONE_POLYGON_BASE:New("CASE II/III Valid Zone", p)
@@ -3651,14 +3727,17 @@ end
 --- Get radial, i.e. the final bearing FB-180 degrees including holding offset for Case II/III recoveries.
 -- @param #AIRBOSS self
 -- @param #boolean magnetic If true, magnetic radial is returned. Default is true radial.
+-- @param #boolean offset If true, inlcude holding offset.
 -- @return #number Radial in degrees.
-function AIRBOSS:GetRadialCase3(magnetic) 
+function AIRBOSS:GetRadialCase3(magnetic, offset) 
 
   -- Get radial.
   local radial=self:GetFinalBearing(magnetic)-180
   
   -- Holding offset angle (+-15 or 30 degrees usually)
-  radial=radial-self.holdingoffset
+  if offset then
+    radial=radial-self.holdingoffset
+  end
   
   -- Adjust for negative values.
   if radial<0 then
@@ -3711,23 +3790,6 @@ function AIRBOSS:_GetRelativeHeading(unit, runway)
   if runway then
     rhdg=rhdg-self.carrierparam.rwyangle
   end
-  
-  --[[
-  -- Heading of unit.
-  local unitheading=unit:GetHeading()
-  
-  -- Heading of carrier.
-  local carrierheading
-  
-  -- Include runway?
-  if runway then
-    carrierheading=self:GetFinalBearing(false)
-  else
-    carrierheading=self:GetHeading(false)
-  end
-  
-  local rhdg=unitheading-carrierheading
-  ]]
   
   -- Return heading in degrees.
   return rhdg
@@ -4495,8 +4557,8 @@ function AIRBOSS:_Debrief(playerData)
   table.insert(playerData.grades, mygrade)
   
   -- LSO grade message.
-  local text=string.format("%s %.1f PT - %s", grade, points, analysis)
-  text=text..string.format("Detailed debriefing can be found in the F10 radio menu.")
+  local text=string.format("%s %.1f PT - %s\n", grade, points, analysis)
+  text=text..string.format("Your detailed debriefing can be found via the F10 radio menu.")
   self:MessageToPlayer(playerData,text, "LSO", "", 30, true)
 
   -- Check if boltered or waved off?
@@ -4518,47 +4580,15 @@ function AIRBOSS:_Debrief(playerData)
     -- TODO: CASE III: After bolter/wo turn left and climb to 1200 ft and re-enter pattern?
     -- TODO: CASE III: After pattern wo? No idea...
     
-    -- Get flight.
-    
-    --[[
-    local flight=self:_GetFlightFromGroupInQueue(playerData.group, self.flight)
-    
-    if flight then
-    
-      if flight.case==1 then
-        -- CASE I
-        if playerData.boltered or playerData.waveoff then
-          -- CASE I bolter or waveoff ==> stay in pattern and try again.
-          playerData.step=AIRBOSS.PatternStep.COMMENCING
-        elseif playerData.patternwo then
-          -- CASE I pattern wave off.
-          -- Ask again? Back to marshal.
-          playerData.step=AIRBOSS.PatternStep.COMMENCING
-        end
-        
-      elseif flight.case==2 then
-      
-        
-      
-      elseif flight.case==3 then
-      
-      end
-    
-    else
-    end
-    ]]
-    
-    
     playerData.step=AIRBOSS.PatternStep.COMMENCING
-      
-    
+        
   elseif playerData.landed and not playerData.unit:InAir() then
   
     -- Remove player unit from flight and all queues.
     self:_RemoveUnitFromFlight(playerData.unit)
   
     -- Message to player.
-    self:MessageToPlayer(playerData, "Welcome to the carrier!", "LSO", nil, 10)
+    self:MessageToPlayer(playerData, "Welcome on board!", "LSO", nil, 10)
     
   else
 
@@ -4721,6 +4751,56 @@ function AIRBOSS:_IsHuman(group)
   return false
 end
 
+--- Get fuel state in pounds.
+-- @param #AIRBOSS self
+-- @param Wrapper.Unit#UNIT unit The unit for which the mass is determined.
+-- @return #number Fuel state in pounds.
+function AIRBOSS:_GetFuelState(unit)
+
+  -- Get relative fuel [0,1].
+  local fuel=unit:GetFuel()
+  
+  -- Get max weight of fuel in kg.
+  local maxfuel=self:_GetUnitMasses(unit)
+  
+  -- Fuel state, i.e. what let's 
+  local fuelstate=fuel*maxfuel
+  
+  -- Debug info.
+  self:I(self.lid..string.format("Unit %s fuel state = %.1f kg = %.1f lbs", unit:GetName(), fuelstate, UTILS.kg2lbs(fuelstate)))
+  
+  return UTILS.kg2lbs(fuelstate)
+end
+
+--- Get unit masses especially fuel from DCS descriptor values.
+-- @param #AIRBOSS self
+-- @param Wrapper.Unit#UNIT unit The unit for which the mass is determined.
+-- @return #number Mass of fuel in kg.
+-- @return #number Empty weight of unit in kg.
+-- @return #number Max weight of unit in kg.
+-- @return #number Max cargo weight in kg.
+function AIRBOSS:_GetUnitMasses(unit)
+
+  -- Get DCS descriptors table.
+  local Desc=unit:GetDesc()
+
+  -- Mass of fuel in kg.
+  local massfuel=Desc.fuelMassMax or 0
+  
+  -- Mass of empty unit in km.
+  local massempty=Desc.massEmpty or 0
+  
+  -- Max weight of unit in kg.
+  local massmax=Desc.massMax or 0
+  
+  -- Rest is cargo.
+  local masscargo=massmax-massfuel-massempty
+  
+  -- Debug info.
+  self:I(self.lid..string.format("Unit %s mass fuel=%.1f kg, empty=%.1f kg, max=%.1f kg, cargo=%.1f kg", unit:GetName(), massfuel, massempty, massmax, masscargo))
+  
+  return massfuel, massempty, massmax, masscargo
+end
 
 --- Get player data from unit object
 -- @param #AIRBOSS self
@@ -5015,6 +5095,7 @@ function AIRBOSS:_RequestCommence(_unitName)
           -- Get stack value.
           local stack=playerData.flag:Get()
           
+          -- Check if player is in the lowest stack.
           if stack>1 then
             -- We are in a higher stack.
             text="Negative ghostrider, it's not your turn yet!"
@@ -5023,8 +5104,8 @@ function AIRBOSS:_RequestCommence(_unitName)
             -- Number of aircraft currently in pattern.
             local _,npattern=self:_GetQueueInfo(self.Qpattern)
                 
-            -- TODO: set nmax for pattern. Should be ~6 but let's make this 4.
-            if npattern>0 then  
+            -- Check if pattern is already full.
+            if npattern>self.Nmaxpattern then  
               -- Patern is full!
               text=string.format("Negative ghostrider, pattern is full! There are %d aircraft currently in pattern.", npattern)
             else
@@ -5493,6 +5574,14 @@ function AIRBOSS:_DisplayPlayerStatus(_unitName)
     local playerData=self.players[_playername] --#AIRBOSS.PlayerData
     
     if playerData then
+    
+      -- Stack and stack altitude.
+      local stack=playerData.flag:Get()
+      local stackalt=UTILS.MetersToFeet(self:_GetMarshalAltitude(stack))
+      
+      -- Fuel and fuel state.
+      local fuel=playerData.unit:GetFuel()*100
+      local fuelstate=self:_GetFuelState(playerData.unit)      
        
       -- Player data.
       local text=string.format("Status of player %s (%s)\n", playerData.name, playerData.callsign)
@@ -5501,15 +5590,11 @@ function AIRBOSS:_DisplayPlayerStatus(_unitName)
       text=text..string.format("Skil level: %s\n", playerData.difficulty)
       text=text..string.format("Aircraft: %s\n", playerData.actype)
       text=text..string.format("Board number: %s\n", playerData.onboard)
-      text=text..string.format("Fuel: %.1f %%\n", playerData.unit:GetFuel()*100)
-      local stack=playerData.flag:Get()
-      local stackalt=UTILS.MetersToFeet(self:_GetMarshalAltitude(stack))
-      text=text..string.format("Flag/stack: %d\n", stack)
-      text=text..string.format("Stack alt: %d ft\n", stackalt)
+      text=text..string.format("Fuel state: %.1f lbs/1000 (%.1f %%)\n", fuelstate/1000, fuel)
+      text=text..string.format("Stack: %d alt=%d ft\n", stack, stackalt)
       text=text..string.format("Group: %s\n", playerData.group:GetName())
-      text=text..string.format("# units: %d\n", #playerData.group:GetUnits())
-      text=text..string.format("n units: %d\n", playerData.nunits)
-      text=text..string.format("Section Lead: %s\n", tostring(playerData.seclead))      
+      text=text..string.format("# units: %d (n=%d)\n", #playerData.group:GetUnits(), playerData.nunits)
+      text=text..string.format("Section Lead: %s\n", tostring(playerData.seclead))
       text=text..string.format("# section: %d", #playerData.section)
       for _,_sec in pairs(playerData.section) do
         local sec=_sec --#AIRBOSS.PlayerData
@@ -5601,31 +5686,46 @@ function AIRBOSS:_MarkCase23Zones(_unitName, flare)
     
     if playerData then
     
-      local text="CASE II/III: Marking:\n"
+      -- Initial 
+      local text="Marking CASE II/III zone:\n"
       
       --TODO: Add height!
       
       if flare then
-        text=text.."* Valid zone with GREEN flares\n"
+        text=text.."* valid area with GREEN flares\n"
         local zp=self:_GetCase23ValidZone()
         zp:FlareZone(FLARECOLOR.Green, 45)
-        text=text.."* Platform zone with RED flares\n"
+        text=text.."* platform with RED flares\n"
         self.zonePlatform:FlareZone(FLARECOLOR.Red, 45)
-        text=text.."* Dirty up zone with YELLOW flares\n"
+        text=text.."* dirty up with YELLOW flares\n"
         self.zoneDirtyup:FlareZone(FLARECOLOR.Yellow, 45)
-        text=text.."* Bullseye zone with WHITE flares\n"
+        if math.abs(self.holdingoffset)>0 then
+          self.zoneArcturn1:FlareZone(FLARECOLOR.Yellow, 45)
+          text=text.."* arc turn in with YELLOW flares\n"
+          self.zoneArcturn2:FlareZone(FLARECOLOR.White, 45)
+          text=text.."* arc trun out with WHITE flares\n"
+        end
+        text=text.."* bullseye with WHITE flares\n"
         self.zoneBullseye:FlareZone(FLARECOLOR.White, 45)
       else
-        text=text.."* Valid zone with GREEN smoke\n"
+        text=text.."* valid area with GREEN smoke\n"
         local zp=self:_GetCase23ValidZone()
         zp:SmokeZone(SMOKECOLOR.Green, 45)
-        text=text.."* Platform zone with RED smoke\n"
+        text=text.."* platform with RED smoke\n"
         self.zonePlatform:SmokeZone(SMOKECOLOR.Red, 45)
-        text=text.."* Dirty up zone with ORANGE flares\n"
+        text=text.."* dirty up with ORANGE flares\n"
+        if math.abs(self.holdingoffset)>0 then
+          self.zoneArcturn1:SmokeZone(SMOKECOLOR.Red, 45)
+          text=text.."* arc turn in with YELLOW flares\n"
+          self.zoneArcturn2:SmokeZone(SMOKECOLOR.Orange, 45)
+          text=text.."* arc trun out with WHITE flares\n"
+        end
+        
         self.zoneDirtyup:SmokeZone(SMOKECOLOR.Orange, 45)
-        text=text.."* Bullseye zone with BLUE smoke\n"
+        text=text.."* bullseye with BLUE smoke\n"
         self.zoneBullseye:SmokeZone(SMOKECOLOR.Blue, 45)
       end
+      
       -- Send message to player.
       self:MessageToPlayer(playerData, text, "AIRBOSS", "", 10)
     end
