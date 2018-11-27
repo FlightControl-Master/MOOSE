@@ -618,6 +618,9 @@ function ZONE_RADIUS:GetVec3( Height )
 end
 
 
+
+
+
 --- Scan the zone for the presence of units of the given ObjectCategories.
 -- Note that after a zone has been scanned, the zone can be evaluated by:
 -- 
@@ -629,11 +632,11 @@ end
 -- @{#ZONE_RADIUS.
 -- @param #ZONE_RADIUS self
 -- @param ObjectCategories
--- @param Coalition
+-- @param UnitCategories
 -- @usage
 --    self.Zone:Scan()
 --    local IsAttacked = self.Zone:IsSomeInZoneOfCoalition( self.Coalition )
-function ZONE_RADIUS:Scan( ObjectCategories )
+function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
 
   self.ScanData = {}
   self.ScanData.Coalitions = {}
@@ -660,9 +663,24 @@ function ZONE_RADIUS:Scan( ObjectCategories )
       if ( ObjectCategory == Object.Category.UNIT and ZoneObject:isExist() and ZoneObject:isActive() ) or 
          (ObjectCategory == Object.Category.STATIC and ZoneObject:isExist()) then
         local CoalitionDCSUnit = ZoneObject:getCoalition()
-        self.ScanData.Coalitions[CoalitionDCSUnit] = true
-        self.ScanData.Units[ZoneObject] = ZoneObject
-        self:F2( { Name = ZoneObject:getName(), Coalition = CoalitionDCSUnit } )
+        local Include = false
+        if not UnitCategories then
+          Include = true
+        else
+          local CategoryDCSUnit = ZoneObject:getDesc().category
+          for UnitCategoryID, UnitCategory in pairs( UnitCategories ) do
+            if UnitCategory == CategoryDCSUnit then
+              Include = true
+              break
+            end
+          end
+        end
+        if Include then
+          local CoalitionDCSUnit = ZoneObject:getCoalition()
+          self.ScanData.Coalitions[CoalitionDCSUnit] = true
+          self.ScanData.Units[ZoneObject] = ZoneObject
+          self:F2( { Name = ZoneObject:getName(), Coalition = CoalitionDCSUnit } )
+        end
       end
       if ObjectCategory == Object.Category.SCENERY then
         local SceneryType = ZoneObject:getTypeName()
