@@ -325,7 +325,7 @@ end
 -- So all event listeners will catch the destroy event of this group for each unit in the group.
 -- To raise these events, provide the `GenerateEvent` parameter.
 -- @param #GROUP self
--- @param #boolean GenerateEvent true if you want to generate a crash or dead event for each unit.
+-- @param #boolean GenerateEvent If true, a crash or dead event for each unit is generated. If false, if no event is triggered. If nil, a RemoveUnit event is triggered.
 -- @usage
 -- -- Air unit example: destroy the Helicopter and generate a S_EVENT_CRASH for each unit in the Helicopter group.
 -- Helicopter = GROUP:FindByName( "Helicopter" )

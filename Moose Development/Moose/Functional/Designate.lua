@@ -286,9 +286,9 @@ do -- DESIGNATE
   --   * The status report can be automatically flashed by selecting "Status" -> "Flash Status On".
   --   * The automatic flashing of the status report can be deactivated by selecting "Status" -> "Flash Status Off".
   --   * The flashing of the status menu is disabled by default.
-  --   * The method @{#DESIGNATE.SetFlashStatusMenu}() can be used to enable or disable to flashing of the status menu.
+  --   * The method @{#DESIGNATE.FlashStatusMenu}() can be used to enable or disable to flashing of the status menu.
   --   
-  --     Designate:SetFlashStatusMenu( true )
+  --     Designate:FlashStatusMenu( true )
   --     
   -- The example will activate the flashing of the status menu for this Designate object.
   -- 
@@ -474,7 +474,7 @@ do -- DESIGNATE
     self.Designating = {}
     self:SetDesignateName()
     
-    self:SetLaseDuration() -- Default is 120 seconds.
+    self.LaseDuration = 60
     
     self:SetFlashStatusMenu( false )
     self:SetFlashDetectionMessages( true )
@@ -677,14 +677,6 @@ do -- DESIGNATE
     return self
   end
   
-  --- Set the lase duration for designations.
-  -- @param #DESIGNATE self
-  -- @param #number LaseDuration The time in seconds a lase will continue to hold on target. The default is 120 seconds.
-  -- @return #DESIGNATE
-  function DESIGNATE:SetLaseDuration( LaseDuration )
-    self.LaseDuration = LaseDuration or 120
-    return self
-  end
 
   --- Generate an array of possible laser codes.
   -- Each new lase will select a code from this table.
@@ -1008,9 +1000,9 @@ do -- DESIGNATE
         if string.find( Designating, "L", 1, true ) == nil then
           MENU_GROUP_COMMAND_DELAYED:New( AttackGroup, "Search other target", DetectedMenu, self.MenuForget, self, DesignateIndex ):SetTime( MenuTime ):SetTag( self.DesignateName )
           for LaserCode, MenuText in pairs( self.MenuLaserCodes ) do
-            MENU_GROUP_COMMAND_DELAYED:New( AttackGroup, string.format( MenuText, LaserCode ), DetectedMenu, self.MenuLaseCode, self, DesignateIndex, self.LaseDuration, LaserCode ):SetTime( MenuTime ):SetTag( self.DesignateName )
+            MENU_GROUP_COMMAND_DELAYED:New( AttackGroup, string.format( MenuText, LaserCode ), DetectedMenu, self.MenuLaseCode, self, DesignateIndex, 60, LaserCode ):SetTime( MenuTime ):SetTag( self.DesignateName )
           end
-          MENU_GROUP_COMMAND_DELAYED:New( AttackGroup, "Lase with random laser code(s)", DetectedMenu, self.MenuLaseOn, self, DesignateIndex, self.LaseDuration ):SetTime( MenuTime ):SetTag( self.DesignateName )
+          MENU_GROUP_COMMAND_DELAYED:New( AttackGroup, "Lase with random laser code(s)", DetectedMenu, self.MenuLaseOn, self, DesignateIndex, 60 ):SetTime( MenuTime ):SetTag( self.DesignateName )
         else
           MENU_GROUP_COMMAND_DELAYED:New( AttackGroup, "Stop lasing", DetectedMenu, self.MenuLaseOff, self, DesignateIndex ):SetTime( MenuTime ):SetTag( self.DesignateName )
         end
@@ -1168,10 +1160,10 @@ do -- DESIGNATE
   
     if string.find( self.Designating[Index], "L", 1, true ) == nil then
       self.Designating[Index] = self.Designating[Index] .. "L"
-      self.LaseStart = timer.getTime()
-      self.LaseDuration = Duration
-      self:Lasing( Index, Duration, LaserCode )
     end
+    self.LaseStart = timer.getTime()
+    self.LaseDuration = Duration
+    self:Lasing( Index, Duration, LaserCode )
   end
   
 
@@ -1330,7 +1322,7 @@ do -- DESIGNATE
       local MarkedLaserCodesText = ReportLaserCodes:Text(', ')
       self.CC:GetPositionable():MessageToSetGroup( "Marking " .. MarkingCount .. " x "  .. MarkedTypesText .. ", code " .. MarkedLaserCodesText .. ".", 5, self.AttackSet, self.DesignateName )
   
-      self:__Lasing( -self.LaseDuration, Index, Duration, LaserCodeRequested )
+      self:__Lasing( -30, Index, Duration, LaserCodeRequested )
       
       self:SetDesignateMenu()
 

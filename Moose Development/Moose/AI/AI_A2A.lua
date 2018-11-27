@@ -438,14 +438,13 @@ function AI_A2A:onafterStatus()
         RTB = false
       end
     end
-
--- I think this code is not requirement anymore after release 2.5.    
---    if self:Is( "Fuel" ) or self:Is( "Damaged" ) or self:Is( "LostControl" ) then
---      if DistanceFromHomeBase < 5000 then
---        self:E( self.Controllable:GetName() .. " is near the home base, RTB!" )
---        self:Home( "Destroy" )
---      end
---    end
+    
+    if self:Is( "Fuel" ) or self:Is( "Damaged" ) or self:Is( "LostControl" ) then
+      if DistanceFromHomeBase < 5000 then
+        self:E( self.Controllable:GetName() .. " is too far from home base, RTB!" )
+        self:Home( "Destroy" )
+      end
+    end
     
 
     if not self:Is( "Fuel" ) and not self:Is( "Home" ) then
@@ -482,12 +481,9 @@ function AI_A2A:onafterStatus()
     end
 
     -- Check if planes went RTB and are out of control.
-    -- We only check if planes are out of control, when they are in duty.
     if self.Controllable:HasTask() == false then
       if not self:Is( "Started" ) and 
          not self:Is( "Stopped" ) and
-         not self:Is( "Fuel" ) and 
-         not self:Is( "Damaged" ) and 
          not self:Is( "Home" ) then
         if self.IdleCount >= 2 then
           if Damage ~= InitialLife then
@@ -507,11 +503,8 @@ function AI_A2A:onafterStatus()
     if RTB == true then
       self:__RTB( 0.5 )
     end
-
-    if not self:Is("Home") then
-      self:__Status( 10 )
-    end
     
+    self:__Status( 10 )
   end
 end
 
