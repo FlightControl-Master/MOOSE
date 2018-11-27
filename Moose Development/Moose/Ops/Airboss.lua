@@ -48,9 +48,6 @@
 -- @field Core.Zone#ZONE_UNIT zoneCCA Carrier controlled area (CCA), i.e. a zone of 50 NM radius around the carrier.
 -- @field Core.Zone#ZONE_UNIT zoneCCZ Carrier controlled zone (CCZ), i.e. a zone of 5 NM radius around the carrier.
 -- @field Core.Zone#ZONE_UNIT zoneInitial Zone usually 3 NM astern of carrier where pilots start their CASE I pattern.
--- @field Core.Zone#ZONE_UNIT zonePlatform Zone astern the carrier where pilots should hit 5000 ft in CASE II/III.
--- @field Core.Zone#ZONE_UNIT zoneDirtyup Zone astern the carrier where pilots should hit 1200 ft and dirty up.
--- @field Core.Zone#ZONE_UNIT zoneBullseye Zone astern the carrier where pilots should intercept the glide slope.
 -- @field #table players Table of players. 
 -- @field #table menuadded Table of units where the F10 radio menu was added.
 -- @field #AIRBOSS.Checkpoint Upwind Upwind checkpoint.
@@ -119,9 +116,6 @@ AIRBOSS = {
   zoneCCA      = nil,
   zoneCCZ      = nil,
   zoneInitial  = nil,
-  zonePlatform = nil,
-  zoneDirtyup  = nil,
-  zoneBullseye = nil,
   players      =  {},
   menuadded    =  {},
   Upwind       =  {},
@@ -454,7 +448,7 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.3.6"
+AIRBOSS.version="0.3.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -583,14 +577,6 @@ function AIRBOSS:New(carriername, alias)
   -- CASE I/II moving zone: Zone 3 NM astern and 100 m starboard of the carrier with radius of 0.5 km.
   self.zoneInitial=ZONE_UNIT:New("Initial Zone", self.carrier, 0.5*1000, {dx=-UTILS.NMToMeters(3), dy=100, relative_to_unit=true})
   
-  -- CASE II/III moving zones.
-  local radial=180+self.carrierparam.rwyangle
-  local radius=UTILS.NMToMeters(1)
-  self.zonePlatform = ZONE_UNIT:New("Platform Zone", self.carrier, radius, {rho=UTILS.NMToMeters(19), theta=radial+self.holdingoffset, relative_to_unit=true})
-  self.zoneArcturn1 = ZONE_UNIT:New("ArcTurn1 Zone", self.carrier, radius, {rho=UTILS.NMToMeters(14), theta=radial+self.holdingoffset, relative_to_unit=true})
-  self.zoneArcturn2 = ZONE_UNIT:New("ArcTurn2 Zone", self.carrier, radius, {rho=UTILS.NMToMeters(12), theta=radial,                    relative_to_unit=true})
-  self.zoneDirtyup  = ZONE_UNIT:New("DirtyUp Zone",  self.carrier, radius, {rho=UTILS.NMToMeters( 9), theta=radial,                    relative_to_unit=true})
-  self.zoneBullseye = ZONE_UNIT:New("Bulleye Zone",  self.carrier, radius, {rho=UTILS.NMToMeters( 3), theta=radial,                    relative_to_unit=true})
   
   -- Smoke zones.
   if self.Debug then
@@ -598,7 +584,15 @@ function AIRBOSS:New(carriername, alias)
     --self.zonePlatform:SmokeZone(SMOKECOLOR.Orange, 90)
     --self.zoneDirtyup:SmokeZone(SMOKECOLOR.Blue, 90)
     --self.zoneBullseye:SmokeZone(SMOKECOLOR.Red, 90)
-    --local zp=self:_GetCase23ValidZone():SmokeZone(SMOKECOLOR.Green, 45)
+    --self.zoneInitial:SmokeZone(SMOKECOLOR.White, 90)
+    local case=3
+    self:_GetZoneBullseye(case):SmokeZone(SMOKECOLOR.White, 45)
+    self:_GetZoneDirtyUp(case):SmokeZone(SMOKECOLOR.Orange, 45)
+    self:_GetZoneArcIn(case):SmokeZone(SMOKECOLOR.Blue, 45)
+    self:_GetZoneArcOut(case):SmokeZone(SMOKECOLOR.Blue, 45)
+    self:_GetZonePlatform(case):SmokeZone(SMOKECOLOR.Red, 45)
+    self:_GetZoneCorridor(case):SmokeZone(SMOKECOLOR.Green, 45)
+    
   end
   
   -- Init default sound files.
@@ -626,6 +620,7 @@ function AIRBOSS:New(carriername, alias)
   self:AddTransition("*",             "Idle",       "Idle")        -- Carrier is idleing.
   self:AddTransition("Idle",          "Recover",    "Recovering")  -- Recover aircraft.
   self:AddTransition("*",             "Status",     "*")           -- Update status of players and queues.
+  self:AddTransition("*",             "Case",       "*")           -- Switch to another case recovery.
   self:AddTransition("*",             "Stop",       "Stopped")     -- Stop AIRBOSS script.
 
 
@@ -657,6 +652,20 @@ function AIRBOSS:New(carriername, alias)
   -- @function [parent=#AIRBOSS] __Recover
   -- @param #AIRBOSS self
   -- @param #number delay Delay in seconds.
+
+
+  --- Triggers the FSM event "Case" that switches the recovery case.
+  -- @function [parent=#AIRBOSS] Case
+  -- @param #AIRBOSS self
+  -- @param #number OldCase Old recovery case.
+  -- @param #number NewCase New recovery case.
+
+  --- Triggers the delayed FSM event "Case" that switches the recovery case
+  -- @function [parent=#AIRBOSS] __Case
+  -- @param #AIRBOSS self
+  -- @param #number delay Delay in seconds.
+  -- @param #number OldCase Old recovery case.
+  -- @param #number NewCase New recovery case.
 
 
   --- Triggers the FSM event "Stop" that stops the airboss. Event handlers are stopped.
@@ -859,7 +868,7 @@ function AIRBOSS:IsIdle()
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- FSM states
+-- FSM event functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after Start event. Starts the warehouse. Addes event handlers and schedules status updates of reqests and queue.
@@ -1010,6 +1019,44 @@ function AIRBOSS:_CheckRecoveryTimes()
   end
 
 end
+
+--- On before "Case" event.
+-- @param #AIRBOSS self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #number OldCase The old (current) case.
+-- @param #number NewCase The new case.
+-- @return #boolean If true, switching to new case recovery is allowed.
+function AIRBOSS:onbeforeCase(From, Event, To, OldCase, NewCase)
+  if NewCase==self.case then
+    -- Old=New ==> no switch necessary
+    return false
+  end
+  
+  if NewCase<1 or NewCase>3 then
+    self:E(self.lid.."ERROR: new case is not 1, 2 or 3 but %s", tostring(NewCase))
+    return false
+  end
+  
+  return true
+end
+
+--- On after "Case" event.
+-- @param #AIRBOSS self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #number OldCase The old (current) case.
+-- @param #number NewCase The new case.
+function AIRBOSS:onbeforeCase(From, Event, To, OldCase, NewCase)
+
+  self.case=NewCase
+  
+  
+
+end
+
 
 --- On before "Recover" event.
 -- @param #AIRBOSS self
@@ -2632,52 +2679,253 @@ function AIRBOSS:_Holding(playerData)
   self:MessageToPlayer(playerData, text, "AIRBOSS", nil, 5)
 end
 
-
---- Get CASE II/III box zone.
+--- Get Bullseye zone with radius 1 NM and DME 3 NM from the carrier. Radial depends on recovery case.
 -- @param #AIRBOSS self
+-- @param #number case Recovery case.
+-- @return Core.Zone#ZONE_RADIUS Arc in zone.
+function AIRBOSS:_GetZoneBullseye(case)
+
+  -- Radius = 1 NM.
+  local radius=UTILS.NMToMeters(1)
+  
+  -- Distance = 3 NM
+  local distance=UTILS.NMToMeters(3)
+  
+  -- Zone depends on Case recovery.
+  local radial
+  if case==2 then
+  
+    radial=self:GetRadialCase2(false, false)
+  
+  elseif case==3 then
+  
+    radial=self:GetRadialCase3(false, false)
+  
+  else
+  
+    self:E(self.lid.."ERROR: Bullseye zone only for CASE II or III recoveries!")
+    return nil
+  
+  end
+  
+  -- Get coordinate and vec2.
+  local coord=self:GetCoordinate():Translate(distance, radial)
+  local vec2=coord:GetVec2()
+
+  -- Create zone.
+  local zone=ZONE_RADIUS:New("Zone Bullseye", vec2, radius)
+  
+  return zone
+end
+
+--- Get dirty up zone with radius 1 NM and DME 9 NM from the carrier. Radial depends on recovery case.
+-- @param #AIRBOSS self
+-- @param #number case Recovery case.
+-- @return Core.Zone#ZONE_RADIUS Arc in zone.
+function AIRBOSS:_GetZoneDirtyUp(case)
+
+  -- Radius = 1 NM.
+  local radius=UTILS.NMToMeters(1)
+  
+  -- Distance = 19 NM
+  local distance=UTILS.NMToMeters(9)
+  
+  -- Zone depends on Case recovery.
+  local radial
+  if case==2 then
+  
+    radial=self:GetRadialCase2(false, false)
+  
+  elseif case==3 then
+  
+    radial=self:GetRadialCase3(false, false)
+  
+  else
+  
+    self:E(self.lid.."ERROR: Dirty Up zone only for CASE II or III recoveries!")
+    return nil
+  
+  end
+  
+  -- Get coordinate and vec2.
+  local coord=self:GetCoordinate():Translate(distance, radial)
+  local vec2=coord:GetVec2()
+
+  -- Create zone.
+  local zone=ZONE_RADIUS:New("Zone Dirty Up", vec2, radius)
+  
+  return zone
+end
+
+--- Get arc out zone with radius 1 NM and DME 12 NM from the carrier. Radial depends on recovery case.
+-- @param #AIRBOSS self
+-- @param #number case Recovery case.
+-- @return Core.Zone#ZONE_RADIUS Arc in zone.
+function AIRBOSS:_GetZoneArcOut(case)
+
+  -- Radius = 1 NM.
+  local radius=UTILS.NMToMeters(1)
+  
+  -- Distance = 12 NM
+  local distance=UTILS.NMToMeters(12)
+  
+  -- Zone depends on Case recovery.
+  local radial
+  if case==2 then
+  
+    radial=self:GetRadialCase2(false, false)
+  
+  elseif case==3 then
+  
+    radial=self:GetRadialCase3(false, false)
+  
+  else
+  
+    self:E(self.lid.."ERROR: Arc out zone only for CASE II or III recoveries!")
+    return nil
+  
+  end
+  
+  -- Get coordinate and vec2.
+  local coord=self:GetCoordinate():Translate(distance, radial)
+  local vec2=coord:GetVec2()
+
+  -- Create zone.
+  local zone=ZONE_RADIUS:New("Zone Arc Out", vec2, radius)
+  
+  return zone
+end
+
+--- Get arc in zone with radius 1 NM and DME 14 NM from the carrier. Radial depends on recovery case.
+-- @param #AIRBOSS self
+-- @param #number case Recovery case.
+-- @return Core.Zone#ZONE_RADIUS Arc in zone.
+function AIRBOSS:_GetZoneArcIn(case)
+
+  -- Radius = 1 NM.
+  local radius=UTILS.NMToMeters(1)
+  
+  -- Zone depends on Case recovery.
+  local radial
+  if case==2 then
+  
+    radial=self:GetRadialCase2(false, true)
+  
+  elseif case==3 then
+  
+    radial=self:GetRadialCase3(false, true)
+  
+  else
+  
+    self:E(self.lid.."ERROR: Arc in zone only for CASE II or III recoveries!")
+    return nil
+  
+  end
+  
+  -- Distance = 14 NM
+  local distance=UTILS.NMToMeters(12/math.cos(math.rad(self.holdingoffset)))
+  
+  -- Get coordinate and vec2.
+  local coord=self:GetCoordinate():Translate(distance, radial)
+  local vec2=coord:GetVec2()
+
+  -- Create zone.
+  local zone=ZONE_RADIUS:New("Zone Arc In", vec2, radius)
+  
+  return zone
+end
+
+--- Get platform zone with radius 1 NM and DME 19 NM from the carrier. Radial depends on recovery case.
+-- @param #AIRBOSS self
+-- @param #number case Recovery case.
+-- @return Core.Zone#ZONE_RADIUS Circular platform zone.
+function AIRBOSS:_GetZonePlatform(case)
+
+  -- Radius = 1 NM.
+  local radius=UTILS.NMToMeters(1)
+  
+  -- Distance = 19 NM
+  local distance=UTILS.NMToMeters(19)
+  
+  -- Zone depends on Case recovery.
+  local radial
+  if case==2 then
+  
+    radial=self:GetRadialCase2(false, true)
+  
+  elseif case==3 then
+  
+    radial=self:GetRadialCase3(false, true)
+  
+  else
+  
+    self:E(self.lid.."ERROR: Platform zone only for CASE II or III recoveries!")
+    return nil
+  
+  end
+  
+  -- Get coordinate and vec2.
+  local coord=self:GetCoordinate():Translate(distance, radial)
+  local vec2=coord:GetVec2()
+
+  -- Create zone.
+  local zone=ZONE_RADIUS:New("Zone Platform", vec2, radius)
+  
+  return zone
+end
+
+
+--- Get approach corridor zone. Shape depends on recovery case.
+-- @param #AIRBOSS self
+-- @param #number case Recovery case.
 -- @return Core.Zone#ZONE_POLYGON_BASE Box zone.
-function AIRBOSS:_GetCase23ValidZone()
+function AIRBOSS:_GetZoneCorridor(case)
 
-  -- Radial.
-  local hdg=self:GetRadialCase3(false, false)
-  local off=self:GetRadialCase3(false, true)
+  -- Radial and offset.
+  local radial
+  local offset
   
+  -- Select case.
+  if case==2 then
+    radial=self:GetRadialCase2(false, false)
+    offset=self:GetRadialCase2(false, true)
+  elseif case==3 then
+    radial=self:GetRadialCase3(false, false)
+    offset=self:GetRadialCase3(false, true)  
+  else
+    radial=self:GetRadialCase3(false, false)
+    offset=self:GetRadialCase3(false, true)    
+  end
+   
+  self:I(string.format("FF case %d radial = %d", case, radial))
+  self:I(string.format("FF case %d offset = %d", case, offset))
   
-  self:I("FF radial case 3 = "..hdg)
-
   -- Width of the box.
   local w=UTILS.NMToMeters(5)
   -- Length of the box.
-  local l=UTILS.NMToMeters(50)
-
-  -- Coordinate of the carrier.
-  local c0=self:GetCoordinate()
-  
-  -- Do not jump diagonal because it screws up the smoke zones.
-  local c1=c0:Translate(w, hdg+90)  -- Starboard close
-  local c2=c1:Translate(l, hdg)     -- Starboard far
-  local c4=c0:Translate(w, hdg-90)  -- Port close
-  local c3=c4:Translate(l, hdg)     -- Port far
-
-  local beta=hdg-self.holdingoffset
-  env.info("FF beta = "..beta)
+  local l=UTILS.NMToMeters(10)
+ 
+  local beta=radial-self.holdingoffset
+  --env.info("FF beta = "..beta)
   local x=(50-9)/math.cos(math.rad(beta))
-  env.info("FF x [NM] = "..x)
+  --env.info("FF x [NM] = "..x)
 
   local c={}
   c[1]=self:GetCoordinate()
-  c[2]=c[1]:Translate( UTILS.NMToMeters( 5), hdg-90)
-  c[3]=c[2]:Translate( UTILS.NMToMeters( 9), hdg)  
-  c[4]=c[3]:Translate( UTILS.NMToMeters( x), -beta)
---[[
-  c[5]=c[4]:Translate( UTILS.NMToMeters(10), hdg+90)
-  c[6]=c[5]:Translate(-UTILS.NMToMeters( x), beta)
-  c[7]=c[6]:Translate(-UTILS.NMToMeters( 5), hdg-90)
-  ]]
+  c[2]=c[1]:Translate( UTILS.NMToMeters( 1), radial-90)
+  c[3]=c[2]:Translate( UTILS.NMToMeters(13), radial)
+  c[4]=c[3]:Translate( UTILS.NMToMeters( 2), radial+90)
+  c[5]=c[4]:Translate( UTILS.NMToMeters(10), offset)
+  c[6]=c[5]:Translate( UTILS.NMToMeters( 2), radial+90)
+  c[7]=c[6]:Translate(-UTILS.NMToMeters(10), offset)    --This is more difficult!
+  c[8]=c[7]:Translate( UTILS.NMToMeters( 2), radial-90)
+  c[9]=c[8]:Translate(-UTILS.NMToMeters(13), radial)
+  
   
   -- Create an array of a square!
   local p={}
   for _i,_c in ipairs(c) do
+    _c:SmokeBlue()
     p[_i]=_c:GetVec2()
   end
 
@@ -2693,6 +2941,8 @@ end
 -- @param #AIRBOSS.PlayerData playerData Player data.
 -- @return Core.Zone#ZONE Holding zone.
 function AIRBOSS:_GetHoldingZone(playerData)
+
+  --TODO: make indepened of whole playerData. Just use case and stack as input!
 
   -- Player unit and flight.
   local unit=playerData.unit
@@ -2724,6 +2974,8 @@ function AIRBOSS:_GetHoldingZone(playerData)
       
       -- TODO: Include 15 or 30 degrees offset.
       local hdg=self.carrier:GetHeading()-self.holdingoffset
+      
+      --TODO: case dependend radial!
       local hdg=self:GetRadialCase3(false)
       
       -- Create an array of a square!
@@ -2816,7 +3068,7 @@ end
 function AIRBOSS:_Platform(playerData)
   
   -- Check if player is in valid zone
-  local validzone=self:_GetCase23ValidZone()
+  local validzone=self:_GetZoneCorridor(playerData.case)
   
   -- Check if we are inside the moving zone.
   local invalid=playerData.unit:IsNotInZone(validzone)
@@ -2828,7 +3080,7 @@ function AIRBOSS:_Platform(playerData)
   end
     
   -- Check if we are inside the moving zone.
-  local inzone=playerData.unit:IsInZone(self.zonePlatform)
+  local inzone=playerData.unit:IsInZone(self:_GetZonePlatform(playerData.case))
   
   -- Check if we are in zone.
   if inzone then
@@ -2863,7 +3115,7 @@ end
 function AIRBOSS:_DirtyUp(playerData)
 
   -- Check if player is in valid zone
-  local validzone=self:_GetCase23ValidZone()
+  local validzone=self:_GetZoneCorridor(playerData.case)
   
   -- Check if we are inside the moving zone.
   local invalid=playerData.unit:IsNotInZone(validzone)
@@ -2875,7 +3127,7 @@ function AIRBOSS:_DirtyUp(playerData)
   end
   
   -- Check if we are inside the moving zone.
-  local inzone=playerData.unit:IsInZone(self.zoneDirtyup)  
+  local inzone=playerData.unit:IsInZone(self:_GetZoneDirtyUp(playerData.case))  
   
   --if self:_CheckLimits(X, Z, self.DirtyUp) then
   if inzone then
@@ -2917,7 +3169,7 @@ end
 function AIRBOSS:_Bullseye(playerData)
 
   -- Check if player is in valid zone
-  local validzone=self:_GetCase23ValidZone()
+  local validzone=self:_GetZoneCorridor(playerData.case)
   
   -- Check if we are inside the moving zone.
   local invalid=playerData.unit:IsNotInZone(validzone)
@@ -2929,7 +3181,7 @@ function AIRBOSS:_Bullseye(playerData)
   end
 
   -- Check if we are inside the moving zone.
-  local inzone=playerData.unit:IsInZone(self.zoneBullseye)
+  local inzone=playerData.unit:IsInZone(self:_GetZoneBullseye(playerData.case))
   
   -- Check that we reached the position.
   --if self:_CheckLimits(X, Z, self.Bullseye) then
@@ -3724,14 +3976,37 @@ function AIRBOSS:GetFinalBearing(magnetic)
   return fb
 end
 
---- Get radial, i.e. the final bearing FB-180 degrees including holding offset for Case II/III recoveries.
+--- Get radial with respect to carrier heading and (optionally) holding offset. This is used in Case II recoveries.
+-- @param #AIRBOSS self
+-- @param #boolean magnetic If true, magnetic radial is returned. Default is true radial.
+-- @param #boolean offset If true, inlcude holding offset.
+-- @return #number Radial in degrees.
+function AIRBOSS:GetRadialCase2(magnetic, offset) 
+
+  -- Radial wrt to heading of carrier.  
+  local radial=self:GetHeading(magnetic)-180
+  
+  -- Holding offset angle (+-15 or 30 degrees usually)
+  if offset then
+    radial=radial-self.holdingoffset
+  end
+  
+  -- Adjust for negative values.
+  if radial<0 then
+    radial=radial+360
+  end
+  
+  return radial
+end
+
+--- Get radial with respect to angled runway and (optionally) holding offset. This is used in Case III recoveries.
 -- @param #AIRBOSS self
 -- @param #boolean magnetic If true, magnetic radial is returned. Default is true radial.
 -- @param #boolean offset If true, inlcude holding offset.
 -- @return #number Radial in degrees.
 function AIRBOSS:GetRadialCase3(magnetic, offset) 
 
-  -- Get radial.
+  -- Radial wrt angled runway.
   local radial=self:GetFinalBearing(magnetic)-180
   
   -- Holding offset angle (+-15 or 30 degrees usually)
@@ -3780,8 +4055,7 @@ function AIRBOSS:_GetRelativeHeading(unit, runway)
   local vP=unit:GetOrientationX()
   
   -- We only want the X-Z plane. Aircraft could fly parallel but ballistic and we dont want the "pitch" angle. 
-  vC.y=0
-  vP.y=0
+  vC.y=0 ; vP.y=0
   
   -- Get angle between the two orientation vectors in rad.
   local rhdg=math.deg(math.acos(UTILS.VecDot(vC,vP)/UTILS.VecNorm(vC)/UTILS.VecNorm(vP)))  
@@ -5614,7 +5888,7 @@ function AIRBOSS:_DisplayPlayerStatus(_unitName)
       elseif playerData.step==AIRBOSS.PatternStep.PLATFORM then
 
         -- Heading and distance to platform zone.
-        local flyhdg=playerData.unit:GetCoordinate():HeadingTo(self.zonePlatform:GetCoordinate())
+        local flyhdg=playerData.unit:GetCoordinate():HeadingTo(self:_GetZonePlatform(playerData.case):GetCoordinate())
         local flydist=UTILS.MetersToNM(playerData.unit:GetCoordinate():Get2DDistance(self.zoneInitial:GetCoordinate()))
         local fb=self:GetFinalBearing(true)
 
@@ -5685,45 +5959,49 @@ function AIRBOSS:_MarkCase23Zones(_unitName, flare)
     local playerData=self.players[_playername] --#AIRBOSS.PlayerData
     
     if playerData then
+
+      local case=playerData.case
+      
+      if case<2 then
+        case=3
+      end
+
     
       -- Initial 
-      local text="Marking CASE II/III zone:\n"
+      local text=string.format("Marking CASE %d zone:\n", case)
       
       --TODO: Add height!
       
       if flare then
-        text=text.."* valid area with GREEN flares\n"
-        local zp=self:_GetCase23ValidZone()
-        zp:FlareZone(FLARECOLOR.Green, 45)
+        text=text.."* approach corridor with GREEN flares\n"
+        self:_GetZoneCorridor(case):FlareZone(FLARECOLOR.Green, 45)
         text=text.."* platform with RED flares\n"
-        self.zonePlatform:FlareZone(FLARECOLOR.Red, 45)
+        self:_GetZonePlatform(case):FlareZone(FLARECOLOR.Red, 45)
         text=text.."* dirty up with YELLOW flares\n"
-        self.zoneDirtyup:FlareZone(FLARECOLOR.Yellow, 45)
+        self:_GetZoneDirtyUp(case):FlareZone(FLARECOLOR.Yellow, 45)
         if math.abs(self.holdingoffset)>0 then
-          self.zoneArcturn1:FlareZone(FLARECOLOR.Yellow, 45)
+          self:_GetZoneArcIn(case):FlareZone(FLARECOLOR.Yellow, 45)
           text=text.."* arc turn in with YELLOW flares\n"
-          self.zoneArcturn2:FlareZone(FLARECOLOR.White, 45)
+          self:_GetZoneArcOut(case):FlareZone(FLARECOLOR.White, 45)
           text=text.."* arc trun out with WHITE flares\n"
         end
         text=text.."* bullseye with WHITE flares\n"
-        self.zoneBullseye:FlareZone(FLARECOLOR.White, 45)
+        self:_GetZoneBullseye(case):FlareZone(FLARECOLOR.White, 45)
       else
-        text=text.."* valid area with GREEN smoke\n"
-        local zp=self:_GetCase23ValidZone()
-        zp:SmokeZone(SMOKECOLOR.Green, 45)
+        text=text.."* approach corridor with GREEN smoke\n"
+        self:_GetZoneCorridor(case):SmokeZone(SMOKECOLOR.Green, 45)
         text=text.."* platform with RED smoke\n"
-        self.zonePlatform:SmokeZone(SMOKECOLOR.Red, 45)
+        self:_GetZonePlatform(case):SmokeZone(SMOKECOLOR.Red, 45)
         text=text.."* dirty up with ORANGE flares\n"
+        self:_GetZoneDirtyUp(case):SmokeZone(SMOKECOLOR.Orange, 45)
         if math.abs(self.holdingoffset)>0 then
-          self.zoneArcturn1:SmokeZone(SMOKECOLOR.Red, 45)
+          self:_GetZoneArcIn(case):SmokeZone(SMOKECOLOR.Red, 45)
           text=text.."* arc turn in with YELLOW flares\n"
-          self.zoneArcturn2:SmokeZone(SMOKECOLOR.Orange, 45)
+          self:_GetZoneArcOut(case):SmokeZone(SMOKECOLOR.Orange, 45)
           text=text.."* arc trun out with WHITE flares\n"
         end
-        
-        self.zoneDirtyup:SmokeZone(SMOKECOLOR.Orange, 45)
         text=text.."* bullseye with BLUE smoke\n"
-        self.zoneBullseye:SmokeZone(SMOKECOLOR.Blue, 45)
+        self:_GetZoneBullseye(case):SmokeZone(SMOKECOLOR.Blue, 45)
       end
       
       -- Send message to player.
