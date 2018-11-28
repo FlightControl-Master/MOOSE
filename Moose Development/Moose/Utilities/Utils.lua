@@ -308,7 +308,12 @@ UTILS.hPa2mmHg = function( hPa )
   return hPa * 0.7500615613030
 end
 
-
+--- Convert kilo gramms (kg) to pounds (lbs).
+-- @param #number kg Mass in kg.
+-- @return #number Mass in lbs.
+UTILS.kg2lbs = function( kg )
+  return kg * 2.20462
+end
 
 --[[acc:
 in DM: decimal point of minutes.
