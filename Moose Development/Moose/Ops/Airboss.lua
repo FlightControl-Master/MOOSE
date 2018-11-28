@@ -102,7 +102,11 @@
 -- 
 -- ## CASE III
 -- 
--- ![Banner Image](..\Presentations\AIRBOSS\Airboss_CaseIII.png)
+-- ![Banner Image](..\Presentations\AIRBOSS\Airboss_Case3.png)
+-- 
+-- ## CASE II
+-- 
+-- ![Banner Image](..\Presentations\AIRBOSS\Airboss_Case2.png)
 --
 -- @field #AIRBOSS
 AIRBOSS = {
@@ -2832,8 +2836,10 @@ function AIRBOSS:_GetZoneArcIn(case)
   
   end
   
+  local x=12/math.cos(math.rad(self.holdingoffset))
+  
   -- Distance = 14 NM
-  local distance=UTILS.NMToMeters(12/math.cos(math.rad(self.holdingoffset)))
+  local distance=UTILS.NMToMeters(x)
   
   -- Get coordinate and vec2.
   local coord=self:GetCoordinate():Translate(distance, radial)
@@ -2914,22 +2920,26 @@ function AIRBOSS:_GetZoneCorridor(case)
   local w=UTILS.NMToMeters(5)
   -- Length of the box.
   local l=UTILS.NMToMeters(10)
+  
+  -- Angle between radial and offset in rad.
+  local alpha=math.rad(self.holdingoffset)
+  
+  -- Distance from ArcIn to ArcOut zone
+  local d=UTILS.NMToMeters(12)
+  local y=d*math.tan(alpha)
  
-  local beta=radial-self.holdingoffset
-  --env.info("FF beta = "..beta)
-  local x=(50-9)/math.cos(math.rad(beta))
-  --env.info("FF x [NM] = "..x)
+  local d2=math.cos(alpha)/UTILS.NMToMeters(2)
 
   local c={}
-  c[1]=self:GetCoordinate()
-  c[2]=c[1]:Translate( UTILS.NMToMeters( 1), radial-90)
-  c[3]=c[2]:Translate( UTILS.NMToMeters(13), radial)
-  c[4]=c[3]:Translate( UTILS.NMToMeters( 2), radial+90)
-  c[5]=c[4]:Translate( UTILS.NMToMeters(10), offset)
-  c[6]=c[5]:Translate( UTILS.NMToMeters( 2), radial+90)
-  c[7]=c[6]:Translate(-UTILS.NMToMeters(10), offset)    --This is more difficult!
-  c[8]=c[7]:Translate( UTILS.NMToMeters( 2), radial-90)
-  c[9]=c[8]:Translate(-UTILS.NMToMeters(13), radial)
+  c[1]=self:GetCoordinate()                                     -- Carrier coordinate
+  c[2]=c[1]:Translate( UTILS.NMToMeters( 1),    radial-90)      -- 1 Right of carrier
+  c[3]=c[2]:Translate( UTILS.NMToMeters(13),    radial)         -- 1 Right and 13 "south"
+  c[4]=c[3]:Translate( UTILS.NMToMeters( y),    radial+90)      -- y left, 13 south  
+  c[5]=c[4]:Translate( UTILS.NMToMeters(10),    offset)         -- to back wall angled
+  c[6]=c[5]:Translate( UTILS.NMToMeters( 2),    offset+90)      -- Back wall (angled)
+  c[7]=c[6]:Translate(-UTILS.NMToMeters(10+d2), offset)         -- back along X & Z
+  c[8]=c[7]:Translate( UTILS.NMToMeters( y),    radial-90)      -- back along X      
+  c[9]=c[1]:Translate(-UTILS.NMToMeters( 1),    radial+90)      -- 1 left of carrier
   
   
   -- Create an array of a square!
@@ -3114,7 +3124,11 @@ function AIRBOSS:_Platform(playerData)
     end
         
     -- Next step: Dirty up and level out at 1200 ft.
-    playerData.step=AIRBOSS.PatternStep.DIRTYUP
+    if math.abs(self.holdingoffset)>0 then
+      playerData.step=AIRBOSS.PatternStep.ARCIN
+    else
+      playerData.step=AIRBOSS.PatternStep.DIRTYUP
+    end
     playerData.warning=nil
   end
 end
