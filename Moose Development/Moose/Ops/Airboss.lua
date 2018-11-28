@@ -96,7 +96,17 @@
 --     
 -- ## CASE I
 -- 
--- When CASE I recovery is active, 
+-- ### Holding Pattern
+-- 
+-- ![Banner Image](..\Presentations\AIRBOSS\Airboss_Case1_Holding.png)
+-- 
+-- ### Landing Pattern
+-- 
+-- ![Banner Image](..\Presentations\AIRBOSS\Airboss_Case1_Landing.png)
+-- 
+-- ## CASE III
+-- 
+-- ![Banner Image](..\Presentations\AIRBOSS\Airboss_CaseIII.png)
 --
 -- @field #AIRBOSS
 AIRBOSS = {
