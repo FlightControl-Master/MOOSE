@@ -287,37 +287,37 @@ AIRBOSS.Soundfile={
     normal="LSO - RightLineUp(S).ogg",
     louder="LSO - RightLineUp(L).ogg",
     subtitle="Right for line up.",
-    duration=3,
+    duration=1.5,
   },
   COMELEFT={
     normal="LSO - ComeLeft(S).ogg",
     louder="LSO - ComeLeft(L).ogg",
     subtitle="Come left.",
-    duration=3,
+    duration=1,
   },
   HIGH={
     normal="LSO - High(S).ogg",
     louder="LSO - High(L).ogg",
     subtitle="You're high.",
-    duration=3,
+    duration=1,
   },
   POWER={
     normal="LSO - Power(S).ogg",
     louder="LSO - Power(L).ogg",
     subtitle="Power.",
-    duration=3,
+    duration=1,
   },
   SLOW={
     normal="LSO-Slow-Normal.ogg",
     louder="LSO-Slow-Loud.ogg",
     subtitle="You're slow.",
-    duration=3,
+    duration=1,
   },
   FAST={
     normal="LSO-Fast-Normal.ogg",
     louder="LSO-Fast-Loud.ogg",
     subtitle="You're fast.",
-    duration=3,
+    duration=1,
   },
   CALLTHEBALL={
     normal="LSO - Call the Ball.ogg",
@@ -328,17 +328,17 @@ AIRBOSS.Soundfile={
   ROGERBALL={
     normal="LSO - Roger.ogg",
     subtitle="Roger ball!",
-    duration=3,
+    duration=1.2,
   },  
   WAVEOFF={
     normal="LSO - WaveOff.ogg",
     subtitle="Wave off!",
-    duration=3,
+    duration=1,
   },  
   BOLTER={
     normal="LSO - Bolter.ogg",
     subtitle="Bolter, Bolter!",
-    duration=3,
+    duration=1.5,
   },
   LONGINGROOVE={
     normal="LSO - Long in Groove.ogg",
@@ -469,25 +469,25 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.3.9w"
+AIRBOSS.version="0.4.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Set case II and III times. 
--- TODO: Add radio transmission queue for LSO and airboss.
 -- TODO: Get correct wire when trapped.
+-- TODO: Set case II and III times. 
 -- TODO: Add radio check (LSO, AIRBOSS) to F10 radio menu.
 -- TODO: Add user functions.
 -- TODO: Generalize parameters for other carriers.
 -- TODO: Generalize parameters for other aircraft.
 -- TODO: Foul deck check.
 -- TODO: Persistence of results.
--- NOPE: Strike group with helo bringing cargo etc.
 -- TODO: Right pattern step after bolter/wo/patternWO?
--- TODO: CASE II.
--- TODO: CASE III.
+-- DONE: Add radio transmission queue for LSO and airboss.
+-- TONE: CASE II.
+-- DONE: CASE III.
+-- NOPE: Strike group with helo bringing cargo etc. Not yet.
 -- DONE: Handle crash event. Delete A/C from queue, send rescue helo.
 -- DONE: Get fuel state in pounds. (working for the hornet, did not check others)
 -- DONE: Add aircraft numbers in queue to carrier info F10 radio output.
@@ -920,8 +920,8 @@ function AIRBOSS:onafterStart(From, Event, To)
   
   -- Schedule radio queue checks.
   -- TODO: id's to self to be able to stop the scheduler.
-  local RQLid=self.radiotimer:Schedule(self, self._CheckRadioQueue, {self, self.RQLSO}, 1, 0.1)
-  local RQMid=self.radiotimer:Schedule(self, self._CheckRadioQueue, {self, self.RQMarshal}, 1, 0.1)
+  local RQLid=self.radiotimer:Schedule(self, self._CheckRadioQueue, {self.RQLSO, "LSO"}, 1, 0.1)
+  local RQMid=self.radiotimer:Schedule(self, self._CheckRadioQueue, {self.RQMarshal, "MARSHAL"}, 1, 0.1)
 
   -- Start status check in 1 second.
   self:__Status(1)
@@ -1766,7 +1766,7 @@ function AIRBOSS:_GetMarshalAltitude(stack, case)
     angels0=6
     
     -- Distance: d=n*angles0+15 NM, so first stack is at 15+6=21 NM
-    Dist=UTILS.NMToMeters((stack-1)*angels0+15)
+    Dist=UTILS.NMToMeters(stack*angels0+15)
     
     -- Get correct radial depending on recovery case including offset.
     local radial
@@ -2524,6 +2524,7 @@ function AIRBOSS:OnEventLand(EventData)
       -- Landing distance to carrier position.
       local dist=coord:Get2DDistance(self:GetCoordinate())
       
+      -- Correct sign if necessary.
       if X<0 then
         dist=-dist
       end
@@ -2538,7 +2539,7 @@ function AIRBOSS:OnEventLand(EventData)
       local w4=self:GetCoordinate():Translate(self.carrierparam.wire4, hdg):MarkToAll("Wire 4")
       
       -- Get wire
-      local wire=self:_GetWire(dist)
+      local wire=self:_GetWire(dist, 30)
       
       -- Aircraft type.
       local _type=EventData.IniUnit:GetTypeName()
@@ -2568,7 +2569,7 @@ function AIRBOSS:OnEventLand(EventData)
     local dist=coord:Get2DDistance(self:GetCoordinate())
     
     -- Get wire
-    local wire=self:_GetWire(dist)
+    local wire=self:_GetWire(dist, 0)
     
     -- Aircraft type.
     local _type=EventData.IniUnit:GetTypeName()
@@ -2969,11 +2970,12 @@ function AIRBOSS:_GetZoneCorridor(case)
   c[8]=c[7]:Translate( UTILS.NMToMeters( y),    radial-90)      -- back along X  
   c[9]=c[1]:Translate( UTILS.NMToMeters( 1),    radial+90)      -- 1 left of carrier
   
-  
   -- Create an array of a square!
   local p={}
   for _i,_c in ipairs(c) do
-    _c:SmokeBlue()
+    if self.Debug then
+      _c:SmokeBlue()
+    end
     p[_i]=_c:GetVec2()
   end
 
@@ -3033,10 +3035,13 @@ function AIRBOSS:_GetHoldingZone(playerData)
       
       -- Create an array of a square!
       local p={}
-      p[1]=c1:Translate(UTILS.NMToMeters(1), hdg+90):GetVec2()  --c1 is at (angels+15) NM directly behind the carrier. We translate it 1 NM starboard.
-      p[2]=c2:Translate(UTILS.NMToMeters(1), hdg+90):GetVec2()  --c2 is 10 NM further behind. Also translated 1 NM starboard.
-      p[3]=c2:Translate(UTILS.NMToMeters(7), hdg-90):GetVec2()  --p3 6 NM port of carrier.
-      p[4]=c1:Translate(UTILS.NMToMeters(7), hdg-90):GetVec2()  --p4 6 NM port of carrier.
+      p[1]=c1:Translate(UTILS.NMToMeters(1), hdg-90):GetVec2()  --c1 is at (angels+15) NM directly behind the carrier. We translate it 1 NM starboard.
+      p[2]=c2:Translate(UTILS.NMToMeters(1), hdg-90):GetVec2()  --c2 is 10 NM further behind. Also translated 1 NM starboard.
+      p[3]=c2:Translate(UTILS.NMToMeters(7), hdg+90):GetVec2()  --p3 6 NM port of carrier.
+      p[4]=c1:Translate(UTILS.NMToMeters(7), hdg+90):GetVec2()  --p4 6 NM port of carrier.
+      
+      --c1:SmokeBlue()
+      --c2:SmokeOrange()
       
       -- Square zone length=10NM width=6 NM behind the carrier starting at angels+15 NM behind the carrier.
       -- So stay 0-5 NM (+1 NM error margin) port of carrier.
@@ -3887,24 +3892,28 @@ end
 --- Get wire from landing position.
 -- @param #AIRBOSS self
 -- @param #number d Distance in meters wrt carrier position where player landed.
-function AIRBOSS:_GetWire(d)
+-- @param #number dx Correction.
+function AIRBOSS:_GetWire(d, dx)
 
   -- Little offset for the exact wire positions.
-  local wdx=0
-  
+  dx=dx or 30
+
   -- Which wire was caught? X>0 since calculated as distance!
   local wire
-  if d<self.carrierparam.wire1+wdx then
+  if d-dx<self.carrierparam.wire1 then           -- < -104
     wire=1
-  elseif d<self.carrierparam.wire2+wdx then
+  elseif d-dx<self.carrierparam.wire2 then       -- < -92
     wire=2
-  elseif d<self.carrierparam.wire3+wdx then
+  elseif d-dx<self.carrierparam.wire3 then       -- < -80
     wire=3
-  elseif d<self.carrierparam.wire4+wdx then
+  elseif d-dx<self.carrierparam.wire4 then       -- < -68
     wire=4
   else
     wire=99
   end
+  
+  -- Debug output.
+  self:I(string.format("GetWire: d=%.1f m, dx=%.1f m, d-dx=%.1f m ==> wire=%d.", d, dx, d-dx, wire))
 
   return wire
 end
@@ -5172,18 +5181,18 @@ end
 --- Radio queue item.
 -- @type AIRBOSS.Radioitem
 -- @field #number Tplay Abs time when transmission should be played.
--- @field #number duration Duration of the transmission in seconds.
 -- @field #number Tstarted Abs time when transmission began to play.
 -- @field #number prio Priority 0-100.
 -- @field #boolean isplaying Currently playing.
 -- @field Core.Beacon#RADIO radio Radio object.
--- @field #AIRBOSS.SoundFile call
--- @field #boolean loud Play loud version
+-- @field #AIRBOSS.RadioSound call Radio sound.
 
 --- Check radio queue for transmissions to be broadcasted.
 -- @param #AIRBOSS self
 -- @param #table radioqueue The radio queue.
-function AIRBOSS:_CheckRadioQueue(radioqueue)
+-- @param #string name Name of the queue.
+function AIRBOSS:_CheckRadioQueue(radioqueue, name)
+  --env.info(string.format("FF: check radio queue %s: n=%d", name, #radioqueue))
 
   -- Check if queue is empty.
   if #radioqueue==0 then
@@ -5197,7 +5206,7 @@ function AIRBOSS:_CheckRadioQueue(radioqueue)
   local function _sort(a, b)
     return (a.Tplay < b.Tplay) or (a.Tplay==b.Tplay and a.prio < b.prio)
   end
-  table.sort(radioqueue, _sort)  
+  table.sort(radioqueue, _sort)
   
   local playing=false
   local next=nil  --#AIRBOSS.Radioitem
@@ -5212,7 +5221,7 @@ function AIRBOSS:_CheckRadioQueue(radioqueue)
       if transmission.isplaying then
       
         -- Check if transmission is finished.
-        if time>transmission.Tstarted+transmission.duration then
+        if time>=transmission.Tstarted+transmission.call.duration then
           
           -- Transmission over.
           transmission.isplaying=false
@@ -5272,8 +5281,7 @@ function AIRBOSS:RadioTransmission(radio, call, loud, delay)
   
   transmission.radio=radio
   transmission.call=call
-  transmission.loud=loud
-  transmission.Tplay=timer.getAbsTime()+delay
+  transmission.Tplay=timer.getAbsTime()+(delay or 0)
   transmission.prio=50
   transmission.isplaying=false
   transmission.Tstarted=nil

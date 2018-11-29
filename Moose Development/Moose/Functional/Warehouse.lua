@@ -1719,12 +1719,14 @@ WAREHOUSE.Quantity = {
 --- Warehouse database. Note that this is a global array to have easier exchange between warehouses.
 -- @type WAREHOUSE.db
 -- @field #number AssetID Unique ID of each asset. This is a running number, which is increased each time a new asset is added.
--- @field #table Assets Table holding registered assets, which are of type @{Functional.Warehouse#WAREHOUSE.Assetitem}.
+-- @field #table Assets Table holding registered assets, which are of type @{Functional.Warehouse#WAREHOUSE.Assetitem}.#
+-- @field #number WarehouseID Unique ID of the warehouse. Running number.
 -- @field #table Warehouses Table holding all defined @{#WAREHOUSE} objects by their unique ids.
 WAREHOUSE.db = {
-  AssetID    = 0,
-  Assets     = {},
-  Warehouses = {}
+  AssetID     = 0,
+  Assets      = {},
+  WarehouseID = 0,
+  Warehouses  = {}
 }
 
 --- Warehouse class version.
@@ -1825,7 +1827,13 @@ function WAREHOUSE:New(warehouse, alias)
 
   -- Set some variables.
   self.warehouse=warehouse
-  self.uid=tonumber(warehouse:GetID())
+  
+  -- Increase global warehouse counter.
+  WAREHOUSE.db.WarehouseID=WAREHOUSE.db.WarehouseID+1
+  
+  -- Set unique ID for this warehouse.
+  self.uid=WAREHOUSE.db.WarehouseID
+  --self.uid=tonumber(warehouse:GetID())
 
   -- Closest of the same coalition but within a certain range.
   local _airbase=self:GetCoordinate():GetClosestAirbase(nil, self:GetCoalition())

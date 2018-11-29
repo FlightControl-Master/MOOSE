@@ -701,7 +701,7 @@ function RESCUEHELO:onafterStatus(From, Event, To)
 
   -- Report current fuel.
   local text=string.format("Rescue Helo %s: state=%s fuel=%.1f", self.helo:GetName(), self:GetState(), fuel)
-  self:I(text)
+  self:T(text)
 
   -- If fuel < threshold ==> send helo to home base!
   if fuel<self.lowfuel and self:IsRunning() then
