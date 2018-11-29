@@ -45,6 +45,7 @@
 -- @field Core.Radio#RADIO LSOradio Radio for LSO calls.
 -- @field Core.Radio#RADIO Carrierradio Radio for carrier calls.
 -- @field #AIRBOSS.RadioCalls radiocall LSO and Airboss call sound files and texts.
+-- @field Core.Scheduler#SCHEDULER radiotimer Radio queue scheduler.
 -- @field Core.Zone#ZONE_UNIT zoneCCA Carrier controlled area (CCA), i.e. a zone of 50 NM radius around the carrier.
 -- @field Core.Zone#ZONE_UNIT zoneCCZ Carrier controlled zone (CCZ), i.e. a zone of 5 NM radius around the carrier.
 -- @field Core.Zone#ZONE_UNIT zoneInitial Zone usually 3 NM astern of carrier where pilots start their CASE I pattern.
@@ -65,6 +66,8 @@
 -- @field #table flights List of all flights in the CCA.
 -- @field #table Qmarshal Queue of marshalling aircraft groups.
 -- @field #table Qpattern Queue of aircraft groups in the landing pattern.
+-- @field #table RQMarshal Radio queue of marshal.
+-- @field #table RQLSO Radio queue of LSO.
 -- @field #number Nmaxpattern Max number of aircraft in landing pattern.
 -- @field Ops.RecoveryTanker#RECOVERYTANKER tanker Recovery tanker flying overhead of carrier.
 -- @field Functional.Warehouse#WAREHOUSE warehouse Warehouse object of the carrier.
@@ -126,6 +129,7 @@ AIRBOSS = {
   Carrierradio = nil,
   Carrierfreq  = nil,
   radiocall    =  {},
+  radiotimer   = nil,
   zoneCCA      = nil,
   zoneCCZ      = nil,
   zoneInitial  = nil,
@@ -146,6 +150,8 @@ AIRBOSS = {
   flights      =  {},
   Qpattern     =  {},
   Qmarshal     =  {},
+  RQMarshal    =  {},
+  RQLSO        =  {},
   Nmaxpattern  = nil,
   tanker       = nil,
   warehouse    = nil,
@@ -463,7 +469,7 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.3.9"
+AIRBOSS.version="0.3.9w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -549,6 +555,9 @@ function AIRBOSS:New(carriername, alias)
   self.LSOradio=RADIO:New(self.carrier)
   self.LSOradio:SetAlias("LSO")
   self:SetLSOradio()
+  
+  -- Radio scheduler.
+  self.radiotimer=SCHEDULER:New()
   
   -- Set ICSL to channel 1.
   self:SetICLS()
@@ -908,6 +917,11 @@ function AIRBOSS:onafterStart(From, Event, To)
   
   -- Time stamp for checking queues. 
   self.Tqueue=timer.getTime()
+  
+  -- Schedule radio queue checks.
+  -- TODO: id's to self to be able to stop the scheduler.
+  local RQLid=self.radiotimer:Schedule(self, self._CheckRadioQueue, {self, self.RQLSO}, 1, 0.1)
+  local RQMid=self.radiotimer:Schedule(self, self._CheckRadioQueue, {self, self.RQMarshal}, 1, 0.1)
 
   -- Start status check in 1 second.
   self:__Status(1)
@@ -1728,8 +1742,7 @@ function AIRBOSS:_GetMarshalAltitude(stack, case)
 
   -- Carrier position.
   local Carrier=self:GetCoordinate()
-  local hdg=self.carrier:GetHeading()
-
+  
   -- Altitude of first stack. Depends on recovery case.
   local angels0
   local Dist
@@ -1739,14 +1752,36 @@ function AIRBOSS:_GetMarshalAltitude(stack, case)
   if case==1 then
     -- CASE I: Holding at 2000 ft on a circular pattern port of the carrier. Interval +1000 ft for next stack.
     angels0=2
+    
+    -- Distance 2.5 NM.
     Dist=UTILS.NMToMeters(2.5)
+    
+    -- Get true heading of carrier.
+    local hdg=self.carrier:GetHeading()
+    
+    -- Center of holding pattern point. We give it a little head start -70 instead of -90 degrees.
     p1=Carrier:Translate(Dist, hdg-70)
   else
     -- CASE II/III: Holding at 6000 ft on a racetrack pattern astern the carrier.
     angels0=6
+    
+    -- Distance: d=n*angles0+15 NM, so first stack is at 15+6=21 NM
     Dist=UTILS.NMToMeters((stack-1)*angels0+15)
-    p1=Carrier:Translate(-Dist, hdg)
-    p2=Carrier:Translate(-(Dist+UTILS.NMToMeters(10)), hdg)
+    
+    -- Get correct radial depending on recovery case including offset.
+    local radial
+    if case==2 then
+      radial=self:GetRadialCase2(false, true)
+    elseif case==3 then
+      radial=self:GetRadialCase3(false, true)
+    end
+    
+    -- First point of race track pattern
+    p1=Carrier:Translate(Dist, radial)
+    
+    -- Second point which is 10 NM further behind.
+    --TODO: check if 10 NM is okay.
+    p2=Carrier:Translate(Dist+UTILS.NMToMeters(10), radial)
   end
 
   -- Pattern altitude.
@@ -2968,15 +3003,18 @@ function AIRBOSS:_GetHoldingZone(playerData)
     -- Current stack.
     local stack=playerData.flag:Get()
     
+    -- Player's recovery case.
+    local case=playerData.case
+    
     -- Stack is <= 0 ==> no marshal zone.
     if stack<=0 then
       return nil
-    end
+    end    
     
     -- Pattern alitude.
-    local patternalt, c1, c2=self:_GetMarshalAltitude(stack)
+    local patternalt, c1, c2=self:_GetMarshalAltitude(stack, case)
     
-    if playerData.case==1 then
+    if case==1 then
       -- CASE I
       
       -- Zone 2.5 NM port of carrier with a radius of 3 NM (holding pattern should be < 5 NM). 
@@ -2987,13 +3025,12 @@ function AIRBOSS:_GetHoldingZone(playerData)
             
       -- Get radial.
       local hdg      
-      if playerData.case==2 then
+      if case==2 then
         hdg=self:GetRadialCase2(false, true)
       else
         hdg=self:GetRadialCase3(false, true)
       end
       
-      -- TODO: This is WRONG!
       -- Create an array of a square!
       local p={}
       p[1]=c1:Translate(UTILS.NMToMeters(1), hdg+90):GetVec2()  --c1 is at (angels+15) NM directly behind the carrier. We translate it 1 NM starboard.
@@ -3136,7 +3173,6 @@ function AIRBOSS:_ArcInTurn(playerData)
   -- Check if we are inside the moving zone.
   local inzone=playerData.unit:IsInZone(self:_GetZoneArcIn(playerData.case))
   
-  --if self:_CheckLimits(X, Z, self.DirtyUp) then
   if inzone then
     
     -- Debug message.
@@ -4253,19 +4289,19 @@ function AIRBOSS:_LSOadvice(playerData, glideslopeError, lineupError)
   if glideslopeError>1 then
     -- "You're high!"
     self:RadioTransmission(self.LSOradio, self.radiocall.HIGH, true, delay)
-    delay=delay+1.5
+    --delay=delay+1.5
   elseif glideslopeError>0.5 then
     -- "You're a little high."
     self:RadioTransmission(self.LSOradio, self.radiocall.HIGH, false, delay)
-    delay=delay+1.5
+    --delay=delay+1.5
   elseif glideslopeError<-1.0 then
     -- "Power!"
     self:RadioTransmission(self.LSOradio, self.radiocall.POWER, true, delay)
-    delay=delay+1.5
+    --delay=delay+1.5
   elseif glideslopeError<-0.5 then
     -- "You're a little low."
     self:RadioTransmission(self.LSOradio, self.radiocall.POWER, false, delay)
-    delay=delay+1.5
+    --delay=delay+1.5
   else
     text="Good altitude."
   end
@@ -4277,19 +4313,19 @@ function AIRBOSS:_LSOadvice(playerData, glideslopeError, lineupError)
   if lineupError<-3 then
     -- "Come left!"
     self:RadioTransmission(self.LSOradio, self.radiocall.COMELEFT, true, delay)
-    delay=delay+1.5
+    --delay=delay+1.5
   elseif lineupError<-1 then
     -- "Come left."
     self:RadioTransmission(self.LSOradio, self.radiocall.COMELEFT, false, delay)
-    delay=delay+1.5    
+    --delay=delay+1.5    
   elseif lineupError>3 then
     -- "Right for lineup!"
     self:RadioTransmission(self.LSOradio, self.radiocall.RIGHTFORLINEUP, true, delay)
-    delay=delay+1.5    
+   --delay=delay+1.5    
   elseif lineupError>1 then
     -- "Right for lineup."
     self:RadioTransmission(self.LSOradio, self.radiocall.RIGHTFORLINEUP, false, delay)
-    delay=delay+1.5    
+    --delay=delay+1.5    
   else
     text=text.."Good lineup."
   end
@@ -4303,21 +4339,21 @@ function AIRBOSS:_LSOadvice(playerData, glideslopeError, lineupError)
   if aoa>=9.3 then
     -- "Your're slow!"
     self:RadioTransmission(self.LSOradio, self.radiocall.SLOW, true, delay)
-    delay=delay+1.5        
+    --delay=delay+1.5        
   elseif aoa>=8.8 and aoa<9.3 then
     -- "Your're a little slow."
     self:RadioTransmission(self.LSOradio, self.radiocall.SLOW, false, delay)
-    delay=delay+1.5              
+    --delay=delay+1.5              
   elseif aoa>=7.4 and aoa<8.8 then
     text=text.."You're on speed."
   elseif aoa>=6.9 and aoa<7.4 then
     -- "You're a little fast."
     self:RadioTransmission(self.LSOradio, self.radiocall.FAST, false, delay)
-    delay=delay+1.5            
+    --delay=delay+1.5            
   elseif aoa>=0 and aoa<6.9 then
     -- "You're fast!"
     self:RadioTransmission(self.LSOradio, self.radiocall.FAST, true, delay)
-    delay=delay+1.5                
+    --delay=delay+1.5                
   else
     text=text.."Unknown AoA state."
   end
@@ -4969,117 +5005,6 @@ end
 -- MISC functions
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Radio transmission.
--- @param #AIRBOSS self
--- @param Core.Radio#RADIO radio sending transmission.
--- @param #AIRBOSS.RadioSound call Radio sound files and subtitles.
--- @param #boolean loud If true, play loud sound file version.
--- @param #number delay Delay in seconds, before the message is broadcasted.
-function AIRBOSS:RadioTransmission(radio, call, loud, delay)
-  self:E({radio=radio, call=call, loud=loud, delay=delay})  
-
-  if (delay==nil) or (delay and delay==0) then
-
-    if call==nil then
-      self:E(self.lid.."ERROR: Radio call=nil!")
-      self:E({radio=radio})
-      self:E({call=call})
-      self:E({loud=loud})
-      self:E({delay=delay})
-      return
-    end    
-  
-    local filename
-    if loud then
-      filename=call.louder
-    else
-      filename=call.normal
-    end
-      
-    -- New transmission.
-    radio:NewUnitTransmission(filename, call.subtitle, call.duration, radio.Frequency/1000000, radio.Modulation, false)
-    
-    -- Broadcast message.
-    radio:Broadcast(true)
-    
-    -- "Subtitle".
-    self:MessageToAll(call.subtitle, radio:GetAlias(), "", call.duration)
-    
-  else
-  
-    if call==nil then
-      self:E(self.lid.."ERROR: Radio call=nil!")
-      self:E({radio=radio})
-      self:E({call=call})
-      self:E({loud=loud})
-      self:E({delay=delay})
-      return
-    end
-  
-    -- Scheduled transmission.
-    SCHEDULER:New(nil, self.RadioTransmission, {self, radio, call, loud}, delay)
-  end
-end
-
---- Send text message to player client.
--- Message format will be "SENDER: RECCEIVER, MESSAGE".
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data.
--- @param #string message The message to send.
--- @param #string sender The person who sends the message or nil.
--- @param #string receiver The person who receives the message. Default player's onboard number. Set to "" for no receiver.
--- @param #number duration Display message duration. Default 10 seconds.
--- @param #boolean clear If true, clear screen from previous messages.
--- @param #number delay Delay in seconds, before the message is displayed.
-function AIRBOSS:MessageToPlayer(playerData, message, sender, receiver, duration, clear, delay)
-
-  if playerData and message and message~="" then
-  
-    -- Default duration.
-    duration=duration or 10
-
-    -- Format message.          
-    local text
-    if receiver and receiver=="" then
-      text=string.format("%s", message)      
-    else
-      receiver=receiver or playerData.onboard
-      text=string.format("%s, %s", receiver, message)
-    end
-    self:I(self.lid..text)
-      
-    if delay and delay>0 then
-      SCHEDULER:New(nil, self.MessageToPlayer, {self, playerData, message, sender, receiver, duration, clear}, delay)
-    else
-      if playerData.client then
-        MESSAGE:New(text, duration, sender, clear):ToClient(playerData.client)
-      end
-    end
-    
-  end
-  
-end
-
---- Send text message to all players in the CCA.
--- Message format will be "SENDER: RECCEIVER, MESSAGE".
--- @param #AIRBOSS self
--- @param #string message The message to send.
--- @param #string sender The person who sends the message or nil.
--- @param #string receiver The person who receives the message. Default player's onboard number. Set to "" for no receiver.
--- @param #number duration Display message duration. Default 10 seconds.
--- @param #boolean clear If true, clear screen from previous messages.
--- @param #number delay Delay in seconds, before the message is displayed.
-function AIRBOSS:MessageToAll(message, sender, receiver, duration, clear, delay)
-
-  for _,_player in pairs(self.players) do
-    local player=_player --#AIRBOSS.PlayerData
-    if player.unit:IsInZone(self.zoneCCA) then
-      self:MessageToPlayer(player,message,sender,receiver,duration,clear,delay)
-    end 
-  end
-
-end
-
 --- Check if aircraft is capable of landing on an aircraft carrier.
 -- @param #AIRBOSS self
 -- @param Wrapper.Unit#UNIT unit Aircraft unit. (Will also work with groups as given parameter.)
@@ -5226,7 +5151,7 @@ function AIRBOSS:_GetPlayerUnitAndName(_unitName)
   return nil,nil
 end
 
---- Get carrier coaltion.
+--- Get carrier coalition.
 -- @param #AIRBOSS self
 -- @return #number Coalition side of carrier.
 function AIRBOSS:GetCoalition()
@@ -5238,6 +5163,224 @@ end
 -- @return Core.Point#COORDINATE Carrier coordinate.
 function AIRBOSS:GetCoordinate()
   return self.carrier:GetCoordinate()
+end
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- RADIO MESSAGE Functions
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Radio queue item.
+-- @type AIRBOSS.Radioitem
+-- @field #number Tplay Abs time when transmission should be played.
+-- @field #number duration Duration of the transmission in seconds.
+-- @field #number Tstarted Abs time when transmission began to play.
+-- @field #number prio Priority 0-100.
+-- @field #boolean isplaying Currently playing.
+-- @field Core.Beacon#RADIO radio Radio object.
+-- @field #AIRBOSS.SoundFile call
+-- @field #boolean loud Play loud version
+
+--- Check radio queue for transmissions to be broadcasted.
+-- @param #AIRBOSS self
+-- @param #table radioqueue The radio queue.
+function AIRBOSS:_CheckRadioQueue(radioqueue)
+
+  -- Check if queue is empty.
+  if #radioqueue==0 then
+    return
+  end
+
+  -- Get current abs time.
+  local time=timer.getAbsTime()
+  
+  -- Sort results table wrt times they have already been engaged.
+  local function _sort(a, b)
+    return (a.Tplay < b.Tplay) or (a.Tplay==b.Tplay and a.prio < b.prio)
+  end
+  table.sort(radioqueue, _sort)  
+  
+  local playing=false
+  local next=nil  --#AIRBOSS.Radioitem
+  local remove=nil
+  for i,_transmission in ipairs(radioqueue) do
+    local transmission=_transmission  --#AIRBOSS.Radioitem
+    
+    -- Check if transmission time has passed.
+    if time>transmission.Tplay then
+      
+      -- Check if transmission is currently playing.
+      if transmission.isplaying then
+      
+        -- Check if transmission is finished.
+        if time>transmission.Tstarted+transmission.duration then
+          
+          -- Transmission over.
+          transmission.isplaying=false
+          remove=i
+          --table.insert(remove, i)
+          
+        else -- still playing
+        
+          -- Transmission is still playing.
+          playing=true
+          
+        end
+      
+      else -- not playing yet
+      
+        -- Not playing ==> this will be next.
+        if next==nil then
+          next=transmission
+        end
+             
+      end
+      
+    else
+      
+        -- Transmission not due yet.
+      
+    end  
+  end
+  
+  -- Found a new transmission.
+  if next~=nil and not playing then
+    self:RadioTransmit(next.radio, next.call, next.loud)
+    next.isplaying=true
+    next.Tstarted=time
+  end
+  
+  -- Remove completed calls from queue.
+  --for _,idx in pairs(remove) do
+  if remove then
+    table.remove(radioqueue, remove)
+  end
+  --end
+
+end
+
+--- Add Radio transmission to radio queue
+-- @param #AIRBOSS self
+-- @param Core.Radio#RADIO radio sending transmission.
+-- @param #AIRBOSS.RadioSound call Radio sound files and subtitles.
+-- @param #boolean loud If true, play loud sound file version.
+-- @param #number delay Delay in seconds, before the message is broadcasted.
+function AIRBOSS:RadioTransmission(radio, call, loud, delay)
+  self:E({radio=radio, call=call, loud=loud, delay=delay})
+  
+  -- Create a new radio transmission item.
+  local transmission={} --#AIRBOSS.Radioitem
+  
+  transmission.radio=radio
+  transmission.call=call
+  transmission.loud=loud
+  transmission.Tplay=timer.getAbsTime()+delay
+  transmission.prio=50
+  transmission.isplaying=false
+  transmission.Tstarted=nil
+  
+  -- Add transmission to the right queue.
+  if radio:GetAlias()=="LSO" then
+  
+    table.insert(self.RQLSO, transmission)
+  
+  elseif radio:GetAlias()=="AIRBOSS" then
+  
+    table.insert(self.RQMarshal, transmission)
+  
+  end
+end
+
+--- Transmission radio message.
+-- @param #AIRBOSS self
+-- @param Core.Radio#RADIO radio sending transmission.
+-- @param #AIRBOSS.RadioSound call Radio sound files and subtitles.
+-- @param #boolean loud If true, play loud sound file version.
+-- @param #number delay Delay in seconds, before the message is broadcasted.
+function AIRBOSS:RadioTransmit(radio, call, loud, delay)
+  self:E({radio=radio, call=call, loud=loud, delay=delay})  
+
+  if (delay==nil) or (delay and delay==0) then
+
+    local filename
+    if loud then
+      filename=call.louder
+    else
+      filename=call.normal
+    end
+      
+    -- New transmission.
+    radio:NewUnitTransmission(filename, call.subtitle, call.duration, radio.Frequency/1000000, radio.Modulation, false)
+    
+    -- Broadcast message.
+    radio:Broadcast(true)
+    
+    -- "Subtitle".
+    self:MessageToAll(call.subtitle, radio:GetAlias(), "", call.duration)
+    
+  else
+  
+    -- Scheduled transmission.
+    SCHEDULER:New(nil, self.RadioTransmission, {self, radio, call, loud}, delay)
+  end
+end
+
+--- Send text message to player client.
+-- Message format will be "SENDER: RECCEIVER, MESSAGE".
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.PlayerData playerData Player data.
+-- @param #string message The message to send.
+-- @param #string sender The person who sends the message or nil.
+-- @param #string receiver The person who receives the message. Default player's onboard number. Set to "" for no receiver.
+-- @param #number duration Display message duration. Default 10 seconds.
+-- @param #boolean clear If true, clear screen from previous messages.
+-- @param #number delay Delay in seconds, before the message is displayed.
+function AIRBOSS:MessageToPlayer(playerData, message, sender, receiver, duration, clear, delay)
+
+  if playerData and message and message~="" then
+  
+    -- Default duration.
+    duration=duration or 10
+
+    -- Format message.          
+    local text
+    if receiver and receiver=="" then
+      text=string.format("%s", message)      
+    else
+      receiver=receiver or playerData.onboard
+      text=string.format("%s, %s", receiver, message)
+    end
+    self:I(self.lid..text)
+      
+    if delay and delay>0 then
+      SCHEDULER:New(nil, self.MessageToPlayer, {self, playerData, message, sender, receiver, duration, clear}, delay)
+    else
+      if playerData.client then
+        MESSAGE:New(text, duration, sender, clear):ToClient(playerData.client)
+      end
+    end
+    
+  end
+  
+end
+
+--- Send text message to all players in the CCA.
+-- Message format will be "SENDER: RECCEIVER, MESSAGE".
+-- @param #AIRBOSS self
+-- @param #string message The message to send.
+-- @param #string sender The person who sends the message or nil.
+-- @param #string receiver The person who receives the message. Default player's onboard number. Set to "" for no receiver.
+-- @param #number duration Display message duration. Default 10 seconds.
+-- @param #boolean clear If true, clear screen from previous messages.
+-- @param #number delay Delay in seconds, before the message is displayed.
+function AIRBOSS:MessageToAll(message, sender, receiver, duration, clear, delay)
+
+  for _,_player in pairs(self.players) do
+    local player=_player --#AIRBOSS.PlayerData
+    if player.unit:IsInZone(self.zoneCCA) then
+      self:MessageToPlayer(player,message,sender,receiver,duration,clear,delay)
+    end 
+  end
+
 end
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------

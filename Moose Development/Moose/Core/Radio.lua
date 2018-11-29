@@ -348,7 +348,7 @@ end
 -- * If your POSITIONABLE is a UNIT or a GROUP, the Power is ignored.
 -- * If your POSITIONABLE is not a UNIT or a GROUP, the Subtitle, SubtitleDuration are ignored
 -- @param #RADIO self
--- @param #boolean trigger Use trigger.action.radioTransmission() in any case, i.e. also for UNITS and GROUPS.
+-- @param #boolean viatrigger Use trigger.action.radioTransmission() in any case, i.e. also for UNITS and GROUPS.
 -- @return #RADIO self
 function RADIO:Broadcast(viatrigger)
   self:F({viatrigger=viatrigger})
