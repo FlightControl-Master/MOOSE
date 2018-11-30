@@ -465,7 +465,7 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.4.0w"
+AIRBOSS.version="0.4.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -564,13 +564,13 @@ function AIRBOSS:New(carriername, alias)
   self:SetTACAN()
 
   -- Set max aircraft in landing pattern.
-  self:SetMaxLandingPattern(1)
+  self:SetMaxLandingPattern(2)
   
   -- Set holding offset to 0 degrees.
   self:SetHoldingOffsetAngle(30)
 
   -- Default recovery case.
-  self:SetRecoveryCase(3)
+  self:SetRecoveryCase(1)
     
   -- CCA 50 NM radius zone around the carrier.
   self:SetCarrierControlledArea()
@@ -1160,13 +1160,13 @@ function AIRBOSS:_InitStennis()
  
   -- Upwind leg (break entry).
   self.Upwind.name="Upwind"
-  self.Upwind.Xmin=-UTILS.NMToMeters(4)          -- Not more than 4 NM behind the boat. Check for initial is at 3 NM with a radius of ?.
+  self.Upwind.Xmin=-UTILS.NMToMeters(4)          -- Not more than 4 NM behind the boat. Check for initial is at 3 NM with a radius of 500 m and 100 m starboard.
   self.Upwind.Xmax= nil
-  self.Upwind.Zmin=-100                          -- Not more than 100 meters port of boat.
-  self.Upwind.Zmax= UTILS.NMToMeters(1)          -- Not more than 1 NM starboard of boat.
+  self.Upwind.Zmin=-400                          -- Not more than 400 meters port of boat. Otherwise miss the zone.
+  self.Upwind.Zmax= 600                          -- Not more than 600 m starboard of boat. Otherwise miss the zone.
   self.Upwind.LimitXmin=0                        -- Check and next step when at carrier and starboard of carrier.
   self.Upwind.LimitXmax=nil
-  self.Upwind.LimitZmin=0
+  self.Upwind.LimitZmin=-100
   self.Upwind.LimitZmax=nil
 
   -- Early break.
@@ -2357,8 +2357,8 @@ function AIRBOSS:_CheckPlayerStatus()
             
           elseif playerData.step==AIRBOSS.PatternStep.DEBRIEF then
           
-            -- Debriefing in 5 seconds.
-            SCHEDULER:New(nil, self._Debrief, {self, playerData}, 5)
+            -- Debriefing in 10 seconds.
+            SCHEDULER:New(nil, self._Debrief, {self, playerData}, 10)
             
             -- Undefined status.
             playerData.step=AIRBOSS.PatternStep.UNDEFINED
@@ -4672,8 +4672,8 @@ end
 -- @param #AIRBOSS.PlayerData playerData Player data.
 -- @param #number X X distance player to carrier.
 -- @param #number Z Z distance player to carrier.
--- @param #boolean patternwo (Optional) Pattern wave off.
 -- @param #AIRBOSS.Checkpoint posData Checkpoint data.
+-- @param #boolean patternwo (Optional) Pattern wave off.
 function AIRBOSS:_AbortPattern(playerData, X, Z, posData, patternwo)
 
   -- Text where we are wrong.
@@ -4791,7 +4791,7 @@ function AIRBOSS:_DistanceCheck(playerData, optdist)
   end
   
   -- Distance to carrier.
-  local distance=playerData.unit:GetCoodinate():Get2DDistance(self:GetCoordinate())
+  local distance=playerData.unit:GetCoordinate():Get2DDistance(self:GetCoordinate())
 
   -- Get relative score.
   local lowscore, badscore = self:_GetGoodBadScore(playerData)
