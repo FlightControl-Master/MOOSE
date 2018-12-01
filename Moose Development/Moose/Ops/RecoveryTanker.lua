@@ -214,9 +214,10 @@ RECOVERYTANKER.version="0.9.4w"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Seamless change of position update. Get good updated waypoint and update position if tanker position is right!
 -- TODO: Check if TACAN mode "X" is allowed for AA TACAN stations.
 -- TODO: Check if tanker is going back to "Running" state after RTB and respawn.
--- TODO: Is alive check for tanker.
+-- TODO: Is alive check for tanker necessary?
 -- DONE: Write documenation.
 -- DONE: Trace functions self:T instead of self:I for less output.
 -- DONE: Make pattern update parameters (distance, orientation) input parameters.
