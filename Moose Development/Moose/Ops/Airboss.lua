@@ -20,13 +20,14 @@
 -- **PLEASE NOTE** that his class is work in progress and in an **alpha** stage and very much work in progress.
 -- 
 -- At the moment, parameters are optimized for F/A-18C Hornet as aircraft and USS John C. Stennis as carrier.
--- The community mod A-4E is also supported in priciple but needs further tweaking of parameters suche as on speed AoA values.
+-- The community A-4E-C mod is also supported in priciple but needs further tweaking of parameters suche as on speed AoA values.
+-- 
 -- Other aircraft and carriers **might** be possible in future but would need a different set of optimized parameters.
 --
 -- ===
 --
 -- ### Author: **funkyfranky**
--- ### Co-author: **Bankler** (Carrier trainer idea and script)
+-- ### Special Thanks To: **Bankler** (Carrier trainer idea and script)
 --
 -- @module Ops.Airboss
 -- @image MOOSE.JPG
@@ -47,7 +48,6 @@
 -- @field #number ICLSchannel ICLS channel.
 -- @field Core.Radio#RADIO LSOradio Radio for LSO calls.
 -- @field Core.Radio#RADIO Carrierradio Radio for carrier calls.
--- @field #AIRBOSS.RadioCalls radiocall LSO and Airboss call sound files and texts.
 -- @field Core.Scheduler#SCHEDULER radiotimer Radio queue scheduler.
 -- @field Core.Zone#ZONE_UNIT zoneCCA Carrier controlled area (CCA), i.e. a zone of 50 NM radius around the carrier.
 -- @field Core.Zone#ZONE_UNIT zoneCCZ Carrier controlled zone (CCZ), i.e. a zone of 5 NM radius around the carrier.
@@ -132,7 +132,6 @@ AIRBOSS = {
   LSOfreq       = nil,
   Carrierradio  = nil,
   Carrierfreq   = nil,
-  radiocall     =  {},
   radiotimer    = nil,
   zoneCCA       = nil,
   zoneCCZ       = nil,
@@ -258,99 +257,194 @@ AIRBOSS.PatternStep={
 
 --- Radio sound file and subtitle.
 -- @type AIRBOSS.RadioSound
--- @field #string normal Sound file normal.
--- @field #string louder Sound file loud.
+-- @field #string file Sound file name without suffix.
+-- @field #string suffix File suffix/extention, e.g. "ogg".
+-- @field #boolean loud Loud version of sound file available.
 -- @field #string subtitle Subtitle displayed during transmission.
--- @field #number duration Duration in seconds the subtitle is displayed.
+-- @field #number duration Duration of the sound in seconds. This is also the duration the subtitle is displayed.
 
---- LSO and Airboss radio calls.
--- @type AIRBOSS.RadioCalls
+--- LSO radio calls.
+-- @type AIRBOSS.LSOCall
 -- @field #AIRBOSS.RadioSound RIGHTFORLINEUP "Right for line up!" call.
 -- @field #AIRBOSS.RadioSound COMELEFT "Come left!" call.
 -- @field #AIRBOSS.RadioSound HIGH "You're high!" call.
--- @field #AIRBOSS.RadioSound POWER Sound file "Power!" call.
--- @field #AIRBOSS.RadioSound SLOW Sound file "You're slow!" call.
--- @field #AIRBOSS.RadioSound FAST Sound file "You're fast!" call.
--- @field #AIRBOSS.RadioSound CALLTHEBALL Sound file "Call the ball." call.
--- @field #AIRBOSS.RadioSound ROGERBALL "Roger, ball." call.
--- @field #AIRBOSS.RadioSound WAVEOFF "Wave off!" call.
--- @field #AIRBOSS.RadioSound BOLTER "Bolter, bolter!" call.
+-- @field #AIRBOSS.RadioSound POWER "Power!" call.
+-- @field #AIRBOSS.RadioSound CALLTHEBALL "Call the Ball" 
+-- @field #AIRBOSS.RadioSound ROGERBALL "Roger ball" call (actually from pilot).
+-- @field #AIRBOSS.RadioSound WAVEOFF "Wafe off" call
+-- @field #AIRBOSS.RadioSound BOLTER "Bolter, Bolter" call
 -- @field #AIRBOSS.RadioSound LONGINGROOVE "You're long in the groove. Depart and re-enter." call.
-
---- Default radio call sound files.
--- @type AIRBOSS.Soundfile
--- @field #AIRBOSS.RadioSound RIGHTFORLINEUP
--- @field #AIRBOSS.RadioSound COMELEFT
--- @field #AIRBOSS.RadioSound HIGH
--- @field #AIRBOSS.RadioSound POWER
--- @field #AIRBOSS.RadioSound CALLTHEBALL
--- @field #AIRBOSS.RadioSound ROGERBALL
--- @field #AIRBOSS.RadioSound WAVEOFF
--- @field #AIRBOSS.RadioSound BOLTER
--- @field #AIRBOSS.RadioSound LONGINGROOVE
-AIRBOSS.Soundfile={
+-- @field #AIRBOSS.RadioSound N1 "One" call.
+-- @field #AIRBOSS.RadioSound N2 "Two" call.
+-- @field #AIRBOSS.RadioSound N9 "Nine" call.
+AIRBOSS.LSOCall={
   RIGHTFORLINEUP={
-    normal="LSO - RightLineUp(S).ogg",
-    louder="LSO - RightLineUp(L).ogg",
-    subtitle="Right for line up.",
-    duration=1.5,
+    file="LSO-RightForLineup",
+    suffix="ogg",
+    loud=true,
+    subtitle="Right for line up",
+    duration=1.0,
   },
   COMELEFT={
-    normal="LSO - ComeLeft(S).ogg",
-    louder="LSO - ComeLeft(L).ogg",
-    subtitle="Come left.",
-    duration=1,
+    file="LSO-ComeLeft",
+    suffix="ogg",
+    loud=true,
+    subtitle="Come left",
+    duration=0.8,
   },
   HIGH={
-    normal="LSO - High(S).ogg",
-    louder="LSO - High(L).ogg",
-    subtitle="You're high.",
-    duration=1,
+    file="LSO-High",
+    loud=true,
+    subtitle="You're high",
+    duration=0.9,
+  },
+  LOW={
+    file="LSO-Low",
+    loud=true,
+    subtitle="You're low",
+    duration=0.6,
   },
   POWER={
-    normal="LSO - Power(S).ogg",
-    louder="LSO - Power(L).ogg",
-    subtitle="Power.",
-    duration=1,
+    file="LSO-Power",
+    suffix="ogg",    
+    loud=true,
+    subtitle="Power",
+    duration=0.6,
   },
   SLOW={
-    normal="LSO-Slow-Normal.ogg",
-    louder="LSO-Slow-Loud.ogg",
-    subtitle="You're slow.",
-    duration=1,
+    file="LSO-Slow",
+    suffix="ogg",
+    loud=true,
+    subtitle="You're slow",
+    duration=0.9,
   },
   FAST={
-    normal="LSO-Fast-Normal.ogg",
-    louder="LSO-Fast-Loud.ogg",
-    subtitle="You're fast.",
-    duration=1,
+    file="LSO-Fast",
+    suffix="ogg",
+    loud=true,
+    subtitle="You're fast",
+    duration=0.9,
   },
   CALLTHEBALL={
-    normal="LSO - Call the Ball.ogg",
-    louder="LSO - Call the Ball.ogg",
-    subtitle="Call the ball.",
-    duration=3,
+    file="LSO-CallTheBall",
+    suffix="ogg",    
+    louder=false,
+    subtitle="Call the ball",
+    duration=0.7,
   },
   ROGERBALL={
-    normal="LSO - Roger.ogg",
-    subtitle="Roger ball!",
-    duration=1.2,
+    file="LSO-RogerBall",
+    suffix="ogg",    
+    louder=false,    
+    subtitle="Roger ball",
+    duration=0.7,
   },  
   WAVEOFF={
-    normal="LSO - WaveOff.ogg",
-    subtitle="Wave off!",
-    duration=1,
+    file="LSO-WaveOff",
+    suffix="ogg",
+    louder=false,
+    subtitle="Wave off",
+    duration=0.7,
   },  
   BOLTER={
-    normal="LSO - Bolter.ogg",
+    file="LSO-BolterBolter",
+    suffix="ogg",
+    louder=false,
     subtitle="Bolter, Bolter!",
-    duration=1.5,
+    duration=1.0,
   },
   LONGINGROOVE={
-    normal="LSO - Long in Groove.ogg",
-    subtitle="You're long in the groove. Depart and re-enter.",
-    duration=3,
-  }
+    file="LSO-LonInTheGroove",
+    suffix="ogg",
+    louder=false,
+    subtitle="You're long in the groove",
+    duration=1.3,
+  },
+  DEPARTANDREENTER={
+    file="LSO-DepartAndReenter",
+    suffix="ogg",
+    louder=false,
+    subtitle="Depart and re-enter",
+    duration=1.3,
+  },
+  PADDLESCONTACT={
+    file="LSO-PaddlesContact",
+    suffix="ogg",
+    louder=false,
+    subtitle="Paddles, contact",
+    duration=1.0,
+  },
+  N1={
+    file="LSO-N1",
+    suffix="ogg",
+    louder=false,
+    subtitle="",
+    duration=0.3,
+  },
+  N2={
+    file="LSO-N2",
+    suffix="ogg",
+    louder=false,
+    subtitle="",
+    duration=0.3,
+  },
+  N3={
+    file="LSO-N3",
+    suffix="ogg",
+    louder=false,
+    subtitle="",
+    duration=0.4,
+  },
+  N4={
+    file="LSO-N4",
+    suffix="ogg",
+    louder=false,
+    subtitle="",
+    duration=0.4,
+  },
+  N5={
+    file="LSO-N5",
+    suffix="ogg",
+    louder=false,
+    subtitle="",
+    duration=0.4,
+  },
+  N6={
+    file="LSO-N6",
+    suffix="ogg",
+    louder=false,
+    subtitle="",
+    duration=0.6,
+  },
+  N7={
+    file="LSO-N7",
+    suffix="ogg",
+    louder=false,
+    subtitle="",
+    duration=0.6,
+  },
+  N8={
+    file="LSO-N8",
+    suffix="ogg",
+    louder=false,
+    subtitle="",
+    duration=0.4,
+  },
+  N9={
+    file="LSO-N9",
+    suffix="ogg",
+    louder=false,
+    subtitle="",
+    duration=0.5,
+  },
+  N0={
+    file="LSO-N0",
+    suffix="ogg",
+    louder=false,
+    subtitle="",
+    duration=0.4,
+  },
+
 }
 
 --- Difficulty level.
@@ -366,8 +460,8 @@ AIRBOSS.Difficulty={
 
 --- Recovery time.
 -- @type AIRBOSS.Recovery
--- @field #number START Start of recovery.
--- @field #number STOP End of recovery.
+-- @field #number START Start of recovery in seconds of abs time.
+-- @field #number STOP End of recovery in seconds of abs time.
 -- @field #number CASE Recovery case (1-3) of that time slot.
 
 --- Groove position.
@@ -438,7 +532,7 @@ AIRBOSS.GroovePos={
 -- @field #boolean player If true, flight is a human player.
 -- @field #string actype Aircraft type name.
 -- @field #table onboardnumbers Onboard numbers of aircraft in the group.
--- @field #number onboard Onboard number of player or fist unit in group.
+-- @field #string onboard Onboard number of player or first unit in group.
 -- @field #number case Recovery case of flight.
 -- @field #string seclead Name of section lead.
 -- @field #table section Other human flight groups belonging to this flight. This flight is the lead.
@@ -473,7 +567,7 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.4.2"
+AIRBOSS.version="0.4.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -620,11 +714,14 @@ function AIRBOSS:New(carriername, alias)
     self:_GetZoneCorridor(case):SmokeZone(SMOKECOLOR.Green, 45)    
   end
   
-  
+--[[  
   -- Init default sound files.
-  for _name,_sound in pairs(AIRBOSS.Soundfile) do
+  for _name,_sound in pairs(AIRBOSS.LSOCall) do
     local sound=_sound --#AIRBOSS.RadioSound
-    self.radiocall[_name]=sound
+    local text=string.format()
+    sound.subtitle=1
+    sound.louder=1
+    --self.radiocall[_name]=sound
   end
   
   -- Debug:
@@ -632,6 +729,7 @@ function AIRBOSS:New(carriername, alias)
   for _name,_sound in pairs(self.radiocall) do
     self:T{name=_name,sound=_sound}
   end
+]]
   
   -----------------------
   --- FSM Transitions ---
@@ -1071,75 +1169,7 @@ function AIRBOSS:_CheckRecoveryTimes()
   end
   
   -- Debug output.
-  self:I(self.lid..text)  
-
-  --[[
-  
-  -- Check if a recovery time was set.
-  if #self.recoverytime==0 then
-  
-    -- If no recovery times have been specified, we assume any time is okay.
-    self:I("FF Start recovery. No recovery time set!")
-    if not self:IsRecovering() then
-      -- Give command to recover!
-      return true
-    else
-      -- Do nothing.
-      return nil
-    end
-        
-  else
-  
-    -- Selected recovery event if any.
-    local recovery=nil --#AIRBOSS.Recovery
-    
-    for i,_rtime in pairs(self.recoverytime) do
-      local rtime=_rtime --#AIRBOSS.Recovery
-      
-      if abstime>=rtime.START and abstime<=rtime.STOP then
-
-        -- This is a valid time slot. Do not touch recovery again!
-        recovery=rtime
-        
-      elseif abstime>rtime.STOP then
-        -- Stop time has already passed.
-        -- We do not remove the time sind the above #recovery check would fail by automatically setting case 1 always!
-        --table.insert(remove, i)
-      elseif abstime<rtime.START then
-        -- This recovery time is in the future.
-      end
-                
-    end
-
-    --TODO: Remove past recovery times from list? If so, #recovery will fail!
-
-    local recover=false
-    
-    if recovery then
-      -- We are inside a recovery time window.
-      if self:IsRecovering() then
-        -- Do nothing, i.e. keep recovering.
-        recovery=nil
-      elseif self:IsIdle() then
-        self:I(self.lid..string.format("Starting case %d recovery."))
-      end
-    else
-      -- At this point, there is not recovery set.
-      if self:IsRecovering() then
-        -- Stop recovery and switch to idle.
-        self:I(self.lid.."Stopping recovery.")
-        recover=false
-      elseif self:IsIdle() then
-        -- Nothing to do.
-        recover=nil
-      end
-    end
-   
-    return recovery
-  end
-
-  --]]
-  
+  self:I(self.lid..text)
 end
 
 
@@ -1369,31 +1399,32 @@ function AIRBOSS:_GetAircraftAoA(playerData)
   local skyhawk=playerData.actype==AIRBOSS.AircraftCarrier.A4EC
   local harrier=playerData.actype==AIRBOSS.AircraftCarrier.AV8B
   
-  local aoa -- #AIRBOSS.AircraftAoA
+  local aoa={} -- #AIRBOSS.AircraftAoA
   
   if hornet then
+    -- F/A-18C Hornet parameters
     aoa.Slow=9.3
     aoa.OnSpeedMax=8.8
     aoa.OnSpeed=8.1
     aoa.OnSpeedMin=7.4
     aoa.Fast=6.9
   elseif skyhawk then
-    -- TODO: A-4 parameters! On speed AoA?
-    aoa.Slow=9.3
-    aoa.OnSpeedMax=8.8
-    aoa.OnSpeed=8.1
-    aoa.OnSpeedMin=7.4
-    aoa.Fast=6.9
+    -- A-4-E parameters from https://forums.eagle.ru/showpost.php?p=3703467&postcount=390
+    aoa.Slow=18.5
+    aoa.OnSpeedMax=18.0
+    aoa.OnSpeed=17.5
+    aoa.OnSpeedMin=17.0
+    aoa.Fast=16.5
   elseif harrier then
     -- TODO: AV-8B parameters! On speed AoA?
     aoa.Slow=13.0
-    aoa.OnSpeedMax=12
-    aoa.OnSpeed=11
-    aoa.OnSpeedMin=10
+    aoa.OnSpeedMax=12.0
+    aoa.OnSpeed=11.0
+    aoa.OnSpeedMin=10.0
     aoa.Fast=9.0
   end
 
-
+  return aoa
 end
 
 --- Get optimal aircraft flight parameters at checkpoint.
@@ -1680,14 +1711,14 @@ function AIRBOSS:_ScanCarrierZone()
             -- Send AI to marshal stack.
             self:_MarshalAI(knownflight, stack)
             
-            -- Add group to marshal stack queue
+            -- Add group to marshal stack queue.
             self:_AddMarshallGroup(knownflight, stack)
             
           end
         end
       end
     else
-      self:I(self.lid..string.format("New flight group %s of type %s detected inside CCA.", groupname, actype))
+      -- Unknown new flight. Create a new flight group.
       self:_CreateFlightGroup(group)
     end
       
@@ -1902,7 +1933,7 @@ function AIRBOSS:_AddMarshallGroup(flight, stack)
   
   -- Marshal message.
   -- TODO: Get charlie time estimate.
-  local text=string.format("%s, Case %d, BRC is %03d, hold at %d. Expected Charlie Time XX.\n", flight.onboard, flight.case, brc, alt)
+  local text=string.format("Case %d, BRC is %03d, hold at %d. Expected Charlie Time XX.\n", flight.case, brc, alt)
   text=text..string.format("Altimeter %.2f. Report see me.", P)
 
   -- Message to all players.
@@ -2120,7 +2151,7 @@ end
 function AIRBOSS:_CreateFlightGroup(group)
 
   -- Debug info.
-  self:I(self.lid..string.format("Creating new flight for group %s.", group:GetName()))
+  self:I(self.lid..string.format("Creating new flight for group %s of aircraft type %s.", group:GetName(), group:GetTypeName()))
   
   -- New flight.
   local flight={} --#AIRBOSS.Flightitem
@@ -2442,6 +2473,10 @@ function AIRBOSS:_CheckPlayerStatus()
           elseif playerData.step==AIRBOSS.PatternStep.REFUELING then
           
             -- Nothing to do here at the moment.
+            
+          elseif playerData.step==AIRBOSS.PatternStep.SPINNING then
+          
+            -- Might still be better to stay in commencing?
 
           elseif playerData.step==AIRBOSS.PatternStep.HOLDING then
           
@@ -2541,7 +2576,7 @@ function AIRBOSS:_CheckPlayerStatus()
             
           else
           
-            self:E(self.lid..string.format("ERROR: unknown player step %s", tostring(playerData.step)))
+            self:E(self.lid..string.format("ERROR: Unknown player step %s. Please report!", tostring(playerData.step)))
             
           end
           
@@ -2604,6 +2639,9 @@ function AIRBOSS:OnEventBirth(EventData)
     --env.info("FF radiocall LSO long in groove")
     --self:RadioTransmission(self.LSOradio, self.radiocall["LONGINGROOVE"], false, 5)
     --self:RadioTransmission(self.LSOradio, self.radiocall.LONGINGROOVE, false, 20)
+    
+    
+    self:_Number2Sound(self.LSOradio, "129", 10)
     
     if self.Debug then
       --self:_MarkCase23Zones(_unit:GetName())
@@ -3278,7 +3316,7 @@ function AIRBOSS:_CheckForLongDownwind(playerData)
   if X<limit then --and relhead<45 then
     
     -- Sound output.
-    self:RadioTransmission(self.LSOradio, self.radiocall.LONGINGROOVE)
+    self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.LONGINGROOVE)
     
     -- Debrief.
     self:_AddToDebrief(playerData, "Long in the groove - Pattern Wave Off!")
@@ -3323,8 +3361,7 @@ function AIRBOSS:_Abeam(playerData)
     local hintDist, debriefDist=self:_DistanceCheck(playerData, dist) --math.abs(Z)
     
     -- Paddles contact.
-    -- TODO: radio message.
-    self:MessageToPlayer(playerData, "Paddles, contact.", "LSO", "")
+    self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.PADDLESCONTACT)
     
     -- Message to player.
     if playerData.difficulty~=AIRBOSS.Difficulty.HARD then
@@ -3553,7 +3590,7 @@ function AIRBOSS:_Groove(playerData)
   if rho<=RXX and playerData.step==AIRBOSS.PatternStep.GROOVE_XX then
   
     -- LSO "Call the ball" call.
-    self:RadioTransmission(self.LSOradio, self.radiocall.CALLTHEBALL)
+    self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.CALLTHEBALL)
     playerData.Tlso=timer.getTime()
         
     -- Store data.
@@ -3565,7 +3602,7 @@ function AIRBOSS:_Groove(playerData)
   elseif rho<=RRB and playerData.step==AIRBOSS.PatternStep.GROOVE_RB then
 
     -- Pilot: "Roger ball" call.
-    self:RadioTransmission(self.LSOradio, self.radiocall.ROGERBALL)
+    self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.ROGERBALL)
     playerData.Tlso=timer.getTime()+1
     
     -- Store data.
@@ -3607,7 +3644,7 @@ function AIRBOSS:_Groove(playerData)
       if waveoff then
               
         -- LSO Wave off!
-        self:RadioTransmission(self.LSOradio, self.radiocall.WAVEOFF)
+        self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.WAVEOFF)
         playerData.Tlso=timer.getTime()
         
         -- Player was waved off!
@@ -4467,27 +4504,20 @@ function AIRBOSS:_LSOadvice(playerData, glideslopeError, lineupError)
   -- Player group.
   local player=playerData.unit:GetGroup()
   
-  -- Init delay.
-  local delay=0
-  
   -- Glideslope high/low calls.
   local text=""
   if glideslopeError>1 then
     -- "You're high!"
-    self:RadioTransmission(self.LSOradio, self.radiocall.HIGH, true, delay)
-    --delay=delay+1.5
+    self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.HIGH, true)
   elseif glideslopeError>0.5 then
     -- "You're a little high."
-    self:RadioTransmission(self.LSOradio, self.radiocall.HIGH, false, delay)
-    --delay=delay+1.5
+    self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.HIGH, false)
   elseif glideslopeError<-1.0 then
     -- "Power!"
-    self:RadioTransmission(self.LSOradio, self.radiocall.POWER, true, delay)
-    --delay=delay+1.5
+    self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.POWER, true)
   elseif glideslopeError<-0.5 then
     -- "You're a little low."
-    self:RadioTransmission(self.LSOradio, self.radiocall.POWER, false, delay)
-    --delay=delay+1.5
+    self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.POWER, false)
   else
     text="Good altitude."
   end
@@ -4498,20 +4528,16 @@ function AIRBOSS:_LSOadvice(playerData, glideslopeError, lineupError)
   -- Lineup left/right calls.
   if lineupError<-3 then
     -- "Come left!"
-    self:RadioTransmission(self.LSOradio, self.radiocall.COMELEFT, true, delay)
-    --delay=delay+1.5
+    self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.COMELEFT, true)
   elseif lineupError<-1 then
     -- "Come left."
-    self:RadioTransmission(self.LSOradio, self.radiocall.COMELEFT, false, delay)
-    --delay=delay+1.5    
+    self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.COMELEFT, false)    
   elseif lineupError>3 then
     -- "Right for lineup!"
-    self:RadioTransmission(self.LSOradio, self.radiocall.RIGHTFORLINEUP, true, delay)
-   --delay=delay+1.5    
+    self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.RIGHTFORLINEUP, true)    
   elseif lineupError>1 then
     -- "Right for lineup."
-    self:RadioTransmission(self.LSOradio, self.radiocall.RIGHTFORLINEUP, false, delay)
-    --delay=delay+1.5    
+    self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.RIGHTFORLINEUP, false)
   else
     text=text.."Good lineup."
   end
@@ -4527,22 +4553,18 @@ function AIRBOSS:_LSOadvice(playerData, glideslopeError, lineupError)
   -- Rate aoa.
   if aoa>=aircraftaoa.Slow then
     -- "Your're slow!"
-    self:RadioTransmission(self.LSOradio, self.radiocall.SLOW, true, delay)
-    --delay=delay+1.5        
+    self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.SLOW, true)        
   elseif aoa>=aircraftaoa.OnSpeedMax and aoa<aircraftaoa.Slow then
     -- "Your're a little slow."
-    self:RadioTransmission(self.LSOradio, self.radiocall.SLOW, false, delay)
-    --delay=delay+1.5              
+    self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.SLOW, false)              
   elseif aoa>=aircraftaoa.OnSpeedMin and aoa<aircraftaoa.OnSpeedMax then
     text=text.."You're on speed."
   elseif aoa>=aircraftaoa.Fast and aoa<aircraftaoa.OnSpeedMin then
     -- "You're a little fast."
-    self:RadioTransmission(self.LSOradio, self.radiocall.FAST, false, delay)
-    --delay=delay+1.5            
+    self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.FAST, false)
   elseif aoa<aircraftaoa.Fast then
     -- "You're fast!"
-    self:RadioTransmission(self.LSOradio, self.radiocall.FAST, true, delay)
-    --delay=delay+1.5                
+    self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.FAST, true)                
   else
     text=text.."Unknown AoA state."
   end
@@ -5570,12 +5592,22 @@ function AIRBOSS:RadioTransmit(radio, call, loud, delay)
 
   if (delay==nil) or (delay and delay==0) then
 
-    local filename
+    -- Construct file name and subtitle.
+    local filename=call.file
+    local subtitle=call.subtitle
     if loud then
-      filename=call.louder
+      if call.loud then
+        filename=filename.."_Loud"
+      end
+      if subtitle and subtitle~="" then
+        subtitle=subtitle.."!"
+      end
     else
-      filename=call.normal
+      if subtitle and subtitle~="" then
+        subtitle=subtitle.."."
+      end
     end
+    filename=filename.."."..call.suffix
       
     -- New transmission.
     radio:NewUnitTransmission(filename, call.subtitle, call.duration, radio.Frequency/1000000, radio.Modulation, false)
@@ -5583,13 +5615,14 @@ function AIRBOSS:RadioTransmit(radio, call, loud, delay)
     -- Broadcast message.
     radio:Broadcast(true)
     
-    -- "Subtitle".
-    self:MessageToAll(call.subtitle, radio:GetAlias(), "", call.duration)
+    -- Message "Subtitle" to all players.
+    self:MessageToAll(subtitle, radio:GetAlias(), "", call.duration)
     
   else
   
     -- Scheduled transmission.
     SCHEDULER:New(nil, self.RadioTransmission, {self, radio, call, loud}, delay)
+    
   end
 end
 
@@ -5619,6 +5652,11 @@ function AIRBOSS:MessageToPlayer(playerData, message, sender, receiver, duration
       text=string.format("%s, %s", receiver, message)
     end
     self:I(self.lid..text)
+    
+    -- TODO: Test! Need to make this better!.
+    if receiver==playerData.onboard then
+      self:_Number2Sound(self.LSOradio, receiver, delay)
+    end
       
     if delay and delay>0 then
       SCHEDULER:New(nil, self.MessageToPlayer, {self, playerData, message, sender, receiver, duration, clear}, delay)
@@ -5648,6 +5686,69 @@ function AIRBOSS:MessageToAll(message, sender, receiver, duration, clear, delay)
     if player.unit:IsInZone(self.zoneCCA) then
       self:MessageToPlayer(player, message, sender, receiver, duration, clear, delay)
     end 
+  end
+
+end
+
+--- Convert a number (as string) into a radio message.
+-- E.g. for board number or headings.
+-- @param #AIRBOSS self
+-- @param Core.Radio#RADIO radio Radio used for transmission.
+-- @param #string number Number string, e.g. "032" or "183".
+-- @param #number delay Delay before transmission in seconds.
+function AIRBOSS:_Number2Sound(radio, number, delay)
+
+  --- Split string into characters.
+  local function _split(str)
+    local chars={}
+    for i=1,#str do
+      local c=str:sub(i,i)
+      table.insert(chars, c)
+    end
+    return chars
+  end
+  
+  local alias=radio:GetAlias()
+  local sender=""
+  if alias=="LSO" then
+    sender="LSOCall"
+  elseif alias=="MARSHAL" then
+    sender="MarshalCall"
+  elseif alias=="AIRBOSS" then
+    sender="AirbossCall"
+  end
+  
+  -- Split string into characters.
+  local numbers=_split(number)
+  
+  for i=1,#numbers do
+  
+    -- Current number
+    local n=numbers[i]
+    
+    if n=="0" then
+      self:RadioTransmission(radio, AIRBOSS[sender].N0, false, delay)
+    elseif n=="1" then
+      self:RadioTransmission(radio, AIRBOSS[sender].N1, false, delay)
+    elseif n=="2" then
+      self:RadioTransmission(radio, AIRBOSS[sender].N2, false, delay)
+    elseif n=="3" then
+      self:RadioTransmission(radio, AIRBOSS[sender].N3, false, delay)
+    elseif n=="4" then
+      self:RadioTransmission(radio, AIRBOSS[sender].N4, false, delay)
+    elseif n=="5" then
+      self:RadioTransmission(radio, AIRBOSS[sender].N5, false, delay)
+    elseif n=="6" then
+      self:RadioTransmission(radio, AIRBOSS[sender].N6, false, delay)
+    elseif n=="7" then
+      self:RadioTransmission(radio, AIRBOSS[sender].N7, false, delay)    
+    elseif n=="8" then
+      self:RadioTransmission(radio, AIRBOSS[sender].N8, false, delay)    
+    elseif n=="9" then
+      self:RadioTransmission(radio, AIRBOSS[sender].N9, false, delay)
+    else
+      self:E(self.lid..string.format("ERROR: Unknown number %s", tostring(n)))
+    end
   end
 
 end
@@ -6539,25 +6640,25 @@ function AIRBOSS:_MarkCase23Zones(_unitName, flare)
       else
 
         -- Case I/II: Initial      
-        if case==1 or case==2  or self.Debug then
+        if case==1 or case==2  then
           text=text.."* initial with WHITE smoke\n"
           self.zoneInitial:SmokeZone(SMOKECOLOR.White, 45)
         end
         
         -- Case II/III: Approach Corridor
-        if case==2 or case==3 or self.Debug then
+        if case==2 or case==3 then
           text=text.."* approach corridor with GREEN smoke\n"
           self:_GetZoneCorridor(case):SmokeZone(SMOKECOLOR.Green, 45)
         end
 
         -- Case II/III: platform
-        if case==2 or case==3 or self.Debug then
+        if case==2 or case==3 then
           text=text.."* platform with RED smoke\n"
           self:_GetZonePlatform(case):SmokeZone(SMOKECOLOR.Red, 45)
         end
 
         -- Case II/III: arc in/out if offset>0.
-        if case==2 or case==3 or self.Debug then
+        if case==2 or case==3 then
           if math.abs(self.holdingoffset)>0 then
             self:_GetZoneArcIn(case):SmokeZone(SMOKECOLOR.Red, 45)
             text=text.."* arc turn in with YELLOW flares\n"
@@ -6567,13 +6668,13 @@ function AIRBOSS:_MarkCase23Zones(_unitName, flare)
         end
 
         -- Case III: dirty up
-        if case==3 or self.Debug then
+        if case==3 then
           text=text.."* dirty up with ORANGE flares\n"
           self:_GetZoneDirtyUp(case):SmokeZone(SMOKECOLOR.Orange, 45)
         end
 
         -- Case III: dirty up
-        if case==3 or self.Debug then                
+        if case==3 then                
           text=text.."* bullseye with BLUE smoke\n"
           self:_GetZoneBullseye(case):SmokeZone(SMOKECOLOR.Blue, 45)
         end
