@@ -374,6 +374,13 @@ AIRBOSS.LSOCall={
     subtitle="Paddles, contact",
     duration=1.0,
   },
+  RADIOCHECK={
+    file="LSO-RadioCheck",
+    suffix="ogg",
+    louder=false,
+    subtitle="Paddles, radio check",
+    duration=1.0,
+  },
   N1={
     file="LSO-N1",
     suffix="ogg",
@@ -4963,15 +4970,29 @@ function AIRBOSS:_AltitudeCheck(playerData, altopt)
   -- Altitude error +-X%
   local _error=(altitude-altopt)/altopt*100
   
+  local radiocall={} --#AIRBOSS.RadioSound
+ 
   local hint
   if _error>badscore then
     hint=string.format("You're high.")
+    radiocall=AIRBOSS.LSOCall.HIGH
+    radiocall.loud=true
+    radiocall.subtitle=""
   elseif _error>lowscore then
     hint= string.format("You're slightly high.")
+    radiocall=AIRBOSS.LSOCall.HIGH
+    radiocall.loud=false
+    radiocall.subtitle=""
   elseif _error<-badscore then
     hint=string.format("You're low. ")
+    radiocall=AIRBOSS.LSOCall.LOW
+    radiocall.loud=true
+    radiocall.subtitle=""
   elseif _error<-lowscore then
     hint=string.format("You're slightly low.")
+    radiocall=AIRBOSS.LSOCall.LOW
+    radiocall.loud=false
+    radiocall.subtitle=""
   else
     hint=string.format("Good altitude. ")
   end
@@ -4991,7 +5012,7 @@ function AIRBOSS:_AltitudeCheck(playerData, altopt)
   return hint, debrief
 end
 
---- Evaluate player's altitude at checkpoint.
+--- Evaluate player's distance to the boat at checkpoint.
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data table.
 -- @param #number optdist Optimal distance in meters.
@@ -5831,8 +5852,9 @@ function AIRBOSS:_AddF10Commands(_unitName)
         missionCommands.addCommandForGroup(_gid, "Request Marshal?",    _rootPath, self._RequestMarshal,   self, _unitName)
         missionCommands.addCommandForGroup(_gid, "Commencing!",         _rootPath, self._RequestCommence,  self, _unitName)
         missionCommands.addCommandForGroup(_gid, "Request Refueling?",  _rootPath, self._RequestRefueling, self, _unitName)
-        missionCommands.addCommandForGroup(_gid, "Set Section!",        _rootPath, self._SetSection,       self, _unitName)        
-        
+        missionCommands.addCommandForGroup(_gid, "Set Section!",        _rootPath, self._SetSection,       self, _unitName) 
+        missionCommands.addCommandForGroup(_gid, "Radio Check LSO",     _rootPath, self._LSORadioCheck,    self, _unitName)
+        missionCommands.addCommandForGroup(_gid, "Radio Check Marshal", _rootPath, self._MarshalRadioCheck,self, _unitName)
       end
     else
       self:T(self.lid.."Could not find group or group ID in AddF10Menu() function. Unit name: ".._unitName)
@@ -5877,6 +5899,45 @@ function AIRBOSS:_ResetPlayerStatus(_unitName)
       -- Initialize player data.
       self:_InitPlayer(playerData)
         
+    end
+  end
+end
+
+--- LSO radio check. Will broadcase LSO message at given LSO frequency.
+-- @param #AIRBOSS self
+-- @param #string _unitName Name fo the player unit.
+function AIRBOSS:_LSORadioCheck(_unitName)
+  self:F(_unitName)
+  
+  -- Get player unit and name.
+  local _unit, _playername = self:_GetPlayerUnitAndName(_unitName)
+    
+  -- Check if we have a unit which is a player.
+  if _unit and _playername then
+    local playerData=self.players[_playername] --#AIRBOSS.PlayerData        
+    if playerData then    
+      -- Broadcase LSO radio check message on LSO radio.
+      self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.RADIOCHECK)
+    end
+  end
+end
+
+--- Marshal radio check. Will broadcase Marshal message at given Marshal frequency.
+-- @param #AIRBOSS self
+-- @param #string _unitName Name fo the player unit.
+function AIRBOSS:_MarshalRadioCheck(_unitName)
+  self:F(_unitName)
+  
+  -- Get player unit and name.
+  local _unit, _playername = self:_GetPlayerUnitAndName(_unitName)
+    
+  -- Check if we have a unit which is a player.
+  if _unit and _playername then
+    local playerData=self.players[_playername] --#AIRBOSS.PlayerData        
+    if playerData then    
+      -- Broadcase LSO radio check message on LSO radio.
+      -- TODO: Replace LSO message by marshal message.
+      self:RadioTransmission(self.Carrierradio, AIRBOSS.LSOCall.RADIOCHECK)
     end
   end
 end
