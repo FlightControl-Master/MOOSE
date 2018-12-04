@@ -46,6 +46,7 @@
 -- @field #boolean uncontrolledac If true, use and uncontrolled tanker group already present in the mission.
 -- @field DCS#Vec3 orientation Orientation of the carrier. Used to monitor changes and update the pattern if heading changes significantly.
 -- @field Core.Point#COORDINATE position Positon of carrier. Used to monitor if carrier significantly changed its position and then update the tanker pattern.
+-- @field Core.Zone#ZONE_UNIT zoneUpdate Moving zone relative to carrier. Each time the tanker is in this zone, its pattern is updated.
 -- @extends Core.Fsm#FSM
 
 --- Recovery Tanker.
@@ -204,11 +205,12 @@ RECOVERYTANKER = {
   uncontrolledac  = nil,
   orientation     = nil,
   position        = nil,
+  zoneUpdate      = nil,
 }
 
 --- Class version.
 -- @field #string version
-RECOVERYTANKER.version="0.9.4w"
+RECOVERYTANKER.version="0.9.5w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -268,6 +270,9 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   self:SetPatternUpdateDistance()
   self:SetPatternUpdateHeading()
   self:SetPatternUpdateInterval()
+  
+  -- Moving zone: Zone 1 NM astern the carrier with radius of 1.0 km.
+  self.zoneUpdate=ZONE_UNIT:New("Pattern Update Zone", self.carrier, 1*1000, {dx=-UTILS.NMToMeters(1), dy=0, relative_to_unit=true})
 
   -----------------------
   --- FSM Transitions ---
@@ -707,6 +712,15 @@ function RECOVERYTANKER:onafterStatus(From, Event, To)
   local text=string.format("Recovery tanker %s: state=%s fuel=%.1f", self.tanker:GetName(), self:GetState(), fuel)
   self:T(text)
   
+  -- Check if tanker flies through pattern update zone.
+  -- TODO: Check if this can be used to update the pattern without too much disruption.
+  --       Could be a problem when carrier changes course since the tanker might not fligh through the zone any more.
+  local inupdatezone=self.tanker:GetUnit(1):IsInZone(self.zoneUpdate)
+  if inupdatezone then
+    local clock=UTILS.SecondsToClock(timer.getAbsTime())
+    self:I(string.format("Recovery tanker is in pattern update zone! Time=%s", clock))
+  end
+  
   -- Check if tanker is running and not RTBing or refueling.
   if self:IsRunning() then
   
@@ -763,9 +777,9 @@ function RECOVERYTANKER:onafterStatus(From, Event, To)
     
   end
   
-  -- Call status again in 1 minute.
+  -- Call status again in 30 seconds.
   if not self:IsStopped() then
-    self:__Status(-60)
+    self:__Status(-30)
   end
 end
 
@@ -910,10 +924,10 @@ function RECOVERYTANKER:_RefuelingStart(EventData)
   if EventData and EventData.IniUnit and EventData.IniUnit:IsAlive() then
   
     -- Unit receiving fuel.
-    local unit=EventData.IniUnit
+    local receiver=EventData.IniUnit
     
     -- Get distance to tanker to check that unit is receiving fuel from this tanker.
-    local dist=unit:GetCoordinate():Get2DDistance(self.tanker:GetCoordinate())
+    local dist=receiver:GetCoordinate():Get2DDistance(self.tanker:GetCoordinate())
     
     -- If distance > 100 meters, this should be another tanker.
     if dist>100 then
@@ -921,7 +935,7 @@ function RECOVERYTANKER:_RefuelingStart(EventData)
     end
   
     -- Info message.
-    self:T(string.format("Recovery tanker %s started refueling unit %s", self.tanker:GetName(), unit:GetName()))
+    self:T(string.format("Recovery tanker %s started refueling unit %s", self.tanker:GetName(), receiver:GetName()))
     
     -- FMS state "Refueling".
     self:RefuelStart(receiver)
@@ -938,10 +952,10 @@ function RECOVERYTANKER:_RefuelingStop(EventData)
   if EventData and EventData.IniUnit and EventData.IniUnit:IsAlive() then
   
     -- Unit receiving fuel.
-    local unit=EventData.IniUnit
+    local receiver=EventData.IniUnit
     
     -- Get distance to tanker to check that unit is receiving fuel from this tanker.
-    local dist=unit:GetCoordinate():Get2DDistance(self.tanker:GetCoordinate())
+    local dist=receiver:GetCoordinate():Get2DDistance(self.tanker:GetCoordinate())
     
     -- If distance > 100 meters, this should be another tanker.
     if dist>100 then
@@ -949,10 +963,10 @@ function RECOVERYTANKER:_RefuelingStop(EventData)
     end
   
     -- Info message.
-    self:T(string.format("Recovery tanker %s stopped refueling unit %s", self.tanker:GetName(), unit:GetName()))
+    self:T(string.format("Recovery tanker %s stopped refueling unit %s", self.tanker:GetName(), receiver:GetName()))
     
     -- FSM state "Running".
-    self:RefuelStop(unit)
+    self:RefuelStop(receiver)
   end
 
 end
@@ -1114,6 +1128,52 @@ function RECOVERYTANKER:_ActivateTACAN(delay)
     
   end
 
+end
+
+--- Calculate distances between carrier and tanker.
+-- @param #AIRBOSS self 
+-- @return #number Distance [m] in the direction of the orientation of the carrier.
+-- @return #number Distance [m] perpendicular to the orientation of the carrier.
+-- @return #number Distance [m] to the carrier.
+-- @return #number Angle [Deg] from carrier to plane. Phi=0 if the plane is directly behind the carrier, phi=90 if the plane is starboard, phi=180 if the plane is in front of the carrier.
+function RECOVERYTANKER:_GetDistances()
+
+  -- Vector to carrier
+  local a=self.carrier:GetVec3()
+  
+  -- Vector to player
+  local b=self.tanker:GetVec3()
+  
+  -- Vector from carrier to player.
+  local c={x=b.x-a.x, y=0, z=b.z-a.z}
+  
+  -- Orientation of carrier.
+  local x=self.carrier:GetOrientationX()
+  
+  -- Projection of player pos on x component.
+  local dx=UTILS.VecDot(x,c)
+  
+  -- Orientation of carrier.
+  local z=self.carrier:GetOrientationZ()
+  
+  -- Projection of player pos on z component.  
+  local dz=UTILS.VecDot(z,c)
+  
+  -- Polar coordinates
+  local rho=math.sqrt(dx*dx+dz*dz)
+  local phi=math.deg(math.atan2(dz,dx))
+  if phi<0 then
+    phi=phi+360
+  end
+  
+  -- phi=0 if the plane is directly behind the carrier, phi=180 if the plane is in front of the carrier
+  phi=phi-180
+
+  if phi<0 then
+    phi=phi+360
+  end
+  
+  return dx,dz,rho,phi
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

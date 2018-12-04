@@ -10,8 +10,8 @@
 --    * Different skill levels from on-the-fly tips for flight students to ziplip for pros.
 --    * Define recovery time windows with individual recovery cases.
 --    * Automatic TACAN and ICLS channel setting of carrier.
---    * Separate radio channels for LSO and Marshal/Airboss transmissions.
---    * Voice over support for LSO, Marshal and Airboss radio transmissions.
+--    * Separate radio channels for LSO and Marshal transmissions.
+--    * Voice over support for LSO and Marshal and Airboss radio transmissions.
 --    * F10 radio menu including carrier info (weather, radio frequencies, TACAN/ICLS channels), player LSO grades, help function (player aircraft attitude, marking of pattern zones etc).
 --    * Recovery tanker and refueling option via integration of @{#Ops.RecoveryTanker} class.
 --    * Rescue helo option via  @{#Ops.RescueHelo} class.
@@ -20,7 +20,7 @@
 -- **PLEASE NOTE** that his class is work in progress and in an **alpha** stage and very much work in progress.
 -- 
 -- At the moment, parameters are optimized for F/A-18C Hornet as aircraft and USS John C. Stennis as carrier.
--- The community A-4E-C mod is also supported in priciple but needs further tweaking of parameters suche as on speed AoA values.
+-- The community A-4E mod is also supported in priciple but maybe needs further tweaking of parameters such as on speed AoA values.
 -- 
 -- Other aircraft and carriers **might** be possible in future but would need a different set of optimized parameters.
 --
@@ -43,11 +43,19 @@
 -- @field #string alias Alias of the carrier.
 -- @field Wrapper.Airbase#AIRBASE airbase Carrier airbase object.
 -- @field Core.Radio#BEACON beacon Carrier beacon for TACAN and ICLS.
+-- @field #boolean TACANon Automatic TACAN is activated.
 -- @field #number TACANchannel TACAN channel.
 -- @field #string TACANmode TACAN mode, i.e. "X" or "Y".
+-- @field #string TACANmorse TACAN morse code, e.g. "STN".
+-- @field #boolean ICLSon Automatic ICLS is activated.
 -- @field #number ICLSchannel ICLS channel.
+-- @field #string ICLSmorse ICLS morse code, e.g. "STN".
 -- @field Core.Radio#RADIO LSOradio Radio for LSO calls.
+-- @field #number LSOfreq LSO radio frequency in MHz.
+-- @field #string LSOmodulation LSO radio modulation "AM" or "FM".
 -- @field Core.Radio#RADIO Carrierradio Radio for carrier calls.
+-- @field #number Carrierfreq Marshal radio frequency in MHz.
+-- @field #string Carriermodulation Marshal radio modulation "AM" or "FM".
 -- @field Core.Scheduler#SCHEDULER radiotimer Radio queue scheduler.
 -- @field Core.Zone#ZONE_UNIT zoneCCA Carrier controlled area (CCA), i.e. a zone of 50 NM radius around the carrier.
 -- @field Core.Zone#ZONE_UNIT zoneCCZ Carrier controlled zone (CCZ), i.e. a zone of 5 NM radius around the carrier.
@@ -125,13 +133,19 @@ AIRBOSS = {
   alias         = nil,
   airbase       = nil,
   beacon        = nil,
+  TACANon       = nil,
   TACANchannel  = nil,
   TACANmode     = nil,
+  TACANmorse    = nil,
+  ICLSon        = nil,
   ICLSchannel   = nil,
+  ICLSmorse     = nil,
   LSOradio      = nil,
   LSOfreq       = nil,
+  LSOmodulation = nil,
   Carrierradio  = nil,
   Carrierfreq   = nil,
+  Carriermodulation = nil,
   radiotimer    = nil,
   zoneCCA       = nil,
   zoneCCZ       = nil,
@@ -265,18 +279,30 @@ AIRBOSS.PatternStep={
 
 --- LSO radio calls.
 -- @type AIRBOSS.LSOCall
--- @field #AIRBOSS.RadioSound RIGHTFORLINEUP "Right for line up!" call.
--- @field #AIRBOSS.RadioSound COMELEFT "Come left!" call.
--- @field #AIRBOSS.RadioSound HIGH "You're high!" call.
--- @field #AIRBOSS.RadioSound POWER "Power!" call.
+-- @field #AIRBOSS.RadioSound RIGHTFORLINEUP "Right for line up" call.
+-- @field #AIRBOSS.RadioSound COMELEFT "Come left" call.
+-- @field #AIRBOSS.RadioSound HIGH "You're high" call.
+-- @field #AIRBOSS.RadioSound LOW "You're low" call.
+-- @field #AIRBOSS.RadioSound POWER "Power" call.
+-- @field #AIRBOSS.RadioSound FAST "You're fast" call.
+-- @field #AIRBOSS.RadioSound SLOW "You're slow" call.
+-- @field #AIRBOSS.RadioSound PADDLESCONTACT "Paddles, contact" call.
 -- @field #AIRBOSS.RadioSound CALLTHEBALL "Call the Ball" 
 -- @field #AIRBOSS.RadioSound ROGERBALL "Roger ball" call (actually from pilot).
 -- @field #AIRBOSS.RadioSound WAVEOFF "Wafe off" call
 -- @field #AIRBOSS.RadioSound BOLTER "Bolter, Bolter" call
 -- @field #AIRBOSS.RadioSound LONGINGROOVE "You're long in the groove. Depart and re-enter." call.
+-- @field #AIRBOSS.RadioSound DEPARTANDREENTER "Depart and re-enter" call.
 -- @field #AIRBOSS.RadioSound N1 "One" call.
 -- @field #AIRBOSS.RadioSound N2 "Two" call.
+-- @field #AIRBOSS.RadioSound N3 "Three" call.
+-- @field #AIRBOSS.RadioSound N4 "Four" call.
+-- @field #AIRBOSS.RadioSound N5 "Five" call.
+-- @field #AIRBOSS.RadioSound N6 "Six" call.
+-- @field #AIRBOSS.RadioSound N7 "Seven" call.
+-- @field #AIRBOSS.RadioSound N8 "Eight" call.
 -- @field #AIRBOSS.RadioSound N9 "Nine" call.
+-- @field #AIRBOSS.RadioSound N0 "Zero" call.
 AIRBOSS.LSOCall={
   RIGHTFORLINEUP={
     file="LSO-RightForLineup",
@@ -444,7 +470,91 @@ AIRBOSS.LSOCall={
     subtitle="",
     duration=0.4,
   },
+}
 
+--- Marshal radio calls.
+-- @type AIRBOSS.MarshalCall
+-- @field #AIRBOSS.RadioSound N1 "One" call.
+-- @field #AIRBOSS.RadioSound N2 "Two" call.
+-- @field #AIRBOSS.RadioSound N3 "Three" call.
+-- @field #AIRBOSS.RadioSound N4 "Four" call.
+-- @field #AIRBOSS.RadioSound N5 "Five" call.
+-- @field #AIRBOSS.RadioSound N6 "Six" call.
+-- @field #AIRBOSS.RadioSound N7 "Seven" call.
+-- @field #AIRBOSS.RadioSound N8 "Eight" call.
+-- @field #AIRBOSS.RadioSound N9 "Nine" call.
+-- @field #AIRBOSS.RadioSound N0 "Zero" call.
+AIRBOSS.MarshalCall={
+  N1={
+    file="LSO-N1",
+    suffix="ogg",
+    louder=false,
+    subtitle="",
+    duration=0.3,
+  },
+  N2={
+    file="LSO-N2",
+    suffix="ogg",
+    louder=false,
+    subtitle="",
+    duration=0.3,
+  },
+  N3={
+    file="LSO-N3",
+    suffix="ogg",
+    louder=false,
+    subtitle="",
+    duration=0.4,
+  },
+  N4={
+    file="LSO-N4",
+    suffix="ogg",
+    louder=false,
+    subtitle="",
+    duration=0.4,
+  },
+  N5={
+    file="LSO-N5",
+    suffix="ogg",
+    louder=false,
+    subtitle="",
+    duration=0.4,
+  },
+  N6={
+    file="LSO-N6",
+    suffix="ogg",
+    louder=false,
+    subtitle="",
+    duration=0.6,
+  },
+  N7={
+    file="LSO-N7",
+    suffix="ogg",
+    louder=false,
+    subtitle="",
+    duration=0.6,
+  },
+  N8={
+    file="LSO-N8",
+    suffix="ogg",
+    louder=false,
+    subtitle="",
+    duration=0.4,
+  },
+  N9={
+    file="LSO-N9",
+    suffix="ogg",
+    louder=false,
+    subtitle="",
+    duration=0.5,
+  },
+  N0={
+    file="LSO-N0",
+    suffix="ogg",
+    louder=false,
+    subtitle="",
+    duration=0.4,
+  },
 }
 
 --- Difficulty level.
@@ -567,7 +677,7 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.4.3"
+AIRBOSS.version="0.4.3w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -905,6 +1015,12 @@ function AIRBOSS:AddRecoveryTime(starttime, stoptime, case)
   return self
 end
 
+--- Disable automatic TACAN activation
+-- @param #AIRBOSS self
+-- @return #AIRBOSS self
+function AIRBOSS:SetTACANoff()
+  self.TACANon=false
+end
 
 --- Set TACAN channel of carrier.
 -- @param #AIRBOSS self
@@ -912,21 +1028,33 @@ end
 -- @param #string mode TACAN mode, i.e. "X" or "Y". Default "X".
 -- @param #string morsecode Morse code identifier. Three letters, e.g. "STN".
 -- @return #AIRBOSS self
-function AIRBOSS:SetTACAN(channel, mode, moresecode)
+function AIRBOSS:SetTACAN(channel, mode, morsecode)
 
   self.TACANchannel=channel or 74
   self.TACANmode=mode or "X"
-
+  self.TACANmorse=morsecode or "STN"
+  self.TACANon=true
+  
   return self
+end
+
+--- Disable automatic ICLS activation.
+-- @param #AIRBOSS self
+-- @return #AIRBOSS self
+function AIRBOSS:SetICLSoff()
+  self.ICLSon=false
 end
 
 --- Set ICLS channel of carrier.
 -- @param #AIRBOSS self
 -- @param #number channel ICLS channel. Default 1.
+-- @param #string morsecode Morse code identifier. Three letters, e.g. "STN".
 -- @return #AIRBOSS self
-function AIRBOSS:SetICLS(channel)
+function AIRBOSS:SetICLS(channel, morsecode)
 
   self.ICLSchannel=channel or 1
+  self.ICLSmorse=morsecode or "STN"
+  self.ICLSon=true
 
   return self
 end
@@ -1036,13 +1164,13 @@ function AIRBOSS:onafterStart(From, Event, To)
   self:I(self.lid..string.format("Theatre = %s", tostring(theatre)))
   
   -- Activate TACAN.
-  if self.TACANchannel~=nil and self.TACANmode~=nil then
-    self.beacon:ActivateTACAN(self.TACANchannel, self.TACANmode, "STN", true)
+  if self.TACANon then
+    self.beacon:ActivateTACAN(self.TACANchannel, self.TACANmode, self.TACANmorse, true)
   end
   
   -- Activate ICLS.
-  if self.ICLSchannel then
-    self.beacon:ActivateICLS(self.ICLSchannel, "STN")
+  if self.ICLSon then
+    self.beacon:ActivateICLS(self.ICLSchannel, self.ICLSmorse)
   end
     
   -- Handle events.
@@ -1399,6 +1527,7 @@ function AIRBOSS:_GetAircraftAoA(playerData)
   local skyhawk=playerData.actype==AIRBOSS.AircraftCarrier.A4EC
   local harrier=playerData.actype==AIRBOSS.AircraftCarrier.AV8B
   
+  -- Table with AoA values.
   local aoa={} -- #AIRBOSS.AircraftAoA
   
   if hornet then
@@ -1761,11 +1890,16 @@ function AIRBOSS:_MarshalPlayer(playerData)
     
     -- Set step to holding.
     playerData.step=AIRBOSS.PatternStep.HOLDING
+    playerData.warning=nil
+    
+    -- Holding switch to nil until player arrives in the holding zone.
+    playerData.holding=nil
     
     -- Set same stack for all flights in section.
     for _,_flight in pairs(playerData.section) do
       local flight=_flight --#AIRBOSS.PlayerData
       flight.step=AIRBOSS.PatternStep.HOLDING
+      flight.holding=nil
       flight.flag:Set(mystack)
     end
     
@@ -1963,7 +2097,7 @@ function AIRBOSS:_CheckCollapseMarshalStack(flight)
  
   -- TODO: Message to all players!
   MESSAGE:New(text, 15, "MARSHAL"):ToAll()
-  --self:MessageToAll(text, "MARSHAL", flight)
+  self:MessageToAll(text, "MARSHAL", flight)
   
   -- Hint for human players.
   if not flight.ai then
@@ -2827,7 +2961,7 @@ function AIRBOSS:_Holding(playerData)
   local stack=playerData.flag:Get()
   
   -- Pattern alitude.
-  local patternalt, c1, c2=self:_GetMarshalAltitude(stack)
+  local patternalt, c1, c2=self:_GetMarshalAltitude(stack, playerData.case)
   
   -- Player altitude.
   local playeralt=unit:GetAltitude()
@@ -2912,13 +3046,13 @@ function AIRBOSS:_Commencing(playerData)
   self:_InitPlayer(playerData)
     
   -- Commence
-  local text=string.format("Commencing. (Case %d)", self.case)
+  local text=string.format("Commencing. (Case %d)", playerData.case)
   
   -- Message to all players.
   self:MessageToAll(text, playerData.onboard, "", 5)
   
   -- Next step: depends on case recovery.
-  if self.case==1 then
+  if playerData.case==1 then
     -- CASE I: Player has to fly to the initial which is 3 NM DME astern of the boat.
     playerData.step=AIRBOSS.PatternStep.INITIAL
   else
@@ -2936,8 +3070,8 @@ function AIRBOSS:_Initial(playerData)
   if playerData.unit:IsInZone(self.zoneInitial) then
   
     -- Inform player.
-    local hint=string.format("Entering the pattern.")
-    if playerData.difficulty==AIRBOSS.Difficulty.EASY then
+    local hint=string.format("Initial")
+    if playerData.difficulty==AIRBOSS.Difficulty.EASY then      
       hint=hint.."\nAim for 800 feet and 350 kts at the break entry."
     end
     
@@ -2966,6 +3100,12 @@ function AIRBOSS:_Platform(playerData)
     self:MessageToPlayer(playerData, "You left the valid approach corridor!", "AIRBOSS")
     playerData.warning=true  
   end
+  
+  -- Back in zone.
+  if not invalid and playerData.warning then
+    self:MessageToPlayer(playerData, "You're back in the approach corridor. Now stay there!", "AIRBOSS")
+    playerData.warning=false
+  end  
     
   -- Check if we are inside the moving zone.
   local inzone=playerData.unit:IsInZone(self:_GetZonePlatform(playerData.case))
@@ -3027,9 +3167,8 @@ function AIRBOSS:_ArcInTurn(playerData)
   end
   
   -- Back in zone.
-  -- TODO: add this to the other checkpoints!
   if not invalid and playerData.warning then
-    self:MessageToPlayer(playerData, "You are back in the approach corridor. Now stay there!", "AIRBOSS")
+    self:MessageToPlayer(playerData, "You're back in the approach corridor. Now stay there!", "AIRBOSS")
     playerData.warning=false
   end
   
@@ -3054,8 +3193,7 @@ function AIRBOSS:_ArcInTurn(playerData)
     end
         
     -- Next step: Arc Out Turn.
-    playerData.step=AIRBOSS.PatternStep.ARCOUT
-    
+    playerData.step=AIRBOSS.PatternStep.ARCOUT   
     playerData.warning=nil
   end
 end
@@ -3076,6 +3214,13 @@ function AIRBOSS:_ArcOutTurn(playerData)
     self:MessageToPlayer(playerData, "You left the valid approach corridor!", "AIRBOSS")
     playerData.warning=true
   end
+
+  -- Back in zone.
+  if not invalid and playerData.warning then
+    self:MessageToPlayer(playerData, "You're back in the approach corridor. Now stay there!", "AIRBOSS")
+    playerData.warning=false
+  end
+
   
   -- Check if we are inside the moving zone.
   local inzone=playerData.unit:IsInZone(self:_GetZoneArcOut(playerData.case))
@@ -3129,6 +3274,13 @@ function AIRBOSS:_DirtyUp(playerData)
     self:MessageToPlayer(playerData, "You left the valid approach corridor!", "AIRBOSS")
     playerData.warning=true
   end
+
+  -- Back in zone.
+  if not invalid and playerData.warning then
+    self:MessageToPlayer(playerData, "You're back in the approach corridor. Now stay there!", "AIRBOSS")
+    playerData.warning=false
+  end
+
   
   -- Check if we are inside the moving zone.
   local inzone=playerData.unit:IsInZone(self:_GetZoneDirtyUp(playerData.case))  
@@ -3156,8 +3308,7 @@ function AIRBOSS:_DirtyUp(playerData)
     end
         
     -- Next step: CASE III: Intercept glide slope and follow bullseye (ICLS).
-    playerData.step=AIRBOSS.PatternStep.BULLSEYE
-    
+    playerData.step=AIRBOSS.PatternStep.BULLSEYE    
     playerData.warning=nil
   end
 end
@@ -3178,6 +3329,13 @@ function AIRBOSS:_Bullseye(playerData)
     self:MessageToPlayer(playerData, "You left the valid approach corridor!", "AIRBOSS")
     playerData.warning=true  
   end
+  
+  -- Back in zone.
+  if not invalid and playerData.warning then
+    self:MessageToPlayer(playerData, "You're back in the approach corridor. Now stay there!", "AIRBOSS")
+    playerData.warning=false
+  end
+
 
   -- Check if we are inside the moving zone.
   local inzone=playerData.unit:IsInZone(self:_GetZoneBullseye(playerData.case))
@@ -3205,8 +3363,7 @@ function AIRBOSS:_Bullseye(playerData)
     end
     
     -- Next step: Groove Call the ball.
-    playerData.step=AIRBOSS.PatternStep.GROOVE_XX
-    
+    playerData.step=AIRBOSS.PatternStep.GROOVE_XX  
     playerData.warning=nil
   end
 end
@@ -3249,6 +3406,7 @@ function AIRBOSS:_Upwind(playerData)
     
     -- Next step: Early Break.
     playerData.step=AIRBOSS.PatternStep.EARLYBREAK
+    playerData.warning=nil
   end
 end
 
@@ -3298,6 +3456,7 @@ function AIRBOSS:_Break(playerData, part)
     else
       playerData.step=AIRBOSS.PatternStep.ABEAM
     end
+    playerData.warning=nil
   end
 end
 
@@ -3327,6 +3486,7 @@ function AIRBOSS:_CheckForLongDownwind(playerData)
     
     -- Next step: Debriefing.
     playerData.step=AIRBOSS.PatternStep.DEBRIEF
+    playerData.warning=nil
   end
   
 end
@@ -3377,6 +3537,7 @@ function AIRBOSS:_Abeam(playerData)
     
     -- Next step: ninety.
     playerData.step=AIRBOSS.PatternStep.NINETY
+    playerData.warning=nil
   end
 end
 
@@ -3423,6 +3584,7 @@ function AIRBOSS:_Ninety(playerData)
     
     -- Next step: wake.
     playerData.step=AIRBOSS.PatternStep.WAKE
+    playerData.warning=nil
     
   elseif relheading>90 and self:_CheckLimits(X, Z, self.Wake) then
     -- Message to player.
@@ -3471,6 +3633,7 @@ function AIRBOSS:_Wake(playerData)
 
     -- Next step: Final.
     playerData.step=AIRBOSS.PatternStep.FINAL
+    playerData.warning=nil
   end
 end
 
@@ -3536,6 +3699,7 @@ function AIRBOSS:_Final(playerData)
     
     -- Next step: X start & call the ball.
     playerData.step=AIRBOSS.PatternStep.GROOVE_XX
+    playerData.warning=nil
   end
 
 end
@@ -3598,6 +3762,7 @@ function AIRBOSS:_Groove(playerData)
     
     -- Next step: roger ball.
     playerData.step=AIRBOSS.PatternStep.GROOVE_RB
+    playerData.warning=nil
   
   elseif rho<=RRB and playerData.step==AIRBOSS.PatternStep.GROOVE_RB then
 
@@ -3610,6 +3775,7 @@ function AIRBOSS:_Groove(playerData)
     
     -- Next step: in the middle.
     playerData.step=AIRBOSS.PatternStep.GROOVE_IM
+    playerData.warning=nil
     
   elseif rho<=RIM and playerData.step==AIRBOSS.PatternStep.GROOVE_IM then
   
@@ -3623,6 +3789,7 @@ function AIRBOSS:_Groove(playerData)
     
     -- Next step: in close.
     playerData.step=AIRBOSS.PatternStep.GROOVE_IC
+    playerData.warning=nil
   
   elseif rho<=RIC and playerData.step==AIRBOSS.PatternStep.GROOVE_IC then
 
@@ -3654,6 +3821,7 @@ function AIRBOSS:_Groove(playerData)
       else
         -- Next step: AR at the ramp.      
         playerData.step=AIRBOSS.PatternStep.GROOVE_AR
+        playerData.warning=nil
       end
       
     end
@@ -3670,6 +3838,7 @@ function AIRBOSS:_Groove(playerData)
     
     -- Next step: in the wires.
     playerData.step=AIRBOSS.PatternStep.GROOVE_IW
+    playerData.warning=nil
   end
   
   -- Time since last LSO call.
@@ -3700,7 +3869,7 @@ function AIRBOSS:_Groove(playerData)
       
       -- Next step: debrief.
       playerData.step=AIRBOSS.PatternStep.DEBRIEF
-      
+      playerData.warning=nil
     end
   end 
 end
@@ -3806,6 +3975,7 @@ function AIRBOSS:_Trapped(playerData, wire)
   
   -- Next step: debriefing.
   playerData.step=AIRBOSS.PatternStep.DEBRIEF
+  playerData.warning=nil
 end
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -4039,6 +4209,7 @@ function AIRBOSS:_GetZoneCorridor(case)
   
   -- Width of the box in NM.
   local w=2
+  
   -- Length of the box in NM.
   local l=10
   
@@ -4050,33 +4221,38 @@ function AIRBOSS:_GetZoneCorridor(case)
   
   -- Distance from ArcIn to ArcOut zone
   local y=d*math.tan(alpha)
- 
-  --local d2=math.cos(alpha)/2
+  
+  -- Little extra bit along X.
+  local x=w/2*math.tan(alpha)
   
   -- Get the extra bit we need to go back from the end to the arc turn in.
   local C=w/math.cos(alpha)
   local b=w*math.tan(alpha)
   local a=C-b
 
+  local k=w/2/math.cos(alpha)
 
   self:I(string.format("FF w = %.1f NM", w))
   self:I(string.format("FF l = %.1f NM", l))
   self:I(string.format("FF d = %.1f NM", d))
   self:I(string.format("FF y = %.1f NM", y))
-  self:I(string.format("FF C = %.1f NM", C))
-  self:I(string.format("FF b = %.1f NM", b))
-  self:I(string.format("FF a = %.1f NM", a))
+  --self:I(string.format("FF C = %.1f NM", C))
+  --self:I(string.format("FF b = %.1f NM", b))
+  --self:I(string.format("FF a = %.1f NM", a))
+  self:I(string.format("FF x = %.1f NM", y))
+  self:I(string.format("FF k = %.1f NM", k))
     
   -- TODO: Still not right!
+  -- TODO: Does this still work with alpha=0?e 
   local c={}
   c[1]=self:GetCoordinate()                                     -- Carrier coordinate
   c[2]=c[1]:Translate( UTILS.NMToMeters(w/2),   radial-90)      -- 1 Right of carrier
   c[3]=c[2]:Translate( UTILS.NMToMeters(d+w/2), radial)         -- 13 "south" @ 1 right
-  c[4]=c[3]:Translate( UTILS.NMToMeters(y),     radial+90)      -- y left @ 13 south  
+  c[4]=c[3]:Translate( UTILS.NMToMeters(y+x),   radial+90)      -- y+x left @ 13 south  
   c[5]=c[4]:Translate( UTILS.NMToMeters(l),     offset)         -- 10 NM to back wall (angled)
   c[6]=c[5]:Translate( UTILS.NMToMeters(w),     offset+90)      -- Back wall (angled)
-  c[7]=c[6]:Translate(-UTILS.NMToMeters(l+a),   offset)         -- 10+a Back along X & Z
-  c[8]=c[7]:Translate( UTILS.NMToMeters(y),     radial-90)      -- Back along X 
+  c[7]=c[6]:Translate(-UTILS.NMToMeters(l+k),   offset)         -- 10+a Back along X & Z
+  c[8]=c[7]:Translate( UTILS.NMToMeters(y-x),   radial-90)      -- y-x back along X
   c[9]=c[1]:Translate( UTILS.NMToMeters(w/2),   radial+90)      -- 1 left of carrier
   
   -- Create an array of a square!
@@ -4090,7 +4266,7 @@ function AIRBOSS:_GetZoneCorridor(case)
 
   -- Square zone length=10NM width=6 NM behind the carrier starting at angels+15 NM behind the carrier.
   -- So stay 0-5 NM (+1 NM error margin) port of carrier.
-  local zone=ZONE_POLYGON_BASE:New("CASE II/III Valid Zone", p)
+  local zone=ZONE_POLYGON_BASE:New("CASE II/III Approach Corridor", p)
 
   return zone
 end
@@ -4910,6 +5086,7 @@ function AIRBOSS:_AbortPattern(playerData, X, Z, posData, patternwo)
 
     -- Next step debrief.  
     playerData.step=AIRBOSS.PatternStep.DEBRIEF
+    playerData.warning=nil
   end
 
   -- Message to player.
@@ -4973,12 +5150,12 @@ function AIRBOSS:_AltitudeCheck(playerData, altopt)
   elseif _error<-lowscore then
     hint=string.format("You're slightly low.")
   else
-    hint=string.format("Good altitude. ")
+    hint=string.format("Good altitude.")
   end
   
   -- Extend or decrease depending on skill.
   if playerData.difficulty==AIRBOSS.Difficulty.EASY then
-    hint=hint..string.format("Optimal altitude is %d ft.", UTILS.MetersToFeet(altopt))
+    hint=hint..string.format(" Optimal altitude is %d ft.", UTILS.MetersToFeet(altopt))
   elseif playerData.difficulty==AIRBOSS.Difficulty.NORMAL then
     --hint=hint.."\n"
   elseif playerData.difficulty==AIRBOSS.Difficulty.HARD then
@@ -4986,7 +5163,7 @@ function AIRBOSS:_AltitudeCheck(playerData, altopt)
   end
   
   -- Debrief text.
-  local debrief=string.format("Altitude %d ft = %d%% deviation from %d ft optimum.", UTILS.MetersToFeet(altitude), _error, UTILS.MetersToFeet(altopt))
+  local debrief=string.format("Altitude %d ft = %d%% deviation from %d ft.", UTILS.MetersToFeet(altitude), _error, UTILS.MetersToFeet(altopt))
   
   return hint, debrief
 end
@@ -5035,7 +5212,7 @@ function AIRBOSS:_DistanceCheck(playerData, optdist)
   end
 
   -- Debriefing text.
-  local debrief=string.format("Distance %.1f NM = %d%% deviation from %.1f NM optimum.",UTILS.MetersToNM(distance), _error, UTILS.MetersToNM(optdist))
+  local debrief=string.format("Distance %.1f NM = %d%% deviation from %.1f NM.",UTILS.MetersToNM(distance), _error, UTILS.MetersToNM(optdist))
    
   return hint, debrief
 end
@@ -5084,7 +5261,7 @@ function AIRBOSS:_AoACheck(playerData, optaoa)
   end
   
   -- Debriefing text.
-  local debrief=string.format("AoA %.1f = %d%% deviation from %.1f optimum.", aoa, _error, optaoa)
+  local debrief=string.format("AoA %.1f = %d%% deviation from %.1f.", aoa, _error, optaoa)
   
   return hint, debrief
 end
@@ -5210,6 +5387,7 @@ function AIRBOSS:_Debrief(playerData)
 
       -- Commencing again.      
       playerData.step=AIRBOSS.PatternStep.COMMENCING
+      playerData.warning=nil
       
     else
       -- Unit does not seem to be alive!
@@ -5232,6 +5410,7 @@ function AIRBOSS:_Debrief(playerData)
 
     -- Next step.
     playerData.step=AIRBOSS.PatternStep.UNDEFINED
+    playerData.warning=nil
   end
   
   -- Increase number of passes.
@@ -5457,6 +5636,40 @@ function AIRBOSS:GetCoordinate()
   return self.carrier:GetCoordinate()
 end
 
+
+--- Get mission weather.
+-- @param #AIRBOSS self
+function AIRBOSS:_MissionWeather()
+
+  -- Weather data from mission file.
+  local weather=env.mission.weather
+
+
+  --[[
+  ["clouds"] = 
+  {
+      ["thickness"] = 430,
+      ["density"] = 7,
+      ["base"] = 0,
+      ["iprecptns"] = 1,
+  }, -- end of ["clouds"]
+  ]]  
+  local clouds=weather.clouds
+
+  --[[  
+  ["fog"] = 
+  {
+      ["thickness"] = 0,
+      ["visibility"] = 25,
+  }, -- end of ["fog"]
+  ]]  
+  local fog=weather.fog
+  
+  -- Visibilty distance in meters.
+  local vis=weather.visibility.distance
+
+end
+
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- RADIO MESSAGE Functions
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -5654,8 +5867,15 @@ function AIRBOSS:MessageToPlayer(playerData, message, sender, receiver, duration
     self:I(self.lid..text)
     
     -- TODO: Test! Need to make this better!.
+    -- TODO: This will fail with message to all since for each player the message will be played!
     if receiver==playerData.onboard then
-      self:_Number2Sound(self.LSOradio, receiver, delay)
+      if sender then
+        if sender=="LSO" then
+          self:_Number2Sound(self.LSOradio, receiver, delay)
+        elseif sender=="MARSHALL" then
+          self:_Number2Sound(self.Carrierradio, receiver, delay)
+        end
+      end      
     end
       
     if delay and delay>0 then
@@ -5818,8 +6038,8 @@ function AIRBOSS:_AddF10Commands(_unitName)
         missionCommands.addCommandForGroup(_gid, "Attitude Monitor ON/OFF", _helpPath, self._AttitudeMonitor,   self, playername)
         missionCommands.addCommandForGroup(_gid, "Smoke Marshal Zone",      _helpPath, self._MarkMarshalZone,   self, _unitName, false)
         missionCommands.addCommandForGroup(_gid, "Flare Marshal Zone",      _helpPath, self._MarkMarshalZone,   self, _unitName, true)
-        missionCommands.addCommandForGroup(_gid, "Smoke R. Case Zones",     _helpPath, self._MarkCase23Zones,   self, _unitName, false)
-        missionCommands.addCommandForGroup(_gid, "Flare R. Case Zones",     _helpPath, self._MarkCase23Zones,   self, _unitName, true)
+        missionCommands.addCommandForGroup(_gid, "Smoke Pattern Zones",     _helpPath, self._MarkCase23Zones,   self, _unitName, false)
+        missionCommands.addCommandForGroup(_gid, "Flare Pattern Zones",     _helpPath, self._MarkCase23Zones,   self, _unitName, true)
         missionCommands.addCommandForGroup(_gid, "[Reset My Status]",       _helpPath, self._ResetPlayerStatus, self, _unitName)
                         
         -- F10/Airboss/<Carrier Name>/Kneeboard
@@ -5904,20 +6124,20 @@ function AIRBOSS:_RequestMarshal(_unitName)
         if self:_InQueue(self.Qmarshal, playerData.group) then
         
           -- Flight group is already in marhal queue.
-          local text=string.format("%s, you are already in the Marshal queue. New marshal request denied!", playerData.name)
-          MESSAGE:New(text, 10, "MARSHAL"):ToClient(playerData.client)        
+          local text=string.format("you are already in the Marshal queue. New marshal request denied!")
+          self:MessageToPlayer(playerData, text, "MARSHAL")       
         
         elseif self:_InQueue(self.Qpattern, playerData.group) then
           
           -- Flight group is already in pattern queue.
-          local text=string.format("%s, you are already in the Pattern queue. Marshal request denied!", playerData.name)
-          MESSAGE:New(text, 10, "MARSHAL"):ToClient(playerData.client)       
+          local text=string.format("you are already in the Pattern queue. Marshal request denied!")
+          self:MessageToPlayer(playerData, text, "MARSHAL")       
           
         elseif not _unit:InAir() then 
 
           -- Flight group is already in pattern queue.
-          local text=string.format("%s, you are not airborn. Marshal request denied!", playerData.name)
-          MESSAGE:New(text, 10, "MARSHAL"):ToClient(playerData.client)       
+          local text=string.format("you are not airborn. Marshal request denied!")
+          self:MessageToPlayer(playerData, text, "MARSHAL")       
         
         else
       
@@ -5929,8 +6149,8 @@ function AIRBOSS:_RequestMarshal(_unitName)
       else
       
         -- Flight group is not in CCA yet.
-        local text=string.format("%s, you are not inside CCA yet. Marshal request denied!", playerData.name)
-        MESSAGE:New(text, 10, "MARSHAL"):ToClient(playerData.client)
+        local text=string.format("you are not inside CCA yet. Marshal request denied!")
+        self:MessageToPlayer(playerData, text, "MARSHAL")
         
       end
     end
@@ -5999,6 +6219,7 @@ function AIRBOSS:_RequestCommence(_unitName)
               
               -- Set player step.
               playerData.step=AIRBOSS.PatternStep.COMMENCING
+              playerData.warning=nil
               
               -- Collaps marshal stack.
               self:_CollapseMarshalStack(playerData, false)
@@ -6051,11 +6272,14 @@ function AIRBOSS:_RequestRefueling(_unitName)
             -- Tanker is up and running.
             text=string.format("Proceed to tanker at angels %d.", angels)
             
-            --TODO: State TACAN channel of tanker if defined.
+            -- State TACAN channel of tanker if defined.
+            if self.tanker.TACANon then
+              text=text..string.format("\nTanker TACAN channel %d%s (%s)", self.tanker.TACANchannel, self.tanker.TACANmode, self.tanker.TACANmorse)
+            end
             
             -- Tanker is currently refueling. Inform player.
             if self.tanker:IsRefueling() then
-              text=text.."\n Tanker is currently refueling. You might have to queue up."
+              text=text.."\nTanker is currently refueling. You might have to queue up."
             end
             
             -- Collapse marshal stack if player is in queue.
@@ -6345,14 +6569,13 @@ function AIRBOSS:_DisplayCarrierInfo(_unitname)
       local carrierspeed=UTILS.MpsToKnots(self.carrier:GetVelocityMPS())
         
       -- Tacan/ICLS.
-      -- TODO: adjust to option TACAN or ICLS disabled.
       local tacan="unknown"
       local icls="unknown"
-      if self.TACANchannel~=nil then
-        tacan=string.format("%d%s", self.TACANchannel, self.TACANmode)
+      if self.TACANon and self.TACANchannel~=nil then
+        tacan=string.format("%d%s (%s)", self.TACANchannel, self.TACANmode, self.TACANmorse)
       end
-      if self.ICLSchannel~=nil then
-        icls=string.format("%d", self.ICLSchannel)
+      if self.ICLSon and self.ICLSchannel~=nil then
+        icls=string.format("%d (%s)", self.ICLSchannel, self.ICLSmorse)
       end
       
       -- Get groups, units in queues.
