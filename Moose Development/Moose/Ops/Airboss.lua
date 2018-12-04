@@ -125,8 +125,8 @@
 -- @field #AIRBOSS
 AIRBOSS = {
   ClassName     = "AIRBOSS",
+  Debug         = false,
   lid           = nil,
-  Debug         = true,
   carrier       = nil,
   carriertype   = nil,
   carrierparam  =  {},
@@ -407,75 +407,75 @@ AIRBOSS.LSOCall={
     subtitle="Paddles, radio check",
     duration=1.0,
   },
+  N0={
+    file="LSO-N0",
+    suffix="ogg",
+    louder=false,
+    subtitle="0",
+    duration=0.5,
+  },
   N1={
     file="LSO-N1",
     suffix="ogg",
     louder=false,
-    subtitle="",
+    subtitle="1",
     duration=0.3,
   },
   N2={
     file="LSO-N2",
     suffix="ogg",
     louder=false,
-    subtitle="",
+    subtitle="2",
     duration=0.3,
   },
   N3={
     file="LSO-N3",
     suffix="ogg",
     louder=false,
-    subtitle="",
+    subtitle="3",
     duration=0.4,
   },
   N4={
     file="LSO-N4",
     suffix="ogg",
     louder=false,
-    subtitle="",
+    subtitle="4",
     duration=0.4,
   },
   N5={
     file="LSO-N5",
     suffix="ogg",
     louder=false,
-    subtitle="",
+    subtitle="5",
     duration=0.4,
   },
   N6={
     file="LSO-N6",
     suffix="ogg",
     louder=false,
-    subtitle="",
+    subtitle="6",
     duration=0.6,
   },
   N7={
     file="LSO-N7",
     suffix="ogg",
     louder=false,
-    subtitle="",
+    subtitle="7",
     duration=0.6,
   },
   N8={
     file="LSO-N8",
     suffix="ogg",
     louder=false,
-    subtitle="",
+    subtitle="8",
     duration=0.4,
   },
   N9={
     file="LSO-N9",
     suffix="ogg",
     louder=false,
-    subtitle="",
+    subtitle="9",
     duration=0.5,
-  },
-  N0={
-    file="LSO-N0",
-    suffix="ogg",
-    louder=false,
-    subtitle="",
-    duration=0.4,
   },
 }
 
@@ -492,75 +492,75 @@ AIRBOSS.LSOCall={
 -- @field #AIRBOSS.RadioSound N9 "Nine" call.
 -- @field #AIRBOSS.RadioSound N0 "Zero" call.
 AIRBOSS.MarshalCall={
+  N0={
+    file="LSO-N0",
+    suffix="ogg",
+    louder=false,
+    subtitle="0",
+    duration=0.5,
+  },
   N1={
     file="LSO-N1",
     suffix="ogg",
     louder=false,
-    subtitle="",
+    subtitle="1",
     duration=0.3,
   },
   N2={
     file="LSO-N2",
     suffix="ogg",
     louder=false,
-    subtitle="",
+    subtitle="2",
     duration=0.3,
   },
   N3={
     file="LSO-N3",
     suffix="ogg",
     louder=false,
-    subtitle="",
+    subtitle="3",
     duration=0.4,
   },
   N4={
     file="LSO-N4",
     suffix="ogg",
     louder=false,
-    subtitle="",
+    subtitle="4",
     duration=0.4,
   },
   N5={
     file="LSO-N5",
     suffix="ogg",
     louder=false,
-    subtitle="",
+    subtitle="5",
     duration=0.4,
   },
   N6={
     file="LSO-N6",
     suffix="ogg",
     louder=false,
-    subtitle="",
+    subtitle="6",
     duration=0.6,
   },
   N7={
     file="LSO-N7",
     suffix="ogg",
     louder=false,
-    subtitle="",
+    subtitle="7",
     duration=0.6,
   },
   N8={
     file="LSO-N8",
     suffix="ogg",
     louder=false,
-    subtitle="",
+    subtitle="8",
     duration=0.4,
   },
   N9={
     file="LSO-N9",
     suffix="ogg",
     louder=false,
-    subtitle="",
+    subtitle="9",
     duration=0.5,
-  },
-  N0={
-    file="LSO-N0",
-    suffix="ogg",
-    louder=false,
-    subtitle="",
-    duration=0.4,
   },
 }
 
@@ -684,7 +684,7 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.4.4w"
+AIRBOSS.version="0.4.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -769,7 +769,7 @@ function AIRBOSS:New(carriername, alias)
 
   -- Set up Airboss radio.  
   self.Carrierradio=RADIO:New(self.carrier)
-  self.Carrierradio:SetAlias("AIRBOSS")
+  self.Carrierradio:SetAlias("MARSHAL")
   self:SetCarrierradio()
   
   -- Set up LSO radio.  
@@ -1916,6 +1916,7 @@ function AIRBOSS:_MarshalPlayer(playerData)
     -- Flight is not registered yet.
     local text="you are not yet registered inside the CCA. Marshal request denied!"
     self:MessageToPlayer(playerData, text, "MARSHAL")
+    
   end  
   
 end
@@ -2079,7 +2080,7 @@ function AIRBOSS:_AddMarshalGroup(flight, stack)
   text=text..string.format("Altimeter %.2f. Report see me.", P)
 
   -- Message to all players.
-  self:MessageToAll(text, "MARSHAL")
+  self:MessageToAll(text, "MARSHAL", flight.onboard)
    
   -- Add to marshal queue.
   table.insert(self.Qmarshal, flight)
@@ -2812,7 +2813,8 @@ function AIRBOSS:OnEventBirth(EventData)
     
     -- Debug.    
     if self.Debug then
-      self:_Number2Sound(self.LSOradio, "0123456789", 10)
+--      self:_Number2Sound(self.LSOradio, "0123456789", 10)
+      self:_Number2Sound(self.Carrierradio, "0123456789", 10)
       --self:_MarkCase23Zones(_unit:GetName())
     end
     
@@ -4283,24 +4285,25 @@ function AIRBOSS:_GetZoneCorridor(case)
   self:I(string.format("FF l = %.1f NM", l))
   self:I(string.format("FF d = %.1f NM", d))
   self:I(string.format("FF y = %.1f NM", y))
-  --self:I(string.format("FF C = %.1f NM", C))
-  --self:I(string.format("FF b = %.1f NM", b))
-  --self:I(string.format("FF a = %.1f NM", a))
-  self:I(string.format("FF x = %.1f NM", y))
+  self:I(string.format("FF C = %.1f NM", C))
+  self:I(string.format("FF b = %.1f NM", b))
+  self:I(string.format("FF a = %.1f NM", a))
+  self:I(string.format("FF x = %.1f NM", x))
   self:I(string.format("FF k = %.1f NM", k))
     
   -- TODO: Still not right!
   -- TODO: Does this still work with alpha=0?e 
   local c={}
   c[1]=self:GetCoordinate()                                     -- Carrier coordinate
-  c[2]=c[1]:Translate( UTILS.NMToMeters(w/2),   radial-90)      -- 1 Right of carrier
-  c[3]=c[2]:Translate( UTILS.NMToMeters(d+w/2), radial)         -- 13 "south" @ 1 right
-  c[4]=c[3]:Translate( UTILS.NMToMeters(y+x),   radial+90)      -- y+x left @ 13 south  
-  c[5]=c[4]:Translate( UTILS.NMToMeters(l),     offset)         -- 10 NM to back wall (angled)
-  c[6]=c[5]:Translate( UTILS.NMToMeters(w),     offset+90)      -- Back wall (angled)
-  c[7]=c[6]:Translate(-UTILS.NMToMeters(l+k),   offset)         -- 10+a Back along X & Z
-  c[8]=c[7]:Translate( UTILS.NMToMeters(y-x),   radial-90)      -- y-x back along X
-  c[9]=c[1]:Translate( UTILS.NMToMeters(w/2),   radial+90)      -- 1 left of carrier
+  c[2]=c[1]:Translate( UTILS.NMToMeters(w/2),     radial-90)    -- 1 Right of carrier CORRECT!
+  c[3]=c[2]:Translate( UTILS.NMToMeters(d+w/2),   radial)       -- 13 "south" @ 1 right
+  c[4]=c[3]:Translate( UTILS.NMToMeters(y+a/2),   radial+90)    -- y+x left @ 13 south  
+  c[5]=c[4]:Translate( UTILS.NMToMeters(l),       offset)       -- 10 NM to back wall (angled)
+  c[6]=c[5]:Translate( UTILS.NMToMeters(w),       offset+90)    -- Back wall (angled)
+  c[7]=c[6]:Translate(-UTILS.NMToMeters(l+a),     offset)       -- 10+a Back along X & Z
+  --c[8]=c[7]:Translate( UTILS.NMToMeters(y-a/2), radial-90)    -- y-x back along X  
+  c[9]=c[1]:Translate( UTILS.NMToMeters(w/2),     radial+90)    -- 1 left of carrier CORRECT!
+  c[8]=c[9]:Translate( UTILS.NMToMeters(d-w/2),   radial)       -- 1 left and 11 behind of carrier CORRECT!
   
   -- Create an array of a square!
   local p={}
@@ -5776,7 +5779,7 @@ function AIRBOSS:_CheckRadioQueue(radioqueue, name)
   local function _sort(a, b)
     return (a.Tplay < b.Tplay) or (a.Tplay==b.Tplay and a.prio < b.prio)
   end
-  table.sort(radioqueue, _sort)
+  --table.sort(radioqueue, _sort)
   
   local playing=false
   local next=nil  --#AIRBOSS.Radioitem
@@ -5861,7 +5864,7 @@ function AIRBOSS:RadioTransmission(radio, call, loud, delay)
   
     table.insert(self.RQLSO, transmission)
   
-  elseif radio:GetAlias()=="AIRBOSS" then
+  elseif radio:GetAlias()=="MARSHAL" then
   
     table.insert(self.RQMarshal, transmission)
   
@@ -5975,18 +5978,31 @@ end
 -- @param #number duration Display message duration. Default 10 seconds.
 -- @param #boolean clear If true, clear screen from previous messages.
 -- @param #number delay Delay in seconds, before the message is displayed.
-function AIRBOSS:MessageToAll(message, sender, receiver, duration, clear, delay)
+-- @param #boolean soundoff If true, do not play boad number message.
+function AIRBOSS:MessageToAll(message, sender, receiver, duration, clear, delay, soundoff)
 
+  local playit=true -- In case two have the same flight number.
   for _,_player in pairs(self.players) do
-    local player=_player --#AIRBOSS.PlayerData
+    local playerData=_player --#AIRBOSS.PlayerData
     
     -- Message to all players in CCA.
     -- TODO: could make something to all in pattern or all in marshal queue depending on sender.
-    if player.unit:IsInZone(self.zoneCCA) then
+    if playerData.unit:IsInZone(self.zoneCCA) then
+    
+      -- Play receiver board number. Best we can do if no voice over for the whole message is there.
+      if receiver==playerData.onboard and playit and not soundoff then
+        if sender then
+          if sender=="LSO" or sender =="AIRBOSS" then
+            self:_Number2Sound(self.LSOradio, receiver, delay)
+          elseif sender=="MARSHAL" then
+            self:_Number2Sound(self.Carrierradio, receiver, delay)
+          end
+        end
+        playit=false  -- Play only once, in case two have the same flight number.
+      end    
       
-      -- No sound here.
-      -- TODO: Need to improve? depending on sender.
-      self:MessageToPlayer(player, message, sender, receiver, duration, clear, delay, true)
+      -- Message to player.
+      self:MessageToPlayer(playerData, message, sender, receiver, duration, clear, delay, true)
       
     end
      
@@ -6012,14 +6028,18 @@ function AIRBOSS:_Number2Sound(radio, number, delay)
     return chars
   end
   
+  -- Get radio alias.
   local alias=radio:GetAlias()
+  
   local sender=""
   if alias=="LSO" then
     sender="LSOCall"
   elseif alias=="MARSHAL" then
     sender="MarshalCall"
-  elseif alias=="AIRBOSS" then
-    sender="AirbossCall"
+  --elseif alias=="AIRBOSS" then
+  --  sender="AirbossCall"
+  else
+    self:E(self.lid.."ERROR: Unknown radio alias!")
   end
   
   -- Split string into characters.
@@ -6051,7 +6071,7 @@ function AIRBOSS:_Number2Sound(radio, number, delay)
     elseif n=="9" then
       self:RadioTransmission(radio, AIRBOSS[sender].N9, false, delay)
     else
-      self:E(self.lid..string.format("ERROR: Unknown number %s", tostring(n)))
+      self:E(self.lid..string.format("ERROR: Unknown number %s!", tostring(n)))
     end
   end
 
@@ -6075,69 +6095,67 @@ function AIRBOSS:_AddF10Commands(_unitName)
 
     -- Get group and ID.
     local group=_unit:GetGroup()
-    local _gid=group:GetID()
+    local gid=group:GetID()
   
-    if group and _gid then
+    if group and gid then
   
-      if not self.menuadded[_gid] then
+      if not self.menuadded[gid] then
       
         -- Enable switch so we don't do this twice.
-        self.menuadded[_gid]=true
+        self.menuadded[gid]=true
   
         -- Main F10 menu: F10/Airboss/<Carrier Name>/
-        if AIRBOSS.MenuF10[_gid]==nil then
-          AIRBOSS.MenuF10[_gid]=missionCommands.addSubMenuForGroup(_gid, "Airboss")
+        if AIRBOSS.MenuF10[gid]==nil then
+          AIRBOSS.MenuF10[gid]=missionCommands.addSubMenuForGroup(gid, "Airboss")
         end
         
         -- Player Data.
         local playerData=self.players[playername]
         
-        -- F10/Airboss/<Carrier Name>
-        local _rootPath=missionCommands.addSubMenuForGroup(_gid, self.alias, AIRBOSS.MenuF10[_gid])
+        -- F10/Airboss/<Carrier>
+        local _rootPath=missionCommands.addSubMenuForGroup(gid, self.alias, AIRBOSS.MenuF10[gid])
         
-        -- F10/Airboss/<Carrier Name>/Results
-        local _statsPath=missionCommands.addSubMenuForGroup(_gid, "Results", _rootPath)
+        -- F10/Airboss/<Carrier>/Help
+        local _helpPath=missionCommands.addSubMenuForGroup(gid, "Help", _rootPath)
+        -- F10/Airboss/<Carrier>/Help/Skill Level
+        local _skillPath=missionCommands.addSubMenuForGroup(gid, "Skill Level", _helpPath)
+        -- F10/Airboss/<Carrier>/Help/Skill Level/
+        missionCommands.addCommandForGroup(gid, "Flight Student",  _skillPath, self._SetDifficulty, self, playername, AIRBOSS.Difficulty.EASY)
+        missionCommands.addCommandForGroup(gid, "Naval Aviator",   _skillPath, self._SetDifficulty, self, playername, AIRBOSS.Difficulty.NORMAL)
+        missionCommands.addCommandForGroup(gid, "TOPGUN Graduate", _skillPath, self._SetDifficulty, self, playername, AIRBOSS.Difficulty.HARD)
+        -- F10/Airboss/<Carrier>/Help/Mark Zones
+        local _markPath=missionCommands.addSubMenuForGroup(gid, "Mark Zones", _helpPath)
+        -- F10/Airboss/<Carrier>/Help/Mark Zones/
+        missionCommands.addCommandForGroup(gid, "Smoke My Marshal Zone",      _markPath, self._MarkMarshalZone, self, _unitName, false)
+        missionCommands.addCommandForGroup(gid, "Flare My Marshal Zone",      _markPath, self._MarkMarshalZone, self, _unitName, true)
+        missionCommands.addCommandForGroup(gid, "Smoke Pattern Zones",        _markPath, self._MarkCase23Zones, self, _unitName, false)
+        missionCommands.addCommandForGroup(gid, "Flare Pattern Zones",        _markPath, self._MarkCase23Zones, self, _unitName, true)
+        -- F10/Airboss/<Carrier>/Help/
+        missionCommands.addCommandForGroup(gid, "Radio Check LSO",         _helpPath, self._LSORadioCheck,     self, _unitName)
+        missionCommands.addCommandForGroup(gid, "Radio Check Marshal",     _helpPath, self._MarshalRadioCheck, self, _unitName)           
+        missionCommands.addCommandForGroup(gid, "Attitude Monitor ON/OFF", _helpPath, self._AttitudeMonitor,   self,  playername)
+        missionCommands.addCommandForGroup(gid, "[Reset My Status]",       _helpPath, self._ResetPlayerStatus, self, _unitName)
+
         
-        -- F10/Airboss/<Carrier Name>/My Settings/Skil Level
-        local _skillPath=missionCommands.addSubMenuForGroup(_gid, "Skill Level", _rootPath)
+        -- F10/Airboss/<Carrier>/Kneeboard
+        local _kneeboardPath=missionCommands.addSubMenuForGroup(gid, "Kneeboard", _rootPath)        
+        -- F10/Airboss/<Carrier>/Kneeboard/Results
+        local _resultsPath=missionCommands.addSubMenuForGroup(gid, "Results", _kneeboardPath)
+        -- F10/Airboss/<Carrier>/Kneeboard/Results/
+        missionCommands.addCommandForGroup(gid, "Greenie Board", _resultsPath, self._DisplayScoreBoard,   self, _unitName)
+        missionCommands.addCommandForGroup(gid, "My LSO Grades", _resultsPath, self._DisplayPlayerGrades, self, _unitName)
+        missionCommands.addCommandForGroup(gid, "Last Debrief",  _resultsPath, self._DisplayDebriefing,   self, _unitName)
+        -- F10/Airboss/<Carrier/Kneeboard/
+        missionCommands.addCommandForGroup(gid, "Carrier Info",   _kneeboardPath, self._DisplayCarrierInfo,    self, _unitName)
+        missionCommands.addCommandForGroup(gid, "Weather Report", _kneeboardPath, self._DisplayCarrierWeather, self, _unitName)
+        missionCommands.addCommandForGroup(gid, "My Status",      _kneeboardPath, self._DisplayPlayerStatus,   self, _unitName)
 
-        -- F10/Airboss/<Carrier Name>/My Settings/Skil Level
-        local _helpPath=missionCommands.addSubMenuForGroup(_gid, "Help", _rootPath)
 
-        -- F10/Airboss/<Carrier Name>/My Settings/Kneeboard
-        local _kneeboardPath=missionCommands.addSubMenuForGroup(_gid, "Kneeboard", _rootPath)
-
-        -- F10/Airboss/<Carrier Name>/Results/
-        missionCommands.addCommandForGroup(_gid, "Greenie Board", _statsPath, self._DisplayScoreBoard,   self, _unitName)
-        missionCommands.addCommandForGroup(_gid, "My LSO Grades", _statsPath, self._DisplayPlayerGrades, self, _unitName)
-        missionCommands.addCommandForGroup(_gid, "Last Debrief",  _statsPath, self._DisplayDebriefing,   self, _unitName)
-        --missionCommands.addCommandForGroup(_gid, "(Clear ALL Results)", _statsPath, self._ResetRangeStats, self, _unitName)
-        
-        -- F10/Airboss/<Carrier Name>/Skill Level
-        missionCommands.addCommandForGroup(_gid, "Flight Student",  _skillPath, self._SetDifficulty, self, playername, AIRBOSS.Difficulty.EASY)
-        missionCommands.addCommandForGroup(_gid, "Naval Aviator",   _skillPath, self._SetDifficulty, self, playername, AIRBOSS.Difficulty.NORMAL)
-        missionCommands.addCommandForGroup(_gid, "TOPGUN Graduate", _skillPath, self._SetDifficulty, self, playername, AIRBOSS.Difficulty.HARD)
-
-        -- F10/Airboss/<Carrier Name>/Help
-        missionCommands.addCommandForGroup(_gid, "Attitude Monitor ON/OFF", _helpPath, self._AttitudeMonitor,   self, playername)
-        missionCommands.addCommandForGroup(_gid, "Smoke Marshal Zone",      _helpPath, self._MarkMarshalZone,   self, _unitName, false)
-        missionCommands.addCommandForGroup(_gid, "Flare Marshal Zone",      _helpPath, self._MarkMarshalZone,   self, _unitName, true)
-        missionCommands.addCommandForGroup(_gid, "Smoke Pattern Zones",     _helpPath, self._MarkCase23Zones,   self, _unitName, false)
-        missionCommands.addCommandForGroup(_gid, "Flare Pattern Zones",     _helpPath, self._MarkCase23Zones,   self, _unitName, true)
-        missionCommands.addCommandForGroup(_gid, "[Reset My Status]",       _helpPath, self._ResetPlayerStatus, self, _unitName)
-                        
-        -- F10/Airboss/<Carrier Name>/Kneeboard
-        missionCommands.addCommandForGroup(_gid, "Carrier Info",   _kneeboardPath, self._DisplayCarrierInfo,    self, _unitName)
-        missionCommands.addCommandForGroup(_gid, "Weather Report", _kneeboardPath, self._DisplayCarrierWeather, self, _unitName)
-        missionCommands.addCommandForGroup(_gid, "My Status",      _kneeboardPath, self._DisplayPlayerStatus,   self, _unitName)
-
-        -- F10/Airboss/<Carrier Name>/        
-        missionCommands.addCommandForGroup(_gid, "Request Marshal?",    _rootPath, self._RequestMarshal,   self, _unitName)
-        missionCommands.addCommandForGroup(_gid, "Commencing!",         _rootPath, self._RequestCommence,  self, _unitName)
-        missionCommands.addCommandForGroup(_gid, "Request Refueling?",  _rootPath, self._RequestRefueling, self, _unitName)
-        missionCommands.addCommandForGroup(_gid, "Set Section!",        _rootPath, self._SetSection,       self, _unitName) 
-        missionCommands.addCommandForGroup(_gid, "Radio Check LSO",     _rootPath, self._LSORadioCheck,    self, _unitName)
-        missionCommands.addCommandForGroup(_gid, "Radio Check Marshal", _rootPath, self._MarshalRadioCheck,self, _unitName)
+        -- F10/Airboss/<Carrier>/
+        missionCommands.addCommandForGroup(gid, "Request Marshal",    _rootPath, self._RequestMarshal,   self, _unitName)
+        missionCommands.addCommandForGroup(gid, "Request Commencing", _rootPath, self._RequestCommence,  self, _unitName)
+        missionCommands.addCommandForGroup(gid, "Request Refueling",  _rootPath, self._RequestRefueling, self, _unitName)
+        missionCommands.addCommandForGroup(gid, "Set Section",        _rootPath, self._SetSection,       self, _unitName)
       end
     else
       self:T(self.lid.."Could not find group or group ID in AddF10Menu() function. Unit name: ".._unitName)
@@ -7007,23 +7025,23 @@ function AIRBOSS:_MarkCase23Zones(_unitName, flare)
         -- Case II/III: arc in/out if offset>0.
         if case==2 or case==3 then
           if math.abs(self.holdingoffset)>0 then
-            self:_GetZoneArcIn(case):SmokeZone(SMOKECOLOR.Red, 45)
-            text=text.."* arc turn in with YELLOW flares\n"
-            self:_GetZoneArcOut(case):SmokeZone(SMOKECOLOR.Orange, 45)
-            text=text.."* arc trun out with WHITE flares\n"
+            self:_GetZoneArcIn(case):SmokeZone(SMOKECOLOR.Blue, 45)
+            text=text.."* arc turn in with BLUE smoke\n"
+            self:_GetZoneArcOut(case):SmokeZone(SMOKECOLOR.Blue, 45)
+            text=text.."* arc trun out with BLUE smoke\n"
           end
         end
 
         -- Case III: dirty up
         if case==3 then
-          text=text.."* dirty up with ORANGE flares\n"
+          text=text.."* dirty up with ORANGE smoke\n"
           self:_GetZoneDirtyUp(case):SmokeZone(SMOKECOLOR.Orange, 45)
         end
 
-        -- Case III: dirty up
+        -- Case III: bullseye
         if case==3 then                
-          text=text.."* bullseye with BLUE smoke\n"
-          self:_GetZoneBullseye(case):SmokeZone(SMOKECOLOR.Blue, 45)
+          text=text.."* bullseye with WHITE smoke\n"
+          self:_GetZoneBullseye(case):SmokeZone(SMOKECOLOR.White, 45)
         end
         
       end

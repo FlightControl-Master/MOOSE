@@ -179,7 +179,7 @@
 -- @field #RECOVERYTANKER
 RECOVERYTANKER = {
   ClassName       = "RECOVERYTANKER",
-  Debug           = false,
+  Debug           = true,
   carrier         = nil,
   carriertype     = nil,
   tankergroupname = nil,
@@ -210,7 +210,7 @@ RECOVERYTANKER = {
 
 --- Class version.
 -- @field #string version
-RECOVERYTANKER.version="0.9.5w"
+RECOVERYTANKER.version="0.9.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -271,8 +271,10 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   self:SetPatternUpdateHeading()
   self:SetPatternUpdateInterval()
   
-  -- Moving zone: Zone 1 NM astern the carrier with radius of 1.0 km.
-  self.zoneUpdate=ZONE_UNIT:New("Pattern Update Zone", self.carrier, 1*1000, {dx=-UTILS.NMToMeters(1), dy=0, relative_to_unit=true})
+  -- Moving zone: Zone 1 NM astern the carrier with radius of 1 NM.
+  self.zoneUpdate=ZONE_UNIT:New("Pattern Update Zone", self.carrier, UTILS.NMToMeters(1), {dx=-UTILS.NMToMeters(1), dy=0, relative_to_unit=true})
+  
+  self.zoneUpdate:SmokeZone(SMOKECOLOR.White, 45)
 
   -----------------------
   --- FSM Transitions ---
@@ -629,7 +631,6 @@ function RECOVERYTANKER:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.EngineShutdown)
   self:HandleEvent(EVENTS.Refueling,     self._RefuelingStart)  --Need explcit functions sice OnEventRefueling and OnEventRefuelingStop did not hook.
   self:HandleEvent(EVENTS.RefuelingStop, self._RefuelingStop)
-  --self:HandleEvent(EVENTS.Crash)
   
   -- Spawn tanker.
   local Spawn=SPAWN:New(self.tankergroupname):InitUnControlled(false)
@@ -710,7 +711,7 @@ function RECOVERYTANKER:onafterStatus(From, Event, To)
   -- Get fuel of tanker.
   local fuel=self.tanker:GetFuel()*100
   local text=string.format("Recovery tanker %s: state=%s fuel=%.1f", self.tanker:GetName(), self:GetState(), fuel)
-  self:T(text)
+  self:I(text)
   
   -- Check if tanker flies through pattern update zone.
   -- TODO: Check if this can be used to update the pattern without too much disruption.
@@ -800,7 +801,7 @@ function RECOVERYTANKER:onafterPatternUpdate(From, Event, To)
   local Carrier=self.carrier:GetCoordinate()
   
   -- Define race-track pattern.
-  local p0=self.tanker:GetCoordinate():Translate(2000, self.tanker:GetHeading())
+  local p0=self.tanker:GetCoordinate():Translate(3000, self.tanker:GetHeading())
   local p1=Carrier:SetAltitude(self.altitude):Translate(self.distStern, hdg)
   local p2=Carrier:SetAltitude(self.altitude):Translate(self.distBow, hdg)
   
@@ -821,6 +822,8 @@ function RECOVERYTANKER:onafterPatternUpdate(From, Event, To)
   wp[1]=self.tanker:GetCoordinate():WaypointAirTurningPoint(nil , self.speed, {}, "Current Position")
   wp[2]=p0:WaypointAirTurningPoint(nil, self.speed, {taskorbit}, "Tanker Orbit")
   
+  --local wp=self:_Pattern()
+  
   -- Initialize WP and route tanker.
   self.tanker:WayPointInitialize(wp)
   
@@ -835,6 +838,48 @@ function RECOVERYTANKER:onafterPatternUpdate(From, Event, To)
   
   -- Set update time.
   self.Tupdate=timer.getTime()
+end
+
+
+--- Self made race track pattern.
+-- @param #RECOVERYTANKER self
+-- @return #table Table of pattern waypoints.
+function RECOVERYTANKER:_Pattern()
+
+
+  -- Carrier heading.
+  local hdg=self.carrier:GetHeading()
+  
+  -- Pattern altitude
+  local alt=self.altitude
+  
+  -- Carrier position.
+  local Carrier=self.carrier:GetCoordinate()
+  
+  local width=UTILS.NMToMeters(8)
+  
+  -- Not working as desired, since tanker changes course too rapidly after each waypoint.
+  
+  -- Define race-track pattern.
+  local p={}
+  p[1]=self.tanker:GetCoordinate()                      -- Tanker position
+  p[2]=Carrier:SetAltitude(alt)                         -- Carrier position
+  p[3]=p[2]:Translate(self.distBow, hdg)                -- In front of carrier
+  p[4]=p[3]:Translate(width/math.sqrt(2), hdg-45)       -- Middle front for smoother curve
+  -- Probably need one more to make it go -hdg at the waypoint.
+  p[5]=p[3]:Translate(width, hdg-90)                    -- In front on port
+  p[6]=p[5]:Translate(self.distStern-self.distBow, hdg) -- Behind on port (sterndist<0!)
+  p[7]=p[2]:Translate(self.distStern, hdg)              -- Behind carrier
+  
+  local wp={}
+  for i=1,#p do
+    local coord=p[i] --Core.Point#COORDINATE
+    coord:MarkToAll(string.format("Waypoint %d", i))
+    --table.insert(wp, coord:WaypointAirFlyOverPoint(nil , self.speed))
+    table.insert(wp, coord:WaypointAirTurningPoint(nil , self.speed))
+  end
+
+  return wp
 end
 
 --- On after "RTB" event. Send tanker back to carrier.
@@ -1029,7 +1074,7 @@ function RECOVERYTANKER:_InitRoute(dist, delay)
   -- Waypoints.
   local wp={}
   if self.takeoff==SPAWN.Takeoff.Air then
-    wp[#wp+1]=self.tanker:GetCoordinate():SetAltitude(self.altitude):WaypointAirTurningPoint(nil, self.speed, {}, "Spawn Position")   
+    wp[#wp+1]=self.tanker:GetCoordinate():SetAltitude(self.altitude):WaypointAirTurningPoint(nil, self.speed, {}, "Spawn Position")
   else
     wp[#wp+1]=Carrier:WaypointAirTakeOffParking()
   end
@@ -1131,7 +1176,7 @@ function RECOVERYTANKER:_ActivateTACAN(delay)
 end
 
 --- Calculate distances between carrier and tanker.
--- @param #AIRBOSS self 
+-- @param #RECOVERYTANKER self 
 -- @return #number Distance [m] in the direction of the orientation of the carrier.
 -- @return #number Distance [m] perpendicular to the orientation of the carrier.
 -- @return #number Distance [m] to the carrier.

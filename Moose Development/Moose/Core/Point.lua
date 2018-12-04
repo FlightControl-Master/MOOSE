@@ -460,7 +460,7 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param DCS#Distance Distance The Distance to be added in meters.
   -- @param DCS#Angle Angle The Angle in degrees. Defaults to 0 if not specified (nil).
-  -- @return #COORDINATE The new calculated COORDINATE.
+  -- @return Core.Point#COORDINATE The new calculated COORDINATE.
   function COORDINATE:Translate( Distance, Angle )
     local SX = self.x
     local SY = self.z
