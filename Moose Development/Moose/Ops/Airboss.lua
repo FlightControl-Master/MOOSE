@@ -125,7 +125,7 @@
 -- @field #AIRBOSS
 AIRBOSS = {
   ClassName     = "AIRBOSS",
-  Debug         = false,
+  Debug         = true,
   lid           = nil,
   carrier       = nil,
   carriertype   = nil,
@@ -309,54 +309,54 @@ AIRBOSS.LSOCall={
     suffix="ogg",
     loud=true,
     subtitle="Right for line up",
-    duration=1.0,
+    duration=0.80,
   },
   COMELEFT={
     file="LSO-ComeLeft",
     suffix="ogg",
     loud=true,
     subtitle="Come left",
-    duration=0.8,
+    duration=0.60,
   },
   HIGH={
     file="LSO-High",
     loud=true,
     subtitle="You're high",
-    duration=0.9,
+    duration=0.65,
   },
   LOW={
     file="LSO-Low",
     loud=true,
     subtitle="You're low",
-    duration=0.6,
+    duration=0.50,
   },
   POWER={
     file="LSO-Power",
     suffix="ogg",    
     loud=true,
     subtitle="Power",
-    duration=0.6,
+    duration=0.45,
   },
   SLOW={
     file="LSO-Slow",
     suffix="ogg",
     loud=true,
     subtitle="You're slow",
-    duration=0.9,
+    duration=0.65,
   },
   FAST={
     file="LSO-Fast",
     suffix="ogg",
     loud=true,
     subtitle="You're fast",
-    duration=0.9,
+    duration=0.7,
   },
   CALLTHEBALL={
     file="LSO-CallTheBall",
     suffix="ogg",    
     louder=false,
     subtitle="Call the ball",
-    duration=0.7,
+    duration=0.6,
   },
   ROGERBALL={
     file="LSO-RogerBall",
@@ -370,28 +370,28 @@ AIRBOSS.LSOCall={
     suffix="ogg",
     louder=false,
     subtitle="Wave off",
-    duration=0.7,
+    duration=0.6,
   },  
   BOLTER={
     file="LSO-BolterBolter",
     suffix="ogg",
     louder=false,
     subtitle="Bolter, Bolter!",
-    duration=1.0,
+    duration=0.75,
   },
   LONGINGROOVE={
     file="LSO-LongInTheGroove",
     suffix="ogg",
     louder=false,
     subtitle="You're long in the groove",
-    duration=1.3,
+    duration=1.2,
   },
   DEPARTANDREENTER={
     file="LSO-DepartAndReenter",
     suffix="ogg",
     louder=false,
     subtitle="Depart and re-enter",
-    duration=1.3,
+    duration=1.1,
   },
   PADDLESCONTACT={
     file="LSO-PaddlesContact",
@@ -405,77 +405,77 @@ AIRBOSS.LSOCall={
     suffix="ogg",
     louder=false,
     subtitle="Paddles, radio check",
-    duration=1.0,
+    duration=1.1,
   },
   N0={
     file="LSO-N0",
     suffix="ogg",
     louder=false,
     subtitle="0",
-    duration=0.5,
+    duration=0.40,
   },
   N1={
     file="LSO-N1",
     suffix="ogg",
     louder=false,
     subtitle="1",
-    duration=0.3,
+    duration=0.25,
   },
   N2={
     file="LSO-N2",
     suffix="ogg",
     louder=false,
     subtitle="2",
-    duration=0.3,
+    duration=0.35,
   },
   N3={
     file="LSO-N3",
     suffix="ogg",
     louder=false,
     subtitle="3",
-    duration=0.4,
+    duration=0.37,
   },
   N4={
     file="LSO-N4",
     suffix="ogg",
     louder=false,
     subtitle="4",
-    duration=0.4,
+    duration=0.39,
   },
   N5={
     file="LSO-N5",
     suffix="ogg",
     louder=false,
     subtitle="5",
-    duration=0.4,
+    duration=0.38,
   },
   N6={
     file="LSO-N6",
     suffix="ogg",
     louder=false,
     subtitle="6",
-    duration=0.6,
+    duration=0.40,
   },
   N7={
     file="LSO-N7",
     suffix="ogg",
     louder=false,
     subtitle="7",
-    duration=0.6,
+    duration=0.40,
   },
   N8={
     file="LSO-N8",
     suffix="ogg",
     louder=false,
     subtitle="8",
-    duration=0.4,
+    duration=0.37,
   },
   N9={
     file="LSO-N9",
     suffix="ogg",
     louder=false,
     subtitle="9",
-    duration=0.5,
+    duration=0.38,
   },
 }
 
@@ -492,75 +492,83 @@ AIRBOSS.LSOCall={
 -- @field #AIRBOSS.RadioSound N9 "Nine" call.
 -- @field #AIRBOSS.RadioSound N0 "Zero" call.
 AIRBOSS.MarshalCall={
+  RADIOCHECK={
+    file="MARSHAL-RadioCheck",
+    suffix="ogg",
+    louder=false,
+    subtitle="Marshal, radio check",
+    duration=1.0,
+  },
+-- TODO: Other voice overs for marshal.
   N0={
     file="LSO-N0",
     suffix="ogg",
     louder=false,
     subtitle="0",
-    duration=0.5,
+    duration=0.40,
   },
   N1={
     file="LSO-N1",
     suffix="ogg",
     louder=false,
     subtitle="1",
-    duration=0.3,
+    duration=0.25,
   },
   N2={
     file="LSO-N2",
     suffix="ogg",
     louder=false,
     subtitle="2",
-    duration=0.3,
+    duration=0.35,
   },
   N3={
     file="LSO-N3",
     suffix="ogg",
     louder=false,
     subtitle="3",
-    duration=0.4,
+    duration=0.37,
   },
   N4={
     file="LSO-N4",
     suffix="ogg",
     louder=false,
     subtitle="4",
-    duration=0.4,
+    duration=0.39,
   },
   N5={
     file="LSO-N5",
     suffix="ogg",
     louder=false,
     subtitle="5",
-    duration=0.4,
+    duration=0.38,
   },
   N6={
     file="LSO-N6",
     suffix="ogg",
     louder=false,
     subtitle="6",
-    duration=0.6,
+    duration=0.40,
   },
   N7={
     file="LSO-N7",
     suffix="ogg",
     louder=false,
     subtitle="7",
-    duration=0.6,
+    duration=0.40,
   },
   N8={
     file="LSO-N8",
     suffix="ogg",
     louder=false,
     subtitle="8",
-    duration=0.4,
+    duration=0.37,
   },
   N9={
     file="LSO-N9",
     suffix="ogg",
     louder=false,
     subtitle="9",
-    duration=0.5,
+    duration=0.38,
   },
 }
 
@@ -684,7 +692,7 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.4.5w"
+AIRBOSS.version="0.4.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -790,10 +798,10 @@ function AIRBOSS:New(carriername, alias)
   self:SetMaxLandingPattern(2)
   
   -- Set holding offset to 0 degrees.
-  self:SetHoldingOffsetAngle(45)
+  self:SetHoldingOffsetAngle(15)
 
   -- Default recovery case.
-  self:SetRecoveryCase(1)
+  self:SetRecoveryCase(3)
     
   -- CCA 50 NM radius zone around the carrier.
   self:SetCarrierControlledArea()
@@ -1192,8 +1200,8 @@ function AIRBOSS:onafterStart(From, Event, To)
   
   -- Schedule radio queue checks.
   -- TODO: id's to self to be able to stop the scheduler.
-  local RQLid=self.radiotimer:Schedule(self, self._CheckRadioQueue, {self.RQLSO, "LSO"}, 1, 0.1)
-  local RQMid=self.radiotimer:Schedule(self, self._CheckRadioQueue, {self.RQMarshal, "MARSHAL"}, 1, 0.1)
+  local RQLid=self.radiotimer:Schedule(self, self._CheckRadioQueue, {self.RQLSO,     "LSO"},     1, 0.01)
+  local RQMid=self.radiotimer:Schedule(self, self._CheckRadioQueue, {self.RQMarshal, "MARSHAL"}, 1, 0.01)
 
   -- Start status check in 1 second.
   self:__Status(1)
@@ -2807,9 +2815,8 @@ function AIRBOSS:OnEventBirth(EventData)
     
     -- Debug.    
     if self.Debug then
---      self:_Number2Sound(self.LSOradio, "0123456789", 10)
-      self:_Number2Sound(self.Carrierradio, "0123456789", 10)
-      --self:_MarkCase23Zones(_unit:GetName())
+      self:_Number2Sound(self.LSOradio,     "0123456789", 10)
+      self:_Number2Sound(self.Carrierradio, "0123456789", 30)
     end
     
   end 
@@ -3135,13 +3142,13 @@ function AIRBOSS:_Platform(playerData)
   
   -- Issue warning.
   if invalid and not playerData.warning then
-    self:MessageToPlayer(playerData, "You left the valid approach corridor!", "AIRBOSS")
+    self:MessageToPlayer(playerData, "You left the valid approach corridor!", "MARSHAL")
     playerData.warning=true  
   end
   
   -- Back in zone.
   if not invalid and playerData.warning then
-    self:MessageToPlayer(playerData, "You're back in the approach corridor. Now stay there!", "AIRBOSS")
+    self:MessageToPlayer(playerData, "You're back in the approach corridor. Now stay there!", "MARSHAL")
     playerData.warning=false
   end  
     
@@ -3200,13 +3207,13 @@ function AIRBOSS:_ArcInTurn(playerData)
   
   -- Issue warning.
   if invalid and not playerData.warning then
-    self:MessageToPlayer(playerData, "You left the valid approach corridor!", "AIRBOSS")
+    self:MessageToPlayer(playerData, "You left the valid approach corridor!", "MARSHAL")
     playerData.warning=true
   end
   
   -- Back in zone.
   if not invalid and playerData.warning then
-    self:MessageToPlayer(playerData, "You're back in the approach corridor. Now stay there!", "AIRBOSS")
+    self:MessageToPlayer(playerData, "You're back in the approach corridor. Now stay there!", "MARSHAL")
     playerData.warning=false
   end
   
@@ -3249,13 +3256,13 @@ function AIRBOSS:_ArcOutTurn(playerData)
   
   -- Issue warning.
   if invalid and not playerData.warning then
-    self:MessageToPlayer(playerData, "You left the valid approach corridor!", "AIRBOSS")
+    self:MessageToPlayer(playerData, "You left the valid approach corridor!", "MARHAL")
     playerData.warning=true
   end
 
   -- Back in zone.
   if not invalid and playerData.warning then
-    self:MessageToPlayer(playerData, "You're back in the approach corridor. Now stay there!", "AIRBOSS")
+    self:MessageToPlayer(playerData, "You're back in the approach corridor. Now stay there!", "MARSHAL")
     playerData.warning=false
   end
 
@@ -3308,13 +3315,13 @@ function AIRBOSS:_DirtyUp(playerData)
   
   -- Issue warning.
   if invalid and not playerData.warning then
-    self:MessageToPlayer(playerData, "You left the valid approach corridor!", "AIRBOSS")
+    self:MessageToPlayer(playerData, "You left the valid approach corridor!", "MARSHAL")
     playerData.warning=true
   end
 
   -- Back in zone.
   if not invalid and playerData.warning then
-    self:MessageToPlayer(playerData, "You're back in the approach corridor. Now stay there!", "AIRBOSS")
+    self:MessageToPlayer(playerData, "You're back in the approach corridor. Now stay there!", "MARSHAL")
     playerData.warning=false
   end
 
@@ -3362,13 +3369,13 @@ function AIRBOSS:_Bullseye(playerData)
   
   -- Issue warning.
   if invalid and not playerData.warning then
-    self:MessageToPlayer(playerData, "You left the valid approach corridor!", "AIRBOSS")
+    self:MessageToPlayer(playerData, "You left the valid approach corridor!", "MARSHAL")
     playerData.warning=true  
   end
   
   -- Back in zone.
   if not invalid and playerData.warning then
-    self:MessageToPlayer(playerData, "You're back in the approach corridor. Now stay there!", "AIRBOSS")
+    self:MessageToPlayer(playerData, "You're back in the approach corridor. Now stay there!", "MARHAL")
     playerData.warning=false
   end
 
@@ -3823,7 +3830,7 @@ function AIRBOSS:_Groove(playerData)
     -- Debug.
     local text=string.format("Groove IM=%d m", rho)
     MESSAGE:New(text, 5):ToAllIf(self.Debug)
-    self:I(self.lid..string.format("FF IM=%d", rho))
+    self:I(self.lid..text)
     
     -- Store data.
     playerData.groove.IM=groovedata    
@@ -4078,7 +4085,7 @@ function AIRBOSS:_GetZoneDirtyUp(case)
   -- Radius = 1 NM.
   local radius=UTILS.NMToMeters(1)
   
-  -- Distance = 19 NM
+  -- Distance = 9 NM
   local distance=UTILS.NMToMeters(9)
   
   -- Zone depends on Case recovery.
@@ -4173,8 +4180,10 @@ function AIRBOSS:_GetZoneArcIn(case)
   
   end
   
+  -- Angle between FB/BRC and holding zone.
   local alpha=math.rad(self.holdingoffset)
   
+  -- 12+x NM from carrier
   local x=12/math.cos(alpha)
   
   -- Distance = 14 NM
@@ -4198,10 +4207,7 @@ function AIRBOSS:_GetZonePlatform(case)
 
   -- Radius = 1 NM.
   local radius=UTILS.NMToMeters(1)
-  
-  -- Distance = 19 NM
-  local distance=UTILS.NMToMeters(19)
-  
+    
   -- Zone depends on Case recovery.
   local radial
   if case==2 then
@@ -4218,6 +4224,12 @@ function AIRBOSS:_GetZonePlatform(case)
     return nil
   
   end
+
+  -- Angle between FB/BRC and holding zone.
+  local alpha=math.rad(self.holdingoffset)
+
+  -- Distance = 19 NM
+  local distance=UTILS.NMToMeters(19)/math.cos(alpha)
   
   -- Get coordinate and vec2.
   local coord=self:GetCoordinate():Translate(distance, radial)
@@ -4251,58 +4263,66 @@ function AIRBOSS:_GetZoneCorridor(case)
     radial=self:GetRadialCase3(false, false)
     offset=self:GetRadialCase3(false, true)    
   end
-   
-  self:I(string.format("FF case %d radial = %d", case, radial))
-  self:I(string.format("FF case %d offset = %d", case, offset))
-  
-  -- Width of the box in NM.
-  local w=2
-  
-  -- Length of the box in NM.
-  local l=10
-  
+
   -- Angle between radial and offset in rad.
   local alpha=math.rad(self.holdingoffset)
+   
+  -- Width of the box in NM.
+  local w=2
+  local w2=w/2
   
-  -- Distance from carrier to arc zone.
+  -- Length of the box in NM.
+  local l=10/math.cos(alpha)
+    
+  -- Distance from carrier to arc out zone.
   local d=12
   
-  -- Distance from ArcIn to ArcOut zone
-  local y=d*math.tan(alpha)
+  -- Some math...
+  local y1=d-w2
+  local x1=y1*math.tan(alpha)
+  local y2=d+w2
+  local x2=y2*math.tan(alpha)  
+  local b=w2*(1/math.cos(alpha)-1)
   
-  -- Little extra bit along X.
-  local x=w/2*math.tan(alpha)
+  -- This is what we need.
+  local P=x1+b
+  local Q=x2-b
   
-  -- Get the extra bit we need to go back from the end to the arc turn in.
-  local C=w/math.cos(alpha)
-  local b=w*math.tan(alpha)
-  local a=C-b
+  -- Debug output.
+  self:I(string.format("FF case %d radial = %d", case, radial))
+  self:I(string.format("FF case %d offset = %d", case, offset))
+  self:I(string.format("FF w  = %.1f NM", w))
+  self:I(string.format("FF l  = %.1f NM", l))
+  self:I(string.format("FF d  = %.1f NM", d))
+  self:I(string.format("FF y1 = %.1f NM", y1))
+  self:I(string.format("FF x1 = %.1f NM", x1))
+  self:I(string.format("FF y2 = %.1f NM", y2))
+  self:I(string.format("FF x2 = %.1f NM", x2))
+  self:I(string.format("FF b  = %.1f NM", b))
+  self:I(string.format("FF P  = %.1f NM", P))
+  self:I(string.format("FF Q  = %.1f NM", Q))
 
-  local k=w/2/math.cos(alpha)
-
-  self:I(string.format("FF w = %.1f NM", w))
-  self:I(string.format("FF l = %.1f NM", l))
-  self:I(string.format("FF d = %.1f NM", d))
-  self:I(string.format("FF y = %.1f NM", y))
-  self:I(string.format("FF C = %.1f NM", C))
-  self:I(string.format("FF b = %.1f NM", b))
-  self:I(string.format("FF a = %.1f NM", a))
-  self:I(string.format("FF x = %.1f NM", x))
-  self:I(string.format("FF k = %.1f NM", k))
-    
-  -- TODO: Still not right!
-  -- TODO: Does this still work with alpha=0?e 
   local c={}
-  c[1]=self:GetCoordinate()                                     -- Carrier coordinate
-  c[2]=c[1]:Translate( UTILS.NMToMeters(w/2),     radial-90)    -- 1 Right of carrier CORRECT!
-  c[3]=c[2]:Translate( UTILS.NMToMeters(d+w/2),   radial)       -- 13 "south" @ 1 right
-  c[4]=c[3]:Translate( UTILS.NMToMeters(y+a/2),   radial+90)    -- y+x left @ 13 south  
-  c[5]=c[4]:Translate( UTILS.NMToMeters(l),       offset)       -- 10 NM to back wall (angled)
-  c[6]=c[5]:Translate( UTILS.NMToMeters(w),       offset+90)    -- Back wall (angled)
-  c[7]=c[6]:Translate(-UTILS.NMToMeters(l+a),     offset)       -- 10+a Back along X & Z
-  --c[8]=c[7]:Translate( UTILS.NMToMeters(y-a/2), radial-90)    -- y-x back along X  
-  c[9]=c[1]:Translate( UTILS.NMToMeters(w/2),     radial+90)    -- 1 left of carrier CORRECT!
-  c[8]=c[9]:Translate( UTILS.NMToMeters(d-w/2),   radial)       -- 1 left and 11 behind of carrier CORRECT!
+  c[1]=self:GetCoordinate() --Carrier coordinate
+  
+  if math.abs(self.holdingoffset)>1 then
+    -- Complicated case with an angle.
+    c[2]=c[1]:Translate( UTILS.NMToMeters(w2),     radial-90)     -- 1 Right of carrier CORRECT!  
+    c[3]=c[2]:Translate( UTILS.NMToMeters(d+w2),   radial)        -- 13 "south" @ 1 right
+    c[4]=c[3]:Translate( UTILS.NMToMeters(Q),      radial+90)     -- 
+    c[5]=c[4]:Translate( UTILS.NMToMeters(l),      offset)
+    c[6]=c[5]:Translate( UTILS.NMToMeters(w),      offset+90)     -- Back wall (angled)  
+    c[9]=c[1]:Translate( UTILS.NMToMeters(w2),     radial+90)     -- 1 left of carrier CORRECT!
+    c[8]=c[9]:Translate( UTILS.NMToMeters(d-w2),   radial)        -- 1 left and 11 behind of carrier CORRECT!
+    c[7]=c[8]:Translate( UTILS.NMToMeters(P),      radial+90)
+  else  
+    -- Easy case of a long box.
+    c[2]=c[1]:Translate( UTILS.NMToMeters(w2),       radial-90)
+    c[3]=c[2]:Translate( UTILS.NMToMeters(d+w2+l),   radial)
+    c[4]=c[3]:Translate( UTILS.NMToMeters(w),        radial+90)
+    c[5]=c[1]:Translate( UTILS.NMToMeters(w2),       radial+90)
+  end
+
   
   -- Create an array of a square!
   local p={}
@@ -4342,8 +4362,6 @@ function AIRBOSS:_GetZoneHolding(case, stack)
     -- CASE I
     
     -- Zone 2.5 NM port of carrier with a radius of 3 NM (holding pattern should be < 5 NM). 
-    --zoneHolding=ZONE_UNIT:New("CASE I Holding Zone", self.carrier, UTILS.NMToMeters(3), {dx=0, dy=-UTILS.NMToMeters(2.5), relative_to_unit=true})
-    
     local R=UTILS.MetersToNM(2.5)
     local coord=self:GetCoordinate():Translate(R, 270)
     
@@ -5139,7 +5157,7 @@ function AIRBOSS:_AbortPattern(playerData, X, Z, posData, patternwo)
   end
 
   -- Message to player.
-  self:MessageToPlayer(playerData, text, "AIRBOSS", nil, 20)
+  self:MessageToPlayer(playerData, text, "LSO", nil, 20)
 end
 
 
@@ -5464,7 +5482,7 @@ function AIRBOSS:_Debrief(playerData)
     self:_RemoveUnitFromFlight(playerData.unit)
   
     -- Message to player.
-    self:MessageToPlayer(playerData, string.format("Welcome aboard, %s!", playerData.name), "AIRBOSS", "", 10)
+    self:MessageToPlayer(playerData, string.format("Welcome aboard, %s!", playerData.name), "LSO", "", 10)
     
   else
 
@@ -5949,7 +5967,7 @@ function AIRBOSS:MessageToPlayer(playerData, message, sender, receiver, duration
     -- DONE: This will fail with message to all since for each player the message will be played!
     if receiver==playerData.onboard and not soundoff then
       if sender then
-        if sender=="LSO" or sender =="AIRBOSS" then
+        if sender=="LSO" then
           self:_Number2Sound(self.LSOradio, receiver, delay)
         elseif sender=="MARSHAL" then
           self:_Number2Sound(self.Carrierradio, receiver, delay)
@@ -5992,7 +6010,7 @@ function AIRBOSS:MessageToAll(message, sender, receiver, duration, clear, delay,
       -- Play receiver board number. Best we can do if no voice over for the whole message is there.
       if receiver==playerData.onboard and sender and playit and not soundoff then
         -- Check who is the sender.          
-        if sender=="LSO" or sender =="AIRBOSS" then
+        if sender=="LSO" then
           -- Sender is LSO or AIRBOSS ==> Broadcast on LSO radio.
           self:_Number2Sound(self.LSOradio, receiver, delay)
         elseif sender=="MARSHAL" then
@@ -6129,8 +6147,8 @@ function AIRBOSS:_AddF10Commands(_unitName)
         -- F10/Airboss/<Carrier>/Help/Mark Zones/
         missionCommands.addCommandForGroup(gid, "Smoke My Marshal Zone",      _markPath, self._MarkMarshalZone, self, _unitName, false)
         missionCommands.addCommandForGroup(gid, "Flare My Marshal Zone",      _markPath, self._MarkMarshalZone, self, _unitName, true)
-        missionCommands.addCommandForGroup(gid, "Smoke Pattern Zones",        _markPath, self._MarkCase23Zones, self, _unitName, false)
-        missionCommands.addCommandForGroup(gid, "Flare Pattern Zones",        _markPath, self._MarkCase23Zones, self, _unitName, true)
+        missionCommands.addCommandForGroup(gid, "Smoke Pattern Zones",        _markPath, self._MarkCaseZones, self,   _unitName, false)
+        missionCommands.addCommandForGroup(gid, "Flare Pattern Zones",        _markPath, self._MarkCaseZones, self,   _unitName, true)
         -- F10/Airboss/<Carrier>/Help/
         missionCommands.addCommandForGroup(gid, "Radio Check LSO",         _helpPath, self._LSORadioCheck,     self, _unitName)
         missionCommands.addCommandForGroup(gid, "Radio Check Marshal",     _helpPath, self._MarshalRadioCheck, self, _unitName)           
@@ -6928,37 +6946,46 @@ function AIRBOSS:_MarkMarshalZone(_unitName, flare)
     
     if playerData then
     
-      -- Get current holding zone.
-      local zone=self:_GetZoneHolding(playerData.case, playerData.flag:Get())
+      -- Get player stack and recovery case.
+      local stack=playerData.flag:Get()
+      local case=playerData.case
       
-      local text="No marshal zone to smoke!"
-      if zone then
-      
-        --TODO: Add height!
-      
+      local text=""
+      if stack>0 then
+    
+        -- Get current holding zone.
+        local zone=self:_GetZoneHolding(case, stack)
+        
+        -- Pattern alitude.
+        local patternalt=self:_GetMarshalAltitude(stack, case)
+        
+        patternalt=0
+        
         if flare then
           text="Marking marshal zone with WHITE flares."
-          zone:FlareZone(FLARECOLOR.White, 45)        
+          zone:FlareZone(FLARECOLOR.White, 45, nil, patternalt)
         else
           text="Marking marshal zone with WHITE smoke."
-          zone:SmokeZone(SMOKECOLOR.White, 45)
+          zone:SmokeZone(SMOKECOLOR.White, 45, patternalt)
         end
         
+      else
+        text="You are currently not in a marshal stack. No zone to mark!"
       end
       
       -- Send message to player.
-      self:MessageToPlayer(playerData, text, "MARSHAL", "", 10)
+      self:MessageToPlayer(playerData, text, "MARSHAL")
     end
   end
   
 end
 
 
---- Mark current marshal zone of player by either smoke or flares.
+--- Mark CASE I or II/II zones by either smoke or flares.
 -- @param #AIRBOSS self
 -- @param #string _unitName Name of the player unit.
 -- @param #boolean flare If true, flare the zone. If false, smoke the zone.
-function AIRBOSS:_MarkCase23Zones(_unitName, flare)
+function AIRBOSS:_MarkCaseZones(_unitName, flare)
 
   -- Get player unit and name.
   local _unit, _playername = self:_GetPlayerUnitAndName(_unitName)
@@ -6973,10 +7000,9 @@ function AIRBOSS:_MarkCase23Zones(_unitName, flare)
       local case=playerData.case
       
       -- Initial 
-      local text=string.format("Marking CASE %d zone:\n", case)
+      local text=string.format("Marking CASE %d zones\n", case)
       
-      --TODO: Add height - at least in some cases?
-      
+      -- Flare or smoke?
       if flare then
 
         -- Case I/II: Initial
@@ -7052,12 +7078,11 @@ function AIRBOSS:_MarkCase23Zones(_unitName, flare)
       end
       
       -- Send message to player.
-      self:MessageToPlayer(playerData, text, "AIRBOSS", "", 10)
+      self:MessageToPlayer(playerData, text, "MARSHAL")
     end
   end
   
 end
-
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
