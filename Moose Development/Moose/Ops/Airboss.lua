@@ -694,7 +694,7 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.4.7"
+AIRBOSS.version="0.4.8"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -3855,7 +3855,7 @@ function AIRBOSS:_Groove(playerData)
       playerData.groove.IC=groovedata
       
       -- Check if player should wave off.
-      local waveoff=self:_CheckWaveOff(glideslopeError, lineupError, AoA, playerData.difficulty)
+      local waveoff=self:_CheckWaveOff(glideslopeError, lineupError, AoA, playerData)
       
       -- Let's see..
       if waveoff then
@@ -3946,7 +3946,7 @@ function AIRBOSS:_CheckWaveOff(glideslopeError, lineupError, AoA, playerData)
     self:I(self.lid..string.format("%s: Wave off due to glide slope error %.1f > 1 degree!", playerData.name, glideslopeError))
     waveoff=true
   end
-  
+
   -- Too far from centerline?
   if math.abs(lineupError)>3 then
     self:I(self.lid..string.format("%s: Wave off due to line up error %.1f > 3 degrees!", playerData.name, lineupError))
