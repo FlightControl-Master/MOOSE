@@ -125,7 +125,7 @@
 -- @field #AIRBOSS
 AIRBOSS = {
   ClassName     = "AIRBOSS",
-  Debug         = true,
+  Debug         = false,
   lid           = nil,
   carrier       = nil,
   carriertype   = nil,
@@ -320,12 +320,14 @@ AIRBOSS.LSOCall={
   },
   HIGH={
     file="LSO-High",
+    suffix="ogg",
     loud=true,
     subtitle="You're high",
     duration=0.65,
   },
   LOW={
     file="LSO-Low",
+    suffix="ogg",
     loud=true,
     subtitle="You're low",
     duration=0.50,
@@ -426,7 +428,7 @@ AIRBOSS.LSOCall={
     suffix="ogg",
     louder=false,
     subtitle="2",
-    duration=0.35,
+    duration=0.37,
   },
   N3={
     file="LSO-N3",
@@ -519,7 +521,7 @@ AIRBOSS.MarshalCall={
     suffix="ogg",
     louder=false,
     subtitle="2",
-    duration=0.35,
+    duration=0.37,
   },
   N3={
     file="LSO-N3",
@@ -692,7 +694,7 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.4.6"
+AIRBOSS.version="0.4.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -801,7 +803,7 @@ function AIRBOSS:New(carriername, alias)
   self:SetHoldingOffsetAngle(15)
 
   -- Default recovery case.
-  self:SetRecoveryCase(3)
+  self:SetRecoveryCase(1)
     
   -- CCA 50 NM radius zone around the carrier.
   self:SetCarrierControlledArea()
@@ -2816,7 +2818,7 @@ function AIRBOSS:OnEventBirth(EventData)
     -- Debug.    
     if self.Debug then
       self:_Number2Sound(self.LSOradio,     "0123456789", 10)
-      self:_Number2Sound(self.Carrierradio, "0123456789", 30)
+      self:_Number2Sound(self.Carrierradio, "0123456789", 20)
     end
     
   end 
@@ -5914,7 +5916,7 @@ function AIRBOSS:RadioTransmit(radio, call, loud, delay)
         subtitle=subtitle.."."
       end
     end
-    filename=filename.."."..call.suffix
+    filename=filename.."."..(call.suffix or "ogg")
       
     -- New transmission.
     radio:NewUnitTransmission(filename, call.subtitle, call.duration, radio.Frequency/1000000, radio.Modulation, false)
