@@ -15,7 +15,7 @@
 --    * F10 radio menu including carrier info (weather, radio frequencies, TACAN/ICLS channels), player LSO grades, help function (player aircraft attitude, marking of pattern zones etc).
 --    * Recovery tanker and refueling option via integration of @{#Ops.RecoveryTanker} class.
 --    * Rescue helo option via  @{#Ops.RescueHelo} class.
---    * Multiple carriers supported (due to object oriented approach).
+--    * Multiple carrier support (due to object oriented approach).
 --
 -- **PLEASE NOTE** that his class is work in progress and in an **alpha** stage and very much work in progress.
 -- 
@@ -67,9 +67,9 @@
 -- @field #AIRBOSS.Checkpoint BreakLate Late brak checkpoint.
 -- @field #AIRBOSS.Checkpoint Abeam Abeam checkpoint.
 -- @field #AIRBOSS.Checkpoint Ninety At the ninety checkpoint.
--- @field #AIRBOSS.Checkpoint Wake Right behind the carrier.
+-- @field #AIRBOSS.Checkpoint Wake Checkpoint right behind the carrier.
+-- @field #AIRBOSS.Checkpoint Final Checkpoint when turning to final.
 -- @field #AIRBOSS.Checkpoint Groove In the groove checkpoint.
--- @field #AIRBOSS.Checkpoint Trap Landing checkpoint.
 -- @field #AIRBOSS.Checkpoint Platform Case II/III descent at 2000 ft/min at 5000 ft platform.
 -- @field #AIRBOSS.Checkpoint DirtyUp Case II/III dirty up and on speed position at 1200 ft and 10-12 NM from the carrier.
 -- @field #AIRBOSS.Checkpoint Bullseye Case III intercept glideslope and follow ICLS aka "bullseye".
@@ -158,8 +158,8 @@ AIRBOSS = {
   BreakLate     =  {},
   Ninety        =  {},
   Wake          =  {},
+  Final         =  {},  
   Groove        =  {},
-  Trap          =  {},
   Platform      =  {},
   DirtyUp       =  {},
   Bullseye      =  {},
@@ -380,7 +380,7 @@ AIRBOSS.LSOCall={
     duration=1.0,
   },
   LONGINGROOVE={
-    file="LSO-LonInTheGroove",
+    file="LSO-LongInTheGroove",
     suffix="ogg",
     louder=false,
     subtitle="You're long in the groove",
@@ -684,7 +684,7 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.4.5"
+AIRBOSS.version="0.4.5w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1233,7 +1233,6 @@ function AIRBOSS:onafterStatus(From, Event, To)
   self:_CheckPlayerStatus()
 
   -- Call status every 0.5 seconds.
-  -- TODO: make dt user input.
   self:__Status(-0.5)
 end
 
@@ -1402,9 +1401,8 @@ function AIRBOSS:_InitStennis()
   self.Platform.Xmax =nil
   self.Platform.Zmin=-UTILS.NMToMeters(30)  -- Not more than 30 NM port of boat.
   self.Platform.Zmax= UTILS.NMToMeters(30)  -- Not more than 30 NM starboard of boat.
-  self.Platform.LimitXmin=nil
-  --TODO: better rho dist! now switch to dirty up level flight 12 NM.
-  self.Platform.LimitXmax=-UTILS.NMToMeters(20) -- Check and next step when 20 NM behind the boat.
+  self.Platform.LimitXmin=nil               -- Limits via zone
+  self.Platform.LimitXmax=nil
   self.Platform.LimitZmin=nil
   self.Platform.LimitZmax=nil 
   
@@ -1414,9 +1412,8 @@ function AIRBOSS:_InitStennis()
   self.DirtyUp.Xmax= nil
   self.DirtyUp.Zmin=-UTILS.NMToMeters(30)        -- Not more than 30 NM port of boat.
   self.DirtyUp.Zmax= UTILS.NMToMeters(30)        -- Not more than 30 NM starboard of boat.
-  self.DirtyUp.LimitXmin=nil
-  --TODO: better rho dist! Intercept glideslope and follow bullseye.
-  self.DirtyUp.LimitXmax=-UTILS.NMToMeters(10)   -- Check and next step at 10 NM behind the boat.
+  self.DirtyUp.LimitXmin=nil                     -- Limits via zone
+  self.DirtyUp.LimitXmax=nil
   self.DirtyUp.LimitZmin=nil
   self.DirtyUp.LimitZmax=nil 
   
@@ -1426,9 +1423,8 @@ function AIRBOSS:_InitStennis()
   self.Bullseye.Xmax= nil
   self.Bullseye.Zmin=-UTILS.NMToMeters(30)       -- Not more than 30 NM port.
   self.Bullseye.Zmax= UTILS.NMToMeters(30)       -- Not more than 30 NM starboard.
-  self.Bullseye.LimitXmin=nil
-  --TODO: better rho dist! Call the ball.
-  self.Bullseye.LimitXmax=-UTILS.NMToMeters(3)   -- Check and next step 3 NM behind the boat.
+  self.Bullseye.LimitXmin=nil                    -- Limits via zone.
+  self.Bullseye.LimitXmax=nil
   self.Bullseye.LimitZmin=nil
   self.Bullseye.LimitZmax=nil
  
@@ -1498,29 +1494,27 @@ function AIRBOSS:_InitStennis()
   self.Wake.LimitZmin=0                         -- Check and next step when directly behind the boat.
   self.Wake.LimitZmax=nil
 
-  -- TODO: rename to final
   -- Turn to final.
+  self.Final.name="Final"
+  self.Final.Xmin=-UTILS.NMToMeters(4)           -- Not more than 4 NM behind the boat.
+  self.Final.Xmax= 0                             -- Must be behind the boat.
+  self.Final.Zmin=-1000                          -- Not more than 1 km port.
+  self.Final.Zmax= nil
+  self.Final.LimitXmin=nil                       -- No limits. Check is carried out differently.
+  self.Final.LimitXmax=nil
+  self.Final.LimitZmin=nil
+  self.Final.LimitZmax=nil
+  
+  -- In the Groove.
   self.Groove.name="Groove"
   self.Groove.Xmin=-UTILS.NMToMeters(4)           -- Not more than 4 NM behind the boat.
-  self.Groove.Xmax= 0                             -- Must be behind the boat.
-  self.Groove.Zmin=-1000                          -- Not more than 1 km port.
-  self.Groove.Zmax= nil
+  self.Groove.Xmax= nil
+  self.Groove.Zmin=-UTILS.NMToMeters(2)           -- Not more than 2 NM port
+  self.Groove.Zmax= UTILS.NMToMeters(2)           -- Not more than 2 NM starboard.
   self.Groove.LimitXmin=nil                       -- No limits. Check is carried out differently.
   self.Groove.LimitXmax=nil
   self.Groove.LimitZmin=nil
   self.Groove.LimitZmax=nil
-  
-  -- TODO rename to groove
-  -- In the Groove.
-  self.Trap.name="Trap"
-  self.Trap.Xmin=-UTILS.NMToMeters(4)           -- Not more than 4 NM behind the boat.
-  self.Trap.Xmax= nil
-  self.Trap.Zmin=-UTILS.NMToMeters(2)           -- Not more than 2 NM port
-  self.Trap.Zmax= UTILS.NMToMeters(2)           -- Not more than 2 NM starboard.
-  self.Trap.LimitXmin=nil                       -- No limits. Check is carried out differently.
-  self.Trap.LimitXmax=nil
-  self.Trap.LimitZmin=nil
-  self.Trap.LimitZmax=nil
 
 end
 
@@ -3328,7 +3322,6 @@ function AIRBOSS:_DirtyUp(playerData)
   -- Check if we are inside the moving zone.
   local inzone=playerData.unit:IsInZone(self:_GetZoneDirtyUp(playerData.case))  
   
-  --if self:_CheckLimits(X, Z, self.DirtyUp) then
   if inzone then
     
     -- Debug message.
@@ -3689,8 +3682,8 @@ function AIRBOSS:_Final(playerData)
   local X, Z, rho, phi = self:_GetDistances(playerData.unit)
 
   -- In front of carrier or more than 4 km behind carrier. 
-  if self:_CheckAbort(X, Z, self.Groove) then
-    self:_AbortPattern(playerData, X, Z, self.Groove, true)
+  if self:_CheckAbort(X, Z, self.Final) then
+    self:_AbortPattern(playerData, X, Z, self.Final, true)
     return
   end
    
@@ -3763,8 +3756,8 @@ function AIRBOSS:_Groove(playerData)
   local player=playerData.unit:GetGroup()
 
   -- Check abort conditions.
-  if self:_CheckAbort(X, Z, self.Trap) then
-    self:_AbortPattern(playerData, X, Z, self.Trap, true)
+  if self:_CheckAbort(X, Z, self.Groove) then
+    self:_AbortPattern(playerData, X, Z, self.Groove, true)
     return
   end
 
@@ -3802,7 +3795,7 @@ function AIRBOSS:_Groove(playerData)
     
     -- Pilot "405, Hornet Ball, 3.2"
     -- TODO: Pilot output should come from pilot in MP.
-    local text=string.format("Hornet Ball, %.1f", self:_GetFuelState(playerData.unit))
+    local text=string.format("Hornet Ball, %.1f", self:_GetFuelState(playerData.unit)/1000)
     self:MessageToPlayer(playerData, text, playerData.onboard, "", 3, false, 3)
             
     -- Store data.
@@ -3932,29 +3925,35 @@ end
 -- @param #number glideslopeError Glide slope error in degrees.
 -- @param #number lineupError Line up error in degrees.
 -- @param #number AoA Angle of attack of player aircraft.
--- @param #string diffifulty Difficulty setting of player.
+-- @param #AIRBOSS.PlayerData playerData Player data.
 -- @return #boolean If true, player should wave off!
-function AIRBOSS:_CheckWaveOff(glideslopeError, lineupError, AoA, difficulty)
+function AIRBOSS:_CheckWaveOff(glideslopeError, lineupError, AoA, playerData)
 
+  -- Assume we're all good.
   local waveoff=false
   
   -- Too high or too low?
   if math.abs(glideslopeError)>1 then
-    self:I(self.lid..string.format("Wave off due to glide slope error %.1f > 1 degree!", glideslopeError))
+    self:I(self.lid..string.format("%s: Wave off due to glide slope error %.1f > 1 degree!", playerData.name, glideslopeError))
     waveoff=true
   end
   
   -- Too far from centerline?
   if math.abs(lineupError)>3 then
-    self:I(self.lid..string.format("Wave off due to line up error %.1f > 3 degrees!", lineupError))
+    self:I(self.lid..string.format("%s: Wave off due to line up error %.1f > 3 degrees!", playerData.name, lineupError))
     waveoff=true
   end
   
-  -- Too slow or too fast?
-  --TODO: Get aircraft dependent values. Needs playerData!
-  if AoA<6.9 or AoA>9.3 then
-    if difficulty==AIRBOSS.Difficulty.HARD then
-      self:I(self.lid.."Wave off due to AoA<6.9 or AoA>9.3!")
+  -- Too slow or too fast? Only for pros.
+  if playerData.difficulty==AIRBOSS.Difficulty.HARD then
+    -- Get aircraft specific AoA values
+    local aoaac=self:_GetAircraftAoA(playerData)    
+    -- Check too slow or too fast. 
+    if AoA<aoaac.Fast then
+      self:I(self.lid..string.format("%s: Wave off due to AoA %.1f < %.1f!", playerData.name, AoA, aoaac.Fast))
+      waveoff=true
+    elseif AoA>aoaac.Slow then
+      self:I(self.lid..string.format("%s: Wave off due to AoA %.1f > %.1f!", playerData.name, AoA, aoaac.Slow))
       waveoff=true
     end
   end
@@ -5937,6 +5936,7 @@ function AIRBOSS:MessageToPlayer(playerData, message, sender, receiver, duration
     -- Format message.          
     local text
     if receiver and receiver=="" then
+      -- No (blank) receiver.
       text=string.format("%s", message)      
     else
       -- Default "receiver" is onboard number of player.
@@ -5945,7 +5945,7 @@ function AIRBOSS:MessageToPlayer(playerData, message, sender, receiver, duration
     end
     self:I(self.lid..text)
     
-    -- TODO: Test! Need to make this better!.
+    -- Send onboard number so that player is alerted about the text message.
     -- DONE: This will fail with message to all since for each player the message will be played!
     if receiver==playerData.onboard and not soundoff then
       if sender then
@@ -5990,13 +5990,14 @@ function AIRBOSS:MessageToAll(message, sender, receiver, duration, clear, delay,
     if playerData.unit:IsInZone(self.zoneCCA) then
     
       -- Play receiver board number. Best we can do if no voice over for the whole message is there.
-      if receiver==playerData.onboard and playit and not soundoff then
-        if sender then
-          if sender=="LSO" or sender =="AIRBOSS" then
-            self:_Number2Sound(self.LSOradio, receiver, delay)
-          elseif sender=="MARSHAL" then
-            self:_Number2Sound(self.Carrierradio, receiver, delay)
-          end
+      if receiver==playerData.onboard and sender and playit and not soundoff then
+        -- Check who is the sender.          
+        if sender=="LSO" or sender =="AIRBOSS" then
+          -- Sender is LSO or AIRBOSS ==> Broadcast on LSO radio.
+          self:_Number2Sound(self.LSOradio, receiver, delay)
+        elseif sender=="MARSHAL" then
+          -- Sender is MARSHAL ==> Broadcast on MARSHAL radio.
+          self:_Number2Sound(self.Carrierradio, receiver, delay)
         end
         playit=false  -- Play only once, in case two have the same flight number.
       end    
@@ -6236,9 +6237,8 @@ function AIRBOSS:_MarshalRadioCheck(_unitName)
   if _unit and _playername then
     local playerData=self.players[_playername] --#AIRBOSS.PlayerData        
     if playerData then    
-      -- Broadcase LSO radio check message on LSO radio.
-      -- TODO: Replace LSO message by marshal message.
-      self:RadioTransmission(self.Carrierradio, AIRBOSS.LSOCall.RADIOCHECK)
+      -- Broadcase Marshal radio check message on Marshal radio.
+      self:RadioTransmission(self.Carrierradio, AIRBOSS.MarshalCall.RADIOCHECK)
     end
   end
 end
@@ -6373,7 +6373,6 @@ function AIRBOSS:_RequestCommence(_unitName)
       else
         -- This flight is not yet registered!
         text="Negative ghostrider, you are not inside the CCA yet!"
-        -- TODO: fly 10 km towards the carrier advice for skill "Flight Student"
       end
       
       -- Debug
@@ -6465,42 +6464,48 @@ function AIRBOSS:_SetSection(_unitName)
       -- Coordinate of flight lead.
       local mycoord=_unit:GetCoordinate()
       
-      -- TODO: Only allow set section, if player is not in marshal stack yet.
-      
-      -- Loop over all registered flights.
-      for _,_flight in pairs(self.flights) do
-        local flight=_flight --#AIRBOSS.Flightitem
-        
-        -- Only human flight groups excluding myself.
-        if flight.ai==false and flight.groupname~=playerData.groupname then
-        
-          -- Distance to other group.
-          local distance=flight.group:GetCoordinate():Get2DDistance(mycoord)
-          
-          if distance<200 then
-            table.insert(playerData.section, flight)
-          end
-          
-        end
-      end
-        
-      -- Info on section members.
+      -- Check if player is in Marshal or pattern queue already.
       local text      
-      if #playerData.section>0 then
-        text=string.format("Registered flight section:")
-        text=text..string.format("- %s (lead)", playerData.name)
-        for _,_flight in paris(playerData.section) do
-          local flight=_flight --#AIRBOSS.PlayerData
-          text=text..string.format("- %s", flight.name)
-          flight.seclead=playerData.name
-          
-          -- Inform player that he is now part of a section.
-          self:MessageToPlayer(flight, string.format("Your section lead is now %s.", playerData.name), "MARSHAL")
-        end
+      if self:_InQueue(self.Qmarshal,playerData.group) then
+        text=string.format("You are already in the Marshal queue. Setting section no possible any more!")
+      elseif self:_InQueue(self.Qpattern, playerData.group) then
+        text=string.format("You are already in the Pattern queue. Setting section no possible any more!")
       else
-        text="No other human flights found within radius of 200 meters!"
+      
+        -- Loop over all registered flights.
+        for _,_flight in pairs(self.flights) do
+          local flight=_flight --#AIRBOSS.Flightitem
+          
+          -- Only human flight groups excluding myself.
+          if flight.ai==false and flight.groupname~=playerData.groupname then
+          
+            -- Distance to other group.
+            local distance=flight.group:GetCoordinate():Get2DDistance(mycoord)
+            
+            if distance<200 then
+              table.insert(playerData.section, flight)
+            end
+            
+          end
+        end
+          
+        -- Info on section members.
+        if #playerData.section>0 then
+          text=string.format("Registered flight section:")
+          text=text..string.format("- %s (lead)", playerData.name)
+          for _,_flight in paris(playerData.section) do
+            local flight=_flight --#AIRBOSS.PlayerData
+            text=text..string.format("- %s", flight.name)
+            flight.seclead=playerData.name
+            
+            -- Inform player that he is now part of a section.
+            self:MessageToPlayer(flight, string.format("Your section lead is now %s.", playerData.name), "MARSHAL")
+          end
+        else
+          text="No other human flights found within radius of 200 meters!"
+        end
       end
-
+      
       -- Message to section lead.
       self:MessageToPlayer(playerData, text, "MARSHAL")
     end
@@ -6757,7 +6762,7 @@ function AIRBOSS:_DisplayCarrierInfo(_unitname)
       text=text..string.format("BRC %03d°\n", self:GetBRC())
       text=text..string.format("FB %03d°\n", self:GetFinalBearing(true))           
       text=text..string.format("Speed %d kts\n", carrierspeed)
-      text=text..string.format("Airboss radio %.3f MHz\n", self.Carrierfreq) --TODO: add modulation
+      text=text..string.format("Marshal radio %.3f MHz\n", self.Carrierfreq) --TODO: add modulation
       text=text..string.format("LSO radio %.3f MHz\n", self.LSOfreq)
       text=text..string.format("TACAN Channel %s\n", tacan)
       text=text..string.format("ICLS Channel %s\n", icls)
@@ -6942,7 +6947,7 @@ function AIRBOSS:_MarkMarshalZone(_unitName, flare)
       end
       
       -- Send message to player.
-      self:MessageToPlayer(playerData, text, "AIRBOSS", "", 10)
+      self:MessageToPlayer(playerData, text, "MARSHAL", "", 10)
     end
   end
   
