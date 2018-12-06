@@ -294,7 +294,7 @@ AIRBOSS.PatternStep={
 -- @field #AIRBOSS.RadioCall PADDLESCONTACT "Paddles, contact" call.
 -- @field #AIRBOSS.RadioCall CALLTHEBALL "Call the Ball" 
 -- @field #AIRBOSS.RadioCall ROGERBALL "Roger ball" call.
--- @field #AIRBOSS.RadioCall WAVEOFF "Wafe off" call
+-- @field #AIRBOSS.RadioCall WAVEOFF "Wave off" call
 -- @field #AIRBOSS.RadioCall BOLTER "Bolter, Bolter" call
 -- @field #AIRBOSS.RadioCall LONGINGROOVE "You're long in the groove. Depart and re-enter." call.
 -- @field #AIRBOSS.RadioCall DEPARTANDREENTER "Depart and re-enter" call.
@@ -312,7 +312,7 @@ AIRBOSS.LSOCall={
   RADIOCHECK={
     file="LSO-RadioCheck",
     suffix="ogg",
-    louder=false,
+    loud=false,
     subtitle="Paddles, radio check",
     duration=1.1,
   },
@@ -349,7 +349,7 @@ AIRBOSS.LSOCall={
     suffix="ogg",    
     loud=true,
     subtitle="Power",
-    duration=0.45,
+    duration=0.50,  --0.45 was too short
   },
   SLOW={
     file="LSO-Slow",
@@ -368,121 +368,121 @@ AIRBOSS.LSOCall={
   CALLTHEBALL={
     file="LSO-CallTheBall",
     suffix="ogg",    
-    louder=false,
+    loud=false,
     subtitle="Call the ball",
     duration=0.6,
   },
   ROGERBALL={
     file="LSO-RogerBall",
     suffix="ogg",    
-    louder=false,    
+    loud=false,    
     subtitle="Roger ball",
     duration=0.7,
   },  
   WAVEOFF={
     file="LSO-WaveOff",
     suffix="ogg",
-    louder=false,
+    loud=false,
     subtitle="Wave off",
     duration=0.6,
   },  
   BOLTER={
     file="LSO-BolterBolter",
     suffix="ogg",
-    louder=false,
-    subtitle="Bolter, Bolter!",
+    loud=false,
+    subtitle="Bolter, Bolter",
     duration=0.75,
   },
   LONGINGROOVE={
     file="LSO-LongInTheGroove",
     suffix="ogg",
-    louder=false,
+    loud=false,
     subtitle="You're long in the groove",
     duration=1.2,
   },
   DEPARTANDREENTER={
     file="LSO-DepartAndReenter",
     suffix="ogg",
-    louder=false,
+    loud=false,
     subtitle="Depart and re-enter",
     duration=1.1,
   },
   PADDLESCONTACT={
     file="LSO-PaddlesContact",
     suffix="ogg",
-    louder=false,
+    loud=false,
     subtitle="Paddles, contact",
     duration=1.0,
   },
   N0={
     file="LSO-N0",
     suffix="ogg",
-    louder=false,
-    subtitle="0",
+    loud=false,
+    subtitle="",
     duration=0.40,
   },
   N1={
     file="LSO-N1",
     suffix="ogg",
-    louder=false,
-    subtitle="1",
+    loud=false,
+    subtitle="",
     duration=0.25,
   },
   N2={
     file="LSO-N2",
     suffix="ogg",
-    louder=false,
-    subtitle="2",
+    loud=false,
+    subtitle="",
     duration=0.37,
   },
   N3={
     file="LSO-N3",
     suffix="ogg",
-    louder=false,
-    subtitle="3",
+    loud=false,
+    subtitle="",
     duration=0.37,
   },
   N4={
     file="LSO-N4",
     suffix="ogg",
-    louder=false,
-    subtitle="4",
+    loud=false,
+    subtitle="",
     duration=0.39,
   },
   N5={
     file="LSO-N5",
     suffix="ogg",
-    louder=false,
-    subtitle="5",
+    loud=false,
+    subtitle="",
     duration=0.38,
   },
   N6={
     file="LSO-N6",
     suffix="ogg",
-    louder=false,
-    subtitle="6",
+    loud=false,
+    subtitle="",
     duration=0.40,
   },
   N7={
     file="LSO-N7",
     suffix="ogg",
-    louder=false,
-    subtitle="7",
+    loud=false,
+    subtitle="",
     duration=0.40,
   },
   N8={
     file="LSO-N8",
     suffix="ogg",
-    louder=false,
-    subtitle="8",
+    loud=false,
+    subtitle="",
     duration=0.37,
   },
   N9={
     file="LSO-N9",
     suffix="ogg",
-    louder=false,
-    subtitle="9",
-    duration=0.38,
+    loud=false,
+    subtitle="",
+    duration=0.40,  --0.38 too short
   },
 }
 
@@ -503,7 +503,7 @@ AIRBOSS.MarshalCall={
   RADIOCHECK={
     file="MARSHAL-RadioCheck",
     suffix="ogg",
-    louder=false,
+    loud=false,
     subtitle="Marshal, radio check",
     duration=1.0,
   },
@@ -511,72 +511,72 @@ AIRBOSS.MarshalCall={
   N0={
     file="LSO-N0",
     suffix="ogg",
-    louder=false,
+    loud=false,
     subtitle="0",
     duration=0.40,
   },
   N1={
     file="LSO-N1",
     suffix="ogg",
-    louder=false,
+    loud=false,
     subtitle="1",
     duration=0.25,
   },
   N2={
     file="LSO-N2",
     suffix="ogg",
-    louder=false,
+    loud=false,
     subtitle="2",
     duration=0.37,
   },
   N3={
     file="LSO-N3",
     suffix="ogg",
-    louder=false,
+    loud=false,
     subtitle="3",
     duration=0.37,
   },
   N4={
     file="LSO-N4",
     suffix="ogg",
-    louder=false,
+    loud=false,
     subtitle="4",
     duration=0.39,
   },
   N5={
     file="LSO-N5",
     suffix="ogg",
-    louder=false,
+    loud=false,
     subtitle="5",
     duration=0.38,
   },
   N6={
     file="LSO-N6",
     suffix="ogg",
-    louder=false,
+    loud=false,
     subtitle="6",
     duration=0.40,
   },
   N7={
     file="LSO-N7",
     suffix="ogg",
-    louder=false,
+    loud=false,
     subtitle="7",
     duration=0.40,
   },
   N8={
     file="LSO-N8",
     suffix="ogg",
-    louder=false,
+    loud=false,
     subtitle="8",
     duration=0.37,
   },
   N9={
     file="LSO-N9",
     suffix="ogg",
-    louder=false,
+    loud=false,
     subtitle="9",
-    duration=0.38,
+    duration=0.40,  --0.38 too short
   },
 }
 
@@ -696,7 +696,7 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.4.8w"
+AIRBOSS.version="0.4.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -708,12 +708,12 @@ AIRBOSS.version="0.4.8w"
 -- TODO: Option to turn AI handling off.
 -- TODO: Check distance to players during approach. PWO if too close.
 -- TODO: Spin pattern. Add radio menu entry. Not sure what to add though?!
--- DONE: Add radio check (LSO, AIRBOSS) to F10 radio menu.
 -- TODO: Add user functions.
 -- TODO: Generalize parameters for other carriers.
 -- TODO: Generalize parameters for other aircraft.
 -- TODO: Foul deck check.
 -- TODO: Persistence of results.
+-- DONE: Add radio check (LSO, AIRBOSS) to F10 radio menu.
 -- DONE: Right pattern step after bolter/wo/patternWO? Guess so.
 -- DONE: Set case II and III times (via recovery time).
 -- DONE: Get correct wire when trapped. DONE but might need further tweaking.
@@ -843,23 +843,39 @@ function AIRBOSS:New(carriername, alias)
     self:_GetZonePlatform(case):SmokeZone(SMOKECOLOR.Red, 45)
     self:_GetZoneCorridor(case):SmokeZone(SMOKECOLOR.Green, 45)
   end
-  
---[[  
+
+  -- If calls should be part of self and individual for different carriers.  
+  --[[  
   -- Init default sound files.
   for _name,_sound in pairs(AIRBOSS.LSOCall) do
     local sound=_sound --#AIRBOSS.RadioCall
     local text=string.format()
     sound.subtitle=1
-    sound.louder=1
+    sound.loud=1
     --self.radiocall[_name]=sound
   end
+  ]]
   
   -- Debug:
-  self:T(self.lid.."Default sound files:")
-  for _name,_sound in pairs(self.radiocall) do
-    self:T{name=_name,sound=_sound}
+  if false then
+    local text="Playing default sound files:"
+    for _name,_call in pairs(AIRBOSS.LSOCall) do
+      local call=_call --#AIRBOSS.RadioCall
+      
+      -- Debug text.
+      text=text..string.format("\nFile=%s.%s, duration=%.2f sec, loud=%s, subtitle=\"%s\".", call.file, call.suffix, call.duration, tostring(call.loud), call.subtitle)
+      
+      -- Radio transmission to queue.
+      self:RadioTransmission(self.LSOradio, call, false, 10)
+      
+      -- Also play the loud version.
+      if call.loud then
+        self:RadioTransmission(self.LSOradio, call, true, 10)
+      end
+    end
+    self:I(self.lid..text)
   end
-]]
+
   
   -----------------------
   --- FSM Transitions ---
@@ -5875,7 +5891,8 @@ end
 -- @field #number prio Priority 0-100.
 -- @field #boolean isplaying Currently playing.
 -- @field Core.Beacon#RADIO radio Radio object.
--- @field #AIRBOSS.RadioCall call Radio sound.
+-- @field #AIRBOSS.RadioCall call Radio call.
+-- @field #boolean loud If true, play loud version of file.
 
 --- Check radio queue for transmissions to be broadcasted.
 -- @param #AIRBOSS self
@@ -5975,6 +5992,7 @@ function AIRBOSS:RadioTransmission(radio, call, loud, delay)
   transmission.prio=50
   transmission.isplaying=false
   transmission.Tstarted=nil
+  transmission.loud=loud and call.loud
   
   -- Add transmission to the right queue.
   if radio:GetAlias()=="LSO" then

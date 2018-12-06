@@ -48,12 +48,12 @@ BIGSMOKEPRESET = {
 -- @field #string Caucasus Caucasus map.
 -- @field #string Normandy Normandy map.
 -- @field #string NTTR Nevada Test and Training Range map.
--- @field #string PersionGulf Persian Gulf map.
+-- @field #string PersianGulf Persian Gulf map.
 DCSMAP = {
   Caucasus="Caucasus",
-  NTTR="NTTR",
+  NTTR="Nevada",
   Normandy="Normandy",
-  PersianGulf="Persian Gulf"
+  PersianGulf="PersianGulf"
 }
 
 --- Utilities static class.
@@ -758,21 +758,27 @@ end
 --- Returns the magnetic declination of the map.
 -- Returned values for the current maps are:
 -- 
--- * Caucasus +6
--- * NTTR ?
--- * Normandy ?
--- * Persion Gulf ?
+-- * Caucasus +6 (East), year ~ 2011
+-- * NTTR +12 (East), year ~ 2011
+-- * Normandy -10 (West), year ~ 1944
+-- * Persian Gulf +2 (East), year ~ 2011
 -- @param #string map (Optional) Map for which the declination is returned. Default is from env.mission.theatre
--- @return #string Declination in degrees.
+-- @return #number Declination in degrees.
 function UTILS.GetMagneticDeclination(map)
 
   -- Map.
   map=map or UTILS.GetDCSMap()
   
   local declination=0
-  if map=="Caucasus" then
+  if map==DCSMAP.Caucasus then
     declination=6
-  else  
+  elseif map==DCSMAP.NTTR then
+    declination=12
+  elseif map==DCSMAP.Normandy then
+    declination=-10
+  elseif map==DCSMAP.PersianGulf then
+    declination=2
+  else
     declination=0
   end
 

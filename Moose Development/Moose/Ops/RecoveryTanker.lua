@@ -28,7 +28,7 @@
 -- @field Wrapper.Airbase#AIRBASE airbase The home airbase object of the tanker. Normally the aircraft carrier.
 -- @field Core.Radio#BEACON beacon Tanker TACAN beacon.
 -- @field #number TACANchannel TACAN channel. Default 1.
--- @field #string TACANmode TACAN mode, i.e. "X" or "Y". Default "Y".
+-- @field #string TACANmode TACAN mode, i.e. "X" or "Y". Default "Y". Use only "Y" for AA TACAN stations!
 -- @field #string TACANmorse TACAN morse code. Three letters identifying the TACAN station. Default "TKR".
 -- @field #boolean TACANon If true, TACAN is automatically activated. If false, TACAN is disabled.
 -- @field #number speed Tanker speed when flying pattern.
@@ -37,7 +37,6 @@
 -- @field #number distBow Race-track distance bow.
 -- @field #number Dupdate Pattern update when carrier changes its position by more than this distance (meters).
 -- @field #number Hupdate Pattern update when carrier changes its heading by more than this number (degrees).
--- @field #boolean turning If true, carrier is turning.
 -- @field #number dTupdate Minimum time interval in seconds before the next pattern update can happen.
 -- @field #number Tupdate Last time the pattern was updated.
 -- @field #number takeoff Takeoff type (cold, hot, air).
@@ -123,18 +122,18 @@
 -- 
 -- A TACAN beacon for the tanker can be activated via scripting, i.e. no need to do this within the mission editor.
 -- 
--- The beacon is create with the @{#RECOVERYTANKER.SetTACAN}(*channel*, *mode*, *morse*) function, where *channel* is the TACAN channel (a number), *mode* the TACAN mode (either "X"
--- or "Y") and *morse* a three letter string that is send as morse code to identify the tanker:
+-- The beacon is create with the @{#RECOVERYTANKER.SetTACAN}(*channel*, *morse*) function, where *channel* is the TACAN channel (a number), 
+-- and *morse* a three letter string that is send as morse code to identify the tanker:
 -- 
---     TexacoStennis:SetTACAN(10, "Y", "TKR")
+--     TexacoStennis:SetTACAN(10, "TKR")
 --     
 -- will activate a TACAN beacon 10Y with more code "TKR".
 -- 
--- If you do not set a TACAN beacon explicitly, it is automatically create on channel 1, mode "Y" and morse code "TKR".
+-- If you do not set a TACAN beacon explicitly, it is automatically create on channel 1Y and morse code "TKR".
+-- The mode is *always* "Y" for AA TACAN stations since mode "X" does not work!
 -- 
 -- In order to completely disable the TACAN beacon, you can use the @{#RECOVERYTANKER.SetTACANoff}() function in your script.
--- 
--- Note to self, I am not sure, if an AA TACAN station *must* be of mode "Y" in order to work. It seems that this was the case in earlier DCS versions.
+--
 -- 
 -- ## Pattern Update
 -- 
@@ -146,7 +145,8 @@
 -- **Note** that updating the pattern always leads to a small disruption in the perfect racetrack pattern of the tanker. This is because a new waypoint and new racetrack points
 -- need to be set as DCS task. This is also the reason why the pattern is not contantly updated but rather when the position or heading of the carrier changes significantly.
 --
--- The maximum update frequency is set to 15 minutes. You can adjust this by @{#RECOVERYTANKER.SetPatternUpdateInterval}.
+-- The maximum update frequency is set to 10 minutes. You can adjust this by @{#RECOVERYTANKER.SetPatternUpdateInterval}.
+-- Also the pattern will not be updated while the carrier is turning or the tanker is currently refuelling another unit.
 --
 -- # Finite State Model
 -- 
@@ -181,7 +181,7 @@
 -- @field #RECOVERYTANKER
 RECOVERYTANKER = {
   ClassName       = "RECOVERYTANKER",
-  Debug           = true,
+  Debug           = false,
   carrier         = nil,
   carriertype     = nil,
   tankergroupname = nil,
@@ -199,7 +199,6 @@ RECOVERYTANKER = {
   dTupdate        = nil,
   Dupdate         = nil,
   Hupdate         = nil,
-  turning         = nil,
   Tupdate         = nil,
   takeoff         = nil,
   lowfuel         = nil,
@@ -214,16 +213,16 @@ RECOVERYTANKER = {
 
 --- Class version.
 -- @field #string version
-RECOVERYTANKER.version="0.9.6w"
+RECOVERYTANKER.version="0.9.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: Seamless change of position update. Get good updated waypoint and update position if tanker position is right!
--- TODO: Check if TACAN mode "X" is allowed for AA TACAN stations.
--- TODO: Check if tanker is going back to "Running" state after RTB and respawn.
 -- TODO: Is alive check for tanker necessary?
+-- DONE: Check if TACAN mode "X" is allowed for AA TACAN stations. Nope
+-- DONE: Check if tanker is going back to "Running" state after RTB and respawn.
 -- DONE: Write documenation.
 -- DONE: Trace functions self:T instead of self:I for less output.
 -- DONE: Make pattern update parameters (distance, orientation) input parameters.
@@ -267,7 +266,7 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   self:SetSpeed()
   self:SetRacetrackDistances(6, 8)
   self:SetHomeBase(AIRBASE:FindByName(self.carrier:GetName()))
-  self:SetTakeoffAir()
+  self:SetTakeoffHot()
   self:SetLowFuelThreshold()
   self:SetRespawnOnOff()
   self:SetTACAN()
@@ -276,8 +275,7 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   self:SetPatternUpdateInterval()
   
   -- Moving zone: Zone 1 NM astern the carrier with radius of 1 NM.
-  self.zoneUpdate=ZONE_UNIT:New("Pattern Update Zone", self.carrier, UTILS.NMToMeters(1), {dx=-UTILS.NMToMeters(1), dy=0, relative_to_unit=true})
-  
+  self.zoneUpdate=ZONE_UNIT:New("Pattern Update Zone", self.carrier, UTILS.NMToMeters(1), {dx=-UTILS.NMToMeters(1), dy=0, relative_to_unit=true}) 
   --self.zoneUpdate:SmokeZone(SMOKECOLOR.White, 45)
 
   -----------------------
@@ -441,10 +439,10 @@ end
 
 --- Set minimum pattern update interval. After a pattern update this time interval has to pass before the next update is allowed.
 -- @param #RECOVERYTANKER self
--- @param #number interval Min interval in minutes. Default is 15 minutes.
+-- @param #number interval Min interval in minutes. Default is 10 minutes.
 -- @return #RECOVERYTANKER self
 function RECOVERYTANKER:SetPatternUpdateInterval(interval)
-  self.dTupdate=(interval or 15)*60
+  self.dTupdate=(interval or 10)*60
   return self
 end
 
@@ -575,17 +573,32 @@ function RECOVERYTANKER:SetTACANoff()
   return self
 end
 
---- Set TACAN channel of tanker.
+--- Set TACAN channel of tanker. Note that mode is automatically set to "Y" for AA TACAN since only that works.
 -- @param #RECOVERYTANKER self
 -- @param #number channel TACAN channel. Default 1.
--- @param #string mode TACAN mode, i.e. "X" or "Y". Default "Y".
 -- @param #string morse TACAN morse code identifier. Three letters. Default "TKR".
 -- @return #RECOVERYTANKER self
-function RECOVERYTANKER:SetTACAN(channel, mode, morse)
+function RECOVERYTANKER:SetTACAN(channel, morse)
   self.TACANchannel=channel or 1
-  self.TACANmode=mode or "Y"
+  self.TACANmode="Y"
   self.TACANmorse=morse or "TKR"
   self.TACANon=true
+  return self
+end
+
+--- Activate debug mode. Marks of pattern on F10 map etc.
+-- @param #RECOVERYTANKER self
+-- @return #RECOVERYTANKER self
+function RECOVERYTANKER:SetDebugModeON()
+  self.Debug=true
+  return self
+end
+
+--- Deactivate debug mode. This is also the default setting.
+-- @param #RECOVERYTANKER self
+-- @return #RECOVERYTANKER self
+function RECOVERYTANKER:SetDebugModeOFF()
+  self.Debug=false
   return self
 end
 
@@ -697,7 +710,6 @@ function RECOVERYTANKER:onafterStart(From, Event, To)
   self.orientation=self.carrier:GetOrientationX()
   self.orientlast=self.carrier:GetOrientationX()
   self.position=self.carrier:GetCoordinate()
-  self.turning=false
 
   -- Init status updates in 10 seconds.
   self:__Status(10)
@@ -717,15 +729,17 @@ function RECOVERYTANKER:onafterStatus(From, Event, To)
   -- Get fuel of tanker.
   local fuel=self.tanker:GetFuel()*100
   local text=string.format("Recovery tanker %s: state=%s fuel=%.1f", self.tanker:GetName(), self:GetState(), fuel)
-  self:I(text)
-  
+  self:T(text)
+
   -- Check if tanker flies through pattern update zone.
   -- TODO: Check if this can be used to update the pattern without too much disruption.
-  --       Could be a problem when carrier changes course since the tanker might not fligh through the zone any more.
-  local inupdatezone=self.tanker:GetUnit(1):IsInZone(self.zoneUpdate)
-  if inupdatezone then
-    local clock=UTILS.SecondsToClock(timer.getAbsTime())
-    self:I(string.format("Recovery tanker is in pattern update zone! Time=%s", clock))
+  --       Could be a problem when carrier changes course since the tanker might not fligh through the zone any more.  
+  if self.Debug and self.zoneUpdate then
+    local inupdatezone=self.tanker:GetUnit(1):IsInZone(self.zoneUpdate)
+    if inupdatezone then
+      local clock=UTILS.SecondsToClock(timer.getAbsTime())
+      self:T(string.format("Recovery tanker is in pattern update zone! Time=%s", clock))
+    end
   end
   
   -- Check if tanker is running and not RTBing or refueling.
@@ -798,7 +812,7 @@ end
 function RECOVERYTANKER:onafterPatternUpdate(From, Event, To)
 
   -- Debug message.
-  self:T(string.format("Updating recovery tanker %s orbit.", self.tanker:GetName()))
+  self:T(string.format("Updating recovery tanker %s racetrack pattern.", self.tanker:GetName()))
     
   -- Carrier heading.
   local hdg=self.carrier:GetHeading()
@@ -1102,18 +1116,12 @@ end
 -- @return #boolean If true, heading and/or position have changed more than 10 degrees or 10 km, respectively.
 function RECOVERYTANKER:_CheckPatternUpdate(dt)
 
-  -- Assume no update necessary.
-  local update=false
-  
-  local Hchange=false
-  local Dchange=false
-  local turning=false
-
   -- Get current position and orientation of carrier.
   local pos=self.carrier:GetCoordinate()
+  
+  -- Current orientation of carrier.
   local vNew=self.carrier:GetOrientationX()
   
-
   -- Reference orientation of carrier after the last update
   local vOld=self.orientation
   
@@ -1121,7 +1129,7 @@ function RECOVERYTANKER:_CheckPatternUpdate(dt)
   local vLast=self.orientlast
   
   -- We only need the X-Z plane.
-  vNew.y=0 ; vOld.y=0
+  vNew.y=0 ; vOld.y=0 ; vLast.y=0
   
   -- Get angle between old and new orientation vectors in rad and convert to degrees.
   local deltaHeading=math.deg(math.acos(UTILS.VecDot(vNew,vOld)/UTILS.VecNorm(vNew)/UTILS.VecNorm(vOld)))
@@ -1132,11 +1140,17 @@ function RECOVERYTANKER:_CheckPatternUpdate(dt)
   -- Last orientation becomes new orientation
   self.orientlast=vNew
   
-  -- Carrier is turning
+  -- Carrier is turning when its heading changed by at least one degree since last check.
   local turning=deltaLast>=1
+  
+  -- Debug output if turning
+  if turning then
+    self:T2(string.format("Carrier is turning. Delta Heading = %.1f", deltaLast))
+  end
 
   -- Check if orientation changed.
-  if math.abs(deltaHeading)>self.Hupdate then
+  local Hchange=false
+  if math.abs(deltaHeading)>=self.Hupdate then
     self:T(string.format("Carrier heading changed by %d degrees. Turning=%s.", deltaHeading, tostring(turning)))
     Hchange=true
   end
@@ -1145,15 +1159,16 @@ function RECOVERYTANKER:_CheckPatternUpdate(dt)
   local dist=pos:Get2DDistance(self.position)
   
   -- Check if carrier moved more than ~10 km.
+  local Dchange=false
   if dist>self.Dupdate then
-    self:T(string.format("Carrier position changed by %.1f km. Turning=%s.", dist/1000, tostring(turning)))
+    self:T(string.format("Carrier position changed by %.1f NM. Turning=%s.", UTILS.MetersToNM(dist), tostring(turning)))
     Dchange=true
   end
   
   -- Assume no update necessary.
   local update=false
   
-  -- No update if currently turning! Also must be running (nor RTB or refuelling) and T>~10 min.
+  -- No update if currently turning! Also must be running (not RTB or refuelling) and T>~10 min since last position update.
   if self:IsRunning() and dt>self.dTupdate and not turning then
   
     -- Update if heading or distance changed.
@@ -1250,4 +1265,3 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-

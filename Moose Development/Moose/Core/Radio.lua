@@ -172,9 +172,7 @@ function RADIO:SetFrequency(Frequency)
     
       -- Convert frequency from MHz to Hz
       self.Frequency = Frequency * 1000000
-      
-
-      
+            
       -- If the RADIO is attached to a UNIT or a GROUP, we need to send the DCS Command "SetFrequency" to change the UNIT or GROUP frequency
       if self.Positionable.ClassName == "UNIT" or self.Positionable.ClassName == "GROUP" then
       
@@ -186,7 +184,7 @@ function RADIO:SetFrequency(Frequency)
           }
         }            
       
-        self:I(commandSetFrequency)
+        self:T2(commandSetFrequency)
         self.Positionable:SetCommand(commandSetFrequency)
       end
       
@@ -355,7 +353,7 @@ function RADIO:Broadcast(viatrigger)
   
   -- If the POSITIONABLE is actually a UNIT or a GROUP, use the more complicated DCS command system.
   if (self.Positionable.ClassName=="UNIT" or self.Positionable.ClassName=="GROUP") and (not viatrigger) then
-    self:I("Broadcasting from a UNIT or a GROUP")
+    self:T("Broadcasting from a UNIT or a GROUP")
 
     local commandTransmitMessage={
       id = "TransmitMessage",
@@ -366,12 +364,12 @@ function RADIO:Broadcast(viatrigger)
         loop = self.Loop,
       }}
     
-    self:I(commandTransmitMessage)
+    self:T3(commandTransmitMessage)
     self.Positionable:SetCommand(commandTransmitMessage)
   else
     -- If the POSITIONABLE is anything else, we revert to the general singleton function
     -- I need to give it a unique name, so that the transmission can be stopped later. I use the class ID
-    self:I("Broadcasting from a POSITIONABLE")
+    self:T("Broadcasting from a POSITIONABLE")
     trigger.action.radioTransmission(self.FileName, self.Positionable:GetPositionVec3(), self.Modulation, self.Loop, self.Frequency, self.Power, tostring(self.ID))
   end
   
@@ -522,7 +520,7 @@ end
 -- 
 -- myBeacon:TACAN(20, "Y", "TEXACO", true) -- Activate the beacon
 function BEACON:ActivateTACAN(Channel, Mode, Message, Bearing, Duration)
-  self:I({channel=Channel, mode=Mode, callsign=Message, bearing=Bearing, duration=Duration})
+  self:T({channel=Channel, mode=Mode, callsign=Message, bearing=Bearing, duration=Duration})
   
   -- Get frequency.
   local Frequency=UTILS.TACANToFrequency(Channel, Mode)
@@ -648,7 +646,7 @@ function BEACON:AATACAN(TACANChannel, Message, Bearing, BeaconDuration)
       })
       
     if BeaconDuration then -- Schedule the stop of the BEACON if asked by the MD
-      SCHEDULER:New( nil, 
+      SCHEDULER:New(nil, 
       function()
         self:StopAATACAN()
       end, {}, BeaconDuration)
