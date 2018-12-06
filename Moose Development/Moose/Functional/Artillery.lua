@@ -2878,7 +2878,7 @@ function ARTY:onafterCeaseFire(Controllable, From, Event, To, target)
     self.Controllable:ClearTasks()
     
   else
-    self:E(ARTY.id.."ERROR: No target in cease fire for group %s.", self.groupname)
+    self:E(ARTY.id..string.format("ERROR: No target in cease fire for group %s.", self.groupname))
   end
       
   -- Set number of shots to zero.

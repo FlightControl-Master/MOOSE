@@ -36,7 +36,8 @@
 -- @field #number distStern Race-track distance astern.
 -- @field #number distBow Race-track distance bow.
 -- @field #number Dupdate Pattern update when carrier changes its position by more than this distance (meters).
--- @field #number Hupdate Pattern update when carrier changes its heading by more than this number (degrees). 
+-- @field #number Hupdate Pattern update when carrier changes its heading by more than this number (degrees).
+-- @field #boolean turning If true, carrier is turning.
 -- @field #number dTupdate Minimum time interval in seconds before the next pattern update can happen.
 -- @field #number Tupdate Last time the pattern was updated.
 -- @field #number takeoff Takeoff type (cold, hot, air).
@@ -45,6 +46,7 @@
 -- @field #boolean respawninair If true, tanker will always be respawned in air. This has no impact on the initial spawn setting.
 -- @field #boolean uncontrolledac If true, use and uncontrolled tanker group already present in the mission.
 -- @field DCS#Vec3 orientation Orientation of the carrier. Used to monitor changes and update the pattern if heading changes significantly.
+-- @field DCS#Vec3 orientlast Orientation of the carrier for checking if carrier is currently turning.
 -- @field Core.Point#COORDINATE position Positon of carrier. Used to monitor if carrier significantly changed its position and then update the tanker pattern.
 -- @field Core.Zone#ZONE_UNIT zoneUpdate Moving zone relative to carrier. Each time the tanker is in this zone, its pattern is updated.
 -- @extends Core.Fsm#FSM
@@ -197,6 +199,7 @@ RECOVERYTANKER = {
   dTupdate        = nil,
   Dupdate         = nil,
   Hupdate         = nil,
+  turning         = nil,
   Tupdate         = nil,
   takeoff         = nil,
   lowfuel         = nil,
@@ -204,13 +207,14 @@ RECOVERYTANKER = {
   respawninair    = nil,
   uncontrolledac  = nil,
   orientation     = nil,
+  orientlast      = nil,
   position        = nil,
   zoneUpdate      = nil,
 }
 
 --- Class version.
 -- @field #string version
-RECOVERYTANKER.version="0.9.6"
+RECOVERYTANKER.version="0.9.6w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -274,7 +278,7 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   -- Moving zone: Zone 1 NM astern the carrier with radius of 1 NM.
   self.zoneUpdate=ZONE_UNIT:New("Pattern Update Zone", self.carrier, UTILS.NMToMeters(1), {dx=-UTILS.NMToMeters(1), dy=0, relative_to_unit=true})
   
-  self.zoneUpdate:SmokeZone(SMOKECOLOR.White, 45)
+  --self.zoneUpdate:SmokeZone(SMOKECOLOR.White, 45)
 
   -----------------------
   --- FSM Transitions ---
@@ -691,7 +695,9 @@ function RECOVERYTANKER:onafterStart(From, Event, To)
   
   -- Get initial orientation and position of carrier.
   self.orientation=self.carrier:GetOrientationX()
+  self.orientlast=self.carrier:GetOrientationX()
   self.position=self.carrier:GetCoordinate()
+  self.turning=false
 
   -- Init status updates in 10 seconds.
   self:__Status(10)
@@ -1098,45 +1104,65 @@ function RECOVERYTANKER:_CheckPatternUpdate(dt)
 
   -- Assume no update necessary.
   local update=false
+  
+  local Hchange=false
+  local Dchange=false
+  local turning=false
 
   -- Get current position and orientation of carrier.
   local pos=self.carrier:GetCoordinate()
-  local vC=self.carrier:GetOrientationX()
+  local vNew=self.carrier:GetOrientationX()
   
-  -- Check if tanker is running and last updated is more than 10 minutes ago.
-  if self:IsRunning() and dt>self.dTupdate then
 
-    -- Last saved orientation of carrier.
-    local vP=self.orientation
-    
-    -- We only need the X-Z plane.
-    vC.y=0 ; vP.y=0
-    
-    -- Get angle between the two orientation vectors in rad.
-    local rhdg=math.deg(math.acos(UTILS.VecDot(vC,vP)/UTILS.VecNorm(vC)/UTILS.VecNorm(vP)))
+  -- Reference orientation of carrier after the last update
+  local vOld=self.orientation
   
-    -- Check if orientation changed.
-    if math.abs(rhdg)>self.Hupdate then
-      self:T(string.format("Carrier heading changed by %d degrees. Updating recovery tanker pattern.", rhdg))
-      update=true
-    end
-    
-    -- Get distance to saved position.
-    local dist=pos:Get2DDistance(self.position)
-    
-    -- Check if carrier moved more than ~10 km.
-    if dist>self.Dupdate then
-      self:T(string.format("Carrier position changed by %.1f km. Updating recovery tanker pattern.", dist/1000))
-      update=true
-    end
-    
+  -- Last orientation from 30 seconds ago.
+  local vLast=self.orientlast
+  
+  -- We only need the X-Z plane.
+  vNew.y=0 ; vOld.y=0
+  
+  -- Get angle between old and new orientation vectors in rad and convert to degrees.
+  local deltaHeading=math.deg(math.acos(UTILS.VecDot(vNew,vOld)/UTILS.VecNorm(vNew)/UTILS.VecNorm(vOld)))
+  
+  -- Angle between current heading and last time we checked ~30 seconds ago.
+  local deltaLast=math.deg(math.acos(UTILS.VecDot(vNew,vLast)/UTILS.VecNorm(vNew)/UTILS.VecNorm(vLast)))
+  
+  -- Last orientation becomes new orientation
+  self.orientlast=vNew
+  
+  -- Carrier is turning
+  local turning=deltaLast>=1
+
+  -- Check if orientation changed.
+  if math.abs(deltaHeading)>self.Hupdate then
+    self:T(string.format("Carrier heading changed by %d degrees. Turning=%s.", deltaHeading, tostring(turning)))
+    Hchange=true
   end
   
-  -- If pattern is updated then update orientation AND positon.
-  -- But only if last update is less then 10 minutes ago.
-  if update then
-    self.orientation=vC
-    self.position=pos
+  -- Get distance to saved position.
+  local dist=pos:Get2DDistance(self.position)
+  
+  -- Check if carrier moved more than ~10 km.
+  if dist>self.Dupdate then
+    self:T(string.format("Carrier position changed by %.1f km. Turning=%s.", dist/1000, tostring(turning)))
+    Dchange=true
+  end
+  
+  -- Assume no update necessary.
+  local update=false
+  
+  -- No update if currently turning! Also must be running (nor RTB or refuelling) and T>~10 min.
+  if self:IsRunning() and dt>self.dTupdate and not turning then
+  
+    -- Update if heading or distance changed.
+    if Hchange or Dchange then
+      self.orientation=vNew
+      self.position=pos
+      update=true
+    end
+    
   end
     
   return update

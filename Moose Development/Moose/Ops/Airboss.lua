@@ -73,7 +73,11 @@
 -- @field #AIRBOSS.Checkpoint Platform Case II/III descent at 2000 ft/min at 5000 ft platform.
 -- @field #AIRBOSS.Checkpoint DirtyUp Case II/III dirty up and on speed position at 1200 ft and 10-12 NM from the carrier.
 -- @field #AIRBOSS.Checkpoint Bullseye Case III intercept glideslope and follow ICLS aka "bullseye".
--- @field #number case Recovery case I, II or III in progress.
+-- @field #number defaultcase Default recovery case. This is the case used if not specified otherwise.
+-- @field #number case Recovery case I, II or III currently in progress.
+-- @field #table recoverytimes List of time windows when aircraft are recovered including the recovery case and holding offset.
+-- @field #number defaultoffset Default holding pattern update if not specified otherwise.
+-- @field #number holdingoffset Offset [degrees] of Case II/III holding pattern.
 -- @field #table flights List of all flights in the CCA.
 -- @field #table Qmarshal Queue of marshalling aircraft groups.
 -- @field #table Qpattern Queue of aircraft groups in the landing pattern.
@@ -82,8 +86,6 @@
 -- @field #number Nmaxpattern Max number of aircraft in landing pattern.
 -- @field Ops.RecoveryTanker#RECOVERYTANKER tanker Recovery tanker flying overhead of carrier.
 -- @field Functional.Warehouse#WAREHOUSE warehouse Warehouse object of the carrier.
--- @field #table recoverytimes List of time windows when aircraft are recovered including the recovery case.
--- @field #number holdingoffset Offset [degrees] of Case II/III holding pattern. Default 0 degrees.
 -- @extends Core.Fsm#FSM
 
 --- The boss!
@@ -163,7 +165,11 @@ AIRBOSS = {
   Platform      =  {},
   DirtyUp       =  {},
   Bullseye      =  {},
-  case          =   1,
+  defaultcase   = nil,
+  case          = nil,
+  defaultoffset = nil,
+  holdingoffset = nil,  
+  recoverytimes =  {},
   flights       =  {},
   Qpattern      =  {},
   Qmarshal      =  {},
@@ -172,8 +178,6 @@ AIRBOSS = {
   Nmaxpattern   = nil,
   tanker        = nil,
   warehouse     = nil,
-  recoverytimes =  {},
-  holdingoffset = nil,
 }
 
 --- Player aircraft types capable of landing on carriers.
@@ -235,9 +239,9 @@ AIRBOSS.CarrierType={
 -- @type AIRBOSS.AircraftAoA
 -- @field #number OnSpeedMin Minimum on speed AoA. Values below are fast
 -- @field #number OnSpeedMax Maximum on speed AoA. Values above are slow.
--- @field #number OnSpeed Optimal AoA.
+-- @field #number OnSpeed Optimal on-speed AoA.
 -- @field #number Fast Fast AoA threshold. Smaller means faster.
--- @field #number Slow Slow AoA threshold. Larger means slower
+-- @field #number Slow Slow AoA threshold. Larger means slower.
 
 --- Pattern steps.
 -- @type AIRBOSS.PatternStep
@@ -270,7 +274,7 @@ AIRBOSS.PatternStep={
 }
 
 --- Radio sound file and subtitle.
--- @type AIRBOSS.RadioSound
+-- @type AIRBOSS.RadioCall
 -- @field #string file Sound file name without suffix.
 -- @field #string suffix File suffix/extention, e.g. "ogg".
 -- @field #boolean loud Loud version of sound file available.
@@ -279,31 +283,39 @@ AIRBOSS.PatternStep={
 
 --- LSO radio calls.
 -- @type AIRBOSS.LSOCall
--- @field #AIRBOSS.RadioSound RIGHTFORLINEUP "Right for line up" call.
--- @field #AIRBOSS.RadioSound COMELEFT "Come left" call.
--- @field #AIRBOSS.RadioSound HIGH "You're high" call.
--- @field #AIRBOSS.RadioSound LOW "You're low" call.
--- @field #AIRBOSS.RadioSound POWER "Power" call.
--- @field #AIRBOSS.RadioSound FAST "You're fast" call.
--- @field #AIRBOSS.RadioSound SLOW "You're slow" call.
--- @field #AIRBOSS.RadioSound PADDLESCONTACT "Paddles, contact" call.
--- @field #AIRBOSS.RadioSound CALLTHEBALL "Call the Ball" 
--- @field #AIRBOSS.RadioSound ROGERBALL "Roger ball" call.
--- @field #AIRBOSS.RadioSound WAVEOFF "Wafe off" call
--- @field #AIRBOSS.RadioSound BOLTER "Bolter, Bolter" call
--- @field #AIRBOSS.RadioSound LONGINGROOVE "You're long in the groove. Depart and re-enter." call.
--- @field #AIRBOSS.RadioSound DEPARTANDREENTER "Depart and re-enter" call.
--- @field #AIRBOSS.RadioSound N1 "One" call.
--- @field #AIRBOSS.RadioSound N2 "Two" call.
--- @field #AIRBOSS.RadioSound N3 "Three" call.
--- @field #AIRBOSS.RadioSound N4 "Four" call.
--- @field #AIRBOSS.RadioSound N5 "Five" call.
--- @field #AIRBOSS.RadioSound N6 "Six" call.
--- @field #AIRBOSS.RadioSound N7 "Seven" call.
--- @field #AIRBOSS.RadioSound N8 "Eight" call.
--- @field #AIRBOSS.RadioSound N9 "Nine" call.
--- @field #AIRBOSS.RadioSound N0 "Zero" call.
+-- @field #AIRBOSS.RadioCall RADIOCHECK "Paddles, radio check" call.
+-- @field #AIRBOSS.RadioCall RIGHTFORLINEUP "Right for line up" call.
+-- @field #AIRBOSS.RadioCall COMELEFT "Come left" call.
+-- @field #AIRBOSS.RadioCall HIGH "You're high" call.
+-- @field #AIRBOSS.RadioCall LOW "You're low" call.
+-- @field #AIRBOSS.RadioCall POWER "Power" call.
+-- @field #AIRBOSS.RadioCall FAST "You're fast" call.
+-- @field #AIRBOSS.RadioCall SLOW "You're slow" call.
+-- @field #AIRBOSS.RadioCall PADDLESCONTACT "Paddles, contact" call.
+-- @field #AIRBOSS.RadioCall CALLTHEBALL "Call the Ball" 
+-- @field #AIRBOSS.RadioCall ROGERBALL "Roger ball" call.
+-- @field #AIRBOSS.RadioCall WAVEOFF "Wafe off" call
+-- @field #AIRBOSS.RadioCall BOLTER "Bolter, Bolter" call
+-- @field #AIRBOSS.RadioCall LONGINGROOVE "You're long in the groove. Depart and re-enter." call.
+-- @field #AIRBOSS.RadioCall DEPARTANDREENTER "Depart and re-enter" call.
+-- @field #AIRBOSS.RadioCall N0 "Zero" call.
+-- @field #AIRBOSS.RadioCall N1 "One" call.
+-- @field #AIRBOSS.RadioCall N2 "Two" call.
+-- @field #AIRBOSS.RadioCall N3 "Three" call.
+-- @field #AIRBOSS.RadioCall N4 "Four" call.
+-- @field #AIRBOSS.RadioCall N5 "Five" call.
+-- @field #AIRBOSS.RadioCall N6 "Six" call.
+-- @field #AIRBOSS.RadioCall N7 "Seven" call.
+-- @field #AIRBOSS.RadioCall N8 "Eight" call.
+-- @field #AIRBOSS.RadioCall N9 "Nine" call.
 AIRBOSS.LSOCall={
+  RADIOCHECK={
+    file="LSO-RadioCheck",
+    suffix="ogg",
+    louder=false,
+    subtitle="Paddles, radio check",
+    duration=1.1,
+  },
   RIGHTFORLINEUP={
     file="LSO-RightForLineup",
     suffix="ogg",
@@ -402,13 +414,6 @@ AIRBOSS.LSOCall={
     subtitle="Paddles, contact",
     duration=1.0,
   },
-  RADIOCHECK={
-    file="LSO-RadioCheck",
-    suffix="ogg",
-    louder=false,
-    subtitle="Paddles, radio check",
-    duration=1.1,
-  },
   N0={
     file="LSO-N0",
     suffix="ogg",
@@ -483,16 +488,17 @@ AIRBOSS.LSOCall={
 
 --- Marshal radio calls.
 -- @type AIRBOSS.MarshalCall
--- @field #AIRBOSS.RadioSound N1 "One" call.
--- @field #AIRBOSS.RadioSound N2 "Two" call.
--- @field #AIRBOSS.RadioSound N3 "Three" call.
--- @field #AIRBOSS.RadioSound N4 "Four" call.
--- @field #AIRBOSS.RadioSound N5 "Five" call.
--- @field #AIRBOSS.RadioSound N6 "Six" call.
--- @field #AIRBOSS.RadioSound N7 "Seven" call.
--- @field #AIRBOSS.RadioSound N8 "Eight" call.
--- @field #AIRBOSS.RadioSound N9 "Nine" call.
--- @field #AIRBOSS.RadioSound N0 "Zero" call.
+-- @field #AIRBOSS.RadioCall RADIOCHECK "Marshal, radio check" call.
+-- @field #AIRBOSS.RadioCall N0 "Zero" call.
+-- @field #AIRBOSS.RadioCall N1 "One" call.
+-- @field #AIRBOSS.RadioCall N2 "Two" call.
+-- @field #AIRBOSS.RadioCall N3 "Three" call.
+-- @field #AIRBOSS.RadioCall N4 "Four" call.
+-- @field #AIRBOSS.RadioCall N5 "Five" call.
+-- @field #AIRBOSS.RadioCall N6 "Six" call.
+-- @field #AIRBOSS.RadioCall N7 "Seven" call.
+-- @field #AIRBOSS.RadioCall N8 "Eight" call.
+-- @field #AIRBOSS.RadioCall N9 "Nine" call.
 AIRBOSS.MarshalCall={
   RADIOCHECK={
     file="MARSHAL-RadioCheck",
@@ -585,11 +591,12 @@ AIRBOSS.Difficulty={
   HARD="TOPGUN Graduate",
 }
 
---- Recovery time.
+--- Recovery window parameters.
 -- @type AIRBOSS.Recovery
 -- @field #number START Start of recovery in seconds of abs time.
 -- @field #number STOP End of recovery in seconds of abs time.
 -- @field #number CASE Recovery case (1-3) of that time slot.
+-- @field #number OFFSET Angle offset of the holding pattern in degrees. Usually 0, +-15, or +-30 degrees.
 
 --- Groove position.
 -- @type AIRBOSS.GroovePos
@@ -641,11 +648,6 @@ AIRBOSS.GroovePos={
 -- @field #number LimitXmax Latitudal threshold for triggering the next step if X>Xmax.
 -- @field #number LimitZmin Latitudal threshold for triggering the next step if Z<Zmin.
 -- @field #number LimitZmax Latitudal threshold for triggering the next step if Z>Zmax.
--- @field #number Altitude Optimal altitude at this point.
--- @field #number AoA Optimal AoA at this point.
--- @field #number Distance Optimal distance at this point.
--- @field #number Speed Optimal speed at this point.
--- @field #table Checklist Table of checklist text items to display at this point.
 
 --- Parameters of a flight group.
 -- @type AIRBOSS.Flightitem
@@ -694,7 +696,7 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.4.8"
+AIRBOSS.version="0.4.8w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -706,7 +708,7 @@ AIRBOSS.version="0.4.8"
 -- TODO: Option to turn AI handling off.
 -- TODO: Check distance to players during approach. PWO if too close.
 -- TODO: Spin pattern. Add radio menu entry. Not sure what to add though?!
--- TODO: Add radio check (LSO, AIRBOSS) to F10 radio menu.
+-- DONE: Add radio check (LSO, AIRBOSS) to F10 radio menu.
 -- TODO: Add user functions.
 -- TODO: Generalize parameters for other carriers.
 -- TODO: Generalize parameters for other aircraft.
@@ -799,11 +801,11 @@ function AIRBOSS:New(carriername, alias)
   -- Set max aircraft in landing pattern.
   self:SetMaxLandingPattern(2)
   
-  -- Set holding offset to 0 degrees.
-  self:SetHoldingOffsetAngle(15)
-
-  -- Default recovery case.
+  -- Default recovery case. This sets self.defaultcase and self.case.
   self:SetRecoveryCase(1)
+
+  -- Set holding offset to 0 degrees. This set self.defaultoffset and self.holdingoffset.
+  self:SetHoldingOffsetAngle(15)
     
   -- CCA 50 NM radius zone around the carrier.
   self:SetCarrierControlledArea()
@@ -845,7 +847,7 @@ function AIRBOSS:New(carriername, alias)
 --[[  
   -- Init default sound files.
   for _name,_sound in pairs(AIRBOSS.LSOCall) do
-    local sound=_sound --#AIRBOSS.RadioSound
+    local sound=_sound --#AIRBOSS.RadioCall
     local text=string.format()
     sound.subtitle=1
     sound.louder=1
@@ -901,12 +903,14 @@ function AIRBOSS:New(carriername, alias)
   -- @function [parent=#AIRBOSS] RecoveryStart
   -- @param #AIRBOSS self
   -- @param #number Case Recovery case (1, 2 or 3) that is started.
+  -- @param #number Offset Holding pattern offset angle in degrees for CASE II/III recoveries.
 
   --- Triggers the FSM delayed event "RecoveryStart" that starts the recovery of aircraft. Marshalling aircraft are send to the landing pattern.
   -- @function [parent=#AIRBOSS] __RecoveryStart
+  -- @param #number delay Delay in seconds.
   -- @param #AIRBOSS self
   -- @param #number Case Recovery case (1, 2 or 3) that is started.
-  -- @param #number delay Delay in seconds.
+  -- @param #number Offset Holding pattern offset angle in degrees for CASE II/III recoveries.
 
 
   --- Triggers the FSM event "RecoveryStop" that stops the recovery of aircraft.
@@ -923,12 +927,14 @@ function AIRBOSS:New(carriername, alias)
   -- @function [parent=#AIRBOSS] RecoveryCase
   -- @param #AIRBOSS self
   -- @param #number Case The new recovery case (1, 2 or 3).
+  -- @param #number Offset Holding pattern offset angle in degrees for CASE II/III recoveries.
 
   --- Triggers the delayed FSM event "RecoveryCase" that sets the used aircraft recovery case.
   -- @function [parent=#AIRBOSS] __Case
   -- @param #AIRBOSS self
   -- @param #number delay Delay in seconds.
   -- @param #number Case The new recovery case (1, 2 or 3).
+  -- @param #number Offset Holding pattern offset angle in degrees for CASE II/III recoveries.
 
 
   --- Triggers the FSM event "Stop" that stops the airboss. Event handlers are stopped.
@@ -975,14 +981,16 @@ function AIRBOSS:SetCarrierControlledZone(radius)
   return self
 end
 
---- Set recovery case pattern.
+--- Set the default recovery case.
 -- @param #AIRBOSS self
--- @param #number case Case of recovery. Either 1 or 3. Default 1.
+-- @param #number case Case of recovery. Either 1, 2 or 3. Default 1.
 -- @return #AIRBOSS self
 function AIRBOSS:SetRecoveryCase(case)
 
-  self.case=case or 1
-
+  self.defaultcase=case or 1
+  
+  self.case=self.defaultcase
+  
   return self
 end
 
@@ -993,8 +1001,11 @@ end
 -- @return #AIRBOSS self
 function AIRBOSS:SetHoldingOffsetAngle(offset)
 
-  self.holdingoffset=offset or 0
 
+  self.defaultoffset=offset or 0
+  
+  self.holdingoffset=self.defaultoffset
+  
   return self
 end
 
@@ -1002,9 +1013,10 @@ end
 -- @param #AIRBOSS self
 -- @param #string starttime Start time, e.g. "8:00" for eight o'clock. Default now.
 -- @param #string stoptime Stop time, e.g. "9:00" for nine o'clock. Default 90 minutes after start time.
--- @param #number case Recovery case for that time slot. Number between one and three. Default 1.
+-- @param #number case Recovery case for that time slot. Number between one and three.
+-- @param #number holdingoffset Only for CASE II/III: Angle in degrees the holding pattern is offset.
 -- @return #AIRBOSS self
-function AIRBOSS:AddRecoveryTime(starttime, stoptime, case)
+function AIRBOSS:AddRecoveryTime(starttime, stoptime, case, holdingoffset)
 
   -- Set start time.
   local Tstart=UTILS.ClockToSeconds(starttime or UTILS.SecondsToClock(timer.getAbsTime()))
@@ -1018,17 +1030,22 @@ function AIRBOSS:AddRecoveryTime(starttime, stoptime, case)
     return self
   end
   
-  -- Default is Case 1 recovery.
-  case=case or 1
+  -- Case or default value.
+  case=case or self.defaultcase
+  
+  -- Holding offset or default value.
+  holdingoffset=holdingoffset or self.defaultoffset
+  
   
   -- Recovery window.
-  local rtime={} --#AIRBOSS.Recovery
-  rtime.START=Tstart
-  rtime.STOP=Tstop
-  rtime.CASE=case
+  local recovery={} --#AIRBOSS.Recovery
+  recovery.START=Tstart
+  recovery.STOP=Tstop
+  recovery.CASE=case
+  recovery.OFFSET=holdingoffset
   
   -- Add to table
-  table.insert(self.recoverytimes, rtime)
+  table.insert(self.recoverytimes, recovery)
   
   return self
 end
@@ -1066,7 +1083,7 @@ end
 --- Set ICLS channel of carrier.
 -- @param #AIRBOSS self
 -- @param #number channel ICLS channel. Default 1.
--- @param #string morsecode Morse code identifier. Three letters, e.g. "STN".
+-- @param #string morsecode Morse code identifier. Three letters, e.g. "STN". Default "STN".
 -- @return #AIRBOSS self
 function AIRBOSS:SetICLS(channel, morsecode)
 
@@ -1262,6 +1279,13 @@ function AIRBOSS:_CheckRecoveryTimes()
     text=" none!"
   end
   
+  -- Sort windows wrt to start time.
+  local _sort=function(a, b) return a.START<b.START end
+  table.sort(self.recoverytimes,_sort)
+  
+  -- Next recovery case in the future.
+  local nextwindow=nil  --#AIRBOSS.Recovery
+  
   -- Loop over all slots.
   for _,_recovery in pairs(self.recoverytimes) do
     local recovery=_recovery --#AIRBOSS.Recovery
@@ -1307,14 +1331,34 @@ function AIRBOSS:_CheckRecoveryTimes()
     else
       -- This recovery is in the future.
       state="in the future"
+      
+      -- This is the next to come.
+      if nextwindow==nil then
+        nextwindow=recovery
+        state="next to come"
+      end
     end
     
     -- Debug text.
-    text=text..string.format("\n- Start=%s Stop=%s Case=%d Status=\"%s\"", Cstart, Cstop, recovery.CASE, state)
+    text=text..string.format("\n- Start=%s Stop=%s Case=%d Offset=%d Status=\"%s\"", Cstart, Cstop, recovery.CASE, recovery.OFFSET, state)
   end
   
   -- Debug output.
   self:I(self.lid..text)
+  
+  -- Carrier is idle. We need to make sure that incoming flights get the correct recovery info of the next window.
+  if self:IsIdle() then
+    -- Check if there is a next windows defined.
+    if nextwindow then
+      -- Set case and offset of the next window.
+      self.case=nextwindow.CASE
+      self.holdingoffset=nextwindow.OFFSET
+    else
+      -- No next window. Set default values.
+      self.case=self.defaultcase
+      self.holdingoffset=self.defaultoffset
+    end
+  end
 end
 
 
@@ -1324,13 +1368,28 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param #number Case The recovery case (1, 2 or 3) to switch to.
-function AIRBOSS:onafterRecoveryCase(From, Event, To, Case)
+-- @param #number Offset Holding pattern offset angle in degrees for CASE II/III recoveries.
+function AIRBOSS:onafterRecoveryCase(From, Event, To, Case, Offset)
+
+  -- Input or default value.
+  Case=Case or self.defaultcase
+  
+  -- Input or default value
+  Offset=Offset or self.defaultoffset
 
   -- Debug output.
-  self:I(self.lid..string.format("Switching to recovery case %d.", Case))
+  local text=string.format("Switching to recovery case %d.", Case)
+  if Case>1 then
+    text=text..string.format(" Holding offset angle %d degrees.", Offset)
+  end
+  MESSAGE:New(text, 20, self.alias):ToAllIf(self.Debug)
+  self:I(self.lid..text)
   
   -- Set new recovery case.
   self.case=Case
+  
+  -- Set holding offset.
+  self.holdingoffset=Offset
 end
 
 --- On after "RecoveryStart" event. Recovery of aircraft is started and carrier switches to state "Recovering".
@@ -1339,14 +1398,26 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param #number Case The recovery case (1, 2 or 3) to start.
-function AIRBOSS:onafterRecoveryStart(From, Event, To, Case)
+-- @param #number Offset Holding pattern offset angle in degrees for CASE II/III recoveries.
+function AIRBOSS:onafterRecoveryStart(From, Event, To, Case, Offset)
+
+  -- Input or default value.
+  Case=Case or self.defaultcase
+  
+  -- Input or default value.
+  Offset=Offset or self.defaultoffset
 
   -- Debug output.
-  self:I(self.lid..string.format("Starting aircraft recovery in case %d.", Case))
+  local text=string.format("Starting aircraft recovery case %d.", Case)
+  if Case>1 then
+    text=text..string.format(" Holding offset angle %d degrees.", Offset)
+  end
+  MESSAGE:New(text, 20, self.alias):ToAllIf(self.Debug)
+  self:I(self.lid..text)
   
   -- Switch to case.
-  self:RecoveryCase(Case)
-  
+  self:RecoveryCase(Case, Offset)
+    
 end
 
 --- On after "RecoveryStop" event. Recovery of aircraft is stopped and carrier switches to state "Idle".
@@ -1357,10 +1428,7 @@ end
 function AIRBOSS:onafterRecoveryStop(From, Event, To)
 
   -- Debug output.
-  self:I(self.lid..string.format("Stopping aircraft recovery."))
-  
-  -- Switch to idle state.
-  self:Idle()
+  self:I(self.lid..string.format("Stopping aircraft recovery. Carrier goes to state idle."))
   
 end
 
@@ -1741,10 +1809,14 @@ function AIRBOSS:_CheckQueue()
     -- Time (last) flight has entered landing pattern.
     local Tpattern=9999
     local npunits=1
+    local pcase=1
     if npattern>0 then
     
       -- Last flight group send to pattern.
       local patternflight=self.Qpattern[#self.Qpattern] --#AIRBOSS.Flightitem
+      
+      -- Recovery case of pattern flight.
+      pcase=patternflight.case
       
       -- Number of aircraft in this group.
       local npunits=patternflight.nunits
@@ -1756,7 +1828,7 @@ function AIRBOSS:_CheckQueue()
     
     -- Min time in pattern before next aircraft is allowed.
     local TpatternMin
-    if self.case==1 then
+    if pcase==1 then
       TpatternMin=45*npunits   --  45 seconds interval per plane!
     else
       TpatternMin=120*npunits  -- 120 seconds interval per plane!
@@ -1781,6 +1853,7 @@ function AIRBOSS:_ScanCarrierZone()
   -- Carrier position.
   local coord=self:GetCoordinate()
   
+  -- Scan radius.
   local Rout=UTILS.NMToMeters(50)
   
   -- Scan units in carrier zone.
@@ -1890,12 +1963,9 @@ function AIRBOSS:_MarshalPlayer(playerData)
   
   -- Check if flight is known to the airboss already.
   if playerData then
-  
-    -- Number of flight groups in stack.
-    local ngroups, nunits=self:_GetQueueInfo(self.Qmarshal, self.case)
-    
-    -- Assign next free stack to this flight.
-    local mystack=ngroups+1
+
+    -- Get free stack.  
+    local mystack=self:_GetFreeStack(self.case)
     
     -- Add group to marshal stack.
     self:_AddMarshalGroup(playerData, mystack)
@@ -1963,13 +2033,15 @@ function AIRBOSS:_MarshalAI(flight, nstack)
   -- Set up waypoints including collapsing the stack.
   for stack=nstack, 1, -1 do
   
+    -- TODO: skip stack 6 if recoverytanker (or at whatever angels the tanker orbits).
+  
     -- Get altitude and positions.  
     local Altitude, p1, p2=self:_GetMarshalAltitude(stack)
     
     local p1=p1 --Core.Point#COORDINATE
     local Dist=p1:Get2DDistance(self:GetCoordinate())
     
-    -- Orbit task.
+    -- Task: orbit at specified position, altitude and speed until flag=stack-1
     local TaskOrbit=_taskorbit(p1, Altitude, Speed, stack-1, p2)
      
     -- Waypoint description.    
@@ -1981,7 +2053,7 @@ function AIRBOSS:_MarshalAI(flight, nstack)
   end  
   
   -- Landing waypoint.
-  wp[#wp+1]=Carrier:WaypointAirLanding(Speed, self.airbase, nil, "Landing")
+  wp[#wp+1]=Carrier:SetAltitude(250):WaypointAirLanding(Speed, self.airbase, nil, "Landing")
       
   -- Reinit waypoints.
   group:WayPointInitialize(wp)
@@ -2112,7 +2184,7 @@ function AIRBOSS:_CheckCollapseMarshalStack(flight)
     
     -- Hint for easy skill.
     if playerData.difficulty==AIRBOSS.Difficulty.EASY then
-      self:MessageToPlayer(flight, string.format("Use F10 radio menu \"Commence!\" command when you are ready!"), nil, "", 5)
+      self:MessageToPlayer(flight, string.format("Use F10 radio menu \"Request Commence\" command when ready!"), nil, "", 5)
     end
   end
  
@@ -2147,6 +2219,7 @@ function AIRBOSS:_CollapseMarshalStack(flight, nopattern)
       if stack>0 and mstack>stack then
       
         -- Decrease stack/flag by one ==> AI will go lower.
+        -- TODO: If we include the recovery tanker, this needs to be generalized.
         mflight.flag:Set(mstack-1)
         
         -- Inform players.
@@ -2216,16 +2289,32 @@ function AIRBOSS:_GetFreeStack(case)
   case=case or self.case
   
   -- Get stack 
-  local stack
+  local nfull
   if case==1 then
     -- Lowest Case I stack.
-    stack=self:_GetQueueInfo(self.Qmarshal, 1)
+    nfull=self:_GetQueueInfo(self.Qmarshal, 1)
   else
     -- Lowest Case II or III stack.
-    stack=self:_GetQueueInfo(self.Qmarshal, 23)
+    nfull=self:_GetQueueInfo(self.Qmarshal, 23)
   end
   
-  return stack+1
+  -- Get recovery tanker stack.
+  local tankerstack=9999
+  if self.tanker and case==1 then
+    tankerstack=self:_GetAngels(self.tanker.altitude)
+  end
+  
+  local nfree
+  if nfull<tankerstack-1 then
+    -- Free stack is simply the next.
+    nfree=nfull+1
+  else
+    -- Here one more because of the tanker.
+    nfree=nfull+2
+  end
+    
+
+  return nfree
 end
 
 
@@ -2356,7 +2445,7 @@ function AIRBOSS:_CreateFlightGroup(group)
     flight.seclead=flight.group:GetUnit(1):GetName()  -- Sec lead is first unitname of group but player name for players.
     flight.section={}
     
-    -- Note, this should be set elsewhere.
+    -- Note, this should be re-set elsewhere!
     flight.case=self.case
     
     -- Onboard
@@ -3445,10 +3534,7 @@ function AIRBOSS:_Upwind(playerData)
       local hint=string.format("%s\n%s\n%s", playerData.step, hintAlt, hintSpeed)
       self:MessageToPlayer(playerData, hint, "MARSHAL", "")
     end
-        
-    -- Debrief.
-    --self:_AddToDebrief(playerData, debrief)
-    
+
     -- Next step: Early Break.
     playerData.step=AIRBOSS.PatternStep.EARLYBREAK
     playerData.warning=nil
@@ -4749,20 +4835,26 @@ function AIRBOSS:_LSOadvice(playerData, glideslopeError, lineupError)
   -- Player group.
   local player=playerData.unit:GetGroup()
   
+  local advice=0
+  
   -- Glideslope high/low calls.
   local text=""
   if glideslopeError>1 then
     -- "You're high!"
     self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.HIGH, true)
+    advice=advice+AIRBOSS.LSOCall.HIGH.duration
   elseif glideslopeError>0.5 then
     -- "You're a little high."
     self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.HIGH, false)
+    advice=advice+AIRBOSS.LSOCall.HIGH.duration
   elseif glideslopeError<-1.0 then
     -- "Power!"
     self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.POWER, true)
+    advice=advice+AIRBOSS.LSOCall.POWER.duration
   elseif glideslopeError<-0.5 then
     -- "You're a little low."
     self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.POWER, false)
+    advice=advice+AIRBOSS.LSOCall.POWER.duration
   else
     text="Good altitude."
   end
@@ -4774,15 +4866,19 @@ function AIRBOSS:_LSOadvice(playerData, glideslopeError, lineupError)
   if lineupError<-3 then
     -- "Come left!"
     self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.COMELEFT, true)
+    advice=advice+AIRBOSS.LSOCall.COMELEFT.duration
   elseif lineupError<-1 then
     -- "Come left."
-    self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.COMELEFT, false)    
+    self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.COMELEFT, false)
+    advice=advice+AIRBOSS.LSOCall.COMELEFT.duration    
   elseif lineupError>3 then
     -- "Right for lineup!"
-    self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.RIGHTFORLINEUP, true)    
+    self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.RIGHTFORLINEUP, true)
+    advice=advice+AIRBOSS.LSOCall.RIGHTFORLINEUP.duration    
   elseif lineupError>1 then
     -- "Right for lineup."
     self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.RIGHTFORLINEUP, false)
+    advice=advice+AIRBOSS.LSOCall.RIGHTFORLINEUP.duration
   else
     text=text.."Good lineup."
   end
@@ -4798,18 +4894,22 @@ function AIRBOSS:_LSOadvice(playerData, glideslopeError, lineupError)
   -- Rate aoa.
   if aoa>=aircraftaoa.Slow then
     -- "Your're slow!"
-    self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.SLOW, true)        
+    self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.SLOW, true)
+    advice=advice+AIRBOSS.LSOCall.SLOW.duration
   elseif aoa>=aircraftaoa.OnSpeedMax and aoa<aircraftaoa.Slow then
     -- "Your're a little slow."
-    self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.SLOW, false)              
+    self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.SLOW, false)
+    advice=advice+AIRBOSS.LSOCall.SLOW.duration              
   elseif aoa>=aircraftaoa.OnSpeedMin and aoa<aircraftaoa.OnSpeedMax then
     text=text.."You're on speed."
   elseif aoa>=aircraftaoa.Fast and aoa<aircraftaoa.OnSpeedMin then
     -- "You're a little fast."
     self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.FAST, false)
+    advice=advice+AIRBOSS.LSOCall.FAST.duration
   elseif aoa<aircraftaoa.Fast then
     -- "You're fast!"
-    self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.FAST, true)                
+    self:RadioTransmission(self.LSOradio, AIRBOSS.LSOCall.FAST, true)
+    advice=advice+AIRBOSS.LSOCall.FAST.duration
   else
     text=text.."Unknown AoA state."
   end
@@ -4818,7 +4918,7 @@ function AIRBOSS:_LSOadvice(playerData, glideslopeError, lineupError)
   text=text..string.format(" AoA = %.1f", aoa)
    
   -- Set last time.
-  playerData.Tlso=timer.getTime()   
+  playerData.Tlso=timer.getTime()
 end
 
 --- Grade approach.
@@ -5209,7 +5309,7 @@ function AIRBOSS:_AltitudeCheck(playerData, altopt)
   -- Altitude error +-X%
   local _error=(altitude-altopt)/altopt*100
   
-  local radiocall={} --#AIRBOSS.RadioSound
+  local radiocall={} --#AIRBOSS.RadioCall
  
   local hint
   if _error>badscore then
@@ -5613,15 +5713,13 @@ function AIRBOSS:_GetFuelState(unit)
   return UTILS.kg2lbs(fuelstate)
 end
 
---- Get altitude in angels.
+--- Convert altitude from meters to angels (thousands of feet).
 -- @param #AIRBOSS self
--- @param Wrapper.Unit#UNIT unit The unit for which the mass is determined.
--- @return #number Altitude of unit in Anglels = thouthands of feet.
-function AIRBOSS:_GetAngels(unit)
+-- @param alt Alitude in meters.
+-- @return #number Altitude in Anglels = thousands of feet using math.floor().
+function AIRBOSS:_GetAngels(alt)
 
-  local alt=unit:GetAltitude()
-  
-  local angels=math.floor(UTILS.MetersToFeet(alt))/1000
+  local angels=math.floor(UTILS.MetersToFeet(alt)/1000)
 
   return angels
 end
@@ -5777,7 +5875,7 @@ end
 -- @field #number prio Priority 0-100.
 -- @field #boolean isplaying Currently playing.
 -- @field Core.Beacon#RADIO radio Radio object.
--- @field #AIRBOSS.RadioSound call Radio sound.
+-- @field #AIRBOSS.RadioCall call Radio sound.
 
 --- Check radio queue for transmissions to be broadcasted.
 -- @param #AIRBOSS self
@@ -5862,7 +5960,7 @@ end
 --- Add Radio transmission to radio queue
 -- @param #AIRBOSS self
 -- @param Core.Radio#RADIO radio sending transmission.
--- @param #AIRBOSS.RadioSound call Radio sound files and subtitles.
+-- @param #AIRBOSS.RadioCall call Radio sound files and subtitles.
 -- @param #boolean loud If true, play loud sound file version.
 -- @param #number delay Delay in seconds, before the message is broadcasted.
 function AIRBOSS:RadioTransmission(radio, call, loud, delay)
@@ -5893,7 +5991,7 @@ end
 --- Transmission radio message.
 -- @param #AIRBOSS self
 -- @param Core.Radio#RADIO radio sending transmission.
--- @param #AIRBOSS.RadioSound call Radio sound files and subtitles.
+-- @param #AIRBOSS.RadioCall call Radio sound files and subtitles.
 -- @param #boolean loud If true, play loud sound file version.
 -- @param #number delay Delay in seconds, before the message is broadcasted.
 function AIRBOSS:RadioTransmit(radio, call, loud, delay)
