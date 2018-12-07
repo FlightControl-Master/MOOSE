@@ -582,9 +582,9 @@ AIRBOSS.MarshalCall={
 
 --- Difficulty level.
 -- @type AIRBOSS.Difficulty
--- @field #string EASY Easy difficulty: error margin 10 for high score and 20 for low score. No score for deviation >20.
--- @field #string NORMAL Normal difficulty: error margin 5 deviation from ideal for high score and 10 for low score. No score for deviation >10.
--- @field #string HARD Hard difficulty: error margin 2.5 deviation from ideal value for high score and 5 for low score. No score for deviation >5.
+-- @field #string EASY Flight Stutdent. Shows tips and hints in important phases of the approach.
+-- @field #string NORMAL Naval aviator. Moderate number of hints but not really zip lip.
+-- @field #string HARD TOPGUN graduate. For people who know what they are doing. Nearly ziplip.
 AIRBOSS.Difficulty={
   EASY="Flight Student",
   NORMAL="Naval Aviator",

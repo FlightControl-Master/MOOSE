@@ -7,8 +7,9 @@
 --    * Regular pattern update with respect to carrier positon.
 --    * Automatic respawning when tanker runs out of fuel for 24/7 operations.
 --    * Tanker can be spawned cold or hot on the carrier or at any other airbase or directly in air.
+--    * Automatic AA TACAN beacon setting.
+--    * Finite State Machine (FSM) implementation, which allows the mission designer to hook into certain events.
 --
--- Please not that his class is work in progress and in an **alpha** stage.
 --
 -- ===
 --
