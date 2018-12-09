@@ -118,15 +118,21 @@ do -- UserSound
   --- Play the usersound to the given @{Wrapper.Group}.
   -- @param #USERSOUND self
   -- @param Wrapper.Group#GROUP Group The @{Wrapper.Group} to play the usersound to.
+  -- @param #number Delay (Optional) Delay in seconds, before the sound is played. Default 0.
   -- @return #USERSOUND The usersound instance.
   -- @usage
   --   local BlueVictory = USERSOUND:New( "BlueVictory.ogg" )
   --   local PlayerGroup = GROUP:FindByName( "PlayerGroup" ) -- Search for the active group named "PlayerGroup", that contains a human player.
   --   BlueVictory:ToGroup( PlayerGroup ) -- Play the sound that Blue has won to the player group.
   --   
-  function USERSOUND:ToGroup( Group ) --R2.3
-    
-    trigger.action.outSoundForGroup( Group:GetID(), self.UserSoundFileName )
+  function USERSOUND:ToGroup( Group, Delay ) --R2.3
+  
+    Delay=Delay or 0
+    if Delay>0 then
+      SCHEDULER:New(nil, USERSOUND.ToGroup,{self, Group}, Delay)      
+    else
+      trigger.action.outSoundForGroup( Group:GetID(), self.UserSoundFileName )
+    end
     
     return self
   end  

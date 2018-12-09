@@ -195,6 +195,49 @@ function SPAWNSTATIC:SpawnFromPointVec2( PointVec2, Heading, NewName ) --R2.1
 end
 
 
+--- Creates a new @{Static} from a COORDINATE.
+-- @param #SPAWNSTATIC self
+-- @param Core.Point#COORDINATE Coordinate The 3D coordinate where to spawn the static.
+-- @param #number Heading (Optional) Heading The heading of the static, which is a number in degrees from 0 to 360. Default is 0 degrees.
+-- @param #string NewName (Optional) The name of the new static.
+-- @return #SPAWNSTATIC
+function SPAWNSTATIC:SpawnFromCoordinate(Coordinate, Heading, NewName) --R2.4
+  self:F( { PointVec2, Heading, NewName  } )
+  
+  local StaticTemplate, CoalitionID, CategoryID, CountryID = _DATABASE:GetStaticGroupTemplate( self.SpawnTemplatePrefix )
+  
+  if StaticTemplate then
+  
+    Heading=Heading or 0
+  
+    local StaticUnitTemplate = StaticTemplate.units[1]
+  
+    StaticUnitTemplate.x   = Coordinate.x    
+    StaticUnitTemplate.y   = Coordinate.z
+    StaticUnitTemplate.alt = Coordinate.y
+  
+    StaticTemplate.route = nil
+    StaticTemplate.groupId = nil
+    
+    StaticTemplate.name = NewName or string.format("%s#%05d", self.SpawnTemplatePrefix, self.SpawnIndex )
+    StaticUnitTemplate.name = StaticTemplate.name
+    StaticUnitTemplate.heading = ( Heading / 180 ) * math.pi
+    
+    _DATABASE:_RegisterStaticTemplate( StaticTemplate, CoalitionID, CategoryID, CountryID)
+    
+    self:F({StaticTemplate = StaticTemplate})
+
+    local Static = coalition.addStaticObject( self.CountryID or CountryID, StaticTemplate.units[1] )
+    
+    self.SpawnIndex = self.SpawnIndex + 1
+    
+    return _DATABASE:FindStatic(Static:getName())
+  end
+  
+  return nil
+end
+
+
 --- Respawns the original @{Static}.
 -- @param #SPAWNSTATIC self
 -- @return #SPAWNSTATIC

@@ -706,8 +706,8 @@ end
 
 --- Returns the unit's climb or descent angle.
 -- @param Wrapper.Positionable#POSITIONABLE self
--- @return #number Climb or descent angle in degrees.
-function POSITIONABLE:GetClimbAnge()
+-- @return #number Climb or descent angle in degrees. Or 0 if velocity vector norm is zero (or nil). Or nil, if the position of the POSITIONABLE returns nil.
+function POSITIONABLE:GetClimbAngle()
 
   -- Get position of the unit.
   local unitpos = self:GetPosition()
@@ -719,10 +719,17 @@ function POSITIONABLE:GetClimbAnge()
     
     if unitvel and UTILS.VecNorm(unitvel)~=0 then
 
-      return math.asin(unitvel.y/UTILS.VecNorm(unitvel))
-
+      -- Calculate climb angle.
+      local angle=math.asin(unitvel.y/UTILS.VecNorm(unitvel))
+      
+      -- Return angle in degrees.
+      return math.deg(angle)
+    else
+      return 0
     end
   end
+  
+  return nil
 end
 
 --- Returns the pitch angle of a unit.

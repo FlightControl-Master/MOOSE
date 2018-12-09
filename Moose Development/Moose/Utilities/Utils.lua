@@ -43,6 +43,19 @@ BIGSMOKEPRESET = {
   HugeSmoke=7,
 }
 
+--- DCS map as returned by env.mission.theatre.
+-- @type DCSMAP
+-- @field #string Caucasus Caucasus map.
+-- @field #string Normandy Normandy map.
+-- @field #string NTTR Nevada Test and Training Range map.
+-- @field #string PersianGulf Persian Gulf map.
+DCSMAP = {
+  Caucasus="Caucasus",
+  NTTR="Nevada",
+  Normandy="Normandy",
+  PersianGulf="PersianGulf"
+}
+
 --- Utilities static class.
 -- @type UTILS
 UTILS = {
@@ -281,7 +294,26 @@ UTILS.CelciusToFarenheit = function( Celcius )
   return Celcius * 9/5 + 32 
 end
 
+--- Convert pressure from hecto Pascal (hPa) to inches of mercury (inHg).
+-- @param #number hPa Pressure in hPa.
+-- @return #number Pressure in inHg.
+UTILS.hPa2inHg = function( hPa )
+  return hPa * 0.0295299830714
+end
 
+--- Convert pressure from hecto Pascal (hPa) to millimeters of mercury (mmHg).
+-- @param #number hPa Pressure in hPa.
+-- @return #number Pressure in mmHg.
+UTILS.hPa2mmHg = function( hPa )
+  return hPa * 0.7500615613030
+end
+
+--- Convert kilo gramms (kg) to pounds (lbs).
+-- @param #number kg Mass in kg.
+-- @return #number Mass in lbs.
+UTILS.kg2lbs = function( kg )
+  return kg * 2.20462
+end
 
 --[[acc:
 in DM: decimal point of minutes.
@@ -539,7 +571,7 @@ end
 
 --- Convert clock time from hours, minutes and seconds to seconds.
 -- @param #string clock String of clock time. E.g., "06:12:35" or "5:1:30+1". Format is (H)H:(M)M:((S)S)(+D) H=Hours, M=Minutes, S=Seconds, D=Days.
--- @param #number Seconds. Corresponds to what you cet from timer.getAbsTime() function.
+-- @return #number Seconds. Corresponds to what you cet from timer.getAbsTime() function.
 function UTILS.ClockToSeconds(clock)
   
   -- Nil check.
@@ -551,7 +583,7 @@ function UTILS.ClockToSeconds(clock)
   local seconds=0
   
   -- Split additional days.
-  local dsplit=UTILS.split(clock, "+")
+  local dsplit=UTILS.Split(clock, "+")
   
   -- Convert days to seconds.
   if #dsplit>1 then
@@ -679,4 +711,78 @@ end
 function UTILS.VecCross(a, b)
   return {x=a.y*b.z - a.z*b.y, y=a.z*b.x - a.x*b.z, z=a.x*b.y - a.y*b.x}
 end
+
+--- Converts a TACAN Channel/Mode couple into a frequency in Hz.
+-- @param #number TACANChannel The TACAN channel, i.e. the 10 in "10X".
+-- @param #string TACANMode The TACAN mode, i.e. the "X" in "10X".
+-- @return #number Frequency in Hz or #nil if parameters are invalid.
+function UTILS.TACANToFrequency(TACANChannel, TACANMode)
+
+  if type(TACANChannel) ~= "number" then
+    return nil -- error in arguments
+  end
+  if TACANMode ~= "X" and TACANMode ~= "Y" then
+    return nil -- error in arguments
+  end  
+  
+-- This code is largely based on ED's code, in DCS World\Scripts\World\Radio\BeaconTypes.lua, line 137.
+-- I have no idea what it does but it seems to work
+  local A = 1151 -- 'X', channel >= 64
+  local B = 64   -- channel >= 64
+  
+  if TACANChannel < 64 then
+    B = 1
+  end
+  
+  if TACANMode == 'Y' then
+    A = 1025
+    if TACANChannel < 64 then
+      A = 1088
+    end
+  else -- 'X'
+    if TACANChannel < 64 then
+      A = 962
+    end
+  end
+  
+  return (A + TACANChannel - B) * 1000000
+end
+
+
+--- Returns the DCS map/theatre as optained by env.mission.theatre
+-- @return #string DCS map name .
+function UTILS.GetDCSMap()
+  return env.mission.theatre
+end
+
+--- Returns the magnetic declination of the map.
+-- Returned values for the current maps are:
+-- 
+-- * Caucasus +6 (East), year ~ 2011
+-- * NTTR +12 (East), year ~ 2011
+-- * Normandy -10 (West), year ~ 1944
+-- * Persian Gulf +2 (East), year ~ 2011
+-- @param #string map (Optional) Map for which the declination is returned. Default is from env.mission.theatre
+-- @return #number Declination in degrees.
+function UTILS.GetMagneticDeclination(map)
+
+  -- Map.
+  map=map or UTILS.GetDCSMap()
+  
+  local declination=0
+  if map==DCSMAP.Caucasus then
+    declination=6
+  elseif map==DCSMAP.NTTR then
+    declination=12
+  elseif map==DCSMAP.Normandy then
+    declination=-10
+  elseif map==DCSMAP.PersianGulf then
+    declination=2
+  else
+    declination=0
+  end
+
+  return declination
+end
+
 

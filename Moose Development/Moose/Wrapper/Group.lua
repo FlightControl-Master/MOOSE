@@ -325,7 +325,7 @@ end
 -- So all event listeners will catch the destroy event of this group for each unit in the group.
 -- To raise these events, provide the `GenerateEvent` parameter.
 -- @param #GROUP self
--- @param #boolean GenerateEvent true if you want to generate a crash or dead event for each unit.
+-- @param #boolean GenerateEvent If true, a crash or dead event for each unit is generated. If false, if no event is triggered. If nil, a RemoveUnit event is triggered.
 -- @usage
 -- -- Air unit example: destroy the Helicopter and generate a S_EVENT_CRASH for each unit in the Helicopter group.
 -- Helicopter = GROUP:FindByName( "Helicopter" )
@@ -1482,6 +1482,17 @@ function GROUP:Respawn( Template, Reset )
   if not Template then
     Template = self:GetTemplate()
   end
+  
+  -- Get correct heading.
+  local function _Heading(course)
+    local h
+    if course<=180 then
+      h=math.rad(course)
+    else
+      h=-math.rad(360-course)
+    end
+    return h 
+  end        
 
   if self:IsAlive() then
     local Zone = self.InitRespawnZone -- Core.Zone#ZONE
@@ -1515,7 +1526,8 @@ function GROUP:Respawn( Template, Reset )
           Template.units[UnitID].alt = self.InitRespawnHeight and self.InitRespawnHeight or GroupUnitVec3.y
           Template.units[UnitID].x = ( Template.units[UnitID].x - From.x ) + GroupUnitVec3.x -- Keep the original x position of the template and translate to the new position.
           Template.units[UnitID].y = ( Template.units[UnitID].y - From.y ) + GroupUnitVec3.z -- Keep the original z position of the template and translate to the new position.
-          Template.units[UnitID].heading = self.InitRespawnHeading and self.InitRespawnHeading or GroupUnit:GetHeading()
+          Template.units[UnitID].heading = _Heading(self.InitRespawnHeading and self.InitRespawnHeading or GroupUnit:GetHeading())
+          Template.units[UnitID].psi     = -Template.units[UnitID].heading
           self:F( { UnitID, Template.units[UnitID], Template.units[UnitID] } )
         end
       end

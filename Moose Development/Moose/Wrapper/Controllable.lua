@@ -342,16 +342,26 @@ function CONTROLLABLE:PushTask( DCSTask, WaitTime )
   local DCSControllable = self:GetDCSObject()
 
   if DCSControllable then
-    local Controller = self:_GetController()
+  
+    local DCSControllableName = self:GetName()
 
     -- When a controllable SPAWNs, it takes about a second to get the controllable in the simulator. Setting tasks to unspawned controllables provides unexpected results.
     -- Therefore we schedule the functions to set the mission and options for the Controllable.
-    -- Controller:pushTask( DCSTask )
+    -- Controller:pushTask( DCSTask )    
+    
+    local function PushTask( Controller, DCSTask )
+      if self and self:IsAlive() then
+        local Controller = self:_GetController()
+        Controller:pushTask( DCSTask )
+      else
+        BASE:E( { DCSControllableName .. " is not alive anymore.", DCSTask = DCSTask } )
+      end
+    end
 
-    if WaitTime then
-      self.TaskScheduler:Schedule( Controller, Controller.pushTask, { DCSTask }, WaitTime )
+    if not WaitTime or WaitTime == 0 then
+      PushTask( self, DCSTask )
     else
-      Controller:pushTask( DCSTask )
+      self.TaskScheduler:Schedule( self, PushTask, { DCSTask }, WaitTime )
     end
 
     return self
@@ -362,7 +372,7 @@ end
 
 --- Clearing the Task Queue and Setting the Task on the queue from the controllable.
 -- @param #CONTROLLABLE self
--- @param #DCS.Task DCSTask DCS Task array.
+-- @param DCS#Task DCSTask DCS Task array.
 -- @param #number WaitTime Time in seconds, before the task is set.
 -- @return Wrapper.Controllable#CONTROLLABLE self
 function CONTROLLABLE:SetTask( DCSTask, WaitTime )
@@ -540,9 +550,9 @@ end
 
 
 
---- Executes a command action
+--- Executes a command action for the CONTROLLABLE.
 -- @param #CONTROLLABLE self
--- @param DCS#Command DCSCommand
+-- @param DCS#Command DCSCommand The command to be executed.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:SetCommand( DCSCommand )
   self:F2( DCSCommand )
@@ -630,9 +640,122 @@ function CONTROLLABLE:StartUncontrolled(delay)
   return self
 end
 
+--- Give the CONTROLLABLE the command to activate a beacon. See [DCS_command_activateBeacon](https://wiki.hoggitworld.com/view/DCS_command_activateBeacon) on Hoggit.
+-- For specific beacons like TACAN use the more convenient @{#BEACON} class.
+-- Note that a controllable can only have one beacon activated at a time with the execption of ICLS.
+-- @param #CONTROLLABLE self
+-- @param Core.Radio#BEACON.Type Type Beacon type (VOR, DME, TACAN, RSBN, ILS etc).
+-- @param Core.Radio#BEACON.System System Beacon system (VOR, DME, TACAN, RSBN, ILS etc).
+-- @param #number Frequency Frequency in Hz the beacon is running on. Use @{#UTILS.TACANToFrequency} to generate a frequency for TACAN beacons.
+-- @param #number UnitID The ID of the unit the beacon is attached to. Usefull if more units are in one group.
+-- @param #number Channel Channel the beacon is using. For, e.g. TACAN beacons.
+-- @param #string ModeChannel The TACAN mode of the beacon, i.e. "X" or "Y".
+-- @param #boolean AA If true, create and Air-Air beacon. IF nil, automatically set if CONTROLLABLE depending on whether unit is and aircraft or not.
+-- @param #string Callsign Morse code identification callsign.
+-- @param #boolean Bearing If true, beacon provides bearing information - if supported by the unit the beacon is attached to.
+-- @param #number Delay (Optional) Delay in seconds before the beacon is activated.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:CommandActivateBeacon(Type, System, Frequency, UnitID, Channel, ModeChannel, AA, Callsign, Bearing, Delay)
+
+  AA=AA or self:IsAir()
+  UnitID=UnitID or self:GetID()
+  
+  -- Command
+  local CommandActivateBeacon= {
+    id = "ActivateBeacon",
+    params = {
+      ["type"] = Type,
+      ["system"] = System,      
+      ["frequency"] = Frequency,
+      ["unitId"] = UnitID,
+      ["channel"] = Channel,
+      ["modeChannel"] = ModeChannel,
+      ["AA"] = AA,
+      ["callsign"] = Callsign,
+      ["bearing"] = Bearing,
+    }
+  }
+  
+  if Delay and Delay>0 then
+    SCHEDULER:New(nil, self.CommandActivateBeacon, {self, Type, System, Frequency, UnitID, Channel, ModeChannel, AA, Callsign, Bearing}, Delay)    
+  else  
+    self:SetCommand(CommandActivateBeacon)
+  end
+    
+  return self
+end
+
+--- Activate ICLS system of the CONTROLLABLE. The controllable should be an aircraft carrier!
+-- @param #CONTROLLABLE self
+-- @param #number Channel ICLS channel.
+-- @param #number UnitID The ID of the unit the ICLS system is attached to. Useful if more units are in one group.
+-- @param #string Callsign Morse code identification callsign.
+-- @param #number Delay (Optional) Delay in seconds before the ICLS is deactivated.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:CommandActivateICLS(Channel, UnitID, Callsign, Delay)
+  self:F()
+
+  -- Command to activate ICLS system.
+  local CommandActivateICLS= {
+    id = "ActivateICLS",
+    params= {
+      ["type"] = BEACON.Type.ICLS,
+      ["channel"] = Channel,
+      ["unitId"] = UnitID,      
+      ["callsign"] = Callsign,
+    }
+  }
+
+  if Delay and Delay>0 then
+    SCHEDULER:New(nil, self.CommandActivateICLS, {self}, Delay)    
+  else  
+    self:SetCommand(CommandActivateICLS)
+  end
+
+  return self
+end
+
+
+--- Deactivate the active beacon of the CONTROLLABLE.
+-- @param #CONTROLLABLE self
+-- @param #number Delay (Optional) Delay in seconds before the beacon is deactivated.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:CommandDeactivateBeacon(Delay)
+  self:F()
+  
+  -- Command to deactivate 
+  local CommandDeactivateBeacon={id='DeactivateBeacon', params={}}
+
+  if Delay and Delay>0 then
+    SCHEDULER:New(nil, self.CommandActivateBeacon, {self}, Delay)    
+  else  
+    self:SetCommand(CommandDeactivateBeacon)
+  end
+
+  return self
+end
+
+--- Deactivate the ICLS of the CONTROLLABLE.
+-- @param #CONTROLLABLE self
+-- @param #number Delay (Optional) Delay in seconds before the ICLS is deactivated.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:CommandDeactivateICLS(Delay)
+  self:F()
+  
+  -- Command to deactivate 
+  local CommandDeactivateICLS={id='DeactivateICLS', params={}}
+
+  if Delay and Delay>0 then
+    SCHEDULER:New(nil, self.CommandDeactivateICLS, {self}, Delay)    
+  else  
+    self:SetCommand(CommandDeactivateICLS)
+  end
+
+  return self
+end
+
+
 -- TASKS FOR AIR CONTROLLABLES
-
-
 --- (AIR) Attack a Controllable.
 -- @param #CONTROLLABLE self
 -- @param Wrapper.Controllable#CONTROLLABLE AttackGroup The Controllable to be attacked.
@@ -870,6 +993,38 @@ function CONTROLLABLE:TaskOrbitCircleAtVec2( Point, Altitude, Speed )
   return DCSTask
 end
 
+--- (AIR) Orbit at a position with at a given altitude and speed. Optionally, a race track pattern can be specified.
+-- @param #CONTROLLABLE self
+-- @param Core.Point#COORDINATE Coord Coordinate at which the CONTROLLABLE orbits.
+-- @param #number Altitude Altitude in meters of the orbit pattern.
+-- @param #number Speed Speed [m/s] flying the orbit pattern
+-- @param Core.Point#COORDINATE CoordRaceTrack (Optional) If this coordinate is specified, the CONTROLLABLE will fly a race-track pattern using this and the initial coordinate. 
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:TaskOrbit(Coord, Altitude, Speed, CoordRaceTrack)
+
+  local Pattern=AI.Task.OrbitPattern.CIRCLE
+  
+  local P1=Coord:GetVec2()
+  local P2=nil
+  if CoordRaceTrack then
+    Pattern=AI.Task.OrbitPattern.RACE_TRACK
+    P2=CoordRaceTrack:GetVec2()
+  end
+
+  local Task = {
+    id = 'Orbit',
+    params = {
+      pattern  = Pattern,
+      point    = P1,
+      point2   = P2,
+      speed    = Speed,
+      altitude = Altitude,
+    }
+  }
+
+  return Task
+end
+
 --- (AIR) Orbit at the current position of the first unit of the controllable at a specified alititude.
 -- @param #CONTROLLABLE self
 -- @param #number Altitude The altitude [m] to hold the position.
@@ -958,11 +1113,7 @@ function CONTROLLABLE:TaskRefueling()
 --    params = {} 
 --  }
 
-  local DCSTask
-  DCSTask = { id = 'Refueling',
-    params = {
-    },
-  },
+  local DCSTask={id='Refueling', params={}}
 
   self:T3( { DCSTask } )
   return DCSTask
@@ -2101,7 +2252,7 @@ do -- Route methods
     FromCoordinate = FromCoordinate or self:GetCoordinate()
     
     -- Get path and path length on road including the end points (From and To).
-    local PathOnRoad, LengthOnRoad=FromCoordinate:GetPathOnRoad(ToCoordinate, true)
+    local PathOnRoad, LengthOnRoad, GotPath =FromCoordinate:GetPathOnRoad(ToCoordinate, true)
     
     -- Get the length only(!) on the road.
     local _,LengthRoad=FromCoordinate:GetPathOnRoad(ToCoordinate, false)
@@ -2113,7 +2264,7 @@ do -- Route methods
     -- Calculate the direct distance between the initial and final points.
     local LengthDirect=FromCoordinate:Get2DDistance(ToCoordinate)
     
-    if PathOnRoad then
+    if GotPath then
     
       -- Off road part of the rout: Total=OffRoad+OnRoad.
       LengthOffRoad=LengthOnRoad-LengthRoad
@@ -2136,7 +2287,7 @@ do -- Route methods
     local canroad=false
                 
     -- Check if a valid path on road could be found.
-    if PathOnRoad and LengthDirect > 2000 then -- if the length of the movement is less than 1 km, drive directly.
+    if GotPath and LengthDirect > 2000 then -- if the length of the movement is less than 1 km, drive directly.
       -- Check whether the road is very long compared to direct path.
       if LongRoad and Shortcut then
 
@@ -3024,6 +3175,3 @@ function CONTROLLABLE:IsAirPlane()
   return nil
 end
 
-
-
--- Message APIs
