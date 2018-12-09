@@ -70,6 +70,7 @@
 -- @field #string autosavepath Path where the asset file is saved on auto save.
 -- @field #string autosavefilename File name of the auto asset save file. Default is auto generated from warehouse id and name.
 -- @field #boolean safeparking If true, parking spots for aircraft are considered as occupied if e.g. a client aircraft is parked there. Default false.
+-- @field #boolean isunit If true, warehouse is represented by a unit instead of a static.
 -- @extends Core.Fsm#FSM
 
 --- Have your assets at the right place at the right time - or not!
@@ -1558,6 +1559,7 @@ WAREHOUSE = {
   autosavepath  =   nil,
   autosavefile  =   nil,
   saveparking   = false,
+  isunit        = false,
 }
 
 --- Item of the warehouse stock table.
@@ -1731,7 +1733,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.6.6"
+WAREHOUSE.version="0.6.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -1804,6 +1806,9 @@ function WAREHOUSE:New(warehouse, alias)
     if warehouse==nil then
       env.info(string.format("No warehouse unit with name %s found trying static.", warehouse))
       warehouse=STATIC:FindByName(warehouse, true)
+      self.isunit=false
+    else
+      self.isunit=true
     end
   end
   
@@ -1833,6 +1838,8 @@ function WAREHOUSE:New(warehouse, alias)
   
   -- Set unique ID for this warehouse.
   self.uid=WAREHOUSE.db.WarehouseID
+  
+  -- As Kalbuth found out, this would fail when using SPAWNSTATIC https://forums.eagle.ru/showthread.php?p=3703488#post3703488
   --self.uid=tonumber(warehouse:GetID())
 
   -- Closest of the same coalition but within a certain range.
@@ -2908,6 +2915,7 @@ function WAREHOUSE:GetAssignment(request)
   return tostring(request.assignment)
 end
 
+--[[
 --- Get warehouse unique ID from static warehouse object. This is the ID under which you find the @{#WAREHOUSE} object in the global data base.
 -- @param #WAREHOUSE self
 -- @param #string staticname Name of the warehouse static object.
@@ -2917,6 +2925,7 @@ function WAREHOUSE:GetWarehouseID(staticname)
   local uid=tonumber(warehouse:GetID())
   return uid
 end
+]]
 
 --- Find a warehouse in the global warehouse data base.
 -- @param #WAREHOUSE self
@@ -6934,10 +6943,14 @@ function WAREHOUSE:_SimpleTaskFunction(Function, group)
   -- Task script.
   local DCSScript = {}
   --DCSScript[#DCSScript+1] = string.format('env.info(\"WAREHOUSE: Simple task function called!\") ')
-  DCSScript[#DCSScript+1] = string.format('local mygroup   = GROUP:FindByName(\"%s\") ', groupname)        -- The group that executes the task function. Very handy with the "...".
-  DCSScript[#DCSScript+1] = string.format("local mystatic  = STATIC:FindByName(\"%s\") ", warehouse)       -- The static that holds the warehouse self object.
-  DCSScript[#DCSScript+1] = string.format('local warehouse = mystatic:GetState(mystatic, \"WAREHOUSE\") ') -- Get the warehouse self object from the static.
-  DCSScript[#DCSScript+1] = string.format('%s(mygroup)', Function)                                         -- Call the function, e.g. myfunction.(warehouse,mygroup)  
+  DCSScript[#DCSScript+1] = string.format('local mygroup     = GROUP:FindByName(\"%s\") ', groupname)              -- The group that executes the task function. Very handy with the "...".
+  if self.isunit then
+    DCSScript[#DCSScript+1] = string.format("local mywarehouse = UNIT:FindByName(\"%s\") ", warehouse)             -- The unit that holds the warehouse self object.
+  else
+    DCSScript[#DCSScript+1] = string.format("local mywarehouse = STATIC:FindByName(\"%s\") ", warehouse)           -- The static that holds the warehouse self object.
+  end
+  DCSScript[#DCSScript+1] = string.format('local warehouse   = mywarehouse:GetState(mywarehouse, \"WAREHOUSE\") ') -- Get the warehouse self object from the static.
+  DCSScript[#DCSScript+1] = string.format('%s(mygroup)', Function)                                                 -- Call the function, e.g. myfunction.(warehouse,mygroup)  
 
   -- Create task.
   local DCSTask = CONTROLLABLE.TaskWrappedAction(self, CONTROLLABLE.CommandDoScript(self, table.concat(DCSScript)))
