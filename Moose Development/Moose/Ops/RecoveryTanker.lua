@@ -14,6 +14,7 @@
 -- ===
 --
 -- ### Author: **funkyfranky** 
+-- ### Special thanks to HighwaymanEd for testing and suggesting improvements!
 --
 -- @module Ops.RecoveryTanker
 -- @image MOOSE.JPG
@@ -276,7 +277,7 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   self:SetPatternUpdateInterval()
   
   -- Moving zone: Zone 1 NM astern the carrier with radius of 1 NM.
-  self.zoneUpdate=ZONE_UNIT:New("Pattern Update Zone", self.carrier, UTILS.NMToMeters(1), {dx=-UTILS.NMToMeters(1), dy=0, relative_to_unit=true}) 
+  --self.zoneUpdate=ZONE_UNIT:New("Pattern Update Zone", self.carrier, UTILS.NMToMeters(1), {dx=-UTILS.NMToMeters(1), dy=0, relative_to_unit=true}) 
   --self.zoneUpdate:SmokeZone(SMOKECOLOR.White, 45)
 
   -----------------------
@@ -734,7 +735,8 @@ function RECOVERYTANKER:onafterStatus(From, Event, To)
 
   -- Check if tanker flies through pattern update zone.
   -- TODO: Check if this can be used to update the pattern without too much disruption.
-  --       Could be a problem when carrier changes course since the tanker might not fligh through the zone any more.  
+  --       Could be a problem when carrier changes course since the tanker might not fligh through the zone any more.
+  --[[
   if self.Debug and self.zoneUpdate then
     local inupdatezone=self.tanker:GetUnit(1):IsInZone(self.zoneUpdate)
     if inupdatezone then
@@ -742,6 +744,7 @@ function RECOVERYTANKER:onafterStatus(From, Event, To)
       self:T(string.format("Recovery tanker is in pattern update zone! Time=%s", clock))
     end
   end
+  ]]
   
   -- Check if tanker is running and not RTBing or refueling.
   if self:IsRunning() then

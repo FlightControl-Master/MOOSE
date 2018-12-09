@@ -9,8 +9,6 @@
 --    * Automatic respawning on empty fuel for 24/7 operations.
 --    * Automatic rescuing of crashed or ejected units in the vicinity.
 --
--- Please not that his class is work in progress and in an **alpha** stage.
---
 -- ===
 --
 -- ### Author: **funkyfranky** 
@@ -162,7 +160,7 @@ RESCUEHELO = {
 
 --- Class version.
 -- @field #string version
-RESCUEHELO.version="0.9.4w"
+RESCUEHELO.version="0.9.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
