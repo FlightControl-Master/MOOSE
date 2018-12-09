@@ -264,13 +264,12 @@ function RADIO:SetSubtitle(Subtitle, SubtitleDuration)
     self:E({"Subtitle is invalid. Subtitle reset.", self.Subtitle})
   end
   if type(SubtitleDuration) == "number" then
-    if math.floor(math.abs(SubtitleDuration)) == SubtitleDuration then
-      self.SubtitleDuration = SubtitleDuration
-      return self
-    end
+    self.SubtitleDuration = SubtitleDuration
+  else
+    self.SubtitleDuration = 0
+    self:E({"SubtitleDuration is invalid. SubtitleDuration reset.", self.SubtitleDuration})  
   end
-  self.SubtitleDuration = 0
-  self:E({"SubtitleDuration is invalid. SubtitleDuration reset.", self.SubtitleDuration})
+  return self
 end
 
 --- Create a new transmission, that is to say, populate the RADIO with relevant data
@@ -309,7 +308,7 @@ end
 -- @param #boolean Loop If true, loop message.
 -- @return #RADIO self
 function RADIO:NewUnitTransmission(FileName, Subtitle, SubtitleDuration, Frequency, Modulation, Loop)
-  self:E({FileName, Subtitle, SubtitleDuration, Frequency, Modulation, Loop})
+  self:F({FileName, Subtitle, SubtitleDuration, Frequency, Modulation, Loop})
 
   -- Set file name.
   self:SetFileName(FileName)

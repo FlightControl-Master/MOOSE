@@ -1114,7 +1114,7 @@ end
 --- Check if heading or position have changed significantly.
 -- @param #RECOVERYTANKER self
 -- @param #number dt Time since last update in seconds.
--- @return #boolean If true, heading and/or position have changed more than 10 degrees or 10 km, respectively.
+-- @return #boolean If true, heading and/or position have changed more than 5 degrees or 10 km, respectively.
 function RECOVERYTANKER:_CheckPatternUpdate(dt)
 
   -- Get current position and orientation of carrier.
