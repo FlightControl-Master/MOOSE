@@ -1,4 +1,4 @@
---- **Functional** - (R2.5) - Rescue helo.
+--- **Ops** - (R2.5) - Rescue helo.
 -- 
 -- Recue helicopter for carrier operations.
 --

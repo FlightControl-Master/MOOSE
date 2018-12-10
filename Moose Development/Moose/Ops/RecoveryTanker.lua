@@ -1,4 +1,4 @@
---- **Functional** - (R2.5) - Carrier recovery tanker.
+--- **Ops** - (R2.5) - Carrier recovery tanker.
 -- 
 -- Tanker aircraft flying a racetrack pattern overhead an aircraft carrier.
 --

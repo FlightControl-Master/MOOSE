@@ -19,8 +19,8 @@
 --    * Multiple carrier support due to object oriented approach.
 --    * Finite State Machine (FSM) implementation.
 --
--- **PLEASE NOTE** that his class is work in progress and in an **alpha** stage and very much work in progress.
--- Your constructive feed back is necessary and highly appreciated.
+-- **PLEASE NOTE** that his class is work in progress and in an **alpha** stage and very much **work in progress**.
+-- Your constructive feedback is both necessary and highly appreciated.
 -- 
 -- At the moment, parameters are optimized for F/A-18C Hornet as aircraft and USS John C. Stennis as carrier.
 -- The community A-4E mod is also supported in priciple but maybe needs further tweaking of parameters such as on speed AoA values.
@@ -30,7 +30,7 @@
 -- ===
 --
 -- ### Author: **funkyfranky**
--- ### Special thanks to **Bankler** for his [https://forums.eagle.ru/showthread.php?t=221412](Recovery Trainer) mission and script, which gave the inspiration for this class.
+-- ### Special thanks to **Bankler** for his great [Recovery Trainer](https://forums.eagle.ru/showthread.php?t=221412) mission and script! This gave the inspiration for this class. Also it uses some functionalities for determining the player positon in Case I recoveries.
 --
 -- @module Ops.Airboss
 -- @image MOOSE.JPG
@@ -65,7 +65,7 @@
 -- @field Core.Zone#ZONE_UNIT zoneInitial Zone usually 3 NM astern of carrier where pilots start their CASE I pattern.
 -- @field #table players Table of players. 
 -- @field #table menuadded Table of units where the F10 radio menu was added.
--- @field #AIRBOSS.Checkpoint Upwind Upwind checkpoint.
+-- @field #AIRBOSS.Checkpoint BreakEntry Break entry checkpoint.
 -- @field #AIRBOSS.Checkpoint BreakEarly Early break checkpoint.
 -- @field #AIRBOSS.Checkpoint BreakLate Late brak checkpoint.
 -- @field #AIRBOSS.Checkpoint Abeam Abeam checkpoint.
@@ -90,6 +90,9 @@
 -- @field #boolean handleai If true (default), handle AI aircraft.
 -- @field Ops.RecoveryTanker#RECOVERYTANKER tanker Recovery tanker flying overhead of carrier.
 -- @field Functional.Warehouse#WAREHOUSE warehouse Warehouse object of the carrier.
+-- @field DCS#Vec3 Corientation Carrier orientation in space.
+-- @field DCS#Vec3 Corientlast Last known carrier orientation.
+-- @field Core.Point#COORDINATE Cposition Carrier position.
 -- @extends Core.Fsm#FSM
 
 --- The boss!
@@ -162,10 +165,10 @@ AIRBOSS = {
   zoneInitial   = nil,
   players       =  {},
   menuadded     =  {},
-  Upwind        =  {},
-  Abeam         =  {},
+  BreakEntry    =  {},
   BreakEarly    =  {},
   BreakLate     =  {},
+  Abeam         =  {},  
   Ninety        =  {},
   Wake          =  {},
   Final         =  {},  
@@ -269,16 +272,16 @@ AIRBOSS.PatternStep={
   PLATFORM="Platform",
   ARCIN="Arc Turn In",
   ARCOUT="Arc Turn Out",
-  DIRTYUP="Level out and Dirty Up",
-  BULLSEYE="Follow Bullseye",
+  DIRTYUP="Dirty Up",
+  BULLSEYE="Bullseye",
   INITIAL="Initial",
-  UPWIND="Upwind",
+  BREAKENTRY="Break Entry",
   EARLYBREAK="Early Break",
   LATEBREAK="Late Break",
   ABEAM="Abeam",
   NINETY="Ninety",
   WAKE="Wake",
-  FINAL="On Final",
+  FINAL="Turn Final",
   GROOVE_XX="Groove X",
   GROOVE_RB="Groove Roger Ball",
   GROOVE_IM="Groove In the Middle",
@@ -650,6 +653,8 @@ AIRBOSS.GroovePos={
 -- @field #string grade LSO grade, i.e. _OK_, OK, (OK), --, CUT
 -- @field #number points Points received.
 -- @field #string details Detailed flight analysis.
+-- @field #number wire Wire caught.
+-- @field #number Tgroove Time in the groove in seconds.
 
 --- Checkpoint parameters triggering the next step in the pattern.
 -- @type AIRBOSS.Checkpoint
@@ -717,18 +722,20 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.5.0"
+AIRBOSS.version="0.5.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Extract (static) weather from mission for cloud covery etc.
+-- TODO: First send AI to marshal and then allow them into the landing pattern ==> task function when reaching the waypoint.
+-- TODO: PWO during case 2/3. Also when too close to other player.
 -- TODO: Option to filter AI groups for recovery.
--- TODO: Check distance to players during approach. PWO if too close.
 -- TODO: Spin pattern. Add radio menu entry. Not sure what to add though?!
 -- TODO: Foul deck check.
 -- TODO: Persistence of results.
+-- DONE: Extract (static) weather from mission for cloud covery etc.
+-- DONE: Check distance to players during approach.
 -- DONE: Option to turn AI handling off.
 -- DONE: Add user functions.
 -- DONE: Update AI holding pattern wrt to moving carrier.
@@ -854,8 +861,8 @@ function AIRBOSS:New(carriername, alias)
     return nil
   end
   
-  -- CASE I/II moving zone: Zone 3 NM astern and 100 m starboard of the carrier with radius of 0.5 km.
-  self.zoneInitial=ZONE_UNIT:New("Initial Zone", self.carrier, 0.5*1000, {dx=-UTILS.NMToMeters(3), dy=100, relative_to_unit=true})
+  -- CASE I/II moving zone: Zone 2.75 NM astern and 0.1 NM starboard of the carrier with a diameter of 1 NM.
+  self.zoneInitial=ZONE_UNIT:New("Initial Zone", self.carrier, UTILS.NMToMeters(0.5), {dx=-UTILS.NMToMeters(2.75), dy=UTILS.NMToMeters(0.1), relative_to_unit=true})
     
   -- Smoke zones.
   if self.Debug and false then
@@ -1355,6 +1362,30 @@ function AIRBOSS:onafterStatus(From, Event, To)
   self:__Status(-0.5)
 end
 
+--- Get aircraft nickname.
+-- @param #AIRBOSS self
+-- @param #string actype Aircraft type name.
+-- @return #string Aircraft nickname. E.g. "Hornet" for the F/A-18C or "Tomcat" For the F-14A.
+function AIRBOSS:_GetACNickname(actype)
+
+  local nickname="unknown"
+  if actype==AIRBOSS.AircraftCarrier.A4EC then
+    nickname="Skyhawk"
+  elseif actype==AIRBOSS.AircraftCarrier.AV8B then
+    nickname="Harrier"
+  elseif actype==AIRBOSS.AircraftCarrier.E2D then
+    nickname="Hawkeye"
+  elseif actype==AIRBOSS.AircraftCarrier.F14A then
+    nickname="Tomcat"
+  elseif actype==AIRBOSS.AircraftCarrier.FA18C or actype==AIRBOSS.AircraftCarrier.HORNET then
+    nickname="Hornet"
+  elseif actype==AIRBOSS.AircraftCarrier.S3B or actype==AIRBOSS.AircraftCarrier.S3BTANKER then
+    nickname="Viking"
+  end
+  
+  return nickname
+end
+
 --- Check recovery times and start/stop recovery mode of aircraft.
 -- @param #AIRBOSS self
 function AIRBOSS:_CheckAIStatus()
@@ -1375,27 +1406,27 @@ function AIRBOSS:_CheckAIStatus()
         
         -- Get lineup and distance to carrier.
         local lineup=self:_Lineup(unit, true)
-        local distance=unit:GetCoordinate():Get2DDistance(self:GetCoordinate())
+        local distance=UTILS.NMToMeters(unit:GetCoordinate():Get2DDistance(self:GetCoordinate()))
+        local alt=UTILS.MetersToFeet(unit:GetAltitude())
         
         -- Check if parameters are right and flight is in the groove.
-        if lineup<2 and distance<=UTILS.NMToMeters(0.75) and not flight.ballcall then
+        if lineup<2 and distance<=0.75 and alt<500 and not flight.ballcall then
         
             -- Paddles: Call the ball!
           self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.CALLTHEBALL, false, 0)
 
           -- Pilot: "405, Hornet Ball, 3.2"
-          -- TODO: Hornet ==> General.
           -- TODO: Message to players only.
           -- TODO: Voice over.
           -- TODO: Correct unit onboard number not section lead!
-          local text=string.format("%s, Hornet Ball, %.1f.", flight.onboard, self:_GetFuelState(unit)/1000)
+          local text=string.format("%s, %s Ball, %.1f.", flight.onboard, self:_GetACNickname(unit:GetTypeName()), self:_GetFuelState(unit)/1000)
           MESSAGE:New(text, 5):ToCoalition(self:GetCoalition())
           --self:MessageToPlayer(playerData, text, playerData.onboard, "", 3, false, 3)
           
-          -- Paddles: Roger ball.
-          self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.ROGERBALL, false, 10)
+          -- Paddles: Roger ball after 3 seconds.
+          self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.ROGERBALL, false, 3)
           
-          -- TODO: This does not work for flights with more than one aircraft in the group!
+          -- TODO: This does not work for flights with more than one aircraft in the group! But we need to set it not to flood the screen with messages for the same unit.
           flight.ballcall=true
         end
         
@@ -1403,6 +1434,80 @@ function AIRBOSS:_CheckAIStatus()
     end
   end
 
+end
+
+--- Check if player in the landing pattern is too close to another aircarft in the pattern.
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.PlayerData player Player data.
+function AIRBOSS:_CheckPlayerPatternDistance(player)
+
+  -- Nothing to do since we check only in the pattern.
+  if #self.Qpattern==0 then 
+    return
+  end
+
+  --- Function that checks if unit1 is too close to unit2.  
+  local function _checkclose(_unit1, _unit2)
+  
+    local unit1=_unit1 --Wrapper.Unit#UNIT
+    local unit2=_unit2 --Wrapper.Unit#UNIT
+    
+    if (not unit1) or (not unit2) then
+      return false
+    end
+    
+    -- Check that this is not the same unit.
+    if unit1:GetName()==unit2:GetName() then
+      return false
+    end
+    
+    -- TODO: return false when unit2 is not in air? Could be on the carrier.
+    
+    -- Positions of units.
+    local c1=unit1:GetCoordinate()
+    local c2=unit2:GetCoordinate()
+    
+    -- Vector from unit1 to unit2
+    local vec12={x=c2.x-c1.x, y=0, z=c2.z-c1.z} --DCS#Vec3
+    
+    -- Distance between units.
+    local dist=UTILS.VecNorm(vec12)
+    
+    -- Orientation of unit 1 in space.
+    local vec1=unit1:GetOrientationX()
+    vec1.y=0
+    
+    -- Get angle between the two orientation vectors. Does the player aircraft nose point into the direction of the other aircraft? (Could be behind him!)
+    local rhdg=math.deg(math.acos(UTILS.VecDot(vec12,vec1)/UTILS.VecNorm(vec12)/UTILS.VecNorm(vec1)))
+    
+    -- Direction in 30 degrees cone and distance < 200 meters.
+    -- TODO: Test parameter values.
+    if math.abs(rhdg)<30 and dist<200 then  
+      return true
+    else
+      return false
+    end
+  end
+  
+  -- Loop over all other flights in pattern.
+  for _,_flight in pairs(self.Qpattern) do
+    local flight=_flight --#AIRBOSS.Flightitem
+    
+    -- Now we still need to loop over all units in the flight.
+    for _,_unit in pairs(flight.group:GetUnits()) do
+      
+      -- Check if player is too close to another aircraft in the pattern.
+      local tooclose=_checkclose(player, _unit)
+      
+      if tooclose then
+        local text=string.format("Player %s too close (<200 meters) to aircraft %s!", player.name, _unit:GetName())
+        MESSAGE:New(text, 20, "DEBUG"):ToAllIf(self.Debug)
+        -- TODO: AIRBOSS call ==> Pattern wave off. 
+      end
+                
+    end
+  end
+    
 end
 
 --- Check recovery times and start/stop recovery mode of aircraft.
@@ -1658,16 +1763,16 @@ function AIRBOSS:_InitStennis()
   self.Bullseye.LimitZmin=nil
   self.Bullseye.LimitZmax=nil
  
-  -- Upwind leg (break entry).
-  self.Upwind.name="Upwind"
-  self.Upwind.Xmin=-UTILS.NMToMeters(4)          -- Not more than 4 NM behind the boat. Check for initial is at 3 NM with a radius of 500 m and 100 m starboard.
-  self.Upwind.Xmax= nil
-  self.Upwind.Zmin=-400                          -- Not more than 400 meters port of boat. Otherwise miss the zone.
-  self.Upwind.Zmax= 600                          -- Not more than 600 m starboard of boat. Otherwise miss the zone.
-  self.Upwind.LimitXmin=0                        -- Check and next step when at carrier and starboard of carrier.
-  self.Upwind.LimitXmax=nil
-  self.Upwind.LimitZmin=-100
-  self.Upwind.LimitZmax=nil
+  -- Break entry.
+  self.BreakEntry.name="BreakEntry"
+  self.BreakEntry.Xmin=-UTILS.NMToMeters(4)          -- Not more than 4 NM behind the boat. Check for initial is at 3 NM with a radius of 500 m and 100 m starboard.
+  self.BreakEntry.Xmax= nil
+  self.BreakEntry.Zmin=-400                          -- Not more than 400 meters port of boat. Otherwise miss the zone.
+  self.BreakEntry.Zmax= 600                          -- Not more than 600 m starboard of boat. Otherwise miss the zone.
+  self.BreakEntry.LimitXmin=0                        -- Check and next step when at carrier and starboard of carrier.
+  self.BreakEntry.LimitXmax=nil
+  self.BreakEntry.LimitZmin=-100
+  self.BreakEntry.LimitZmax=nil
 
   -- Early break.
   self.BreakEarly.name="Early Break"
@@ -1862,7 +1967,7 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
       speed=UTILS.KnotsToMps(250)
     end
     
-  elseif step==AIRBOSS.PatternStep.UPWIND then
+  elseif step==AIRBOSS.PatternStep.BREAKENTRY then
 
     if hornet then     
       alt=UTILS.FeetToMeters(800)
@@ -2236,13 +2341,39 @@ function AIRBOSS:_MarshalAI(flight, nstack)
   end  
   
   -- Landing waypoint.
-  wp[#wp+1]=Carrier:SetAltitude(250):WaypointAirLanding(Speed, self.airbase, nil, "Landing")
+  --wp[#wp+1]=Carrier:SetAltitude(250):WaypointAirLanding(Speed, self.airbase, nil, "Landing")
       
   -- Reinit waypoints.
   group:WayPointInitialize(wp)
   
   -- Route group.
   group:Route(wp, 0)
+end
+
+--- Tell AI to land on the carrier.
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.Flightitem flight Flight group.
+function AIRBOSS:_LandAI(flight)
+
+  -- Aircraft speed when flying the pattern.
+  local Speed=UTILS.KnotsToMps(272)
+  
+  local Carrier=self:GetCoordinate()
+
+  -- Waypoints array.
+  local wp={}
+
+  wp[#wp+1]=flight.group:GetCoordinate():WaypointAirTurningPoint(nil ,Speed, {}, "Current position")
+
+  -- Landing waypoint.
+  wp[#wp+1]=self:GetCoordinate():SetAltitude(250):WaypointAirLanding(Speed, self.airbase, nil, "Landing")
+      
+  -- Reinit waypoints.
+  flight.group:WayPointInitialize(wp)
+  
+  -- Route group.
+  flight.group:Route(wp, 0)
+
 end
 
 --- Get marshal altitude and position.
@@ -2353,6 +2484,7 @@ function AIRBOSS:_CheckCollapseMarshalStack(flight)
   if flight.ai then
     -- Collapse stack and send AI to pattern.
     self:_CollapseMarshalStack(flight)
+    self:_LandAI(flight)
   end
 
   -- Inform all flights.
@@ -2723,6 +2855,7 @@ function AIRBOSS:_InitPlayer(playerData)
   playerData.Tlso=timer.getTime()
   playerData.Tgroove=nil
   playerData.wire=nil
+  playerData.ballcall=false
   
   -- Set us up on final if group name contains "Groove". But only for the first pass.
   if playerData.group:GetName():match("Groove") and playerData.passes==0 then
@@ -2921,7 +3054,7 @@ function AIRBOSS:_CheckPatternUpdate()
   -- Current orientation of carrier.
   local vNew=self.carrier:GetOrientationX()
   
-  -- Reference orientation of carrier after the last update
+  -- Reference orientation of carrier after the last update.
   local vOld=self.Corientation
   
   -- Last orientation from 30 seconds ago.
@@ -3014,6 +3147,10 @@ function AIRBOSS:_CheckPlayerStatus()
 
         -- Check if player is in carrier controlled area (zone with R=50 NM around the carrier).
         if unit:IsInZone(self.zoneCCA) then
+        
+          -- Check if player is too close to another aircraft in the pattern.
+          -- TODO: Find a better place to call this!
+          --self:_CheckPlayerPatternDistance(playerData)
                  
           if playerData.step==AIRBOSS.PatternStep.UNDEFINED then
             
@@ -3070,20 +3207,20 @@ function AIRBOSS:_CheckPlayerStatus()
             -- CASE I/II: Player is at the initial position entering the landing pattern.
             self:_Initial(playerData)
             
-          elseif playerData.step==AIRBOSS.PatternStep.UPWIND then
+          elseif playerData.step==AIRBOSS.PatternStep.BREAKENTRY then
           
-            -- CASE I/II: Upwind leg aka break entry.
-            self:_Upwind(playerData)
+            -- CASE I/II: Break entry.
+            self:_BreakEntry(playerData)
             
           elseif playerData.step==AIRBOSS.PatternStep.EARLYBREAK then
           
             -- CASE I/II: Early break.
-            self:_Break(playerData, "early")
+            self:_Break(playerData, AIRBOSS.PatternStep.EARLYBREAK)
             
           elseif playerData.step==AIRBOSS.PatternStep.LATEBREAK then
           
             -- CASE I/II: Late break.
-            self:_Break(playerData, "late")
+            self:_Break(playerData, AIRBOSS.PatternStep.LATEBREAK)
             
           elseif playerData.step==AIRBOSS.PatternStep.ABEAM then
           
@@ -3266,8 +3403,13 @@ function AIRBOSS:OnEventLand(EventData)
         coord:SmokeGreen()        
       end
       
-      -- Get wire
+      -- Get wire.
       local wire=self:_GetWire(dist)
+      
+      -- No wire ==> Bolter, Bolter radio call.
+      if wire>4 then
+        self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.BOLTER)
+      end
       
       -- Get time in the groove.
       local gdataX0=playerData.groove.X0 --#AIRBOSS.GrooveData
@@ -3498,15 +3640,18 @@ function AIRBOSS:_Initial(playerData)
   
     -- Inform player.
     local hint=string.format("Initial")
-    if playerData.difficulty==AIRBOSS.Difficulty.EASY then      
-      hint=hint.."\nAim for 800 feet and 350 kts at the break entry."
+    if playerData.difficulty==AIRBOSS.Difficulty.EASY then
+      local alt,aoa,dist,speed=self:_GetAircraftParameters(playerData, AIRBOSS.PatternStep.BREAKENTRY)
+      hint=hint..string.format("\nOptimal setup at the break entry is %d feet and %d kts.", UTILS.MetersToFeet(alt), UTILS.MpsToKnots(speed))
     end
     
-    -- Send message.
-    self:MessageToPlayer(playerData, hint, "MARSHAL")
+    -- Send message for normal and easy difficulty.
+    if playerData.difficulty~=AIRBOSS.Difficulty.HARD then
+      self:MessageToPlayer(playerData, hint, "MARSHAL")
+    end
   
-    -- Next step: upwind.
-    playerData.step=AIRBOSS.PatternStep.UPWIND
+    -- Next step: Break entry.
+    playerData.step=AIRBOSS.PatternStep.BREAKENTRY
   end
   
 end
@@ -3741,22 +3886,22 @@ function AIRBOSS:_Bullseye(playerData)
 end
  
 
---- Upwind leg or break entry for case I/II recoveries.
+--- Break entry for case I/II recoveries.
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data table.
-function AIRBOSS:_Upwind(playerData)
+function AIRBOSS:_BreakEntry(playerData)
 
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
   local X, Z, rho, phi=self:_GetDistances(playerData.unit)
   
   -- Abort condition check.
-  if self:_CheckAbort(X, Z, self.Upwind) then
-    self:_AbortPattern(playerData, X, Z, self.Upwind, true)
+  if self:_CheckAbort(X, Z, self.BreakEntry) then
+    self:_AbortPattern(playerData, X, Z, self.BreakEntry, true)
     return
   end
   
   -- Check if we are in front of the boat (diffX > 0).
-  if self:_CheckLimits(X, Z, self.Upwind) then
+  if self:_CheckLimits(X, Z, self.BreakEntry) then
   
     -- Get optimal altitude, distance and speed.
     local alt, aoa, dist, speed=self:_GetAircraftParameters(playerData)
@@ -3791,7 +3936,7 @@ function AIRBOSS:_Break(playerData, part)
   
   -- Early or late break.  
   local breakpoint = self.BreakEarly
-  if part=="late" then
+  if part==AIRBOSS.PatternStep.LATEBREAK then
     breakpoint = self.BreakLate
   end
     
@@ -3820,7 +3965,7 @@ function AIRBOSS:_Break(playerData, part)
     self:_AddToDebrief(playerData, debrief)
 
     -- Next step: Late Break or Abeam.
-    if part=="early" then
+    if part==AIRBOSS.PatternStep.EARLYBREAK then
       playerData.step=AIRBOSS.PatternStep.LATEBREAK
     else
       playerData.step=AIRBOSS.PatternStep.ABEAM
@@ -5773,6 +5918,8 @@ function AIRBOSS:_Debrief(playerData)
   mygrade.grade=grade
   mygrade.points=points
   mygrade.details=analysis
+  mygrade.wire=playerData.wire
+  mygrade.Tgroove=playerData.Tgroove
   
   -- Add grade to table.
   table.insert(playerData.grades, mygrade)
@@ -5799,34 +5946,52 @@ function AIRBOSS:_Debrief(playerData)
     if playerData.unit:IsAlive() then
     
       -- TODO: handle case where player landed even though he was waved off!
+      
+      if playerData.unit:InAir()==true then
     
-      -- Heading and distance tip.
-      local heading, distance
-      
-      if playerData.case==1 or playerData.case==2 then
-      
-        -- Get heading and distance to initial zone ~3 NM astern.
-        heading=playerData.unit:GetCoordinate():HeadingTo(self.zoneInitial:GetCoordinate())
-        distance=playerData.unit:GetCoordinate():Get2DDistance(self.zoneInitial:GetCoordinate())
-      
-      elseif playerData.case==3 then
-  
-        -- Get heading and distance to bullseye zone ~3 NM astern.
-        local zone=self:_GetZoneBullseye(playerData.case)
+        -- Heading and distance tip.
+        local heading, distance
         
-        heading=playerData.unit:GetCoordinate():HeadingTo(zone:GetCoordinate())
-        distance=playerData.unit:GetCoordinate():Get2DDistance(zone:GetCoordinate())
+        if playerData.case==1 or playerData.case==2 then
+        
+          -- Get heading and distance to initial zone ~3 NM astern.
+          heading=playerData.unit:GetCoordinate():HeadingTo(self.zoneInitial:GetCoordinate())
+          distance=playerData.unit:GetCoordinate():Get2DDistance(self.zoneInitial:GetCoordinate())
+        
+        elseif playerData.case==3 then
+    
+          -- Get heading and distance to bullseye zone ~3 NM astern.
+          local zone=self:_GetZoneBullseye(playerData.case)
+          
+          heading=playerData.unit:GetCoordinate():HeadingTo(zone:GetCoordinate())
+          distance=playerData.unit:GetCoordinate():Get2DDistance(zone:GetCoordinate())
+        
+        end
+          
+        -- Re-enter message.
+        local text=string.format("fly heading %d for %d NM to re-enter the pattern.", heading, UTILS.MetersToNM(distance))
+        self:MessageToPlayer(playerData, text, "LSO", nil, 10, false, 5)
+        
+  
+        -- Commencing again.      
+        playerData.step=AIRBOSS.PatternStep.COMMENCING
+        playerData.warning=nil
+        
+      else
+      
+        if playerData.waveoff then
+
+          -- Airboss talkto!
+          local text=string.format("you were waved off but landed anyway. Airboss wants to talk to you!")
+          self:MessageToPlayer(playerData, text, "LSO", nil, 10, false, 2)
+          
+          -- Next step undefined. Player landed.
+          playerData.step=AIRBOSS.PatternStep.UNDEFINED
+          playerData.warning=nil
+        
+        end
       
       end
-        
-      -- Re-enter message.
-      local text=string.format("fly heading %d for %d NM to re-enter the pattern.", heading, UTILS.MetersToNM(distance))
-      self:MessageToPlayer(playerData, text, "LSO", nil, 10, false, 5)
-      
-
-      -- Commencing again.      
-      playerData.step=AIRBOSS.PatternStep.COMMENCING
-      playerData.warning=nil
       
     else
       -- Unit does not seem to be alive!
@@ -6320,25 +6485,29 @@ function AIRBOSS:MessageToPlayer(playerData, message, sender, receiver, duration
       text=string.format("%s, %s", receiver, message)
     end
     self:I(self.lid..text)
-    
-    -- Send onboard number so that player is alerted about the text message.
-    -- DONE: This will fail with message to all since for each player the message will be played!
-    if receiver==playerData.onboard and not soundoff then
-      if sender then
-        if sender=="LSO" then
-          self:_Number2Sound(self.LSORadio, receiver, delay)
-        elseif sender=="MARSHAL" then
-          self:_Number2Sound(self.MarshalRadio, receiver, delay)
-        end
-      end      
-    end
       
     if delay and delay>0 then
-      SCHEDULER:New(nil, self.MessageToPlayer, {self, playerData, message, sender, receiver, duration, clear}, delay)
+      -- Delayed call.
+      SCHEDULER:New(self, self.MessageToPlayer, {playerData, message, sender, receiver, duration, clear, 0, soundoff}, delay)
     else
+    
+      -- Send onboard number so that player is alerted about the text message.
+      -- DONE: This will fail with message to all since for each player the message will be played!
+      if receiver==playerData.onboard and not soundoff then
+        if sender then
+          if sender=="LSO" then
+            self:_Number2Sound(self.LSORadio, receiver, delay)
+          elseif sender=="MARSHAL" then
+            self:_Number2Sound(self.MarshalRadio, receiver, delay)
+          end
+        end      
+      end    
+    
+      -- Text message to player client.
       if playerData.client then
         MESSAGE:New(text, duration, sender, clear):ToClient(playerData.client)
       end
+      
     end
     
   end
@@ -6496,47 +6665,47 @@ function AIRBOSS:_AddF10Commands(_unitName)
         -- F10/Airboss/<Carrier>/F1 Help
         --------------------------------
         local _helpPath=missionCommands.addSubMenuForGroup(gid, "Help", _rootPath)
-        -- F10/Airboss/<Carrier>/Help/Skill Level
+        -- F10/Airboss/<Carrier>/F1 Help/F1 Skill Level
         local _skillPath=missionCommands.addSubMenuForGroup(gid, "Skill Level", _helpPath)
-        -- F10/Airboss/<Carrier>/Help/Skill Level/
-        missionCommands.addCommandForGroup(gid, "Flight Student",  _skillPath, self._SetDifficulty, self, playername, AIRBOSS.Difficulty.EASY)
-        missionCommands.addCommandForGroup(gid, "Naval Aviator",   _skillPath, self._SetDifficulty, self, playername, AIRBOSS.Difficulty.NORMAL)
-        missionCommands.addCommandForGroup(gid, "TOPGUN Graduate", _skillPath, self._SetDifficulty, self, playername, AIRBOSS.Difficulty.HARD)
-        -- F10/Airboss/<Carrier>/Help/Mark Zones
+        -- F10/Airboss/<Carrier>/F1 Help/F1 Skill Level/
+        missionCommands.addCommandForGroup(gid, "Flight Student",  _skillPath, self._SetDifficulty, self, playername, AIRBOSS.Difficulty.EASY)   -- F1
+        missionCommands.addCommandForGroup(gid, "Naval Aviator",   _skillPath, self._SetDifficulty, self, playername, AIRBOSS.Difficulty.NORMAL) -- F2
+        missionCommands.addCommandForGroup(gid, "TOPGUN Graduate", _skillPath, self._SetDifficulty, self, playername, AIRBOSS.Difficulty.HARD)   -- F3
+        -- F10/Airboss/<Carrier>/F1 Help/F2 Mark Zones
         local _markPath=missionCommands.addSubMenuForGroup(gid, "Mark Zones", _helpPath)
-        -- F10/Airboss/<Carrier>/Help/Mark Zones/
-        missionCommands.addCommandForGroup(gid, "Smoke My Marshal Zone",      _markPath, self._MarkMarshalZone, self, _unitName, false)
-        missionCommands.addCommandForGroup(gid, "Flare My Marshal Zone",      _markPath, self._MarkMarshalZone, self, _unitName, true)
-        missionCommands.addCommandForGroup(gid, "Smoke Pattern Zones",        _markPath, self._MarkCaseZones, self,   _unitName, false)
-        missionCommands.addCommandForGroup(gid, "Flare Pattern Zones",        _markPath, self._MarkCaseZones, self,   _unitName, true)
-        -- F10/Airboss/<Carrier>/Help/
-        missionCommands.addCommandForGroup(gid, "Radio Check LSO",         _helpPath, self._LSORadioCheck,     self, _unitName)
-        missionCommands.addCommandForGroup(gid, "Radio Check Marshal",     _helpPath, self._MarshalRadioCheck, self, _unitName)           
-        missionCommands.addCommandForGroup(gid, "Attitude Monitor ON/OFF", _helpPath, self._AttitudeMonitor,   self,  playername)
-        missionCommands.addCommandForGroup(gid, "[Reset My Status]",       _helpPath, self._ResetPlayerStatus, self, _unitName)
+        -- F10/Airboss/<Carrier>/F1 Help/F3 Mark Zones/
+        missionCommands.addCommandForGroup(gid, "Smoke My Marshal Zone",      _markPath, self._MarkMarshalZone, self, _unitName, false)  -- F1
+        missionCommands.addCommandForGroup(gid, "Flare My Marshal Zone",      _markPath, self._MarkMarshalZone, self, _unitName, true)   -- F2
+        missionCommands.addCommandForGroup(gid, "Smoke Pattern Zones",        _markPath, self._MarkCaseZones, self,   _unitName, false)  -- F3
+        missionCommands.addCommandForGroup(gid, "Flare Pattern Zones",        _markPath, self._MarkCaseZones, self,   _unitName, true)   -- F4
+        -- F10/Airboss/<Carrier>/F1 Help/
+        missionCommands.addCommandForGroup(gid, "My Status",               _helpPath, self._DisplayPlayerStatus, self, _unitName)   -- F4
+        missionCommands.addCommandForGroup(gid, "Attitude Monitor ON/OFF", _helpPath, self._AttitudeMonitor,     self,  playername) -- F5   
+        missionCommands.addCommandForGroup(gid, "Radio Check LSO",         _helpPath, self._LSORadioCheck,       self, _unitName)   -- F6
+        missionCommands.addCommandForGroup(gid, "Radio Check Marshal",     _helpPath, self._MarshalRadioCheck,   self, _unitName)   -- F7   
+        missionCommands.addCommandForGroup(gid, "[Reset My Status]",       _helpPath, self._ResetPlayerStatus,   self, _unitName)   -- F8
 
         -------------------------------------
         -- F10/Airboss/<Carrier>/F2 Kneeboard --
         -------------------------------------
         local _kneeboardPath=missionCommands.addSubMenuForGroup(gid, "Kneeboard", _rootPath)        
-        -- F10/Airboss/<Carrier>/Kneeboard/Results
+        -- F10/Airboss/<Carrier>/F2 Kneeboard/F1 Results
         local _resultsPath=missionCommands.addSubMenuForGroup(gid, "Results", _kneeboardPath)
-        -- F10/Airboss/<Carrier>/Kneeboard/Results/
-        missionCommands.addCommandForGroup(gid, "Greenie Board", _resultsPath, self._DisplayScoreBoard,   self, _unitName)
-        missionCommands.addCommandForGroup(gid, "My LSO Grades", _resultsPath, self._DisplayPlayerGrades, self, _unitName)
-        missionCommands.addCommandForGroup(gid, "Last Debrief",  _resultsPath, self._DisplayDebriefing,   self, _unitName)
-        -- F10/Airboss/<Carrier/Kneeboard/
-        missionCommands.addCommandForGroup(gid, "Carrier Info",   _kneeboardPath, self._DisplayCarrierInfo,    self, _unitName)
-        missionCommands.addCommandForGroup(gid, "Weather Report", _kneeboardPath, self._DisplayCarrierWeather, self, _unitName)
-        missionCommands.addCommandForGroup(gid, "My Status",      _kneeboardPath, self._DisplayPlayerStatus,   self, _unitName)
-        missionCommands.addCommandForGroup(gid, "Set Section",    _kneeboardPath, self._SetSection,            self, _unitName)
+        -- F10/Airboss/<Carrier>/F2 Kneeboard/F1 Results/
+        missionCommands.addCommandForGroup(gid, "Greenie Board", _resultsPath, self._DisplayScoreBoard,   self, _unitName) -- F1
+        missionCommands.addCommandForGroup(gid, "My LSO Grades", _resultsPath, self._DisplayPlayerGrades, self, _unitName) -- F2
+        missionCommands.addCommandForGroup(gid, "Last Debrief",  _resultsPath, self._DisplayDebriefing,   self, _unitName) -- F3
+        -- F10/Airboss/<Carrier/F2 Kneeboard/
+        missionCommands.addCommandForGroup(gid, "Carrier Info",   _kneeboardPath, self._DisplayCarrierInfo,    self, _unitName) -- F2
+        missionCommands.addCommandForGroup(gid, "Weather Report", _kneeboardPath, self._DisplayCarrierWeather, self, _unitName) -- F3
+        missionCommands.addCommandForGroup(gid, "Set Section",    _kneeboardPath, self._SetSection,            self, _unitName) -- F4
 
         ----------------------------
         -- F10/Airboss/<Carrier>/ --
         ----------------------------
-        missionCommands.addCommandForGroup(gid, "Request Marshal",    _rootPath, self._RequestMarshal,   self, _unitName)
-        missionCommands.addCommandForGroup(gid, "Request Commence",   _rootPath, self._RequestCommence,  self, _unitName)
-        missionCommands.addCommandForGroup(gid, "Request Refueling",  _rootPath, self._RequestRefueling, self, _unitName)        
+        missionCommands.addCommandForGroup(gid, "Request Marshal",    _rootPath, self._RequestMarshal,   self, _unitName) -- F3
+        missionCommands.addCommandForGroup(gid, "Request Commence",   _rootPath, self._RequestCommence,  self, _unitName) -- F4
+        missionCommands.addCommandForGroup(gid, "Request Refueling",  _rootPath, self._RequestRefueling, self, _unitName) -- F5
       end
     else
       self:T(self.lid.."Could not find group or group ID in AddF10Menu() function. Unit name: ".._unitName)
