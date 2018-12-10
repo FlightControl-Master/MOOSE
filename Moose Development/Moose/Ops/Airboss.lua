@@ -255,6 +255,8 @@ AIRBOSS.CarrierType={
 -- @field #number OnSpeed Optimal on-speed AoA.
 -- @field #number Fast Fast AoA threshold. Smaller means faster.
 -- @field #number Slow Slow AoA threshold. Larger means slower.
+-- @field #number FAST Really fast AoA threshold.
+-- @field #number SLOW Really slow AoA threshold.
 
 --- Pattern steps.
 -- @type AIRBOSS.PatternStep
@@ -1762,25 +1764,31 @@ function AIRBOSS:_GetAircraftAoA(playerData)
   
   if hornet then
     -- F/A-18C Hornet parameters
+    aoa.SLOW=9.8
     aoa.Slow=9.3
     aoa.OnSpeedMax=8.8
     aoa.OnSpeed=8.1
     aoa.OnSpeedMin=7.4
     aoa.Fast=6.9
+    aoa.FAST=6.3
   elseif skyhawk then
     -- A-4E-C parameters from https://forums.eagle.ru/showpost.php?p=3703467&postcount=390
+    aoa.SLOW=19.0
     aoa.Slow=18.5
     aoa.OnSpeedMax=18.0
     aoa.OnSpeed=17.5
     aoa.OnSpeedMin=17.0
     aoa.Fast=16.5
+    aoa.FAST=16.0
   elseif harrier then
     -- TODO: AV-8B parameters! On speed AoA?
+    aoa.SLOW=14.0
     aoa.Slow=13.0
     aoa.OnSpeedMax=12.0
     aoa.OnSpeed=11.0
     aoa.OnSpeedMin=10.0
     aoa.Fast=9.0
+    aoa.FAST=8.0
   end
 
   return aoa
@@ -3837,6 +3845,7 @@ function AIRBOSS:_CheckForLongDownwind(playerData)
     
     -- Sound output.
     self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.LONGINGROOVE)
+    self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.DEPARTANDREENTER)
     
     -- Debrief.
     self:_AddToDebrief(playerData, "Long in the groove - Pattern Wave Off!")
@@ -5059,9 +5068,7 @@ end
 -- @param #number lineupError Error in degrees.
 function AIRBOSS:_LSOadvice(playerData, glideslopeError, lineupError)
 
-  -- Player group.
-  local player=playerData.unit:GetGroup()
-  
+  -- Advice time.
   local advice=0
   
   -- Glideslope high/low calls.
@@ -5162,10 +5169,10 @@ function AIRBOSS:_LSOgrade(playerData)
   end
 
   -- Analyse flight data and conver to LSO text.
-  local GXX,nXX=self:_Flightdata2Text(playerData.groove.XX)
-  local GIM,nIM=self:_Flightdata2Text(playerData.groove.IM)
-  local GIC,nIC=self:_Flightdata2Text(playerData.groove.IC)
-  local GAR,nAR=self:_Flightdata2Text(playerData.groove.AR)
+  local GXX,nXX=self:_Flightdata2Text(playerData, AIRBOSS.GroovePos.XX) --playerData.groove.XX)
+  local GIM,nIM=self:_Flightdata2Text(playerData, AIRBOSS.GroovePos.IM) --playerData.groove.IM)
+  local GIC,nIC=self:_Flightdata2Text(playerData, AIRBOSS.GroovePos.IC) --playerData.groove.IC)
+  local GAR,nAR=self:_Flightdata2Text(playerData, AIRBOSS.GroovePos.AR) --playerData.groove.AR)
   
   -- Put everything together.
   local G=GXX.." "..GIM.." ".." "..GIC.." "..GAR
@@ -5241,10 +5248,12 @@ end
 
 --- Grade flight data.
 -- @param #AIRBOSS self
+-- @param #AIRBOSS.PlayerData playerData Player data.
+-- @param #string groovestep Step in the groove.
 -- @param #AIRBOSS.GrooveData fdata Flight data in the groove.
 -- @return #string LSO grade or empty string if flight data table is nil.
 -- @return #number Number of deviations from perfect flight path.
-function AIRBOSS:_Flightdata2Text(fdata)
+function AIRBOSS:_Flightdata2Text(playerData, groovestep)
 
   local function little(text)
     return string.format("(%s)",text)
@@ -5252,6 +5261,9 @@ function AIRBOSS:_Flightdata2Text(fdata)
   local function underline(text)
     return string.format("_%s_", text)
   end
+  
+  -- Data.
+  local fdata=playerData.groove[groovestep]
 
   -- No flight data ==> return empty string.
   if fdata==nil then
@@ -5265,40 +5277,43 @@ function AIRBOSS:_Flightdata2Text(fdata)
   local GSE=fdata.GSE
   local LUE=fdata.LUE
   local ROL=fdata.Roll
+  
+  -- Aircraft specific AoA values.
+  local acaoa=self:_GetAircraftAoA(playerData)
 
   -- Speed.
   local S=nil
-  if AOA>9.8 then
+  if AOA>acaoa.SLOW then
     S=underline("SLO")
-  elseif AOA>9.3 then
+  elseif AOA>acaoa.Slow then
     S="SLO"
-  elseif AOA>8.8 then
+  elseif AOA>acaoa.OnSpeedMax then
     S=little("SLO")
-  elseif AOA<6.4 then
+  elseif AOA<acaoa.FAST then
     S=underline("F")
-  elseif AOA<6.9 then
+  elseif AOA<acaoa.Fast then
     S="F"
-  elseif AOA<7.4 then
+  elseif AOA<acaoa.OnSpeedMin then
     S=little("F")
   end
   
-  -- Alitude.
+  -- Glideslope/altitude. Good [-0.25, 0.25]
   local A=nil
   if GSE>1 then
     A=underline("H")
   elseif GSE>0.5 then
-    A=little("H")
-  elseif GSE>0.25 then
     A="H"
+  elseif GSE>0.25 then
+    A=little("H")
   elseif GSE<-1 then
     A=underline("LO")
   elseif GSE<-0.5 then
-    A=little("LO")
-  elseif GSE<-0.25 then
     A="LO"
+  elseif GSE<-0.25 then
+    A=little("LO")
   end
   
-  -- Line up.
+  -- Line up. Good [-0.5, 0.5]
   local D=nil
   if LUE>3 then
     D=underline("LUL")
