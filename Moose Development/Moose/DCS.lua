@@ -430,6 +430,8 @@ do -- Types
 
 end --
 
+
+
 do -- Object
 
   --- [DCS Class Object](https://wiki.hoggitworld.com/view/DCS_Class_Object)
@@ -525,6 +527,126 @@ do -- CoalitionObject
   CoalitionObject = {} --#CoalitionObject
 
 end -- CoalitionObject
+
+
+do -- Weapon
+
+  --- [DCS Class Weapon](https://wiki.hoggitworld.com/view/DCS_Class_Weapon)
+  -- @type Weapon
+  -- @extends #CoalitionObject
+  -- @field #Weapon.flag flag enum stores weapon flags. Some of them are combination of another flags.
+  -- @field #Weapon.Category Category enum that stores weapon categories.
+  -- @field #Weapon.GuidanceType GuidanceType enum that stores guidance methods. Available only for guided weapon (Weapon.Category.MISSILE and some Weapon.Category.BOMB).
+  -- @field #Weapon.MissileCategory MissileCategory enum that stores missile category. Available only for missiles (Weapon.Category.MISSILE). 
+  -- @field #Weapon.WarheadType WarheadType enum that stores warhead types.
+  -- @field #Weapon.Desc Desc The descriptor of a weapon.
+
+  --- enum stores weapon flags. Some of them are combination of another flags.
+  -- @type Weapon.flag
+  -- @field LGB
+  -- @field TvGB
+  -- @field SNSGB
+  -- @field HEBomb
+  -- @field Penetrator
+  -- @field NapalmBomb
+  -- @field FAEBomb
+  -- @field ClusterBomb
+  -- @field Dispencer
+  -- @field CandleBomb
+  -- @field ParachuteBomb
+  -- @field GuidedBomb = LGB + TvGB + SNSGB
+  -- @field AnyUnguidedBomb  = HEBomb + Penetrator + NapalmBomb + FAEBomb + ClusterBomb + Dispencer + CandleBomb + ParachuteBomb
+  -- @field AnyBomb = GuidedBomb + AnyUnguidedBomb
+  -- @field LightRocket
+  -- @field MarkerRocket
+  -- @field CandleRocket
+  -- @field HeavyRocket
+  -- @field AnyRocket = LightRocket + HeavyRocket + MarkerRocket + CandleRocket
+  -- @field AntiRadarMissile
+  -- @field AntiShipMissile
+  -- @field AntiTankMissile
+  -- @field FireAndForgetASM
+  -- @field LaserASM
+  -- @field TeleASM
+  -- @field CruiseMissile
+  -- @field GuidedASM = LaserASM + TeleASM
+  -- @field TacticASM = GuidedASM + FireAndForgetASM 
+  -- @field AnyASM = AntiRadarMissile + AntiShipMissile + AntiTankMissile + FireAndForgetASM + GuidedASM + CruiseMissile
+  -- @field SRAAM
+  -- @field MRAAM 
+  -- @field LRAAM 
+  -- @field IR_AAM 
+  -- @field SAR_AAM 
+  -- @field AR_AAM 
+  -- @field AnyAAM = IR_AAM + SAR_AAM + AR_AAM + SRAAM + MRAAM + LRAAM 
+  -- @field AnyMissile = AnyASM + AnyAAM
+  -- @field AnyAutonomousMissile = IR_AAM + AntiRadarMissile + AntiShipMissile + FireAndForgetASM + CruiseMissile
+  -- @field GUN_POD
+  -- @field BuiltInCannon
+  -- @field Cannons = GUN_POD + BuiltInCannon 
+  -- @field AnyAGWeapon = BuiltInCannon + GUN_POD + AnyBomb + AnyRocket + AnyASM
+  -- @field AnyAAWeapon = BuiltInCannon + GUN_POD + AnyAAM
+  -- @field UnguidedWeapon = Cannons + BuiltInCannon + GUN_POD + AnyUnguidedBomb + AnyRocket
+  -- @field GuidedWeapon = GuidedBomb + AnyASM + AnyAAM
+  -- @field AnyWeapon = AnyBomb + AnyRocket + AnyMissile + Cannons
+  -- @field MarkerWeapon = MarkerRocket + CandleRocket + CandleBomb
+  -- @field ArmWeapon = AnyWeapon - MarkerWeapon
+
+  --- Weapon.Category enum that stores weapon categories.
+  -- @type Weapon.Category
+  -- @field SHELL
+  -- @field MISSILE
+  -- @field ROCKET
+  -- @field BOMB
+  
+
+  --- Weapon.GuidanceType enum that stores guidance methods. Available only for guided weapon (Weapon.Category.MISSILE and some Weapon.Category.BOMB). 
+  -- @type Weapon.GuidanceType
+  -- @field INS
+  -- @field IR
+  -- @field RADAR_ACTIVE
+  -- @field RADAR_SEMI_ACTIVE
+  -- @field RADAR_PASSIVE
+  -- @field TV
+  -- @field LASER
+  -- @field TELE 
+
+  
+  --- Weapon.MissileCategory enum that stores missile category. Available only for missiles (Weapon.Category.MISSILE). 
+  -- @type Weapon.MissileCategory
+  -- @field AAM
+  -- @field SAM
+  -- @field BM
+  -- @field ANTI_SHIP
+  -- @field CRUISE
+  -- @field OTHER
+
+  --- Weapon.WarheadType enum that stores warhead types. 
+  -- @type Weapon.WarheadType
+  -- @field AP
+  -- @field HE
+  -- @field SHAPED_EXPLOSIVE
+  
+  --- Returns the unit that launched the weapon.
+  -- @function [parent=#Weapon] getLauncher
+  -- @param #Weapon self
+  -- @return #Unit
+  
+  --- returns target of the guided weapon. Unguided weapons and guided weapon that is targeted at the point on the ground will return nil. 
+  -- @function [parent=#Weapon] getTarget
+  -- @param #Weapon self
+  -- @return #Object
+  
+  --- returns weapon descriptor. Descriptor type depends on weapon category.  
+  -- @function [parent=#Weapon] getDesc
+  -- @param #Weapon self
+  -- @return #Weapon.Desc
+
+
+
+  Weapon = {} --#Weapon
+
+end -- Weapon
 
 
 do -- Airbase

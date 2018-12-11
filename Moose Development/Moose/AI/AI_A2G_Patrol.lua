@@ -112,7 +112,7 @@ AI_A2G_PATROL = {
 function AI_A2G_PATROL:New( AIPatrol, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageMinSpeed, EngageMaxSpeed, PatrolAltType )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, AI_A2A_PATROL:New( AIPatrol, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType ) ) -- #AI_A2G_PATROL
+  local self = BASE:Inherit( self, AI_A2G:New( AIPatrol ) ) -- #AI_A2G_PATROL
 
   self.Accomplished = false
   self.Engaging = false
@@ -290,7 +290,6 @@ end
 -- @param #string To The To State string.
 function AI_A2G_PATROL:onafterStart( AIPatrol, From, Event, To )
 
-  self:GetParent( self ).onafterStart( self, AIPatrol, From, Event, To )
   AIPatrol:HandleEvent( EVENTS.Takeoff, nil, self )
 
 end

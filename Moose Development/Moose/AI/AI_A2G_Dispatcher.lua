@@ -810,6 +810,7 @@ do -- AI_A2G_DISPATCHER
     if Squadron then
       self:F( { SquadronName = Squadron.Name } )
       local LandingMethod = self:GetSquadronLanding( Squadron.Name )
+      
       if LandingMethod == AI_A2G_DISPATCHER.Landing.AtRunway then
         local DefenderSize = Defender:GetSize()
         if DefenderSize == 1 then
@@ -1395,6 +1396,8 @@ do -- AI_A2G_DISPATCHER
     local DefenderSquadron = self:GetSquadron( SquadronName )
     
     DefenderSquadron.Uncontrolled = true
+    self:SetSquadronTakeoffFromParkingCold( SquadronName )
+    self:SetSquadronLandingAtEngineShutdown( SquadronName )
 
     for SpawnTemplate, DefenderSpawn in pairs( self.DefenderSpawns ) do
       DefenderSpawn:InitUnControlled()
@@ -2856,13 +2859,16 @@ do -- AI_A2G_DISPATCHER
         if DefenderUnitIndex == 1 then
           DefenderPatrolTemplate = UTILS.DeepCopy( DefenderTemplate )
           self.DefenderPatrolIndex = self.DefenderPatrolIndex + 1
-          DefenderPatrolTemplate.name = SquadronName .. "#" .. self.DefenderPatrolIndex .. "#" .. GroupName
+          --DefenderPatrolTemplate.name = SquadronName .. "#" .. self.DefenderPatrolIndex .. "#" .. GroupName
+          DefenderPatrolTemplate.name = GroupName
           DefenderName = DefenderPatrolTemplate.name
         else
           -- Add the unit in the template to the DefenderPatrolTemplate.
           local DefenderUnitTemplate = DefenderTemplate.units[1]
           DefenderPatrolTemplate.units[DefenderUnitIndex] = DefenderUnitTemplate
         end
+        DefenderPatrolTemplate.units[DefenderUnitIndex].name = string.format( DefenderPatrolTemplate.name .. '-%02d', DefenderUnitIndex )
+        DefenderPatrolTemplate.units[DefenderUnitIndex].unitId = nil
         DefenderUnitIndex = DefenderUnitIndex + 1
         DefenderSquadron.Resources[TemplateID][GroupName] = nil
         if DefenderUnitIndex > DefenderGrouping then
@@ -2880,8 +2886,8 @@ do -- AI_A2G_DISPATCHER
         DefenderPatrolTemplate.route.points[1].type   = GROUPTEMPLATE.Takeoff[Takeoff][1] -- type
         DefenderPatrolTemplate.route.points[1].action = GROUPTEMPLATE.Takeoff[Takeoff][2] -- action
         local Defender = _DATABASE:Spawn( DefenderPatrolTemplate )
-      
         self:AddDefenderToSquadron( DefenderSquadron, Defender, DefenderGrouping )
+        Defender:Activate()
         return Defender, DefenderGrouping
       end
     else
@@ -2993,6 +2999,8 @@ do -- AI_A2G_DISPATCHER
 
     self:F( { From, Event, To, AttackerDetection.Index, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing, DefenderFriendlies = DefenderFriendlies } )
 
+    AttackerDetection.Type = DefenseTaskType -- This is set to report the task type in the status panel.
+
     local AttackerSet = AttackerDetection.Set
     local AttackerUnit = AttackerSet:GetFirst()
     
@@ -3103,7 +3111,9 @@ do -- AI_A2G_DISPATCHER
                 
                   DefenderCount = DefenderCount - DefenderGrouping / DefenderOverhead
         
-                  local Fsm = AI_A2G_ENGAGE:New( DefenderGroup, Defense.EngageMinSpeed, Defense.EngageMaxSpeed )
+                  local AI_A2G_ENGAGE = { SEAD = AI_A2G_SEAD, BAI = AI_A2G_BAI, CAS = AI_A2G_CAS }
+        
+                  local Fsm = AI_A2G_ENGAGE[DefenseTaskType]:New( DefenderGroup, Defense.EngageMinSpeed, Defense.EngageMaxSpeed ) -- AI.AI_A2G_ENGAGE
                   Fsm:SetDispatcher( self )
                   Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
                   Fsm:SetFuelThreshold( DefenderSquadron.FuelThreshold or self.DefenderDefault.FuelThreshold, 60 )
@@ -3120,6 +3130,8 @@ do -- AI_A2G_DISPATCHER
                     local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
                     local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
                     local DefenderTarget = Dispatcher:GetDefenderTaskTarget( Defender )
+                    
+                    self:F( { DefenderTarget = DefenderTarget } )
                     
                     if DefenderTarget then
                       Fsm:__Engage( 2, DefenderTarget.Set ) -- Engage on the TargetSetUnit
@@ -3141,10 +3153,10 @@ do -- AI_A2G_DISPATCHER
                     
                     local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
                     local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-                    if Defender:IsAboveRunway() then
-                      Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
-                      Defender:Destroy()
-                    end
+                    --if Defender:IsAboveRunway() then
+                      --Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
+                      --Defender:Destroy()
+                    --end
                   end
                   
                   --- @param #AI_A2G_DISPATCHER self
@@ -3298,8 +3310,8 @@ do -- AI_A2G_DISPATCHER
           
     for DefenderGroup, DefenderTask in pairs( self:GetDefenderTasks() ) do
       local DefenderGroup = DefenderGroup -- Wrapper.Group#GROUP
+      local DefenderTaskFsm = self:GetDefenderTaskFsm( DefenderGroup )
       if not DefenderGroup:IsAlive() then
-        local DefenderTaskFsm = self:GetDefenderTaskFsm( DefenderGroup )
         self:F( { Defender = DefenderGroup:GetName(), DefenderState = DefenderTaskFsm:GetState() } )
         if not DefenderTaskFsm:Is( "Started" ) then
           self:ClearDefenderTask( DefenderGroup )
@@ -3312,10 +3324,10 @@ do -- AI_A2G_DISPATCHER
             self:ClearDefenderTaskTarget( DefenderGroup )
           else
             if DefenderTask.Target.Set then
-              local AttackerCount = DefenderTask.Target.Set:Count()
-              if AttackerCount == 0 then
+              local TargetCount = DefenderTask.Target.Set:Count()
+              if TargetCount == 0 then
                 self:F( { "All Targets destroyed in Target, removing:", DefenderTask.Target.Index } )
-                self:ClearDefenderTaskTarget( DefenderGroup )
+                self:ClearDefenderTask( DefenderGroup )
               end
             end
           end
@@ -3410,7 +3422,7 @@ do -- AI_A2G_DISPATCHER
 
       if self.TacticalDisplay then      
         -- Show tactical situation
-        Report:Add( string.format( "\n - Target %s ( %s ): ( #%d ) %s" , DetectedItem.ItemID, DetectedItem.Index, DetectedItem.Set:Count(), DetectedItem.Set:GetObjectNames() ) )
+        Report:Add( string.format( "\n - %s %s ( %s ): ( #%d ) %s" , DetectedItem.Type or " --- ", DetectedItem.ItemID, DetectedItem.Index, DetectedItem.Set:Count(), DetectedItem.Set:GetObjectNames() ) )
         for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
           local Defender = Defender -- Wrapper.Group#GROUP
            if DefenderTask.Target and DefenderTask.Target.Index == DetectedItem.Index then

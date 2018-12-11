@@ -475,7 +475,7 @@ function AI_AIR:onafterStatus()
       RTB = true
       self:SetStatusOff()
     end
-
+    
     -- Check if planes went RTB and are out of control.
     -- We only check if planes are out of control, when they are in duty.
     if self.Controllable:HasTask() == false then
@@ -484,7 +484,7 @@ function AI_AIR:onafterStatus()
          not self:Is( "Fuel" ) and 
          not self:Is( "Damaged" ) and 
          not self:Is( "Home" ) then
-        if self.IdleCount >= 2 then
+        if self.IdleCount >= 10 then
           if Damage ~= InitialLife then
             self:Damaged()
           else  
@@ -547,7 +547,7 @@ function AI_AIR:onafterRTB( AIGroup, From, Event, To )
     self:E( "Group " .. AIGroup:GetName() .. " ... RTB! ( " .. self:GetState() .. " )" )
     
     self:ClearTargetDistance()
-    AIGroup:ClearTasks()
+    --AIGroup:ClearTasks()
 
     local EngageRoute = {}
 
