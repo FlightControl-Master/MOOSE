@@ -656,6 +656,14 @@ function POSITIONABLE:GetVelocityMPS()
   return 0
 end
 
+--- Returns the POSITIONABLE velocity in knots.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return #number The velocity in knots.
+function POSITIONABLE:GetVelocityKNOTS()
+  self:F2( self.PositionableName )
+  return UTILS.MpsToKnots(self:GetVelocityMPS())
+end
+
 --- Returns the Angle of Attack of a positionable.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return #number Angle of attack in degrees.

@@ -47,6 +47,8 @@
 -- @field #AIRBOSS.CarrierParameters carrierparam Carrier specifc parameters.
 -- @field #string alias Alias of the carrier.
 -- @field Wrapper.Airbase#AIRBASE airbase Carrier airbase object.
+-- @field #table waypoints Waypoint coordinates of carrier.
+-- @field #number currentwp Current waypoint, i.e. the one that has been passed last.
 -- @field Core.Radio#BEACON beacon Carrier beacon for TACAN and ICLS.
 -- @field #boolean TACANon Automatic TACAN is activated.
 -- @field #number TACANchannel TACAN channel.
@@ -192,13 +194,15 @@
 -- @field #AIRBOSS
 AIRBOSS = {
   ClassName     = "AIRBOSS",
-  Debug         = false,
+  Debug         = true,
   lid           = nil,
   carrier       = nil,
   carriertype   = nil,
   carrierparam  =  {},
   alias         = nil,
   airbase       = nil,
+  waypoints     =  {},
+  currentwp     = nil,
   beacon        = nil,
   TACANon       = nil,
   TACANchannel  = nil,
@@ -776,7 +780,7 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.5.1w"
+AIRBOSS.version="0.5.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1358,13 +1362,15 @@ function AIRBOSS:onafterStart(From, Event, To)
   -- TODO: id's to self to be able to stop the scheduler.
   local RQLid=self.radiotimer:Schedule(self, self._CheckRadioQueue, {self.RQLSO,     "LSO"},     1, 0.01)
   local RQMid=self.radiotimer:Schedule(self, self._CheckRadioQueue, {self.RQMarshal, "MARSHAL"}, 1, 0.01)
-  
-  
+    
   -- Initial carrier position and orientation.
   self.Cposition=self:GetCoordinate()
   self.Corientation=self.carrier:GetOrientationX()
   self.Corientlast=self.Corientation
   self.Tpupdate=timer.getTime()
+  
+  -- Init patrol route of carrier.
+  self:_PatrolRoute()
 
   -- Start status check in 1 second.
   self:__Status(1)
@@ -1387,7 +1393,8 @@ function AIRBOSS:onafterStatus(From, Event, To)
     local clock=UTILS.SecondsToClock(timer.getAbsTime())
 
     -- Debug info.
-    local text=string.format("Time %s - Status %s (case %d)", clock, self:GetState(), self.case)
+    local text=string.format("Time %s - Status %s (case=%d) - Speed=%.1f kts - Heading=%d - WP=%d - ETA=%s",
+    clock, self:GetState(), self.case, self.carrier:GetVelocityKNOTS(), self:GetHeading(), self.currentwp, UTILS.SecondsToClock(self:_GetETAatNextWP()))
     self:I(self.lid..text)
     
     -- Check recovery times and start/stop recovery mode if necessary.
@@ -1770,6 +1777,161 @@ end
 -- Parameter initialization
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Function called when group is passing a waypoint.
+--@param Wrapper.Group#GROUP Group that passed the waypoint
+--@param #AIRBOSS airboss Airboss object.
+--@param #number i Waypoint number that has been reached.
+--@param #number final Final waypoint number.
+function AIRBOSS._PassingWaypoint(group, airboss, i, final)
+
+  -- Debug message.
+  local text=string.format("Group %s passing waypoint %d of %d.", group:GetName(), i, final)
+  
+  local pos=group:GetCoordinate()
+  pos:SmokeRed()
+  local MarkerID=pos:MarkToAll(string.format("Reached Waypoint %d of group %s", i, group:GetName()))
+  
+  MESSAGE:New(text,10):ToAll()
+  env.info(text)
+  
+  -- Set current waypoint.
+  airboss.currentwp=i
+end
+
+
+--- Patrol carrier
+-- @param #AIRBOSS self
+-- @return #AIRBOSS self
+function AIRBOSS:_PatrolRoute()
+
+  -- Get carrier group.
+  local CarrierGroup=self.carrier:GetGroup()
+  
+  -- Waypoints of group.
+  local Waypoints = CarrierGroup:GetTemplateRoutePoints()
+  
+  -- NOTE: This is only necessary, if the first waypoint would already be far way, i.e. when the script is started with a large delay.
+  -- Calculate the new Route.
+  --local wp0=CarrierGroup:GetCoordinate():WaypointGround(5.5*3.6)
+  
+  -- Insert current coordinate as first waypoint
+  --table.insert(Waypoints, 1, wp0)
+  
+  for n=1,#Waypoints do
+  
+    -- Passing waypoint taskfunction
+    local TaskPassingWP=CarrierGroup:TaskFunction("AIRBOSS._PassingWaypoint", self, n, #Waypoints)
+    
+    -- Call task function when carrier arrives at waypoint.
+    CarrierGroup:SetTaskWaypoint(Waypoints[n], TaskPassingWP)
+  end
+  
+  -- TODO: set task to call this routine again when carrier reaches final waypoint if user chooses to.
+  -- SetPatrolAdInfinitum user function
+
+  -- Set waypoint table.
+  local i=1
+  for _,point in ipairs(Waypoints) do
+  
+    -- Coordinate of the waypoint
+    local coord=COORDINATE:New(point.x, point.alt, point.y)
+    
+    -- Set velocity of the coordinate.
+    coord:SetVelocity(point.speed)
+    
+    -- Add to table.
+    table.insert(self.waypoints, coord)
+    
+    -- Debug info.
+    if self.Debug then
+      coord:MarkToAll(string.format("Carrier Waypoint %d, Speed=%.1f knots", i, UTILS.MpsToKnots(point.speed)))
+    end
+    
+    -- Increase counter.
+    i=i+1  
+  end
+  
+  -- Current waypoint is 1.
+  self.currentwp=1
+
+  -- Route carrier group.
+  CarrierGroup:Route(Waypoints)
+end
+
+--- Estimated the carrier position at some point in the future given the current waypoints and speeds.
+-- @param #AIRBOSS self
+-- @return DCS#time ETA abs. time in seconds.
+function AIRBOSS:_GetETAatNextWP()
+
+  -- Current waypoint
+  local cwp=self.currentwp
+  
+  -- Current abs. time.
+  local tnow=timer.getAbsTime()
+
+  -- Current position.
+  local p=self:GetCoordinate()
+  
+  -- Current velocity [m/s].
+  local v=self.carrier:GetVelocityMPS()
+  
+  -- Distance to next waypoint.
+  local s=0
+  if #self.waypoints>cwp then
+    s=p:Get2DDistance(self.waypoints[cwp+1])
+  end
+  
+  -- v=s/t <==> t=s/v
+  local t=s/v
+  
+  -- ETA
+  local eta=t+tnow
+  
+  return eta
+end
+
+
+--- Estimated the carrier position at some point in the future given the current waypoints and speeds.
+-- @param #AIRBOSS self
+-- @param #number time Absolute mission time at which the carrier position is requested.
+-- @return Core.Point#COORDINATE Coordinate of the carrier at the given time.
+function AIRBOSS:_GetCarrierFuture(time)
+
+  local nwp=self.currentwp
+  
+  local waypoints={}
+  local lastwp=nil --Core.Point#COORDINATE
+  for i=1,#self.waypoints do
+    
+    if i>nwp then
+      table.insert(waypoints, self.waypoints[i])
+    elseif i==nwp then
+      lastwp=self.waypoints[i]
+    end
+  
+  end
+  
+  -- Current abs. time.
+  local tnow=timer.getAbsTime()
+
+  local p=self:GetCoordinate()
+  local v=self.carrier:GetVelocityMPS()
+  
+  local s=p:Get2DDistance(self.waypoints[nwp+1])
+  
+  -- v=s/t <==> t=s/v
+  local t=s/v
+  
+  local eta=UTILS.SecondsToClock(t+tnow)
+  
+  
+  for _,_wp in ipairs(waypoints) do
+    local wp=_wp --Core.Point#COORDINATE
+    
+  end
+
+end
+
 --- Init parameters for USS Stennis carrier.
 -- @param #AIRBOSS self
 function AIRBOSS:_InitStennis()
@@ -1831,11 +1993,11 @@ function AIRBOSS:_InitStennis()
   self.BreakEntry.name="Break Entry"
   self.BreakEntry.Xmin=-UTILS.NMToMeters(4)          -- Not more than 4 NM behind the boat. Check for initial is at 3 NM with a radius of 500 m and 100 m starboard.
   self.BreakEntry.Xmax= nil
-  self.BreakEntry.Zmin=-400                          -- Not more than 400 meters port of boat. Otherwise miss the zone.
-  self.BreakEntry.Zmax= 600                          -- Not more than 600 m starboard of boat. Otherwise miss the zone.
+  self.BreakEntry.Zmin=-400                          -- Not more than  400 m port of boat. Otherwise miss the zone.
+  self.BreakEntry.Zmax=1000                          -- Not more than 1000 m starboard of boat. Otherwise miss the zone.
   self.BreakEntry.LimitXmin=0                        -- Check and next step when at carrier and starboard of carrier.
   self.BreakEntry.LimitXmax=nil
-  self.BreakEntry.LimitZmin=-100
+  self.BreakEntry.LimitZmin=nil
   self.BreakEntry.LimitZmax=nil
 
   -- Early break.
@@ -3234,6 +3396,8 @@ function AIRBOSS:_CheckPlayerStatus()
           -- Check if player is too close to another aircraft in the pattern.
           -- TODO: Find a better place to call this!
           --self:_CheckPlayerPatternDistance(playerData)
+          local Tnow=timer.getTime()
+          env.info(string.format("T=%s step=%s", Tnow, playerData.step))
                  
           if playerData.step==AIRBOSS.PatternStep.UNDEFINED then
             
@@ -3409,7 +3573,7 @@ function AIRBOSS:OnEventBirth(EventData)
     self.players[_playername]=self:_NewPlayer(_unitName)
     
     -- Debug.    
-    if self.Debug then
+    if self.Debug and false then
       self:_Number2Sound(self.LSORadio,     "0123456789", 10)
       self:_Number2Sound(self.MarshalRadio, "0123456789", 20)
     end
@@ -3476,10 +3640,10 @@ function AIRBOSS:OnEventLand(EventData)
         local hdg=self.carrier:GetHeading()+self.carrierparam.rwyangle
         
         -- Debug marks of wires.
-        local w1=self:GetCoordinate():Translate(self.carrierparam.wire1, hdg):MarkToAll("Wire 1")
-        local w2=self:GetCoordinate():Translate(self.carrierparam.wire2, hdg):MarkToAll("Wire 2")
-        local w3=self:GetCoordinate():Translate(self.carrierparam.wire3, hdg):MarkToAll("Wire 3")
-        local w4=self:GetCoordinate():Translate(self.carrierparam.wire4, hdg):MarkToAll("Wire 4")
+        local w1=self:GetCoordinate():Translate(self.carrierparam.wire1, hdg):MarkToAll("Wire 1a")
+        local w2=self:GetCoordinate():Translate(self.carrierparam.wire2, hdg):MarkToAll("Wire 2a")
+        local w3=self:GetCoordinate():Translate(self.carrierparam.wire3, hdg):MarkToAll("Wire 3a")
+        local w4=self:GetCoordinate():Translate(self.carrierparam.wire4, hdg):MarkToAll("Wire 4a")
         
         -- Debug mark of player landing coord.
         local lp=coord:MarkToAll("Landing coord.")
@@ -3487,7 +3651,7 @@ function AIRBOSS:OnEventLand(EventData)
       end
       
       -- Get wire.
-      local wire=self:_GetWire(dist)
+      local wire=self:_GetWire(self:GetCoordinate(), coord)
       
       -- No wire ==> Bolter, Bolter radio call.
       if wire>4 then
@@ -3529,7 +3693,7 @@ function AIRBOSS:OnEventLand(EventData)
     local dist=coord:Get2DDistance(self:GetCoordinate())
     
     -- Get wire
-    local wire=self:_GetWire(dist, 0)
+    local wire=self:_GetWire(self:GetCoordinate(), coord, 0)
     
     -- Aircraft type.
     local _type=EventData.IniUnit:GetTypeName()
@@ -3993,7 +4157,7 @@ function AIRBOSS:_BreakEntry(playerData)
     local hintAlt=self:_AltitudeCheck(playerData, alt)
     
     -- Get speed hint.
-    local hintSpeed=self:_AltitudeCheck(playerData, speed)
+    local hintSpeed=self:_SpeedCheck(playerData,speed)
     
     -- Message to player.
     if playerData.difficulty~=AIRBOSS.Difficulty.HARD then
@@ -4527,7 +4691,7 @@ end
 --- Get wire from landing position.
 -- @param #AIRBOSS self
 -- @param Core.Point#COORDINATE Ccoord Carrier position.
--- @param Core.Point#COORDINATE Landing position.
+-- @param Core.Point#COORDINATE Lcoord Landing position.
 -- @param #number dx Correction.
 function AIRBOSS:_GetWire(Ccoord, Lcoord, dx)
 
