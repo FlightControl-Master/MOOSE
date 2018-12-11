@@ -30,7 +30,9 @@
 -- ===
 --
 -- ### Author: **funkyfranky**
--- ### Special thanks to **Bankler** for his great [Recovery Trainer](https://forums.eagle.ru/showthread.php?t=221412) mission and script! This gave the inspiration for this class. Also it uses some functionalities for determining the player positon in Case I recoveries.
+-- ### Special thanks to
+--  **Bankler** for his great [Recovery Trainer](https://forums.eagle.ru/showthread.php?t=221412) mission and script!
+-- This gave the inspiration for this class. Also this uses some functionalities for determining the player positon in Case I recoveries.
 --
 -- @module Ops.Airboss
 -- @image MOOSE.JPG
@@ -134,6 +136,58 @@
 -- ## CASE II
 -- 
 -- ![Banner Image](..\Presentations\AIRBOSS\Airboss_Case2.png)
+-- 
+-- # Scripting
+-- 
+-- Writing a basic script is easy and can be done in two lines.
+-- 
+--     local airbossStennis=AIRBOSS:New("USS Stennis", "Stennis")
+--     airbossStennis:Start()
+--     
+-- The first line creates and AIRBOSS object via the @{#AIRBOSS.New}(*carriername*, *alias*) constructor. The first parameter *carriername* is name of the carrier unit as
+-- defined in the mission editor. The second parameter *alias* is optional. This name will, e.g., be used for the F10 radio menu entry. If not given, the alias is identical
+-- to the carriername of the first parameter.
+-- 
+-- This simple script initializes a lot of parameters with default values:
+-- 
+--    * TACAN channel is set to 74X, see @{#AIRBOSS.SetTACAN}
+--    * ICSL channel is set to 1, see @{#AIRBOSS.SetICLS}
+--    * LSO radio is set to 264 MHz FM, see @{#AIRBOSS.SetLSORadio}
+--    * Marshal radio is set to 305 MHz FM, see @{#AIRBOSS.SetMarshalRadio}
+--    * Default recovery case is set to 1, see @{#AIRBOSS.SetRecoveryCase}
+--
+-- ## Recovery Windows
+-- 
+-- Recovery of aircraft is only allowed during defined time slots. You can define these slots via the @{#AIRBOSS.AddRecoveryWindow}(*start*, *stop*, *case*, *holdingoffset*) function.
+-- The parameters are:
+-- 
+--   * *start*: The start time as a string. For example "8:00" for a window opening at 8 am. Or "13:30+1" for half past one on the next day. Default (nil) is ASAP.
+--   * *stop*: Time when the window closes as a string. Same format as *start*. Default is 90 minutes after start time.
+--   * *case*: The recovery case during that window (1, 2 or 3). Default 1.
+--   * *holdingoffset*: Holding offset angle in degrees. Only for Case II or III recoveries. Default 0 deg. Common +-15 deg or +-30 deg.
+--   
+-- If recovery is closed, AI flights will be send to marshal stacks and orbit there until the next window opens.
+-- Players can request marshal via the F10 menu and will also be given a marshal stack. Currently, human players can request commence via the F10 radio regarless of
+-- whether a window is open or not and will be alowed to enter the pattern (if not already full). This will probably change in the future.
+-- 
+-- At the moment there is no autmatic recovery case set depending on weather or daytime. So it is the AIRBOSS (you) who needs to make that descision.
+-- It is probably a good idea to synchronize the timing with the waypoints of the carrier. For example, setting up the waypoints such that the carrier
+-- already has turning into the wind, when a recovery window opens.
+-- 
+-- The code for setting up multiple recovery windows could look like this
+--     local airbossStennis=AIRBOSS:New("USS Stennis", "Stennis")
+--     airbossStennis:AddRecoveryWindow("8:30", "9:30", 1)
+--     airbossStennis:AddRecoveryWindow("12:00", "13:15", 2, 15)
+--     airbossStennis:AddRecoveryWindow("23:30", "00:30+1", 3, -30)
+--     airbossStennis:Start()
+--   
+-- This will open a Case I recovery window from 8:30 to 9:30. Then a Case II recovery from 12:00 to 13:15, where the holing offset is +15 degrees wrt BRC.
+-- Finally, a Case III window opens 23:30 on the day the mission starts and closes 0:30 on the following day. The holding offset is -30 degrees wrt FB.
+-- 
+-- Note that incoming flights will be assigned a holding pattern for the next opening window case if no window is open at the moment. So in the above example,
+-- all flights incoming after 13:15 will be assigned to a Case III marshal stack. Therefore, you should make sure that no flights are incoming long before the
+-- next window opens or adjust the recovery planning accordingly.
+--  
 --
 -- @field #AIRBOSS
 AIRBOSS = {
@@ -722,7 +776,7 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.5.1"
+AIRBOSS.version="0.5.1w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1066,7 +1120,7 @@ end
 -- @param #number case Recovery case for that time slot. Number between one and three.
 -- @param #number holdingoffset Only for CASE II/III: Angle in degrees the holding pattern is offset.
 -- @return #AIRBOSS self
-function AIRBOSS:AddRecoveryTime(starttime, stoptime, case, holdingoffset)
+function AIRBOSS:AddRecoveryWindow(starttime, stoptime, case, holdingoffset)
 
   -- Absolute mission time in seconds.
   local Tnow=timer.getAbsTime()
@@ -1724,11 +1778,21 @@ function AIRBOSS:_InitStennis()
   self.carrierparam.rwyangle   =  -9
   self.carrierparam.sterndist  =-150
   self.carrierparam.deckheight =  22
+  
+  --[[
   self.carrierparam.wire1      =-104
   self.carrierparam.wire2      = -92
   self.carrierparam.wire3      = -80
   self.carrierparam.wire4      = -68
   self.carrierparam.wireoffset =  30
+  ]]
+  
+  self.carrierparam.wire1      =   0
+  self.carrierparam.wire2      =  12
+  self.carrierparam.wire3      =  24
+  self.carrierparam.wire4      =  36
+  self.carrierparam.wireoffset =  30
+
  
   -- Platform at 5k. Reduce descent rate to 2000 ft/min to 1200 dirty up level flight.
   self.Platform.name="Platform 5k"
@@ -1764,7 +1828,7 @@ function AIRBOSS:_InitStennis()
   self.Bullseye.LimitZmax=nil
  
   -- Break entry.
-  self.BreakEntry.name="BreakEntry"
+  self.BreakEntry.name="Break Entry"
   self.BreakEntry.Xmin=-UTILS.NMToMeters(4)          -- Not more than 4 NM behind the boat. Check for initial is at 3 NM with a radius of 500 m and 100 m starboard.
   self.BreakEntry.Xmax= nil
   self.BreakEntry.Zmin=-400                          -- Not more than 400 meters port of boat. Otherwise miss the zone.
@@ -2348,6 +2412,25 @@ function AIRBOSS:_MarshalAI(flight, nstack)
   
   -- Route group.
   group:Route(wp, 0)
+end
+
+--- Task function.
+-- @param #AIRBOSS self
+function AIRBOSS:_InitPatternTaskFunction()
+
+  -- Name of the warehouse (static) object.
+  local carriername=self.carrier:GetName()
+
+  -- Task script.
+  local DCSScript = {}
+  DCSScript[#DCSScript+1] = string.format('local mycarrier = UNIT:FindByName(\"%s\") ', carriername)       -- The carrier unit that holds the self object.
+  DCSScript[#DCSScript+1] = string.format('local myairboss = mycarrier:GetState(mycarrier, \"AIRBOSS\") ') -- Get the AIRBOSS self object.
+  DCSScript[#DCSScript+1] = string.format('myairboss:PatternUpdate()')                                      -- Call the function, e.g. mytanker.(self)
+
+  -- Create task.
+  local DCSTask = CONTROLLABLE.TaskWrappedAction(self, CONTROLLABLE.CommandDoScript(self, table.concat(DCSScript)))
+
+  return DCSTask
 end
 
 --- Tell AI to land on the carrier.
@@ -4443,9 +4526,72 @@ end
 
 --- Get wire from landing position.
 -- @param #AIRBOSS self
+-- @param Core.Point#COORDINATE Ccoord Carrier position.
+-- @param Core.Point#COORDINATE Landing position.
+-- @param #number dx Correction.
+function AIRBOSS:_GetWire(Ccoord, Lcoord, dx)
+
+  local hdg=self.carrier:GetHeading()
+  
+  -- Stern coordinate (sterndist<0)
+  local Scoord=Ccoord:Translate(self.carrierparam.sterndist, hdg)
+  
+  -- Distance to landing coord
+  local Ldist=Lcoord:Get2DDistance(Scoord)
+
+  -- Little offset for the exact wire positions.
+  dx=dx or self.carrierparam.wireoffset
+  
+  -- Corrected distance.
+  local d=Ldist+dx
+
+  -- Which wire was caught? X>0 since calculated as distance!
+  local wire
+  if d<self.carrierparam.wire1 then           -- < -104
+    wire=1
+  elseif d<self.carrierparam.wire2 then       -- < -92
+    wire=2
+  elseif d<self.carrierparam.wire3 then       -- < -80
+    wire=3
+  elseif d<self.carrierparam.wire4 then       -- < -68
+    wire=4
+  else
+    wire=99
+  end
+  
+  if self.Debug then
+    local FB=self:GetFinalBearing(false)
+    
+    local w1=Scoord:Translate(self.carrierparam.wire1, FB)
+    local w2=Scoord:Translate(self.carrierparam.wire2, FB)
+    local w3=Scoord:Translate(self.carrierparam.wire3, FB)
+    local w4=Scoord:Translate(self.carrierparam.wire4, FB)
+    
+    w1:MarkToAll("Wire 1")
+    w2:MarkToAll("Wire 2")
+    w3:MarkToAll("Wire 3")
+    w4:MarkToAll("Wire 4")
+    
+    Scoord:MarkToAll("Stern")
+    Lcoord:MarkToAll(string.format("Landing Point wire=%s", wire))
+    
+    w1:SmokeBlue()
+    w2:SmokeOrange()
+    w3:SmokeRed()
+    w4:SmokeWhite()
+  end
+  
+  -- Debug output.
+  self:I(string.format("GetWire: L=%.1f m, dx=%.1f m, d=L+dx=%.1f m ==> wire=%d.", Ldist, dx, d, wire))
+
+  return wire
+end
+
+--- Get wire from landing position.
+-- @param #AIRBOSS self
 -- @param #number d Distance in meters wrt carrier position where player landed.
 -- @param #number dx Correction.
-function AIRBOSS:_GetWire(d, dx)
+function AIRBOSS:_GetWire2(d, dx)
 
   -- Little offset for the exact wire positions.
   dx=dx or self.carrierparam.wireoffset
@@ -4498,9 +4644,11 @@ function AIRBOSS:_Trapped(playerData)
     self:_AddToDebrief(playerData, hint, "Groove: IW")
     
   else
+  
     --Still in air ==> Boltered!
     MESSAGE:New("Player boltered in trapped", 5, "DEBUG")
     playerData.boltered=true
+    
   end
   
   -- Next step: debriefing.
