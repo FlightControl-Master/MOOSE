@@ -194,7 +194,7 @@
 -- @field #AIRBOSS
 AIRBOSS = {
   ClassName     = "AIRBOSS",
-  Debug         = true,
+  Debug         = false,
   lid           = nil,
   carrier       = nil,
   carriertype   = nil,
@@ -583,7 +583,7 @@ AIRBOSS.MarshalCall={
     subtitle="Marshal, radio check",
     duration=1.0,
   },
--- TODO: Other voice overs for marshal.
+  -- TODO: Other voice overs for marshal.
   N0={
     file="LSO-N0",
     suffix="ogg",
@@ -749,7 +749,8 @@ AIRBOSS.GroovePos={
 --- Parameters of an element in a flight group.
 -- @type AIRBOSS.FlightElement
 -- @field Wrapper.Unit#UNIT unit Aircraft unit.
--- @field #string onboard Onboard number.
+-- @field #boolean ai If true, AI sits inside. If false, human player is flying.
+-- @field #string onboard Onboard number of the aircraft.
 -- @field #boolean ballcall If true, flight called the ball in the groove.
 
 --- Player data table holding all important parameters of each player.
@@ -783,18 +784,18 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.5.2w"
+AIRBOSS.version="0.5.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: First send AI to marshal and then allow them into the landing pattern ==> task function when reaching the waypoint.
 -- TODO: PWO during case 2/3. Also when too close to other player.
 -- TODO: Option to filter AI groups for recovery.
 -- TODO: Spin pattern. Add radio menu entry. Not sure what to add though?!
 -- TODO: Foul deck check.
 -- TODO: Persistence of results.
+-- DONE: First send AI to marshal and then allow them into the landing pattern ==> task function when reaching the waypoint.
 -- DONE: Extract (static) weather from mission for cloud covery etc.
 -- DONE: Check distance to players during approach.
 -- DONE: Option to turn AI handling off.
@@ -1493,6 +1494,9 @@ function AIRBOSS:_CheckAIStatus()
           -- Paddles: Roger ball after 3 seconds.
           self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.ROGERBALL, false, 3)
           
+          -- Flight element called the ball.
+          element.ballcall=true
+          
           -- This is for the whole flight. Maybe we need it.
           flight.ballcall=true
         end
@@ -1561,6 +1565,7 @@ function AIRBOSS:_CheckPlayerPatternDistance(player)
     local flight=_flight --#AIRBOSS.FlightGroup
     
     -- Now we still need to loop over all units in the flight.
+    -- TODO: Replace by elements.
     for _,_unit in pairs(flight.group:GetUnits()) do
       
       -- Check if player is too close to another aircraft in the pattern.
@@ -1781,8 +1786,8 @@ end
 -- Parameter initialization
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Function called when group is passing a waypoint.
---@param Wrapper.Group#GROUP Group that passed the waypoint
+--- Function called when a group is passing a waypoint.
+--@param Wrapper.Group#GROUP group Group that passed the waypoint
 --@param #AIRBOSS airboss Airboss object.
 --@param #number i Waypoint number that has been reached.
 --@param #number final Final waypoint number.
@@ -1800,6 +1805,32 @@ function AIRBOSS._PassingWaypoint(group, airboss, i, final)
   
   -- Set current waypoint.
   airboss.currentwp=i
+end
+
+--- Function called when a group has reached the holding zone.
+--@param Wrapper.Group#GROUP group Group that reached the holding zone.
+--@param #AIRBOSS airboss Airboss object.
+--@param #AIRBOSS.FlightGroup flight Flight group that has reached the holding zone.
+function AIRBOSS._ReachedHoldingZone(group, airboss, flight)
+
+  -- Debug message.
+  local text=string.format("Group %s has reached the holding zone.", group:GetName())
+  
+  local pos=group:GetCoordinate()
+  pos:SmokeRed()
+  local MarkerID=pos:MarkToAll(string.format("Flight group %s reached holding zone.", group:GetName()))
+  
+  MESSAGE:New(text,10):ToAll()
+  env.info(text)
+  
+  -- Set current waypoint.
+  --local flight=airboss:_GetFlightFromGroupInQueue(group, airboss.flights)
+  
+  -- Set holding flag true and set timestamp for marshal time check.
+  if flight then
+    flight.holding=true
+    flight.time=timer.getAbsTime()
+  end
 end
 
 
@@ -1957,7 +1988,7 @@ function AIRBOSS:_InitStennis()
   self.carrierparam.wire2      =  12
   self.carrierparam.wire3      =  24
   self.carrierparam.wire4      =  36
-  self.carrierparam.wireoffset =  30
+  self.carrierparam.wireoffset =  50
 
  
   -- Platform at 5k. Reduce descent rate to 2000 ft/min to 1200 dirty up level flight.
@@ -2274,6 +2305,33 @@ end
 -- QUEUE Functions
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Get next marshal flight which is ready to enter the landing pattern.
+-- @param #AIRBOSS self
+-- @return #AIRBOSS.FlightGroup Marshal flight next in line and ready to enter the pattern. Or nil if no flight is ready.
+function AIRBOSS:_GetNextMarshalFight()
+
+  -- Min 5 min in marshal before send to landing pattern.
+  local TmarshalMin=5*60
+
+  for _,_flight in pairs(self.Qmarshal) do
+    local flight=_flight --#AIRBOSS.FlightGroup
+    
+    -- Current stack.
+    local stack=flight.flag:Get()
+    
+    -- Marshal time.
+    local Tmarshal=timer.getAbsTime()-flight.time
+    
+    -- Check if conditions are right.
+    if stack==1 and flight.holding and Tmarshal>=TmarshalMin then
+      return flight
+    end
+  end
+
+  return nil
+end
+
+
 --- Check marshal and pattern queues.
 -- @param #AIRBOSS self
 function AIRBOSS:_CheckQueue()
@@ -2289,15 +2347,14 @@ function AIRBOSS:_CheckQueue()
   -- Get number of flight groups(!) in marshal pattern.
   local nmarshal,_=self:_GetQueueInfo(self.Qmarshal)
   
-  -- Check if there are flights in marshal strack and if the pattern is free.
-  if nmarshal>0 and npattern<self.Nmaxpattern then
+  local marshalflight=self:_GetNextMarshalFight()
   
-    -- Next flight in line to be send from marshal to pattern.
-    local marshalflight=self.Qmarshal[1]  --#AIRBOSS.FlightGroup
-    
+  -- Check if there are flights in marshal strack and if the pattern is free.
+  if marshalflight and npattern<self.Nmaxpattern then
+  
     -- Time flight is marshaling.
     local Tmarshal=timer.getAbsTime()-marshalflight.time
-    self:I(self.lid..string.format("Marshal time of group %s = %d seconds", marshalflight.groupname, Tmarshal))
+    self:I(self.lid..string.format("Marshal time of next group %s = %d seconds", marshalflight.groupname, Tmarshal))
     
     -- Time (last) flight has entered landing pattern.
     local Tpattern=9999
@@ -2316,22 +2373,19 @@ function AIRBOSS:_CheckQueue()
       
       -- Get time in pattern.
       Tpattern=timer.getAbsTime()-patternflight.time
-      self:I(self.lid..string.format("Pattern time of group %s = %d seconds. # of units=%d.", patternflight.groupname, Tpattern, npunits))
+      self:I(self.lid..string.format("Pattern time of last group %s = %d seconds. # of units=%d.", patternflight.groupname, Tpattern, npunits))
     end
     
     -- Min time in pattern before next aircraft is allowed.
     local TpatternMin
     if pcase==1 then
-      TpatternMin=45*npunits   --  45 seconds interval per plane!
+      TpatternMin=3*60*npunits --45*npunits   --  45 seconds interval per plane!
     else
-      TpatternMin=120*npunits  -- 120 seconds interval per plane!
+      TpatternMin=6*60*npunits --120*npunits  -- 120 seconds interval per plane!
     end
     
-    -- Min time in marshal before send to landing pattern.
-    local TmarshalMin=120
-    
-    -- Two minutes in pattern at least and >45 sec interval between pattern flights.
-    if self:IsRecovering() and Tmarshal>TmarshalMin and Tpattern>TpatternMin then
+    -- Check recovery window open and enough space to last pattern flight.
+    if self:IsRecovering() and Tpattern>TpatternMin then
       self:_CheckCollapseMarshalStack(marshalflight)
     end
     
@@ -2511,15 +2565,18 @@ function AIRBOSS:_MarshalAI(flight, nstack)
   -- Current carrier position.
   local Carrier=self:GetCoordinate()
     
-  -- Aircraft speed when flying the pattern.
-  local Speed=UTILS.KnotsToMps(272)
+  -- Aircraft speed 272 knots when orbiting the pattern. (Orbit expects m/s.)
+  local SpeedOrbit=UTILS.KnotsToMps(272)
+  
+  -- Aircraft speed 400 knots when transiting to holding zone. (Waypoint expects km/h.)
+  local SpeedTransit=UTILS.KnotsToKmph(400)
   
   --- Create a DCS task to orbit at a certain altitude.
   local function _taskorbit(p1, alt, speed, stopflag, p2)
     local DCSTask={}
     DCSTask.id="ControlledTask"
     DCSTask.params={}
-    DCSTask.params.task=group:TaskOrbit(p1, alt, speed, p2)        
+    DCSTask.params.task=group:TaskOrbit(p1, alt, speed, p2)
     DCSTask.params.stopCondition={userFlag=groupname, userFlagValue=stopflag}
     return DCSTask
   end
@@ -2527,25 +2584,29 @@ function AIRBOSS:_MarshalAI(flight, nstack)
   -- Waypoints array.
   local wp={}
   
-  -- Current position.
-  wp[1]=group:GetCoordinate():WaypointAirTurningPoint(nil ,Speed, {}, "Current Position")
+  -- Current position. Not sure if necessary but might be. Need to test if it hurts or not.
+  wp[1]=group:GetCoordinate():WaypointAirTurningPoint(nil, SpeedTransit, {}, "Current Position")
   
   -- If flight has not arrived in the holding zone, we guide it there.
   if not flight.holding then
 
     -- Get altitude and positions.  
-    local Altitude, p1, p2=self:_GetMarshalAltitude(nstack, flight.case)  
+    local Altitude, p1, p2=self:_GetMarshalAltitude(nstack, flight.case)
+    
+    -- Task function when arriving at the holding zone. This will set flight.holding=true.
+    local TaskArrivedHolding=flight.group:TaskFunction("AIRBOSS._ReachedHoldingZone", self, flight)
+
+    -- Carrier heading.
+    local hdg=self:GetHeading()
    
     if flight.case==1 then
-      -- TODO: Test & fine tune.
-      -- Waypoint in front of the carrier
-      wp[2]=self:GetCoordinate():Translate(UTILS.NMtoMeters(10), self:GetHeading()-45)
-      -- Enter pattern
-      wp[3]=self:GetCoordinate():Translate(UTILS.NMtoMeters(5), self:GetHeading()-90)
-      --TODO: waypoint task that sets flight.holing to true.
+      -- Waypoint "north" of carrier's holding zone.
+      wp[2]=p1:Translate(UTILS.NMToMeters(10), hdg):WaypointAirTurningPoint(nil, SpeedTransit, {}, "Prepare Entering Case I Marshal Pattern")
+      -- Enter pattern from "north" to "south".
+      wp[3]=p1:Translate( UTILS.NMToMeters(5), hdg):WaypointAirTurningPoint(nil, SpeedTransit, {TaskArrivedHolding}, "Entering Case I Marshal Pattern")
     else
-      wp[2]=p1:WaypointAirTurningPoint(nil ,Speed, {}, "Entering Marshal Pattern")
-      -- TODO: waypoint task!
+      -- TODO: Test and tune!
+      wp[2]=p1:WaypointAirTurningPoint(nil, SpeedTransit, {TaskArrivedHolding}, "Entering Marshal Pattern")
     end
     
   end
@@ -2559,13 +2620,13 @@ function AIRBOSS:_MarshalAI(flight, nstack)
     -- Get altitude and positions.  
     local Altitude, p1, p2=self:_GetMarshalAltitude(stack, flight.case)
     
-    -- Right CCW pattern for CASE II/III.
+    -- Correct CCW pattern for CASE II/III.
     local c1=nil  --Core.Point#COORDINATE
     local c2=nil  --Core.Point#COORDINATE
     local p0=nil  --Core.Point#COORDINATE
     if flight.case==1 then
       c1=p1
-      p0=self:GetCoordinate()
+      p0=self:GetCoordinate():Translate(UTILS.NMToMeters(5), -90):SetAltitude(Altitude)
     else
       c1=p2
       c2=p1
@@ -2576,10 +2637,10 @@ function AIRBOSS:_MarshalAI(flight, nstack)
     local Dist=p1:Get2DDistance(self:GetCoordinate())
     
     -- Task: orbit at specified position, altitude and speed until flag=stack-1
-    local TaskOrbit=_taskorbit(c1, Altitude, Speed, stack-1, c2)
+    local TaskOrbit=_taskorbit(c1, Altitude, SpeedOrbit, stack-1, c2)
      
     -- Waypoint description.    
-    local text=string.format("Flight %s: Marshal stack %d: alt=%d, dist=%.1f, speed=%d", flight.groupname, stack, UTILS.MetersToFeet(Altitude), UTILS.MetersToNM(Dist), UTILS.MpsToKnots(Speed))
+    local text=string.format("Flight %s: Marshal stack %d: alt=%d, dist=%.1f, speed=%d", flight.groupname, stack, UTILS.MetersToFeet(Altitude), UTILS.MetersToNM(Dist), UTILS.MpsToKnots(SpeedOrbit))
     
     -- Debug mark.
     if self.Debug then
@@ -2590,7 +2651,7 @@ function AIRBOSS:_MarshalAI(flight, nstack)
     end
     
     -- Waypoint.
-    wp[#wp+1]=p0:SetAltitude(Altitude):WaypointAirTurningPoint(nil, Speed, {TaskOrbit}, text)
+    wp[#wp+1]=p0:WaypointAirTurningPoint(nil, SpeedTransit, {TaskOrbit}, text)
     
   end  
   
@@ -2604,39 +2665,20 @@ function AIRBOSS:_MarshalAI(flight, nstack)
   group:Route(wp, 0)
 end
 
---- Task function.
--- @param #AIRBOSS self
-function AIRBOSS:_InitPatternTaskFunction()
-
-  -- Name of the warehouse (static) object.
-  local carriername=self.carrier:GetName()
-
-  -- Task script.
-  local DCSScript = {}
-  DCSScript[#DCSScript+1] = string.format('local mycarrier = UNIT:FindByName(\"%s\") ', carriername)       -- The carrier unit that holds the self object.
-  DCSScript[#DCSScript+1] = string.format('local myairboss = mycarrier:GetState(mycarrier, \"AIRBOSS\") ') -- Get the AIRBOSS self object.
-  DCSScript[#DCSScript+1] = string.format('myairboss:PatternUpdate()')                                      -- Call the function, e.g. mytanker.(self)
-
-  -- Create task.
-  local DCSTask = CONTROLLABLE.TaskWrappedAction(self, CONTROLLABLE.CommandDoScript(self, table.concat(DCSScript)))
-
-  return DCSTask
-end
-
 --- Tell AI to land on the carrier.
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.FlightGroup flight Flight group.
 function AIRBOSS:_LandAI(flight)
 
   -- Aircraft speed when flying the pattern.
-  local Speed=UTILS.KnotsToMps(272)
+  local Speed=UTILS.KnotsToKmph(272)
   
   local Carrier=self:GetCoordinate()
 
   -- Waypoints array.
   local wp={}
 
-  wp[#wp+1]=flight.group:GetCoordinate():WaypointAirTurningPoint(nil ,Speed, {}, "Current position")
+  wp[#wp+1]=flight.group:GetCoordinate():WaypointAirTurningPoint(nil, Speed, {}, "Current position")
 
   -- Landing waypoint.
   wp[#wp+1]=self:GetCoordinate():SetAltitude(250):WaypointAirLanding(Speed, self.airbase, nil, "Landing")
@@ -2646,7 +2688,6 @@ function AIRBOSS:_LandAI(flight)
   
   -- Route group.
   flight.group:Route(wp, 0)
-
 end
 
 --- Get marshal altitude and position.
@@ -2712,6 +2753,12 @@ function AIRBOSS:_GetMarshalAltitude(stack, case)
 
   -- Pattern altitude.
   local altitude=UTILS.FeetToMeters(((stack-1)+angels0)*1000)
+  
+  -- Set altitude of coordinate.
+  p1:SetAltitude(altitude, true)
+  if p2 then
+    p2:SetAltitude(altitude, true)
+  end
   
   return altitude, p1, p2
 end
@@ -2801,7 +2848,7 @@ function AIRBOSS:_CollapseMarshalStack(flight, nopattern)
       
       -- Only collapse stacks above the new pattern flight.
       -- This will go wrong, if patternflight is not in marshal stack because it will have value -100 and all mstacks will be larger!
-      -- Maybe need to set the initial value to 1000? Or check pstack>0?
+      -- Maybe need to set the initial value to 1000? Or check stack>0 of pattern flight?
       if stack>0 and mstack>stack then
       
         -- Decrease stack/flag by one ==> AI will go lower.
@@ -2928,7 +2975,7 @@ function AIRBOSS:_GetQueueInfo(queue, case)
       -- Only count specific case with special 23 = CASE II and III combined.
       if (flight.case==case) or (case==23 and (flight.case==2 or flight.case==3)) then
         ngroup=ngroup+1
-        nunits=nunits+flight.nunits          
+        nunits=nunits+flight.nunits
       end
       
     else
@@ -3040,18 +3087,22 @@ function AIRBOSS:_CreateFlightGroup(group)
     -- Note, this should be re-set elsewhere!
     flight.case=self.case
     
+    -- Flight elements.
+    local text=string.format("Flight elemets of group %s:", flight.groupname)
     flight.elements={}
     local units=group:GetUnits()
-    for _,_unit in pairs(units) do
+    for i,_unit in pairs(units) do
       local unit=_unit --Wrapper.Unit#UNIT
       local name=unit:GetName()
       local element={} --#AIRBOSS.FlightElement
       element.unit=unit
       element.onboard=flight.onboardnumbers[name]
       element.ballcall=false
+      --element.ai=
+      text=text..string.format("\n[%d] %s onboard #%s", i, name, tostring(element.onboard))
       table.insert(flight.elements, element)
     end
-    
+    self:I(self.lid..text)  
     
     -- Onboard
     if flight.ai then
@@ -3186,7 +3237,7 @@ end
 function AIRBOSS:_GetFlightElement(unitname, flight)
 
   -- Loop over all elements in flight group.
-  for i,_element in pairs(flight) do
+  for i,_element in pairs(flight.elements) do
     local element=_element --#AIRBOSS.FlightElement
     
     if element.unit:GetName()==unitname then
@@ -4790,18 +4841,20 @@ function AIRBOSS:_GetWire(Ccoord, Lcoord, dx)
   -- Little offset for the exact wire positions.
   dx=dx or self.carrierparam.wireoffset
   
+  dx=self.carrierparam.wireoffset
+  
   -- Corrected distance.
-  local d=Ldist+dx
+  local d=Ldist-dx
 
   -- Which wire was caught? X>0 since calculated as distance!
   local wire
-  if d<self.carrierparam.wire1 then           -- < -104
+  if d<self.carrierparam.wire1 then           -- 0
     wire=1
-  elseif d<self.carrierparam.wire2 then       -- < -92
+  elseif d<self.carrierparam.wire2 then       -- 12
     wire=2
-  elseif d<self.carrierparam.wire3 then       -- < -80
+  elseif d<self.carrierparam.wire3 then       -- 24
     wire=3
-  elseif d<self.carrierparam.wire4 then       -- < -68
+  elseif d<self.carrierparam.wire4 then       -- 36
     wire=4
   else
     wire=99
@@ -4810,10 +4863,10 @@ function AIRBOSS:_GetWire(Ccoord, Lcoord, dx)
   if self.Debug then
     local FB=self:GetFinalBearing(false)
     
-    local w1=Scoord:Translate(self.carrierparam.wire1, FB)
-    local w2=Scoord:Translate(self.carrierparam.wire2, FB)
-    local w3=Scoord:Translate(self.carrierparam.wire3, FB)
-    local w4=Scoord:Translate(self.carrierparam.wire4, FB)
+    local w1=Scoord:Translate(self.carrierparam.wire1+self.carrierparam.wireoffset, FB)
+    local w2=Scoord:Translate(self.carrierparam.wire2+self.carrierparam.wireoffset, FB)
+    local w3=Scoord:Translate(self.carrierparam.wire3+self.carrierparam.wireoffset, FB)
+    local w4=Scoord:Translate(self.carrierparam.wire4+self.carrierparam.wireoffset, FB)
     
     w1:MarkToAll("Wire 1")
     w2:MarkToAll("Wire 2")
@@ -4823,6 +4876,8 @@ function AIRBOSS:_GetWire(Ccoord, Lcoord, dx)
     Scoord:MarkToAll("Stern")
     Lcoord:MarkToAll(string.format("Landing Point wire=%s", wire))
     
+    Scoord:SmokeGreen()
+    Lcoord:SmokeGreen()
     w1:SmokeBlue()
     w2:SmokeOrange()
     w3:SmokeRed()
@@ -4830,7 +4885,7 @@ function AIRBOSS:_GetWire(Ccoord, Lcoord, dx)
   end
   
   -- Debug output.
-  self:I(string.format("GetWire: L=%.1f m, dx=%.1f m, d=L+dx=%.1f m ==> wire=%d.", Ldist, dx, d, wire))
+  self:I(string.format("GetWire: L=%.1f m, dx=%.1f m, d=L-dx=%.1f m ==> wire=%d.", Ldist, dx, d, wire))
 
   return wire
 end
@@ -6491,17 +6546,36 @@ function AIRBOSS:_IsCarrierAircraft(unit)
   return false
 end
 
+--- Checks if a human player sits in the unit.
+-- @param #AIRBOSS self
+-- @param Wrapper.Unit#UNIT unit Aircraft unit.
+-- @return #boolean If true, human player inside the unit.
+function AIRBOSS:_IsHumanUnit(unit)
+  
+  -- Get player unit or nil if no player unit.
+  local playerunit=self:_GetPlayerUnitAndName(unit:GetName())
+  
+  if playerunit then
+    return true
+  else
+    return false
+  end
+end
+
 --- Checks if a group has a human player.
 -- @param #AIRBOSS self
 -- @param Wrapper.Group#GROUP group Aircraft group.
 -- @return #boolean If true, human player inside group.
 function AIRBOSS:_IsHuman(group)
 
+  -- Get all units of the group.
   local units=group:GetUnits()
   
+  -- Loop over all units.
   for _,_unit in pairs(units) do
-    local playerunit=self:_GetPlayerUnitAndName(_unit:GetName())
-    if playerunit then
+    -- Check if unit is human.
+    local human=self:_IsHumanUnit(_unit)
+    if human then
       return true
     end
   end
