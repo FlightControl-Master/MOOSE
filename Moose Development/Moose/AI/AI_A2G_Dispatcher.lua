@@ -3175,7 +3175,7 @@ do -- AI_A2G_DISPATCHER
                     if Dispatcher:GetSquadronLanding( Squadron.Name ) == AI_A2G_DISPATCHER.Landing.NearAirbase then
                       Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
                       Defender:Destroy()
-                      self:ParkDefender( Squadron, Defender )
+                      Dispatcher:ParkDefender( Squadron, Defender )
                     end
                   end
                 end  -- if DefenderGCI then
@@ -3311,6 +3311,9 @@ do -- AI_A2G_DISPATCHER
     for DefenderGroup, DefenderTask in pairs( self:GetDefenderTasks() ) do
       local DefenderGroup = DefenderGroup -- Wrapper.Group#GROUP
       local DefenderTaskFsm = self:GetDefenderTaskFsm( DefenderGroup )
+      if DefenderTaskFsm:Is( "LostControl" ) then
+        self:ClearDefenderTask( DefenderGroup )
+      end
       if not DefenderGroup:IsAlive() then
         self:F( { Defender = DefenderGroup:GetName(), DefenderState = DefenderTaskFsm:GetState() } )
         if not DefenderTaskFsm:Is( "Started" ) then

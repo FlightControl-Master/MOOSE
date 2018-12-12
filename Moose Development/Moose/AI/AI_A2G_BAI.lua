@@ -40,20 +40,6 @@ function AI_A2G_BAI:New( AIGroup, EngageMinSpeed, EngageMaxSpeed )
   return self
 end
 
---- onafter event handler for Start event.
--- @param #AI_A2G_BAI self
--- @param Wrapper.Group#GROUP AIGroup The AI group managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
-function AI_A2G_BAI:onafterStart( AIGroup, From, Event, To )
-
-  self:GetParent( self ).onafterStart( self, AIGroup, From, Event, To )
-  AIGroup:HandleEvent( EVENTS.Takeoff, nil, self )
-
-end
-
-
 
 --- @param #AI_A2G_BAI self
 -- @param Wrapper.Group#GROUP DefenderGroup The GroupGroup managed by the FSM.
@@ -83,86 +69,64 @@ function AI_A2G_BAI:onafterEngage( DefenderGroup, From, Event, To, AttackSetUnit
       
       local TargetDistance = DefenderCoord:Get2DDistance( TargetCoord )
       
-      if TargetDistance >= 50000 then
-  
-        local EngageRoute = {}
-  
-        local ToTargetSpeed = math.random( self.EngageMinSpeed, self.EngageMaxSpeed )
-        
-        --- Calculate the target route point.
-        
-        local FromWP = DefenderCoord:WaypointAir( 
-          self.PatrolAltType, 
-          POINT_VEC3.RoutePointType.TurningPoint, 
-          POINT_VEC3.RoutePointAction.TurningPoint, 
-          ToTargetSpeed, 
-          true 
-        )
-        
-        EngageRoute[#EngageRoute+1] = FromWP
-  
-        local ToCoord = self.AttackSetUnit:GetFirst():GetCoordinate()
-        self:SetTargetDistance( ToCoord ) -- For RTB status check
-        
-        local FromEngageAngle = ToCoord:GetAngleDegrees( ToCoord:GetDirectionVec3( DefenderCoord ) )
-        
-        --- Create a route point of type air.
-        local ToWP = ToCoord:Translate( 50000, FromEngageAngle ):WaypointAir( 
-          self.PatrolAltType, 
-          POINT_VEC3.RoutePointType.TurningPoint, 
-          POINT_VEC3.RoutePointAction.TurningPoint, 
-          ToTargetSpeed, 
-          true 
-        )
-    
-        self:F( { Angle = FromEngageAngle, ToTargetSpeed = ToTargetSpeed } )
-        self:F( { self.EngageMinSpeed, self.EngageMaxSpeed, ToTargetSpeed } )
-        
-        EngageRoute[#EngageRoute+1] = ToWP
-        
-        local AttackTasks = {}
-    
-        for AttackUnitID, AttackUnit in pairs( self.AttackSetUnit:GetSet() ) do
-          if AttackUnit:IsAlive() and AttackUnit:IsGround() then
-            self:T( { "Engage Unit evaluation:", AttackUnit:GetName(), AttackUnit:IsAlive(), AttackUnit:IsGround() } )
-            local HasRadar = AttackUnit:HasSEAD() 
-            if HasRadar then
-              self:T( { "Eliminating Unit:", AttackUnit:GetName() } )
-              AttackTasks[#AttackTasks+1] = DefenderGroup:TaskAttackUnit( AttackUnit )
-            end
-          end
-        end
-          
-        if #AttackTasks == 0 then
-          self:E( DefenderGroupName .. ": No targets found -> Going RTB")
-          self:Return()
-          self:__RTB( 0.5 )
-        else
-          DefenderGroup:OptionROEOpenFire()
-          DefenderGroup:OptionROTEvadeFire()
-  
-          AttackTasks[#AttackTasks+1] = DefenderGroup:TaskFunction( "AI_A2G_ENGAGE.EngageRoute", self )
-          EngageRoute[#EngageRoute].task = DefenderGroup:TaskCombo( AttackTasks )
-        end
-        
-        DefenderGroup:Route( EngageRoute, 0 )
+      local EngageRoute = {}
+
+      local ToTargetSpeed = math.random( self.EngageMinSpeed, self.EngageMaxSpeed )
       
-      else
-        local AttackTasks = {}
-        --local AttackUnit = self.AttackSetUnit:GetRandom() -- Wrapper.Unit#UNIT
-        for AttackUnitID, AttackUnit in pairs( self.AttackSetUnit:GetSet() ) do
-          if AttackUnit:IsAlive() and AttackUnit:IsGround() then
-            local HasRadar = AttackUnit:HasSEAD() 
-            if HasRadar then
-              self:T( { "Eliminating Unit:", AttackUnit:GetName(), AttackUnit:IsAlive(), AttackUnit:IsGround() } )
-              AttackTasks[#AttackTasks+1] = DefenderGroup:TaskAttackUnit( AttackUnit )
-            end
-          end
+      --- Calculate the target route point.
+      
+      local FromWP = DefenderCoord:WaypointAir( 
+        self.PatrolAltType, 
+        POINT_VEC3.RoutePointType.TurningPoint, 
+        POINT_VEC3.RoutePointAction.TurningPoint, 
+        ToTargetSpeed, 
+        true 
+      )
+      
+      EngageRoute[#EngageRoute+1] = FromWP
+
+      local ToCoord = self.AttackSetUnit:GetFirst():GetCoordinate()
+      self:SetTargetDistance( ToCoord ) -- For RTB status check
+      
+      local FromEngageAngle = ToCoord:GetAngleDegrees( ToCoord:GetDirectionVec3( DefenderCoord ) )
+      
+      --- Create a route point of type air.
+      local ToWP = ToCoord:Translate( 10000, FromEngageAngle ):WaypointAir( 
+        self.PatrolAltType, 
+        POINT_VEC3.RoutePointType.TurningPoint, 
+        POINT_VEC3.RoutePointAction.TurningPoint, 
+        ToTargetSpeed, 
+        true 
+      )
+  
+      self:F( { Angle = FromEngageAngle, ToTargetSpeed = ToTargetSpeed } )
+      self:F( { self.EngageMinSpeed, self.EngageMaxSpeed, ToTargetSpeed } )
+      
+      EngageRoute[#EngageRoute+1] = ToWP
+      
+      local AttackTasks = {}
+  
+      for AttackUnitID, AttackUnit in pairs( self.AttackSetUnit:GetSet() ) do
+        if AttackUnit:IsAlive() and AttackUnit:IsGround() then
+          self:T( { "Engage Unit evaluation:", AttackUnit:GetName(), AttackUnit:IsAlive(), AttackUnit:IsGround() } )
+          self:T( { "Eliminating Unit:", AttackUnit:GetName() } )
+          AttackTasks[#AttackTasks+1] = DefenderGroup:TaskAttackUnit( AttackUnit )
         end
+      end
+        
+      if #AttackTasks == 0 then
+        self:E( DefenderGroupName .. ": No targets found -> Going RTB")
+        self:Return()
+        self:__RTB( 0.5 )
+      else
+        DefenderGroup:OptionROEOpenFire()
+        DefenderGroup:OptionROTEvadeFire()
+
         AttackTasks[#AttackTasks+1] = DefenderGroup:TaskFunction( "AI_A2G_ENGAGE.EngageRoute", self )
-        local DefenderTask = DefenderGroup:TaskCombo( AttackTasks )
-        DefenderGroup:SetTask( DefenderTask, 0 )
-      end  
+        EngageRoute[#EngageRoute].task = DefenderGroup:TaskCombo( AttackTasks )
+      end
+      
+      DefenderGroup:Route( EngageRoute, 0.5 )
     end
   else
     self:E( DefenderGroupName .. ": No targets found -> Going RTB")

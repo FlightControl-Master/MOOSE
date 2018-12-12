@@ -425,7 +425,6 @@ function AI_AIR:onafterStatus()
     
     if not self:Is( "Holding" ) and not self:Is( "Returning" ) then
       local DistanceFromHomeBase = self.HomeAirbase:GetCoordinate():Get2DDistance( self.Controllable:GetCoordinate() )
-      self:F({DistanceFromHomeBase=DistanceFromHomeBase})
       
       if DistanceFromHomeBase > self.DisengageRadius then
         self:E( self.Controllable:GetName() .. " is too far from home base, RTB!" )
@@ -444,9 +443,13 @@ function AI_AIR:onafterStatus()
     
 
     if not self:Is( "Fuel" ) and not self:Is( "Home" ) then
+      
       local Fuel = self.Controllable:GetFuelMin()
-      self:F({Fuel=Fuel, FuelThresholdPercentage=self.FuelThresholdPercentage})
+      
+      -- If the fuel in the controllable is below the treshold percentage,
+      -- then send for refuel in case of a tanker, otherwise RTB.
       if Fuel < self.FuelThresholdPercentage then
+      
         if self.TankerName then
           self:E( self.Controllable:GetName() .. " is out of fuel: " .. Fuel .. " ... Refuelling at Tanker!" )
           self:Refuel()
@@ -468,7 +471,10 @@ function AI_AIR:onafterStatus()
     -- TODO: Check GROUP damage function.
     local Damage = self.Controllable:GetLife()
     local InitialLife = self.Controllable:GetLife0()
-    self:F( { Damage = Damage, InitialLife = InitialLife, DamageThreshold = self.PatrolDamageThreshold } )
+    
+    -- If the group is damaged, then RTB.
+    -- Note that a group can consist of more units, so if one unit is damaged of a group, the mission may continue.
+    -- The damaged unit will RTB due to DCS logic, and the others will continue to engage.
     if ( Damage / InitialLife ) < self.PatrolDamageThreshold then
       self:E( self.Controllable:GetName() .. " is damaged: " .. Damage .. " ... RTB!" )
       self:Damaged()
@@ -489,6 +495,7 @@ function AI_AIR:onafterStatus()
             self:Damaged()
           else  
             self:E( self.Controllable:GetName() .. " control lost! " )
+            
             self:LostControl()
           end
         else
