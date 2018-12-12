@@ -721,17 +721,13 @@ AIRBOSS.GroovePos={
 -- @field #number Xmax Maximum allowed longitual distance to carrier.
 -- @field #number Zmin Minimum allowed latitudal distance to carrier.
 -- @field #number Zmax Maximum allowed latitudal distance to carrier.
--- @field #number Rmin Minimum allowed range to carrier.
--- @field #number Rmax Maximum allowed range to carrier.
--- @field #number Amin Minimum allowed angle to carrier.
--- @field #number Amax Maximum allowed angle to carrier.
 -- @field #number LimitXmin Latitudal threshold for triggering the next step if X<Xmin.
 -- @field #number LimitXmax Latitudal threshold for triggering the next step if X>Xmax.
 -- @field #number LimitZmin Latitudal threshold for triggering the next step if Z<Zmin.
 -- @field #number LimitZmax Latitudal threshold for triggering the next step if Z>Zmax.
 
 --- Parameters of a flight group.
--- @type AIRBOSS.Flightitem
+-- @type AIRBOSS.FlightGroup
 -- @field Wrapper.Group#GROUP group Flight group.
 -- @field #string groupname Name of the group.
 -- @field #number nunits Number of units in group.
@@ -746,6 +742,14 @@ AIRBOSS.GroovePos={
 -- @field #number case Recovery case of flight.
 -- @field #string seclead Name of section lead.
 -- @field #table section Other human flight groups belonging to this flight. This flight is the lead.
+-- @field #boolean holding If true, flight is in holding zone.
+-- @field #boolean ballcall If true, flight called the ball in the groove.
+-- @field #table elements Flight group elements.
+
+--- Parameters of an element in a flight group.
+-- @type AIRBOSS.FlightElement
+-- @field Wrapper.Unit#UNIT unit Aircraft unit.
+-- @field #string onboard Onboard number.
 -- @field #boolean ballcall If true, flight called the ball in the groove.
 
 --- Player data table holding all important parameters of each player.
@@ -755,13 +759,12 @@ AIRBOSS.GroovePos={
 -- @field Wrapper.Client#CLIENT client Client object of player.
 -- @field #string callsign Callsign of player.
 -- @field #string difficulty Difficulty level.
--- @field #string step Coming pattern step.
+-- @field #string step Current/next pattern step.
 -- @field #boolean warning Set true once the player got a warning.
 -- @field #number passes Number of passes.
 -- @field #boolean attitudemonitor If true, display aircraft attitude and other parameters constantly.
 -- @field #table debrief Debrief analysis of the current step of this pass.
 -- @field #table grades LSO grades of player passes.
--- @field #boolean holding If true, player is in holding zone.
 -- @field #boolean landed If true, player landed or attempted to land.
 -- @field #boolean boltered If true, player boltered.
 -- @field #boolean waveoff If true, player was waved off during final approach.
@@ -772,7 +775,7 @@ AIRBOSS.GroovePos={
 -- @field #number wire Wire caught by player when trapped.
 -- @field #AIRBOSS.GroovePos groove Data table at each position in the groove. Elemets are of type @{#AIRBOSS.GrooveData}.
 -- @field #table menu F10 radio menu
--- @extends #AIRBOSS.Flightitem
+-- @extends #AIRBOSS.FlightGroup
 
 --- Main radio menu.
 -- @field #table MenuF10
@@ -780,7 +783,7 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.5.2"
+AIRBOSS.version="0.5.2w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1447,31 +1450,35 @@ function AIRBOSS:_GetACNickname(actype)
   return nickname
 end
 
---- Check recovery times and start/stop recovery mode of aircraft.
+--- Check AI status. Pattern queue AI in the groove? Marshal queue AI arrived in holding zone?
 -- @param #AIRBOSS self
 function AIRBOSS:_CheckAIStatus()
 
   -- Loop over all flights in landing pattern.
   for _,_flight in pairs(self.Qpattern) do
-    local flight=_flight --#AIRBOSS.Flightitem
+    local flight=_flight --#AIRBOSS.FlightGroup
     
     -- Only AI!
     if flight.ai then
-    
-      -- Get unnits
-      local units=flight.group:GetUnits()
-      
+        
       -- Loop over all units in AI flight.
-      for _,_unit in pairs(units) do
-        local unit=_unit --Wrapper.Unit#UNIT
+      for _,_element in pairs(flight.elements) do
+        local element=_element --#AIRBOSS.FlightElement
+        
+        -- Unit
+        local unit=element.unit
         
         -- Get lineup and distance to carrier.
         local lineup=self:_Lineup(unit, true)
-        local distance=UTILS.NMToMeters(unit:GetCoordinate():Get2DDistance(self:GetCoordinate()))
+        
+        -- Distance in NM.
+        local distance=UTILS.MetersToNM(unit:GetCoordinate():Get2DDistance(self:GetCoordinate()))
+        
+        -- Altitude in ft.
         local alt=UTILS.MetersToFeet(unit:GetAltitude())
         
         -- Check if parameters are right and flight is in the groove.
-        if lineup<2 and distance<=0.75 and alt<500 and not flight.ballcall then
+        if lineup<2 and distance<=0.75 and alt<500 and not element.ballcall then
         
             -- Paddles: Call the ball!
           self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.CALLTHEBALL, false, 0)
@@ -1479,15 +1486,14 @@ function AIRBOSS:_CheckAIStatus()
           -- Pilot: "405, Hornet Ball, 3.2"
           -- TODO: Message to players only.
           -- TODO: Voice over.
-          -- TODO: Correct unit onboard number not section lead!
-          local text=string.format("%s, %s Ball, %.1f.", flight.onboard, self:_GetACNickname(unit:GetTypeName()), self:_GetFuelState(unit)/1000)
-          MESSAGE:New(text, 5):ToCoalition(self:GetCoalition())
+          local text=string.format("%s, %s Ball, %.1f.", element.onboard, self:_GetACNickname(unit:GetTypeName()), self:_GetFuelState(unit)/1000)
+          MESSAGE:New(text, 15):ToCoalition(self:GetCoalition())
           --self:MessageToPlayer(playerData, text, playerData.onboard, "", 3, false, 3)
           
           -- Paddles: Roger ball after 3 seconds.
           self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.ROGERBALL, false, 3)
           
-          -- TODO: This does not work for flights with more than one aircraft in the group! But we need to set it not to flood the screen with messages for the same unit.
+          -- This is for the whole flight. Maybe we need it.
           flight.ballcall=true
         end
         
@@ -1552,7 +1558,7 @@ function AIRBOSS:_CheckPlayerPatternDistance(player)
   
   -- Loop over all other flights in pattern.
   for _,_flight in pairs(self.Qpattern) do
-    local flight=_flight --#AIRBOSS.Flightitem
+    local flight=_flight --#AIRBOSS.FlightGroup
     
     -- Now we still need to loop over all units in the flight.
     for _,_unit in pairs(flight.group:GetUnits()) do
@@ -1597,8 +1603,6 @@ function AIRBOSS:_CheckRecoveryTimes()
   -- Loop over all slots.
   for _,_recovery in pairs(self.recoverytimes) do
     local recovery=_recovery --#AIRBOSS.Recovery
-    
-    --if recovery.OVER==false then
         
     -- Get start/stop clock strings.
     local Cstart=UTILS.SecondsToClock(recovery.START)
@@ -2289,7 +2293,7 @@ function AIRBOSS:_CheckQueue()
   if nmarshal>0 and npattern<self.Nmaxpattern then
   
     -- Next flight in line to be send from marshal to pattern.
-    local marshalflight=self.Qmarshal[1]  --#AIRBOSS.Flightitem
+    local marshalflight=self.Qmarshal[1]  --#AIRBOSS.FlightGroup
     
     -- Time flight is marshaling.
     local Tmarshal=timer.getAbsTime()-marshalflight.time
@@ -2302,7 +2306,7 @@ function AIRBOSS:_CheckQueue()
     if npattern>0 then
     
       -- Last flight group send to pattern.
-      local patternflight=self.Qpattern[#self.Qpattern] --#AIRBOSS.Flightitem
+      local patternflight=self.Qpattern[#self.Qpattern] --#AIRBOSS.FlightGroup
       
       -- Recovery case of pattern flight.
       pcase=patternflight.case
@@ -2435,7 +2439,7 @@ function AIRBOSS:_ScanCarrierZone()
   -- Find flights that are not in CCA.
   local remove={}
   for _,_flight in pairs(self.flights) do
-    local flight=_flight --#AIRBOSS.Flightitem
+    local flight=_flight --#AIRBOSS.FlightGroup
     if insideCCA[flight.groupname]==nil then
       table.insert(remove, flight.group)
     end
@@ -2490,7 +2494,7 @@ end
 
 --- Tell AI to orbit at a specified position at a specified alititude with a specified speed.
 -- @param #AIRBOSS self
--- @param #AIRBOSS.Flightitem flight Flight group.
+-- @param #AIRBOSS.FlightGroup flight Flight group.
 -- @param #number nstack Stack number of group. (Should be #self.Qmarshal+1 for new flight groups.)
 function AIRBOSS:_MarshalAI(flight, nstack)
 
@@ -2523,6 +2527,30 @@ function AIRBOSS:_MarshalAI(flight, nstack)
   -- Waypoints array.
   local wp={}
   
+  -- Current position.
+  wp[1]=group:GetCoordinate():WaypointAirTurningPoint(nil ,Speed, {}, "Current Position")
+  
+  -- If flight has not arrived in the holding zone, we guide it there.
+  if not flight.holding then
+
+    -- Get altitude and positions.  
+    local Altitude, p1, p2=self:_GetMarshalAltitude(nstack, flight.case)  
+   
+    if flight.case==1 then
+      -- TODO: Test & fine tune.
+      -- Waypoint in front of the carrier
+      wp[2]=self:GetCoordinate():Translate(UTILS.NMtoMeters(10), self:GetHeading()-45)
+      -- Enter pattern
+      wp[3]=self:GetCoordinate():Translate(UTILS.NMtoMeters(5), self:GetHeading()-90)
+      --TODO: waypoint task that sets flight.holing to true.
+    else
+      wp[2]=p1:WaypointAirTurningPoint(nil ,Speed, {}, "Entering Marshal Pattern")
+      -- TODO: waypoint task!
+    end
+    
+  end
+  
+  
   -- Set up waypoints including collapsing the stack.
   for stack=nstack, 1, -1 do
   
@@ -2531,7 +2559,7 @@ function AIRBOSS:_MarshalAI(flight, nstack)
     -- Get altitude and positions.  
     local Altitude, p1, p2=self:_GetMarshalAltitude(stack, flight.case)
     
-    -- Right CW pattern for CASE II/III.
+    -- Right CCW pattern for CASE II/III.
     local c1=nil  --Core.Point#COORDINATE
     local c2=nil  --Core.Point#COORDINATE
     local p0=nil  --Core.Point#COORDINATE
@@ -2566,7 +2594,7 @@ function AIRBOSS:_MarshalAI(flight, nstack)
     
   end  
   
-  -- Landing waypoint.
+  -- Landing waypoint. (Done separately now).
   --wp[#wp+1]=Carrier:SetAltitude(250):WaypointAirLanding(Speed, self.airbase, nil, "Landing")
       
   -- Reinit waypoints.
@@ -2597,7 +2625,7 @@ end
 
 --- Tell AI to land on the carrier.
 -- @param #AIRBOSS self
--- @param #AIRBOSS.Flightitem flight Flight group.
+-- @param #AIRBOSS.FlightGroup flight Flight group.
 function AIRBOSS:_LandAI(flight)
 
   -- Aircraft speed when flying the pattern.
@@ -2690,7 +2718,7 @@ end
 
 --- Add a flight group to a specific marshal stack and to the marshal queue.
 -- @param #AIRBOSS self
--- @param #AIRBOSS.Flightitem flight Flight group.
+-- @param #AIRBOSS.FlightGroup flight Flight group.
 -- @param #number stack Marshal stack. This (re-)sets the flag value.
 function AIRBOSS:_AddMarshalGroup(flight, stack)
 
@@ -2722,7 +2750,7 @@ end
 --- Check if marshal stack can be collapsed.
 -- If next in line is an AI flight, this is done. If human player is next, we wait for "Commence" via F10 radio menu command.
 -- @param #AIRBOSS self
--- @param #AIRBOSS.Flightitem flight Flight to go to pattern.
+-- @param #AIRBOSS.FlightGroup flight Flight to go to pattern.
 function AIRBOSS:_CheckCollapseMarshalStack(flight)
 
   -- Check if flight is AI or human. If AI, we collapse the stack and commence. If human, we suggest to commence.
@@ -2750,7 +2778,7 @@ end
 
 --- Collapse marshal stack.
 -- @param #AIRBOSS self
--- @param #AIRBOSS.Flightitem flight Flight that left the marshal stack.
+-- @param #AIRBOSS.FlightGroup flight Flight that left the marshal stack.
 -- @param #boolean nopattern If true, flight does not go to pattern.
 function AIRBOSS:_CollapseMarshalStack(flight, nopattern)
   self:I({flight=flight, nopattern=nopattern})
@@ -2781,7 +2809,7 @@ function AIRBOSS:_CollapseMarshalStack(flight, nopattern)
         mflight.flag:Set(mstack-1)
         
         -- Inform players.
-        if mflight.player and mflight.difficulty~=AIRBOSS.Difficulty.HARD then
+        if mflight.ai==false and mflight.difficulty~=AIRBOSS.Difficulty.HARD then
           local alt=UTILS.MetersToFeet(self:_GetMarshalAltitude(mstack-1,case))
           local text=string.format("descent to next lower stack at %d ft", alt)
           self:MessageToPlayer(mflight, text, "MARSHAL")
@@ -2892,7 +2920,7 @@ function AIRBOSS:_GetQueueInfo(queue, case)
   
   -- Loop over flight groups.
   for _,_flight in pairs(queue) do
-    local flight=_flight --#AIRBOSS.Flightitem
+    local flight=_flight --#AIRBOSS.FlightGroup
     
     -- Check if a specific case was requested.
     if case then
@@ -2929,7 +2957,7 @@ function AIRBOSS:_PrintQueue(queue, name)
     text=text.." empty."
   else
     for i,_flight in pairs(queue) do
-      local flight=_flight --#AIRBOSS.Flightitem
+      local flight=_flight --#AIRBOSS.FlightGroup
       
       -- Timestamp.
       local clock=UTILS.SecondsToClock(flight.time)
@@ -2978,14 +3006,14 @@ end
 --- Create a new flight group. Usually when a flight appears in the CCA.
 -- @param #AIRBOSS self
 -- @param Wrapper.Group#GROUP group Aircraft group.
--- @return #AIRBOSS.Flightitem Flight group.
+-- @return #AIRBOSS.FlightGroup Flight group.
 function AIRBOSS:_CreateFlightGroup(group)
 
   -- Debug info.
   self:I(self.lid..string.format("Creating new flight for group %s of aircraft type %s.", group:GetName(), group:GetTypeName()))
   
   -- New flight.
-  local flight={} --#AIRBOSS.Flightitem
+  local flight={} --#AIRBOSS.FlightGroup
   
   -- Check if not already in flights
   if not self:_InQueue(self.flights, group) then
@@ -3011,6 +3039,19 @@ function AIRBOSS:_CreateFlightGroup(group)
     
     -- Note, this should be re-set elsewhere!
     flight.case=self.case
+    
+    flight.elements={}
+    local units=group:GetUnits()
+    for _,_unit in pairs(units) do
+      local unit=_unit --Wrapper.Unit#UNIT
+      local name=unit:GetName()
+      local element={} --#AIRBOSS.FlightElement
+      element.unit=unit
+      element.onboard=flight.onboardnumbers[name]
+      element.ballcall=false
+      table.insert(flight.elements, element)
+    end
+    
     
     -- Onboard
     if flight.ai then
@@ -3116,7 +3157,7 @@ end
 -- @param #AIRBOSS self
 -- @param Wrapper.Group#GROUP group Group that will be removed from queue.
 -- @param #table queue The queue from which the group will be removed.
--- @return #AIRBOSS.Flightitem Flight group.
+-- @return #AIRBOSS.FlightGroup Flight group.
 -- @return #number Queue index.
 function AIRBOSS:_GetFlightFromGroupInQueue(group, queue)
 
@@ -3125,7 +3166,7 @@ function AIRBOSS:_GetFlightFromGroupInQueue(group, queue)
   
   -- Loop over all flight groups in queue
   for i,_flight in pairs(queue) do
-    local flight=_flight --#AIRBOSS.Flightitem
+    local flight=_flight --#AIRBOSS.FlightGroup
     
     if flight.groupname==name then
       return flight, i
@@ -3136,6 +3177,43 @@ function AIRBOSS:_GetFlightFromGroupInQueue(group, queue)
   return nil, nil
 end
 
+--- Get element in flight. 
+-- @param #AIRBOSS self
+-- @param #string unitname Name of the unit.
+-- @param #AIRBOSS.FlightGroup flight Flight group.
+-- @return #AIRBOSS.FlightElement Flight element.
+-- @return #number Element index.
+function AIRBOSS:_GetFlightElement(unitname, flight)
+
+  -- Loop over all elements in flight group.
+  for i,_element in pairs(flight) do
+    local element=_element --#AIRBOSS.FlightElement
+    
+    if element.unit:GetName()==unitname then
+      return element, i
+    end
+  end
+  
+  self:T2(self.lid..string.format("WARNING: Flight element %s could not be found in flight group.", unitname, flight.groupname))
+  return nil, nil
+end
+
+--- Get element in flight. 
+-- @param #AIRBOSS self
+-- @param #string unitname Name of the unit.
+-- @param #AIRBOSS.FlightGroup flight Flight group.
+function AIRBOSS:_RemoveFlightElement(unitname, flight)
+
+  -- Get table index.
+  local element,idx=self:_GetFlightElement(unitname,flight)
+
+  if idx then
+    table.remove(flight.elements, idx)
+  else
+    self:E("ERROR: Flight element could not be removed from flight group. Index=nil!")
+  end
+end
+
 --- Check if a group is in a queue.
 -- @param #AIRBOSS self
 -- @param #table queue The queue to check.
@@ -3144,7 +3222,7 @@ end
 function AIRBOSS:_InQueue(queue, group)
   local name=group:GetName()
   for _,_flight in pairs(queue) do
-    local flight=_flight  --#AIRBOSS.Flightitem
+    local flight=_flight  --#AIRBOSS.FlightGroup
     if name==flight.groupname then
       return true
     end
@@ -3156,11 +3234,11 @@ end
 --- Remove a flight group.
 -- @param #AIRBOSS self
 -- @param Wrapper.Group#GROUP group Aircraft group.
--- @return #AIRBOSS.Flightitem Flight group.
+-- @return #AIRBOSS.FlightGroup Flight group.
 function AIRBOSS:_RemoveFlightGroup(group)
   local groupname=group:GetName()
   for i,_flight in pairs(self.flights) do
-    local flight=_flight --#AIRBOSS.Flightitem
+    local flight=_flight --#AIRBOSS.FlightGroup
     if flight.groupname==groupname then
       self:I(string.format("Removing flight group %s (not in CCA).", groupname))
       table.remove(self.flights, i)
@@ -3172,12 +3250,12 @@ end
 --- Remove a flight group from a queue.
 -- @param #AIRBOSS self
 -- @param #table queue The queue from which the group will be removed.
--- @param #AIRBOSS.Flightitem flight Flight group that will be removed from queue.
+-- @param #AIRBOSS.FlightGroup flight Flight group that will be removed from queue.
 function AIRBOSS:_RemoveFlightFromQueue(queue, flight)
 
   -- Loop over all flights in group.
   for i,_flight in pairs(queue) do
-    local qflight=_flight --#AIRBOSS.Flightitem
+    local qflight=_flight --#AIRBOSS.FlightGroup
     
     -- Check for name.
     if qflight.groupname==flight.groupname then
@@ -3201,7 +3279,7 @@ function AIRBOSS:_RemoveGroupFromQueue(queue, group)
     
   -- Loop over all flights in group.
   for i,_flight in pairs(queue) do
-    local flight=_flight --#AIRBOSS.Flightitem
+    local flight=_flight --#AIRBOSS.FlightGroup
     
     -- Check for name.
     if flight.groupname==name then
@@ -3233,10 +3311,16 @@ function AIRBOSS:_RemoveUnitFromFlight(unit)
       -- Check if flight exists.
       if flight then
 
-        -- TODO: Improve this and remove the explicit unit. Make unit array for flight!
+        -- Remove element from flight group.
+        self:_RemoveFlightElement(unit:GetName(), flight)
         
         -- Decrease number of units in group.
         flight.nunits=flight.nunits-1
+        
+        -- Check if numbers still match.
+        if #flight.elements~=flight.nunits then
+          self:E("ERROR: Number of elements != number of units in flight!")
+        end
                 
         -- Check if no units are left.
         if flight.nunits==0 then
@@ -3260,12 +3344,12 @@ function AIRBOSS:_RemoveFlight(flight)
   self:_RemoveFlightFromQueue(self.Qpattern, flight)
   
   -- Check if player or AI
-  if flight.player then
-    -- Set Playerstep to undefined.
-    flight.step=AIRBOSS.PatternStep.UNDEFINED
-  else
+  if flight.ai then  
     -- Remove AI flight completely.
     self:_RemoveFlightFromQueue(self.flights, flight)
+  else
+    -- Set Playerstep to undefined.
+    flight.step=AIRBOSS.PatternStep.UNDEFINED
   end
   
 end
@@ -3348,7 +3432,7 @@ function AIRBOSS:_CheckPatternUpdate()
       
     -- Loop over all marshal flights
     for _,_flight in pairs(self.Qmarshal) do
-      local flight=_flight --#AIRBOSS.Flightitem
+      local flight=_flight --#AIRBOSS.FlightGroup
       
       -- Update marshal pattern of AI keeping the same stack.
       if flight.ai then
@@ -3776,7 +3860,7 @@ function AIRBOSS:_Holding(playerData)
   local playeralt=unit:GetAltitude()
   
   -- Get holding zone of player.
-  local zoneHolding=self:_GetZoneHolding(playerData.case, playerData.flag:Get())
+  local zoneHolding=self:_GetZoneHolding(playerData.case, stack)
     
   -- Check if player is in holding zone.
   local inholdingzone=unit:IsInZone(zoneHolding)
@@ -7143,6 +7227,8 @@ function AIRBOSS:_RequestMarshal(_unitName)
           self:MessageToPlayer(playerData, text, "MARSHAL")       
         
         else
+        
+          -- TODO: check if recovery window is open.
       
           -- Add flight to marshal stack.
           self:_MarshalPlayer(playerData)
@@ -7335,7 +7421,7 @@ function AIRBOSS:_SetSection(_unitName)
       
         -- Loop over all registered flights.
         for _,_flight in pairs(self.flights) do
-          local flight=_flight --#AIRBOSS.Flightitem
+          local flight=_flight --#AIRBOSS.FlightGroup
           
           -- Only human flight groups excluding myself.
           if flight.ai==false and flight.groupname~=playerData.groupname then
