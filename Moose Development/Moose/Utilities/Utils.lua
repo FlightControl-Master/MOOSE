@@ -558,7 +558,7 @@ function UTILS.SecondsToClock(seconds)
   -- Seconds of this day.
   local _seconds=seconds%(60*60*24)
 
-  if seconds <= 0 then
+  if seconds<0 then
     return nil
   else
     local hours = string.format("%02.f", math.floor(_seconds/3600))

@@ -215,7 +215,7 @@ RECOVERYTANKER = {
 
 --- Class version.
 -- @field #string version
-RECOVERYTANKER.version="0.9.7"
+RECOVERYTANKER.version="0.9.8"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -842,9 +842,9 @@ function RECOVERYTANKER:onafterPatternUpdate(From, Event, To)
   -- Waypoints array.
   local wp={}
     
-  -- New waypoint with orbit pattern task.
-  wp[1]=self.tanker:GetCoordinate():WaypointAirTurningPoint(nil , self.speed, {}, "Current Position")
-  wp[2]=p0:WaypointAirTurningPoint(nil, self.speed, {taskorbit}, "Tanker Orbit")
+  -- New waypoint with orbit pattern task. Speed expected in km/h.
+  wp[1]=self.tanker:GetCoordinate():WaypointAirTurningPoint(nil , UTILS.MpsToKmph(self.speed), {}, "Current Position")
+  wp[2]=p0:WaypointAirTurningPoint(nil, UTILS.MpsToKmph(self.speed), {taskorbit}, "Tanker Orbit")
   
   --local wp=self:_Pattern()
   
@@ -900,7 +900,7 @@ function RECOVERYTANKER:_Pattern()
     local coord=p[i] --Core.Point#COORDINATE
     coord:MarkToAll(string.format("Waypoint %d", i))
     --table.insert(wp, coord:WaypointAirFlyOverPoint(nil , self.speed))
-    table.insert(wp, coord:WaypointAirTurningPoint(nil , self.speed))
+    table.insert(wp, coord:WaypointAirTurningPoint(nil , UTILS.MpsToKmph(self.speed)))
   end
 
   return wp
@@ -1098,11 +1098,11 @@ function RECOVERYTANKER:_InitRoute(dist, delay)
   -- Waypoints.
   local wp={}
   if self.takeoff==SPAWN.Takeoff.Air then
-    wp[#wp+1]=self.tanker:GetCoordinate():SetAltitude(self.altitude):WaypointAirTurningPoint(nil, self.speed, {}, "Spawn Position")
+    wp[#wp+1]=self.tanker:GetCoordinate():SetAltitude(self.altitude):WaypointAirTurningPoint(nil, UTILS.MpsToKmph(self.speed), {}, "Spawn Position")
   else
     wp[#wp+1]=Carrier:WaypointAirTakeOffParking()
   end
-  wp[#wp+1]=p:WaypointAirTurningPoint(nil, self.speed, {task}, "Begin Pattern")
+  wp[#wp+1]=p:WaypointAirTurningPoint(nil, UTILS.MpsToKmph(self.speed), {task}, "Begin Pattern")
     
   -- Set route.
   self.tanker:Route(wp, delay)

@@ -400,18 +400,18 @@ AIRBOSS = {
 
 --- Player aircraft types capable of landing on carriers.
 -- @type AIRBOSS.AircraftPlayer
--- @field #string AV8B AV-8B Night Harrier.
+-- @field #string AV8B AV-8B Night Harrier (not yet supported).
 -- @field #string HORNET F/A-18C Lot 20 Hornet.
 -- @field #string A4EC Community A-4E-C mod.
 AIRBOSS.AircraftPlayer={
-  AV8B="AV8BNA",
+  --AV8B="AV8BNA",
   HORNET="FA-18C_hornet",
   A4EC="A-4E-C",
 }
 
 --- Aircraft types capable of landing on carrier (human+AI).
 -- @type AIRBOSS.AircraftCarrier
--- @field #string AV8B AV-8B Night Harrier.
+-- @field #string AV8B AV-8B Night Harrier (not yet supported).
 -- @field #string HORNET F/A-18C Lot 20 Hornet.
 -- @field #string A4EC Community A-4E mod.
 -- @field #string S3B Lockheed S-3B Viking.
@@ -420,7 +420,7 @@ AIRBOSS.AircraftPlayer={
 -- @field #string FA18C F/A-18C Hornet (AI).
 -- @field #string F14A F-14A (AI).
 AIRBOSS.AircraftCarrier={
-  AV8B="AV8BNA",
+  --AV8B="AV8BNA",
   HORNET="FA-18C_hornet",
   A4EC="A-4E-C",
   S3B="S-3B",
@@ -929,7 +929,7 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.5.3w"
+AIRBOSS.version="0.5.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1695,6 +1695,8 @@ function AIRBOSS:_CheckPlayerPatternDistance(player)
     
     -- Get angle between the two orientation vectors. Does the player aircraft nose point into the direction of the other aircraft? (Could be behind him!)
     local rhdg=math.deg(math.acos(UTILS.VecDot(vec12,vec1)/UTILS.VecNorm(vec12)/UTILS.VecNorm(vec1)))
+    
+    -- TODO: Check altitude difference?
     
     -- Direction in 30 degrees cone and distance < 200 meters.
     -- TODO: Test parameter values.
@@ -2744,17 +2746,16 @@ function AIRBOSS:_MarshalAI(flight, nstack)
    
     if flight.case==1 then
       -- Waypoint "north" of carrier's holding zone.
-      wp[2]=p1:Translate(UTILS.NMToMeters(10), hdg):WaypointAirTurningPoint(nil, SpeedTransit, {}, "Prepare Entering Case I Marshal Pattern")
+      --wp[2]=p1:Translate(UTILS.NMToMeters(10), hdg):WaypointAirTurningPoint(nil, SpeedTransit, {}, "Prepare Entering Case I Marshal Pattern")
       -- Enter pattern from "north" to "south".
-      wp[3]=p1:Translate( UTILS.NMToMeters(5), hdg):WaypointAirTurningPoint(nil, SpeedTransit, {TaskArrivedHolding}, "Entering Case I Marshal Pattern")
+      wp[2]=p1:Translate( UTILS.NMToMeters(10), hdg):WaypointAirTurningPoint(nil, SpeedTransit, {TaskArrivedHolding}, "Entering Case I Marshal Pattern")
     else
       -- TODO: Test and tune!
       wp[2]=p1:WaypointAirTurningPoint(nil, SpeedTransit, {TaskArrivedHolding}, "Entering Marshal Pattern")
     end
     
   end
-  
-  
+   
   -- Set up waypoints including collapsing the stack.
   for stack=nstack, 1, -1 do
   
@@ -2794,7 +2795,8 @@ function AIRBOSS:_MarshalAI(flight, nstack)
     end
     
     -- Waypoint.
-    wp[#wp+1]=p0:WaypointAirTurningPoint(nil, SpeedTransit, {TaskOrbit}, text)
+    -- TODO: p0?
+    wp[#wp+1]=p1:WaypointAirTurningPoint(nil, SpeedTransit, {TaskOrbit}, text)
     
   end  
   
@@ -2817,14 +2819,15 @@ function AIRBOSS:_LandAI(flight)
   local Speed=UTILS.KnotsToKmph(272)
   
   local Carrier=self:GetCoordinate()
+  local hdg=self:GetHeading()
 
   -- Waypoints array.
   local wp={}
 
   wp[#wp+1]=flight.group:GetCoordinate():WaypointAirTurningPoint(nil, Speed, {}, "Current position")
 
-  -- Landing waypoint.
-  wp[#wp+1]=self:GetCoordinate():SetAltitude(250):WaypointAirLanding(Speed, self.airbase, nil, "Landing")
+  -- Landing waypoint 5 NM behind carrier at 250 ASL.
+  wp[#wp+1]=self:GetCoordinate():Translate(-UTILS.NMToMeters(5), hdg):SetAltitude(250):WaypointAirLanding(Speed, self.airbase, nil, "Landing")
       
   -- Reinit waypoints.
   flight.group:WayPointInitialize(wp)
@@ -2864,13 +2867,13 @@ function AIRBOSS:_GetMarshalAltitude(stack, case)
     angels0=2
     
     -- Distance 2.5 NM.
-    Dist=UTILS.NMToMeters(2.5)
+    Dist=UTILS.NMToMeters(2.5*math.sqrt(2))
     
     -- Get true heading of carrier.
     local hdg=self.carrier:GetHeading()
     
     -- Center of holding pattern point. We give it a little head start -70 instead of -90 degrees.
-    p1=Carrier:Translate(Dist, hdg-70)
+    p1=Carrier:Translate(Dist, hdg-45)
   else
     -- CASE II/III: Holding at 6000 ft on a racetrack pattern astern the carrier.
     angels0=6
@@ -3005,9 +3008,14 @@ function AIRBOSS:_CollapseMarshalStack(flight, nopattern)
           self:MessageToPlayer(mflight, text, "MARSHAL")
         end
         
-        -- Also decrease flag for section members of flight.
+        -- Debug info.
+        self:I(string.format("Flight %s case %d is changing marshal stack %d --> %d.", mflight.groupname, mflight.case, mstack, mstack-1))
+        
+        -- Loop over section members.
         for _,_sec in pairs(mflight.section) do
           local sec=_sec --#AIRBOSS.PlayerData
+          
+          -- Also decrease flag for section members of flight.
           sec.flag:Set(mstack-1)
           
           -- Inform section member.
@@ -3029,30 +3037,30 @@ function AIRBOSS:_CollapseMarshalStack(flight, nopattern)
     -- Debug
     self:I(self.lid..string.format("Flight %s is leaving stack but not going to pattern.", flight.groupname))
 
-    -- New time stamp for time in pattern.
-    flight.time=timer.getAbsTime()
-
-    -- Set flag to -1.
+    -- Set flag to -1. -1 is rather arbitrary. Should not be -100 or positive.
     flight.flag:Set(-1)
-  
+      
   else
 
     -- Debug
-    self:I(self.lid..string.format("Flight %s is commencing pattern.", flight.groupname))
-    
-    -- New time stamp for time in pattern.
-    flight.time=timer.getAbsTime()
+    local Tmarshal=UTILS.SecondsToClock(timer.getAbsTime()-flight.time)
+    self:I(self.lid..string.format("Flight %s is leaving marshal after %s and going pattern.", flight.groupname, Tmarshal))
     
     -- Decrease flag.
     flight.flag:Set(stack-1)
     
     -- Add flight to pattern queue.
     table.insert(self.Qpattern, flight)
-    
-    -- Remove flight from marshal queue.
-    self:_RemoveGroupFromQueue(self.Qmarshal, flight.group)
-    
+        
   end
+
+  -- New time stamp for time in pattern.
+  flight.time=timer.getAbsTime()
+
+  
+  -- Remove flight from marshal queue.
+  self:_RemoveGroupFromQueue(self.Qmarshal, flight.group)
+  
 end
 
 --- Get next free stack depending on recovery case. Note that here we assume one flight group per stack!
@@ -3150,7 +3158,8 @@ function AIRBOSS:_PrintQueue(queue, name)
       local flight=_flight --#AIRBOSS.FlightGroup
       
       -- Timestamp.
-      local clock=UTILS.SecondsToClock(flight.time)
+      --local clock=UTILS.SecondsToClock(timer.getAbsTime()-flight.time)
+      local clock=timer.getAbsTime()-flight.time
       -- Recovery case of flight.
       local case=flight.case
       -- Stack and stack alt.
@@ -3165,6 +3174,11 @@ function AIRBOSS:_PrintQueue(queue, name)
       local nsec=#flight.section
       local actype=flight.actype
       local onboard=flight.onboard
+      local holding="false"
+      if flight.holding then
+        holding="true"
+      end
+      
       -- TODO: Include player data.
       --[[
       if not flight.ai then
@@ -3182,8 +3196,11 @@ function AIRBOSS:_PrintQueue(queue, name)
         k=playerData.waveoff
       end
       ]]
-      text=text..string.format("\n[%d] %s*%d (%s): lead=%s (%d), onboard=%s, stackalt=%d ft, flag=%d, case=%d, time=%s, fuel=%d, ai=%s",
-                                 i, flight.groupname, flight.nunits, actype, lead, nsec, onboard, alt, stack, case, clock, fuel, ai)
+      text=text..string.format("\n[%d] %s*%d (%s): lead=%s (%d), onboard=%s, flag=%d, case=%d, time=%d, fuel=%d, ai=%s, holding=%s",
+                                 i, flight.groupname, flight.nunits, actype, lead, nsec, onboard, stack, case, clock, fuel, ai, holding)
+      if flight.holding then
+        text=text..string.format(" stackalt=%d ft", alt)
+      end
     end
   end
   self:I(self.lid..text)
@@ -3226,6 +3243,7 @@ function AIRBOSS:_CreateFlightGroup(group)
     flight.seclead=flight.group:GetUnit(1):GetName()  -- Sec lead is first unitname of group but player name for players.
     flight.section={}
     flight.ballcall=false
+    flight.holding=nil
     
     -- Note, this should be re-set elsewhere!
     flight.case=self.case
@@ -7641,6 +7659,9 @@ function AIRBOSS:_SetSection(_unitName)
       elseif self:_InQueue(self.Qpattern, playerData.group) then
         text=string.format("You are already in the Pattern queue. Setting section no possible any more!")
       else
+      
+        -- Init array
+        playerData.section={}
       
         -- Loop over all registered flights.
         for _,_flight in pairs(self.flights) do
