@@ -22,6 +22,19 @@
 -- **PLEASE NOTE** that his class is work in progress and in an **alpha** stage and very much **work in progress**.
 -- Your constructive feedback is both necessary and highly appreciated.
 -- 
+-- Supported Carriers:
+-- 
+--    * USS John C. Stennis:
+--    
+-- Supported Player and AI Aircraft:
+-- 
+--    * F/A-18C Hornet Lot 20 (player+AI)
+--    * A-4E-C community mod (player+AI)
+--    * F/A-18C (AI)
+--    * F-14A (AI)
+--    * E-2D (AI)
+--    * S-3B (AI)
+-- 
 -- At the moment, parameters are optimized for F/A-18C Hornet as aircraft and USS John C. Stennis as carrier.
 -- The community A-4E mod is also supported in priciple but maybe needs further tweaking of parameters such as on speed AoA values.
 -- 
@@ -31,8 +44,8 @@
 --
 -- ### Author: **funkyfranky**
 -- ### Special thanks to
---  **Bankler** for his great [Recovery Trainer](https://forums.eagle.ru/showthread.php?t=221412) mission and script!
--- This gave the inspiration for this class. Also this uses some functionalities for determining the player positon in Case I recoveries.
+-- **Bankler** for his great [Recovery Trainer](https://forums.eagle.ru/showthread.php?t=221412) mission and script!
+-- This gave the inspiration for this class. Also this class uses some functionalities for determining the player positon in Case I recoveries he developed.
 --
 -- @module Ops.Airboss
 -- @image MOOSE.JPG
@@ -189,7 +202,139 @@
 -- Note that incoming flights will be assigned a holding pattern for the next opening window case if no window is open at the moment. So in the above example,
 -- all flights incoming after 13:15 will be assigned to a Case III marshal stack. Therefore, you should make sure that no flights are incoming long before the
 -- next window opens or adjust the recovery planning accordingly.
---  
+-- 
+-- # The F10 Radio Menu
+-- 
+-- The F10 radio menu can be used to post requests to Marshal but also provides information about the player and carrier status. Additionally, helper functions
+-- can be called.
+-- 
+-- ## Main Menu
+-- 
+-- The general structure
+-- 
+--    * **F1 Help...**: Help submenu, see below.
+--    * **F2 Kneeboard...**: Kneeboard submenu, see below. Carrier information, weather report, player status.
+--    * **F3 Request Marshal**
+--    * **F4 Request Commence**
+--    * **F5 Request Refueling**
+-- 
+-- ### Request Marshal
+-- 
+-- This radio command can be used to request a stack in the holding pattern from Marshal. Necessary conditions are that the flight is inside the CCZ.
+-- Marshal will assign an individual stack for each player group depending on the current or next open recovery case window.
+-- If multiple players have registered as a section, the section lead will be assigned a stack and is responsible to guide his section to the assigned holding position.
+-- 
+-- ### Request Commence
+-- 
+-- This command can be used to request commencing from the marshal stack to the landing pattern. Necessary condition is that the player is in the lowest marshal stack
+-- and that the number of aircraft in the landing pattern is smaller than four.
+-- 
+-- A player can also request commencing if he is not registered in a marshal stack yet. If the pattern is free, Marshal will allow him to directly enter the landing pattern.
+-- 
+-- ### Request Refueling
+-- 
+-- If a recovery tanker was setup via the @{#AIRBOSS.SetRecoveryTanker} function, the player can request refueling. If the tanker is ready, refueling is granted and the player
+-- can leave the marshal stack for refueling. The stack will collapse and the player needs to request marshal again, when refueling is finished.
+-- 
+-- ## Help Menu
+-- 
+-- This menu provides commands to help the player. 
+-- 
+-- ### Skill Level Submenu
+-- 
+-- The player can choose between three skill or difficulty levels.
+-- 
+--    * **Flight Student**: The player receives tips at certain stages of the pattern, e.g. if he is at the right altitude, speed, etc.
+--    * **Naval Aviator**: Less tips are show. Player should be familiar with the procedures and its aircraft parameters. 
+--    * **TOPGUN Graduate**: Only very few information is provided to the player. This is for pros.
+--    
+-- ### Mark Zones Submenu
+-- 
+-- These commands can be used to mark marshal or landing pattern zones.
+-- 
+--    * **Smoke My Marshal Zone** This smokes the the surrounding area of the currently assigned marshal zone of the player. Player has to be registered for marshal.
+--    * **Flare My Marshal Zone** Similar to smoke but uses flares to mark the marshal zone.
+--    * **Smoke Pattern Zones** Smoke is used to mark the landing pattern zone of the player depending on his recovery case.
+--    For Case I this is the initial zone. For Case II/III and three these are the Platform, Arc turn, Dirty Up, Bullseye/Initial zones as well as the approach corridor.
+--    * **Flare Pattern Zones** Similar to smoke but uses flares to mark the pattern zones.
+--    
+-- ### My Status
+-- 
+-- This command provides information about the current player status. For example, his current step in the pattern.
+-- 
+-- ### Attitude Monitor
+-- 
+-- This command displays the current aircraft attitude of the player in short intervals as message on the screen.
+-- It provides information about current pitch, roll, yaw, lineup and glideslope error, orientation of the plane wrt to carrier etc.
+-- 
+-- ### LSO Radio Check
+-- 
+-- LSO will transmit a short message on his radio frequency. See @{#AIRBOSS.SetLSORadio}.
+-- 
+-- ### Marshal Radio Check
+-- 
+-- Marshal will transmit a short message on his radio frequency. See @{#AIRBOSS.SetMarshalRadio}.
+-- 
+-- ### [Reset My Status]
+-- 
+-- This will reset the current player status. If player is currently in a marshal stack, he will be removed from the marshal queue and the stack will collapse.
+-- The player needs to re-register later if desired. If player is currently in the landing pattern, he will be removed from the pattern queue.
+-- 
+-- ## Kneeboard Menu
+-- 
+-- The Kneeboard menu provides information about the carrier, weather and player results.
+-- 
+-- ### Results Submenu
+-- 
+-- Here you find your LSO grading results as well as scores of other players.
+-- 
+--    * **Greenie Board** lists average scores of all players obtained during landing approaches.
+--    * **My LSO Grades** lists all grades the player has received for his approaches in this mission.
+--    * **Last Debrief** shows the detailed debriefing of the player's last approach. 
+-- 
+-- ### Carrier Info
+-- 
+-- Information about the current carrier status is displayed. This includes current BRC, FB, LSO and Marshal frequences, list of next recovery windows.
+-- 
+-- ### Weather Report
+-- 
+-- Displays information about the current weather at the carrier such as QFE, wind and temperature.
+-- 
+-- ### Set Section
+-- 
+-- With this command, you can define a section of human flights. The player how issues the command becomes the section lead and all other human players
+-- within a radius of 200 meters become members of the section.
+-- 
+-- # Landing Signal Officer (LSO)
+-- 
+-- The LSO will first contact you on his radio channel when you are at the the abeam position (Case I) with the phrase "Paddles, contact.".
+-- Once you are in the groove the LSO will ask you to "Call the ball." and then acknoledge your ball call by "Roger Ball."
+-- 
+-- During the groove the LSO will give you advice if you deviate from the correct landing path. These advices will be given when you are
+-- 
+--    * too low or too high with respect to the glideslope, 
+--    * too fast or too slow with respect to the optimal AoA,
+--    * too far left or too far right wirth respect to the lineup of the (angled) runway.
+-- 
+-- ## LSO Grading
+-- 
+-- LSO grading starts when the player enters the groove. The flight path and aircraft attitude is evaluated at certain steps
+-- 
+--    * **X** At the Start
+--    * **IM** In the Middle
+--    * **IC** In Close
+--    * **AR** At the Ramp
+--    * **IW** In the Wires
+--    
+-- Grading at each step includes the above calls, i.e.
+--
+--    * Linup: (LUL), LUL, _LUL_, (RUL), RUL, _RUL_
+--    * Alitude: (H), H, _H_, (L), L, _L_
+--    * Speed: (F), F, _F_, (S), S, _S_
+--    
+-- The position at the landing even is analyses and the corresponding trapped wire calculated. If no wire was caught, the LSO will give the bolter call.
+-- 
+-- If a player is sigifiantly off from the ideal parameters in close or at the ramp, the LSO will wave off the player.
 --
 -- @field #AIRBOSS
 AIRBOSS = {
@@ -784,7 +929,7 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.5.3"
+AIRBOSS.version="0.5.3w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1565,16 +1710,16 @@ function AIRBOSS:_CheckPlayerPatternDistance(player)
     local flight=_flight --#AIRBOSS.FlightGroup
     
     -- Now we still need to loop over all units in the flight.
-    -- TODO: Replace by elements.
-    for _,_unit in pairs(flight.group:GetUnits()) do
+    for _,_element in pairs(flight.elements) do
+      local element=_element --#AIRBOSS.FlightElement
       
       -- Check if player is too close to another aircraft in the pattern.
-      local tooclose=_checkclose(player, _unit)
+      local tooclose=_checkclose(player.unit, element.unit)
       
       if tooclose then
-        local text=string.format("Player %s too close (<200 meters) to aircraft %s!", player.name, _unit:GetName())
+        local text=string.format("Player %s too close (<200 meters) to aircraft %s!", player.name, element.unit:GetName())
         MESSAGE:New(text, 20, "DEBUG"):ToAllIf(self.Debug)
-        -- TODO: AIRBOSS call ==> Pattern wave off. 
+        -- TODO: AIRBOSS call ==> Pattern wave off.
       end
                 
     end
@@ -1752,12 +1897,9 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function AIRBOSS:onafterRecoveryStop(From, Event, To)
-
   -- Debug output.
-  self:I(self.lid..string.format("Stopping aircraft recovery. Carrier goes to state idle."))
-  
+  self:I(self.lid..string.format("Stopping aircraft recovery. Carrier goes to state idle.")) 
 end
-
 
 --- On after "Idle" event. Carrier goes to state "Idle".
 -- @param #AIRBOSS self
@@ -1768,7 +1910,6 @@ function AIRBOSS:onafterIdle(From, Event, To)
   -- Debug output.
   self:I(self.lid..string.format("Carrier goes to idle."))
 end
-
 
 --- On after Stop event. Unhandle events. 
 -- @param #AIRBOSS self
@@ -1796,12 +1937,14 @@ function AIRBOSS._PassingWaypoint(group, airboss, i, final)
   -- Debug message.
   local text=string.format("Group %s passing waypoint %d of %d.", group:GetName(), i, final)
   
-  local pos=group:GetCoordinate()
-  pos:SmokeRed()
-  local MarkerID=pos:MarkToAll(string.format("Reached Waypoint %d of group %s", i, group:GetName()))
+  if airboss.Debug then
+    local pos=group:GetCoordinate()
+    pos:SmokeRed()
+    local MarkerID=pos:MarkToAll(string.format("Group %s reached waypoint %d", group:GetName(), i))
+  end
   
-  MESSAGE:New(text,10):ToAll()
-  env.info(text)
+  MESSAGE:New(text,10):ToAllIf(airboss.Debug)
+  airboss:T(airboss.lid..text)
   
   -- Set current waypoint.
   airboss.currentwp=i
@@ -1816,15 +1959,15 @@ function AIRBOSS._ReachedHoldingZone(group, airboss, flight)
   -- Debug message.
   local text=string.format("Group %s has reached the holding zone.", group:GetName())
   
-  local pos=group:GetCoordinate()
-  pos:SmokeRed()
-  local MarkerID=pos:MarkToAll(string.format("Flight group %s reached holding zone.", group:GetName()))
-  
-  MESSAGE:New(text,10):ToAll()
-  env.info(text)
-  
-  -- Set current waypoint.
-  --local flight=airboss:_GetFlightFromGroupInQueue(group, airboss.flights)
+  -- Debug mark.
+  if airboss.Debug then
+    local pos=group:GetCoordinate()  
+    local MarkerID=pos:MarkToAll(string.format("Flight group %s reached holding zone.", group:GetName()))
+  end
+      
+  -- Message output
+  MESSAGE:New(text,10):ToAllIf(airboss.Debug)
+  airboss:T(airboss.lid..text)
   
   -- Set holding flag true and set timestamp for marshal time check.
   if flight then
@@ -3529,10 +3672,16 @@ function AIRBOSS:_CheckPlayerStatus()
         if unit:IsInZone(self.zoneCCA) then
         
           -- Check if player is too close to another aircraft in the pattern.
-          -- TODO: Find a better place to call this!
-          --self:_CheckPlayerPatternDistance(playerData)
-          local Tnow=timer.getTime()
-          env.info(string.format("T=%s step=%s", Tnow, playerData.step))
+          -- TODO: At which steps is the really necessary. Case II/III?
+          if  playerData.step==AIRBOSS.PatternStep.INITIAL or
+              playerData.step==AIRBOSS.PatternStep.BREAKENTRY or
+              playerData.step==AIRBOSS.PatternStep.EARLYBREAK or              
+              playerData.step==AIRBOSS.PatternStep.LATEBREAK or
+              playerData.step==AIRBOSS.PatternStep.ABEAM or
+              playerData.step==AIRBOSS.PatternStep.GROOVE_XX or
+              playerData.step==AIRBOSS.PatternStep.GROOVE_IM then
+            self:_CheckPlayerPatternDistance(playerData)
+          end
                  
           if playerData.step==AIRBOSS.PatternStep.UNDEFINED then
             
@@ -8009,37 +8158,49 @@ function AIRBOSS:_MarkCaseZones(_unitName, flare)
       if flare then
 
         -- Case I/II: Initial
-        text=text.."* initial with WHITE flares\n"
-        self.zoneInitial:FlareZone(FLARECOLOR.White, 45)
+        if case==1 or case==2 then
+          text=text.."* initial with WHITE flares\n"
+          self.zoneInitial:FlareZone(FLARECOLOR.White, 45)
+        end
       
         -- Case II/III: approach corridor
-        text=text.."* approach corridor with GREEN flares\n"
-        self:_GetZoneCorridor(case):FlareZone(FLARECOLOR.Green, 45)
+        if case==2 or case==3 then
+          text=text.."* approach corridor with GREEN flares\n"
+          self:_GetZoneCorridor(case):FlareZone(FLARECOLOR.Green, 45)
+        end
         
         -- Case II/III: platform
-        text=text.."* platform with RED flares\n"
-        self:_GetZonePlatform(case):FlareZone(FLARECOLOR.Red, 45)
+        if case==2 or case==3 then
+          text=text.."* platform with RED flares\n"
+          self:_GetZonePlatform(case):FlareZone(FLARECOLOR.Red, 45)
+        end
         
         -- Case III: dirty up
-        text=text.."* dirty up with YELLOW flares\n"
-        self:_GetZoneDirtyUp(case):FlareZone(FLARECOLOR.Yellow, 45)
+        if case==3 then
+          text=text.."* dirty up with YELLOW flares\n"
+          self:_GetZoneDirtyUp(case):FlareZone(FLARECOLOR.Yellow, 45)
+        end
         
         -- Case II/III: arc in/out
-        if math.abs(self.holdingoffset)>0 then
-          self:_GetZoneArcIn(case):FlareZone(FLARECOLOR.Yellow, 45)
-          text=text.."* arc turn in with YELLOW flares\n"
-          self:_GetZoneArcOut(case):FlareZone(FLARECOLOR.White, 45)
-          text=text.."* arc trun out with WHITE flares\n"
+        if case==2 or case==3 then
+          if math.abs(self.holdingoffset)>0 then
+            self:_GetZoneArcIn(case):FlareZone(FLARECOLOR.Yellow, 45)
+            text=text.."* arc turn in with YELLOW flares\n"
+            self:_GetZoneArcOut(case):FlareZone(FLARECOLOR.White, 45)
+           text=text.."* arc trun out with WHITE flares\n"
+          end
         end
         
         -- Case III: bullseye
-        text=text.."* bullseye with WHITE flares\n"
-        self:_GetZoneBullseye(case):FlareZone(FLARECOLOR.White, 45)
+        if case==3 then
+          text=text.."* bullseye with WHITE flares\n"
+          self:_GetZoneBullseye(case):FlareZone(FLARECOLOR.White, 45)
+        end
         
       else
 
         -- Case I/II: Initial      
-        if case==1 or case==2  then
+        if case==1 or case==2 then
           text=text.."* initial with WHITE smoke\n"
           self.zoneInitial:SmokeZone(SMOKECOLOR.White, 45)
         end
