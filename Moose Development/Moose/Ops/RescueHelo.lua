@@ -2,12 +2,14 @@
 -- 
 -- Recue helicopter for carrier operations.
 --
--- Features:
+-- **Main Features:**
 --
 --    * Close formation with carrier.
 --    * Carrier can have any number of waypoints.
 --    * Automatic respawning on empty fuel for 24/7 operations.
 --    * Automatic rescuing of crashed or ejected units in the vicinity.
+--    * Multiple helos at different carriers due to object oriented approach.
+--    * Finite State Machine (FSM) implementation.
 --
 -- ===
 --
@@ -20,6 +22,7 @@
 -- @type RESCUEHELO
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug Debug mode on/off.
+-- @field #string lid Log debug id text.
 -- @field Wrapper.Unit#UNIT carrier The carrier the helo is attached to.
 -- @field #string carriertype Carrier type.
 -- @field #string helogroupname Name of the late activated helo template group.
@@ -53,7 +56,7 @@
 -- # Recue Helo
 --
 -- The rescue helo will fly in close formation with another unit, which is typically an aircraft carrier.
--- It's mission is to rescue crashed units or ejected pilots. Well, and to look cool...
+-- It's mission is to rescue crashed or ejected pilots. Well, and to look cool...
 -- 
 -- # Simple Script
 -- 
@@ -120,7 +123,6 @@
 -- 
 -- Once the helo runs out of fuel, it will return to the USS Normandy and not the Stennis for respawning.
 -- 
--- 
 -- ## Formation Positon
 -- 
 -- The position of the helo relative to the mother ship can be tuned via the functions
@@ -129,11 +131,44 @@
 --    * @{#RESCUEHELO.SetOffsetX}(*distance*)}, where *distance is the distance in the direction of movement of the carrier. Default is 200 meters.
 --    * @{#RESCUEHELO.SetOffsetZ}(*distance*)}, where *distance is the distance on the starboard side. Default is 200 meters.
 --
+-- # Finite State Machine
+-- 
+-- The implementation uses a Finite State Machine (FSM). This allows the mission designer to hook in to certain events.
+-- 
+--    * @{#RESCUEHELO.Start}: This eventfunction starts the FMS process and initialized parameters and spawns the helo. DCS event handling is started.
+--    * @{#RESCUEHELO.Status}: This eventfunction is called in regular intervals (~60 seconds) and checks the status of the helo and carrier. It triggers other events if necessary.
+--    * @{#RESCUEHELO.Rescue}: This eventfunction commands the helo to go on a rescue operation at a certain coordinate.
+--    * @{#RESCUEHELO.RTB}: This eventsfunction sends the helo to its home base (usually the carrier). This is called once the helo runs low on gas.
+--    * @{#RESCUEHELO.Run}: This eventfunction is called when the helo resumes normal operations and goes back on station.  
+--    * @{#RESCUEHELO.Stop}: This eventfunction stops the FSM by unhandling DCS events.
+--
+-- The mission designer can capture these events by RESCUEHELO.OnAfter*Eventname* functions, e.g. @{#RESCUEHELO.OnAfterRescue}.
+--
+-- # Debugging
+-- 
+-- In case you have problems, it is always a good idea to have a look at your DCS log file. You find it in your "Saved Games" folder, so for example in
+--     C:\Users\<yourname>\Saved Games\DCS\Logs\dcs.log
+-- All output concerning the @{#RESCUEHELO} class should have the string "RESCUEHELO" in the corresponding line.
+-- Searching for lines that contain the string "error" or "nil" can also give you a hint what's wrong.
+-- 
+-- The verbosity of the output can be increased by adding the following lines to your script:
+-- 
+--     BASE:TraceOnOff(true)
+--     BASE:TraceLevel(1)
+--     BASE:TraceClass("RESCUEHELO")
+-- 
+-- To get even more output you can increase the trace level to 2 or even 3, c.f. @{Core.Base#BASE} for more details.
+-- 
+-- ## Debug Mode
+-- 
+-- You have the option to enable the debug mode for this class via the @{#RESCUEHELO.SetDebugModeON} function.
+-- If enabled, text messages about the helo status will be displayed on screen and marks of the pattern created on the F10 map.
 --
 -- @field #RESCUEHELO
 RESCUEHELO = {
   ClassName      = "RESCUEHELO",
   Debug          = false,
+  lid            = nil,
   carrier        = nil,
   carriertype    = nil,
   helogroupname  = nil,
@@ -160,14 +195,14 @@ RESCUEHELO = {
 
 --- Class version.
 -- @field #string version
-RESCUEHELO.version="0.9.5"
+RESCUEHELO.version="0.9.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Write documenation.
 -- TODO: Add option to stop carrier while rescue operation is in progress? Done but NOT working!
+-- DONE: Write documenation.
 -- DONE: Add option to deactivate the rescueing.
 -- DONE: Possibility to add already present/spawned aircraft, e.g. for warehouse.
 -- DONE: Add rescue event when aircraft crashes.
@@ -199,6 +234,9 @@ function RESCUEHELO:New(carrierunit, helogroupname)
   
   -- Helo group name.
   self.helogroupname=helogroupname
+  
+  -- Log ID.
+  self.lid=string.format("RESCUEHELO %s |", self.carrier:GetName())
     
   -- Init defaults.  
   self:SetHomeBase(AIRBASE:FindByName(self.carrier:GetName()))
@@ -239,6 +277,7 @@ function RESCUEHELO:New(carrierunit, helogroupname)
   -- @param #RESCUEHELO self
   -- @param #number delay Delay in seconds.
 
+
   --- Triggers the FSM event "Rescue" that sends the helo on a rescue mission to a specifc coordinate.
   -- @function [parent=#RESCUEHELO] Rescue
   -- @param #RESCUEHELO self
@@ -250,6 +289,15 @@ function RESCUEHELO:New(carrierunit, helogroupname)
   -- @param #number delay Delay in seconds.
   -- @param Core.Point#COORDINATE RescueCoord Coordinate where the resue mission takes place.
 
+  --- On after "Rescue" event user function. Called when a the the helo goes on a rescue mission.
+  -- @function [parent=#RESCUEHELO] OnAfterRescue
+  -- @param #RESCUEHELO self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Core.Point#COORDINATE RescueCoord Crash site where the rescue operation takes place.
+
+
   --- Triggers the FSM event "RTB" that sends the helo home.
   -- @function [parent=#RESCUEHELO] RTB
   -- @param #RESCUEHELO self
@@ -259,6 +307,14 @@ function RESCUEHELO:New(carrierunit, helogroupname)
   -- @param #RESCUEHELO self
   -- @param #number delay Delay in seconds.
 
+  --- On after "RTB" event user function. Called when a the the helo returns to its home base.
+  -- @function [parent=#RESCUEHELO] OnAfterRTB
+  -- @param #RESCUEHELO self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
   --- Triggers the FSM event "Run".
   -- @function [parent=#RESCUEHELO] Run
   -- @param #RESCUEHELO self
@@ -267,6 +323,17 @@ function RESCUEHELO:New(carrierunit, helogroupname)
   -- @function [parent=#RESCUEHELO] __Run
   -- @param #RESCUEHELO self
   -- @param #number delay Delay in seconds.
+
+
+  --- Triggers the FSM event "Status" that updates the helo status.
+  -- @function [parent=#RESCUEHELO] Status
+  -- @param #RESCUEHELO self
+
+  --- Triggers the delayed FSM event "Status" that updates the helo status.
+  -- @function [parent=#RESCUEHELO] __Status
+  -- @param #RESCUEHELO self
+  -- @param #number delay Delay in seconds.
+
 
   --- Triggers the FSM event "Stop" that stops the rescue helo. Event handlers are stopped.
   -- @function [parent=#RESCUEHELO] Stop
@@ -472,6 +539,21 @@ function RESCUEHELO:SetUseUncontrolledAircraft()
   return self
 end
 
+--- Activate debug mode. Display debug messages on screen.
+-- @param #RESCUEHELO self
+-- @return #RESCUEHELO self
+function RESCUEHELO:SetDebugModeON()
+  self.Debug=true
+  return self
+end
+
+--- Deactivate debug mode. This is also the default setting.
+-- @param #RESCUEHELO self
+-- @return #RESCUEHELO self
+function RESCUEHELO:SetDebugModeOFF()
+  self.Debug=false
+  return self
+end
 
 --- Check if helo is returning to base.
 -- @param #RESCUEHELO self
@@ -510,7 +592,9 @@ function RESCUEHELO:OnEventLand(EventData)
     if groupname:match(self.helogroupname) then
     
       -- Respawn the Helo.
-      self:I(string.format("Respawning rescue helo group %s at home base.", groupname))
+      local text=string.format("Respawning rescue helo group %s at home base.", groupname)
+      MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+      self:T(self.lid..text)
       
       if self.takeoff==SPAWN.Takeoff.Air or self.respawninair then
         
@@ -548,7 +632,9 @@ function RESCUEHELO:_OnEventCrashOrEject(EventData)
     if EventData.IniGroupName~=self.helo:GetName() then
     
       -- Debug.
-      self:T(string.format("Unit %s crashed or ejected.", unitname))
+      local text=string.format("Unit %s crashed or ejected.", unitname)
+      MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+      self:T(self.lid..text)
     
       -- Unit "alive" and in our rescue zone.
       if unit:IsAlive() and unit:IsInZone(self.rescuezone) then
@@ -557,7 +643,9 @@ function RESCUEHELO:_OnEventCrashOrEject(EventData)
         local coord=unit:GetCoordinate()
         
         -- Debug mark on map.
-        coord:MarkToCoalition(string.format("Crash site of unit %s.", unitname), self.helo:GetCoalition())
+        if self.Debug then
+          coord:MarkToCoalition(self.lid..string.format("Crash site of unit %s.", unitname), self.helo:GetCoalition())
+        end
       
         -- Only rescue if helo is "running" and not, e.g., rescuing already.
         if self:IsRunning() and self.rescueon then
@@ -568,7 +656,7 @@ function RESCUEHELO:_OnEventCrashOrEject(EventData)
       
     else
     
-      self:I(string.format("Rescue helo %s crashed!", unitname))
+      self:E(self.lid..string.format("Rescue helo %s crashed!", unitname))
     
     end
     
@@ -588,7 +676,8 @@ end
 function RESCUEHELO:onafterStart(From, Event, To)
 
   -- Events are handled my MOOSE.
-  self:I(string.format("Starting Rescue Helo Formation v%s for carrier unit %s of type %s.", RESCUEHELO.version, self.carrier:GetName(), self.carriertype))
+  local text=string.format("Starting Rescue Helo Formation v%s for carrier unit %s of type %s.", RESCUEHELO.version, self.carrier:GetName(), self.carriertype)
+  self:I(self.lid..text)
   
   -- Handle events.
   --self:HandleEvent(EVENTS.Birth)
@@ -699,7 +788,8 @@ function RESCUEHELO:onafterStatus(From, Event, To)
 
   -- Report current fuel.
   local text=string.format("Rescue Helo %s: state=%s fuel=%.1f", self.helo:GetName(), self:GetState(), fuel)
-  self:T(text)
+  MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+  self:T(self.lid..text)
 
   -- If fuel < threshold ==> send helo to home base!
   if fuel<self.lowfuel and self:IsRunning() then
@@ -719,13 +809,23 @@ function RESCUEHELO:onafterRun(From, Event, To)
   
   -- Restart formation if stopped.
   if self.formation:Is("Stopped") then
-    self:I(string.format("Restarting formation of rescue helo %s.", self.helo:GetName()))
+    -- Debug info.
+    local text=string.format("Restarting formation of rescue helo %s.", self.helo:GetName())
+    MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+    self:T(self.lid..text)
+    
+    -- Start formation.
     self.formation:Start()
   end
   
   -- Restart route of carrier if it was stopped.
   if self.carrierstop then
-    self:I("Carrier resuming route after rescue operation.")
+    -- Debug info.
+    local text="Carrier resuming route after rescue operation."
+    MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+    self:T(self.lid..text)
+    
+    -- Resume route of carrier.
     self.carrier:RouteResume()
     self.carrierstop=false
   end
@@ -742,7 +842,8 @@ function RESCUEHELO:onafterRescue(From, Event, To, RescueCoord)
 
   -- Debug message.
   local text=string.format("Helo %s is send to rescue mission.", self.helo:GetName())
-  self:I(text)
+  MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+  self:T(self.lid..text)
   
   -- Waypoint array.
   local wp={}
@@ -761,7 +862,7 @@ function RESCUEHELO:onafterRescue(From, Event, To, RescueCoord)
   wp[2]=RescueCoord:SetAltitude(50):WaypointAirTurningPoint(nil, 200, {RescueTask}, "Crash Site")
   wp[3]=self.airbase:GetCoordinate():SetAltitude(70):WaypointAirLanding(200, self.airbase, {}, "Land at Home Base")
 
-  -- Initialize WP and route tanker.
+  -- Initialize WP and route helo.
   self.helo:WayPointInitialize(wp)
 
   -- Set task.
@@ -772,7 +873,10 @@ function RESCUEHELO:onafterRescue(From, Event, To, RescueCoord)
   
   -- Stop carrier.
   if self.rescuestopboat then
-    self:I("Stopping carrier for rescue operation.")
+    local text="Stopping carrier for rescue operation."
+    MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+    self:T(self.lid..text)
+    
     self.carrier:RouteStop()
     self.carrierstop=true
   end
@@ -792,7 +896,8 @@ function RESCUEHELO:onbeforeRTB(From, Event, To)
     
     -- Debug message.
     local text=string.format("Respawning rescue helo group %s in air.", self.helo:GetName())
-    self:I(text)  
+    MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+    self:T(self.lid..text)  
     
     -- Respawn helo.
     self.helo:InitHeading(self.helo:GetHeading())
@@ -805,7 +910,7 @@ function RESCUEHELO:onbeforeRTB(From, Event, To)
   return true
 end
 
---- On after RTB event. Send tanker back to carrier.
+--- On after RTB event. Send helo back to carrier.
 -- @param #RESCUEHELO self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -814,7 +919,8 @@ function RESCUEHELO:onafterRTB(From, Event, To)
 
     -- Debug message.
     local text=string.format("Rescue helo %s is returning to airbase %s.", self.helo:GetName(), self.airbase:GetName())
-    self:I(text)
+    MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+    self:T(self.lid..text)
     
     -- Waypoint array.
     local wp={}
@@ -823,7 +929,7 @@ function RESCUEHELO:onafterRTB(From, Event, To)
     wp[1]=self.helo:GetCoordinate():WaypointAirTurningPoint(nil, 300, {}, "Current Position")
     wp[2]=self.airbase:GetCoordinate():SetAltitude(70):WaypointAirLanding(300, self.airbase, {}, "Landing at Home Base")
 
-    -- Initialize WP and route tanker.
+    -- Initialize WP and route helo.
     self.helo:WayPointInitialize(wp)
   
     -- Set task.

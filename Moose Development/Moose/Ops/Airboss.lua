@@ -2,7 +2,7 @@
 -- 
 -- The AIRBOSS class manages recoveries of human pilots and AI aircraft on aircraft carriers.
 --
--- Main features:
+-- **Main Features:**
 --
 --    * CASE I, II and III recoveries.
 --    * Supports human pilots as well as AI flight groups.
@@ -12,33 +12,35 @@
 --    * Automatic TACAN and ICLS channel setting of carrier.
 --    * Separate radio channels for LSO and Marshal transmissions.
 --    * Voice over support for LSO and Marshal radio transmissions.
---    * F10 radio menu including carrier info (weather, radio frequencies, TACAN/ICLS channels), player LSO grades, help function (player aircraft attitude, marking of pattern zones etc).
+--    * F10 radio menu including carrier info (weather, radio frequencies, TACAN/ICLS channels), player LSO grades,
+--    help function (player aircraft attitude, marking of pattern zones etc).
 --    * Recovery tanker and refueling option via integration of @{#Ops.RecoveryTanker} class.
 --    * Rescue helo option via @{#Ops.RescueHelo} class.
---    * Highly customizable by user API functions. 
+--    * Many parameters customizable by convenient user API functions. 
 --    * Multiple carrier support due to object oriented approach.
---    * Finite State Machine (FSM) implementation.
---
--- **PLEASE NOTE** that his class is work in progress and in an **alpha** stage and very much **work in progress**.
--- Your constructive feedback is both necessary and highly appreciated.
+--    * Finite State Machine (FSM) implementat
 -- 
 -- Supported Carriers:
 -- 
---    * USS John C. Stennis:
+--    * USS John C. Stennis
 --    
 -- Supported Player and AI Aircraft:
 -- 
 --    * F/A-18C Hornet Lot 20 (player+AI)
---    * A-4E-C community mod (player+AI)
---    * F/A-18C (AI)
---    * F-14A (AI)
---    * E-2D (AI)
---    * S-3B (AI)
+--    * A-4E-C Skyhawk Community Mod (player+AI)
+--    * F/A-18C Hornet (AI)
+--    * F-14A Tomcat (AI)
+--    * E-2D Hawkeye (AI)
+--    * S-3B Viking & tanker version (AI)
 -- 
 -- At the moment, parameters are optimized for F/A-18C Hornet as aircraft and USS John C. Stennis as carrier.
 -- The community A-4E mod is also supported in priciple but maybe needs further tweaking of parameters such as on speed AoA values.
 -- 
--- Other aircraft and carriers **might** be possible in future but would need a different set of optimized parameters.
+-- Other aircraft and carriers *might* be possible in future but would need a different set of optimized individual parameters.
+-- *Winter is coming!*
+--
+-- **PLEASE NOTE** that his class is work in progress and in an **alpha** stage and very much **work in progress**.
+-- Your constructive feedback is both necessary and highly appreciated.
 --
 -- ===
 --
@@ -126,31 +128,65 @@
 -- 
 -- The AIRBOSS class supports all three commonly used recovery cases, i.e.
 -- 
---    * CASE I: For daytime and good weather, 
---    * CASE II: For daytime but poor visibility conditions,
---    * CASE III: For nighttime recoveries.
+--    * **CASE I** during daytime and good weather, 
+--    * **CASE II** during daytime with poor visibility conditions,
+--    * **CASE III** during nighttime recoveries.
 --    
 -- That being said, this script allows you to use any of the three cases to be used at any time. Or, in other words, *you* need to specify when which case is safe and appropriate.
 -- 
 -- This is a lot of responsability. *You* are the boss, but *you* need to make the right decisions or things will go terribly wrong!
+-- 
+-- Recovery windows can be set up via the @{#AIRBOSS.AddRecoveryWindow} function as explained below. With this it is possible to seamlessly switch recovery cases even in the same mission.
 --     
 -- ## CASE I
 -- 
--- ### Holding Pattern
+-- As mentioned before, Case I recovery is the standard procedure during daytime and good visibility conditions.
 -- 
+-- ### Holding Pattern
+--  
 -- ![Banner Image](..\Presentations\AIRBOSS\Airboss_Case1_Holding.png)
+-- 
+-- The graphic depicts a the standard holding pattern during a Case I recovery. Incoming aircraft enter the holding pattern, which is a counter clockwise turn with a
+-- diameter of 5 NM, at their assigned altiude. The holding altitude of the first stack is 2000 ft. The inverval between stacks is 1000 ft.
+-- 
+-- Once a recovery window opens, the aircraft of the lowest stack commence their landing approach and the rest of the Marshal stack collapses, i.e. aircraft switch from
+-- their current stack to the next lower stack.
+-- 
+-- The flight that transitions form the holding pattern to the landing approach, it should leave the Marshal stack at the 3 position and make a left hand turn to the *Initial*
+-- position, which is 3 NM astern of the boat.
 -- 
 -- ### Landing Pattern
 -- 
 -- ![Banner Image](..\Presentations\AIRBOSS\Airboss_Case1_Landing.png)
 -- 
+-- Once the aircraft reaches the Inital, the landing pattern begins. The important steps of the pattern are shown in the image above.
+-- 
 -- ## CASE III
 -- 
 -- ![Banner Image](..\Presentations\AIRBOSS\Airboss_Case3.png)
 -- 
+-- A Case III recovery is conducted during nighttime. The holding positon and the landing pattern are very different from a Case I recovery as can be seen in the image above.
+-- 
+-- The first holding zone starts 21 NM astern the carrier at angels 6. The interval between the stacks is 1000 ft just like in Case I. However, the distance to the boat also
+-- increases by 1 NM with each stack. The general form can be written as D=15+6+(N-1), where D is the distance to the boat in NM and N the number of the stack starting at one.
+-- 
+-- Once the aircraft of the lowest stack is allowed to commence to the landing pattern, it starts a descent at 4000 ft/min until it reaches the "*Platform*" at 5000 ft and
+-- ~19 NM DME. From there a shallower descent at 2000 ft/min should be performed. At an altitude of 1200 ft the aircraft should level out and "*Dirty Up*" (gear & hook down).
+-- 
+-- At 3 NM distance to the carrier, the aircraft should intercept the 3.5 degrees glide slope at the "*Bullseye*". From there the pilot should "follow the needes" of the ICLS. 
+-- 
 -- ## CASE II
 -- 
 -- ![Banner Image](..\Presentations\AIRBOSS\Airboss_Case2.png)
+-- 
+-- Case II is the common recovery procedure at daytime if visibilty conditions are poor. It can be viewed as hybrid between Case I and III.
+-- The holding pattern is very similar to that of the Case III recovery with the difference the the radial is the inverse of the BRC instead of the FB.
+-- From the holding zone aircraft are follow the Case III path until they reach the Initial position 3 NM astern the boat. From there a standard Case I recovery procdure is
+-- in place.
+-- 
+-- Note that the image depicts the case, where the holding zone has an angle offset off 30 degrees with respect to the BRC. This is optional. Commonly used offset angles
+-- are 0 (no offset), +-15 degrees or +-30 degrees. The AIRBOSS class supports all these scenarios which are used during Case II and III recoveries.
+-- 
 -- 
 -- # Scripting
 -- 
@@ -324,17 +360,69 @@
 --    * **IM** In the Middle
 --    * **IC** In Close
 --    * **AR** At the Ramp
---    * **IW** In the Wires
+--    * **IW** In the Wiress
 --    
 -- Grading at each step includes the above calls, i.e.
 --
---    * Linup: (LUL), LUL, _LUL_, (RUL), RUL, _RUL_
---    * Alitude: (H), H, _H_, (L), L, _L_
---    * Speed: (F), F, _F_, (S), S, _S_
+--    * Linup: (LUL), LUL, _LUL_, (RUL), RUL, \_RUL\_
+--    * Alitude: (H), H, _H_, (L), L, \_L\_
+--    * Speed: (F), F, _F_, (SLO), SLO, \_SLO\_
 --    
--- The position at the landing even is analyses and the corresponding trapped wire calculated. If no wire was caught, the LSO will give the bolter call.
+-- The position at the landing event is analyzed and the corresponding trapped wire calculated. If no wire was caught, the LSO will give the bolter call.
 -- 
--- If a player is sigifiantly off from the ideal parameters in close or at the ramp, the LSO will wave off the player.
+-- If a player is sigifiantly off from the ideal parameters in close or at the ramp, the LSO will wave the player off.
+-- 
+-- ## Pattern Wave Off
+-- 
+-- The player's aircraft position is evaluated at certain critical locations in the landing pattern. If the player is far off from the ideal approach, the LSO will
+-- issue a pattern wave off. Currently, this is only implemented for Case I recoveries and the Case I part in the Case II recovery, i.e.
+-- 
+--    * Break Entry
+--    * Early Break
+--    * Late Break
+--    * Abeam
+--    * Ninety
+--    * Wake
+--    * Groove
+--    
+-- At these points it is also checked if a player comes too close to another aircraft ahead of him in the pattern.
+-- 
+-- # AI Handling
+-- 
+-- The implementation allows to handle incoming AI units and integrate them into the marshal and landing pattern.
+-- 
+-- By default, incoming carrier capable aircraft which are detecting inside the CCZ and approach the carrier by more than 5 NM are automatically guided to the holding zone.
+-- Each AI group gets its own marshal stack in the holding pattern. Once a recovery window opens, the AI group of the lowest stack is transitioning to the landing pattern
+-- and the Marshal stack collapses.
+-- 
+-- If no AI handling is desired, this can be turned off via the @{#AIRBOSS.SetHandleAIOFF} function.
+-- 
+-- ## Known Issues
+-- 
+-- The holding position of the AI is updated regularly when the carrier has changed its position by more then 2.5 NM or changed its course significantly.
+-- The patterns are realized by orbit or racetrack patterns of the DCS scripting API.
+-- However, when the position is updated or the marshal stack collapses, it comes to disruptions of the regular orbit becase a new waypoint with a new 
+-- orbit task needs to be created.
+-- 
+-- # Debugging
+-- 
+-- In case you have problems, it is always a good idea to have a look at your DCS log file. You find it in your "Saved Games" folder, so for example in
+--     C:\Users\<yourname>\Saved Games\DCS\Logs\dcs.log
+-- All output concerning the @{#AIRBOSS} class should have the string "AIRBOSS" in the corresponding line.
+-- Searching for lines that contain the string "error" or "nil" can also give you a hint what's wrong.
+-- 
+-- The verbosity of the output can be increased by adding the following lines to your script:
+-- 
+--     BASE:TraceOnOff(true)
+--     BASE:TraceLevel(1)
+--     BASE:TraceClass("AIRBOSS")
+-- 
+-- To get even more output you can increase the trace level to 2 or even 3, c.f. @{Core.Base#BASE} for more details.
+-- 
+-- ## Debug Mode
+-- 
+-- You have the option to enable the debug mode for this class via the @{#AIRBOSS.SetDebugModeON} function.
+-- If enabled, status and debug text messages will be displayed on the screen. Also informative marks on the F10 map are created.
 --
 -- @field #AIRBOSS
 AIRBOSS = {
@@ -418,7 +506,7 @@ AIRBOSS.AircraftPlayer={
 -- @field #string S3BTANKER Lockheed S-3B Viking tanker.
 -- @field #string E2D Grumman E-2D Hawkeye AWACS.
 -- @field #string FA18C F/A-18C Hornet (AI).
--- @field #string F14A F-14A (AI).
+-- @field #string F14A F-14A Tomcat (AI).
 AIRBOSS.AircraftCarrier={
   --AV8B="AV8BNA",
   HORNET="FA-18C_hornet",
@@ -929,7 +1017,7 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.5.4"
+AIRBOSS.version="0.5.4w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1456,6 +1544,22 @@ function AIRBOSS:SetWarehouse(warehouse)
   return self
 end
 
+--- Activate debug mode. Display debug messages on screen.
+-- @param #AIRBOSS self
+-- @return #AIRBOSS self
+function AIRBOSS:SetDebugModeON()
+  self.Debug=true
+  return self
+end
+
+--- Deactivate debug mode. This is also the default setting.
+-- @param #AIRBOSS self
+-- @return #AIRBOSS self
+function AIRBOSS:SetDebugModeOFF()
+  self.Debug=false
+  return self
+end
+
 --- Check if carrier is recovering aircraft.
 -- @param #AIRBOSS self
 -- @return #boolean If true, time slot for recovery is open.
@@ -1626,15 +1730,14 @@ function AIRBOSS:_CheckAIStatus()
         -- Check if parameters are right and flight is in the groove.
         if lineup<2 and distance<=0.75 and alt<500 and not element.ballcall then
         
-            -- Paddles: Call the ball!
+          -- Paddles: Call the ball!
           self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.CALLTHEBALL, false, 0)
 
           -- Pilot: "405, Hornet Ball, 3.2"
-          -- TODO: Message to players only.
           -- TODO: Voice over.
-          local text=string.format("%s, %s Ball, %.1f.", element.onboard, self:_GetACNickname(unit:GetTypeName()), self:_GetFuelState(unit)/1000)
-          MESSAGE:New(text, 15):ToCoalition(self:GetCoalition())
-          --self:MessageToPlayer(playerData, text, playerData.onboard, "", 3, false, 3)
+          local text=string.format("%s Ball, %.1f.", self:_GetACNickname(unit:GetTypeName()), self:_GetFuelState(unit)/1000)          
+          self:MessageToPattern(text, element.onboard, "", 3, false, 0, true)
+          MESSAGE:New(text, 15):ToAll()
           
           -- Paddles: Roger ball after 3 seconds.
           self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.ROGERBALL, false, 3)
@@ -1677,7 +1780,10 @@ function AIRBOSS:_CheckPlayerPatternDistance(player)
       return false
     end
     
-    -- TODO: return false when unit2 is not in air? Could be on the carrier.
+    -- Return false when unit2 is not in air? Could be on the carrier.
+    if not unit2:InAir() then
+      return false
+    end
     
     -- Positions of units.
     local c1=unit1:GetCoordinate()
@@ -1696,11 +1802,12 @@ function AIRBOSS:_CheckPlayerPatternDistance(player)
     -- Get angle between the two orientation vectors. Does the player aircraft nose point into the direction of the other aircraft? (Could be behind him!)
     local rhdg=math.deg(math.acos(UTILS.VecDot(vec12,vec1)/UTILS.VecNorm(vec12)/UTILS.VecNorm(vec1)))
     
-    -- TODO: Check altitude difference?
+    -- Check altitude difference?
+    local dalt=math.abs(c2.y-c1.y)
     
-    -- Direction in 30 degrees cone and distance < 200 meters.
+    -- Direction in 30 degrees cone and distance < 200 meters and altitude difference <50
     -- TODO: Test parameter values.
-    if math.abs(rhdg)<30 and dist<200 then  
+    if math.abs(rhdg)<30 and dist<200 and dalt<50 then  
       return true
     else
       return false
@@ -1939,17 +2046,26 @@ function AIRBOSS._PassingWaypoint(group, airboss, i, final)
   -- Debug message.
   local text=string.format("Group %s passing waypoint %d of %d.", group:GetName(), i, final)
   
+  -- Debug smoke and marker.
   if airboss.Debug then
     local pos=group:GetCoordinate()
     pos:SmokeRed()
     local MarkerID=pos:MarkToAll(string.format("Group %s reached waypoint %d", group:GetName(), i))
   end
   
+  -- Debug message.
   MESSAGE:New(text,10):ToAllIf(airboss.Debug)
   airboss:T(airboss.lid..text)
   
   -- Set current waypoint.
   airboss.currentwp=i
+  
+  -- If final waypoint reached, do route all over again.
+  if i==final then
+    -- TODO: set task to call this routine again when carrier reaches final waypoint if user chooses to.
+    -- SetPatrolAdInfinitum user function
+    airboss:_PatrolRoute()
+  end
 end
 
 --- Function called when a group has reached the holding zone.
@@ -1992,8 +2108,7 @@ function AIRBOSS:_PatrolRoute()
   
   -- NOTE: This is only necessary, if the first waypoint would already be far way, i.e. when the script is started with a large delay.
   -- Calculate the new Route.
-  --local wp0=CarrierGroup:GetCoordinate():WaypointGround(5.5*3.6)
-  
+  --local wp0=CarrierGroup:GetCoordinate():WaypointGround(5.5*3.6) 
   -- Insert current coordinate as first waypoint
   --table.insert(Waypoints, 1, wp0)
   
@@ -2005,9 +2120,6 @@ function AIRBOSS:_PatrolRoute()
     -- Call task function when carrier arrives at waypoint.
     CarrierGroup:SetTaskWaypoint(Waypoints[n], TaskPassingWP)
   end
-  
-  -- TODO: set task to call this routine again when carrier reaches final waypoint if user chooses to.
-  -- SetPatrolAdInfinitum user function
 
   -- Set waypoint table.
   local i=1
@@ -7129,7 +7241,6 @@ function AIRBOSS:MessageToPlayer(playerData, message, sender, receiver, duration
     else
     
       -- Send onboard number so that player is alerted about the text message.
-      -- DONE: This will fail with message to all since for each player the message will be played!
       if receiver==playerData.onboard and not soundoff then
         if sender then
           if sender=="LSO" then
@@ -7163,35 +7274,87 @@ end
 -- @param #boolean soundoff If true, do not play boad number message.
 function AIRBOSS:MessageToAll(message, sender, receiver, duration, clear, delay, soundoff)
 
-  local playit=true -- In case two have the same flight number.
+  -- Make sure the onboard number sound is played only once.
+  local soundoff=false
+  
   for _,_player in pairs(self.players) do
     local playerData=_player --#AIRBOSS.PlayerData
     
     -- Message to all players in CCA.
-    -- TODO: could make something to all in pattern or all in marshal queue depending on sender.
     if playerData.unit:IsInZone(self.zoneCCA) then
-    
-      -- Play receiver board number. Best we can do if no voice over for the whole message is there.
-      if receiver==playerData.onboard and sender and playit and not soundoff then
-        -- Check who is the sender.          
-        if sender=="LSO" then
-          -- Sender is LSO or AIRBOSS ==> Broadcast on LSO radio.
-          self:_Number2Sound(self.LSORadio, receiver, delay)
-        elseif sender=="MARSHAL" then
-          -- Sender is MARSHAL ==> Broadcast on MARSHAL radio.
-          self:_Number2Sound(self.MarshalRadio, receiver, delay)
-        end
-        playit=false  -- Play only once, in case two have the same flight number.
-      end    
       
       -- Message to player.
-      self:MessageToPlayer(playerData, message, sender, receiver, duration, clear, delay, true)
+      self:MessageToPlayer(playerData, message, sender, receiver, duration, clear, delay, soundoff)
       
+      -- Disable sound play of onboard number.
+      soundoff=true      
     end
-     
   end
-
 end
+
+
+--- Send text message to all players in the pattern queue.
+-- Message format will be "SENDER: RECCEIVER, MESSAGE".
+-- @param #AIRBOSS self
+-- @param #string message The message to send.
+-- @param #string sender The person who sends the message or nil.
+-- @param #string receiver The person who receives the message. Default player's onboard number. Set to "" for no receiver.
+-- @param #number duration Display message duration. Default 10 seconds.
+-- @param #boolean clear If true, clear screen from previous messages.
+-- @param #number delay Delay in seconds, before the message is displayed.
+-- @param #boolean soundoff If true, do not play boad number message.
+function AIRBOSS:MessageToPattern(message, sender, receiver, duration, clear, delay, soundoff)
+
+  -- Make sure the onboard number sound is played only once.
+  local soundoff=false
+  
+  -- Loop over all flights in the pattern queue.
+  for _,_player in pairs(self.Qpattern) do
+    local playerData=_player --#AIRBOSS.PlayerData
+    
+    -- Message only to human pilots.
+    if not playerData.ai then
+      
+      -- Message to player.
+      self:MessageToPlayer(playerData, message, sender, receiver, duration, clear, delay, soundoff)
+      
+      -- Disable sound play of onboard number.
+      soundoff=true      
+    end     
+  end
+end
+
+--- Send text message to all players in the marshal queue.
+-- Message format will be "SENDER: RECCEIVER, MESSAGE".
+-- @param #AIRBOSS self
+-- @param #string message The message to send.
+-- @param #string sender The person who sends the message or nil.
+-- @param #string receiver The person who receives the message. Default player's onboard number. Set to "" for no receiver.
+-- @param #number duration Display message duration. Default 10 seconds.
+-- @param #boolean clear If true, clear screen from previous messages.
+-- @param #number delay Delay in seconds, before the message is displayed.
+-- @param #boolean soundoff If true, do not play boad number message.
+function AIRBOSS:MessageToMarshal(message, sender, receiver, duration, clear, delay, soundoff)
+
+  -- Make sure the onboard number sound is played only once.
+  local soundoff=false
+  
+  -- Loop over all flights in the marshal queue.
+  for _,_player in pairs(self.Qmarshal) do
+    local playerData=_player --#AIRBOSS.PlayerData
+    
+    -- Message only to human pilots.
+    if not playerData.ai then
+      
+      -- Message to player.
+      self:MessageToPlayer(playerData, message, sender, receiver, duration, clear, delay, soundoff)
+      
+      -- Disable sound play of onboard number.
+      soundoff=true
+    end     
+  end
+end
+
 
 --- Convert a number (as string) into a radio message.
 -- E.g. for board number or headings.
@@ -7279,8 +7442,11 @@ function AIRBOSS:_AddF10Commands(_unitName)
     -- Get group and ID.
     local group=_unit:GetGroup()
     local gid=group:GetID()
+    
+    -- Player Data.
+    local playerData=self.players[playername]    
   
-    if group and gid then
+    if group and gid and playerData then
   
       if not self.menuadded[gid] then
       
@@ -7291,9 +7457,6 @@ function AIRBOSS:_AddF10Commands(_unitName)
         if AIRBOSS.MenuF10[gid]==nil then
           AIRBOSS.MenuF10[gid]=missionCommands.addSubMenuForGroup(gid, "Airboss")
         end
-        
-        -- Player Data.
-        local playerData=self.players[playername]
         
         -- F10/Airboss/<Carrier>
         local _rootPath=missionCommands.addSubMenuForGroup(gid, self.alias, AIRBOSS.MenuF10[gid])
@@ -7311,19 +7474,19 @@ function AIRBOSS:_AddF10Commands(_unitName)
         -- F10/Airboss/<Carrier>/F1 Help/F2 Mark Zones
         local _markPath=missionCommands.addSubMenuForGroup(gid, "Mark Zones", _helpPath)
         -- F10/Airboss/<Carrier>/F1 Help/F3 Mark Zones/
-        missionCommands.addCommandForGroup(gid, "Smoke My Marshal Zone",      _markPath, self._MarkMarshalZone, self, _unitName, false)  -- F1
-        missionCommands.addCommandForGroup(gid, "Flare My Marshal Zone",      _markPath, self._MarkMarshalZone, self, _unitName, true)   -- F2
-        missionCommands.addCommandForGroup(gid, "Smoke Pattern Zones",        _markPath, self._MarkCaseZones, self,   _unitName, false)  -- F3
-        missionCommands.addCommandForGroup(gid, "Flare Pattern Zones",        _markPath, self._MarkCaseZones, self,   _unitName, true)   -- F4
+        missionCommands.addCommandForGroup(gid, "Smoke Pattern Zones",   _markPath, self._MarkCaseZones,   self, _unitName, false)  -- F1
+        missionCommands.addCommandForGroup(gid, "Flare Pattern Zones",   _markPath, self._MarkCaseZones,   self, _unitName, true)   -- F2        
+        missionCommands.addCommandForGroup(gid, "Smoke My Marshal Zone", _markPath, self._MarkMarshalZone, self, _unitName, false)  -- F3
+        missionCommands.addCommandForGroup(gid, "Flare My Marshal Zone", _markPath, self._MarkMarshalZone, self, _unitName, true)   -- F4
         -- F10/Airboss/<Carrier>/F1 Help/
-        missionCommands.addCommandForGroup(gid, "My Status",               _helpPath, self._DisplayPlayerStatus, self, _unitName)   -- F4
-        missionCommands.addCommandForGroup(gid, "Attitude Monitor ON/OFF", _helpPath, self._AttitudeMonitor,     self,  playername) -- F5   
-        missionCommands.addCommandForGroup(gid, "Radio Check LSO",         _helpPath, self._LSORadioCheck,       self, _unitName)   -- F6
-        missionCommands.addCommandForGroup(gid, "Radio Check Marshal",     _helpPath, self._MarshalRadioCheck,   self, _unitName)   -- F7   
-        missionCommands.addCommandForGroup(gid, "[Reset My Status]",       _helpPath, self._ResetPlayerStatus,   self, _unitName)   -- F8
+        missionCommands.addCommandForGroup(gid, "My Status",           _helpPath, self._DisplayPlayerStatus, self, _unitName)   -- F4
+        missionCommands.addCommandForGroup(gid, "Attitude Monitor",    _helpPath, self._AttitudeMonitor,     self,  playername) -- F5
+        missionCommands.addCommandForGroup(gid, "Radio Check LSO",     _helpPath, self._LSORadioCheck,       self, _unitName)   -- F6
+        missionCommands.addCommandForGroup(gid, "Radio Check Marshal", _helpPath, self._MarshalRadioCheck,   self, _unitName)   -- F7
+        missionCommands.addCommandForGroup(gid, "[Reset My Status]",   _helpPath, self._ResetPlayerStatus,   self, _unitName)   -- F8
 
         -------------------------------------
-        -- F10/Airboss/<Carrier>/F2 Kneeboard --
+        -- F10/Airboss/<Carrier>/F2 Kneeboard
         -------------------------------------
         local _kneeboardPath=missionCommands.addSubMenuForGroup(gid, "Kneeboard", _rootPath)        
         -- F10/Airboss/<Carrier>/F2 Kneeboard/F1 Results
@@ -7337,9 +7500,9 @@ function AIRBOSS:_AddF10Commands(_unitName)
         missionCommands.addCommandForGroup(gid, "Weather Report", _kneeboardPath, self._DisplayCarrierWeather, self, _unitName) -- F3
         missionCommands.addCommandForGroup(gid, "Set Section",    _kneeboardPath, self._SetSection,            self, _unitName) -- F4
 
-        ----------------------------
-        -- F10/Airboss/<Carrier>/ --
-        ----------------------------
+        -------------------------
+        -- F10/Airboss/<Carrier>/
+        -------------------------
         missionCommands.addCommandForGroup(gid, "Request Marshal",    _rootPath, self._RequestMarshal,   self, _unitName) -- F3
         missionCommands.addCommandForGroup(gid, "Request Commence",   _rootPath, self._RequestCommence,  self, _unitName) -- F4
         missionCommands.addCommandForGroup(gid, "Request Refueling",  _rootPath, self._RequestRefueling, self, _unitName) -- F5

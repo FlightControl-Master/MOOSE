@@ -2,14 +2,14 @@
 -- 
 -- Tanker aircraft flying a racetrack pattern overhead an aircraft carrier.
 --
--- Features:
+-- **Main Features:**
 --
 --    * Regular pattern update with respect to carrier positon.
 --    * Automatic respawning when tanker runs out of fuel for 24/7 operations.
 --    * Tanker can be spawned cold or hot on the carrier or at any other airbase or directly in air.
 --    * Automatic AA TACAN beacon setting.
+--    * Multiple tanker at different carriers due to object oriented approach.
 --    * Finite State Machine (FSM) implementation, which allows the mission designer to hook into certain events.
---
 --
 -- ===
 --
@@ -23,7 +23,8 @@
 -- @type RECOVERYTANKER
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug Debug mode.
--- @field Wrapper.Unit#UNIT carrier The carrier the helo is attached to.
+-- @field #string lid Log debug id text.
+-- @field Wrapper.Unit#UNIT carrier The carrier the tanker is attached to.
 -- @field #string carriertype Carrier type.
 -- @field #string tankergroupname Name of the late activated tanker template group.
 -- @field Wrapper.Group#GROUP tanker Tanker group.
@@ -60,7 +61,7 @@
 --
 -- # Recovery Tanker
 --
--- A recovery tanker acts as refueling unit flying overhead an aircraft carrier in order to supply incoming flights with gas if necessary.
+-- A recovery tanker acts as refueling unit flying overhead an aircraft carrier in order to supply incoming flights with gas if they go "Bingo on the Ball".
 -- 
 -- # Simple Script
 -- 
@@ -110,7 +111,7 @@
 -- If only the first spawning should happen on the carrier, one use the @{#RECOVERYTANKER.SetRespawnInAir}() function to command that all subsequent spawning
 -- will happen in air.
 -- 
--- If the helo should not be respawned at all, one can set @{#RECOVERYTANKER.SetRespawnOff}().
+-- If the tanker should not be respawned at all, one can set @{#RECOVERYTANKER.SetRespawnOff}().
 -- 
 -- ## Pattern Parameters
 -- 
@@ -136,7 +137,6 @@
 -- 
 -- In order to completely disable the TACAN beacon, you can use the @{#RECOVERYTANKER.SetTACANoff}() function in your script.
 --
--- 
 -- ## Pattern Update
 -- 
 -- The pattern of the tanker is updated if at least one of the two following conditions apply:
@@ -150,9 +150,9 @@
 -- The maximum update frequency is set to 10 minutes. You can adjust this by @{#RECOVERYTANKER.SetPatternUpdateInterval}.
 -- Also the pattern will not be updated while the carrier is turning or the tanker is currently refuelling another unit.
 --
--- # Finite State Model
+-- # Finite State Machine
 -- 
--- The implementation uses a Finite State Model (FSM). This allows the mission designer to hook in to certain events.
+-- The implementation uses a Finite State Machine (FSM). This allows the mission designer to hook in to certain events.
 -- 
 --    * @{#RECOVERYTANKER.Start}: This event starts the FMS process and initialized parameters and spawns the tanker. DCS event handling is started.
 --    * @{#RECOVERYTANKER.Status}: This event is called in regular intervals (~60 seconds) and checks the status of the tanker and carrier. It triggers other events if necessary.
@@ -179,11 +179,17 @@
 --     BASE:TraceClass("RECOVERYTANKER")
 -- 
 -- To get even more output you can increase the trace level to 2 or even 3, c.f. @{Core.Base#BASE} for more details.
+-- 
+-- ## Debug Mode
+-- 
+-- You have the option to enable the debug mode for this class via the @{#RECOVERYTANKER.SetDebugModeON} function.
+-- If enabled, text messages about the tanker status will be displayed on screen and marks of the pattern created on the F10 map.
 --
 -- @field #RECOVERYTANKER
 RECOVERYTANKER = {
   ClassName       = "RECOVERYTANKER",
   Debug           = false,
+  lid             = nil,
   carrier         = nil,
   carriertype     = nil,
   tankergroupname = nil,
@@ -262,6 +268,9 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   
   -- Save self in static object. Easier to retrieve later.
   self.carrier:SetState(self.carrier, "RECOVERYTANKER", self)
+  
+  -- Debug log id.
+  self.lid=string.format("RECOVERYTANKER %s", self.carrier:GetName())
   
   -- Init default parameters.
   self:SetAltitude()
@@ -359,7 +368,7 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   -- @param Wrapper.Airbase#AIRBASE airbase The airbase where the tanker should return to.
 
   --- On after "RTB" event user function. Called when a the the tanker returns to its home base.
-  -- @function [parent=#RECOVERYTANKER] OnAfterPatternUpdate
+  -- @function [parent=#RECOVERYTANKER] OnAfterRTB
   -- @param #RECOVERYTANKER self
   -- @param #string From From state.
   -- @param #string Event Event.
@@ -731,7 +740,7 @@ function RECOVERYTANKER:onafterStatus(From, Event, To)
   -- Get fuel of tanker.
   local fuel=self.tanker:GetFuel()*100
   local text=string.format("Recovery tanker %s: state=%s fuel=%.1f", self.tanker:GetName(), self:GetState(), fuel)
-  self:T(text)
+  self:T(self.lid..text)
 
   -- Check if tanker flies through pattern update zone.
   -- TODO: Check if this can be used to update the pattern without too much disruption.
@@ -760,7 +769,8 @@ function RECOVERYTANKER:onafterStatus(From, Event, To)
       
           -- Debug message.
           local text=string.format("Respawning recovery tanker %s in air.", self.tanker:GetName())
-          self:T(text)  
+          MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+          self:T(self.lid..text)  
           
           -- Respawn tanker.
           self.tanker:InitHeading(self.tanker:GetHeading())
@@ -816,7 +826,9 @@ end
 function RECOVERYTANKER:onafterPatternUpdate(From, Event, To)
 
   -- Debug message.
-  self:T(string.format("Updating recovery tanker %s racetrack pattern.", self.tanker:GetName()))
+  local text=string.format("Updating recovery tanker %s racetrack pattern.", self.tanker:GetName())
+  MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+  self:T(self.lid..text)
     
   -- Carrier heading.
   local hdg=self.carrier:GetHeading()
@@ -865,11 +877,10 @@ function RECOVERYTANKER:onafterPatternUpdate(From, Event, To)
 end
 
 
---- Self made race track pattern.
+--- Self made race track pattern. (not used)
 -- @param #RECOVERYTANKER self
 -- @return #table Table of pattern waypoints.
 function RECOVERYTANKER:_Pattern()
-
 
   -- Carrier heading.
   local hdg=self.carrier:GetHeading()
@@ -919,7 +930,8 @@ function RECOVERYTANKER:onafterRTB(From, Event, To, airbase)
 
   -- Debug message.
   local text=string.format("Recoery tanker %s returning to airbase %s.", self.tanker:GetName(), airbase:GetName())
-  self:T(text)
+  MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+  self:T(self.lid..text)
   
   -- Waypoint array.
   local wp={}
@@ -968,7 +980,10 @@ function RECOVERYTANKER:OnEventEngineShutdown(EventData)
     if groupname:match(self.tankergroupname) then
   
       -- Debug info.
-      self:T(string.format("Respawning recovery tanker group %s.", group:GetName()))
+      local text=string.format("Respawning recovery tanker group %s.", group:GetName())
+      MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+      self:T(self.lid..text)
+      
       
       -- Respawn tanker.
       self.tanker=group:RespawnAtCurrentAirbase()
@@ -1004,7 +1019,9 @@ function RECOVERYTANKER:_RefuelingStart(EventData)
     end
   
     -- Info message.
-    self:T(string.format("Recovery tanker %s started refueling unit %s", self.tanker:GetName(), receiver:GetName()))
+    local text=string.format("Recovery tanker %s started refueling unit %s", self.tanker:GetName(), receiver:GetName())
+    MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+    self:T(self.lid..text)    
     
     -- FMS state "Refueling".
     self:RefuelStart(receiver)
@@ -1032,8 +1049,10 @@ function RECOVERYTANKER:_RefuelingStop(EventData)
     end
   
     -- Info message.
-    self:T(string.format("Recovery tanker %s stopped refueling unit %s", self.tanker:GetName(), receiver:GetName()))
-    
+    local text=string.format("Recovery tanker %s stopped refueling unit %s", self.tanker:GetName(), receiver:GetName())
+    MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+    self:T(self.lid..text)
+        
     -- FSM state "Running".
     self:RefuelStop(receiver)
   end
@@ -1076,7 +1095,7 @@ function RECOVERYTANKER:_InitRoute(dist, delay)
   delay=delay or 1
   
   -- Debug message.
-  self:T(string.format("Initializing route for recovery tanker %s.", self.tanker:GetName()))
+  self:T(self.lid..string.format("Initializing route of recovery tanker %s.", self.tanker:GetName()))
   
   -- Carrier position.
   local Carrier=self.carrier:GetCoordinate()
@@ -1149,13 +1168,13 @@ function RECOVERYTANKER:_CheckPatternUpdate(dt)
   
   -- Debug output if turning
   if turning then
-    self:T2(string.format("Carrier is turning. Delta Heading = %.1f", deltaLast))
+    self:T2(self.lid..string.format("Carrier is turning. Delta Heading = %.1f", deltaLast))
   end
 
   -- Check if orientation changed.
   local Hchange=false
   if math.abs(deltaHeading)>=self.Hupdate then
-    self:T(string.format("Carrier heading changed by %d degrees. Turning=%s.", deltaHeading, tostring(turning)))
+    self:T(self.lid..string.format("Carrier heading changed by %d degrees. Turning=%s.", deltaHeading, tostring(turning)))
     Hchange=true
   end
   
@@ -1165,7 +1184,7 @@ function RECOVERYTANKER:_CheckPatternUpdate(dt)
   -- Check if carrier moved more than ~10 km.
   local Dchange=false
   if dist>self.Dupdate then
-    self:T(string.format("Carrier position changed by %.1f NM. Turning=%s.", UTILS.MetersToNM(dist), tostring(turning)))
+    self:T(self.lid..string.format("Carrier position changed by %.1f NM. Turning=%s.", UTILS.MetersToNM(dist), tostring(turning)))
     Dchange=true
   end
   
@@ -1177,6 +1196,12 @@ function RECOVERYTANKER:_CheckPatternUpdate(dt)
   
     -- Update if heading or distance changed.
     if Hchange or Dchange then
+      -- Debug message.
+      local text=string.format("Updating tanker %s pattern due to carrier change.", self.tanker:GetName())
+      MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+      self:T(self.lid..text)
+      
+      -- Update pos and orientation.
       self.orientation=vNew
       self.position=pos
       update=true
@@ -1206,7 +1231,9 @@ function RECOVERYTANKER:_ActivateTACAN(delay)
     if unit:IsAlive() then
     
       -- Debug message.
-      self:T(string.format("Activating recovery tanker TACAN beacon: channel=%d mode=%s, morse=%s.", self.TACANchannel, self.TACANmode, self.TACANmorse))
+      local text=string.format("Activating recovery tanker TACAN beacon: channel=%d mode=%s, morse=%s.", self.TACANchannel, self.TACANmode, self.TACANmorse)
+      MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+      self:T(self.lid..text)      
     
       -- Create a new beacon and activate TACAN.
       self.beacon=BEACON:New(unit)
@@ -1218,52 +1245,6 @@ function RECOVERYTANKER:_ActivateTACAN(delay)
     
   end
 
-end
-
---- Calculate distances between carrier and tanker.
--- @param #RECOVERYTANKER self 
--- @return #number Distance [m] in the direction of the orientation of the carrier.
--- @return #number Distance [m] perpendicular to the orientation of the carrier.
--- @return #number Distance [m] to the carrier.
--- @return #number Angle [Deg] from carrier to plane. Phi=0 if the plane is directly behind the carrier, phi=90 if the plane is starboard, phi=180 if the plane is in front of the carrier.
-function RECOVERYTANKER:_GetDistances()
-
-  -- Vector to carrier
-  local a=self.carrier:GetVec3()
-  
-  -- Vector to player
-  local b=self.tanker:GetVec3()
-  
-  -- Vector from carrier to player.
-  local c={x=b.x-a.x, y=0, z=b.z-a.z}
-  
-  -- Orientation of carrier.
-  local x=self.carrier:GetOrientationX()
-  
-  -- Projection of player pos on x component.
-  local dx=UTILS.VecDot(x,c)
-  
-  -- Orientation of carrier.
-  local z=self.carrier:GetOrientationZ()
-  
-  -- Projection of player pos on z component.  
-  local dz=UTILS.VecDot(z,c)
-  
-  -- Polar coordinates
-  local rho=math.sqrt(dx*dx+dz*dz)
-  local phi=math.deg(math.atan2(dz,dx))
-  if phi<0 then
-    phi=phi+360
-  end
-  
-  -- phi=0 if the plane is directly behind the carrier, phi=180 if the plane is in front of the carrier
-  phi=phi-180
-
-  if phi<0 then
-    phi=phi+360
-  end
-  
-  return dx,dz,rho,phi
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
