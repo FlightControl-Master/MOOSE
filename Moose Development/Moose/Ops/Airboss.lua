@@ -18,7 +18,7 @@
 --    * Rescue helo option via @{#Ops.RescueHelo} class.
 --    * Many parameters customizable by convenient user API functions. 
 --    * Multiple carrier support due to object oriented approach.
---    * Finite State Machine (FSM) implementat
+--    * Finite State Machine (FSM) implementation.
 -- 
 -- Supported Carriers:
 -- 
@@ -33,11 +33,11 @@
 --    * E-2D Hawkeye (AI)
 --    * S-3B Viking & tanker version (AI)
 -- 
--- At the moment, parameters are optimized for F/A-18C Hornet as aircraft and USS John C. Stennis as carrier.
--- The community A-4E mod is also supported in priciple but maybe needs further tweaking of parameters such as on speed AoA values.
+-- At the moment, optimized parameters are available for the F/A-18C Hornet (Lot 20) as aircraft and the USS John C. Stennis as carrier.
+-- The community A-4E mod is also supported in priciple but may needs further tweaking of parameters such as on speed AoA values.
 -- 
--- Other aircraft and carriers *might* be possible in future but would need a different set of optimized individual parameters.
--- *Winter is coming!*
+-- The implemenation is kept very general. So other including other aircraft and carriers in future is possible. (*Winter is coming!*)
+-- But each aircraft or carrier needs a different set of optimized individual parameters. 
 --
 -- **PLEASE NOTE** that his class is work in progress and in an **alpha** stage and very much **work in progress**.
 -- Your constructive feedback is both necessary and highly appreciated.
@@ -47,7 +47,7 @@
 -- ### Author: **funkyfranky**
 -- ### Special thanks to
 -- **Bankler** for his great [Recovery Trainer](https://forums.eagle.ru/showthread.php?t=221412) mission and script!
--- This gave the inspiration for this class. Also this class uses some functionalities for determining the player positon in Case I recoveries he developed.
+-- His work was the initial inspiration for this class. Also note that this class uses some routines for determining the player position in Case I recoveries developed by Bankler.
 --
 -- @module Ops.Airboss
 -- @image MOOSE.JPG
@@ -112,6 +112,7 @@
 -- @field DCS#Vec3 Corientation Carrier orientation in space.
 -- @field DCS#Vec3 Corientlast Last known carrier orientation.
 -- @field Core.Point#COORDINATE Cposition Carrier position.
+-- @field #string defaultskill Default player skill @{#AIRBOSS.Difficulty}.
 -- @extends Core.Fsm#FSM
 
 --- The boss!
@@ -165,10 +166,10 @@
 -- 
 -- ![Banner Image](..\Presentations\AIRBOSS\Airboss_Case3.png)
 -- 
--- A Case III recovery is conducted during nighttime. The holding positon and the landing pattern are very different from a Case I recovery as can be seen in the image above.
+-- A Case III recovery is conducted during nighttime. The holding positon and the landing pattern are rather different from a Case I recovery as can be seen in the image above.
 -- 
--- The first holding zone starts 21 NM astern the carrier at angels 6. The interval between the stacks is 1000 ft just like in Case I. However, the distance to the boat also
--- increases by 1 NM with each stack. The general form can be written as D=15+6+(N-1), where D is the distance to the boat in NM and N the number of the stack starting at one.
+-- The first holding zone starts 21 NM astern the carrier at angels 6. The interval between the stacks is 1000 ft just like in Case I. However, the distance to the boat
+-- increases by 1 NM with each stack. The general form can be written as D=15+6+(N-1), where D is the distance to the boat in NM and N the number of the stack starting at N=1.
 -- 
 -- Once the aircraft of the lowest stack is allowed to commence to the landing pattern, it starts a descent at 4000 ft/min until it reaches the "*Platform*" at 5000 ft and
 -- ~19 NM DME. From there a shallower descent at 2000 ft/min should be performed. At an altitude of 1200 ft the aircraft should level out and "*Dirty Up*" (gear & hook down).
@@ -181,11 +182,11 @@
 -- 
 -- Case II is the common recovery procedure at daytime if visibilty conditions are poor. It can be viewed as hybrid between Case I and III.
 -- The holding pattern is very similar to that of the Case III recovery with the difference the the radial is the inverse of the BRC instead of the FB.
--- From the holding zone aircraft are follow the Case III path until they reach the Initial position 3 NM astern the boat. From there a standard Case I recovery procdure is
+-- From the holding zone aircraft are follow the Case III path until they reach the Initial position 3 NM astern the boat. From there a standard Case I recovery procedure is
 -- in place.
 -- 
--- Note that the image depicts the case, where the holding zone has an angle offset off 30 degrees with respect to the BRC. This is optional. Commonly used offset angles
--- are 0 (no offset), +-15 degrees or +-30 degrees. The AIRBOSS class supports all these scenarios which are used during Case II and III recoveries.
+-- Note that the image depicts the case, where the holding zone has an angle offset of 30 degrees with respect to the BRC. This is optional. Commonly used offset angles
+-- are 0 (no offset), +-15 or +-30 degrees. The AIRBOSS class supports all these scenarios which are used during Case II and III recoveries.
 -- 
 -- 
 -- # Scripting
@@ -427,7 +428,7 @@
 -- @field #AIRBOSS
 AIRBOSS = {
   ClassName     = "AIRBOSS",
-  Debug         = false,
+  Debug         = true,
   lid           = nil,
   carrier       = nil,
   carriertype   = nil,
@@ -484,6 +485,7 @@ AIRBOSS = {
   Corientation  = nil,
   Corientlast   = nil,
   Cposition     = nil,
+  defaultskill  = nil,
 }
 
 --- Player aircraft types capable of landing on carriers.
@@ -1017,12 +1019,14 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.5.4w"
+AIRBOSS.version="0.5.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: 
+-- TODO: Subtitles off options on player level.
 -- TODO: PWO during case 2/3. Also when too close to other player.
 -- TODO: Option to filter AI groups for recovery.
 -- TODO: Spin pattern. Add radio menu entry. Not sure what to add though?!
@@ -1132,6 +1136,9 @@ function AIRBOSS:New(carriername, alias)
 
   -- Set holding offset to 0 degrees. This set self.defaultoffset and self.holdingoffset.
   self:SetHoldingOffsetAngle()
+  
+  -- Default player skill EASY.
+  self:SetDefaultPlayerSkill(AIRBOSS.Difficulty.EASY)
     
   -- CCA 50 NM radius zone around the carrier.
   self:SetCarrierControlledArea()
@@ -1339,7 +1346,8 @@ function AIRBOSS:SetRecoveryCase(case)
 end
 
 --- Set holding pattern offset from final bearing for Case II/III recoveries.
--- Usually, this is +-15 or +-30 degrees.
+-- Usually, this is +-15 or +-30 degrees. You should not use and offet angle >= 90 degrees, because this will cause a devision by zero in some of the equations used to calculate the approach corridor.
+-- So best stick to the defaults up to 30 degrees.
 -- @param #AIRBOSS self
 -- @param #number offset Offset angle in degrees. Default 0.
 -- @return #AIRBOSS self
@@ -1541,6 +1549,30 @@ end
 -- @return #ARIBOSS self
 function AIRBOSS:SetWarehouse(warehouse)
   self.warehouse=warehouse
+  return self
+end
+
+--- Set default player skill. New players will be initialized with this skill.
+-- 
+-- * "Flight Student" = @{#AIRBOSS.Difficulty.Easy}
+-- * "Naval Aviator" = @{#AIRBOSS.Difficulty.Normal}
+-- * "TOPGUN Graduate" = @{#AIRBOSS.Difficulty.Hard}
+-- @param #AIRBOSS self
+-- @param #string skill Player skill. Default "Naval Aviator".
+-- @return #ARIBOSS self
+function AIRBOSS:SetDefaultPlayerSkill(skill)
+  self.defaultskill=skill or AIRBOSS.Difficulty.NORMAL
+  -- Check that defualt skill is valid.
+  local gotit=false
+  for _,_skill in pairs(AIRBOSS.Difficulty) do
+    if _skill==self.defaultskill then
+      gotit=true
+    end
+  end
+  if not gotit then
+    self.defaultskill=AIRBOSS.Difficulty.NORMAL
+    self:E(self.lid..string.format("ERROR: Invalid default skill = %s. Resetting to Naval Aviator.", tostring(skill)))
+  end
   return self
 end
 
@@ -2047,7 +2079,7 @@ function AIRBOSS._PassingWaypoint(group, airboss, i, final)
   local text=string.format("Group %s passing waypoint %d of %d.", group:GetName(), i, final)
   
   -- Debug smoke and marker.
-  if airboss.Debug then
+  if airboss.Debug and false then
     local pos=group:GetCoordinate()
     pos:SmokeRed()
     local MarkerID=pos:MarkToAll(string.format("Group %s reached waypoint %d", group:GetName(), i))
@@ -2061,7 +2093,7 @@ function AIRBOSS._PassingWaypoint(group, airboss, i, final)
   airboss.currentwp=i
   
   -- If final waypoint reached, do route all over again.
-  if i==final then
+  if i==final and final>1 then
     -- TODO: set task to call this routine again when carrier reaches final waypoint if user chooses to.
     -- SetPatrolAdInfinitum user function
     airboss:_PatrolRoute()
@@ -2078,7 +2110,7 @@ function AIRBOSS._ReachedHoldingZone(group, airboss, flight)
   local text=string.format("Group %s has reached the holding zone.", group:GetName())
   
   -- Debug mark.
-  if airboss.Debug then
+  if airboss.Debug and false then
     local pos=group:GetCoordinate()  
     local MarkerID=pos:MarkToAll(string.format("Flight group %s reached holding zone.", group:GetName()))
   end
@@ -2821,6 +2853,9 @@ function AIRBOSS:_MarshalAI(flight, nstack)
   
   -- Current carrier position.
   local Carrier=self:GetCoordinate()
+  
+  -- Carrier heading.
+  local hdg=self:GetHeading()
     
   -- Aircraft speed 272 knots when orbiting the pattern. (Orbit expects m/s.)
   local SpeedOrbit=UTILS.KnotsToMps(272)
@@ -2852,15 +2887,12 @@ function AIRBOSS:_MarshalAI(flight, nstack)
     
     -- Task function when arriving at the holding zone. This will set flight.holding=true.
     local TaskArrivedHolding=flight.group:TaskFunction("AIRBOSS._ReachedHoldingZone", self, flight)
-
-    -- Carrier heading.
-    local hdg=self:GetHeading()
    
     if flight.case==1 then
       -- Waypoint "north" of carrier's holding zone.
       --wp[2]=p1:Translate(UTILS.NMToMeters(10), hdg):WaypointAirTurningPoint(nil, SpeedTransit, {}, "Prepare Entering Case I Marshal Pattern")
       -- Enter pattern from "north" to "south".
-      wp[2]=p1:Translate( UTILS.NMToMeters(10), hdg):WaypointAirTurningPoint(nil, SpeedTransit, {TaskArrivedHolding}, "Entering Case I Marshal Pattern")
+      wp[2]=Carrier:Translate(UTILS.NMToMeters(10), hdg-30):WaypointAirTurningPoint(nil, SpeedTransit, {TaskArrivedHolding}, "Entering Case I Marshal Pattern")
     else
       -- TODO: Test and tune!
       wp[2]=p1:WaypointAirTurningPoint(nil, SpeedTransit, {TaskArrivedHolding}, "Entering Marshal Pattern")
@@ -2882,7 +2914,10 @@ function AIRBOSS:_MarshalAI(flight, nstack)
     local p0=nil  --Core.Point#COORDINATE
     if flight.case==1 then
       c1=p1
-      p0=self:GetCoordinate():Translate(UTILS.NMToMeters(5), -90):SetAltitude(Altitude)
+      c2=p2
+      p0=p1 --self:GetCoordinate():Translate(UTILS.NMToMeters(5), -90):SetAltitude(Altitude)
+      p0=self:GetCoordinate():Translate(UTILS.NMToMeters(2.5/math.sqrt(2)), 225):SetAltitude(Altitude)
+      --p0=self:GetCoordinate():Translate(UTILS.NMToMeters(2), hdg+190):SetAltitude(Altitude)
     else
       c1=p2
       c2=p1
@@ -2899,16 +2934,19 @@ function AIRBOSS:_MarshalAI(flight, nstack)
     local text=string.format("Flight %s: Marshal stack %d: alt=%d, dist=%.1f, speed=%d", flight.groupname, stack, UTILS.MetersToFeet(Altitude), UTILS.MetersToNM(Dist), UTILS.MpsToKnots(SpeedOrbit))
     
     -- Debug mark.
-    if self.Debug then
-      c1:MarkToAll(text)
+    if self.Debug or true then
+      --c1:MarkToAll(text)
       if c2 then
-        c2:MarkToAll(text)
+        --c2:MarkToAll(text)
       end
     end
+    p0:MarkToAll("p0")
+    p1:MarkToAll("p1")
+    p2:MarkToAll("p2")
     
     -- Waypoint.
     -- TODO: p0?
-    wp[#wp+1]=p1:WaypointAirTurningPoint(nil, SpeedTransit, {TaskOrbit}, text)
+    wp[#wp+1]=p0:WaypointAirTurningPoint(nil, SpeedTransit, {TaskOrbit}, text)
     
   end  
   
@@ -2986,6 +3024,9 @@ function AIRBOSS:_GetMarshalAltitude(stack, case)
     
     -- Center of holding pattern point. We give it a little head start -70 instead of -90 degrees.
     p1=Carrier:Translate(Dist, hdg-45)
+    
+    p1=Carrier:Translate(UTILS.NMToMeters(1.0), hdg)
+    p2=Carrier:Translate(UTILS.NMToMeters(3.5), hdg)
   else
     -- CASE II/III: Holding at 6000 ft on a racetrack pattern astern the carrier.
     angels0=6
@@ -3086,7 +3127,7 @@ end
 -- @param #AIRBOSS.FlightGroup flight Flight that left the marshal stack.
 -- @param #boolean nopattern If true, flight does not go to pattern.
 function AIRBOSS:_CollapseMarshalStack(flight, nopattern)
-  self:I({flight=flight, nopattern=nopattern})
+  self:F2({flight=flight, nopattern=nopattern})
 
   -- Recovery case of flight.
   local case=flight.case
@@ -3115,7 +3156,7 @@ function AIRBOSS:_CollapseMarshalStack(flight, nopattern)
         
         -- Inform players.
         if mflight.ai==false and mflight.difficulty~=AIRBOSS.Difficulty.HARD then
-          local alt=UTILS.MetersToFeet(self:_GetMarshalAltitude(mstack-1,case))
+          local alt=UTILS.MetersToFeet(self:_GetMarshalAltitude(mstack-1, case))
           local text=string.format("descent to next lower stack at %d ft", alt)
           self:MessageToPlayer(mflight, text, "MARSHAL")
         end
@@ -4024,6 +4065,8 @@ function AIRBOSS:OnEventLand(EventData)
     local airbase=EventData.Place
     local airbasename=tostring(airbase:GetName())
     
+    -- TODO: also check distance to airbase since landing "in the water" also trigger a landing event!
+    
     -- Check if player landed on the right airbase.
     if airbasename==self.airbase:GetName() then
     
@@ -4184,7 +4227,7 @@ function AIRBOSS:_Holding(playerData)
   local stack=playerData.flag:Get()
   
   -- Pattern alitude.
-  local patternalt, c1, c2=self:_GetMarshalAltitude(stack, playerData.case)
+  local patternalt=self:_GetMarshalAltitude(stack, playerData.case)
   
   -- Player altitude.
   local playeralt=unit:GetAltitude()
@@ -6805,7 +6848,7 @@ function AIRBOSS:_GetOnboardNumbers(group, playeronly)
   end
   
   -- Debug info.
-  self:I(self.lid..text)
+  self:T2(self.lid..text)
   
   return numbers
 end
@@ -6878,7 +6921,7 @@ function AIRBOSS:_GetFuelState(unit)
   local fuelstate=fuel*maxfuel
   
   -- Debug info.
-  self:I(self.lid..string.format("Unit %s fuel state = %.1f kg = %.1f lbs", unit:GetName(), fuelstate, UTILS.kg2lbs(fuelstate)))
+  self:T2(self.lid..string.format("Unit %s fuel state = %.1f kg = %.1f lbs", unit:GetName(), fuelstate, UTILS.kg2lbs(fuelstate)))
   
   return UTILS.kg2lbs(fuelstate)
 end
@@ -6919,7 +6962,7 @@ function AIRBOSS:_GetUnitMasses(unit)
   local masscargo=massmax-massfuel-massempty
   
   -- Debug info.
-  self:I(self.lid..string.format("Unit %s mass fuel=%.1f kg, empty=%.1f kg, max=%.1f kg, cargo=%.1f kg", unit:GetName(), massfuel, massempty, massmax, masscargo))
+  self:T2(self.lid..string.format("Unit %s mass fuel=%.1f kg, empty=%.1f kg, max=%.1f kg, cargo=%.1f kg", unit:GetName(), massfuel, massempty, massmax, masscargo))
   
   return massfuel, massempty, massmax, masscargo
 end
