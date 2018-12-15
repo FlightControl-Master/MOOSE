@@ -1002,11 +1002,15 @@ do -- COORDINATE
   function COORDINATE:WaypointAir( AltType, Type, Action, Speed, SpeedLocked, airbase, DCSTasks, description )
     self:F2( { AltType, Type, Action, Speed, SpeedLocked } )
     
-    -- Defaults
+    -- Set alttype or "RADIO" which is AGL.
     AltType=AltType or "RADIO"
+    
+    -- Speedlocked by default
     if SpeedLocked==nil then
       SpeedLocked=true
     end
+    
+    -- Speed or default 500 km/h.
     Speed=Speed or 500
     
     -- Waypoint array.
@@ -1015,19 +1019,26 @@ do -- COORDINATE
     -- Coordinates.
     RoutePoint.x = self.x
     RoutePoint.y = self.z
+    
     -- Altitude.
     RoutePoint.alt = self.y
     RoutePoint.alt_type = AltType
+    
     -- Waypoint type.
     RoutePoint.type = Type or nil
     RoutePoint.action = Action or nil
-    -- Set speed/ETA.
+    
+    -- Speed.
     RoutePoint.speed = Speed/3.6
     RoutePoint.speed_locked = SpeedLocked
+    
+    -- ETA.
     RoutePoint.ETA=nil
-    RoutePoint.ETA_locked = false    
+    RoutePoint.ETA_locked = false
+    
     -- Waypoint description.
     RoutePoint.name=description
+    
     -- Airbase parameters for takeoff and landing points.
     if airbase then
       local AirbaseID = airbase:GetID()
@@ -1036,31 +1047,24 @@ do -- COORDINATE
         RoutePoint.linkUnit = AirbaseID
         RoutePoint.helipadId = AirbaseID
       elseif AirbaseCategory == Airbase.Category.AIRDROME then
-        RoutePoint.airdromeId = AirbaseID       
+        RoutePoint.airdromeId = AirbaseID
       else
         self:T("ERROR: Unknown airbase category in COORDINATE:WaypointAir()!")
-      end  
-    end        
+      end
+      
+      self:MarkToAll(string.format("Landing waypoint at airbase %s", airbase:GetName()))
+    end
     
-
-    --  ["task"] =
-    --  {
-    --      ["id"] = "ComboTask",
-    --      ["params"] =
-    --      {
-    --          ["tasks"] =
-    --          {
-    --          }, -- end of ["tasks"]
-    --      }, -- end of ["params"]
-    --  }, -- end of ["task"]
-
     -- Waypoint tasks.
     RoutePoint.task = {}
     RoutePoint.task.id = "ComboTask"
     RoutePoint.task.params = {}
     RoutePoint.task.params.tasks = DCSTasks or {}
 
+    -- Debug.
     self:T({RoutePoint=RoutePoint})
+    
+    -- Return waypoint.
     return RoutePoint
   end
 
