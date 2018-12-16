@@ -1052,7 +1052,7 @@ do -- COORDINATE
         self:T("ERROR: Unknown airbase category in COORDINATE:WaypointAir()!")
       end
       
-      self:MarkToAll(string.format("Landing waypoint at airbase %s", airbase:GetName()))
+      --self:MarkToAll(string.format("Landing waypoint at airbase %s", airbase:GetName()))
     end
     
     -- Waypoint tasks.

@@ -35,7 +35,7 @@
 -- ===
 --
 -- @module Functional.Warehouse
--- @image MOOSE.JPG
+-- @image Warehouse.JPG
 
 --- WAREHOUSE class.
 -- @type WAREHOUSE

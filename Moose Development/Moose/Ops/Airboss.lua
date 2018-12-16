@@ -390,9 +390,9 @@
 -- 
 -- # AI Handling
 -- 
--- The implementation allows to handle incoming AI units and integrate them into the marshal and landing pattern.
+-- The AIRBOSS class allows to handle incoming AI units and integrate them into the marshal and landing pattern.
 -- 
--- By default, incoming carrier capable aircraft which are detecting inside the CCZ and approach the carrier by more than 5 NM are automatically guided to the holding zone.
+-- By default, incoming carrier capable aircraft which are detecting inside the CCZ and approach the carrier by more than 10 NM are automatically guided to the holding zone.
 -- Each AI group gets its own marshal stack in the holding pattern. Once a recovery window opens, the AI group of the lowest stack is transitioning to the landing pattern
 -- and the Marshal stack collapses.
 -- 
@@ -1767,9 +1767,11 @@ function AIRBOSS:_CheckAIStatus()
 
           -- Pilot: "405, Hornet Ball, 3.2"
           -- TODO: Voice over.
-          local text=string.format("%s Ball, %.1f.", self:_GetACNickname(unit:GetTypeName()), self:_GetFuelState(unit)/1000)          
+          local text=string.format("%s Ball, %.1f.", self:_GetACNickname(unit:GetTypeName()), self:_GetFuelState(unit)/1000)     
           self:MessageToPattern(text, element.onboard, "", 3, false, 0, true)
-          MESSAGE:New(text, 15):ToAll()
+          
+          -- Debug message.
+          MESSAGE:New(string.format("%s, %s", element.onboard..text), 15, "DEBUG"):ToAllIf(self.Debug)
           
           -- Paddles: Roger ball after 3 seconds.
           self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.ROGERBALL, false, 3)
@@ -2749,13 +2751,13 @@ function AIRBOSS:_ScanCarrierZone()
         -- Debug info.
         self:T3(self.lid..string.format("Known AI flight group %s closed in by %.1f NM", knownflight.groupname, UTILS.MetersToNM(closein)))
         
-        -- Send AI flight to marshal stack if group closes in more than 2.5 and has initial flag value.
-        if closein>UTILS.NMToMeters(2.5) and knownflight.flag:Get()==-100 then
+        -- Send AI flight to marshal stack if group closes in more than 5 and has initial flag value.
+        if closein>UTILS.NMToMeters(5) and knownflight.flag:Get()==-100 then
         
           -- Check that we do not add a recovery tanker for marshaling.
           if self.tanker and self.tanker.tanker:GetName()==groupname then
           
-            -- Don't touch the recovery thanker!
+            -- Don't touch the recovery tanker!
             
           else
           
@@ -2788,7 +2790,7 @@ function AIRBOSS:_ScanCarrierZone()
     end
   end
   
-  -- Remove flight groups. 
+  -- Remove flight groups outside CCA.
   for _,group in pairs(remove) do
     self:_RemoveFlightGroup(group)
   end
@@ -5152,17 +5154,20 @@ end
 -- @param #number dx Correction.
 function AIRBOSS:_GetWire(Ccoord, Lcoord, dx)
 
+  -- Heading of carrier (true).
   local hdg=self.carrier:GetHeading()
   
-  -- Stern coordinate (sterndist<0)
-  local Scoord=Ccoord:Translate(self.carrierparam.sterndist, hdg)
+  -- Final bearing (true).
+  local FB=self:GetFinalBearing()
   
-  -- Distance to landing coord
+  -- Stern coordinate (sterndist<0). Also translate 10 meters starboard wrt Final bearing.
+  local Scoord=Ccoord:Translate(self.carrierparam.sterndist, hdg):Translate(10, FB+90)
+  
+  -- Distance to landing coord.
   local Ldist=Lcoord:Get2DDistance(Scoord)
 
   -- Little offset for the exact wire positions.
-  dx=dx or self.carrierparam.wireoffset
-  
+  -- TODO: Maybe add little offset depending on aircraft type.
   dx=self.carrierparam.wireoffset
   
   -- Corrected distance.
@@ -5183,8 +5188,7 @@ function AIRBOSS:_GetWire(Ccoord, Lcoord, dx)
   end
   
   if self.Debug then
-    local FB=self:GetFinalBearing(false)
-    
+ 
     local w1=Scoord:Translate(self.carrierparam.wire1+self.carrierparam.wireoffset, FB)
     local w2=Scoord:Translate(self.carrierparam.wire2+self.carrierparam.wireoffset, FB)
     local w3=Scoord:Translate(self.carrierparam.wire3+self.carrierparam.wireoffset, FB)
@@ -7485,16 +7489,15 @@ function AIRBOSS:_AddF10Commands(_unitName)
     -- Get group and ID.
     local group=_unit:GetGroup()
     local gid=group:GetID()
-    
-    -- Player Data.
-    local playerData=self.players[playername]    
-  
-    if group and gid and playerData then
+      
+    if group and gid then
   
       if not self.menuadded[gid] then
       
         -- Enable switch so we don't do this twice.
         self.menuadded[gid]=true
+        
+        env.info("FF menu")
   
         -- Main F10 menu: F10/Airboss/<Carrier Name>/
         if AIRBOSS.MenuF10[gid]==nil then
@@ -7551,10 +7554,10 @@ function AIRBOSS:_AddF10Commands(_unitName)
         missionCommands.addCommandForGroup(gid, "Request Refueling",  _rootPath, self._RequestRefueling, self, _unitName) -- F5
       end
     else
-      self:T(self.lid.."Could not find group or group ID in AddF10Menu() function. Unit name: ".._unitName)
+      self:E(self.lid..string.format("ERROR: Could not find group or group ID in AddF10Menu() function. Unit name: %s.", _unitName))
     end
   else
-    self:T(self.lid.."Player unit does not exist in AddF10Menu() function. Unit name: ".._unitName)
+    self:E(self.lid..string.format("ERROR: Player unit does not exist in AddF10Menu() function. Unit name: %s.", _unitName))
   end
 
 end
@@ -7712,12 +7715,7 @@ function AIRBOSS:_RequestCommence(_unitName)
       local text      
       if _unit:IsInZone(self.zoneCCA) then
       
-        if self:_InQueue(self.Qmarshal, playerData.group) then
-        
-          -- Flight group is already in marhal queue.
-          text=string.format("%s, you are already in the Marshal queue. Commence request denied!", playerData.name)        
-        
-        elseif self:_InQueue(self.Qpattern, playerData.group) then
+        if self:_InQueue(self.Qpattern, playerData.group) then
           
           -- Flight group is already in pattern queue.
           text=string.format("%s, you are already in the Pattern queue. Commence request denied!", playerData.name)
@@ -7742,10 +7740,13 @@ function AIRBOSS:_RequestCommence(_unitName)
             local _,npattern=self:_GetQueueInfo(self.Qpattern)
                 
             -- Check if pattern is already full.
-            if npattern>=self.Nmaxpattern then  
+            if npattern>=self.Nmaxpattern then
+            
               -- Patern is full!
               text=string.format("Negative ghostrider, pattern is full!\nThere are %d aircraft currently in the pattern.", npattern)
+              
             else
+            
               -- Positive response.
               if playerData.case==1 then
                 text="Proceed to initial."
@@ -7861,9 +7862,9 @@ function AIRBOSS:_SetSection(_unitName)
       -- Check if player is in Marshal or pattern queue already.
       local text      
       if self:_InQueue(self.Qmarshal,playerData.group) then
-        text=string.format("You are already in the Marshal queue. Setting section no possible any more!")
+        text=string.format("You are already in the Marshal queue. Setting section not possible any more!")
       elseif self:_InQueue(self.Qpattern, playerData.group) then
-        text=string.format("You are already in the Pattern queue. Setting section no possible any more!")
+        text=string.format("You are already in the Pattern queue. Setting section not possible any more!")
       else
       
         -- Init array

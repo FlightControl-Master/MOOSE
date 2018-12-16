@@ -5,16 +5,16 @@
 -- **Main Features:**
 --
 --    * Close formation with carrier.
---    * Carrier can have any number of waypoints.
+--    * No restrictions regarding carrier waypoints and heading.
 --    * Automatic respawning on empty fuel for 24/7 operations.
---    * Automatic rescuing of crashed or ejected units in the vicinity.
+--    * Automatic rescuing of crashed or ejected pilots in the vicinity of the carrier.
 --    * Multiple helos at different carriers due to object oriented approach.
 --    * Finite State Machine (FSM) implementation.
 --
 -- ===
 --
 -- ### Author: **funkyfranky**
--- ### Contributions: Flightcontrol (@{#AI_FORMATION} class)
+-- ### Contributions: Flightcontrol (@{AI.#AI_FORMATION} class)
 --
 -- @module Ops.RescueHelo
 -- @image MOOSE.JPG
@@ -27,7 +27,6 @@
 -- @field Wrapper.Unit#UNIT carrier The carrier the helo is attached to.
 -- @field #string carriertype Carrier type.
 -- @field #string helogroupname Name of the late activated helo template group.
--- @field #string helogroupalias Spawn alias name of the group. Necessary for multiple RESCUEHELO objects in one mission. Uses groupname plus carrier name.
 -- @field Wrapper.Group#GROUP helo Helo group.
 -- @field #number takeoff Takeoff type.
 -- @field Wrapper.Airbase#AIRBASE airbase The airbase object acting as home base of the helo.
@@ -54,7 +53,7 @@
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\RESCUEHELO\RescueHelo_Main.jpg)
+-- ![Banner Image](..\Presentations\RESCUEHELO\RescueHelo_Main.png)
 --
 -- # Recue Helo
 --
@@ -191,7 +190,6 @@ RESCUEHELO = {
   carrier        = nil,
   carriertype    = nil,
   helogroupname  = nil,
-  helogroupalias = nil,
   helo           = nil,
   airbase        = nil,
   takeoff        = nil,
@@ -216,7 +214,7 @@ RESCUEHELO = {
 
 --- Class version.
 -- @field #string version
-RESCUEHELO.version="0.9.7"
+RESCUEHELO.version="0.9.8"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -396,12 +394,19 @@ function RESCUEHELO:SetLowFuelThreshold(threshold)
   return self
 end
 
---- Set home airbase of the helo. Default is the carrier.
+--- Set home airbase of the helo. This is the airbase where the helo is spawned (if not in air) and will go when it is out of fuel.
 -- @param #RESCUEHELO self
--- @param Wrapper.Airbase#AIRBASE airbase Homebase of helo.
+-- @param Wrapper.Airbase#AIRBASE airbase The home airbase. Can be the airbase name (passed as a string) or a Moose AIRBASE object.
 -- @return #RESCUEHELO self
 function RESCUEHELO:SetHomeBase(airbase)
-  self.airbase=airbase
+  if type(airbase)=="string" then
+    self.airbase=AIRBASE:FindByName(airbase)
+  else
+    self.airbase=airbase
+  end
+  if not self.airbase then
+    self:E(self.lid.."ERROR: Airbase is nil!")
+  end
   return self
 end
 
@@ -755,10 +760,10 @@ function RESCUEHELO:onafterStart(From, Event, To)
   local delay=120
   
   -- Set unique alias for spawn.
-  self.helogroupalias=string.format("%s_%s", self.helogroupname, self.carrier:GetName())
+  local helogroupalias=string.format("%s_%s", self.helogroupname, self.carrier:GetName())
   
   -- Spawn helo. We need to introduce an alias in case this class is used twice. This would confuse the spawn routine.
-  local Spawn=SPAWN:NewWithAlias(self.helogroupname, self.helogroupalias)
+  local Spawn=SPAWN:NewWithAlias(self.helogroupname, helogroupalias)
   
   -- Spawn in air or at airbase.
   if self.takeoff==SPAWN.Takeoff.Air then
@@ -788,9 +793,6 @@ function RESCUEHELO:onafterStart(From, Event, To)
     
       -- Use an uncontrolled aircraft group.
       self.helo=GROUP:FindByName(self.helogroupname)
-      
-      -- Also set the alias just in case.
-      self.helogroupalias=self.helogroupname
       
       if self.helo:IsAlive() then
       

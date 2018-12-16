@@ -1912,8 +1912,7 @@ do -- Route methods
         --local PointAirbase=RTBAirbase:GetCoordinate():SetAltitude(coord.y):WaypointAirTurningPoint(nil ,Speed)
         
         -- Landing waypoint. More general than prev version since it should also work with FAPRS and ships.
-        local PointLanding=RTBAirbase:GetCoordinate():WaypointAirLanding(Speed, RTBAirbase)
-        
+        local PointLanding=RTBAirbase:GetCoordinate():WaypointAirLanding(Speed, RTBAirbase)        
         
         -- Waypoint table.
         local Points={PointFrom, PointLanding}
