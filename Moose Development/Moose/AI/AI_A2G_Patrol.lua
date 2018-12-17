@@ -10,7 +10,7 @@
 -- @image AI_Air_To_Ground_Patrol.JPG
 
 --- @type AI_A2G_PATROL
--- @extends AI.AI_A2A_Patrol#AI_A2A_PATROL
+-- @extends AI.AI_A2G_Engage#AI_A2G_ENGAGE
 
 
 --- The AI_A2G_PATROL class implements the core functions to patrol a @{Zone} by an AI @{Wrapper.Group} or @{Wrapper.Group} 
@@ -100,30 +100,33 @@ AI_A2G_PATROL = {
 --- Creates a new AI_A2G_PATROL object
 -- @param #AI_A2G_PATROL self
 -- @param Wrapper.Group#GROUP AIPatrol
+-- @param DCS#Speed  EngageMinSpeed The minimum speed of the @{Wrapper.Group} in km/h when engaging a target.
+-- @param DCS#Speed  EngageMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h when engaging a target.
 -- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
 -- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
 -- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
 -- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Group} in km/h.
 -- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h.
--- @param DCS#Speed  EngageMinSpeed The minimum speed of the @{Wrapper.Group} in km/h when engaging a target.
--- @param DCS#Speed  EngageMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h when engaging a target.
 -- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
 -- @return #AI_A2G_PATROL
-function AI_A2G_PATROL:New( AIPatrol, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageMinSpeed, EngageMaxSpeed, PatrolAltType )
+function AI_A2G_PATROL:New( AIPatrol, EngageMinSpeed, EngageMaxSpeed, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, AI_A2G:New( AIPatrol ) ) -- #AI_A2G_PATROL
+  local self = BASE:Inherit( self, AI_A2G_ENGAGE:New( AIPatrol, EngageMinSpeed, EngageMaxSpeed ) ) -- #AI_A2G_PATROL
 
-  self.Accomplished = false
-  self.Engaging = false
+  self.PatrolZone = PatrolZone
+  self.PatrolFloorAltitude = PatrolFloorAltitude
+  self.PatrolCeilingAltitude = PatrolCeilingAltitude
+  self.PatrolMinSpeed = PatrolMinSpeed
+  self.PatrolMaxSpeed = PatrolMaxSpeed
   
-  self.EngageMinSpeed = EngageMinSpeed
-  self.EngageMaxSpeed = EngageMaxSpeed
+  -- defafult PatrolAltType to "RADIO" if not specified
+  self.PatrolAltType = PatrolAltType or "RADIO"
   
-  self:AddTransition( { "Patrolling", "Engaging", "Returning", "Airborne" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_A2G_PATROL.
+  self:AddTransition( { "Started", "Airborne", "Refuelling" }, "Patrol", "Patrolling" )
 
-  --- OnBefore Transition Handler for Event Engage.
-  -- @function [parent=#AI_A2G_PATROL] OnBeforeEngage
+  --- OnBefore Transition Handler for Event Patrol.
+  -- @function [parent=#AI_A2G_PATROL] OnBeforePatrol
   -- @param #AI_A2G_PATROL self
   -- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
   -- @param #string From The From State string.
@@ -131,44 +134,25 @@ function AI_A2G_PATROL:New( AIPatrol, PatrolZone, PatrolFloorAltitude, PatrolCei
   -- @param #string To The To State string.
   -- @return #boolean Return false to cancel Transition.
   
-  --- OnAfter Transition Handler for Event Engage.
-  -- @function [parent=#AI_A2G_PATROL] OnAfterEngage
+  --- OnAfter Transition Handler for Event Patrol.
+  -- @function [parent=#AI_A2G_PATROL] OnAfterPatrol
   -- @param #AI_A2G_PATROL self
   -- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
-  	
-  --- Synchronous Event Trigger for Event Engage.
-  -- @function [parent=#AI_A2G_PATROL] Engage
+    
+  --- Synchronous Event Trigger for Event Patrol.
+  -- @function [parent=#AI_A2G_PATROL] Patrol
   -- @param #AI_A2G_PATROL self
   
-  --- Asynchronous Event Trigger for Event Engage.
-  -- @function [parent=#AI_A2G_PATROL] __Engage
+  --- Asynchronous Event Trigger for Event Patrol.
+  -- @function [parent=#AI_A2G_PATROL] __Patrol
   -- @param #AI_A2G_PATROL self
   -- @param #number Delay The delay in seconds.
-
---- OnLeave Transition Handler for State Engaging.
--- @function [parent=#AI_A2G_PATROL] OnLeaveEngaging
--- @param #AI_A2G_PATROL self
--- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
--- @return #boolean Return false to cancel Transition.
-
---- OnEnter Transition Handler for State Engaging.
--- @function [parent=#AI_A2G_PATROL] OnEnterEngaging
--- @param #AI_A2G_PATROL self
--- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
-
-  self:AddTransition( "Engaging", "Fired", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_A2G_PATROL.
   
-  --- OnBefore Transition Handler for Event Fired.
-  -- @function [parent=#AI_A2G_PATROL] OnBeforeFired
+  --- OnLeave Transition Handler for State Patrolling.
+  -- @function [parent=#AI_A2G_PATROL] OnLeavePatrolling
   -- @param #AI_A2G_PATROL self
   -- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
   -- @param #string From The From State string.
@@ -176,27 +160,18 @@ function AI_A2G_PATROL:New( AIPatrol, PatrolZone, PatrolFloorAltitude, PatrolCei
   -- @param #string To The To State string.
   -- @return #boolean Return false to cancel Transition.
   
-  --- OnAfter Transition Handler for Event Fired.
-  -- @function [parent=#AI_A2G_PATROL] OnAfterFired
+  --- OnEnter Transition Handler for State Patrolling.
+  -- @function [parent=#AI_A2G_PATROL] OnEnterPatrolling
   -- @param #AI_A2G_PATROL self
   -- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
-  	
-  --- Synchronous Event Trigger for Event Fired.
-  -- @function [parent=#AI_A2G_PATROL] Fired
-  -- @param #AI_A2G_PATROL self
   
-  --- Asynchronous Event Trigger for Event Fired.
-  -- @function [parent=#AI_A2G_PATROL] __Fired
-  -- @param #AI_A2G_PATROL self
-  -- @param #number Delay The delay in seconds.
-
-  self:AddTransition( "*", "Destroy", "*" ) -- FSM_CONTROLLABLE Transition for type #AI_A2G_PATROL.
-
-  --- OnBefore Transition Handler for Event Destroy.
-  -- @function [parent=#AI_A2G_PATROL] OnBeforeDestroy
+    self:AddTransition( "Patrolling", "Route", "Patrolling" ) -- FSM_CONTROLLABLE Transition for type #AI_A2G_PATROL.
+  
+  --- OnBefore Transition Handler for Event Route.
+  -- @function [parent=#AI_A2G_PATROL] OnBeforeRoute
   -- @param #AI_A2G_PATROL self
   -- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
   -- @param #string From The From State string.
@@ -204,109 +179,29 @@ function AI_A2G_PATROL:New( AIPatrol, PatrolZone, PatrolFloorAltitude, PatrolCei
   -- @param #string To The To State string.
   -- @return #boolean Return false to cancel Transition.
   
-  --- OnAfter Transition Handler for Event Destroy.
-  -- @function [parent=#AI_A2G_PATROL] OnAfterDestroy
+  --- OnAfter Transition Handler for Event Route.
+  -- @function [parent=#AI_A2G_PATROL] OnAfterRoute
   -- @param #AI_A2G_PATROL self
   -- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
-  	
-  --- Synchronous Event Trigger for Event Destroy.
-  -- @function [parent=#AI_A2G_PATROL] Destroy
+    
+  --- Synchronous Event Trigger for Event Route.
+  -- @function [parent=#AI_A2G_PATROL] Route
   -- @param #AI_A2G_PATROL self
   
-  --- Asynchronous Event Trigger for Event Destroy.
-  -- @function [parent=#AI_A2G_PATROL] __Destroy
+  --- Asynchronous Event Trigger for Event Route.
+  -- @function [parent=#AI_A2G_PATROL] __Route
   -- @param #AI_A2G_PATROL self
   -- @param #number Delay The delay in seconds.
 
 
-  self:AddTransition( "Engaging", "Abort", "Patrolling" ) -- FSM_CONTROLLABLE Transition for type #AI_A2G_PATROL.
-
-  --- OnBefore Transition Handler for Event Abort.
-  -- @function [parent=#AI_A2G_PATROL] OnBeforeAbort
-  -- @param #AI_A2G_PATROL self
-  -- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
-  -- @return #boolean Return false to cancel Transition.
-  
-  --- OnAfter Transition Handler for Event Abort.
-  -- @function [parent=#AI_A2G_PATROL] OnAfterAbort
-  -- @param #AI_A2G_PATROL self
-  -- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
-  	
-  --- Synchronous Event Trigger for Event Abort.
-  -- @function [parent=#AI_A2G_PATROL] Abort
-  -- @param #AI_A2G_PATROL self
-  
-  --- Asynchronous Event Trigger for Event Abort.
-  -- @function [parent=#AI_A2G_PATROL] __Abort
-  -- @param #AI_A2G_PATROL self
-  -- @param #number Delay The delay in seconds.
-
-  self:AddTransition( "Engaging", "Accomplish", "Patrolling" ) -- FSM_CONTROLLABLE Transition for type #AI_A2G_PATROL.
-
-  --- OnBefore Transition Handler for Event Accomplish.
-  -- @function [parent=#AI_A2G_PATROL] OnBeforeAccomplish
-  -- @param #AI_A2G_PATROL self
-  -- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
-  -- @return #boolean Return false to cancel Transition.
-  
-  --- OnAfter Transition Handler for Event Accomplish.
-  -- @function [parent=#AI_A2G_PATROL] OnAfterAccomplish
-  -- @param #AI_A2G_PATROL self
-  -- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
-  	
-  --- Synchronous Event Trigger for Event Accomplish.
-  -- @function [parent=#AI_A2G_PATROL] Accomplish
-  -- @param #AI_A2G_PATROL self
-  
-  --- Asynchronous Event Trigger for Event Accomplish.
-  -- @function [parent=#AI_A2G_PATROL] __Accomplish
-  -- @param #AI_A2G_PATROL self
-  -- @param #number Delay The delay in seconds.  
+  self:AddTransition( "*", "Reset", "Patrolling" ) -- FSM_CONTROLLABLE Transition for type #AI_A2G_PATROL.
 
   return self
 end
 
-
---- onafter State Transition for Event Patrol.
--- @param #AI_A2G_PATROL self
--- @param Wrapper.Group#GROUP AIPatrol The AI Group managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
-function AI_A2G_PATROL:onafterStart( AIPatrol, From, Event, To )
-
-  AIPatrol:HandleEvent( EVENTS.Takeoff, nil, self )
-
-end
-
---- Set the Engage Zone which defines where the AI will engage bogies. 
--- @param #AI_A2G_PATROL self
--- @param Core.Zone#ZONE EngageZone The zone where the AI is performing CAP.
--- @return #AI_A2G_PATROL self
-function AI_A2G_PATROL:SetEngageZone( EngageZone )
-  self:F2()
-
-  if EngageZone then  
-    self.EngageZone = EngageZone
-  else
-    self.EngageZone = nil
-  end
-end
 
 --- Set the Engage Range when the AI will engage with airborne enemies. 
 -- @param #AI_A2G_PATROL self
@@ -322,157 +217,93 @@ function AI_A2G_PATROL:SetEngageRange( EngageRange )
   end
 end
 
---- onafter State Transition for Event Patrol.
+--- Defines a new patrol route using the @{Process_PatrolZone} parameters and settings.
 -- @param #AI_A2G_PATROL self
--- @param Wrapper.Group#GROUP AIPatrol The AI Group managed by the FSM.
+-- @return #AI_A2G_PATROL self
+-- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
 function AI_A2G_PATROL:onafterPatrol( AIPatrol, From, Event, To )
+  self:F2()
 
-  -- Call the parent Start event handler
-  self:GetParent(self).onafterPatrol( self, AIPatrol, From, Event, To )
-  self:HandleEvent( EVENTS.Dead )
+  self:ClearTargetDistance()
 
+  self:__Route( 1 )
+  
+  AIPatrol:OnReSpawn(
+    function( PatrolGroup )
+      self:__Reset( 1 )
+      self:__Route( 5 )
+    end
+  )
 end
-
--- todo: need to fix this global function
 
 --- @param Wrapper.Group#GROUP AIPatrol
-function AI_A2G_PATROL.AttackRoute( AIPatrol, Fsm )
+-- This statis method is called from the route path within the last task at the last waaypoint of the AIPatrol.
+-- Note that this method is required, as triggers the next route when patrolling for the AIPatrol.
+function AI_A2G_PATROL.PatrolRoute( AIPatrol, Fsm )
 
-  AIPatrol:F( { "AI_A2G_PATROL.AttackRoute:", AIPatrol:GetName() } )
+  AIPatrol:F( { "AI_A2G_PATROL.PatrolRoute:", AIPatrol:GetName() } )
 
   if AIPatrol:IsAlive() then
-    Fsm:__Engage( 0.5 )
+    Fsm:Route()
   end
+  
 end
 
---- @param #AI_A2G_PATROL self
--- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
+--- Defines a new patrol route using the @{Process_PatrolZone} parameters and settings.
+-- @param #AI_A2G_PATROL self
+-- @param Wrapper.Group#GROUP AIPatrol The Group managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
-function AI_A2G_PATROL:onbeforeEngage( AIPatrol, From, Event, To )
-  
-  if self.Accomplished == true then
-    return false
+function AI_A2G_PATROL:onafterRoute( AIPatrol, From, Event, To )
+
+  self:F2()
+
+  -- When RTB, don't allow anymore the routing.
+  if From == "RTB" then
+    return
   end
-end
 
---- @param #AI_A2G_PATROL self
--- @param Wrapper.Group#GROUP AIPatrol The AI Group managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
-function AI_A2G_PATROL:onafterAbort( AIPatrol, From, Event, To )
-  AIPatrol:ClearTasks()
-  self:__Route( 0.5 )
-end
-
-
---- @param #AI_A2G_PATROL self
--- @param Wrapper.Group#GROUP AIPatrol The AIPatrol Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
-function AI_A2G_PATROL:onafterEngage( AIPatrol, From, Event, To, AttackSetUnit )
-
-  self:F( { AIPatrol, From, Event, To, AttackSetUnit} )
-
-  self.AttackSetUnit = AttackSetUnit or self.AttackSetUnit -- Core.Set#SET_UNIT
   
-  local FirstAttackUnit = self.AttackSetUnit:GetFirst() -- Wrapper.Unit#UNIT
-  
-  if FirstAttackUnit and FirstAttackUnit:IsAlive() then -- If there is no attacker anymore, stop the engagement.
-  
-    if AIPatrol:IsAlive() then
+  if AIPatrol:IsAlive() then
+    
+    local PatrolRoute = {}
 
-      local EngageRoute = {}
+    --- Calculate the target route point.
+    
+    local CurrentCoord = AIPatrol:GetCoordinate()
+    
+    local ToTargetCoord = self.PatrolZone:GetRandomPointVec2()
+    ToTargetCoord:SetAlt( math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude ) )
+    self:SetTargetDistance( ToTargetCoord ) -- For RTB status check
+    
+    local ToTargetSpeed = math.random( self.PatrolMinSpeed, self.PatrolMaxSpeed )
+    
+    --- Create a route point of type air.
+    local ToPatrolRoutePoint = ToTargetCoord:WaypointAir( 
+      self.PatrolAltType, 
+      POINT_VEC3.RoutePointType.TurningPoint, 
+      POINT_VEC3.RoutePointAction.TurningPoint, 
+      ToTargetSpeed, 
+      true 
+    )
 
-      --- Calculate the target route point.
-      local CurrentCoord = AIPatrol:GetCoordinate()
-      local ToTargetCoord = self.AttackSetUnit:GetFirst():GetCoordinate()
-      local ToTargetSpeed = math.random( self.EngageMinSpeed, self.EngageMaxSpeed )
-      local ToInterceptAngle = CurrentCoord:GetAngleDegrees( CurrentCoord:GetDirectionVec3( ToTargetCoord ) )
-      
-      --- Create a route point of type air.
-      local ToPatrolRoutePoint = CurrentCoord:Translate( 5000, ToInterceptAngle ):WaypointAir( 
-        self.PatrolAltType, 
-        POINT_VEC3.RoutePointType.TurningPoint, 
-        POINT_VEC3.RoutePointAction.TurningPoint, 
-        ToTargetSpeed, 
-        true 
-      )
-  
-      self:F( { Angle = ToInterceptAngle, ToTargetSpeed = ToTargetSpeed } )
-      self:T2( { self.MinSpeed, self.MaxSpeed, ToTargetSpeed } )
-      
-      EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
-      EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
+    PatrolRoute[#PatrolRoute+1] = ToPatrolRoutePoint
+    PatrolRoute[#PatrolRoute+1] = ToPatrolRoutePoint
+    
+    local Tasks = {}
+    Tasks[#Tasks+1] = AIPatrol:TaskFunction( "AI_A2G_PATROL.PatrolRoute", self )
+    PatrolRoute[#PatrolRoute].task = AIPatrol:TaskCombo( Tasks )
+    
+    AIPatrol:OptionROEReturnFire()
+    AIPatrol:OptionROTEvadeFire()
 
-      local AttackTasks = {}
-  
-      for AttackUnitID, AttackUnit in pairs( self.AttackSetUnit:GetSet() ) do
-        local AttackUnit = AttackUnit -- Wrapper.Unit#UNIT
-        self:T( { "Attacking Unit:", AttackUnit:GetName(), AttackUnit:IsAlive(), AttackUnit:IsAir() } )
-        if AttackUnit:IsAlive() and AttackUnit:IsGround() then
-          AttackTasks[#AttackTasks+1] = AIPatrol:TaskAttackUnit( AttackUnit )
-        end
-      end
-  
-      if #AttackTasks == 0 then
-        self:E("No targets found -> Going back to Patrolling")
-        self:__Abort( 0.5 )
-      else
-        AIPatrol:OptionROEOpenFire()
-        AIPatrol:OptionROTEvadeFire()
-
-        AttackTasks[#AttackTasks+1] = AIPatrol:TaskFunction( "AI_A2G_PATROL.AttackRoute", self )
-        EngageRoute[#EngageRoute].task = AIPatrol:TaskCombo( AttackTasks )
-      end
-      
-      AIPatrol:Route( EngageRoute, 0.5 )
-    end
-  else
-    self:E("No targets found -> Going back to Patrolling")
-    self:__Abort( 0.5 )
+    AIPatrol:Route( PatrolRoute, 0.5 )
   end
-end
 
---- @param #AI_A2G_PATROL self
--- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
-function AI_A2G_PATROL:onafterAccomplish( AIPatrol, From, Event, To )
-  self.Accomplished = true
-  self:SetDetectionOff()
-end
-
---- @param #AI_A2G_PATROL self
--- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
--- @param Core.Event#EVENTDATA EventData
-function AI_A2G_PATROL:onafterDestroy( AIPatrol, From, Event, To, EventData )
-
-  if EventData.IniUnit then
-    self.AttackUnits[EventData.IniUnit] = nil
-  end
-end
-
---- @param #AI_A2G_PATROL self
--- @param Core.Event#EVENTDATA EventData
-function AI_A2G_PATROL:OnEventDead( EventData )
-  self:F( { "EventDead", EventData } )
-
-  if EventData.IniDCSUnit then
-    if self.AttackUnits and self.AttackUnits[EventData.IniUnit] then
-      self:__Destroy( 1, EventData )
-    end
-  end  
 end
 
 --- @param Wrapper.Group#GROUP AIPatrol

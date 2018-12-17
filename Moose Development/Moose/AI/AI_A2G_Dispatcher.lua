@@ -2761,7 +2761,7 @@ do -- AI_A2G_DISPATCHER
       -- Count the total of defenders on the battlefield.
       --local DefenderSize = Defender:GetInitialSize()
       if DefenderTask.Target then
-        --if DefenderTask.Fsm:Is( "Engaging" ) then
+        if DefenderTask.Fsm:Is( "Engaging" ) then
           self:F( "Defender Group Name: " .. Defender:GetName() .. ", Size: " .. DefenderSize )
           DefendersTotal = DefendersTotal + DefenderSize
           if DefenderTaskTarget and DefenderTaskTarget.Index == AttackerDetection.Index then
@@ -2775,7 +2775,7 @@ do -- AI_A2G_DISPATCHER
               DefendersEngaged = 0
             end
           end
-        --end
+        end
       end
 
       
@@ -2921,7 +2921,9 @@ do -- AI_A2G_DISPATCHER
       
       if DefenderPatrol then
 
-        local Fsm = AI_A2G_PATROL:New( DefenderPatrol, Patrol.Zone, Patrol.FloorAltitude, Patrol.CeilingAltitude, Patrol.PatrolMinSpeed, Patrol.PatrolMaxSpeed, Patrol.EngageMinSpeed, Patrol.EngageMaxSpeed, Patrol.AltType )
+        local AI_A2G_PATROL = { SEAD = AI_A2G_SEAD, BAI = AI_A2G_BAI, CAS = AI_A2G_CAS }
+        
+        local Fsm = AI_A2G_PATROL[DefenseTaskType]:New( DefenderPatrol, Patrol.EngageMinSpeed, Patrol.EngageMaxSpeed, Patrol.Zone, Patrol.FloorAltitude, Patrol.CeilingAltitude, Patrol.PatrolMinSpeed, Patrol.PatrolMaxSpeed, Patrol.AltType )
         Fsm:SetDispatcher( self )
         Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
         Fsm:SetFuelThreshold( DefenderSquadron.FuelThreshold or self.DefenderDefault.FuelThreshold, 60 )
@@ -2930,7 +2932,7 @@ do -- AI_A2G_DISPATCHER
         Fsm:SetTanker( DefenderSquadron.TankerName or self.DefenderDefault.TankerName )
         Fsm:Start()
 
-        self:SetDefenderTask( SquadronName, DefenderPatrol, DefenseTaskType, Fsm )
+        self:SetDefenderTask( SquadronName, DefenderPatrol, DefenseTaskType, Fsm, nil, DefenderGrouping )
 
         function Fsm:onafterTakeoff( Defender, From, Event, To )
           self:F({"Patrol Birth", Defender:GetName()})
@@ -2967,7 +2969,7 @@ do -- AI_A2G_DISPATCHER
           if Dispatcher:GetSquadronLanding( Squadron.Name ) == AI_A2G_DISPATCHER.Landing.NearAirbase then
             Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
             Defender:Destroy()
-            self:ParkDefender( Squadron, Defender )
+            Dispatcher:ParkDefender( Squadron, Defender )
           end
         end
       end
@@ -3425,7 +3427,7 @@ do -- AI_A2G_DISPATCHER
 
       if self.TacticalDisplay then      
         -- Show tactical situation
-        Report:Add( string.format( "\n - %s %s ( %s ): ( #%d ) %s" , DetectedItem.Type or " --- ", DetectedItem.ItemID, DetectedItem.Index, DetectedItem.Set:Count(), DetectedItem.Set:GetObjectNames() ) )
+        Report:Add( string.format( "\n - %4s %s ( %s ): ( #%d ) %s" , DetectedItem.Type or " --- ", DetectedItem.ItemID, DetectedItem.Index, DetectedItem.Set:Count(), DetectedItem.Set:GetObjectNames() ) )
         for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
           local Defender = Defender -- Wrapper.Group#GROUP
            if DefenderTask.Target and DefenderTask.Target.Index == DetectedItem.Index then

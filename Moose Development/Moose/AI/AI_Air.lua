@@ -511,7 +511,7 @@ function AI_AIR:onafterStatus()
     end
 
     if not self:Is("Home") then
-      self:__Status( 10 )
+      self:__Status( 30 )
     end
     
   end

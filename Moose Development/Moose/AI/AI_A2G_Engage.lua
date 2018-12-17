@@ -97,7 +97,7 @@ function AI_A2G_ENGAGE:New( AIGroup, EngageMinSpeed, EngageMaxSpeed )
   
   self.PatrolAltType = "RADIO"
   
-  self:AddTransition( { "Started", "Engaging", "Returning", "Airborne" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_A2G_ENGAGE.
+  self:AddTransition( { "Started", "Engaging", "Returning", "Airborne", "Patrolling" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_A2G_ENGAGE.
 
   --- OnBefore Transition Handler for Event Engage.
   -- @function [parent=#AI_A2G_ENGAGE] OnBeforeEngage
