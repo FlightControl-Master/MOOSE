@@ -1,4 +1,4 @@
---- **Ops** - (R2.5) - Rescue helo.
+--- **Ops** - (R2.5) - Rescue helicopter for carrier operations.
 -- 
 -- Recue helicopter for carrier operations.
 --
@@ -14,7 +14,7 @@
 -- ===
 --
 -- ### Author: **funkyfranky**
--- ### Contributions: Flightcontrol (@{AI.#AI_FORMATION} class)
+-- ### Contributions: Flightcontrol (@{AI.AI_Formation} class being used here)
 --
 -- @module Ops.RescueHelo
 -- @image MOOSE.JPG
@@ -62,20 +62,20 @@
 -- 
 -- # Simple Script
 -- 
--- In the mission editor you have to set up a carrier unit, which will act as "mother". In the following, this unit will be named "USS Stennis".
+-- In the mission editor you have to set up a carrier unit, which will act as "mother". In the following, this unit will be named "*USS Stennis*".
 -- 
--- Secondly, you need to define a recue helicopter group in the mission editor and set it to "LATE ACTIVATED". The name of the group we'll use is "Recue Helo".
+-- Secondly, you need to define a recue helicopter group in the mission editor and set it to "**LATE ACTIVATED**". The name of the group we'll use is "*Recue Helo*".
 -- 
 -- The basic script is very simple and consists of only two lines. 
 -- 
 --      RescueheloStennis=RESCUEHELO:New(UNIT:FindByName("USS Stennis"), "Rescue Helo")
 --      RescueheloStennis:Start()
 --
--- The first line will create a new RESCUEHELO object and the second line starts the process.
+-- The first line will create a new @{#RESCUEHELO} object via @{#RESCUEHELO.New} and the second line starts the process by calling @{#RESCUEHELO.Start}.
 -- 
--- **NOTE** that it is *very important* to define the RESCUEHELO object as **global** variable. Otherwise, the lua garbage collector will kill the formation!
+-- **NOTE** that it is *very important* to define the RESCUEHELO object as **global** variable. Otherwise, the lua garbage collector will kill the formation for unknown reasons!
 -- 
--- By default, the helo will be spawned on the USS Stennis with hot engines. Then it will take off and go on station on the starboard side of the boat.
+-- By default, the helo will be spawned on the *USS Stennis* with hot engines. Then it will take off and go on station on the starboard side of the boat.
 -- 
 -- Once the helo is out of fuel, it will return to the carrier. When the helo lands, it will be respawned immidiately and go back on station.
 -- 
@@ -85,7 +85,7 @@
 -- 
 -- # Fine Tuning
 -- 
--- The implementation allows to customize quite a few settings easily.
+-- The implementation allows to customize quite a few settings easily via user API functions.
 -- 
 -- ## Takeoff Type
 -- 
@@ -136,15 +136,15 @@
 -- ## Rescue Operations
 --
 -- By default the rescue helo will start a rescue operation if an aircraft crashes or a pilot ejects in the vicinity of the carrier.
--- The standard "rescue zone" has a radius of 30 km around the carrier. The radius can be adjusted via the @{#RESCUEHELO.SetRescueZone}(*radius*) functions,
--- where *radius* is the radius of the zone in kilometers. If you use multiple rescue helos in the same mission, you might want to ensure that the radii
+-- The standard "rescue zone" has a radius of 15 NM (~28 km) around the carrier. The radius can be adjusted via the @{#RESCUEHELO.SetRescueZone}(*radius*) functions,
+-- where *radius* is the radius of the zone in nautical miles. If you use multiple rescue helos in the same mission, you might want to ensure that the radii
 -- are not overlapping so that two helos try to rescue the same pilot. But it should not hurt either way.
 -- 
 -- Once the helo reaches the crash site, the rescue operation will last 5 minutes. This time can be changed by @{#RESCUEHELO.SetRescueDuration(*time*),
 -- where *time* is the duration in minutes.
 -- 
--- During the rescue operation, the helo will hover (orbit) over the crash site at a speed of 10 km/h. The speed can be set by @{#RESCUEHELO.SetRescueHoverSpeed}(*speed*),
--- where the *speed* is given in km/h.
+-- During the rescue operation, the helo will hover (orbit) over the crash site at a speed of 5 knots. The speed can be set by @{#RESCUEHELO.SetRescueHoverSpeed}(*speed*),
+-- where the *speed* is given in knots.
 -- 
 -- If no rescue operations should be carried out by the helo, this option can be completely disabled by using @{#RESCUEHELO.SetRescueOff}().
 --
@@ -214,7 +214,7 @@ RESCUEHELO = {
 
 --- Class version.
 -- @field #string version
-RESCUEHELO.version="0.9.8"
+RESCUEHELO.version="0.9.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -234,7 +234,7 @@ RESCUEHELO.version="0.9.8"
 
 --- Create a new RESCUEHELO object. 
 -- @param #RESCUEHELO self
--- @param Wrapper.Unit#UNIT carrierunit Carrier unit.
+-- @param Wrapper.Unit#UNIT carrierunit Carrier unit object or simply the unit name.
 -- @param #string helogroupname Name of the late activated rescue helo template group.
 -- @return #RESCUEHELO RESCUEHELO object.
 function RESCUEHELO:New(carrierunit, helogroupname)
@@ -412,20 +412,20 @@ end
 
 --- Set rescue zone radius. Crashed or ejected units inside this radius of the carrier will be rescued if possible.
 -- @param #RESCUEHELO self
--- @param #number radius Radius of rescue zone in kilometers. Default is 30 km.
+-- @param #number radius Radius of rescue zone in nautical miles. Default is 15 NM.
 -- @return #RESCUEHELO self
 function RESCUEHELO:SetRescueZone(radius)
-  radius=(radius or 30)*1000
+  radius=UTILS.NMToMeters(radius or 15)
   self.rescuezone=ZONE_UNIT:New("Rescue Zone", self.carrier, radius)
   return self
 end
 
 --- Set rescue hover speed.
 -- @param #RESCUEHELO self
--- @param #number speed Speed in km/h. Default 10 km/h.
+-- @param #number speed Speed in knots. Default 5 kts.
 -- @return #RESCUEHELO self
 function RESCUEHELO:SetRescueHoverSpeed(speed)
-  self.rescuespeed=UTILS.KmphToMps(speed or 10)
+  self.rescuespeed=UTILS.KnotsToMps(speed or 5)
   return self
 end
 

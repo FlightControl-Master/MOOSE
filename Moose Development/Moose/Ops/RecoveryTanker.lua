@@ -15,7 +15,7 @@
 -- ===
 --
 -- ### Author: **funkyfranky** 
--- ### Special thanks to HighwaymanEd for testing and suggesting improvements!
+-- ### Special thanks to **HighwaymanEd** for testing and suggesting improvements!
 --
 -- @module Ops.RecoveryTanker
 -- @image MOOSE.JPG
@@ -1206,7 +1206,7 @@ function RECOVERYTANKER:_ActivateTACAN(delay)
   if delay and delay>0 then
   
     -- Schedule TACAN activation.
-    SCHEDULER:New(nil, self._ActivateTACAN, {self}, delay)
+    SCHEDULER:New(self, self._ActivateTACAN, {}, delay)
     
   else
 

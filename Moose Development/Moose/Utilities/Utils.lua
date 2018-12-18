@@ -263,7 +263,11 @@ UTILS.FeetToMeters = function(feet)
 end
 
 UTILS.KnotsToKmph = function(knots)
-  return knots* 1.852
+  return knots * 1.852
+end
+
+UTILS.KmphToKnots = function(knots)
+  return knots / 1.852
 end
 
 UTILS.KmphToMps = function( kmph )
