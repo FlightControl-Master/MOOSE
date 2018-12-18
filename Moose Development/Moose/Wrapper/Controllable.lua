@@ -148,7 +148,7 @@
 --   * @{#CONTROLLABLE.OptionROEReturnFirePossible}
 --   * @{#CONTROLLABLE.OptionROEEvadeFirePossible}
 -- 
--- ## 5.2) Rule on thread:
+-- ## 5.2) Reaction On Thread:
 -- 
 --   * @{#CONTROLLABLE.OptionROTNoReaction}
 --   * @{#CONTROLLABLE.OptionROTPassiveDefense}
