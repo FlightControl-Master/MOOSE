@@ -298,6 +298,19 @@ function AI_AIR:SetSpeed( PatrolMinSpeed, PatrolMaxSpeed )
 end
 
 
+--- Sets (modifies) the minimum and maximum RTB speed of the patrol.
+-- @param #AI_AIR self
+-- @param DCS#Speed  RTBMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.
+-- @param DCS#Speed  RTBMaxSpeed The maximum speed of the @{Wrapper.Controllable} in km/h.
+-- @return #AI_AIR self
+function AI_AIR:SetRTBSpeed( RTBMinSpeed, RTBMaxSpeed )
+  self:F2( { RTBMinSpeed, RTBMaxSpeed } )
+  
+  self.RTBMinSpeed = RTBMinSpeed
+  self.RTBMaxSpeed = RTBMaxSpeed
+end
+
+
 --- Sets the floor and ceiling altitude of the patrol.
 -- @param #AI_AIR self
 -- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
@@ -511,7 +524,7 @@ function AI_AIR:onafterStatus()
     end
 
     if not self:Is("Home") then
-      self:__Status( 30 )
+      self:__Status( 10 )
     end
     
   end
@@ -562,7 +575,7 @@ function AI_AIR:onafterRTB( AIGroup, From, Event, To )
     
     local CurrentCoord = AIGroup:GetCoordinate()
     local ToTargetCoord = self.HomeAirbase:GetCoordinate()
-    local ToTargetSpeed = math.random( self.PatrolMinSpeed, self.PatrolMaxSpeed )
+    local ToTargetSpeed = math.random( self.RTBMinSpeed, self.RTBMaxSpeed )
     local ToAirbaseAngle = CurrentCoord:GetAngleDegrees( CurrentCoord:GetDirectionVec3( ToTargetCoord ) )
 
     local Distance = CurrentCoord:Get2DDistance( ToTargetCoord )
@@ -582,9 +595,6 @@ function AI_AIR:onafterRTB( AIGroup, From, Event, To )
       true 
     )
 
-    self:F( { Angle = ToAirbaseAngle, ToTargetSpeed = ToTargetSpeed } )
-    self:T2( { self.MinSpeed, self.MaxSpeed, ToTargetSpeed } )
-    
     EngageRoute[#EngageRoute+1] = ToRTBRoutePoint
     EngageRoute[#EngageRoute+1] = ToRTBRoutePoint
     

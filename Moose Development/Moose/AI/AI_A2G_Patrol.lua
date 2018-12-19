@@ -99,26 +99,31 @@ AI_A2G_PATROL = {
 
 --- Creates a new AI_A2G_PATROL object
 -- @param #AI_A2G_PATROL self
--- @param Wrapper.Group#GROUP AIPatrol
--- @param DCS#Speed  EngageMinSpeed The minimum speed of the @{Wrapper.Group} in km/h when engaging a target.
--- @param DCS#Speed  EngageMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h when engaging a target.
+-- @param Wrapper.Group#GROUP AIGroup
+-- @param DCS#Speed EngageMinSpeed (optional, default = 50% of max speed) The minimum speed of the @{Wrapper.Group} in km/h when engaging a target.
+-- @param DCS#Speed EngageMaxSpeed (optional, default = 75% of max speed) The maximum speed of the @{Wrapper.Group} in km/h when engaging a target.
+-- @param DCS#Altitude EngageFloorAltitude (optional, default = 1000m ) The lowest altitude in meters where to execute the engagement.
+-- @param DCS#Altitude EngageCeilingAltitude (optional, default = 1500m ) The highest altitude in meters where to execute the engagement.
 -- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
--- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
--- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Group} in km/h.
--- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h.
--- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
+-- @param DCS#Altitude PatrolFloorAltitude (optional, default = 1000m ) The lowest altitude in meters where to execute the patrol.
+-- @param DCS#Altitude PatrolCeilingAltitude (optional, default = 1500m ) The highest altitude in meters where to execute the patrol.
+-- @param DCS#Speed  PatrolMinSpeed (optional, default = 50% of max speed) The minimum speed of the @{Wrapper.Group} in km/h.
+-- @param DCS#Speed  PatrolMaxSpeed (optional, default = 75% of max speed) The maximum speed of the @{Wrapper.Group} in km/h.
+-- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO.
 -- @return #AI_A2G_PATROL
-function AI_A2G_PATROL:New( AIPatrol, EngageMinSpeed, EngageMaxSpeed, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType )
+function AI_A2G_PATROL:New( AIGroup, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, AI_A2G_ENGAGE:New( AIPatrol, EngageMinSpeed, EngageMaxSpeed ) ) -- #AI_A2G_PATROL
+  local self = BASE:Inherit( self, AI_A2G_ENGAGE:New( AIGroup, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude ) ) -- #AI_A2G_PATROL
 
+  local SpeedMax = AIGroup:GetSpeedMax()
+  
   self.PatrolZone = PatrolZone
-  self.PatrolFloorAltitude = PatrolFloorAltitude
-  self.PatrolCeilingAltitude = PatrolCeilingAltitude
-  self.PatrolMinSpeed = PatrolMinSpeed
-  self.PatrolMaxSpeed = PatrolMaxSpeed
+  
+  self.PatrolFloorAltitude = PatrolFloorAltitude or 1000
+  self.PatrolCeilingAltitude = PatrolCeilingAltitude or 1500
+  self.PatrolMinSpeed = PatrolMinSpeed or SpeedMax * 0.5
+  self.PatrolMaxSpeed = PatrolMaxSpeed or SpeedMax * 0.75
   
   -- defafult PatrolAltType to "RADIO" if not specified
   self.PatrolAltType = PatrolAltType or "RADIO"

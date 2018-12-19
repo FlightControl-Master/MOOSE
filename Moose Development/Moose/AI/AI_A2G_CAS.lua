@@ -14,7 +14,7 @@
 
 
 --- @type AI_A2G_CAS
--- @extends AI.AI_A2G_Engage#AI_A2G_Engage
+-- @extends AI.AI_A2G_Patrol#AI_A2G_PATROL
 
 
 --- Implements the core functions to intercept intruders. Use the Engage trigger to intercept intruders.
@@ -33,6 +33,8 @@ AI_A2G_CAS = {
 -- @param Wrapper.Group#GROUP AIGroup
 -- @param DCS#Speed  EngageMinSpeed The minimum speed of the @{Wrapper.Group} in km/h when engaging a target.
 -- @param DCS#Speed  EngageMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h when engaging a target.
+-- @param DCS#Altitude EngageFloorAltitude The lowest altitude in meters where to execute the engagement.
+-- @param DCS#Altitude EngageCeilingAltitude The highest altitude in meters where to execute the engagement.
 -- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
 -- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
 -- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
@@ -40,10 +42,14 @@ AI_A2G_CAS = {
 -- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h.
 -- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
 -- @return #AI_A2G_CAS
-function AI_A2G_CAS:New( AIGroup, EngageMinSpeed, EngageMaxSpeed, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType )
+function AI_A2G_CAS:New( AIGroup, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, AI_A2G_PATROL:New( AIGroup, EngageMinSpeed, EngageMaxSpeed, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType ) ) -- #AI_A2G_CAS
+  local self = BASE:Inherit( self, AI_A2G_PATROL:New( AIGroup, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType ) ) -- #AI_A2G_CAS
+
+  local RTBSpeedMax = AIGroup:GetSpeedMax()
+
+  self:SetRTBSpeed( RTBSpeedMax * 0.50, RTBSpeedMax * 0.75 )
 
   return self
 end
@@ -72,8 +78,11 @@ function AI_A2G_CAS:onafterEngage( DefenderGroup, From, Event, To, AttackSetUnit
       -- If it is less than 10km, then attack without a route.
       -- Otherwise perform a route attack.
 
-      local DefenderCoord = DefenderGroup:GetCoordinate()
-      local TargetCoord = self.AttackSetUnit:GetFirst():GetCoordinate()
+      local DefenderCoord = DefenderGroup:GetPointVec3()
+      DefenderCoord:SetY( math.random( self.EngageFloorAltitude, self.EngageCeilingAltitude ) ) -- Ground targets don't have an altitude.
+
+      local TargetCoord = self.AttackSetUnit:GetFirst():GetPointVec3()
+      TargetCoord:SetY( math.random( self.EngageFloorAltitude, self.EngageCeilingAltitude ) ) -- Ground targets don't have an altitude.
       
       local TargetDistance = DefenderCoord:Get2DDistance( TargetCoord )
       
@@ -84,7 +93,7 @@ function AI_A2G_CAS:onafterEngage( DefenderGroup, From, Event, To, AttackSetUnit
       --- Calculate the target route point.
       
       local FromWP = DefenderCoord:WaypointAir( 
-        self.PatrolAltType, 
+        self.PatrolAltType or "RADIO", 
         POINT_VEC3.RoutePointType.TurningPoint, 
         POINT_VEC3.RoutePointAction.TurningPoint, 
         ToTargetSpeed, 
@@ -93,16 +102,15 @@ function AI_A2G_CAS:onafterEngage( DefenderGroup, From, Event, To, AttackSetUnit
       
       EngageRoute[#EngageRoute+1] = FromWP
 
-      local ToCoord = self.AttackSetUnit:GetFirst():GetCoordinate()
-      self:SetTargetDistance( ToCoord ) -- For RTB status check
+      self:SetTargetDistance( TargetCoord ) -- For RTB status check
       
-      local FromEngageAngle = ToCoord:GetAngleDegrees( ToCoord:GetDirectionVec3( DefenderCoord ) )
+      local FromEngageAngle = TargetCoord:GetAngleDegrees( TargetCoord:GetDirectionVec3( DefenderCoord ) )
       
       local EngageDistance = ( DefenderGroup:IsHelicopter() and 5000 ) or ( DefenderGroup:IsAirPlane() and 10000 )
       
       --- Create a route point of type air.
-      local ToWP = ToCoord:Translate( EngageDistance, FromEngageAngle ):WaypointAir( 
-        self.PatrolAltType, 
+      local ToWP = TargetCoord:Translate( EngageDistance, FromEngageAngle ):WaypointAir( 
+        self.PatrolAltType or "RADIO", 
         POINT_VEC3.RoutePointType.TurningPoint, 
         POINT_VEC3.RoutePointAction.TurningPoint, 
         ToTargetSpeed, 

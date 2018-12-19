@@ -14,7 +14,7 @@
 
 
 --- @type AI_A2G_SEAD
--- @extends AI.AI_A2G_Engage#AI_A2G_Engage
+-- @extends AI.AI_A2G_Patrol#AI_A2G_PATROL
 
 
 --- Implements the core functions to SEAD intruders. Use the Engage trigger to intercept intruders.
@@ -83,6 +83,8 @@ AI_A2G_SEAD = {
 -- @param Wrapper.Group#GROUP AIGroup
 -- @param DCS#Speed  EngageMinSpeed The minimum speed of the @{Wrapper.Group} in km/h when engaging a target.
 -- @param DCS#Speed  EngageMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h when engaging a target.
+-- @param DCS#Altitude EngageFloorAltitude The lowest altitude in meters where to execute the engagement.
+-- @param DCS#Altitude EngageCeilingAltitude The highest altitude in meters where to execute the engagement.
 -- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
 -- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
 -- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
@@ -90,10 +92,10 @@ AI_A2G_SEAD = {
 -- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h.
 -- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
 -- @return #AI_A2G_SEAD
-function AI_A2G_SEAD:New( AIGroup, EngageMinSpeed, EngageMaxSpeed, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType )
+function AI_A2G_SEAD:New( AIGroup, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, AI_A2G_PATROL:New( AIGroup, EngageMinSpeed, EngageMaxSpeed, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType ) ) -- #AI_A2G_SEAD
+  local self = BASE:Inherit( self, AI_A2G_PATROL:New( AIGroup, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType ) ) -- #AI_A2G_SEAD
 
   return self
 end
@@ -123,8 +125,11 @@ function AI_A2G_SEAD:onafterEngage( DefenderGroup, From, Event, To, AttackSetUni
       -- If it is less than 50km, then attack without a route.
       -- Otherwise perform a route attack.
 
-      local DefenderCoord = DefenderGroup:GetCoordinate()
-      local TargetCoord = self.AttackSetUnit:GetFirst():GetCoordinate()
+      local DefenderCoord = DefenderGroup:GetPointVec3()
+      DefenderCoord:SetY( math.random( self.EngageFloorAltitude, self.EngageCeilingAltitude ) ) -- Ground targets don't have an altitude.
+
+      local TargetCoord = self.AttackSetUnit:GetFirst():GetPointVec3()
+      TargetCoord:SetY( math.random( self.EngageFloorAltitude, self.EngageCeilingAltitude ) ) -- Ground targets don't have an altitude.
       
       local TargetDistance = DefenderCoord:Get2DDistance( TargetCoord )
       
@@ -137,7 +142,7 @@ function AI_A2G_SEAD:onafterEngage( DefenderGroup, From, Event, To, AttackSetUni
         --- Calculate the target route point.
         
         local FromWP = DefenderCoord:WaypointAir( 
-          self.PatrolAltType, 
+          self.PatrolAltType or "RADIO", 
           POINT_VEC3.RoutePointType.TurningPoint, 
           POINT_VEC3.RoutePointAction.TurningPoint, 
           ToTargetSpeed, 
@@ -153,7 +158,7 @@ function AI_A2G_SEAD:onafterEngage( DefenderGroup, From, Event, To, AttackSetUni
         
         --- Create a route point of type air, 50km from the center of the attack point.
         local ToWP = ToCoord:Translate( 50000, FromEngageAngle ):WaypointAir( 
-          self.PatrolAltType, 
+          self.PatrolAltType or "RADIO", 
           POINT_VEC3.RoutePointType.TurningPoint, 
           POINT_VEC3.RoutePointAction.TurningPoint, 
           ToTargetSpeed, 

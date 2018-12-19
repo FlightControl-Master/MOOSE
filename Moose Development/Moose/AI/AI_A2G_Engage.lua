@@ -81,8 +81,12 @@ AI_A2G_ENGAGE = {
 --- Creates a new AI_A2G_ENGAGE object
 -- @param #AI_A2G_ENGAGE self
 -- @param Wrapper.Group#GROUP AIGroup
+-- @param DCS#Speed EngageMinSpeed (optional, default = 50% of max speed) The minimum speed of the @{Wrapper.Group} in km/h when engaging a target.
+-- @param DCS#Speed  EngageMaxSpeed (optional, default = 75% of max speed) The maximum speed of the @{Wrapper.Group} in km/h when engaging a target.
+-- @param DCS#Altitude EngageFloorAltitude (optional, default = 1000m ) The lowest altitude in meters where to execute the engagement.
+-- @param DCS#Altitude EngageCeilingAltitude (optional, default = 1500m ) The highest altitude in meters where to execute the engagement.
 -- @return #AI_A2G_ENGAGE
-function AI_A2G_ENGAGE:New( AIGroup, EngageMinSpeed, EngageMaxSpeed )
+function AI_A2G_ENGAGE:New( AIGroup, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude )
 
   -- Inherits from BASE
   local self = BASE:Inherit( self, AI_A2G:New( AIGroup ) ) -- #AI_A2G_ENGAGE
@@ -90,12 +94,12 @@ function AI_A2G_ENGAGE:New( AIGroup, EngageMinSpeed, EngageMaxSpeed )
   self.Accomplished = false
   self.Engaging = false
   
-  self.EngageMinSpeed = EngageMinSpeed
-  self.EngageMaxSpeed = EngageMaxSpeed
-  self.PatrolMinSpeed = EngageMinSpeed
-  self.PatrolMaxSpeed = EngageMaxSpeed
+  local SpeedMax = AIGroup:GetSpeedMax()
   
-  self.PatrolAltType = "RADIO"
+  self.EngageMinSpeed = EngageMinSpeed or SpeedMax * 0.5
+  self.EngageMaxSpeed = EngageMaxSpeed or SpeedMax * 0.75
+  self.EngageFloorAltitude = EngageFloorAltitude or 1000
+  self.EngageCeilingAltitude = EngageCeilingAltitude or 1500
   
   self:AddTransition( { "Started", "Engaging", "Returning", "Airborne", "Patrolling" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_A2G_ENGAGE.
 
