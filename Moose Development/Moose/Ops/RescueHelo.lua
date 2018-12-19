@@ -113,8 +113,10 @@
 -- 
 -- ## Home Base
 -- 
--- It is possible to define a "home base" other than the aircaft carrier. For example, one could imagine a strike group, and the helo will be spawned from
--- another ship which has a helo pad.
+-- It is possible to define a "home base" other than the aircaft carrier using the @{#RESCUEHELO.SetHomeBase}(*airbase*) function, where *airbase* is
+-- a @{Wrapper.Airbase#AIRBASE} object or simply the name of the airbase.
+-- 
+-- For example, one could imagine a strike group, and the helo will be spawned from another ship which has a helo pad.
 -- 
 --      RescueheloStennis=RESCUEHELO:New(UNIT:FindByName("USS Stennis"), "Rescue Helo")
 --      RescueheloStennis:SetHomeBase(AIRBASE:FindByName("USS Normandy"))
@@ -130,8 +132,8 @@
 -- The position of the helo relative to the mother ship can be tuned via the functions
 -- 
 --    * @{#RESCUEHELO.SetAltitude}(*altitude*), where *altitude* is the altitude the helo flies at in meters. Default is 70 meters.
---    * @{#RESCUEHELO.SetOffsetX}(*distance*)}, where *distance is the distance in the direction of movement of the carrier. Default is 200 meters.
---    * @{#RESCUEHELO.SetOffsetZ}(*distance*)}, where *distance is the distance on the starboard side. Default is 100 meters.
+--    * @{#RESCUEHELO.SetOffsetX}(*distance*), where *distance is the distance in the direction of movement of the carrier. Default is 200 meters.
+--    * @{#RESCUEHELO.SetOffsetZ}(*distance*), where *distance is the distance on the starboard side. Default is 100 meters.
 --
 -- ## Rescue Operations
 --

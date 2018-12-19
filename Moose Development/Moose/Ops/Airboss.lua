@@ -1069,7 +1069,7 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.5.7"
+AIRBOSS.version="0.5.7w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -2129,7 +2129,6 @@ function AIRBOSS:onafterRecoveryStart(From, Event, To, Case, Offset)
   
   -- Switch to case.
   self:RecoveryCase(Case, Offset)
-    
 end
 
 --- On after "RecoveryStop" event. Recovery of aircraft is stopped and carrier switches to state "Idle".
@@ -3007,12 +3006,7 @@ function AIRBOSS:_MarshalAI(flight, nstack)
     else
     
       -- Get correct radial depending on recovery case including offset.
-      local radial
-      if case==2 then
-        radial=self:GetRadialCase2(false, true)
-      elseif case==3 then
-        radial=self:GetRadialCase3(false, true)
-      end
+      local radial=self:GetRadial(case, false, true)
     
       -- Point in the middle of the race track and a 5 NM more port perpendicular.
       p0=p2:Translate(UTILS.NMToMeters(5), radial+90):Translate(UTILS.NMToMeters(5), radial)
@@ -3083,9 +3077,12 @@ function AIRBOSS:_LandAI(flight)
 
   -- Current positon.
   wp[#wp+1]=flight.group:GetCoordinate():WaypointAirTurningPoint(nil, Speed, {}, "Current position")
+  
+  -- Altitude 2000 ft
+  local alt=UTILS.FeetToMeters(2000)
 
   -- Landing waypoint 5 NM behind carrier at 2000 ft = 610 meters ASL.
-  wp[#wp+1]=self:GetCoordinate():Translate(-UTILS.NMToMeters(5), hdg):SetAltitude(UTILS.FeetToMeters(2000)):WaypointAirLanding(Speed, self.airbase, nil, "Landing")
+  wp[#wp+1]=self:GetCoordinate():Translate(-UTILS.NMToMeters(5), hdg):SetAltitude(alt):WaypointAirLanding(Speed, self.airbase, nil, "Landing")
       
   -- Reinit waypoints.
   flight.group:WayPointInitialize(wp)
@@ -3145,20 +3142,15 @@ function AIRBOSS:_GetMarshalAltitude(stack, case)
     Dist=UTILS.NMToMeters((stack-1)+angels0+15)
     
     -- Get correct radial depending on recovery case including offset.
-    local radial
-    if case==2 then
-      radial=self:GetRadialCase2(false, true)
-    elseif case==3 then
-      radial=self:GetRadialCase3(false, true)
-    end
+    local radial=self:GetRadial(case, false, true)
     
     -- For CCW pattern: p1 further astern than p2.
     
-    -- First point of race track pattern
+    -- First point of race track pattern.
+    --TODO: check if 7 NM is okay.
     p1=Carrier:Translate(Dist+UTILS.NMToMeters(7), radial)
     
-    -- Second point which is 10 NM further behind.
-    --TODO: check if 10 NM is okay.
+    -- Second point.
     p2=Carrier:Translate(Dist, radial)
     
   end
@@ -3434,8 +3426,8 @@ function AIRBOSS:_PrintQueue(queue, name)
       local flight=_flight --#AIRBOSS.FlightGroup
       
       -- Timestamp.
-      --local clock=UTILS.SecondsToClock(timer.getAbsTime()-flight.time)
-      local clock=timer.getAbsTime()-flight.time
+      local clock=UTILS.SecondsToClock(timer.getAbsTime()-flight.time)
+      --local clock=timer.getAbsTime()-flight.time
       -- Recovery case of flight.
       local case=flight.case
       -- Stack and stack alt.
@@ -3450,10 +3442,7 @@ function AIRBOSS:_PrintQueue(queue, name)
       local nsec=#flight.section
       local actype=flight.actype
       local onboard=flight.onboard
-      local holding="false"
-      if flight.holding then
-        holding="true"
-      end
+      local holding=tostring(flight.holding)
       
       -- TODO: Include player data.
       --[[
@@ -3976,13 +3965,13 @@ function AIRBOSS:_CheckPlayerStatus()
         
           -- Check if player is too close to another aircraft in the pattern.
           -- TODO: At which steps is the really necessary. Case II/III?
-          if  playerData.step==AIRBOSS.PatternStep.INITIAL or
+          if  playerData.step==AIRBOSS.PatternStep.INITIAL    or
               playerData.step==AIRBOSS.PatternStep.BREAKENTRY or
               playerData.step==AIRBOSS.PatternStep.EARLYBREAK or              
-              playerData.step==AIRBOSS.PatternStep.LATEBREAK or
-              playerData.step==AIRBOSS.PatternStep.ABEAM or
-              playerData.step==AIRBOSS.PatternStep.GROOVE_XX or
-              playerData.step==AIRBOSS.PatternStep.GROOVE_IM then
+              playerData.step==AIRBOSS.PatternStep.LATEBREAK  or
+              playerData.step==AIRBOSS.PatternStep.ABEAM      or
+              playerData.step==AIRBOSS.PatternStep.GROOVE_XX  or
+              playerData.step==AIRBOSS.PatternStep.GROOVE_IM  then
             self:_CheckPlayerPatternDistance(playerData)
           end
                  
@@ -4225,16 +4214,8 @@ function AIRBOSS:OnEventLand(EventData)
         dist=-dist
       end
       
-      -- Debug output
+      -- Debug mark of player landing coord.
       if self.Debug and false then
-        local hdg=self.carrier:GetHeading()+self.carrierparam.rwyangle
-        
-        -- Debug marks of wires.
-        local w1=self:GetCoordinate():Translate(self.carrierparam.wire1, hdg):MarkToAll("Wire 1a")
-        local w2=self:GetCoordinate():Translate(self.carrierparam.wire2, hdg):MarkToAll("Wire 2a")
-        local w3=self:GetCoordinate():Translate(self.carrierparam.wire3, hdg):MarkToAll("Wire 3a")
-        local w4=self:GetCoordinate():Translate(self.carrierparam.wire4, hdg):MarkToAll("Wire 4a")
-        
         -- Debug mark of player landing coord.
         local lp=coord:MarkToAll("Landing coord.")
         coord:SmokeGreen()        
@@ -4261,7 +4242,7 @@ function AIRBOSS:OnEventLand(EventData)
       -- Debug text.
       local text=string.format("Player %s AC type %s landed at dist=%.1f m (+offset=%.1f). Trapped wire=%d.", EventData.IniUnitName, _type, dist, self.carrierparam.wireoffset, wire)
       text=text..string.format("X=%.1f m, Z=%.1f m, rho=%.1f m, phi=%.1f deg.", X, Z, rho, phi)
-      self:T(self.lid..text)      
+      self:T(self.lid..text)
       
       -- We did land.
       playerData.landed=true
@@ -4375,9 +4356,11 @@ function AIRBOSS:_Holding(playerData)
   -- Check player alt is +-500 feet of assigned pattern alt.
   local altdiff=playeralt-patternalt
   local goodalt=math.abs(altdiff)<UTILS.MetersToFeet(500)
+  local angels=self:_GetAngels(patternalt)
   
-  -- TODO: check if player is flying counter clockwise. AOB<0.
+  -- TODO: Check if player is flying counter clockwise. AOB<0.
 
+  -- Message text.
   local text=""
   
   -- Different cases
@@ -4386,12 +4369,31 @@ function AIRBOSS:_Holding(playerData)
     
     if inholdingzone then
       -- Player is still in holding zone.
-      self:T2("Player is still in the holding zone. Good job.")
+      self:T3("Player is still in the holding zone. Good job.")
     else
       -- Player left the holding zone.
       self:T("Player just left the holding zone. Come back!")
       text=text..string.format("You just left the holding zone. Watch your numbers!")
       playerData.holding=false
+    end
+    
+    -- Altitude check
+    if altdiff>goodalt then
+    
+      -- Issue warning.
+      if not playerData.warning then
+        text=text..string.format("You just left your assigned altitude. Get back to angels %d.", angels)
+        playerData.warning=true
+      end
+      
+    else
+      
+      -- Back to assigned altitude.
+      if playerData.warning then
+        text=text..string.format("Altitude is looking good again.")
+        playerData.warning=nil
+      end
+    
     end
     
   elseif playerData.holding==false then
@@ -4423,7 +4425,7 @@ function AIRBOSS:_Holding(playerData)
       
       -- Feedback on altitude.
       if goodalt then
-        text=text..string.format(" Now stay at that altitude.")
+        text=text..string.format(" Altitude is good.")
       else
         if altdiff<0 then
           text=text..string.format(" But you are too low.")
@@ -4432,6 +4434,12 @@ function AIRBOSS:_Holding(playerData)
         end
         text=text..string.format(" Currently assigned altitude is %d ft.", UTILS.MetersToFeet(patternalt))
       end
+      
+      -- No info for the pros.
+      if playerData.difficulty==AIRBOSS.Difficulty.HARD then
+        text=""
+      end
+      
     else
       -- Player did not yet arrive in holding zone.
       self:T2("Waiting for player to arrive in the holding zone.")
@@ -4459,8 +4467,13 @@ function AIRBOSS:_Commencing(playerData)
   -- Commence
   local text=string.format("Commencing. (Case %d)", playerData.case)
   
-  -- Message to all players.
-  self:MessageToMarshal(text, playerData.onboard, "", 5)
+  -- Message to all players in Marshal stack.
+  --self:MessageToMarshal(text, playerData.onboard, "", 5)
+  
+  -- Message to player only.
+  if playerData.difficulty~=AIRBOSS.Difficulty.HARD then
+    self:MessageToPlayer(playerData, text, playerData.onboard, "", 5)
+  end
   
   -- Next step: depends on case recovery.
   if playerData.case==1 then
@@ -4484,11 +4497,17 @@ function AIRBOSS:_Initial(playerData)
   -- Check if player is in initial zone and entering the CASE I pattern.
   if playerData.unit:IsInZone(self.zoneInitial) then
   
-    -- Inform player.
-    local hint=string.format("Initial")
-
     -- Send message for normal and easy difficulty.
     if playerData.difficulty~=AIRBOSS.Difficulty.HARD then
+    
+      -- Inform player.
+      local hint=string.format("Initial")
+      
+      -- Hook down for students.
+      if playerData.difficulty==AIRBOSS.Difficulty.EASY then
+        hint=hint.." - Hook down!"
+      end    
+    
       self:MessageToPlayer(playerData, hint, "MARSHAL")
     end
   
@@ -4553,12 +4572,15 @@ function AIRBOSS:_Platform(playerData)
     
     -- Message to player.
     if playerData.difficulty~=AIRBOSS.Difficulty.HARD then
+    
+      -- Altitude and speed hint.
       local hint=string.format("%s\n%s\n%s", playerData.step, hintAlt, hintSpeed)
+      
       self:MessageToPlayer(playerData, hint, "MARSHAL", "")
     end
         
     -- Next step: depends.
-    if math.abs(self.holdingoffset)>0 then
+    if math.abs(self.holdingoffset)>0 and playerData.case>1 then
       -- Turn to BRC (case II) or FB (case III).
       playerData.step=AIRBOSS.PatternStep.ARCIN
     else
@@ -4605,9 +4627,11 @@ function AIRBOSS:_ArcInTurn(playerData)
       local hint=string.format("%s\n%s", playerData.step, hintSpeed)
       self:MessageToPlayer(playerData, hint, "MARSHAL", "")
     end
+    
+    -- TODO: Hint to turn right and select TACAN FB or BRC.
         
     -- Next step: Arc Out Turn.
-    playerData.step=AIRBOSS.PatternStep.ARCOUT   
+    playerData.step=AIRBOSS.PatternStep.ARCOUT
     playerData.warning=nil
     self:_StepHint(playerData)
   end
@@ -4690,6 +4714,8 @@ function AIRBOSS:_DirtyUp(playerData)
       local hint=string.format("%s\n%s\n%s", playerData.step, hintAlt, hintSpeed)
       self:MessageToPlayer(playerData, hint, "MARSHAL", "")
     end
+    
+    --TODO: Hint: Dirty up! Gear, hook and flaps down!
         
     -- Next step: CASE III: Intercept glide slope and follow bullseye (ICLS).
     playerData.step=AIRBOSS.PatternStep.BULLSEYE
@@ -4729,6 +4755,8 @@ function AIRBOSS:_Bullseye(playerData)
       local hint=string.format("%s\n%s\n%s", playerData.step, hintAlt, hintAoA)
       self:MessageToPlayer(playerData, hint, "MARSHAL", "")
     end
+    
+    -- TODO: Hint
     
     -- Next step: Groove Call the ball.
     playerData.step=AIRBOSS.PatternStep.GROOVE_XX  
@@ -5442,21 +5470,7 @@ function AIRBOSS:_GetZoneBullseye(case)
   local distance=UTILS.NMToMeters(3)
   
   -- Zone depends on Case recovery.
-  local radial
-  if case==2 then
-  
-    radial=self:GetRadialCase2(false, false)
-  
-  elseif case==3 then
-  
-    radial=self:GetRadialCase3(false, false)
-  
-  else
-  
-    self:E(self.lid.."ERROR: Bullseye zone only for CASE II or III recoveries!")
-    return nil
-  
-  end
+  local radial=self:GetRadial(case, false, false)
   
   -- Get coordinate and vec2.
   local coord=self:GetCoordinate():Translate(distance, radial)
@@ -5481,21 +5495,7 @@ function AIRBOSS:_GetZoneDirtyUp(case)
   local distance=UTILS.NMToMeters(9)
   
   -- Zone depends on Case recovery.
-  local radial
-  if case==2 then
-  
-    radial=self:GetRadialCase2(false, false)
-  
-  elseif case==3 then
-  
-    radial=self:GetRadialCase3(false, false)
-  
-  else
-  
-    self:E(self.lid.."ERROR: Dirty Up zone only for CASE II or III recoveries!")
-    return nil
-  
-  end
+  local radial=self:GetRadial(case, false, false)
   
   -- Get coordinate and vec2.
   local coord=self:GetCoordinate():Translate(distance, radial)
@@ -5520,21 +5520,7 @@ function AIRBOSS:_GetZoneArcOut(case)
   local distance=UTILS.NMToMeters(12)
   
   -- Zone depends on Case recovery.
-  local radial
-  if case==2 then
-  
-    radial=self:GetRadialCase2(false, false)
-  
-  elseif case==3 then
-  
-    radial=self:GetRadialCase3(false, false)
-  
-  else
-  
-    self:E(self.lid.."ERROR: Arc out zone only for CASE II or III recoveries!")
-    return nil
-  
-  end
+  local radial=self:GetRadial(case, false, false)
   
   -- Get coordinate of carrier and translate.
   local coord=self:GetCoordinate():Translate(distance, radial)
@@ -5555,21 +5541,7 @@ function AIRBOSS:_GetZoneArcIn(case)
   local radius=UTILS.NMToMeters(1)
   
   -- Zone depends on Case recovery.
-  local radial
-  if case==2 then
-  
-    radial=self:GetRadialCase2(false, true)
-  
-  elseif case==3 then
-  
-    radial=self:GetRadialCase3(false, true)
-  
-  else
-  
-    self:E(self.lid.."ERROR: Arc in zone only for CASE II or III recoveries!")
-    return nil
-  
-  end
+  local radial=self:GetRadial(case, false, true)
   
   -- Angle between FB/BRC and holding zone.
   local alpha=math.rad(self.holdingoffset)
@@ -5599,21 +5571,7 @@ function AIRBOSS:_GetZonePlatform(case)
   local radius=UTILS.NMToMeters(1)
     
   -- Zone depends on Case recovery.
-  local radial
-  if case==2 then
-  
-    radial=self:GetRadialCase2(false, true)
-  
-  elseif case==3 then
-  
-    radial=self:GetRadialCase3(false, true)
-  
-  else
-  
-    self:E(self.lid.."ERROR: Platform zone only for CASE II or III recoveries!")
-    return nil
-  
-  end
+  local radial=self:GetRadial(case, false, true)
 
   -- Angle between FB/BRC and holding zone.
   local alpha=math.rad(self.holdingoffset)
@@ -5638,21 +5596,9 @@ end
 function AIRBOSS:_GetZoneCorridor(case)
 
   -- Radial and offset.
-  local radial
-  local offset
+  local radial=self:GetRadial(case, false, false)
+  local offset=self:GetRadial(case, false, true)
   
-  -- Select case.
-  if case==2 then
-    radial=self:GetRadialCase2(false, false)
-    offset=self:GetRadialCase2(false, true)
-  elseif case==3 then
-    radial=self:GetRadialCase3(false, false)
-    offset=self:GetRadialCase3(false, true)  
-  else
-    radial=self:GetRadialCase3(false, false)
-    offset=self:GetRadialCase3(false, true)    
-  end
-
   -- Angle between radial and offset in rad.
   local alpha=math.rad(self.holdingoffset)
    
@@ -5766,12 +5712,7 @@ function AIRBOSS:_GetZoneHolding(case, stack)
     -- CASE II/II
           
     -- Get radial.
-    local radial
-    if case==2 then
-      radial=self:GetRadialCase2(false, true)
-    else
-      radial=self:GetRadialCase3(false, true)
-    end
+    local radial=self:GetRadial(case, false, true)
     
     -- Create an array of a square!
     local p={}
@@ -5958,67 +5899,72 @@ function AIRBOSS:GetFinalBearing(magnetic)
   return fb
 end
 
---- Get radial with respect to carrier heading and (optionally) holding offset. This is used in Case II recoveries.
+--- Get radial with respect to carrier BRC or FB and (optionally) holding offset.
+-- 
+-- * case=1: radial=FB-180
+-- * case=2: radial=HDG-180 (+offset)
+-- * case=3: radial=FB-180 (+offset)
+-- 
 -- @param #AIRBOSS self
+-- @param #number case Recovery case.
 -- @param #boolean magnetic If true, magnetic radial is returned. Default is true radial.
 -- @param #boolean offset If true, inlcude holding offset.
+-- @param #boolean inverse Return inverse, i.e. radial-180 degrees.
 -- @return #number Radial in degrees.
-function AIRBOSS:GetRadialCase2(magnetic, offset) 
+function AIRBOSS:GetRadial(case, magnetic, offset, inverse)
 
-  -- Radial wrt to heading of carrier.  
-  local radial=self:GetHeading(magnetic)-180
+  -- Case or current case.
+  case=case or self.case
   
-  -- Holding offset angle (+-15 or 30 degrees usually)
-  if offset then
-    radial=radial+self.holdingoffset
+  -- Radial.
+  local radial
+
+  -- Select case.
+  if case==1 then
+  
+    -- Get radial.
+    radial=self:GetFinalBearing(magnetic)-180
+  
+  elseif case==2 then
+  
+    -- Radial wrt to heading of carrier.  
+    radial=self:GetHeading(magnetic)-180
+  
+    -- Holding offset angle (+-15 or 30 degrees usually)
+    if offset then
+      radial=radial+self.holdingoffset
+    end
+    
+  elseif case==3 then
+
+    -- Radial wrt angled runway.
+    local radial=self:GetFinalBearing(magnetic)-180
+    
+    -- Holding offset angle (+-15 or 30 degrees usually)
+    if offset then
+      radial=radial+self.holdingoffset
+    end
+  
   end
   
   -- Adjust for negative values.
   if radial<0 then
     radial=radial+360
   end
-  
-  return radial
-end
 
---- Get radial with respect to angled runway and (optionally) holding offset. This is used in Case III recoveries.
--- @param #AIRBOSS self
--- @param #boolean magnetic If true, magnetic radial is returned. Default is true radial.
--- @param #boolean offset If true, inlcude holding offset.
--- @return #number Radial in degrees.
-function AIRBOSS:GetRadialCase3(magnetic, offset) 
-
-  -- Radial wrt angled runway.
-  local radial=self:GetFinalBearing(magnetic)-180
+  -- Inverse?
+  if inverse then
   
-  -- Holding offset angle (+-15 or 30 degrees usually)
-  if offset then
-    radial=radial+self.holdingoffset
+    -- Inverse radial
+    radial=radial-180
+
+    -- Adjust for negative values.
+    if radial<0 then
+      radial=radial+360
+    end    
+    
   end
-  
-  -- Adjust for negative values.
-  if radial<0 then
-    radial=radial+360
-  end
-  
-  return radial
-end
 
---- Get radial, i.e. the final bearing FB-180 degrees.
--- @param #AIRBOSS self
--- @param #boolean magnetic If true, magnetic radial is returned. Default is true radial.
--- @return #number Radial in degrees.
-function AIRBOSS:GetRadial(magnetic) 
-
-  -- Get radial.
-  local radial=self:GetFinalBearing(magnetic)-180
-  
-  -- Adjust for negative values.
-  if radial<0 then
-    radial=radial+360
-  end
-  
-  return radial
 end
 
 --- Get relative heading of player wrt carrier.
@@ -7042,7 +6988,7 @@ function AIRBOSS:_StepHint(playerData, step)
     
     -- Altitude.
     if alt then
-      hint=hint..string.format("\nAltitude=%.1f ft", UTILS.MetersToFeet(alt))
+      hint=hint..string.format("\nAltitude=%d ft", UTILS.MetersToFeet(alt))
     end
     
     -- AoA.
@@ -7052,19 +6998,19 @@ function AIRBOSS:_StepHint(playerData, step)
     
     -- Speed.
     if speed then
-      hint=hint..string.format("\nSpeed=%.1f knots", UTILS.MpsToKnots(speed))
+      hint=hint..string.format("\nSpeed %d knots", UTILS.MpsToKnots(speed))
     end
     
     -- Distance to the boat.
     if dist then
-      hint=hint..string.format("\nDistance=%.1f NM to the boat", UTILS.MetersToNM(dist))
+      hint=hint..string.format("\nDistance to the boat %.1f NM", UTILS.MetersToNM(dist))
     end
     
     -- Check if there was actually anything to tell.
     if hint~="" then
     
       -- Compile text if any.
-      local text=string.format("Optimal setup at next step %s:", step)..hint
+      local text=string.format("Optimal setup at next step %s:%s", step, hint)
     
       -- Send hint to player.
       self:MessageToPlayer(playerData, text, "AIRBOSS", "", 10, false, 2)
