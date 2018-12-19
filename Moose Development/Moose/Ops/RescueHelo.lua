@@ -138,6 +138,8 @@
 -- ## Rescue Operations
 --
 -- By default the rescue helo will start a rescue operation if an aircraft crashes or a pilot ejects in the vicinity of the carrier.
+-- This is rescricted to aircraft of the same coaliton as the rescue helo. Enemy (or neutral) pilots will be left on their own.
+-- 
 -- The standard "rescue zone" has a radius of 15 NM (~28 km) around the carrier. The radius can be adjusted via the @{#RESCUEHELO.SetRescueZone}(*radius*) functions,
 -- where *radius* is the radius of the zone in nautical miles. If you use multiple rescue helos in the same mission, you might want to ensure that the radii
 -- are not overlapping so that two helos try to rescue the same pilot. But it should not hurt either way.
@@ -719,9 +721,12 @@ function RESCUEHELO:_OnEventCrashOrEject(EventData)
         if self.Debug then
           coord:MarkToCoalition(self.lid..string.format("Crash site of unit %s.", unitname), self.helo:GetCoalition())
         end
+        
+        -- Check that coalition is the same.
+        local rightcoalition=EventData.IniGroup:GetCoalition()==self.helo:GetCoalition()
       
         -- Only rescue if helo is "running" and not, e.g., rescuing already.
-        if self:IsRunning() and self.rescueon then
+        if self:IsRunning() and self.rescueon and rightcoalition then
           self:Rescue(coord)
         end
       

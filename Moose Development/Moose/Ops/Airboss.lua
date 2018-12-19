@@ -11,7 +11,7 @@
 --    * Define recovery time windows with individual recovery cases.
 --    * Automatic TACAN and ICLS channel setting of carrier.
 --    * Separate radio channels for LSO and Marshal transmissions.
---    * Voice over support for LSO and Marshal radio transmissions.
+--    * Voice over support for LSO and Marshal radio transmissions with more than 30 common radio calls.
 --    * F10 radio menu including carrier info (weather, radio frequencies, TACAN/ICLS channels), player LSO grades,
 --    help function (player aircraft attitude, marking of pattern zones etc).
 --    * Recovery tanker and refueling option via integration of @{Ops.RecoveryTanker} class.
@@ -659,6 +659,7 @@ AIRBOSS.PatternStep={
 -- @field #AIRBOSS.RadioCall BOLTER "Bolter, Bolter" call
 -- @field #AIRBOSS.RadioCall LONGINGROOVE "You're long in the groove. Depart and re-enter." call.
 -- @field #AIRBOSS.RadioCall DEPARTANDREENTER "Depart and re-enter" call.
+-- @field #AIRBOSS.RadioCall WELCOMEABOARD "Welcome aboard.
 -- @field #AIRBOSS.RadioCall N0 "Zero" call.
 -- @field #AIRBOSS.RadioCall N1 "One" call.
 -- @field #AIRBOSS.RadioCall N2 "Two" call.
@@ -775,6 +776,13 @@ AIRBOSS.LSOCall={
     subtitle="Paddles, contact",
     duration=1.0,
   },
+  WELCOMEABOARD={
+    file="LSO-WelcomeAboard",
+    suffix="ogg",
+    loud=false,
+    subtitle="Welcome aboard.",
+    duration=0.9,
+  },
   N0={
     file="LSO-N0",
     suffix="ogg",
@@ -849,7 +857,9 @@ AIRBOSS.LSOCall={
 
 --- Marshal radio calls.
 -- @type AIRBOSS.MarshalCall
--- @field #AIRBOSS.RadioCall RADIOCHECK "Marshal, radio check" call.
+-- @field #AIRBOSS.RadioCall RADIOCHECK "Radio check" call.
+-- @field #AIRBOSS.RadioCall SAYNEEDLES "Say needles" call.
+-- @field #AIRBOSS.RadioCall FLYNEEDLES "Fly your needles" call.
 -- @field #AIRBOSS.RadioCall N0 "Zero" call.
 -- @field #AIRBOSS.RadioCall N1 "One" call.
 -- @field #AIRBOSS.RadioCall N2 "Two" call.
@@ -865,8 +875,22 @@ AIRBOSS.MarshalCall={
     file="MARSHAL-RadioCheck",
     suffix="ogg",
     loud=false,
-    subtitle="Marshal, radio check",
+    subtitle="Radio check",
     duration=1.0,
+  },
+  SAYNEEDLES={
+    file="MARSHAL-SayNeedles",
+    suffix="ogg",
+    loud=false,
+    subtitle="Say needles",
+    duration=0.9,
+  },
+  FLYNEEDLES={
+    file="MARSHAL-FlyYourNeedles",
+    suffix="ogg",
+    loud=false,
+    subtitle="Fly your needles",
+    duration=0.9,
   },
   -- TODO: Other voice overs for marshal.
   N0={
@@ -1069,7 +1093,7 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.5.7w"
+AIRBOSS.version="0.5.8"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1623,7 +1647,10 @@ end
 -- @param #string skill Player skill. Default "Naval Aviator".
 -- @return #ARIBOSS self
 function AIRBOSS:SetDefaultPlayerSkill(skill)
+
+  -- Set skill or normal.
   self.defaultskill=skill or AIRBOSS.Difficulty.NORMAL
+  
   -- Check that defualt skill is valid.
   local gotit=false
   for _,_skill in pairs(AIRBOSS.Difficulty) do
@@ -1631,10 +1658,13 @@ function AIRBOSS:SetDefaultPlayerSkill(skill)
       gotit=true
     end
   end
+  
+  -- If invalid user input, fall back to normal.
   if not gotit then
     self.defaultskill=AIRBOSS.Difficulty.NORMAL
     self:E(self.lid..string.format("ERROR: Invalid default skill = %s. Resetting to Naval Aviator.", tostring(skill)))
   end
+  
   return self
 end
 
@@ -3425,9 +3455,8 @@ function AIRBOSS:_PrintQueue(queue, name)
     for i,_flight in pairs(queue) do
       local flight=_flight --#AIRBOSS.FlightGroup
       
-      -- Timestamp.
+      -- Time stamp.
       local clock=UTILS.SecondsToClock(timer.getAbsTime()-flight.time)
-      --local clock=timer.getAbsTime()-flight.time
       -- Recovery case of flight.
       local case=flight.case
       -- Stack and stack alt.
@@ -3461,7 +3490,7 @@ function AIRBOSS:_PrintQueue(queue, name)
         k=playerData.waveoff
       end
       ]]
-      text=text..string.format("\n[%d] %s*%d (%s): lead=%s (%d), onboard=%s, flag=%d, case=%d, time=%d, fuel=%d, ai=%s, holding=%s",
+      text=text..string.format("\n[%d] %s*%d (%s): lead=%s (%d), onboard=%s, flag=%d, case=%d, time=%s, fuel=%d, ai=%s, holding=%s",
                                  i, flight.groupname, flight.nunits, actype, lead, nsec, onboard, stack, case, clock, fuel, ai, holding)
       if flight.holding then
         text=text..string.format(" stackalt=%d ft", alt)
@@ -3586,7 +3615,7 @@ function AIRBOSS:_NewPlayer(unitname)
     playerData.attitudemonitor=false
     
     -- Set difficulty level.
-    playerData.difficulty=playerData.difficulty or AIRBOSS.Difficulty.EASY
+    playerData.difficulty=playerData.difficulty or self.defaultskill
   
     -- Init stuff for this round.
     playerData=self:_InitPlayer(playerData)
@@ -4131,7 +4160,7 @@ function AIRBOSS:OnEventBirth(EventData)
     -- Debug output.
     local text=string.format("AIRBOSS: Pilot %s, callsign %s entered unit %s of group %s.", _playername, _callsign, _unitName, _group:GetName())
     self:T(self.lid..text)
-    MESSAGE:New(text, 5):ToAllIf(self.Debug or true)
+    MESSAGE:New(text, 5):ToAllIf(self.Debug)
     
     -- Check if aircraft type the player occupies is carrier capable.
     local rightaircraft=self:_IsCarrierAircraft(_unit)
@@ -4145,15 +4174,15 @@ function AIRBOSS:OnEventBirth(EventData)
     -- Add Menu commands.
     self:_AddF10Commands(_unitName)
     
+    -- Init new player data.
+    local playerData=self:_NewPlayer(_unitName)
+    
     -- Init player data.
-    self.players[_playername]=self:_NewPlayer(_unitName)
+    self.players[_playername]=playerData
     
-    -- Debug.    
-    if self.Debug and false then
-      self:_Number2Sound(self.LSORadio,     "0123456789", 10)
-      self:_Number2Sound(self.MarshalRadio, "0123456789", 20)
-    end
-    
+    -- Welcome player message.
+    self:MessageToPlayer(playerData, string.format("Welcome, %s %s!", playerData.difficulty, playerData.name), "AIRBOSS", "", 5)
+       
   end 
 end
 
@@ -4353,9 +4382,28 @@ function AIRBOSS:_Holding(playerData)
   -- Check if player is in holding zone.
   local inholdingzone=unit:IsInZone(zoneHolding)
   
-  -- Check player alt is +-500 feet of assigned pattern alt.
+  -- Altitude difference between player and assinged stack.
   local altdiff=playeralt-patternalt
-  local goodalt=math.abs(altdiff)<UTILS.MetersToFeet(500)
+  
+  -- Acceptable altitude depending on player skill.
+  local altgood=UTILS.FeetToMeters(500)
+  if playerData.difficulty==AIRBOSS.Difficulty.HARD then
+    -- Pros can be expected to be within +-100 ft.
+    altgood=UTILS.FeetToMeters(100)
+  elseif playerData.difficulty==AIRBOSS.Difficulty.NORMAL then
+    -- Normal guys should be within +-300 ft.
+    altgood=UTILS.FeetToMeters(300)
+  elseif playerData.difficulty==AIRBOSS.Difficulty.EASY then
+    -- Students should be within +-500 ft.
+    altgood=UTILS.FeetToMeters(500)
+  else
+    -- ERROR
+  end
+  
+  -- Check if altitude is acceptable.
+  local goodalt=math.abs(altdiff)<altgood
+  
+  -- Angels.
   local angels=self:_GetAngels(patternalt)
   
   -- TODO: Check if player is flying counter clockwise. AOB<0.
@@ -4378,11 +4426,19 @@ function AIRBOSS:_Holding(playerData)
     end
     
     -- Altitude check
-    if altdiff>goodalt then
+    if altdiff>altgood then
     
-      -- Issue warning.
+      -- Issue warning for being too high.
       if not playerData.warning then
-        text=text..string.format("You just left your assigned altitude. Get back to angels %d.", angels)
+        text=text..string.format("You left your assigned altitude. Descent to angels %d.", angels)
+        playerData.warning=true
+      end
+      
+    elseif altdiff<-altgood then
+
+      -- Issue warning for being too low.
+      if not playerData.warning then
+        text=text..string.format("You left your assigned altitude. Climb to angels %d.", angels)
         playerData.warning=true
       end
       
@@ -4428,11 +4484,12 @@ function AIRBOSS:_Holding(playerData)
         text=text..string.format(" Altitude is good.")
       else
         if altdiff<0 then
-          text=text..string.format(" But you are too low.")
+          text=text..string.format(" But you're too low.")
         else
-          text=text..string.format(" But you are too high.")
+          text=text..string.format(" But you're too high.")
         end
-        text=text..string.format(" Currently assigned altitude is %d ft.", UTILS.MetersToFeet(patternalt))
+        text=text..string.format("\nCurrently assigned altitude is %d ft.", UTILS.MetersToFeet(patternalt))
+        playerData.warning=true
       end
       
       -- No info for the pros.
@@ -4624,7 +4681,18 @@ function AIRBOSS:_ArcInTurn(playerData)
 
     -- Message to player.
     if playerData.difficulty~=AIRBOSS.Difficulty.HARD then
+    
+      -- Hint speed.
       local hint=string.format("%s\n%s", playerData.step, hintSpeed)
+            
+      -- Hint turn and set TACAN.
+      if playerData.difficulty==AIRBOSS.Difficulty.EASY then
+        -- Get inverse magnetic radial without offset ==> FB for Case II or BRC for Case III.  
+        local radial=self:GetRadial(playerData.case, true, false, true)
+        hint=hint..string.format("\nTurn right and select TACAN %d.", radial)
+      end
+      
+      -- Message to player.
       self:MessageToPlayer(playerData, hint, "MARSHAL", "")
     end
     
@@ -4711,12 +4779,23 @@ function AIRBOSS:_DirtyUp(playerData)
 
     -- Message to player.
     if playerData.difficulty~=AIRBOSS.Difficulty.HARD then
+    
+      -- Hint alt and speed.
       local hint=string.format("%s\n%s\n%s", playerData.step, hintAlt, hintSpeed)
+      
+      -- Hint turn and set TACAN.
+      if playerData.difficulty==AIRBOSS.Difficulty.EASY then
+        hint=hint.."\nDirty up! Hook, gear and flaps down."
+      end      
+      
       self:MessageToPlayer(playerData, hint, "MARSHAL", "")
     end
     
-    --TODO: Hint: Dirty up! Gear, hook and flaps down!
-        
+    -- Radio call "Say/Fly needles". Delayed by 10/15 seconds.
+    self:RadioTransmission(self.MarshalRadio, AIRBOSS.MarshalCall.SAYNEEDLES, false, 10)
+    self:RadioTransmission(self.MarshalRadio, AIRBOSS.MarshalCall.FLYNEEDLES, false, 15)
+    -- TODO: Make Fly Bullseye call if no automatic ICLS is active.
+    
     -- Next step: CASE III: Intercept glide slope and follow bullseye (ICLS).
     playerData.step=AIRBOSS.PatternStep.BULLSEYE
     playerData.warning=nil
@@ -4752,15 +4831,23 @@ function AIRBOSS:_Bullseye(playerData)
     
     -- Message to player.
     if playerData.difficulty~=AIRBOSS.Difficulty.HARD then
+      
+      -- Hint alt and aoa.
       local hint=string.format("%s\n%s\n%s", playerData.step, hintAlt, hintAoA)
+      
+      -- Hint follow the needles.
+      if playerData.difficulty==AIRBOSS.Difficulty.EASY then
+        hint=hint..string.format("Intercept glide slope and follow the needles.")
+      end
+      
       self:MessageToPlayer(playerData, hint, "MARSHAL", "")
     end
     
-    -- TODO: Hint
-    
     -- Next step: Groove Call the ball.
-    playerData.step=AIRBOSS.PatternStep.GROOVE_XX  
+    playerData.step=AIRBOSS.PatternStep.GROOVE_XX
     playerData.warning=nil
+    
+    -- Stephint should be empty.
     self:_StepHint(playerData)
   end
 end
@@ -4838,7 +4925,15 @@ function AIRBOSS:_Break(playerData, part)
     
     -- Message to player.
     if playerData.difficulty~=AIRBOSS.Difficulty.HARD then
+    
+      -- Hint alt.
       local hint=string.format("%s %s", playerData.step, hint)
+            
+      -- Hint dirty up.
+      if playerData.difficult==AIRBOSS.Difficulty.EASY and part==AIRBOSS.PatternStep.LATEBREAK then
+        hint=hint.."Dirty up! Gear down, flaps down. Check hook down."
+      end
+      
       self:MessageToPlayer(playerData, hint, "MARSHAL", "")
     end
 
@@ -4851,6 +4946,7 @@ function AIRBOSS:_Break(playerData, part)
     else
       playerData.step=AIRBOSS.PatternStep.ABEAM
     end
+    
     playerData.warning=nil
     self:_StepHint(playerData)
   end
@@ -6064,8 +6160,7 @@ function AIRBOSS:_CheckLimits(X, Z, check)
   -- Debug info.
   local text=string.format("step=%s: next=%s: X=%d Xmin=%s Xmax=%s | Z=%d Zmin=%s Zmax=%s", 
   check.name, tostring(next), X, tostring(check.LimitXmin), tostring(check.LimitXmax), Z, tostring(check.LimitZmin), tostring(check.LimitZmax))
-  self:T(self.lid..text)
-  --MESSAGE:New(text, 1):ToAllIf(self.Debug)
+  self:T3(self.lid..text)
 
   return next
 end
