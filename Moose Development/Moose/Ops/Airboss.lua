@@ -593,12 +593,14 @@ AIRBOSS.CarrierType={
 -- @type AIRBOSS.CarrierParameters
 -- @field #number rwyangle Runway angle in degrees. for carriers with angled deck. For USS Stennis -9 degrees.
 -- @field #number sterndist Distance in meters from carrier position to stern of carrier. For USS Stennis -150 meters.
--- @field #number deckheight Height of deck in meters. For USS Stennis ~22 meters.
+-- @field #number deckheight Height of deck in meters. For USS Stennis ~63 ft = 19 meters.
 -- @field #number wire1 Distance in meters from carrier position to first wire.
 -- @field #number wire2 Distance in meters from carrier position to second wire.
 -- @field #number wire3 Distance in meters from carrier position to third wire.
 -- @field #number wire4 Distance in meters from carrier position to fourth wire.
--- @field #number wireoffset Offset in meters for wire calculation.
+-- @field #number wireoffset Offset distance from stern/rundown in meters.
+-- @field #number rwylength Length of the landing runway in meters.
+-- @field #number rwywidth Width of the landing runway in meters.
 
 --- Aircraft specific Angle of Attack (AoA) (or alpha) parameters.
 -- @type AIRBOSS.AircraftAoA
@@ -1124,7 +1126,7 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.5.8w"
+AIRBOSS.version="0.5.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1297,7 +1299,65 @@ function AIRBOSS:New(carriername, alias)
     self:_GetZonePlatform(case):SmokeZone(SMOKECOLOR.Red, 45)
     self:_GetZoneCorridor(case):SmokeZone(SMOKECOLOR.Green, 45)
   end
-
+  
+  -- Carrier parameter tests.
+  if false then
+      -- Stern coordinate.
+    local FB=self:GetFinalBearing(false)
+    local hdg=self:GetHeading(false)
+    local stern=self:_GetSternCoord():SetAltitude(self.carrierparam.deckheight)
+    local rwy=stern:Translate(self.carrierparam.rwylength, FB):SetAltitude(self.carrierparam.deckheight)
+    --stern:SmokeGreen()
+    --bow:SmokeRed()
+    
+    local function flareme()
+    
+      -- Stern
+      stern:FlareGreen()
+      
+      -- End of runway
+      --rwy:FlareRed()
+      
+      -- Runway half width = 10 m
+      local r1=stern:Translate(10, FB+90)
+      r1:FlareWhite()
+      
+      -- Carrier pos.
+      --self:GetCoordinate():FlareYellow()
+      
+      
+      -- Total lendth of carrier from stern to bow.
+      local bow=stern:Translate(310, hdg)
+      bow:FlareYellow()
+      
+      -- Total width of carrier.
+      
+      -- Right 30 meters from stern.
+      local cR=stern:Translate(30, hdg+90)
+      cR:FlareYellow()
+  
+      -- Left 40 meters from stern.
+      local cL=stern:Translate(40, hdg-90)
+      cL:FlareYellow()
+      
+      
+      --[[
+      local w1=stern:Translate(46, FB)
+      local w2=stern:Translate(46+12, FB)
+      local w3=stern:Translate(46+24, FB)
+      local w4=stern:Translate(46+35, FB)
+      w1:FlareWhite()
+      w2:FlareYellow()
+      w3:FlareWhite()
+      w4:FlareYellow()
+      ]]
+      
+    end
+    
+    SCHEDULER:New(nil, flareme, {}, 1, 1)
+    
+  end
+  
   -- If calls should be part of self and individual for different carriers.  
   --[[  
   -- Init default sound files.
@@ -2432,22 +2492,17 @@ function AIRBOSS:_InitStennis()
 
   -- Carrier Parameters.
   self.carrierparam.rwyangle   =  -9
-  self.carrierparam.sterndist  =-150
-  self.carrierparam.deckheight =  22
+  self.carrierparam.sterndist  =-153
+  self.carrierparam.deckheight =  19
+  self.carrierparam.rwylength  = 225
+  self.carrierparam.rwywidth   =  20
   
-  --[[
-  self.carrierparam.wire1      =-104
-  self.carrierparam.wire2      = -92
-  self.carrierparam.wire3      = -80
-  self.carrierparam.wire4      = -68
-  self.carrierparam.wireoffset =  30
-  ]]
-  
-  self.carrierparam.wire1      =   0
-  self.carrierparam.wire2      =  12
-  self.carrierparam.wire3      =  24
-  self.carrierparam.wire4      =  36
-  self.carrierparam.wireoffset =  50
+  -- Wires
+  self.carrierparam.wire1      =  46        -- Distance from stern to first wire.
+  self.carrierparam.wire2      =  46+12
+  self.carrierparam.wire3      =  46+24
+  self.carrierparam.wire4      =  46+35     -- Last wire is strangely one meter closer.
+  self.carrierparam.wireoffset =  46
 
  
   -- Platform at 5k. Reduce descent rate to 2000 ft/min to 1200 dirty up level flight.
@@ -4302,7 +4357,7 @@ function AIRBOSS:OnEventLand(EventData)
         end
         
         -- Get wire.
-        local wire=self:_GetWire(self:GetCoordinate(), coord)
+        local wire=self:_GetWire(coord)
         
         -- No wire ==> Bolter, Bolter radio call.
         if wire>4 then
@@ -4331,7 +4386,7 @@ function AIRBOSS:OnEventLand(EventData)
         playerData.step=AIRBOSS.PatternStep.UNDEFINED
   
         -- Call trapped function in 3 seconds to make sure we did not bolter.
-        SCHEDULER:New(self, self._Trapped, {playerData}, 3)
+        SCHEDULER:New(self, self._Trapped, {playerData}, 1)
         
       end
        
@@ -4346,7 +4401,7 @@ function AIRBOSS:OnEventLand(EventData)
       local dist=coord:Get2DDistance(self:GetCoordinate())
       
       -- Get wire
-      local wire=self:_GetWire(self:GetCoordinate(), coord, 0)
+      local wire=self:_GetWire(coord, 0)
       
       -- Aircraft type.
       local _type=EventData.IniUnit:GetTypeName()
@@ -5486,18 +5541,17 @@ function AIRBOSS:_GetSternCoord()
   local FB=self:GetFinalBearing()
 
   -- Stern coordinate (sterndist<0). Also translate 10 meters starboard wrt Final bearing.
-  local stern=self:GetCoordinate():Translate(self.carrierparam.sterndist, hdg):Translate(12, FB+90)
+  local stern=self:GetCoordinate():Translate(self.carrierparam.sterndist, hdg):Translate(7, FB+90)
 
   return stern
 end
 
 --- Get wire from landing position.
 -- @param #AIRBOSS self
--- @param Core.Point#COORDINATE Ccoord Carrier position.
 -- @param Core.Point#COORDINATE Lcoord Landing position.
 -- @param #number dc Distance correction.
 -- @return #number Trapped wire (1-4) or 99 if no wire was trapped.
-function AIRBOSS:_GetWire(Ccoord, Lcoord, dc)
+function AIRBOSS:_GetWire(Lcoord, dc)
 
   -- Heading of carrier (true).
   local hdg=self.carrier:GetHeading()
@@ -5516,25 +5570,22 @@ function AIRBOSS:_GetWire(Ccoord, Lcoord, dc)
   
   -- Corrected landing distance wrt to stern. Landing distance needs to be reduced due to delayed landing event for human players.
   local d=Ldist-dc
-
-  -- Wire offset from stern pos.
-  local dx=self.carrierparam.wireoffset
   
   -- Shift wires from stern to their correct position.
-  local w1=self.carrierparam.wire1+dx
-  local w2=self.carrierparam.wire2+dx
-  local w3=self.carrierparam.wire3+dx
-  local w4=self.carrierparam.wire4+dx
+  local w1=self.carrierparam.wire1
+  local w2=self.carrierparam.wire2
+  local w3=self.carrierparam.wire3
+  local w4=self.carrierparam.wire4
 
   -- Which wire was caught?
   local wire
-  if d<w1 then           -- 0+dx
+  if d<w1 then           -- 46
     wire=1
-  elseif d<w2 then       -- 12+dx
+  elseif d<w2 then       -- 46+12
     wire=2
-  elseif d<w3 then       -- 24+dx
+  elseif d<w3 then       -- 46+24
     wire=3
-  elseif d<w4 then       -- 36+dx
+  elseif d<w4 then       -- 46+35
     wire=4
   else
     wire=99
@@ -5569,18 +5620,10 @@ function AIRBOSS:_GetWire(Ccoord, Lcoord, dc)
     -- Smoke corrected landing pos red.
     Dcoord:SmokeRed()
     
-    -- Smoke wires.
-    --[[
-    Scoord:SmokeGreen()    
-    w1:SmokeBlue()
-    w2:SmokeOrange()
-    w3:SmokeRed()
-    w4:SmokeWhite()
-    ]]
   end
   
   -- Debug output.
-  self:I(string.format("GetWire: L=%.1f, L-dx-dc=%.1f ==> wire=%d (dx=%.1f)", Ldist, Ldist-dx-dc, wire, dx+dc))
+  self:I(string.format("GetWire: L=%.1f, L-dc=%.1f ==> wire=%d (dc=%.1f)", Ldist, Ldist-dc, wire, dc))
 
   return wire
 end
@@ -5598,8 +5641,8 @@ function AIRBOSS:_Trapped(playerData)
     
     local coord=unit:GetCoordinate()
     
-    -- Get velocity in km/h
-    local v=unit:GetVelocityKMH()
+    -- Get velocity in km/h. We need to substrackt the carrier velocity.
+    local v=unit:GetVelocityKMH()-self.carrier:GetVelocityKMH()
     
     -- Distance
     local d=self:GetCoordinate():Get2DDistance(coord)
@@ -5608,7 +5651,7 @@ function AIRBOSS:_Trapped(playerData)
     local stern=self:_GetSternCoord()
     
     -- Distance to stern pos.
-    local s=self:GetCoordinate():Get2DDistance(coord)
+    local s=stern:Get2DDistance(coord)
 
     -- Debug.
     local text=string.format("Player %s _Trapped v=%.1f km/h, d=%.1f m, s=%.1f", playerData.name, v, d, s)
@@ -5621,11 +5664,11 @@ function AIRBOSS:_Trapped(playerData)
     end
         
     -- Put some smoke and a mark
-    if self.Debug then
+    --if self.Debug then
       coord:SmokeBlue()
       coord:MarkToAll(text)
       stern:MarkToAll("Stern")
-    end
+    --end
     
     -- Get wire.
     local wire=playerData.wire
@@ -6011,15 +6054,27 @@ function AIRBOSS:_Glideslope(unit, optangle)
   -- Default is 0.
   optangle=optangle or 0
 
- -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
-  local X, Z, rho, phi = self:_GetDistances(unit)
-
   -- Glideslope. Wee need to correct for the height of the deck. The ideal glide slope is 3.5 degrees.
   local h=unit:GetAltitude()-self.carrierparam.deckheight
-  
+
+  --[[
+   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
+  local X, Z, rho, phi = self:_GetDistances(unit)  
   -- Distance correction.
   local offx=self.carrierparam.wire3 or self.carrierparam.sterndist
   local x=math.abs(self.carrierparam.wire3-X)
+  ]]
+  
+  -- Stern coordinate.
+  local stern=self:_GetSternCoord()
+  
+  -- Ideally we want to land at the 3-wire (or slightly before).
+  if self.carrierparam.wire3 then
+    stern:Translate(self.carrierparam.wire3, self:GetFinalBearing(false))
+  end
+  
+  -- Distance from stern to aircraft.
+  local x=unit:GetCoordinate():Get2DDistance(stern)
   
   -- Glide slope.
   local glideslope=math.atan(h/x)  
@@ -6046,6 +6101,18 @@ function AIRBOSS:_Lineup(unit, runway)
 
   -- Vector from plane to ref point on boad.
   local c={x=b.x-a.x, y=0, z=b.z-a.z}
+
+  --[[  
+  -- Stern coordinate.
+  local stern=self:_GetSternCoord()
+  
+  -- Position of aircraft.
+  local coord=unit:GetCoordinate()
+  
+  -- Vector from stern to aircraft.
+  local c={x=stern.x-coord.x, y=0, z=stern.z-coord.z}
+  
+  ]]
   
   -- Current line up and error wrt to final heading of the runway.
   local lineup=math.deg(math.atan2(c.z, c.x))
@@ -6054,6 +6121,8 @@ function AIRBOSS:_Lineup(unit, runway)
   if runway then
     lineup=lineup-self.carrierparam.rwyangle
   end
+  
+  env.info("FF lineup = "..lineup)
 
   return lineup, UTILS.VecNorm(c)
 end
@@ -6672,7 +6741,7 @@ function AIRBOSS:_TooFarOutText(X, Z, posData)
       xtext="close to "
     end
   elseif posData.Xmax and X>posData.Xmax then
-    if posData.LimitXmax>=0 then
+    if posData.Xmax>=0 then
       xtext="far ahead of "
     else
       xtext="close to "
