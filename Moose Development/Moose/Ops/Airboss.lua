@@ -37,21 +37,21 @@
 -- At the moment, optimized parameters are available for the F/A-18C Hornet (Lot 20) as aircraft and the USS John C. Stennis as carrier.
 -- The A-4E community mod is also supported in priciple but may need further tweaking of parameters.
 -- 
--- The implemenation is kept very general. So other including other aircraft and carriers in future is possible. [*Winter is coming!*](https://forums.eagle.ru/forumdisplay.php?f=395)
+-- The implemenation is kept general. So other aircraft and carriers possible in future. [*Winter is coming!*](https://forums.eagle.ru/forumdisplay.php?f=395)
 -- But each aircraft or carrier needs a different set of optimized individual parameters. 
 --
 -- **PLEASE NOTE** that his class is work in progress and in an early **alpha** stage. Many/most things work already very nicely but there a lot of cases I did not run into yet.
---  Therefore, your *constructive* feedback is both necessary and appreciated! Find the bugs :)
+--  Therefore, your *constructive* feedback is both necessary and appreciated!
 -- 
--- ### Open Questions?
+-- ### Some Open Questions?
 -- 
 --    * What are the conditions for a foul deck wave off?
 --    * What is the next step after a pattern wave off during Case II or III recovery?
---    * What is the condition for a "fly through" \\ or \/ LSO grade?
+--    * What is the condition for a "fly through" (\\ or /) LSO grade?
 --    * The above question is one of many regarding LSO grade. If you have more info, please share.
 --
 -- If you know the answer to any of this, please get in touch with me!
--- The necessary infrastructure to implement it is most likely already there, but I was not 100% sure about the exact conditions. 
+-- The necessary infrastructure to implement it is most likely already there, but I am not 100% sure about the exact conditions. 
 --
 -- ===
 --
@@ -125,7 +125,8 @@
 -- @field DCS#Vec3 Corientlast Last known carrier orientation.
 -- @field Core.Point#COORDINATE Cposition Carrier position.
 -- @field #string defaultskill Default player skill @{#AIRBOSS.Difficulty}.
--- @field #boolean adinfinitum If true, carrier patrols ad infinitum, i.e. when reaching its last waypoint it starts at waypoint one again. 
+-- @field #boolean adinfinitum If true, carrier patrols ad infinitum, i.e. when reaching its last waypoint it starts at waypoint one again.
+-- @field #number magvar Magnetic declination in degrees.
 -- @extends Core.Fsm#FSM
 
 --- Be the boss!
@@ -215,11 +216,14 @@
 -- 
 -- This simple script initializes a lot of parameters with default values:
 -- 
---    * TACAN channel is set to 74X, see @{#AIRBOSS.SetTACAN}
---    * ICSL channel is set to 1, see @{#AIRBOSS.SetICLS}
---    * LSO radio is set to 264 MHz FM, see @{#AIRBOSS.SetLSORadio}
---    * Marshal radio is set to 305 MHz FM, see @{#AIRBOSS.SetMarshalRadio}
---    * Default recovery case is set to 1, see @{#AIRBOSS.SetRecoveryCase}
+--    * TACAN channel is set to 74X, see @{#AIRBOSS.SetTACAN},
+--    * ICSL channel is set to 1, see @{#AIRBOSS.SetICLS},
+--    * LSO radio is set to 264 MHz FM, see @{#AIRBOSS.SetLSORadio},
+--    * Marshal radio is set to 305 MHz FM, see @{#AIRBOSS.SetMarshalRadio},
+--    * Default recovery case is set to 1, see @{#AIRBOSS.SetRecoveryCase},
+--    * Carrier Controlled Area (CCA) is set to 50 NM, see @{#AIRBOSS.SetCarrierControlledArea},
+--    * Default player skill "Flight Student" (easy), see @{#AIRBOSS.SetDefaultPlayerSkill},
+--    * Once the carrier reaches its final waypoint, it will restart its route, see @{#AIRBOSS.SetPatrolAdInfinitum}.
 --    
 -- The **second line** starts the AIRBOSS class. If you set options this should happen after the @{#AIRBOSS.New} and before @{#AIRBOSS.Start} command.
 -- 
@@ -275,7 +279,8 @@
 -- 
 -- ### Request Marshal
 -- 
--- This radio command can be used to request a stack in the holding pattern from Marshal. Necessary conditions are that the flight is inside the CCZ.
+-- This radio command can be used to request a stack in the holding pattern from Marshal. Necessary conditions are that the flight is inside the Carrier Controlled Area (CCA)
+-- (see @{#AIRBOSS.SetCarrierControlledArea}).
 -- Marshal will assign an individual stack for each player group depending on the current or next open recovery case window.
 -- If multiple players have registered as a section, the section lead will be assigned a stack and is responsible to guide his section to the assigned holding position.
 -- 
@@ -307,11 +312,11 @@
 -- 
 -- These commands can be used to mark marshal or landing pattern zones.
 -- 
---    * **Smoke My Marshal Zone** This smokes the surrounding area of the currently assigned Marshal zone of the player. Player has to be registered in Marshal queue.
---    * **Flare My Marshal Zone** Similar to smoke but uses flares to mark the Marshal zone.
 --    * **Smoke Pattern Zones** Smoke is used to mark the landing pattern zone of the player depending on his recovery case.
 --    For Case I this is the initial zone. For Case II/III and three these are the Platform, Arc turn, Dirty Up, Bullseye/Initial zones as well as the approach corridor.
 --    * **Flare Pattern Zones** Similar to smoke but uses flares to mark the pattern zones.
+--    * **Smoke Marshal Zone** This smokes the surrounding area of the currently assigned Marshal zone of the player. Player has to be registered in Marshal queue.
+--    * **Flare Marshal Zone** Similar to smoke but uses flares to mark the Marshal zone.
 --    
 -- ### My Status
 -- 
@@ -536,6 +541,7 @@ AIRBOSS = {
   Cposition     = nil,
   defaultskill  = nil,
   adinfinitum   = nil,
+  magvar        = nil,
 }
 
 --- Player aircraft types capable of landing on carriers.
@@ -606,6 +612,31 @@ AIRBOSS.CarrierType={
 
 --- Pattern steps.
 -- @type AIRBOSS.PatternStep
+-- @field #string UNDEFINED "Undefined".
+-- @field #string REFUELING "Refueling".
+-- @field #string SPINNING "Spinning".
+-- @field #string COMMENCING "Commencing".
+-- @field #string HOLDING "Holding".
+-- @field #string PLATFORM "Platform".
+-- @field #string ARCIN "Arc Turn In".
+-- @field #string ARCOUT "Arc Turn Out".
+-- @field #string DIRTYUP "Dirty Up".
+-- @field #string BULLSEYE "Bullseye".
+-- @field #string INITIAL "Initial".
+-- @field #string BREAKENTRY "Break Entry".
+-- @field #string EARLYBREAK "Early Break".
+-- @field #string LATEBREAK "Late Break".
+-- @field #string ABEAM "Abeam".
+-- @field #string NINETY "Ninety".
+-- @field #string WAKE "Wake".
+-- @field #string FINAL "Final".
+-- @field #string GROOVE_XX "Groove X".
+-- @field #string GROOVE_RB "Groove Roger Ball".
+-- @field #string GROOVE_IM "Groove In the Middle".
+-- @field #string GROOVE_IC "Groove In Close".
+-- @field #string GROOVE_AR "Groove At the Ramp".
+-- @field #string GROOVE_IW "Groove In the Wires".
+-- @field #string DEBRIEF "Debrief".
 AIRBOSS.PatternStep={
   UNDEFINED="Undefined",
   REFUELING="Refueling",
@@ -657,9 +688,9 @@ AIRBOSS.PatternStep={
 -- @field #AIRBOSS.RadioCall ROGERBALL "Roger ball" call.
 -- @field #AIRBOSS.RadioCall WAVEOFF "Wave off" call
 -- @field #AIRBOSS.RadioCall BOLTER "Bolter, Bolter" call
--- @field #AIRBOSS.RadioCall LONGINGROOVE "You're long in the groove. Depart and re-enter." call.
+-- @field #AIRBOSS.RadioCall LONGINGROOVE "You're long in the groove" call.
 -- @field #AIRBOSS.RadioCall DEPARTANDREENTER "Depart and re-enter" call.
--- @field #AIRBOSS.RadioCall WELCOMEABOARD "Welcome aboard.
+-- @field #AIRBOSS.RadioCall WELCOMEABOARD "Welcome aboard" call.
 -- @field #AIRBOSS.RadioCall N0 "Zero" call.
 -- @field #AIRBOSS.RadioCall N1 "One" call.
 -- @field #AIRBOSS.RadioCall N2 "Two" call.
@@ -1093,16 +1124,15 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.5.8"
+AIRBOSS.version="0.5.8w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Player eject and crash debrief "gradings".
 -- TODO: Add voice over fly needs and welcome aboard.
--- TODO: Set magnetic declination function.
--- TODO: Improve trapped wire calculation.
--- TODO: More Hints for Case II/III. 
+-- TODO: Improve trapped wire calculation. 
 -- TODO: Carrier zone with dimensions of carrier. to check if landing happend on deck.
 -- TODO: Carrier runway zone for fould deck check.
 -- TODO: Subtitles off options on player level.
@@ -1110,6 +1140,8 @@ AIRBOSS.version="0.5.8"
 -- TODO: Option to filter AI groups for recovery.
 -- TODO: Spin pattern. Add radio menu entry. Not sure what to add though?!
 -- TODO: Persistence of results.
+-- DONE: More Hints for Case II/III.
+-- DONE: Set magnetic declination function.
 -- DONE: First send AI to marshal and then allow them into the landing pattern ==> task function when reaching the waypoint.
 -- DONE: Extract (static) weather from mission for cloud covery etc.
 -- DONE: Check distance to players during approach.
@@ -1201,6 +1233,9 @@ function AIRBOSS:New(carriername, alias)
   
   -- Radio scheduler.
   self.radiotimer=SCHEDULER:New()
+  
+  -- Set magnetic declination.
+  self:SetMagneticDeclination()
   
   -- Set ICSL to channel 1.
   self:SetICLS()
@@ -1597,7 +1632,7 @@ end
 --- Set number of aircraft units which can be in the landing pattern before the pattern is full.
 -- @param #AIRBOSS self
 -- @param #number nmax Max number. Default 4.
--- @return #ARIBOSS self
+-- @return #AIRBOSS self
 function AIRBOSS:SetMaxLandingPattern(nmax)
   self.Nmaxpattern=nmax or 4
   return self
@@ -1686,6 +1721,17 @@ function AIRBOSS:SetPatrolAdInfinitum(switch)
   else
     self.adinfinitum=true
   end
+  return self
+end
+
+--- Set the magnetic declination (or variation). By default this is set to the standard declination of the map.
+-- @param #AIRBOSS self
+-- @param #number declination Declination in degrees or nil for default declination of the map.
+-- @return #AIRBOSS self
+function AIRBOSS:SetMagneticDeclination(declination)
+
+  self.magvar=declination or UTILS.GetMagneticDeclination()
+
   return self
 end
 
@@ -2824,13 +2870,13 @@ function AIRBOSS:_ScanCarrierZone()
     local unit=_unit --Wrapper.Unit#UNIT
     
     -- Necessary conditions to be met:
-    local airborn=unit:IsAir() and unit:InAir()
+    local airborne=unit:IsAir() and unit:InAir()
     local inzone=unit:IsInZone(self.zoneCCA)
     local friendly=self:GetCoalition()==unit:GetCoalition()
     local carrierac=self:_IsCarrierAircraft(unit)
     
-    -- Check if this an aircraft and that it is airborn and closing in.
-    if airborn and inzone and friendly and carrierac then
+    -- Check if this an aircraft and that it is airborne and closing in.
+    if airborne and inzone and friendly and carrierac then
     
       local group=unit:GetGroup()
       local groupname=group:GetName()
@@ -3059,7 +3105,6 @@ function AIRBOSS:_MarshalAI(flight, nstack)
     wp[1]=group:GetCoordinate():WaypointAirTurningPoint(nil, speedOrbitKmh, {}, "Current Position")
     
     -- Create new waypoint 0.2 Nm ahead of current positon.
-    -- TODO: Set altitude here or take the one of the orbit task? Maybe depends on ostack>nstack or ostack==nstack.
     p0=group:GetCoordinate():Translate(UTILS.NMToMeters(0.2), group:GetHeading())
          
   end
@@ -3648,7 +3693,6 @@ function AIRBOSS:_InitPlayer(playerData, step)
   playerData.Tlso=timer.getTime()
   playerData.Tgroove=nil
   playerData.wire=nil
-  playerData.ballcall=false
   
   -- Set us up on final if group name contains "Groove". But only for the first pass.
   if playerData.group:GetName():match("Groove") and playerData.passes==0 then
@@ -4229,58 +4273,67 @@ function AIRBOSS:OnEventLand(EventData)
       -- Player data.
       local playerData=self.players[_playername] --#AIRBOSS.PlayerData
       
-      -- Coordinate at landing event.
-      local coord=playerData.unit:GetCoordinate()
-            
-      -- Get distances relative to
-      local X,Z,rho,phi=self:_GetDistances(_unit)
+      -- Check if player already landed. We dont need a second time.
+      if playerData.landed then
       
-      -- Landing distance to carrier position.
-      local dist=coord:Get2DDistance(self:GetCoordinate())
+        self:E(self.lid..string.format("Player %s just landed a second time.", _playername))
       
-      -- Correct sign if necessary.
-      if X<0 then
-        dist=-dist
-      end
+      else
       
-      -- Debug mark of player landing coord.
-      if self.Debug and false then
+        -- Coordinate at landing event.
+        local coord=playerData.unit:GetCoordinate()
+              
+        -- Get distances relative to
+        local X,Z,rho,phi=self:_GetDistances(_unit)
+        
+        -- Landing distance to carrier position.
+        local dist=coord:Get2DDistance(self:GetCoordinate())
+        
+        -- Correct sign if necessary.
+        if X<0 then
+          dist=-dist
+        end
+        
         -- Debug mark of player landing coord.
-        local lp=coord:MarkToAll("Landing coord.")
-        coord:SmokeGreen()        
+        if self.Debug and false then
+          -- Debug mark of player landing coord.
+          local lp=coord:MarkToAll("Landing coord.")
+          coord:SmokeGreen()        
+        end
+        
+        -- Get wire.
+        local wire=self:_GetWire(self:GetCoordinate(), coord)
+        
+        -- No wire ==> Bolter, Bolter radio call.
+        if wire>4 then
+          self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.BOLTER)
+        end
+        
+        -- Get time in the groove.
+        local gdataX0=playerData.groove.X0 --#AIRBOSS.GrooveData
+        playerData.Tgroove=timer.getTime()-gdataX0.TGroove
+        
+        -- Set player wire
+        playerData.wire=wire      
+        
+        -- Aircraft type.
+        local _type=EventData.IniUnit:GetTypeName()
+        
+        -- Debug text.
+        local text=string.format("Player %s AC type %s landed at dist=%.1f m (+offset=%.1f). Trapped wire=%d.", EventData.IniUnitName, _type, dist, self.carrierparam.wireoffset, wire)
+        text=text..string.format("X=%.1f m, Z=%.1f m, rho=%.1f m, phi=%.1f deg.", X, Z, rho, phi)
+        self:T(self.lid..text)
+        
+        -- We did land.
+        playerData.landed=true
+        
+        -- Unkonwn step until we now more.
+        playerData.step=AIRBOSS.PatternStep.UNDEFINED
+  
+        -- Call trapped function in 3 seconds to make sure we did not bolter.
+        SCHEDULER:New(self, self._Trapped, {playerData}, 3)
+        
       end
-      
-      -- Get wire.
-      local wire=self:_GetWire(self:GetCoordinate(), coord)
-      
-      -- No wire ==> Bolter, Bolter radio call.
-      if wire>4 then
-        self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.BOLTER)
-      end
-      
-      -- Get time in the groove.
-      local gdataX0=playerData.groove.X0 --#AIRBOSS.GrooveData
-      playerData.Tgroove=timer.getTime()-gdataX0.TGroove
-      
-      -- Set player wire
-      playerData.wire=wire      
-      
-      -- Aircraft type.
-      local _type=EventData.IniUnit:GetTypeName()
-      
-      -- Debug text.
-      local text=string.format("Player %s AC type %s landed at dist=%.1f m (+offset=%.1f). Trapped wire=%d.", EventData.IniUnitName, _type, dist, self.carrierparam.wireoffset, wire)
-      text=text..string.format("X=%.1f m, Z=%.1f m, rho=%.1f m, phi=%.1f deg.", X, Z, rho, phi)
-      self:T(self.lid..text)
-      
-      -- We did land.
-      playerData.landed=true
-      
-      -- Unkonwn step until we now more.
-      playerData.step=AIRBOSS.PatternStep.UNDEFINED
-
-      -- Call trapped function in 3 seconds to make sure we did not bolter.
-      SCHEDULER:New(self, self._Trapped, {playerData}, 3)
        
     else
     
@@ -4695,8 +4748,6 @@ function AIRBOSS:_ArcInTurn(playerData)
       -- Message to player.
       self:MessageToPlayer(playerData, hint, "MARSHAL", "")
     end
-    
-    -- TODO: Hint to turn right and select TACAN FB or BRC.
         
     -- Next step: Arc Out Turn.
     playerData.step=AIRBOSS.PatternStep.ARCOUT
@@ -5423,12 +5474,30 @@ function AIRBOSS:_CheckWaveOff(glideslopeError, lineupError, AoA, playerData)
   return waveoff
 end
 
+--- Get "stern" coordinate.
+-- @param #AIRBOSS self
+-- @return Core.Point#COORDINATE Coordinate at the rundown of the carrier.
+function AIRBOSS:_GetSternCoord()
+
+  -- Heading of carrier (true).
+  local hdg=self.carrier:GetHeading()
+  
+  -- Final bearing (true).
+  local FB=self:GetFinalBearing()
+
+  -- Stern coordinate (sterndist<0). Also translate 10 meters starboard wrt Final bearing.
+  local stern=self:GetCoordinate():Translate(self.carrierparam.sterndist, hdg):Translate(12, FB+90)
+
+  return stern
+end
+
 --- Get wire from landing position.
 -- @param #AIRBOSS self
 -- @param Core.Point#COORDINATE Ccoord Carrier position.
 -- @param Core.Point#COORDINATE Lcoord Landing position.
--- @param #number dx Correction.
-function AIRBOSS:_GetWire(Ccoord, Lcoord, dx)
+-- @param #number dc Distance correction.
+-- @return #number Trapped wire (1-4) or 99 if no wire was trapped.
+function AIRBOSS:_GetWire(Ccoord, Lcoord, dc)
 
   -- Heading of carrier (true).
   local hdg=self.carrier:GetHeading()
@@ -5437,18 +5506,19 @@ function AIRBOSS:_GetWire(Ccoord, Lcoord, dx)
   local FB=self:GetFinalBearing()
   
   -- Stern coordinate (sterndist<0). Also translate 10 meters starboard wrt Final bearing.
-  local Scoord=Ccoord:Translate(self.carrierparam.sterndist, hdg):Translate(12, FB+90)
+  local Scoord=self:_GetSternCoord()
   
   -- Distance to landing coord.
   local Ldist=Lcoord:Get2DDistance(Scoord)
 
-  -- Little offset for the exact wire positions.
-  -- TODO: Maybe add little offset depending on aircraft type.
-  dx=self.carrierparam.wireoffset
+  -- For human (not AI) the lading event is delayed unfortunately. Therefore, we need another correction factor.
+  dc= dc or 65
   
-  -- Landing distance wrt to stern.
-  local dc=65
+  -- Corrected landing distance wrt to stern. Landing distance needs to be reduced due to delayed landing event for human players.
   local d=Ldist-dc
+
+  -- Wire offset from stern pos.
+  local dx=self.carrierparam.wireoffset
   
   -- Shift wires from stern to their correct position.
   local w1=self.carrierparam.wire1+dx
@@ -5472,30 +5542,36 @@ function AIRBOSS:_GetWire(Ccoord, Lcoord, dx)
   
   if self.Debug then
  
+    -- Wire position coodinates.
     local wp1=Scoord:Translate(w1, FB)
     local wp2=Scoord:Translate(w2, FB)
     local wp3=Scoord:Translate(w3, FB)
     local wp4=Scoord:Translate(w4, FB)
     
+    -- Debug marks.
     wp1:MarkToAll("Wire 1")
     wp2:MarkToAll("Wire 2")
     wp3:MarkToAll("Wire 3")
     wp4:MarkToAll("Wire 4")
     
+    -- Mark stern.
     Scoord:MarkToAll("Stern")
+    
+    -- Mark at landing position.
     Lcoord:MarkToAll(string.format("Landing Point wire=%s", wire))
     
+    -- Smoke landing position.
     Lcoord:SmokeGreen()
     
+    -- Corrected landing position.
     local Dcoord=Lcoord:Translate(-dc, FB)
     
+    -- Smoke corrected landing pos red.
     Dcoord:SmokeRed()
     
-    --local dcoord=Lcoord
-    
+    -- Smoke wires.
     --[[
-    Scoord:SmokeGreen()
-    
+    Scoord:SmokeGreen()    
     w1:SmokeBlue()
     w2:SmokeOrange()
     w3:SmokeRed()
@@ -5504,7 +5580,7 @@ function AIRBOSS:_GetWire(Ccoord, Lcoord, dx)
   end
   
   -- Debug output.
-  self:I(string.format("GetWire: L=%.1f, L-dx=%.1f ==> wire=%d (dx=%.1f)", Ldist, Ldist-dx-dc, wire, dx+dc))
+  self:I(string.format("GetWire: L=%.1f, L-dx-dc=%.1f ==> wire=%d (dx=%.1f)", Ldist, Ldist-dx-dc, wire, dx+dc))
 
   return wire
 end
@@ -5517,6 +5593,41 @@ function AIRBOSS:_Trapped(playerData)
   if playerData.unit:InAir()==false then
     -- Seems we have successfully landed.
     
+    -- Lets see if we can get a good wire.
+    local unit=playerData.unit
+    
+    local coord=unit:GetCoordinate()
+    
+    -- Get velocity in km/h
+    local v=unit:GetVelocityKMH()
+    
+    -- Distance
+    local d=self:GetCoordinate():Get2DDistance(coord)
+    
+    -- Stern coordinate.
+    local stern=self:_GetSternCoord()
+    
+    -- Distance to stern pos.
+    local s=self:GetCoordinate():Get2DDistance(coord)
+
+    -- Debug.
+    local text=string.format("Player %s _Trapped v=%.1f km/h, d=%.1f m, s=%.1f", playerData.name, v, d, s)
+    self:E(self.lid..text)
+    
+    -- TODO: call this function again until v < threshold. Player comes to a standstill ==> Get wire!
+    if v>5 then
+      SCHEDULER:New(self, self._Trapped, {playerData}, 0.1)
+      return
+    end
+        
+    -- Put some smoke and a mark
+    if self.Debug then
+      coord:SmokeBlue()
+      coord:MarkToAll(text)
+      stern:MarkToAll("Stern")
+    end
+    
+    -- Get wire.
     local wire=playerData.wire
 
     -- Message to player.    
@@ -5530,6 +5641,8 @@ function AIRBOSS:_Trapped(playerData)
     elseif wire==1 then
       text=text.." Try harder next time!"
     end
+    
+    -- Message to player.
     self:MessageToPlayer(playerData, text, "LSO", "")
     
     -- Debrief.
@@ -5539,7 +5652,11 @@ function AIRBOSS:_Trapped(playerData)
   else
   
     --Still in air ==> Boltered!
-    MESSAGE:New("Player boltered in trapped", 5, "DEBUG")
+    local text="Player boltered in trapped function."
+    self:T(self.lid..text)
+    MESSAGE:New("Player boltered in trapped", 5, "DEBUG"):ToAllIf(self.debug)
+    
+    -- Bolter switch on.
     playerData.boltered=true
     
   end
@@ -5953,7 +6070,7 @@ function AIRBOSS:GetHeading(magnetic)
     
   -- Include magnetic declination.
   if magnetic then
-    hdg=hdg-UTILS.GetMagneticDeclination()
+    hdg=hdg-self.magvar
   end
   
   -- Adjust negative values.
@@ -6064,7 +6181,7 @@ function AIRBOSS:GetRadial(case, magnetic, offset, inverse)
 end
 
 --- Get relative heading of player wrt carrier.
--- This is the angle between the direction vector of the carrier and the direction vector of the provided unit.
+-- This is the angle between the direction/orientation vector of the carrier and the direction/orientation vector of the provided unit.
 -- Note that this is calculated in the X-Z plane, i.e. the altitude Y is not taken into account.
 -- @param #AIRBOSS self
 -- @param Wrapper.Unit#UNIT unit Player unit.
@@ -6125,6 +6242,9 @@ function AIRBOSS:_GetDistances(unit)
   
   -- Polar coordinates
   local rho=math.sqrt(dx*dx+dz*dz)
+  
+  
+  -- Not exactly sure any more what I wanted to calculate here.
   local phi=math.deg(math.atan2(dz,dx))
   if phi<0 then
     phi=phi+360
@@ -6898,12 +7018,25 @@ function AIRBOSS:_Debrief(playerData)
   -- Add LSO grade to table.
   table.insert(playerData.grades, mygrade)
   
-  -- LSO grade message.
+  -- LSO grade: (OK) 3.0 PT - LURIM
   local text=string.format("%s %.1f PT - %s", grade, points, analysis)
-  if playerData.wire then
+  
+  -- Wire trapped. Not if pattern WI.
+  if playerData.wire and not playerData.patternwo then
     text=text..string.format(" %d-wire", playerData.wire)
   end
-  text=text..string.format("\nYour detailed debriefing can be found via the F10 radio menu.")
+  
+  -- Time in the groove. Only Case I/II and not pattern WO.
+  if playerData.Tgroove and playerData.case<3 and not playerData.patternwo then
+    text=text..string.format("\nYour detailed debriefing can be found via the F10 radio menu.")
+  end
+  
+  -- Info text.
+  if playerData.difficulty==AIRBOSS.Difficulty.EASY then
+    text=text..string.format("\nYour detailed debriefing can be found via the F10 radio menu.")
+  end
+  
+  -- Message.
   self:MessageToPlayer(playerData, text, "LSO", "", 30, true)
   
   
@@ -7036,7 +7169,10 @@ function AIRBOSS:_Debrief(playerData)
       self:_RemoveUnitFromFlight(playerData.unit)
     
       -- Message to player.
-      self:MessageToPlayer(playerData, string.format("Welcome aboard, %s!", playerData.name), "LSO", "", 10)
+      --self:MessageToPlayer(playerData, string.format("Welcome aboard, %s!", playerData.name), "LSO", "", 10)
+      
+      -- Welcome aboard!
+      self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.WELCOMEABOARD)
       
     end
     
@@ -7826,10 +7962,10 @@ function AIRBOSS:_AddF10Commands(_unitName)
         -- F10/Airboss/<Carrier>/F1 Help/F1 Mark Zones
         local _markPath=missionCommands.addSubMenuForGroup(gid, "Mark Zones", _helpPath)
         -- F10/Airboss/<Carrier>/F1 Help/F1 Mark Zones/
-        missionCommands.addCommandForGroup(gid, "Smoke Pattern Zones",   _markPath, self._MarkCaseZones,   self, _unitName, false)  -- F1
-        missionCommands.addCommandForGroup(gid, "Flare Pattern Zones",   _markPath, self._MarkCaseZones,   self, _unitName, true)   -- F2        
-        missionCommands.addCommandForGroup(gid, "Smoke My Marshal Zone", _markPath, self._MarkMarshalZone, self, _unitName, false)  -- F3
-        missionCommands.addCommandForGroup(gid, "Flare My Marshal Zone", _markPath, self._MarkMarshalZone, self, _unitName, true)   -- F4
+        missionCommands.addCommandForGroup(gid, "Smoke Pattern Zones", _markPath, self._MarkCaseZones,   self, _unitName, false)  -- F1
+        missionCommands.addCommandForGroup(gid, "Flare Pattern Zones", _markPath, self._MarkCaseZones,   self, _unitName, true)   -- F2        
+        missionCommands.addCommandForGroup(gid, "Smoke Marshal Zone",  _markPath, self._MarkMarshalZone, self, _unitName, false)  -- F3
+        missionCommands.addCommandForGroup(gid, "Flare Marshal Zone",  _markPath, self._MarkMarshalZone, self, _unitName, true)   -- F4
         -- F10/Airboss/<Carrier>/F1 Help/F2 Skill Level
         local _skillPath=missionCommands.addSubMenuForGroup(gid, "Skill Level", _helpPath)
         -- F10/Airboss/<Carrier>/F1 Help/F2 Skill Level/
@@ -7980,12 +8116,12 @@ function AIRBOSS:_RequestMarshal(_unitName)
           
           -- Flight group is already in pattern queue.
           local text=string.format("you are already in the Pattern queue. Marshal request denied!")
-          self:MessageToPlayer(playerData, text, "MARSHAL")       
+          self:MessageToPlayer(playerData, text, "MARSHAL")
           
         elseif not _unit:InAir() then 
 
           -- Flight group is already in pattern queue.
-          local text=string.format("you are not airborn. Marshal request denied!")
+          local text=string.format("you are not airborne. Marshal request denied!")
           self:MessageToPlayer(playerData, text, "MARSHAL")       
         
         else
@@ -8035,7 +8171,7 @@ function AIRBOSS:_RequestCommence(_unitName)
         elseif not _unit:InAir() then 
 
           -- Flight group is already in pattern queue.
-          text=string.format("%s, you are not airborn. Commence request denied!", playerData.name)
+          text=string.format("%s, you are not airborne. Commence request denied!", playerData.name)
         
         else      
       
