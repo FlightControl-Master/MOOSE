@@ -598,9 +598,11 @@ AIRBOSS.CarrierType={
 -- @field #number wire2 Distance in meters from carrier position to second wire.
 -- @field #number wire3 Distance in meters from carrier position to third wire.
 -- @field #number wire4 Distance in meters from carrier position to fourth wire.
--- @field #number wireoffset Offset distance from stern/rundown in meters.
 -- @field #number rwylength Length of the landing runway in meters.
 -- @field #number rwywidth Width of the landing runway in meters.
+-- @field #number totlenght Total length of carrier.
+-- @field #number totwidthstarboard Total with of the carrier from stern position to starboard side (asymmetric carriers).
+-- @field #number totwidthport Total with of the carrier from stern position to port side (asymmetric carriers).
 
 --- Aircraft specific Angle of Attack (AoA) (or alpha) parameters.
 -- @type AIRBOSS.AircraftAoA
@@ -1126,17 +1128,17 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.5.9"
+AIRBOSS.version="0.5.9w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: Player eject and crash debrief "gradings".
--- TODO: Add voice over fly needs and welcome aboard.
+-- DONE: Add voice over fly needs and welcome aboard.
 -- TODO: Improve trapped wire calculation. 
--- TODO: Carrier zone with dimensions of carrier. to check if landing happend on deck.
--- TODO: Carrier runway zone for fould deck check.
+-- DONE: Carrier zone with dimensions of carrier. to check if landing happend on deck.
+-- DONE: Carrier runway zone for fould deck check.
 -- TODO: Subtitles off options on player level.
 -- TODO: PWO during case 2/3. Also when too close to other player.
 -- TODO: Option to filter AI groups for recovery.
@@ -1305,42 +1307,45 @@ function AIRBOSS:New(carriername, alias)
       -- Stern coordinate.
     local FB=self:GetFinalBearing(false)
     local hdg=self:GetHeading(false)
-    local stern=self:_GetSternCoord():SetAltitude(self.carrierparam.deckheight)
-    local rwy=stern:Translate(self.carrierparam.rwylength, FB):SetAltitude(self.carrierparam.deckheight)
-    --stern:SmokeGreen()
-    --bow:SmokeRed()
+    
+    -- Stern pos.
+    local stern=self:_GetSternCoord()
+    
+    -- Bow pos.
+    local bow=stern:Translate(self.carrierparam.totlenght, hdg)
+    
+    -- End of rwy.
+    local rwy=stern:Translate(self.carrierparam.rwylength, FB, true)
+    
     
     local function flareme()
+
+      -- Carrier pos.
+      self:GetCoordinate():FlareYellow()
     
       -- Stern
       stern:FlareGreen()
-      
-      -- End of runway
-      --rwy:FlareRed()
-      
-      -- Runway half width = 10 m
-      local r1=stern:Translate(10, FB+90)
-      r1:FlareWhite()
-      
-      -- Carrier pos.
-      --self:GetCoordinate():FlareYellow()
-      
-      
-      -- Total lendth of carrier from stern to bow.
-      local bow=stern:Translate(310, hdg)
+
+      -- Bow
       bow:FlareYellow()
       
-      -- Total width of carrier.
+      -- Runway half width = 10 m.
+      local r1=stern:Translate(self.carrierparam.rwywidth*0.5, FB+90)
+      local r2=stern:Translate(self.carrierparam.rwywidth*0.5, FB-90)
+      r1:FlareWhite()
+      r2:FlareWhite()
+      
+      -- End of runway.
+      rwy:FlareRed()
       
       -- Right 30 meters from stern.
-      local cR=stern:Translate(30, hdg+90)
+      local cR=stern:Translate(self.carrierparam.totstarboard, hdg+90)
       cR:FlareYellow()
   
       -- Left 40 meters from stern.
-      local cL=stern:Translate(40, hdg-90)
+      local cL=stern:Translate(self.carrierparam.totport, hdg-90)
       cL:FlareYellow()
-      
-      
+           
       --[[
       local w1=stern:Translate(46, FB)
       local w2=stern:Translate(46+12, FB)
@@ -1700,7 +1705,7 @@ end
 
 --- Handle AI aircraft.
 -- @param #AIRBOSS self
--- @return #ARIBOSS self
+-- @return #AIRBOSS self
 function AIRBOSS:SetHandleAION()
   self.handleai=true
   return self
@@ -2491,18 +2496,24 @@ end
 function AIRBOSS:_InitStennis()
 
   -- Carrier Parameters.
-  self.carrierparam.rwyangle   =  -9
   self.carrierparam.sterndist  =-153
   self.carrierparam.deckheight =  19
+  
+  -- Total size of the carrier (approx as rectangle).
+  self.carrierparam.totlenght=310         -- Wiki says 332.8 meters overall length.
+  self.carrierparam.totwidthport=40       -- Wiki says  76.8 meters overall beam.
+  self.carrierparam.totwidthstarboard=30
+  
+  -- Landing runway.
+  self.carrierparam.rwyangle   =  -9
   self.carrierparam.rwylength  = 225
   self.carrierparam.rwywidth   =  20
   
-  -- Wires
+  -- Wires.
   self.carrierparam.wire1      =  46        -- Distance from stern to first wire.
   self.carrierparam.wire2      =  46+12
   self.carrierparam.wire3      =  46+24
   self.carrierparam.wire4      =  46+35     -- Last wire is strangely one meter closer.
-  self.carrierparam.wireoffset =  46
 
  
   -- Platform at 5k. Reduce descent rate to 2000 ft/min to 1200 dirty up level flight.
@@ -3126,10 +3137,10 @@ function AIRBOSS:_MarshalAI(flight, nstack)
     
       -- Initial point 7 NM and a bit port of carrier.
       -- TODO: Test and tune!
-      local pE=Carrier:SetAltitude(altitude):Translate(UTILS.NMToMeters(7), hdg-30)
+      local pE=Carrier:Translate(UTILS.NMToMeters(7), hdg-30):SetAltitude(altitude)
             
       -- Entry point 5 NM port and slightly astern the boat.
-      p0=Carrier:SetAltitude(altitude):Translate(UTILS.NMToMeters(5*math.sqrt(2)), hdg-135)
+      p0=Carrier:Translate(UTILS.NMToMeters(5*math.sqrt(2)), hdg-135):SetAltitude(altitude)
             
       -- Waypoint ahead of carrier's holding zone.
       wp[#wp+1]=pE:WaypointAirTurningPoint(nil, speedTransit, {TaskArrivedHolding}, "Entering Case I Marshal Pattern")
@@ -3140,7 +3151,7 @@ function AIRBOSS:_MarshalAI(flight, nstack)
       local radial=self:GetRadial(case, false, true)
     
       -- Point in the middle of the race track and a 5 NM more port perpendicular.
-      p0=p2:Translate(UTILS.NMToMeters(5), radial+90):Translate(UTILS.NMToMeters(5), radial)
+      p0=p2:Translate(UTILS.NMToMeters(5), radial+90):Translate(UTILS.NMToMeters(5), radial, true)
       
       -- Entering Case II/III marshal pattern waypoint.
       wp[#wp+1]=p0:WaypointAirTurningPoint(nil, speedTransit, {TaskArrivedHolding}, "Entering Case II/III Marshal Pattern")
@@ -3160,7 +3171,7 @@ function AIRBOSS:_MarshalAI(flight, nstack)
     wp[1]=group:GetCoordinate():WaypointAirTurningPoint(nil, speedOrbitKmh, {}, "Current Position")
     
     -- Create new waypoint 0.2 Nm ahead of current positon.
-    p0=group:GetCoordinate():Translate(UTILS.NMToMeters(0.2), group:GetHeading())
+    p0=group:GetCoordinate():Translate(UTILS.NMToMeters(0.2), group:GetHeading(), true)
          
   end
   
@@ -4308,11 +4319,16 @@ function AIRBOSS:OnEventLand(EventData)
   
   -- Check if aircraft landed on the right airbase.
   if airbasename==self.airbase:GetName() then
+  
+    -- Stern coordinate at the rundown.
+    local stern=self:_GetSternCoord()
+    
+    local zoneCarrier=self:_GetZoneCarrierBox()
       
     -- Check if player or AI landed.
     if _unit and _playername then
       -- Human Player landed.
-    
+          
       -- Get info.
       local _uid=_unit:GetID()
       local _group=_unit:GetGroup()
@@ -4328,66 +4344,64 @@ function AIRBOSS:OnEventLand(EventData)
       -- Player data.
       local playerData=self.players[_playername] --#AIRBOSS.PlayerData
       
-      -- Check if player already landed. We dont need a second time.
-      if playerData.landed then
+      -- Check that player landed on the carrier.
+      if _unit:IsInZone(zoneCarrier) then
       
-        self:E(self.lid..string.format("Player %s just landed a second time.", _playername))
-      
-      else
-      
-        -- Coordinate at landing event.
-        local coord=playerData.unit:GetCoordinate()
-              
-        -- Get distances relative to
-        local X,Z,rho,phi=self:_GetDistances(_unit)
+        -- Check if player already landed. We dont need a second time.      
+        if playerData.landed then
         
-        -- Landing distance to carrier position.
-        local dist=coord:Get2DDistance(self:GetCoordinate())
+          self:E(self.lid..string.format("Player %s just landed a second time.", _playername))
         
-        -- Correct sign if necessary.
-        if X<0 then
-          dist=-dist
-        end
+        else
         
-        -- Debug mark of player landing coord.
-        if self.Debug and false then
+          -- Coordinate at landing event.
+          local coord=playerData.unit:GetCoordinate()
+                
+          -- Get distances relative to
+          local X,Z,rho,phi=self:_GetDistances(_unit)
+          
+          -- Landing distance wrt to stern position.
+          local dist=coord:Get2DDistance(stern)
+          
+          
           -- Debug mark of player landing coord.
-          local lp=coord:MarkToAll("Landing coord.")
-          coord:SmokeGreen()        
+          if self.Debug and false then
+            -- Debug mark of player landing coord.
+            local lp=coord:MarkToAll("Landing coord.")
+            coord:SmokeGreen()        
+          end
+          
+          -- Get wire.  We additionally shift the landing coord back because landing event for players is unfortunately delayed.
+          local wire=self:_GetWire(coord, 65)
+          
+          -- No wire ==> Bolter, Bolter radio call.
+          -- TODO: might need a better place for this. or check
+          if wire>4 then
+            self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.BOLTER)
+          end
+          
+          -- Get time in the groove.
+          local gdataX0=playerData.groove.X0 --#AIRBOSS.GrooveData
+          playerData.Tgroove=timer.getTime()-gdataX0.TGroove
+          
+          -- Debug text.
+          local text=string.format("Player %s AC type %s landed at dist=%.1f m. Trapped wire=%d.", playerData.name, playerData.actype, dist, wire)
+          text=text..string.format("X=%.1f m, Z=%.1f m, rho=%.1f m, phi=%.1f deg.", X, Z, rho, phi)
+          self:T(self.lid..text)
+          
+          -- We did land.
+          playerData.landed=true
+          
+          -- Unkonwn step until we now more.
+          playerData.step=AIRBOSS.PatternStep.UNDEFINED
+    
+          -- Call trapped function in 1 second to make sure we did not bolter.
+          SCHEDULER:New(self, self._Trapped, {playerData}, 1)
+          
         end
         
-        -- Get wire.
-        local wire=self:_GetWire(coord)
-        
-        -- No wire ==> Bolter, Bolter radio call.
-        if wire>4 then
-          self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.BOLTER)
-        end
-        
-        -- Get time in the groove.
-        local gdataX0=playerData.groove.X0 --#AIRBOSS.GrooveData
-        playerData.Tgroove=timer.getTime()-gdataX0.TGroove
-        
-        -- Set player wire
-        playerData.wire=wire      
-        
-        -- Aircraft type.
-        local _type=EventData.IniUnit:GetTypeName()
-        
-        -- Debug text.
-        local text=string.format("Player %s AC type %s landed at dist=%.1f m (+offset=%.1f). Trapped wire=%d.", EventData.IniUnitName, _type, dist, self.carrierparam.wireoffset, wire)
-        text=text..string.format("X=%.1f m, Z=%.1f m, rho=%.1f m, phi=%.1f deg.", X, Z, rho, phi)
-        self:T(self.lid..text)
-        
-        -- We did land.
-        playerData.landed=true
-        
-        -- Unkonwn step until we now more.
-        playerData.step=AIRBOSS.PatternStep.UNDEFINED
-  
-        -- Call trapped function in 3 seconds to make sure we did not bolter.
-        SCHEDULER:New(self, self._Trapped, {playerData}, 1)
-        
+      else
+        -- Player did not land in carrier box zone. Maybe in the water near the carrier.
       end
        
     else
@@ -5315,7 +5329,7 @@ end
 function AIRBOSS:_Groove(playerData)
 
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
-  local X, Z, rho, phi = self:_GetDistances(playerData.unit)
+  local X, Z = self:_GetDistances(playerData.unit)
   
   -- Player altitude
   local alt=playerData.unit:GetAltitude()
@@ -5328,7 +5342,13 @@ function AIRBOSS:_Groove(playerData)
     self:_AbortPattern(playerData, X, Z, self.Groove, true)
     return
   end
-
+  
+  -- Stern position at the rundown.
+  local stern=self:_GetSternCoord()
+  
+  -- Distance from rundown to player aircraft.
+  local rho=stern:Get2DDistance(playerData.unit:GetCoordinate())
+  
   -- Lineup with runway centerline.
   local lineupError=self:_Lineup(playerData.unit, true)
   
@@ -5451,42 +5471,55 @@ function AIRBOSS:_Groove(playerData)
   end
   
   -- Time since last LSO call.
-  local time=timer.getTime()
-  local deltaT=time-playerData.Tlso
+  local deltaT=timer.getTime()-playerData.Tlso
   
-  -- Check if we are beween 3/4 NM and end of ship.
+  -- Check if we are beween 3/4 NM and end of ship. Only one call every 3 seconds.
   if X<0 and rho>=RAR and rho<RXX and deltaT>=3 and playerData.waveoff==false then
 
     -- LSO call if necessary.
     self:_LSOadvice(playerData, glideslopeError, lineupError)
+    
+  end
+  
+  --------------------------------------------------------
+  --- Some time here the landing event MIGHT be triggered.
+  --------------------------------------------------------
 
-  elseif X>100 then
-           
-    if playerData.landed then
-      
-      -- Add to debrief.
-      if playerData.waveoff then
+  -- Player infront of the carrier X>~77 m.
+  if X>self.carrierparam.totlenght+self.carrierparam.sterndist then
+  
+    if playerData.waveoff then
+    
+      if playerData.landed then
+        -- This should not happen because landing event was triggered.
         self:_AddToDebrief(playerData, "You were waved off but landed anyway. Airboss wants to talk to you!")
       else
-        self:_AddToDebrief(playerData, "You boltered.")
+        self:_AddToDebrief(playerData, "You were waved off.")
       end
-            
+    
+    elseif playerData.boltered then
+    
+      -- This should not happen because landing event was triggered.
+      self:_AddToDebrief(playerData, "You boltered.")
+      
     else
       
-      -- Add to debrief.
-      self:_AddToDebrief(playerData, "You were waved off.")
+      -- What? Player was not waved off but flew past the carrier without landing. Why did waveoff not kick in?
       
-      -- Next step: debrief.
-      playerData.step=AIRBOSS.PatternStep.DEBRIEF
-      playerData.warning=nil
     end
-  end 
+    
+     -- Next step: debrief.
+    playerData.step=AIRBOSS.PatternStep.DEBRIEF
+    playerData.warning=nil
+    
+  end
+  
 end
 
 --- LSO check if player needs to wave off.
 -- Wave off conditions are:
 -- 
--- * Glide slope error > 3 degrees.
+-- * Glide slope error > 1 degree.
 -- * Line up error > 3 degrees.
 -- * AoA check but only for TOPGUN graduates.
 -- @param #AIRBOSS self
@@ -5542,6 +5575,9 @@ function AIRBOSS:_GetSternCoord()
 
   -- Stern coordinate (sterndist<0). Also translate 10 meters starboard wrt Final bearing.
   local stern=self:GetCoordinate():Translate(self.carrierparam.sterndist, hdg):Translate(7, FB+90)
+  
+  -- Set altitude.
+  stern:SetAltitude(self.carrierparam.deckheight)
 
   return stern
 end
@@ -5549,13 +5585,10 @@ end
 --- Get wire from landing position.
 -- @param #AIRBOSS self
 -- @param Core.Point#COORDINATE Lcoord Landing position.
--- @param #number dc Distance correction.
+-- @param #number dc Distance correction. Shift the landing coord back if dc>0 and forward if dc<0.
 -- @return #number Trapped wire (1-4) or 99 if no wire was trapped.
 function AIRBOSS:_GetWire(Lcoord, dc)
 
-  -- Heading of carrier (true).
-  local hdg=self.carrier:GetHeading()
-  
   -- Final bearing (true).
   local FB=self:GetFinalBearing()
   
@@ -5639,40 +5672,47 @@ function AIRBOSS:_Trapped(playerData)
     -- Lets see if we can get a good wire.
     local unit=playerData.unit
     
+    -- Coordinate of player aircraft.
     local coord=unit:GetCoordinate()
     
     -- Get velocity in km/h. We need to substrackt the carrier velocity.
     local v=unit:GetVelocityKMH()-self.carrier:GetVelocityKMH()
-    
-    -- Distance
-    local d=self:GetCoordinate():Get2DDistance(coord)
     
     -- Stern coordinate.
     local stern=self:_GetSternCoord()
     
     -- Distance to stern pos.
     local s=stern:Get2DDistance(coord)
+    
+    -- Get current wire (estimate). This now based on the position where the player comes to a standstill which should reflect the trapped wire better.
+    -- TODO: Need to find the correction factor!
+    local dcorr=100
+    local wire=self:_GetWire(coord, dcorr)
 
     -- Debug.
-    local text=string.format("Player %s _Trapped v=%.1f km/h, d=%.1f m, s=%.1f", playerData.name, v, d, s)
+    local text=string.format("Player %s _Trapped: v=%.1f km/h, s=%.1f m ==> wire=%d (dcorr=%d)", playerData.name, v, s, wire, dcorr)
     self:E(self.lid..text)
     
-    -- TODO: call this function again until v < threshold. Player comes to a standstill ==> Get wire!
+    -- Call this function again until v < threshold. Player comes to a standstill ==> Get wire!
     if v>5 then
       SCHEDULER:New(self, self._Trapped, {playerData}, 0.1)
       return
     end
-        
+    
+    ----------------------------------------
+    --- Form this point on we have converged
+    ----------------------------------------
+    
     -- Put some smoke and a mark
     --if self.Debug then
       coord:SmokeBlue()
       coord:MarkToAll(text)
       stern:MarkToAll("Stern")
     --end
-    
-    -- Get wire.
-    local wire=playerData.wire
 
+    -- Set player wire.
+    playerData.wire=wire
+    
     -- Message to player.    
     local text=string.format("Trapped %d-wire.", wire)
     if wire==3 then
@@ -5694,10 +5734,10 @@ function AIRBOSS:_Trapped(playerData)
     
   else
   
-    --Still in air ==> Boltered!
-    local text="Player boltered in trapped function."
+    --Again in air ==> Boltered!
+    local text=string.format("Player %s boltered in trapped function.", playerData.name)
     self:T(self.lid..text)
-    MESSAGE:New("Player boltered in trapped", 5, "DEBUG"):ToAllIf(self.debug)
+    MESSAGE:New(text, 5, "DEBUG"):ToAllIf(self.debug)
     
     -- Bolter switch on.
     playerData.boltered=true
@@ -5931,6 +5971,77 @@ function AIRBOSS:_GetZoneCorridor(case)
   return zone
 end
 
+
+--- Get zone of carrier. Carrier is approximated as rectangle.
+-- @param #AIRBOSS self
+-- @return Core.Zone#ZONE Zone surrounding the carrier.
+function AIRBOSS:_GetZoneCarrierBox()
+
+  -- Stern coordinate.
+  local S=self:_GetSternCoord()
+  
+  -- Current carrier heading.
+  local hdg=self:GetHeading(false)
+  
+  -- Coordinate array.
+  local p={}
+  
+  -- Starboard stern point.
+  p[1]=S:Translate(self.carrierparam.totwidthstarboard, hdg+90)
+  
+  -- Starboard bow point.
+  p[2]=p[1]:Translate(self.carrierparam.totlenght, hdg)
+  
+  -- Port bow point.
+  p[3]=p[2]:Translate(self.carrierparam.totwidthstarboard+self.carrierparam.totwidthport, hdg-90)
+  
+  -- Port stern point.
+  p[4]=p[3]:Translate(self.carrierparam.totlegth, hdg-180)
+  
+  -- Convert to vec2.
+  local vec2={}
+  for _,coord in ipairs(p) do
+    table.insert(vec2, coord:GetVec2())
+  end
+  
+  -- Create polygon zone.
+  local zone=ZONE_POLYGON_BASE:New("Carrier Box Zone", vec2)
+
+  return zone
+end
+
+--- Get zone of landing runway
+-- @param #AIRBOSS self
+-- @return Core.Zone#ZONE Zone surrounding landing runway.
+function AIRBOSS:_GetZoneRunwayBox()
+
+  -- Stern coordinate.
+  local S=self:_GetSternCoord()
+  
+  -- Current carrier heading.
+  local FB=self:GetFinalBearing(false)
+  
+  -- Coordinate array.
+  local p={}
+
+  -- Points.
+  p[1]=S:Translate(self.carrierparam.rwywidth, FB+90)
+  p[2]=p[1]:Translate(self.carrierparam.rwylength, FB)
+  p[3]=p[2]:Translate(self.carrierparam.rwywidth*2, FB-90)
+  p[4]=p[3]:Translate(self.carrierparam.rwylength, FB-180)
+
+  -- Convert to vec2.
+  local vec2={}
+  for _,coord in ipairs(p) do
+    table.insert(vec2, coord:GetVec2())
+  end
+  
+  -- Create polygon zone.
+  local zone=ZONE_POLYGON_BASE:New("Landing Runway Zone", vec2)
+
+  return zone 
+end
+
 --- Get holding zone of player.
 -- @param #AIRBOSS self
 -- @param #number case Recovery case.
@@ -6047,17 +6158,16 @@ end
 --- Get glide slope of aircraft unit.
 -- @param #AIRBOSS self
 -- @param Wrapper.Unit#UNIT unit Aircraft unit.
--- @param #number optangle (Optional) Return glide slope relative to this angle, i.e. the error from the optimal glide slope.
+-- @param #number optangle (Optional) Return glide slope relative to this angle, i.e. the error from the optimal glide slope ~3.5 degrees.
 -- @return #number Glide slope angle in degrees measured from the deck of the carrier and third wire.
 function AIRBOSS:_Glideslope(unit, optangle)
 
   -- Default is 0.
   optangle=optangle or 0
 
+  --[[
   -- Glideslope. Wee need to correct for the height of the deck. The ideal glide slope is 3.5 degrees.
   local h=unit:GetAltitude()-self.carrierparam.deckheight
-
-  --[[
    -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
   local X, Z, rho, phi = self:_GetDistances(unit)  
   -- Distance correction.
@@ -6070,11 +6180,14 @@ function AIRBOSS:_Glideslope(unit, optangle)
   
   -- Ideally we want to land at the 3-wire (or slightly before).
   if self.carrierparam.wire3 then
-    stern:Translate(self.carrierparam.wire3, self:GetFinalBearing(false))
+    stern:Translate(self.carrierparam.wire3, self:GetFinalBearing(false), true)
   end
   
   -- Distance from stern to aircraft.
   local x=unit:GetCoordinate():Get2DDistance(stern)
+  
+  -- Altitude of unit. Stern coordinate already includes the deck height so no correction nedded any more.
+  local h=unit:GetAltitude()
   
   -- Glide slope.
   local glideslope=math.atan(h/x)  
@@ -6087,10 +6200,11 @@ end
 -- @param Wrapper.Unit#UNIT unit Aircraft unit.
 -- @param #boolean runway If true, include angled runway.
 -- @return #number Line up with runway heading in degrees. 0 degrees = perfect line up. +1 too far left. -1 too far right.
--- @return #number Distance from carrier tail to player aircraft in meters.
 function AIRBOSS:_Lineup(unit, runway) 
 
- -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
+  --[[
+
+  -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
   local X, Z, rho, phi = self:_GetDistances(unit)
   
   -- Position at the end of the deck. From there we calculate the angle.
@@ -6102,7 +6216,6 @@ function AIRBOSS:_Lineup(unit, runway)
   -- Vector from plane to ref point on boad.
   local c={x=b.x-a.x, y=0, z=b.z-a.z}
 
-  --[[  
   -- Stern coordinate.
   local stern=self:_GetSternCoord()
   
@@ -6112,7 +6225,6 @@ function AIRBOSS:_Lineup(unit, runway)
   -- Vector from stern to aircraft.
   local c={x=stern.x-coord.x, y=0, z=stern.z-coord.z}
   
-  ]]
   
   -- Current line up and error wrt to final heading of the runway.
   local lineup=math.deg(math.atan2(c.z, c.x))
@@ -6122,9 +6234,35 @@ function AIRBOSS:_Lineup(unit, runway)
     lineup=lineup-self.carrierparam.rwyangle
   end
   
+  ]]  
+  
+  --- New stuff
+  
+  -- Carrier Orientation.
+  local X=COORDINATE:NewFromVec3(self.carrier:GetOrientationX())
+  
+  -- Rotate orientation to angled runway.
+  if runway then  
+    X=X:Rotate2D(self.carrierparams.rwyangle)
+  end
+  
+  -- Stern coordinate.
+  local S=self:_GetSternCoord()
+  S.y=0 -- 2D only
+  
+  -- Plane coordinate.
+  local P=unit:GetCoordinate()
+  P.y=0 -- 2D only
+  
+  -- Vector from Plane to Stern V=S-P
+  local V=UTILS.VecSubstract(S, P)
+  
+  -- Angle between carrier orientation and 
+  local alpha=UTILS.VecAngle(X,V)
+  
   env.info("FF lineup = "..lineup)
 
-  return lineup, UTILS.VecNorm(c)
+  return lineup
 end
 
 --- Get true (or magnetic) heading of carrier.
@@ -6306,7 +6444,7 @@ function AIRBOSS:_GetDistances(unit)
   -- Orientation of carrier.
   local z=self.carrier:GetOrientationZ()
   
-  -- Projection of player pos on z component.  
+  -- Projection of player pos on z component.
   local dz=UTILS.VecDot(z,c)
   
   -- Polar coordinates

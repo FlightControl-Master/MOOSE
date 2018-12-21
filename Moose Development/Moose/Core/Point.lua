@@ -460,17 +460,46 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param DCS#Distance Distance The Distance to be added in meters.
   -- @param DCS#Angle Angle The Angle in degrees. Defaults to 0 if not specified (nil).
+  -- @param #boolean Keepalt If true, keep altitude of original coordinate. Default is that the new coordinate is created at the translated land height.
   -- @return Core.Point#COORDINATE The new calculated COORDINATE.
-  function COORDINATE:Translate( Distance, Angle )
+  function COORDINATE:Translate( Distance, Angle, Keepalt )
     local SX = self.x
     local SY = self.z
     local Radians = (Angle or 0) / 180 * math.pi
     local TX = Distance * math.cos( Radians ) + SX
     local TY = Distance * math.sin( Radians ) + SY
-
-    return COORDINATE:NewFromVec2( { x = TX, y = TY } )
+  
+    if Keepalt then
+      return COORDINATE:NewFromVec3( { x = TX, y=self.y, z = TY } )
+    else
+      return COORDINATE:NewFromVec2( { x = TX, y = TY } )
+    end
   end
 
+  --- Rotate coordinate in 2D (x,z) space.
+  -- @param #COORDINATE self
+  -- @param DCS#Angle Angle Angle of rotation in degrees.
+  -- @return Core.Point#COORDINATE The rotated coordinate.
+  function COORDINATE:Rotate2D(Angle)
+  
+    if not Angle then
+      return self
+    end
+
+    local phi=math.rad(Angle)
+    
+    local X=self.z
+    local Y=self.x
+    
+    --slocal R=math.sqrt(X*X+Y*Y)
+      
+    local x=X*math.cos(phi)-Y*math.sin(phi)
+    local y=X*math.sin(phi)+Y*math.cos(phi)
+
+    -- Coordinate assignment looks bit strange but is correct.
+    return COORDINATE:NewFromVec3({x=y, y=self.y, z=x})
+  end
+  
   --- Return a random Vec2 within an Outer Radius and optionally NOT within an Inner Radius of the COORDINATE.
   -- @param #COORDINATE self
   -- @param DCS#Distance OuterRadius

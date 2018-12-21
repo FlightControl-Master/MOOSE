@@ -716,6 +716,23 @@ function UTILS.VecCross(a, b)
   return {x=a.y*b.z - a.z*b.y, y=a.z*b.x - a.x*b.z, z=a.x*b.y - a.y*b.x}
 end
 
+--- Calculate the difference between two 3D vectors by substracting the x,y,z components from each other. 
+-- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+-- @param DCS#Vec3 b Vector in 3D with x, y, z components.
+-- @return DCS#Vec3 Vector c=a-b with c(i)=a(i)-b(i), i=x,y,z.
+function UTILS.VecSubstract(a, b)
+  return {x=a.x-b.x, y=a.y-b.y, z=a.z-b.z}
+end
+
+--- Calculate the angle between two 3D vectors. 
+-- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+-- @param DCS#Vec3 b Vector in 3D with x, y, z components.
+-- @return #number Angle alpha between and b in degrees. alpha=acos(a*b)/(|a||b|), (* denotes the dot product). 
+function UTILS.VecAngle(a, b)
+  local alpha=math.acos(UTILS.VecDot(a,b)/(UTILS.VecNorm(a)*UTILS.VecNorm(b)))
+  return math.deg(alpha)
+end
+
 --- Converts a TACAN Channel/Mode couple into a frequency in Hz.
 -- @param #number TACANChannel The TACAN channel, i.e. the 10 in "10X".
 -- @param #string TACANMode The TACAN mode, i.e. the "X" in "10X".
