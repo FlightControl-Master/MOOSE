@@ -11,7 +11,7 @@
 --    * Define recovery time windows with individual recovery cases.
 --    * Automatic TACAN and ICLS channel setting of carrier.
 --    * Separate radio channels for LSO and Marshal transmissions.
---    * Voice over support for LSO and Marshal radio transmissions with more than 30 common radio calls.
+--    * Voice over support for LSO and Marshal radio transmissions.
 --    * F10 radio menu including carrier info (weather, radio frequencies, TACAN/ICLS channels), player LSO grades,
 --    help function (player aircraft attitude, marking of pattern zones etc).
 --    * Recovery tanker and refueling option via integration of @{Ops.RecoveryTanker} class.
@@ -436,7 +436,7 @@
 -- 
 -- The @{#AIRBOSS} class allows to handle incoming AI units and integrate them into the marshal and landing pattern.
 -- 
--- By default, incoming carrier capable aircraft which are detecting inside the CCZ and approach the carrier by more than 5 NM are automatically guided to the holding zone.
+-- By default, incoming carrier capable aircraft which are detecting inside the Carrier Controlled Area (CCA) and approach the carrier by more than 5 NM are automatically guided to the holding zone.
 -- Each AI group gets its own marshal stack in the holding pattern. Once a recovery window opens, the AI group of the lowest stack is transitioning to the landing pattern
 -- and the Marshal stack collapses.
 -- 
@@ -1128,22 +1128,23 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.6.0"
+AIRBOSS.version="0.6.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Improve radio messages. Maybe usersound for messages which are only meant for players?
 -- TODO: Player eject and crash debrief "gradings".
--- DONE: Add voice over fly needs and welcome aboard.
--- TODO: Improve trapped wire calculation. 
--- DONE: Carrier zone with dimensions of carrier. to check if landing happend on deck.
--- DONE: Carrier runway zone for fould deck check.
 -- TODO: Subtitles off options on player level.
 -- TODO: PWO during case 2/3. Also when too close to other player.
 -- TODO: Option to filter AI groups for recovery.
 -- TODO: Spin pattern. Add radio menu entry. Not sure what to add though?!
 -- TODO: Persistence of results.
+-- DONE: Add voice over fly needs and welcome aboard.
+-- DONE: Improve trapped wire calculation. 
+-- DONE: Carrier zone with dimensions of carrier. to check if landing happend on deck.
+-- DONE: Carrier runway zone for fould deck check.
 -- DONE: More Hints for Case II/III.
 -- DONE: Set magnetic declination function.
 -- DONE: First send AI to marshal and then allow them into the landing pattern ==> task function when reaching the waypoint.
@@ -2004,7 +2005,7 @@ function AIRBOSS:_CheckAIStatus()
 
           -- Pilot: "405, Hornet Ball, 3.2"
           -- TODO: Voice over.
-          local text=string.format("%s Ball, %.1f.", self:_GetACNickname(unit:GetTypeName()), self:_GetFuelState(unit)/1000)     
+          local text=string.format("%s Ball, %.1f.", self:_GetACNickname(unit:GetTypeName()), self:_GetFuelState(unit)/1000)
           self:MessageToPattern(text, element.onboard, "", 3, false, 0, true)
           
           -- Debug message.
@@ -4382,7 +4383,7 @@ function AIRBOSS:OnEventLand(EventData)
           end
           
           -- Get wire.  We additionally shift the landing coord back because landing event for players is unfortunately delayed.
-          local wire=self:_GetWire(coord, 65)
+          local wire=self:_GetWire(coord, 100)
           
           -- No wire ==> Bolter, Bolter radio call.
           -- TODO: might need a better place for this. or check
@@ -5368,6 +5369,9 @@ function AIRBOSS:_Groove(playerData)
   -- Get AoA.
   local AoA=playerData.unit:GetAoA()
   
+  -- For debugging.
+  --MESSAGE:New(string.format("LUE=%.1f  GLE=%.1f  AoA=%.1f", lineupError, glideslopeError, AoA), 3, nil, true):ToAll()
+  
   -- Ranges in the groove.
   local RXX=UTILS.NMToMeters(0.750)+math.abs(self.carrierparam.sterndist) -- Start of groove.      0.75  = 1389 m
   local RRB=UTILS.NMToMeters(0.500)+math.abs(self.carrierparam.sterndist) -- Roger Ball! call.     0.5   =  926 m
@@ -5545,13 +5549,17 @@ function AIRBOSS:_CheckWaveOff(glideslopeError, lineupError, AoA, playerData)
   
   -- Too high or too low?
   if math.abs(glideslopeError)>1 then
-    self:T(self.lid..string.format("%s: Wave off due to glide slope error |%.1f| > 1 degree!", playerData.name, glideslopeError))
+    local text=string.format("Wave off due to glide slope error |%.1f| > 1 degree!", glideslopeError)
+    self:I(self.lid..string.format("%s: %s", playerData.name, text))
+    self:_AddToDebrief(playerData, text)
     waveoff=true
   end
 
   -- Too far from centerline?
   if math.abs(lineupError)>3 then
-    self:T(self.lid..string.format("%s: Wave off due to line up error |%.1f| > 3 degrees!", playerData.name, lineupError))
+    local text=string.format("Wave off due to line up error |%.1f| > 3 degrees!", lineupError)
+    self:I(self.lid..string.format("%s: %s", playerData.name, text))
+    self:_AddToDebrief(playerData, text)
     waveoff=true
   end
   
@@ -5561,10 +5569,14 @@ function AIRBOSS:_CheckWaveOff(glideslopeError, lineupError, AoA, playerData)
     local aoaac=self:_GetAircraftAoA(playerData)    
     -- Check too slow or too fast. 
     if AoA<aoaac.Fast then
-      self:T(self.lid..string.format("%s: Wave off due to AoA %.1f < %.1f!", playerData.name, AoA, aoaac.Fast))
+      local text=string.format("Wave off due to AoA %.1f < %.1f!", AoA, aoaac.Fast)
+      self:I(self.lid..string.format("%s: %s", playerData.name, text))
+      self:_AddToDebrief(playerData, text)
       waveoff=true
     elseif AoA>aoaac.Slow then
-      self:T(self.lid..string.format("%s: Wave off due to AoA %.1f > %.1f!", playerData.name, AoA, aoaac.Slow))
+      local text=string.format("Wave off due to AoA %.1f > %.1f!", AoA, aoaac.Slow)
+      self:I(self.lid..string.format("%s: %s", playerData.name, text))
+      self:_AddToDebrief(playerData, text)
       waveoff=true
     end
   end
@@ -5695,7 +5707,6 @@ function AIRBOSS:_Trapped(playerData)
     local s=stern:Get2DDistance(coord)
     
     -- Get current wire (estimate). This now based on the position where the player comes to a standstill which should reflect the trapped wire better.
-    -- TODO: Need to find the correction factor!
     local dcorr=100
     local wire=self:_GetWire(coord, dcorr)
 
@@ -5713,12 +5724,12 @@ function AIRBOSS:_Trapped(playerData)
     --- Form this point on we have converged
     ----------------------------------------
     
-    -- Put some smoke and a mark
-    --if self.Debug then
+    -- Put some smoke and a mark.
+    if self.Debug then
       coord:SmokeBlue()
       coord:MarkToAll(text)
       stern:MarkToAll("Stern")
-    --end
+    end
 
     -- Set player wire.
     playerData.wire=wire
@@ -6178,23 +6189,26 @@ function AIRBOSS:_Glideslope(unit, optangle)
   -- Stern coordinate.
   local stern=self:_GetSternCoord()
   
-  -- Ideally we want to land at the 3-wire (or slightly before).
+  -- Ideally we want to land between 2nd and 3rd wire.
   if self.carrierparam.wire3 then
-    stern:Translate(self.carrierparam.wire3, self:GetFinalBearing(false), true)
+    local d23=self.carrierparam.wire2+0.5*(self.carrierparam.wire3-self.carrierparam.wire2)
+    stern=stern:Translate(d23, self:GetFinalBearing(false), true)
   end
-  
+
   -- Distance from stern to aircraft.
   local x=unit:GetCoordinate():Get2DDistance(stern)
   
-  -- Altitude of unit. Stern coordinate already includes the deck height so no correction nedded any more.
-  local h=unit:GetAltitude()
+  -- Altitude of unit corrected by the deck height of the carrier.
+  local h=unit:GetAltitude()-self.carrierparam.deckheight
   
   -- Glide slope.
   local glideslope=math.atan(h/x)
   
   -- Glide slope (error) in degrees.
   local gs=math.deg(glideslope)-optangle
-
+  
+  --env.info(string.format("FF Glide slope error = %.1f, x=%.1f h=%.1f", gs, x, h))
+  
   return gs
 end
 
@@ -7230,7 +7244,7 @@ function AIRBOSS:_Debrief(playerData)
     end
     
     -- Time in the groove. Only Case I/II and not pattern WO.
-    if playerData.Tgroove and playerData.Tgroovey<=60 and playerData.case<3 then
+    if playerData.Tgroove and playerData.Tgroove<=60 and playerData.case<3 then
       text=text..string.format("\nTime in the groove %d seconds.", playerData.Tgroove)
     end
     
@@ -8085,8 +8099,6 @@ function AIRBOSS:_Number2Sound(radio, number, delay)
     sender="LSOCall"
   elseif alias=="MARSHAL" then
     sender="MarshalCall"
-  --elseif alias=="AIRBOSS" then
-  --  sender="AirbossCall"
   else
     self:E(self.lid.."ERROR: Unknown radio alias!")
   end
