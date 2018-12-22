@@ -733,6 +733,28 @@ function UTILS.VecAngle(a, b)
   return math.deg(alpha)
 end
 
+--- Rotate 3D vector in the 2D (x,z) plane. y-component (usually altitude) unchanged. 
+-- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+-- @param #number angle Rotation angle in degrees.
+-- @return DCS#Vec3 Vector rotated in the (x,z) plane.
+function UTILS.Rotate2D(a, angle)
+
+  local phi=math.rad(angle)
+  
+  local x=a.z
+  local y=a.x
+    
+  local Z=x*math.cos(phi)-y*math.sin(phi)
+  local X=x*math.sin(phi)+y*math.cos(phi)
+  local Y=a.y
+  
+  local A={x=X, y=Y, z=Z}
+
+  return A
+end
+
+
+
 --- Converts a TACAN Channel/Mode couple into a frequency in Hz.
 -- @param #number TACANChannel The TACAN channel, i.e. the 10 in "10X".
 -- @param #string TACANMode The TACAN mode, i.e. the "X" in "10X".

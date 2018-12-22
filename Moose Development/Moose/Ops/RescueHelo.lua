@@ -782,7 +782,7 @@ function RESCUEHELO:onafterStart(From, Event, To)
     local dist=UTILS.NMToMeters(0.2)
     
     -- Coordinate behind the carrier. Altitude at least 100 meters for spawning because it drops down a bit.
-    local Carrier=self.carrier:GetCoordinate():SetAltitude(math.max(140, self.altitude)):Translate(dist, hdg)
+    local Carrier=self.carrier:GetCoordinate():Translate(dist, hdg):SetAltitude(math.max(140, self.altitude))
     
     -- Orientation of spawned group.
     Spawn:InitHeading(hdg)

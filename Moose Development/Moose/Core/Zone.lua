@@ -535,7 +535,7 @@ function ZONE_RADIUS:FlareZone( FlareColor, Points, Azimuth, AddHeight )
   local Vec2 = self:GetVec2()
   
   AddHeight = AddHeight or 0
-
+  
   Points = Points and Points or 360
 
   local Angle
@@ -1431,11 +1431,15 @@ end
 -- @param #ZONE_POLYGON_BASE self
 -- @param Utilities.Utils#FLARECOLOR FlareColor The flare color.
 -- @param #number Segments (Optional) Number of segments within boundary line. Default 10.
+-- @param DCS#Azimuth Azimuth (optional) Azimuth The azimuth of the flare.
+-- @param #number AddHeight (optional) The height to be added for the smoke.
 -- @return #ZONE_POLYGON_BASE self
-function ZONE_POLYGON_BASE:FlareZone( FlareColor, Segments )
+function ZONE_POLYGON_BASE:FlareZone( FlareColor, Segments, Azimuth, AddHeight )
   self:F2(FlareColor)
 
   Segments=Segments or 10
+  
+  AddHeight = AddHeight or 0
   
   local i=1
   local j=#self._.Polygon
@@ -1449,7 +1453,7 @@ function ZONE_POLYGON_BASE:FlareZone( FlareColor, Segments )
     for Segment = 0, Segments do -- We divide each line in 5 segments and smoke a point on the line.
       local PointX = self._.Polygon[i].x + ( Segment * DeltaX / Segments )
       local PointY = self._.Polygon[i].y + ( Segment * DeltaY / Segments )
-      POINT_VEC2:New( PointX, PointY ):Flare(FlareColor)
+      POINT_VEC2:New( PointX, PointY, AddHeight ):Flare(FlareColor, Azimuth)
     end
     j = i
     i = i + 1

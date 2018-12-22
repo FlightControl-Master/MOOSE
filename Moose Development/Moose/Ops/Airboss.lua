@@ -600,7 +600,7 @@ AIRBOSS.CarrierType={
 -- @field #number wire4 Distance in meters from carrier position to fourth wire.
 -- @field #number rwylength Length of the landing runway in meters.
 -- @field #number rwywidth Width of the landing runway in meters.
--- @field #number totlenght Total length of carrier.
+-- @field #number totlength Total length of carrier.
 -- @field #number totwidthstarboard Total with of the carrier from stern position to starboard side (asymmetric carriers).
 -- @field #number totwidthport Total with of the carrier from stern position to port side (asymmetric carriers).
 
@@ -1128,7 +1128,7 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.5.9w"
+AIRBOSS.version="0.6.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1203,11 +1203,13 @@ function AIRBOSS:New(carriername, alias)
     return nil
   end
   
+  --[[
   self.Debug=true
   BASE:TraceOnOff(true)
   BASE:TraceClass(self.ClassName)
   BASE:TraceLevel(1)
-      
+  ]]
+  
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("AIRBOSS %s | ", carriername)
   
@@ -1223,8 +1225,10 @@ function AIRBOSS:New(carriername, alias)
   -- Create carrier beacon.
   self.beacon=BEACON:New(self.carrier)
     
-  -- Defaults:
-
+  -------------
+  --- Defaults:
+  -------------
+  
   -- Set up Airboss radio.  
   self.MarshalRadio=RADIO:New(self.carrier)
   self.MarshalRadio:SetAlias("MARSHAL")
@@ -1312,7 +1316,7 @@ function AIRBOSS:New(carriername, alias)
     local stern=self:_GetSternCoord()
     
     -- Bow pos.
-    local bow=stern:Translate(self.carrierparam.totlenght, hdg)
+    local bow=stern:Translate(self.carrierparam.totlength, hdg)
     
     -- End of rwy.
     local rwy=stern:Translate(self.carrierparam.rwylength, FB, true)
@@ -1339,11 +1343,11 @@ function AIRBOSS:New(carriername, alias)
       rwy:FlareRed()
       
       -- Right 30 meters from stern.
-      local cR=stern:Translate(self.carrierparam.totstarboard, hdg+90)
+      local cR=stern:Translate(self.carrierparam.totwidthstarboard, hdg+90)
       cR:FlareYellow()
   
       -- Left 40 meters from stern.
-      local cL=stern:Translate(self.carrierparam.totport, hdg-90)
+      local cL=stern:Translate(self.carrierparam.totwidthport, hdg-90)
       cL:FlareYellow()
            
       --[[
@@ -1356,8 +1360,14 @@ function AIRBOSS:New(carriername, alias)
       w3:FlareWhite()
       w4:FlareYellow()
       ]]
-      
+
+
+      local cbox=self:_GetZoneCarrierBox()
+      local rbox=self:_GetZoneRunwayBox()    
+      cbox:FlareZone(FLARECOLOR.Green, 5, nil, self.carrierparam.deckheight)
+      rbox:FlareZone(FLARECOLOR.White, 5, nil, self.carrierparam.deckheight)
     end
+    
     
     SCHEDULER:New(nil, flareme, {}, 1, 1)
     
@@ -2500,7 +2510,7 @@ function AIRBOSS:_InitStennis()
   self.carrierparam.deckheight =  19
   
   -- Total size of the carrier (approx as rectangle).
-  self.carrierparam.totlenght=310         -- Wiki says 332.8 meters overall length.
+  self.carrierparam.totlength=310         -- Wiki says 332.8 meters overall length.
   self.carrierparam.totwidthport=40       -- Wiki says  76.8 meters overall beam.
   self.carrierparam.totwidthstarboard=30
   
@@ -5486,7 +5496,7 @@ function AIRBOSS:_Groove(playerData)
   --------------------------------------------------------
 
   -- Player infront of the carrier X>~77 m.
-  if X>self.carrierparam.totlenght+self.carrierparam.sterndist then
+  if X>self.carrierparam.totlength+self.carrierparam.sterndist then
   
     if playerData.waveoff then
     
@@ -5990,13 +6000,13 @@ function AIRBOSS:_GetZoneCarrierBox()
   p[1]=S:Translate(self.carrierparam.totwidthstarboard, hdg+90)
   
   -- Starboard bow point.
-  p[2]=p[1]:Translate(self.carrierparam.totlenght, hdg)
+  p[2]=p[1]:Translate(self.carrierparam.totlength, hdg)
   
   -- Port bow point.
   p[3]=p[2]:Translate(self.carrierparam.totwidthstarboard+self.carrierparam.totwidthport, hdg-90)
   
   -- Port stern point.
-  p[4]=p[3]:Translate(self.carrierparam.totlegth, hdg-180)
+  p[4]=p[3]:Translate(self.carrierparam.totlength, hdg-180)
   
   -- Convert to vec2.
   local vec2={}
@@ -6164,16 +6174,6 @@ function AIRBOSS:_Glideslope(unit, optangle)
 
   -- Default is 0.
   optangle=optangle or 0
-
-  --[[
-  -- Glideslope. Wee need to correct for the height of the deck. The ideal glide slope is 3.5 degrees.
-  local h=unit:GetAltitude()-self.carrierparam.deckheight
-   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
-  local X, Z, rho, phi = self:_GetDistances(unit)  
-  -- Distance correction.
-  local offx=self.carrierparam.wire3 or self.carrierparam.sterndist
-  local x=math.abs(self.carrierparam.wire3-X)
-  ]]
   
   -- Stern coordinate.
   local stern=self:_GetSternCoord()
@@ -6190,9 +6190,12 @@ function AIRBOSS:_Glideslope(unit, optangle)
   local h=unit:GetAltitude()
   
   -- Glide slope.
-  local glideslope=math.atan(h/x)  
+  local glideslope=math.atan(h/x)
+  
+  -- Glide slope (error) in degrees.
+  local gs=math.deg(glideslope)-optangle
 
-  return math.deg(glideslope)-optangle
+  return gs
 end
 
 --- Get line up of player wrt to carrier. 
@@ -6200,69 +6203,59 @@ end
 -- @param Wrapper.Unit#UNIT unit Aircraft unit.
 -- @param #boolean runway If true, include angled runway.
 -- @return #number Line up with runway heading in degrees. 0 degrees = perfect line up. +1 too far left. -1 too far right.
-function AIRBOSS:_Lineup(unit, runway) 
-
-  --[[
-
-  -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
-  local X, Z, rho, phi = self:_GetDistances(unit)
+function AIRBOSS:_Lineup(unit, runway)
   
-  -- Position at the end of the deck. From there we calculate the angle.
-  local b={x=self.carrierparam.sterndist, z=0}
+  -- Vector to carrier.
+  local A=self:_GetSternCoord():GetVec3()
   
-  -- Position of the aircraft wrt carrier coordinates.
-  local a={x=X, z=Z}
-
-  -- Vector from plane to ref point on boad.
-  local c={x=b.x-a.x, y=0, z=b.z-a.z}
-
-  -- Stern coordinate.
-  local stern=self:_GetSternCoord()
+  -- Vector to player.
+  local B=unit:GetVec3()
   
-  -- Position of aircraft.
-  local coord=unit:GetCoordinate()
+  -- Vector from player to carrier.
+  local C=UTILS.VecSubstract(A, B)
   
-  -- Vector from stern to aircraft.
-  local c={x=stern.x-coord.x, y=0, z=stern.z-coord.z}
+  -- Only in 2D plane.
+  C.y=0
   
-  
-  -- Current line up and error wrt to final heading of the runway.
-  local lineup=math.deg(math.atan2(c.z, c.x))
-  
-  -- Include runway.
-  if runway then
-    lineup=lineup-self.carrierparam.rwyangle
-  end
-  
-  ]]  
-  
-  --- New stuff
-  
-  -- Carrier Orientation.
-  local X=COORDINATE:NewFromVec3(self.carrier:GetOrientationX())
+  -- Orientation of carrier.
+  local X=self.carrier:GetOrientationX()
   
   -- Rotate orientation to angled runway.
   if runway then  
-    X=X:Rotate2D(self.carrierparams.rwyangle)
+    X=UTILS.Rotate2D(X, -self.carrierparam.rwyangle)
   end
   
-  -- Stern coordinate.
-  local S=self:_GetSternCoord()
-  S.y=0 -- 2D only
+  -- Projection of player pos on x component.
+  local x=UTILS.VecDot(X, C)
   
-  -- Plane coordinate.
-  local P=unit:GetCoordinate()
-  P.y=0 -- 2D only
+  -- Orientation of carrier.
+  local Z=self.carrier:GetOrientationZ()
   
-  -- Vector from Plane to Stern V=S-P
-  local V=UTILS.VecSubstract(S, P)
+  -- Rotate orientation to angled runway.
+  if runway then  
+    Z=UTILS.Rotate2D(Z, -self.carrierparam.rwyangle)
+  end    
   
-  -- Angle between carrier orientation and 
-  local alpha=UTILS.VecAngle(X,V)
+  -- Projection of player pos on z component.
+  local z=UTILS.VecDot(Z, C)
   
-  env.info("FF lineup = "..lineup)
+  --- 
 
-  return lineup
+  -- Position of the aircraft in the new coordinate system.
+  local a={x=x, y=0, z=z}
+
+  -- Stern position in the new coordinate system, which is simply the origin.
+  local b={x=0, y=0, z=0}
+  
+  -- Vector from plane to ref point on the boat.
+  local c=UTILS.VecSubstract(a, b)
+
+  -- Current line up and error wrt to final heading of the runway.
+  local lineup=math.deg(math.atan2(c.z, c.x))
+  
+  --env.info(string.format("FF lineup 2 = %.1f", lineup))
+  
+  return lineup   
 end
 
 --- Get true (or magnetic) heading of carrier.
@@ -7228,14 +7221,19 @@ function AIRBOSS:_Debrief(playerData)
   -- LSO grade: (OK) 3.0 PT - LURIM
   local text=string.format("%s %.1f PT - %s", grade, points, analysis)
   
-  -- Wire trapped. Not if pattern WI.
-  if playerData.wire and not playerData.patternwo then
-    text=text..string.format(" %d-wire", playerData.wire)
-  end
+  -- Wire and Groove time only if not pattern WO.
+  if not playerData.patternwo then
   
-  -- Time in the groove. Only Case I/II and not pattern WO.
-  if playerData.Tgroove and playerData.case<3 and not playerData.patternwo then
-    text=text..string.format("\nYour detailed debriefing can be found via the F10 radio menu.")
+    -- Wire trapped. Not if pattern WI.
+    if playerData.wire then
+      text=text..string.format(" %d-wire", playerData.wire)
+    end
+    
+    -- Time in the groove. Only Case I/II and not pattern WO.
+    if playerData.Tgroove and playerData.Tgroovey<=60 and playerData.case<3 then
+      text=text..string.format("\nTime in the groove %d seconds.", playerData.Tgroove)
+    end
+    
   end
   
   -- Info text.
@@ -7249,6 +7247,7 @@ function AIRBOSS:_Debrief(playerData)
   
   -- Set step to undefined and check.
   playerData.step=AIRBOSS.PatternStep.UNDEFINED
+
 
   -- Check what happened?
   if playerData.patternwo then

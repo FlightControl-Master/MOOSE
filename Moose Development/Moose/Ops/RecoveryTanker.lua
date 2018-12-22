@@ -701,7 +701,7 @@ function RECOVERYTANKER:onafterStart(From, Event, To)
     local dist=-self.distStern+UTILS.NMToMeters(4)
     
     -- Coordinate behind the carrier and slightly port.
-    local Carrier=self.carrier:GetCoordinate():SetAltitude(self.altitude):Translate(dist, hdg+190)
+    local Carrier=self.carrier:GetCoordinate():Translate(dist, hdg+190):SetAltitude(self.altitude)
     
     -- Orientation of spawned group.
     Spawn:InitHeading(hdg+10)
@@ -853,11 +853,11 @@ function RECOVERYTANKER:onafterPatternUpdate(From, Event, To)
   local Carrier=self.carrier:GetCoordinate()
   
   -- Define race-track pattern.
-  local p0=self.tanker:GetCoordinate():Translate(UTILS.NMToMeters(1), self.tanker:GetHeading())
+  local p0=self.tanker:GetCoordinate():Translate(UTILS.NMToMeters(1), self.tanker:GetHeading(), true)
   
   -- Racetrack pattern points.
-  local p1=Carrier:SetAltitude(self.altitude):Translate(self.distStern, hdg)
-  local p2=Carrier:SetAltitude(self.altitude):Translate(self.distBow, hdg)
+  local p1=Carrier:Translate(self.distStern, hdg):SetAltitude(self.altitude)
+  local p2=Carrier:Translate(self.distBow, hdg):SetAltitude(self.altitude)
   
   -- Set orbit task.
   local taskorbit=self.tanker:TaskOrbit(p1, self.altitude, self.speed, p2)
