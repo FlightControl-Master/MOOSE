@@ -1109,6 +1109,7 @@ AIRBOSS.GroovePos={
 -- @field #number passes Number of passes.
 -- @field #boolean attitudemonitor If true, display aircraft attitude and other parameters constantly.
 -- @field #table debrief Debrief analysis of the current step of this pass.
+-- @field #table lastdebrief Debrief of player performance of last completed pass.
 -- @field #table grades LSO grades of player passes.
 -- @field #boolean landed If true, player landed or attempted to land.
 -- @field #boolean boltered If true, player boltered.
@@ -1128,13 +1129,15 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.6.1"
+AIRBOSS.version="0.6.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: Improve radio messages. Maybe usersound for messages which are only meant for players?
+-- TODO: Include recovery tanker into next stack calculation. Angels six should be empty.
+-- TODO: Get charly time estimate function.
 -- TODO: Player eject and crash debrief "gradings".
 -- TODO: Subtitles off options on player level.
 -- TODO: PWO during case 2/3. Also when too close to other player.
@@ -1204,13 +1207,13 @@ function AIRBOSS:New(carriername, alias)
     return nil
   end
   
-  --[[
-  self.Debug=true
-  BASE:TraceOnOff(true)
-  BASE:TraceClass(self.ClassName)
-  BASE:TraceLevel(1)
-  ]]
-  
+  if false then
+    self.Debug=true
+    BASE:TraceOnOff(true)
+    BASE:TraceClass(self.ClassName)
+    BASE:TraceLevel(1)
+  end
+    
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("AIRBOSS %s | ", carriername)
   
@@ -1307,7 +1310,7 @@ function AIRBOSS:New(carriername, alias)
     self:_GetZoneCorridor(case):SmokeZone(SMOKECOLOR.Green, 45)
   end
   
-  -- Carrier parameter tests.
+  -- Carrier parameter debug tests.
   if false then
       -- Stern coordinate.
     local FB=self:GetFinalBearing(false)
@@ -1322,7 +1325,7 @@ function AIRBOSS:New(carriername, alias)
     -- End of rwy.
     local rwy=stern:Translate(self.carrierparam.rwylength, FB, true)
     
-    
+    --- Flare points and zones.
     local function flareme()
 
       -- Carrier pos.
@@ -1350,28 +1353,26 @@ function AIRBOSS:New(carriername, alias)
       -- Left 40 meters from stern.
       local cL=stern:Translate(self.carrierparam.totwidthport, hdg-90)
       cL:FlareYellow()
-           
-      --[[
-      local w1=stern:Translate(46, FB)
-      local w2=stern:Translate(46+12, FB)
-      local w3=stern:Translate(46+24, FB)
-      local w4=stern:Translate(46+35, FB)
+
+      -- Flare wires.           
+      local w1=stern:Translate(self.carrierparam.wire1, FB)
+      local w2=stern:Translate(self.carrierparam.wire2, FB)
+      local w3=stern:Translate(self.carrierparam.wire3, FB)
+      local w4=stern:Translate(self.carrierparam.wire4, FB)
       w1:FlareWhite()
       w2:FlareYellow()
       w3:FlareWhite()
       w4:FlareYellow()
-      ]]
 
-
+      -- Flare carrier and landing runway.
       local cbox=self:_GetZoneCarrierBox()
       local rbox=self:_GetZoneRunwayBox()    
       cbox:FlareZone(FLARECOLOR.Green, 5, nil, self.carrierparam.deckheight)
       rbox:FlareZone(FLARECOLOR.White, 5, nil, self.carrierparam.deckheight)
     end
     
-    
-    SCHEDULER:New(nil, flareme, {}, 1, 1)
-    
+    -- Flare points every 3 seconds for 3 minutes.
+    SCHEDULER:New(nil, flareme, {}, 1, 3, nil, 180)    
   end
   
   -- If calls should be part of self and individual for different carriers.  
@@ -3151,7 +3152,7 @@ function AIRBOSS:_MarshalAI(flight, nstack)
       local pE=Carrier:Translate(UTILS.NMToMeters(7), hdg-30):SetAltitude(altitude)
             
       -- Entry point 5 NM port and slightly astern the boat.
-      p0=Carrier:Translate(UTILS.NMToMeters(5*math.sqrt(2)), hdg-135):SetAltitude(altitude)
+      p0=Carrier:Translate(UTILS.NMToMeters(5), hdg-135):SetAltitude(altitude)
             
       -- Waypoint ahead of carrier's holding zone.
       wp[#wp+1]=pE:WaypointAirTurningPoint(nil, speedTransit, {TaskArrivedHolding}, "Entering Case I Marshal Pattern")
@@ -3213,10 +3214,23 @@ end
 function AIRBOSS:_LandAI(flight)
 
    -- Debug info.
-    self:T(self.lid..string.format("Landing AI flight %s.", flight.groupname))  
+  self:T(self.lid..string.format("Landing AI flight %s.", flight.groupname))
+    
+  -- NOTE: Looks like the AI needs to approach at the "correct" speed. If they are too fast, they fly an unnecessary circle to bleed of speed first.
+  --       Unfortunately, the correct speed depends on the aircraft type!  
 
   -- Aircraft speed when flying the pattern.
-  local Speed=UTILS.KnotsToKmph(274)
+  local Speed=UTILS.KnotsToKmph(200)
+  
+  if flight.actype==AIRBOSS.AircraftCarrier.HORNET or flight.actype==AIRBOSS.AircraftCarrier.FA18C then
+    Speed=UTILS.KnotsToKmph(200)
+  elseif flight.actype==AIRBOSS.AircraftCarrier.E2D then
+    Speed=UTILS.KnotsToKmph(150)
+  elseif flight.actype==AIRBOSS.AircraftCarrier.F14A then
+    Speed=UTILS.KnotsToKmph(175)
+  elseif flight.actype==AIRBOSS.AircraftCarrier.S3B or flight.actype==AIRBOSS.AircraftCarrier.S3BTANKER then
+    Speed=UTILS.KnotsToKmph(140)
+  end
   
   -- Carrier position.
   local Carrier=self:GetCoordinate()
@@ -3226,15 +3240,20 @@ function AIRBOSS:_LandAI(flight)
 
   -- Waypoints array.
   local wp={}
+  
+  local CurrentSpeed=flight.group:GetVelocityKMH()
 
   -- Current positon.
-  wp[#wp+1]=flight.group:GetCoordinate():WaypointAirTurningPoint(nil, Speed, {}, "Current position")
+  wp[#wp+1]=flight.group:GetCoordinate():WaypointAirTurningPoint(nil, CurrentSpeed, {}, "Current position")
   
-  -- Altitude 2000 ft
-  local alt=UTILS.FeetToMeters(2000)
+  -- Altitude 800 ft. Looks like this works best.
+  local alt=UTILS.FeetToMeters(800)
 
   -- Landing waypoint 5 NM behind carrier at 2000 ft = 610 meters ASL.
-  wp[#wp+1]=self:GetCoordinate():Translate(-UTILS.NMToMeters(5), hdg):SetAltitude(alt):WaypointAirLanding(Speed, self.airbase, nil, "Landing")
+  wp[#wp+1]=Carrier:Translate(UTILS.NMToMeters(4), hdg-160):SetAltitude(alt):WaypointAirLanding(Speed, self.airbase, nil, "Landing")
+  --wp[#wp+1]=self:GetCoordinate():Translate(UTILS.NMToMeters(3), hdg-160):SetAltitude(alt):WaypointAirTurningPoint(nil,Speed, {}, "Before Initial") ---WaypointAirLanding(Speed, self.airbase, nil, "Landing")
+  --
+  --wp[#wp+1]=self:GetCoordinate():WaypointAirLanding(Speed, self.airbase, nil, "Landing")
       
   -- Reinit waypoints.
   flight.group:WayPointInitialize(wp)
@@ -3268,6 +3287,9 @@ function AIRBOSS:_GetMarshalAltitude(stack, case)
   local Dist
   local p1=nil  --Core.Point#COORDINATE
   local p2=nil  --Core.Point#COORDINATE
+
+  -- Stack number.
+  local nstack=stack-1
   
   if case==1 then
   
@@ -3282,7 +3304,7 @@ function AIRBOSS:_GetMarshalAltitude(stack, case)
     -- First point over carrier.
     p1=Carrier
     
-    -- Seconds point 1.5 NM ahead.
+    -- Second point 1.5 NM ahead.
     p2=Carrier:Translate( UTILS.NMToMeters(1.5), hdg)
     
   else
@@ -3291,7 +3313,7 @@ function AIRBOSS:_GetMarshalAltitude(stack, case)
     angels0=6
     
     -- Distance: d=n*angles0+15 NM, so first stack is at 15+6=21 NM
-    Dist=UTILS.NMToMeters((stack-1)+angels0+15)
+    Dist=UTILS.NMToMeters(nstack+angels0+15)
     
     -- Get correct radial depending on recovery case including offset.
     local radial=self:GetRadial(case, false, true)
@@ -3308,7 +3330,7 @@ function AIRBOSS:_GetMarshalAltitude(stack, case)
   end
 
   -- Pattern altitude.
-  local altitude=UTILS.FeetToMeters(((stack-1)+angels0)*1000)
+  local altitude=UTILS.FeetToMeters((nstack+angels0)*1000)
   
   -- Set altitude of coordinate.
   p1:SetAltitude(altitude, true)
@@ -3405,50 +3427,52 @@ function AIRBOSS:_CollapseMarshalStack(flight, nopattern)
       -- Maybe need to set the initial value to 1000? Or check stack>0 of pattern flight?
       if stack>0 and mstack>stack then
       
-        -- Decrease stack/flag by one ==> AI will go lower.
+        -- New stack is old stack minus one.
         -- TODO: If we include the recovery tanker, this needs to be generalized.
-        mflight.flag:Set(mstack-1)
+        local newstack=mstack-1
+        
+        -- Debug info.
+        self:T(self.lid..string.format("Flight %s case %d is changing marshal stack %d --> %d.", mflight.groupname, mflight.case, mstack, newstack))
         
         if mflight.ai then
         
-          -- Command AI to decrease stack.
-          self:_MarshalAI(flight, mstack-1)
+          -- Command AI to decrease stack. Flag is set in the routine.
+          self:_MarshalAI(mflight, newstack)
           
         else
+ 
+          -- Decrease stack/flag. Human player needs to take care himself.          
+          mflight.flag:Set(newstack)
         
           -- Inform players.
           if mflight.difficulty~=AIRBOSS.Difficulty.HARD then
           
             -- Send message to all non-pros that they can descent.
-            local alt=UTILS.MetersToFeet(self:_GetMarshalAltitude(mstack-1, case))
+            local alt=UTILS.MetersToFeet(self:_GetMarshalAltitude(newstack, case))
             local text=string.format("descent to next lower stack at %d ft", alt)
             self:MessageToPlayer(mflight, text, "MARSHAL")
             
           end
-          
-        end
-        
-        -- Debug info.
-        self:T(self.lid..string.format("Flight %s case %d is changing marshal stack %d --> %d.", mflight.groupname, mflight.case, mstack, mstack-1))
-        
-        -- Loop over section members.
-        for _,_sec in pairs(mflight.section) do
-          local sec=_sec --#AIRBOSS.PlayerData
-          
-          -- Also decrease flag for section members of flight.
-          sec.flag:Set(mstack-1)
-          
-          -- Inform section member.
-          if sec.difficulty~=AIRBOSS.Difficulty.HARD then
-            local alt=UTILS.MetersToFeet(self:_GetMarshalAltitude(mstack-1,case))
-            local text=string.format("follow your lead to next lower stack at %d ft", alt)
-            self:MessageToPlayer(sec, text, "MARSHAL")
-          end                    
-        end
-        
+                  
+          -- Loop over section members.
+          for _,_sec in pairs(mflight.section) do
+            local sec=_sec --#AIRBOSS.PlayerData
+            
+            -- Also decrease flag for section members of flight.
+            sec.flag:Set(newstack)
+            
+            -- Inform section member.
+            if sec.difficulty~=AIRBOSS.Difficulty.HARD then
+              local alt=UTILS.MetersToFeet(self:_GetMarshalAltitude(newstack, case))
+              local text=string.format("follow your lead to next lower stack at %d ft", alt)
+              self:MessageToPlayer(sec, text, "MARSHAL")
+            end
+                                
+          end
+                  
+        end        
       end
-      
-    end    
+    end 
   end
   
   
@@ -3732,6 +3756,9 @@ function AIRBOSS:_NewPlayer(unitname)
       
     -- LSO grades.
     playerData.grades=playerData.grades or {}
+    
+    -- Debriefing tables.
+    playerData.lastdebrief=playerData.lastdebrief or {}
     
     -- Attitude monitor.
     playerData.attitudemonitor=false
@@ -5370,7 +5397,7 @@ function AIRBOSS:_Groove(playerData)
   local AoA=playerData.unit:GetAoA()
   
   -- For debugging.
-  --MESSAGE:New(string.format("LUE=%.1f  GLE=%.1f  AoA=%.1f", lineupError, glideslopeError, AoA), 3, nil, true):ToAll()
+  --MESSAGE:New(string.format("LineUp=%.1f  GlideSlope=%.1f  AoA=%.1f", lineupError, glideslopeError, AoA), 3, nil, true):ToAll()
   
   -- Ranges in the groove.
   local RXX=UTILS.NMToMeters(0.750)+math.abs(self.carrierparam.sterndist) -- Start of groove.      0.75  = 1389 m
@@ -6365,7 +6392,7 @@ function AIRBOSS:GetRadial(case, magnetic, offset, inverse)
   elseif case==3 then
 
     -- Radial wrt angled runway.
-    local radial=self:GetFinalBearing(magnetic)-180
+    radial=self:GetFinalBearing(magnetic)-180
     
     -- Holding offset angle (+-15 or 30 degrees usually)
     if offset then
@@ -6392,6 +6419,7 @@ function AIRBOSS:GetRadial(case, magnetic, offset, inverse)
     
   end
 
+  return radial
 end
 
 --- Get relative heading of player wrt carrier.
@@ -6598,6 +6626,47 @@ function AIRBOSS:_LSOadvice(playerData, glideslopeError, lineupError)
   playerData.Tlso=timer.getTime()
 end
 
+--- Grade player time in the groove - from turning to final until touchdown.
+-- 
+-- If time
+-- 
+-- * < 9 seconds: No Grade "--"  
+-- * 9-11 seconds: Fair "(OK)"
+-- * 12-21 seconds: OK (15-18 is ideal)
+-- * 22-24 seconds: Fair "(OK)
+-- * > 24 seconds: No Grade "--"
+--
+-- If you manage to be between 16.4 and and 16.6 seconds, you will even get and okay underline "\_OK\_".    
+--
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.PlayerData playerData Player data table.
+-- @return #string LSO grade for time in groove, i.e. \_OK\_, OK, (OK), --.
+function AIRBOSS:_EvalGrooveTime(playerData)
+
+  -- Time in groove.
+  local t=playerData.Tgroove
+  
+  local grade=""
+  if t<9 then
+    grade="--"
+  elseif t<12 then
+    grade="(OK)"
+  elseif t<22 then
+    grade="OK"
+  elseif t<=24 then
+    grade="(OK)"
+  else
+    grade="--"
+  end
+  
+  -- The unicorn!
+  if t>=16.4 and t<=16.6 then
+    grade="_OK_"
+  end
+ 
+  return grade
+end
+
 --- Grade approach.
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data table.
@@ -6661,14 +6730,6 @@ function AIRBOSS:_LSOgrade(playerData)
   text=text.."# of normal deviations  = "..nN.."\n"
   text=text.."# of small deviations ( = "..nS.."\n"
   self:T2(self.lid..text)
-
-  --[[  
-  <9 seconds: No Grade
-  9-11 seconds: Fair
-  12-21 seconds(15-18 is ideal): OK
-  22-24 seconds: Fair
-  >24 seconds: No Grade  
-  ]]
   
   -- Special cases.
   if playerData.patternwo then
@@ -7208,6 +7269,7 @@ end
 -- @param #string hint Debrief text of this step.
 -- @param #string step (Optional) Current step in the pattern. Default from playerData.
 function AIRBOSS:_AddToDebrief(playerData, hint, step)
+  playerData.debrief={}
   step=step or playerData.step
   table.insert(playerData.debrief, {step=step, hint=hint})
 end
@@ -7245,10 +7307,13 @@ function AIRBOSS:_Debrief(playerData)
     
     -- Time in the groove. Only Case I/II and not pattern WO.
     if playerData.Tgroove and playerData.Tgroove<=60 and playerData.case<3 then
-      text=text..string.format("\nTime in the groove %d seconds.", playerData.Tgroove)
+      text=text..string.format("\nTime in the groove %d seconds: %s", playerData.Tgroove, self:_EvalGrooveTime(playerData))
     end
     
   end
+  
+  -- Copy debriefing text.
+  playerData.lastdebrief=UTILS.DeepCopy(playerData.debrief)
   
   -- Info text.
   if playerData.difficulty==AIRBOSS.Difficulty.EASY then
@@ -8696,9 +8761,9 @@ function AIRBOSS:_DisplayDebriefing(_unitName)
       local text=string.format("Debriefing:")
      
       -- Check if data is present. 
-      if #playerData.debrief>0 then      
+      if #playerData.lastdebrief>0 then
         text=text..string.format("\n================================\n")
-        for _,_data in pairs(playerData.debrief) do
+        for _,_data in pairs(playerData.lastdebrief) do
           local step=_data.step
           local comment=_data.hint
           text=text..string.format("* %s:\n",step)
@@ -8710,7 +8775,7 @@ function AIRBOSS:_DisplayDebriefing(_unitName)
       
       -- Send debrief message to player
       self:MessageToPlayer(playerData, text, nil , "", 30, true)
-      
+            
     end
   end
 end
