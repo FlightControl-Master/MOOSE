@@ -237,7 +237,7 @@ RECOVERYTANKER = {
 
 --- Class version.
 -- @field #string version
-RECOVERYTANKER.version="0.9.9"
+RECOVERYTANKER.version="1.0.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -301,11 +301,12 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   self:SetPatternUpdateHeading()
   self:SetPatternUpdateInterval()
   
-  --[[
-  BASE:TraceOnOff(true)
-  BASE:TraceClass(self.ClassName)
-  BASE:TraceLevel(1)
-  ]]
+  -- Debug trace.
+  if false then
+    BASE:TraceOnOff(true)
+    BASE:TraceClass(self.ClassName)
+    BASE:TraceLevel(1)
+  end
   
   -----------------------
   --- FSM Transitions ---
@@ -964,7 +965,9 @@ function RECOVERYTANKER:OnEventEngineShutdown(EventData)
       self:T(self.lid..text)
            
       -- Respawn tanker.
-      self.tanker=group:RespawnAtCurrentAirbase()
+      --self.tanker=group:RespawnAtCurrentAirbase()
+      -- Delaying respawn due to DCS bug https://github.com/FlightControl-Master/MOOSE/issues/1076
+      SCHEDULER:New(nil , group.RespawnAtCurrentAirbase, {group}, 1)
       
       -- Create tanker beacon and activate TACAN.
       if self.TACANon then
@@ -972,8 +975,8 @@ function RECOVERYTANKER:OnEventEngineShutdown(EventData)
       end
 
       -- Initial route.
-      SCHEDULER:New(self, self._InitRoute, {-self.distStern+UTILS.NMToMeters(3)}, 1)
-      --self:_InitRoute(-self.distStern+UTILS.NMToMeters(3), 1)
+      SCHEDULER:New(self, self._InitRoute, {-self.distStern+UTILS.NMToMeters(3)}, 2)
+      
     end
     
   end

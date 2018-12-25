@@ -1609,7 +1609,7 @@ function GROUP:Respawn( Template, Reset )
   -- Destroy old group. Dont trigger any dead/crash events since this is a respawn.
   self:Destroy(false)
   
-  self:E({Template=Template})
+  self:T({Template=Template})
   
   -- Spawn new group.
   _DATABASE:Spawn(Template)

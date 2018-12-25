@@ -218,7 +218,7 @@ RESCUEHELO = {
 
 --- Class version.
 -- @field #string version
-RESCUEHELO.version="0.9.9"
+RESCUEHELO.version="1.0.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -269,6 +269,7 @@ function RESCUEHELO:New(carrierunit, helogroupname)
   self:SetAltitude()
   self:SetOffsetX()
   self:SetOffsetZ()
+  self:SetRespawnOn()
   self:SetRescueOn()
   self:SetRescueZone()
   self:SetRescueHoverSpeed()
@@ -279,11 +280,12 @@ function RESCUEHELO:New(carrierunit, helogroupname)
   self.rtb=false
   self.carrierstop=false
   
-  --[[
-  BASE:TraceOnOff(true)
-  BASE:TraceClass("RESCUEHELO")
-  BASE:TraceLevel(1)
-  ]]
+  -- Debug trace.
+  if false then
+    BASE:TraceOnOff(true)
+    BASE:TraceClass(self.ClassName)
+    BASE:TraceLevel(1)
+  end
   
   -----------------------
   --- FSM Transitions ---
@@ -656,28 +658,35 @@ function RESCUEHELO:OnEventLand(EventData)
         
         self:T(string.format("Rescue helo %s returned from rescue operation.", groupname))
         
-      end      
+      end
       
+      -- Check if takeoff air or respawn in air is set. Landing event should not happen unless the helo was on a rescue mission.
       if self.takeoff==SPAWN.Takeoff.Air or self.respawninair then
         
         if self:IsRescuing() then
         
           self:T(string.format("Rescue helo %s returned from rescue operation.", groupname))
+          
+          -- Respawn helo at current airbase.
+          self.helo=group:RespawnAtCurrentAirbase()
         
         else
         
           self:T2(string.format("WARNING: Rescue helo %s landed. This should not happen for Takeoff=Air or respawninair=true unless a rescue operation finished.", groupname))
+
+          -- Respawn helo at current airbase anyway.
+          if self.respawn then
+            self.helo=group:RespawnAtCurrentAirbase()
+          end
           
         end
-
-        -- Respawn helo at current airbase anyway.
-        self.helo=group:RespawnAtCurrentAirbase()
-
       
       else
       
         -- Respawn helo at current airbase.
-        self.helo=group:RespawnAtCurrentAirbase()
+        if self.respawn then
+          self.helo=group:RespawnAtCurrentAirbase()
+        end
         
       end
       
@@ -782,7 +791,7 @@ function RESCUEHELO:onafterStart(From, Event, To)
     local dist=UTILS.NMToMeters(0.2)
     
     -- Coordinate behind the carrier. Altitude at least 100 meters for spawning because it drops down a bit.
-    local Carrier=self.carrier:GetCoordinate():Translate(dist, hdg):SetAltitude(math.max(140, self.altitude))
+    local Carrier=self.carrier:GetCoordinate():Translate(dist, hdg):SetAltitude(math.max(100, self.altitude))
     
     -- Orientation of spawned group.
     Spawn:InitHeading(hdg)
