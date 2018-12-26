@@ -14,7 +14,7 @@ print( "Moose target path         : " .. MooseTargetPath )
 
 local MooseSourcesFilePath =  MooseSetupPath .. "/Moose.files"
 local LoaderFilePath = MooseTargetPath.."/Moose.lua"
-local MooseFilePath = MooseTargetPath .. "/Loader.lua"
+local MooseFilePath = MooseTargetPath .. "/Modules.lua"
 
 print( "Reading Moose source list : " .. MooseSourcesFilePath )
 
@@ -39,7 +39,7 @@ local MooseLoaderText = MooseLoader:read( "*a" )
 MooseLoader:close()
 
 LoaderFile:write( MooseLoaderText )
-LoaderFile:write( "__Moose.Include( 'Scripts/Moose/Moose.lua'\n" )
+LoaderFile:write( "__Moose.Include( 'Scripts/Moose/Modules.lua' ) \n" )
 
 local MooseSourcesFile = io.open( MooseSourcesFilePath, "r" )
 local MooseSource = MooseSourcesFile:read("*l")
