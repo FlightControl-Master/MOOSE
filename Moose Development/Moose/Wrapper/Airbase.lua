@@ -238,6 +238,8 @@ AIRBASE.Normandy = {
 -- * AIRBASE.PersianGulf.Sharjah_Intl
 -- * AIRBASE.PersianGulf.Shiraz_International_Airport
 -- * AIRBASE.PersianGulf.Kerman_Airport
+-- * AIRBASE.PersianGulf.Jiroft_Airport
+-- * AIRBASE.PersianGulf.Lavan_Island_Airport
 -- @field PersianGulf
 AIRBASE.PersianGulf = {
   ["Fujairah_Intl"] = "Fujairah Intl",
@@ -259,6 +261,8 @@ AIRBASE.PersianGulf = {
   ["Sharjah_Intl"] = "Sharjah Intl",
   ["Shiraz_International_Airport"] = "Shiraz International Airport",
   ["Kerman_Airport"] = "Kerman Airport",
+  ["Jiroft_Airport"] = "Jiroft Airport",
+  ["Lavan_Island_Airport"] = "Lavan Island Airport",
   }
   
 --- AIRBASE.ParkingSpot ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".

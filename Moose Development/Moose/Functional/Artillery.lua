@@ -216,7 +216,7 @@
 -- One way to determin which types of ammo the unit carries, one can use the debug mode of the arty class via @{#ARTY.SetDebugON}().
 -- In debug mode, the all ammo types of the group are printed to the monitor as message and can be found in the DCS.log file.   
 -- 
--- ## Empoying Selected Weapons
+-- ## Employing Selected Weapons
 -- 
 -- If an ARTY group carries multiple weapons, which can be used for artillery task, a certain weapon type can be selected to attack the target.
 -- This is done via the *weapontype* parameter of the @{#ARTY.AssignTargetCoord}(..., *weapontype*, ...) function.
@@ -674,11 +674,13 @@ ARTY.id="ARTY | "
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="1.0.6"
+ARTY.version="1.0.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO list:
+-- TODO: Add hit event and make the arty group relocate.
+-- TODO: Handle rearming for ships. How?
 -- DONE: Delete targets from queue user function.
 -- DONE: Delete entire target queue user function.
 -- DONE: Add weapon types. Done but needs improvements.
@@ -697,11 +699,9 @@ ARTY.version="1.0.6"
 -- DONE: Add command move to make arty group move.
 -- DONE: remove schedulers for status event.
 -- DONE: Improve handling of special weapons. When winchester if using selected weapons?
--- TODO: Handle rearming for ships. How?
 -- DONE: Make coordinate after rearming general, i.e. also work after the group has moved to anonther location.
 -- DONE: Add set commands via markers. E.g. set rearming place.
 -- DONE: Test stationary types like mortas ==> rearming etc.
--- TODO: Add hit event and make the arty group relocate.
 -- DONE: Add illumination and smoke.
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2878,7 +2878,7 @@ function ARTY:onafterCeaseFire(Controllable, From, Event, To, target)
     self.Controllable:ClearTasks()
     
   else
-    self:E(ARTY.id.."ERROR: No target in cease fire for group %s.", self.groupname)
+    self:E(ARTY.id..string.format("ERROR: No target in cease fire for group %s.", self.groupname))
   end
       
   -- Set number of shots to zero.
@@ -4253,101 +4253,116 @@ end
 -- @param #ARTY self
 function ARTY:_CheckTargetsInRange()
 
+  local targets2delete={}
+  
   for i=1,#self.targets do
     local _target=self.targets[i]
     
     self:T3(ARTY.id..string.format("Before: Target %s - in range = %s", _target.name, tostring(_target.inrange)))
     
     -- Check if target is in range.
-    local _inrange,_toofar,_tooclose=self:_TargetInRange(_target)
+    local _inrange,_toofar,_tooclose,_remove=self:_TargetInRange(_target)
     self:T3(ARTY.id..string.format("Inbetw: Target %s - in range = %s, toofar = %s, tooclose = %s", _target.name, tostring(_target.inrange), tostring(_toofar), tostring(_tooclose)))
     
-    -- Init default for assigning moves into range.
-    local _movetowards=false
-    local _moveaway=false
+    if _remove then
     
-    if _target.inrange==nil then
-    
-      -- First time the check is performed. We call the function again and send a message.
-      _target.inrange,_toofar,_tooclose=self:_TargetInRange(_target, self.report or self.Debug)
+      -- The ARTY group is immobile and not cargo but the target is not in range!
+      table.insert(targets2delete, _target.name)
       
-      -- Send group towards/away from target.
-      if _toofar then
-        _movetowards=true
-      elseif _tooclose then
-        _moveaway=true
-      end
+    else 
     
-    elseif _target.inrange==true then
-    
-      -- Target was in range at previous check...
-           
-      if _toofar then       --...but is now too far away.
-        _movetowards=true
-      elseif _tooclose then --...but is now too close.
-        _moveaway=true
-      end
-    
-    elseif _target.inrange==false then
-    
-      -- Target was out of range at previous check.
+      -- Init default for assigning moves into range.
+      local _movetowards=false
+      local _moveaway=false
       
-      if _inrange then
-        -- Inform coalition that target is now in range.
-        local text=string.format("%s, target %s is now in range.", self.alias, _target.name)
-        self:T(ARTY.id..text)
-        MESSAGE:New(text,10):ToCoalitionIf(self.Controllable:GetCoalition(), self.report or self.Debug)
-      end
-    
-    end
-    
-    -- Assign a relocation command so that the unit will be in range of the requested target.
-    if self.autorelocate and (_movetowards or _moveaway) then
-    
-      -- Get current position.
-      local _from=self.Controllable:GetCoordinate()
-      local _dist=_from:Get2DDistance(_target.coord)
+      if _target.inrange==nil then
       
-      if _dist<=self.autorelocatemaxdist then
-      
-        local _tocoord --Core.Point#COORDINATE
-        local _name=""
-        local _safetymargin=500
-      
-        if _movetowards then
+        -- First time the check is performed. We call the function again and send a message.
+        _target.inrange,_toofar,_tooclose=self:_TargetInRange(_target, self.report or self.Debug)
         
-          -- Target was in range on previous check but now we are too far away.        
-          local _waytogo=_dist-self.maxrange+_safetymargin
-          local _heading=self:_GetHeading(_from,_target.coord)
-          _tocoord=_from:Translate(_waytogo, _heading)
-          _name=string.format("%s, relocation to within max firing range of target %s", self.alias, _target.name)
-          
-        elseif _moveaway then
-        
-          -- Target was in range on previous check but now we are too far away.        
-          local _waytogo=_dist-self.minrange+_safetymargin
-          local _heading=self:_GetHeading(_target.coord,_from)
-          _tocoord=_from:Translate(_waytogo, _heading)
-          _name=string.format("%s, relocation to within min firing range of target %s", self.alias, _target.name)
-
+        -- Send group towards/away from target.
+        if _toofar then
+          _movetowards=true
+        elseif _tooclose then
+          _moveaway=true
         end
-  
-        -- Send info message.
-        MESSAGE:New(_name.." assigned.", 10):ToCoalitionIf(self.Controllable:GetCoalition(), self.report or self.Debug)
+      
+      elseif _target.inrange==true then
+      
+        -- Target was in range at previous check...
+             
+        if _toofar then       --...but is now too far away.
+          _movetowards=true
+        elseif _tooclose then --...but is now too close.
+          _moveaway=true
+        end
+      
+      elseif _target.inrange==false then
+      
+        -- Target was out of range at previous check.
         
-        -- Assign relocation move.
-        self:AssignMoveCoord(_tocoord, nil, nil, self.autorelocateonroad, false, _name, true)
-        
+        if _inrange then
+          -- Inform coalition that target is now in range.
+          local text=string.format("%s, target %s is now in range.", self.alias, _target.name)
+          self:T(ARTY.id..text)
+          MESSAGE:New(text,10):ToCoalitionIf(self.Controllable:GetCoalition(), self.report or self.Debug)
+        end
+      
       end
+      
+      -- Assign a relocation command so that the unit will be in range of the requested target.
+      if self.autorelocate and (_movetowards or _moveaway) then
+      
+        -- Get current position.
+        local _from=self.Controllable:GetCoordinate()
+        local _dist=_from:Get2DDistance(_target.coord)
+        
+        if _dist<=self.autorelocatemaxdist then
+        
+          local _tocoord --Core.Point#COORDINATE
+          local _name=""
+          local _safetymargin=500
+        
+          if _movetowards then
+          
+            -- Target was in range on previous check but now we are too far away.        
+            local _waytogo=_dist-self.maxrange+_safetymargin
+            local _heading=self:_GetHeading(_from,_target.coord)
+            _tocoord=_from:Translate(_waytogo, _heading)
+            _name=string.format("%s, relocation to within max firing range of target %s", self.alias, _target.name)
             
+          elseif _moveaway then
+          
+            -- Target was in range on previous check but now we are too far away.        
+            local _waytogo=_dist-self.minrange+_safetymargin
+            local _heading=self:_GetHeading(_target.coord,_from)
+            _tocoord=_from:Translate(_waytogo, _heading)
+            _name=string.format("%s, relocation to within min firing range of target %s", self.alias, _target.name)
+  
+          end
+    
+          -- Send info message.
+          MESSAGE:New(_name.." assigned.", 10):ToCoalitionIf(self.Controllable:GetCoalition(), self.report or self.Debug)
+          
+          -- Assign relocation move.
+          self:AssignMoveCoord(_tocoord, nil, nil, self.autorelocateonroad, false, _name, true)
+          
+        end
+              
+      end
+      
+      -- Update value.
+      _target.inrange=_inrange
+      
+      self:T3(ARTY.id..string.format("After: Target %s - in range = %s", _target.name, tostring(_target.inrange)))
     end
-    
-    -- Update value.
-    _target.inrange=_inrange
-    
-    self:T3(ARTY.id..string.format("After: Target %s - in range = %s", _target.name, tostring(_target.inrange)))
-    
   end
+  
+  -- Remove targets not in range.
+  for _,targetname in pairs(targets2delete) do
+    self:RemoveTarget(targetname)
+  end
+  
 end
 
 --- Check all normal (untimed) targets and return the target with the highest priority which has been engaged the fewest times.
@@ -4728,6 +4743,7 @@ end
 -- @return #boolean True if target is in range, false otherwise.
 -- @return #boolean True if ARTY group is too far away from the target, i.e. distance > max firing range.
 -- @return #boolean True if ARTY group is too close to the target, i.e. distance < min finring range.
+-- @return #boolean True if target should be removed since ARTY group is immobile and not cargo.
 function ARTY:_TargetInRange(target, message)
   self:F3(target)
   
@@ -4763,11 +4779,13 @@ function ARTY:_TargetInRange(target, message)
   end
     
   -- Remove target if ARTY group cannot move, e.g. Mortas. No chance to be ever in range - unless they are cargo.
+  local _remove=false
   if not (self.ismobile or self.iscargo) and _inrange==false then
-    self:RemoveTarget(target.name)
+    --self:RemoveTarget(target.name)
+    _remove=true
   end
 
-  return _inrange,_toofar,_tooclose
+  return _inrange,_toofar,_tooclose,_remove
 end
 
 --- Get the weapon type name, which should be used to attack the target.

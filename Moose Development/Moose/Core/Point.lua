@@ -342,18 +342,18 @@ do -- COORDINATE
     return x - Precision <= self.x and x + Precision >= self.x and z - Precision <= self.z and z + Precision >= self.z   
   end
   
-  --- Returns if the 2 coordinates are at the same 2D position.
+  --- Scan/find objects (units, statics, scenery) within a certain radius around the coordinate using the world.searchObjects() DCS API function.
   -- @param #COORDINATE self
   -- @param #number radius (Optional) Scan radius in meters. Default 100 m.
   -- @param #boolean scanunits (Optional) If true scan for units. Default true.
   -- @param #boolean scanstatics (Optional) If true scan for static objects. Default true.
   -- @param #boolean scanscenery (Optional) If true scan for scenery objects. Default false.
-  -- @return True if units were found.
-  -- @return True if statics were found.
-  -- @return True if scenery objects were found.
-  -- @return Unit objects found.
-  -- @return Static objects found.
-  -- @return Scenery objects found.
+  -- @return #boolean True if units were found.
+  -- @return #boolean True if statics were found.
+  -- @return #boolean True if scenery objects were found.
+  -- @return #table Table of MOOSE @[#Wrapper.Unit#UNIT} objects found.
+  -- @return #table Table of DCS static objects found.
+  -- @return #table Table of DCS scenery objects found.
   function COORDINATE:ScanObjects(radius, scanunits, scanstatics, scanscenery)
     self:F(string.format("Scanning in radius %.1f m.", radius))
 
@@ -405,18 +405,17 @@ do -- COORDINATE
         local ObjectCategory = ZoneObject:getCategory()
         
         -- Check for unit or static objects
-        --if (ObjectCategory == Object.Category.UNIT and ZoneObject:isExist() and ZoneObject:isActive()) then
-        if (ObjectCategory == Object.Category.UNIT and ZoneObject:isExist()) then
+        if ObjectCategory==Object.Category.UNIT and ZoneObject:isExist() then
         
           table.insert(Units, UNIT:Find(ZoneObject))
           gotunits=true
           
-        elseif (ObjectCategory == Object.Category.STATIC and ZoneObject:isExist()) then
+        elseif ObjectCategory==Object.Category.STATIC and ZoneObject:isExist() then
         
           table.insert(Statics, ZoneObject)
           gotstatics=true
           
-        elseif ObjectCategory == Object.Category.SCENERY then
+        elseif ObjectCategory==Object.Category.SCENERY then
         
           table.insert(Scenery, ZoneObject)
           gotscenery=true
@@ -460,18 +459,47 @@ do -- COORDINATE
   --- Add a Distance in meters from the COORDINATE orthonormal plane, with the given angle, and calculate the new COORDINATE.
   -- @param #COORDINATE self
   -- @param DCS#Distance Distance The Distance to be added in meters.
-  -- @param DCS#Angle Angle The Angle in degrees.
-  -- @return #COORDINATE The new calculated COORDINATE.
-  function COORDINATE:Translate( Distance, Angle )
+  -- @param DCS#Angle Angle The Angle in degrees. Defaults to 0 if not specified (nil).
+  -- @param #boolean Keepalt If true, keep altitude of original coordinate. Default is that the new coordinate is created at the translated land height.
+  -- @return Core.Point#COORDINATE The new calculated COORDINATE.
+  function COORDINATE:Translate( Distance, Angle, Keepalt )
     local SX = self.x
     local SY = self.z
-    local Radians = Angle / 180 * math.pi
+    local Radians = (Angle or 0) / 180 * math.pi
     local TX = Distance * math.cos( Radians ) + SX
     local TY = Distance * math.sin( Radians ) + SY
-
-    return COORDINATE:NewFromVec2( { x = TX, y = TY } )
+  
+    if Keepalt then
+      return COORDINATE:NewFromVec3( { x = TX, y=self.y, z = TY } )
+    else
+      return COORDINATE:NewFromVec2( { x = TX, y = TY } )
+    end
   end
 
+  --- Rotate coordinate in 2D (x,z) space.
+  -- @param #COORDINATE self
+  -- @param DCS#Angle Angle Angle of rotation in degrees.
+  -- @return Core.Point#COORDINATE The rotated coordinate.
+  function COORDINATE:Rotate2D(Angle)
+  
+    if not Angle then
+      return self
+    end
+
+    local phi=math.rad(Angle)
+    
+    local X=self.z
+    local Y=self.x
+    
+    --slocal R=math.sqrt(X*X+Y*Y)
+      
+    local x=X*math.cos(phi)-Y*math.sin(phi)
+    local y=X*math.sin(phi)+Y*math.cos(phi)
+
+    -- Coordinate assignment looks bit strange but is correct.
+    return COORDINATE:NewFromVec3({x=y, y=self.y, z=x})
+  end
+  
   --- Return a random Vec2 within an Outer Radius and optionally NOT within an Inner Radius of the COORDINATE.
   -- @param #COORDINATE self
   -- @param DCS#Distance OuterRadius
@@ -1003,11 +1031,15 @@ do -- COORDINATE
   function COORDINATE:WaypointAir( AltType, Type, Action, Speed, SpeedLocked, airbase, DCSTasks, description )
     self:F2( { AltType, Type, Action, Speed, SpeedLocked } )
     
-    -- Defaults
+    -- Set alttype or "RADIO" which is AGL.
     AltType=AltType or "RADIO"
+    
+    -- Speedlocked by default
     if SpeedLocked==nil then
       SpeedLocked=true
     end
+    
+    -- Speed or default 500 km/h.
     Speed=Speed or 500
     
     -- Waypoint array.
@@ -1016,19 +1048,26 @@ do -- COORDINATE
     -- Coordinates.
     RoutePoint.x = self.x
     RoutePoint.y = self.z
+    
     -- Altitude.
     RoutePoint.alt = self.y
     RoutePoint.alt_type = AltType
+    
     -- Waypoint type.
     RoutePoint.type = Type or nil
     RoutePoint.action = Action or nil
-    -- Set speed/ETA.
+    
+    -- Speed.
     RoutePoint.speed = Speed/3.6
     RoutePoint.speed_locked = SpeedLocked
+    
+    -- ETA.
     RoutePoint.ETA=nil
-    RoutePoint.ETA_locked = false    
+    RoutePoint.ETA_locked = false
+    
     -- Waypoint description.
     RoutePoint.name=description
+    
     -- Airbase parameters for takeoff and landing points.
     if airbase then
       local AirbaseID = airbase:GetID()
@@ -1037,31 +1076,24 @@ do -- COORDINATE
         RoutePoint.linkUnit = AirbaseID
         RoutePoint.helipadId = AirbaseID
       elseif AirbaseCategory == Airbase.Category.AIRDROME then
-        RoutePoint.airdromeId = AirbaseID       
+        RoutePoint.airdromeId = AirbaseID
       else
         self:T("ERROR: Unknown airbase category in COORDINATE:WaypointAir()!")
-      end  
-    end        
+      end
+      
+      --self:MarkToAll(string.format("Landing waypoint at airbase %s", airbase:GetName()))
+    end
     
-
-    --  ["task"] =
-    --  {
-    --      ["id"] = "ComboTask",
-    --      ["params"] =
-    --      {
-    --          ["tasks"] =
-    --          {
-    --          }, -- end of ["tasks"]
-    --      }, -- end of ["params"]
-    --  }, -- end of ["task"]
-
     -- Waypoint tasks.
     RoutePoint.task = {}
     RoutePoint.task.id = "ComboTask"
     RoutePoint.task.params = {}
     RoutePoint.task.params.tasks = DCSTasks or {}
 
+    -- Debug.
     self:T({RoutePoint=RoutePoint})
+    
+    -- Return waypoint.
     return RoutePoint
   end
 
@@ -1121,6 +1153,9 @@ do -- COORDINATE
   --- Build a Waypoint Air "Landing".
   -- @param #COORDINATE self
   -- @param DCS#Speed Speed Airspeed in km/h.
+  -- @param Wrapper.Airbase#AIRBASE airbase The airbase for takeoff and landing points.
+  -- @param #table DCSTasks A table of @{DCS#Task} items which are executed at the waypoint.
+  -- @param #string description A text description of the waypoint, which will be shown on the F10 map.
   -- @return #table The route point.
   -- @usage
   -- 
@@ -1129,8 +1164,8 @@ do -- COORDINATE
   --    LandingWaypoint = LandingCoord:WaypointAirLanding( 60 )
   --    HeliGroup:Route( { LandWaypoint }, 1 ) -- Start landing the helicopter in one second.
   -- 
-  function COORDINATE:WaypointAirLanding( Speed )
-    return self:WaypointAir( nil, COORDINATE.WaypointType.Land, COORDINATE.WaypointAction.Landing, Speed )
+  function COORDINATE:WaypointAirLanding( Speed, airbase, DCSTasks, description )
+    return self:WaypointAir(nil, COORDINATE.WaypointType.Land, COORDINATE.WaypointAction.Landing, Speed, nil, airbase, DCSTasks, description)
   end
   
   

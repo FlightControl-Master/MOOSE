@@ -59,6 +59,10 @@ Functional/Suppression.lua
 Functional/PseudoATC.lua
 Functional/Warehouse.lua
 
+Ops/Airboss.lua
+Ops/RecoveryTanker.lua
+Ops/RescueHelo.lua
+
 AI/AI_Balancer.lua
 AI/AI_Air.lua
 AI/AI_A2A.lua

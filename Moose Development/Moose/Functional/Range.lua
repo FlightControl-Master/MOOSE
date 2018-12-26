@@ -276,7 +276,7 @@ RANGE.id="RANGE | "
 
 --- Range script version.
 -- @field #string version
-RANGE.version="1.2.1"
+RANGE.version="1.2.3"
 
 --TODO list:
 --TODO: Add custom weapons, which can be specified by the user.
@@ -460,9 +460,10 @@ function RANGE:SetBombtrackThreshold(distance)
   self.BombtrackThreshold=distance*1000 or 25*1000
 end
 
---- Set range location. If this is not done, one (random) unit position of the range is used to determine the center of the range.  
+--- Set range location. If this is not done, one (random) unit position of the range is used to determine the location of the range.
+-- The range location determines the position at which the weather data is evaluated.  
 -- @param #RANGE self
--- @param Core.Point#COORDINATE coordinate Coordinate of the center of the range.
+-- @param Core.Point#COORDINATE coordinate Coordinate of the range.
 function RANGE:SetRangeLocation(coordinate)
   self.location=coordinate
 end
@@ -471,7 +472,7 @@ end
 -- If a zone is not explicitly specified, the range zone is determined by its location and radius.
 -- @param #RANGE self
 -- @param Core.Zone#ZONE zone MOOSE zone defining the range perimeters.
-function RANGE:SetRangeLocation(zone)
+function RANGE:SetRangeZone(zone)
   self.rangezone=zone
 end
 
@@ -1163,11 +1164,19 @@ function RANGE:OnEventShot(EventData)
         -- Coordinate of impact point.
         local impactcoord=COORDINATE:NewFromVec3(_lastBombPos)
         
+        -- Check if impact happend in range zone.
+        local insidezone=self.rangezone:IsCoordinateInZone(impactcoord)
+        
         -- Distance from range. We dont want to smoke targets outside of the range.
         local impactdist=impactcoord:Get2DDistance(self.location)
         
+        -- Impact point of bomb.
+        if self.Debug then
+          impactcoord:MarkToAll("Bomb impact point")
+        end
+        
         -- Smoke impact point of bomb.
-        if self.PlayerSettings[_playername].smokebombimpact and impactdist<self.rangeradius then
+        if self.PlayerSettings[_playername].smokebombimpact and insidezone then
           if self.PlayerSettings[_playername].delaysmoke then
             timer.scheduleFunction(self._DelayedSmoke, {coord=impactcoord, color=self.PlayerSettings[_playername].smokecolor}, timer.getTime() + self.TdelaySmoke)
           else
@@ -1184,6 +1193,8 @@ function RANGE:OnEventShot(EventData)
           
             -- Distance between bomb and target.
             local _temp = impactcoord:Get2DDistance(_target:GetCoordinate())
+            
+            --env.info(string.format("FF target = %s dist = %d m", _target:GetName(), _temp))
   
             -- Find closest target to last known position of the bomb.
             if _distance == nil or _temp < _distance then
@@ -1203,7 +1214,7 @@ function RANGE:OnEventShot(EventData)
           end
         end
 
-        -- Count if bomb fell less than 1 km away from the target.
+        -- Count if bomb fell less than ~1 km away from the target.
         if _distance <= self.scorebombdistance then
 
           -- Init bomb player results.
@@ -1222,10 +1233,10 @@ function RANGE:OnEventShot(EventData)
 
           -- Send message.
           self:_DisplayMessageToGroup(_unit, _message, nil, true)
-        elseif _distance <= self.rangeradius then
+        elseif insidezone then
           -- Send message
           local _message=string.format("%s, weapon fell more than %.1f km away from nearest range target. No score!", _callsign, self.scorebombdistance/1000)
-          self:_DisplayMessageToGroup(_unit, _message, nil, true)
+          self:_DisplayMessageToGroup(_unit, _message, nil, false)
         end
         
         --Terminate the timer

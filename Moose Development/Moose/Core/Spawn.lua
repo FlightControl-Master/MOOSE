@@ -2637,7 +2637,9 @@ function SPAWN:_OnEngineShutDown( EventData )
   			if Landed and self.RepeatOnEngineShutDown then
   				local SpawnGroupIndex = self:GetSpawnIndexFromGroup( SpawnGroup )
   				self:T( { "EngineShutDown: ", "ReSpawn:", SpawnGroup:GetName(), SpawnGroupIndex } )
-  				self:ReSpawn( SpawnGroupIndex )
+  				--self:ReSpawn( SpawnGroupIndex )
+  				-- Delay respawn by three seconds due to DCS 2.5.4 OB bug https://github.com/FlightControl-Master/MOOSE/issues/1076
+  				SCHEDULER:New(self, self.ReSpawn, {SpawnGroupIndex}, 3)
   			end
   		end
     end
