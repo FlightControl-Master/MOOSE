@@ -1,12 +1,41 @@
---- **Functional** -- Provides defensive behaviour to a set of SAM sites within a running Mission.
+--- **Functional** -- Make SAM sites execute evasive and defensive behaviour when being fired upon.
 -- 
 -- ===
 -- 
--- @module Sead
+-- ## Features:
+-- 
+--   * When SAM sites are being fired upon, the SAMs will take evasive action will reposition themselves when possible.
+--   * When SAM sites are being fired upon, the SAMs will take defensive action by shutting down their radars.
+-- 
+-- ===
+-- 
+-- ## Missions:
+-- 
+-- [SEV - SEAD Evasion](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/SEV%20-%20SEAD%20Evasion)
+-- 
+-- ===
+-- 
+-- ### Authors: **FlightControl**
+-- 
+-- ===
+-- 
+-- @module Functional.Sead
+-- @image SEAD.JPG
 
---- The SEAD class
--- @type SEAD
+--- @type SEAD
 -- @extends Core.Base#BASE
+
+--- Make SAM sites execute evasive and defensive behaviour when being fired upon.
+-- 
+-- This class is very easy to use. Just setup a SEAD object by using @{#SEAD.New}() and SAMs will evade and take defensive action when being fired upon.
+-- 
+-- # Constructor:
+-- 
+-- Use the @{#SEAD.New}() constructor to create a new SEAD object.
+-- 
+--       SEAD_RU_SAM_Defenses = SEAD:New( { 'RU SA-6 Kub', 'RU SA-6 Defenses', 'RU MI-26 Troops', 'RU Attack Gori' } )
+-- 
+-- @field #SEAD
 SEAD = {
 	ClassName = "SEAD", 
 	TargetSkill = {

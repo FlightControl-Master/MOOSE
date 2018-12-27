@@ -2,61 +2,81 @@
 -- 
 -- ===
 -- 
--- @{#ESCORT} class
+-- ## Features:
+-- 
+--   * Escort navigation commands.
+--   * Escort hold at position commands.
+--   * Escorts reporting detected targets.
+--   * Escorts scanning targets in advance.
+--   * Escorts attacking specific targets.
+--   * Request assistance from other groups for attack.
+--   * Manage rule of engagement of escorts.
+--   * Manage the allowed evasion techniques of escorts.
+--   * Make escort to execute a defined mission or path.
+--   * Escort tactical situation reporting.
+-- 
 -- ===
--- The @{#ESCORT} class allows you to interact with escorting AI on your flight and take the lead.
+-- 
+-- ## Missions:
+-- 
+-- [ESC - Escorting](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/ESC%20-%20Escorting)
+-- 
+-- ===
+-- 
+-- Allows you to interact with escorting AI on your flight and take the lead.
+-- 
 -- Each escorting group can be commanded with a whole set of radio commands (radio menu in your flight, and then F10).
 --
 -- The radio commands will vary according the category of the group. The richest set of commands are with Helicopters and AirPlanes.
 -- Ships and Ground troops will have a more limited set, but they can provide support through the bombing of targets designated by the other escorts.
 --
--- RADIO MENUs that can be created:
--- ===
+-- # RADIO MENUs that can be created:
+-- 
 -- Find a summary below of the current available commands:
 --
--- Navigation ...:
--- ---------------
+-- ## Navigation ...:
+-- 
 -- Escort group navigation functions:
 --
 --   * **"Join-Up and Follow at x meters":** The escort group fill follow you at about x meters, and they will follow you.
 --   * **"Flare":** Provides menu commands to let the escort group shoot a flare in the air in a color.
 --   * **"Smoke":** Provides menu commands to let the escort group smoke the air in a color. Note that smoking is only available for ground and naval troops.
 --
--- Hold position ...:
--- ------------------
+-- ## Hold position ...:
+-- 
 -- Escort group navigation functions:
 --
 --   * **"At current location":** Stops the escort group and they will hover 30 meters above the ground at the position they stopped.
 --   * **"At client location":** Stops the escort group and they will hover 30 meters above the ground at the position they stopped.
 --
--- Report targets ...:
--- -------------------
+-- ## Report targets ...:
+-- 
 -- Report targets will make the escort group to report any target that it identifies within a 8km range. Any detected target can be attacked using the 4. Attack nearby targets function. (see below).
 --
 --   * **"Report now":** Will report the current detected targets.
 --   * **"Report targets on":** Will make the escort group to report detected targets and will fill the "Attack nearby targets" menu list.
 --   * **"Report targets off":** Will stop detecting targets.
 --
--- Scan targets ...:
--- -----------------
+-- ## Scan targets ...:
+-- 
 -- Menu items to pop-up the escort group for target scanning. After scanning, the escort group will resume with the mission or defined task.
 --
 --   * **"Scan targets 30 seconds":** Scan 30 seconds for targets.
 --   * **"Scan targets 60 seconds":** Scan 60 seconds for targets.
 --
--- Attack targets ...:
--- ------------------- 
+-- ## Attack targets ...:
+-- 
 -- This menu item will list all detected targets within a 15km range. Depending on the level of detection (known/unknown) and visuality, the targets type will also be listed.
 --
--- Request assistance from ...:
--- ----------------------------
+-- ## Request assistance from ...:
+-- 
 -- This menu item will list all detected targets within a 15km range, as with the menu item **Attack Targets**.
 -- This menu item allows to request attack support from other escorts supporting the current client group.
 -- eg. the function allows a player to request support from the Ship escort to attack a target identified by the Plane escort with its Tomahawk missiles.
 -- eg. the function allows a player to request support from other Planes escorting to bomb the unit with illumination missiles or bombs, so that the main plane escort can attack the area.
 --
--- ROE ...:
--- -------- 
+-- ## ROE ...:
+-- 
 -- Sets the Rules of Engagement (ROE) of the escort group when in flight.
 --
 --   * **"Hold Fire":** The escort group will hold fire.
@@ -64,8 +84,8 @@
 --   * **"Open Fire":** The escort group will open fire on designated targets.
 --   * **"Weapon Free":** The escort group will engage with any target.
 --
--- Evasion ...:
--- ------------
+-- ## Evasion ...:
+-- 
 -- Will define the evasion techniques that the escort group will perform during flight or combat.
 --
 --   * **"Fight until death":** The escort group will have no reaction to threats.
@@ -73,35 +93,43 @@
 --   * **"Evade enemy fire":** The rescort group will evade enemy fire before firing.
 --   * **"Go below radar and evade fire":** The escort group will perform evasive vertical manoeuvres.
 --
--- Resume Mission ...:
--- -------------------
+-- ## Resume Mission ...:
+-- 
 -- Escort groups can have their own mission. This menu item will allow the escort group to resume their Mission from a given waypoint.
 -- Note that this is really fantastic, as you now have the dynamic of taking control of the escort groups, and allowing them to resume their path or mission.
 --
--- ESCORT construction methods.
 -- ===
+-- 
+-- ### Authors: **FlightControl** 
+-- 
+-- ===
+--
+-- @module Functional.Escort
+-- @image Escorting.JPG
+
+
+
+--- @type ESCORT
+-- @extends Core.Base#BASE
+-- @field Wrapper.Client#CLIENT EscortClient
+-- @field Wrapper.Group#GROUP EscortGroup
+-- @field #string EscortName
+-- @field #ESCORT.MODE EscortMode The mode the escort is in.
+-- @field Core.Scheduler#SCHEDULER FollowScheduler The instance of the SCHEDULER class.
+-- @field #number FollowDistance The current follow distance.
+-- @field #boolean ReportTargets If true, nearby targets are reported.
+-- @Field DCS#AI.Option.Air.val.ROE OptionROE Which ROE is set to the EscortGroup.
+-- @field DCS#AI.Option.Air.val.REACTION_ON_THREAT OptionReactionOnThreat Which REACTION_ON_THREAT is set to the EscortGroup.
+-- @field FunctionalMENU_GROUPDETECTION_BASE Detection
+
+--- ESCORT class
+-- 
+-- # ESCORT construction methods.
+-- 
 -- Create a new SPAWN object with the @{#ESCORT.New} method:
 --
---  * @{#ESCORT.New}: Creates a new ESCORT object from a @{Group#GROUP} for a @{Client#CLIENT}, with an optional briefing text.
+--  * @{#ESCORT.New}: Creates a new ESCORT object from a @{Wrapper.Group#GROUP} for a @{Wrapper.Client#CLIENT}, with an optional briefing text.
 --
--- ESCORT initialization methods.
--- ===
--- The following menus are created within the RADIO MENU (F10) of an active unit hosted by a player:
---
--- * @{#ESCORT.MenuFollowAt}: Creates a menu to make the escort follow the client.
--- * @{#ESCORT.MenuHoldAtEscortPosition}: Creates a menu to hold the escort at its current position.
--- * @{#ESCORT.MenuHoldAtLeaderPosition}: Creates a menu to hold the escort at the client position.
--- * @{#ESCORT.MenuScanForTargets}: Creates a menu so that the escort scans targets.
--- * @{#ESCORT.MenuFlare}: Creates a menu to disperse flares.
--- * @{#ESCORT.MenuSmoke}: Creates a menu to disparse smoke.
--- * @{#ESCORT.MenuReportTargets}: Creates a menu so that the escort reports targets.
--- * @{#ESCORT.MenuReportPosition}: Creates a menu so that the escort reports its current position from bullseye.
--- * @{#ESCORT.MenuAssistedAttack: Creates a menu so that the escort supportes assisted attack from other escorts with the client.
--- * @{#ESCORT.MenuROE: Creates a menu structure to set the rules of engagement of the escort.
--- * @{#ESCORT.MenuEvasion: Creates a menu structure to set the evasion techniques when the escort is under threat.
--- * @{#ESCORT.MenuResumeMission}: Creates a menu structure so that the escort can resume from a waypoint.
--- 
--- 
 -- @usage
 -- -- Declare a new EscortPlanes object as follows:
 -- 
@@ -111,25 +139,8 @@
 -- 
 -- -- Now use these 2 objects to construct the new EscortPlanes object.
 -- EscortPlanes = ESCORT:New( EscortClient, EscortGroup, "Desert", "Welcome to the mission. You are escorted by a plane with code name 'Desert', which can be instructed through the F10 radio menu." )
--- 
 --
---
--- @module Escort
--- @author FlightControl
-
---- ESCORT class
--- @type ESCORT
--- @extends Core.Base#BASE
--- @field Wrapper.Client#CLIENT EscortClient
--- @field Wrapper.Group#GROUP EscortGroup
--- @field #string EscortName
--- @field #ESCORT.MODE EscortMode The mode the escort is in.
--- @field Core.Scheduler#SCHEDULER FollowScheduler The instance of the SCHEDULER class.
--- @field #number FollowDistance The current follow distance.
--- @field #boolean ReportTargets If true, nearby targets are reported.
--- @Field Dcs.DCSTypes#AI.Option.Air.val.ROE OptionROE Which ROE is set to the EscortGroup.
--- @field Dcs.DCSTypes#AI.Option.Air.val.REACTION_ON_THREAT OptionReactionOnThreat Which REACTION_ON_THREAT is set to the EscortGroup.
--- @field FunctionalMENU_GROUPDETECTION_BASE Detection
+-- @field #ESCORT
 ESCORT = {
   ClassName = "ESCORT",
   EscortName = nil, -- The Escort Name
@@ -295,7 +306,7 @@ end
 --- Defines a menu slot to let the escort Join and Follow you at a certain distance.
 -- This menu will appear under **Navigation**.
 -- @param #ESCORT self
--- @param Dcs.DCSTypes#Distance Distance The distance in meters that the escort needs to follow the client.
+-- @param DCS#Distance Distance The distance in meters that the escort needs to follow the client.
 -- @return #ESCORT
 function ESCORT:MenuFollowAt( Distance )
   self:F(Distance)
@@ -320,8 +331,8 @@ end
 --- Defines a menu slot to let the escort hold at their current position and stay low with a specified height during a specified time in seconds.
 -- This menu will appear under **Hold position**.
 -- @param #ESCORT self
--- @param Dcs.DCSTypes#Distance Height Optional parameter that sets the height in meters to let the escort orbit at the current location. The default value is 30 meters.
--- @param Dcs.DCSTypes#Time Seconds Optional parameter that lets the escort orbit at the current position for a specified time. (not implemented yet). The default value is 0 seconds, meaning, that the escort will orbit forever until a sequent command is given.
+-- @param DCS#Distance Height Optional parameter that sets the height in meters to let the escort orbit at the current location. The default value is 30 meters.
+-- @param DCS#Time Seconds Optional parameter that lets the escort orbit at the current position for a specified time. (not implemented yet). The default value is 0 seconds, meaning, that the escort will orbit forever until a sequent command is given.
 -- @param #string MenuTextFormat Optional parameter that shows the menu option text. The text string is formatted, and should contain two %d tokens in the string. The first for the Height, the second for the Time (if given). If no text is given, the default text will be displayed.
 -- @return #ESCORT
 -- TODO: Implement Seconds parameter. Challenge is to first develop the "continue from last activity" function.
@@ -381,8 +392,8 @@ end
 --- Defines a menu slot to let the escort hold at the client position and stay low with a specified height during a specified time in seconds.
 -- This menu will appear under **Navigation**.
 -- @param #ESCORT self
--- @param Dcs.DCSTypes#Distance Height Optional parameter that sets the height in meters to let the escort orbit at the current location. The default value is 30 meters.
--- @param Dcs.DCSTypes#Time Seconds Optional parameter that lets the escort orbit at the current position for a specified time. (not implemented yet). The default value is 0 seconds, meaning, that the escort will orbit forever until a sequent command is given.
+-- @param DCS#Distance Height Optional parameter that sets the height in meters to let the escort orbit at the current location. The default value is 30 meters.
+-- @param DCS#Time Seconds Optional parameter that lets the escort orbit at the current position for a specified time. (not implemented yet). The default value is 0 seconds, meaning, that the escort will orbit forever until a sequent command is given.
 -- @param #string MenuTextFormat Optional parameter that shows the menu option text. The text string is formatted, and should contain one or two %d tokens in the string. The first for the Height, the second for the Time (if given). If no text is given, the default text will be displayed.
 -- @return #ESCORT
 -- TODO: Implement Seconds parameter. Challenge is to first develop the "continue from last activity" function.
@@ -442,8 +453,8 @@ end
 --- Defines a menu slot to let the escort scan for targets at a certain height for a certain time in seconds.
 -- This menu will appear under **Scan targets**.
 -- @param #ESCORT self
--- @param Dcs.DCSTypes#Distance Height Optional parameter that sets the height in meters to let the escort orbit at the current location. The default value is 30 meters.
--- @param Dcs.DCSTypes#Time Seconds Optional parameter that lets the escort orbit at the current position for a specified time. (not implemented yet). The default value is 0 seconds, meaning, that the escort will orbit forever until a sequent command is given.
+-- @param DCS#Distance Height Optional parameter that sets the height in meters to let the escort orbit at the current location. The default value is 30 meters.
+-- @param DCS#Time Seconds Optional parameter that lets the escort orbit at the current position for a specified time. (not implemented yet). The default value is 0 seconds, meaning, that the escort will orbit forever until a sequent command is given.
 -- @param #string MenuTextFormat Optional parameter that shows the menu option text. The text string is formatted, and should contain one or two %d tokens in the string. The first for the Height, the second for the Time (if given). If no text is given, the default text will be displayed.
 -- @return #ESCORT
 function ESCORT:MenuScanForTargets( Height, Seconds, MenuTextFormat )
@@ -567,7 +578,7 @@ end
 -- This menu will appear under **Report targets**.
 -- Note that if a report targets menu is not specified, no targets will be detected by the escort, and the attack and assisted attack menus will not be displayed.
 -- @param #ESCORT self
--- @param Dcs.DCSTypes#Time Seconds Optional parameter that lets the escort report their current detected targets after specified time interval in seconds. The default time is 30 seconds.
+-- @param DCS#Time Seconds Optional parameter that lets the escort report their current detected targets after specified time interval in seconds. The default time is 30 seconds.
 -- @return #ESCORT
 function ESCORT:MenuReportTargets( Seconds )
   self:F( { Seconds } )
@@ -737,7 +748,7 @@ end
 -- @param Functional.Escort#ESCORT self
 -- @param Wrapper.Group#GROUP EscortGroup
 -- @param Wrapper.Client#CLIENT EscortClient
--- @param Dcs.DCSTypes#Distance Distance
+-- @param DCS#Distance Distance
 function ESCORT:JoinUpAndFollow( EscortGroup, EscortClient, Distance )
   self:F( { EscortGroup, EscortClient, Distance } )
 

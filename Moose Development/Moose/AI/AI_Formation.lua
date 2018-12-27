@@ -1,35 +1,11 @@
---- **AI** -- (R2.2) - Build large airborne formations of aircraft.
+--- **AI** -- Build large airborne formations of aircraft.
 -- 
--- ===
+-- **Features:**
+--
+--   * Build in-air formations consisting of more than 40 aircraft as one group.
+--   * Build different formation types.
+--   * Assign a group leader that will guide the large formation path.
 -- 
--- ![Banner Image](..\Presentations\AI_FORMATION\Dia1.JPG)
--- 
--- ===
--- 
--- AI_FORMATION makes AI @{GROUP}s fly in formation of various compositions.
--- The AI_FORMATION class models formations in a different manner than the internal DCS formation logic!!!
--- The purpose of the class is to:
--- 
---   * Make formation building a process that can be managed while in flight, rather than a task.
---   * Human players can guide formations, consisting of larget planes.
---   * Build large formations (like a large bomber field).
---   * Form formations that DCS does not support off the shelve.
--- 
--- A few remarks:
--- 
---   * Depending on the type of plane, the change in direction by the leader may result in the formation getting disentangled while in flight and needs to be rebuild.
---   * Formations are vulnerable to collissions, but is depending on the type of plane, the distance between the planes and the speed and angle executed by the leader.
---   * Formations may take a while to build up.
--- 
--- As a result, the AI_FORMATION is not perfect, but is very useful to:
--- 
---   * Model large formations when flying straight line.
---   * Make humans guide a large formation, when the planes are wide from each other.
--- 
--- There are the following types of classes defined:
--- 
---   * @{#AI_FORMATION}: Create a formation from several @{GROUP}s.
---   
 -- ===
 -- 
 -- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/FOR%20-%20Formation)
@@ -45,13 +21,14 @@
 -- 
 -- ===
 --   
--- @module AI_Formation
+-- @module AI.AI_Formation
+-- @image AI_Large_Formations.JPG
 
 --- AI_FORMATION class
 -- @type AI_FORMATION
--- @extends Fsm#FSM_SET
--- @field Unit#UNIT FollowUnit
--- @field Set#SET_GROUP FollowGroupSet
+-- @extends Core.Fsm#FSM_SET
+-- @field Wrapper.Unit#UNIT FollowUnit
+-- @field Core.Set#SET_GROUP FollowGroupSet
 -- @field #string FollowName
 -- @field #AI_FORMATION.MODE FollowMode The mode the escort is in.
 -- @field Scheduler#SCHEDULER FollowScheduler The instance of the SCHEDULER class.
@@ -59,11 +36,10 @@
 -- @field #boolean ReportTargets If true, nearby targets are reported.
 -- @Field DCSTypes#AI.Option.Air.val.ROE OptionROE Which ROE is set to the FollowGroup.
 -- @field DCSTypes#AI.Option.Air.val.REACTION_ON_THREAT OptionReactionOnThreat Which REACTION_ON_THREAT is set to the FollowGroup.
+-- @field #number dtFollow Time step between position updates.
 
 
---- # AI_FORMATION class, extends @{Fsm#FSM_SET}
--- 
--- The #AI_FORMATION class allows you to build large formations, make AI follow a @{Client#CLIENT} (player) leader or a @{Unit#UNIT} (AI) leader.
+--- Build large formations, make AI follow a @{Wrapper.Client#CLIENT} (player) leader or a @{Wrapper.Unit#UNIT} (AI) leader.
 --
 -- AI_FORMATION makes AI @{GROUP}s fly in formation of various compositions.
 -- The AI_FORMATION class models formations in a different manner than the internal DCS formation logic!!!
@@ -89,25 +65,25 @@
 -- 
 -- Create a new SPAWN object with the @{#AI_FORMATION.New} method:
 --
---   * @{Follow#AI_FORMATION.New}(): Creates a new AI_FORMATION object from a @{Group#GROUP} for a @{Client#CLIENT} or a @{Unit#UNIT}, with an optional briefing text.
+--   * @{#AI_FORMATION.New}(): Creates a new AI_FORMATION object from a @{Wrapper.Group#GROUP} for a @{Wrapper.Client#CLIENT} or a @{Wrapper.Unit#UNIT}, with an optional briefing text.
 --
 -- ## Formation methods
 -- 
 -- The following methods can be used to set or change the formation:
 -- 
---  * @{AI_Formation#AI_FORMATION.FormationLine}(): Form a line formation (core formation function).
---  * @{AI_Formation#AI_FORMATION.FormationTrail}(): Form a trail formation.
---  * @{AI_Formation#AI_FORMATION.FormationLeftLine}(): Form a left line formation.
---  * @{AI_Formation#AI_FORMATION.FormationRightLine}(): Form a right line formation.
---  * @{AI_Formation#AI_FORMATION.FormationRightWing}(): Form a right wing formation.
---  * @{AI_Formation#AI_FORMATION.FormationLeftWing}(): Form a left wing formation.
---  * @{AI_Formation#AI_FORMATION.FormationCenterWing}(): Form a center wing formation.
---  * @{AI_Formation#AI_FORMATION.FormationCenterVic}(): Form a Vic formation (same as CenterWing.
---  * @{AI_Formation#AI_FORMATION.FormationCenterBoxed}(): Form a center boxed formation.
+--  * @{#AI_FORMATION.FormationLine}(): Form a line formation (core formation function).
+--  * @{#AI_FORMATION.FormationTrail}(): Form a trail formation.
+--  * @{#AI_FORMATION.FormationLeftLine}(): Form a left line formation.
+--  * @{#AI_FORMATION.FormationRightLine}(): Form a right line formation.
+--  * @{#AI_FORMATION.FormationRightWing}(): Form a right wing formation.
+--  * @{#AI_FORMATION.FormationLeftWing}(): Form a left wing formation.
+--  * @{#AI_FORMATION.FormationCenterWing}(): Form a center wing formation.
+--  * @{#AI_FORMATION.FormationCenterVic}(): Form a Vic formation (same as CenterWing.
+--  * @{#AI_FORMATION.FormationCenterBoxed}(): Form a center boxed formation.
 --  
 -- ## Randomization
 -- 
--- Use the method @{AI_Formation#AI_FORMATION.SetFlightRandomization}() to simulate the formation flying errors that pilots make while in formation. Is a range set in meters.
+-- Use the method @{AI.AI_Formation#AI_FORMATION.SetFlightRandomization}() to simulate the formation flying errors that pilots make while in formation. Is a range set in meters.
 --
 -- @usage
 -- local FollowGroupSet = SET_GROUP:New():FilterCategories("plane"):FilterCoalitions("blue"):FilterPrefixes("Follow"):FilterStart()
@@ -131,6 +107,7 @@ AI_FORMATION = {
   FollowScheduler = nil,
   OptionROE = AI.Option.Air.val.ROE.OPEN_FIRE,
   OptionReactionOnThreat = AI.Option.Air.val.REACTION_ON_THREAT.ALLOW_ABORT_MISSION,
+  dtFollow = 0.5,
 }
 
 --- AI_FORMATION.Mode class
@@ -147,16 +124,17 @@ AI_FORMATION = {
 
 --- AI_FORMATION class constructor for an AI group
 -- @param #AI_FORMATION self
--- @param Unit#UNIT FollowUnit The UNIT leading the FolllowGroupSet.
+-- @param Wrapper.Unit#UNIT FollowUnit The UNIT leading the FolllowGroupSet.
 -- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
 -- @param #string FollowName Name of the escort.
+-- @param #string FollowBriefing Briefing.
 -- @return #AI_FORMATION self
 function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefing ) --R2.1
   local self = BASE:Inherit( self, FSM_SET:New( FollowGroupSet ) )
   self:F( { FollowUnit, FollowGroupSet, FollowName } )
 
-  self.FollowUnit = FollowUnit -- Unit#UNIT
-  self.FollowGroupSet = FollowGroupSet -- Set#SET_GROUP
+  self.FollowUnit = FollowUnit -- Wrapper.Unit#UNIT
+  self.FollowGroupSet = FollowGroupSet -- Core.Set#SET_GROUP
   
   self:SetFlightRandomization( 2 )
   
@@ -164,7 +142,7 @@ function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefin
 
   self:AddTransition( "*", "Stop", "Stopped" )
 
-  self:AddTransition( "None", "Start", "Following" )
+  self:AddTransition( {"None", "Stopped"}, "Start", "Following" )
 
   self:AddTransition( "*", "FormationLine", "*" )
   --- FormationLine Handler OnBefore for AI_FORMATION
@@ -645,6 +623,16 @@ function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefin
   return self
 end
 
+
+--- Set time interval between updates of the formation.
+-- @param #AI_FORMATION self
+-- @param #number dt Time step in seconds between formation updates. Default is every 0.5 seconds.
+-- @return #AI_FORMATION
+function AI_FORMATION:SetFollowTimeInterval(dt) --R2.1
+  self.dtFollow=dt or 0.5
+  return self
+end
+
 --- This function is for test, it will put on the frequency of the FollowScheduler a red smoke at the direction vector calculated for the escort to fly to.
 -- This allows to visualize where the escort is flying to.
 -- @param #AI_FORMATION self
@@ -675,7 +663,7 @@ function AI_FORMATION:onafterFormationLine( FollowGroupSet, From , Event , To, X
   
   local FollowSet = FollowGroupSet:GetSet()
   
-  local i = 0
+  local i = 1  --FF i=0 caused first unit to have no XSpace! Probably needs further adjustments. This is just a quick work around.
   
   for FollowID, FollowGroup in pairs( FollowSet ) do
   
@@ -906,7 +894,7 @@ function AI_FORMATION:onafterFormationBox( FollowGroupSet, From , Event , To, XS
 end
 
 
---- Use the method @{AI_Formation#AI_FORMATION.SetFlightRandomization}() to make the air units in your formation randomize their flight a bit while in formation.
+--- Use the method @{AI.AI_Formation#AI_FORMATION.SetFlightRandomization}() to make the air units in your formation randomize their flight a bit while in formation.
 -- @param #AI_FORMATION self
 -- @param #number FlightRandomization The formation flying errors that pilots can make while in formation. Is a range set in meters.
 -- @return #AI_FORMATION
@@ -918,7 +906,30 @@ function AI_FORMATION:SetFlightRandomization( FlightRandomization ) --R2.1
 end
 
 
---- @param Follow#AI_FORMATION self
+--- Stop function. Formation will not be updated any more.
+-- @param #AI_FORMATION self
+-- @param Core.Set#SET_GROUP FollowGroupSet The following set of groups.
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @pram #string To The to state.
+function AI_FORMATION:onafterStop(FollowGroupSet, From, Event, To) --R2.1
+  self:E("Stopping formation.")
+end
+
+--- Follow event fuction. Check if coming from state "stopped". If so the transition is rejected.
+-- @param #AI_FORMATION self
+-- @param Core.Set#SET_GROUP FollowGroupSet The following set of groups.
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @pram #string To The to state.
+function AI_FORMATION:onbeforeFollow( FollowGroupSet, From, Event, To ) --R2.1
+  if From=="Stopped" then
+    return false  -- Deny transition.
+  end
+  return true
+end
+
+--- @param #AI_FORMATION self
 function AI_FORMATION:onenterFollowing( FollowGroupSet ) --R2.1
   self:F( )
 
@@ -993,7 +1004,7 @@ function AI_FORMATION:onenterFollowing( FollowGroupSet ) --R2.1
             local Alpha_R = ( Alpha_T < 0 ) and Alpha_T + 2 * math.pi or Alpha_T
             local Position = math.cos( Alpha_R )
             local GD = ( ( GDv.x )^2 + ( GDv.z )^2 ) ^ 0.5
-            local Distance = GD * Position + - CS * 0,5
+            local Distance = GD * Position + - CS * 0.5
       
             -- Calculate the group direction vector
             local GV = { x = GV2.x - CV2.x, y = GV2.y - CV2.y, z = GV2.z - CV2.z  }
@@ -1057,8 +1068,8 @@ function AI_FORMATION:onenterFollowing( FollowGroupSet ) --R2.1
       end,
       self, ClientUnit, CT1, CV1, CT2, CV2
     )
-
-    self:__Follow( -0.5 )
+    
+    self:__Follow( -self.dtFollow )
   end
   
 end

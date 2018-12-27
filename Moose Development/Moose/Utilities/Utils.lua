@@ -10,6 +10,7 @@
 --   * FlightControl : Rework to OO framework 
 -- 
 -- @module Utils
+-- @image MOOSE.JPG
 
 
 --- @type SMOKECOLOR
@@ -28,6 +29,32 @@ SMOKECOLOR = trigger.smokeColor -- #SMOKECOLOR
 -- @field Yellow
 
 FLARECOLOR = trigger.flareColor -- #FLARECOLOR
+
+--- Big smoke preset enum.
+-- @type BIGSMOKEPRESET
+BIGSMOKEPRESET = {
+  SmallSmokeAndFire=0,
+  MediumSmokeAndFire=1,
+  LargeSmokeAndFire=2,
+  HugeSmokeAndFire=3,
+  SmallSmoke=4,
+  MediumSmoke=5,
+  LargeSmoke=6,
+  HugeSmoke=7,
+}
+
+--- DCS map as returned by env.mission.theatre.
+-- @type DCSMAP
+-- @field #string Caucasus Caucasus map.
+-- @field #string Normandy Normandy map.
+-- @field #string NTTR Nevada Test and Training Range map.
+-- @field #string PersianGulf Persian Gulf map.
+DCSMAP = {
+  Caucasus="Caucasus",
+  NTTR="Nevada",
+  Normandy="Normandy",
+  PersianGulf="PersianGulf"
+}
 
 --- Utilities static class.
 -- @type UTILS
@@ -236,7 +263,11 @@ UTILS.FeetToMeters = function(feet)
 end
 
 UTILS.KnotsToKmph = function(knots)
-  return knots* 1.852
+  return knots * 1.852
+end
+
+UTILS.KmphToKnots = function(knots)
+  return knots / 1.852
 end
 
 UTILS.KmphToMps = function( kmph )
@@ -267,7 +298,26 @@ UTILS.CelciusToFarenheit = function( Celcius )
   return Celcius * 9/5 + 32 
 end
 
+--- Convert pressure from hecto Pascal (hPa) to inches of mercury (inHg).
+-- @param #number hPa Pressure in hPa.
+-- @return #number Pressure in inHg.
+UTILS.hPa2inHg = function( hPa )
+  return hPa * 0.0295299830714
+end
 
+--- Convert pressure from hecto Pascal (hPa) to millimeters of mercury (mmHg).
+-- @param #number hPa Pressure in hPa.
+-- @return #number Pressure in mmHg.
+UTILS.hPa2mmHg = function( hPa )
+  return hPa * 0.7500615613030
+end
+
+--- Convert kilo gramms (kg) to pounds (lbs).
+-- @param #number kg Mass in kg.
+-- @return #number Mass in lbs.
+UTILS.kg2lbs = function( kg )
+  return kg * 2.20462
+end
 
 --[[acc:
 in DM: decimal point of minutes.
@@ -482,3 +532,300 @@ function UTILS.BeaufortScale(speed)
   end
   return bn,bd
 end
+
+--- Split string at seperators. C.f. http://stackoverflow.com/questions/1426954/split-string-in-lua
+-- @param #string str Sting to split.
+-- @param #string sep Speparator for split.
+-- @return #table Split text.
+function UTILS.Split(str, sep)
+  local result = {}
+  local regex = ("([^%s]+)"):format(sep)
+  for each in str:gmatch(regex) do
+    table.insert(result, each)
+  end
+  return result
+end
+
+--- Convert time in seconds to hours, minutes and seconds.
+-- @param #number seconds Time in seconds, e.g. from timer.getAbsTime() function.
+-- @return #string Time in format Hours:Minutes:Seconds+Days (HH:MM:SS+D).
+function UTILS.SecondsToClock(seconds)
+  
+  -- Nil check.
+  if seconds==nil then
+    return nil
+  end
+  
+  -- Seconds
+  local seconds = tonumber(seconds)
+  
+  -- Seconds of this day.
+  local _seconds=seconds%(60*60*24)
+
+  if seconds<0 then
+    return nil
+  else
+    local hours = string.format("%02.f", math.floor(_seconds/3600))
+    local mins  = string.format("%02.f", math.floor(_seconds/60 - (hours*60)))
+    local secs  = string.format("%02.f", math.floor(_seconds - hours*3600 - mins *60))
+    local days  = string.format("%d", seconds/(60*60*24))
+    return hours..":"..mins..":"..secs.."+"..days
+  end
+end
+
+--- Convert clock time from hours, minutes and seconds to seconds.
+-- @param #string clock String of clock time. E.g., "06:12:35" or "5:1:30+1". Format is (H)H:(M)M:((S)S)(+D) H=Hours, M=Minutes, S=Seconds, D=Days.
+-- @return #number Seconds. Corresponds to what you cet from timer.getAbsTime() function.
+function UTILS.ClockToSeconds(clock)
+  
+  -- Nil check.
+  if clock==nil then
+    return nil
+  end
+  
+  -- Seconds init.
+  local seconds=0
+  
+  -- Split additional days.
+  local dsplit=UTILS.Split(clock, "+")
+  
+  -- Convert days to seconds.
+  if #dsplit>1 then
+    seconds=seconds+tonumber(dsplit[2])*60*60*24
+  end
+
+  -- Split hours, minutes, seconds    
+  local tsplit=UTILS.Split(dsplit[1], ":")
+
+  -- Get time in seconds
+  local i=1
+  for _,time in ipairs(tsplit) do
+    if i==1 then
+      -- Hours
+      seconds=seconds+tonumber(time)*60*60
+    elseif i==2 then
+      -- Minutes
+      seconds=seconds+tonumber(time)*60
+    elseif i==3 then
+      -- Seconds
+      seconds=seconds+tonumber(time)
+    end
+    i=i+1
+  end
+  
+  return seconds
+end
+
+--- Display clock and mission time on screen as a message to all.
+-- @param #number duration Duration in seconds how long the time is displayed. Default is 5 seconds.
+function UTILS.DisplayMissionTime(duration)
+  duration=duration or 5
+  local Tnow=timer.getAbsTime()
+  local mission_time=Tnow-timer.getTime0()
+  local mission_time_minutes=mission_time/60
+  local mission_time_seconds=mission_time%60
+  local local_time=UTILS.SecondsToClock(Tnow)  
+  local text=string.format("Time: %s - %02d:%02d", local_time, mission_time_minutes, mission_time_seconds)
+  MESSAGE:New(text, duration):ToAll()
+end
+
+
+--- Generate a Gaussian pseudo-random number.
+-- @param #number x0 Expectation value of distribution.
+-- @param #number sigma (Optional) Standard deviation. Default 10.
+-- @param #number xmin (Optional) Lower cut-off value.
+-- @param #number xmax (Optional) Upper cut-off value.
+-- @param #number imax (Optional) Max number of tries to get a value between xmin and xmax (if specified). Default 100.
+-- @return #number Gaussian random number.
+function UTILS.RandomGaussian(x0, sigma, xmin, xmax, imax)
+
+  -- Standard deviation. Default 10 if not given.
+  sigma=sigma or 10
+  
+  -- Max attempts.
+  imax=imax or 100
+    
+  local r
+  local gotit=false
+  local i=0
+  while not gotit do
+  
+    -- Uniform numbers in [0,1). We need two.
+    local x1=math.random()
+    local x2=math.random()
+  
+    -- Transform to Gaussian exp(-(x-x0)²/(2*sigma²).
+    r = math.sqrt(-2*sigma*sigma * math.log(x1)) * math.cos(2*math.pi * x2) + x0
+    
+    i=i+1
+    if (r>=xmin and r<=xmax) or i>imax then
+      gotit=true
+    end
+  end
+  
+  return r
+end
+
+--- Randomize a value by a certain amount.
+-- @param #number value The value which should be randomized
+-- @param #number fac Randomization factor.
+-- @param #number lower (Optional) Lower limit of the returned value.
+-- @param #number upper (Optional) Upper limit of the returned value.
+-- @return #number Randomized value.
+-- @usage UTILS.Randomize(100, 0.1) returns a value between 90 and 110, i.e. a plus/minus ten percent variation.
+-- @usage UTILS.Randomize(100, 0.5, nil, 120) returns a value between 50 and 120, i.e. a plus/minus fivty percent variation with upper bound 120.
+function UTILS.Randomize(value, fac, lower, upper)
+  local min
+  if lower then
+    min=math.max(value-value*fac, lower)
+  else
+    min=value-value*fac
+  end
+  local max
+  if upper then
+    max=math.min(value+value*fac, upper)
+  else
+    max=value+value*fac
+  end
+  
+  local r=math.random(min, max)
+  
+  return r
+end
+
+--- Calculate the [dot product](https://en.wikipedia.org/wiki/Dot_product) of two vectors. The result is a number.
+-- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+-- @param DCS#Vec3 b Vector in 3D with x, y, z components.
+-- @return #number Scalar product of the two vectors a*b.
+function UTILS.VecDot(a, b)
+  return a.x*b.x + a.y*b.y + a.z*b.z
+end
+
+--- Calculate the [euclidean norm](https://en.wikipedia.org/wiki/Euclidean_distance) (length) of a 3D vector.
+-- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+-- @return #number Norm of the vector.
+function UTILS.VecNorm(a)
+  return math.sqrt(UTILS.VecDot(a, a))
+end
+
+--- Calculate the [cross product](https://en.wikipedia.org/wiki/Cross_product) of two 3D vectors. The result is a 3D vector.
+-- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+-- @param DCS#Vec3 b Vector in 3D with x, y, z components.
+-- @return DCS#Vec3 Vector
+function UTILS.VecCross(a, b)
+  return {x=a.y*b.z - a.z*b.y, y=a.z*b.x - a.x*b.z, z=a.x*b.y - a.y*b.x}
+end
+
+--- Calculate the difference between two 3D vectors by substracting the x,y,z components from each other. 
+-- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+-- @param DCS#Vec3 b Vector in 3D with x, y, z components.
+-- @return DCS#Vec3 Vector c=a-b with c(i)=a(i)-b(i), i=x,y,z.
+function UTILS.VecSubstract(a, b)
+  return {x=a.x-b.x, y=a.y-b.y, z=a.z-b.z}
+end
+
+--- Calculate the angle between two 3D vectors. 
+-- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+-- @param DCS#Vec3 b Vector in 3D with x, y, z components.
+-- @return #number Angle alpha between and b in degrees. alpha=acos(a*b)/(|a||b|), (* denotes the dot product). 
+function UTILS.VecAngle(a, b)
+  local alpha=math.acos(UTILS.VecDot(a,b)/(UTILS.VecNorm(a)*UTILS.VecNorm(b)))
+  return math.deg(alpha)
+end
+
+--- Rotate 3D vector in the 2D (x,z) plane. y-component (usually altitude) unchanged. 
+-- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+-- @param #number angle Rotation angle in degrees.
+-- @return DCS#Vec3 Vector rotated in the (x,z) plane.
+function UTILS.Rotate2D(a, angle)
+
+  local phi=math.rad(angle)
+  
+  local x=a.z
+  local y=a.x
+    
+  local Z=x*math.cos(phi)-y*math.sin(phi)
+  local X=x*math.sin(phi)+y*math.cos(phi)
+  local Y=a.y
+  
+  local A={x=X, y=Y, z=Z}
+
+  return A
+end
+
+
+
+--- Converts a TACAN Channel/Mode couple into a frequency in Hz.
+-- @param #number TACANChannel The TACAN channel, i.e. the 10 in "10X".
+-- @param #string TACANMode The TACAN mode, i.e. the "X" in "10X".
+-- @return #number Frequency in Hz or #nil if parameters are invalid.
+function UTILS.TACANToFrequency(TACANChannel, TACANMode)
+
+  if type(TACANChannel) ~= "number" then
+    return nil -- error in arguments
+  end
+  if TACANMode ~= "X" and TACANMode ~= "Y" then
+    return nil -- error in arguments
+  end  
+  
+-- This code is largely based on ED's code, in DCS World\Scripts\World\Radio\BeaconTypes.lua, line 137.
+-- I have no idea what it does but it seems to work
+  local A = 1151 -- 'X', channel >= 64
+  local B = 64   -- channel >= 64
+  
+  if TACANChannel < 64 then
+    B = 1
+  end
+  
+  if TACANMode == 'Y' then
+    A = 1025
+    if TACANChannel < 64 then
+      A = 1088
+    end
+  else -- 'X'
+    if TACANChannel < 64 then
+      A = 962
+    end
+  end
+  
+  return (A + TACANChannel - B) * 1000000
+end
+
+
+--- Returns the DCS map/theatre as optained by env.mission.theatre
+-- @return #string DCS map name .
+function UTILS.GetDCSMap()
+  return env.mission.theatre
+end
+
+--- Returns the magnetic declination of the map.
+-- Returned values for the current maps are:
+-- 
+-- * Caucasus +6 (East), year ~ 2011
+-- * NTTR +12 (East), year ~ 2011
+-- * Normandy -10 (West), year ~ 1944
+-- * Persian Gulf +2 (East), year ~ 2011
+-- @param #string map (Optional) Map for which the declination is returned. Default is from env.mission.theatre
+-- @return #number Declination in degrees.
+function UTILS.GetMagneticDeclination(map)
+
+  -- Map.
+  map=map or UTILS.GetDCSMap()
+  
+  local declination=0
+  if map==DCSMAP.Caucasus then
+    declination=6
+  elseif map==DCSMAP.NTTR then
+    declination=12
+  elseif map==DCSMAP.Normandy then
+    declination=-10
+  elseif map==DCSMAP.PersianGulf then
+    declination=2
+  else
+    declination=0
+  end
+
+  return declination
+end
+
+

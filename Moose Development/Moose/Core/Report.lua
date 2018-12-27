@@ -1,6 +1,26 @@
---- The REPORT class
--- @type REPORT
+--- **Core** - Provides a handy means to create messages and reports.
+--
+-- ===
+-- 
+-- ## Features:
+-- 
+--   * Create text blocks that are formatted.
+--   * Create automatic indents.
+--   * Variate the delimiters between reporting lines.
+-- 
+-- ===
+--
+-- ### Authors: FlightControl : Design & Programming
+--
+-- @module Core.Report
+-- @image Core_Report.JPG
+
+
+--- @type REPORT
 -- @extends Core.Base#BASE
+
+--- Provides a handy means to create messages and reports.
+-- @field #REPORT
 REPORT = {
   ClassName = "REPORT",
   Title = "",

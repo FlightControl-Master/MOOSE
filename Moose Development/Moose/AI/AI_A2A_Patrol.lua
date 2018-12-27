@@ -1,26 +1,23 @@
 --- **AI** -- (R2.2) - Models the process of air patrol of airplanes.
 -- 
--- This is a class used in the @{AI_A2A_Dispatcher}.
--- 
 -- ===
 -- 
 -- ### Author: **FlightControl**
 -- 
 -- ===
 -- 
--- @module AI_A2A_Patrol
+-- @module AI.AI_A2A_Patrol
+-- @image AI_Air_Patrolling.JPG
 
 
 --- @type AI_A2A_PATROL
 -- @extends AI.AI_A2A#AI_A2A
 
---- # AI_A2A_PATROL class, extends @{Fsm#FSM_CONTROLLABLE}
--- 
--- The AI_A2A_PATROL class implements the core functions to patrol a @{Zone} by an AI @{Group} or @{Group}.
+--- Implements the core functions to patrol a @{Zone} by an AI @{Wrapper.Group} or @{Wrapper.Group}.
 -- 
 -- ![Process](..\Presentations\AI_PATROL\Dia3.JPG)
 -- 
--- The AI_A2A_PATROL is assigned a @{Group} and this must be done before the AI_A2A_PATROL process can be started using the **Start** event.
+-- The AI_A2A_PATROL is assigned a @{Wrapper.Group} and this must be done before the AI_A2A_PATROL process can be started using the **Start** event.
 -- 
 -- ![Process](..\Presentations\AI_PATROL\Dia4.JPG)
 -- 
@@ -93,7 +90,7 @@
 --   * @{#AI_A2A_PATROL.SetDetectionOff}(): Set the detection off, the AI will not detect for targets. The existing target list will NOT be erased.
 -- 
 -- The detection frequency can be set with @{#AI_A2A_PATROL.SetRefreshTimeInterval}( seconds ), where the amount of seconds specify how much seconds will be waited before the next detection.
--- Use the method @{#AI_A2A_PATROL.GetDetectedUnits}() to obtain a list of the @{Unit}s detected by the AI.
+-- Use the method @{#AI_A2A_PATROL.GetDetectedUnits}() to obtain a list of the @{Wrapper.Unit}s detected by the AI.
 -- 
 -- The detection can be filtered to potential targets in a specific zone.
 -- Use the method @{#AI_A2A_PATROL.SetDetectionZone}() to set the zone where targets need to be detected.
@@ -126,11 +123,11 @@ AI_A2A_PATROL = {
 -- @param #AI_A2A_PATROL self
 -- @param Wrapper.Group#GROUP AIPatrol
 -- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
--- @param Dcs.DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
--- @param Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Group} in km/h.
--- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Group} in km/h.
--- @param Dcs.DCSTypes#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
+-- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+-- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+-- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Group} in km/h.
+-- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h.
+-- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
 -- @return #AI_A2A_PATROL self
 -- @usage
 -- -- Define a new AI_A2A_PATROL Object. This PatrolArea will patrol a Group within PatrolZone between 3000 and 6000 meters, with a variying speed between 600 and 900 km/h.
@@ -236,8 +233,8 @@ end
 
 --- Sets (modifies) the minimum and maximum speed of the patrol.
 -- @param #AI_A2A_PATROL self
--- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Group} in km/h.
--- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Group} in km/h.
+-- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Group} in km/h.
+-- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h.
 -- @return #AI_A2A_PATROL self
 function AI_A2A_PATROL:SetSpeed( PatrolMinSpeed, PatrolMaxSpeed )
   self:F2( { PatrolMinSpeed, PatrolMaxSpeed } )
@@ -250,8 +247,8 @@ end
 
 --- Sets the floor and ceiling altitude of the patrol.
 -- @param #AI_A2A_PATROL self
--- @param Dcs.DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
--- @param Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+-- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+-- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
 -- @return #AI_A2A_PATROL self
 function AI_A2A_PATROL:SetAltitude( PatrolFloorAltitude, PatrolCeilingAltitude )
   self:F2( { PatrolFloorAltitude, PatrolCeilingAltitude } )
@@ -354,13 +351,12 @@ function AI_A2A_PATROL:onafterRoute( AIPatrol, From, Event, To )
 end
 
 --- @param Wrapper.Group#GROUP AIPatrol
-function AI_A2A_PATROL.Resume( AIPatrol )
+function AI_A2A_PATROL.Resume( AIPatrol, Fsm )
 
-  AIPatrol:F( { "AI_A2A_PATROL.Resume:", AIPatrol:GetName() } )
+  AIPatrol:I( { "AI_A2A_PATROL.Resume:", AIPatrol:GetName() } )
   if AIPatrol:IsAlive() then
-    local _AI_A2A = AIPatrol:GetState( AIPatrol, "AI_A2A" ) -- #AI_A2A
-      _AI_A2A:__Reset( 1 )
-      _AI_A2A:__Route( 5 )
+    Fsm:__Reset( 1 )
+    Fsm:__Route( 5 )
   end
   
 end

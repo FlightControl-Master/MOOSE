@@ -1,8 +1,10 @@
---- **Core (WIP)** -- Manage user flags.
+--- **Core** - Manage user flags to interact with the mission editor trigger system and server side scripts.
 --
 -- ===
 -- 
--- Management of DCS User Flags.
+-- ## Features:
+-- 
+--   * Set or get DCS user flags within running missions.
 -- 
 -- ===
 -- 
@@ -10,7 +12,9 @@
 -- 
 -- ===
 -- 
--- @module UserFlag
+-- @module Core.UserFlag
+-- @image Core_Userflag.JPG
+-- 
 
 do -- UserFlag
 
@@ -18,11 +22,9 @@ do -- UserFlag
   -- @extends Core.Base#BASE
 
 
-  --- # USERFLAG class, extends @{Base#BASE}
+  --- Management of DCS User Flags.
   -- 
-  -- Management of DCS User Flags.
-  -- 
-  -- ## 1. USERFLAG constructor
+  -- # 1. USERFLAG constructor
   --   
   --   * @{#USERFLAG.New}(): Creates a new USERFLAG object.
   -- 
@@ -55,8 +57,6 @@ do -- UserFlag
   --   
   function USERFLAG:Set( Number ) --R2.3
   
-    self:F( { Number = Number } )
-    
     trigger.action.setUserFlag( self.UserFlagName, Number )
     
     return self
@@ -70,7 +70,7 @@ do -- UserFlag
   --   local BlueVictory = USERFLAG:New( "VictoryBlue" )
   --   local BlueVictoryValue = BlueVictory:Get() -- Get the UserFlag VictoryBlue value.
   --   
-  function USERFLAG:Get( Number ) --R2.3
+  function USERFLAG:Get() --R2.3
     
     return trigger.misc.getUserFlag( self.UserFlagName )
   end  

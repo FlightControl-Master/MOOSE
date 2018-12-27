@@ -1,14 +1,13 @@
---- **Core** -- Management of SPOT logistics, that can be transported from and to transportation carriers.
---
--- ![Banner Image](..\Presentations\SPOT\Dia1.JPG)
+--- **Core** - Management of spotting logistics, that can be activated and deactivated upon command.
 --
 -- ===
 -- 
 -- SPOT implements the DCS Spot class functionality, but adds additional luxury to be able to:
 -- 
 --   * Spot for a defined duration.
---   * wiggle the spot at the target.
---   * Provide a @{Unit} as a target, instead of a point.
+--   * Updates of laer spot position every 0.2 seconds for moving targets.
+--   * Wiggle the spot at the target.
+--   * Provide a @{Wrapper.Unit} as a target, instead of a point.
 --   * Implement a status machine, LaseOn, LaseOff.
 --
 -- ===
@@ -38,7 +37,8 @@
 -- 
 -- ===
 -- 
--- @module Spot
+-- @module Core.Spot
+-- @image Core_Spot.JPG
 
 
 do
@@ -47,13 +47,12 @@ do
   -- @extends Core.Fsm#FSM
 
 
-  --- # SPOT class, extends @{Fsm#FSM}
-  -- 
-  -- SPOT implements the DCS Spot class functionality, but adds additional luxury to be able to:
+  --- Implements the target spotting or marking functionality, but adds additional luxury to be able to:
   -- 
   --   * Mark targets for a defined duration.
-  --   * wiggle the spot at the target.
-  --   * Provide a @{Unit} as a target, instead of a point.
+  --   * Updates of laer spot position every 0.2 seconds for moving targets.
+  --   * Wiggle the spot at the target.
+  --   * Provide a @{Wrapper.Unit} as a target, instead of a point.
   --   * Implement a status machine, LaseOn, LaseOff.
   -- 
   -- ## 1. SPOT constructor
@@ -88,9 +87,7 @@ do
   
   --- SPOT Constructor.
   -- @param #SPOT self
-  -- @param Wrapper.Unit#UNIT Recce
-  -- @param #number LaserCode
-  -- @param #number Duration
+  -- @param Wrapper.Unit#UNIT Recce Unit that is lasing
   -- @return #SPOT
   function SPOT:New( Recce )
   
@@ -118,12 +115,17 @@ do
     --- LaseOn Trigger for SPOT
     -- @function [parent=#SPOT] LaseOn
     -- @param #SPOT self
+    -- @param Wrapper.Positionable#POSITIONABLE Target
+    -- @param #number LaserCode Laser code.
+    -- @param #number Duration Duration of lasing in seconds.
     
     --- LaseOn Asynchronous Trigger for SPOT
     -- @function [parent=#SPOT] __LaseOn
     -- @param #SPOT self
     -- @param #number Delay
-    
+    -- @param Wrapper.Positionable#POSITIONABLE Target
+    -- @param #number LaserCode Laser code.
+    -- @param #number Duration Duration of lasing in seconds.
     
     
     self:AddTransition( "On",  "Lasing", "On" )
@@ -196,9 +198,9 @@ do
   -- @param From
   -- @param Event
   -- @param To
-  -- @param Wrapper.Positionable#POSITIONABLE Target
-  -- @param #number LaserCode
-  -- @param #number Duration
+  -- @param Wrapper.Positionable#POSITIONABLE Target Unit that is being lased.
+  -- @param #number LaserCode Laser code.
+  -- @param #number Duration Duration of lasing in seconds.
   function SPOT:onafterLaseOn( From, Event, To, Target, LaserCode, Duration )
     self:F( { "LaseOn", Target, LaserCode, Duration } )
 

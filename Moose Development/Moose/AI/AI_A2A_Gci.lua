@@ -8,7 +8,8 @@
 -- 
 -- ===       
 --
--- @module AI_A2A_GCI
+-- @module AI.AI_A2A_GCI
+-- @image AI_Ground_Control_Intercept.JPG
 
 
 
@@ -16,13 +17,11 @@
 -- @extends AI.AI_A2A#AI_A2A
 
 
---- # AI_A2A_GCI class, extends @{AI_A2A#AI_A2A}
--- 
--- The AI_A2A_GCI class implements the core functions to intercept intruders. The Engage function will intercept intruders.
+--- Implements the core functions to intercept intruders. Use the Engage trigger to intercept intruders.
 -- 
 -- ![Process](..\Presentations\AI_GCI\Dia3.JPG)
 -- 
--- The AI_A2A_GCI is assigned a @{Group} and this must be done before the AI_A2A_GCI process can be started using the **Start** event.
+-- The AI_A2A_GCI is assigned a @{Wrapper.Group} and this must be done before the AI_A2A_GCI process can be started using the **Start** event.
 -- 
 -- ![Process](..\Presentations\AI_GCI\Dia4.JPG)
 -- 
@@ -65,15 +64,15 @@
 -- 
 -- ### 2.2 AI_A2A_GCI Events
 -- 
---   * **@{AI_Patrol#AI_PATROL_ZONE.Start}**: Start the process.
---   * **@{AI_Patrol#AI_PATROL_ZONE.Route}**: Route the AI to a new random 3D point within the Patrol Zone.
+--   * **@{AI.AI_Patrol#AI_PATROL_ZONE.Start}**: Start the process.
+--   * **@{AI.AI_Patrol#AI_PATROL_ZONE.Route}**: Route the AI to a new random 3D point within the Patrol Zone.
 --   * **@{#AI_A2A_GCI.Engage}**: Let the AI engage the bogeys.
 --   * **@{#AI_A2A_GCI.Abort}**: Aborts the engagement and return patrolling in the patrol zone.
---   * **@{AI_Patrol#AI_PATROL_ZONE.RTB}**: Route the AI to the home base.
---   * **@{AI_Patrol#AI_PATROL_ZONE.Detect}**: The AI is detecting targets.
---   * **@{AI_Patrol#AI_PATROL_ZONE.Detected}**: The AI has detected new targets.
---   * **@{#AI_A2A_GCI.Destroy}**: The AI has destroyed a bogey @{Unit}.
---   * **@{#AI_A2A_GCI.Destroyed}**: The AI has destroyed all bogeys @{Unit}s assigned in the CAS task.
+--   * **@{AI.AI_Patrol#AI_PATROL_ZONE.RTB}**: Route the AI to the home base.
+--   * **@{AI.AI_Patrol#AI_PATROL_ZONE.Detect}**: The AI is detecting targets.
+--   * **@{AI.AI_Patrol#AI_PATROL_ZONE.Detected}**: The AI has detected new targets.
+--   * **@{#AI_A2A_GCI.Destroy}**: The AI has destroyed a bogey @{Wrapper.Unit}.
+--   * **@{#AI_A2A_GCI.Destroyed}**: The AI has destroyed all bogeys @{Wrapper.Unit}s assigned in the CAS task.
 --   * **Status** ( Group ): The AI is checking status (fuel and damage). When the tresholds have been reached, the AI will RTB.
 --
 -- ## 3. Set the Range of Engagement
@@ -84,7 +83,7 @@
 -- that will define when the AI will engage with the detected airborne enemy targets.
 -- The range can be beyond or smaller than the range of the Patrol Zone.
 -- The range is applied at the position of the AI.
--- Use the method @{AI_GCI#AI_A2A_GCI.SetEngageRange}() to define that range.
+-- Use the method @{AI.AI_GCI#AI_A2A_GCI.SetEngageRange}() to define that range.
 --
 -- ## 4. Set the Zone of Engagement
 -- 
@@ -92,7 +91,7 @@
 -- 
 -- An optional @{Zone} can be set, 
 -- that will define when the AI will engage with the detected airborne enemy targets.
--- Use the method @{AI_Cap#AI_A2A_GCI.SetEngageZone}() to define that Zone.
+-- Use the method @{AI.AI_Cap#AI_A2A_GCI.SetEngageZone}() to define that Zone.
 --  
 -- ===
 -- 
@@ -291,6 +290,7 @@ end
 -- @param #string To The To State string.
 function AI_A2A_GCI:onafterStart( AIIntercept, From, Event, To )
 
+  self:GetParent( self ).onafterStart( self, AIIntercept, From, Event, To )
   AIIntercept:HandleEvent( EVENTS.Takeoff, nil, self )
 
 end

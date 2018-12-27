@@ -1,20 +1,27 @@
---- **Functional** -- MISSILETRAINER helps you to train missile avoidance.
+--- **Functional** -- Train missile defence and deflection.
 -- 
 -- ===
 --
--- 1) @{MissileTrainer#MISSILETRAINER} class, extends @{Base#BASE}
+-- ## Features:
+-- 
+--   * Track the missiles fired at you and other players, providing bearing and range information of the missiles towards the airplanes.
+--   * Provide alerts of missile launches, including detailed information of the units launching, including bearing, range �
+--   * Provide alerts when a missile would have killed your aircraft.
+--   * Provide alerts when the missile self destructs.
+--   * Enable / Disable and Configure the Missile Trainer using the various menu options.
+-- 
 -- ===
--- The @{#MISSILETRAINER} class uses the DCS world messaging system to be alerted of any missiles fired, and when a missile would hit your aircraft,
+-- 
+-- ## Missions:
+-- 
+-- [MIT - Missile Trainer](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/MIT%20-%20Missile%20Trainer)
+-- 
+-- ===
+-- 
+-- Uses the MOOSE messaging system to be alerted of any missiles fired, and when a missile would hit your aircraft,
 -- the class will destroy the missile within a certain range, to avoid damage to your aircraft.
--- It suports the following functionality:
---
---  * Track the missiles fired at you and other players, providing bearing and range information of the missiles towards the airplanes.
---  * Provide alerts of missile launches, including detailed information of the units launching, including bearing, range �
---  * Provide alerts when a missile would have killed your aircraft.
---  * Provide alerts when the missile self destructs.
---  * Enable / Disable and Configure the Missile Trainer using the various menu options.
 --  
---  When running a mission where MISSILETRAINER is used, the following radio menu structure ( 'Radio Menu' -> 'Other (F10)' -> 'MissileTrainer' ) options are available for the players:
+-- When running a mission where the missile trainer is used, the following radio menu structure ( 'Radio Menu' -> 'Other (F10)' -> 'MissileTrainer' ) options are available for the players:
 --  
 --  * **Messages**: Menu to configure all messages.
 --     * **Messages On**: Show all messages.
@@ -44,17 +51,40 @@
 --     * **150 meter**: Destroys the missile when the distance to the aircraft is below or equal to 150 meter.
 --     * **200 meter**: Destroys the missile when the distance to the aircraft is below or equal to 200 meter.
 --   
+-- ===
+-- 
+-- ### Authors: **FlightControl**
+-- 
+-- ### Contributions:
+-- 
+--    * **Stuka (Danny)**: Who you can search on the Eagle Dynamics Forums. Working together with Danny has resulted in the MISSILETRAINER class.  
+--      Danny has shared his ideas and together we made a design. 
+--      Together with the **476 virtual team**, we tested the MISSILETRAINER class, and got much positive feedback!
+--    * **132nd Squadron**: Testing and optimizing the logic.
+-- 
+-- ===
 --
--- 1.1) MISSILETRAINER construction methods:
--- -----------------------------------------
+-- @module Functional.MissileTrainer
+-- @image Missile_Trainer.JPG
+
+
+--- @type MISSILETRAINER
+-- @field Core.Set#SET_CLIENT DBClients
+-- @extends Core.Base#BASE
+
+
+---
+--
+-- # Constructor:
+-- 
 -- Create a new MISSILETRAINER object with the @{#MISSILETRAINER.New} method:
 --
 --   * @{#MISSILETRAINER.New}: Creates a new MISSILETRAINER object taking the maximum distance to your aircraft to evaluate when a missile needs to be destroyed.
 --
 -- MISSILETRAINER will collect each unit declared in the mission with a skill level "Client" and "Player", and will monitor the missiles shot at those.
 --
--- 1.2) MISSILETRAINER initialization methods:
--- -------------------------------------------
+-- # Initialization:
+-- 
 -- A MISSILETRAINER object will behave differently based on the usage of initialization methods:
 --
 --  * @{#MISSILETRAINER.InitMessagesOnOff}: Sets by default the display of any message to be ON or OFF.
@@ -67,24 +97,8 @@
 --  * @{#MISSILETRAINER.InitRangeOnOff}: Sets by default the display of range information of missiles ON of OFF.
 --  * @{#MISSILETRAINER.InitBearingOnOff}: Sets by default the display of bearing information of missiles ON of OFF.
 --  * @{#MISSILETRAINER.InitMenusOnOff}: Allows to configure the options through the radio menu.
---
--- ===
 -- 
--- CREDITS
--- ===
--- **Stuka (Danny)** Who you can search on the Eagle Dynamics Forums.
--- Working together with Danny has resulted in the MISSILETRAINER class. 
--- Danny has shared his ideas and together we made a design. 
--- Together with the **476 virtual team**, we tested the MISSILETRAINER class, and got much positive feedback!
--- 
--- @module MissileTrainer
--- @author FlightControl
-
-
---- The MISSILETRAINER class
--- @type MISSILETRAINER
--- @field Core.Set#SET_CLIENT DBClients
--- @extends Core.Base#BASE
+-- @field #MISSILETRAINER 
 MISSILETRAINER = {
   ClassName = "MISSILETRAINER",
   TrackingMissiles = {},

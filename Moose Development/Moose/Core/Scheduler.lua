@@ -1,15 +1,14 @@
---- **Core** -- SCHEDULER prepares and handles the **execution of functions over scheduled time (intervals)**.
+--- **Core** - Prepares and handles the execution of functions over scheduled time (intervals).
 --
--- ![Banner Image](..\Presentations\SCHEDULER\Dia1.JPG)
--- 
 -- ===
 -- 
--- SCHEDULER manages the **scheduling of functions**:
+-- ## Features:
 -- 
---    * optionally in an optional specified time interval, 
---    * optionally **repeating** with a specified time repeat interval, 
---    * optionally **randomizing** with a specified time interval randomization factor, 
---    * optionally **stop** the repeating after a specified time interval. 
+--   * Schedule functions over time,
+--   * optionally in an optional specified time interval, 
+--   * optionally **repeating** with a specified time repeat interval, 
+--   * optionally **randomizing** with a specified time interval randomization factor, 
+--   * optionally **stop** the repeating after a specified time interval. 
 --
 -- ===
 -- 
@@ -39,8 +38,8 @@
 -- 
 -- ===
 --
--- @module Scheduler
-
+-- @module Core.Scheduler
+-- @image Core_Scheduler.JPG
 
 --- The SCHEDULER class
 -- @type SCHEDULER
@@ -48,9 +47,7 @@
 -- @extends Core.Base#BASE
 
 
---- # SCHEDULER class, extends @{Base#BASE}
--- 
--- The SCHEDULER class creates schedule.
+--- Creates and handles schedules over time, which allow to execute code at specific time intervals with randomization.
 -- 
 -- A SCHEDULER can manage **multiple** (repeating) schedules. Each planned or executing schedule has a unique **ScheduleID**.
 -- The ScheduleID is returned when the method @{#SCHEDULER.Schedule}() is called.

@@ -1,7 +1,18 @@
---- **Core** -- The **FSM** (**F**inite **S**tate **M**achine) class and derived **FSM\_** classes 
--- are design patterns allowing efficient (long-lasting) processes and workflows.
+--- **Core** - FSM (Finite State Machine) are objects that model and control long lasting business processes and workflow.
 -- 
--- ![Banner Image](..\Presentations\FSM\Dia1.JPG)
+-- ===
+-- 
+-- ## Features:
+-- 
+--   * Provide a base class to model your own state machines.
+--   * Trigger events synchronously.
+--   * Trigger events asynchronously.
+--   * Handle events before or after the event was triggered.
+--   * Handle state transitions as a result of event before and after the state change.
+--   * For internal moose purposes, further state machines have been designed:
+--     - to handle controllables (groups and units).
+--     - to handle tasks.
+--     - to handle processes.
 -- 
 -- ===
 -- 
@@ -52,7 +63,7 @@
 -- 
 --   * @{#FSM_TASK}: Models Finite State Machines for @{Task}s.
 --   * @{#FSM_PROCESS}: Models Finite State Machines for @{Task} actions, which control @{Client}s.
---   * @{#FSM_CONTROLLABLE}: Models Finite State Machines for @{Controllable}s, which are @{Group}s, @{Unit}s, @{Client}s.
+--   * @{#FSM_CONTROLLABLE}: Models Finite State Machines for @{Wrapper.Controllable}s, which are @{Wrapper.Group}s, @{Wrapper.Unit}s, @{Client}s.
 --   * @{#FSM_SET}: Models Finite State Machines for @{Set}s. Note that these FSMs control multiple objects!!! So State concerns here
 --     for multiple objects or the position of the state machine in the process.
 -- 
@@ -64,7 +75,8 @@
 -- 
 -- ===
 --
--- @module Fsm
+-- @module Core.Fsm
+-- @image Core_Finite_State_Machine.JPG
 
 do -- FSM
 
@@ -72,9 +84,7 @@ do -- FSM
   -- @extends Core.Base#BASE
   
   
-  --- # FSM class, extends @{Base#BASE}
-  --
-  -- A Finite State Machine (FSM) models a process flow that transitions between various **States** through triggered **Events**.
+  --- A Finite State Machine (FSM) models a process flow that transitions between various **States** through triggered **Events**.
   -- 
   -- A FSM can only be in one of a finite number of states. 
   -- The machine is in only one state at a time; the state it is in at any given time is called the **current state**. 
@@ -328,7 +338,7 @@ do -- FSM
   --
   -- ===
   -- 
-  -- @field #FSM FSM
+  -- @field #FSM
   -- 
   FSM = {
     ClassName = "FSM",
@@ -337,7 +347,7 @@ do -- FSM
   --- Creates a new FSM object.
   -- @param #FSM self
   -- @return #FSM
-  function FSM:New( FsmT )
+  function FSM:New()
   
     -- Inherits from BASE
     self = BASE:Inherit( self, BASE:New() )
@@ -410,7 +420,7 @@ do -- FSM
     return self._Transitions or {}
   end
   
-  --- Set the default @{Process} template with key ProcessName providing the ProcessClass and the process object when it is assigned to a @{Controllable} by the task.
+  --- Set the default @{Process} template with key ProcessName providing the ProcessClass and the process object when it is assigned to a @{Wrapper.Controllable} by the task.
   -- @param #FSM self
   -- @param #table From Can contain a string indicating the From state or a table of strings containing multiple From states.
   -- @param #string Event The Event name.
@@ -441,6 +451,8 @@ do -- FSM
   -- @return #table
   function FSM:GetProcesses()
   
+    self:F( { Processes = self._Processes } )
+  
     return self._Processes or {}
   end
   
@@ -449,6 +461,18 @@ do -- FSM
     for ProcessID, Process in pairs( self:GetProcesses() ) do
       if Process.From == From and Process.Event == Event then
         return Process.fsm
+      end
+    end
+    
+    error( "Sub-Process from state " .. From .. " with event " .. Event .. " not found!" )
+  end
+  
+  function FSM:SetProcess( From, Event, Fsm )
+  
+    for ProcessID, Process in pairs( self:GetProcesses() ) do
+      if Process.From == From and Process.Event == Event then
+        Process.fsm = Fsm
+        return true
       end
     end
     
@@ -557,8 +581,9 @@ do -- FSM
   end
   
   
-  function FSM:_call_handler( handler, params, EventName )
+  function FSM:_call_handler( step, trigger, params, EventName )
 
+    local handler = step .. trigger
     local ErrorHandler = function( errmsg )
   
       env.info( "Error in SCHEDULER function:" .. errmsg )
@@ -569,83 +594,117 @@ do -- FSM
       return errmsg
     end
     if self[handler] then
-      self:T2( "Calling " .. handler )
+      self:T( "*** FSM ***    " .. step .. " *** " .. params[1] .. " --> " .. params[2] .. " --> " .. params[3] )
       self._EventSchedules[EventName] = nil
       local Result, Value = xpcall( function() return self[handler]( self, unpack( params ) ) end, ErrorHandler )
       return Value
     end
   end
   
+  --- @param #FSM self
   function FSM._handler( self, EventName, ... )
   
-    local Can, to = self:can( EventName )
+    local Can, To = self:can( EventName )
   
-    if to == "*" then
-      to = self.current
+    if To == "*" then
+      To = self.current
     end
   
     if Can then
-      local from = self.current
-      local params = { from, EventName, to, ...  }
+      local From = self.current
+      local Params = { From, EventName, To, ...  }
 
-      if self.Controllable then
-        self:T( "FSM Transition for " .. self.Controllable.ControllableName .. " :" .. self.current .. " --> " .. EventName .. " --> " .. to )
+
+      if self["onleave".. From] or
+         self["OnLeave".. From] or
+         self["onbefore".. EventName] or
+         self["OnBefore".. EventName] or
+         self["onafter".. EventName] or
+         self["OnAfter".. EventName] or
+         self["onenter".. To] or
+         self["OnEnter".. To] 
+      then
+        if self:_call_handler( "onbefore", EventName, Params, EventName ) == false then
+          self:T( "*** FSM ***    Cancel" .. " *** " .. self.current .. " --> " .. EventName .. " --> " .. To .. " *** onbefore" .. EventName )
+          return false
+        else
+          if self:_call_handler( "OnBefore", EventName, Params, EventName ) == false then
+            self:T( "*** FSM ***    Cancel" .. " *** " .. self.current .. " --> " .. EventName .. " --> " .. To .. " *** OnBefore" .. EventName )
+            return false
+          else
+            if self:_call_handler( "onleave", From, Params, EventName ) == false then  
+              self:T( "*** FSM ***    Cancel" .. " *** " .. self.current .. " --> " .. EventName .. " --> " .. To .. " *** onleave" .. From )
+              return false
+            else
+              if self:_call_handler( "OnLeave", From, Params, EventName ) == false then
+                self:T( "*** FSM ***    Cancel" .. " *** " .. self.current .. " --> " .. EventName .. " --> " .. To .. " *** OnLeave" .. From )
+                return false
+              end
+            end  
+          end
+        end
       else
-        self:T( "FSM Transition:" .. self.current .. " --> " .. EventName .. " --> " .. to )
-      end        
+        local ClassName = self:GetClassName()
+        if ClassName == "FSM" then
+          self:T( "*** FSM ***    Transit *** " .. self.current .. " --> " .. EventName .. " --> " .. To )
+        end
   
-      if ( self:_call_handler("onbefore" .. EventName, params, EventName ) == false )
-      or ( self:_call_handler("OnBefore" .. EventName, params, EventName ) == false )
-      or ( self:_call_handler("onleave" .. from, params, EventName ) == false )
-      or ( self:_call_handler("OnLeave" .. from, params, EventName ) == false ) then
-        self:T( "Cancel Transition" )
-        return false
+        if ClassName == "FSM_TASK" then
+          self:T( "*** FSM ***    Transit *** " .. self.current .. " --> " .. EventName .. " --> " .. To .. " *** Task: " .. self.TaskName )
+        end
+  
+        if ClassName == "FSM_CONTROLLABLE" then
+          self:T( "*** FSM ***    Transit *** " .. self.current .. " --> " .. EventName .. " --> " .. To .. " *** TaskUnit: " .. self.Controllable.ControllableName .. " *** "  )
+        end        
+    
+        if ClassName == "FSM_PROCESS" then
+          self:T( "*** FSM ***    Transit *** " .. self.current .. " --> " .. EventName .. " --> " .. To .. " *** Task: " .. self.Task:GetName() .. ", TaskUnit: " .. self.Controllable.ControllableName .. " *** "  )
+        end        
       end
   
-      self.current = to
+      self.current = To
   
       local execute = true
   
-      local subtable = self:_gosub( from, EventName )
+      local subtable = self:_gosub( From, EventName )
       for _, sub in pairs( subtable ) do
         --if sub.nextevent then
         --  self:F2( "nextevent = " .. sub.nextevent )
         --  self[sub.nextevent]( self )
         --end
-        self:T( "calling sub start event: " .. sub.StartEvent )
+        self:T( "*** FSM ***    Sub *** " .. sub.StartEvent )
         sub.fsm.fsmparent = self
         sub.fsm.ReturnEvents = sub.ReturnEvents
         sub.fsm[sub.StartEvent]( sub.fsm )
         execute = false
       end
   
-      local fsmparent, Event = self:_isendstate( to )
+      local fsmparent, Event = self:_isendstate( To )
       if fsmparent and Event then
-        self:F2( { "end state: ", fsmparent, Event } )
-        self:_call_handler("onenter" .. to, params, EventName )
-        self:_call_handler("OnEnter" .. to, params, EventName )
-        self:_call_handler("onafter" .. EventName, params, EventName )
-        self:_call_handler("OnAfter" .. EventName, params, EventName )
-        self:_call_handler("onstatechange", params, EventName )
+        self:T( "*** FSM ***    End *** " .. Event )
+        self:_call_handler("onenter", To, Params, EventName )
+        self:_call_handler("OnEnter", To, Params, EventName )
+        self:_call_handler("onafter", EventName, Params, EventName )
+        self:_call_handler("OnAfter", EventName, Params, EventName )
+        self:_call_handler("onstate", "change", Params, EventName )
         fsmparent[Event]( fsmparent )
         execute = false
       end
   
       if execute then
+          self:_call_handler("onafter", EventName, Params, EventName )
+          self:_call_handler("OnAfter", EventName, Params, EventName )
+      
         -- only execute the call if the From state is not equal to the To state! Otherwise this function should never execute!
         --if from ~= to then
-          self:_call_handler("onenter" .. to, params, EventName )
-          self:_call_handler("OnEnter" .. to, params, EventName )
+          self:_call_handler("onenter", To, Params, EventName )
+          self:_call_handler("OnEnter", To, Params, EventName )
         --end
-  
-        self:_call_handler("onafter" .. EventName, params, EventName )
-        self:_call_handler("OnAfter" .. EventName, params, EventName )
-  
-        self:_call_handler("onstatechange", params, EventName )
+    
+        self:_call_handler("onstate", "change", Params, EventName )
       end
     else
-      self:T( "Cannot execute transition." )
-      self:T( { From = self.current, Event = EventName, To = to, Can = Can } )
+      self:T( "*** FSM *** NO Transition *** " .. self.current .. " --> " .. EventName .. " -->  ? " )
     end
   
     return nil
@@ -691,17 +750,16 @@ do -- FSM
   function FSM:_isendstate( Current )
     local FSMParent = self.fsmparent
     if FSMParent and self.endstates[Current] then
-      self:T( { state = Current, endstates = self.endstates, endstate = self.endstates[Current] } )
+      --self:T( { state = Current, endstates = self.endstates, endstate = self.endstates[Current] } )
       FSMParent.current = Current
       local ParentFrom = FSMParent.current
-      self:T( ParentFrom )
-      self:T( self.ReturnEvents )
+      --self:T( { ParentFrom, self.ReturnEvents } )
       local Event = self.ReturnEvents[Current]
-      self:T( { ParentFrom, Event, self.ReturnEvents } )
+      --self:T( { Event } )
       if Event then
         return FSMParent, Event
       else
-        self:T( { "Could not find parent event name for state ", ParentFrom } )
+        --self:T( { "Could not find parent event name for state ", ParentFrom } )
       end
     end
   
@@ -721,6 +779,10 @@ do -- FSM
   end
   
   function FSM:GetState()
+    return self.current
+  end
+  
+  function FSM:GetCurrentState()
     return self.current
   end
   
@@ -752,14 +814,11 @@ do -- FSM_CONTROLLABLE
   -- @field Wrapper.Controllable#CONTROLLABLE Controllable
   -- @extends Core.Fsm#FSM
   
-  --- # FSM_CONTROLLABLE, extends @{#FSM}
-  --
-  -- FSM_CONTROLLABLE class models Finite State Machines for @{Controllable}s, which are @{Group}s, @{Unit}s, @{Client}s.
+  --- Models Finite State Machines for @{Wrapper.Controllable}s, which are @{Wrapper.Group}s, @{Wrapper.Unit}s, @{Client}s.
   -- 
   -- ===
   -- 
-  -- @field #FSM_CONTROLLABLE FSM_CONTROLLABLE
-  -- 
+  -- @field #FSM_CONTROLLABLE
   FSM_CONTROLLABLE = {
     ClassName = "FSM_CONTROLLABLE",
   }
@@ -769,10 +828,10 @@ do -- FSM_CONTROLLABLE
   -- @param #table FSMT Finite State Machine Table
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable (optional) The CONTROLLABLE object that the FSM_CONTROLLABLE governs.
   -- @return #FSM_CONTROLLABLE
-  function FSM_CONTROLLABLE:New( FSMT, Controllable )
+  function FSM_CONTROLLABLE:New( Controllable )
   
     -- Inherits from BASE
-    local self = BASE:Inherit( self, FSM:New( FSMT ) ) -- Core.Fsm#FSM_CONTROLLABLE
+    local self = BASE:Inherit( self, FSM:New() ) -- Core.Fsm#FSM_CONTROLLABLE
   
     if Controllable then
       self:SetControllable( Controllable )
@@ -855,7 +914,9 @@ do -- FSM_CONTROLLABLE
     return self.Controllable
   end
   
-  function FSM_CONTROLLABLE:_call_handler( handler, params, EventName )
+  function FSM_CONTROLLABLE:_call_handler( step, trigger, params, EventName )
+  
+    local handler = step .. trigger
   
     local ErrorHandler = function( errmsg )
   
@@ -868,7 +929,7 @@ do -- FSM_CONTROLLABLE
     end
   
     if self[handler] then
-      self:F3( "Calling " .. handler )
+      self:T( "*** FSM ***    " .. step .. " *** " .. params[1] .. " --> " .. params[2] .. " --> " .. params[3] .. " *** TaskUnit: " .. self.Controllable:GetName() )
       self._EventSchedules[EventName] = nil
       local Result, Value = xpcall( function() return self[handler]( self, self.Controllable, unpack( params ) ) end, ErrorHandler )
       return Value
@@ -885,9 +946,7 @@ do -- FSM_PROCESS
   -- @extends Core.Fsm#FSM_CONTROLLABLE
   
   
-  --- # FSM_PROCESS, extends @{#FSM}
-  --
-  -- FSM_PROCESS class models Finite State Machines for @{Task} actions, which control @{Client}s.
+  --- FSM_PROCESS class models Finite State Machines for @{Task} actions, which control @{Client}s.
   -- 
   -- ===
   -- 
@@ -905,9 +964,9 @@ do -- FSM_PROCESS
     local self = BASE:Inherit( self, FSM_CONTROLLABLE:New() ) -- Core.Fsm#FSM_PROCESS
 
     --self:F( Controllable )
-  
+    
     self:Assign( Controllable, Task )
-  
+    
     return self
   end
   
@@ -915,7 +974,9 @@ do -- FSM_PROCESS
     self:T( "No Initialisation" )
   end  
 
-  function FSM_PROCESS:_call_handler( handler, params, EventName )
+  function FSM_PROCESS:_call_handler( step, trigger, params, EventName )
+  
+    local handler = step .. trigger
   
     local ErrorHandler = function( errmsg )
   
@@ -928,9 +989,14 @@ do -- FSM_PROCESS
     end
   
     if self[handler] then
-      self:F3( "Calling " .. handler )
+      if handler ~= "onstatechange" then
+        self:T( "*** FSM ***    " .. step .. " *** " .. params[1] .. " --> " .. params[2] .. " --> " .. params[3] .. " *** Task: " .. self.Task:GetName() .. ", TaskUnit: " .. self.Controllable:GetName() )
+      end
       self._EventSchedules[EventName] = nil
-      local Result, Value = xpcall( function() return self[handler]( self, self.Controllable, self.Task, unpack( params ) ) end, ErrorHandler )
+      local Result, Value
+      if self.Controllable and self.Controllable:IsAlive() == true then
+        Result, Value = xpcall( function() return self[handler]( self, self.Controllable, self.Task, unpack( params ) ) end, ErrorHandler )
+      end
       return Value
       --return self[handler]( self, self.Controllable, unpack( params ) )
     end
@@ -946,7 +1012,7 @@ do -- FSM_PROCESS
     local NewFsm = self:New( Controllable, Task ) -- Core.Fsm#FSM_PROCESS
   
     NewFsm:Assign( Controllable, Task )
-  
+
     -- Polymorphic call to initialize the new FSM_PROCESS based on self FSM_PROCESS
     NewFsm:Init( self )
     
@@ -1037,26 +1103,26 @@ do -- FSM_PROCESS
 -- TODO: Need to check and fix that an FSM_PROCESS is only for a UNIT. Not for a GROUP.  
   
   --- Send a message of the @{Task} to the Group of the Unit.
--- @param #FSM_PROCESS self
-function FSM_PROCESS:Message( Message )
-  self:F( { Message = Message } )
+  -- @param #FSM_PROCESS self
+  function FSM_PROCESS:Message( Message )
+    self:F( { Message = Message } )
+  
+    local CC = self:GetCommandCenter()
+    local TaskGroup = self.Controllable:GetGroup()
+    
+    local PlayerName = self.Controllable:GetPlayerName() -- Only for a unit
+    PlayerName = PlayerName and " (" .. PlayerName .. ")" or "" -- If PlayerName is nil, then keep it nil, otherwise add brackets.
+    local Callsign = self.Controllable:GetCallsign()
+    local Prefix = Callsign and " @ " .. Callsign .. PlayerName or ""
+    
+    Message = Prefix .. ": " .. Message
+    CC:MessageToGroup( Message, TaskGroup )
+  end
 
-  local CC = self:GetCommandCenter()
-  local TaskGroup = self.Controllable:GetGroup()
-  
-  local PlayerName = self.Controllable:GetPlayerName() -- Only for a unit
-  PlayerName = PlayerName and " (" .. PlayerName .. ")" or "" -- If PlayerName is nil, then keep it nil, otherwise add brackets.
-  local Callsign = self.Controllable:GetCallsign()
-  local Prefix = Callsign and " @ " .. Callsign .. PlayerName or ""
-  
-  Message = Prefix .. ": " .. Message
-  CC:MessageToGroup( Message, TaskGroup )
-end
-
   
   
   
-  --- Assign the process to a @{Unit} and activate the process.
+  --- Assign the process to a @{Wrapper.Unit} and activate the process.
   -- @param #FSM_PROCESS self
   -- @param Task.Tasking#TASK Task
   -- @param Wrapper.Unit#UNIT ProcessUnit
@@ -1072,14 +1138,16 @@ end
     return self
   end
     
-  function FSM_PROCESS:onenterAssigned( ProcessUnit )
-    self:T( "Assign" )
+--  function FSM_PROCESS:onenterAssigned( ProcessUnit, Task, From, Event, To )
+--  
+--    if From( "Planned" ) then
+--      self:T( "*** FSM ***    Assign *** " .. Task:GetName() .. "/" .. ProcessUnit:GetName() .. " *** " .. From .. " --> " .. Event .. " --> " .. To )
+--      self.Task:Assign()
+--    end
+--  end
   
-    self.Task:Assign()
-  end
-  
-  function FSM_PROCESS:onenterFailed( ProcessUnit )
-    self:T( "Failed" )
+  function FSM_PROCESS:onenterFailed( ProcessUnit, Task, From, Event, To )
+    self:T( "*** FSM ***    Failed *** " .. Task:GetName() .. "/" .. ProcessUnit:GetName() .. " *** " .. From .. " --> " .. Event .. " --> " .. To )
   
     self.Task:Fail()
   end
@@ -1091,14 +1159,17 @@ end
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function FSM_PROCESS:onstatechange( ProcessUnit, Task, From, Event, To, Dummy )
-    self:T( { ProcessUnit:GetName(), From, Event, To, Dummy, self:IsTrace() } )
+  function FSM_PROCESS:onstatechange( ProcessUnit, Task, From, Event, To )
   
-    if self:IsTrace() then
-      --MESSAGE:New( "@ Process " .. self:GetClassNameAndID() .. " : " .. Event .. " changed to state " .. To, 2 ):ToAll()
+    if From ~= To then
+      self:T( "*** FSM ***    Change *** " .. Task:GetName() .. "/" .. ProcessUnit:GetName() .. " *** " .. From .. " --> " .. Event .. " --> " .. To )
     end
   
-    self:T( { Scores = self._Scores, To = To } )
+--    if self:IsTrace() then
+--      MESSAGE:New( "@ Process " .. self:GetClassNameAndID() .. " : " .. Event .. " changed to state " .. To, 2 ):ToAll()
+--      self:F2( { Scores = self._Scores, To = To } )
+--    end
+  
     -- TODO: This needs to be reworked with a callback functions allocated within Task, and set within the mission script from the Task Objects...
     if self._Scores[To] then
     
@@ -1119,9 +1190,7 @@ do -- FSM_TASK
   -- @field Tasking.Task#TASK Task
   -- @extends #FSM
    
-  --- # FSM_TASK, extends @{#FSM}
-  --
-  -- FSM_TASK class models Finite State Machines for @{Task}s.
+  --- Models Finite State Machines for @{Tasking.Task}s.
   -- 
   -- ===
   -- 
@@ -1133,24 +1202,37 @@ do -- FSM_TASK
   
   --- Creates a new FSM_TASK object.
   -- @param #FSM_TASK self
-  -- @param #table FSMT
-  -- @param Tasking.Task#TASK Task
-  -- @param Wrapper.Unit#UNIT TaskUnit
+  -- @param #string TaskName The name of the task.
   -- @return #FSM_TASK
-  function FSM_TASK:New( FSMT )
+  function FSM_TASK:New( TaskName )
   
-    local self = BASE:Inherit( self, FSM_CONTROLLABLE:New( FSMT ) ) -- Core.Fsm#FSM_TASK
+    local self = BASE:Inherit( self, FSM_CONTROLLABLE:New() ) -- Core.Fsm#FSM_TASK
   
     self["onstatechange"] = self.OnStateChange
+    self.TaskName = TaskName
   
     return self
   end
   
-  function FSM_TASK:_call_handler( handler, params, EventName )
+  function FSM_TASK:_call_handler( step, trigger, params, EventName )
+    local handler = step .. trigger
+    
+    local ErrorHandler = function( errmsg )
+  
+      env.info( "Error in SCHEDULER function:" .. errmsg )
+      if BASE.Debug ~= nil then
+        env.info( BASE.Debug.traceback() )
+      end
+      
+      return errmsg
+    end
+
     if self[handler] then
-      self:T( "Calling " .. handler )
+      self:T( "*** FSM ***    " .. step .. " *** " .. params[1] .. " --> " .. params[2] .. " --> " .. params[3] .. " *** Task: " .. self.TaskName )
       self._EventSchedules[EventName] = nil
-      return self[handler]( self, unpack( params ) )
+      --return self[handler]( self, unpack( params ) )
+      local Result, Value = xpcall( function() return self[handler]( self, unpack( params ) ) end, ErrorHandler )
+      return Value
     end
   end
 
@@ -1164,9 +1246,7 @@ do -- FSM_SET
   -- @extends Core.Fsm#FSM
 
 
-  --- # FSM_SET, extends @{#FSM}
-  --
-  -- FSM_SET class models Finite State Machines for @{Set}s. Note that these FSMs control multiple objects!!! So State concerns here
+  --- FSM_SET class models Finite State Machines for @{Set}s. Note that these FSMs control multiple objects!!! So State concerns here
   -- for multiple objects or the position of the state machine in the process.
   -- 
   -- ===
@@ -1210,9 +1290,10 @@ do -- FSM_SET
     return self.Controllable
   end
   
-  function FSM_SET:_call_handler( handler, params, EventName  )
+  function FSM_SET:_call_handler( step, trigger, params, EventName  )
+  local handler = step .. trigger
     if self[handler] then
-      self:T( "Calling " .. handler )
+      self:T( "*** FSM ***    " .. step .. " *** " .. params[1] .. " --> " .. params[2] .. " --> " .. params[3] )
       self._EventSchedules[EventName] = nil
       return self[handler]( self, self.Set, unpack( params ) )
     end

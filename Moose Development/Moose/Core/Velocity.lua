@@ -1,5 +1,13 @@
---- **Core** -- VELOCITY models a speed, which can be expressed in various formats according the Settings.
+--- **Core** - Models a velocity or speed, which can be expressed in various formats according the settings.
 -- 
+-- ===
+-- 
+-- ## Features:
+-- 
+--   * Convert velocity in various metric systems.
+--   * Set the velocity.
+--   * Create a text in a specific format of a velocity.
+--   
 -- ===
 -- 
 -- ### Author: **FlightControl**
@@ -7,7 +15,8 @@
 -- 
 -- ===
 -- 
--- @module Velocity
+-- @module Core.Velocity
+-- @image MOOSE.JPG
 
 do -- Velocity
 
@@ -15,11 +24,9 @@ do -- Velocity
   -- @extends Core.Base#BASE
 
 
-  --- # VELOCITY class, extends @{Base#BASE}
+  --- VELOCITY models a speed, which can be expressed in various formats according the Settings.
   -- 
-  -- VELOCITY models a speed, which can be expressed in various formats according the Settings.
-  -- 
-  -- ## 1. VELOCITY constructor
+  -- ## VELOCITY constructor
   --   
   --   * @{#VELOCITY.New}(): Creates a new VELOCITY object.
   -- 
@@ -125,7 +132,7 @@ do -- VELOCITY_POSITIONABLE
   -- @extends Core.Base#BASE
 
 
-  --- # VELOCITY_POSITIONABLE class, extends @{Base#BASE}
+  --- # VELOCITY_POSITIONABLE class, extends @{Core.Base#BASE}
   -- 
   -- VELOCITY_POSITIONABLE monitors the speed of an @{Positionable} in the simulation, which can be expressed in various formats according the Settings.
   -- 

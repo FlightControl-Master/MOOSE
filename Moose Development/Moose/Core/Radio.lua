@@ -1,27 +1,30 @@
---- **Core** -- The RADIO Module is responsible for everything that is related to radio transmission and you can hear in DCS, be it TACAN beacons, Radio transmissions...
--- 
--- ![Banner Image](..\Presentations\RADIO\Dia1.JPG)
+--- **Core** - Is responsible for everything that is related to radio transmission and you can hear in DCS, be it TACAN beacons, Radio transmissions.
 -- 
 -- ===
+-- 
+-- ## Features:
+-- 
+--   * Provide radio functionality to broadcast radio transmissions.
+--   * Provide beacon functionality to assist pilots.
 --
 -- The Radio contains 2 classes : RADIO and BEACON
 --  
--- What are radio communications in DCS ?
+-- What are radio communications in DCS?
 -- 
 --   * Radio transmissions consist of **sound files** that are broadcasted on a specific **frequency** (e.g. 115MHz) and **modulation** (e.g. AM),
 --   * They can be **subtitled** for a specific **duration**, the **power** in Watts of the transmiter's antenna can be set, and the transmission can be **looped**.
 -- 
--- How to supply DCS my own Sound Files ?
+-- How to supply DCS my own Sound Files?
 --   
 --   * Your sound files need to be encoded in **.ogg** or .wav,
 --   * Your sound files should be **as tiny as possible**. It is suggested you encode in .ogg with low bitrate and sampling settings,
 --   * They need to be added in .\l10n\DEFAULT\ in you .miz file (wich can be decompressed like a .zip file),
 --   * For simplicty sake, you can **let DCS' Mission Editor add the file** itself, by creating a new Trigger with the action "Sound to Country", and choosing your sound file and a country you don't use in your mission.
 --   
--- Due to weird DCS quirks, **radio communications behave differently** if sent by a @{Unit#UNIT} or a @{Group#GROUP} or by any other @{Positionable#POSITIONABLE}
+-- Due to weird DCS quirks, **radio communications behave differently** if sent by a @{Wrapper.Unit#UNIT} or a @{Wrapper.Group#GROUP} or by any other @{Wrapper.Positionable#POSITIONABLE}
 -- 
---   * If the transmitter is a @{Unit#UNIT} or a @{Group#GROUP}, DCS will set the power of the transmission  automatically,
---   * If the transmitter is any other @{Positionable#POSITIONABLE}, the transmisison can't be subtitled or looped.
+--   * If the transmitter is a @{Wrapper.Unit#UNIT} or a @{Wrapper.Group#GROUP}, DCS will set the power of the transmission automatically,
+--   * If the transmitter is any other @{Wrapper.Positionable#POSITIONABLE}, the transmisison can't be subtitled or looped.
 --   
 -- Note that obviously, the **frequency** and the **modulation** of the transmission are important only if the players are piloting an **Advanced System Modelling** enabled aircraft,
 -- like the A10C or the Mirage 2000C. They will **hear the transmission** if they are tuned on the **right frequency and modulation** (and if they are close enough - more on that below).
@@ -30,56 +33,58 @@
 --
 -- ===
 --
--- ### Author: Hugues "Grey_Echo" Bousquet
+-- ### Authors: Hugues "Grey_Echo" Bousquet, funkyfranky
 --
--- @module Radio
+-- @module Core.Radio
+-- @image Core_Radio.JPG
 
 
---- # RADIO class, extends @{Base#BASE}
+--- Models the radio capabilty.
 -- 
 -- ## RADIO usage
 -- 
 -- There are 3 steps to a successful radio transmission.
 -- 
---   * First, you need to **"add a @{#RADIO} object** to your @{Positionable#POSITIONABLE}. This is done using the @{Positionable#POSITIONABLE.GetRadio}() function,
+--   * First, you need to **"add a @{#RADIO} object** to your @{Wrapper.Positionable#POSITIONABLE}. This is done using the @{Wrapper.Positionable#POSITIONABLE.GetRadio}() function,
 --   * Then, you will **set the relevant parameters** to the transmission (see below),
 --   * When done, you can actually **broadcast the transmission** (i.e. play the sound) with the @{RADIO.Broadcast}() function.
 --   
--- Methods to set relevant parameters for both a @{Unit#UNIT} or a @{Group#GROUP} or any other @{Positionable#POSITIONABLE}
+-- Methods to set relevant parameters for both a @{Wrapper.Unit#UNIT} or a @{Wrapper.Group#GROUP} or any other @{Wrapper.Positionable#POSITIONABLE}
 -- 
 --   * @{#RADIO.SetFileName}() : Sets the file name of your sound file (e.g. "Noise.ogg"),
 --   * @{#RADIO.SetFrequency}() : Sets the frequency of your transmission.
 --   * @{#RADIO.SetModulation}() : Sets the modulation of your transmission.
 --   * @{#RADIO.SetLoop}() : Choose if you want the transmission to be looped. If you need your transmission to be looped, you might need a @{#BEACON} instead...
 -- 
--- Additional Methods to set relevant parameters if the transmiter is a @{Unit#UNIT} or a @{Group#GROUP}
+-- Additional Methods to set relevant parameters if the transmiter is a @{Wrapper.Unit#UNIT} or a @{Wrapper.Group#GROUP}
 -- 
 --   * @{#RADIO.SetSubtitle}() : Set both the subtitle and its duration,
 --   * @{#RADIO.NewUnitTransmission}() : Shortcut to set all the relevant parameters in one method call
 -- 
--- Additional Methods to set relevant parameters if the transmiter is any other @{Positionable#POSITIONABLE}
+-- Additional Methods to set relevant parameters if the transmiter is any other @{Wrapper.Positionable#POSITIONABLE}
 -- 
 --   * @{#RADIO.SetPower}() : Sets the power of the antenna in Watts
 --   * @{#RADIO.NewGenericTransmission}() : Shortcut to set all the relevant parameters in one method call
 -- 
--- What is this power thing ?
+-- What is this power thing?
 -- 
---   * If your transmission is sent by a @{Positionable#POSITIONABLE} other than a @{Unit#UNIT} or a @{Group#GROUP}, you can set the power of the antenna,
+--   * If your transmission is sent by a @{Wrapper.Positionable#POSITIONABLE} other than a @{Wrapper.Unit#UNIT} or a @{Wrapper.Group#GROUP}, you can set the power of the antenna,
 --   * Otherwise, DCS sets it automatically, depending on what's available on your Unit,
---   * If the player gets **too far** from the transmiter, or if the antenna is **too weak**, the transmission will **fade** and **become noisyer**,
+--   * If the player gets **too far** from the transmitter, or if the antenna is **too weak**, the transmission will **fade** and **become noisyer**,
 --   * This an automated DCS calculation you have no say on,
---   * For reference, a standard VOR station has a 100W antenna, a standard AA TACAN has a 120W antenna, and civilian ATC's antenna usually range between 300 and 500W,
+--   * For reference, a standard VOR station has a 100 W antenna, a standard AA TACAN has a 120 W antenna, and civilian ATC's antenna usually range between 300 and 500 W,
 --   * Note that if the transmission has a subtitle, it will be readable, regardless of the quality of the transmission. 
 --   
 -- @type RADIO
--- @field Positionable#POSITIONABLE Positionable The transmiter
--- @field #string FileName Name of the sound file
--- @field #number Frequency Frequency of the transmission in Hz
--- @field #number Modulation Modulation of the transmission (either radio.modulation.AM or radio.modulation.FM)
--- @field #string Subtitle Subtitle of the transmission
--- @field #number SubtitleDuration Duration of the Subtitle in seconds
--- @field #number Power Power of the antenna is Watts
--- @field #boolean Loop (default true)
+-- @field Wrapper.Controllable#CONTROLLABLE Positionable The @{#CONTROLLABLE} that will transmit the radio calls.
+-- @field #string FileName Name of the sound file played.
+-- @field #number Frequency Frequency of the transmission in Hz.
+-- @field #number Modulation Modulation of the transmission (either radio.modulation.AM or radio.modulation.FM).
+-- @field #string Subtitle Subtitle of the transmission.
+-- @field #number SubtitleDuration Duration of the Subtitle in seconds.
+-- @field #number Power Power of the antenna is Watts.
+-- @field #boolean Loop Transmission is repeated (default true).
+-- @field #string alias Name of the radio transmitter.
 -- @extends Core.Base#BASE
 RADIO = {
   ClassName = "RADIO",
@@ -89,19 +94,19 @@ RADIO = {
   Subtitle = "",
   SubtitleDuration = 0,
   Power = 100,
-  Loop = true,
+  Loop = false,
+  alias=nil,
 }
 
---- Create a new RADIO Object. This doesn't broadcast a transmission, though, use @{#RADIO.Broadcast} to actually broadcast
--- If you want to create a RADIO, you probably should use @{Positionable#POSITIONABLE.GetRadio}() instead
+--- Create a new RADIO Object. This doesn't broadcast a transmission, though, use @{#RADIO.Broadcast} to actually broadcast.
+-- If you want to create a RADIO, you probably should use @{Wrapper.Positionable#POSITIONABLE.GetRadio}() instead.
 -- @param #RADIO self
 -- @param Wrapper.Positionable#POSITIONABLE Positionable The @{Positionable} that will receive radio capabilities.
--- @return #RADIO Radio
--- @return #nil If Positionable is invalid
+-- @return #RADIO The RADIO object or #nil if Positionable is invalid.
 function RADIO:New(Positionable)
+
+  -- Inherit base
   local self = BASE:Inherit( self, BASE:New() ) -- Core.Radio#RADIO
-  
-  self.Loop = true        -- default Loop to true (not sure the above RADIO definition actually is working)
   self:F(Positionable)
   
   if Positionable:GetPointVec2() then -- It's stupid, but the only way I found to make sure positionable is valid
@@ -109,11 +114,27 @@ function RADIO:New(Positionable)
     return self
   end
   
-  self:E({"The passed positionable is invalid, no RADIO created", Positionable})
+  self:E({error="The passed positionable is invalid, no RADIO created!", positionable=Positionable})
   return nil
 end
 
---- Check validity of the filename passed and sets RADIO.FileName
+--- Set alias of the transmitter.
+-- @param #RADIO self
+-- @param #string alias Name of the radio transmitter.
+-- @return #RADIO self
+function RADIO:SetAlias(alias)
+  self.alias=tostring(alias)
+  return self
+end
+
+--- Get alias of the transmitter.
+-- @param #RADIO self
+-- @return #string Name of the transmitter.
+function RADIO:GetAlias()
+  return tostring(self.alias)
+end
+
+--- Set the file name for the radio transmission.
 -- @param #RADIO self
 -- @param #string FileName File name of the sound file (i.e. "Noise.ogg")
 -- @return #RADIO self
@@ -121,49 +142,63 @@ function RADIO:SetFileName(FileName)
   self:F2(FileName)
   
   if type(FileName) == "string" then
+  
     if FileName:find(".ogg") or FileName:find(".wav") then
       if not FileName:find("l10n/DEFAULT/") then
         FileName = "l10n/DEFAULT/" .. FileName
       end
+      
       self.FileName = FileName
       return self
     end
   end
   
-  self:E({"File name invalid. Maybe something wrong with the extension ?", self.FileName})
+  self:E({"File name invalid. Maybe something wrong with the extension?", FileName})
   return self
 end
 
---- Check validity of the frequency passed and sets RADIO.Frequency
+--- Set the frequency for the radio transmission.
+-- If the transmitting positionable is a unit or group, this also set the command "SetFrequency" with the defined frequency and modulation.
 -- @param #RADIO self
--- @param #number Frequency in MHz (Ranges allowed for radio transmissions in DCS : 30-88 / 108-152 / 225-400MHz)
+-- @param #number Frequency Frequency in MHz. Ranges allowed for radio transmissions in DCS : 30-88 / 108-152 / 225-400MHz.
 -- @return #RADIO self
 function RADIO:SetFrequency(Frequency)
   self:F2(Frequency)
+  
   if type(Frequency) == "number" then
+  
     -- If frequency is in range
     if (Frequency >= 30 and Frequency < 88) or (Frequency >= 108 and Frequency < 152) or (Frequency >= 225 and Frequency < 400) then
-      self.Frequency = Frequency * 1000000 -- Conversion in Hz
+    
+      -- Convert frequency from MHz to Hz
+      self.Frequency = Frequency * 1000000
+            
       -- If the RADIO is attached to a UNIT or a GROUP, we need to send the DCS Command "SetFrequency" to change the UNIT or GROUP frequency
       if self.Positionable.ClassName == "UNIT" or self.Positionable.ClassName == "GROUP" then
-        self.Positionable:SetCommand({
+      
+        local commandSetFrequency={
           id = "SetFrequency",
           params = {
-            frequency = self.Frequency,
+            frequency  = self.Frequency,
             modulation = self.Modulation,
           }
-        })
+        }            
+      
+        self:T2(commandSetFrequency)
+        self.Positionable:SetCommand(commandSetFrequency)
       end
+      
       return self
     end
   end
-  self:E({"Frequency is outside of DCS Frequency ranges (30-80, 108-152, 225-400). Frequency unchanged.", self.Frequency})
+  
+  self:E({"Frequency is outside of DCS Frequency ranges (30-80, 108-152, 225-400). Frequency unchanged.", Frequency})
   return self
 end
 
---- Check validity of the frequency passed and sets RADIO.Modulation
+--- Set AM or FM modulation of the radio transmitter.
 -- @param #RADIO self
--- @param #number Modulation either radio.modulation.AM or radio.modulation.FM
+-- @param #number Modulation Modulation is either radio.modulation.AM or radio.modulation.FM.
 -- @return #RADIO self
 function RADIO:SetModulation(Modulation)
   self:F2(Modulation)
@@ -179,23 +214,24 @@ end
 
 --- Check validity of the power passed and sets RADIO.Power
 -- @param #RADIO self
--- @param #number Power in W
+-- @param #number Power Power in W.
 -- @return #RADIO self
 function RADIO:SetPower(Power)
   self:F2(Power)
+  
   if type(Power) == "number" then
     self.Power = math.floor(math.abs(Power)) --TODO Find what is the maximum power allowed by DCS and limit power to that
-    return self
+  else
+    self:E({"Power is invalid. Power unchanged.", self.Power})
   end
-  self:E({"Power is invalid. Power unchanged.", self.Power})
+  
   return self
 end
 
---- Check validity of the loop passed and sets RADIO.Loop
+--- Set message looping on or off.
 -- @param #RADIO self
--- @param #boolean Loop
+-- @param #boolean Loop If true, message is repeated indefinitely.
 -- @return #RADIO self
--- @usage
 function RADIO:SetLoop(Loop)
   self:F2(Loop)
   if type(Loop) == "boolean" then
@@ -228,13 +264,12 @@ function RADIO:SetSubtitle(Subtitle, SubtitleDuration)
     self:E({"Subtitle is invalid. Subtitle reset.", self.Subtitle})
   end
   if type(SubtitleDuration) == "number" then
-    if math.floor(math.abs(SubtitleDuration)) == SubtitleDuration then
-      self.SubtitleDuration = SubtitleDuration
-      return self
-    end
+    self.SubtitleDuration = SubtitleDuration
+  else
+    self.SubtitleDuration = 0
+    self:E({"SubtitleDuration is invalid. SubtitleDuration reset.", self.SubtitleDuration})  
   end
-  self.SubtitleDuration = 0
-  self:E({"SubtitleDuration is invalid. SubtitleDuration reset.", self.SubtitleDuration})
+  return self
 end
 
 --- Create a new transmission, that is to say, populate the RADIO with relevant data
@@ -242,10 +277,10 @@ end
 -- but it will work with a UNIT or a GROUP anyway. 
 -- Only the #RADIO and the Filename are mandatory
 -- @param #RADIO self
--- @param #string FileName
--- @param #number Frequency in MHz
--- @param #number Modulation either radio.modulation.AM or radio.modulation.FM
--- @param #number Power in W
+-- @param #string FileName Name of the sound file that will be transmitted.
+-- @param #number Frequency Frequency in MHz.
+-- @param #number Modulation Modulation of frequency, which is either radio.modulation.AM or radio.modulation.FM.
+-- @param #number Power Power in W.
 -- @return #RADIO self
 function RADIO:NewGenericTransmission(FileName, Frequency, Modulation, Power, Loop)
   self:F({FileName, Frequency, Modulation, Power})
@@ -262,62 +297,85 @@ end
 
 --- Create a new transmission, that is to say, populate the RADIO with relevant data
 -- In this function the data is especially relevant if the broadcaster is a UNIT or a GROUP,
--- but it will work for any @{Positionable#POSITIONABLE}. 
+-- but it will work for any @{Wrapper.Positionable#POSITIONABLE}. 
 -- Only the RADIO and the Filename are mandatory.
 -- @param #RADIO self
--- @param #string FileName
--- @param #string Subtitle
--- @param #number SubtitleDuration in s
--- @param #number Frequency in MHz
--- @param #number Modulation either radio.modulation.AM or radio.modulation.FM
--- @param #boolean Loop
+-- @param #string FileName Name of sound file.
+-- @param #string Subtitle Subtitle to be displayed with sound file.
+-- @param #number SubtitleDuration Duration of subtitle display in seconds.
+-- @param #number Frequency Frequency in MHz.
+-- @param #number Modulation Modulation which can be either radio.modulation.AM or radio.modulation.FM
+-- @param #boolean Loop If true, loop message.
 -- @return #RADIO self
 function RADIO:NewUnitTransmission(FileName, Subtitle, SubtitleDuration, Frequency, Modulation, Loop)
   self:F({FileName, Subtitle, SubtitleDuration, Frequency, Modulation, Loop})
 
+  -- Set file name.
   self:SetFileName(FileName)
-  if Subtitle then self:SetSubtitle(Subtitle) end
-  if SubtitleDuration then self:SetSubtitleDuration(SubtitleDuration) end
-  if Frequency then self:SetFrequency(Frequency) end
-  if Modulation then self:SetModulation(Modulation) end
-  if Loop then self:SetLoop(Loop) end
+
+  -- Set modulation AM/FM.
+  if Modulation then
+    self:SetModulation(Modulation)
+  end
+
+  -- Set frequency.
+  if Frequency then 
+    self:SetFrequency(Frequency)
+  end
+  
+  -- Set subtitle.
+  if Subtitle then
+    self:SetSubtitle(Subtitle, SubtitleDuration or 0)
+  end
+ 
+  -- Set Looping.
+  if Loop then 
+    self:SetLoop(Loop)
+  end
   
   return self
 end
 
---- Actually Broadcast the transmission
+--- Broadcast the transmission.
 -- * The Radio has to be populated with the new transmission before broadcasting.
--- * Please use RADIO setters or either @{Radio#RADIO.NewGenericTransmission} or @{Radio#RADIO.NewUnitTransmission}
+-- * Please use RADIO setters or either @{#RADIO.NewGenericTransmission} or @{#RADIO.NewUnitTransmission}
 -- * This class is in fact pretty smart, it determines the right DCS function to use depending on the type of POSITIONABLE
 -- * If the POSITIONABLE is not a UNIT or a GROUP, we use the generic (but limited) trigger.action.radioTransmission()
 -- * If the POSITIONABLE is a UNIT or a GROUP, we use the "TransmitMessage" Command
 -- * If your POSITIONABLE is a UNIT or a GROUP, the Power is ignored.
 -- * If your POSITIONABLE is not a UNIT or a GROUP, the Subtitle, SubtitleDuration are ignored
 -- @param #RADIO self
+-- @param #boolean viatrigger Use trigger.action.radioTransmission() in any case, i.e. also for UNITS and GROUPS.
 -- @return #RADIO self
-function RADIO:Broadcast()
-  self:F()
+function RADIO:Broadcast(viatrigger)
+  self:F({viatrigger=viatrigger})
   
-  -- If the POSITIONABLE is actually a UNIT or a GROUP, use the more complicated DCS command system
-  if self.Positionable.ClassName == "UNIT" or self.Positionable.ClassName == "GROUP" then
-    self:T2("Broadcasting from a UNIT or a GROUP")
-    self.Positionable:SetCommand({
+  -- If the POSITIONABLE is actually a UNIT or a GROUP, use the more complicated DCS command system.
+  if (self.Positionable.ClassName=="UNIT" or self.Positionable.ClassName=="GROUP") and (not viatrigger) then
+    self:T("Broadcasting from a UNIT or a GROUP")
+
+    local commandTransmitMessage={
       id = "TransmitMessage",
       params = {
         file = self.FileName,
         duration = self.SubtitleDuration,
         subtitle = self.Subtitle,
         loop = self.Loop,
-      }
-    })
+      }}
+    
+    self:T3(commandTransmitMessage)
+    self.Positionable:SetCommand(commandTransmitMessage)
   else
     -- If the POSITIONABLE is anything else, we revert to the general singleton function
     -- I need to give it a unique name, so that the transmission can be stopped later. I use the class ID
-    self:T2("Broadcasting from a POSITIONABLE")
+    self:T("Broadcasting from a POSITIONABLE")
     trigger.action.radioTransmission(self.FileName, self.Positionable:GetPositionVec3(), self.Modulation, self.Loop, self.Frequency, self.Power, tostring(self.ID))
   end
+  
   return self
 end
+
+
 
 --- Stops a transmission
 -- This function is especially usefull to stop the broadcast of looped transmissions
@@ -327,10 +385,10 @@ function RADIO:StopBroadcast()
   self:F()
   -- If the POSITIONABLE is a UNIT or a GROUP, stop the transmission with the DCS "StopTransmission" command 
   if self.Positionable.ClassName == "UNIT" or self.Positionable.ClassName == "GROUP" then
-    self.Positionable:SetCommand({
-      id = "StopTransmission",
-      params = {}
-    })
+  
+    local commandStopTransmission={id="StopTransmission", params={}}
+  
+    self.Positionable:SetCommand(commandStopTransmission)
   else
     -- Else, we use the appropriate singleton funciton
     trigger.action.stopRadioTransmission(tostring(self.ID))
@@ -339,41 +397,103 @@ function RADIO:StopBroadcast()
 end
 
 
---- # BEACON class, extends @{Base#BASE}
--- 
--- After attaching a @{#BEACON} to your @{Positionable#POSITIONABLE}, you need to select the right function to activate the kind of beacon you want. 
+--- After attaching a @{#BEACON} to your @{Wrapper.Positionable#POSITIONABLE}, you need to select the right function to activate the kind of beacon you want. 
 -- There are two types of BEACONs available : the AA TACAN Beacon and the general purpose Radio Beacon.
 -- Note that in both case, you can set an optional parameter : the `BeaconDuration`. This can be very usefull to simulate the battery time if your BEACON is
 -- attach to a cargo crate, for exemple. 
 -- 
 -- ## AA TACAN Beacon usage
 -- 
--- This beacon only works with airborne @{Unit#UNIT} or a @{Group#GROUP}. Use @{#BEACON:AATACAN}() to set the beacon parameters and start the beacon.
+-- This beacon only works with airborne @{Wrapper.Unit#UNIT} or a @{Wrapper.Group#GROUP}. Use @{#BEACON:AATACAN}() to set the beacon parameters and start the beacon.
 -- Use @#BEACON:StopAATACAN}() to stop it.
 -- 
 -- ## General Purpose Radio Beacon usage
 -- 
--- This beacon will work with any @{Positionable#POSITIONABLE}, but **it won't follow the @{Positionable#POSITIONABLE}** ! This means that you should only use it with
--- @{Positionable#POSITIONABLE} that don't move, or move very slowly. Use @{#BEACON:RadioBeacon}() to set the beacon parameters and start the beacon.
+-- This beacon will work with any @{Wrapper.Positionable#POSITIONABLE}, but **it won't follow the @{Wrapper.Positionable#POSITIONABLE}** ! This means that you should only use it with
+-- @{Wrapper.Positionable#POSITIONABLE} that don't move, or move very slowly. Use @{#BEACON:RadioBeacon}() to set the beacon parameters and start the beacon.
 -- Use @{#BEACON:StopRadioBeacon}() to stop it.
 -- 
 -- @type BEACON
+-- @field #string ClassName Name of the class "BEACON".
+-- @field Wrapper.Controllable#CONTROLLABLE Positionable The @{#CONTROLLABLE} that will receive radio capabilities.
 -- @extends Core.Base#BASE
 BEACON = {
   ClassName = "BEACON",
+  Positionable = nil,
 }
 
---- Create a new BEACON Object. This doesn't activate the beacon, though, use @{#BEACON.AATACAN} or @{#BEACON.Generic}
--- If you want to create a BEACON, you probably should use @{Positionable#POSITIONABLE.GetBeacon}() instead.
+--- Beacon types supported by DCS. 
+-- @type BEACON.Type
+-- @field #number NULL
+-- @field #number VOR
+-- @field #number DME
+-- @field #number VOR_DME
+-- @field #number TACAN
+-- @field #number VORTAC
+-- @field #number RSBN
+-- @field #number BROADCAST_STATION
+-- @field #number HOMER
+-- @field #number AIRPORT_HOMER
+-- @field #number AIRPORT_HOMER_WITH_MARKER
+-- @field #number ILS_FAR_HOMER
+-- @field #number ILS_NEAR_HOMER
+-- @field #number ILS_LOCALIZER
+-- @field #number ILS_GLIDESLOPE
+-- @field #number NAUTICAL_HOMER
+-- @field #number ICLS
+BEACON.Type={
+  NULL = 0, 
+  VOR = 1,
+  DME = 2,
+  VOR_DME = 3, 
+  TACAN = 4,
+  VORTAC = 5, 
+  RSBN = 32,
+  BROADCAST_STATION = 1024, 
+  HOMER = 8,
+  AIRPORT_HOMER = 4104, 
+  AIRPORT_HOMER_WITH_MARKER = 4136, 
+  ILS_FAR_HOMER = 16408,
+  ILS_NEAR_HOMER = 16456, 
+  ILS_LOCALIZER = 16640,
+  ILS_GLIDESLOPE = 16896, 
+  NAUTICAL_HOMER = 32776,
+  ICLS = 131584,
+}
+
+--- Beacon systems supported by DCS. 
+-- @type BEACON.System
+-- @field #number PAR_10
+-- @field #number RSBN_5
+-- @field #number TACAN
+-- @field #number TACAN_TANKER
+-- @field #number ILS_LOCALIZER
+-- @field #number ILS_GLIDESLOPE
+-- @field #number BROADCAST_STATION
+BEACON.System={
+  PAR_10 = 1, 
+  RSBN_5 = 2, 
+  TACAN = 3, 
+  TACAN_TANKER = 4, 
+  ILS_LOCALIZER = 5, 
+  ILS_GLIDESLOPE = 6, 
+  BROADCAST_STATION = 7,
+}
+
+--- Create a new BEACON Object. This doesn't activate the beacon, though, use @{#BEACON.ActivateTACAN} etc.
+-- If you want to create a BEACON, you probably should use @{Wrapper.Positionable#POSITIONABLE.GetBeacon}() instead.
 -- @param #BEACON self
 -- @param Wrapper.Positionable#POSITIONABLE Positionable The @{Positionable} that will receive radio capabilities.
--- @return #BEACON Beacon
--- @return #nil If Positionable is invalid
+-- @return #BEACON Beacon object or #nil if the positionable is invalid.
 function BEACON:New(Positionable)
-  local self = BASE:Inherit(self, BASE:New())
+
+  -- Inherit BASE.
+  local self=BASE:Inherit(self, BASE:New()) --#BEACON
   
+  -- Debug.
   self:F(Positionable)
   
+  -- Set positionable.
   if Positionable:GetPointVec2() then -- It's stupid, but the only way I found to make sure positionable is valid
     self.Positionable = Positionable
     return self
@@ -384,43 +504,94 @@ function BEACON:New(Positionable)
 end
 
 
---- Converts a TACAN Channel/Mode couple into a frequency in Hz
+--- Activates a TACAN BEACON.
 -- @param #BEACON self
--- @param #number TACANChannel
--- @param #string TACANMode
--- @return #number Frequecy
--- @return #nil if parameters are invalid
-function BEACON:_TACANToFrequency(TACANChannel, TACANMode)
-  self:F3({TACANChannel, TACANMode})
-
-  if type(TACANChannel) ~= "number" then
-      if TACANMode ~= "X" and TACANMode ~= "Y" then
-        return nil -- error in arguments
-      end
+-- @param #number Channel TACAN channel, i.e. the "10" part in "10Y".
+-- @param #string Mode TACAN mode, i.e. the "Y" part in "10Y".
+-- @param #string Message The Message that is going to be coded in Morse and broadcasted by the beacon.
+-- @param #boolean Bearing If true, beacon provides bearing information. If false (or nil), only distance information is available.
+-- @param #number Duration How long will the beacon last in seconds. Omit for forever.
+-- @return #BEACON self
+-- @usage
+-- -- Let's create a TACAN Beacon for a tanker
+-- local myUnit = UNIT:FindByName("MyUnit") 
+-- local myBeacon = myUnit:GetBeacon() -- Creates the beacon
+-- 
+-- myBeacon:TACAN(20, "Y", "TEXACO", true) -- Activate the beacon
+function BEACON:ActivateTACAN(Channel, Mode, Message, Bearing, Duration)
+  self:T({channel=Channel, mode=Mode, callsign=Message, bearing=Bearing, duration=Duration})
+  
+  -- Get frequency.
+  local Frequency=UTILS.TACANToFrequency(Channel, Mode)
+  
+  -- Check.
+  if not Frequency then 
+    self:E({"The passed TACAN channel is invalid, the BEACON is not emitting"})
+    return self
   end
   
--- This code is largely based on ED's code, in DCS World\Scripts\World\Radio\BeaconTypes.lua, line 137.
--- I have no idea what it does but it seems to work
-  local A = 1151 -- 'X', channel >= 64
-  local B = 64   -- channel >= 64
+  -- Beacon type.
+  local Type=BEACON.Type.TACAN
   
-  if TACANChannel < 64 then
-    B = 1
-  end
+  -- Beacon system.  
+  local System=BEACON.System.TACAN
   
-  if TACANMode == 'Y' then
-    A = 1025
-    if TACANChannel < 64 then
-      A = 1088
+  -- Check if unit is an aircraft and set system accordingly.
+  local AA=self.Positionable:IsAir()
+  if AA then
+    System=BEACON.System.TACAN_TANKER
+    -- Check if "Y" mode is selected for aircraft.
+    if Mode~="Y" then
+      self:E({"WARNING: The POSITIONABLE you want to attach the AA Tacan Beacon is an aircraft: Mode should Y !The BEACON is not emitting.", self.Positionable})
     end
-  else -- 'X'
-    if TACANChannel < 64 then
-      A = 962
-    end
   end
   
-  return (A + TACANChannel - B) * 1000000
+  -- Attached unit.
+  local UnitID=self.Positionable:GetID()
+  
+  -- Debug.
+  self:T({"TACAN BEACON started!"})
+    
+  -- Start beacon.
+  self.Positionable:CommandActivateBeacon(Type, System, Frequency, UnitID, Channel, Mode, AA, Message, Bearing)
+      
+  -- Stop sheduler.
+  if Duration then
+    self.Positionable:DeactivateBeacon(Duration)
+  end
+  
+  return self
 end
+
+--- Activates an ICLS BEACON. The unit the BEACON is attached to should be an aircraft carrier supporting this system.
+-- @param #BEACON self
+-- @param #number Channel ICLS channel.
+-- @param #string Callsign The Message that is going to be coded in Morse and broadcasted by the beacon.
+-- @param #number Duration How long will the beacon last in seconds. Omit for forever.
+-- @return #BEACON self
+function BEACON:ActivateICLS(Channel, Callsign, Duration)
+  self:F({Channel=Channel, Callsign=Callsign, Duration=Duration})
+  
+  -- Attached unit.
+  local UnitID=self.Positionable:GetID()
+  
+  -- Debug
+  self:T2({"ICLS BEACON started!"})
+    
+  -- Start beacon.
+  self.Positionable:CommandActivateICLS(Channel, UnitID, Callsign)
+      
+  -- Stop sheduler
+  if Duration then -- Schedule the stop of the BEACON if asked by the MD
+    self.Positionable:DeactivateBeacon(Duration)
+  end
+  
+  return self
+end
+
+
+
+
 
 
 --- Activates a TACAN BEACON on an Aircraft.
@@ -474,7 +645,7 @@ function BEACON:AATACAN(TACANChannel, Message, Bearing, BeaconDuration)
       })
       
     if BeaconDuration then -- Schedule the stop of the BEACON if asked by the MD
-      SCHEDULER:New( nil, 
+      SCHEDULER:New(nil, 
       function()
         self:StopAATACAN()
       end, {}, BeaconDuration)
@@ -585,4 +756,44 @@ function BEACON:StopRadioBeacon()
   self:F()
   -- The unique name of the transmission is the class ID
   trigger.action.stopRadioTransmission(tostring(self.ID))
+  return self
 end
+
+--- Converts a TACAN Channel/Mode couple into a frequency in Hz
+-- @param #BEACON self
+-- @param #number TACANChannel
+-- @param #string TACANMode
+-- @return #number Frequecy
+-- @return #nil if parameters are invalid
+function BEACON:_TACANToFrequency(TACANChannel, TACANMode)
+  self:F3({TACANChannel, TACANMode})
+
+  if type(TACANChannel) ~= "number" then
+    if TACANMode ~= "X" and TACANMode ~= "Y" then
+      return nil -- error in arguments
+    end
+  end
+  
+-- This code is largely based on ED's code, in DCS World\Scripts\World\Radio\BeaconTypes.lua, line 137.
+-- I have no idea what it does but it seems to work
+  local A = 1151 -- 'X', channel >= 64
+  local B = 64   -- channel >= 64
+  
+  if TACANChannel < 64 then
+    B = 1
+  end
+  
+  if TACANMode == 'Y' then
+    A = 1025
+    if TACANChannel < 64 then
+      A = 1088
+    end
+  else -- 'X'
+    if TACANChannel < 64 then
+      A = 962
+    end
+  end
+  
+  return (A + TACANChannel - B) * 1000000
+end
+
