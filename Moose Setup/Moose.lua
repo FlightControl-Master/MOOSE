@@ -19,4 +19,4 @@ end
 
 __Moose.Includes = {}
 
-__Moose.Include( 'Scripts/Moose/Modules.lua' )
+__Moose.Include( "Modules.lua" )

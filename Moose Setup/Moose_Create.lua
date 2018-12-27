@@ -10,13 +10,11 @@ print( "Moose (D)ynamic (S)tatic  : " .. MooseDynamicStatic )
 print( "Commit Hash ID            : " .. MooseCommitHash )
 print( "Moose development path    : " .. MooseDevelopmentPath )
 print( "Moose setup path          : " .. MooseSetupPath )
-print( "Moose target path         : " .. MooseTargetPath )
 
-local MooseSourcesFilePath =  MooseSetupPath .. "/Moose.files"
-local LoaderFilePath = MooseTargetPath.."/Moose.lua"
-local MooseFilePath = MooseTargetPath .. "/Modules.lua"
+local MooseModulesFilePath =  MooseDevelopmentPath .. "/Modules.lua"
+local LoaderFilePath = MooseSetupPath .. "/Moose.lua"
 
-print( "Reading Moose source list : " .. MooseSourcesFilePath )
+print( "Reading Moose source list : " .. MooseModulesFilePath )
 
 local LoaderFile = io.open( LoaderFilePath, "w" )
 
@@ -32,28 +30,26 @@ if MooseDynamicStatic == "S" then
   MooseLoaderPath = MooseSetupPath .. "/Moose Templates/Moose_Static_Loader.lua"
 end
 
-local MooseFile = io.open( MooseFilePath, "w" )
-
 local MooseLoader = io.open( MooseLoaderPath, "r" )
 local MooseLoaderText = MooseLoader:read( "*a" )
 MooseLoader:close()
 
 LoaderFile:write( MooseLoaderText )
-LoaderFile:write( "__Moose.Include( 'Scripts/Moose/Modules.lua' ) \n" )
 
-local MooseSourcesFile = io.open( MooseSourcesFilePath, "r" )
+local MooseSourcesFile = io.open( MooseModulesFilePath, "r" )
 local MooseSource = MooseSourcesFile:read("*l")
+
+_, _, MooseSource = string.find( MooseSource, "Scripts/Moose/(.+)'" )
 
 while( MooseSource ) do
   
   if MooseSource ~= "" then
     local MooseFilePath = MooseDevelopmentPath .. "/" .. MooseSource
     if MooseDynamicStatic == "D" then
-      print( "Load dynamic: " .. MooseSource )
-      MooseFile:write( "__Moose.Include( 'Scripts/Moose/" .. MooseSource .. "' )\n" )
+      print( "Load dynamic: " .. MooseFilePath )
     end
     if MooseDynamicStatic == "S" then
-      print( "Load static: " .. MooseSource )
+      print( "Load static: " .. MooseFilePath )
       local MooseSourceFile = io.open( MooseFilePath, "r" )
       local MooseSourceFileText = MooseSourceFile:read( "*a" )
       MooseSourceFile:close()
@@ -63,6 +59,7 @@ while( MooseSource ) do
   end
   
   MooseSource = MooseSourcesFile:read("*l")
+  _, _, MooseSource = string.find( MooseSource, "Scripts/Moose/(.+)'" )
 end
 
 if MooseDynamicStatic == "D" then
@@ -76,4 +73,3 @@ LoaderFile:write( "env.info( '*** MOOSE INCLUDE END *** ' )\n" )
 
 MooseSourcesFile:close()
 LoaderFile:close()
-MooseFile:close()
