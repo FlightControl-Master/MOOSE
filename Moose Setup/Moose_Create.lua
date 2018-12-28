@@ -10,9 +10,10 @@ print( "Moose (D)ynamic (S)tatic  : " .. MooseDynamicStatic )
 print( "Commit Hash ID            : " .. MooseCommitHash )
 print( "Moose development path    : " .. MooseDevelopmentPath )
 print( "Moose setup path          : " .. MooseSetupPath )
+print( "Moose target path         : " .. MooseTargetPath )
 
 local MooseModulesFilePath =  MooseDevelopmentPath .. "/Modules.lua"
-local LoaderFilePath = MooseSetupPath .. "/Moose.lua"
+local LoaderFilePath = MooseTargetPath .. "/Moose.lua"
 
 print( "Reading Moose source list : " .. MooseModulesFilePath )
 
