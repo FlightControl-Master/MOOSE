@@ -18,3 +18,5 @@ __Moose.Include = function( IncludeFile )
 end
 
 __Moose.Includes = {}
+
+__Moose.Include( 'Scripts/Moose/Modules.lua' )

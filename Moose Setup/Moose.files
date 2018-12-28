@@ -112,4 +112,4 @@ Tasking/Task_Cargo_CSAR.lua
 Tasking/Task_Cargo_Dispatcher.lua
 Tasking/TaskZoneCapture.lua
 
-Moose.lua
+Globals.lua
