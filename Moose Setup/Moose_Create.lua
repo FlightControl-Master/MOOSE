@@ -40,11 +40,10 @@ LoaderFile:write( MooseLoaderText )
 local MooseSourcesFile = io.open( MooseModulesFilePath, "r" )
 local MooseSource = MooseSourcesFile:read("*l")
 
-_, _, MooseSource = string.find( MooseSource, "Scripts/Moose/(.+)'" )
-
 while( MooseSource ) do
   
   if MooseSource ~= "" then
+    MooseSource = string.match( MooseSource, "Scripts/Moose/(.+)'" )
     local MooseFilePath = MooseDevelopmentPath .. "/" .. MooseSource
     if MooseDynamicStatic == "D" then
       print( "Load dynamic: " .. MooseFilePath )
@@ -60,7 +59,6 @@ while( MooseSource ) do
   end
   
   MooseSource = MooseSourcesFile:read("*l")
-  _, _, MooseSource = string.find( MooseSource, "Scripts/Moose/(.+)'" )
 end
 
 if MooseDynamicStatic == "D" then
