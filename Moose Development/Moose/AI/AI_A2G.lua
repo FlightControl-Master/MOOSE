@@ -61,7 +61,7 @@ function AI_A2G:New( AIGroup )
   local self = BASE:Inherit( self, AI_AIR:New( AIGroup ) ) -- #AI_A2G
   
   self:SetFuelThreshold( .2, 60 )
-  self:SetDamageThreshold( 0.4 )
+  self:SetDamageThreshold( 0.95 )
   self:SetDisengageRadius( 70000 )
   
   return self

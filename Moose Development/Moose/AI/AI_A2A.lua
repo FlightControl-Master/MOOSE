@@ -489,7 +489,7 @@ function AI_A2A:onafterStatus()
          not self:Is( "Fuel" ) and 
          not self:Is( "Damaged" ) and 
          not self:Is( "Home" ) then
-        if self.IdleCount >= 2 then
+        if self.IdleCount >= 3 then
           if Damage ~= InitialLife then
             self:Damaged()
           else  

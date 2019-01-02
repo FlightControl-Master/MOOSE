@@ -555,7 +555,7 @@ end
 -- @return #number The relative amount of fuel (from 0.0 to 1.0).
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetFuel()
-  self:F( self.UnitName )
+  self:F3( self.UnitName )
 
   local DCSUnit = self:GetDCSObject()
   
@@ -571,7 +571,7 @@ end
 -- @param #UNIT self
 -- @return #list<Wrapper.Unit#UNIT> A list of one @{Wrapper.Unit}.
 function UNIT:GetUnits()
-  self:F2( { self.UnitName } )
+  self:F3( { self.UnitName } )
   local DCSUnit = self:GetDCSObject()
 
   local Units = {}

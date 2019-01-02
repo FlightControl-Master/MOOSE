@@ -168,6 +168,11 @@
 --   * @{#CONTROLLABLE.OptionAlarmStateGreen}
 --   * @{#CONTROLLABLE.OptionAlarmStateRed}
 -- 
+-- ## 5.4) Jettison weapons:
+-- 
+--   * @{#CONTROLLABLE.OptionAllowJettisonWeaponsOnThreat}
+--   * @{#CONTROLLABLE.OptionKeepWeaponsOnThreat}
+-- 
 -- @field #CONTROLLABLE
 CONTROLLABLE = {
   ClassName = "CONTROLLABLE",
@@ -302,7 +307,7 @@ end
 -- @param #CONTROLLABLE self
 -- @return #CONTROLLABLE
 function CONTROLLABLE:ClearTasks()
-  self:F2()
+  self:E( "ClearTasks" )
 
   local DCSControllable = self:GetDCSObject()
 
@@ -376,13 +381,15 @@ end
 -- @param #number WaitTime Time in seconds, before the task is set.
 -- @return Wrapper.Controllable#CONTROLLABLE self
 function CONTROLLABLE:SetTask( DCSTask, WaitTime )
-  self:F2( { DCSTask = DCSTask } )
+  self:E( { "SetTask", WaitTime, DCSTask = DCSTask } )
 
   local DCSControllable = self:GetDCSObject()
 
   if DCSControllable then
 
     local DCSControllableName = self:GetName()
+    
+    self:E( "Controllable Name = " .. DCSControllableName )
 
     -- When a controllable SPAWNs, it takes about a second to get the controllable in the simulator. Setting tasks to unspawned controllables provides unexpected results.
     -- Therefore we schedule the functions to set the mission and options for the Controllable.
@@ -1810,6 +1817,7 @@ function CONTROLLABLE:TaskFunction( FunctionString, ... )
 
   local DCSScript = {}
   DCSScript[#DCSScript+1] = "local MissionControllable = GROUP:Find( ... ) "
+  DCSScript[#DCSScript+1] = "env.info( 'TaskFunction: ' .. ( MissionControllable and MissionControllable:GetName() ) or 'No Group' )"
 
   if arg and arg.n > 0 then
     local ArgumentKey = '_' .. tostring( arg ):match("table: (.*)")
@@ -3073,7 +3081,7 @@ function CONTROLLABLE:OptionRTBAmmo( WeaponsFlag )
     local Controller = self:_GetController()
 
     if self:IsAir() then
-      Controller:setOption( AI.Option.GROUND.id.RTB_ON_OUT_OF_AMMO, WeaponsFlag )
+      Controller:setOption( AI.Option.Air.id.RTB_ON_OUT_OF_AMMO, WeaponsFlag )
     end
 
     return self
@@ -3082,6 +3090,47 @@ function CONTROLLABLE:OptionRTBAmmo( WeaponsFlag )
   return nil
 end
 
+
+--- Allow to Jettison of weapons upon threat.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionAllowJettisonWeaponsOnThreat()
+  self:F2( { self.ControllableName } )
+
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+
+    if self:IsAir() then
+      Controller:setOption( AI.Option.Air.id.PROHIBIT_JETT, false )
+    end
+
+    return self
+  end
+
+  return nil
+end
+
+
+--- Keep weapons upon threat.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionKeepWeaponsOnThreat()
+  self:F2( { self.ControllableName } )
+
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+
+    if self:IsAir() then
+      Controller:setOption( AI.Option.Air.id.PROHIBIT_JETT, true )
+    end
+
+    return self
+  end
+
+  return nil
+end
 
 
 

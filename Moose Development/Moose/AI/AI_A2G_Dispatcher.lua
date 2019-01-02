@@ -810,6 +810,7 @@ do -- AI_A2G_DISPATCHER
     if Squadron then
       self:F( { SquadronName = Squadron.Name } )
       local LandingMethod = self:GetSquadronLanding( Squadron.Name )
+      
       if LandingMethod == AI_A2G_DISPATCHER.Landing.AtRunway then
         local DefenderSize = Defender:GetSize()
         if DefenderSize == 1 then
@@ -1395,6 +1396,8 @@ do -- AI_A2G_DISPATCHER
     local DefenderSquadron = self:GetSquadron( SquadronName )
     
     DefenderSquadron.Uncontrolled = true
+    self:SetSquadronTakeoffFromParkingCold( SquadronName )
+    self:SetSquadronLandingAtEngineShutdown( SquadronName )
 
     for SpawnTemplate, DefenderSpawn in pairs( self.DefenderSpawns ) do
       DefenderSpawn:InitUnControlled()
@@ -1653,8 +1656,10 @@ do -- AI_A2G_DISPATCHER
   ---
   -- @param #AI_A2G_DISPATCHER self
   -- @param #string SquadronName The squadron name.
-  -- @param #number EngageMinSpeed The minimum speed at which the SEAD task can be executed.
-  -- @param #number EngageMaxSpeed The maximum speed at which the SEAD task can be executed.
+  -- @param #number EngageMinSpeed (optional, default = 50% of max speed) The minimum speed at which the SEAD task can be executed.
+  -- @param #number EngageMaxSpeed (optional, default = 75% of max speed) The maximum speed at which the SEAD task can be executed.
+  -- @param DCS#Altitude EngageFloorAltitude (optional, default = 1000m ) The lowest altitude in meters where to execute the engagement.
+  -- @param DCS#Altitude EngageCeilingAltitude (optional, default = 1500m ) The highest altitude in meters where to execute the engagement.
   -- @usage 
   -- 
   --        -- SEAD Squadron execution.
@@ -1663,7 +1668,7 @@ do -- AI_A2G_DISPATCHER
   --        A2GDispatcher:SetSquadronSead( "Maykop", 900, 1200 )
   -- 
   -- @return #AI_A2G_DISPATCHER
-  function AI_A2G_DISPATCHER:SetSquadronSead( SquadronName, EngageMinSpeed, EngageMaxSpeed )
+  function AI_A2G_DISPATCHER:SetSquadronSead( SquadronName, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude )
   
     local DefenderSquadron = self:GetSquadron( SquadronName )
 
@@ -1673,6 +1678,8 @@ do -- AI_A2G_DISPATCHER
     Sead.Name = SquadronName
     Sead.EngageMinSpeed = EngageMinSpeed
     Sead.EngageMaxSpeed = EngageMaxSpeed
+    Sead.EngageFloorAltitude = EngageFloorAltitude
+    Sead.EngageCeilingAltitude = EngageCeilingAltitude
     Sead.Defend = true
     
     self:F( { Sead = Sead } )
@@ -1703,12 +1710,12 @@ do -- AI_A2G_DISPATCHER
   -- @param #AI_A2G_DISPATCHER self
   -- @param #string SquadronName The squadron name.
   -- @param Core.Zone#ZONE_BASE Zone The @{Zone} object derived from @{Core.Zone#ZONE_BASE} that defines the zone wherein the Patrol will be executed.
-  -- @param #number FloorAltitude The minimum altitude at which the cap can be executed.
-  -- @param #number CeilingAltitude the maximum altitude at which the cap can be executed.
-  -- @param #number PatrolMinSpeed The minimum speed at which the cap can be executed.
-  -- @param #number PatrolMaxSpeed The maximum speed at which the cap can be executed.
-  -- @param #number EngageMinSpeed The minimum speed at which the engage can be executed.
-  -- @param #number EngageMaxSpeed The maximum speed at which the engage can be executed.
+  -- @param #number FloorAltitude (optional, default = 1000m ) The minimum altitude at which the cap can be executed.
+  -- @param #number CeilingAltitude (optional, default = 1500m ) The maximum altitude at which the cap can be executed.
+  -- @param #number PatrolMinSpeed (optional, default = 50% of max speed) The minimum speed at which the cap can be executed.
+  -- @param #number PatrolMaxSpeed (optional, default = 75% of max speed) The maximum speed at which the cap can be executed.
+  -- @param #number EngageMinSpeed (optional, default = 50% of max speed) The minimum speed at which the engage can be executed.
+  -- @param #number EngageMaxSpeed (optional, default = 75% of max speed) The maximum speed at which the engage can be executed.
   -- @param #number AltType The altitude type, which is a string "BARO" defining Barometric or "RADIO" defining radio controlled altitude.
   -- @return #AI_A2G_DISPATCHER
   -- @usage
@@ -1726,8 +1733,10 @@ do -- AI_A2G_DISPATCHER
     local SeadPatrol = DefenderSquadron.SEAD
     SeadPatrol.Name = SquadronName
     SeadPatrol.Zone = Zone
-    SeadPatrol.FloorAltitude = FloorAltitude
-    SeadPatrol.CeilingAltitude = CeilingAltitude
+    SeadPatrol.PatrolFloorAltitude = FloorAltitude
+    SeadPatrol.PatrolCeilingAltitude = CeilingAltitude
+    SeadPatrol.EngageFloorAltitude = FloorAltitude
+    SeadPatrol.EngageCeilingAltitude = CeilingAltitude
     SeadPatrol.PatrolMinSpeed = PatrolMinSpeed
     SeadPatrol.PatrolMaxSpeed = PatrolMaxSpeed
     SeadPatrol.EngageMinSpeed = EngageMinSpeed
@@ -1744,8 +1753,10 @@ do -- AI_A2G_DISPATCHER
   ---
   -- @param #AI_A2G_DISPATCHER self
   -- @param #string SquadronName The squadron name.
-  -- @param #number EngageMinSpeed The minimum speed at which the CAS task can be executed.
-  -- @param #number EngageMaxSpeed The maximum speed at which the CAS task can be executed.
+  -- @param #number EngageMinSpeed (optional, default = 50% of max speed) The minimum speed at which the CAS task can be executed.
+  -- @param #number EngageMaxSpeed (optional, default = 75% of max speed) The maximum speed at which the CAS task can be executed.
+  -- @param DCS#Altitude EngageFloorAltitude (optional, default = 1000m ) The lowest altitude in meters where to execute the engagement.
+  -- @param DCS#Altitude EngageCeilingAltitude (optional, default = 1500m ) The highest altitude in meters where to execute the engagement.
   -- @usage 
   -- 
   --        -- CAS Squadron execution.
@@ -1754,7 +1765,7 @@ do -- AI_A2G_DISPATCHER
   --        A2GDispatcher:SetSquadronCas( "Maykop", 900, 1200 )
   -- 
   -- @return #AI_A2G_DISPATCHER
-  function AI_A2G_DISPATCHER:SetSquadronCas( SquadronName, EngageMinSpeed, EngageMaxSpeed )
+  function AI_A2G_DISPATCHER:SetSquadronCas( SquadronName, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude )
   
     local DefenderSquadron = self:GetSquadron( SquadronName )
 
@@ -1764,6 +1775,8 @@ do -- AI_A2G_DISPATCHER
     Cas.Name = SquadronName
     Cas.EngageMinSpeed = EngageMinSpeed
     Cas.EngageMaxSpeed = EngageMaxSpeed
+    Cas.EngageFloorAltitude = EngageFloorAltitude
+    Cas.EngageCeilingAltitude = EngageCeilingAltitude
     Cas.Defend = true
     
     self:F( { Cas = Cas } )
@@ -1795,12 +1808,12 @@ do -- AI_A2G_DISPATCHER
   -- @param #AI_A2G_DISPATCHER self
   -- @param #string SquadronName The squadron name.
   -- @param Core.Zone#ZONE_BASE Zone The @{Zone} object derived from @{Core.Zone#ZONE_BASE} that defines the zone wherein the Patrol will be executed.
-  -- @param #number FloorAltitude The minimum altitude at which the cap can be executed.
-  -- @param #number CeilingAltitude the maximum altitude at which the cap can be executed.
-  -- @param #number PatrolMinSpeed The minimum speed at which the cap can be executed.
-  -- @param #number PatrolMaxSpeed The maximum speed at which the cap can be executed.
-  -- @param #number EngageMinSpeed The minimum speed at which the engage can be executed.
-  -- @param #number EngageMaxSpeed The maximum speed at which the engage can be executed.
+  -- @param #number FloorAltitude (optional, default = 1000m ) The minimum altitude at which the cap can be executed.
+  -- @param #number CeilingAltitude (optional, default = 1500m ) The maximum altitude at which the cap can be executed.
+  -- @param #number PatrolMinSpeed (optional, default = 50% of max speed) The minimum speed at which the cap can be executed.
+  -- @param #number PatrolMaxSpeed (optional, default = 75% of max speed) The maximum speed at which the cap can be executed.
+  -- @param #number EngageMinSpeed (optional, default = 50% of max speed) The minimum speed at which the engage can be executed.
+  -- @param #number EngageMaxSpeed (optional, default = 75% of max speed) The maximum speed at which the engage can be executed.
   -- @param #number AltType The altitude type, which is a string "BARO" defining Barometric or "RADIO" defining radio controlled altitude.
   -- @return #AI_A2G_DISPATCHER
   -- @usage
@@ -1818,8 +1831,10 @@ do -- AI_A2G_DISPATCHER
     local CasPatrol = DefenderSquadron.CAS
     CasPatrol.Name = SquadronName
     CasPatrol.Zone = Zone
-    CasPatrol.FloorAltitude = FloorAltitude
-    CasPatrol.CeilingAltitude = CeilingAltitude
+    CasPatrol.PatrolFloorAltitude = FloorAltitude
+    CasPatrol.PatrolCeilingAltitude = CeilingAltitude
+    CasPatrol.EngageFloorAltitude = FloorAltitude
+    CasPatrol.EngageCeilingAltitude = CeilingAltitude
     CasPatrol.PatrolMinSpeed = PatrolMinSpeed
     CasPatrol.PatrolMaxSpeed = PatrolMaxSpeed
     CasPatrol.EngageMinSpeed = EngageMinSpeed
@@ -1836,8 +1851,10 @@ do -- AI_A2G_DISPATCHER
   ---
   -- @param #AI_A2G_DISPATCHER self
   -- @param #string SquadronName The squadron name.
-  -- @param #number EngageMinSpeed The minimum speed at which the BAI task can be executed.
-  -- @param #number EngageMaxSpeed The maximum speed at which the BAI task can be executed.
+  -- @param #number EngageMinSpeed (optional, default = 50% of max speed) The minimum speed at which the BAI task can be executed.
+  -- @param #number EngageMaxSpeed (optional, default = 75% of max speed) The maximum speed at which the BAI task can be executed.
+  -- @param DCS#Altitude EngageFloorAltitude (optional, default = 1000m ) The lowest altitude in meters where to execute the engagement.
+  -- @param DCS#Altitude EngageCeilingAltitude (optional, default = 1500m ) The highest altitude in meters where to execute the engagement.
   -- @usage 
   -- 
   --        -- BAI Squadron execution.
@@ -1846,7 +1863,7 @@ do -- AI_A2G_DISPATCHER
   --        A2GDispatcher:SetSquadronBai( "Maykop", 900, 1200 )
   -- 
   -- @return #AI_A2G_DISPATCHER
-  function AI_A2G_DISPATCHER:SetSquadronBai( SquadronName, EngageMinSpeed, EngageMaxSpeed )
+  function AI_A2G_DISPATCHER:SetSquadronBai( SquadronName, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude )
   
     local DefenderSquadron = self:GetSquadron( SquadronName )
 
@@ -1856,6 +1873,8 @@ do -- AI_A2G_DISPATCHER
     Bai.Name = SquadronName
     Bai.EngageMinSpeed = EngageMinSpeed
     Bai.EngageMaxSpeed = EngageMaxSpeed
+    Bai.EngageFloorAltitude = EngageFloorAltitude
+    Bai.EngageCeilingAltitude = EngageCeilingAltitude
     Bai.Defend = true
     
     self:F( { Bai = Bai } )
@@ -1885,12 +1904,12 @@ do -- AI_A2G_DISPATCHER
   -- @param #AI_A2G_DISPATCHER self
   -- @param #string SquadronName The squadron name.
   -- @param Core.Zone#ZONE_BASE Zone The @{Zone} object derived from @{Core.Zone#ZONE_BASE} that defines the zone wherein the Patrol will be executed.
-  -- @param #number FloorAltitude The minimum altitude at which the cap can be executed.
-  -- @param #number CeilingAltitude the maximum altitude at which the cap can be executed.
-  -- @param #number PatrolMinSpeed The minimum speed at which the cap can be executed.
-  -- @param #number PatrolMaxSpeed The maximum speed at which the cap can be executed.
-  -- @param #number EngageMinSpeed The minimum speed at which the engage can be executed.
-  -- @param #number EngageMaxSpeed The maximum speed at which the engage can be executed.
+  -- @param #number FloorAltitude (optional, default = 1000m ) The minimum altitude at which the cap can be executed.
+  -- @param #number CeilingAltitude (optional, default = 1500m ) The maximum altitude at which the cap can be executed.
+  -- @param #number PatrolMinSpeed (optional, default = 50% of max speed) The minimum speed at which the cap can be executed.
+  -- @param #number PatrolMaxSpeed (optional, default = 75% of max speed) The maximum speed at which the cap can be executed.
+  -- @param #number EngageMinSpeed (optional, default = 50% of max speed) The minimum speed at which the engage can be executed.
+  -- @param #number EngageMaxSpeed (optional, default = 75% of max speed) The maximum speed at which the engage can be executed.
   -- @param #number AltType The altitude type, which is a string "BARO" defining Barometric or "RADIO" defining radio controlled altitude.
   -- @return #AI_A2G_DISPATCHER
   -- @usage
@@ -1908,8 +1927,10 @@ do -- AI_A2G_DISPATCHER
     local BaiPatrol = DefenderSquadron.BAI
     BaiPatrol.Name = SquadronName
     BaiPatrol.Zone = Zone
-    BaiPatrol.FloorAltitude = FloorAltitude
-    BaiPatrol.CeilingAltitude = CeilingAltitude
+    BaiPatrol.PatrolFloorAltitude = FloorAltitude
+    BaiPatrol.PatrolCeilingAltitude = CeilingAltitude
+    BaiPatrol.EngageFloorAltitude = FloorAltitude
+    BaiPatrol.EngageCeilingAltitude = CeilingAltitude
     BaiPatrol.PatrolMinSpeed = PatrolMinSpeed
     BaiPatrol.PatrolMaxSpeed = PatrolMaxSpeed
     BaiPatrol.EngageMinSpeed = EngageMinSpeed
@@ -2856,13 +2877,16 @@ do -- AI_A2G_DISPATCHER
         if DefenderUnitIndex == 1 then
           DefenderPatrolTemplate = UTILS.DeepCopy( DefenderTemplate )
           self.DefenderPatrolIndex = self.DefenderPatrolIndex + 1
-          DefenderPatrolTemplate.name = SquadronName .. "#" .. self.DefenderPatrolIndex .. "#" .. GroupName
+          --DefenderPatrolTemplate.name = SquadronName .. "#" .. self.DefenderPatrolIndex .. "#" .. GroupName
+          DefenderPatrolTemplate.name = GroupName
           DefenderName = DefenderPatrolTemplate.name
         else
           -- Add the unit in the template to the DefenderPatrolTemplate.
           local DefenderUnitTemplate = DefenderTemplate.units[1]
           DefenderPatrolTemplate.units[DefenderUnitIndex] = DefenderUnitTemplate
         end
+        DefenderPatrolTemplate.units[DefenderUnitIndex].name = string.format( DefenderPatrolTemplate.name .. '-%02d', DefenderUnitIndex )
+        DefenderPatrolTemplate.units[DefenderUnitIndex].unitId = nil
         DefenderUnitIndex = DefenderUnitIndex + 1
         DefenderSquadron.Resources[TemplateID][GroupName] = nil
         if DefenderUnitIndex > DefenderGrouping then
@@ -2880,8 +2904,8 @@ do -- AI_A2G_DISPATCHER
         DefenderPatrolTemplate.route.points[1].type   = GROUPTEMPLATE.Takeoff[Takeoff][1] -- type
         DefenderPatrolTemplate.route.points[1].action = GROUPTEMPLATE.Takeoff[Takeoff][2] -- action
         local Defender = _DATABASE:Spawn( DefenderPatrolTemplate )
-      
         self:AddDefenderToSquadron( DefenderSquadron, Defender, DefenderGrouping )
+        Defender:Activate()
         return Defender, DefenderGrouping
       end
     else
@@ -2915,7 +2939,9 @@ do -- AI_A2G_DISPATCHER
       
       if DefenderPatrol then
 
-        local Fsm = AI_A2G_PATROL:New( DefenderPatrol, Patrol.Zone, Patrol.FloorAltitude, Patrol.CeilingAltitude, Patrol.PatrolMinSpeed, Patrol.PatrolMaxSpeed, Patrol.EngageMinSpeed, Patrol.EngageMaxSpeed, Patrol.AltType )
+        local AI_A2G_PATROL = { SEAD = AI_A2G_SEAD, BAI = AI_A2G_BAI, CAS = AI_A2G_CAS }
+        
+        local Fsm = AI_A2G_PATROL[DefenseTaskType]:New( DefenderPatrol, Patrol.EngageMinSpeed, Patrol.EngageMaxSpeed, Patrol.EngageFloorAltitude, Patrol.EngageCeilingAltitude, Patrol.Zone, Patrol.PatrolFloorAltitude, Patrol.PatrolCeilingAltitude, Patrol.PatrolMinSpeed, Patrol.PatrolMaxSpeed, Patrol.AltType )
         Fsm:SetDispatcher( self )
         Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
         Fsm:SetFuelThreshold( DefenderSquadron.FuelThreshold or self.DefenderDefault.FuelThreshold, 60 )
@@ -2924,7 +2950,7 @@ do -- AI_A2G_DISPATCHER
         Fsm:SetTanker( DefenderSquadron.TankerName or self.DefenderDefault.TankerName )
         Fsm:Start()
 
-        self:SetDefenderTask( SquadronName, DefenderPatrol, DefenseTaskType, Fsm )
+        self:SetDefenderTask( SquadronName, DefenderPatrol, DefenseTaskType, Fsm, nil, DefenderGrouping )
 
         function Fsm:onafterTakeoff( Defender, From, Event, To )
           self:F({"Patrol Birth", Defender:GetName()})
@@ -2961,7 +2987,7 @@ do -- AI_A2G_DISPATCHER
           if Dispatcher:GetSquadronLanding( Squadron.Name ) == AI_A2G_DISPATCHER.Landing.NearAirbase then
             Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
             Defender:Destroy()
-            self:ParkDefender( Squadron, Defender )
+            Dispatcher:ParkDefender( Squadron, Defender )
           end
         end
       end
@@ -2992,6 +3018,8 @@ do -- AI_A2G_DISPATCHER
   function AI_A2G_DISPATCHER:onafterDefend( From, Event, To, AttackerDetection, DefendersTotal, DefendersEngaged, DefendersMissing, DefenderFriendlies, DefenseTaskType )
 
     self:F( { From, Event, To, AttackerDetection.Index, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing, DefenderFriendlies = DefenderFriendlies } )
+
+    AttackerDetection.Type = DefenseTaskType -- This is set to report the task type in the status panel.
 
     local AttackerSet = AttackerDetection.Set
     local AttackerUnit = AttackerSet:GetFirst()
@@ -3103,7 +3131,9 @@ do -- AI_A2G_DISPATCHER
                 
                   DefenderCount = DefenderCount - DefenderGrouping / DefenderOverhead
         
-                  local Fsm = AI_A2G_ENGAGE:New( DefenderGroup, Defense.EngageMinSpeed, Defense.EngageMaxSpeed )
+                  local AI_A2G_ENGAGE = { SEAD = AI_A2G_SEAD, BAI = AI_A2G_BAI, CAS = AI_A2G_CAS }
+        
+                  local Fsm = AI_A2G_ENGAGE[DefenseTaskType]:New( DefenderGroup, Defense.EngageMinSpeed, Defense.EngageMaxSpeed, Defense.EngageFloorAltitude, Defense.EngageCeilingAltitude ) -- AI.AI_A2G_ENGAGE
                   Fsm:SetDispatcher( self )
                   Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
                   Fsm:SetFuelThreshold( DefenderSquadron.FuelThreshold or self.DefenderDefault.FuelThreshold, 60 )
@@ -3120,6 +3150,8 @@ do -- AI_A2G_DISPATCHER
                     local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
                     local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
                     local DefenderTarget = Dispatcher:GetDefenderTaskTarget( Defender )
+                    
+                    self:F( { DefenderTarget = DefenderTarget } )
                     
                     if DefenderTarget then
                       Fsm:__Engage( 2, DefenderTarget.Set ) -- Engage on the TargetSetUnit
@@ -3141,10 +3173,10 @@ do -- AI_A2G_DISPATCHER
                     
                     local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
                     local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-                    if Defender:IsAboveRunway() then
-                      Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
-                      Defender:Destroy()
-                    end
+                    --if Defender:IsAboveRunway() then
+                      --Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
+                      --Defender:Destroy()
+                    --end
                   end
                   
                   --- @param #AI_A2G_DISPATCHER self
@@ -3163,7 +3195,7 @@ do -- AI_A2G_DISPATCHER
                     if Dispatcher:GetSquadronLanding( Squadron.Name ) == AI_A2G_DISPATCHER.Landing.NearAirbase then
                       Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
                       Defender:Destroy()
-                      self:ParkDefender( Squadron, Defender )
+                      Dispatcher:ParkDefender( Squadron, Defender )
                     end
                   end
                 end  -- if DefenderGCI then
@@ -3298,8 +3330,11 @@ do -- AI_A2G_DISPATCHER
           
     for DefenderGroup, DefenderTask in pairs( self:GetDefenderTasks() ) do
       local DefenderGroup = DefenderGroup -- Wrapper.Group#GROUP
+      local DefenderTaskFsm = self:GetDefenderTaskFsm( DefenderGroup )
+      if DefenderTaskFsm:Is( "LostControl" ) then
+        self:ClearDefenderTask( DefenderGroup )
+      end
       if not DefenderGroup:IsAlive() then
-        local DefenderTaskFsm = self:GetDefenderTaskFsm( DefenderGroup )
         self:F( { Defender = DefenderGroup:GetName(), DefenderState = DefenderTaskFsm:GetState() } )
         if not DefenderTaskFsm:Is( "Started" ) then
           self:ClearDefenderTask( DefenderGroup )
@@ -3312,10 +3347,10 @@ do -- AI_A2G_DISPATCHER
             self:ClearDefenderTaskTarget( DefenderGroup )
           else
             if DefenderTask.Target.Set then
-              local AttackerCount = DefenderTask.Target.Set:Count()
-              if AttackerCount == 0 then
+              local TargetCount = DefenderTask.Target.Set:Count()
+              if TargetCount == 0 then
                 self:F( { "All Targets destroyed in Target, removing:", DefenderTask.Target.Index } )
-                self:ClearDefenderTaskTarget( DefenderGroup )
+                self:ClearDefenderTask( DefenderGroup )
               end
             end
           end
@@ -3410,7 +3445,7 @@ do -- AI_A2G_DISPATCHER
 
       if self.TacticalDisplay then      
         -- Show tactical situation
-        Report:Add( string.format( "\n - Target %s ( %s ): ( #%d ) %s" , DetectedItem.ItemID, DetectedItem.Index, DetectedItem.Set:Count(), DetectedItem.Set:GetObjectNames() ) )
+        Report:Add( string.format( "\n - %4s %s ( %s ): ( #%d ) %s" , DetectedItem.Type or " --- ", DetectedItem.ItemID, DetectedItem.Index, DetectedItem.Set:Count(), DetectedItem.Set:GetObjectNames() ) )
         for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
           local Defender = Defender -- Wrapper.Group#GROUP
            if DefenderTask.Target and DefenderTask.Target.Index == DetectedItem.Index then

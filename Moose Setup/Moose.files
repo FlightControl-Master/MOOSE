@@ -72,6 +72,9 @@ AI/AI_A2A_Gci.lua
 AI/AI_A2A_Dispatcher.lua
 AI/AI_A2G.lua
 AI/AI_A2G_Engage.lua
+AI/AI_A2G_BAI.lua
+AI/AI_A2G_CAS.lua
+AI/AI_A2G_SEAD.lua
 AI/AI_A2G_Patrol.lua
 AI/AI_A2G_Dispatcher.lua
 AI/AI_Patrol.lua
@@ -109,4 +112,4 @@ Tasking/Task_Cargo_CSAR.lua
 Tasking/Task_Cargo_Dispatcher.lua
 Tasking/TaskZoneCapture.lua
 
-Moose.lua
+Globals.lua

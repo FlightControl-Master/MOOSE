@@ -14,7 +14,7 @@
 
 
 --- @type AI_A2G_ENGAGE
--- @extends AI.AI_A2A#AI_A2A
+-- @extends AI.AI_A2G#AI_A2G
 
 
 --- Implements the core functions to intercept intruders. Use the Engage trigger to intercept intruders.
@@ -81,8 +81,12 @@ AI_A2G_ENGAGE = {
 --- Creates a new AI_A2G_ENGAGE object
 -- @param #AI_A2G_ENGAGE self
 -- @param Wrapper.Group#GROUP AIGroup
+-- @param DCS#Speed EngageMinSpeed (optional, default = 50% of max speed) The minimum speed of the @{Wrapper.Group} in km/h when engaging a target.
+-- @param DCS#Speed  EngageMaxSpeed (optional, default = 75% of max speed) The maximum speed of the @{Wrapper.Group} in km/h when engaging a target.
+-- @param DCS#Altitude EngageFloorAltitude (optional, default = 1000m ) The lowest altitude in meters where to execute the engagement.
+-- @param DCS#Altitude EngageCeilingAltitude (optional, default = 1500m ) The highest altitude in meters where to execute the engagement.
 -- @return #AI_A2G_ENGAGE
-function AI_A2G_ENGAGE:New( AIGroup, EngageMinSpeed, EngageMaxSpeed )
+function AI_A2G_ENGAGE:New( AIGroup, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude )
 
   -- Inherits from BASE
   local self = BASE:Inherit( self, AI_A2G:New( AIGroup ) ) -- #AI_A2G_ENGAGE
@@ -90,14 +94,14 @@ function AI_A2G_ENGAGE:New( AIGroup, EngageMinSpeed, EngageMaxSpeed )
   self.Accomplished = false
   self.Engaging = false
   
-  self.EngageMinSpeed = EngageMinSpeed
-  self.EngageMaxSpeed = EngageMaxSpeed
-  self.PatrolMinSpeed = EngageMinSpeed
-  self.PatrolMaxSpeed = EngageMaxSpeed
+  local SpeedMax = AIGroup:GetSpeedMax()
   
-  self.PatrolAltType = "RADIO"
+  self.EngageMinSpeed = EngageMinSpeed or SpeedMax * 0.5
+  self.EngageMaxSpeed = EngageMaxSpeed or SpeedMax * 0.75
+  self.EngageFloorAltitude = EngageFloorAltitude or 1000
+  self.EngageCeilingAltitude = EngageCeilingAltitude or 1500
   
-  self:AddTransition( { "Started", "Engaging", "Returning", "Airborne" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_A2G_ENGAGE.
+  self:AddTransition( { "Started", "Engaging", "Returning", "Airborne", "Patrolling" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_A2G_ENGAGE.
 
   --- OnBefore Transition Handler for Event Engage.
   -- @function [parent=#AI_A2G_ENGAGE] OnBeforeEngage
@@ -266,7 +270,8 @@ end
 -- @param #string To The To State string.
 function AI_A2G_ENGAGE:onafterStart( AIGroup, From, Event, To )
 
-  self:GetParent( self ).onafterStart( self, AIGroup, From, Event, To )
+  self:GetParent( self, AI_A2G_ENGAGE ).onafterStart( self, AIGroup, From, Event, To )
+
   AIGroup:HandleEvent( EVENTS.Takeoff, nil, self )
 
 end
@@ -327,81 +332,14 @@ end
 
 
 --- @param #AI_A2G_ENGAGE self
--- @param Wrapper.Group#GROUP AIGroup The GroupGroup managed by the FSM.
+-- @param Wrapper.Group#GROUP DefenderGroup The GroupGroup managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
-function AI_A2G_ENGAGE:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
+function AI_A2G_ENGAGE:onafterEngage( DefenderGroup, From, Event, To, AttackSetUnit )
 
-  self:F( { AIGroup, From, Event, To, AttackSetUnit} )
-
-  self.AttackSetUnit = AttackSetUnit or self.AttackSetUnit -- Core.Set#SET_UNIT
+  self:F( { DefenderGroup, From, Event, To, AttackSetUnit} )
   
-  local FirstAttackUnit = self.AttackSetUnit:GetFirst()
-  
-  if FirstAttackUnit and FirstAttackUnit:IsAlive() then
-
-    if AIGroup:IsAlive() then
-  
-      local EngageRoute = {}
-      
-      local CurrentCoord = AIGroup:GetCoordinate()
-  
-      --- Calculate the target route point.
-      
-      local CurrentCoord = AIGroup:GetCoordinate()
-      
-      local ToTargetCoord = self.AttackSetUnit:GetFirst():GetCoordinate()
-      self:SetTargetDistance( ToTargetCoord ) -- For RTB status check
-      
-      local ToTargetSpeed = math.random( self.EngageMinSpeed, self.EngageMaxSpeed )
-      local ToEngageAngle = CurrentCoord:GetAngleDegrees( CurrentCoord:GetDirectionVec3( ToTargetCoord ) )
-      
-      --- Create a route point of type air.
-      local ToPatrolRoutePoint = CurrentCoord:Translate( 15000, ToEngageAngle ):WaypointAir( 
-        self.PatrolAltType, 
-        POINT_VEC3.RoutePointType.TurningPoint, 
-        POINT_VEC3.RoutePointAction.TurningPoint, 
-        ToTargetSpeed, 
-        true 
-      )
-  
-      self:F( { Angle = ToEngageAngle, ToTargetSpeed = ToTargetSpeed } )
-      self:F( { self.EngageMinSpeed, self.EngageMaxSpeed, ToTargetSpeed } )
-      
-      EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
-      EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
-      
-      local AttackTasks = {}
-  
-      for AttackUnitID, AttackUnit in pairs( self.AttackSetUnit:GetSet() ) do
-        local AttackUnit = AttackUnit -- Wrapper.Unit#UNIT
-        if AttackUnit:IsAlive() and AttackUnit:IsGround() then
-          self:T( { "Eliminating Unit:", AttackUnit:GetName(), AttackUnit:IsAlive(), AttackUnit:IsGround() } )
-          AttackTasks[#AttackTasks+1] = AIGroup:TaskAttackUnit( AttackUnit )
-        end
-      end
-        
-      if #AttackTasks == 0 then
-        self:E("No targets found -> Going RTB")
-        self:Return()
-        self:__RTB( 0.5 )
-      else
-        AIGroup:OptionROEOpenFire()
-        AIGroup:OptionROTEvadeFire()
-
-        AttackTasks[#AttackTasks+1] = AIGroup:TaskFunction( "AI_A2G_ENGAGE.EngageRoute", self )
-        EngageRoute[#EngageRoute].task = AIGroup:TaskCombo( AttackTasks )
-      end
-      
-      AIGroup:Route( EngageRoute, 0.5 )
-    
-    end
-  else
-    self:E("No targets found -> Going RTB")
-    self:Return()
-    self:__RTB( 0.5 )
-  end
 end
 
 --- @param #AI_A2G_ENGAGE self

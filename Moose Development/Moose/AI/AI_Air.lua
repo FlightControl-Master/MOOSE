@@ -298,6 +298,19 @@ function AI_AIR:SetSpeed( PatrolMinSpeed, PatrolMaxSpeed )
 end
 
 
+--- Sets (modifies) the minimum and maximum RTB speed of the patrol.
+-- @param #AI_AIR self
+-- @param DCS#Speed  RTBMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.
+-- @param DCS#Speed  RTBMaxSpeed The maximum speed of the @{Wrapper.Controllable} in km/h.
+-- @return #AI_AIR self
+function AI_AIR:SetRTBSpeed( RTBMinSpeed, RTBMaxSpeed )
+  self:F2( { RTBMinSpeed, RTBMaxSpeed } )
+  
+  self.RTBMinSpeed = RTBMinSpeed
+  self.RTBMaxSpeed = RTBMaxSpeed
+end
+
+
 --- Sets the floor and ceiling altitude of the patrol.
 -- @param #AI_AIR self
 -- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
@@ -425,7 +438,6 @@ function AI_AIR:onafterStatus()
     
     if not self:Is( "Holding" ) and not self:Is( "Returning" ) then
       local DistanceFromHomeBase = self.HomeAirbase:GetCoordinate():Get2DDistance( self.Controllable:GetCoordinate() )
-      self:F({DistanceFromHomeBase=DistanceFromHomeBase})
       
       if DistanceFromHomeBase > self.DisengageRadius then
         self:E( self.Controllable:GetName() .. " is too far from home base, RTB!" )
@@ -444,9 +456,13 @@ function AI_AIR:onafterStatus()
     
 
     if not self:Is( "Fuel" ) and not self:Is( "Home" ) then
+      
       local Fuel = self.Controllable:GetFuelMin()
-      self:F({Fuel=Fuel, FuelThresholdPercentage=self.FuelThresholdPercentage})
+      
+      -- If the fuel in the controllable is below the treshold percentage,
+      -- then send for refuel in case of a tanker, otherwise RTB.
       if Fuel < self.FuelThresholdPercentage then
+      
         if self.TankerName then
           self:E( self.Controllable:GetName() .. " is out of fuel: " .. Fuel .. " ... Refuelling at Tanker!" )
           self:Refuel()
@@ -468,14 +484,17 @@ function AI_AIR:onafterStatus()
     -- TODO: Check GROUP damage function.
     local Damage = self.Controllable:GetLife()
     local InitialLife = self.Controllable:GetLife0()
-    self:F( { Damage = Damage, InitialLife = InitialLife, DamageThreshold = self.PatrolDamageThreshold } )
+    
+    -- If the group is damaged, then RTB.
+    -- Note that a group can consist of more units, so if one unit is damaged of a group, the mission may continue.
+    -- The damaged unit will RTB due to DCS logic, and the others will continue to engage.
     if ( Damage / InitialLife ) < self.PatrolDamageThreshold then
       self:E( self.Controllable:GetName() .. " is damaged: " .. Damage .. " ... RTB!" )
       self:Damaged()
       RTB = true
       self:SetStatusOff()
     end
-
+    
     -- Check if planes went RTB and are out of control.
     -- We only check if planes are out of control, when they are in duty.
     if self.Controllable:HasTask() == false then
@@ -484,11 +503,12 @@ function AI_AIR:onafterStatus()
          not self:Is( "Fuel" ) and 
          not self:Is( "Damaged" ) and 
          not self:Is( "Home" ) then
-        if self.IdleCount >= 2 then
+        if self.IdleCount >= 10 then
           if Damage ~= InitialLife then
             self:Damaged()
           else  
             self:E( self.Controllable:GetName() .. " control lost! " )
+            
             self:LostControl()
           end
         else
@@ -547,7 +567,7 @@ function AI_AIR:onafterRTB( AIGroup, From, Event, To )
     self:E( "Group " .. AIGroup:GetName() .. " ... RTB! ( " .. self:GetState() .. " )" )
     
     self:ClearTargetDistance()
-    AIGroup:ClearTasks()
+    --AIGroup:ClearTasks()
 
     local EngageRoute = {}
 
@@ -555,7 +575,7 @@ function AI_AIR:onafterRTB( AIGroup, From, Event, To )
     
     local CurrentCoord = AIGroup:GetCoordinate()
     local ToTargetCoord = self.HomeAirbase:GetCoordinate()
-    local ToTargetSpeed = math.random( self.PatrolMinSpeed, self.PatrolMaxSpeed )
+    local ToTargetSpeed = math.random( self.RTBMinSpeed, self.RTBMaxSpeed )
     local ToAirbaseAngle = CurrentCoord:GetAngleDegrees( CurrentCoord:GetDirectionVec3( ToTargetCoord ) )
 
     local Distance = CurrentCoord:Get2DDistance( ToTargetCoord )
@@ -575,9 +595,6 @@ function AI_AIR:onafterRTB( AIGroup, From, Event, To )
       true 
     )
 
-    self:F( { Angle = ToAirbaseAngle, ToTargetSpeed = ToTargetSpeed } )
-    self:T2( { self.MinSpeed, self.MaxSpeed, ToTargetSpeed } )
-    
     EngageRoute[#EngageRoute+1] = ToRTBRoutePoint
     EngageRoute[#EngageRoute+1] = ToRTBRoutePoint
     

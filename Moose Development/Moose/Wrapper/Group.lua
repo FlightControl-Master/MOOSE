@@ -934,7 +934,7 @@ end
 -- @return #number The fuel state of the unit with the least amount of fuel
 -- @return #Unit reference to #Unit object for further processing
 function GROUP:GetFuelMin()
-  self:F(self.ControllableName)
+  self:F3(self.ControllableName)
 
   if not self:GetDCSObject() then
     BASE:E( { "Cannot GetFuel", Group = self, Alive = self:IsAlive() } )
