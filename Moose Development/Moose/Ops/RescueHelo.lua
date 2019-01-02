@@ -218,7 +218,7 @@ RESCUEHELO = {
 
 --- Class version.
 -- @field #string version
-RESCUEHELO.version="1.0.0"
+RESCUEHELO.version="1.0.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -530,10 +530,10 @@ end
 
 --- Set offset perpendicular to orientation to carrier.
 -- @param #RESCUEHELO self
--- @param #number distance Offset distance in meters. Default 100 m.
+-- @param #number distance Offset distance in meters. Default 240 m.
 -- @return #RESCUEHELO self
 function RESCUEHELO:SetOffsetZ(distance)
-  self.offsetZ=distance or 100
+  self.offsetZ=distance or 240
   return self
 end
 

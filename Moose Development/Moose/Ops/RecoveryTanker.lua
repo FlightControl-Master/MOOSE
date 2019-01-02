@@ -237,7 +237,7 @@ RECOVERYTANKER = {
 
 --- Class version.
 -- @field #string version
-RECOVERYTANKER.version="1.0.0"
+RECOVERYTANKER.version="1.0.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -739,7 +739,7 @@ function RECOVERYTANKER:onafterStart(From, Event, To)
   end
 
   -- Initialize route. self.distStern<0!
-  SCHEDULER:New(self, self._InitRoute, {-self.distStern+UTILS.NMToMeters(3)}, 1)
+  SCHEDULER:New(nil, self._InitRoute, {self, -self.distStern+UTILS.NMToMeters(3)}, 1)
   --self:_InitRoute(-self.distStern+UTILS.NMToMeters(3), 1)
   
   -- Create tanker beacon.
@@ -975,7 +975,7 @@ function RECOVERYTANKER:OnEventEngineShutdown(EventData)
       end
 
       -- Initial route.
-      SCHEDULER:New(self, self._InitRoute, {-self.distStern+UTILS.NMToMeters(3)}, 2)
+      SCHEDULER:New(nil, self._InitRoute, {self, -self.distStern+UTILS.NMToMeters(3)}, 2)
       
     end
     
@@ -1209,7 +1209,7 @@ function RECOVERYTANKER:_ActivateTACAN(delay)
   if delay and delay>0 then
   
     -- Schedule TACAN activation.
-    SCHEDULER:New(self, self._ActivateTACAN, {}, delay)
+    SCHEDULER:New(nil, self._ActivateTACAN, {self}, delay)
     
   else
 
