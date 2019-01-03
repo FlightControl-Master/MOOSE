@@ -278,6 +278,7 @@
 --    * **F3 Request Marshal**
 --    * **F4 Request Commence**
 --    * **F5 Request Refueling**
+--    * **F6 [Reset My Status]**
 -- 
 -- ### Request Marshal
 -- 
@@ -380,12 +381,12 @@
 -- 
 -- ## LSO Grading
 -- 
--- LSO grading starts when the player enters the groove. The flight path and aircraft attitude is evaluated at certain steps
+-- LSO grading starts when the player enters the groove. The flight path and aircraft attitude is evaluated at certain steps (distances measured from rundown):
 -- 
---    * **X** At the Start (0.75 NM = 1389 m from the rundown).
---    * **IM** In the Middle (0.375 NM = 695 from the rundown).
---    * **IC** In Close (0.18 NM = 333 m from the rundown).
---    * **AR** At the Ramp (0.027 NM = 50 m from the rundown).
+--    * **X** At the Start (0.75 NM = 1390 m).
+--    * **IM** In the Middle (0.375 NM = 695 m).
+--    * **IC** In Close (0.18 NM = 333 m).
+--    * **AR** At the Ramp (0.027 NM = 50 m).
 --    * **IW** In the Wiress (at the landing position).
 -- 
 -- Grading at each step includes the above calls, i.e.
@@ -393,7 +394,7 @@
 --    * **L**ined **U**p **L**eft or **R**ight: LUL, LUR
 --    * Too **H**igh or too **LO**w: H, LO
 --    * Too **F**ast or too **SLO**w: F, SLO
---    * Fly through **down* or **up**: \\, /
+--    * **Fly through** glide slope **down** or **up**: \\ , /
 --    
 -- Each grading, x, is subdivided by
 -- 
@@ -408,7 +409,7 @@
 --    * Glide slope error < -1.2 degrees or > 1.8 degrees and/or
 --    * AOA depending on aircraft type and only applied if skill level is "TOPGUN graduate".
 --    
--- Line up and glide slope error thresholds were tested using [https://forums.eagle.ru/showthread.php?t=211557](VFA-113 Stingers LSO Mod),
+-- Line up and glide slope error thresholds were tested using [VFA-113 Stingers LSO Mod](https://forums.eagle.ru/showthread.php?t=211557),
 -- if the aircraft is outside the red box.
 -- 
 -- ## Pattern Wave Off

@@ -381,7 +381,7 @@ end
 -- @param #number WaitTime Time in seconds, before the task is set.
 -- @return Wrapper.Controllable#CONTROLLABLE self
 function CONTROLLABLE:SetTask( DCSTask, WaitTime )
-  self:E( { "SetTask", WaitTime, DCSTask = DCSTask } )
+  self:F( { "SetTask", WaitTime, DCSTask = DCSTask } )
 
   local DCSControllable = self:GetDCSObject()
 
@@ -389,7 +389,7 @@ function CONTROLLABLE:SetTask( DCSTask, WaitTime )
 
     local DCSControllableName = self:GetName()
     
-    self:E( "Controllable Name = " .. DCSControllableName )
+    self:T2( "Controllable Name = " .. DCSControllableName )
 
     -- When a controllable SPAWNs, it takes about a second to get the controllable in the simulator. Setting tasks to unspawned controllables provides unexpected results.
     -- Therefore we schedule the functions to set the mission and options for the Controllable.
