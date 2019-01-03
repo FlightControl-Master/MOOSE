@@ -2639,7 +2639,7 @@ function SPAWN:_OnEngineShutDown( EventData )
   				self:T( { "EngineShutDown: ", "ReSpawn:", SpawnGroup:GetName(), SpawnGroupIndex } )
   				--self:ReSpawn( SpawnGroupIndex )
   				-- Delay respawn by three seconds due to DCS 2.5.4 OB bug https://github.com/FlightControl-Master/MOOSE/issues/1076
-  				SCHEDULER:New(self, self.ReSpawn, {SpawnGroupIndex}, 3)
+  				SCHEDULER:New(nil, self.ReSpawn, {self, SpawnGroupIndex}, 3)
   			end
   		end
     end
