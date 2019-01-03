@@ -269,7 +269,9 @@
 -- The F10 radio menu can be used to post requests to Marshal but also provides information about the player and carrier status. Additionally, helper functions
 -- can be called.
 -- 
--- ## Main Menu
+-- ## Root Menu
+-- 
+-- ![Banner Image](..\Presentations\AIRBOSS\Airboss_MenuRoot.png)
 -- 
 -- The general structure
 -- 
@@ -306,9 +308,13 @@
 -- 
 -- ## Help Menu
 -- 
+-- ![Banner Image](..\Presentations\AIRBOSS\Airboss_MenuHelp.png)
+-- 
 -- This menu provides commands to help the player. 
 -- 
 -- ### Mark Zones Submenu
+-- 
+-- ![Banner Image](..\Presentations\AIRBOSS\Airboss_MenuMarkZones.png)
 -- 
 -- These commands can be used to mark marshal or landing pattern zones.
 -- 
@@ -317,8 +323,14 @@
 --    * **Flare Pattern Zones** Similar to smoke but uses flares to mark the pattern zones.
 --    * **Smoke Marshal Zone** This smokes the surrounding area of the currently assigned Marshal zone of the player. Player has to be registered in Marshal queue.
 --    * **Flare Marshal Zone** Similar to smoke but uses flares to mark the Marshal zone.
+--    
+-- Note that the smoke lasts ~5 minutes but the zones are moving along with the carrier. So after some time, the smoke gives shows you a picture of the past.
+-- 
+-- ![Banner Image](..\Presentations\AIRBOSS\Airboss_Case3_FlarePattern.png)
 -- 
 -- ### Skill Level Submenu
+-- 
+-- ![Banner Image](..\Presentations\AIRBOSS\Airboss_MenuSkill.png)
 -- 
 -- The player can choose between three skill or difficulty levels.
 -- 
@@ -328,12 +340,18 @@
 --       
 -- ### My Status
 -- 
+-- ![Banner Image](..\Presentations\AIRBOSS\Airboss_MenuMyStatus.png)
+-- 
 -- This command provides information about the current player status. For example, his current step in the pattern.
 -- 
 -- ### Attitude Monitor
 -- 
+-- ![Banner Image](..\Presentations\AIRBOSS\Airboss_MenuAttitudeMonitor.png)
+-- 
 -- This command displays the current aircraft attitude of the player in short intervals as message on the screen.
 -- It provides information about current pitch, roll, yaw, lineup and glideslope error, orientation of the plane wrt to carrier etc.
+-- 
+-- If you are in the groove, current lineup and glide slope errors are displayed and you get an on-the-fly LSO grade.
 -- 
 -- ### LSO Radio Check
 -- 
@@ -345,9 +363,13 @@
 -- 
 -- ## Kneeboard Menu
 -- 
+-- ![Banner Image](..\Presentations\AIRBOSS\Airboss_MenuKneeboard.png)
+-- 
 -- The Kneeboard menu provides information about the carrier, weather and player results.
 -- 
 -- ### Results Submenu
+-- 
+-- ![Banner Image](..\Presentations\AIRBOSS\Airboss_MenuResults.png)
 -- 
 -- Here you find your LSO grading results as well as scores of other players.
 -- 
@@ -357,9 +379,13 @@
 -- 
 -- ### Carrier Info
 -- 
+-- ![Banner Image](..\Presentations\AIRBOSS\Airboss_MenuCarrierInfo.png)
+-- 
 -- Information about the current carrier status is displayed. This includes current BRC, FB, LSO and Marshal frequences, list of next recovery windows.
 -- 
 -- ### Weather Report
+-- 
+-- ![Banner Image](..\Presentations\AIRBOSS\Airboss_MenuWeatherReport.png)
 -- 
 -- Displays information about the current weather at the carrier such as QFE, wind and temperature.
 -- 
@@ -367,6 +393,12 @@
 -- 
 -- With this command, you can define a section of human flights. The player how issues the command becomes the section lead and all other human players
 -- within a radius of 200 meters become members of the section.
+-- 
+-- ### Marshal Queue
+-- 
+-- ![Banner Image](..\Presentations\AIRBOSS\Airboss_MenuMarshalQueue.png)
+-- 
+-- Lists all flights currently in the Marshal queue including their assigned stack, recovery case and Charie time estimate. 
 -- 
 -- # Landing Signal Officer (LSO)
 -- 
@@ -408,9 +440,17 @@
 --    * Line up error > 3.0 degrees left or right and/or
 --    * Glide slope error < -1.2 degrees or > 1.8 degrees and/or
 --    * AOA depending on aircraft type and only applied if skill level is "TOPGUN graduate".
---    
--- Line up and glide slope error thresholds were tested using [VFA-113 Stingers LSO Mod](https://forums.eagle.ru/showthread.php?t=211557),
--- if the aircraft is outside the red box.
+--
+-- ![Banner Image](..\Presentations\AIRBOSS\Airboss_LSOPlatcam.png)
+--     
+-- Line up and glide slope error thresholds were tested extensively using [VFA-113 Stingers LSO Mod](https://forums.eagle.ru/showthread.php?t=211557),
+-- if the aircraft is outside the red box. In the picture above, **blue** numbers denote the line up thresholds while the **blacks** refer to the glide slope.
+-- 
+-- A wave off is called, when the aircraft is outside the red rectangle. The measurement stops already 50 m before the rundown, since the error in the calculation
+-- increases the closer the aircraft gets to the origin/reference point.
+-- 
+-- The optimal glide slope is assumed to be 3.5 degrees leading to a touch down point between the second and third wire.
+-- The height of the carrier deck and the exact wire locations are taken into account in the calculations.
 -- 
 -- ## Pattern Wave Off
 -- 
@@ -1141,7 +1181,7 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.7.0"
+AIRBOSS.version="0.7.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1317,7 +1357,7 @@ function AIRBOSS:New(carriername, alias)
     self.Debug=true
     BASE:TraceOnOff(true)
     BASE:TraceClass(self.ClassName)
-    BASE:TraceLevel(1)
+    BASE:TraceLevel(3)
   end
     
   -- Smoke zones.
@@ -3978,6 +4018,7 @@ function AIRBOSS:_InitPlayer(playerData, step)
   -- Set us up on final if group name contains "Groove". But only for the first pass.
   if playerData.group:GetName():match("Groove") and playerData.passes==0 then
     self:MessageToPlayer(playerData, "Group name contains \"Groove\". Happy groove testing.")
+    playerData.attitudemonitor=true
     playerData.step=AIRBOSS.PatternStep.FINAL
   end
   
@@ -4608,6 +4649,9 @@ function AIRBOSS:OnEventLand(EventData)
           
           -- Unkonwn step until we now more.
           playerData.step=AIRBOSS.PatternStep.UNDEFINED
+          
+          -- Switch attitude monitor off if on.
+          playerData.attitudemonitor=false          
     
           -- Call trapped function in 1 second to make sure we did not bolter.
           SCHEDULER:New(nil, self._Trapped, {self, playerData}, 1)
@@ -6465,10 +6509,10 @@ function AIRBOSS:_AttitudeMonitor(playerData)
   -- Output
   local text=string.format("Pattern step: %s\n", playerData.step) 
   text=text..string.format("AoA=%.1f | |V|=%.1f knots\n", aoa, UTILS.MpsToKnots(vabs))
-  text=text..string.format("Vx=%.1f Vy=%.1f Vz=%.1f m/s\n", velo.x, velo.y, velo.z)  
+  text=text..string.format("Vx=%.1f Vy=%.1f Vz=%.1f m/s\n", velo.x, velo.y, velo.z)
   text=text..string.format("Pitch=%.1f° | Roll=%.1f° | Yaw=%.1f°\n", pitch, roll, yaw)
   text=text..string.format("Climb Angle=%.1f° | Rate=%d ft/min\n", unit:GetClimbAngle(), velo.y*196.85) 
-  text=text..string.format("R=%.1f NM | X=%d Z=%d m\n", UTILS.MetersToNM(rho), dx, dz)
+  text=text..string.format("R=%.2f NM | X=%d Z=%d m\n", UTILS.MetersToNM(rho), dx, dz)
   text=text..string.format("Gamma=%.1f°", relhead)
   -- If in the groove, provide line up and glide slope error.
   if playerData.step==AIRBOSS.PatternStep.GROOVE_X0 or
@@ -6479,14 +6523,16 @@ function AIRBOSS:_AttitudeMonitor(playerData)
      playerData.step==AIRBOSS.PatternStep.GROOVE_IW then
     local lineup=self:_Lineup(playerData.unit, true)
     local glideslope=self:_Glideslope(playerData.unit, 3.5)
-    text=text..string.format("\nLU Error = %.1f° (line up)", lineup)
-    text=text..string.format("\nGS Error = %.1f° (glide slope)", glideslope)
+    text=text..string.format("\nLineUp=%.2f° | GlideSlope=%.2f°", lineup, glideslope)
+    --text=text..string.format("\nGlideslope = ", glideslope)
+    local grade, points, analysis=self:_LSOgrade(playerData)
+    text=text..string.format("\n%s %.1f PT - %s", grade, points, analysis)
   end
   
   -- Wind (for debugging).
   --text=text..string.format("Wind Vx=%.1f Vy=%.1f Vz=%.1f\n", wind.x, wind.y, wind.z)
 
-  MESSAGE:New(text, 3, nil , true):ToClient(playerData.client)
+  MESSAGE:New(text, 1, nil , true):ToClient(playerData.client)
 end
 
 --- Get glide slope of aircraft unit.
@@ -7423,29 +7469,31 @@ function AIRBOSS:_AltitudeCheck(playerData, altopt)
   -- Altitude error +-X%
   local _error=(altitude-altopt)/altopt*100
   
-  local radiocall={} --#AIRBOSS.RadioCall
+  -- TODO: radio call for flight students.
+  --local radiocall={} --#AIRBOSS.RadioCall
  
   local hint
   if _error>badscore then
     hint=string.format("You're high.")
-    radiocall=AIRBOSS.LSOCall.HIGH
-    radiocall.loud=true
-    radiocall.subtitle=""
+    -- TODO: Dang! This overwrites the array!
+    --radiocall=AIRBOSS.LSOCall.HIGH
+    --radiocall.loud=true
+    --radiocall.subtitle=""
   elseif _error>lowscore then
     hint= string.format("You're slightly high.")
-    radiocall=AIRBOSS.LSOCall.HIGH
-    radiocall.loud=false
-    radiocall.subtitle=""
+    --radiocall=AIRBOSS.LSOCall.HIGH
+    --radiocall.loud=false
+    --radiocall.subtitle=""
   elseif _error<-badscore then
     hint=string.format("You're low. ")
-    radiocall=AIRBOSS.LSOCall.LOW
-    radiocall.loud=true
-    radiocall.subtitle=""
+    --radiocall=AIRBOSS.LSOCall.LOW
+    --radiocall.loud=true
+    --radiocall.subtitle=""
   elseif _error<-lowscore then
     hint=string.format("You're slightly low.")
-    radiocall=AIRBOSS.LSOCall.LOW
-    radiocall.loud=false
-    radiocall.subtitle=""
+    --radiocall=AIRBOSS.LSOCall.LOW
+    --radiocall.loud=false
+    --radiocall.subtitle=""
   else
     hint=string.format("Good altitude.")
   end
@@ -7640,6 +7688,9 @@ end
 -- @param #AIRBOSS.PlayerData playerData Player data.
 function AIRBOSS:_Debrief(playerData)
   self:F(self.lid..string.format("Debriefing of player %s.", playerData.name))
+  
+  -- Switch attitude monitor off if on.
+  playerData.attitudemonitor=false
 
   -- LSO grade, points, and flight data analyis.
   local grade, points, analysis=self:_LSOgrade(playerData)
