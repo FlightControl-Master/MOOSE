@@ -93,7 +93,6 @@
 -- @field Core.Scheduler#SCHEDULER radiotimer Radio queue scheduler.
 -- @field Core.Zone#ZONE_UNIT zoneCCA Carrier controlled area (CCA), i.e. a zone of 50 NM radius around the carrier.
 -- @field Core.Zone#ZONE_UNIT zoneCCZ Carrier controlled zone (CCZ), i.e. a zone of 5 NM radius around the carrier.
--- @field Core.Zone#ZONE_UNIT zoneInitial Zone usually 3 NM astern of carrier where pilots start their CASE I pattern.
 -- @field #table players Table of players. 
 -- @field #table menuadded Table of units where the F10 radio menu was added.
 -- @field #AIRBOSS.Checkpoint BreakEntry Break entry checkpoint.
@@ -129,6 +128,7 @@
 -- @field #number magvar Magnetic declination in degrees.
 -- @field #number Tcollapse Last time timer.gettime() the stack collapsed.
 -- @field #AIRBOSS.Recovery recoverywindow Current or next recovery window opened.
+-- @field #boolean usersoundradio Use user sound output instead of radio transmissions.
 -- @extends Core.Fsm#FSM
 
 --- Be the boss!
@@ -559,7 +559,6 @@ AIRBOSS = {
   radiotimer    = nil,
   zoneCCA       = nil,
   zoneCCZ       = nil,
-  zoneInitial   = nil,
   players       =  {},
   menuadded     =  {},
   BreakEntry    =  {},
@@ -595,6 +594,7 @@ AIRBOSS = {
   magvar        = nil,
   Tcollapse     = nil,
   recoverywindow = nil,
+  usersoundradio = nil,
 }
 
 --- Player aircraft types capable of landing on carriers.
@@ -1181,7 +1181,7 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.7.1"
+AIRBOSS.version="0.7.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1346,7 +1346,7 @@ function AIRBOSS:New(carriername, alias)
   end
   
   -- CASE I/II moving zone: Zone 2.75 NM astern and 0.1 NM starboard of the carrier with a diameter of 1 NM.
-  self.zoneInitial=ZONE_UNIT:New("Initial Zone", self.carrier, UTILS.NMToMeters(0.5), {dx=-UTILS.NMToMeters(2.75), dy=UTILS.NMToMeters(0.1), relative_to_unit=true})
+  --self.zoneInitial=ZONE_UNIT:New("Initial Zone", self.carrier, UTILS.NMToMeters(0.5), {dx=-UTILS.NMToMeters(2.75), dy=UTILS.NMToMeters(0.1), relative_to_unit=true})
   
   -------------------
   -- Debug Section --
@@ -1765,6 +1765,13 @@ function AIRBOSS:SetMarshalRadio(frequency, modulation)
   self.MarshalRadio:SetModulation(self.MarshalModu)
 
   return self
+end
+
+--- Use user sound output instead of radio transmission for messages. Might be handy if radio transmissions are broken.
+-- @param #AIRBOSS self
+-- @return #AIRBOSS self
+function AIRBOSS:SetUserSoundRadio()
+  self.usersoundradio=true
 end
 
 --- Set number of aircraft units which can be in the landing pattern before the pattern is full.
@@ -2644,8 +2651,8 @@ function AIRBOSS:_InitStennis()
   self.BreakEntry.name="Break Entry"
   self.BreakEntry.Xmin=-UTILS.NMToMeters(4)          -- Not more than 4 NM behind the boat. Check for initial is at 3 NM with a radius of 500 m and 100 m starboard.
   self.BreakEntry.Xmax= nil
-  self.BreakEntry.Zmin=-400                          -- Not more than 400 m port of boat. Otherwise miss the zone.
-  self.BreakEntry.Zmax=UTILS.NMToMeters(1.5)         -- Not more than 1.5 NM starboard.
+  self.BreakEntry.Zmin=-UTILS.NMToMeters(0.5)        -- Not more than 0.5 NM port of boat.
+  self.BreakEntry.Zmax= UTILS.NMToMeters(1.5)        -- Not more than 1.5 NM starboard.
   self.BreakEntry.LimitXmin=0                        -- Check and next step when at carrier and starboard of carrier.
   self.BreakEntry.LimitXmax=nil
   self.BreakEntry.LimitZmin=nil
@@ -4945,7 +4952,7 @@ end
 function AIRBOSS:_Initial(playerData)
 
   -- Check if player is in initial zone and entering the CASE I pattern.
-  local inzone=playerData.unit:IsInZone(self.zoneInitial)
+  local inzone=playerData.unit:IsInZone(self:_GetZoneInitial(playerData.case))
 
   -- Relative heading to carrier direction.
   local relheading=self:_GetRelativeHeading(playerData.unit, false)
@@ -6121,6 +6128,56 @@ end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ZONE functions
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--- Get Initial zone for Case I or II.
+-- @param #AIRBOSS self
+-- @param #number case Recovery Case.
+-- @return Core.Zone#ZONE_POLYGON_BASE Initial zone.
+function AIRBOSS:_GetZoneInitial(case)
+
+  -- Get radial, i.e. inverse of BRC.
+  local radial=self:GetRadial(2, false, false)
+  
+  -- Carrier coordinate.
+  local cv=self:GetCoordinate()
+  
+  -- Zone and vec2 array.
+  local zone
+  local vec2
+  
+  if case==1 then
+    -- Case I
+  
+    local c1=cv:Translate(UTILS.NMToMeters(0.5), radial-90)                    --  0.0 0.5 starboard
+    local c2=c1:Translate(UTILS.NMToMeters(3), radial):Translate(1, radial-90) -- -3.0 1.5 starboard, astern
+    local c3=c2:Translate(UTILS.NMToMeters(2), radial+90)
+    local c4=cv:Translate(UTILS.NMToMeters(0.5), radial)
+    local c5=cv
+  
+    -- Vec2 array.
+    vec2={c1:GetVec2(), c2:GetVec2(), c3:GetVec2(), c4:GetVec2(), c5:GetVec2()}
+    
+  else
+    -- Case II
+
+    -- Funnel.
+    local c1=cv:Translate(UTILS.NMToMeters(0.5), radial-90)                                         -- 0.0, 0.5
+    local c2=c1:Translate(UTILS.NMToMeters(0.5), radial)                                            -- 0.5, 0.5
+    local c3=cv:Translate(UTILS.NMToMeters(1.2), radial-90):Translate(UTILS.NMToMeters(3), radial)  -- 3.0, 1.2
+    local c4=cv:Translate(UTILS.NMToMeters(1.2), radial+90):Translate(UTILS.NMToMeters(3), radial)  -- 3.0,-1.2
+    local c5=cv:Translate(UTILS.NMToMeters(0.5), radial)    
+    local c6=cv
+  
+    -- Vec2 array.
+    vec2={c1:GetVec2(), c2:GetVec2(), c3:GetVec2(), c4:GetVec2(), c5:GetVec2(), c6:GetVec2()}
+  
+  end
+  
+  -- Polygon zone.
+  local zone=ZONE_POLYGON_BASE:New("CASE I/II initial.", vec2)
+
+  return zone
+end
+
 
 --- Get Bullseye zone with radius 1 NM and DME 3 NM from the carrier. Radial depends on recovery case.
 -- @param #AIRBOSS self
@@ -6150,7 +6207,7 @@ end
 --- Get dirty up zone with radius 1 NM and DME 9 NM from the carrier. Radial depends on recovery case.
 -- @param #AIRBOSS self
 -- @param #number case Recovery case.
--- @return Core.Zone#ZONE_RADIUS Arc in zone.
+-- @return Core.Zone#ZONE_RADIUS Dirty up zone.
 function AIRBOSS:_GetZoneDirtyUp(case)
 
   -- Radius = 1 NM.
@@ -6179,10 +6236,10 @@ end
 function AIRBOSS:_GetZoneArcOut(case)
 
   -- Radius = 1 NM.
-  local radius=UTILS.NMToMeters(1)
+  local radius=UTILS.NMToMeters(1.25)
   
   -- Distance = 12 NM
-  local distance=UTILS.NMToMeters(12)
+  local distance=UTILS.NMToMeters(11.75)
   
   -- Zone depends on Case recovery.
   local radial=self:GetRadial(case, false, false)
@@ -6203,7 +6260,7 @@ end
 function AIRBOSS:_GetZoneArcIn(case)
 
   -- Radius = 1 NM.
-  local radius=UTILS.NMToMeters(1)
+  local radius=UTILS.NMToMeters(1.25)
   
   -- Zone depends on Case recovery.
   local radial=self:GetRadial(case, false, true)
@@ -6212,7 +6269,7 @@ function AIRBOSS:_GetZoneArcIn(case)
   local alpha=math.rad(self.holdingoffset)
   
   -- 12+x NM from carrier
-  local x=12/math.cos(alpha)
+  local x=14/math.cos(alpha)
   
   -- Distance = 14 NM
   local distance=UTILS.NMToMeters(x)
@@ -6280,7 +6337,6 @@ function AIRBOSS:_GetZoneCorridor(case)
   -- Length of the box in NM.
   local x=(d+w/2)/math.cos(alpha)
   local l=28-x
-  --local l=15 --/math.cos(alpha)
   
   -- Some math...
   local y1=d-w2
@@ -6320,6 +6376,10 @@ function AIRBOSS:_GetZoneCorridor(case)
     c[9]=c[1]:Translate( UTILS.NMToMeters(w2),      radial+90)     -- 1 left of carrier.
     c[8]=c[9]:Translate( UTILS.NMToMeters(d+dx-w2), radial)        -- 1 left and 11 behind of carrier.
     c[7]=c[8]:Translate( UTILS.NMToMeters(P),       radial+90)
+    
+    -- Translate these points a bit for a smoother turn.
+    c[4]=c[4]:Translate(UTILS.NMToMeters(2), offset)
+    c[7]=c[7]:Translate(UTILS.NMToMeters(2), offset)
   else  
     -- Easy case of a long box.
     c[2]=c[1]:Translate( UTILS.NMToMeters(w2),        radial-90)
@@ -7789,10 +7849,13 @@ function AIRBOSS:_Debrief(playerData)
     
         -- Next step: Initial again.  
         playerData.step=AIRBOSS.PatternStep.INITIAL
+        
+        -- Create a point 3.0 NM astern for re-entry.
+        local zoneinitial=self:GetCoordinate():Translate(UTILS.NMToMeters(3.5), self:GetRadial(2, false, false, false))
       
         -- Get heading and distance to initial zone ~3 NM astern.
-        heading=playerData.unit:GetCoordinate():HeadingTo(self.zoneInitial:GetCoordinate())
-        distance=playerData.unit:GetCoordinate():Get2DDistance(self.zoneInitial:GetCoordinate())
+        heading=playerData.unit:GetCoordinate():HeadingTo(zoneinitial)
+        distance=playerData.unit:GetCoordinate():Get2DDistance(zoneinitial)
       
       elseif playerData.case==3 then
       
@@ -7841,14 +7904,20 @@ function AIRBOSS:_Debrief(playerData)
       end
       
     else
+        
+      -- Welcome aboard!
+      self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.WELCOMEABOARD)
     
       -- Airboss talkto!
       local text=string.format("you were waved off but landed anyway. Airboss wants to talk to you!")
-      self:MessageToPlayer(playerData, text, "LSO", nil, 10, false, 2)
+      self:MessageToPlayer(playerData, text, "LSO", nil, 10, false, 3)
       
+      -- Remove player unit from flight and all queues.
+      self:_RemoveUnitFromFlight(playerData.unit)
+            
       -- Next step undefined. Player landed.
       playerData.step=AIRBOSS.PatternStep.UNDEFINED
-    
+      
     end
   
   elseif playerData.boltered then
@@ -8402,18 +8471,31 @@ function AIRBOSS:RadioTransmit(radio, call, loud, delay)
       end
     end
     filename=filename.."."..(call.suffix or "ogg")
+    
+    -- Output via radio transmision or user sound.
+    if self.usersoundradio then
+    
+      for _,_player in pairs(self.players) do
+        local playerData=_player --#AIRBOSS.PlayerData
+        if playerData.unit:IsInZone(self.zoneCCA) then
+          USERSOUND:New(filename):ToGroup(playerData.group)
+        end
+      end
+
+    else
       
-    -- New transmission.
-    radio:NewUnitTransmission(filename, call.subtitle, call.duration, radio.Frequency/1000000, radio.Modulation, false)
+      -- New transmission.
+      radio:NewUnitTransmission(filename, call.subtitle, call.duration, radio.Frequency/1000000, radio.Modulation, false)
+      
+      -- Broadcast message.
+      radio:Broadcast(true)
     
-    -- Broadcast message.
-    radio:Broadcast(true)
-    
-    -- Workaround for the community A-4E-C as long as their radios are not functioning properly.
-    for _,_player in pairs(self.players) do
-      local playerData=_player --#AIRBOSS.PlayerData
-      if playerData.actype==AIRBOSS.AircraftCarrier.A4EC then
-        USERSOUND:New(filename):ToGroup(playerData.group)
+      -- Workaround for the community A-4E-C as long as their radios are not functioning properly.
+      for _,_player in pairs(self.players) do
+        local playerData=_player --#AIRBOSS.PlayerData
+        if playerData.actype==AIRBOSS.AircraftCarrier.A4EC then
+          USERSOUND:New(filename):ToGroup(playerData.group)
+        end
       end
     end
     
@@ -8423,7 +8505,7 @@ function AIRBOSS:RadioTransmit(radio, call, loud, delay)
   else
   
     -- Scheduled transmission.
-    SCHEDULER:New(nil, self.RadioTransmission, {self, radio, call, loud}, delay)
+    SCHEDULER:New(nil, self.RadioTransmit, {self, radio, call, loud}, delay)
     
   end
 end
@@ -9622,23 +9704,31 @@ function AIRBOSS:_DisplayPlayerStatus(_unitName)
       
       if playerData.step==AIRBOSS.PatternStep.INITIAL then
       
+        -- Create a point 3.0 NM astern for re-entry.
+        local zoneinitial=self:GetCoordinate():Translate(UTILS.NMToMeters(3.5), self:GetRadial(2, false, false, false))
+      
         -- Heading and distance to initial zone.
-        local flyhdg=playerData.unit:GetCoordinate():HeadingTo(self.zoneInitial:GetCoordinate())
-        local flydist=UTILS.MetersToNM(playerData.unit:GetCoordinate():Get2DDistance(self.zoneInitial:GetCoordinate()))
+        local flyhdg=playerData.unit:GetCoordinate():HeadingTo(zoneinitial)
+        local flydist=UTILS.MetersToNM(playerData.unit:GetCoordinate():Get2DDistance(zoneinitial))
         local brc=self:GetBRC()
 
         -- Help player to find its way to the initial zone.                
         text=text..string.format("\nFly heading %03d° for %.1f NM and turn to BRC %03d°.", flyhdg, flydist, brc)
                 
       elseif playerData.step==AIRBOSS.PatternStep.PLATFORM then
+      
+        -- Coordinate of the platform zone.
+        local zoneplatform=self:_GetZonePlatform(playerData.case):GetCoordinate()
 
         -- Heading and distance to platform zone.
-        local flyhdg=playerData.unit:GetCoordinate():HeadingTo(self:_GetZonePlatform(playerData.case):GetCoordinate())
-        local flydist=UTILS.MetersToNM(playerData.unit:GetCoordinate():Get2DDistance(self.zoneInitial:GetCoordinate()))
-        local fb=self:GetFinalBearing(true)
+        local flyhdg=playerData.unit:GetCoordinate():HeadingTo(zoneplatform)
+        local flydist=UTILS.MetersToNM(playerData.unit:GetCoordinate():Get2DDistance(zoneplatform))
+        
+        -- Get heading.
+        local hdg=self:GetRadial(playerData.case, true, true, true)
 
         -- Help player to find its way to the initial zone.                
-        text=text..string.format("\nFly heading %03d° for %.1f NM and turn to FB %03d°.", flyhdg, flydist, fb)
+        text=text..string.format("\nFly heading %03d° for %.1f NM and turn to FB %03d°.", flyhdg, flydist, hdg)
               
       end
       
@@ -9684,7 +9774,7 @@ function AIRBOSS:_MarkMarshalZone(_unitName, flare)
           zone:FlareZone(FLARECOLOR.White, 45, nil, patternalt)
         else
           text="Marking marshal zone with WHITE smoke."
-          zone:SmokeZone(SMOKECOLOR.White, 45, patternalt)
+          zone:SmokeZone(SMOKECOLOR.Blue, 45, patternalt)
         end
         
       else
@@ -9725,14 +9815,14 @@ function AIRBOSS:_MarkCaseZones(_unitName, flare)
 
         -- Case I/II: Initial
         if case==1 or case==2 then
-          text=text.."* initial with WHITE flares\n"
-          self.zoneInitial:FlareZone(FLARECOLOR.White, 45)
+          text=text.."* initial with GREEN flares\n"
+          self:_GetZoneInitial(case):FlareZone(FLARECOLOR.Green, 45)
         end
       
         -- Case II/III: approach corridor
         if case==2 or case==3 then
-          text=text.."* approach corridor with GREEN flares\n"
-          self:_GetZoneCorridor(case):FlareZone(FLARECOLOR.Green, 45)
+          text=text.."* approach corridor with YELLOW flares\n"
+          self:_GetZoneCorridor(case):FlareZone(FLARECOLOR.Yellow, 45)
         end
         
         -- Case II/III: platform
@@ -9750,8 +9840,8 @@ function AIRBOSS:_MarkCaseZones(_unitName, flare)
         -- Case II/III: arc in/out
         if case==2 or case==3 then
           if math.abs(self.holdingoffset)>0 then
-            self:_GetZoneArcIn(case):FlareZone(FLARECOLOR.Yellow, 45)
-            text=text.."* arc turn in with YELLOW flares\n"
+            self:_GetZoneArcIn(case):FlareZone(FLARECOLOR.White, 45)
+            text=text.."* arc turn in with WHITE flares\n"
             self:_GetZoneArcOut(case):FlareZone(FLARECOLOR.White, 45)
            text=text.."* arc trun out with WHITE flares\n"
           end
@@ -9759,22 +9849,22 @@ function AIRBOSS:_MarkCaseZones(_unitName, flare)
         
         -- Case III: bullseye
         if case==3 then
-          text=text.."* bullseye with WHITE flares\n"
-          self:_GetZoneBullseye(case):FlareZone(FLARECOLOR.White, 45)
+          text=text.."* bullseye with GREEN flares\n"
+          self:_GetZoneBullseye(case):FlareZone(FLARECOLOR.Green, 45)
         end
         
       else
 
         -- Case I/II: Initial      
         if case==1 or case==2 then
-          text=text.."* initial with WHITE smoke\n"
-          self.zoneInitial:SmokeZone(SMOKECOLOR.White, 45)
+          text=text.."* initial with GREEN smoke\n"
+          self:_GetZoneInitial(case):SmokeZone(SMOKECOLOR.Green, 45)
         end
         
         -- Case II/III: Approach Corridor
         if case==2 or case==3 then
-          text=text.."* approach corridor with GREEN smoke\n"
-          self:_GetZoneCorridor(case):SmokeZone(SMOKECOLOR.Green, 45)
+          text=text.."* approach corridor with ORANGE smoke\n"
+          self:_GetZoneCorridor(case):SmokeZone(SMOKECOLOR.Orange, 45)
         end
 
         -- Case II/III: platform
@@ -9801,8 +9891,8 @@ function AIRBOSS:_MarkCaseZones(_unitName, flare)
 
         -- Case III: bullseye
         if case==3 then                
-          text=text.."* bullseye with WHITE smoke\n"
-          self:_GetZoneBullseye(case):SmokeZone(SMOKECOLOR.White, 45)
+          text=text.."* bullseye with GREEN smoke\n"
+          self:_GetZoneBullseye(case):SmokeZone(SMOKECOLOR.Green, 45)
         end
         
       end
