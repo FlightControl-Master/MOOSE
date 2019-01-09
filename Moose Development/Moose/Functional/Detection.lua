@@ -1233,7 +1233,7 @@ do -- DETECTION_BASE
     -- @param DCS#Unit.Category Category The category of the unit.
     -- @return #boolean true if there are friendlies nearby 
     function DETECTION_BASE:IsFriendliesNearBy( DetectedItem, Category )
-      self:F( { "FriendliesNearBy Test", DetectedItem.FriendliesNearBy } )
+--      self:F( { "FriendliesNearBy Test", DetectedItem.FriendliesNearBy } )
       return ( DetectedItem.FriendliesNearBy and DetectedItem.FriendliesNearBy[Category] ~= nil ) or false
     end
   

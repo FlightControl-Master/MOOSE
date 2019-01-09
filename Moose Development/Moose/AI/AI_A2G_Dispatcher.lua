@@ -3026,7 +3026,7 @@ do -- AI_A2G_DISPATCHER
       for DefenderID, Defender in pairs( Defenders or {} ) do
 
         local Fsm = self:GetDefenderTaskFsm( Defender )
-        Fsm:__Engage( 1, AttackerDetection.Set ) -- Engage on the TargetSetUnit
+        Fsm:Engage( AttackerDetection.Set ) -- Engage on the TargetSetUnit
         
         self:SetDefenderTaskTarget( Defender, AttackerDetection )
 
@@ -3055,7 +3055,7 @@ do -- AI_A2G_DISPATCHER
         local SquadronOverhead = self:GetSquadronOverhead( SquadronName )
 
         local Fsm = self:GetDefenderTaskFsm( DefenderGroup )
-        Fsm:__Engage( 1, AttackerSet ) -- Engage on the TargetSetUnit
+        Fsm:Engage( AttackerSet ) -- Engage on the TargetSetUnit
         
         self:SetDefenderTaskTarget( DefenderGroup, AttackerDetection )
   
@@ -3152,9 +3152,9 @@ do -- AI_A2G_DISPATCHER
                 
                   DefenderCount = DefenderCount - DefenderGrouping / DefenderOverhead
         
-                  local AI_A2G_ENGAGE = { SEAD = AI_A2G_SEAD, BAI = AI_A2G_BAI, CAS = AI_A2G_CAS }
+                  local AI_A2G = { SEAD = AI_A2G_SEAD, BAI = AI_A2G_BAI, CAS = AI_A2G_CAS }
         
-                  local Fsm = AI_A2G_ENGAGE[DefenseTaskType]:New( DefenderGroup, Defense.EngageMinSpeed, Defense.EngageMaxSpeed, Defense.EngageFloorAltitude, Defense.EngageCeilingAltitude ) -- AI.AI_A2G_ENGAGE
+                  local Fsm = AI_A2G[DefenseTaskType]:New( DefenderGroup, Defense.EngageMinSpeed, Defense.EngageMaxSpeed, Defense.EngageFloorAltitude, Defense.EngageCeilingAltitude ) -- AI.AI_A2G_ENGAGE
                   Fsm:SetDispatcher( self )
                   Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
                   Fsm:SetFuelThreshold( DefenderSquadron.FuelThreshold or self.DefenderDefault.FuelThreshold, 60 )
@@ -3175,7 +3175,7 @@ do -- AI_A2G_DISPATCHER
                     self:F( { DefenderTarget = DefenderTarget } )
                     
                     if DefenderTarget then
-                      Fsm:__Engage( 2, DefenderTarget.Set ) -- Engage on the TargetSetUnit
+                      Fsm:Engage( DefenderTarget.Set ) -- Engage on the TargetSetUnit
                     end
                   end
   

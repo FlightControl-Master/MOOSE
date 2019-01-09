@@ -97,6 +97,10 @@ function AI_A2G_SEAD:New( AIGroup, EngageMinSpeed, EngageMaxSpeed, EngageFloorAl
   -- Inherits from BASE
   local self = BASE:Inherit( self, AI_A2G_PATROL:New( AIGroup, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType ) ) -- #AI_A2G_SEAD
 
+  local RTBSpeedMax = AIGroup:GetSpeedMax() or 9999
+
+  self:SetRTBSpeed( RTBSpeedMax * 0.50, RTBSpeedMax * 0.75 )
+
   return self
 end
 
