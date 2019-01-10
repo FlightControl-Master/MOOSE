@@ -322,6 +322,9 @@ function SPAWN:New( SpawnTemplatePrefix )
     self.Grouping = nil                             -- No grouping.
     self.SpawnInitLivery = nil                      -- No special livery.
     self.SpawnInitSkill = nil                       -- No special skill.
+    self.SpawnInitFreq  = nil                       -- No special frequency.
+    self.SpawnInitModu  = nil                       -- No special modulation.
+    self.SpawnInitRadio = nil                       -- No radio comms setting.
 
 		self.SpawnGroups = {}														-- Array containing the descriptions of each Group to be Spawned.
 	else
@@ -370,7 +373,10 @@ function SPAWN:NewWithAlias( SpawnTemplatePrefix, SpawnAliasPrefix )
     self.Grouping = nil                             -- No grouping.
     self.SpawnInitLivery = nil                      -- No special livery.
     self.SpawnInitSkill = nil                       -- No special skill.
-
+    self.SpawnInitFreq  = nil                       -- No special frequency.
+    self.SpawnInitModu  = nil                       -- No special modulation.
+    self.SpawnInitRadio = nil                       -- No radio comms setting.
+    
 		self.SpawnGroups = {}														-- Array containing the descriptions of each Group to be Spawned.
 	else
 		error( "SPAWN:New: There is no group declared in the mission editor with SpawnTemplatePrefix = '" .. SpawnTemplatePrefix .. "'" )
@@ -421,7 +427,10 @@ function SPAWN:NewFromTemplate( SpawnTemplate, SpawnTemplatePrefix, SpawnAliasPr
     self.Grouping = nil                             -- No grouping.
     self.SpawnInitLivery = nil                      -- No special livery.
     self.SpawnInitSkill = nil                       -- No special skill.
-
+    self.SpawnInitFreq  = nil                       -- No special frequency.
+    self.SpawnInitModu  = nil                       -- No special modulation.
+    self.SpawnInitRadio = nil                       -- No radio comms setting.
+    
     self.SpawnGroups = {}                           -- Array containing the descriptions of each Group to be Spawned.
   else
     error( "There is no template provided for SpawnTemplatePrefix = '" .. SpawnTemplatePrefix .. "'" )
@@ -594,6 +603,42 @@ function SPAWN:InitSkill( Skill )
     self.SpawnInitSkill="High"
   end
   
+  return self
+end
+
+--- Sets the radio comms on or off. Same as checking/unchecking the COMM box in the mission editor.
+-- @param #SPAWN self 
+-- @param #number switch If true (or nil), enables the radio comms. If false, disables the radio for the spawned group.
+-- @return #SPAWN self
+function SPAWN:InitRadioCommsOnOff(switch)
+  self:F({switch=switch} )
+  self.SpawnInitRadio=switch or true
+  return self
+end
+
+--- Sets the radio frequency of the group.
+-- @param #SPAWN self 
+-- @param #number frequency The frequency in MHz.
+-- @return #SPAWN self
+function SPAWN:InitRadioFrequency(frequency)
+  self:F({frequency=frequency} )
+
+  self.SpawnInitFreq=frequency
+  
+  return self
+end
+
+--- Set radio modulation. Default is AM.
+-- @param #SPAWN self
+-- @param #string modulation Either "FM" or "AM". If no value is given, modulation is set to AM.
+-- @return #SPAWN self
+function SPAWN:InitRadioModulation(modulation)
+  self:F({modulation=modulation})
+  if modulation and modulation:lower()=="fm" then
+    self.SpawnInitModu=radio.modulation.FM
+  else
+    self.SpawnInitModu=radio.modulation.AM
+  end
   return self
 end
 
@@ -1173,6 +1218,22 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
             SpawnTemplate.units[UnitID].skill = self.SpawnInitSkill
           end
         end
+        
+        
+        -- Set radio comms on/off.
+        if self.SpawnInitRadio then
+          SpawnTemplate.communication=self.SpawnInitRadio
+        end        
+        
+        -- Set radio frequency.
+        if self.SpawnInitFreq then
+          SpawnTemplate.frequency=self.SpawnInitFreq
+        end
+        
+        -- Set radio modulation.
+        if self.SpawnInitModu then
+          SpawnTemplate.modulation=self.SpawnInitModu
+        end        
         
         -- Set country, coaliton and categroy.
         SpawnTemplate.CategoryID = self.SpawnInitCategory or SpawnTemplate.CategoryID 
