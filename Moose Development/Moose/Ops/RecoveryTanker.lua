@@ -35,6 +35,8 @@
 -- @field #string TACANmode TACAN mode, i.e. "X" or "Y". Default "Y". Use only "Y" for AA TACAN stations!
 -- @field #string TACANmorse TACAN morse code. Three letters identifying the TACAN station. Default "TKR".
 -- @field #boolean TACANon If true, TACAN is automatically activated. If false, TACAN is disabled.
+-- @field #number RadioFreq Radio frequency in MHz of the tanker. Default 251 MHz.
+-- @field #string RadioModu Radio modulation "AM" or "FM". Default "AM".
 -- @field #number speed Tanker speed when flying pattern.
 -- @field #number altitude Tanker orbit pattern altitude.
 -- @field #number distStern Race-track distance astern. distStern is <0.
@@ -153,6 +155,19 @@
 -- The mode is *always* "Y" for AA TACAN stations since mode "X" does not work!
 -- 
 -- In order to completely disable the TACAN beacon, you can use the @{#RECOVERYTANKER.SetTACANoff}() function in your script.
+-- 
+-- ## Radio
+-- 
+-- The radio frequency on optionally modulation can be set via the @{#RECOVERYTANKER.SetRadio}(*frequency*, *modulation*) function. The first parameter denotes the radio frequency the tanker uses in MHz.
+-- The second parameter is *optional* and sets the modulation to either AM (default) or FM.
+-- 
+-- For example,
+-- 
+--     TexacoStennis:SetRadio(260)
+--
+-- will set the frequency of the tanker to 260 MHz AM.
+-- 
+-- **Note** that if this is not set, the tanker frequency will be automatically set to **251 MHz AM**.
 --
 -- ## Pattern Update
 -- 
@@ -217,6 +232,8 @@ RECOVERYTANKER = {
   TACANmode       = nil,
   TACANmorse      = nil,
   TACANon         = nil,
+  RadioFreq       = nil,
+  RadioModu       = nil,
   altitude        = nil,
   speed           = nil,
   distStern       = nil,
@@ -237,7 +254,7 @@ RECOVERYTANKER = {
 
 --- Class version.
 -- @field #string version
-RECOVERYTANKER.version="1.0.1"
+RECOVERYTANKER.version="1.0.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -297,6 +314,7 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   self:SetLowFuelThreshold()
   self:SetRespawnOnOff()
   self:SetTACAN()
+  self:SetRadio()
   self:SetPatternUpdateDistance()
   self:SetPatternUpdateHeading()
   self:SetPatternUpdateInterval()
@@ -623,6 +641,17 @@ function RECOVERYTANKER:SetTACAN(channel, morse)
   return self
 end
 
+--- Set radio frequency and optionally modulation of the tanker.
+-- @param #RECOVERYTANKER self
+-- @param #number frequency Radio frequency in MHz. Default 251 MHz.
+-- @param #string modulation Radio modulation, either "AM" or "FM". Default "AM".
+-- @return #RECOVERYTANKER self
+function RECOVERYTANKER:SetRadio(frequency, modulation)
+  self.RadioFreq=frequency or 251
+  self.RadioModu=modulation or "AM"
+  return self
+end
+
 --- Activate debug mode. Marks of pattern on F10 map and debug messages displayed on screen.
 -- @param #RECOVERYTANKER self
 -- @return #RECOVERYTANKER self
@@ -691,6 +720,11 @@ function RECOVERYTANKER:onafterStart(From, Event, To)
   
   -- Spawn tanker. We need to introduce an alias in case this class is used twice. This would confuse the spawn routine.
   local Spawn=SPAWN:NewWithAlias(self.tankergroupname, tankergroupalias)
+  
+  -- Set radio frequency and modulation.
+  Spawn:InitRadioCommsOnOff(true)
+  Spawn:InitRadioFrequency(self.RadioFreq)
+  Spawn:InitRadioModulation(self.RadioModu)
   
   -- Spawn on carrier.
   if self.takeoff==SPAWN.Takeoff.Air then
@@ -789,8 +823,15 @@ function RECOVERYTANKER:onafterStatus(From, Event, To)
           MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
           self:T(self.lid..text)  
           
-          -- Respawn tanker.
+          -- Set heading for respawn template.
           self.tanker:InitHeading(self.tanker:GetHeading())
+          
+          -- Set radio for respawn template.
+          self.tanker:InitRadioCommsOnOff(true)
+          self.tanker:InitRadioFrequency(self.RadioFreq)
+          self.tanker:InitRadioModulation(self.RadioModu)
+          
+          -- Respawn tanker.
           self.tanker=self.tanker:Respawn(nil, true)
           
           -- Create tanker beacon and activate TACAN.
@@ -963,9 +1004,13 @@ function RECOVERYTANKER:OnEventEngineShutdown(EventData)
       local text=string.format("Respawning recovery tanker group %s.", group:GetName())
       MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
       self:T(self.lid..text)
+      
+      -- Set radio for respawn template.
+      group:InitRadioCommsOnOff(true)
+      group:InitRadioFrequency(self.RadioFreq)
+      group:InitRadioModulation(self.RadioModu)
            
       -- Respawn tanker.
-      --self.tanker=group:RespawnAtCurrentAirbase()
       -- Delaying respawn due to DCS bug https://github.com/FlightControl-Master/MOOSE/issues/1076
       SCHEDULER:New(nil , group.RespawnAtCurrentAirbase, {group}, 1)
       

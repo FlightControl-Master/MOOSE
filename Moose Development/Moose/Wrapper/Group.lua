@@ -1455,6 +1455,41 @@ function GROUP:InitRandomizePositionRadius( OuterRadius, InnerRadius )
   return self
 end
 
+--- Sets the radio comms on or off when the group is respawned. Same as checking/unchecking the COMM box in the mission editor.
+-- @param #GROUP self 
+-- @param #number switch If true (or nil), enables the radio comms. If false, disables the radio for the spawned group.
+-- @return #GROUP self
+function GROUP:InitRadioCommsOnOff(switch)
+  self:F({switch=switch} )
+  self.InitRespawnRadio=switch or true
+end
+
+--- Sets the radio frequency of the group when it is respawned.
+-- @param #GROUP self 
+-- @param #number frequency The frequency in MHz.
+-- @return #GROUP self
+function GROUP:InitRadioFrequency(frequency)
+  self:F({frequency=frequency} )
+
+  self.InitRespawnFreq=frequency
+  
+  return self
+end
+
+--- Set radio modulation when the group is respawned. Default is AM.
+-- @param #GROUP self
+-- @param #string modulation Either "FM" or "AM". If no value is given, modulation is set to AM.
+-- @return #GROUP self
+function GROUP:InitRadioModulation(modulation)
+  self:F({modulation=modulation})
+  if modulation and modulation:lower()=="fm" then
+    self.InitRespawnModu=radio.modulation.FM
+  else
+    self.InitRespawnModu=radio.modulation.AM
+  end
+  return self
+end
+
 
 --- Respawn the @{Wrapper.Group} at a @{Point}.
 -- The method will setup the new group template according the Init(Respawn) settings provided for the group.
@@ -1477,7 +1512,7 @@ end
 -- 
 -- @param Wrapper.Group#GROUP self
 -- @param #table Template (optional) The template of the Group retrieved with GROUP:GetTemplate(). If the template is not provided, the template will be retrieved of the group itself.
--- @param #boolean Reset Reset positons if TRUE.
+-- @param #boolean Reset Reset positions if TRUE.
 -- @return Wrapper.Group#GROUP self
 function GROUP:Respawn( Template, Reset )
 
@@ -1606,6 +1641,17 @@ function GROUP:Respawn( Template, Reset )
     
   end
   
+  -- Set radio frequency and modulation.
+  if self.InitRespawnRadio then
+    Template.communication=self.InitRespawnRadio
+  end
+  if self.InitRespawnFreq then
+    Template.frequency=self.InitRespawnFreq
+  end
+  if self.InitRespawnModu then
+    Template.modulation=self.InitRespawnModu
+  end
+  
   -- Destroy old group. Dont trigger any dead/crash events since this is a respawn.
   self:Destroy(false)
   
@@ -1714,12 +1760,23 @@ function GROUP:RespawnAtCurrentAirbase(SpawnTemplate, Takeoff, Uncontrolled) -- 
     
     -- Set uncontrolled state.
     SpawnTemplate.uncontrolled=Uncontrolled
+    
+    -- Set radio frequency and modulation.
+    if self.InitRespawnRadio then
+      SpawnTemplate.communication=self.InitRespawnRadio
+    end
+    if self.InitRespawnFreq then
+      SpawnTemplate.frequency=self.InitRespawnFreq
+    end
+    if self.InitRespawnModu then
+      SpawnTemplate.modulation=self.InitRespawnModu
+    end
 
     -- Destroy old group.
     self:Destroy(false)
     
     -- Spawn new group.
-    _DATABASE:Spawn( SpawnTemplate )
+    _DATABASE:Spawn(SpawnTemplate)
   
     -- Reset events.
     self:ResetEvents()

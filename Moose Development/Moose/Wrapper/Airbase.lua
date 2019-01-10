@@ -219,50 +219,62 @@ AIRBASE.Normandy = {
 
 --- These are all airbases of the Persion Gulf Map:
 -- 
--- * AIRBASE.PersianGulf.Fujairah_Intl
--- * AIRBASE.PersianGulf.Qeshm_Island
--- * AIRBASE.PersianGulf.Sir_Abu_Nuayr
 -- * AIRBASE.PersianGulf.Abu_Musa_Island_Airport
 -- * AIRBASE.PersianGulf.Bandar_Abbas_Intl
 -- * AIRBASE.PersianGulf.Bandar_Lengeh
--- * AIRBASE.PersianGulf.Tunb_Island_AFB
--- * AIRBASE.PersianGulf.Havadarya
--- * AIRBASE.PersianGulf.Lar_Airbase
--- * AIRBASE.PersianGulf.Sirri_Island
--- * AIRBASE.PersianGulf.Tunb_Kochak
 -- * AIRBASE.PersianGulf.Al_Dhafra_AB
 -- * AIRBASE.PersianGulf.Dubai_Intl
 -- * AIRBASE.PersianGulf.Al_Maktoum_Intl
+-- * AIRBASE.PersianGulf.Fujairah_Intl
+-- * AIRBASE.PersianGulf.Tunb_Island_AFB
+-- * AIRBASE.PersianGulf.Havadarya
 -- * AIRBASE.PersianGulf.Khasab
+-- * AIRBASE.PersianGulf.Lar_Airbase
 -- * AIRBASE.PersianGulf.Al_Minhad_AB
+-- * AIRBASE.PersianGulf.Qeshm_Island
 -- * AIRBASE.PersianGulf.Sharjah_Intl
--- * AIRBASE.PersianGulf.Shiraz_International_Airport
+-- * AIRBASE.PersianGulf.Sirri_Island
+-- * AIRBASE.PersianGulf.Tunb_Kochak
+-- * AIRBASE.PersianGulf.Sir_Abu_Nuayr
 -- * AIRBASE.PersianGulf.Kerman_Airport
--- * AIRBASE.PersianGulf.Jiroft_Airport
+-- * AIRBASE.PersianGulf.Shiraz_International_Airport
+-- * AIRBASE.PersianGulf.Sas_Al_Nakheel_Airport
+-- * AIRBASE.PersianGulf.Bandar-e-Jask_airfield
+-- * AIRBASE.PersianGulf.Abu_Dhabi_International_Airport
+-- * AIRBASE.PersianGulf.Al-Bateen_Airport
+-- * AIRBASE.PersianGulf.Kish_International_Airport
+-- * AIRBASE.PersianGulf.Al_Ain_International_Airport
 -- * AIRBASE.PersianGulf.Lavan_Island_Airport
+-- * AIRBASE.PersianGulf.Jiroft_Airport
 -- @field PersianGulf
 AIRBASE.PersianGulf = {
-  ["Fujairah_Intl"] = "Fujairah Intl",
-  ["Qeshm_Island"] = "Qeshm Island",
-  ["Sir_Abu_Nuayr"] = "Sir Abu Nuayr",
   ["Abu_Musa_Island_Airport"] = "Abu Musa Island Airport",
   ["Bandar_Abbas_Intl"] = "Bandar Abbas Intl",
   ["Bandar_Lengeh"] = "Bandar Lengeh",
+  ["Al_Dhafra_AB"] = "Al Dhafra AB",
+  ["Dubai_Intl"] = "Dubai Intl",  
+  ["Al_Maktoum_Intl"] = "Al Maktoum Intl",
+  ["Fujairah_Intl"] = "Fujairah Intl",
   ["Tunb_Island_AFB"] = "Tunb Island AFB",
   ["Havadarya"] = "Havadarya",
+  ["Khasab"] = "Khasab",
   ["Lar_Airbase"] = "Lar Airbase",
+  ["Al_Minhad_AB"] = "Al Minhad AB",
+  ["Qeshm_Island"] = "Qeshm Island",
+  ["Sharjah_Intl"] = "Sharjah Intl",
   ["Sirri_Island"] = "Sirri Island",
   ["Tunb_Kochak"] = "Tunb Kochak",
-  ["Al_Dhafra_AB"] = "Al Dhafra AB",
-  ["Dubai_Intl"] = "Dubai Intl",
-  ["Al_Maktoum_Intl"] = "Al Maktoum Intl",
-  ["Khasab"] = "Khasab",
-  ["Al_Minhad_AB"] = "Al Minhad AB",
-  ["Sharjah_Intl"] = "Sharjah Intl",
-  ["Shiraz_International_Airport"] = "Shiraz International Airport",
+  ["Sir_Abu_Nuayr"] = "Sir Abu Nuayr",
   ["Kerman_Airport"] = "Kerman Airport",
-  ["Jiroft_Airport"] = "Jiroft Airport",
+  ["Shiraz_International_Airport"] = "Shiraz International Airport",
+  ["Sas_Al_Nakheel_Airport"] = "Sas Al Nakheel Airport",
+  ["Bandar-e-Jask_airfield"] = "Bandar-e-Jask airfield",
+  ["Abu_Dhabi_International_Airport"] = "Abu Dhabi International Airport",
+  ["Al-Bateen_Airport"] = "Al-Bateen Airport",
+  ["Kish_International_Airport"] = "Kish International Airport",
+  ["Al_Ain_International_Airport"] = "Al Ain International Airport",
   ["Lavan_Island_Airport"] = "Lavan Island Airport",
+  ["Jiroft_Airport"] = "Jiroft Airport",
   }
   
 --- AIRBASE.ParkingSpot ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
