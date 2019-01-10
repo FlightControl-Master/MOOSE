@@ -46,13 +46,14 @@
 -- ## 1. Which coalition am I modeling an A2G defense system for? blue or red?
 -- 
 -- One AI_A2G_DISPATCHER object can create a defense system for **one coalition**, which is blue or red.
--- If you want to create a **mutual defense system**, for both blue and red, then you need to create **two** AI_A2G_DISPATCHER **objects**,
+-- If you want to create a **mutual defense system**, for both blue and red, then you need to instantiate **two** AI_A2G_DISPATCHER **objects**,
 -- each governing their defense system for one coalition.
 -- 
 --      
 -- ## 2. Which type of detection will I setup? Grouping based per AREA, per TYPE or per UNIT? (Later others will follow).
 -- 
--- The MOOSE framework leverages the @{Functional.Detection} classes to perform the reconnaissance, detecting enemy units and reporting them to the head quarters.
+-- The MOOSE framework leverages the @{Functional.Detection} classes to perform the reconnaissance, detecting enemy units 
+-- and reporting them to the head quarters.
 -- Several types of @{Functional.Detection} classes exist, and the most common characteristics of these classes is that they:
 -- 
 --    * Perform detections from multiple recce as one co-operating entity.
@@ -61,62 +62,82 @@
 --    * Communicates detections.
 -- 
 -- 
--- ## 3. Which recce units can be used as part of the detection system? Only Ground or also Airborne?
+-- ## 3. Which recce units can be used as part of the detection system? Only ground based, or also airborne?
 -- 
--- Depending on the type of mission you want to achieve, different types of units can be applied to detect ground enemy targets.
--- Ground based units are very useful to act as a reconnaissance, but they lack sometimes the visibility to detect targets at greater range.
--- Recce are very useful to acquire the position of enemy ground targets when spread out over the battlefield at strategic positions.
--- Ground units also have varying detectors, and especially the ground units which have laser guiding missiles can be extremely effective at
+-- Depending on the type of mission you want to achieve, different types of units can be engaged to perform ground enemy targets reconnaissance.
+-- Ground recce (FAC) are very useful units to determine the position of enemy ground targets when they spread out over the battlefield at strategic positions.
+-- Using their varying detection technology, and especially those ground units which have spotting technology, can be extremely effective at
 -- detecting targets at great range. The terrain elevation characteristics are a big tool in making ground recce to be more effective.
+-- Unfortunately, they lack sometimes the visibility to detect targets at greater range, or when scenery is preventing line of sight.
 -- If you succeed to position recce at higher level terrain providing a broad and far overview of the lower terrain in the distance, then
 -- the recce will be very effective at detecting approaching enemy targets. Therefore, always use the terrain very carefully!
 -- 
--- Beside ground level units to use for reconnaissance, air units are also very effective. The are capable of patrolling at great speed
--- covering a large terrain. However, airborne recce can be vulnerable to air to ground attacks, and you need air superiority to make then
--- effective. Also the instruments available at the air units play a big role in the effectiveness of the reconnaissance.
--- Air units which have ground detection capabilities will be much more effective than air units with only visual detection capabilities.
--- For the red coalition, the Mi-28N and for the blue side, the reaper are such effective reconnaissance airborne units.
+-- Airborne recce (AFAC) are also very effective. The are capable of patrolling at a functional detection altitude,
+-- having an overview of the whole battlefield. However, airborne recce can be vulnerable to air to ground attacks, 
+-- so you need air superiority to make them effective. 
+-- Airborne recce will also have varying ground detection technology, which plays a big role in the effectiveness of the reconnaissance.
+-- Certain helicopter or plane types have ground searching radars or advanced ground scanning technology, and are very effective 
+-- compared to air units having only visual detection capabilities.
+-- For example, for the red coalition, the Mi-28N and the Su-34; and for the blue side, the reaper, are such effective airborne recce units.
+-- 
+-- Typically, don't want these recce units to engage with the enemy, you want to keep them at position. Therefore, it is a good practice
+-- to set the ROE for these recce to hold weapons, and make them invisible from the enemy.
+-- 
+-- It is not possible to perform a recce function as a player (unit).
 -- 
 -- 
--- ## 4. How do defenses decide to engage on approaching enemy units?
+-- ## 4. How do the defenses decide **when and where to engage** on approaching enemy units?
 -- 
--- The A2G dispacher needs you to setup defense coordinates, which are specific coordinates that are strategic positions in the battle field
--- to be defended. Any ground based enemy approaching to such a defense point, will be engaged for defense by A2G defense units.
--- The A2G dispatcher provides parameters to setup the defensiveness, meaning, when actually A2G units will engage with the approaching enemy.
--- For this, a probability distribution model has been created, which models an increased probability that a defense will engage an attacker,
--- depending on the distance of the attacker to the defense coordinate. There are 3 levels of defense reactivity setup, which are Low, Medium and High.
--- Defenses will start to consider defensive action when an enemy ground unit is within 60km from a defense point, by default.
--- But you can change this maximum distance using on of the available methods. The close the attacker is to the defense point, the
--- higher the probability will be that a defense action will be launched!
+-- The A2G dispacher needs you to setup (various) defense coordinates, which are strategic positions in the battle field to be defended. 
+-- Any ground based enemy approaching within the proximity of such a defense point, may trigger for a defensive action by friendly air units.
+-- 
+-- There are 2 important parameters that play a role in the defensive decision making: defensiveness and reactivity.
+-- 
+-- The A2G dispatcher provides various parameters to setup the **defensiveness**, 
+-- which models the decision **when** a defender will engage with the approaching enemy.
+-- Defensiveness is calculated by a probability distribution model when to trigger a defense action, 
+-- depending on the distance of the enemy unit from the defense coordinates, and a **defensiveness factor**. 
+-- 
+-- The other parameter considered for defensive action is **where the enemy is located**, thus the distance from a defense coordinate, 
+-- which we call the **reactive distance**. By default, the reactive distance is set to 60km, but can be changed by the mission designer
+-- using the available method explained further below.
+-- The combination of the defensiveness and reactivity results in a model that, the closer the attacker is to the defense point, 
+-- the higher the probability will be that a defense action will be launched!
 -- 
 -- 
 -- ## 5. Are defense coordinates and defense reactivity the only parameters?
 -- 
 -- No, depending on the target type, and the threat level of the target, the probability of defense will be higher.
 -- In other words, when a SAM-10 radar emitter is detected, its probabilty for defense will be much higher than when a BMP-1 vehicle is
--- detected, even when both are at the same distance from a defense coordinate.
--- This will ensure optimal defenses, SEAD tasks will be much more quicker launched agains radar emitters, to ensure air superiority.
--- Approaching main battle tanks will be much faster defended upon, than a group of approaching trucks.
+-- detected, even when both enemies are at the same distance from a defense coordinate.
+-- This will ensure optimal defenses, SEAD tasks will be launched much more quicker against engaging radar emitters, to ensure air superiority.
+-- Approaching main battle tanks will be engaged much faster, than a group of approaching trucks.
 -- 
 -- 
 -- ## 6. Which Squadrons will I create and which name will I give each Squadron?
 -- 
 -- The A2G defense system works with **Squadrons**. Each Squadron must be given a unique name, that forms the **key** to the squadron.
--- Several options and activities can be set per Squadron.
+-- Several options and activities can be set per Squadron. A free format name can be given, but always ensure that the name is meaningfull 
+-- for your mission, and remember that squadron names are used for communication to the players of your mission.
 -- 
--- There are mainly 3 types of defenses: SEAD, CAS and BAI.
+-- There are mainly 3 types of defenses: **SEAD**, **CAS** and **BAI**.
 -- 
 -- Suppression of Air Defenses (SEAD) are effective agains radar emitters. Close Air Support (CAS) is launched when the enemy is close near friendly units.
 -- Battleground Air Interdiction (BAI) tasks are launched when there are no friendlies around.
 -- 
 -- Depending on the defense type, different payloads will be needed. See further points on squadron definition.
 -- 
+-- 
 -- ## 7. Where will the Squadrons be located? On Airbases? On Carrier Ships? On Farps?
 -- 
--- Squadrons are placed as the "home base" on an airfield, carrier or farp.
--- Carefully plan where each Squadron will be located as part of the defense system.
+-- Squadrons are placed at the **home base** on an **airfield**, **carrier** or **farp**.
+-- Carefully plan where each Squadron will be located as part of the defense system required for mission effective defenses.
+-- If the home base of the squadron is too far from assumed enemy positions, then the defenses will be too late.
+-- The home bases must be **behind** enemy lines, you want to prevent your home bases to be engaged by enemies!
+-- Depending on the units applied for defenses, the home base can be further or closer to the enemies.
 -- Any airbase, farp or carrier can act as the launching platform for A2G defenses.
--- Carefully plan which airbases will take part in the coalition. Color each airbase in the color of the coalition.
+-- Carefully plan which airbases will take part in the coalition. Color each airbase **in the color of the coalition**, using the mission editor,
+-- or your air units will not return for landing at the airbase!
 -- 
 -- 
 -- ## 8. Which helicopter or plane models will I assign for each Squadron? Do I need one plane model or more plane models per squadron?
@@ -3005,7 +3026,7 @@ do -- AI_A2G_DISPATCHER
       for DefenderID, Defender in pairs( Defenders or {} ) do
 
         local Fsm = self:GetDefenderTaskFsm( Defender )
-        Fsm:__Engage( 1, AttackerDetection.Set ) -- Engage on the TargetSetUnit
+        Fsm:Engage( AttackerDetection.Set ) -- Engage on the TargetSetUnit
         
         self:SetDefenderTaskTarget( Defender, AttackerDetection )
 
@@ -3034,7 +3055,7 @@ do -- AI_A2G_DISPATCHER
         local SquadronOverhead = self:GetSquadronOverhead( SquadronName )
 
         local Fsm = self:GetDefenderTaskFsm( DefenderGroup )
-        Fsm:__Engage( 1, AttackerSet ) -- Engage on the TargetSetUnit
+        Fsm:Engage( AttackerSet ) -- Engage on the TargetSetUnit
         
         self:SetDefenderTaskTarget( DefenderGroup, AttackerDetection )
   
@@ -3131,9 +3152,9 @@ do -- AI_A2G_DISPATCHER
                 
                   DefenderCount = DefenderCount - DefenderGrouping / DefenderOverhead
         
-                  local AI_A2G_ENGAGE = { SEAD = AI_A2G_SEAD, BAI = AI_A2G_BAI, CAS = AI_A2G_CAS }
+                  local AI_A2G = { SEAD = AI_A2G_SEAD, BAI = AI_A2G_BAI, CAS = AI_A2G_CAS }
         
-                  local Fsm = AI_A2G_ENGAGE[DefenseTaskType]:New( DefenderGroup, Defense.EngageMinSpeed, Defense.EngageMaxSpeed, Defense.EngageFloorAltitude, Defense.EngageCeilingAltitude ) -- AI.AI_A2G_ENGAGE
+                  local Fsm = AI_A2G[DefenseTaskType]:New( DefenderGroup, Defense.EngageMinSpeed, Defense.EngageMaxSpeed, Defense.EngageFloorAltitude, Defense.EngageCeilingAltitude ) -- AI.AI_A2G_ENGAGE
                   Fsm:SetDispatcher( self )
                   Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
                   Fsm:SetFuelThreshold( DefenderSquadron.FuelThreshold or self.DefenderDefault.FuelThreshold, 60 )
@@ -3154,7 +3175,7 @@ do -- AI_A2G_DISPATCHER
                     self:F( { DefenderTarget = DefenderTarget } )
                     
                     if DefenderTarget then
-                      Fsm:__Engage( 2, DefenderTarget.Set ) -- Engage on the TargetSetUnit
+                      Fsm:Engage( DefenderTarget.Set ) -- Engage on the TargetSetUnit
                     end
                   end
   
@@ -3261,8 +3282,6 @@ do -- AI_A2G_DISPATCHER
     local IsFriendliesNearBy = self.Detection:IsFriendliesNearBy( DetectedItem, Unit.Category.GROUND_UNIT )
     local IsCas = ( AttackerRadarCount == 0 ) and ( IsFriendliesNearBy == true ) -- Is the AttackerSet a CAS group?
     
-    self:F( { Friendlies = self.Detection:GetFriendliesNearBy( DetectedItem, Unit.Category.GROUND_UNIT ) } )
-    
     if IsCas == true then
     
       -- First, count the active defenders, engaging the DetectedItem.
@@ -3331,9 +3350,9 @@ do -- AI_A2G_DISPATCHER
     for DefenderGroup, DefenderTask in pairs( self:GetDefenderTasks() ) do
       local DefenderGroup = DefenderGroup -- Wrapper.Group#GROUP
       local DefenderTaskFsm = self:GetDefenderTaskFsm( DefenderGroup )
-      if DefenderTaskFsm:Is( "LostControl" ) then
-        self:ClearDefenderTask( DefenderGroup )
-      end
+      --if DefenderTaskFsm:Is( "LostControl" ) then
+      --  self:ClearDefenderTask( DefenderGroup )
+      --end
       if not DefenderGroup:IsAlive() then
         self:F( { Defender = DefenderGroup:GetName(), DefenderState = DefenderTaskFsm:GetState() } )
         if not DefenderTaskFsm:Is( "Started" ) then

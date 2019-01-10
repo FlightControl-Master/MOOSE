@@ -47,7 +47,7 @@ function AI_A2G_CAS:New( AIGroup, EngageMinSpeed, EngageMaxSpeed, EngageFloorAlt
   -- Inherits from BASE
   local self = BASE:Inherit( self, AI_A2G_PATROL:New( AIGroup, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType ) ) -- #AI_A2G_CAS
 
-  local RTBSpeedMax = AIGroup:GetSpeedMax()
+  local RTBSpeedMax = AIGroup:GetSpeedMax() or 9999
 
   self:SetRTBSpeed( RTBSpeedMax * 0.50, RTBSpeedMax * 0.75 )
 
