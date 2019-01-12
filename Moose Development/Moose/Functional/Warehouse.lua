@@ -2449,7 +2449,7 @@ function WAREHOUSE:SetAutoDefenceOff()
   return self
 end
 
---- Set auto defence off. This is the default.
+--- Enable auto save of warehouse assets at mission end event.
 -- @param #WAREHOUSE self
 -- @param #string path Path where to save the asset data file.
 -- @param #string filename File name. Default is generated automatically from warehouse id.

@@ -6,19 +6,19 @@
 --
 --    * CASE I, II and III recoveries.
 --    * Supports human pilots as well as AI flight groups.
---    * Automatic LSO grading (WIP).
---    * Different skill levels from on-the-fly tips for flight students to ziplip for pros.
---    * Define recovery time windows with individual recovery cases.
+--    * Automatic LSO grading (WIP) including (optional) live grading while in the groove.
+--    * Different skill levels from on-the-fly tips for flight students to *ziplip* for pros.
+--    * Define recovery time windows with individual recovery cases in the same mission.
 --    * Automatic TACAN and ICLS channel setting of carrier.
 --    * Separate radio channels for LSO and Marshal transmissions.
 --    * Voice over support for LSO and Marshal radio transmissions.
---    * F10 radio menu including carrier info (weather, radio frequencies, TACAN/ICLS channels), player LSO grades,
---    help function (player aircraft attitude, marking of pattern zones etc).
+--    * F10 radio menu including carrier info (weather, radio frequencies, TACAN/ICLS channels), player LSO grades, help function (aircraft attitude, marking of zones etc).
 --    * Recovery tanker and refueling option via integration of @{Ops.RecoveryTanker} class.
 --    * Rescue helicopter option via @{Ops.RescueHelo} class.
---    * Many parameters customizable by convenient user API functions. 
+--    * Many parameters customizable by convenient user API functions.
 --    * Multiple carrier support due to object oriented approach.
 --    * Unlimited number of players.
+--    * Persistence of player results (optional). LSO grading data is saved to csv file.
 --    * Finite State Machine (FSM) implementation.
 -- 
 -- **Supported Carriers:**
@@ -45,7 +45,6 @@
 -- 
 -- ### Some Open Questions?
 -- 
---    * What are the conditions for a foul deck wave off?
 --    * What is the next step after a pattern wave off during Case II or III recovery?
 --    * What is the condition for a "fly through" (\\ or /) LSO grade?
 --    * The above question is one of many regarding LSO grade. If you have more info, please share.
@@ -133,6 +132,11 @@
 -- @field #number dTqueue Time interval in seconds for updating the queues etc.
 -- @field #number dTstatus Time interval for call FSM status updates.
 -- @field #boolean menumarkzones If false, disables the option to mark zones via smoke or flares.
+-- @field #boolean menusmokezones If false, disables the option to mark zones via smoke.
+-- @field #table playerscores Table holding all player scores and grades.
+-- @field #boolean autosave If true, all player grades are automatically saved to a file on disk.
+-- @field #string autosavepath Path where the player grades file is saved on auto save.
+-- @field #string autosavefilename File name of the auto player grades save file. Default is auto generated from carrier name/alias.
 -- @extends Core.Fsm#FSM
 
 --- Be the boss!
@@ -504,7 +508,7 @@
 -- A foul deck waveoff is called by the LSO if an aircraft is detected within the landing area when an approaching aircraft is crossing the ship's wake during Case I/II operations, 
 -- or with an aircraft approaching the 3/4 NM during Case III operations.
 -- 
--- The approaching aircraft will be notified via radio comms an is supposed to overfly the landing area and enter the Bolter pattern. **The pass is not graded**.
+-- The approaching aircraft will be notified via LSO radio comms and is supposed to overfly the landing area to enter the Bolter pattern. **This pass is not graded**.
 -- 
 -- # AI Handling
 -- 
@@ -532,6 +536,95 @@
 -- The AI performs a very realistic Case I recovery. Therefore, we already have a good Case I and II recovery simulation since the final part of Case II is a
 -- Case I recovery. However, I don't think the AI can do a proper Case III recovery. If you give the AI the landing command, it is out of our hands and will
 -- always go for a Case I in the final pattern part. Maybe this will improve in future DCS version but right now, there is not much we can do about it.
+-- 
+-- # Persistence of Player Results
+--
+-- LSO grades of players can be saved to disk and later reloaded when a new mission is started.
+--
+-- ## Prerequisites
+--
+-- **Important** By default, DCS does not allow for writing data to files. Therefore, one first has to comment out the line "sanitizeModule('io')" and "sanitizeModule('lfs')", i.e.
+--
+--     do
+--       sanitizeModule('os')
+--       --sanitizeModule('io')    -- required for saving files
+--       --sanitizeModule('lfs')   -- optional for setting the default path to your "Saved Games\DCS" folder 
+--       require = nil
+--       loadlib = nil
+--     end
+--
+-- in the file "MissionScripting.lua", which is located in the subdirectory "Scripts" of your DCS installation root directory.
+-- 
+-- ** WARNING ** Desanitizing the "io" and "lfs" modules makes your machine or server vunarable to attacks from the outside! Use this at your own risk.
+--
+-- ## Save Results
+--
+-- Saving asset data to file is achieved by the @{AIRBOSS.Save}(*path*, *filename*) function.
+-- 
+-- The parameter *path* specifies the path on the file system where the
+-- player grades are saved. If you do not specify a path, the file is saved your the DCS installation root directory if the **lfs** module is *not* desanizied or
+-- your "Saved Games\\DCS" folder in case you did desanitize the **lfs** module.
+-- 
+-- The parameter *filename* is optional and defines the name of the saved file. By default this is automatically created from the AIRBOSS carrier name/alias, i.e.
+-- "Airboss-USS Stennis_LSOgrades.csv", if the alias is "USS Stennis".
+-- 
+-- In the easiest case, you desanitize the **io** and **lfs** modules and just add the line
+--
+--     airbossStennis:Save()
+--     
+-- If you want to specify an explicit path you can do this by
+--
+--     airbossStennis:Save("D:\\My Airboss Data\\")
+--
+-- This will save all player grades to in "D:\\My Airboss Data\\Airboss-USS Stennis_LSOgrades.csv".
+--
+-- ### Automatic Saving
+--
+-- The player grades can be saved automatically after each graded player pass via the @{AIRBOSS.SetAutoSave}(*path*, *filename*) function. Again the parameters *path* and *filename* are optional.
+-- In the simplest case, you desanitize the **lfs** module and just add
+--
+--
+--     airbossStennis:SetAutoSave()
+--
+-- Note that the the stats are saved after the *final* grade has been given, i.e. the player has landed on the carrier. After intermediate results such as bolters or waveoffs the stats are not automatically saved.
+-- 
+-- In case you want to specify an explicit path, you can write
+-- 
+--     airbossStennis:SetAutoSave("D:\\My Airboss Data\\")
+--   
+-- ## Results Output
+-- 
+-- ![Banner Image](..\Presentations\AIRBOSS\Airboss_PersistenceResultsTable.png)
+-- 
+-- The results file is stored as comma separated file. The columns are
+--    * *Name*: The player name.
+--    * *Pass*: A running number counting the passes of the player
+--    * *Points Final*: The final points (i.e. when the player has landed). This is the average over all previous bolters or waveoffs, if any.
+--    * *Points Pass*: The points of each pass including bolters and waveoffs.
+--    * *Grade*: LSO grade.
+--    * *Details*: Detailed analysis of deviations within the groove.
+--    * *Wire*: Trapped wire, if any.
+--    * *Tgroove*: Time in the groove in seconds (not applicable during Case III).
+--    * *Case*: The recovery case operations in progress during the pass.
+--
+-- ## Load Results
+--
+-- Loading player grades from file is achieved by the @{AIRBOSS.Load}(*path*, *filename*) function. The parameter *path* specifies the path on the file system where the
+-- data is loaded from. If you do not specify a path, the file is loaded from your the DCS installation root directory.
+-- The parameter *filename* is optional and defines the name of the file to load. By default this is automatically generated from the AIBOSS carrier name/alias, for example
+-- "Airboss-USS Stennis_LSOgrades.csv".
+--
+-- Note that the AIRBOSS FSM **must not be started** in order to load the data. In other words, loading should happen **after** the
+-- @{#AIRBOSS.New} command is specified in the code but **before** the @{#AIRBOSS.Start} command is given.
+--
+-- Loading the player results is done by
+--
+--     airbossStennis:New("USS Stennis")
+--     airbossStennis:Load("D:\\My Airboss Data\\")
+--     -- Additional specification of parameters such as recovery windows etc, if required.
+--     airbossStennis:Start()
+--
+-- This sequence loads all available player grades from file.
 -- 
 -- # Debugging
 -- 
@@ -622,6 +715,11 @@ AIRBOSS = {
   dTqueue        = nil,
   dTstatus       = nil,
   menumarkzones  = nil,
+  menusmokezones = nil,
+  playerscores   = nil,
+  autosave       = nil,
+  autosavefile   = nil,
+  autosavepath   = nil,
 }
 
 --- Player aircraft types capable of landing on carriers.
@@ -1145,9 +1243,11 @@ AIRBOSS.Difficulty={
 -- @type AIRBOSS.LSOgrade
 -- @field #string grade LSO grade, i.e. _OK_, OK, (OK), --, CUT
 -- @field #number points Points received.
+-- @field #number finalscore Points received after player has finally landed. This is the average over all incomplete passes (bolter, waveoff) before.
 -- @field #string details Detailed flight analysis.
 -- @field #number wire Wire caught.
 -- @field #number Tgroove Time in the groove in seconds.
+-- @field #number case Recovery case.
 
 --- Checkpoint parameters triggering the next step in the pattern.
 -- @type AIRBOSS.Checkpoint
@@ -1202,7 +1302,6 @@ AIRBOSS.Difficulty={
 -- @field #boolean attitudemonitor If true, display aircraft attitude and other parameters constantly.
 -- @field #table debrief Debrief analysis of the current step of this pass.
 -- @field #table lastdebrief Debrief of player performance of last completed pass.
--- @field #table grades LSO grades of player passes.
 -- @field #boolean landed If true, player landed or attempted to land.
 -- @field #boolean boltered If true, player boltered.
 -- @field #boolean waveoff If true, player was waved off during final approach.
@@ -1224,21 +1323,22 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.8.0"
+AIRBOSS.version="0.8.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Allow up to two flights per Case I marshal stack.
+-- TODO: Add max stack for Case I and define waiting queue outside CCZ.
+-- TODO: Spin pattern. Add radio menu entry. Not sure what to add though?!
 -- TODO: Maybe do an additional step at the initial (Case II) or bullseye (Case III) and register player in case he missed some steps.
--- TODO: What happens when section lead or member dies.
--- TODO: Include recovery tanker into next stack calculation. Angels six should be empty.
+-- TODO: What happens when section lead or member dies?
 -- TODO: Player eject and crash debrief "gradings".
 -- TODO: Subtitles off options on player level.
 -- TODO: PWO during case 2/3. Also when too close to other player.
 -- TODO: Option to filter AI groups for recovery.
--- TODO: Spin pattern. Add radio menu entry. Not sure what to add though?!
--- TODO: Persistence of results.
+-- DONE: Persistence of results.
 -- DONE: Foul deck waveoff.
 -- DONE: Get Charlie time estimate function.
 -- DONE: Average player grades until landing.
@@ -1323,6 +1423,9 @@ function AIRBOSS:New(carriername, alias)
   
   -- Create carrier beacon.
   self.beacon=BEACON:New(self.carrier)
+  
+  -- Init player scores table.
+  self.playerscores={}
     
   -------------
   --- Defaults:
@@ -1379,7 +1482,8 @@ function AIRBOSS:New(carriername, alias)
   self:SetStatusUpdateTime()
   
   -- Menu options
-  self:SetMenuMarkZones(false)
+  self:SetMenuMarkZones()
+  self:SetMenuSmokeZones()
   
   -- Init carrier parameters.
   if self.carriertype==AIRBOSS.CarrierType.STENNIS then
@@ -1532,12 +1636,14 @@ function AIRBOSS:New(carriername, alias)
 
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
+  self:AddTransition("Stopped",       "Load",            "Stopped")     -- Load player scores from file.
   self:AddTransition("Stopped",       "Start",           "Idle")        -- Start AIRBOSS script.
   self:AddTransition("*",             "Idle",            "Idle")        -- Carrier is idling.
   self:AddTransition("Idle",          "RecoveryStart",   "Recovering")  -- Start recovering aircraft.
   self:AddTransition("Recovering",    "RecoveryStop",    "Idle")        -- Stop recovering aircraft.
   self:AddTransition("*",             "Status",          "*")           -- Update status of players and queues.
   self:AddTransition("*",             "RecoveryCase",    "*")           -- Switch to another case recovery.
+  self:AddTransition("*",             "Save",            "*")           -- Save player scores to file.  
   self:AddTransition("*",             "Stop",            "Stopped")     -- Stop AIRBOSS FMS.
 
 
@@ -1597,6 +1703,52 @@ function AIRBOSS:New(carriername, alias)
   -- @param #number delay Delay in seconds.
   -- @param #number Case The new recovery case (1, 2 or 3).
   -- @param #number Offset Holding pattern offset angle in degrees for CASE II/III recoveries.
+
+
+  --- Triggers the FSM event "Save" that saved the player scores to a file.
+  -- @function [parent=#AIRBOSS] Save
+  -- @param #AIRBOSS self
+  -- @param #string path Path where the file is saved. Default is the DCS installation root directory or your "Saved Games\DCS" folder if lfs was desanitized.
+  -- @param #string filename (Optional) File name. Default is AIRBOSS-<ALIAS>_LSOgrades.csv.
+
+  --- Triggers the FSM delayed event "Save" that saved the player scores to a file.
+  -- @function [parent=#AIRBOSS] __Save
+  -- @param #AIRBOSS self
+  -- @param #number delay Delay in seconds.
+  -- @param #string path Path where the file is saved. Default is the DCS installation root directory or your "Saved Games\DCS" folder if lfs was desanitized.
+  -- @param #string filename (Optional) File name. Default is AIRBOSS-<ALIAS>_LSOgrades.csv.
+
+  --- On after "Save" event user function. Called when the player scores are saved to disk.
+  -- @function [parent=#AIRBOSS] OnAfterSave
+  -- @param #AIRBOSS self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #string path Path where the file is saved. Default is the DCS installation root directory or your "Saved Games\DCS" folder if lfs was desanitized.
+  -- @param #string filename (Optional) File name. Default is AIRBOSS-<ALIAS>_LSOgrades.csv.
+
+
+  --- Triggers the FSM event "Load" that loads the player scores from a file. AIRBOSS FSM must **not** be started at this point.
+  -- @function [parent=#AIRBOSS] Load
+  -- @param #AIRBOSS self
+  -- @param #string path Path where the file is located. Default is the DCS installation root directory.
+  -- @param #string filename (Optional) File name. Default is AIRBOSS-<ALIAS>_LSOgrades.csv.
+
+  --- Triggers the FSM delayed event "Load" that loads the player scores from a file. AIRBOSS FSM must **not** be started at this point.
+  -- @function [parent=#AIRBOSS] __Load
+  -- @param #AIRBOSS self
+  -- @param #number delay Delay in seconds.
+  -- @param #string path Path where the file is located. Default is the DCS installation root directory or your "Saved Games\DCS" folder if lfs was desanitized.
+  -- @param #string filename (Optional) File name. Default is AIRBOSS-<ALIAS>_LSOgrades.csv.
+
+  --- On after "Load" event user function. Called when the player scores are loaded from disk.
+  -- @function [parent=#AIRBOSS] OnAfterLoad
+  -- @param #AIRBOSS self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #string path Path where the file is located. Default is the DCS installation root directory or your "Saved Games\DCS" folder if lfs was desanitized.
+  -- @param #string filename (Optional) File name. Default is AIRBOSS-<ALIAS>_LSOgrades.csv.
 
 
   --- Triggers the FSM event "Stop" that stops the airboss. Event handlers are stopped.
@@ -1760,7 +1912,23 @@ end
 -- @param #boolean switch If true or nil, menu is enabled. If false, menu is not available to players.
 -- @return #AIRBOSS self
 function AIRBOSS:SetMenuMarkZones(switch)
-  self.menumarkzones=switch or true
+  if switch==nil or switch==true then
+    self.menumarkzones=true
+  else
+    self.menumarkzones=false
+  end
+end
+
+--- Enable or disable F10 radio menu for marking zones via smoke.
+-- @param #AIRBOSS self
+-- @param #boolean switch If true or nil, menu is enabled. If false, menu is not available to players.
+-- @return #AIRBOSS self
+function AIRBOSS:SetMenuSmokeZones(switch)
+  if switch==nil or switch==true then
+    self.menusmokezones=true
+  else
+    self.menusmokezones=false
+  end
 end
 
 --- Set TACAN channel of carrier.
@@ -1871,7 +2039,7 @@ end
 
 --- Do not handle AI aircraft.
 -- @param #AIRBOSS self
--- @return #ARIBOSS self
+-- @return #AIRBOSS self
 function AIRBOSS:SetHandleAIOFF()
   self.handleai=false
   return self
@@ -1881,7 +2049,7 @@ end
 --- Define recovery tanker associated with the carrier.
 -- @param #AIRBOSS self
 -- @param Ops.RecoveryTanker#RECOVERYTANKER recoverytanker Recovery tanker object.
--- @return #ARIBOSS self
+-- @return #AIRBOSS self
 function AIRBOSS:SetRecoveryTanker(recoverytanker)
   self.tanker=recoverytanker
   return self
@@ -1890,7 +2058,7 @@ end
 --- Define warehouse associated with the carrier.
 -- @param #AIRBOSS self
 -- @param Functional.Warehouse#WAREHOUSE warehouse Warehouse object of the carrier.
--- @return #ARIBOSS self
+-- @return #AIRBOSS self
 function AIRBOSS:SetWarehouse(warehouse)
   self.warehouse=warehouse
   return self
@@ -1903,7 +2071,7 @@ end
 -- * "TOPGUN Graduate" = @{#AIRBOSS.Difficulty.Hard}
 -- @param #AIRBOSS self
 -- @param #string skill Player skill. Default "Naval Aviator".
--- @return #ARIBOSS self
+-- @return #AIRBOSS self
 function AIRBOSS:SetDefaultPlayerSkill(skill)
 
   -- Set skill or normal.
@@ -1923,6 +2091,18 @@ function AIRBOSS:SetDefaultPlayerSkill(skill)
     self:E(self.lid..string.format("ERROR: Invalid default skill = %s. Resetting to Naval Aviator.", tostring(skill)))
   end
   
+  return self
+end
+
+--- Enable auto save of player results each time a player is *finally* graded. *Finally* means after the player landed on the carrier! After intermediate passes (bolter or waveoff) the stats are *not* saved.
+-- @param #AIRBOSS self
+-- @param #string path Path where to save the asset data file. Default is the DCS root installation directory or your "Saved Games\\DCS" folder if lfs was desanitized.
+-- @param #string filename File name. Default is generated automatically from airboss carrier name/alias.
+-- @return #AIRBOSS self
+function AIRBOSS:SetAutoSave(path, filename)
+  self.autosave=true
+  self.autosavepath=path
+  self.autosavefile=filename
   return self
 end
 
@@ -2043,7 +2223,8 @@ function AIRBOSS:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.Land)
   self:HandleEvent(EVENTS.Crash)
   self:HandleEvent(EVENTS.Ejection)
-  self:HandleEvent(EVENTS.PlayerLeaveUnit, self._PlayerLeft)  
+  self:HandleEvent(EVENTS.PlayerLeaveUnit, self._PlayerLeft)
+  --self:HandleEvent(EVENTS.MissionEnd)
 
   -- Start status check in 1 second.
   self:__Status(1)
@@ -2607,48 +2788,6 @@ function AIRBOSS:_GetETAatNextWP()
   local eta=t+tnow
   
   return eta
-end
-
-
---- Estimated the carrier position at some point in the future given the current waypoints and speeds.
--- @param #AIRBOSS self
--- @param #number time Absolute mission time at which the carrier position is requested.
--- @return Core.Point#COORDINATE Coordinate of the carrier at the given time.
-function AIRBOSS:_GetCarrierFuture(time)
-
-  local nwp=self.currentwp
-  
-  local waypoints={}
-  local lastwp=nil --Core.Point#COORDINATE
-  for i=1,#self.waypoints do
-    
-    if i>nwp then
-      table.insert(waypoints, self.waypoints[i])
-    elseif i==nwp then
-      lastwp=self.waypoints[i]
-    end
-  
-  end
-  
-  -- Current abs. time.
-  local tnow=timer.getAbsTime()
-
-  local p=self:GetCoordinate()
-  local v=self.carrier:GetVelocityMPS()
-  
-  local s=p:Get2DDistance(self.waypoints[nwp+1])
-  
-  -- v=s/t <==> t=s/v
-  local t=s/v
-  
-  local eta=UTILS.SecondsToClock(t+tnow)
-  
-  
-  for _,_wp in ipairs(waypoints) do
-    local wp=_wp --Core.Point#COORDINATE
-    
-  end
-
 end
 
 --- Init parameters for USS Stennis carrier.
@@ -3998,7 +4137,7 @@ function AIRBOSS:_GetQueueInfo(queue, case)
       local n=countunitsinair(flight.group)
       if n>0 then
         ngroup=ngroup+1
-        nunits=nunits+n        
+        nunits=nunits+n
       end
             
       --TODO: add section members?
@@ -4172,9 +4311,6 @@ function AIRBOSS:_NewPlayer(unitname)
         
     -- Number of passes done by player in this slot.
     playerData.passes=0 --playerData.passes or 0
-      
-    -- LSO grades.
-    playerData.grades=playerData.grades or {}
     
     -- Debriefing tables.
     playerData.lastdebrief=playerData.lastdebrief or {}
@@ -4193,6 +4329,9 @@ function AIRBOSS:_NewPlayer(unitname)
     
     -- Init player data.
     self.players[playername]=playerData
+    
+    -- Init player grades table if necessary.
+    self.playerscores[playername]=self.playerscores[playername] or {}
     
     -- Welcome player message.
     self:MessageToPlayer(playerData, string.format("Welcome, %s %s!", playerData.difficulty, playerData.name), "AIRBOSS", "", 5)
@@ -4740,8 +4879,8 @@ function AIRBOSS:_CheckPlayerStatus()
             
           elseif playerData.step==AIRBOSS.PatternStep.DEBRIEF then
           
-            -- Debriefing in 10 seconds.
-            SCHEDULER:New(nil, self._Debrief, {self, playerData}, 10)
+            -- Debriefing in 6 seconds.
+            SCHEDULER:New(nil, self._Debrief, {self, playerData}, 6)
             
             -- Undefined status.
             playerData.step=AIRBOSS.PatternStep.UNDEFINED
@@ -4805,17 +4944,9 @@ function AIRBOSS:OnEventBirth(EventData)
     -- Add Menu commands.
     self:_AddF10Commands(_unitName)
     
-    -- Init new player data.
-    --local playerData=self:_NewPlayer(_unitName)
-    
     -- Delaying the new player for a second, because AI units of the flight would not be registered correctly.
     SCHEDULER:New(nil, self._NewPlayer, {self, _unitName}, 1)
     
-    -- Init player data.
-    --self.players[_playername]=playerData
-    
-    -- Welcome player message.
-    --self:MessageToPlayer(playerData, string.format("Welcome, %s %s!", playerData.difficulty, playerData.name), "AIRBOSS", "", 5)
   end 
 end
 
@@ -5015,6 +5146,14 @@ function AIRBOSS:OnEventCrash(EventData)
       self:_RemoveFlight(flight, true)
     end
     
+    -- Remove all grades until a final grade is reached.
+    local grades=self.playerscores[_playername]
+    if grades and #grades>0 then
+      while #grades>0 and grades[#grades].finalscore==nil do
+        table.remove(grades, #grades)
+      end
+    end
+    
   else
     -- Debug message.
     self:T2(self.lid..string.format("AI unit %s crashed!", EventData.IniUnitName))
@@ -5047,8 +5186,17 @@ function AIRBOSS:OnEventEjection(EventData)
     if flight then
       self:_RemoveFlight(flight, true)
     end
+
+    -- Remove all grades until a final grade is reached.
+    local grades=self.playerscores[_playername]
+    if grades and #grades>0 then
+      while #grades>0 and grades[#grades].finalscore==nil do
+        table.remove(grades, #grades)
+      end
+    end    
+
   else
-    --
+    -- Debug message.
     self:T2(self.lid..string.format("AI unit %s ejected!", EventData.IniUnitName))
     
     -- Remove unit from flight and queues.
@@ -5082,74 +5230,33 @@ function AIRBOSS:_PlayerLeft(EventData)
     -- Remove flight completely from all queues and collapse marshal if necessary.
     if flight then
       self:_RemoveFlight(flight, true)
+    end
+    
+    -- Remove all grades until a final grade is reached.
+    local grades=self.playerscores[_playername]
+    if grades and #grades>0 then
+      while #grades>0 and grades[#grades].finalscore==nil do
+        table.remove(grades, #grades)
+      end
     end    
     
   end
   
 end
 
---- General event handler.
+--[[
+--- Airboss event function handling the mission end event.
+-- Handles the case when the mission is ended.
 -- @param #AIRBOSS self
--- @param #table Event DCS event table.
-function AIRBOSS:onEvent(Event)
-  self:F3(Event)
+-- @param Core.Event#EVENTDATA EventData Event data.
+function AIRBOSS:OnEventMissionEnd(EventData)
 
-  if Event == nil or Event.initiator == nil then
-    self:T3(AIRBOSS.lid.."Skipping onEvent. Event or Event.initiator unknown.")
-    return true
+  -- Auto save player results.
+  if self.autosave then
+    self:Save(self.autosavepath, self.autosavefile)
   end
-  if Unit.getByName(Event.initiator:getName()) == nil then
-    self:T3(AIRBOSS.lid.."Skipping onEvent. Initiator unit name unknown.")
-    return true
-  end
-
-  local DCSiniunit = Event.initiator
-  
-  local EventData={}  --Core.Event#EVENTDATA
-  local _playerunit=nil
-  local _playername=nil
-  
-  if Event.initiator then
-    EventData.IniUnitName  = Event.initiator:getName()
-    EventData.IniDCSGroup  = Event.initiator:getGroup()
-    EventData.IniGroupName = Event.initiator:getGroup():getName()
-    EventData.IniUnit      = UNIT:Find(DCSiniunit)
-    EventData.IniDCSUnit   = Event.initiator
-    -- Get player unit and name. This returns nil,nil if the event was not fired by a player unit. And these are the only events we are interested in. 
-    _playerunit, _playername = self:_GetPlayerUnitAndName(EventData.IniUnitName)  
-  end
-
-  -- Event info.
-  self:T3(self.lid..string.format("EVENT: Event in onEvent with ID = %s", tostring(Event.id)))
-  self:T3(self.lid..string.format("EVENT: Ini unit   = %s" , tostring(EventData.IniUnitName)))
-  self:T3(self.lid..string.format("EVENT: Ini group  = %s" , tostring(EventData.IniGroupName)))
-  self:T3(self.lid..string.format("EVENT: Ini player = %s" , tostring(_playername)))
-
-  -- Call event PlayerLeaveUnit function.
-  if Event.id==world.event.S_EVENT_PLAYER_LEAVE_UNIT and _playername then
-    --self:OnEventPlayerLeaveUnit(EventData)
-    self:_PlayerLeft(EventData)
-  end
-
-  --[[
-    
-  -- Call event Birth function.
-  if Event.id==world.event.S_EVENT_BIRTH and _playername then
-    self:OnEventBirth(EventData)
-  end
-  
-  -- Call event Ejection function.
-  if Event.id==world.event.S_EVENT_EJECTION and _playername then
-    self:OnEventEjection(EventData)
-  end
-   
-  -- Call event Crash function.
-  if Event.id==world.event.S_EVENT_CRASH and _playername then
-    self:OnEventCrash(EventData)
-  end
-  
-  ]]
 end
+]]
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- PATTERN functions
@@ -8338,7 +8445,7 @@ function AIRBOSS:_Debrief(playerData)
     Points=Points/#playerData.points
     
     -- Reset points array.
-    playerData.points={}    
+    playerData.points={}
   else
     -- Player boltered or was waved off ==> We display the normal points.
     Points=points
@@ -8354,9 +8461,10 @@ function AIRBOSS:_Debrief(playerData)
   if playerData.landed and not playerData.unit:InAir() then
     mygrade.finalscore=Points
   end
+  mygrade.case=playerData.case
   
-  -- Add LSO grade to table.
-  table.insert(playerData.grades, mygrade)
+  -- Add LSO grade to player grades table.
+  table.insert(self.playerscores[playerData.name], mygrade)
   
   -- LSO grade: (OK) 3.0 PT - LURIM
   local text=string.format("%s %.1f PT - %s", grade, Points, analysis)
@@ -8537,6 +8645,11 @@ function AIRBOSS:_Debrief(playerData)
   
   -- Debug message.
   MESSAGE:New(string.format("Player step %s.", playerData.step), 5, "DEBUG"):ToAllIf(self.Debug)
+  
+  -- Auto save player results.
+  if self.autosave and mygrade.finalscore then
+    self:Save(self.autosavepath, self.autosavefile)
+  end
 end
 
 --- Hind for flight students about the (next) step.
@@ -9419,9 +9532,13 @@ function AIRBOSS:_AddF10Commands(_unitName)
         if self.menumarkzones then
           local _markPath=missionCommands.addSubMenuForGroup(gid, "Mark Zones", _helpPath)
           -- F10/Airboss/<Carrier>/F1 Help/F1 Mark Zones/
+          if self.menusmokezones then
           missionCommands.addCommandForGroup(gid, "Smoke Pattern Zones", _markPath, self._MarkCaseZones,   self, _unitName, false)  -- F1
-          missionCommands.addCommandForGroup(gid, "Flare Pattern Zones", _markPath, self._MarkCaseZones,   self, _unitName, true)   -- F2        
+          end
+          missionCommands.addCommandForGroup(gid, "Flare Pattern Zones", _markPath, self._MarkCaseZones,   self, _unitName, true)   -- F2
+          if self.menusmokezones then        
           missionCommands.addCommandForGroup(gid, "Smoke Marshal Zone",  _markPath, self._MarkMarshalZone, self, _unitName, false)  -- F3
+          end
           missionCommands.addCommandForGroup(gid, "Flare Marshal Zone",  _markPath, self._MarkMarshalZone, self, _unitName, true)   -- F4
         end
         -- F10/Airboss/<Carrier>/F1 Help/F2 Skill Level
@@ -9832,22 +9949,30 @@ function AIRBOSS:_DisplayScoreBoard(_unitName)
     local _playerResults={}
     
     -- Calculate average points for all players.
-    for _playerName,_playerData in pairs(self.players) do
-      local playerData=_playerData --#AIRBOSS.PlayerData
+    for playerName,playerGrades in pairs(self.playerscores) do
+    
+      if playerGrades then
       
-      local Paverage=0
-      local n=0
-      for _,_grade in pairs(playerData.grades) do
-        local grade=_grade --#AIRBOSS.LSOgrade
+        -- Loop over all grades
+        local Paverage=0
+        local n=0
+        for _,_grade in pairs(playerGrades) do
+          local grade=_grade --#AIRBOSS.LSOgrade
+          
+          -- Add up points if >=0. For foul deck WO we give -1 and it does not count.
+          if grade.finalscore then --grade.points>=0 then
+            Paverage=Paverage+grade.finalscore
+            n=n+1
+          else
+            --TODO: handle case when the player just leaves after an unfinished pass, e.g bolter, without landing.
+          end        
+        end
         
-        -- Add up points if >=0. For foul deck WO we give -1 and it does not count.
-        if grade.points>=0 then
-          Paverage=Paverage+grade.points
-          n=n+1
-        end        
-      end
-      if n>0 then
-        _playerResults[_playerName]=Paverage/n
+        -- We dont want to devide by zero.
+        if n>0 then
+          _playerResults[playerName]=Paverage/n
+        end
+        
       end
     end
     
@@ -9856,28 +9981,31 @@ function AIRBOSS:_DisplayScoreBoard(_unitName)
     local i=1
     for _playerName,_points in UTILS.spairs(_playerResults, function(t, a, b) return t[b] < t[a] end) do
     
-          -- Current player data.
-      local playerData=self.players[_playerName]  --#AIRBOSS.PlayerData
-    
-      if playerData then
-    
-        -- Text.
-        text=text..string.format("\n[%d] %s %.1f|", i,_playerName,_points)
+      -- Text.
+      text=text..string.format("\n[%d] %s %.1f||", i,_playerName, _points)
+      
+      -- All player grades.
+      local playerGrades=self.playerscores[_playerName]
               
-        -- Add grades of passes.
-        for _,_grade in pairs(playerData.grades) do
-          local grade=_grade --#AIRBOSS.LSOgrade
-          text=text..string.format("|%.1f", grade.points)
+      -- Add grades of passes. We use the actual grade of each pass here and not the average after player has landed.
+      for _,_grade in pairs(playerGrades) do
+        local grade=_grade --#AIRBOSS.LSOgrade
+        if grade.finalscore then
+          text=text..string.format("%.1f|", grade.points)
+        else
+          text=text..string.format("(%.1f)", grade.points)
         end
+      end
         
-        i=i+1
-        if i>10 then
-          break
-        end
-        
+      -- Display only the top ten.
+      i=i+1
+      if i>10 then
+        break
       end
     end
-    if i==0 then
+    
+    -- If no results yet.
+    if i==1 then
       text=text.."\nNo results yet."
     end
 
@@ -9906,12 +10034,18 @@ function AIRBOSS:_DisplayPlayerGrades(_unitName)
     if playerData then
     
       -- Grades of player:
-      local text=string.format("Your grades, %s:", _playername)
+      local text=string.format("Your last 10 grades, %s:", _playername)
+      
+      -- All player grades.
+      local playerGrades=self.playerscores[_playername] or {}
       
       local p=0  -- Average points.
-      local n=0  -- Number of valid passes.
-      for i,_grade in pairs(playerData.grades) do
-        local grade=_grade --#AIRBOSS.LSOgrade
+      local n=0  -- Number of final passes.
+      local m=0  -- Number of total passes.
+      --for i,_grade in pairs(playerGrades) do
+      for i=#playerGrades,1,-1 do
+        --local grade=_grade --#AIRBOSS.LSOgrade
+        local grade=playerGrades[i] --#AIRBOSS.LSOgrade
         
         -- Check if points >=0. For foul deck WO we give -1 and pass is not counted. 
         if grade.points>=0 then
@@ -9919,21 +10053,29 @@ function AIRBOSS:_DisplayPlayerGrades(_unitName)
           -- Show final points or points of pass.
           local points=grade.finalscore or grade.points
           
-          text=text..string.format("\n[%d] %s %.1f PT - %s", n+1, grade.grade, points, grade.details)
-          
-          -- Wire trapped if any.
-          if grade.wire and grade.wire<=4 then
-            text=text..string.format(" %d-wire", grade.wire)
+          -- Display max 10 results.
+          if m<10 then
+            text=text..string.format("\n[%d] %s %.1f PT - %s", i, grade.grade, points, grade.details)
+            
+            -- Wire trapped if any.
+            if grade.wire and grade.wire<=4 then
+              text=text..string.format(" %d-wire", grade.wire)
+            end
+            
+            -- Time in the groove if any.
+            if grade.Tgroove and grade.Tgroove<=60 then
+              text=text..string.format(" Tgroove=%.1f s", grade.Tgroove)
+            end
           end
           
-          -- Time in the groove if any.
-          if grade.Tgroove and grade.Tgroove<=60 then
-            text=text..string.format(" Tgroove=%.1f s", grade.Tgroove)
+          -- Add up final points.
+          if grade.finalscore then
+            p=p+grade.finalscore
+            n=n+1
           end
           
-          -- Add up points.
-          p=p+grade.points
-          n=n+1
+          -- Total passes
+          m=m+1
         end
       end
       
@@ -10304,6 +10446,14 @@ function AIRBOSS:_DisplayPlayerStatus(_unitName)
         local stackalt=self:_GetMarshalAltitude(stack)
         local angels=self:_GetAngels(stackalt)
         stacktext=string.format("Marshal Stack %d, Angels %d\n", stack, angels)
+
+
+        -- Hint about TACAN bearing.
+        if playerData.holding~=nil and playerData.case>1 then
+          -- Get inverse magnetic radial potential offset.
+          local radial=self:GetRadial(playerData.case, true, true, true)
+          stacktext=stacktext..string.format("Select TACAN %03d°, DME %d NM\n", radial, angels+15)
+        end
       end
       
       -- Fuel and fuel state.
@@ -10577,6 +10727,248 @@ function AIRBOSS:_MarshalRadioCheck(_unitName)
       self:RadioTransmission(self.MarshalRadio, AIRBOSS.MarshalCall.RADIOCHECK)
     end
   end
+end
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Persistence Functions
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- On before "Save" event. Checks if io and lfs are available.
+-- @param #AIRBOSS self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #string path (Optional) Path where the file is saved. Default is the DCS root installation folder or your "Saved Games\\DCS" folder if the lfs module is desanitized.
+-- @param #string filename (Optional) File name for saving the player grades. Default is "AIRBOSS-<ALIAS>_LSOgrades.csv".
+function AIRBOSS:onbeforeSave(From, Event, To, path, filename)
+
+  -- Check io module is available.
+  if not io then
+    self:E(self.lid.."ERROR: io not desanitized. Can't save player grades.")
+    return false
+  end
+  
+  -- Check default path.
+  if path==nil and not lfs then
+    self:E(self.lid.."WARNING: lfs not desanitized. Results will be saved in DCS installation root directory rather than your \"Saved Games\DCS\" folder.")
+  end
+
+  return true
+end
+
+--- On after "Save" event. Player data is saved to file.
+-- @param #AIRBOSS self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #string path Path where the file is saved. If nil, file is saved in the DCS root installtion directory or your "Saved Games" folder if lfs was desanitized.
+-- @param #string filename (Optional) File name for saving the player grades. Default is "AIRBOSS-<ALIAS>_LSOgrades.csv".
+function AIRBOSS:onafterSave(From, Event, To, path, filename)
+
+  --- Function that saves data to file
+  local function _savefile(filename, data)
+    local f = assert(io.open(filename, "wb"))
+    f:write(data)
+    f:close()
+  end
+  
+  -- Set path or default.
+  if lfs then
+    path=path or lfs.writedir()
+  end
+
+  -- Set file name.
+  filename=filename or string.format("AIRBOSS-%s_LSOgrades.csv", self.alias)
+
+  -- Set path.
+  if path~=nil then
+    filename=path.."\\"..filename
+  end
+
+  -- Info
+  local text=string.format("Saving player LSO grades to file %s", filename)
+  MESSAGE:New(text,30):ToAllIf(self.Debug)
+  self:I(self.lid..text)
+
+  -- Header line
+  local scores="Name,Pass,Points Final,Points Pass,Grade,Details,Wire,Tgroove,Case\n"
+  
+  -- Loop over all players.
+  for playername,grades in pairs(self.playerscores) do
+  
+    -- Loop over player grades table.
+    for i,_grade in pairs(grades) do
+      local grade=_grade --#AIRBOSS.LSOgrade
+      
+      -- Check some stuff that could be nil.
+      local wire="n/a"
+      if grade.wire and grade.wire<=4 then
+        wire=tostring(grade.wire)
+      end
+      
+      local Tgroove="n/a"
+      if grade.Tgroove and grade.Tgroove<=60 and grade.case<3 then
+        Tgroove=tostring(UTILS.Round(grade.Tgroove, 1))
+      end
+      
+      local finalscore="n/a"
+      if grade.finalscore then
+        finalscore=tostring(UTILS.Round(grade.finalscore, 1))
+      end
+      
+      -- Compile grade line.
+      scores=scores..string.format("%s,%d,%s,%.1f,%s,%s,%s,%s,%d\n", playername, i, finalscore, grade.points, grade.grade, grade.details, wire, Tgroove, grade.case) 
+    end
+  end
+  
+  -- Save file.
+  _savefile(filename, scores)
+end
+
+
+--- On before "Load" event. Checks if the file that the player grades from exists.
+-- @param #AIRBOSS self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #string path (Optional) Path where the file is loaded from. Default is the DCS installation root directory or your "Saved Games\\DCS" folder if lfs was desanizized. 
+-- @param #string filename (Optional) File name for saving the player grades. Default is "AIRBOSS-<ALIAS>_LSOgrades.csv".
+function AIRBOSS:onbeforeLoad(From, Event, To, path, filename)
+
+  --- Function that check if a file exists.
+  local function _fileexists(name)
+     local f=io.open(name,"r")
+     if f~=nil then
+      io.close(f)
+      return true
+    else
+      return false
+    end
+  end
+  
+  -- Check io module is available.
+  if not io then
+    self:E(self.lid.."ERROR: io not desanitized. Can't load player grades.")
+    return false
+  end
+  
+  -- Check default path.
+  if path==nil and not lfs then
+    self:E(self.lid.."WARNING: lfs not desanitized. Results will be saved in DCS installation root directory rather than your \"Saved Games\DCS\" folder.")
+  end
+  
+  -- Set path or default.
+  if lfs then
+    path=path or lfs.writedir()
+  end
+
+  -- Set file name.
+  filename=filename or string.format("AIRBOSS-%s_LSOgrades.csv", self.alias)
+
+  -- Set path.
+  if path~=nil then
+    filename=path.."\\"..filename
+  end
+
+  -- Check if file exists.
+  local exists=_fileexists(filename)
+
+  if exists then
+    return true
+  else
+    self:E(self.lid..string.format("WARNING: Player LSO grades file %s does not exist.", filename), 60)
+    return false
+  end
+
+end
+
+
+--- On after "Load" event. Loads grades of all players from file.
+-- @param #AIRBOSS self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #string path Path where the file is loaded from. Default is the DCS root installation folder or your "Saved Games\\DCS" folder if lfs was desanizied.
+-- @param #string filename (Optional) File name for saving the player grades. Default is "AIRBOSS-<ALIAS>_LSOgrades.csv".
+function AIRBOSS:onafterLoad(From, Event, To, path, filename)
+
+  --- Function that load data from a file.
+  local function _loadfile(filename)
+    local f=assert(io.open(filename, "rb"))
+    local data=f:read("*all")
+    f:close()
+    return data
+  end
+  
+  -- Set path or default.
+  if lfs then
+    path=path or lfs.writedir()
+  end
+
+  -- Set file name.
+  filename=filename or string.format("AIRBOSS-%s_LSOgrades.csv", self.alias)
+
+  -- Set path.
+  if path~=nil then
+    filename=path.."\\"..filename
+  end
+
+  -- Info message.
+  local text=string.format("Loading player LSO grades from file %s", filename)
+  MESSAGE:New(text,10):ToAllIf(self.Debug)
+  self:I(self.lid..text)
+
+  -- Load asset data from file.
+  local data=_loadfile(filename)
+
+  -- Split by line break.
+  local playergrades=UTILS.Split(data,"\n")
+  
+  -- Remove first header line.
+  table.remove(playergrades, 1)
+
+  -- Init player scores table.
+  self.playerscores={}
+
+  -- Loop over all lines.
+  for _,gradeline in pairs(playergrades) do
+
+    -- Parameters are separated by commata.
+    local gradedata=UTILS.Split(gradeline, ",")
+    
+    -- Debug info.
+    self:T2(gradedata)
+    
+    -- Grade table
+    local grade={} --#AIRBOSS.LSOgrade
+    
+    -- Line format: playername, i, grade.finalscore, grade.points, grade.grade, grade.details, wire, Tgroove, case
+    local playername=gradedata[1]
+    if gradedata[3]~=nil and gradedata[3]~="n/a" then
+      grade.finalscore=tonumber(gradedata[3])
+    end
+    grade.points=tonumber(gradedata[4])
+    grade.grade=tostring(gradedata[5])
+    grade.details=tostring(gradedata[6])
+    if gradedata[7]~=nil and gradedata[7]~="n/a" then
+      grade.wire=tonumber(gradedata[7])
+    end
+    if gradedata[8]~=nil and gradedata[8]~="n/a" then
+      grade.Tgroove=tonumber(gradedata[8])
+    end
+    grade.case=tonumber(gradedata[9])
+    
+    -- Init player table if necessary.
+    self.playerscores[playername]=self.playerscores[playername] or {}
+    
+    -- Add grade to table.
+    table.insert(self.playerscores[playername], grade)
+    
+    -- Debug info.
+    self:T2({playername, self.playerscores[playername]})   
+  end
+  
 end
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
