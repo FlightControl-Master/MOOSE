@@ -786,8 +786,6 @@ function ATC_GROUND_CAUCASUS:New( AirbaseNames )
   -- Inherits from BASE
   local self = BASE:Inherit( self, ATC_GROUND:New( self.Airbases, AirbaseNames ) )
 
-  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, 0.05 )
-
   self:SetKickSpeedKmph( 50 )
   self:SetMaximumKickSpeedKmph( 150 )
 
@@ -1000,6 +998,14 @@ function ATC_GROUND_CAUCASUS:New( AirbaseNames )
 end
 
 
+--- Start SCHEDULER for ATC_GROUND_CAUCASUS object.
+-- @param #ATC_GROUND_CAUCASUS self
+-- @param RepeatScanSeconds Time in second for defining occurency of alerts.
+-- @return nothing
+function ATC_GROUND_CAUCASUS:Start( RepeatScanSeconds )
+  RepeatScanSeconds = RepeatScanSeconds or 0.05
+  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, 0.05 )
+end
 
 
 --- @type ATC_GROUND_NEVADA
@@ -1377,8 +1383,6 @@ function ATC_GROUND_NEVADA:New( AirbaseNames )
   -- Inherits from BASE
   local self = BASE:Inherit( self, ATC_GROUND:New( self.Airbases, AirbaseNames ) )
 
-  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, 0.05 )
-
   self:SetKickSpeedKmph( 50 )
   self:SetMaximumKickSpeedKmph( 150 )
 
@@ -1540,6 +1544,16 @@ function ATC_GROUND_NEVADA:New( AirbaseNames )
   --]]
   
   return self
+end
+
+
+--- Start SCHEDULER for ATC_GROUND_CAUCASUS object.
+-- @param #ATC_GROUND_NEVADA self
+-- @param RepeatScanSeconds Time in second for defining occurency of alerts.
+-- @return nothing
+function ATC_GROUND_NEVADA:Start( RepeatScanSeconds )
+  RepeatScanSeconds = RepeatScanSeconds or 0.05
+  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, 0.05 )
 end
 
 --- @type ATC_GROUND_NORMANDY
@@ -2032,8 +2046,6 @@ function ATC_GROUND_NORMANDY:New( AirbaseNames )
   -- Inherits from BASE
   local self = BASE:Inherit( self, ATC_GROUND:New( self.Airbases, AirbaseNames ) ) -- #ATC_GROUND_NORMANDY
 
-  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, 0.05 )
-  
   self:SetKickSpeedKmph( 40 )
   self:SetMaximumKickSpeedKmph( 100 )
 
@@ -2316,6 +2328,14 @@ function ATC_GROUND_NORMANDY:New( AirbaseNames )
 end
 
      
+--- Start SCHEDULER for ATC_GROUND_NORMANDY object.
+-- @param #ATC_GROUND_CAUCASUS self
+-- @param RepeatScanSeconds Time in second for defining occurency of alerts.
+-- @return nothing
+function ATC_GROUND_NORMANDY:Start( RepeatScanSeconds )
+  RepeatScanSeconds = RepeatScanSeconds or 0.05
+  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, 0.05 )
+end
 
 
      
