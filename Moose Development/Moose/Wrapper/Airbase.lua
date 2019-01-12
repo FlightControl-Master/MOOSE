@@ -238,6 +238,16 @@ AIRBASE.Normandy = {
 -- * AIRBASE.PersianGulf.Sharjah_Intl
 -- * AIRBASE.PersianGulf.Shiraz_International_Airport
 -- * AIRBASE.PersianGulf.Kerman_Airport
+-- * AIRBASE.PersianGulf.Sas_Al_Nakheel_Airport
+-- * AIRBASE.PersianGulf.Bandar_e_Jask_airfield
+-- * AIRBASE.PersianGulf.Abu_Dhabi_International_Airport
+-- * AIRBASE.PersianGulf.Al_Bateen_Airport
+-- * AIRBASE.PersianGulf.Kish_International_Airport
+-- * AIRBASE.PersianGulf.Al_Ain_International_Airport
+-- * AIRBASE.PersianGulf.Lavan_Island_Airport
+-- * AIRBASE.PersianGulf.Jiroft_Airport
+-- * AIRBASE.PersianGulf.Bandar_Abbas_Intl 
+-- 
 -- @field PersianGulf
 AIRBASE.PersianGulf = {
   ["Fujairah_Intl"] = "Fujairah Intl",
@@ -259,6 +269,15 @@ AIRBASE.PersianGulf = {
   ["Sharjah_Intl"] = "Sharjah Intl",
   ["Shiraz_International_Airport"] = "Shiraz International Airport",
   ["Kerman_Airport"] = "Kerman Airport",
+  ["Sas_Al_Nakheel_Airport"] = "Sas Al Nakheel Airport",
+  ["Bandar_e_Jask_airfield"] = "Bandar-e-Jask airfield",
+  ["Abu_Dhabi_International_Airport"] = "Abu Dhabi International Airport",
+  ["Al_Bateen_Airport"] = "Al-Bateen Airport",
+  ["Kish_International_Airport"] = "Kish International Airport",
+  ["Al_Ain_International_Airport"] = "Al Ain International Airport",
+  ["Lavan_Island_Airport"] = "Lavan Island Airport",
+  ["Jiroft_Airport"] = "Jiroft Airport",
+  ["Bandar_Abbas_Intl"] = "Bandar Abbas Intl",
   }
   
 --- AIRBASE.ParkingSpot ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
