@@ -81,7 +81,7 @@
 -- @field #PSEUDOATC
 PSEUDOATC={
   ClassName = "PSEUDOATC",
-  player={},
+  group={},
   Debug=false,
   mdur=30,
   mrefresh=120,
@@ -383,16 +383,23 @@ function PSEUDOATC:PlayerEntered(unit)
   local PlayerName=unit:GetPlayerName()
   local UnitName=unit:GetName()
   local CallSign=unit:GetCallsign()
+  local UID=unit:GetDCSObject():getID()
+  
+  if not self.group[GID] then
+    self.group[GID]={}
+    self.group[GID].player={}
+  end
+  
   
   -- Init player table.  
-  self.player[GID]={}
-  self.player[GID].group=group
-  self.player[GID].unit=unit
-  self.player[GID].groupname=GroupName
-  self.player[GID].unitname=UnitName
-  self.player[GID].playername=PlayerName
-  self.player[GID].callsign=CallSign
-  self.player[GID].waypoints=group:GetTaskRoute()
+  self.group[GID].player[UID]={}
+  self.group[GID].player[UID].group=group
+  self.group[GID].player[UID].unit=unit
+  self.group[GID].player[UID].groupname=GroupName
+  self.group[GID].player[UID].unitname=UnitName
+  self.group[GID].player[UID].playername=PlayerName
+  self.group[GID].player[UID].callsign=CallSign
+  self.group[GID].player[UID].waypoints=group:GetTaskRoute()
   
   -- Info message.
   local text=string.format("Player %s entered unit %s of group %s (id=%d).", PlayerName, UnitName, GroupName, GID)
@@ -400,19 +407,26 @@ function PSEUDOATC:PlayerEntered(unit)
   MESSAGE:New(text, 30):ToAllIf(self.Debug)
   
   -- Create main F10 menu, i.e. "F10/Pseudo ATC"
-  self.player[GID].menu_main=missionCommands.addSubMenuForGroup(GID, "Pseudo ATC")
+    local countPlayerInGroup = 0
+    for _ in pairs(self.group[GID].player) do countPlayerInGroup = countPlayerInGroup + 1 end
+  if countPlayerInGroup <= 1 then
+    self.group[GID].menu_main=missionCommands.addSubMenuForGroup(GID, "Pseudo ATC")
+  end
+  
+  -- Create/update custom menu for player
+  self:MenuCreatePlayer(GID,UID)
     
   -- Create/update list of nearby airports.
-  self:LocalAirports(GID)
+  self:LocalAirports(GID,UID)
   
   -- Create submenu of local airports.
-  self:MenuAirports(GID)
+  self:MenuAirports(GID,UID)
   
   -- Create submenu Waypoints.
-  self:MenuWaypoints(GID)
+  self:MenuWaypoints(GID,UID)
   
   -- Start scheduler to refresh the F10 menues.
-  self.player[GID].scheduler, self.player[GID].schedulerid=SCHEDULER:New(nil, self.MenuRefresh, {self, GID}, self.mrefresh, self.mrefresh)
+  self.group[GID].player[UID].scheduler, self.group[GID].player[UID].schedulerid=SCHEDULER:New(nil, self.MenuRefresh, {self, GID, UID}, self.mrefresh, self.mrefresh)
  
 end
 
@@ -425,24 +439,23 @@ function PSEUDOATC:PlayerLanded(unit, place)
   
   -- Gather some information.
   local group=unit:GetGroup()
-  local id=group:GetID()
-  local PlayerName=self.player[id].playername
-  local Callsign=self.player[id].callsign
-  local UnitName=self.player[id].unitname
-  local GroupName=self.player[id].groupname
-  local CallSign=self.player[id].callsign
+  local GID=group:GetID()
+  local UID=unit:GetDCSObject():getID()
+  local PlayerName=self.group[GID].player[UID].playername
+  local UnitName=self.group[GID].player[UID].unitname
+  local GroupName=self.group[GID].player[UID].groupname
   
   -- Debug message.
-  local text=string.format("Player %s in unit %s of group %s (id=%d) landed at %s.", PlayerName, UnitName, GroupName, id, place)
+  local text=string.format("Player %s in unit %s of group %s (id=%d) landed at %s.", PlayerName, UnitName, GroupName, GID, place)
   self:T(PSEUDOATC.id..text)
   MESSAGE:New(text, 30):ToAllIf(self.Debug)
   
   -- Stop altitude reporting timer if its activated.
-  self:AltitudeTimerStop(id)
+  self:AltitudeTimerStop(GID,UID)
   
   -- Welcome message.
   if place and self.chatty then
-    local text=string.format("Touchdown! Welcome to %s. Have a nice day!", place)
+    local text=string.format("Touchdown! Welcome to %s pilot %s. Have a nice day!", place,PlayerName)
     MESSAGE:New(text, self.mdur):ToGroup(group)
   end
 
@@ -457,15 +470,15 @@ function PSEUDOATC:PlayerTakeOff(unit, place)
   
   -- Gather some information.
   local group=unit:GetGroup()
-  local id=group:GetID()
-  local PlayerName=self.player[id].playername
-  local Callsign=self.player[id].callsign
-  local UnitName=self.player[id].unitname
-  local GroupName=self.player[id].groupname
-  local CallSign=self.player[id].callsign
+  local GID=group:GetID()
+  local UID=unit:GetDCSObject():getID()
+  local PlayerName=self.group[GID].player[UID].playername
+  local CallSign=self.group[GID].player[UID].callsign
+  local UnitName=self.group[GID].player[UID].unitname
+  local GroupName=self.group[GID].player[UID].groupname
   
   -- Debug message.
-  local text=string.format("Player %s in unit %s of group %s (id=%d) took off at %s.", PlayerName, UnitName, GroupName, id, place)
+  local text=string.format("Player %s in unit %s of group %s (id=%d) took off at %s.", PlayerName, UnitName, GroupName, GID, place)
   self:T(PSEUDOATC.id..text)
   MESSAGE:New(text, 30):ToAllIf(self.Debug)
     
@@ -485,30 +498,44 @@ function PSEUDOATC:PlayerLeft(unit)
  
   -- Get id.
   local group=unit:GetGroup()
-  local id=group:GetID()
+  local GID=group:GetID()
+  local UID=unit:GetDCSObject():getID()
   
-  if self.player[id] then
+  if self.group[GID].player[UID] then
+    local PlayerName=self.group[GID].player[UID].playername
+    local CallSign=self.group[GID].player[UID].callsign
+    local UnitName=self.group[GID].player[UID].unitname
+    local GroupName=self.group[GID].player[UID].groupname
   
     -- Debug message.
-    local text=string.format("Player %s (callsign %s) of group %s just left unit %s.", self.player[id].playername, self.player[id].callsign, self.player[id].groupname, self.player[id].unitname)
+    local text=string.format("Player %s (callsign %s) of group %s just left unit %s.", PlayerName, CallSign, GroupName, UnitName)
     self:T(PSEUDOATC.id..text)
     MESSAGE:New(text, 30):ToAllIf(self.Debug)
     
     -- Stop scheduler for menu updates
-    if self.player[id].schedulerid then
-      self.player[id].scheduler:Stop(self.player[id].schedulerid)
+    if self.group[GID].player[UID].schedulerid then
+      self.group[GID].player[UID].scheduler:Stop(self.group[GID].player[UID].schedulerid)
     end
     
     -- Stop scheduler for reporting alt if it runs.
-    self:AltitudeTimerStop(id)
+    self:AltitudeTimerStop(GID,UID)
     
+    --  Remove own menu.
+    if self.group[GID].player[UID].menu_own then
+      missionCommands.removeItemForGroup(GID,self.group[GID].player[UID].menu_own)
+    end
     -- Remove main menu.
-    if self.player[id].menu_main then
-      missionCommands.removeItem(self.player[id].menu_main)
+    -- WARNING: Remove only if last human element of group 
+    
+    local countPlayerInGroup = 0
+    for _ in pairs(self.group[GID].player) do countPlayerInGroup = countPlayerInGroup + 1 end
+  
+    if self.group[GID].menu_main and countPlayerInGroup==1 then
+      missionCommands.removeItemForGroup(GID,self.group[GID].menu_main)
     end
   
     -- Remove player array.
-    self.player[id]=nil
+    self.group[GID].player[UID]=nil
     
   end
 end
@@ -518,80 +545,94 @@ end
 
 --- Refreshes all player menues.
 -- @param #PSEUDOATC self.
--- @param #number id Group id of player unit. 
-function PSEUDOATC:MenuRefresh(id)
-  self:F({id=id})
-
+-- @param #number GID Group id of player unit.
+-- @param #number UID Unit id of player. 
+function PSEUDOATC:MenuRefresh(GID,UID)
+  self:F({GID=GID,UID=UID})
   -- Debug message.
-  local text=string.format("Refreshing menues for player %s in group %s.", self.player[id].playername, self.player[id].groupname)
+  local text=string.format("Refreshing menues for player %s in group %s.", self.group[GID].player[UID].playername, self.group[GID].player[UID].groupname)
   self:T(PSEUDOATC.id..text)
   MESSAGE:New(text,30):ToAllIf(self.Debug)
 
   -- Clear menu.
-  self:MenuClear(id)
+  self:MenuClear(GID,UID)
   
   -- Create list of nearby airports.
-  self:LocalAirports(id)
+  self:LocalAirports(GID,UID)
       
   -- Create submenu Local Airports.
-  self:MenuAirports(id)
+  self:MenuAirports(GID,UID)
   
   -- Create submenu Waypoints etc.
-  self:MenuWaypoints(id)
+  self:MenuWaypoints(GID,UID)
   
 end
+
+--- Create player menus.
+-- @param #PSEUDOATC self.
+-- @param #number GID Group id of player unit.
+-- @param #number UID Unit id of player. 
+function PSEUDOATC:MenuCreatePlayer(GID,UID)
+  self:F({GID=GID,UID=UID})
+  -- Table for menu entries.
+    local PlayerName=self.group[GID].player[UID].playername
+    self.group[GID].player[UID].menu_own=missionCommands.addSubMenuForGroup(GID, PlayerName, self.group[GID].menu_main)
+end
+
 
 
 --- Clear player menus.
 -- @param #PSEUDOATC self.
--- @param #number id Group id of player unit. 
-function PSEUDOATC:MenuClear(id)
-  self:F(id)
+-- @param #number GID Group id of player unit.
+-- @param #number UID Unit id of player. 
+function PSEUDOATC:MenuClear(GID,UID)
+  self:F({GID=GID,UID=UID})
 
   -- Debug message.
-  local text=string.format("Clearing menus for player %s in group %s.", self.player[id].playername, self.player[id].groupname)
+  local text=string.format("Clearing menus for player %s in group %s.", self.group[GID].player[UID].playername, self.group[GID].player[UID].groupname)
   self:T(PSEUDOATC.id..text)
   MESSAGE:New(text,30):ToAllIf(self.Debug)
   
   -- Delete Airports menu.
-  if self.player[id].menu_airports then
-    missionCommands.removeItemForGroup(id, self.player[id].menu_airports)
-    self.player[id].menu_airports=nil
+  if self.group[GID].player[UID].menu_airports then
+    missionCommands.removeItemForGroup(GID, self.group[GID].player[UID].menu_airports)
+    self.group[GID].player[UID].menu_airports=nil
   else
     self:T2(PSEUDOATC.id.."No airports to clear menus.")
   end
  
   -- Delete waypoints menu.
-  if self.player[id].menu_waypoints then
-    missionCommands.removeItemForGroup(id, self.player[id].menu_waypoints)
-    self.player[id].menu_waypoints=nil
+  if self.group[GID].player[UID].menu_waypoints then
+    missionCommands.removeItemForGroup(GID, self.group[GID].player[UID].menu_waypoints)
+    self.group[GID].player[UID].menu_waypoints=nil
   end
   
   -- Delete report alt until touchdown menu command.
-  if self.player[id].menu_reportalt then
-    missionCommands.removeItemForGroup(id, self.player[id].menu_reportalt)
-    self.player[id].menu_reportalt=nil
+  if self.group[GID].player[UID].menu_reportalt then
+    missionCommands.removeItemForGroup(GID, self.group[GID].player[UID].menu_reportalt)
+    self.group[GID].player[UID].menu_reportalt=nil
   end
 
   -- Delete request current alt menu command.
-  if self.player[id].menu_requestalt then
-    missionCommands.removeItemForGroup(id, self.player[id].menu_requestalt)
-    self.player[id].menu_requestalt=nil
+  if self.group[GID].player[UID].menu_requestalt then
+    missionCommands.removeItemForGroup(GID, self.group[GID].player[UID].menu_requestalt)
+    self.group[GID].player[UID].menu_requestalt=nil
   end
 
 end
 
 --- Create "F10/Pseudo ATC/Local Airports/Airport Name/" menu items each containing weather report and BR request.
 -- @param #PSEUDOATC self
--- @param #number id Group id of player unit for which menues are created. 
-function PSEUDOATC:MenuAirports(id)
-  self:F(id)
+-- @param #number GID Group id of player unit.
+-- @param #number UID Unit id of player. 
+function PSEUDOATC:MenuAirports(GID,UID)
+  self:F({GID=GID,UID=UID})
 
   -- Table for menu entries.
-  self.player[id].menu_airports=missionCommands.addSubMenuForGroup(id, "Local Airports", self.player[id].menu_main)
+  self.group[GID].player[UID].menu_airports=missionCommands.addSubMenuForGroup(GID, "Local Airports", self.group[GID].player[UID].menu_own)
    
   local i=0
-  for _,airport in pairs(self.player[id].airports) do
+  for _,airport in pairs(self.group[GID].player[UID].airports) do
   
     i=i+1
     if i > 10 then
@@ -603,37 +644,38 @@ function PSEUDOATC:MenuAirports(id)
     local pos=AIRBASE:FindByName(name):GetCoordinate()
     
     --F10menu_ATC_airports[ID][name] = missionCommands.addSubMenuForGroup(ID, name, F10menu_ATC)
-    local submenu=missionCommands.addSubMenuForGroup(id, name, self.player[id].menu_airports)
+    local submenu=missionCommands.addSubMenuForGroup(GID, name, self.group[GID].player[UID].menu_airports)
     
     -- Create menu reporting commands
-    missionCommands.addCommandForGroup(id, "Weather Report", submenu, self.ReportWeather, self, id, pos, name)
-    missionCommands.addCommandForGroup(id, "Request BR", submenu, self.ReportBR, self, id, pos, name)
+    missionCommands.addCommandForGroup(GID, "Weather Report", submenu, self.ReportWeather, self, GID, UID, pos, name)
+    missionCommands.addCommandForGroup(GID, "Request BR", submenu, self.ReportBR, self, GID, UID, pos, name)
     
     -- Debug message.
-    self:T(string.format(PSEUDOATC.id.."Creating airport menu item %s for ID %d", name, id))
+    self:T(string.format(PSEUDOATC.id.."Creating airport menu item %s for ID %d", name, GID))
   end
 end
 
 --- Create "F10/Pseudo ATC/Waypoints/<Waypoint i>  menu items.
 -- @param #PSEUDOATC self
--- @param #number id Group id of player unit for which menues are created. 
-function PSEUDOATC:MenuWaypoints(id)
-  self:F(id)
+-- @param #number GID Group id of player unit.
+-- @param #number UID Unit id of player. 
+function PSEUDOATC:MenuWaypoints(GID, UID)
+  self:F({GID=GID, UID=UID})
 
   -- Player unit and callsign.
-  local unit=self.player[id].unit --Wrapper.Unit#UNIT
-  local callsign=self.player[id].callsign
+--  local unit=self.group[GID].player[UID].unit --Wrapper.Unit#UNIT
+  local callsign=self.group[GID].player[UID].callsign
   
   -- Debug info.
-  self:T(PSEUDOATC.id..string.format("Creating waypoint menu for %s (ID %d).", callsign, id))
+  self:T(PSEUDOATC.id..string.format("Creating waypoint menu for %s (ID %d).", callsign, GID))
      
-  if #self.player[id].waypoints>0 then
+  if #self.group[GID].player[UID].waypoints>0 then
   
     -- F10/PseudoATC/Waypoints
-    self.player[id].menu_waypoints=missionCommands.addSubMenuForGroup(id, "Waypoints", self.player[id].menu_main)
+    self.group[GID].player[UID].menu_waypoints=missionCommands.addSubMenuForGroup(GID, "Waypoints", self.group[GID].player[UID].menu_own)
 
     local j=0    
-    for i, wp in pairs(self.player[id].waypoints) do
+    for i, wp in pairs(self.group[GID].player[UID].waypoints) do
     
       -- Increase counter
       j=j+1
@@ -647,16 +689,16 @@ function PSEUDOATC:MenuWaypoints(id)
       local name=string.format("Waypoint %d", i-1)
       
       -- "F10/PseudoATC/Waypoints/Waypoint X"
-      local submenu=missionCommands.addSubMenuForGroup(id, name, self.player[id].menu_waypoints)
+      local submenu=missionCommands.addSubMenuForGroup(GID, name, self.group[GID].player[UID].menu_waypoints)
       
       -- Menu commands for each waypoint "F10/PseudoATC/My Aircraft (callsign)/Waypoints/Waypoint X/<Commands>"
-      missionCommands.addCommandForGroup(id, "Weather Report", submenu, self.ReportWeather, self, id, pos, name)
-      missionCommands.addCommandForGroup(id, "Request BR", submenu, self.ReportBR, self, id, pos, name)
+      missionCommands.addCommandForGroup(GID, "Weather Report", submenu, self.ReportWeather, self, GID, UID, pos, name)
+      missionCommands.addCommandForGroup(GID, "Request BR", submenu, self.ReportBR, self, GID, UID, pos, name)
     end
   end
   
-  self.player[id].menu_reportalt  = missionCommands.addCommandForGroup(id, "Talk me down",     self.player[id].menu_main, self.AltidudeTimerToggle, self, id)
-  self.player[id].menu_requestalt = missionCommands.addCommandForGroup(id, "Request altitude", self.player[id].menu_main, self.ReportHeight, self, id)
+  self.group[GID].player[UID].menu_reportalt  = missionCommands.addCommandForGroup(GID, "Talk me down",     self.group[GID].player[UID].menu_own, self.AltidudeTimerToggle, self, GID, UID)
+  self.group[GID].player[UID].menu_requestalt = missionCommands.addCommandForGroup(GID, "Request altitude", self.group[GID].player[UID].menu_own, self.ReportHeight, self, GID, UID)
 end
 
 -----------------------------------------------------------------------------------------------------------------------------------------
@@ -664,14 +706,15 @@ end
 
 --- Weather Report. Report pressure QFE/QNH, temperature, wind at certain location.
 -- @param #PSEUDOATC self
--- @param #number id Group id to which the report is delivered.
+-- @param #number GID Group id of player unit.
+-- @param #number UID Unit id of player. 
 -- @param Core.Point#COORDINATE position Coordinates at which the pressure is measured.
 -- @param #string location Name of the location at which the pressure is measured.
-function PSEUDOATC:ReportWeather(id, position, location)
-  self:F({id=id, position=position, location=location})
+function PSEUDOATC:ReportWeather(GID, UID, position, location)
+  self:F({GID=GID, UID=UID, position=position, location=location})
   
   -- Player unit system settings.
-  local settings=_DATABASE:GetPlayerSettings(self.player[id].playername) or _SETTINGS --Core.Settings#SETTINGS
+  local settings=_DATABASE:GetPlayerSettings(self.group[GID].player[UID].playername) or _SETTINGS --Core.Settings#SETTINGS
   
   local text=string.format("Local weather at %s:\n", location)
    
@@ -723,23 +766,24 @@ function PSEUDOATC:ReportWeather(id, position, location)
   end  
   
   -- Message text.
-  local text=text..string.format("Wind from %s at %s (%s).", Ds, Vs, Bd)
+  local text=text..string.format("%s, Wind from %s at %s (%s).", self.group[GID].player[UID].playername, Ds, Vs, Bd)
   
   -- Send message
-  self:_DisplayMessageToGroup(self.player[id].unit, text, self.mdur, true)
+  self:_DisplayMessageToGroup(self.group[GID].player[UID].unit, text, self.mdur, true)
   
 end
 
 --- Report absolute bearing and range form player unit to airport.
 -- @param #PSEUDOATC self
--- @param #number id Group id to the report is delivered.
+-- @param #number GID Group id of player unit.
+-- @param #number UID Unit id of player. 
 -- @param Core.Point#COORDINATE position Coordinates at which the pressure is measured.
 -- @param #string location Name of the location at which the pressure is measured.
-function PSEUDOATC:ReportBR(id, position, location)
-  self:F({id=id, position=position, location=location})
+function PSEUDOATC:ReportBR(GID, UID, position, location)
+  self:F({GID=GID, UID=UID, position=position, location=location})
 
   -- Current coordinates.
-  local unit=self.player[id].unit --Wrapper.Unit#UNIT
+  local unit=self.group[GID].player[UID].unit --Wrapper.Unit#UNIT
   local coord=unit:GetCoordinate()
   
   -- Direction vector from current position (coord) to target (position).
@@ -752,7 +796,7 @@ function PSEUDOATC:ReportBR(id, position, location)
   local Bs=string.format('%03d°', angle)
   
   -- Settings.
-  local settings=_DATABASE:GetPlayerSettings(self.player[id].playername) or _SETTINGS --Core.Settings#SETTINGS
+  local settings=_DATABASE:GetPlayerSettings(self.group[GID].player[UID].playername) or _SETTINGS --Core.Settings#SETTINGS
   
   
   local Rs=string.format("%.1f NM", UTILS.MetersToNM(range))
@@ -769,12 +813,13 @@ end
 
 --- Report altitude above ground level of player unit.
 -- @param #PSEUDOATC self
--- @param #number id Group id to the report is delivered.
+-- @param #number GID Group id of player unit.
+-- @param #number UID Unit id of player. 
 -- @param #number dt (Optional) Duration the message is displayed.
 -- @param #boolean _clear (Optional) Clear previouse messages. 
 -- @return #number Altitude above ground.
-function PSEUDOATC:ReportHeight(id, dt, _clear)
-  self:F({id=id, dt=dt})
+function PSEUDOATC:ReportHeight(GID, UID, dt, _clear)
+  self:F({GID=GID, UID=UID, dt=dt})
 
   local dt = dt or self.mdur
   if _clear==nil then
@@ -791,7 +836,7 @@ function PSEUDOATC:ReportHeight(id, dt, _clear)
   end
 
   -- Get height AGL.
-  local unit=self.player[id].unit --Wrapper.Unit#UNIT
+  local unit=self.group[GID].player[UID].unit --Wrapper.Unit#UNIT
   
   if unit and unit:IsAlive() then
   
@@ -800,7 +845,7 @@ function PSEUDOATC:ReportHeight(id, dt, _clear)
     local callsign=unit:GetCallsign()
     
     -- Settings.
-    local settings=_DATABASE:GetPlayerSettings(self.player[id].playername) or _SETTINGS --Core.Settings#SETTINGS
+    local settings=_DATABASE:GetPlayerSettings(self.group[GID].player[UID].playername) or _SETTINGS --Core.Settings#SETTINGS
     
     -- Height string.
     local Hs=string.format("%d ft", UTILS.MetersToFeet(height))
@@ -817,7 +862,7 @@ function PSEUDOATC:ReportHeight(id, dt, _clear)
     end
     
     -- Send message to player group.  
-    self:_DisplayMessageToGroup(self.player[id].unit,_text, dt,_clear)
+    self:_DisplayMessageToGroup(self.group[GID].player[UID].unit,_text, dt,_clear)
     
     -- Return height
     return height
@@ -830,47 +875,50 @@ end
 
 --- Toggle report altitude reporting on/off.
 -- @param #PSEUDOATC self.
--- @param #number id Group id of player unit. 
-function PSEUDOATC:AltidudeTimerToggle(id)
-  self:F(id)
+-- @param #number GID Group id of player unit.
+-- @param #number UID Unit id of player. 
+function PSEUDOATC:AltidudeTimerToggle(GID,UID)
+  self:F({GID=GID, UID=UID})
   
-  if self.player[id].altimerid then
+  if self.group[GID].player[UID].altimerid then
     -- If the timer is on, we turn it off.
-    self:AltitudeTimerStop(id)
+    self:AltitudeTimerStop(GID, UID)
   else
     -- If the timer is off, we turn it on.
-    self:AltitudeTimeStart(id)
+    self:AltitudeTimeStart(GID, UID)
   end
 end
 
 --- Start altitude reporting scheduler.
 -- @param #PSEUDOATC self.
--- @param #number id Group id of player unit. 
-function PSEUDOATC:AltitudeTimeStart(id)
-  self:F(id)
+-- @param #number GID Group id of player unit.
+-- @param #number UID Unit id of player. 
+function PSEUDOATC:AltitudeTimeStart(GID, UID)
+  self:F({GID=GID, UID=UID})
   
   -- Debug info.
-  self:T(PSEUDOATC.id..string.format("Starting altitude report timer for player ID %d.", id))
+  self:T(PSEUDOATC.id..string.format("Starting altitude report timer for player ID %d.", UID))
   
   -- Start timer. Altitude is reported every ~3 seconds.
-  self.player[id].altimer, self.player[id].altimerid=SCHEDULER:New(nil, self.ReportHeight, {self, id, 0.1, true}, 1, 3)
+  self.group[GID].player[UID].altimer, self.group[GID].player[UID].altimerid=SCHEDULER:New(nil, self.ReportHeight, {self, GID, UID, 0.1, true}, 1, 3)
 end
 
 --- Stop/destroy DCS scheduler function for reporting altitude.
 -- @param #PSEUDOATC self.
--- @param #number id Group id of player unit. 
-function PSEUDOATC:AltitudeTimerStop(id)
-
+-- @param #number GID Group id of player unit.
+-- @param #number UID Unit id of player. 
+function PSEUDOATC:AltitudeTimerStop(GID, UID)
+  self:F({GID=GID,UID=UID})
   -- Debug info.
-  self:T(PSEUDOATC.id..string.format("Stopping altitude report timer for player ID %d.", id))
+  self:T(PSEUDOATC.id..string.format("Stopping altitude report timer for player ID %d.", UID))
   
   -- Stop timer.
-  if self.player[id].altimerid then
-    self.player[id].altimer:Stop(self.player[id].altimerid)
+  if self.group[GID].player[UID].altimerid then
+    self.group[GID].player[UID].altimer:Stop(self.group[GID].player[UID].altimerid)
   end
   
-  self.player[id].altimer=nil
-  self.player[id].altimerid=nil
+  self.group[GID].player[UID].altimer=nil
+  self.group[GID].player[UID].altimerid=nil
 end
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -878,16 +926,17 @@ end
 
 --- Create list of nearby airports sorted by distance to player unit.
 -- @param #PSEUDOATC self
--- @param #number id Group id of player unit.
-function PSEUDOATC:LocalAirports(id)
-  self:F(id)
+-- @param #number GID Group id of player unit.
+-- @param #number UID Unit id of player. 
+function PSEUDOATC:LocalAirports(GID, UID)
+  self:F({GID=GID, UID=UID})
 
   -- Airports table.  
-  self.player[id].airports=nil
-  self.player[id].airports={}
+  self.group[GID].player[UID].airports=nil
+  self.group[GID].player[UID].airports={}
   
   -- Current player position.
-  local pos=self.player[id].unit:GetCoordinate()
+  local pos=self.group[GID].player[UID].unit:GetCoordinate()
   
   -- Loop over coalitions.
   for i=0,2 do
@@ -903,7 +952,7 @@ function PSEUDOATC:LocalAirports(id)
       local d=q:Get2DDistance(pos)
       
       -- Add to table.
-      table.insert(self.player[id].airports, {distance=d, name=name})
+      table.insert(self.group[GID].player[UID].airports, {distance=d, name=name})
       
     end
   end
@@ -914,7 +963,7 @@ function PSEUDOATC:LocalAirports(id)
   end
   
   -- Sort airports table w.r.t. distance to player.
-  table.sort(self.player[id].airports, compare)
+  table.sort(self.group[GID].player[UID].airports, compare)
   
 end
 
@@ -991,4 +1040,6 @@ function PSEUDOATC:_myname(unitname)
   
   return string.format("%s (%s)", csign, pname)
 end
+
+
 
