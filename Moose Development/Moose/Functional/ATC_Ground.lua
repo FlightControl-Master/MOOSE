@@ -275,7 +275,7 @@ function ATC_GROUND:_AirbaseMonitor()
                 self:E( Taxi )
                 if Taxi == false then
                   local Velocity = VELOCITY:New( AirbaseMeta.KickSpeed or self.KickSpeed )
-                  Client:Message( "Welcome at " .. AirbaseID .. ". The maximum taxiing speed is " .. 
+                  Client:Message( "Welcome to " .. AirbaseID .. ". The maximum taxiing speed is " .. 
                                   Velocity:ToString() , 20, "ATC" )
                   Client:SetState( self, "Taxi", true )
                 end
@@ -299,7 +299,7 @@ function ATC_GROUND:_AirbaseMonitor()
                   end
                   if Speeding == true then
                     MESSAGE:New( "Penalty! Player " .. Client:GetPlayerName() .. 
-                                 " is kicked, due to a severe airbase traffic rule violation ...", 10, "ATC" ):ToAll()
+                                 " has been kicked, due to a severe airbase traffic rule violation ...", 10, "ATC" ):ToAll()
                     Client:Destroy()
                     Client:SetState( self, "Speeding", false )
                     Client:SetState( self, "Warnings", 0 )
@@ -331,7 +331,7 @@ function ATC_GROUND:_AirbaseMonitor()
                                         Velocity:ToString(), 5, "ATC" )
                         Client:SetState( self, "Warnings", SpeedingWarnings + 1 )
                       else
-                        MESSAGE:New( "Penalty! Player " .. Client:GetPlayerName() .. " is kicked, due to a severe airbase traffic rule violation ...", 10, "ATC" ):ToAll()
+                        MESSAGE:New( "Penalty! Player " .. Client:GetPlayerName() .. " has been kicked, due to a severe airbase traffic rule violation ...", 10, "ATC" ):ToAll()
                         --- @param Wrapper.Client#CLIENT Client
                         Client:Destroy()
                         Client:SetState( self, "Speeding", false )
@@ -363,7 +363,7 @@ function ATC_GROUND:_AirbaseMonitor()
                       Client:Message( "Warning " .. OffRunwayWarnings .. "/3! Airbase traffic rule violation! Get back on the taxi immediately!", 5, "ATC" )
                       Client:SetState( self, "OffRunwayWarnings", OffRunwayWarnings + 1 )
                     else
-                      MESSAGE:New( "Penalty! Player " .. Client:GetPlayerName() .. " is kicked, due to a severe airbase traffic rule violation ...", 10, "ATC" ):ToAll()
+                      MESSAGE:New( "Penalty! Player " .. Client:GetPlayerName() .. " has been kicked, due to a severe airbase traffic rule violation ...", 10, "ATC" ):ToAll()
                       --- @param Wrapper.Client#CLIENT Client
                       Client:Destroy()
                       Client:SetState( self, "IsOffRunway", false )
@@ -788,8 +788,6 @@ function ATC_GROUND_CAUCASUS:New( AirbaseNames )
   -- Inherits from BASE
   local self = BASE:Inherit( self, ATC_GROUND:New( self.Airbases, AirbaseNames ) )
 
-  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, 0.05 )
-
   self:SetKickSpeedKmph( 50 )
   self:SetMaximumKickSpeedKmph( 150 )
 
@@ -1001,6 +999,15 @@ function ATC_GROUND_CAUCASUS:New( AirbaseNames )
   return self
 end
 
+
+--- Start SCHEDULER for ATC_GROUND_CAUCASUS object.
+-- @param #ATC_GROUND_CAUCASUS self
+-- @param RepeatScanSeconds Time in second for defining occurency of alerts.
+-- @return nothing
+function ATC_GROUND_CAUCASUS:Start( RepeatScanSeconds )
+  RepeatScanSeconds = RepeatScanSeconds or 0.05
+  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, RepeatScanSeconds )
+end
 
 
 
@@ -1379,8 +1386,6 @@ function ATC_GROUND_NEVADA:New( AirbaseNames )
   -- Inherits from BASE
   local self = BASE:Inherit( self, ATC_GROUND:New( self.Airbases, AirbaseNames ) )
 
-  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, 0.05 )
-
   self:SetKickSpeedKmph( 50 )
   self:SetMaximumKickSpeedKmph( 150 )
 
@@ -1543,6 +1548,16 @@ function ATC_GROUND_NEVADA:New( AirbaseNames )
   
   return self
 end
+
+--- Start SCHEDULER for ATC_GROUND_NEVADA object.
+-- @param #ATC_GROUND_NEVADA self
+-- @param RepeatScanSeconds Time in second for defining occurency of alerts.
+-- @return nothing
+function ATC_GROUND_NEVADA:Start( RepeatScanSeconds )
+  RepeatScanSeconds = RepeatScanSeconds or 0.05
+  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, RepeatScanSeconds )
+end
+
 
 --- @type ATC_GROUND_NORMANDY
 -- @extends #ATC_GROUND
@@ -2033,8 +2048,6 @@ function ATC_GROUND_NORMANDY:New( AirbaseNames )
 
   -- Inherits from BASE
   local self = BASE:Inherit( self, ATC_GROUND:New( self.Airbases, AirbaseNames ) ) -- #ATC_GROUND_NORMANDY
-
-  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, 0.05 )
   
   self:SetKickSpeedKmph( 40 )
   self:SetMaximumKickSpeedKmph( 100 )
@@ -2317,6 +2330,15 @@ function ATC_GROUND_NORMANDY:New( AirbaseNames )
   return self
 end
 
+     
+--- Start SCHEDULER for ATC_GROUND_NORMANDY object.
+-- @param #ATC_GROUND_NORMANDY self
+-- @param RepeatScanSeconds Time in second for defining occurency of alerts.
+-- @return nothing
+function ATC_GROUND_NORMANDY:Start( RepeatScanSeconds )
+  RepeatScanSeconds = RepeatScanSeconds or 0.05
+  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, RepeatScanSeconds )
+end
 
 --- @type ATC_GROUND_PERSIANGULF
 -- @extends #ATC_GROUND
@@ -2889,8 +2911,6 @@ function ATC_GROUND_PERSIANGULF:New( AirbaseNames )
 
   -- Inherits from BASE
   local self = BASE:Inherit( self, ATC_GROUND:New( self.Airbases, AirbaseNames ) ) -- #ATC_GROUND_PERSIANGULF
-
-  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, 0.05 )
   
   self:SetKickSpeedKmph( 50 )
   self:SetMaximumKickSpeedKmph( 150 )
@@ -3152,6 +3172,14 @@ function ATC_GROUND_PERSIANGULF:New( AirbaseNames )
   return self
 end
 
+--- Start SCHEDULER for ATC_GROUND_PERSIANGULF object.
+-- @param #ATC_GROUND_PERSIANGULF self
+-- @param RepeatScanSeconds Time in second for defining occurency of alerts.
+-- @return nothing
+function ATC_GROUND_PERSIANGULF:Start( RepeatScanSeconds )
+  RepeatScanSeconds = RepeatScanSeconds or 0.05
+  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, RepeatScanSeconds )
+end
           
 
 
