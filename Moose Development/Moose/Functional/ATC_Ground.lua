@@ -1004,7 +1004,7 @@ end
 -- @return nothing
 function ATC_GROUND_CAUCASUS:Start( RepeatScanSeconds )
   RepeatScanSeconds = RepeatScanSeconds or 0.05
-  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, 0.05 )
+  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, RepeatScanSeconds )
 end
 
 
@@ -1553,7 +1553,7 @@ end
 -- @return nothing
 function ATC_GROUND_NEVADA:Start( RepeatScanSeconds )
   RepeatScanSeconds = RepeatScanSeconds or 0.05
-  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, 0.05 )
+  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, RepeatScanSeconds )
 end
 
 --- @type ATC_GROUND_NORMANDY
@@ -2334,7 +2334,7 @@ end
 -- @return nothing
 function ATC_GROUND_NORMANDY:Start( RepeatScanSeconds )
   RepeatScanSeconds = RepeatScanSeconds or 0.05
-  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, 0.05 )
+  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, RepeatScanSeconds )
 end
 
 
