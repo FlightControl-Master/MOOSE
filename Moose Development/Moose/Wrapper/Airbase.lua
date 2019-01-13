@@ -246,7 +246,6 @@ AIRBASE.Normandy = {
 -- * AIRBASE.PersianGulf.Al_Ain_International_Airport
 -- * AIRBASE.PersianGulf.Lavan_Island_Airport
 -- * AIRBASE.PersianGulf.Jiroft_Airport
--- * AIRBASE.PersianGulf.Bandar_Abbas_Intl 
 -- 
 -- @field PersianGulf
 AIRBASE.PersianGulf = {
@@ -277,7 +276,6 @@ AIRBASE.PersianGulf = {
   ["Al_Ain_International_Airport"] = "Al Ain International Airport",
   ["Lavan_Island_Airport"] = "Lavan Island Airport",
   ["Jiroft_Airport"] = "Jiroft Airport",
-  ["Bandar_Abbas_Intl"] = "Bandar Abbas Intl",
   }
   
 --- AIRBASE.ParkingSpot ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
