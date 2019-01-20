@@ -64,6 +64,8 @@ function AI_AIR:New( AIGroup )
   
   self:SetStartState( "Stopped" ) 
 
+  self:AddTransition( "*", "Queue", "Queued" )
+
   self:AddTransition( "*", "Start", "Started" )
   
   --- Start Handler OnBefore for AI_AIR
@@ -400,6 +402,8 @@ function AI_AIR:SetDamageThreshold( PatrolDamageThreshold )
   return self
 end
 
+
+
 --- Defines a new patrol route using the @{Process_PatrolZone} parameters and settings.
 -- @param #AI_AIR self
 -- @return #AI_AIR self
@@ -537,7 +541,7 @@ function AI_AIR.RTBRoute( AIGroup, Fsm )
   AIGroup:F( { "AI_AIR.RTBRoute:", AIGroup:GetName() } )
   
   if AIGroup:IsAlive() then
-    Fsm:__RTB( 0.5 )
+    Fsm:RTB()
   end
   
 end
@@ -573,19 +577,29 @@ function AI_AIR:onafterRTB( AIGroup, From, Event, To )
 
     --- Calculate the target route point.
     
-    local CurrentCoord = AIGroup:GetCoordinate()
+    local FromCoord = AIGroup:GetCoordinate()
     local ToTargetCoord = self.HomeAirbase:GetCoordinate()
     local ToTargetSpeed = math.random( self.RTBMinSpeed, self.RTBMaxSpeed )
-    local ToAirbaseAngle = CurrentCoord:GetAngleDegrees( CurrentCoord:GetDirectionVec3( ToTargetCoord ) )
+    local ToAirbaseAngle = FromCoord:GetAngleDegrees( FromCoord:GetDirectionVec3( ToTargetCoord ) )
 
-    local Distance = CurrentCoord:Get2DDistance( ToTargetCoord )
+    local Distance = FromCoord:Get2DDistance( ToTargetCoord )
     
-    local ToAirbaseCoord = CurrentCoord:Translate( 5000, ToAirbaseAngle )
+    local ToAirbaseCoord = FromCoord:Translate( 5000, ToAirbaseAngle )
     if Distance < 5000 then
       self:E( "RTB and near the airbase!" )
       self:Home()
       return
     end
+    
+    --- Create a route point of type air.
+    local FromRTBRoutePoint = FromCoord:WaypointAir( 
+      self.PatrolAltType, 
+      POINT_VEC3.RoutePointType.TurningPoint, 
+      POINT_VEC3.RoutePointAction.TurningPoint, 
+      ToTargetSpeed, 
+      true 
+    )
+
     --- Create a route point of type air.
     local ToRTBRoutePoint = ToAirbaseCoord:WaypointAir( 
       self.PatrolAltType, 
@@ -595,7 +609,7 @@ function AI_AIR:onafterRTB( AIGroup, From, Event, To )
       true 
     )
 
-    EngageRoute[#EngageRoute+1] = ToRTBRoutePoint
+    EngageRoute[#EngageRoute+1] = FromRTBRoutePoint
     EngageRoute[#EngageRoute+1] = ToRTBRoutePoint
     
     AIGroup:OptionROEHoldFire()
@@ -609,7 +623,7 @@ function AI_AIR:onafterRTB( AIGroup, From, Event, To )
     EngageRoute[#EngageRoute].task = AIGroup:TaskCombo( Tasks )
 
     --- NOW ROUTE THE GROUP!
-    AIGroup:Route( EngageRoute, 0.5 )
+    AIGroup:Route( EngageRoute, 0 )
       
   end
     

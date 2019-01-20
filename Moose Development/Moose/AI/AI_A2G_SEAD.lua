@@ -159,9 +159,10 @@ function AI_A2G_SEAD:onafterEngage( DefenderGroup, From, Event, To, AttackSetUni
         self:SetTargetDistance( ToCoord ) -- For RTB status check
         
         local FromEngageAngle = ToCoord:GetAngleDegrees( ToCoord:GetDirectionVec3( DefenderCoord ) )
-        
+        local EngageDistance = ( DefenderGroup:IsHelicopter() and 5000 ) or ( DefenderGroup:IsAirPlane() and 25000 )
+
         --- Create a route point of type air, 50km from the center of the attack point.
-        local ToWP = ToCoord:Translate( 50000, FromEngageAngle ):WaypointAir( 
+        local ToWP = ToCoord:Translate( EngageDistance, FromEngageAngle ):WaypointAir( 
           self.PatrolAltType or "RADIO", 
           POINT_VEC3.RoutePointType.TurningPoint, 
           POINT_VEC3.RoutePointAction.TurningPoint, 

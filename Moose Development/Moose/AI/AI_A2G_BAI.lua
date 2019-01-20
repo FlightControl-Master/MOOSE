@@ -106,9 +106,10 @@ function AI_A2G_BAI:onafterEngage( DefenderGroup, From, Event, To, AttackSetUnit
       self:SetTargetDistance( ToCoord ) -- For RTB status check
       
       local FromEngageAngle = ToCoord:GetAngleDegrees( ToCoord:GetDirectionVec3( DefenderCoord ) )
+      local EngageDistance = ( DefenderGroup:IsHelicopter() and 5000 ) or ( DefenderGroup:IsAirPlane() and 10000 )      
       
       --- Create a route point of type air.
-      local ToWP = ToCoord:Translate( 10000, FromEngageAngle ):WaypointAir( 
+      local ToWP = ToCoord:Translate( EngageDistance, FromEngageAngle ):WaypointAir( 
         self.PatrolAltType or "RADIO", 
         POINT_VEC3.RoutePointType.TurningPoint, 
         POINT_VEC3.RoutePointAction.TurningPoint, 
