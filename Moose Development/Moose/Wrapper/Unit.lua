@@ -783,6 +783,27 @@ function UNIT:GetThreatLevel()
 
 end
 
+--- Triggers an explosion at the coordinates of the unit.
+-- @param #UNIT self
+-- @param #number power Power of the explosion in kg TNT. Default 100 kg TNT.
+-- @param #number delay (Optional) Delay of explosion in seconds.
+-- @return #UNIT self
+function UNIT:Explode(power, delay)
+
+  -- Default.
+  power=power or 100
+  
+  -- Check if delay or not.
+  if delay and delay>0 then
+    -- Delayed call.
+    SCHEDULER:New(nil, self.Explode, {self, power}, delay)
+  else
+    -- Create an explotion at the coordinate of the unit.
+    self:GetCoordinate():Explosion(power)
+  end
+
+  return self
+end
 
 -- Is functions
 
