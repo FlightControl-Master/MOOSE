@@ -4,7 +4,7 @@
 -- 
 -- ### Author: **FlightControl**
 -- 
--- ### Contributions: 
+-- ### Contributions: **Hardcard**, **funkyfranky**
 -- 
 -- ===
 -- 
@@ -310,6 +310,44 @@ function POSITIONABLE:GetCoordinate()
   return nil
 end
 
+--- Returns a COORDINATE object, which is offset with respect to the orientation of the POSITIONABLE.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #number x Offset in the direction "the nose" of the unit is pointing in meters. Default 0 m.
+-- @param #number y Offset "above" the unit in meters. Default 0 m.
+-- @param #number z Offset in the direction "the wing" of the unit is pointing in meters. z>0 starboard, z<0 port. Default 0 m.
+-- @return Core.Point#COORDINATE The COORDINATE of the offset with respect to the orientation of the  POSITIONABLE.
+function POSITIONABLE:GetOffsetCoordinate(x,y,z)
+  
+  -- Default if nil.
+  x=x or 0
+  y=y or 0
+  z=z or 0
+
+  -- Vectors making up the coordinate system.
+  local X=self:GetOrientationX()
+  local Y=self:GetOrientationY()
+  local Z=self:GetOrientationZ()
+  
+  -- Offset vector: x meters ahead, z meters starboard, y meters above.
+  local A={x=x, y=y, z=z}
+  
+  -- Scale components of orthonormal coordinate vectors.
+  local x={x=X.x*A.x, y=X.y*A.x, z=X.z*A.x}
+  local y={x=Y.x*A.y, y=Y.y*A.y, z=Y.z*A.y}
+  local z={x=Z.x*A.z, y=Z.y*A.z, z=Z.z*A.z}
+  
+  -- Add up vectors in the unit coordinate system ==> this gives the offset vector relative the the origin of the map.
+  local a={x=x.x+y.x+z.x, y=x.y+y.y+z.y, z=x.z+y.z+z.z}
+  
+  -- Vector from the origin of the map to the unit.
+  local u=self:GetVec3()
+  
+  -- Translate offset vector from map origin to the unit: v=u+a.
+  local v={x=a.x+u.x, y=a.y+u.y, z=a.z+u.z}
+  
+  -- Return the offset coordinate.
+  return COORDINATE:NewFromVec3(v)
+end
 
 --- Returns a random @{DCS#Vec3} vector within a range, indicating the point in 3D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self

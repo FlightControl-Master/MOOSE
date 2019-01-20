@@ -546,7 +546,7 @@ RAT.id="RAT | "
 --- RAT version.
 -- @list version
 RAT.version={
-  version = "2.3.4",
+  version = "2.3.5",
   print = true,
 }
 
@@ -2446,7 +2446,7 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
   local VxCruiseMax
   if self.Vcruisemax then
     -- User input.
-    VxCruiseMax = min(self.Vcruisemax, self.aircraft.Vmax)
+    VxCruiseMax = math.min(self.Vcruisemax, self.aircraft.Vmax)
   else
     -- Max cruise speed 90% of Vmax or 900 km/h whichever is lower.
     VxCruiseMax = math.min(self.aircraft.Vmax*0.90, 250)

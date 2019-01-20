@@ -47,6 +47,8 @@
 -- @field #boolean carrierstop If true, route of carrier was stopped.
 -- @field #number HeloFuel0 Initial fuel of helo in percent. Necessary due to DCS bug that helo with full tank does not return fuel via API function.
 -- @field #boolean rtb If true, Helo will be return to base on the next status check.
+-- @field #number hid Unit ID of the helo group. (Global) Running number.
+-- @field #string alias Alias of the spawn group.
 -- @extends Core.Fsm#FSM
 
 --- Rescue Helo
@@ -64,7 +66,7 @@
 -- 
 -- In the mission editor you have to set up a carrier unit, which will act as "mother". In the following, this unit will be named "*USS Stennis*".
 -- 
--- Secondly, you need to define a recue helicopter group in the mission editor and set it to "**LATE ACTIVATED**". The name of the group we'll use is "*Recue Helo*".
+-- Secondly, you need to define a rescue helicopter group in the mission editor and set it to "**LATE ACTIVATED**". The name of the group we'll use is "*Recue Helo*".
 -- 
 -- The basic script is very simple and consists of only two lines. 
 -- 
@@ -89,7 +91,7 @@
 -- 
 -- ## Takeoff Type
 -- 
--- By default, the helo is spawned with running engies on the carrier. The mission designer has set option to set the take off type via the @{#RESCUEHELO.SetTakeoff} function.
+-- By default, the helo is spawned with running engines on the carrier. The mission designer has set option to set the take off type via the @{#RESCUEHELO.SetTakeoff} function.
 -- Or via shortcuts
 -- 
 --    * @{#RESCUEHELO.SetTakeoffHot}(): Will set the takeoff to hot, which is also the default.
@@ -102,7 +104,7 @@
 --      RescueheloStennis:Start()
 -- will spawn the helo near the USS Stennis in air.
 -- 
--- Spawning in air is not as realsitic but can be useful do avoid DCS bugs and shortcomings like aircraft crashing into each other on the flight deck.
+-- Spawning in air is not as realistic but can be useful do avoid DCS bugs and shortcomings like aircraft crashing into each other on the flight deck.
 -- 
 -- **Note** that when spawning in air is set, the helo will also not return to the boat, once it is out of fuel. Instead it will be respawned in air.
 -- 
@@ -113,7 +115,7 @@
 -- 
 -- ## Home Base
 -- 
--- It is possible to define a "home base" other than the aircaft carrier using the @{#RESCUEHELO.SetHomeBase}(*airbase*) function, where *airbase* is
+-- It is possible to define a "home base" other than the aircraft carrier using the @{#RESCUEHELO.SetHomeBase}(*airbase*) function, where *airbase* is
 -- a @{Wrapper.Airbase#AIRBASE} object or simply the name of the airbase.
 -- 
 -- For example, one could imagine a strike group, and the helo will be spawned from another ship which has a helo pad.
@@ -127,7 +129,7 @@
 -- 
 -- Once the helo runs out of fuel, it will return to the USS Normandy and not the Stennis for respawning.
 -- 
--- ## Formation Positon
+-- ## Formation Position
 -- 
 -- The position of the helo relative to the mother ship can be tuned via the functions
 -- 
@@ -138,7 +140,7 @@
 -- ## Rescue Operations
 --
 -- By default the rescue helo will start a rescue operation if an aircraft crashes or a pilot ejects in the vicinity of the carrier.
--- This is rescricted to aircraft of the same coaliton as the rescue helo. Enemy (or neutral) pilots will be left on their own.
+-- This is restricted to aircraft of the same coalition as the rescue helo. Enemy (or neutral) pilots will be left on their own.
 -- 
 -- The standard "rescue zone" has a radius of 15 NM (~28 km) around the carrier. The radius can be adjusted via the @{#RESCUEHELO.SetRescueZone}(*radius*) functions,
 -- where *radius* is the radius of the zone in nautical miles. If you use multiple rescue helos in the same mission, you might want to ensure that the radii
@@ -214,11 +216,16 @@ RESCUEHELO = {
   HeloFuel0      = nil,
   rtb            = nil,
   carrierstop    = nil,
+  alias          = nil,
 }
+
+--- Unique ID (global).
+-- @field #number uid Unique ID (global).
+RESCUEHELO.uid=0
 
 --- Class version.
 -- @field #string version
-RESCUEHELO.version="1.0.1"
+RESCUEHELO.version="1.0.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -226,8 +233,8 @@ RESCUEHELO.version="1.0.1"
 
 -- TODO: Add messages for rescue mission.
 -- TODO: Add option to stop carrier while rescue operation is in progress? Done but NOT working!
--- DONE: Write documenation.
--- DONE: Add option to deactivate the rescueing.
+-- DONE: Write documentation.
+-- DONE: Add option to deactivate the rescuing.
 -- DONE: Possibility to add already present/spawned aircraft, e.g. for warehouse.
 -- DONE: Add rescue event when aircraft crashes.
 -- DONE: Make offset input parameter.
@@ -259,8 +266,14 @@ function RESCUEHELO:New(carrierunit, helogroupname)
   -- Helo group name.
   self.helogroupname=helogroupname
   
+  -- Increase ID.
+  RESCUEHELO.uid=RESCUEHELO.uid+1
+  
+  -- Set unique spawn alias.
+  self.alias=string.format("%s_%s_%02d", self.carrier:GetName(), self.helogroupname, RESCUEHELO.uid)
+  
   -- Log ID.
-  self.lid=string.format("RESCUEHELO %s |", self.carrier:GetName())
+  self.lid=string.format("RESCUEHELO %s |", self.alias)
     
   -- Init defaults.  
   self:SetHomeBase(AIRBASE:FindByName(self.carrier:GetName()))
@@ -519,9 +532,9 @@ function RESCUEHELO:SetAltitude(alt)
   return self
 end
 
---- Set offset parallel to orienation of carrier.
+--- Set offset parallel to orientation of carrier.
 -- @param #RESCUEHELO self
--- @param #number distance Offset distance in meters. Default 200 m.
+-- @param #number distance Offset distance in meters. Default 200 m (~660 ft).
 -- @return #RESCUEHELO self
 function RESCUEHELO:SetOffsetX(distance)
   self.offsetX=distance or 200
@@ -530,7 +543,7 @@ end
 
 --- Set offset perpendicular to orientation to carrier.
 -- @param #RESCUEHELO self
--- @param #number distance Offset distance in meters. Default 240 m.
+-- @param #number distance Offset distance in meters. Default 240 m (~780 ft).
 -- @return #RESCUEHELO self
 function RESCUEHELO:SetOffsetZ(distance)
   self.offsetZ=distance or 240
@@ -631,6 +644,13 @@ function RESCUEHELO:IsStopped()
   return self:is("Stopped")
 end
 
+--- Alias of helo spawn group.
+-- @param #RESCUEHELO self
+-- @return #string Alias of the helo. 
+function RESCUEHELO:GetAlias()
+  return self.alias
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- EVENT functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -668,7 +688,8 @@ function RESCUEHELO:OnEventLand(EventData)
           self:T(string.format("Rescue helo %s returned from rescue operation.", groupname))
           
           -- Respawn helo at current airbase.
-          self.helo=group:RespawnAtCurrentAirbase()
+          --self.helo=group:RespawnAtCurrentAirbase()
+          SCHEDULER:New(nil, group.RespawnAtCurrentAirbase, {group}, 5)
         
         else
         
@@ -676,7 +697,8 @@ function RESCUEHELO:OnEventLand(EventData)
 
           -- Respawn helo at current airbase anyway.
           if self.respawn then
-            self.helo=group:RespawnAtCurrentAirbase()
+            --self.helo=group:RespawnAtCurrentAirbase()
+            SCHEDULER:New(nil, group.RespawnAtCurrentAirbase, {group}, 5)
           end
           
         end
@@ -685,7 +707,8 @@ function RESCUEHELO:OnEventLand(EventData)
       
         -- Respawn helo at current airbase.
         if self.respawn then
-          self.helo=group:RespawnAtCurrentAirbase()
+          --self.helo=group:RespawnAtCurrentAirbase()
+          SCHEDULER:New(nil, group.RespawnAtCurrentAirbase, {group}, 5)
         end
         
       end
@@ -743,7 +766,11 @@ function RESCUEHELO:_OnEventCrashOrEject(EventData)
       
     else
     
+      -- Error message.
       self:E(self.lid..string.format("Rescue helo %s crashed!", unitname))
+      
+      -- Stop FSM.
+      self:Stop()      
     
     end
     
@@ -774,12 +801,9 @@ function RESCUEHELO:onafterStart(From, Event, To)
   
   -- Delay before formation is started.
   local delay=120
-  
-  -- Set unique alias for spawn.
-  local helogroupalias=string.format("%s_%s", self.helogroupname, self.carrier:GetName())
-  
+    
   -- Spawn helo. We need to introduce an alias in case this class is used twice. This would confuse the spawn routine.
-  local Spawn=SPAWN:NewWithAlias(self.helogroupname, helogroupalias)
+  local Spawn=SPAWN:NewWithAlias(self.helogroupname, self.alias)
   
   -- Spawn in air or at airbase.
   if self.takeoff==SPAWN.Takeoff.Air then
@@ -872,58 +896,81 @@ function RESCUEHELO:onafterStatus(From, Event, To)
   -- Get current time.
   local time=timer.getTime()
 
-  -- Get relative fuel wrt to initial fuel of helo (DCS bug https://forums.eagle.ru/showthread.php?t=223712)
-  local fuel=self.helo:GetFuel()/self.HeloFuel0*100
-
-  -- Report current fuel.
-  local text=string.format("Rescue Helo %s: state=%s fuel=%.1f", self.helo:GetName(), self:GetState(), fuel)
-  MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
-  self:T(self.lid..text)
-
   -- Check if helo is running and not RTBing already or rescuing.
-  if self:IsRunning() then
+  if self.helo:IsAlive() then
+
+    -------------------
+    -- HELO is ALIVE --
+    ------------------- 
+
+    -- Get relative fuel wrt to initial fuel of helo (DCS bug https://forums.eagle.ru/showthread.php?t=223712)
+    local fuel=self.helo:GetFuel()/self.HeloFuel0*100
   
-    -- Check if fuel is low.
-    if fuel<self.lowfuel then
+    -- Report current fuel.
+    local text=string.format("Rescue Helo %s: state=%s fuel=%.1f", self.helo:GetName(), self:GetState(), fuel)
+    MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+    self:E(self.lid..text)  
+  
+    if self:IsRunning() then
     
-      -- Check if spawn in air is activated.
-      if self.takeoff==SPAWN.Takeoff.Air or self.respawninair then
+      -- Check if fuel is low.
+      if fuel<self.lowfuel then
       
-        -- Check if respawn is enabled.
-        if self.respawn then
+        -- Check if spawn in air is activated.
+        if self.takeoff==SPAWN.Takeoff.Air or self.respawninair then
         
-          -- Respawn helo in air.
-          self.helo:Respawn(nil, true)
+          -- Check if respawn is enabled.
+          if self.respawn then
           
-        end
+            -- Respawn helo in air.
+            self.helo:Respawn(nil, true)
+            
+          end
+          
+        else
         
-      else
+          -- Send helo back to base.
+          self:RTB()
+        
+        end
       
+      end
+      
+    elseif self:IsRescuing() then
+    
+      if self.rtb then
+  
         -- Send helo back to base.
         self:RTB()
+        
+        -- Switch to false.
+        self.rtb=false
       
       end
     
     end
-    
-  elseif self:IsRescuing() then
-  
-    if self.rtb then
 
-      -- Send helo back to base.
-      self:RTB()
-      
-      -- Switch to false.
-      self.rtb=false
-    
+    -- Call status again in 30 seconds.
+    if not self:IsStopped() then
+      self:__Status(-30)
     end
+
+    
+  else
   
-  end
-  
-  -- Call status again in 30 seconds.
-  if not self:IsStopped() then
-    self:__Status(-30)
-  end
+    ------------------
+    -- HELO is DEAD --
+    ------------------
+    
+    -- Stop FSM.
+    self:Stop()
+    
+    -- Restart FSM after 5 seconds.
+    if self.respawn then
+      self:__Start(5)
+    end
+    
+  end    
 end
 
 --- On after "Run" event. FSM will go to "Running" state. If formation is topped, it will be started again.
@@ -1083,6 +1130,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function RESCUEHELO:onafterStop(From, Event, To)
+  self.formation:Stop()
   self:UnHandleEvent(EVENTS.Land)
   self:UnHandleEvent(EVENTS.Crash)
   self:UnHandleEvent(EVENTS.Ejection)

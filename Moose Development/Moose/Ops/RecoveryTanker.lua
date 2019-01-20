@@ -4,7 +4,7 @@
 --
 -- **Main Features:**
 --
---    * Regular pattern update with respect to carrier positon.
+--    * Regular pattern update with respect to carrier position.
 --    * No restrictions regarding carrier waypoints and heading.
 --    * Automatic respawning when tanker runs out of fuel for 24/7 operations.
 --    * Tanker can be spawned cold or hot on the carrier or at any other airbase or directly in air.
@@ -52,7 +52,8 @@
 -- @field #boolean uncontrolledac If true, use and uncontrolled tanker group already present in the mission.
 -- @field DCS#Vec3 orientation Orientation of the carrier. Used to monitor changes and update the pattern if heading changes significantly.
 -- @field DCS#Vec3 orientlast Orientation of the carrier for checking if carrier is currently turning.
--- @field Core.Point#COORDINATE position Positon of carrier. Used to monitor if carrier significantly changed its position and then update the tanker pattern.
+-- @field Core.Point#COORDINATE position Position of carrier. Used to monitor if carrier significantly changed its position and then update the tanker pattern.
+-- @field #string alias Alias of the spawn group.
 -- @extends Core.Fsm#FSM
 
 --- Recovery Tanker.
@@ -100,7 +101,7 @@
 -- 
 -- ## Takeoff Type
 -- 
--- By default, the tanker is spawned with running engies on the carrier. The mission designer has set option to set the take off type via the @{#RECOVERYTANKER.SetTakeoff} function.
+-- By default, the tanker is spawned with running engines on the carrier. The mission designer has set option to set the take off type via the @{#RECOVERYTANKER.SetTakeoff} function.
 -- Or via shortcuts
 -- 
 --    * @{#RECOVERYTANKER.SetTakeoffHot}(): Will set the takeoff to hot, which is also the default.
@@ -113,7 +114,7 @@
 --     TexacoStennis:Start()
 -- will spawn the tanker several nautical miles astern the carrier. From there it will start its pattern.
 -- 
--- Spawning in air is not as realsitic but can be useful do avoid DCS bugs and shortcomings like aircraft crashing into each other on the flight deck.
+-- Spawning in air is not as realistic but can be useful do avoid DCS bugs and shortcomings like aircraft crashing into each other on the flight deck.
 -- 
 -- **Note** that when spawning in air is set, the tanker will also not return to the boat, once it is out of fuel. Instead it will be respawned directly in air.
 -- 
@@ -177,7 +178,7 @@
 --    * The aircraft carrier changes its heading by more than 5 degrees (see @{#RECOVERYTANKER.SetPatternUpdateHeading})
 -- 
 -- **Note** that updating the pattern often leads to a more or less small disruption of the perfect racetrack pattern of the tanker. This is because a new waypoint and new racetrack points
--- need to be set as DCS task. This is the reason why the pattern is not contantly updated but rather when the position or heading of the carrier changes significantly.
+-- need to be set as DCS task. This is the reason why the pattern is not constantly updated but rather when the position or heading of the carrier changes significantly.
 --
 -- The maximum update frequency is set to 10 minutes. You can adjust this by @{#RECOVERYTANKER.SetPatternUpdateInterval}.
 -- Also the pattern will not be updated whilst the carrier is turning or the tanker is currently refueling another unit.
@@ -250,11 +251,16 @@ RECOVERYTANKER = {
   orientation     = nil,
   orientlast      = nil,
   position        = nil,
+  alias           = nil,
 }
+
+--- Unique ID (global).
+-- @field #number uid Unique ID (global).
+RECOVERYTANKER.uid=0
 
 --- Class version.
 -- @field #string version
-RECOVERYTANKER.version="1.0.2"
+RECOVERYTANKER.version="1.0.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -264,7 +270,7 @@ RECOVERYTANKER.version="1.0.2"
 -- DONE: Seamless change of position update. Get good updated waypoint and update position if tanker position is right. Not really possiple atm.
 -- DONE: Check if TACAN mode "X" is allowed for AA TACAN stations. Nope
 -- DONE: Check if tanker is going back to "Running" state after RTB and respawn.
--- DONE: Write documenation.
+-- DONE: Write documentation.
 -- DONE: Trace functions self:T instead of self:I for less output.
 -- DONE: Make pattern update parameters (distance, orientation) input parameters.
 -- DONE: Add FSM event for pattern update.
@@ -302,8 +308,14 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   -- Save self in static object. Easier to retrieve later.
   self.carrier:SetState(self.carrier, "RECOVERYTANKER", self)
   
-  -- Debug log id.
-  self.lid=string.format("RECOVERYTANKER %s", self.carrier:GetName())
+  -- Increase unique ID.
+  RECOVERYTANKER.uid=RECOVERYTANKER.uid+1
+  
+  -- Set unique spawn alias.
+  self.alias=string.format("%s_%s_%02d", self.carrier:GetName(), self.tankergroupname, RECOVERYTANKER.uid)
+  
+  -- Log ID.
+  self.lid=string.format("RECOVERYTANKER %s |", self.alias)
   
   -- Init default parameters.
   self:SetAltitude()
@@ -715,11 +727,8 @@ function RECOVERYTANKER:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.Refueling,     self._RefuelingStart)  --Need explcit functions sice OnEventRefueling and OnEventRefuelingStop did not hook.
   self:HandleEvent(EVENTS.RefuelingStop, self._RefuelingStop)
   
-  -- Set unique alias for spawn from tanker group name and carrier unit name.
-  local tankergroupalias=string.format("%s_%s", self.tankergroupname, self.carrier:GetName())
-  
   -- Spawn tanker. We need to introduce an alias in case this class is used twice. This would confuse the spawn routine.
-  local Spawn=SPAWN:NewWithAlias(self.tankergroupname, tankergroupalias)
+  local Spawn=SPAWN:NewWithAlias(self.tankergroupname, self.alias)
   
   -- Set radio frequency and modulation.
   Spawn:InitRadioCommsOnOff(true)
@@ -774,7 +783,6 @@ function RECOVERYTANKER:onafterStart(From, Event, To)
 
   -- Initialize route. self.distStern<0!
   SCHEDULER:New(nil, self._InitRoute, {self, -self.distStern+UTILS.NMToMeters(3)}, 1)
-  --self:_InitRoute(-self.distStern+UTILS.NMToMeters(3), 1)
   
   -- Create tanker beacon.
   if self.TACANon then
@@ -801,79 +809,102 @@ function RECOVERYTANKER:onafterStatus(From, Event, To)
   -- Get current time.
   local time=timer.getTime()
   
-  -- Get fuel of tanker.
-  local fuel=self.tanker:GetFuel()*100
-  local text=string.format("Recovery tanker %s: state=%s fuel=%.1f", self.tanker:GetName(), self:GetState(), fuel)
-  self:T(self.lid..text)
+  if self.tanker:IsAlive() then
   
-  -- Check if tanker is running and not RTBing or refueling.
-  if self:IsRunning() then
+    ---------------------
+    -- TANKER is ALIVE --
+    --------------------- 
   
-    -- Check fuel.
-    if fuel<self.lowfuel then
+    -- Get fuel of tanker.
+    local fuel=self.tanker:GetFuel()*100
+    local text=string.format("Recovery tanker %s: state=%s fuel=%.1f", self.tanker:GetName(), self:GetState(), fuel)
+    self:T(self.lid..text)
     
-      -- Check if spawn in air is activated.
-      if self.takeoff==SPAWN.Takeoff.Air or self.respawninair then
+    -- Check if tanker is running and not RTBing or refueling.
+    if self:IsRunning() then
+    
+      -- Check fuel.
+      if fuel<self.lowfuel then
       
-        -- Check that respawn should happen.
-        if self.respawn then
-      
-          -- Debug message.
-          local text=string.format("Respawning recovery tanker %s in air.", self.tanker:GetName())
-          MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
-          self:T(self.lid..text)  
-          
-          -- Set heading for respawn template.
-          self.tanker:InitHeading(self.tanker:GetHeading())
-          
-          -- Set radio for respawn template.
-          self.tanker:InitRadioCommsOnOff(true)
-          self.tanker:InitRadioFrequency(self.RadioFreq)
-          self.tanker:InitRadioModulation(self.RadioModu)
-          
-          -- Respawn tanker.
-          self.tanker=self.tanker:Respawn(nil, true)
-          
-          -- Create tanker beacon and activate TACAN.
-          if self.TACANon then
-            self:_ActivateTACAN(3)
+        -- Check if spawn in air is activated.
+        if self.takeoff==SPAWN.Takeoff.Air or self.respawninair then
+        
+          -- Check that respawn should happen.
+          if self.respawn then
+        
+            -- Debug message.
+            local text=string.format("Respawning recovery tanker %s in air.", self.tanker:GetName())
+            MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+            self:T(self.lid..text)  
+            
+            -- Set heading for respawn template.
+            self.tanker:InitHeading(self.tanker:GetHeading())
+            
+            -- Set radio for respawn template.
+            self.tanker:InitRadioCommsOnOff(true)
+            self.tanker:InitRadioFrequency(self.RadioFreq)
+            self.tanker:InitRadioModulation(self.RadioModu)
+            
+            -- Respawn tanker.
+            self.tanker=self.tanker:Respawn(nil, true)
+            
+            -- Create tanker beacon and activate TACAN.
+            if self.TACANon then
+              self:_ActivateTACAN(3)
+            end
+            
+            -- Update Pattern in 2 seconds. Need to give a bit time so that the respawned group is in the game.
+            self:__PatternUpdate(2)
           end
           
-          -- Update Pattern in 2 seconds. Need to give a bit time so that the respawned group is in the game.
-          self:__PatternUpdate(2)
+        else
+  
+          -- Send tanker home if fuel runs low.
+          self:RTB(self.airbase)
+                  
         end
-        
+                  
       else
-
-        -- Send tanker home if fuel runs low.
-        self:RTB(self.airbase)
-                
-      end
-                
-    else
-    
-      if self.Tupdate then
       
-        --Time since last pattern update.
-        local dt=time-self.Tupdate
+        if self.Tupdate then
         
-        -- Check if pattern needs to be updated.
-        local updatepattern=self:_CheckPatternUpdate(dt)
-        
-        -- Update pattern.
-        if updatepattern then
-          self:PatternUpdate()
+          --Time since last pattern update.
+          local dt=time-self.Tupdate
+          
+          -- Check if pattern needs to be updated.
+          local updatepattern=self:_CheckPatternUpdate(dt)
+          
+          -- Update pattern.
+          if updatepattern then
+            self:PatternUpdate()
+          end
+          
         end
-        
       end
+      
+    end
+    
+    -- Call status again in 30 seconds.
+    if not self:IsStopped() then
+      self:__Status(-30)
+    end
+    
+  else
+  
+    --------------------
+    -- TANKER is DEAD --
+    --------------------
+    
+    -- Stop FSM.
+    self:Stop()
+    
+    -- Restart FSM after 5 seconds.
+    if self.respawn then
+      self:__Start(5)
     end
     
   end
-  
-  -- Call status again in 30 seconds.
-  if not self:IsStopped() then
-    self:__Status(-30)
-  end
+
 end
 
 --- On after "PatternUpdate" event. Updates the racetrack pattern of the tanker wrt the carrier position.
