@@ -234,12 +234,12 @@ function AI_A2G_PATROL:onafterPatrol( AIPatrol, From, Event, To )
 
   self:ClearTargetDistance()
 
-  self:__Route( 1 )
+  self:__Route( self.TaskDelay )
   
   AIPatrol:OnReSpawn(
     function( PatrolGroup )
-      self:__Reset( 1 )
-      self:__Route( 5 )
+      self:__Reset( self.TaskDelay )
+      self:__Route( self.TaskDelay )
     end
   )
 end
@@ -306,7 +306,7 @@ function AI_A2G_PATROL:onafterRoute( AIPatrol, From, Event, To )
     AIPatrol:OptionROEReturnFire()
     AIPatrol:OptionROTEvadeFire()
 
-    AIPatrol:Route( PatrolRoute, 0.5 )
+    AIPatrol:Route( PatrolRoute, self.TaskDelay )
   end
 
 end
@@ -314,10 +314,10 @@ end
 --- @param Wrapper.Group#GROUP AIPatrol
 function AI_A2G_PATROL.Resume( AIPatrol, Fsm )
 
-  AIPatrol:I( { "AI_A2G_PATROL.Resume:", AIPatrol:GetName() } )
+  AIPatrol:F( { "AI_A2G_PATROL.Resume:", AIPatrol:GetName() } )
   if AIPatrol:IsAlive() then
-    Fsm:__Reset( 1 )
-    Fsm:__Route( 5 )
+    Fsm:__Reset( self.TaskDelay )
+    Fsm:__Route( self.TaskDelay )
   end
   
 end

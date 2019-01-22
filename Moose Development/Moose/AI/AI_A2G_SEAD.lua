@@ -191,7 +191,7 @@ function AI_A2G_SEAD:onafterEngage( DefenderGroup, From, Event, To, AttackSetUni
         if #AttackTasks == 0 then
           self:E( DefenderGroupName .. ": No targets found -> Going RTB")
           self:Return()
-          self:__RTB( 0.5 )
+          self:__RTB( self.TaskDelay )
         else
           DefenderGroup:OptionROEOpenFire()
           DefenderGroup:OptionROTVertical()
@@ -202,7 +202,7 @@ function AI_A2G_SEAD:onafterEngage( DefenderGroup, From, Event, To, AttackSetUni
           EngageRoute[#EngageRoute].task = DefenderGroup:TaskCombo( AttackTasks )
         end
         
-        DefenderGroup:Route( EngageRoute, 2 )
+        DefenderGroup:Route( EngageRoute, self.TaskDelay )
       
 --      else
 --        local AttackTasks = {}
@@ -230,7 +230,7 @@ function AI_A2G_SEAD:onafterEngage( DefenderGroup, From, Event, To, AttackSetUni
   else
     self:E( DefenderGroupName .. ": No targets found -> Going RTB")
     self:Return()
-    self:__RTB( 0.5 )
+    self:__RTB( self.TaskDelay )
   end
 end
 
