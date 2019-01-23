@@ -4,9 +4,9 @@
 --
 -- ## Features:
 --
---    * Holds (virtual) assests in stock and spawns them upon request.
+--    * Holds (virtual) assets in stock and spawns them upon request.
 --    * Manages requests of assets from other warehouses.
---    * Queueing system with optional priorization of requests.
+--    * Queueing system with optional prioritization of requests.
 --    * Realistic transportation of assets between warehouses.
 --    * Different means of automatic transportation (planes, helicopters, APCs, self propelled).
 --    * Strategic components such as capturing, defending and destroying warehouses and their associated infrastructure.
@@ -68,7 +68,7 @@
 -- @field #number spawnzonemaxdist Max distance between warehouse and spawn zone. Default 5000 meters.
 -- @field #boolean autosave Automatically save assets to file when mission ends.
 -- @field #string autosavepath Path where the asset file is saved on auto save.
--- @field #string autosavefilename File name of the auto asset save file. Default is auto generated from warehouse id and name.
+-- @field #string autosavefile File name of the auto asset save file. Default is auto generated from warehouse id and name.
 -- @field #boolean safeparking If true, parking spots for aircraft are considered as occupied if e.g. a client aircraft is parked there. Default false.
 -- @field #boolean isunit If true, warehouse is represented by a unit instead of a static.
 -- @extends Core.Fsm#FSM
@@ -84,7 +84,7 @@
 -- this means they can be destroyed during the transport and add more life to the DCS world.
 --
 -- This comes along with some additional interesting stategic aspects since capturing/defending and destroying/protecting an enemy or your
--- own warehous becomes of critical importance for the development of a conflict.
+-- own warehouse becomes of critical importance for the development of a conflict.
 --
 -- In essence, creating an efficient network of warehouses is vital for the success of a battle or even the whole war. Likewise, of course, cutting off the enemy
 -- of important supply lines by capturing or destroying warehouses or their associated infrastructure is equally important.
@@ -1733,7 +1733,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.6.7"
+WAREHOUSE.version="0.6.8"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -1802,10 +1802,11 @@ function WAREHOUSE:New(warehouse, alias)
 
   -- Check if just a string was given and convert to static.
   if type(warehouse)=="string" then
-    warehouse=UNIT:FindByName(warehouse)
+    local warehousename=warehouse
+    warehouse=UNIT:FindByName(warehousename)
     if warehouse==nil then
-      env.info(string.format("No warehouse unit with name %s found trying static.", warehouse))
-      warehouse=STATIC:FindByName(warehouse, true)
+      env.info(string.format("No warehouse unit with name %s found trying static.", tostring(warehousename)))
+      warehouse=STATIC:FindByName(warehousename, true)
       self.isunit=false
     else
       self.isunit=true
@@ -4795,9 +4796,8 @@ function WAREHOUSE:onafterCaptured(From, Event, To, Coalition, Country)
   local text=string.format("Warehouse %s: We were captured by enemy coalition (side=%d)!", self.alias, Coalition)
   self:_InfoMessage(text)
 
-  -- Change coalition and country of warehouse static.
-  self:ChangeCoaliton(Coalition, Country)
-
+  -- Warehouse respawned.
+  self:ChangeCountry(Country)
 end
 
 
@@ -5173,9 +5173,12 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
       -- Spawn train.
       if self.rail then
         --TODO: Rail should only get one asset because they would spawn on top!
+        
+        -- Spawn naval assets.
+        _group=self:_SpawnAssetGroundNaval(_alias,_assetitem, Request, self.spawnzone)
       end
 
-      self:E(self.wid.."ERROR: Spawning of TRAIN assets not possible yet!")
+      --self:E(self.wid.."ERROR: Spawning of TRAIN assets not possible yet!")
 
     elseif _assetitem.category==Group.Category.SHIP then
 
@@ -5220,7 +5223,7 @@ end
 -- @return Wrapper.Group#GROUP The spawned group or nil if the group could not be spawned.
 function WAREHOUSE:_SpawnAssetGroundNaval(alias, asset, request, spawnzone, aioff)
 
-  if asset and (asset.category==Group.Category.GROUND or asset.category==Group.Category.SHIP) then
+  if asset and (asset.category==Group.Category.GROUND or asset.category==Group.Category.SHIP or asset.category==Group.Category.TRAIN) then
 
     -- Prepare spawn template.
     local template=self:_SpawnAssetPrepareTemplate(asset, alias)
@@ -5230,6 +5233,11 @@ function WAREHOUSE:_SpawnAssetGroundNaval(alias, asset, request, spawnzone, aiof
 
     -- Get a random coordinate in the spawn zone.
     local coord=spawnzone:GetRandomCoordinate()
+    
+    -- For trains, we use the rail connection point.
+    if asset.category==Group.Category.TRAIN then
+      coord=self.rail
+    end
 
     -- Translate the position of the units.
     for i=1,#template.units do

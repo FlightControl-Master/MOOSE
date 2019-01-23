@@ -266,7 +266,7 @@ RECOVERYTANKER.version="1.0.3"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Is alive check for tanker necessary?
+-- DONE: Is alive check for tanker necessary?
 -- DONE: Seamless change of position update. Get good updated waypoint and update position if tanker position is right. Not really possiple atm.
 -- DONE: Check if TACAN mode "X" is allowed for AA TACAN stations. Nope
 -- DONE: Check if tanker is going back to "Running" state after RTB and respawn.
@@ -706,6 +706,24 @@ end
 -- @return #boolean If true, is stopped. 
 function RECOVERYTANKER:IsStopped()
   return self:is("Stopped")
+end
+
+--- Alias of tanker spawn group.
+-- @param #RECOVERYTANKER self
+-- @return #string Alias of the tanker. 
+function RECOVERYTANKER:GetAlias()
+  return self.alias
+end
+
+--- Get unit name of the spawned tanker.
+-- @param #RECOVERYTANKER self
+-- @return #string Name of the tanker unit or nil if it does not exist. 
+function RECOVERYTANKER:GetUnitName()
+  local unit=self.tanker:GetUnit(1)
+  if unit then
+    return unit:GetName()
+  end
+  return nil
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

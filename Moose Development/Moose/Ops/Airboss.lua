@@ -6,7 +6,7 @@
 --
 --    * CASE I, II and III recoveries.
 --    * Supports human pilots as well as AI flight groups.
---    * Automatic LSO grading (WIP) including (optional) live grading while in the groove.
+--    * Automatic LSO grading including (optional) live grading while in the groove.
 --    * Different skill levels from on-the-fly tips for flight students to *ziplip* for pros. Can be set for each player individually.
 --    * Define recovery time windows with individual recovery cases in the same mission.
 --    * Automatic TACAN and ICLS channel setting of carrier.
@@ -15,6 +15,7 @@
 --    * F10 radio menu including carrier info (weather, radio frequencies, TACAN/ICLS channels), player LSO grades, help function (aircraft attitude, marking of zones etc).
 --    * Recovery tanker and refueling option via integration of @{Ops.RecoveryTanker} class.
 --    * Rescue helicopter option via @{Ops.RescueHelo} class.
+--    * Combine multiple human player to sections.
 --    * Many parameters customizable by convenient user API functions.
 --    * Multiple carrier support due to object oriented approach.
 --    * Unlimited number of players.
@@ -84,10 +85,10 @@
 -- @field #boolean ICLSon Automatic ICLS is activated.
 -- @field #number ICLSchannel ICLS channel.
 -- @field #string ICLSmorse ICLS morse code, e.g. "STN".
--- @field Core.Radio#RADIO LSORadio Radio for LSO calls.
+-- @field #AIRBOSS.Radio LSORadio Radio for LSO calls.
 -- @field #number LSOFreq LSO radio frequency in MHz.
 -- @field #string LSOModu LSO radio modulation "AM" or "FM".
--- @field Core.Radio#RADIO MarshalRadio Radio for carrier calls.
+-- @field #AIRBOSS.Radio MarshalRadio Radio for carrier calls.
 -- @field #number MarshalFreq Marshal radio frequency in MHz.
 -- @field #string MarshalModu Marshal radio modulation "AM" or "FM".
 -- @field Core.Scheduler#SCHEDULER radiotimer Radio queue scheduler.
@@ -147,6 +148,7 @@
 -- @field #boolean staticweather Mission uses static rather than dynamic weather.
 -- @field #number windowcount Running number counting the recovery windows.
 -- @field #number LSOdT Time interval in seconds before the LSO will make its next call.
+-- @field #string senderac Name of the aircraft acting as sender for broadcasting radio messages from the carrier. DCS shortcoming workaround.
 -- @extends Core.Fsm#FSM
 
 --- Be the boss!
@@ -323,6 +325,11 @@
 -- 
 -- Marshal will transmit a short message on his radio frequency. See @{#AIRBOSS.SetMarshalRadio}.
 -- 
+-- ### Subtitles On/Off
+-- 
+-- This command toggles the display of radio message subtitles. By default subtitles are on.
+-- Note that subtitles for radio messages which do not have a complete voice over are always displayed.
+-- 
 -- ## Kneeboard Menu
 -- 
 -- ![Banner Image](..\Presentations\AIRBOSS\Airboss_MenuKneeboard.png)
@@ -361,9 +368,9 @@
 -- 
 -- The responsibilities of the section leader are:
 -- 
---      * To request Marshal. The section members are not allowed to do this and have to follow the lead to his assigned stack.
---      * To lead the right way to the pattern if the flight is allowed to commence.
---      * The lead is also the only one who can request commence if the flight wants to bypass the Marshal stack.
+--    * To request Marshal. The section members are not allowed to do this and have to follow the lead to his assigned stack.
+--    * To lead the right way to the pattern if the flight is allowed to commence.
+--    * The lead is also the only one who can request commence if the flight wants to bypass the Marshal stack.
 -- 
 -- Each time the command is issued by the lead, the complete section is set up from scratch. Members which are not inside the 100 m radius any more are
 -- removed and/or new members which are now in range are added.
@@ -530,7 +537,7 @@
 -- Players can request marshal via the F10 menu and will also be given a marshal stack. Currently, human players can request commence via the F10 radio regardless of
 -- whether a window is open or not and will be allowed to enter the pattern (if not already full). This will probably change in the future.
 -- 
--- At the moment there is no automatic recovery case set depending on weather or daytime. So it is the AIRBOSS (you) who needs to make that decision.
+-- At the moment there is no automatic recovery case set depending on weather or daytime. So it is the AIRBOSS (i.e. you as mission designer) who needs to make that decision.
 -- It is probably a good idea to synchronize the timing with the waypoints of the carrier. For example, setting up the waypoints such that the carrier
 -- already has turning into the wind, when a recovery window opens.
 -- 
@@ -679,6 +686,34 @@
 -- 
 -- ===
 -- 
+-- # Examples
+-- 
+-- In this section a few simple examples are given to illustrate the scripting part.
+-- 
+-- ## Simple Case
+-- 
+--     -- Create AIRBOSS object.
+--     local AirbossStennis=AIRBOSS:New("USS Stennis")
+--     
+--     -- Add recovery windows:
+--     -- Case I from 9 to 12 am.
+--     local window1=AirbossStennis:AddRecoveryWindow("8:55",  "12:00", 1)
+--     -- Case II with +15 degrees holding offset from 1500 for 90 min.
+--     local window2=AirbossStennis:AddRecoveryWindow("14:55", "16:30", 2, 15)
+--     -- Case III with +30 degrees holding offset from 2100 to 2330.
+--     local window3=AirbossStennis:AddRecoveryWindow("21:00", "23:30", 3, 30)
+--     
+--     -- Load all saved player grades from your "Saved Games\DCS" folder (if lfs was desanitized).
+--     AirbossStennis:Load()
+--     
+--     -- Automatically save player results to your "Saved Games\DCS" folder each time a player get a final grade from the LSO.
+--     AirbossStennis:SetAutoSave()
+--         
+--     -- Start airboss class.
+--     AirbossStennis:Start()
+-- 
+-- ===
+-- 
 -- # Debugging
 -- 
 -- In case you have problems, it is always a good idea to have a look at your DCS log file. You find it in your "Saved Games" folder, so for example in
@@ -782,6 +817,7 @@ AIRBOSS = {
   staticweather  = nil,
   windowcount    = 0,
   LSOdT          = nil,
+  senderac       = nil,
 }
 
 --- Player aircraft types capable of landing on carriers.
@@ -932,6 +968,12 @@ AIRBOSS.GroovePos={
   IW="IW",
 }
 
+--- Radio.
+-- @type AIRBOSS.Radio
+-- @field #number frequency Frequency in Hz.
+-- @field #number modulation Band modulation.
+-- @field #string alias Radio alias.
+
 --- Radio sound file and subtitle.
 -- @type AIRBOSS.RadioCall
 -- @field #string file Sound file name without suffix.
@@ -939,6 +981,10 @@ AIRBOSS.GroovePos={
 -- @field #boolean loud Loud version of sound file available.
 -- @field #string subtitle Subtitle displayed during transmission.
 -- @field #number duration Duration of the sound in seconds. This is also the duration the subtitle is displayed.
+-- @field #number subduration Duration in seconds the subtitle is displayed.
+-- @field #string modexsender Onboard number of the sender (optional).
+-- @field #string modexreceiver Onboard number of the receiver (optional).
+-- @field #string sender Sender of the message (optional). Default radia alias.
 
 --- LSO radio calls.
 -- @type AIRBOSS.LSOCall
@@ -969,6 +1015,8 @@ AIRBOSS.GroovePos={
 -- @field #AIRBOSS.RadioCall N7 "Seven" call.
 -- @field #AIRBOSS.RadioCall N8 "Eight" call.
 -- @field #AIRBOSS.RadioCall N9 "Nine" call.
+-- @field #AIRBOSS.RadioCall CLICK Radio end transmission click sound.
+-- @field #AIRBOSS.RadioCall NOISE Static noise sound.
 AIRBOSS.LSOCall={
   RADIOCHECK={
     file="LSO-RadioCheck",
@@ -976,6 +1024,7 @@ AIRBOSS.LSOCall={
     loud=false,
     subtitle="Paddles, radio check",
     duration=1.1,
+    subduration=5,
   },
   RIGHTFORLINEUP={
     file="LSO-RightForLineup",
@@ -983,6 +1032,7 @@ AIRBOSS.LSOCall={
     loud=true,
     subtitle="Right for line up",
     duration=0.80,
+    subduration=1,
   },
   COMELEFT={
     file="LSO-ComeLeft",
@@ -990,6 +1040,7 @@ AIRBOSS.LSOCall={
     loud=true,
     subtitle="Come left",
     duration=0.60,
+    subduration=1,
   },
   HIGH={
     file="LSO-High",
@@ -997,6 +1048,7 @@ AIRBOSS.LSOCall={
     loud=true,
     subtitle="You're high",
     duration=0.65,
+    subduration=1,
   },
   LOW={
     file="LSO-Low",
@@ -1004,6 +1056,7 @@ AIRBOSS.LSOCall={
     loud=true,
     subtitle="You're low",
     duration=0.50,
+    subduration=1,
   },
   POWER={
     file="LSO-Power",
@@ -1011,6 +1064,7 @@ AIRBOSS.LSOCall={
     loud=true,
     subtitle="Power",
     duration=0.50,  --0.45 was too short
+    subduration=1,
   },
   SLOW={
     file="LSO-Slow",
@@ -1018,6 +1072,7 @@ AIRBOSS.LSOCall={
     loud=true,
     subtitle="You're slow",
     duration=0.65,
+    subduration=1,
   },
   FAST={
     file="LSO-Fast",
@@ -1025,6 +1080,7 @@ AIRBOSS.LSOCall={
     loud=true,
     subtitle="You're fast",
     duration=0.7,
+    subduration=1,
   },
   CALLTHEBALL={
     file="LSO-CallTheBall",
@@ -1032,6 +1088,7 @@ AIRBOSS.LSOCall={
     loud=false,
     subtitle="Call the ball",
     duration=0.6,
+    subduration=2,
   },
   ROGERBALL={
     file="LSO-RogerBall",
@@ -1039,6 +1096,7 @@ AIRBOSS.LSOCall={
     loud=false,    
     subtitle="Roger ball",
     duration=0.7,
+    subduration=2,
   },  
   WAVEOFF={
     file="LSO-WaveOff",
@@ -1046,6 +1104,7 @@ AIRBOSS.LSOCall={
     loud=false,
     subtitle="Wave off",
     duration=0.6,
+    subduration=5,
   },  
   BOLTER={
     file="LSO-BolterBolter",
@@ -1053,6 +1112,7 @@ AIRBOSS.LSOCall={
     loud=false,
     subtitle="Bolter, Bolter",
     duration=0.75,
+    subduration=5,
   },
   LONGINGROOVE={
     file="LSO-LongInTheGroove",
@@ -1060,6 +1120,7 @@ AIRBOSS.LSOCall={
     loud=false,
     subtitle="You're long in the groove",
     duration=1.2,
+    subduration=5,
   },
   FOULDECK={
     file="LSO-FoulDeck",
@@ -1067,6 +1128,7 @@ AIRBOSS.LSOCall={
     loud=false,
     subtitle="Foul deck",
     duration=0.62,
+    subduration=5,
   },
   DEPARTANDREENTER={
     file="LSO-DepartAndReenter",
@@ -1074,6 +1136,7 @@ AIRBOSS.LSOCall={
     loud=false,
     subtitle="Depart and re-enter",
     duration=1.1,
+    subduration=5,
   },
   PADDLESCONTACT={
     file="LSO-PaddlesContact",
@@ -1081,13 +1144,15 @@ AIRBOSS.LSOCall={
     loud=false,
     subtitle="Paddles, contact",
     duration=1.0,
+    subduration=5,
   },
   WELCOMEABOARD={
     file="LSO-WelcomeAboard",
     suffix="ogg",
     loud=false,
     subtitle="Welcome aboard",
-    duration=0.9,
+    duration=1.0,
+    subduration=5,
   },
   N0={
     file="LSO-N0",
@@ -1157,7 +1222,21 @@ AIRBOSS.LSOCall={
     suffix="ogg",
     loud=false,
     subtitle="",
-    duration=0.40,  --0.38 too short
+    duration=0.40,
+  },
+  CLICK={
+    file="AIRBOSS-RadioClick",
+    suffix="ogg",
+    loud=false,
+    subtitle="",
+    duration=0.35,
+  },
+  NOISE={
+    file="AIRBOSS-Noise",
+    suffix="ogg",
+    loud=false,
+    subtitle="",
+    duration=3.6,
   },
 }
 
@@ -1176,13 +1255,16 @@ AIRBOSS.LSOCall={
 -- @field #AIRBOSS.RadioCall N7 "Seven" call.
 -- @field #AIRBOSS.RadioCall N8 "Eight" call.
 -- @field #AIRBOSS.RadioCall N9 "Nine" call.
+-- @field #AIRBOSS.RadioCall CLICK Radio end transmission click sound.
+-- @field #AIRBOSS.RadioCall NOISE Static noise sound.
 AIRBOSS.MarshalCall={
   RADIOCHECK={
     file="MARSHAL-RadioCheck",
     suffix="ogg",
     loud=false,
     subtitle="Radio check",
-    duration=1.0,
+    duration=1.1,
+    subduration=5,
   },
   SAYNEEDLES={
     file="MARSHAL-SayNeedles",
@@ -1190,6 +1272,7 @@ AIRBOSS.MarshalCall={
     loud=false,
     subtitle="Say needles",
     duration=0.9,
+    subduration=5,
   },
   FLYNEEDLES={
     file="MARSHAL-FlyYourNeedles",
@@ -1197,6 +1280,7 @@ AIRBOSS.MarshalCall={
     loud=false,
     subtitle="Fly your needles",
     duration=0.9,
+    subduration=5,
   },
   -- TODO: Other voice overs for marshal.
   N0={
@@ -1268,6 +1352,20 @@ AIRBOSS.MarshalCall={
     loud=false,
     subtitle="",
     duration=0.40,  --0.38 too short
+  },
+  CLICK={
+    file="AIRBOSS-RadioClick",
+    suffix="ogg",
+    loud=false,
+    subtitle="",
+    duration=0.35,
+  },
+  NOISE={
+    file="AIRBOSS-Noise",
+    suffix="ogg",
+    loud=false,
+    subtitle="",
+    duration=3.6,
   },
 }
 
@@ -1389,7 +1487,7 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.9.0"
+AIRBOSS.version="0.9.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1502,13 +1600,9 @@ function AIRBOSS:New(carriername, alias)
   -------------
   
   -- Set up Airboss radio.  
-  self.MarshalRadio=RADIO:New(self.carrier)
-  self.MarshalRadio:SetAlias("MARSHAL")
-  self:SetMarshalRadio()
+  self:SetMarshalRadio()  
   
   -- Set up LSO radio.  
-  self.LSORadio=RADIO:New(self.carrier)
-  self.LSORadio:SetAlias("LSO")
   self:SetLSORadio()
   
   -- Set LSO call interval. Default 4 sec.
@@ -1533,10 +1627,10 @@ function AIRBOSS:New(carriername, alias)
   self:SetMaxMarshalStacks()
   
   -- Set max section members. Default 2.
-  self:SetMaxSectionSize(2)
+  self:SetMaxSectionSize()
   
   -- Set max flights per stack. Default is 2.
-  self:SetMaxFlightsPerStack(2)
+  self:SetMaxFlightsPerStack()
    
   -- Set AI handling On.
   self:SetHandleAION()
@@ -2226,8 +2320,8 @@ end
 -- @return #AIRBOSS self
 function AIRBOSS:SetLSORadio(frequency, modulation)
 
-  self.LSOFreq=frequency or 264
-  self.LSOModu=modulation or "AM"
+  self.LSOFreq=(frequency or 264)
+  modulation=modulation or "AM"
   
   if modulation=="FM" then
     self.LSOModu=radio.modulation.FM
@@ -2235,9 +2329,11 @@ function AIRBOSS:SetLSORadio(frequency, modulation)
     self.LSOModu=radio.modulation.AM
   end
   
-  self.LSORadio:SetFrequency(self.LSOFreq)
-  self.LSORadio:SetModulation(self.LSOModu)
-
+  self.LSORadio={} --#AIRBOSS.Radio
+  self.LSORadio.frequency=self.LSOFreq
+  self.LSORadio.modulation=self.LSOModu
+  self.LSORadio.alias="LSO"
+  
   return self
 end
 
@@ -2249,7 +2345,7 @@ end
 function AIRBOSS:SetMarshalRadio(frequency, modulation)
 
   self.MarshalFreq=frequency or 305
-  self.MarshalModu=modulation or "AM"
+  modulation=modulation or "AM"
   
   if modulation=="FM" then
     self.MarshalModu=radio.modulation.FM
@@ -2257,9 +2353,20 @@ function AIRBOSS:SetMarshalRadio(frequency, modulation)
     self.MarshalModu=radio.modulation.AM
   end
   
-  self.MarshalRadio:SetFrequency(self.MarshalFreq)
-  self.MarshalRadio:SetModulation(self.MarshalModu)
+  self.MarshalRadio={} --#AIRBOSS.Radio
+  self.MarshalRadio.frequency=self.MarshalFreq
+  self.MarshalRadio.modulation=self.MarshalModu
+  self.MarshalRadio.alias="MARSHAL"
+  
+  return self
+end
 
+--- Set unit name for sending radio messages.
+-- @param #AIRBOSS self
+-- @param #string unitname Name of the unit.
+-- @return #AIRBOSS self
+function AIRBOSS:SetRadioUnitName(unitname)
+  self.senderac=unitname
   return self
 end
 
@@ -2611,7 +2718,7 @@ function AIRBOSS:_CheckAIStatus()
           -- Pilot: "405, Hornet Ball, 3.2"
           -- TODO: Voice over.
           local text=string.format("%s Ball, %.1f.", self:_GetACNickname(unit:GetTypeName()), self:_GetFuelState(unit)/1000)
-          self:MessageToPattern(text, element.onboard, "", 3)
+          self:MessageToPattern(text, element.onboard, "", 5)
           
           -- Debug message.
           MESSAGE:New(string.format("%s, %s", element.onboard, text), 15, "DEBUG"):ToAllIf(self.Debug)
@@ -4026,7 +4133,7 @@ function AIRBOSS:_WaitPlayer(playerData)
     end
     
     -- Send message.
-    self:MessageToPlayer(playerData, text, "AIRBOSS", nil, 10)
+    self:MessageToMarshal(text, "AIRBOSS", playerData.onboard, 10)
 
     -- Add player flight to waiting queue.
     table.insert(self.Qwaiting, playerData)
@@ -4044,7 +4151,6 @@ function AIRBOSS:_WaitPlayer(playerData)
       flight.step=AIRBOSS.PatternStep.WAITING
       flight.time=timer.getAbsTime()
       flight.warning=nil
-      self:MessageToPlayer(flight, text, "AIRBOSS", nil, 10)
     end
     
   end
@@ -4700,33 +4806,6 @@ function AIRBOSS:_GetFreeStack(ai, case, empty)
   -- Recovery case.
   case=case or self.case
 
-  --[[
-  
-  -- Get stack 
-  local nfull
-  if case==1 then
-    -- Lowest Case I stack.
-    nfull=self:_GetQueueInfo(self.Qmarshal, 1)
-  else
-    -- Lowest Case II or III stack.
-    nfull=self:_GetQueueInfo(self.Qmarshal, 23)
-  end
-
-  -- Simple case without a recovery tanker for now.
-  local nfree=nfull+1
-
-  -- Case I stacks are limited to angels 2, 3, 4, 5 ==> so 4 free stacks. At Angels 6, we might have a tanker.
-  -- Next flights are asked to hold outside 10 NM zone.
-  if case==1 and nfree>self.Nmaxmarshal then
-    nfree=nil
-  end
-
-  return nfree
-
-  ]]
-  
-  -- New version.
-  
   -- Max number of stacks available.
   local nmaxstacks=100
   if case==1 then
@@ -4765,7 +4844,7 @@ function AIRBOSS:_GetFreeStack(ai, case, empty)
   -- Loop over stacks and check which one has a place left.
   local nfree=nil
   for i=1,nmaxstacks do
-    env.info(string.format("FF stack[%d]=%d", i, stack[i]))
+    self:T2(self.lid..string.format("FF Stack[%d]=%d", i, stack[i]))
     if ai or empty then
       -- AI need the whole stack.
       if stack[i]==self.NmaxStack then
@@ -5130,8 +5209,9 @@ function AIRBOSS:_InitPlayer(playerData, step)
   -- Set us up on final if group name contains "Groove". But only for the first pass.
   if playerData.group:GetName():match("Groove") and playerData.passes==0 then
     self:MessageToPlayer(playerData, "Group name contains \"Groove\". Happy groove testing.")
-    playerData.attitudemonitor=false
+    playerData.attitudemonitor=false    
     playerData.step=AIRBOSS.PatternStep.FINAL
+    table.insert(self.Qpattern, playerData)
   end
   
   return playerData
@@ -5716,7 +5796,7 @@ function AIRBOSS:_CheckMissedStepOnEntry(playerData)
   local rightqueue=self:_InQueue(self.Qpattern, playerData.group)
   local rightflag=playerData.flag:Get()~=-42
  
-  -- Steps that the player could of missed during Case II/III.
+  -- Steps that the player could have missed during Case II/III.
   local step=playerData.step
   local missedstep=step==AIRBOSS.PatternStep.PLATFORM or step==AIRBOSS.PatternStep.ARCIN or step==AIRBOSS.PatternStep.ARCOUT or step==AIRBOSS.PatternStep.DIRTYUP
           
@@ -5807,13 +5887,6 @@ function AIRBOSS:OnEventBirth(EventData)
       local text=string.format("Player entered aircraft of other coalition.")
       MESSAGE:New(text, 30):ToAllIf(self.Debug)
       self:T(self.lid..text)
-      --[[
-      local gid=_group:GetID()
-      if self.menuadded[gid] then
-        if AIRBOSS.MenuRoot[gid] then
-        end
-      end
-      ]]
       return
     end
             
@@ -6222,8 +6295,8 @@ function AIRBOSS:_Holding(playerData)
     -- TODO: check if this works.
     --local dT=timer.getAbsTime()-playerData.time
     
-    -- Check if less then 60 seconds.
-    if dT<=60 then
+    -- Check if less then 90 seconds.
+    if dT<=90 then
       justcollapsed=true
     end
   end
@@ -6372,7 +6445,7 @@ function AIRBOSS:_Commencing(playerData, zonecheck)
   self:_InitPlayer(playerData)
     
   -- Commencing message to player only.
-  if playerData.difficulty==AIRBOSS.Difficulty.EASY then
+  if playerData.difficulty~=AIRBOSS.Difficulty.HARD then
 
     -- Text  
     local text=""
@@ -6666,10 +6739,11 @@ function AIRBOSS:_DirtyUp(playerData)
     end
     
     -- Radio call "Say/Fly needles". Delayed by 10/15 seconds.
-    self:_Number2Radio(self.MarshalRadio, playerData.onboard, 20)
-    self:RadioTransmission(self.MarshalRadio, AIRBOSS.MarshalCall.SAYNEEDLES, false, 20.1)
-    self:_Number2Radio(self.MarshalRadio, playerData.onboard, 25)
-    self:RadioTransmission(self.MarshalRadio, AIRBOSS.MarshalCall.FLYNEEDLES, false, 25.1)
+    local callsay=self:_NewRadioCall(AIRBOSS.MarshalCall.SAYNEEDLES, nil, nil, 5, playerData.onboard)
+    local callfly=self:_NewRadioCall(AIRBOSS.MarshalCall.FLYNEEDLES, nil, nil, 5, playerData.onboard)
+    self:RadioTransmission(self.MarshalRadio, callsay, false, 40)
+    self:RadioTransmission(self.MarshalRadio, callfly, false, 45)
+            
     -- TODO: Make Fly Bullseye call if no automatic ICLS is active.
     
     -- Next step: CASE III: Intercept glide slope and follow bullseye (ICLS).
@@ -7099,8 +7173,7 @@ function AIRBOSS:_Final(playerData)
     playerData.groove.X0=groovedata
     
     -- Next step: X start.
-    self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.GROOVE_XX)
-    
+    self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.GROOVE_XX)    
   end
 
 end
@@ -7473,7 +7546,9 @@ function AIRBOSS:_CheckFoulDeck(playerData)
       local text=string.format("Unit %s on landing runway ==> Foul deck!", unit:GetName())
       self:T(self.lid..text)
       MESSAGE:New(text, 10):ToAllIf(self.Debug)
-      --runway:FlareZone(FLARECOLOR.Red, 30)
+      if self.Debug then
+        runway:FlareZone(FLARECOLOR.Red, 30)
+      end
       fouldeck=true
       foulunit=unit
     end
@@ -7493,7 +7568,7 @@ function AIRBOSS:_CheckFoulDeck(playerData)
     self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.WAVEOFF, false, 1.2)
     
     -- Player hint for flight students.
-    if playerData.difficulty==AIRBOSS.Difficulty.EASY then
+    if playerData.difficulty~=AIRBOSS.Difficulty.HARD then
       local text=string.format("overfly landing area and enter bolter pattern.")
       self:MessageToPlayer(playerData, text, "LSO", nil, 10, false, 3)
     end    
@@ -7508,7 +7583,7 @@ function AIRBOSS:_CheckFoulDeck(playerData)
     if foulunit then
       local foulflight=self:_GetFlightFromGroupInQueue(foulunit:GetGroup(), self.flights)
       if foulflight and not foulflight.ai then
-        self:MessageToPlayer(foulflight, "Move your ass from my runway. NOW!", "AIRBOSS", nil, 10)
+        self:MessageToPlayer(foulflight, "move your ass from my runway. NOW!", "AIRBOSS", nil, 10)
       end
     end
   end
@@ -9185,31 +9260,25 @@ function AIRBOSS:_AltitudeCheck(playerData, altopt)
   -- Altitude error +-X%
   local _error=(altitude-altopt)/altopt*100
   
-  -- TODO: radio call for flight students.
-  --local radiocall={} --#AIRBOSS.RadioCall
+  -- Radio call for flight students.
+  local radiocall=nil --#AIRBOSS.RadioCall
  
-  local hint
+  local hint=""
+  local loud=false
   if _error>badscore then
-    hint=string.format("You're high.")
-    -- TODO: Dang! This overwrites the array!
-    --radiocall=AIRBOSS.LSOCall.HIGH
-    --radiocall.loud=true
-    --radiocall.subtitle=""
+    --hint=string.format("You're high.")
+    radiocall=self:_NewRadioCall(AIRBOSS.LSOCall.HIGH, nil, nil, 5)
+    loud=true
   elseif _error>lowscore then
-    hint= string.format("You're slightly high.")
-    --radiocall=AIRBOSS.LSOCall.HIGH
-    --radiocall.loud=false
-    --radiocall.subtitle=""
+    --hint= string.format("You're slightly high.")
+    radiocall=self:_NewRadioCall(AIRBOSS.LSOCall.HIGH, nil, nil, 5)
   elseif _error<-badscore then
-    hint=string.format("You're low. ")
-    --radiocall=AIRBOSS.LSOCall.LOW
-    --radiocall.loud=true
-    --radiocall.subtitle=""
+    --hint=string.format("You're low. ")
+    radiocall=self:_NewRadioCall(AIRBOSS.LSOCall.LOW, nil, nil, 5)
+    loud=true
   elseif _error<-lowscore then
-    hint=string.format("You're slightly low.")
-    --radiocall=AIRBOSS.LSOCall.LOW
-    --radiocall.loud=false
-    --radiocall.subtitle=""
+    --hint=string.format("You're slightly low.")
+    radiocall=self:_NewRadioCall(AIRBOSS.LSOCall.LOW, nil, nil, 5)
   else
     hint=string.format("Good altitude.")
   end
@@ -9218,8 +9287,11 @@ function AIRBOSS:_AltitudeCheck(playerData, altopt)
   if playerData.difficulty==AIRBOSS.Difficulty.EASY then
     -- Also inform students about the optimal altitude.
     hint=hint..string.format(" Optimal altitude is %d ft.", UTILS.MetersToFeet(altopt))
+    self:Sound2Player(playerData, self.LSORadio, radiocall, loud)
   elseif playerData.difficulty==AIRBOSS.Difficulty.NORMAL then
     -- We keep it short normally.
+    hint=""
+    self:Sound2Player(playerData, self.LSORadio, radiocall, loud)
   elseif playerData.difficulty==AIRBOSS.Difficulty.HARD then
     -- No hint at all for the pros.
     hint=""
@@ -9305,29 +9377,43 @@ function AIRBOSS:_AoACheck(playerData, optaoa)
     
   -- Get aircraft AoA parameters.
   local aircraftaoa=self:_GetAircraftAoA(playerData)
+  
+    -- Radio call for flight students.
+  local radiocall=nil --#AIRBOSS.RadioCall
 
   -- Rate aoa.
   local hint=""
+  local loud=false
   if aoa>=aircraftaoa.SLOW then
-    hint="Your're slow!"
+    --hint="Your're slow!"
+    radiocall=self:_NewRadioCall(AIRBOSS.LSOCall.SLOW, nil, nil, 5)
+    loud=true
   elseif aoa>=aircraftaoa.Slow then
-    hint="Your're slow."
+    --hint="Your're slow."
+    radiocall=self:_NewRadioCall(AIRBOSS.LSOCall.SLOW, nil, nil, 5)
   elseif aoa>=aircraftaoa.OnSpeedMax then
     hint="Your're a little slow."
   elseif aoa>=aircraftaoa.OnSpeedMin then
     hint="You're on speed."
   elseif aoa>=aircraftaoa.Fast then
     hint="You're a little fast."
+  elseif aoa>=aircraftaoa.FAST then
+    --hint="Your're fast."
+    radiocall=self:_NewRadioCall(AIRBOSS.LSOCall.FAST, nil, nil, 5)
   else
-    hint="You're fast!"
+    --hint="You're fast!"
+    radiocall=self:_NewRadioCall(AIRBOSS.LSOCall.FAST, nil, nil, 5)
+    loud=true
   end
 
   -- Extend or decrease depending on skill.
   if playerData.difficulty==AIRBOSS.Difficulty.EASY then
     -- Also inform students about optimal value.
     hint=hint..string.format(" Optimal AoA is %.1f.", self:_AoADeg2Units(playerData, optaoa))
+    self:Sound2Player(playerData, self.LSORadio, radiocall, loud)
   elseif playerData.difficulty==AIRBOSS.Difficulty.NORMAL then
     -- We keep is short normally.
+    self:Sound2Player(playerData, self.LSORadio, radiocall, loud)
   elseif playerData.difficulty==AIRBOSS.Difficulty.HARD then
     -- No hint at all for the pros.
     hint=""
@@ -9360,15 +9446,25 @@ function AIRBOSS:_SpeedCheck(playerData, speedopt)
   -- Altitude error +-X%
   local _error=(speed-speedopt)/speedopt*100
   
-  local hint
+    -- Radio call for flight students.
+  local radiocall=nil --#AIRBOSS.RadioCall  
+  
+  local hint=""
+  local loud=false
   if _error>badscore then
-    hint=string.format("You're fast.")
+    --hint=string.format("You're fast.")
+    radiocall=self:_NewRadioCall(AIRBOSS.LSOCall.FAST, "AIRBOSS", nil, 5)
+    loud=true    
   elseif _error>lowscore then
-    hint= string.format("You're slightly fast.")
+    --hint= string.format("You're slightly fast.")
+    radiocall=self:_NewRadioCall(AIRBOSS.LSOCall.FAST, "AIRBOSS", nil, 5)
   elseif _error<-badscore then
-    hint=string.format("You're low.")
+    --hint=string.format("You're slow.")
+    radiocall=self:_NewRadioCall(AIRBOSS.LSOCall.SLOW, "AIRBOSS", nil, 5)
   elseif _error<-lowscore then
-    hint=string.format("You're slightly slow.")
+    --hint=string.format("You're slightly slow.")
+    radiocall=self:_NewRadioCall(AIRBOSS.LSOCall.SLOW, "AIRBOSS", nil, 5)
+    loud=true
   else
     hint=string.format("Good speed.")
   end
@@ -9376,8 +9472,10 @@ function AIRBOSS:_SpeedCheck(playerData, speedopt)
   -- Extend or decrease depending on skill.
   if playerData.difficulty==AIRBOSS.Difficulty.EASY then
     hint=hint..string.format(" Optimal speed is %d knots.", UTILS.MpsToKnots(speedopt))
+    self:Sound2Player(playerData, self.LSORadio, radiocall, loud)
   elseif playerData.difficulty==AIRBOSS.Difficulty.NORMAL then
     -- We keep is short normally.
+    self:Sound2Player(playerData, self.LSORadio, radiocall, loud)
   elseif playerData.difficulty==AIRBOSS.Difficulty.HARD then
     -- No hint at all for pros.
     hint=""
@@ -9551,8 +9649,22 @@ function AIRBOSS:_Debrief(playerData)
     -- Foul Deck --
     ---------------
 
-    -- Bolter pattern. Then Abeam or bullseye.
-    playerData.step=AIRBOSS.PatternStep.BOLTER
+    if playerData.unit:InAir() then
+
+      -- Bolter pattern. Then Abeam or bullseye.
+      playerData.step=AIRBOSS.PatternStep.BOLTER
+
+    else
+        
+      -- Welcome aboard!
+      self:Sound2Player(playerData, self.LSORadio, AIRBOSS.LSOCall.WELCOMEABOARD)
+    
+      -- Airboss talkto!
+      local text=string.format("the deck was fouled but landed anyway. Airboss wants to talk to you!")
+      self:MessageToPlayer(playerData, text, "LSO", nil, 10, false, 3)
+      
+    end
+
    
   elseif playerData.waveoff then
 
@@ -9568,7 +9680,7 @@ function AIRBOSS:_Debrief(playerData)
     else
         
       -- Welcome aboard!
-      self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.WELCOMEABOARD)
+      self:Sound2Player(playerData, self.LSORadio, AIRBOSS.LSOCall.WELCOMEABOARD)
     
       -- Airboss talkto!
       local text=string.format("you were waved off but landed anyway. Airboss wants to talk to you!")
@@ -9598,7 +9710,7 @@ function AIRBOSS:_Debrief(playerData)
      if not playerData.unit:InAir() then
   
       -- Welcome aboard!
-      self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.WELCOMEABOARD)
+      self:Sound2Player(playerData, self.LSORadio, AIRBOSS.LSOCall.WELCOMEABOARD)
       
     end
     
@@ -10028,7 +10140,7 @@ end
 -- @field #number Tstarted Abs time when transmission began to play.
 -- @field #number prio Priority 0-100.
 -- @field #boolean isplaying Currently playing.
--- @field Core.Beacon#RADIO radio Radio object.
+-- @field #AIRBOSS.Radio radio Radio object.
 -- @field #AIRBOSS.RadioCall call Radio call.
 -- @field #boolean loud If true, play loud version of file.
 
@@ -10097,7 +10209,7 @@ function AIRBOSS:_CheckRadioQueue(radioqueue, name)
   
   -- Found a new transmission.
   if next~=nil and not playing then
-    self:RadioTransmit(next.radio, next.call, next.loud)
+    self:Broadcast(next.radio, next.call, next.loud)
     next.isplaying=true
     next.Tstarted=time
   end
@@ -10111,9 +10223,9 @@ function AIRBOSS:_CheckRadioQueue(radioqueue, name)
 
 end
 
---- Add Radio transmission to radio queue
+--- Add Radio transmission to radio queue.
 -- @param #AIRBOSS self
--- @param Core.Radio#RADIO radio sending transmission.
+-- @param #AIRBOSS.Radio radio Radio sending the transmission.
 -- @param #AIRBOSS.RadioCall call Radio sound files and subtitles.
 -- @param #boolean loud If true, play loud sound file version.
 -- @param #number delay Delay in seconds, before the message is broadcasted.
@@ -10131,92 +10243,277 @@ function AIRBOSS:RadioTransmission(radio, call, loud, delay)
   transmission.Tstarted=nil
   transmission.loud=loud and call.loud
   
+  -- Player onboard number if sender has one.
+  if self:_IsOnboard(call.modexsender) then
+    self:_Number2Radio(radio, call.modexsender, delay)
+  end
+  
+  -- Play onboard number if receiver has one.
+  if self:_IsOnboard(call.modexreceiver) then
+    self:_Number2Radio(radio, call.modexreceiver, delay)
+  end  
+  
   -- Add transmission to the right queue.
-  if radio:GetAlias()=="LSO" then
+  local caller=""
+  if radio.alias=="LSO" then
   
     table.insert(self.RQLSO, transmission)
+    
+    caller="LSOCall"
   
-  elseif radio:GetAlias()=="MARSHAL" then
+  elseif radio.alias=="MARSHAL" then
   
     table.insert(self.RQMarshal, transmission)
+    
+    caller="MarshalCall"
   
+  end
+  
+  -- Append radio click sound at the end of the transmission.
+  if call~=AIRBOSS[caller].CLICK and
+     call~=AIRBOSS[caller].N0 and
+     call~=AIRBOSS[caller].N1 and
+     call~=AIRBOSS[caller].N2 and
+     call~=AIRBOSS[caller].N3 and
+     call~=AIRBOSS[caller].N4 and
+     call~=AIRBOSS[caller].N5 and
+     call~=AIRBOSS[caller].N6 and
+     call~=AIRBOSS[caller].N7 and
+     call~=AIRBOSS[caller].N8 and
+     call~=AIRBOSS[caller].N9 then
+    self:RadioTransmission(radio, AIRBOSS[caller].CLICK, false, delay)
   end
 end
 
---- Transmission radio message.
+
+--- Check if a call needs a subtitle because the complete voice overs are not available.
 -- @param #AIRBOSS self
--- @param Core.Radio#RADIO radio sending transmission.
+-- @param #AIRBOSS.RadioCall call Radio sound files and subtitles.
+-- @return #boolean If true, call needs a subtitle.
+function AIRBOSS:_NeedsSubtitle(call)
+  -- Currently we play the noise file.
+  if call.file==AIRBOSS.MarshalCall.NOISE.file or call.file==AIRBOSS.LSOCall.NOISE.file then
+    return true
+  else  
+    return false
+  end
+end
+
+--- Broadcast radio message.
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.Radio radio Radio sending transmission.
+-- @param #AIRBOSS.RadioCall call Radio sound files and subtitles.
+-- @param #boolean loud Play loud version of file.
+function AIRBOSS:Broadcast(radio, call, loud)
+  self:F(call)
+  
+  -- Check which sound output method to use.
+  if not self.usersoundradio then
+  
+    ----------------------------
+    -- Transmission via Radio --
+    ----------------------------
+  
+    -- Get unit sending the transmission.
+    local sender=self:_GetRadioSender()
+    
+    -- Construct file name and subtitle.
+    local filename=self:_RadioFilename(call, loud)
+    
+    -- Create subtitle for transmission.
+    local subtitle=self:_RadioSubtitle(radio, call, loud)
+  
+    -- Debug.  
+    self:T({filename=filename, subtitle=subtitle})
+  
+    if sender then
+    
+      -- Broadcasting from aircraft. Only players tuned in to the right frequency will see the message.
+      self:T(self.lid..string.format("Broadcasting from aircraft %s", sender:GetName()))
+      
+      -- Command to set the Frequency for the transmission.
+      local commandFrequency={
+        id="SetFrequency",
+        params={
+          frequency=radio.frequency*1000000,  -- Frequency in Hz.
+          modulation=radio.modulation,
+        }}
+      
+      -- Command to tranmit the call.
+      local commandTransmit={
+        id = "TransmitMessage",
+        params = {
+          file=filename,
+          duration=call.subduration or 5,
+          subtitle=subtitle,
+          loop=false,
+        }}
+      
+      -- Set commend for frequency
+      sender:SetCommand(commandFrequency)
+      
+      -- Set command for radio transmission. 
+      sender:SetCommand(commandTransmit)
+      
+    else
+    
+      -- Broadcasting from carrier. No subtitle possible. Need to send messages to players.
+      self:T(self.lid..string.format("Broadcasting from carrier via trigger.action.radioTransmission()."))
+    
+      -- Transmit from carrier position.
+      local vec3=self.carrier:GetPositionVec3()
+      
+      -- Transmit via trigger.
+      trigger.action.radioTransmission(filename, vec3, radio.modulation, false, radio.frequency*1000000, 100)
+      
+      -- Display subtitle of message to players.
+      for _,_player in pairs(self.players) do
+        local playerData=_player --#AIRBOSS.PlayerData
+        
+        -- Message to all players in CCA that have subtites on.
+        if playerData.unit:IsInZone(self.zoneCCA) and playerData.actype~=AIRBOSS.AircraftCarrier.A4EC then
+        
+          -- Only to players with subtitle on or if noise is played.
+          if playerData.subtitles or self:_NeedsSubtitle(call) then
+           
+            -- Messages to marshal to everyone. Messages on LSO radio only to those in the pattern.
+            if radio.alias=="MARSHAL" or (radio.alias=="LSO" and self:_InQueue(self.Qpattern, playerData.group)) then
+          
+              -- Message to player.
+              self:MessageToPlayer(playerData, subtitle, nil, "", call.subduration or 5)
+            
+            end
+            
+          end
+          
+        end
+      end
+    end
+  end
+  
+  ----------------
+  -- Easy Comms --
+  ----------------
+  
+  -- Workaround for the community A-4E-C as long as their radios are not functioning properly.
+  for _,_player in pairs(self.players) do
+    local playerData=_player --#AIRBOSS.PlayerData
+
+    -- Easy comms if globally activated but definitly for all player in the community A-4E.        
+    if self.usersoundradio or playerData.actype==AIRBOSS.AircraftCarrier.A4EC then
+           
+      -- Messages to marshal to everyone. Messages on LSO radio only to those in the pattern.
+      if radio.alias=="MARSHAL" or (radio.alias=="LSO" and self:_InQueue(self.Qpattern, playerData.group)) then
+  
+        -- User sound to players (inside CCA).
+        self:Sound2Player(playerData, radio, call, loud)
+      end
+
+    end
+  end  
+  
+end
+
+--- Player user sound to player if he is inside the CCA.
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.PlayerData playerData Player data.
+-- @param #AIRBOSS.Radio radio The radio used for transmission.
 -- @param #AIRBOSS.RadioCall call Radio sound files and subtitles.
 -- @param #boolean loud If true, play loud sound file version.
 -- @param #number delay Delay in seconds, before the message is broadcasted.
-function AIRBOSS:RadioTransmit(radio, call, loud, delay)
-  self:F2({radio=radio, call=call, loud=loud, delay=delay})  
+function AIRBOSS:Sound2Player(playerData, radio, call, loud, delay)
 
-  if (delay==nil) or (delay and delay==0) then
+  -- Only to players inside the CCA.
+  if playerData.unit:IsInZone(self.zoneCCA) and call then
 
-    -- Construct file name and subtitle.
-    local filename=call.file
-    local subtitle=call.subtitle
-    if loud then
-      if call.loud then
-        filename=filename.."_Loud"
-      end
-      if subtitle and subtitle~="" then
-        subtitle=subtitle.."!"
-      end
-    else
-      if subtitle and subtitle~="" then
-        subtitle=subtitle.."."
-      end
+    -- Construct file name.
+    local filename=self:_RadioFilename(call, loud)
+    
+    -- Get Subtitle
+    local subtitle=self:_RadioSubtitle(radio, call, loud)
+    
+    -- Play sound file via usersound trigger.
+    USERSOUND:New(filename):ToGroup(playerData.group, delay)
+    
+    -- Only to players with subtitle on or if noise is played.
+    if playerData.subtitles or self:_NeedsSubtitle(call) then
+      self:MessageToPlayer(playerData, subtitle, nil, "", call.subduration or 10, false, delay)
     end
-    filename=filename.."."..(call.suffix or "ogg")
-    
-    -- Output via radio transmision or user sound.
-    if self.usersoundradio then
-    
-      for _,_player in pairs(self.players) do
-        local playerData=_player --#AIRBOSS.PlayerData
-        if playerData.unit:IsInZone(self.zoneCCA) then
-          USERSOUND:New(filename):ToGroup(playerData.group)
-        end
-      end
-
-    else
-      
-      -- New transmission.
-      radio:NewUnitTransmission(filename, call.subtitle, call.duration, radio.Frequency/1000000, radio.Modulation, false)
-      
-      -- Broadcast message.
-      radio:Broadcast(true)
-    
-      -- Workaround for the community A-4E-C as long as their radios are not functioning properly.
-      for _,_player in pairs(self.players) do
-        local playerData=_player --#AIRBOSS.PlayerData
-        if playerData.actype==AIRBOSS.AircraftCarrier.A4EC then
-          USERSOUND:New(filename):ToGroup(playerData.group)
-        end
-      end
-    end
-    
-    -- Message "Subtitle" to all players.
-    for _,_player in pairs(self.players) do
-      local playerData=_player --#AIRBOSS.PlayerData
-      
-      -- Message to all players in CCA that have subtites on.
-      if playerData.unit:IsInZone(self.zoneCCA) and playerData.subtitles then
-        
-        -- Message to player.
-        self:MessageToPlayer(playerData, subtitle, radio:GetAlias(), "", call.duration)
-        
-      end
-    end    
-    
-  else
-  
-    -- Scheduled transmission.
-    SCHEDULER:New(nil, self.RadioTransmit, {self, radio, call, loud}, delay)
     
   end
+end
+
+--- Create radio subtitle from radio call.
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.Radio radio The radio used for transmission.
+-- @param #AIRBOSS.RadioCall call Radio sound files and subtitles.
+-- @param #boolean loud If true, append "!" else ".".
+-- @return #string Subtitle to be displayed.
+function AIRBOSS:_RadioSubtitle(radio, call, loud)
+
+  -- No subtitle if call is nil, or subtitle is nil or subtitle is empty.
+  if call==nil or call.subtitle==nil or call.subtitle=="" then
+    return ""
+  end
+  
+  -- Sender
+  local sender=call.sender or radio.alias
+  if call.modexsender then
+    sender=call.modexsender
+  end
+  
+  -- Modex of receiver.
+  local receiver=call.modexreceiver or ""
+
+  -- Init subtitle.
+  local subtitle=string.format("%s: %s", sender, call.subtitle)
+  if receiver and receiver~="" then
+    subtitle=string.format("%s: %s, %s", sender, receiver, call.subtitle)
+  end
+  
+  -- Last character of the string.
+  local lastchar=string.sub(subtitle, -1)
+  
+  -- Append ! or .
+  if loud then
+    if lastchar=="." or lastchar=="!" then
+      subtitle=string.sub(subtitle, 1,-1)
+    end
+    subtitle=subtitle.."!"
+  else
+    if lastchar=="!" then
+      -- This also okay.
+    elseif lastchar=="." then
+      -- Nothing to do.
+    else
+      subtitle=subtitle.."."
+    end
+  end
+
+  return subtitle  
+end
+
+--- Get full file name for radio call.
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.RadioCall call Radio sound files and subtitles.
+-- @param #boolean loud Use loud version of file if available.
+-- @return #string The file name of the radio sound.
+function AIRBOSS:_RadioFilename(call, loud)
+
+    -- Construct file name and subtitle.
+    local prefix=call.file or ""
+    local suffix=call.suffix or "ogg"
+    local path="l10n/DEFAULT/"
+    
+    -- Loud version.
+    if loud then
+      prefix=prefix.."_Loud"
+    end
+    
+    -- File name inclusing path in miz file.
+    local filename=string.format("%s%s.%s", path, prefix, suffix)
+
+    return filename
 end
 
 --- Send text message to player client.
@@ -10254,23 +10551,17 @@ function AIRBOSS:MessageToPlayer(playerData, message, sender, receiver, duration
       SCHEDULER:New(nil, self.MessageToPlayer, {self, playerData, message, sender, receiver, duration, clear, 0, soundoff}, delay)
     else
     
-      if not soundoff then
+      if receiver==playerData.onboard and not soundoff then
       
-        if receiver=="99" then
+        -- Sound only to player group.
+        if sender and (sender=="LSO" or sender=="MARSHAL" or sender=="AIRBOSS") then
         
-          -- Radio message from LSO or MARSHAL to all.
-          if sender and sender=="LSO" then
-            self:_Number2Radio(self.LSORadio, receiver, delay)
-          elseif sender and (sender=="MARSHAL" or sender=="AIRBOSS") then
-            self:_Number2Radio(self.MarshalRadio, receiver, delay)
-          end
-          
-        elseif receiver==playerData.onboard then
-        
-          -- Sound only to player group.
-          if sender and (sender=="LSO" or sender=="MARSHAL" or sender=="AIRBOSS") then
-            self:_Number2Sound(playerData, sender, receiver, delay)
-          end
+          -- User sound of board number.
+          local wait=self:_Number2Sound(playerData, sender, receiver)
+            
+          -- Play click sound to end message.
+          local filename=self:_RadioFilename(AIRBOSS.MarshalCall.CLICK)
+          USERSOUND:New(filename):ToGroup(playerData.group, wait)
           
         end        
       end
@@ -10295,40 +10586,17 @@ end
 -- @param #number duration Display message duration. Default 10 seconds.
 -- @param #boolean clear If true, clear screen from previous messages.
 -- @param #number delay Delay in seconds, before the message is displayed.
--- @param #boolean soundoff If true, do not play boad number message.
-function AIRBOSS:MessageToPattern(message, sender, receiver, duration, clear, delay, soundoff)
+function AIRBOSS:MessageToPattern(message, sender, receiver, duration, clear, delay)
 
   -- Local delay.
   local _delay=delay or 0
   
-  -- Broadcast onboard number on Marshal frequency if sender.
-  if self:_IsOnboard(sender) then
-    self:_Number2Radio(self.LSORadio, sender, _delay)
-    _delay=_delay+3
-  end
-
-  if self:_IsOnboard(receiver) or receiver=="99" then
-    self:_Number2Radio(self.LSORadio, receiver, _delay)
-  end
+  -- Create new (fake) radio call to show the subtitile.
+  local call=self:_NewRadioCall(AIRBOSS.LSOCall.NOISE, sender or "LSO", message, duration, receiver, sender)
+      
+  -- Dummy radio transmission to display subtitle only to those who tuned in.
+  self:RadioTransmission(self.LSORadio, call, false, delay)
   
-  -- Loop over all flights in the pattern queue.
-  for _,_player in pairs(self.players) do
-    local player=_player --#AIRBOSS.PlayerData
-    
-      
-    -- Only to players inside CCA.
-    if player and player.unit:IsInZone(self.zoneCCA) then
-    
-      -- To all if adressed to 99 or only to flights in the pattern queue.
-      if receiver=="99" or self:_InQueue(self.Qpattern, player.group) then
-      
-        -- Message to player.
-        self:MessageToPlayer(player, message, sender, receiver, duration, clear, delay, true)
-        
-      end
-      
-    end     
-  end
 end
 
 --- Send text message to all players in the marshal queue.
@@ -10345,34 +10613,66 @@ function AIRBOSS:MessageToMarshal(message, sender, receiver, duration, clear, de
   -- Local delay.
   local _delay=delay or 0
   
-  -- Broadcast onboard number on Marshal frequency if sender is onboard.
-  if self:_IsOnboard(sender) then
-    self:_Number2Radio(self.MarshalRadio, sender, _delay)
-    _delay=_delay+3
-  end
+  -- Create new (fake) radio call to show the subtitile.
+  local call=self:_NewRadioCall(AIRBOSS.MarshalCall.NOISE, sender or "MARSHAL", message, duration, receiver, sender)
+      
+  -- Dummy radio transmission to display subtitle only to those who tuned in.
+  self:RadioTransmission(self.MarshalRadio, call, false, delay)  
 
-  -- Broadcast onboard number on Marshal frequency if receiver is onboard.
-  if self:_IsOnboard(receiver) or receiver=="99" then
-    self:_Number2Radio(self.MarshalRadio, receiver, _delay)
+end
+
+--- Generate a new radio call (deepcopy) from an existing default call. P
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.RadioCall call Radio call to be enhanced.
+-- @param #string sender Sender of the message. Default is the radio alias.
+-- @param #string subtitle Subtitle of the message. Default from original radio call. Use "" for no subtitle.
+-- @param #number subduration Time in seconds the subtitle is displayed. Default 10 seconds.
+-- @param #string modexreceiver Onboard number of the receiver or nil.
+-- @param #string modexsender Onboard number of the sender or nil.
+function AIRBOSS:_NewRadioCall(call, sender, subtitle, subduration, modexreceiver, modexsender)
+
+  -- Create a new call
+  local newcall=UTILS.DeepCopy(call) --#AIRBOSS.RadioCall
+  
+  -- Sender for displaying the subtitle.
+  newcall.sender=sender
+  
+  -- Subtitle of the message.
+  newcall.subtitle=subtitle or call.subtitle
+  
+  -- Duration of subtitle display.
+  newcall.subduration=subduration or 10
+  
+  -- Tail number of the receiver.
+  if self:_IsOnboard(modexreceiver) then
+    newcall.modexreceiver=modexreceiver
   end
- 
-  -- Loop over all flights in the marshal queue.
-  for _,_player in pairs(self.players) do
-    local player=_player --#AIRBOSS.PlayerData
-    
-    -- Only to players inside CCA.
-    if player and player.unit:IsInZone(self.zoneCCA) then
-    
-      -- To all if adressed to 99 or only to flights in the Marshal or Waiting queue.
-      --if receiver=="99" or self:_InQueue(self.Qmarshal, player.group) or self:_InQueue(self.Qwaiting, player.group) then
-      
-        -- Message to player.
-        self:MessageToPlayer(player, message, sender, receiver, duration, clear, delay, true)
-      
-      --end
-      
-    end
+  
+  -- Tail number of the sender.
+  if self:_IsOnboard(modexsender) then
+    newcall.modexsender=modexsender
   end
+  
+  return newcall
+end
+
+--- Get unit from which we want to transmit a radio message. This has to be an aircraft for subtitles to work.
+-- @param #AIRBOSS self
+-- @return Wrapper.Unit#UNIT Sending aircraft unit or nil if was not setup, is not an aircraft or is not alive.
+function AIRBOSS:_GetRadioSender()
+
+  -- Check if we have a sending aircraft.
+  local sender=nil  --Wrapper.Unit#UNIT
+  if self.senderac then
+    sender=UNIT:FindByName(self.senderac)
+  end
+  
+  -- Check that sender is alive and an aircraft.
+  if sender and sender:IsAlive() and sender:IsAir() then
+    return sender
+  end
+  
+  return nil
 end
 
 --- Check if text is an onboard number of a flight.
@@ -10384,6 +10684,11 @@ function AIRBOSS:_IsOnboard(text)
   -- Nil check.
   if text==nil then
     return false
+  end
+  
+  -- Message to all.
+  if text=="99" then
+    return true
   end
 
   -- Loop over all flights.
@@ -10408,7 +10713,11 @@ end
 -- @param #string sender Who is sending the call, either "LSO" or "MARSHAL".
 -- @param #string number Number string, e.g. "032" or "183".
 -- @param #number delay Delay before transmission in seconds.
+-- @return #number Duration of the call in seconds.
 function AIRBOSS:_Number2Sound(playerData, sender, number, delay)
+
+  -- Default.
+  delay=delay or 0
 
   --- Split string into characters.
   local function _split(str)
@@ -10420,55 +10729,52 @@ function AIRBOSS:_Number2Sound(playerData, sender, number, delay)
     return chars
   end
 
-  if delay and delay>0 then
-    -- Delayed call.
-    SCHEDULER:New(nil, AIRBOSS._Number2Sound, {self, playerData, sender, number}, delay)
+  -- Sender    
+  local Sender
+  if sender=="LSO" then
+    Sender="LSOCall"
+  elseif sender=="MARSHAL" or sender=="AIRBOSS" then
+    Sender="MarshalCall"
   else
-  
-    -- Split string into characters.
-    local numbers=_split(number)
-    
-    local Sender
-    if sender=="LSO" then
-      Sender="LSOCall"
-    elseif sender=="MARSHAL" or sender=="AIRBOSS" then
-      Sender="MarshalCall"
-    else
-      self:E(self.lid..string.format("ERROR: Unknown radio sender %s!", tostring(sender)))
-      return
-    end    
-
-    local wait=0    
-    for i=1,#numbers do
-    
-      -- Current number
-      local n=numbers[i]
-      
-      -- Convert to N0, N1, ...
-      local N=string.format("N%s", n)
-      
-      -- Radio call.
-      local call=AIRBOSS[Sender][N] --#AIRBOSS.RadioCall
-      
-      -- Create file name.
-      local filename=string.format("%s.%s", call.file, call.suffix)
-      
-      -- Play sound.
-      USERSOUND:New(filename):ToGroup(playerData.group, wait)
-      
-      -- Wait until this call is over before playing the next.
-      wait=wait+call.duration     
-    end
-    
+    self:E(self.lid..string.format("ERROR: Unknown radio sender %s!", tostring(sender)))
+    return
   end
+  
+  -- Split string into characters.
+  local numbers=_split(number)
+
+  local wait=0    
+  for i=1,#numbers do
+  
+    -- Current number
+    local n=numbers[i]
+    
+    -- Convert to N0, N1, ...
+    local N=string.format("N%s", n)
+    
+    -- Radio call.
+    local call=AIRBOSS[Sender][N] --#AIRBOSS.RadioCall
+    
+    -- Create file name.
+    local filename=string.format("%s.%s", call.file, call.suffix)
+    
+    -- Play sound.
+    USERSOUND:New(filename):ToGroup(playerData.group, delay+wait)
+    
+    -- Wait until this call is over before playing the next.
+    wait=wait+call.duration
+  end
+  
+  return wait
 end
 
 --- Convert a number (as string) into a radio message.
 -- E.g. for board number or headings.
 -- @param #AIRBOSS self
--- @param Core.Radio#RADIO radio Radio used for transmission.
+-- @param #AIRBOSS.Radio radio Radio used for transmission.
 -- @param #string number Number string, e.g. "032" or "183".
 -- @param #number delay Delay before transmission in seconds.
+-- @return #number Duration of the call in seconds.
 function AIRBOSS:_Number2Radio(radio, number, delay)
 
   --- Split string into characters.
@@ -10481,51 +10787,40 @@ function AIRBOSS:_Number2Radio(radio, number, delay)
     return chars
   end
   
-  -- Get radio alias.
-  local alias=radio:GetAlias()
-  
-  local sender=""
-  if alias=="LSO" then
-    sender="LSOCall"
-  elseif alias=="MARSHAL" then
-    sender="MarshalCall"
+  -- Sender.
+  local Sender=""
+  if radio.alias=="LSO" then
+    Sender="LSOCall"
+  elseif radio.alias=="MARSHAL" then
+    Sender="MarshalCall"
   else
-    self:E(self.lid.."ERROR: Unknown radio alias!")
+    self:E(self.lid..string.format("ERROR: Unknown radio alias %s!", tostring(radio.alias)))
   end
   
   -- Split string into characters.
   local numbers=_split(number)
-  
+
+  local wait=0    
   for i=1,#numbers do
   
     -- Current number
     local n=numbers[i]
     
-    if n=="0" then
-      self:RadioTransmission(radio, AIRBOSS[sender].N0, false, delay)
-    elseif n=="1" then
-      self:RadioTransmission(radio, AIRBOSS[sender].N1, false, delay)
-    elseif n=="2" then
-      self:RadioTransmission(radio, AIRBOSS[sender].N2, false, delay)
-    elseif n=="3" then
-      self:RadioTransmission(radio, AIRBOSS[sender].N3, false, delay)
-    elseif n=="4" then
-      self:RadioTransmission(radio, AIRBOSS[sender].N4, false, delay)
-    elseif n=="5" then
-      self:RadioTransmission(radio, AIRBOSS[sender].N5, false, delay)
-    elseif n=="6" then
-      self:RadioTransmission(radio, AIRBOSS[sender].N6, false, delay)
-    elseif n=="7" then
-      self:RadioTransmission(radio, AIRBOSS[sender].N7, false, delay)    
-    elseif n=="8" then
-      self:RadioTransmission(radio, AIRBOSS[sender].N8, false, delay)    
-    elseif n=="9" then
-      self:RadioTransmission(radio, AIRBOSS[sender].N9, false, delay)
-    else
-      self:E(self.lid..string.format("ERROR: Unknown number %s!", tostring(n)))
-    end
+    -- Convert to N0, N1, ...
+    local N=string.format("N%s", n)
+    
+    -- Radio call.
+    local call=AIRBOSS[Sender][N] --#AIRBOSS.RadioCall
+    
+    -- Transmit.
+    self:RadioTransmission(radio, call, false, delay)
+    
+    -- Add up duration of the number.
+    wait=wait+call.duration    
   end
-
+  
+  -- Return the total duration of the call.
+  return wait
 end
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -10761,6 +11056,7 @@ function AIRBOSS:_RequestCommence(_unitName)
     
       -- Check if unit is in CCA.
       local text=""
+      local cleared=false
       if _unit:IsInZone(self.zoneCCA) then
       
         -- Get stack value.
@@ -10849,9 +11145,8 @@ function AIRBOSS:_RequestCommence(_unitName)
             table.insert(self.Qpattern, playerData)
           end          
           
-          -- Call commence routine. No zone check.
-          -- NOTE: Commencing will set step for all section members as well.
-          self:_Commencing(playerData, false)                    
+          -- Clear player for commence.
+          cleared=true                              
         end
         
       else
@@ -10864,6 +11159,13 @@ function AIRBOSS:_RequestCommence(_unitName)
       
       -- Send message.
       self:MessageToPlayer(playerData, text, "MARSHAL")
+      
+      -- Check if player was cleard. Need to do this after the message above is displayed.
+      if cleared then
+        -- Call commence routine. No zone check.
+        -- NOTE: Commencing will set step for all section members as well.      
+        self:_Commencing(playerData, false)
+      end
     end
   end
 end
@@ -11458,7 +11760,7 @@ function AIRBOSS:_DisplayCarrierInfo(_unitname)
         text=text..string.format("Case %d recovery ops\n", self.case)
       else
         local radial=self:GetRadial(self.case, true, true, true)      
-        text=text..string.format("Case %d recovery ops\nMarshal radial %03d°)\n", self.case, radial)
+        text=text..string.format("Case %d recovery ops\nMarshal radial %03d°\n", self.case, radial)
       end
       text=text..string.format("BRC %03d°\n", self:GetBRC())
       text=text..string.format("FB %03d°\n", self:GetFinalBearing(true))           
@@ -11517,18 +11819,6 @@ function AIRBOSS:_DisplayCarrierWeather(_unitname)
     
     local WD=string.format('%03d°', Wd)
     local Ts=string.format("%d°C",T)
-    
-    --[[
-    local settings=_DATABASE:GetPlayerSettings(playername) or _SETTINGS --Core.Settings#SETTINGS
-    local tT=string.format("%d°C",T)
-    local tW=string.format("%.1f m/s", Ws)
-    local tP=string.format("%.1f mmHg", UTILS.hPa2mmHg(P))
-    if settings:IsImperial() then
-      tT=string.format("%d°F", UTILS.CelciusToFarenheit(T))
-      tW=string.format("%.1f knots", UTILS.MpsToKnots(Ws))
-      tP=string.format("%.2f inHg", UTILS.hPa2inHg(P))      
-    end
-    ]]
     
     local tT=string.format("%d°C",T)
     local tW=string.format("%.1f knots", UTILS.MpsToKnots(Ws))
@@ -11796,16 +12086,16 @@ function AIRBOSS:_MarkMarshalZone(_unitName, flare)
           zoneHolding:FlareZone(FLARECOLOR.White, 45, nil, patternalt)
           
           if playerData.case==1 then
-            text=text.."\nMarking Commence zone with GREEN flares."
-            zoneThree:FlareZone(FLARECOLOR.Green, 45, nil, patternalt)
+            text=text.."\nMarking Commence zone with RED flares."
+            zoneThree:FlareZone(FLARECOLOR.Red, 45, nil, patternalt)
           end          
         else
           text="Marking Marshal zone with WHITE smoke."
           zoneHolding:SmokeZone(SMOKECOLOR.White, 45, patternalt)
           
           if playerData.case==1 then
-            text=text.."\nMarking Commence zone with GREEN smoke."
-            zoneThree:SmokeZone(SMOKECOLOR.Green, 45, patternalt)
+            text=text.."\nMarking Commence zone with RED smoke."
+            zoneThree:SmokeZone(SMOKECOLOR.Red, 45, patternalt)
           end                    
         end
         
@@ -11857,8 +12147,8 @@ function AIRBOSS:_MarkCaseZones(_unitName, flare)
       
         -- Case II/III: approach corridor
         if case==2 or case==3 then
-          text=text.."* approach corridor with YELLOW flares\n"
-          self:_GetZoneCorridor(case):FlareZone(FLARECOLOR.Yellow, 45)
+          text=text.."* approach corridor with GREEN flares\n"
+          self:_GetZoneCorridor(case):FlareZone(FLARECOLOR.Green, 45)
         end
         
         -- Case II/III: platform
@@ -11903,8 +12193,8 @@ function AIRBOSS:_MarkCaseZones(_unitName, flare)
         
         -- Case II/III: Approach Corridor
         if case==2 or case==3 then
-          text=text.."* approach corridor with ORANGE smoke\n"
-          self:_GetZoneCorridor(case):SmokeZone(SMOKECOLOR.Orange, 45)
+          text=text.."* approach corridor with GREEN smoke\n"
+          self:_GetZoneCorridor(case):SmokeZone(SMOKECOLOR.Green, 45)
         end
 
         -- Case II/III: platform

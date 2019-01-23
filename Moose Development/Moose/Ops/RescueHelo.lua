@@ -651,6 +651,17 @@ function RESCUEHELO:GetAlias()
   return self.alias
 end
 
+--- Get unit name of the spawned helo.
+-- @param #RESCUEHELO self
+-- @return #string Name of the helo unit or nil if it does not exist. 
+function RESCUEHELO:GetUnitName()
+  local unit=self.helo:GetUnit(1)
+  if unit then
+    return unit:GetName()
+  end
+  return nil
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- EVENT functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -909,7 +920,7 @@ function RESCUEHELO:onafterStatus(From, Event, To)
     -- Report current fuel.
     local text=string.format("Rescue Helo %s: state=%s fuel=%.1f", self.helo:GetName(), self:GetState(), fuel)
     MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
-    self:E(self.lid..text)  
+    self:T(self.lid..text)  
   
     if self:IsRunning() then
     

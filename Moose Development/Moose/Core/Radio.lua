@@ -461,13 +461,13 @@ BEACON.Type={
   ICLS = 131584,
 }
 
---- Beacon systems supported by DCS. 
+--- Beacon systems supported by DCS. https://wiki.hoggitworld.com/view/DCS_command_activateBeacon
 -- @type BEACON.System
 -- @field #number PAR_10
 -- @field #number RSBN_5
 -- @field #number TACAN
 -- @field #number TACAN_TANKER
--- @field #number ILS_LOCALIZER
+-- @field #number ILS_LOCALIZER (This is the one to be used for AA TACAN Tanker!)
 -- @field #number ILS_GLIDESLOPE
 -- @field #number BROADCAST_STATION
 BEACON.System={
@@ -539,7 +539,7 @@ function BEACON:ActivateTACAN(Channel, Mode, Message, Bearing, Duration)
   -- Check if unit is an aircraft and set system accordingly.
   local AA=self.Positionable:IsAir()
   if AA then
-    System=BEACON.System.TACAN_TANKER
+    System=5 --NOTE: 5 is how you cat the correct tanker behaviour! --BEACON.System.TACAN_TANKER
     -- Check if "Y" mode is selected for aircraft.
     if Mode~="Y" then
       self:E({"WARNING: The POSITIONABLE you want to attach the AA Tacan Beacon is an aircraft: Mode should Y !The BEACON is not emitting.", self.Positionable})
