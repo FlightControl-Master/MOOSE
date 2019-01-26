@@ -9,6 +9,7 @@
 --    * Automatic LSO grading including (optional) live grading while in the groove.
 --    * Different skill levels from on-the-fly tips for flight students to *ziplip* for pros. Can be set for each player individually.
 --    * Define recovery time windows with individual recovery cases in the same mission.
+--    * Option to let the carrier steam into the wind automatically.
 --    * Automatic TACAN and ICLS channel setting of carrier.
 --    * Separate radio channels for LSO and Marshal transmissions.
 --    * Voice over support for LSO and Marshal radio transmissions.
@@ -43,6 +44,13 @@
 --
 -- **PLEASE NOTE** that his class is work in progress and in an early **alpha** stage. Many/most things work already very nicely but there a lot of cases I did not run into yet.
 --  Therefore, your *constructive* feedback is both necessary and appreciated!
+--  
+-- ## IMPORTANT
+-- 
+-- Due to technical restrictions of DCS make sure you have:
+-- 
+--    * Each player slot in a separate group. DCS does only allow to send messages to groups and not to individual units.
+--    * Players are identified by their player name. Ensure that no two player have the same name, e.g. "New Callsign", as this will lead to unexpected results.
 -- 
 -- ### Open Questions?
 -- 
@@ -149,6 +157,12 @@
 -- @field #number windowcount Running number counting the recovery windows.
 -- @field #number LSOdT Time interval in seconds before the LSO will make its next call.
 -- @field #string senderac Name of the aircraft acting as sender for broadcasting radio messages from the carrier. DCS shortcoming workaround.
+-- @field #boolean turnintowind If true, carrier is currently turning into the wind.
+-- @field #boolean detour If true, carrier is currently making a detour from its path along the ME waypoints.
+-- @field Core.Point#COORDINATE Creturnto Position to return to after turn into the wind leg is over.
+-- @field Core.Set#SET_GROUP squadsetAI AI groups in this set will be handled by the airboss.
+-- @field #boolean menusingle If true, menu is optimized for a single carrier.
+-- @field #number collisiondist Distance up to which collision checks are done.
 -- @extends Core.Fsm#FSM
 
 --- Be the boss!
@@ -231,6 +245,10 @@
 -- 
 -- The F10 radio menu can be used to post requests to Marshal but also provides information about the player and carrier status. Additionally, helper functions
 -- can be called.
+-- 
+-- By default, the script creates a submenu "Airboss" in the "F10 Other ..." menu and each @{#AIRBOSS} carrier gets its own submenu.
+-- If you intend to have only one carrier, you can simplify the menu structure using the @{#AIRBOSS.SetMenuSingleCarrier} function, which will create all carrier specific menu entries directly
+-- in the "Airboss" submenu. (Needless to say, that if you enable this and define mulitiple carriers, the menu structure will get completely screwed up.)
 -- 
 -- ## Root Menu
 -- 
@@ -561,6 +579,20 @@
 --       AddRecoveryWindow(string.format("08:05:00+%d", i), string.format("08:50:00+%d", i))
 --     end
 -- 
+-- ### Turning into the Wind
+-- 
+-- For each recovery window, you can define if the carrier should automatically turn into the wind. This is done by passing one or two additional arguments to the @{#AIRBOSS.AddRecoveryWindow} function:
+-- 
+--     airbossStennis:AddRecoveryWindow("8:30", "9:30", 1, nil, true, 20)
+-- 
+-- Setting the fifth parameter to *true* enables the automatic turning into the wind. The sixth parameter (here 20) specifies the speed in knots the carrier will go.
+-- The carrier will steam into the wind for as long as the recovery window is open. The distance up to which possible collisions are detected can be set by the @{#AIRBOSS.SetCollisionDistance} function.
+-- 
+-- However, the airboss scans the type of the surface up to 5 NM in the direction of movement of the carrier. If he detects anything but deep water, he will stop the current course and head back to
+-- the point where he initially turned into the wind.
+-- 
+-- The same holds true after the recovery window closes. The carrier will head back to the place where he left its assigned route and resume the path to the next waypoint defined in the mission editor.
+-- 
 -- ===
 -- 
 -- # Persistence of Player Results
@@ -818,6 +850,11 @@ AIRBOSS = {
   windowcount    = 0,
   LSOdT          = nil,
   senderac       = nil,
+  turnintowind   = nil,
+  detour         = nil,
+  squadsetAI     = nil,
+  menusingle     = nil,
+  collisiondist  = nil,
 }
 
 --- Player aircraft types capable of landing on carriers.
@@ -1388,6 +1425,8 @@ AIRBOSS.Difficulty={
 -- @field #number OFFSET Angle offset of the holding pattern in degrees. Usually 0, +-15, or +-30 degrees.
 -- @field #boolean OPEN Recovery window is currently open.
 -- @field #boolean OVER Recovery window is over and closed.
+-- @field #boolean WIND Carrier will turn into the wind.
+-- @field #number SPEED The speed in knots the carrier has during the recovery.
 -- @field #number ID Recovery window ID.
 
 --- Groove data.
@@ -1487,7 +1526,7 @@ AIRBOSS.MenuF10={}
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.9.1"
+AIRBOSS.version="0.9.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1661,7 +1700,10 @@ function AIRBOSS:New(carriername, alias)
   
   -- Carrier patrols its waypoints until the end of time.
   self:SetPatrolAdInfinitum(true)
-
+  
+  -- Collision check distance. Default 5 NM.
+  self:SetCollisionDistance()
+  
   -- Set update time intervals.
   self:SetQueueUpdateTime()
   self:SetStatusUpdateTime()
@@ -1669,6 +1711,7 @@ function AIRBOSS:New(carriername, alias)
   -- Menu options.
   self:SetMenuMarkZones()
   self:SetMenuSmokeZones()
+  self:SetMenuSingleCarrier(false)
   
   -- Init carrier parameters.
   if self.carriertype==AIRBOSS.CarrierType.STENNIS then
@@ -1693,7 +1736,7 @@ function AIRBOSS:New(carriername, alias)
   
   -- Debug trace.
   if false then
-    self.Debug=false
+    self.Debug=true
     BASE:TraceOnOff(true)
     BASE:TraceClass(self.ClassName)
     BASE:TraceLevel(1)
@@ -2008,6 +2051,15 @@ function AIRBOSS:SetCarrierControlledZone(radius)
   return self
 end
 
+--- Set distance up to which water ahead is scanned for collisions.
+-- @param #AIRBOSS self
+-- @param #number dist Distance in NM. Default 5 NM.
+-- @return #AIRBOSS self
+function AIRBOSS:SetCollisionDistance(distance)
+  self.collisiondist=UTILS.NMToMeters(distance or 5)
+  return self
+end
+
 --- Set the default recovery case.
 -- @param #AIRBOSS self
 -- @param #number case Case of recovery. Either 1, 2 or 3. Default 1.
@@ -2046,8 +2098,10 @@ end
 -- @param #string stoptime Stop time, e.g. "9:00" for nine o'clock. Default 90 minutes after start time.
 -- @param #number case Recovery case for that time slot. Number between one and three.
 -- @param #number holdingoffset Only for CASE II/III: Angle in degrees the holding pattern is offset.
+-- @param #boolean turnintowind If true, carrier will turn into the wind 5 minutes before the recovery window opens.
+-- @param #number speed Speed in knots during turn into wind leg.
 -- @return #AIRBOSS.Recovery Recovery window.
-function AIRBOSS:AddRecoveryWindow(starttime, stoptime, case, holdingoffset)
+function AIRBOSS:AddRecoveryWindow(starttime, stoptime, case, holdingoffset, turnintowind, speed)
 
   -- Absolute mission time in seconds.
   local Tnow=timer.getAbsTime()
@@ -2093,12 +2147,23 @@ function AIRBOSS:AddRecoveryWindow(starttime, stoptime, case, holdingoffset)
   recovery.OFFSET=holdingoffset
   recovery.OPEN=false
   recovery.OVER=false
+  recovery.WIND=turnintowind
+  recovery.SPEED=speed or 20
   recovery.ID=self.windowcount
   
   -- Add to table
   table.insert(self.recoverytimes, recovery)
   
   return recovery
+end
+
+--- Define a set of AI groups that are handled by the airboss.
+-- @param #AIRBOSS self
+-- @param Core.Set#SET_GROUP setgroup The set of AI groups which are handled by the airboss. 
+-- @return #AIRBOSS self
+function AIRBOSS:SetSquadronAI(setgroup)
+  self.squadsetAI=setgroup
+  return self
 end
 
 --- Close currently running recovery window and stop recovery ops. Recovery window is deleted.
@@ -2166,7 +2231,6 @@ function AIRBOSS:DeleteRecoveryWindow(window, delay)
         if window.OPEN then
           -- Window is currently open.
           self:RecoveryStop()
-          --self:CloseCurrentRecoveryWindow()
         else
           table.remove(self.recoverytimes, i)
         end
@@ -2223,6 +2287,20 @@ end
 -- @return #AIRBOSS self
 function AIRBOSS:SetMarshalRadius(radius)
   self.marshalradius=UTILS.NMToMeters(radius or 2.75)
+  return self
+end
+
+--- Optimized F10 radio menu for a single carrier. The menu entries will be stored directly under F10 Other/Airboss/ and not F10 Other/Airboss/"Carrier Alias"/.
+-- **WARNING**: If you use this with two airboss objects/carriers, the radio menu will be screwed up!
+-- @param #AIRBOSS self
+-- @param #boolean switch If true or nil single menu is enabled. If false, menu is for multiple carriers in the mission.
+-- @return #AIRBOSS self
+function AIRBOSS:SetMenuSingleCarrier(switch)
+  if switch==true or switch==nil then
+    self.menusingle=true
+  else
+    self.menusingle=false
+  end
   return self
 end
 
@@ -2647,11 +2725,45 @@ function AIRBOSS:onafterStatus(From, Event, To)
   
     -- Get time.
     local clock=UTILS.SecondsToClock(timer.getAbsTime())
+    local eta=UTILS.SecondsToClock(self:_GetETAatNextWP())
+    
+    -- Current heading and position of the carrier.
+    local hdg=self:GetHeading()
+    local pos=self:GetCoordinate()
+    
+    -- Check water is ahead.
+    local collision=self:_CheckCollisionCoord(pos:Translate(self.collisiondist, hdg))
 
     -- Debug info.
-    local text=string.format("Time %s - Status %s (case=%d) - Speed=%.1f kts - Heading=%d - WP=%d - ETA=%s",
-    clock, self:GetState(), self.case, self.carrier:GetVelocityKNOTS(), self:GetHeading(), self.currentwp, UTILS.SecondsToClock(self:_GetETAatNextWP()))
+    local text=string.format("Time %s - Status %s (case=%d) - Speed=%.1f kts - Heading=%d - WP=%d - ETA=%s - Collision Warning=%s",
+    clock, self:GetState(), self.case, self.carrier:GetVelocityKNOTS(), hdg, self.currentwp, eta, tostring(collision))
     self:T(self.lid..text)
+    
+    -- Check for collision.
+    if collision then
+    
+      -- We are currently turning into the wind.
+      if self.turnintowind then
+
+        -- Carrier resumes its initial route. This disables turnintowind switch.
+        self:CarrierResumeRoute(self.Creturnto)
+      
+        -- Since current window would stay open, we disable the WIND switch. 
+        if self:IsRecovering() and self.recoverywindow and self.recoverywindow.WIND then          
+          -- Disable turn into the wind for this window so that we do not do this all over again.
+          self.recoverywindow.WIND=false
+        end
+        
+      else
+      
+        -- Find path around the obstacle.
+        if not self.detour then
+          --self:_Pathfinder()
+        end
+      
+      end
+    end
+    
     
     -- Check recovery times and start/stop recovery mode if necessary.
     self:_CheckRecoveryTimes()
@@ -2939,7 +3051,28 @@ function AIRBOSS:_CheckRecoveryTimes()
     if nextwindow then
       -- Set case and offset of the next window.
       self:RecoveryCase(nextwindow.CASE, nextwindow.OFFSET)
+      
+      -- Check if time is less than 5 minutes.
+      if nextwindow.WIND and nextwindow.START-time<5*60 and not self.turnintowind then
+      
+        -- Calculate distance we travel into the wind.
+        local t=nextwindow.STOP-nextwindow.START
+        local v=UTILS.KnotsToMps(nextwindow.SPEED)
+        local s=v*t
+        
+        -- Distance in NM to go + 1 NM safety. 
+        local d=UTILS.MetersToNM(s)+1
+        
+        -- Route carrier into the wind. Sets self.turnintowind=true
+        self:CarrierTurnIntoWind(d, nextwindow.SPEED)
+        
+        -- Set wind switch to false.
+        --nextwindow.WIND=false
+      end
+      
+      -- Set current recovery window.
       self.recoverywindow=nextwindow
+            
     else
       -- No next window. Set default values.
       self:RecoveryCase()
@@ -3104,7 +3237,12 @@ function AIRBOSS:onafterRecoveryStop(From, Event, To)
   local text=string.format("Case %d recovery ops are stopped.", self.case)
 
   -- Message to Marshal.
-  self:MessageToMarshal(text, "AIRBOSS", "99")  
+  self:MessageToMarshal(text, "AIRBOSS", "99")
+  
+  -- If carrier is currently heading into the wind, we resume the original route.
+  if self.turnintowind then
+    self:CarrierResumeRoute(self.Creturnto)
+  end
   
   -- Check recovery windows. This sets self.recoverywindow to the next window.
   self:_CheckRecoveryTimes()
@@ -3179,147 +3317,6 @@ end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Parameter initialization
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
---- Function called when a group is passing a waypoint.
---@param Wrapper.Group#GROUP group Group that passed the waypoint
---@param #AIRBOSS airboss Airboss object.
---@param #number i Waypoint number that has been reached.
---@param #number final Final waypoint number.
-function AIRBOSS._PassingWaypoint(group, airboss, i, final)
-
-  -- Debug message.
-  local text=string.format("Group %s passing waypoint %d of %d.", group:GetName(), i, final)
-  
-  -- Debug smoke and marker.
-  if airboss.Debug and false then
-    local pos=group:GetCoordinate()
-    pos:SmokeRed()
-    local MarkerID=pos:MarkToAll(string.format("Group %s reached waypoint %d", group:GetName(), i))
-  end
-  
-  -- Debug message.
-  MESSAGE:New(text,10):ToAllIf(airboss.Debug)
-  airboss:T(airboss.lid..text)
-  
-  -- Set current waypoint.
-  airboss.currentwp=i
-  
-  -- If final waypoint reached, do route all over again.
-  if i==final and final>1 and airboss.adinfinitum then
-    airboss:_PatrolRoute()
-  end
-end
-
---- Function called when a group has reached the holding zone.
---@param Wrapper.Group#GROUP group Group that reached the holding zone.
---@param #AIRBOSS airboss Airboss object.
---@param #AIRBOSS.FlightGroup flight Flight group that has reached the holding zone.
-function AIRBOSS._ReachedHoldingZone(group, airboss, flight)
-
-  -- Debug message.
-  local text=string.format("Flight %s reached holding zone.", group:GetName())
-  MESSAGE:New(text,10):ToAllIf(airboss.Debug)
-  airboss:T(airboss.lid..text)
- 
-  -- Debug mark.
-  if airboss.Debug then
-    group:GetCoordinate():MarkToAll(text)
-  end
-  
-  -- Set holding flag true and set timestamp for marshal time check.
-  if flight then
-    flight.holding=true
-    flight.time=timer.getAbsTime()
-  end
-end
-
-
---- Patrol carrier
--- @param #AIRBOSS self
--- @return #AIRBOSS self
-function AIRBOSS:_PatrolRoute()
-
-  -- Get carrier group.
-  local CarrierGroup=self.carrier:GetGroup()
-  
-  -- Waypoints of group.
-  local Waypoints = CarrierGroup:GetTemplateRoutePoints()
-  
-  -- NOTE: This is only necessary, if the first waypoint would already be far way, i.e. when the script is started with a large delay.
-  -- Calculate the new Route.
-  --local wp0=CarrierGroup:GetCoordinate():WaypointGround(5.5*3.6) 
-  -- Insert current coordinate as first waypoint
-  --table.insert(Waypoints, 1, wp0)
-  
-  for n=1,#Waypoints do
-  
-    -- Passing waypoint taskfunction
-    local TaskPassingWP=CarrierGroup:TaskFunction("AIRBOSS._PassingWaypoint", self, n, #Waypoints)
-    
-    -- Call task function when carrier arrives at waypoint.
-    CarrierGroup:SetTaskWaypoint(Waypoints[n], TaskPassingWP)
-  end
-
-  -- Set waypoint table.
-  local i=1
-  for _,point in ipairs(Waypoints) do
-  
-    -- Coordinate of the waypoint
-    local coord=COORDINATE:New(point.x, point.alt, point.y)
-    
-    -- Set velocity of the coordinate.
-    coord:SetVelocity(point.speed)
-    
-    -- Add to table.
-    table.insert(self.waypoints, coord)
-    
-    -- Debug info.
-    if self.Debug then
-      coord:MarkToAll(string.format("Carrier Waypoint %d, Speed=%.1f knots", i, UTILS.MpsToKnots(point.speed)))
-    end
-    
-    -- Increase counter.
-    i=i+1  
-  end
-  
-  -- Current waypoint is 1.
-  self.currentwp=1
-
-  -- Route carrier group.
-  CarrierGroup:Route(Waypoints)
-end
-
---- Estimated the carrier position at some point in the future given the current waypoints and speeds.
--- @param #AIRBOSS self
--- @return DCS#time ETA abs. time in seconds.
-function AIRBOSS:_GetETAatNextWP()
-
-  -- Current waypoint
-  local cwp=self.currentwp
-  
-  -- Current abs. time.
-  local tnow=timer.getAbsTime()
-
-  -- Current position.
-  local p=self:GetCoordinate()
-  
-  -- Current velocity [m/s].
-  local v=self.carrier:GetVelocityMPS()
-  
-  -- Distance to next waypoint.
-  local s=0
-  if #self.waypoints>cwp then
-    s=p:Get2DDistance(self.waypoints[cwp+1])
-  end
-  
-  -- v=s/t <==> t=s/v
-  local t=s/v
-  
-  -- ETA
-  local eta=t+tnow
-  
-  return eta
-end
 
 --- Init parameters for USS Stennis carrier.
 -- @param #AIRBOSS self
@@ -4037,6 +4034,17 @@ function AIRBOSS:_ScanCarrierZone()
       -- Check if flight is AI and if we want to handle it at all.
       if knownflight.ai and self.handleai then
       
+        -- Check if AI group is part of the group set if a set was defined.
+        local iscarriersquad=true
+        if self.squadsetAI then
+          local group=self.squadsetAI:FindGroup(groupname)
+          if group then
+            iscarriersquad=true
+          else
+            iscarriersquad=false
+          end
+        end
+      
         -- Get distance to carrier.
         local dist=knownflight.group:GetCoordinate():Get2DDistance(self:GetCoordinate())
         
@@ -4047,7 +4055,7 @@ function AIRBOSS:_ScanCarrierZone()
         self:T3(self.lid..string.format("Known AI flight group %s closed in by %.1f NM", knownflight.groupname, UTILS.MetersToNM(closein)))
         
         -- Send AI flight to marshal stack if group closes in more than 5 and has initial flag value.
-        if closein>UTILS.NMToMeters(5) and knownflight.flag:Get()==-100 then
+        if closein>UTILS.NMToMeters(5) and knownflight.flag:Get()==-100 and iscarriersquad then
         
           -- Check that we do not add a recovery tanker for marshaling.
           if self.tanker and self.tanker.tanker:GetName()==groupname then
@@ -4642,7 +4650,14 @@ function AIRBOSS:_AddMarshalGroup(flight, stack)
 
   -- Stack altitude.  
   local alt=UTILS.MetersToFeet(self:_GetMarshalAltitude(stack, flight.case))
+  
+  -- Current BRC.
   local brc=self:GetBRC()
+  
+  -- If the carrier is supposed to turn into the wind, we take the wind coordinate.
+  if self.recoverywindow and self.recoverywindow.WIND then
+    brc=self:GetBRCintoWind()
+  end
   
   -- Get charlie time estimate.
   flight.Tcharlie=self:_GetCharlieTime(flight)
@@ -4651,7 +4666,7 @@ function AIRBOSS:_AddMarshalGroup(flight, stack)
   local Ccharlie=UTILS.SecondsToClock(flight.Tcharlie)
   
   -- Marshal message.
-  local text=string.format("Case %d, BRC is %03d°, hold at %d. Expected Charlie Time %s.\n", flight.case, brc, alt, tostring(Ccharlie))
+  local text=string.format("Case %d, expected BRC %03d°, hold at %d. Expected Charlie Time %s.\n", flight.case, brc, alt, tostring(Ccharlie))
   text=text..string.format("Altimeter %.2f. Report see me.", P)
   
   -- Message to all players.
@@ -5209,7 +5224,7 @@ function AIRBOSS:_InitPlayer(playerData, step)
   -- Set us up on final if group name contains "Groove". But only for the first pass.
   if playerData.group:GetName():match("Groove") and playerData.passes==0 then
     self:MessageToPlayer(playerData, "Group name contains \"Groove\". Happy groove testing.")
-    playerData.attitudemonitor=false    
+    playerData.attitudemonitor=true
     playerData.step=AIRBOSS.PatternStep.FINAL
     table.insert(self.Qpattern, playerData)
   end
@@ -5473,109 +5488,6 @@ function AIRBOSS:_RemoveFlight(flight, completely)
     end
   end
   
-end
-
---- Check if heading or position of carrier have changed significantly.
--- @param #AIRBOSS self
-function AIRBOSS:_CheckPatternUpdate()
-
-  -- TODO: Make parameters input values.
-
-  -- Min 10 min between pattern updates.
-  local dTPupdate=10*60
-  
-  -- Update if carrier moves by more than 2.5 NM.
-  local Dupdate=UTILS.NMToMeters(2.5)
-  
-  -- Update if carrier turned by more than 5 degrees.
-  local Hupdate=5
-  
-  -- Time since last pattern update
-  local dt=timer.getTime()-self.Tpupdate
-  
-  -- At least 10 min between updates. Not yet...
-  if dt<dTPupdate then
-    return
-  end
-
-  -- Get current position and orientation of carrier.
-  local pos=self:GetCoordinate()
-  
-  -- Current orientation of carrier.
-  local vNew=self.carrier:GetOrientationX()
-  
-  -- Reference orientation of carrier after the last update.
-  local vOld=self.Corientation
-  
-  -- Last orientation from 30 seconds ago.
-  local vLast=self.Corientlast
-  
-  -- We only need the X-Z plane.
-  vNew.y=0 ; vOld.y=0 ; vLast.y=0
-  
-  -- Get angle between old and new orientation vectors in rad and convert to degrees.
-  local deltaHeading=math.deg(math.acos(UTILS.VecDot(vNew,vOld)/UTILS.VecNorm(vNew)/UTILS.VecNorm(vOld)))
-  
-  -- Angle between current heading and last time we checked ~30 seconds ago.
-  local deltaLast=math.deg(math.acos(UTILS.VecDot(vNew,vLast)/UTILS.VecNorm(vNew)/UTILS.VecNorm(vLast)))
-  
-  -- Last orientation becomes new orientation
-  self.Corientlast=vNew
-  
-  -- Carrier is turning when its heading changed by at least one degree since last check.
-  local turning=deltaLast>=1
-  
-  -- No update if carrier is turning!
-  if turning then
-    self:T2(self.lid..string.format("Carrier is turning. Delta Heading = %.1f", deltaLast))
-    return
-  end
-
-  -- Check if orientation changed.
-  local Hchange=false
-  if math.abs(deltaHeading)>=Hupdate then
-    self:T(self.lid..string.format("Carrier heading changed by %d degrees. Turning=%s.", deltaHeading, tostring(turning)))
-    Hchange=true
-  end
-  
-  -- Get distance to saved position.
-  local dist=pos:Get2DDistance(self.Cposition)
-  
-  -- Check if carrier moved more than ~10 km.
-  local Dchange=false
-  if dist>=Dupdate then
-    self:T(self.lid..string.format("Carrier position changed by %.1f NM. Turning=%s.", UTILS.MetersToNM(dist), tostring(turning)))
-    Dchange=true
-  end
-
-  -- If heading or distance changed ==> update marshal AI patterns.
-  if Hchange or Dchange then
-      
-    -- Loop over all marshal flights
-    for _,_flight in pairs(self.Qmarshal) do
-      local flight=_flight --#AIRBOSS.FlightGroup
-      
-      -- Update marshal pattern of AI keeping the same stack.
-      if flight.ai then
-        self:_MarshalAI(flight, flight.flag:Get())
-      end
-      
-    end
-    
-    -- Inform player about new final bearing.
-    if Hchange then
-      -- 99, new final bearing XXX
-      local FB=self:GetFinalBearing(true)
-      local text=string.format("new final bearing %03d°.", FB)
-      self:MessageToMarshal(text, "AIRBOSS", "99", 10)
-    end
-    
-    -- Reset parameters for next update check.
-    self.Corientation=vNew
-    self.Cposition=pos
-    self.Tpupdate=timer.getTime()        
-  end
-
 end
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -8453,6 +8365,40 @@ function AIRBOSS:GetBRC()
   return self:GetHeading(true)
 end
 
+--- Get true (or magnetic) heading of carrier into the wind. This accounts for the angled runway.
+-- @param #AIRBOSS self
+-- @param #boolean magnetic If true, calculate magnetic heading. By default true heading is returned.
+-- @return #number Carrier heading in degrees.
+function AIRBOSS:GetHeadingIntoWind(magnetic)
+
+  -- Get direction the wind is blowing from. This is where we want to go.
+  local windfrom=self:GetCoordinate():GetWind(50)
+  
+  -- Actually, we want the runway in the wind.
+  local intowind=windfrom-self.carrierparam.rwyangle
+  
+  -- Magnetic heading.
+  if magnetic then
+    intowind=intowind-self.magvar
+  end
+  
+  -- Adjust negative values.
+  if intowind<0 then
+    intowind=intowind+360
+  end    
+
+  return intowind
+end 
+
+--- Get base recovery course (BRC) when the carrier would head into the wind.
+-- This includes the current wind direction and accounts for the angled runway.
+-- @param #AIRBOSS self
+-- @return #number BRC into the wind in degrees.
+function AIRBOSS:GetBRCintoWind()
+  -- BRC is the magnetic heading.
+  return self:GetHeadingIntoWind(true)
+end
+
 
 --- Get final bearing (FB) of carrier.
 -- By default, the routine returns the magnetic FB depending on the current map (Caucasus, NTTR, Normandy, Persion Gulf etc).
@@ -9800,6 +9746,543 @@ function AIRBOSS:_StepHint(playerData, step)
   end
 end
 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- CARRIER ROUTING Functions
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Check for possible collisions between two coordinates.
+-- @param #AIRBOSS self
+-- @param Core.Point#COORDINATE coordto Coordinate to which the collision is check.
+-- @param Core.Point#COORDINATE coordfrom Coordinate from which the collision is check.
+-- @return #boolean If true, surface type ahead is not deep water.
+-- @return #number Max free distance in meters.
+function AIRBOSS:_CheckCollisionCoord(coordto, coordfrom) 
+  
+  -- Increment in meters.
+  local dx=100
+ 
+  -- From coordinate. Default 500 in front of the carrier.
+  local d=0 
+  if coordfrom then
+    d=0
+  else
+    d=250
+    coordfrom=self:GetCoordinate():Translate(d, self:GetHeading())
+  end  
+ 
+  -- Distance between the two coordinates.
+  local dmax=coordfrom:Get2DDistance(coordto)
+  
+  -- Direction.
+  local direction=coordfrom:HeadingTo(coordto)
+    
+  -- Scan path between the two coordinates.
+  local clear=true
+  while d<=dmax do
+  
+    -- Check point.
+    local cp=coordfrom:Translate(d, direction)
+      
+    -- Check if surface type is water.
+    if not cp:IsSurfaceTypeWater() then
+    
+      -- Debug mark points.
+      if self.Debug then
+        local st=cp:GetSurfaceType()
+        cp:MarkToAll(string.format("Collision check surface type %d", st))
+      end    
+  
+      -- Collision WARNING!    
+      clear=false
+      break
+    end
+    
+    -- Increase distance.
+    d=d+dx
+  end
+  
+  local text=""
+  if clear then
+    text=string.format("Path into direction %03d° is clear for the next %.1f NM.", direction, UTILS.MetersToNM(d))
+  else
+    text=string.format("Detected obstacle at distance %.1f NM into direction %03d°.", UTILS.MetersToNM(d), direction)
+  end
+  self:T2(self.lid..text)
+  
+  return not clear, d
+end
+
+
+--- Check Collision.
+-- @param #AIRBOSS self
+-- @param Core.Point#COORDINATE fromcoord Coordinate from which the path to the next WP is calculated. Default current carrier position.
+-- @return #boolean If true, surface type ahead is not deep water.
+function AIRBOSS:_CheckFreePathToNextWP(fromcoord)
+
+  -- Position.
+  fromcoord=fromcoord or self:GetCoordinate():Translate(250, self:GetHeading())
+  
+  -- Next wp = current+1 (or last)
+  local Nnextwp=math.min(self.currentwp+1, #self.waypoints)
+  
+  -- Next waypoint.
+  local nextwp=self.waypoints[Nnextwp] --Core.Point#COORDINATE
+  
+  -- Check for collision.
+  local collision=self:_CheckCollisionCoord(nextwp, fromcoord)
+  
+  return collision
+end
+
+--- Find free path to the next waypoint.
+-- @param #AIRBOSS self
+function AIRBOSS:_Pathfinder()
+
+  -- Heading and current coordiante.
+  local hdg=self:GetHeading()
+  local cv=self:GetCoordinate()
+
+  -- Possible directions.
+  local directions={-20, 20, -30, 30, -40, 40, -50, 50, -60, 60, -70, 70, -80, 80, -90, 90, -100, 100}
+
+  -- Starboard turns up to 90 degrees.
+  for _,_direction in pairs(directions) do
+  
+    -- New direction.
+    local direction=hdg+_direction
+  
+    -- Check for collisions in the next 20 NM of the current direction.
+    local _, dfree=self:_CheckCollisionCoord(cv:Translate(UTILS.NMToMeters(20), direction), cv)
+    
+    -- Loop over distances and find the first one which gives a clear path to the next waypoint.
+    local distance=500
+    while distance<=dfree do
+         
+      -- Coordinate from which we calculate the path.
+      local fromcoord=cv:Translate(distance, direction)
+    
+      -- Check for collision between point and next waypoint.
+      local collision=self:_CheckFreePathToNextWP(fromcoord)
+      
+      -- Debug info.
+      self:T2(self.lid..string.format("Pathfinder d=%.1f m, direction=%03d°, collision=%s", distance, direction, tostring(collision)))
+      
+      -- If path is clear, we start a little detour.      
+      if not collision then
+        self:CarrierDetour(fromcoord)
+        return
+      end
+      
+      distance=distance+500
+    end    
+  end
+end
+
+
+--- Carrier resumes the route at its next waypoint.
+--@param #AIRBOSS self
+--@param Core.Point#COORDINATE goto (Optional) First goto this coordinate before resuming route.
+--@return #AIRBOSS self
+function AIRBOSS:CarrierResumeRoute(goto)
+
+  -- Make carrier resume its route.
+  AIRBOSS._ResumeRoute(self.carrier:GetGroup(), self, goto)
+
+  return self
+end
+
+
+--- Let the carrier make a detour to a given point. When it reaches the point, it will resume its normal route.
+-- @param #AIRBOSS self
+-- @param Core.Point#COORDINATE coord Coordinate of the detour.
+-- @param #number speed Speed in knots. Default is current carrier velocity.
+-- @param #boolean uturn (Optional) If true, carrier will go back to where it came from before it resumes its route to the next waypoint.
+-- @return #AIRBOSS self
+function AIRBOSS:CarrierDetour(coord, speed, uturn)
+
+  -- Current coordinate of the carrier.
+  local pos0=self:GetCoordinate()
+    
+  -- Speed in km/h.
+  local speedkmh=UTILS.KnotsToKmph(speed or self.carrier:GetVelocityKNOTS())
+  
+  -- Waypoint table.
+  local wp={}
+  
+  -- Create from/to waypoints.
+  table.insert(wp, pos0:WaypointGround(speedkmh))
+  table.insert(wp, coord:WaypointGround(speedkmh))
+  
+  -- If enabled, go back to where you came from.
+  if uturn then
+    table.insert(wp, pos0:WaypointGround(speedkmh))
+  end
+  
+  -- Get carrier group.
+  local group=self.carrier:GetGroup()
+  
+  -- Passing waypoint taskfunction
+  local TaskResumeRoute=group:TaskFunction("AIRBOSS._ResumeRoute", self)
+  
+  -- Set task to restart route at the last point.
+  group:SetTaskWaypoint(wp[#wp], TaskResumeRoute)
+  
+  -- Debug mark.
+  if self.Debug then
+    coord:MarkToAll("Detour Point")
+  end
+  
+  -- Detour switch true.
+  self.detour=true
+  
+  -- Route carrier into the wind.
+  self.carrier:Route(wp)
+end
+
+--- Let the carrier turn into the wind.
+-- @param #AIRBOSS self
+-- @param #number distance Distance in NM from current position.
+-- @param #number speed Speed in knots. Default 15 knots.
+-- @return #AIRBOSS self
+function AIRBOSS:CarrierTurnIntoWind(distance, speed)
+
+  -- Time in seconds.
+  local time=distance/speed*3600
+
+  -- Debug message.
+  self:T(self.lid..string.format("Carrier steaming into the wind. Distance=%.1f NM, Speed=%.1f knots, Time=%d sec.", distance, speed, time))
+   
+  -- Get heading into the wind accounting for angled runway.
+  local intowind=self:GetHeadingIntoWind(false)
+   
+  -- Length of path into the wind in meters.
+  local dist=UTILS.NMToMeters(distance)
+  
+  -- Translate current position.
+  local pos1=self:GetCoordinate():Translate(dist, intowind)
+  
+  -- Debug mark.
+  if self.Debug then
+    pos1:MarkToAll("Into the wind point")
+  end
+  
+  -- Speed in km/h.
+  local speedkmh=UTILS.KnotsToKmph(speed)
+  
+  -- Return to coordinate if collision is detected.
+  self.Creturnto=self:GetCoordinate()
+
+  -- Let the carrier make a detour from its route but return to its current position.  
+  self:CarrierDetour(pos1, speed, true)
+  
+  -- Set switch that we are currently turning into the wind.
+  self.turnintowind=true
+
+  return self
+end
+
+--- Patrol carrier.
+-- @param #AIRBOSS self
+-- @return #AIRBOSS self
+function AIRBOSS:_PatrolRoute()
+
+  -- Get carrier group.
+  local CarrierGroup=self.carrier:GetGroup()
+  
+  -- Waypoints of group.
+  local Waypoints = CarrierGroup:GetTemplateRoutePoints()
+  
+  -- Loop over waypoints.
+  for n=1,#Waypoints do
+  
+    -- Passing waypoint taskfunction
+    local TaskPassingWP=CarrierGroup:TaskFunction("AIRBOSS._PassingWaypoint", self, n, #Waypoints)
+    
+    -- Call task function when carrier arrives at waypoint.
+    CarrierGroup:SetTaskWaypoint(Waypoints[n], TaskPassingWP)
+  end
+
+  -- Set waypoint table.
+  local i=1
+  for _,point in ipairs(Waypoints) do
+  
+    -- Coordinate of the waypoint
+    local coord=COORDINATE:New(point.x, point.alt, point.y)
+    
+    -- Set velocity of the coordinate.
+    coord:SetVelocity(point.speed)
+    
+    -- Add to table.
+    table.insert(self.waypoints, coord)
+    
+    -- Debug info.
+    if self.Debug then
+      coord:MarkToAll(string.format("Carrier Waypoint %d, Speed=%.1f knots", i, UTILS.MpsToKnots(point.speed)))
+    end
+    
+    -- Increase counter.
+    i=i+1  
+  end
+  
+  -- Current waypoint is 1.
+  self.currentwp=1
+
+  -- Route carrier group.
+  CarrierGroup:Route(Waypoints)
+  
+  return self
+end
+
+--- Estimated the carrier position at some point in the future given the current waypoints and speeds.
+-- @param #AIRBOSS self
+-- @return DCS#time ETA abs. time in seconds.
+function AIRBOSS:_GetETAatNextWP()
+
+  -- Current waypoint
+  local cwp=self.currentwp
+  
+  -- Current abs. time.
+  local tnow=timer.getAbsTime()
+
+  -- Current position.
+  local p=self:GetCoordinate()
+  
+  -- Current velocity [m/s].
+  local v=self.carrier:GetVelocityMPS()
+  
+  -- Distance to next waypoint.
+  local s=0
+  if #self.waypoints>cwp then
+    s=p:Get2DDistance(self.waypoints[cwp+1])
+  end
+  
+  -- v=s/t <==> t=s/v
+  local t=s/v
+  
+  -- ETA
+  local eta=t+tnow
+  
+  return eta
+end
+
+
+--- Check if heading or position of carrier have changed significantly.
+-- @param #AIRBOSS self
+function AIRBOSS:_CheckPatternUpdate()
+
+  -- TODO: Make parameters input values.
+
+  -- Min 10 min between pattern updates.
+  local dTPupdate=10*60
+  
+  -- Update if carrier moves by more than 2.5 NM.
+  local Dupdate=UTILS.NMToMeters(2.5)
+  
+  -- Update if carrier turned by more than 5 degrees.
+  local Hupdate=5
+  
+  -- Time since last pattern update
+  local dt=timer.getTime()-self.Tpupdate
+  
+  -- At least 10 min between updates. Not yet...
+  if dt<dTPupdate then
+    return
+  end
+
+  -- Get current position and orientation of carrier.
+  local pos=self:GetCoordinate()
+  
+  -- Current orientation of carrier.
+  local vNew=self.carrier:GetOrientationX()
+  
+  -- Reference orientation of carrier after the last update.
+  local vOld=self.Corientation
+  
+  -- Last orientation from 30 seconds ago.
+  local vLast=self.Corientlast
+  
+  -- We only need the X-Z plane.
+  vNew.y=0 ; vOld.y=0 ; vLast.y=0
+  
+  -- Get angle between old and new orientation vectors in rad and convert to degrees.
+  local deltaHeading=math.deg(math.acos(UTILS.VecDot(vNew,vOld)/UTILS.VecNorm(vNew)/UTILS.VecNorm(vOld)))
+  
+  -- Angle between current heading and last time we checked ~30 seconds ago.
+  local deltaLast=math.deg(math.acos(UTILS.VecDot(vNew,vLast)/UTILS.VecNorm(vNew)/UTILS.VecNorm(vLast)))
+  
+  -- Last orientation becomes new orientation
+  self.Corientlast=vNew
+  
+  -- Carrier is turning when its heading changed by at least one degree since last check.
+  local turning=deltaLast>=1
+  
+  -- No update if carrier is turning!
+  if turning then
+    self:T2(self.lid..string.format("Carrier is turning. Delta Heading = %.1f", deltaLast))
+    return
+  end
+
+  -- Check if orientation changed.
+  local Hchange=false
+  if math.abs(deltaHeading)>=Hupdate then
+    self:T(self.lid..string.format("Carrier heading changed by %d degrees. Turning=%s.", deltaHeading, tostring(turning)))
+    Hchange=true
+  end
+  
+  -- Get distance to saved position.
+  local dist=pos:Get2DDistance(self.Cposition)
+  
+  -- Check if carrier moved more than ~10 km.
+  local Dchange=false
+  if dist>=Dupdate then
+    self:T(self.lid..string.format("Carrier position changed by %.1f NM. Turning=%s.", UTILS.MetersToNM(dist), tostring(turning)))
+    Dchange=true
+  end
+
+  -- If heading or distance changed ==> update marshal AI patterns.
+  if Hchange or Dchange then
+      
+    -- Loop over all marshal flights
+    for _,_flight in pairs(self.Qmarshal) do
+      local flight=_flight --#AIRBOSS.FlightGroup
+      
+      -- Update marshal pattern of AI keeping the same stack.
+      if flight.ai then
+        self:_MarshalAI(flight, flight.flag:Get())
+      end
+      
+    end
+    
+    -- Inform player about new final bearing.
+    if Hchange then
+      -- 99, new final bearing XXX
+      local FB=self:GetFinalBearing(true)
+      local text=string.format("new final bearing %03d°.", FB)
+      self:MessageToMarshal(text, "AIRBOSS", "99", 10)
+    end
+    
+    -- Reset parameters for next update check.
+    self.Corientation=vNew
+    self.Cposition=pos
+    self.Tpupdate=timer.getTime()        
+  end
+
+end
+
+--- Function called when a group is passing a waypoint.
+--@param Wrapper.Group#GROUP group Group that passed the waypoint
+--@param #AIRBOSS airboss Airboss object.
+--@param #number i Waypoint number that has been reached.
+--@param #number final Final waypoint number.
+function AIRBOSS._PassingWaypoint(group, airboss, i, final)
+
+  -- Debug message.
+  local text=string.format("Group %s passing waypoint %d of %d.", group:GetName(), i, final)
+  
+  -- Debug smoke and marker.
+  if airboss.Debug and false then
+    local pos=group:GetCoordinate()
+    pos:SmokeRed()
+    local MarkerID=pos:MarkToAll(string.format("Group %s reached waypoint %d", group:GetName(), i))
+  end
+  
+  -- Debug message.
+  MESSAGE:New(text,10):ToAllIf(airboss.Debug)
+  airboss:T(airboss.lid..text)
+  
+  -- Set current waypoint.
+  airboss.currentwp=i
+  
+  -- If final waypoint reached, do route all over again.
+  if i==final and final>1 and airboss.adinfinitum then
+    airboss:_PatrolRoute()
+  end
+end
+
+--- Carrier Strike Group resumes the route of the waypoints defined in the mission editor.
+--@param Wrapper.Group#GROUP group Carrier Strike Group that passed the waypoint.
+--@param #AIRBOSS airboss Airboss object.
+--@param Core.Point#COORDINATE goto Go to coordinate before route is resumed.
+function AIRBOSS._ResumeRoute(group, airboss, goto)
+
+  -- Next wp = current+1 (or last)
+  local nextwp=math.min(airboss.currentwp+1, #airboss.waypoints)
+
+  -- Debug message.
+  local text=string.format("Group %s is resuming route. Next waypoint %d.", group:GetName(), nextwp)
+  
+  -- Debug message.
+  MESSAGE:New(text,10):ToAllIf(airboss.Debug)
+  airboss:T(airboss.lid..text)
+  
+  -- Waypoints array.
+  local waypoints={}
+  
+  -- Get current velocity in km/h.
+  local velocity=group:GetVelocityKMH()
+  
+  -- Current positon as first waypoint.
+  local wp0=group:GetCoordinate():WaypointGround(velocity)
+  table.insert(waypoints, wp0)
+  
+  if goto then
+    local wp1=goto:WaypointGround(velocity)
+    table.insert(waypoints, wp1)  
+  end
+  
+  -- Loop over all remaining waypoints.
+  for i=nextwp, #airboss.waypoints do
+  
+    -- Coordinate of the next WP.
+    local coord=airboss.waypoints[i]  --Core.Point#COORDINATE
+    
+    -- Speed in km/h of that WP. Velocity is in m/s.
+    local speed=coord.Velocity*3.6
+    
+    -- Create waypoint.
+    local wp=coord:WaypointGround(speed)
+
+    -- Passing waypoint task function.
+    local TaskPassingWP=group:TaskFunction("AIRBOSS._PassingWaypoint", airboss, i, #airboss.waypoints)
+    
+    -- Call task function when carrier arrives at waypoint.
+    group:SetTaskWaypoint(wp, TaskPassingWP)
+
+    -- Add waypoints to table.
+    table.insert(waypoints, wp)
+  end
+  
+  -- Set turn into wind switch false.
+  airboss.turnintowind=false
+  airboss.detour=false
+
+  -- Route group.
+  group:Route(waypoints)  
+end
+
+--- Function called when a group has reached the holding zone.
+--@param Wrapper.Group#GROUP group Group that reached the holding zone.
+--@param #AIRBOSS airboss Airboss object.
+--@param #AIRBOSS.FlightGroup flight Flight group that has reached the holding zone.
+function AIRBOSS._ReachedHoldingZone(group, airboss, flight)
+
+  -- Debug message.
+  local text=string.format("Flight %s reached holding zone.", group:GetName())
+  MESSAGE:New(text,10):ToAllIf(airboss.Debug)
+  airboss:T(airboss.lid..text)
+ 
+  -- Debug mark.
+  if airboss.Debug then
+    group:GetCoordinate():MarkToAll(text)
+  end
+  
+  -- Set holding flag true and set timestamp for marshal time check.
+  if flight then
+    flight.holding=true
+    flight.time=timer.getAbsTime()
+  end
+end
+
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- MISC functions
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -9960,7 +10443,6 @@ end
 function AIRBOSS:_GetAngels(alt)
 
   if alt then
-    --local angels=math.floor(UTILS.MetersToFeet(alt)/1000)
     local angels=UTILS.Round(UTILS.MetersToFeet(alt)/1000, 0)
     return angels
   else
@@ -10856,9 +11338,13 @@ function AIRBOSS:_AddF10Commands(_unitName)
         end
         
         -- F10/Airboss/<Carrier>
-        local _rootPath=missionCommands.addSubMenuForGroup(gid, self.alias, AIRBOSS.MenuF10[gid])        
-        --AIRBOSS.MenuRoot[gid]=missionCommands.addSubMenuForGroup(gid, self.alias, AIRBOSS.MenuF10[gid])
-        --local _rootPath=AIRBOSS.MenuRoot[gid]
+        local _rootPath
+        if self.menusingle then
+          _rootPath=AIRBOSS.MenuF10[gid]
+        else
+          _rootPath=missionCommands.addSubMenuForGroup(gid, self.alias, AIRBOSS.MenuF10[gid])
+        end        
+
         
         --------------------------------        
         -- F10/Airboss/<Carrier>/F1 Help
