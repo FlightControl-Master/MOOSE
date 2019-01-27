@@ -1068,17 +1068,27 @@ end
 
 
 
---- (AIR) Delivering weapon on the runway.
+--- (AIR) Delivering weapon on the runway. See [hoggit](https://wiki.hoggitworld.com/view/DCS_task_bombingRunway)
+-- 
+-- Make sure the aircraft has the following role:
+-- 
+-- * CAS
+-- * Ground Attack
+-- * Runway Attack
+-- * Anti-Ship Strike
+-- * AFAC
+-- * Pinpoint Strike
+-- 
 -- @param #CONTROLLABLE self
 -- @param Wrapper.Airbase#AIRBASE Airbase Airbase to attack.
--- @param #number WeaponType (optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.
--- @param DCS#AI.Task.WeaponExpend WeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
--- @param #number AttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
+-- @param #number WeaponType (optional) Bitmask of weapon types those allowed to use. See [DCS enum weapon flag](https://wiki.hoggitworld.com/view/DCS_enum_weapon_flag). Default 2147485694 = AnyBomb (GuidedBomb + AnyUnguidedBomb).
+-- @param DCS#AI.Task.WeaponExpend WeaponExpend Enum AI.Task.WeaponExpend that defines how much munitions the AI will expend per attack run. Default "ALL".
+-- @param #number AttackQty Number of times the group will attack if the target. Default 1.
 -- @param DCS#Azimuth Direction (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
--- @param #boolean ControllableAttack (optional) Flag indicates that the target must be engaged by all aircrafts of the controllable. Has effect only if the task is assigned to a controllable, not to a single aircraft.
+-- @param #boolean GroupAttack (optional) Flag indicates that the target must be engaged by all aircrafts of the controllable. Has effect only if the task is assigned to a group and not to a single aircraft.
 -- @return DCS#Task The DCS task structure.
-function CONTROLLABLE:TaskBombingRunway( Airbase, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack )
-  self:F2( { self.ControllableName, Airbase, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack } )
+function CONTROLLABLE:TaskBombingRunway(Airbase, WeaponType, WeaponExpend, AttackQty, Direction, GroupAttack)
+  self:F2( { self.ControllableName, Airbase, WeaponType, WeaponExpend, AttackQty, Direction, GroupAttack } )
 
 --  BombingRunway = { 
 --    id = 'BombingRunway', 
@@ -1088,19 +1098,24 @@ function CONTROLLABLE:TaskBombingRunway( Airbase, WeaponType, WeaponExpend, Atta
 --      expend = enum AI.Task.WeaponExpend,
 --      attackQty = number, 
 --      direction = Azimuth, 
---      controllableAttack = boolean, 
+--      groupAttack = boolean, 
 --    } 
---  } 
+--  }
+
+  -- Defaults.
+  WeaponType=WeaponType or 2147485694
+  WeaponExpend=WeaponExpend or AI.Task.WeaponExpend.ALL
+  AttackQty=AttackQty or 1
 
   local DCSTask
   DCSTask = { id = 'BombingRunway',
     params = {
-    point = Airbase:GetID(),
+    runwayId = Airbase:GetID(),
     weaponType = WeaponType, 
     expend = WeaponExpend,
     attackQty = AttackQty, 
     direction = Direction, 
-    controllableAttack = ControllableAttack, 
+    groupAttack = GroupAttack, 
     },
   },
 
