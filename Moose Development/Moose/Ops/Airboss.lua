@@ -9881,12 +9881,12 @@ end
 
 --- Carrier resumes the route at its next waypoint.
 --@param #AIRBOSS self
---@param Core.Point#COORDINATE goto (Optional) First goto this coordinate before resuming route.
+--@param Core.Point#COORDINATE gotocoord (Optional) First goto this coordinate before resuming route.
 --@return #AIRBOSS self
-function AIRBOSS:CarrierResumeRoute(goto)
+function AIRBOSS:CarrierResumeRoute(gotocoord)
 
   -- Make carrier resume its route.
-  AIRBOSS._ResumeRoute(self.carrier:GetGroup(), self, goto)
+  AIRBOSS._ResumeRoute(self.carrier:GetGroup(), self, gotocoord)
 
   return self
 end
@@ -10202,8 +10202,8 @@ end
 --- Carrier Strike Group resumes the route of the waypoints defined in the mission editor.
 --@param Wrapper.Group#GROUP group Carrier Strike Group that passed the waypoint.
 --@param #AIRBOSS airboss Airboss object.
---@param Core.Point#COORDINATE goto Go to coordinate before route is resumed.
-function AIRBOSS._ResumeRoute(group, airboss, goto)
+--@param Core.Point#COORDINATE gotocoord Go to coordinate before route is resumed.
+function AIRBOSS._ResumeRoute(group, airboss, gotocoord)
 
   -- Next wp = current+1 (or last)
   local nextwp=math.min(airboss.currentwp+1, #airboss.waypoints)
@@ -10225,8 +10225,8 @@ function AIRBOSS._ResumeRoute(group, airboss, goto)
   local wp0=group:GetCoordinate():WaypointGround(velocity)
   table.insert(waypoints, wp0)
   
-  if goto then
-    local wp1=goto:WaypointGround(velocity)
+  if gotocoord then
+    local wp1=gotocoord:WaypointGround(velocity)
     table.insert(waypoints, wp1)  
   end
   
