@@ -2033,6 +2033,54 @@ do -- SET_UNIT
     return self
   end
   
+  
+  --- Get the SET of the SET_UNIT **sorted per Threat Level**.
+  -- 
+  -- @param #SET_UNIT self
+  -- @param #number FromThreatLevel The TreatLevel to start the evaluation **From** (this must be a value between 0 and 10).
+  -- @param #number ToThreatLevel The TreatLevel to stop the evaluation **To** (this must be a value between 0 and 10).
+  -- @return #SET_UNIT self
+  -- @usage
+  -- 
+  -- 
+  function SET_UNIT:GetSetPerThreatLevel( FromThreatLevel, ToThreatLevel )
+    self:F2( arg )
+    
+    local ThreatLevelSet = {}
+    
+    if self:Count() ~= 0 then
+      for UnitName, UnitObject in pairs( self.Set ) do
+        local Unit = UnitObject -- Wrapper.Unit#UNIT
+      
+        local ThreatLevel = Unit:GetThreatLevel()
+        ThreatLevelSet[ThreatLevel] = ThreatLevelSet[ThreatLevel] or {}
+        ThreatLevelSet[ThreatLevel].Set = ThreatLevelSet[ThreatLevel].Set or {}
+        ThreatLevelSet[ThreatLevel].Set[UnitName] = UnitObject
+        self:F( { ThreatLevel = ThreatLevel, ThreatLevelSet = ThreatLevelSet[ThreatLevel].Set } )
+      end
+      
+      
+      local OrderedPerThreatLevelSet = {}
+      
+      local ThreatLevelIncrement = FromThreatLevel <= ToThreatLevel and 1 or -1
+
+            
+      for ThreatLevel = FromThreatLevel, ToThreatLevel, ThreatLevelIncrement do
+        self:F( { ThreatLevel = ThreatLevel } )
+        local ThreatLevelItem = ThreatLevelSet[ThreatLevel]
+        if ThreatLevelItem then
+          for UnitName, UnitObject in pairs( ThreatLevelItem.Set ) do
+            table.insert( OrderedPerThreatLevelSet, UnitObject )
+          end
+        end
+      end
+
+      return OrderedPerThreatLevelSet
+    end
+    
+  end
+  
+  
   --- Iterate the SET_UNIT **sorted *per Threat Level** and call an interator function for each **alive** UNIT, providing the UNIT and optional parameters.
   -- 
   -- @param #SET_UNIT self

@@ -615,7 +615,7 @@ function AI_AIR:onafterRTB( AIGroup, From, Event, To )
     EngageRoute[#EngageRoute+1] = ToRTBRoutePoint
     
     local Tasks = {}
-    Tasks[#Tasks+1] = AIGroup:TaskFunction( "AI_A2G_ENGAGE.RTBRoute", self )
+    Tasks[#Tasks+1] = AIGroup:TaskFunction( "AI_AIR.RTBRoute", self )
     
     EngageRoute[#EngageRoute].task = AIGroup:TaskCombo( Tasks )
 
