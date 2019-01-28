@@ -1937,29 +1937,6 @@ do -- Route methods
       
         -- If speed is not given take 80% of max speed.
         local Speed=Speed or self:GetSpeedMax()*0.8
-
-        --[[
-        local GroupPoint = self:GetVec2()
-        local GroupVelocity = self:GetUnit(1):GetDesc().speedMax    
-        local PointFrom = {}
-        PointFrom.x = GroupPoint.x
-        PointFrom.y = GroupPoint.y
-        PointFrom.type = "Turning Point"
-        PointFrom.action = "Turning Point"
-        PointFrom.speed = GroupVelocity
-                
-        local PointTo = {}
-        local AirbasePointVec2 = RTBAirbase:GetPointVec2()
-        local AirbaseAirPoint = AirbasePointVec2:WaypointAir(
-          POINT_VEC3.RoutePointAltType.BARO,
-          "Land",
-          "Landing", 
-          Speed or self:GetUnit(1):GetDesc().speedMax
-        )
-        
-        AirbaseAirPoint["airdromeId"] = RTBAirbase:GetID()
-        AirbaseAirPoint["speed_locked"] = true
-        ]]
         
         -- Curent (from) waypoint.
         local coord=self:GetCoordinate()

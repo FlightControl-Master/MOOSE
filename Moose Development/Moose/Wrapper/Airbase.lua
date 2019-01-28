@@ -268,9 +268,9 @@ AIRBASE.PersianGulf = {
   ["Kerman_Airport"] = "Kerman Airport",
   ["Shiraz_International_Airport"] = "Shiraz International Airport",
   ["Sas_Al_Nakheel_Airport"] = "Sas Al Nakheel Airport",
-  ["Bandar-e-Jask_airfield"] = "Bandar-e-Jask airfield",
+  ["Bandar_e_Jask_airfield"] = "Bandar-e-Jask airfield",
   ["Abu_Dhabi_International_Airport"] = "Abu Dhabi International Airport",
-  ["Al-Bateen_Airport"] = "Al-Bateen Airport",
+  ["Al_Bateen_Airport"] = "Al-Bateen Airport",
   ["Kish_International_Airport"] = "Kish International Airport",
   ["Al_Ain_International_Airport"] = "Al Ain International Airport",
   ["Lavan_Island_Airport"] = "Lavan Island Airport",
@@ -648,31 +648,20 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
     verysafe=false
   end  
   
-  -- Get the size of an object.
-  local function _GetObjectSize(unit,mooseobject)
-    if mooseobject then
-      unit=unit:GetDCSObject()
-    end
-    if unit and unit:isExist() then
-      local DCSdesc=unit:getDesc()
-      if DCSdesc.box then
-        local x=DCSdesc.box.max.x+math.abs(DCSdesc.box.min.x)
-        local y=DCSdesc.box.max.y+math.abs(DCSdesc.box.min.y)  --height
-        local z=DCSdesc.box.max.z+math.abs(DCSdesc.box.min.z)
-        return math.max(x,z), x , y, z
-      end
-    end
-    return 0,0,0,0
-  end
-  
   -- Function calculating the overlap of two (square) objects.
-  local function _overlap(object1, mooseobject1, object2, mooseobject2, dist)
-    local l1=_GetObjectSize(object1, mooseobject1)
-    local l2=_GetObjectSize(object2, mooseobject2)
-    local safedist=(l1/2+l2/2)*1.1    
-    local safe = (dist > safedist)
-    self:T3(string.format("l1=%.1f l2=%.1f s=%.1f d=%.1f ==> safe=%s", l1,l2,safedist,dist,tostring(safe)))
-    return safe    
+  local function _overlap(object1, object2, dist)
+    local pos1=object1 --Wrapper.Positionable#POSITIONABLE
+    local pos2=object2 --Wrapper.Positionable#POSITIONABLE
+    local r1=pos1:GetBoundingRadius()
+    local r2=pos2:GetBoundingRadius()
+    if r1 and r2 then
+      local safedist=(r1+r2)*1.1    
+      local safe = (dist > safedist)
+      self:E(string.format("r1=%.1f r2=%.1f s=%.1f d=%.1f ==> safe=%s", r1, r2, safedist, dist, tostring(safe)))
+      return safe
+    else
+      return true
+    end    
   end
   
   -- Get airport name.
@@ -687,7 +676,7 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
   
   -- Get the aircraft size, i.e. it's longest side of x,z.
   local aircraft=group:GetUnit(1)
-  local _aircraftsize, ax,ay,az=_GetObjectSize(aircraft, true)
+  local _aircraftsize, ax,ay,az=aircraft:GetObjectSize()
   
   -- Number of spots we are looking for. Note that, e.g. grouping can require a number different from the group size!
   local _nspots=nspots or group:GetSize()
@@ -733,16 +722,13 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
     
         -- Check all units.    
         for _,unit in pairs(_units) do
-          -- Unis are now returned as MOOSE units not DCS units!
-          --local _vec3=unit:getPoint()
-          --local _coord=COORDINATE:NewFromVec3(_vec3)
           local _coord=unit:GetCoordinate()
           local _dist=_coord:Get2DDistance(_spot)      
-          local _safe=_overlap(aircraft, true, unit, true,_dist)
+          local _safe=_overlap(aircraft, unit, _dist)
           
           if markobstacles then
-            local l,x,y,z=_GetObjectSize(unit)      
-            _coord:MarkToAll(string.format("Unit %s\nx=%.1f y=%.1f z=%.1f\nl=%.1f d=%.1f\nspot %d safe=%s", unit:getName(),x,y,z,l,_dist, _termid, tostring(_safe)))
+            local l,x,y,z=unit:GetObjectSize()
+            _coord:MarkToAll(string.format("Unit %s\nx=%.1f y=%.1f z=%.1f\nl=%.1f d=%.1f\nspot %d safe=%s", unit:GetName(),x,y,z,l,_dist, _termid, tostring(_safe)))
           end
           
           if scanunits and not _safe then
@@ -752,13 +738,14 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
       
         -- Check all statics.
         for _,static in pairs(_statics) do
+          local _static=STATIC:Find(static)
           local _vec3=static:getPoint()
           local _coord=COORDINATE:NewFromVec3(_vec3)
           local _dist=_coord:Get2DDistance(_spot)      
-          local _safe=_overlap(aircraft, true, static, false,_dist)
+          local _safe=_overlap(aircraft,_static,_dist)
           
           if markobstacles then
-            local l,x,y,z=_GetObjectSize(static)
+            local l,x,y,z=_static:GetObjectSize()
             _coord:MarkToAll(string.format("Static %s\nx=%.1f y=%.1f z=%.1f\nl=%.1f d=%.1f\nspot %d safe=%s", static:getName(),x,y,z,l,_dist, _termid, tostring(_safe)))
           end
           
@@ -769,13 +756,14 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
         
         -- Check all scenery.
         for _,scenery in pairs(_sceneries) do
+          local _scenery=SCENERY:Register(scenery:getTypeName(), scenery)
           local _vec3=scenery:getPoint()
           local _coord=COORDINATE:NewFromVec3(_vec3)
           local _dist=_coord:Get2DDistance(_spot)
-          local _safe=_overlap(aircraft, true, scenery, false,_dist)
+          local _safe=_overlap(aircraft,_scenery,_dist)
           
           if markobstacles then
-            local l,x,y,z=_GetObjectSize(scenery)
+            local l,x,y,z=scenery:GetObjectSize(scenery)
             _coord:MarkToAll(string.format("Scenery %s\nx=%.1f y=%.1f z=%.1f\nl=%.1f d=%.1f\nspot %d safe=%s", scenery:getTypeName(),x,y,z,l,_dist, _termid, tostring(_safe)))
           end
           
@@ -787,7 +775,7 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
         -- Now check the already given spots so that we do not put a large aircraft next to one we already assigned a nearby spot.
         for _,_takenspot in pairs(validspots) do
           local _dist=_takenspot.Coordinate:Get2DDistance(_spot)
-          local _safe=_overlap(aircraft, true, aircraft, true,_dist)
+          local _safe=_overlap(aircraft, aircraft, _dist)
           if not _safe then
             occupied=true
           end
@@ -797,7 +785,7 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
         if occupied then
           self:T(string.format("%s: Parking spot id %d occupied.", airport, _termid))
         else
-          self:E(string.format("%s: Parking spot id %d free.", airport, _termid))      
+          self:I(string.format("%s: Parking spot id %d free.", airport, _termid))      
           if nvalid<_nspots then
             table.insert(validspots, {Coordinate=_spot, TerminalID=_termid})
           end

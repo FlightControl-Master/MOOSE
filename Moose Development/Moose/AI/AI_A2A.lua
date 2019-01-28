@@ -7,7 +7,7 @@
 -- ===
 -- 
 -- @module AI.AI_A2A
--- @image AI_Air_To_Air_Dispatching.JPG
+-- @image MOOSE.JPG
 
 --BASE:TraceClass("AI_A2A")
 

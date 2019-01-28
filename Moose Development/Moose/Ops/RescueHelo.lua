@@ -17,7 +17,7 @@
 -- ### Contributions: Flightcontrol (@{AI.AI_Formation} class being used here)
 --
 -- @module Ops.RescueHelo
--- @image MOOSE.JPG
+-- @image Ops_RescueHelo.png
 
 --- RESCUEHELO class.
 -- @type RESCUEHELO
@@ -49,6 +49,7 @@
 -- @field #boolean rtb If true, Helo will be return to base on the next status check.
 -- @field #number hid Unit ID of the helo group. (Global) Running number.
 -- @field #string alias Alias of the spawn group.
+-- @field #number uid Unique ID of this helo.
 -- @extends Core.Fsm#FSM
 
 --- Rescue Helo
@@ -217,22 +218,23 @@ RESCUEHELO = {
   rtb            = nil,
   carrierstop    = nil,
   alias          = nil,
+  uid            =   0,
 }
 
 --- Unique ID (global).
 -- @field #number uid Unique ID (global).
-RESCUEHELO.uid=0
+RESCUEHELO.UID=0
 
 --- Class version.
 -- @field #string version
-RESCUEHELO.version="1.0.2"
+RESCUEHELO.version="1.0.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Add messages for rescue mission.
--- TODO: Add option to stop carrier while rescue operation is in progress? Done but NOT working!
+-- NOPE: Add messages for rescue mission.
+-- NOPE: Add option to stop carrier while rescue operation is in progress? Done but NOT working. Postponed...
 -- DONE: Write documentation.
 -- DONE: Add option to deactivate the rescuing.
 -- DONE: Possibility to add already present/spawned aircraft, e.g. for warehouse.
@@ -267,10 +269,16 @@ function RESCUEHELO:New(carrierunit, helogroupname)
   self.helogroupname=helogroupname
   
   -- Increase ID.
-  RESCUEHELO.uid=RESCUEHELO.uid+1
+  RESCUEHELO.UID=RESCUEHELO.UID+1
+  
+  -- Unique ID of this helo.
+  self.uid=RESCUEHELO.UID
+  
+  -- Save self in static object. Easier to retrieve later.
+  self.carrier:SetState(self.carrier, string.format("RESCUEHELO_%d", self.uid) , self)
   
   -- Set unique spawn alias.
-  self.alias=string.format("%s_%s_%02d", self.carrier:GetName(), self.helogroupname, RESCUEHELO.uid)
+  self.alias=string.format("%s_%s_%02d", self.carrier:GetName(), self.helogroupname, RESCUEHELO.UID)
   
   -- Log ID.
   self.lid=string.format("RESCUEHELO %s |", self.alias)
@@ -295,6 +303,7 @@ function RESCUEHELO:New(carrierunit, helogroupname)
   
   -- Debug trace.
   if false then
+    self.Debug=true
     BASE:TraceOnOff(true)
     BASE:TraceClass(self.ClassName)
     BASE:TraceLevel(1)
@@ -687,7 +696,7 @@ function RESCUEHELO:OnEventLand(EventData)
       
       if self:IsRescuing() then
         
-        self:T(string.format("Rescue helo %s returned from rescue operation.", groupname))
+        self:T(self.lid..string.format("Rescue helo %s returned from rescue operation.", groupname))
         
       end
       
@@ -696,20 +705,18 @@ function RESCUEHELO:OnEventLand(EventData)
         
         if self:IsRescuing() then
         
-          self:T(string.format("Rescue helo %s returned from rescue operation.", groupname))
+          self:T(self.lid..string.format("Rescue helo %s returned from rescue operation.", groupname))
           
           -- Respawn helo at current airbase.
-          --self.helo=group:RespawnAtCurrentAirbase()
-          SCHEDULER:New(nil, group.RespawnAtCurrentAirbase, {group}, 5)
+          SCHEDULER:New(nil, group.RespawnAtCurrentAirbase, {group}, 3)
         
         else
         
-          self:T2(string.format("WARNING: Rescue helo %s landed. This should not happen for Takeoff=Air or respawninair=true unless a rescue operation finished.", groupname))
+          self:T2(self.lid..string.format("WARNING: Rescue helo %s landed. This should not happen for Takeoff=Air or respawninair=true unless a rescue operation finished.", groupname))
 
           -- Respawn helo at current airbase anyway.
           if self.respawn then
-            --self.helo=group:RespawnAtCurrentAirbase()
-            SCHEDULER:New(nil, group.RespawnAtCurrentAirbase, {group}, 5)
+            SCHEDULER:New(nil, group.RespawnAtCurrentAirbase, {group}, 3)
           end
           
         end
@@ -718,8 +725,7 @@ function RESCUEHELO:OnEventLand(EventData)
       
         -- Respawn helo at current airbase.
         if self.respawn then
-          --self.helo=group:RespawnAtCurrentAirbase()
-          SCHEDULER:New(nil, group.RespawnAtCurrentAirbase, {group}, 5)
+          SCHEDULER:New(nil, group.RespawnAtCurrentAirbase, {group}, 3)
         end
         
       end
@@ -934,7 +940,7 @@ function RESCUEHELO:onafterStatus(From, Event, To)
           if self.respawn then
           
             -- Respawn helo in air.
-            self.helo:Respawn(nil, true)
+            self.helo=self.helo:Respawn(nil, true)
             
           end
           
@@ -952,7 +958,7 @@ function RESCUEHELO:onafterStatus(From, Event, To)
       if self.rtb then
   
         -- Send helo back to base.
-        self:RTB()
+        --self:RTB()
         
         -- Switch to false.
         self.rtb=false
@@ -1017,14 +1023,27 @@ function RESCUEHELO:onafterRun(From, Event, To)
 end
 
 
---- Function called when a group is passing a waypoint.
---@param Wrapper.Group#GROUP group Group that passed the waypoint
---@param #RESCUEHELO rescuehelo Rescue helo object.
-function RESCUEHELO._TaskRTB(group, rescuehelo)
-  env.info(string.format("FF Executing TaskRTB for group %s.", group:GetName()))
+--- Task to send the helo RTB.
+-- @param #RESCUEHELO self
+-- @return DCS#Task DCS Task table.
+function RESCUEHELO:_TaskRTB()
   
   -- Set RTB switch so on next status update, the helo is respawned with RTB waypoints.
-  rescuehelo.rtb=true
+  --rescuehelo.rtb=true
+
+  -- Name of the warehouse (static) object.
+  local carriername=self.carrier:GetName()
+
+  -- Task script.
+  local DCSScript = {}
+  DCSScript[#DCSScript+1] = string.format('local mycarrier = UNIT:FindByName(\"%s\") ', carriername)                       -- The carrier unit that holds the self object.
+  DCSScript[#DCSScript+1] = string.format('local myhelo    = mycarrier:GetState(mycarrier, \"RESCUEHELO_%d\") ', self.uid) -- Get the RECOVERYTANKER self object.
+  DCSScript[#DCSScript+1] = string.format('myhelo:RTB()')                                                                  -- Call the function, e.g. myhelo.(self)
+
+  -- Create task.
+  local DCSTask = CONTROLLABLE.TaskWrappedAction(self, CONTROLLABLE.CommandDoScript(self, table.concat(DCSScript)))
+
+  return DCSTask
   
   -- This made DCS crash to desktop!
   --rescuehelo:RTB()
@@ -1035,7 +1054,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Core.Point#COORDINATE RescueCoord Coordinate where the rescue should happen
+-- @param Core.Point#COORDINATE RescueCoord Coordinate where the rescue should happen.
 function RESCUEHELO:onafterRescue(From, Event, To, RescueCoord)
 
   -- Debug message.
@@ -1056,7 +1075,8 @@ function RESCUEHELO:onafterRescue(From, Event, To, RescueCoord)
   RescueTask.params.stopCondition={duration=self.rescueduration}
   
   -- Passing waypoint taskfunction
-  local TaskRTB=self.helo:TaskFunction("RESCUEHELO._TaskRTB", self)
+  --local TaskRTB=self.helo:TaskFunction("RESCUEHELO._TaskRTB", self)
+  local TaskRTB=self:_TaskRTB()
   
   -- Rescue speed 90% of max possible.
   local speed=self.helo:GetSpeedMax()*0.9
@@ -1132,7 +1152,7 @@ function RESCUEHELO:onafterRTB(From, Event, To, airbase)
   end
     
   -- Route helo back home. It is respawned! But this is the only way to ensure that it actually lands at the airbase.
-  self.helo:RouteRTB(airbase)
+  self:RouteRTB(airbase)
 end
 
 --- On after Stop event. Unhandle events and stop status updates.
@@ -1146,6 +1166,42 @@ function RESCUEHELO:onafterStop(From, Event, To)
   self:UnHandleEvent(EVENTS.Crash)
   self:UnHandleEvent(EVENTS.Ejection)
 end
+
+
+--- Route helo back to its home base.
+-- @param #RESCUEHELO self
+-- @param Wrapper.Airbase#AIRBASE RTBAirbase
+-- @param #number Speed Speed.
+function RESCUEHELO:RouteRTB(RTBAirbase, Speed)
+
+  -- If speed is not given take 80% of max speed.
+  local Speed=Speed or self.helo:GetSpeedMax()*0.8
+  
+  -- Curent (from) waypoint.
+  local coord=self.helo:GetCoordinate()
+  local PointFrom=coord:WaypointAirTurningPoint(nil, Speed)
+  
+  -- Airbase coordinate.
+  local PointAirbase=RTBAirbase:GetCoordinate():SetAltitude(100):WaypointAirTurningPoint(nil ,Speed)
+  
+  -- Landing waypoint. More general than prev version since it should also work with FAPRS and ships.
+  local PointLanding=RTBAirbase:GetCoordinate():SetAltitude(20):WaypointAirLanding(Speed, RTBAirbase)
+  
+  -- Waypoint table.
+  local Points={PointFrom, PointLanding}
+  
+  -- Get group template.
+  local Template=self.helo:GetTemplate()
+  
+  -- Set route points.
+  Template.route.points=Points
+  
+  -- Respawn the group.
+  self.helo=self.helo:Respawn(Template, true)
+  
+  return self
+end
+
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

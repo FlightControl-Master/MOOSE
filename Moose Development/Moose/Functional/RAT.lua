@@ -717,6 +717,11 @@ function RAT:Spawn(naircraft)
       self.FLcruise=005*RAT.unit.FL2m
     end
   end
+
+  -- Enable helos to go to destinations 100 meters away.  
+  if self.category==RAT.cat.heli then
+    self.mindist=50
+  end  
   
   -- Run consistency checks.
   self:_CheckConsistency()
@@ -1812,14 +1817,14 @@ function RAT:ATC_Delay(time)
 end
 
 --- Set minimum distance between departure and destination. Default is 5 km.
--- Minimum distance should not be smaller than maybe ~500 meters to ensure that departure and destination are different.
+-- Minimum distance should not be smaller than maybe ~100 meters to ensure that departure and destination are different.
 -- @param #RAT self
 -- @param #number dist Distance in km.
 -- @return #RAT RAT self object.
 function RAT:SetMinDistance(dist)
   self:F2(dist)
   -- Distance in meters. Absolute minimum is 500 m.
-  self.mindist=math.max(500, dist*1000)
+  self.mindist=math.max(100, dist*1000)
   return self
 end
 

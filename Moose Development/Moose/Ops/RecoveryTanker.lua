@@ -9,7 +9,8 @@
 --    * Automatic respawning when tanker runs out of fuel for 24/7 operations.
 --    * Tanker can be spawned cold or hot on the carrier or at any other airbase or directly in air.
 --    * Automatic AA TACAN beacon setting.
---    * Multiple tankers at different carriers due to object oriented approach.
+--    * Multiple tankers at the same carrier.
+--    * Multiple carriers due to object oriented approach.
 --    * Finite State Machine (FSM) implementation, which allows the mission designer to hook into certain events.
 --
 -- ===
@@ -18,7 +19,7 @@
 -- ### Special thanks to **HighwaymanEd** for testing and suggesting improvements!
 --
 -- @module Ops.RecoveryTanker
--- @image MOOSE.JPG
+-- @image Ops_RecoveryTanker.png
 
 --- RECOVERYTANKER class.
 -- @type RECOVERYTANKER
@@ -54,6 +55,7 @@
 -- @field DCS#Vec3 orientlast Orientation of the carrier for checking if carrier is currently turning.
 -- @field Core.Point#COORDINATE position Position of carrier. Used to monitor if carrier significantly changed its position and then update the tanker pattern.
 -- @field #string alias Alias of the spawn group.
+-- @field #number uid Unique ID of this tanker.
 -- @extends Core.Fsm#FSM
 
 --- Recovery Tanker.
@@ -252,15 +254,16 @@ RECOVERYTANKER = {
   orientlast      = nil,
   position        = nil,
   alias           = nil,
+  uid             =   0,
 }
 
 --- Unique ID (global).
--- @field #number uid Unique ID (global).
-RECOVERYTANKER.uid=0
+-- @field #number UID Unique ID (global).
+RECOVERYTANKER.UID=0
 
 --- Class version.
 -- @field #string version
-RECOVERYTANKER.version="1.0.3"
+RECOVERYTANKER.version="1.0.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -305,14 +308,17 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   -- Tanker group name.
   self.tankergroupname=tankergroupname
   
-  -- Save self in static object. Easier to retrieve later.
-  self.carrier:SetState(self.carrier, "RECOVERYTANKER", self)
-  
   -- Increase unique ID.
-  RECOVERYTANKER.uid=RECOVERYTANKER.uid+1
+  RECOVERYTANKER.UID=RECOVERYTANKER.UID+1
+  
+  -- Unique ID of this tanker.
+  self.uid=RECOVERYTANKER.UID
+
+  -- Save self in static object. Easier to retrieve later.
+  self.carrier:SetState(self.carrier, string.format("RECOVERYTANKER_%d", self.uid) , self)    
   
   -- Set unique spawn alias.
-  self.alias=string.format("%s_%s_%02d", self.carrier:GetName(), self.tankergroupname, RECOVERYTANKER.uid)
+  self.alias=string.format("%s_%s_%02d", self.carrier:GetName(), self.tankergroupname, RECOVERYTANKER.UID)
   
   -- Log ID.
   self.lid=string.format("RECOVERYTANKER %s |", self.alias)
@@ -931,7 +937,6 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function RECOVERYTANKER:onafterPatternUpdate(From, Event, To)
-
   -- Debug message.
   local text=string.format("Updating recovery tanker %s racetrack pattern.", self.tanker:GetName())
   MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
@@ -981,6 +986,7 @@ function RECOVERYTANKER:onafterPatternUpdate(From, Event, To)
   
   -- Set update time.
   self.Tupdate=timer.getTime()
+
 end
 
 --- On after "RTB" event. Send tanker back to carrier.
@@ -1149,16 +1155,15 @@ function RECOVERYTANKER:_InitPatternTaskFunction()
 
   -- Task script.
   local DCSScript = {}
-  DCSScript[#DCSScript+1] = string.format('local mycarrier = UNIT:FindByName(\"%s\") ', carriername)              -- The carrier unit that holds the self object.
-  DCSScript[#DCSScript+1] = string.format('local mytanker  = mycarrier:GetState(mycarrier, \"RECOVERYTANKER\") ') -- Get the RECOVERYTANKER self object.
-  DCSScript[#DCSScript+1] = string.format('mytanker:PatternUpdate()')                                             -- Call the function, e.g. mytanker.(self)
+  DCSScript[#DCSScript+1] = string.format('local mycarrier = UNIT:FindByName(\"%s\") ', carriername)                           -- The carrier unit that holds the self object.
+  DCSScript[#DCSScript+1] = string.format('local mytanker  = mycarrier:GetState(mycarrier, \"RECOVERYTANKER_%d\") ', self.uid) -- Get the RECOVERYTANKER self object.
+  DCSScript[#DCSScript+1] = string.format('mytanker:PatternUpdate()')                                                          -- Call the function, e.g. mytanker.(self)
 
   -- Create task.
   local DCSTask = CONTROLLABLE.TaskWrappedAction(self, CONTROLLABLE.CommandDoScript(self, table.concat(DCSScript)))
 
   return DCSTask
 end
-
 
 --- Init waypoint after spawn. Tanker is first guided to a position astern the carrier and starts its racetrack pattern from there.
 -- @param #RECOVERYTANKER self
@@ -1195,7 +1200,7 @@ function RECOVERYTANKER:_InitRoute(dist, delay)
   end
   
   -- Task to update pattern when wp 2 is reached.
-  local task=self:_InitPatternTaskFunction()  
+  local task=self:_InitPatternTaskFunction()
 
   -- Waypoints.
   local wp={}

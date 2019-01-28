@@ -71,7 +71,7 @@
 -- Bankler was kind enough to allow me to add this to the class - thanks again!
 --
 -- @module Ops.Airboss
--- @image MOOSE.JPG
+-- @image Ops_Airboss.png
 
 --- AIRBOSS class.
 -- @type AIRBOSS
