@@ -1062,8 +1062,8 @@ do -- COORDINATE
     RoutePoint.speed_locked = SpeedLocked
     
     -- ETA.
-    RoutePoint.ETA=nil
-    RoutePoint.ETA_locked = false
+    RoutePoint.ETA=0
+    RoutePoint.ETA_locked=true
     
     -- Waypoint description.
     RoutePoint.name=description
@@ -1081,7 +1081,7 @@ do -- COORDINATE
         self:T("ERROR: Unknown airbase category in COORDINATE:WaypointAir()!")
       end
       
-      --self:MarkToAll(string.format("Landing waypoint at airbase %s", airbase:GetName()))
+      --self:MarkToAll(string.format("Landing waypoint at airbase %s, ID=%d, Category=%d", airbase:GetName(), AirbaseID, AirbaseCategory  ))
     end
     
     -- Waypoint tasks.
@@ -1089,6 +1089,11 @@ do -- COORDINATE
     RoutePoint.task.id = "ComboTask"
     RoutePoint.task.params = {}
     RoutePoint.task.params.tasks = DCSTasks or {}
+    
+    --RoutePoint.properties={}
+    --RoutePoint.properties.addopt={}
+    
+    --RoutePoint.formation_template=""
 
     -- Debug.
     self:T({RoutePoint=RoutePoint})
@@ -1165,7 +1170,7 @@ do -- COORDINATE
   --    HeliGroup:Route( { LandWaypoint }, 1 ) -- Start landing the helicopter in one second.
   -- 
   function COORDINATE:WaypointAirLanding( Speed, airbase, DCSTasks, description )
-    return self:WaypointAir(nil, COORDINATE.WaypointType.Land, COORDINATE.WaypointAction.Landing, Speed, nil, airbase, DCSTasks, description)
+    return self:WaypointAir(nil, COORDINATE.WaypointType.Land, COORDINATE.WaypointAction.Landing, Speed, false, airbase, DCSTasks, description)
   end
   
   

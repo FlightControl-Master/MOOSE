@@ -428,6 +428,27 @@ function POSITIONABLE:GetBoundingBox() --R2.1
 end
 
 
+--- Get the object size.
+-- @param #POSITIONABLE self 
+-- @return DCS#Distance Max size of object in x, z or 0 if bounding box could not be obtained.
+-- @return DCS#Distance Length x or 0 if bounding box could not be obtained.
+-- @return DCS#Distance Height y or 0 if bounding box could not be obtained.
+-- @return DCS#Distance Width z or 0 if bounding box could not be obtained.
+function POSITIONABLE:GetObjectSize()
+
+  -- Get bounding box.
+  local box=self:GetBoundingBox()
+  
+  if box then
+    local x=box.max.x+math.abs(box.min.x)  --length
+    local y=box.max.y+math.abs(box.min.y)  --height
+    local z=box.max.z+math.abs(box.min.z)  --width
+    return math.max(x,z), x , y, z
+  end
+  
+  return 0,0,0,0
+end
+
 --- Get the bounding radius of the underlying POSITIONABLE DCS Object.
 -- @param #POSITIONABLE self
 -- @param #number mindist (Optional) If bounding box is smaller than this value, mindist is returned. 
