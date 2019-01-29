@@ -3557,12 +3557,13 @@ do -- AI_A2G_DISPATCHER
 
       function Fsm:onafterRTB( Defender, From, Event, To )
         self:F({"Defender RTB", Defender:GetName()})
-        self:GetParent(self).onafterRTB( self, Defender, From, Event, To )
         
         local DefenderName = Defender:GetName()
         local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
         Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " returning." )
+
+        self:GetParent(self).onafterRTB( self, Defender, From, Event, To )
 
         Dispatcher:ClearDefenderTaskTarget( Defender )
       end

@@ -120,14 +120,22 @@ function AI_A2G_BAI:onafterEngage( DefenderGroup, From, Event, To, AttackSetUnit
       EngageRoute[#EngageRoute+1] = ToWP
       
       local AttackTasks = {}
+      
+      self.AttackSetUnit.AttackIndex = self.AttackSetUnit.AttackIndex and self.AttackSetUnit.AttackIndex + 1 or 1
   
-      for OrderedID, AttackUnit in ipairs( self.AttackSetUnit:GetSetPerThreatLevel( 10, 0 ) ) do
-        if AttackUnit then
-          if AttackUnit:IsAlive() and AttackUnit:IsGround() then
-            self:T( { "BAI Unit:", AttackUnit:GetName() } )
-            AttackTasks[#AttackTasks+1] = DefenderGroup:TaskAttackUnit( AttackUnit, false, false, nil, nil, EngageAltitude )
-            break
-          end
+      local AttackSetUnitPerThreatLevel = self.AttackSetUnit:GetSetPerThreatLevel( 10, 0 )
+  
+      local AttackUnit = AttackSetUnitPerThreatLevel[self.AttackSetUnit.AttackIndex]
+  
+      if not AttackUnit then
+        self.AttackSetUnit.AttackIndex = 1
+        AttackUnit = AttackSetUnitPerThreatLevel[self.AttackSetUnit.AttackIndex]
+      end
+      
+      if AttackUnit then
+        if AttackUnit:IsAlive() and AttackUnit:IsGround() then
+          self:T( { "BAI Unit:", AttackUnit:GetName() } )
+          AttackTasks[#AttackTasks+1] = DefenderGroup:TaskAttackUnit( AttackUnit, false, false, nil, nil, EngageAltitude )
         end
       end
         

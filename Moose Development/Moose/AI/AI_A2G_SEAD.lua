@@ -173,15 +173,23 @@ function AI_A2G_SEAD:onafterEngage( DefenderGroup, From, Event, To, AttackSetUni
       EngageRoute[#EngageRoute+1] = ToWP
       
       local AttackTasks = {}
+
+      self.AttackSetUnit.AttackIndex = self.AttackSetUnit.AttackIndex and self.AttackSetUnit.AttackIndex + 1 or 1
+      if self.AttackSetUnit.AttackIndex > self.AttackSetUnit:Count() then
+        self.AttackSetUnit.AttackIndex = 1
+      end
+
+      local AttackSetUnitPerThreatLevel = self.AttackSetUnit:GetSetPerThreatLevel( 10, 0 )
   
-      for OrderedID, AttackUnit in ipairs( self.AttackSetUnit:GetSetPerThreatLevel( 10, 0 ) ) do
-        if AttackUnit then
-          if AttackUnit:IsAlive() and AttackUnit:IsGround() then
-            local HasRadar = AttackUnit:HasSEAD() 
-            if HasRadar then
-              self:F( { "SEAD Unit:", AttackUnit:GetName() } )
-              AttackTasks[#AttackTasks+1] = DefenderGroup:TaskAttackUnit( AttackUnit, false, false, nil, nil, EngageAltitude )
-              break
+      for AttackUnitID, AttackUnit in ipairs( AttackSetUnitPerThreatLevel ) do
+        if AttackUnitID >= self.AttackSetUnit.AttackIndex then
+          if AttackUnit then
+            if AttackUnit:IsAlive() and AttackUnit:IsGround() then
+              local HasRadar = AttackUnit:HasSEAD() 
+              if HasRadar then
+                self:F( { "SEAD Unit:", AttackUnit:GetName() } )
+                AttackTasks[#AttackTasks+1] = DefenderGroup:TaskAttackUnit( AttackUnit, false, false, nil, nil, EngageAltitude )
+              end
             end
           end
         end
