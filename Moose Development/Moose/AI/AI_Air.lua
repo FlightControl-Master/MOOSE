@@ -51,6 +51,8 @@ AI_AIR = {
   ClassName = "AI_AIR",
 }
 
+AI_AIR.TaskDelay = 0.5 -- The delay of each task given to the AI.
+
 --- Creates a new AI_AIR process.
 -- @param #AI_AIR self
 -- @param Wrapper.Group#GROUP AIGroup The group object to receive the A2G Process.
@@ -63,6 +65,8 @@ function AI_AIR:New( AIGroup )
   self:SetControllable( AIGroup )
   
   self:SetStartState( "Stopped" ) 
+
+  self:AddTransition( "*", "Queue", "Queued" )
 
   self:AddTransition( "*", "Start", "Started" )
   
@@ -400,6 +404,8 @@ function AI_AIR:SetDamageThreshold( PatrolDamageThreshold )
   return self
 end
 
+
+
 --- Defines a new patrol route using the @{Process_PatrolZone} parameters and settings.
 -- @param #AI_AIR self
 -- @return #AI_AIR self
@@ -520,7 +526,7 @@ function AI_AIR:onafterStatus()
     end
 
     if RTB == true then
-      self:__RTB( 0.5 )
+      self:__RTB( self.TaskDelay )
     end
 
     if not self:Is("Home") then
@@ -537,7 +543,7 @@ function AI_AIR.RTBRoute( AIGroup, Fsm )
   AIGroup:F( { "AI_AIR.RTBRoute:", AIGroup:GetName() } )
   
   if AIGroup:IsAlive() then
-    Fsm:__RTB( 0.5 )
+    Fsm:RTB()
   end
   
 end
@@ -547,7 +553,7 @@ function AI_AIR.RTBHold( AIGroup, Fsm )
 
   AIGroup:F( { "AI_AIR.RTBHold:", AIGroup:GetName() } )
   if AIGroup:IsAlive() then
-    Fsm:__RTB( 0.5 )
+    Fsm:__RTB( Fsm.TaskDelay )
     Fsm:Return()
     local Task = AIGroup:TaskOrbitCircle( 4000, 400 )
     AIGroup:SetTask( Task )
@@ -573,19 +579,29 @@ function AI_AIR:onafterRTB( AIGroup, From, Event, To )
 
     --- Calculate the target route point.
     
-    local CurrentCoord = AIGroup:GetCoordinate()
+    local FromCoord = AIGroup:GetCoordinate()
     local ToTargetCoord = self.HomeAirbase:GetCoordinate()
     local ToTargetSpeed = math.random( self.RTBMinSpeed, self.RTBMaxSpeed )
-    local ToAirbaseAngle = CurrentCoord:GetAngleDegrees( CurrentCoord:GetDirectionVec3( ToTargetCoord ) )
+    local ToAirbaseAngle = FromCoord:GetAngleDegrees( FromCoord:GetDirectionVec3( ToTargetCoord ) )
 
-    local Distance = CurrentCoord:Get2DDistance( ToTargetCoord )
+    local Distance = FromCoord:Get2DDistance( ToTargetCoord )
     
-    local ToAirbaseCoord = CurrentCoord:Translate( 5000, ToAirbaseAngle )
+    local ToAirbaseCoord = FromCoord:Translate( 5000, ToAirbaseAngle )
     if Distance < 5000 then
       self:E( "RTB and near the airbase!" )
       self:Home()
       return
     end
+    
+    --- Create a route point of type air.
+    local FromRTBRoutePoint = FromCoord:WaypointAir( 
+      self.PatrolAltType, 
+      POINT_VEC3.RoutePointType.TurningPoint, 
+      POINT_VEC3.RoutePointAction.TurningPoint, 
+      ToTargetSpeed, 
+      true 
+    )
+
     --- Create a route point of type air.
     local ToRTBRoutePoint = ToAirbaseCoord:WaypointAir( 
       self.PatrolAltType, 
@@ -595,21 +611,19 @@ function AI_AIR:onafterRTB( AIGroup, From, Event, To )
       true 
     )
 
-    EngageRoute[#EngageRoute+1] = ToRTBRoutePoint
+    EngageRoute[#EngageRoute+1] = FromRTBRoutePoint
     EngageRoute[#EngageRoute+1] = ToRTBRoutePoint
     
+    local Tasks = {}
+    Tasks[#Tasks+1] = AIGroup:TaskFunction( "AI_AIR.RTBRoute", self )
+    
+    EngageRoute[#EngageRoute].task = AIGroup:TaskCombo( Tasks )
+
     AIGroup:OptionROEHoldFire()
     AIGroup:OptionROTEvadeFire()
 
-    --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
-    AIGroup:WayPointInitialize( EngageRoute )
-  
-    local Tasks = {}
-    Tasks[#Tasks+1] = AIGroup:TaskFunction( "AI_AIR.RTBRoute", self )
-    EngageRoute[#EngageRoute].task = AIGroup:TaskCombo( Tasks )
-
     --- NOW ROUTE THE GROUP!
-    AIGroup:Route( EngageRoute, 0.5 )
+    AIGroup:Route( EngageRoute, self.TaskDelay )
       
   end
     
@@ -656,7 +670,7 @@ function AI_AIR.Resume( AIGroup, Fsm )
 
   AIGroup:I( { "AI_AIR.Resume:", AIGroup:GetName() } )
   if AIGroup:IsAlive() then
-    Fsm:__RTB( 0.5 )
+    Fsm:__RTB( Fsm.TaskDelay )
   end
   
 end
@@ -676,10 +690,19 @@ function AI_AIR:onafterRefuel( AIGroup, From, Event, To )
   
       --- Calculate the target route point.
       
-      local CurrentCoord = AIGroup:GetCoordinate()
+      local FromRefuelCoord = AIGroup:GetCoordinate()
       local ToRefuelCoord = Tanker:GetCoordinate()
       local ToRefuelSpeed = math.random( self.PatrolMinSpeed, self.PatrolMaxSpeed )
       
+      --- Create a route point of type air.
+      local FromRefuelRoutePoint = FromRefuelCoord:WaypointAir( 
+        self.PatrolAltType, 
+        POINT_VEC3.RoutePointType.TurningPoint, 
+        POINT_VEC3.RoutePointAction.TurningPoint, 
+        ToRefuelSpeed, 
+        true 
+      )
+
       --- Create a route point of type air.
       local ToRefuelRoutePoint = ToRefuelCoord:WaypointAir( 
         self.PatrolAltType, 
@@ -691,7 +714,7 @@ function AI_AIR:onafterRefuel( AIGroup, From, Event, To )
   
       self:F( { ToRefuelSpeed = ToRefuelSpeed } )
       
-      RefuelRoute[#RefuelRoute+1] = ToRefuelRoutePoint
+      RefuelRoute[#RefuelRoute+1] = FromRefuelRoutePoint
       RefuelRoute[#RefuelRoute+1] = ToRefuelRoutePoint
       
       AIGroup:OptionROEHoldFire()
@@ -702,7 +725,7 @@ function AI_AIR:onafterRefuel( AIGroup, From, Event, To )
       Tasks[#Tasks+1] = AIGroup:TaskFunction( self:GetClassName() .. ".Resume", self )
       RefuelRoute[#RefuelRoute].task = AIGroup:TaskCombo( Tasks )
   
-      AIGroup:Route( RefuelRoute, 0.5 )
+      AIGroup:Route( RefuelRoute, self.TaskDelay )
     else
       self:RTB()
     end
@@ -725,7 +748,7 @@ function AI_AIR:OnCrash( EventData )
   if self.Controllable:IsAlive() and EventData.IniDCSGroupName == self.Controllable:GetName() then
     self:E( self.Controllable:GetUnits() )
     if #self.Controllable:GetUnits() == 1 then
-      self:__Crash( 1, EventData )
+      self:__Crash( self.TaskDelay, EventData )
     end
   end
 end
@@ -735,7 +758,7 @@ end
 function AI_AIR:OnEjection( EventData )
 
   if self.Controllable:IsAlive() and EventData.IniDCSGroupName == self.Controllable:GetName() then
-    self:__Eject( 1, EventData )
+    self:__Eject( self.TaskDelay, EventData )
   end
 end
 
@@ -744,6 +767,6 @@ end
 function AI_AIR:OnPilotDead( EventData )
 
   if self.Controllable:IsAlive() and EventData.IniDCSGroupName == self.Controllable:GetName() then
-    self:__PilotDead( 1, EventData )
+    self:__PilotDead( self.TaskDelay, EventData )
   end
 end

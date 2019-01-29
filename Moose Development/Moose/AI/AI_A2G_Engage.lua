@@ -295,10 +295,10 @@ end
 --- @param Wrapper.Group#GROUP AIControllable
 function AI_A2G_ENGAGE.EngageRoute( AIGroup, Fsm )
 
-  AIGroup:F( { "AI_A2G_ENGAGE.EngageRoute:", AIGroup:GetName() } )
+  AIGroup:I( { "AI_A2G_ENGAGE.EngageRoute:", AIGroup:GetName() } )
   
   if AIGroup:IsAlive() then
-    Fsm:__Engage( 0.5 )
+    Fsm:__Engage( Fsm.TaskDelay )
   
     --local Task = AIGroup:TaskOrbitCircle( 4000, 400 )
     --AIGroup:SetTask( Task )
@@ -327,7 +327,7 @@ end
 function AI_A2G_ENGAGE:onafterAbort( AIGroup, From, Event, To )
   AIGroup:ClearTasks()
   self:Return()
-  self:__RTB( 0.5 )
+  self:__RTB( self.TaskDelay )
 end
 
 
@@ -372,7 +372,7 @@ function AI_A2G_ENGAGE:OnEventDead( EventData )
 
   if EventData.IniDCSUnit then
     if self.AttackUnits and self.AttackUnits[EventData.IniUnit] then
-      self:__Destroy( 1, EventData )
+      self:__Destroy( self.TaskDelay, EventData )
     end
   end  
 end

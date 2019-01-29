@@ -305,7 +305,7 @@ do -- AI_A2G_DISPATCHER
   -- 
   -- An reconnaissance network, is used to detect enemy ground targets, potentially group them into areas, and to understand the position, level of threat of the enemy.
   -- 
-  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia5.JPG)
+  -- ![Banner Image](..\Presentations\AI_A2G_DISPATCHER\Dia5.JPG)
   -- 
   -- As explained in the introduction, depending on the type of mission you want to achieve, different types of units can be applied to detect ground enemy targets.
   -- Ground based units are very useful to act as a reconnaissance, but they lack sometimes the visibility to detect targets at greater range.
@@ -493,9 +493,9 @@ do -- AI_A2G_DISPATCHER
   -- 
   -- You need to configure each squadron which task types you want it to perform. Read on ...
   -- 
-  -- ### 3.2. Squadrons enemy ground target **Engagement**.
+  -- ### 3.2. Squadrons enemy ground target **engagement types**.
   --   
-  -- There are two ways how targets can be engaged: directly upon call from the airfield, farp or carrier, or through a patrol.
+  -- There are two ways how targets can be engaged: directly **on call** from the airfield, farp or carrier, or through a **patrol**.
   -- 
   -- Patrols are extremely handy, as these will airborne your helicopters or airplanes in advance. They will patrol in defined zones outlined, 
   -- and will engage with the targets once commanded. If the patrol zone is close enough to the enemy ground targets, then the time required
@@ -505,7 +505,7 @@ do -- AI_A2G_DISPATCHER
   -- 
   -- The mission designer needs to carefully balance the need for patrols or the need for engagement on call from the airfields.
   -- 
-  -- ### 3.3. Squadron **on call engagement**.
+  -- ### 3.3. Squadron **on call** engagement.
   -- 
   -- So to make squadrons engage targets from the airfields, use the following methods:
   -- 
@@ -558,11 +558,349 @@ do -- AI_A2G_DISPATCHER
   --        A2GDispatcher:SetSquadronBaiPatrol( "Maykop BAI", PatrolZone, 800, 900, 50, 80, 250, 300 )
   --        A2GDispatcher:SetSquadronPatrolInterval( "Maykop BAI", 2, 30, 60, 1, "BAI" )
   -- 
+  -- 
+  -- ### 3.5. Set squadron take-off methods
+  -- 
+  -- Use the various SetSquadronTakeoff... methods to control how squadrons are taking-off from the home airfield, FARP or ship.
+  -- 
+  --   * @{#AI_A2G_DISPATCHER.SetSquadronTakeoff}() is the generic configuration method to control takeoff from the air, hot, cold or from the runway. See the method for further details.
+  --   * @{#AI_A2G_DISPATCHER.SetSquadronTakeoffInAir}() will spawn new aircraft from the squadron directly in the air.
+  --   * @{#AI_A2G_DISPATCHER.SetSquadronTakeoffFromParkingCold}() will spawn new aircraft in without running engines at a parking spot at the airfield.
+  --   * @{#AI_A2G_DISPATCHER.SetSquadronTakeoffFromParkingHot}() will spawn new aircraft in with running engines at a parking spot at the airfield.
+  --   * @{#AI_A2G_DISPATCHER.SetSquadronTakeoffFromRunway}() will spawn new aircraft at the runway at the airfield.
+  -- 
+  -- **The default landing method is to spawn new aircraft directly in the air.**
+  -- 
+  -- Use these methods to fine-tune for specific airfields that are known to create bottlenecks, or have reduced airbase efficiency.
+  -- The more and the longer aircraft need to taxi at an airfield, the more risk there is that:
+  -- 
+  --   * aircraft will stop waiting for each other or for a landing aircraft before takeoff.
+  --   * aircraft may get into a "dead-lock" situation, where two aircraft are blocking each other.
+  --   * aircraft may collide at the airbase.
+  --   * aircraft may be awaiting the landing of a plane currently in the air, but never lands ...
+  --   
+  -- Currently within the DCS engine, the airfield traffic coordination is erroneous and contains a lot of bugs.
+  -- If you experience while testing problems with aircraft take-off or landing, please use one of the above methods as a solution to workaround these issues!
+  -- 
+  -- This example sets the default takeoff method to be from the runway.
+  -- And for a couple of squadrons overrides this default method.
+  -- 
+  --      -- Setup the Takeoff methods
+  --      
+  --      -- The default takeoff
+  --      A2ADispatcher:SetDefaultTakeOffFromRunway()
+  --      
+  --      -- The individual takeoff per squadron
+  --      A2ADispatcher:SetSquadronTakeoff( "Mineralnye", AI_A2G_DISPATCHER.Takeoff.Air )
+  --      A2ADispatcher:SetSquadronTakeoffInAir( "Sochi" )
+  --      A2ADispatcher:SetSquadronTakeoffFromRunway( "Mozdok" )
+  --      A2ADispatcher:SetSquadronTakeoffFromParkingCold( "Maykop" )
+  --      A2ADispatcher:SetSquadronTakeoffFromParkingHot( "Novo" )  
+  -- 
+  -- 
+  -- ### 3.5.1. Set Squadron takeoff altitude when spawning new aircraft in the air.
+  -- 
+  -- In the case of the @{#AI_A2G_DISPATCHER.SetSquadronTakeoffInAir}() there is also an other parameter that can be applied.
+  -- That is modifying or setting the **altitude** from where planes spawn in the air.
+  -- Use the method @{#AI_A2G_DISPATCHER.SetSquadronTakeoffInAirAltitude}() to set the altitude for a specific squadron.
+  -- The default takeoff altitude can be modified or set using the method @{#AI_A2G_DISPATCHER.SetSquadronTakeoffInAirAltitude}().
+  -- As part of the method @{#AI_A2G_DISPATCHER.SetSquadronTakeoffInAir}() a parameter can be specified to set the takeoff altitude.
+  -- If this parameter is not specified, then the default altitude will be used for the squadron.
+  -- 
+  -- ### 3.5.2. Set Squadron takeoff interval.
+  -- 
+  -- The different types of available airfields have different amounts of available launching platforms:
+  -- 
+  --   - Airbases typically have a lot of platforms.
+  --   - FARPs have 4 platforms.
+  --   - Ships have 2 to 4 platforms.
+  --   
+  -- Depending on the demand of requested takeoffs by the A2G dispatcher, an airfield can become overloaded. Too many aircraft need to be taken
+  -- off at the same time, which will result in clutter as described above. In order to better control this behaviour, a takeoff scheduler is implemented,
+  -- which can be used to control how many aircraft are ordered for takeoff between specific time intervals.
+  -- The takeff intervals can be specified per squadron, which make sense, as each squadron have a "home" airfield.
+  -- 
+  -- For this purpose, the method @{#AI_A2G_DISPATCHER.SetSquadronTakeOffInterval}() can be used to specify the takeoff intervals of 
+  -- aircraft groups per squadron to avoid cluttering of aircraft at airbases.
+  -- This is especially useful for FARPs and ships. Each takeoff dispatch is queued by the dispatcher and when the interval time
+  -- has been reached, a new group will be spawned or activated for takeoff.
+  -- 
+  -- The interval needs to be estimated, and depends on the time needed for the aircraft group to actually depart from the launch platform, and
+  -- the way how the aircraft are starting up. Cold starts take the longest duration, hot starts a few seconds, and runway takeoff also a few seconds for FARPs and ships.
+  -- 
+  -- See the underlying example:
+  -- 
+  --      -- Imagine a squadron launched from a FARP, with a grouping of 4.
+  --      -- Aircraft will cold start from the FARP, and thus, a maximum of 4 aircraft can be launched at the same time.
+  --      -- Additionally, depending on the group composition of the aircraft, defending units will be ordered for takeoff together.
+  --      -- It takes about 3 to 4 minutes to takeoff helicopters from FARPs in cold start.
+  --      A2ADispatcher:SetSquadronTakeOffInterval( "Mineralnye", 60 * 4 )
+  -- 
+  -- 
+  -- ### 3.6. Set squadron landing methods
+  -- 
+  -- In analogy with takeoff, the landing methods are to control how squadrons land at the airfield:
+  -- 
+  --   * @{#AI_A2G_DISPATCHER.SetSquadronLanding}() is the generic configuration method to control landing, namely despawn the aircraft near the airfield in the air, right after landing, or at engine shutdown.
+  --   * @{#AI_A2G_DISPATCHER.SetSquadronLandingNearAirbase}() will despawn the returning aircraft in the air when near the airfield.
+  --   * @{#AI_A2G_DISPATCHER.SetSquadronLandingAtRunway}() will despawn the returning aircraft directly after landing at the runway.
+  --   * @{#AI_A2G_DISPATCHER.SetSquadronLandingAtEngineShutdown}() will despawn the returning aircraft when the aircraft has returned to its parking spot and has turned off its engines.
+  -- 
+  -- You can use these methods to minimize the airbase coodination overhead and to increase the airbase efficiency.
+  -- When there are lots of aircraft returning for landing, at the same airbase, the takeoff process will be halted, which can cause a complete failure of the
+  -- A2A defense system, as no new CAP or GCI planes can takeoff.
+  -- Note that the method @{#AI_A2G_DISPATCHER.SetSquadronLandingNearAirbase}() will only work for returning aircraft, not for damaged or out of fuel aircraft.
+  -- Damaged or out-of-fuel aircraft are returning to the nearest friendly airbase and will land, and are out of control from ground control.
+  -- 
+  -- This example defines the default landing method to be at the runway.
+  -- And for a couple of squadrons overrides this default method.
+  -- 
+  --      -- Setup the Landing methods
+  -- 
+  --      -- The default landing method
+  --      A2ADispatcher:SetDefaultLandingAtRunway()
+  -- 
+  --      -- The individual landing per squadron
+  --      A2ADispatcher:SetSquadronLandingAtRunway( "Mineralnye" )
+  --      A2ADispatcher:SetSquadronLandingNearAirbase( "Sochi" )
+  --      A2ADispatcher:SetSquadronLandingAtEngineShutdown( "Mozdok" )
+  --      A2ADispatcher:SetSquadronLandingNearAirbase( "Maykop" )
+  --      A2ADispatcher:SetSquadronLanding( "Novo", AI_A2G_DISPATCHER.Landing.AtRunway )
+  -- 
+  -- 
+  -- ### 3.7. Set squadron **grouping**.
+  -- 
+  -- Use the method @{#AI_A2G_DISPATCHER.SetSquadronGrouping}() to set the grouping of aircraft when spawned in.
+  -- 
+  -- ![Banner Image](..\Presentations\AI_A2G_DISPATCHER\Dia12.JPG)
+  -- 
+  -- In the case of **on call** engagement, the @{#AI_A2G_DISPATCHER.SetSquadronGrouping}() method has additional behaviour. 
+  -- When there aren't enough patrol flights airborne, a on call will be initiated for the remaining
+  -- targets to be engaged. Depending on the grouping parameter, the spawned flights for on call aircraft are grouped into this setting.   
+  -- For example with a group setting of 2, if 3 targets are detected and cannot be engaged by the available patrols or any airborne flight, 
+  -- an additional on call flight needs to be started.
+  -- 
+  -- The **grouping value is set for a Squadron**, and can be **dynamically adjusted** during mission execution, so to adjust the defense flights grouping when the tactical situation changes.
+  -- 
+  -- ### 3.8. Set the squadron **overhead** to balance the effectiveness of the A2G defenses.
+  -- 
+  -- The effectiveness can be set with the **overhead parameter**. This is a number that is used to calculate the amount of Units that dispatching command will allocate to GCI in surplus of detected amount of units.
+  -- The **default value** of the overhead parameter is 1.0, which means **equal balance**.
+  -- 
+  -- ![Banner Image](..\Presentations\AI_A2G_DISPATCHER\Dia11.JPG)
+  -- 
+  -- However, depending on the (type of) aircraft (strength and payload) in the squadron and the amount of resources available, this parameter can be changed.
+  -- 
+  -- The @{#AI_A2G_DISPATCHER.SetSquadronOverhead}() method can be used to tweak the defense strength,
+  -- taking into account the plane types of the squadron. 
+  -- 
+  -- For example, a A-10C with full long-distance A2G missiles payload, may still be less effective than a Su-23 with short range A2G missiles...
+  -- So in this case, one may want to use the @{#AI_A2G_DISPATCHER.SetOverhead}() method to allocate more defending planes as the amount of detected attacking ground units.
+  -- The overhead must be given as a decimal value with 1 as the neutral value, which means that overhead values: 
+  -- 
+  --   * Higher than 1.0, for example 1.5, will increase the defense unit amounts. For 4 attacking ground units detected, 6 aircraft will be spawned.
+  --   * Lower than 1, for example 0.75, will decrease the defense unit amounts. For 4 attacking ground units detected, only 3 aircraft will be spawned.
+  -- 
+  -- The amount of defending units is calculated by multiplying the amount of detected attacking ground units as part of the detected group 
+  -- multiplied by the overhead parameter, and rounded up to the smallest integer. 
+  -- 
+  -- Typically, for A2G defenses, values small than 1 will be used. Here are some good values for a couple of aircraft to support CAS operations:
+  -- 
+  --   - A-10C: 0.15
+  --   - Su-34: 0.15
+  --   - A-10A: 0.25
+  --   - SU-25T: 0.10
+  -- 
+  -- So generically, the amount of missiles that an aircraft can take will determine its attacking effectiveness. The longer the range of the missiles, 
+  -- the less risk that the defender may be destroyed by the enemy, thus, the less aircraft needs to be activated in a defense.
+  -- 
+  -- The **overhead value is set for a Squadron**, and can be **dynamically adjusted** during mission execution, so to adjust the defense overhead when the tactical situation changes.
+  --
+  -- ### 3.8. Set the squadron **engage limit**.
+  -- 
+  -- To limit the amount of aircraft to defend against a large group of intruders, an **engage limit** can be defined per squadron.
+  -- This limit will avoid an extensive amount of aircraft to engage with the enemy if the attacking ground forces are enormous.
+  -- 
+  -- Use the method @{#AI_A2G_DISPATCHER.SetSquadronEngageLimit}() to limit the amount of aircraft that will engage with the enemy, per squadron.
+  --
+  -- ## 4. Set the **fuel treshold**.
+  -- 
+  -- When aircraft get **out of fuel** to a certain %-tage, which is by default **15% (0.15)**, there are two possible actions that can be taken:
+  --  - The aircraft will go RTB, and will be replaced with a new aircraft if possible.
+  --  - The aircraft will refuel at a tanker, if a tanker has been specified for the squadron.
+  -- 
+  -- Use the method @{#AI_A2G_DISPATCHER.SetSquadronFuelThreshold}() to set the **squadron fuel treshold** of the aircraft for all squadrons.
+  -- 
+  -- ## 6. Other configuration options
+  -- 
+  -- ### 6.1. Set a tactical display panel.
+  -- 
+  -- Every 30 seconds, a tactical display panel can be shown that illustrates what the status is of the different groups controlled by AI_A2G_DISPATCHER.
+  -- Use the method @{#AI_A2G_DISPATCHER.SetTacticalDisplay}() to switch on the tactical display panel. The default will not show this panel.
+  -- Note that there may be some performance impact if this panel is shown.
+  -- 
+  -- ## 10. Default settings.
+  -- 
+  -- Default settings configure the standard behaviour of the squadrons. 
+  -- This section a good overview of the different parameters that setup the behaviour of **ALL** the squadrons by default.
+  -- Note that default behaviour can be tweaked, and thus, this will change the behaviour of all the squadrons.
+  -- Unless there is a specific behaviour set for a specific squadron, the default configured behaviour will be followed.
+  -- 
+  -- ## 10.1. Default **takeoff** behaviour.
+  -- 
+  -- The default takeoff behaviour is set to **in the air**, which means that new spawned aircraft will be spawned directly in the air above the airbase by default.
+  -- 
+  -- **The default takeoff method can be set for ALL squadrons that don't have an individual takeoff method configured.**
+  -- 
+  --   * @{#AI_A2G_DISPATCHER.SetDefaultTakeoff}() is the generic configuration method to control takeoff by default from the air, hot, cold or from the runway. See the method for further details.
+  --   * @{#AI_A2G_DISPATCHER.SetDefaultTakeoffInAir}() will spawn by default new aircraft from the squadron directly in the air.
+  --   * @{#AI_A2G_DISPATCHER.SetDefaultTakeoffFromParkingCold}() will spawn by default new aircraft in without running engines at a parking spot at the airfield.
+  --   * @{#AI_A2G_DISPATCHER.SetDefaultTakeoffFromParkingHot}() will spawn by default new aircraft in with running engines at a parking spot at the airfield.
+  --   * @{#AI_A2G_DISPATCHER.SetDefaultTakeoffFromRunway}() will spawn by default new aircraft at the runway at the airfield.
+  -- 
+  -- ## 10.2. Default landing behaviour.
+  -- 
+  -- The default landing behaviour is set to **near the airbase**, which means that returning airplanes will be despawned directly in the air by default.
+  -- 
+  -- The default landing method can be set for ALL squadrons that don't have an individual landing method configured.
+  -- 
+  --   * @{#AI_A2G_DISPATCHER.SetDefaultLanding}() is the generic configuration method to control by default landing, namely despawn the aircraft near the airfield in the air, right after landing, or at engine shutdown.
+  --   * @{#AI_A2G_DISPATCHER.SetDefaultLandingNearAirbase}() will despawn by default the returning aircraft in the air when near the airfield.
+  --   * @{#AI_A2G_DISPATCHER.SetDefaultLandingAtRunway}() will despawn by default the returning aircraft directly after landing at the runway.
+  --   * @{#AI_A2G_DISPATCHER.SetDefaultLandingAtEngineShutdown}() will despawn by default the returning aircraft when the aircraft has returned to its parking spot and has turned off its engines.
+  -- 
+  -- ## 10.3. Default **overhead**.
+  -- 
+  -- The default overhead is set to **0.25**. That essentially means that for each 4 ground enemies there will be 1 aircraft dispatched.
+  -- 
+  -- The default overhead value can be set for ALL squadrons that don't have an individual overhead value configured.
+  --
+  -- Use the @{#AI_A2G_DISPATCHER.SetDefaultOverhead}() method can be used to set the default overhead or defense strength for ALL squadrons.
+  --
+  -- ## 10.4. Default **grouping**.
+  -- 
+  -- The default grouping is set to **one airplane**. That essentially means that there won't be any grouping applied by default.
+  -- 
+  -- The default grouping value can be set for ALL squadrons that don't have an individual grouping value configured.
+  -- 
+  -- Use the method @{#AI_A2G_DISPATCHER.SetDefaultGrouping}() to set the **default grouping** of spawned airplanes for all squadrons.
+  -- 
+  -- ## 10.5. Default RTB fuel treshold.
+  -- 
+  -- When an airplane gets **out of fuel** to a certain %-tage, which is **15% (0.15)**, it will go RTB, and will be replaced with a new airplane when applicable.
+  -- 
+  -- Use the method @{#AI_A2G_DISPATCHER.SetDefaultFuelThreshold}() to set the **default fuel treshold** of spawned airplanes for all squadrons.
+  -- 
+  -- ## 10.6. Default RTB damage treshold.
+  -- 
+  -- When an airplane is **damaged** to a certain %-tage, which is **40% (0.40)**, it will go RTB, and will be replaced with a new airplane when applicable.
+  -- 
+  -- Use the method @{#AI_A2G_DISPATCHER.SetDefaultDamageThreshold}() to set the **default damage treshold** of spawned airplanes for all squadrons.
+  -- 
+  -- ## 10.7. Default settings for **patrol**.
+  -- 
+  -- ### 10.7.1. Default **patrol time Interval**.
+  -- 
+  -- Patrol dispatching is time event driven, and will evaluate in random time intervals if a new patrol needs to be dispatched.
+  -- 
+  -- The default patrol time interval is between **180** and **600** seconds.
+  -- 
+  -- Use the method @{#AI_A2G_DISPATCHER.SetDefaultPatrolTimeInterval}() to set the **default patrol time interval** of dispatched aircraft for ALL squadrons.
+  --   
+  -- Note that you can still change the patrol limit and patrol time intervals for each patrol individually using 
+  -- the @{#AI_A2G_DISPATCHER.SetSquadronPatrolTimeInterval}() method.
+  -- 
+  -- ### 10.7.2. Default **patrol limit**.
+  -- 
+  -- Multiple patrol can be airborne at the same time for one squadron, which is controlled by the **patrol limit**.
+  -- The **default patrol limit** is 1 patrol per squadron to be airborne at the same time.
+  -- Note that the default patrol limit is used when a squadron patrol is defined, and cannot be changed afterwards.
+  -- So, ensure that you set the default patrol limit **before** you define or setup the squadron patrol.
+  -- 
+  -- Use the method @{#AI_A2G_DISPATCHER.SetDefaultPatrolTimeInterval}() to set the **default patrol time interval** of dispatched aircraft patrols for all squadrons.  
+  -- Note that you can still change the patrol limit and patrol time intervals for each patrol individually using 
+  -- the @{#AI_A2G_DISPATCHER.SetSquadronPatrolTimeInterval}() method.
+  -- 
+  -- ## 10.7.3. Default tanker for refuelling when executing CAP.
+  -- 
+  -- Instead of sending CAP to RTB when out of fuel, you can let CAP refuel in mid air using a tanker.
+  -- This greatly increases the efficiency of your CAP operations.
+  -- 
+  -- In the mission editor, setup a group with task Refuelling. A tanker unit of the correct coalition will be automatically selected.
+  -- Then, use the method @{#AI_A2G_DISPATCHER.SetDefaultTanker}() to set the tanker for the dispatcher.
+  -- Use the method @{#AI_A2G_DISPATCHER.SetDefaultFuelThreshold}() to set the %-tage left in the defender airplane tanks when a refuel action is needed.
+  -- 
+  -- When the tanker specified is alive and in the air, the tanker will be used for refuelling.
+  -- 
+  -- For example, the following setup will set the default refuel tanker to "Tanker":
+  -- 
+  -- ![Banner Image](..\Presentations\AI_A2G_DISPATCHER\AI_A2G_DISPATCHER-ME_11.JPG)
+  -- 
+  --      -- Define the CAP
+  --      A2ADispatcher:SetSquadron( "Sochi", AIRBASE.Caucasus.Sochi_Adler, { "SQ CCCP SU-34" }, 20 )
+  --      A2ADispatcher:SetSquadronCap( "Sochi", ZONE:New( "PatrolZone" ), 4000, 8000, 600, 800, 1000, 1300 )
+  --      A2ADispatcher:SetSquadronCapInterval("Sochi", 2, 30, 600, 1 ) 
+  --      A2ADispatcher:SetSquadronGci( "Sochi", 900, 1200 )
+  --      
+  --      -- Set the default tanker for refuelling to "Tanker", when the default fuel treshold has reached 90% fuel left.
+  --      A2ADispatcher:SetDefaultFuelThreshold( 0.9 )
+  --      A2ADispatcher:SetDefaultTanker( "Tanker" )
+  --  
+  -- ## 10.8. Default settings for GCI.
+  -- 
+  -- ## 10.8.1. Optimal intercept point calculation.
+  -- 
+  -- When intruders are detected, the intrusion path of the attackers can be monitored by the EWR.  
+  -- Although defender planes might be on standby at the airbase, it can still take some time to get the defenses up in the air if there aren't any defenses airborne.
+  -- This time can easily take 2 to 3 minutes, and even then the defenders still need to fly towards the target, which takes also time.
+  -- 
+  -- Therefore, an optimal **intercept point** is calculated which takes a couple of parameters:
+  -- 
+  --   * The average bearing of the intruders for an amount of seconds.
+  --   * The average speed of the intruders for an amount of seconds.
+  --   * An assumed time it takes to get planes operational at the airbase.
+  -- 
+  -- The **intercept point** will determine:
+  -- 
+  --   * If there are any friendlies close to engage the target. These can be defenders performing CAP or defenders in RTB.
+  --   * The optimal airbase from where defenders will takeoff for GCI.
+  -- 
+  -- Use the method @{#AI_A2G_DISPATCHER.SetIntercept}() to modify the assumed intercept delay time to calculate a valid interception.
+  -- 
+  -- ## 10.8.2. Default Disengage Radius.
+  -- 
+  -- The radius to **disengage any target** when the **distance** of the defender to the **home base** is larger than the specified meters.
+  -- The default Disengage Radius is **300km** (300000 meters). Note that the Disengage Radius is applicable to ALL squadrons!
+  --   
+  -- Use the method @{#AI_A2G_DISPATCHER.SetDisengageRadius}() to modify the default Disengage Radius to another distance setting.
+  -- 
+  -- ## 11. Airbase capture:
+  -- 
+  -- Different squadrons can be located at one airbase.
+  -- If the airbase gets captured, that is, when there is an enemy unit near the airbase, and there aren't anymore friendlies at the airbase, the airbase will change coalition ownership.
+  -- As a result, the GCI and CAP will stop!
+  -- However, the squadron will still stay alive. Any airplane that is airborne will continue its operations until all airborne airplanes
+  -- of the squadron will be destroyed. This to keep consistency of air operations not to confuse the players.
+  -- 
+  -- 
+  -- 
+  -- 
   -- @field #AI_A2G_DISPATCHER
   AI_A2G_DISPATCHER = {
     ClassName = "AI_A2G_DISPATCHER",
     Detection = nil,
   }
+
+  --- Definition of a Squadron.
+  -- @type AI_A2G_DISPATCHER.Squadron
+  -- @field #string Name The Squadron name.
+  -- @field Wrapper.Airbase#AIRBASE Airbase The home airbase.
+  -- @field #string AirbaseName The name of the home airbase.
+  -- @field Core.Spawn#SPAWN Spawn The spawning object.
+  -- @field #number ResourceCount The number of resources available.
+  -- @field #list<#string> TemplatePrefixes The list of template prefixes.
+  -- @field #boolean Captured true if the squadron is captured. 
+  -- @field #number Overhead The overhead for the squadron. 
 
 
   --- List of defense coordinates.
@@ -586,6 +924,32 @@ do -- AI_A2G_DISPATCHER
     AtRunway = 2,
     AtEngineShutdown = 3,
   }
+  
+  --- A defense queue item description
+  -- @type AI_A2G_DISPATCHER.DefenseQueueItem
+  -- @field Squadron
+  -- @field #AI_A2G_DISPATCHER.Squadron DefenderSquadron The squadron in the queue.
+  -- @field DefendersNeeded
+  -- @field Defense
+  -- @field DefenseTaskType
+  -- @field Functional.Detection#DETECTION_BASE AttackerDetection
+  -- @field DefenderGrouping
+  -- @field #string SquadronName The name of the squadron.
+  
+  --- Queue of planned defenses to be launched.
+  -- This queue exists because defenses must be launched on FARPS, or in the air, or on an airbase, or on carriers.
+  -- And some of these platforms have very limited amount of "launching" platforms.
+  -- Therefore, this queue concept is introduced that queues each defender request.
+  -- Depending on the location of the launching site, the queued defenders will be launched at varying time intervals.
+  -- This guarantees that launched defenders are also directly existing ...
+  -- @type AI_A2G_DISPATCHER.DefenseQueue
+  -- @list<#AI_A2G_DISPATCHER.DefenseQueueItem> DefenseQueueItem A list of all defenses being queued ...
+  
+  --- @field #AI_A2G_DISPATCHER.DefenseQueue DefenseQueue
+  AI_A2G_DISPATCHER.DefenseQueue = {}
+  
+  
+  
   
   --- AI_A2G_DISPATCHER constructor.
   -- This is defining the A2G DISPATCHER for one coaliton.
@@ -759,6 +1123,8 @@ do -- AI_A2G_DISPATCHER
     
     self:SetDefenseReactivityMedium()
     
+    self.TakeoffScheduleID = self:ScheduleRepeat( 10, 10, 0, nil, self.ResourceTakeoff, self )
+    
     self:__Start( 5 )
     
     return self
@@ -774,14 +1140,14 @@ do -- AI_A2G_DISPATCHER
     for SquadronName, DefenderSquadron in pairs( self.DefenderSquadrons ) do
       DefenderSquadron.Resource = {}
       for Resource = 1, DefenderSquadron.ResourceCount or 0 do
-        self:ParkDefender( DefenderSquadron )
+        self:ResourcePark( DefenderSquadron )
       end
     end
   end
   
 
   --- @param #AI_A2G_DISPATCHER self
-  function AI_A2G_DISPATCHER:ParkDefender( DefenderSquadron )
+  function AI_A2G_DISPATCHER:ResourcePark( DefenderSquadron )
     local TemplateID = math.random( 1, #DefenderSquadron.Spawn )
     local Spawn = DefenderSquadron.Spawn[ TemplateID ] -- Core.Spawn#SPAWN
     Spawn:InitGrouping( 1 )
@@ -838,7 +1204,7 @@ do -- AI_A2G_DISPATCHER
           self:RemoveDefenderFromSquadron( Squadron, Defender )
         end
         DefenderUnit:Destroy()
-        self:ParkDefender( Squadron, Defender )
+        self:ResourcePark( Squadron, Defender )
         return
       end
       if DefenderUnit:GetLife() ~= DefenderUnit:GetLife0() then
@@ -865,11 +1231,11 @@ do -- AI_A2G_DISPATCHER
           self:RemoveDefenderFromSquadron( Squadron, Defender )
         end
         DefenderUnit:Destroy()
-        self:ParkDefender( Squadron, Defender )
+        self:ResourcePark( Squadron, Defender )
       end
     end 
   end
-  
+
   do -- Manage the defensive behaviour
   
     --- @param #AI_A2G_DISPATCHER self
@@ -1352,7 +1718,6 @@ do -- AI_A2G_DISPATCHER
   -- @return #AI_A2G_DISPATCHER
   function AI_A2G_DISPATCHER:SetSquadron( SquadronName, AirbaseName, TemplatePrefixes, ResourceCount )
   
-  
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
 
     local DefenderSquadron = self.DefenderSquadrons[SquadronName]
@@ -1379,6 +1744,8 @@ do -- AI_A2G_DISPATCHER
     DefenderSquadron.TemplatePrefixes = TemplatePrefixes
     DefenderSquadron.Captured = false -- Not captured. This flag will be set to true, when the airbase where the squadron is located, is captured.
 
+    self:SetSquadronTakeoffInterval( SquadronName, 0 )
+   
     self:F( { Squadron = {SquadronName, AirbaseName, TemplatePrefixes, ResourceCount } } )
     
     return self
@@ -1448,6 +1815,28 @@ do -- AI_A2G_DISPATCHER
     return nil
     
   end
+
+  --- @param #AI_A2G_DISPATCHER self
+  -- @param #string SquadronName The squadron name.
+  -- @param #number TakeoffInterval  Only Takeoff new units each specified interval in seconds in 10 seconds steps.
+  -- @usage
+  -- 
+  --        -- Set the Squadron Takeoff interval every 60 seconds for squadron "SQ50", which is good for a FARP cold start.
+  --        A2GDispatcher:SetSquadronTakeoffInterval( "SQ50", 60 )
+  --        
+  function AI_A2G_DISPATCHER:SetSquadronTakeoffInterval( SquadronName, TakeoffInterval )
+
+    self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
+    
+    local DefenderSquadron = self:GetSquadron( SquadronName )
+
+    if DefenderSquadron then
+      DefenderSquadron.TakeoffInterval = TakeoffInterval or 0
+      DefenderSquadron.TakeoffTime = 0
+    end
+    
+  end
+  
 
   
   --- Set the squadron patrol parameters for a specific task type.  
@@ -2806,6 +3195,7 @@ do -- AI_A2G_DISPATCHER
           if DefenderTaskTarget and DefenderTaskTarget.Index == AttackerDetection.Index then
           
             local SquadronOverhead = self:GetSquadronOverhead( DefenderSquadronName )
+            self:F( { SquadronOverhead = SquadronOverhead } )
             if DefenderSize then
               DefendersEngaged = DefendersEngaged + DefenderSize
               DefendersMissing = DefendersMissing - DefenderSize / SquadronOverhead
@@ -2818,6 +3208,15 @@ do -- AI_A2G_DISPATCHER
       end
 
       
+    end
+
+    for QueueID, QueueItem in pairs( self.DefenseQueue ) do
+      local QueueItem = QueueItem -- #AI_A2G_DISPATCHER.DefenseQueueItem
+      if QueueItem.AttackerDetection and QueueItem.AttackerDetection.ItemID == AttackerDetection.ItemID then
+        DefendersMissing = DefendersMissing - QueueItem.DefendersNeeded / QueueItem.DefenderSquadron.Overhead
+        --DefendersEngaged = DefendersEngaged + QueueItem.DefenderGrouping
+      end
+      self:F( { QueueItemName = QueueItem.Defense, QueueItem_ItemID = QueueItem.AttackerDetection.ItemID, DetectedItem = AttackerDetection.ItemID, DefendersMissing = DefendersMissing } )
     end
 
     self:F( { DefenderCount = DefendersEngaged } )
@@ -2864,7 +3263,7 @@ do -- AI_A2G_DISPATCHER
         break
       end
     end
-
+    
     return Friendlies
   end
 
@@ -2950,72 +3349,264 @@ do -- AI_A2G_DISPATCHER
   -- @param #AI_A2G_DISPATCHER self
   function AI_A2G_DISPATCHER:onafterPatrol( From, Event, To, SquadronName, DefenseTaskType )
   
-    self:F({SquadronName = SquadronName})
-    
     local DefenderSquadron, Patrol = self:CanPatrol( SquadronName, DefenseTaskType )
     
     if Patrol then
-
-      local DefenderPatrol, DefenderGrouping = self:ResourceActivate( DefenderSquadron )    
-      
-      if DefenderPatrol then
-
-        local AI_A2G_PATROL = { SEAD = AI_A2G_SEAD, BAI = AI_A2G_BAI, CAS = AI_A2G_CAS }
-        
-        local Fsm = AI_A2G_PATROL[DefenseTaskType]:New( DefenderPatrol, Patrol.EngageMinSpeed, Patrol.EngageMaxSpeed, Patrol.EngageFloorAltitude, Patrol.EngageCeilingAltitude, Patrol.Zone, Patrol.PatrolFloorAltitude, Patrol.PatrolCeilingAltitude, Patrol.PatrolMinSpeed, Patrol.PatrolMaxSpeed, Patrol.AltType )
-        Fsm:SetDispatcher( self )
-        Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
-        Fsm:SetFuelThreshold( DefenderSquadron.FuelThreshold or self.DefenderDefault.FuelThreshold, 60 )
-        Fsm:SetDamageThreshold( self.DefenderDefault.DamageThreshold )
-        Fsm:SetDisengageRadius( self.DisengageRadius )
-        Fsm:SetTanker( DefenderSquadron.TankerName or self.DefenderDefault.TankerName )
-        Fsm:Start()
-
-        self:SetDefenderTask( SquadronName, DefenderPatrol, DefenseTaskType, Fsm, nil, DefenderGrouping )
-
-        function Fsm:onafterTakeoff( Defender, From, Event, To )
-          self:F({"Patrol Birth", Defender:GetName()})
-          --self:GetParent(self).onafterBirth( self, Defender, From, Event, To )
-          
-          local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
-          local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-
-          if Squadron then
-            Fsm:__Patrol( 2 ) -- Start Patrolling
-          end
-        end
-
-        function Fsm:onafterRTB( Defender, From, Event, To )
-          self:F({"Patrol RTB", Defender:GetName()})
-          self:GetParent(self).onafterRTB( self, Defender, From, Event, To )
-          local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
-          Dispatcher:ClearDefenderTaskTarget( Defender )
-        end
-
-        --- @param #AI_A2G_DISPATCHER self
-        function Fsm:onafterHome( Defender, From, Event, To, Action )
-          self:F({"Patrol Home", Defender:GetName()})
-          self:GetParent(self).onafterHome( self, Defender, From, Event, To )
-          
-          local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
-          local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-
-          if Action and Action == "Destroy" then
-            Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
-            Defender:Destroy()
-          end
-          
-          if Dispatcher:GetSquadronLanding( Squadron.Name ) == AI_A2G_DISPATCHER.Landing.NearAirbase then
-            Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
-            Defender:Destroy()
-            Dispatcher:ParkDefender( Squadron, Defender )
-          end
-        end
-      end
+      self:ResourceQueue( true, DefenderSquadron, nil, Patrol, DefenseTaskType, nil, SquadronName )
     end
     
   end
 
+  ---
+  -- @param #AI_A2G_DISPATCHER self
+  function AI_A2G_DISPATCHER:ResourceQueue( Patrol, DefenderSquadron, DefendersNeeded, Defense, DefenseTaskType, AttackerDetection, SquadronName )
+
+  self:F( { DefenderSquadron, DefendersNeeded, Defense, DefenseTaskType, AttackerDetection, SquadronName } )
+
+    local DefenseQueueItem = {} -- #AI_A2G_DISPATCHER.DefenderQueueItem
+
+
+    DefenseQueueItem.Patrol = Patrol
+    DefenseQueueItem.DefenderSquadron = DefenderSquadron
+    DefenseQueueItem.DefendersNeeded = DefendersNeeded
+    DefenseQueueItem.Defense = Defense
+    DefenseQueueItem.DefenseTaskType = DefenseTaskType
+    DefenseQueueItem.AttackerDetection = AttackerDetection
+    DefenseQueueItem.SquadronName  = SquadronName
+    
+    table.insert( self.DefenseQueue, DefenseQueueItem )
+    self:F( { QueueItems = #self.DefenseQueue } )
+
+  end
+  
+  ---
+  -- @param #AI_A2G_DISPATCHER self
+  function AI_A2G_DISPATCHER:ResourceTakeoff()
+
+    for DefenseQueueID, DefenseQueueItem in pairs( self.DefenseQueue ) do
+      self:F( { DefenseQueueID } )
+    end
+  
+    for SquadronName, Squadron in pairs( self.DefenderSquadrons ) do
+      
+      if #self.DefenseQueue > 0 then
+
+        self:F( { SquadronName, Squadron.Name, Squadron.TakeoffTime, Squadron.TakeoffInterval, timer.getTime() } )
+      
+        local DefenseQueueItem = self.DefenseQueue[1]
+        self:F( {DefenderSquadron=DefenseQueueItem.DefenderSquadron} )
+        
+        if DefenseQueueItem.SquadronName == SquadronName then
+
+          if Squadron.TakeoffTime + Squadron.TakeoffInterval < timer.getTime() then
+            Squadron.TakeoffTime = timer.getTime()
+  
+            if DefenseQueueItem.Patrol == true then
+              self:ResourcePatrol( DefenseQueueItem.DefenderSquadron, DefenseQueueItem.DefendersNeeded, DefenseQueueItem.Defense, DefenseQueueItem.DefenseTaskType, DefenseQueueItem.AttackerDetection, DefenseQueueItem.SquadronName )
+            else
+              self:ResourceEngage( DefenseQueueItem.DefenderSquadron, DefenseQueueItem.DefendersNeeded, DefenseQueueItem.Defense, DefenseQueueItem.DefenseTaskType, DefenseQueueItem.AttackerDetection, DefenseQueueItem.SquadronName )
+            end
+            table.remove( self.DefenseQueue, 1 )
+          end
+        end
+      end
+      
+    end
+  
+  end
+
+  ---
+  -- @param #AI_A2G_DISPATCHER self
+  function AI_A2G_DISPATCHER:ResourcePatrol( DefenderSquadron, DefendersNeeded, Patrol, DefenseTaskType, AttackerDetection, SquadronName )
+
+
+    self:F({DefenderSquadron=DefenderSquadron})
+    self:F({DefendersNeeded=DefendersNeeded})
+    self:F({Patrol=Patrol})
+    self:F({DefenseTaskType=DefenseTaskType})
+    self:F({AttackerDetection=AttackerDetection})
+    self:F({SquadronName=SquadronName})
+    
+    local DefenderGroup, DefenderGrouping = self:ResourceActivate( DefenderSquadron, DefendersNeeded )    
+
+    if DefenderGroup then
+
+      local AI_A2G_PATROL = { SEAD = AI_A2G_SEAD, BAI = AI_A2G_BAI, CAS = AI_A2G_CAS }
+      
+      local Fsm = AI_A2G_PATROL[DefenseTaskType]:New( DefenderGroup, Patrol.EngageMinSpeed, Patrol.EngageMaxSpeed, Patrol.EngageFloorAltitude, Patrol.EngageCeilingAltitude, Patrol.Zone, Patrol.PatrolFloorAltitude, Patrol.PatrolCeilingAltitude, Patrol.PatrolMinSpeed, Patrol.PatrolMaxSpeed, Patrol.AltType )
+      Fsm:SetDispatcher( self )
+      Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
+      Fsm:SetFuelThreshold( DefenderSquadron.FuelThreshold or self.DefenderDefault.FuelThreshold, 60 )
+      Fsm:SetDamageThreshold( self.DefenderDefault.DamageThreshold )
+      Fsm:SetDisengageRadius( self.DisengageRadius )
+      Fsm:SetTanker( DefenderSquadron.TankerName or self.DefenderDefault.TankerName )
+      Fsm:Start()
+
+      self:SetDefenderTask( SquadronName, DefenderGroup, DefenseTaskType, Fsm, nil, DefenderGrouping )
+      
+      function Fsm:onafterTakeoff( Defender, From, Event, To )
+        self:F({"Defender Birth", Defender:GetName()})
+        --self:GetParent(self).onafterBirth( self, Defender, From, Event, To )
+        
+        local DefenderName = Defender:GetName()
+        local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
+        local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
+        
+        if Squadron then
+          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " airborne." )
+          Fsm:Patrol() -- Engage on the TargetSetUnit
+        end
+      end
+
+      function Fsm:onafterRTB( Defender, From, Event, To )
+        self:F({"Defender RTB", Defender:GetName()})
+        self:GetParent(self).onafterRTB( self, Defender, From, Event, To )
+        
+        local DefenderName = Defender:GetName()
+        local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
+        local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
+        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " returning." )
+
+        Dispatcher:ClearDefenderTaskTarget( Defender )
+      end
+
+      --- @param #AI_A2G_DISPATCHER self
+      function Fsm:onafterLostControl( Defender, From, Event, To )
+        self:F({"Defender LostControl", Defender:GetName()})
+        self:GetParent(self).onafterHome( self, Defender, From, Event, To )
+        
+        local DefenderName = Defender:GetName()
+        local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
+        local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
+        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " lost control." )
+        if Defender:IsAboveRunway() then
+          Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
+          Defender:Destroy()
+        end
+      end
+      
+      --- @param #AI_A2G_DISPATCHER self
+      function Fsm:onafterHome( Defender, From, Event, To, Action )
+        self:F({"Defender Home", Defender:GetName()})
+        self:GetParent(self).onafterHome( self, Defender, From, Event, To )
+        
+        local DefenderName = Defender:GetName()
+        local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
+        local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
+        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " landing." )
+
+        if Action and Action == "Destroy" then
+          Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
+          Defender:Destroy()
+        end
+
+        if Dispatcher:GetSquadronLanding( Squadron.Name ) == AI_A2G_DISPATCHER.Landing.NearAirbase then
+          Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
+          Defender:Destroy()
+          Dispatcher:ResourcePark( Squadron, Defender )
+        end
+      end
+    end
+
+  end
+  
+  
+  ---
+  -- @param #AI_A2G_DISPATCHER self
+  function AI_A2G_DISPATCHER:ResourceEngage( DefenderSquadron, DefendersNeeded, Defense, DefenseTaskType, AttackerDetection, SquadronName )
+    
+    self:F({DefenderSquadron=DefenderSquadron})
+    self:F({DefendersNeeded=DefendersNeeded})
+    self:F({Defense=Defense})
+    self:F({DefenseTaskType=DefenseTaskType})
+    self:F({AttackerDetection=AttackerDetection})
+    self:F({SquadronName=SquadronName})
+    
+    local DefenderGroup, DefenderGrouping = self:ResourceActivate( DefenderSquadron, DefendersNeeded )    
+
+    if DefenderGroup then
+
+      local AI_A2G = { SEAD = AI_A2G_SEAD, BAI = AI_A2G_BAI, CAS = AI_A2G_CAS }
+
+      local Fsm = AI_A2G[DefenseTaskType]:New( DefenderGroup, Defense.EngageMinSpeed, Defense.EngageMaxSpeed, Defense.EngageFloorAltitude, Defense.EngageCeilingAltitude ) -- AI.AI_A2G_ENGAGE
+      Fsm:SetDispatcher( self )
+      Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
+      Fsm:SetFuelThreshold( DefenderSquadron.FuelThreshold or self.DefenderDefault.FuelThreshold, 60 )
+      Fsm:SetDamageThreshold( self.DefenderDefault.DamageThreshold )
+      Fsm:SetDisengageRadius( self.DisengageRadius )
+      Fsm:Start()
+
+      self:SetDefenderTask( SquadronName, DefenderGroup, DefenseTaskType, Fsm, AttackerDetection, DefenderGrouping )
+      
+      function Fsm:onafterTakeoff( Defender, From, Event, To )
+        self:F({"Defender Birth", Defender:GetName()})
+        --self:GetParent(self).onafterBirth( self, Defender, From, Event, To )
+        
+        local DefenderName = Defender:GetName()
+        local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
+        local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
+        local DefenderTarget = Dispatcher:GetDefenderTaskTarget( Defender )
+        
+        self:F( { DefenderTarget = DefenderTarget } )
+        
+        if DefenderTarget then
+          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " airborne." )
+          Fsm:Engage( DefenderTarget.Set ) -- Engage on the TargetSetUnit
+        end
+      end
+
+      function Fsm:onafterRTB( Defender, From, Event, To )
+        self:F({"Defender RTB", Defender:GetName()})
+        
+        local DefenderName = Defender:GetName()
+        local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
+        local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
+        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " returning." )
+
+        self:GetParent(self).onafterRTB( self, Defender, From, Event, To )
+
+        Dispatcher:ClearDefenderTaskTarget( Defender )
+      end
+
+      --- @param #AI_A2G_DISPATCHER self
+      function Fsm:onafterLostControl( Defender, From, Event, To )
+        self:F({"Defender LostControl", Defender:GetName()})
+        self:GetParent(self).onafterHome( self, Defender, From, Event, To )
+        
+        local DefenderName = Defender:GetName()
+        local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
+        local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
+        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " lost control." )
+
+        if Defender:IsAboveRunway() then
+          Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
+          Defender:Destroy()
+        end
+      end
+      
+      --- @param #AI_A2G_DISPATCHER self
+      function Fsm:onafterHome( Defender, From, Event, To, Action )
+        self:F({"Defender Home", Defender:GetName()})
+        self:GetParent(self).onafterHome( self, Defender, From, Event, To )
+        
+        local DefenderName = Defender:GetName()
+        local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
+        local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
+        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " landing." )
+
+        if Action and Action == "Destroy" then
+          Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
+          Defender:Destroy()
+        end
+
+        if Dispatcher:GetSquadronLanding( Squadron.Name ) == AI_A2G_DISPATCHER.Landing.NearAirbase then
+          Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
+          Defender:Destroy()
+          Dispatcher:ResourcePark( Squadron, Defender )
+        end
+      end
+    end
+  end
 
   ---
   -- @param #AI_A2G_DISPATCHER self
@@ -3143,83 +3734,9 @@ do -- AI_A2G_DISPATCHER
               end
               
               while ( DefendersNeeded > 0 ) do
-            
-                local DefenderGroup, DefenderGrouping = self:ResourceActivate( DefenderSquadron, DefendersNeeded )    
-  
+                self:ResourceQueue( false, DefenderSquadron, DefendersNeeded, Defense, DefenseTaskType, AttackerDetection, ClosestDefenderSquadronName )
                 DefendersNeeded = DefendersNeeded - DefenderGrouping
-        
-                if DefenderGroup then
-                
-                  DefenderCount = DefenderCount - DefenderGrouping / DefenderOverhead
-        
-                  local AI_A2G = { SEAD = AI_A2G_SEAD, BAI = AI_A2G_BAI, CAS = AI_A2G_CAS }
-        
-                  local Fsm = AI_A2G[DefenseTaskType]:New( DefenderGroup, Defense.EngageMinSpeed, Defense.EngageMaxSpeed, Defense.EngageFloorAltitude, Defense.EngageCeilingAltitude ) -- AI.AI_A2G_ENGAGE
-                  Fsm:SetDispatcher( self )
-                  Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
-                  Fsm:SetFuelThreshold( DefenderSquadron.FuelThreshold or self.DefenderDefault.FuelThreshold, 60 )
-                  Fsm:SetDamageThreshold( self.DefenderDefault.DamageThreshold )
-                  Fsm:SetDisengageRadius( self.DisengageRadius )
-                  Fsm:Start()
-        
-                  self:SetDefenderTask( ClosestDefenderSquadronName, DefenderGroup, DefenseTaskType, Fsm, AttackerDetection, DefenderGrouping )
-                  
-                  function Fsm:onafterTakeoff( Defender, From, Event, To )
-                    self:F({"Defender Birth", Defender:GetName()})
-                    --self:GetParent(self).onafterBirth( self, Defender, From, Event, To )
-                    
-                    local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
-                    local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-                    local DefenderTarget = Dispatcher:GetDefenderTaskTarget( Defender )
-                    
-                    self:F( { DefenderTarget = DefenderTarget } )
-                    
-                    if DefenderTarget then
-                      Fsm:Engage( DefenderTarget.Set ) -- Engage on the TargetSetUnit
-                    end
-                  end
-  
-                  function Fsm:onafterRTB( Defender, From, Event, To )
-                    self:F({"Defender RTB", Defender:GetName()})
-                    self:GetParent(self).onafterRTB( self, Defender, From, Event, To )
-                    
-                    local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
-                    Dispatcher:ClearDefenderTaskTarget( Defender )
-                  end
-  
-                  --- @param #AI_A2G_DISPATCHER self
-                  function Fsm:onafterLostControl( Defender, From, Event, To )
-                    self:F({"Defender LostControl", Defender:GetName()})
-                    self:GetParent(self).onafterHome( self, Defender, From, Event, To )
-                    
-                    local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
-                    local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-                    --if Defender:IsAboveRunway() then
-                      --Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
-                      --Defender:Destroy()
-                    --end
-                  end
-                  
-                  --- @param #AI_A2G_DISPATCHER self
-                  function Fsm:onafterHome( Defender, From, Event, To, Action )
-                    self:F({"Defender Home", Defender:GetName()})
-                    self:GetParent(self).onafterHome( self, Defender, From, Event, To )
-                    
-                    local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
-                    local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-  
-                    if Action and Action == "Destroy" then
-                      Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
-                      Defender:Destroy()
-                    end
-  
-                    if Dispatcher:GetSquadronLanding( Squadron.Name ) == AI_A2G_DISPATCHER.Landing.NearAirbase then
-                      Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
-                      Defender:Destroy()
-                      Dispatcher:ParkDefender( Squadron, Defender )
-                    end
-                  end
-                end  -- if DefenderGCI then
+                DefenderCount = DefenderCount - DefenderGrouping / DefenderOverhead
               end  -- while ( DefendersNeeded > 0 ) do
           else
             -- No more resources, try something else.
@@ -3257,6 +3774,8 @@ do -- AI_A2G_DISPATCHER
       self:F( { AttackerCount = AttackerCount, DefendersTotal = DefendersTotal, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing } )
   
       local DefenderGroups = self:CountDefenders( DetectedItem, DefendersEngaged, "SEAD" )
+      
+      
   
       if DetectedItem.IsDetected == true then
         
@@ -3464,7 +3983,7 @@ do -- AI_A2G_DISPATCHER
 
       if self.TacticalDisplay then      
         -- Show tactical situation
-        Report:Add( string.format( "\n - %4s %s ( %s ): ( #%d ) %s" , DetectedItem.Type or " --- ", DetectedItem.ItemID, DetectedItem.Index, DetectedItem.Set:Count(), DetectedItem.Set:GetObjectNames() ) )
+        Report:Add( string.format( " - %s ( %s ): ( #%d - %4s ) %s" , DetectedItem.ItemID, DetectedItem.Index, DetectedItem.Set:Count(), DetectedItem.Type or " --- ", DetectedItem.Set:GetObjectNames() ) )
         for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
           local Defender = Defender -- Wrapper.Group#GROUP
            if DefenderTask.Target and DefenderTask.Target.Index == DetectedItem.Index then
@@ -3510,6 +4029,13 @@ do -- AI_A2G_DISPATCHER
         end
       end
       Report:Add( string.format( "\n - %d Tasks - %d Defender Groups", TaskCount, DefenderGroupCount ) )
+
+      Report:Add( string.format( "\n - %d Queued Aircraft Launches", #self.DefenseQueue ) )
+      for DefenseQueueID, DefenseQueueItem in pairs( self.DefenseQueue ) do
+        local DefenseQueueItem = DefenseQueueItem -- #AI_A2G_DISPATCHER.DefenseQueueItem
+        Report:Add( string.format( "   - %s - %s", DefenseQueueItem.SquadronName, DefenseQueueItem.DefenderSquadron.TakeoffTime, DefenseQueueItem.DefenderSquadron.TakeoffInterval) )
+        
+      end
   
       self:F( Report:Text( "\n" ) )
       trigger.action.outText( Report:Text( "\n" ), 25 )

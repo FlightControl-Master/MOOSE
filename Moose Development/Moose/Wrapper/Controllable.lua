@@ -400,7 +400,7 @@ function CONTROLLABLE:SetTask( DCSTask, WaitTime )
         local Controller = self:_GetController()
         --self:I( "Before SetTask" )
         Controller:setTask( DCSTask )
-        --self:I( "After SetTask" )
+        self:I( { ControllableName = self:GetName(), DCSTask = DCSTask } )
       else
         BASE:E( { DCSControllableName .. " is not alive anymore.", DCSTask = DCSTask } )
       end
@@ -408,6 +408,7 @@ function CONTROLLABLE:SetTask( DCSTask, WaitTime )
 
     if not WaitTime or WaitTime == 0 then
       SetTask( self, DCSTask )
+      self:I( { ControllableName = self:GetName(), DCSTask = DCSTask } )
     else
       self.TaskScheduler:Schedule( self, SetTask, { DCSTask }, WaitTime )
     end
@@ -1057,7 +1058,7 @@ end
 -- @param #CONTROLLABLE self
 -- @param #number Altitude The altitude [m] to hold the position.
 -- @param #number Speed The speed [m/s] flying when holding the position.
--- @param Core.Point#COORDINATE Coordinate The coordinate where to orbit.
+-- @param Core.Point#COORDINATE Coordinate (optional) The coordinate where to orbit. If the coordinate is not given, then the current position of the controllable is used.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:TaskOrbitCircle( Altitude, Speed, Coordinate )
   self:F2( { self.ControllableName, Altitude, Speed } )
