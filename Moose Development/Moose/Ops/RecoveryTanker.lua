@@ -56,6 +56,9 @@
 -- @field Core.Point#COORDINATE position Position of carrier. Used to monitor if carrier significantly changed its position and then update the tanker pattern.
 -- @field #string alias Alias of the spawn group.
 -- @field #number uid Unique ID of this tanker.
+-- @field #boolean awacs If true, the groups gets the enroute task AWACS instead of tanker.
+-- @field #number callsignname Number for the callsign name.
+-- @field #number callsignnumber Number of the callsign name.
 -- @extends Core.Fsm#FSM
 
 --- Recovery Tanker.
@@ -184,6 +187,37 @@
 --
 -- The maximum update frequency is set to 10 minutes. You can adjust this by @{#RECOVERYTANKER.SetPatternUpdateInterval}.
 -- Also the pattern will not be updated whilst the carrier is turning or the tanker is currently refueling another unit.
+-- 
+-- ## Callsign
+-- 
+-- The callsign of the tanker can be set via the @{#RECOVERYTANKER.SetCallsign}(*callsignname*, *callsignnumber*) function. Both parameters are *numbers*.
+-- The first parameter *callsignname* defines the name (1=Texaco, 2=Arco, 3=Shell). The second (optional) parameter specifies the first number and has to be between 1-9.
+-- Also see [DCS_enum_callsigns](https://wiki.hoggitworld.com/view/DCS_enum_callsigns) and [DCS_command_setCallsign](https://wiki.hoggitworld.com/view/DCS_command_setCallsign).
+-- 
+--     TexacoStennis:SetCAllsign(CALLSIGN.Tanker.Arco)
+--
+-- For convenience, MOOSE has a CALLSIGN enumerator introduced.
+-- 
+-- ## AWACS
+-- 
+-- You can use the class also to have an AWACS orbiting overhead the carrier. This requires to add the @{#RECOVERYTANKER.SetAWACS}() function to the script, which sets the enroute tasks AWACS 
+-- as soon as the aircraft enters its pattern.
+-- 
+-- A simple script could look like this:
+-- 
+--     -- E-2D at USS Stennis spawning in air.
+--     local awacsStennis=RECOVERYTANKER:New("USS Stennis", "E2D Group")
+--     
+--     -- Custom settings:
+--     awacsStennis:SetAWACS()
+--     awacsStennis:SetCallsign(CALLSIGN.AWACS.Wizard, 1)
+--     awacsStennis:SetTakeoffAir()
+--     awacsStennis:SetAltitude(20000)
+--     awacsStennis:SetRadio(262)
+--     awacsStennis:SetTACAN(2, "WIZ")
+--     
+--     -- Start AWACS.
+--     awacsStennis:Start()
 --
 -- # Finite State Machine
 -- 
@@ -255,6 +289,9 @@ RECOVERYTANKER = {
   position        = nil,
   alias           = nil,
   uid             =   0,
+  awacs           = nil,
+  callsignname    = nil,
+  callsignnumber  = nil,
 }
 
 --- Unique ID (global).
@@ -263,7 +300,7 @@ RECOVERYTANKER.UID=0
 
 --- Class version.
 -- @field #string version
-RECOVERYTANKER.version="1.0.4"
+RECOVERYTANKER.version="1.0.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -336,6 +373,7 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   self:SetPatternUpdateDistance()
   self:SetPatternUpdateHeading()
   self:SetPatternUpdateInterval()
+  self:SetAWACS(false)
   
   -- Debug trace.
   if false then
@@ -552,6 +590,30 @@ function RECOVERYTANKER:SetHomeBase(airbase)
   if not self.airbase then
     self:E(self.lid.."ERROR: Airbase is nil!")
   end
+  return self
+end
+
+--- Set that the group takes the roll of an AWACS instead of a refueling tanker.
+-- @param #RECOVERYTANKER self
+-- @param #boolean switch If true or nil, set roll AWACS.
+-- @return #RECOVERYTANKER self
+function RECOVERYTANKER:SetAWACS(switch)
+  if switch==nil or switch==true then
+    self.awacs=true
+  else
+    self.awacs=false
+  end
+  return self
+end
+
+--- Set callsign of the tanker group.
+-- @param #RECOVERYTANKER self
+-- @param #number callsignname Number
+-- @param #number callsignnumber Number
+-- @return #RECOVERYTANKER self
+function RECOVERYTANKER:SetCallsign(callsignname, callsignnumber)
+  self.callsignname=callsignname
+  self.callsignnumber=callsignnumber
   return self
 end
 
@@ -813,6 +875,11 @@ function RECOVERYTANKER:onafterStart(From, Event, To)
     self:_ActivateTACAN(2)
   end
   
+  -- Set callsign.
+  if self.callsignname then
+    self.tanker:CommandSetCallsign(self.callsignname, self.callsignnumber, 2)
+  end
+  
   -- Get initial orientation and position of carrier.
   self.orientation=self.carrier:GetOrientationX()
   self.orientlast=self.carrier:GetOrientationX()
@@ -875,6 +942,11 @@ function RECOVERYTANKER:onafterStatus(From, Event, To)
             -- Create tanker beacon and activate TACAN.
             if self.TACANon then
               self:_ActivateTACAN(3)
+            end
+            
+            -- Set callsign.
+            if self.callsignname then
+              self.tanker:CommandSetCallsign(self.callsignname, self.callsignnumber, 3)
             end
             
             -- Update Pattern in 2 seconds. Need to give a bit time so that the respawned group is in the game.
@@ -976,10 +1048,13 @@ function RECOVERYTANKER:onafterPatternUpdate(From, Event, To)
   self.tanker:WayPointInitialize(wp)
   
   -- Task combo.
-  local tasktanker = self.tanker:EnRouteTaskTanker()
+  local taskroll = self.tanker:EnRouteTaskTanker()
+  if self.awacs then
+    taskroll=self.tanker:EnRouteTaskAWACS()
+  end
   local taskroute  = self.tanker:TaskRoute(wp)
-  -- Note that tasktanker has to come first. Otherwise it does not work!
-  local taskcombo  = self.tanker:TaskCombo({tasktanker, taskroute})
+  -- Note that the order is important here! tasktanker has to come first. Otherwise it does not work.
+  local taskcombo  = self.tanker:TaskCombo({taskroll, taskroute})
 
   -- Set task.
   self.tanker:SetTask(taskcombo, 1)
@@ -1071,8 +1146,13 @@ function RECOVERYTANKER:OnEventEngineShutdown(EventData)
       
       -- Create tanker beacon and activate TACAN.
       if self.TACANon then
-        self:_ActivateTACAN(2)
+        self:_ActivateTACAN(3)
       end
+      
+      -- Set callsign.
+      if self.callsignname then
+        self.tanker:CommandSetCallsign(self.callsignname, self.callsignnumber, 3)
+      end      
 
       -- Initial route.
       SCHEDULER:New(nil, self._InitRoute, {self, -self.distStern+UTILS.NMToMeters(3)}, 2)
