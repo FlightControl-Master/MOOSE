@@ -761,6 +761,27 @@ function CONTROLLABLE:CommandDeactivateICLS(Delay)
   return self
 end
 
+--- Set callsign of the CONTROLLABLE. See [DCS_command_setCallsign](https://wiki.hoggitworld.com/view/DCS_command_setCallsign)
+-- @param #CONTROLLABLE self
+-- @param DCS#CALLSIGN CallName Number corresponding the the callsign identifier you wish this group to be called.
+-- @param #number CallNumber The number value the group will be referred to as. Only valid numbers are 1-9. For example Uzi **5**-1. Default 1.
+-- @param #number Delay (Optional) Delay in seconds before the callsign is set. Default is immediately.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:CommandSetCallsign(CallName, CallNumber, Delay)
+  self:F()
+  
+  -- Command to set the callsign. 
+  local CommandSetCallsign={id='SetCallsign', params={callname=CallName, callnumber=CallNumber or 1}}
+
+  if Delay and Delay>0 then
+    SCHEDULER:New(nil, self.CommandSetCallsign, {self, CallName, CallNumber}, Delay)
+  else  
+    self:SetCommand(CommandSetCallsign)
+  end
+
+  return self
+end
+
 
 -- TASKS FOR AIR CONTROLLABLES
 --- (AIR) Attack a Controllable.
