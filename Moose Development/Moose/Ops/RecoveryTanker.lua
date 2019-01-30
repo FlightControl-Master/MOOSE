@@ -59,6 +59,7 @@
 -- @field #boolean awacs If true, the groups gets the enroute task AWACS instead of tanker.
 -- @field #number callsignname Number for the callsign name.
 -- @field #number callsignnumber Number of the callsign name.
+-- @field #string modex Tail number of the tanker.
 -- @extends Core.Fsm#FSM
 
 --- Recovery Tanker.
@@ -292,6 +293,7 @@ RECOVERYTANKER = {
   awacs           = nil,
   callsignname    = nil,
   callsignnumber  = nil,
+  modex           = nil,
 }
 
 --- Unique ID (global).
@@ -300,7 +302,7 @@ RECOVERYTANKER.UID=0
 
 --- Class version.
 -- @field #string version
-RECOVERYTANKER.version="1.0.5"
+RECOVERYTANKER.version="1.0.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -358,7 +360,7 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   self.alias=string.format("%s_%s_%02d", self.carrier:GetName(), self.tankergroupname, RECOVERYTANKER.UID)
   
   -- Log ID.
-  self.lid=string.format("RECOVERYTANKER %s |", self.alias)
+  self.lid=string.format("RECOVERYTANKER %s | ", self.alias)
   
   -- Init default parameters.
   self:SetAltitude()
@@ -617,6 +619,15 @@ function RECOVERYTANKER:SetCallsign(callsignname, callsignnumber)
   return self
 end
 
+--- Set modex (tail number) of the tanker.
+-- @param #RECOVERYTANKER self
+-- @param #number modex Tail number.
+-- @return #RECOVERYTANKER self
+function RECOVERYTANKER:SetModex(modex)
+  self.modex=modex
+  return self
+end
+
 --- Set takeoff type.
 -- @param #RECOVERYTANKER self
 -- @param #number takeofftype Takeoff type.
@@ -820,6 +831,7 @@ function RECOVERYTANKER:onafterStart(From, Event, To)
   Spawn:InitRadioCommsOnOff(true)
   Spawn:InitRadioFrequency(self.RadioFreq)
   Spawn:InitRadioModulation(self.RadioModu)
+  Spawn:InitModex(self.modex)
   
   -- Spawn on carrier.
   if self.takeoff==SPAWN.Takeoff.Air then
@@ -935,6 +947,7 @@ function RECOVERYTANKER:onafterStatus(From, Event, To)
             self.tanker:InitRadioCommsOnOff(true)
             self.tanker:InitRadioFrequency(self.RadioFreq)
             self.tanker:InitRadioModulation(self.RadioModu)
+            self.tanker:InitModex(self.modex)
             
             -- Respawn tanker.
             self.tanker=self.tanker:Respawn(nil, true)
@@ -1139,6 +1152,7 @@ function RECOVERYTANKER:OnEventEngineShutdown(EventData)
       group:InitRadioCommsOnOff(true)
       group:InitRadioFrequency(self.RadioFreq)
       group:InitRadioModulation(self.RadioModu)
+      group:InitModex(self.modex)
            
       -- Respawn tanker.
       -- Delaying respawn due to DCS bug https://github.com/FlightControl-Master/MOOSE/issues/1076

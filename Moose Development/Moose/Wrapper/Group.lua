@@ -1457,11 +1457,16 @@ end
 
 --- Sets the radio comms on or off when the group is respawned. Same as checking/unchecking the COMM box in the mission editor.
 -- @param #GROUP self 
--- @param #number switch If true (or nil), enables the radio comms. If false, disables the radio for the spawned group.
+-- @param #boolean switch If true (or nil), enables the radio comms. If false, disables the radio for the spawned group.
 -- @return #GROUP self
 function GROUP:InitRadioCommsOnOff(switch)
-  self:F({switch=switch} )
-  self.InitRespawnRadio=switch or true
+  self:F({switch=switch})
+  if switch==true or switch==nil then
+    self.InitRespawnRadio=true
+  else
+    self.InitRespawnRadio=false
+  end
+  return self
 end
 
 --- Sets the radio frequency of the group when it is respawned.
@@ -1469,7 +1474,7 @@ end
 -- @param #number frequency The frequency in MHz.
 -- @return #GROUP self
 function GROUP:InitRadioFrequency(frequency)
-  self:F({frequency=frequency} )
+  self:F({frequency=frequency})
 
   self.InitRespawnFreq=frequency
   
@@ -1490,6 +1495,17 @@ function GROUP:InitRadioModulation(modulation)
   return self
 end
 
+--- Sets the modex (tail number) of the first unit of the group. If more units are in the group, the number is increased with every unit.
+-- @param #GROUP self
+-- @param #string modex Tail number of the first unit.
+-- @return #GROUP self
+function GROUP:InitModex(modex)
+  self:F({modex=modex})
+  if modex then
+    self.InitRespawnModex=tonumber(modex)
+  end
+  return self
+end
 
 --- Respawn the @{Wrapper.Group} at a @{Point}.
 -- The method will setup the new group template according the Init(Respawn) settings provided for the group.
@@ -1639,6 +1655,13 @@ function GROUP:Respawn( Template, Reset )
       
     end      
     
+  end
+  
+  -- Set tail number.
+  if self.InitRespawnModex then
+    for UnitID=1,#Template.units do
+      Template.units[UnitID].onboard_num=string.format("%03d", self.InitRespawnModex+(UnitID-1))
+    end
   end
   
   -- Set radio frequency and modulation.

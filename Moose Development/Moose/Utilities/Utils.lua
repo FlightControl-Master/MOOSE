@@ -890,4 +890,19 @@ function UTILS.GetMagneticDeclination(map)
   return declination
 end
 
-
+--- Checks if a file exists or not. This requires **io** to be desanitized.
+-- @param #string file File that should be checked.
+-- @return #boolean True if the file exists, false if the file does not exist or nil if the io module is not available and the check could not be performed.
+function UTILS.FileExists(file)
+  if io then
+    local f=io.open(file, "r")
+    if f~=nil then
+      io.close(f)
+      return true
+    else
+      return false
+    end
+  else
+    return nil
+  end  
+end

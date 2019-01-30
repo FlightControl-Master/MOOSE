@@ -50,6 +50,7 @@
 -- @field #number hid Unit ID of the helo group. (Global) Running number.
 -- @field #string alias Alias of the spawn group.
 -- @field #number uid Unique ID of this helo.
+-- @field #number modex Tail number of the helo.
 -- @extends Core.Fsm#FSM
 
 --- Rescue Helo
@@ -219,6 +220,7 @@ RESCUEHELO = {
   carrierstop    = nil,
   alias          = nil,
   uid            =   0,
+  modex          = nil,
 }
 
 --- Unique ID (global).
@@ -227,7 +229,7 @@ RESCUEHELO.UID=0
 
 --- Class version.
 -- @field #string version
-RESCUEHELO.version="1.0.3"
+RESCUEHELO.version="1.0.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -281,7 +283,7 @@ function RESCUEHELO:New(carrierunit, helogroupname)
   self.alias=string.format("%s_%s_%02d", self.carrier:GetName(), self.helogroupname, RESCUEHELO.UID)
   
   -- Log ID.
-  self.lid=string.format("RESCUEHELO %s |", self.alias)
+  self.lid=string.format("RESCUEHELO %s | ", self.alias)
     
   -- Init defaults.  
   self:SetHomeBase(AIRBASE:FindByName(self.carrier:GetName()))
@@ -599,6 +601,15 @@ function RESCUEHELO:SetRespawnInAir()
   return self
 end
 
+--- Set modex (tail number) of the helo.
+-- @param #RESCUEHELO self
+-- @param #number modex Tail number.
+-- @return #RESCUEHELO self
+function RESCUEHELO:SetModex(modex)
+  self.modex=modex
+  return self
+end
+
 --- Use an uncontrolled aircraft already present in the mission rather than spawning a new helo as initial rescue helo.
 -- This can be useful when interfaced with, e.g., a warehouse.
 -- The group name is the one specified in the @{#RESCUEHELO.New} function.
@@ -707,6 +718,9 @@ function RESCUEHELO:OnEventLand(EventData)
         
           self:T(self.lid..string.format("Rescue helo %s returned from rescue operation.", groupname))
           
+          -- Set modex for respawn.
+          group:InitModex(self.modex)
+          
           -- Respawn helo at current airbase.
           SCHEDULER:New(nil, group.RespawnAtCurrentAirbase, {group}, 3)
         
@@ -716,7 +730,13 @@ function RESCUEHELO:OnEventLand(EventData)
 
           -- Respawn helo at current airbase anyway.
           if self.respawn then
+
+            -- Set modex for respawn.
+            group:InitModex(self.modex)
+          
+            -- Respawn helo at current airbase.
             SCHEDULER:New(nil, group.RespawnAtCurrentAirbase, {group}, 3)
+            
           end
           
         end
@@ -725,6 +745,11 @@ function RESCUEHELO:OnEventLand(EventData)
       
         -- Respawn helo at current airbase.
         if self.respawn then
+        
+          -- Set modex for respawn.
+          group:InitModex(self.modex)
+        
+          -- Respawn helo at current airbase.
           SCHEDULER:New(nil, group.RespawnAtCurrentAirbase, {group}, 3)
         end
         
@@ -822,6 +847,9 @@ function RESCUEHELO:onafterStart(From, Event, To)
   -- Spawn helo. We need to introduce an alias in case this class is used twice. This would confuse the spawn routine.
   local Spawn=SPAWN:NewWithAlias(self.helogroupname, self.alias)
   
+  -- Set modex for spawn.
+  Spawn:InitModex(self.modex)  
+  
   -- Spawn in air or at airbase.
   if self.takeoff==SPAWN.Takeoff.Air then
   
@@ -865,7 +893,7 @@ function RESCUEHELO:onafterStart(From, Event, To)
         return
       end
        
-    else
+    else    
 
       -- Spawn at airbase.
       self.helo=Spawn:SpawnAtAirbase(self.airbase, self.takeoff)
@@ -938,6 +966,9 @@ function RESCUEHELO:onafterStatus(From, Event, To)
         
           -- Check if respawn is enabled.
           if self.respawn then
+          
+            -- Set modex for respawn.
+            self.helo:InitModex(self.modex)          
           
             -- Respawn helo in air.
             self.helo=self.helo:Respawn(nil, true)
@@ -1196,6 +1227,9 @@ function RESCUEHELO:RouteRTB(RTBAirbase, Speed)
   -- Set route points.
   Template.route.points=Points
   
+  -- Set modex for respawn.
+  self.helo:InitModex(self.modex)          
+    
   -- Respawn the group.
   self.helo=self.helo:Respawn(Template, true)
   

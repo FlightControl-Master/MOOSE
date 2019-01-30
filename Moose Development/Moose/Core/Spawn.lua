@@ -325,6 +325,7 @@ function SPAWN:New( SpawnTemplatePrefix )
     self.SpawnInitFreq  = nil                       -- No special frequency.
     self.SpawnInitModu  = nil                       -- No special modulation.
     self.SpawnInitRadio = nil                       -- No radio comms setting.
+    self.SpawnInitModex = nil
 
 		self.SpawnGroups = {}														-- Array containing the descriptions of each Group to be Spawned.
 	else
@@ -376,6 +377,7 @@ function SPAWN:NewWithAlias( SpawnTemplatePrefix, SpawnAliasPrefix )
     self.SpawnInitFreq  = nil                       -- No special frequency.
     self.SpawnInitModu  = nil                       -- No special modulation.
     self.SpawnInitRadio = nil                       -- No radio comms setting.
+    self.SpawnInitModex = nil
     
 		self.SpawnGroups = {}														-- Array containing the descriptions of each Group to be Spawned.
 	else
@@ -430,6 +432,7 @@ function SPAWN:NewFromTemplate( SpawnTemplate, SpawnTemplatePrefix, SpawnAliasPr
     self.SpawnInitFreq  = nil                       -- No special frequency.
     self.SpawnInitModu  = nil                       -- No special modulation.
     self.SpawnInitRadio = nil                       -- No radio comms setting.
+    self.SpawnInitModex = nil
     
     self.SpawnGroups = {}                           -- Array containing the descriptions of each Group to be Spawned.
   else
@@ -639,6 +642,19 @@ function SPAWN:InitRadioModulation(modulation)
   else
     self.SpawnInitModu=radio.modulation.AM
   end
+  return self
+end
+
+--- Sets the modex of the first unit of the group. If more units are in the group, the number is increased by one with every unit.
+-- @param #SPAWN self 
+-- @param #number modex Modex of the first unit.
+-- @return #SPAWN self
+function SPAWN:InitModex(modex)
+
+  if modex then
+    self.SpawnInitModex=tonumber(modex)
+  end
+  
   return self
 end
 
@@ -1218,7 +1234,13 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
             SpawnTemplate.units[UnitID].skill = self.SpawnInitSkill
           end
         end
-        
+
+        -- Set tail number.
+        if self.SpawnInitModex then
+          for UnitID = 1, #SpawnTemplate.units do
+            SpawnTemplate.units[UnitID].onboard_num = string.format("%03d", self.SpawnInitModex+(UnitID-1))
+          end
+        end
         
         -- Set radio comms on/off.
         if self.SpawnInitRadio then
