@@ -46,6 +46,7 @@ do -- DETECTION MANAGER
   --- @type DETECTION_MANAGER
   -- @field Core.Set#SET_GROUP SetGroup The groups to which the FAC will report to.
   -- @field Functional.Detection#DETECTION_BASE Detection The DETECTION_BASE object that is used to report the detected objects.
+  -- @field Tasking.CommandCenter#COMMANDCENTER CC The command center that is used to communicate with the players.
   -- @extends Core.Fsm#FSM
 
   --- DETECTION_MANAGER class.
@@ -217,6 +218,33 @@ do -- DETECTION MANAGER
   
     return self._ReportDisplayTime
   end
+  
+  --- Set a command center to communicate actions to the players reporting to the command center.
+  -- @param #DETECTION_MANAGER self
+  -- @param Tasking.CommandCenter#COMMANDCENTER CommandCenter The command center.
+  -- @return #DETECTION_MANGER self
+  function DETECTION_MANAGER:SetCommandCenter( CommandCenter )
+    
+    self.CC = CommandCenter
+    
+    return self
+  end
+  
+  
+  --- Send an information message to the players reporting to the command center.
+  -- @param #DETECTION_MANAGER self
+  -- @param #string Message The message to be sent.
+  -- @return #DETECTION_MANGER self
+  function DETECTION_MANAGER:MessageToPlayers( Message )
+    
+    if self.CC then
+      self.CC:MessageToAll( Message )
+    end
+    
+    return self
+  end
+  
+  
   
   --- Reports the detected items to the @{Core.Set#SET_GROUP}.
   -- @param #DETECTION_MANAGER self
