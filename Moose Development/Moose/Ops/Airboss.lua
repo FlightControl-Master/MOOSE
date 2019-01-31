@@ -45,12 +45,23 @@
 -- **PLEASE NOTE** that his class is work in progress and in an early **alpha** stage. Many/most things work already very nicely but there a lot of cases I did not run into yet.
 --  Therefore, your *constructive* feedback is both necessary and appreciated!
 --  
+-- ## Discussion
+-- 
+-- If you have questions or suggestions, visit the MOOSE Discord [#ops-airboss](https://discordapp.com/channels/378590350614462464/527363141185830915) channel.
+-- There you also find an example mission and the necessary voice over sound files. Check the **pinned messages**.
+--  
 -- ## IMPORTANT
 -- 
 -- Due to technical restrictions of DCS make sure you have:
 -- 
 --    * Each player slot in a separate group. DCS does only allow to send messages to groups and not to individual units.
 --    * Players are identified by their player name. Ensure that no two player have the same name, e.g. "New Callsign", as this will lead to unexpected results.
+--    
+-- ## Youtube Videos
+-- 
+--    * [[MOOSE] Airboss - Groove Testing (WIP)](https://www.youtube.com/watch?v=94KHQxxX3UI)
+--    * [[MOOSE] Airboss - Groove Test A-4E Community Mod](https://www.youtube.com/watch?v=ZbjD7FHiaHo)
+-- 
 -- 
 -- ### Open Questions?
 -- 
@@ -163,6 +174,8 @@
 -- @field Core.Set#SET_GROUP squadsetAI AI groups in this set will be handled by the airboss.
 -- @field #boolean menusingle If true, menu is optimized for a single carrier.
 -- @field #number collisiondist Distance up to which collision checks are done.
+-- @field #number Tmessage Default duration in seconds messages are displayed to players.
+-- @field #string soundfolder Folder within the mission (miz) file where airboss sound files are located.
 -- @extends Core.Fsm#FSM
 
 --- Be the boss!
@@ -246,9 +259,11 @@
 -- The F10 radio menu can be used to post requests to Marshal but also provides information about the player and carrier status. Additionally, helper functions
 -- can be called.
 -- 
+-- ![Banner Image](..\Presentations\AIRBOSS\Airboss_MenuMain.png)
+-- 
 -- By default, the script creates a submenu "Airboss" in the "F10 Other ..." menu and each @{#AIRBOSS} carrier gets its own submenu.
 -- If you intend to have only one carrier, you can simplify the menu structure using the @{#AIRBOSS.SetMenuSingleCarrier} function, which will create all carrier specific menu entries directly
--- in the "Airboss" submenu. (Needless to say, that if you enable this and define mulitiple carriers, the menu structure will get completely screwed up.)
+-- in the "Airboss" submenu. (Needless to say, that if you enable this and define multiple carriers, the menu structure will get completely screwed up.)
 -- 
 -- ## Root Menu
 -- 
@@ -274,9 +289,17 @@
 -- ### Request Commence
 -- 
 -- This command can be used to request commencing from the marshal stack to the landing pattern. Necessary condition is that the player is in the lowest marshal stack
--- and that the number of aircraft in the landing pattern is smaller than four.
+-- and that the number of aircraft in the landing pattern is smaller than four (or the number set by the mission designer).
+-- 
+-- ![Banner Image](..\Presentations\AIRBOSS\Airboss_Case1Pattern.png)
+-- 
+-- The image displays the standard Case I Marshal pattern recovery. Pilots are supposed to fly a clockwise circle and descent between the **3** and **1** positions.
+-- 
+-- Commence should be performed at around the **3** position. If the pilot is in the lowest Marshal stack, and flies through this area, he is automatically cleared for the
+-- landing pattern. In other words, there is no need for the "Request Commence" radio command. The zone can be marked via smoke or flared using the player's F10 radio menu. 
 -- 
 -- A player can also request commencing if he is not registered in a marshal stack yet. If the pattern is free, Marshal will allow him to directly enter the landing pattern.
+-- However, this is only possible when the Airboss has a nice day - see @{#AIRBOSS.SetAirbossNiceGuy}.
 --  
 -- ### Request Refueling
 -- 
@@ -441,7 +464,7 @@
 --    * **IM** In the Middle (0.5 NM = 926 m), middle one third of the glideslope.
 --    * **IC** In Close (0.25 NM = 463 m), last one third of the glideslope.
 --    * **AR** At the Ramp (0.027 NM = 50 m).
---    * **IW** In the Wiress (at the landing position).
+--    * **IW** In the Wires (at the landing position).
 -- 
 -- Grading at each step includes the above calls, i.e.
 --
@@ -689,6 +712,27 @@
 -- 
 -- ===
 -- 
+-- # Sound Files
+-- 
+-- An important aspect of the AIRBOSS is that it uses voice overs for greater immersion. The necessary sound files can be obtained from the 
+-- MOOSE Discord in the [#ops-airboss](https://discordapp.com/channels/378590350614462464/527363141185830915) channel. Check out the **pinned messages**.
+-- 
+-- However, including sound files into a new mission is tedious as these usually need to be included into the mission **miz** file via (unused) triggers.
+-- 
+-- The default location inside the miz file is "l10n/DEFAULT/". But simply opening the *miz* file with e.g. [7-zip](https://www.7-zip.org/) and copying the files into that folder does not work.
+-- The next time the mission is saved, files not included via trigger are automatically removed by DCS.
+-- 
+-- However, if you create a new folder inside the miz file, which contains the sounds, it will not be deleted and can be used. The location of the sound files can be specified
+-- via the @{#AIRBOSS.SetSoundfilesFolder}(*folderpath*) function. The parameter *folderpath* defines the location of the sound files folder within the mission *miz* file.
+-- 
+-- ![Banner Image](..\Presentations\AIRBOSS\Airboss_SoundfilesFolder.png)
+-- 
+-- For example as
+-- 
+--     airbossStennis:SetSoundfilesFolder("Airboss Soundfiles/")
+--  
+-- ===
+-- 
 -- # AI Handling
 -- 
 -- The @{#AIRBOSS} class allows to handle incoming AI units and integrate them into the marshal and landing pattern.
@@ -855,6 +899,8 @@ AIRBOSS = {
   squadsetAI     = nil,
   menusingle     = nil,
   collisiondist  = nil,
+  Tmessage       = nil,
+  soundfolder    = nil,
 }
 
 --- Player aircraft types capable of landing on carriers.
@@ -1520,13 +1566,17 @@ AIRBOSS.Difficulty={
 -- @field #boolean subtitles If true, display subtitles of radio messages.
 -- @extends #AIRBOSS.FlightGroup
 
---- Main radio menu: F10 Other/Airboss
+--- Main group level radio menu: F10 Other/Airboss.
 -- @field #table MenuF10
 AIRBOSS.MenuF10={}
 
+--- Airboss mission level F10 root menu.
+-- @field #table MenuF10Root
+AIRBOSS.MenuF10Root=nil
+
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.9.2"
+AIRBOSS.version="0.9.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1707,6 +1757,7 @@ function AIRBOSS:New(carriername, alias)
   -- Set update time intervals.
   self:SetQueueUpdateTime()
   self:SetStatusUpdateTime()
+  self:SetDefaultMessageDuration()
   
   -- Menu options.
   self:SetMenuMarkZones()
@@ -2271,6 +2322,31 @@ function AIRBOSS:SetAirbossNiceGuy(switch)
   return self
 end
 
+--- Set folder where the airboss sound files are located **within you mission (miz) file**.
+-- The default path is "l10n/DEFAULT/" but sound files simply copied there will be removed by DCS the next time you save the mission.
+-- However, if you create a new folder inside the miz file, which contains the sounds, it will not be deleted and can be used. 
+-- @param #AIRBOSS self
+-- @param #string folderpath The path to the sound files, e.g. "Airboss Soundfiles/".
+-- @return #AIRBOSS self
+function AIRBOSS:SetSoundfilesFolder(folderpath)
+
+  -- Check that it ends with /
+  if folderpath then
+    local lastchar=string.sub(folderpath, -1)
+    if lastchar~="/" then
+      folderpath=folderpath.."/"
+    end
+  end
+
+  -- Folderpath.
+  self.soundfolder=folderpath
+
+  -- Info message.  
+  self:I(self.lid..string.format("Setting sound files folder to: %s", self.soundfolder))
+   
+  return self
+end
+
 --- Set time interval for updating player status and other things.
 -- @param #AIRBOSS self
 -- @param #number interval Time interval in seconds. Default 0.5 sec.
@@ -2280,13 +2356,22 @@ function AIRBOSS:SetStatusUpdateTime(interval)
   return self
 end
 
+--- Set duration how long messages are displayed to players. 
+-- @param #AIRBOSS self
+-- @param #number duration Duration in seconds. Default 10 sec.
+-- @return #AIRBOSS self
+function AIRBOSS:SetDefaultMessageDuration(duration)
+  self.Tmessage=duration or 10
+  return self
+end
+
 --- Set Case I Marshal radius. This is the radius of the valid zone around "the post" aircraft are supposed to be holding in the Case I Marshal stack.
 -- The post is 2.5 NM port of the carrier.
 -- @param #AIRBOSS self
--- @param #number Radius in NM. Default 2.75 NM, which gives a diameter of 5.5 NM.
+-- @param #number Radius in NM. Default 2.8 NM, which gives a diameter of 5.6 NM.
 -- @return #AIRBOSS self
 function AIRBOSS:SetMarshalRadius(radius)
-  self.marshalradius=UTILS.NMToMeters(radius or 2.75)
+  self.marshalradius=UTILS.NMToMeters(radius or 2.8)
   return self
 end
 
@@ -2696,7 +2781,7 @@ function AIRBOSS:onafterStart(From, Event, To)
   self:_CheckRecoveryTimes()
   
   -- Time stamp for checking queues. We substract 60 seconds so the routine is called right after status is called the first time. 
-  self.Tqueue=timer.getTime()-60  
+  self.Tqueue=timer.getTime()-60
   
   -- Handle events.
   self:HandleEvent(EVENTS.Birth)
@@ -3940,7 +4025,7 @@ function AIRBOSS:_ClearForLanding(flight)
   local text=string.format("you are cleared for Case %d recovery.", flight.case)
   
   -- Add a little delay because message that recovery window opened could come just before.
-  self:MessageToMarshal(text, "MARSHAL", flight.onboard, 10, false, 2)
+  self:MessageToMarshal(text, "MARSHAL", flight.onboard, nil, false, 2)
  
 end
 
@@ -4141,7 +4226,7 @@ function AIRBOSS:_WaitPlayer(playerData)
     end
     
     -- Send message.
-    self:MessageToMarshal(text, "AIRBOSS", playerData.onboard, 10)
+    self:MessageToMarshal(text, "AIRBOSS", playerData.onboard)
 
     -- Add player flight to waiting queue.
     table.insert(self.Qwaiting, playerData)
@@ -6141,7 +6226,7 @@ function AIRBOSS:_Waiting(playerData)
   -- Warning if player is inside the zone.
   if inzone and Twaiting>3*60 and not playerData.warning then
     local text=string.format("You are supposed to wait outside the 10 NM zone.")
-    self:MessageToPlayer(playerData, text, "AIRBOSS", nil, 10)
+    self:MessageToPlayer(playerData, text, "AIRBOSS")
     playerData.warning=true    
   end
   
@@ -6373,7 +6458,8 @@ function AIRBOSS:_Commencing(playerData, zonecheck)
     end
     
     -- Message to player.
-    self:MessageToPlayer(playerData, text, "MARSHAL", nil, 3)
+    --self:MessageToPlayer(playerData, text, "MARSHAL", nil, 3)
+    self:MessageToPlayer(playerData, text, "MARSHAL")
   end
   
   -- Next step: depends on case recovery.
@@ -7482,7 +7568,7 @@ function AIRBOSS:_CheckFoulDeck(playerData)
     -- Player hint for flight students.
     if playerData.difficulty~=AIRBOSS.Difficulty.HARD then
       local text=string.format("overfly landing area and enter bolter pattern.")
-      self:MessageToPlayer(playerData, text, "LSO", nil, 10, false, 3)
+      self:MessageToPlayer(playerData, text, "LSO", nil, nil, false, 3)
     end    
     
     -- Set player parameters for foul deck
@@ -7495,7 +7581,7 @@ function AIRBOSS:_CheckFoulDeck(playerData)
     if foulunit then
       local foulflight=self:_GetFlightFromGroupInQueue(foulunit:GetGroup(), self.flights)
       if foulflight and not foulflight.ai then
-        self:MessageToPlayer(foulflight, "move your ass from my runway. NOW!", "AIRBOSS", nil, 10)
+        self:MessageToPlayer(foulflight, "move your ass from my runway. NOW!", "AIRBOSS")
       end
     end
   end
@@ -9134,7 +9220,7 @@ function AIRBOSS:_AbortPattern(playerData, X, Z, posData, patternwo)
   self:T(self.lid..dtext)
 
   -- Message to player.
-  self:MessageToPlayer(playerData, text, "LSO", nil, 20)
+  self:MessageToPlayer(playerData, text, "LSO")
   
   if patternwo then
   
@@ -9579,7 +9665,7 @@ function AIRBOSS:_Debrief(playerData)
         
       -- Re-enter message.
       local text=string.format("fly heading %03d° for %d NM to re-enter the pattern.", heading, UTILS.MetersToNM(distance))
-      self:MessageToPlayer(playerData, text, "LSO", nil, 10, false, 5)
+      self:MessageToPlayer(playerData, text, "LSO", nil, nil, false, 5)
 
     else
     
@@ -9607,7 +9693,7 @@ function AIRBOSS:_Debrief(playerData)
     
       -- Airboss talkto!
       local text=string.format("the deck was fouled but landed anyway. Airboss wants to talk to you!")
-      self:MessageToPlayer(playerData, text, "LSO", nil, 10, false, 3)
+      self:MessageToPlayer(playerData, text, "LSO", nil, nil, false, 3)
       
     end
 
@@ -9630,7 +9716,7 @@ function AIRBOSS:_Debrief(playerData)
     
       -- Airboss talkto!
       local text=string.format("you were waved off but landed anyway. Airboss wants to talk to you!")
-      self:MessageToPlayer(playerData, text, "LSO", nil, 10, false, 3)
+      self:MessageToPlayer(playerData, text, "LSO", nil, nil, false, 3)
       
     end
   
@@ -9663,7 +9749,7 @@ function AIRBOSS:_Debrief(playerData)
   else
 
     -- Message to player.
-    self:MessageToPlayer(playerData, "Undefined state after landing! Please report.", "ERROR", nil, 10)
+    self:MessageToPlayer(playerData, "Undefined state after landing! Please report.", "ERROR", nil, 20)
 
     -- Next step.
     playerData.step=AIRBOSS.PatternStep.UNDEFINED
@@ -9739,7 +9825,7 @@ function AIRBOSS:_StepHint(playerData, step)
       local text=string.format("Optimal setup at next step %s:%s", step, hint)
     
       -- Send hint to player.
-      self:MessageToPlayer(playerData, text, "AIRBOSS", "", 10, false, 1)
+      self:MessageToPlayer(playerData, text, "AIRBOSS", "", nil, false, 1)
       
     end
   
@@ -10158,7 +10244,7 @@ function AIRBOSS:_CheckPatternUpdate()
       -- 99, new final bearing XXX
       local FB=self:GetFinalBearing(true)
       local text=string.format("new final bearing %03d°.", FB)
-      self:MessageToMarshal(text, "AIRBOSS", "99", 10)
+      self:MessageToMarshal(text, "AIRBOSS", "99")
     end
     
     -- Reset parameters for next update check.
@@ -10919,7 +11005,7 @@ function AIRBOSS:Sound2Player(playerData, radio, call, loud, delay)
     
     -- Only to players with subtitle on or if noise is played.
     if playerData.subtitles or self:_NeedsSubtitle(call) then
-      self:MessageToPlayer(playerData, subtitle, nil, "", call.subduration or 10, false, delay)
+      self:MessageToPlayer(playerData, subtitle, nil, "", call.subduration, false, delay)
     end
     
   end
@@ -10985,8 +11071,10 @@ function AIRBOSS:_RadioFilename(call, loud)
     -- Construct file name and subtitle.
     local prefix=call.file or ""
     local suffix=call.suffix or "ogg"
-    local path="l10n/DEFAULT/"
     
+    -- Path to sound files. Default is in the ME
+    local path=self.soundfolder or "l10n/DEFAULT/"
+        
     -- Loud version.
     if loud then
       prefix=prefix.."_Loud"
@@ -11014,7 +11102,7 @@ function AIRBOSS:MessageToPlayer(playerData, message, sender, receiver, duration
   if playerData and message and message~="" then
   
     -- Default duration.
-    duration=duration or 10
+    duration=duration or self.Tmessage
 
     -- Format message.          
     local text
@@ -11070,9 +11158,6 @@ end
 -- @param #number delay Delay in seconds, before the message is displayed.
 function AIRBOSS:MessageToPattern(message, sender, receiver, duration, clear, delay)
 
-  -- Local delay.
-  local _delay=delay or 0
-  
   -- Create new (fake) radio call to show the subtitile.
   local call=self:_NewRadioCall(AIRBOSS.LSOCall.NOISE, sender or "LSO", message, duration, receiver, sender)
       
@@ -11091,9 +11176,6 @@ end
 -- @param #boolean clear If true, clear screen from previous messages.
 -- @param #number delay Delay in seconds, before the message is displayed.
 function AIRBOSS:MessageToMarshal(message, sender, receiver, duration, clear, delay)
-  
-  -- Local delay.
-  local _delay=delay or 0
   
   -- Create new (fake) radio call to show the subtitile.
   local call=self:_NewRadioCall(AIRBOSS.MarshalCall.NOISE, sender or "MARSHAL", message, duration, receiver, sender)
@@ -11123,7 +11205,7 @@ function AIRBOSS:_NewRadioCall(call, sender, subtitle, subduration, modexreceive
   newcall.subtitle=subtitle or call.subtitle
   
   -- Duration of subtitle display.
-  newcall.subduration=subduration or 10
+  newcall.subduration=subduration or self.Tmessage
   
   -- Tail number of the receiver.
   if self:_IsOnboard(modexreceiver) then
@@ -11238,7 +11320,8 @@ function AIRBOSS:_Number2Sound(playerData, sender, number, delay)
     local call=AIRBOSS[Sender][N] --#AIRBOSS.RadioCall
     
     -- Create file name.
-    local filename=string.format("%s.%s", call.file, call.suffix)
+    --local filename=string.format("%s.%s", call.file, call.suffix)
+    local filename=self:_RadioFilename(call, false)
     
     -- Play sound.
     USERSOUND:New(filename):ToGroup(playerData.group, delay+wait)
@@ -11331,20 +11414,43 @@ function AIRBOSS:_AddF10Commands(_unitName)
       
         -- Enable switch so we don't do this twice.
         self.menuadded[gid]=true
-
-        -- Main F10 menu: F10/Airboss/<Carrier Name>/
-        if AIRBOSS.MenuF10[gid]==nil then
-          AIRBOSS.MenuF10[gid]=missionCommands.addSubMenuForGroup(gid, "Airboss")
+        
+        -- Set menu root path.
+        local _rootPath=nil
+        if AIRBOSS.MenuF10Root then
+          ------------------------
+          -- MISSON LEVEL MENUE --
+          ------------------------          
+           
+          if self.menusingle then
+            -- F10/Airboss/...
+            _rootPath=AIRBOSS.MenuF10Root
+          else
+            -- F10/Airboss/<Carrier Alias>/...
+            _rootPath=missionCommands.addSubMenuForGroup(gid, self.alias, AIRBOSS.MenuF10Root)
+          end
+         
+        else
+          ------------------------
+          -- GROUP LEVEL MENUES --
+          ------------------------
+          
+          -- Main F10 menu: F10/Airboss/
+          if AIRBOSS.MenuF10[gid]==nil then
+            AIRBOSS.MenuF10[gid]=missionCommands.addSubMenuForGroup(gid, "Airboss")
+          end
+          
+          
+          if self.menusingle then
+            -- F10/Airboss/...
+            _rootPath=AIRBOSS.MenuF10[gid]
+          else
+            -- F10/Airboss/<Carrier Alias>/...
+            _rootPath=missionCommands.addSubMenuForGroup(gid, self.alias, AIRBOSS.MenuF10[gid])
+          end
+          
         end
         
-        -- F10/Airboss/<Carrier>
-        local _rootPath
-        if self.menusingle then
-          _rootPath=AIRBOSS.MenuF10[gid]
-        else
-          _rootPath=missionCommands.addSubMenuForGroup(gid, self.alias, AIRBOSS.MenuF10[gid])
-        end        
-
         
         --------------------------------        
         -- F10/Airboss/<Carrier>/F1 Help
@@ -12156,7 +12262,7 @@ function AIRBOSS:_DisplayQueue(_unitname, queue, qname)
       end
       
       -- Send message.
-      self:MessageToPlayer(playerData, text, nil, "", 10, true)
+      self:MessageToPlayer(playerData, text, nil, "", nil, true)
     end
   end
 end
@@ -12472,7 +12578,7 @@ function AIRBOSS:_DisplayPlayerStatus(_unitName)
       local fuel=playerData.unit:GetFuel()*100
       local fuelstate=self:_GetFuelState(playerData.unit)
       
-      ---
+      -- Number of units in group.
       local _,nunitsGround=self:_GetFlightUnits(playerData, true)
       local _,nunitsAirborne=self:_GetFlightUnits(playerData, false)
        
@@ -12487,8 +12593,6 @@ function AIRBOSS:_DisplayPlayerStatus(_unitName)
       text=text..string.format("Skill Level: %s\n", playerData.difficulty)
       text=text..string.format("Tail # %s (%s)\n", playerData.onboard, self:_GetACNickname(playerData.actype))
       text=text..string.format("Fuel State: %.1f lbs/1000 (%.1f %%)\n", fuelstate/1000, fuel)
-      --text=text..string.format("Aircraft: %s\n", self:_GetACNickname(playerData.actype))
-      --text=text..string.format("Group: %s\n", playerData.group:GetName())
       text=text..string.format("# units: %d (%d airborne)\n", nunitsGround, nunitsAirborne)
       text=text..string.format("Section Lead: %s (%d/%d)", tostring(playerData.seclead), #playerData.section+1, self.NmaxSection+1)
       for _,_sec in pairs(playerData.section) do

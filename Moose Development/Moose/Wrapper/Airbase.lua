@@ -657,7 +657,7 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
     if r1 and r2 then
       local safedist=(r1+r2)*1.1    
       local safe = (dist > safedist)
-      self:E(string.format("r1=%.1f r2=%.1f s=%.1f d=%.1f ==> safe=%s", r1, r2, safedist, dist, tostring(safe)))
+      self:T2(string.format("r1=%.1f r2=%.1f s=%.1f d=%.1f ==> safe=%s", r1, r2, safedist, dist, tostring(safe)))
       return safe
     else
       return true
@@ -710,7 +710,7 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
       if verysafe and (parkingspot.Free==false or parkingspot.TOAC==true) then
           
         -- DCS getParking() routine returned that spot is not free.
-        self:E(string.format("%s: Parking spot id %d NOT free (or aircraft has not taken off yet). Free=%s, TOAC=%s.", airport, parkingspot.TerminalID, tostring(parkingspot.Free), tostring(parkingspot.TOAC)))
+        self:T(string.format("%s: Parking spot id %d NOT free (or aircraft has not taken off yet). Free=%s, TOAC=%s.", airport, parkingspot.TerminalID, tostring(parkingspot.Free), tostring(parkingspot.TOAC)))
     
       else
             
@@ -785,11 +785,12 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
         if occupied then
           self:T(string.format("%s: Parking spot id %d occupied.", airport, _termid))
         else
-          self:I(string.format("%s: Parking spot id %d free.", airport, _termid))      
+          self:I(string.format("%s: Parking spot id %d free.", airport, _termid))
           if nvalid<_nspots then
             table.insert(validspots, {Coordinate=_spot, TerminalID=_termid})
           end
           nvalid=nvalid+1
+          self:I(string.format("%s: Parking spot id %d free. Nfree=%d/%d.", airport, _termid, nvalid,_nspots))
         end
         
       end -- loop over units

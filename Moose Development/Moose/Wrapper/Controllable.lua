@@ -400,7 +400,8 @@ function CONTROLLABLE:SetTask( DCSTask, WaitTime )
         local Controller = self:_GetController()
         --self:I( "Before SetTask" )
         Controller:setTask( DCSTask )
-        self:I( { ControllableName = self:GetName(), DCSTask = DCSTask } )
+        -- AI_FORMATION class (used by RESCUEHELO) calls SetTask twice per second! hence spamming the DCS log file ==> setting this to trace. 
+        self:T( { ControllableName = self:GetName(), DCSTask = DCSTask } )
       else
         BASE:E( { DCSControllableName .. " is not alive anymore.", DCSTask = DCSTask } )
       end
@@ -408,7 +409,8 @@ function CONTROLLABLE:SetTask( DCSTask, WaitTime )
 
     if not WaitTime or WaitTime == 0 then
       SetTask( self, DCSTask )
-      self:I( { ControllableName = self:GetName(), DCSTask = DCSTask } )
+      -- See above.
+      self:T( { ControllableName = self:GetName(), DCSTask = DCSTask } )
     else
       self.TaskScheduler:Schedule( self, SetTask, { DCSTask }, WaitTime )
     end

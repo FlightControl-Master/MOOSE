@@ -59,6 +59,7 @@
 -- @field #boolean awacs If true, the groups gets the enroute task AWACS instead of tanker.
 -- @field #number callsignname Number for the callsign name.
 -- @field #number callsignnumber Number of the callsign name.
+-- @field #string modex Tail number of the tanker.
 -- @extends Core.Fsm#FSM
 
 --- Recovery Tanker.
@@ -292,6 +293,7 @@ RECOVERYTANKER = {
   awacs           = nil,
   callsignname    = nil,
   callsignnumber  = nil,
+  modex           = nil,
 }
 
 --- Unique ID (global).
@@ -300,7 +302,7 @@ RECOVERYTANKER.UID=0
 
 --- Class version.
 -- @field #string version
-RECOVERYTANKER.version="1.0.5"
+RECOVERYTANKER.version="1.0.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -358,7 +360,7 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   self.alias=string.format("%s_%s_%02d", self.carrier:GetName(), self.tankergroupname, RECOVERYTANKER.UID)
   
   -- Log ID.
-  self.lid=string.format("RECOVERYTANKER %s |", self.alias)
+  self.lid=string.format("RECOVERYTANKER %s | ", self.alias)
   
   -- Init default parameters.
   self:SetAltitude()
@@ -617,6 +619,15 @@ function RECOVERYTANKER:SetCallsign(callsignname, callsignnumber)
   return self
 end
 
+--- Set modex (tail number) of the tanker.
+-- @param #RECOVERYTANKER self
+-- @param #number modex Tail number.
+-- @return #RECOVERYTANKER self
+function RECOVERYTANKER:SetModex(modex)
+  self.modex=modex
+  return self
+end
+
 --- Set takeoff type.
 -- @param #RECOVERYTANKER self
 -- @param #number takeofftype Takeoff type.
@@ -810,8 +821,10 @@ function RECOVERYTANKER:onafterStart(From, Event, To)
   
   -- Handle events.
   self:HandleEvent(EVENTS.EngineShutdown)
-  self:HandleEvent(EVENTS.Refueling,     self._RefuelingStart)  --Need explcit functions sice OnEventRefueling and OnEventRefuelingStop did not hook.
+  self:HandleEvent(EVENTS.Refueling,     self._RefuelingStart)      --Need explicit functions since OnEventRefueling and OnEventRefuelingStop did not hook!
   self:HandleEvent(EVENTS.RefuelingStop, self._RefuelingStop)
+  self:HandleEvent(EVENTS.Crash,         self._OnEventCrashOrDead)
+  self:HandleEvent(EVENTS.Dead,          self._OnEventCrashOrDead)
   
   -- Spawn tanker. We need to introduce an alias in case this class is used twice. This would confuse the spawn routine.
   local Spawn=SPAWN:NewWithAlias(self.tankergroupname, self.alias)
@@ -820,6 +833,7 @@ function RECOVERYTANKER:onafterStart(From, Event, To)
   Spawn:InitRadioCommsOnOff(true)
   Spawn:InitRadioFrequency(self.RadioFreq)
   Spawn:InitRadioModulation(self.RadioModu)
+  Spawn:InitModex(self.modex)
   
   -- Spawn on carrier.
   if self.takeoff==SPAWN.Takeoff.Air then
@@ -935,6 +949,7 @@ function RECOVERYTANKER:onafterStatus(From, Event, To)
             self.tanker:InitRadioCommsOnOff(true)
             self.tanker:InitRadioFrequency(self.RadioFreq)
             self.tanker:InitRadioModulation(self.RadioModu)
+            self.tanker:InitModex(self.modex)
             
             -- Respawn tanker.
             self.tanker=self.tanker:Respawn(nil, true)
@@ -990,15 +1005,18 @@ function RECOVERYTANKER:onafterStatus(From, Event, To)
     --------------------
     -- TANKER is DEAD --
     --------------------
+
+    if not self:IsStopped() then
     
-    -- Stop FSM.
-    self:Stop()
+      -- Stop FSM.
+      self:Stop()
     
-    -- Restart FSM after 5 seconds.
-    if self.respawn then
-      self:__Start(5)
+      -- Restart FSM after 5 seconds.
+      if self.respawn then
+        self:__Start(5)
+      end
+      
     end
-    
   end
 
 end
@@ -1103,9 +1121,22 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function RECOVERYTANKER:onafterStop(From, Event, To)
+
+  -- Unhandle events.
   self:UnHandleEvent(EVENTS.EngineShutdown)
   self:UnHandleEvent(EVENTS.Refueling)
   self:UnHandleEvent(EVENTS.RefuelingStop)
+  self:UnHandleEvent(EVENTS.Dead)
+  self:UnHandleEvent(EVENTS.Crash)
+  
+  -- If tanker is alive, despawn it.
+  if self.helo and self.helo:IsAlive() then
+    self:I(self.lid.."Stopping FSM and despawning tanker.")
+    self.tanker:Destroy()
+  else
+    self:I(self.lid.."Stopping FSM. Tanker was not alive.")
+  end
+    
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1139,6 +1170,7 @@ function RECOVERYTANKER:OnEventEngineShutdown(EventData)
       group:InitRadioCommsOnOff(true)
       group:InitRadioFrequency(self.RadioFreq)
       group:InitRadioModulation(self.RadioModu)
+      group:InitModex(self.modex)
            
       -- Respawn tanker.
       -- Delaying respawn due to DCS bug https://github.com/FlightControl-Master/MOOSE/issues/1076
@@ -1221,6 +1253,37 @@ function RECOVERYTANKER:_RefuelingStop(EventData)
 
 end
 
+--- A unit crashed or died.
+-- @param #RECOVERYTANKER self
+-- @param Core.Event#EVENTDATA EventData Event data.
+function RECOVERYTANKER:_OnEventCrashOrDead(EventData)
+  self:F2({eventdata=EventData})
+  
+  -- Check that there is an initiating unit in the event data.
+  if EventData and EventData.IniUnit then
+
+    -- Crashed or dead unit.
+    local unit=EventData.IniUnit  
+    local unitname=tostring(EventData.IniUnitName)
+    
+    -- Check that it was the tanker that crashed.
+    if EventData.IniGroupName==self.tanker:GetName() then
+    
+      -- Error message.
+      self:E(self.lid..string.format("Recovery tanker %s crashed!", unitname))
+      
+      -- Stop FSM.
+      self:Stop()
+      
+      -- Restart.
+      if self.respawn then
+        self:__Start(5)
+      end
+    
+    end
+    
+  end
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- MISC functions

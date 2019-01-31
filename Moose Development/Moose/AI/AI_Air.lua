@@ -7,7 +7,7 @@
 -- ===
 -- 
 -- @module AI.AI_Air
--- @image AI_Air_Operations.JPG
+-- @image MOOSE.JPG
 
 --- @type AI_AIR
 -- @extends Core.Fsm#FSM_CONTROLLABLE
