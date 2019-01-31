@@ -110,6 +110,7 @@
 -- @field #AIRBOSS.Radio MarshalRadio Radio for carrier calls.
 -- @field #number MarshalFreq Marshal radio frequency in MHz.
 -- @field #string MarshalModu Marshal radio modulation "AM" or "FM".
+-- @field #number TowerFreq Tower radio frequency in MHz.
 -- @field Core.Scheduler#SCHEDULER radiotimer Radio queue scheduler.
 -- @field Core.Zone#ZONE_UNIT zoneCCA Carrier controlled area (CCA), i.e. a zone of 50 NM radius around the carrier.
 -- @field Core.Zone#ZONE_UNIT zoneCCZ Carrier controlled zone (CCZ), i.e. a zone of 5 NM radius around the carrier.
@@ -172,6 +173,7 @@
 -- @field #boolean detour If true, carrier is currently making a detour from its path along the ME waypoints.
 -- @field Core.Point#COORDINATE Creturnto Position to return to after turn into the wind leg is over.
 -- @field Core.Set#SET_GROUP squadsetAI AI groups in this set will be handled by the airboss.
+-- @field Core.Set#SET_GROUP excludesetAI AI groups in this set will be explicitly excluded from handling by the airboss and not forced into the Marshal pattern.
 -- @field #boolean menusingle If true, menu is optimized for a single carrier.
 -- @field #number collisiondist Distance up to which collision checks are done.
 -- @field #number Tmessage Default duration in seconds messages are displayed to players.
@@ -836,6 +838,7 @@ AIRBOSS = {
   MarshalRadio   = nil,
   MarshalFreq    = nil,
   MarshalModu    = nil,
+  TowerFreq      = nil,
   radiotimer     = nil,
   zoneCCA        = nil,
   zoneCCZ        = nil,
@@ -897,6 +900,7 @@ AIRBOSS = {
   turnintowind   = nil,
   detour         = nil,
   squadsetAI     = nil,
+  excludesetAI   = nil,
   menusingle     = nil,
   collisiondist  = nil,
   Tmessage       = nil,
@@ -1681,6 +1685,9 @@ function AIRBOSS:New(carriername, alias)
   -- Create carrier beacon.
   self.beacon=BEACON:New(self.carrier)
   
+  -- Set Tower Frequency of carrier.
+  self:_GetTowerFrequency()
+  
   -- Init player scores table.
   self.playerscores={}
     
@@ -2214,6 +2221,15 @@ end
 -- @return #AIRBOSS self
 function AIRBOSS:SetSquadronAI(setgroup)
   self.squadsetAI=setgroup
+  return self
+end
+
+--- Define a set of AI groups that excluded from AI handling. Members of this set will be left allone by the airboss and not forced into the Marshal pattern.
+-- @param #AIRBOSS self
+-- @param Core.Set#SET_GROUP setgroup The set of AI groups which are excluded.
+-- @return #AIRBOSS self
+function AIRBOSS:SetExcludeAI(setgroup)
+  self.excludesetAI=setgroup
   return self
 end
 
@@ -4119,8 +4135,10 @@ function AIRBOSS:_ScanCarrierZone()
       -- Check if flight is AI and if we want to handle it at all.
       if knownflight.ai and self.handleai then
       
-        -- Check if AI group is part of the group set if a set was defined.
+        -- Defines if AI group should be handled by the airboss.
         local iscarriersquad=true
+        
+        -- Check if AI group is part of the group set if a set was defined.
         if self.squadsetAI then
           local group=self.squadsetAI:FindGroup(groupname)
           if group then
@@ -4129,6 +4147,15 @@ function AIRBOSS:_ScanCarrierZone()
             iscarriersquad=false
           end
         end
+
+        -- Check if group was explicitly excluded.
+        if self.excludesetAI then
+          local group=self.excludesetAI:FindGroup(groupname)
+          if group then
+            iscarriersquad=false
+          end
+        end
+
       
         -- Get distance to carrier.
         local dist=knownflight.group:GetCoordinate():Get2DDistance(self:GetCoordinate())
@@ -10449,6 +10476,25 @@ function AIRBOSS:_GetOnboardNumbers(group, playeronly)
   return numbers
 end
 
+--- Get Tower frequency of carrier.
+-- @param #AIRBOSS self
+function AIRBOSS:_GetTowerFrequency()
+
+  -- Tower frequency in MHz
+  self.TowerFreq=0
+
+  -- Get Template of Strike Group
+  local striketemplate=self.carrier:GetGroup():GetTemplate()
+ 
+  -- Find the carrier unit.
+  for _,unit in pairs(striketemplate.units) do
+    if self.carrier:GetName()==unit.name then
+      self.TowerFreq=unit.frequency/1000000
+      return
+    end
+  end
+end
+
 --- Check if aircraft is capable of landing on an aircraft carrier.
 -- @param #AIRBOSS self
 -- @param Wrapper.Unit#UNIT unit Aircraft unit. (Will also work with groups as given parameter.)
@@ -12268,6 +12314,8 @@ function AIRBOSS:_DisplayQueue(_unitname, queue, qname)
 end
 
 
+
+
 --- Report information about carrier.
 -- @param #AIRBOSS self
 -- @param #string _unitname Name of the player unit.
@@ -12292,7 +12340,7 @@ function AIRBOSS:_DisplayCarrierInfo(_unitname)
       local carrierheading=self.carrier:GetHeading()
       local carrierspeed=UTILS.MpsToKnots(self.carrier:GetVelocityMPS())
         
-      -- Tacan/ICLS.
+      -- TACAN/ICLS.
       local tacan="unknown"
       local icls="unknown"
       if self.TACANon and self.TACANchannel~=nil then
@@ -12357,6 +12405,7 @@ function AIRBOSS:_DisplayCarrierInfo(_unitname)
       text=text..string.format("BRC %03d°\n", self:GetBRC())
       text=text..string.format("FB %03d°\n", self:GetFinalBearing(true))           
       text=text..string.format("Speed %d kts\n", carrierspeed)
+      text=text..string.format("Tower frequency %.3f MHz\n", self.TowerFreq)
       text=text..string.format("Marshal radio %.3f MHz\n", self.MarshalFreq)
       text=text..string.format("LSO radio %.3f MHz\n", self.LSOFreq)
       text=text..string.format("TACAN Channel %s\n", tacan)
