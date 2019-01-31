@@ -11158,9 +11158,6 @@ end
 -- @param #number delay Delay in seconds, before the message is displayed.
 function AIRBOSS:MessageToPattern(message, sender, receiver, duration, clear, delay)
 
-  -- Local delay.
-  local _delay=delay or 0
-  
   -- Create new (fake) radio call to show the subtitile.
   local call=self:_NewRadioCall(AIRBOSS.LSOCall.NOISE, sender or "LSO", message, duration, receiver, sender)
       
@@ -11179,9 +11176,6 @@ end
 -- @param #boolean clear If true, clear screen from previous messages.
 -- @param #number delay Delay in seconds, before the message is displayed.
 function AIRBOSS:MessageToMarshal(message, sender, receiver, duration, clear, delay)
-  
-  -- Local delay.
-  local _delay=delay or 0
   
   -- Create new (fake) radio call to show the subtitile.
   local call=self:_NewRadioCall(AIRBOSS.MarshalCall.NOISE, sender or "MARSHAL", message, duration, receiver, sender)
@@ -12584,7 +12578,7 @@ function AIRBOSS:_DisplayPlayerStatus(_unitName)
       local fuel=playerData.unit:GetFuel()*100
       local fuelstate=self:_GetFuelState(playerData.unit)
       
-      ---
+      -- Number of units in group.
       local _,nunitsGround=self:_GetFlightUnits(playerData, true)
       local _,nunitsAirborne=self:_GetFlightUnits(playerData, false)
        
@@ -12599,8 +12593,6 @@ function AIRBOSS:_DisplayPlayerStatus(_unitName)
       text=text..string.format("Skill Level: %s\n", playerData.difficulty)
       text=text..string.format("Tail # %s (%s)\n", playerData.onboard, self:_GetACNickname(playerData.actype))
       text=text..string.format("Fuel State: %.1f lbs/1000 (%.1f %%)\n", fuelstate/1000, fuel)
-      --text=text..string.format("Aircraft: %s\n", self:_GetACNickname(playerData.actype))
-      --text=text..string.format("Group: %s\n", playerData.group:GetName())
       text=text..string.format("# units: %d (%d airborne)\n", nunitsGround, nunitsAirborne)
       text=text..string.format("Section Lead: %s (%d/%d)", tostring(playerData.seclead), #playerData.section+1, self.NmaxSection+1)
       for _,_sec in pairs(playerData.section) do

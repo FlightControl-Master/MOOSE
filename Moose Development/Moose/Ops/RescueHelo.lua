@@ -10,6 +10,12 @@
 --    * Automatic rescuing of crashed or ejected pilots in the vicinity of the carrier.
 --    * Multiple helos at different carriers due to object oriented approach.
 --    * Finite State Machine (FSM) implementation.
+--    
+-- ## Known (DCS) Issues
+-- 
+--    * CH-53E does only report 27.5% fuel even if fuel is set to 100% in the ME. See [bug report](https://forums.eagle.ru/showthread.php?t=223712)
+--    * CH-53E does not accept USS Tarawa as landing airbase (even it can be spawned on it).
+--    * Helos dont move away from their landing position on carriers.
 --
 -- ===
 --
@@ -229,7 +235,7 @@ RESCUEHELO.UID=0
 
 --- Class version.
 -- @field #string version
-RESCUEHELO.version="1.0.4"
+RESCUEHELO.version="1.0.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -319,12 +325,14 @@ function RESCUEHELO:New(carrierunit, helogroupname)
   self:SetStartState("Stopped")
 
   -- Add FSM transitions.
-  --                 From State  -->   Event   -->   To State
+  --                 From State  -->  Event    -->  To State
   self:AddTransition("Stopped",       "Start",      "Running")
   self:AddTransition("Running",       "Rescue",     "Rescuing")
   self:AddTransition("Running",       "RTB",        "Returning")
   self:AddTransition("Rescuing",      "RTB",        "Returning")
-  self:AddTransition("*",             "Run",        "Running")
+  self:AddTransition("Returning",     "Returned",   "Returned")
+  self:AddTransition("Running",       "Run",        "Running")
+  self:AddTransition("Returned",      "Run",        "Running")
   self:AddTransition("*",             "Status",     "*")
   self:AddTransition("*",             "Stop",       "Stopped")
 
@@ -377,6 +385,25 @@ function RESCUEHELO:New(carrierunit, helogroupname)
   -- @param #string Event Event.
   -- @param #string To To state.
   -- @param Wrapper.Airbase#AIRBASE airbase The airbase to return to. Default is the home base.
+
+  --- Triggers the FSM event "Returned" after the helo has landed.
+  -- @function [parent=#RESCUEHELO] Returned
+  -- @param #RESCUEHELO self
+  -- @param Wrapper.Airbase#AIRBASE airbase The airbase the helo has landed.
+
+  --- Triggers the delayed FSM event "Returned" after the helo has landed.
+  -- @function [parent=#RESCUEHELO] __Returned
+  -- @param #RESCUEHELO self
+  -- @param #number delay Delay in seconds.
+  -- @param Wrapper.Airbase#AIRBASE airbase The airbase the helo has landed.
+
+  --- On after "Returned" event user function. Called when a the the helo has landed at an airbase.
+  -- @function [parent=#RESCUEHELO] OnAfterReturned
+  -- @param #RESCUEHELO self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Wrapper.Airbase#AIRBASE airbase The airbase the helo has landed.
 
 
   --- Triggers the FSM event "Run".
@@ -705,59 +732,25 @@ function RESCUEHELO:OnEventLand(EventData)
       MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
       self:T(self.lid..text)
       
-      if self:IsRescuing() then
-        
+      -- Helo has rescued someone.
+      -- TODO: Add "Rescued" event.
+      if self:IsRescuing() then        
         self:T(self.lid..string.format("Rescue helo %s returned from rescue operation.", groupname))
-        
       end
       
       -- Check if takeoff air or respawn in air is set. Landing event should not happen unless the helo was on a rescue mission.
       if self.takeoff==SPAWN.Takeoff.Air or self.respawninair then
         
-        if self:IsRescuing() then
-        
-          self:T(self.lid..string.format("Rescue helo %s returned from rescue operation.", groupname))
-          
-          -- Set modex for respawn.
-          group:InitModex(self.modex)
-          
-          -- Respawn helo at current airbase.
-          SCHEDULER:New(nil, group.RespawnAtCurrentAirbase, {group}, 3)
-        
-        else
-        
-          self:T2(self.lid..string.format("WARNING: Rescue helo %s landed. This should not happen for Takeoff=Air or respawninair=true unless a rescue operation finished.", groupname))
+        if not self:IsRescuing() then
 
-          -- Respawn helo at current airbase anyway.
-          if self.respawn then
-
-            -- Set modex for respawn.
-            group:InitModex(self.modex)
+          self:E(self.lid..string.format("WARNING: Rescue helo %s landed. This should not happen for Takeoff=Air or respawninair=true and no rescue operation in progress.", groupname))
           
-            -- Respawn helo at current airbase.
-            SCHEDULER:New(nil, group.RespawnAtCurrentAirbase, {group}, 3)
-            
-          end
-          
-        end
-      
-      else
-      
-        -- Respawn helo at current airbase.
-        if self.respawn then
-        
-          -- Set modex for respawn.
-          group:InitModex(self.modex)
-        
-          -- Respawn helo at current airbase.
-          SCHEDULER:New(nil, group.RespawnAtCurrentAirbase, {group}, 3)
-        end
-        
+        end              
       end
       
-      -- Restart the formation.
-      self:__Run(10)
-      
+      -- Trigger returned event. Respawn at current airbase.
+      self:__Returned(3, EventData.Place)
+            
     end
   end
 end
@@ -812,7 +805,12 @@ function RESCUEHELO:_OnEventCrashOrEject(EventData)
       self:E(self.lid..string.format("Rescue helo %s crashed!", unitname))
       
       -- Stop FSM.
-      self:Stop()      
+      self:Stop()
+      
+      -- Restart.
+      if self.respawn then
+        self:__Start(5)
+      end
     
     end
     
@@ -838,7 +836,7 @@ function RESCUEHELO:onafterStart(From, Event, To)
   -- Handle events.
   --self:HandleEvent(EVENTS.Birth)
   self:HandleEvent(EVENTS.Land)
-  self:HandleEvent(EVENTS.Crash, self._OnEventCrashOrEject)
+  self:HandleEvent(EVENTS.Crash,    self._OnEventCrashOrEject)
   self:HandleEvent(EVENTS.Ejection, self._OnEventCrashOrEject)
   
   -- Delay before formation is started.
@@ -948,13 +946,16 @@ function RESCUEHELO:onafterStatus(From, Event, To)
     -- HELO is ALIVE --
     ------------------- 
 
-    -- Get relative fuel wrt to initial fuel of helo (DCS bug https://forums.eagle.ru/showthread.php?t=223712)
-    local fuel=self.helo:GetFuel()/self.HeloFuel0*100
+    -- Get (relative) fuel wrt to initial fuel of helo (DCS bug https://forums.eagle.ru/showthread.php?t=223712)
+    local fuel=self.helo:GetFuel()*100
+    local fuelrel=fuel/self.HeloFuel0
+    local life=self.helo:GetUnit(1):GetLife()
+    local life0=self.helo:GetUnit(1):GetLife0()
   
     -- Report current fuel.
-    local text=string.format("Rescue Helo %s: state=%s fuel=%.1f", self.helo:GetName(), self:GetState(), fuel)
+    local text=string.format("Rescue Helo %s: state=%s fuel=%.1f, rel.fuel=%.1f, life=%.1f/%.1f", self.helo:GetName(), self:GetState(), fuel, fuelrel, life, life0)
     MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
-    self:T(self.lid..text)  
+    self:T(self.lid..text)
   
     if self:IsRunning() then
     
@@ -968,10 +969,14 @@ function RESCUEHELO:onafterStatus(From, Event, To)
           if self.respawn then
           
             -- Set modex for respawn.
-            self.helo:InitModex(self.modex)          
-          
+            self.helo:InitModex(self.modex)
+            
             -- Respawn helo in air.
             self.helo=self.helo:Respawn(nil, true)
+            
+            -- XXX: ATTENTION: if helo automatically RTBs on low fuel, it goes a bit cazy. The formation is not stopped and he partially dives into the water.
+            -- Also trying to find a ship to land on he flies right through it.            
+            --self.helo:OptionRTBBingoFuel(false)
             
           end
           
@@ -986,15 +991,7 @@ function RESCUEHELO:onafterStatus(From, Event, To)
       
     elseif self:IsRescuing() then
     
-      if self.rtb then
-  
-        -- Send helo back to base.
-        --self:RTB()
-        
-        -- Switch to false.
-        self.rtb=false
-      
-      end
+      -- Helo is on a rescue mission.
     
     end
 
@@ -1003,25 +1000,28 @@ function RESCUEHELO:onafterStatus(From, Event, To)
       self:__Status(-30)
     end
 
-    
   else
   
     ------------------
     -- HELO is DEAD --
     ------------------
     
-    -- Stop FSM.
-    self:Stop()
+    if not self:IsStopped() then
     
-    -- Restart FSM after 5 seconds.
-    if self.respawn then
-      self:__Start(5)
+      -- Stop FSM.
+      self:Stop()
+      
+      -- Restart FSM after 5 seconds.
+      if self.respawn then
+        self:__Start(5)
+      end
+      
     end
+  end
     
-  end    
 end
 
---- On after "Run" event. FSM will go to "Running" state. If formation is topped, it will be started again.
+--- On after "Run" event. FSM will go to "Running" state. If formation is stopped, it will be started again.
 -- @param #RESCUEHELO self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -1068,7 +1068,7 @@ function RESCUEHELO:_TaskRTB()
   -- Task script.
   local DCSScript = {}
   DCSScript[#DCSScript+1] = string.format('local mycarrier = UNIT:FindByName(\"%s\") ', carriername)                       -- The carrier unit that holds the self object.
-  DCSScript[#DCSScript+1] = string.format('local myhelo    = mycarrier:GetState(mycarrier, \"RESCUEHELO_%d\") ', self.uid) -- Get the RECOVERYTANKER self object.
+  DCSScript[#DCSScript+1] = string.format('local myhelo    = mycarrier:GetState(mycarrier, \"RESCUEHELO_%d\") ', self.uid) -- Get the RESCUEHELO self object.
   DCSScript[#DCSScript+1] = string.format('myhelo:RTB()')                                                                  -- Call the function, e.g. myhelo.(self)
 
   -- Create task.
@@ -1186,16 +1186,58 @@ function RESCUEHELO:onafterRTB(From, Event, To, airbase)
   self:RouteRTB(airbase)
 end
 
---- On after Stop event. Unhandle events and stop status updates.
+--- On after Returned event. Helo has landed.
+-- @param #RESCUEHELO self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Wrapper.Airbase#AIRBASE airbase The base to which the helo has returned.
+function RESCUEHELO:onafterReturned(From, Event, To, airbase)
+
+  if airbase then
+    local airbasename=airbase:GetName()
+    self:T(self.lid..string.format("Helo returned to airbase %s", tostring(airbasename)))
+  else
+    self:E(self.lid..string.format("WARNING: Helo landed but airbase (EventData.Place) is nil!"))
+  end
+  
+  -- Respawn helo at current airbase.
+  if self.respawn then
+  
+    -- Set modex for respawn.
+    self.helo:InitModex(self.modex)
+  
+    -- Respawn helo at current airbase.
+    self.helo:RespawnAtCurrentAirbase()
+    
+    -- Restart the formation.
+    self:__Run(10)
+  end  
+
+end
+
+--- On after Stop event. Unhandle events and stop status updates. If helo is alive, it is despawned.
 -- @param #RESCUEHELO self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
 function RESCUEHELO:onafterStop(From, Event, To)
+
+  -- Stop formation
   self.formation:Stop()
+    
+  -- Unhandle events.
   self:UnHandleEvent(EVENTS.Land)
   self:UnHandleEvent(EVENTS.Crash)
   self:UnHandleEvent(EVENTS.Ejection)
+
+  -- If helo is alive, despawn it.
+  if self.helo and self.helo:IsAlive() then
+    self:I(self.lid.."Stopping FSM and despawning helo.")
+    self.helo:Destroy()
+  else
+    self:I(self.lid.."Stopping FSM. Helo was not alive.")
+  end  
 end
 
 

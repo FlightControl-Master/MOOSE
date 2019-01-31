@@ -821,8 +821,10 @@ function RECOVERYTANKER:onafterStart(From, Event, To)
   
   -- Handle events.
   self:HandleEvent(EVENTS.EngineShutdown)
-  self:HandleEvent(EVENTS.Refueling,     self._RefuelingStart)  --Need explcit functions sice OnEventRefueling and OnEventRefuelingStop did not hook.
+  self:HandleEvent(EVENTS.Refueling,     self._RefuelingStart)      --Need explicit functions since OnEventRefueling and OnEventRefuelingStop did not hook!
   self:HandleEvent(EVENTS.RefuelingStop, self._RefuelingStop)
+  self:HandleEvent(EVENTS.Crash,         self._OnEventCrashOrDead)
+  self:HandleEvent(EVENTS.Dead,          self._OnEventCrashOrDead)
   
   -- Spawn tanker. We need to introduce an alias in case this class is used twice. This would confuse the spawn routine.
   local Spawn=SPAWN:NewWithAlias(self.tankergroupname, self.alias)
@@ -1003,15 +1005,18 @@ function RECOVERYTANKER:onafterStatus(From, Event, To)
     --------------------
     -- TANKER is DEAD --
     --------------------
+
+    if not self:IsStopped() then
     
-    -- Stop FSM.
-    self:Stop()
+      -- Stop FSM.
+      self:Stop()
     
-    -- Restart FSM after 5 seconds.
-    if self.respawn then
-      self:__Start(5)
+      -- Restart FSM after 5 seconds.
+      if self.respawn then
+        self:__Start(5)
+      end
+      
     end
-    
   end
 
 end
@@ -1116,9 +1121,22 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function RECOVERYTANKER:onafterStop(From, Event, To)
+
+  -- Unhandle events.
   self:UnHandleEvent(EVENTS.EngineShutdown)
   self:UnHandleEvent(EVENTS.Refueling)
   self:UnHandleEvent(EVENTS.RefuelingStop)
+  self:UnHandleEvent(EVENTS.Dead)
+  self:UnHandleEvent(EVENTS.Crash)
+  
+  -- If tanker is alive, despawn it.
+  if self.helo and self.helo:IsAlive() then
+    self:I(self.lid.."Stopping FSM and despawning tanker.")
+    self.tanker:Destroy()
+  else
+    self:I(self.lid.."Stopping FSM. Tanker was not alive.")
+  end
+    
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1235,6 +1253,37 @@ function RECOVERYTANKER:_RefuelingStop(EventData)
 
 end
 
+--- A unit crashed or died.
+-- @param #RECOVERYTANKER self
+-- @param Core.Event#EVENTDATA EventData Event data.
+function RECOVERYTANKER:_OnEventCrashOrDead(EventData)
+  self:F2({eventdata=EventData})
+  
+  -- Check that there is an initiating unit in the event data.
+  if EventData and EventData.IniUnit then
+
+    -- Crashed or dead unit.
+    local unit=EventData.IniUnit  
+    local unitname=tostring(EventData.IniUnitName)
+    
+    -- Check that it was the tanker that crashed.
+    if EventData.IniGroupName==self.tanker:GetName() then
+    
+      -- Error message.
+      self:E(self.lid..string.format("Recovery tanker %s crashed!", unitname))
+      
+      -- Stop FSM.
+      self:Stop()
+      
+      -- Restart.
+      if self.respawn then
+        self:__Start(5)
+      end
+    
+    end
+    
+  end
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- MISC functions
