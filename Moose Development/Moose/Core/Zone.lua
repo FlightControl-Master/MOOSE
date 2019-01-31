@@ -535,7 +535,7 @@ function ZONE_RADIUS:FlareZone( FlareColor, Points, Azimuth, AddHeight )
   local Vec2 = self:GetVec2()
   
   AddHeight = AddHeight or 0
-
+  
   Points = Points and Points or 360
 
   local Angle
@@ -618,6 +618,9 @@ function ZONE_RADIUS:GetVec3( Height )
 end
 
 
+
+
+
 --- Scan the zone for the presence of units of the given ObjectCategories.
 -- Note that after a zone has been scanned, the zone can be evaluated by:
 -- 
@@ -629,11 +632,11 @@ end
 -- @{#ZONE_RADIUS.
 -- @param #ZONE_RADIUS self
 -- @param ObjectCategories
--- @param Coalition
+-- @param UnitCategories
 -- @usage
 --    self.Zone:Scan()
 --    local IsAttacked = self.Zone:IsSomeInZoneOfCoalition( self.Coalition )
-function ZONE_RADIUS:Scan( ObjectCategories )
+function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
 
   self.ScanData = {}
   self.ScanData.Coalitions = {}
@@ -660,9 +663,24 @@ function ZONE_RADIUS:Scan( ObjectCategories )
       if ( ObjectCategory == Object.Category.UNIT and ZoneObject:isExist() and ZoneObject:isActive() ) or 
          (ObjectCategory == Object.Category.STATIC and ZoneObject:isExist()) then
         local CoalitionDCSUnit = ZoneObject:getCoalition()
-        self.ScanData.Coalitions[CoalitionDCSUnit] = true
-        self.ScanData.Units[ZoneObject] = ZoneObject
-        self:F2( { Name = ZoneObject:getName(), Coalition = CoalitionDCSUnit } )
+        local Include = false
+        if not UnitCategories then
+          Include = true
+        else
+          local CategoryDCSUnit = ZoneObject:getDesc().category
+          for UnitCategoryID, UnitCategory in pairs( UnitCategories ) do
+            if UnitCategory == CategoryDCSUnit then
+              Include = true
+              break
+            end
+          end
+        end
+        if Include then
+          local CoalitionDCSUnit = ZoneObject:getCoalition()
+          self.ScanData.Coalitions[CoalitionDCSUnit] = true
+          self.ScanData.Units[ZoneObject] = ZoneObject
+          self:F2( { Name = ZoneObject:getName(), Coalition = CoalitionDCSUnit } )
+        end
       end
       if ObjectCategory == Object.Category.SCENERY then
         local SceneryType = ZoneObject:getTypeName()
@@ -1380,16 +1398,15 @@ end
 --- Smokes the zone boundaries in a color.
 -- @param #ZONE_POLYGON_BASE self
 -- @param Utilities.Utils#SMOKECOLOR SmokeColor The smoke color.
+-- @param #number Segments (Optional) Number of segments within boundary line. Default 10.
 -- @return #ZONE_POLYGON_BASE self
-function ZONE_POLYGON_BASE:SmokeZone( SmokeColor )
+function ZONE_POLYGON_BASE:SmokeZone( SmokeColor, Segments )
   self:F2( SmokeColor )
 
-  local i 
-  local j 
-  local Segments = 10
+  Segments=Segments or 10
   
-  i = 1
-  j = #self._.Polygon
+  local i=1
+  local j=#self._.Polygon
   
   while i <= #self._.Polygon do
     self:T( { i, j, self._.Polygon[i], self._.Polygon[j] } )
@@ -1401,6 +1418,42 @@ function ZONE_POLYGON_BASE:SmokeZone( SmokeColor )
       local PointX = self._.Polygon[i].x + ( Segment * DeltaX / Segments )
       local PointY = self._.Polygon[i].y + ( Segment * DeltaY / Segments )
       POINT_VEC2:New( PointX, PointY ):Smoke( SmokeColor )
+    end
+    j = i
+    i = i + 1
+  end
+
+  return self
+end
+
+
+--- Flare the zone boundaries in a color.
+-- @param #ZONE_POLYGON_BASE self
+-- @param Utilities.Utils#FLARECOLOR FlareColor The flare color.
+-- @param #number Segments (Optional) Number of segments within boundary line. Default 10.
+-- @param DCS#Azimuth Azimuth (optional) Azimuth The azimuth of the flare.
+-- @param #number AddHeight (optional) The height to be added for the smoke.
+-- @return #ZONE_POLYGON_BASE self
+function ZONE_POLYGON_BASE:FlareZone( FlareColor, Segments, Azimuth, AddHeight )
+  self:F2(FlareColor)
+
+  Segments=Segments or 10
+  
+  AddHeight = AddHeight or 0
+  
+  local i=1
+  local j=#self._.Polygon
+  
+  while i <= #self._.Polygon do
+    self:T( { i, j, self._.Polygon[i], self._.Polygon[j] } )
+    
+    local DeltaX = self._.Polygon[j].x - self._.Polygon[i].x
+    local DeltaY = self._.Polygon[j].y - self._.Polygon[i].y
+    
+    for Segment = 0, Segments do -- We divide each line in 5 segments and smoke a point on the line.
+      local PointX = self._.Polygon[i].x + ( Segment * DeltaX / Segments )
+      local PointY = self._.Polygon[i].y + ( Segment * DeltaY / Segments )
+      POINT_VEC2:New( PointX, PointY, AddHeight ):Flare(FlareColor, Azimuth)
     end
     j = i
     i = i + 1

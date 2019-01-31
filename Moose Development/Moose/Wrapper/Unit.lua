@@ -555,7 +555,7 @@ end
 -- @return #number The relative amount of fuel (from 0.0 to 1.0).
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetFuel()
-  self:F( self.UnitName )
+  self:F3( self.UnitName )
 
   local DCSUnit = self:GetDCSObject()
   
@@ -571,7 +571,7 @@ end
 -- @param #UNIT self
 -- @return #list<Wrapper.Unit#UNIT> A list of one @{Wrapper.Unit}.
 function UNIT:GetUnits()
-  self:F2( { self.UnitName } )
+  self:F3( { self.UnitName } )
   local DCSUnit = self:GetDCSObject()
 
   local Units = {}
@@ -783,6 +783,27 @@ function UNIT:GetThreatLevel()
 
 end
 
+--- Triggers an explosion at the coordinates of the unit.
+-- @param #UNIT self
+-- @param #number power Power of the explosion in kg TNT. Default 100 kg TNT.
+-- @param #number delay (Optional) Delay of explosion in seconds.
+-- @return #UNIT self
+function UNIT:Explode(power, delay)
+
+  -- Default.
+  power=power or 100
+  
+  -- Check if delay or not.
+  if delay and delay>0 then
+    -- Delayed call.
+    SCHEDULER:New(nil, self.Explode, {self, power}, delay)
+  else
+    -- Create an explotion at the coordinate of the unit.
+    self:GetCoordinate():Explosion(power)
+  end
+
+  return self
+end
 
 -- Is functions
 
@@ -902,29 +923,31 @@ end
 function UNIT:InAir()
   self:F2( self.UnitName )
 
+  -- Get DCS unit object.
   local DCSUnit = self:GetDCSObject() --DCS#Unit
   
   if DCSUnit then
---    Implementation of workaround. The original code is below.
---    This to simulate the landing on buildings.
 
-    local UnitInAir = true
-
+    -- Get DCS result of whether unit is in air or not.
+    local UnitInAir = DCSUnit:inAir()
+    
+    -- Get unit category.
     local UnitCategory = DCSUnit:getDesc().category
-    if UnitCategory == Unit.Category.HELICOPTER then
+
+    -- If DCS says that it is in air, check if this is really the case, since we might have landed on a building where inAir()=true but actually is not.
+    -- This is a workaround since DCS currently does not acknoledge that helos land on buildings.
+    -- Note however, that the velocity check will fail if the ground is moving, e.g. on an aircraft carrier!    
+    if UnitInAir==true and UnitCategory == Unit.Category.HELICOPTER then
       local VelocityVec3 = DCSUnit:getVelocity()
-      local Velocity = ( VelocityVec3.x ^ 2 + VelocityVec3.y ^ 2 + VelocityVec3.z ^ 2 ) ^ 0.5 -- in meters / sec
+      local Velocity = UTILS.VecNorm(VelocityVec3)
       local Coordinate = DCSUnit:getPoint()
       local LandHeight = land.getHeight( { x = Coordinate.x, y = Coordinate.z } )
       local Height = Coordinate.y - LandHeight
       if Velocity < 1 and Height <= 60   then
         UnitInAir = false
       end
-    else
-      UnitInAir = DCSUnit:inAir()
     end
-
-
+    
     self:T3( UnitInAir )
     return UnitInAir
   end

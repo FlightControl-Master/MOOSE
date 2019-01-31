@@ -59,12 +59,24 @@ Functional/Suppression.lua
 Functional/PseudoATC.lua
 Functional/Warehouse.lua
 
+Ops/Airboss.lua
+Ops/RecoveryTanker.lua
+Ops/RescueHelo.lua
+
 AI/AI_Balancer.lua
+AI/AI_Air.lua
 AI/AI_A2A.lua
 AI/AI_A2A_Patrol.lua
 AI/AI_A2A_Cap.lua
 AI/AI_A2A_Gci.lua
 AI/AI_A2A_Dispatcher.lua
+AI/AI_A2G.lua
+AI/AI_A2G_Engage.lua
+AI/AI_A2G_BAI.lua
+AI/AI_A2G_CAS.lua
+AI/AI_A2G_SEAD.lua
+AI/AI_A2G_Patrol.lua
+AI/AI_A2G_Dispatcher.lua
 AI/AI_Patrol.lua
 AI/AI_Cap.lua
 AI/AI_Cas.lua
@@ -100,4 +112,4 @@ Tasking/Task_Cargo_CSAR.lua
 Tasking/Task_Cargo_Dispatcher.lua
 Tasking/TaskZoneCapture.lua
 
-Moose.lua
+Globals.lua

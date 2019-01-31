@@ -70,7 +70,7 @@ do -- UserFlag
   --   local BlueVictory = USERFLAG:New( "VictoryBlue" )
   --   local BlueVictoryValue = BlueVictory:Get() -- Get the UserFlag VictoryBlue value.
   --   
-  function USERFLAG:Get( Number ) --R2.3
+  function USERFLAG:Get() --R2.3
     
     return trigger.misc.getUserFlag( self.UserFlagName )
   end  

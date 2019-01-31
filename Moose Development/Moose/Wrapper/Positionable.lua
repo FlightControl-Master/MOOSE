@@ -4,7 +4,7 @@
 -- 
 -- ### Author: **FlightControl**
 -- 
--- ### Contributions: 
+-- ### Contributions: **Hardcard**, **funkyfranky**
 -- 
 -- ===
 -- 
@@ -310,6 +310,44 @@ function POSITIONABLE:GetCoordinate()
   return nil
 end
 
+--- Returns a COORDINATE object, which is offset with respect to the orientation of the POSITIONABLE.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #number x Offset in the direction "the nose" of the unit is pointing in meters. Default 0 m.
+-- @param #number y Offset "above" the unit in meters. Default 0 m.
+-- @param #number z Offset in the direction "the wing" of the unit is pointing in meters. z>0 starboard, z<0 port. Default 0 m.
+-- @return Core.Point#COORDINATE The COORDINATE of the offset with respect to the orientation of the  POSITIONABLE.
+function POSITIONABLE:GetOffsetCoordinate(x,y,z)
+  
+  -- Default if nil.
+  x=x or 0
+  y=y or 0
+  z=z or 0
+
+  -- Vectors making up the coordinate system.
+  local X=self:GetOrientationX()
+  local Y=self:GetOrientationY()
+  local Z=self:GetOrientationZ()
+  
+  -- Offset vector: x meters ahead, z meters starboard, y meters above.
+  local A={x=x, y=y, z=z}
+  
+  -- Scale components of orthonormal coordinate vectors.
+  local x={x=X.x*A.x, y=X.y*A.x, z=X.z*A.x}
+  local y={x=Y.x*A.y, y=Y.y*A.y, z=Y.z*A.y}
+  local z={x=Z.x*A.z, y=Z.y*A.z, z=Z.z*A.z}
+  
+  -- Add up vectors in the unit coordinate system ==> this gives the offset vector relative the the origin of the map.
+  local a={x=x.x+y.x+z.x, y=x.y+y.y+z.y, z=x.z+y.z+z.z}
+  
+  -- Vector from the origin of the map to the unit.
+  local u=self:GetVec3()
+  
+  -- Translate offset vector from map origin to the unit: v=u+a.
+  local v={x=a.x+u.x, y=a.y+u.y, z=a.z+u.z}
+  
+  -- Return the offset coordinate.
+  return COORDINATE:NewFromVec3(v)
+end
 
 --- Returns a random @{DCS#Vec3} vector within a range, indicating the point in 3D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
@@ -389,6 +427,27 @@ function POSITIONABLE:GetBoundingBox() --R2.1
   return nil
 end
 
+
+--- Get the object size.
+-- @param #POSITIONABLE self 
+-- @return DCS#Distance Max size of object in x, z or 0 if bounding box could not be obtained.
+-- @return DCS#Distance Length x or 0 if bounding box could not be obtained.
+-- @return DCS#Distance Height y or 0 if bounding box could not be obtained.
+-- @return DCS#Distance Width z or 0 if bounding box could not be obtained.
+function POSITIONABLE:GetObjectSize()
+
+  -- Get bounding box.
+  local box=self:GetBoundingBox()
+  
+  if box then
+    local x=box.max.x+math.abs(box.min.x)  --length
+    local y=box.max.y+math.abs(box.min.y)  --height
+    local z=box.max.z+math.abs(box.min.z)  --width
+    return math.max(x,z), x , y, z
+  end
+  
+  return 0,0,0,0
+end
 
 --- Get the bounding radius of the underlying POSITIONABLE DCS Object.
 -- @param #POSITIONABLE self
@@ -656,6 +715,14 @@ function POSITIONABLE:GetVelocityMPS()
   return 0
 end
 
+--- Returns the POSITIONABLE velocity in knots.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return #number The velocity in knots.
+function POSITIONABLE:GetVelocityKNOTS()
+  self:F2( self.PositionableName )
+  return UTILS.MpsToKnots(self:GetVelocityMPS())
+end
+
 --- Returns the Angle of Attack of a positionable.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return #number Angle of attack in degrees.
@@ -706,8 +773,8 @@ end
 
 --- Returns the unit's climb or descent angle.
 -- @param Wrapper.Positionable#POSITIONABLE self
--- @return #number Climb or descent angle in degrees.
-function POSITIONABLE:GetClimbAnge()
+-- @return #number Climb or descent angle in degrees. Or 0 if velocity vector norm is zero (or nil). Or nil, if the position of the POSITIONABLE returns nil.
+function POSITIONABLE:GetClimbAngle()
 
   -- Get position of the unit.
   local unitpos = self:GetPosition()
@@ -719,10 +786,17 @@ function POSITIONABLE:GetClimbAnge()
     
     if unitvel and UTILS.VecNorm(unitvel)~=0 then
 
-      return math.asin(unitvel.y/UTILS.VecNorm(unitvel))
-
+      -- Calculate climb angle.
+      local angle=math.asin(unitvel.y/UTILS.VecNorm(unitvel))
+      
+      -- Return angle in degrees.
+      return math.deg(angle)
+    else
+      return 0
     end
   end
+  
+  return nil
 end
 
 --- Returns the pitch angle of a unit.

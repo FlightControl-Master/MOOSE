@@ -345,7 +345,7 @@ function AI_A2A_PATROL:onafterRoute( AIPatrol, From, Event, To )
     AIPatrol:OptionROEReturnFire()
     AIPatrol:OptionROTEvadeFire()
 
-    AIPatrol:Route( PatrolRoute, 0.5 )
+    AIPatrol:Route( PatrolRoute, 0.5)
   end
 
 end

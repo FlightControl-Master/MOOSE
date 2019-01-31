@@ -1012,7 +1012,7 @@ do -- DETECTION_BASE
     --- Set the parameters to calculate to optimal intercept point.
     -- @param #DETECTION_BASE self
     -- @param #boolean Intercept Intercept is true if an intercept point is calculated. Intercept is false if it is disabled. The default Intercept is false.
-    -- @param #number IntereptDelay If Intercept is true, then InterceptDelay is the average time it takes to get airplanes airborne.
+    -- @param #number InterceptDelay If Intercept is true, then InterceptDelay is the average time it takes to get airplanes airborne.
     -- @return #DETECTION_BASE self
     function DETECTION_BASE:SetIntercept( Intercept, InterceptDelay )
       self:F2()
@@ -1233,7 +1233,7 @@ do -- DETECTION_BASE
     -- @param DCS#Unit.Category Category The category of the unit.
     -- @return #boolean true if there are friendlies nearby 
     function DETECTION_BASE:IsFriendliesNearBy( DetectedItem, Category )
-      --self:F( { "FriendliesNearBy Test", DetectedItem.FriendliesNearBy } )
+--      self:F( { "FriendliesNearBy Test", DetectedItem.FriendliesNearBy } )
       return ( DetectedItem.FriendliesNearBy and DetectedItem.FriendliesNearBy[Category] ~= nil ) or false
     end
   

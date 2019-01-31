@@ -36,6 +36,7 @@
 -- @field #boolean ReportTargets If true, nearby targets are reported.
 -- @Field DCSTypes#AI.Option.Air.val.ROE OptionROE Which ROE is set to the FollowGroup.
 -- @field DCSTypes#AI.Option.Air.val.REACTION_ON_THREAT OptionReactionOnThreat Which REACTION_ON_THREAT is set to the FollowGroup.
+-- @field #number dtFollow Time step between position updates.
 
 
 --- Build large formations, make AI follow a @{Wrapper.Client#CLIENT} (player) leader or a @{Wrapper.Unit#UNIT} (AI) leader.
@@ -106,6 +107,7 @@ AI_FORMATION = {
   FollowScheduler = nil,
   OptionROE = AI.Option.Air.val.ROE.OPEN_FIRE,
   OptionReactionOnThreat = AI.Option.Air.val.REACTION_ON_THREAT.ALLOW_ABORT_MISSION,
+  dtFollow = 0.5,
 }
 
 --- AI_FORMATION.Mode class
@@ -125,6 +127,7 @@ AI_FORMATION = {
 -- @param Wrapper.Unit#UNIT FollowUnit The UNIT leading the FolllowGroupSet.
 -- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
 -- @param #string FollowName Name of the escort.
+-- @param #string FollowBriefing Briefing.
 -- @return #AI_FORMATION self
 function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefing ) --R2.1
   local self = BASE:Inherit( self, FSM_SET:New( FollowGroupSet ) )
@@ -139,7 +142,7 @@ function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefin
 
   self:AddTransition( "*", "Stop", "Stopped" )
 
-  self:AddTransition( "None", "Start", "Following" )
+  self:AddTransition( {"None", "Stopped"}, "Start", "Following" )
 
   self:AddTransition( "*", "FormationLine", "*" )
   --- FormationLine Handler OnBefore for AI_FORMATION
@@ -620,6 +623,16 @@ function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefin
   return self
 end
 
+
+--- Set time interval between updates of the formation.
+-- @param #AI_FORMATION self
+-- @param #number dt Time step in seconds between formation updates. Default is every 0.5 seconds.
+-- @return #AI_FORMATION
+function AI_FORMATION:SetFollowTimeInterval(dt) --R2.1
+  self.dtFollow=dt or 0.5
+  return self
+end
+
 --- This function is for test, it will put on the frequency of the FollowScheduler a red smoke at the direction vector calculated for the escort to fly to.
 -- This allows to visualize where the escort is flying to.
 -- @param #AI_FORMATION self
@@ -893,7 +906,30 @@ function AI_FORMATION:SetFlightRandomization( FlightRandomization ) --R2.1
 end
 
 
---- @param Follow#AI_FORMATION self
+--- Stop function. Formation will not be updated any more.
+-- @param #AI_FORMATION self
+-- @param Core.Set#SET_GROUP FollowGroupSet The following set of groups.
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @pram #string To The to state.
+function AI_FORMATION:onafterStop(FollowGroupSet, From, Event, To) --R2.1
+  self:E("Stopping formation.")
+end
+
+--- Follow event fuction. Check if coming from state "stopped". If so the transition is rejected.
+-- @param #AI_FORMATION self
+-- @param Core.Set#SET_GROUP FollowGroupSet The following set of groups.
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @pram #string To The to state.
+function AI_FORMATION:onbeforeFollow( FollowGroupSet, From, Event, To ) --R2.1
+  if From=="Stopped" then
+    return false  -- Deny transition.
+  end
+  return true
+end
+
+--- @param #AI_FORMATION self
 function AI_FORMATION:onenterFollowing( FollowGroupSet ) --R2.1
   self:F( )
 
@@ -1032,8 +1068,8 @@ function AI_FORMATION:onenterFollowing( FollowGroupSet ) --R2.1
       end,
       self, ClientUnit, CT1, CV1, CT2, CV2
     )
-
-    self:__Follow( -0.5 )
+    
+    self:__Follow( -self.dtFollow )
   end
   
 end

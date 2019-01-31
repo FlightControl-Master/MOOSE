@@ -325,7 +325,7 @@ end
 -- So all event listeners will catch the destroy event of this group for each unit in the group.
 -- To raise these events, provide the `GenerateEvent` parameter.
 -- @param #GROUP self
--- @param #boolean GenerateEvent true if you want to generate a crash or dead event for each unit.
+-- @param #boolean GenerateEvent If true, a crash or dead event for each unit is generated. If false, if no event is triggered. If nil, a RemoveUnit event is triggered.
 -- @usage
 -- -- Air unit example: destroy the Helicopter and generate a S_EVENT_CRASH for each unit in the Helicopter group.
 -- Helicopter = GROUP:FindByName( "Helicopter" )
@@ -934,7 +934,7 @@ end
 -- @return #number The fuel state of the unit with the least amount of fuel
 -- @return #Unit reference to #Unit object for further processing
 function GROUP:GetFuelMin()
-  self:F(self.ControllableName)
+  self:F3(self.ControllableName)
 
   if not self:GetDCSObject() then
     BASE:E( { "Cannot GetFuel", Group = self, Alive = self:IsAlive() } )
@@ -1455,6 +1455,57 @@ function GROUP:InitRandomizePositionRadius( OuterRadius, InnerRadius )
   return self
 end
 
+--- Sets the radio comms on or off when the group is respawned. Same as checking/unchecking the COMM box in the mission editor.
+-- @param #GROUP self 
+-- @param #boolean switch If true (or nil), enables the radio comms. If false, disables the radio for the spawned group.
+-- @return #GROUP self
+function GROUP:InitRadioCommsOnOff(switch)
+  self:F({switch=switch})
+  if switch==true or switch==nil then
+    self.InitRespawnRadio=true
+  else
+    self.InitRespawnRadio=false
+  end
+  return self
+end
+
+--- Sets the radio frequency of the group when it is respawned.
+-- @param #GROUP self 
+-- @param #number frequency The frequency in MHz.
+-- @return #GROUP self
+function GROUP:InitRadioFrequency(frequency)
+  self:F({frequency=frequency})
+
+  self.InitRespawnFreq=frequency
+  
+  return self
+end
+
+--- Set radio modulation when the group is respawned. Default is AM.
+-- @param #GROUP self
+-- @param #string modulation Either "FM" or "AM". If no value is given, modulation is set to AM.
+-- @return #GROUP self
+function GROUP:InitRadioModulation(modulation)
+  self:F({modulation=modulation})
+  if modulation and modulation:lower()=="fm" then
+    self.InitRespawnModu=radio.modulation.FM
+  else
+    self.InitRespawnModu=radio.modulation.AM
+  end
+  return self
+end
+
+--- Sets the modex (tail number) of the first unit of the group. If more units are in the group, the number is increased with every unit.
+-- @param #GROUP self
+-- @param #string modex Tail number of the first unit.
+-- @return #GROUP self
+function GROUP:InitModex(modex)
+  self:F({modex=modex})
+  if modex then
+    self.InitRespawnModex=tonumber(modex)
+  end
+  return self
+end
 
 --- Respawn the @{Wrapper.Group} at a @{Point}.
 -- The method will setup the new group template according the Init(Respawn) settings provided for the group.
@@ -1477,29 +1528,61 @@ end
 -- 
 -- @param Wrapper.Group#GROUP self
 -- @param #table Template (optional) The template of the Group retrieved with GROUP:GetTemplate(). If the template is not provided, the template will be retrieved of the group itself.
+-- @param #boolean Reset Reset positions if TRUE.
+-- @return Wrapper.Group#GROUP self
 function GROUP:Respawn( Template, Reset )
 
-  if not Template then
-    Template = self:GetTemplate()
-  end
+  -- Given template or get old.
+  Template = Template or self:GetTemplate()
+  
+  -- Get correct heading.
+  local function _Heading(course)
+    local h
+    if course<=180 then
+      h=math.rad(course)
+    else
+      h=-math.rad(360-course)
+    end
+    return h 
+  end        
 
+  -- First check if group is alive.
   if self:IsAlive() then
+  
+    -- Respawn zone.
     local Zone = self.InitRespawnZone -- Core.Zone#ZONE
+    
+    -- Zone position or current group position.
     local Vec3 = Zone and Zone:GetVec3() or self:GetVec3()
+    
+    -- From point of the template.
     local From = { x = Template.x, y = Template.y }
+    
+    -- X, Y
     Template.x = Vec3.x
     Template.y = Vec3.z
+    
     --Template.x = nil
     --Template.y = nil
     
+    -- Debug number of units.
     self:F( #Template.units )
+    
+    -- Reset position etc?
     if Reset == true then
+
+      -- Loop over units in group.
       for UnitID, UnitData in pairs( self:GetUnits() ) do
         local GroupUnit = UnitData -- Wrapper.Unit#UNIT
-        self:F( GroupUnit:GetName() )
+        self:F(GroupUnit:GetName())
+        
         if GroupUnit:IsAlive() then
-          self:F( "Alive"  )
-          local GroupUnitVec3 = GroupUnit:GetVec3() 
+          self:F("Alive")
+          
+          -- Get unit position vector.
+          local GroupUnitVec3 = GroupUnit:GetVec3()
+          
+          -- Check if respawn zone is set.
           if Zone then
             if self.InitRespawnRandomizePositionZone then
               GroupUnitVec3 = Zone:GetRandomVec3()
@@ -1512,17 +1595,38 @@ function GROUP:Respawn( Template, Reset )
             end
           end
           
+          -- Altitude
           Template.units[UnitID].alt = self.InitRespawnHeight and self.InitRespawnHeight or GroupUnitVec3.y
-          Template.units[UnitID].x = ( Template.units[UnitID].x - From.x ) + GroupUnitVec3.x -- Keep the original x position of the template and translate to the new position.
-          Template.units[UnitID].y = ( Template.units[UnitID].y - From.y ) + GroupUnitVec3.z -- Keep the original z position of the template and translate to the new position.
-          Template.units[UnitID].heading = self.InitRespawnHeading and self.InitRespawnHeading or GroupUnit:GetHeading()
+          
+          -- Unit position. Why not simply take the current positon?
+          if Zone then
+            Template.units[UnitID].x = ( Template.units[UnitID].x - From.x ) + GroupUnitVec3.x -- Keep the original x position of the template and translate to the new position.
+            Template.units[UnitID].y = ( Template.units[UnitID].y - From.y ) + GroupUnitVec3.z -- Keep the original z position of the template and translate to the new position.
+          else
+            Template.units[UnitID].x=GroupUnitVec3.x
+            Template.units[UnitID].y=GroupUnitVec3.z
+          end
+          
+          -- Set heading.
+          Template.units[UnitID].heading = _Heading(self.InitRespawnHeading and self.InitRespawnHeading or GroupUnit:GetHeading())
+          Template.units[UnitID].psi     = -Template.units[UnitID].heading
+          
+          -- Debug.
           self:F( { UnitID, Template.units[UnitID], Template.units[UnitID] } )
         end
       end
-    else
+      
+    else  -- Reset=false or nil
+    
+      -- Loop over template units.
       for UnitID, TemplateUnitData in pairs( Template.units ) do
+      
         self:F( "Reset"  )
+        
+        -- Position from template.
         local GroupUnitVec3 = { x = TemplateUnitData.x, y = TemplateUnitData.alt, z = TemplateUnitData.y }
+        
+        -- Respawn zone position.
         if Zone then
           if self.InitRespawnRandomizePositionZone then
             GroupUnitVec3 = Zone:GetRandomVec3()
@@ -1535,23 +1639,54 @@ function GROUP:Respawn( Template, Reset )
           end
         end
         
+        -- Set altitude.
         Template.units[UnitID].alt = self.InitRespawnHeight and self.InitRespawnHeight or GroupUnitVec3.y
+        
+        -- Unit position.
         Template.units[UnitID].x = ( Template.units[UnitID].x - From.x ) + GroupUnitVec3.x -- Keep the original x position of the template and translate to the new position.
         Template.units[UnitID].y = ( Template.units[UnitID].y - From.y ) + GroupUnitVec3.z -- Keep the original z position of the template and translate to the new position.
+        
+        -- Heading
         Template.units[UnitID].heading = self.InitRespawnHeading and self.InitRespawnHeading or TemplateUnitData.heading
+        
+        -- Debug.
         self:F( { UnitID, Template.units[UnitID], Template.units[UnitID] } )
       end
+      
     end      
     
   end
   
-  self:Destroy()
-  _DATABASE:Spawn( Template )
+  -- Set tail number.
+  if self.InitRespawnModex then
+    for UnitID=1,#Template.units do
+      Template.units[UnitID].onboard_num=string.format("%03d", self.InitRespawnModex+(UnitID-1))
+    end
+  end
   
+  -- Set radio frequency and modulation.
+  if self.InitRespawnRadio then
+    Template.communication=self.InitRespawnRadio
+  end
+  if self.InitRespawnFreq then
+    Template.frequency=self.InitRespawnFreq
+  end
+  if self.InitRespawnModu then
+    Template.modulation=self.InitRespawnModu
+  end
+  
+  -- Destroy old group. Dont trigger any dead/crash events since this is a respawn.
+  self:Destroy(false)
+  
+  self:T({Template=Template})
+  
+  -- Spawn new group.
+  _DATABASE:Spawn(Template)
+  
+  -- Reset events.
   self:ResetEvents()
   
   return self
-  
 end
 
 
@@ -1648,11 +1783,23 @@ function GROUP:RespawnAtCurrentAirbase(SpawnTemplate, Takeoff, Uncontrolled) -- 
     
     -- Set uncontrolled state.
     SpawnTemplate.uncontrolled=Uncontrolled
+    
+    -- Set radio frequency and modulation.
+    if self.InitRespawnRadio then
+      SpawnTemplate.communication=self.InitRespawnRadio
+    end
+    if self.InitRespawnFreq then
+      SpawnTemplate.frequency=self.InitRespawnFreq
+    end
+    if self.InitRespawnModu then
+      SpawnTemplate.modulation=self.InitRespawnModu
+    end
 
     -- Destroy old group.
     self:Destroy(false)
     
-    _DATABASE:Spawn( SpawnTemplate )
+    -- Spawn new group.
+    _DATABASE:Spawn(SpawnTemplate)
   
     -- Reset events.
     self:ResetEvents()
@@ -1800,8 +1947,8 @@ do -- Route methods
   -- 
   -- @param #GROUP self
   -- @param Wrapper.Airbase#AIRBASE RTBAirbase (optional) The @{Wrapper.Airbase} to return to. If blank, the controllable will return to the nearest friendly airbase.
-  -- @param #number Speed (optional) The Speed, if no Speed is given, the maximum Speed of the first unit is selected. 
-  -- @return #GROUP
+  -- @param #number Speed (optional) The Speed, if no Speed is given, 80% of maximum Speed of the group is selected. 
+  -- @return #GROUP self
   function GROUP:RouteRTB( RTBAirbase, Speed )
     self:F( { RTBAirbase:GetName(), Speed } )
   
@@ -1811,42 +1958,42 @@ do -- Route methods
   
       if RTBAirbase then
       
-        local GroupPoint = self:GetVec2()
-        local GroupVelocity = self:GetUnit(1):GetDesc().speedMax
-    
-        local PointFrom = {}
-        PointFrom.x = GroupPoint.x
-        PointFrom.y = GroupPoint.y
-        PointFrom.type = "Turning Point"
-        PointFrom.action = "Turning Point"
-        PointFrom.speed = GroupVelocity
-
-    
-        local PointTo = {}
-        local AirbasePointVec2 = RTBAirbase:GetPointVec2()
-        local AirbaseAirPoint = AirbasePointVec2:WaypointAir(
-          POINT_VEC3.RoutePointAltType.BARO,
-          "Land",
-          "Landing", 
-          Speed or self:GetUnit(1):GetDesc().speedMax
-        )
+        -- If speed is not given take 80% of max speed.
+        local Speed=Speed or self:GetSpeedMax()*0.8
         
-        AirbaseAirPoint["airdromeId"] = RTBAirbase:GetID()
-        AirbaseAirPoint["speed_locked"] = true,
+        -- Curent (from) waypoint.
+        local coord=self:GetCoordinate()
+        local PointFrom=coord:WaypointAirTurningPoint(nil, Speed)
+        
+        -- Airbase coordinate.
+        --local PointAirbase=RTBAirbase:GetCoordinate():SetAltitude(coord.y):WaypointAirTurningPoint(nil ,Speed)
+        
+        -- Landing waypoint. More general than prev version since it should also work with FAPRS and ships.
+        local PointLanding=RTBAirbase:GetCoordinate():WaypointAirLanding(Speed, RTBAirbase)        
+        
+        -- Waypoint table.
+        local Points={PointFrom, PointLanding}
+        --local Points={PointFrom, PointAirbase, PointLanding}
     
-        self:F(AirbaseAirPoint )
-    
-        local Points = { PointFrom, AirbaseAirPoint }
-    
-        self:T3( Points )
+        -- Debug info.
+        self:T3(Points)
 
-        local Template = self:GetTemplate()
-        Template.route.points = Points
-        self:Respawn( Template )
-    
-        --self:Route( Points )
+        -- Get group template.
+        local Template=self:GetTemplate()
+        
+        -- Set route points.
+        Template.route.points=Points
+        
+        -- Respawn the group.
+        self:Respawn(Template, true)
+        
+        -- Route the group or this will not work.
+        self:Route(Points)
       else
+      
+        -- Clear all tasks.
         self:ClearTasks()
+        
       end
     end
   
