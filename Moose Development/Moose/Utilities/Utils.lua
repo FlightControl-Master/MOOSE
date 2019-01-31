@@ -59,10 +59,6 @@ DCSMAP = {
 
 --- See [DCS_enum_callsigns](https://wiki.hoggitworld.com/view/DCS_enum_callsigns)
 -- @type CALLSIGN
--- @field #table Aircraft Aircraft callsigns.
--- @field #table AWACS AWACS callsigns.
--- @field #table Tanker Tanker callsigns.
--- @field #table JTAC JTAC callsigns.
 CALLSIGN={
   -- Aircraft
   Aircraft={
