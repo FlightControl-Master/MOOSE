@@ -1651,7 +1651,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.9.4"
+AIRBOSS.version="0.9.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -4928,7 +4928,10 @@ function AIRBOSS:_AddMarshalGroup(flight, stack)
   
   -- If the carrier is supposed to turn into the wind, we take the wind coordinate.
   if self.recoverywindow and self.recoverywindow.WIND then
-    brc=self:GetBRCintoWind()
+    local _,vwind=self:GetCoordinate():GetWind(50)
+    if vwind>0.1 then
+      brc=self:GetBRCintoWind()
+    end
   end
   
   -- Get charlie time estimate.
@@ -5170,17 +5173,20 @@ function AIRBOSS:_GetFlightUnits(flight, onground)
     local group=_group --Wrapper.Group#GROUP
     local units=group:GetUnits()
     local n=0
-    for _,_unit in pairs(units) do
-      local unit=_unit --Wrapper.Unit#UNIT
-      if unit and unit:IsAlive()  then
-        if inair then
-          -- Only count units in air.
-          if unit:InAir() then
+    if units then
+      for _,_unit in pairs(units) do
+        local unit=_unit --Wrapper.Unit#UNIT
+        if unit and unit:IsAlive()  then
+          if inair then
+            -- Only count units in air.
+            if unit:InAir() then
+              self:T2(self.lid..string.format("Unit %s is in AIR", unit:GetName()))
+              n=n+1
+            end
+          else
+            -- Count units in air or on the ground.
             n=n+1
           end
-        else
-          -- Count units in air or on the ground.
-          n=n+1
         end
       end
     end
@@ -5718,11 +5724,17 @@ function AIRBOSS:_RemoveUnitFromFlight(unit)
         
         if removed then
         
-          -- Get number of units (excluding section members). For AI only those that are stil in air as we assume once they landed, they are out of the game.
+          -- Get number of units (excluding section members). For AI only those that are still in air as we assume once they landed, they are out of the game.
           local _,nunits=self:_GetFlightUnits(flight, not flight.ai)
           
+          -- Number of flight elements still left.
+          local nelements=#flight.elements
+          
+          -- Debug info.
+          self:T(self.lid..string.format("Removed unit %s: nunits=%d, nelements=%d", unit:GetName(), nunits, nelements))
+          
           -- Check if no units are left.
-          if nunits==0 then
+          if nunits==0 or nelements==0 then
             -- Remove flight from all queues.
             self:_RemoveFlight(flight)
           end
@@ -10529,6 +10541,11 @@ function AIRBOSS:CarrierTurnIntoWind(time, vdeck)
   -- Wind speed.
   local _,vwind=self:GetCoordinate():GetWind(50)
   
+  -- Check that wind is >= 0.1 m/s.
+  if vwind<0.1 then
+    return
+  end
+    
   -- Speed of carrier in m/s.
   local vtot=vdeck-vwind
   
@@ -12036,9 +12053,9 @@ function AIRBOSS:_AddF10Commands(_unitName)
         missionCommands.addCommandForGroup(gid, "Carrier Info",     _kneeboardPath, self._DisplayCarrierInfo,    self, _unitName) -- F2
         missionCommands.addCommandForGroup(gid, "Weather Report",   _kneeboardPath, self._DisplayCarrierWeather, self, _unitName) -- F3
         missionCommands.addCommandForGroup(gid, "Set Section",      _kneeboardPath, self._SetSection,            self, _unitName) -- F4
-        missionCommands.addCommandForGroup(gid, "Marshal Queue",    _kneeboardPath, self._DisplayQueue,          self, _unitName, self.Qmarshal, "Marshal") -- F5
-        missionCommands.addCommandForGroup(gid, "Pattern Queue",    _kneeboardPath, self._DisplayQueue,          self, _unitName, self.Qpattern, "Pattern") -- F6
-        missionCommands.addCommandForGroup(gid, "Waiting Queue",    _kneeboardPath, self._DisplayQueue,          self, _unitName, self.Qwaiting, "Waiting") -- F7
+        missionCommands.addCommandForGroup(gid, "Marshal Queue",    _kneeboardPath, self._DisplayQueue,          self, _unitName, "Marshal") -- F5
+        missionCommands.addCommandForGroup(gid, "Pattern Queue",    _kneeboardPath, self._DisplayQueue,          self, _unitName, "Pattern") -- F6
+        missionCommands.addCommandForGroup(gid, "Waiting Queue",    _kneeboardPath, self._DisplayQueue,          self, _unitName, "Waiting") -- F7
 
         -------------------------
         -- F10/Airboss/<Carrier>/
@@ -12753,9 +12770,8 @@ end
 --- Display marshal or pattern queue.
 -- @param #AIRBOSS self
 -- @param #string _unitname Name of the player unit.
--- @param #table queue The queue to display.
 -- @param #string qname Name of the queue.
-function AIRBOSS:_DisplayQueue(_unitname, queue, qname)
+function AIRBOSS:_DisplayQueue(_unitname, qname)
 
   -- Get player unit and player name.
   local unit, playername = self:_GetPlayerUnitAndName(_unitname)
@@ -12767,6 +12783,16 @@ function AIRBOSS:_DisplayQueue(_unitname, queue, qname)
     local playerData=self.players[playername]  --#AIRBOSS.PlayerData
     
     if playerData then
+    
+      -- Queue to display.
+      local queue=nil
+      if qname=="Marshal" then
+        queue=self.Qmarshal
+      elseif qname=="Pattern" then
+        queue=self.Qpattern
+      elseif qname=="Waiting" then      
+        queue=self.Qwaiting
+      end
     
       -- Number of group and units in queue
       local Nqueue,nqueue=self:_GetQueueInfo(queue, playerData.case)
