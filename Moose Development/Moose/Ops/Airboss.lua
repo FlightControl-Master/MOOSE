@@ -16,7 +16,7 @@
 --    * F10 radio menu including carrier info (weather, radio frequencies, TACAN/ICLS channels), player LSO grades, help function (aircraft attitude, marking of zones etc).
 --    * Recovery tanker and refueling option via integration of @{Ops.RecoveryTanker} class.
 --    * Rescue helicopter option via @{Ops.RescueHelo} class.
---    * Combine multiple human player to sections.
+--    * Combine multiple human player to sections (WIP).
 --    * Many parameters customizable by convenient user API functions.
 --    * Multiple carrier support due to object oriented approach.
 --    * Unlimited number of players.
@@ -26,11 +26,13 @@
 -- **Supported Carriers:**
 -- 
 --    * [USS John C. Stennis](https://en.wikipedia.org/wiki/USS_John_C._Stennis) (CVN-74)
+--    * [USS Tarawa](https://en.wikipedia.org/wiki/USS_Tarawa_(LHA-1)) (LHA-1) [**WIP**]
 --    
 -- **Supported Aircraft:**
 -- 
 --    * [F/A-18C Hornet Lot 20](https://forums.eagle.ru/forumdisplay.php?f=557) (Player & AI)
 --    * [A-4E Skyhawk Community Mod](https://forums.eagle.ru/showthread.php?t=224989) (Player & AI)
+--    * [AV-8B N/A Harrier](https://forums.eagle.ru/forumdisplay.php?f=555) (Player & AI) [**WIP**]
 --    * F/A-18C Hornet (AI)
 --    * F-14A Tomcat (AI)
 --    * E-2D Hawkeye (AI)
@@ -39,10 +41,14 @@
 -- At the moment, optimized parameters are available for the F/A-18C Hornet (Lot 20) as aircraft and the USS John C. Stennis as carrier.
 -- The A-4E community mod is also supported in principle but may need further tweaking of parameters. Also the A-4E-C mod needs *easy comms* activated to interact with the F10 radio menu.
 -- 
--- The implementation is kept general. So other aircraft and carriers possible in future. [*Winter is coming!*](https://forums.eagle.ru/forumdisplay.php?f=395)
+-- The AV-8B Harrier and the USS Tarawa are very much WIP. Those two can only be used together, i.e. the Tarawa is the only carrier the harrier is supposed to land on and
+-- the no other fixed wing aircraft (human or AI controlled) are supposed to land on the Tarawa. Currently only Case I is supported. Case II/III take slightly steps from the CVN carrier.
+-- However, the two Case II/III pattern are very similar so this is not a big drawback.
+-- 
+-- The implementation is kept general. Therefore, other aircraft and carriers can be added in future. [*Winter is coming!*](https://forums.eagle.ru/forumdisplay.php?f=395)
 -- But each aircraft or carrier needs a different set of optimized individual parameters. 
 --
--- **PLEASE NOTE** that his class is work in progress and in an early **alpha** stage. Many/most things work already very nicely but there a lot of cases I did not run into yet.
+-- **PLEASE NOTE** that his class is work in progress. Many/most things work already very nicely but there a lot of cases I did not run into yet.
 --  Therefore, your *constructive* feedback is both necessary and appreciated!
 --  
 -- ## Discussion
@@ -59,9 +65,21 @@
 --    
 -- ## Youtube Videos
 -- 
+-- Early AIRBOSS Groove Testing:
+-- 
 --    * [[MOOSE] Airboss - Groove Testing (WIP)](https://www.youtube.com/watch?v=94KHQxxX3UI)
 --    * [[MOOSE] Airboss - Groove Test A-4E Community Mod](https://www.youtube.com/watch?v=ZbjD7FHiaHo)
 -- 
+-- Lex explaining Boat Ops:
+-- 
+--    * [( DCS HORNET ) Some boat ops basics VID 1](https://www.youtube.com/watch?v=LvGQS-3AzMc)
+--    * [( DCS HORNET ) Some boat ops basics VID 1](https://www.youtube.com/watch?v=bN44wvtRsw0)
+--    
+-- Jabbers Case I and III Recovery Tutorials:
+-- 
+--    * [DCS World - F/A-18 - Case I Carrier Recovery Tutorial](https://www.youtube.com/watch?v=lm-M3VUy-_I)
+--    * [DCS World - Case I Recovery Tutorial - Followup](https://www.youtube.com/watch?v=cW5R32Q6xC8)
+--    * [DCS World - CASE III Recovery Tutorial](https://www.youtube.com/watch?v=Lnfug5CVAvo)
 -- 
 -- ### Open Questions?
 -- 
@@ -196,7 +214,7 @@
 -- 
 --    * **CASE I** during daytime and good weather, 
 --    * **CASE II** during daytime but poor visibility conditions,
---    * **CASE III** during nighttime recoveries.
+--    * **CASE III** when below Case II conditions, e.g. during nighttime.
 --    
 -- That being said, this script allows you to use any of the three cases to be used at any time. Or, in other words, *you* need to specify when which case is safe and appropriate.
 -- 
@@ -601,7 +619,7 @@
 -- The following example shows how you set up a recovery window for the next week:
 -- 
 --     for i=0,7 do
---       AddRecoveryWindow(string.format("08:05:00+%d", i), string.format("08:50:00+%d", i))
+--        airbossStennis:AddRecoveryWindow(string.format("08:05:00+%d", i), string.format("08:50:00+%d", i))
 --     end
 -- 
 -- ### Turning into the Wind
@@ -610,7 +628,9 @@
 -- 
 --     airbossStennis:AddRecoveryWindow("8:30", "9:30", 1, nil, true, 20)
 -- 
--- Setting the fifth parameter to *true* enables the automatic turning into the wind. The sixth parameter (here 20) specifies the speed in knots the carrier will go.
+-- Setting the fifth parameter to *true* enables the automatic turning into the wind. The sixth parameter (here 20) specifies the speed in knots the carrier will go so that to total wind above the deck.
+-- For example, if the is blowing with 5 knots, the carrier will go 15 knots so that it adds up to the specified 20 knots. 
+-- 
 -- The carrier will steam into the wind for as long as the recovery window is open. The distance up to which possible collisions are detected can be set by the @{#AIRBOSS.SetCollisionDistance} function.
 -- 
 -- However, the airboss scans the type of the surface up to 5 NM in the direction of movement of the carrier. If he detects anything but deep water, he will stop the current course and head back to
@@ -907,20 +927,9 @@ AIRBOSS = {
   soundfolder    = nil,
 }
 
---- Player aircraft types capable of landing on carriers.
--- @type AIRBOSS.AircraftPlayer
--- @field #string AV8B AV-8B Night Harrier (not yet supported).
--- @field #string HORNET F/A-18C Lot 20 Hornet.
--- @field #string A4EC A-4E Community mod.
-AIRBOSS.AircraftPlayer={
-  --AV8B="AV8BNA",
-  HORNET="FA-18C_hornet",
-  A4EC="A-4E-C",
-}
-
 --- Aircraft types capable of landing on carrier (human+AI).
 -- @type AIRBOSS.AircraftCarrier
--- @field #string AV8B AV-8B Night Harrier (not yet supported).
+-- @field #string AV8B AV-8B Night Harrier. Works only with the USS Tarawa.
 -- @field #string A4EC A-4E Community mod.
 -- @field #string HORNET F/A-18C Lot 20 Hornet by Eagle Dynamics.
 -- @field #string F14A F-14A by Heatblur.
@@ -931,7 +940,7 @@ AIRBOSS.AircraftPlayer={
 -- @field #string S3BTANKER Lockheed S-3B Viking tanker.
 -- @field #string E2D Grumman E-2D Hawkeye AWACS.
 AIRBOSS.AircraftCarrier={
-  --AV8B="AV8BNA",
+  AV8B="AV8BNA",
   HORNET="FA-18C_hornet",
   A4EC="A-4E-C",
   F14A="F-14A_tomcat",
@@ -1006,6 +1015,8 @@ AIRBOSS.CarrierType={
 -- @field #string GROOVE_IM "Groove In the Middle".
 -- @field #string GROOVE_IC "Groove In Close".
 -- @field #string GROOVE_AR "Groove At the Ramp".
+-- @field #string GROOVE_AL "Groove Abeam Landing Spot".
+-- @field #string GROOVE_LC "Groove Level Cross".
 -- @field #string GROOVE_IW "Groove In the Wires".
 -- @field #string BOLTER "Bolter Pattern".
 -- @field #string DEBRIEF "Debrief".
@@ -1034,6 +1045,8 @@ AIRBOSS.PatternStep={
   GROOVE_IC="Groove In Close",
   GROOVE_AR="Groove At the Ramp",
   GROOVE_IW="Groove In the Wires",
+  GROOVE_AL="Groove Abeam Landing Spot",
+  GROOVE_LC="Groove Level Cross",
   BOLTER="Bolter Pattern",
   DEBRIEF="Debrief",
 }
@@ -1045,6 +1058,8 @@ AIRBOSS.PatternStep={
 -- @field #string IM "IM": In the middle.
 -- @field #string IC "IC": In close.
 -- @field #string AR "AR": At the ramp.
+-- @field #string AL "AL": Abeam landing position (Tarawa).
+-- @field #string LC "LC": Level crossing (Tarawa).
 -- @field #string IW "IW": In the wires.
 AIRBOSS.GroovePos={
   X0="X0",
@@ -1052,6 +1067,8 @@ AIRBOSS.GroovePos={
   IM="IM",
   IC="IC",
   AR="AR",
+  AL="AL",
+  LC="LC",
   IW="IW",
 }
 
@@ -1071,7 +1088,7 @@ AIRBOSS.GroovePos={
 -- @field #number subduration Duration in seconds the subtitle is displayed.
 -- @field #string modexsender Onboard number of the sender (optional).
 -- @field #string modexreceiver Onboard number of the receiver (optional).
--- @field #string sender Sender of the message (optional). Default radia alias.
+-- @field #string sender Sender of the message (optional). Default radio alias.
 
 --- LSO radio calls.
 -- @type AIRBOSS.LSOCall
@@ -1092,6 +1109,12 @@ AIRBOSS.GroovePos={
 -- @field #AIRBOSS.RadioCall FOULDECK "Foul Deck" call.
 -- @field #AIRBOSS.RadioCall DEPARTANDREENTER "Depart and re-enter" call.
 -- @field #AIRBOSS.RadioCall WELCOMEABOARD "Welcome aboard" call.
+-- @field #AIRBOSS.RadioCall EXPECTHEAVYWAVEOFF "Expect heavy wavoff" call.
+-- @field #AIRBOSS.RadioCall EXPECTSPOT75 "Expect spot 7.5" call.
+-- @field #AIRBOSS.RadioCall CLEAREDTOLAND "Cleared to land" call.
+-- @field #AIRBOSS.RadioCall CHECK "CHECK" call. 
+-- @field #AIRBOSS.RadioCall STABILIZED "Stabilized" call.
+-- @field #AIRBOSS.RadioCall IDLE "Idle" call.
 -- @field #AIRBOSS.RadioCall N0 "Zero" call.
 -- @field #AIRBOSS.RadioCall N1 "One" call.
 -- @field #AIRBOSS.RadioCall N2 "Two" call.
@@ -1239,6 +1262,54 @@ AIRBOSS.LSOCall={
     loud=false,
     subtitle="Welcome aboard",
     duration=1.0,
+    subduration=5,
+  },
+  EXPECTHEAVYWAVEOFF={
+    file="LSO-ExpectHeavyWaveoff",
+    suffix="ogg",
+    loud=false,
+    subtitle="Expect heavy waveoff",
+    duration=1.2,
+    subduration=5,
+  },
+  EXPECTSPOT75={
+    file="LSO-ExpectSpot75",
+    suffix="ogg",
+    loud=false,
+    subtitle="Expect spot 7.5",
+    duration=2.0,
+    subduration=5,
+  },
+  CLEAREDTOLAND={
+    file="LSO-ClearedToLand",
+    suffix="ogg",
+    loud=false,
+    subtitle="Cleared to land",
+    duration=1.0,
+    subduration=5,
+  },
+  CHECK={
+    file="LSO-Check",
+    suffix="ogg",
+    loud=false,
+    subtitle="Check",
+    duration=0.45,
+    subduration=2.5,
+  },
+  STABILIZED={
+    file="LSO-Stabilized",
+    suffix="ogg",
+    loud=false,
+    subtitle="Stabilized",
+    duration=0.9,
+    subduration=5,
+  },
+  IDLE={
+    file="LSO-Idle",
+    suffix="ogg",
+    loud=false,
+    subtitle="Idle",
+    duration=0.45,
     subduration=5,
   },
   N0={
@@ -1580,7 +1651,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.9.3"
+AIRBOSS.version="0.9.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1778,8 +1849,8 @@ function AIRBOSS:New(carriername, alias)
     -- TODO: Carl Vinson parameters.
     self:_InitStennis()
   elseif self.carriertype==AIRBOSS.CarrierType.TARAWA then
-    -- TODO: Tarawa parameters.
-    self:_InitStennis()
+    -- Tarawa parameters.
+    self:_InitTarawa()
   elseif self.carriertype==AIRBOSS.CarrierType.KUZNETSOV then
     -- Kusnetsov parameters - maybe...
     self:_InitStennis()
@@ -1834,7 +1905,7 @@ function AIRBOSS:New(carriername, alias)
       self:GetCoordinate():FlareYellow()
     
       -- Stern
-      stern:FlareGreen()
+      stern:FlareYellow()
 
       -- Bow
       bow:FlareYellow()
@@ -1855,17 +1926,36 @@ function AIRBOSS:New(carriername, alias)
       -- Left 40 meters from stern.
       local cL=stern:Translate(self.carrierparam.totwidthport, hdg-90)
       cL:FlareYellow()
+      
 
-      -- Flare wires.           
-      local w1=stern:Translate(self.carrierparam.wire1, FB)
-      local w2=stern:Translate(self.carrierparam.wire2, FB)
-      local w3=stern:Translate(self.carrierparam.wire3, FB)
-      local w4=stern:Translate(self.carrierparam.wire4, FB)
-      w1:FlareWhite()
-      w2:FlareYellow()
-      w3:FlareWhite()
-      w4:FlareYellow()
+      -- Carrier specific.
+      if self.carrier:GetTypeName()~=AIRBOSS.CarrierType.TARAWA then
+      
+        -- Flare wires.
+        local w1=stern:Translate(self.carrierparam.wire1, FB)
+        local w2=stern:Translate(self.carrierparam.wire2, FB)
+        local w3=stern:Translate(self.carrierparam.wire3, FB)
+        local w4=stern:Translate(self.carrierparam.wire4, FB)
+        w1:FlareWhite()
+        w2:FlareYellow()
+        w3:FlareWhite()
+        w4:FlareYellow()
+        
+      else
+      
+        -- Abeam landing spot zone.
+        local ALSPT=self:_GetZoneAbeamLandingSpot()
+        ALSPT:FlareZone(FLARECOLOR.Red, 5, nil, UTILS.FeetToMeters(120))
+        
+        -- Primary landing spot zone.
+        local LSPT=self:_GetZoneLandingSpot()
+        LSPT:FlareZone(FLARECOLOR.Green, 5, nil, self.carrierparam.deckheight)
 
+        -- Landing spot coordinate.
+        local PLSC=self:_GetLandingSpotCoordinate()
+        PLSC:FlareWhite()        
+      end
+      
       -- Flare carrier and landing runway.
       local cbox=self:_GetZoneCarrierBox()
       local rbox=self:_GetZoneRunwayBox()    
@@ -2745,7 +2835,7 @@ end
 -- FSM event functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- On after Start event. Starts the warehouse. Addes event handlers and schedules status updates of reqests and queue.
+--- On after Start event. Starts the AIRBOSS. Addes event handlers and schedules status updates of reqests and queue.
 -- @param #AIRBOSS self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -3165,10 +3255,7 @@ function AIRBOSS:_CheckRecoveryTimes()
         local d=UTILS.MetersToNM(s)+1
         
         -- Route carrier into the wind. Sets self.turnintowind=true
-        self:CarrierTurnIntoWind(d, nextwindow.SPEED)
-        
-        -- Set wind switch to false.
-        --nextwindow.WIND=false
+        self:CarrierTurnIntoWind(t, v)
       end
       
       -- Set current recovery window.
@@ -3547,7 +3634,7 @@ function AIRBOSS:_InitStennis()
   self.Final.name="Final"
   self.Final.Xmin=-UTILS.NMToMeters(4)           -- Not more than 4 NM behind the boat.
   self.Final.Xmax= 0                             -- Must be behind the boat.
-  self.Final.Zmin=-1000                          -- Not more than 1 km port.
+  self.Final.Zmin=-2000                          -- Not more than 2 km port.
   self.Final.Zmax= nil
   self.Final.LimitXmin=nil                       -- No limits. Check is carried out differently.
   self.Final.LimitXmax=nil
@@ -3565,6 +3652,46 @@ function AIRBOSS:_InitStennis()
   self.Groove.LimitZmin=nil
   self.Groove.LimitZmax=nil
 
+end
+
+--- Init parameters for USS Stennis carrier.
+-- @param #AIRBOSS self
+function AIRBOSS:_InitTarawa()
+
+  -- Init Stennis as default.
+  self:_InitStennis()
+  
+  -- Carrier Parameters.
+  self.carrierparam.sterndist  =-125
+  self.carrierparam.deckheight =  21  --69 ft
+  
+  -- Total size of the carrier (approx as rectangle).
+  self.carrierparam.totlength=245
+  self.carrierparam.totwidthport=10
+  self.carrierparam.totwidthstarboard=25
+  
+  -- Landing runway.
+  self.carrierparam.rwyangle  =   0
+  self.carrierparam.rwylength = 225
+  self.carrierparam.rwywidth  =  15
+  
+  -- Wires.
+  self.carrierparam.wire1=nil
+  self.carrierparam.wire2=nil
+  self.carrierparam.wire3=nil
+  self.carrierparam.wire4=nil
+  
+  -- Late break.
+  self.BreakLate.name="Late Break"
+  self.BreakLate.Xmin=-UTILS.NMToMeters(1)         -- Not more than 1 NM behind the boat. Last check was at 0.
+  self.BreakLate.Xmax= UTILS.NMToMeters(5)         -- Not more than 5 NM in front of the boat. Enough for late breaks?
+  self.BreakLate.Zmin=-UTILS.NMToMeters(1.6)       -- Not more than 1.6 NM port.
+  self.BreakLate.Zmax= UTILS.NMToMeters(1)         -- Not more than 1 NM starboard.
+  self.BreakLate.LimitXmin= 0                      -- Check and next step 0.8 NM port and in front of boat.
+  self.BreakLate.LimitXmax= nil
+  self.BreakLate.LimitZmin=-UTILS.NMToMeters(0.5)  -- 926 m port, closer than the stennis as abeam is 0.8-1.0 rather than 1.2
+  self.BreakLate.LimitZmax= nil  
+    
 end
 
 --- Get optimal aircraft AoA parameters..
@@ -3604,22 +3731,14 @@ function AIRBOSS:_GetAircraftAoA(playerData)
   elseif skyhawk then
     -- A-4E-C Skyhawk parameters from https://forums.eagle.ru/showpost.php?p=3703467&postcount=390
     -- Note that these are arbitrary UNITS and not degrees. We need a conversion formula!
-    --[[
-    aoa.SLOW=self:_AoAUnit2Deg(playerData, 19.0)
-    aoa.Slow=self:_AoAUnit2Deg(playerData, 18.5)
-    aoa.OnSpeedMax=self:_AoAUnit2Deg(playerData, 18.0)
-    aoa.OnSpeed=self:_AoAUnit2Deg(playerData, 17.5)
-    aoa.OnSpeedMin=self:_AoAUnit2Deg(playerData, 17.0)
-    aoa.Fast=self:_AoAUnit2Deg(playerData, 16.5)
-    aoa.FAST=self:_AoAUnit2Deg(playerData, 16.0)
-    ]]
-    aoa.SLOW=9.8
-    aoa.Slow=9.3
-    aoa.OnSpeedMax=8.8
-    aoa.OnSpeed=8.1
-    aoa.OnSpeedMin=7.4
-    aoa.Fast=6.9
-    aoa.FAST=6.3
+    -- Github repo suggests they simply use a factor of two to get from degrees to units.
+    aoa.SLOW       = 9.50       --=19.0/2
+    aoa.Slow       = 9.25       --=18.5/2
+    aoa.OnSpeedMax = 9.00       --=18.0/2
+    aoa.OnSpeed    = 8.75       --=17.5/2 8.1
+    aoa.OnSpeedMin = 8.50       --=17.0/2
+    aoa.Fast       = 8.25       --=17.5/2
+    aoa.FAST       = 8.00       --=16.5/2
   elseif harrier then
     -- AV-8B Harrier parameters. This might need further tuning.
     aoa.SLOW=14.0
@@ -3646,7 +3765,10 @@ function AIRBOSS:_AoAUnit2Deg(playerData, aoaunits)
 
   -- Check aircraft type of player.
   if playerData.actype==AIRBOSS.AircraftCarrier.F14A or playerData.actype==AIRBOSS.AircraftCarrier.F14B then
-    -- F-14A/B
+  
+    -------------
+    -- F-14A/B --
+    -------------
   
     -- NATOPS:
     -- unit=0  ==> alpha=-10 degrees.
@@ -3656,13 +3778,21 @@ function AIRBOSS:_AoAUnit2Deg(playerData, aoaunits)
     degrees=-10+50/30*aoaunits
     
   elseif playerData.actype==AIRBOSS.AircraftCarrier.A4EC then
-    -- A-4E
+  
+    ----------
+    -- A-4E --
+    ----------
+
+    -- A-4E-C source code suggests a imple factor of 1/2 for conversion.
+    degrees=0.5*aoaunits
     
+    --[[
     -- Assuming same conversion as for the Tomcat. Indexer also goes from 0-30 units. Maybe it is right, maybe not.    
     local a=1.9/5.5
     local a=1/3
     local b=8.0-17.5*a
     degrees=a*aoaunits+b
+    ]]
     
   end
   
@@ -3681,7 +3811,10 @@ function AIRBOSS:_AoADeg2Units(playerData, degrees)
 
   -- Check aircraft type of player.
   if playerData.actype==AIRBOSS.AircraftCarrier.F14A or playerData.actype==AIRBOSS.AircraftCarrier.F14B then
-    -- F-14A/B
+
+    -------------
+    -- F-14A/B --
+    -------------
   
     -- NATOPS:
     -- unit=0  ==> alpha=-10 degrees.
@@ -3690,10 +3823,16 @@ function AIRBOSS:_AoADeg2Units(playerData, degrees)
     -- Assuming a linear relationship between these to points of the graph.
     aoaunits=(degrees+10)*30/50
 
---[[    
   elseif playerData.actype==AIRBOSS.AircraftCarrier.A4EC then
-    -- A-4E
+  
+    ----------
+    -- A-4E --
+    ----------
     
+    -- A-4E source code suggests a simple factor of two as conversion.
+    aoaunits=2*degrees
+    
+    --[[
     -- Assuming same conversion as for the Tomcat. Indexer also goes from 0-30 units. Maybe it is right, maybe not.
     aoaunits=30/50*degrees+10
     --aoaunits=2*degrees
@@ -3702,8 +3841,8 @@ function AIRBOSS:_AoADeg2Units(playerData, degrees)
     local a=1.9/5.5
     local a=1/3
     local b=8.0-17.5*a
-    aoaunits=(degrees-b)/a    
-]]    
+    ]]
+        
   end
   
   return aoaunits
@@ -3726,6 +3865,7 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
   local hornet=playerData.actype==AIRBOSS.AircraftCarrier.HORNET
   local skyhawk=playerData.actype==AIRBOSS.AircraftCarrier.A4EC
   local tomcat=playerData.actype==AIRBOSS.AircraftCarrier.F14A or playerData.actype==AIRBOSS.AircraftCarrier.F14B
+  local harrier=playerData.actype==AIRBOSS.AircraftCarrier.AV8B
   
   -- Return values.
   local alt
@@ -3770,7 +3910,7 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
   
   elseif step==AIRBOSS.PatternStep.INITIAL then
 
-    if hornet or tomcat then     
+    if hornet or tomcat or harrier then     
       alt=UTILS.FeetToMeters(800)
       speed=UTILS.KnotsToMps(350)
     elseif skyhawk then
@@ -3780,7 +3920,7 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
     
   elseif step==AIRBOSS.PatternStep.BREAKENTRY then
 
-    if hornet or tomcat then     
+    if hornet or tomcat or harrier then     
       alt=UTILS.FeetToMeters(800)
       speed=UTILS.KnotsToMps(350)
     elseif skyhawk then
@@ -3790,7 +3930,7 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
   
   elseif step==AIRBOSS.PatternStep.EARLYBREAK then
 
-    if hornet or tomcat then     
+    if hornet or tomcat or harrier then     
       alt=UTILS.FeetToMeters(800)
     elseif skyhawk then
       alt=UTILS.FeetToMeters(600)  
@@ -3798,7 +3938,7 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
     
   elseif step==AIRBOSS.PatternStep.LATEBREAK then
 
-    if hornet or tomcat then     
+    if hornet or tomcat or harrier then     
       alt=UTILS.FeetToMeters(800)
     elseif skyhawk then
       alt=UTILS.FeetToMeters(600)  
@@ -3806,7 +3946,7 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
     
   elseif step==AIRBOSS.PatternStep.ABEAM then
   
-    if hornet or tomcat then     
+    if hornet or tomcat or harrier then     
       alt=UTILS.FeetToMeters(600)
     elseif skyhawk then
       alt=UTILS.FeetToMeters(500)  
@@ -3814,14 +3954,21 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
     
     aoa=aoaac.OnSpeed
     
-    dist=UTILS.NMToMeters(1.2)
+    if harrier then
+      -- 0.8 to 1.0 NM
+      dist=UTILS.NMToMeters(0.9)
+    else
+      dist=UTILS.NMToMeters(1.2)
+    end
     
   elseif step==AIRBOSS.PatternStep.NINETY then
 
     if hornet or tomcat then     
       alt=UTILS.FeetToMeters(500)
     elseif skyhawk then
-      alt=UTILS.FeetToMeters(500)  
+      alt=UTILS.FeetToMeters(500)
+    elseif harrier then
+      alt=UTILS.FeetToMeters(425)    
     end
     
     aoa=aoaac.OnSpeed
@@ -3833,6 +3980,7 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
     elseif skyhawk then
       alt=UTILS.FeetToMeters(370) --?
     end
+    -- Harrier wont get into wake pos. Runway is not angled and it stays port.
     
     aoa=aoaac.OnSpeed
     
@@ -3841,7 +3989,10 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
     if hornet or tomcat then     
       alt=UTILS.FeetToMeters(300)
     elseif skyhawk then
-      alt=UTILS.FeetToMeters(300) --?  
+      alt=UTILS.FeetToMeters(300) --?
+    elseif harrier then
+      -- 300-325 ft
+      alt=UTILS.FeetToMeters(300)
     end
     
     aoa=aoaac.OnSpeed
@@ -4611,6 +4762,15 @@ function AIRBOSS:_GetMarshalAltitude(stack, case)
     
     -- Second point 1.5 NM ahead.
     p2=Carrier:Translate(UTILS.NMToMeters(1.5), hdg)
+    
+    -- Tarawa Delta pattern.
+    if self.carriertype==AIRBOSS.CarrierType.TARAWA then
+    
+      -- Pattern is directly overhead the carrier.
+      p1=Carrier:Translate(UTILS.NMToMeters(1.0), hdg+90)
+      p2=p1:Translate(2.5, hdg)
+    
+    end
     
   else
   
@@ -5643,29 +5803,9 @@ function AIRBOSS:_CheckPlayerStatus()
           end
           
           -- Foul deck check.
-          -- TODO: Put steps check into the subroutine.
-          if playerData.case<3 then
-          
-            -- Case I/II: Check is done, when AC is at the wake according to NATOPS. At the wake we switch to final.
-            if playerData.step==AIRBOSS.PatternStep.FINAL or
-               playerData.step==AIRBOSS.PatternStep.GROOVE_XX or
-               playerData.step==AIRBOSS.PatternStep.GROOVE_IM or
-               playerData.step==AIRBOSS.PatternStep.GROOVE_IC then
-                
-              self:_CheckFoulDeck(playerData)
-            end          
-          
-          else
+          self:_CheckFoulDeck(playerData)
 
-            -- Case III: Check is done at 3/4 NM according to NATOPS
-            if playerData.step==AIRBOSS.PatternStep.GROOVE_XX or
-               playerData.step==AIRBOSS.PatternStep.GROOVE_IM or
-               playerData.step==AIRBOSS.PatternStep.GROOVE_IC then
-               
-              self:_CheckFoulDeck(playerData)
-            end
-          end
-                 
+          -- Check current step.                 
           if playerData.step==AIRBOSS.PatternStep.UNDEFINED then
             
             -- Status undefined.
@@ -5773,6 +5913,8 @@ function AIRBOSS:_CheckPlayerStatus()
                  playerData.step==AIRBOSS.PatternStep.GROOVE_IM or
                  playerData.step==AIRBOSS.PatternStep.GROOVE_IC or
                  playerData.step==AIRBOSS.PatternStep.GROOVE_AR or
+                 playerData.step==AIRBOSS.PatternStep.GROOVE_AL or
+                 playerData.step==AIRBOSS.PatternStep.GROOVE_LC or
                  playerData.step==AIRBOSS.PatternStep.GROOVE_IW then
           
             -- CASE I/II: In the groove.
@@ -5962,7 +6104,10 @@ function AIRBOSS:OnEventLand(EventData)
       
     -- Check if player or AI landed.
     if _unit and _playername then
-      -- Human Player landed.
+    
+      -------------------------
+      -- Human Player landed --
+      -------------------------
           
       -- Get info.
       local _uid=_unit:GetID()
@@ -6009,6 +6154,12 @@ function AIRBOSS:OnEventLand(EventData)
         
         else
         
+          -- We did land.
+          playerData.landed=true
+          
+          -- Switch attitude monitor off if on.
+          playerData.attitudemonitor=false
+        
           -- Coordinate at landing event.
           local coord=playerData.unit:GetCoordinate()
                 
@@ -6025,15 +6176,6 @@ function AIRBOSS:OnEventLand(EventData)
             coord:SmokeGreen()        
           end
           
-          -- Get wire.  We additionally shift the landing coord back because landing event for players is unfortunately delayed.
-          local wire=self:_GetWire(coord, 75)
-          
-          -- No wire ==> Bolter, Bolter radio call.
-          -- TODO: might need a better place for this. or check
-          if wire>4 then
-            self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.BOLTER)
-          end
-          
           -- Get time in the groove.
           local gdataX0=playerData.groove.X0 --#AIRBOSS.GrooveData
           if gdataX0 then
@@ -6042,22 +6184,38 @@ function AIRBOSS:OnEventLand(EventData)
             playerData.Tgroove=999
           end
           
-          -- Debug text.
-          local text=string.format("Player %s AC type %s landed at dist=%.1f m. Trapped wire=%d.", playerData.name, playerData.actype, dist, wire)
-          text=text..string.format(" X=%.1f m, Z=%.1f m, rho=%.1f m.", X, Z, rho)
-          self:T(self.lid..text)
+          -- Check carrier type.
+          if self.carriertype==AIRBOSS.CarrierType.TARAWA then
           
-          -- We did land.
-          playerData.landed=true
+            -- Power "Idle".
+            self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.IDLE, false, 2)
           
-          -- Unkonwn step until we now more.
-          playerData.step=AIRBOSS.PatternStep.UNDEFINED
+            -- Next step debrief.
+            self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.DEBRIEF)                        
           
-          -- Switch attitude monitor off if on.
-          playerData.attitudemonitor=false          
-    
-          -- Call trapped function in 1 second to make sure we did not bolter.
-          SCHEDULER:New(nil, self._Trapped, {self, playerData}, 1)
+          else
+          
+            -- Get wire.  We additionally shift the landing coord back because landing event for players is unfortunately delayed.
+            local wire=self:_GetWire(coord, 75)
+            
+            -- No wire ==> Bolter, Bolter radio call.
+            -- TODO: might need a better place for this. or check
+            if wire>4 then
+              self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.BOLTER)
+            end
+                        
+            -- Debug text.
+            local text=string.format("Player %s AC type %s landed at dist=%.1f m. Trapped wire=%d.", playerData.name, playerData.actype, dist, wire)
+            text=text..string.format(" X=%.1f m, Z=%.1f m, rho=%.1f m.", X, Z, rho)
+            self:T(self.lid..text)
+            
+            -- Unkonwn step until we now more.
+            playerData.step=AIRBOSS.PatternStep.UNDEFINED            
+      
+            -- Call trapped function in 1 second to make sure we did not bolter.
+            SCHEDULER:New(nil, self._Trapped, {self, playerData}, 1)
+            
+          end
           
         end
         
@@ -6070,26 +6228,33 @@ function AIRBOSS:OnEventLand(EventData)
        
     else
     
-      -- AI unit landed.
+      --------------------
+      -- AI unit landed --
+      --------------------
       
-      -- Coordinate at landing event
-      local coord=EventData.IniUnit:GetCoordinate()
+      if self.carriertype~=AIRBOSS.CarrierType.TARAWA then
       
-      -- Debug mark of player landing coord.
-      local dist=coord:Get2DDistance(self:GetCoordinate())
-      
-      -- Get wire
-      local wire=self:_GetWire(coord, 0)
-      
-      -- Aircraft type.
-      local _type=EventData.IniUnit:GetTypeName()
-      
-      -- Debug text.
-      local text=string.format("AI unit %s of type %s landed at dist=%.1f m. Trapped wire=%d.", _unitName, _type, dist, wire)
-      self:T(self.lid..text)
+        -- Coordinate at landing event
+        local coord=EventData.IniUnit:GetCoordinate()
+        
+        -- Debug mark of player landing coord.
+        local dist=coord:Get2DDistance(self:GetCoordinate())
+        
+        -- Get wire
+        local wire=self:_GetWire(coord, 0)
+        
+        -- Aircraft type.
+        local _type=EventData.IniUnit:GetTypeName()
+        
+        -- Debug text.
+        local text=string.format("AI unit %s of type %s landed at dist=%.1f m. Trapped wire=%d.", _unitName, _type, dist, wire)
+        self:T(self.lid..text)
+
+      end
       
       -- AI always lands ==> remove unit from flight group and queues.
       self:_RemoveUnitFromFlight(EventData.IniUnit)
+      
     end
   end    
 end
@@ -6532,7 +6697,7 @@ function AIRBOSS:_Initial(playerData)
       local hint=string.format("Initial")
       
       -- Hook down for students.
-      if playerData.difficulty==AIRBOSS.Difficulty.EASY then
+      if playerData.difficulty==AIRBOSS.Difficulty.EASY and playerData.actype~=AIRBOSS.AircraftCarrier.AV8B then
         hint=hint.." - Hook down!"
       end    
     
@@ -6755,20 +6920,26 @@ function AIRBOSS:_DirtyUp(playerData)
       -- Hint alt and speed.
       local hint=string.format("%s\n%s\n%s", playerData.step, hintAlt, hintSpeed)
       
-      -- Hint turn and set TACAN.
+      -- Dirty up.
       if playerData.difficulty==AIRBOSS.Difficulty.EASY then
-        hint=hint.."\nDirty up! Hook, gear and flaps down."
+        if playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
+          hint=hint.."\nFAF! Checks completed. Nozzles 50°."
+        else
+          hint=hint.."\nDirty up! Hook, gear and flaps down."
+        end
       end      
       
       self:MessageToPlayer(playerData, hint, "MARSHAL", "")
     end
     
     -- Radio call "Say/Fly needles". Delayed by 10/15 seconds.
-    local callsay=self:_NewRadioCall(AIRBOSS.MarshalCall.SAYNEEDLES, nil, nil, 5, playerData.onboard)
-    local callfly=self:_NewRadioCall(AIRBOSS.MarshalCall.FLYNEEDLES, nil, nil, 5, playerData.onboard)
-    self:RadioTransmission(self.MarshalRadio, callsay, false, 40)
-    self:RadioTransmission(self.MarshalRadio, callfly, false, 45)
-            
+    if playerData.actype~=AIRBOSS.AircraftCarrier.AV8B then
+      local callsay=self:_NewRadioCall(AIRBOSS.MarshalCall.SAYNEEDLES, nil, nil, 5, playerData.onboard)
+      local callfly=self:_NewRadioCall(AIRBOSS.MarshalCall.FLYNEEDLES, nil, nil, 5, playerData.onboard)
+      self:RadioTransmission(self.MarshalRadio, callsay, false, 40)
+      self:RadioTransmission(self.MarshalRadio, callfly, false, 45)
+    end
+                
     -- TODO: Make Fly Bullseye call if no automatic ICLS is active.
     
     -- Next step: CASE III: Intercept glide slope and follow bullseye (ICLS).
@@ -6815,10 +6986,17 @@ function AIRBOSS:_Bullseye(playerData)
       
       -- Hint follow the needles.
       if playerData.difficulty==AIRBOSS.Difficulty.EASY then
-        hint=hint..string.format("Intercept glideslope and follow the needles.")
+        if playerData.actype~=AIRBOSS.AircraftCarrier.AV8B then
+          hint=hint..string.format("Intercept glideslope and follow the needles.")
+        end
       end
       
       self:MessageToPlayer(playerData, hint, "MARSHAL", "")
+    end
+    
+    -- LSO expect spot 7.5 call
+    if playerData.actype==AIRBOSS.AircraftCarrier.AV8B then     
+      self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.EXPECTSPOT75)
     end
     
     -- Next step: Groove Call the ball.
@@ -6855,8 +7033,7 @@ function AIRBOSS:_BolterPattern(playerData)
     else
       nextstep=AIRBOSS.PatternStep.BULLSEYE
     end
-    self:_SetPlayerStep(playerData, nextstep)
-    
+    self:_SetPlayerStep(playerData, nextstep)    
   end
 end
 
@@ -6934,11 +7111,15 @@ function AIRBOSS:_Break(playerData, part)
     
       -- Hint alt.
       local hint=string.format("%s %s", playerData.step, hint)
-            
+         
+      --[[   
       -- Hint dirty up.
       if playerData.difficult==AIRBOSS.Difficulty.EASY and part==AIRBOSS.PatternStep.LATEBREAK then
-        hint=hint.."\nDirty up! Gear down, flaps down. Check hook down."
+        if playerData.actype~=AIRBOSS.AircraftCarrier.AV8B then
+          hint=hint.."\nDirty up! Gear down, flaps down. Check hook down."
+        end
       end
+      ]]
       
       self:MessageToPlayer(playerData, hint, "MARSHAL", "")
     end
@@ -6966,8 +7147,13 @@ function AIRBOSS:_CheckForLongDownwind(playerData)
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
   local X, Z=self:_GetDistances(playerData.unit)
 
-  -- One NM from carrier is too far.  
+  -- 1.5 NM from carrier is too far.  
   local limit=UTILS.NMToMeters(-1.5)
+  
+  -- For the tarawa we give a bit more space.
+  if self.carriertype==AIRBOSS.CarrierType.TARAWA then
+    limit=UTILS.NMToMeters(-2.0)
+  end
   
   -- Check we are not too far out w.r.t back of the boat.
   if X<limit then --and relhead<45 then
@@ -7021,6 +7207,11 @@ function AIRBOSS:_Abeam(playerData)
     
     -- Paddles contact.
     self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.PADDLESCONTACT)
+    
+     -- LSO expect spot 7.5 call
+    if playerData.actype==AIRBOSS.AircraftCarrier.AV8B then     
+      self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.EXPECTSPOT75, false, 5)
+    end   
     
     -- Message to player.
     if playerData.difficulty~=AIRBOSS.Difficulty.HARD then
@@ -7082,12 +7273,21 @@ function AIRBOSS:_Ninety(playerData)
     self:_AddToDebrief(playerData, debrief)
     
     -- Next step: wake.
-    self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.WAKE)
+    if self.carriertype==AIRBOSS.CarrierType.TARAWA then
+      -- Harrier has no wake stop. It stays port of the boat.
+      self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.FINAL)
+    else
+      self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.WAKE)
+    end
     
   elseif relheading>90 and self:_CheckLimits(X, Z, self.Wake) then
     -- Message to player.
     self:MessageToPlayer(playerData, "You are already at the wake and have not passed the 90. Turn faster next time!", "LSO")
-    --TODO: pattern WO?
+    self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.DEPARTANDREENTER)
+    playerData.patternwo=true
+    -- Debrief.
+    self:_AddToDebrief(playerData, "Overshoot at wake - Pattern Waveoff!")
+    self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.DEBRIEF)
   end
 end
 
@@ -7185,7 +7385,7 @@ function AIRBOSS:_Final(playerData)
     groovedata.Step=playerData.step
     groovedata.Alt=alt
     groovedata.AoA=aoa
-    groovedata.GSE=self:_Glideslope(playerData.unit, 3.5)
+    groovedata.GSE=self:_Glideslope(playerData.unit)
     groovedata.LUE=self:_Lineup(playerData.unit, true)
     groovedata.Roll=roll
     groovedata.Rhdg=relhead
@@ -7233,7 +7433,7 @@ function AIRBOSS:_Groove(playerData)
   local lineupError=self:_Lineup(playerData.unit, true)
   
   -- Glideslope.
-  local glideslopeError=self:_Glideslope(playerData.unit, 3.5)
+  local glideslopeError=self:_Glideslope(playerData.unit)
   
   -- Get AoA.
   local AoA=playerData.unit:GetAoA()
@@ -7281,8 +7481,7 @@ function AIRBOSS:_Groove(playerData)
     playerData.valid=true
     
     -- Next step: in the middle.
-    playerData.step=AIRBOSS.PatternStep.GROOVE_IM
-    playerData.warning=nil
+    self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.GROOVE_IM)
     
   elseif rho<=RIM and playerData.step==AIRBOSS.PatternStep.GROOVE_IM then
   
@@ -7295,8 +7494,7 @@ function AIRBOSS:_Groove(playerData)
     playerData.groove.IM=groovedata
     
     -- Next step: in close.
-    playerData.step=AIRBOSS.PatternStep.GROOVE_IC
-    playerData.warning=nil
+    self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.GROOVE_IC)
   
   elseif rho<=RIC and playerData.step==AIRBOSS.PatternStep.GROOVE_IC then
   
@@ -7308,9 +7506,8 @@ function AIRBOSS:_Groove(playerData)
     -- Store data.      
     playerData.groove.IC=groovedata
       
-    -- Next step: AR at the ramp.      
-    playerData.step=AIRBOSS.PatternStep.GROOVE_AR
-    playerData.warning=nil
+    -- Next step: AR at the ramp.
+    self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.GROOVE_AR)   
     
   elseif rho<=RAR and playerData.step==AIRBOSS.PatternStep.GROOVE_AR then
   
@@ -7323,8 +7520,70 @@ function AIRBOSS:_Groove(playerData)
     playerData.groove.AR=groovedata
     
     -- Next step: in the wires.
-    playerData.step=AIRBOSS.PatternStep.GROOVE_IW
-    playerData.warning=nil
+    if playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
+      self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.GROOVE_AL)
+    else    
+      self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.GROOVE_IW)
+    end
+    
+  elseif rho<=RAR and playerData.step==AIRBOSS.PatternStep.GROOVE_AL then
+  
+    -- Store data.
+    playerData.groove.AL=groovedata
+    
+    -- Get zone abeam LDG spot.
+    local ZoneALS=self:_GetZoneAbeamLandingSpot()
+    
+    -- Get player velocity in km/h.
+    local vplayer=playerData.unit:GetVelocityKMH()
+    
+    -- Get carrier velocity in km/h.
+    local vcarrier=self.carrier:GetVelocityKMH()
+    
+    -- Speed difference.
+    local dv=math.abs(vplayer-vcarrier)
+    
+    -- Stable when speed difference < 10 km/h.
+    local stable=dv<10    
+    
+    -- Check if player is inside the zone.
+    if playerData.unit:IsInZone(ZoneALS) and stable then
+    
+      -- Radio Transmission "Cleared to land" once the aircraft is inside the zone.  
+      self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.CLEAREDTOLAND)
+    
+      -- Next step: Level cross.
+      self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.GROOVE_LC)      
+    end
+
+  elseif rho<=RAR and playerData.step==AIRBOSS.PatternStep.GROOVE_LC then
+  
+    -- Store data.
+    playerData.groove.LC=groovedata    
+  
+    -- Get zone primary LDG spot.
+    local ZoneLS=self:_GetZoneLandingSpot()
+    
+    -- Get player velocity in km/h.
+    local vplayer=playerData.unit:GetVelocityKMH()
+    
+    -- Get carrier velocity in km/h.
+    local vcarrier=self.carrier:GetVelocityKMH()
+    
+    -- Speed difference.
+    local dv=math.abs(vplayer-vcarrier)
+    
+    -- Stable when v<5 km/h.
+    local stable=dv<5
+    
+    -- Radio Transmission "Cleared to land" once the aircraft is inside the zone.
+    if playerData.unit:IsInZone(ZoneLS) and stable and playerData.warning==false then
+      self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.STABILIZED)
+      playerData.warning=true
+    end
+    
+    -- We keep it in this step until landed.
+    
   end
   
   --------------
@@ -7464,8 +7723,7 @@ function AIRBOSS:_Groove(playerData)
     end
     
      -- Next step: debrief.
-    playerData.step=AIRBOSS.PatternStep.DEBRIEF
-    playerData.warning=nil
+    self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.DEBRIEF)
     
   end
   
@@ -7488,22 +7746,35 @@ function AIRBOSS:_CheckWaveOff(glideslopeError, lineupError, AoA, playerData)
   -- Assume we're all good.
   local waveoff=false
   
+  -- Parameters
+  local glMax= 1.8
+  local glMin=-1.2
+  local luAbs= 3.0
+  
+  -- For the harrier, we allow a bit more room.
+  if playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
+    glMax= 4.0
+    glMin=-3.0
+    luAbs= 5.0
+    return false
+  end
+  
   -- Too high or too low?
-  if glideslopeError>1.8 then
-    local text=string.format("Wave off due to glideslope error %.2f > 1.8 degrees!", glideslopeError)
+  if glideslopeError>glMax then
+    local text=string.format("Wave off due to glideslope error %.2f > %.1f degrees!", glideslopeError, glMax)
     self:T(self.lid..string.format("%s: %s", playerData.name, text))
     self:_AddToDebrief(playerData, text)
     waveoff=true
-  elseif glideslopeError<-1.2 then
-    local text=string.format("Wave off due to glideslope error %.2f < -1.2 degrees!", glideslopeError)
+  elseif glideslopeError<glMin then
+    local text=string.format("Wave off due to glideslope error %.2f < %.1f degrees!", glideslopeError, glMin)
     self:T(self.lid..string.format("%s: %s", playerData.name, text))
     self:_AddToDebrief(playerData, text)
     waveoff=true
   end
 
   -- Too far from centerline?
-  if math.abs(lineupError)>3 then
-    local text=string.format("Wave off due to line up error |%.1f| > 3 degrees!", lineupError)
+  if math.abs(lineupError)>luAbs then
+    local text=string.format("Wave off due to line up error |%.1f| > %.1f degrees!", lineupError, luAbs)
     self:T(self.lid..string.format("%s: %s", playerData.name, text))
     self:_AddToDebrief(playerData, text)
     waveoff=true
@@ -7536,14 +7807,42 @@ end
 -- @return boolean If true, we have a foul deck.
 function AIRBOSS:_CheckFoulDeck(playerData)
 
+  -- Assume no check necessary.
+  local check=false
+  
+  -- Case I/II: Check is done, when AC is at the wake according to NATOPS. At the wake we switch to final.
+  if playerData.case<3 and playerData.step==AIRBOSS.PatternStep.FINAL then
+    check=true
+  end
+    
+  -- Case III: Check is done at 3/4 NM according to NATOPS.
+  if playerData.step==AIRBOSS.PatternStep.GROOVE_XX or
+     playerData.step==AIRBOSS.PatternStep.GROOVE_IM or
+     playerData.step==AIRBOSS.PatternStep.GROOVE_IC then
+    check=true
+  end
+  
+  -- AV-8B check until 
+  if playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
+    if playerData.step==AIRBOSS.PatternStep.GROOVE_AR or
+       playerData.step==AIRBOSS.PatternStep.GROOVE_AL then       
+      check=true
+    end
+  end
+  
   -- Check if player was already waved off. Should not be necessary as player step is set to debrief afterwards!
-  if playerData.fouldeckwo==true then
+  if playerData.fouldeckwo==true or check==false then
     -- Player was already waved off.
     return
   end
 
   -- Landing runway zone.
   local runway=self:_GetZoneRunwayBox()
+  
+  -- For AB-8B we just check the primary landing spot.
+  if playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
+    runway=self:_GetZoneLandingSpot()
+  end
   
   -- Scan radius.
   local R=250
@@ -7628,7 +7927,16 @@ function AIRBOSS:_GetSternCoord()
   local FB=self:GetFinalBearing()
 
   -- Stern coordinate (sterndist<0). Also translate 10 meters starboard wrt Final bearing.
-  local stern=self:GetCoordinate():Translate(self.carrierparam.sterndist, hdg):Translate(7, FB+90)
+  local stern=self:GetCoordinate()
+  
+  -- Stern coordinate (sterndist<0). 
+  if self.carriertype==AIRBOSS.CarrierType.TARAWA then
+    -- Tarawa: Translate 8 meters port.
+    stern=stern:Translate(self.carrierparam.sterndist, hdg):Translate(8, FB-90)
+  else
+    -- Stennis: translate 7 meters starboard wrt Final bearing.
+    stern=stern:Translate(self.carrierparam.sterndist, hdg):Translate(7, FB+90)
+  end
   
   -- Set altitude.
   stern:SetAltitude(self.carrierparam.deckheight)
@@ -8127,7 +8435,7 @@ function AIRBOSS:_GetZoneCarrierBox()
   return zone
 end
 
---- Get zone of landing runway
+--- Get zone of landing runway.
 -- @param #AIRBOSS self
 -- @return Core.Zone#ZONE_POLYGON Zone surrounding landing runway.
 function AIRBOSS:_GetZoneRunwayBox()
@@ -8159,6 +8467,73 @@ function AIRBOSS:_GetZoneRunwayBox()
   return zone 
 end
 
+
+--- Get zone of primary abeam landing position of USS Tarawa. Box length and width 30 meters.
+-- @param #AIRBOSS self
+-- @return Core.Zone#ZONE_POLYGON Zone surrounding landing runway.
+function AIRBOSS:_GetZoneAbeamLandingSpot()
+
+  -- Primary landing Spot coordinate.  
+  local S=self:_GetOptLandingCoordinate()
+  
+  -- Current carrier heading.
+  local FB=self:GetFinalBearing(false)
+  
+  -- Coordinate array.
+  local p={}
+
+  -- Points.
+  p[1]=S:Translate( 15, FB):Translate(15, FB+90)  -- Top-Right
+  p[2]=S:Translate(-15, FB):Translate(15, FB+90)  -- Bottom-Right
+  p[3]=S:Translate(-15, FB):Translate(15, FB-90)  -- Bottom-Left  
+  p[4]=S:Translate( 15, FB):Translate(15, FB-90)  -- Top-Left
+
+  -- Convert to vec2.
+  local vec2={}
+  for _,coord in ipairs(p) do
+    table.insert(vec2, coord:GetVec2())
+  end
+  
+  -- Create polygon zone.
+  local zone=ZONE_POLYGON_BASE:New("Abeam Landing Spot Zone", vec2)
+
+  return zone 
+end
+
+
+--- Get zone of the primary landing spot of the USS Tarawa.
+-- @param #AIRBOSS self
+-- @return Core.Zone#ZONE_POLYGON Zone surrounding landing runway.
+function AIRBOSS:_GetZoneLandingSpot()
+
+  -- Primary landing Spot coordinate.  
+  local S=self:_GetLandingSpotCoordinate()
+  
+  -- Current carrier heading.
+  local FB=self:GetFinalBearing(false)
+  
+  -- Coordinate array.
+  local p={}
+
+  -- Points.
+  p[1]=S:Translate( 10, FB):Translate(10, FB+90)  -- Top-Right
+  p[2]=S:Translate(-10, FB):Translate(10, FB+90)  -- Bottom-Right
+  p[3]=S:Translate(-10, FB):Translate(10, FB-90)  -- Bottom-Left
+  p[4]=S:Translate( 10, FB):Translate(10, FB-90)  -- Top-left
+
+  -- Convert to vec2.
+  local vec2={}
+  for _,coord in ipairs(p) do
+    table.insert(vec2, coord:GetVec2())
+  end
+  
+  -- Create polygon zone.
+  local zone=ZONE_POLYGON_BASE:New("Landing Spot Zone", vec2)
+
+  return zone 
+end
+
+
 --- Get holding zone of player.
 -- @param #AIRBOSS self
 -- @param #number case Recovery case.
@@ -8174,7 +8549,7 @@ function AIRBOSS:_GetZoneHolding(case, stack)
     return nil
   end    
   
-  -- Pattern alitude.
+  -- Pattern altitude.
   local patternalt, c1, c2=self:_GetMarshalAltitude(stack, case)
   
   -- Select case.
@@ -8192,6 +8567,11 @@ function AIRBOSS:_GetZoneHolding(case, stack)
     
     -- Create holding zone.
     zoneHolding=ZONE_RADIUS:New("CASE I Holding Zone", Post:GetVec2(), self.marshalradius)
+    
+    -- Delta pattern.
+    if self.carriertype==AIRBOSS.CarrierType.TARAWA then
+      zoneHolding=ZONE_RADIUS:New("CASE I Holding Zone", self.carrier:GetVec2(), UTILS.NMToMeters(5))
+    end
   
   else  
     -- CASE II/II
@@ -8238,8 +8618,20 @@ function AIRBOSS:_GetZoneCommence(case)
     -- Three position
     local Three=self:GetCoordinate():Translate(D, hdg+275)
     
+    if self.carriertype==AIRBOSS.CarrierType.TARAWA then
+    
+      local Dx=UTILS.NMToMeters(2.25)
+      
+      local Dz=UTILS.NMToMeters(2.25)
+      
+      R=UTILS.NMToMeters(1)
+      
+      Three=self:GetCoordinate():Translate(Dz, hdg-90):Translate(Dx, hdg-180)
+    
+    end
+    
     -- Create holding zone.
-    zone=ZONE_RADIUS:New("CASE I Holding Zone", Three:GetVec2(), R)
+    zone=ZONE_RADIUS:New("CASE I Commence Zone", Three:GetVec2(), R)
     
   else
     -- Case II/III
@@ -8290,6 +8682,8 @@ function AIRBOSS:_AttitudeMonitor(playerData)
      playerData.step==AIRBOSS.PatternStep.GROOVE_IM or
      playerData.step==AIRBOSS.PatternStep.GROOVE_IC or
      playerData.step==AIRBOSS.PatternStep.GROOVE_AR or
+     playerData.step==AIRBOSS.PatternStep.GROOVE_AL or
+     playerData.step==AIRBOSS.PatternStep.GROOVE_LC or
      playerData.step==AIRBOSS.PatternStep.GROOVE_IW then
     step=self:_GS(step,-1)
   end  
@@ -8311,11 +8705,19 @@ function AIRBOSS:_AttitudeMonitor(playerData)
      playerData.step==AIRBOSS.PatternStep.GROOVE_IM or
      playerData.step==AIRBOSS.PatternStep.GROOVE_IC or
      playerData.step==AIRBOSS.PatternStep.GROOVE_AR or
+     playerData.step==AIRBOSS.PatternStep.GROOVE_AL or
+     playerData.step==AIRBOSS.PatternStep.GROOVE_LC or
      playerData.step==AIRBOSS.PatternStep.GROOVE_IW then
     local lineup=self:_Lineup(playerData.unit, true)
-    local glideslope=self:_Glideslope(playerData.unit, 3.5)
+    local glideslope=self:_Glideslope(playerData.unit)
     local dist=self:_GetOptLandingCoordinate():Get2DDistance(playerData.unit)
-    text=text..string.format("\nDist=%.1f m Alt=%.1f m", dist, self:_GetAltCarrier(playerData.unit))
+    -- Get player velocity in km/h.
+    local vplayer=playerData.unit:GetVelocityKMH()    
+    -- Get carrier velocity in km/h.
+    local vcarrier=self.carrier:GetVelocityKMH()    
+    -- Speed difference.
+    local dv=math.abs(vplayer-vcarrier)    
+    text=text..string.format("\nDist=%.1f m Alt=%.1f m delta|V|=%.1f km/h", dist, self:_GetAltCarrier(playerData.unit), dv)
     text=text..string.format("\nLineUp=%.2f° | GlideSlope=%.2f° | AoA=%.1f", lineup, glideslope, self:_AoADeg2Units(playerData, aoa))
     local grade, points, analysis=self:_LSOgrade(playerData)
     text=text..string.format("\nGrade: %s %.1f PT - %s", grade, points, analysis)
@@ -8334,17 +8736,26 @@ end
 -- @return #number Glide slope angle in degrees measured from the deck of the carrier and third wire.
 function AIRBOSS:_Glideslope(unit, optangle)
 
-  -- Default is 0.
-  optangle=optangle or 0
-   
+  if optangle==nil then
+    if unit:GetTypeName()==AIRBOSS.AircraftCarrier.AV8B then
+      optangle=3.0
+    else
+      optangle=3.5
+    end
+  end   
    -- Landing coordinate
-  local landingcoord=self:_GetOptLandingCoordinate() 
+  local landingcoord=self:_GetOptLandingCoordinate()
 
   -- Distance from stern to aircraft.
   local x=unit:GetCoordinate():Get2DDistance(landingcoord)
   
   -- Altitude of unit corrected by the deck height of the carrier.
   local h=self:_GetAltCarrier(unit)
+  
+  -- Harrier should be 40-50 ft above the deck.
+  if unit:GetTypeName()==AIRBOSS.AircraftCarrier.AV8B then
+    h=unit:GetAltitude()-(UTILS.FeetToMeters(50)+self.carrierparam.deckheight+2)
+  end
   
   -- Glide slope.
   local glideslope=math.atan(h/x)
@@ -8429,7 +8840,7 @@ function AIRBOSS:_GetAltCarrier(unit)
   return h
 end
 
---- Get optimal landing position of the aircraft. Usually between second and third wire.
+--- Get optimal landing position of the aircraft. Usually between second and third wire. In case of Tarawa we take the abeam landing spot 120 ft abeam the 7.5 position.
 -- @param #AIRBOSS self
 -- @return Core.Point#COORDINATE Optimal landing coordinate.
 function AIRBOSS:_GetOptLandingCoordinate()
@@ -8437,13 +8848,49 @@ function AIRBOSS:_GetOptLandingCoordinate()
   -- Stern coordinate.
   local stern=self:_GetSternCoord()
   
-  -- Ideally we want to land between 2nd and 3rd wire.
-  if self.carrierparam.wire3 then
-    -- We take the position of the 3rd wire to approximately account for the length of the aircraft.
-    local d23=self.carrierparam.wire3 --+0.5*(self.carrierparam.wire3-self.carrierparam.wire2)
-    stern=stern:Translate(d23, self:GetFinalBearing(false), true)
+  -- Final bearing.
+  local FB=self:GetFinalBearing(false)
+  
+  if self.carriertype==AIRBOSS.CarrierType.TARAWA then
+    
+    -- Landing 100 ft abeam, 120 ft alt. 
+    stern=self:_GetLandingSpotCoordinate():Translate(35, FB-90)
+    
+    -- Alitude 120 ft.
+    stern:SetAltitude(UTILS.FeetToMeters(120))
+  
+  else
+  
+    -- Ideally we want to land between 2nd and 3rd wire.
+    if self.carrierparam.wire3 then
+      -- We take the position of the 3rd wire to approximately account for the length of the aircraft.
+      local d23=self.carrierparam.wire3       --+0.5*(self.carrierparam.wire3-self.carrierparam.wire2)
+      stern=stern:Translate(d23, FB, true)
+    end
+    
   end
 
+  return stern
+end
+
+--- Get landing spot on Tarawa.
+-- @param #AIRBOSS self
+-- @return Core.Point#COORDINATE Primary landing spot coordinate.
+function AIRBOSS:_GetLandingSpotCoordinate()
+
+  -- Stern coordinate.
+  local stern=self:_GetSternCoord()
+  
+  if self.carriertype==AIRBOSS.CarrierType.TARAWA then
+    
+    -- Landing 100 ft abeam, 120 alt. 
+    local hdg=self:GetHeading()
+    
+    -- Primary landing spot 7.5
+    stern=stern:Translate(57, hdg):SetAltitude(self.carrierparam.deckheight)
+    
+  end
+  
   return stern
 end
 
@@ -8723,7 +9170,6 @@ function AIRBOSS:_LSOadvice(playerData, glideslopeError, lineupError)
 
   -- Advice time.
   local advice=0
-  local text=""
   
   -- Glideslope high/low calls.
   --TODO: introduce GSE enumerator values.
@@ -8744,11 +9190,9 @@ function AIRBOSS:_LSOadvice(playerData, glideslopeError, lineupError)
     self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.POWER, false)
     advice=advice+AIRBOSS.LSOCall.POWER.duration
   else
-    text="Good altitude."
+    -- "Good altitude."
   end
 
-  text=text..string.format(" Glideslope Error = %.2f°", glideslopeError)
-  text=text.."\n"
   
   -- Lineup left/right calls.
   -- TODO: introduce LUE enumerator values.
@@ -8769,10 +9213,8 @@ function AIRBOSS:_LSOadvice(playerData, glideslopeError, lineupError)
     self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.RIGHTFORLINEUP, false)
     advice=advice+AIRBOSS.LSOCall.RIGHTFORLINEUP.duration
   else
-    text=text.."Good lineup."
+    -- "Good lineup."
   end
-  
-  text=text..string.format(" Lineup Error = %.1f°\n", lineupError)
   
   -- Get current AoA.
   local AOA=playerData.unit:GetAoA()
@@ -8780,37 +9222,36 @@ function AIRBOSS:_LSOadvice(playerData, glideslopeError, lineupError)
   -- Get aircraft AoA parameters.
   local acaoa=self:_GetAircraftAoA(playerData)
 
-  -- Speed via AoA.
-  if AOA>acaoa.SLOW then
-    -- "Your're slow!"
-    self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.SLOW, true)
-    advice=advice+AIRBOSS.LSOCall.SLOW.duration
-    --S=underline("SLO")
-  elseif AOA>acaoa.Slow then
-    -- "Your're slow."
-    self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.SLOW, false)
-    advice=advice+AIRBOSS.LSOCall.SLOW.duration              
-    --S="SLO"
-  elseif AOA>acaoa.OnSpeedMax then
-    -- No call.
-    --S=little("SLO")
-  elseif AOA<acaoa.FAST then
-    -- "You're fast!"
-    self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.FAST, true)
-    advice=advice+AIRBOSS.LSOCall.FAST.duration
-    --S=underline("F")
-  elseif AOA<acaoa.Fast then
-    -- "You're fast."
-    self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.FAST, false)
-    advice=advice+AIRBOSS.LSOCall.FAST.duration
-    --S="F"
-  elseif AOA<acaoa.OnSpeedMin then
-    -- No Call.
-    --S=little("F")
+  -- Speed via AoA - not for the Harrier.
+  if playerData.actype~=AIRBOSS.AircraftCarrier.AV8B then
+    if AOA>acaoa.SLOW then
+      -- "Your're slow!"
+      self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.SLOW, true)
+      advice=advice+AIRBOSS.LSOCall.SLOW.duration
+      --S=underline("SLO")
+    elseif AOA>acaoa.Slow then
+      -- "Your're slow."
+      self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.SLOW, false)
+      advice=advice+AIRBOSS.LSOCall.SLOW.duration              
+      --S="SLO"
+    elseif AOA>acaoa.OnSpeedMax then
+      -- No call.
+      --S=little("SLO")
+    elseif AOA<acaoa.FAST then
+      -- "You're fast!"
+      self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.FAST, true)
+      advice=advice+AIRBOSS.LSOCall.FAST.duration
+      --S=underline("F")
+    elseif AOA<acaoa.Fast then
+      -- "You're fast."
+      self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.FAST, false)
+      advice=advice+AIRBOSS.LSOCall.FAST.duration
+      --S="F"
+    elseif AOA<acaoa.OnSpeedMin then
+      -- No Call.
+      --S=little("F")
+    end
   end
-  
-  -- Text not used.
-  --text=text..string.format(" AoA = %.1f", aoa)
    
   -- Set last time.
   playerData.Tlso=timer.getTime()
@@ -9129,7 +9570,25 @@ function AIRBOSS:_GS(step, n)
     if n==-1 then
       gp=AIRBOSS.GroovePos.IC
     elseif n==1 then
-      gp=AIRBOSS.GroovePos.IW
+      if self.carriertype==AIRBOSS.CarrierType.TARAWA then
+        gp=AIRBOSS.GroovePos.AL
+      else
+        gp=AIRBOSS.GroovePos.IW
+      end
+    end
+  elseif step==AIRBOSS.PatternStep.GROOVE_AL then
+    gp=AIRBOSS.GroovePos.AL --"AL"  -- Abeam landing spot.
+    if n==-1 then
+      gp=AIRBOSS.GroovePos.AR
+    elseif n==1 then
+      gp=AIRBOSS.GroovePos.LC
+    end
+  elseif step==AIRBOSS.PatternStep.GROOVE_LC then
+    gp=AIRBOSS.GroovePos.LC --"LC"  -- Level crossing.
+    if n==-1 then
+      gp=AIRBOSS.GroovePos.AL
+    elseif n==1 then
+      gp=AIRBOSS.GroovePos.LC
     end
   elseif step==AIRBOSS.PatternStep.GROOVE_IW then
     gp=AIRBOSS.GroovePos.IW --"IW"  -- In the wires.
@@ -9345,7 +9804,7 @@ function AIRBOSS:_AltitudeCheck(playerData, altopt)
   -- Extend or decrease depending on skill.
   if playerData.difficulty==AIRBOSS.Difficulty.EASY then
     -- Also inform students about the optimal altitude.
-    hint=hint..string.format(" Optimal altitude is %d ft.", UTILS.MetersToFeet(altopt))
+    hint=hint..string.format("Optimal altitude is %d ft.", UTILS.MetersToFeet(altopt))
     self:Sound2Player(playerData, self.LSORadio, radiocall, loud)
   elseif playerData.difficulty==AIRBOSS.Difficulty.NORMAL then
     -- We keep it short normally.
@@ -9844,7 +10303,15 @@ function AIRBOSS:_StepHint(playerData, step)
     if dist then
       hint=hint..string.format("\nDistance to the boat %.1f NM", UTILS.MetersToNM(dist))
     end
-    
+
+    if step==AIRBOSS.PatternStep.ABEAM then
+      if playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
+        hint=hint.."\nNozzles 50°-60°. Antiskid OFF. Lights OFF."
+      else
+        hint=hint.."\nDirty up! Gear DOWN, flaps DOWN. Check hook down."
+      end    
+    end
+        
     -- Check if there was actually anything to tell.
     if hint~="" then
     
@@ -10054,23 +10521,30 @@ end
 
 --- Let the carrier turn into the wind.
 -- @param #AIRBOSS self
--- @param #number distance Distance in NM from current position.
--- @param #number speed Speed in knots. Default 15 knots.
+-- @param #number time Time in seconds.
+-- @param #number vdeck Speed on deck m/s. Carrier will
 -- @return #AIRBOSS self
-function AIRBOSS:CarrierTurnIntoWind(distance, speed)
+function AIRBOSS:CarrierTurnIntoWind(time, vdeck)
+  
+  -- Wind speed.
+  local _,vwind=self:GetCoordinate():GetWind(50)
+  
+  -- Speed of carrier in m/s.
+  local vtot=vdeck-vwind
+  
+  -- Distance to travel
+  local dist=vtot*time
+  
+  -- Speed in knots
+  local speedknots=UTILS.MpsToKnots(vtot)
+  local distNM=UTILS.MetersToNM(dist)
+  
+  -- Debug output
+  self:E(self.lid..string.format("Carrier steaming into the wind (%.1f kts). Distance=%.1f NM, Speed=%.1f knots, Time=%d sec.", UTILS.MpsToKnots(vwind), distNM, speedknots, time))
 
-  -- Time in seconds.
-  local time=distance/speed*3600
-
-  -- Debug message.
-  self:T(self.lid..string.format("Carrier steaming into the wind. Distance=%.1f NM, Speed=%.1f knots, Time=%d sec.", distance, speed, time))
-   
   -- Get heading into the wind accounting for angled runway.
   local intowind=self:GetHeadingIntoWind(false)
    
-  -- Length of path into the wind in meters.
-  local dist=UTILS.NMToMeters(distance)
-  
   -- Translate current position.
   local pos1=self:GetCoordinate():Translate(dist, intowind)
   
@@ -10079,14 +10553,11 @@ function AIRBOSS:CarrierTurnIntoWind(distance, speed)
     pos1:MarkToAll("Into the wind point")
   end
   
-  -- Speed in km/h.
-  local speedkmh=UTILS.KnotsToKmph(speed)
-  
   -- Return to coordinate if collision is detected.
   self.Creturnto=self:GetCoordinate()
 
   -- Let the carrier make a detour from its route but return to its current position.  
-  self:CarrierDetour(pos1, speed, true)
+  self:CarrierDetour(pos1, speedknots, true)
   
   -- Set switch that we are currently turning into the wind.
   self.turnintowind=true
@@ -10495,18 +10966,41 @@ function AIRBOSS:_GetTowerFrequency()
   end
 end
 
---- Check if aircraft is capable of landing on an aircraft carrier.
+--- Check if aircraft is capable of landing on this aircraft carrier.
 -- @param #AIRBOSS self
 -- @param Wrapper.Unit#UNIT unit Aircraft unit. (Will also work with groups as given parameter.)
 -- @return #boolean If true, aircraft can land on a carrier.
 function AIRBOSS:_IsCarrierAircraft(unit)
-  local carrieraircraft=false
+  
+  -- Get aircraft type name
   local aircrafttype=unit:GetTypeName()
+
+  -- Special case for Harrier which can only land on Tarawa.
+  if aircrafttype==AIRBOSS.AircraftCarrier.AV8B then
+    if self.carriertype==AIRBOSS.CarrierType.TARAWA then
+      return true
+    else
+      return false
+    end
+  end
+  
+  -- Also only Harriers can land on the Tarawa.
+  if self.carriertype==AIRBOSS.CarrierType.TARAWA then
+    if aircrafttype~=AIRBOSS.AircraftCarrier.AV8B then
+      return false
+    end
+  end
+    
+  -- Loop over all other known carrier capable aircraft.
   for _,actype in pairs(AIRBOSS.AircraftCarrier) do
+  
+    -- Check if this is a carrier capable aircraft type.
     if actype==aircrafttype then
       return true
     end
   end
+  
+  -- No carrier carrier aircraft.
   return false
 end
 
@@ -12402,8 +12896,8 @@ function AIRBOSS:_DisplayCarrierInfo(_unitname)
         local radial=self:GetRadial(self.case, true, true, true)      
         text=text..string.format("Case %d recovery ops\nMarshal radial %03d°\n", self.case, radial)
       end
-      text=text..string.format("BRC %03d°\n", self:GetBRC())
-      text=text..string.format("FB %03d°\n", self:GetFinalBearing(true))           
+      text=text..string.format("BRC %03d° - FB %03d°\n", self:GetBRC(), self:GetFinalBearing(true))
+      --text=text..string.format("FB %03d°\n", self:GetFinalBearing(true))           
       text=text..string.format("Speed %d kts\n", carrierspeed)
       text=text..string.format("Tower frequency %.3f MHz\n", self.TowerFreq)
       text=text..string.format("Marshal radio %.3f MHz\n", self.MarshalFreq)
@@ -12472,6 +12966,7 @@ function AIRBOSS:_DisplayCarrierWeather(_unitname)
     text=text..string.format("Wind from %s at %s (%s)\n", WD, tW, Bd)
     text=text..string.format("QFE %.1f hPa = %s", P, tP)
     
+    -- More info only reliable if Mission uses static weather.
     if self.staticweather then
       local clouds, visibility, fog, dust=self:_GetStaticWeather()
       text=text..string.format("\nVisibility %.1f NM", UTILS.MetersToNM(visibility))
@@ -12816,6 +13311,18 @@ function AIRBOSS:_MarkCaseZones(_unitName, flare)
         if case==3 then
           text=text.."* bullseye with GREEN flares\n"
           self:_GetZoneBullseye(case):FlareZone(FLARECOLOR.Green, 45)
+        end
+
+        -- Tarawa landing spots.
+        if self.carriertype==AIRBOSS.CarrierType.TARAWA then
+          text=text.."* abeam landing stop with RED flares\n"
+          -- Abeam landing spot zone.
+          local ALSPT=self:_GetZoneAbeamLandingSpot()
+          ALSPT:FlareZone(FLARECOLOR.Red, 5, nil, UTILS.FeetToMeters(110))
+          -- Primary landing spot zone.
+          text=text.."* primary landing spot with GREEN flares\n"
+          local LSPT=self:_GetZoneLandingSpot()
+          LSPT:FlareZone(FLARECOLOR.Green, 5, nil, self.carrierparam.deckheight)
         end
         
       else
