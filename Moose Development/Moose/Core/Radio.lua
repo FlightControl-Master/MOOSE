@@ -160,7 +160,7 @@ end
 --- Set the frequency for the radio transmission.
 -- If the transmitting positionable is a unit or group, this also set the command "SetFrequency" with the defined frequency and modulation.
 -- @param #RADIO self
--- @param #number Frequency Frequency in MHz. Ranges allowed for radio transmissions in DCS : 30-88 / 108-152 / 225-400MHz.
+-- @param #number Frequency Frequency in MHz. Ranges allowed for radio transmissions in DCS : 30-87.995 / 108-173.995 / 225-399.975MHz.
 -- @return #RADIO self
 function RADIO:SetFrequency(Frequency)
   self:F2(Frequency)
@@ -168,7 +168,7 @@ function RADIO:SetFrequency(Frequency)
   if type(Frequency) == "number" then
   
     -- If frequency is in range
-    if (Frequency >= 30 and Frequency < 88) or (Frequency >= 108 and Frequency < 152) or (Frequency >= 225 and Frequency < 400) then
+    if (Frequency >= 30 and Frequency <= 87.995) or (Frequency >= 108 and Frequency <= 173.995) or (Frequency >= 225 and Frequency <= 399.975) then
     
       -- Convert frequency from MHz to Hz
       self.Frequency = Frequency * 1000000
