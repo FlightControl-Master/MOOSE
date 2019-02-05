@@ -4253,7 +4253,7 @@ function AIRBOSS:_ScanCarrierZone()
     local unit=_unit --Wrapper.Unit#UNIT
     
     -- Necessary conditions to be met:
-    local airborne=unit:IsAir() and unit:InAir()
+    local airborne=unit:IsAir() --and unit:InAir()
     local inzone=unit:IsInZone(self.zoneCCA)
     local friendly=self:GetCoalition()==unit:GetCoalition()
     local carrierac=self:_IsCarrierAircraft(unit)
@@ -5000,9 +5000,6 @@ function AIRBOSS:_CollapseMarshalStack(flight, nopattern)
       
       -- Only collapse stacks above the new pattern flight.
       if mstack>stack then
-      
-        -- OLD: New stack is old stack minus one.
-        --local newstack=mstack-1
         
         -- NEW: Is this now right as we allow more flights per stack?
         -- TODO: Question is, does the stack collapse if the lower stack is completely empty or do aircraft descent if just one flight leaves.
@@ -5327,6 +5324,10 @@ function AIRBOSS:_PrintQueue(queue, name)
         local alt=UTILS.MetersToFeet(self:_GetMarshalAltitude(stack, case))
         text=text..string.format(" stackalt=%d ft", alt)
       end
+      for j,_element in pairs(flight.elements) do
+        local element=_element --#AIRBOSS.FlightElement
+        text=text..string.format("\n  (%d) %s (%s): ai=%s, ballcall=%s, recovered=%s", j, element.onboard, element.unitname, tostring(element.ai), tostring(element.ballcall), tostring(element.recovered))
+      end
     end
   end
   self:T(self.lid..text)
@@ -5383,13 +5384,14 @@ function AIRBOSS:_CreateFlightGroup(group)
     local units=group:GetUnits()
     for i,_unit in pairs(units) do
       local unit=_unit --Wrapper.Unit#UNIT
-      local name=unit:GetName()
       local element={} --#AIRBOSS.FlightElement
       element.unit=unit
-      element.onboard=flight.onboardnumbers[name]
+      element.unitname=unit:GetName()
+      element.onboard=flight.onboardnumbers[element.unitname]
       element.ballcall=false
       element.ai=not self:_IsHumanUnit(unit)
-      text=text..string.format("\n[%d] %s onboard #%s, AI=%s", i, name, tostring(element.onboard), tostring(element.ai))
+      element.recovered=false
+      text=text..string.format("\n[%d] %s onboard #%s, AI=%s", i, element.unitname, tostring(element.onboard), tostring(element.ai))
       table.insert(flight.elements, element)
     end
     self:T(self.lid..text)  
@@ -5548,8 +5550,9 @@ end
 --- Get element in flight. 
 -- @param #AIRBOSS self
 -- @param #string unitname Name of the unit.
--- @return #AIRBOSS.FlightElement Element of the flight.
--- @return #number Element index.
+-- @return #AIRBOSS.FlightElement Element of the flight or nil.
+-- @return #number Element index or nil.
+-- @return #AIRBOSS.FlightGroup The Flight group or nil
 function AIRBOSS:_GetFlightElement(unitname)
 
   -- Get the unit.
@@ -5569,7 +5572,7 @@ function AIRBOSS:_GetFlightElement(unitname)
         local element=_element --#AIRBOSS.FlightElement
         
         if element.unit:GetName()==unitname then
-          return element, i
+          return element, i, flight
         end
       end
       
@@ -5577,7 +5580,7 @@ function AIRBOSS:_GetFlightElement(unitname)
     end
   end
     
-  return nil, nil
+  return nil, nil, nil
 end
 
 --- Get element in flight. 
@@ -5587,7 +5590,7 @@ end
 function AIRBOSS:_RemoveFlightElement(unitname)
 
   -- Get table index.
-  local element,idx=self:_GetFlightElement(unitname)
+  local element,idx, flight=self:_GetFlightElement(unitname)
 
   if idx then
     table.remove(flight.elements, idx)
@@ -5655,7 +5658,7 @@ end
 -- @return #boolean If true, all elements landed.
 function AIRBOSS:_CheckAllRecovered(flight)
 
-  for _,_element in pair(flight.elements) do
+  for _,_element in pairs(flight.elements) do
     local element=_element  --#AIROBSS.FlightElement
     if not element.recovered then
       return false
@@ -6314,7 +6317,13 @@ function AIRBOSS:OnEventLand(EventData)
       end
       
       -- AI always lands ==> remove unit from flight group and queues.
-      self:_RemoveUnitFromFlight(EventData.IniUnit)
+      self:_RecoveredElement(EventData.IniUnit)
+      local flight=self:_GetFlightFromGroupInQueue(EventData.IniGroup, self.flights)
+      local allrecovered=self:_CheckAllRecovered(flight)
+      if allrecovered then
+        self:_RemoveFlightFromQueue(self.Qpattern, flight)
+      end
+      --self:_RemoveUnitFromFlight(EventData.IniUnit)
       
     end
   end    
@@ -10372,8 +10381,14 @@ function AIRBOSS:_Debrief(playerData)
   
   -- Player landed and is not in air anymore.
   if playerData.landed and not playerData.unit:InAir() then
-    -- TODO: This is not 100% correct if player group has some AI units. But we do it anyway since otherwise player will 
-    self:_RemoveFlightFromQueue(self.Qpattern, playerData)
+    -- Set recovered flag.
+    self:_RecoveredElement(playerData.unit)
+    
+    local allrecovered=self:_CheckAllRecovered(playerData)
+    
+    if allrecovered then
+      self:_RemoveFlightFromQueue(self.Qpattern, playerData)
+    end
   end
   
   -- Increase number of passes.
@@ -10689,7 +10704,8 @@ function AIRBOSS:CarrierTurnIntoWind(time, vdeck)
   -- Return to coordinate if collision is detected.
   self.Creturnto=self:GetCoordinate()
 
-  -- Let the carrier make a detour from its route but return to its current position.  
+  -- Let the carrier make a detour from its route but return to its current position.
+  -- TODO: Add downwind speed
   self:CarrierDetour(pos1, speedknots, true)
   
   -- Set switch that we are currently turning into the wind.
@@ -13089,7 +13105,7 @@ function AIRBOSS:_DisplayCarrierWeather(_unitname)
     -- Get atmospheric data at carrier location.
     local T=coord:GetTemperature()
     local P=coord:GetPressure()
-    local Wd,Ws=coord:GetWind()
+    local Wd,Ws=coord:GetWind(50)
     
     -- Get Beaufort wind scale.
     local Bn,Bd=UTILS.BeaufortScale(Ws)
