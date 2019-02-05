@@ -58,10 +58,11 @@
 --  
 -- ## IMPORTANT
 -- 
--- Due to technical restrictions of DCS make sure you have:
+-- Some important restrictions of DCS you should be aware of:
 -- 
---    * Each player slot in a separate group. DCS does only allow to send messages to groups and not to individual units.
+--    * Each player slot (client) should be in a separate group as DCS does only allow for sending messages to groups and not individual units.
 --    * Players are identified by their player name. Ensure that no two player have the same name, e.g. "New Callsign", as this will lead to unexpected results.
+--    * The modex (tail number) of an aircraft should be changed dynamically in the mission by a player. Unfortunately, there is no way to get this information via scripting API functions. 
 --    
 -- ## Youtube Videos
 -- 
@@ -73,7 +74,7 @@
 -- Lex explaining Boat Ops:
 -- 
 --    * [( DCS HORNET ) Some boat ops basics VID 1](https://www.youtube.com/watch?v=LvGQS-3AzMc)
---    * [( DCS HORNET ) Some boat ops basics VID 1](https://www.youtube.com/watch?v=bN44wvtRsw0)
+--    * [( DCS HORNET ) Some boat ops basics VID 2](https://www.youtube.com/watch?v=bN44wvtRsw0)
 --    
 -- Jabbers Case I and III Recovery Tutorials:
 -- 
@@ -1607,10 +1608,11 @@ AIRBOSS.Difficulty={
 --- Parameters of an element in a flight group.
 -- @type AIRBOSS.FlightElement
 -- @field Wrapper.Unit#UNIT unit Aircraft unit.
+-- @field #string unitname Name of the unit.
 -- @field #boolean ai If true, AI sits inside. If false, human player is flying.
 -- @field #string onboard Onboard number of the aircraft.
 -- @field #boolean ballcall If true, flight called the ball in the groove.
--- @field #boolean ai If true, element is AI.
+-- @field #boolean recovered If true, element was successfully recovered.
 
 --- Player data table holding all important parameters of each player.
 -- @type AIRBOSS.PlayerData
@@ -1651,18 +1653,21 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.9.5"
+AIRBOSS.version="0.9.5wip"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+ 
+-- TODO: Despawn AI after landing/engine shutdown option.
+-- TODO: Do not remove recovered elements but only set switch. Remove only groups which are completely recovered.
+-- TODO: Handle cases where AI crashes on carrier deck. 
 -- TODO: Spin pattern. Add radio menu entry. Not sure what to add though?!
 -- TODO: Player eject and crash debrief "gradings".
 -- TODO: What happens when section lead or member dies?
 -- TODO: PWO during case 2/3.
 -- TODO: PWO when player comes too close to other flight.
--- TODO: Option to filter AI groups for recovery.
+-- DONE: Option to filter AI groups for recovery.
 -- DONE: Rework radio messages. Better control over player board numbers.
 -- DONE: Case I & II/III zone so that player gets into pattern automatically. Case I 3 position on the circle. Case II/III when the player enters the approach corridor maybe?
 -- DONE: Add static weather information.
@@ -5511,60 +5516,78 @@ function AIRBOSS:_InitPlayer(playerData, step)
 end
 
 
---- Get flight from group. 
+--- Get flight from group in a queue. 
 -- @param #AIRBOSS self
 -- @param Wrapper.Group#GROUP group Group that will be removed from queue.
 -- @param #table queue The queue from which the group will be removed.
--- @return #AIRBOSS.FlightGroup Flight group.
--- @return #number Queue index.
+-- @return #AIRBOSS.FlightGroup Flight group or nil.
+-- @return #number Queue index or nil.
 function AIRBOSS:_GetFlightFromGroupInQueue(group, queue)
 
-  -- Group name
-  local name=group:GetName()
-  
-  -- Loop over all flight groups in queue
-  for i,_flight in pairs(queue) do
-    local flight=_flight --#AIRBOSS.FlightGroup
-    
-    if flight.groupname==name then
-      return flight, i
-    end
-  end
+  if group then
 
-  self:T2(self.lid..string.format("WARNING: Flight group %s could not be found in queue.", name))
+    -- Group name
+    local name=group:GetName()
+    
+    -- Loop over all flight groups in queue
+    for i,_flight in pairs(queue) do
+      local flight=_flight --#AIRBOSS.FlightGroup
+      
+      if flight.groupname==name then
+        return flight, i
+      end
+    end
+  
+    self:T2(self.lid..string.format("WARNING: Flight group %s could not be found in queue.", name))  
+  end
+  
+  self:T2(self.lid..string.format("WARNING: Flight group could not be found in queue. Group is nil!"))
   return nil, nil
 end
 
 --- Get element in flight. 
 -- @param #AIRBOSS self
 -- @param #string unitname Name of the unit.
--- @param #AIRBOSS.FlightGroup flight Flight group.
--- @return #AIRBOSS.FlightElement Flight element.
+-- @return #AIRBOSS.FlightElement Element of the flight.
 -- @return #number Element index.
-function AIRBOSS:_GetFlightElement(unitname, flight)
+function AIRBOSS:_GetFlightElement(unitname)
 
-  -- Loop over all elements in flight group.
-  for i,_element in pairs(flight.elements) do
-    local element=_element --#AIRBOSS.FlightElement
-    
-    if element.unit:GetName()==unitname then
-      return element, i
+  -- Get the unit.
+  local unit=UNIT:FindByName(unitname)
+  
+  -- Check if unit exists.
+  if unit then
+  
+    -- Get flight element from all flights.
+    local flight=self:_GetFlightFromGroupInQueue(unit:GetGroup(), self.flights)
+        
+    -- Check if fight exists.
+    if flight then
+
+      -- Loop over all elements in flight group.
+      for i,_element in pairs(flight.elements) do
+        local element=_element --#AIRBOSS.FlightElement
+        
+        if element.unit:GetName()==unitname then
+          return element, i
+        end
+      end
+      
+      self:T2(self.lid..string.format("WARNING: Flight element %s could not be found in flight group.", unitname, flight.groupname))
     end
   end
-  
-  self:T2(self.lid..string.format("WARNING: Flight element %s could not be found in flight group.", unitname, flight.groupname))
+    
   return nil, nil
 end
 
 --- Get element in flight. 
 -- @param #AIRBOSS self
 -- @param #string unitname Name of the unit.
--- @param #AIRBOSS.FlightGroup flight Flight group.
 -- @return #boolean If true, element could be removed or nil otherwise.
-function AIRBOSS:_RemoveFlightElement(unitname, flight)
+function AIRBOSS:_RemoveFlightElement(unitname)
 
   -- Get table index.
-  local element,idx=self:_GetFlightElement(unitname, flight)
+  local element,idx=self:_GetFlightElement(unitname)
 
   if idx then
     table.remove(flight.elements, idx)
@@ -5624,6 +5647,31 @@ function AIRBOSS:_RemoveDeadFlightGroups()
     end
   end  
   
+end
+
+--- Chech if all elements of a flight were recovered.
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.FlightGroup flight
+-- @return #boolean If true, all elements landed.
+function AIRBOSS:_CheckAllRecovered(flight)
+
+  for _,_element in pair(flight.elements) do
+    local element=_element  --#AIROBSS.FlightElement
+    if not element.recovered then
+      return false
+    end
+  end
+
+  return true
+end
+
+--- Sets flag recovered=true for a flight element, which was successfully recovered (landed).
+-- @param #AIRBOSS self
+-- @param Wrapper.Unit#UNIT unit The aircraft unit that was recovered.
+-- @return #boolean If true, all flight elements were rerovered.
+function AIRBOSS:_RecoveredElement(unit)
+  local element=self:_GetFlightElement(unit:GetName())  --#AIRBOSS.FlightElement  
+  element.recovered=true
 end
 
 --- Remove a flight group from the Marshal queue. Marshal stack is collapsed, too, if flight was in the queue. Waiting flights are send to marshal.
@@ -5720,7 +5768,7 @@ function AIRBOSS:_RemoveUnitFromFlight(unit)
       if flight then
 
         -- Remove element from flight group.
-        local removed=self:_RemoveFlightElement(unit:GetName(), flight)
+        local removed=self:_RemoveFlightElement(unit:GetName())
         
         if removed then
         
@@ -6200,7 +6248,7 @@ function AIRBOSS:OnEventLand(EventData)
           if self.carriertype==AIRBOSS.CarrierType.TARAWA then
           
             -- Power "Idle".
-            self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.IDLE, false, 2)
+            self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.IDLE, false, 1)
           
             -- Next step debrief.
             self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.DEBRIEF)                        
@@ -6212,9 +6260,9 @@ function AIRBOSS:OnEventLand(EventData)
             
             -- No wire ==> Bolter, Bolter radio call.
             -- TODO: might need a better place for this. or check
-            if wire>4 then
-              self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.BOLTER)
-            end
+            --if wire>4 then
+            --  self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.BOLTER)
+            --end
                         
             -- Debug text.
             local text=string.format("Player %s AC type %s landed at dist=%.1f m. Trapped wire=%d.", playerData.name, playerData.actype, dist, wire)
@@ -6222,7 +6270,8 @@ function AIRBOSS:OnEventLand(EventData)
             self:T(self.lid..text)
             
             -- Unkonwn step until we now more.
-            playerData.step=AIRBOSS.PatternStep.UNDEFINED            
+            playerData.step=AIRBOSS.PatternStep.UNDEFINED
+            playerData.warning=nil        
       
             -- Call trapped function in 1 second to make sure we did not bolter.
             SCHEDULER:New(nil, self._Trapped, {self, playerData}, 1)
@@ -6271,11 +6320,67 @@ function AIRBOSS:OnEventLand(EventData)
   end    
 end
 
+--- Airboss event handler for event that a unit shuts down its engines.
+-- @param #AIRBOSS self
+-- @param Core.Event#EVENTDATA EventData
+--function AIRBOSS:OnEventPlayerLeaveUnit(EventData)
+function AIRBOSS:OnEventEngineShutdown(EventData)
+  self:F3({eventengineshutdown=EventData})
+
+  local _unitName=EventData.IniUnitName
+  local _unit, _playername=self:_GetPlayerUnitAndName(_unitName)
+  
+  self:T3(self.lid.."ENGINESHUTDOWN: unit   = "..tostring(EventData.IniUnitName))
+  self:T3(self.lid.."ENGINESHUTDOWN: group  = "..tostring(EventData.IniGroupName))
+  self:T3(self.lid.."ENGINESHUTDOWN: player = "..tostring(_playername))
+  
+  if _unit and _playername then
+  
+    -- Debug message.
+    self:T(self.lid..string.format("Player %s shutted down its engines!",_playername))
+    
+  else
+  
+    -- Debug message.
+    self:T2(self.lid..string.format("AI unit %s shutted down its engines!", _unitName))
+    
+  end  
+
+end
+
+--- Airboss event handler for event that a unit takes off.
+-- @param #AIRBOSS self
+-- @param Core.Event#EVENTDATA EventData
+--function AIRBOSS:OnEventPlayerLeaveUnit(EventData)
+function AIRBOSS:OnEventTakeoff(EventData)
+  self:F3({eventtakeoff=EventData})
+
+  local _unitName=EventData.IniUnitName
+  local _unit, _playername=self:_GetPlayerUnitAndName(_unitName)
+  
+  self:T3(self.lid.."TAKEOFF: unit   = "..tostring(EventData.IniUnitName))
+  self:T3(self.lid.."TAKEOFF: group  = "..tostring(EventData.IniGroupName))
+  self:T3(self.lid.."TAKEOFF: player = "..tostring(_playername))
+  
+  if _unit and _playername then
+  
+    -- Debug message.
+    self:T(self.lid..string.format("Player %s took off!",_playername))
+    
+  else
+  
+    -- Debug message.
+    self:T2(self.lid..string.format("AI unit %s took off!", _unitName))
+    
+  end  
+
+end
+
 --- Airboss event handler for event crash.
 -- @param #AIRBOSS self
 -- @param Core.Event#EVENTDATA EventData
 function AIRBOSS:OnEventCrash(EventData)
-  self:F3({eventland = EventData})
+  self:F3({eventcrash = EventData})
 
   local _unitName=EventData.IniUnitName
   local _unit, _playername=self:_GetPlayerUnitAndName(_unitName)
@@ -8066,6 +8171,8 @@ function AIRBOSS:_Trapped(playerData)
       -- A-4E gets slowed down much faster the the F/A-18C!
       dcorr=56
     end
+    
+    -- Get wire.
     local wire=self:_GetWire(coord, dcorr)
 
     -- Debug.
@@ -8074,6 +8181,15 @@ function AIRBOSS:_Trapped(playerData)
     
     -- Call this function again until v < threshold. Player comes to a standstill ==> Get wire!
     if v>5 then
+          
+      -- Check if we passed all wires. 
+      if wire>4 and v>10 and not playerData.warning then
+        -- Looks like we missed the wires ==> Bolter!
+        self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.BOLTER)
+        playerData.warning=true
+      end
+    
+      -- Call function again and check if converged or back in air.
       SCHEDULER:New(nil, self._Trapped, {self, playerData}, 0.1)
       return
     end
