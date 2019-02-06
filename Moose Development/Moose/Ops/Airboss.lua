@@ -16,7 +16,7 @@
 --    * F10 radio menu including carrier info (weather, radio frequencies, TACAN/ICLS channels), player LSO grades, help function (aircraft attitude, marking of zones etc).
 --    * Recovery tanker and refueling option via integration of @{Ops.RecoveryTanker} class.
 --    * Rescue helicopter option via @{Ops.RescueHelo} class.
---    * Combine multiple human player to sections (WIP).
+--    * Combine multiple human players to sections (WIP).
 --    * Many parameters customizable by convenient user API functions.
 --    * Multiple carrier support due to object oriented approach.
 --    * Unlimited number of players.
@@ -1655,7 +1655,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.9.5wip"
+AIRBOSS.version="0.9.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -3522,10 +3522,15 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function AIRBOSS:onafterStop(From, Event, To)
+  -- Unhandle events.
   self:UnHandleEvent(EVENTS.Birth)
   self:UnHandleEvent(EVENTS.Land)
+  self:UnHandleEvent(EVENTS.EngineShutdown)
+  self:UnHandleEvent(EVENTS.Takeoff)
   self:UnHandleEvent(EVENTS.Crash)
   self:UnHandleEvent(EVENTS.Ejection)
+  self:UnHandleEvent(EVENTS.PlayerLeaveUnit)
+  self:UnHandleEvent(EVENTS.MissionEnd)
 end
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -5118,7 +5123,8 @@ function AIRBOSS:_CollapseMarshalStack(flight, nopattern)
     self:T(self.lid..string.format("Flight %s is leaving marshal after %s and going pattern.", flight.groupname, Tmarshal))
         
     -- Add flight to pattern queue.
-    table.insert(self.Qpattern, flight)
+    --table.insert(self.Qpattern, flight)
+    self:_AddFlightToPatternQueue(flight)
         
   end
 
@@ -5323,8 +5329,8 @@ function AIRBOSS:_PrintQueue(queue, name)
   --local nqueue=#queue
   local Nqueue, nqueue=self:_GetQueueInfo(queue)
 
-  local text=string.format("%s Queue N=%d, n=%d:", name, Nqueue, nqueue)
-  if nqueue==0 then
+  local text=string.format("%s Queue N=%d (#%d), n=%d:", name, Nqueue, #queue, nqueue)
+  if #queue==0 then
     text=text.." empty."
   else
     for i,_flight in pairs(queue) do
@@ -5554,7 +5560,8 @@ function AIRBOSS:_InitPlayer(playerData, step)
     self:MessageToPlayer(playerData, "Group name contains \"Groove\". Happy groove testing.")
     playerData.attitudemonitor=true
     playerData.step=AIRBOSS.PatternStep.FINAL
-    table.insert(self.Qpattern, playerData)
+    --table.insert(self.Qpattern, playerData)
+    self:_AddFlightToPatternQueue(flight)
   end
   
   return playerData
@@ -5765,6 +5772,28 @@ function AIRBOSS:_CheckSectionRecovered(flight)
   return true
 end
 
+--- Add flight to pattern queue and set recoverd to false for all elements of the flight and its section members.
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.FlightGroup Flight group of element.
+function AIRBOSS:_AddFlightToPatternQueue(flight)
+
+  -- Add flight to table.
+  table.insert(self.Qpattern, flight)
+  
+  -- Init recovered switch.
+  flight.recovered=false
+  for _,elem in pairs(flight.elements) do
+    elem.recoverd=false
+  end
+  
+  -- Set recovered for all section members.
+  for _,sec in pairs(flight.section) do
+    for _,elem in pairs(sec.elements) do
+      elem.recoverd=false
+    end
+  end
+end
+
 --- Sets flag recovered=true for a flight element, which was successfully recovered (landed).
 -- @param #AIRBOSS self
 -- @param Wrapper.Unit#UNIT unit The aircraft unit that was recovered.
@@ -5780,11 +5809,12 @@ end
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.FlightGroup flight Flight group that will be removed from queue.
 -- @param #boolean nopattern If true, flight is NOT going to landing pattern.
--- @return #boolean If true, flight was removed. 
+-- @return #boolean True, flight was removed or false otherwise.
+-- @return #number Table index of the flight in the Marshal queue.
 function AIRBOSS:_RemoveFlightFromMarshalQueue(flight, nopattern)
 
   -- Remove flight from marshal queue if it is in.
-  local removed=self:_RemoveFlightFromQueue(self.Qmarshal, flight)
+  local removed, idx=self:_RemoveFlightFromQueue(self.Qmarshal, flight)
   
   -- Collapse marshal stack if flight was removed.
   if removed then
@@ -5820,18 +5850,18 @@ function AIRBOSS:_RemoveFlightFromMarshalQueue(flight, nopattern)
       -- Remove flight from waiting queue.
       self:_RemoveFlightFromQueue(self.Qwaiting, nextflight)
       
-    end
-    
+    end    
   end
   
-  return removed
+  return removed, idx
 end
 
 --- Remove a flight group from a queue.
 -- @param #AIRBOSS self
 -- @param #table queue The queue from which the group will be removed.
 -- @param #AIRBOSS.FlightGroup flight Flight group that will be removed from queue.
--- @return #boolean If true, flight was in Queue and removed.
+-- @return #boolean True, flight was in Queue and removed. False otherwise.
+-- @return #number Table index of removed queue element or nil.
 function AIRBOSS:_RemoveFlightFromQueue(queue, flight)
 
   -- Loop over all flights in group.
@@ -5842,14 +5872,14 @@ function AIRBOSS:_RemoveFlightFromQueue(queue, flight)
     if qflight.groupname==flight.groupname then
       self:T(self.lid..string.format("Removing flight group %s from queue.", flight.groupname))
       table.remove(queue, i)
-      return true
+      return true, i
     end
   end
   
-  return false
+  return false, nil
 end
 
---- Remove a unit from a flight group (e.g. when landed) and update all queues if the whole flight group is gone.
+--- Remove a unit and its element from a flight group (e.g. when landed) and update all queues if the whole flight group is gone.
 -- @param #AIRBOSS self
 -- @param Wrapper.Unit#UNIT unit The unit to be removed.
 function AIRBOSS:_RemoveUnitFromFlight(unit)
@@ -5891,6 +5921,29 @@ function AIRBOSS:_RemoveUnitFromFlight(unit)
           
         end              
       end    
+    end
+  end
+  
+end
+
+--- Remove a flight, which is a member of a section, from this section.
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.FlightGroup flight The flight to be removed from the section
+function AIRBOSS:_RemoveFlightFromSection(flight)
+
+  -- First check if player is not the lead.
+  if flight.name~=flight.seclead then
+
+    -- Remove this flight group from the section of the leader.
+    local lead=self.players[flight.seclead]  --#AIRBOSS.FlightGroup
+    if lead then
+      for i,sec in pairs(lead.section) do
+        local sectionmember=sec --#AIRBOSS.FlightGroup
+        if sectionmember.name==flight.name then
+          table.remove(lead.section, i)
+          break
+        end
+      end
     end
   end
   
@@ -5939,17 +5992,8 @@ function AIRBOSS:_UpdateFlightSection(flight)
     -- Section Member --
     --------------------
     
-    -- Remove this flight group from the section of the leader.
-    local lead=self.players[flight.seclead]  --#AIRBOSS.FlightGroup
-    if lead then
-      for i,sec in pairs(lead.section) do
-        local sectionmember=sec --#AIRBOSS.FlightGroup
-        if sectionmember.name==flight.name then
-          table.remove(lead.section, i)
-          break
-        end
-      end
-    end
+    -- Remove flight from its leaders section.
+    self:_RemoveFlightFromSection(flight)
     
   end
 
@@ -5961,31 +6005,28 @@ end
 -- @param #AIRBOSS.PlayerData flight The flight to be removed.
 -- @param #boolean completely If true, also remove human flight from all flights table.
 function AIRBOSS:_RemoveFlight(flight, completely)
-
+  self:F(self.lid.. string.format("Removing flight %s, ai=%s completely=%s.", tostring(flight.groupname), tostring(flight.ai), tostring(completely)))
+  
   -- Remove flight from all queues.
   self:_RemoveFlightFromMarshalQueue(flight, true)
   self:_RemoveFlightFromQueue(self.Qpattern, flight)
-  self:_RemoveFlightFromQueue(self.Qwaiting, flight)
+  self:_RemoveFlightFromQueue(self.Qwaiting, flight)      
   
   -- Check if player or AI
   if flight.ai then  
   
-    -- Remove AI flight completely.
+    -- Remove AI flight completely. Pure AI flights have no sections and cannot be members.
     self:_RemoveFlightFromQueue(self.flights, flight)
     
   else
-  
+    
+    -- Check if flight should be completely removed, e.g. after the player died or simply left the slot.
     if completely then
-    
-      -- TODO: update section and checksectinrecovered at the beginning to ensure that not anybody else from the section is in the queue?!
-    
-      -- Update flight section. Remove flight from section lead or find new section lead.
+
+      -- Update flight section. Remove flight from section or find new section leader if flight was the lead.
       self:_UpdateFlightSection(flight)
-      
-      -- Check if section has recovered, just in case.
-      self:_CheckSectionRecovered(flight)
     
-      -- Remove HUMAN flight completely, e.g. when player died or left.
+      -- Remove completely.
       self:_RemoveFlightFromQueue(self.flights, flight)
 
       -- Remove all grades until a final grade is reached.
@@ -5997,8 +6038,19 @@ function AIRBOSS:_RemoveFlight(flight, completely)
       end 
       
     else
-      -- Set Playerstep to undefined.
-      flight.step=AIRBOSS.PatternStep.UNDEFINED
+    
+      -- Set player step to undefined.
+      self:_SetPlayerStep(flight, AIRBOSS.PatternStep.UNDEFINED)
+      
+      -- Also set this for the section members as they are in the same boat.
+      for _,sectionmember in pairs(flight.section) do
+        self:_SetPlayerStep(sectionmember, AIRBOSS.PatternStep.UNDEFINED)
+      end
+      
+      -- TODO: What if flight is member of a section. His status is now undefined. Should he be removed from the section?
+      -- I think yes, if he pulls the trigger.
+      self:_RemoveFlightFromSection(flight)
+      
     end
   end
   
@@ -6527,7 +6579,7 @@ function AIRBOSS:OnEventEngineShutdown(EventData)
   else
   
     -- Debug message.
-    self:T2(self.lid..string.format("AI unit %s shut down its engines!", _unitName))
+    self:T(self.lid..string.format("AI unit %s shut down its engines!", _unitName))
     
     if self.despawnshutdown then
     
@@ -6542,8 +6594,8 @@ function AIRBOSS:OnEventEngineShutdown(EventData)
         
         -- Despawn group and completely remove flight.
         if recovered then
-          -- TODO: This creates an Event RemoveUnit. Should be captured.
-          EventData.IniGroup:Destroy()
+          self:T(self.lid..string.format("AI group %s completely recovered. Despawning group after engine shutdown event as requested in 5 seconds.", tostring(EventData.IniGroupName)))
+          EventData.IniGroup:Destroy(nil, 5)
           self:_RemoveFlight(flight)
         end
       end
@@ -6572,10 +6624,14 @@ function AIRBOSS:OnEventTakeoff(EventData)
     -- Debug message.
     self:T(self.lid..string.format("Player %s took off!",_playername))
     
+    -- TODO: Set recoverd status.
+    
   else
   
     -- Debug message.
     self:T2(self.lid..string.format("AI unit %s took off!", _unitName))
+    
+    -- TODO: Set recoverd status.
     
   end  
 
@@ -6602,7 +6658,7 @@ function AIRBOSS:OnEventCrash(EventData)
     local flight=self.players[_playername]
     
     -- Remove flight completely from all queues and collapse marshal if necessary.
-    -- This also updates the section, if any and removes unfinished gradings.
+    -- This also updates the section, if any and removes any unfinished gradings of the player.
     if flight then
       self:_RemoveFlight(flight, true)
     end
@@ -6643,7 +6699,7 @@ function AIRBOSS:OnEventEjection(EventData)
 
   else
     -- Debug message.
-    self:T2(self.lid..string.format("AI unit %s ejected!", EventData.IniUnitName))
+    self:T(self.lid..string.format("AI unit %s ejected!", EventData.IniUnitName))
     
     -- Remove element/unit from flight group and from all queues if no elements alive.
     self:_RemoveUnitFromFlight(EventData.IniUnit)
@@ -12413,6 +12469,7 @@ function AIRBOSS:_ResetPlayerStatus(_unitName)
       self:MessageToPlayer(playerData, text, "AIRBOSS")
       
       -- Remove flight from queues. Collapse marshal stack if necessary.
+      -- TODO: This has not the completely tag. What to do with section members if flight is lead or not?
       self:_RemoveFlight(playerData)
       
       -- Initialize player data.
@@ -12606,7 +12663,8 @@ function AIRBOSS:_RequestCommence(_unitName)
             end
             
             -- Add player to pattern queue. Usually this is done when the stack is collapsed but this player is not in the Marshal queue.
-            table.insert(self.Qpattern, playerData)
+            --table.insert(self.Qpattern, playerData)
+            self:_AddFlightToPatternQueue(playerData)
           end          
           
           -- Clear player for commence.
