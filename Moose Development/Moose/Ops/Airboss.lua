@@ -85,10 +85,9 @@
 -- ### Open Questions?
 -- 
 --    * Currently the script does not support spin patterns. Marshal releases flights only when there is a free slot in the landing pattern. How is this handled in real life?
---    * What is the next step after a pattern wave off during Case II or III recovery?
+--    * What is the next step after a pattern wave off during Case II or III recovery? A: Go back to start!
 --    * What are the conditions for waving off flights when they get too close to a flight ahead in the pattern? At which pattern steps are flights waved off because of this?
 --    * Some more LSO gradings could be added. What is missing and what are the conditions?
---    * For the A-4E-C, what are the AoA thresholds for being on speed, (a little) slow, (a little) fast in **degrees**? In know the numbers in units of the indexer but need a proper conversion to degrees.
 --
 -- If you know the answer to any of this, please get in touch with me! The necessary infrastructure to implement it is most likely already there.
 --
@@ -197,6 +196,7 @@
 -- @field #number collisiondist Distance up to which collision checks are done.
 -- @field #number Tmessage Default duration in seconds messages are displayed to players.
 -- @field #string soundfolder Folder within the mission (miz) file where airboss sound files are located.
+-- @field #boolean despawnshutdown Despawn group after engine shutdown.
 -- @extends Core.Fsm#FSM
 
 --- Be the boss!
@@ -926,6 +926,7 @@ AIRBOSS = {
   collisiondist  = nil,
   Tmessage       = nil,
   soundfolder    = nil,
+  despawnshutdown= nil,
 }
 
 --- Aircraft types capable of landing on carrier (human+AI).
@@ -1604,6 +1605,7 @@ AIRBOSS.Difficulty={
 -- @field #boolean ballcall If true, flight called the ball in the groove.
 -- @field #table elements Flight group elements.
 -- @field #number Tcharlie Charlie (abs) time in seconds.
+-- @field #string name Player name or name of first AI unit.
 
 --- Parameters of an element in a flight group.
 -- @type AIRBOSS.FlightElement
@@ -1613,11 +1615,11 @@ AIRBOSS.Difficulty={
 -- @field #string onboard Onboard number of the aircraft.
 -- @field #boolean ballcall If true, flight called the ball in the groove.
 -- @field #boolean recovered If true, element was successfully recovered.
+-- @field #boolean isseclead If true, element is the section lead.
 
 --- Player data table holding all important parameters of each player.
 -- @type AIRBOSS.PlayerData
--- @field Wrapper.Unit#UNIT unit Aircraft of the player.
--- @field #string name Player name. 
+-- @field Wrapper.Unit#UNIT unit Aircraft of the player. 
 -- @field Wrapper.Client#CLIENT client Client object of player.
 -- @field #string callsign Callsign of player.
 -- @field #string difficulty Difficulty level.
@@ -1659,14 +1661,14 @@ AIRBOSS.version="0.9.5wip"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  
--- TODO: Despawn AI after landing/engine shutdown option.
--- TODO: Do not remove recovered elements but only set switch. Remove only groups which are completely recovered.
--- TODO: Handle cases where AI crashes on carrier deck. 
+-- TODO: Handle cases where AI crashes on carrier deck ==> Clean up deck. 
 -- TODO: Spin pattern. Add radio menu entry. Not sure what to add though?!
 -- TODO: Player eject and crash debrief "gradings".
--- TODO: What happens when section lead or member dies?
 -- TODO: PWO during case 2/3.
 -- TODO: PWO when player comes too close to other flight.
+-- DONE: Despawn AI after engine shutdown option.
+-- DONE: What happens when section lead or member dies?
+-- DONE: Do not remove recovered elements but only set switch. Remove only groups which are completely recovered.
 -- DONE: Option to filter AI groups for recovery.
 -- DONE: Rework radio messages. Better control over player board numbers.
 -- DONE: Case I & II/III zone so that player gets into pattern automatically. Case I 3 position on the circle. Case II/III when the player enters the approach corridor maybe?
@@ -1809,6 +1811,9 @@ function AIRBOSS:New(carriername, alias)
   
   -- Airboss is a nice guy.
   self:SetAirbossNiceGuy()
+  
+  -- No despawn after engine shutdown by default.
+  self:SetDespawnOnEngineShutdown(false)
   
   -- Mission uses static weather by default.
   self:SetStaticWeather()
@@ -2433,6 +2438,20 @@ function AIRBOSS:SetAirbossNiceGuy(switch)
   return self
 end
 
+--- Despawn AI groups after they they shut down their engines 
+-- @param #AIRBOSS self
+-- @param #boolean switch If true or nil, AI groups are despawned.
+-- @return #AIRBOSS self
+function AIRBOSS:SetDespawnOnEngineShutdown(switch)
+  if switch==true or switch==nil then
+    self.despawnshutdown=true
+  else
+    self.despawnshutdown=false
+  end
+  return self
+end
+
+
 --- Set folder where the airboss sound files are located **within you mission (miz) file**.
 -- The default path is "l10n/DEFAULT/" but sound files simply copied there will be removed by DCS the next time you save the mission.
 -- However, if you create a new folder inside the miz file, which contains the sounds, it will not be deleted and can be used. 
@@ -2897,10 +2916,12 @@ function AIRBOSS:onafterStart(From, Event, To)
   -- Handle events.
   self:HandleEvent(EVENTS.Birth)
   self:HandleEvent(EVENTS.Land)
+  self:HandleEvent(EVENTS.EngineShutdown)
+  self:HandleEvent(EVENTS.Takeoff)
   self:HandleEvent(EVENTS.Crash)
   self:HandleEvent(EVENTS.Ejection)
   self:HandleEvent(EVENTS.PlayerLeaveUnit, self._PlayerLeft)
-  --self:HandleEvent(EVENTS.MissionEnd)
+  self:HandleEvent(EVENTS.MissionEnd)
 
   -- Start status check in 1 second.
   self:__Status(1)
@@ -4041,7 +4062,6 @@ function AIRBOSS:_GetNextMarshalFight()
   return nil
 end
 
-
 --- Check marshal and pattern queues.
 -- @param #AIRBOSS self
 function AIRBOSS:_CheckQueue()
@@ -4086,13 +4106,20 @@ function AIRBOSS:_CheckQueue()
 
   -- Check if carrier is currently in recovery mode.
   if not self:IsRecovering() then
+  
+    -----------------------------
+    -- Switching Recovery Case --
+    -----------------------------
 
     -- Loop over all flights currently in the marshal queue.
     for _,_flight in pairs(self.Qmarshal) do
       local flight=_flight --#AIRBOSS.FlightGroup
       
-      -- Check if they have the right case.
-      if flight.case~=self.case then
+      -- TODO: In principle this should be done/necessary only if case 1-->2/3 or 2/3-->1, right?
+      -- When recovery switches from 2->3 or 3-->2 nothing changes in the marshal stack.
+      
+      -- Check if a change of stack is necessary.
+      if (flight.case==1 and self.case>1) or (flight.case>1 and self.case==1) then
       
         -- Remove flight from marshal queue.
         local removed=self:_RemoveFlightFromQueue(self.Qmarshal, flight)
@@ -4113,8 +4140,15 @@ function AIRBOSS:_CheckQueue()
           end
           
           -- Break the loop so that only one flight per 30 seconds is removed. No spam of messages, no conflict with the loop over queue entries.
-          break
+          break          
+
+        elseif flight.case~=self.case then
+        
+          -- This should handle 2-->3 or 3-->2
+          flight.case=self.case
+          
         end
+        
       end      
     end
 
@@ -4172,6 +4206,7 @@ function AIRBOSS:_CheckQueue()
     
   end
 end
+
 
 --- Clear flight for landing. AI are removed from Marshal queue and the Marshal stack is collapsed.
 -- If next in line is an AI flight, this is done. If human player is next, we wait for "Commence" via F10 radio menu command.
@@ -4447,19 +4482,27 @@ function AIRBOSS:_MarshalPlayer(playerData, stack)
     self:_AddMarshalGroup(playerData, stack)
     
     -- Set step to holding.
-    playerData.step=AIRBOSS.PatternStep.HOLDING
-    playerData.warning=nil
+    self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.HOLDING)
     
     -- Holding switch to nil until player arrives in the holding zone.
     playerData.holding=nil
     
     -- Set same stack for all flights in section.
     for _,_flight in pairs(playerData.section) do
-      -- TODO: inform section members.
       local flight=_flight --#AIRBOSS.PlayerData
-      flight.case=playerData.case
-      flight.step=AIRBOSS.PatternStep.HOLDING
+      
+      -- TODO: Inform player? Should be done by lead via radio?
+      
+      -- Set step.
+      self:_SetPlayerStep(flight, AIRBOSS.PatternStep.HOLDING)
+      
+      -- Holding to nil, until arrived.
       flight.holding=nil
+      
+      -- Set case to that of lead.
+      flight.case=playerData.case
+      
+      -- Set stack flag.      
       flight.flag:Set(stack)
     end
     
@@ -5326,7 +5369,8 @@ function AIRBOSS:_PrintQueue(queue, name)
       end
       for j,_element in pairs(flight.elements) do
         local element=_element --#AIRBOSS.FlightElement
-        text=text..string.format("\n  (%d) %s (%s): ai=%s, ballcall=%s, recovered=%s", j, element.onboard, element.unitname, tostring(element.ai), tostring(element.ballcall), tostring(element.recovered))
+        text=text..string.format("\n  (%d) %s (%s): ai=%s, ballcall=%s, recovered=%s", 
+        j, element.onboard, element.unitname, tostring(element.ai), tostring(element.ballcall), tostring(element.recovered))
       end
     end
   end
@@ -5371,9 +5415,7 @@ function AIRBOSS:_CreateFlightGroup(group)
     flight.section={}
     flight.ballcall=false
     flight.holding=nil
-    
-    -- TODO Name should also be set for AI as it is used to get the section lead. Switch this from PlayerData to FlightGroup enumerator.
-    flight.name=flight.group:GetUnit(1):GetName()
+    flight.name=flight.group:GetUnit(1):GetName()   --Will be overwritten in _Newplayer with player name if human player in the group.
     
     -- Note, this should be re-set elsewhere!
     flight.case=self.case
@@ -5390,7 +5432,7 @@ function AIRBOSS:_CreateFlightGroup(group)
       element.onboard=flight.onboardnumbers[element.unitname]
       element.ballcall=false
       element.ai=not self:_IsHumanUnit(unit)
-      element.recovered=false
+      element.recovered=nil
       text=text..string.format("\n[%d] %s onboard #%s, AI=%s", i, element.unitname, tostring(element.onboard), tostring(element.ai))
       table.insert(flight.elements, element)
     end
@@ -5400,6 +5442,7 @@ function AIRBOSS:_CreateFlightGroup(group)
     if flight.ai then
       local onboard=flight.onboardnumbers[flight.seclead]
       flight.onboard=onboard
+      flight.elements[1].isseclead=true
     else
       flight.onboard=self:_GetOnboardNumberPlayer(group)
     end
@@ -5652,29 +5695,85 @@ function AIRBOSS:_RemoveDeadFlightGroups()
   
 end
 
---- Chech if all elements of a flight were recovered.
+--- Get the lead flight group of a flight group.
 -- @param #AIRBOSS self
--- @param #AIRBOSS.FlightGroup flight
--- @return #boolean If true, all elements landed.
-function AIRBOSS:_CheckAllRecovered(flight)
+-- @param #AIRBOSS.FlightGroup flight Flight group to check.
+-- @return #AIRBOSS.FlightGroup Flight group of the leader or flight itself if no other leader.
+function AIRBOSS:_GetLeadFlight(flight)
 
-  for _,_element in pairs(flight.elements) do
+  -- Init.
+  local lead=flight
+  
+  -- Only human players can be section leads of other players.
+  if flight.name~=flight.seclead then
+    lead=self.players[flight.seclead]
+  end
+  
+  return lead
+end
+
+--- Check if all elements of a flight were recovered. This also checks potential section members.
+-- If so, flight is removed from the queue.
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.FlightGroup flight Flight group to check.
+-- @return #boolean If true, all elements landed.
+function AIRBOSS:_CheckSectionRecovered(flight)
+
+  -- Nil check.
+  if flight==nil then
+    return true
+  end
+
+  -- Get the lead flight first, so that we can also check all section members.
+  local lead=self:_GetLeadFlight(flight)
+
+  -- Check all elements of the lead flight group.
+  for _,_element in pairs(lead.elements) do
     local element=_element  --#AIROBSS.FlightElement
     if not element.recovered then
       return false
     end
   end
-
+  
+  -- Now check all section members, if any.
+  for _,_section in pairs(lead.section) do
+    local sectionmember=_section --#AIRBOSS.FlightGroup
+ 
+    -- Check all elements of the secmember flight group.
+    for _,_element in pairs(sectionmember.elements) do
+      local element=_element  --#AIROBSS.FlightElement
+      if not element.recovered then
+        return false
+      end
+    end
+  end
+  
+  -- Remove lead flight from pattern queue. It is this flight who is added to the queue.
+  self:_RemoveFlightFromQueue(self.Qpattern, lead)
+  
+  -- Just for now, check if it is in other queues as well.
+  if self:_InQueue(self.Qmarshal, lead.group) then
+    self:E("ERROR: flight group should not be in marshal queue")
+    self:_RemoveFlightFromMarshalQueue(lead, true)
+  end
+  -- Just for now, check if it is in other queues as well.
+  if self:_InQueue(self.Qwaiting, lead.group) then
+    self:E("ERROR: flight group should not be in pattern queue")
+    self:_RemoveFlightFromQueue(self.Qwaiting, lead)
+  end
+    
   return true
 end
 
 --- Sets flag recovered=true for a flight element, which was successfully recovered (landed).
 -- @param #AIRBOSS self
 -- @param Wrapper.Unit#UNIT unit The aircraft unit that was recovered.
--- @return #boolean If true, all flight elements were rerovered.
+-- @return #AIRBOSS.FlightGroup Flight group of element.
 function AIRBOSS:_RecoveredElement(unit)
-  local element=self:_GetFlightElement(unit:GetName())  --#AIRBOSS.FlightElement  
+  local element, idx, flight=self:_GetFlightElement(unit:GetName())  --#AIRBOSS.FlightElement  
   element.recovered=true
+  
+  return flight
 end
 
 --- Remove a flight group from the Marshal queue. Marshal stack is collapsed, too, if flight was in the queue. Waiting flights are send to marshal.
@@ -5797,6 +5896,65 @@ function AIRBOSS:_RemoveUnitFromFlight(unit)
   
 end
 
+--- Update section if a flight is removed.
+-- If removed flight is member of a section, he is removed for the leaders section.
+-- If removed flight is the section lead, we try to find a new leader.
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.FlightGroup flight The flight to be removed.
+function AIRBOSS:_UpdateFlightSection(flight)
+
+  -- Check if this player is the leader of a section.
+  if flight.seclead==flight.name then
+
+    --------------------
+    -- Section Leader --
+    --------------------
+    
+    -- This player is the leader ==> We need a new one.
+    if #flight.section>=1 then
+    
+      -- New leader.
+      local newlead=flight.section[1]  --#AIRBOSS.FlightGroup
+      newlead.seclead=newlead.name
+      
+      -- Adjust new section members.
+      for i=2,#flight.section do
+        local member=flight.section[i] --#AIRBOSS.FlightGroup
+        
+        -- Add remaining members new leaders table.  
+        table.insert(newlead.section, member)
+        
+        -- Set new section lead of member.
+        member.seclead=newlead.name
+      end
+      
+    end
+    
+    -- Flight section empty
+    flight.section={}
+  
+  else
+  
+    --------------------
+    -- Section Member --
+    --------------------
+    
+    -- Remove this flight group from the section of the leader.
+    local lead=self.players[flight.seclead]  --#AIRBOSS.FlightGroup
+    if lead then
+      for i,sec in pairs(lead.section) do
+        local sectionmember=sec --#AIRBOSS.FlightGroup
+        if sectionmember.name==flight.name then
+          table.remove(lead.section, i)
+          break
+        end
+      end
+    end
+    
+  end
+
+end
+
 --- Remove a flight from Marshal, Pattern and Waiting queues. If flight is in Marhal queue, the above stack is collapsed.  
 -- Also set player step to undefined if applicable or remove human flight if option *completely* is true. 
 -- @param #AIRBOSS self
@@ -5811,12 +5969,33 @@ function AIRBOSS:_RemoveFlight(flight, completely)
   
   -- Check if player or AI
   if flight.ai then  
+  
     -- Remove AI flight completely.
     self:_RemoveFlightFromQueue(self.flights, flight)
+    
   else
+  
     if completely then
-      -- Remove HUMAN flight completely.
+    
+      -- TODO: update section and checksectinrecovered at the beginning to ensure that not anybody else from the section is in the queue?!
+    
+      -- Update flight section. Remove flight from section lead or find new section lead.
+      self:_UpdateFlightSection(flight)
+      
+      -- Check if section has recovered, just in case.
+      self:_CheckSectionRecovered(flight)
+    
+      -- Remove HUMAN flight completely, e.g. when player died or left.
       self:_RemoveFlightFromQueue(self.flights, flight)
+
+      -- Remove all grades until a final grade is reached.
+      local grades=self.playerscores[flight.name]
+      if grades and #grades>0 then
+        while #grades>0 and grades[#grades].finalscore==nil do
+          table.remove(grades, #grades)
+        end
+      end 
+      
     else
       -- Set Playerstep to undefined.
       flight.step=AIRBOSS.PatternStep.UNDEFINED
@@ -6317,13 +6496,10 @@ function AIRBOSS:OnEventLand(EventData)
       end
       
       -- AI always lands ==> remove unit from flight group and queues.
-      self:_RecoveredElement(EventData.IniUnit)
-      local flight=self:_GetFlightFromGroupInQueue(EventData.IniGroup, self.flights)
-      local allrecovered=self:_CheckAllRecovered(flight)
-      if allrecovered then
-        self:_RemoveFlightFromQueue(self.Qpattern, flight)
-      end
-      --self:_RemoveUnitFromFlight(EventData.IniUnit)
+      local flight=self:_RecoveredElement(EventData.IniUnit)
+      
+      -- Check if all were recovered. If so update pattern queue.
+      self:_CheckSectionRecovered(flight)
       
     end
   end    
@@ -6346,12 +6522,32 @@ function AIRBOSS:OnEventEngineShutdown(EventData)
   if _unit and _playername then
   
     -- Debug message.
-    self:T(self.lid..string.format("Player %s shutted down its engines!",_playername))
+    self:T(self.lid..string.format("Player %s shut down its engines!",_playername))
     
   else
   
     -- Debug message.
-    self:T2(self.lid..string.format("AI unit %s shutted down its engines!", _unitName))
+    self:T2(self.lid..string.format("AI unit %s shut down its engines!", _unitName))
+    
+    if self.despawnshutdown then
+    
+      -- Get flight.
+      local flight=self:_GetFlightFromGroupInQueue(EventData.IniGroup, self.flights)
+    
+      -- Only AI flights.
+      if flight and flight.ai then
+      
+        -- Check if all elements were recovered.
+        local recovered=self:_CheckSectionRecovered(flight)
+        
+        -- Despawn group and completely remove flight.
+        if recovered then
+          -- TODO: This creates an Event RemoveUnit. Should be captured.
+          EventData.IniGroup:Destroy()
+          self:_RemoveFlight(flight)
+        end
+      end
+    end
     
   end  
 
@@ -6406,16 +6602,9 @@ function AIRBOSS:OnEventCrash(EventData)
     local flight=self.players[_playername]
     
     -- Remove flight completely from all queues and collapse marshal if necessary.
+    -- This also updates the section, if any and removes unfinished gradings.
     if flight then
       self:_RemoveFlight(flight, true)
-    end
-    
-    -- Remove all grades until a final grade is reached.
-    local grades=self.playerscores[_playername]
-    if grades and #grades>0 then
-      while #grades>0 and grades[#grades].finalscore==nil do
-        table.remove(grades, #grades)
-      end
     end
     
   else
@@ -6443,6 +6632,7 @@ function AIRBOSS:OnEventEjection(EventData)
   
   if _unit and _playername then
     self:T(self.lid..string.format("Player %s ejected!",_playername))
+    
     -- Get player flight.
     local flight=self.players[_playername]
     
@@ -6451,20 +6641,17 @@ function AIRBOSS:OnEventEjection(EventData)
       self:_RemoveFlight(flight, true)
     end
 
-    -- Remove all grades until a final grade is reached.
-    local grades=self.playerscores[_playername]
-    if grades and #grades>0 then
-      while #grades>0 and grades[#grades].finalscore==nil do
-        table.remove(grades, #grades)
-      end
-    end    
-
   else
     -- Debug message.
     self:T2(self.lid..string.format("AI unit %s ejected!", EventData.IniUnitName))
     
-    -- Remove unit from flight and queues.
-    self:_RemoveUnitFromFlight(EventData.IniUnit)     
+    -- Remove element/unit from flight group and from all queues if no elements alive.
+    self:_RemoveUnitFromFlight(EventData.IniUnit)
+    
+    -- What could happen is, that another element has landed (recovered) already and this one crashes.
+    -- This would mean that the flight would not be deleted from the queue ==> Check if section recovered.    
+    local flight=self:_GetFlightFromGroupInQueue(EventData.IniGroup, self.flights)
+    self:_CheckSectionRecovered(flight)
   end
   
 end
@@ -6496,31 +6683,17 @@ function AIRBOSS:_PlayerLeft(EventData)
       self:_RemoveFlight(flight, true)
     end
     
-    -- Remove all grades until a final grade is reached.
-    local grades=self.playerscores[_playername]
-    if grades and #grades>0 then
-      while #grades>0 and grades[#grades].finalscore==nil do
-        table.remove(grades, #grades)
-      end
-    end    
-    
   end
   
 end
 
---[[
 --- Airboss event function handling the mission end event.
 -- Handles the case when the mission is ended.
 -- @param #AIRBOSS self
 -- @param Core.Event#EVENTDATA EventData Event data.
 function AIRBOSS:OnEventMissionEnd(EventData)
-
-  -- Auto save player results.
-  if self.autosave then
-    self:Save(self.autosavepath, self.autosavefile)
-  end
+  self:T3(self.lid.."Mission Ended")
 end
-]]
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- PATTERN functions
@@ -10384,11 +10557,8 @@ function AIRBOSS:_Debrief(playerData)
     -- Set recovered flag.
     self:_RecoveredElement(playerData.unit)
     
-    local allrecovered=self:_CheckAllRecovered(playerData)
-    
-    if allrecovered then
-      self:_RemoveFlightFromQueue(self.Qpattern, playerData)
-    end
+    -- Check if all elements 
+    self:_CheckSectionRecovered(playerData)
   end
   
   -- Increase number of passes.
@@ -10620,14 +10790,19 @@ end
 -- @param Core.Point#COORDINATE coord Coordinate of the detour.
 -- @param #number speed Speed in knots. Default is current carrier velocity.
 -- @param #boolean uturn (Optional) If true, carrier will go back to where it came from before it resumes its route to the next waypoint.
+-- @param #number uspeed Speed in knots after U-turn. Default is same as before.
 -- @return #AIRBOSS self
-function AIRBOSS:CarrierDetour(coord, speed, uturn)
+function AIRBOSS:CarrierDetour(coord, speed, uturn, uspeed)
 
   -- Current coordinate of the carrier.
   local pos0=self:GetCoordinate()
+  
+  -- Default.
+  speed=speed or self.carrier:GetVelocityKNOTS()
     
   -- Speed in km/h.
-  local speedkmh=UTILS.KnotsToKmph(speed or self.carrier:GetVelocityKNOTS())
+  local speedkmh=UTILS.KnotsToKmph(speed)
+  local uspeedkmh=UTILS.KnotsToKmph(uspeed)
   
   -- Waypoint table.
   local wp={}
@@ -10638,7 +10813,7 @@ function AIRBOSS:CarrierDetour(coord, speed, uturn)
   
   -- If enabled, go back to where you came from.
   if uturn then
-    table.insert(wp, pos0:WaypointGround(speedkmh))
+    table.insert(wp, pos0:WaypointGround(uspeedkmh))
   end
   
   -- Get carrier group.
@@ -10688,7 +10863,7 @@ function AIRBOSS:CarrierTurnIntoWind(time, vdeck)
   local distNM=UTILS.MetersToNM(dist)
   
   -- Debug output
-  self:E(self.lid..string.format("Carrier steaming into the wind (%.1f kts). Distance=%.1f NM, Speed=%.1f knots, Time=%d sec.", UTILS.MpsToKnots(vwind), distNM, speedknots, time))
+  self:I(self.lid..string.format("Carrier steaming into the wind (%.1f kts). Distance=%.1f NM, Speed=%.1f knots, Time=%d sec.", UTILS.MpsToKnots(vwind), distNM, speedknots, time))
 
   -- Get heading into the wind accounting for angled runway.
   local intowind=self:GetHeadingIntoWind(false)
@@ -10703,10 +10878,18 @@ function AIRBOSS:CarrierTurnIntoWind(time, vdeck)
   
   -- Return to coordinate if collision is detected.
   self.Creturnto=self:GetCoordinate()
+  
+  -- Next wp = current+1 (or last)
+  local Nnextwp=math.min(self.currentwp+1, #self.waypoints)
+  
+  -- Next waypoint.
+  local nextwp=self.waypoints[Nnextwp] --Core.Point#COORDINATE
+  
+  -- For downwind, we take the velocity at the next WP.
+  local vdownwind=UTILS.MpsToKnots(nextwp:GetVelocity())
 
   -- Let the carrier make a detour from its route but return to its current position.
-  -- TODO: Add downwind speed
-  self:CarrierDetour(pos1, speedknots, true)
+  self:CarrierDetour(pos1, speedknots, true, vdownwind)
   
   -- Set switch that we are currently turning into the wind.
   self.turnintowind=true
