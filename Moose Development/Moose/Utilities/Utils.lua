@@ -782,6 +782,14 @@ function UTILS.VecSubstract(a, b)
   return {x=a.x-b.x, y=a.y-b.y, z=a.z-b.z}
 end
 
+--- Calculate the total vector of two 3D vectors by adding the x,y,z components of each other. 
+-- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+-- @param DCS#Vec3 b Vector in 3D with x, y, z components.
+-- @return DCS#Vec3 Vector c=a+b with c(i)=a(i)+b(i), i=x,y,z.
+function UTILS.VecAdd(a, b)
+  return {x=a.x+b.x, y=a.y+b.y, z=a.z+b.z}
+end
+
 --- Calculate the angle between two 3D vectors. 
 -- @param DCS#Vec3 a Vector in 3D with x, y, z components.
 -- @param DCS#Vec3 b Vector in 3D with x, y, z components.

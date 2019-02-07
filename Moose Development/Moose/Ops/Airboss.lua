@@ -38,10 +38,9 @@
 --    * E-2D Hawkeye (AI)
 --    * S-3B Viking & tanker version (AI)
 -- 
--- At the moment, optimized parameters are available for the F/A-18C Hornet (Lot 20) as aircraft and the USS John C. Stennis as carrier.
--- The A-4E community mod is also supported in principle but may need further tweaking of parameters. Also the A-4E-C mod needs *easy comms* activated to interact with the F10 radio menu.
+-- At the moment, optimized parameters are available for the F/A-18C Hornet (Lot 20) and A-4E community mod as aircraft and the USS John C. Stennis as carrier.
 -- 
--- The AV-8B Harrier and the USS Tarawa are very much WIP. Those two can only be used together, i.e. the Tarawa is the only carrier the harrier is supposed to land on and
+-- The AV-8B Harrier and the USS Tarawa are WIP. Those two can only be used together, i.e. the Tarawa is the only carrier the harrier is supposed to land on and
 -- the no other fixed wing aircraft (human or AI controlled) are supposed to land on the Tarawa. Currently only Case I is supported. Case II/III take slightly steps from the CVN carrier.
 -- However, the two Case II/III pattern are very similar so this is not a big drawback.
 -- 
@@ -62,7 +61,8 @@
 -- 
 --    * Each player slot (client) should be in a separate group as DCS does only allow for sending messages to groups and not individual units.
 --    * Players are identified by their player name. Ensure that no two player have the same name, e.g. "New Callsign", as this will lead to unexpected results.
---    * The modex (tail number) of an aircraft should be changed dynamically in the mission by a player. Unfortunately, there is no way to get this information via scripting API functions. 
+--    * The modex (tail number) of an aircraft should be changed dynamically in the mission by a player. Unfortunately, there is no way to get this information via scripting API functions.
+--    * The A-4E-C mod needs *easy comms* activated to interact with the F10 radio menu. 
 --    
 -- ## Youtube Videos
 -- 
@@ -107,6 +107,8 @@
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug Debug mode. Messages to all about status.
 -- @field #string lid Class id string for output to DCS log file.
+-- @field #string theatre The DCS map used in the mission.
+-- @field #string missionname The Name of the mission.
 -- @field Wrapper.Unit#UNIT carrier Aircraft carrier unit on which we want to practice.
 -- @field #string carriertype Type name of aircraft carrier.
 -- @field #AIRBOSS.CarrierParameters carrierparam Carrier specific parameters.
@@ -421,11 +423,11 @@
 -- Displays information about the current weather at the carrier such as QFE, wind and temperature.
 -- 
 -- For missions using static weather, more information such as cloud base, thickness, precipitation, visibility distance, fog and dust are displayed.
--- If you mission uses dynamic weather, you can disable this output via the @{#AIRBOSS.SetStaticWeather}(**false**) function.
+-- If your mission uses dynamic weather, you can disable this output via the @{#AIRBOSS.SetStaticWeather}(**false**) function.
 -- 
 -- ### Set Section
 -- 
--- With this command, you can define a section of human flights. The player how issues the command becomes the section lead and all other human players
+-- With this command, you can define a section of human flights. The player who issues the command becomes the section lead and all other human players
 -- within a radius of 100 meters become members of the section.
 -- 
 -- The responsibilities of the section leader are:
@@ -446,7 +448,7 @@
 -- 
 -- ![Banner Image](..\Presentations\AIRBOSS\Airboss_MenuMarshalQueue.png)
 -- 
--- Lists all flights currently in the Marshal queue including their assigned stack, recovery case and Charie time estimate.
+-- Lists all flights currently in the Marshal queue including their assigned stack, recovery case and Charlie time estimate.
 -- By default, the number of available Case I stacks is three, i.e. at angels 2, 3 and 4. Usually, the recovery thanker orbits at angels 6.
 -- The number of available stacks can be set by the @{#AIRBOSS.SetMaxMarshalStack} function.
 -- 
@@ -547,7 +549,7 @@
 --    * 2.5 Points **B**: "Bolder", when the player landed but did not catch a wire.
 --    * 1.0 Points **WO**: "Wave-Off": Player got waved off in the final parts of the groove.
 --    * 1.0 Points **PWO**: "Pattern Wave-Off", when pilot was far away from where he should be in the pattern. For example, being long in the groove gives a "LIG PWO".
---    * 0.0 Point **CUT**: "Cut pass", when player was waved off but landed anyway.
+--    * 0.0 Points **CUT**: "Cut pass", when player was waved off but landed anyway.
 --    
 -- ## Foul Deck Waveoff
 -- 
@@ -838,6 +840,8 @@ AIRBOSS = {
   ClassName      = "AIRBOSS",
   Debug          = false,
   lid            = nil,
+  theatre        = nil,
+  missionname    = nil,
   carrier        = nil,
   carriertype    = nil,
   carrierparam   =  {},
@@ -1564,7 +1568,7 @@ AIRBOSS.Difficulty={
 -- @field #number TGroove Time stamp when pilot entered the groove.
 -- @field #string FlyThrough Fly through up "/" or fly through down "\\".
 
---- LSO grade
+--- LSO grade data.
 -- @type AIRBOSS.LSOgrade
 -- @field #string grade LSO grade, i.e. _OK_, OK, (OK), --, CUT
 -- @field #number points Points received.
@@ -1573,6 +1577,15 @@ AIRBOSS.Difficulty={
 -- @field #number wire Wire caught.
 -- @field #number Tgroove Time in the groove in seconds.
 -- @field #number case Recovery case.
+-- @field #string time Mission time.
+-- @field #string wind Wind speed on deck in knots.
+-- @field #string airframe Aircraft type name of player.
+-- @field #string modex Onboard number.
+-- @field #string carriertype Carrier type name.
+-- @field #string carriername Carrier name/alias.
+-- @field #string theatre DCS map.
+-- @field #string missionname Name of the mission.
+-- @field #string date Real live date. Needs **os** to be desanitized. 
 
 --- Checkpoint parameters triggering the next step in the pattern.
 -- @type AIRBOSS.Checkpoint
@@ -1655,7 +1668,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.9.6"
+AIRBOSS.version="0.9.6w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -2869,14 +2882,15 @@ function AIRBOSS:onafterStart(From, Event, To)
   -- Events are handled my MOOSE.
   self:I(self.lid..string.format("Starting AIRBOSS v%s for carrier unit %s of type %s.", AIRBOSS.version, self.carrier:GetName(), self.carriertype))
   
-  -- Current map.
-  local theatre=env.mission.theatre  
-  self:T2(self.lid..string.format("Theatre = %s", tostring(theatre)))
-  
   -- Activate TACAN.
   if self.TACANon then
     self.beacon:ActivateTACAN(self.TACANchannel, self.TACANmode, self.TACANmorse, true)
   end
+  
+  -- Current map.
+  self.theatre=env.mission.theatre
+  self.missionname=env.mission.name --TODO check!  
+  self:T2(self.lid..string.format("Theatre = %s, mission = %s", tostring(self.theatre), tostring(self.missionname)))  
   
   -- Activate ICLS.
   if self.ICLSon then
@@ -4657,7 +4671,6 @@ function AIRBOSS:_MarshalAI(flight, nstack)
     if case==1 then
     
       -- Initial point 7 NM and a bit port of carrier.
-      -- TODO: Test and tune!
       local pE=Carrier:Translate(UTILS.NMToMeters(7), hdg-30):SetAltitude(altitude)
             
       -- Entry point 5 NM port and slightly astern the boat.
@@ -5049,9 +5062,9 @@ function AIRBOSS:_CollapseMarshalStack(flight, nopattern)
       -- Only collapse stacks above the new pattern flight.
       if mstack>stack then
         
-        -- NEW: Is this now right as we allow more flights per stack?
-        -- TODO: Question is, does the stack collapse if the lower stack is completely empty or do aircraft descent if just one flight leaves.
-        --       For now, assuming that the stack must be completely empty before the next higher AC are allowed to descent.
+        -- TODO: Is this now right as we allow more flights per stack?
+        -- Question is, does the stack collapse if the lower stack is completely empty or do aircraft descent if just one flight leaves.
+        -- For now, assuming that the stack must be completely empty before the next higher AC are allowed to descent.
         local newstack=self:_GetFreeStack(mflight.ai, mflight.case, true)
         
         -- Free stack has to be below.
@@ -6047,7 +6060,7 @@ function AIRBOSS:_RemoveFlight(flight, completely)
         self:_SetPlayerStep(sectionmember, AIRBOSS.PatternStep.UNDEFINED)
       end
       
-      -- TODO: What if flight is member of a section. His status is now undefined. Should he be removed from the section?
+      -- What if flight is member of a section. His status is now undefined. Should he be removed from the section?
       -- I think yes, if he pulls the trigger.
       self:_RemoveFlightFromSection(flight)
       
@@ -9291,6 +9304,46 @@ function AIRBOSS:GetBRC()
   return self:GetHeading(true)
 end
 
+--- Get wind direction and speed at carrier position.
+-- @param #AIRBOSS self
+-- @param #number alt Altitude in meters. Default 50 m.
+-- @return #number Direction the wind is blowing **from** in degrees.
+-- @return #number Wind speed in m/s.
+function AIRBOSS:GetWind(alt)
+
+  local cv=self:GetCoordinate()
+  
+  local Wdir, Wspeed=cv:GetWind(alt or 50)
+    
+  return Wdir, Wspeed
+end
+
+--- Get wind direction and speed on carrier deck.
+-- @param #AIRBOSS self
+-- @param #number alt Altitude in meters. Default 50 m.
+-- @return #number Direction the wind is blowing **from** in degrees.
+-- @return #number Wind speed in m/s.
+function AIRBOSS:GetWindOnDeck(alt)
+  
+  -- Position of carrier
+  local cv=self:GetCoordinate()
+  
+  -- Velocity vector of carrier.
+  local vc=self.carrier:GetVelocityVec3()
+  
+  -- Wind (from) vector
+  local vw=cv:GetWindWithTurbulenceVec3(alt or 50)
+  
+  -- Carrier velocity has to be negative. If carrier drives in the direction the wind is blowing from, we have less wind in total.
+  local vd=UTILS.VecSubstract(vw, vc)
+
+  -- Strength.  
+  local vabs=UTILS.VecNorm(vd)
+  
+  return vd, vabs
+end
+
+
 --- Get true (or magnetic) heading of carrier into the wind. This accounts for the angled runway.
 -- @param #AIRBOSS self
 -- @param #boolean magnetic If true, calculate magnetic heading. By default true heading is returned.
@@ -10428,6 +10481,18 @@ function AIRBOSS:_Debrief(playerData)
     mygrade.finalscore=Points
   end
   mygrade.case=playerData.case
+  mygrade.time=UTILS.SecondsToClock(timer.getAbsTime())
+  mygrade.wind=tostring(UTILS.Round(self:_GetWindOnDeck(), 1))
+  mygrade.airframe=playerData.actype
+  mygrade.modex=playerData.onboard
+  mygrade.carriertype=self.carriertype
+  mygrade.carriername=self.alias
+  mygrade.theatre=self.theatre
+  mygrade.missionname=self.missionname
+  mygrade.date="n/a"
+  if os then
+    mygrade.date=os.date()  --os.date("%d.%m.%Y")
+  end
   
   -- Add LSO grade to player grades table.
   table.insert(self.playerscores[playerData.name], mygrade)
@@ -10482,8 +10547,7 @@ function AIRBOSS:_Debrief(playerData)
     -- TODO: CASE III: After bolter/wo turn left and climb to 1200 ft and re-enter pattern?
     -- TODO: CASE III: After pattern wo? No idea...  
   
-    -- Can become nil when I crashed and changed to observer. Which events are captured? Nil check for unit?
-  
+    -- Can become nil when I crashed and changed to observer. Which events are captured? Nil check for unit?  
     if playerData.unit:IsAlive() then
     
       -- Heading and distance tip.
@@ -13880,7 +13944,7 @@ function AIRBOSS:onafterSave(From, Event, To, path, filename)
   self:I(self.lid..text)
 
   -- Header line
-  local scores="Name,Pass,Points Final,Points Pass,Grade,Details,Wire,Tgroove,Case\n"
+  local scores="Name,Pass,Points Final,Points Pass,Grade,Details,Wire,Tgroove,Case,Mission Time,Wind,Airframe,Modex,Carrier Type,Carrier Name,Map, Mission Name,Date\n"
   
   -- Loop over all players.
   for playername,grades in pairs(self.playerscores) do
@@ -13906,7 +13970,10 @@ function AIRBOSS:onafterSave(From, Event, To, path, filename)
       end
       
       -- Compile grade line.
-      scores=scores..string.format("%s,%d,%s,%.1f,%s,%s,%s,%s,%d\n", playername, i, finalscore, grade.points, grade.grade, grade.details, wire, Tgroove, grade.case) 
+      --scores=scores..string.format("%s,%d,%s,%.1f,%s,%s,%s,%s,%d\n",
+      scores=scores..string.format("%s,%d,%s,%.1f,%s,%s,%s,%s,%d,%s,%s,%s,%s,%s,%s,%s\n",
+      playername, i, finalscore, grade.points, grade.grade, grade.details, wire, Tgroove, grade.case,
+      grade.time, grade.wind, grade.airframe, grade.modex, grade.carriertype, grade.carrieralias, grade.theatre, grade.missionname, grade.date)
     end
   end
   
@@ -14031,7 +14098,9 @@ function AIRBOSS:onafterLoad(From, Event, To, path, filename)
     -- Grade table
     local grade={} --#AIRBOSS.LSOgrade
     
-    -- Line format: playername, i, grade.finalscore, grade.points, grade.grade, grade.details, wire, Tgroove, case
+    --- Line format:
+    -- playername, i, grade.finalscore, grade.points, grade.grade, grade.details, wire, Tgroove, case,
+    -- time, wind, airframe, modex, carriertype, carriername, theatre, missionname, date
     local playername=gradedata[1]
     if gradedata[3]~=nil and gradedata[3]~="n/a" then
       grade.finalscore=tonumber(gradedata[3])
@@ -14046,6 +14115,15 @@ function AIRBOSS:onafterLoad(From, Event, To, path, filename)
       grade.Tgroove=tonumber(gradedata[8])
     end
     grade.case=tonumber(gradedata[9])
+    grade.time=gradedata[10] or "n/a"
+    grade.wind=gradedata[11] or "n/a"
+    grade.airframe=gradedata[12] or "n/a"
+    grade.modex=gradedata[13] or "n/a"
+    grade.carriertype=gradedata[14] or "n/a"
+    grade.carriername=gradedata[15] or "n/a"
+    grade.theatre=gradedata[16] or "n/a"
+    grade.missionname=gradedata[17] or "n/a"
+    grade.date=gradedata[18] or "n/a"    
     
     -- Init player table if necessary.
     self.playerscores[playername]=self.playerscores[playername] or {}
