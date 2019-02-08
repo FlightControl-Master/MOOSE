@@ -108,7 +108,6 @@
 -- @field #boolean Debug Debug mode. Messages to all about status.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #string theatre The DCS map used in the mission.
--- @field #string missionname The Name of the mission.
 -- @field Wrapper.Unit#UNIT carrier Aircraft carrier unit on which we want to practice.
 -- @field #string carriertype Type name of aircraft carrier.
 -- @field #AIRBOSS.CarrierParameters carrierparam Carrier specific parameters.
@@ -841,7 +840,6 @@ AIRBOSS = {
   Debug          = false,
   lid            = nil,
   theatre        = nil,
-  missionname    = nil,
   carrier        = nil,
   carriertype    = nil,
   carrierparam   =  {},
@@ -1584,7 +1582,6 @@ AIRBOSS.Difficulty={
 -- @field #string carriertype Carrier type name.
 -- @field #string carriername Carrier name/alias.
 -- @field #string theatre DCS map.
--- @field #string missionname Name of the mission.
 -- @field #string date Real live date. Needs **os** to be desanitized. 
 
 --- Checkpoint parameters triggering the next step in the pattern.
@@ -1606,7 +1603,7 @@ AIRBOSS.Difficulty={
 -- @field #number nunits Number of units in group.
 -- @field #number dist0 Distance to carrier in meters when the group was first detected inside the CCA.
 -- @field #number time Timestamp in seconds of timer.getAbsTime() of the last important event, e.g. added to the queue.
--- @field Core.UserFlag#USERFLAG flag User flag for triggering events for the flight.
+-- @field #number flag Flag value describing the current stack.
 -- @field #boolean ai If true, flight is purly AI.
 -- @field #string actype Aircraft type name.
 -- @field #table onboardnumbers Onboard numbers of aircraft in the group.
@@ -2888,9 +2885,8 @@ function AIRBOSS:onafterStart(From, Event, To)
   end
   
   -- Current map.
-  self.theatre=env.mission.theatre
-  self.missionname=env.mission.name --TODO check!  
-  self:T2(self.lid..string.format("Theatre = %s, mission = %s", tostring(self.theatre), tostring(self.missionname)))  
+  self.theatre=env.mission.theatre  
+  self:T2(self.lid..string.format("Theatre = %s.", tostring(self.theatre)))  
   
   -- Activate ICLS.
   if self.ICLSon then
@@ -5574,7 +5570,7 @@ function AIRBOSS:_InitPlayer(playerData, step)
     playerData.attitudemonitor=true
     playerData.step=AIRBOSS.PatternStep.FINAL
     --table.insert(self.Qpattern, playerData)
-    self:_AddFlightToPatternQueue(flight)
+    self:_AddFlightToPatternQueue(playerData)
   end
   
   return playerData
@@ -10482,13 +10478,13 @@ function AIRBOSS:_Debrief(playerData)
   end
   mygrade.case=playerData.case
   mygrade.time=UTILS.SecondsToClock(timer.getAbsTime())
-  mygrade.wind=tostring(UTILS.Round(self:_GetWindOnDeck(), 1))
+  local _,windondeck=self:GetWindOnDeck()
+  mygrade.wind=tostring(UTILS.Round(windondeck, 1))
   mygrade.airframe=playerData.actype
   mygrade.modex=playerData.onboard
   mygrade.carriertype=self.carriertype
   mygrade.carriername=self.alias
   mygrade.theatre=self.theatre
-  mygrade.missionname=self.missionname
   mygrade.date="n/a"
   if os then
     mygrade.date=os.date()  --os.date("%d.%m.%Y")
@@ -13944,7 +13940,7 @@ function AIRBOSS:onafterSave(From, Event, To, path, filename)
   self:I(self.lid..text)
 
   -- Header line
-  local scores="Name,Pass,Points Final,Points Pass,Grade,Details,Wire,Tgroove,Case,Mission Time,Wind,Airframe,Modex,Carrier Type,Carrier Name,Map, Mission Name,Date\n"
+  local scores="Name,Pass,Points Final,Points Pass,Grade,Details,Wire,Tgroove,Case,Mission Time,Wind,Airframe,Modex,Carrier Type,Carrier Name,Theatre,Date\n"
   
   -- Loop over all players.
   for playername,grades in pairs(self.playerscores) do
@@ -13971,9 +13967,9 @@ function AIRBOSS:onafterSave(From, Event, To, path, filename)
       
       -- Compile grade line.
       --scores=scores..string.format("%s,%d,%s,%.1f,%s,%s,%s,%s,%d\n",
-      scores=scores..string.format("%s,%d,%s,%.1f,%s,%s,%s,%s,%d,%s,%s,%s,%s,%s,%s,%s\n",
+      scores=scores..string.format("%s,%d,%s,%.1f,%s,%s,%s,%s,%d,%s,%s,%s,%s,%s,%s\n",
       playername, i, finalscore, grade.points, grade.grade, grade.details, wire, Tgroove, grade.case,
-      grade.time, grade.wind, grade.airframe, grade.modex, grade.carriertype, grade.carrieralias, grade.theatre, grade.missionname, grade.date)
+      grade.time, grade.wind, grade.airframe, grade.modex, grade.carriertype, grade.carriername, grade.theatre, grade.date)
     end
   end
   
@@ -14100,7 +14096,7 @@ function AIRBOSS:onafterLoad(From, Event, To, path, filename)
     
     --- Line format:
     -- playername, i, grade.finalscore, grade.points, grade.grade, grade.details, wire, Tgroove, case,
-    -- time, wind, airframe, modex, carriertype, carriername, theatre, missionname, date
+    -- time, wind, airframe, modex, carriertype, carriername, theatre, date
     local playername=gradedata[1]
     if gradedata[3]~=nil and gradedata[3]~="n/a" then
       grade.finalscore=tonumber(gradedata[3])
@@ -14122,8 +14118,7 @@ function AIRBOSS:onafterLoad(From, Event, To, path, filename)
     grade.carriertype=gradedata[14] or "n/a"
     grade.carriername=gradedata[15] or "n/a"
     grade.theatre=gradedata[16] or "n/a"
-    grade.missionname=gradedata[17] or "n/a"
-    grade.date=gradedata[18] or "n/a"    
+    grade.date=gradedata[17] or "n/a"    
     
     -- Init player table if necessary.
     self.playerscores[playername]=self.playerscores[playername] or {}
