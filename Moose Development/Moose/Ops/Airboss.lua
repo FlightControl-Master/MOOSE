@@ -155,6 +155,7 @@
 -- @field #table Qmarshal Queue of marshalling aircraft groups.
 -- @field #table Qpattern Queue of aircraft groups in the landing pattern.
 -- @field #table Qwaiting Queue of aircraft groups waiting outside 10 NM zone for the next free Marshal stack.
+-- @field #table Qspinning Queue of aircraft currently spinning.
 -- @field #table RQMarshal Radio queue of marshal.
 -- @field #table RQLSO Radio queue of LSO.
 -- @field #number Nmaxpattern Max number of aircraft in landing pattern.
@@ -298,7 +299,8 @@
 --    * **F3 Request Marshal**
 --    * **F4 Request Commence**
 --    * **F5 Request Refueling**
---    * **F6 [Reset My Status]**
+--    * **F6 Spinning**
+--    * **F7 [Reset My Status]**
 -- 
 -- ### Request Marshal
 -- 
@@ -327,6 +329,17 @@
 -- 
 -- If a recovery taker has been set up via the @{#AIRBOSS.SetRecoveryTanker}, the player can request refueling at any time. If currently in the marshal stack, the stack above will collapse.
 -- The player will be informed if the tanker is currently busy or going RTB to refuel itself at its home base. Once the re-fueling is complete, the player has to re-register to the marshal stack.
+-- 
+-- ### Spinning
+-- 
+-- If the pattern is full, players can go into the spinning pattern. This step is only allowed, if the player is in the pattern and his next step
+-- is initial, break entry, early/late break.
+-- 
+-- If a player is in the spin pattern, flights in the Marshal queue should hold their altitude and are not allowed into the pattern until the spinning aircraft
+-- proceeds.
+-- 
+-- 
+-- If a player 
 --
 -- ### [Reset My Status]
 -- 
@@ -712,6 +725,15 @@
 --    * *Wire*: Trapped wire, if any.
 --    * *Tgroove*: Time in the groove in seconds (not applicable during Case III).
 --    * *Case*: The recovery case operations in progress during the pass.
+--    * *Wind*: Wind on deck in knots during approach.
+--    * *Modex*: Tail number of the player.
+--    * *Airframe*: Aircraft type used in the recovery.
+--    * *Carrier Type*: Type name of the carrier.
+--    * *Carrier Name*: Name/alias of the carrier.
+--    * *Theatre*: DCS map.
+--    * *Mission Time*: Mission time at the end of the approach.
+--    * *Mission Date*: Mission date in yyyy/mm/dd format.
+--    * *OS Date*: Real life date from os.date(). Needs **os** to be desanitized.
 --
 -- ## Load Results
 --
@@ -754,6 +776,45 @@
 -- For example as
 -- 
 --     airbossStennis:SetSoundfilesFolder("Airboss Soundfiles/")
+--     
+-- ## Remarks
+-- 
+-- DCS offers two (actually three) ways to send radio messages. Each one has its advantages and disadvantages and it is important to understand the differences.
+-- 
+-- ### Transmission via Command
+-- 
+-- *In principle*, the best way to transmit messages is via the [TransmitMessage](https://wiki.hoggitworld.com/view/DCS_command_transmitMessage) command.
+-- This method has the advantage that subtitles can be used and these subtitles are only displayed to the players who dialed in the same radio frequency as
+-- used for the transmission.
+-- However, this method unfortunately only works if the sending unit is an **aircraft**. There it is not usable by the AIRBOSS per se as the transmission comes from
+-- a naval unit (the carrier).
+-- 
+-- As a workaround, you can put an aircraft, e.g. a Helicopter on the deck of the carrier or another ship of the strike group. The aircraft should be set to
+-- uncontrolled and maybe even to immortal. With the @{#AIRBOSS.SetRadioUnit}(*unitname*) function you can use this unit as "radio repeater".
+-- Of course you can also use any other aircraft in the vicinity of the carrier, e.g. a rescue helo or a recovery tanker. It is just important that this
+-- unit is and stays close the the boat as the distance from the sender to the receiver is modeled in DCS. So messages from too far away might not reach the players.
+-- 
+-- **Note** that not all radio messages the airboss sends have voice overs. Therefore, if you use a radio relay unit, users should *not* disable the
+-- subtitles in the DCS game menu. 
+-- 
+-- ### Transmission via Trigger
+-- 
+-- Another way to broadcast messages is via the [radio transmission trigger](https://wiki.hoggitworld.com/view/DCS_func_radioTransmission). This method can be used for all 
+-- units (land, air, naval). However, messages cannot be subtitled. Therefore, subtitles are displayed to the players via normal textout messages.
+-- The disadvantage is that is is impossible to know which players have the right radio frequencies dialed in. There subtitles of the Marshal radio are displayed to all players
+-- inside the CCA. Subtitles on the LSO radio frequency are displayed to all players in the pattern.
+-- 
+-- ### Sound to User
+-- 
+-- The third way to play sounds to the user via the [outsound trigger](https://wiki.hoggitworld.com/view/DCS_func_outSound).
+-- These sounds are not coming from a radio station and therefore can be heard by players independent of their actual radio frequency setting.
+-- The AIRBOSS class uses this method to play sounds to players which are of a more "private" nature - for example when a player has left his assigned altitude
+-- in the Marshal stack. Often this is the modex of the player in combination with a textout messaged displayed on screen.
+-- 
+-- If you want to use this method for all radio messages you can enable it via the @{#AIRBOSS.SetUserSoundRadio}() function. This is the analogue of activating easy comms in DCS.
+-- 
+-- Note that this method is used for all players who are in the A-4E community mod as this mod does not have the ability to use radios due to current DCS restrictions.
+-- Therefore, A-4E drivers will hear all radio transmissions from the Marshal/Airboss and all LSO messages as soon as their commence the pattern.
 --  
 -- ===
 -- 
@@ -796,11 +857,11 @@
 --     local AirbossStennis=AIRBOSS:New("USS Stennis")
 --     
 --     -- Add recovery windows:
---     -- Case I from 9 to 12 am.
---     local window1=AirbossStennis:AddRecoveryWindow("8:55",  "12:00", 1)
---     -- Case II with +15 degrees holding offset from 1500 for 90 min.
---     local window2=AirbossStennis:AddRecoveryWindow("14:55", "16:30", 2, 15)
---     -- Case III with +30 degrees holding offset from 2100 to 2330.
+--     -- Case I from 9 to 10 am. Carrier will turn into the wind 5 min before window opens and go at a speed so that wind over the deck is 25 knots.
+--     local window1=AirbossStennis:AddRecoveryWindow("9:00",  "10:00", 1, nil, true, 25)
+--     -- Case II with +15 degrees holding offset from 15:00 for 60 min.
+--     local window2=AirbossStennis:AddRecoveryWindow("15:00", "16:00", 2, 15)
+--     -- Case III with +30 degrees holding offset from 21:00 to 23:30.
 --     local window3=AirbossStennis:AddRecoveryWindow("21:00", "23:30", 3, 30)
 --     
 --     -- Load all saved player grades from your "Saved Games\DCS" folder (if lfs was desanitized).
@@ -887,6 +948,7 @@ AIRBOSS = {
   Qpattern       =  {},
   Qmarshal       =  {},
   Qwaiting       =  {},
+  Qspinning      =  {},
   RQMarshal      =  {},
   RQLSO          =  {},
   Nmaxpattern    = nil,
@@ -1665,17 +1727,17 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.9.6w"
+AIRBOSS.version="0.9.7w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  
 -- TODO: Handle cases where AI crashes on carrier deck ==> Clean up deck. 
--- TODO: Spin pattern. Add radio menu entry. Not sure what to add though?!
 -- TODO: Player eject and crash debrief "gradings".
 -- TODO: PWO during case 2/3.
 -- TODO: PWO when player comes too close to other flight.
+-- DONE: Spin pattern. Add radio menu entry. Not sure what to add though?!
 -- DONE: Despawn AI after engine shutdown option.
 -- DONE: What happens when section lead or member dies?
 -- DONE: Do not remove recovered elements but only set switch. Remove only groups which are completely recovered.
@@ -4057,7 +4119,7 @@ function AIRBOSS:_GetNextMarshalFight()
     local flight=_flight --#AIRBOSS.FlightGroup
     
     -- Current stack.
-    local stack=flight.flag:Get()
+    local stack=flight.flag
     
     -- Total marshal time in seconds.
     local Tmarshal=timer.getAbsTime()-flight.time
@@ -4088,6 +4150,7 @@ function AIRBOSS:_CheckQueue()
   self:_PrintQueue(self.Qmarshal, "Marshal")
   self:_PrintQueue(self.Qpattern, "Pattern")
   self:_PrintQueue(self.Qwaiting, "Waiting")
+  self:_PrintQueue(self.Qspinning, "Spinning")
   
   -- If flights are waiting outside 10 NM zone and carrier switches from Case I to Case II/III, they should be added to the Marshal stack as now there is no stack limit any more.
   if self.case>1 then
@@ -4167,7 +4230,6 @@ function AIRBOSS:_CheckQueue()
       end      
     end
 
-  
     -- Not recovering ==> skip the rest!
     return
   end  
@@ -4175,11 +4237,14 @@ function AIRBOSS:_CheckQueue()
   -- Get number of airborne aircraft units(!) currently in pattern.
   local _,npattern=self:_GetQueueInfo(self.Qpattern)
   
+  -- Get number of aircraft units spinning.
+  local _,nspinning=self:_GetQueueInfo(self.Qspinning)
+  
   -- Get next marshal flight.
   local marshalflight=self:_GetNextMarshalFight()
   
-  -- Check if there are flights waiting in the Marshal stack and if the pattern is free.
-  if marshalflight and npattern<self.Nmaxpattern then
+  -- Check if there are flights waiting in the Marshal stack and if the pattern is free. No one should be spinning.
+  if marshalflight and npattern<self.Nmaxpattern and nspinning==0 then
   
     -- Time flight is marshaling.
     local Tmarshal=timer.getAbsTime()-marshalflight.time
@@ -4373,7 +4438,7 @@ function AIRBOSS:_ScanCarrierZone()
         self:T3(self.lid..string.format("Known AI flight group %s closed in by %.1f NM", knownflight.groupname, UTILS.MetersToNM(closein)))
         
         -- Send AI flight to marshal stack if group closes in more than 5 and has initial flag value.
-        if closein>UTILS.NMToMeters(5) and knownflight.flag:Get()==-100 and iscarriersquad then
+        if closein>UTILS.NMToMeters(5) and knownflight.flag==-100 and iscarriersquad then
         
           -- Check that we do not add a recovery tanker for marshaling.
           if self.tanker and self.tanker.tanker:GetName()==groupname then
@@ -4518,7 +4583,7 @@ function AIRBOSS:_MarshalPlayer(playerData, stack)
       flight.case=playerData.case
       
       -- Set stack flag.      
-      flight.flag:Set(stack)
+      flight.flag=stack
     end
     
   else
@@ -4534,7 +4599,7 @@ end
 function AIRBOSS:_WaitAI(flight)
 
   -- Set flag to something other than -100 and <0
-  flight.flag:Set(-99)
+  flight.flag=-99
 
   -- Add AI flight to waiting queue.
   table.insert(self.Qwaiting, flight)
@@ -4612,14 +4677,14 @@ function AIRBOSS:_MarshalAI(flight, nstack)
   local case=flight.case
 
   -- Get old/current stack.
-  local ostack=flight.flag:Get()
+  local ostack=flight.flag
 
   -- Flight group name.
   local group=flight.group
   local groupname=flight.groupname
     
   -- Set new stack.
-  flight.flag:Set(nstack)
+  flight.flag=nstack
   
   -- Current carrier position.
   local Carrier=self:GetCoordinate()
@@ -4875,7 +4940,7 @@ end
 function AIRBOSS:_GetCharlieTime(flightgroup)
 
   -- Get current stack of player.
-  local stack=flightgroup.flag:Get()
+  local stack=flightgroup.flag
   
   -- Flight is not in marshal stack.
   if stack<=0 then
@@ -4901,7 +4966,7 @@ function AIRBOSS:_GetCharlieTime(flightgroup)
     local flight=_flight --#AIRBOSS.FlightGroup
   
     -- Stack of marshal flight.
-    local mstack=flight.flag:Get()
+    local mstack=flight.flag
     
     -- Time to get to the marshal stack if not holding already.
     local Tarrive=0
@@ -4971,7 +5036,7 @@ end
 function AIRBOSS:_AddMarshalGroup(flight, stack)
 
   -- Set flag value. This corresponds to the stack number which starts at 1.
-  flight.flag:Set(stack)
+  flight.flag=stack
   
   -- Set recovery case.
   flight.case=self.case
@@ -5034,7 +5099,7 @@ function AIRBOSS:_CollapseMarshalStack(flight, nopattern)
   local case=flight.case
   
   -- Stack of flight.
-  local stack=flight.flag:Get()
+  local stack=flight.flag
   
   -- Check that stack > 0.
   if stack<=0 then
@@ -5053,7 +5118,7 @@ function AIRBOSS:_CollapseMarshalStack(flight, nopattern)
     if (case==1 and mflight.case==1) or (case>1 and mflight.case>1) then
     
       -- Get current flag/stack value.
-      local mstack=mflight.flag:Get()
+      local mstack=mflight.flag
       
       -- Only collapse stacks above the new pattern flight.
       if mstack>stack then
@@ -5077,7 +5142,7 @@ function AIRBOSS:_CollapseMarshalStack(flight, nopattern)
           else
    
             -- Decrease stack/flag. Human player needs to take care himself.
-            mflight.flag:Set(newstack)
+            mflight.flag=newstack
             
             -- Angels of new stack.
             local angels=self:_GetAngels(self:_GetMarshalAltitude(newstack, case))
@@ -5099,7 +5164,7 @@ function AIRBOSS:_CollapseMarshalStack(flight, nopattern)
               local sec=_sec --#AIRBOSS.PlayerData
               
               -- Also decrease flag for section members of flight.
-              sec.flag:Set(newstack)
+              sec.flag=newstack
               
               -- Set new time stamp.
               sec.time=timer.getAbsTime()
@@ -5138,7 +5203,7 @@ function AIRBOSS:_CollapseMarshalStack(flight, nopattern)
   end
 
   -- Set flag to -1 (-1 is rather arbitrary but it should not be positive or -100 or -42).
-  flight.flag:Set(-1)
+  flight.flag=-1
 
   -- New time stamp for time in pattern.
   flight.time=timer.getAbsTime()
@@ -5176,7 +5241,7 @@ function AIRBOSS:_GetFreeStack(ai, case, empty)
     if flight.case==case then
     
       -- Get stack of flight.
-      local n=flight.flag:Get()
+      local n=flight.flag
       
       if n>0 then
         if flight.ai then
@@ -5347,7 +5412,7 @@ function AIRBOSS:_PrintQueue(queue, name)
       
       local clock=UTILS.SecondsToClock(timer.getAbsTime()-flight.time)
       local case=flight.case
-      local stack=flight.flag:Get()      
+      local stack=flight.flag    
       local fuel=flight.group:GetFuelMin()*100
       local ai=tostring(flight.ai)
       local lead=flight.seclead
@@ -5421,8 +5486,7 @@ function AIRBOSS:_CreateFlightGroup(group)
     flight.nunits=#group:GetUnits()
     flight.time=timer.getAbsTime()
     flight.dist0=group:GetCoordinate():Get2DDistance(self:GetCoordinate())
-    flight.flag=USERFLAG:New(groupname)
-    flight.flag:Set(-100)
+    flight.flag=-100
     flight.ai=not human
     flight.actype=group:GetTypeName()
     flight.onboardnumbers=self:_GetOnboardNumbers(group)
@@ -5562,7 +5626,7 @@ function AIRBOSS:_InitPlayer(playerData, step)
   playerData.Tlso=timer.getTime()
   playerData.Tgroove=nil
   playerData.wire=nil
-  playerData.flag:Set(-100)
+  playerData.flag=-100
   
   -- Set us up on final if group name contains "Groove". But only for the first pass.
   if playerData.group:GetName():match("Groove") and playerData.passes==0 then
@@ -6122,7 +6186,8 @@ function AIRBOSS:_CheckPlayerStatus()
             
           elseif playerData.step==AIRBOSS.PatternStep.SPINNING then
           
-            -- Might still be better to stay in commencing?
+            -- Player is spinning.
+            self:_Spinning(playerData)
 
           elseif playerData.step==AIRBOSS.PatternStep.HOLDING then
           
@@ -6263,7 +6328,7 @@ function AIRBOSS:_CheckMissedStepOnEntry(playerData)
   -- Conditions to be met: Case II/III, in pattern queue, flag!=42 (will be set to 42 at the end if player missed a step).
   local rightcase=playerData.case>1
   local rightqueue=self:_InQueue(self.Qpattern, playerData.group)
-  local rightflag=playerData.flag:Get()~=-42
+  local rightflag=playerData.flag~=-42
  
   -- Steps that the player could have missed during Case II/III.
   local step=playerData.step
@@ -6309,7 +6374,7 @@ function AIRBOSS:_CheckMissedStepOnEntry(playerData)
         end
         
         -- Set flag value to -42. This is the value to ensure that this routine is not called again!
-        playerData.flag:Set(-42)
+        playerData.flag=-42
       end              
     end                      
   end
@@ -6764,6 +6829,39 @@ end
 -- PATTERN functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Spinning
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.PlayerData playerData Player data.
+function AIRBOSS:_Spinning(playerData)
+
+  -- Early break.
+  local SpinIt={}
+  SpinIt.name="Spinning"
+  SpinIt.Xmin=-UTILS.NMToMeters(5)         -- Not more than 5 NM behind the boat.
+  SpinIt.Xmax= UTILS.NMToMeters(5)         -- Not more than 5 NM in front of the boat.
+  SpinIt.Zmin=-UTILS.NMToMeters(5)         -- Not more than 5 NM port.
+  SpinIt.Zmax= UTILS.NMToMeters(3)         -- Not more than 3 NM starboard.
+  SpinIt.LimitXmin=100                     -- 100 meters ahead and a bit starboard.
+  SpinIt.LimitXmax=nil
+  SpinIt.LimitZmin=10
+  SpinIt.LimitZmax=nil  
+
+  -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
+  local X, Z, rho, phi=self:_GetDistances(playerData.unit)
+  
+  -- Check if we are in front of the boat (diffX > 0).
+  if self:_CheckLimits(X, Z, SpinIt) then
+    
+    -- Player is "de-spinned".
+    --self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.EARLYBREAK)
+    
+    -- Remove player from spinning queue.
+    --self:_RemoveFlightFromQueue(self.Qspinning, playerData)
+    
+  end
+
+end
+
 --- Waiting outside 10 NM zone for free Marshal stack.
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data.
@@ -6802,7 +6900,7 @@ function AIRBOSS:_Holding(playerData)
   local unit=playerData.unit
   
   -- Current stack.
-  local stack=playerData.flag:Get()
+  local stack=playerData.flag
   
   ---------------------------
   -- Holding Pattern Check --
@@ -11180,7 +11278,7 @@ function AIRBOSS:_CheckPatternUpdate()
       
       -- Update marshal pattern of AI keeping the same stack.
       if flight.ai then
-        self:_MarshalAI(flight, flight.flag:Get())
+        self:_MarshalAI(flight, flight.flag)
       end
       
     end
@@ -12620,6 +12718,92 @@ function AIRBOSS:_RequestMarshal(_unitName)
   end
 end
 
+--- Request spinning.
+-- @param #AIRBOSS self
+-- @param #string _unitName Name fo the player unit.
+function AIRBOSS:_RequestSpinning(_unitName)
+  self:F(_unitName)
+  
+  -- Get player unit and name.
+  local _unit, _playername = self:_GetPlayerUnitAndName(_unitName)
+  
+  -- Check if we have a unit which is a player.
+  if _unit and _playername then
+    local playerData=self.players[_playername] --#AIRBOSS.PlayerData
+    
+    if playerData then
+      
+      local text=""
+      if not self:_InQueue(self.Qpattern, playerData.group) then
+      
+        -- Player not in pattern queue
+        text="negative, you have to be in the pattern to spin it!"
+      
+      --[[
+      elseif playerData.seclead~=playerData.name then
+      
+        -- Player is not section lead
+        text="negative, your section lead has to call spinning."
+      ]]
+      
+      -- Check if player is in the right step.
+      elseif not (playerData.step==AIRBOSS.PatternStep.BREAKENTRY or 
+                  playerData.step==AIRBOSS.PatternStep.EARLYBREAK or 
+                  playerData.step==AIRBOSS.PatternStep.LATEBREAK  or 
+                  playerData.step==AIRBOSS.PatternStep.INITIAL)   then
+                  
+        text="negative, you have to be in the right step to spin it!"
+        
+      else
+      
+        -- Check if player is in the pattern.
+        if self:_InQueue(self.Qspinning, playerData.group) then
+        
+          if playerData.difficulty~=AIRBOSS.Difficulty.HARD then
+            text="Proceed to early break."
+          end        
+        
+          -- Player is "de-spinned".
+          self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.EARLYBREAK)
+          
+          -- Remove player from spinning queue
+          self:_RemoveFlightFromQueue(self.Qspinning, playerData)
+           
+        else
+        
+          -- Set player step.
+          self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.SPINNING)
+          
+          -- Add player to spinning queue.
+          table.insert(self.Qspinning, playerData)
+          
+          if playerData.difficulty~=AIRBOSS.Difficulty.HARD then
+            text="Spin it!"
+          end
+          
+          -- Set step for section members.
+          --[[
+          for _,sec in pairs(playerData.section) do
+            local sectionmember=sec --#AIRBOSS.PlayerData
+            self:_SetPlayerStep(sectionmember, AIRBOSS.PatternStep.SPINNING)
+            if sectionmember.difficulty~=AIRBOSS.Difficulty.HARD then
+              text="Spin it!"
+              self:MessageToPlayer(playerData, text, "MARSHAL")
+            end
+          end
+          ]]
+      
+        end
+        
+      end
+      
+      -- Send message.
+      self:MessageToPlayer(playerData, text, "MARSHAL")  
+          
+    end
+  end
+end
+
 --- Request to commence landing approach.
 -- @param #AIRBOSS self
 -- @param #string _unitName Name fo the player unit.
@@ -12641,7 +12825,7 @@ function AIRBOSS:_RequestCommence(_unitName)
       if _unit:IsInZone(self.zoneCCA) then
       
         -- Get stack value.
-        local stack=playerData.flag:Get()    
+        local stack=playerData.flag
   
         -- Number of airborne aircraft currently in pattern.
         local _,npattern=self:_GetQueueInfo(self.Qpattern)      
@@ -13240,7 +13424,7 @@ function AIRBOSS:_DisplayQueue(_unitname, qname)
             local flight=_flight --#AIRBOSS.FlightGroup
             local charlie=self:_GetCharlieTime(flight)
             local Charlie=UTILS.SecondsToClock(charlie)
-            local stack=flight.flag:Get()
+            local stack=flight.flag
             local angels=self:_GetAngels(self:_GetMarshalAltitude(stack, flight.case))
             local _,nunit,nsec=self:_GetFlightUnits(flight, true)
             local nick=self:_GetACNickname(flight.actype)
@@ -13559,7 +13743,7 @@ function AIRBOSS:_DisplayPlayerStatus(_unitName)
       end
 
       -- Stack.
-      local stack=playerData.flag:Get()
+      local stack=playerData.flag
       
       -- Stack text.
       local stacktext=nil
@@ -13656,7 +13840,7 @@ function AIRBOSS:_MarkMarshalZone(_unitName, flare)
     if playerData then
     
       -- Get player stack and recovery case.
-      local stack=playerData.flag:Get()
+      local stack=playerData.flag
       local case=playerData.case
       
       local text=""
@@ -13940,7 +14124,8 @@ function AIRBOSS:onafterSave(From, Event, To, path, filename)
   self:I(self.lid..text)
 
   -- Header line
-  local scores="Name,Pass,Points Final,Points Pass,Grade,Details,Wire,Tgroove,Case,Mission Time,Wind,Airframe,Modex,Carrier Type,Carrier Name,Theatre,Date\n"
+  --local scores="Name,Pass,Points Final,Points Pass,Grade,Details,Wire,Tgroove,Case,Mission Time,Wind,Airframe,Modex,Carrier Type,Carrier Name,Theatre,Date OS\n"
+  local scores="Name,Pass,Points Final,Points Pass,Grade,Details,Wire,Tgroove,Case,Wind,Modex,Airframe,Carrier Type, Carrier Name,Theatre,Mission Time,Mission Date,OS Date\n"
   
   -- Loop over all players.
   for playername,grades in pairs(self.playerscores) do
