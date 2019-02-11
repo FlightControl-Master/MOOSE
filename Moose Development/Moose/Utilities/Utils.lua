@@ -864,6 +864,16 @@ function UTILS.GetDCSMap()
   return env.mission.theatre
 end
 
+--- Returns the mission date. This is the date the mission started.
+-- @return #string Mission date in yyyy/mm/dd format.
+function UTILS.GetDCSMissionDate()
+  local year=tostring(env.mission.date.Year)
+  local month=tostring(env.mission.date.Month)
+  local day=tostring(env.mission.date.Day)
+  return string.format("%s/%s/%s", year, month, day)
+end
+
+
 --- Returns the magnetic declination of the map.
 -- Returned values for the current maps are:
 -- 
