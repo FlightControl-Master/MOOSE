@@ -1719,12 +1719,12 @@ WAREHOUSE.Quantity = {
 }
 
 --- Warehouse database. Note that this is a global array to have easier exchange between warehouses.
--- @type WAREHOUSE.db
+-- @type _WAREHOUSEDB
 -- @field #number AssetID Unique ID of each asset. This is a running number, which is increased each time a new asset is added.
 -- @field #table Assets Table holding registered assets, which are of type @{Functional.Warehouse#WAREHOUSE.Assetitem}.#
 -- @field #number WarehouseID Unique ID of the warehouse. Running number.
 -- @field #table Warehouses Table holding all defined @{#WAREHOUSE} objects by their unique ids.
-WAREHOUSE.db = {
+_WAREHOUSEDB  = {
   AssetID     = 0,
   Assets      = {},
   WarehouseID = 0,
@@ -1733,7 +1733,7 @@ WAREHOUSE.db = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.6.8"
+WAREHOUSE.version="0.6.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -1835,10 +1835,10 @@ function WAREHOUSE:New(warehouse, alias)
   self.warehouse=warehouse
 
   -- Increase global warehouse counter.
-  WAREHOUSE.db.WarehouseID=WAREHOUSE.db.WarehouseID+1
+  _WAREHOUSEDB.WarehouseID=_WAREHOUSEDB.WarehouseID+1
 
   -- Set unique ID for this warehouse.
-  self.uid=WAREHOUSE.db.WarehouseID
+  self.uid=_WAREHOUSEDB.WarehouseID
 
   -- As Kalbuth found out, this would fail when using SPAWNSTATIC https://forums.eagle.ru/showthread.php?p=3703488#post3703488
   --self.uid=tonumber(warehouse:GetID())
@@ -1854,7 +1854,7 @@ function WAREHOUSE:New(warehouse, alias)
   self.spawnzone=ZONE_RADIUS:New(string.format("Warehouse %s spawn zone", self.warehouse:GetName()), warehouse:GetVec2(), 250)
 
   -- Add warehouse to database.
-  WAREHOUSE.db.Warehouses[self.uid]=self
+  _WAREHOUSEDB.Warehouses[self.uid]=self
 
   -----------------------
   --- FSM Transitions ---
@@ -2933,7 +2933,7 @@ end
 -- @param #number uid The unique ID of the warehouse.
 -- @return #WAREHOUSE The warehouse object or nil if no warehouse exists.
 function WAREHOUSE:FindWarehouseInDB(uid)
-  return WAREHOUSE.db.Warehouses[uid]
+  return _WAREHOUSEDB.Warehouses[uid]
 end
 
 --- Find nearest warehouse in service, i.e. warehouses which are not started, stopped or destroyed are not considered.
@@ -2977,7 +2977,7 @@ function WAREHOUSE:FindNearestWarehouse(MinAssets, Descriptor, DescriptorValue, 
   -- Loop over all warehouses.
   local nearest=nil
   local distmin=nil
-  for wid,warehouse in pairs(WAREHOUSE.db.Warehouses) do
+  for wid,warehouse in pairs(_WAREHOUSEDB.Warehouses) do
     local warehouse=warehouse --#WAREHOUSE
 
     -- Distance from this warehouse to the other warehouse.
@@ -3029,7 +3029,7 @@ function WAREHOUSE:FindAssetInDB(group)
 
   if aid~=nil then
 
-    local asset=WAREHOUSE.db.Assets[aid]
+    local asset=_WAREHOUSEDB.Assets[aid]
     self:E({asset=asset})
     if asset==nil then
       self:_ErrorMessage(string.format("ERROR: Asset for group %s not found in the data base!", group:GetName()), 0)
@@ -3210,7 +3210,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function WAREHOUSE:onafterStatus(From, Event, To)
-  self:I(self.wid..string.format("Checking status of warehouse %s. Current FSM state %s. Global warehouse assets = %d.", self.alias, self:GetState(), #WAREHOUSE.db.Assets))
+  self:I(self.wid..string.format("Checking status of warehouse %s. Current FSM state %s. Global warehouse assets = %d.", self.alias, self:GetState(), #_WAREHOUSEDB.Assets))
 
   -- Check if any pending jobs are done and can be deleted from the
   self:_JobDone()
@@ -3726,10 +3726,10 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute, forcecargobay,
     local asset={} --#WAREHOUSE.Assetitem
 
     -- Increase asset unique id counter.
-    WAREHOUSE.db.AssetID=WAREHOUSE.db.AssetID+1
+    _WAREHOUSEDB.AssetID=_WAREHOUSEDB.AssetID+1
 
     -- Set parameters.
-    asset.uid=WAREHOUSE.db.AssetID
+    asset.uid=_WAREHOUSEDB.AssetID
     asset.templatename=templategroupname
     asset.template=UTILS.DeepCopy(_DATABASE.Templates.Groups[templategroupname].Template)
     asset.category=Category
@@ -3755,7 +3755,7 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute, forcecargobay,
     end
 
     -- Add asset to global db.
-    WAREHOUSE.db.Assets[asset.uid]=asset
+    _WAREHOUSEDB.Assets[asset.uid]=asset
 
     -- Add asset to the table that is retured.
     table.insert(assets,asset)

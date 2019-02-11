@@ -16,7 +16,7 @@
 --    * F10 radio menu including carrier info (weather, radio frequencies, TACAN/ICLS channels), player LSO grades, help function (aircraft attitude, marking of zones etc).
 --    * Recovery tanker and refueling option via integration of @{Ops.RecoveryTanker} class.
 --    * Rescue helicopter option via @{Ops.RescueHelo} class.
---    * Combine multiple human player to sections (WIP).
+--    * Combine multiple human players to sections (WIP).
 --    * Many parameters customizable by convenient user API functions.
 --    * Multiple carrier support due to object oriented approach.
 --    * Unlimited number of players.
@@ -38,10 +38,9 @@
 --    * E-2D Hawkeye (AI)
 --    * S-3B Viking & tanker version (AI)
 -- 
--- At the moment, optimized parameters are available for the F/A-18C Hornet (Lot 20) as aircraft and the USS John C. Stennis as carrier.
--- The A-4E community mod is also supported in principle but may need further tweaking of parameters. Also the A-4E-C mod needs *easy comms* activated to interact with the F10 radio menu.
+-- At the moment, optimized parameters are available for the F/A-18C Hornet (Lot 20) and A-4E community mod as aircraft and the USS John C. Stennis as carrier.
 -- 
--- The AV-8B Harrier and the USS Tarawa are very much WIP. Those two can only be used together, i.e. the Tarawa is the only carrier the harrier is supposed to land on and
+-- The AV-8B Harrier and the USS Tarawa are WIP. Those two can only be used together, i.e. the Tarawa is the only carrier the harrier is supposed to land on and
 -- the no other fixed wing aircraft (human or AI controlled) are supposed to land on the Tarawa. Currently only Case I is supported. Case II/III take slightly steps from the CVN carrier.
 -- However, the two Case II/III pattern are very similar so this is not a big drawback.
 -- 
@@ -58,10 +57,12 @@
 --  
 -- ## IMPORTANT
 -- 
--- Due to technical restrictions of DCS make sure you have:
+-- Some important restrictions (of DCS) you should be aware of:
 -- 
---    * Each player slot in a separate group. DCS does only allow to send messages to groups and not to individual units.
---    * Players are identified by their player name. Ensure that no two player have the same name, e.g. "New Callsign", as this will lead to unexpected results.
+--    * Each player slot (client) should be in a separate group as DCS does only allow for sending messages to groups and not individual units.
+--    * Players are identified by their player name. Hence, ensure that no two player have the same name, e.g. "New Callsign", as this will lead to unexpected results.
+--    * The modex (tail number) of an aircraft should **not** be changed dynamically in the mission by a player. Unfortunately, there is no way to get this information via scripting API functions.
+--    * The A-4E-C mod needs *easy comms* activated to interact with the F10 radio menu. 
 --    
 -- ## Youtube Videos
 -- 
@@ -69,11 +70,12 @@
 -- 
 --    * [[MOOSE] Airboss - Groove Testing (WIP)](https://www.youtube.com/watch?v=94KHQxxX3UI)
 --    * [[MOOSE] Airboss - Groove Test A-4E Community Mod](https://www.youtube.com/watch?v=ZbjD7FHiaHo)
+--    * [[MOOSE] Airboss - Groove Test: On-the-fly LSO Grading](https://www.youtube.com/watch?v=Xgs1hwDcPyM)
 -- 
 -- Lex explaining Boat Ops:
 -- 
 --    * [( DCS HORNET ) Some boat ops basics VID 1](https://www.youtube.com/watch?v=LvGQS-3AzMc)
---    * [( DCS HORNET ) Some boat ops basics VID 1](https://www.youtube.com/watch?v=bN44wvtRsw0)
+--    * [( DCS HORNET ) Some boat ops basics VID 2](https://www.youtube.com/watch?v=bN44wvtRsw0)
 --    
 -- Jabbers Case I and III Recovery Tutorials:
 -- 
@@ -83,11 +85,9 @@
 -- 
 -- ### Open Questions?
 -- 
---    * Currently the script does not support spin patterns. Marshal releases flights only when there is a free slot in the landing pattern. How is this handled in real life?
---    * What is the next step after a pattern wave off during Case II or III recovery?
+--    * What is the next step after a pattern wave off during Case II or III recovery? A: Go back to start!
 --    * What are the conditions for waving off flights when they get too close to a flight ahead in the pattern? At which pattern steps are flights waved off because of this?
 --    * Some more LSO gradings could be added. What is missing and what are the conditions?
---    * For the A-4E-C, what are the AoA thresholds for being on speed, (a little) slow, (a little) fast in **degrees**? In know the numbers in units of the indexer but need a proper conversion to degrees.
 --
 -- If you know the answer to any of this, please get in touch with me! The necessary infrastructure to implement it is most likely already there.
 --
@@ -107,6 +107,7 @@
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug Debug mode. Messages to all about status.
 -- @field #string lid Class id string for output to DCS log file.
+-- @field #string theatre The DCS map used in the mission.
 -- @field Wrapper.Unit#UNIT carrier Aircraft carrier unit on which we want to practice.
 -- @field #string carriertype Type name of aircraft carrier.
 -- @field #AIRBOSS.CarrierParameters carrierparam Carrier specific parameters.
@@ -154,6 +155,7 @@
 -- @field #table Qmarshal Queue of marshalling aircraft groups.
 -- @field #table Qpattern Queue of aircraft groups in the landing pattern.
 -- @field #table Qwaiting Queue of aircraft groups waiting outside 10 NM zone for the next free Marshal stack.
+-- @field #table Qspinning Queue of aircraft currently spinning.
 -- @field #table RQMarshal Radio queue of marshal.
 -- @field #table RQLSO Radio queue of LSO.
 -- @field #number Nmaxpattern Max number of aircraft in landing pattern.
@@ -196,6 +198,9 @@
 -- @field #number collisiondist Distance up to which collision checks are done.
 -- @field #number Tmessage Default duration in seconds messages are displayed to players.
 -- @field #string soundfolder Folder within the mission (miz) file where airboss sound files are located.
+-- @field #boolean despawnshutdown Despawn group after engine shutdown.
+-- @field #number Tbeacon Last time the beacons were refeshed.
+-- @field #number dTbeacon Time interval to refresh the beacons. Default 5 minutes.
 -- @extends Core.Fsm#FSM
 
 --- Be the boss!
@@ -296,7 +301,8 @@
 --    * **F3 Request Marshal**
 --    * **F4 Request Commence**
 --    * **F5 Request Refueling**
---    * **F6 [Reset My Status]**
+--    * **F6 Spinning**
+--    * **F7 [Reset My Status]**
 -- 
 -- ### Request Marshal
 -- 
@@ -325,6 +331,18 @@
 -- 
 -- If a recovery taker has been set up via the @{#AIRBOSS.SetRecoveryTanker}, the player can request refueling at any time. If currently in the marshal stack, the stack above will collapse.
 -- The player will be informed if the tanker is currently busy or going RTB to refuel itself at its home base. Once the re-fueling is complete, the player has to re-register to the marshal stack.
+-- 
+-- ### Spinning
+-- 
+-- If the pattern is full, players can go into the spinning pattern. This step is only allowed, if the player is in the pattern and his next step
+-- is initial, break entry, early/late break. At this point, the player should climb to 1200 ft a fly on the port side of the boat to go back to the initial again.
+-- 
+-- If a player is in the spin pattern, flights in the Marshal queue should hold their altitude and are not allowed into the pattern until the spinning aircraft
+-- proceeds.
+-- 
+-- Once the player reaches a point 100 meters behind the boat and at least 1 NM port, his step is set to "Initial" and he can resume the normal pattern approach.
+-- 
+-- If necessary, the player can call "Spinning" again when in the above mentioned steps.
 --
 -- ### [Reset My Status]
 -- 
@@ -380,7 +398,7 @@
 -- 
 -- ### LSO Radio Check
 -- 
--- LSO will transmit a short message on his radio frequency. See @{#AIRBOSS.SetLSORadio}.
+-- LSO will transmit a short message on his radio frequency. See @{#AIRBOSS.SetLSORadio}. Note that in the A-4E you will not hear the message unless you are in the pattern.
 -- 
 -- ### Marshal Radio Check
 -- 
@@ -420,11 +438,11 @@
 -- Displays information about the current weather at the carrier such as QFE, wind and temperature.
 -- 
 -- For missions using static weather, more information such as cloud base, thickness, precipitation, visibility distance, fog and dust are displayed.
--- If you mission uses dynamic weather, you can disable this output via the @{#AIRBOSS.SetStaticWeather}(**false**) function.
+-- If your mission uses dynamic weather, you can disable this output via the @{#AIRBOSS.SetStaticWeather}(**false**) function.
 -- 
 -- ### Set Section
 -- 
--- With this command, you can define a section of human flights. The player how issues the command becomes the section lead and all other human players
+-- With this command, you can define a section of human flights. The player who issues the command becomes the section lead and all other human players
 -- within a radius of 100 meters become members of the section.
 -- 
 -- The responsibilities of the section leader are:
@@ -445,7 +463,7 @@
 -- 
 -- ![Banner Image](..\Presentations\AIRBOSS\Airboss_MenuMarshalQueue.png)
 -- 
--- Lists all flights currently in the Marshal queue including their assigned stack, recovery case and Charie time estimate.
+-- Lists all flights currently in the Marshal queue including their assigned stack, recovery case and Charlie time estimate.
 -- By default, the number of available Case I stacks is three, i.e. at angels 2, 3 and 4. Usually, the recovery thanker orbits at angels 6.
 -- The number of available stacks can be set by the @{#AIRBOSS.SetMaxMarshalStack} function.
 -- 
@@ -546,7 +564,7 @@
 --    * 2.5 Points **B**: "Bolder", when the player landed but did not catch a wire.
 --    * 1.0 Points **WO**: "Wave-Off": Player got waved off in the final parts of the groove.
 --    * 1.0 Points **PWO**: "Pattern Wave-Off", when pilot was far away from where he should be in the pattern. For example, being long in the groove gives a "LIG PWO".
---    * 0.0 Point **CUT**: "Cut pass", when player was waved off but landed anyway.
+--    * 0.0 Points **CUT**: "Cut pass", when player was waved off but landed anyway.
 --    
 -- ## Foul Deck Waveoff
 -- 
@@ -628,15 +646,17 @@
 -- 
 --     airbossStennis:AddRecoveryWindow("8:30", "9:30", 1, nil, true, 20)
 -- 
--- Setting the fifth parameter to *true* enables the automatic turning into the wind. The sixth parameter (here 20) specifies the speed in knots the carrier will go so that to total wind above the deck.
--- For example, if the is blowing with 5 knots, the carrier will go 15 knots so that it adds up to the specified 20 knots. 
+-- Setting the fifth parameter to *true* enables the automatic turning into the wind. The sixth parameter (here 20) specifies the speed in knots the carrier will go so that to total wind above the deck
+-- corresponds to this wind speed. For example, if the is blowing with 5 knots, the carrier will go 15 knots so that the total velocity adds up to the specified 20 knots for the pilot. 
 -- 
 -- The carrier will steam into the wind for as long as the recovery window is open. The distance up to which possible collisions are detected can be set by the @{#AIRBOSS.SetCollisionDistance} function.
 -- 
--- However, the airboss scans the type of the surface up to 5 NM in the direction of movement of the carrier. If he detects anything but deep water, he will stop the current course and head back to
+-- However, the AIRBOSS scans the type of the surface up to 5 NM in the direction of movement of the carrier. If he detects anything but deep water, he will stop the current course and head back to
 -- the point where he initially turned into the wind.
 -- 
 -- The same holds true after the recovery window closes. The carrier will head back to the place where he left its assigned route and resume the path to the next waypoint defined in the mission editor.
+-- 
+-- Note that the carrier will only head into the wind, if the wind direction is different by more than 5° from the current heading of the carrier (the angled runway, if any, fis taken into account here). 
 -- 
 -- ===
 -- 
@@ -710,6 +730,15 @@
 --    * *Wire*: Trapped wire, if any.
 --    * *Tgroove*: Time in the groove in seconds (not applicable during Case III).
 --    * *Case*: The recovery case operations in progress during the pass.
+--    * *Wind*: Wind on deck in knots during approach.
+--    * *Modex*: Tail number of the player.
+--    * *Airframe*: Aircraft type used in the recovery.
+--    * *Carrier Type*: Type name of the carrier.
+--    * *Carrier Name*: Name/alias of the carrier.
+--    * *Theatre*: DCS map.
+--    * *Mission Time*: Mission time at the end of the approach.
+--    * *Mission Date*: Mission date in yyyy/mm/dd format.
+--    * *OS Date*: Real life date from os.date(). Needs **os** to be desanitized.
 --
 -- ## Load Results
 --
@@ -752,6 +781,45 @@
 -- For example as
 -- 
 --     airbossStennis:SetSoundfilesFolder("Airboss Soundfiles/")
+--     
+-- ## Remarks
+-- 
+-- DCS offers two (actually three) ways to send radio messages. Each one has its advantages and disadvantages and it is important to understand the differences.
+-- 
+-- ### Transmission via Command
+-- 
+-- *In principle*, the best way to transmit messages is via the [TransmitMessage](https://wiki.hoggitworld.com/view/DCS_command_transmitMessage) command.
+-- This method has the advantage that subtitles can be used and these subtitles are only displayed to the players who dialed in the same radio frequency as
+-- used for the transmission.
+-- However, this method unfortunately only works if the sending unit is an **aircraft**. There it is not usable by the AIRBOSS per se as the transmission comes from
+-- a naval unit (the carrier).
+-- 
+-- As a workaround, you can put an aircraft, e.g. a Helicopter on the deck of the carrier or another ship of the strike group. The aircraft should be set to
+-- uncontrolled and maybe even to immortal. With the @{#AIRBOSS.SetRadioUnit}(*unitname*) function you can use this unit as "radio repeater".
+-- Of course you can also use any other aircraft in the vicinity of the carrier, e.g. a rescue helo or a recovery tanker. It is just important that this
+-- unit is and stays close the the boat as the distance from the sender to the receiver is modeled in DCS. So messages from too far away might not reach the players.
+-- 
+-- **Note** that not all radio messages the airboss sends have voice overs. Therefore, if you use a radio relay unit, users should *not* disable the
+-- subtitles in the DCS game menu. 
+-- 
+-- ### Transmission via Trigger
+-- 
+-- Another way to broadcast messages is via the [radio transmission trigger](https://wiki.hoggitworld.com/view/DCS_func_radioTransmission). This method can be used for all 
+-- units (land, air, naval). However, messages cannot be subtitled. Therefore, subtitles are displayed to the players via normal textout messages.
+-- The disadvantage is that is is impossible to know which players have the right radio frequencies dialed in. There subtitles of the Marshal radio are displayed to all players
+-- inside the CCA. Subtitles on the LSO radio frequency are displayed to all players in the pattern.
+-- 
+-- ### Sound to User
+-- 
+-- The third way to play sounds to the user via the [outsound trigger](https://wiki.hoggitworld.com/view/DCS_func_outSound).
+-- These sounds are not coming from a radio station and therefore can be heard by players independent of their actual radio frequency setting.
+-- The AIRBOSS class uses this method to play sounds to players which are of a more "private" nature - for example when a player has left his assigned altitude
+-- in the Marshal stack. Often this is the modex of the player in combination with a textout messaged displayed on screen.
+-- 
+-- If you want to use this method for all radio messages you can enable it via the @{#AIRBOSS.SetUserSoundRadio}() function. This is the analogue of activating easy comms in DCS.
+-- 
+-- Note that this method is used for all players who are in the A-4E community mod as this mod does not have the ability to use radios due to current DCS restrictions.
+-- Therefore, A-4E drivers will hear all radio transmissions from the Marshal/Airboss and all LSO messages as soon as their commence the pattern.
 --  
 -- ===
 -- 
@@ -794,11 +862,11 @@
 --     local AirbossStennis=AIRBOSS:New("USS Stennis")
 --     
 --     -- Add recovery windows:
---     -- Case I from 9 to 12 am.
---     local window1=AirbossStennis:AddRecoveryWindow("8:55",  "12:00", 1)
---     -- Case II with +15 degrees holding offset from 1500 for 90 min.
---     local window2=AirbossStennis:AddRecoveryWindow("14:55", "16:30", 2, 15)
---     -- Case III with +30 degrees holding offset from 2100 to 2330.
+--     -- Case I from 9 to 10 am. Carrier will turn into the wind 5 min before window opens and go at a speed so that wind over the deck is 25 knots.
+--     local window1=AirbossStennis:AddRecoveryWindow("9:00",  "10:00", 1, nil, true, 25)
+--     -- Case II with +15 degrees holding offset from 15:00 for 60 min.
+--     local window2=AirbossStennis:AddRecoveryWindow("15:00", "16:00", 2, 15)
+--     -- Case III with +30 degrees holding offset from 21:00 to 23:30.
 --     local window3=AirbossStennis:AddRecoveryWindow("21:00", "23:30", 3, 30)
 --     
 --     -- Load all saved player grades from your "Saved Games\DCS" folder (if lfs was desanitized).
@@ -837,6 +905,7 @@ AIRBOSS = {
   ClassName      = "AIRBOSS",
   Debug          = false,
   lid            = nil,
+  theatre        = nil,
   carrier        = nil,
   carriertype    = nil,
   carrierparam   =  {},
@@ -884,6 +953,7 @@ AIRBOSS = {
   Qpattern       =  {},
   Qmarshal       =  {},
   Qwaiting       =  {},
+  Qspinning      =  {},
   RQMarshal      =  {},
   RQLSO          =  {},
   Nmaxpattern    = nil,
@@ -925,6 +995,9 @@ AIRBOSS = {
   collisiondist  = nil,
   Tmessage       = nil,
   soundfolder    = nil,
+  despawnshutdown= nil,
+  dTbeacon       = nil,
+  Tbeacon        = nil,
 }
 
 --- Aircraft types capable of landing on carrier (human+AI).
@@ -1562,7 +1635,7 @@ AIRBOSS.Difficulty={
 -- @field #number TGroove Time stamp when pilot entered the groove.
 -- @field #string FlyThrough Fly through up "/" or fly through down "\\".
 
---- LSO grade
+--- LSO grade data.
 -- @type AIRBOSS.LSOgrade
 -- @field #string grade LSO grade, i.e. _OK_, OK, (OK), --, CUT
 -- @field #number points Points received.
@@ -1571,6 +1644,15 @@ AIRBOSS.Difficulty={
 -- @field #number wire Wire caught.
 -- @field #number Tgroove Time in the groove in seconds.
 -- @field #number case Recovery case.
+-- @field #string wind Wind speed on deck in knots.
+-- @field #string modex Onboard number.
+-- @field #string airframe Aircraft type name of player.
+-- @field #string carriertype Carrier type name.
+-- @field #string carriername Carrier name/alias.
+-- @field #string theatre DCS map.
+-- @field #string mitime Mission time in hh:mm:ss+d format
+-- @field #string midate Mission date in yyyy/mm/dd format.
+-- @field #string osdate Real live date. Needs **os** to be desanitized. 
 
 --- Checkpoint parameters triggering the next step in the pattern.
 -- @type AIRBOSS.Checkpoint
@@ -1591,7 +1673,7 @@ AIRBOSS.Difficulty={
 -- @field #number nunits Number of units in group.
 -- @field #number dist0 Distance to carrier in meters when the group was first detected inside the CCA.
 -- @field #number time Timestamp in seconds of timer.getAbsTime() of the last important event, e.g. added to the queue.
--- @field Core.UserFlag#USERFLAG flag User flag for triggering events for the flight.
+-- @field #number flag Flag value describing the current stack.
 -- @field #boolean ai If true, flight is purly AI.
 -- @field #string actype Aircraft type name.
 -- @field #table onboardnumbers Onboard numbers of aircraft in the group.
@@ -1603,19 +1685,20 @@ AIRBOSS.Difficulty={
 -- @field #boolean ballcall If true, flight called the ball in the groove.
 -- @field #table elements Flight group elements.
 -- @field #number Tcharlie Charlie (abs) time in seconds.
+-- @field #string name Player name or name of first AI unit.
 
 --- Parameters of an element in a flight group.
 -- @type AIRBOSS.FlightElement
 -- @field Wrapper.Unit#UNIT unit Aircraft unit.
+-- @field #string unitname Name of the unit.
 -- @field #boolean ai If true, AI sits inside. If false, human player is flying.
 -- @field #string onboard Onboard number of the aircraft.
 -- @field #boolean ballcall If true, flight called the ball in the groove.
--- @field #boolean ai If true, element is AI.
+-- @field #boolean recovered If true, element was successfully recovered.
 
 --- Player data table holding all important parameters of each player.
 -- @type AIRBOSS.PlayerData
--- @field Wrapper.Unit#UNIT unit Aircraft of the player.
--- @field #string name Player name. 
+-- @field Wrapper.Unit#UNIT unit Aircraft of the player. 
 -- @field Wrapper.Client#CLIENT client Client object of player.
 -- @field #string callsign Callsign of player.
 -- @field #string difficulty Difficulty level.
@@ -1651,18 +1734,21 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.9.5"
+AIRBOSS.version="0.9.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
--- TODO: Spin pattern. Add radio menu entry. Not sure what to add though?!
+ 
+-- TODO: Handle cases where AI crashes on carrier deck ==> Clean up deck. 
 -- TODO: Player eject and crash debrief "gradings".
--- TODO: What happens when section lead or member dies?
 -- TODO: PWO during case 2/3.
 -- TODO: PWO when player comes too close to other flight.
--- TODO: Option to filter AI groups for recovery.
+-- DONE: Spin pattern. Add radio menu entry. Not sure what to add though?!
+-- DONE: Despawn AI after engine shutdown option.
+-- DONE: What happens when section lead or member dies?
+-- DONE: Do not remove recovered elements but only set switch. Remove only groups which are completely recovered.
+-- DONE: Option to filter AI groups for recovery.
 -- DONE: Rework radio messages. Better control over player board numbers.
 -- DONE: Case I & II/III zone so that player gets into pattern automatically. Case I 3 position on the circle. Case II/III when the player enters the approach corridor maybe?
 -- DONE: Add static weather information.
@@ -1743,6 +1829,10 @@ function AIRBOSS:New(carriername, alias)
     
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("AIRBOSS %s | ", carriername)
+
+  -- Current map.
+  self.theatre=env.mission.theatre  
+  self:T2(self.lid..string.format("Theatre = %s.", tostring(self.theatre)))
   
   -- Get carrier type.
   self.carriertype=self.carrier:GetTypeName()
@@ -1786,6 +1876,9 @@ function AIRBOSS:New(carriername, alias)
   
   -- Set TACAN to channel 74X.
   self:SetTACAN()
+  
+  -- Becons are reactivated very 5 min.
+  self:SetBeaconRefresh()
 
   -- Set max aircraft in landing pattern. Default 4.
   self:SetMaxLandingPattern()
@@ -1804,6 +1897,9 @@ function AIRBOSS:New(carriername, alias)
   
   -- Airboss is a nice guy.
   self:SetAirbossNiceGuy()
+  
+  -- No despawn after engine shutdown by default.
+  self:SetDespawnOnEngineShutdown(false)
   
   -- Mission uses static weather by default.
   self:SetStaticWeather()
@@ -2428,6 +2524,20 @@ function AIRBOSS:SetAirbossNiceGuy(switch)
   return self
 end
 
+--- Despawn AI groups after they they shut down their engines 
+-- @param #AIRBOSS self
+-- @param #boolean switch If true or nil, AI groups are despawned.
+-- @return #AIRBOSS self
+function AIRBOSS:SetDespawnOnEngineShutdown(switch)
+  if switch==true or switch==nil then
+    self.despawnshutdown=true
+  else
+    self.despawnshutdown=false
+  end
+  return self
+end
+
+
 --- Set folder where the airboss sound files are located **within you mission (miz) file**.
 -- The default path is "l10n/DEFAULT/" but sound files simply copied there will be removed by DCS the next time you save the mission.
 -- However, if you create a new folder inside the miz file, which contains the sounds, it will not be deleted and can be used. 
@@ -2578,6 +2688,16 @@ function AIRBOSS:SetICLS(channel, morsecode)
   self.ICLSmorse=morsecode or "STN"
   self.ICLSon=true
 
+  return self
+end
+
+
+--- Set beacon (TACAN/ICLS) time refresh interfal in case the beacons die.
+-- @param #AIRBOSS self
+-- @param #number interval Time interval in seconds. Default 300 sec = 5 min.
+-- @return #AIRBOSS self
+function AIRBOSS:SetBeaconRefresh(interval)
+  self.dTbeacon=interval or 300
   return self
 end
 
@@ -2831,6 +2951,25 @@ function AIRBOSS:IsPaused()
   return self:is("Paused")
 end
 
+--- Activate TACAN and ICLS beacons.
+-- @param #AIRBOSS self 
+function AIRBOSS:_ActivateBeacons()
+  self:T(self.lid..string.format("Activating Beacons (TACAN=%s, ICLS=%s)", tostring(self.TACANon), tostring(self.ICLSon)))
+
+  -- Activate TACAN.
+  if self.TACANon then
+    self.beacon:ActivateTACAN(self.TACANchannel, self.TACANmode, self.TACANmorse, true)
+  end
+  
+  -- Activate ICLS.
+  if self.ICLSon then
+    self.beacon:ActivateICLS(self.ICLSchannel, self.ICLSmorse)
+  end
+
+  -- Set time stamp.  
+  self.Tbeacon=timer.getTime()
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM event functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2843,21 +2982,10 @@ end
 function AIRBOSS:onafterStart(From, Event, To)
 
   -- Events are handled my MOOSE.
-  self:I(self.lid..string.format("Starting AIRBOSS v%s for carrier unit %s of type %s.", AIRBOSS.version, self.carrier:GetName(), self.carriertype))
+  self:I(self.lid..string.format("Starting AIRBOSS v%s for carrier unit %s of type %s on map %s", AIRBOSS.version, self.carrier:GetName(), self.carriertype, self.theatre))
   
-  -- Current map.
-  local theatre=env.mission.theatre  
-  self:T2(self.lid..string.format("Theatre = %s", tostring(theatre)))
-  
-  -- Activate TACAN.
-  if self.TACANon then
-    self.beacon:ActivateTACAN(self.TACANchannel, self.TACANmode, self.TACANmorse, true)
-  end
-  
-  -- Activate ICLS.
-  if self.ICLSon then
-    self.beacon:ActivateICLS(self.ICLSchannel, self.ICLSmorse)
-  end
+  -- Activate TACAN and ICLS if desired.
+  self:_ActivateBeacons()
       
   -- Schedule radio queue checks.
   self.RQLid=self.radiotimer:Schedule(self, self._CheckRadioQueue, {self.RQLSO,     "LSO"},     1, 0.01)
@@ -2892,10 +3020,12 @@ function AIRBOSS:onafterStart(From, Event, To)
   -- Handle events.
   self:HandleEvent(EVENTS.Birth)
   self:HandleEvent(EVENTS.Land)
+  self:HandleEvent(EVENTS.EngineShutdown)
+  self:HandleEvent(EVENTS.Takeoff)
   self:HandleEvent(EVENTS.Crash)
   self:HandleEvent(EVENTS.Ejection)
   self:HandleEvent(EVENTS.PlayerLeaveUnit, self._PlayerLeft)
-  --self:HandleEvent(EVENTS.MissionEnd)
+  self:HandleEvent(EVENTS.MissionEnd)
 
   -- Start status check in 1 second.
   self:__Status(1)
@@ -2975,6 +3105,11 @@ function AIRBOSS:onafterStatus(From, Event, To)
     self.Tqueue=time
   end
   
+  -- (Re-)activate TACAN and ICLS channels.
+  if time-self.Tbeacon>self.dTbeacon then
+    self:_ActivateBeacons()
+  end  
+  
   -- Check player status.
   self:_CheckPlayerStatus()
   
@@ -3046,6 +3181,24 @@ end
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData player Player data.
 function AIRBOSS:_CheckPlayerPatternDistance(player)
+
+  -- Check if player is too close to another aircraft in the pattern.
+  -- TODO: At which steps is the really necessary. Case II/III?
+  if  player.step==AIRBOSS.PatternStep.INITIAL    or
+      player.step==AIRBOSS.PatternStep.BREAKENTRY or
+      player.step==AIRBOSS.PatternStep.EARLYBREAK or              
+      player.step==AIRBOSS.PatternStep.LATEBREAK  or
+      player.step==AIRBOSS.PatternStep.ABEAM      or
+      player.step==AIRBOSS.PatternStep.GROOVE_XX  or
+      player.step==AIRBOSS.PatternStep.GROOVE_IM  then
+      
+    -- Right step but not implemented.
+    return
+    
+  else
+    -- Wrong step - no check performed.
+    return
+  end
 
   -- Nothing to do since we check only in the pattern.
   if #self.Qpattern==0 then
@@ -3246,16 +3399,33 @@ function AIRBOSS:_CheckRecoveryTimes()
       -- Check if time is less than 5 minutes.
       if nextwindow.WIND and nextwindow.START-time<5*60 and not self.turnintowind then
       
-        -- Calculate distance we travel into the wind.
-        local t=nextwindow.STOP-nextwindow.START
-        local v=UTILS.KnotsToMps(nextwindow.SPEED)
-        local s=v*t
+        -- Check that wind is blowing from a direction > 5° different from the current heading.
+        local hdg=self:GetHeading()
+        local wind=self:GetHeadingIntoWind()
+        local delta=self:_GetDeltaHeading(hdg, wind)
+        local uturn=delta>5
+
+        -- Check if wind is actually blowing (0.1 m/s = 0.36 km/h = 0.2 knots)
+        local _,vwind=self:GetWind()
+        if vwind<0.1 then
+          uturn=false
+        end
+      
+        --Debug info
+        self:T(self.lid..string.format("Heading=%03d°, Wind=%03d° %.1f kts, Delta=%03d° ==> U-turn=%s", hdg, wind,UTILS.MpsToKnots(vwind), delta, tostring(uturn)))
         
-        -- Distance in NM to go + 1 NM safety. 
-        local d=UTILS.MetersToNM(s)+1
+      
+        -- Time into the wind + the 5 min early.
+        local t=nextwindow.STOP-nextwindow.START+300
+        local v=UTILS.KnotsToMps(nextwindow.SPEED)
+        
+        -- Check that we do not go above max possible speed.
+        local vmax=self.carrier:GetSpeedMax()        
+        v=math.min(v,vmax)
         
         -- Route carrier into the wind. Sets self.turnintowind=true
-        self:CarrierTurnIntoWind(t, v)
+        self:CarrierTurnIntoWind(t, v, uturn)
+        
       end
       
       -- Set current recovery window.
@@ -3496,10 +3666,15 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function AIRBOSS:onafterStop(From, Event, To)
+  -- Unhandle events.
   self:UnHandleEvent(EVENTS.Birth)
   self:UnHandleEvent(EVENTS.Land)
+  self:UnHandleEvent(EVENTS.EngineShutdown)
+  self:UnHandleEvent(EVENTS.Takeoff)
   self:UnHandleEvent(EVENTS.Crash)
   self:UnHandleEvent(EVENTS.Ejection)
+  self:UnHandleEvent(EVENTS.PlayerLeaveUnit)
+  self:UnHandleEvent(EVENTS.MissionEnd)
 end
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -4016,7 +4191,7 @@ function AIRBOSS:_GetNextMarshalFight()
     local flight=_flight --#AIRBOSS.FlightGroup
     
     -- Current stack.
-    local stack=flight.flag:Get()
+    local stack=flight.flag
     
     -- Total marshal time in seconds.
     local Tmarshal=timer.getAbsTime()-flight.time
@@ -4036,7 +4211,6 @@ function AIRBOSS:_GetNextMarshalFight()
   return nil
 end
 
-
 --- Check marshal and pattern queues.
 -- @param #AIRBOSS self
 function AIRBOSS:_CheckQueue()
@@ -4048,6 +4222,7 @@ function AIRBOSS:_CheckQueue()
   self:_PrintQueue(self.Qmarshal, "Marshal")
   self:_PrintQueue(self.Qpattern, "Pattern")
   self:_PrintQueue(self.Qwaiting, "Waiting")
+  self:_PrintQueue(self.Qspinning, "Spinning")
   
   -- If flights are waiting outside 10 NM zone and carrier switches from Case I to Case II/III, they should be added to the Marshal stack as now there is no stack limit any more.
   if self.case>1 then
@@ -4081,13 +4256,20 @@ function AIRBOSS:_CheckQueue()
 
   -- Check if carrier is currently in recovery mode.
   if not self:IsRecovering() then
+  
+    -----------------------------
+    -- Switching Recovery Case --
+    -----------------------------
 
     -- Loop over all flights currently in the marshal queue.
     for _,_flight in pairs(self.Qmarshal) do
       local flight=_flight --#AIRBOSS.FlightGroup
       
-      -- Check if they have the right case.
-      if flight.case~=self.case then
+      -- TODO: In principle this should be done/necessary only if case 1-->2/3 or 2/3-->1, right?
+      -- When recovery switches from 2->3 or 3-->2 nothing changes in the marshal stack.
+      
+      -- Check if a change of stack is necessary.
+      if (flight.case==1 and self.case>1) or (flight.case>1 and self.case==1) then
       
         -- Remove flight from marshal queue.
         local removed=self:_RemoveFlightFromQueue(self.Qmarshal, flight)
@@ -4108,12 +4290,18 @@ function AIRBOSS:_CheckQueue()
           end
           
           -- Break the loop so that only one flight per 30 seconds is removed. No spam of messages, no conflict with the loop over queue entries.
-          break
+          break          
+
+        elseif flight.case~=self.case then
+        
+          -- This should handle 2-->3 or 3-->2
+          flight.case=self.case
+          
         end
+        
       end      
     end
 
-  
     -- Not recovering ==> skip the rest!
     return
   end  
@@ -4121,11 +4309,14 @@ function AIRBOSS:_CheckQueue()
   -- Get number of airborne aircraft units(!) currently in pattern.
   local _,npattern=self:_GetQueueInfo(self.Qpattern)
   
+  -- Get number of aircraft units spinning.
+  local _,nspinning=self:_GetQueueInfo(self.Qspinning)
+  
   -- Get next marshal flight.
   local marshalflight=self:_GetNextMarshalFight()
   
-  -- Check if there are flights waiting in the Marshal stack and if the pattern is free.
-  if marshalflight and npattern<self.Nmaxpattern then
+  -- Check if there are flights waiting in the Marshal stack and if the pattern is free. No one should be spinning.
+  if marshalflight and npattern<self.Nmaxpattern and nspinning==0 then
   
     -- Time flight is marshaling.
     local Tmarshal=timer.getAbsTime()-marshalflight.time
@@ -4167,6 +4358,7 @@ function AIRBOSS:_CheckQueue()
     
   end
 end
+
 
 --- Clear flight for landing. AI are removed from Marshal queue and the Marshal stack is collapsed.
 -- If next in line is an AI flight, this is done. If human player is next, we wait for "Commence" via F10 radio menu command.
@@ -4248,7 +4440,7 @@ function AIRBOSS:_ScanCarrierZone()
     local unit=_unit --Wrapper.Unit#UNIT
     
     -- Necessary conditions to be met:
-    local airborne=unit:IsAir() and unit:InAir()
+    local airborne=unit:IsAir() --and unit:InAir()
     local inzone=unit:IsInZone(self.zoneCCA)
     local friendly=self:GetCoalition()==unit:GetCoalition()
     local carrierac=self:_IsCarrierAircraft(unit)
@@ -4318,7 +4510,7 @@ function AIRBOSS:_ScanCarrierZone()
         self:T3(self.lid..string.format("Known AI flight group %s closed in by %.1f NM", knownflight.groupname, UTILS.MetersToNM(closein)))
         
         -- Send AI flight to marshal stack if group closes in more than 5 and has initial flag value.
-        if closein>UTILS.NMToMeters(5) and knownflight.flag:Get()==-100 and iscarriersquad then
+        if closein>UTILS.NMToMeters(5) and knownflight.flag==-100 and iscarriersquad then
         
           -- Check that we do not add a recovery tanker for marshaling.
           if self.tanker and self.tanker.tanker:GetName()==groupname then
@@ -4442,20 +4634,28 @@ function AIRBOSS:_MarshalPlayer(playerData, stack)
     self:_AddMarshalGroup(playerData, stack)
     
     -- Set step to holding.
-    playerData.step=AIRBOSS.PatternStep.HOLDING
-    playerData.warning=nil
+    self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.HOLDING)
     
     -- Holding switch to nil until player arrives in the holding zone.
     playerData.holding=nil
     
     -- Set same stack for all flights in section.
     for _,_flight in pairs(playerData.section) do
-      -- TODO: inform section members.
       local flight=_flight --#AIRBOSS.PlayerData
-      flight.case=playerData.case
-      flight.step=AIRBOSS.PatternStep.HOLDING
+      
+      -- TODO: Inform player? Should be done by lead via radio?
+      
+      -- Set step.
+      self:_SetPlayerStep(flight, AIRBOSS.PatternStep.HOLDING)
+      
+      -- Holding to nil, until arrived.
       flight.holding=nil
-      flight.flag:Set(stack)
+      
+      -- Set case to that of lead.
+      flight.case=playerData.case
+      
+      -- Set stack flag.      
+      flight.flag=stack
     end
     
   else
@@ -4471,7 +4671,7 @@ end
 function AIRBOSS:_WaitAI(flight)
 
   -- Set flag to something other than -100 and <0
-  flight.flag:Set(-99)
+  flight.flag=-99
 
   -- Add AI flight to waiting queue.
   table.insert(self.Qwaiting, flight)
@@ -4549,14 +4749,14 @@ function AIRBOSS:_MarshalAI(flight, nstack)
   local case=flight.case
 
   -- Get old/current stack.
-  local ostack=flight.flag:Get()
+  local ostack=flight.flag
 
   -- Flight group name.
   local group=flight.group
   local groupname=flight.groupname
     
   -- Set new stack.
-  flight.flag:Set(nstack)
+  flight.flag=nstack
   
   -- Current carrier position.
   local Carrier=self:GetCoordinate()
@@ -4604,7 +4804,6 @@ function AIRBOSS:_MarshalAI(flight, nstack)
     if case==1 then
     
       -- Initial point 7 NM and a bit port of carrier.
-      -- TODO: Test and tune!
       local pE=Carrier:Translate(UTILS.NMToMeters(7), hdg-30):SetAltitude(altitude)
             
       -- Entry point 5 NM port and slightly astern the boat.
@@ -4786,7 +4985,7 @@ function AIRBOSS:_GetMarshalAltitude(stack, case)
     -- For CCW pattern: p1 further astern than p2.
     
     -- Length of the race track pattern.
-    local l=UTILS.NMToMeters(7)
+    local l=UTILS.NMToMeters(10)
     
     -- First point of race track pattern.
     p1=Carrier:Translate(Dist+l, radial)
@@ -4813,7 +5012,7 @@ end
 function AIRBOSS:_GetCharlieTime(flightgroup)
 
   -- Get current stack of player.
-  local stack=flightgroup.flag:Get()
+  local stack=flightgroup.flag
   
   -- Flight is not in marshal stack.
   if stack<=0 then
@@ -4839,7 +5038,7 @@ function AIRBOSS:_GetCharlieTime(flightgroup)
     local flight=_flight --#AIRBOSS.FlightGroup
   
     -- Stack of marshal flight.
-    local mstack=flight.flag:Get()
+    local mstack=flight.flag
     
     -- Time to get to the marshal stack if not holding already.
     local Tarrive=0
@@ -4909,7 +5108,7 @@ end
 function AIRBOSS:_AddMarshalGroup(flight, stack)
 
   -- Set flag value. This corresponds to the stack number which starts at 1.
-  flight.flag:Set(stack)
+  flight.flag=stack
   
   -- Set recovery case.
   flight.case=self.case
@@ -4928,10 +5127,7 @@ function AIRBOSS:_AddMarshalGroup(flight, stack)
   
   -- If the carrier is supposed to turn into the wind, we take the wind coordinate.
   if self.recoverywindow and self.recoverywindow.WIND then
-    local _,vwind=self:GetCoordinate():GetWind(50)
-    if vwind>0.1 then
-      brc=self:GetBRCintoWind()
-    end
+    brc=self:GetBRCintoWind()
   end
   
   -- Get charlie time estimate.
@@ -4972,7 +5168,7 @@ function AIRBOSS:_CollapseMarshalStack(flight, nopattern)
   local case=flight.case
   
   -- Stack of flight.
-  local stack=flight.flag:Get()
+  local stack=flight.flag
   
   -- Check that stack > 0.
   if stack<=0 then
@@ -4991,17 +5187,14 @@ function AIRBOSS:_CollapseMarshalStack(flight, nopattern)
     if (case==1 and mflight.case==1) or (case>1 and mflight.case>1) then
     
       -- Get current flag/stack value.
-      local mstack=mflight.flag:Get()
+      local mstack=mflight.flag
       
       -- Only collapse stacks above the new pattern flight.
       if mstack>stack then
-      
-        -- OLD: New stack is old stack minus one.
-        --local newstack=mstack-1
         
-        -- NEW: Is this now right as we allow more flights per stack?
-        -- TODO: Question is, does the stack collapse if the lower stack is completely empty or do aircraft descent if just one flight leaves.
-        --       For now, assuming that the stack must be completely empty before the next higher AC are allowed to descent.
+        -- TODO: Is this now right as we allow more flights per stack?
+        -- Question is, does the stack collapse if the lower stack is completely empty or do aircraft descent if just one flight leaves.
+        -- For now, assuming that the stack must be completely empty before the next higher AC are allowed to descent.
         local newstack=self:_GetFreeStack(mflight.ai, mflight.case, true)
         
         -- Free stack has to be below.
@@ -5018,7 +5211,7 @@ function AIRBOSS:_CollapseMarshalStack(flight, nopattern)
           else
    
             -- Decrease stack/flag. Human player needs to take care himself.
-            mflight.flag:Set(newstack)
+            mflight.flag=newstack
             
             -- Angels of new stack.
             local angels=self:_GetAngels(self:_GetMarshalAltitude(newstack, case))
@@ -5040,7 +5233,7 @@ function AIRBOSS:_CollapseMarshalStack(flight, nopattern)
               local sec=_sec --#AIRBOSS.PlayerData
               
               -- Also decrease flag for section members of flight.
-              sec.flag:Set(newstack)
+              sec.flag=newstack
               
               -- Set new time stamp.
               sec.time=timer.getAbsTime()
@@ -5073,12 +5266,13 @@ function AIRBOSS:_CollapseMarshalStack(flight, nopattern)
     self:T(self.lid..string.format("Flight %s is leaving marshal after %s and going pattern.", flight.groupname, Tmarshal))
         
     -- Add flight to pattern queue.
-    table.insert(self.Qpattern, flight)
+    --table.insert(self.Qpattern, flight)
+    self:_AddFlightToPatternQueue(flight)
         
   end
 
   -- Set flag to -1 (-1 is rather arbitrary but it should not be positive or -100 or -42).
-  flight.flag:Set(-1)
+  flight.flag=-1
 
   -- New time stamp for time in pattern.
   flight.time=timer.getAbsTime()
@@ -5116,7 +5310,7 @@ function AIRBOSS:_GetFreeStack(ai, case, empty)
     if flight.case==case then
     
       -- Get stack of flight.
-      local n=flight.flag:Get()
+      local n=flight.flag
       
       if n>0 then
         if flight.ai then
@@ -5278,8 +5472,8 @@ function AIRBOSS:_PrintQueue(queue, name)
   --local nqueue=#queue
   local Nqueue, nqueue=self:_GetQueueInfo(queue)
 
-  local text=string.format("%s Queue N=%d, n=%d:", name, Nqueue, nqueue)
-  if nqueue==0 then
+  local text=string.format("%s Queue N=%d (#%d), n=%d:", name, Nqueue, #queue, nqueue)
+  if #queue==0 then
     text=text.." empty."
   else
     for i,_flight in pairs(queue) do
@@ -5287,7 +5481,7 @@ function AIRBOSS:_PrintQueue(queue, name)
       
       local clock=UTILS.SecondsToClock(timer.getAbsTime()-flight.time)
       local case=flight.case
-      local stack=flight.flag:Get()      
+      local stack=flight.flag    
       local fuel=flight.group:GetFuelMin()*100
       local ai=tostring(flight.ai)
       local lead=flight.seclead
@@ -5321,6 +5515,11 @@ function AIRBOSS:_PrintQueue(queue, name)
       if stack>0 then
         local alt=UTILS.MetersToFeet(self:_GetMarshalAltitude(stack, case))
         text=text..string.format(" stackalt=%d ft", alt)
+      end
+      for j,_element in pairs(flight.elements) do
+        local element=_element --#AIRBOSS.FlightElement
+        text=text..string.format("\n  (%d) %s (%s): ai=%s, ballcall=%s, recovered=%s", 
+        j, element.onboard, element.unitname, tostring(element.ai), tostring(element.ballcall), tostring(element.recovered))
       end
     end
   end
@@ -5356,8 +5555,7 @@ function AIRBOSS:_CreateFlightGroup(group)
     flight.nunits=#group:GetUnits()
     flight.time=timer.getAbsTime()
     flight.dist0=group:GetCoordinate():Get2DDistance(self:GetCoordinate())
-    flight.flag=USERFLAG:New(groupname)
-    flight.flag:Set(-100)
+    flight.flag=-100
     flight.ai=not human
     flight.actype=group:GetTypeName()
     flight.onboardnumbers=self:_GetOnboardNumbers(group)
@@ -5365,9 +5563,7 @@ function AIRBOSS:_CreateFlightGroup(group)
     flight.section={}
     flight.ballcall=false
     flight.holding=nil
-    
-    -- TODO Name should also be set for AI as it is used to get the section lead. Switch this from PlayerData to FlightGroup enumerator.
-    flight.name=flight.group:GetUnit(1):GetName()
+    flight.name=flight.group:GetUnit(1):GetName()   --Will be overwritten in _Newplayer with player name if human player in the group.
     
     -- Note, this should be re-set elsewhere!
     flight.case=self.case
@@ -5378,13 +5574,14 @@ function AIRBOSS:_CreateFlightGroup(group)
     local units=group:GetUnits()
     for i,_unit in pairs(units) do
       local unit=_unit --Wrapper.Unit#UNIT
-      local name=unit:GetName()
       local element={} --#AIRBOSS.FlightElement
       element.unit=unit
-      element.onboard=flight.onboardnumbers[name]
+      element.unitname=unit:GetName()
+      element.onboard=flight.onboardnumbers[element.unitname]
       element.ballcall=false
       element.ai=not self:_IsHumanUnit(unit)
-      text=text..string.format("\n[%d] %s onboard #%s, AI=%s", i, name, tostring(element.onboard), tostring(element.ai))
+      element.recovered=nil
+      text=text..string.format("\n[%d] %s onboard #%s, AI=%s", i, element.unitname, tostring(element.onboard), tostring(element.ai))
       table.insert(flight.elements, element)
     end
     self:T(self.lid..text)  
@@ -5420,6 +5617,7 @@ function AIRBOSS:_NewPlayer(unitname)
   
   if playerunit and playername then
   
+    -- Get group.
     local group=playerunit:GetGroup()
 
     -- Player data.
@@ -5428,45 +5626,50 @@ function AIRBOSS:_NewPlayer(unitname)
     -- Create a flight group for the player.
     playerData=self:_CreateFlightGroup(group)
     
-    -- Player unit, client and callsign.
-    playerData.unit     = playerunit
-    playerData.name     = playername
-    playerData.callsign = playerData.unit:GetCallsign()
-    playerData.client   = CLIENT:FindByName(unitname, nil, true)
-    playerData.seclead  = playername
-        
-    -- Number of passes done by player in this slot.
-    playerData.passes=0 --playerData.passes or 0
+    -- Nil check.
+    if playerData then
     
-    -- Debriefing tables.
-    playerData.lastdebrief=playerData.lastdebrief or {}
+      -- Player unit, client and callsign.
+      playerData.unit     = playerunit
+      playerData.name     = playername
+      playerData.callsign = playerData.unit:GetCallsign()
+      playerData.client   = CLIENT:FindByName(unitname, nil, true)
+      playerData.seclead  = playername
+          
+      -- Number of passes done by player in this slot.
+      playerData.passes=0 --playerData.passes or 0
+      
+      -- Debriefing tables.
+      playerData.lastdebrief=playerData.lastdebrief or {}
+      
+      -- Attitude monitor.
+      playerData.attitudemonitor=false
+      
+      -- Set difficulty level.
+      playerData.difficulty=playerData.difficulty or self.defaultskill
+      
+      -- Subtitles of player
+      if playerData.subtitles==nil then
+        playerData.subtitles=true
+      end
+      
+      -- Points rewarded.
+      playerData.points={}
     
-    -- Attitude monitor.
-    playerData.attitudemonitor=false
+      -- Init stuff for this round.
+      playerData=self:_InitPlayer(playerData)
+      
+      -- Init player data.
+      self.players[playername]=playerData
+      
+      -- Init player grades table if necessary.
+      self.playerscores[playername]=self.playerscores[playername] or {}
+      
+      -- Welcome player message.
+      self:MessageToPlayer(playerData, string.format("Welcome, %s %s!", playerData.difficulty, playerData.name), string.format("AIRBOSS %s", self.alias), "", 5)
     
-    -- Set difficulty level.
-    playerData.difficulty=playerData.difficulty or self.defaultskill
-    
-    -- Subtitles of player
-    if playerData.subtitles==nil then
-      playerData.subtitles=true
     end
     
-    -- Points rewarded.
-    playerData.points={}
-  
-    -- Init stuff for this round.
-    playerData=self:_InitPlayer(playerData)
-    
-    -- Init player data.
-    self.players[playername]=playerData
-    
-    -- Init player grades table if necessary.
-    self.playerscores[playername]=self.playerscores[playername] or {}
-    
-    -- Welcome player message.
-    self:MessageToPlayer(playerData, string.format("Welcome, %s %s!", playerData.difficulty, playerData.name), string.format("AIRBOSS %s", self.alias), "", 5)
-        
     -- Return player data table.
     return playerData    
   end
@@ -5497,74 +5700,94 @@ function AIRBOSS:_InitPlayer(playerData, step)
   playerData.Tlso=timer.getTime()
   playerData.Tgroove=nil
   playerData.wire=nil
-  playerData.flag:Set(-100)
+  playerData.flag=-100
   
   -- Set us up on final if group name contains "Groove". But only for the first pass.
   if playerData.group:GetName():match("Groove") and playerData.passes==0 then
     self:MessageToPlayer(playerData, "Group name contains \"Groove\". Happy groove testing.")
     playerData.attitudemonitor=true
     playerData.step=AIRBOSS.PatternStep.FINAL
-    table.insert(self.Qpattern, playerData)
+    self:_AddFlightToPatternQueue(playerData)
+    self.dTstatus=0.1
   end
   
   return playerData
 end
 
 
---- Get flight from group. 
+--- Get flight from group in a queue. 
 -- @param #AIRBOSS self
 -- @param Wrapper.Group#GROUP group Group that will be removed from queue.
 -- @param #table queue The queue from which the group will be removed.
--- @return #AIRBOSS.FlightGroup Flight group.
--- @return #number Queue index.
+-- @return #AIRBOSS.FlightGroup Flight group or nil.
+-- @return #number Queue index or nil.
 function AIRBOSS:_GetFlightFromGroupInQueue(group, queue)
 
-  -- Group name
-  local name=group:GetName()
-  
-  -- Loop over all flight groups in queue
-  for i,_flight in pairs(queue) do
-    local flight=_flight --#AIRBOSS.FlightGroup
-    
-    if flight.groupname==name then
-      return flight, i
-    end
-  end
+  if group then
 
-  self:T2(self.lid..string.format("WARNING: Flight group %s could not be found in queue.", name))
+    -- Group name
+    local name=group:GetName()
+    
+    -- Loop over all flight groups in queue
+    for i,_flight in pairs(queue) do
+      local flight=_flight --#AIRBOSS.FlightGroup
+      
+      if flight.groupname==name then
+        return flight, i
+      end
+    end
+  
+    self:T2(self.lid..string.format("WARNING: Flight group %s could not be found in queue.", name))  
+  end
+  
+  self:T2(self.lid..string.format("WARNING: Flight group could not be found in queue. Group is nil!"))
   return nil, nil
 end
 
 --- Get element in flight. 
 -- @param #AIRBOSS self
 -- @param #string unitname Name of the unit.
--- @param #AIRBOSS.FlightGroup flight Flight group.
--- @return #AIRBOSS.FlightElement Flight element.
--- @return #number Element index.
-function AIRBOSS:_GetFlightElement(unitname, flight)
+-- @return #AIRBOSS.FlightElement Element of the flight or nil.
+-- @return #number Element index or nil.
+-- @return #AIRBOSS.FlightGroup The Flight group or nil
+function AIRBOSS:_GetFlightElement(unitname)
 
-  -- Loop over all elements in flight group.
-  for i,_element in pairs(flight.elements) do
-    local element=_element --#AIRBOSS.FlightElement
-    
-    if element.unit:GetName()==unitname then
-      return element, i
+  -- Get the unit.
+  local unit=UNIT:FindByName(unitname)
+  
+  -- Check if unit exists.
+  if unit then
+  
+    -- Get flight element from all flights.
+    local flight=self:_GetFlightFromGroupInQueue(unit:GetGroup(), self.flights)
+        
+    -- Check if fight exists.
+    if flight then
+
+      -- Loop over all elements in flight group.
+      for i,_element in pairs(flight.elements) do
+        local element=_element --#AIRBOSS.FlightElement
+        
+        if element.unit:GetName()==unitname then
+          return element, i, flight
+        end
+      end
+      
+      self:T2(self.lid..string.format("WARNING: Flight element %s could not be found in flight group.", unitname, flight.groupname))
     end
   end
-  
-  self:T2(self.lid..string.format("WARNING: Flight element %s could not be found in flight group.", unitname, flight.groupname))
-  return nil, nil
+    
+  return nil, nil, nil
 end
 
 --- Get element in flight. 
 -- @param #AIRBOSS self
 -- @param #string unitname Name of the unit.
--- @param #AIRBOSS.FlightGroup flight Flight group.
 -- @return #boolean If true, element could be removed or nil otherwise.
-function AIRBOSS:_RemoveFlightElement(unitname, flight)
+function AIRBOSS:_RemoveFlightElement(unitname)
 
   -- Get table index.
-  local element,idx=self:_GetFlightElement(unitname, flight)
+  local element,idx, flight=self:_GetFlightElement(unitname)
 
   if idx then
     table.remove(flight.elements, idx)
@@ -5626,15 +5849,119 @@ function AIRBOSS:_RemoveDeadFlightGroups()
   
 end
 
+--- Get the lead flight group of a flight group.
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.FlightGroup flight Flight group to check.
+-- @return #AIRBOSS.FlightGroup Flight group of the leader or flight itself if no other leader.
+function AIRBOSS:_GetLeadFlight(flight)
+
+  -- Init.
+  local lead=flight
+  
+  -- Only human players can be section leads of other players.
+  if flight.name~=flight.seclead then
+    lead=self.players[flight.seclead]
+  end
+  
+  return lead
+end
+
+--- Check if all elements of a flight were recovered. This also checks potential section members.
+-- If so, flight is removed from the queue.
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.FlightGroup flight Flight group to check.
+-- @return #boolean If true, all elements landed.
+function AIRBOSS:_CheckSectionRecovered(flight)
+
+  -- Nil check.
+  if flight==nil then
+    return true
+  end
+
+  -- Get the lead flight first, so that we can also check all section members.
+  local lead=self:_GetLeadFlight(flight)
+
+  -- Check all elements of the lead flight group.
+  for _,_element in pairs(lead.elements) do
+    local element=_element  --#AIROBSS.FlightElement
+    if not element.recovered then
+      return false
+    end
+  end
+  
+  -- Now check all section members, if any.
+  for _,_section in pairs(lead.section) do
+    local sectionmember=_section --#AIRBOSS.FlightGroup
+ 
+    -- Check all elements of the secmember flight group.
+    for _,_element in pairs(sectionmember.elements) do
+      local element=_element  --#AIROBSS.FlightElement
+      if not element.recovered then
+        return false
+      end
+    end
+  end
+  
+  -- Remove lead flight from pattern queue. It is this flight who is added to the queue.
+  self:_RemoveFlightFromQueue(self.Qpattern, lead)
+  
+  -- Just for now, check if it is in other queues as well.
+  if self:_InQueue(self.Qmarshal, lead.group) then
+    self:E("ERROR: flight group should not be in marshal queue")
+    self:_RemoveFlightFromMarshalQueue(lead, true)
+  end
+  -- Just for now, check if it is in other queues as well.
+  if self:_InQueue(self.Qwaiting, lead.group) then
+    self:E("ERROR: flight group should not be in pattern queue")
+    self:_RemoveFlightFromQueue(self.Qwaiting, lead)
+  end
+    
+  return true
+end
+
+--- Add flight to pattern queue and set recoverd to false for all elements of the flight and its section members.
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.FlightGroup Flight group of element.
+function AIRBOSS:_AddFlightToPatternQueue(flight)
+
+  -- Add flight to table.
+  table.insert(self.Qpattern, flight)
+  
+  -- Init recovered switch.
+  flight.recovered=false
+  for _,elem in pairs(flight.elements) do
+    elem.recoverd=false
+  end
+  
+  -- Set recovered for all section members.
+  for _,sec in pairs(flight.section) do
+    for _,elem in pairs(sec.elements) do
+      elem.recoverd=false
+    end
+  end
+end
+
+--- Sets flag recovered=true for a flight element, which was successfully recovered (landed).
+-- @param #AIRBOSS self
+-- @param Wrapper.Unit#UNIT unit The aircraft unit that was recovered.
+-- @return #AIRBOSS.FlightGroup Flight group of element.
+function AIRBOSS:_RecoveredElement(unit)
+  local element, idx, flight=self:_GetFlightElement(unit:GetName())  --#AIRBOSS.FlightElement  
+  element.recovered=true
+  
+  return flight
+end
+
 --- Remove a flight group from the Marshal queue. Marshal stack is collapsed, too, if flight was in the queue. Waiting flights are send to marshal.
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.FlightGroup flight Flight group that will be removed from queue.
 -- @param #boolean nopattern If true, flight is NOT going to landing pattern.
--- @return #boolean If true, flight was removed. 
+-- @return #boolean True, flight was removed or false otherwise.
+-- @return #number Table index of the flight in the Marshal queue.
 function AIRBOSS:_RemoveFlightFromMarshalQueue(flight, nopattern)
 
   -- Remove flight from marshal queue if it is in.
-  local removed=self:_RemoveFlightFromQueue(self.Qmarshal, flight)
+  local removed, idx=self:_RemoveFlightFromQueue(self.Qmarshal, flight)
   
   -- Collapse marshal stack if flight was removed.
   if removed then
@@ -5670,18 +5997,18 @@ function AIRBOSS:_RemoveFlightFromMarshalQueue(flight, nopattern)
       -- Remove flight from waiting queue.
       self:_RemoveFlightFromQueue(self.Qwaiting, nextflight)
       
-    end
-    
+    end    
   end
   
-  return removed
+  return removed, idx
 end
 
 --- Remove a flight group from a queue.
 -- @param #AIRBOSS self
 -- @param #table queue The queue from which the group will be removed.
 -- @param #AIRBOSS.FlightGroup flight Flight group that will be removed from queue.
--- @return #boolean If true, flight was in Queue and removed.
+-- @return #boolean True, flight was in Queue and removed. False otherwise.
+-- @return #number Table index of removed queue element or nil.
 function AIRBOSS:_RemoveFlightFromQueue(queue, flight)
 
   -- Loop over all flights in group.
@@ -5692,14 +6019,14 @@ function AIRBOSS:_RemoveFlightFromQueue(queue, flight)
     if qflight.groupname==flight.groupname then
       self:T(self.lid..string.format("Removing flight group %s from queue.", flight.groupname))
       table.remove(queue, i)
-      return true
+      return true, i
     end
   end
   
-  return false
+  return false, nil
 end
 
---- Remove a unit from a flight group (e.g. when landed) and update all queues if the whole flight group is gone.
+--- Remove a unit and its element from a flight group (e.g. when landed) and update all queues if the whole flight group is gone.
 -- @param #AIRBOSS self
 -- @param Wrapper.Unit#UNIT unit The unit to be removed.
 function AIRBOSS:_RemoveUnitFromFlight(unit)
@@ -5720,7 +6047,7 @@ function AIRBOSS:_RemoveUnitFromFlight(unit)
       if flight then
 
         -- Remove element from flight group.
-        local removed=self:_RemoveFlightElement(unit:GetName(), flight)
+        local removed=self:_RemoveFlightElement(unit:GetName())
         
         if removed then
         
@@ -5746,29 +6073,134 @@ function AIRBOSS:_RemoveUnitFromFlight(unit)
   
 end
 
+--- Remove a flight, which is a member of a section, from this section.
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.FlightGroup flight The flight to be removed from the section
+function AIRBOSS:_RemoveFlightFromSection(flight)
+
+  -- First check if player is not the lead.
+  if flight.name~=flight.seclead then
+
+    -- Remove this flight group from the section of the leader.
+    local lead=self.players[flight.seclead]  --#AIRBOSS.FlightGroup
+    if lead then
+      for i,sec in pairs(lead.section) do
+        local sectionmember=sec --#AIRBOSS.FlightGroup
+        if sectionmember.name==flight.name then
+          table.remove(lead.section, i)
+          break
+        end
+      end
+    end
+  end
+  
+end
+
+--- Update section if a flight is removed.
+-- If removed flight is member of a section, he is removed for the leaders section.
+-- If removed flight is the section lead, we try to find a new leader.
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.FlightGroup flight The flight to be removed.
+function AIRBOSS:_UpdateFlightSection(flight)
+
+  -- Check if this player is the leader of a section.
+  if flight.seclead==flight.name then
+
+    --------------------
+    -- Section Leader --
+    --------------------
+    
+    -- This player is the leader ==> We need a new one.
+    if #flight.section>=1 then
+    
+      -- New leader.
+      local newlead=flight.section[1]  --#AIRBOSS.FlightGroup
+      newlead.seclead=newlead.name
+      
+      -- Adjust new section members.
+      for i=2,#flight.section do
+        local member=flight.section[i] --#AIRBOSS.FlightGroup
+        
+        -- Add remaining members new leaders table.  
+        table.insert(newlead.section, member)
+        
+        -- Set new section lead of member.
+        member.seclead=newlead.name
+      end
+      
+    end
+    
+    -- Flight section empty
+    flight.section={}
+  
+  else
+  
+    --------------------
+    -- Section Member --
+    --------------------
+    
+    -- Remove flight from its leaders section.
+    self:_RemoveFlightFromSection(flight)
+    
+  end
+
+end
+
 --- Remove a flight from Marshal, Pattern and Waiting queues. If flight is in Marhal queue, the above stack is collapsed.  
 -- Also set player step to undefined if applicable or remove human flight if option *completely* is true. 
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData flight The flight to be removed.
 -- @param #boolean completely If true, also remove human flight from all flights table.
 function AIRBOSS:_RemoveFlight(flight, completely)
-
+  self:F(self.lid.. string.format("Removing flight %s, ai=%s completely=%s.", tostring(flight.groupname), tostring(flight.ai), tostring(completely)))
+  
   -- Remove flight from all queues.
   self:_RemoveFlightFromMarshalQueue(flight, true)
   self:_RemoveFlightFromQueue(self.Qpattern, flight)
   self:_RemoveFlightFromQueue(self.Qwaiting, flight)
+  self:_RemoveFlightFromQueue(self.Qspinning, flight)
   
   -- Check if player or AI
   if flight.ai then  
-    -- Remove AI flight completely.
+  
+    -- Remove AI flight completely. Pure AI flights have no sections and cannot be members.
     self:_RemoveFlightFromQueue(self.flights, flight)
+    
   else
+    
+    -- Check if flight should be completely removed, e.g. after the player died or simply left the slot.
     if completely then
-      -- Remove HUMAN flight completely.
+
+      -- Update flight section. Remove flight from section or find new section leader if flight was the lead.
+      self:_UpdateFlightSection(flight)
+    
+      -- Remove completely.
       self:_RemoveFlightFromQueue(self.flights, flight)
+
+      -- Remove all grades until a final grade is reached.
+      local grades=self.playerscores[flight.name]
+      if grades and #grades>0 then
+        while #grades>0 and grades[#grades].finalscore==nil do
+          table.remove(grades, #grades)
+        end
+      end 
+      
     else
-      -- Set Playerstep to undefined.
-      flight.step=AIRBOSS.PatternStep.UNDEFINED
+    
+      -- Set player step to undefined.
+      self:_SetPlayerStep(flight, AIRBOSS.PatternStep.UNDEFINED)
+      
+      -- Also set this for the section members as they are in the same boat.
+      for _,sectionmember in pairs(flight.section) do
+        self:_SetPlayerStep(sectionmember, AIRBOSS.PatternStep.UNDEFINED)
+        -- Also remove section member in case they are in the spinning queue.
+        self:_RemoveFlightFromQueue(self.Qspinning, sectionmember)
+      end
+      
+      -- What if flight is member of a section. His status is now undefined. Should he be removed from the section?
+      -- I think yes, if he pulls the trigger.
+      self:_RemoveFlightFromSection(flight)
+      
     end
   end
   
@@ -5801,18 +6233,9 @@ function AIRBOSS:_CheckPlayerStatus()
           if playerData.attitudemonitor then
             self:_AttitudeMonitor(playerData)
           end        
-        
-          -- Check if player is too close to another aircraft in the pattern.
-          -- TODO: At which steps is the really necessary. Case II/III?
-          if  playerData.step==AIRBOSS.PatternStep.INITIAL    or
-              playerData.step==AIRBOSS.PatternStep.BREAKENTRY or
-              playerData.step==AIRBOSS.PatternStep.EARLYBREAK or              
-              playerData.step==AIRBOSS.PatternStep.LATEBREAK  or
-              playerData.step==AIRBOSS.PatternStep.ABEAM      or
-              playerData.step==AIRBOSS.PatternStep.GROOVE_XX  or
-              playerData.step==AIRBOSS.PatternStep.GROOVE_IM  then
-              --self:_CheckPlayerPatternDistance(playerData)
-          end
+          
+          -- Check distance to other flights.
+          self:_CheckPlayerPatternDistance(playerData)
           
           -- Foul deck check.
           self:_CheckFoulDeck(playerData)
@@ -5831,7 +6254,8 @@ function AIRBOSS:_CheckPlayerStatus()
             
           elseif playerData.step==AIRBOSS.PatternStep.SPINNING then
           
-            -- Might still be better to stay in commencing?
+            -- Player is spinning.
+            self:_Spinning(playerData)
 
           elseif playerData.step==AIRBOSS.PatternStep.HOLDING then
           
@@ -5972,7 +6396,7 @@ function AIRBOSS:_CheckMissedStepOnEntry(playerData)
   -- Conditions to be met: Case II/III, in pattern queue, flag!=42 (will be set to 42 at the end if player missed a step).
   local rightcase=playerData.case>1
   local rightqueue=self:_InQueue(self.Qpattern, playerData.group)
-  local rightflag=playerData.flag:Get()~=-42
+  local rightflag=playerData.flag~=-42
  
   -- Steps that the player could have missed during Case II/III.
   local step=playerData.step
@@ -6018,11 +6442,45 @@ function AIRBOSS:_CheckMissedStepOnEntry(playerData)
         end
         
         -- Set flag value to -42. This is the value to ensure that this routine is not called again!
-        playerData.flag:Set(-42)
+        playerData.flag=-42
       end              
     end                      
   end
 end
+
+--- Set time in the groove for player.
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.PlayerData playerData Player data.
+function AIRBOSS:_SetTimeInGroove(playerData)
+
+  -- Get time in the groove.
+  local gdataX0=playerData.groove.X0 --#AIRBOSS.GrooveData
+  if gdataX0 then
+    playerData.Tgroove=timer.getTime()-gdataX0.TGroove
+  else
+    playerData.Tgroove=9999
+  end
+
+end
+
+--- Get time in the groove of player.
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.PlayerData playerData Player data.
+-- @return #number Player's time in groove in seconds.
+function AIRBOSS:_GetTimeInGroove(playerData)
+
+  local Tgroove=999
+
+  -- Get time in the groove.
+  local gdataX0=playerData.groove.X0 --#AIRBOSS.GrooveData
+  if gdataX0 then
+    Tgroove=timer.getTime()-gdataX0.TGroove
+  end
+
+  return Tgroove
+end
+
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- EVENT functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -6188,42 +6646,28 @@ function AIRBOSS:OnEventLand(EventData)
             coord:SmokeGreen()        
           end
           
-          -- Get time in the groove.
-          local gdataX0=playerData.groove.X0 --#AIRBOSS.GrooveData
-          if gdataX0 then
-            playerData.Tgroove=timer.getTime()-gdataX0.TGroove
-          else
-            playerData.Tgroove=999
-          end
+          -- Set time in the groove of player.
+          self:_SetTimeInGroove(playerData)
+          
+          -- Debug text.
+          local text=string.format("Player %s AC type %s landed at dist=%.1f m. Tgroove=%.1f sec.", playerData.name, playerData.actype, dist, self:_GetTimeInGroove(playerData))
+          text=text..string.format(" X=%.1f m, Z=%.1f m, rho=%.1f m.", X, Z, rho)
+          self:T(self.lid..text)          
           
           -- Check carrier type.
           if self.carriertype==AIRBOSS.CarrierType.TARAWA then
           
             -- Power "Idle".
-            self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.IDLE, false, 2)
+            self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.IDLE, false, 1)
           
             -- Next step debrief.
             self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.DEBRIEF)                        
           
           else
           
-            -- Get wire.  We additionally shift the landing coord back because landing event for players is unfortunately delayed.
-            local wire=self:_GetWire(coord, 75)
-            
-            -- No wire ==> Bolter, Bolter radio call.
-            -- TODO: might need a better place for this. or check
-            if wire>4 then
-              self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.BOLTER)
-            end
-                        
-            -- Debug text.
-            local text=string.format("Player %s AC type %s landed at dist=%.1f m. Trapped wire=%d.", playerData.name, playerData.actype, dist, wire)
-            text=text..string.format(" X=%.1f m, Z=%.1f m, rho=%.1f m.", X, Z, rho)
-            self:T(self.lid..text)
-            
-            -- Unkonwn step until we now more.
-            playerData.step=AIRBOSS.PatternStep.UNDEFINED            
-      
+            -- Next step undefined until we know more.
+            self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.UNDEFINED)                        
+                            
             -- Call trapped function in 1 second to make sure we did not bolter.
             SCHEDULER:New(nil, self._Trapped, {self, playerData}, 1)
             
@@ -6265,17 +6709,121 @@ function AIRBOSS:OnEventLand(EventData)
       end
       
       -- AI always lands ==> remove unit from flight group and queues.
-      self:_RemoveUnitFromFlight(EventData.IniUnit)
+      local flight=self:_RecoveredElement(EventData.IniUnit)
+      
+      -- Check if all were recovered. If so update pattern queue.
+      self:_CheckSectionRecovered(flight)
       
     end
   end    
+end
+
+--- Airboss event handler for event that a unit shuts down its engines.
+-- @param #AIRBOSS self
+-- @param Core.Event#EVENTDATA EventData
+--function AIRBOSS:OnEventPlayerLeaveUnit(EventData)
+function AIRBOSS:OnEventEngineShutdown(EventData)
+  self:F3({eventengineshutdown=EventData})
+
+  local _unitName=EventData.IniUnitName
+  local _unit, _playername=self:_GetPlayerUnitAndName(_unitName)
+  
+  self:T3(self.lid.."ENGINESHUTDOWN: unit   = "..tostring(EventData.IniUnitName))
+  self:T3(self.lid.."ENGINESHUTDOWN: group  = "..tostring(EventData.IniGroupName))
+  self:T3(self.lid.."ENGINESHUTDOWN: player = "..tostring(_playername))
+  
+  if _unit and _playername then
+  
+    -- Debug message.
+    self:T(self.lid..string.format("Player %s shut down its engines!",_playername))
+    
+  else
+  
+    -- Debug message.
+    self:T(self.lid..string.format("AI unit %s shut down its engines!", _unitName))
+    
+    if self.despawnshutdown then
+    
+      -- Get flight.
+      local flight=self:_GetFlightFromGroupInQueue(EventData.IniGroup, self.flights)
+    
+      -- Only AI flights.
+      if flight and flight.ai then
+      
+        -- Check if all elements were recovered.
+        local recovered=self:_CheckSectionRecovered(flight)
+        
+        -- Despawn group and completely remove flight.
+        if recovered then
+          self:T(self.lid..string.format("AI group %s completely recovered. Despawning group after engine shutdown event as requested in 5 seconds.", tostring(EventData.IniGroupName)))
+          EventData.IniGroup:Destroy(nil, 5)
+          self:_RemoveFlight(flight)
+        end
+      end
+    end
+    
+  end  
+
+end
+
+--- Airboss event handler for event that a unit takes off.
+-- @param #AIRBOSS self
+-- @param Core.Event#EVENTDATA EventData
+--function AIRBOSS:OnEventPlayerLeaveUnit(EventData)
+function AIRBOSS:OnEventTakeoff(EventData)
+  self:F3({eventtakeoff=EventData})
+
+  local _unitName=EventData.IniUnitName
+  local _unit, _playername=self:_GetPlayerUnitAndName(_unitName)
+  
+  self:T3(self.lid.."TAKEOFF: unit   = "..tostring(EventData.IniUnitName))
+  self:T3(self.lid.."TAKEOFF: group  = "..tostring(EventData.IniGroupName))
+  self:T3(self.lid.."TAKEOFF: player = "..tostring(_playername))
+  
+  -- Airbase.
+  local airbase=EventData.Place
+  
+  -- Airbase name.
+  local airbasename="unknown"
+  if airbase then
+    airbasename=airbase:GetName()
+  end
+  
+  -- Check right airbase.
+  if airbasename==self.carrier:GetName() then
+  
+    if _unit and _playername then
+    
+      -- Debug message.
+      self:T(self.lid..string.format("Player %s took off at %s!",_playername, airbasename))
+      
+    else
+    
+      -- Debug message.
+      self:T2(self.lid..string.format("AI unit %s took off at %s!", _unitName, airbasename))
+      
+      -- Get flight.
+      local flight=self:_GetFlightFromGroupInQueue(EventData.IniGroup, self.flights)
+      
+      if flight then
+      
+        -- Set ballcall and recoverd status.
+        for _,elem in pairs(flight.elements) do
+          local element=elem --#AIRBOSS.FlightElement
+          element.ballcall=false
+          element.recovered=nil
+        end
+      end    
+    end
+      
+  end
 end
 
 --- Airboss event handler for event crash.
 -- @param #AIRBOSS self
 -- @param Core.Event#EVENTDATA EventData
 function AIRBOSS:OnEventCrash(EventData)
-  self:F3({eventland = EventData})
+  self:F3({eventcrash = EventData})
 
   local _unitName=EventData.IniUnitName
   local _unit, _playername=self:_GetPlayerUnitAndName(_unitName)
@@ -6292,16 +6840,9 @@ function AIRBOSS:OnEventCrash(EventData)
     local flight=self.players[_playername]
     
     -- Remove flight completely from all queues and collapse marshal if necessary.
+    -- This also updates the section, if any and removes any unfinished gradings of the player.
     if flight then
       self:_RemoveFlight(flight, true)
-    end
-    
-    -- Remove all grades until a final grade is reached.
-    local grades=self.playerscores[_playername]
-    if grades and #grades>0 then
-      while #grades>0 and grades[#grades].finalscore==nil do
-        table.remove(grades, #grades)
-      end
     end
     
   else
@@ -6329,6 +6870,7 @@ function AIRBOSS:OnEventEjection(EventData)
   
   if _unit and _playername then
     self:T(self.lid..string.format("Player %s ejected!",_playername))
+    
     -- Get player flight.
     local flight=self.players[_playername]
     
@@ -6337,20 +6879,17 @@ function AIRBOSS:OnEventEjection(EventData)
       self:_RemoveFlight(flight, true)
     end
 
-    -- Remove all grades until a final grade is reached.
-    local grades=self.playerscores[_playername]
-    if grades and #grades>0 then
-      while #grades>0 and grades[#grades].finalscore==nil do
-        table.remove(grades, #grades)
-      end
-    end    
-
   else
     -- Debug message.
-    self:T2(self.lid..string.format("AI unit %s ejected!", EventData.IniUnitName))
+    self:T(self.lid..string.format("AI unit %s ejected!", EventData.IniUnitName))
     
-    -- Remove unit from flight and queues.
-    self:_RemoveUnitFromFlight(EventData.IniUnit)     
+    -- Remove element/unit from flight group and from all queues if no elements alive.
+    self:_RemoveUnitFromFlight(EventData.IniUnit)
+    
+    -- What could happen is, that another element has landed (recovered) already and this one crashes.
+    -- This would mean that the flight would not be deleted from the queue ==> Check if section recovered.    
+    local flight=self:_GetFlightFromGroupInQueue(EventData.IniGroup, self.flights)
+    self:_CheckSectionRecovered(flight)
   end
   
 end
@@ -6382,35 +6921,54 @@ function AIRBOSS:_PlayerLeft(EventData)
       self:_RemoveFlight(flight, true)
     end
     
-    -- Remove all grades until a final grade is reached.
-    local grades=self.playerscores[_playername]
-    if grades and #grades>0 then
-      while #grades>0 and grades[#grades].finalscore==nil do
-        table.remove(grades, #grades)
-      end
-    end    
-    
   end
   
 end
 
---[[
 --- Airboss event function handling the mission end event.
 -- Handles the case when the mission is ended.
 -- @param #AIRBOSS self
 -- @param Core.Event#EVENTDATA EventData Event data.
 function AIRBOSS:OnEventMissionEnd(EventData)
-
-  -- Auto save player results.
-  if self.autosave then
-    self:Save(self.autosavepath, self.autosavefile)
-  end
+  self:T3(self.lid.."Mission Ended")
 end
-]]
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- PATTERN functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Spinning
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.PlayerData playerData Player data.
+function AIRBOSS:_Spinning(playerData)
+
+  -- Early break.
+  local SpinIt={}
+  SpinIt.name="Spinning"
+  SpinIt.Xmin=-UTILS.NMToMeters(6)         -- Not more than 5 NM behind the boat.
+  SpinIt.Xmax= UTILS.NMToMeters(5)         -- Not more than 5 NM in front of the boat.
+  SpinIt.Zmin=-UTILS.NMToMeters(6)         -- Not more than 5 NM port.
+  SpinIt.Zmax= UTILS.NMToMeters(2)         -- Not more than 3 NM starboard.
+  SpinIt.LimitXmin=-100                    -- 100 meters behind the boat
+  SpinIt.LimitXmax=nil
+  SpinIt.LimitZmin=-UTILS.NMToMeters(1)    -- 1 NM port
+  SpinIt.LimitZmax=nil
+  
+  -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
+  local X, Z, rho, phi=self:_GetDistances(playerData.unit)
+  
+  -- Check if we are in front of the boat (diffX > 0).
+  if self:_CheckLimits(X, Z, SpinIt) then
+    
+    -- Player is "de-spinned". Should go to initial again.
+    self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.INITIAL)
+    
+    -- Remove player from spinning queue.
+    self:_RemoveFlightFromQueue(self.Qspinning, playerData)
+    
+  end
+
+end
 
 --- Waiting outside 10 NM zone for free Marshal stack.
 -- @param #AIRBOSS self
@@ -6450,7 +7008,7 @@ function AIRBOSS:_Holding(playerData)
   local unit=playerData.unit
   
   -- Current stack.
-  local stack=playerData.flag:Get()
+  local stack=playerData.flag
   
   ---------------------------
   -- Holding Pattern Check --
@@ -7370,8 +7928,8 @@ function AIRBOSS:_Final(playerData)
   -- Player's angle of bank.
   local roll=playerData.unit:GetRoll()
   
-  -- Check if player is in +-5 deg cone and flying towards the runway.
-  if math.abs(lineup)<5 then --and math.abs(relhead)<5 then
+  -- Check if player is in +-4 deg cone and flying towards the runway.
+  if math.abs(lineup)<=4 then
 
     -- Get optimal altitude, distance and speed.
     local alt, aoa, dist, speed=self:_GetAircraftParameters(playerData)
@@ -7998,7 +8556,7 @@ function AIRBOSS:_GetWire(Lcoord, dc)
     wire=99
   end
   
-  if self.Debug then
+  if self.Debug and false then
  
     -- Wire position coodinates.
     local wp1=Scoord:Translate(w1, FB)
@@ -8066,6 +8624,8 @@ function AIRBOSS:_Trapped(playerData)
       -- A-4E gets slowed down much faster the the F/A-18C!
       dcorr=56
     end
+    
+    -- Get wire.
     local wire=self:_GetWire(coord, dcorr)
 
     -- Debug.
@@ -8074,6 +8634,15 @@ function AIRBOSS:_Trapped(playerData)
     
     -- Call this function again until v < threshold. Player comes to a standstill ==> Get wire!
     if v>5 then
+          
+      -- Check if we passed all wires. 
+      if wire>4 and v>10 and not playerData.warning then
+        -- Looks like we missed the wires ==> Bolter!
+        self:RadioTransmission(self.LSORadio, AIRBOSS.LSOCall.BOLTER)
+        playerData.warning=true
+      end
+    
+      -- Call function again and check if converged or back in air.
       SCHEDULER:New(nil, self._Trapped, {self, playerData}, 0.1)
       return
     end
@@ -8339,7 +8908,7 @@ function AIRBOSS:_GetZoneCorridor(case)
   
   -- Length of the box in NM.
   local x=(d+w/2)/math.cos(alpha)
-  local l=28-x
+  local l=31-x
   
   -- Some math...
   local y1=d-w2
@@ -8732,6 +9301,7 @@ function AIRBOSS:_AttitudeMonitor(playerData)
     text=text..string.format("\nDist=%.1f m Alt=%.1f m delta|V|=%.1f km/h", dist, self:_GetAltCarrier(playerData.unit), dv)
     text=text..string.format("\nLineUp=%.2f° | GlideSlope=%.2f° | AoA=%.1f", lineup, glideslope, self:_AoADeg2Units(playerData, aoa))
     local grade, points, analysis=self:_LSOgrade(playerData)
+    text=text..string.format("\nTgroove=%.1f sec", self:_GetTimeInGroove(playerData))
     text=text..string.format("\nGrade: %s %.1f PT - %s", grade, points, analysis)
   else
     text=text..string.format("\nR=%.2f NM | X=%d Z=%d m", UTILS.MetersToNM(rho), dx, dz)
@@ -8937,6 +9507,56 @@ function AIRBOSS:GetBRC()
   return self:GetHeading(true)
 end
 
+--- Get wind direction and speed at carrier position.
+-- @param #AIRBOSS self
+-- @param #number alt Altitude ASL in meters. Default 50 m.
+-- @return #number Direction the wind is blowing **from** in degrees.
+-- @return #number Wind speed in m/s.
+function AIRBOSS:GetWind(alt)
+
+  -- Current position of the carrier
+  local cv=self:GetCoordinate()
+  
+  -- Wind direction and speed. By default at 50 meters ASL.
+  local Wdir, Wspeed=cv:GetWind(alt or 50)
+    
+  return Wdir, Wspeed
+end
+
+--- Get wind direction and speed on carrier deck.
+-- @param #AIRBOSS self
+-- @param #number alt Altitude in meters. Default 50 m.
+-- @return #number Direction the wind is blowing **from** in degrees.
+-- @return #number Wind speed in m/s.
+function AIRBOSS:GetWindOnDeck(alt)
+  
+  -- Position of carrier
+  local cv=self:GetCoordinate()
+  
+  -- Velocity vector of carrier.
+  local vc=self.carrier:GetVelocityVec3()
+  
+  -- Rotate to angled deck.
+  vc=UTILS.Rotate2D(vc, self.carrierparam.rwyangle)
+  
+  -- Wind (from) vector
+  local vw=cv:GetWindWithTurbulenceVec3(alt or 50)
+  
+  -- Carrier velocity has to be negative. If carrier drives in the direction the wind is blowing from, we have less wind in total.
+  local vd=UTILS.VecSubstract(vw, vc)
+  
+  local vh=math.deg(math.atan2(vd.z, vd.x))
+  if vh<0 then
+    vh=vh+360
+  end  
+
+  -- Strength.  
+  local vabs=UTILS.VecNorm(vd)
+  
+  return vh, vabs
+end
+
+
 --- Get true (or magnetic) heading of carrier into the wind. This accounts for the angled runway.
 -- @param #AIRBOSS self
 -- @param #boolean magnetic If true, calculate magnetic heading. By default true heading is returned.
@@ -8944,10 +9564,15 @@ end
 function AIRBOSS:GetHeadingIntoWind(magnetic)
 
   -- Get direction the wind is blowing from. This is where we want to go.
-  local windfrom=self:GetCoordinate():GetWind(50)
+  local windfrom, vwind=self:GetWind()
   
   -- Actually, we want the runway in the wind.
   local intowind=windfrom-self.carrierparam.rwyangle
+  
+  -- If no wind, take current heading.
+  if vwind<0.1 then
+    intowind=self:GetHeading()
+  end
   
   -- Magnetic heading.
   if magnetic then
@@ -9061,6 +9686,28 @@ function AIRBOSS:GetRadial(case, magnetic, offset, inverse)
   end
 
   return radial
+end
+
+--- Get difference between to headings in degrees taking into accound the [0,360) periodocity. 
+-- @param #AIRBOSS self
+-- @param #number hdg1 Heading one.
+-- @param #number hdg2 Heading two.
+-- @return #number Difference between the two headings in degrees.
+function AIRBOSS:_GetDeltaHeading(hdg1, hdg2)
+  
+  local V={}  --DCS#Vec3
+  V.x=math.cos(math.rad(hdg1))
+  V.y=0
+  V.z=math.sin(math.rad(hdg1))
+  
+  local W={}  --DCS#Vec3
+  W.x=math.cos(math.rad(hdg2))
+  W.y=0
+  W.z=math.sin(math.rad(hdg2))
+  
+  local alpha=UTILS.VecAngle(V,W)
+  
+  return alpha
 end
 
 --- Get relative heading of player wrt carrier.
@@ -10074,6 +10721,19 @@ function AIRBOSS:_Debrief(playerData)
     mygrade.finalscore=Points
   end
   mygrade.case=playerData.case
+  local _,windondeck=self:GetWindOnDeck()
+  mygrade.wind=tostring(UTILS.Round(UTILS.MpsToKnots(windondeck), 1))
+  mygrade.modex=playerData.onboard
+  mygrade.airframe=playerData.actype
+  mygrade.carriertype=self.carriertype
+  mygrade.carriername=self.alias
+  mygrade.theatre=self.theatre
+  mygrade.mitime=UTILS.SecondsToClock(timer.getAbsTime())
+  mygrade.midate=UTILS.GetDCSMissionDate()
+  mygrade.osdate="n/a"
+  if os then
+    mygrade.osdate=os.date()  --os.date("%d.%m.%Y")
+  end
   
   -- Add LSO grade to player grades table.
   table.insert(self.playerscores[playerData.name], mygrade)
@@ -10128,8 +10788,7 @@ function AIRBOSS:_Debrief(playerData)
     -- TODO: CASE III: After bolter/wo turn left and climb to 1200 ft and re-enter pattern?
     -- TODO: CASE III: After pattern wo? No idea...  
   
-    -- Can become nil when I crashed and changed to observer. Which events are captured? Nil check for unit?
-  
+    -- Can become nil when I crashed and changed to observer. Which events are captured? Nil check for unit?  
     if playerData.unit:IsAlive() then
     
       -- Heading and distance tip.
@@ -10256,8 +10915,11 @@ function AIRBOSS:_Debrief(playerData)
   
   -- Player landed and is not in air anymore.
   if playerData.landed and not playerData.unit:InAir() then
-    -- TODO: This is not 100% correct if player group has some AI units. But we do it anyway since otherwise player will 
-    self:_RemoveFlightFromQueue(self.Qpattern, playerData)
+    -- Set recovered flag.
+    self:_RecoveredElement(playerData.unit)
+    
+    -- Check if all elements 
+    self:_CheckSectionRecovered(playerData)
   end
   
   -- Increase number of passes.
@@ -10489,14 +11151,19 @@ end
 -- @param Core.Point#COORDINATE coord Coordinate of the detour.
 -- @param #number speed Speed in knots. Default is current carrier velocity.
 -- @param #boolean uturn (Optional) If true, carrier will go back to where it came from before it resumes its route to the next waypoint.
+-- @param #number uspeed Speed in knots after U-turn. Default is same as before.
 -- @return #AIRBOSS self
-function AIRBOSS:CarrierDetour(coord, speed, uturn)
+function AIRBOSS:CarrierDetour(coord, speed, uturn, uspeed)
 
   -- Current coordinate of the carrier.
   local pos0=self:GetCoordinate()
+  
+  -- Default.
+  speed=speed or self.carrier:GetVelocityKNOTS()
     
   -- Speed in km/h.
-  local speedkmh=UTILS.KnotsToKmph(speed or self.carrier:GetVelocityKNOTS())
+  local speedkmh=UTILS.KnotsToKmph(speed)
+  local uspeedkmh=UTILS.KnotsToKmph(uspeed)
   
   -- Waypoint table.
   local wp={}
@@ -10507,7 +11174,7 @@ function AIRBOSS:CarrierDetour(coord, speed, uturn)
   
   -- If enabled, go back to where you came from.
   if uturn then
-    table.insert(wp, pos0:WaypointGround(speedkmh))
+    table.insert(wp, pos0:WaypointGround(uspeedkmh))
   end
   
   -- Get carrier group.
@@ -10535,17 +11202,13 @@ end
 -- @param #AIRBOSS self
 -- @param #number time Time in seconds.
 -- @param #number vdeck Speed on deck m/s. Carrier will
+-- @param #boolean uturn Make U-turn and go back to initial after downwind leg.
 -- @return #AIRBOSS self
-function AIRBOSS:CarrierTurnIntoWind(time, vdeck)
+function AIRBOSS:CarrierTurnIntoWind(time, vdeck, uturn)
   
   -- Wind speed.
-  local _,vwind=self:GetCoordinate():GetWind(50)
+  local _,vwind=self:GetWind()
   
-  -- Check that wind is >= 0.1 m/s.
-  if vwind<0.1 then
-    return
-  end
-    
   -- Speed of carrier in m/s.
   local vtot=vdeck-vwind
   
@@ -10557,7 +11220,7 @@ function AIRBOSS:CarrierTurnIntoWind(time, vdeck)
   local distNM=UTILS.MetersToNM(dist)
   
   -- Debug output
-  self:E(self.lid..string.format("Carrier steaming into the wind (%.1f kts). Distance=%.1f NM, Speed=%.1f knots, Time=%d sec.", UTILS.MpsToKnots(vwind), distNM, speedknots, time))
+  self:I(self.lid..string.format("Carrier steaming into the wind (%.1f kts). Distance=%.1f NM, Speed=%.1f knots, Time=%d sec.", UTILS.MpsToKnots(vwind), distNM, speedknots, time))
 
   -- Get heading into the wind accounting for angled runway.
   local intowind=self:GetHeadingIntoWind(false)
@@ -10572,14 +11235,35 @@ function AIRBOSS:CarrierTurnIntoWind(time, vdeck)
   
   -- Return to coordinate if collision is detected.
   self.Creturnto=self:GetCoordinate()
+    
+  -- Next waypoint.
+  local nextwp=self:_GetNextWaypoint()
+  
+  -- For downwind, we take the velocity at the next WP.
+  local vdownwind=UTILS.MpsToKnots(nextwp:GetVelocity())
 
-  -- Let the carrier make a detour from its route but return to its current position.  
-  self:CarrierDetour(pos1, speedknots, true)
+  -- Let the carrier make a detour from its route but return to its current position.
+  self:CarrierDetour(pos1, speedknots, uturn, vdownwind)
   
   -- Set switch that we are currently turning into the wind.
   self.turnintowind=true
 
   return self
+end
+
+--- Get next waypoint of the carrier.
+-- @param #AIRBOSS self
+-- @return Core.Point#COORDINATE Coordinate of the next waypoint.
+-- @return #number Number of waypoint
+function AIRBOSS:_GetNextWaypoint()
+
+  -- Next wp = current+1 (or last)
+  local Nnextwp=math.min(self.currentwp+1, #self.waypoints)
+  
+  -- Next waypoint.
+  local nextwp=self.waypoints[Nnextwp] --Core.Point#COORDINATE
+
+  return nextwp,Nnextwp
 end
 
 --- Patrol carrier.
@@ -10749,7 +11433,7 @@ function AIRBOSS:_CheckPatternUpdate()
       
       -- Update marshal pattern of AI keeping the same stack.
       if flight.ai then
-        self:_MarshalAI(flight, flight.flag:Get())
+        self:_MarshalAI(flight, flight.flag)
       end
       
     end
@@ -10794,6 +11478,9 @@ function AIRBOSS._PassingWaypoint(group, airboss, i, final)
   -- Set current waypoint.
   airboss.currentwp=i
   
+  -- Reactivate beacons.
+  --airboss:_ActivateBeacons()
+  
   -- If final waypoint reached, do route all over again.
   if i==final and final>1 and airboss.adinfinitum then
     airboss:_PatrolRoute()
@@ -10806,15 +11493,11 @@ end
 --@param Core.Point#COORDINATE gotocoord Go to coordinate before route is resumed.
 function AIRBOSS._ResumeRoute(group, airboss, gotocoord)
 
-  -- Next wp = current+1 (or last)
-  local nextwp=math.min(airboss.currentwp+1, #airboss.waypoints)
-
-  -- Debug message.
-  local text=string.format("Group %s is resuming route. Next waypoint %d.", group:GetName(), nextwp)
+  -- Get next waypoint
+  local nextwp,Nextwp=airboss:_GetNextWaypoint()
   
-  -- Debug message.
-  MESSAGE:New(text,10):ToAllIf(airboss.Debug)
-  airboss:T(airboss.lid..text)
+  -- Velocity at that coordinate.
+  local speedkmh=nextwp.Velocity*3.6
   
   -- Waypoints array.
   local waypoints={}
@@ -10823,16 +11506,24 @@ function AIRBOSS._ResumeRoute(group, airboss, gotocoord)
   local velocity=group:GetVelocityKMH()
   
   -- Current positon as first waypoint.
-  local wp0=group:GetCoordinate():WaypointGround(velocity)
+  local wp0=group:GetCoordinate():WaypointGround(speedkmh)
   table.insert(waypoints, wp0)
   
+  -- First goto this coordinate.
   if gotocoord then
-    local wp1=gotocoord:WaypointGround(velocity)
+    local wp1=gotocoord:WaypointGround(speedkmh)
     table.insert(waypoints, wp1)  
   end
   
+  -- Debug message.
+  local text=string.format("Carrier is resuming route. Next waypoint %d, Speed=%.1f knots.", Nextwp, UTILS.KmphToKnots(speedkmh))
+  
+  -- Debug message.
+  MESSAGE:New(text,10):ToAllIf(airboss.Debug)
+  airboss:I(airboss.lid..text)  
+  
   -- Loop over all remaining waypoints.
-  for i=nextwp, #airboss.waypoints do
+  for i=Nextwp, #airboss.waypoints do
   
     -- Coordinate of the next WP.
     local coord=airboss.waypoints[i]  --Core.Point#COORDINATE
@@ -12063,7 +12754,8 @@ function AIRBOSS:_AddF10Commands(_unitName)
         missionCommands.addCommandForGroup(gid, "Request Marshal",    _rootPath, self._RequestMarshal,    self, _unitName) -- F3
         missionCommands.addCommandForGroup(gid, "Request Commence",   _rootPath, self._RequestCommence,   self, _unitName) -- F4
         missionCommands.addCommandForGroup(gid, "Request Refueling",  _rootPath, self._RequestRefueling,  self, _unitName) -- F5
-        missionCommands.addCommandForGroup(gid, "[Reset My Status]",  _rootPath, self._ResetPlayerStatus, self, _unitName) -- F6
+        missionCommands.addCommandForGroup(gid, "Spinning",           _rootPath, self._RequestSpinning,   self, _unitName) -- F6        
+        missionCommands.addCommandForGroup(gid, "[Reset My Status]",  _rootPath, self._ResetPlayerStatus, self, _unitName) -- F7
       end
     else
       self:E(self.lid..string.format("ERROR: Could not find group or group ID in AddF10Menu() function. Unit name: %s.", _unitName))
@@ -12098,6 +12790,7 @@ function AIRBOSS:_ResetPlayerStatus(_unitName)
       self:MessageToPlayer(playerData, text, "AIRBOSS")
       
       -- Remove flight from queues. Collapse marshal stack if necessary.
+      -- Section members are removed from the Spinning queue. If flight is member, he is removed from the section.
       self:_RemoveFlight(playerData)
       
       -- Initialize player data.
@@ -12188,6 +12881,82 @@ function AIRBOSS:_RequestMarshal(_unitName)
   end
 end
 
+--- Request spinning.
+-- @param #AIRBOSS self
+-- @param #string _unitName Name fo the player unit.
+function AIRBOSS:_RequestSpinning(_unitName)
+  self:F(_unitName)
+  
+  -- Get player unit and name.
+  local _unit, _playername = self:_GetPlayerUnitAndName(_unitName)
+  
+  -- Check if we have a unit which is a player.
+  if _unit and _playername then
+    local playerData=self.players[_playername] --#AIRBOSS.PlayerData
+    
+    if playerData then
+      
+      local text=""
+      if not self:_InQueue(self.Qpattern, playerData.group) then
+      
+        -- Player not in pattern queue
+        text="negative, you have to be in the pattern to spin it!"
+      
+      --[[
+      elseif playerData.seclead~=playerData.name then
+      
+        -- Player is not section lead
+        text="negative, your section lead has to call spinning."
+      ]]
+      
+      elseif playerData.step==AIRBOSS.PatternStep.SPINNING then
+      
+        text="negative, you are already spinning."
+      
+      -- Check if player is in the right step.
+      elseif not (playerData.step==AIRBOSS.PatternStep.BREAKENTRY or 
+                  playerData.step==AIRBOSS.PatternStep.EARLYBREAK or
+                  playerData.step==AIRBOSS.PatternStep.LATEBREAK) then
+                  
+        text="negative, you have to be in the right step to spin it!"
+        
+      else
+              
+        -- Set player step.
+        self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.SPINNING)
+        
+        -- Add player to spinning queue.
+        table.insert(self.Qspinning, playerData)
+        
+        -- Some advice.
+        if playerData.difficulty~=AIRBOSS.Difficulty.HARD then
+          text="Spin it!"
+        end
+        if playerData.difficulty==AIRBOSS.Difficulty.EASY then
+          text=text.." Climb to 1200 feet and proceed to the initial."
+        end          
+          
+        -- Set step for section members.
+        --[[
+        for _,sec in pairs(playerData.section) do
+          local sectionmember=sec --#AIRBOSS.PlayerData
+          self:_SetPlayerStep(sectionmember, AIRBOSS.PatternStep.SPINNING)
+          if sectionmember.difficulty~=AIRBOSS.Difficulty.HARD then
+            text="Spin it!"
+            self:MessageToPlayer(playerData, text, "MARSHAL")
+          end
+        end
+        ]]
+        
+      end
+      
+      -- Send message.
+      self:MessageToPlayer(playerData, text, "MARSHAL")  
+          
+    end
+  end
+end
+
 --- Request to commence landing approach.
 -- @param #AIRBOSS self
 -- @param #string _unitName Name fo the player unit.
@@ -12209,7 +12978,7 @@ function AIRBOSS:_RequestCommence(_unitName)
       if _unit:IsInZone(self.zoneCCA) then
       
         -- Get stack value.
-        local stack=playerData.flag:Get()    
+        local stack=playerData.flag
   
         -- Number of airborne aircraft currently in pattern.
         local _,npattern=self:_GetQueueInfo(self.Qpattern)      
@@ -12291,7 +13060,8 @@ function AIRBOSS:_RequestCommence(_unitName)
             end
             
             -- Add player to pattern queue. Usually this is done when the stack is collapsed but this player is not in the Marshal queue.
-            table.insert(self.Qpattern, playerData)
+            --table.insert(self.Qpattern, playerData)
+            self:_AddFlightToPatternQueue(playerData)
           end          
           
           -- Clear player for commence.
@@ -12694,7 +13464,7 @@ function AIRBOSS:_DisplayPlayerGrades(_unitName)
             end
             
             -- Time in the groove if any.
-            if grade.Tgroove and grade.Tgroove<=60 then
+            if grade.Tgroove and grade.Tgroove<=120 then
               text=text..string.format(" Tgroove=%.1f s", grade.Tgroove)
             end
           end
@@ -12807,7 +13577,7 @@ function AIRBOSS:_DisplayQueue(_unitname, qname)
             local flight=_flight --#AIRBOSS.FlightGroup
             local charlie=self:_GetCharlieTime(flight)
             local Charlie=UTILS.SecondsToClock(charlie)
-            local stack=flight.flag:Get()
+            local stack=flight.flag
             local angels=self:_GetAngels(self:_GetMarshalAltitude(stack, flight.case))
             local _,nunit,nsec=self:_GetFlightUnits(flight, true)
             local nick=self:_GetACNickname(flight.actype)
@@ -12870,11 +13640,15 @@ function AIRBOSS:_DisplayCarrierInfo(_unitname)
         icls=string.format("%d (%s)", self.ICLSchannel, self.ICLSmorse)
       end
       
+      -- Wind on flight deck
+      local wind=UTILS.MpsToKnots(select(2, self:GetWindOnDeck()))
+      
       -- Get groups, units in queues.
-      local Nmarshal,nmarshal=self:_GetQueueInfo(self.Qmarshal, playerData.case)
-      local Npattern,npattern=self:_GetQueueInfo(self.Qpattern)
-      local Nwaiting,nwaiting=self:_GetQueueInfo(self.Qwaiting)
-      local Ntotal,ntotal=self:_GetQueueInfo(self.flights)
+      local Nmarshal,nmarshal   = self:_GetQueueInfo(self.Qmarshal, playerData.case)
+      local Npattern,npattern   = self:_GetQueueInfo(self.Qpattern)
+      local Nspinning,nspinning = self:_GetQueueInfo(self.Qspinning)
+      local Nwaiting,nwaiting   = self:_GetQueueInfo(self.Qwaiting)
+      local Ntotal,ntotal       = self:_GetQueueInfo(self.flights)
       
       -- Current abs time.
       local Tabs=timer.getAbsTime()
@@ -12923,8 +13697,7 @@ function AIRBOSS:_DisplayCarrierInfo(_unitname)
         text=text..string.format("Case %d recovery ops\nMarshal radial %03d°\n", self.case, radial)
       end
       text=text..string.format("BRC %03d° - FB %03d°\n", self:GetBRC(), self:GetFinalBearing(true))
-      --text=text..string.format("FB %03d°\n", self:GetFinalBearing(true))           
-      text=text..string.format("Speed %d kts\n", carrierspeed)
+      text=text..string.format("Speed %.1f kts - Wind on deck %.1f kts\n", carrierspeed, wind)
       text=text..string.format("Tower frequency %.3f MHz\n", self.TowerFreq)
       text=text..string.format("Marshal radio %.3f MHz\n", self.MarshalFreq)
       text=text..string.format("LSO radio %.3f MHz\n", self.LSOFreq)
@@ -12933,10 +13706,9 @@ function AIRBOSS:_DisplayCarrierInfo(_unitname)
       if tankertext then
         text=text..tankertext.."\n"
       end
-      --text=text..string.format("# A/C total %d\n", #self.flights)
       text=text..string.format("# A/C total %d (%d)\n", Ntotal, ntotal)
       text=text..string.format("# A/C marshal %d (%d)\n", Nmarshal, nmarshal)
-      text=text..string.format("# A/C pattern %d (%d)\n", Npattern, npattern)
+      text=text..string.format("# A/C pattern %d (%d) - spinning %d (%d)\n", Npattern, npattern, Nspinning, nspinning)
       text=text..string.format("# A/C waiting %d (%d)\n", Nwaiting, nwaiting)
       text=text..string.format(recoverytext)
       self:T2(self.lid..text)
@@ -12973,10 +13745,13 @@ function AIRBOSS:_DisplayCarrierWeather(_unitname)
     -- Get atmospheric data at carrier location.
     local T=coord:GetTemperature()
     local P=coord:GetPressure()
-    local Wd,Ws=coord:GetWind()
+    local Wd,Ws=self:GetWind()
     
     -- Get Beaufort wind scale.
     local Bn,Bd=UTILS.BeaufortScale(Ws)
+    
+    -- Wind on flight deck
+    local Wod=UTILS.MpsToKnots(select(2, self:GetWindOnDeck()))    
     
     local WD=string.format('%03d°', Wd)
     local Ts=string.format("%d°C",T)
@@ -12990,6 +13765,7 @@ function AIRBOSS:_DisplayCarrierWeather(_unitname)
     text=text..string.format("================================\n")      
     text=text..string.format("Temperature %s\n", tT)
     text=text..string.format("Wind from %s at %s (%s)\n", WD, tW, Bd)
+    text=text..string.format("Wind on deck %.1f knots\n", Wod)
     text=text..string.format("QFE %.1f hPa = %s", P, tP)
     
     -- More info only reliable if Mission uses static weather.
@@ -13126,7 +13902,7 @@ function AIRBOSS:_DisplayPlayerStatus(_unitName)
       end
 
       -- Stack.
-      local stack=playerData.flag:Get()
+      local stack=playerData.flag
       
       -- Stack text.
       local stacktext=nil
@@ -13161,7 +13937,7 @@ function AIRBOSS:_DisplayPlayerStatus(_unitName)
       end
       text=text..string.format("Recovery Case: %d\n", playerData.case)
       text=text..string.format("Skill Level: %s\n", playerData.difficulty)
-      text=text..string.format("Tail # %s (%s)\n", playerData.onboard, self:_GetACNickname(playerData.actype))
+      text=text..string.format("Modex: %s (%s)\n", playerData.onboard, self:_GetACNickname(playerData.actype))
       text=text..string.format("Fuel State: %.1f lbs/1000 (%.1f %%)\n", fuelstate/1000, fuel)
       text=text..string.format("# units: %d (%d airborne)\n", nunitsGround, nunitsAirborne)
       text=text..string.format("Section Lead: %s (%d/%d)", tostring(playerData.seclead), #playerData.section+1, self.NmaxSection+1)
@@ -13223,7 +13999,7 @@ function AIRBOSS:_MarkMarshalZone(_unitName, flare)
     if playerData then
     
       -- Get player stack and recovery case.
-      local stack=playerData.flag:Get()
+      local stack=playerData.flag
       local case=playerData.case
       
       local text=""
@@ -13507,7 +14283,7 @@ function AIRBOSS:onafterSave(From, Event, To, path, filename)
   self:I(self.lid..text)
 
   -- Header line
-  local scores="Name,Pass,Points Final,Points Pass,Grade,Details,Wire,Tgroove,Case\n"
+  local scores="Name,Pass,Points Final,Points Pass,Grade,Details,Wire,Tgroove,Case,Wind,Modex,Airframe,Carrier Type, Carrier Name,Theatre,Mission Time,Mission Date,OS Date\n"
   
   -- Loop over all players.
   for playername,grades in pairs(self.playerscores) do
@@ -13523,7 +14299,7 @@ function AIRBOSS:onafterSave(From, Event, To, path, filename)
       end
       
       local Tgroove="n/a"
-      if grade.Tgroove and grade.Tgroove<=60 and grade.case<3 then
+      if grade.Tgroove and grade.Tgroove<=120 and grade.case<3 then
         Tgroove=tostring(UTILS.Round(grade.Tgroove, 1))
       end
       
@@ -13533,7 +14309,10 @@ function AIRBOSS:onafterSave(From, Event, To, path, filename)
       end
       
       -- Compile grade line.
-      scores=scores..string.format("%s,%d,%s,%.1f,%s,%s,%s,%s,%d\n", playername, i, finalscore, grade.points, grade.grade, grade.details, wire, Tgroove, grade.case) 
+      --scores=scores..string.format("%s,%d,%s,%.1f,%s,%s,%s,%s,%d\n",
+      scores=scores..string.format("%s,%d,%s,%.1f,%s,%s,%s,%s,%d,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+      playername, i, finalscore, grade.points, grade.grade, grade.details, wire, Tgroove, grade.case,
+      grade.wind, grade.modex, grade.airframe, grade.carriertype, grade.carriername, grade.theatre, grade.mitime, grade.midate, grade.osdate)
     end
   end
   
@@ -13658,7 +14437,9 @@ function AIRBOSS:onafterLoad(From, Event, To, path, filename)
     -- Grade table
     local grade={} --#AIRBOSS.LSOgrade
     
-    -- Line format: playername, i, grade.finalscore, grade.points, grade.grade, grade.details, wire, Tgroove, case
+    --- Line format:
+    -- playername, i, grade.finalscore, grade.points, grade.grade, grade.details, wire, Tgroove, case,
+    -- time, wind, airframe, modex, carriertype, carriername, theatre, date
     local playername=gradedata[1]
     if gradedata[3]~=nil and gradedata[3]~="n/a" then
       grade.finalscore=tonumber(gradedata[3])
@@ -13673,6 +14454,16 @@ function AIRBOSS:onafterLoad(From, Event, To, path, filename)
       grade.Tgroove=tonumber(gradedata[8])
     end
     grade.case=tonumber(gradedata[9])
+    -- new
+    grade.wind=gradedata[10] or "n/a"
+    grade.modex=gradedata[11] or "n/a"
+    grade.airframe=gradedata[12] or "n/a"
+    grade.carriertype=gradedata[13] or "n/a"
+    grade.carriername=gradedata[14] or "n/a"
+    grade.theatre=gradedata[15] or "n/a"
+    grade.mitime=gradedata[16] or "n/a"
+    grade.midate=gradedata[17] or "n/a"
+    grade.osdate=gradedata[18] or "n/a"    
     
     -- Init player table if necessary.
     self.playerscores[playername]=self.playerscores[playername] or {}
