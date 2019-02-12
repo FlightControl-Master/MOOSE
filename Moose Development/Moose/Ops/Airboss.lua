@@ -331,7 +331,7 @@
 --  
 -- ### Request Refueling
 -- 
--- If a recovery taker has been set up via the @{#AIRBOSS.SetRecoveryTanker}, the player can request refueling at any time. If currently in the marshal stack, the stack above will collapse.
+-- If a recovery tanker has been set up via the @{#AIRBOSS.SetRecoveryTanker}, the player can request refueling at any time. If currently in the marshal stack, the stack above will collapse.
 -- The player will be informed if the tanker is currently busy or going RTB to refuel itself at its home base. Once the re-fueling is complete, the player has to re-register to the marshal stack.
 -- 
 -- ### Spinning
@@ -1586,6 +1586,9 @@ function AIRBOSS:New(carriername, alias)
     self:E(self.lid..string.format("ERROR: Unknown carrier type %s!", tostring(self.carriertype)))
     return nil
   end
+  
+  -- Init voice over files.
+  self:_InitVoiceOvers()
   
   -------------------
   -- Debug Section --
@@ -7372,28 +7375,6 @@ function AIRBOSS:_ArcInTurn(playerData)
   
     -- Hint for player about altitude, AoA etc.
     self:_PlayerHint(playerData)
-    
-    -- Message to player.
-    if playerData.difficulty~=AIRBOSS.Difficulty.HARD then
-    
-      -- Hint
-      -- TODO Add as special case to playerhint function
-      local hint=""
-            
-      -- Hint turn and set TACAN.
-      if playerData.difficulty==AIRBOSS.Difficulty.EASY then
-        -- Get inverse magnetic radial without offset ==> FB for Case II or BRC for Case III.  
-        local radial=self:GetRadial(playerData.case, true, false, true)
-        local turn="right"
-        if self.holdingoffset<0 then
-          turn="left"
-        end
-        hint=hint..string.format("\nTurn %s and select TACAN %03d°.", turn, radial)
-      end
-      
-      -- Message to player.
-      self:MessageToPlayer(playerData, hint, "MARSHAL", "")
-    end
         
     -- Next step: Arc Out Turn.
     self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.ARCOUT)
@@ -7447,25 +7428,6 @@ function AIRBOSS:_DirtyUp(playerData)
 
     -- Hint for player about altitude, AoA etc.
     self:_PlayerHint(playerData)
-
-    -- Message to player.
-    if playerData.difficulty~=AIRBOSS.Difficulty.HARD then
-    
-      -- Hint alt and speed.
-      -- TODO Add to playerhint function as special case.
-      local hint=""
-      
-      -- Dirty up.
-      if playerData.difficulty==AIRBOSS.Difficulty.EASY then
-        if playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
-          hint=hint.."\nFAF! Checks completed. Nozzles 50°."
-        else
-          hint=hint.."\nDirty up! Hook, gear and flaps down."
-        end
-      end      
-      
-      self:MessageToPlayer(playerData, hint, "MARSHAL", "")
-    end
     
     -- Radio call "Say/Fly needles". Delayed by 10/15 seconds.
     if playerData.actype~=AIRBOSS.AircraftCarrier.AV8B then
@@ -7503,20 +7465,6 @@ function AIRBOSS:_Bullseye(playerData)
       
     -- Hint for player about altitude, AoA etc.
     self:_PlayerHint(playerData)
-    
-    -- Message to player.
-    -- TODO: Add to playerhint as special case.
-    if playerData.difficulty~=AIRBOSS.Difficulty.HARD then
-      local hint=""            
-      -- Hint follow the needles.
-      if playerData.difficulty==AIRBOSS.Difficulty.EASY then
-        if playerData.actype~=AIRBOSS.AircraftCarrier.AV8B then
-          hint=hint..string.format("Intercept glideslope and follow the needles.")
-        end
-      end
-      
-      self:MessageToPlayer(playerData, hint, "MARSHAL", "")
-    end
     
     -- LSO expect spot 7.5 call
     if playerData.actype==AIRBOSS.AircraftCarrier.AV8B then     
@@ -7585,21 +7533,21 @@ function AIRBOSS:_PlayerHint(playerData, delay)
   local hintAoA,debriefAoA,callAoA=self:_AoACheck(playerData, aoa)
   
   -- Get distance to the boat hint.
-  local hintDist,debriefDist,callDist=self:_DistCheck(playerData, dist)
+  local hintDist,debriefDist,callDist=self:_DistanceCheck(playerData, dist)
   
   -- Message to player.
   local hint=""  
   if hintAlt then
-    hint=hint..hintAlt.."\n"
+    hint=hint.."\n"..hintAlt
   end
   if hintSpeed then
-    hint=hint..hintSpeed.."\n"
+    hint=hint.."\n"..hintSpeed
   end
   if hintAoA then
-    hint=hint..hintAoA.."\n"
+    hint=hint.."\n"..hintAoA
   end
   if hintDist then
-    hint=hint..hintDist.."\n"
+    hint=hint.."\n"..hintDist
   end
   
   -- Debriefing text.
@@ -7639,6 +7587,43 @@ function AIRBOSS:_PlayerHint(playerData, delay)
     self:Sound2Player(playerData, self.LSORadio, callDist, false, delay)
     delay=delay+callDist.duration+0.5
   end
+  
+  -- ARC IN info.
+  if playerData.step==AIRBOSS.PatternStep.ARCIN then
+  
+    -- Hint turn and set TACAN.
+    if playerData.difficulty==AIRBOSS.Difficulty.EASY then
+      -- Get inverse magnetic radial without offset ==> FB for Case II or BRC for Case III.  
+      local radial=self:GetRadial(playerData.case, true, false, true)
+      local turn="right"
+      if self.holdingoffset<0 then
+        turn="left"
+      end
+      hint=hint..string.format("\nTurn %s and select TACAN %03d°.", turn, radial)
+    end
+    
+  end
+  
+  -- DIRTUP additonal info.
+  if playerData.step==AIRBOSS.PatternStep.DIRTYUP then
+    if playerData.difficulty==AIRBOSS.Difficulty.EASY then
+      if playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
+        hint=hint.."\nFAF! Checks completed. Nozzles 50°."
+      else
+        hint=hint.."\nDirty up! Hook, gear and flaps down."
+      end
+    end      
+  end
+  
+  -- BULLSEYE additonal info.
+  if playerData.step==AIRBOSS.PatternStep.BULLSEYE then            
+    -- Hint follow the needles.
+    if playerData.difficulty==AIRBOSS.Difficulty.EASY then
+      if playerData.actype~=AIRBOSS.AircraftCarrier.AV8B then
+        hint=hint..string.format("\nIntercept glideslope and follow the needles.")
+      end
+    end
+  end  
   
   -- Message to player.
   if hint~="" then
@@ -7776,7 +7761,7 @@ function AIRBOSS:_Abeam(playerData)
     end
     
     -- Hint for player about altitude, AoA etc.
-    self:_PlayerHint(playerData)
+    self:_PlayerHint(playerData, 3)
 
     -- Next step: ninety.
     self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.NINETY)
@@ -8398,10 +8383,14 @@ function AIRBOSS:_CheckFoulDeck(playerData)
       self:MessageToPlayer(playerData, text, "LSO", nil, nil, false, 3)
     end    
     
-    -- Set player parameters for foul deck
+    -- Set player parameters for foul deck.
     playerData.fouldeckwo=true
+    
+    -- Debrief.
     playerData.step=AIRBOSS.PatternStep.DEBRIEF
     playerData.warning=nil
+    
+    -- Pass would be invalid if the player lands.
     playerData.valid=false
     
     -- Send a message to the player that blocks the runway.
@@ -12019,18 +12008,18 @@ function AIRBOSS:RadioTransmission(radio, call, loud, delay)
   end
   
   -- Append radio click sound at the end of the transmission.
-  if call~=AIRBOSS[caller].CLICK and
-     call~=AIRBOSS[caller].N0 and
-     call~=AIRBOSS[caller].N1 and
-     call~=AIRBOSS[caller].N2 and
-     call~=AIRBOSS[caller].N3 and
-     call~=AIRBOSS[caller].N4 and
-     call~=AIRBOSS[caller].N5 and
-     call~=AIRBOSS[caller].N6 and
-     call~=AIRBOSS[caller].N7 and
-     call~=AIRBOSS[caller].N8 and
-     call~=AIRBOSS[caller].N9 then
-    self:RadioTransmission(radio, AIRBOSS[caller].CLICK, false, delay)
+  if call~=self[caller].CLICK and
+     call~=self[caller].N0 and
+     call~=self[caller].N1 and
+     call~=self[caller].N2 and
+     call~=self[caller].N3 and
+     call~=self[caller].N4 and
+     call~=self[caller].N5 and
+     call~=self[caller].N6 and
+     call~=self[caller].N7 and
+     call~=self[caller].N8 and
+     call~=self[caller].N9 then
+    self:RadioTransmission(radio, self[caller].CLICK, false, delay)
   end
 end
 
@@ -12497,7 +12486,7 @@ function AIRBOSS:_Number2Sound(playerData, sender, number, delay)
     local N=string.format("N%s", n)
     
     -- Radio call.
-    local call=AIRBOSS[Sender][N] --#AIRBOSS.RadioCall
+    local call=self[Sender][N] --#AIRBOSS.RadioCall
     
     -- Create file name.
     --local filename=string.format("%s.%s", call.file, call.suffix)
@@ -12555,7 +12544,7 @@ function AIRBOSS:_Number2Radio(radio, number, delay)
     local N=string.format("N%s", n)
     
     -- Radio call.
-    local call=AIRBOSS[Sender][N] --#AIRBOSS.RadioCall
+    local call=self[Sender][N] --#AIRBOSS.RadioCall
     
     -- Transmit.
     self:RadioTransmission(radio, call, false, delay)
