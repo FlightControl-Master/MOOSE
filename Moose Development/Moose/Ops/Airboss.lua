@@ -1206,7 +1206,7 @@ AIRBOSS.GroovePos={
 -- @field #AIRBOSS.RadioCall NOISE Static noise sound.
 
 --- Marshal radio calls.
--- @type AIRBOSS.MarshalCall
+-- @type AIRBOSS.MarshalCalls
 -- @field #AIRBOSS.RadioCall RADIOCHECK "Radio check" call.
 -- @field #AIRBOSS.RadioCall SAYNEEDLES "Say needles" call.
 -- @field #AIRBOSS.RadioCall FLYNEEDLES "Fly your needles" call.
@@ -1222,6 +1222,15 @@ AIRBOSS.GroovePos={
 -- @field #AIRBOSS.RadioCall N9 "Nine" call.
 -- @field #AIRBOSS.RadioCall CLICK Radio end transmission click sound.
 -- @field #AIRBOSS.RadioCall NOISE Static noise sound.
+-- @field #AIRBOSS.RadioCall CASE "Case" call.
+-- @field #AIRBOSS.RadioCall EXPECTED "Expected" call.
+-- @field #AIRBOSS.RadioCall BRC "BRC" call.
+-- @field #AIRBOSS.RadioCall CHARLIETIME "Charlie Time" call.
+-- @field #AIRBOSS.RadioCall REPORTSEEME "Report see me" call.
+-- @field #AIRBOSS.RadioCall HOLDAT "Hold at" call.
+-- @field #AIRBOSS.RadioCall ANGELS "Angels" call.
+-- @field #AIRBOSS.RadioCall ALTIMETER "Altimeter" call.
+-- @field #AIRBOSS.RadioCall POINT "Point" call.
 
 --- Message for player.
 -- @type AIRBOSS.PlayerMessage
@@ -3488,8 +3497,8 @@ function AIRBOSS:_InitTarawa()
   self.BreakLate.LimitXmin= 0                      -- Check and next step 0.8 NM port and in front of boat.
   self.BreakLate.LimitXmax= nil
   self.BreakLate.LimitZmin=-UTILS.NMToMeters(0.5)  -- 926 m port, closer than the stennis as abeam is 0.8-1.0 rather than 1.2
-  self.BreakLate.LimitZmax= nil  
-    
+  self.BreakLate.LimitZmax= nil
+  
 end
 
 
@@ -3793,72 +3802,71 @@ function AIRBOSS:_InitVoiceOvers()
       duration=0.9,
       subduration=5,
     },
-    -- TODO: Other voice overs for marshal.
     N0={
-      file="LSO-N0",
+      file="MARSHAL-N0",
       suffix="ogg",
       loud=false,
       subtitle="",
       duration=0.40,
     },
     N1={
-      file="LSO-N1",
+      file="MARSHAL-N1",
       suffix="ogg",
       loud=false,
       subtitle="",
       duration=0.25,
     },
     N2={
-      file="LSO-N2",
+      file="MARSHAL-N2",
       suffix="ogg",
       loud=false,
       subtitle="",
       duration=0.37,
     },
     N3={
-      file="LSO-N3",
+      file="MARSHAL-N3",
       suffix="ogg",
       loud=false,
       subtitle="",
       duration=0.37,
     },
     N4={
-      file="LSO-N4",
+      file="MARSHAL-N4",
       suffix="ogg",
       loud=false,
       subtitle="",
       duration=0.39,
     },
     N5={
-      file="LSO-N5",
+      file="MARSHAL-N5",
       suffix="ogg",
       loud=false,
       subtitle="",
       duration=0.39,
     },
     N6={
-      file="LSO-N6",
+      file="MARSHAL-N6",
       suffix="ogg",
       loud=false,
       subtitle="",
       duration=0.40,
     },
     N7={
-      file="LSO-N7",
+      file="MARSHAL-N7",
       suffix="ogg",
       loud=false,
       subtitle="",
       duration=0.40,
     },
     N8={
-      file="LSO-N8",
+      file="MARSHAL-N8",
       suffix="ogg",
       loud=false,
       subtitle="",
       duration=0.37,
     },
     N9={
-      file="LSO-N9",
+      file="MARSHAL-N9",
       suffix="ogg",
       loud=false,
       subtitle="",
@@ -5146,11 +5154,14 @@ function AIRBOSS:_AddMarshalGroup(flight, stack)
   local Ccharlie=UTILS.SecondsToClock(flight.Tcharlie)
   
   -- Marshal message.
-  local text=string.format("Case %d, expected BRC %03d°, hold at %d. Expected Charlie Time %s.\n", flight.case, brc, alt, tostring(Ccharlie))
-  text=text..string.format("Altimeter %.2f. Report see me.", P)
+  --local text=string.format("Case %d, expected BRC %03d°, hold at %d. Expected Charlie Time %s.\n", flight.case, brc, alt, tostring(Ccharlie))
+  --text=text..string.format("Altimeter %.2f. Report see me.", P)
   
   -- Message to all players.
-  self:MessageToMarshal(text, "MARSHAL", flight.onboard)
+  --self:MessageToMarshal(text, "MARSHAL", flight.onboard)
+  
+  -- Combined marshal call.
+  self:_MarshalCallArrived(flight.onboard, flight.case, brc, alt, Ccharlie, P)
   
   -- Hint about TACAN bearing.
   if self.TACANon and (not flight.ai) and flight.difficulty==AIRBOSS.Difficulty.EASY then
@@ -5895,7 +5906,7 @@ function AIRBOSS:_CheckSectionRecovered(flight)
 
   -- Check all elements of the lead flight group.
   for _,_element in pairs(lead.elements) do
-    local element=_element  --#AIROBSS.FlightElement
+    local element=_element  --#AIRBOSS.FlightElement
     if not element.recovered then
       return false
     end
@@ -12555,6 +12566,65 @@ function AIRBOSS:_Number2Radio(radio, number, delay)
   
   -- Return the total duration of the call.
   return wait
+end
+
+--- Compile a radio call when Marshal tells a flight the holding alitude.
+-- @param #AIRBOSS self
+-- @param #string modex Tail number.
+-- @param #number case Recovery case.
+-- @param #number brc Base recovery course.
+-- @param #number altitude Holding alitude.
+-- @param #string charlie Charlie Time estimate.
+-- @param #string qfe Alitmeter inHg.
+function AIRBOSS:_MarshalCallArrived(modex, case, brc, altitude, charlie, qfe)
+  
+  -- Split strings etc.
+  local angels=self:_GetAngels(altitude)
+  local QFE=UTILS.Split(tostring(qfe), ".")
+  local CT=UTILS.Split(select(1, UTILS.Split(alitmeter, "+")), ":")
+
+  -- Subtitle text.
+  local text=string.format("Case %d, expected BRC %03d°, hold at angels %d. Expected Charlie Time %s.\n", case, brc, angels, charlie)
+  text=text..string.format("Altimeter %.2f. Report see me.", qfe)
+
+  -- Create new call to display complete subtitle.
+  local casecall=self:_NewRadioCall(self.MarshalCall.CASE, "MARSHAL", text, self.Tmessage, modex)
+  
+  -- Case..
+  self:RadioTransmission(self.MarshalRadio, casecall)
+  -- X..
+  self:_Number2Radio(self.MarshalRadio, tostring(case))
+  -- expected..
+  self:RadioTransmission(self.MarshalRadio, self.MarshalCall.EXPECTED)
+  -- BRC..
+  self:RadioTransmission(self.MarshalRadio, self.MarshalCall.BRC)
+  -- XYZ..
+  self:_Number2Radio(self.MarshalRadio, string.format("%d03", brc))
+  -- hold at..
+  self:RadioTransmission(self.MarshalRadio, self.MarshalCall.HOLDAT)
+  -- angels..
+  self:RadioTransmission(self.MarshalRadio, self.MarshalCall.ANGELS)
+  -- X..
+  self:_Number2Radio(self.MarshalRadio, tostring(angels))
+  -- Expected..
+  self:RadioTransmission(self.MarshalRadio, self.MarshalCall.EXPECTED)
+  -- Charlie time..
+  self:RadioTransmission(self.MarshalRadio, self.MarshalCall.CHARLIETIME)
+  -- XY.. (hours)
+  self:_Number2Radio(self.MarshalRadio, CT[1])
+  -- XY.. (minutes)
+  self:_Number2Radio(self.MarshalRadio, CT[2])
+  -- Altimeter..
+  self:RadioTransmission(self.MarshalRadio, self.MarshalCall.ALTIMETER)
+  -- XY..
+  self:_Number2Radio(self.MarshalRadio, QFE[1])
+  -- Point..
+  self:RadioTransmission(self.MarshalRadio, self.MarshalCall.POINT)
+  -- XY..
+  self:_Number2Radio(self.MarshalRadio, QFE[2])
+  -- Report see me.
+  self:RadioTransmission(self.MarshalRadio, self.MarshalCall.REPORTSEEME)
+  
 end
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
