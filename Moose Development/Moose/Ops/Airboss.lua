@@ -203,6 +203,7 @@
 -- @field #number dTbeacon Time interval to refresh the beacons. Default 5 minutes.
 -- @field #AIRBOSS.LSOCalls LSOCall Radio voice overs of the LSO.
 -- @field #AIRBOSS.MarshalCalls MarshalCall Radio voice over of the Marshal/Airboss.
+-- @field #number lowfuelAI Low fuel threshold for AI groups in percent.
 -- @extends Core.Fsm#FSM
 
 --- Be the boss!
@@ -1002,6 +1003,7 @@ AIRBOSS = {
   Tbeacon        = nil,
   LSOCall        = nil,
   MarshalCall    = nil,
+  lowfuelAI      = nil,
 }
 
 --- Aircraft types capable of landing on carrier (human+AI).
@@ -2755,6 +2757,23 @@ end
 --- Check AI status. Pattern queue AI in the groove? Marshal queue AI arrived in holding zone?
 -- @param #AIRBOSS self
 function AIRBOSS:_CheckAIStatus()
+
+  -- Loop over all flights in Marshal stack.
+  for _,_flight in pairs(self.Qmarshal) do
+    local flight=_flight --#AIRBOSS.FlightGroup
+    
+    -- Only AI!
+    if flight.ai then
+      
+      -- TODO: Check that aircraft can be refueled.
+      local fuel=flight.group:GetFuelMin()*100
+      
+      if self.lowfuelAI and fuel<self.lowfuelAI then
+        --self:_RefuelAI(flight)
+      end
+            
+    end    
+  end
 
   -- Loop over all flights in landing pattern.
   for _,_flight in pairs(self.Qpattern) do
@@ -4541,14 +4560,14 @@ function AIRBOSS:_ScanCarrierZone()
             
             if stack then
             
-              -- Send AI to marshal stack.
-              self:_MarshalAI(knownflight, stack)
+              -- Send AI to marshal stack. We respawn the group to clean possible departure and destination airbases.
+              self:_MarshalAI(knownflight, stack, true)
               
             else
             
               -- Send AI to orbit outside 10 NM zone and wait until the next Marshal stack is available.
               if not self:_InQueue(self.Qwaiting, knownflight.group) then
-                self:_WaitAI(knownflight)
+                self:_WaitAI(knownflight, true)  -- Group is respawned to clear any attached airfields.
               end
             
             end
@@ -4685,7 +4704,8 @@ end
 -- If the flight is not already holding in the Marshal stack, it is guided there first.
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.FlightGroup flight Flight group.
-function AIRBOSS:_WaitAI(flight)
+-- @param #boolean respawn If true respawn the group. Otherwise reset the mission task with new waypoints.
+function AIRBOSS:_WaitAI(flight, respawn)
 
   -- Set flag to something other than -100 and <0
   flight.flag=-99
@@ -4740,13 +4760,32 @@ function AIRBOSS:_WaitAI(flight)
   -- Debug markers.
   if self.Debug then
     p0:MarkToAll(string.format("Waiting Orbit of flight %s at Angels %s", groupname, angels))
-  end  
-
-  -- Reinit waypoints.
-  group:WayPointInitialize(wp)
+  end
   
-  -- Route group.
-  group:Route(wp, 0)
+  if respawn then
+  
+    -- This should clear the landing waypoints.  
+    -- TODO: This resets the weapons and the fuel state. But not the units fortunately.
+
+    -- Get group template.
+    local Template=group:GetTemplate()
+    
+    -- Set route points.
+    Template.route.points=wp
+    
+    -- Respawn the group.
+    group=group:Respawn(Template, true)  
+    
+  else  
+
+    -- Reinit waypoints.
+    group:WayPointInitialize(wp)
+    
+    -- Route group.
+    group:Route(wp, 0)
+    
+  end
+  
 end
 
 --- Command AI flight to orbit at a specified position at a specified altitude with a specified speed. If flight is not in the Marshal queue yet, it is added. This fixes the recovery case.
@@ -4754,7 +4793,8 @@ end
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.FlightGroup flight Flight group.
 -- @param #number nstack Stack number of group. Can also be the current stack if AI position needs to be updated wrt to changed carrier position.
-function AIRBOSS:_MarshalAI(flight, nstack)
+-- @param #boolean respawn If true, respawn the flight otherwise update mission task with new waypoints.
+function AIRBOSS:_MarshalAI(flight, nstack, respawn)
 
   -- Check if flight is already in Marshal queue.
   if not self:_InQueue(self.Qmarshal,flight.group) then
@@ -4870,14 +4910,73 @@ function AIRBOSS:_MarshalAI(flight, nstack)
     p0:MarkToAll("WP P0 "..groupname)
     p1:MarkToAll("RT P1 "..groupname)
     p2:MarkToAll("RT P2 "..groupname)
-  end  
+  end
+  
+  if respawn then
+  
+    -- This should clear the landing waypoints.  
+    -- TODO: This resets the weapons and the fuel state. But not the units fortunately.
 
+    -- Get group template.
+    local Template=group:GetTemplate()
+    
+    -- Set route points.
+    Template.route.points=wp
+    
+    -- Respawn the group.
+    group=group:Respawn(Template, true)  
+    
+  else
+
+    -- Reinit waypoints.
+    group:WayPointInitialize(wp)
+    
+    -- Route group.
+    group:Route(wp, 0)
+    
+  end  
+end
+
+--- Tell AI to refuel. Either at the recovery tanker or at the nearest divert airfield.
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.FlightGroup flight Flight group.
+function AIRBOSS:_RefuelAI(flight)
+
+  -- Waypoints array.
+  local wp={}
+
+  -- Current speed.
+  local CurrentSpeed=flight.group:GetVelocityKMH()
+
+  -- Current positon.
+  wp[#wp+1]=flight.group:GetCoordinate():WaypointAirTurningPoint(nil, CurrentSpeed, {}, "Current position")
+
+  if self.tanker then
+  
+    -- Current Tanker position.
+    local tankerpos=self.tanker.tanker:GetCoordinate()
+    
+    -- Task refueling.
+    local TaskRefuel=flight.group:TaskRefueling()
+
+    -- Task to go back to Marshal.
+    local TaskMarshal=flight.group:TaskFunction("AIRBOSS._TaskFunctionMarshalAI", self, flight)
+    
+    -- Waypoint with tasks.
+    wp[#wp+1]=tankerpos:WaypointAirTurningPoint(nil, CurrentSpeed, {TaskRefuel, TaskMarshal}, "Refueling")
+  
+  else
+  
+    local divertfield=self:GetCoordinate():GetClosestAirbase(Airbase.Category.AIRDROME, self:GetCoalition())
+  
+  end
+  
   -- Reinit waypoints.
-  group:WayPointInitialize(wp)
+  flight.group:WayPointInitialize(wp)
   
   -- Route group.
-  group:Route(wp, 0)
-  
+  flight.group:Route(wp, 0)
+
 end
 
 --- Tell AI to land on the carrier.
@@ -7876,12 +7975,12 @@ function AIRBOSS:_Final(playerData)
 
     -- Hint for player about altitude, AoA etc.
     self:_PlayerHint(playerData)
-
+    
     -- Gather pilot data.
     local groovedata={} --#AIRBOSS.GrooveData
     groovedata.Step=playerData.step
-    groovedata.Alt=alt
-    groovedata.AoA=aoa
+    groovedata.Alt=playerData.unit:GetAltitude()
+    groovedata.AoA=playerData.unit:GetAoA()
     groovedata.GSE=self:_Glideslope(playerData.unit)
     groovedata.LUE=self:_Lineup(playerData.unit, true)
     groovedata.Roll=roll
@@ -8134,7 +8233,7 @@ function AIRBOSS:_Groove(playerData)
     
       -- Update max deviation of line up error.    
       if math.abs(lineupError)>math.abs(gd.LUE) then
-        self:T(self.lid..string.format("Got bigger Linue up error at %s: LUE %.3f>%.3f.", gs, lineupError, gd.LUE))
+        self:T(self.lid..string.format("Got bigger Lineup error at %s: LUE %.3f>%.3f.", gs, lineupError, gd.LUE))
         gd.LUE=lineupError
       end
       
@@ -11508,6 +11607,36 @@ function AIRBOSS._ReachedHoldingZone(group, airboss, flight)
   end
 end
 
+--- Function called when a group should be send to the Marshal stack. If stack is full, it is send to wait.
+--@param Wrapper.Group#GROUP group Group that reached the holding zone.
+--@param #AIRBOSS airboss Airboss object.
+--@param #AIRBOSS.FlightGroup flight Flight group that has reached the holding zone.
+function AIRBOSS._TaskFunctionMarshalAI(group, airboss, flight)
+
+  -- Debug message.
+  local text=string.format("Flight %s is send to marshal.", group:GetName())
+  MESSAGE:New(text,10):ToAllIf(airboss.Debug)
+  airboss:T(airboss.lid..text)
+  
+  -- Get the next free stack for current recovery case.
+  local stack=airboss:_GetFreeStack(flight.ai)
+  
+  if stack then
+  
+    -- Send AI to marshal stack.
+    airboss:_MarshalAI(flight, stack)
+    
+  else
+  
+    -- Send AI to orbit outside 10 NM zone and wait until the next Marshal stack is available.
+    if not airboss:_InQueue(airboss.Qwaiting, flight.group) then
+      airboss:_WaitAI(flight)
+    end
+  
+  end
+  
+end
+
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- MISC functions
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -11980,6 +12109,10 @@ end
 -- @param #number delay Delay in seconds, before the message is broadcasted.
 function AIRBOSS:RadioTransmission(radio, call, loud, delay)
   self:F2({radio=radio, call=call, loud=loud, delay=delay})
+  
+  if radio==nil or call==nil then
+    return
+  end
   
   -- Create a new radio transmission item.
   local transmission={} --#AIRBOSS.Radioitem
@@ -12577,18 +12710,24 @@ end
 -- @param #string charlie Charlie Time estimate.
 -- @param #string qfe Alitmeter inHg.
 function AIRBOSS:_MarshalCallArrived(modex, case, brc, altitude, charlie, qfe)
+  self:E({modex=modex,case=case,brc=brc,altitude=altitude,charlie=charlie,qfe=qfe})
   
   -- Split strings etc.
   local angels=self:_GetAngels(altitude)
-  local QFE=UTILS.Split(tostring(qfe), ".")
-  local CT=UTILS.Split(select(1, UTILS.Split(alitmeter, "+")), ":")
+  local QFE=UTILS.Split(tostring(UTILS.Round(qfe,2)), ".")
+  local clock=UTILS.Split(charlie, "+")
+  self:E({clock=clock})
+  local CT=UTILS.Split(clock[1], ":")
 
   -- Subtitle text.
   local text=string.format("Case %d, expected BRC %03d°, hold at angels %d. Expected Charlie Time %s.\n", case, brc, angels, charlie)
   text=text..string.format("Altimeter %.2f. Report see me.", qfe)
 
   -- Create new call to display complete subtitle.
-  local casecall=self:_NewRadioCall(self.MarshalCall.CASE, "MARSHAL", text, self.Tmessage, modex)
+  --local casecall=self:_NewRadioCall(self.MarshalCall.CASE, "MARSHAL", text, self.Tmessage, modex)
+  
+  -- Until we have a case sound we take the noise for testing
+  local casecall=self:_NewRadioCall(self.MarshalCall.NOISE, "MARSHAL", text, self.Tmessage, modex)
   
   -- Case..
   self:RadioTransmission(self.MarshalRadio, casecall)
@@ -12599,7 +12738,7 @@ function AIRBOSS:_MarshalCallArrived(modex, case, brc, altitude, charlie, qfe)
   -- BRC..
   self:RadioTransmission(self.MarshalRadio, self.MarshalCall.BRC)
   -- XYZ..
-  self:_Number2Radio(self.MarshalRadio, string.format("%d03", brc))
+  self:_Number2Radio(self.MarshalRadio, string.format("%03d", brc))
   -- hold at..
   self:RadioTransmission(self.MarshalRadio, self.MarshalCall.HOLDAT)
   -- angels..
@@ -12624,7 +12763,8 @@ function AIRBOSS:_MarshalCallArrived(modex, case, brc, altitude, charlie, qfe)
   self:_Number2Radio(self.MarshalRadio, QFE[2])
   -- Report see me.
   self:RadioTransmission(self.MarshalRadio, self.MarshalCall.REPORTSEEME)
-  
+  -- Click!
+  self:RadioTransmission(self.MarshalRadio, self.MarshalCall.CLICK)
 end
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
