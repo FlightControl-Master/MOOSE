@@ -189,6 +189,8 @@
 -- @field #number windowcount Running number counting the recovery windows.
 -- @field #number LSOdT Time interval in seconds before the LSO will make its next call.
 -- @field #string senderac Name of the aircraft acting as sender for broadcasting radio messages from the carrier. DCS shortcoming workaround.
+-- @field #string radiorelayLSO Name of the aircraft acting as sender for broadcasting LSO radio messages from the carrier. DCS shortcoming workaround.
+-- @field #string radiorelayMSH Name of the aircraft acting as sender for broadcasting Marhsal radio messages from the carrier. DCS shortcoming workaround.
 -- @field #boolean turnintowind If true, carrier is currently turning into the wind.
 -- @field #boolean detour If true, carrier is currently making a detour from its path along the ME waypoints.
 -- @field Core.Point#COORDINATE Creturnto Position to return to after turn into the wind leg is over.
@@ -204,6 +206,7 @@
 -- @field #AIRBOSS.LSOCalls LSOCall Radio voice overs of the LSO.
 -- @field #AIRBOSS.MarshalCalls MarshalCall Radio voice over of the Marshal/Airboss.
 -- @field #number lowfuelAI Low fuel threshold for AI groups in percent.
+-- @field #boolean emergency If true (default), allow emergency landings, i.e. bypass any pattern and go for final approach.
 -- @extends Core.Fsm#FSM
 
 --- Be the boss!
@@ -299,13 +302,14 @@
 -- 
 -- The general structure
 -- 
---    * **F1 Help...**: Help submenu, see below.
---    * **F2 Kneeboard...**: Kneeboard submenu, see below. Carrier information, weather report, player status.
+--    * **F1 Help...**  (Help submenu, see below.)
+--    * **F2 Kneeboard...** (Kneeboard submenu, see below. Carrier information, weather report, player status.)
 --    * **F3 Request Marshal**
 --    * **F4 Request Commence**
 --    * **F5 Request Refueling**
 --    * **F6 Spinning**
---    * **F7 [Reset My Status]**
+--    * **F7 Emergency Landing**
+--    * **F8 [Reset My Status]**
 -- 
 -- ### Request Marshal
 -- 
@@ -347,6 +351,12 @@
 -- 
 -- If necessary, the player can call "Spinning" again when in the above mentioned steps.
 --
+-- ### Emergency Landing
+-- 
+-- Request an emergency landing, i.e. bypass all pattern steps and go directly to the final approach.
+-- 
+-- All section members are supposed to follow. Player (or section lead) is removed from all other queues and automatically added to the landing pattern queue.
+-- 
 -- ### [Reset My Status]
 -- 
 -- This will reset the current player status. If player is currently in a marshal stack, he will be removed from the marshal queue and the stack above will collapse.
@@ -785,7 +795,34 @@
 -- 
 --     airbossStennis:SetSoundfilesFolder("Airboss Soundfiles/")
 --     
--- ## Remarks
+-- ## How To Use Your Own Voice Overs
+-- 
+-- If you have a set of AIRBOSS sound files recorded or got it from elsewhere it is possible to use those instead of the default ones.
+-- I recommend to use exactly the same file names as the original sound files have.
+-- 
+-- However, the **timing is critical**! As sometimes sounds are played directly after one another, e.g. by saying the modex but also on other occations, the airboss
+-- script has a radio queue implemented (actually two - one for the LSO and one for the Marshal/Airboss radio).
+-- By this it is automatically taken care that played messages are not overlapping and played over each other. The disadvantage is, that the script needs to know
+-- the exact duration of *each* voice over. For the default sounds this is hard coded in the source code. For your own files, you need to give that bit of information
+-- to the script via the @{#AIRBOSS.SetVoiceOver}(**radiocall**, **duration**, **subtitle**, **subduration**, **filename**, **suffix**) function. Only the first two 
+-- parameters **radiocall** and **duration** are usually important to adjust here.
+-- 
+-- For example, if you want to change the LSO "Call the Ball" and "Roger Ball" calls:
+-- 
+--     airbossStennis:SetVoiceOver(airbossStennis.LSOCall.CALLTHEBALL, 0.6)
+--     airbossStennis:SetVoiceOver(airbossStennis.LSOCall.ROGERBALL, 0.7)
+--     
+-- Again, changing the file name, subtitle, subtitle duration is not required if you name the file exactly like the original one, which is this case would be "LSO-RogerBall.ogg".
+--     
+-- ## Carrier Specific Voice Overs
+-- 
+-- It is possible to use diffent sound files for different carriers. If you have set up two (or more) AIRBOSS objects at different carriers - say Stennis and Tarawa - each
+-- carrier would use the files in the specified directory, e.g.
+-- 
+--     airbossStennis:SetSoundfilesFolder("Airboss Soundfiles Stenis/")
+--     airbossTarawa:SetSoundfilesFolder("Airboss Soundfiles Tarawa/")
+--     
+-- ## The Radio Transmission Dilemma
 -- 
 -- DCS offers two (actually three) ways to send radio messages. Each one has its advantages and disadvantages and it is important to understand the differences.
 -- 
@@ -794,8 +831,8 @@
 -- *In principle*, the best way to transmit messages is via the [TransmitMessage](https://wiki.hoggitworld.com/view/DCS_command_transmitMessage) command.
 -- This method has the advantage that subtitles can be used and these subtitles are only displayed to the players who dialed in the same radio frequency as
 -- used for the transmission.
--- However, this method unfortunately only works if the sending unit is an **aircraft**. There it is not usable by the AIRBOSS per se as the transmission comes from
--- a naval unit (the carrier).
+-- However, this method unfortunately only works if the sending unit is an **aircraft**. Therefore, it is not usable by the AIRBOSS per se as the transmission comes from
+-- a naval unit (i.e. the carrier).
 -- 
 -- As a workaround, you can put an aircraft, e.g. a Helicopter on the deck of the carrier or another ship of the strike group. The aircraft should be set to
 -- uncontrolled and maybe even to immortal. With the @{#AIRBOSS.SetRadioUnit}(*unitname*) function you can use this unit as "radio repeater".
@@ -809,7 +846,7 @@
 -- 
 -- Another way to broadcast messages is via the [radio transmission trigger](https://wiki.hoggitworld.com/view/DCS_func_radioTransmission). This method can be used for all 
 -- units (land, air, naval). However, messages cannot be subtitled. Therefore, subtitles are displayed to the players via normal textout messages.
--- The disadvantage is that is is impossible to know which players have the right radio frequencies dialed in. There subtitles of the Marshal radio are displayed to all players
+-- The disadvantage is that is is impossible to know which players have the right radio frequencies dialed in. Therefore, subtitles of the Marshal radio calls are displayed to all players
 -- inside the CCA. Subtitles on the LSO radio frequency are displayed to all players in the pattern.
 -- 
 -- ### Sound to User
@@ -990,6 +1027,8 @@ AIRBOSS = {
   windowcount    = 0,
   LSOdT          = nil,
   senderac       = nil,
+  radiorelayLSO  = nil,
+  radiorelayMSH  = nil,
   turnintowind   = nil,
   detour         = nil,
   squadsetAI     = nil,
@@ -1004,6 +1043,7 @@ AIRBOSS = {
   LSOCall        = nil,
   MarshalCall    = nil,
   lowfuelAI      = nil,
+  emergency      = nil,
 }
 
 --- Aircraft types capable of landing on carrier (human+AI).
@@ -1098,6 +1138,7 @@ AIRBOSS.CarrierType={
 -- @field #string GROOVE_LC "Groove Level Cross".
 -- @field #string GROOVE_IW "Groove In the Wires".
 -- @field #string BOLTER "Bolter Pattern".
+-- @field #string EMERGENCY "Emergency Landing".
 -- @field #string DEBRIEF "Debrief".
 AIRBOSS.PatternStep={
   UNDEFINED="Undefined",
@@ -1127,6 +1168,7 @@ AIRBOSS.PatternStep={
   GROOVE_AL="Groove Abeam Landing Spot",
   GROOVE_LC="Groove Level Cross",
   BOLTER="Bolter Pattern",
+  EMERGENCY="Emergency Landing",
   DEBRIEF="Debrief",
 }
 
@@ -1540,6 +1582,9 @@ function AIRBOSS:New(carriername, alias)
   
   -- Airboss is a nice guy.
   self:SetAirbossNiceGuy()
+  
+  -- Allow emergency landings.
+  self:SetEmergencyLandings()
   
   -- No despawn after engine shutdown by default.
   self:SetDespawnOnEngineShutdown(false)
@@ -2158,6 +2203,20 @@ function AIRBOSS:SetAirbossNiceGuy(switch)
   return self
 end
 
+--- Allow emergency landings, i.e. bypassing any pattern and go directly to final approach.
+-- @param #AIRBOSS self
+-- @param #boolean switch If true or nil, emergency landings are okay.
+-- @return #AIRBOSS self
+function AIRBOSS:SetEmergencyLandings(switch)
+  if switch==true or switch==nil then
+    self.emergency=true
+  else
+    self.emergency=false
+  end
+  return self
+end
+
+
 --- Despawn AI groups after they they shut down their engines 
 -- @param #AIRBOSS self
 -- @param #boolean switch If true or nil, AI groups are despawned.
@@ -2392,6 +2451,25 @@ function AIRBOSS:SetRadioUnitName(unitname)
   self.senderac=unitname
   return self
 end
+
+--- Set unit acting as radio relay for the LSO radio.
+-- @param #AIRBOSS self
+-- @param #string unitname Name of the unit.
+-- @return #AIRBOSS self
+function AIRBOSS:SetRadioRelayLSO(unitname)
+  self.radiorelayLSO=unitname
+  return self
+end
+
+--- Set unit acting as radio relay for the Marshal radio.
+-- @param #AIRBOSS self
+-- @param #string unitname Name of the unit.
+-- @return #AIRBOSS self
+function AIRBOSS:SetRadioRelayMarshal(unitname)
+  self.radiorelayMarshal=unitname
+  return self
+end
+
 
 --- Use user sound output instead of radio transmission for messages. Might be handy if radio transmissions are broken.
 -- @param #AIRBOSS self
@@ -3071,7 +3149,7 @@ function AIRBOSS:_CheckRecoveryTimes()
         local v=UTILS.KnotsToMps(nextwindow.SPEED)
         
         -- Check that we do not go above max possible speed.
-        local vmax=self.carrier:GetSpeedMax()        
+        local vmax=self.carrier:GetSpeedMax()
         v=math.min(v,vmax)
         
         -- Route carrier into the wind. Sets self.turnintowind=true
@@ -3106,15 +3184,16 @@ end
 --@param #AIRBOSS self
 --@param #AIRBOSS.FlightGroup flight
 --@return #AIRBOSS.FlightGroup The leader of the section. Could be the flight itself.
+--@return #boolean If true, flight is lead.
 function AIRBOSS:_GetFlightLead(flight)
 
   if flight.name~=flight.seclead then
     -- Section lead of flight.
     local lead=self.players[flight.seclead]
-    return lead
+    return lead,false
   else
     -- Flight without section or section lead.
-    return flight
+    return flight,true
   end
 
 end
@@ -4967,7 +5046,18 @@ function AIRBOSS:_RefuelAI(flight)
   
   else
   
+    ------------------------------
+    -- Guide AI to divert field --
+    ------------------------------
+  
+    -- Closest Airfield of the coaliton.
     local divertfield=self:GetCoordinate():GetClosestAirbase(Airbase.Category.AIRDROME, self:GetCoalition())
+    
+    -- Coordinate.
+    local divertcoord=divertfield:GetCoordinate()
+    
+    -- Landing waypoint.
+    wp[#wp+1]=divertcoord:WaypointAirLanding(UTILS.KnotsToKmph(200), divertfield, {}, "Divert Field")
   
   end
   
@@ -5385,7 +5475,6 @@ function AIRBOSS:_CollapseMarshalStack(flight, nopattern)
     self:T(self.lid..string.format("Flight %s is leaving marshal after %s and going pattern.", flight.groupname, Tmarshal))
         
     -- Add flight to pattern queue.
-    --table.insert(self.Qpattern, flight)
     self:_AddFlightToPatternQueue(flight)
         
   end
@@ -6049,6 +6138,11 @@ function AIRBOSS:_AddFlightToPatternQueue(flight)
   -- Add flight to table.
   table.insert(self.Qpattern, flight)
   
+  -- Set flag to -1 (-1 is rather arbitrary but it should not be positive or -100 or -42).
+  flight.flag=-1
+  -- New time stamp for time in pattern.
+  flight.time=timer.getAbsTime()
+  
   -- Init recovered switch.
   flight.recovered=false
   for _,elem in pairs(flight.elements) do
@@ -6057,6 +6151,9 @@ function AIRBOSS:_AddFlightToPatternQueue(flight)
   
   -- Set recovered for all section members.
   for _,sec in pairs(flight.section) do
+    -- Set flag and timestamp for section members
+    sec.flag=-1
+    sec.time=timer.getAbsTime()
     for _,elem in pairs(sec.elements) do
       elem.recoverd=false
     end
@@ -6462,6 +6559,11 @@ function AIRBOSS:_CheckPlayerStatus()
           
             -- CASE I/II: In the wake.
             self:_Wake(playerData)
+            
+          elseif playerData.step==AIRBOSS.PatternStep.EMERGENCY then
+          
+            -- Emergency landing. Player pos is not checked.
+            self:_Final(playerData, true)
             
           elseif playerData.step==AIRBOSS.PatternStep.FINAL then
           
@@ -7950,15 +8052,17 @@ end
 --- Turn to final.
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data table.
-function AIRBOSS:_Final(playerData)
-
+-- @param #boolean nocheck If true, player is not checked to be in the right position.
+function AIRBOSS:_Final(playerData, nocheck)
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
   local X, Z, rho, phi = self:_GetDistances(playerData.unit)
 
-  -- In front of carrier or more than 4 km behind carrier. 
-  if self:_CheckAbort(X, Z, self.Final) then
-    self:_AbortPattern(playerData, X, Z, self.Final, true)
-    return
+  -- In front of carrier or more than 4 km behind carrier.
+  if not nocheck then
+    if self:_CheckAbort(X, Z, self.Final) then
+      self:_AbortPattern(playerData, X, Z, self.Final, true)
+      return
+    end
   end
    
   -- Relative heading 0=fly parallel +-90=fly perpendicular
@@ -7970,8 +8074,15 @@ function AIRBOSS:_Final(playerData)
   -- Player's angle of bank.
   local roll=playerData.unit:GetRoll()
   
+  -- Get groove zone.
+  local zone=self:_GetZoneGroove()
+  
+  -- Check if player is in zone.
+  local inzone=playerData.unit:IsInZone(zone)
+  
   -- Check if player is in +-4 deg cone and flying towards the runway.
-  if math.abs(lineup)<=4 then
+  --if math.abs(lineup)<=4 then
+  if inzone then
 
     -- Hint for player about altitude, AoA etc.
     self:_PlayerHint(playerData)
@@ -7994,7 +8105,7 @@ function AIRBOSS:_Final(playerData)
     playerData.groove.X0=groovedata
     
     -- Next step: X start.
-    self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.GROOVE_XX)    
+    self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.GROOVE_XX)
   end
 
 end
@@ -8730,6 +8841,7 @@ end
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ZONE functions
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 --- Get Initial zone for Case I or II.
 -- @param #AIRBOSS self
 -- @param #number case Recovery Case.
@@ -8742,8 +8854,7 @@ function AIRBOSS:_GetZoneInitial(case)
   -- Carrier coordinate.
   local cv=self:GetCoordinate()
   
-  -- Zone and vec2 array.
-  local zone
+  -- Vec2 array.
   local vec2
   
   if case==1 then
@@ -8775,11 +8886,43 @@ function AIRBOSS:_GetZoneInitial(case)
   end
   
   -- Polygon zone.
-  local zone=ZONE_POLYGON_BASE:New("CASE I/II initial.", vec2)
+  local zone=ZONE_POLYGON_BASE:New("Zone CASE I/II Initial", vec2)
 
   return zone
 end
 
+--- Get groove zone.
+-- @param #AIRBOSS self
+-- @param #number l Length of the groove in NM. Default 1.5 NM.
+-- @param #number w Width of the groove in NM. Default 
+-- @return Core.Zone#ZONE_POLYGON_BASE Initial zone.
+function AIRBOSS:_GetZoneGroove(l, w)
+
+  l=l or 1.5
+  w=w or 0.5
+
+  -- Get radial, i.e. inverse of BRC.
+  local fbi=self:GetRadial(1, false, false)
+  
+  -- Stern coordinate.
+  local st=self:_GetSternCoord()
+  
+  -- Zone points.
+  local c1=st:Translate(self.carrierparam.totwidthstarboard, fbi-90)
+  local c2=st:Translate(UTILS.NMToMeters(0.10), fbi-90):Translate(UTILS.NMToMeters(0.3), fbi)
+  local c3=st:Translate(UTILS.NMToMeters(w/2),  fbi-90):Translate(UTILS.NMToMeters(l),   fbi)
+  local c4=st:Translate(UTILS.NMToMeters(w/2),  fbi+90):Translate(UTILS.NMToMeters(l),   fbi)
+  local c5=st:Translate(UTILS.NMToMeters(0.10), fbi+90):Translate(UTILS.NMToMeters(0.3), fbi)
+  local c6=st:Translate(self.carrierparam.totwidthport, fbi+90)
+    
+  -- Vec2 array.
+  local vec2={c1:GetVec2(), c2:GetVec2(), c3:GetVec2(), c4:GetVec2(), c5:GetVec2(), c6:GetVec2()}
+  
+  -- Polygon zone.
+  local zone=ZONE_POLYGON_BASE:New("Zone Groove", vec2)
+
+  return zone
+end
 
 --- Get Bullseye zone with radius 1 NM and DME 3 NM from the carrier. Radial depends on recovery case.
 -- @param #AIRBOSS self
@@ -11195,13 +11338,18 @@ function AIRBOSS:CarrierDetour(coord, speed, uturn, uspeed)
     
   -- Speed in km/h.
   local speedkmh=UTILS.KnotsToKmph(speed)
+  local cspeedkmh=self.carrier:GetVelocityKMH()
   local uspeedkmh=UTILS.KnotsToKmph(uspeed)
   
   -- Waypoint table.
   local wp={}
   
+  -- Pos1 is a bit into.
+  local pos1=pos0:Translate(500, pos0:HeadingTo(coord))
+  
   -- Create from/to waypoints.
-  table.insert(wp, pos0:WaypointGround(speedkmh))
+  table.insert(wp, pos0:WaypointGround(cspeedkmh))
+  table.insert(wp, pos1:WaypointGround(cspeedkmh))
   table.insert(wp, coord:WaypointGround(speedkmh))
   
   -- If enabled, go back to where you came from.
@@ -11241,8 +11389,8 @@ function AIRBOSS:CarrierTurnIntoWind(time, vdeck, uturn)
   -- Wind speed.
   local _,vwind=self:GetWind()
   
-  -- Speed of carrier in m/s.
-  local vtot=vdeck-vwind
+  -- Speed of carrier in m/s but at least 2 knots.
+  local vtot=math.max(vdeck-vwind, UTILS.KnotsToMps(2))
   
   -- Distance to travel
   local dist=vtot*time
@@ -12197,7 +12345,7 @@ function AIRBOSS:Broadcast(radio, call, loud)
     ----------------------------
   
     -- Get unit sending the transmission.
-    local sender=self:_GetRadioSender()
+    local sender=self:_GetRadioSender(radio)
     
     -- Construct file name and subtitle.
     local filename=self:_RadioFilename(call, loud)
@@ -12535,13 +12683,30 @@ end
 
 --- Get unit from which we want to transmit a radio message. This has to be an aircraft for subtitles to work.
 -- @param #AIRBOSS self
+-- @param #AIRBOSS.Radio radio Airboss radio data.
 -- @return Wrapper.Unit#UNIT Sending aircraft unit or nil if was not setup, is not an aircraft or is not alive.
-function AIRBOSS:_GetRadioSender()
+function AIRBOSS:_GetRadioSender(radio)
 
   -- Check if we have a sending aircraft.
   local sender=nil  --Wrapper.Unit#UNIT
+
+  -- Try the general default.
   if self.senderac then
     sender=UNIT:FindByName(self.senderac)
+  end
+
+  -- Try the specific marshal unit.
+  if radio.alias=="Marshal" then
+    if self.radiorelayMSH then
+      sender=UNIT:FindByName(self.radiorelayMSH)
+    end
+  end
+    
+  -- Try the specific LSO unit.
+  if radio.alias=="LSO" then
+    if self.radiorelayLSO then
+      sender=UNIT:FindByName(self.radiorelayLSO)
+    end  
   end
   
   -- Check that sender is alive and an aircraft.
@@ -12885,8 +13050,9 @@ function AIRBOSS:_AddF10Commands(_unitName)
         missionCommands.addCommandForGroup(gid, "Request Marshal",    _rootPath, self._RequestMarshal,    self, _unitName) -- F3
         missionCommands.addCommandForGroup(gid, "Request Commence",   _rootPath, self._RequestCommence,   self, _unitName) -- F4
         missionCommands.addCommandForGroup(gid, "Request Refueling",  _rootPath, self._RequestRefueling,  self, _unitName) -- F5
-        missionCommands.addCommandForGroup(gid, "Spinning",           _rootPath, self._RequestSpinning,   self, _unitName) -- F6        
-        missionCommands.addCommandForGroup(gid, "[Reset My Status]",  _rootPath, self._ResetPlayerStatus, self, _unitName) -- F7
+        missionCommands.addCommandForGroup(gid, "Spinning",           _rootPath, self._RequestSpinning,   self, _unitName) -- F6     
+        missionCommands.addCommandForGroup(gid, "Emergency Landing",  _rootPath, self._RequestEmergency,  self, _unitName) -- F7
+        missionCommands.addCommandForGroup(gid, "[Reset My Status]",  _rootPath, self._ResetPlayerStatus, self, _unitName) -- F8
       end
     else
       self:E(self.lid..string.format("ERROR: Could not find group or group ID in AddF10Menu() function. Unit name: %s.", _unitName))
@@ -13012,6 +13178,71 @@ function AIRBOSS:_RequestMarshal(_unitName)
   end
 end
 
+--- Request emergency landing.
+-- @param #AIRBOSS self
+-- @param #string _unitName Name fo the player unit.
+function AIRBOSS:_RequestEmergency(_unitName)
+  self:F(_unitName)
+  
+  -- Get player unit and name.
+  local _unit, _playername = self:_GetPlayerUnitAndName(_unitName)
+  
+  -- Check if we have a unit which is a player.
+  if _unit and _playername then
+    local playerData=self.players[_playername] --#AIRBOSS.PlayerData
+    
+    if playerData then
+    
+      local text=""
+      if not self.emergency then
+      
+        -- Mission designer did not allow emergency landing.
+        text="negative, no emergency landings on my carrier. We are currently busy. See how you get along!"
+      
+      else
+      
+        -- Cleared.
+        text="roger, you can bypass the pattern and are cleared for final approach!"
+    
+        -- Now, if player is in the marshal or waiting queue he will be removed. But the new leader should stay in or not.
+        local lead=self:_GetFlightLead(playerData)
+        
+        -- Set set for lead.
+        self:_SetPlayerStep(lead, AIRBOSS.PatternStep.EMERGENCY)
+        
+        -- Also set emergency landing for all members.
+        for _,sec in pairs(lead.section) do
+          local sectionmember=sec --#AIRBOSS.PlayerData
+          self:_SetPlayerStep(sectionmember, AIRBOSS.PatternStep.EMERGENCY)
+          
+          -- Remove flight from spinning queue just in case (everone can spin on his own).
+          self:_RemoveFlightFromQueue(self.Qspinning, sectionmember)
+        end
+        
+        
+        -- Remove flight from waiting queue just in case.
+        self:_RemoveFlightFromQueue(self.Qwaiting, lead)
+        
+        if self:_InQueue(self.Qmarshal, lead.group) then
+          -- Remove flight from Marshal queue and add to pattern.
+          self:_RemoveFlightFromMarshalQueue(lead)
+        else
+          -- Add flight to pattern if he was not.
+          if not self:_InQueue(self.Qpattern, lead.group) then
+            self:_AddFlightToPatternQueue(lead)
+          end
+        end
+        
+      end
+      
+      -- Send message.
+      self:MessageToPlayer(playerData, text, "AIRBOSS")
+          
+    end
+    
+  end
+end
+
 --- Request spinning.
 -- @param #AIRBOSS self
 -- @param #string _unitName Name fo the player unit.
@@ -13030,25 +13261,20 @@ function AIRBOSS:_RequestSpinning(_unitName)
       local text=""
       if not self:_InQueue(self.Qpattern, playerData.group) then
       
-        -- Player not in pattern queue
+        -- Player not in pattern queue.
         text="negative, you have to be in the pattern to spin it!"
-      
-      --[[
-      elseif playerData.seclead~=playerData.name then
-      
-        -- Player is not section lead
-        text="negative, your section lead has to call spinning."
-      ]]
-      
+        
       elseif playerData.step==AIRBOSS.PatternStep.SPINNING then
       
+        -- Player is already spinning.
         text="negative, you are already spinning."
       
       -- Check if player is in the right step.
       elseif not (playerData.step==AIRBOSS.PatternStep.BREAKENTRY or 
                   playerData.step==AIRBOSS.PatternStep.EARLYBREAK or
                   playerData.step==AIRBOSS.PatternStep.LATEBREAK) then
-                  
+        
+        -- Player is not in the right step.
         text="negative, you have to be in the right step to spin it!"
         
       else
