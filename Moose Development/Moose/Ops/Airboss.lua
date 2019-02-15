@@ -209,6 +209,8 @@
 -- @field #boolean emergency If true (default), allow emergency landings, i.e. bypass any pattern and go for final approach.
 -- @field #boolean respawnAI If true, respawn AI flights as they enter the CCA to detach and airfields from the mission plan. Default false.
 -- @field #boolean turning If true, carrier is currently turning.
+-- @field #AIRBOSS.GLE gle Glidesope error thresholds.
+-- @field #AIRBOSS.LUE lue Lineup error thresholds.
 -- @extends Core.Fsm#FSM
 
 --- Be the boss!
@@ -1047,6 +1049,8 @@ AIRBOSS = {
   lowfuelAI      = nil,
   emergency      = nil,
   respawnAI      = nil,
+  gle            =  {},
+  lue            =  {},
 }
 
 --- Aircraft types capable of landing on carrier (human+AI).
@@ -1111,6 +1115,25 @@ AIRBOSS.CarrierType={
 -- @field #number Slow Slow AoA threshold. Larger means slower.
 -- @field #number FAST Really fast AoA threshold.
 -- @field #number SLOW Really slow AoA threshold.
+
+--- Glideslope error thresholds in degrees.
+-- @type AIRBOSS.GLE
+-- @field #number _max Max _OK_ value. Default 0.4 deg. 
+-- @field #number _min Min _OK_ value. Default -0.3 deg.
+-- @field #number High (H) threshold. Default 0.8 deg.
+-- @field #number Low  (L) threshold. Default -0.6 deg.
+-- @field #number HIGH  H  threshold. Default 1.5 deg.
+-- @field #number LOW   L  threshold. Default -0.9 deg.
+
+--- Lineup error thresholds in degrees.
+-- @type AIRBOSS.LUE
+-- @field #number _max Max _OK_ value. Default 0.5 deg.
+-- @field #number _min Min _OK_ value. Default -0.5 deg.
+-- @field #number Left  (LUR) threshold. Default -1.0 deg.
+-- @field #number Right (LUL) threshold. Default 1.0 deg.
+-- @field #number LEFT   LUR  threshold. Default -3.0 deg.
+-- @field #number RIGHT  LUL  threshold. Default 3.0 deg.
+
 
 --- Pattern steps.
 -- @type AIRBOSS.PatternStep
@@ -1279,13 +1302,6 @@ AIRBOSS.GroovePos={
 -- @field #AIRBOSS.RadioCall ALTIMETER "Altimeter" call.
 -- @field #AIRBOSS.RadioCall POINT "Point" call.
 
---- Message for player.
--- @type AIRBOSS.PlayerMessage
--- @field string message Message text.
--- @field #string sender Sender of the message.
--- @field #string receiver Receiver of the message.
--- @field #number duration
--- @field #boolean clear
 
 --- Difficulty level.
 -- @type AIRBOSS.Difficulty
@@ -1409,7 +1425,7 @@ AIRBOSS.Difficulty={
 -- @field #number finalscore Final score if points are averaged over multiple passes.
 -- @field #boolean valid If true, player made a valid approach. Is set true on start of Groove X.
 -- @field #boolean subtitles If true, display subtitles of radio messages.
--- @field #table messages Table of messages.
+-- @field #boolean showhints If true, show step hints.
 -- @extends #AIRBOSS.FlightGroup
 
 --- Main group level radio menu: F10 Other/Airboss.
@@ -1609,6 +1625,12 @@ function AIRBOSS:New(carriername, alias)
   
   -- Default player skill EASY.
   self:SetDefaultPlayerSkill(AIRBOSS.Difficulty.EASY)
+  
+  -- Default glideslope error thresholds.
+  self:SetGlideslopeErrorThresholds()
+  
+  -- Default lineup error thresholds.
+  --self:SetLine
     
   -- CCA 50 NM radius zone around the carrier.
   self:SetCarrierControlledArea()
@@ -2292,6 +2314,45 @@ end
 -- @return #AIRBOSS self
 function AIRBOSS:SetDefaultMessageDuration(duration)
   self.Tmessage=duration or 10
+  return self
+end
+
+
+--- Set glideslope error thresholds.
+-- @param #AIRBOSS self
+-- @param #number _max
+-- @param #number _min
+-- @param #number High
+-- @param #number HIGH
+-- @param #number Low
+-- @param #number LOW
+-- @return #AIRBOSS self
+function AIRBOSS:SetGlideslopeErrorThresholds(_max,_min, High, HIGH, Low, LOW)
+  self.gle._max=_max or  0.4
+  self.gle.High=High or  0.8
+  self.gle.HIGH=HIGH or  1.5
+  self.gle._min=_min or -0.3
+  self.gle.Low=Low   or -0.6
+  self.gle.LOW=LOW   or -0.9
+  return self
+end
+
+--- Set lineup error thresholds.
+-- @param #AIRBOSS self
+-- @param #number _max
+-- @param #number _min
+-- @param #number Left
+-- @param #number LEFT
+-- @param #number Right
+-- @param #number RIGHT
+-- @return #AIRBOSS self
+function AIRBOSS:SetLineupErrorThresholds(_max,_min, Left, LEFT, Right, RIGHT)
+  self.lue._max=_max or 0.5
+  self.lue._min=_min or -0.5
+  self.lue.Left=Left or -1.0
+  self.lue.LEFT=LEFT or -3.0
+  self.lue.Right=Right or 1.0
+  self.lue.RIGHT=RIGHT or 3.0
   return self
 end
 
@@ -4842,7 +4903,7 @@ function AIRBOSS:_MarshalPlayer(playerData, stack)
     for _,_flight in pairs(playerData.section) do
       local flight=_flight --#AIRBOSS.PlayerData
       
-      -- TODO: Inform player? Should be done by lead via radio?
+      -- XXX: Inform player? Should be done by lead via radio?
       
       -- Set step.
       self:_SetPlayerStep(flight, AIRBOSS.PatternStep.HOLDING)
@@ -4928,7 +4989,7 @@ function AIRBOSS:_WaitAI(flight, respawn)
   if respawn then
   
     -- This should clear the landing waypoints.  
-    -- TODO: This resets the weapons and the fuel state. But not the units fortunately.
+    -- Note: This resets the weapons and the fuel state. But not the units fortunately.
 
     -- Get group template.
     local Template=group:GetTemplate()
@@ -5078,7 +5139,7 @@ function AIRBOSS:_MarshalAI(flight, nstack, respawn)
   if respawn then
   
     -- This should clear the landing waypoints.  
-    -- TODO: This resets the weapons and the fuel state. But not the units fortunately.
+    -- Note: This resets the weapons and the fuel state. But not the units fortunately.
 
     -- Get group template.
     local Template=group:GetTemplate()
@@ -5943,9 +6004,18 @@ function AIRBOSS:_NewPlayer(unitname)
       -- Set difficulty level.
       playerData.difficulty=playerData.difficulty or self.defaultskill
       
-      -- Subtitles of player
+      -- Subtitles of player.
       if playerData.subtitles==nil then
         playerData.subtitles=true
+      end
+      
+      -- Show step hints.
+      if playerData.showhints==nil then
+        if playerData.difficulty~=AIRBOSS.Difficulty.HARD then
+          playerData.showhints=false
+        else
+          playerData.showhints=true
+        end
       end
       
       -- Points rewarded.
@@ -6190,7 +6260,7 @@ function AIRBOSS:_CheckSectionRecovered(flight)
  
     -- Check all elements of the secmember flight group.
     for _,_element in pairs(sectionmember.elements) do
-      local element=_element  --#AIROBSS.FlightElement
+      local element=_element  --#AIRBOSS.FlightElement
       if not element.recovered then
         return false
       end
@@ -7389,7 +7459,6 @@ function AIRBOSS:_Holding(playerData)
       self:T3("Player is still in the holding zone. Good job.")
     else
       -- Player left the holding zone.
-      self:T("Player just left the holding zone. Come back!")
       text=text..string.format("You just left the holding zone. Watch your numbers!")
       playerData.holding=false
     end
@@ -7428,12 +7497,11 @@ function AIRBOSS:_Holding(playerData)
     -- Player left holding zone
     if inholdingzone then
       -- Player is back in the holding zone.
-      self:T("Player is back in the holding zone after leaving it.")
       text=text..string.format("You are back in the holding zone. Now stay there!")
       playerData.holding=true
     else
       -- Player is still outside the holding zone.
-      self:T2("Player still outside the holding zone. What are you doing man?!")
+      self:T3("Player still outside the holding zone. What are you doing man?!")
     end
     
   elseif playerData.holding==nil then
@@ -7443,9 +7511,6 @@ function AIRBOSS:_Holding(playerData)
     
       -- Player arrived in holding zone.
       playerData.holding=true
-      
-      -- Debug output.
-      self:T("Player entered the holding zone for the first time.")
       
       -- Inform player.
       text=text..string.format("You arrived at the holding zone.")
@@ -7463,20 +7528,18 @@ function AIRBOSS:_Holding(playerData)
         playerData.warning=true
       end
       
-      -- No info for the pros.
-      if playerData.difficulty==AIRBOSS.Difficulty.HARD then
-        text=""
-      end
-      
     else
       -- Player did not yet arrive in holding zone.
-      self:T2("Waiting for player to arrive in the holding zone.")
+      self:T3("Waiting for player to arrive in the holding zone.")
     end
     
   end
   
-  -- Send message.  
-  self:MessageToPlayer(playerData, text, "AIRBOSS", nil, 5)
+  -- Send message.
+  if playerData.showhints then
+    self:MessageToPlayer(playerData, text, "MARSHAL")
+  end
+  
 end
 
 
@@ -7523,13 +7586,12 @@ function AIRBOSS:_Commencing(playerData, zonecheck)
       text=text.."Proceed to initial."
     else
       text=text.."Descent to platform."
-      if playerData.difficulty==AIRBOSS.Difficulty.EASY then
+      if playerData.difficulty==AIRBOSS.Difficulty.EASY and playerData.showhints then
         text=text.." VSI 4000 ft/min until you reach 5000 ft."
       end
     end
     
     -- Message to player.
-    --self:MessageToPlayer(playerData, text, "MARSHAL", nil, 3)
     self:MessageToPlayer(playerData, text, "MARSHAL")
   end
   
@@ -7557,7 +7619,7 @@ end
 --- Start pattern when player enters the initial zone in case I/II recoveries.
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data table.
--- @return #boolean True if player is in the inital zone.
+-- @return #boolean True if player is in the initial zone.
 function AIRBOSS:_Initial(playerData)
 
   -- Check if player is in initial zone and entering the CASE I pattern.
@@ -7570,7 +7632,7 @@ function AIRBOSS:_Initial(playerData)
   if inzone and math.abs(relheading)<60 then
   
     -- Send message for normal and easy difficulty.
-    if playerData.difficulty~=AIRBOSS.Difficulty.HARD then
+    if playerData.showhints then
     
       -- Inform player.
       local hint=string.format("Initial")
@@ -7805,128 +7867,7 @@ function AIRBOSS:_BolterPattern(playerData)
   end
 end
 
---- Display hint to player.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
--- @param #number delay Delay before playing sound messages. Default 0 sec.
-function AIRBOSS:_PlayerHint(playerData, delay)
 
-  -- No hint for the pros.
-  if playerData.difficulty==AIRBOSS.Difficulty.HARD then
-    return
-  end
-
-  -- Get optimal altitude, distance and speed.
-  local alt, aoa, dist, speed=self:_GetAircraftParameters(playerData)
-  
-  -- Get altitude hint.
-  local hintAlt,debriefAlt,callAlt=self:_AltitudeCheck(playerData, alt)
-  
-  -- Get speed hint.
-  local hintSpeed,debriefSpeed,callSpeed=self:_SpeedCheck(playerData, speed)
-  
-  -- Get AoA hint.
-  local hintAoA,debriefAoA,callAoA=self:_AoACheck(playerData, aoa)
-  
-  -- Get distance to the boat hint.
-  local hintDist,debriefDist,callDist=self:_DistanceCheck(playerData, dist)
-  
-  -- Message to player.
-  local hint=""  
-  if hintAlt then
-    hint=hint.."\n"..hintAlt
-  end
-  if hintSpeed then
-    hint=hint.."\n"..hintSpeed
-  end
-  if hintAoA then
-    hint=hint.."\n"..hintAoA
-  end
-  if hintDist then
-    hint=hint.."\n"..hintDist
-  end
-  
-  -- Debriefing text.
-  local debrief=""
-  if debriefAlt then
-    debrief=debrief.."\n-"..debriefAlt
-  end
-  if debriefSpeed then
-    debrief=debrief.."\n-"..debriefSpeed
-  end
-  if debriefAoA then
-    debrief=debrief.."\n-"..debriefAoA
-  end
-  if debriefDist then
-    debrief=debrief.."\n-"..debriefDist
-  end
-
-  -- Add step to debriefing.
-  if debrief~="" then
-    self:_AddToDebrief(playerData, debrief)
-  end
-  
-  delay=delay or 0
-  if callAlt then
-    self:Sound2Player(playerData, self.LSORadio, callAlt, false, delay)
-    delay=delay+callAlt.duration+0.5
-  end
-  if callSpeed then
-    self:Sound2Player(playerData, self.LSORadio, callSpeed, false, delay)
-    delay=delay+callSpeed.duration+0.5
-  end
-  if callAoA then
-    self:Sound2Player(playerData, self.LSORadio, callAoA, false, delay)
-    delay=delay+callAoA.duration+0.5
-  end
-  if callDist then
-    self:Sound2Player(playerData, self.LSORadio, callDist, false, delay)
-    delay=delay+callDist.duration+0.5
-  end
-  
-  -- ARC IN info.
-  if playerData.step==AIRBOSS.PatternStep.ARCIN then
-  
-    -- Hint turn and set TACAN.
-    if playerData.difficulty==AIRBOSS.Difficulty.EASY then
-      -- Get inverse magnetic radial without offset ==> FB for Case II or BRC for Case III.  
-      local radial=self:GetRadial(playerData.case, true, false, true)
-      local turn="right"
-      if self.holdingoffset<0 then
-        turn="left"
-      end
-      hint=hint..string.format("\nTurn %s and select TACAN %03d°.", turn, radial)
-    end
-    
-  end
-  
-  -- DIRTUP additonal info.
-  if playerData.step==AIRBOSS.PatternStep.DIRTYUP then
-    if playerData.difficulty==AIRBOSS.Difficulty.EASY then
-      if playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
-        hint=hint.."\nFAF! Checks completed. Nozzles 50°."
-      else
-        hint=hint.."\nDirty up! Hook, gear and flaps down."
-      end
-    end      
-  end
-  
-  -- BULLSEYE additonal info.
-  if playerData.step==AIRBOSS.PatternStep.BULLSEYE then            
-    -- Hint follow the needles.
-    if playerData.difficulty==AIRBOSS.Difficulty.EASY then
-      if playerData.actype~=AIRBOSS.AircraftCarrier.AV8B then
-        hint=hint..string.format("\nIntercept glideslope and follow the needles.")
-      end
-    end
-  end  
-  
-  -- Message to player.
-  if hint~="" then
-    local text=string.format("%s%s", playerData.step, hint)
-    self:MessageToPlayer(playerData, hint, "AIRBOSS", "")
-  end
-end
 
 --- Break entry for case I/II recoveries.
 -- @param #AIRBOSS self
@@ -8683,7 +8624,7 @@ function AIRBOSS:_CheckFoulDeck(playerData)
     self:RadioTransmission(self.LSORadio, self.LSOCall.WAVEOFF, false, 1.2)
     
     -- Player hint for flight students.
-    if playerData.difficulty~=AIRBOSS.Difficulty.HARD then
+    if playerData.showhints then
       local text=string.format("overfly landing area and enter bolter pattern.")
       self:MessageToPlayer(playerData, text, "LSO", nil, nil, false, 3)
     end    
@@ -10091,19 +10032,20 @@ function AIRBOSS:_LSOadvice(playerData, glideslopeError, lineupError)
   
   -- Glideslope high/low calls.
   --TODO: introduce GSE enumerator values.
-  if glideslopeError>1.5 then
+  if glideslopeError>self.gle.HIGH then --1.5 then
     -- "You're high!"
     self:RadioTransmission(self.LSORadio, self.LSOCall.HIGH, true)
     advice=advice+self.LSOCall.HIGH.duration
-  elseif glideslopeError>0.8 then
+  elseif glideslopeError>self.gle.High then --0.8 then
     -- "You're high."
     self:RadioTransmission(self.LSORadio, self.LSOCall.HIGH, false)
     advice=advice+self.LSOCall.HIGH.duration
-  elseif glideslopeError<-0.9 then
+  elseif glideslopeError<self.gle.LOW then -- -0.9 then
     -- "Power!"
     self:RadioTransmission(self.LSORadio, self.LSOCall.POWER, true)
     advice=advice+self.LSOCall.POWER.duration
-  elseif glideslopeError<-0.6 then
+  elseif glideslopeError<self.gle.Low then  -- -0.6 then
+    --TODO CHECK THIS NUMBER. -0.3 vs -0.6!
     -- "Power."
     self:RadioTransmission(self.LSORadio, self.LSOCall.POWER, false)
     advice=advice+self.LSOCall.POWER.duration
@@ -10114,19 +10056,19 @@ function AIRBOSS:_LSOadvice(playerData, glideslopeError, lineupError)
   
   -- Lineup left/right calls.
   -- TODO: introduce LUE enumerator values.
-  if lineupError<-3 then
+  if lineupError<self.lue.LEFT then
     -- "Come left!"
     self:RadioTransmission(self.LSORadio, self.LSOCall.COMELEFT, true)
     advice=advice+self.LSOCall.COMELEFT.duration
-  elseif lineupError<-1 then
+  elseif lineupError<self.lue.Left then
     -- "Come left."
     self:RadioTransmission(self.LSORadio, self.LSOCall.COMELEFT, false)
     advice=advice+self.LSOCall.COMELEFT.duration    
-  elseif lineupError>3 then
+  elseif lineupError>self.lue.RIGHT then --3 then
     -- "Right for lineup!"
     self:RadioTransmission(self.LSORadio, self.LSOCall.RIGHTFORLINEUP, true)
     advice=advice+self.LSOCall.RIGHTFORLINEUP.duration    
-  elseif lineupError>1 then
+  elseif lineupError>self.lue.Right then -- 1 then
     -- "Right for lineup."
     self:RadioTransmission(self.LSORadio, self.LSOCall.RIGHTFORLINEUP, false)
     advice=advice+self.LSOCall.RIGHTFORLINEUP.duration
@@ -10369,7 +10311,7 @@ function AIRBOSS:_Flightdata2Text(playerData, groovestep)
   elseif AOA<acaoa.OnSpeedMin then
     S=little("F")
   end
-  
+
   -- Glideslope/altitude. Good [-0.3, 0.4] asymmetric!
   -- TODO: introduce enumerator with GSE values.
   local A=nil
@@ -10645,33 +10587,189 @@ function AIRBOSS:_AbortPattern(playerData, X, Z, posData, patternwo)
   
 end
 
-
---- Get error margin depending on player skill.
--- 
--- * Flight students: 10% and 20%
--- * Naval Aviators: 5% and 10%
--- * TOPGUN Graduates: 2.5% and 5%
--- 
+--- Display hint to player.
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data table.
--- @return #number Error margin for still being okay.
--- @return #number Error margin for really sucking.
-function AIRBOSS:_GetGoodBadScore(playerData)
+-- @param #number delay Delay before playing sound messages. Default 0 sec.
+function AIRBOSS:_PlayerHint(playerData, delay)
 
-  local lowscore
-  local badscore
-  if playerData.difficulty==AIRBOSS.Difficulty.EASY then
-    lowscore=10
-    badscore=20    
-  elseif playerData.difficulty==AIRBOSS.Difficulty.NORMAL then
-    lowscore=5
-    badscore=10     
-  elseif playerData.difficulty==AIRBOSS.Difficulty.HARD then
-    lowscore=2.5
-    badscore=5
+  -- No hint for the pros.
+  if not playerData.showhints then
+    return
+  end
+
+  -- Get optimal altitude, distance and speed.
+  local alt, aoa, dist, speed=self:_GetAircraftParameters(playerData)
+  
+  -- Get altitude hint.
+  local hintAlt,debriefAlt,callAlt=self:_AltitudeCheck(playerData, alt)
+  
+  -- Get speed hint.
+  local hintSpeed,debriefSpeed,callSpeed=self:_SpeedCheck(playerData, speed)
+  
+  -- Get AoA hint.
+  local hintAoA,debriefAoA,callAoA=self:_AoACheck(playerData, aoa)
+  
+  -- Get distance to the boat hint.
+  local hintDist,debriefDist,callDist=self:_DistanceCheck(playerData, dist)
+  
+  -- Message to player.
+  local hint=""  
+  if hintAlt then
+    hint=hint.."\n"..hintAlt
+  end
+  if hintSpeed then
+    hint=hint.."\n"..hintSpeed
+  end
+  if hintAoA then
+    hint=hint.."\n"..hintAoA
+  end
+  if hintDist then
+    hint=hint.."\n"..hintDist
   end
   
-  return lowscore, badscore
+  -- Debriefing text.
+  local debrief=""
+  if debriefAlt then
+    debrief=debrief.."\n-"..debriefAlt
+  end
+  if debriefSpeed then
+    debrief=debrief.."\n-"..debriefSpeed
+  end
+  if debriefAoA then
+    debrief=debrief.."\n-"..debriefAoA
+  end
+  if debriefDist then
+    debrief=debrief.."\n-"..debriefDist
+  end
+
+  -- Add step to debriefing.
+  if debrief~="" then
+    self:_AddToDebrief(playerData, debrief)
+  end
+  
+  -- Voice hint.
+  delay=delay or 0
+  if callAlt then
+    self:Sound2Player(playerData, self.LSORadio, callAlt, false, delay)
+    delay=delay+callAlt.duration+0.5
+  end
+  if callSpeed then
+    self:Sound2Player(playerData, self.LSORadio, callSpeed, false, delay)
+    delay=delay+callSpeed.duration+0.5
+  end
+  if callAoA then
+    self:Sound2Player(playerData, self.LSORadio, callAoA, false, delay)
+    delay=delay+callAoA.duration+0.5
+  end
+  if callDist then
+    self:Sound2Player(playerData, self.LSORadio, callDist, false, delay)
+    delay=delay+callDist.duration+0.5
+  end
+  
+  -- ARC IN info.
+  if playerData.step==AIRBOSS.PatternStep.ARCIN then
+  
+    -- Hint turn and set TACAN.
+    if playerData.difficulty==AIRBOSS.Difficulty.EASY then
+      -- Get inverse magnetic radial without offset ==> FB for Case II or BRC for Case III.  
+      local radial=self:GetRadial(playerData.case, true, false, true)
+      local turn="right"
+      if self.holdingoffset<0 then
+        turn="left"
+      end
+      hint=hint..string.format("\nTurn %s and select TACAN %03d°.", turn, radial)
+    end
+    
+  end
+  
+  -- DIRTUP additonal info.
+  if playerData.step==AIRBOSS.PatternStep.DIRTYUP then
+    if playerData.difficulty==AIRBOSS.Difficulty.EASY then
+      if playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
+        hint=hint.."\nFAF! Checks completed. Nozzles 50°."
+      else
+        hint=hint.."\nDirty up! Hook, gear and flaps down."
+      end
+    end
+  end
+  
+  -- BULLSEYE additonal info.
+  if playerData.step==AIRBOSS.PatternStep.BULLSEYE then        
+    -- Hint follow the needles.
+    if playerData.difficulty==AIRBOSS.Difficulty.EASY then
+      if playerData.actype~=AIRBOSS.AircraftCarrier.AV8B then
+        hint=hint..string.format("\nIntercept glideslope and follow the needles.")
+      end
+    end
+  end
+  
+  -- Message to player.
+  if hint~="" then
+    local text=string.format("%s%s", playerData.step, hint)
+    self:MessageToPlayer(playerData, hint, "AIRBOSS", "")
+  end
+end
+
+
+--- Display hint for flight students about the (next) step. Message is displayed after one second.
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.PlayerData playerData Player data.
+-- @param #string step Step for which hint is given.
+function AIRBOSS:_StepHint(playerData, step)
+  
+  -- Set step.  
+  step=step or playerData.step 
+
+  -- Message is only for "Flight Students".
+  if playerData.difficulty==AIRBOSS.Difficulty.EASY and playerData.showhints then
+  
+    -- Get optimal parameters at step.
+    local alt, aoa, dist, speed=self:_GetAircraftParameters(playerData, step)
+    
+    -- Hint:
+    local hint=""
+    
+    -- Altitude.
+    if alt then
+      hint=hint..string.format("\nAltitude %d ft", UTILS.MetersToFeet(alt))
+    end
+    
+    -- AoA.
+    if aoa then
+      hint=hint..string.format("\nAoA %.1f", aoa)
+    end
+    
+    -- Speed.
+    if speed then
+      hint=hint..string.format("\nSpeed %d knots", UTILS.MpsToKnots(speed))
+    end
+    
+    -- Distance to the boat.
+    if dist then
+      hint=hint..string.format("\nDistance to the boat %.1f NM", UTILS.MetersToNM(dist))
+    end
+
+    if step==AIRBOSS.PatternStep.ABEAM then
+      if playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
+        hint=hint.."\nNozzles 50°-60°. Antiskid OFF. Lights OFF."
+      else
+        hint=hint.."\nDirty up! Gear DOWN, flaps DOWN. Check hook down."
+      end
+    end
+        
+    -- Check if there was actually anything to tell.
+    if hint~="" then
+    
+      -- Compile text if any.
+      local text=string.format("Optimal setup at next step %s:%s", step, hint)
+    
+      -- Send hint to player.
+      self:MessageToPlayer(playerData, text, "AIRBOSS", "", nil, false, 1)
+      
+    end
+  
+  end
 end
 
 
@@ -10701,23 +10799,20 @@ function AIRBOSS:_AltitudeCheck(playerData, altopt)
   local radiocall=nil --#AIRBOSS.RadioCall
  
   local hint=""
-  local loud=false
   if _error>badscore then
     --hint=string.format("You're high.")
-    radiocall=self:_NewRadioCall(self.LSOCall.HIGH, nil, nil, 5)
-    loud=true
+    radiocall=self:_NewRadioCall(self.LSOCall.HIGH, "Paddles", "")
   elseif _error>lowscore then
     --hint= string.format("You're slightly high.")
-    radiocall=self:_NewRadioCall(self.LSOCall.HIGH, nil, nil, 5)
+    radiocall=self:_NewRadioCall(self.LSOCall.HIGH, "Paddles", "")
   elseif _error<-badscore then
     --hint=string.format("You're low. ")
-    radiocall=self:_NewRadioCall(self.LSOCall.LOW, nil, nil, 5)
-    loud=true
+    radiocall=self:_NewRadioCall(self.LSOCall.LOW, "Paddles", "")
   elseif _error<-lowscore then
     --hint=string.format("You're slightly low.")
-    radiocall=self:_NewRadioCall(self.LSOCall.LOW, nil, nil, 5)
+    radiocall=self:_NewRadioCall(self.LSOCall.LOW, "Paddles", "")
   else
-    hint=string.format("Good altitude.")
+    hint=string.format("Good altitude. ")
   end
   
   -- Extend or decrease depending on skill.
@@ -10736,6 +10831,133 @@ function AIRBOSS:_AltitudeCheck(playerData, altopt)
   local debrief=string.format("Altitude %d ft = %d%% deviation from %d ft.", UTILS.MetersToFeet(altitude), _error, UTILS.MetersToFeet(altopt))
   
   return hint, debrief,radiocall
+end
+
+--- Score for correct AoA.
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.PlayerData playerData Player data.
+-- @param #number optaoa Optimal AoA.
+-- @return #string Feedback message text or easy and normal difficulty level or nil for hard.
+-- @return #string Debriefing text.
+-- @return #AIRBOSS.RadioCall Radio call.
+function AIRBOSS:_AoACheck(playerData, optaoa)
+
+  if optaoa==nil then
+    return nil, nil
+  end
+  
+  -- Get relative score.
+  local lowscore, badscore = self:_GetGoodBadScore(playerData)
+  
+  -- Player AoA
+  local aoa=playerData.unit:GetAoA()
+  
+  -- Altitude error +-X%
+  local _error=(aoa-optaoa)/optaoa*100  
+    
+  -- Get aircraft AoA parameters.
+  local aircraftaoa=self:_GetAircraftAoA(playerData)
+  
+    -- Radio call for flight students.
+  local radiocall=nil --#AIRBOSS.RadioCall
+
+  -- Rate aoa.
+  local hint=""
+  if aoa>=aircraftaoa.SLOW then
+    --hint="Your're slow!"
+    radiocall=self:_NewRadioCall(self.LSOCall.SLOW, "Paddles", "")
+  elseif aoa>=aircraftaoa.Slow then
+    --hint="Your're slow."
+    radiocall=self:_NewRadioCall(self.LSOCall.SLOW, "Paddles", "")
+  elseif aoa>=aircraftaoa.OnSpeedMax then
+    hint="Your're a little slow. "
+  elseif aoa>=aircraftaoa.OnSpeedMin then
+    hint="You're on speed. "
+  elseif aoa>=aircraftaoa.Fast then
+    hint="You're a little fast. "
+  elseif aoa>=aircraftaoa.FAST then
+    --hint="Your're fast."
+    radiocall=self:_NewRadioCall(self.LSOCall.FAST, "Paddles", "")
+  else
+    --hint="You're fast!"
+    radiocall=self:_NewRadioCall(self.LSOCall.FAST, "Paddles", "")
+  end
+
+  -- Extend or decrease depending on skill.
+  if playerData.difficulty==AIRBOSS.Difficulty.EASY then
+    -- Also inform students about optimal value.
+    hint=hint..string.format("Optimal AoA is %.1f.", self:_AoADeg2Units(playerData, optaoa))
+  elseif playerData.difficulty==AIRBOSS.Difficulty.NORMAL then
+    -- We keep is short normally.
+    hint=""
+  elseif playerData.difficulty==AIRBOSS.Difficulty.HARD then
+    -- No hint at all for the pros.
+    hint=""
+  end
+  
+  -- Debriefing text.
+  local debrief=string.format("AoA %.1f = %d%% deviation from %.1f.", self:_AoADeg2Units(playerData, aoa), _error, self:_AoADeg2Units(playerData, optaoa))
+  
+  return hint, debrief,radiocall
+end
+
+--- Evaluate player's speed.
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.PlayerData playerData Player data table.
+-- @param #number speedopt Optimal speed in m/s.
+-- @return #string Feedback text.
+-- @return #string Debriefing text.
+-- @return #AIRBOSS.RadioCall Radio call.
+function AIRBOSS:_SpeedCheck(playerData, speedopt)
+
+  if speedopt==nil then
+    return nil, nil
+  end
+
+  -- Player altitude.
+  local speed=playerData.unit:GetVelocityMPS()
+  
+  -- Get relative score.
+  local lowscore, badscore=self:_GetGoodBadScore(playerData)
+  
+  -- Altitude error +-X%
+  local _error=(speed-speedopt)/speedopt*100
+  
+    -- Radio call for flight students.
+  local radiocall=nil --#AIRBOSS.RadioCall  
+  
+  local hint=""
+  if _error>badscore then
+    --hint=string.format("You're fast.")
+    radiocall=self:_NewRadioCall(self.LSOCall.FAST, "AIRBOSS", "")
+  elseif _error>lowscore then
+    --hint= string.format("You're slightly fast.")
+    radiocall=self:_NewRadioCall(self.LSOCall.FAST, "AIRBOSS", "")
+  elseif _error<-badscore then
+    --hint=string.format("You're slow.")
+    radiocall=self:_NewRadioCall(self.LSOCall.SLOW, "AIRBOSS", "")
+  elseif _error<-lowscore then
+    --hint=string.format("You're slightly slow.")
+    radiocall=self:_NewRadioCall(self.LSOCall.SLOW, "AIRBOSS", "")
+  else
+    hint=string.format("Good speed. ")
+  end
+  
+  -- Extend or decrease depending on skill.
+  if playerData.difficulty==AIRBOSS.Difficulty.EASY then
+    hint=hint..string.format("Optimal speed is %d knots.", UTILS.MpsToKnots(speedopt))
+  elseif playerData.difficulty==AIRBOSS.Difficulty.NORMAL then
+    -- We keep is short normally.
+    hint=""
+  elseif playerData.difficulty==AIRBOSS.Difficulty.HARD then
+    -- No hint at all for pros.
+    hint=""
+  end
+  
+  -- Debrief text.
+  local debrief=string.format("Speed %d knots = %d%% deviation from %d knots.", UTILS.MpsToKnots(speed), _error, UTILS.MpsToKnots(speedopt))
+  
+  return hint, debrief, radiocall
 end
 
 --- Evaluate player's distance to the boat at checkpoint.
@@ -10781,7 +11003,6 @@ function AIRBOSS:_DistanceCheck(playerData, optdist)
     -- We keep it short normally.
   elseif playerData.difficulty==AIRBOSS.Difficulty.HARD then
     -- No hint at all for the pros.
-    hint=""
   end
 
   -- Debriefing text.
@@ -10790,140 +11011,9 @@ function AIRBOSS:_DistanceCheck(playerData, optdist)
   return hint, debrief, nil
 end
 
---- Score for correct AoA.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data.
--- @param #number optaoa Optimal AoA.
--- @return #string Feedback message text or easy and normal difficulty level or nil for hard.
--- @return #string Debriefing text.
--- @return #AIRBOSS.RadioCall Radio call.
-function AIRBOSS:_AoACheck(playerData, optaoa)
-
-  if optaoa==nil then
-    return nil, nil
-  end
-  
-  -- Get relative score.
-  local lowscore, badscore = self:_GetGoodBadScore(playerData)
-  
-  -- Player AoA
-  local aoa=playerData.unit:GetAoA()
-  
-  -- Altitude error +-X%
-  local _error=(aoa-optaoa)/optaoa*100  
-    
-  -- Get aircraft AoA parameters.
-  local aircraftaoa=self:_GetAircraftAoA(playerData)
-  
-    -- Radio call for flight students.
-  local radiocall=nil --#AIRBOSS.RadioCall
-
-  -- Rate aoa.
-  local hint=""
-  local loud=false
-  if aoa>=aircraftaoa.SLOW then
-    --hint="Your're slow!"
-    radiocall=self:_NewRadioCall(self.LSOCall.SLOW, nil, nil, 5)
-    loud=true
-  elseif aoa>=aircraftaoa.Slow then
-    --hint="Your're slow."
-    radiocall=self:_NewRadioCall(self.LSOCall.SLOW, nil, nil, 5)
-  elseif aoa>=aircraftaoa.OnSpeedMax then
-    hint="Your're a little slow."
-  elseif aoa>=aircraftaoa.OnSpeedMin then
-    hint="You're on speed."
-  elseif aoa>=aircraftaoa.Fast then
-    hint="You're a little fast."
-  elseif aoa>=aircraftaoa.FAST then
-    --hint="Your're fast."
-    radiocall=self:_NewRadioCall(self.LSOCall.FAST, nil, nil, 5)
-  else
-    --hint="You're fast!"
-    radiocall=self:_NewRadioCall(self.LSOCall.FAST, nil, nil, 5)
-    loud=true
-  end
-
-  -- Extend or decrease depending on skill.
-  if playerData.difficulty==AIRBOSS.Difficulty.EASY then
-    -- Also inform students about optimal value.
-    hint=hint..string.format(" Optimal AoA is %.1f.", self:_AoADeg2Units(playerData, optaoa))
-    self:Sound2Player(playerData, self.LSORadio, radiocall, loud)
-  elseif playerData.difficulty==AIRBOSS.Difficulty.NORMAL then
-    -- We keep is short normally.
-    self:Sound2Player(playerData, self.LSORadio, radiocall, loud)
-  elseif playerData.difficulty==AIRBOSS.Difficulty.HARD then
-    -- No hint at all for the pros.
-    hint=""
-  end
-  
-  -- Debriefing text.
-  local debrief=string.format("AoA %.1f = %d%% deviation from %.1f.", self:_AoADeg2Units(playerData, aoa), _error, self:_AoADeg2Units(playerData, optaoa))
-  
-  return hint, debrief,radiocall
-end
-
---- Evaluate player's speed.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data table.
--- @param #number speedopt Optimal speed in m/s.
--- @return #string Feedback text.
--- @return #string Debriefing text.
--- @return #AIRBOSS.RadioCall Radio call.
-function AIRBOSS:_SpeedCheck(playerData, speedopt)
-
-  if speedopt==nil then
-    return nil, nil
-  end
-
-  -- Player altitude.
-  local speed=playerData.unit:GetVelocityMPS()
-  
-  -- Get relative score.
-  local lowscore, badscore=self:_GetGoodBadScore(playerData)
-  
-  -- Altitude error +-X%
-  local _error=(speed-speedopt)/speedopt*100
-  
-    -- Radio call for flight students.
-  local radiocall=nil --#AIRBOSS.RadioCall  
-  
-  local hint=""
-  local loud=false
-  if _error>badscore then
-    --hint=string.format("You're fast.")
-    radiocall=self:_NewRadioCall(self.LSOCall.FAST, "AIRBOSS", nil, 5)
-    loud=true    
-  elseif _error>lowscore then
-    --hint= string.format("You're slightly fast.")
-    radiocall=self:_NewRadioCall(self.LSOCall.FAST, "AIRBOSS", nil, 5)
-  elseif _error<-badscore then
-    --hint=string.format("You're slow.")
-    radiocall=self:_NewRadioCall(self.LSOCall.SLOW, "AIRBOSS", nil, 5)
-  elseif _error<-lowscore then
-    --hint=string.format("You're slightly slow.")
-    radiocall=self:_NewRadioCall(self.LSOCall.SLOW, "AIRBOSS", nil, 5)
-    loud=true
-  else
-    hint=string.format("Good speed.")
-  end
-  
-  -- Extend or decrease depending on skill.
-  if playerData.difficulty==AIRBOSS.Difficulty.EASY then
-    hint=hint..string.format(" Optimal speed is %d knots.", UTILS.MpsToKnots(speedopt))
-    self:Sound2Player(playerData, self.LSORadio, radiocall, loud)
-  elseif playerData.difficulty==AIRBOSS.Difficulty.NORMAL then
-    -- We keep is short normally.
-    self:Sound2Player(playerData, self.LSORadio, radiocall, loud)
-  elseif playerData.difficulty==AIRBOSS.Difficulty.HARD then
-    -- No hint at all for pros.
-    hint=""
-  end
-  
-  -- Debrief text.
-  local debrief=string.format("Speed %d knots = %d%% deviation from %d knots.", UTILS.MpsToKnots(speed), _error, UTILS.MpsToKnots(speedopt))
-  
-  return hint, debrief, radiocall
-end
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- DEBRIEFING
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Append text to debriefing.
 -- @param #AIRBOSS self
@@ -11198,66 +11288,6 @@ function AIRBOSS:_Debrief(playerData)
   -- Auto save player results.
   if self.autosave and mygrade.finalscore then
     self:Save(self.autosavepath, self.autosavefile)
-  end
-end
-
---- Display hint for flight students about the (next) step. Message is displayed after one second.
--- @param #AIRBOSS self
--- @param #AIRBOSS.PlayerData playerData Player data.
--- @param #string step Step for which hint is given.
-function AIRBOSS:_StepHint(playerData, step)
-  
-  -- Set step.  
-  step=step or playerData.step 
-
-  -- Message is only for "Flight Students".
-  if playerData.difficulty==AIRBOSS.Difficulty.EASY then
-  
-    -- Get optimal parameters at step.
-    local alt, aoa, dist, speed=self:_GetAircraftParameters(playerData, step)
-    
-    -- Hint:
-    local hint=""
-    
-    -- Altitude.
-    if alt then
-      hint=hint..string.format("\nAltitude %d ft", UTILS.MetersToFeet(alt))
-    end
-    
-    -- AoA.
-    if aoa then
-      hint=hint..string.format("\nAoA %.1f", aoa)
-    end
-    
-    -- Speed.
-    if speed then
-      hint=hint..string.format("\nSpeed %d knots", UTILS.MpsToKnots(speed))
-    end
-    
-    -- Distance to the boat.
-    if dist then
-      hint=hint..string.format("\nDistance to the boat %.1f NM", UTILS.MetersToNM(dist))
-    end
-
-    if step==AIRBOSS.PatternStep.ABEAM then
-      if playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
-        hint=hint.."\nNozzles 50°-60°. Antiskid OFF. Lights OFF."
-      else
-        hint=hint.."\nDirty up! Gear DOWN, flaps DOWN. Check hook down."
-      end    
-    end
-        
-    -- Check if there was actually anything to tell.
-    if hint~="" then
-    
-      -- Compile text if any.
-      local text=string.format("Optimal setup at next step %s:%s", step, hint)
-    
-      -- Send hint to player.
-      self:MessageToPlayer(playerData, text, "AIRBOSS", "", nil, false, 1)
-      
-    end
-  
   end
 end
 
@@ -11989,6 +12019,34 @@ function AIRBOSS:_GetTowerFrequency()
   end
 end
 
+--- Get error margin depending on player skill.
+-- 
+-- * Flight students: 10% and 20%
+-- * Naval Aviators: 5% and 10%
+-- * TOPGUN Graduates: 2.5% and 5%
+-- 
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.PlayerData playerData Player data table.
+-- @return #number Error margin for still being okay.
+-- @return #number Error margin for really sucking.
+function AIRBOSS:_GetGoodBadScore(playerData)
+
+  local lowscore
+  local badscore
+  if playerData.difficulty==AIRBOSS.Difficulty.EASY then
+    lowscore=10
+    badscore=20    
+  elseif playerData.difficulty==AIRBOSS.Difficulty.NORMAL then
+    lowscore=5
+    badscore=10     
+  elseif playerData.difficulty==AIRBOSS.Difficulty.HARD then
+    lowscore=2.5
+    badscore=5
+  end
+  
+  return lowscore, badscore
+end
+
 --- Check if aircraft is capable of landing on this aircraft carrier.
 -- @param #AIRBOSS self
 -- @param Wrapper.Unit#UNIT unit Aircraft unit. (Will also work with groups as given parameter.)
@@ -12363,6 +12421,7 @@ end
 function AIRBOSS:RadioTransmission(radio, call, loud, delay)
   self:F2({radio=radio, call=call, loud=loud, delay=delay})
   
+  -- Nil check.
   if radio==nil or call==nil then
     return
   end
@@ -13012,6 +13071,7 @@ function AIRBOSS:_MarshalCallArrived(modex, case, brc, altitude, charlie, qfe)
   self:RadioTransmission(self.MarshalRadio, casecall, nil, delay)
   -- X..
   self:_Number2Radio(self.MarshalRadio, tostring(case), nil, delay)
+  
   delay=delay+0.5
   -- expected..
   self:RadioTransmission(self.MarshalRadio, self.MarshalCall.EXPECTED, nil, delay)
@@ -13019,6 +13079,7 @@ function AIRBOSS:_MarshalCallArrived(modex, case, brc, altitude, charlie, qfe)
   self:RadioTransmission(self.MarshalRadio, self.MarshalCall.BRC, nil, delay)
   -- XYZ..
   self:_Number2Radio(self.MarshalRadio, string.format("%03d", brc), nil, delay)
+  
   delay=delay+0.5
   -- hold at..
   self:RadioTransmission(self.MarshalRadio, self.MarshalCall.HOLDAT, nil, delay)
@@ -13027,6 +13088,7 @@ function AIRBOSS:_MarshalCallArrived(modex, case, brc, altitude, charlie, qfe)
   self:RadioTransmission(self.MarshalRadio, self.MarshalCall.ANGELS, nil, delay)
   -- X..
   self:_Number2Radio(self.MarshalRadio, tostring(angels), nil, delay)
+  
   delay=delay+0.5
   -- Expected..
   self:RadioTransmission(self.MarshalRadio, self.MarshalCall.EXPECTED, nil, delay)
@@ -13036,6 +13098,7 @@ function AIRBOSS:_MarshalCallArrived(modex, case, brc, altitude, charlie, qfe)
   self:_Number2Radio(self.MarshalRadio, CT[1], nil, delay)
   -- XY.. (minutes)
   self:_Number2Radio(self.MarshalRadio, CT[2], nil, delay)
+  
   delay=delay+0.5
   -- Altimeter..
   self:RadioTransmission(self.MarshalRadio, self.MarshalCall.ALTIMETER, nil, delay)
@@ -13045,6 +13108,7 @@ function AIRBOSS:_MarshalCallArrived(modex, case, brc, altitude, charlie, qfe)
   self:RadioTransmission(self.MarshalRadio, self.MarshalCall.POINT, nil, delay)
   -- XY..
   self:_Number2Radio(self.MarshalRadio, QFE[2], nil, delay)
+  
   delay=delay+0.5
   -- Report see me.
   self:RadioTransmission(self.MarshalRadio, self.MarshalCall.REPORTSEEME, nil, delay)
@@ -13140,6 +13204,7 @@ function AIRBOSS:_AddF10Commands(_unitName)
         missionCommands.addCommandForGroup(gid, "Flight Student",  _skillPath, self._SetDifficulty, self, playername, AIRBOSS.Difficulty.EASY)   -- F1
         missionCommands.addCommandForGroup(gid, "Naval Aviator",   _skillPath, self._SetDifficulty, self, playername, AIRBOSS.Difficulty.NORMAL) -- F2
         missionCommands.addCommandForGroup(gid, "TOPGUN Graduate", _skillPath, self._SetDifficulty, self, playername, AIRBOSS.Difficulty.HARD)   -- F3
+        missionCommands.addCommandForGroup(gid, "Hints On/Off",    _skillPath, self._SetHintsOnOff, self, playername)                            -- F4
         -- F10/Airboss/<Carrier>/F1 Help/
         missionCommands.addCommandForGroup(gid, "My Status",           _helpPath, self._DisplayPlayerStatus, self, _unitName)   -- F3
         missionCommands.addCommandForGroup(gid, "Attitude Monitor",    _helpPath, self._DisplayAttitude,     self, _unitName)   -- F4
@@ -13985,7 +14050,7 @@ function AIRBOSS:_DisplayDebriefing(_unitName)
         for _,_data in pairs(playerData.lastdebrief) do
           local step=_data.step
           local comment=_data.hint
-          text=text..string.format("* %s:\n",step)
+          text=text..string.format("* %s:",step)
           text=text..string.format("%s\n", comment)
         end
       else
@@ -14285,6 +14350,45 @@ function AIRBOSS:_SetDifficulty(playername, difficulty)
     self:MessageToPlayer(playerData, text, nil, playerData.name, 5)
   else
     self:E(self.lid..string.format("ERROR: Could not get player data for player %s.", playername))
+  end
+  
+  -- Set hints as well.
+  if playerData.difficulty==AIRBOSS.Difficulty.HARD then
+    playerData.showhints=false
+  else
+    playerData.showhints=true
+  end
+  
+end
+
+--- Turn player's aircraft attitude display on or off.
+-- @param #AIRBOSS self
+-- @param #string _unitname Name of the player unit.
+function AIRBOSS:_SetHintsOnOff(_unitname)
+  self:F2(_unitname)
+  
+  -- Get player unit and player name.
+  local unit, playername = self:_GetPlayerUnitAndName(_unitname)
+  
+  -- Check if we have a player.
+  if unit and playername then
+  
+    -- Player data.  
+    local playerData=self.players[playername]  --#AIRBOSS.PlayerData
+    
+    if playerData then
+      playerData.showhints=not playerData.showhints
+      
+      -- Inform player.
+      local text=""
+      if playerData.showhints==true then
+        text=string.format("hints are now ON.")
+      elseif playerData.showhints==false then
+        text=string.format("hints are now OFF.")
+      end
+      self:MessageToPlayer(playerData, text, nil, playerData.name, 5)
+            
+    end
   end
 end
 
