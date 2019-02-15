@@ -207,6 +207,8 @@
 -- @field #AIRBOSS.MarshalCalls MarshalCall Radio voice over of the Marshal/Airboss.
 -- @field #number lowfuelAI Low fuel threshold for AI groups in percent.
 -- @field #boolean emergency If true (default), allow emergency landings, i.e. bypass any pattern and go for final approach.
+-- @field #boolean respawnAI If true, respawn AI flights as they enter the CCA to detach and airfields from the mission plan. Default false.
+-- @field #boolean turning If true, carrier is currently turning.
 -- @extends Core.Fsm#FSM
 
 --- Be the boss!
@@ -1044,6 +1046,7 @@ AIRBOSS = {
   MarshalCall    = nil,
   lowfuelAI      = nil,
   emergency      = nil,
+  respawnAI      = nil,
 }
 
 --- Aircraft types capable of landing on carrier (human+AI).
@@ -1589,6 +1592,9 @@ function AIRBOSS:New(carriername, alias)
   -- No despawn after engine shutdown by default.
   self:SetDespawnOnEngineShutdown(false)
   
+  -- No respawning of AI groups when entering the CCA.
+  self:SetRespawnAI(false)
+  
   -- Mission uses static weather by default.
   self:SetStaticWeather()
   
@@ -1658,6 +1664,8 @@ function AIRBOSS:New(carriername, alias)
     BASE:TraceLevel(1)
     self.dTstatus=0.1
   end
+  
+  --self:_GetZoneGroove():SmokeZone(SMOKECOLOR.Red, 5)
     
   -- Smoke zones.
   if self.Debug and false then
@@ -2217,7 +2225,7 @@ function AIRBOSS:SetEmergencyLandings(switch)
 end
 
 
---- Despawn AI groups after they they shut down their engines 
+--- Despawn AI groups after they they shut down their engines. 
 -- @param #AIRBOSS self
 -- @param #boolean switch If true or nil, AI groups are despawned.
 -- @return #AIRBOSS self
@@ -2226,6 +2234,19 @@ function AIRBOSS:SetDespawnOnEngineShutdown(switch)
     self.despawnshutdown=true
   else
     self.despawnshutdown=false
+  end
+  return self
+end
+
+--- Respawn AI groups once they reach the CCA. Clears any attached airbases and allows making them land on the carrier via script.
+-- @param #AIRBOSS self
+-- @param #boolean switch If true or nil, AI groups are respawned.
+-- @return #AIRBOSS self
+function AIRBOSS:SetRespawnAI(switch)
+  if switch==true or switch==nil then
+    self.respawnAI=true
+  else
+    self.respawnAI=false
   end
   return self
 end
@@ -3970,6 +3991,69 @@ function AIRBOSS:_InitVoiceOvers()
       subtitle="",
       duration=0.40,  --0.38 too short
     },
+    CASE={
+      file="MARSHAL-Case",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.45,
+    },
+    EXPECTED={
+      file="MARSHAL-Expected",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.60,
+    },    
+    BRC={
+      file="MARSHAL-BRC",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.68,
+    },    
+    HOLDAT={
+      file="MARSHAL-HoldAt",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.43,
+    },    
+    ANGELS={
+      file="MARSHAL-Angels",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.68,
+    },    
+    EXPECTED={
+      file="MARSHAL-Expected",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.72,
+    },    
+    ALTIMETER={
+      file="MARSHAL-Altimeter",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.73,
+    },    
+    POINT={
+      file="MARSHAL-Point",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.42,
+    },    
+    REPORTSEEME={
+      file="MARSHAL-ReportSeeMe",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=1.05,
+    },        
     CLICK={
       file="AIRBOSS-RadioClick",
       suffix="ogg",
@@ -4640,13 +4724,13 @@ function AIRBOSS:_ScanCarrierZone()
             if stack then
             
               -- Send AI to marshal stack. We respawn the group to clean possible departure and destination airbases.
-              self:_MarshalAI(knownflight, stack, true)
+              self:_MarshalAI(knownflight, stack, self.respawnAI)
               
             else
             
               -- Send AI to orbit outside 10 NM zone and wait until the next Marshal stack is available.
               if not self:_InQueue(self.Qwaiting, knownflight.group) then
-                self:_WaitAI(knownflight, true)  -- Group is respawned to clear any attached airfields.
+                self:_WaitAI(knownflight, self.respawnAI)  -- Group is respawned to clear any attached airfields.
               end
             
             end
@@ -8893,19 +8977,21 @@ end
 
 --- Get groove zone.
 -- @param #AIRBOSS self
--- @param #number l Length of the groove in NM. Default 1.5 NM.
--- @param #number w Width of the groove in NM. Default 
+-- @param #number l Length of the groove in NM. Default 2.0 NM.
+-- @param #number w Width of the groove in NM. Default  0.3 NM.
 -- @return Core.Zone#ZONE_POLYGON_BASE Initial zone.
 function AIRBOSS:_GetZoneGroove(l, w)
 
-  l=l or 1.5
-  w=w or 0.5
+  l=l or 2.0
+  w=w or 0.3
 
   -- Get radial, i.e. inverse of BRC.
   local fbi=self:GetRadial(1, false, false)
   
   -- Stern coordinate.
   local st=self:_GetSternCoord()
+  
+  -- TODO: optimize for Tarawa. shift port.
   
   -- Zone points.
   local c1=st:Translate(self.carrierparam.totwidthstarboard, fbi-90)
@@ -11579,7 +11665,25 @@ function AIRBOSS:_CheckPatternUpdate()
   self.Corientlast=vNew
   
   -- Carrier is turning when its heading changed by at least one degree since last check.
-  local turning=deltaLast>=1
+  local turning=math.abs(deltaLast)>=1
+  
+  -- Starting to turn.
+  if turning and not self.turning then
+    -- Turning!
+    self.turning=true
+    
+    -- Get heading.
+    local hdg
+    if self.turnintowind then
+      hdg=select(1,self:GetWind())
+    else
+      hdg=self:GetCoordinate():HeadingTo(self:_GetNextWaypoint())
+    end
+    
+    -- Inform everyone.
+    local text=string.format("staring turn to heading %03d°.", hdg)
+    self:MessageToMarshal(text, "AIRBOSS", "99")
+  end
   
   -- No update if carrier is turning!
   if turning then
@@ -11624,12 +11728,13 @@ function AIRBOSS:_CheckPatternUpdate()
       local FB=self:GetFinalBearing(true)
       local text=string.format("new final bearing %03d°.", FB)
       self:MessageToMarshal(text, "AIRBOSS", "99")
+      self.turning=false
     end
     
     -- Reset parameters for next update check.
     self.Corientation=vNew
     self.Cposition=pos
-    self.Tpupdate=timer.getTime()        
+    self.Tpupdate=timer.getTime()
   end
 
 end
@@ -12310,7 +12415,16 @@ function AIRBOSS:RadioTransmission(radio, call, loud, delay)
      call~=self[caller].N6 and
      call~=self[caller].N7 and
      call~=self[caller].N8 and
-     call~=self[caller].N9 then
+     call~=self[caller].N9 and
+     call~=self[caller].EXPECTED and
+     call~=self[caller].BRC and
+     call~=self[caller].ALTIMETER and
+     call~=self[caller].POINT and
+     call~=self[caller].HOLDAT and
+     call~=self[caller].CASE and
+     call~=self[caller].POINT and
+     call~=self[caller].ANGELS and
+     call~=self[caller].CHARLIETIME then
     self:RadioTransmission(radio, self[caller].CLICK, false, delay)
   end
 end
@@ -12889,47 +13003,54 @@ function AIRBOSS:_MarshalCallArrived(modex, case, brc, altitude, charlie, qfe)
   text=text..string.format("Altimeter %.2f. Report see me.", qfe)
 
   -- Create new call to display complete subtitle.
-  --local casecall=self:_NewRadioCall(self.MarshalCall.CASE, "MARSHAL", text, self.Tmessage, modex)
+  local casecall=self:_NewRadioCall(self.MarshalCall.CASE, "MARSHAL", text, self.Tmessage, modex)
   
-  -- Until we have a case sound we take the noise for testing
-  local casecall=self:_NewRadioCall(self.MarshalCall.NOISE, "MARSHAL", text, self.Tmessage, modex)
+  
+  local delay=0
   
   -- Case..
-  self:RadioTransmission(self.MarshalRadio, casecall)
+  self:RadioTransmission(self.MarshalRadio, casecall, nil, delay)
   -- X..
-  self:_Number2Radio(self.MarshalRadio, tostring(case))
+  self:_Number2Radio(self.MarshalRadio, tostring(case), nil, delay)
+  delay=delay+0.5
   -- expected..
-  self:RadioTransmission(self.MarshalRadio, self.MarshalCall.EXPECTED)
+  self:RadioTransmission(self.MarshalRadio, self.MarshalCall.EXPECTED, nil, delay)
   -- BRC..
-  self:RadioTransmission(self.MarshalRadio, self.MarshalCall.BRC)
+  self:RadioTransmission(self.MarshalRadio, self.MarshalCall.BRC, nil, delay)
   -- XYZ..
-  self:_Number2Radio(self.MarshalRadio, string.format("%03d", brc))
+  self:_Number2Radio(self.MarshalRadio, string.format("%03d", brc), nil, delay)
+  delay=delay+0.5
   -- hold at..
-  self:RadioTransmission(self.MarshalRadio, self.MarshalCall.HOLDAT)
+  self:RadioTransmission(self.MarshalRadio, self.MarshalCall.HOLDAT, nil, delay)
+  delay=delay+0.1
   -- angels..
-  self:RadioTransmission(self.MarshalRadio, self.MarshalCall.ANGELS)
+  self:RadioTransmission(self.MarshalRadio, self.MarshalCall.ANGELS, nil, delay)
   -- X..
-  self:_Number2Radio(self.MarshalRadio, tostring(angels))
+  self:_Number2Radio(self.MarshalRadio, tostring(angels), nil, delay)
+  delay=delay+0.5
   -- Expected..
-  self:RadioTransmission(self.MarshalRadio, self.MarshalCall.EXPECTED)
+  self:RadioTransmission(self.MarshalRadio, self.MarshalCall.EXPECTED, nil, delay)
   -- Charlie time..
-  self:RadioTransmission(self.MarshalRadio, self.MarshalCall.CHARLIETIME)
+  self:RadioTransmission(self.MarshalRadio, self.MarshalCall.CHARLIETIME, nil, delay)
   -- XY.. (hours)
-  self:_Number2Radio(self.MarshalRadio, CT[1])
+  self:_Number2Radio(self.MarshalRadio, CT[1], nil, delay)
   -- XY.. (minutes)
-  self:_Number2Radio(self.MarshalRadio, CT[2])
+  self:_Number2Radio(self.MarshalRadio, CT[2], nil, delay)
+  delay=delay+0.5
   -- Altimeter..
-  self:RadioTransmission(self.MarshalRadio, self.MarshalCall.ALTIMETER)
+  self:RadioTransmission(self.MarshalRadio, self.MarshalCall.ALTIMETER, nil, delay)
   -- XY..
-  self:_Number2Radio(self.MarshalRadio, QFE[1])
+  self:_Number2Radio(self.MarshalRadio, QFE[1], nil, delay)
   -- Point..
-  self:RadioTransmission(self.MarshalRadio, self.MarshalCall.POINT)
+  self:RadioTransmission(self.MarshalRadio, self.MarshalCall.POINT, nil, delay)
   -- XY..
-  self:_Number2Radio(self.MarshalRadio, QFE[2])
+  self:_Number2Radio(self.MarshalRadio, QFE[2], nil, delay)
+  delay=delay+0.5
   -- Report see me.
-  self:RadioTransmission(self.MarshalRadio, self.MarshalCall.REPORTSEEME)
+  self:RadioTransmission(self.MarshalRadio, self.MarshalCall.REPORTSEEME, nil, delay)
+  delay=delay+0.2
   -- Click!
-  self:RadioTransmission(self.MarshalRadio, self.MarshalCall.CLICK)
+  self:RadioTransmission(self.MarshalRadio, self.MarshalCall.CLICK, nil, delay)
 end
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
