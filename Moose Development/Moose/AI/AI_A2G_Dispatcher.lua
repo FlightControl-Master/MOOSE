@@ -5,14 +5,14 @@
 -- Features:
 -- 
 --    * Setup quickly an A2G defense system for a coalition.
---    * Setup multiple defense zones to defend specif points in your battlefield.
---    * Setup (SEAD) suppression of air defenses to enhance the control of enemy airspace.
---    * Setup (CAS) Controlled Air Support to attack approach enemy ground units.
---    * Setup (BAI) Battleground Air Interdiction to attack detected remote enemy ground units and targets.
---    * Define and use a detection network setup by recce.
---    * Define defense squadrons at airbases, farps and carriers.
+--    * Setup multiple defense zones to defend specific coordinates in your battlefield.
+--    * Setup (SEAD) Suppression of Air Defense squadrons, to gain control in the air of enemy grounds.
+--    * Setup (CAS) Controlled Air Support squadrons, to attack closeby enemy ground units near friendly installations.
+--    * Setup (BAI) Battleground Air Interdiction squadrons to attack remote enemy ground units and targets.
+--    * Define and use a detection network controlled by recce.
+--    * Define A2G defense squadrons at airbases, farps and carriers.
 --    * Enable airbases for A2G defenses.
---    * Add different planes and helicopter templates to different squadrons.
+--    * Add different planes and helicopter templates to squadrons.
 --    * Assign squadrons to execute a specific engagement type depending on threat level of the detected ground enemy unit composition.
 --    * Add multiple squadrons to different airbases, farps or carriers.
 --    * Define different ranges to engage upon.
@@ -46,7 +46,7 @@
 -- ## 1. Which coalition am I modeling an A2G defense system for? blue or red?
 -- 
 -- One AI_A2G_DISPATCHER object can create a defense system for **one coalition**, which is blue or red.
--- If you want to create a **mutual defense system**, for both blue and red, then you need to instantiate **two** AI_A2G_DISPATCHER **objects**,
+-- If you want to create a **mutual defense system**, for both blue and red, then you need to create **two** AI_A2G_DISPATCHER **objects**,
 -- each governing their defense system for one coalition.
 -- 
 --      
@@ -300,10 +300,11 @@ do -- AI_A2G_DISPATCHER
   -- ### 1.1. Define the **reconnaissance network**:
   -- 
   -- As part of the AI_A2G_DISPATCHER :New() constructor, a reconnaissance network must be given as the first parameter.
-  -- A reconnaissance network is provide through an instance of a @{Functional.Detection} network.
+  -- A reconnaissance network is provided by passing a @{Functional.Detection} object.
   -- The most effective reconnaissance for the A2G dispatcher would be to use the @{Functional.Detection#DETECTION_AREAS} object.
   -- 
-  -- An reconnaissance network, is used to detect enemy ground targets, potentially group them into areas, and to understand the position, level of threat of the enemy.
+  -- A reconnaissance network, is used to detect enemy ground targets, 
+  -- potentially group them into areas, and to understand the position, level of threat of the enemy.
   -- 
   -- ![Banner Image](..\Presentations\AI_A2G_DISPATCHER\Dia5.JPG)
   -- 
