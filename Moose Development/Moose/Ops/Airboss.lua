@@ -842,7 +842,10 @@
 -- a naval unit (i.e. the carrier).
 -- 
 -- As a workaround, you can put an aircraft, e.g. a Helicopter on the deck of the carrier or another ship of the strike group. The aircraft should be set to
--- uncontrolled and maybe even to immortal. With the @{#AIRBOSS.SetRadioUnit}(*unitname*) function you can use this unit as "radio repeater".
+-- uncontrolled and maybe even to immortal. With the @{#AIRBOSS.SetRadioUnitName}(*unitname*) function you can use this unit as "radio repeater" for both Marshal and LSO
+-- radio channels. However, this might lead to interruptions in the transmission if both channels transmit simultaniously. Therefore, it is better to assign a unit for 
+-- each radio via the @{#AIRBOSS.SetRadioRelayLSO}(unitname) and @{#AIRBOSS.SetRadioRelayMarshal}(unitname) functions.
+-- 
 -- Of course you can also use any other aircraft in the vicinity of the carrier, e.g. a rescue helo or a recovery tanker. It is just important that this
 -- unit is and stays close the the boat as the distance from the sender to the receiver is modeled in DCS. So messages from too far away might not reach the players.
 -- 
@@ -879,6 +882,27 @@
 -- and the Marshal stack collapses.
 -- 
 -- If no AI handling is desired, this can be turned off via the @{#AIRBOSS.SetHandleAIOFF} function.
+-- 
+-- In case only specifc AI groups shall be excluded, it can be done by adding the groups to a set, e.g.
+-- 
+--     -- AI groups explicitly excluded from handling by the Airboss
+--     local CarrierExcludeSet=SET_GROUP:New():FilterPrefixes("E-2D Wizard Group"):FilterStart()
+--     AirbossStennis:SetExcludeAI(CarrierExcludeSet)
+--     
+-- Similarly, to the @{#AIRBOSS.SetExcludeAI} function, AI groups can be explicitly *included* via the @{#AIRBOSS.SetSquadronAI} function. If this is used, only the *included* groups are handled
+-- by the AIRBOSS.
+-- 
+-- ## Refueling
+-- 
+-- AI groups in the marshal pattern can be send to refuel at the recovery tanker or if none is defined to the nearest divert airfield. This can be enabled by the @{AIRBOSS.SetRefuelAI}(*lowfuelthreshold*).
+-- The parameter *lowfuelthreshold* is the threshold of fuel in percent. If the fuel drops below this value, the group will go for refueling. If refueling is performed at the recovery tanker,
+-- the group will return to the marshal stack when done. The aircraft will not return from the divert airfield however.
+-- 
+-- ## Respawning - DCS Landing Bug
+-- 
+-- AI groups that enter the CCA are usually guided to Marshal stack. However, due to DCS limitations they might not obey the landing task if they have another airfield as departure and/or destination in
+-- their mission task. Therefore, AI groups can be respawned when detected in the CCA. This should clear all other airfields and allow the aircraft to land on the carrier.
+-- This is achieved by the @{AIRBOSS.SetRespawnAI}() function.
 -- 
 -- ## Known Issues
 -- 
@@ -1362,7 +1386,6 @@ AIRBOSS.Difficulty={
 -- @field #number LUE Lineup error in degrees.
 -- @field #number Roll Roll angle.
 -- @field #number Rhdg Relative heading player to carrier. 0=parallel, +-90=perpendicular.
--- @field #number TGroove Time stamp when pilot entered the groove.
 -- @field #string FlyThrough Fly through up "/" or fly through down "\\".
 
 --- LSO grade data.
@@ -1416,6 +1439,7 @@ AIRBOSS.Difficulty={
 -- @field #table elements Flight group elements.
 -- @field #number Tcharlie Charlie (abs) time in seconds.
 -- @field #string name Player name or name of first AI unit.
+-- @field #boolean refueling Flight is refueling.
 
 --- Parameters of an element in a flight group.
 -- @type AIRBOSS.FlightElement
@@ -1707,25 +1731,28 @@ function AIRBOSS:New(carriername, alias)
   -------------------
   
   -- Debug trace.
-  if true then
+  if false then
     --self.Debug=true
     BASE:TraceOnOff(true)
     BASE:TraceClass(self.ClassName)
     BASE:TraceLevel(1)
     self.dTstatus=0.1
   end
-  
-  --self:_GetZoneGroove():SmokeZone(SMOKECOLOR.Red, 5)
     
   -- Smoke zones.
   if self.Debug and false then
     local case=2
+    self.holdingoffset=30
+    self:_GetZoneGroove():SmokeZone(SMOKECOLOR.Red, 5)
     self:_GetZoneBullseye(case):SmokeZone(SMOKECOLOR.White, 45)
     self:_GetZoneDirtyUp(case):SmokeZone(SMOKECOLOR.Orange, 45)
     self:_GetZoneArcIn(case):SmokeZone(SMOKECOLOR.Blue, 45)
     self:_GetZoneArcOut(case):SmokeZone(SMOKECOLOR.Blue, 45)
     self:_GetZonePlatform(case):SmokeZone(SMOKECOLOR.Red, 45)
     self:_GetZoneCorridor(case):SmokeZone(SMOKECOLOR.Green, 45)
+    self:_GetZoneHolding(case, 1):SmokeZone(SMOKECOLOR.White, 45)
+    self:_GetZoneInitial(case):SmokeZone(SMOKECOLOR.Orange, 45)
+    self:_GetZoneCommence(1):SmokeZone(SMOKECOLOR.Red, 45)
   end
   
   -- Carrier parameter debug tests.
@@ -2277,6 +2304,15 @@ function AIRBOSS:SetRespawnAI(switch)
   else
     self.respawnAI=false
   end
+  return self
+end
+
+--- Give AI aircraft the refueling task if a recovery tanker is present or send them to the nearest divert airfield.
+-- @param #AIRBOSS self
+-- @param #number lowfuelthreshold Low fuel threshold in percent. AI will go refueling if their fuel level drops below this value. Default 10 %. 
+-- @return #AIRBOSS self
+function AIRBOSS:SetRefuelAI(lowfuelthreshold)
+  self.lowfuelAI=lowfuelthreshold or 10
   return self
 end
 
@@ -3002,11 +3038,16 @@ function AIRBOSS:_CheckAIStatus()
     -- Only AI!
     if flight.ai then
       
-      -- TODO: Check that aircraft can be refueled.
+      -- Get fuel amount in %.
       local fuel=flight.group:GetFuelMin()*100
       
-      if self.lowfuelAI and fuel<self.lowfuelAI then
-        --self:_RefuelAI(flight)
+      -- Debug text.
+      local text=string.format("Group %s fuel=%.1f %%", flight.groupname, fuel)
+      self:T3(self.lid..text)
+      
+      -- Send AI for refueling at tanker or divert field.
+      if self.lowfuelAI and fuel<self.lowfuelAI and not flight.refueling then
+        self:_RefuelAI(flight)
       end
             
     end    
@@ -5267,9 +5308,9 @@ function AIRBOSS:_MarshalAI(flight, nstack, respawn)
     self:_AddMarshalGroup(flight, nstack)
   end
   
-  -- Explot unit.
-  local u1=flight.group:GetUnit(1) --Wrapper.Unit#UNIT
-  u1:Explode(500, 10)
+  -- Explode unit for testing. Worked!
+  --local u1=flight.group:GetUnit(1) --Wrapper.Unit#UNIT
+  --u1:Explode(500, 10)
 
   -- Recovery case.
   local case=flight.case
@@ -5419,8 +5460,27 @@ function AIRBOSS:_RefuelAI(flight)
 
   -- Current positon.
   wp[#wp+1]=flight.group:GetCoordinate():WaypointAirTurningPoint(nil, CurrentSpeed, {}, "Current position")
-
-  if self.tanker then
+  
+  -- Check if aircraft can be refueled.
+  -- TODO: This should also depend on the tanker type AC.
+  local refuelac=false
+  local actype=flight.group:GetTypeName()  
+  if actype==AIRBOSS.AircraftCarrier.AV8B      or
+     actype==AIRBOSS.AircraftCarrier.F14A      or
+     actype==AIRBOSS.AircraftCarrier.F14B      or
+     actype==AIRBOSS.AircraftCarrier.F14A_AI   or
+     actype==AIRBOSS.AircraftCarrier.HORNET    or
+     actype==AIRBOSS.AircraftCarrier.FA18C     or
+     actype==AIRBOSS.AircraftCarrier.S3B       or
+     actype==AIRBOSS.AircraftCarrier.S3BTANKER then
+     refuelac=true
+  end
+  
+  -- Message.
+  local text="" 
+  
+  -- Refuel or divert?
+  if self.tanker and refuelac then
   
     -- Current Tanker position.
     local tankerpos=self.tanker.tanker:GetCoordinate()
@@ -5433,6 +5493,9 @@ function AIRBOSS:_RefuelAI(flight)
     
     -- Waypoint with tasks.
     wp[#wp+1]=tankerpos:WaypointAirTurningPoint(nil, CurrentSpeed, {TaskRefuel, TaskMarshal}, "Refueling")
+    
+    -- Message.
+    text="going to recovery tanker for some gas."
   
   else
   
@@ -5448,14 +5511,24 @@ function AIRBOSS:_RefuelAI(flight)
     
     -- Landing waypoint.
     wp[#wp+1]=divertcoord:WaypointAirLanding(UTILS.KnotsToKmph(200), divertfield, {}, "Divert Field")
+    
+    -- Message
+    text=string.format("going to divert field %s to get some gas.", divertfield:GetName())
   
   end
+  
+  -- Message to marshal.
+  self:MessageToMarshal(text, flight.onboard, nil, self.Tmessage)
+  self:I(self.lid..flight.groupname.." "..text)
   
   -- Reinit waypoints.
   flight.group:WayPointInitialize(wp)
   
   -- Route group.
   flight.group:Route(wp, 0)
+  
+  -- Set refueling switch.
+  flight.refueling=true
 
 end
 
@@ -6138,6 +6211,7 @@ function AIRBOSS:_CreateFlightGroup(group)
     flight.seclead=flight.group:GetUnit(1):GetName()  -- Sec lead is first unitname of group but player name for players.
     flight.section={}
     flight.ballcall=false
+    flight.refueling=false
     flight.holding=nil
     flight.name=flight.group:GetUnit(1):GetName()   --Will be overwritten in _Newplayer with player name if human player in the group.
     
@@ -6278,6 +6352,7 @@ function AIRBOSS:_InitPlayer(playerData, step)
   playerData.debrief={}
   playerData.warning=nil
   playerData.holding=nil
+  playerData.refueling=false
   playerData.valid=false
   playerData.lig=false
   playerData.patternwo=false
@@ -6496,12 +6571,12 @@ function AIRBOSS:_CheckSectionRecovered(flight)
   
   -- Just for now, check if it is in other queues as well.
   if self:_InQueue(self.Qmarshal, lead.group) then
-    self:E("ERROR: flight group should not be in marshal queue")
+    self:E(self.lid..string.format("ERROR: lead flight group %s should not be in marshal queue", lead.groupname))
     self:_RemoveFlightFromMarshalQueue(lead, true)
   end
   -- Just for now, check if it is in other queues as well.
   if self:_InQueue(self.Qwaiting, lead.group) then
-    self:E("ERROR: flight group should not be in pattern queue")
+    self:E(self.lid..string.format("ERROR: lead flight group %s should not be in pattern queue", lead.groupname))
     self:_RemoveFlightFromQueue(self.Qwaiting, lead)
   end
     
@@ -7055,19 +7130,8 @@ end
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data.
 function AIRBOSS:_SetTimeInGroove(playerData)
-
-  --[[
-
-  -- Get time in the groove.
-  local gdataX0=playerData.groove.X0 --#AIRBOSS.GrooveData
-  if gdataX0 then
-    playerData.Tgroove=timer.getTime()-gdataX0.TGroove
-  else
-    playerData.Tgroove=9999
-  end
   
-  ]]
-  
+  -- Set time in the groove
   if playerData.TIG0 then
     playerData.Tgroove=timer.getTime()-playerData.TIG0
   else
@@ -7084,16 +7148,7 @@ function AIRBOSS:_GetTimeInGroove(playerData)
 
   local Tgroove=999
 
-  --[[
-
-  -- Get time in the groove.
-  local gdataX0=playerData.groove.X0 --#AIRBOSS.GrooveData
-  if gdataX0 then
-    Tgroove=timer.getTime()-gdataX0.TGroove
-  end
-  
-  ]]
-  
+  -- Get time in the groove.  
   if playerData.TIG0 then
     Tgroove=timer.getTime()-playerData.TIG0
   end
@@ -7215,7 +7270,7 @@ function AIRBOSS:OnEventLand(EventData)
       
       -- Check if playerData is okay.
       if playerData==nil then
-        self:E(self.lid.."ERROR: playerData nil in landing event.")
+        self:E(self.lid..string.format("ERROR: playerData nil in landing event. unit=%s player=%s", tostring(_unitName), tostring(_playername)))
         return
       end
       
@@ -7234,6 +7289,8 @@ function AIRBOSS:OnEventLand(EventData)
           -- Clear queues just in case.
           self:_RemoveFlightFromMarshalQueue(playerData, true)
           self:_RemoveFlightFromQueue(self.Qpattern, playerData)
+          self:_RemoveFlightFromQueue(self.Qwaiting, playerData)
+          self:_RemoveFlightFromQueue(self.Qspinning, playerData)
           
           return
         end
@@ -7297,7 +7354,8 @@ function AIRBOSS:OnEventLand(EventData)
         end
         
       else
-        -- TODO: Handle case where player did not land on the carrier.
+        -- Handle case where player did not land on the carrier.
+        -- Well, I guess, he leaves the slot or ejects. Both should be handled.
         if playerData then
           self:E(self.lid..string.format("Player %s did not land in carrier box zone. Maybe in the water near the carrier?", playerData.name))
         end
@@ -8375,7 +8433,6 @@ function AIRBOSS:_Final(playerData, nocheck)
     groovedata.LUE=self:_Lineup(playerData.unit, true)
     groovedata.Roll=roll
     groovedata.Rhdg=relhead
-    groovedata.TGroove=timer.getTime()
     groovedata.FlyThrough=nil
     
     -- TODO: could add angled approach if lineup<5 and relhead>5. This would mean the player has not turned in correctly!
@@ -9177,8 +9234,6 @@ function AIRBOSS:_GetZoneGroove(l, w)
   -- Stern coordinate.
   local st=self:_GetSternCoord()
   
-  -- TODO: optimize for Tarawa. shift port.
-  
   -- Zone points.
   local c1=st:Translate(self.carrierparam.totwidthstarboard, fbi-90)
   local c2=st:Translate(UTILS.NMToMeters(0.10), fbi-90):Translate(UTILS.NMToMeters(0.3), fbi)
@@ -9252,7 +9307,7 @@ end
 -- @return Core.Zone#ZONE_RADIUS Arc in zone.
 function AIRBOSS:_GetZoneArcOut(case)
 
-  -- Radius = 1 NM.
+  -- Radius = 1.25 NM.
   local radius=UTILS.NMToMeters(1.25)
   
   -- Distance = 12 NM
@@ -9276,7 +9331,7 @@ end
 -- @return Core.Zone#ZONE_RADIUS Arc in zone.
 function AIRBOSS:_GetZoneArcIn(case)
 
-  -- Radius = 1 NM.
+  -- Radius = 1.25 NM.
   local radius=UTILS.NMToMeters(1.25)
   
   -- Zone depends on Case recovery.
@@ -9286,8 +9341,7 @@ function AIRBOSS:_GetZoneArcIn(case)
   local alpha=math.rad(self.holdingoffset)
   
   -- 14+x NM from carrier
-  -- TODO
-  local x=14/math.cos(alpha)
+  local x=14 --/math.cos(alpha)
   
   -- Distance = 14 NM
   local distance=UTILS.NMToMeters(x)
@@ -9342,8 +9396,8 @@ function AIRBOSS:_GetZoneCorridor(case)
   -- Angle between radial and offset in rad.
   local alpha=math.rad(self.holdingoffset)
   
-  -- Distance shift ahead of carrier to allow for some space to bolter
-  local dx=2
+  -- Distance shift ahead of carrier to allow for some space to bolter.
+  local dx=5
    
   -- Width of the box in NM.
   local w=2
@@ -9382,9 +9436,12 @@ function AIRBOSS:_GetZoneCorridor(case)
   self:T3(string.format("FF Q  = %.1f NM", Q))
 
   local c={}
-  c[1]=self:GetCoordinate():Translate(-UTILS.NMToMeters(dx), radial) --Carrier coordinate translated 2 NM in direction of travel to allow for bolter space.
+  local cv=self:GetCoordinate()
+  c[1]=cv:Translate(-UTILS.NMToMeters(dx), radial) --Carrier coordinate translated 2 NM in direction of travel to allow for bolter space.
   
-  if math.abs(self.holdingoffset)>1 then
+  if math.abs(self.holdingoffset)>=5 then
+  
+    --[[
     -- Complicated case with an angle.
     c[2]=c[1]:Translate( UTILS.NMToMeters(w2),      radial-90)     -- 1 Right of carrier.
     c[3]=c[2]:Translate( UTILS.NMToMeters(d+dx+w2), radial)        -- 13 "south" @ 1 right
@@ -9394,10 +9451,22 @@ function AIRBOSS:_GetZoneCorridor(case)
     c[9]=c[1]:Translate( UTILS.NMToMeters(w2),      radial+90)     -- 1 left of carrier.
     c[8]=c[9]:Translate( UTILS.NMToMeters(d+dx-w2), radial)        -- 1 left and 11 behind of carrier.
     c[7]=c[8]:Translate( UTILS.NMToMeters(P),       radial+90)
+    ]]
+    
+    c[2]=c[1]:Translate( UTILS.NMToMeters(w2),      radial-90)     -- 1 Right of carrier, dx ahead.
+    c[3]=c[2]:Translate( UTILS.NMToMeters(d+dx+w2), radial)        -- 13 "south" @ 1 right
+    
+    c[4]=cv:Translate(UTILS.NMToMeters(15), offset):Translate(UTILS.NMToMeters(1), offset-90)
+    c[5]=cv:Translate(UTILS.NMToMeters(31), offset):Translate(UTILS.NMToMeters(1), offset-90)
+    c[6]=cv:Translate(UTILS.NMToMeters(31), offset):Translate(UTILS.NMToMeters(1), offset+90)
+    c[7]=cv:Translate(UTILS.NMToMeters(13), offset):Translate(UTILS.NMToMeters(1), offset+90)
+    c[8]=cv:Translate(UTILS.NMToMeters(11), radial):Translate(UTILS.NMToMeters(1), radial+90)
+    c[9]=c[1]:Translate(UTILS.NMToMeters(w2), radial+90)
+    
     
     -- Translate these points a bit for a smoother turn.
-    c[4]=c[4]:Translate(UTILS.NMToMeters(2), offset)
-    c[7]=c[7]:Translate(UTILS.NMToMeters(2), offset)
+    --c[4]=c[4]:Translate(UTILS.NMToMeters(2), offset)
+    --c[7]=c[7]:Translate(UTILS.NMToMeters(2), offset)
   else  
     -- Easy case of a long box.
     c[2]=c[1]:Translate( UTILS.NMToMeters(w2),        radial-90)
@@ -9958,15 +10027,25 @@ end
 --- Get wind direction and speed at carrier position.
 -- @param #AIRBOSS self
 -- @param #number alt Altitude ASL in meters. Default 50 m.
+-- @param #boolean magnetic Direction including magnetic declination.
 -- @return #number Direction the wind is blowing **from** in degrees.
 -- @return #number Wind speed in m/s.
-function AIRBOSS:GetWind(alt)
+function AIRBOSS:GetWind(alt, magnetic)
 
   -- Current position of the carrier
   local cv=self:GetCoordinate()
   
   -- Wind direction and speed. By default at 50 meters ASL.
   local Wdir, Wspeed=cv:GetWind(alt or 50)
+  
+  -- Include magnetic declination.
+  if magnetic then
+    Wdir=Wdir-self.magvar
+    -- Adjust negative values.
+    if Wdir<0 then
+      Wdir=Wdir+360
+    end  
+  end
     
   return Wdir, Wspeed
 end
@@ -10279,7 +10358,6 @@ function AIRBOSS:_LSOadvice(playerData, glideslopeError, lineupError)
   local advice=0
   
   -- Glideslope high/low calls.
-  --TODO: introduce GSE enumerator values.
   if glideslopeError>self.gle.HIGH then --1.5 then
     -- "You're high!"
     self:RadioTransmission(self.LSORadio, self.LSOCall.HIGH, true, nil, nil, true)
@@ -10293,7 +10371,6 @@ function AIRBOSS:_LSOadvice(playerData, glideslopeError, lineupError)
     self:RadioTransmission(self.LSORadio, self.LSOCall.POWER, true, nil, nil, true)
     advice=advice+self.LSOCall.POWER.duration
   elseif glideslopeError<self.gle.Low then  -- -0.6 then
-    --TODO CHECK THIS NUMBER. -0.3 vs -0.6!
     -- "Power."
     self:RadioTransmission(self.LSORadio, self.LSOCall.POWER, false, nil, nil, true)
     advice=advice+self.LSOCall.POWER.duration
@@ -10303,7 +10380,6 @@ function AIRBOSS:_LSOadvice(playerData, glideslopeError, lineupError)
 
   
   -- Lineup left/right calls.
-  -- TODO: introduce LUE enumerator values.
   if lineupError<self.lue.LEFT then
     -- "Come left!"
     self:RadioTransmission(self.LSORadio, self.LSOCall.COMELEFT, true, nil, nil, true)
@@ -10489,7 +10565,8 @@ function AIRBOSS:_LSOgrade(playerData)
     else
       grade="WOFD"
       points=-1.0
-    end    
+    end
+    G="n/a"
   elseif playerData.waveoff then
     -- Wave Off
     if playerData.landed then
@@ -11427,7 +11504,7 @@ function AIRBOSS:_Debrief(playerData)
     
       -- Unit does not seem to be alive!
       -- TODO: What now?
-      self:T2(self.lid..string.format("Player unit not alive!"))
+      self:E(self.lid..string.format("ERROR: Player unit not alive!"))
           
     end
     
@@ -12167,6 +12244,9 @@ function AIRBOSS._TaskFunctionMarshalAI(group, airboss, flight)
     end
   
   end
+  
+  -- Not refueling any more in case it was.
+  flight.refueling=false
   
 end
 
@@ -13361,6 +13441,9 @@ function AIRBOSS:_MarshalCallRecoveryStopped(case)
 
   -- Subtitle.
   local text=string.format("Case %d recovery ops are stopped. Deck is closed.", case)
+  
+  -- Debug message.
+  self:I(self.lid..text)
 
   -- Create new call to display complete subtitle.
   local call=self:_NewRadioCall(self.MarshalCall.CASE, "AIRBOSS", text, self.Tmessage, "99")
@@ -13399,6 +13482,9 @@ function AIRBOSS:_MarshalCallRecoveryPausedResumedAt(clock)
 
   -- Subtitle.
   local text=string.format("aircraft recovery is paused and will be resumed at %s.", clock)
+  
+  -- Debug message.
+  self:I(self.lid..text)
 
   -- Create new call with full subtitle.
   local call=self:_NewRadioCall(self.MarshalCall.RECOVERYPAUSEDRESUMED, "AIRBOSS", text, self.Tmessage, "99")
@@ -13424,6 +13510,9 @@ function AIRBOSS:_MarshalCallClearedForRecovery(modex, case)
 
   -- Subtitle.
   local text=string.format("you're cleared for Case %d recovery.", case)
+  
+  -- Debug message.
+  self:I(self.lid..text)
   
   -- Create new call with full subtitle.
   local call=self:_NewRadioCall(self.MarshalCall.CLEAREDFORRECOVERY, "MARSHAL", text, self.Tmessage, modex)
@@ -13459,6 +13548,9 @@ function AIRBOSS:_MarshalCallNewFinalBearing(FB)
 
   -- Subtitle.
   local text=string.format("new final bearing %03d°.", FB)
+  
+  -- Debug message.
+  self:I(self.lid..text)
 
   -- Create new call with full subtitle.
   local call=self:_NewRadioCall(self.MarshalCall.NEWFB, "AIRBOSS", text, self.Tmessage, "99")
@@ -13479,6 +13571,9 @@ function AIRBOSS:_MarshalCallCarrierTurnTo(hdg)
 
   -- Subtitle.
   local text=string.format("starting turn to heading %03d°.", hdg)
+  
+  -- Debug message.
+  self:I(self.lid..text)
 
   -- Create new call with full subtitle.
   local call=self:_NewRadioCall(self.MarshalCall.CARRIERTURNTOHEADING, "AIRBOSS", text, self.Tmessage, "99")
@@ -13507,6 +13602,9 @@ function AIRBOSS:_MarshalCallStackFull(modex, nwaiting)
   else
     text=text..string.format("You are next in line.")
   end
+  
+  -- Debug message.
+  self:I(self.lid..text)
   
   -- Create new call with full subtitle.
   local call=self:_NewRadioCall(self.MarshalCall.STACKFULL, "AIRBOSS", text, self.Tmessage, modex)
@@ -13560,7 +13658,7 @@ end
 -- @param #string charlie Charlie Time estimate.
 -- @param #string qfe Alitmeter inHg.
 function AIRBOSS:_MarshalCallArrived(modex, case, brc, altitude, charlie, qfe)
-  self:E({modex=modex,case=case,brc=brc,altitude=altitude,charlie=charlie,qfe=qfe})
+  self:F({modex=modex,case=case,brc=brc,altitude=altitude,charlie=charlie,qfe=qfe})
   
   -- Split strings etc.
   local angels=self:_GetAngels(altitude)
@@ -13571,6 +13669,9 @@ function AIRBOSS:_MarshalCallArrived(modex, case, brc, altitude, charlie, qfe)
   -- Subtitle text.
   local text=string.format("Case %d, expected BRC %03d°, hold at angels %d. Expected Charlie Time %s.\n", case, brc, angels, charlie)
   text=text..string.format("Altimeter %.2f. Report see me.", qfe)
+  
+  -- Debug message.
+  self:I(self.lid..text)
 
   -- Create new call to display complete subtitle.
   local casecall=self:_NewRadioCall(self.MarshalCall.CASE, "MARSHAL", text, self.Tmessage, modex)
@@ -13705,10 +13806,10 @@ function AIRBOSS:_AddF10Commands(_unitName)
         -- F10/Airboss/<Carrier>/F1 Help/F2 Skill Level
         local _skillPath=missionCommands.addSubMenuForGroup(gid, "Skill Level", _helpPath)
         -- F10/Airboss/<Carrier>/F1 Help/F2 Skill Level/
-        missionCommands.addCommandForGroup(gid, "Flight Student",  _skillPath, self._SetDifficulty, self, playername, AIRBOSS.Difficulty.EASY)   -- F1
-        missionCommands.addCommandForGroup(gid, "Naval Aviator",   _skillPath, self._SetDifficulty, self, playername, AIRBOSS.Difficulty.NORMAL) -- F2
-        missionCommands.addCommandForGroup(gid, "TOPGUN Graduate", _skillPath, self._SetDifficulty, self, playername, AIRBOSS.Difficulty.HARD)   -- F3
-        missionCommands.addCommandForGroup(gid, "Hints On/Off",    _skillPath, self._SetHintsOnOff, self, playername)                            -- F4
+        missionCommands.addCommandForGroup(gid, "Flight Student",  _skillPath, self._SetDifficulty, self, _unitName, AIRBOSS.Difficulty.EASY)   -- F1
+        missionCommands.addCommandForGroup(gid, "Naval Aviator",   _skillPath, self._SetDifficulty, self, _unitName, AIRBOSS.Difficulty.NORMAL) -- F2
+        missionCommands.addCommandForGroup(gid, "TOPGUN Graduate", _skillPath, self._SetDifficulty, self, _unitName, AIRBOSS.Difficulty.HARD)   -- F3
+        missionCommands.addCommandForGroup(gid, "Hints On/Off",    _skillPath, self._SetHintsOnOff, self, _unitName)                            -- F4
         -- F10/Airboss/<Carrier>/F1 Help/
         missionCommands.addCommandForGroup(gid, "My Status",           _helpPath, self._DisplayPlayerStatus, self, _unitName)   -- F3
         missionCommands.addCommandForGroup(gid, "Attitude Monitor",    _helpPath, self._DisplayAttitude,     self, _unitName)   -- F4
@@ -14187,7 +14288,7 @@ function AIRBOSS:_RequestRefueling(_unitName)
             
           elseif self.tanker:IsReturning() then
             -- Tanker is RTB.
-            text="Tanker is RTB. Request denied!\nWait for the tanker to be back on station if you can."
+            text="negative, tanker is RTB. Request denied!\nWait for the tanker to be back on station if you can."
           end
           
         else
@@ -14847,28 +14948,36 @@ end
 
 --- Set difficulty level.
 -- @param #AIRBOSS self
--- @param #string playername Player name.
+-- @param #string _unitname Name of the player unit.
 -- @param #AIRBOSS.Difficulty difficulty Difficulty level.
-function AIRBOSS:_SetDifficulty(playername, difficulty)
-  self:T2({difficulty=difficulty, playername=playername})
+function AIRBOSS:_SetDifficulty(_unitname, difficulty)
+  self:T2({difficulty=difficulty, unitname=_unitname})
   
-  local playerData=self.players[playername]  --#AIRBOSS.PlayerData
+  -- Get player unit and player name.
+  local unit, playername = self:_GetPlayerUnitAndName(_unitname)
   
-  if playerData then
-    playerData.difficulty=difficulty
-    local text=string.format("your skill level is now: %s.", difficulty)
-    self:MessageToPlayer(playerData, text, nil, playerData.name, 5)
-  else
-    self:E(self.lid..string.format("ERROR: Could not get player data for player %s.", playername))
-  end
+  -- Check if we have a player.
+  if unit and playername then  
   
-  -- Set hints as well.
-  if playerData.difficulty==AIRBOSS.Difficulty.HARD then
-    playerData.showhints=false
-  else
-    playerData.showhints=true
-  end
-  
+    -- Player data.
+    local playerData=self.players[playername]  --#AIRBOSS.PlayerData
+    
+    if playerData then
+      playerData.difficulty=difficulty
+      local text=string.format("your skill level is now: %s.", difficulty)
+      self:MessageToPlayer(playerData, text, nil, playerData.name, 5)
+    else
+      self:E(self.lid..string.format("ERROR: Could not get player data for player %s.", playername))
+    end
+    
+    -- Set hints as well.
+    if playerData.difficulty==AIRBOSS.Difficulty.HARD then
+      playerData.showhints=false
+    else
+      playerData.showhints=true
+    end
+    
+  end  
 end
 
 --- Turn player's aircraft attitude display on or off.
@@ -14887,13 +14996,15 @@ function AIRBOSS:_SetHintsOnOff(_unitname)
     local playerData=self.players[playername]  --#AIRBOSS.PlayerData
     
     if playerData then
+    
+      -- Invert hints.
       playerData.showhints=not playerData.showhints
       
       -- Inform player.
       local text=""
       if playerData.showhints==true then
         text=string.format("hints are now ON.")
-      elseif playerData.showhints==false then
+      else
         text=string.format("hints are now OFF.")
       end
       self:MessageToPlayer(playerData, text, nil, playerData.name, 5)
