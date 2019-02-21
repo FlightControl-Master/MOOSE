@@ -210,6 +210,7 @@ do -- COORDINATE
     FromParkingAreaHot = "From Parking Area Hot",
     FromRunway = "From Runway",
     Landing = "Landing",
+    LandingReFuAr = "LandingReFuAr",
   }
 
   --- @field COORDINATE.WaypointType 
@@ -219,6 +220,7 @@ do -- COORDINATE
     TakeOff = "TakeOffParkingHot",
     TurningPoint = "Turning Point",
     Land = "Land",
+    LandingReFuAr = "LandingReFuAr",
   }
 
 
@@ -1027,8 +1029,9 @@ do -- COORDINATE
   -- @param Wrapper.Airbase#AIRBASE airbase The airbase for takeoff and landing points.
   -- @param #table DCSTasks A table of @{DCS#Task} items which are executed at the waypoint.
   -- @param #string description A text description of the waypoint, which will be shown on the F10 map.
+  -- @param #number timeReFuAr Time in minutes the aircraft stays at the airport for ReFueling and ReArming.
   -- @return #table The route point.
-  function COORDINATE:WaypointAir( AltType, Type, Action, Speed, SpeedLocked, airbase, DCSTasks, description )
+  function COORDINATE:WaypointAir( AltType, Type, Action, Speed, SpeedLocked, airbase, DCSTasks, description, timeReFuAr )
     self:F2( { AltType, Type, Action, Speed, SpeedLocked } )
     
     -- Set alttype or "RADIO" which is AGL.
@@ -1055,7 +1058,7 @@ do -- COORDINATE
     
     -- Waypoint type.
     RoutePoint.type = Type or nil
-    RoutePoint.action = Action or nil
+    RoutePoint.action = Action or nil    
     
     -- Speed.
     RoutePoint.speed = Speed/3.6
@@ -1082,6 +1085,11 @@ do -- COORDINATE
       end
       
       --self:MarkToAll(string.format("Landing waypoint at airbase %s, ID=%d, Category=%d", airbase:GetName(), AirbaseID, AirbaseCategory  ))
+    end
+    
+    -- Time in minutes to stay at the airbase before resuming route. 
+    if Type==COORDINATE.WaypointType.LandingReFuAr then
+      RoutePoint.timeReFuAr=timeReFuAr or 10
     end
     
     -- Waypoint tasks.
@@ -1173,7 +1181,17 @@ do -- COORDINATE
     return self:WaypointAir(nil, COORDINATE.WaypointType.Land, COORDINATE.WaypointAction.Landing, Speed, false, airbase, DCSTasks, description)
   end
   
-  
+  --- Build a Waypoint Air "LandingReFuAr". Mimics the aircraft ReFueling and ReArming. 
+  -- @param #COORDINATE self
+  -- @param DCS#Speed Speed Airspeed in km/h.
+  -- @param Wrapper.Airbase#AIRBASE airbase The airbase for takeoff and landing points.
+  -- @param #number timeReFuAr Time in minutes, the aircraft stays at the airbase. Default 10 min.
+  -- @param #table DCSTasks A table of @{DCS#Task} items which are executed at the waypoint.
+  -- @param #string description A text description of the waypoint, which will be shown on the F10 map.
+  -- @return #table The route point.
+  function COORDINATE:WaypointAirLandingReFu( Speed, airbase, timeReFuAr, DCSTasks, description )
+    return self:WaypointAir(nil, COORDINATE.WaypointType.LandingReFuAr, COORDINATE.WaypointAction.LandingReFuAr, Speed, false, airbase, DCSTasks, description, timeReFuAr or 10)
+  end  
   
   
   --- Build an ground type route point.
