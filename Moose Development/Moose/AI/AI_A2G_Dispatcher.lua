@@ -3919,17 +3919,18 @@ do -- AI_A2G_DISPATCHER
       local DetectionIndex = DetectedItem.Index
       local DetectedItemChanged = DetectedItem.Changed
       
-      local AttackerCoordinate = self.Detection:GetDetectedItemCoordinate( DetectedItem )
+      local AttackCoordinate = self.Detection:GetDetectedItemCoordinate( DetectedItem )
       
       -- Calculate if for this DetectedItem if a defense needs to be initiated.
       -- This calculation is based on the distance between the defense point and the attackers, and the defensiveness parameter.
       -- The attackers closest to the defense coordinates will be handled first, or course!
       
-      local DefenseCoordinate = nil
+      local EngageCoordinate = nil
       
-      for DefenseCoordinateName, EvaluateCoordinate in pairs( self.DefenseCoordinates ) do
+      for DefenseCoordinateName, DefenseCoordinate in pairs( self.DefenseCoordinates ) do
+        local DefenseCoordinate = DefenseCoordinate -- Core.Point#COORDINATE
 
-        local EvaluateDistance = AttackerCoordinate:Get2DDistance( EvaluateCoordinate )
+        local EvaluateDistance = AttackCoordinate:Get2DDistance( DefenseCoordinate )
         
         if EvaluateDistance <= self.DefenseRadius then
         
@@ -3939,18 +3940,62 @@ do -- AI_A2G_DISPATCHER
           self:F( { DistanceProbability = DistanceProbability, DefenseProbability = DefenseProbability } )
           
           if DefenseProbability <= DistanceProbability / ( 300 / 30 ) then
-            DefenseCoordinate = EvaluateCoordinate
-            break
+            
+            -- Now check if this coordinate is not in a danger zone, meaning, that the attack line is not crossing other coordinates.
+            -- (y1 – y2)x + (x2 – x1)y + (x1y2 – x2y1) = 0
+            
+            local c1 = DefenseCoordinate
+            local c2 = AttackCoordinate
+            
+            local a = c1.z - c2.z -- Calculate a
+            local b = c2.x - c1.x -- Calculate b
+            local c = c1.x * c2.z - c2.x * c1.z -- calculate c
+            
+            local ok = true
+            
+            -- Now we check if each coordinate radius of about 30km of each attack is crossing a defense line. If yes, then this is not a good attack!
+            for AttackItemID, CheckAttackItem in pairs( Detection:GetDetectedItems() ) do
+            
+              -- Only compare other detected coordinates.
+              if AttackItemID ~= DetectedItemID then
+            
+                local CheckAttackCoordinate = self.Detection:GetDetectedItemCoordinate( CheckAttackItem )
+                
+                local x = CheckAttackCoordinate.x
+                local y = CheckAttackCoordinate.z
+                local r = 8000
+                
+                -- now we check if the coordinate is intersecting with the defense line.
+                
+                local IntersectDistance = ( math.abs( a * x + b * y + c ) ) / math.sqrt( a * a + b * b )
+                self:F( { IntersectDistance = IntersectDistance, x = x, y = y } )
+                
+                local IntersectAttackDistance = CheckAttackCoordinate:Get2DDistance( DefenseCoordinate )
+                
+                self:F( { IntersectAttackDistance=IntersectAttackDistance, EvaluateDistance=EvaluateDistance } )
+                
+                -- If the distance of the attack coordinate is larger than the test radius; then the line intersects, and this is not a good coordinate.
+                if IntersectDistance < r and IntersectAttackDistance < EvaluateDistance then
+                  ok = false
+                  break
+                end
+              end
+            end
+            
+            if ok == true then
+              EngageCoordinate = DefenseCoordinate
+              break
+            end
           end
         end
       end
       
-      if DefenseCoordinate then
+      if EngageCoordinate then
         do 
           local DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies = self:Evaluate_SEAD( DetectedItem ) -- Returns a SET_UNIT with the SEAD targets to be engaged...
           if DefendersMissing and DefendersMissing > 0 then
             self:F( { DefendersTotal = DefendersTotal, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing } )
-            self:Defend( DetectedItem, DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies, "SEAD", DefenseCoordinate )
+            self:Defend( DetectedItem, DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies, "SEAD", EngageCoordinate )
             Delay = Delay + 1
           end
         end
@@ -3959,7 +4004,7 @@ do -- AI_A2G_DISPATCHER
           local DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies = self:Evaluate_CAS( DetectedItem ) -- Returns a SET_UNIT with the CAS targets to be engaged...
           if DefendersMissing and DefendersMissing > 0 then
             self:F( { DefendersTotal = DefendersTotal, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing } )
-            self:Defend( DetectedItem, DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies, "CAS", DefenseCoordinate )
+            self:Defend( DetectedItem, DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies, "CAS", EngageCoordinate )
             Delay = Delay + 1
           end
         end
@@ -3968,7 +4013,7 @@ do -- AI_A2G_DISPATCHER
           local DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies = self:Evaluate_BAI( DetectedItem ) -- Returns a SET_UNIT with the CAS targets to be engaged...
           if DefendersMissing and DefendersMissing > 0 then
             self:F( { DefendersTotal = DefendersTotal, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing } )
-            self:Defend( DetectedItem, DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies, "BAI", DefenseCoordinate )
+            self:Defend( DetectedItem, DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies, "BAI", EngageCoordinate )
             Delay = Delay + 1
           end
         end
