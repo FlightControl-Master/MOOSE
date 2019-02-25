@@ -129,7 +129,7 @@ function AI_A2G_SEAD:onafterEngage( DefenderGroup, From, Event, To, AttackSetUni
       -- If it is less than 50km, then attack without a route.
       -- Otherwise perform a route attack.
 
-      local EngageAltitude = math.random( self.EngageFloorAltitude, self.EngageCeilingAltitude )
+      local EngageAltitude = math.random( self.EngageFloorAltitude or 500, self.EngageCeilingAltitude or 1000 )
       local EngageSpeed = math.random( self.EngageMinSpeed, self.EngageMaxSpeed )
 
       local DefenderCoord = DefenderGroup:GetPointVec3()
@@ -150,7 +150,7 @@ function AI_A2G_SEAD:onafterEngage( DefenderGroup, From, Event, To, AttackSetUni
         POINT_VEC3.RoutePointType.TurningPoint, 
         POINT_VEC3.RoutePointAction.TurningPoint, 
         EngageSpeed, 
-        true 
+        false 
       )
       
       EngageRoute[#EngageRoute+1] = FromWP
@@ -174,28 +174,28 @@ function AI_A2G_SEAD:onafterEngage( DefenderGroup, From, Event, To, AttackSetUni
       
       local AttackTasks = {}
 
-      self.AttackSetUnit.AttackIndex = self.AttackSetUnit.AttackIndex and self.AttackSetUnit.AttackIndex + 1 or 1
-      if self.AttackSetUnit.AttackIndex > self.AttackSetUnit:Count() then
-        self.AttackSetUnit.AttackIndex = 1
-      end
-
+--      self.AttackSetUnit.AttackIndex = self.AttackSetUnit.AttackIndex and self.AttackSetUnit.AttackIndex + 1 or 1
+--      if self.AttackSetUnit.AttackIndex > self.AttackSetUnit:Count() then
+--        self.AttackSetUnit.AttackIndex = 1
+--      end
+--
       local AttackSetUnitPerThreatLevel = self.AttackSetUnit:GetSetPerThreatLevel( 10, 0 )
   
+      local AttackUnitTasks = {}
+  
       for AttackUnitID, AttackUnit in ipairs( AttackSetUnitPerThreatLevel ) do
-        if AttackUnitID >= self.AttackSetUnit.AttackIndex then
-          if AttackUnit then
-            if AttackUnit:IsAlive() and AttackUnit:IsGround() then
-              local HasRadar = AttackUnit:HasSEAD() 
-              if HasRadar then
-                self:F( { "SEAD Unit:", AttackUnit:GetName() } )
-                AttackTasks[#AttackTasks+1] = DefenderGroup:TaskAttackUnit( AttackUnit, false, false, nil, nil, EngageAltitude )
-              end
+        if AttackUnit then
+          if AttackUnit:IsAlive() and AttackUnit:IsGround() then
+            local HasRadar = AttackUnit:HasSEAD() 
+            if HasRadar then
+              self:F( { "SEAD Unit:", AttackUnit:GetName() } )
+              AttackUnitTasks[#AttackUnitTasks+1] = DefenderGroup:TaskAttackUnit( AttackUnit, false, false, nil, nil, EngageAltitude )
             end
           end
         end
       end
         
-      if #AttackTasks == 0 then
+      if #AttackUnitTasks == 0 then
         self:E( DefenderGroupName .. ": No targets found -> Going RTB")
         self:Return()
         self:__RTB( self.TaskDelay )
@@ -205,6 +205,7 @@ function AI_A2G_SEAD:onafterEngage( DefenderGroup, From, Event, To, AttackSetUni
         DefenderGroup:OptionKeepWeaponsOnThreat()
         --DefenderGroup:OptionRTBAmmo( Weapon.flag.AnyASM )
 
+        AttackTasks[#AttackTasks+1] = DefenderGroup:TaskCombo( AttackUnitTasks )
         AttackTasks[#AttackTasks+1] = DefenderGroup:TaskFunction( "AI_A2G_ENGAGE.EngageRoute", self )
         EngageRoute[#EngageRoute].task = DefenderGroup:TaskCombo( AttackTasks )
       end

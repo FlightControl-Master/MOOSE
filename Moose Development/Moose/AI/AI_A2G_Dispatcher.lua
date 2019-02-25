@@ -2089,8 +2089,8 @@ do -- AI_A2G_DISPATCHER
     Sead.Name = SquadronName
     Sead.EngageMinSpeed = EngageMinSpeed
     Sead.EngageMaxSpeed = EngageMaxSpeed
-    Sead.EngageFloorAltitude = EngageFloorAltitude
-    Sead.EngageCeilingAltitude = EngageCeilingAltitude
+    Sead.EngageFloorAltitude = EngageFloorAltitude or 500
+    Sead.EngageCeilingAltitude = EngageCeilingAltitude or 1000
     Sead.Defend = true
     
     self:F( { Sead = Sead } )
@@ -2186,8 +2186,8 @@ do -- AI_A2G_DISPATCHER
     Cas.Name = SquadronName
     Cas.EngageMinSpeed = EngageMinSpeed
     Cas.EngageMaxSpeed = EngageMaxSpeed
-    Cas.EngageFloorAltitude = EngageFloorAltitude
-    Cas.EngageCeilingAltitude = EngageCeilingAltitude
+    Cas.EngageFloorAltitude = EngageFloorAltitude or 500
+    Cas.EngageCeilingAltitude = EngageCeilingAltitude or 1000
     Cas.Defend = true
     
     self:F( { Cas = Cas } )
@@ -2284,8 +2284,8 @@ do -- AI_A2G_DISPATCHER
     Bai.Name = SquadronName
     Bai.EngageMinSpeed = EngageMinSpeed
     Bai.EngageMaxSpeed = EngageMaxSpeed
-    Bai.EngageFloorAltitude = EngageFloorAltitude
-    Bai.EngageCeilingAltitude = EngageCeilingAltitude
+    Bai.EngageFloorAltitude = EngageFloorAltitude or 500
+    Bai.EngageCeilingAltitude = EngageCeilingAltitude or 1000
     Bai.Defend = true
     
     self:F( { Bai = Bai } )
@@ -3942,7 +3942,7 @@ do -- AI_A2G_DISPATCHER
           if DefenseProbability <= DistanceProbability / ( 300 / 30 ) then
             
             -- Now check if this coordinate is not in a danger zone, meaning, that the attack line is not crossing other coordinates.
-            -- (y1 – y2)x + (x2 – x1)y + (x1y2 – x2y1) = 0
+            -- (y1 â€“ y2)x + (x2 â€“ x1)y + (x1y2 â€“ x2y1) = 0
             
             local c1 = DefenseCoordinate
             local c2 = AttackCoordinate
@@ -4029,7 +4029,8 @@ do -- AI_A2G_DISPATCHER
 
       if self.TacticalDisplay then      
         -- Show tactical situation
-        Report:Add( string.format( " - %s ( %s ): ( #%d - %4s ) %s" , DetectedItem.ItemID, DetectedItem.Index, DetectedItem.Set:Count(), DetectedItem.Type or " --- ", DetectedItem.Set:GetObjectNames() ) )
+        local ThreatLevel = DetectedItem.Set:CalculateThreatLevelA2G()
+        Report:Add( string.format( " - %s ( %s ): ( #%d - %4s ) %s" , DetectedItem.ItemID, DetectedItem.Index, DetectedItem.Set:Count(), DetectedItem.Type or " --- ", string.rep(  "â– ", ThreatLevel ) ) )
         for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
           local Defender = Defender -- Wrapper.Group#GROUP
            if DefenderTask.Target and DefenderTask.Target.Index == DetectedItem.Index then

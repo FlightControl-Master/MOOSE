@@ -788,7 +788,7 @@ do -- DETECTION_BASE
         -- IsDetected = false!
         -- This is used in A2A_TASK_DISPATCHER to initiate fighter sweeping! The TASK_A2A_INTERCEPT tasks will be replaced with TASK_A2A_SWEEP tasks.
         for DetectedObjectName, DetectedObject in pairs( self.DetectedObjects ) do
-          if self.DetectedObjects[DetectedObjectName].IsDetected == true and self.DetectedObjects[DetectedObjectName].DetectionTimeStamp + 60 <= DetectionTimeStamp then
+          if self.DetectedObjects[DetectedObjectName].IsDetected == true and self.DetectedObjects[DetectedObjectName].DetectionTimeStamp + 300 <= DetectionTimeStamp then
             self.DetectedObjects[DetectedObjectName].IsDetected = false
           end
         end

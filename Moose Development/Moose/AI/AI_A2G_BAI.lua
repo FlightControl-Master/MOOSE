@@ -127,19 +127,30 @@ function AI_A2G_BAI:onafterEngage( DefenderGroup, From, Event, To, AttackSetUnit
   
       local AttackUnit = AttackSetUnitPerThreatLevel[self.AttackSetUnit.AttackIndex]
   
-      if not AttackUnit then
-        self.AttackSetUnit.AttackIndex = 1
-        AttackUnit = AttackSetUnitPerThreatLevel[self.AttackSetUnit.AttackIndex]
-      end
+      local AttackUnitTasks = {}
+
+--      if not AttackUnit then
+--        self.AttackSetUnit.AttackIndex = 1
+--        AttackUnit = AttackSetUnitPerThreatLevel[self.AttackSetUnit.AttackIndex]
+--      end
+--      if AttackUnit then
+--        if AttackUnit:IsAlive() and AttackUnit:IsGround() then
+--          self:T( { "BAI Unit:", AttackUnit:GetName() } )
+--          AttackUnitTasks[#AttackUnitTasks+1] = DefenderGroup:TaskAttackUnit( AttackUnit, false, false, nil, nil, EngageAltitude )
+--        end
+--      end
       
-      if AttackUnit then
-        if AttackUnit:IsAlive() and AttackUnit:IsGround() then
-          self:T( { "BAI Unit:", AttackUnit:GetName() } )
-          AttackTasks[#AttackTasks+1] = DefenderGroup:TaskAttackUnit( AttackUnit, false, false, nil, nil, EngageAltitude )
+      for AttackUnitIndex, AttackUnit in ipairs( AttackSetUnitPerThreatLevel or {} ) do
+        if AttackUnit then
+          if AttackUnit:IsAlive() and AttackUnit:IsGround() then
+            self:T( { "BAI Unit:", AttackUnit:GetName() } )
+            AttackUnitTasks[#AttackUnitTasks+1] = DefenderGroup:TaskAttackUnit( AttackUnit, false, false, nil, nil, EngageAltitude )
+          end
         end
       end
+      
         
-      if #AttackTasks == 0 then
+      if #AttackUnitTasks == 0 then
         self:E( DefenderGroupName .. ": No targets found -> Going RTB")
         self:Return()
         self:__RTB( self.TaskDelay )
@@ -148,6 +159,7 @@ function AI_A2G_BAI:onafterEngage( DefenderGroup, From, Event, To, AttackSetUnit
         DefenderGroup:OptionROTEvadeFire()
         DefenderGroup:OptionKeepWeaponsOnThreat()
 
+        AttackTasks[#AttackTasks+1] = DefenderGroup:TaskCombo( AttackUnitTasks )
         AttackTasks[#AttackTasks+1] = DefenderGroup:TaskFunction( "AI_A2G_ENGAGE.EngageRoute", self )
         EngageRoute[#EngageRoute].task = DefenderGroup:TaskCombo( AttackTasks )
       end
