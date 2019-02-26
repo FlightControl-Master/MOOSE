@@ -589,7 +589,7 @@
 -- Furthermore, we have the cases:
 -- 
 --    * 2.5 Points **B**: "Bolder", when the player landed but did not catch a wire.
---    * 2.0 Points **PWO**: "Pattern Wave-Off", when pilot was far away from where he should be in the pattern.
+--    * 2.0 Points **WOP**: "Pattern Wave-Off", when pilot was far away from where he should be in the pattern.
 --    * 2.0 Points **OWO**: "Own Wave-Off**, when pilot flies past the deck without touching it.
 --    * 1.0 Points **WO**: "Technique Wave-Off": Player got waved off in the final parts of the groove.
 --    * 1.0 Points **LIG**: "Long In the Groove", when pilot extents the downwind leg too far and screws up the timing for the following aircraft.
@@ -819,13 +819,28 @@
 --
 -- ![Banner Image](..\Presentations\AIRBOSS\Airboss_TrapSheetLUE.png)
 -- 
--- The graph displayes the lineup error as a function of the distance to the carrier.
+-- The graph displays the lineup error (LUE) as a function of the distance to the carrier.
+-- 
+-- The pilot approaches the carrier from the port side, LUE>0°, at a distance of ~1 NM.
+-- At the beginning of the groove (X), he significantly overshoots to the starboard side (LUE<5°).
+-- In the middle (IM), he performs good corrections and smoothly reduces the lineup error.
+-- Finally, at a distance of ~0.3 NM (IC) he has corrected his lineup with the runway to a reasonable level, |LUE|<0.5°. 
 -- 
 -- ## Glideslope Error
 -- 
 -- ![Banner Image](..\Presentations\AIRBOSS\Airboss_TrapSheetGSE.png)
 -- 
--- -- The graph displayes the glideslope error as a function of the distance to the carrier.
+-- The graph displays the glideslope error (GLE) as a function of the distance to the carrier.
+-- 
+-- In this case the pilot already enters the groove (X) below the optimal glideslope. He is not able to correct his height in the IM part and
+-- stays significantly too low. In close, he performs a harsh correction to gain altitude and ends up even slightly too high (GLE>0.5°).
+-- At his point further corrections are necessary.
+-- 
+-- ## Angle of Attack
+-- 
+-- ![Banner Image](..\Presentations\AIRBOSS\Airboss_TrapSheetAoA.png)
+-- 
+-- The graph displays the angle of attack (AoA) as a function of the distance to the carrier.
 --
 -- ===
 -- 
