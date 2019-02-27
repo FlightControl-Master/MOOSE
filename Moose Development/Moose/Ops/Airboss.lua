@@ -436,6 +436,11 @@
 -- This command toggles the display of radio message subtitles if no radio relay unit is used. By default subtitles are on.
 -- Note that subtitles for radio messages which do not have a complete voice over are always displayed.
 -- 
+-- ### Trapsheet On/Off
+-- 
+-- Each player can activated or deactivate the recording of his flight data (AoA, glideslope, lineup, etc.) during his landing approaches.
+-- Note that this feature also has to be enabled by the mission designer. 
+-- 
 -- ## Kneeboard Menu
 -- 
 -- ![Banner Image](..\Presentations\AIRBOSS\Airboss_MenuKneeboard.png)
@@ -828,12 +833,12 @@
 -- 
 -- ## Glideslope Error
 -- 
--- ![Banner Image](..\Presentations\AIRBOSS\Airboss_TrapSheetGSE.png)
+-- ![Banner Image](..\Presentations\AIRBOSS\Airboss_TrapSheetGLE.png)
 -- 
--- The graph displays the glideslope error (GLE) as a function of the distance to the carrier.
+-- The graph displays the glideslope error (GSE) as a function of the distance to the carrier.
 -- 
 -- In this case the pilot already enters the groove (X) below the optimal glideslope. He is not able to correct his height in the IM part and
--- stays significantly too low. In close, he performs a harsh correction to gain altitude and ends up even slightly too high (GLE>0.5°).
+-- stays significantly too low. In close, he performs a harsh correction to gain altitude and ends up even slightly too high (GSE>0.5°).
 -- At his point further corrections are necessary.
 -- 
 -- ## Angle of Attack
@@ -841,6 +846,9 @@
 -- ![Banner Image](..\Presentations\AIRBOSS\Airboss_TrapSheetAoA.png)
 -- 
 -- The graph displays the angle of attack (AoA) as a function of the distance to the carrier.
+-- 
+-- The pilot starts off being on speed after the ball call. Then he get way to fast troughout the most part of the groove. He manages to correct
+-- this somewhat short before touchdown.
 --
 -- ===
 -- 
@@ -1468,6 +1476,7 @@ AIRBOSS.Difficulty={
 -- @field #number Vel Total velocity in m/s.
 -- @field #number Vy Vertical velocity in m/s.
 -- @field #number Gamma Relative heading player to carrier's runway. 0=parallel, +-90=perpendicular.
+-- @field #string Grade LSO grade details.
 -- @field #string FlyThrough Fly through up "/" or fly through down "\\".
 
 --- LSO grade data.
@@ -1575,7 +1584,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.9.9"
+AIRBOSS.version="0.9.9.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -8632,6 +8641,7 @@ function AIRBOSS:_GetGrooveData(playerData)
   groovedata.Vel=UTILS.VecNorm(vel)
   groovedata.Vy=vel.y    
   groovedata.Gamma=self:_GetRelativeHeading(playerData.unit, true)
+  groovedata.Grade=select(3, self:_LSOgrade(playerData))
 
   return groovedata
 end
@@ -8875,6 +8885,7 @@ function AIRBOSS:_Groove(playerData)
 
     -- Get current groove data.
     local gd=playerData.groove[gs] --#AIRBOSS.GrooveData
+    
     if gd then
       self:T3(gd)
     
@@ -10319,37 +10330,49 @@ function AIRBOSS:GetWind(alt, magnetic)
   return Wdir, Wspeed
 end
 
---- Get wind direction and speed on carrier deck.
+--- Get wind speed on carrier deck parallel and perpendicular to runway.
 -- @param #AIRBOSS self
 -- @param #number alt Altitude in meters. Default 50 m.
--- @return #number Direction the wind is blowing **from** in degrees.
--- @return #number Wind speed in m/s.
+-- @return #number Wind component parallel to runway im m/s.
+-- @return #number Wind component perpendicular to runway in m/s.
+-- @return #number Total wind strength in m/s.
 function AIRBOSS:GetWindOnDeck(alt)
   
-  -- Position of carrier
+  -- Position of carrier.
   local cv=self:GetCoordinate()
   
   -- Velocity vector of carrier.
   local vc=self.carrier:GetVelocityVec3()
   
-  -- Rotate to angled deck.
-  vc=UTILS.Rotate2D(vc, self.carrierparam.rwyangle)
+  -- Carrier orientation X.
+  local xc=self.carrier:GetOrientationX()
+  
+  -- Carrier orientation Z.
+  local zc=self.carrier:GetOrientationZ()
+  
+  -- Rotate back so that angled deck points to wind.
+  xc=UTILS.Rotate2D(xc, -self.carrierparam.rwyangle)
+  zc=UTILS.Rotate2D(zc, -self.carrierparam.rwyangle)
   
   -- Wind (from) vector
   local vw=cv:GetWindWithTurbulenceVec3(alt or 50)
   
+  -- Total wind velocity vector.
   -- Carrier velocity has to be negative. If carrier drives in the direction the wind is blowing from, we have less wind in total.
-  local vd=UTILS.VecSubstract(vw, vc)
-  
-  local vh=math.deg(math.atan2(vd.z, vd.x))
-  if vh<0 then
-    vh=vh+360
-  end  
+  local vT=UTILS.VecSubstract(vw, vc)
 
-  -- Strength.  
-  local vabs=UTILS.VecNorm(vd)
+  -- || Parallel component.
+  local vpa=UTILS.VecDot(vT,xc)
   
-  return vh, vabs
+  -- == Perpendicular component.
+  local vpp=UTILS.VecDot(vT,zc)  
+  
+  -- Strength.  
+  local vabs=UTILS.VecNorm(vT)
+  
+  -- We return positive values as head wind and negative values as tail wind.
+  --TODO: Check minus sign.
+  return -vpa, vpp, vabs
 end
 
 
@@ -11701,7 +11724,7 @@ function AIRBOSS:_Debrief(playerData)
     mygrade.finalscore=Points
   end
   mygrade.case=playerData.case
-  local _,windondeck=self:GetWindOnDeck()
+  local windondeck=self:GetWindOnDeck()
   mygrade.wind=tostring(UTILS.Round(UTILS.MpsToKnots(windondeck), 1))
   mygrade.modex=playerData.onboard
   mygrade.airframe=playerData.actype
@@ -15205,7 +15228,7 @@ function AIRBOSS:_DisplayCarrierInfo(_unitname)
       end
       
       -- Wind on flight deck
-      local wind=UTILS.MpsToKnots(select(2, self:GetWindOnDeck()))
+      local wind=UTILS.MpsToKnots(select(1, self:GetWindOnDeck()))
       
       -- Get groups, units in queues.
       local Nmarshal,nmarshal   = self:_GetQueueInfo(self.Qmarshal, playerData.case)
@@ -15328,8 +15351,10 @@ function AIRBOSS:_DisplayCarrierWeather(_unitname)
     -- Get Beaufort wind scale.
     local Bn,Bd=UTILS.BeaufortScale(Ws)
     
-    -- Wind on flight deck
-    local Wod=UTILS.MpsToKnots(select(2, self:GetWindOnDeck()))    
+    -- Wind on flight deck.
+    local WodPA,WodPP=self:GetWindOnDeck()
+    local WodPA=UTILS.MpsToKnots(WodPA)
+    local WodPP=UTILS.MpsToKnots(WodPP)
     
     local WD=string.format('%03d°', Wd)
     local Ts=string.format("%d°C",T)
@@ -15337,13 +15362,13 @@ function AIRBOSS:_DisplayCarrierWeather(_unitname)
     local tT=string.format("%d°C",T)
     local tW=string.format("%.1f knots", UTILS.MpsToKnots(Ws))
     local tP=string.format("%.2f inHg", UTILS.hPa2inHg(P))          
-              
+    
     -- Report text.
     text=text..string.format("Weather Report at Carrier %s:\n", self.alias)
-    text=text..string.format("================================\n")      
+    text=text..string.format("================================\n")
     text=text..string.format("Temperature %s\n", tT)
     text=text..string.format("Wind from %s at %s (%s)\n", WD, tW, Bd)
-    text=text..string.format("Wind on deck %.1f knots\n", Wod)
+    text=text..string.format("Wind on deck || %.1f kts, == %.1f kts\n", WodPA, WodPP)
     text=text..string.format("QFE %.1f hPa = %s", P, tP)
     
     -- More info only reliable if Mission uses static weather.
@@ -15972,8 +15997,8 @@ function AIRBOSS:_SaveTrapSheet(playerData, grade)
     local l=groove.Roll
     local m=groove.Yaw
     local n=groove.Step
-    --                         t    a    b    c    d    e    f    g    h    i    j    k    l    m   n
-    data=data..string.format("%.2f,%.3f,%.1f,%.1f,%.1f,%.2f,%.2f,%.2f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%s\n",t,a,b,c,d,e,f,g,h,i,j,k,l,m,n)
+    --                         t    a    b    c    d    e    f    g    h    i    j    k    l    m   n  o
+    data=data..string.format("%.2f,%.3f,%.1f,%.1f,%.1f,%.2f,%.2f,%.2f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%s,%s\n",t,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o)
   end
   
   -- Save file.
