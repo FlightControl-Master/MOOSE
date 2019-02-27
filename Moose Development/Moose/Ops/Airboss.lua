@@ -1476,7 +1476,9 @@ AIRBOSS.Difficulty={
 -- @field #number Vel Total velocity in m/s.
 -- @field #number Vy Vertical velocity in m/s.
 -- @field #number Gamma Relative heading player to carrier's runway. 0=parallel, +-90=perpendicular.
--- @field #string Grade LSO grade details.
+-- @field #string Grade LSO grade.
+-- @field #number GradePoints LSO grade points
+-- @field #string GradeDetail LSO grade details.
 -- @field #string FlyThrough Fly through up "/" or fly through down "\\".
 
 --- LSO grade data.
@@ -1826,7 +1828,7 @@ function AIRBOSS:New(carriername, alias)
   
   -- Debug trace.
   if false then
-    --self.Debug=true
+    self.Debug=true
     BASE:TraceOnOff(true)
     BASE:TraceClass(self.ClassName)
     BASE:TraceLevel(1)
@@ -2548,8 +2550,12 @@ end
 -- @param #string path (Optional) Path where to save the trap sheets.
 -- @return #AIRBOSS self
 function AIRBOSS:SetTrapSheet(path)
-  self.trapsheet=true
-  self.trappath=path
+  if io then
+    self.trapsheet=true
+    self.trappath=path
+  else
+    self:E(self.lid.."ERROR: io is not desanitized. Cannot save trap sheet.")
+  end
   return self
 end
 
@@ -6806,8 +6812,14 @@ end
 -- @param Wrapper.Unit#UNIT unit The aircraft unit that was recovered.
 -- @return #AIRBOSS.FlightGroup Flight group of element.
 function AIRBOSS:_RecoveredElement(unit)
-  local element, idx, flight=self:_GetFlightElement(unit:GetName())  --#AIRBOSS.FlightElement  
-  element.recovered=true
+
+  -- Get element of flight.
+  local element, idx, flight=self:_GetFlightElement(unit:GetName())  --#AIRBOSS.FlightElement
+  
+  -- Nil check. Could be if a helo landed or something else we dont know!
+  if element then
+    element.recovered=true
+  end
   
   return flight
 end
@@ -8622,7 +8634,10 @@ function AIRBOSS:_GetGrooveData(playerData)
   end
   
     -- Velocity vector.
-  local vel=playerData.unit:GetVelocityVec3()      
+  local vel=playerData.unit:GetVelocityVec3()
+  
+  -- Grade, points, details
+  local Gg,Gp,Gd=self:_LSOgrade(playerData)      
 
   -- Gather pilot data.
   local groovedata={} --#AIRBOSS.GrooveData
@@ -8641,7 +8656,9 @@ function AIRBOSS:_GetGrooveData(playerData)
   groovedata.Vel=UTILS.VecNorm(vel)
   groovedata.Vy=vel.y    
   groovedata.Gamma=self:_GetRelativeHeading(playerData.unit, true)
-  groovedata.Grade=select(3, self:_LSOgrade(playerData))
+  groovedata.Grade=Gg
+  groovedata.GradePoints=Gp
+  groovedata.GradeDetail=Gd
 
   return groovedata
 end
@@ -12138,7 +12155,7 @@ function AIRBOSS:CarrierDetour(coord, speed, uturn, uspeed)
   local wp={}
   
   -- Pos1 is a bit into.
-  local pos1=pos0:Translate(500, pos0:HeadingTo(coord))
+  local pos1=pos0:Translate(500, pos0:HeadingTo(coord)):Translate(500, self:GetHeading())
   
   -- Create from/to waypoints.
   table.insert(wp, pos0:WaypointGround(cspeedkmh))
@@ -12161,6 +12178,7 @@ function AIRBOSS:CarrierDetour(coord, speed, uturn, uspeed)
   
   -- Debug mark.
   if self.Debug then
+    pos1:MarkToAll("Detour Pos1")
     coord:MarkToAll("Detour Point")
   end
   
@@ -12199,7 +12217,7 @@ function AIRBOSS:CarrierTurnIntoWind(time, vdeck, uturn)
   local intowind=self:GetHeadingIntoWind(false)
    
   -- Translate current position.
-  local pos1=self:GetCoordinate():Translate(dist, intowind)
+  local pos1=self:GetCoordinate():Translate(dist, intowind):Translate(500, self:GetHeading())
   
   -- Debug mark.
   if self.Debug then
@@ -15975,7 +15993,7 @@ function AIRBOSS:_SaveTrapSheet(playerData, grade)
   self:I(self.lid..text)
 
   -- Header line
-  local data="#Time,Rho,X,Z,Alt,AoA,GSE,LUE,Vtot,Vy,Gamma,Pitch,Roll,Yaw,Step\n"
+  local data="#Time,Rho,X,Z,Alt,AoA,GSE,LUE,Vtot,Vy,Gamma,Pitch,Roll,Yaw,Step,Grade,Points,Details\n"
   
   local g0=playerData.trapsheet[1] --#AIRBOSS.GrooveData
   local T0=g0.Time
@@ -15996,9 +16014,12 @@ function AIRBOSS:_SaveTrapSheet(playerData, grade)
     local k=groove.Pitch
     local l=groove.Roll
     local m=groove.Yaw
-    local n=groove.Step
-    --                         t    a    b    c    d    e    f    g    h    i    j    k    l    m   n  o
-    data=data..string.format("%.2f,%.3f,%.1f,%.1f,%.1f,%.2f,%.2f,%.2f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%s,%s\n",t,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o)
+    local n=self:_GS(groove.Step, -1)
+    local o=groove.Grade
+    local p=groove.GradePoints
+    local q=groove.GradeDetail
+    --                         t    a    b    c    d    e    f    g    h    i    j    k    l    m   n  o   p   q
+    data=data..string.format("%.2f,%.3f,%.1f,%.1f,%.1f,%.2f,%.2f,%.2f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%s,%s,%.1f,%s\n",t,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q)
   end
   
   -- Save file.
