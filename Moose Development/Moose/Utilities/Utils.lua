@@ -799,6 +799,18 @@ function UTILS.VecAngle(a, b)
   return math.deg(alpha)
 end
 
+--- Calculate "heading" of a 3D vector in the X-Z plane.
+-- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+-- @return #number Heading in degrees in [0,360).
+function UTILS.VecHdg(a)
+  local h=math.deg(math.atan2(a.z, a.x))
+  if h<0 then
+    h=h+360
+  end
+  return h
+end
+
+
 --- Rotate 3D vector in the 2D (x,z) plane. y-component (usually altitude) unchanged. 
 -- @param DCS#Vec3 a Vector in 3D with x, y, z components.
 -- @param #number angle Rotation angle in degrees.
