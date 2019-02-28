@@ -12274,7 +12274,7 @@ function AIRBOSS:CarrierTurnIntoWind(time, vdeck, uturn)
 
     -- Point in the right direction to help turning.
     -- TODO turn left or right? 
-    Csoo=Cv:Translate(1200, hdg+90):Translate(1200, hiw)
+    Csoo=Cv:Translate(1200, hdg-90):Translate(1200, hiw)
     
     -- Heading into wind from Csoo.
     local hsw=self:GetHeadingIntoWind(false, Csoo)
