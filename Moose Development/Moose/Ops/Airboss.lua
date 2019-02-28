@@ -10325,12 +10325,13 @@ end
 -- @param #AIRBOSS self
 -- @param #number alt Altitude ASL in meters. Default 50 m.
 -- @param #boolean magnetic Direction including magnetic declination.
+-- @param Core.Point#COORDINATE coord (Optional) Coordinate at which to get the wind. Default is current carrier position.
 -- @return #number Direction the wind is blowing **from** in degrees.
 -- @return #number Wind speed in m/s.
-function AIRBOSS:GetWind(alt, magnetic)
+function AIRBOSS:GetWind(alt, magnetic, coord)
 
-  -- Current position of the carrier
-  local cv=self:GetCoordinate()
+  -- Current position of the carrier or input.
+  local cv=coord or self:GetCoordinate()
   
   -- Wind direction and speed. By default at 50 meters ASL.
   local Wdir, Wspeed=cv:GetWind(alt or 50)
@@ -10396,11 +10397,12 @@ end
 --- Get true (or magnetic) heading of carrier into the wind. This accounts for the angled runway.
 -- @param #AIRBOSS self
 -- @param #boolean magnetic If true, calculate magnetic heading. By default true heading is returned.
+-- @param Core.Point#COORDINATE coord (Optional) Coodinate from which heading is calculated. Default is current carrier position.
 -- @return #number Carrier heading in degrees.
-function AIRBOSS:GetHeadingIntoWind(magnetic)
+function AIRBOSS:GetHeadingIntoWind(magnetic, coord)
 
   -- Get direction the wind is blowing from. This is where we want to go.
-  local windfrom, vwind=self:GetWind()
+  local windfrom, vwind=self:GetWind(nil, nil, coord)
   
   -- Actually, we want the runway in the wind.
   local intowind=windfrom-self.carrierparam.rwyangle
@@ -12137,8 +12139,9 @@ end
 -- @param #number speed Speed in knots. Default is current carrier velocity.
 -- @param #boolean uturn (Optional) If true, carrier will go back to where it came from before it resumes its route to the next waypoint.
 -- @param #number uspeed Speed in knots after U-turn. Default is same as before.
+-- @param Core.Point#COORDINATE tcoord Additional coordinate to make turn smoother.
 -- @return #AIRBOSS self
-function AIRBOSS:CarrierDetour(coord, speed, uturn, uspeed)
+function AIRBOSS:CarrierDetour(coord, speed, uturn, uspeed, tcoord)
 
   -- Current coordinate of the carrier.
   local pos0=self:GetCoordinate()
@@ -12149,17 +12152,16 @@ function AIRBOSS:CarrierDetour(coord, speed, uturn, uspeed)
   -- Speed in km/h.
   local speedkmh=UTILS.KnotsToKmph(speed)
   local cspeedkmh=self.carrier:GetVelocityKMH()
-  local uspeedkmh=UTILS.KnotsToKmph(uspeed)
+  local uspeedkmh=UTILS.KnotsToKmph(uspeed or speed)
   
   -- Waypoint table.
   local wp={}
   
-  -- Pos1 is a bit into.
-  local pos1=pos0:Translate(500, pos0:HeadingTo(coord)):Translate(500, self:GetHeading())
-  
   -- Create from/to waypoints.
   table.insert(wp, pos0:WaypointGround(cspeedkmh))
-  table.insert(wp, pos1:WaypointGround(cspeedkmh))
+  if tcoord then
+    table.insert(wp, tcoord:WaypointGround(cspeedkmh))
+  end
   table.insert(wp, coord:WaypointGround(speedkmh))
   
   -- If enabled, go back to where you came from.
@@ -12178,7 +12180,9 @@ function AIRBOSS:CarrierDetour(coord, speed, uturn, uspeed)
   
   -- Debug mark.
   if self.Debug then
-    pos1:MarkToAll("Detour Pos1")
+    if tcoord then
+      tcoord:MarkToAll("Detour Tcoord")
+    end
     coord:MarkToAll("Detour Point")
   end
   
@@ -12214,15 +12218,72 @@ function AIRBOSS:CarrierTurnIntoWind(time, vdeck, uturn)
   self:I(self.lid..string.format("Carrier steaming into the wind (%.1f kts). Distance=%.1f NM, Speed=%.1f knots, Time=%d sec.", UTILS.MpsToKnots(vwind), distNM, speedknots, time))
 
   -- Get heading into the wind accounting for angled runway.
-  local intowind=self:GetHeadingIntoWind(false)
-   
-  -- Translate current position.
-  local pos1=self:GetCoordinate():Translate(dist, intowind):Translate(500, self:GetHeading())
+  local hiw=self:GetHeadingIntoWind()
   
-  -- Debug mark.
-  if self.Debug then
-    pos1:MarkToAll("Into the wind point")
+  -- Current heading.
+  local hdg=self:GetHeading()
+  
+  -- Heading difference.
+  local deltaH=self:_GetDeltaHeading(hdg, hiw)
+  
+  local Cv=self:GetCoordinate()
+  
+  local Ctiw=nil --Core.Point#COORDINATE
+  local Csoo=nil --Core.Point#COORDINATE
+  
+  -- Define path depending on turn angle.
+  if deltaH<45 then
+    -- Small turn.
+    
+    -- Point in the right direction to help turning.
+    Csoo=Cv:Translate(750, hdg):Translate(750, hiw)
+    
+    -- Heading into wind from Csoo.
+    local hsw=self:GetHeadingIntoWind(false, Csoo)
+    
+    -- Into the wind coord.
+    Ctiw=Csoo:Translate(dist, hsw)
+  
+  elseif deltaH<90 then
+    -- Medium turn.
+    
+     -- Point in the right direction to help turning.
+    Csoo=Cv:Translate(900, hdg):Translate(900, hiw)
+    
+    -- Heading into wind from Csoo.
+    local hsw=self:GetHeadingIntoWind(false, Csoo)
+    
+    -- Into the wind coord.
+    Ctiw=Csoo:Translate(dist, hsw)
+        
+  elseif deltaH<135 then
+    -- Large turn backwards.
+    
+    -- Point in the right direction to help turning.
+    -- TODO turn left or right? 
+    Csoo=Cv:Translate(1200, hdg-90):Translate(1200, hiw)
+    
+    -- Heading into wind from Csoo.
+    local hsw=self:GetHeadingIntoWind(false, Csoo)
+
+    -- Into the wind coord.
+    Ctiw=Csoo:Translate(dist, hsw)
+
+  else
+    -- Huge turn backwards.
+
+    -- Point in the right direction to help turning.
+    -- TODO turn left or right? 
+    Csoo=Cv:Translate(1200, hdg+90):Translate(1200, hiw)
+    
+    -- Heading into wind from Csoo.
+    local hsw=self:GetHeadingIntoWind(false, Csoo)
+
+    -- Into the wind coord.
+    Ctiw=Csoo:Translate(dist, hsw)
+  
   end
+    
   
   -- Return to coordinate if collision is detected.
   self.Creturnto=self:GetCoordinate()
@@ -12234,7 +12295,7 @@ function AIRBOSS:CarrierTurnIntoWind(time, vdeck, uturn)
   local vdownwind=UTILS.MpsToKnots(nextwp:GetVelocity())
 
   -- Let the carrier make a detour from its route but return to its current position.
-  self:CarrierDetour(pos1, speedknots, uturn, vdownwind)
+  self:CarrierDetour(Ctiw, speedknots, uturn, vdownwind, Csoo)
   
   -- Set switch that we are currently turning into the wind.
   self.turnintowind=true
