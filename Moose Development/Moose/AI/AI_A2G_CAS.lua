@@ -141,7 +141,7 @@ function AI_A2G_CAS:onafterEngage( DefenderGroup, From, Event, To, AttackSetUnit
         if AttackUnit then
           if AttackUnit:IsAlive() and AttackUnit:IsGround() then
             self:T( { "CAS Unit:", AttackUnit:GetName() } )
-            AttackUnitTasks[#AttackUnitTasks+1] = DefenderGroup:TaskAttackUnit( AttackUnit, false, false, nil, nil, EngageAltitude )
+            AttackUnitTasks[#AttackUnitTasks+1] = DefenderGroup:TaskAttackUnit( AttackUnit, true, false, nil, nil, EngageAltitude )
           end
         end
       end

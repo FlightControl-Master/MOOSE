@@ -3169,14 +3169,13 @@ do -- AI_A2G_DISPATCHER
   
   ---
   -- @param #AI_A2G_DISPATCHER self
-  function AI_A2G_DISPATCHER:CountDefendersEngaged( AttackerDetection )
+  function AI_A2G_DISPATCHER:CountDefendersEngaged( AttackerDetection, AttackerCount )
 
     -- First, count the active AIGroups Units, targetting the DetectedSet
     local DefendersEngaged = 0
     local DefendersTotal = 0
     
     local AttackerSet = AttackerDetection.Set
-    local AttackerCount = AttackerSet:Count()
     local DefendersMissing = AttackerCount
     --DetectedSet:Flush()
     
@@ -3628,13 +3627,64 @@ do -- AI_A2G_DISPATCHER
 
   ---
   -- @param #AI_A2G_DISPATCHER self
-  function AI_A2G_DISPATCHER:onafterDefend( From, Event, To, AttackerDetection, DefendersTotal, DefendersEngaged, DefendersMissing, DefenderFriendlies, DefenseTaskType )
+  function AI_A2G_DISPATCHER:HasDefenseLine( DefenseCoordinate, DetectedItem )
 
-    self:F( { From, Event, To, AttackerDetection.Index, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing, DefenderFriendlies = DefenderFriendlies } )
+    local AttackCoordinate = self.Detection:GetDetectedItemCoordinate( DetectedItem )
+    local EvaluateDistance = AttackCoordinate:Get2DDistance( DefenseCoordinate )
 
-    AttackerDetection.Type = DefenseTaskType -- This is set to report the task type in the status panel.
+    -- Now check if this coordinate is not in a danger zone, meaning, that the attack line is not crossing other coordinates.
+    -- (y1 – y2)x + (x2 – x1)y + (x1y2 – x2y1) = 0
+    
+    local c1 = DefenseCoordinate
+    local c2 = AttackCoordinate
+    
+    local a = c1.z - c2.z -- Calculate a
+    local b = c2.x - c1.x -- Calculate b
+    local c = c1.x * c2.z - c2.x * c1.z -- calculate c
+    
+    local ok = true
+    
+    -- Now we check if each coordinate radius of about 30km of each attack is crossing a defense line. If yes, then this is not a good attack!
+    for AttackItemID, CheckAttackItem in pairs( self.Detection:GetDetectedItems() ) do
+    
+      -- Only compare other detected coordinates.
+      if AttackItemID ~= DetectedItem.ID then
+    
+        local CheckAttackCoordinate = self.Detection:GetDetectedItemCoordinate( CheckAttackItem )
+        
+        local x = CheckAttackCoordinate.x
+        local y = CheckAttackCoordinate.z
+        local r = 8000
+        
+        -- now we check if the coordinate is intersecting with the defense line.
+        
+        local IntersectDistance = ( math.abs( a * x + b * y + c ) ) / math.sqrt( a * a + b * b )
+        self:F( { IntersectDistance = IntersectDistance, x = x, y = y } )
+        
+        local IntersectAttackDistance = CheckAttackCoordinate:Get2DDistance( DefenseCoordinate )
+        
+        self:F( { IntersectAttackDistance=IntersectAttackDistance, EvaluateDistance=EvaluateDistance } )
+        
+        -- If the distance of the attack coordinate is larger than the test radius; then the line intersects, and this is not a good coordinate.
+        if IntersectDistance < r and IntersectAttackDistance < EvaluateDistance then
+          ok = false
+          break
+        end
+      end
+    end
+    
+    return ok
+  end
 
-    local AttackerSet = AttackerDetection.Set
+  ---
+  -- @param #AI_A2G_DISPATCHER self
+  function AI_A2G_DISPATCHER:onafterDefend( From, Event, To, DetectedItem, DefendersTotal, DefendersEngaged, DefendersMissing, DefenderFriendlies, DefenseTaskType )
+
+    self:F( { From, Event, To, DetectedItem.Index, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing, DefenderFriendlies = DefenderFriendlies } )
+
+    DetectedItem.Type = DefenseTaskType -- This is set to report the task type in the status panel.
+
+    local AttackerSet = DetectedItem.Set
     local AttackerUnit = AttackerSet:GetFirst()
     
     if AttackerUnit and AttackerUnit:IsAlive() then
@@ -3642,18 +3692,25 @@ do -- AI_A2G_DISPATCHER
       local DefenderCount = 0
   
       for DefenderID, DefenderGroup in pairs( DefenderFriendlies or {} ) do
-  
-        local SquadronName = self:GetDefenderTask( DefenderGroup ).SquadronName
-        local SquadronOverhead = self:GetSquadronOverhead( SquadronName )
 
-        local Fsm = self:GetDefenderTaskFsm( DefenderGroup )
-        Fsm:Engage( AttackerSet ) -- Engage on the TargetSetUnit
-        
-        self:SetDefenderTaskTarget( DefenderGroup, AttackerDetection )
+        -- Here we check if the defenders have a defense line to the attackers.
+        -- If the attackers are behind enemy lines or too close to an other defense line; then don´t engage.
+        local DefenseCoordinate = DefenderGroup:GetCoordinate()
+        local HasDefenseLine = self:HasDefenseLine( DefenseCoordinate, DetectedItem )
   
-        local DefenderGroupSize = DefenderGroup:GetSize()
-        DefendersMissing = DefendersMissing - DefenderGroupSize / SquadronOverhead
-        DefendersTotal = DefendersTotal + DefenderGroupSize / SquadronOverhead
+        if HasDefenseLine == true then
+          local SquadronName = self:GetDefenderTask( DefenderGroup ).SquadronName
+          local SquadronOverhead = self:GetSquadronOverhead( SquadronName )
+  
+          local Fsm = self:GetDefenderTaskFsm( DefenderGroup )
+          Fsm:Engage( AttackerSet ) -- Engage on the TargetSetUnit
+          
+          self:SetDefenderTaskTarget( DefenderGroup, DetectedItem )
+    
+          local DefenderGroupSize = DefenderGroup:GetSize()
+          DefendersMissing = DefendersMissing - DefenderGroupSize / SquadronOverhead
+          DefendersTotal = DefendersTotal + DefenderGroupSize / SquadronOverhead
+        end
         
         if DefendersMissing <= 0 then
           break
@@ -3676,21 +3733,26 @@ do -- AI_A2G_DISPATCHER
         
           if DefenderSquadron[DefenseTaskType] then
 
-            local SpawnCoord = DefenderSquadron.Airbase:GetCoordinate() -- Core.Point#COORDINATE
+            local AirbaseCoordinate = DefenderSquadron.Airbase:GetCoordinate() -- Core.Point#COORDINATE
             local AttackerCoord = AttackerUnit:GetCoordinate()
-            local InterceptCoord = AttackerDetection.InterceptCoord
+            local InterceptCoord = DetectedItem.InterceptCoord
             self:F( { InterceptCoord = InterceptCoord } )
             if InterceptCoord then
-              local InterceptDistance = SpawnCoord:Get2DDistance( InterceptCoord )
-              local AirbaseDistance = SpawnCoord:Get2DDistance( AttackerCoord )
+              local InterceptDistance = AirbaseCoordinate:Get2DDistance( InterceptCoord )
+              local AirbaseDistance = AirbaseCoordinate:Get2DDistance( AttackerCoord )
               self:F( { InterceptDistance = InterceptDistance, AirbaseDistance = AirbaseDistance, InterceptCoord = InterceptCoord } )
               
               if ClosestDistance == 0 or InterceptDistance < ClosestDistance then
                 
                 -- Only intercept if the distance to target is smaller or equal to the GciRadius limit.
                 if AirbaseDistance <= self.DefenseRadius then
-                  ClosestDistance = InterceptDistance
-                  ClosestDefenderSquadronName = SquadronName
+                
+                  -- Check if there is a defense line...
+                  local HasDefenseLine = self:HasDefenseLine( AirbaseCoordinate, DetectedItem )
+                  if HasDefenseLine == true then
+                    ClosestDistance = InterceptDistance
+                    ClosestDefenderSquadronName = SquadronName
+                  end
                 end
               end
             end
@@ -3735,7 +3797,7 @@ do -- AI_A2G_DISPATCHER
               end
               
               while ( DefendersNeeded > 0 ) do
-                self:ResourceQueue( false, DefenderSquadron, DefendersNeeded, Defense, DefenseTaskType, AttackerDetection, ClosestDefenderSquadronName )
+                self:ResourceQueue( false, DefenderSquadron, DefendersNeeded, Defense, DefenseTaskType, DetectedItem, ClosestDefenderSquadronName )
                 DefendersNeeded = DefendersNeeded - DefenderGrouping
                 DefenderCount = DefenderCount - DefenderGrouping / DefenderOverhead
               end  -- while ( DefendersNeeded > 0 ) do
@@ -3764,13 +3826,12 @@ do -- AI_A2G_DISPATCHER
     self:F( { DetectedItem.ItemID } )
   
     local AttackerSet = DetectedItem.Set -- Core.Set#SET_UNIT
-    local AttackerCount = AttackerSet:Count()
-    local IsSEAD = AttackerSet:HasSEAD() -- Is the AttackerSet a SEAD group?
+    local AttackerCount = AttackerSet:HasSEAD() -- Is the AttackerSet a SEAD group, then the amount of radar emitters will be returned; that need to be attacked.
     
-    if ( IsSEAD > 0 ) then
+    if ( AttackerCount > 0 ) then
     
       -- First, count the active defenders, engaging the DetectedItem.
-      local DefendersTotal, DefendersEngaged, DefendersMissing = self:CountDefendersEngaged( DetectedItem )
+      local DefendersTotal, DefendersEngaged, DefendersMissing = self:CountDefendersEngaged( DetectedItem, AttackerCount )
       
       self:F( { AttackerCount = AttackerCount, DefendersTotal = DefendersTotal, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing } )
   
@@ -3805,7 +3866,7 @@ do -- AI_A2G_DISPATCHER
     if IsCas == true then
     
       -- First, count the active defenders, engaging the DetectedItem.
-      local DefendersTotal, DefendersEngaged, DefendersMissing = self:CountDefendersEngaged( DetectedItem )
+      local DefendersTotal, DefendersEngaged, DefendersMissing = self:CountDefendersEngaged( DetectedItem, AttackerCount )
       
       self:F( { AttackerCount = AttackerCount, DefendersTotal = DefendersTotal, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing } )
   
@@ -3838,7 +3899,7 @@ do -- AI_A2G_DISPATCHER
     if IsBai == true then
     
       -- First, count the active defenders, engaging the DetectedItem.
-      local DefendersTotal, DefendersEngaged, DefendersMissing = self:CountDefendersEngaged( DetectedItem )
+      local DefendersTotal, DefendersEngaged, DefendersMissing = self:CountDefendersEngaged( DetectedItem, AttackerCount )
   
       self:F( { AttackerCount = AttackerCount, DefendersTotal = DefendersTotal, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing } )
   
@@ -3852,6 +3913,8 @@ do -- AI_A2G_DISPATCHER
     
     return nil, nil, nil
   end
+
+
 
 
   --- Assigns A2G AI Tasks in relation to the detected items.
@@ -3900,7 +3963,6 @@ do -- AI_A2G_DISPATCHER
     local Report = REPORT:New( "\nTactical Overview" )
 
     local DefenderGroupCount = 0
-    local Delay = 0 -- We need to implement a delay for each action because the spawning on airbases get confused if done too quick.
 
     local DefendersTotal = 0
 
@@ -3940,52 +4002,8 @@ do -- AI_A2G_DISPATCHER
           self:F( { DistanceProbability = DistanceProbability, DefenseProbability = DefenseProbability } )
           
           if DefenseProbability <= DistanceProbability / ( 300 / 30 ) then
-            
-            -- Now check if this coordinate is not in a danger zone, meaning, that the attack line is not crossing other coordinates.
-            -- (y1 – y2)x + (x2 – x1)y + (x1y2 – x2y1) = 0
-            
-            local c1 = DefenseCoordinate
-            local c2 = AttackCoordinate
-            
-            local a = c1.z - c2.z -- Calculate a
-            local b = c2.x - c1.x -- Calculate b
-            local c = c1.x * c2.z - c2.x * c1.z -- calculate c
-            
-            local ok = true
-            
-            -- Now we check if each coordinate radius of about 30km of each attack is crossing a defense line. If yes, then this is not a good attack!
-            for AttackItemID, CheckAttackItem in pairs( Detection:GetDetectedItems() ) do
-            
-              -- Only compare other detected coordinates.
-              if AttackItemID ~= DetectedItemID then
-            
-                local CheckAttackCoordinate = self.Detection:GetDetectedItemCoordinate( CheckAttackItem )
-                
-                local x = CheckAttackCoordinate.x
-                local y = CheckAttackCoordinate.z
-                local r = 8000
-                
-                -- now we check if the coordinate is intersecting with the defense line.
-                
-                local IntersectDistance = ( math.abs( a * x + b * y + c ) ) / math.sqrt( a * a + b * b )
-                self:F( { IntersectDistance = IntersectDistance, x = x, y = y } )
-                
-                local IntersectAttackDistance = CheckAttackCoordinate:Get2DDistance( DefenseCoordinate )
-                
-                self:F( { IntersectAttackDistance=IntersectAttackDistance, EvaluateDistance=EvaluateDistance } )
-                
-                -- If the distance of the attack coordinate is larger than the test radius; then the line intersects, and this is not a good coordinate.
-                if IntersectDistance < r and IntersectAttackDistance < EvaluateDistance then
-                  ok = false
-                  break
-                end
-              end
-            end
-            
-            if ok == true then
-              EngageCoordinate = DefenseCoordinate
-              break
-            end
+            EngageCoordinate = DefenseCoordinate
+            break
           end
         end
       end
@@ -3996,7 +4014,6 @@ do -- AI_A2G_DISPATCHER
           if DefendersMissing and DefendersMissing > 0 then
             self:F( { DefendersTotal = DefendersTotal, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing } )
             self:Defend( DetectedItem, DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies, "SEAD", EngageCoordinate )
-            Delay = Delay + 1
           end
         end
   
@@ -4005,7 +4022,6 @@ do -- AI_A2G_DISPATCHER
           if DefendersMissing and DefendersMissing > 0 then
             self:F( { DefendersTotal = DefendersTotal, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing } )
             self:Defend( DetectedItem, DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies, "CAS", EngageCoordinate )
-            Delay = Delay + 1
           end
         end
   
@@ -4014,7 +4030,6 @@ do -- AI_A2G_DISPATCHER
           if DefendersMissing and DefendersMissing > 0 then
             self:F( { DefendersTotal = DefendersTotal, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing } )
             self:Defend( DetectedItem, DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies, "BAI", EngageCoordinate )
-            Delay = Delay + 1
           end
         end
       end
@@ -4030,7 +4045,7 @@ do -- AI_A2G_DISPATCHER
       if self.TacticalDisplay then      
         -- Show tactical situation
         local ThreatLevel = DetectedItem.Set:CalculateThreatLevelA2G()
-        Report:Add( string.format( " - %s ( %s ): ( #%d - %4s ) %s" , DetectedItem.ItemID, DetectedItem.Index, DetectedItem.Set:Count(), DetectedItem.Type or " --- ", string.rep(  "■", ThreatLevel ) ) )
+        Report:Add( string.format( " - %1s%s ( %4s ): ( #%d - %4s ) %s" , ( DetectedItem.IsDetected == true ) and "!" or " ", DetectedItem.ItemID, DetectedItem.Index, DetectedItem.Set:Count(), DetectedItem.Type or " --- ", string.rep(  "■", ThreatLevel ) ) )
         for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
           local Defender = Defender -- Wrapper.Group#GROUP
            if DefenderTask.Target and DefenderTask.Target.Index == DetectedItem.Index then

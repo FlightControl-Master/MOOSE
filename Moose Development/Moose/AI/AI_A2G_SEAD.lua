@@ -189,7 +189,7 @@ function AI_A2G_SEAD:onafterEngage( DefenderGroup, From, Event, To, AttackSetUni
             local HasRadar = AttackUnit:HasSEAD() 
             if HasRadar then
               self:F( { "SEAD Unit:", AttackUnit:GetName() } )
-              AttackUnitTasks[#AttackUnitTasks+1] = DefenderGroup:TaskAttackUnit( AttackUnit, false, false, nil, nil, EngageAltitude )
+              AttackUnitTasks[#AttackUnitTasks+1] = DefenderGroup:TaskAttackUnit( AttackUnit, true, false, nil, nil, EngageAltitude )
             end
           end
         end
