@@ -201,8 +201,8 @@
 -- 
 -- ## AWACS
 -- 
--- You can use the class also to have an AWACS orbiting overhead the carrier. This requires to add the @{#RECOVERYTANKER.SetAWACS}() function to the script, which sets the enroute tasks AWACS 
--- as soon as the aircraft enters its pattern.
+-- You can use the class also to have an AWACS orbiting overhead the carrier. This requires to add the @{#RECOVERYTANKER.SetAWACS}(*switch*, *eplrs*) function to the script, which sets the enroute tasks AWACS 
+-- as soon as the aircraft enters its pattern. Note that the EPLRS data link is enabled by default. To disable it, the second parameter *eplrs* must be set to *false*.
 -- 
 -- A simple script could look like this:
 -- 
@@ -294,6 +294,7 @@ RECOVERYTANKER = {
   callsignname    = nil,
   callsignnumber  = nil,
   modex           = nil,
+  eplrs           = nil,
 }
 
 --- Unique ID (global).
@@ -302,7 +303,7 @@ RECOVERYTANKER.UID=0
 
 --- Class version.
 -- @field #string version
-RECOVERYTANKER.version="1.0.6"
+RECOVERYTANKER.version="1.0.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -598,15 +599,23 @@ end
 --- Set that the group takes the roll of an AWACS instead of a refueling tanker.
 -- @param #RECOVERYTANKER self
 -- @param #boolean switch If true or nil, set roll AWACS.
+-- @param #boolean eplrs If true or nil, enable EPLRS. If false, EPLRS will be off.
 -- @return #RECOVERYTANKER self
-function RECOVERYTANKER:SetAWACS(switch)
+function RECOVERYTANKER:SetAWACS(switch, eplrs)
   if switch==nil or switch==true then
     self.awacs=true
   else
     self.awacs=false
   end
+  if eplrs==nil or eplrs==true then
+    self.eplrs=true
+  else
+    self.eplrs=false
+  end
+  
   return self
 end
+
 
 --- Set callsign of the tanker group.
 -- @param #RECOVERYTANKER self
@@ -894,6 +903,12 @@ function RECOVERYTANKER:onafterStart(From, Event, To)
     self.tanker:CommandSetCallsign(self.callsignname, self.callsignnumber, 2)
   end
   
+  -- Turn EPLRS datalink on.
+  if self.eplrs then
+    self.tanker:CommandEPLRS(true, 3)
+  end
+  
+  
   -- Get initial orientation and position of carrier.
   self.orientation=self.carrier:GetOrientationX()
   self.orientlast=self.carrier:GetOrientationX()
@@ -954,6 +969,9 @@ function RECOVERYTANKER:onafterStatus(From, Event, To)
             -- Respawn tanker.
             self.tanker=self.tanker:Respawn(nil, true)
             
+            -- Update Pattern in 2 seconds. Need to give a bit time so that the respawned group is in the game.
+            self:__PatternUpdate(2)
+            
             -- Create tanker beacon and activate TACAN.
             if self.TACANon then
               self:_ActivateTACAN(3)
@@ -964,8 +982,10 @@ function RECOVERYTANKER:onafterStatus(From, Event, To)
               self.tanker:CommandSetCallsign(self.callsignname, self.callsignnumber, 3)
             end
             
-            -- Update Pattern in 2 seconds. Need to give a bit time so that the respawned group is in the game.
-            self:__PatternUpdate(2)
+            -- Turn EPLRS datalink on.
+            if self.eplrs then
+              self.tanker:CommandEPLRS(true, 4)
+            end                        
           end
           
         else
@@ -1066,11 +1086,18 @@ function RECOVERYTANKER:onafterPatternUpdate(From, Event, To)
   self.tanker:WayPointInitialize(wp)
   
   -- Task combo.
+  
+  -- Be a tanker or be an AWACS.
   local taskroll = self.tanker:EnRouteTaskTanker()
   if self.awacs then
     taskroll=self.tanker:EnRouteTaskAWACS()
   end
+  
+  --local taskeplrs=self.tanker:TaskEPLRS(true, 2)
+  
+  -- Route task.
   local taskroute  = self.tanker:TaskRoute(wp)
+  
   -- Note that the order is important here! tasktanker has to come first. Otherwise it does not work.
   local taskcombo  = self.tanker:TaskCombo({taskroll, taskroute})
 
@@ -1184,7 +1211,12 @@ function RECOVERYTANKER:OnEventEngineShutdown(EventData)
       -- Set callsign.
       if self.callsignname then
         self.tanker:CommandSetCallsign(self.callsignname, self.callsignnumber, 3)
-      end      
+      end
+      
+      -- Turn EPLRS datalink on.
+      if self.eplrs then
+        self.tanker:CommandEPLRS(true, 4)
+      end       
 
       -- Initial route.
       SCHEDULER:New(nil, self._InitRoute, {self, -self.distStern+UTILS.NMToMeters(3)}, 2)
