@@ -12290,11 +12290,11 @@ function AIRBOSS:CarrierDetour(coord, speed, uturn, uspeed, tcoord)
   -- Debug mark.
   if self.Debug then
     if tcoord then
-      tcoord:MarkToAll("Detour Turn Help")
+      tcoord:MarkToAll(string.format("Detour Turn Help WP. Speed %.1f knots", UTILS.KmphToKnots(cspeedkmh)))
     end
-    coord:MarkToAll("Detour Point")
+    coord:MarkToAll(string.format("Detour Waypoint. Speed %.1f knots", UTILS.KmphToKnots(speedkmh)))
     if uturn then
-      pos0:MarkToAll(string.format("U-turn Return Point. Speed %.1f km/h", uspeedkmh))
+      pos0:MarkToAll(string.format("Detour U-turn WP. Speed %.1f knots", UTILS.KmphToKnots(uspeedkmh)))
     end
   end
   
