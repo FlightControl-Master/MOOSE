@@ -293,12 +293,12 @@ end
 -- todo: need to fix this global function
 
 --- @param Wrapper.Group#GROUP AIControllable
-function AI_A2G_ENGAGE.EngageRoute( AIGroup, Fsm )
+function AI_A2G_ENGAGE.EngageRoute( AIGroup, Fsm, AttackSetUnit )
 
   AIGroup:I( { "AI_A2G_ENGAGE.EngageRoute:", AIGroup:GetName() } )
   
   if AIGroup:IsAlive() then
-    Fsm:__Engage( Fsm.TaskDelay )
+    Fsm:__Engage( Fsm.TaskDelay, AttackSetUnit )
   
     --local Task = AIGroup:TaskOrbitCircle( 4000, 400 )
     --AIGroup:SetTask( Task )

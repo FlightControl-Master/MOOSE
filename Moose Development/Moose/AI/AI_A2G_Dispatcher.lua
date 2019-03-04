@@ -3351,8 +3351,20 @@ do -- AI_A2G_DISPATCHER
   
     local DefenderSquadron, Patrol = self:CanPatrol( SquadronName, DefenseTaskType )
     
+    -- Determine if there are sufficient resources to form a complete group for patrol.    
+    local DefendersNeeded
+    if DefenderSquadron.ResourceCount == nil then
+      DefendersNeeded = DefenderSquadron.Grouping
+    else
+      if DefenderSquadron.ResourceCount >= DefenderSquadron.Grouping then
+        DefendersNeeded = DefenderSquadron.Grouping
+      else
+        DefendersNeeded = DefenderSquadron.ResourceCount
+      end
+    end
+    
     if Patrol then
-      self:ResourceQueue( true, DefenderSquadron, nil, Patrol, DefenseTaskType, nil, SquadronName )
+      self:ResourceQueue( true, DefenderSquadron, DefendersNeeded, Patrol, DefenseTaskType, nil, SquadronName )
     end
     
   end
@@ -3654,7 +3666,7 @@ do -- AI_A2G_DISPATCHER
         
         local x = CheckAttackCoordinate.x
         local y = CheckAttackCoordinate.z
-        local r = 8000
+        local r = 5000
         
         -- now we check if the coordinate is intersecting with the defense line.
         
@@ -4097,6 +4109,11 @@ do -- AI_A2G_DISPATCHER
         local DefenseQueueItem = DefenseQueueItem -- #AI_A2G_DISPATCHER.DefenseQueueItem
         Report:Add( string.format( "   - %s - %s", DefenseQueueItem.SquadronName, DefenseQueueItem.DefenderSquadron.TakeoffTime, DefenseQueueItem.DefenderSquadron.TakeoffInterval) )
         
+      end
+      
+      Report:Add( string.format( "\n - Squadron Resources: ", #self.DefenseQueue ) )
+      for DefenderSquadronName, DefenderSquadron in pairs( self.DefenderSquadrons ) do
+        Report:Add( string.format( "   - %s - %d", DefenderSquadronName, DefenderSquadron.ResourceCount and DefenderSquadron.ResourceCount or "n/a" ) )
       end
   
       self:F( Report:Text( "\n" ) )
