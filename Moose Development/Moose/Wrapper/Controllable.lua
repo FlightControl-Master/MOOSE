@@ -764,7 +764,7 @@ function CONTROLLABLE:CommandDeactivateICLS(Delay)
   return self
 end
 
---- Set callsign of the CONTROLLABLE. See [DCS_command_setCallsign](https://wiki.hoggitworld.com/view/DCS_command_setCallsign)
+--- Set callsign of the CONTROLLABLE. See [DCS command setCallsign](https://wiki.hoggitworld.com/view/DCS_command_setCallsign)
 -- @param #CONTROLLABLE self
 -- @param DCS#CALLSIGN CallName Number corresponding the the callsign identifier you wish this group to be called.
 -- @param #number CallNumber The number value the group will be referred to as. Only valid numbers are 1-9. For example Uzi **5**-1. Default 1.
@@ -785,6 +785,50 @@ function CONTROLLABLE:CommandSetCallsign(CallName, CallNumber, Delay)
   return self
 end
 
+--- Set EPLRS of the CONTROLLABLE on/off. See [DCS command EPLRS](https://wiki.hoggitworld.com/view/DCS_command_eplrs)
+-- @param #CONTROLLABLE self
+-- @param #boolean SwitchOnOff If true (or nil) switch EPLRS on. If false switch off.
+-- @param #number Delay (Optional) Delay in seconds before the callsign is set. Default is immediately.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:CommandEPLRS(SwitchOnOff, Delay)
+  self:F()
+  
+  if SwitchOnOff==nil then
+    SwitchOnOff=true
+  end
+  
+  -- ID
+  local _id=self:GetID()
+  
+  -- Command to set the callsign. 
+  local CommandEPLRS={id='EPLRS', params={value=SwitchOnOff, groupId=_id}}
+
+  if Delay and Delay>0 then
+    SCHEDULER:New(nil, self.CommandEPLRS, {self, SwitchOnOff}, Delay)
+  else
+    self:T(string.format("EPLRS=%s for controllable %s (id=%s)", tostring(SwitchOnOff), tostring(self:GetName()), tostring(_id)))
+    self:SetCommand(CommandEPLRS)
+  end
+
+  return self
+end
+
+--- Set EPLRS data link on/off.
+-- @param #CONTROLLABLE self
+-- @param #boolean SwitchOnOff If true (or nil) switch EPLRS on. If false switch off.
+-- @param #number idx Task index. Default 1.
+-- @return #table Task wrapped action.
+function CONTROLLABLE:TaskEPLRS(SwitchOnOff, idx)
+
+  -- ID
+  local _id=self:GetID()
+  
+  -- Command to set the callsign. 
+  local CommandEPLRS={id='EPLRS', params={value=SwitchOnOff, groupId=_id}}
+
+  return self:TaskWrappedAction(CommandEPLRS, idx or 1)
+  
+end
 
 -- TASKS FOR AIR CONTROLLABLES
 --- (AIR) Attack a Controllable.

@@ -345,11 +345,11 @@ UTILS.MpsToMiph = function( mps )
 end
 
 UTILS.MpsToKnots = function( mps )
-  return mps * 3600 / 1852
+  return mps * 1.94384 --3600 / 1852
 end
 
 UTILS.KnotsToMps = function( knots )
-  return knots * 1852 / 3600
+  return knots / 1.94384 --* 1852 / 3600
 end
 
 UTILS.CelciusToFarenheit = function( Celcius )

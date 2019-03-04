@@ -234,9 +234,9 @@
 -- 
 -- The AIRBOSS class supports all three commonly used recovery cases, i.e.
 -- 
---    * **CASE I** during daytime and good weather, 
---    * **CASE II** during daytime but poor visibility conditions,
---    * **CASE III** when below Case II conditions, e.g. during nighttime.
+--    * **CASE I** during daytime and good weather (ceiling > 3000 ft, visibility > 5 NM), 
+--    * **CASE II** during daytime but poor visibility conditions (ceiling > 1000 ft, visibility > 5NM),
+--    * **CASE III** when below Case II conditions and during nighttime (ceiling < 1000 ft, visibility < 5 NM).
 --    
 -- That being said, this script allows you to use any of the three cases to be used at any time. Or, in other words, *you* need to specify when which case is safe and appropriate.
 -- 
@@ -819,6 +819,9 @@
 --    * *Roll*: roll angle of player aircraft in degrees.
 --    * *Yaw*: yaw angle of player aircraft in degrees.
 --    * *Step*: Step in the groove.
+--    * *Grade*: Current LSO grade.
+--    * *Points*: Current points for the pass.
+--    * *Details*: Detailed grading analysis.
 --
 --## Lineup Error
 --
@@ -995,6 +998,36 @@
 -- The AI performs a very realistic Case I recovery. Therefore, we already have a good Case I and II recovery simulation since the final part of Case II is a
 -- Case I recovery. However, I don't think the AI can do a proper Case III recovery. If you give the AI the landing command, it is out of our hands and will
 -- always go for a Case I in the final pattern part. Maybe this will improve in future DCS version but right now, there is not much we can do about it.
+-- 
+-- ===
+-- 
+-- # Finite State Machine (FSM)
+-- 
+-- The AIRBOSS class has a Finite State Machine (FSM) implementation for the carrier. This allows mission designers to hook into certain events and helps
+-- simulate complex behaviour easier.
+-- 
+-- FSM events are:
+-- 
+--    * @{#AIRBOSS.Start}: Starts the AIRBOSS FSM.
+--    * @{#AIRBOSS.Stop}: Stops the AIRBOSS FSM.
+--    * @{#AIRBOSS.Idle}: Carrier is set to idle and not recovering.
+--    * @{#AIRBOSS.RecoveryStart}: Starts the recovery ops.
+--    * @{#AIRBOSS.RecoveryStop}: Stops the recovery ops.
+--    * @{#AIRBOSS.RecoveryPause}: Pauses the recovery ops.
+--    * @{#AIRBOSS.RecoveryUnpause}: Unpauses the recovery ops.
+--    * @{#AIRBOSS.RecoveryCase}: Sets/switches the recovery case.
+--    * @{#AIRBOSS.PassingWaypoint}: Carrier passes a waypoint defined in the mission editor.
+-- 
+-- These events can be used in the user script. When the event is triggered, it is automatically a function OnAfter*Eventname* called. For example
+-- 
+--     --- Carrier just passed waypoint *n*.
+--     function AirbossStennis:OnAfterPassingWaypoint(From, Event, To, n)
+--      -- Launch green flare.
+--      self.carrier:FlareGreen()
+--     end
+-- 
+-- In this example, we only launch a green flare every time the carrier passes a waypoint defined in the mission editor. But, of course, you can also use it to add new
+-- recovery windows each time a carrier passes a waypoint. Therefore, you can create an "infinite" number of windows easily.
 -- 
 -- ===
 -- 
@@ -1457,6 +1490,7 @@ AIRBOSS.Difficulty={
 -- @field #boolean OVER Recovery window is over and closed.
 -- @field #boolean WIND Carrier will turn into the wind.
 -- @field #number SPEED The speed in knots the carrier has during the recovery.
+-- @field #boolean UTURN If true, carrier makes a U-turn to the point it came from before resuming its route to the next waypoint.
 -- @field #number ID Recovery window ID.
 
 --- Groove data.
@@ -1586,7 +1620,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.9.9.1"
+AIRBOSS.version="0.9.9.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1832,7 +1866,7 @@ function AIRBOSS:New(carriername, alias)
     BASE:TraceOnOff(true)
     BASE:TraceClass(self.ClassName)
     BASE:TraceLevel(1)
-    self.dTstatus=0.1
+    --self.dTstatus=0.1
   end
     
   -- Smoke zones.
@@ -1953,6 +1987,7 @@ function AIRBOSS:New(carriername, alias)
   self:AddTransition("Paused",        "RecoveryUnpause", "Recovering")  -- Unpause recovering aircraft.
   self:AddTransition("*",             "Status",          "*")           -- Update status of players and queues.
   self:AddTransition("*",             "RecoveryCase",    "*")           -- Switch to another case recovery.
+  self:AddTransition("*",             "PassingWaypoint", "*")           -- Carrier is passing a waypoint.
   self:AddTransition("*",             "Save",            "*")           -- Save player scores to file.  
   self:AddTransition("*",             "Stop",            "Stopped")     -- Stop AIRBOSS FMS.
 
@@ -1965,6 +2000,13 @@ function AIRBOSS:New(carriername, alias)
   -- @function [parent=#AIRBOSS] __Start
   -- @param #AIRBOSS self
   -- @param #number delay Delay in seconds.
+
+  --- On after "Start" user function. Called when the AIRBOSS FSM is started.
+  -- @function [parent=#AIRBOSS] OnAfterStart
+  -- @param #AIRBOSS self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
 
 
   --- Triggers the FSM event "Idle" that puts the carrier into state "Idle" where no recoveries are carried out.
@@ -1998,6 +2040,7 @@ function AIRBOSS:New(carriername, alias)
   -- @param #string To To state.
   -- @param #number Case The recovery case (1, 2 or 3) to start.
   -- @param #number Offset Holding pattern offset angle in degrees for CASE II/III recoveries.
+
 
   --- Triggers the FSM event "RecoveryStop" that stops the recovery of aircraft.
   -- @function [parent=#AIRBOSS] RecoveryStop
@@ -2042,6 +2085,27 @@ function AIRBOSS:New(carriername, alias)
   -- @param #number delay Delay in seconds.
   -- @param #number Case The new recovery case (1, 2 or 3).
   -- @param #number Offset Holding pattern offset angle in degrees for CASE II/III recoveries.
+
+
+  --- Triggers the FSM event "PassingWaypoint". Called when the carrier passes a waypoint.
+  -- @function [parent=#AIRBOSS] PassingWaypoint
+  -- @param #AIRBOSS self
+  -- @param #number waypoint Number of waypoint.
+
+  --- Triggers the FSM delayed event "PassingWaypoint". Called when the carrier passes a waypoint.
+  -- @function [parent=#AIRBOSS] __PassingWaypoint
+  -- @param #AIRBOSS self
+  -- @param #number delay Delay in seconds.
+  -- @param #number Case Recovery case (1, 2 or 3) that is started.
+  -- @param #number Offset Holding pattern offset angle in degrees for CASE II/III recoveries.
+
+  --- On after "PassingWaypoint" user function. Called when the carrier passes a waypoint of its route.
+  -- @function [parent=#AIRBOSS] OnAfterPassingWaypoint
+  -- @param #AIRBOSS self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #number waypoint Number of waypoint.
 
 
   --- Triggers the FSM event "Save" that saved the player scores to a file.
@@ -2183,8 +2247,9 @@ end
 -- @param #number holdingoffset Only for CASE II/III: Angle in degrees the holding pattern is offset.
 -- @param #boolean turnintowind If true, carrier will turn into the wind 5 minutes before the recovery window opens.
 -- @param #number speed Speed in knots during turn into wind leg.
+-- @param #boolean uturn If true (or nil), carrier wil perform a U-turn and go back to where it came from before resuming its route to the next waypoint. If false, it will go directly to the next waypoint.
 -- @return #AIRBOSS.Recovery Recovery window.
-function AIRBOSS:AddRecoveryWindow(starttime, stoptime, case, holdingoffset, turnintowind, speed)
+function AIRBOSS:AddRecoveryWindow(starttime, stoptime, case, holdingoffset, turnintowind, speed, uturn)
 
   -- Absolute mission time in seconds.
   local Tnow=timer.getAbsTime()
@@ -2233,6 +2298,12 @@ function AIRBOSS:AddRecoveryWindow(starttime, stoptime, case, holdingoffset, tur
   recovery.WIND=turnintowind
   recovery.SPEED=speed or 20
   recovery.ID=self.windowcount
+  
+  if uturn==nil or uturn==true then
+    recovery.UTURN=true
+  else
+    recovery.UTURN=false
+  end
   
   -- Add to table
   table.insert(self.recoverytimes, recovery)
@@ -2283,6 +2354,7 @@ function AIRBOSS:DeleteAllRecoveryWindows(delay)
 
   -- Loop over all recovery windows.
   for _,recovery in pairs(self.recoverytimes) do
+    env.info("FF deleting recovery window ID "..tostring(recovery.ID))
     self:DeleteRecoveryWindow(recovery, delay)
   end
 
@@ -2297,7 +2369,7 @@ function AIRBOSS:GetRecoveryWindowByID(id)
   if id then
     for _,_window in pairs(self.recoverytimes) do
       local window=_window --#AIRBOSS.Recovery
-      if window.ID==id then
+      if window and window.ID==id then
         return window
       end
     end
@@ -2993,7 +3065,7 @@ end
 -- FSM event functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- On after Start event. Starts the AIRBOSS. Addes event handlers and schedules status updates of reqests and queue.
+--- On after Start event. Starts the AIRBOSS. Adds event handlers and schedules status updates of requests and queue.
 -- @param #AIRBOSS self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -3017,7 +3089,7 @@ function AIRBOSS:onafterStart(From, Event, To)
   self.Tpupdate=timer.getTime()
   
   -- Init patrol route of carrier.
-  self:_PatrolRoute()
+  self:_PatrolRoute(1)
   
   -- Check if no recovery window is set.
   if #self.recoverytimes==0 then
@@ -3441,6 +3513,7 @@ function AIRBOSS:_CheckRecoveryTimes()
   
     -- Check if there is a next windows defined.
     if nextwindow then
+    
       -- Set case and offset of the next window.
       self:RecoveryCase(nextwindow.CASE, nextwindow.OFFSET)
       
@@ -3458,6 +3531,11 @@ function AIRBOSS:_CheckRecoveryTimes()
         if vwind<0.1 then
           uturn=false
         end
+        
+        -- U-turn disabled by user input.
+        if not nextwindow.UTURN then
+          uturn=false
+        end
       
         --Debug info
         self:T(self.lid..string.format("Heading=%03d°, Wind=%03d° %.1f kts, Delta=%03d° ==> U-turn=%s", hdg, wind,UTILS.MpsToKnots(vwind), delta, tostring(uturn)))
@@ -3468,7 +3546,7 @@ function AIRBOSS:_CheckRecoveryTimes()
         local v=UTILS.KnotsToMps(nextwindow.SPEED)
         
         -- Check that we do not go above max possible speed.
-        local vmax=self.carrier:GetSpeedMax()
+        local vmax=self.carrier:GetSpeedMax()/3.6  -- convert to m/s
         v=math.min(v,vmax)
         
         -- Route carrier into the wind. Sets self.turnintowind=true
@@ -3624,20 +3702,30 @@ function AIRBOSS:onafterRecoveryStop(From, Event, To)
   -- Debug output.
   self:T(self.lid..string.format("Stopping aircraft recovery."))
   
-  -- Delete current recovery window if open.
-  if self.recoverywindow and self.recoverywindow.OPEN==true then
-    self.recoverywindow.OPEN=false
-    self.recoverywindow.OVER=true
-    self:DeleteRecoveryWindow(self.recoverywindow)
-  end
-  
   -- Recovery ops stopped message.  
   self:_MarshalCallRecoveryStopped(self.case)
   
   -- If carrier is currently heading into the wind, we resume the original route.
   if self.turnintowind then
-    self:CarrierResumeRoute(self.Creturnto)
+  
+    -- Coordinate to return to.
+    local coord=self.Creturnto
+    
+    -- No U-turn.
+    if self.recoverywindow and self.recoverywindow.UTURN==false then
+      coord=nil
+    end
+    
+    -- Carrier resumes route.
+    self:CarrierResumeRoute(coord)
   end
+  
+  -- Delete current recovery window if open.
+  if self.recoverywindow and self.recoverywindow.OPEN==true then
+    self.recoverywindow.OPEN=false
+    self.recoverywindow.OVER=true
+    self:DeleteRecoveryWindow(self.recoverywindow)
+  end  
   
   -- Check recovery windows. This sets self.recoverywindow to the next window.
   self:_CheckRecoveryTimes()
@@ -3691,6 +3779,16 @@ function AIRBOSS:onafterRecoveryUnpause(From, Event, To)
 
 end
 
+--- On after "PassingWaypoint" event. Carrier has just passed a waypoint
+-- @param #AIRBOSS self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #number n Number of waypoint that was passed.
+function AIRBOSS:onafterPassingWaypoint(From, Event, To, n)
+  -- Debug output.
+  self:I(self.lid..string.format("Carrier passed waypoint %d.", n))
+end
 
 --- On after "Idle" event. Carrier goes to state "Idle".
 -- @param #AIRBOSS self
@@ -10879,7 +10977,7 @@ function AIRBOSS:_LSOgrade(playerData)
     if playerData.lig then
       -- Long In the Groove (LIG).
       -- According to Stingers this is a CUT pass and gives 1.0 points.
-      grade="CUT"
+      grade="WO"
       points=1.0
       G="LIG"
     else
@@ -12146,25 +12244,36 @@ function AIRBOSS:CarrierDetour(coord, speed, uturn, uspeed, tcoord)
   -- Current coordinate of the carrier.
   local pos0=self:GetCoordinate()
   
-  -- Default.
-  speed=speed or self.carrier:GetVelocityKNOTS()
+  -- Current speed in knots.
+  local vel0=self.carrier:GetVelocityKNOTS()
+  
+  -- Default. If speed is not given we take the current speed but at least 5 knots.
+  speed=speed or math.max(vel0, 5)
     
-  -- Speed in km/h.
-  local speedkmh=UTILS.KnotsToKmph(speed)
-  local cspeedkmh=self.carrier:GetVelocityKMH()
+  -- Speed in km/h. At least 2 knots.
+  local speedkmh=math.max(UTILS.KnotsToKmph(speed), UTILS.KnotsToKmph(2))
+  
+  -- Turn speed in km/h. At least 10 knots.
+  local cspeedkmh=math.max(self.carrier:GetVelocityKMH(), UTILS.KnotsToKmph(10))
+  
+  -- U-turn speed in km/h.
   local uspeedkmh=UTILS.KnotsToKmph(uspeed or speed)
   
   -- Waypoint table.
   local wp={}
   
-  -- Create from/to waypoints.
+  -- Waypoint at current position.
   table.insert(wp, pos0:WaypointGround(cspeedkmh))
+  
+  -- Waypooint to help the turn.
   if tcoord then
     table.insert(wp, tcoord:WaypointGround(cspeedkmh))
   end
+  
+  -- Detour waypoint.
   table.insert(wp, coord:WaypointGround(speedkmh))
   
-  -- If enabled, go back to where you came from.
+  -- U-turn waypoint. If enabled, go back to where you came from.
   if uturn then
     table.insert(wp, pos0:WaypointGround(uspeedkmh))
   end
@@ -12181,9 +12290,12 @@ function AIRBOSS:CarrierDetour(coord, speed, uturn, uspeed, tcoord)
   -- Debug mark.
   if self.Debug then
     if tcoord then
-      tcoord:MarkToAll("Detour Tcoord")
+      tcoord:MarkToAll(string.format("Detour Turn Help WP. Speed %.1f knots", UTILS.KmphToKnots(cspeedkmh)))
     end
-    coord:MarkToAll("Detour Point")
+    coord:MarkToAll(string.format("Detour Waypoint. Speed %.1f knots", UTILS.KmphToKnots(speedkmh)))
+    if uturn then
+      pos0:MarkToAll(string.format("Detour U-turn WP. Speed %.1f knots", UTILS.KmphToKnots(uspeedkmh)))
+    end
   end
   
   -- Detour switch true.
@@ -12259,9 +12371,8 @@ function AIRBOSS:CarrierTurnIntoWind(time, vdeck, uturn)
   elseif deltaH<135 then
     -- Large turn backwards.
     
-    -- Point in the right direction to help turning.
-    -- TODO turn left or right? 
-    Csoo=Cv:Translate(1200, hdg-90):Translate(1200, hiw)
+    -- Point in the right direction to help turning. 
+    Csoo=Cv:Translate(1100, hdg-90):Translate(1000, hiw)
     
     -- Heading into wind from Csoo.
     local hsw=self:GetHeadingIntoWind(false, Csoo)
@@ -12273,8 +12384,7 @@ function AIRBOSS:CarrierTurnIntoWind(time, vdeck, uturn)
     -- Huge turn backwards.
 
     -- Point in the right direction to help turning.
-    -- TODO turn left or right? 
-    Csoo=Cv:Translate(1200, hdg-90):Translate(1200, hiw)
+    Csoo=Cv:Translate(1200, hdg-90):Translate(1000, hiw)
     
     -- Heading into wind from Csoo.
     local hsw=self:GetHeadingIntoWind(false, Csoo)
@@ -12293,6 +12403,11 @@ function AIRBOSS:CarrierTurnIntoWind(time, vdeck, uturn)
   
   -- For downwind, we take the velocity at the next WP.
   local vdownwind=UTILS.MpsToKnots(nextwp:GetVelocity())
+  
+  -- Make sure we move at all in case the speed at the waypoint is zero.
+  if vdownwind<1 then
+    vdownwind=10
+  end
 
   -- Let the carrier make a detour from its route but return to its current position.
   self:CarrierDetour(Ctiw, speedknots, uturn, vdownwind, Csoo)
@@ -12309,19 +12424,29 @@ end
 -- @return #number Number of waypoint
 function AIRBOSS:_GetNextWaypoint()
 
-  -- Next wp = current+1 (or last)
-  local Nnextwp=math.min(self.currentwp+1, #self.waypoints)
+  -- Next waypoint.  
+  local Nextwp=nil
+  if self.currentwp==#self.waypoints then
+    Nextwp=1
+  else
+    Nextwp=self.currentwp+1
+  end
+  
+  -- Debug output
+  local text=string.format("Current WP=%d/%d, next WP=%d", self.currentwp, #self.waypoints, Nextwp)
+  self:T2(self.lid..text)
   
   -- Next waypoint.
-  local nextwp=self.waypoints[Nnextwp] --Core.Point#COORDINATE
+  local nextwp=self.waypoints[Nextwp] --Core.Point#COORDINATE
 
-  return nextwp,Nnextwp
+  return nextwp,Nextwp
 end
 
 --- Patrol carrier.
 -- @param #AIRBOSS self
+-- @param #number n Current waypoint.
 -- @return #AIRBOSS self
-function AIRBOSS:_PatrolRoute()
+function AIRBOSS:_PatrolRoute(n)
 
   -- Get carrier group.
   local CarrierGroup=self.carrier:GetGroup()
@@ -12338,10 +12463,12 @@ function AIRBOSS:_PatrolRoute()
     -- Call task function when carrier arrives at waypoint.
     CarrierGroup:SetTaskWaypoint(Waypoints[n], TaskPassingWP)
   end
+  
+  -- Init array.
+  self.waypoints={}
 
   -- Set waypoint table.
-  local i=1
-  for _,point in ipairs(Waypoints) do
+  for i,point in ipairs(Waypoints) do
   
     -- Coordinate of the waypoint
     local coord=COORDINATE:New(point.x, point.alt, point.y)
@@ -12357,12 +12484,10 @@ function AIRBOSS:_PatrolRoute()
       coord:MarkToAll(string.format("Carrier Waypoint %d, Speed=%.1f knots", i, UTILS.MpsToKnots(point.speed)))
     end
     
-    -- Increase counter.
-    i=i+1  
   end
   
   -- Current waypoint is 1.
-  self.currentwp=1
+  self.currentwp=n or 1
 
   -- Route carrier group.
   CarrierGroup:Route(Waypoints)
@@ -12581,12 +12706,15 @@ function AIRBOSS._PassingWaypoint(group, airboss, i, final)
   -- Set current waypoint.
   airboss.currentwp=i
   
+  -- Passing Waypoint event.
+  airboss:PassingWaypoint(i)
+  
   -- Reactivate beacons.
   --airboss:_ActivateBeacons()
   
   -- If final waypoint reached, do route all over again.
   if i==final and final>1 and airboss.adinfinitum then
-    airboss:_PatrolRoute()
+    airboss:_PatrolRoute(i)
   end
 end
 
@@ -12599,14 +12727,16 @@ function AIRBOSS._ResumeRoute(group, airboss, gotocoord)
   -- Get next waypoint
   local nextwp,Nextwp=airboss:_GetNextWaypoint()
   
-  -- Velocity at that coordinate.
+  -- Speed set at waypoint.
   local speedkmh=nextwp.Velocity*3.6
+  
+  -- If speed at waypoint is zero, we set it to 10 knots.
+  if speedkmh<1 then
+    speedkmh=UTILS.KnotsToKmph(10)
+  end
   
   -- Waypoints array.
   local waypoints={}
-  
-  -- Get current velocity in km/h.
-  local velocity=group:GetVelocityKMH()
   
   -- Current positon as first waypoint.
   local wp0=group:GetCoordinate():WaypointGround(speedkmh)
@@ -12633,6 +12763,11 @@ function AIRBOSS._ResumeRoute(group, airboss, gotocoord)
     
     -- Speed in km/h of that WP. Velocity is in m/s.
     local speed=coord.Velocity*3.6
+    
+    -- If speed is zero we set it to 10 knots.
+    if speed<1 then
+      speed=UTILS.KnotsToKmph(10)
+    end
     
     -- Create waypoint.
     local wp=coord:WaypointGround(speed)
@@ -13873,7 +14008,7 @@ function AIRBOSS:_Number2Radio(radio, number, delay, interval)
 end
 
 
---- Inform everyone that recovery ops are stopped and deck is closed.
+--- AI aircraft calls the ball.
 -- @param #AIRBOSS self
 -- @param #string modex Tail number.
 -- @param #string nickname Aircraft nickname.
