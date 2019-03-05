@@ -151,6 +151,7 @@
 -- @field #boolean parkingscanscenery If true, area around parking spots is scanned for scenery objects. Default is false.
 -- @field #boolean parkingverysafe If true, parking spots are considered as non-free until a possible aircraft has left and taken off. Default false.
 -- @field #boolean despawnair If true, aircraft are despawned when they reach their destination zone. Default.
+-- @field #boolean eplrs If true, turn on EPLSR datalink for the RAT group.
 -- @extends Core.Spawn#SPAWN
 
 --- Implements an easy to use way to randomly fill your map with AI aircraft.
@@ -430,6 +431,7 @@ RAT={
   parkingscanscenery=false, -- Scan parking spots for scenery obstacles.
   parkingverysafe=false,    -- Very safe option.
   despawnair=true,
+  eplrs=false,
 }
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -548,7 +550,7 @@ RAT.id="RAT | "
 --- RAT version.
 -- @list version
 RAT.version={
-  version = "2.3.6",
+  version = "2.3.7",
   print = true,
 }
 
@@ -1642,6 +1644,19 @@ function RAT:Invisible()
   return self
 end
 
+--- Turn EPLSR datalink on/off. 
+-- @param #RAT self
+-- @param #boolean switch If true (or nil), turn EPLRS on.
+-- @return #RAT RAT self object.
+function RAT:SetEPLSR(switch)
+  if switch==nil or switch==true then
+    self.eplrs=true
+  else
+    self.eplrs=false
+  end
+  return self
+end
+
 --- Aircraft are immortal. 
 -- @param #RAT self
 -- @return #RAT RAT self object.
@@ -2163,6 +2178,11 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   if self.immortal then
     self:_CommandImmortal(group, true)
   end
+  
+  -- Set group to be immortal.
+  if self.eplrs then
+    group:CommandEPLRS(true, 1)
+  end  
   
   -- Set ROE, default is "weapon hold".
   self:_SetROE(group, self.roe)

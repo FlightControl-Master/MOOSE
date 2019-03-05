@@ -72,6 +72,7 @@
 --    * [[MOOSE] Airboss - Groove Testing (WIP)](https://www.youtube.com/watch?v=94KHQxxX3UI)
 --    * [[MOOSE] Airboss - Groove Test A-4E Community Mod](https://www.youtube.com/watch?v=ZbjD7FHiaHo)
 --    * [[MOOSE] Airboss - Groove Test: On-the-fly LSO Grading](https://www.youtube.com/watch?v=Xgs1hwDcPyM)
+--    * [[MOOSE] Airboss - Carrier Auto Steam Into Wind](https://www.youtube.com/watch?v=IsU8dYgsp90)
 -- 
 -- ### Lex explaining Boat Ops:
 -- 
