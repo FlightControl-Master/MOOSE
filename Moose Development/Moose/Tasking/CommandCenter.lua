@@ -144,6 +144,25 @@
 -- This is done by using the method @{#COMMANDCENTER.SetReferenceZones}().
 -- For the moment, only one Reference Zone class can be specified, but in the future, more classes will become possible.
 -- 
+-- ## 7. Tasks.
+-- 
+-- ### 7.1. Automatically assign tasks.
+-- 
+-- One of the most important roles of the command center is the management of tasks.
+-- The command center can assign automatically tasks to the players using the @{Tasking.CommandCenter#COMMANDCENTER.SetAutoAssignTasks}() method.
+-- When this method is used with a parameter true; the command center will scan at regular intervals which players in a slot are not having a task assigned.
+-- For those players; the tasking is enabled to assign automatically a task.
+-- An Assign Menu will be accessible for the player under the command center menu, to configure the automatic tasking to switched on or off.
+-- 
+-- ### 7.2. Automatically accept assigned tasks.
+-- 
+-- When a task is assigned; the mission designer can decide if players are immediately assigned to the task; or they can accept/reject the assigned task.
+-- Use the method @{Tasking.CommandCenter#COMMANDCENTER.SetAutoAcceptTasks}() to configure this behaviour.
+-- If the tasks are not automatically accepted; the player will receive a message that he needs to access the command center menu and
+-- choose from 2 added menu options either to accept or reject the assigned task within 30 seconds.
+-- If the task is not accepted within 30 seconds; the task will be cancelled and a new task will be assigned.
+-- 
+-- 
 -- @field #COMMANDCENTER
 COMMANDCENTER = {
   ClassName = "COMMANDCENTER",
@@ -169,10 +188,11 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
   self.CommandCenterName = CommandCenterName or CommandCenterPositionable:GetName()
   self.CommandCenterCoalition = CommandCenterPositionable:GetCoalition()
   
-  self.AutoAssignTasks = false
-	
 	self.Missions = {}
 
+  self:SetAutoAssignTasks( false )
+  self:SetAutoAcceptTasks( true )
+  
   self:HandleEvent( EVENTS.Birth,
     --- @param #COMMANDCENTER self
     -- @param Core.Event#EVENTDATA EventData
@@ -467,7 +487,9 @@ function COMMANDCENTER:AssignRandomTask( TaskGroup )
   
   local Task = Tasks[ math.random( 1, #Tasks ) ] -- Tasking.Task#TASK
   
-  Task:SetAssignMethod( ACT_ASSIGN_MENU_ACCEPT:New( Task.TaskBriefing ) )
+  if not self.AutoAcceptTasks == true then
+    Task:SetAssignMethod( ACT_ASSIGN_MENU_ACCEPT:New( Task.TaskBriefing ) )
+  end
   
   Task:AssignToGroup( TaskGroup )
 
@@ -498,29 +520,36 @@ end
 
 
 --- Automatically assigns tasks to all TaskGroups.
+-- One of the most important roles of the command center is the management of tasks.
+-- When this method is used with a parameter true; the command center will scan at regular intervals which players in a slot are not having a task assigned.
+-- For those players; the tasking is enabled to assign automatically a task.
+-- An Assign Menu will be accessible for the player under the command center menu, to configure the automatic tasking to switched on or off.
 -- @param #COMMANDCENTER self
 -- @param #boolean AutoAssign true for ON and false or nil for OFF.
 function COMMANDCENTER:SetAutoAssignTasks( AutoAssign )
 
   self.AutoAssignTasks = AutoAssign or false
   
-  local GroupSet = self:AddGroups()
-
-  for GroupID, TaskGroup in pairs( GroupSet:GetSet() ) do
-    local TaskGroup = TaskGroup -- Wrapper.Group#GROUP
-    self:GetMenu( TaskGroup )
-  end
-
   if self.AutoAssignTasks == true then
     self:ScheduleRepeat( 10, 30, 0, nil, self.AssignTasks, self )
   else
     self:ScheduleStop( self.AssignTasks )
   end
   
-  self:SetCommandCenterMenu()
-
 end
 
+--- Automatically accept tasks for all TaskGroups.
+-- When a task is assigned; the mission designer can decide if players are immediately assigned to the task; or they can accept/reject the assigned task.
+-- If the tasks are not automatically accepted; the player will receive a message that he needs to access the command center menu and
+-- choose from 2 added menu options either to accept or reject the assigned task within 30 seconds.
+-- If the task is not accepted within 30 seconds; the task will be cancelled and a new task will be assigned.
+-- @param #COMMANDCENTER self
+-- @param #boolean AutoAccept true for ON and false or nil for OFF.
+function COMMANDCENTER:SetAutoAcceptTasks( AutoAccept )
+
+  self.AutoAcceptTasks = AutoAccept or false
+  
+end
 
 --- Automatically assigns tasks to all TaskGroups.
 -- @param #COMMANDCENTER self
@@ -531,12 +560,16 @@ function COMMANDCENTER:AssignTasks()
   for GroupID, TaskGroup in pairs( GroupSet:GetSet() ) do
     local TaskGroup = TaskGroup -- Wrapper.Group#GROUP
     
-    if self:IsGroupAssigned( TaskGroup ) then
-    else
-      -- Only groups with planes or helicopters will receive automatic tasks.
-      -- TODO Workaround DCS-BUG-3 - https://github.com/FlightControl-Master/MOOSE/issues/696
-      if TaskGroup:IsAir() then
-        self:AssignRandomTask( TaskGroup )
+    if TaskGroup:IsAlive() then
+      self:GetMenu( TaskGroup )
+      
+      if self:IsGroupAssigned( TaskGroup ) then
+      else
+        -- Only groups with planes or helicopters will receive automatic tasks.
+        -- TODO Workaround DCS-BUG-3 - https://github.com/FlightControl-Master/MOOSE/issues/696
+        if TaskGroup:IsAir() then
+          self:AssignRandomTask( TaskGroup )
+        end
       end
     end
   end
