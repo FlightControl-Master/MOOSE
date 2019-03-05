@@ -1644,11 +1644,11 @@ function RAT:Invisible()
   return self
 end
 
---- Turn EPLSR datalink on/off. 
+--- Turn EPLRS datalink on/off. 
 -- @param #RAT self
 -- @param #boolean switch If true (or nil), turn EPLRS on.
 -- @return #RAT RAT self object.
-function RAT:SetEPLSR(switch)
+function RAT:SetEPLRS(switch)
   if switch==nil or switch==true then
     self.eplrs=true
   else
