@@ -110,6 +110,7 @@ __Moose.Include( 'Scripts/Moose/Tasking/Task_Cargo.lua' )
 __Moose.Include( 'Scripts/Moose/Tasking/Task_Cargo_Transport.lua' )
 __Moose.Include( 'Scripts/Moose/Tasking/Task_Cargo_CSAR.lua' )
 __Moose.Include( 'Scripts/Moose/Tasking/Task_Cargo_Dispatcher.lua' )
-__Moose.Include( 'Scripts/Moose/Tasking/TaskZoneCapture.lua' )
+__Moose.Include( 'Scripts/Moose/Tasking/Task_Capture_Zone.lua' )
+__Moose.Include( 'Scripts/Moose/Tasking/Task_Capture_Dispatcher.lua' )
 
 __Moose.Include( 'Scripts/Moose/Globals.lua' )
