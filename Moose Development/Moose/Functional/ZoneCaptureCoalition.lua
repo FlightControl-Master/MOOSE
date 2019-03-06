@@ -556,6 +556,8 @@ do -- ZONE_CAPTURE_COALITION
   --- @param #ZONE_CAPTURE_COALITION self
   function ZONE_CAPTURE_COALITION:onenterCaptured()
   
+    self:F({"hello"})
+  
     self:GetParent( self, ZONE_CAPTURE_COALITION ).onenterCaptured( self )
     
     self.Goal:Achieved()
@@ -643,6 +645,7 @@ do -- ZONE_CAPTURE_COALITION
     self:SetCoalition( NewCoalition )
   
     self:Mark()
+    self.Goal:Achieved()
   end
   
   
