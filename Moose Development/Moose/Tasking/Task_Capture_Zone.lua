@@ -59,19 +59,25 @@ do -- TASK_ZONE_GOAL
     local Fsm = self:GetUnitProcess()
     
 
-    Fsm:AddProcess   ( "Planned", "Accept", ACT_ASSIGN_ACCEPT:New( self.TaskBriefing ), { Assigned = "StartMonitoring", Rejected = "Reject" }  )
-    
     Fsm:AddTransition( "Assigned", "StartMonitoring", "Monitoring" )
     Fsm:AddTransition( "Monitoring", "Monitor", "Monitoring", {} )
-    Fsm:AddTransition( "Monitoring", "RouteTo", "Monitoring" )
     Fsm:AddProcess( "Monitoring", "RouteToZone", ACT_ROUTE_ZONE:New(), {} )
     
-    --Fsm:AddTransition( "Accounted", "DestroyedAll", "Accounted" )
-    --Fsm:AddTransition( "Accounted", "Success", "Success" )
     Fsm:AddTransition( "Rejected", "Reject", "Aborted" )
     Fsm:AddTransition( "Failed", "Fail", "Failed" )
     
     self:SetTargetZone( self.ZoneGoal:GetZone() )
+
+    --- Test 
+    -- @param #FSM_PROCESS self
+    -- @param Wrapper.Unit#UNIT TaskUnit
+    -- @param Tasking.Task#TASK Task
+    function Fsm:OnAfterAssigned( TaskUnit, Task )
+      self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      
+      self:__StartMonitoring( 0.1 )
+      self:__RouteToZone( 0.1 )
+    end
     
     --- Test 
     -- @param #FSM_PROCESS self
@@ -80,7 +86,6 @@ do -- TASK_ZONE_GOAL
     function Fsm:onafterStartMonitoring( TaskUnit, Task )
       self:F( { self } )
       self:__Monitor( 0.1 )
-      self:__RouteTo( 0.1 )
     end
     
     --- Monitor Loop
@@ -101,7 +106,7 @@ do -- TASK_ZONE_GOAL
       -- Determine the first Unit from the self.TargetSetUnit
       
       if Task:GetTargetZone( TaskUnit ) then
-        self:__RouteTo( 0.1 )
+        self:__RouteToZone( 0.1 )
       end
     end
 
@@ -225,7 +230,7 @@ do -- TASK_CAPTURE_ZONE
     
 
   function TASK_CAPTURE_ZONE:ReportOrder( ReportGroup ) 
-    local Coordinate = self:GetData( "Coordinate" )
+    local Coordinate = self.TaskInfo:GetData( "Coordinate" )
     --local Coordinate = self.TaskInfo.Coordinates.TaskInfoText
     local Distance = ReportGroup:GetCoordinate():Get2DDistance( Coordinate )
     
