@@ -1778,21 +1778,22 @@ do -- AI_A2G_DISPATCHER
   --        -- Set the Squadron visible before startup of dispatcher.
   --        A2GDispatcher:SetSquadronVisible( "Mineralnye" )
   --        
-  function AI_A2G_DISPATCHER:SetSquadronVisible( SquadronName )
-  
-    self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
-    
-    local DefenderSquadron = self:GetSquadron( SquadronName )
-    
-    DefenderSquadron.Uncontrolled = true
-    self:SetSquadronTakeoffFromParkingCold( SquadronName )
-    self:SetSquadronLandingAtEngineShutdown( SquadronName )
-
-    for SpawnTemplate, DefenderSpawn in pairs( self.DefenderSpawns ) do
-      DefenderSpawn:InitUnControlled()
-    end
-
-  end
+  -- TODO: disabling because of bug in queueing.       
+--  function AI_A2G_DISPATCHER:SetSquadronVisible( SquadronName )
+--  
+--    self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
+--    
+--    local DefenderSquadron = self:GetSquadron( SquadronName )
+--    
+--    DefenderSquadron.Uncontrolled = true
+--    self:SetSquadronTakeoffFromParkingCold( SquadronName )
+--    self:SetSquadronLandingAtEngineShutdown( SquadronName )
+--
+--    for SpawnTemplate, DefenderSpawn in pairs( self.DefenderSpawns ) do
+--      DefenderSpawn:InitUnControlled()
+--    end
+--
+--  end
 
   --- Check if the Squadron is visible before startup of the dispatcher.
   -- @param #AI_A2G_DISPATCHER self
