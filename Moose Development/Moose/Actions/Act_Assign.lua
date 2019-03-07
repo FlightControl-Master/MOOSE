@@ -167,7 +167,7 @@ do -- ACT_ASSIGN_ACCEPT
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function ACT_ASSIGN_ACCEPT:onenterAssigned( ProcessUnit, Task, From, Event, To )
+  function ACT_ASSIGN_ACCEPT:onenterAssigned( ProcessUnit, Task, From, Event, To, TaskGroup )
   
     self.Task:Assign( ProcessUnit, ProcessUnit:GetPlayerName() )
   end
