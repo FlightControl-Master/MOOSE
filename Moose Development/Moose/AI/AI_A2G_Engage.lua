@@ -101,6 +101,51 @@ function AI_A2G_ENGAGE:New( AIGroup, EngageMinSpeed, EngageMaxSpeed, EngageFloor
   self.EngageFloorAltitude = EngageFloorAltitude or 1000
   self.EngageCeilingAltitude = EngageCeilingAltitude or 1500
   
+  self:AddTransition( { "Started", "Engaging", "Returning", "Airborne", "Patrolling" }, "EngageRoute", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_A2G_ENGAGE.
+
+  --- OnBefore Transition Handler for Event EngageRoute.
+  -- @function [parent=#AI_A2G_ENGAGE] OnBeforeEngageRoute
+  -- @param #AI_A2G_ENGAGE self
+  -- @param Wrapper.Group#GROUP AIGroup The Group Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+  
+  --- OnAfter Transition Handler for Event EngageRoute.
+  -- @function [parent=#AI_A2G_ENGAGE] OnAfterEngageRoute
+  -- @param #AI_A2G_ENGAGE self
+  -- @param Wrapper.Group#GROUP AIGroup The Group Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  	
+  --- Synchronous Event Trigger for Event EngageRoute.
+  -- @function [parent=#AI_A2G_ENGAGE] EngageRoute
+  -- @param #AI_A2G_ENGAGE self
+  
+  --- Asynchronous Event Trigger for Event EngageRoute.
+  -- @function [parent=#AI_A2G_ENGAGE] __EngageRoute
+  -- @param #AI_A2G_ENGAGE self
+  -- @param #number Delay The delay in seconds.
+
+--- OnLeave Transition Handler for State Engaging.
+-- @function [parent=#AI_A2G_ENGAGE] OnLeaveEngaging
+-- @param #AI_A2G_ENGAGE self
+-- @param Wrapper.Group#GROUP AIGroup The Group Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+-- @return #boolean Return false to cancel Transition.
+
+--- OnEnter Transition Handler for State Engaging.
+-- @function [parent=#AI_A2G_ENGAGE] OnEnterEngaging
+-- @param #AI_A2G_ENGAGE self
+-- @param Wrapper.Group#GROUP AIGroup The Group Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+
   self:AddTransition( { "Started", "Engaging", "Returning", "Airborne", "Patrolling" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_A2G_ENGAGE.
 
   --- OnBefore Transition Handler for Event Engage.
@@ -119,7 +164,7 @@ function AI_A2G_ENGAGE:New( AIGroup, EngageMinSpeed, EngageMaxSpeed, EngageFloor
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
-  	
+    
   --- Synchronous Event Trigger for Event Engage.
   -- @function [parent=#AI_A2G_ENGAGE] Engage
   -- @param #AI_A2G_ENGAGE self
@@ -293,9 +338,22 @@ end
 -- todo: need to fix this global function
 
 --- @param Wrapper.Group#GROUP AIControllable
-function AI_A2G_ENGAGE.EngageRoute( AIGroup, Fsm, AttackSetUnit )
+function AI_A2G_ENGAGE.___EngageRoute( AIGroup, Fsm, AttackSetUnit )
 
-  AIGroup:I( { "AI_A2G_ENGAGE.EngageRoute:", AIGroup:GetName() } )
+  AIGroup:I( { "AI_A2G_ENGAGE.___EngageRoute:", AIGroup:GetName() } )
+  
+  if AIGroup:IsAlive() then
+    Fsm:__EngageRoute( Fsm.TaskDelay, AttackSetUnit )
+  
+    --local Task = AIGroup:TaskOrbitCircle( 4000, 400 )
+    --AIGroup:SetTask( Task )
+  end
+end
+
+--- @param Wrapper.Group#GROUP AIControllable
+function AI_A2G_ENGAGE.___Engage( AIGroup, Fsm, AttackSetUnit )
+
+  AIGroup:I( { "AI_A2G_ENGAGE.___Engage:", AIGroup:GetName() } )
   
   if AIGroup:IsAlive() then
     Fsm:__Engage( Fsm.TaskDelay, AttackSetUnit )
@@ -336,7 +394,7 @@ end
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
-function AI_A2G_ENGAGE:onafterEngage( DefenderGroup, From, Event, To, AttackSetUnit )
+function AI_A2G_ENGAGE:onafterEngageRoute( DefenderGroup, From, Event, To, AttackSetUnit )
 
   self:F( { DefenderGroup, From, Event, To, AttackSetUnit} )
   
@@ -375,4 +433,88 @@ function AI_A2G_ENGAGE:OnEventDead( EventData )
       self:__Destroy( self.TaskDelay, EventData )
     end
   end  
+end
+
+--- @param #AI_A2G_ENGAGE self
+-- @param Wrapper.Group#GROUP DefenderGroup The GroupGroup managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+function AI_A2G_ENGAGE:onafterEngageRoute( DefenderGroup, From, Event, To, AttackSetUnit )
+
+  self:F( { DefenderGroup, From, Event, To, AttackSetUnit} )
+  
+  local DefenderGroupName = DefenderGroup:GetName()
+
+  local AttackCount = AttackSetUnit:Count()
+  
+  if AttackCount > 0 then
+
+    if DefenderGroup:IsAlive() then
+
+      local EngageAltitude = math.random( self.EngageFloorAltitude, self.EngageCeilingAltitude )
+      local EngageSpeed = math.random( self.EngageMinSpeed, self.EngageMaxSpeed )
+
+      -- Determine the distance to the target.
+      -- If it is less than 10km, then attack without a route.
+      -- Otherwise perform a route attack.
+
+      local DefenderCoord = DefenderGroup:GetPointVec3()
+      DefenderCoord:SetY( EngageAltitude ) -- Ground targets don't have an altitude.
+
+      local TargetCoord = AttackSetUnit:GetFirst():GetPointVec3()
+      TargetCoord:SetY( EngageAltitude ) -- Ground targets don't have an altitude.
+      
+      local TargetDistance = DefenderCoord:Get2DDistance( TargetCoord )
+      local EngageDistance = ( DefenderGroup:IsHelicopter() and 5000 ) or ( DefenderGroup:IsAirPlane() and 10000 ) 
+      
+      if TargetDistance <= EngageDistance * 3 then
+
+        self:__Engage( 0.1, AttackSetUnit )
+
+      else
+
+        local EngageRoute = {}
+        local AttackTasks = {}
+        
+        --- Calculate the target route point.
+        
+        local FromWP = DefenderCoord:WaypointAir( 
+          self.PatrolAltType or "RADIO", 
+          POINT_VEC3.RoutePointType.TurningPoint, 
+          POINT_VEC3.RoutePointAction.TurningPoint, 
+          EngageSpeed, 
+          true 
+        )
+        
+        EngageRoute[#EngageRoute+1] = FromWP
+  
+        self:SetTargetDistance( TargetCoord ) -- For RTB status check
+        
+        local FromEngageAngle = DefenderCoord:GetAngleDegrees( DefenderCoord:GetDirectionVec3( TargetCoord ) )
+        local ToWP = DefenderCoord:Translate( EngageDistance, FromEngageAngle, true ):WaypointAir( 
+          self.PatrolAltType or "RADIO", 
+          POINT_VEC3.RoutePointType.TurningPoint, 
+          POINT_VEC3.RoutePointAction.TurningPoint, 
+          EngageSpeed, 
+          true 
+        )
+  
+        EngageRoute[#EngageRoute+1] = ToWP
+
+        AttackTasks[#AttackTasks+1] = DefenderGroup:TaskFunction( "AI_A2G_ENGAGE.___EngageRoute", self, AttackSetUnit )
+        EngageRoute[#EngageRoute].task = DefenderGroup:TaskCombo( AttackTasks )
+        
+        DefenderGroup:OptionROEReturnFire()
+        DefenderGroup:OptionROTEvadeFire()
+        
+        DefenderGroup:Route( EngageRoute, self.TaskDelay )
+      end
+
+    end
+  else
+    self:E( DefenderGroupName .. ": No targets found -> Going RTB")
+    self:Return()
+    self:__RTB( self.TaskDelay )
+  end
 end

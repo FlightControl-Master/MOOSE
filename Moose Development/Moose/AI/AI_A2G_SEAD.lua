@@ -194,7 +194,7 @@ function AI_A2G_SEAD:onafterEngage( DefenderGroup, From, Event, To, AttackSetUni
         end
       end
 
-      AttackTasks[#AttackTasks+1] = DefenderGroup:TaskFunction( "AI_A2G_ENGAGE.EngageRoute", self, AttackSetUnit )
+      AttackTasks[#AttackTasks+1] = DefenderGroup:TaskFunction( "AI_A2G_ENGAGE.___Engage", self, AttackSetUnit )
       EngageRoute[#EngageRoute].task = DefenderGroup:TaskCombo( AttackTasks )
       
       DefenderGroup:Route( EngageRoute, self.TaskDelay )

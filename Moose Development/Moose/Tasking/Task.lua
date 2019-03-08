@@ -1786,7 +1786,7 @@ function TASK:GetPlayerCount() --R2.1 Get a count of the players.
     if PlayerGroup:IsAlive() == true then
       if self:IsGroupAssigned( PlayerGroup ) then
         local PlayerNames = PlayerGroup:GetPlayerNames()
-          PlayerCount = PlayerCount + #PlayerNames
+        PlayerCount = PlayerCount + ((PlayerNames) and #PlayerNames or 0) -- PlayerNames can be nil when there are no players.
       end
     end
   end

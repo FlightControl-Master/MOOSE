@@ -57,6 +57,9 @@ do -- DETECTION MANAGER
     Detection = nil,
   }
   
+  --- @field Tasking.CommandCenter#COMMANDCENTER
+  DETECTION_MANAGER.CC = {}
+  
   --- FAC constructor.
   -- @param #DETECTION_MANAGER self
   -- @param Core.Set#SET_GROUP SetGroup
@@ -238,7 +241,7 @@ do -- DETECTION MANAGER
   function DETECTION_MANAGER:MessageToPlayers( Message )
     
     if self.CC then
-      self.CC:MessageToAll( Message )
+      self.CC:MessageToCoalition( Message )
     end
     
     return self

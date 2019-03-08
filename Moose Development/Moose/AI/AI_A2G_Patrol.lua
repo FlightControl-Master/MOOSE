@@ -62,7 +62,7 @@
 -- ### 2.2 AI_A2G_PATROL Events
 -- 
 --   * **@{AI.AI_Patrol#AI_PATROL_ZONE.Start}**: Start the process.
---   * **@{AI.AI_Patrol#AI_PATROL_ZONE.Route}**: Route the AI to a new random 3D point within the Patrol Zone.
+--   * **@{AI.AI_Patrol#AI_PATROL_ZONE.PatrolRoute}**: Route the AI to a new random 3D point within the Patrol Zone.
 --   * **@{#AI_A2G_PATROL.Engage}**: Let the AI engage the bogeys.
 --   * **@{#AI_A2G_PATROL.Abort}**: Aborts the engagement and return patrolling in the patrol zone.
 --   * **@{AI.AI_Patrol#AI_PATROL_ZONE.RTB}**: Route the AI to the home base.
@@ -173,10 +173,10 @@ function AI_A2G_PATROL:New( AIGroup, EngageMinSpeed, EngageMaxSpeed, EngageFloor
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
   
-    self:AddTransition( "Patrolling", "Route", "Patrolling" ) -- FSM_CONTROLLABLE Transition for type #AI_A2G_PATROL.
+    self:AddTransition( "Patrolling", "PatrolRoute", "Patrolling" ) -- FSM_CONTROLLABLE Transition for type #AI_A2G_PATROL.
   
-  --- OnBefore Transition Handler for Event Route.
-  -- @function [parent=#AI_A2G_PATROL] OnBeforeRoute
+  --- OnBefore Transition Handler for Event PatrolRoute.
+  -- @function [parent=#AI_A2G_PATROL] OnBeforePatrolRoute
   -- @param #AI_A2G_PATROL self
   -- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
   -- @param #string From The From State string.
@@ -184,20 +184,20 @@ function AI_A2G_PATROL:New( AIGroup, EngageMinSpeed, EngageMaxSpeed, EngageFloor
   -- @param #string To The To State string.
   -- @return #boolean Return false to cancel Transition.
   
-  --- OnAfter Transition Handler for Event Route.
-  -- @function [parent=#AI_A2G_PATROL] OnAfterRoute
+  --- OnAfter Transition Handler for Event PatrolRoute.
+  -- @function [parent=#AI_A2G_PATROL] OnAfterPatrolRoute
   -- @param #AI_A2G_PATROL self
   -- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
     
-  --- Synchronous Event Trigger for Event Route.
-  -- @function [parent=#AI_A2G_PATROL] Route
+  --- Synchronous Event Trigger for Event PatrolRoute.
+  -- @function [parent=#AI_A2G_PATROL] PatrolRoute
   -- @param #AI_A2G_PATROL self
   
-  --- Asynchronous Event Trigger for Event Route.
-  -- @function [parent=#AI_A2G_PATROL] __Route
+  --- Asynchronous Event Trigger for Event PatrolRoute.
+  -- @function [parent=#AI_A2G_PATROL] __PatrolRoute
   -- @param #AI_A2G_PATROL self
   -- @param #number Delay The delay in seconds.
 
@@ -234,12 +234,12 @@ function AI_A2G_PATROL:onafterPatrol( AIPatrol, From, Event, To )
 
   self:ClearTargetDistance()
 
-  self:__Route( self.TaskDelay )
+  self:__PatrolRoute( self.TaskDelay )
   
   AIPatrol:OnReSpawn(
     function( PatrolGroup )
       self:__Reset( self.TaskDelay )
-      self:__Route( self.TaskDelay )
+      self:__PatrolRoute( self.TaskDelay )
     end
   )
 end
@@ -247,12 +247,12 @@ end
 --- @param Wrapper.Group#GROUP AIPatrol
 -- This statis method is called from the route path within the last task at the last waaypoint of the AIPatrol.
 -- Note that this method is required, as triggers the next route when patrolling for the AIPatrol.
-function AI_A2G_PATROL.PatrolRoute( AIPatrol, Fsm )
+function AI_A2G_PATROL.___PatrolRoute( AIPatrol, Fsm )
 
-  AIPatrol:F( { "AI_A2G_PATROL.PatrolRoute:", AIPatrol:GetName() } )
+  AIPatrol:F( { "AI_A2G_PATROL.___PatrolRoute:", AIPatrol:GetName() } )
 
   if AIPatrol:IsAlive() then
-    Fsm:Route()
+    Fsm:PatrolRoute()
   end
   
 end
@@ -263,7 +263,7 @@ end
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
-function AI_A2G_PATROL:onafterRoute( AIPatrol, From, Event, To )
+function AI_A2G_PATROL:onafterPatrolRoute( AIPatrol, From, Event, To )
 
   self:F2()
 
@@ -300,7 +300,7 @@ function AI_A2G_PATROL:onafterRoute( AIPatrol, From, Event, To )
     PatrolRoute[#PatrolRoute+1] = ToPatrolRoutePoint
     
     local Tasks = {}
-    Tasks[#Tasks+1] = AIPatrol:TaskFunction( "AI_A2G_PATROL.PatrolRoute", self )
+    Tasks[#Tasks+1] = AIPatrol:TaskFunction( "AI_A2G_PATROL.___PatrolRoute", self )
     PatrolRoute[#PatrolRoute].task = AIPatrol:TaskCombo( Tasks )
     
     AIPatrol:OptionROEReturnFire()
@@ -317,7 +317,7 @@ function AI_A2G_PATROL.Resume( AIPatrol, Fsm )
   AIPatrol:F( { "AI_A2G_PATROL.Resume:", AIPatrol:GetName() } )
   if AIPatrol:IsAlive() then
     Fsm:__Reset( self.TaskDelay )
-    Fsm:__Route( self.TaskDelay )
+    Fsm:__PatrolRoute( self.TaskDelay )
   end
   
 end

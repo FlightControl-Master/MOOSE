@@ -809,8 +809,10 @@ do -- Scheduling
   function BASE:ScheduleStop( SchedulerFunction )
   
     self:F3( { "ScheduleStop:" } )
-    
-  _SCHEDULEDISPATCHER:Stop( self.Scheduler, self._.Schedules[SchedulerFunction] )
+  
+    if self.Scheduler then
+      _SCHEDULEDISPATCHER:Stop( self.Scheduler, self._.Schedules[SchedulerFunction] )
+    end
   end
 
 end

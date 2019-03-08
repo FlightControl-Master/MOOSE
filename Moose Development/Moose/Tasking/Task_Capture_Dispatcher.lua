@@ -195,8 +195,8 @@ do -- TASK_CAPTURE_DISPATCHER
   --- Add a capture zone task.
   -- @param #TASK_CAPTURE_DISPATCHER self
   -- @param #string TaskPrefix (optional) The prefix of the capture zone task. 
-  -- This prefix will be appended with a . + a number of 3 digits.
-  -- If no TaskPrefix is given, then "Capture" will be used as the prefix. 
+  -- If no TaskPrefix is given, then "Capture" will be used as the TaskPrefix. 
+  -- The TaskPrefix will be appended with a . + a number of 3 digits, if the TaskPrefix already exists in the task collection.
   -- @param Functional.CaptureZoneCoalition#ZONE_CAPTURE_COALITION CaptureZone The zone of the coalition to be captured as the task goal.
   -- @param #string Briefing The briefing of the task to be shown to the player.
   -- @return Tasking.Task_Capture_Zone#TASK_CAPTURE_ZONE
@@ -205,9 +205,11 @@ do -- TASK_CAPTURE_DISPATCHER
   --  
   function TASK_CAPTURE_DISPATCHER:AddCaptureZoneTask( TaskPrefix, CaptureZone, Briefing )
 
-    self.ZoneCount = self.ZoneCount + 1
-    
-    local TaskName = string.format( ( TaskPrefix or "Capture" ) .. ".%03d", self.ZoneCount )
+    local TaskName = TaskPrefix or "Capture"
+    if self.Zones[TaskName] then
+      self.ZoneCount = self.ZoneCount + 1
+      TaskName = string.format( "%s.%03d", TaskName, self.ZoneCount )
+    end
     
     self.Zones[TaskName] = {} 
     self.Zones[TaskName].CaptureZone = CaptureZone
@@ -241,15 +243,8 @@ do -- TASK_CAPTURE_DISPATCHER
       for TaskIndex, TaskData in pairs( self.Tasks ) do
         local Task = TaskData -- Tasking.Task#TASK
         if Task:IsStatePlanned() then
-          -- Here we need to check if the pilot is still existing.
---          local DetectedItem = Detection:GetDetectedItemByIndex( TaskIndex )
---          if not DetectedItem then
---            local TaskText = Task:GetName()
---            for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
---              Mission:GetCommandCenter():MessageToGroup( string.format( "Obsolete A2A task %s for %s removed.", TaskText, Mission:GetShortText() ), TaskGroup )
---            end
+        -- Here we need to check if the pilot is still existing.
 --            Task = self:RemoveTask( TaskIndex )
---          end
         end
       end
 

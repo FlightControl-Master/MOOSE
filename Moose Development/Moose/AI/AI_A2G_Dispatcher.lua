@@ -3564,8 +3564,34 @@ do -- AI_A2G_DISPATCHER
         
         if DefenderTarget then
           Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " airborne." )
-          Fsm:Engage( DefenderTarget.Set ) -- Engage on the TargetSetUnit
+          Fsm:EngageRoute( DefenderTarget.Set ) -- Engage on the TargetSetUnit
         end
+      end
+
+      function Fsm:OnAfterEngageRoute( Defender, From, Event, To, AttackSetUnit )
+        self:F({"Engage Route", Defender:GetName()})
+        --self:GetParent(self).onafterBirth( self, Defender, From, Event, To )
+        
+        local DefenderName = Defender:GetName()
+        local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
+        local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
+        local FirstUnit = AttackSetUnit:GetFirst()
+        local Coordinate = FirstUnit:GetCoordinate() -- Core.Point#COORDINATE
+
+        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " on route, bearing " .. Coordinate:ToString( Defender ) )
+      end
+
+      function Fsm:OnAfterEngage( Defender, From, Event, To, AttackSetUnit )
+        self:F({"Engage Route", Defender:GetName()})
+        --self:GetParent(self).onafterBirth( self, Defender, From, Event, To )
+        
+        local DefenderName = Defender:GetName()
+        local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
+        local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
+        local FirstUnit = AttackSetUnit:GetFirst()
+        local Coordinate = FirstUnit:GetCoordinate()
+
+        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " engaging target, bearing " .. Coordinate:ToString( Defender ) )
       end
 
       function Fsm:onafterRTB( Defender, From, Event, To )
@@ -3574,7 +3600,7 @@ do -- AI_A2G_DISPATCHER
         local DefenderName = Defender:GetName()
         local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " returning." )
+        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " RTB." )
 
         self:GetParent(self).onafterRTB( self, Defender, From, Event, To )
 
@@ -3716,7 +3742,7 @@ do -- AI_A2G_DISPATCHER
           local SquadronOverhead = self:GetSquadronOverhead( SquadronName )
   
           local Fsm = self:GetDefenderTaskFsm( DefenderGroup )
-          Fsm:Engage( AttackerSet ) -- Engage on the TargetSetUnit
+          Fsm:EngageRoute( AttackerSet ) -- Engage on the TargetSetUnit
           
           self:SetDefenderTaskTarget( DefenderGroup, DetectedItem )
     
