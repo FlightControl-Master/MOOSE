@@ -58,7 +58,7 @@ do -- DETECTION MANAGER
   }
   
   --- @field Tasking.CommandCenter#COMMANDCENTER
-  DETECTION_MANAGER.CC = {}
+  DETECTION_MANAGER.CC = nil
   
   --- FAC constructor.
   -- @param #DETECTION_MANAGER self

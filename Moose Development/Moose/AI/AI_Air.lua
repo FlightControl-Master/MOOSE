@@ -746,7 +746,6 @@ end
 function AI_AIR:OnCrash( EventData )
 
   if self.Controllable:IsAlive() and EventData.IniDCSGroupName == self.Controllable:GetName() then
-    self:E( self.Controllable:GetUnits() )
     if #self.Controllable:GetUnits() == 1 then
       self:__Crash( self.TaskDelay, EventData )
     end

@@ -1900,7 +1900,7 @@ function CONTROLLABLE:TaskFunction( FunctionString, ... )
 
   local DCSScript = {}
   DCSScript[#DCSScript+1] = "local MissionControllable = GROUP:Find( ... ) "
-  DCSScript[#DCSScript+1] = "env.info( 'TaskFunction: ' .. ( MissionControllable and MissionControllable:GetName() ) or 'No Group' )"
+  --DCSScript[#DCSScript+1] = "env.info( 'TaskFunction: ' .. ( MissionControllable and MissionControllable:GetName() ) or 'No Group' )"
 
   if arg and arg.n > 0 then
     local ArgumentKey = '_' .. tostring( arg ):match("table: (.*)")

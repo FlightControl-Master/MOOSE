@@ -3216,8 +3216,8 @@ do -- AI_A2G_DISPATCHER
       if QueueItem.AttackerDetection and QueueItem.AttackerDetection.ItemID == AttackerDetection.ItemID then
         DefendersMissing = DefendersMissing - QueueItem.DefendersNeeded / QueueItem.DefenderSquadron.Overhead
         --DefendersEngaged = DefendersEngaged + QueueItem.DefenderGrouping
+        self:F( { QueueItemName = QueueItem.Defense, QueueItem_ItemID = QueueItem.AttackerDetection.ItemID, DetectedItem = AttackerDetection.ItemID, DefendersMissing = DefendersMissing } )
       end
-      self:F( { QueueItemName = QueueItem.Defense, QueueItem_ItemID = QueueItem.AttackerDetection.ItemID, DetectedItem = AttackerDetection.ItemID, DefendersMissing = DefendersMissing } )
     end
 
     self:F( { DefenderCount = DefendersEngaged } )
@@ -3352,20 +3352,23 @@ do -- AI_A2G_DISPATCHER
   
     local DefenderSquadron, Patrol = self:CanPatrol( SquadronName, DefenseTaskType )
     
-    -- Determine if there are sufficient resources to form a complete group for patrol.    
-    local DefendersNeeded
-    if DefenderSquadron.ResourceCount == nil then
-      DefendersNeeded = DefenderSquadron.Grouping
-    else
-      if DefenderSquadron.ResourceCount >= DefenderSquadron.Grouping then
-        DefendersNeeded = DefenderSquadron.Grouping
+    -- Determine if there are sufficient resources to form a complete group for patrol.
+    if DefenderSquadron then    
+      local DefendersNeeded
+      local DefendersGrouping = ( DefenderSquadron.Grouping or self.DefenderDefault.Grouping )
+      if DefenderSquadron.ResourceCount == nil then
+        DefendersNeeded = DefendersGrouping
       else
-        DefendersNeeded = DefenderSquadron.ResourceCount
+        if DefenderSquadron.ResourceCount >= DefendersGrouping then
+          DefendersNeeded = DefendersGrouping 
+        else
+          DefendersNeeded = DefenderSquadron.ResourceCount
+        end
       end
-    end
-    
-    if Patrol then
-      self:ResourceQueue( true, DefenderSquadron, DefendersNeeded, Patrol, DefenseTaskType, nil, SquadronName )
+      
+      if Patrol then
+        self:ResourceQueue( true, DefenderSquadron, DefendersNeeded, Patrol, DefenseTaskType, nil, SquadronName )
+      end
     end
     
   end
