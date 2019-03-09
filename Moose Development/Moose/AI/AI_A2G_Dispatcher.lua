@@ -1143,7 +1143,9 @@ do -- AI_A2G_DISPATCHER
       for Resource = 1, DefenderSquadron.ResourceCount or 0 do
         self:ResourcePark( DefenderSquadron )
       end
+      self:I( "Parked resources for squadron " .. DefenderSquadron.Name )
     end
+    
   end
   
 
@@ -3771,7 +3773,7 @@ do -- AI_A2G_DISPATCHER
       
         self:F( { DefenderSquadrons = self.DefenderSquadrons } )
 
-        for SquadronName, DefenderSquadron in pairs( self.DefenderSquadrons or {} ) do
+        for SquadronName, DefenderSquadron in UTILS.rpairs( self.DefenderSquadrons or {} ) do
         
           if DefenderSquadron[DefenseTaskType] then
 
@@ -3792,8 +3794,12 @@ do -- AI_A2G_DISPATCHER
                   -- Check if there is a defense line...
                   local HasDefenseLine = self:HasDefenseLine( AirbaseCoordinate, DetectedItem )
                   if HasDefenseLine == true then
-                    ClosestDistance = InterceptDistance
-                    ClosestDefenderSquadronName = SquadronName
+                    local ProbabilityRange = ( self.DefenseRadius - InterceptDistance ) / self.DefenseRadius
+                    local Probability = math.random()
+                    if Probability > ProbabilityRange then
+                      ClosestDistance = InterceptDistance
+                      ClosestDefenderSquadronName = SquadronName
+                    end
                   end
                 end
               end

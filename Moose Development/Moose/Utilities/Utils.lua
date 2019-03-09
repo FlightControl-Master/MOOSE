@@ -519,6 +519,31 @@ function UTILS.spairs( t, order )
     end
 end
 
+-- Here is a customized version of pairs, which I called rpairs because it iterates over the table in a random order.
+function UTILS.rpairs( t )
+    -- collect the keys
+    
+    local keys = {}
+    for k in pairs(t) do keys[#keys+1] = k end
+
+    local random = {}
+    local j = #keys
+    for i = 1, j do
+      local k = math.random( 1, #keys )
+      random[i] = keys[k]
+      table.remove( keys, k )
+    end
+    
+    -- return the iterator function
+    local i = 0
+    return function()
+        i = i + 1
+        if random[i] then
+            return random[i], t[random[i]]
+        end
+    end
+end
+
 -- get a new mark ID for markings
 function UTILS.GetMarkID()
 
