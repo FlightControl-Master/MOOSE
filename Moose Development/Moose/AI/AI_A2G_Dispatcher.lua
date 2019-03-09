@@ -1265,39 +1265,6 @@ do -- AI_A2G_DISPATCHER
   
   end
   
-  --- Define the radius to engage any target by airborne friendlies, which are executing cap or returning from an defense mission.
-  -- If there is a target area detected and reported, then any friendlies that are airborne near this target area, 
-  -- will be commanded to (re-)engage that target when available (if no other tasks were commanded).
-  -- 
-  -- For example, if 100000 is given as a value, then any friendly that is airborne within 100km from the detected target, 
-  -- will be considered to receive the command to engage that target area.
-  -- 
-  -- You need to evaluate the value of this parameter carefully:
-  -- 
-  --   * If too small, more defense missions may be triggered upon detected target areas.
-  --   * If too large, any airborne cap may not be able to reach the detected target area in time, because it is too far.
-  --   
-  -- **Use the method @{#AI_A2G_DISPATCHER.SetEngageRadius}() to modify the default Engage Radius for ALL squadrons.**
-  -- 
-  -- Demonstration Mission: [AID-019 - AI_A2G - Engage Range Test](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/release-2-2-pre/AID%20-%20AI%20Dispatching/AID-019%20-%20AI_A2G%20-%20Engage%20Range%20Test)
-  -- 
-  -- @param #AI_A2G_DISPATCHER self
-  -- @param #number EngageRadius (Optional, Default = 100000) The radius to report friendlies near the target.
-  -- @return #AI_A2G_DISPATCHER
-  -- @usage
-  -- 
-  --   -- Set 50km as the radius to engage any target by airborne friendlies.
-  --   A2GDispatcher:SetEngageRadius( 50000 )
-  --   
-  --   -- Set 100km as the radius to engage any target by airborne friendlies.
-  --   A2GDispatcher:SetEngageRadius() -- 100000 is the default value.
-  --   
-  function AI_A2G_DISPATCHER:SetEngageRadius( EngageRadius )
-
-    --self.Detection:SetFriendliesRange( EngageRadius or 100000 )
-  
-    return self
-  end
 
   --- Define the radius to disengage any target when the distance to the home base is larger than the specified meters.
   -- @param #AI_A2G_DISPATCHER self
@@ -2518,6 +2485,30 @@ do -- AI_A2G_DISPATCHER
   end
 
 
+  --- Sets the engage probability if the squadron will engage on a detected target.
+  -- This can be configured per squadron, to ensure that each squadron as a specific defensive probability setting.
+  -- @param #AI_A2G_DISPATCHER self
+  -- @param #string SquadronName The name of the squadron.
+  -- @param #number EngageProbability The probability when the squadron will consider to engage the detected target. 
+  -- @usage:
+  -- 
+  --   local A2GDispatcher = AI_A2G_DISPATCHER:New( ... )
+  --   
+  --   -- Set an defense probability for squadron SquadronName of 50%.
+  --   -- This will result that this squadron has 50% chance to engage on a detected target.
+  --   A2GDispatcher:SetSquadronEngageProbability( "SquadronName", 0.5 )
+  -- 
+  -- 
+  -- @return #AI_A2G_DISPATCHER
+  function AI_A2G_DISPATCHER:SetSquadronEngageProbability( SquadronName, EngageProbability )
+  
+    local DefenderSquadron = self:GetSquadron( SquadronName )
+    DefenderSquadron.EngageProbability = EngageProbability
+    
+    return self
+  end
+
+
   --- Defines the default method at which new flights will spawn and take-off as part of the defense system.
   -- @param #AI_A2G_DISPATCHER self
   -- @param #number Takeoff From the airbase hot, from the airbase cold, in the air, from the runway.
@@ -3580,10 +3571,13 @@ do -- AI_A2G_DISPATCHER
         local DefenderName = Defender:GetName()
         local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-        local FirstUnit = AttackSetUnit:GetFirst()
-        local Coordinate = FirstUnit:GetCoordinate() -- Core.Point#COORDINATE
-
-        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " on route, bearing " .. Coordinate:ToString( Defender ) )
+        
+        if FirstUnit then
+          local FirstUnit = AttackSetUnit:GetFirst()
+          local Coordinate = FirstUnit:GetCoordinate() -- Core.Point#COORDINATE
+  
+          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " on route, bearing " .. Coordinate:ToString( Defender ) )
+        end
       end
 
       function Fsm:OnAfterEngage( Defender, From, Event, To, AttackSetUnit )
@@ -3594,9 +3588,11 @@ do -- AI_A2G_DISPATCHER
         local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
         local FirstUnit = AttackSetUnit:GetFirst()
-        local Coordinate = FirstUnit:GetCoordinate()
-
-        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " engaging target, bearing " .. Coordinate:ToString( Defender ) )
+        if FirstUnit then
+          local Coordinate = FirstUnit:GetCoordinate()
+  
+          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " engaging target, bearing " .. Coordinate:ToString( Defender ) )
+        end
       end
 
       function Fsm:onafterRTB( Defender, From, Event, To )
@@ -3765,7 +3761,7 @@ do -- AI_A2G_DISPATCHER
       DefenderCount = DefendersMissing
   
       local ClosestDistance = 0
-      local ClosestDefenderSquadronName = nil
+      local EngageSquadronName = nil
       
       local BreakLoop = false
       
@@ -3786,20 +3782,17 @@ do -- AI_A2G_DISPATCHER
               local AirbaseDistance = AirbaseCoordinate:Get2DDistance( AttackerCoord )
               self:F( { InterceptDistance = InterceptDistance, AirbaseDistance = AirbaseDistance, InterceptCoord = InterceptCoord } )
               
-              if ClosestDistance == 0 or InterceptDistance < ClosestDistance then
-                
-                -- Only intercept if the distance to target is smaller or equal to the GciRadius limit.
-                if AirbaseDistance <= self.DefenseRadius then
-                
-                  -- Check if there is a defense line...
-                  local HasDefenseLine = self:HasDefenseLine( AirbaseCoordinate, DetectedItem )
-                  if HasDefenseLine == true then
-                    local ProbabilityRange = ( self.DefenseRadius - InterceptDistance ) / self.DefenseRadius
-                    local Probability = math.random()
-                    if Probability > ProbabilityRange then
-                      ClosestDistance = InterceptDistance
-                      ClosestDefenderSquadronName = SquadronName
-                    end
+              -- Only intercept if the distance to target is smaller or equal to the GciRadius limit.
+              if AirbaseDistance <= self.DefenseRadius then
+              
+                -- Check if there is a defense line...
+                local HasDefenseLine = self:HasDefenseLine( AirbaseCoordinate, DetectedItem )
+                if HasDefenseLine == true then
+                  local EngageProbability = ( DefenderSquadron.EngageProbability or 1 )
+                  local Probability = math.random()
+                  if Probability < EngageProbability then
+                    EngageSquadronName = SquadronName
+                    break
                   end
                 end
               end
@@ -3807,9 +3800,9 @@ do -- AI_A2G_DISPATCHER
           end
         end
         
-        if ClosestDefenderSquadronName then
+        if EngageSquadronName then
         
-          local DefenderSquadron, Defense = self:CanDefend( ClosestDefenderSquadronName, DefenseTaskType )
+          local DefenderSquadron, Defense = self:CanDefend( EngageSquadronName, DefenseTaskType )
           
           if Defense then
   
@@ -3845,7 +3838,7 @@ do -- AI_A2G_DISPATCHER
               end
               
               while ( DefendersNeeded > 0 ) do
-                self:ResourceQueue( false, DefenderSquadron, DefendersNeeded, Defense, DefenseTaskType, DetectedItem, ClosestDefenderSquadronName )
+                self:ResourceQueue( false, DefenderSquadron, DefendersNeeded, Defense, DefenseTaskType, DetectedItem, EngageSquadronName )
                 DefendersNeeded = DefendersNeeded - DefenderGrouping
                 DefenderCount = DefenderCount - DefenderGrouping / DefenderOverhead
               end  -- while ( DefendersNeeded > 0 ) do
@@ -4260,581 +4253,6 @@ do
     local PatrolTaskTypes = { "SEAD", "CAS", "BAI" }
     local PatrolTaskType = PatrolTaskTypes[math.random(1,3)]
     self:Patrol( SquadronName, PatrolTaskType )    
-  end
-
-end
-
-do
-
-  --- @type AI_A2G_GCICAP
-  -- @extends #AI_A2G_DISPATCHER
-
-  --- Create an automatic air defence system for a coalition setting up GCI and CAP air defenses. 
-  -- The class derives from @{#AI_A2G_DISPATCHER} and thus, all the methods that are defined in the @{#AI_A2G_DISPATCHER} class, can be used also in AI\_A2G\_GCICAP.
-  -- 
-  -- ===
-  -- 
-  -- # Demo Missions
-  -- 
-  -- ### [AI\_A2G\_GCICAP for Caucasus](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/release-2-2-pre/AID%20-%20AI%20Dispatching/AID-200%20-%20AI_A2G%20-%20GCICAP%20Demonstration)
-  -- ### [AI\_A2G\_GCICAP for NTTR](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/release-2-2-pre/AID%20-%20AI%20Dispatching/AID-210%20-%20NTTR%20AI_A2G_GCICAP%20Demonstration)
-  -- ### [AI\_A2G\_GCICAP for Normandy](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/release-2-2-pre/AID%20-%20AI%20Dispatching/AID-220%20-%20NORMANDY%20AI_A2G_GCICAP%20Demonstration)
-  -- 
-  -- ### [AI\_A2G\_GCICAP for beta testers](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/AID%20-%20AI%20Dispatching)
-  --
-  -- ===
-  -- 
-  -- # YouTube Channel
-  -- 
-  -- ### [DCS WORLD - MOOSE - A2G GCICAP - Build an automatic A2G Defense System](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl0S4KMNUUJpaUs6zZHjLKNx)
-  -- 
-  -- ===
-  -- 
-  -- ![Banner Image](..\Presentations\AI_A2G_DISPATCHER\Dia3.JPG)
-  -- 
-  -- AI\_A2G\_GCICAP includes automatic spawning of Combat Air Patrol aircraft (CAP) and Ground Controlled Intercept aircraft (GCI) in response to enemy 
-  -- air movements that are detected by an airborne or ground based radar network. 
-  -- 
-  -- With a little time and with a little work it provides the mission designer with a convincing and completely automatic air defence system.
-  -- 
-  -- The AI_A2G_GCICAP provides a lightweight configuration method using the mission editor. Within a very short time, and with very little coding, 
-  -- the mission designer is able to configure a complete A2G defense system for a coalition using the DCS Mission Editor available functions. 
-  -- Using the DCS Mission Editor, you define borders of the coalition which are guarded by GCICAP, 
-  -- configure airbases to belong to the coalition, define squadrons flying certain types of planes or payloads per airbase, and define CAP zones.
-  -- **Very little lua needs to be applied, a one liner**, which is fully explained below, which can be embedded 
-  -- right in a DO SCRIPT trigger action or in a larger DO SCRIPT FILE trigger action. 
-  -- 
-  -- CAP flights will take off and proceed to designated CAP zones where they will remain on station until the ground radars direct them to intercept 
-  -- detected enemy aircraft or they run short of fuel and must return to base (RTB). 
-  -- 
-  -- When a CAP flight leaves their zone to perform a GCI or return to base a new CAP flight will spawn to take its place.
-  -- If all CAP flights are engaged or RTB then additional GCI interceptors will scramble to intercept unengaged enemy aircraft under ground radar control.
-  -- 
-  -- In short it is a plug in very flexible and configurable air defence module for DCS World.
-  -- 
-  -- ===
-  -- 
-  -- # The following actions need to be followed when using AI\_A2G\_GCICAP in your mission:
-  -- 
-  -- ## 1) Configure a working AI\_A2G\_GCICAP defense system for ONE coalition. 
-  --   
-  -- ### 1.1) Define which airbases are for which coalition. 
-  -- 
-  -- ![Mission Editor Action](..\Presentations\AI_A2G_DISPATCHER\AI_A2G_GCICAP-ME_1.JPG)
-  -- 
-  -- Color the airbases red or blue. You can do this by selecting the airbase on the map, and select the coalition blue or red.
-  -- 
-  -- ### 1.2) Place groups of units given a name starting with a **EWR prefix** of your choice to build your EWR network. 
-  -- 
-  -- ![Mission Editor Action](..\Presentations\AI_A2G_DISPATCHER\AI_A2G_GCICAP-ME_2.JPG)
-  --       
-  -- **All EWR groups starting with the EWR prefix (text) will be included in the detection system.**  
-  -- 
-  -- An EWR network, or, Early Warning Radar network, is used to early detect potential airborne targets and to understand the position of patrolling targets of the enemy.
-  -- Typically EWR networks are setup using 55G6 EWR, 1L13 EWR, Hawk sr and Patriot str ground based radar units. 
-  -- These radars have different ranges and 55G6 EWR and 1L13 EWR radars are Eastern Bloc units (eg Russia, Ukraine, Georgia) while the Hawk and Patriot radars are Western (eg US).
-  -- Additionally, ANY other radar capable unit can be part of the EWR network! 
-  -- Also AWACS airborne units, planes, helicopters can help to detect targets, as long as they have radar.
-  -- The position of these units is very important as they need to provide enough coverage 
-  -- to pick up enemy aircraft as they approach so that CAP and GCI flights can be tasked to intercept them.
-  -- 
-  -- Additionally in a hot war situation where the border is no longer respected the placement of radars has a big effect on how fast the war escalates. 
-  -- For example if they are a long way forward and can detect enemy planes on the ground and taking off 
-  -- they will start to vector CAP and GCI flights to attack them straight away which will immediately draw a response from the other coalition. 
-  -- Having the radars further back will mean a slower escalation because fewer targets will be detected and 
-  -- therefore less CAP and GCI flights will spawn and this will tend to make just the border area active rather than a melee over the whole map. 
-  -- It all depends on what the desired effect is. 
-  -- 
-  -- EWR networks are **dynamically maintained**. By defining in a **smart way the names or name prefixes of the groups** with EWR capable units, these groups will be **automatically added or deleted** from the EWR network, 
-  -- increasing or decreasing the radar coverage of the Early Warning System.
-  -- 
-  -- ### 1.3) Place Airplane or Helicopter Groups with late activation switched on above the airbases to define Squadrons. 
-  -- 
-  -- ![Mission Editor Action](..\Presentations\AI_A2G_DISPATCHER\AI_A2G_GCICAP-ME_3.JPG)
-  -- 
-  -- These are **templates**, with a given name starting with a **Template prefix** above each airbase that you wanna have a squadron. 
-  -- These **templates** need to be within 1.5km from the airbase center. They don't need to have a slot at the airplane, they can just be positioned above the airbase, 
-  -- without a route, and should only have ONE unit.
-  -- 
-  -- ![Mission Editor Action](..\Presentations\AI_A2G_DISPATCHER\AI_A2G_GCICAP-ME_4.JPG)
-  -- 
-  -- **All airplane or helicopter groups that are starting with any of the choosen Template Prefixes will result in a squadron created at the airbase.**  
-  -- 
-  -- ### 1.4) Place floating helicopters to create the CAP zones defined by its route points. 
-  -- 
-  -- ![Mission Editor Action](..\Presentations\AI_A2G_DISPATCHER\AI_A2G_GCICAP-ME_5.JPG)
-  -- 
-  -- **All airplane or helicopter groups that are starting with any of the choosen Template Prefixes will result in a squadron created at the airbase.**  
-  -- 
-  -- The helicopter indicates the start of the CAP zone. 
-  -- The route points define the form of the CAP zone polygon. 
-  -- 
-  -- ![Mission Editor Action](..\Presentations\AI_A2G_DISPATCHER\AI_A2G_GCICAP-ME_6.JPG)
-  -- 
-  -- **The place of the helicopter is important, as the airbase closest to the helicopter will be the airbase from where the CAP planes will take off for CAP.**
-  -- 
-  -- ## 2) There are a lot of defaults set, which can be further modified using the methods in @{#AI_A2G_DISPATCHER}:
-  -- 
-  -- ### 2.1) Planes are taking off in the air from the airbases.
-  -- 
-  -- This prevents airbases to get cluttered with airplanes taking off, it also reduces the risk of human players colliding with taxiiing airplanes,
-  -- resulting in the airbase to halt operations.
-  -- 
-  -- You can change the way how planes take off by using the inherited methods from AI\_A2G\_DISPATCHER:
-  -- 
-  --   * @{#AI_A2G_DISPATCHER.SetSquadronTakeoff}() is the generic configuration method to control takeoff from the air, hot, cold or from the runway. See the method for further details.
-  --   * @{#AI_A2G_DISPATCHER.SetSquadronTakeoffInAir}() will spawn new aircraft from the squadron directly in the air.
-  --   * @{#AI_A2G_DISPATCHER.SetSquadronTakeoffFromParkingCold}() will spawn new aircraft in without running engines at a parking spot at the airfield.
-  --   * @{#AI_A2G_DISPATCHER.SetSquadronTakeoffFromParkingHot}() will spawn new aircraft in with running engines at a parking spot at the airfield.
-  --   * @{#AI_A2G_DISPATCHER.SetSquadronTakeoffFromRunway}() will spawn new aircraft at the runway at the airfield.
-  -- 
-  -- Use these methods to fine-tune for specific airfields that are known to create bottlenecks, or have reduced airbase efficiency.
-  -- The more and the longer aircraft need to taxi at an airfield, the more risk there is that:
-  -- 
-  --   * aircraft will stop waiting for each other or for a landing aircraft before takeoff.
-  --   * aircraft may get into a "dead-lock" situation, where two aircraft are blocking each other.
-  --   * aircraft may collide at the airbase.
-  --   * aircraft may be awaiting the landing of a plane currently in the air, but never lands ...
-  --   
-  -- Currently within the DCS engine, the airfield traffic coordination is erroneous and contains a lot of bugs.
-  -- If you experience while testing problems with aircraft take-off or landing, please use one of the above methods as a solution to workaround these issues!
-  -- 
-  -- ### 2.2) Planes return near the airbase or will land if damaged.
-  -- 
-  -- When damaged airplanes return to the airbase, they will be routed and will dissapear in the air when they are near the airbase.
-  -- There are exceptions to this rule, airplanes that aren't "listening" anymore due to damage or out of fuel, will return to the airbase and land.
-  -- 
-  -- You can change the way how planes land by using the inherited methods from AI\_A2G\_DISPATCHER:
-  -- 
-  --   * @{#AI_A2G_DISPATCHER.SetSquadronLanding}() is the generic configuration method to control landing, namely despawn the aircraft near the airfield in the air, right after landing, or at engine shutdown.
-  --   * @{#AI_A2G_DISPATCHER.SetSquadronLandingNearAirbase}() will despawn the returning aircraft in the air when near the airfield.
-  --   * @{#AI_A2G_DISPATCHER.SetSquadronLandingAtRunway}() will despawn the returning aircraft directly after landing at the runway.
-  --   * @{#AI_A2G_DISPATCHER.SetSquadronLandingAtEngineShutdown}() will despawn the returning aircraft when the aircraft has returned to its parking spot and has turned off its engines.
-  -- 
-  -- You can use these methods to minimize the airbase coodination overhead and to increase the airbase efficiency.
-  -- When there are lots of aircraft returning for landing, at the same airbase, the takeoff process will be halted, which can cause a complete failure of the
-  -- A2G defense system, as no new CAP or GCI planes can takeoff.
-  -- Note that the method @{#AI_A2G_DISPATCHER.SetSquadronLandingNearAirbase}() will only work for returning aircraft, not for damaged or out of fuel aircraft.
-  -- Damaged or out-of-fuel aircraft are returning to the nearest friendly airbase and will land, and are out of control from ground control.
-  -- 
-  -- ### 2.3) CAP operations setup for specific airbases, will be executed with the following parameters: 
-  -- 
-  --   * The altitude will range between 6000 and 10000 meters. 
-  --   * The CAP speed will vary between 500 and 800 km/h. 
-  --   * The engage speed between 800 and 1200 km/h.
-  --   
-  -- You can change or add a CAP zone by using the inherited methods from AI\_A2G\_DISPATCHER:
-  -- 
-  -- The method @{#AI_A2G_DISPATCHER.SetSquadronPatrol}() defines a CAP execution for a squadron.
-  -- 
-  -- Setting-up a CAP zone also requires specific parameters:
-  -- 
-  --   * The minimum and maximum altitude
-  --   * The minimum speed and maximum patrol speed
-  --   * The minimum and maximum engage speed
-  --   * The type of altitude measurement
-  -- 
-  -- These define how the squadron will perform the CAP while partrolling. Different terrain types requires different types of CAP. 
-  -- 
-  -- The @{#AI_A2G_DISPATCHER.SetSquadronPatrolInterval}() method specifies **how much** and **when** CAP flights will takeoff.
-  -- 
-  -- It is recommended not to overload the air defense with CAP flights, as these will decrease the performance of the overall system. 
-  -- 
-  -- For example, the following setup will create a CAP for squadron "Sochi":
-  -- 
-  --    A2GDispatcher:SetSquadronPatrol( "Sochi", CAPZoneWest, 4000, 8000, 600, 800, 800, 1200, "BARO" )
-  --    A2GDispatcher:SetSquadronPatrolInterval( "Sochi", 2, 30, 120, 1 )
-  -- 
-  -- ### 2.4) Each airbase will perform GCI when required, with the following parameters:
-  -- 
-  --   * The engage speed is between 800 and 1200 km/h.
-  -- 
-  -- You can change or add a GCI parameters by using the inherited methods from AI\_A2G\_DISPATCHER:
-  -- 
-  -- The method @{#AI_A2G_DISPATCHER.SetSquadronGci}() defines a GCI execution for a squadron.
-  -- 
-  -- Setting-up a GCI readiness also requires specific parameters:
-  -- 
-  --   * The minimum speed and maximum patrol speed
-  -- 
-  -- Essentially this controls how many flights of GCI aircraft can be active at any time.
-  -- Note allowing large numbers of active GCI flights can adversely impact mission performance on low or medium specification hosts/servers.
-  -- GCI needs to be setup at strategic airbases. Too far will mean that the aircraft need to fly a long way to reach the intruders, 
-  -- too short will mean that the intruders may have alraedy passed the ideal interception point!
-  -- 
-  -- For example, the following setup will create a GCI for squadron "Sochi":
-  -- 
-  --    A2GDispatcher:SetSquadronGci( "Mozdok", 900, 1200 )
-  -- 
-  -- ### 2.5) Grouping or detected targets.
-  -- 
-  -- Detected targets are constantly re-grouped, that is, when certain detected aircraft are moving further than the group radius, then these aircraft will become a separate
-  -- group being detected.
-  -- 
-  -- Targets will be grouped within a radius of 30km by default.
-  -- 
-  -- The radius indicates that detected targets need to be grouped within a radius of 30km.
-  -- The grouping radius should not be too small, but also depends on the types of planes and the era of the simulation.
-  -- Fast planes like in the 80s, need a larger radius than WWII planes.  
-  -- Typically I suggest to use 30000 for new generation planes and 10000 for older era aircraft.
-  -- 
-  -- ## 3) Additional notes:
-  -- 
-  -- In order to create a two way A2G defense system, **two AI\_A2G\_GCICAP defense systems must need to be created**, for each coalition one.
-  -- Each defense system needs its own EWR network setup, airplane templates and CAP configurations.
-  -- 
-  -- This is a good implementation, because maybe in the future, more coalitions may become available in DCS world.
-  -- 
-  -- ## 4) Coding examples how to use the AI\_A2G\_GCICAP class:
-  -- 
-  -- ### 4.1) An easy setup:
-  -- 
-  --      -- Setup the AI_A2G_GCICAP dispatcher for one coalition, and initialize it.
-  --      GCI_Red = AI_A2G_GCICAP:New( "EWR CCCP", "SQUADRON CCCP", "CAP CCCP", 2 )
-  --   -- 
-  -- The following parameters were given to the :New method of AI_A2G_GCICAP, and mean the following:
-  -- 
-  --    * `"EWR CCCP"`: Groups of the blue coalition are placed that define the EWR network. These groups start with the name `EWR CCCP`.
-  --    * `"SQUADRON CCCP"`: Late activated Groups objects of the red coalition are placed above the relevant airbases that will contain these templates in the squadron.
-  --      These late activated Groups start with the name `SQUADRON CCCP`. Each Group object contains only one Unit, and defines the weapon payload, skin and skill level.
-  --    * `"CAP CCCP"`: CAP Zones are defined using floating, late activated Helicopter Group objects, where the route points define the route of the polygon of the CAP Zone.
-  --      These Helicopter Group objects start with the name `CAP CCCP`, and will be the locations wherein CAP will be performed.
-  --    * `2` Defines how many CAP airplanes are patrolling in each CAP zone defined simulateneously.  
-  -- 
-  -- 
-  -- ### 4.2) A more advanced setup:
-  -- 
-  --      -- Setup the AI_A2G_GCICAP dispatcher for the blue coalition.
-  -- 
-  --      A2G_GCICAP_Blue = AI_A2G_GCICAP:New( { "BLUE EWR" }, { "104th", "105th", "106th" }, { "104th CAP" }, 4 ) 
-  -- 
-  -- The following parameters for the :New method have the following meaning:
-  -- 
-  --    * `{ "BLUE EWR" }`: An array of the group name prefixes of the groups of the blue coalition are placed that define the EWR network. These groups start with the name `BLUE EWR`.
-  --    * `{ "104th", "105th", "106th" } `: An array of the group name prefixes of the Late activated Groups objects of the blue coalition are 
-  --      placed above the relevant airbases that will contain these templates in the squadron.
-  --      These late activated Groups start with the name `104th` or `105th` or `106th`. 
-  --    * `{ "104th CAP" }`: An array of the names of the CAP zones are defined using floating, late activated helicopter group objects, 
-  --      where the route points define the route of the polygon of the CAP Zone.
-  --      These Helicopter Group objects start with the name `104th CAP`, and will be the locations wherein CAP will be performed.
-  --    * `4` Defines how many CAP airplanes are patrolling in each CAP zone defined simulateneously.  
-  -- 
-  -- @field #AI_A2G_GCICAP
-  AI_A2G_GCICAP = {
-    ClassName = "AI_A2G_GCICAP",
-    Detection = nil,
-  }
-
-
-  --- AI_A2G_GCICAP constructor.
-  -- @param #AI_A2G_GCICAP self
-  -- @param #string EWRPrefixes A list of prefixes that of groups that setup the Early Warning Radar network.
-  -- @param #string TemplatePrefixes A list of template prefixes.
-  -- @param #string PatrolPrefixes A list of CAP zone prefixes (polygon zones).
-  -- @param #number PatrolLimit A number of how many CAP maximum will be spawned.
-  -- @param #number GroupingRadius The radius in meters wherein detected planes are being grouped as one target area. 
-  -- For airplanes, 6000 (6km) is recommended, and is also the default value of this parameter.
-  -- @param #number EngageRadius The radius in meters wherein detected airplanes will be engaged by airborne defenders without a task.
-  -- @param #number GciRadius The radius in meters wherein detected airplanes will GCI.
-  -- @param #number ResourceCount The amount of resources that will be allocated to each squadron.
-  -- @return #AI_A2G_GCICAP
-  -- @usage
-  --   
-  --   -- Setup a new GCICAP dispatcher object. Each squadron has unlimited resources.
-  --   -- The EWR network group prefix is "DF CCCP". All groups starting with "DF CCCP" will be part of the EWR network.
-  --   -- The Squadron Templates prefix is "SQ CCCP". All groups starting with "SQ CCCP" will be considered as airplane templates.
-  --   -- The CAP Zone prefix is "CAP Zone".
-  --   -- The CAP Limit is 2.
-  --   A2GDispatcher = AI_A2G_GCICAP:New( { "DF CCCP" }, { "SQ CCCP" }, { "CAP Zone" }, 2 )  
-  --   
-  -- @usage
-  --   
-  --   -- Setup a new GCICAP dispatcher object. Each squadron has unlimited resources.
-  --   -- The EWR network group prefix is "DF CCCP". All groups starting with "DF CCCP" will be part of the EWR network.
-  --   -- The Squadron Templates prefix is "SQ CCCP". All groups starting with "SQ CCCP" will be considered as airplane templates.
-  --   -- The CAP Zone prefix is "CAP Zone".
-  --   -- The CAP Limit is 2.
-  --   -- The Grouping Radius is set to 20000. Thus all planes within a 20km radius will be grouped as a group of targets.
-  --   A2GDispatcher = AI_A2G_GCICAP:New( { "DF CCCP" }, { "SQ CCCP" }, { "CAP Zone" }, 2, 20000 )  
-  --   
-  -- @usage
-  --   
-  --   -- Setup a new GCICAP dispatcher object. Each squadron has unlimited resources.
-  --   -- The EWR network group prefix is "DF CCCP". All groups starting with "DF CCCP" will be part of the EWR network.
-  --   -- The Squadron Templates prefix is "SQ CCCP". All groups starting with "SQ CCCP" will be considered as airplane templates.
-  --   -- The CAP Zone prefix is "CAP Zone".
-  --   -- The CAP Limit is 2.
-  --   -- The Grouping Radius is set to 20000. Thus all planes within a 20km radius will be grouped as a group of targets.
-  --   -- The Engage Radius is set to 60000. Any defender without a task, and in healthy condition, 
-  --   -- will be considered a defense task if the target is within 60km from the defender.
-  --   A2GDispatcher = AI_A2G_GCICAP:New( { "DF CCCP" }, { "SQ CCCP" }, { "CAP Zone" }, 2, 20000, 60000 )  
-  --   
-  -- @usage
-  --   
-  --   -- Setup a new GCICAP dispatcher object. Each squadron has unlimited resources.
-  --   -- The EWR network group prefix is DF CCCP. All groups starting with DF CCCP will be part of the EWR network.
-  --   -- The Squadron Templates prefix is "SQ CCCP". All groups starting with "SQ CCCP" will be considered as airplane templates.
-  --   -- The CAP Zone prefix is "CAP Zone".
-  --   -- The CAP Limit is 2.
-  --   -- The Grouping Radius is set to 20000. Thus all planes within a 20km radius will be grouped as a group of targets.
-  --   -- The Engage Radius is set to 60000. Any defender without a task, and in healthy condition, 
-  --   -- will be considered a defense task if the target is within 60km from the defender.
-  --   -- The GCI Radius is set to 150000. Any target detected within 150km will be considered for GCI engagement.
-  --   A2GDispatcher = AI_A2G_GCICAP:New( { "DF CCCP" }, { "SQ CCCP" }, { "CAP Zone" }, 2, 20000, 60000, 150000 )  
-  --   
-  -- @usage
-  --   
-  --   -- Setup a new GCICAP dispatcher object. Each squadron has 30 resources.
-  --   -- The EWR network group prefix is "DF CCCP". All groups starting with "DF CCCP" will be part of the EWR network.
-  --   -- The Squadron Templates prefix is "SQ CCCP". All groups starting with "SQ CCCP" will be considered as airplane templates.
-  --   -- The CAP Zone prefix is "CAP Zone".
-  --   -- The CAP Limit is 2.
-  --   -- The Grouping Radius is set to 20000. Thus all planes within a 20km radius will be grouped as a group of targets.
-  --   -- The Engage Radius is set to 60000. Any defender without a task, and in healthy condition, 
-  --   -- will be considered a defense task if the target is within 60km from the defender.
-  --   -- The GCI Radius is set to 150000. Any target detected within 150km will be considered for GCI engagement.
-  --   -- The amount of resources for each squadron is set to 30. Thus about 30 resources are allocated to each squadron created.
-  -- 
-  --   A2GDispatcher = AI_A2G_GCICAP:New( { "DF CCCP" }, { "SQ CCCP" }, { "CAP Zone" }, 2, 20000, 60000, 150000, 30 )  
-  --   
-  -- @usage
-  --   
-  --   -- Setup a new GCICAP dispatcher object. Each squadron has 30 resources.
-  --   -- The EWR network group prefix is "DF CCCP". All groups starting with "DF CCCP" will be part of the EWR network.
-  --   -- The Squadron Templates prefix is "SQ CCCP". All groups starting with "SQ CCCP" will be considered as airplane templates.
-  --   -- The CAP Zone prefix is nil. No CAP is created.
-  --   -- The CAP Limit is nil.
-  --   -- The Grouping Radius is nil. The default range of 6km radius will be grouped as a group of targets.
-  --   -- The Engage Radius is set nil. The default Engage Radius will be used to consider a defenser being assigned to a task.
-  --   -- The GCI Radius is nil. Any target detected within the default GCI Radius will be considered for GCI engagement.
-  --   -- The amount of resources for each squadron is set to 30. Thus about 30 resources are allocated to each squadron created.
-  -- 
-  --   A2GDispatcher = AI_A2G_GCICAP:New( { "DF CCCP" }, { "SQ CCCP" }, nil, nil, nil, nil, nil, 30 )  
-  --   
-  function AI_A2G_GCICAP:New( EWRPrefixes, TemplatePrefixes, PatrolPrefixes, PatrolLimit, GroupingRadius, EngageRadius, GciRadius, ResourceCount )
-
-    local EWRSetGroup = SET_GROUP:New()
-    EWRSetGroup:FilterPrefixes( EWRPrefixes )
-    EWRSetGroup:FilterStart()
-
-    local Detection  = DETECTION_AREAS:New( EWRSetGroup, GroupingRadius or 30000 )
-
-    local self = BASE:Inherit( self, AI_A2G_DISPATCHER:New( Detection ) ) -- #AI_A2G_GCICAP
-    
-    self:SetGciRadius( GciRadius )
-
-    -- Determine the coalition of the EWRNetwork, this will be the coalition of the GCICAP.
-    local EWRFirst = EWRSetGroup:GetFirst() -- Wrapper.Group#GROUP
-    local EWRCoalition = EWRFirst:GetCoalition()
-    
-    -- Determine the airbases belonging to the coalition.
-    local AirbaseNames = {} -- #list<#string>
-    for AirbaseID, AirbaseData in pairs( _DATABASE.AIRBASES ) do
-      local Airbase = AirbaseData -- Wrapper.Airbase#AIRBASE
-      local AirbaseName = Airbase:GetName()
-      if Airbase:GetCoalition() == EWRCoalition then
-        table.insert( AirbaseNames, AirbaseName )
-      end
-    end    
-    
-    self.Templates = SET_GROUP
-      :New()
-      :FilterPrefixes( TemplatePrefixes )
-      :FilterOnce()
-
-    -- Setup squadrons
-    
-    self:I( { Airbases = AirbaseNames  } )
-
-    self:I( "Defining Templates for Airbases ..." )    
-    for AirbaseID, AirbaseName in pairs( AirbaseNames ) do
-      local Airbase = _DATABASE:FindAirbase( AirbaseName ) -- Wrapper.Airbase#AIRBASE
-      local AirbaseName = Airbase:GetName()
-      local AirbaseCoord = Airbase:GetCoordinate()
-      local AirbaseZone = ZONE_RADIUS:New( "Airbase", AirbaseCoord:GetVec2(), 3000 )
-      local Templates = nil
-      self:I( { Airbase = AirbaseName } )    
-      for TemplateID, Template in pairs( self.Templates:GetSet() ) do
-        local Template = Template -- Wrapper.Group#GROUP
-        local TemplateCoord = Template:GetCoordinate()
-        if AirbaseZone:IsVec2InZone( TemplateCoord:GetVec2() ) then
-          Templates = Templates or {}
-          table.insert( Templates, Template:GetName() )
-          self:I( { Template = Template:GetName() } )
-        end
-      end
-      if Templates then
-        self:SetSquadron( AirbaseName, AirbaseName, Templates, ResourceCount )
-      end
-    end
-
-    -- Setup CAP.
-    -- Find for each CAP the nearest airbase to the (start or center) of the zone. 
-    -- CAP will be launched from there.
-    
-    self.CAPTemplates = SET_GROUP:New()
-    self.CAPTemplates:FilterPrefixes( PatrolPrefixes )
-    self.CAPTemplates:FilterOnce()
-    
-    self:I( "Setting up CAP ..." )    
-    for CAPID, CAPTemplate in pairs( self.CAPTemplates:GetSet() ) do
-      local CAPZone = ZONE_POLYGON:New( CAPTemplate:GetName(), CAPTemplate )
-      -- Now find the closest airbase from the ZONE (start or center)
-      local AirbaseDistance = 99999999
-      local AirbaseClosest = nil -- Wrapper.Airbase#AIRBASE
-      self:I( { CAPZoneGroup = CAPID } )    
-      for AirbaseID, AirbaseName in pairs( AirbaseNames ) do
-        local Airbase = _DATABASE:FindAirbase( AirbaseName ) -- Wrapper.Airbase#AIRBASE
-        local AirbaseName = Airbase:GetName()
-        local AirbaseCoord = Airbase:GetCoordinate()
-        local Squadron = self.DefenderSquadrons[AirbaseName]
-        if Squadron then
-          local Distance = AirbaseCoord:Get2DDistance( CAPZone:GetCoordinate() )
-          self:I( { AirbaseDistance = Distance } )    
-          if Distance < AirbaseDistance then
-            AirbaseDistance = Distance
-            AirbaseClosest = Airbase
-          end
-        end
-      end
-      if AirbaseClosest then
-        self:I( { CAPAirbase = AirbaseClosest:GetName() } )    
-        self:SetSquadronPatrol( AirbaseClosest:GetName(), CAPZone, 6000, 10000, 500, 800, 800, 1200, "RADIO" )
-        self:SetSquadronPatrolInterval( AirbaseClosest:GetName(), PatrolLimit, 300, 600, 1 )
-      end          
-    end    
-
-    -- Setup GCI.
-    -- GCI is setup for all Squadrons.
-    self:I( "Setting up GCI ..." )    
-    for AirbaseID, AirbaseName in pairs( AirbaseNames ) do
-      local Airbase = _DATABASE:FindAirbase( AirbaseName ) -- Wrapper.Airbase#AIRBASE
-      local AirbaseName = Airbase:GetName()
-      local Squadron = self.DefenderSquadrons[AirbaseName]
-      self:F( { Airbase = AirbaseName } )    
-      if Squadron then
-        self:I( { GCIAirbase = AirbaseName } )    
-        self:SetSquadronGci( AirbaseName, 800, 1200 )
-      end
-    end
-    
-    self:__Start( 5 )
-    
-    self:HandleEvent( EVENTS.Crash, self.OnEventCrashOrDead )
-    self:HandleEvent( EVENTS.Dead, self.OnEventCrashOrDead )
-    --self:HandleEvent( EVENTS.RemoveUnit, self.OnEventCrashOrDead )
-    
-    self:HandleEvent( EVENTS.Land )
-    self:HandleEvent( EVENTS.EngineShutdown )
-    
-    return self
-  end
-
-  --- AI_A2G_GCICAP constructor with border.
-  -- @param #AI_A2G_GCICAP self
-  -- @param #string EWRPrefixes A list of prefixes that of groups that setup the Early Warning Radar network.
-  -- @param #string TemplatePrefixes A list of template prefixes.
-  -- @param #string BorderPrefix A Border Zone Prefix.
-  -- @param #string PatrolPrefixes A list of CAP zone prefixes (polygon zones).
-  -- @param #number PatrolLimit A number of how many CAP maximum will be spawned.
-  -- @param #number GroupingRadius The radius in meters wherein detected planes are being grouped as one target area. 
-  -- For airplanes, 6000 (6km) is recommended, and is also the default value of this parameter.
-  -- @param #number EngageRadius The radius in meters wherein detected airplanes will be engaged by airborne defenders without a task.
-  -- @param #number GciRadius The radius in meters wherein detected airplanes will GCI.
-  -- @param #number ResourceCount The amount of resources that will be allocated to each squadron.
-  -- @return #AI_A2G_GCICAP
-  -- @usage
-  --   
-  --   -- Setup a new GCICAP dispatcher object with a border. Each squadron has unlimited resources.
-  --   -- The EWR network group prefix is "DF CCCP". All groups starting with "DF CCCP" will be part of the EWR network.
-  --   -- The Squadron Templates prefix is "SQ CCCP". All groups starting with "SQ CCCP" will be considered as airplane templates.
-  --   -- The CAP Zone prefix is "CAP Zone".
-  --   -- The CAP Limit is 2.
-  -- 
-  --   A2GDispatcher = AI_A2G_GCICAP:NewWithBorder( { "DF CCCP" }, { "SQ CCCP" }, "Border", { "CAP Zone" }, 2 )  
-  --   
-  -- @usage
-  --   
-  --   -- Setup a new GCICAP dispatcher object with a border. Each squadron has unlimited resources.
-  --   -- The EWR network group prefix is "DF CCCP". All groups starting with "DF CCCP" will be part of the EWR network.
-  --   -- The Squadron Templates prefix is "SQ CCCP". All groups starting with "SQ CCCP" will be considered as airplane templates.
-  --   -- The Border prefix is "Border". This will setup a border using the group defined within the mission editor with the name Border.
-  --   -- The CAP Zone prefix is "CAP Zone".
-  --   -- The CAP Limit is 2.
-  --   -- The Grouping Radius is set to 20000. Thus all planes within a 20km radius will be grouped as a group of targets.
-  -- 
-  --   A2GDispatcher = AI_A2G_GCICAP:NewWithBorder( { "DF CCCP" }, { "SQ CCCP" }, "Border", { "CAP Zone" }, 2, 20000 )  
-  --   
-  -- @usage
-  --   
-  --   -- Setup a new GCICAP dispatcher object with a border. Each squadron has unlimited resources.
-  --   -- The EWR network group prefix is "DF CCCP". All groups starting with "DF CCCP" will be part of the EWR network.
-  --   -- The Squadron Templates prefix is "SQ CCCP". All groups starting with "SQ CCCP" will be considered as airplane templates.
-  --   -- The Border prefix is "Border". This will setup a border using the group defined within the mission editor with the name Border.
-  --   -- The CAP Zone prefix is "CAP Zone".
-  --   -- The CAP Limit is 2.
-  --   -- The Grouping Radius is set to 20000. Thus all planes within a 20km radius will be grouped as a group of targets.
-  --   -- The Engage Radius is set to 60000. Any defender without a task, and in healthy condition, 
-  --   -- will be considered a defense task if the target is within 60km from the defender.
-  -- 
-  --   A2GDispatcher = AI_A2G_GCICAP:NewWithBorder( { "DF CCCP" }, { "SQ CCCP" }, "Border", { "CAP Zone" }, 2, 20000, 60000 )  
-  --   
-  -- @usage
-  --   
-  --   -- Setup a new GCICAP dispatcher object with a border. Each squadron has unlimited resources.
-  --   -- The EWR network group prefix is "DF CCCP". All groups starting with "DF CCCP" will be part of the EWR network.
-  --   -- The Squadron Templates prefix is "SQ CCCP". All groups starting with "SQ CCCP" will be considered as airplane templates.
-  --   -- The Border prefix is "Border". This will setup a border using the group defined within the mission editor with the name Border.
-  --   -- The CAP Zone prefix is "CAP Zone".
-  --   -- The CAP Limit is 2.
-  --   -- The Grouping Radius is set to 20000. Thus all planes within a 20km radius will be grouped as a group of targets.
-  --   -- The Engage Radius is set to 60000. Any defender without a task, and in healthy condition, 
-  --   -- will be considered a defense task if the target is within 60km from the defender.
-  --   -- The GCI Radius is set to 150000. Any target detected within 150km will be considered for GCI engagement.
-  -- 
-  --   A2GDispatcher = AI_A2G_GCICAP:NewWithBorder( { "DF CCCP" }, { "SQ CCCP" }, "Border", { "CAP Zone" }, 2, 20000, 60000, 150000 )  
-  --   
-  -- @usage
-  --   
-  --   -- Setup a new GCICAP dispatcher object with a border. Each squadron has 30 resources.
-  --   -- The EWR network group prefix is "DF CCCP". All groups starting with "DF CCCP" will be part of the EWR network.
-  --   -- The Squadron Templates prefix is "SQ CCCP". All groups starting with "SQ CCCP" will be considered as airplane templates.
-  --   -- The Border prefix is "Border". This will setup a border using the group defined within the mission editor with the name Border.
-  --   -- The CAP Zone prefix is "CAP Zone".
-  --   -- The CAP Limit is 2.
-  --   -- The Grouping Radius is set to 20000. Thus all planes within a 20km radius will be grouped as a group of targets.
-  --   -- The Engage Radius is set to 60000. Any defender without a task, and in healthy condition, 
-  --   -- will be considered a defense task if the target is within 60km from the defender.
-  --   -- The GCI Radius is set to 150000. Any target detected within 150km will be considered for GCI engagement.
-  --   -- The amount of resources for each squadron is set to 30. Thus about 30 resources are allocated to each squadron created.
-  -- 
-  --   A2GDispatcher = AI_A2G_GCICAP:NewWithBorder( { "DF CCCP" }, { "SQ CCCP" }, "Border", { "CAP Zone" }, 2, 20000, 60000, 150000, 30 )  
-  --   
-  -- @usage
-  --   
-  --   -- Setup a new GCICAP dispatcher object with a border. Each squadron has 30 resources.
-  --   -- The EWR network group prefix is "DF CCCP". All groups starting with "DF CCCP" will be part of the EWR network.
-  --   -- The Squadron Templates prefix is "SQ CCCP". All groups starting with "SQ CCCP" will be considered as airplane templates.
-  --   -- The Border prefix is "Border". This will setup a border using the group defined within the mission editor with the name Border.
-  --   -- The CAP Zone prefix is nil. No CAP is created.
-  --   -- The CAP Limit is nil.
-  --   -- The Grouping Radius is nil. The default range of 6km radius will be grouped as a group of targets.
-  --   -- The Engage Radius is set nil. The default Engage Radius will be used to consider a defenser being assigned to a task.
-  --   -- The GCI Radius is nil. Any target detected within the default GCI Radius will be considered for GCI engagement.
-  --   -- The amount of resources for each squadron is set to 30. Thus about 30 resources are allocated to each squadron created.
-  -- 
-  --   A2GDispatcher = AI_A2G_GCICAP:NewWithBorder( { "DF CCCP" }, { "SQ CCCP" }, "Border", nil, nil, nil, nil, nil, 30 )  
-  --   
-  function AI_A2G_GCICAP:NewWithBorder( EWRPrefixes, TemplatePrefixes, BorderPrefix, PatrolPrefixes, PatrolLimit, GroupingRadius, EngageRadius, GciRadius, ResourceCount )
-
-    local self = AI_A2G_GCICAP:New( EWRPrefixes, TemplatePrefixes, PatrolPrefixes, PatrolLimit, GroupingRadius, EngageRadius, GciRadius, ResourceCount )
-
-    if BorderPrefix then
-      self:SetBorderZone( ZONE_POLYGON:New( BorderPrefix, GROUP:FindByName( BorderPrefix ) ) )
-    end
-    
-    return self
-
   end
 
 end

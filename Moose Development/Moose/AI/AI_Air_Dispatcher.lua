@@ -111,6 +111,7 @@ do -- AI_AIR_DISPATCHER
     self:SetDefaultTakeoff( AI_AIR_DISPATCHER.Takeoff.Air )
     self:SetDefaultTakeoffInAirAltitude( 500 ) -- Default takeoff is 500 meters above the ground.
     self:SetDefaultLanding( AI_AIR_DISPATCHER.Landing.NearAirbase )
+    self:SetDefaultEngageRadius( 150000 )
 
     self:SetDefaultOverhead( 1 )
     self:SetDefaultGrouping( 1 )
@@ -382,6 +383,7 @@ do -- AI_AIR_DISPATCHER
     return self
   end
   
+
   
   
   --- Define a border area to simulate a **cold war** scenario.
@@ -508,7 +510,7 @@ do -- AI_AIR_DISPATCHER
 
 
   --- Set the default engage limit for squadrons, which will be used to determine how many air units will engage at the same time with the enemy.
-  -- The default eatrol limit is 1, which means one eatrol group maximum per squadron.
+  -- The default eatrol limit is 1, which means one patrol group maximum per squadron.
   -- @param #AI_AIR_DISPATCHER self
   -- @param #number EngageLimit The maximum engages that can be done at the same time per squadron.
   -- @return #AI_AIR_DISPATCHER
@@ -526,6 +528,7 @@ do -- AI_AIR_DISPATCHER
     
     return self
   end  
+
 
 
   function AI_AIR_DISPATCHER:SetIntercept( InterceptDelay )
