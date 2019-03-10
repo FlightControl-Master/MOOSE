@@ -175,6 +175,14 @@ COMMANDCENTER = {
   CommunicationMode = "80",
 }
 
+
+--- @type COMMANDCENTER.AutoAssignMethods
+COMMANDCENTER.AutoAssignMethods = {
+  ["Random"] = 1,
+  ["Distance"] = 2,
+  ["Priority"] = 3
+  }
+
 --- The constructor takes an IDENTIFIABLE as the HQ command center.
 -- @param #COMMANDCENTER self
 -- @param Wrapper.Positionable#POSITIONABLE CommandCenterPositionable
@@ -192,6 +200,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
 
   self:SetAutoAssignTasks( false )
   self:SetAutoAcceptTasks( true )
+  self:SetAutoAssignMethod( COMMANDCENTER.AutoAssignMethods.Random )
   
   self:HandleEvent( EVENTS.Birth,
     --- @param #COMMANDCENTER self
@@ -462,7 +471,7 @@ function COMMANDCENTER:GetMenu( TaskGroup )
   self.CommandCenterMenus[TaskGroup] = CommandCenterMenu
 
   if self.AutoAssignTasks == false then
-    local AssignTaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, "Assign Task", CommandCenterMenu, self.AssignRandomTask, self, TaskGroup ):SetTime(MenuTime):SetTag("AutoTask")
+    local AssignTaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, "Assign Task", CommandCenterMenu, self.AssignTask, self, TaskGroup ):SetTime(MenuTime):SetTag("AutoTask")
   end
   CommandCenterMenu:Remove( MenuTime, "AutoTask" )
     
@@ -473,22 +482,33 @@ end
 --- Assigns a random task to a TaskGroup.
 -- @param #COMMANDCENTER self
 -- @return #COMMANDCENTER
-function COMMANDCENTER:AssignRandomTask( TaskGroup )
+function COMMANDCENTER:AssignTask( TaskGroup )
 
   local Tasks = {}
+  local AssignPriority = 99999999
+  local AutoAssignMethod = self.AutoAssignMethod
 
   for MissionID, Mission in pairs( self:GetMissions() ) do
     local Mission = Mission -- Tasking.Mission#MISSION
     local MissionTasks = Mission:GetGroupTasks( TaskGroup )
     for MissionTaskName, MissionTask in pairs( MissionTasks or {} ) do
-      Tasks[#Tasks+1] = MissionTask
+      local TaskPriority = MissionTask:GetAutoAssignPriority( self.AutoAssignMethod, self, TaskGroup )
+      if TaskPriority < AssignPriority then
+        AssignPriority = TaskPriority
+        Tasks = {}
+      end
+      if TaskPriority == AssignPriority then
+        Tasks[#Tasks+1] = MissionTask
+      end
     end
   end
   
   local Task = Tasks[ math.random( 1, #Tasks ) ] -- Tasking.Task#TASK
+
+  self:I( "Assigning task " .. Task:GetName() .. " using auto assign method " .. self.AutoAssignMethod .. " to " .. TaskGroup:GetName() .. " with task priority " .. AssignPriority )
   
   if not self.AutoAcceptTasks == true then
-    Task:SetAssignMethod( ACT_ASSIGN_MENU_ACCEPT:New( Task.TaskBriefing ) )
+    Task:SetAutoAssignMethod( ACT_ASSIGN_MENU_ACCEPT:New( Task.TaskBriefing ) )
   end
   
   Task:AssignToGroup( TaskGroup )
@@ -551,6 +571,24 @@ function COMMANDCENTER:SetAutoAcceptTasks( AutoAccept )
   
 end
 
+
+--- Define the method to be used to assign automatically a task from the available tasks in the mission.
+-- There are 3 types of methods that can be applied for the moment:
+-- 
+--   1. Random - assigns a random task in the mission to the player.
+--   2. Distance - assigns a task based on a distance evaluation from the player. The closest are to be assigned first.
+--   3. Priority - assigns a task based on the priority as defined by the mission designer, using the SetTaskPriority parameter.
+--   
+-- The different task classes implement the logic to determine the priority of automatic task assignment to a player, depending on one of the above methods.
+-- The method @{Tasking.Task#TASK.GetAutoAssignPriority} calculate the priority of the tasks to be assigned. 
+-- @param #COMMANDCENTER self
+-- @param #COMMANDCENTER.AutoAssignMethods AutoAssignMethod A selection of an assign method from the COMMANDCENTER.AutoAssignMethods enumeration.
+function COMMANDCENTER:SetAutoAssignMethod( AutoAssignMethod )
+
+  self.AutoAssignMethod = AutoAssignMethod or COMMANDCENTER.AutoAssignMethods.Random
+  
+end
+
 --- Automatically assigns tasks to all TaskGroups.
 -- @param #COMMANDCENTER self
 function COMMANDCENTER:AssignTasks()
@@ -568,7 +606,7 @@ function COMMANDCENTER:AssignTasks()
         -- Only groups with planes or helicopters will receive automatic tasks.
         -- TODO Workaround DCS-BUG-3 - https://github.com/FlightControl-Master/MOOSE/issues/696
         if TaskGroup:IsAir() then
-          self:AssignRandomTask( TaskGroup )
+          self:AssignTask( TaskGroup )
         end
       end
     end

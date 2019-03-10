@@ -221,7 +221,6 @@ do -- TASK_CAPTURE_ZONE
   -- @param #TASK_CAPTURE_ZONE self
   function TASK_CAPTURE_ZONE:UpdateTaskInfo() 
 
-
     local ZoneCoordinate = self.ZoneGoal:GetZone():GetCoordinate() 
     self.TaskInfo:AddCoordinate( ZoneCoordinate, 0, "SOD" )
     self.TaskInfo:AddText( "Zone Name", self.ZoneGoal:GetZoneName(), 10, "MOD" )
@@ -230,8 +229,8 @@ do -- TASK_CAPTURE_ZONE
     
 
   function TASK_CAPTURE_ZONE:ReportOrder( ReportGroup ) 
-    local Coordinate = self.TaskInfo:GetData( "Coordinate" )
-    --local Coordinate = self.TaskInfo.Coordinates.TaskInfoText
+
+    local Coordinate = self.TaskInfo:GetCoordinate()
     local Distance = ReportGroup:GetCoordinate():Get2DDistance( Coordinate )
     
     return Distance
@@ -260,6 +259,26 @@ do -- TASK_CAPTURE_ZONE
     end
     
     self:__Goal( -10, PlayerUnit, PlayerName )
+  end
+
+  --- This function is called from the @{Tasking.CommandCenter#COMMANDCENTER} to determine the method of automatic task selection.
+  -- @param #TASK_CAPTURE_ZONE self
+  -- @param #number AutoAssignMethod The method to be applied to the task.
+  -- @param Tasking.CommandCenter#COMMANDCENTER CommandCenter The command center.
+  -- @param Wrapper.Group#GROUP TaskGroup The player group.
+  function TASK_CAPTURE_ZONE:GetAutoAssignPriority( AutoAssignMethod, CommandCenter, TaskGroup )
+  
+    if     AutoAssignMethod == COMMANDCENTER.AutoAssignMethods.Random then
+      return math.random( 1, 9 )
+    elseif AutoAssignMethod == COMMANDCENTER.AutoAssignMethods.Distance then
+      local Coordinate = self.TaskInfo:GetCoordinate()
+      local Distance = TaskGroup:GetCoordinate():Get2DDistance( CommandCenter:GetPositionable():GetCoordinate() )
+      return math.floor( Distance )
+    elseif AutoAssignMethod == COMMANDCENTER.AutoAssignMethods.Priority then
+      return 1
+    end
+
+    return 0
   end
 
 end

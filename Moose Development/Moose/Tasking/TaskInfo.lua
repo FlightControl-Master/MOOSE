@@ -130,6 +130,15 @@ function TASKINFO:AddCoordinate( Coordinate, Order, Detail, Keep )
 end
 
 
+--- Get the Coordinate. 
+-- @param #TASKINFO self
+-- @return Core.Point#COORDINATE Coordinate
+function TASKINFO:GetCoordinate()
+  return self:GetData( "Coordinate" )
+end
+
+
+
 --- Add Coordinates. 
 -- @param #TASKINFO self
 -- @param #list<Core.Point#COORDINATE> Coordinates

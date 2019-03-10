@@ -1381,6 +1381,23 @@ do -- TASK_CARGO
     
     return 0
   end
+
+  --- This function is called from the @{Tasking.CommandCenter#COMMANDCENTER} to determine the method of automatic task selection.
+  -- @param #TASK_CARGO self
+  -- @param #number AutoAssignMethod The method to be applied to the task.
+  -- @param Wrapper.Group#GROUP TaskGroup The player group.
+  function TASK_CARGO:GetAutoAssignPriority( AutoAssignMethod, TaskGroup )
+  
+    if     AutoAssignMethod == COMMANDCENTER.AutoAssignMethods.Random then
+      return math.random( 1, 9 )
+    elseif AutoAssignMethod == COMMANDCENTER.AutoAssignMethods.Distance then
+      return 0
+    elseif AutoAssignMethod == COMMANDCENTER.AutoAssignMethods.Priority then
+      return 1
+    end
+
+    return 0
+  end
   
   
   
