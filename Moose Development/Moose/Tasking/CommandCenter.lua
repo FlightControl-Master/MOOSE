@@ -492,13 +492,16 @@ function COMMANDCENTER:AssignTask( TaskGroup )
     local Mission = Mission -- Tasking.Mission#MISSION
     local MissionTasks = Mission:GetGroupTasks( TaskGroup )
     for MissionTaskName, MissionTask in pairs( MissionTasks or {} ) do
-      local TaskPriority = MissionTask:GetAutoAssignPriority( self.AutoAssignMethod, self, TaskGroup )
-      if TaskPriority < AssignPriority then
-        AssignPriority = TaskPriority
-        Tasks = {}
-      end
-      if TaskPriority == AssignPriority then
-        Tasks[#Tasks+1] = MissionTask
+      local MissionTask = MissionTask -- Tasking.Task#TASK
+      if MissionTask:IsStatePlanned() or MissionTask:IsStateReplanned() or MissionTask:IsStateAssigned() then
+        local TaskPriority = MissionTask:GetAutoAssignPriority( self.AutoAssignMethod, self, TaskGroup )
+        if TaskPriority < AssignPriority then
+          AssignPriority = TaskPriority
+          Tasks = {}
+        end
+        if TaskPriority == AssignPriority then
+          Tasks[#Tasks+1] = MissionTask
+        end
       end
     end
   end
