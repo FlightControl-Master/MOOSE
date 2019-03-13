@@ -918,8 +918,7 @@ end
 
 --- Returns true if the UNIT is in the air.
 -- @param #UNIT self
--- @return #boolean true if in the air.
--- @return #nil The UNIT is not existing or alive.  
+-- @return #boolean Return true if in the air or #nil if the UNIT is not existing or alive.   
 function UNIT:InAir()
   self:F2( self.UnitName )
 
