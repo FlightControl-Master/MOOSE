@@ -32,6 +32,7 @@
 -- **Supported Aircraft:**
 -- 
 --    * [F/A-18C Hornet Lot 20](https://forums.eagle.ru/forumdisplay.php?f=557) (Player & AI)
+--    * [F-14B Tomcat](https://forums.eagle.ru/forumdisplay.php?f=395) (Player & AI) [**WIP**]
 --    * [A-4E Skyhawk Community Mod](https://forums.eagle.ru/showthread.php?t=224989) (Player & AI)
 --    * [AV-8B N/A Harrier](https://forums.eagle.ru/forumdisplay.php?f=555) (Player & AI) [**WIP**]
 --    * F/A-18C Hornet (AI)
@@ -45,16 +46,15 @@
 -- the no other fixed wing aircraft (human or AI controlled) are supposed to land on the Tarawa. Currently only Case I is supported. Case II/III take slightly steps from the CVN carrier.
 -- However, the two Case II/III pattern are very similar so this is not a big drawback.
 -- 
--- The implementation is kept general. Therefore, other aircraft and carriers can be added in future. [*Winter is coming!*](https://forums.eagle.ru/forumdisplay.php?f=395)
--- But each aircraft or carrier needs a different set of optimized individual parameters. 
+-- Heatblur's mighty F-14B Tomcat has just been added (March 13th 2019). Beware that this is currently WIP - both the module and the AIRBOSS implementation.
 --
 -- **PLEASE NOTE** that his class is work in progress. Many/most things work already very nicely but there a lot of cases I did not run into yet.
 --  Therefore, your *constructive* feedback is both necessary and appreciated!
 --  
 -- ## Discussion
 -- 
--- If you have questions or suggestions, visit the MOOSE Discord [#ops-airboss](https://discordapp.com/channels/378590350614462464/527363141185830915) channel.
--- There you also find an example mission and the necessary voice over sound files. Check the **pinned messages**.
+-- If you have questions or suggestions, please visit the [MOOSE Discord](https://discord.gg/AeYAkHP) #ops-airboss channel.
+-- There you also find an example mission and the necessary voice over sound files. Check out the **pinned messages**.
 --  
 -- ## IMPORTANT
 -- 
@@ -67,7 +67,7 @@
 --    
 -- ## Youtube Videos
 -- 
--- ### Early AIRBOSS Groove Testing:
+-- ### AIRBOSS videos:
 -- 
 --    * [[MOOSE] Airboss - Groove Testing (WIP)](https://www.youtube.com/watch?v=94KHQxxX3UI)
 --    * [[MOOSE] Airboss - Groove Test A-4E Community Mod](https://www.youtube.com/watch?v=ZbjD7FHiaHo)
@@ -1210,7 +1210,7 @@ AIRBOSS.AircraftCarrier={
   HORNET="FA-18C_hornet",
   A4EC="A-4E-C",
   F14A="F-14A_tomcat",
-  F14B="F-14B_tomcat",
+  F14B="F-14B",
   F14A_AI="F-14A",
   FA18C="F/A-18C",
   S3B="S-3B",
@@ -1621,7 +1621,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.9.9.2"
+AIRBOSS.version="0.9.9.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -4720,23 +4720,23 @@ function AIRBOSS:_GetAircraftAoA(playerData)
   
   if hornet then
     -- F/A-18C Hornet parameters.
-    aoa.SLOW=9.8
-    aoa.Slow=9.3
-    aoa.OnSpeedMax=8.8
-    aoa.OnSpeed=8.1
-    aoa.OnSpeedMin=7.4
-    aoa.Fast=6.9
-    aoa.FAST=6.3
+    aoa.SLOW       = 9.8
+    aoa.Slow       = 9.3
+    aoa.OnSpeedMax = 8.8
+    aoa.OnSpeed    = 8.1
+    aoa.OnSpeedMin = 7.4
+    aoa.Fast       = 6.9
+    aoa.FAST       = 6.3
   elseif tomcat then
     -- F-14A/B Tomcat parameters (taken from NATOPS). Converted from units 0-30 to degrees.
     -- Currently assuming a linear relationship with 0=-10 degrees and 30=+40 degrees as stated in NATOPS.
-    aoa.SLOW=18.33        --17.0 units
-    aoa.Slow=16.67        --16.0 units
-    aoa.OnSpeedMax=15.83  --15.5 units
-    aoa.OnSpeed=15.0      --15.0 units
-    aoa.OnSpeedMin=14.17  --14.5 units
-    aoa.Fast=13.33        --14.0 units
-    aoa.FAST=11.67        --13.0 units
+    aoa.SLOW       = self:_AoAUnit2Deg(playerData, 17.0)  --18.33 --17.0 units
+    aoa.Slow       = self:_AoAUnit2Deg(playerData, 16.0)  --16.67 --16.0 units
+    aoa.OnSpeedMax = self:_AoAUnit2Deg(playerData, 15.5)  --15.83 --15.5 units
+    aoa.OnSpeed    = self:_AoAUnit2Deg(playerData, 15.0)  --15.0  --15.0 units
+    aoa.OnSpeedMin = self:_AoAUnit2Deg(playerData, 14.5)  --14.17 --14.5 units
+    aoa.Fast       = self:_AoAUnit2Deg(playerData, 14.0)  --13.33 --14.0 units
+    aoa.FAST       = self:_AoAUnit2Deg(playerData, 13.0)  --11.67 --13.0 units
   elseif skyhawk then
     -- A-4E-C Skyhawk parameters from https://forums.eagle.ru/showpost.php?p=3703467&postcount=390
     -- Note that these are arbitrary UNITS and not degrees. We need a conversion formula!
@@ -4750,13 +4750,13 @@ function AIRBOSS:_GetAircraftAoA(playerData)
     aoa.FAST       = 8.00       --=16.5/2
   elseif harrier then
     -- AV-8B Harrier parameters. This might need further tuning.
-    aoa.SLOW=14.0
-    aoa.Slow=13.0
-    aoa.OnSpeedMax=12.0
-    aoa.OnSpeed=11.0
-    aoa.OnSpeedMin=10.0
-    aoa.Fast=9.0
-    aoa.FAST=8.0
+    aoa.SLOW       = 14.0
+    aoa.Slow       = 13.0
+    aoa.OnSpeedMax = 12.0
+    aoa.OnSpeed    = 11.0
+    aoa.OnSpeedMin = 10.0
+    aoa.Fast       =  9.0
+    aoa.FAST       =  8.0
   end
 
   return aoa
@@ -4784,7 +4784,12 @@ function AIRBOSS:_AoAUnit2Deg(playerData, aoaunits)
     -- unit=30 ==> alpha=+40 degrees.
     
     -- Assuming a linear relationship between these to points of the graph.
+    -- However: AoA=15 Units ==> 15 degrees, which is too much.
     degrees=-10+50/30*aoaunits
+    
+    -- HB Facebook page https://www.facebook.com/heatblur/photos/a.683612385159716/754368278084126
+    -- AoA=15 Units <==> AoA=10.359 degrees.
+    degrees=0.918*aoaunits-3.411
     
   elseif playerData.actype==AIRBOSS.AircraftCarrier.A4EC then
   
@@ -4823,6 +4828,10 @@ function AIRBOSS:_AoADeg2Units(playerData, degrees)
     
     -- Assuming a linear relationship between these to points of the graph.
     aoaunits=(degrees+10)*30/50
+
+    -- HB Facebook page https://www.facebook.com/heatblur/photos/a.683612385159716/754368278084126
+    -- AoA=15 Units <==> AoA=10.359 degrees.    
+    aoaunits=1.089*degrees+3.715
 
   elseif playerData.actype==AIRBOSS.AircraftCarrier.A4EC then
   
@@ -4870,25 +4879,31 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
   
    alt=UTILS.FeetToMeters(5000)
    
-   dist=UTILS.NMToMeters(20)
+   --dist=UTILS.NMToMeters(20)
    
    speed=UTILS.KnotsToMps(250)
    
  elseif step==AIRBOSS.PatternStep.ARCIN then
  
-  speed=UTILS.KnotsToMps(250) 
+  if tomcat then
+    speed=UTILS.KnotsToMps(150)
+  else
+    speed=UTILS.KnotsToMps(250)
+  end 
  
  elseif step==AIRBOSS.PatternStep.ARCOUT then
  
-  speed=UTILS.KnotsToMps(250)
+  if tomcat then
+    speed=UTILS.KnotsToMps(150)
+  else
+    speed=UTILS.KnotsToMps(250)
+  end 
   
  elseif step==AIRBOSS.PatternStep.DIRTYUP then
   
-    alt=UTILS.FeetToMeters(1200)
+    alt=UTILS.FeetToMeters(1200)    
     
-    dist=UTILS.NMToMeters(12)
-    
-    speed=UTILS.KnotsToMps(250)
+    --speed=UTILS.KnotsToMps(250)
   
   elseif step==AIRBOSS.PatternStep.BULLSEYE then
 
@@ -4965,8 +4980,10 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
   
   elseif step==AIRBOSS.PatternStep.WAKE then
   
-    if hornet or tomcat then     
+    if hornet then     
       alt=UTILS.FeetToMeters(370)
+    elseif tomcat then
+      alt=UTILS.FeetToMeters(430) -- Tomcat should be a bit higher as it intercepts the GS a bit higher.
     elseif skyhawk then
       alt=UTILS.FeetToMeters(370) --?
     end
@@ -4976,8 +4993,10 @@ function AIRBOSS:_GetAircraftParameters(playerData, step)
     
   elseif step==AIRBOSS.PatternStep.FINAL then
 
-    if hornet or tomcat then     
+    if hornet then     
       alt=UTILS.FeetToMeters(300)
+    elseif tomcat then
+      alt=UTILS.FeetToMeters(360)
     elseif skyhawk then
       alt=UTILS.FeetToMeters(300) --?
     elseif harrier then
@@ -8274,7 +8293,11 @@ function AIRBOSS:_Initial(playerData)
       
       -- Hook down for students.
       if playerData.difficulty==AIRBOSS.Difficulty.EASY and playerData.actype~=AIRBOSS.AircraftCarrier.AV8B then
-        hint=hint.." - Hook down!"
+        if playerData.actype==AIRBOSS.AircraftCarrier.F14A or playerData.actype==AIRBOSS.AircraftCarrier.F14B then
+          hint=hint.." - Hook down, SAS on, Wing Sweep 68°!"
+        else
+          hint=hint.." - Hook down!"
+        end
       end    
     
       self:MessageToPlayer(playerData, hint, "MARSHAL")
@@ -8423,7 +8446,7 @@ function AIRBOSS:_DirtyUp(playerData)
     self:_PlayerHint(playerData)
     
     -- Radio call "Say/Fly needles". Delayed by 10/15 seconds.
-    if playerData.actype~=AIRBOSS.AircraftCarrier.AV8B then
+    if playerData.actype==AIRBOSS.AircraftCarrier.HORNET then
       local callsay=self:_NewRadioCall(self.MarshalCall.SAYNEEDLES, nil, nil, 5, playerData.onboard)
       local callfly=self:_NewRadioCall(self.MarshalCall.FLYNEEDLES, nil, nil, 5, playerData.onboard)
       self:RadioTransmission(self.MarshalRadio, callsay, false, 50, nil, true)
@@ -9432,7 +9455,9 @@ function AIRBOSS:_Trapped(playerData)
     local dcorr=100
     if playerData.actype==AIRBOSS.AircraftCarrier.HORNET then
       dcorr=100
+    elseif playerData.actype==AIRBOSS.AircraftCarrier.F14A or playerData.actype==AIRBOSS.AircraftCarrier.F14B then
       -- TODO: Check Tomcat.
+      dcorr=100
     elseif playerData.actype==AIRBOSS.AircraftCarrier.A4EC then
       -- A-4E gets slowed down much faster the the F/A-18C!
       dcorr=56
@@ -10179,7 +10204,7 @@ function AIRBOSS:_AttitudeMonitor(playerData)
  
   -- Output
   local text=string.format("Pattern step: %s", step) 
-  text=text..string.format("\nAoA=%.1f° | |V|=%.1f knots", aoa, UTILS.MpsToKnots(vabs))
+  text=text..string.format("\nAoA=%.1f° = %.1f Units | |V|=%.1f knots", aoa, self:_AoADeg2Units(playerData, aoa), UTILS.MpsToKnots(vabs))
   if self.Debug then
     -- Velocity vector.
     text=text..string.format("\nVx=%.1f Vy=%.1f Vz=%.1f m/s", velo.x, velo.y, velo.z)
@@ -10208,7 +10233,7 @@ function AIRBOSS:_AttitudeMonitor(playerData)
     local dv=math.abs(vplayer-vcarrier)    
     text=text..string.format("\nDist=%.1f m Alt=%.1f m delta|V|=%.1f km/h", dist, self:_GetAltCarrier(playerData.unit), dv)
     text=text..string.format("\nGamma=%.1f° | Rho=%.1f°", relhead, phi)
-    text=text..string.format("\nLineUp=%.2f° | GlideSlope=%.2f° | AoA=%.1f", lue, gle, self:_AoADeg2Units(playerData, aoa))
+    text=text..string.format("\nLineUp=%.2f° | GlideSlope=%.2f° | AoA=%.1f Units", lue, gle, self:_AoADeg2Units(playerData, aoa))
     local grade, points, analysis=self:_LSOgrade(playerData)
     text=text..string.format("\nTgroove=%.1f sec", self:_GetTimeInGroove(playerData))
     text=text..string.format("\nGrade: %s %.1f PT - %s", grade, points, analysis)
@@ -11459,6 +11484,7 @@ function AIRBOSS:_PlayerHint(playerData, delay, soundoff)
       if playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
         hint=hint.."\nFAF! Checks completed. Nozzles 50°."
       else
+        --TODO: Tomcat?
         hint=hint.."\nDirty up! Hook, gear and flaps down."
       end
     end
@@ -11468,8 +11494,10 @@ function AIRBOSS:_PlayerHint(playerData, delay, soundoff)
   if playerData.step==AIRBOSS.PatternStep.BULLSEYE then        
     -- Hint follow the needles.
     if playerData.difficulty==AIRBOSS.Difficulty.EASY then
-      if playerData.actype~=AIRBOSS.AircraftCarrier.AV8B then
+      if playerData.actype==AIRBOSS.AircraftCarrier.HORNET then
         hint=hint..string.format("\nIntercept glideslope and follow the needles.")
+      else
+        hint=hint..string.format("\nIntercept glideslope.")
       end
     end
   end
@@ -11507,7 +11535,7 @@ function AIRBOSS:_StepHint(playerData, step)
     
     -- AoA.
     if aoa then
-      hint=hint..string.format("\nAoA %.1f", aoa)
+      hint=hint..string.format("\nAoA %.1f", self:_AoADeg2Units(playerData, aoa))
     end
     
     -- Speed.
@@ -11520,9 +11548,19 @@ function AIRBOSS:_StepHint(playerData, step)
       hint=hint..string.format("\nDistance to the boat %.1f NM", UTILS.MetersToNM(dist))
     end
 
+    -- Late break.
+    if step==AIRBOSS.PatternStep.LATEBREAK then
+      if playerData.actype==AIRBOSS.AircraftCarrier.F14A or playerData.actype==AIRBOSS.AircraftCarrier.F14B then
+        hint=hint.."\nWing Sweep 20°, Gear DOWN < 280 KIAS."
+      end
+    end
+    
+    -- Abeam.
     if step==AIRBOSS.PatternStep.ABEAM then
       if playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
         hint=hint.."\nNozzles 50°-60°. Antiskid OFF. Lights OFF."
+      elseif playerData.actype==AIRBOSS.AircraftCarrier.F14A or playerData.actype==AIRBOSS.AircraftCarrier.F14B then
+        hint=hint.."\nSlats/Flaps EXTENDED < 225 KIAS. DLC SELECTED. Auto Throttle IF DESIRED."
       else
         hint=hint.."\nDirty up! Gear DOWN, flaps DOWN. Check hook down."
       end

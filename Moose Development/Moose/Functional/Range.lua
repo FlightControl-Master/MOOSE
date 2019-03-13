@@ -282,7 +282,7 @@ RANGE.id="RANGE | "
 
 --- Range script version.
 -- @field #string version
-RANGE.version="1.2.4"
+RANGE.version="1.2.5"
 
 --TODO list:
 --TODO: Verbosity level for messages.
@@ -1054,8 +1054,9 @@ function RANGE:OnEventBirth(EventData)
     -- Reset current strafe status.
     self.strafeStatus[_uid] = nil
   
-    -- Add Menu commands.
-    self:_AddF10Commands(_unitName)
+    -- Add Menu commands after a delay of 0.1 seconds.
+    --self:_AddF10Commands(_unitName)
+    SCHEDULER:New(nil, self._AddF10Commands, {self,_unitName}, 0.1)
     
     -- By default, some bomb impact points and do not flare each hit on target.
     self.PlayerSettings[_playername]={}

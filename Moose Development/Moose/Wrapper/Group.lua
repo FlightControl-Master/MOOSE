@@ -1923,6 +1923,47 @@ function GROUP:InAir()
   return nil
 end
 
+--- Checks whether any unit (or optionally) all units of a group is(are) airbore or not.
+-- @param Wrapper.Group#GROUP self
+-- @param #boolean AllUnits (Optional) If true, check whether all units of the group are airborne.
+-- @return #boolean True if at least one (optionally all) unit(s) is(are) airborne or false otherwise. Nil if no unit exists or is alive.
+function GROUP:IsAirborne(AllUnits)
+  self:F2( self.GroupName )
+
+  -- Get all units of the group.
+  local units=self:GetUnits()
+  
+  if units then
+  
+    for _,_unit in pairs(units) do
+      local unit=_unit --Wrapper.Unit#UNIT
+      
+      if unit then
+      
+        -- Unit in air or not.
+        local inair=unit:InAir()
+        
+        -- Unit is not in air and we wanted to know whether ALL units are ==> return false
+        if inair==false and AllUnits==true then
+          return false
+        end
+        
+        -- At least one unit is in are and we did not care which one.
+        if inair==true and not AllUnits then
+          return true
+        end
+        
+      end
+      -- At least one unit is in the air.
+      return true  
+    end
+  end
+  
+  return nil
+end
+
+
+
 --- Returns the DCS descriptor table of the nth unit of the group.
 -- @param #GROUP self
 -- @param #number n (Optional) The number of the unit for which the dscriptor is returned.
