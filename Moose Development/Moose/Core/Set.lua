@@ -148,7 +148,7 @@ do -- SET_BASE
   function SET_BASE:GetSet()
     self:F2()
     
-    return self.Set
+    return self.Set or {}
   end
   
   --- Gets a list of the Names of the Objects in the Set.

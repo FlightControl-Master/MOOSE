@@ -469,7 +469,7 @@ do -- DESIGNATE
     self.CC = CC
     self.Detection = Detection
     self.AttackSet = AttackSet
-    self.RecceSet = Detection:GetDetectionSetGroup()
+    self.RecceSet = Detection:GetDetectionSet()
     self.Recces = {}
     self.Designating = {}
     self:SetDesignateName()
@@ -1182,7 +1182,7 @@ do -- DESIGNATE
   
   
     local DetectedItem = self.Detection:GetDetectedItemByIndex( Index )
-    local TargetSetUnit = self.Detection:GetDetectedSet( DetectedItem )
+    local TargetSetUnit = self.Detection:GetDetectedItemSet( DetectedItem )
 
     local MarkingCount = 0
     local MarkedTypes = {}
@@ -1352,7 +1352,7 @@ do -- DESIGNATE
     end
     
     local DetectedItem = self.Detection:GetDetectedItemByIndex( Index )
-    local TargetSetUnit = self.Detection:GetDetectedSet( DetectedItem )
+    local TargetSetUnit = self.Detection:GetDetectedItemSet( DetectedItem )
     
     local Recces = self.Recces
     
@@ -1377,7 +1377,7 @@ do -- DESIGNATE
   function DESIGNATE:onafterSmoke( From, Event, To, Index, Color )
   
     local DetectedItem = self.Detection:GetDetectedItemByIndex( Index )
-    local TargetSetUnit = self.Detection:GetDetectedSet( DetectedItem )
+    local TargetSetUnit = self.Detection:GetDetectedItemSet( DetectedItem )
     local TargetSetUnitCount = TargetSetUnit:Count()
   
     local MarkedCount = 0
@@ -1422,7 +1422,7 @@ do -- DESIGNATE
   function DESIGNATE:onafterIlluminate( From, Event, To, Index )
   
     local DetectedItem = self.Detection:GetDetectedItemByIndex( Index )
-    local TargetSetUnit = self.Detection:GetDetectedSet( DetectedItem )
+    local TargetSetUnit = self.Detection:GetDetectedItemSet( DetectedItem )
     local TargetUnit = TargetSetUnit:GetFirst()
   
     if TargetUnit then
