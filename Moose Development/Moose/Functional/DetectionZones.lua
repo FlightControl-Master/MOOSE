@@ -127,22 +127,22 @@ do -- DETECTION_ZONES
   function DETECTION_ZONES:CalculateIntercept( DetectedItem )
 
     local DetectedCoord = DetectedItem.Coordinate
-    local DetectedSpeed = DetectedCoord:GetVelocity()
-    local DetectedHeading = DetectedCoord:GetHeading()
-
-    if self.Intercept then
-      local DetectedSet = DetectedItem.Set
-      -- todo: speed
-  
-      local TranslateDistance = DetectedSpeed * self.InterceptDelay
-      
-      local InterceptCoord = DetectedCoord:Translate( TranslateDistance, DetectedHeading )
-      
-      DetectedItem.InterceptCoord = InterceptCoord
-    else
-      DetectedItem.InterceptCoord = DetectedCoord
-    end
-    
+--    local DetectedSpeed = DetectedCoord:GetVelocity()
+--    local DetectedHeading = DetectedCoord:GetHeading()
+--
+--    if self.Intercept then
+--      local DetectedSet = DetectedItem.Set
+--      -- todo: speed
+--  
+--      local TranslateDistance = DetectedSpeed * self.InterceptDelay
+--      
+--      local InterceptCoord = DetectedCoord:Translate( TranslateDistance, DetectedHeading )
+--      
+--      DetectedItem.InterceptCoord = InterceptCoord
+--    else
+--      DetectedItem.InterceptCoord = DetectedCoord
+--    end
+    DetectedItem.InterceptCoord = DetectedCoord    
   end
   
   

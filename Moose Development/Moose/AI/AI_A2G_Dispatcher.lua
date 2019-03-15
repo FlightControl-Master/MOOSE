@@ -3983,7 +3983,9 @@ do -- AI_A2G_DISPATCHER
           self:ClearDefenderTask( DefenderGroup )
         end
       else
+      -- TODO: prio 1, what is this index stuff again, simplify it.
         if DefenderTask.Target then
+        self:F( { Target = DefenderTask.Target } )
           local AttackerItem = Detection:GetDetectedItemByIndex( DefenderTask.Target.Index )
           if not AttackerItem then
             self:F( { "Removing obsolete Target:", DefenderTask.Target.Index } )
