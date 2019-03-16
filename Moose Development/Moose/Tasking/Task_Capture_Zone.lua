@@ -219,12 +219,13 @@ do -- TASK_CAPTURE_ZONE
 
   --- Instantiates a new TASK_CAPTURE_ZONE.
   -- @param #TASK_CAPTURE_ZONE self
-  function TASK_CAPTURE_ZONE:UpdateTaskInfo() 
-
+  function TASK_CAPTURE_ZONE:UpdateTaskInfo( DetectedItem ) 
+  
     local ZoneCoordinate = self.ZoneGoal:GetZone():GetCoordinate() 
-    self.TaskInfo:AddCoordinate( ZoneCoordinate, 0, "SOD" )
-    self.TaskInfo:AddText( "Zone Name", self.ZoneGoal:GetZoneName(), 10, "MOD" )
-    self.TaskInfo:AddText( "Zone Coalition", self.ZoneGoal:GetCoalitionName(), 11, "MOD" )
+    self.TaskInfo:AddTaskName( 0, "MSOD", true )
+    self.TaskInfo:AddCoordinate( ZoneCoordinate, 1, "SOD", true )
+    self.TaskInfo:AddText( "Zone Name", self.ZoneGoal:GetZoneName(), 10, "MOD", true )
+    self.TaskInfo:AddText( "Zone Coalition", self.ZoneGoal:GetCoalitionName(), 11, "MOD", true )
   end
     
 
