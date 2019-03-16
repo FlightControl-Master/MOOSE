@@ -1524,18 +1524,14 @@ do -- DETECTION_BASE
     local DetectedItem = {}
     self.DetectedItemCount = self.DetectedItemCount + 1
     self.DetectedItemMax = self.DetectedItemMax + 1
-    
-    if DetectedItemKey then
-      self.DetectedItems[DetectedItemKey] = DetectedItem
-    else
-      self.DetectedItems[self.DetectedItemMax] = DetectedItem
-    end
-    
-    self.DetectedItemsByIndex[self.DetectedItemMax] = DetectedItem
-    
+        
+    self.DetectedItems[DetectedItemKey] = DetectedItem
+
+    local DetectedItemIndex = DetectedItemKey or self.DetectedItemMax
+    self.DetectedItemsByIndex[DetectedItemIndex] = DetectedItem
+    DetectedItem.Index = DetectedItemIndex
     
     DetectedItem.Set = Set or SET_UNIT:New():FilterDeads():FilterCrashes()
-    DetectedItem.Index = DetectedItemKey or self.DetectedItemMax
     DetectedItem.ItemID = ItemPrefix .. "." .. self.DetectedItemMax
     DetectedItem.ID = self.DetectedItemMax
     DetectedItem.Removed = false

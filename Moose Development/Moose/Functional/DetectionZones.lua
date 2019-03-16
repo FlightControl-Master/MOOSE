@@ -261,8 +261,8 @@ do -- DETECTION_ZONES
     
     local DetectedUnits = SET_UNIT:New()
     
-    -- First go through all detected sets, and check if there are new detected units, match all existing detected units and identify undetected units.
-    -- Regroup when needed, split groups when needed.
+    -- First go through all zones, and check if there are new Zones.
+    -- New Zones become a new DetectedItem.
     for ZoneName, DetectionZone in pairs( self.DetectionSetZone:GetSet() ) do
       
       local DetectedItem = self:GetDetectedItemByKey( ZoneName )
@@ -276,6 +276,8 @@ do -- DETECTION_ZONES
       -- Scan the zone
       DetectionZone:Scan( { Object.Category.UNIT }, { Unit.Category.GROUND_UNIT } )
       
+      -- For all the units in the zone,
+      -- check if they are of the same coalition to be included.
       local ZoneUnits = DetectionZone:GetScannedUnits()
       for DCSUnitID, DCSUnit in pairs( ZoneUnits ) do
         local UnitName = DCSUnit:getName()
@@ -289,11 +291,8 @@ do -- DETECTION_ZONES
           end
         end
       end
-      
     end
-    
-
-        
+            
     
     -- Now all the tests should have been build, now make some smoke and flares...
     -- We also report here the friendlies within the detected areas.

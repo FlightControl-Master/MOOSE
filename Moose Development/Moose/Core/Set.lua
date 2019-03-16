@@ -130,6 +130,20 @@ do -- SET_BASE
   
     return self
   end
+
+  --- Clear the Objects in the Set.
+  -- @param #SET_BASE self
+  -- @return #SET_BASE self
+  function SET_BASE:Clear()
+    
+    for Name, Object in pairs( self.Set ) do
+      self:Remove( Name )
+    end
+    
+    return self
+  end
+  
+  
   
   --- Finds an @{Core.Base#BASE} object based on the object Name.
   -- @param #SET_BASE self
