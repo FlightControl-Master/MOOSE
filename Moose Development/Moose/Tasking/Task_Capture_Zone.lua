@@ -226,6 +226,8 @@ do -- TASK_CAPTURE_ZONE
     self.TaskInfo:AddCoordinate( ZoneCoordinate, 1, "SOD", true )
     self.TaskInfo:AddText( "Zone Name", self.ZoneGoal:GetZoneName(), 10, "MOD", true )
     self.TaskInfo:AddText( "Zone Coalition", self.ZoneGoal:GetCoalitionName(), 11, "MOD", true )
+    --local ThreatLevel, ThreatText = self.TargetSetUnit:CalculateThreatLevelA2G()
+    --self.TaskInfo:AddThreat( ThreatText, ThreatLevel, 10, "MOD", true )
   end
     
 
