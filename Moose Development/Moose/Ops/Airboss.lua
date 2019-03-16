@@ -219,6 +219,7 @@
 -- @field #AIRBOSS.LUE lue Lineup error thresholds.
 -- @field #boolean trapsheet If true, players can save their trap sheets.
 -- @field #string trappath Path where to save the trap sheets.
+-- @field #string trapprefix File prefix for trap sheet files.
 -- @extends Core.Fsm#FSM
 
 --- Be the boss!
@@ -634,8 +635,8 @@
 --    
 -- The **second line** starts the AIRBOSS class. If you set options this should happen after the @{#AIRBOSS.New} and before @{#AIRBOSS.Start} command.
 -- 
--- If no recovery window is set like in the basic example, a window will automatically open 15 minutes after mission start and close again after three hours.
--- The next section explains how to set your own recovery times.
+-- However, good mission planning involves also planning when aircraft are supposed to be launched or recovered. The definition of *case specific* recovery ops within the same mission is described in
+-- the next section.
 --
 -- ## Recovery Windows
 -- 
@@ -1191,6 +1192,7 @@ AIRBOSS = {
   lue            =  {},
   trapsheet      = nil,
   trappath       = nil,
+  trapprefix     = nil,
 }
 
 --- Aircraft types capable of landing on carrier (human+AI).
@@ -1580,7 +1582,8 @@ AIRBOSS.Difficulty={
 
 --- Player data table holding all important parameters of each player.
 -- @type AIRBOSS.PlayerData
--- @field Wrapper.Unit#UNIT unit Aircraft of the player. 
+-- @field Wrapper.Unit#UNIT unit Aircraft of the player.
+-- @field #string unitname Name of the unit.
 -- @field Wrapper.Client#CLIENT client Client object of player.
 -- @field #string callsign Callsign of player.
 -- @field #string difficulty Difficulty level.
@@ -1621,7 +1624,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.9.9.3"
+AIRBOSS.version="0.9.9.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -2621,11 +2624,13 @@ end
 --- Enable saving of player's trap sheets and specify an optional directory path.
 -- @param #AIRBOSS self
 -- @param #string path (Optional) Path where to save the trap sheets.
+-- @param #string prefix (Optional) Prefix for trap sheet files. File name will be saved as *prefix_aircrafttype-0001.csv*, *prefix_aircrafttype-0002.csv*, etc.
 -- @return #AIRBOSS self
-function AIRBOSS:SetTrapSheet(path)
+function AIRBOSS:SetTrapSheet(path, prefix)
   if io then
     self.trapsheet=true
     self.trappath=path
+    self.trapprefix=prefix
   else
     self:E(self.lid.."ERROR: io is not desanitized. Cannot save trap sheet.")
   end
@@ -3092,8 +3097,8 @@ function AIRBOSS:onafterStart(From, Event, To)
   -- Init patrol route of carrier.
   self:_PatrolRoute(1)
   
-  -- Check if no recovery window is set.
-  if #self.recoverytimes==0 then
+  -- Check if no recovery window is set. DISABLED!
+  if #self.recoverytimes==0 and false then
   
     -- Open window in 15 minutes for 3 hours.
     local Topen=timer.getAbsTime()+15*60
@@ -3154,6 +3159,19 @@ function AIRBOSS:onafterStatus(From, Event, To)
     local text=string.format("Time %s - Status %s (case=%d) - Speed=%.1f kts - Heading=%d - WP=%d - ETA=%s - Turning=%s - Collision Warning=%s",
     clock, self:GetState(), self.case, self.carrier:GetVelocityKNOTS(), hdg, self.currentwp, eta, tostring(self.turning), tostring(collision))
     self:T(self.lid..text)
+    
+    -- Players online:
+    text="Players:"
+    local i=0
+    for _name,_player in pairs(self.players) do
+      i=i+1
+      local player=_player --#AIRBOSS.FlightGroup
+      text=text..string.format("\n%d.) %s step=%s, unit=%s", i, tostring(player.name), tostring(player.step), tostring(player.unitname))
+    end
+    if i==0 then
+      text=text.." none"
+    end
+    self:I(self.lid..text)
     
     -- Check for collision.
     if collision then
@@ -6586,6 +6604,7 @@ function AIRBOSS:_NewPlayer(unitname)
     
       -- Player unit, client and callsign.
       playerData.unit     = playerunit
+      playerData.unitname = unitname
       playerData.name     = playername
       playerData.callsign = playerData.unit:GetCallsign()
       playerData.client   = CLIENT:FindByName(unitname, nil, true)
@@ -7173,7 +7192,18 @@ function AIRBOSS:_RemoveFlight(flight, completely)
         while #grades>0 and grades[#grades].finalscore==nil do
           table.remove(grades, #grades)
         end
-      end 
+      end
+      
+      
+      -- Remove player from players table.
+      local playerdata=self.players[flight.name]
+      if playerdata then
+        self:I(self.lid..string.format("Removing player %s completely.", flight.name))
+        self.players[flight.name]=nil
+      end
+      
+      -- Remove flight.
+      flight=nil
       
     else
     
@@ -7511,9 +7541,9 @@ function AIRBOSS:OnEventBirth(EventData)
   local _unitName=EventData.IniUnitName
   local _unit, _playername=self:_GetPlayerUnitAndName(_unitName)
   
-  self:T2(self.lid.."BIRTH: unit   = "..tostring(EventData.IniUnitName))
-  self:T2(self.lid.."BIRTH: group  = "..tostring(EventData.IniGroupName))
-  self:T2(self.lid.."BIRTH: player = "..tostring(_playername))
+  self:T(self.lid.."BIRTH: unit   = "..tostring(EventData.IniUnitName))
+  self:T(self.lid.."BIRTH: group  = "..tostring(EventData.IniGroupName))
+  self:T(self.lid.."BIRTH: player = "..tostring(_playername))
       
   if _unit and _playername then
   
@@ -7624,14 +7654,14 @@ function AIRBOSS:OnEventLand(EventData)
           local text=string.format("you missed at least one important step in the pattern!\nYour next step would have been %s.\nThis pass is INVALID.", playerData.step)
           self:MessageToPlayer(playerData, text, "AIRBOSS", nil, 30, true, 5)
           
-          -- Reinitialize player data.
-          self:_InitPlayer(playerData)
-          
           -- Clear queues just in case.
           self:_RemoveFlightFromMarshalQueue(playerData, true)
           self:_RemoveFlightFromQueue(self.Qpattern, playerData)
           self:_RemoveFlightFromQueue(self.Qwaiting, playerData)
           self:_RemoveFlightFromQueue(self.Qspinning, playerData)
+          
+          -- Reinitialize player data.
+          self:_InitPlayer(playerData)          
           
           return
         end
@@ -7741,7 +7771,6 @@ end
 --- Airboss event handler for event that a unit shuts down its engines.
 -- @param #AIRBOSS self
 -- @param Core.Event#EVENTDATA EventData
---function AIRBOSS:OnEventPlayerLeaveUnit(EventData)
 function AIRBOSS:OnEventEngineShutdown(EventData)
   self:F3({eventengineshutdown=EventData})
 
@@ -13189,6 +13218,27 @@ function AIRBOSS:_GetPlayerDataGroup(group)
   return nil
 end
 
+--- Returns the unit of a player and the player name from the self.players table if it exists. 
+-- @param #AIRBOSS self
+-- @param #string _unitName Name of the player unit.
+-- @return Wrapper.Unit#UNIT Unit of player or nil.
+-- @return #string Name of player or nil.
+function AIRBOSS:_GetPlayerUnit(_unitName)
+
+  for _,_player in pairs(self.players) do
+  
+    local player=_player --#AIRBOSS.PlayerData
+    
+    if player.unit and player.unit:GetName()==_unitName then
+      self:T(self.lid..string.format("Found player=%s unit=%s in players table.", tostring(player.name), tostring(_unitName)))
+      return player.unit, player.name
+    end
+  
+  end
+
+  return nil,nil
+end
+
 --- Returns the unit of a player and the player name. If the unit does not belong to a player, nil is returned. 
 -- @param #AIRBOSS self
 -- @param #string _unitName Name of the player unit.
@@ -13199,16 +13249,31 @@ function AIRBOSS:_GetPlayerUnitAndName(_unitName)
 
   if _unitName ~= nil then
   
+    -- First, let's look up all current players.
+    local u,pn=self:_GetPlayerUnit(_unitName)
+    
+    -- Return
+    if u and pn then
+      return u, pn
+    end
+  
     -- Get DCS unit from its name.
     local DCSunit=Unit.getByName(_unitName)
     
     if DCSunit then
     
+      -- Get player name if any.
       local playername=DCSunit:getPlayerName()
+      
+      -- Unit object.
       local unit=UNIT:Find(DCSunit)
     
+      -- Debug.
       self:T2({DCSunit=DCSunit, unit=unit, playername=playername})
+      
+      -- Check if enverything is there.
       if DCSunit and unit and playername then
+        self:T(self.lid..string.format("Found DCS unit %s with player %s.", tostring(_unitName), tostring(playername)))
         return unit, playername
       end
       
@@ -15925,7 +15990,11 @@ function AIRBOSS:_DisplayPlayerStatus(_unitName)
       
       -- Send message.
       self:MessageToPlayer(playerData, text, nil, "", 30, true)
-    end
+    else
+      self:E(self.lid..string.format("ERROR: playerData=nil. Unit name=%s, player name=%s", _unitName, _playername))
+    end    
+  else
+    self:E(self.lid..string.format("ERROR: could not find player for unit %s", _unitName))
   end
   
 end
@@ -16191,9 +16260,13 @@ function AIRBOSS:_SaveTrapSheet(playerData, grade)
 
   --- Function that saves data to file
   local function _savefile(filename, data)
-    local f = assert(io.open(filename, "wb"))
-    f:write(data)
-    f:close()
+    local f = io.open(filename, "wb")
+    if f then
+      f:write(data)
+      f:close()
+    else
+      self:E(self.lid..string.format("ERROR: could not save trap sheet to file %s.\nFile may contain invalid characters.", tostring(filename)))
+    end
   end
   
   -- Set path or default.
@@ -16208,7 +16281,11 @@ function AIRBOSS:_SaveTrapSheet(playerData, grade)
   for i=1,9999 do
   
     -- Create file name
-    filename=string.format("AIRBOSS-%s_Trapsheet-%s_%s-%04d.csv", self.alias, playerData.name, playerData.actype, i)
+	if self.trapprefix then
+		filename=string.format("%s_%s-%04d.csv", self.trapprefix, playerData.actype, i)
+	else
+		filename=string.format("AIRBOSS-%s_Trapsheet-%s_%s-%04d.csv", self.alias, playerData.name, playerData.actype, i)
+	end
 
     -- Set path.
     if path~=nil then
@@ -16242,7 +16319,7 @@ function AIRBOSS:_SaveTrapSheet(playerData, grade)
     local d=UTILS.MetersToFeet(groove.Alt)
     local e=groove.AoA
     local f=groove.GSE
-    local g=groove.LUE
+    local g=-groove.LUE
     local h=UTILS.MpsToKnots(groove.Vel)
     local i=groove.Vy*196.85
     local j=groove.Gamma
