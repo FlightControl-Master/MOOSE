@@ -1101,7 +1101,7 @@ function POSITIONABLE:MessageToSetGroup( Message, Duration, MessageSetGroup, Nam
   local DCSObject = self:GetDCSObject()
   if DCSObject then
     if DCSObject:isExist() then
-      MessageSetGroup:ForEachGroup(
+      MessageSetGroup:ForEachGroupAlive(
         function( MessageGroup )
           self:GetMessage( Message, Duration, Name ):ToGroup( MessageGroup )
         end 

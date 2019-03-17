@@ -1393,7 +1393,7 @@ do -- DESIGNATE
           self:F( "Smoking ..." )
 
           local RecceGroup = self.RecceSet:FindNearestGroupFromPointVec2(SmokeUnit:GetPointVec2())
-          local RecceUnit = RecceGroup:GetUnit( 1 )
+          local RecceUnit = RecceGroup:GetUnit( 1 ) -- Wrapper.Unit#UNIT
 
           if RecceUnit then
 
