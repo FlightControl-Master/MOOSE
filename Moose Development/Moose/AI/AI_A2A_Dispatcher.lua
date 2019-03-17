@@ -1688,7 +1688,7 @@ do -- AI_A2A_DISPATCHER
    
     -- Add the CAP to the EWR network.
     
-    local RecceSet = self.Detection:GetDetectionSetGroup()
+    local RecceSet = self.Detection:GetDetectionSet()
     RecceSet:FilterPrefixes( DefenderSquadron.TemplatePrefixes )
     RecceSet:FilterStart()
     

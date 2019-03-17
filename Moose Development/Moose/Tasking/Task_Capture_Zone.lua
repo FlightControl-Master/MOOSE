@@ -47,7 +47,7 @@ do -- TASK_ZONE_GOAL
   -- @param Tasking.Mission#MISSION Mission
   -- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
   -- @param #string TaskName The name of the Task.
-  -- @param Core.ZoneGoal#ZONE_GOAL ZoneGoal
+  -- @param Core.ZoneGoalCoalition#ZONE_GOAL_COALITION ZoneGoal
   -- @return #TASK_ZONE_GOAL self
   function TASK_ZONE_GOAL:New( Mission, SetGroup, TaskName, ZoneGoal, TaskType, TaskBriefing )
     local self = BASE:Inherit( self, TASK:New( Mission, SetGroup, TaskName, TaskType, TaskBriefing ) ) -- #TASK_ZONE_GOAL
@@ -219,12 +219,16 @@ do -- TASK_CAPTURE_ZONE
 
   --- Instantiates a new TASK_CAPTURE_ZONE.
   -- @param #TASK_CAPTURE_ZONE self
-  function TASK_CAPTURE_ZONE:UpdateTaskInfo() 
-
+  function TASK_CAPTURE_ZONE:UpdateTaskInfo( DetectedItem ) 
+  
     local ZoneCoordinate = self.ZoneGoal:GetZone():GetCoordinate() 
-    self.TaskInfo:AddCoordinate( ZoneCoordinate, 0, "SOD" )
-    self.TaskInfo:AddText( "Zone Name", self.ZoneGoal:GetZoneName(), 10, "MOD" )
-    self.TaskInfo:AddText( "Zone Coalition", self.ZoneGoal:GetCoalitionName(), 11, "MOD" )
+    self.TaskInfo:AddTaskName( 0, "MSOD", true )
+    self.TaskInfo:AddCoordinate( ZoneCoordinate, 1, "SOD", true )
+    self.TaskInfo:AddText( "Zone Name", self.ZoneGoal:GetZoneName(), 10, "MOD", true )
+    self.TaskInfo:AddText( "Zone Coalition", self.ZoneGoal:GetCoalitionName(), 11, "MOD", true )
+    local SetUnit = self.ZoneGoal.Zone:GetScannedSetUnit()
+    local ThreatLevel, ThreatText = SetUnit:CalculateThreatLevelA2G()
+    self.TaskInfo:AddThreat( ThreatText, ThreatLevel, 20, "MOD", true )
   end
     
 

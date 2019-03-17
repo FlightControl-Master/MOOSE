@@ -872,7 +872,7 @@ function ESCORT:_AttackTarget( DetectedItem )
     EscortGroup:OptionROTPassiveDefense()
     EscortGroup:SetState( EscortGroup, "Escort", self )
 
-    local DetectedSet = self.Detection:GetDetectedSet( DetectedItem )
+    local DetectedSet = self.Detection:GetDetectedItemSet( DetectedItem )
     
     local Tasks = {}
 
@@ -895,7 +895,7 @@ function ESCORT:_AttackTarget( DetectedItem )
     
   else
   
-    local DetectedSet = self.Detection:GetDetectedSet( DetectedItem )
+    local DetectedSet = self.Detection:GetDetectedItemSet( DetectedItem )
     
     local Tasks = {}
 
@@ -934,7 +934,7 @@ function ESCORT:_AssistTarget( EscortGroupAttack, DetectedItem )
     EscortGroupAttack:OptionROEOpenFire()
     EscortGroupAttack:OptionROTVertical()
     
-    local DetectedSet = self.Detection:GetDetectedSet( DetectedItem )
+    local DetectedSet = self.Detection:GetDetectedItemSet( DetectedItem )
     
     local Tasks = {}
 
@@ -956,7 +956,7 @@ function ESCORT:_AssistTarget( EscortGroupAttack, DetectedItem )
     )
 
   else
-    local DetectedSet = self.Detection:GetDetectedSet( DetectedItem )
+    local DetectedSet = self.Detection:GetDetectedItemSet( DetectedItem )
     
     local Tasks = {}
 

@@ -130,6 +130,20 @@ do -- SET_BASE
   
     return self
   end
+
+  --- Clear the Objects in the Set.
+  -- @param #SET_BASE self
+  -- @return #SET_BASE self
+  function SET_BASE:Clear()
+    
+    for Name, Object in pairs( self.Set ) do
+      self:Remove( Name )
+    end
+    
+    return self
+  end
+  
+  
   
   --- Finds an @{Core.Base#BASE} object based on the object Name.
   -- @param #SET_BASE self
@@ -148,7 +162,7 @@ do -- SET_BASE
   function SET_BASE:GetSet()
     self:F2()
     
-    return self.Set
+    return self.Set or {}
   end
   
   --- Gets a list of the Names of the Objects in the Set.

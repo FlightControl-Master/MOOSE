@@ -631,8 +631,8 @@ end
 --   * @{ZONE_RADIUS.IsNoneInZone}(): Scan if the zone is empty.
 -- @{#ZONE_RADIUS.
 -- @param #ZONE_RADIUS self
--- @param ObjectCategories
--- @param UnitCategories
+-- @param ObjectCategories An array of categories of the objects to find in the zone.
+-- @param UnitCategories An array of unit categories of the objects to find in the zone.
 -- @usage
 --    self.Zone:Scan()
 --    local IsAttacked = self.Zone:IsSomeInZoneOfCoalition( self.Coalition )
@@ -701,6 +701,20 @@ end
 function ZONE_RADIUS:GetScannedUnits()
 
   return self.ScanData.Units
+end
+
+
+function ZONE_RADIUS:GetScannedSetUnit()
+
+  local SetUnit = SET_UNIT:New()
+
+  if self.ScanData then
+    for ObjectID, UnitObject in pairs( self.ScanData.Units ) do
+      SetUnit:AddUnit( UNIT:FindByName(UnitObject:getName() ) )  
+    end
+  end
+
+  return SetUnit
 end
 
 

@@ -246,6 +246,7 @@ do -- TASK_CAPTURE_DISPATCHER
         -- Here we need to check if the pilot is still existing.
 --            Task = self:RemoveTask( TaskIndex )
         end
+        
       end
 
       -- Now that all obsolete tasks are removed, loop through the Zone tasks.
@@ -257,25 +258,32 @@ do -- TASK_CAPTURE_DISPATCHER
           CaptureZone.Task.TaskPrefix = CaptureZone.TaskPrefix -- We keep the TaskPrefix for further reference!
           Mission:AddTask( CaptureZone.Task )
           TaskReport:Add( TaskName )
+          CaptureZone.Task:UpdateTaskInfo()
+          
           function CaptureZone.Task.OnEnterSuccess( Task, From, Event, To )
             self:Success( Task )
+            CaptureZone.Task:UpdateTaskInfo()
           end
 
           function CaptureZone.Task.OnEnterCancelled( Task, From, Event, To )
             self:Cancelled( Task )
+            CaptureZone.Task:UpdateTaskInfo()
           end
-          
+            
           function CaptureZone.Task.OnEnterFailed( Task, From, Event, To )
             self:Failed( Task )
+            CaptureZone.Task:UpdateTaskInfo()
           end
 
           function CaptureZone.Task.OnEnterAborted( Task, From, Event, To )
             self:Aborted( Task )
+            CaptureZone.Task:UpdateTaskInfo()
           end
 
           -- Now broadcast the onafterCargoPickedUp event to the Task Cargo Dispatcher.
           function CaptureZone.Task.OnAfterCaptured( Task, From, Event, To, TaskUnit )
             self:Captured( Task, Task.TaskPrefix, TaskUnit )
+            CaptureZone.Task:UpdateTaskInfo()
           end
 
         end

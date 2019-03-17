@@ -162,7 +162,7 @@ end
 -- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
 -- @return #TASKINFO self
 function TASKINFO:AddThreat( ThreatText, ThreatLevel, Order, Detail, Keep )
-  self:AddInfo( "Threat", ThreatText .. " [" .. string.rep(  "■", ThreatLevel ) .. string.rep(  "□", 10 - ThreatLevel ) .. "]", Order, Detail, Keep )
+  self:AddInfo( "Threat", " [" .. string.rep(  "■", ThreatLevel ) .. string.rep(  "□", 10 - ThreatLevel ) .. "]:" .. ThreatText, Order, Detail, Keep )
   return self
 end
 
@@ -306,65 +306,51 @@ function TASKINFO:Report( Report, Detail, ReportGroup, Task )
 
   for Key, Data in UTILS.spairs( self.Info.Set, function( t, a, b ) return t[a].Order < t[b].Order end ) do
 
-    self:F( { Key = Key, Detail = Detail, Data = Data } )
-    
     if Data.Detail:find( Detail ) then
       local Text = ""
-      if Key == "TaskName" then
+      if     Key == "TaskName" then
         Key = nil
         Text = Data.Data
-      end
-      if Key == "Coordinate" then
+      elseif Key == "Coordinate" then
         local Coordinate = Data.Data -- Core.Point#COORDINATE
         Text = Coordinate:ToString( ReportGroup:GetUnit(1), nil, Task )
-      end
-      if Key == "Threat" then
+      elseif Key == "Threat" then
         local DataText = Data.Data -- #string
         Text = DataText
-      end
-      if Key == "Counting" then
+      elseif Key == "Counting" then
         local DataText = Data.Data -- #string
         Text = DataText
-      end
-      if Key == "Targets" then
+      elseif Key == "Targets" then
         local DataText = Data.Data -- #string
         Text = DataText
-      end
-      if Key == "QFE" then
+      elseif Key == "QFE" then
         local Coordinate = Data.Data -- Core.Point#COORDINATE
         Text = Coordinate:ToStringPressure( ReportGroup:GetUnit(1), nil, Task )
-      end
-      if Key == "Temperature" then
+      elseif Key == "Temperature" then
         local Coordinate = Data.Data -- Core.Point#COORDINATE
         Text = Coordinate:ToStringTemperature( ReportGroup:GetUnit(1), nil, Task )
-      end
-      if Key == "Wind" then
+      elseif Key == "Wind" then
         local Coordinate = Data.Data -- Core.Point#COORDINATE
         Text = Coordinate:ToStringWind( ReportGroup:GetUnit(1), nil, Task )
-      end
-      if Key == "Cargo" then
+      elseif Key == "Cargo" then
+        local DataText = Data.Data -- #string
+        Text = DataText
+      elseif Key == "Friendlies" then
+        local DataText = Data.Data -- #string
+        Text = DataText
+      elseif Key == "Players" then
+        local DataText = Data.Data -- #string
+        Text = DataText
+      else
         local DataText = Data.Data -- #string
         Text = DataText
       end
-      if Key == "Friendlies" then
-        local DataText = Data.Data -- #string
-        Text = DataText
-      end
-      if Key == "Players" then
-        local DataText = Data.Data -- #string
-        Text = DataText
-      end
-
 
       if Line < math.floor( Data.Order / 10 ) then
         if Line == 0 then
-          if Text ~= "" then
-            Report:AddIndent( LineReport:Text( ", " ), "-" )
-          end
+          Report:AddIndent( LineReport:Text( ", " ), "-" )
         else
-          if Text ~= "" then
-            Report:AddIndent( LineReport:Text( ", " ) )
-          end
+          Report:AddIndent( LineReport:Text( ", " ) )
         end
         LineReport = REPORT:New()
         Line = math.floor( Data.Order / 10 )
@@ -373,8 +359,9 @@ function TASKINFO:Report( Report, Detail, ReportGroup, Task )
       if Text ~= "" then
         LineReport:Add( ( Key and ( Key .. ":" ) or "" ) .. Text )
       end
+
     end
   end
+  
   Report:AddIndent( LineReport:Text( ", " ) )
-
 end
