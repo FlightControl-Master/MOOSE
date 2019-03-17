@@ -3467,6 +3467,20 @@ do -- AI_A2G_DISPATCHER
         end
       end
 
+      function Fsm:onafterPatrolRoute( Defender, From, Event, To, AttackSetUnit )
+        self:F({"Defender PatrolRoute", Defender:GetName()})
+        self:GetParent(self).onafterPatrolRoute( self, Defender, From, Event, To, AttackSetUnit )
+        
+        local DefenderName = Defender:GetName()
+        local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
+        local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
+        if Squadron then
+          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " returning." )
+        end
+
+        Dispatcher:ClearDefenderTaskTarget( Defender )
+      end
+
       function Fsm:onafterRTB( Defender, From, Event, To )
         self:F({"Defender RTB", Defender:GetName()})
         self:GetParent(self).onafterRTB( self, Defender, From, Event, To )
@@ -3564,15 +3578,15 @@ do -- AI_A2G_DISPATCHER
         end
       end
 
-      function Fsm:OnAfterEngageRoute( Defender, From, Event, To, AttackSetUnit )
+      function Fsm:onafterEngageRoute( Defender, From, Event, To, AttackSetUnit )
         self:F({"Engage Route", Defender:GetName()})
-        --self:GetParent(self).onafterBirth( self, Defender, From, Event, To )
+        self:GetParent(self).onafterEngageRoute( self, Defender, From, Event, To, AttackSetUnit )
         
         local DefenderName = Defender:GetName()
         local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
         
-        if FirstUnit then
+        if Squadron then
           local FirstUnit = AttackSetUnit:GetFirst()
           local Coordinate = FirstUnit:GetCoordinate() -- Core.Point#COORDINATE
   

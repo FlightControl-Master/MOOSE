@@ -162,7 +162,7 @@ end
 -- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
 -- @return #TASKINFO self
 function TASKINFO:AddThreat( ThreatText, ThreatLevel, Order, Detail, Keep )
-  self:AddInfo( "Threat", ThreatText .. " [" .. string.rep(  "■", ThreatLevel ) .. string.rep(  "□", 10 - ThreatLevel ) .. "]", Order, Detail, Keep )
+  self:AddInfo( "Threat", " [" .. string.rep(  "■", ThreatLevel ) .. string.rep(  "□", 10 - ThreatLevel ) .. "]:" .. ThreatText, Order, Detail, Keep )
   return self
 end
 

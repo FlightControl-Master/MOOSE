@@ -704,6 +704,20 @@ function ZONE_RADIUS:GetScannedUnits()
 end
 
 
+function ZONE_RADIUS:GetScannedSetUnit()
+
+  local SetUnit = SET_UNIT:New()
+
+  if self.ScanData then
+    for ObjectID, UnitObject in pairs( self.ScanData.Units ) do
+      SetUnit:AddUnit( UNIT:FindByName(UnitObject:getName() ) )  
+    end
+  end
+
+  return SetUnit
+end
+
+
 function ZONE_RADIUS:CountScannedCoalitions()
 
   local Count = 0
