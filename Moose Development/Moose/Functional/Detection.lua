@@ -1536,6 +1536,10 @@ do -- DETECTION_BASE
     DetectedItem.ID = self.DetectedItemMax
     DetectedItem.Removed = false
     
+    if self.Locking then
+      self:LockDetectedItem( DetectedItem )
+    end
+    
     return DetectedItem
   end
   
@@ -1724,6 +1728,68 @@ do -- DETECTION_BASE
     end
 
   end  
+
+  --- Lock the detected items when created and lock all existing detected items.
+  -- @param #DETECTION_BASE self
+  -- @return #DETECTION_BASE
+  function DETECTION_BASE:LockDetectedItems()
+
+    for DetectedItemID, DetectedItem in pairs( self.DetectedItems ) do
+      self:LockDetectedItem( DetectedItem )
+    end
+    self.Locking = true
+
+    return self
+  end
+
+
+  --- Unlock the detected items when created and unlock all existing detected items.
+  -- @param #DETECTION_BASE self
+  -- @return #DETECTION_BASE
+  function DETECTION_BASE:UnlockDetectedItems()
+
+    for DetectedItemID, DetectedItem in pairs( self.DetectedItems ) do
+      self:UnlockDetectedItem( DetectedItem )
+    end
+    self.Locking = nil
+
+    return self
+  end
+  
+  --- Validate if the detected item is locked.
+  -- @param #DETECTION_BASE self
+  -- @param #DETECTION_BASE.DetectedItem DetectedItem The DetectedItem.
+  -- @return #boolean
+  function DETECTION_BASE:IsDetectedItemLocked( DetectedItem )
+
+    return self.Locking and DetectedItem.Locked == true
+
+  end
+  
+
+  --- Lock a detected item.
+  -- @param #DETECTION_BASE self
+  -- @param #DETECTION_BASE.DetectedItem DetectedItem The DetectedItem.
+  -- @return #DETECTION_BASE
+  function DETECTION_BASE:LockDetectedItem( DetectedItem )
+
+    DetectedItem.Locked = true
+
+    return self
+  end
+
+  --- Unlock a detected item.
+  -- @param #DETECTION_BASE self
+  -- @param #DETECTION_BASE.DetectedItem DetectedItem The DetectedItem.
+  -- @return #DETECTION_BASE
+  function DETECTION_BASE:UnlockDetectedItem( DetectedItem )
+
+    DetectedItem.Locked = nil
+
+    return self
+  end
+
+
 
 
   --- Set the detected item coordinate.

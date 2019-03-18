@@ -233,6 +233,7 @@ do -- TASK_CAPTURE_DISPATCHER
   function TASK_CAPTURE_DISPATCHER:Link_AI_A2G_Dispatcher( AI_A2G_Dispatcher )
 
     self.AI_A2G_Dispatcher = AI_A2G_Dispatcher -- AI.AI_A2G_Dispatcher#AI_A2G_DISPATCHER
+    AI_A2G_Dispatcher.Detection:LockDetectedItems()
 
     return self
   end
@@ -276,34 +277,50 @@ do -- TASK_CAPTURE_DISPATCHER
           CaptureZone.Task:UpdateTaskInfo()
 
           function CaptureZone.Task.OnEnterAssigned( Task, From, Event, To )
-            self.AI_A2G_Dispatcher:Unlock( Task.TaskZoneName ) -- This will unlock the zone to be defended by AI.        
+            if self.AI_A2G_Dispatcher then
+              self.AI_A2G_Dispatcher:Unlock( Task.TaskZoneName ) -- This will unlock the zone to be defended by AI.
+            end        
             CaptureZone.Task:UpdateTaskInfo()
           end
           
           function CaptureZone.Task.OnEnterSuccess( Task, From, Event, To )
             self:Success( Task )
+            if self.AI_A2G_Dispatcher then
+              self.AI_A2G_Dispatcher:Lock( Task.TaskZoneName ) -- This will lock the zone from being defended by AI.
+            end
             CaptureZone.Task:UpdateTaskInfo()
           end
 
           function CaptureZone.Task.OnEnterCancelled( Task, From, Event, To )
             self:Cancelled( Task )
-            self.AI_A2G_Dispatcher:Unlock( Task.TaskZoneName ) -- This will lock the zone from being defended by AI.
+            if self.AI_A2G_Dispatcher then
+              self.AI_A2G_Dispatcher:Lock( Task.TaskZoneName ) -- This will lock the zone from being defended by AI.
+            end
             CaptureZone.Task:UpdateTaskInfo()
           end
             
           function CaptureZone.Task.OnEnterFailed( Task, From, Event, To )
             self:Failed( Task )
+            if self.AI_A2G_Dispatcher then
+              self.AI_A2G_Dispatcher:Lock( Task.TaskZoneName ) -- This will lock the zone from being defended by AI.
+            end
             CaptureZone.Task:UpdateTaskInfo()
           end
 
           function CaptureZone.Task.OnEnterAborted( Task, From, Event, To )
             self:Aborted( Task )
+            if self.AI_A2G_Dispatcher then
+              self.AI_A2G_Dispatcher:Lock( Task.TaskZoneName ) -- This will lock the zone from being defended by AI.
+            end
             CaptureZone.Task:UpdateTaskInfo()
           end
 
           -- Now broadcast the onafterCargoPickedUp event to the Task Cargo Dispatcher.
           function CaptureZone.Task.OnAfterCaptured( Task, From, Event, To, TaskUnit )
             self:Captured( Task, Task.TaskPrefix, TaskUnit )
+            if self.AI_A2G_Dispatcher then
+              self.AI_A2G_Dispatcher:Lock( Task.TaskZoneName ) -- This will lock the zone from being defended by AI.
+            end
             CaptureZone.Task:UpdateTaskInfo()
           end
 

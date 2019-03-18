@@ -1126,7 +1126,7 @@ do -- AI_A2G_DISPATCHER
     
     self.TakeoffScheduleID = self:ScheduleRepeat( 10, 10, 0, nil, self.ResourceTakeoff, self )
     
-    self:__Start( 5 )
+    self:__Start( 1 )
     
     return self
   end
@@ -1150,8 +1150,29 @@ do -- AI_A2G_DISPATCHER
   
   --- Locks the DefenseItem from being defended.
   -- @param #AI_A2G_DISPATCHER self
-  -- @param #string DefenseItemKey The key of the defense item.
+  -- @param #string DetectedItemIndex The index of the detected item.
+  function AI_A2G_DISPATCHER:Lock( DetectedItemIndex )
+    self:F( { DetectedItemIndex = DetectedItemIndex } )
+    local DetectedItem = self.Detection:GetDetectedItemByIndex( DetectedItemIndex )
+    if DetectedItem then
+      self:F( { Locked = DetectedItem } )
+      self.Detection:LockDetectedItem( DetectedItem )
+    end
+  end
   
+  
+  --- Unlocks the DefenseItem from being defended.
+  -- @param #AI_A2G_DISPATCHER self
+  -- @param #string DetectedItemIndex The index of the detected item.
+  function AI_A2G_DISPATCHER:Unlock( DetectedItemIndex )
+    self:F( { DetectedItemIndex = DetectedItemIndex } )
+    self:F( { Index = self.Detection.DetectedItemsByIndex } )
+    local DetectedItem = self.Detection:GetDetectedItemByIndex( DetectedItemIndex )
+    if DetectedItem then
+      self:F( { Unlocked = DetectedItem } )
+      self.Detection:UnlockDetectedItem( DetectedItem )
+    end
+  end
   
   
 
@@ -4032,100 +4053,102 @@ do -- AI_A2G_DISPATCHER
     -- Now that all obsolete tasks are removed, loop through the detected targets.
     for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
     
-      local DetectedItem = DetectedItem -- Functional.Detection#DETECTION_BASE.DetectedItem
-      local DetectedSet = DetectedItem.Set -- Core.Set#SET_UNIT
-      local DetectedCount = DetectedSet:Count()
-      local DetectedZone = DetectedItem.Zone
-
-      self:F( { "Target ID", DetectedItem.ItemID } )
-      DetectedSet:Flush( self )
-
-      local DetectedID = DetectedItem.ID
-      local DetectionIndex = DetectedItem.Index
-      local DetectedItemChanged = DetectedItem.Changed
-      
-      local AttackCoordinate = self.Detection:GetDetectedItemCoordinate( DetectedItem )
-      
-      -- Calculate if for this DetectedItem if a defense needs to be initiated.
-      -- This calculation is based on the distance between the defense point and the attackers, and the defensiveness parameter.
-      -- The attackers closest to the defense coordinates will be handled first, or course!
-      
-      local EngageCoordinate = nil
-      
-      for DefenseCoordinateName, DefenseCoordinate in pairs( self.DefenseCoordinates ) do
-        local DefenseCoordinate = DefenseCoordinate -- Core.Point#COORDINATE
-
-        local EvaluateDistance = AttackCoordinate:Get2DDistance( DefenseCoordinate )
+      if not self.Detection:IsDetectedItemLocked( DetectedItem ) == true then
+        local DetectedItem = DetectedItem -- Functional.Detection#DETECTION_BASE.DetectedItem
+        local DetectedSet = DetectedItem.Set -- Core.Set#SET_UNIT
+        local DetectedCount = DetectedSet:Count()
+        local DetectedZone = DetectedItem.Zone
+  
+        self:F( { "Target ID", DetectedItem.ItemID } )
+        DetectedSet:Flush( self )
+  
+        local DetectedID = DetectedItem.ID
+        local DetectionIndex = DetectedItem.Index
+        local DetectedItemChanged = DetectedItem.Changed
         
-        if EvaluateDistance <= self.DefenseRadius then
+        local AttackCoordinate = self.Detection:GetDetectedItemCoordinate( DetectedItem )
         
-          local DistanceProbability = ( self.DefenseRadius / EvaluateDistance * self.DefenseReactivity )
-          local DefenseProbability = math.random()
+        -- Calculate if for this DetectedItem if a defense needs to be initiated.
+        -- This calculation is based on the distance between the defense point and the attackers, and the defensiveness parameter.
+        -- The attackers closest to the defense coordinates will be handled first, or course!
+        
+        local EngageCoordinate = nil
+        
+        for DefenseCoordinateName, DefenseCoordinate in pairs( self.DefenseCoordinates ) do
+          local DefenseCoordinate = DefenseCoordinate -- Core.Point#COORDINATE
+  
+          local EvaluateDistance = AttackCoordinate:Get2DDistance( DefenseCoordinate )
           
-          self:F( { DistanceProbability = DistanceProbability, DefenseProbability = DefenseProbability } )
+          if EvaluateDistance <= self.DefenseRadius then
           
-          if DefenseProbability <= DistanceProbability / ( 300 / 30 ) then
-            EngageCoordinate = DefenseCoordinate
-            break
+            local DistanceProbability = ( self.DefenseRadius / EvaluateDistance * self.DefenseReactivity )
+            local DefenseProbability = math.random()
+            
+            self:F( { DistanceProbability = DistanceProbability, DefenseProbability = DefenseProbability } )
+            
+            if DefenseProbability <= DistanceProbability / ( 300 / 30 ) then
+              EngageCoordinate = DefenseCoordinate
+              break
+            end
           end
         end
-      end
-      
-      if EngageCoordinate then
-        do 
-          local DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies = self:Evaluate_SEAD( DetectedItem ) -- Returns a SET_UNIT with the SEAD targets to be engaged...
-          if DefendersMissing and DefendersMissing > 0 then
-            self:F( { DefendersTotal = DefendersTotal, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing } )
-            self:Defend( DetectedItem, DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies, "SEAD", EngageCoordinate )
+        
+        if EngageCoordinate then
+          do 
+            local DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies = self:Evaluate_SEAD( DetectedItem ) -- Returns a SET_UNIT with the SEAD targets to be engaged...
+            if DefendersMissing and DefendersMissing > 0 then
+              self:F( { DefendersTotal = DefendersTotal, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing } )
+              self:Defend( DetectedItem, DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies, "SEAD", EngageCoordinate )
+            end
+          end
+    
+          do 
+            local DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies = self:Evaluate_CAS( DetectedItem ) -- Returns a SET_UNIT with the CAS targets to be engaged...
+            if DefendersMissing and DefendersMissing > 0 then
+              self:F( { DefendersTotal = DefendersTotal, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing } )
+              self:Defend( DetectedItem, DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies, "CAS", EngageCoordinate )
+            end
+          end
+    
+          do 
+            local DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies = self:Evaluate_BAI( DetectedItem ) -- Returns a SET_UNIT with the CAS targets to be engaged...
+            if DefendersMissing and DefendersMissing > 0 then
+              self:F( { DefendersTotal = DefendersTotal, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing } )
+              self:Defend( DetectedItem, DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies, "BAI", EngageCoordinate )
+            end
           end
         end
   
-        do 
-          local DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies = self:Evaluate_CAS( DetectedItem ) -- Returns a SET_UNIT with the CAS targets to be engaged...
-          if DefendersMissing and DefendersMissing > 0 then
-            self:F( { DefendersTotal = DefendersTotal, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing } )
-            self:Defend( DetectedItem, DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies, "CAS", EngageCoordinate )
-          end
-        end
+  --      do
+  --        local DefendersMissing, Friendlies = self:Evaluate_CAS( DetectedItem )
+  --        if DefendersMissing and DefendersMissing > 0 then
+  --          self:F( { DefendersMissing = DefendersMissing } )
+  --          self:CAS( DetectedItem, DefendersMissing, Friendlies )
+  --        end
+  --      end
   
-        do 
-          local DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies = self:Evaluate_BAI( DetectedItem ) -- Returns a SET_UNIT with the CAS targets to be engaged...
-          if DefendersMissing and DefendersMissing > 0 then
-            self:F( { DefendersTotal = DefendersTotal, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing } )
-            self:Defend( DetectedItem, DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies, "BAI", EngageCoordinate )
-          end
-        end
-      end
-
---      do
---        local DefendersMissing, Friendlies = self:Evaluate_CAS( DetectedItem )
---        if DefendersMissing and DefendersMissing > 0 then
---          self:F( { DefendersMissing = DefendersMissing } )
---          self:CAS( DetectedItem, DefendersMissing, Friendlies )
---        end
---      end
-
-      if self.TacticalDisplay then      
-        -- Show tactical situation
-        local ThreatLevel = DetectedItem.Set:CalculateThreatLevelA2G()
-        Report:Add( string.format( " - %1s%s ( %4s ): ( #%d - %4s ) %s" , ( DetectedItem.IsDetected == true ) and "!" or " ", DetectedItem.ItemID, DetectedItem.Index, DetectedItem.Set:Count(), DetectedItem.Type or " --- ", string.rep(  "■", ThreatLevel ) ) )
-        for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
-          local Defender = Defender -- Wrapper.Group#GROUP
-           if DefenderTask.Target and DefenderTask.Target.Index == DetectedItem.Index then
-             if Defender:IsAlive() then
-               DefenderGroupCount = DefenderGroupCount + 1
-               local Fuel = Defender:GetFuelMin() * 100
-               local Damage = Defender:GetLife() / Defender:GetLife0() * 100
-               Report:Add( string.format( "   - %s ( %s - %s ): ( #%d ) F: %3d, D:%3d - %s", 
-                                          Defender:GetName(), 
-                                          DefenderTask.Type, 
-                                          DefenderTask.Fsm:GetState(), 
-                                          Defender:GetSize(), 
-                                          Fuel,
-                                          Damage, 
-                                          Defender:HasTask() == true and "Executing" or "Idle" ) )
+        if self.TacticalDisplay then      
+          -- Show tactical situation
+          local ThreatLevel = DetectedItem.Set:CalculateThreatLevelA2G()
+          Report:Add( string.format( " - %1s%s ( %4s ): ( #%d - %4s ) %s" , ( DetectedItem.IsDetected == true ) and "!" or " ", DetectedItem.ItemID, DetectedItem.Index, DetectedItem.Set:Count(), DetectedItem.Type or " --- ", string.rep(  "■", ThreatLevel ) ) )
+          for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
+            local Defender = Defender -- Wrapper.Group#GROUP
+             if DefenderTask.Target and DefenderTask.Target.Index == DetectedItem.Index then
+               if Defender:IsAlive() then
+                 DefenderGroupCount = DefenderGroupCount + 1
+                 local Fuel = Defender:GetFuelMin() * 100
+                 local Damage = Defender:GetLife() / Defender:GetLife0() * 100
+                 Report:Add( string.format( "   - %s ( %s - %s ): ( #%d ) F: %3d, D:%3d - %s", 
+                                            Defender:GetName(), 
+                                            DefenderTask.Type, 
+                                            DefenderTask.Fsm:GetState(), 
+                                            Defender:GetSize(), 
+                                            Fuel,
+                                            Damage, 
+                                            Defender:HasTask() == true and "Executing" or "Idle" ) )
+               end
              end
-           end
+          end
         end
       end
     end
