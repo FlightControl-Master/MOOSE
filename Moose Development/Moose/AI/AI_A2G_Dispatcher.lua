@@ -1148,6 +1148,12 @@ do -- AI_A2G_DISPATCHER
     
   end
   
+  --- Locks the DefenseItem from being defended.
+  -- @param #AI_A2G_DISPATCHER self
+  -- @param #string DefenseItemKey The key of the defense item.
+  
+  
+  
 
   --- @param #AI_A2G_DISPATCHER self
   function AI_A2G_DISPATCHER:ResourcePark( DefenderSquadron )

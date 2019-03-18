@@ -168,7 +168,10 @@ do -- TASK_CAPTURE_DISPATCHER
     Zones = {},
     ZoneCount = 0,
   }
+
+
   
+  TASK_CAPTURE_DISPATCHER.AI_A2G_Dispatcher = nil -- AI.AI_A2G_Dispatcher#AI_A2G_DISPATCHER
   
   --- TASK_CAPTURE_DISPATCHER constructor.
   -- @param #TASK_CAPTURE_DISPATCHER self
@@ -223,6 +226,18 @@ do -- TASK_CAPTURE_DISPATCHER
   end
 
 
+  --- Link an AI_A2G_DISPATCHER to the TASK_CAPTURE_DISPATCHER.
+  -- @param #TASK_CAPTURE_DISPATCHER self
+  -- @param AI.AI_A2G_Dispatcher#AI_A2G_DISPATCHER AI_A2G_Dispatcher The AI Dispatcher to be linked to the tasking. 
+  -- @return Tasking.Task_Capture_Zone#TASK_CAPTURE_ZONE
+  function TASK_CAPTURE_DISPATCHER:Link_AI_A2G_Dispatcher( AI_A2G_Dispatcher )
+
+    self.AI_A2G_Dispatcher = AI_A2G_Dispatcher -- AI.AI_A2G_Dispatcher#AI_A2G_DISPATCHER
+
+    return self
+  end
+
+
   --- Assigns tasks to the @{Core.Set#SET_GROUP}.
   -- @param #TASK_CAPTURE_DISPATCHER self
   -- @return #boolean Return true if you want the task assigning to continue... false will cancel the loop.
@@ -259,6 +274,11 @@ do -- TASK_CAPTURE_DISPATCHER
           Mission:AddTask( CaptureZone.Task )
           TaskReport:Add( TaskName )
           CaptureZone.Task:UpdateTaskInfo()
+
+          function CaptureZone.Task.OnEnterAssigned( Task, From, Event, To )
+            self.AI_A2G_Dispatcher:Unlock( Task.TaskZoneName ) -- This will unlock the zone to be defended by AI.        
+            CaptureZone.Task:UpdateTaskInfo()
+          end
           
           function CaptureZone.Task.OnEnterSuccess( Task, From, Event, To )
             self:Success( Task )
@@ -267,6 +287,7 @@ do -- TASK_CAPTURE_DISPATCHER
 
           function CaptureZone.Task.OnEnterCancelled( Task, From, Event, To )
             self:Cancelled( Task )
+            self.AI_A2G_Dispatcher:Unlock( Task.TaskZoneName ) -- This will lock the zone from being defended by AI.
             CaptureZone.Task:UpdateTaskInfo()
           end
             
