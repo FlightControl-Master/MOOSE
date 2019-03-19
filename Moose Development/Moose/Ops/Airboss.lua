@@ -1642,7 +1642,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.9.9.5"
+AIRBOSS.version="0.9.9.5w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -4046,9 +4046,10 @@ function AIRBOSS:_InitTarawa()
   
 end
 
---- Set parameters for Marshal Voice overs by *Raynor*.
+
+--- Init parameters for Marshal Voice overs by *Raynor*.
 -- @param #AIRBOSS self
-function AIRBOSS:SetVoiceOversMarshalRaynor()
+function AIRBOSS:SetVoiceOversMarshalByRaynor()
 
   self.MarshalCall.AFFIRMATIVE.duration=0.70
   self.MarshalCall.ALTIMETER.duration=0.60
@@ -4094,7 +4095,7 @@ end
 
 --- Set parameters for LSO Voice overs by *Raynor*.
 -- @param #AIRBOSS self
-function AIRBOSS:SetVoiceOversLSORaynor()
+function AIRBOSS:SetVoiceOversLSOByRaynor()
 
   self.LSOCall.BOLTER.duration=0.75
   self.LSOCall.CALLTHEBALL.duration=0.625
@@ -4126,10 +4127,98 @@ function AIRBOSS:SetVoiceOversLSORaynor()
   self.LSOCall.RIGHTFORLINEUP.duration=0.70
   self.LSOCall.ROGERBALL.duration=0.72
   self.LSOCall.SLOW.duration=0.63
-  self.LSOCall.SLOW.duration=0.59
+  --self.LSOCall.SLOW.duration=0.59  --TODO
   self.LSOCall.STABILIZED.duration=0.75
   self.LSOCall.WAVEOFF.duration=0.55
   self.LSOCall.WELCOMEABOARD.duration=0.80
+end
+
+
+
+--- Set parameters for LSO Voice overs by *funkyfranky*.
+-- @param #AIRBOSS self
+function AIRBOSS:SetVoiceOversLSOByFF()
+
+  self.LSOCall.BOLTER.duration=0.75
+  self.LSOCall.CALLTHEBALL.duration=0.60
+  self.LSOCall.CHECK.duration=0.45
+  self.LSOCall.CLEAREDTOLAND.duration=1.00
+  self.LSOCall.COMELEFT.duration=0.60
+  self.LSOCall.DEPARTANDREENTER.duration=1.10
+  self.LSOCall.EXPECTHEAVYWAVEOFF.duration=1.20
+  self.LSOCall.EXPECTSPOT75.duration=2.00
+  self.LSOCall.FAST.duration=0.70
+  self.LSOCall.FOULDECK.duration=0.62
+  self.LSOCall.HIGH.duration=0.65
+  self.LSOCall.IDLE.duration=0.45
+  self.LSOCall.LONGINGROOVE.duration=1.20
+  self.LSOCall.LOW.duration=0.50
+  self.LSOCall.N0.duration=0.40
+  self.LSOCall.N1.duration=0.25
+  self.LSOCall.N2.duration=0.37
+  self.LSOCall.N3.duration=0.37
+  self.LSOCall.N4.duration=0.39
+  self.LSOCall.N5.duration=0.39
+  self.LSOCall.N6.duration=0.40
+  self.LSOCall.N7.duration=0.40
+  self.LSOCall.N8.duration=0.37
+  self.LSOCall.N9.duration=0.40
+  self.LSOCall.PADDLESCONTACT.duration=1.00
+  self.LSOCall.POWER.duration=0.50
+  self.LSOCall.RADIOCHECK.duration=1.10
+  self.LSOCall.RIGHTFORLINEUP.duration=0.80
+  self.LSOCall.ROGERBALL.duration=1.00
+  self.LSOCall.SLOW.duration=0.65
+  self.LSOCall.SLOW.duration=0.59
+  self.LSOCall.STABILIZED.duration=0.90
+  self.LSOCall.WAVEOFF.duration=0.60
+  self.LSOCall.WELCOMEABOARD.duration=1.00
+end
+
+--- Intit parameters for Marshal Voice overs by *funkyfranky*.
+-- @param #AIRBOSS self
+function AIRBOSS:SetVoiceOversMarshalByFF()
+
+  self.MarshalCall.AFFIRMATIVE.duration=0.90
+  self.MarshalCall.ALTIMETER.duration=0.85
+  self.MarshalCall.BRC.duration=0.80
+  self.MarshalCall.CARRIERTURNTOHEADING.duration=2.48
+  self.MarshalCall.CASE.duration=0.40
+  self.MarshalCall.CHARLIETIME.duration=0.90
+  self.MarshalCall.CLEAREDFORRECOVERY.duration=1.25
+  self.MarshalCall.DECKCLOSED.duration=1.10
+  self.MarshalCall.DEGREES.duration=0.60
+  self.MarshalCall.EXPECTED.duration=0.55
+  self.MarshalCall.FLYNEEDLES.duration=0.90
+  self.MarshalCall.HOLDATANGELS.duration=1.10
+  self.MarshalCall.HOURS.duration=0.60
+  self.MarshalCall.MARSHALRADIAL.duration=1.10
+  self.MarshalCall.N0.duration=0.40
+  self.MarshalCall.N1.duration=0.25
+  self.MarshalCall.N2.duration=0.37
+  self.MarshalCall.N3.duration=0.37
+  self.MarshalCall.N4.duration=0.39
+  self.MarshalCall.N5.duration=0.39
+  self.MarshalCall.N6.duration=0.40
+  self.MarshalCall.N7.duration=0.40
+  self.MarshalCall.N8.duration=0.37
+  self.MarshalCall.N9.duration=0.40
+  self.MarshalCall.NEGATIVE.duration=0.80
+  self.MarshalCall.NEWFB.duration=1.35
+  self.MarshalCall.OPS.duration=0.48
+  self.MarshalCall.POINT.duration=0.33
+  self.MarshalCall.RADIOCHECK.duration=1.20
+  self.MarshalCall.RECOVERY.duration=0.70
+  self.MarshalCall.RECOVERYOPSSTOPPED.duration=1.65
+  self.MarshalCall.RECOVERYPAUSEDNOTICE.duration=2.9 -- Strangely the file is actually a shorter ~2.4 sec.
+  self.MarshalCall.RECOVERYPAUSEDRESUMED.duration=3.40
+  self.MarshalCall.REPORTSEEME.duration=0.95
+  self.MarshalCall.RESUMERECOVERY.duration=1.75
+  self.MarshalCall.ROGER.duration=0.53
+  self.MarshalCall.SAYNEEDLES.duration=0.90
+  self.MarshalCall.STACKFULL.duration=6.35
+  self.MarshalCall.STARTINGRECOVERY.duration=2.65
+
 end
 
 --- Init voice over radio transmission call.
@@ -4891,6 +4980,10 @@ function AIRBOSS:_InitVoiceOvers()
       duration=3.6,
     },
   }
+
+  -- Default timings by Raynor
+  self:SetVoiceOversLSOByRaynor()
+  self:SetVoiceOversMarshalByRaynor()
   
 end
 
