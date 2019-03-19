@@ -4084,7 +4084,7 @@ function AIRBOSS:SetVoiceOversMarshalByRaynor()
   self.MarshalCall.RECOVERYOPSSTOPPED.duration=1.36
   self.MarshalCall.RECOVERYPAUSEDNOTICE.duration=2.8 -- Strangely the file is actually a shorter ~2.4 sec.
   self.MarshalCall.RECOVERYPAUSEDRESUMED.duration=2.75
-  self.MarshalCall.REPORTSEEME.duration=0.96
+  self.MarshalCall.REPORTSEEME.duration=1.06 --0.96
   self.MarshalCall.RESUMERECOVERY.duration=1.41
   self.MarshalCall.ROGER.duration=0.41
   self.MarshalCall.SAYNEEDLES.duration=0.79
@@ -7900,9 +7900,9 @@ function AIRBOSS:OnEventLand(EventData)
   local _unit, _playername=self:_GetPlayerUnitAndName(_unitName)
   
   -- Debug output.
-  self:T3(self.lid.."LAND: unit   = "..tostring(EventData.IniUnitName))
-  self:T3(self.lid.."LAND: group  = "..tostring(EventData.IniGroupName))
-  self:T3(self.lid.."LAND: player = "..tostring(_playername))
+  self:T(self.lid.."LAND: unit   = "..tostring(EventData.IniUnitName))
+  self:T(self.lid.."LAND: group  = "..tostring(EventData.IniGroupName))
+  self:T(self.lid.."LAND: player = "..tostring(_playername))
   
   -- This would be the closest airbase.
   local airbase=EventData.Place
@@ -16689,23 +16689,23 @@ function AIRBOSS:_SaveTrapSheet(playerData, grade)
   for _,_groove in ipairs(playerData.trapsheet) do
     local groove=_groove --#AIRBOSS.GrooveData
     local t=groove.Time-T0
-    local a=UTILS.MetersToNM(groove.Rho)
-    local b=-groove.X
-    local c=groove.Z
-    local d=UTILS.MetersToFeet(groove.Alt)
-    local e=groove.AoA
-    local f=groove.GSE
-    local g=-groove.LUE
-    local h=UTILS.MpsToKnots(groove.Vel)
-    local i=groove.Vy*196.85
-    local j=groove.Gamma
-    local k=groove.Pitch
-    local l=groove.Roll
-    local m=groove.Yaw
-    local n=self:_GS(groove.Step, -1)
-    local o=groove.Grade
-    local p=groove.GradePoints
-    local q=groove.GradeDetail
+    local a=UTILS.MetersToNM(groove.Rho or 0)
+    local b=-groove.X or 0
+    local c=groove.Z or 0
+    local d=UTILS.MetersToFeet(groove.Alt or 0)
+    local e=groove.AoA or 0
+    local f=groove.GSE or 0
+    local g=-groove.LUE or 0
+    local h=UTILS.MpsToKnots(groove.Vel or 0)
+    local i=(groove.Vy or 0)*196.85
+    local j=groove.Gamma or 0
+    local k=groove.Pitch or 0
+    local l=groove.Roll or 0
+    local m=groove.Yaw or 0
+    local n=self:_GS(groove.Step, -1) or "n/a"
+    local o=groove.Grade or "n/a"
+    local p=groove.GradePoints or 0
+    local q=groove.GradeDetail or "n/a"
     --                         t    a    b    c    d    e    f    g    h    i    j    k    l    m   n  o   p   q
     data=data..string.format("%.2f,%.3f,%.1f,%.1f,%.1f,%.2f,%.2f,%.2f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%s,%s,%.1f,%s\n",t,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q)
   end
