@@ -73,6 +73,8 @@
 --    * [[MOOSE] Airboss - Groove Test A-4E Community Mod](https://www.youtube.com/watch?v=ZbjD7FHiaHo)
 --    * [[MOOSE] Airboss - Groove Test: On-the-fly LSO Grading](https://www.youtube.com/watch?v=Xgs1hwDcPyM)
 --    * [[MOOSE] Airboss - Carrier Auto Steam Into Wind](https://www.youtube.com/watch?v=IsU8dYgsp90)
+--    * [[MOOSE] Airboss - CASE I Walkthrough by TG](https://www.youtube.com/watch?v=o1UrP4Q6PMM)
+--    * [[MOOSE] Airboss - New LSO/Marshal Voice Overs by Raynor](https://www.youtube.com/watch?v=_Suo68bRu8k)
 -- 
 -- ### Lex explaining Boat Ops:
 -- 
@@ -211,6 +213,7 @@
 -- @field #number dTbeacon Time interval to refresh the beacons. Default 5 minutes.
 -- @field #AIRBOSS.LSOCalls LSOCall Radio voice overs of the LSO.
 -- @field #AIRBOSS.MarshalCalls MarshalCall Radio voice over of the Marshal/Airboss.
+-- @field #AIRBOSS.PilotCalls PilotCall Radio voice over from AI pilots.
 -- @field #number lowfuelAI Low fuel threshold for AI groups in percent.
 -- @field #boolean emergency If true (default), allow emergency landings, i.e. bypass any pattern and go for final approach.
 -- @field #boolean respawnAI If true, respawn AI flights as they enter the CCA to detach and airfields from the mission plan. Default false.
@@ -1379,6 +1382,30 @@ AIRBOSS.GroovePos={
 -- @field #string modexreceiver Onboard number of the receiver (optional).
 -- @field #string sender Sender of the message (optional). Default radio alias.
 
+--- Pilot radio calls.
+-- type AIRBOSS.PilotCalls
+-- @field #AIRBOSS.RadioCall N0 "Zero" call.
+-- @field #AIRBOSS.RadioCall N1 "One" call.
+-- @field #AIRBOSS.RadioCall N2 "Two" call.
+-- @field #AIRBOSS.RadioCall N3 "Three" call.
+-- @field #AIRBOSS.RadioCall N4 "Four" call.
+-- @field #AIRBOSS.RadioCall N5 "Five" call.
+-- @field #AIRBOSS.RadioCall N6 "Six" call.
+-- @field #AIRBOSS.RadioCall N7 "Seven" call.
+-- @field #AIRBOSS.RadioCall N8 "Eight" call.
+-- @field #AIRBOSS.RadioCall N9 "Nine" call.
+-- @field #AIRBOSS.RadioCall POINT "Point" call.
+-- @field #AIRBOSS.RadioCall BALL "Ball" call.
+-- @field #AIRBOSS.RadioCall HARRIER "Harrier" call.
+-- @field #AIRBOSS.RadioCall HAWKEYE "Hawkeye" call.
+-- @field #AIRBOSS.RadioCall HORNET "Hornet" call.
+-- @field #AIRBOSS.RadioCall SKYHAWK "Skyhawk" call.
+-- @field #AIRBOSS.RadioCall TOMCAT "Tomcat" call.
+-- @field #AIRBOSS.RadioCall VIKING "Viking" call.
+-- @field #AIRBOSS.RadioCall BINGOFUEL "Bingo Fuel" call.
+-- @field #AIRBOSS.RadioCall GASATDIVERT "Going for gas at the divert field" call.
+-- @field #AIRBOSS.RadioCall GASATTANKER "Going for gas at the recovery tanker" call.
+
 --- LSO radio calls.
 -- @type AIRBOSS.LSOCalls
 -- @field #AIRBOSS.RadioCall BOLTER "Bolter, Bolter" call.
@@ -1416,13 +1443,6 @@ AIRBOSS.GroovePos={
 -- @field #AIRBOSS.RadioCall WELCOMEABOARD "Welcome aboard" call. 
 -- @field #AIRBOSS.RadioCall CLICK Radio end transmission click sound.
 -- @field #AIRBOSS.RadioCall NOISE Static noise sound.
--- @field #AIRBOSS.RadioCall BALL "Ball" call.
--- @field #AIRBOSS.RadioCall HARRIER "Harrier" call.
--- @field #AIRBOSS.RadioCall HAWKEYE "Hawkeye" call.
--- @field #AIRBOSS.RadioCall HORNET "Hornet" call.
--- @field #AIRBOSS.RadioCall SKYHAWK "Skyhawk" call.
--- @field #AIRBOSS.RadioCall TOMCAT "Tomcat" call.
--- @field #AIRBOSS.RadioCall VIKING "Viking" call.
 -- @field #AIRBOSS.RadioCall SPINIT "Spin it" call.
 
 --- Marshal radio calls.
@@ -1468,9 +1488,7 @@ AIRBOSS.GroovePos={
 -- @field #AIRBOSS.RadioCall STARTINGRECOVERY "Starting aircraft recovery" call.
 -- @field #AIRBOSS.RadioCall CLICK Radio end transmission click sound.
 -- @field #AIRBOSS.RadioCall NOISE Static noise sound.
--- @field #AIRBOSS.RadioCall BINGOFUEL "Bingo Fuel" call.
--- @field #AIRBOSS.RadioCall GASATDIVERT "Going for gas at the divert field" call.
--- @field #AIRBOSS.RadioCall GASATTANKER "Going for gas at the recovery tanker" call.
+
 
 --- Difficulty level.
 -- @type AIRBOSS.Difficulty
@@ -1624,7 +1642,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.9.9.4"
+AIRBOSS.version="0.9.9.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -4028,6 +4046,91 @@ function AIRBOSS:_InitTarawa()
   
 end
 
+--- Set parameters for Marshal Voice overs by *Raynor*.
+-- @param #AIRBOSS self
+function AIRBOSS:SetVoiceOversMarshalRaynor()
+
+  self.MarshalCall.AFFIRMATIVE.duration=0.70
+  self.MarshalCall.ALTIMETER.duration=0.60
+  self.MarshalCall.BRC.duration=0.60
+  self.MarshalCall.CARRIERTURNTOHEADING.duration=1.87
+  self.MarshalCall.CASE.duration=0.60
+  self.MarshalCall.CHARLIETIME.duration=0.81
+  self.MarshalCall.CLEAREDFORRECOVERY.duration=1.21
+  self.MarshalCall.DECKCLOSED.duration=0.86
+  self.MarshalCall.DEGREES.duration=0.55
+  self.MarshalCall.EXPECTED.duration=0.61
+  self.MarshalCall.FLYNEEDLES.duration=0.90
+  self.MarshalCall.HOLDATANGELS.duration=0.91
+  self.MarshalCall.HOURS.duration=0.54
+  self.MarshalCall.MARSHALRADIAL.duration=0.80
+  self.MarshalCall.N0.duration=0.38
+  self.MarshalCall.N1.duration=0.30
+  self.MarshalCall.N2.duration=0.30
+  self.MarshalCall.N3.duration=0.30
+  self.MarshalCall.N4.duration=0.32
+  self.MarshalCall.N5.duration=0.41
+  self.MarshalCall.N6.duration=0.48
+  self.MarshalCall.N7.duration=0.51
+  self.MarshalCall.N8.duration=0.38
+  self.MarshalCall.N9.duration=0.34
+  self.MarshalCall.NEGATIVE.duration=0.60
+  self.MarshalCall.NEWFB.duration=1.10  
+  self.MarshalCall.OPS.duration=0.46
+  self.MarshalCall.POINT.duration=0.21
+  self.MarshalCall.RADIOCHECK.duration=0.95
+  self.MarshalCall.RECOVERY.duration=0.63
+  self.MarshalCall.RECOVERYOPSSTOPPED.duration=1.36
+  self.MarshalCall.RECOVERYPAUSEDNOTICE.duration=2.8 -- Strangely the file is actually a shorter ~2.4 sec.
+  self.MarshalCall.RECOVERYPAUSEDRESUMED.duration=2.75
+  self.MarshalCall.REPORTSEEME.duration=0.96
+  self.MarshalCall.RESUMERECOVERY.duration=1.41
+  self.MarshalCall.ROGER.duration=0.41
+  self.MarshalCall.SAYNEEDLES.duration=0.79
+  self.MarshalCall.STACKFULL.duration=4.70
+  self.MarshalCall.STARTINGRECOVERY.duration=2.06
+
+end
+
+--- Set parameters for LSO Voice overs by *Raynor*.
+-- @param #AIRBOSS self
+function AIRBOSS:SetVoiceOversLSORaynor()
+
+  self.LSOCall.BOLTER.duration=0.75
+  self.LSOCall.CALLTHEBALL.duration=0.625
+  self.LSOCall.CHECK.duration=0.40
+  self.LSOCall.CLEAREDTOLAND.duration=0.85
+  self.LSOCall.COMELEFT.duration=0.60
+  self.LSOCall.DEPARTANDREENTER.duration=1.10
+  self.LSOCall.EXPECTHEAVYWAVEOFF.duration=1.30
+  self.LSOCall.EXPECTSPOT75.duration=1.85
+  self.LSOCall.FAST.duration=0.75
+  self.LSOCall.FOULDECK.duration=0.75
+  self.LSOCall.HIGH.duration=0.65
+  self.LSOCall.IDLE.duration=0.40
+  self.LSOCall.LONGINGROOVE.duration=1.25
+  self.LSOCall.LOW.duration=0.60
+  self.LSOCall.N0.duration=0.38
+  self.LSOCall.N1.duration=0.30
+  self.LSOCall.N2.duration=0.30
+  self.LSOCall.N3.duration=0.30
+  self.LSOCall.N4.duration=0.32
+  self.LSOCall.N5.duration=0.41
+  self.LSOCall.N6.duration=0.48
+  self.LSOCall.N7.duration=0.51
+  self.LSOCall.N8.duration=0.38
+  self.LSOCall.N9.duration=0.34
+  self.LSOCall.PADDLESCONTACT.duration=0.91
+  self.LSOCall.POWER.duration=0.45
+  self.LSOCall.RADIOCHECK.duration=0.90
+  self.LSOCall.RIGHTFORLINEUP.duration=0.70
+  self.LSOCall.ROGERBALL.duration=0.72
+  self.LSOCall.SLOW.duration=0.63
+  self.LSOCall.SLOW.duration=0.59
+  self.LSOCall.STABILIZED.duration=0.75
+  self.LSOCall.WAVEOFF.duration=0.55
+  self.LSOCall.WELCOMEABOARD.duration=0.80
+end
 
 --- Init voice over radio transmission call.
 -- @param #AIRBOSS self
@@ -4307,62 +4410,6 @@ function AIRBOSS:_InitVoiceOvers()
       subtitle="",
       duration=3.6,
     },
-    SKYHAWK={
-      file="AIRBOSS-Skyhawk",
-      suffix="ogg",
-      loud=false,
-      subtitle="",
-      duration=0.95,
-      subduration=5,
-    },
-    HARRIER={
-      file="AIRBOSS-Harrier",
-      suffix="ogg",
-      loud=false,
-      subtitle="",
-      duration=0.58,
-      subduration=5,
-    },
-    HAWKEYE={
-      file="AIRBOSS-Hawkeye",
-      suffix="ogg",
-      loud=false,
-      subtitle="",
-      duration=0.63,
-      subduration=5,
-    },
-    TOMCAT={
-      file="AIRBOSS-Tomcat",
-      suffix="ogg",
-      loud=false,
-      subtitle="",
-      duration=0.66,
-      subduration=5,
-    },
-    HORNET={
-      file="AIRBOSS-Hornet",
-      suffix="ogg",
-      loud=false,
-      subtitle="",
-      duration=0.56,
-      subduration=5,
-    },
-    VIKING={
-      file="AIRBOSS-Viking",
-      suffix="ogg",
-      loud=false,
-      subtitle="",
-      duration=0.61,
-      subduration=5,
-    },
-    BALL={
-      file="AIRBOSS-Ball",
-      suffix="ogg",
-      loud=false,
-      subtitle="",
-      duration=0.50,
-      subduration=5,
-    },
     SPINIT={
       file="AIRBOSS-SpinIt",
       suffix="ogg",
@@ -4371,6 +4418,168 @@ function AIRBOSS:_InitVoiceOvers()
       duration=0.73,
       subduration=5,
     },    
+  }
+  
+  -----------------
+  -- Pilot Calls --
+  -----------------
+
+  -- Pilot Radio Calls.
+  self.PilotCall={
+    N0={
+      file="PILOT-N0",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.40,
+    },
+    N1={
+      file="PILOT-N1",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.25,
+    },
+    N2={
+      file="PILOT-N2",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.37,
+    },
+    N3={
+      file="PILOT-N3",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.37,
+    },
+    N4={
+      file="PILOT-N4",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.39,
+    },
+    N5={
+      file="PILOT-N5",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.39,
+    },
+    N6={
+      file="PILOT-N6",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.40,
+    },
+    N7={
+      file="PILOT-N7",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.40,
+    },
+    N8={
+      file="PILOT-N8",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.37,
+    },
+    N9={
+      file="PILOT-N9",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.40,
+    },
+    POINT={
+      file="PILOT-Point",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.33,
+    },    
+    SKYHAWK={
+      file="PILOT-Skyhawk",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.95,
+      subduration=5,
+    },
+    HARRIER={
+      file="PILOT-Harrier",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.58,
+      subduration=5,
+    },
+    HAWKEYE={
+      file="PILOT-Hawkeye",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.63,
+      subduration=5,
+    },
+    TOMCAT={
+      file="PILOT-Tomcat",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.66,
+      subduration=5,
+    },
+    HORNET={
+      file="PILOT-Hornet",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.56,
+      subduration=5,
+    },
+    VIKING={
+      file="PILOT-Viking",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.61,
+      subduration=5,
+    },
+    BALL={
+      file="PILOT-Ball",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.50,
+      subduration=5,
+    },
+    BINGOFUEL={
+      file="PILOT-BingoFuel",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=0.80,
+    },
+    GASATDIVERT={
+      file="PILOT-GasAtDivert",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=1.80,
+    },
+    GASATTANKER={
+      file="PILOT-GasAtTanker",
+      suffix="ogg",
+      loud=false,
+      subtitle="",
+      duration=1.95,
+    },
   }
   
   -------------------
@@ -4680,27 +4889,6 @@ function AIRBOSS:_InitVoiceOvers()
       loud=false,
       subtitle="",
       duration=3.6,
-    },
-    BINGOFUEL={
-      file="AIRBOSS-BingoFuel",
-      suffix="ogg",
-      loud=false,
-      subtitle="",
-      duration=0.80,
-    },
-    GASATDIVERT={
-      file="AIRBOSS-GasAtDivert",
-      suffix="ogg",
-      loud=false,
-      subtitle="",
-      duration=1.80,
-    },
-    GASATTANKER={
-      file="AIRBOSS-GasAtTanker",
-      suffix="ogg",
-      loud=false,
-      subtitle="",
-      duration=1.95,
     },
   }
   
@@ -7538,6 +7726,18 @@ end
 function AIRBOSS:OnEventBirth(EventData)
   self:F3({eventbirth = EventData})
   
+  -- Nil checks.
+  if EventData==nil then
+    self:E(self.lid.."ERROR: EventData=nil in event BIRTH!")
+    self:E(EventData)
+    return
+  end
+  if EventData.IniUnit==nil then
+    self:E(self.lid.."ERROR: EventData.IniUnit=nil in event BIRTH!")
+    self:E(EventData)
+    return
+  end  
+  
   local _unitName=EventData.IniUnitName
   local _unit, _playername=self:_GetPlayerUnitAndName(_unitName)
   
@@ -7587,6 +7787,18 @@ end
 -- @param Core.Event#EVENTDATA EventData
 function AIRBOSS:OnEventLand(EventData)
   self:F3({eventland = EventData})
+  
+  -- Nil checks.
+  if EventData==nil then
+    self:E(self.lid.."ERROR: EventData=nil in event LAND!")
+    self:E(EventData)
+    return
+  end
+  if EventData.IniUnit==nil then
+    self:E(self.lid.."ERROR: EventData.IniUnit=nil in event LAND!")
+    self:E(EventData)
+    return
+  end
   
   -- Get unit name that landed.
   local _unitName=EventData.IniUnitName
@@ -7773,6 +7985,19 @@ end
 -- @param Core.Event#EVENTDATA EventData
 function AIRBOSS:OnEventEngineShutdown(EventData)
   self:F3({eventengineshutdown=EventData})
+  
+  -- Nil checks.
+  if EventData==nil then
+    self:E(self.lid.."ERROR: EventData=nil in event ENGINESHUTDOWN!")
+    self:E(EventData)
+    return
+  end
+  if EventData.IniUnit==nil then
+    self:E(self.lid.."ERROR: EventData.IniUnit=nil in event ENGINESHUTDOWN!")
+    self:E(EventData)
+    return
+  end
+
 
   local _unitName=EventData.IniUnitName
   local _unit, _playername=self:_GetPlayerUnitAndName(_unitName)
@@ -7821,6 +8046,19 @@ end
 --function AIRBOSS:OnEventPlayerLeaveUnit(EventData)
 function AIRBOSS:OnEventTakeoff(EventData)
   self:F3({eventtakeoff=EventData})
+
+  -- Nil checks.
+  if EventData==nil then
+    self:E(self.lid.."ERROR: EventData=nil in event TAKEOFF!")
+    self:E(EventData)
+    return
+  end
+  if EventData.IniUnit==nil then
+    self:E(self.lid.."ERROR: EventData.IniUnit=nil in event TAKEOFF!")
+    self:E(EventData)
+    return
+  end
+
 
   local _unitName=EventData.IniUnitName
   local _unit, _playername=self:_GetPlayerUnitAndName(_unitName)
@@ -7873,6 +8111,19 @@ end
 -- @param Core.Event#EVENTDATA EventData
 function AIRBOSS:OnEventCrash(EventData)
   self:F3({eventcrash = EventData})
+  
+  -- Nil checks.
+  if EventData==nil then
+    self:E(self.lid.."ERROR: EventData=nil in event CRASH!")
+    self:E(EventData)
+    return
+  end
+  if EventData.IniUnit==nil then
+    self:E(self.lid.."ERROR: EventData.IniUnit=nil in event CRASH!")
+    self:E(EventData)
+    return
+  end
+
 
   local _unitName=EventData.IniUnitName
   local _unit, _playername=self:_GetPlayerUnitAndName(_unitName)
@@ -7909,6 +8160,19 @@ end
 -- @param Core.Event#EVENTDATA EventData
 function AIRBOSS:OnEventEjection(EventData)
   self:F3({eventland = EventData})
+  
+  -- Nil checks.
+  if EventData==nil then
+    self:E(self.lid.."ERROR: EventData=nil in event EJECTION!")
+    self:E(EventData)
+    return
+  end
+  if EventData.IniUnit==nil then
+    self:E(self.lid.."ERROR: EventData.IniUnit=nil in event EJECTION!")
+    self:E(EventData)
+    return
+  end
+
 
   local _unitName=EventData.IniUnitName
   local _unit, _playername=self:_GetPlayerUnitAndName(_unitName)
@@ -7949,6 +8213,19 @@ end
 --function AIRBOSS:OnEventPlayerLeaveUnit(EventData)
 function AIRBOSS:_PlayerLeft(EventData)
   self:F3({eventleave=EventData})
+  
+  -- Nil checks.
+  if EventData==nil then
+    self:E(self.lid.."ERROR: EventData=nil in event PLAYERLEFTUNIT!")
+    self:E(EventData)
+    return
+  end
+  if EventData.IniUnit==nil then
+    self:E(self.lid.."ERROR: EventData.IniUnit=nil in event PLAYERLEFTUNIT!")
+    self:E(EventData)
+    return
+  end
+
 
   local _unitName=EventData.IniUnitName
   local _unit, _playername=self:_GetPlayerUnitAndName(_unitName)
@@ -13477,7 +13754,8 @@ end
 -- @param #number delay Delay in seconds, before the message is broadcasted.
 -- @param #number interval Interval in seconds after the last sound has been played.
 -- @param #boolean click If true, play radio click at the end.
-function AIRBOSS:RadioTransmission(radio, call, loud, delay, interval, click)
+-- @param #booelan pilotcall If true, it's a pilot call.
+function AIRBOSS:RadioTransmission(radio, call, loud, delay, interval, click, pilotcall)
   self:F2({radio=radio, call=call, loud=loud, delay=delay, interval=interval, click=click})
   
   -- Nil check.
@@ -13498,12 +13776,12 @@ function AIRBOSS:RadioTransmission(radio, call, loud, delay, interval, click)
   
   -- Player onboard number if sender has one.
   if self:_IsOnboard(call.modexsender) then
-    self:_Number2Radio(radio, call.modexsender, delay, 0.3)
+    self:_Number2Radio(radio, call.modexsender, delay, 0.3, pilotcall)
   end
   
   -- Play onboard number if receiver has one.
   if self:_IsOnboard(call.modexreceiver) then
-    self:_Number2Radio(radio, call.modexreceiver, delay, 0.3)
+    self:_Number2Radio(radio, call.modexreceiver, delay, 0.3, pilotcall)
   end  
   
   -- Add transmission to the right queue.
@@ -14058,8 +14336,9 @@ end
 -- @param #string number Number string, e.g. "032" or "183".
 -- @param #number delay Delay before transmission in seconds.
 -- @param #number interval Interval between the next call.
+-- @param #boolean pilotcall If true, use pilot sound files.
 -- @return #number Duration of the call in seconds.
-function AIRBOSS:_Number2Radio(radio, number, delay, interval)
+function AIRBOSS:_Number2Radio(radio, number, delay, interval, pilotcall)
 
   --- Split string into characters.
   local function _split(str)
@@ -14079,6 +14358,10 @@ function AIRBOSS:_Number2Radio(radio, number, delay, interval)
     Sender="MarshalCall"
   else
     self:E(self.lid..string.format("ERROR: Unknown radio alias %s!", tostring(radio.alias)))
+  end
+  
+  if pilotcall then
+    Sender="PilotCall"
   end
   
   -- Split string into characters.
@@ -14132,18 +14415,18 @@ function AIRBOSS:_LSOCallAircraftBall(modex, nickname, fuelstate)
   local FS=UTILS.Split(string.format("%.1f", fuelstate), ".")
   
   -- Create new call to display complete subtitle.
-  local call=self:_NewRadioCall(self.LSOCall[NICKNAME], modex, text, self.Tmessage, nil, modex)
+  local call=self:_NewRadioCall(self.PilotCall[NICKNAME], modex, text, self.Tmessage, nil, modex)
   
   -- Hornet ..
-  self:RadioTransmission(self.LSORadio, call)
+  self:RadioTransmission(self.LSORadio, call, nil, nil, nil, nil, true)
   -- Ball,
-  self:RadioTransmission(self.LSORadio, self.LSOCall.BALL)
+  self:RadioTransmission(self.LSORadio, self.PilotCall.BALL, nil, nil, nil, nil, true)
   -- X..
-  self:_Number2Radio(self.LSORadio, FS[1])
+  self:_Number2Radio(self.LSORadio, FS[1], nil, nil, true)
   -- Point..
-  self:RadioTransmission(self.LSORadio, self.MarshalCall.POINT)
+  self:RadioTransmission(self.LSORadio, self.PilotCall.POINT, nil, nil, nil, nil, true)
   -- Y.
-  self:_Number2Radio(self.LSORadio, FS[2])  
+  self:_Number2Radio(self.LSORadio, FS[2], nil, nil, true)  
   
   -- CLICK!
   self:RadioTransmission(self.LSORadio, self.LSOCall.CLICK)
@@ -14162,13 +14445,13 @@ function AIRBOSS:_MarshalCallGasAtTanker(modex)
   self:I(self.lid..text)
 
   -- Create new call to display complete subtitle.
-  local call=self:_NewRadioCall(self.MarshalCall.BINGOFUEL, modex, text, self.Tmessage, nil, modex)
+  local call=self:_NewRadioCall(self.PilotCall.BINGOFUEL, modex, text, self.Tmessage, nil, modex)
 
   -- MODEX, bingo fuel!
-  self:RadioTransmission(self.MarshalRadio, call)
+  self:RadioTransmission(self.MarshalRadio, call, nil, nil, nil, nil, true)
   
   -- Going for fuel at the recovery tanker. Click!
-  self:RadioTransmission(self.MarshalRadio, self.MarshalCall.GASATTANKER, nil, nil, nil, true)  
+  self:RadioTransmission(self.MarshalRadio, self.PilotCall.GASATTANKER, nil, nil, nil, true, true)  
   
 end
 
@@ -14185,13 +14468,13 @@ function AIRBOSS:_MarshalCallGasAtDivert(modex, divertname)
   self:I(self.lid..text)
 
   -- Create new call to display complete subtitle.
-  local call=self:_NewRadioCall(self.MarshalCall.BINGOFUEL, modex, text, self.Tmessage, nil, modex)
+  local call=self:_NewRadioCall(self.PilotCall.BINGOFUEL, modex, text, self.Tmessage, nil, modex)
 
   -- MODEX, bingo fuel!
-  self:RadioTransmission(self.MarshalRadio, call)
+  self:RadioTransmission(self.MarshalRadio, call, nil, nil, nil, nil, true)
   
   -- Going for fuel at the divert field. Click!
-  self:RadioTransmission(self.MarshalRadio, self.MarshalCall.GASATDIVERT, nil, nil, nil, true)  
+  self:RadioTransmission(self.MarshalRadio, self.PilotCall.GASATDIVERT, nil, nil, nil, true, true)  
   
 end
 

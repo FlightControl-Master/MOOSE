@@ -952,10 +952,12 @@ function GROUP:GetFuelMin()
   local tmp  = nil
 
   for UnitID, UnitData in pairs( self:GetUnits() ) do
-    tmp = UnitData:GetFuel()
-    if tmp < min then
-      min = tmp
-      unit = UnitData
+    if UnitData and UnitData:IsAlive() then
+      tmp = UnitData:GetFuel()
+      if tmp < min then
+        min = tmp
+        unit = UnitData
+      end
     end
   end
 
