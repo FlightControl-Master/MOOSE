@@ -221,14 +221,16 @@ do -- TASK_CAPTURE_ZONE
   -- @param #TASK_CAPTURE_ZONE self
   function TASK_CAPTURE_ZONE:UpdateTaskInfo( DetectedItem ) 
   
+    self:F({"Update"})
+  
     local ZoneCoordinate = self.ZoneGoal:GetZone():GetCoordinate() 
-    self.TaskInfo:AddTaskName( 0, "MSOD", true )
-    self.TaskInfo:AddCoordinate( ZoneCoordinate, 1, "SOD", true )
-    self.TaskInfo:AddText( "Zone Name", self.ZoneGoal:GetZoneName(), 10, "MOD", true )
-    self.TaskInfo:AddText( "Zone Coalition", self.ZoneGoal:GetCoalitionName(), 11, "MOD", true )
+    self.TaskInfo:AddTaskName( 0, "MSOD" )
+    self.TaskInfo:AddCoordinate( ZoneCoordinate, 1, "SOD" )
+    self.TaskInfo:AddText( "Zone Name", self.ZoneGoal:GetZoneName(), 10, "MOD" )
+    self.TaskInfo:AddText( "Zone Coalition", self.ZoneGoal:GetCoalitionName(), 11, "MOD" )
     local SetUnit = self.ZoneGoal.Zone:GetScannedSetUnit()
     local ThreatLevel, ThreatText = SetUnit:CalculateThreatLevelA2G()
-    self.TaskInfo:AddThreat( ThreatText, ThreatLevel, 20, "MOD", true )
+    self.TaskInfo:AddThreat( ThreatText, ThreatLevel, 20, "MOD" )
   end
     
 
@@ -276,7 +278,7 @@ do -- TASK_CAPTURE_ZONE
       return math.random( 1, 9 )
     elseif AutoAssignMethod == COMMANDCENTER.AutoAssignMethods.Distance then
       local Coordinate = self.TaskInfo:GetCoordinate()
-      local Distance = TaskGroup:GetCoordinate():Get2DDistance( CommandCenter:GetPositionable():GetCoordinate() )
+      local Distance = Coordinate:Get2DDistance( CommandCenter:GetPositionable():GetCoordinate() )
       return math.floor( Distance )
     elseif AutoAssignMethod == COMMANDCENTER.AutoAssignMethods.Priority then
       return 1
