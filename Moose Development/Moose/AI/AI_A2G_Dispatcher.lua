@@ -919,7 +919,7 @@ do -- AI_A2G_DISPATCHER
   AI_A2G_DISPATCHER.Takeoff = GROUP.Takeoff
   
   --- Defnes Landing location.
-  -- @field Landing
+  -- @field #AI_A2G_DISPATCHER.Landing
   AI_A2G_DISPATCHER.Landing = {
     NearAirbase = 1,
     AtRunway = 2,
@@ -950,7 +950,12 @@ do -- AI_A2G_DISPATCHER
   AI_A2G_DISPATCHER.DefenseQueue = {}
   
   
-  
+  --- Defense approach types
+  -- @type #AI_A2G_DISPATCHER.DefenseApproach
+  AI_A2G_DISPATCHER.DefenseApproach = {
+    Random = 1,
+    Distance = 2,
+  }
   
   --- AI_A2G_DISPATCHER constructor.
   -- This is defining the A2G DISPATCHER for one coaliton.
@@ -996,6 +1001,8 @@ do -- AI_A2G_DISPATCHER
 --    self.Detection:SetRefreshTimeInterval( 30 )
 
     self:SetDefenseRadius()
+    self:SetDefenseLimit( nil )
+    self:SetDefenseApproach( AI_A2G_DISPATCHER.DefenseApproach.Random )
     self:SetIntercept( 300 )  -- A default intercept delay time of 300 seconds.
     self:SetDisengageRadius( 300000 ) -- The default Disengage Radius is 300 km.
     
@@ -1174,6 +1181,26 @@ do -- AI_A2G_DISPATCHER
     end
   end
   
+  
+  --- Sets maximum zones to be engaged at one time by defenders.
+  -- @param #AI_A2G_DISPATCHER self
+  -- @param #number DefenseLimit The maximum amount of detected items to be engaged at the same time.
+  function AI_A2G_DISPATCHER:SetDefenseLimit( DefenseLimit )
+    self:F( { DefenseLimit = DefenseLimit } )
+    
+    self.DefenseLimit = DefenseLimit
+  end
+  
+
+  --- Sets the method of the tactical approach of the defenses.
+  -- @param #AI_A2G_DISPATCHER self
+  -- @param #number DefenseApproach Use the structure AI_A2G_DISPATCHER.DefenseApproach to set the defense approach.
+  -- The default defense approach is AI_A2G_DISPATCHER.DefenseApproach.Random.
+  function AI_A2G_DISPATCHER:SetDefenseApproach( DefenseApproach )
+    self:F( { DefenseApproach = DefenseApproach } )
+    
+    self._DefenseApproach = DefenseApproach
+  end
   
 
   --- @param #AI_A2G_DISPATCHER self
@@ -3927,7 +3954,7 @@ do -- AI_A2G_DISPATCHER
       end
     end
     
-    return nil, nil, nil
+    return 0, 0, 0
   end
 
 
@@ -3960,7 +3987,7 @@ do -- AI_A2G_DISPATCHER
       end
     end
     
-    return nil, nil, nil
+    return 0, 0, 0
   end
 
 
@@ -3993,11 +4020,29 @@ do -- AI_A2G_DISPATCHER
       end
     end
     
-    return nil, nil, nil
+    return 0, 0, 0
   end
 
 
+  --- Assigns A2G AI Tasks in relation to the detected items.
+  -- @param #AI_A2G_DISPATCHER self
+  function AI_A2G_DISPATCHER:Order( DetectedItem )
+    local AttackCoordinate = self.Detection:GetDetectedItemCoordinate( DetectedItem )
+    
+    local ShortestDistance = 999999999
+  
+    for DefenseCoordinateName, DefenseCoordinate in pairs( self.DefenseCoordinates ) do
+      local DefenseCoordinate = DefenseCoordinate -- Core.Point#COORDINATE
 
+      local EvaluateDistance = AttackCoordinate:Get2DDistance( DefenseCoordinate )
+      
+      if EvaluateDistance <= ShortestDistance then
+        ShortestDistance = EvaluateDistance
+      end
+    end
+    
+    return ShortestDistance
+  end
 
   --- Assigns A2G AI Tasks in relation to the detected items.
   -- @param #AI_A2G_DISPATCHER self
@@ -4049,9 +4094,11 @@ do -- AI_A2G_DISPATCHER
     local DefenderGroupCount = 0
 
     local DefendersTotal = 0
+    local DefenseTotal = 0
 
     -- Now that all obsolete tasks are removed, loop through the detected targets.
-    for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
+    --for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
+    for DetectedItemID, DetectedItem in UTILS.spairs( Detection:GetDetectedItems(), function( t, a, b ) return self:Order(t[a]) <  self:Order(t[b]) end  ) do
     
       if not self.Detection:IsDetectedItemLocked( DetectedItem ) == true then
         local DetectedItem = DetectedItem -- Functional.Detection#DETECTION_BASE.DetectedItem
@@ -4060,6 +4107,8 @@ do -- AI_A2G_DISPATCHER
         local DetectedZone = DetectedItem.Zone
   
         self:F( { "Target ID", DetectedItem.ItemID } )
+        
+        self:F( { DefenseLimit = self.DefenseLimitmit, DefenseTotal = DefenseTotal } )
         DetectedSet:Flush( self )
   
         local DetectedID = DetectedItem.ID
@@ -4086,17 +4135,24 @@ do -- AI_A2G_DISPATCHER
             
             self:F( { DistanceProbability = DistanceProbability, DefenseProbability = DefenseProbability } )
             
-            if DefenseProbability <= DistanceProbability / ( 300 / 30 ) then
+            if self._DefenseApproach == AI_A2G_DISPATCHER.DefenseApproach.Random then
+            
+              if DefenseProbability <= DistanceProbability / ( 300 / 30 ) then
+                EngageCoordinate = DefenseCoordinate
+                break
+              end
+            end
+            if self._DefenseApproach == AI_A2G_DISPATCHER.DefenseApproach.Distance then
               EngageCoordinate = DefenseCoordinate
               break
             end
           end
         end
         
-        if EngageCoordinate then
+        if EngageCoordinate and DefenseTotal < self.DefenseLimit then
           do 
             local DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies = self:Evaluate_SEAD( DetectedItem ) -- Returns a SET_UNIT with the SEAD targets to be engaged...
-            if DefendersMissing and DefendersMissing > 0 then
+            if DefendersMissing > 0 then
               self:F( { DefendersTotal = DefendersTotal, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing } )
               self:Defend( DetectedItem, DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies, "SEAD", EngageCoordinate )
             end
@@ -4104,7 +4160,7 @@ do -- AI_A2G_DISPATCHER
     
           do 
             local DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies = self:Evaluate_CAS( DetectedItem ) -- Returns a SET_UNIT with the CAS targets to be engaged...
-            if DefendersMissing and DefendersMissing > 0 then
+            if DefendersMissing > 0 then
               self:F( { DefendersTotal = DefendersTotal, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing } )
               self:Defend( DetectedItem, DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies, "CAS", EngageCoordinate )
             end
@@ -4112,20 +4168,26 @@ do -- AI_A2G_DISPATCHER
     
           do 
             local DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies = self:Evaluate_BAI( DetectedItem ) -- Returns a SET_UNIT with the CAS targets to be engaged...
-            if DefendersMissing and DefendersMissing > 0 then
+            if DefendersMissing > 0 then
               self:F( { DefendersTotal = DefendersTotal, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing } )
               self:Defend( DetectedItem, DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies, "BAI", EngageCoordinate )
             end
           end
         end
-  
-  --      do
-  --        local DefendersMissing, Friendlies = self:Evaluate_CAS( DetectedItem )
-  --        if DefendersMissing and DefendersMissing > 0 then
-  --          self:F( { DefendersMissing = DefendersMissing } )
-  --          self:CAS( DetectedItem, DefendersMissing, Friendlies )
-  --        end
-  --      end
+        
+        for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
+          local Defender = Defender -- Wrapper.Group#GROUP
+          if DefenderTask.Target and DefenderTask.Target.Index == DetectedItem.Index then
+            DefenseTotal = DefenseTotal + 1
+          end
+        end
+        
+        for DefenseQueueID, DefenseQueueItem in pairs( self.DefenseQueue ) do
+          local DefenseQueueItem = DefenseQueueItem -- #AI_A2G_DISPATCHER.DefenseQueueItem
+          if DefenseQueueItem.AttackerDetection.Index == DetectedItem.Index then
+            DefenseTotal = DefenseTotal + 1
+          end
+        end
   
         if self.TacticalDisplay then      
           -- Show tactical situation
