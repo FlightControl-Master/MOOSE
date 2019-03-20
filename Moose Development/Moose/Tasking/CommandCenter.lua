@@ -212,7 +212,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
         if EventGroup and self:HasGroup( EventGroup ) then
           local CommandCenterMenu = MENU_GROUP:New( EventGroup, self:GetText() )
           local MenuReporting = MENU_GROUP:New( EventGroup, "Missions Reports", CommandCenterMenu )
-          local MenuMissionsSummary = MENU_GROUP_COMMAND:New( EventGroup, "Missions Status Report", MenuReporting, self.ReportMissionsStatus, self, EventGroup )
+          local MenuMissionsSummary = MENU_GROUP_COMMAND:New( EventGroup, "Missions Status Report", MenuReporting, self.ReportSummary, self, EventGroup )
           local MenuMissionsDetails = MENU_GROUP_COMMAND:New( EventGroup, "Missions Players Report", MenuReporting, self.ReportMissionsPlayers, self, EventGroup )
           self:ReportSummary( EventGroup )
           local PlayerUnit = EventData.IniUnit
