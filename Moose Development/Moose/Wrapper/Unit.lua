@@ -324,13 +324,16 @@ end
 -- @return #string Player Name
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetPlayerName()
-  self:F2( self.UnitName )
+  self:F( self.UnitName )
 
   local DCSUnit = self:GetDCSObject() -- DCS#Unit
   
   if DCSUnit then
   
+    self:F({self:GetName()})
+  
     local PlayerName = DCSUnit:getPlayerName()
+    self:F({PlayerName = PlayerName})
     -- TODO Workaround DCS-BUG-3 - https://github.com/FlightControl-Master/MOOSE/issues/696
 --    if PlayerName == nil or PlayerName == "" then
 --      local PlayerCategory = DCSUnit:getDesc().category

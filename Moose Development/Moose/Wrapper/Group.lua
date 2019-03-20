@@ -2107,8 +2107,11 @@ do -- Players
   
     local PlayerNames = {}
     
+    self:F({Group = self:GetName()})
+    
     local Units = self:GetUnits()
     for UnitID, UnitData in pairs( Units ) do
+      self:F({UnitData:GetName()})
       local Unit = UnitData -- Wrapper.Unit#UNIT
       local PlayerName = Unit:GetPlayerName()
       if PlayerName and PlayerName ~= "" then
