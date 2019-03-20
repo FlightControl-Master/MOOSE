@@ -318,6 +318,30 @@ function UNIT:GetCallsign()
   return nil
 end
 
+--- Check if an (air) unit is a client or player slot. Information is retrieved from the group template.
+-- @param #UNIT self
+-- @return #boolean If true, unit is associated with a client or player slot.
+function UNIT:IsPlayer()
+  
+  -- Get group.
+  local group=self:GetGroup()
+    
+  -- Units of template group.
+  local units=group:GetTemplate().units
+  
+  -- Get numbers.
+  for _,unit in pairs(units) do
+      
+    -- Check if unit name matach and skill is Client or Player.
+    if unit.name==self:GetName() and (unit.skill=="Client" or unit.skill=="Player") then
+      return true
+    end
+
+  end
+  
+  return false
+end
+
 
 --- Returns name of the player that control the unit or nil if the unit is controlled by A.I.
 -- @param #UNIT self

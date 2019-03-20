@@ -10457,6 +10457,7 @@ function AIRBOSS:_GetZoneHolding(case, stack)
     if self.carriertype==AIRBOSS.CarrierType.TARAWA then
       zoneHolding=ZONE_RADIUS:New("CASE I Holding Zone", self.carrier:GetVec2(), UTILS.NMToMeters(5))
     end
+    
   
   else  
     -- CASE II/II
@@ -13368,6 +13369,7 @@ function AIRBOSS:_GetOnboardNumbers(group, playeronly)
   
   return numbers
 end
+
 
 --- Get Tower frequency of carrier.
 -- @param #AIRBOSS self
