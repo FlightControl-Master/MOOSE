@@ -879,6 +879,29 @@
 -- 
 --     airbossStennis:SetSoundfilesFolder("Airboss Soundfiles/")
 --     
+-- ## Carrier Specific Voice Overs
+-- 
+-- It is possible to use different sound files for different carriers. If you have set up two (or more) AIRBOSS objects at different carriers - say Stennis and Tarawa - each
+-- carrier would use the files in the specified directory, e.g.
+-- 
+--     airbossStennis:SetSoundfilesFolder("Airboss Soundfiles Stennis/")
+--     airbossTarawa:SetSoundfilesFolder("Airboss Soundfiles Tarawa/")
+--     
+-- ## Sound Packs
+-- 
+-- The AIRBOSS currently has two different "sound packs" for both LSO and Marshal radios. These contain voice overs by different actors.
+-- These can be set by @{#AIRBOSS.SetVoiceOversLSOByRaynor}() and @{#AIRBOSS.SetVoiceOversMarshalByRaynor}(). These are the default settings.
+-- The other sound files can be set by @{#AIRBOSS.SetVoiceOversLSOByFF}() and @{#AIRBOSS.SetVoiceOversMarshalByFF}().
+-- Also combinations can be used, e.g.
+-- 
+--     airbossStennis:SetVoiceOversLSOByFF()
+--     airbossStennis:SetVoiceOversMarshalByRaynor()
+--     
+-- In this example LSO voice overs by FF and Marshal voice overs by Raynor are used.
+-- 
+-- **Note** that this only initializes the correct parameters parameters of sound files, i.e. the duration. The correct files have to be in the directory set by the
+-- @{#AIRBOSS.SetSoundfilesFolder}(*folder*) function.
+--     
 -- ## How To Use Your Own Voice Overs
 -- 
 -- If you have a set of AIRBOSS sound files recorded or got it from elsewhere it is possible to use those instead of the default ones.
@@ -898,13 +921,7 @@
 --     
 -- Again, changing the file name, subtitle, subtitle duration is not required if you name the file exactly like the original one, which is this case would be "LSO-RogerBall.ogg".
 --     
--- ## Carrier Specific Voice Overs
 -- 
--- It is possible to use different sound files for different carriers. If you have set up two (or more) AIRBOSS objects at different carriers - say Stennis and Tarawa - each
--- carrier would use the files in the specified directory, e.g.
--- 
---     airbossStennis:SetSoundfilesFolder("Airboss Soundfiles Stennis/")
---     airbossTarawa:SetSoundfilesFolder("Airboss Soundfiles Tarawa/")
 --     
 -- ## The Radio Dilemma
 -- 
@@ -3184,7 +3201,7 @@ function AIRBOSS:onafterStatus(From, Event, To)
     for _name,_player in pairs(self.players) do
       i=i+1
       local player=_player --#AIRBOSS.FlightGroup
-      text=text..string.format("\n%d.) %s step=%s, unit=%s", i, tostring(player.name), tostring(player.step), tostring(player.unitname))
+      text=text..string.format("\n%d.) %s: Step=%s, Unit=%s, Airframe=%s", i, tostring(player.name), tostring(player.step), tostring(player.unitname), tostring(player.actype))
     end
     if i==0 then
       text=text.." none"
@@ -4050,6 +4067,7 @@ end
 --- Init parameters for Marshal Voice overs by *Raynor*.
 -- @param #AIRBOSS self
 function AIRBOSS:SetVoiceOversMarshalByRaynor()
+  self:I(self.lid..string.format("Marshal Raynor reporting for duty!"))
 
   self.MarshalCall.AFFIRMATIVE.duration=0.70
   self.MarshalCall.ALTIMETER.duration=0.60
@@ -4096,6 +4114,7 @@ end
 --- Set parameters for LSO Voice overs by *Raynor*.
 -- @param #AIRBOSS self
 function AIRBOSS:SetVoiceOversLSOByRaynor()
+  self:I(self.lid..string.format("LSO Raynor reporting for duty!"))
 
   self.LSOCall.BOLTER.duration=0.75
   self.LSOCall.CALLTHEBALL.duration=0.625
@@ -4138,6 +4157,7 @@ end
 --- Set parameters for LSO Voice overs by *funkyfranky*.
 -- @param #AIRBOSS self
 function AIRBOSS:SetVoiceOversLSOByFF()
+  self:I(self.lid..string.format("Marshal FF reporting for duty!"))
 
   self.LSOCall.BOLTER.duration=0.75
   self.LSOCall.CALLTHEBALL.duration=0.60
@@ -4178,6 +4198,7 @@ end
 --- Intit parameters for Marshal Voice overs by *funkyfranky*.
 -- @param #AIRBOSS self
 function AIRBOSS:SetVoiceOversMarshalByFF()
+  self:I(self.lid..string.format("Marshal FF reporting for duty!"))
 
   self.MarshalCall.AFFIRMATIVE.duration=0.90
   self.MarshalCall.ALTIMETER.duration=0.85
