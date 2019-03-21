@@ -432,7 +432,7 @@ function TASK:New( Mission, SetGroupAssign, TaskName, TaskType, TaskBriefing )
   self:AddTransition( "Assigned", "Fail", "Failed" )
   self:AddTransition( { "Planned", "Assigned" }, "Abort", "Aborted" )
   self:AddTransition( "Assigned", "Cancel", "Cancelled" )
-  self:AddTransition( "*", "Goal", "*" )
+  self:AddTransition( "Assigned", "Goal", "*" )
   
   self.Fsm = {}
   
