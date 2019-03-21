@@ -212,6 +212,8 @@ do -- TASK_CAPTURE_ZONE
     )
     
     self:UpdateTaskInfo( true )
+    
+    self:SetGoalTotal( 1 )
 
     return self
   end 
@@ -261,6 +263,7 @@ do -- TASK_CAPTURE_ZONE
              Scoring:_AddMissionGoalScore( self.Mission, PlayerName, "Zone " .. self.ZoneGoal:GetZoneName() .." captured", PlayerContribution * 200 / TotalContributions )
            end
         end
+        self:AddProgress( PlayerName, "Zone " .. self.ZoneGoal:GetZoneName() .." captured", timer.getTime() , 1 )
       end
     end
     
