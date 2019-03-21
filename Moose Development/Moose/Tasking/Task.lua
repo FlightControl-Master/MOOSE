@@ -1808,7 +1808,7 @@ function TASK:GetPlayerNames() --R2.1 Get a map of the players.
     if PlayerGroup:IsAlive() == true then
       if self:IsGroupAssigned( PlayerGroup ) then
         local PlayerNames = PlayerGroup:GetPlayerNames()
-        for PlayerNameID, PlayerName in pairs( PlayerNames ) do
+        for PlayerNameID, PlayerName in pairs( PlayerNames or {} ) do
           PlayerNameMap[PlayerName] = PlayerGroup
         end
       end

@@ -348,7 +348,7 @@ end
 -- @return #string Player Name
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetPlayerName()
-  self:F2( self.UnitName )
+  self:F( self.UnitName )
 
   local DCSUnit = self:GetDCSObject() -- DCS#Unit
   
@@ -831,37 +831,6 @@ end
 
 -- Is functions
 
---- Returns true if the unit is within a @{Zone}.
--- @param #UNIT self
--- @param Core.Zone#ZONE_BASE Zone The zone to test.
--- @return #boolean Returns true if the unit is within the @{Core.Zone#ZONE_BASE}
-function UNIT:IsInZone( Zone )
-  self:F2( { self.UnitName, Zone } )
-
-  if self:IsAlive() then
-    local IsInZone = Zone:IsVec3InZone( self:GetVec3() )
-  
-    return IsInZone 
-  end
-  return false
-end
-
---- Returns true if the unit is not within a @{Zone}.
--- @param #UNIT self
--- @param Core.Zone#ZONE_BASE Zone The zone to test.
--- @return #boolean Returns true if the unit is not within the @{Core.Zone#ZONE_BASE}
-function UNIT:IsNotInZone( Zone )
-  self:F2( { self.UnitName, Zone } )
-
-  if self:IsAlive() then
-    local IsInZone = not Zone:IsVec3InZone( self:GetVec3() )
-    
-    self:T( { IsInZone } )
-    return IsInZone 
-  else
-    return false
-  end
-end
 
 
 --- Returns true if there is an **other** DCS Unit within a radius of the current 2D point of the DCS Unit.

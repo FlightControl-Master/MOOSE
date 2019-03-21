@@ -211,7 +211,9 @@ do -- TASK_CAPTURE_ZONE
       "Capture Zone " .. self.TaskZoneName
     )
     
-    self:UpdateTaskInfo()
+    self:UpdateTaskInfo( true )
+    
+    self:SetGoalTotal( 1 )
 
     return self
   end 
@@ -219,18 +221,18 @@ do -- TASK_CAPTURE_ZONE
 
   --- Instantiates a new TASK_CAPTURE_ZONE.
   -- @param #TASK_CAPTURE_ZONE self
-  function TASK_CAPTURE_ZONE:UpdateTaskInfo( DetectedItem ) 
+  function TASK_CAPTURE_ZONE:UpdateTaskInfo( Persist ) 
   
-    self:F({"Update"})
+    Persist = Persist or false
   
     local ZoneCoordinate = self.ZoneGoal:GetZone():GetCoordinate() 
-    self.TaskInfo:AddTaskName( 0, "MSOD" )
-    self.TaskInfo:AddCoordinate( ZoneCoordinate, 1, "SOD" )
-    self.TaskInfo:AddText( "Zone Name", self.ZoneGoal:GetZoneName(), 10, "MOD" )
-    self.TaskInfo:AddText( "Zone Coalition", self.ZoneGoal:GetCoalitionName(), 11, "MOD" )
+    self.TaskInfo:AddTaskName( 0, "MSOD", Persist )
+    self.TaskInfo:AddCoordinate( ZoneCoordinate, 1, "SOD", Persist )
+    self.TaskInfo:AddText( "Zone Name", self.ZoneGoal:GetZoneName(), 10, "MOD", Persist )
+    self.TaskInfo:AddText( "Zone Coalition", self.ZoneGoal:GetCoalitionName(), 11, "MOD", Persist )
     local SetUnit = self.ZoneGoal.Zone:GetScannedSetUnit()
     local ThreatLevel, ThreatText = SetUnit:CalculateThreatLevelA2G()
-    self.TaskInfo:AddThreat( ThreatText, ThreatLevel, 20, "MOD" )
+    self.TaskInfo:AddThreat( ThreatText, ThreatLevel, 20, "MSOD", Persist )
   end
     
 
@@ -251,7 +253,6 @@ do -- TASK_CAPTURE_ZONE
     
     if self.ZoneGoal then
       if self.ZoneGoal.Goal:IsAchieved() then
-        self:Success()
         local TotalContributions = self.ZoneGoal.Goal:GetTotalContributions()
         local PlayerContributions = self.ZoneGoal.Goal:GetPlayerContributions()
         self:F( { TotalContributions = TotalContributions, PlayerContributions = PlayerContributions } )
@@ -261,6 +262,7 @@ do -- TASK_CAPTURE_ZONE
              Scoring:_AddMissionGoalScore( self.Mission, PlayerName, "Zone " .. self.ZoneGoal:GetZoneName() .." captured", PlayerContribution * 200 / TotalContributions )
            end
         end
+        self:Success()
       end
     end
     

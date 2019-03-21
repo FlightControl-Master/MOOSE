@@ -284,7 +284,7 @@ do -- TASK_CAPTURE_DISPATCHER
           end
           
           function CaptureZone.Task.OnEnterSuccess( Task, From, Event, To )
-            self:Success( Task )
+            --self:Success( Task )
             if self.AI_A2G_Dispatcher then
               self.AI_A2G_Dispatcher:Lock( Task.TaskZoneName ) -- This will lock the zone from being defended by AI.
             end
