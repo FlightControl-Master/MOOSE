@@ -507,14 +507,18 @@ function COMMANDCENTER:AssignTask( TaskGroup )
   end
   
   local Task = Tasks[ math.random( 1, #Tasks ) ] -- Tasking.Task#TASK
+  
+  if Task then
 
-  self:I( "Assigning task " .. Task:GetName() .. " using auto assign method " .. self.AutoAssignMethod .. " to " .. TaskGroup:GetName() .. " with task priority " .. AssignPriority )
-  
-  if not self.AutoAcceptTasks == true then
-    Task:SetAutoAssignMethod( ACT_ASSIGN_MENU_ACCEPT:New( Task.TaskBriefing ) )
+    self:I( "Assigning task " .. Task:GetName() .. " using auto assign method " .. self.AutoAssignMethod .. " to " .. TaskGroup:GetName() .. " with task priority " .. AssignPriority )
+    
+    if not self.AutoAcceptTasks == true then
+      Task:SetAutoAssignMethod( ACT_ASSIGN_MENU_ACCEPT:New( Task.TaskBriefing ) )
+    end
+    
+    Task:AssignToGroup( TaskGroup )
+    
   end
-  
-  Task:AssignToGroup( TaskGroup )
 
 end
 

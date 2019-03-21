@@ -253,7 +253,6 @@ do -- TASK_CAPTURE_ZONE
     
     if self.ZoneGoal then
       if self.ZoneGoal.Goal:IsAchieved() then
-        self:Success()
         local TotalContributions = self.ZoneGoal.Goal:GetTotalContributions()
         local PlayerContributions = self.ZoneGoal.Goal:GetPlayerContributions()
         self:F( { TotalContributions = TotalContributions, PlayerContributions = PlayerContributions } )
@@ -263,7 +262,7 @@ do -- TASK_CAPTURE_ZONE
              Scoring:_AddMissionGoalScore( self.Mission, PlayerName, "Zone " .. self.ZoneGoal:GetZoneName() .." captured", PlayerContribution * 200 / TotalContributions )
            end
         end
-        self:AddProgress( PlayerName, "Zone " .. self.ZoneGoal:GetZoneName() .." captured", timer.getTime() , 1 )
+        self:Success()
       end
     end
     
