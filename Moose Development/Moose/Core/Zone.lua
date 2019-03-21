@@ -712,7 +712,15 @@ function ZONE_RADIUS:GetScannedSetUnit()
     for ObjectID, UnitObject in pairs( self.ScanData.Units ) do
       local UnitObject = UnitObject -- DCS#Unit
       if UnitObject:isExist() then
-        SetUnit:AddUnit( UNIT:FindByName( UnitObject:getName() ) )  
+        local FoundUnit = UNIT:FindByName( UnitObject:getName() )
+        if FoundUnit then
+          SetUnit:AddUnit( FoundUnit )
+        else
+          local FoundStatic = STATIC:FindByName( UnitObject:getName() )
+          if FoundStatic then
+            SetUnit:AddUnit( FoundStatic )
+          end
+        end
       end
     end
   end
