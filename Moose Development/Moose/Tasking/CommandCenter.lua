@@ -212,7 +212,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
         if EventGroup and self:HasGroup( EventGroup ) then
           local CommandCenterMenu = MENU_GROUP:New( EventGroup, self:GetText() )
           local MenuReporting = MENU_GROUP:New( EventGroup, "Missions Reports", CommandCenterMenu )
-          local MenuMissionsSummary = MENU_GROUP_COMMAND:New( EventGroup, "Missions Status Report", MenuReporting, self.ReportMissionsStatus, self, EventGroup )
+          local MenuMissionsSummary = MENU_GROUP_COMMAND:New( EventGroup, "Missions Status Report", MenuReporting, self.ReportSummary, self, EventGroup )
           local MenuMissionsDetails = MENU_GROUP_COMMAND:New( EventGroup, "Missions Players Report", MenuReporting, self.ReportMissionsPlayers, self, EventGroup )
           self:ReportSummary( EventGroup )
           local PlayerUnit = EventData.IniUnit
@@ -507,14 +507,18 @@ function COMMANDCENTER:AssignTask( TaskGroup )
   end
   
   local Task = Tasks[ math.random( 1, #Tasks ) ] -- Tasking.Task#TASK
+  
+  if Task then
 
-  self:I( "Assigning task " .. Task:GetName() .. " using auto assign method " .. self.AutoAssignMethod .. " to " .. TaskGroup:GetName() .. " with task priority " .. AssignPriority )
-  
-  if not self.AutoAcceptTasks == true then
-    Task:SetAutoAssignMethod( ACT_ASSIGN_MENU_ACCEPT:New( Task.TaskBriefing ) )
+    self:I( "Assigning task " .. Task:GetName() .. " using auto assign method " .. self.AutoAssignMethod .. " to " .. TaskGroup:GetName() .. " with task priority " .. AssignPriority )
+    
+    if not self.AutoAcceptTasks == true then
+      Task:SetAutoAssignMethod( ACT_ASSIGN_MENU_ACCEPT:New( Task.TaskBriefing ) )
+    end
+    
+    Task:AssignToGroup( TaskGroup )
+    
   end
-  
-  Task:AssignToGroup( TaskGroup )
 
 end
 

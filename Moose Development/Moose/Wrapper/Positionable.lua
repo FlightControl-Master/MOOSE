@@ -1101,7 +1101,7 @@ function POSITIONABLE:MessageToSetGroup( Message, Duration, MessageSetGroup, Nam
   local DCSObject = self:GetDCSObject()
   if DCSObject then
     if DCSObject:isExist() then
-      MessageSetGroup:ForEachGroup(
+      MessageSetGroup:ForEachGroupAlive(
         function( MessageGroup )
           self:GetMessage( Message, Duration, Name ):ToGroup( MessageGroup )
         end 
@@ -1479,3 +1479,33 @@ function POSITIONABLE:SmokeBlue()
 end
 
 
+--- Returns true if the unit is within a @{Zone}.
+-- @param #STPOSITIONABLEATIC self
+-- @param Core.Zone#ZONE_BASE Zone The zone to test.
+-- @return #boolean Returns true if the unit is within the @{Core.Zone#ZONE_BASE}
+function POSITIONABLE:IsInZone( Zone )
+  self:F2( { self.PositionableName, Zone } )
+
+  if self:IsAlive() then
+    local IsInZone = Zone:IsVec3InZone( self:GetVec3() )
+  
+    return IsInZone 
+  end
+  return false
+end
+
+--- Returns true if the unit is not within a @{Zone}.
+-- @param #POSITIONABLE self
+-- @param Core.Zone#ZONE_BASE Zone The zone to test.
+-- @return #boolean Returns true if the unit is not within the @{Core.Zone#ZONE_BASE}
+function POSITIONABLE:IsNotInZone( Zone )
+  self:F2( { self.PositionableName, Zone } )
+
+  if self:IsAlive() then
+    local IsNotInZone = not Zone:IsVec3InZone( self:GetVec3() )
+    
+    return IsNotInZone 
+  else
+    return false
+  end
+end

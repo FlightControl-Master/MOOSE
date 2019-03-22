@@ -633,7 +633,7 @@ do -- TASK_A2G_DISPATCHER
         --DetectedSet:Flush( self )
         
         local DetectedItemID = DetectedItem.ID
-        local TaskIndex = DetectedItem.ID
+        local TaskIndex = DetectedItem.Index
         local DetectedItemChanged = DetectedItem.Changed
         
         self:F( { DetectedItemChanged = DetectedItemChanged, DetectedItemID = DetectedItemID, TaskIndex = TaskIndex } )
@@ -649,6 +649,7 @@ do -- TASK_A2G_DISPATCHER
               if TargetSetUnit then
                 if Task:IsInstanceOf( TASK_A2G_SEAD ) then
                   Task:SetTargetSetUnit( TargetSetUnit )
+                  Task:SetDetection( Detection, DetectedItem )
                   Task:UpdateTaskInfo( DetectedItem )
                   TargetsReport:Add( Detection:GetChangeText( DetectedItem )  )
                 else
@@ -659,7 +660,7 @@ do -- TASK_A2G_DISPATCHER
                 if TargetSetUnit then
                   if Task:IsInstanceOf( TASK_A2G_CAS ) then
                     Task:SetTargetSetUnit( TargetSetUnit )
-                    Task:SetDetection( Detection, TaskIndex )
+                    Task:SetDetection( Detection, DetectedItem )
                     Task:UpdateTaskInfo( DetectedItem )
                     TargetsReport:Add( Detection:GetChangeText( DetectedItem ) )
                   else
@@ -671,7 +672,7 @@ do -- TASK_A2G_DISPATCHER
                   if TargetSetUnit then
                     if Task:IsInstanceOf( TASK_A2G_BAI ) then
                       Task:SetTargetSetUnit( TargetSetUnit )
-                      Task:SetDetection( Detection, TaskIndex )
+                      Task:SetDetection( Detection, DetectedItem )
                       Task:UpdateTaskInfo( DetectedItem )
                       TargetsReport:Add( Detection:GetChangeText( DetectedItem ) )
                     else
