@@ -208,6 +208,8 @@
 -- @field #number collisiondist Distance up to which collision checks are done.
 -- @field #number Tmessage Default duration in seconds messages are displayed to players.
 -- @field #string soundfolder Folder within the mission (miz) file where airboss sound files are located.
+-- @field #string soundfolderLSO Folder withing the mission (miz) file where LSO sound files are stored.
+-- @field #string soundfolderMSH Folder withing the mission (miz) file where Marshal sound files are stored.
 -- @field #boolean despawnshutdown Despawn group after engine shutdown.
 -- @field #number Tbeacon Last time the beacons were refeshed.
 -- @field #number dTbeacon Time interval to refresh the beacons. Default 5 minutes.
@@ -1200,6 +1202,8 @@ AIRBOSS = {
   collisiondist  = nil,
   Tmessage       = nil,
   soundfolder    = nil,
+  soundfolderLSO = nil,
+  soundfolderMSH = nil,
   despawnshutdown= nil,
   dTbeacon       = nil,
   Tbeacon        = nil,
@@ -1659,7 +1663,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.9.9.5"
+AIRBOSS.version="0.9.9.6w"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -4066,8 +4070,23 @@ end
 
 --- Init parameters for Marshal Voice overs by *Raynor*.
 -- @param #AIRBOSS self
-function AIRBOSS:SetVoiceOversMarshalByRaynor()
-  self:I(self.lid..string.format("Marshal Raynor reporting for duty!"))
+-- @param #string mizfolder (Optional) Folder within miz file where the sound files are located.
+function AIRBOSS:SetVoiceOversMarshalByRaynor(mizfolder)
+  
+  -- Set sound files folder.
+  if mizfolder then
+    local lastchar=string.sub(mizfolder, -1)
+    if lastchar~="/" then
+      mizfolder=mizfolder.."/"
+    end
+    self.soundfolderMSH=mizfolder
+  else
+    -- Default is the general folder.
+    self.soundfolderMSH=self.soundfolder
+  end
+  
+  -- Report for duty.
+  self:I(self.lid..string.format("Marshal Raynor reporting for duty! Soundfolder=%s", tostring(self.soundfolderMSH)))
 
   self.MarshalCall.AFFIRMATIVE.duration=0.70
   self.MarshalCall.ALTIMETER.duration=0.60
@@ -4113,8 +4132,23 @@ end
 
 --- Set parameters for LSO Voice overs by *Raynor*.
 -- @param #AIRBOSS self
-function AIRBOSS:SetVoiceOversLSOByRaynor()
-  self:I(self.lid..string.format("LSO Raynor reporting for duty!"))
+-- @param #string mizfolder (Optional) Folder within miz file where the sound files are located.
+function AIRBOSS:SetVoiceOversLSOByRaynor(mizfolder)
+
+  -- Set sound files folder.
+  if mizfolder then
+    local lastchar=string.sub(mizfolder, -1)
+    if lastchar~="/" then
+      mizfolder=mizfolder.."/"
+    end
+    self.soundfolderLSO=mizfolder
+  else
+    -- Default is the general folder.
+    self.soundfolderLSO=self.soundfolder
+  end
+
+  -- Report for duty.
+  self:I(self.lid..string.format("LSO Raynor reporting for duty! Soundfolder=%s", tostring(self.soundfolderLSO)))
 
   self.LSOCall.BOLTER.duration=0.75
   self.LSOCall.CALLTHEBALL.duration=0.625
@@ -4156,8 +4190,20 @@ end
 
 --- Set parameters for LSO Voice overs by *funkyfranky*.
 -- @param #AIRBOSS self
-function AIRBOSS:SetVoiceOversLSOByFF()
-  self:I(self.lid..string.format("Marshal FF reporting for duty!"))
+-- @param #string mizfolder (Optional) Folder within miz file where the sound files are located.
+function AIRBOSS:SetVoiceOversLSOByFF(mizfolder)
+
+  -- Set sound files folder.
+  if mizfolder then
+    local lastchar=string.sub(mizfolder, -1)
+    if lastchar~="/" then
+      mizfolder=mizfolder.."/"
+    end
+    self.soundfolderLSO=mizfolder
+  else
+    -- Default is the general folder.
+    self.soundfolderLSO=self.soundfolder
+  end
 
   self.LSOCall.BOLTER.duration=0.75
   self.LSOCall.CALLTHEBALL.duration=0.60
@@ -4197,8 +4243,23 @@ end
 
 --- Intit parameters for Marshal Voice overs by *funkyfranky*.
 -- @param #AIRBOSS self
-function AIRBOSS:SetVoiceOversMarshalByFF()
-  self:I(self.lid..string.format("Marshal FF reporting for duty!"))
+-- @param #string mizfolder (Optional) Folder within miz file where the sound files are located.
+function AIRBOSS:SetVoiceOversMarshalByFF(mizfolder)
+
+  -- Set sound files folder.
+  if mizfolder then
+    local lastchar=string.sub(mizfolder, -1)
+    if lastchar~="/" then
+      mizfolder=mizfolder.."/"
+    end
+    self.soundfolderMSH=mizfolder
+  else
+    -- Default is the general folder.
+    self.soundfolderMSH=self.soundfolder
+  end
+  
+  -- Report for duty.
+  self:I(self.lid..string.format("Marshal FF reporting for duty! Soundfolder=%s", tostring(self.soundfolderMSH)))
 
   self.MarshalCall.AFFIRMATIVE.duration=0.90
   self.MarshalCall.ALTIMETER.duration=0.85
@@ -5020,7 +5081,7 @@ function AIRBOSS:SetVoiceOver(radiocall, duration, subtitle, subduration, filena
   radiocall.duration=duration
   radiocall.subtitle=subtitle or radiocall.subtitle
   radiocall.file=filename
-  radiocall.suffix=".ogg"
+  radiocall.suffix=suffix or ".ogg"
 end
 
 --- Get optimal aircraft AoA parameters..
@@ -13955,7 +14016,7 @@ function AIRBOSS:Broadcast(radio, call, loud)
     local sender=self:_GetRadioSender(radio)
     
     -- Construct file name and subtitle.
-    local filename=self:_RadioFilename(call, loud)
+    local filename=self:_RadioFilename(call, loud, radio.alias)
     
     -- Create subtitle for transmission.
     local subtitle=self:_RadioSubtitle(radio, call, loud)
@@ -14064,7 +14125,7 @@ function AIRBOSS:Sound2Player(playerData, radio, call, loud, delay)
   if playerData.unit:IsInZone(self.zoneCCA) and call then
 
     -- Construct file name.
-    local filename=self:_RadioFilename(call, loud)
+    local filename=self:_RadioFilename(call, loud, radio.alias)
     
     -- Get Subtitle
     local subtitle=self:_RadioSubtitle(radio, call, loud)
@@ -14134,25 +14195,34 @@ end
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.RadioCall call Radio sound files and subtitles.
 -- @param #boolean loud Use loud version of file if available.
+-- @param #string channel Radio channel alias "LSO" or "LSOCall", "MARSHAL" or "MarshalCall".
 -- @return #string The file name of the radio sound.
-function AIRBOSS:_RadioFilename(call, loud)
+function AIRBOSS:_RadioFilename(call, loud, channel)
 
-    -- Construct file name and subtitle.
-    local prefix=call.file or ""
-    local suffix=call.suffix or "ogg"
-    
-    -- Path to sound files. Default is in the ME
-    local path=self.soundfolder or "l10n/DEFAULT/"
-        
-    -- Loud version.
-    if loud then
-      prefix=prefix.."_Loud"
-    end
-    
-    -- File name inclusing path in miz file.
-    local filename=string.format("%s%s.%s", path, prefix, suffix)
+  -- Construct file name and subtitle.
+  local prefix=call.file or ""
+  local suffix=call.suffix or "ogg"
+  
+  -- Path to sound files. Default is in the ME
+  local path=self.soundfolder or "l10n/DEFAULT/"
+  
+  -- Check for special LSO and Marshal sound folders. 
+  if string.find(call.file, "LSO-") and channel and (channel=="LSO" or channel=="LSOCall") then
+    path=self.soundfolderLSO or path
+  end
+  if string.find(call.file, "MARSHAL-") and channel and (channel=="MARSHAL" or channel=="MarshalCall") then
+    path=self.soundfolderMSH or path
+  end
+      
+  -- Loud version.
+  if loud then
+    prefix=prefix.."_Loud"
+  end
+  
+  -- File name inclusing path in miz file.
+  local filename=string.format("%s%s.%s", path, prefix, suffix)
 
-    return filename
+  return filename
 end
 
 --- Send text message to player client.
@@ -14206,21 +14276,21 @@ function AIRBOSS:MessageToPlayer(playerData, message, sender, receiver, duration
       
       -- Negative.
       if string.find(text:lower(), "negative") then
-        local filename=self:_RadioFilename(self.MarshalCall.NEGATIVE)
+        local filename=self:_RadioFilename(self.MarshalCall.NEGATIVE, false, "MARSHAL")
         USERSOUND:New(filename):ToGroup(playerData.group, wait)
         wait=wait+self.MarshalCall.NEGATIVE.duration
       end
 
       -- Affirm.
       if string.find(text:lower(), "affirm") then
-        local filename=self:_RadioFilename(self.MarshalCall.AFFIRMATIVE)
+        local filename=self:_RadioFilename(self.MarshalCall.AFFIRMATIVE, false, "MARSHAL")
         USERSOUND:New(filename):ToGroup(playerData.group, wait)
         wait=wait+self.MarshalCall.AFFIRMATIVE.duration
       end
       
       -- Roger.
       if string.find(text:lower(), "roger") then
-        local filename=self:_RadioFilename(self.MarshalCall.ROGER)
+        local filename=self:_RadioFilename(self.MarshalCall.ROGER, false, "MARSHAL")
         USERSOUND:New(filename):ToGroup(playerData.group, wait)
         wait=wait+self.MarshalCall.ROGER.duration
       end
@@ -14432,8 +14502,7 @@ function AIRBOSS:_Number2Sound(playerData, sender, number, delay)
     local call=self[Sender][N] --#AIRBOSS.RadioCall
     
     -- Create file name.
-    --local filename=string.format("%s.%s", call.file, call.suffix)
-    local filename=self:_RadioFilename(call, false)
+    local filename=self:_RadioFilename(call, false, Sender)
     
     -- Play sound.
     USERSOUND:New(filename):ToGroup(playerData.group, delay+wait)
