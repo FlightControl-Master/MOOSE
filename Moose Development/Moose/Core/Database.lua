@@ -1330,7 +1330,7 @@ end
       -- What is he hitting?
       if Event.TgtCategory then
   
-        if Event.IniCoalition then -- A coalition object was hit, probably a static.
+        if Event.WeaponCoalition then -- A coalition object was hit, probably a static.
           -- A target got hit
           self.HITS[Event.TgtUnitName] = self.HITS[Event.TgtUnitName] or {}
           local Hit = self.HITS[Event.TgtUnitName]
