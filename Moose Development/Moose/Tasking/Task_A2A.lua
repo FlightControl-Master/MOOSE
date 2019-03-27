@@ -362,7 +362,7 @@ do -- TASK_A2A
       return math.random( 1, 9 )
     elseif AutoAssignMethod == COMMANDCENTER.AutoAssignMethods.Distance then
       local Coordinate = self.TaskInfo:GetData( "Coordinate" )
-      local Distance = TaskGroup:GetCoordinate():Get2DDistance( CommandCenter:GetPositionable():GetCoordinate() )
+      local Distance = Coordinate:Get2DDistance( CommandCenter:GetPositionable():GetCoordinate() )
       return math.floor( Distance )
     elseif AutoAssignMethod == COMMANDCENTER.AutoAssignMethods.Priority then
       return 1

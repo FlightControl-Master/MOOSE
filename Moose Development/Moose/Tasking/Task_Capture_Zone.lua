@@ -47,7 +47,7 @@ do -- TASK_ZONE_GOAL
   -- @param Tasking.Mission#MISSION Mission
   -- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
   -- @param #string TaskName The name of the Task.
-  -- @param Core.ZoneGoal#ZONE_GOAL ZoneGoal
+  -- @param Core.ZoneGoalCoalition#ZONE_GOAL_COALITION ZoneGoal
   -- @return #TASK_ZONE_GOAL self
   function TASK_ZONE_GOAL:New( Mission, SetGroup, TaskName, ZoneGoal, TaskType, TaskBriefing )
     local self = BASE:Inherit( self, TASK:New( Mission, SetGroup, TaskName, TaskType, TaskBriefing ) ) -- #TASK_ZONE_GOAL
@@ -211,7 +211,9 @@ do -- TASK_CAPTURE_ZONE
       "Capture Zone " .. self.TaskZoneName
     )
     
-    self:UpdateTaskInfo()
+    self:UpdateTaskInfo( true )
+    
+    self:SetGoalTotal( 1 )
 
     return self
   end 
@@ -219,12 +221,18 @@ do -- TASK_CAPTURE_ZONE
 
   --- Instantiates a new TASK_CAPTURE_ZONE.
   -- @param #TASK_CAPTURE_ZONE self
-  function TASK_CAPTURE_ZONE:UpdateTaskInfo() 
-
+  function TASK_CAPTURE_ZONE:UpdateTaskInfo( Persist ) 
+  
+    Persist = Persist or false
+  
     local ZoneCoordinate = self.ZoneGoal:GetZone():GetCoordinate() 
-    self.TaskInfo:AddCoordinate( ZoneCoordinate, 0, "SOD" )
-    self.TaskInfo:AddText( "Zone Name", self.ZoneGoal:GetZoneName(), 10, "MOD" )
-    self.TaskInfo:AddText( "Zone Coalition", self.ZoneGoal:GetCoalitionName(), 11, "MOD" )
+    self.TaskInfo:AddTaskName( 0, "MSOD", Persist )
+    self.TaskInfo:AddCoordinate( ZoneCoordinate, 1, "SOD", Persist )
+    self.TaskInfo:AddText( "Zone Name", self.ZoneGoal:GetZoneName(), 10, "MOD", Persist )
+    self.TaskInfo:AddText( "Zone Coalition", self.ZoneGoal:GetCoalitionName(), 11, "MOD", Persist )
+    local SetUnit = self.ZoneGoal.Zone:GetScannedSetUnit()
+    local ThreatLevel, ThreatText = SetUnit:CalculateThreatLevelA2G()
+    self.TaskInfo:AddThreat( ThreatText, ThreatLevel, 20, "MSOD", Persist )
   end
     
 
@@ -245,7 +253,6 @@ do -- TASK_CAPTURE_ZONE
     
     if self.ZoneGoal then
       if self.ZoneGoal.Goal:IsAchieved() then
-        self:Success()
         local TotalContributions = self.ZoneGoal.Goal:GetTotalContributions()
         local PlayerContributions = self.ZoneGoal.Goal:GetPlayerContributions()
         self:F( { TotalContributions = TotalContributions, PlayerContributions = PlayerContributions } )
@@ -255,6 +262,7 @@ do -- TASK_CAPTURE_ZONE
              Scoring:_AddMissionGoalScore( self.Mission, PlayerName, "Zone " .. self.ZoneGoal:GetZoneName() .." captured", PlayerContribution * 200 / TotalContributions )
            end
         end
+        self:Success()
       end
     end
     
@@ -272,7 +280,7 @@ do -- TASK_CAPTURE_ZONE
       return math.random( 1, 9 )
     elseif AutoAssignMethod == COMMANDCENTER.AutoAssignMethods.Distance then
       local Coordinate = self.TaskInfo:GetCoordinate()
-      local Distance = TaskGroup:GetCoordinate():Get2DDistance( CommandCenter:GetPositionable():GetCoordinate() )
+      local Distance = Coordinate:Get2DDistance( CommandCenter:GetPositionable():GetCoordinate() )
       return math.floor( Distance )
     elseif AutoAssignMethod == COMMANDCENTER.AutoAssignMethods.Priority then
       return 1

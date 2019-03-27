@@ -356,11 +356,11 @@ do -- ZONE_CAPTURE_COALITION
   --  ZoneCaptureCoalition = ZONE_CAPTURE_COALITION:New( AttackZone, coalition.side.RED ) -- Create a new ZONE_CAPTURE_COALITION object of zone AttackZone with ownership RED coalition.
   --  ZoneCaptureCoalition:__Guard( 1 ) -- Start the Guarding of the AttackZone.
   --  
-  function ZONE_CAPTURE_COALITION:New( Zone, Coalition )
+  function ZONE_CAPTURE_COALITION:New( Zone, Coalition, UnitCategories )
   
-    local self = BASE:Inherit( self, ZONE_GOAL_COALITION:New( Zone, Coalition ) ) -- #ZONE_CAPTURE_COALITION
+    local self = BASE:Inherit( self, ZONE_GOAL_COALITION:New( Zone, Coalition, UnitCategories ) ) -- #ZONE_CAPTURE_COALITION
 
-    self:F( { Zone = Zone, Coalition  = Coalition } )
+    self:F( { Zone = Zone, Coalition  = Coalition, UnitCategories = UnitCategories } )
 
     do 
     

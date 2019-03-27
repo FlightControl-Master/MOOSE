@@ -239,6 +239,8 @@ do -- DETECTION MANAGER
   -- @param #string Message The message to be sent.
   -- @return #DETECTION_MANGER self
   function DETECTION_MANAGER:MessageToPlayers( Message )
+  
+    self:F( { Message = Message } )
     
     if self.CC then
       self.CC:MessageToCoalition( Message )

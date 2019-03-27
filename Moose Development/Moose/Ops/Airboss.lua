@@ -73,8 +73,9 @@
 --    * [[MOOSE] Airboss - Groove Test A-4E Community Mod](https://www.youtube.com/watch?v=ZbjD7FHiaHo)
 --    * [[MOOSE] Airboss - Groove Test: On-the-fly LSO Grading](https://www.youtube.com/watch?v=Xgs1hwDcPyM)
 --    * [[MOOSE] Airboss - Carrier Auto Steam Into Wind](https://www.youtube.com/watch?v=IsU8dYgsp90)
---    * [[MOOSE] Airboss - CASE I Walkthrough by TG](https://www.youtube.com/watch?v=o1UrP4Q6PMM)
+--    * [[MOOSE] Airboss - CASE I Walkthrough in the F/A-18C by TG](https://www.youtube.com/watch?v=o1UrP4Q6PMM)
 --    * [[MOOSE] Airboss - New LSO/Marshal Voice Overs by Raynor](https://www.youtube.com/watch?v=_Suo68bRu8k)
+--    * [[MOOSE] Airboss - CASE I, "Until We Go Down" featuring the F-14B by Pikes](https://www.youtube.com/watch?v=ojgHDSw3Doc)
 -- 
 -- ### Lex explaining Boat Ops:
 -- 
@@ -1663,7 +1664,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.9.9.6w"
+AIRBOSS.version="0.9.9.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -4204,6 +4205,9 @@ function AIRBOSS:SetVoiceOversLSOByFF(mizfolder)
     -- Default is the general folder.
     self.soundfolderLSO=self.soundfolder
   end
+  
+  -- Report for duty.
+  self:I(self.lid..string.format("LSO FF reporting for duty! Soundfolder=%s", tostring(self.soundfolderLSO)))  
 
   self.LSOCall.BOLTER.duration=0.75
   self.LSOCall.CALLTHEBALL.duration=0.60
