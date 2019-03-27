@@ -9055,9 +9055,17 @@ function AIRBOSS:_Break(playerData, part)
     self:_AbortPattern(playerData, X, Z, breakpoint, true)
     return
   end
+  
+  -- Player made a very tight turn and did not trigger the latebreak threshold at 0.8 NM.
+  local tooclose=false
+  if part==AIRBOSS.PatternStep.LATEBREAK then
+    if X<0 and Z<UTILS.NMToMeters(0.8) then
+      tooclose=true
+    end  
+  end
 
   -- Check limits.
-  if self:_CheckLimits(X, Z, breakpoint) then
+  if self:_CheckLimits(X, Z, breakpoint) or tooclose then
   
     -- Hint for player about altitude, AoA etc.
     self:_PlayerHint(playerData)

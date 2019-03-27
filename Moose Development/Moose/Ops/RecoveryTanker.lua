@@ -884,7 +884,7 @@ function RECOVERYTANKER:onafterStart(From, Event, To)
     else
     
       -- Spawn tanker at airbase.
-      self.tanker=Spawn:SpawnAtAirbase(self.airbase, self.takeoff)
+      self.tanker=Spawn:SpawnAtAirbase(self.airbase, self.takeoff, nil, AIRBASE.TerminalType.OpenBig)
       
     end
     
