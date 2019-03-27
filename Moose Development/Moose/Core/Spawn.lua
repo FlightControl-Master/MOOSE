@@ -1470,8 +1470,9 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
       self:T( { "Current point of ", self.SpawnTemplatePrefix, SpawnAirbase } )
       
       -- Template group, unit and its attributes.
-      --local TemplateGroup = GROUP:FindByName(self.SpawnTemplatePrefix)
-      --local TemplateUnit=TemplateGroup:GetUnit(1)
+      local TemplateGroup = GROUP:FindByName(self.SpawnTemplatePrefix)
+      local TemplateUnit=TemplateGroup:GetUnit(1)
+      
       --local ishelo=TemplateUnit:HasAttribute("Helicopters")
       --local isbomber=TemplateUnit:HasAttribute("Bombers")
       --local istransport=TemplateUnit:HasAttribute("Transports")

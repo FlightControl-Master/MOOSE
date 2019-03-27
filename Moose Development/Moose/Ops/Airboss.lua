@@ -4068,6 +4068,69 @@ function AIRBOSS:_InitTarawa()
   
 end
 
+--- Init parameters for Marshal Voice overs *Gabriella* by HighwaymanEd.
+-- @param #AIRBOSS self
+-- @param #string mizfolder (Optional) Folder within miz file where the sound files are located.
+function AIRBOSS:SetVoiceOversMarshalByGabriella(mizfolder)
+  
+  -- Set sound files folder.
+  if mizfolder then
+    local lastchar=string.sub(mizfolder, -1)
+    if lastchar~="/" then
+      mizfolder=mizfolder.."/"
+    end
+    self.soundfolderMSH=mizfolder
+  else
+    -- Default is the general folder.
+    self.soundfolderMSH=self.soundfolder
+  end
+  
+  -- Report for duty.
+  self:I(self.lid..string.format("Marshal Gabriella reporting for duty! Soundfolder=%s", tostring(self.soundfolderMSH)))
+
+  self.MarshalCall.AFFIRMATIVE.duration=0.65
+  self.MarshalCall.ALTIMETER.duration=0.60
+  self.MarshalCall.BRC.duration=0.67
+  self.MarshalCall.CARRIERTURNTOHEADING.duration=1.62
+  self.MarshalCall.CASE.duration=0.30
+  self.MarshalCall.CHARLIETIME.duration=0.77
+  self.MarshalCall.CLEAREDFORRECOVERY.duration=0.93
+  self.MarshalCall.DECKCLOSED.duration=0.73
+  self.MarshalCall.DEGREES.duration=0.48
+  self.MarshalCall.EXPECTED.duration=0.50
+  self.MarshalCall.FLYNEEDLES.duration=0.89
+  self.MarshalCall.HOLDATANGELS.duration=0.81
+  self.MarshalCall.HOURS.duration=0.41
+  self.MarshalCall.MARSHALRADIAL.duration=0.95
+  self.MarshalCall.N0.duration=0.41
+  self.MarshalCall.N1.duration=0.30
+  self.MarshalCall.N2.duration=0.34
+  self.MarshalCall.N3.duration=0.31
+  self.MarshalCall.N4.duration=0.34
+  self.MarshalCall.N5.duration=0.30
+  self.MarshalCall.N6.duration=0.33
+  self.MarshalCall.N7.duration=0.38
+  self.MarshalCall.N8.duration=0.35
+  self.MarshalCall.N9.duration=0.35
+  self.MarshalCall.NEGATIVE.duration=0.60
+  self.MarshalCall.NEWFB.duration=0.95
+  self.MarshalCall.OPS.duration=0.23
+  self.MarshalCall.POINT.duration=0.38
+  self.MarshalCall.RADIOCHECK.duration=1.27
+  self.MarshalCall.RECOVERY.duration=0.60
+  self.MarshalCall.RECOVERYOPSSTOPPED.duration=1.25
+  self.MarshalCall.RECOVERYPAUSEDNOTICE.duration=2.55
+  self.MarshalCall.RECOVERYPAUSEDRESUMED.duration=2.55
+  self.MarshalCall.REPORTSEEME.duration=0.87
+  self.MarshalCall.RESUMERECOVERY.duration=1.55
+  self.MarshalCall.ROGER.duration=0.50
+  self.MarshalCall.SAYNEEDLES.duration=0.82
+  self.MarshalCall.STACKFULL.duration=5.70
+  self.MarshalCall.STARTINGRECOVERY.duration=1.61
+
+end
+
+
 
 --- Init parameters for Marshal Voice overs by *Raynor*.
 -- @param #AIRBOSS self
