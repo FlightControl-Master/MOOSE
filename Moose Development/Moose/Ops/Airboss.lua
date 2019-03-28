@@ -5655,16 +5655,21 @@ function AIRBOSS:_ClearForLanding(flight)
     self:_RemoveFlightFromMarshalQueue(flight, false)
     self:_LandAI(flight)
     
+    -- Cleared for Case X recovery.
+    self:_MarshalCallClearedForRecovery(flight.onboard, flight.case)
+    
   else
+  
+    -- Cleared for Case X recovery.
+    if flight.step~=AIRBOSS.PatternStep.COMMENCING then
+      self:_MarshalCallClearedForRecovery(flight.onboard, flight.case)
+    end  
 
     -- Set step to commencing. This will trigger the zone check until the player is in the right place.
     self:_SetPlayerStep(flight, AIRBOSS.PatternStep.COMMENCING, 3)
-    
+            
   end
-  
-  -- Cleared for Case X recovery.
-  self:_MarshalCallClearedForRecovery(flight.onboard, flight.case)
-   
+     
 end
 
 --- Set player step. Any warning is erased and next step hint shown.
@@ -9126,7 +9131,11 @@ function AIRBOSS:_Break(playerData, part)
   -- Player made a very tight turn and did not trigger the latebreak threshold at 0.8 NM.
   local tooclose=false
   if part==AIRBOSS.PatternStep.LATEBREAK then
-    if X<0 and Z<UTILS.NMToMeters(0.8) then
+    local close=0.8
+    if playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
+      close=0.5
+    end
+    if X<0 and Z<UTILS.NMToMeters(close) then
       tooclose=true
     end  
   end
