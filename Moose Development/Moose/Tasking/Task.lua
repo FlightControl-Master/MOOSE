@@ -1709,6 +1709,23 @@ end
 
 do -- Links
 
+  --- Set goal of a task
+  -- @param #TASK self
+  -- @param Core.Goal#GOAL Goal
+  -- @return #TASK
+  function TASK:SetGoal( Goal )
+    self.Goal = Goal
+  end
+
+
+  --- Get goal of a task
+  -- @param #TASK self
+  -- @return Core.Goal#GOAL The Goal
+  function TASK:GetGoal()
+    return self.Goal
+  end
+
+
   --- Set dispatcher of a task
   -- @param #TASK self
   -- @param Tasking.DetectionManager#DETECTION_MANAGER Dispatcher

@@ -213,7 +213,7 @@ do -- TASK_CAPTURE_ZONE
     
     self:UpdateTaskInfo( true )
     
-    self:SetGoalTotal( 1 )
+    self:SetGoal( self.ZoneGoal.Goal )
 
     return self
   end 
@@ -232,7 +232,7 @@ do -- TASK_CAPTURE_ZONE
     self.TaskInfo:AddText( "Zone Coalition", self.ZoneGoal:GetCoalitionName(), 11, "MOD", Persist )
     local SetUnit = self.ZoneGoal.Zone:GetScannedSetUnit()
     local ThreatLevel, ThreatText = SetUnit:CalculateThreatLevelA2G()
-    self.TaskInfo:AddThreat( ThreatText, ThreatLevel, 20, "MSOD", Persist )
+    self.TaskInfo:AddThreat( ThreatText, ThreatLevel, 20, "MOD", Persist )
   end
     
 

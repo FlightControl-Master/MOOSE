@@ -1826,6 +1826,21 @@ do -- DETECTION_BASE
     return nil
   end
 
+  --- Get a list of the detected item coordinates.
+  -- @param #DETECTION_BASE self
+  -- @param #DETECTION_BASE.DetectedItem DetectedItem The DetectedItem to set the coordinate at.
+  -- @return Core.Point#COORDINATE
+  function DETECTION_BASE:GetDetectedItemCoordinates()
+  
+    local Coordinates = {}
+  
+    for DetectedItemID, DetectedItem in pairs( self:GetDetectedItems() ) do
+      Coordinates[DetectedItem] = self:GetDetectedItemCoordinate( DetectedItem )
+    end
+  
+    return Coordinates
+  end
+
   --- Set the detected item threatlevel.
   -- @param #DETECTION_BASE self
   -- @param #DETECTION_BASE.DetectedItem The DetectedItem to calculate the threatlevel for.

@@ -968,18 +968,19 @@ function MISSION:ReportPlayersProgress( ReportGroup )
   -- Determine how many tasks are remaining.
   for TaskID, Task in pairs( self:GetTasks() ) do
     local Task = Task -- Tasking.Task#TASK
-    local TaskGoalTotal = Task:GetGoalTotal() or 0
     local TaskName = Task:GetName()
+    local Goal = Task:GetGoal()
     PlayerList[TaskName] = PlayerList[TaskName] or {}
-    if TaskGoalTotal ~= 0 then
-      local PlayerNames = self:GetPlayerNames()
-      for PlayerName, PlayerData in pairs( PlayerNames ) do
-        PlayerList[TaskName][PlayerName] = string.format( 'Player (%s): Task "%s": %d%%', PlayerName, TaskName, Task:GetPlayerProgress( PlayerName ) * 100 / TaskGoalTotal )
+    if Goal then
+      local TotalContributions = Goal:GetTotalContributions()
+      local PlayerContributions = Goal:GetPlayerContributions()
+      self:F( { TotalContributions = TotalContributions, PlayerContributions = PlayerContributions } )
+      for PlayerName, PlayerContribution in pairs( PlayerContributions ) do
+         PlayerList[TaskName][PlayerName] = string.format( 'Player (%s): Task "%s": %d%%', PlayerName, TaskName, PlayerContributions[PlayerName] * 100 / TotalContributions )       
       end
     else
       PlayerList[TaskName]["_"] = string.format( 'Player (---): Task "%s": %d%%', TaskName, 0 )
-    end
-    
+    end    
   end
 
   for TaskName, TaskData in pairs( PlayerList ) do
