@@ -1664,7 +1664,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.9.9.6"
+AIRBOSS.version="0.9.9.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -5486,7 +5486,15 @@ function AIRBOSS:_GetNextMarshalFight()
     
     -- Check if conditions are right.
     if stack==1 and flight.holding~=nil and Tmarshal>=TmarshalMin then
-      return flight
+      if flight.ai then
+        -- Return AI flight.
+        return flight
+      else
+        -- Check for human player if they are already commencing.
+        if flight.step~=AIRBOSS.PatternStep.COMMENCING then
+          return flight
+        end
+      end
     end
   end
 
@@ -5663,6 +5671,7 @@ function AIRBOSS:_ClearForLanding(flight)
     -- Cleared for Case X recovery.
     if flight.step~=AIRBOSS.PatternStep.COMMENCING then
       self:_MarshalCallClearedForRecovery(flight.onboard, flight.case)
+      flight.time=timer.getAbsTime()
     end  
 
     -- Set step to commencing. This will trigger the zone check until the player is in the right place.
@@ -8771,6 +8780,14 @@ function AIRBOSS:_Commencing(playerData, zonecheck)
   
     -- Skip the rest if not in the zone yet.
     if not inzone then
+
+      -- Friendly reminder.
+      if timer.getAbsTime()-playerData.time>180 then
+        self:_MarshalCallClearedForRecovery(playerData.onboard, playerData.case)
+        playerData.time=timer.getAbsTime()        
+      end   
+    
+      -- Skip the rest.
       return
     end
     
@@ -9136,6 +9153,9 @@ function AIRBOSS:_Break(playerData, part)
       close=0.5
     end
     if X<0 and Z<UTILS.NMToMeters(close) then
+      if playerData.difficulty==AIRBOSS.Difficulty.EASY and playerData.showhints then
+        self:MessageToPlayer(playerData, "your turn was too tight! Allow for more distance to the boat next time.", "LSO")
+      end
       tooclose=true
     end  
   end
@@ -10767,6 +10787,9 @@ function AIRBOSS:_AttitudeMonitor(playerData)
   
   -- Relative heading Aircraft to Carrier.
   local relhead=self:_GetRelativeHeading(playerData.unit, rwy)
+  
+  --local lc=self:_GetOptLandingCoordinate()
+  --lc:FlareRed()
  
   -- Output
   local text=string.format("Pattern step: %s", step) 
@@ -10778,7 +10801,15 @@ function AIRBOSS:_AttitudeMonitor(playerData)
     text=text..string.format("\nWind Vx=%.1f Vy=%.1f Vz=%.1f m/s", wind.x, wind.y, wind.z)
   end
   text=text..string.format("\nPitch=%.1f° | Roll=%.1f° | Yaw=%.1f°", pitch, roll, yaw)
-  text=text..string.format("\nClimb Angle=%.1f° | Rate=%d ft/min", unit:GetClimbAngle(), velo.y*196.85) 
+  text=text..string.format("\nClimb Angle=%.1f° | Rate=%d ft/min", unit:GetClimbAngle(), velo.y*196.85)
+  local dist=self:_GetOptLandingCoordinate():Get3DDistance(playerData.unit)
+  -- Get player velocity in km/h.
+  local vplayer=playerData.unit:GetVelocityKMH()    
+  -- Get carrier velocity in km/h.
+  local vcarrier=self.carrier:GetVelocityKMH()    
+  -- Speed difference.
+  local dv=math.abs(vplayer-vcarrier)    
+  text=text..string.format("\nDist=%.1f m Alt=%.1f m delta|V|=%.1f km/h", dist, self:_GetAltCarrier(playerData.unit), dv)
   -- If in the groove, provide line up and glide slope error.
   if playerData.step==AIRBOSS.PatternStep.FINAL or
      playerData.step==AIRBOSS.PatternStep.GROOVE_XX or
@@ -10790,14 +10821,7 @@ function AIRBOSS:_AttitudeMonitor(playerData)
      playerData.step==AIRBOSS.PatternStep.GROOVE_IW then
     local lue=self:_Lineup(playerData.unit, true)
     local gle=self:_Glideslope(playerData.unit)
-    local dist=self:_GetOptLandingCoordinate():Get2DDistance(playerData.unit)
-    -- Get player velocity in km/h.
-    local vplayer=playerData.unit:GetVelocityKMH()    
-    -- Get carrier velocity in km/h.
-    local vcarrier=self.carrier:GetVelocityKMH()    
-    -- Speed difference.
-    local dv=math.abs(vplayer-vcarrier)    
-    text=text..string.format("\nDist=%.1f m Alt=%.1f m delta|V|=%.1f km/h", dist, self:_GetAltCarrier(playerData.unit), dv)
+    --local gle2=self:_Glideslope2(playerData.unit)
     text=text..string.format("\nGamma=%.1f° | Rho=%.1f°", relhead, phi)
     text=text..string.format("\nLineUp=%.2f° | GlideSlope=%.2f° | AoA=%.1f Units", lue, gle, self:_AoADeg2Units(playerData, aoa))
     local grade, points, analysis=self:_LSOgrade(playerData)
@@ -10841,6 +10865,49 @@ function AIRBOSS:_Glideslope(unit, optangle)
   
   -- Glide slope.
   local glideslope=math.atan(h/x)
+  
+  -- Glide slope (error) in degrees.
+  local gs=math.deg(glideslope)-optangle
+  
+  -- Debug.
+  self:T2(self.lid..string.format("Glide slope error = %.1f, x=%.1f h=%.1f", gs, x, h))
+  
+  --local gs2=self:_Glideslope2(unit)
+  --self:E(self.lid..string.format("Glide slope error = %.1f =%.1f, x=%.1f h=%.1f", gs, gs2, x, h))
+  
+  return gs
+end
+
+--- Get glide slope of aircraft unit.
+-- @param #AIRBOSS self
+-- @param Wrapper.Unit#UNIT unit Aircraft unit.
+-- @param #number optangle (Optional) Return glide slope relative to this angle, i.e. the error from the optimal glide slope ~3.5 degrees.
+-- @return #number Glide slope angle in degrees measured from the deck of the carrier and third wire.
+function AIRBOSS:_Glideslope2(unit, optangle)
+
+  if optangle==nil then
+    if unit:GetTypeName()==AIRBOSS.AircraftCarrier.AV8B then
+      optangle=3.0
+    else
+      optangle=3.5
+    end
+  end   
+   -- Landing coordinate
+  local landingcoord=self:_GetOptLandingCoordinate()
+
+  -- Distance from stern to aircraft.
+  local x=unit:GetCoordinate():Get3DDistance(landingcoord)
+  
+  -- Altitude of unit corrected by the deck height of the carrier.
+  local h=self:_GetAltCarrier(unit)
+  
+  -- Harrier should be 40-50 ft above the deck.
+  if unit:GetTypeName()==AIRBOSS.AircraftCarrier.AV8B then
+    h=unit:GetAltitude()-(UTILS.FeetToMeters(50)+self.carrierparam.deckheight+2)
+  end
+  
+  -- Glide slope.
+  local glideslope=math.asin(h/x)
   
   -- Glide slope (error) in degrees.
   local gs=math.deg(glideslope)-optangle
@@ -10921,7 +10988,7 @@ function AIRBOSS:_GetAltCarrier(unit)
   -- TODO: Value 4 meters is for the Hornet. Adjust for Harrier, A4E and 
 
   -- Altitude of unit corrected by the deck height of the carrier.  
-  local h=unit:GetAltitude()-self.carrierparam.deckheight-4
+  local h=unit:GetAltitude()-self.carrierparam.deckheight-2
   
   return h
 end
@@ -10950,9 +11017,12 @@ function AIRBOSS:_GetOptLandingCoordinate()
     -- Ideally we want to land between 2nd and 3rd wire.
     if self.carrierparam.wire3 then
       -- We take the position of the 3rd wire to approximately account for the length of the aircraft.
-      local d23=self.carrierparam.wire3       --+0.5*(self.carrierparam.wire3-self.carrierparam.wire2)
-      stern=stern:Translate(d23, FB, true)
+      local w3=self.carrierparam.wire3
+      stern=stern:Translate(w3, FB, true)
     end
+    
+    -- Add 2 meters to account for aircraft height.
+    stern.y=stern.y+2
     
   end
 
