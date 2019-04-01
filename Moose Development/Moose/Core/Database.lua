@@ -1211,15 +1211,15 @@ end
 function DATABASE:_RegisterTemplates()
   self:F2()
 
-  self.Navpoints = {}
+  self.NavPoints = {}
   self.UNITS = {}
-  --Build routines.db.units and self.Navpoints
+  --Build routines.db.units and self.NavPoints
   for CoalitionName, coa_data in pairs(env.mission.coalition) do
     self:T({CoalitionName=CoalitionName})
 
     if (CoalitionName == 'red' or CoalitionName == 'blue' or CoalitionName == 'neutrals') and type(coa_data) == 'table' then
       --self.Units[coa_name] = {}
-
+      
       local CoalitionSide = coalition.side[string.upper(CoalitionName)]
       if CoalitionName=="red" then
         CoalitionSide=coalition.side.NEUTRAL
@@ -1230,18 +1230,18 @@ function DATABASE:_RegisterTemplates()
       end
 
       -- build nav points DB
-      self.Navpoints[CoalitionName] = {}
+      self.NavPoints[CoalitionName] = {}
       if coa_data.nav_points then --navpoints
         for nav_ind, nav_data in pairs(coa_data.nav_points) do
 
           if type(nav_data) == 'table' then
-            self.Navpoints[CoalitionName][nav_ind] = routines.utils.deepCopy(nav_data)
+            self.NavPoints[CoalitionName][nav_ind] = routines.utils.deepCopy(nav_data)
 
-            self.Navpoints[CoalitionName][nav_ind]['name'] = nav_data.callsignStr  -- name is a little bit more self-explanatory.
-            self.Navpoints[CoalitionName][nav_ind]['point'] = {}  -- point is used by SSE, support it.
-            self.Navpoints[CoalitionName][nav_ind]['point']['x'] = nav_data.x
-            self.Navpoints[CoalitionName][nav_ind]['point']['y'] = 0
-            self.Navpoints[CoalitionName][nav_ind]['point']['z'] = nav_data.y
+            self.NavPoints[CoalitionName][nav_ind]['name'] = nav_data.callsignStr  -- name is a little bit more self-explanatory.
+            self.NavPoints[CoalitionName][nav_ind]['point'] = {}  -- point is used by SSE, support it.
+            self.NavPoints[CoalitionName][nav_ind]['point']['x'] = nav_data.x
+            self.NavPoints[CoalitionName][nav_ind]['point']['y'] = 0
+            self.NavPoints[CoalitionName][nav_ind]['point']['z'] = nav_data.y
           end
         end
       end
