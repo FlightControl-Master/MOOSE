@@ -9016,11 +9016,11 @@ function AIRBOSS:_DirtyUp(playerData)
     self:_PlayerHint(playerData)
     
     -- Radio call "Say/Fly needles". Delayed by 10/15 seconds.
-    if playerData.actype==AIRBOSS.AircraftCarrier.HORNET then
+    if playerData.actype==AIRBOSS.AircraftCarrier.HORNET or playerData.actype==AIRBOSS.AircraftCarrier.F14A or playerData.actype==AIRBOSS.AircraftCarrier.F14B then
       local callsay=self:_NewRadioCall(self.MarshalCall.SAYNEEDLES, nil, nil, 5, playerData.onboard)
       local callfly=self:_NewRadioCall(self.MarshalCall.FLYNEEDLES, nil, nil, 5, playerData.onboard)
-      self:RadioTransmission(self.MarshalRadio, callsay, false, 50, nil, true)
-      self:RadioTransmission(self.MarshalRadio, callfly, false, 55, nil, true)
+      self:RadioTransmission(self.MarshalRadio, callsay, false, 55, nil, true)
+      self:RadioTransmission(self.MarshalRadio, callfly, false, 60, nil, true)
     end
                 
     -- TODO: Make Fly Bullseye call if no automatic ICLS is active.
