@@ -961,17 +961,6 @@ do -- Event Handling
     return self
   end
 
-  --- UnSubscribe to a DCS event.
-  -- @param #UNIT self
-  -- @param Core.Event#EVENTS Event
-  -- @return #UNIT
-  function UNIT:UnHandleEvent( Event )
-
-    self:EventDispatcher():RemoveForUnit( self:GetName(), self, Event )
-
-    return self
-  end
-
   --- Reset the subscriptions.
   -- @param #UNIT self
   -- @return #UNIT
