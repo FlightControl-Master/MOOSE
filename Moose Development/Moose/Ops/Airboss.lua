@@ -15375,10 +15375,46 @@ function AIRBOSS:_RequestEmergency(_unitName)
         -- Mission designer did not allow emergency landing.
         text="negative, no emergency landings on my carrier. We are currently busy. See how you get along!"
 
-      elseif not _unit:InAir() then 
+      elseif not _unit:InAir() then
+        
+        -- Carrier zone.
+        local zone=self:_GetZoneCarrierBox()
+        
+        -- Check if player is on the carrier.
+        if playerData.unit:IsInZone(zone) then
+        
+          -- Bolter pattern.
+          text="roger, you are now technically in the bolter pattern. Your next step after takeoff is abeam!"
+          
+          -- Get flight lead.
+          local lead=self:_GetFlightLead(playerData)
+          
+          -- Set set for lead.
+          self:_SetPlayerStep(lead, AIRBOSS.PatternStep.BOLTER)
+          
+          -- Also set bolter pattern for all members.
+          for _,sec in pairs(lead.section) do
+            local sectionmember=sec --#AIRBOSS.PlayerData
+            self:_SetPlayerStep(sectionmember, AIRBOSS.PatternStep.BOLTER)            
+          end
+                  
+          -- Remove flight from waiting queue just in case.
+          self:_RemoveFlightFromQueue(self.Qwaiting, lead)
+          
+          if self:_InQueue(self.Qmarshal, lead.group) then
+            -- Remove flight from Marshal queue and add to pattern.
+            self:_RemoveFlightFromMarshalQueue(lead)
+          else
+            -- Add flight to pattern if he was not.
+            if not self:_InQueue(self.Qpattern, lead.group) then
+              self:_AddFlightToPatternQueue(lead)
+            end
+          end
 
-        -- Flight group is not in air
-        text=string.format("negative, you are not airborne. Request denied!")
+        else
+          -- Flight group is not in air.
+          text=string.format("negative, you are not airborne. Request denied!")
+        end          
       
       else
       
@@ -15399,8 +15435,7 @@ function AIRBOSS:_RequestEmergency(_unitName)
           -- Remove flight from spinning queue just in case (everone can spin on his own).
           self:_RemoveFlightFromQueue(self.Qspinning, sectionmember)
         end
-        
-        
+                
         -- Remove flight from waiting queue just in case.
         self:_RemoveFlightFromQueue(self.Qwaiting, lead)
         
