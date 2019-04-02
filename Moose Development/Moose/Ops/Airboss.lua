@@ -376,6 +376,9 @@
 -- 
 -- All section members are supposed to follow. Player (or section lead) is removed from all other queues and automatically added to the landing pattern queue.
 -- 
+-- If this command is called while the player is currently on the carrier, he will be put in the bolter pattern. So the next expected step after take of
+-- is the abeam position. This allows for quick landing training exercises without having to go through the whole pattern.
+-- 
 -- The mission designer can forbid this option my setting @{#AIRBOSS.SetEmergencyLandings}(false) in the script.
 -- 
 -- ### [Reset My Status]
@@ -13187,11 +13190,17 @@ function AIRBOSS:_GetETAatNextWP()
   -- Current velocity [m/s].
   local v=self.carrier:GetVelocityMPS()
   
+  -- Next waypoint.
+  local nextWP=self:_GetNextWaypoint()
+  
   -- Distance to next waypoint.
-  local s=0
-  if #self.waypoints>cwp then
-    s=p:Get2DDistance(self.waypoints[cwp+1])
-  end
+  local s=p:Get2DDistance(nextWP)
+  
+  -- Distance to next waypoint.
+  --local s=0
+  --if #self.waypoints>cwp then
+  --  s=p:Get2DDistance(self.waypoints[cwp+1])
+  --end
   
   -- v=s/t <==> t=s/v
   local t=s/v
