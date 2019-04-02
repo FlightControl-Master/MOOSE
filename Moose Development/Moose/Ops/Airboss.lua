@@ -376,6 +376,9 @@
 -- 
 -- All section members are supposed to follow. Player (or section lead) is removed from all other queues and automatically added to the landing pattern queue.
 -- 
+-- If this command is called while the player is currently on the carrier, he will be put in the bolter pattern. So the next expected step after take of
+-- is the abeam position. This allows for quick landing training exercises without having to go through the whole pattern.
+-- 
 -- The mission designer can forbid this option my setting @{#AIRBOSS.SetEmergencyLandings}(false) in the script.
 -- 
 -- ### [Reset My Status]
@@ -1664,7 +1667,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.9.9.6"
+AIRBOSS.version="0.9.9.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -4068,6 +4071,69 @@ function AIRBOSS:_InitTarawa()
   
 end
 
+--- Init parameters for Marshal Voice overs *Gabriella* by HighwaymanEd.
+-- @param #AIRBOSS self
+-- @param #string mizfolder (Optional) Folder within miz file where the sound files are located.
+function AIRBOSS:SetVoiceOversMarshalByGabriella(mizfolder)
+  
+  -- Set sound files folder.
+  if mizfolder then
+    local lastchar=string.sub(mizfolder, -1)
+    if lastchar~="/" then
+      mizfolder=mizfolder.."/"
+    end
+    self.soundfolderMSH=mizfolder
+  else
+    -- Default is the general folder.
+    self.soundfolderMSH=self.soundfolder
+  end
+  
+  -- Report for duty.
+  self:I(self.lid..string.format("Marshal Gabriella reporting for duty! Soundfolder=%s", tostring(self.soundfolderMSH)))
+
+  self.MarshalCall.AFFIRMATIVE.duration=0.65
+  self.MarshalCall.ALTIMETER.duration=0.60
+  self.MarshalCall.BRC.duration=0.67
+  self.MarshalCall.CARRIERTURNTOHEADING.duration=1.62
+  self.MarshalCall.CASE.duration=0.30
+  self.MarshalCall.CHARLIETIME.duration=0.77
+  self.MarshalCall.CLEAREDFORRECOVERY.duration=0.93
+  self.MarshalCall.DECKCLOSED.duration=0.73
+  self.MarshalCall.DEGREES.duration=0.48
+  self.MarshalCall.EXPECTED.duration=0.50
+  self.MarshalCall.FLYNEEDLES.duration=0.89
+  self.MarshalCall.HOLDATANGELS.duration=0.81
+  self.MarshalCall.HOURS.duration=0.41
+  self.MarshalCall.MARSHALRADIAL.duration=0.95
+  self.MarshalCall.N0.duration=0.41
+  self.MarshalCall.N1.duration=0.30
+  self.MarshalCall.N2.duration=0.34
+  self.MarshalCall.N3.duration=0.31
+  self.MarshalCall.N4.duration=0.34
+  self.MarshalCall.N5.duration=0.30
+  self.MarshalCall.N6.duration=0.33
+  self.MarshalCall.N7.duration=0.38
+  self.MarshalCall.N8.duration=0.35
+  self.MarshalCall.N9.duration=0.35
+  self.MarshalCall.NEGATIVE.duration=0.60
+  self.MarshalCall.NEWFB.duration=0.95
+  self.MarshalCall.OPS.duration=0.23
+  self.MarshalCall.POINT.duration=0.38
+  self.MarshalCall.RADIOCHECK.duration=1.27
+  self.MarshalCall.RECOVERY.duration=0.60
+  self.MarshalCall.RECOVERYOPSSTOPPED.duration=1.25
+  self.MarshalCall.RECOVERYPAUSEDNOTICE.duration=2.55
+  self.MarshalCall.RECOVERYPAUSEDRESUMED.duration=2.55
+  self.MarshalCall.REPORTSEEME.duration=0.87
+  self.MarshalCall.RESUMERECOVERY.duration=1.55
+  self.MarshalCall.ROGER.duration=0.50
+  self.MarshalCall.SAYNEEDLES.duration=0.82
+  self.MarshalCall.STACKFULL.duration=5.70
+  self.MarshalCall.STARTINGRECOVERY.duration=1.61
+
+end
+
+
 
 --- Init parameters for Marshal Voice overs by *Raynor*.
 -- @param #AIRBOSS self
@@ -5423,7 +5489,15 @@ function AIRBOSS:_GetNextMarshalFight()
     
     -- Check if conditions are right.
     if stack==1 and flight.holding~=nil and Tmarshal>=TmarshalMin then
-      return flight
+      if flight.ai then
+        -- Return AI flight.
+        return flight
+      else
+        -- Check for human player if they are already commencing.
+        if flight.step~=AIRBOSS.PatternStep.COMMENCING then
+          return flight
+        end
+      end
     end
   end
 
@@ -5592,16 +5666,22 @@ function AIRBOSS:_ClearForLanding(flight)
     self:_RemoveFlightFromMarshalQueue(flight, false)
     self:_LandAI(flight)
     
+    -- Cleared for Case X recovery.
+    self:_MarshalCallClearedForRecovery(flight.onboard, flight.case)
+    
   else
+  
+    -- Cleared for Case X recovery.
+    if flight.step~=AIRBOSS.PatternStep.COMMENCING then
+      self:_MarshalCallClearedForRecovery(flight.onboard, flight.case)
+      flight.time=timer.getAbsTime()
+    end  
 
     -- Set step to commencing. This will trigger the zone check until the player is in the right place.
     self:_SetPlayerStep(flight, AIRBOSS.PatternStep.COMMENCING, 3)
-    
+            
   end
-  
-  -- Cleared for Case X recovery.
-  self:_MarshalCallClearedForRecovery(flight.onboard, flight.case)
-   
+     
 end
 
 --- Set player step. Any warning is erased and next step hint shown.
@@ -8703,6 +8783,14 @@ function AIRBOSS:_Commencing(playerData, zonecheck)
   
     -- Skip the rest if not in the zone yet.
     if not inzone then
+
+      -- Friendly reminder.
+      if timer.getAbsTime()-playerData.time>180 then
+        self:_MarshalCallClearedForRecovery(playerData.onboard, playerData.case)
+        playerData.time=timer.getAbsTime()        
+      end   
+    
+      -- Skip the rest.
       return
     end
     
@@ -8931,11 +9019,11 @@ function AIRBOSS:_DirtyUp(playerData)
     self:_PlayerHint(playerData)
     
     -- Radio call "Say/Fly needles". Delayed by 10/15 seconds.
-    if playerData.actype==AIRBOSS.AircraftCarrier.HORNET then
+    if playerData.actype==AIRBOSS.AircraftCarrier.HORNET or playerData.actype==AIRBOSS.AircraftCarrier.F14A or playerData.actype==AIRBOSS.AircraftCarrier.F14B then
       local callsay=self:_NewRadioCall(self.MarshalCall.SAYNEEDLES, nil, nil, 5, playerData.onboard)
       local callfly=self:_NewRadioCall(self.MarshalCall.FLYNEEDLES, nil, nil, 5, playerData.onboard)
-      self:RadioTransmission(self.MarshalRadio, callsay, false, 50, nil, true)
-      self:RadioTransmission(self.MarshalRadio, callfly, false, 55, nil, true)
+      self:RadioTransmission(self.MarshalRadio, callsay, false, 55, nil, true)
+      self:RadioTransmission(self.MarshalRadio, callfly, false, 60, nil, true)
     end
                 
     -- TODO: Make Fly Bullseye call if no automatic ICLS is active.
@@ -9059,9 +9147,24 @@ function AIRBOSS:_Break(playerData, part)
     self:_AbortPattern(playerData, X, Z, breakpoint, true)
     return
   end
+  
+  -- Player made a very tight turn and did not trigger the latebreak threshold at 0.8 NM.
+  local tooclose=false
+  if part==AIRBOSS.PatternStep.LATEBREAK then
+    local close=0.8
+    if playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
+      close=0.5
+    end
+    if X<0 and Z<UTILS.NMToMeters(close) then
+      if playerData.difficulty==AIRBOSS.Difficulty.EASY and playerData.showhints then
+        self:MessageToPlayer(playerData, "your turn was too tight! Allow for more distance to the boat next time.", "LSO")
+      end
+      tooclose=true
+    end  
+  end
 
   -- Check limits.
-  if self:_CheckLimits(X, Z, breakpoint) then
+  if self:_CheckLimits(X, Z, breakpoint) or tooclose then
   
     -- Hint for player about altitude, AoA etc.
     self:_PlayerHint(playerData)
@@ -10687,6 +10790,9 @@ function AIRBOSS:_AttitudeMonitor(playerData)
   
   -- Relative heading Aircraft to Carrier.
   local relhead=self:_GetRelativeHeading(playerData.unit, rwy)
+  
+  --local lc=self:_GetOptLandingCoordinate()
+  --lc:FlareRed()
  
   -- Output
   local text=string.format("Pattern step: %s", step) 
@@ -10698,7 +10804,15 @@ function AIRBOSS:_AttitudeMonitor(playerData)
     text=text..string.format("\nWind Vx=%.1f Vy=%.1f Vz=%.1f m/s", wind.x, wind.y, wind.z)
   end
   text=text..string.format("\nPitch=%.1f° | Roll=%.1f° | Yaw=%.1f°", pitch, roll, yaw)
-  text=text..string.format("\nClimb Angle=%.1f° | Rate=%d ft/min", unit:GetClimbAngle(), velo.y*196.85) 
+  text=text..string.format("\nClimb Angle=%.1f° | Rate=%d ft/min", unit:GetClimbAngle(), velo.y*196.85)
+  local dist=self:_GetOptLandingCoordinate():Get3DDistance(playerData.unit)
+  -- Get player velocity in km/h.
+  local vplayer=playerData.unit:GetVelocityKMH()    
+  -- Get carrier velocity in km/h.
+  local vcarrier=self.carrier:GetVelocityKMH()    
+  -- Speed difference.
+  local dv=math.abs(vplayer-vcarrier)    
+  text=text..string.format("\nDist=%.1f m Alt=%.1f m delta|V|=%.1f km/h", dist, self:_GetAltCarrier(playerData.unit), dv)
   -- If in the groove, provide line up and glide slope error.
   if playerData.step==AIRBOSS.PatternStep.FINAL or
      playerData.step==AIRBOSS.PatternStep.GROOVE_XX or
@@ -10710,14 +10824,7 @@ function AIRBOSS:_AttitudeMonitor(playerData)
      playerData.step==AIRBOSS.PatternStep.GROOVE_IW then
     local lue=self:_Lineup(playerData.unit, true)
     local gle=self:_Glideslope(playerData.unit)
-    local dist=self:_GetOptLandingCoordinate():Get2DDistance(playerData.unit)
-    -- Get player velocity in km/h.
-    local vplayer=playerData.unit:GetVelocityKMH()    
-    -- Get carrier velocity in km/h.
-    local vcarrier=self.carrier:GetVelocityKMH()    
-    -- Speed difference.
-    local dv=math.abs(vplayer-vcarrier)    
-    text=text..string.format("\nDist=%.1f m Alt=%.1f m delta|V|=%.1f km/h", dist, self:_GetAltCarrier(playerData.unit), dv)
+    --local gle2=self:_Glideslope2(playerData.unit)
     text=text..string.format("\nGamma=%.1f° | Rho=%.1f°", relhead, phi)
     text=text..string.format("\nLineUp=%.2f° | GlideSlope=%.2f° | AoA=%.1f Units", lue, gle, self:_AoADeg2Units(playerData, aoa))
     local grade, points, analysis=self:_LSOgrade(playerData)
@@ -10761,6 +10868,49 @@ function AIRBOSS:_Glideslope(unit, optangle)
   
   -- Glide slope.
   local glideslope=math.atan(h/x)
+  
+  -- Glide slope (error) in degrees.
+  local gs=math.deg(glideslope)-optangle
+  
+  -- Debug.
+  self:T2(self.lid..string.format("Glide slope error = %.1f, x=%.1f h=%.1f", gs, x, h))
+  
+  --local gs2=self:_Glideslope2(unit)
+  --self:E(self.lid..string.format("Glide slope error = %.1f =%.1f, x=%.1f h=%.1f", gs, gs2, x, h))
+  
+  return gs
+end
+
+--- Get glide slope of aircraft unit.
+-- @param #AIRBOSS self
+-- @param Wrapper.Unit#UNIT unit Aircraft unit.
+-- @param #number optangle (Optional) Return glide slope relative to this angle, i.e. the error from the optimal glide slope ~3.5 degrees.
+-- @return #number Glide slope angle in degrees measured from the deck of the carrier and third wire.
+function AIRBOSS:_Glideslope2(unit, optangle)
+
+  if optangle==nil then
+    if unit:GetTypeName()==AIRBOSS.AircraftCarrier.AV8B then
+      optangle=3.0
+    else
+      optangle=3.5
+    end
+  end   
+   -- Landing coordinate
+  local landingcoord=self:_GetOptLandingCoordinate()
+
+  -- Distance from stern to aircraft.
+  local x=unit:GetCoordinate():Get3DDistance(landingcoord)
+  
+  -- Altitude of unit corrected by the deck height of the carrier.
+  local h=self:_GetAltCarrier(unit)
+  
+  -- Harrier should be 40-50 ft above the deck.
+  if unit:GetTypeName()==AIRBOSS.AircraftCarrier.AV8B then
+    h=unit:GetAltitude()-(UTILS.FeetToMeters(50)+self.carrierparam.deckheight+2)
+  end
+  
+  -- Glide slope.
+  local glideslope=math.asin(h/x)
   
   -- Glide slope (error) in degrees.
   local gs=math.deg(glideslope)-optangle
@@ -10841,7 +10991,7 @@ function AIRBOSS:_GetAltCarrier(unit)
   -- TODO: Value 4 meters is for the Hornet. Adjust for Harrier, A4E and 
 
   -- Altitude of unit corrected by the deck height of the carrier.  
-  local h=unit:GetAltitude()-self.carrierparam.deckheight-4
+  local h=unit:GetAltitude()-self.carrierparam.deckheight-2
   
   return h
 end
@@ -10870,9 +11020,12 @@ function AIRBOSS:_GetOptLandingCoordinate()
     -- Ideally we want to land between 2nd and 3rd wire.
     if self.carrierparam.wire3 then
       -- We take the position of the 3rd wire to approximately account for the length of the aircraft.
-      local d23=self.carrierparam.wire3       --+0.5*(self.carrierparam.wire3-self.carrierparam.wire2)
-      stern=stern:Translate(d23, FB, true)
+      local w3=self.carrierparam.wire3
+      stern=stern:Translate(w3, FB, true)
     end
+    
+    -- Add 2 meters to account for aircraft height.
+    stern.y=stern.y+2
     
   end
 
@@ -13037,11 +13190,17 @@ function AIRBOSS:_GetETAatNextWP()
   -- Current velocity [m/s].
   local v=self.carrier:GetVelocityMPS()
   
+  -- Next waypoint.
+  local nextWP=self:_GetNextWaypoint()
+  
   -- Distance to next waypoint.
-  local s=0
-  if #self.waypoints>cwp then
-    s=p:Get2DDistance(self.waypoints[cwp+1])
-  end
+  local s=p:Get2DDistance(nextWP)
+  
+  -- Distance to next waypoint.
+  --local s=0
+  --if #self.waypoints>cwp then
+  --  s=p:Get2DDistance(self.waypoints[cwp+1])
+  --end
   
   -- v=s/t <==> t=s/v
   local t=s/v
@@ -15225,10 +15384,46 @@ function AIRBOSS:_RequestEmergency(_unitName)
         -- Mission designer did not allow emergency landing.
         text="negative, no emergency landings on my carrier. We are currently busy. See how you get along!"
 
-      elseif not _unit:InAir() then 
+      elseif not _unit:InAir() then
+        
+        -- Carrier zone.
+        local zone=self:_GetZoneCarrierBox()
+        
+        -- Check if player is on the carrier.
+        if playerData.unit:IsInZone(zone) then
+        
+          -- Bolter pattern.
+          text="roger, you are now technically in the bolter pattern. Your next step after takeoff is abeam!"
+          
+          -- Get flight lead.
+          local lead=self:_GetFlightLead(playerData)
+          
+          -- Set set for lead.
+          self:_SetPlayerStep(lead, AIRBOSS.PatternStep.BOLTER)
+          
+          -- Also set bolter pattern for all members.
+          for _,sec in pairs(lead.section) do
+            local sectionmember=sec --#AIRBOSS.PlayerData
+            self:_SetPlayerStep(sectionmember, AIRBOSS.PatternStep.BOLTER)            
+          end
+                  
+          -- Remove flight from waiting queue just in case.
+          self:_RemoveFlightFromQueue(self.Qwaiting, lead)
+          
+          if self:_InQueue(self.Qmarshal, lead.group) then
+            -- Remove flight from Marshal queue and add to pattern.
+            self:_RemoveFlightFromMarshalQueue(lead)
+          else
+            -- Add flight to pattern if he was not.
+            if not self:_InQueue(self.Qpattern, lead.group) then
+              self:_AddFlightToPatternQueue(lead)
+            end
+          end
 
-        -- Flight group is not in air
-        text=string.format("negative, you are not airborne. Request denied!")
+        else
+          -- Flight group is not in air.
+          text=string.format("negative, you are not airborne. Request denied!")
+        end          
       
       else
       
@@ -15249,8 +15444,7 @@ function AIRBOSS:_RequestEmergency(_unitName)
           -- Remove flight from spinning queue just in case (everone can spin on his own).
           self:_RemoveFlightFromQueue(self.Qspinning, sectionmember)
         end
-        
-        
+                
         -- Remove flight from waiting queue just in case.
         self:_RemoveFlightFromQueue(self.Qwaiting, lead)
         

@@ -1472,10 +1472,19 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
       -- Template group, unit and its attributes.
       local TemplateGroup = GROUP:FindByName(self.SpawnTemplatePrefix)
       local TemplateUnit=TemplateGroup:GetUnit(1)
+      
+      --local ishelo=TemplateUnit:HasAttribute("Helicopters")
+      --local isbomber=TemplateUnit:HasAttribute("Bombers")
+      --local istransport=TemplateUnit:HasAttribute("Transports")
+      --local isfighter=TemplateUnit:HasAttribute("Battleplanes")
+      
+      local group=TemplateGroup
+      local istransport=group:HasAttribute("Transports") and group:HasAttribute("Planes")
+      local isawacs=group:HasAttribute("AWACS")
+      local isfighter=group:HasAttribute("Fighters") or group:HasAttribute("Interceptors") or group:HasAttribute("Multirole fighters") or (group:HasAttribute("Bombers") and not group:HasAttribute("Strategic bombers"))
+      local isbomber=group:HasAttribute("Strategic bombers")
+      local istanker=group:HasAttribute("Tankers")
       local ishelo=TemplateUnit:HasAttribute("Helicopters")
-      local isbomber=TemplateUnit:HasAttribute("Bombers")
-      local istransport=TemplateUnit:HasAttribute("Transports")
-      local isfighter=TemplateUnit:HasAttribute("Battleplanes")
       
       -- Number of units in the group. With grouping this can actually differ from the template group size!
       local nunits=#SpawnTemplate.units
@@ -1585,10 +1594,7 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
           else
             -- Fixed wing aircraft is spawned.
             if termtype==nil then
-            --TODO: Add some default cases for transport, bombers etc. if no explicit terminal type is provided.
-            --TODO: We don't want Bombers to spawn in shelters. But I don't know a good attribute for just fighers.
-            --TODO: Some attributes are "Helicopters", "Bombers", "Transports", "Battleplanes". Need to check it out.
-              if isbomber or istransport then
+              if isbomber or istransport or istanker or isawacs then
                 -- First we fill the potentially bigger spots.
                 self:T(string.format("Transport/bomber group %s is at %s using terminal type %d.", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), AIRBASE.TerminalType.OpenBig))
                 spots=SpawnAirbase:FindFreeParkingSpotForAircraft(TemplateGroup, AIRBASE.TerminalType.OpenBig, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits)
