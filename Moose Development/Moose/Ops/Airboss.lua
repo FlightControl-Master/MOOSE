@@ -6047,7 +6047,13 @@ function AIRBOSS:_MarshalAI(flight, nstack, respawn)
 
   -- Nil check.
   if flight==nil or flight.group==nil then
-    self:E(self.lid.."ERROR: flight or flight.group is nil")
+    self:E(self.lid.."ERROR: flight or flight.group is nil.")
+    return
+  end
+
+  -- Nil check.
+  if flight.group:GetCoordinate()==nil then
+    self:E(self.lid.."ERROR: cannot get coordinate of flight group.")
     return
   end
   
