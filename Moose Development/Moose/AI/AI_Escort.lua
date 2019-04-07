@@ -300,6 +300,8 @@ function AI_ESCORT:Menus()
 --  self:MenuScanForTargets( 100, 60 )
 
   self:MenuJoinUp()
+  self:MenuFormationTrail( 0, 0, 50 )
+  self:MenuFormationStack( 0, 0, 100, 150 )
 
   self:MenuHoldAtEscortPosition( 1000, 500 )
   self:MenuHoldAtLeaderPosition( 1000, 500 )
@@ -366,7 +368,7 @@ function AI_ESCORT:MenuFormationTrail( XStart, XSpace, YStart )
     self.FlightMenuReportNavigation = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Navigation", self.FlightMenu )
   end
 
-  if not self.FlightMenuJoinUp then
+  if not self.FlightMenuFormationTrail then
     self.FlightMenuFormationTrail  = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Trail",  self.FlightMenuReportNavigation, AI_ESCORT._FlightFormationTrail, self, XStart, XSpace, YStart )
   end
 
@@ -388,6 +390,45 @@ function AI_ESCORT:MenuFormationTrail( XStart, XSpace, YStart )
 
   return self
 end
+
+
+--- Defines a menu slot to let the escort to join in a stacked formation.
+-- This menu will appear under **Navigation**.
+-- @param #AI_ESCORT self
+-- @param #number XStart The start position on the X-axis in meters for the first group.
+-- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+-- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+-- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
+-- @return #AI_ESCORT
+function AI_ESCORT:MenuFormationStack( XStart, XSpace, YStart, YSpace )
+
+  if not self.FlightMenuReportNavigation then
+    self.FlightMenuReportNavigation = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Navigation", self.FlightMenu )
+  end
+
+  if not self.FlightMenuFormationStack then
+    self.FlightMenuFormationStack  = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Stack",  self.FlightMenuReportNavigation, AI_ESCORT._FlightFormationStack, self, XStart, XSpace, YStart, YSpace )
+  end
+
+  self.EscortGroupSet:ForEachGroupAlive(
+    --- @param Core.Group#GROUP EscortGroup
+    function( EscortGroup )
+      if EscortGroup:IsAir() then
+        if not EscortGroup.EscortMenuReportNavigation then
+          EscortGroup.EscortMenuReportNavigation = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Navigation", EscortGroup.EscortMenu )
+        end
+    
+        if not EscortGroup.EscortMenuFormationStack then
+          EscortGroup.EscortMenuFormationStack = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Stack", EscortGroup.EscortMenuReportNavigation, ESCORT._EscortFormationStack, self, EscortGroup, XStart, XSpace, YStart, YSpace )
+        end
+    
+      end
+    end
+  )
+
+  return self
+end
+
 
 
 
@@ -1023,13 +1064,40 @@ function AI_ESCORT:_EscortFormationTrail( EscortGroup, XStart, XSpace, YStart )
 end
 
 
-function AI_ESCORT:_EscortFormationTrail( XStart, XSpace, YStart )
+function AI_ESCORT:_FlightFormationTrail( XStart, XSpace, YStart )
 
   self.EscortGroupSet:ForEachGroupAlive(
     --- @param Core.Group#GROUP EscortGroup
     function( EscortGroup )
       if EscortGroup:IsAir() then
-        self:FormationTrail( EscortGroup, XStart, XSpace, YStart )
+        self:_EscortFormationTrail( EscortGroup, XStart, XSpace, YStart )
+      end
+    end
+  )
+
+end
+
+--- Lets the escort to join in a stacked formation.
+-- @param #AI_ESCORT self
+-- @param #number XStart The start position on the X-axis in meters for the first group.
+-- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+-- @param #number YStart The start position on the Y-axis in meters for the first group.
+-- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
+-- @return #AI_ESCORT
+function AI_ESCORT:_EscortFormationStack( EscortGroup, XStart, XSpace, YStart, YSpace )
+
+  self:FormationTrail( XStart, XSpace, YStart, YSpace )
+
+end
+
+
+function AI_ESCORT:_FlightFormationStack( XStart, XSpace, YStart, YSpace )
+
+  self.EscortGroupSet:ForEachGroupAlive(
+    --- @param Core.Group#GROUP EscortGroup
+    function( EscortGroup )
+      if EscortGroup:IsAir() then
+        self:_EscortFormationStack( EscortGroup, XStart, XSpace, YStart, YSpace )
       end
     end
   )
