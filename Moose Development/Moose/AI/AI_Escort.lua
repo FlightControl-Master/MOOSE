@@ -321,8 +321,49 @@ function AI_ESCORT:Menus()
 end
 
 
---- Defines a menu slot to let the escort to join formation.
--- This menu will appear under **Navigation**.
+
+function AI_ESCORT:MenuFormation( Formation, ... )
+
+  if not self.FlightMenuFormation then
+    self.FlightMenuFormation = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Formation", self.FlightMenu )
+  end
+
+  if not self["FlightMenuFormation"..Formation] then
+    self["FlightMenuFormation"..Formation]  = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), Formation, self.FlightMenuFormation, 
+      function ( self, Formation, ... )
+        self.EscortGroupSet:ForEachGroupAlive(
+          --- @param Core.Group#GROUP EscortGroup
+          function( EscortGroup )
+            if EscortGroup:IsAir() then
+              self:E({Formation=Formation})
+              self["Formation"..Formation]( arg )
+            end
+          end
+        )
+      end, self, Formation, ... 
+    )
+  end
+
+--  self.EscortGroupSet:ForEachGroupAlive(
+--    --- @param Core.Group#GROUP EscortGroup
+--    function( EscortGroup )
+--      if EscortGroup:IsAir() then
+--        if not EscortGroup.EscortMenuReportNavigation then
+--          EscortGroup.EscortMenuReportNavigation = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Navigation", EscortGroup.EscortMenu )
+--        end
+--    
+--        if not EscortGroup["EscortMenuFormation"..Formation] then
+--          EscortGroup["EscortMenuFormation"..Formation] = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), Formation, EscortGroup.EscortMenuReportNavigation, AI_ESCORT["_EscortFormation"..Formation], self, EscortGroup, ... )
+--        end
+--      end
+--    end
+--  )
+
+end
+
+
+--- Defines --- Defines a menu slot to let the escort to join formation.
+-- This menu will appear under **Formation**.
 -- @param #AI_ESCORT self
 -- @return #AI_ESCORT
 function AI_ESCORT:MenuJoinUp()
@@ -356,7 +397,7 @@ end
 
 
 --- Defines a menu slot to let the escort to join in a trail formation.
--- This menu will appear under **Navigation**.
+-- This menu will appear under **Formation**.
 -- @param #AI_ESCORT self
 -- @param #number XStart The start position on the X-axis in meters for the first group.
 -- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
@@ -364,36 +405,13 @@ end
 -- @return #AI_ESCORT
 function AI_ESCORT:MenuFormationTrail( XStart, XSpace, YStart )
 
-  if not self.FlightMenuReportNavigation then
-    self.FlightMenuReportNavigation = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Navigation", self.FlightMenu )
-  end
-
-  if not self.FlightMenuFormationTrail then
-    self.FlightMenuFormationTrail  = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Trail",  self.FlightMenuReportNavigation, AI_ESCORT._FlightFormationTrail, self, XStart, XSpace, YStart )
-  end
-
-  self.EscortGroupSet:ForEachGroupAlive(
-    --- @param Core.Group#GROUP EscortGroup
-    function( EscortGroup )
-      if EscortGroup:IsAir() then
-        if not EscortGroup.EscortMenuReportNavigation then
-          EscortGroup.EscortMenuReportNavigation = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Navigation", EscortGroup.EscortMenu )
-        end
-    
-        if not EscortGroup.EscortMenuFormationTrail then
-          EscortGroup.EscortMenuFormationTrail = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Trail", EscortGroup.EscortMenuReportNavigation, ESCORT._EscortFormationTrail, self, EscortGroup, XStart, XSpace, YStart )
-        end
-    
-      end
-    end
-  )
+  self:MenuFormation( "Trail", XStart, XSpace, YStart )
 
   return self
 end
 
-
 --- Defines a menu slot to let the escort to join in a stacked formation.
--- This menu will appear under **Navigation**.
+-- This menu will appear under **Formation**.
 -- @param #AI_ESCORT self
 -- @param #number XStart The start position on the X-axis in meters for the first group.
 -- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
@@ -402,34 +420,147 @@ end
 -- @return #AI_ESCORT
 function AI_ESCORT:MenuFormationStack( XStart, XSpace, YStart, YSpace )
 
-  if not self.FlightMenuReportNavigation then
-    self.FlightMenuReportNavigation = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Navigation", self.FlightMenu )
-  end
-
-  if not self.FlightMenuFormationStack then
-    self.FlightMenuFormationStack  = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Stack",  self.FlightMenuReportNavigation, AI_ESCORT._FlightFormationStack, self, XStart, XSpace, YStart, YSpace )
-  end
-
-  self.EscortGroupSet:ForEachGroupAlive(
-    --- @param Core.Group#GROUP EscortGroup
-    function( EscortGroup )
-      if EscortGroup:IsAir() then
-        if not EscortGroup.EscortMenuReportNavigation then
-          EscortGroup.EscortMenuReportNavigation = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Navigation", EscortGroup.EscortMenu )
-        end
-    
-        if not EscortGroup.EscortMenuFormationStack then
-          EscortGroup.EscortMenuFormationStack = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Stack", EscortGroup.EscortMenuReportNavigation, ESCORT._EscortFormationStack, self, EscortGroup, XStart, XSpace, YStart, YSpace )
-        end
-    
-      end
-    end
-  )
+  self:MenuFormation( "Stack", XStart, XSpace, YStart, YSpace )
 
   return self
 end
 
 
+--- Defines a menu slot to let the escort to join in a leFt wing formation.
+-- This menu will appear under **Formation**.
+-- @param #AI_ESCORT self
+-- @param #number XStart The start position on the X-axis in meters for the first group.
+-- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+-- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+-- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+-- @return #AI_ESCORT
+function AI_ESCORT:MenuFormationLeftWing( XStart, YStart, ZStart, ZSpace )
+
+  self:MenuFormation( "LeftWing", XStart, YStart, ZStart, ZSpace )
+
+  return self
+end
+
+
+--- Defines a menu slot to let the escort to join in a leFt wing formation.
+-- This menu will appear under **Formation**.
+-- @param #AI_ESCORT self
+-- @param #number XStart The start position on the X-axis in meters for the first group.
+-- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+-- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+-- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+-- @return #AI_ESCORT
+function AI_ESCORT:MenuFormationLeftLine( XStart, YStart, ZStart, ZSpace )
+
+  self:MenuFormation( "LeftLine", XStart, YStart, ZStart, ZSpace )
+
+  return self
+end
+
+
+--- Defines a menu slot to let the escort to join in a right line formation.
+-- This menu will appear under **Formation**.
+-- @param #AI_ESCORT self
+-- @param #number XStart The start position on the X-axis in meters for the first group.
+-- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+-- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+-- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+-- @return #AI_ESCORT
+function AI_ESCORT:MenuFormationRightLine( XStart, YStart, ZStart, ZSpace )
+
+  self:MenuFormation( "RightLine", XStart, YStart, ZStart, ZSpace )
+
+  return self
+end
+
+
+--- Defines a menu slot to let the escort to join in a left wing formation.
+-- This menu will appear under **Formation**.
+-- @param #AI_ESCORT self
+-- @param #number XStart The start position on the X-axis in meters for the first group.
+-- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+-- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+-- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+-- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+-- @return #AI_ESCORT
+function AI_ESCORT:MenuFormationLeftWing( XStart, XSpace, YStart, ZStart, ZSpace )
+
+  self:MenuFormation( "LeftWing", XStart, XSpace, YStart, ZStart, ZSpace )
+
+  return self
+end
+
+
+--- Defines a menu slot to let the escort to join in a right wing formation.
+-- This menu will appear under **Formation**.
+-- @param #AI_ESCORT self
+-- @param #number XStart The start position on the X-axis in meters for the first group.
+-- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+-- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+-- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+-- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+-- @return #AI_ESCORT
+function AI_ESCORT:MenuFormationRightWing( XStart, XSpace, YStart, ZStart, ZSpace )
+
+  self:MenuFormation( "RightWing", XStart, XSpace, YStart, ZStart, ZSpace )
+
+  return self
+end
+
+
+--- Defines a menu slot to let the escort to join in a center wing formation.
+-- This menu will appear under **Formation**.
+-- @param #AI_ESCORT self
+-- @param #number XStart The start position on the X-axis in meters for the first group.
+-- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+-- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+-- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
+-- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+-- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+-- @return #AI_ESCORT
+function AI_ESCORT:MenuFormationCenterWing( XStart, XSpace, YStart, YSpace, ZStart, ZSpace )
+
+  self:MenuFormation( "CenterWing", XStart, XSpace, YStart, YSpace, ZStart, ZSpace )
+
+  return self
+end
+
+
+--- Defines a menu slot to let the escort to join in a vic formation.
+-- This menu will appear under **Formation**.
+-- @param #AI_ESCORT self
+-- @param #number XStart The start position on the X-axis in meters for the first group.
+-- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+-- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+-- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
+-- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+-- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+-- @return #AI_ESCORT
+function AI_ESCORT:MenuFormationVic( XStart, XSpace, YStart, YSpace, ZStart, ZSpace )
+
+  self:MenuFormation( "Vic", XStart, XSpace, YStart, YSpace, ZStart, ZSpace )
+
+  return self
+end
+
+
+--- Defines a menu slot to let the escort to join in a box formation.
+-- This menu will appear under **Formation**.
+-- @param #AI_ESCORT self
+-- @param #number XStart The start position on the X-axis in meters for the first group.
+-- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+-- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+-- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
+-- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+-- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+-- @param #number ZLevels The amount of levels on the Z-axis.
+-- @return #AI_ESCORT
+function AI_ESCORT:MenuFormationBox( XStart, XSpace, YStart, YSpace, ZStart, ZSpace, ZLevels )
+
+  self:MenuFormation( "Box", XStart, XSpace, YStart, YSpace, ZStart, ZSpace, ZLevels )
+
+  return self
+end
 
 
 --- Defines a menu slot to let the escort hold at their current position and stay low with a specified height during a specified time in seconds.
@@ -1086,7 +1217,7 @@ end
 -- @return #AI_ESCORT
 function AI_ESCORT:_EscortFormationStack( EscortGroup, XStart, XSpace, YStart, YSpace )
 
-  self:FormationTrail( XStart, XSpace, YStart, YSpace )
+  self:FormationStack( XStart, XSpace, YStart, YSpace )
 
 end
 
