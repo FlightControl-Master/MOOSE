@@ -300,8 +300,14 @@ function AI_ESCORT:Menus()
 --  self:MenuScanForTargets( 100, 60 )
 
   self:MenuJoinUp()
-  self:MenuFormationTrail( 0, 0, 50 )
-  self:MenuFormationStack( 0, 0, 100, 150 )
+  self:MenuFormationTrail( 0, 50, 100 )
+  self:MenuFormationStack( 0, 0, 100, 100 )
+  self:MenuFormationLeftLine( 0, 0, 100, 100 )
+  self:MenuFormationRightLine( 0, 0, 100, 100 )
+  self:MenuFormationLeftWing( 0, 50, 0, 100, 100 )
+  self:MenuFormationRightWing( 0, 50, 0, 100, 100 )
+  self:MenuFormationCenterWing( 50, 50, 0, 50, 100, 100 )
+  self:MenuFormationBox( 50, 100, 0, 50, 50, 100, 10 )
 
   self:MenuHoldAtEscortPosition( 1000, 500 )
   self:MenuHoldAtLeaderPosition( 1000, 500 )
@@ -333,12 +339,12 @@ function AI_ESCORT:MenuFormation( Formation, ... )
       function ( self, Formation, ... )
         self.EscortGroupSet:ForEachGroupAlive(
           --- @param Core.Group#GROUP EscortGroup
-          function( EscortGroup )
+          function( EscortGroup, self, Formation, ... )
             if EscortGroup:IsAir() then
               self:E({Formation=Formation})
-              self["Formation"..Formation]( arg )
+              self["Formation"..Formation]( self, ... )
             end
-          end
+          end, self, Formation, ...
         )
       end, self, Formation, ... 
     )
@@ -421,22 +427,6 @@ end
 function AI_ESCORT:MenuFormationStack( XStart, XSpace, YStart, YSpace )
 
   self:MenuFormation( "Stack", XStart, XSpace, YStart, YSpace )
-
-  return self
-end
-
-
---- Defines a menu slot to let the escort to join in a leFt wing formation.
--- This menu will appear under **Formation**.
--- @param #AI_ESCORT self
--- @param #number XStart The start position on the X-axis in meters for the first group.
--- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
--- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
--- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
--- @return #AI_ESCORT
-function AI_ESCORT:MenuFormationLeftWing( XStart, YStart, ZStart, ZSpace )
-
-  self:MenuFormation( "LeftWing", XStart, YStart, ZStart, ZSpace )
 
   return self
 end
