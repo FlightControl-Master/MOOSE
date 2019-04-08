@@ -1038,7 +1038,7 @@ function AI_FORMATION:onenterFollowing( FollowGroupSet ) --R2.1
               local Alpha_R = ( Alpha_T < 0 ) and Alpha_T + 2 * math.pi or Alpha_T
               local Position = math.cos( Alpha_R )
               local GD = ( ( GDv.x )^2 + ( GDv.z )^2 ) ^ 0.5
-              local Distance = GD * Position + - CS * 0.5
+              local Distance = GD * Position + - CS * 0.3
         
               -- Calculate the group direction vector
               local GV = { x = GV2.x - CV2.x, y = GV2.y - CV2.y, z = GV2.z - CV2.z  }
@@ -1056,7 +1056,7 @@ function AI_FORMATION:onenterFollowing( FollowGroupSet ) --R2.1
               -- Now we calculate the intersecting vector between the circle around CV2 with radius FollowDistance and GH2.
               -- From the GeoGebra model: CVI = (x(CV2) + FollowDistance cos(alpha), y(GH2) + FollowDistance sin(alpha), z(CV2))
               local CVI = { x = CV2.x + CS * 10 * math.sin(Ca),
-                y = GH2.y - ( Distance + FollowFormation.x ) / 5, -- + FollowFormation.y,
+                y = GH2.y - ( Distance + FollowFormation.x ) / 10, -- + FollowFormation.y,
                 z = CV2.z + CS * 10 * math.cos(Ca),
               }
         

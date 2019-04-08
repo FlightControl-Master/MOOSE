@@ -305,7 +305,7 @@ do -- DETECTION_BASE
   
   --- DETECTION constructor.
   -- @param #DETECTION_BASE self
-  -- @param Core.Set#SET_BASE DetectionSet The @{Set} that is used to detect the units.
+  -- @param Core.Set#SET_GROUP DetectionSet The @{Set} of @{Group}s that is used to detect the units.
   -- @return #DETECTION_BASE self
   function DETECTION_BASE:New( DetectionSet )
   
@@ -541,13 +541,14 @@ do -- DETECTION_BASE
       
       end
       
-      self.DetectionCount = self.DetectionSet:Count()
-      for DetectionID, DetectionData in pairs( self.DetectionSet:GetSet() ) do
-        --self:F( { DetectionGroupData } )
-        self:F( { DetectionGroup = DetectionData:GetName() } )
-        self:__Detection( DetectDelay, DetectionData, DetectionTimeStamp ) -- Process each detection asynchronously.
-        DetectDelay = DetectDelay + 1
-      end
+      self.DetectionCount = self.DetectionSet:GetSomeIteratorLimit()
+      
+      self.DetectionSet:ForSomeGroupAlive(
+        function( DetectionGroup )
+          self:__Detection( DetectDelay, DetectionGroup, DetectionTimeStamp ) -- Process each detection asynchronously.
+          DetectDelay = DetectDelay + 1
+        end
+      )
     end
     
     --- @param #DETECTION_BASE self
@@ -2502,7 +2503,6 @@ do -- DETECTION_AREAS
       local Report = REPORT:New()
       Report:Add( DetectedItemID )
       Report:Add( string.format( "Threat: [%s%s]", string.rep(  "■", ThreatLevelA2G ), string.rep(  "□", 10-ThreatLevelA2G ) ) )
-      Report:Add( DetectedItemCoordText )
       
       return Report
     end
