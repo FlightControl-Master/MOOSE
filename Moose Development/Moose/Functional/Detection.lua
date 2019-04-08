@@ -2500,8 +2500,9 @@ do -- DETECTION_AREAS
       local ThreatLevelA2G = self:GetDetectedItemThreatLevel( DetectedItem )
       
       local Report = REPORT:New()
+      Report:Add( DetectedItemID )
       Report:Add( string.format( "Threat: [%s%s]", string.rep(  "■", ThreatLevelA2G ), string.rep(  "□", 10-ThreatLevelA2G ) ) )
-      Report:Add(DetectedItemID .. ", " .. DetectedItemCoordText)
+      Report:Add( DetectedItemCoordText )
       
       return Report
     end
