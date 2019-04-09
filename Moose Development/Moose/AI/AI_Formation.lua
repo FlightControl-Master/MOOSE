@@ -963,14 +963,10 @@ end
 
 --- @param #AI_FORMATION self
 function AI_FORMATION:onenterFollowing( FollowGroupSet ) --R2.1
-  self:F( )
 
-  self:T( { self.FollowUnit.UnitName, self.FollowUnit:IsAlive() } )
   if self.FollowUnit:IsAlive() then
 
     local ClientUnit = self.FollowUnit
-
-    self:T( {ClientUnit.UnitName } )
 
     local CT1, CT2, CV1, CV2
     CT1 = ClientUnit:GetState( self, "CT1" )
@@ -1038,7 +1034,7 @@ function AI_FORMATION:onenterFollowing( FollowGroupSet ) --R2.1
               local Alpha_R = ( Alpha_T < 0 ) and Alpha_T + 2 * math.pi or Alpha_T
               local Position = math.cos( Alpha_R )
               local GD = ( ( GDv.x )^2 + ( GDv.z )^2 ) ^ 0.5
-              local Distance = GD * Position + - CS * 0.3
+              local Distance = GD * Position + - CS * 0.5
         
               -- Calculate the group direction vector
               local GV = { x = GV2.x - CV2.x, y = GV2.y - CV2.y, z = GV2.z - CV2.z  }
@@ -1056,7 +1052,7 @@ function AI_FORMATION:onenterFollowing( FollowGroupSet ) --R2.1
               -- Now we calculate the intersecting vector between the circle around CV2 with radius FollowDistance and GH2.
               -- From the GeoGebra model: CVI = (x(CV2) + FollowDistance cos(alpha), y(GH2) + FollowDistance sin(alpha), z(CV2))
               local CVI = { x = CV2.x + CS * 10 * math.sin(Ca),
-                y = GH2.y - ( Distance + FollowFormation.x ) / 10, -- + FollowFormation.y,
+                y = GH2.y + ( Distance + FollowFormation.x ) / 10, -- + FollowFormation.y,
                 z = CV2.z + CS * 10 * math.cos(Ca),
               }
         
@@ -1087,13 +1083,22 @@ function AI_FORMATION:onenterFollowing( FollowGroupSet ) --R2.1
               
               
               
-              local Time = 60
+              local Time = 120
               
               local Speed = - ( Distance + FollowFormation.x ) / Time
-              local GS = Speed + CS
-              if Speed < 0 then
-                Speed = 0
+
+              if Distance > -4000 then
+                Speed = - ( Distance + FollowFormation.x ) / 90
               end
+ 
+              if Distance > -1500 then
+                Speed = - ( Distance + FollowFormation.x ) / 20
+              end
+              
+              local GS = Speed + CS
+
+              self:F( { Distance = Distance, Speed = Speed, CS = CS, GS = GS } )
+              
   
               -- Now route the escort to the desired point with the desired speed.
               FollowGroup:RouteToVec3( GDV_Formation, GS ) -- DCS models speed in Mps (Miles per second)
