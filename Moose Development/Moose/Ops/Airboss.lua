@@ -1667,7 +1667,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.9.9.7"
+AIRBOSS.version="0.9.9.8"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -8861,8 +8861,11 @@ function AIRBOSS:_Initial(playerData)
   -- Relative heading to carrier direction.
   local relheading=self:_GetRelativeHeading(playerData.unit, false)
   
+  -- Alitude of player in feet.
+  local altitude=UTILS.MetersToFeet(playerData.unit:GetAltitude())
+  
   -- Check if player is in zone and flying roughly in the right direction.
-  if inzone and math.abs(relheading)<60 then
+  if inzone and math.abs(relheading)<60 and altitude<=1300 then
   
     -- Send message for normal and easy difficulty.
     if playerData.showhints then
