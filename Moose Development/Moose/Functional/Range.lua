@@ -264,6 +264,14 @@ RANGE.Defaults={
   foulline=610,
 }
 
+--- Bomb target. self.bombingTargets, {name=name, target=unit, goodhitrange=goodhitrange, move=randommove, speed=speed}
+-- @type RANGE.BombTarget
+-- @field #string name Name of unit?
+-- @field Wrapper.Unit#UNIT target Target unit.
+-- @field #number goodhitrange Range in meters for a good hit.
+-- @field #boolean move If true, unit move randomly.
+-- @field #number speed Speed of unit.
+
 --- Global list of all defined range names.
 -- @field #table Names
 RANGE.Names={}
