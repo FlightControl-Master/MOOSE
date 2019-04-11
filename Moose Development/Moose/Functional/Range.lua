@@ -1185,7 +1185,7 @@ function RANGE:OnEventShot(EventData)
   
   -- Weapon data.
   local _weapon = EventData.Weapon:getTypeName()  -- should be the same as Event.WeaponTypeName
-  local _weaponStrArray = self:_split(_weapon,"%.")
+  local _weaponStrArray = UTILS.Split(_weapon,"%.")
   local _weaponName = _weaponStrArray[#_weaponStrArray]
   
   -- Debug info.
