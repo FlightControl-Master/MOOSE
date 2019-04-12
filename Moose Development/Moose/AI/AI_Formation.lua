@@ -136,6 +136,13 @@ function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefin
   self.FollowUnit = FollowUnit -- Wrapper.Unit#UNIT
   self.FollowGroupSet = FollowGroupSet -- Core.Set#SET_GROUP
   
+  self.FollowGroupSet:ForEachGroup(
+    function( FollowGroup )
+      self:E("Following")
+      FollowGroup.Following = true
+    end
+  )
+  
   self:SetFlightRandomization( 2 )
   
   self:SetStartState( "None" ) 
@@ -906,6 +913,31 @@ function AI_FORMATION:SetFlightRandomization( FlightRandomization ) --R2.1
 end
 
 
+--- This releases the air unit in your flight from the formation flight.
+-- @param #AI_FORMATION self
+-- @param Wrapper.Group#GROUP FollowGroup FollowGroup.
+-- @return #AI_FORMATION
+function AI_FORMATION:ReleaseFormation( FollowGroup )
+
+  FollowGroup.Following = false
+  
+  return self
+end
+
+
+--- This joins up the air unit in your formation flight.
+-- @param #AI_FORMATION self
+-- @param Wrapper.Group#GROUP FollowGroup FollowGroup.
+-- @return #AI_FORMATION
+function AI_FORMATION:JoinFormation( FollowGroup )
+
+  FollowGroup.Following = true
+  
+  return self
+end
+
+
+
 --- Stop function. Formation will not be updated any more.
 -- @param #AI_FORMATION self
 -- @param Core.Set#SET_GROUP FollowGroupSet The following set of groups.
@@ -960,109 +992,112 @@ function AI_FORMATION:onenterFollowing( FollowGroupSet ) --R2.1
       --- @param Wrapper.Group#GROUP FollowGroup
       -- @param Wrapper.Unit#UNIT ClientUnit
       function( FollowGroup, Formation, ClientUnit, CT1, CV1, CT2, CV2 )
+      
+        if FollowGroup.Following == true then
         
-        FollowGroup:OptionROTEvadeFire()
-        FollowGroup:OptionROEReturnFire()
-
-        local GroupUnit = FollowGroup:GetUnit( 1 )
-        local FollowFormation = FollowGroup:GetState( self, "FormationVec3" )
-        if FollowFormation then
-          local FollowDistance = FollowFormation.x
-          
-          local GT1 = GroupUnit:GetState( self, "GT1" )
-      
-          if CT1 == nil or CT1 == 0 or GT1 == nil or GT1 == 0 then
-            GroupUnit:SetState( self, "GV1", GroupUnit:GetPointVec3() )
-            GroupUnit:SetState( self, "GT1", timer.getTime() ) 
-          else
-            local CD = ( ( CV2.x - CV1.x )^2 + ( CV2.y - CV1.y )^2 + ( CV2.z - CV1.z )^2 ) ^ 0.5
-            local CT = CT2 - CT1
-      
-            local CS = ( 3600 / CT ) * ( CD / 1000 ) / 3.6
-
-            local CDv = { x = CV2.x - CV1.x, y = CV2.y - CV1.y, z = CV2.z - CV1.z }
-            local Ca = math.atan2( CDv.x, CDv.z )
-      
+          FollowGroup:OptionROTEvadeFire()
+          FollowGroup:OptionROEReturnFire()
+  
+          local GroupUnit = FollowGroup:GetUnit( 1 )
+          local FollowFormation = FollowGroup:GetState( self, "FormationVec3" )
+          if FollowFormation then
+            local FollowDistance = FollowFormation.x
+            
             local GT1 = GroupUnit:GetState( self, "GT1" )
-            local GT2 = timer.getTime()
-            local GV1 = GroupUnit:GetState( self, "GV1" )
-            local GV2 = GroupUnit:GetPointVec3()
-            GV2:AddX( math.random( -Formation.FlightRandomization / 2, Formation.FlightRandomization / 2 ) )
-            GV2:AddY( math.random( -Formation.FlightRandomization / 2, Formation.FlightRandomization / 2 ) )
-            GV2:AddZ( math.random( -Formation.FlightRandomization / 2, Formation.FlightRandomization / 2 ) )
-            GroupUnit:SetState( self, "GT1", GT2 )
-            GroupUnit:SetState( self, "GV1", GV2 )
-            
-      
-            local GD = ( ( GV2.x - GV1.x )^2 + ( GV2.y - GV1.y )^2 + ( GV2.z - GV1.z )^2 ) ^ 0.5
-            local GT = GT2 - GT1
-      
-
-            -- Calculate the distance
-            local GDv =  { x = GV2.x - CV1.x, y =  GV2.y - CV1.y, z = GV2.z - CV1.z }
-            local Alpha_T = math.atan2( GDv.x, GDv.z ) - math.atan2( CDv.x, CDv.z ) 
-            local Alpha_R = ( Alpha_T < 0 ) and Alpha_T + 2 * math.pi or Alpha_T
-            local Position = math.cos( Alpha_R )
-            local GD = ( ( GDv.x )^2 + ( GDv.z )^2 ) ^ 0.5
-            local Distance = GD * Position + - CS * 0.5
-      
-            -- Calculate the group direction vector
-            local GV = { x = GV2.x - CV2.x, y = GV2.y - CV2.y, z = GV2.z - CV2.z  }
-      
-            -- Calculate GH2, GH2 with the same height as CV2.
-            local GH2 = { x = GV2.x, y = CV2.y + FollowFormation.y, z = GV2.z }
-      
-            -- Calculate the angle of GV to the orthonormal plane
-            local alpha = math.atan2( GV.x, GV.z )
-      
-            local GVx = FollowFormation.z * math.cos( Ca ) + FollowFormation.x * math.sin( Ca )
-            local GVz = FollowFormation.x * math.cos( Ca ) - FollowFormation.z * math.sin( Ca )
-
-
-            -- Now we calculate the intersecting vector between the circle around CV2 with radius FollowDistance and GH2.
-            -- From the GeoGebra model: CVI = (x(CV2) + FollowDistance cos(alpha), y(GH2) + FollowDistance sin(alpha), z(CV2))
-            local CVI = { x = CV2.x + CS * 10 * math.sin(Ca),
-              y = GH2.y - ( Distance + FollowFormation.x ) / 5, -- + FollowFormation.y,
-              z = CV2.z + CS * 10 * math.cos(Ca),
-            }
-      
-            -- Calculate the direction vector DV of the escort group. We use CVI as the base and CV2 as the direction.
-            local DV = { x = CV2.x - CVI.x, y = CV2.y - CVI.y, z = CV2.z - CVI.z }
-      
-            -- We now calculate the unary direction vector DVu, so that we can multiply DVu with the speed, which is expressed in meters / s.
-            -- We need to calculate this vector to predict the point the escort group needs to fly to according its speed.
-            -- The distance of the destination point should be far enough not to have the aircraft starting to swipe left to right...
-            local DVu = { x = DV.x / FollowDistance, y = DV.y, z = DV.z / FollowDistance }
-      
-            -- Now we can calculate the group destination vector GDV.
-            local GDV = { x = CVI.x, y = CVI.y, z = CVI.z }
-            
-            local ADDx = FollowFormation.x * math.cos(alpha) - FollowFormation.z * math.sin(alpha)
-            local ADDz = FollowFormation.z * math.cos(alpha) + FollowFormation.x * math.sin(alpha)
-            
-            local GDV_Formation = { 
-              x = GDV.x - GVx, 
-              y = GDV.y, 
-              z = GDV.z - GVz
-            }
-            
-            if self.SmokeDirectionVector == true then
-              trigger.action.smoke( GDV, trigger.smokeColor.Green )
-              trigger.action.smoke( GDV_Formation, trigger.smokeColor.White )
+        
+            if CT1 == nil or CT1 == 0 or GT1 == nil or GT1 == 0 then
+              GroupUnit:SetState( self, "GV1", GroupUnit:GetPointVec3() )
+              GroupUnit:SetState( self, "GT1", timer.getTime() ) 
+            else
+              local CD = ( ( CV2.x - CV1.x )^2 + ( CV2.y - CV1.y )^2 + ( CV2.z - CV1.z )^2 ) ^ 0.5
+              local CT = CT2 - CT1
+        
+              local CS = ( 3600 / CT ) * ( CD / 1000 ) / 3.6
+  
+              local CDv = { x = CV2.x - CV1.x, y = CV2.y - CV1.y, z = CV2.z - CV1.z }
+              local Ca = math.atan2( CDv.x, CDv.z )
+        
+              local GT1 = GroupUnit:GetState( self, "GT1" )
+              local GT2 = timer.getTime()
+              local GV1 = GroupUnit:GetState( self, "GV1" )
+              local GV2 = GroupUnit:GetPointVec3()
+              GV2:AddX( math.random( -Formation.FlightRandomization / 2, Formation.FlightRandomization / 2 ) )
+              GV2:AddY( math.random( -Formation.FlightRandomization / 2, Formation.FlightRandomization / 2 ) )
+              GV2:AddZ( math.random( -Formation.FlightRandomization / 2, Formation.FlightRandomization / 2 ) )
+              GroupUnit:SetState( self, "GT1", GT2 )
+              GroupUnit:SetState( self, "GV1", GV2 )
+              
+        
+              local GD = ( ( GV2.x - GV1.x )^2 + ( GV2.y - GV1.y )^2 + ( GV2.z - GV1.z )^2 ) ^ 0.5
+              local GT = GT2 - GT1
+        
+  
+              -- Calculate the distance
+              local GDv =  { x = GV2.x - CV1.x, y =  GV2.y - CV1.y, z = GV2.z - CV1.z }
+              local Alpha_T = math.atan2( GDv.x, GDv.z ) - math.atan2( CDv.x, CDv.z ) 
+              local Alpha_R = ( Alpha_T < 0 ) and Alpha_T + 2 * math.pi or Alpha_T
+              local Position = math.cos( Alpha_R )
+              local GD = ( ( GDv.x )^2 + ( GDv.z )^2 ) ^ 0.5
+              local Distance = GD * Position + - CS * 0.5
+        
+              -- Calculate the group direction vector
+              local GV = { x = GV2.x - CV2.x, y = GV2.y - CV2.y, z = GV2.z - CV2.z  }
+        
+              -- Calculate GH2, GH2 with the same height as CV2.
+              local GH2 = { x = GV2.x, y = CV2.y + FollowFormation.y, z = GV2.z }
+        
+              -- Calculate the angle of GV to the orthonormal plane
+              local alpha = math.atan2( GV.x, GV.z )
+        
+              local GVx = FollowFormation.z * math.cos( Ca ) + FollowFormation.x * math.sin( Ca )
+              local GVz = FollowFormation.x * math.cos( Ca ) - FollowFormation.z * math.sin( Ca )
+  
+  
+              -- Now we calculate the intersecting vector between the circle around CV2 with radius FollowDistance and GH2.
+              -- From the GeoGebra model: CVI = (x(CV2) + FollowDistance cos(alpha), y(GH2) + FollowDistance sin(alpha), z(CV2))
+              local CVI = { x = CV2.x + CS * 10 * math.sin(Ca),
+                y = GH2.y - ( Distance + FollowFormation.x ) / 5, -- + FollowFormation.y,
+                z = CV2.z + CS * 10 * math.cos(Ca),
+              }
+        
+              -- Calculate the direction vector DV of the escort group. We use CVI as the base and CV2 as the direction.
+              local DV = { x = CV2.x - CVI.x, y = CV2.y - CVI.y, z = CV2.z - CVI.z }
+        
+              -- We now calculate the unary direction vector DVu, so that we can multiply DVu with the speed, which is expressed in meters / s.
+              -- We need to calculate this vector to predict the point the escort group needs to fly to according its speed.
+              -- The distance of the destination point should be far enough not to have the aircraft starting to swipe left to right...
+              local DVu = { x = DV.x / FollowDistance, y = DV.y, z = DV.z / FollowDistance }
+        
+              -- Now we can calculate the group destination vector GDV.
+              local GDV = { x = CVI.x, y = CVI.y, z = CVI.z }
+              
+              local ADDx = FollowFormation.x * math.cos(alpha) - FollowFormation.z * math.sin(alpha)
+              local ADDz = FollowFormation.z * math.cos(alpha) + FollowFormation.x * math.sin(alpha)
+              
+              local GDV_Formation = { 
+                x = GDV.x - GVx, 
+                y = GDV.y, 
+                z = GDV.z - GVz
+              }
+              
+              if self.SmokeDirectionVector == true then
+                trigger.action.smoke( GDV, trigger.smokeColor.Green )
+                trigger.action.smoke( GDV_Formation, trigger.smokeColor.White )
+              end
+              
+              
+              
+              local Time = 60
+              
+              local Speed = - ( Distance + FollowFormation.x ) / Time
+              local GS = Speed + CS
+              if Speed < 0 then
+                Speed = 0
+              end
+  
+              -- Now route the escort to the desired point with the desired speed.
+              FollowGroup:RouteToVec3( GDV_Formation, GS ) -- DCS models speed in Mps (Miles per second)
             end
-            
-            
-            
-            local Time = 60
-            
-            local Speed = - ( Distance + FollowFormation.x ) / Time
-            local GS = Speed + CS
-            if Speed < 0 then
-              Speed = 0
-            end
-
-            -- Now route the escort to the desired point with the desired speed.
-            FollowGroup:RouteToVec3( GDV_Formation, GS ) -- DCS models speed in Mps (Miles per second)
           end
         end
       end,

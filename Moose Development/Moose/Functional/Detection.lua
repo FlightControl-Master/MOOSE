@@ -2484,6 +2484,38 @@ do -- DETECTION_AREAS
   -- @param Wrapper.Group#GROUP AttackGroup The group to get the settings for.
   -- @param Core.Settings#SETTINGS Settings (Optional) Message formatting settings to use.
   -- @return Core.Report#REPORT The report of the detection items.
+  function DETECTION_AREAS:DetectedItemReportMenu( DetectedItem, AttackGroup, Settings )
+    self:F( { DetectedItem = DetectedItem } )
+  
+    local DetectedItemID = self:GetDetectedItemID( DetectedItem )
+    
+    if DetectedItem then
+      local DetectedSet = self:GetDetectedItemSet( DetectedItem )
+      local ReportSummaryItem
+      
+      local DetectedZone = self:GetDetectedItemZone( DetectedItem )
+      local DetectedItemCoordinate = DetectedZone:GetCoordinate()
+      local DetectedItemCoordText = DetectedItemCoordinate:ToString( AttackGroup, Settings )
+
+      local ThreatLevelA2G = self:GetDetectedItemThreatLevel( DetectedItem )
+      
+      local Report = REPORT:New()
+      Report:Add( DetectedItemID )
+      Report:Add( string.format( "Threat: [%s%s]", string.rep(  "■", ThreatLevelA2G ), string.rep(  "□", 10-ThreatLevelA2G ) ) )
+      Report:Add( DetectedItemCoordText )
+      
+      return Report
+    end
+    
+    return nil
+  end
+
+  --- Report summary of a detected item using a given numeric index.
+  -- @param #DETECTION_AREAS self
+  -- @param #DETECTION_BASE.DetectedItem DetectedItem The DetectedItem.
+  -- @param Wrapper.Group#GROUP AttackGroup The group to get the settings for.
+  -- @param Core.Settings#SETTINGS Settings (Optional) Message formatting settings to use.
+  -- @return Core.Report#REPORT The report of the detection items.
   function DETECTION_AREAS:DetectedItemReportSummary( DetectedItem, AttackGroup, Settings )
     self:F( { DetectedItem = DetectedItem } )
   
@@ -2503,9 +2535,9 @@ do -- DETECTION_AREAS
       
       local Report = REPORT:New()
       Report:Add(DetectedItemID .. ", " .. DetectedItemCoordText)
-      Report:Add( string.format( "Threat: [%s]", string.rep(  "■", ThreatLevelA2G ), string.rep(  "□", 10-ThreatLevelA2G ) ) )
+      Report:Add( string.format( "Threat: [%s%s]", string.rep(  "■", ThreatLevelA2G ), string.rep(  "□", 10-ThreatLevelA2G ) ) )
       Report:Add( string.format("Type: %2d of %s", DetectedItemsCount, DetectedItemsTypes ) )
-      Report:Add( string.format("Detected: %s", DetectedItem.IsDetected and "yes" or "no" ) )
+      --Report:Add( string.format("Detected: %s", DetectedItem.IsDetected and "yes" or "no" ) )
       
       return Report
     end
