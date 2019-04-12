@@ -653,6 +653,49 @@ function GROUP:GetSize()
   return nil
 end
 
+--- Count number of alive units in the group.
+-- @param #GROUP self
+-- @return #number Number of alive units
+function GROUP:CountAliveUnits()
+  self:F3( { self.GroupName } )
+  local DCSGroup = self:GetDCSObject()
+
+  if DCSGroup then
+    local units=self:GetUnits()
+    local n=0
+    for _,_unit in pairs(units) do
+      local unit=_unit --Wrapper.Unit#UNIT
+      if unit and unit:IsAlive() then
+        n=n+1
+      end
+    end
+    return n
+  end
+
+  return nil
+end
+
+--- Get the first unit of the group which is alive.
+-- @param #GROUP self
+-- @return Wrapper.Unit#UNIT First unit alive.
+function GROUP:GetFirstUnitAlive()
+  self:F3({self.GroupName})
+  local DCSGroup = self:GetDCSObject()
+
+  if DCSGroup then
+    local units=self:GetUnits()
+    for _,_unit in pairs(units) do
+      local unit=_unit --Wrapper.Unit#UNIT
+      if unit and unit:IsAlive() then
+        return unit
+      end
+    end
+  end
+
+  return nil
+end
+
+
 
 --- Returns the average velocity Vec3 vector.
 -- @param Wrapper.Group#GROUP self
@@ -1463,6 +1506,16 @@ function GROUP:InitRandomizePositionRadius( OuterRadius, InnerRadius )
   return self
 end
 
+--- Set respawn coordinate.
+-- @param #GROUP self
+-- @param Core.Point#COORDINATE coordinate Coordinate where the group should be respawned.
+-- @return #GROUP self
+function GROUP:InitCoordinate(coordinate)
+  self:F({coordinate=coordinate})
+  self.InitCoord=coordinate
+  return self
+end
+
 --- Sets the radio comms on or off when the group is respawned. Same as checking/unchecking the COMM box in the mission editor.
 -- @param #GROUP self 
 -- @param #boolean switch If true (or nil), enables the radio comms. If false, disables the radio for the spawned group.
@@ -1603,6 +1656,11 @@ function GROUP:Respawn( Template, Reset )
             end
           end
           
+          -- Coordinate where the group should be respawned.
+          if self.InitCoord then
+            GroupUnitVec3=self.InitCoord:GetVec3()
+          end
+          
           -- Altitude
           Template.units[UnitID].alt = self.InitRespawnHeight and self.InitRespawnHeight or GroupUnitVec3.y
           
@@ -1645,6 +1703,11 @@ function GROUP:Respawn( Template, Reset )
               GroupUnitVec3 = Zone:GetVec3()
             end
           end
+        end
+        
+        -- Coordinate where the group should be respawned.
+        if self.InitCoord then
+          GroupUnitVec3=self.InitCoord:GetVec3()
         end
         
         -- Set altitude.

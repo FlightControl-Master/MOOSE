@@ -226,6 +226,7 @@
 -- @field #boolean trapsheet If true, players can save their trap sheets.
 -- @field #string trappath Path where to save the trap sheets.
 -- @field #string trapprefix File prefix for trap sheet files.
+-- @field #number initialmaxalt Max altitude in meters to register in the inital zone.
 -- @extends Core.Fsm#FSM
 
 --- Be the boss!
@@ -267,7 +268,9 @@
 -- their current stack to the next lower stack.
 -- 
 -- The flight that transitions form the holding pattern to the landing approach, it should leave the Marshal stack at the 3 position and make a left hand turn to the *Initial*
--- position, which is 3 NM astern of the boat.
+-- position, which is 3 NM astern of the boat. Note that you need to be below 1300 feet to be registered in the initial zone.
+-- The altitude can be set via the function @{AIRBOSS.SetInitialMaxAlt}(*altitude*) function.
+-- As described belwo, the initial zone can be smoked or flared via the AIRBOSS F10 Help radio menu.
 -- 
 -- ### Landing Pattern
 -- 
@@ -1193,7 +1196,7 @@ AIRBOSS = {
   marshalradius  = nil,
   airbossnice    = nil,
   staticweather  = nil,
-  windowcount    = 0,
+  windowcount    =   0,
   LSOdT          = nil,
   senderac       = nil,
   radiorelayLSO  = nil,
@@ -1221,6 +1224,7 @@ AIRBOSS = {
   trapsheet      = nil,
   trappath       = nil,
   trapprefix     = nil,
+  initialmaxalt  = nil,
 }
 
 --- Aircraft types capable of landing on carrier (human+AI).
@@ -1667,7 +1671,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.9.9.7"
+AIRBOSS.version="0.9.9.8"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1850,7 +1854,10 @@ function AIRBOSS:New(carriername, alias)
   self:SetHoldingOffsetAngle()
 
   -- Set Marshal stack radius. Default 2.75 NM, which gives a diameter of 5.5 NM.
-  self:SetMarshalRadius() 
+  self:SetMarshalRadius()
+  
+  -- Set max alt at initial. Default 1300 ft.
+  self:SetInitialMaxAlt()
   
   -- Default player skill EASY.
   self:SetDefaultPlayerSkill(AIRBOSS.Difficulty.EASY)
@@ -2528,6 +2535,15 @@ end
 -- @return #AIRBOSS self
 function AIRBOSS:SetRefuelAI(lowfuelthreshold)
   self.lowfuelAI=lowfuelthreshold or 10
+  return self
+end
+
+--- Set max alitude to register flights in the initial zone. Aircraft above this altitude will not be registerered.
+-- @param #AIRBOSS self
+-- @param #number altitude Max alitude in feet. Default 1300 ft.
+-- @return #AIRBOSS self
+function AIRBOSS:SetInitialMaxAlt(altitude)
+  self.initialmaxalt=UTILS.FeetToMeters(altitude or 1300)
   return self
 end
 
@@ -6047,7 +6063,13 @@ function AIRBOSS:_MarshalAI(flight, nstack, respawn)
 
   -- Nil check.
   if flight==nil or flight.group==nil then
-    self:E(self.lid.."ERROR: flight or flight.group is nil")
+    self:E(self.lid.."ERROR: flight or flight.group is nil.")
+    return
+  end
+
+  -- Nil check.
+  if flight.group:GetCoordinate()==nil then
+    self:E(self.lid.."ERROR: cannot get coordinate of flight group.")
     return
   end
   
@@ -8855,8 +8877,11 @@ function AIRBOSS:_Initial(playerData)
   -- Relative heading to carrier direction.
   local relheading=self:_GetRelativeHeading(playerData.unit, false)
   
+  -- Alitude of player in feet.
+  local altitude=playerData.unit:GetAltitude()
+  
   -- Check if player is in zone and flying roughly in the right direction.
-  if inzone and math.abs(relheading)<60 then
+  if inzone and math.abs(relheading)<60 and altitude<=self.initialmaxalt then
   
     -- Send message for normal and easy difficulty.
     if playerData.showhints then

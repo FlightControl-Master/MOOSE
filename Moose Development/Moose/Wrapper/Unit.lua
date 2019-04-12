@@ -817,16 +817,22 @@ function UNIT:Explode(power, delay)
   -- Default.
   power=power or 100
   
-  -- Check if delay or not.
-  if delay and delay>0 then
-    -- Delayed call.
-    SCHEDULER:New(nil, self.Explode, {self, power}, delay)
-  else
-    -- Create an explotion at the coordinate of the unit.
-    self:GetCoordinate():Explosion(power)
+  local DCSUnit = self:GetDCSObject()
+  if DCSUnit then
+  
+    -- Check if delay or not.
+    if delay and delay>0 then
+      -- Delayed call.
+      SCHEDULER:New(nil, self.Explode, {self, power}, delay)
+    else
+      -- Create an explotion at the coordinate of the unit.
+      self:GetCoordinate():Explosion(power)
+    end
+  
+    return self
   end
-
-  return self
+  
+  return nil
 end
 
 -- Is functions

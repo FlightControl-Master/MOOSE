@@ -3675,6 +3675,8 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute, forcecargobay,
   local SpeedMax=group:GetSpeedMax()
   local RangeMin=group:GetRange()
   local smax,sx,sy,sz=_GetObjectSize(Descriptors)
+  
+  --self:E(Descriptors)
 
   -- Get weight and cargo bay size in kg.
   local weight=0
@@ -6379,6 +6381,7 @@ function WAREHOUSE:_CheckRequestValid(request)
 
       if inwater then
         self:E("ERROR: Incorrect request. Ground asset requested but at least one spawn zone is in water!")
+        --valid=false
         valid=false
       end
 
