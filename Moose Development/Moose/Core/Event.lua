@@ -520,46 +520,23 @@ function EVENT:RemoveEvent( EventClass, EventID  )
 
 end
 
---- Resets subscriptions
+--- Clears all event subscriptions for a @{Core.Base#BASE} derived object.
 -- @param #EVENT self
--- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
--- @param DCS#world.event EventID
--- @return #EVENT.Events
-function EVENT:Reset( EventObject ) --R2.1
+-- @param Core.Base#BASE EventObject
+function EVENT:RemoveAll( EventClass )
+  self:F3( { EventClass:GetClassNameAndID() } )
 
-  self:F( { "Resetting subscriptions for class: ", EventObject:GetClassNameAndID() } )
-
-  local EventPriority = EventObject:GetEventPriority()
+  local EventPriority = EventClass:GetEventPriority()
   for EventID, EventData in pairs( self.Events ) do
-    if self.EventsDead then
-      if self.EventsDead[EventID] then
-        if self.EventsDead[EventID][EventPriority] then
-          if self.EventsDead[EventID][EventPriority][EventObject] then
-            self.Events[EventID][EventPriority][EventObject] = self.EventsDead[EventID][EventPriority][EventObject]
-          end
+    if self.Events[EventID] then
+      if self.Events[EventID][EventPriority] then
+        if self.Events[EventID][EventPriority][EventClass] then
+          self.Events[EventID][EventPriority][EventClass] = nil
         end
       end
     end
   end
 end
-
-
-
-
---- Clears all event subscriptions for a @{Core.Base#BASE} derived object.
--- @param #EVENT self
--- @param Core.Base#BASE EventObject
-function EVENT:RemoveAll( EventObject  )
-  self:F3( { EventObject:GetClassNameAndID() } )
-
-  local EventClass = EventObject:GetClassNameAndID()
-  local EventPriority = EventClass:GetEventPriority()
-  for EventID, EventData in pairs( self.Events ) do
-    self.Events[EventID][EventPriority][EventClass] = nil
-  end
-end
-
-
 
 --- Create an OnDead event handler for a group
 -- @param #EVENT self

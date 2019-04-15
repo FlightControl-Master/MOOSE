@@ -1755,7 +1755,7 @@ function GROUP:Respawn( Template, Reset )
   _DATABASE:Spawn(Template)
 
   -- Reset events.
-  self:ResetEvents()
+  self:EventRemoveAll()
 
   return self
 end
@@ -1873,7 +1873,7 @@ function GROUP:RespawnAtCurrentAirbase(SpawnTemplate, Takeoff, Uncontrolled) -- 
     _DATABASE:Spawn(SpawnTemplate)
 
     -- Reset events.
-    self:ResetEvents()
+    self:EventRemoveAll()
 
     return self
   end
@@ -2147,12 +2147,12 @@ do -- Event Handling
   --- Reset the subscriptions.
   -- @param #GROUP self
   -- @return #GROUP
-  function GROUP:ResetEvents()
+  function GROUP:EventRemoveAll()
 
-    self:EventDispatcher():Reset( self )
+    self:EventDispatcher():RemoveAll( self )
 
     for UnitID, UnitData in pairs( self:GetUnits() ) do
-      UnitData:ResetEvents()
+      UnitData:EventRemoveAll()
     end
 
     return self

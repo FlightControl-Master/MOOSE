@@ -1151,7 +1151,7 @@ function SPAWN:ReSpawn( SpawnIndex )
       SpawnGroup:ReSpawnFunction()
     end
 
-    SpawnGroup:ResetEvents()
+    SpawnGroup:EventRemoveAll()
 
     return SpawnGroup
 end
