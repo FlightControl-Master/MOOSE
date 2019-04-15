@@ -58,10 +58,15 @@ Functional/Artillery.lua
 Functional/Suppression.lua
 Functional/PseudoATC.lua
 Functional/Warehouse.lua
+Functional/RAT2.lua
+Functional/RatCraft.lua
+Functional/Fox2.lua
+Functional/FlightModelData.lua
 
 Ops/Airboss.lua
 Ops/RecoveryTanker.lua
 Ops/RescueHelo.lua
+Ops/FlightControl.lua
 
 AI/AI_Balancer.lua
 AI/AI_Air.lua

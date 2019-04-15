@@ -655,6 +655,21 @@ function POSITIONABLE:GetVelocityVec3()
   return nil
 end
 
+--- Get relative velocity with respect to another POSITIONABLE.
+-- @param #POSITIONABLE self
+-- @param #POSITIONABLE positionable Other positionable.
+-- @return #number Relative velocity in m/s.
+function POSITIONABLE:GetRelativeVelocity(positionable)
+  self:F2( self.PositionableName )
+  
+  local v1=self:GetVelocityVec3()
+  local v2=positionable:GetVelocityVec3()
+  
+  local vtot=UTILS.VecAdd(v1,v2)
+  
+  return UTILS.VecNorm(vtot)
+end
+
 
 --- Returns the POSITIONABLE height in meters.
 -- @param Wrapper.Positionable#POSITIONABLE self
