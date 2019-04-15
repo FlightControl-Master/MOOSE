@@ -1,9 +1,9 @@
 --- **Wrapper** -- GROUP wraps the DCS Class Group objects.
--- 
+--
 -- ===
--- 
+--
 -- The @{#GROUP} class is a wrapper class to handle the DCS Group objects.
--- 
+--
 -- ## Features:
 --
 --  * Support all DCS Group APIs.
@@ -14,26 +14,26 @@
 -- **IMPORTANT: ONE SHOULD NEVER SANATIZE these GROUP OBJECT REFERENCES! (make the GROUP object references nil).**
 --
 -- ===
--- 
+--
 -- For each DCS Group object alive within a running mission, a GROUP wrapper object (instance) will be created within the _@{DATABASE} object.
 -- This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Group objects are spawned (using the @{SPAWN} class).
--- 
+--
 -- The GROUP class does not contain a :New() method, rather it provides :Find() methods to retrieve the object reference
 -- using the DCS Group or the DCS GroupName.
 --
 -- The GROUP methods will reference the DCS Group object by name when it is needed during API execution.
 -- If the DCS Group object does not exist or is nil, the GROUP methods will return nil and may log an exception in the DCS.log file.
--- 
+--
 -- ===
--- 
+--
 -- ### Author: **FlightControl**
--- 
--- ### Contributions: 
--- 
+--
+-- ### Contributions:
+--
 --   * [**Entropy**](https://forums.eagle.ru/member.php?u=111471), **Afinegan**: Came up with the requirement for AIOnOff().
--- 
+--
 -- ===
--- 
+--
 -- @module Wrapper.Group
 -- @image Wrapper_Group.JPG
 
@@ -44,7 +44,7 @@
 
 
 --- Wrapper class of the DCS world Group object.
--- 
+--
 -- The GROUP class provides the following functions to retrieve quickly the relevant GROUP instance:
 --
 --  * @{#GROUP.Find}(): Find a GROUP instance from the _DATABASE object using a DCS Group object.
@@ -52,28 +52,28 @@
 --
 -- # 1. Tasking of groups
 --
--- A GROUP is derived from the wrapper class CONTROLLABLE (@{Wrapper.Controllable#CONTROLLABLE}). 
+-- A GROUP is derived from the wrapper class CONTROLLABLE (@{Wrapper.Controllable#CONTROLLABLE}).
 -- See the @{Wrapper.Controllable} task methods section for a description of the task methods.
 --
 -- But here is an example how a group can be assigned a task.
--- 
+--
 -- This test demonstrates the use(s) of the SwitchWayPoint method of the GROUP class.
--- 
+--
 -- First we look up the objects. We create a GROUP object `HeliGroup`, using the @{#GROUP:FindByName}() method, looking up the `"Helicopter"` group object.
 -- Same for the `"AttackGroup"`.
---          
+--
 --          local HeliGroup = GROUP:FindByName( "Helicopter" )
 --          local AttackGroup = GROUP:FindByName( "AttackGroup" )
--- 
--- Now we retrieve the @{Wrapper.Unit#UNIT} objects of the `AttackGroup` object, using the method `:GetUnits()`.   
---       
+--
+-- Now we retrieve the @{Wrapper.Unit#UNIT} objects of the `AttackGroup` object, using the method `:GetUnits()`.
+--
 --          local AttackUnits = AttackGroup:GetUnits()
---          
+--
 -- Tasks are actually text strings that we build using methods of GROUP.
--- So first, we declare an list of `Tasks`.  
---        
+-- So first, we declare an list of `Tasks`.
+--
 --          local Tasks = {}
--- 
+--
 -- Now we loop over the `AttackUnits` using a for loop.
 -- We retrieve the `AttackUnit` using the `AttackGroup:GetUnit()` method.
 -- Each `AttackUnit` found, will be attacked by `HeliGroup`, using the method `HeliGroup:TaskAttackUnit()`.
@@ -81,74 +81,74 @@
 -- The code will assign the task string command to the next element in the `Task` list, using `Tasks[#Tasks+1]`.
 -- This little code will take the count of `Task` using `#` operator, and will add `1` to the count.
 -- This result will be the index of the `Task` element.
---          
+--
 --          for i = 1, #AttackUnits do
 --            local AttackUnit = AttackGroup:GetUnit( i )
 --            Tasks[#Tasks+1] = HeliGroup:TaskAttackUnit( AttackUnit )
 --          end
---          
+--
 -- Once these tasks have been executed, a function `_Resume` will be called ...
---          
+--
 --          Tasks[#Tasks+1] = HeliGroup:TaskFunction( "_Resume", { "''" } )
---          
+--
 --          --- @param Wrapper.Group#GROUP HeliGroup
 --          function _Resume( HeliGroup )
 --            env.info( '_Resume' )
---          
+--
 --            HeliGroup:MessageToAll( "Resuming",10,"Info")
 --          end
--- 
+--
 -- Now here is where the task gets assigned!
 -- Using `HeliGroup:PushTask`, the task is pushed onto the task queue of the group `HeliGroup`.
 -- Since `Tasks` is an array of tasks, we use the `HeliGroup:TaskCombo` method to execute the tasks.
 -- The `HeliGroup:PushTask` method can receive a delay parameter in seconds.
 -- In the example, `30` is given as a delay.
--- 
--- 
---          HeliGroup:PushTask( 
+--
+--
+--          HeliGroup:PushTask(
 --            HeliGroup:TaskCombo(
 --            Tasks
---            ), 30 
---          ) 
--- 
+--            ), 30
+--          )
+--
 -- That's it!
 -- But again, please refer to the @{Wrapper.Controllable} task methods section for a description of the different task methods that are available.
--- 
--- 
+--
+--
 --
 -- ### Obtain the mission from group templates
--- 
+--
 -- Group templates contain complete mission descriptions. Sometimes you want to copy a complete mission from a group and assign it to another:
--- 
+--
 --   * @{Wrapper.Controllable#CONTROLLABLE.TaskMission}: (AIR + GROUND) Return a mission task from a mission template.
 --
 -- ## GROUP Command methods
 --
 -- A GROUP is a @{Wrapper.Controllable}. See the @{Wrapper.Controllable} command methods section for a description of the command methods.
--- 
+--
 -- ## GROUP option methods
 --
 -- A GROUP is a @{Wrapper.Controllable}. See the @{Wrapper.Controllable} option methods section for a description of the option methods.
--- 
+--
 -- ## GROUP Zone validation methods
--- 
+--
 -- The group can be validated whether it is completely, partly or not within a @{Zone}.
 -- Use the following Zone validation methods on the group:
--- 
+--
 --   * @{#GROUP.IsCompletelyInZone}: Returns true if all units of the group are within a @{Zone}.
 --   * @{#GROUP.IsPartlyInZone}: Returns true if some units of the group are within a @{Zone}.
 --   * @{#GROUP.IsNotInZone}: Returns true if none of the group units of the group are within a @{Zone}.
---   
+--
 -- The zone can be of any @{Zone} class derived from @{Core.Zone#ZONE_BASE}. So, these methods are polymorphic to the zones tested on.
--- 
+--
 -- ## GROUP AI methods
--- 
+--
 -- A GROUP has AI methods to control the AI activation.
--- 
+--
 --   * @{#GROUP.SetAIOnOff}(): Turns the GROUP AI On or Off.
 --   * @{#GROUP.SetAIOn}(): Turns the GROUP AI On.
 --   * @{#GROUP.SetAIOff}(): Turns the GROUP AI Off.
--- 
+--
 -- @field #GROUP GROUP
 GROUP = {
   ClassName = "GROUP",
@@ -192,7 +192,7 @@ function GROUP:NewTemplate( GroupTemplate, CoalitionSide, CategoryID, CountryID 
 
   if not _DATABASE.GROUPS[GroupName] then
     _DATABASE.GROUPS[GroupName] = self
-  end  
+  end
 
   self:SetEventPriority( 4 )
   return self
@@ -207,7 +207,7 @@ end
 function GROUP:Register( GroupName )
   local self = BASE:Inherit( self, CONTROLLABLE:New( GroupName ) ) -- #GROUP
   self.GroupName = GroupName
-  
+
   self:SetEventPriority( 4 )
   return self
 end
@@ -253,30 +253,30 @@ end
 --- Returns the @{DCS#Position3} position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return DCS#Position The 3D position vectors of the POSITIONABLE.
--- @return #nil The POSITIONABLE is not existing or alive.  
+-- @return #nil The POSITIONABLE is not existing or alive.
 function GROUP:GetPositionVec3() -- Overridden from POSITIONABLE:GetPositionVec3()
   self:F2( self.PositionableName )
 
   local DCSPositionable = self:GetDCSObject()
-  
+
   if DCSPositionable then
     local PositionablePosition = DCSPositionable:getUnits()[1]:getPosition().p
     self:T3( PositionablePosition )
     return PositionablePosition
   end
-  
+
   return nil
 end
 
 --- Returns if the group is alive.
 -- The Group must:
--- 
+--
 --   * Exist at run-time.
 --   * Has at least one unit.
--- 
+--
 -- When the first @{Wrapper.Unit} of the group is active, it will return true.
 -- If the first @{Wrapper.Unit} of the group is inactive, it will return false.
--- 
+--
 -- @param #GROUP self
 -- @return #boolean true if the group is alive and active.
 -- @return #boolean false if the group is alive but inactive.
@@ -303,16 +303,16 @@ end
 --- Returns if the group is activated.
 -- @param #GROUP self
 -- @return #boolean true if group is activated.
--- @return #nil The group is not existing or alive.  
+-- @return #nil The group is not existing or alive.
 function GROUP:IsActive()
   self:F2( self.GroupName )
 
   local DCSGroup = self:GetDCSObject() -- DCS#Group
-  
+
   if DCSGroup then
-  
+
     local GroupIsActive = DCSGroup:getUnit(1):isActive()
-    return GroupIsActive 
+    return GroupIsActive
   end
 
   return nil
@@ -339,21 +339,21 @@ end
 -- -- Ship unit example: destroy the Ship silently.
 -- Ship = GROUP:FindByName( "Ship" )
 -- Ship:Destroy()
--- 
+--
 -- @usage
 -- -- Destroy without event generation example.
 -- Ship = GROUP:FindByName( "Boat" )
 -- Ship:Destroy( false ) -- Don't generate an event upon destruction.
--- 
+--
 function GROUP:Destroy( GenerateEvent, delay )
   self:F2( self.GroupName )
-  
+
   if delay and delay>0 then
     SCHEDULER:New(nil, GROUP.Destroy, {self, GenerateEvent}, delay)
   else
 
     local DCSGroup = self:GetDCSObject()
-  
+
     if DCSGroup then
       for Index, UnitData in pairs( DCSGroup:getUnits() ) do
         if GenerateEvent and GenerateEvent == true then
@@ -373,7 +373,7 @@ function GROUP:Destroy( GenerateEvent, delay )
       DCSGroup = nil
     end
   end
-  
+
   return nil
 end
 
@@ -461,10 +461,10 @@ function GROUP:HasAttribute(attribute, all)
 
   -- Get all units of the group.
   local _units=self:GetUnits()
-  
+
   local _allhave=true
   local _onehas=false
-  
+
   for _,_unit in pairs(_units) do
     local _unit=_unit --Wrapper.Unit#UNIT
     if _unit then
@@ -474,9 +474,9 @@ function GROUP:HasAttribute(attribute, all)
       else
         _allhave=false
       end
-    end 
+    end
   end
-  
+
   if all==true then
     return _allhave
   else
@@ -493,11 +493,11 @@ function GROUP:GetSpeedMax()
 
   local DCSGroup = self:GetDCSObject()
   if DCSGroup then
-  
+
     local Units=self:GetUnits()
-    
+
     local speedmax=nil
-    
+
     for _,unit in pairs(Units) do
       local unit=unit --Wrapper.Unit#UNIT
       local speed=unit:GetSpeedMax()
@@ -507,10 +507,10 @@ function GROUP:GetSpeedMax()
         speedmax=speed
       end
     end
-    
+
     return speedmax
   end
-  
+
   return nil
 end
 
@@ -523,11 +523,11 @@ function GROUP:GetRange()
 
   local DCSGroup = self:GetDCSObject()
   if DCSGroup then
-  
+
     local Units=self:GetUnits()
-    
+
     local Rangemin=nil
-    
+
     for _,unit in pairs(Units) do
       local unit=unit --Wrapper.Unit#UNIT
       local range=unit:GetRange()
@@ -539,10 +539,10 @@ function GROUP:GetRange()
         end
       end
     end
-    
+
     return Rangemin
   end
-  
+
   return nil
 end
 
@@ -641,7 +641,7 @@ function GROUP:GetSize()
 
   if DCSGroup then
     local GroupSize = DCSGroup:getSize()
-    
+
     if GroupSize then
       self:T3( GroupSize )
       return GroupSize
@@ -700,32 +700,32 @@ end
 --- Returns the average velocity Vec3 vector.
 -- @param Wrapper.Group#GROUP self
 -- @return DCS#Vec3 The velocity Vec3 vector
--- @return #nil The GROUP is not existing or alive.  
+-- @return #nil The GROUP is not existing or alive.
 function GROUP:GetVelocityVec3()
   self:F2( self.GroupName )
 
   local DCSGroup = self:GetDCSObject()
-  
+
   if DCSGroup and DCSGroup:isExist() then
     local GroupUnits = DCSGroup:getUnits()
     local GroupCount = #GroupUnits
-    
+
     local VelocityVec3 = { x = 0, y = 0, z = 0 }
-    
+
     for _, DCSUnit in pairs( GroupUnits ) do
       local UnitVelocityVec3 = DCSUnit:getVelocity()
       VelocityVec3.x = VelocityVec3.x + UnitVelocityVec3.x
       VelocityVec3.y = VelocityVec3.y + UnitVelocityVec3.y
       VelocityVec3.z = VelocityVec3.z + UnitVelocityVec3.z
     end
-    
+
     VelocityVec3.x = VelocityVec3.x / GroupCount
     VelocityVec3.y = VelocityVec3.y / GroupCount
     VelocityVec3.z = VelocityVec3.z / GroupCount
-    
+
     return VelocityVec3
   end
-  
+
   BASE:E( { "Cannot GetVelocityVec3", Group = self, Alive = self:IsAlive() } )
 
   return nil
@@ -734,22 +734,22 @@ end
 
 --- Returns the average group height in meters.
 -- @param Wrapper.Group#GROUP self
--- @param #boolean FromGround Measure from the ground or from sea level. Provide **true** for measuring from the ground. **false** or **nil** if you measure from sea level. 
--- @return DCS#Vec3 The height of the group or nil if is not existing or alive.  
+-- @param #boolean FromGround Measure from the ground or from sea level. Provide **true** for measuring from the ground. **false** or **nil** if you measure from sea level.
+-- @return DCS#Vec3 The height of the group or nil if is not existing or alive.
 function GROUP:GetHeight( FromGround )
   self:F2( self.GroupName )
 
   local DCSGroup = self:GetDCSObject()
-  
+
   if DCSGroup then
     local GroupUnits = DCSGroup:getUnits()
     local GroupCount = #GroupUnits
-    
+
     local GroupHeight = 0
 
     for _, DCSUnit in pairs( GroupUnits ) do
       local GroupPosition = DCSUnit:getPosition()
-      
+
       if FromGround == true then
         local LandHeight =  land.getHeight( { x = GroupPosition.p.x, y = GroupPosition.p.z } )
         GroupHeight = GroupHeight + ( GroupPosition.p.y - LandHeight )
@@ -757,10 +757,10 @@ function GROUP:GetHeight( FromGround )
         GroupHeight = GroupHeight + GroupPosition.p.y
       end
     end
-    
+
     return GroupHeight / GroupCount
   end
-  
+
   return nil
 end
 
@@ -894,18 +894,18 @@ end
 --- Returns a POINT_VEC2 object indicating the point in 2D of the first UNIT of the GROUP within the mission.
 -- @param #GROUP self
 -- @return Core.Point#POINT_VEC2 The 2D point vector of the first DCS Unit of the GROUP.
--- @return #nil The first UNIT is not existing or alive.  
+-- @return #nil The first UNIT is not existing or alive.
 function GROUP:GetPointVec2()
   self:F2(self.GroupName)
 
   local FirstUnit = self:GetUnit(1)
-  
+
   if FirstUnit then
     local FirstUnitPointVec2 = FirstUnit:GetPointVec2()
     self:T3(FirstUnitPointVec2)
     return FirstUnitPointVec2
   end
-  
+
   BASE:E( { "Cannot GetPointVec2", Group = self, Alive = self:IsAlive() } )
 
   return nil
@@ -918,13 +918,13 @@ function GROUP:GetCoordinate()
   self:F2( self.PositionableName )
 
   local FirstUnit = self:GetUnit(1)
-  
+
   if FirstUnit then
     local FirstUnitCoordinate = FirstUnit:GetCoordinate()
     self:T3(FirstUnitCoordinate)
     return FirstUnitCoordinate
   end
-  
+
   BASE:E( { "Cannot GetCoordinate", Group = self, Alive = self:IsAlive() } )
 
   return nil
@@ -936,19 +936,19 @@ end
 -- @param #number Radius
 -- @return DCS#Vec3 The random 3D point vector around the first UNIT of the GROUP.
 -- @return #nil The GROUP is invalid or empty
--- @usage 
+-- @usage
 -- -- If Radius is ignored, returns the DCS#Vec3 of first UNIT of the GROUP
 function GROUP:GetRandomVec3(Radius)
   self:F2(self.GroupName)
-  
+
   local FirstUnit = self:GetUnit(1)
-  
+
   if FirstUnit then
     local FirstUnitRandomPointVec3 = FirstUnit:GetRandomVec3(Radius)
     self:T3(FirstUnitRandomPointVec3)
     return FirstUnitRandomPointVec3
   end
-  
+
   BASE:E( { "Cannot GetRandomVec3", Group = self, Alive = self:IsAlive() } )
 
   return nil
@@ -963,18 +963,18 @@ function GROUP:GetHeading()
 
   local GroupSize = self:GetSize()
   local HeadingAccumulator = 0
-  
+
   if GroupSize then
     for i = 1, GroupSize do
       HeadingAccumulator = HeadingAccumulator + self:GetUnit(i):GetHeading()
     end
     return math.floor(HeadingAccumulator / GroupSize)
   end
-  
+
   BASE:E( { "Cannot GetHeading", Group = self, Alive = self:IsAlive() } )
 
   return nil
-  
+
 end
 
 --- Return the fuel state and unit reference for the unit with the least
@@ -1017,7 +1017,7 @@ function GROUP:GetFuelAvg()
   self:F( self.ControllableName )
 
   local DCSControllable = self:GetDCSObject()
-  
+
   if DCSControllable then
     local GroupSize = self:GetSize()
     local TotalFuel = 0
@@ -1030,7 +1030,7 @@ function GROUP:GetFuelAvg()
     local GroupFuel = TotalFuel / GroupSize
     return GroupFuel
   end
-  
+
   BASE:E( { "Cannot GetFuel", Group = self, Alive = self:IsAlive() } )
 
   return 0
@@ -1053,9 +1053,9 @@ do -- Is Zone methods
 -- @return #boolean Returns true if the Group is completely within the @{Core.Zone#ZONE_BASE}
 function GROUP:IsCompletelyInZone( Zone )
   self:F2( { self.GroupName, Zone } )
-  
+
   if not self:IsAlive() then return false end
-  
+
   for UnitID, UnitData in pairs( self:GetUnits() ) do
     local Unit = UnitData -- Wrapper.Unit#UNIT
     if Zone:IsVec3InZone( Unit:GetVec3() ) then
@@ -1063,7 +1063,7 @@ function GROUP:IsCompletelyInZone( Zone )
       return false
     end
   end
-  
+
   return true
 end
 
@@ -1073,12 +1073,12 @@ end
 -- @return #boolean Returns true if the Group is partially within the @{Core.Zone#ZONE_BASE}
 function GROUP:IsPartlyInZone( Zone )
   self:F2( { self.GroupName, Zone } )
-  
+
   local IsOneUnitInZone = false
   local IsOneUnitOutsideZone = false
-  
+
   if not self:IsAlive() then return false end
-  
+
   for UnitID, UnitData in pairs( self:GetUnits() ) do
     local Unit = UnitData -- Wrapper.Unit#UNIT
     if Zone:IsVec3InZone( Unit:GetVec3() ) then
@@ -1087,7 +1087,7 @@ function GROUP:IsPartlyInZone( Zone )
       IsOneUnitOutsideZone = true
     end
   end
-  
+
   if IsOneUnitInZone and IsOneUnitOutsideZone then
     return true
   else
@@ -1109,16 +1109,16 @@ end
 -- @return #boolean Returns true if the Group is not within the @{Core.Zone#ZONE_BASE}
 function GROUP:IsNotInZone( Zone )
   self:F2( { self.GroupName, Zone } )
-  
+
   if not self:IsAlive() then return true end
-  
+
   for UnitID, UnitData in pairs( self:GetUnits() ) do
     local Unit = UnitData -- Wrapper.Unit#UNIT
     if Zone:IsVec3InZone( Unit:GetVec3() ) then
       return false
     end
   end
-  
+
   return true
 end
 
@@ -1146,16 +1146,16 @@ end
 function GROUP:CountInZone( Zone )
   self:F2( {self.GroupName, Zone} )
   local Count = 0
-  
+
   if not self:IsAlive() then return Count end
-  
+
   for UnitID, UnitData in pairs( self:GetUnits() ) do
     local Unit = UnitData -- Wrapper.Unit#UNIT
     if Zone:IsVec3InZone( Unit:GetVec3() ) then
       Count = Count + 1
     end
   end
-  
+
   return Count
 end
 
@@ -1279,9 +1279,9 @@ do -- AI methods
   -- @param #boolean AIOnOff The value true turns the AI On, the value false turns the AI Off.
   -- @return #GROUP The GROUP.
   function GROUP:SetAIOnOff( AIOnOff )
-  
+
     local DCSGroup = self:GetDCSObject() -- DCS#Group
-    
+
     if DCSGroup then
       local DCSController = DCSGroup:getController() -- DCS#Controller
       if DCSController then
@@ -1289,7 +1289,7 @@ do -- AI methods
         return self
       end
     end
-    
+
     return nil
   end
 
@@ -1298,15 +1298,15 @@ do -- AI methods
   -- @return #GROUP The GROUP.
   function GROUP:SetAIOn()
 
-    return self:SetAIOnOff( true )  
+    return self:SetAIOnOff( true )
   end
-  
+
   --- Turns the AI Off for the GROUP.
   -- @param #GROUP self
   -- @return #GROUP The GROUP.
   function GROUP:SetAIOff()
 
-    return self:SetAIOnOff( false )  
+    return self:SetAIOnOff( false )
   end
 
 end
@@ -1401,7 +1401,7 @@ end
 
 --- Returns the group template from the @{DATABASE} (_DATABASE object).
 -- @param #GROUP self
--- @return #table 
+-- @return #table
 function GROUP:GetTemplate()
   local GroupName = self:GetName()
   return UTILS.DeepCopy( _DATABASE:GetGroupTemplate( GroupName ) )
@@ -1409,7 +1409,7 @@ end
 
 --- Returns the group template route.points[] (the waypoints) from the @{DATABASE} (_DATABASE object).
 -- @param #GROUP self
--- @return #table 
+-- @return #table
 function GROUP:GetTemplateRoutePoints()
   local GroupName = self:GetName()
   return UTILS.DeepCopy( _DATABASE:GetGroupTemplate( GroupName ).route.points )
@@ -1420,7 +1420,7 @@ end
 --- Sets the controlled status in a Template.
 -- @param #GROUP self
 -- @param #boolean Controlled true is controlled, false is uncontrolled.
--- @return #table 
+-- @return #table
 function GROUP:SetTemplateControlled( Template, Controlled )
   Template.uncontrolled = not Controlled
   return Template
@@ -1429,7 +1429,7 @@ end
 --- Sets the CountryID of the group in a Template.
 -- @param #GROUP self
 -- @param DCS#country.id CountryID The country ID.
--- @return #table 
+-- @return #table
 function GROUP:SetTemplateCountry( Template, CountryID )
   Template.CountryID = CountryID
   return Template
@@ -1438,7 +1438,7 @@ end
 --- Sets the CoalitionID of the group in a Template.
 -- @param #GROUP self
 -- @param DCS#coalition.side CoalitionID The coalition ID.
--- @return #table 
+-- @return #table
 function GROUP:SetTemplateCoalition( Template, CoalitionID )
   Template.CoalitionID = CoalitionID
   return Template
@@ -1498,11 +1498,11 @@ end
 -- @param #boolean InnerRadius Inner band in meters from the center.
 -- @return #GROUP self
 function GROUP:InitRandomizePositionRadius( OuterRadius, InnerRadius )
-  
+
   self.InitRespawnRandomizePositionZone = nil
   self.InitRespawnRandomizePositionOuter = OuterRadius
   self.InitRespawnRandomizePositionInner = InnerRadius
-  
+
   return self
 end
 
@@ -1517,7 +1517,7 @@ function GROUP:InitCoordinate(coordinate)
 end
 
 --- Sets the radio comms on or off when the group is respawned. Same as checking/unchecking the COMM box in the mission editor.
--- @param #GROUP self 
+-- @param #GROUP self
 -- @param #boolean switch If true (or nil), enables the radio comms. If false, disables the radio for the spawned group.
 -- @return #GROUP self
 function GROUP:InitRadioCommsOnOff(switch)
@@ -1531,14 +1531,14 @@ function GROUP:InitRadioCommsOnOff(switch)
 end
 
 --- Sets the radio frequency of the group when it is respawned.
--- @param #GROUP self 
+-- @param #GROUP self
 -- @param #number frequency The frequency in MHz.
 -- @return #GROUP self
 function GROUP:InitRadioFrequency(frequency)
   self:F({frequency=frequency})
 
   self.InitRespawnFreq=frequency
-  
+
   return self
 end
 
@@ -1571,7 +1571,7 @@ end
 --- Respawn the @{Wrapper.Group} at a @{Point}.
 -- The method will setup the new group template according the Init(Respawn) settings provided for the group.
 -- These settings can be provided by calling the relevant Init...() methods of the Group.
--- 
+--
 --   - @{#GROUP.InitHeading}: Set the heading for the units in degrees within the respawned group.
 --   - @{#GROUP.InitHeight}: Set the height for the units in meters for the respawned group. (This is applicable for air units).
 --   - @{#GROUP.InitRandomizeHeading}: Randomize the headings for the units within the respawned group.
@@ -1580,13 +1580,13 @@ end
 --   - @{#GROUP.InitRandomizePositionZone}: Randomize the positions of the units of the respawned group within the @{Zone}.
 --   - @{#GROUP.InitRandomizePositionRadius}: Randomize the positions of the units of the respawned group in a circle band.
 --   - @{#GROUP.InitRandomizeTemplates}: Randomize the Template for the respawned group.
--- 
--- 
+--
+--
 -- Notes:
--- 
+--
 --   - When InitZone or InitRandomizeZones is not used, the position of the respawned group will be its current position.
---   - The current alive group will always be destroyed and respawned using the template definition. 
--- 
+--   - The current alive group will always be destroyed and respawned using the template definition.
+--
 -- @param Wrapper.Group#GROUP self
 -- @param #table Template (optional) The template of the Group retrieved with GROUP:GetTemplate(). If the template is not provided, the template will be retrieved of the group itself.
 -- @param #boolean Reset Reset positions if TRUE.
@@ -1595,7 +1595,7 @@ function GROUP:Respawn( Template, Reset )
 
   -- Given template or get old.
   Template = Template or self:GetTemplate()
-  
+
   -- Get correct heading.
   local function _Heading(course)
     local h
@@ -1604,31 +1604,31 @@ function GROUP:Respawn( Template, Reset )
     else
       h=-math.rad(360-course)
     end
-    return h 
-  end        
+    return h
+  end
 
   -- First check if group is alive.
   if self:IsAlive() then
-  
+
     -- Respawn zone.
     local Zone = self.InitRespawnZone -- Core.Zone#ZONE
-    
+
     -- Zone position or current group position.
     local Vec3 = Zone and Zone:GetVec3() or self:GetVec3()
-    
+
     -- From point of the template.
     local From = { x = Template.x, y = Template.y }
-    
+
     -- X, Y
     Template.x = Vec3.x
     Template.y = Vec3.z
-    
+
     --Template.x = nil
     --Template.y = nil
-    
+
     -- Debug number of units.
     self:F( #Template.units )
-    
+
     -- Reset position etc?
     if Reset == true then
 
@@ -1636,13 +1636,13 @@ function GROUP:Respawn( Template, Reset )
       for UnitID, UnitData in pairs( self:GetUnits() ) do
         local GroupUnit = UnitData -- Wrapper.Unit#UNIT
         self:F(GroupUnit:GetName())
-        
+
         if GroupUnit:IsAlive() then
           self:F("Alive")
-          
+
           -- Get unit position vector.
           local GroupUnitVec3 = GroupUnit:GetVec3()
-          
+
           -- Check if respawn zone is set.
           if Zone then
             if self.InitRespawnRandomizePositionZone then
@@ -1655,15 +1655,15 @@ function GROUP:Respawn( Template, Reset )
               end
             end
           end
-          
+
           -- Coordinate where the group should be respawned.
           if self.InitCoord then
             GroupUnitVec3=self.InitCoord:GetVec3()
           end
-          
+
           -- Altitude
           Template.units[UnitID].alt = self.InitRespawnHeight and self.InitRespawnHeight or GroupUnitVec3.y
-          
+
           -- Unit position. Why not simply take the current positon?
           if Zone then
             Template.units[UnitID].x = ( Template.units[UnitID].x - From.x ) + GroupUnitVec3.x -- Keep the original x position of the template and translate to the new position.
@@ -1672,26 +1672,26 @@ function GROUP:Respawn( Template, Reset )
             Template.units[UnitID].x=GroupUnitVec3.x
             Template.units[UnitID].y=GroupUnitVec3.z
           end
-          
+
           -- Set heading.
           Template.units[UnitID].heading = _Heading(self.InitRespawnHeading and self.InitRespawnHeading or GroupUnit:GetHeading())
           Template.units[UnitID].psi     = -Template.units[UnitID].heading
-          
+
           -- Debug.
           self:F( { UnitID, Template.units[UnitID], Template.units[UnitID] } )
         end
       end
-      
+
     else  -- Reset=false or nil
-    
+
       -- Loop over template units.
       for UnitID, TemplateUnitData in pairs( Template.units ) do
-      
+
         self:F( "Reset"  )
-        
+
         -- Position from template.
         local GroupUnitVec3 = { x = TemplateUnitData.x, y = TemplateUnitData.alt, z = TemplateUnitData.y }
-        
+
         -- Respawn zone position.
         if Zone then
           if self.InitRespawnRandomizePositionZone then
@@ -1704,37 +1704,37 @@ function GROUP:Respawn( Template, Reset )
             end
           end
         end
-        
+
         -- Coordinate where the group should be respawned.
         if self.InitCoord then
           GroupUnitVec3=self.InitCoord:GetVec3()
         end
-        
+
         -- Set altitude.
         Template.units[UnitID].alt = self.InitRespawnHeight and self.InitRespawnHeight or GroupUnitVec3.y
-        
+
         -- Unit position.
         Template.units[UnitID].x = ( Template.units[UnitID].x - From.x ) + GroupUnitVec3.x -- Keep the original x position of the template and translate to the new position.
         Template.units[UnitID].y = ( Template.units[UnitID].y - From.y ) + GroupUnitVec3.z -- Keep the original z position of the template and translate to the new position.
-        
+
         -- Heading
         Template.units[UnitID].heading = self.InitRespawnHeading and self.InitRespawnHeading or TemplateUnitData.heading
-        
+
         -- Debug.
         self:F( { UnitID, Template.units[UnitID], Template.units[UnitID] } )
       end
-      
-    end      
-    
+
+    end
+
   end
-  
+
   -- Set tail number.
   if self.InitRespawnModex then
     for UnitID=1,#Template.units do
       Template.units[UnitID].onboard_num=string.format("%03d", self.InitRespawnModex+(UnitID-1))
     end
   end
-  
+
   -- Set radio frequency and modulation.
   if self.InitRespawnRadio then
     Template.communication=self.InitRespawnRadio
@@ -1745,18 +1745,18 @@ function GROUP:Respawn( Template, Reset )
   if self.InitRespawnModu then
     Template.modulation=self.InitRespawnModu
   end
-  
+
   -- Destroy old group. Dont trigger any dead/crash events since this is a respawn.
   self:Destroy(false)
-  
+
   self:T({Template=Template})
-  
+
   -- Spawn new group.
   _DATABASE:Spawn(Template)
-  
+
   -- Reset events.
   self:ResetEvents()
-  
+
   return self
 end
 
@@ -1774,7 +1774,7 @@ function GROUP:RespawnAtCurrentAirbase(SpawnTemplate, Takeoff, Uncontrolled) -- 
 
   -- Get closest airbase. Should be the one we are currently on.
   local airbase=self:GetCoordinate():GetClosestAirbase()
-  
+
   if airbase then
     self:F2("Closest airbase = "..airbase:GetName())
   else
@@ -1783,11 +1783,11 @@ function GROUP:RespawnAtCurrentAirbase(SpawnTemplate, Takeoff, Uncontrolled) -- 
   end
   -- Takeoff type. Default hot.
   Takeoff = Takeoff or SPAWN.Takeoff.Hot
-  
+
   -- Coordinate of the airbase.
   local AirbaseCoord=airbase:GetCoordinate()
-  
-  -- Spawn template.  
+
+  -- Spawn template.
   SpawnTemplate = SpawnTemplate or self:GetTemplate()
 
   if SpawnTemplate then
@@ -1802,7 +1802,7 @@ function GROUP:RespawnAtCurrentAirbase(SpawnTemplate, Takeoff, Uncontrolled) -- 
     -- Aibase id and category.
     local AirbaseID       = airbase:GetID()
     local AirbaseCategory = airbase:GetDesc().category
-    
+
     if AirbaseCategory == Airbase.Category.SHIP or AirbaseCategory == Airbase.Category.HELIPAD then
       SpawnPoint.linkUnit  = AirbaseID
       SpawnPoint.helipadId = AirbaseID
@@ -1810,51 +1810,51 @@ function GROUP:RespawnAtCurrentAirbase(SpawnTemplate, Takeoff, Uncontrolled) -- 
       SpawnPoint.airdromeId = AirbaseID
     end
 
-    
+
     SpawnPoint.type   = GROUPTEMPLATE.Takeoff[Takeoff][1] -- type
     SpawnPoint.action = GROUPTEMPLATE.Takeoff[Takeoff][2] -- action
-    
+
     -- Get the units of the group.
     local units=self:GetUnits()
 
     local x
     local y
     for UnitID=1,#units do
-        
+
       local unit=units[UnitID] --Wrapper.Unit#UNIT
 
       -- Get closest parking spot of current unit. Note that we look for occupied spots since the unit is currently sitting on it!
       local Parkingspot, TermialID, Distance=unit:GetCoordinate():GetClosestParkingSpot(airbase)
-      
+
       --Parkingspot:MarkToAll("parking spot")
       self:T2(string.format("Closest parking spot distance = %s, terminal ID=%s", tostring(Distance), tostring(TermialID)))
 
       -- Get unit coordinates for respawning position.
       local uc=unit:GetCoordinate()
       --uc:MarkToAll(string.format("re-spawnplace %s terminal %d", unit:GetName(), TermialID))
-      
+
       SpawnTemplate.units[UnitID].x   = uc.x --Parkingspot.x
       SpawnTemplate.units[UnitID].y   = uc.z --Parkingspot.z
       SpawnTemplate.units[UnitID].alt = uc.y --Parkingspot.y
 
       SpawnTemplate.units[UnitID].parking    = TermialID
       SpawnTemplate.units[UnitID].parking_id = nil
-      
+
       --SpawnTemplate.units[UnitID].unitId=nil
     end
-    
+
     --SpawnTemplate.groupId=nil
-    
+
     SpawnPoint.x   = SpawnTemplate.units[1].x   --x --AirbaseCoord.x
     SpawnPoint.y   = SpawnTemplate.units[1].y   --y --AirbaseCoord.z
     SpawnPoint.alt = SpawnTemplate.units[1].alt --AirbaseCoord:GetLandHeight()
-               
+
     SpawnTemplate.x = SpawnTemplate.units[1].x  --x --AirbaseCoord.x
     SpawnTemplate.y = SpawnTemplate.units[1].y  --y --AirbaseCoord.z
-    
+
     -- Set uncontrolled state.
     SpawnTemplate.uncontrolled=Uncontrolled
-    
+
     -- Set radio frequency and modulation.
     if self.InitRespawnRadio then
       SpawnTemplate.communication=self.InitRespawnRadio
@@ -1868,16 +1868,16 @@ function GROUP:RespawnAtCurrentAirbase(SpawnTemplate, Takeoff, Uncontrolled) -- 
 
     -- Destroy old group.
     self:Destroy(false)
-    
+
     -- Spawn new group.
     _DATABASE:Spawn(SpawnTemplate)
-  
+
     -- Reset events.
     self:ResetEvents()
 
     return self
   end
-  
+
   return nil
 end
 
@@ -1954,7 +1954,7 @@ end
 --- Calculate the maxium A2G threat level of the Group.
 -- @param #GROUP self
 function GROUP:CalculateThreatLevelA2G()
-  
+
   local MaxThreatLevelA2G = 0
   for UnitName, UnitData in pairs( self:GetUnits() ) do
     local ThreatUnit = UnitData -- Wrapper.Unit#UNIT
@@ -1970,12 +1970,12 @@ end
 
 --- Returns true if the first unit of the GROUP is in the air.
 -- @param Wrapper.Group#GROUP self
--- @return #boolean true if in the first unit of the group is in the air or #nil if the GROUP is not existing or not alive.   
+-- @return #boolean true if in the first unit of the group is in the air or #nil if the GROUP is not existing or not alive.
 function GROUP:InAir()
   self:F2( self.GroupName )
 
   local DCSGroup = self:GetDCSObject()
-  
+
   if DCSGroup then
     local DCSUnit = DCSGroup:getUnit(1)
     if DCSUnit then
@@ -1984,7 +1984,7 @@ function GROUP:InAir()
       return GroupInAir
     end
   end
-  
+
   return nil
 end
 
@@ -1997,33 +1997,33 @@ function GROUP:IsAirborne(AllUnits)
 
   -- Get all units of the group.
   local units=self:GetUnits()
-  
+
   if units then
-  
+
     for _,_unit in pairs(units) do
       local unit=_unit --Wrapper.Unit#UNIT
-      
+
       if unit then
-      
+
         -- Unit in air or not.
         local inair=unit:InAir()
-        
+
         -- Unit is not in air and we wanted to know whether ALL units are ==> return false
         if inair==false and AllUnits==true then
           return false
         end
-        
+
         -- At least one unit is in are and we did not care which one.
         if inair==true and not AllUnits then
           return true
         end
-        
+
       end
       -- At least one unit is in the air.
-      return true  
+      return true
     end
   end
-  
+
   return nil
 end
 
@@ -2032,83 +2032,83 @@ end
 --- Returns the DCS descriptor table of the nth unit of the group.
 -- @param #GROUP self
 -- @param #number n (Optional) The number of the unit for which the dscriptor is returned.
--- @return DCS#Object.Desc The descriptor of the first unit of the group or #nil if the group does not exist any more.   
+-- @return DCS#Object.Desc The descriptor of the first unit of the group or #nil if the group does not exist any more.
 function GROUP:GetDCSDesc(n)
   -- Default.
   n=n or 1
-  
+
   local unit=self:GetUnit(n)
   if unit and unit:IsAlive()~=nil then
     local desc=unit:GetDesc()
     return desc
   end
-  
+
   return nil
 end
 
 do -- Route methods
 
-  --- (AIR) Return the Group to an @{Wrapper.Airbase#AIRBASE}.  
+  --- (AIR) Return the Group to an @{Wrapper.Airbase#AIRBASE}.
   -- The following things are to be taken into account:
-  -- 
+  --
   --   * The group is respawned to achieve the RTB, there may be side artefacts as a result of this. (Like weapons suddenly come back).
   --   * A group consisting out of more than one unit, may rejoin formation when respawned.
   --   * A speed can be given in km/h. If no speed is specified, the maximum speed of the first unit will be taken to return to base.
   --   * When there is no @{Wrapper.Airbase} object specified, the group will return to the home base if the route of the group is pinned at take-off or at landing to a base.
   --   * When there is no @{Wrapper.Airbase} object specified and the group route is not pinned to any airbase, it will return to the nearest airbase.
-  -- 
+  --
   -- @param #GROUP self
   -- @param Wrapper.Airbase#AIRBASE RTBAirbase (optional) The @{Wrapper.Airbase} to return to. If blank, the controllable will return to the nearest friendly airbase.
-  -- @param #number Speed (optional) The Speed, if no Speed is given, 80% of maximum Speed of the group is selected. 
+  -- @param #number Speed (optional) The Speed, if no Speed is given, 80% of maximum Speed of the group is selected.
   -- @return #GROUP self
   function GROUP:RouteRTB( RTBAirbase, Speed )
     self:F( { RTBAirbase:GetName(), Speed } )
-  
+
     local DCSGroup = self:GetDCSObject()
-  
+
     if DCSGroup then
-  
+
       if RTBAirbase then
-      
+
         -- If speed is not given take 80% of max speed.
         local Speed=Speed or self:GetSpeedMax()*0.8
-        
+
         -- Curent (from) waypoint.
         local coord=self:GetCoordinate()
         local PointFrom=coord:WaypointAirTurningPoint(nil, Speed)
-        
+
         -- Airbase coordinate.
         --local PointAirbase=RTBAirbase:GetCoordinate():SetAltitude(coord.y):WaypointAirTurningPoint(nil ,Speed)
-        
+
         -- Landing waypoint. More general than prev version since it should also work with FAPRS and ships.
-        local PointLanding=RTBAirbase:GetCoordinate():WaypointAirLanding(Speed, RTBAirbase)        
-        
+        local PointLanding=RTBAirbase:GetCoordinate():WaypointAirLanding(Speed, RTBAirbase)
+
         -- Waypoint table.
         local Points={PointFrom, PointLanding}
         --local Points={PointFrom, PointAirbase, PointLanding}
-    
+
         -- Debug info.
         self:T3(Points)
 
         -- Get group template.
         local Template=self:GetTemplate()
-        
+
         -- Set route points.
         Template.route.points=Points
-        
+
         -- Respawn the group.
         self:Respawn(Template, true)
-        
+
         -- Route the group or this will not work.
         self:Route(Points)
       else
-      
+
         -- Clear all tasks.
         self:ClearTasks()
-        
+
       end
     end
-  
+
     return self
   end
 
@@ -2127,20 +2127,20 @@ do -- Event Handling
   -- @param #function EventFunction (optional) The function to be called when the event occurs for the GROUP.
   -- @return #GROUP
   function GROUP:HandleEvent( Event, EventFunction, ... )
-  
+
     self:EventDispatcher():OnEventForGroup( self:GetName(), EventFunction, self, Event, ... )
-    
+
     return self
   end
-  
+
   --- UnSubscribe to a DCS event.
   -- @param #GROUP self
   -- @param Core.Event#EVENTS Event
   -- @return #GROUP
   function GROUP:UnHandleEvent( Event )
-  
+
     self:EventDispatcher():RemoveEvent( self, Event )
-    
+
     return self
   end
 
@@ -2148,13 +2148,13 @@ do -- Event Handling
   -- @param #GROUP self
   -- @return #GROUP
   function GROUP:ResetEvents()
-  
+
     self:EventDispatcher():Reset( self )
-    
+
     for UnitID, UnitData in pairs( self:GetUnits() ) do
       UnitData:ResetEvents()
     end
-    
+
     return self
   end
 
@@ -2167,11 +2167,11 @@ do -- Players
   -- @return #table The group has players, an array of player names is returned.
   -- @return #nil The group has no players
   function GROUP:GetPlayerNames()
-  
+
     local HasPlayers = false
-  
+
     local PlayerNames = {}
-    
+
     local Units = self:GetUnits()
     for UnitID, UnitData in pairs( Units ) do
       local Unit = UnitData -- Wrapper.Unit#UNIT
@@ -2180,14 +2180,14 @@ do -- Players
         PlayerNames = PlayerNames or {}
         table.insert( PlayerNames, PlayerName )
         HasPlayers = true
-      end   
+      end
     end
 
-    if HasPlayers == true then    
+    if HasPlayers == true then
       self:F2( PlayerNames )
       return PlayerNames
     end
-    
+
     return nil
   end
 
@@ -2196,21 +2196,21 @@ do -- Players
   -- @param #GROUP self
   -- @return #number The amount of players.
   function GROUP:GetPlayerCount()
-  
+
     local PlayerCount = 0
-    
+
     local Units = self:GetUnits()
     for UnitID, UnitData in pairs( Units or {} ) do
       local Unit = UnitData -- Wrapper.Unit#UNIT
       local PlayerName = Unit:GetPlayerName()
       if PlayerName and PlayerName ~= "" then
         PlayerCount = PlayerCount + 1
-      end   
+      end
     end
 
     return PlayerCount
   end
-  
+
 end
 
 --do -- Smoke
@@ -2263,7 +2263,7 @@ end
 --  else
 --    trigger.action.smoke( self:GetVec3(), SmokeColor )
 --  end
---  
+--
 --end
 --
 ----- Smoke the GROUP Green.
