@@ -322,7 +322,7 @@ function FOX2:OnEventShot(EventData)
   self:E(FOX2.lid..string.format("EVENT SHOT: Target name = %s", tostring(_targetName)))
     
   -- Track missiles of type AAM=1, SAM=2 or OTHER=6
-  local _track = weaponcategory==1 and missilecategory and (missilecategory==1 or missilecategory==2 or missilecategory==6) 
+  local _track = weaponcategory==1 and missilecategory and (missilecategory==1 or missilecategory==2 or missilecategory==6)
     
   -- Get shooter.
   local shooterUnit = EventData.IniUnit
@@ -355,7 +355,12 @@ function FOX2:OnEventShot(EventData)
         if _targetUnit and player.launchalert and player.coalition~=shooterCoalition then
         
           -- Inform players.
-          local text=string.format("Missile launch detected! Distance %.1f NM, bearing %03d°.", UTILS.MetersToNM(distance), bearing)
+          local text=string.format("Missile launch detected! Distance %.1f NM, bearing %03dÂ°.", UTILS.MetersToNM(distance), bearing)
+          
+          if _targetUnit and self:_GetPlayerFromUnitname(_targetUnit:GetName()) then
+            text=string.format("Incoming missile launch detected! Distance %.1f NM, bearing %03dÂ°.", UTILS.MetersToNM(distance), bearing)
+          end
+          
           MESSAGE:New(text, 5, "ALERT"):ToClient(player.client)
           
           if player.marklaunch then
@@ -368,6 +373,9 @@ function FOX2:OnEventShot(EventData)
     
     -- Init missile position.
     local _lastBombPos = {x=0,y=0,z=0}
+    
+    -- Missile coordinate.
+    local missileCoord = nil --Core.Point#COORDINATE
     
     -- Target unit of the missile.
     local target=nil --Wrapper.Unit#UNIT    
@@ -392,7 +400,7 @@ function FOX2:OnEventShot(EventData)
         _lastBombPos = {x=_bombPos.x, y=_bombPos.y, z=_bombPos.z}
         
         -- Missile coordinate.
-        local missileCoord=COORDINATE:NewFromVec3(_lastBombPos)
+        missileCoord=COORDINATE:NewFromVec3(_lastBombPos)
         
         -- Missile velocity in m/s.
         local missileVelocity=UTILS.VecNorm(_ordnance:getVelocity())
@@ -419,8 +427,8 @@ function FOX2:OnEventShot(EventData)
             -- Distance.            
             local dist=missileCoord:Get3DDistance(playerCoord)
             
-            -- Update mindist if necessary.
-            if mindist==nil or dist<mindist then
+            -- Update mindist if necessary. Only include players in a radius of 50 NM from the 
+            if (mindist==nil or dist<mindist) and dist<=UTILS.NMToMeters(50) then
               mindist=dist
               target=player.unit
             end            
@@ -437,7 +445,7 @@ function FOX2:OnEventShot(EventData)
           local bearing=targetCoord:HeadingTo(missileCoord)
           local eta=distance/missileVelocity
           
-          self:T2(self.lid..string.format("Distance = %.1f m, v=%.1f m/s, bearing=%03d°, eta=%.1f sec", distance, missileVelocity, bearing, eta))
+          self:T2(self.lid..string.format("Distance = %.1f m, v=%.1f m/s, bearing=%03dÂ°, eta=%.1f sec", distance, missileVelocity, bearing, eta))
         
           if distance<100 then
           
@@ -490,11 +498,16 @@ function FOX2:OnEventShot(EventData)
         -------------------------------------
               
         if target then  
+        
+          -- Get human player.
           local player=self:_GetPlayerFromUnitname(target:GetName())
-          if player then
+          
+          -- Check for player and distance < 10 km.
+          if player and missileCoord and player.unit:GetCoordinate():Get3DDistance(missileCoord)<10*1000 then
             local text=string.format("Missile defeated. Well done, %s!", player.name)
             MESSAGE:New(text, 10):ToClient(player.client)
           end
+          
         end        
                 
         --Terminate the timer.
