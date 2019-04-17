@@ -25,6 +25,13 @@
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug Debug mode. Messages to all about status.
 -- @field #string lid Class id string for output to DCS log file.
+-- @field #table menuadded Table of groups the menu was added for.
+-- @field #table players Table of players.
+-- @field #table missiles Table of tracked missiles.
+-- @field #table safezones Table of practice zones.
+-- @field #table launchzones Table of launch zones.
+-- @field Core.Set#SET_GROUP protectedset Set of protected groups.
+-- @field #number explosionpower Power of explostion when destroying the missile in kg TNT.
 -- @extends Core.Fsm#FSM
 
 --- Fox 2!
@@ -45,10 +52,11 @@ FOX2 = {
   menuadded      =    {},
   missiles       =    {},
   players        =    {},
-  destroy        =   nil,
   safezones      =    {},
   launchzones    =    {},
-  exlosionpower  =     5,
+  protectedset   =   nil,
+  explosionpower =     5,
+  destroy        =   nil,
 }
 
 
@@ -68,14 +76,19 @@ FOX2 = {
 -- @field #number defeated Number of missiles defeated.
 -- @field #number dead Number of missiles not defeated.
 
---- Missile data
+--- Missile data table.
 -- @type FOX2.MissileData
--- @field #string missiletype Type of missile.
--- @field Wrapper.Unit#UNIT shooterunit Unit that shot the missile.
--- @field Wrapper.Group#GROUP shootergroup Group that shot the missile.
--- @field #number shottime Abs mission time in seconds the missile was fired.
--- @field Wrapper.Unit#UNIT targetunit Unit that was targeted.
-
+-- @field #boolean active If true the missile is active.
+-- @field #string missileType Type of missile.
+-- @field #number missileRange Range of missile in meters.
+-- @field Wrapper.Unit#UNIT shooterUnit Unit that shot the missile.
+-- @field Wrapper.Group#GROUP shooterGroup Group that shot the missile.
+-- @field #number shooterCoalition Coalition side of the shooter.
+-- @field #string shooterName Name of the shooter unit.
+-- @field #number shotTime Abs mission time in seconds the missile was fired.
+-- @field Core.Point#COORDINATE shotCoord Coordinate where the missile was fired.
+-- @field Wrapper.Unit#UNIT targetUnit Unit that was targeted.
+-- @field #FOX2.PlayerData targetPlayer Player that was targeted or nil.
 
 --- Main radio menu on group level.
 -- @field #table MenuF10 Root menu table on group level.
@@ -84,6 +97,10 @@ FOX2.MenuF10={}
 --- Main radio menu on mission level.
 -- @field #table MenuF10Root Root menu on mission level.
 FOX2.MenuF10Root=nil
+
+--- FOX2 class version.
+-- @field #string version
+FOX2.version="0.1.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -156,7 +173,7 @@ end
 function FOX2:onafterStart(From, Event, To)
 
   -- Short info.
-  local text=string.format("Starting FOX2 Missile Trainer v0.0.1")
+  local text=string.format("Starting FOX2 Missile Trainer %s", FOX2.version)
   env.info(text)
 
   -- Handle events:
@@ -303,16 +320,24 @@ function FOX2:OnEventShot(EventData)
   -- Weapon category: 0=Shell, 1=Missile, 2=Rocket, 3=BOMB
   local weaponcategory=desc.category
   
-  -- Missile category=
+  -- Missile category: 1=AAM, 2=SAM, 6=OTHER
   local missilecategory=desc.missileCategory
+  
+  local missilerange=nil
+  if missilecategory then
+    missilerange=desc.DescMissile.rangeMaxAltMax
+  end
   
   -- Debug info.
   self:E(FOX2.lid.."EVENT SHOT: FOX2")
-  self:E(FOX2.lid..string.format("EVENT SHOT: Ini unit    = %s", tostring(EventData.IniUnitName)))
-  self:E(FOX2.lid..string.format("EVENT SHOT: Ini group   = %s", tostring(EventData.IniGroupName)))
-  self:E(FOX2.lid..string.format("EVENT SHOT: Weapon type = %s", tostring(_weapon)))
-  self:E(FOX2.lid..string.format("EVENT SHOT: Weapon cate = %s", tostring(weaponcategory)))
-  self:E(FOX2.lid..string.format("EVENT SHOT: Missil cate = %s", tostring(missilecategory)))
+  self:E(FOX2.lid..string.format("EVENT SHOT: Ini unit     = %s", tostring(EventData.IniUnitName)))
+  self:E(FOX2.lid..string.format("EVENT SHOT: Ini group    = %s", tostring(EventData.IniGroupName)))
+  self:E(FOX2.lid..string.format("EVENT SHOT: Weapon type  = %s", tostring(_weapon)))
+  self:E(FOX2.lid..string.format("EVENT SHOT: Weapon categ = %s", tostring(weaponcategory)))
+  self:E(FOX2.lid..string.format("EVENT SHOT: Missil categ = %s", tostring(missilecategory)))
+  self:E(FOX2.lid..string.format("EVENT SHOT: Missil range = %s", tostring(missilerange)))
+  
+  -- Get the target unit. Note if if _target is not nil, the unit can sometimes not be found!
   if _target then
     self:E({target=_target})
     --_targetName=Unit.getName(_target)
@@ -325,20 +350,35 @@ function FOX2:OnEventShot(EventData)
   local _track = weaponcategory==1 and missilecategory and (missilecategory==1 or missilecategory==2 or missilecategory==6)
     
   -- Get shooter.
-  local shooterUnit = EventData.IniUnit
-  local shooterName = EventData.IniUnitName
-  local shooterCoalition=shooterUnit:GetCoalition()
-  local shooterCoord=shooterUnit:GetCoordinate()
+  --local shooterUnit = EventData.IniUnit
+ -- local shooterName = EventData.IniUnitName
+ -- local shooterCoalition=shooterUnit:GetCoalition()
+ -- local shooterCoord=shooterUnit:GetCoordinate()
 
   -- Only track missiles
   if _track then
   
     local missile={} --#FOX2.MissileData
     
-    --missile.missiletype=_weapontype
+    missile.active=true
+    missile.missileType=_weapon
+    missile.missileRange=missilerange
+    missile.missileName=EventData.weapon:getName()
+    missile.shooterUnit=EventData.IniUnit
+    missile.shooterGroup=EventData.IniGroup
+    missile.shooterCoalition=EventData.IniUnit:GetCoalition()
+    missile.shooterName=EventData.IniUnitName
+    missile.shotTime=timer.getAbsTime()
+    missile.shotCoord=EventData.IniUnit:GetCoordinate()
+    missile.targetUnit=_targetUnit
+    missile.targetPlayer=self:_GetPlayerFromUnit(missile.targetUnit)
+    
+    -- Add missile table.
+    table.insert(self.missiles, missile)
+    
     
     -- Tracking info and init of last bomb position.
-    self:I(FOX2.lid..string.format("FOX2: Tracking %s - %s.", _weapon, EventData.weapon:getName()))
+    self:I(FOX2.lid..string.format("FOX2: Tracking %s - %s.", missile.missileType, missile.missileName))
     
     -- Loop over players.
     for _,_player in pairs(self.players) do
@@ -347,27 +387,38 @@ function FOX2:OnEventShot(EventData)
       -- Player position.
       local playerUnit=player.unit
       
-      if playerUnit and playerUnit:IsAlive() then
+      -- Check that player is alive and of the opposite coalition.
+      if playerUnit and playerUnit:IsAlive() and player.coalition~=missile.shooterCoalition then
       
-        local distance=playerUnit:GetCoordinate():Get3DDistance(shooterCoord)
-        local bearing=playerUnit:GetCoordinate():HeadingTo(shooterCoord)
+        -- Player missile distance.
+        local distance=playerUnit:GetCoordinate():Get3DDistance(missile.shotCoord)
         
-        if _targetUnit and player.launchalert and player.coalition~=shooterCoalition then
+        -- Player bearing to missile.
+        local bearing=playerUnit:GetCoordinate():HeadingTo(missile.shotCoord)
         
-          -- Inform players.
-          local text=string.format("Missile launch detected! Distance %.1f NM, bearing %03d°.", UTILS.MetersToNM(distance), bearing)
-          
-          if _targetUnit and self:_GetPlayerFromUnitname(_targetUnit:GetName()) then
-            text=string.format("Incoming missile launch detected! Distance %.1f NM, bearing %03d°.", UTILS.MetersToNM(distance), bearing)
+        -- Alert that missile has been launched.
+        if player.launchalert then
+        
+          -- Alert directly targeted players or players that are within missile max range.
+          if (missile.targetPlayer and player.unitname==missile.targetPlayer.unitname) or (distance<missile.missileRange)  then
+        
+            -- Inform player.
+            local text=string.format("Missile launch detected! Distance %.1f NM, bearing %03d°.", UTILS.MetersToNM(distance), bearing)
+            
+            --TODO: ALERT or INFO depending on wether this is a direct target.
+            --TODO: lauchalertall option.
+            MESSAGE:New(text, 5, "ALERT"):ToClient(player.client)
+            
           end
           
-          MESSAGE:New(text, 5, "ALERT"):ToClient(player.client)
-          
-          if player.marklaunch then
-            local text=string.format("Missile launch coordinates:\n%s\n%s", shooterCoord:ToStringLLDMS(), shooterCoord:ToStringBULLS(player.coalition))          
-            shooterCoord:MarkToGroup(text, player.group)
-          end
         end
+          
+        -- Mark coordinate.
+        if player.marklaunch then
+          local text=string.format("Missile launch coordinates:\n%s\n%s", missile.shotCoord:ToStringLLDMS(), missile.shotCoord:ToStringBULLS(player.coalition))          
+          missile.shotCoord:MarkToGroup(text, player.group)
+        end
+          
       end
     end              
     
@@ -378,7 +429,7 @@ function FOX2:OnEventShot(EventData)
     local missileCoord = nil --Core.Point#COORDINATE
     
     -- Target unit of the missile.
-    local target=nil --Wrapper.Unit#UNIT    
+    local target=nil --Wrapper.Unit#UNIT
         
     --- Function monitoring the position of a bomb until impact.
     local function trackMissile(_ordnance)
@@ -389,7 +440,7 @@ function FOX2:OnEventShot(EventData)
         return _ordnance:getPoint()
       end)
 
-      --self:T3(FOX2.lid..string.format("FOX2: Missile still in air: %s", tostring(_status)))
+      -- Check if status is not nil. If so, we have a valid point.
       if _status then
       
         ----------------------------------------------
@@ -405,14 +456,23 @@ function FOX2:OnEventShot(EventData)
         -- Missile velocity in m/s.
         local missileVelocity=UTILS.VecNorm(_ordnance:getVelocity())
         
-        if _targetUnit then
+        if missile.targetUnit then
           -----------------------------------
           -- Missile has a specific target --
           -----------------------------------
         
-          target=_targetUnit
+          if missile.targetPlayer then
+            -- Target is a player.
+            target=missile.targetUnit
+          else
+            --TODO: Check if unit is protected.
+          end
           
         else
+        
+          ------------------------------------
+          -- Missile has NO specific target --
+          ------------------------------------       
           
           -- Distance to closest player.
           local mindist=nil
@@ -427,8 +487,11 @@ function FOX2:OnEventShot(EventData)
             -- Distance.            
             local dist=missileCoord:Get3DDistance(playerCoord)
             
-            -- Update mindist if necessary. Only include players in a radius of 50 NM from the 
-            if (mindist==nil or dist<mindist) and dist<=UTILS.NMToMeters(50) then
+            -- Maxrange from launch point to player.
+            local maxrange=playerCoord:Get3DDistance(missile.shotCoord)
+            
+            -- Update mindist if necessary. Only include players in range of missile.
+            if (mindist==nil or dist<mindist) and dist<=maxrange then
               mindist=dist
               target=player.unit
             end            
@@ -439,14 +502,18 @@ function FOX2:OnEventShot(EventData)
         -- Check if missile has a valid target.
         if target then
         
+          -- Target coordinate.
           local targetCoord=target:GetCoordinate()
         
+          -- Distance from missile to target.
           local distance=missileCoord:Get3DDistance(targetCoord)
+          
           local bearing=targetCoord:HeadingTo(missileCoord)
           local eta=distance/missileVelocity
           
           self:T2(self.lid..string.format("Distance = %.1f m, v=%.1f m/s, bearing=%03d°, eta=%.1f sec", distance, missileVelocity, bearing, eta))
         
+          -- If missile is 100 m from target ==> destroy missile.
           if distance<100 then
           
             -- Destroy missile.
@@ -500,15 +567,18 @@ function FOX2:OnEventShot(EventData)
         if target then  
         
           -- Get human player.
-          local player=self:_GetPlayerFromUnitname(target:GetName())
+          local player=self:_GetPlayerFromUnit(target)
           
           -- Check for player and distance < 10 km.
-          if player and missileCoord and player.unit:GetCoordinate():Get3DDistance(missileCoord)<10*1000 then
+          if player and player.unit:IsAlive() then -- and missileCoord and player.unit:GetCoordinate():Get3DDistance(missileCoord)<10*1000 then
             local text=string.format("Missile defeated. Well done, %s!", player.name)
             MESSAGE:New(text, 10):ToClient(player.client)
           end
           
-        end        
+        end
+        
+        -- Missile is not active any more.
+        missile.active=false   
                 
         --Terminate the timer.
         self:T(FOX2.lid..string.format("Terminating missile track timer."))
@@ -677,7 +747,7 @@ end
 -- Misc Functions
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Returns the unit of a player and the player name. If the unit does not belong to a player, nil is returned. 
+--- Returns the player data from a unit name.
 -- @param #FOX2 self
 -- @param #string unitName Name of the unit.
 -- @return #FOX2.PlayerData Player data.
@@ -689,6 +759,30 @@ function FOX2:_GetPlayerFromUnitname(unitName)
     if player.unitname==unitName then
       return player
     end
+  end
+  
+  return nil
+end
+
+--- Retruns the player data from a unit.
+-- @param #FOX2 self
+-- @param Wrapper.Unit#UNIT unit
+-- @return #FOX2.PlayerData Player data.
+function FOX2:_GetPlayerFromUnit(unit)
+
+  if unit and unit:IsAlive() then
+
+    -- Name of the unit
+    local unitname=unit:GetName()
+
+    for _,_player in pairs(self.players) do  
+      local player=_player --#FOX2.PlayerData
+      
+      if player.unitname==unitname then
+        return player
+      end
+    end
+
   end
   
   return nil
