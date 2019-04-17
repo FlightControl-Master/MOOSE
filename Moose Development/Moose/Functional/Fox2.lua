@@ -315,7 +315,7 @@ function FOX2:OnEventShot(EventData)
   
   -- Weapon descriptor.
   local desc=EventData.Weapon:getDesc()
-  --self:E({desc=desc})
+  self:E({desc=desc})
   
   -- Weapon category: 0=Shell, 1=Missile, 2=Rocket, 3=BOMB
   local weaponcategory=desc.category
@@ -325,7 +325,7 @@ function FOX2:OnEventShot(EventData)
   
   local missilerange=nil
   if missilecategory then
-    missilerange=desc.DescMissile.rangeMaxAltMax
+    missilerange=desc.rangeMaxAltMax
   end
   
   -- Debug info.
