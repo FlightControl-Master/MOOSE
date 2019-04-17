@@ -2151,8 +2151,11 @@ do -- Event Handling
 
     self:EventDispatcher():RemoveAll( self )
 
-    for UnitID, UnitData in pairs( self:GetUnits() ) do
-      UnitData:EventRemoveAll()
+    local units = self:GetUnits()
+    if units then
+      for UnitID, UnitData in pairs( units ) do
+        UnitData:EventRemoveAll()
+      end
     end
 
     return self
