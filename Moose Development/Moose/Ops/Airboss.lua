@@ -1671,7 +1671,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.9.9.8"
+AIRBOSS.version="0.9.9.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -10883,6 +10883,14 @@ function AIRBOSS:_Glideslope(unit, optangle)
   -- Distance from stern to aircraft.
   local x=unit:GetCoordinate():Get2DDistance(landingcoord)
   
+  -- New approach using distances!
+  -- TODO: Tarawa, check!
+  local X,Z=self:_GetDistances()
+  x=-X
+  x=x+70 -- 3 wire pos.
+  
+  
+  
   -- Altitude of unit corrected by the deck height of the carrier.
   local h=self:_GetAltCarrier(unit)
   
@@ -10990,8 +10998,10 @@ function AIRBOSS:_Lineup(unit, runway)
   -- Projection of player pos on z component.
   local z=UTILS.VecDot(Z, C)
   
-  --- 
+  ---
+  local lineup=math.deg(math.atan2(z, x))
 
+  --[[
   -- Position of the aircraft in the new coordinate system.
   local a={x=x, y=0, z=z}
 
@@ -11003,7 +11013,8 @@ function AIRBOSS:_Lineup(unit, runway)
 
   -- Current line up and error wrt to final heading of the runway.
   local lineup=math.deg(math.atan2(c.z, c.x))
-
+  ]]
+  
   return lineup
 end
 

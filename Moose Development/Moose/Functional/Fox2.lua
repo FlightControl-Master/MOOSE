@@ -31,7 +31,8 @@
 -- @field #table safezones Table of practice zones.
 -- @field #table launchzones Table of launch zones.
 -- @field Core.Set#SET_GROUP protectedset Set of protected groups.
--- @field #number explosionpower Power of explostion when destroying the missile in kg TNT.
+-- @field #number explosionpower Power of explostion when destroying the missile in kg TNT. Default 5 kg TNT.
+-- @field #number explosiondist Missile player distance in meters for destroying the missile. Default 100 m.
 -- @extends Core.Fsm#FSM
 
 --- Fox 2!
@@ -56,6 +57,7 @@ FOX2 = {
   launchzones    =    {},
   protectedset   =   nil,
   explosionpower =     5,
+  explosiondist  =   100,
   destroy        =   nil,
 }
 
@@ -100,7 +102,7 @@ FOX2.MenuF10Root=nil
 
 --- FOX2 class version.
 -- @field #string version
-FOX2.version="0.1.1"
+FOX2.version="0.1.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -204,6 +206,29 @@ function FOX2:onafterStop(From, Event, To)
 end
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- User Functions
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Add a training zone. Players in the zone are safe.
+-- @param #FOX2 self
+-- @param Core.Zone#ZONE zone Training zone.
+function FOX2:AddSafeZone(zone)
+
+  table.insert(self.safezones, zone)
+
+end
+
+--- Add a launch zone. Only missiles launched within these zones will be tracked.
+-- @param #FOX2 self
+-- @param Core.Zone#ZONE zone Training zone.
+function FOX2:AddLaunchZone(zone)
+
+  table.insert(self.safezones, zone)
+
+end
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Status Functions
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -214,9 +239,38 @@ end
 -- @param #string To To state.
 function FOX2:onafterStatus(From, Event, To)
 
-  self:I(self.lid..string.format("Missile trainer status."))
+  self:I(self.lid..string.format("Missile trainer status: %s", self.GetState()))
+  
+  self:_CheckMissileStatus()
 
   self:__Status(-30)
+end
+
+--- Missile status 
+-- @param #FOX2 self
+function FOX2:_CheckMissileStatus()
+
+  local text="Missiles:"
+  for i,_missile in pairs(self.missiles) do
+    local missile=_missile --#FOX2.MissileData
+    
+    local targetname="unkown"
+    if missile.targetUnit then
+      targetname=missile.targetUnit:GetName()
+    end
+    local playername="none"
+    if missile.targetPlayer then
+      playername=missile.targetPlayer.name
+    end
+    local active=tostring(missile.active)
+    local mtype=missile.missileType
+    local range=UTILS.MetersToNM(missile.missileRange)
+    
+    text=text..string.format("\n%d: active=%s, type=%d, range=%.1f NM, target=%s, player=%s, missilename=%s", i, active, mtype, range, targetname, playername)
+    
+  end
+  self:T(self.lid..text)
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -336,6 +390,13 @@ function FOX2:OnEventShot(EventData)
   self:E(FOX2.lid..string.format("EVENT SHOT: Weapon categ = %s", tostring(weaponcategory)))
   self:E(FOX2.lid..string.format("EVENT SHOT: Missil categ = %s", tostring(missilecategory)))
   self:E(FOX2.lid..string.format("EVENT SHOT: Missil range = %s", tostring(missilerange)))
+  
+  
+  -- Check if fired in launch zone.
+  if not self:_CheckCoordLaunch(EventData.IniUnit:GetCoordinate()) then
+    self:T(self.lid.."Missile was not fired in launch zone. No tracking!")
+    return
+  end
   
   -- Get the target unit. Note if if _target is not nil, the unit can sometimes not be found!
   if _target then
@@ -513,15 +574,15 @@ function FOX2:OnEventShot(EventData)
           
           self:T2(self.lid..string.format("Distance = %.1f m, v=%.1f m/s, bearing=%03d°, eta=%.1f sec", distance, missileVelocity, bearing, eta))
         
-          -- If missile is 100 m from target ==> destroy missile.
-          if distance<100 then
+          -- If missile is 100 m from target ==> destroy missile if in safe zone.
+          if distance<self.explosiondist and self:_CheckCoordSafe(targetCoord)then
           
             -- Destroy missile.
             self:T(self.lid..string.format("Destroying missile at distance %.1f m", distance))
             _ordnance:destroy()
             
             -- Little explosion for the visual effect.
-            missileCoord:Explosion(10)
+            missileCoord:Explosion(self.explosionpower)
             
             local text="Destroying missile. You're dead!"
             MESSAGE:New(text, 10):ToGroup(target:GetGroup())
@@ -746,6 +807,53 @@ end
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Misc Functions
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Check if a coordinate lies within a safe training zone.
+-- @param #FOX2 self
+-- @param Core.Point#COORDINATE coord Coordinate to check.
+-- @return #boolean
+function FOX2:_CheckCoordSafe(coord)
+
+  -- No safe zones defined ==> Everything is safe.
+  if #self.safezones==0 then
+    return true    
+  end
+  
+  -- Loop over all zones.
+  for _,_zone in pairs(self.safezones) do
+    local zone=_zone --Core.Zone#ZONE
+    local inzone=zone:IsCoordinateInZone(coord)
+    if inzone then
+      return true
+    end
+  end
+
+  return false
+end
+
+--- Check if a coordinate lies within a launch zone.
+-- @param #FOX2 self
+-- @param Core.Point#COORDINATE coord Coordinate to check.
+-- @return #boolean
+function FOX2:_CheckCoordLaunch(coord)
+
+  -- No safe zones defined ==> Everything is safe.
+  if #self.launchzones==0 then
+    return true    
+  end
+  
+  -- Loop over all zones.
+  for _,_zone in pairs(self.launchzones) do
+    local zone=_zone --Core.Zone#ZONE
+    local inzone=zone:IsCoordinateInZone(coord)
+    if inzone then
+      return true
+    end
+  end
+
+  return false
+end
+
 
 --- Returns the player data from a unit name.
 -- @param #FOX2 self
