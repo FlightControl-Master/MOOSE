@@ -2408,7 +2408,7 @@ function AIRBOSS:DeleteAllRecoveryWindows(delay)
 
   -- Loop over all recovery windows.
   for _,recovery in pairs(self.recoverytimes) do
-    env.info("FF deleting recovery window ID "..tostring(recovery.ID))
+    self:I(self.lid..string.format("Deleting recovery window ID %s", tostring(recovery.ID)))
     self:DeleteRecoveryWindow(recovery, delay)
   end
 
@@ -7978,29 +7978,6 @@ end
 -- EVENT functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- General DCS event handler.
--- @param #AIRBOSS self
--- @param #table Event DCS event table.
-function AIRBOSS:onEvent(Event)
-  self:F3(Event)
-
-  --[[
-  if Event == nil or Event.initiator == nil then
-    self:T3("Skipping onEvent. Event or Event.initiator unknown.")
-    return true
-  end
-  if Unit.getByName(Event.initiator:getName()) == nil then
-    self:T3("Skipping onEvent. Initiator unit name unknown.")
-    return true
-  end
-  ]]
-
-  --env.info("FF DCS Event")
-  --self:E(Event)
-
-end
-
-
 --- Airboss event handler for event birth.
 -- @param #AIRBOSS self
 -- @param Core.Event#EVENTDATA EventData
@@ -9394,6 +9371,8 @@ function AIRBOSS:_GetGrooveData(playerData)
   groovedata.Grade=Gg
   groovedata.GradePoints=Gp
   groovedata.GradeDetail=Gd
+  
+  --env.info(string.format(", %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f", groovedata.Time, groovedata.Rho, groovedata.X, groovedata.Alt, groovedata.GSE, groovedata.LUE, groovedata.AoA))
 
   return groovedata
 end
@@ -9439,7 +9418,7 @@ function AIRBOSS:_Final(playerData, nocheck)
     -- TODO: could add angled approach if lineup<5 and relhead>5. This would mean the player has not turned in correctly!
         
     -- Groove data.
-    playerData.groove.X0=groovedata
+    playerData.groove.X0=UTILS.DeepCopy(groovedata)
     
     -- Set time stamp. Next call in 4 seconds.
     playerData.Tlso=timer.getTime()
@@ -9447,6 +9426,9 @@ function AIRBOSS:_Final(playerData, nocheck)
     -- Next step: X start.
     self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.GROOVE_XX)
   end
+  
+  -- Groovedata step.
+  groovedata.Step=playerData.step  
 
 end
 
@@ -9454,15 +9436,6 @@ end
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data table.
 function AIRBOSS:_Groove(playerData)
-
-  -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
-  local X, Z=self:_GetDistances(playerData.unit)
-  
-  -- Check abort conditions.
-  if self:_CheckAbort(X, Z, self.Groove) then
-    self:_AbortPattern(playerData, X, Z, self.Groove, true)
-    return
-  end
   
   -- Ranges in the groove.
   local RX0=UTILS.NMToMeters(1.000) -- Everything before X    1.00  = 1852 m
@@ -9475,7 +9448,17 @@ function AIRBOSS:_Groove(playerData)
   local groovedata=self:_GetGrooveData(playerData)
   
   -- Add data to trapsheet.
-  table.insert(playerData.trapsheet, groovedata)  
+  table.insert(playerData.trapsheet, groovedata)
+  
+  -- Coords.
+  local X=groovedata.X
+  local Z=groovedata.Z
+    
+  -- Check abort conditions.
+  if self:_CheckAbort(groovedata.X, groovedata.Z, self.Groove) then
+    self:_AbortPattern(playerData, groovedata.X, groovedata.Z, self.Groove, true)
+    return
+  end    
   
   -- Shortcuts.
   local rho=groovedata.Rho
@@ -9500,7 +9483,7 @@ function AIRBOSS:_Groove(playerData)
     self:RadioTransmission(self.LSORadio, self.LSOCall.ROGERBALL, false, nil, 2, true)
             
     -- Store data.
-    playerData.groove.XX=groovedata
+    playerData.groove.XX=UTILS.DeepCopy(groovedata)
     
     -- This is a valid approach and player did not miss any important steps in the pattern.
     playerData.valid=true
@@ -9511,7 +9494,7 @@ function AIRBOSS:_Groove(playerData)
   elseif rho<=RIM and playerData.step==AIRBOSS.PatternStep.GROOVE_IM then
     
     -- Store data.
-    playerData.groove.IM=groovedata
+    playerData.groove.IM=UTILS.DeepCopy(groovedata)
     
     -- Next step: in close.
     self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.GROOVE_IC)
@@ -9519,7 +9502,7 @@ function AIRBOSS:_Groove(playerData)
   elseif rho<=RIC and playerData.step==AIRBOSS.PatternStep.GROOVE_IC then
   
     -- Store data.      
-    playerData.groove.IC=groovedata
+    playerData.groove.IC=UTILS.DeepCopy(groovedata)
       
     -- Next step: AR at the ramp.
     self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.GROOVE_AR)   
@@ -9527,7 +9510,7 @@ function AIRBOSS:_Groove(playerData)
   elseif rho<=RAR and playerData.step==AIRBOSS.PatternStep.GROOVE_AR then
         
     -- Store data.
-    playerData.groove.AR=groovedata
+    playerData.groove.AR=UTILS.DeepCopy(groovedata)
     
     -- Next step: in the wires.
     if playerData.actype==AIRBOSS.AircraftCarrier.AV8B then
@@ -9539,7 +9522,7 @@ function AIRBOSS:_Groove(playerData)
   elseif rho<=RAR and playerData.step==AIRBOSS.PatternStep.GROOVE_AL then
   
     -- Store data.
-    playerData.groove.AL=groovedata
+    playerData.groove.AL=UTILS.DeepCopy(groovedata)
     
     -- Get zone abeam LDG spot.
     local ZoneALS=self:_GetZoneAbeamLandingSpot()
@@ -9569,7 +9552,7 @@ function AIRBOSS:_Groove(playerData)
   elseif rho<=RAR and playerData.step==AIRBOSS.PatternStep.GROOVE_LC then
   
     -- Store data.
-    playerData.groove.LC=groovedata    
+    playerData.groove.LC=UTILS.DeepCopy(groovedata)    
   
     -- Get zone primary LDG spot.
     local ZoneLS=self:_GetZoneLandingSpot()
@@ -9625,25 +9608,31 @@ function AIRBOSS:_Groove(playerData)
     
   end
   
+  -- Groovedata step.
+  groovedata.Step=playerData.step
+  
   -----------------
   -- Groove Data --
   -----------------
-
-  -- Get groove step short hand of the previous step.  
-  local gs=self:_GS(playerData.step, -1)
   
   -- Check if we are beween 3/4 NM and end of ship.
   if rho>=RAR and rho<RX0 and playerData.waveoff==false then
+  
+    -- Get groove step short hand of the previous step.  
+    local gs=self:_GS(playerData.step, -1)  
 
     -- Get current groove data.
     local gd=playerData.groove[gs] --#AIRBOSS.GrooveData
     
     if gd then
       self:T3(gd)
+      
+      -- Distance in NM.
+      local d=UTILS.MetersToNM(rho)
     
       -- Update max deviation of line up error.    
       if math.abs(lineupError)>math.abs(gd.LUE) then
-        self:T(self.lid..string.format("Got bigger Lineup error at %s: LUE %.3f>%.3f.", gs, lineupError, gd.LUE))
+        self:T(self.lid..string.format("Got bigger LUE at step %s, d=%.3f: LUE %.3f>%.3f", gs, d, lineupError, gd.LUE))
         gd.LUE=lineupError
       end
       
@@ -9651,21 +9640,18 @@ function AIRBOSS:_Groove(playerData)
       if gd.GSE>0.4 and glideslopeError<-0.3 then
         -- Fly through down ==> "\"
         gd.FlyThrough="\\"
-        self:T(self.lid..string.format("Got Fly through DOWN at %s. Max GSE=%.1f, lower GSE=%.1f", gs, gd.GSE, glideslopeError))
+        self:T(self.lid..string.format("Got Fly through DOWN at step %s, d=%.3f: Max GSE=%.3f, lower GSE=%.3f", gs, d, gd.GSE, glideslopeError))
       elseif gd.GSE<-0.3 and glideslopeError>0.4 then
         -- Fly through up ==> "/"
         gd.FlyThrough="/"
-        self:T(self.lid..string.format("Got Fly through UP at %s. Min GSE=%.1f, lower GSE=%.1f", gs, gd.GSE, glideslopeError))
+        self:E(self.lid..string.format("Got Fly through UP at step %s, d=%.3f: Min GSE=%.3f, lower GSE=%.3f", gs, d, gd.GSE, glideslopeError))
       end
       
       -- Update max deviation of glideslope error.
       if math.abs(glideslopeError)>math.abs(gd.GSE) then
-        self:T(self.lid..string.format("Got bigger glideslope error at %s: GSE |%.3f|>|%.3f|.", gs, glideslopeError, gd.GSE))
+        self:T(self.lid..string.format("Got bigger GSE at step %s, d=%.3f: GSE |%.3f|>|%.3f|", gs, d, glideslopeError, gd.GSE))
         gd.GSE=glideslopeError
       end
-      
-      -- Get current AoA.
-      local aoa=playerData.unit:GetAoA()
       
       -- Get aircraft AoA parameters.
       local aircraftaoa=self:_GetAircraftAoA(playerData)
@@ -9674,10 +9660,13 @@ function AIRBOSS:_Groove(playerData)
       local aoaopt=aircraftaoa.OnSpeed
       
       -- Compare AoAs wrt on speed AoA and update max deviation.
-      if math.abs(aoa-aoaopt)>math.abs(gd.AoA-aoaopt) then
-        self:T(self.lid..string.format("Got bigger AoA error at %s: AoA %.3f>%.3f.", gs, aoa, gd.AoA))
-        gd.AoA=aoa
+      if math.abs(AoA-aoaopt)>math.abs(gd.AoA-aoaopt) then
+        self:T(self.lid..string.format("Got bigger AoA error at step %s, d=%.3f: AoA %.3f>%.3f.", gs, d, AoA, gd.AoA))
+        gd.AoA=AoA
       end
+      
+      --local gs2=self:_GS(groovedata.Step, -1)  
+      --env.info(string.format("groovestep %s %s d=%.3f NM: GSE=%.3f %.3f, LUE=%.3f %.3f, AoA=%.3f %.3f", gs, gs2, d, groovedata.GSE, gd.GSE, groovedata.LUE, gd.LUE, groovedata.AoA, gd.AoA))
       
     end
     
@@ -10836,8 +10825,9 @@ function AIRBOSS:_AttitudeMonitor(playerData)
   -- Get carrier velocity in km/h.
   local vcarrier=self.carrier:GetVelocityKMH()    
   -- Speed difference.
-  local dv=math.abs(vplayer-vcarrier)    
-  text=text..string.format("\nDist=%.1f m Alt=%.1f m delta|V|=%.1f km/h", dist, self:_GetAltCarrier(playerData.unit), dv)
+  local dv=math.abs(vplayer-vcarrier)
+  local alt=self:_GetAltCarrier(playerData.unit)
+  text=text..string.format("\nDist=%.1f m Alt=%.1f m delta|V|=%.1f km/h", dist, alt, dv)
   -- If in the groove, provide line up and glide slope error.
   if playerData.step==AIRBOSS.PatternStep.FINAL or
      playerData.step==AIRBOSS.PatternStep.GROOVE_XX or
@@ -10849,7 +10839,6 @@ function AIRBOSS:_AttitudeMonitor(playerData)
      playerData.step==AIRBOSS.PatternStep.GROOVE_IW then
     local lue=self:_Lineup(playerData.unit, true)
     local gle=self:_Glideslope(playerData.unit)
-    --local gle2=self:_Glideslope2(playerData.unit)
     text=text..string.format("\nGamma=%.1f° | Rho=%.1f°", relhead, phi)
     text=text..string.format("\nLineUp=%.2f° | GlideSlope=%.2f° | AoA=%.1f Units", lue, gle, self:_AoADeg2Units(playerData, aoa))
     local grade, points, analysis=self:_LSOgrade(playerData)
@@ -10883,17 +10872,9 @@ function AIRBOSS:_Glideslope(unit, optangle)
   -- Distance from stern to aircraft.
   local x=unit:GetCoordinate():Get2DDistance(landingcoord)
   
-  -- New approach using distances!
-  -- TODO: Tarawa, check!
-  local X,Z=self:_GetDistances()
-  x=-X
-  x=x+70 -- 3 wire pos.
-  
-  
-  
   -- Altitude of unit corrected by the deck height of the carrier.
   local h=self:_GetAltCarrier(unit)
-  
+   
   -- Harrier should be 40-50 ft above the deck.
   if unit:GetTypeName()==AIRBOSS.AircraftCarrier.AV8B then
     h=unit:GetAltitude()-(UTILS.FeetToMeters(50)+self.carrierparam.deckheight+2)
@@ -10901,16 +10882,10 @@ function AIRBOSS:_Glideslope(unit, optangle)
   
   -- Glide slope.
   local glideslope=math.atan(h/x)
-  
+    
   -- Glide slope (error) in degrees.
   local gs=math.deg(glideslope)-optangle
-  
-  -- Debug.
-  self:T2(self.lid..string.format("Glide slope error = %.1f, x=%.1f h=%.1f", gs, x, h))
-  
-  --local gs2=self:_Glideslope2(unit)
-  --self:E(self.lid..string.format("Glide slope error = %.1f =%.1f, x=%.1f h=%.1f", gs, gs2, x, h))
-  
+    
   return gs
 end
 
@@ -10974,10 +10949,11 @@ function AIRBOSS:_Lineup(unit, runway)
   local C=UTILS.VecSubstract(A, B)
   
   -- Only in 2D plane.
-  C.y=0
+  C.y=0.0
   
   -- Orientation of carrier.
-  local X=self.carrier:GetOrientationX()
+  local X=self.carrier:GetOrientationX()  
+  X.y=0.0
   
   -- Rotate orientation to angled runway.
   if runway then  
@@ -10989,6 +10965,7 @@ function AIRBOSS:_Lineup(unit, runway)
   
   -- Orientation of carrier.
   local Z=self.carrier:GetOrientationZ()
+  Z.y=0.0
   
   -- Rotate orientation to angled runway.
   if runway then  
@@ -17012,8 +16989,10 @@ function AIRBOSS:_SaveTrapSheet(playerData, grade)
   local g0=playerData.trapsheet[1] --#AIRBOSS.GrooveData
   local T0=g0.Time
   
-  for _,_groove in ipairs(playerData.trapsheet) do
-    local groove=_groove --#AIRBOSS.GrooveData
+  --for _,_groove in ipairs(playerData.trapsheet) do
+  for i=1,#playerData.trapsheet do
+    --local groove=_groove --#AIRBOSS.GrooveData
+    local groove=playerData.trapsheet[i]
     local t=groove.Time-T0
     local a=UTILS.MetersToNM(groove.Rho or 0)
     local b=-groove.X or 0

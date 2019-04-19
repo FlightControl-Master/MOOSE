@@ -223,7 +223,7 @@ end
 -- @param Core.Zone#ZONE zone Training zone.
 function FOX2:AddLaunchZone(zone)
 
-  table.insert(self.safezones, zone)
+  table.insert(self.launchzones, zone)
 
 end
 
@@ -239,7 +239,7 @@ end
 -- @param #string To To state.
 function FOX2:onafterStatus(From, Event, To)
 
-  self:I(self.lid..string.format("Missile trainer status: %s", self.GetState()))
+  self:I(self.lid..string.format("Missile trainer status: %s", self:GetState()))
   
   self:_CheckMissileStatus()
 
@@ -266,7 +266,7 @@ function FOX2:_CheckMissileStatus()
     local mtype=missile.missileType
     local range=UTILS.MetersToNM(missile.missileRange)
     
-    text=text..string.format("\n%d: active=%s, type=%d, range=%.1f NM, target=%s, player=%s, missilename=%s", i, active, mtype, range, targetname, playername)
+    text=text..string.format("\n[%d] %s: active=%s, type=%s, range=%.1f NM, target=%s, player=%s, missilename=%s", i, mtype, active, range, targetname, playername, missile.missileName)
     
   end
   self:T(self.lid..text)
