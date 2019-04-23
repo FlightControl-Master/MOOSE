@@ -235,7 +235,7 @@ RESCUEHELO.UID=0
 
 --- Class version.
 -- @field #string version
-RESCUEHELO.version="1.0.5"
+RESCUEHELO.version="1.0.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -776,13 +776,18 @@ function RESCUEHELO:_OnEventCrashOrEject(EventData)
       -- Debug.
       local text=string.format("Unit %s crashed or ejected.", unitname)
       MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
-      self:T(self.lid..text)
-    
-      -- Unit "alive" and in our rescue zone.
-      if unit:IsAlive() and unit:IsInZone(self.rescuezone) then
+      self:I(self.lid..text)
+
+      -- Get coordinate of unit.      
+      local coord=unit:GetCoordinate()
       
+      if coord and self.rescuezone:IsCoordinateInZone(coord) then
+      
+      -- This does not seem to work any more. Is:Alive returns flase on ejection.
+      -- Unit "alive" and in our rescue zone.
+      --if unit:IsAlive() and unit:IsInZone(self.rescuezone) then
         -- Get coordinate of crashed unit.
-        local coord=unit:GetCoordinate()
+        --local coord=unit:GetCoordinate()
         
         -- Debug mark on map.
         if self.Debug then
@@ -793,7 +798,7 @@ function RESCUEHELO:_OnEventCrashOrEject(EventData)
         local rightcoalition=EventData.IniGroup:GetCoalition()==self.helo:GetCoalition()
       
         -- Only rescue if helo is "running" and not, e.g., rescuing already.
-        if self:IsRunning() and self.rescueon and rightcoalition then
+        if self:IsRunning() and self.rescueon and rightcoalition then 
           self:Rescue(coord)
         end
       
@@ -1091,7 +1096,7 @@ function RESCUEHELO:onafterRescue(From, Event, To, RescueCoord)
   -- Debug message.
   local text=string.format("Helo %s is send to rescue mission.", self.helo:GetName())
   MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
-  self:T(self.lid..text)
+  self:I(self.lid..text)
   
   -- Waypoint array.
   local wp={}

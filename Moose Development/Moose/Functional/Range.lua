@@ -290,7 +290,7 @@ RANGE.id="RANGE | "
 
 --- Range script version.
 -- @field #string version
-RANGE.version="1.2.5"
+RANGE.version="1.3.0"
 
 --TODO list:
 --TODO: Verbosity level for messages.
@@ -1183,10 +1183,24 @@ end
 function RANGE:OnEventShot(EventData)
   self:F({eventshot = EventData})
   
+  -- Nil checks.
+  if EventData.Weapon==nil then
+    return
+  end
+  if EventData.IniDCSUnit==nil then
+    return
+  end  
+  
   -- Weapon data.
   local _weapon = EventData.Weapon:getTypeName()  -- should be the same as Event.WeaponTypeName
   local _weaponStrArray = UTILS.Split(_weapon,"%.")
   local _weaponName = _weaponStrArray[#_weaponStrArray]
+  
+  -- Weapon descriptor.
+  local desc=EventData.Weapon:getDesc()
+  
+  -- Weapon category: 0=SHELL, 1=MISSILE, 2=ROCKET, 3=BOMB (Weapon.Category.X)
+  local weaponcategory=desc.category
   
   -- Debug info.
   self:T(RANGE.id.."EVENT SHOT: Range "..self.rangename)
@@ -1194,14 +1208,14 @@ function RANGE:OnEventShot(EventData)
   self:T(RANGE.id.."EVENT SHOT: Ini group   = "..EventData.IniGroupName)
   self:T(RANGE.id.."EVENT SHOT: Weapon type = ".._weapon)
   self:T(RANGE.id.."EVENT SHOT: Weapon name = ".._weaponName)
-  
+  self:T(RANGE.id.."EVENT SHOT: Weapon cate = "..weaponcategory)  
   -- Special cases:
-  local _viggen=string.match(_weapon, "ROBOT") or string.match(_weapon, "RB75") or string.match(_weapon, "BK90") or string.match(_weapon, "RB15") or string.match(_weapon, "RB04")
+  --local _viggen=string.match(_weapon, "ROBOT") or string.match(_weapon, "RB75") or string.match(_weapon, "BK90") or string.match(_weapon, "RB15") or string.match(_weapon, "RB04")
   
   -- Tracking conditions for bombs, rockets and missiles.
-  local _bombs=string.match(_weapon, "weapons.bombs") 
-  local _rockets=string.match(_weapon, "weapons.nurs") 
-  local _missiles=string.match(_weapon, "weapons.missiles") or _viggen
+  local _bombs    = weaponcategory==Weapon.Category.BOMB     --string.match(_weapon, "weapons.bombs") 
+  local _rockets  = weaponcategory==Weapon.Category.ROCKET   --string.match(_weapon, "weapons.nurs") 
+  local _missiles = weaponcategory==Weapon.Category.MISSILE  --string.match(_weapon, "weapons.missiles") or _viggen
   
   -- Check if any condition applies here.
   local _track = (_bombs and self.trackbombs) or (_rockets and self.trackrockets) or (_missiles and self.trackmissiles)
@@ -1221,8 +1235,8 @@ function RANGE:OnEventShot(EventData)
     self:T(RANGE.id..string.format("Range %s, player %s, player-range distance = %d km.", self.rangename, _playername, dPR/1000))
   end
 
-  -- Only track if distance player to range is < 25 km.
-  if _track and dPR<=self.BombtrackThreshold then
+  -- Only track if distance player to range is < 25 km. Also check that a player shot. No need to track AI weapons.
+  if _track and dPR<=self.BombtrackThreshold and _unit and _playername then
 
     -- Tracking info and init of last bomb position.
     self:T(RANGE.id..string.format("RANGE %s: Tracking %s - %s.", self.rangename, _weapon, EventData.weapon:getName()))
@@ -1346,8 +1360,8 @@ function RANGE:OnEventShot(EventData)
     end -- end function trackBomb
 
     -- Weapon is not yet "alife" just yet. Start timer in one second.
-    self:T(RANGE.id..string.format("Range %s, player %s: Tracking of weapon starts in one second.", self.rangename, _playername))
-    timer.scheduleFunction(trackBomb, EventData.weapon, timer.getTime() + 1.0)
+    self:T(RANGE.id..string.format("Range %s, player %s: Tracking of weapon starts in 0.1 seconds.", self.rangename, _playername))
+    timer.scheduleFunction(trackBomb, EventData.weapon, timer.getTime()+0.1)
     
   end --if _track (string.match) and player-range distance < threshold.
   
