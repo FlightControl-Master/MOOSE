@@ -1156,6 +1156,18 @@ function SPAWN:ReSpawn( SpawnIndex )
 	return SpawnGroup
 end
 
+
+--- Set the spawn index to a specified index number.
+-- This method can be used to "reset" the spawn counter to a specific index number.
+-- This will actually enable a respawn of groups from the specific index.
+-- @param #SPAWN self
+-- @param #string SpawnIndex The index of the group from where the spawning will start again. The default value would be 0, which means a complete reset of the spawnindex.
+-- @return #SPAWN self
+function SPAWN:SetSpawnIndex( SpawnIndex )
+  self.SpawnIndex = SpawnIndex or 0
+end
+
+
 --- Will spawn a group with a specified index number.
 -- Uses @{DATABASE} global object defined in MOOSE.
 -- @param #SPAWN self
@@ -1465,6 +1477,11 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
     local SpawnTemplate = self.SpawnGroups[self.SpawnIndex].SpawnTemplate
   
     if SpawnTemplate then
+    
+      -- Check if the aircraft with the specified SpawnIndex is already spawned.
+      -- If yes, ensure that the aircraft is spawned at the same aircraft spot.
+      
+      local GroupAlive = self:GetGroupFromIndex( self.SpawnIndex )
 
       -- Debug output
       self:T( { "Current point of ", self.SpawnTemplatePrefix, SpawnAirbase } )
@@ -1535,7 +1552,8 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
       local spots
       
       -- Spawn happens on ground, i.e. at an airbase, a FARP or a ship.
-      if spawnonground then
+      if spawnonground and not SpawnTemplate.parked then
+      
         
         -- Number of free parking spots.
         local nfree=0
@@ -1708,67 +1726,72 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
              
       end
 
-      -- Translate the position of the Group Template to the Vec3.
-      for UnitID = 1, nunits do
-        self:T2('Before Translation SpawnTemplate.units['..UnitID..'].x = '..SpawnTemplate.units[UnitID].x..', SpawnTemplate.units['..UnitID..'].y = '..SpawnTemplate.units[UnitID].y)
-        
-        -- Template of the current unit.
-        local UnitTemplate = SpawnTemplate.units[UnitID]
-        
-        -- Tranlate position and preserve the relative position/formation of all aircraft.  
-        local SX = UnitTemplate.x
-        local SY = UnitTemplate.y 
-        local BX = SpawnTemplate.route.points[1].x
-        local BY = SpawnTemplate.route.points[1].y
-        local TX = PointVec3.x + (SX-BX)
-        local TY = PointVec3.z + (SY-BY)
-               
-        if spawnonground then
-          
-          -- Ships and FARPS seem to have a build in queue.
-          if spawnonship or spawnonfarp or spawnonrunway then
-          
-            self:T(string.format("Group %s spawning at farp, ship or runway %s.", self.SpawnTemplatePrefix, SpawnAirbase:GetName()))
+      if not SpawnTemplate.parked then
+        -- Translate the position of the Group Template to the Vec3.
 
-            -- Spawn on ship. We take only the position of the ship.
-            SpawnTemplate.units[UnitID].x   = PointVec3.x --TX
-            SpawnTemplate.units[UnitID].y   = PointVec3.z --TY
-            SpawnTemplate.units[UnitID].alt = PointVec3.y
-          
-          else
+        SpawnTemplate.parked = true
 
-            self:T(string.format("Group %s spawning at airbase %s on parking spot id %d", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), parkingindex[UnitID]))
-            
-            -- Get coordinates of parking spot.
-            SpawnTemplate.units[UnitID].x   = parkingspots[UnitID].x
-            SpawnTemplate.units[UnitID].y   = parkingspots[UnitID].z
-            SpawnTemplate.units[UnitID].alt = parkingspots[UnitID].y
-            
-            --parkingspots[UnitID]:MarkToAll(string.format("Group %s spawning at airbase %s on parking spot id %d", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), parkingindex[UnitID]))
-          end
+        for UnitID = 1, nunits do
+          self:T2('Before Translation SpawnTemplate.units['..UnitID..'].x = '..SpawnTemplate.units[UnitID].x..', SpawnTemplate.units['..UnitID..'].y = '..SpawnTemplate.units[UnitID].y)
+          
+          -- Template of the current unit.
+          local UnitTemplate = SpawnTemplate.units[UnitID]
+          
+          -- Tranlate position and preserve the relative position/formation of all aircraft.  
+          local SX = UnitTemplate.x
+          local SY = UnitTemplate.y 
+          local BX = SpawnTemplate.route.points[1].x
+          local BY = SpawnTemplate.route.points[1].y
+          local TX = PointVec3.x + (SX-BX)
+          local TY = PointVec3.z + (SY-BY)
                  
-        else
-        
-          self:T(string.format("Group %s spawning in air at %s.", self.SpawnTemplatePrefix, SpawnAirbase:GetName()))
+          if spawnonground then
+            
+            -- Ships and FARPS seem to have a build in queue.
+            if spawnonship or spawnonfarp or spawnonrunway then
+            
+              self:T(string.format("Group %s spawning at farp, ship or runway %s.", self.SpawnTemplatePrefix, SpawnAirbase:GetName()))
+  
+              -- Spawn on ship. We take only the position of the ship.
+              SpawnTemplate.units[UnitID].x   = PointVec3.x --TX
+              SpawnTemplate.units[UnitID].y   = PointVec3.z --TY
+              SpawnTemplate.units[UnitID].alt = PointVec3.y
+            
+            else
+  
+              self:T(string.format("Group %s spawning at airbase %s on parking spot id %d", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), parkingindex[UnitID]))
+              
+              -- Get coordinates of parking spot.
+              SpawnTemplate.units[UnitID].x   = parkingspots[UnitID].x
+              SpawnTemplate.units[UnitID].y   = parkingspots[UnitID].z
+              SpawnTemplate.units[UnitID].alt = parkingspots[UnitID].y
+              
+              --parkingspots[UnitID]:MarkToAll(string.format("Group %s spawning at airbase %s on parking spot id %d", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), parkingindex[UnitID]))
+            end
+                   
+          else
           
-          -- Spawn in air as requested initially. Original template orientation is perserved, altitude is already correctly set.
-          SpawnTemplate.units[UnitID].x   = TX
-          SpawnTemplate.units[UnitID].y   = TY
-          SpawnTemplate.units[UnitID].alt = PointVec3.y
+            self:T(string.format("Group %s spawning in air at %s.", self.SpawnTemplatePrefix, SpawnAirbase:GetName()))
+            
+            -- Spawn in air as requested initially. Original template orientation is perserved, altitude is already correctly set.
+            SpawnTemplate.units[UnitID].x   = TX
+            SpawnTemplate.units[UnitID].y   = TY
+            SpawnTemplate.units[UnitID].alt = PointVec3.y
+            
+          end
+               
+          -- Parking spot id.
+          UnitTemplate.parking = nil
+          UnitTemplate.parking_id = nil
+          if parkingindex[UnitID] then
+            UnitTemplate.parking = parkingindex[UnitID]
+          end
           
+          -- Debug output.
+          self:T2(string.format("Group %s unit number %d: Parking    = %s",self.SpawnTemplatePrefix, UnitID, tostring(UnitTemplate.parking)))
+          self:T2(string.format("Group %s unit number %d: Parking ID = %s",self.SpawnTemplatePrefix, UnitID, tostring(UnitTemplate.parking_id)))        
+          self:T2('After Translation SpawnTemplate.units['..UnitID..'].x = '..SpawnTemplate.units[UnitID].x..', SpawnTemplate.units['..UnitID..'].y = '..SpawnTemplate.units[UnitID].y)
         end
-             
-        -- Parking spot id.
-        UnitTemplate.parking = nil
-        UnitTemplate.parking_id = nil
-        if parkingindex[UnitID] then
-          UnitTemplate.parking = parkingindex[UnitID]
-        end
-        
-        -- Debug output.
-        self:T2(string.format("Group %s unit number %d: Parking    = %s",self.SpawnTemplatePrefix, UnitID, tostring(UnitTemplate.parking)))
-        self:T2(string.format("Group %s unit number %d: Parking ID = %s",self.SpawnTemplatePrefix, UnitID, tostring(UnitTemplate.parking_id)))        
-        self:T2('After Translation SpawnTemplate.units['..UnitID..'].x = '..SpawnTemplate.units[UnitID].x..', SpawnTemplate.units['..UnitID..'].y = '..SpawnTemplate.units[UnitID].y)
       end
       
       -- Set gereral spawnpoint position.
@@ -2088,7 +2111,7 @@ end
 function SPAWN:InitUnControlled( UnControlled )
 	self:F2( { self.SpawnTemplatePrefix, UnControlled } )
 	
-	self.SpawnUnControlled = UnControlled or true
+	self.SpawnUnControlled = ( UnControlled == true ) and true or nil
 	
 	for SpawnGroupID = 1, self.SpawnMaxGroups do
 		self.SpawnGroups[SpawnGroupID].UnControlled = self.SpawnUnControlled

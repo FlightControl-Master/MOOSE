@@ -286,6 +286,8 @@ function AI_ESCORT:New( EscortUnit, EscortGroupSet, EscortName, EscortBriefing )
   return self
 end
 
+--- @param #AI_ESCORT self
+-- @param Core.Set#SET_GROUP EscortGroupSet
 function AI_ESCORT:onafterStart( EscortGroupSet )
 
   self:E("Start")
@@ -300,6 +302,15 @@ function AI_ESCORT:onafterStart( EscortGroupSet )
       EscortGroup:OptionROEOpenFire()
     end
   )
+  
+  local LeaderEscort = EscortGroupSet:GetFirst() -- Wrapper.Group#GROUP
+  
+  local Report = REPORT:New( "Escorts Reporting." )
+  Report:Add( "Current coordinate: " .. LeaderEscort:GetCoordinate():ToString( self.EscortUnit ) )
+  Report:Add( "Configuration: " .. EscortGroupSet:GetUnitTypeNames():Text( ", " ) )
+  Report:Add( "Joining Up ..." )
+  
+  LeaderEscort:MessageTypeToGroup( Report:Text(),  MESSAGE.Type.Information, self.EscortUnit )
     
 end
 

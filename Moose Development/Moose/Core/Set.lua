@@ -924,7 +924,40 @@ do -- SET_GROUP
     
     return AliveSet.Set or {}
   end
+
+  --- Returns a report of of unit types.
+  -- @param #SET_GROUP self
+  -- @return Core.Report#REPORT A report of the unit types found. The key is the UnitTypeName and the value is the amount of unit types found.
+  function SET_GROUP:GetUnitTypeNames()
+    self:F2()
   
+    local MT = {} -- Message Text
+    local UnitTypes = {}
+    
+    local ReportUnitTypes = REPORT:New()
+    
+    for GroupID, GroupData in pairs( self:GetSet() ) do
+      local Units = GroupData:GetUnits()
+      for UnitID, UnitData in pairs( Units ) do
+        if UnitData:IsAlive() then
+          local UnitType = UnitData:GetTypeName()
+      
+          if not UnitTypes[UnitType] then
+            UnitTypes[UnitType] = 1
+          else
+            UnitTypes[UnitType] = UnitTypes[UnitType] + 1
+          end
+        end
+      end
+    end
+  
+    for UnitTypeID, UnitType in pairs( UnitTypes ) do
+      ReportUnitTypes:Add( UnitType .. " of " .. UnitTypeID )
+    end
+  
+    return ReportUnitTypes
+  end
+
   --- Add a GROUP to SET_GROUP.
   -- Note that for each unit in the group that is set, a default cargo bay limit is initialized.
   -- @param Core.Set#SET_GROUP self
