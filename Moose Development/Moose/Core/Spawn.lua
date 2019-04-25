@@ -2197,6 +2197,8 @@ function SPAWN:ParkAtAirbase( SpawnAirbase, TerminalType, Parkingdata ) -- R2.2,
     end
   end
   
+  self:SetSpawnIndex()
+  
   return nil
 end
 
