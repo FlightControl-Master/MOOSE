@@ -1087,11 +1087,11 @@ function AI_FORMATION:onenterFollowing( FollowGroupSet ) --R2.1
               
               local Speed = - ( Distance + FollowFormation.x ) / Time
 
-              if Distance > -4000 then
-                Speed = - ( Distance + FollowFormation.x ) / 90
+              if Distance > -10000 then
+                Speed = - ( Distance + FollowFormation.x ) / 60
               end
  
-              if Distance > -1500 then
+              if Distance > -2500 then
                 Speed = - ( Distance + FollowFormation.x ) / 20
               end
               

@@ -1173,7 +1173,7 @@ end
 -- @param #SPAWN self
 -- @param #string SpawnIndex The index of the group to be spawned.
 -- @return Wrapper.Group#GROUP The group that was spawned. You can use this group for further actions.
-function SPAWN:SpawnWithIndex( SpawnIndex )
+function SPAWN:SpawnWithIndex( SpawnIndex, NoBirth )
 	self:F2( { SpawnTemplatePrefix = self.SpawnTemplatePrefix, SpawnIndex = SpawnIndex, AliveUnits = self.AliveUnits, SpawnMaxGroups = self.SpawnMaxGroups } )
 	
 	if self:_GetSpawnIndex( SpawnIndex ) then
@@ -1275,14 +1275,16 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
         SpawnTemplate.CoalitionID = self.SpawnInitCoalition or SpawnTemplate.CoalitionID 
         
         
-        if SpawnTemplate.CategoryID == Group.Category.HELICOPTER or SpawnTemplate.CategoryID == Group.Category.AIRPLANE then
-          if SpawnTemplate.route.points[1].type == "TakeOffParking" then
-            SpawnTemplate.uncontrolled = self.SpawnUnControlled
-          end
-        end
+--        if SpawnTemplate.CategoryID == Group.Category.HELICOPTER or SpawnTemplate.CategoryID == Group.Category.AIRPLANE then
+--          if SpawnTemplate.route.points[1].type == "TakeOffParking" then
+--            SpawnTemplate.uncontrolled = self.SpawnUnControlled
+--          end
+--        end
       end
 		  
-      self:HandleEvent( EVENTS.Birth, self._OnBirth )
+		  if not NoBirth then
+        self:HandleEvent( EVENTS.Birth, self._OnBirth )
+      end
       self:HandleEvent( EVENTS.Dead, self._OnDeadOrCrash )
       self:HandleEvent( EVENTS.Crash, self._OnDeadOrCrash )
       self:HandleEvent( EVENTS.RemoveUnit, self._OnDeadOrCrash )
@@ -1471,17 +1473,23 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
     EmergencyAirSpawn=true
   end
   
+  self:F( { SpawnIndex = self.SpawnIndex } )
+  
   if self:_GetSpawnIndex( self.SpawnIndex + 1 ) then
     
     -- Get group template.
     local SpawnTemplate = self.SpawnGroups[self.SpawnIndex].SpawnTemplate
   
+    self:F( { SpawnTemplate = SpawnTemplate } )
+    
     if SpawnTemplate then
     
       -- Check if the aircraft with the specified SpawnIndex is already spawned.
       -- If yes, ensure that the aircraft is spawned at the same aircraft spot.
       
       local GroupAlive = self:GetGroupFromIndex( self.SpawnIndex )
+      
+      self:F( { GroupAlive = GroupAlive } )
 
       -- Debug output
       self:T( { "Current point of ", self.SpawnTemplatePrefix, SpawnAirbase } )
@@ -1802,6 +1810,8 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
       SpawnTemplate.x = PointVec3.x
       SpawnTemplate.y = PointVec3.z
       
+      SpawnTemplate.uncontrolled = nil
+      
       -- Spawn group.
       local GroupSpawned = self:SpawnWithIndex( self.SpawnIndex )
             
@@ -1868,12 +1878,13 @@ function SPAWN:ParkAtAirbase( SpawnAirbase, TerminalType, Parkingdata ) -- R2.2,
 
   -- Get position of airbase.
   local PointVec3 = SpawnAirbase:GetCoordinate()
-  self:T2(PointVec3)
 
   -- Set take off type. Default is hot.
   local Takeoff = SPAWN.Takeoff.Cold
 
   for SpawnIndex = 1, self.SpawnMaxGroups do
+  
+    self:F( { SpawnIndex = SpawnIndex, SpawnMaxGroups = self.SpawnMaxGroups } )
   
     -- Get group template.
     local SpawnTemplate = self.SpawnGroups[SpawnIndex].SpawnTemplate
@@ -1945,7 +1956,7 @@ function SPAWN:ParkAtAirbase( SpawnAirbase, TerminalType, Parkingdata ) -- R2.2,
         elseif AirbaseCategory == Airbase.Category.AIRDROME then
           spawnonairport=true
         end
-        spawnonrunway=Takeoff==SPAWN.Takeoff.Cold
+        spawnonrunway=Takeoff==SPAWN.Takeoff.Runway
       end
       
       -- Array with parking spots coordinates.
@@ -2096,7 +2107,7 @@ function SPAWN:ParkAtAirbase( SpawnAirbase, TerminalType, Parkingdata ) -- R2.2,
         SpawnTemplate.parked = true
 
         for UnitID = 1, nunits do
-          self:T2('Before Translation SpawnTemplate.units['..UnitID..'].x = '..SpawnTemplate.units[UnitID].x..', SpawnTemplate.units['..UnitID..'].y = '..SpawnTemplate.units[UnitID].y)
+          self:F('Before Translation SpawnTemplate.units['..UnitID..'].x = '..SpawnTemplate.units[UnitID].x..', SpawnTemplate.units['..UnitID..'].y = '..SpawnTemplate.units[UnitID].y)
           
           -- Template of the current unit.
           local UnitTemplate = SpawnTemplate.units[UnitID]
@@ -2166,8 +2177,10 @@ function SPAWN:ParkAtAirbase( SpawnAirbase, TerminalType, Parkingdata ) -- R2.2,
       SpawnTemplate.x = PointVec3.x
       SpawnTemplate.y = PointVec3.z
       
+      SpawnTemplate.uncontrolled = true
+      
       -- Spawn group.
-      local GroupSpawned = self:SpawnWithIndex( SpawnIndex )
+      local GroupSpawned = self:SpawnWithIndex( SpawnIndex, true )
             
       -- When spawned in the air, we need to generate a Takeoff Event.
       if Takeoff == GROUP.Takeoff.Air then
@@ -2181,7 +2194,6 @@ function SPAWN:ParkAtAirbase( SpawnAirbase, TerminalType, Parkingdata ) -- R2.2,
         SCHEDULER:New(nil, AIRBASE.CheckOnRunWay, {SpawnAirbase, GroupSpawned, 75, true} , 1.0)
       end
       
-      return GroupSpawned      
     end
   end
   

@@ -1,3 +1,4 @@
+__Moose.Include( 'Scripts/Moose/Utilities/Enums.lua' )
 __Moose.Include( 'Scripts/Moose/Utilities/Routines.lua' )
 __Moose.Include( 'Scripts/Moose/Utilities/Utils.lua' )
 
