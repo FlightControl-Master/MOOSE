@@ -195,14 +195,15 @@ AI_ESCORT_REQUEST = {
 -- @param #string EscortBriefing A text showing the AI_ESCORT_REQUEST briefing to the player. Note that if no EscortBriefing is provided, the default briefing will be shown.
 -- @return #AI_ESCORT_REQUEST self
 -- @usage
--- -- Declare a new EscortPlanes object as follows:
--- 
--- -- First find the GROUP object and the CLIENT object.
--- local EscortUnit = CLIENT:FindByName( "Unit Name" ) -- The Unit Name is the name of the unit flagged with the skill Client in the mission editor.
--- local EscortGroup = GROUP:FindByName( "Group Name" ) -- The Group Name is the name of the group that will escort the Escort Client.
--- 
--- -- Now use these 2 objects to construct the new EscortPlanes object.
--- EscortPlanes = AI_ESCORT_REQUEST:New( EscortUnit, EscortGroup, "Desert", "Welcome to the mission. You are escorted by a plane with code name 'Desert', which can be instructed through the F10 radio menu." )
+-- EscortSpawn = SPAWN:NewWithAlias( "Red A2G Escort Template", "Red A2G Escort AI" ):InitLimit( 10, 10 )
+-- EscortSpawn:ParkAtAirbase( AIRBASE:FindByName( AIRBASE.Caucasus.Sochi_Adler ), AIRBASE.TerminalType.OpenBig )
+--
+-- local EscortUnit = UNIT:FindByName( "Red A2G Pilot" )
+--
+-- Escort = AI_ESCORT_REQUEST:New( EscortUnit, EscortSpawn, AIRBASE:FindByName(AIRBASE.Caucasus.Sochi_Adler), "A2G", "Briefing" )
+-- Escort:FormationTrail( 50, 100, 100 )
+-- Escort:Menus()
+-- Escort:__Start( 5 )
 function AI_ESCORT_REQUEST:New( EscortUnit, EscortSpawn, EscortAirbase, EscortName, EscortBriefing )
   
   self.EscortGroupSet = SET_GROUP:New()
@@ -210,7 +211,6 @@ function AI_ESCORT_REQUEST:New( EscortUnit, EscortSpawn, EscortAirbase, EscortNa
   self.EscortAirbase = EscortAirbase
 
   local self = BASE:Inherit( self, AI_ESCORT:New( EscortUnit, self.EscortGroupSet, EscortName, EscortBriefing ) ) -- #AI_ESCORT_REQUEST
-  self:F( { EscortUnit } )
 
   self.LeaderGroup = self.EscortUnit:GetGroup()
 
@@ -241,34 +241,20 @@ function AI_ESCORT_REQUEST:SpawnEscort()
       Report:Add( "Joining Up ..." )
       
       LeaderEscort:MessageTypeToGroup( Report:Text(),  MESSAGE.Type.Information, self.EscortUnit )
+      self:FormationTrail( 50, 50, 50 )
+      self:JoinFormation( EscortGroup )
     end
   )
 
-  self:__FormationTrail( 30, 50, 100, 100 )
-  self:JoinFormation( EscortGroup )
 end
 
 --- @param #AI_ESCORT_REQUEST self
 -- @param Core.Set#SET_GROUP EscortGroupSet
 function AI_ESCORT_REQUEST:onafterStart( EscortGroupSet )
 
-  self:E("Start")
-
-  EscortGroupSet:ForEachGroup(
-    --- @param Core.Group#GROUP EscortGroup
-    function( EscortGroup )
-      --EscortGroup.EscortMenu = MENU_GROUP:New( self.EscortUnit:GetGroup(), EscortGroup:GetName() )
-      EscortGroup:WayPointInitialize( 1 )
-    
-      EscortGroup:OptionROTVertical()
-      EscortGroup:OptionROEOpenFire()
-    end
-  )
-  
   if not self.MenuRequestEscort then
     self.MenuRequestEscort = MENU_GROUP_COMMAND:New( self.LeaderGroup, "Request A2G Escort", nil, 
       function()
-        env.info("call")
         self:SpawnEscort()
       end
       )

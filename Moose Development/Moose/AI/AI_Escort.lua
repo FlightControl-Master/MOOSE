@@ -332,22 +332,29 @@ end
 
 --- Defines the default menus
 -- @param #AI_ESCORT self
+-- @param #number XStart The start position on the X-axis in meters for the first group.
+-- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+-- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+-- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
+-- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+-- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+-- @param #number ZLevels The amount of levels on the Z-axis.
 -- @return #AI_ESCORT
-function AI_ESCORT:Menus()
+function AI_ESCORT:Menus( XStart, XSpace, YStart, YSpace, ZStart, ZSpace, ZLevels )
   self:F()
 
 --  self:MenuScanForTargets( 100, 60 )
 
   self:MenuJoinUp()
-  self:MenuFormationTrail( 50, 100, 50 )
-  self:MenuFormationStack( 50, 100, 50, 50 )
-  self:MenuFormationLeftLine( 0, 0, 100, 100 )
-  self:MenuFormationRightLine( 0, 0, 100, 100 )
-  self:MenuFormationLeftWing( 0, 50, 0, 100, 100 )
-  self:MenuFormationRightWing( 0, 50, 0, 100, 100 )
-  self:MenuFormationCenterWing( 50, 50, 0, 50, 100, 100 )
-  self:MenuFormationBox( 50, 100, 0, 50, 50, 100, 10 )
-
+  self:MenuFormationTrail(XStart,XSpace,YStart)
+  self:MenuFormationStack(XStart,XSpace,YStart,YSpace)
+  self:MenuFormationLeftLine(XStart,YStart,ZStart,ZSpace)
+  self:MenuFormationRightLine(XStart,YStart,ZStart,ZSpace)
+  self:MenuFormationLeftWing(XStart,XSpace,YStart,ZStart,ZSpace)
+  self:MenuFormationRightWing(XStart,XSpace,YStart,ZStart,ZSpace)
+  self:MenuFormationVic(XStart,XSpace,YStart,YSpace,ZStart,ZSpace)
+  self:MenuFormationBox(XStart,XSpace,YStart,YSpace,ZStart,ZSpace,ZLevels)
+  
   self:MenuHoldAtEscortPosition( 1000, 500 )
   self:MenuHoldAtLeaderPosition( 1000, 500 )
   
@@ -1474,6 +1481,9 @@ function AI_ESCORT:_FlightReportTargetsScheduler()
     local ClientEscortTargets = self.Detection
 
     for DetectedItemIndex, DetectedItem in pairs( DetectedItems ) do
+    
+      self:F("FlightReportTargetScheduler Targets")
+    
 
       DetectedTargets = true -- There are detected targets, when the content of the for loop is executed. We use it to display a message.
       

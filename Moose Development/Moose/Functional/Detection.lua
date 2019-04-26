@@ -541,14 +541,17 @@ do -- DETECTION_BASE
       
       end
       
-      self.DetectionCount = self.DetectionSet:GetSomeIteratorLimit()
+      self.DetectionCount = self.DetectionSet:Count()
       
-      self.DetectionSet:ForSomeGroupAlive(
+      self.DetectionSet:ForEachGroupAlive(
         function( DetectionGroup )
           self:__Detection( DetectDelay, DetectionGroup, DetectionTimeStamp ) -- Process each detection asynchronously.
           DetectDelay = DetectDelay + 1
         end
       )
+      
+      self:__Detect( -self.RefreshTimeInterval )
+      
     end
     
     --- @param #DETECTION_BASE self
@@ -803,9 +806,8 @@ do -- DETECTION_BASE
             self:__DetectedItem( 0.1, DetectedItem )
           end
         end
- 
-        self:__Detect( self.RefreshTimeInterval )
       end
+
 
     end
   
