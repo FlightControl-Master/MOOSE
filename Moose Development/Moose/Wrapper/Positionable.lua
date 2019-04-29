@@ -1163,9 +1163,9 @@ end
 
 --- Start Lasing a POSITIONABLE
 -- @param #POSITIONABLE self
--- @param #POSITIONABLE Target
--- @param #number LaserCode
--- @param #number Duration
+-- @param #POSITIONABLE Target The target to lase.
+-- @param #number LaserCode Laser code or random number in [1000, 9999].
+-- @param #number Duration Duration of lasing in seconds.
 -- @return Core.Spot#SPOT
 function POSITIONABLE:LaseUnit( Target, LaserCode, Duration ) --R2.1
   self:F2()

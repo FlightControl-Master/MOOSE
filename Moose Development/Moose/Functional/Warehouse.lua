@@ -7669,7 +7669,13 @@ function WAREHOUSE:_PrintQueue(queue, name)
 
   end
 
-  self:I(self.wid..text)
+  if #queue==0 then
+    self:T(self.wid..text)
+  else
+    if total~="Empty" then
+      self:I(self.wid..text)
+    end
+  end
 end
 
 --- Display status of warehouse.

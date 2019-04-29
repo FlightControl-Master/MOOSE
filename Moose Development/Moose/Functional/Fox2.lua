@@ -367,7 +367,7 @@ function FOX2:_CheckMissileStatus()
 
 end
 
---- Missle
+--- Missle launch.
 -- @param #FOX2 self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -464,7 +464,9 @@ function FOX2:onafterMissileLaunch(From, Event, To, missile)
       
         if missile.targetPlayer then
           -- Target is a player.
-          target=missile.targetUnit
+          if missile.targetPlayer.destroy==true then
+            target=missile.targetUnit
+          end
         else
           --TODO: Check if unit is protected.
         end
@@ -482,19 +484,23 @@ function FOX2:onafterMissileLaunch(From, Event, To, missile)
         for _,_player in pairs(self.players) do
           local player=_player  --#FOX2.PlayerData
           
-          -- Player position.
-          local playerCoord=player.unit:GetCoordinate()
+          -- Check that player was not the one who launched the missile.
+          if player.unitname~=missile.shooterName then
           
-          -- Distance.            
-          local dist=missileCoord:Get3DDistance(playerCoord)
-          
-          -- Maxrange from launch point to player.
-          local maxrange=playerCoord:Get3DDistance(missile.shotCoord)
-          
-          -- Update mindist if necessary. Only include players in range of missile.
-          if (mindist==nil or dist<mindist) and dist<=maxrange then
-            mindist=dist
-            target=player.unit
+            -- Player position.
+            local playerCoord=player.unit:GetCoordinate()
+            
+            -- Distance.            
+            local dist=missileCoord:Get3DDistance(playerCoord)
+            
+            -- Maxrange from launch point to player.
+            local maxrange=playerCoord:Get3DDistance(missile.shotCoord)
+            
+            -- Update mindist if necessary. Only include players in range of missile.
+            if (mindist==nil or dist<mindist) and dist<=maxrange then
+              mindist=dist
+              target=player.unit
+            end
           end            
         end
         
