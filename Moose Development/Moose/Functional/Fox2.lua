@@ -243,7 +243,7 @@ function FOX2:onafterStart(From, Event, To)
     self:TraceLevel(2)
   end
   
-  self:__Status(-1)
+  self:__Status(-10)
 end
 
 --- On after Stop event. Stops the missile trainer and unhandles events.

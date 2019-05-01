@@ -227,6 +227,7 @@
 -- @field #string trappath Path where to save the trap sheets.
 -- @field #string trapprefix File prefix for trap sheet files.
 -- @field #number initialmaxalt Max altitude in meters to register in the inital zone.
+-- @field #boolean welcome If true, display welcome message to player.
 -- @extends Core.Fsm#FSM
 
 --- Be the boss!
@@ -1225,6 +1226,7 @@ AIRBOSS = {
   trappath       = nil,
   trapprefix     = nil,
   initialmaxalt  = nil,
+  welcome        = nil,
 }
 
 --- Aircraft types capable of landing on carrier (human+AI).
@@ -1671,7 +1673,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="0.9.9.9"
+AIRBOSS.version="1.0.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1889,6 +1891,9 @@ function AIRBOSS:New(carriername, alias)
   self:SetMenuMarkZones()
   self:SetMenuSmokeZones()
   self:SetMenuSingleCarrier(false)
+  
+  -- Welcome players.
+  self:SetWelcomePlayers(true)
   
   -- Init carrier parameters.
   if self.carriertype==AIRBOSS.CarrierType.STENNIS then
@@ -2223,6 +2228,18 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- USER API Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Set welcome messages for players.
+-- @param #AIRBOSS self
+-- @param #boolean switch If true, display welcome message to player.
+-- @return #AIRBOSS self
+function AIRBOSS:SetWelcomePlayers(switch)
+
+  self.welcome=switch
+
+  return self
+end
+
 
 --- Set carrier controlled area (CCA).
 -- This is a large zone around the carrier, which is constantly updated wrt the carrier position.
@@ -7126,7 +7143,9 @@ function AIRBOSS:_NewPlayer(unitname)
       self.playerscores[playername]=self.playerscores[playername] or {}
       
       -- Welcome player message.
-      self:MessageToPlayer(playerData, string.format("Welcome, %s %s!", playerData.difficulty, playerData.name), string.format("AIRBOSS %s", self.alias), "", 5)
+      if self.welcome then
+        self:MessageToPlayer(playerData, string.format("Welcome, %s %s!", playerData.difficulty, playerData.name), string.format("AIRBOSS %s", self.alias), "", 5)
+      end
     
     end
     
@@ -17071,15 +17090,11 @@ function AIRBOSS:onafterSave(From, Event, To, path, filename)
     filename=path.."\\"..filename
   end
 
-  -- Info
-  local text=string.format("Saving player LSO grades to file %s", filename)
-  MESSAGE:New(text,30):ToAllIf(self.Debug)
-  self:I(self.lid..text)
-
   -- Header line
   local scores="Name,Pass,Points Final,Points Pass,Grade,Details,Wire,Tgroove,Case,Wind,Modex,Airframe,Carrier Type,Carrier Name,Theatre,Mission Time,Mission Date,OS Date\n"
   
   -- Loop over all players.
+  local n=0
   for playername,grades in pairs(self.playerscores) do
   
     -- Loop over player grades table.
@@ -17106,8 +17121,13 @@ function AIRBOSS:onafterSave(From, Event, To, path, filename)
       scores=scores..string.format("%s,%d,%s,%.1f,%s,%s,%s,%s,%d,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
       playername, i, finalscore, grade.points, grade.grade, grade.details, wire, Tgroove, grade.case,
       grade.wind, grade.modex, grade.airframe, grade.carriertype, grade.carriername, grade.theatre, grade.mitime, grade.midate, grade.osdate)
+      n=n+1
     end
   end
+  
+  -- Info
+  local text=string.format("Saving %d player LSO grades to file %s", n, filename)
+  self:I(self.lid..text)  
   
   -- Save file.
   _savefile(filename, scores)
@@ -17219,6 +17239,7 @@ function AIRBOSS:onafterLoad(From, Event, To, path, filename)
   self.playerscores={}
 
   -- Loop over all lines.
+  local n=0
   for _,gradeline in pairs(playergrades) do
 
     -- Parameters are separated by commata.
@@ -17264,9 +17285,15 @@ function AIRBOSS:onafterLoad(From, Event, To, path, filename)
     -- Add grade to table.
     table.insert(self.playerscores[playername], grade)
     
+    n=n+1
+    
     -- Debug info.
     self:T2({playername, self.playerscores[playername]})   
   end
+  
+  -- Info message.
+  local text=string.format("Loaded %d player LSO grades from file %s", n, filename)
+  self:I(self.lid..text)  
   
 end
 
