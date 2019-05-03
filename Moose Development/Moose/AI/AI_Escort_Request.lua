@@ -243,6 +243,7 @@ function AI_ESCORT_REQUEST:SpawnEscort()
       LeaderEscort:MessageTypeToGroup( Report:Text(),  MESSAGE.Type.Information, self.EscortUnit )
       self:FormationTrail( 50, 50, 50 )
       self:JoinFormation( EscortGroup )
+      self:Menus()
     end
   )
 
@@ -253,7 +254,7 @@ end
 function AI_ESCORT_REQUEST:onafterStart( EscortGroupSet )
 
   if not self.MenuRequestEscort then
-    self.MenuRequestEscort = MENU_GROUP_COMMAND:New( self.LeaderGroup, "Request A2G Escort", nil, 
+    self.MenuRequestEscort = MENU_GROUP_COMMAND:New( self.LeaderGroup, "Request A2G Escort", self.FlightMenu, 
       function()
         self:SpawnEscort()
       end
