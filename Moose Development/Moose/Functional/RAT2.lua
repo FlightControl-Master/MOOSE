@@ -22,6 +22,7 @@
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug Debug mode. Messages to all about status.
 -- @field #string lid Class id string for output to DCS log file.
+-- @field #table Qspawn Queue of ratcraft to spawn.
 -- @extends Core.Fsm#FSM
 
 --- Be surprised!
@@ -39,12 +40,8 @@ RAT2 = {
   ClassName      = "RAT2",
   Debug          = false,
   lid            = nil,
+  Qspawn         =  {},
 }
-
---- Aircraft types capable of landing on carrier (human+AI).
--- @type RAT2.Ratcraft
--- @field Functional.RatCraft#RATCRAFT ratcraft RAT aircraft group.
--- @field #number ntot Total number of alive aircraft groups alive.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -58,7 +55,6 @@ function RAT2:New()
   -- Inherit everthing from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #RAT2
   
-
   -- Start State.
   self:SetStartState("Stopped")
 
@@ -72,10 +68,14 @@ end
 
 --- Create a new RAT2 class object.
 -- @param #RAT2 self
+-- @param #RATAC ratcraft The aircraft to add.
 -- @return #RAT2 self.
-function RAT2:AddAircraft(template, n)
+function RAT2:AddAircraft(ratcraft)
 
+  -- Add ratcraft to spawn queue.
+  table.insert(self.Qspawn, ratcraft)
 
+  return self
 end
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -88,37 +88,425 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function RAT2:onafterStatus(From, Event, To)
+
+  -- Check queue of aircraft to spawn.
+  self:_CheckQueueSpawn()
   
+  self:__Status(-30)
 end
 
 
 --- Check spawn queue and spawn aircraft if necessary.
 -- @param #RAT2 self
-function RAT2:_CheckQueue()
+function RAT2:_CheckQueueSpawn()
 
   for i,_ratcraft in pairs(self.Qspawn) do
-    local ratcraft=_ratcraft --Functional.RatCraft#RATCRAFT
+    local ratcraft=_ratcraft --#RATAC
+    
+    --ratcraft.actype
     
     --- Check if
     -- Time has passed.
     -- Already enough aircraft are alive
     
-    local nalive=ratcraft:_GetAliveGroups()
-    
-    if nalive<ratcraft.ntot then
-      
       -- Try to spawn a ratcraft group.
-      local spawned=self:_TrySpawnRatcraft(ratcraft)
-      
-      -- Remove queue item and break loop.
-      if spawned then
-        table.remove(self.Qspawn, i)
-        break
-      end
-      
+    local spawned=self:_TrySpawnRatcraft(ratcraft)
+    
+    -- Remove queue item and break loop.
+    if spawned then
+      table.remove(self.Qspawn, i)
+      break
     end
+  end  
+  
+end
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Spawn functions
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Spawn an aircraft asset (plane or helo) at the airbase associated with the warehouse.
+-- @param #RAT2 self
+-- @param #RATAC ratcraft
+-- @return #boolean If true, ratcraft was spawned.
+function RAT2:_TrySpawnRatcraft(ratcraft)
+
+  -- TODO: loop over departure airbases.
+  
+  for _,_departure in pairs(ratcraft.departures) do
+  
+    local departure=_departure --#RATAC.Departure
+    
+    local parking=nil
+    
+    if departure.type==RATAC.DeType.AIRBASE then
+    
+      -- Get parking data.
+      local parking=self:_FindParking(departure.airbase, ratcraft)
+    
+      -- Check if enough parking is available.
+      if parking then
+        self:_SpawnRatcraft()
+        return true
+      end      
+    
+    
+    elseif departure.type==RATAC.DeType.ZONE then
+    
+    end
+
+
+    
   end
   
+  
+  return false
+end
+
+
+--- Spawn an aircraft asset (plane or helo) at the airbase associated with the warehouse.
+-- @param #RAT2 self
+-- @param #RATAC ratcraft Ratcraft to spawn.
+-- @param #table parking Parking data for this asset.
+-- @param #boolean uncontrolled Spawn aircraft in uncontrolled state.
+
+-- @return Wrapper.Group#GROUP The spawned group or nil if the group could not be spawned.
+function RAT2:_SpawnRatcraft(ratcraft, departure, destination, parking, uncontrolled)
+
+  -- Prepare the spawn template.
+  local template=self:_SpawnAssetPrepareTemplate(ratcraft, alias)
+  
+    -- Get flight path if the group goes to another warehouse by itself.
+  template.route.points=self:_GetFlightplan(ratcraft, departure, destination)
+  
+  -- Get airbase ID and category.
+  local AirbaseID = self.airbase:GetID()
+  local AirbaseCategory = self:GetAirbaseCategory()
+  
+  -- Check enough parking spots.
+  if AirbaseCategory==Airbase.Category.HELIPAD or AirbaseCategory==Airbase.Category.SHIP then
+  
+    --TODO Figure out what's necessary in this case.
+  
+  else
+  
+    if #parking<#template.units then
+      local text=string.format("ERROR: Not enough parking! Free parking = %d < %d aircraft to be spawned.", #parking, #template.units)
+      self:_DebugMessage(text)
+      return nil
+    end
+  
+  end
+  
+  -- Position the units.
+  for i=1,#template.units do
+  
+    -- Unit template.
+    local unit = template.units[i]
+  
+    if AirbaseCategory == Airbase.Category.HELIPAD or AirbaseCategory == Airbase.Category.SHIP then
+  
+      -- Helipads we take the position of the airbase location, since the exact location of the spawn point does not make sense.
+      local coord=self.airbase:GetCoordinate()
+  
+      unit.x=coord.x
+      unit.y=coord.z
+      unit.alt=coord.y
+  
+      unit.parking_id = nil
+      unit.parking    = nil
+  
+    else
+  
+      local coord=parking[i].Coordinate    --Core.Point#COORDINATE
+      local terminal=parking[i].TerminalID --#number
+  
+      if self.Debug then
+        coord:MarkToAll(string.format("Spawnplace unit %s terminal %d.", unit.name, terminal))
+      end
+  
+      unit.x=coord.x
+      unit.y=coord.z
+      unit.alt=coord.y
+  
+      unit.parking_id = nil
+      unit.parking    = terminal
+  
+    end
+  
+    if asset.livery then
+      unit.livery_id = asset.livery
+    end
+    if asset.skill then
+      unit.skill= asset.skill
+    end
+  
+  end
+  
+  -- And template position.
+  template.x = template.units[1].x
+  template.y = template.units[1].y
+  
+  -- Uncontrolled spawning.
+  template.uncontrolled=uncontrolled
+  
+  -- Debug info.
+  self:T2({airtemplate=template})
+  
+  -- Spawn group.
+  local group=_DATABASE:Spawn(template) --Wrapper.Group#GROUP
+  
+  return group
+end
+
+
+--- Prepare a spawn template for the asset. Deep copy of asset template, adjusting template and unit names, nillifying group and unit ids.
+-- @param #RAT2 self
+-- @param #RATAC ratcraft Aircraft that will be spawned.
+-- @param #string alias Alias name of the group.
+-- @return #table Prepared new spawn template.
+function RAT2:_SpawnAssetPrepareTemplate(ratcraft, alias)
+
+  -- Create an own copy of the template!
+  local template=UTILS.DeepCopy(ratcraft.template)
+
+  -- Set unique name.
+  template.name=alias
+
+  -- Set current(!) coalition and country.
+  template.CoalitionID=ratcraft.coalition
+  template.CountryID=ratcraft.country
+
+  -- Nillify the group ID.
+  template.groupId=nil
+
+  -- No late activation.
+  template.lateActivation=false
+
+  -- Set and empty route.
+  template.route = {}
+  template.route.routeRelativeTOT=true
+  template.route.points = {}
+
+  -- Handle units.
+  for i=1,#template.units do
+
+    -- Unit template.
+    local unit = template.units[i]
+
+    -- Nillify the unit ID.
+    unit.unitId=nil
+
+    -- Set unit name: <alias>-01, <alias>-02, ...
+    unit.name=string.format("%s-%02d", template.name , i)
+
+  end
+
+  return template
+end
+
+--@param #RCRAFT.Attribute _attribute Generlized attribute of unit.
+
+--- Get the proper terminal type based on generalized attribute of the group.
+--@param #RAT2 self
+--@param #number _category Airbase category.
+--@return Wrapper.Airbase#AIRBASE.TerminalType Terminal type for this group.
+function RAT2:_GetTerminal(_attribute, _category)
+
+  -- Default terminal is "large".
+  local _terminal=AIRBASE.TerminalType.OpenBig
+
+  if _attribute==RCRAFT.Attribute.FIGHTER then
+    -- Fighter ==> small.
+    _terminal=AIRBASE.TerminalType.FighterAircraft
+  elseif _attribute==RCRAFT.Attribute.BOMBER or _attribute==RCRAFT.Attribute.TRANSPORTPLANE or _attribute==RCRAFT.Attribute.TANKER or _attribute==RCRAFT.Attribute.AWACS then
+    -- Bigger aircraft.
+    _terminal=AIRBASE.TerminalType.OpenBig
+  elseif _attribute==RCRAFT.Attribute.TRANSPORTHELO or _attribute==RCRAFT.Attribute.ATTACKHELO then
+    -- Helicopter.
+    _terminal=AIRBASE.TerminalType.HelicopterUsable
+  else
+    --_terminal=AIRBASE.TerminalType.OpenMedOrBig
+  end
+
+  -- For ships, we allow medium spots for all fixed wing aircraft. There are smaller tankers and AWACS aircraft that can use a carrier.
+  if _category==Airbase.Category.SHIP then
+    if not (_attribute==RCRAFT.Attribute.TRANSPORTHELO or _attribute==RCRAFT.Attribute.ATTACKHELO) then
+      _terminal=AIRBASE.TerminalType.OpenMedOrBig
+    end
+  end
+
+  return _terminal
+end
+
+
+--- Seach unoccupied parking spots at the airbase for a list of assets. For each asset group a list of parking spots is returned.
+-- During the search also the not yet spawned asset aircraft are considered.
+-- If not enough spots for all asset units could be found, the routine returns nil!
+-- @param #RAT2 self
+-- @param Wrapper.Airbase#AIRBASE airbase The airbase where we search for parking spots.
+-- @param #RATAC ratcraft Ratcraft.
+-- @return #table Table of coordinates and terminal IDs of free parking spots. Each table entry has the elements .Coordinate and .TerminalID.
+function RAT2:_FindParking(airbase, ratcraft)
+
+  -- Init default
+  local scanradius=100
+  local scanunits=true
+  local scanstatics=true
+  local scanscenery=false
+  local verysafe=false
+
+  -- Function calculating the overlap of two (square) objects.
+  local function _overlap(l1,l2,dist)
+    local safedist=(l1/2+l2/2)*1.05  -- 5% safety margine added to safe distance!
+    local safe = (dist > safedist)
+    self:T3(string.format("l1=%.1f l2=%.1f s=%.1f d=%.1f ==> safe=%s", l1,l2,safedist,dist,tostring(safe)))
+    return safe
+  end
+
+  -- Get parking spot data table. This contains all free and "non-free" spots.
+  local parkingdata=airbase:GetParkingSpotsTable()
+
+  -- List of obstacles.
+  local obstacles={}
+
+  -- Loop over all parking spots and get the currently present obstacles.
+  -- How long does this take on very large airbases, i.e. those with hundereds of parking spots? Seems to be okay!
+  for _,parkingspot in pairs(parkingdata) do
+
+    -- Coordinate of the parking spot.
+    local _spot=parkingspot.Coordinate   -- Core.Point#COORDINATE
+    local _termid=parkingspot.TerminalID
+
+    -- Scan a radius of 100 meters around the spot.
+    local _,_,_,_units,_statics,_sceneries=_spot:ScanObjects(scanradius, scanunits, scanstatics, scanscenery)
+
+    -- Check all units.
+    for _,_unit in pairs(_units) do
+      local unit=_unit --Wrapper.Unit#UNIT
+      local _coord=unit:GetCoordinate()
+      local _size=self:_GetObjectSize(unit:GetDCSObject())
+      local _name=unit:GetName()
+      table.insert(obstacles, {coord=_coord, size=_size, name=_name, type="unit"})
+    end
+
+    -- Check all statics.
+    for _,static in pairs(_statics) do
+      local _vec3=static:getPoint()
+      local _coord=COORDINATE:NewFromVec3(_vec3)
+      local _name=static:getName()
+      local _size=self:_GetObjectSize(static)
+      table.insert(obstacles, {coord=_coord, size=_size, name=_name, type="static"})
+    end
+
+    -- Check all scenery.
+    for _,scenery in pairs(_sceneries) do
+      local _vec3=scenery:getPoint()
+      local _coord=COORDINATE:NewFromVec3(_vec3)
+      local _name=scenery:getTypeName()
+      local _size=self:_GetObjectSize(scenery)
+      table.insert(obstacles,{coord=_coord, size=_size, name=_name, type="scenery"})
+    end
+    
+    -- TODO check clients. Clients cannot be spawned. So we can loop over them.
+
+  end
+
+  -- Parking data for all assets.
+  local parking={}
+
+  -- Get terminal type of this asset
+  local terminaltype=self:_GetTerminal(ratcraft.attribute, airbase:GetAirbaseCategory())
+
+  -- Loop over all units - each one needs a spot.
+  --TODO: nunits should be counted from alive units.
+  for i=1,ratcraft.nunits do
+
+    -- Loop over all parking spots.
+    local gotit=false
+    for _,_parkingspot in pairs(parkingdata) do
+      local parkingspot=_parkingspot --Wrapper.Airbase#AIRBASE.ParkingSpot
+
+      -- Check correct terminal type for asset. We don't want helos in shelters etc.
+      if AIRBASE._CheckTerminalType(parkingspot.TerminalType, terminaltype) then
+
+        -- Coordinate of the parking spot.
+        local _spot=parkingspot.Coordinate   -- Core.Point#COORDINATE
+        local _termid=parkingspot.TerminalID
+        local _toac=parkingspot.TOAC
+
+        --env.info(string.format("FF asset=%s (id=%d): needs terminal type=%d, id=%d, #obstacles=%d", _asset.templatename, _asset.uid, terminaltype, _termid, #obstacles))
+
+        local free=true
+        local problem=nil
+
+        -- Safe parking using TO_AC from DCS result.
+        if self.safeparking and _toac then
+          free=false
+          self:T("Parking spot %d is occupied by other aircraft taking off or landing.", _termid)
+        end
+
+        -- Loop over all obstacles.
+        for _,obstacle in pairs(obstacles) do
+
+          -- Check if aircraft overlaps with any obstacle.
+          local dist=_spot:Get2DDistance(obstacle.coord)
+          -- TODO: ratcraft size!
+          local safe=_overlap(ratcraft.size, obstacle.size, dist)
+
+          -- Spot is blocked.
+          if not safe then
+            --env.info(string.format("FF asset=%s (id=%d): spot id=%d dist=%.1fm is NOT SAFE", _asset.templatename, _asset.uid, _termid, dist))
+            free=false
+            problem=obstacle
+            problem.dist=dist
+            break
+          else
+            --env.info(string.format("FF asset=%s (id=%d): spot id=%d dist=%.1fm is SAFE", _asset.templatename, _asset.uid, _termid, dist))
+          end
+
+        end
+
+        -- Check if spot is free
+        if free then
+
+          -- Add parkingspot for this asset unit.
+          table.insert(parking, parkingspot)
+
+          self:T(self.wid..string.format("Parking spot #%d is free for ratcraft unit id=%d!", _termid, i))
+
+          -- Add the unit as obstacle so that this spot will not be available for the next unit.
+          -- TODO: ratcraft templatename.
+          table.insert(obstacles, {coord=_spot, size=ratcraft.size, name=ratcraft.templatename, type="ratcraft"})
+
+          -- Break loop over parking spots.
+          gotit=true
+          break
+
+        else
+
+          -- Debug output for occupied spots.
+          self:T(self.wid..string.format("Parking spot #%d is occupied or not big enough!", _termid))
+          if self.Debug then
+            local coord=problem.coord --Core.Point#COORDINATE
+            local text=string.format("Obstacle blocking spot #%d is %s type %s with size=%.1f m and distance=%.1f m.", _termid, problem.name, problem.type, problem.size, problem.dist)
+            coord:MarkToAll(string.format(text))
+          end
+
+        end
+
+      end -- check terminal type
+    end -- loop over parking spots
+
+    -- No parking spot for at least one unit :(
+    if not gotit then
+      self:T(self.wid..string.format("WARNING: No free parking spot for ratcraft unit i=%d", i))
+      return nil
+    end
+    
+  end -- loop over units
+
+  return parking
 end
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -162,7 +550,7 @@ end
 
 --- Make a flight plan from a departure to a destination airport.
 -- @param #RAT2 self
--- @param Functional.RatCraft#RATCRAFT ratcraft Ratcraft object.
+-- @param #RATAC ratcraft Ratcraft object.
 -- @param Wrapper.Airbase#AIRBASE departure Departure airbase.
 -- @param Wrapper.Airbase#AIRBASE destination Destination airbase.
 -- @return #table Table of flightplan waypoints.
@@ -409,385 +797,165 @@ function RAT2:_GetFlightplan(ratcraft, departure, destination)
   return wp,c
 end
 
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- Spawn functions
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--- RATCRAFT
+-- 
+-- @type RATAC
+-- @field #string ClassName Name of the class.
+-- @field #boolean Debug Debug mode. Messages to all about status.
+-- @field #string lid Class id string for output to DCS log file.
+-- @field #number coalition Coalition side.
+-- @field #number country Country number.
+-- @field #number size Max size in meters.
+-- @field #table liveries Table of liveries.
+-- @field #string livery Livery.
+-- @field #string actype Aircraft type name.
+-- @field #number category Category (plane=X, helo=Y).
+-- @field #string attribute Attribute.
+-- @field #table template Spawn template table.
+-- @extends Core.Fsm#FSM
+RATAC = {
+  ClassName      = "RCRAFT",
+  Debug          = false,
+  lid            = nil,
+  templatename   = nil,
+  alias          = nil,
+  idx            =   0,
+  liveries       =  {},
+  livery         = nil,
+  actype         = nil,
+  attribute      = nil,
+  ceiling        = nil,
+  speedmax       = nil,
+  sizex          = nil,
+  sizez          = nil,
+  size           = nil,
+  coalition      = nil,
+  country        = nil,
+  skill          = nil,
+  onboard        = nil,
+  departures     =  {},
+  destinations   =  {},
+  departure      = nil,
+  destination    = nil,
+  commute        = nil,
+  takeoff        = nil,
+  landing        = nil,
+}
 
---- Spawn an aircraft asset (plane or helo) at the airbase associated with the warehouse.
--- @param #RAT2 self
--- @param Funtional.RatCraft#RATCRAFT ratcraft
--- @return #boolean If true, ratcraft was spawned.
-function RAT2:_TrySpawnRatcraft(ratcraft)
+--- Generalized asset attributes. Can be used to request assets with certain general characteristics. See [DCS attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes) on hoggit.
+-- @type RATAC.Attribute
+-- @field #string TRANSPORTPLANE Airplane with transport capability. This can be used to transport other assets.
+-- @field #string AWACS Airborne Early Warning and Control System.
+-- @field #string FIGHTER Fighter, interceptor, ... airplane.
+-- @field #string BOMBER Aircraft which can be used for strategic bombing.
+-- @field #string TANKER Airplane which can refuel other aircraft.
+-- @field #string TRANSPORTHELO Helicopter with transport capability. This can be used to transport other assets.
+-- @field #string ATTACKHELO Attack helicopter.
+-- @field #string UAV Unpiloted Aerial Vehicle, e.g. drones.
+RATAC.Attribute = {
+  TRANSPORTPLANE="TransportPlane",
+  AWACS="AWACS",
+  FIGHTER="Fighter",
+  BOMBER="Bomber",
+  TANKER="Tanker",
+  TRANSPORTHELO="TransportHelo",
+  ATTACKHELO="AttackHelo",
+  UAV="UAV",
+  OTHER="Other",
+}
 
-  -- TODO: loop over departure airbases.
-  
-  for _,airbase in pairs(ratcraft.departures) do
+--- Departure/destination 
+-- @type RATAC.DeType
+-- @field #string AIRBASE Departure/destination is an airbase.
+-- @field #string ZONE Departure/destination is a zone.
+RATAC.DeType={
+  AIRBASE="Airbase",
+  ZONE="Zone",
+}
 
-    -- Get parking data.
-    local parking=self:_FindParking(airbase, ratcraft)
+--- Departure/destination 
+-- @type RATAC.Departure
+-- @field #string name
+-- @field #string type
+
+--- Create a new AIRBOSS class object for a specific aircraft carrier unit.
+-- @param #RATAC self
+-- @param #string groupname Name of the group 
+-- @return #RATAC self
+function RATAC:New(groupname, alias)
+
+  -- Inherit everything from FSM class.
+  local self=BASE:Inherit(self, FSM:New()) --#RCRAFT
   
-    -- Check if enough parking is available.
-    if parking then
-      self:_SpawnRatcraft()
-      return true
-    end
-    
-  end
+  
+  self.templatename=groupname
+  self.alias=alias
   
   
-  return false
+  -- Start State.
+  self:SetStartState("Stopped")
+
+  -- Add FSM transitions.
+  --                 From State  -->   Event      -->     To State
+  self:AddTransition("Stopped",       "Load",            "Stopped")     -- Load player scores from file.
+  self:AddTransition("Stopped",       "Start",           "Running")     -- Start RAT2 script.
+  
+  return self
 end
 
---- Spawn an aircraft asset (plane or helo) at the airbase associated with the warehouse.
--- @param #RAT2 self
--- @param #string alias Alias name of the asset group.
--- @param #WAREHOUSE.Assetitem asset Ground asset that will be spawned.
--- @param #WAREHOUSE.Queueitem request Request belonging to this asset. Needed for the name/alias.
--- @param #table parking Parking data for this asset.
--- @param #boolean uncontrolled Spawn aircraft in uncontrolled state.
--- @return Wrapper.Group#GROUP The spawned group or nil if the group could not be spawned.
-function RAT2:_SpawnRatcraft(ratcraft, departure, destination, parking, uncontrolled)
+--- Init aircraft parameters.
+-- @param #RATAC self
+-- @return #RATAC self
+function RATAC:_Init()
 
-  -- Prepare the spawn template.
-  local template=self:_SpawnAssetPrepareTemplate(ratcraft, alias)
+
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- User Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Add a departure to 
+-- @param #RATAC self
+-- @return #RATAC self
+function RATAC:AddDeparture(departure)
+
+  local departure={} --#RATAC.Departure
   
-    -- Get flight path if the group goes to another warehouse by itself.
-  template.route.points=self:_GetFlightplan(asset, self.airbase, request.warehouse.airbase)
-  
-  -- Get airbase ID and category.
-  local AirbaseID = self.airbase:GetID()
-  local AirbaseCategory = self:GetAirbaseCategory()
-  
-  -- Check enough parking spots.
-  if AirbaseCategory==Airbase.Category.HELIPAD or AirbaseCategory==Airbase.Category.SHIP then
-  
-    --TODO Figure out what's necessary in this case.
+  departure.type={}
+
+  if type(departure)=="string" then
   
   else
   
-    if #parking<#template.units then
-      local text=string.format("ERROR: Not enough parking! Free parking = %d < %d aircraft to be spawned.", #parking, #template.units)
-      self:_DebugMessage(text)
-      return nil
-    end
-  
   end
-  
-  -- Position the units.
-  for i=1,#template.units do
-  
-    -- Unit template.
-    local unit = template.units[i]
-  
-    if AirbaseCategory == Airbase.Category.HELIPAD or AirbaseCategory == Airbase.Category.SHIP then
-  
-      -- Helipads we take the position of the airbase location, since the exact location of the spawn point does not make sense.
-      local coord=self.airbase:GetCoordinate()
-  
-      unit.x=coord.x
-      unit.y=coord.z
-      unit.alt=coord.y
-  
-      unit.parking_id = nil
-      unit.parking    = nil
-  
-    else
-  
-      local coord=parking[i].Coordinate    --Core.Point#COORDINATE
-      local terminal=parking[i].TerminalID --#number
-  
-      if self.Debug then
-        coord:MarkToAll(string.format("Spawnplace unit %s terminal %d.", unit.name, terminal))
-      end
-  
-      unit.x=coord.x
-      unit.y=coord.z
-      unit.alt=coord.y
-  
-      unit.parking_id = nil
-      unit.parking    = terminal
-  
-    end
-  
-    if asset.livery then
-      unit.livery_id = asset.livery
-    end
-    if asset.skill then
-      unit.skill= asset.skill
-    end
-  
-  end
-  
-  -- And template position.
-  template.x = template.units[1].x
-  template.y = template.units[1].y
-  
-  -- Uncontrolled spawning.
-  template.uncontrolled=uncontrolled
-  
-  -- Debug info.
-  self:T2({airtemplate=template})
-  
-  -- Spawn group.
-  local group=_DATABASE:Spawn(template) --Wrapper.Group#GROUP
-  
-  return group
+
 end
 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Departure Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Prepare a spawn template for the asset. Deep copy of asset template, adjusting template and unit names, nillifying group and unit ids.
--- @param #RAT2 self
--- @param Functional.RatCraft#RATCRAFT ratcraft Aircraft that will be spawned.
--- @param #string alias Alias name of the group.
--- @return #table Prepared new spawn template.
-function RAT2:_SpawnAssetPrepareTemplate(ratcraft, alias)
+--- Get departure.
+-- @param #RATAC self
+-- @return Wrapper.Airbase#AIRBASE
+function RATAC:_GetDeparture()
 
-  -- Create an own copy of the template!
-  local template=UTILS.DeepCopy(ratcraft.template)
+  
+  
 
-  -- Set unique name.
-  template.name=alias
-
-  -- Set current(!) coalition and country.
-  template.CoalitionID=ratcraft.coalition
-  template.CountryID=ratcraft.country
-
-  -- Nillify the group ID.
-  template.groupId=nil
-
-  -- No late activation.
-  template.lateActivation=false
-
-  -- Set and empty route.
-  template.route = {}
-  template.route.routeRelativeTOT=true
-  template.route.points = {}
-
-  -- Handle units.
-  for i=1,#template.units do
-
-    -- Unit template.
-    local unit = template.units[i]
-
-    -- Nillify the unit ID.
-    unit.unitId=nil
-
-    -- Set unit name: <alias>-01, <alias>-02, ...
-    unit.name=string.format("%s-%02d", template.name , i)
-
-  end
-
-  return template
 end
 
---- Get the proper terminal type based on generalized attribute of the group.
---@param #RAT2 self
---@param #RATCRAFT.Attribute _attribute Generlized attribute of unit.
---@param #number _category Airbase category.
---@return Wrapper.Airbase#AIRBASE.TerminalType Terminal type for this group.
-function RAT2:_GetTerminal(_attribute, _category)
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Status Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-  -- Default terminal is "large".
-  local _terminal=AIRBASE.TerminalType.OpenBig
+--- Get number of alive groups
+-- @param #RATAC self
+-- @return #number N live.
+function RATAC:_GetAliveGroups()
 
-  if _attribute==RATCRAFT.Attribute.FIGHTER then
-    -- Fighter ==> small.
-    _terminal=AIRBASE.TerminalType.FighterAircraft
-  elseif _attribute==RATCRAFT.Attribute.BOMBER or _attribute==RATCRAFT.Attribute.TRANSPORTPLANE or _attribute==RATCRAFT.Attribute.TANKER or _attribute==RATCRAFT.Attribute.AWACS then
-    -- Bigger aircraft.
-    _terminal=AIRBASE.TerminalType.OpenBig
-  elseif _attribute==RATCRAFT.Attribute.TRANSPORTHELO or _attribute==RATCRAFT.Attribute.ATTACKHELO then
-    -- Helicopter.
-    _terminal=AIRBASE.TerminalType.HelicopterUsable
-  else
-    --_terminal=AIRBASE.TerminalType.OpenMedOrBig
-  end
-
-  -- For ships, we allow medium spots for all fixed wing aircraft. There are smaller tankers and AWACS aircraft that can use a carrier.
-  if _category==Airbase.Category.SHIP then
-    if not (_attribute==RATCRAFT.Attribute.TRANSPORTHELO or _attribute==RATCRAFT.Attribute.ATTACKHELO) then
-      _terminal=AIRBASE.TerminalType.OpenMedOrBig
-    end
-  end
-
-  return _terminal
+  return 0
 end
 
-
---- Seach unoccupied parking spots at the airbase for a list of assets. For each asset group a list of parking spots is returned.
--- During the search also the not yet spawned asset aircraft are considered.
--- If not enough spots for all asset units could be found, the routine returns nil!
--- @param #RAT2 self
--- @param Wrapper.Airbase#AIRBASE airbase The airbase where we search for parking spots.
--- @param #table assets A table of assets for which the parking spots are needed.
--- @return #table Table of coordinates and terminal IDs of free parking spots. Each table entry has the elements .Coordinate and .TerminalID.
-function RAT2:_FindParking(airbase, ratcraft)
-
-  -- Init default
-  local scanradius=100
-  local scanunits=true
-  local scanstatics=true
-  local scanscenery=false
-  local verysafe=false
-
-  -- Function calculating the overlap of two (square) objects.
-  local function _overlap(l1,l2,dist)
-    local safedist=(l1/2+l2/2)*1.05  -- 5% safety margine added to safe distance!
-    local safe = (dist > safedist)
-    self:T3(string.format("l1=%.1f l2=%.1f s=%.1f d=%.1f ==> safe=%s", l1,l2,safedist,dist,tostring(safe)))
-    return safe
-  end
-
-  -- Get parking spot data table. This contains all free and "non-free" spots.
-  local parkingdata=airbase:GetParkingSpotsTable()
-
-  -- List of obstacles.
-  local obstacles={}
-
-  -- Loop over all parking spots and get the currently present obstacles.
-  -- How long does this take on very large airbases, i.e. those with hundereds of parking spots? Seems to be okay!
-  for _,parkingspot in pairs(parkingdata) do
-
-    -- Coordinate of the parking spot.
-    local _spot=parkingspot.Coordinate   -- Core.Point#COORDINATE
-    local _termid=parkingspot.TerminalID
-
-    -- Scan a radius of 100 meters around the spot.
-    local _,_,_,_units,_statics,_sceneries=_spot:ScanObjects(scanradius, scanunits, scanstatics, scanscenery)
-
-    -- Check all units.
-    for _,_unit in pairs(_units) do
-      local unit=_unit --Wrapper.Unit#UNIT
-      local _coord=unit:GetCoordinate()
-      local _size=self:_GetObjectSize(unit:GetDCSObject())
-      local _name=unit:GetName()
-      table.insert(obstacles, {coord=_coord, size=_size, name=_name, type="unit"})
-    end
-
-    -- Check all statics.
-    for _,static in pairs(_statics) do
-      local _vec3=static:getPoint()
-      local _coord=COORDINATE:NewFromVec3(_vec3)
-      local _name=static:getName()
-      local _size=self:_GetObjectSize(static)
-      table.insert(obstacles, {coord=_coord, size=_size, name=_name, type="static"})
-    end
-
-    -- Check all scenery.
-    for _,scenery in pairs(_sceneries) do
-      local _vec3=scenery:getPoint()
-      local _coord=COORDINATE:NewFromVec3(_vec3)
-      local _name=scenery:getTypeName()
-      local _size=self:_GetObjectSize(scenery)
-      table.insert(obstacles,{coord=_coord, size=_size, name=_name, type="scenery"})
-    end
-    
-    -- TODO check clients. Clients cannot be spawned. So we can loop over them.
-
-  end
-
-  -- Parking data for all assets.
-  local parking={}
-
-  -- Get terminal type of this asset
-  local terminaltype=self:_GetTerminal(ratcraft.attribute, self:GetAirbaseCategory())
-
-  -- Loop over all units - each one needs a spot.
-  --TODO: nunits should be counted from alive units.
-  for i=1,ratcraft.nunits do
-
-    -- Loop over all parking spots.
-    local gotit=false
-    for _,_parkingspot in pairs(parkingdata) do
-      local parkingspot=_parkingspot --Wrapper.Airbase#AIRBASE.ParkingSpot
-
-      -- Check correct terminal type for asset. We don't want helos in shelters etc.
-      if AIRBASE._CheckTerminalType(parkingspot.TerminalType, terminaltype) then
-
-        -- Coordinate of the parking spot.
-        local _spot=parkingspot.Coordinate   -- Core.Point#COORDINATE
-        local _termid=parkingspot.TerminalID
-        local _toac=parkingspot.TOAC
-
-        --env.info(string.format("FF asset=%s (id=%d): needs terminal type=%d, id=%d, #obstacles=%d", _asset.templatename, _asset.uid, terminaltype, _termid, #obstacles))
-
-        local free=true
-        local problem=nil
-
-        -- Safe parking using TO_AC from DCS result.
-        if self.safeparking and _toac then
-          free=false
-          self:T("Parking spot %d is occupied by other aircraft taking off or landing.", _termid)
-        end
-
-        -- Loop over all obstacles.
-        for _,obstacle in pairs(obstacles) do
-
-          -- Check if aircraft overlaps with any obstacle.
-          local dist=_spot:Get2DDistance(obstacle.coord)
-          -- TODO: ratcraft size!
-          local safe=_overlap(ratcraft.size, obstacle.size, dist)
-
-          -- Spot is blocked.
-          if not safe then
-            --env.info(string.format("FF asset=%s (id=%d): spot id=%d dist=%.1fm is NOT SAFE", _asset.templatename, _asset.uid, _termid, dist))
-            free=false
-            problem=obstacle
-            problem.dist=dist
-            break
-          else
-            --env.info(string.format("FF asset=%s (id=%d): spot id=%d dist=%.1fm is SAFE", _asset.templatename, _asset.uid, _termid, dist))
-          end
-
-        end
-
-        -- Check if spot is free
-        if free then
-
-          -- Add parkingspot for this asset unit.
-          table.insert(parking, parkingspot)
-
-          self:T(self.wid..string.format("Parking spot #%d is free for ratcraft unit id=%d!", _termid, i))
-
-          -- Add the unit as obstacle so that this spot will not be available for the next unit.
-          -- TODO: ratcraft templatename.
-          table.insert(obstacles, {coord=_spot, size=ratcraft.size, name=ratcraft.templatename, type="asset"})
-
-          -- Break loop over parking spots.
-          gotit=true
-          break
-
-        else
-
-          -- Debug output for occupied spots.
-          self:T(self.wid..string.format("Parking spot #%d is occupied or not big enough!", _termid))
-          if self.Debug then
-            local coord=problem.coord --Core.Point#COORDINATE
-            local text=string.format("Obstacle blocking spot #%d is %s type %s with size=%.1f m and distance=%.1f m.", _termid, problem.name, problem.type, problem.size, problem.dist)
-            coord:MarkToAll(string.format(text))
-          end
-
-        end
-
-      end -- check terminal type
-    end -- loop over parking spots
-
-    -- No parking spot for at least one unit :(
-    if not gotit then
-      self:T(self.wid..string.format("WARNING: No free parking spot for ratcraft unit i=%d", i))
-      return nil
-    end
-    
-  end -- loop over units
-
-  return parking
-end
-
-
-
-
-
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- Flightplan functions
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
