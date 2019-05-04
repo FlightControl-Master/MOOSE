@@ -828,23 +828,26 @@ function AI_ESCORT:MenuFlare( MenuTextFormat )
   end
 
   if not self.FlightMenuFlare then
+
     self.FlightMenuFlare = MENU_GROUP:New( self.EscortUnit:GetGroup(), MenuText, self.FlightMenuReportNavigation )
-    self.FlightMenuFlareGreen  = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release green flare",  self.FlightMenuFlare, AI_ESCORT._FlightFlare, self, FLARECOLOR.Green,  "Released a green flare!"   )
-    self.FlightMenuFlareRed    = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release red flare",    self.FlightMenuFlare, AI_ESCORT._FlightFlare, self, FLARECOLOR.Red,    "Released a red flare!"     )
-    self.FlightMenuFlareWhite  = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release white flare",  self.FlightMenuFlare, AI_ESCORT._FlightFlare, self, FLARECOLOR.White,  "Released a white flare!"   )
-    self.FlightMenuFlareYellow = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release yellow flare", self.FlightMenuFlare, AI_ESCORT._FlightFlare, self, FLARECOLOR.Yellow, "Released a yellow flare!"  )
+
+    self.FlightMenuFlareGreen  = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Release green flare",  self.FlightMenuFlare )
+    self.FlightMenuFlareRed    = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Release red flare",    self.FlightMenuFlare )
+    self.FlightMenuFlareWhite  = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Release white flare",  self.FlightMenuFlare )
+    self.FlightMenuFlareYellow = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Release yellow flare", self.FlightMenuFlare )
+
+    self.FlightMenuFlareGreenFlight  = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Flight",  self.FlightMenuFlareGreen, AI_ESCORT._FlightFlare, self, FLARECOLOR.Green,  "Released a green flare!"   )
+    self.FlightMenuFlareRedFlight    = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Flight",    self.FlightMenuFlareRed, AI_ESCORT._FlightFlare, self, FLARECOLOR.Red,    "Released a red flare!"     )
+    self.FlightMenuFlareWhiteFlight  = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Flight",  self.FlightMenuFlareWhite, AI_ESCORT._FlightFlare, self, FLARECOLOR.White,  "Released a white flare!"   )
+    self.FlightMenuFlareYellowFlight = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Flight", self.FlightMenuFlareYellow, AI_ESCORT._FlightFlare, self, FLARECOLOR.Yellow, "Released a yellow flare!"  )
   end
 
   self.EscortGroupSet:ForSomeGroupAlive(
     --- @param Core.Group#GROUP EscortGroup
     function( EscortGroup )
 
-      EscortGroup.EscortMenu = MENU_GROUP:New( self.EscortUnit:GetGroup(), EscortGroup:GetName(), self.MainMenu )
-
-      if not EscortGroup.EscortMenuReportNavigation then
-        EscortGroup.EscortMenuReportNavigation = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Navigation", EscortGroup.EscortMenu )
-      end
-    
+      local EscortGroupName = EscortGroup:GetCallsign()
+  
       local MenuText = ""
       if not MenuTextFormat then
         MenuText = "Flare"
@@ -852,13 +855,10 @@ function AI_ESCORT:MenuFlare( MenuTextFormat )
         MenuText = MenuTextFormat
       end
     
-      if not EscortGroup.EscortMenuFlare then
-        EscortGroup.EscortMenuFlare = MENU_GROUP:New( self.EscortUnit:GetGroup(), MenuText, EscortGroup.EscortMenuReportNavigation )
-        EscortGroup.EscortMenuFlareGreen  = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release green flare",  EscortGroup.EscortMenuFlare, AI_ESCORT._Flare, self, EscortGroup, FLARECOLOR.Green,  "Released a green flare!"   )
-        EscortGroup.EscortMenuFlareRed    = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release red flare",    EscortGroup.EscortMenuFlare, AI_ESCORT._Flare, self, EscortGroup, FLARECOLOR.Red,    "Released a red flare!"     )
-        EscortGroup.EscortMenuFlareWhite  = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release white flare",  EscortGroup.EscortMenuFlare, AI_ESCORT._Flare, self, EscortGroup, FLARECOLOR.White,  "Released a white flare!"   )
-        EscortGroup.EscortMenuFlareYellow = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release yellow flare", EscortGroup.EscortMenuFlare, AI_ESCORT._Flare, self, EscortGroup, FLARECOLOR.Yellow, "Released a yellow flare!"  )
-      end
+      EscortGroup.EscortMenuFlareGreen  = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), EscortGroupName, self.FlightMenuFlareGreen, AI_ESCORT._Flare, self, EscortGroup, FLARECOLOR.Green,  "Released a green flare!"   )
+      EscortGroup.EscortMenuFlareRed    = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), EscortGroupName, self.FlightMenuFlareRed, AI_ESCORT._Flare, self, EscortGroup, FLARECOLOR.Red,    "Released a red flare!"     )
+      EscortGroup.EscortMenuFlareWhite  = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), EscortGroupName, self.FlightMenuFlareWhite, AI_ESCORT._Flare, self, EscortGroup, FLARECOLOR.White,  "Released a white flare!"   )
+      EscortGroup.EscortMenuFlareYellow = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), EscortGroupName, self.FlightMenuFlareYellow, AI_ESCORT._Flare, self, EscortGroup, FLARECOLOR.Yellow, "Released a yellow flare!"  )
     end
   )
 
@@ -887,12 +887,20 @@ function AI_ESCORT:MenuSmoke( MenuTextFormat )
   end
 
   if not self.FlightMenuSmoke then
-    self.FlightMenuSmoke = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Smoke", self.FlightMenuReportNavigation )
-    self.FlightMenuSmokeGreen  = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release green smoke",  self.FlightMenuSmoke, AI_ESCORT._FlightSmoke, self, SMOKECOLOR.Green,  "Releasing green smoke!"   )
-    self.FlightMenuSmokeRed    = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release red smoke",    self.FlightMenuSmoke, AI_ESCORT._FlightSmoke, self, SMOKECOLOR.Red,    "Releasing red smoke!"     )
-    self.FlightMenuSmokeWhite  = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release white smoke",  self.FlightMenuSmoke, AI_ESCORT._FlightSmoke, self, SMOKECOLOR.White,  "Releasing white smoke!"   )
-    self.FlightMenuSmokeOrange = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release orange smoke", self.FlightMenuSmoke, AI_ESCORT._FlightSmoke, self, SMOKECOLOR.Orange, "Releasing orange smoke!"  )
-    self.FlightMenuSmokeBlue   = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release blue smoke",   self.FlightMenuSmoke, AI_ESCORT._FlightSmoke, self, SMOKECOLOR.Blue,   "Releasing blue smoke!"    )
+
+    self.FlightMenuSmoke = MENU_GROUP:New( self.EscortUnit:GetGroup(), MenuText, self.FlightMenuReportNavigation )
+
+    self.FlightMenuSmokeGreen  = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Release green smoke",  self.FlightMenuSmoke )
+    self.FlightMenuSmokeRed    = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Release red smoke",    self.FlightMenuSmoke )
+    self.FlightMenuSmokeWhite  = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Release white smoke",  self.FlightMenuSmoke )
+    self.FlightMenuSmokeOrange = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Release orange smoke", self.FlightMenuSmoke )
+    self.FlightMenuSmokeBlue   = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Release blue smoke",   self.FlightMenuSmoke )
+
+    self.FlightMenuSmokeGreenFlight  = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Flight",  self.FlightMenuSmokeGreen, AI_ESCORT._FlightSmoke, self, SMOKECOLOR.Green,  "Releasing green smoke!"   )
+    self.FlightMenuSmokeRedFlight    = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Flight",    self.FlightMenuSmokeRed, AI_ESCORT._FlightSmoke, self, SMOKECOLOR.Red,    "Releasing red smoke!"     )
+    self.FlightMenuSmokeWhiteFlight  = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Flight",  self.FlightMenuSmokeWhite, AI_ESCORT._FlightSmoke, self, SMOKECOLOR.White,  "Releasing white smoke!"   )
+    self.FlightMenuSmokeOrangeFlight = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Flight", self.FlightMenuSmokeOrange, AI_ESCORT._FlightSmoke, self, SMOKECOLOR.Orange, "Releasing orange smoke!"  )
+    self.FlightMenuSmokeBlueFlight   = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Flight",   self.FlightMenuSmokeBlue, AI_ESCORT._FlightSmoke, self, SMOKECOLOR.Blue,   "Releasing blue smoke!"    )
   end
 
   self.EscortGroupSet:ForSomeGroupAlive(
@@ -900,11 +908,7 @@ function AI_ESCORT:MenuSmoke( MenuTextFormat )
     function( EscortGroup )
       if not EscortGroup:IsAir() then
 
-        EscortGroup.EscortMenu = MENU_GROUP:New( self.EscortUnit:GetGroup(), EscortGroup:GetName(), self.MainMenu )
-
-        if not EscortGroup.EscortMenuReportNavigation then
-          EscortGroup.EscortMenuReportNavigation = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Navigation", EscortGroup.EscortMenu )
-        end
+        local EscortGroupName = EscortGroup:GetCallsign()
     
         local MenuText = ""
         if not MenuTextFormat then
@@ -913,14 +917,11 @@ function AI_ESCORT:MenuSmoke( MenuTextFormat )
           MenuText = MenuTextFormat
         end
     
-        if not EscortGroup.EscortMenuSmoke then
-          EscortGroup.EscortMenuSmoke = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Smoke", EscortGroup.EscortMenuReportNavigation )
-          EscortGroup.EscortMenuSmokeGreen  = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release green smoke",  EscortGroup.EscortMenuSmoke, AI_ESCORT._Smoke, self, EscortGroup, SMOKECOLOR.Green,  "Releasing green smoke!"   )
-          EscortGroup.EscortMenuSmokeRed    = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release red smoke",    EscortGroup.EscortMenuSmoke, AI_ESCORT._Smoke, self, EscortGroup, SMOKECOLOR.Red,    "Releasing red smoke!"     )
-          EscortGroup.EscortMenuSmokeWhite  = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release white smoke",  EscortGroup.EscortMenuSmoke, AI_ESCORT._Smoke, self, EscortGroup, SMOKECOLOR.White,  "Releasing white smoke!"   )
-          EscortGroup.EscortMenuSmokeOrange = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release orange smoke", EscortGroup.EscortMenuSmoke, AI_ESCORT._Smoke, self, EscortGroup, SMOKECOLOR.Orange, "Releasing orange smoke!"  )
-          EscortGroup.EscortMenuSmokeBlue   = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release blue smoke",   EscortGroup.EscortMenuSmoke, AI_ESCORT._Smoke, self, EscortGroup, SMOKECOLOR.Blue,   "Releasing blue smoke!"    )
-        end
+        EscortGroup.EscortMenuSmokeGreen  = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), EscortGroupName,  self.FlightMenuSmokeGreen, AI_ESCORT._Smoke, self, EscortGroup, SMOKECOLOR.Green,  "Releasing green smoke!"   )
+        EscortGroup.EscortMenuSmokeRed    = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), EscortGroupName,    self.FlightMenuSmokeRed, AI_ESCORT._Smoke, self, EscortGroup, SMOKECOLOR.Red,    "Releasing red smoke!"     )
+        EscortGroup.EscortMenuSmokeWhite  = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), EscortGroupName,  self.FlightMenuSmokeWhite, AI_ESCORT._Smoke, self, EscortGroup, SMOKECOLOR.White,  "Releasing white smoke!"   )
+        EscortGroup.EscortMenuSmokeOrange = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), EscortGroupName, self.FlightMenuSmokeOrange, AI_ESCORT._Smoke, self, EscortGroup, SMOKECOLOR.Orange, "Releasing orange smoke!"  )
+        EscortGroup.EscortMenuSmokeBlue   = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), EscortGroupName,   self.FlightMenuSmokeBlue, AI_ESCORT._Smoke, self, EscortGroup, SMOKECOLOR.Blue,   "Releasing blue smoke!"    )
       end
     end
   )
