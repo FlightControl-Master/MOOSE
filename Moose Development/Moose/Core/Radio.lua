@@ -889,10 +889,8 @@ end
 
 --- Stop the radio queue. Stop scheduler and delete queue.
 -- @param #RADIOQUEUE self
--- @param #number delay (Optional) Delay in seconds, before the radio queue is started. Default 1 sec.
--- @param #number dt (Optional) Time step in seconds for checking the queue. Default 0.01 sec.
 -- @return #RADIOQUEUE self The RADIOQUEUE object.
-function RADIOQUEUE:Stop(delay, dt)
+function RADIOQUEUE:Stop()
   self:I(self.lid.."Stopping RADIOQUEUE.")
   self.scheduler:Stop(self.RQid)
   self.queue={}
@@ -905,6 +903,15 @@ end
 -- @return #RADIOQUEUE self The RADIOQUEUE object.
 function RADIOQUEUE:SetSenderCoordinate(coordinate)
   self.sendercoord=coordinate
+  return self
+end
+
+--- Set name of unit or static from which transmissions are made.
+-- @param #RADIOQUEUE self
+-- @param #string name Name of the unit or static used for transmissions.
+-- @return #RADIOQUEUE self The RADIOQUEUE object.
+function RADIOQUEUE:SetSenderUnitName(name)
+  self.sendername=name
   return self
 end
 
@@ -1046,9 +1053,9 @@ end
 function RADIOQUEUE:Broadcast(transmission)
 
   -- Get unit sending the transmission.
-  local sender=nil --self:_GetRadioSender(radio)
+  local sender=self:_GetRadioSender()
   
-  -- Construct file name and subtitle.
+  -- Construct file name.
   local filename=string.format("%s%s", transmission.path, transmission.filename)
   
   -- Create subtitle for transmission.
@@ -1072,8 +1079,8 @@ function RADIOQUEUE:Broadcast(transmission)
       id = "TransmitMessage",
       params = {
         file=filename,
-        duration=call.subduration or 5,
-        subtitle=subtitle,
+        duration=transmission.subduration or 5,
+        subtitle=transmission.subtitle or "",
         loop=false,
       }}
     
@@ -1088,11 +1095,26 @@ function RADIOQUEUE:Broadcast(transmission)
     -- Broadcasting from carrier. No subtitle possible. Need to send messages to players.
     self:T(self.lid..string.format("Broadcasting from carrier via trigger.action.radioTransmission()."))
   
-    -- Transmit from carrier position.
-    local vec3=self.sendercoord:GetVec3()
+    -- Position from where to transmit.
+    local vec3=nil
+    
+    -- Try to get positon from sender unit/static.
+    if self.sendername then
+      local coord=self:_GetRadioSenderCoord()
+      if coord then
+        vec3=coord:GetVec3()
+      end
+    end
+    
+    -- Try to get fixed positon.
+    if self.sendercoord and not vec3 then
+      vec3=self.sendercoord:GetVec3()
+    end
     
     -- Transmit via trigger.
-    trigger.action.radioTransmission(filename, vec3, self.modulation, false, self.frequency, self.power)
+    if vec3 then
+      trigger.action.radioTransmission(filename, vec3, self.modulation, false, self.frequency, self.power)
+    end
 
   end
 end
@@ -1205,18 +1227,40 @@ function RADIOQUEUE:_GetRadioSender()
     if sender and sender:IsAlive() and sender:IsAir() then
       return sender
     end
-
     
-    if not sender then
-      sender=STATIC:FindByName(self.sendername)
+  end
+    
+  return nil
+end
+
+--- Get unit from which we want to transmit a radio message. This has to be an aircraft for subtitles to work.
+-- @param #RADIOQUEUE self
+-- @return Core.Point#COORDINATE Coordinate of the sender unit.
+function RADIOQUEUE:_GetRadioSenderCoord()
+
+  local vec3=nil
+
+  -- Try the general default.
+  if self.sendername then
+  
+    -- First try to find a unit 
+    local sender=UNIT:FindByName(self.sendername)
+
+    -- Check that sender is alive and an aircraft.
+    if sender and sender:IsAlive() then
+      return sender:GetCoodinate()
+    end
+    
+    -- Now try a static. 
+    local sender=STATIC:FindByName(self.sendername)
+
+    -- Check that sender is alive and an aircraft.
+    if sender then
+      return sender:GetCoodinate()
     end
     
   end
-  
-  -- Check that sender is alive and an aircraft.
-  if sender and sender:IsAlive() and sender:IsAir() then
-    return sender
-  end
-  
-  return nil,nil
+    
+  return nil
 end
+
