@@ -809,6 +809,7 @@ end
 -- @field #table queue The queue of transmissions. 
 -- @field #number Tlast Time (abs) when the last transmission finished.
 -- @field Core.Point#COORDINATE sendercoord Coordinate from where transmissions are broadcasted.
+-- @field #number sendername Name of the sending unit or static.
 -- @field Wrapper.Positionable#POSITIONABLE positionable The positionable to broadcast the message.
 -- @field #number power Power of radio station in Watts. Default 100 W.
 -- @field #table numbers Table of number transmission parameters.
@@ -823,6 +824,7 @@ RADIOQUEUE = {
   queue={},
   Tlast=nil,
   sendercoord=nil,
+  sendername=nil,
   positionable=nil,
   power=100,
   numbers={},
@@ -871,6 +873,7 @@ end
 -- @param #RADIOQUEUE self
 -- @param #number delay (Optional) Delay in seconds, before the radio queue is started. Default 1 sec.
 -- @param #number dt (Optional) Time step in seconds for checking the queue. Default 0.01 sec.
+-- @return #RADIOQUEUE self The RADIOQUEUE object.
 function RADIOQUEUE:Start(delay, dt)
 
   delay=delay or 1
@@ -880,16 +883,20 @@ function RADIOQUEUE:Start(delay, dt)
   self:I(self.lid..string.format("Starting RADIOQUEUE in %.1f seconds with interval dt=%.3f seconds.", delay, dt))
 
   self.RQid=self.scheduler:Schedule(self, self._CheckRadioQueue, {}, delay, dt)
+  
+  return self
 end
 
 --- Stop the radio queue. Stop scheduler and delete queue.
 -- @param #RADIOQUEUE self
 -- @param #number delay (Optional) Delay in seconds, before the radio queue is started. Default 1 sec.
 -- @param #number dt (Optional) Time step in seconds for checking the queue. Default 0.01 sec.
+-- @return #RADIOQUEUE self The RADIOQUEUE object.
 function RADIOQUEUE:Stop(delay, dt)
   self:I(self.lid.."Stopping RADIOQUEUE.")
   self.scheduler:Stop(self.RQid)
   self.queue={}
+  return self
 end
 
 --- Set coordinate from where the transmission is broadcasted.
@@ -1190,9 +1197,20 @@ function RADIOQUEUE:_GetRadioSender()
   local sender=nil  --Wrapper.Unit#UNIT
 
   -- Try the general default.
-  if self.positionable then
+  if self.sendername then
     -- First try to find a unit 
-    sender=UNIT:FindByName(self.positionable)
+    sender=UNIT:FindByName(self.sendername)
+
+    -- Check that sender is alive and an aircraft.
+    if sender and sender:IsAlive() and sender:IsAir() then
+      return sender
+    end
+
+    
+    if not sender then
+      sender=STATIC:FindByName(self.sendername)
+    end
+    
   end
   
   -- Check that sender is alive and an aircraft.
@@ -1200,5 +1218,5 @@ function RADIOQUEUE:_GetRadioSender()
     return sender
   end
   
-  return nil
+  return nil,nil
 end
