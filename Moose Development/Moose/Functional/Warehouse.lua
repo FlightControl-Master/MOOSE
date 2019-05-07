@@ -1733,7 +1733,7 @@ _WAREHOUSEDB  = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.6.9"
+WAREHOUSE.version="0.7.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -7669,7 +7669,13 @@ function WAREHOUSE:_PrintQueue(queue, name)
 
   end
 
-  self:I(self.wid..text)
+  if #queue==0 then
+    self:T(self.wid..text)
+  else
+    if total~="Empty" then
+      self:I(self.wid..text)
+    end
+  end
 end
 
 --- Display status of warehouse.
@@ -8109,28 +8115,28 @@ function WAREHOUSE:_GetFlightplan(asset, departure, destination)
 
   --- Departure/Take-off
   c[#c+1]=Pdeparture
-  wp[#wp+1]=Pdeparture:WaypointAir("RADIO", COORDINATE.WaypointType.TakeOffParking, COORDINATE.WaypointAction.FromParkingArea, VxClimb, true, departure, nil, "Departure")
+  wp[#wp+1]=Pdeparture:WaypointAir("RADIO", COORDINATE.WaypointType.TakeOffParking, COORDINATE.WaypointAction.FromParkingArea, VxClimb*3.6, true, departure, nil, "Departure")
 
   --- Begin of Cruise
   local Pcruise=Pdeparture:Translate(d_climb, heading)
   Pcruise.y=FLcruise
   c[#c+1]=Pcruise
-  wp[#wp+1]=Pcruise:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, VxCruise, true, nil, nil, "Cruise")
+  wp[#wp+1]=Pcruise:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, VxCruise*3.6, true, nil, nil, "Cruise")
 
   --- Descent
   local Pdescent=Pcruise:Translate(d_cruise, heading)
   Pdescent.y=FLcruise
   c[#c+1]=Pdescent
-  wp[#wp+1]=Pdescent:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, VxDescent, true, nil, nil, "Descent")
+  wp[#wp+1]=Pdescent:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, VxDescent*3.6, true, nil, nil, "Descent")
 
   --- Holding point
   Pholding.y=H_holding+h_holding
   c[#c+1]=Pholding
-  wp[#wp+1]=Pholding:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, VxHolding, true, nil, nil, "Holding")
+  wp[#wp+1]=Pholding:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, VxHolding*3.6, true, nil, nil, "Holding")
 
   --- Final destination.
   c[#c+1]=Pdestination
-  wp[#wp+1]=Pdestination:WaypointAir("RADIO", COORDINATE.WaypointType.Land, COORDINATE.WaypointAction.Landing, VxFinal, true,  destination, nil, "Final Destination")
+  wp[#wp+1]=Pdestination:WaypointAir("RADIO", COORDINATE.WaypointType.Land, COORDINATE.WaypointAction.Landing, VxFinal*3.6, true,  destination, nil, "Final Destination")
 
 
   -- Mark points at waypoints for debugging.
