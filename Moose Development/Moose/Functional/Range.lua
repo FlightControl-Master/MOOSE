@@ -52,6 +52,7 @@
 -- @field #table bombingTargets Table of targets to bomb.
 -- @field #number nbombtargets Number of bombing targets.
 -- @field #number nstrafetargets Number of strafing targets.
+-- @field #boolean messages Globally enable/disable all messages to players.
 -- @field #table MenuAddedTo Table for monitoring which players already got an F10 menu.
 -- @field #table planes Table for administration.
 -- @field #table strafeStatus Table containing the current strafing target a player as assigned to.
@@ -217,6 +218,7 @@ RANGE={
   id=nil,
   rangename=nil,
   location=nil,
+  messages=true,
   rangeradius=5000,
   rangezone=nil,
   strafeTargets={},
@@ -286,9 +288,11 @@ RANGE.TargetType={
 -- @field #number smokecolor Color of smoke.
 -- @field #number flarecolor Color of flares.
 -- @field #boolean messages Display info messages.
+-- @field Wrapper.Client#CLIENT client Client object of player.
 -- @field #string unitname Name of player aircraft unit.
 -- @field #string playername Name of player.
 -- @field #string airframe Aircraft type name.
+-- @field #boolean inzone If true, player is inside the range zone.
 
 --- Bomb target data.
 -- @type RANGE.BombTarget
@@ -336,7 +340,7 @@ RANGE.MenuF10Root=nil
 
 --- Range script version.
 -- @field #string version
-RANGE.version="2.0.0"
+RANGE.version="2.1.0"
 
 --TODO list:
 --TODO: Verbosity level for messages.
@@ -388,6 +392,8 @@ function RANGE:New(rangename)
   self:AddTransition("Stopped",         "Start",             "Running")     -- Start RANGE script.
   self:AddTransition("*",               "Status",            "*")           -- Status of RANGE script.
   self:AddTransition("*",               "Impact",            "*")           -- Impact of bomb/rocket/missile.
+  self:AddTransition("*",               "EnterRange",        "*")           -- Player enters the range.
+  self:AddTransition("*",               "ExitRange",         "*")           -- Player leaves the range.  
   self:AddTransition("*",               "Save",              "*")           -- Save player results.
   self:AddTransition("*",               "Load",              "*")           -- Load player results.
   
@@ -441,6 +447,44 @@ function RANGE:New(rangename)
   -- @param #string Event Event.
   -- @param #string To To state.
   -- @param #RANGE.BombResult result Data of the bombing run.
+  -- @param #RANGE.Playerdata player Data of player settings etc.
+
+  --- Triggers the FSM event "EnterRange".
+  -- @function [parent=#RANGE] EnterRange
+  -- @param #RANGE self
+  -- @param #RANGE.Playerdata player Data of player settings etc.
+
+  --- Triggers the FSM delayed event "EnterRange".
+  -- @function [parent=#RANGE] __EnterRange
+  -- @param #RANGE self
+  -- @param #number delay Delay in seconds before the function is called.
+  -- @param #RANGE.Playerdata player Data of player settings etc.
+
+  --- On after "EnterRange" event user function. Called when a player enters the range zone.
+  -- @function [parent=#RANGE] OnAfterEnterRange
+  -- @param #RANGE self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #RANGE.Playerdata player Data of player settings etc.
+
+  --- Triggers the FSM event "ExitRange".
+  -- @function [parent=#RANGE] ExitRange
+  -- @param #RANGE self
+  -- @param #RANGE.Playerdata player Data of player settings etc.
+
+  --- Triggers the FSM delayed event "ExitRange".
+  -- @function [parent=#RANGE] __ExitRange
+  -- @param #RANGE self
+  -- @param #number delay Delay in seconds before the function is called.
+  -- @param #RANGE.Playerdata player Data of player settings etc.
+
+  --- On after "ExitRange" event user function. Called when a player leaves the range zone.
+  -- @function [parent=#RANGE] OnAfterExitRange
+  -- @param #RANGE self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
   -- @param #RANGE.Playerdata player Data of player settings etc.
     
   -- Return object.
@@ -720,6 +764,23 @@ function RANGE:DebugOFF()
   self.Debug=false
   return self
 end
+
+--- Disable ALL messages to players.
+-- @param #RANGE self
+-- @return #RANGE self
+function RANGE:SetMessagesOFF()
+  self.messages=false
+  return self
+end
+
+--- Enable messages to players. This is the default
+-- @param #RANGE self
+-- @return #RANGE self
+function RANGE:SetMessagesON()
+  self.messages=true
+  return self
+end
+
 
 --- Enables tracking of all bomb types. Note that this is the default setting.
 -- @param #RANGE self
@@ -1253,9 +1314,11 @@ function RANGE:OnEventBirth(EventData)
     self.PlayerSettings[_playername].flarecolor=FLARECOLOR.Red
     self.PlayerSettings[_playername].delaysmoke=true
     self.PlayerSettings[_playername].messages=true
+    self.PlayerSettings[_playername].client=CLIENT:FindByName(_unitName, nil, true)
     self.PlayerSettings[_playername].unitname=_unitName
     self.PlayerSettings[_playername].playername=_playername
     self.PlayerSettings[_playername].airframe=EventData.IniUnit:GetTypeName()
+    self.PlayerSettings[_playername].inzone=false
   
     -- Start check in zone timer.
     if self.planes[_uid] ~= true then
@@ -1580,16 +1643,19 @@ end
 -- @param #string To To state.
 function RANGE:onafterStatus(From, Event, To)
 
+  -- Check range status.
   self:I(self.id..string.format("Range status: %s", self:GetState()))
   
-  --self:_CheckMissileStatus()
+  -- Check player status.
+  self:_CheckPlayers()
   
   -- Save results.
   if self.autosafe then
     self:Save()
   end
 
-  self:__Status(-60)
+  -- Check back in ~10 seconds.
+  self:__Status(-10)
 end
 
 
@@ -2245,6 +2311,47 @@ end
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Timer Functions
 
+--- Check status of players.
+-- @param #RANGE self
+-- @param #string _unitName Name of player unit.
+function RANGE:_CheckPlayers()
+
+  for playername,_playersettings in pairs(self.PlayerSettings) do
+    local playersettings=_playersettings  --#RANGE.PlayerData
+    
+    local unitname=playersettings.unitname
+    local unit=UNIT:FindByName(unitname)
+    
+    if unit and unit:IsAlive() then
+        
+      if unit:IsInZone(self.rangezone) then
+      
+        ------------------------------
+        -- Player INSIDE Range Zone --
+        ------------------------------
+      
+        if not playersettings.inzone then
+          self:EnterRange(playersettings)
+          playersettings.inzone=true
+        end
+        
+      else
+      
+        -------------------------------
+        -- Player OUTSIDE Range Zone --
+        -------------------------------     
+      
+        if playersettings.inzone==true then
+          self:ExitRange(playersettings)
+          playersettings.inzone=false
+        end
+        
+      end
+    end
+  end
+
+end
+
 --- Check if player is inside a strafing zone. If he is, we start looking for hits. If he was and left the zone again, the result is stored.
 -- @param #RANGE self
 -- @param #string _unitName Name of player unit.
@@ -2725,6 +2832,11 @@ function RANGE:_DisplayMessageToGroup(_unit, _text, _time, _clear, display)
     _clear=false
   else
     _clear=true
+  end
+  
+  -- Messages globally disabled.
+  if self.messages==false then
+    return
   end
   
   -- Check if unit is alive.
