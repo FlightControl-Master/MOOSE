@@ -204,7 +204,7 @@ function FMD:_GetDataPoint(unit)
   dp.v=unit:GetVelocityVec3()
   dp.Vtot=UTILS.VecNorm(dp.v)
   dp.Yaw=unit:GetYaw()
-  dp.o=unit:GetOrientation()
+  dp.o=unit:GetOrientationX()
   dp.Hdg=unit:GetHeading()
   
   return dp
@@ -223,34 +223,28 @@ function FMD:_Derivative(playerData)
   self:E("derivative #"..#playerData.data)
 
   local datapoints=playerData.data
-  local dt=playerData.dt
+  --local dt=playerData.dt
 
   for i=2,#datapoints-1 do
-  
-    self:E("i="..i)
   
     local dpm=datapoints[i-1]  --#FMD.DataPoint
     local dpp=datapoints[i+1]  --#FMD.DataPoint
     local dpi=datapoints[i]    --#FMD.DataPoint
     
-    self:E(dpm)
-    self:E(dpp)
-    self:E(dpi)
+    local dt=0.5*(dpp.time-dpm.time)
     
     dpi.Atot=numderiv(dpm.Vtot, dpp.Vtot, dt)
 
     dpi.a.x=numderiv(dpm.v.x, dpp.v.x, dt)
-    dpi.a.y=numderiv(dpm.v.y, dpp.v.y, dt)
+    dpi.a.y=numderiv(dpm.v.y, dpp.v.y, dt)    
     dpi.a.z=numderiv(dpm.v.z, dpp.v.z, dt)
     
     dpi.DPitch=numderiv(dpm.Pitch, dpp.Pitch, dt)
     dpi.DRoll=numderiv(dpm.Roll, dpp.Roll, dt)
     dpi.DYaw=numderiv(dpm.Yaw, dpp.Yaw, dt)
-    
-    local ang=UTILS.VecAngle(dpm.o.x, dpp.o.x)
-    --local dvpp=UTILS.VecAngle(dpi.o.x, dpp.o.x)
-    
-    dpi.omega=numderiv(0, ang)
+
+    local ang=UTILS.VecAngle(dpm.o, dpp.o)
+    dpi.omega=numderiv(0, ang, dt)
     
   end
   
@@ -324,17 +318,12 @@ function FMD:_SaveData(playerData)
   
   -- Calculate derivatives.
   self:_Derivative(playerData)
-  
-  self:E("looping data.")
-  
+
   for i=2,#playerData.data-1 do
   
     local dp=playerData.data[i] --#FMD.DataPoint
     
-    self:E("i="..i)
-    self:E(dp)
-    
-    -- 
+    -- Conversion m/s == Mach. 
     local ms2mach=0.00291545
     
     local t=(dp.time-T0) or 0
@@ -357,33 +346,32 @@ function FMD:_SaveData(playerData)
     local q=dp.Yaw or 0
     local r=dp.DYaw or 0
     local s=dp.omega or 0
-    self:E(data)
-    self:E(t)
-    self:E(a)
-    self:E(b)
-    self:E(c)
-    self:E(d)
-    self:E(e)
-    self:E(f)
-    self:E(g)
-    self:E(h)
-    self:E(i)
-    self:E(j)
-    self:E(k)
-    self:E(l)
-    self:E(m)
-    self:E(n)
-    self:E(o)
-    self:E(p)
-    self:E(q)
-    self:E(r)
-    self:E(s)
-    --self:E(u)
+    
+    self:T3(t)
+    self:T3(a)
+    self:T3(b)
+    self:T3(c)
+    self:T3(d)
+    self:T3(e)
+    self:T3(f)
+    self:T3(g)
+    self:T3(h)
+    self:T3(i)
+    self:T3(j)
+    self:T3(k)
+    self:T3(l)
+    self:T3(m)
+    self:T3(n)
+    self:T3(o)
+    self:T3(p)
+    self:T3(q)
+    self:T3(r)
+    self:T3(s)
+    
     --                         t    a    b    c    d    e    f    g    h    i    j    k    l    m    n    o    p    q    r    s
     data=data..string.format("%.2f,%.2f,%.2f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f \n",
                                t,   a,   b,   c,   d,   e,   f,   g,   h,   i,   j,   k,   l,   m,   n,   o,   p,   q,   r,   s)
-    --data=data..string.format("%.2f\n",t)
-    self:E(data)
+
   end
   
   -- Save file.
