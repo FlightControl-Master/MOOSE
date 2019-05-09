@@ -4,16 +4,16 @@
 -- Train to evade missiles without being destroyed.
 -- 
 --
--- **Main Features:**
---
---     * Adaptive update of missile-to-player distance.
---     * Define your own training zones on the map. Player in this zone will be protected.
---     * Define launch zones. Only 
---     * F10 radio menu to adjust settings for each player.
---     * Easy to use.
---     * Handles air-to-air and surface-to-air missiles.
---     * Alert on missile launch (optional).
---     * Marker of missile launch position (optional).
+-- ## Main Features:
+-- 
+--    * Adaptive update of missile-to-player distance.
+--    * Define your own training zones on the map. Player in this zone will be protected.
+--    * Define launch zones. Only 
+--    * F10 radio menu to adjust settings for each player.
+--    * Easy to use.
+--    * Handles air-to-air and surface-to-air missiles.
+--    * Alert on missile launch (optional).
+--    * Marker of missile launch position (optional).
 --     
 -- ===
 --
@@ -1039,8 +1039,8 @@ end
 --- Returns the unit of a player and the player name. If the unit does not belong to a player, nil is returned. 
 -- @param #FOX2 self
 -- @param #DCS.Weapon weapon The weapon.
--- @return #number Notching heading right, i.e. missile heading +90°
--- @return #number Notching heading left, i.e. missile heading -90°.
+-- @return #number Notching heading right, i.e. missile heading +90ï¿½
+-- @return #number Notching heading left, i.e. missile heading -90ï¿½.
 function FOX2:_GetNotchingHeadings(weapon)
 
   if weapon then

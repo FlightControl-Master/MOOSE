@@ -1,14 +1,20 @@
 --- **Functional** - (R2.5) - Monitor and export flight model data.
 -- 
+-- Record flight data and export it to a csv file. 
 -- 
--- 
--- RAT2 creates random air traffic on the map.
--- 
--- 
+-- ## Recorded Data:
 --
--- **Main Features:**
---
---     * It's very random.
+--    * Time,
+--    * Altitude,
+--    * Temperature,
+--    * Pressure,
+--    * Velocity (total and x,y,z components),
+--    * Acceleration (total and x,y,z components),
+--    * AoA,
+--    * Pitch and pitch rate,
+--    * Roll and roll rate,
+--    * Yaw and yaw rate,
+--    * Turn rate.
 --     
 -- ===
 --
@@ -27,15 +33,35 @@
 -- @field #string savepath Path to save data files.
 -- @extends Core.Fsm#FSM
 
---- Be surprised!
+--- Be sure!
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\RAT2\RAT2_Main.png)
+-- ![Banner Image](..\Presentations\FMD\FMD_Main.png)
 --
--- # The RAT2 Concept
+-- # The FMD Concept
 -- 
+-- This class can be used to record flight data such as velocity, acceleration, pitch, roll, yaw and turn rates. The output is written to a csv file for later analysis.
 -- 
+-- # Usage
+-- 
+-- The script is very easy to use. It only requires the line
+-- 
+--     fmd=FMD:New()
+--     
+-- This will automatically start the FMD script.
+-- 
+-- Each player will get an entry "FMD" in the F-10 radio menu. There he can start or stop the data recording.
+-- 
+-- **IMPORTANT**
+-- Due to a DCS bug, it is necessary that (in single player mode), player/clients have to **hit ESC twice** before entering an aircraft client slot.
+-- Otherwise, the script will not load and now menus will be created for the player.
+-- 
+-- # Output
+-- 
+-- After the data recording is completed, the data is written to a csv file. The file name starts with **FMD** and contains the employed airframe plus a running number.
+-- 
+-- However, one must desanitize the **io** and **lfs** lines the DCS root directory. Otherwise, DCS will not allow data to be written to file.
 -- 
 -- @field #FMD
 FMD = {
@@ -52,9 +78,12 @@ FMD = {
 -- @field Core.Scheduler#SCHEDULER scheduler Scheduler
 -- @field Wrapper.Unit#UNIT unit Player unit.
 -- @field #string unitname Name of the unit.
+-- @field Wrapper.Client#CLIENT client Player client.
 -- @field #string actype Aircraft type.
 -- @field #string name Player name.
 -- @field #number dt Time step for data recording in seconds. Default 0.01 sec ==> 100 data points per second!
+-- @field #number rd Recording duration in seconds.
+-- @field #boolean recording If true, recording started.
 -- @field #table data Data table.
 -- @field #number SID Scheduler ID.
 
@@ -73,14 +102,14 @@ FMD = {
 -- @field DCS#Vec3 v Velocity vector. Components x,y,z in m/s.
 -- @field DCS#Vec3 o Orientation vector. Components x,y,z in meters.
 -- @field #number omega Angle velocity in m/s.
--- @field #number hdg Heading in degrees.
+-- @field #number Hdg Heading in degrees.
 -- @field #number Atot Total acceleration m/s^2.
--- @field DCS#Vec3 a Accelleration vector.
+-- @field DCS#Vec3 a Acceleration vector.
 -- @field #number DRoll Roll speed in degrees/second.
 -- @field #number DPitch Pitch speed in degrees/second.
 -- @field #number DYaw Yaw speed in degrees/second.
 
---- Main group level radio menu: F10 Other/Airboss.
+--- Main group level radio menu: F10 Other/FMD.
 -- @field #table MenuF10
 FMD.MenuF10={}
 
@@ -88,9 +117,9 @@ FMD.MenuF10={}
 -- @field #table MenuF10Root
 FMD.MenuF10Root=nil
 
---- FMD class version.
+--- FMD script version.
 -- @field #string version
-FMD.version="0.0.1"
+FMD.version="0.1.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -114,6 +143,9 @@ function FMD:New()
   --                 From State  -->   Event      -->     To State
   self:AddTransition("Stopped",       "Start",           "Running")     -- Start FMD script.
   self:AddTransition("*",             "Status",          "*")           -- Start FMD script.
+  
+  -- Start FMD.
+  FMD:Start()
 
   return self
 end
@@ -125,9 +157,27 @@ end
 -- @param #string To To state.
 function FMD:onafterStart(From, Event, To)
 
+  -- Short info.
+  local text=string.format("Starting Flight Model Data script version %s", FMD.version)
+  self:I(self.lid..text)  
+
   -- Handle events.
   self:HandleEvent(EVENTS.Birth)
+end
 
+--- On after Stop event.
+-- @param #FMD self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function FMD:onafterStop(From, Event, To)
+
+  -- Short info.
+  local text=string.format("Stopping Flight Model Data script version %s", FMD.version)
+  self:I(self.lid..text)  
+
+  -- Handle events.
+  self:UnHandleEvent(EVENTS.Birth) 
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -157,11 +207,11 @@ function FMD:OnEventBirth(EventData)
     local text=string.format("Pilot %s, callsign %s entered unit %s of group %s.", _playername, _callsign, _unitName, _group:GetName())
     self:T(self.lid..text)
     MESSAGE:New(text, 5):ToAllIf(self.Debug)
-    
-            
+                
     -- Add Menu commands.
     self:_AddF10Commands(_unitName)
 
+    -- Player data.
     self.players[_playername]={}
     
     local player=self.players[_playername] --#FMD.PlayerData
@@ -170,8 +220,11 @@ function FMD:OnEventBirth(EventData)
     player.unit=_unit
     player.unitname=_unitName
     player.name=_playername
+    player.client=CLIENT:FindByName(_unitName, nil, true)
     player.actype=_unit:GetTypeName()
     player.dt=0.01
+    player.rd=30
+    player.recording=false
     player.data={}
      
   end 
@@ -219,8 +272,6 @@ function FMD:_Derivative(playerData)
   local function numderiv(fpm,fpp,h)
     return 0.5*(fpp-fpm)/h
   end
-  
-  self:E("derivative #"..#playerData.data)
 
   local datapoints=playerData.data
   --local dt=playerData.dt
@@ -231,6 +282,7 @@ function FMD:_Derivative(playerData)
     local dpp=datapoints[i+1]  --#FMD.DataPoint
     local dpi=datapoints[i]    --#FMD.DataPoint
     
+    -- Time step.
     local dt=0.5*(dpp.time-dpm.time)
     
     dpi.Atot=numderiv(dpm.Vtot, dpp.Vtot, dt)
@@ -255,8 +307,21 @@ end
 -- @param #FMD.PlayerData playerData Player data table.
 function FMD:_RecordData(playerData)
 
+  -- Check if we are recording already.
+  if not playerData.recording then
+  
+      -- Inform player.
+      local text=string.format("Data recording starts for %.1f sec.", playerData.rd)
+      MESSAGE:New(text, 3, "FMD"):ToClient(playerData.client)
+      
+      -- Activate recording switch.
+      playerData.recording=true    
+  end
+
+  -- Get data point.
   local dp=self:_GetDataPoint(playerData.unit)
   
+  -- Add data point to player table.
   table.insert(playerData.data, dp)
 
 end
@@ -283,8 +348,6 @@ function FMD:_SaveData(playerData)
   if lfs then
     path=path or lfs.writedir()
   end
-  
-  self:E("FF save data")
 
   -- Create unused file name.
   local filename=nil
@@ -347,6 +410,7 @@ function FMD:_SaveData(playerData)
     local r=dp.DYaw or 0
     local s=dp.omega or 0
     
+    -- Debug output.
     self:T3(t)
     self:T3(a)
     self:T3(b)
@@ -369,7 +433,7 @@ function FMD:_SaveData(playerData)
     self:T3(s)
     
     --                         t    a    b    c    d    e    f    g    h    i    j    k    l    m    n    o    p    q    r    s
-    data=data..string.format("%.2f,%.2f,%.2f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f \n",
+    data=data..string.format("%.2f,%.2f,%.2f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f\n",
                                t,   a,   b,   c,   d,   e,   f,   g,   h,   i,   j,   k,   l,   m,   n,   o,   p,   q,   r,   s)
 
   end
@@ -433,9 +497,29 @@ function FMD:_AddF10Commands(_unitName)
           _rootPath=FMD.MenuF10[gid]
           
         end
-                
+
         --------------------------------        
-        -- F10/FMD/<Carrier>/F1 Help
+        -- F10/F<X> FMD/F1 Time Interval
+        --------------------------------
+        local _timePath=missionCommands.addSubMenuForGroup(gid, "Time Interval", _rootPath)
+        -- F10/FMD/F1 Time Interval/
+        missionCommands.addCommandForGroup(gid, "Delta t=0.01 s", _timePath, self._SetTimeInterval, self, _unitName, 0.01)
+        missionCommands.addCommandForGroup(gid, "Delta t=0.1 s",  _timePath, self._SetTimeInterval, self, _unitName, 0.1)
+        missionCommands.addCommandForGroup(gid, "Delta t=1.0 s",  _timePath, self._SetTimeInterval, self, _unitName, 1.0)
+        missionCommands.addCommandForGroup(gid, "Delta t=10 s",   _timePath, self._SetTimeInterval, self, _unitName, 10.0)
+        missionCommands.addCommandForGroup(gid, "Delta t=30 s",   _timePath, self._SetTimeInterval, self, _unitName, 30.0)
+        missionCommands.addCommandForGroup(gid, "Delta t=60 s",   _timePath, self._SetTimeInterval, self, _unitName, 60.0)
+
+        local _durPath=missionCommands.addSubMenuForGroup(gid, "Rec Duration", _rootPath)
+        -- F10/FMD/F1 Rec Duration/
+        missionCommands.addCommandForGroup(gid, "T=10 s",   _timePath, self._SetRecDuration, self, _unitName, 10)
+        missionCommands.addCommandForGroup(gid, "T=30 s",   _timePath, self._SetRecDuration, self, _unitName, 30)
+        missionCommands.addCommandForGroup(gid, "T=60 s",   _timePath, self._SetRecDuration, self, _unitName, 60)
+        missionCommands.addCommandForGroup(gid, "T=5 min",  _timePath, self._SetRecDuration, self, _unitName, 5*60)
+        missionCommands.addCommandForGroup(gid, "T=10 min", _timePath, self._SetRecDuration, self, _unitName, 10*60)
+        
+        --------------------------------        
+        -- F10/F<X> FMD/
         --------------------------------
         
         -- F10/FMD/Start Recording
@@ -443,6 +527,60 @@ function FMD:_AddF10Commands(_unitName)
         missionCommands.addCommandForGroup(gid, "Stop Recording",  _rootPath, self._StopRecording,  self, _unitName)  -- F2
         
       end
+    end
+  end
+end
+
+
+--- Set recording duration.
+-- @param #FMD self
+-- @param #string _unitName Name of player unit.
+-- @param #number rd Recording duration in sec.
+function FMD:_SetTimeInterval(_unitName, rd)
+
+  -- Get player unit and name.
+  local _unit, _playername = self:_GetPlayerUnitAndName(_unitName)
+  
+  -- Check if we have a unit which is a player.
+  if _unit and _playername then
+    local playerData=self.players[_playername] --#FMD.PlayerData
+    
+    if playerData then
+    
+      -- Set dt.
+      playerData.rd=rd
+
+      -- Inform player.
+      local text=string.format("Data recording duration set to %.1f sec.", playerData.rd)
+      MESSAGE:New(text, 10, "FMD"):ToClient(playerData.client)
+    
+    end
+  end
+end
+
+
+--- Set time interval for data recording.
+-- @param #FMD self
+-- @param #string _unitName Name of player unit.
+-- @param #number dt Time interval in seconds.
+function FMD:_SetTimeInterval(_unitName, dt)
+
+  -- Get player unit and name.
+  local _unit, _playername = self:_GetPlayerUnitAndName(_unitName)
+  
+  -- Check if we have a unit which is a player.
+  if _unit and _playername then
+    local playerData=self.players[_playername] --#FMD.PlayerData
+    
+    if playerData then
+    
+      -- Set dt.
+      playerData.dt=dt
+
+      -- Inform player.
+      local text=string.format("Data recording time interval set to %.3f sec.", playerData.dt)
+      MESSAGE:New(text, 10, "FMD"):ToClient(playerData.client)    
+    
     end
   end
 end
@@ -461,11 +599,18 @@ function FMD:_StartRecording(_unitName)
     
     if playerData then
     
+      -- Delay before recording starts.
       local delay=3
     
-      MESSAGE:New(string.format("Flight data recording will be started in %d seconds. dt=%.3f sec", delay, playerData.dt)):ToAll()
+      -- Inform player.
+      local text=string.format("Data recording will be started in %d seconds with %.3f sec timestep for %.1f sec.", delay, playerData.dt, playerData.rd)
+      MESSAGE:New(text, 3, "FMD"):ToClient(playerData.client)
     
-      playerData.SID=playerData.scheduler:Schedule(nil, self._RecordData, {self, playerData}, delay, playerData.dt)
+      -- Start scheduler.
+      playerData.SID=playerData.scheduler:Schedule(nil, self._RecordData, {self, playerData}, delay, playerData.dt, 0.0)
+      
+      -- Stop scheduler once.
+      playerData.scheduler:ScheduleOnce(playerData.rd+delay, self._StopRecording, {self,_unitName})
     end
   end
 
@@ -484,6 +629,15 @@ function FMD:_StopRecording(_unitName)
     local playerData=self.players[_playername] --#FMD.PlayerData
     
     if playerData then
+    
+      local ndata=#playerData.data
+    
+      -- Inform player.
+      local text=string.format("Data recording stopped. Data points recorded: %d", ndata)
+      MESSAGE:New(text, 10, "FMD"):ToClient(playerData.client)
+      
+      -- No recording switch.
+      playerData.recording=false
     
       -- Stop scheduler.
       playerData.scheduler:Stop(playerData.SID)
@@ -527,6 +681,7 @@ function FMD:_GetPlayerUnitAndName(_unitName)
   return nil,nil
 end
 
-
-
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
