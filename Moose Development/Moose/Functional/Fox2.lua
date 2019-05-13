@@ -18,12 +18,12 @@
 -- ===
 --
 -- ### Author: **funkyfranky**
--- @module Functional.FOX2
--- @image Functional_FOX2.png
+-- @module Functional.FOX
+-- @image Functional_FOX.png
 
 
---- FOX2 class.
--- @type FOX2
+--- FOX class.
+-- @type FOX
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug Debug mode. Messages to all about status.
 -- @field #string lid Class id string for output to DCS log file.
@@ -40,24 +40,25 @@
 -- @field #number dt05 Time step [sec] for missile position updates if distance to target > 5 km and < 10 km. Default 0.5 sec.
 -- @field #number dt01 Time step [sec] for missile position updates if distance to target > 1 km and < 5 km. Default 0.1 sec.
 -- @field #number dt00 Time step [sec] for missile position updates if distance to target < 1 km. Default 0.01 sec.
+-- @field #boolean 
 -- @extends Core.Fsm#FSM
 
---- Fox 2!
+--- Fox 3!
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\FOX2\FOX2_Main.png)
+-- ![Banner Image](..\Presentations\FOX\FOX_Main.png)
 --
--- # The FOX2 Concept
+-- # The FOX Concept
 -- 
--- As you probably know [Fox](https://en.wikipedia.org/wiki/Fox_(code_word)) is a NATO bevity code for launching air-to-air munition. Therefore, the class name is not 100% accurate as this
--- script handles air-to-air and surface-to-air missiles. Furthermore, it handles not only Fox **2**, i.e. IR, missiles but also radar guided missiles.  
+-- As you probably know [Fox](https://en.wikipedia.org/wiki/Fox_(code_word)) is a NATO brevity code for launching air-to-air munition. Therefore, the class name is not 100% accurate as this
+-- script handles air-to-air and surface-to-air missiles.
 -- 
 -- 
 -- 
--- @field #FOX2
-FOX2 = {
-  ClassName      = "FOX2",
+-- @field #FOX
+FOX = {
+  ClassName      = "FOX",
   Debug          = false,
   lid            =   nil,
   menuadded      =    {},
@@ -78,7 +79,7 @@ FOX2 = {
 
 
 --- Player data table holding all important parameters of each player.
--- @type FOX2.PlayerData
+-- @type FOX.PlayerData
 -- @field Wrapper.Unit#UNIT unit Aircraft of the player.
 -- @field #string unitname Name of the unit.
 -- @field Wrapper.Client#CLIENT client Client object of player.
@@ -92,9 +93,10 @@ FOX2 = {
 -- @field #boolean marklaunch Mark position of launched missile on F10 map.
 -- @field #number defeated Number of missiles defeated.
 -- @field #number dead Number of missiles not defeated.
+-- @field #boolean inzone Player is inside a protected zone.
 
 --- Missile data table.
--- @type FOX2.MissileData
+-- @type FOX.MissileData
 -- @field Wrapper.Unit#UNIT weapon Missile weapon unit.
 -- @field #boolean active If true the missile is active.
 -- @field #string missileType Type of missile.
@@ -106,132 +108,175 @@ FOX2 = {
 -- @field #number shotTime Abs mission time in seconds the missile was fired.
 -- @field Core.Point#COORDINATE shotCoord Coordinate where the missile was fired.
 -- @field Wrapper.Unit#UNIT targetUnit Unit that was targeted.
--- @field #FOX2.PlayerData targetPlayer Player that was targeted or nil.
+-- @field #FOX.PlayerData targetPlayer Player that was targeted or nil.
 
 --- Main radio menu on group level.
 -- @field #table MenuF10 Root menu table on group level.
-FOX2.MenuF10={}
+FOX.MenuF10={}
 
 --- Main radio menu on mission level.
 -- @field #table MenuF10Root Root menu on mission level.
-FOX2.MenuF10Root=nil
+FOX.MenuF10Root=nil
 
---- FOX2 class version.
+--- FOX class version.
 -- @field #string version
-FOX2.version="0.1.4"
+FOX.version="0.3.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO list:
--- TODO: safe zones
--- TODO: mark shooter on F10
+-- DONE: safe zones
+-- DONE: mark shooter on F10
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Create a new FOX2 class object.
--- @param #FOX2 self
--- @return #FOX2 self.
-function FOX2:New()
+--- Create a new FOX class object.
+-- @param #FOX self
+-- @return #FOX self.
+function FOX:New()
 
-  self.lid="FOX2 | "
+  self.lid="FOX | "
 
   -- Inherit everthing from FSM class.
-  local self=BASE:Inherit(self, FSM:New()) -- #FOX2
+  local self=BASE:Inherit(self, FSM:New()) -- #FOX
   
   -- Start State.
   self:SetStartState("Stopped")
 
   -- Add FSM transitions.
   --                 From State   -->   Event        -->     To State
-  self:AddTransition("Stopped",           "Start",          "Running")     -- Start FOX2 script.
-  self:AddTransition("*",                "Status",          "*")           -- Start FOX2 script.
-  self:AddTransition("*",         "MissileLaunch",          "*")           -- Start FOX2 script.
-  self:AddTransition("*",      "MissileDestroyed",          "*")           -- Start FOX2 script.
+  self:AddTransition("Stopped",           "Start",          "Running")     -- Start FOX script.
+  self:AddTransition("*",                "Status",          "*")           -- Status update.
+  self:AddTransition("*",         "MissileLaunch",          "*")           -- Missile was launched.
+  self:AddTransition("*",      "MissileDestroyed",          "*")           -- Missile was destroyed before impact.
+  self:AddTransition("*",         "EnterSafeZone",          "*")           -- Player enters a safe zone.
+  self:AddTransition("*",          "ExitSafeZone",          "*")           -- Player exists a safe zone.
 
   ------------------------
   --- Pseudo Functions ---
   ------------------------
 
-  --- Triggers the FSM event "Start". Starts the FOX2. Initializes parameters and starts event handlers.
-  -- @function [parent=#FOX2] Start
-  -- @param #FOX2 self
+  --- Triggers the FSM event "Start". Starts the FOX. Initializes parameters and starts event handlers.
+  -- @function [parent=#FOX] Start
+  -- @param #FOX self
 
-  --- Triggers the FSM event "Start" after a delay. Starts the FOX2. Initializes parameters and starts event handlers.
-  -- @function [parent=#FOX2] __Start
-  -- @param #FOX2 self
+  --- Triggers the FSM event "Start" after a delay. Starts the FOX. Initializes parameters and starts event handlers.
+  -- @function [parent=#FOX] __Start
+  -- @param #FOX self
   -- @param #number delay Delay in seconds.
 
-  --- Triggers the FSM event "Stop". Stops the FOX2 and all its event handlers.
-  -- @param #FOX2 self
+  --- Triggers the FSM event "Stop". Stops the FOX and all its event handlers.
+  -- @param #FOX self
 
-  --- Triggers the FSM event "Stop" after a delay. Stops the FOX2 and all its event handlers.
-  -- @function [parent=#FOX2] __Stop
-  -- @param #FOX2 self
+  --- Triggers the FSM event "Stop" after a delay. Stops the FOX and all its event handlers.
+  -- @function [parent=#FOX] __Stop
+  -- @param #FOX self
   -- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Status".
-  -- @function [parent=#FOX2] Status
-  -- @param #FOX2 self
+  -- @function [parent=#FOX] Status
+  -- @param #FOX self
 
   --- Triggers the FSM event "Status" after a delay.
-  -- @function [parent=#FOX2] __Status
-  -- @param #FOX2 self
+  -- @function [parent=#FOX] __Status
+  -- @param #FOX self
   -- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "MissileLaunch".
-  -- @function [parent=#FOX2] MissileLaunch
-  -- @param #FOX2 self
-  -- @param #FOX2.MissileData missile Data of the fired missile.
+  -- @function [parent=#FOX] MissileLaunch
+  -- @param #FOX self
+  -- @param #FOX.MissileData missile Data of the fired missile.
 
   --- Triggers the FSM delayed event "MissileLaunch".
-  -- @function [parent=#FOX2] __MissileLaunch
-  -- @param #FOX2 self
+  -- @function [parent=#FOX] __MissileLaunch
+  -- @param #FOX self
   -- @param #number delay Delay in seconds before the function is called.
-  -- @param #FOX2.MissileData missile Data of the fired missile.
+  -- @param #FOX.MissileData missile Data of the fired missile.
 
   --- On after "MissileLaunch" event user function. Called when a missile was launched.
-  -- @function [parent=#FOX2] OnAfterMissileLaunch
-  -- @param #RECOVERYTANKER self
+  -- @function [parent=#FOX] OnAfterMissileLaunch
+  -- @param #FOX self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  -- @param #FOX2.MissileData missile Data of the fired missile.
+  -- @param #FOX.MissileData missile Data of the fired missile.
 
   --- Triggers the FSM event "MissileDestroyed".
-  -- @function [parent=#FOX2] MissileDestroyed
-  -- @param #FOX2 self
-  -- @param #FOX2.MissileData missile Data of the destroyed missile.
+  -- @function [parent=#FOX] MissileDestroyed
+  -- @param #FOX self
+  -- @param #FOX.MissileData missile Data of the destroyed missile.
 
   --- Triggers the FSM delayed event "MissileDestroyed".
-  -- @function [parent=#FOX2] __MissileDestroyed
-  -- @param #FOX2 self
+  -- @function [parent=#FOX] __MissileDestroyed
+  -- @param #FOX self
   -- @param #number delay Delay in seconds before the function is called.
-  -- @param #FOX2.MissileData missile Data of the destroyed missile.
+  -- @param #FOX.MissileData missile Data of the destroyed missile.
 
-  --- On after "MissileLaunch" event user function. Called when a missile was launched.
-  -- @function [parent=#FOX2] OnAfterMissileLaunch
-  -- @param #RECOVERYTANKER self
+  --- On after "MissileDestroyed" event user function. Called when a missile was destroyed.
+  -- @function [parent=#FOX] OnAfterMissileDestroyed
+  -- @param #FOX self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  -- @param #FOX2.MissileData missile Data of the fired missile.
+  -- @param #FOX.MissileData missile Data of the destroyed missile.
+
+
+  --- Triggers the FSM event "EnterSafeZone".
+  -- @function [parent=#FOX] EnterSafeZone
+  -- @param #FOX self
+  -- @param #FOX.PlayerData player Player data.
+
+  --- Triggers the FSM delayed event "EnterSafeZone".
+  -- @function [parent=#FOX] __EnterSafeZone
+  -- @param #FOX self
+  -- @param #number delay Delay in seconds before the function is called.
+  -- @param #FOX.PlayerData player Player data.
+
+  --- On after "EnterSafeZone" event user function. Called when a player enters a safe zone.
+  -- @function [parent=#FOX] OnAfterEnterSafeZone
+  -- @param #FOX self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #FOX.PlayerData player Player data.
+
+
+  --- Triggers the FSM event "ExitSafeZone".
+  -- @function [parent=#FOX] ExitSafeZone
+  -- @param #FOX self
+  -- @param #FOX.PlayerData player Player data.
+
+  --- Triggers the FSM delayed event "ExitSafeZone".
+  -- @function [parent=#FOX] __ExitSafeZone
+  -- @param #FOX self
+  -- @param #number delay Delay in seconds before the function is called.
+  -- @param #FOX.PlayerData player Player data.
+
+  --- On after "ExitSafeZone" event user function. Called when a player exists a safe zone.
+  -- @function [parent=#FOX] OnAfterExitSafeZone
+  -- @param #FOX self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #FOX.PlayerData player Player data.
+
   
   return self
 end
 
 --- On after Start event. Starts the missile trainer and adds event handlers.
--- @param #FOX2 self
+-- @param #FOX self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function FOX2:onafterStart(From, Event, To)
+function FOX:onafterStart(From, Event, To)
 
   -- Short info.
-  local text=string.format("Starting FOX2 Missile Trainer %s", FOX2.version)
+  local text=string.format("Starting FOX Missile Trainer %s", FOX.version)
   env.info(text)
 
   -- Handle events:
@@ -247,14 +292,14 @@ function FOX2:onafterStart(From, Event, To)
 end
 
 --- On after Stop event. Stops the missile trainer and unhandles events.
--- @param #FOX2 self
+-- @param #FOX self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function FOX2:onafterStop(From, Event, To)
+function FOX:onafterStop(From, Event, To)
 
   -- Short info.
-  local text=string.format("Stopping FOX2 Missile Trainer v0.0.1")
+  local text=string.format("Stopping FOX Missile Trainer %s", FOX.version)
   env.info(text)
 
   -- Handle events:
@@ -268,10 +313,10 @@ end
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Add a training zone. Players in the zone are safe.
--- @param #FOX2 self
+-- @param #FOX self
 -- @param Core.Zone#ZONE zone Training zone.
--- @return #FOX2 self
-function FOX2:AddSafeZone(zone)
+-- @return #FOX self
+function FOX:AddSafeZone(zone)
 
   table.insert(self.safezones, zone)
 
@@ -279,10 +324,10 @@ function FOX2:AddSafeZone(zone)
 end
 
 --- Add a launch zone. Only missiles launched within these zones will be tracked.
--- @param #FOX2 self
+-- @param #FOX self
 -- @param Core.Zone#ZONE zone Training zone.
--- @return #FOX2 self
-function FOX2:AddLaunchZone(zone)
+-- @return #FOX self
+function FOX:AddLaunchZone(zone)
 
   table.insert(self.launchzones, zone)
 
@@ -290,10 +335,10 @@ function FOX2:AddLaunchZone(zone)
 end
 
 --- Set debug mode on/off.
--- @param #FOX2 self
+-- @param #FOX self
 -- @param #boolean switch If true debug mode on. If false/nil debug mode off
--- @return #FOX2 self
-function FOX2:SetDebugOnOff(switch)
+-- @return #FOX self
+function FOX:SetDebugOnOff(switch)
 
   if switch==nil then
     self.Debug=false
@@ -305,17 +350,17 @@ function FOX2:SetDebugOnOff(switch)
 end
 
 --- Set debug mode on.
--- @param #FOX2 self
--- @return #FOX2 self
-function FOX2:SetDebugOn()
+-- @param #FOX self
+-- @return #FOX self
+function FOX:SetDebugOn()
   self:SetDebugOnOff(true)
   return self
 end
 
 --- Set debug mode off.
--- @param #FOX2 self
--- @return #FOX2 self
-function FOX2:SetDebugOff()
+-- @param #FOX self
+-- @return #FOX self
+function FOX:SetDebugOff()
   self:SetDebugOff(false)
   return self
 end
@@ -325,26 +370,77 @@ end
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Check spawn queue and spawn aircraft if necessary.
--- @param #FOX2 self
+-- @param #FOX self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function FOX2:onafterStatus(From, Event, To)
+function FOX:onafterStatus(From, Event, To)
 
-  self:I(self.lid..string.format("Missile trainer status: %s", self:GetState()))
+  local fsmstate=self:GetState()
+  
+  self:I(self.lid..string.format("Missile trainer status: %s", fsmstate))
   
   self:_CheckMissileStatus()
 
-  self:__Status(-30)
+  if fsmstate=="Running" then
+    self:__Status(-10)
+  end
 end
 
+--- Check status of players.
+-- @param #FOX self
+-- @param #string _unitName Name of player unit.
+function FOX:_CheckPlayers()
+
+  for playername,_playersettings in pairs(self.players) do
+    local playersettings=_playersettings  --#FOX.PlayerData
+    
+    local unitname=playersettings.unitname
+    local unit=UNIT:FindByName(unitname)
+    
+    if unit and unit:IsAlive() then
+    
+      local coord=unit:GetCoordinate()
+      
+      local issafe=self:_CheckCoordSafe(coord)
+      
+        
+      if issafe then
+      
+        -----------------------------
+        -- Player INSIDE Safe Zone --
+        -----------------------------
+      
+        if not playersettings.inzone then
+          self:EnterSafeZone(playersettings)
+          playersettings.inzone=true
+        end
+        
+      else
+      
+        ------------------------------
+        -- Player OUTSIDE Safe Zone --
+        ------------------------------     
+      
+        if playersettings.inzone==true then
+          self:ExitSafeZone(playersettings)
+          playersettings.inzone=false
+        end
+        
+      end
+    end
+  end
+
+end
+
+
 --- Missile status 
--- @param #FOX2 self
-function FOX2:_CheckMissileStatus()
+-- @param #FOX self
+function FOX:_CheckMissileStatus()
 
   local text="Missiles:"
   for i,_missile in pairs(self.missiles) do
-    local missile=_missile --#FOX2.MissileData
+    local missile=_missile --#FOX.MissileData
     
     local targetname="unkown"
     if missile.targetUnit then
@@ -368,19 +464,19 @@ function FOX2:_CheckMissileStatus()
 end
 
 --- Missle launch.
--- @param #FOX2 self
+-- @param #FOX self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #FOX2.MissileData missile Fired missile
-function FOX2:onafterMissileLaunch(From, Event, To, missile)
+-- @param #FOX.MissileData missile Fired missile
+function FOX:onafterMissileLaunch(From, Event, To, missile)
 
   -- Tracking info and init of last bomb position.
-  self:I(FOX2.lid..string.format("FOX2: Tracking %s - %s.", missile.missileType, missile.missileName))
+  self:I(FOX.lid..string.format("FOX: Tracking %s - %s.", missile.missileType, missile.missileName))
   
   -- Loop over players.
   for _,_player in pairs(self.players) do
-    local player=_player  --#FOX2.PlayerData
+    local player=_player  --#FOX.PlayerData
     
     -- Player position.
     local playerUnit=player.unit
@@ -406,7 +502,7 @@ function FOX2:onafterMissileLaunch(From, Event, To, missile)
           local text=string.format("Missile launch detected! Distance %.1f NM, bearing %03d°.", UTILS.MetersToNM(distance), bearing)
           text=text..string.format("\nNotching heading %03d or %03d", nr, nl)
           
-          --TODO: ALERT or INFO depending on wether this is a direct target.
+          --TODO: ALERT or INFO depending on whether this is a direct target.
           --TODO: lauchalertall option.
           MESSAGE:New(text, 5, "ALERT"):ToClient(player.client)
           
@@ -482,7 +578,7 @@ function FOX2:onafterMissileLaunch(From, Event, To, missile)
         
         -- Loop over players.
         for _,_player in pairs(self.players) do
-          local player=_player  --#FOX2.PlayerData
+          local player=_player  --#FOX.PlayerData
           
           -- Check that player was not the one who launched the missile.
           if player.unitname~=missile.shooterName then
@@ -588,7 +684,7 @@ function FOX2:onafterMissileLaunch(From, Event, To, missile)
       missile.active=false   
               
       --Terminate the timer.
-      self:T(FOX2.lid..string.format("Terminating missile track timer."))
+      self:T(FOX.lid..string.format("Terminating missile track timer."))
       return nil
   
     end -- _status check
@@ -596,7 +692,7 @@ function FOX2:onafterMissileLaunch(From, Event, To, missile)
   end -- end function trackBomb
   
   -- Weapon is not yet "alife" just yet. Start timer with a little delay.
-  self:T(FOX2.lid..string.format("Tracking of missile starts in 0.1 seconds."))
+  self:T(FOX.lid..string.format("Tracking of missile starts in 0.1 seconds."))
   timer.scheduleFunction(trackMissile, missile.weapon, timer.getTime()+0.0001)
 
 end
@@ -605,10 +701,10 @@ end
 -- Event Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- FOX2 event handler for event birth.
--- @param #FOX2 self
+--- FOX event handler for event birth.
+-- @param #FOX self
 -- @param Core.Event#EVENTDATA EventData
-function FOX2:OnEventBirth(EventData)
+function FOX:OnEventBirth(EventData)
   self:F3({eventbirth = EventData})
   
   -- Nil checks.
@@ -649,7 +745,7 @@ function FOX2:OnEventBirth(EventData)
     SCHEDULER:New(nil, self._AddF10Commands, {self,_unitName}, 0.1)
     
     -- Player data.
-    local playerData={} --#FOX2.PlayerData
+    local playerData={} --#FOX.PlayerData
     
     -- Player unit, client and callsign.
     playerData.unit      = playerunit
@@ -677,10 +773,10 @@ function FOX2:OnEventBirth(EventData)
   end 
 end
 
---- FOX2 event handler for event shot (when a unit releases a rocket or bomb (but not a fast firing gun). 
--- @param #FOX2 self
+--- FOX event handler for event shot (when a unit releases a rocket or bomb (but not a fast firing gun). 
+-- @param #FOX self
 -- @param Core.Event#EVENTDATA EventData
-function FOX2:OnEventShot(EventData)
+function FOX:OnEventShot(EventData)
   self:I({eventshot = EventData})
   
   if EventData.Weapon==nil then
@@ -712,13 +808,13 @@ function FOX2:OnEventShot(EventData)
   end
   
   -- Debug info.
-  self:E(FOX2.lid.."EVENT SHOT: FOX2")
-  self:E(FOX2.lid..string.format("EVENT SHOT: Ini unit     = %s", tostring(EventData.IniUnitName)))
-  self:E(FOX2.lid..string.format("EVENT SHOT: Ini group    = %s", tostring(EventData.IniGroupName)))
-  self:E(FOX2.lid..string.format("EVENT SHOT: Weapon type  = %s", tostring(_weapon)))
-  self:E(FOX2.lid..string.format("EVENT SHOT: Weapon categ = %s", tostring(weaponcategory)))
-  self:E(FOX2.lid..string.format("EVENT SHOT: Missil categ = %s", tostring(missilecategory)))
-  self:E(FOX2.lid..string.format("EVENT SHOT: Missil range = %s", tostring(missilerange)))
+  self:E(FOX.lid.."EVENT SHOT: FOX")
+  self:E(FOX.lid..string.format("EVENT SHOT: Ini unit     = %s", tostring(EventData.IniUnitName)))
+  self:E(FOX.lid..string.format("EVENT SHOT: Ini group    = %s", tostring(EventData.IniGroupName)))
+  self:E(FOX.lid..string.format("EVENT SHOT: Weapon type  = %s", tostring(_weapon)))
+  self:E(FOX.lid..string.format("EVENT SHOT: Weapon categ = %s", tostring(weaponcategory)))
+  self:E(FOX.lid..string.format("EVENT SHOT: Missil categ = %s", tostring(missilecategory)))
+  self:E(FOX.lid..string.format("EVENT SHOT: Missil range = %s", tostring(missilerange)))
   
   
   -- Check if fired in launch zone.
@@ -734,7 +830,7 @@ function FOX2:OnEventShot(EventData)
     --_targetUnit=UNIT:FindByName(_targetName)
     _targetUnit=UNIT:Find(_target)
   end
-  self:E(FOX2.lid..string.format("EVENT SHOT: Target name = %s", tostring(_targetName)))
+  self:E(FOX.lid..string.format("EVENT SHOT: Target name = %s", tostring(_targetName)))
     
   -- Track missiles of type AAM=1, SAM=2 or OTHER=6
   local _track = weaponcategory==1 and missilecategory and (missilecategory==1 or missilecategory==2 or missilecategory==6)
@@ -742,7 +838,7 @@ function FOX2:OnEventShot(EventData)
   -- Only track missiles
   if _track then
   
-    local missile={} --#FOX2.MissileData
+    local missile={} --#FOX.MissileData
     
     missile.active=true
     missile.weapon=EventData.weapon
@@ -758,10 +854,15 @@ function FOX2:OnEventShot(EventData)
     missile.targetUnit=_targetUnit
     missile.targetPlayer=self:_GetPlayerFromUnit(missile.targetUnit)
     
-    -- Add missile table.
-    table.insert(self.missiles, missile)
+    -- TODO: or in protected set!
+    if missile.targetPlayer then
     
-    self:__MissileLaunch(0.1, missile)
+      -- Add missile table.
+      table.insert(self.missiles, missile)
+      
+      self:__MissileLaunch(0.1, missile)
+      
+    end
     
   end --if _track
   
@@ -773,9 +874,9 @@ end
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Add menu commands for player.
--- @param #FOX2 self
+-- @param #FOX self
 -- @param #string _unitName Name of player unit.
-function FOX2:_AddF10Commands(_unitName)
+function FOX:_AddF10Commands(_unitName)
   self:F(_unitName)
   
   -- Get player unit and name.
@@ -797,40 +898,40 @@ function FOX2:_AddF10Commands(_unitName)
         
         -- Set menu root path.
         local _rootPath=nil
-        if FOX2.MenuF10Root then
+        if FOX.MenuF10Root then
           ------------------------
           -- MISSON LEVEL MENUE --
           ------------------------          
            
-          -- F10/FOX2/...
-          _rootPath=FOX2.MenuF10Root
+          -- F10/FOX/...
+          _rootPath=FOX.MenuF10Root
          
         else
           ------------------------
           -- GROUP LEVEL MENUES --
           ------------------------
           
-          -- Main F10 menu: F10/FOX2/
-          if FOX2.MenuF10[gid]==nil then
-            FOX2.MenuF10[gid]=missionCommands.addSubMenuForGroup(gid, "FOX2")
+          -- Main F10 menu: F10/FOX/
+          if FOX.MenuF10[gid]==nil then
+            FOX.MenuF10[gid]=missionCommands.addSubMenuForGroup(gid, "FOX")
           end
           
-          -- F10/FOX2/...
-          _rootPath=FOX2.MenuF10[gid]
+          -- F10/FOX/...
+          _rootPath=FOX.MenuF10[gid]
           
         end
         
         
         --------------------------------        
-        -- F10/F<X> FOX2/F1 Help
+        -- F10/F<X> FOX/F1 Help
         --------------------------------
         local _helpPath=missionCommands.addSubMenuForGroup(gid, "Help", _rootPath)
-        -- F10/FOX2/F1 Help/
+        -- F10/FOX/F1 Help/
         --missionCommands.addCommandForGroup(gid, "Subtitles On/Off",    _helpPath, self._SubtitlesOnOff,      self, _unitName)   -- F7
         --missionCommands.addCommandForGroup(gid, "Trapsheet On/Off",    _helpPath, self._TrapsheetOnOff,      self, _unitName)   -- F8
 
         -------------------------
-        -- F10/F<X> FOX2/
+        -- F10/F<X> FOX/
         -------------------------
         
         missionCommands.addCommandForGroup(gid, "Launch Alerts On/Off",    _rootPath, self._ToggleLaunchAlert,     self, _unitName) -- F2
@@ -848,9 +949,9 @@ end
 
 
 --- Turn player's launch alert on/off.
--- @param #FOX2 self
+-- @param #FOX self
 -- @param #string _unitname Name of the player unit.
-function FOX2:_MyStatus(_unitname)
+function FOX:_MyStatus(_unitname)
   self:F2(_unitname)
   
   -- Get player unit and player name.
@@ -860,7 +961,7 @@ function FOX2:_MyStatus(_unitname)
   if unit and playername then
   
     -- Player data.  
-    local playerData=self.players[playername]  --#FOX2.PlayerData
+    local playerData=self.players[playername]  --#FOX.PlayerData
     
     if playerData then
     
@@ -877,9 +978,9 @@ end
 
 
 --- Turn player's launch alert on/off.
--- @param #FOX2 self
+-- @param #FOX self
 -- @param #string _unitname Name of the player unit.
-function FOX2:_ToggleLaunchAlert(_unitname)
+function FOX:_ToggleLaunchAlert(_unitname)
   self:F2(_unitname)
   
   -- Get player unit and player name.
@@ -889,7 +990,7 @@ function FOX2:_ToggleLaunchAlert(_unitname)
   if unit and playername then
   
     -- Player data.  
-    local playerData=self.players[playername]  --#FOX2.PlayerData
+    local playerData=self.players[playername]  --#FOX.PlayerData
     
     if playerData then
     
@@ -910,9 +1011,9 @@ function FOX2:_ToggleLaunchAlert(_unitname)
 end
 
 --- Turn player's 
--- @param #FOX2 self
+-- @param #FOX self
 -- @param #string _unitname Name of the player unit.
-function FOX2:_ToggleDestroyMissiles(_unitname)
+function FOX:_ToggleDestroyMissiles(_unitname)
   self:F2(_unitname)
   
   -- Get player unit and player name.
@@ -922,7 +1023,7 @@ function FOX2:_ToggleDestroyMissiles(_unitname)
   if unit and playername then
   
     -- Player data.  
-    local playerData=self.players[playername]  --#FOX2.PlayerData
+    local playerData=self.players[playername]  --#FOX.PlayerData
     
     if playerData then
     
@@ -948,9 +1049,9 @@ end
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Get a random text message in case you die.
--- @param #FOX2 self
+-- @param #FOX self
 -- @return #string Text in case you die.
-function FOX2:_DeadText()
+function FOX:_DeadText()
 
   local texts={}
   texts[1]="You're dead!"
@@ -967,10 +1068,10 @@ end
 
 
 --- Check if a coordinate lies within a safe training zone.
--- @param #FOX2 self
+-- @param #FOX self
 -- @param Core.Point#COORDINATE coord Coordinate to check.
 -- @return #boolean True if safe.
-function FOX2:_CheckCoordSafe(coord)
+function FOX:_CheckCoordSafe(coord)
 
   -- No safe zones defined ==> Everything is safe.
   if #self.safezones==0 then
@@ -990,10 +1091,10 @@ function FOX2:_CheckCoordSafe(coord)
 end
 
 --- Check if a coordinate lies within a launch zone.
--- @param #FOX2 self
+-- @param #FOX self
 -- @param Core.Point#COORDINATE coord Coordinate to check.
 -- @return #boolean True if in launch zone.
-function FOX2:_CheckCoordLaunch(coord)
+function FOX:_CheckCoordLaunch(coord)
 
   -- No safe zones defined ==> Everything is safe.
   if #self.launchzones==0 then
@@ -1013,10 +1114,10 @@ function FOX2:_CheckCoordLaunch(coord)
 end
 
 --- Returns the unit of a player and the player name. If the unit does not belong to a player, nil is returned. 
--- @param #FOX2 self
--- @param #DCS.Weapon weapon The weapon.
+-- @param #FOX self
+-- @param DCS#Weapon weapon The weapon.
 -- @return #number Heading of weapon in degrees or -1.
-function FOX2:_GetWeapongHeading(weapon)
+function FOX:_GetWeapongHeading(weapon)
 
   if weapon and weapon:isExist() then
   
@@ -1037,11 +1138,11 @@ function FOX2:_GetWeapongHeading(weapon)
 end
 
 --- Returns the unit of a player and the player name. If the unit does not belong to a player, nil is returned. 
--- @param #FOX2 self
--- @param #DCS.Weapon weapon The weapon.
+-- @param #FOX self
+-- @param DCS#Weapon weapon The weapon.
 -- @return #number Notching heading right, i.e. missile heading +90�
 -- @return #number Notching heading left, i.e. missile heading -90�.
-function FOX2:_GetNotchingHeadings(weapon)
+function FOX:_GetNotchingHeadings(weapon)
 
   if weapon then
   
@@ -1064,13 +1165,13 @@ function FOX2:_GetNotchingHeadings(weapon)
 end
 
 --- Returns the player data from a unit name.
--- @param #FOX2 self
+-- @param #FOX self
 -- @param #string unitName Name of the unit.
--- @return #FOX2.PlayerData Player data.
-function FOX2:_GetPlayerFromUnitname(unitName)
+-- @return #FOX.PlayerData Player data.
+function FOX:_GetPlayerFromUnitname(unitName)
 
   for _,_player in pairs(self.players) do  
-    local player=_player --#FOX2.PlayerData
+    local player=_player --#FOX.PlayerData
     
     if player.unitname==unitName then
       return player
@@ -1081,10 +1182,10 @@ function FOX2:_GetPlayerFromUnitname(unitName)
 end
 
 --- Retruns the player data from a unit.
--- @param #FOX2 self
+-- @param #FOX self
 -- @param Wrapper.Unit#UNIT unit
--- @return #FOX2.PlayerData Player data.
-function FOX2:_GetPlayerFromUnit(unit)
+-- @return #FOX.PlayerData Player data.
+function FOX:_GetPlayerFromUnit(unit)
 
   if unit and unit:IsAlive() then
 
@@ -1092,7 +1193,7 @@ function FOX2:_GetPlayerFromUnit(unit)
     local unitname=unit:GetName()
 
     for _,_player in pairs(self.players) do  
-      local player=_player --#FOX2.PlayerData
+      local player=_player --#FOX.PlayerData
       
       if player.unitname==unitname then
         return player
@@ -1105,11 +1206,11 @@ function FOX2:_GetPlayerFromUnit(unit)
 end
 
 --- Returns the unit of a player and the player name. If the unit does not belong to a player, nil is returned. 
--- @param #FOX2 self
+-- @param #FOX self
 -- @param #string _unitName Name of the player unit.
 -- @return Wrapper.Unit#UNIT Unit of player or nil.
 -- @return #string Name of the player or nil.
-function FOX2:_GetPlayerUnitAndName(_unitName)
+function FOX:_GetPlayerUnitAndName(_unitName)
   self:F2(_unitName)
 
   if _unitName ~= nil then

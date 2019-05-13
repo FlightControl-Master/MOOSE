@@ -340,7 +340,7 @@ RANGE.MenuF10Root=nil
 
 --- Range script version.
 -- @field #string version
-RANGE.version="2.1.0"
+RANGE.version="2.1.1"
 
 --TODO list:
 --TODO: Verbosity level for messages.
@@ -532,7 +532,7 @@ function RANGE:onafterStart()
   end
   
   if self.location==nil then
-    local text=string.format("ERROR! No range location found. Number of strafe targets = %d. Number of bomb targets = %d.", self.rangename, self.nstrafetargets, self.nbombtargets)
+    local text=string.format("ERROR! No range location found. Number of strafe targets = %d. Number of bomb targets = %d.", self.nstrafetargets, self.nbombtargets)
     self:E(self.id..text)
     return
   end
@@ -1095,7 +1095,7 @@ function RANGE:AddBombingTargetUnit(unit, goodhitrange, randommove)
   
   local target={} --#RANGE.BombTarget
   target.name=name
-  target.target=target
+  target.target=unit
   target.goodhitrange=goodhitrange
   target.move=randommove
   target.speed=speed

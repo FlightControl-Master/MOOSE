@@ -151,7 +151,7 @@
 -- 
 -- When a player commits too much damage to friendlies, his penalty score will reach a certain level.
 -- Use the method @{#SCORING.SetFratricide}() to define the level when a player gets kicked.  
--- By default, the fratricide level is the default penalty mutiplier * 2 for the penalty score.
+-- By default, the fratricide level is the default penalty multiplier * 2 for the penalty score.
 -- 
 -- # Penalty score when a player changes the coalition.
 -- 
@@ -227,10 +227,12 @@ SCORING = {
   ClassName = "SCORING",
   ClassID = 0,
   Players = {},
+  CSVdata = {},
 }
 
 local _SCORINGCoalition =
   {
+    [0] = "Neutral",
     [1] = "Red",
     [2] = "Blue",
   }
@@ -247,13 +249,15 @@ local _SCORINGCategory =
 --- Creates a new SCORING object to administer the scoring achieved by players.
 -- @param #SCORING self
 -- @param #string GameName The name of the game. This name is also logged in the CSV score file.
+-- @param #string FileName (Optional) Name of the CSV file for saving results. If the file exists, player scores are read.
+-- @param #boolean MenuOff (Optional) Done create player menus.
 -- @return #SCORING self
 -- @usage
 -- 
 -- -- Define a new scoring object for the mission Gori Valley.
 -- ScoringObject = SCORING:New( "Gori Valley" )
 -- 
-function SCORING:New( GameName )
+function SCORING:New( GameName, FileName, MenuOff )
 
   -- Inherits from BASE
   local self = BASE:Inherit( self, BASE:New() ) -- #SCORING
@@ -262,6 +266,10 @@ function SCORING:New( GameName )
     self.GameName = GameName
   else
     error( "A game name must be given to register the scoring results" )
+  end
+  
+  if FileName then
+    self.FileName = FileName
   end
   
   
@@ -290,6 +298,9 @@ function SCORING:New( GameName )
   
   self:SetDisplayMessagePrefix()
   
+  -- No player menus.
+  self.MenuOff=MenuOff
+  
   -- Event handlers  
   self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
   self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
@@ -312,7 +323,7 @@ function SCORING:New( GameName )
   
 
   -- Create the CSV file.
-  self:OpenCSV( GameName )
+  self:OpenCSV( GameName, FileName )
 
   return self
   
@@ -600,11 +611,13 @@ end
 -- @param #SCORING self
 -- @return #SCORING
 function SCORING:SetScoringMenu( ScoringGroup )
+  if not self.MenuOff then
     local Menu = MENU_GROUP:New( ScoringGroup, 'Scoring and Statistics' )
     local ReportGroupSummary = MENU_GROUP_COMMAND:New( ScoringGroup, 'Summary report players in group', Menu, SCORING.ReportScoreGroupSummary, self, ScoringGroup )
     local ReportGroupDetailed = MENU_GROUP_COMMAND:New( ScoringGroup, 'Detailed report players in group', Menu, SCORING.ReportScoreGroupDetailed, self, ScoringGroup )
     local ReportToAllSummary = MENU_GROUP_COMMAND:New( ScoringGroup, 'Summary report all players', Menu, SCORING.ReportScoreAllSummary, self, ScoringGroup )
     self:SetState( ScoringGroup, "ScoringMenu", Menu )
+  end
   return self
 end
 
@@ -1758,51 +1771,148 @@ function SCORING:ReportScoreAllSummary( PlayerGroup )
 
 end
 
-
-function SCORING:SecondsToClock(sSeconds)
-  local nSeconds = sSeconds
-  if nSeconds == 0 then
-    --return nil;
-    return "00:00:00";
-  else
-    nHours = string.format("%02.f", math.floor(nSeconds/3600));
-    nMins = string.format("%02.f", math.floor(nSeconds/60 - (nHours*60)));
-    nSecs = string.format("%02.f", math.floor(nSeconds - nHours*3600 - nMins *60));
-    return nHours..":"..nMins..":"..nSecs
-  end
-end
-
 --- Opens a score CSV file to log the scores.
 -- @param #SCORING self
 -- @param #string ScoringCSV
+-- @param #string FileName Name of the csv file.
 -- @return #SCORING self
 -- @usage
 -- -- Open a new CSV file to log the scores of the game Gori Valley. Let the name of the CSV file begin with "Player Scores".
 -- ScoringObject = SCORING:New( "Gori Valley" )
 -- ScoringObject:OpenCSV( "Player Scores" )
-function SCORING:OpenCSV( ScoringCSV )
+function SCORING:OpenCSV( ScoringCSV, FileName )
   self:F( ScoringCSV )
   
   if lfs and io and os then
+  
     if ScoringCSV then
-      self.ScoringCSV = ScoringCSV
-      local fdir = lfs.writedir() .. [[Logs\]] .. self.ScoringCSV .. " " .. os.date( "%Y-%m-%d %H-%M-%S" ) .. ".csv"
-
-      self.CSVFile, self.err = io.open( fdir, "w+" )
-      if not self.CSVFile then
-        error( "Error: Cannot open CSV file in " .. lfs.writedir() )
+      
+      -- File name.
+      local fdir = lfs.writedir() .. [[Logs\]] .. ScoringCSV .. " " .. os.date( "%Y-%m-%d %H-%M-%S" ) .. ".csv"
+      
+      if FileName then
+        fdir=lfs.writedir() .. [[Logs\]] .. FileName
+      end
+      
+      if UTILS.FileExists(fdir) then
+        self:LoadCSV(fdir)
+        self.CSVFile, self.err = io.open( fdir, "a+" )
+        if not self.CSVFile then
+          error( "Error: Cannot open CSV file in " .. lfs.writedir() )
+        end
+          
+      else
+        self.CSVFile, self.err = io.open( fdir, "w+" )
+        if not self.CSVFile then
+          error( "Error: Cannot open CSV file in " .. lfs.writedir() )
+        end        
+        self.CSVFile:write( '"GameName","RunTime","Time","PlayerName","TargetPlayerName","ScoreType","PlayerUnitCoaltion","PlayerUnitCategory","PlayerUnitType","PlayerUnitName","TargetUnitCoalition","TargetUnitCategory","TargetUnitType","TargetUnitName","Times","Score"\n' )
       end
 
-      self.CSVFile:write( '"GameName","RunTime","Time","PlayerName","TargetPlayerName","ScoreType","PlayerUnitCoaltion","PlayerUnitCategory","PlayerUnitType","PlayerUnitName","TargetUnitCoalition","TargetUnitCategory","TargetUnitType","TargetUnitName","Times","Score"\n' )
-  
       self.RunTime = os.date("%y-%m-%d_%H-%M-%S")
     else
       error( "A string containing the CSV file name must be given." )
     end
+    
   else
     self:F( "The MissionScripting.lua file has not been changed to allow lfs, io and os modules to be used..." )
   end
   return self
+end
+
+
+--- Load player data from file.
+-- @param #SCORING self
+-- @param #string filename File name containing player scoring data.
+function SCORING:LoadCSV(filename)
+
+  --- Function that load data from a file.
+  local function _loadfile(filename)
+    local f=io.open(filename, "rb")
+    if f then
+      local data=f:read("*all")
+      f:close()
+      return data
+    else
+      self:E(self.id..string.format("ERROR: Could not load player results from file %s", tostring(filename)))
+      return nil
+    end
+  end
+
+  -- Info message.
+  local text=string.format("Loading player scoring from file %s", filename)
+  self:I(text)
+
+  -- Load asset data from file.
+  local data=_loadfile(filename)
+  
+  if data then
+
+    -- Split by line break.
+    local results=UTILS.Split(data,"\n")
+    
+    -- Remove first header line.
+    table.remove(results, 1)
+  
+    -- Init player scores table.
+    self.CSVdata=self.CSVdata or {}
+  
+    -- Loop over all lines.
+    for _,_result in pairs(results) do
+  
+      -- Parameters are separated by commata.
+      local resultdata=UTILS.Split(_result, ",")
+          
+      -- Grade table
+      local result={}
+      
+      --'"GameName","RunTime","Time","PlayerName","TargetPlayerName","ScoreType","PlayerUnitCoaltion","PlayerUnitCategory","PlayerUnitType","PlayerUnitName","TargetUnitCoalition",
+      -- "TargetUnitCategory","TargetUnitType","TargetUnitName","Times","Score"\n'
+      
+      local PlayerName=tostring(resultdata[4])
+      
+      -- Results data.
+      result.GameName=tostring(resultdata[1])
+      result.RunTime=tostring(resultdata[2])    
+      result.Time=tonumber(resultdata[3])
+      result.PlayerName=tostring(resultdata[4])
+      result.TargetPlayerName=tostring(resultdata[5])
+      result.ScoreType=tostring(resultdata[6])
+      result.PlayerUnitCoaltion=tostring(resultdata[7])
+      result.PlayerUnitCategory=tostring(resultdata[8])
+      result.PlayerUnitType=tostring(resultdata[9])
+      result.PlayerUnitName=tostring(resultdata[10])
+      result.TargetUnitCoalition=tostring(resultdata[11])
+      result.TargetUnitCategory=tostring(resultdata[12])
+      result.TargetUnitType=tostring(resultdata[13])
+      result.TargetUnitName=tostring(resultdata[14])
+      result.Times=tonumber(resultdata[15])
+      result.Score=tonumber(resultdata[16])
+      
+      self:E(result.Score)
+            
+      -- Create player array if necessary.
+      self.CSVdata[result.PlayerName]=self.CSVdata[result.PlayerName] or {}
+      
+      if self.Players[PlayerName] == nil then -- I believe this is the place where a Player gets a life in a mission when he enters a unit ...
+        self.Players[PlayerName] = {}
+        self.Players[PlayerName].Hit = {}
+        self.Players[PlayerName].Destroy = {}
+        self.Players[PlayerName].Goals = {}
+        self.Players[PlayerName].Mission = {}
+        self.Players[PlayerName].HitPlayers = {}
+        self.Players[PlayerName].Score = 0
+        self.Players[PlayerName].Penalty = 0
+        self.Players[PlayerName].PenaltyCoalition = 0
+        self.Players[PlayerName].PenaltyWarning = 0              
+      end
+      
+      --self.Players[PlayerName].Score=self.Players[PlayerName].Score+result.Score
+      
+      -- Add result to table.
+      table.insert(self.CSVdata[result.PlayerName], result)    
+    end
+  end
 end
 
 
@@ -1823,11 +1933,17 @@ end
 -- @param #string TargetUnitType The type of the target unit.
 -- @return #SCORING self
 function SCORING:ScoreCSV( PlayerName, TargetPlayerName, ScoreType, ScoreTimes, ScoreAmount, PlayerUnitName, PlayerUnitCoalition, PlayerUnitCategory, PlayerUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
+
   --write statistic information to file
-  local ScoreTime = self:SecondsToClock( timer.getTime() )
+  --local ScoreTime = self:SecondsToClock( timer.getTime() )
+  local ScoreTime = UTILS.SecondsToClock(timer.getAbsTime())
+  
+  -- Player name
   PlayerName = PlayerName:gsub( '"', '_' )
   
-  TargetPlayerName = TargetPlayerName or ""
+  -- Target NAme
+  TargetPlayerName = TargetPlayerName or "n/a"
+  
   TargetPlayerName = TargetPlayerName:gsub( '"', '_' )
 
   if PlayerUnitName and PlayerUnitName ~= '' then
@@ -1847,22 +1963,22 @@ function SCORING:ScoreCSV( PlayerName, TargetPlayerName, ScoreType, ScoreTimes, 
         PlayerUnitType = PlayerUnit:getTypeName()
       end
     else
-      PlayerUnitName = ''
-      PlayerUnitCategory = ''
-      PlayerUnitCoalition = ''
-      PlayerUnitType = ''
+      PlayerUnitName = 'n/a'
+      PlayerUnitCategory = 'n/a'
+      PlayerUnitCoalition = 'n/a'
+      PlayerUnitType = 'n/a'
     end
   else
-    PlayerUnitName = ''
-    PlayerUnitCategory = ''
-    PlayerUnitCoalition = ''
-    PlayerUnitType = ''
+    PlayerUnitName = 'n/a'
+    PlayerUnitCategory = 'n/a'
+    PlayerUnitCoalition = 'n/a'
+    PlayerUnitType = 'n/a'
   end
 
-  TargetUnitCoalition = TargetUnitCoalition or ""
-  TargetUnitCategory = TargetUnitCategory or ""
-  TargetUnitType = TargetUnitType or ""
-  TargetUnitName = TargetUnitName or ""
+  TargetUnitCoalition = TargetUnitCoalition or "n/a"
+  TargetUnitCategory = TargetUnitCategory or "n/a"
+  TargetUnitType = TargetUnitType or "n/a"
+  TargetUnitName = TargetUnitName or "n/a"
 
   if lfs and io and os then
     self.CSVFile:write(
@@ -1881,14 +1997,15 @@ function SCORING:ScoreCSV( PlayerName, TargetPlayerName, ScoreType, ScoreTimes, 
       '"' .. TargetUnitType       .. '"' .. ',' ..
       '"' .. TargetUnitName       .. '"' .. ',' ..
       ''  .. ScoreTimes           .. ''  .. ',' ..
-      ''  .. ScoreAmount
+      ''  .. ScoreAmount 
     )
 
     self.CSVFile:write( "\n" )
   end
 end
 
-
+--- Close csv file.
+-- @param #SCORING self
 function SCORING:CloseCSV()
   if lfs and io and os then
     self.CSVFile:close()

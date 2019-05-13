@@ -1733,7 +1733,7 @@ _WAREHOUSEDB  = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.7.0"
+WAREHOUSE.version="0.7.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -1876,6 +1876,7 @@ function WAREHOUSE:New(warehouse, alias)
   self:AddTransition("Running",         "Request",           "*")           -- Process a request. Only in running mode.
   self:AddTransition("Attacked",        "Request",           "*")           -- Process a request. Only in running mode.
   self:AddTransition("*",               "Unloaded",          "*")           -- Cargo has been unloaded from the carrier (unused ==> unnecessary?).
+  self:AddTransition("*",               "AssetSpawned",      "*")           -- Asset has been spawned into the world.
   self:AddTransition("*",               "Arrived",           "*")           -- Cargo or transport group has arrived.
   self:AddTransition("*",               "Delivered",         "*")           -- All cargo groups of a request have been delivered to the requesting warehouse.
   self:AddTransition("Running",         "SelfRequest",       "*")           -- Request to warehouse itself. Requested assets are only spawned but not delivered anywhere.
@@ -2299,6 +2300,29 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
+
+
+  --- Triggers the FSM event "AssetSpawned" when the warehouse has spawned an asset.
+  -- @function [parent=#WAREHOUSE] AssetSpawned
+  -- @param #WAREHOUSE self
+  -- @param Wrapper.Group#GROUP group the group that was spawned.
+  -- @param #WAREHOUSE.Assetitem asset The asset that was spawned.
+
+  --- Triggers the FSM event "AssetSpawned" with a delay when the warehouse has spawned an asset.
+  -- @function [parent=#WAREHOUSE] __AssetSpawned
+  -- @param #WAREHOUSE self
+  -- @param #number delay Delay in seconds.
+  -- @param Wrapper.Group#GROUP group the group that was spawned.
+  -- @param #WAREHOUSE.Assetitem asset The asset that was spawned.
+
+  --- On after "AssetSpawned" event user function. Called when the warehouse has spawned an asset.
+  -- @function [parent=#WAREHOUSE] OnAfterAssetSpawned
+  -- @param #WAREHOUSE self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Wrapper.Group#GROUP group the group that was spawned.
+  -- @param #WAREHOUSE.Assetitem asset The asset that was spawned.
 
 
   --- Triggers the FSM event "Save" when the warehouse assets are saved to file on disk.
@@ -4259,6 +4283,9 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
       -- Add transport assets.
       table.insert(_transportassets,_assetitem)
+      
+      -- Asset spawned FSM function.
+      self:__AssetSpawned(1, spawngroup, _assetitem)
     end
   end
 
@@ -5195,6 +5222,9 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
     if _group then
       _groupset:AddGroup(_group)
       table.insert(_assets, _assetitem)
+      
+      -- Call FSM function.
+      self:__AssetSpawned(1,_group,_assetitem)
     else
       self:E(self.wid.."ERROR: Cargo asset could not be spawned!")
     end

@@ -145,7 +145,7 @@ function FMD:New()
   self:AddTransition("*",             "Status",          "*")           -- Start FMD script.
   
   -- Start FMD.
-  FMD:Start()
+  self:Start()
 
   return self
 end
@@ -239,28 +239,33 @@ end
 -- @param Wrapper.Unit#UNIT unit
 -- @return #FMD.DataPoint Datapoint.
 function FMD:_GetDataPoint(unit)
+
+  if unit and unit:IsAlive() then
   
-  -- Current coordinate.
-  local coord=unit:GetCoordinate()
-  
-  local dp={} --#FMD.DataPoint
-  
-  dp.a={}
-  dp.Alt=coord.y
-  dp.AoA=unit:GetAoA()
-  dp.Atot=nil
-  dp.P=coord:GetPressure()
-  dp.Pitch=unit:GetPitch()
-  dp.Roll=unit:GetRoll()
-  dp.time=timer.getAbsTime()
-  dp.T=coord:GetTemperature()
-  dp.v=unit:GetVelocityVec3()
-  dp.Vtot=UTILS.VecNorm(dp.v)
-  dp.Yaw=unit:GetYaw()
-  dp.o=unit:GetOrientationX()
-  dp.Hdg=unit:GetHeading()
-  
-  return dp
+    -- Current coordinate.
+    local coord=unit:GetCoordinate()
+    
+    local dp={} --#FMD.DataPoint
+    
+    dp.a={}
+    dp.Alt=coord.y
+    dp.AoA=unit:GetAoA()
+    dp.Atot=nil
+    dp.P=coord:GetPressure()
+    dp.Pitch=unit:GetPitch()
+    dp.Roll=unit:GetRoll()
+    dp.time=timer.getAbsTime()
+    dp.T=coord:GetTemperature()
+    dp.v=unit:GetVelocityVec3()
+    dp.Vtot=UTILS.VecNorm(dp.v)
+    dp.Yaw=unit:GetYaw()
+    dp.o=unit:GetOrientationX()
+    dp.Hdg=unit:GetHeading()
+    
+    return dp
+  else
+    return nil
+  end
 end
 
 --- Get data of unit.
@@ -292,9 +297,32 @@ function FMD:_Derivative(playerData)
     dpi.a.z=numderiv(dpm.v.z, dpp.v.z, dt)
     
     dpi.DPitch=numderiv(dpm.Pitch, dpp.Pitch, dt)
-    dpi.DRoll=numderiv(dpm.Roll, dpp.Roll, dt)
+    --dpi.DRoll=numderiv(dpm.Roll, dpp.Roll, dt)
     dpi.DYaw=numderiv(dpm.Yaw, dpp.Yaw, dt)
+    
+    -- Roll shortcuts.
+    local r1=dpm.Roll
+    local r2=dpp.Roll
+    
+    -- Put roll in [0,360)
+    if (r1<0) then
+      r1=r1+360
+    end 
+    if (r2<0) then
+      r2=r2+360
+    end
 
+    -- Handle case where 360 deg periodicity strikes.
+    if r1<90 and r2>270 then
+      r1=r1+360
+    end    
+    if r1>270 and r2<90 then
+      r2=r2+360
+    end
+    
+    --
+    dpi.DRoll=numderiv(r1, r2, dt)
+    
     local ang=UTILS.VecAngle(dpm.o, dpp.o)
     dpi.omega=numderiv(0, ang, dt)
     
@@ -317,12 +345,20 @@ function FMD:_RecordData(playerData)
       -- Activate recording switch.
       playerData.recording=true    
   end
-
-  -- Get data point.
-  local dp=self:_GetDataPoint(playerData.unit)
   
-  -- Add data point to player table.
-  table.insert(playerData.data, dp)
+  -- Check if unit is alive.
+  if playerData.unit and playerData.unit:IsAlive() then
+
+    -- Get data point.
+    local dp=self:_GetDataPoint(playerData.unit)
+    
+    -- Add data point to player table.
+    table.insert(playerData.data, dp)
+    
+  else
+    -- Stop recording if player unit is not alive.
+    self:_StopRecording(playerData.unitname)
+  end
 
 end
 
@@ -374,7 +410,7 @@ function FMD:_SaveData(playerData)
   self:I(self.lid..text)
 
   -- Header line
-  local data="#Time,Altitude,Temperature,Pressure,Vtot,Vx,Vy,Vz,Atot,ax,ay,az,AoA,Pitch,dPitch/dt,Roll,dRoll/dt,Yaw,dYaw/dt\n"
+  local data="#Time,Altitude,Temperature,Pressure,Vtot,Vx,Vy,Vz,Atot,ax,ay,az,AoA,Pitch,dPitch/dt,Roll,dRoll/dt,Yaw,dYaw/dt,Turn Rate\n"
   
   local g0=playerData.data[1] --#FMD.DataPoint
   local T0=g0.time
@@ -404,7 +440,11 @@ function FMD:_SaveData(playerData)
     local l=dp.AoA or 0
     local m=dp.Pitch or 0
     local n=dp.DPitch or 0
-    local o=dp.Roll or 0
+    local roll=dp.Roll or 0
+    if roll<0 then
+      roll=roll+360
+    end
+    local o=roll --dp.Roll or 0
     local p=dp.DRoll or 0
     local q=dp.Yaw or 0
     local r=dp.DYaw or 0
@@ -510,13 +550,16 @@ function FMD:_AddF10Commands(_unitName)
         missionCommands.addCommandForGroup(gid, "Delta t=30 s",   _timePath, self._SetTimeInterval, self, _unitName, 30.0)
         missionCommands.addCommandForGroup(gid, "Delta t=60 s",   _timePath, self._SetTimeInterval, self, _unitName, 60.0)
 
+        -------------------------------        
+        -- F10/F<X> FMD/F1 Rec Duration
+        -------------------------------
         local _durPath=missionCommands.addSubMenuForGroup(gid, "Rec Duration", _rootPath)
         -- F10/FMD/F1 Rec Duration/
-        missionCommands.addCommandForGroup(gid, "T=10 s",   _timePath, self._SetRecDuration, self, _unitName, 10)
-        missionCommands.addCommandForGroup(gid, "T=30 s",   _timePath, self._SetRecDuration, self, _unitName, 30)
-        missionCommands.addCommandForGroup(gid, "T=60 s",   _timePath, self._SetRecDuration, self, _unitName, 60)
-        missionCommands.addCommandForGroup(gid, "T=5 min",  _timePath, self._SetRecDuration, self, _unitName, 5*60)
-        missionCommands.addCommandForGroup(gid, "T=10 min", _timePath, self._SetRecDuration, self, _unitName, 10*60)
+        missionCommands.addCommandForGroup(gid, "T=10 s",   _durPath, self._SetRecDuration, self, _unitName, 10)
+        missionCommands.addCommandForGroup(gid, "T=30 s",   _durPath, self._SetRecDuration, self, _unitName, 30)
+        missionCommands.addCommandForGroup(gid, "T=60 s",   _durPath, self._SetRecDuration, self, _unitName, 60)
+        missionCommands.addCommandForGroup(gid, "T=5 min",  _durPath, self._SetRecDuration, self, _unitName, 5*60)
+        missionCommands.addCommandForGroup(gid, "T=10 min", _durPath, self._SetRecDuration, self, _unitName, 10*60)
         
         --------------------------------        
         -- F10/F<X> FMD/
@@ -536,7 +579,7 @@ end
 -- @param #FMD self
 -- @param #string _unitName Name of player unit.
 -- @param #number rd Recording duration in sec.
-function FMD:_SetTimeInterval(_unitName, rd)
+function FMD:_SetRecDuration(_unitName, rd)
 
   -- Get player unit and name.
   local _unit, _playername = self:_GetPlayerUnitAndName(_unitName)
@@ -610,7 +653,7 @@ function FMD:_StartRecording(_unitName)
       playerData.SID=playerData.scheduler:Schedule(nil, self._RecordData, {self, playerData}, delay, playerData.dt, 0.0)
       
       -- Stop scheduler once.
-      playerData.scheduler:ScheduleOnce(playerData.rd+delay, self._StopRecording, {self,_unitName})
+      playerData.scheduler:ScheduleOnce(playerData.rd+delay, self._StopRecording, self,_unitName)
     end
   end
 
