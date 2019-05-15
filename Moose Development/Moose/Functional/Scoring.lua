@@ -1347,6 +1347,7 @@ function SCORING:_EventOnDeadOrCrash( Event )
             -- Write CSV penalty.
             Destroyed = true
             self:ScoreCSV( PlayerName, TargetPlayerName, "DESTROY_PENALTY", 1, ThreatPenalty, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
+            
           else
           
             ---
@@ -1469,6 +1470,7 @@ function SCORING:_EventOnDeadOrCrash( Event )
               self:ScoreCSV( PlayerName, "", "DESTROY_SCORE", 1, Score, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, "", "Scenery", TargetUnitType )
             end
           end
+          
         end
         
         -- Delete now the hit cache if the target was destroyed.
@@ -1992,7 +1994,9 @@ function SCORING:LoadCSV(filename)
       -- Create player array if necessary.
       self.CSVdata[result.PlayerName]=self.CSVdata[result.PlayerName] or {}
       
-      if self.Players[PlayerName] == nil then -- I believe this is the place where a Player gets a life in a mission when he enters a unit ...
+      local Player=self.Players[PlayerName] --#SCORING.PlayerData
+      
+      if Player == nil then -- I believe this is the place where a Player gets a life in a mission when he enters a unit ...
         self.Players[PlayerName] = {}
         self.Players[PlayerName].Hit = {}
         self.Players[PlayerName].Destroy = {}
@@ -2003,6 +2007,23 @@ function SCORING:LoadCSV(filename)
         self.Players[PlayerName].Penalty = 0
         self.Players[PlayerName].PenaltyCoalition = 0
         self.Players[PlayerName].PenaltyWarning = 0              
+      end
+      
+      -- Restore player scores.
+      if result.ScoreType then
+        if result.ScoreType:find("PENALTY") then
+        
+          -- Penalty
+          Player.Penalty=Player.Penalty+result.Score
+          
+          -- Coalition change penalty.
+          if result.ScoreType:find("COALITION_PENALTY") then
+            Player.PenaltyCoalition=Player.PenaltyCoalition+1
+          end
+        end
+        if result.ScoreType:find("SCORE") then
+          Player.Score=Player.Score+result.Score
+        end        
       end
       
       --self.Players[PlayerName].Score=self.Players[PlayerName].Score+result.Score
