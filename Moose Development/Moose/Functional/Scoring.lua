@@ -1727,37 +1727,43 @@ function SCORING:ReportScoreGroupSummary( PlayerGroup )
     
     if PlayerName then
     
-      local ReportHits, ScoreHits, PenaltyHits = self:ReportDetailedPlayerHits( PlayerName )
-      ReportHits = ReportHits ~= "" and "\n- " .. ReportHits or ReportHits 
-      self:F( { ReportHits, ScoreHits, PenaltyHits } )
-
-      local ReportDestroys, ScoreDestroys, PenaltyDestroys = self:ReportDetailedPlayerDestroys( PlayerName )
-      ReportDestroys = ReportDestroys ~= "" and "\n- " .. ReportDestroys or ReportDestroys
-      self:F( { ReportDestroys, ScoreDestroys, PenaltyDestroys } )
-
-      local ReportCoalitionChanges, ScoreCoalitionChanges, PenaltyCoalitionChanges = self:ReportDetailedPlayerCoalitionChanges( PlayerName )
-      ReportCoalitionChanges = ReportCoalitionChanges ~= "" and "\n- " .. ReportCoalitionChanges or ReportCoalitionChanges
-      self:F( { ReportCoalitionChanges, ScoreCoalitionChanges, PenaltyCoalitionChanges } )
-
-      local ReportGoals, ScoreGoals, PenaltyGoals = self:ReportDetailedPlayerGoals( PlayerName )
-      ReportGoals = ReportGoals ~= "" and "\n- " .. ReportGoals or ReportGoals
-      self:F( { ReportGoals, ScoreGoals, PenaltyGoals } )
-
-      local ReportMissions, ScoreMissions, PenaltyMissions = self:ReportDetailedPlayerMissions( PlayerName )
-      ReportMissions = ReportMissions ~= "" and "\n- " .. ReportMissions or ReportMissions
-      self:F( { ReportMissions, ScoreMissions, PenaltyMissions } )
+      local Player=self.Players[PlayerName] --#SCORING.PlayerData
       
-      local PlayerScore = ScoreHits + ScoreDestroys + ScoreCoalitionChanges + ScoreGoals + ScoreMissions
-      local PlayerPenalty = PenaltyHits + PenaltyDestroys + PenaltyCoalitionChanges + ScoreGoals + PenaltyMissions
+      if Player then
+    
+        local ReportHits, ScoreHits, PenaltyHits = self:ReportDetailedPlayerHits( PlayerName )
+        ReportHits = ReportHits ~= "" and "\n- " .. ReportHits or ReportHits 
+        self:F( { ReportHits, ScoreHits, PenaltyHits } )
   
-      PlayerMessage = 
-        string.format( "Player '%s' Score = %d ( %d Score, -%d Penalties )", 
-                       PlayerName, 
-                       PlayerScore - PlayerPenalty, 
-                       PlayerScore, 
-                       PlayerPenalty
-                     )
-      MESSAGE:NewType( PlayerMessage, MESSAGE.Type.Detailed ):ToGroup( PlayerGroup )
+        local ReportDestroys, ScoreDestroys, PenaltyDestroys = self:ReportDetailedPlayerDestroys( PlayerName )
+        ReportDestroys = ReportDestroys ~= "" and "\n- " .. ReportDestroys or ReportDestroys
+        self:F( { ReportDestroys, ScoreDestroys, PenaltyDestroys } )
+  
+        local ReportCoalitionChanges, ScoreCoalitionChanges, PenaltyCoalitionChanges = self:ReportDetailedPlayerCoalitionChanges( PlayerName )
+        ReportCoalitionChanges = ReportCoalitionChanges ~= "" and "\n- " .. ReportCoalitionChanges or ReportCoalitionChanges
+        self:F( { ReportCoalitionChanges, ScoreCoalitionChanges, PenaltyCoalitionChanges } )
+  
+        local ReportGoals, ScoreGoals, PenaltyGoals = self:ReportDetailedPlayerGoals( PlayerName )
+        ReportGoals = ReportGoals ~= "" and "\n- " .. ReportGoals or ReportGoals
+        self:F( { ReportGoals, ScoreGoals, PenaltyGoals } )
+  
+        local ReportMissions, ScoreMissions, PenaltyMissions = self:ReportDetailedPlayerMissions( PlayerName )
+        ReportMissions = ReportMissions ~= "" and "\n- " .. ReportMissions or ReportMissions
+        self:F( { ReportMissions, ScoreMissions, PenaltyMissions } )
+        
+        local PlayerScore = Player.Score --ScoreHits + ScoreDestroys + ScoreCoalitionChanges + ScoreGoals + ScoreMissions
+        local PlayerPenalty = Player.Penalty --PenaltyHits + PenaltyDestroys + PenaltyCoalitionChanges + ScoreGoals + PenaltyMissions
+    
+        PlayerMessage = 
+          string.format( "Player '%s' Score = %d ( %d Score, -%d Penalties )", 
+                         PlayerName, 
+                         PlayerScore - PlayerPenalty, 
+                         PlayerScore, 
+                         PlayerPenalty
+                       )
+        MESSAGE:NewType( PlayerMessage, MESSAGE.Type.Detailed ):ToGroup( PlayerGroup )
+        
+      end
     end
   end
 
@@ -1776,45 +1782,50 @@ function SCORING:ReportScoreGroupDetailed( PlayerGroup )
   for UnitID, PlayerUnit in pairs( PlayerUnits ) do
     local PlayerUnit = PlayerUnit -- Wrapper.Unit#UNIT
     local PlayerName = PlayerUnit:GetPlayerName()
-    
+       
     if PlayerName then
     
-      local ReportHits, ScoreHits, PenaltyHits = self:ReportDetailedPlayerHits( PlayerName )
-      ReportHits = ReportHits ~= "" and "\n- " .. ReportHits or ReportHits 
-      self:F( { ReportHits, ScoreHits, PenaltyHits } )
-
-      local ReportDestroys, ScoreDestroys, PenaltyDestroys = self:ReportDetailedPlayerDestroys( PlayerName )
-      ReportDestroys = ReportDestroys ~= "" and "\n- " .. ReportDestroys or ReportDestroys
-      self:F( { ReportDestroys, ScoreDestroys, PenaltyDestroys } )
-
-      local ReportCoalitionChanges, ScoreCoalitionChanges, PenaltyCoalitionChanges = self:ReportDetailedPlayerCoalitionChanges( PlayerName )
-      ReportCoalitionChanges = ReportCoalitionChanges ~= "" and "\n- " .. ReportCoalitionChanges or ReportCoalitionChanges
-      self:F( { ReportCoalitionChanges, ScoreCoalitionChanges, PenaltyCoalitionChanges } )
+      local Player=self.Players[PlayerName] --#SCORING.PlayerData
       
-      local ReportGoals, ScoreGoals, PenaltyGoals = self:ReportDetailedPlayerGoals( PlayerName )
-      ReportGoals = ReportGoals ~= "" and "\n- " .. ReportGoals or ReportGoals
-      self:F( { ReportGoals, ScoreGoals, PenaltyGoals } )
-
-      local ReportMissions, ScoreMissions, PenaltyMissions = self:ReportDetailedPlayerMissions( PlayerName )
-      ReportMissions = ReportMissions ~= "" and "\n- " .. ReportMissions or ReportMissions
-      self:F( { ReportMissions, ScoreMissions, PenaltyMissions } )
-      
-      local PlayerScore = ScoreHits + ScoreDestroys + ScoreCoalitionChanges + ScoreGoals + ScoreMissions
-      local PlayerPenalty = PenaltyHits + PenaltyDestroys + PenaltyCoalitionChanges + ScoreGoals + PenaltyMissions
+      if Player then
+    
+        local ReportHits, ScoreHits, PenaltyHits = self:ReportDetailedPlayerHits( PlayerName )
+        ReportHits = ReportHits ~= "" and "\n- " .. ReportHits or ReportHits 
+        self:F( { ReportHits, ScoreHits, PenaltyHits } )
   
-      PlayerMessage = 
-        string.format( "Player '%s' Score = %d ( %d Score, -%d Penalties )%s%s%s%s%s", 
-                       PlayerName, 
-                       PlayerScore - PlayerPenalty, 
-                       PlayerScore, 
-                       PlayerPenalty, 
-                       ReportHits,
-                       ReportDestroys,
-                       ReportCoalitionChanges,
-                       ReportGoals,
-                       ReportMissions
-                     )
-      MESSAGE:NewType( PlayerMessage, MESSAGE.Type.Detailed ):ToGroup( PlayerGroup )
+        local ReportDestroys, ScoreDestroys, PenaltyDestroys = self:ReportDetailedPlayerDestroys( PlayerName )
+        ReportDestroys = ReportDestroys ~= "" and "\n- " .. ReportDestroys or ReportDestroys
+        self:F( { ReportDestroys, ScoreDestroys, PenaltyDestroys } )
+  
+        local ReportCoalitionChanges, ScoreCoalitionChanges, PenaltyCoalitionChanges = self:ReportDetailedPlayerCoalitionChanges( PlayerName )
+        ReportCoalitionChanges = ReportCoalitionChanges ~= "" and "\n- " .. ReportCoalitionChanges or ReportCoalitionChanges
+        self:F( { ReportCoalitionChanges, ScoreCoalitionChanges, PenaltyCoalitionChanges } )
+        
+        local ReportGoals, ScoreGoals, PenaltyGoals = self:ReportDetailedPlayerGoals( PlayerName )
+        ReportGoals = ReportGoals ~= "" and "\n- " .. ReportGoals or ReportGoals
+        self:F( { ReportGoals, ScoreGoals, PenaltyGoals } )
+  
+        local ReportMissions, ScoreMissions, PenaltyMissions = self:ReportDetailedPlayerMissions( PlayerName )
+        ReportMissions = ReportMissions ~= "" and "\n- " .. ReportMissions or ReportMissions
+        self:F( { ReportMissions, ScoreMissions, PenaltyMissions } )
+        
+        local PlayerScore = Player.Score --ScoreHits + ScoreDestroys + ScoreCoalitionChanges + ScoreGoals + ScoreMissions
+        local PlayerPenalty = Player.Penalty --PenaltyHits + PenaltyDestroys + PenaltyCoalitionChanges + ScoreGoals + PenaltyMissions
+    
+        PlayerMessage = 
+          string.format( "Player '%s' Score = %d ( %d Score, -%d Penalties )%s%s%s%s%s", 
+                         PlayerName, 
+                         PlayerScore - PlayerPenalty, 
+                         PlayerScore, 
+                         PlayerPenalty, 
+                         ReportHits,
+                         ReportDestroys,
+                         ReportCoalitionChanges,
+                         ReportGoals,
+                         ReportMissions
+                       )
+        MESSAGE:NewType( PlayerMessage, MESSAGE.Type.Detailed ):ToGroup( PlayerGroup )
+      end
     end
   end
 
@@ -1834,38 +1845,44 @@ function SCORING:ReportScoreAllSummary( PlayerGroup )
     self:T( { PlayerName = PlayerName, PlayerGroup = PlayerGroup } )
     
     if PlayerName then
-    
-      local ReportHits, ScoreHits, PenaltyHits = self:ReportDetailedPlayerHits( PlayerName )
-      ReportHits = ReportHits ~= "" and "\n- " .. ReportHits or ReportHits 
-      self:F( { ReportHits, ScoreHits, PenaltyHits } )
 
-      local ReportDestroys, ScoreDestroys, PenaltyDestroys = self:ReportDetailedPlayerDestroys( PlayerName )
-      ReportDestroys = ReportDestroys ~= "" and "\n- " .. ReportDestroys or ReportDestroys
-      self:F( { ReportDestroys, ScoreDestroys, PenaltyDestroys } )
-
-      local ReportCoalitionChanges, ScoreCoalitionChanges, PenaltyCoalitionChanges = self:ReportDetailedPlayerCoalitionChanges( PlayerName )
-      ReportCoalitionChanges = ReportCoalitionChanges ~= "" and "\n- " .. ReportCoalitionChanges or ReportCoalitionChanges
-      self:F( { ReportCoalitionChanges, ScoreCoalitionChanges, PenaltyCoalitionChanges } )
-
-      local ReportGoals, ScoreGoals, PenaltyGoals = self:ReportDetailedPlayerGoals( PlayerName )
-      ReportGoals = ReportGoals ~= "" and "\n- " .. ReportGoals or ReportGoals
-      self:F( { ReportGoals, ScoreGoals, PenaltyGoals } )
-
-      local ReportMissions, ScoreMissions, PenaltyMissions = self:ReportDetailedPlayerMissions( PlayerName )
-      ReportMissions = ReportMissions ~= "" and "\n- " .. ReportMissions or ReportMissions
-      self:F( { ReportMissions, ScoreMissions, PenaltyMissions } )
+      local Player=self.Players[PlayerName] --#SCORING.PlayerData
       
-      local PlayerScore = ScoreHits + ScoreDestroys + ScoreCoalitionChanges + ScoreGoals + ScoreMissions
-      local PlayerPenalty = PenaltyHits + PenaltyDestroys + PenaltyCoalitionChanges + ScoreGoals + PenaltyMissions
+      if Player then
+    
+        local ReportHits, ScoreHits, PenaltyHits = self:ReportDetailedPlayerHits( PlayerName )
+        ReportHits = ReportHits ~= "" and "\n- " .. ReportHits or ReportHits 
+        self:F( { ReportHits, ScoreHits, PenaltyHits } )
   
-      PlayerMessage = 
-        string.format( "Player '%s' Score = %d ( %d Score, -%d Penalties )", 
-                       PlayerName, 
-                       PlayerScore - PlayerPenalty, 
-                       PlayerScore, 
-                       PlayerPenalty 
-                     )
-      MESSAGE:NewType( PlayerMessage, MESSAGE.Type.Overview ):ToGroup( PlayerGroup )
+        local ReportDestroys, ScoreDestroys, PenaltyDestroys = self:ReportDetailedPlayerDestroys( PlayerName )
+        ReportDestroys = ReportDestroys ~= "" and "\n- " .. ReportDestroys or ReportDestroys
+        self:F( { ReportDestroys, ScoreDestroys, PenaltyDestroys } )
+  
+        local ReportCoalitionChanges, ScoreCoalitionChanges, PenaltyCoalitionChanges = self:ReportDetailedPlayerCoalitionChanges( PlayerName )
+        ReportCoalitionChanges = ReportCoalitionChanges ~= "" and "\n- " .. ReportCoalitionChanges or ReportCoalitionChanges
+        self:F( { ReportCoalitionChanges, ScoreCoalitionChanges, PenaltyCoalitionChanges } )
+  
+        local ReportGoals, ScoreGoals, PenaltyGoals = self:ReportDetailedPlayerGoals( PlayerName )
+        ReportGoals = ReportGoals ~= "" and "\n- " .. ReportGoals or ReportGoals
+        self:F( { ReportGoals, ScoreGoals, PenaltyGoals } )
+  
+        local ReportMissions, ScoreMissions, PenaltyMissions = self:ReportDetailedPlayerMissions( PlayerName )
+        ReportMissions = ReportMissions ~= "" and "\n- " .. ReportMissions or ReportMissions
+        self:F( { ReportMissions, ScoreMissions, PenaltyMissions } )
+        
+        local PlayerScore = Player.Score --ScoreHits + ScoreDestroys + ScoreCoalitionChanges + ScoreGoals + ScoreMissions
+        local PlayerPenalty = Player.Penalty --PenaltyHits + PenaltyDestroys + PenaltyCoalitionChanges + ScoreGoals + PenaltyMissions
+    
+        PlayerMessage = 
+          string.format( "Player '%s' Score = %d ( %d Score, -%d Penalties )", 
+                         PlayerName, 
+                         PlayerScore - PlayerPenalty, 
+                         PlayerScore, 
+                         PlayerPenalty 
+                       )
+        MESSAGE:NewType( PlayerMessage, MESSAGE.Type.Overview ):ToGroup( PlayerGroup )
+        
+      end
     end
   end
 
@@ -1994,9 +2011,9 @@ function SCORING:LoadCSV(filename)
       -- Create player array if necessary.
       self.CSVdata[result.PlayerName]=self.CSVdata[result.PlayerName] or {}
       
-      local Player=self.Players[PlayerName] --#SCORING.PlayerData
       
-      if Player == nil then -- I believe this is the place where a Player gets a life in a mission when he enters a unit ...
+      -- Init player array if it does not exist.
+      if self.Players[PlayerName] == nil then
         self.Players[PlayerName] = {}
         self.Players[PlayerName].Hit = {}
         self.Players[PlayerName].Destroy = {}
@@ -2009,8 +2026,12 @@ function SCORING:LoadCSV(filename)
         self.Players[PlayerName].PenaltyWarning = 0              
       end
       
+      local Player=self.Players[PlayerName] --#SCORING.PlayerData
+      
       -- Restore player scores.
       if result.ScoreType then
+      
+        
         if result.ScoreType:find("PENALTY") then
         
           -- Penalty
@@ -2021,10 +2042,14 @@ function SCORING:LoadCSV(filename)
             Player.PenaltyCoalition=Player.PenaltyCoalition+1
           end
         end
+        
         if result.ScoreType:find("SCORE") then
           Player.Score=Player.Score+result.Score
-        end        
+        end
+                
       end
+      
+      self:E(string.format("Player %s score = %d %d", PlayerName, Player.Score, self.Players[PlayerName].Score))
       
       --self.Players[PlayerName].Score=self.Players[PlayerName].Score+result.Score
       
@@ -2101,21 +2126,21 @@ function SCORING:ScoreCSV( PlayerName, TargetPlayerName, ScoreType, ScoreTimes, 
 
   if lfs and io and os then
     self.CSVFile:write(
-      '"' .. self.GameName        .. '"' .. ',' ..
-      '"' .. self.RunTime         .. '"' .. ',' ..
-      ''  .. ScoreTime            .. ''  .. ',' ..
-      '"' .. PlayerName           .. '"' .. ',' ..
-      '"' .. TargetPlayerName     .. '"' .. ',' ..
-      '"' .. ScoreType            .. '"' .. ',' ..
-      '"' .. PlayerUnitCoalition  .. '"' .. ',' ..
-      '"' .. PlayerUnitCategory   .. '"' .. ',' ..
-      '"' .. PlayerUnitType       .. '"' .. ',' ..
-      '"' .. PlayerUnitName       .. '"' .. ',' ..
-      '"' .. TargetUnitCoalition  .. '"' .. ',' ..
-      '"' .. TargetUnitCategory   .. '"' .. ',' ..
-      '"' .. TargetUnitType       .. '"' .. ',' ..
-      '"' .. TargetUnitName       .. '"' .. ',' ..
-      ''  .. ScoreTimes           .. ''  .. ',' ..
+      '' .. self.GameName        .. '' .. ',' ..
+      '' .. self.RunTime         .. '' .. ',' ..
+      ''  .. ScoreTime           .. ''  .. ',' ..
+      ''  .. PlayerName          .. ''  .. ',' ..
+      '' .. TargetPlayerName     .. '' .. ',' ..
+      '' .. ScoreType            .. '' .. ',' ..
+      '' .. PlayerUnitCoalition  .. '' .. ',' ..
+      '' .. PlayerUnitCategory   .. '' .. ',' ..
+      '' .. PlayerUnitType       .. '' .. ',' ..
+      '' .. PlayerUnitName       .. '' .. ',' ..
+      '' .. TargetUnitCoalition  .. '' .. ',' ..
+      '' .. TargetUnitCategory   .. '' .. ',' ..
+      '' .. TargetUnitType       .. '' .. ',' ..
+      '' .. TargetUnitName       .. '' .. ',' ..
+      ''  .. ScoreTimes          .. '' .. ',' ..
       ''  .. ScoreAmount 
     )
 
