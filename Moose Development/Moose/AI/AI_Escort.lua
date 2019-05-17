@@ -409,33 +409,6 @@ function AI_ESCORT:MenuFormation( Formation, ... )
 end
 
 
---- Defines --- Defines a menu slot to let the escort to join formation.
--- This menu will appear under **Formation**.
--- @param #AI_ESCORT self
--- @return #AI_ESCORT
-function AI_ESCORT:MenuJoinUp()
-
-  local FlightMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", self.FlightMenu )
-  local FlightMenuJoinUp  = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Join Up",  FlightMenuReportNavigation, AI_ESCORT._FlightJoinUp, self )
-  
-  self.EscortGroupSet:ForSomeGroupAlive(
-    --- @param Core.Group#GROUP EscortGroup
-    function( EscortGroup )
-      if EscortGroup:IsAir() then
-
-        local EscortGroupName = EscortGroup:GetName()
-        local EscortMenu = MENU_GROUP:New( self.PlayerGroup, EscortGroupName, self.MainMenu )
-        local EscortMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", EscortMenu )
-        local EscortMenuJoinUp = MENU_GROUP:New( self.PlayerGroup, "Join Up", EscortMenuReportNavigation )
-
-      end
-    end
-  )
-
-  return self
-end
-
-
 --- Defines a menu slot to let the escort to join in a trail formation.
 -- This menu will appear under **Formation**.
 -- @param #AI_ESCORT self
@@ -587,6 +560,33 @@ function AI_ESCORT:MenuFormationBox( XStart, XSpace, YStart, YSpace, ZStart, ZSp
 end
 
 
+--- Defines --- Defines a menu slot to let the escort to join formation.
+-- This menu will appear under **Formation**.
+-- @param #AI_ESCORT self
+-- @return #AI_ESCORT
+function AI_ESCORT:MenuJoinUp()
+
+  local FlightMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", self.FlightMenu )
+  local FlightMenuJoinUp  = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Join Up",  FlightMenuReportNavigation, AI_ESCORT._FlightJoinUp, self )
+  
+  self.EscortGroupSet:ForSomeGroupAlive(
+    --- @param Core.Group#GROUP EscortGroup
+    function( EscortGroup )
+      if EscortGroup:IsAir() then
+
+        local EscortGroupName = EscortGroup:GetName()
+        local EscortMenu = MENU_GROUP:New( self.PlayerGroup, EscortGroupName, self.MainMenu )
+        local EscortMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", EscortMenu )
+        local EscortMenuJoinUp = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Join Up", EscortMenuReportNavigation, AI_ESCORT._JoinUp, self )
+
+      end
+    end
+  )
+
+  return self
+end
+
+
 --- Defines a menu slot to let the escort hold at their current position and stay low with a specified height during a specified time in seconds.
 -- This menu will appear under **Hold position**.
 -- @param #AI_ESCORT self
@@ -620,11 +620,13 @@ function AI_ESCORT:MenuHoldAtEscortPosition( Height, Speed, MenuTextFormat )
     end
   end
 
+  local FlightMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", self.FlightMenu )
+
   local FlightMenuHoldPosition = MENU_GROUP_COMMAND
     :New(
       self.PlayerGroup,
       MenuText,
-      self.FlightMenu,
+      FlightMenuReportNavigation,
       AI_ESCORT._FlightHoldPosition,
       self,
       nil,
@@ -640,13 +642,12 @@ function AI_ESCORT:MenuHoldAtEscortPosition( Height, Speed, MenuTextFormat )
         local EscortGroupName = EscortGroup:GetName()
         local EscortMenu = MENU_GROUP:New( self.PlayerGroup, EscortGroupName, self.MainMenu )
         local EscortMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", EscortMenu )
-        local EscortMenuHold = MENU_GROUP:New( self.PlayerGroup, MenuText, EscortMenuReportNavigation )
     
         local EscortMenuHoldPosition = MENU_GROUP_COMMAND
           :New(
             self.PlayerGroup,
-            EscortGroupName,
-            EscortMenuHold,
+            MenuText,
+            EscortMenuReportNavigation,
             AI_ESCORT._HoldPosition,
             self,
             EscortGroup,
@@ -695,11 +696,13 @@ function AI_ESCORT:MenuHoldAtLeaderPosition( Height, Speed, MenuTextFormat )
     end
   end
 
+  local FlightMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", self.FlightMenu )
+
   local FlightMenuHoldAtLeaderPosition = MENU_GROUP_COMMAND
     :New(
       self.PlayerGroup,
       MenuText,
-      self.FlightMenu,
+      FlightMenuReportNavigation,
       AI_ESCORT._FlightHoldPosition,
       self,
       self.PlayerGroup,
@@ -715,13 +718,12 @@ function AI_ESCORT:MenuHoldAtLeaderPosition( Height, Speed, MenuTextFormat )
         local EscortGroupName = EscortGroup:GetName()
         local EscortMenu = MENU_GROUP:New( self.PlayerGroup, EscortGroupName, self.MainMenu )
         local EscortMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", EscortMenu )
-        local EscortMenuHold = MENU_GROUP:New( self.PlayerGroup, MenuText, EscortMenuReportNavigation )
 
         local EscortMenuHoldAtLeaderPosition = MENU_GROUP_COMMAND
           :New(
             self.PlayerGroup,
-            EscortGroupName,
-            EscortMenuHold,
+            MenuText,
+            EscortMenuReportNavigation,
             AI_ESCORT._HoldPosition,
             self,
             self.PlayerGroup,
