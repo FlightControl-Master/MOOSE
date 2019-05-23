@@ -304,16 +304,6 @@ do -- Zones
   
     self.ZONES[ZoneName] = nil 
   end
-  
-  --- Finds an @{Zone} based on the zone name in the DATABASE.
-  -- @param #DATABASE self
-  -- @param #string ZoneName
-  -- @return Core.Zone#ZONE_BASE The found @{Zone}.
-  function DATABASE:FindZone( ZoneName )
-  
-    local ZoneFound = self.ZONES[ZoneName]
-    return ZoneFound
-  end
 
 
   --- Private method that registers new ZONE_BASE derived objects within the DATABASE Object.
@@ -347,7 +337,6 @@ do -- Zones
 
 
 end -- zone
-
 
 do -- cargo
 
@@ -1166,7 +1155,7 @@ function DATABASE:OnEventNewZone( EventData )
   self:F2( { EventData } )
 
   if EventData.Zone then
-    self:AddZone( EventData.Zone )
+    self:AddZone( EventData.Zone.ZoneName, EventData.Zone )
   end
 end
 

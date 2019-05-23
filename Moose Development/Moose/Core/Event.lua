@@ -272,10 +272,16 @@ EVENTS = {
 -- @field Wrapper.Airbase#AIRBASE Place The MOOSE airbase object.
 -- @field #string PlaceName The name of the airbase.
 -- 
--- @field weapon The weapon used during the event.
--- @field Weapon
--- @field WeaponName
--- @field WeaponTgtDCSUnit
+-- @field #table weapon The weapon used during the event.
+-- @field #table Weapon
+-- @field #string WeaponName Name of the weapon.
+-- @field DCS#Unit WeaponTgtDCSUnit Target DCS unit of the weapon.
+-- 
+-- @field Cargo.Cargo#CARGO Cargo The cargo object.
+-- @field #string CargoName The name of the cargo object.
+-- 
+-- @field Core.ZONE#ZONE Zone The zone object.
+-- @field #string ZoneName The name of the zone.
 
 
 
@@ -959,8 +965,7 @@ function EVENT:onEvent( Event )
       Event.PlaceName=Event.Place:GetName()
     end
 
---  @FC: something like this should be added.
---[[    
+    --  Mark points.
     if Event.idx then
       Event.MarkID=Event.idx
       Event.MarkVec3=Event.pos
@@ -969,7 +974,6 @@ function EVENT:onEvent( Event )
       Event.MarkCoalition=Event.coalition
       Event.MarkGroupID = Event.groupID
     end
-]]
     
     if Event.cargo then
       Event.Cargo = Event.cargo

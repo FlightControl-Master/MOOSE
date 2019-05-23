@@ -692,7 +692,7 @@ function FOX:onafterMissileLaunch(From, Event, To, missile)
   end -- end function trackBomb
   
   -- Weapon is not yet "alife" just yet. Start timer with a little delay.
-  self:T(FOX.lid..string.format("Tracking of missile starts in 0.1 seconds."))
+  self:T(FOX.lid..string.format("Tracking of missile starts in 0.0001 seconds."))
   timer.scheduleFunction(trackMissile, missile.weapon, timer.getTime()+0.0001)
 
 end
@@ -766,9 +766,6 @@ function FOX:OnEventBirth(EventData)
     
     -- Init player data.
     self.players[playername]=playerData
-      
-    -- Init player grades table if necessary.
-    --self.playerscores[playername]=self.playerscores[playername] or {}    
     
   end 
 end
@@ -860,6 +857,7 @@ function FOX:OnEventShot(EventData)
       -- Add missile table.
       table.insert(self.missiles, missile)
       
+      -- Trigger MissileLaunch event.
       self:__MissileLaunch(0.1, missile)
       
     end
@@ -925,7 +923,7 @@ function FOX:_AddF10Commands(_unitName)
         --------------------------------        
         -- F10/F<X> FOX/F1 Help
         --------------------------------
-        local _helpPath=missionCommands.addSubMenuForGroup(gid, "Help", _rootPath)
+        --local _helpPath=missionCommands.addSubMenuForGroup(gid, "Help", _rootPath)
         -- F10/FOX/F1 Help/
         --missionCommands.addCommandForGroup(gid, "Subtitles On/Off",    _helpPath, self._SubtitlesOnOff,      self, _unitName)   -- F7
         --missionCommands.addCommandForGroup(gid, "Trapsheet On/Off",    _helpPath, self._TrapsheetOnOff,      self, _unitName)   -- F8
@@ -934,9 +932,9 @@ function FOX:_AddF10Commands(_unitName)
         -- F10/F<X> FOX/
         -------------------------
         
-        missionCommands.addCommandForGroup(gid, "Launch Alerts On/Off",    _rootPath, self._ToggleLaunchAlert,     self, _unitName) -- F2
-        missionCommands.addCommandForGroup(gid, "Destroy Missiles On/Off", _rootPath, self._ToggleDestroyMissiles, self, _unitName) -- F3
-        
+        missionCommands.addCommandForGroup(gid, "Launch Alerts On/Off",    _rootPath, self._ToggleLaunchAlert,     self, _unitName) -- F1
+        missionCommands.addCommandForGroup(gid, "Destroy Missiles On/Off", _rootPath, self._ToggleDestroyMissiles, self, _unitName) -- F2
+        missionCommands.addCommandForGroup(gid, "My Status",               _rootPath, self._MyStatus,              self, _unitName) -- F3
       end
     else
       self:E(self.lid..string.format("ERROR: Could not find group or group ID in AddF10Menu() function. Unit name: %s.", _unitName))
@@ -965,17 +963,43 @@ function FOX:_MyStatus(_unitname)
     
     if playerData then
     
+      local m,mtext=self:_GetTargetMissiles(playerData.name)
+    
       local text=string.format("Status of player %s:", playerData.name)
+      local safe=self:_CheckCoordSafe(playerData.unit:GetCoordinate())
       
-      text=text..string.format("Destroy missiles: %s", playerData.destroy)
-      text=text..string.format("Launch alert: %s", playerData.launchalert)
-      text=text..string.format("Me target: %d", self:_GetTargetMissiles(playerData.unit))
-      text=text..string.format("Am I safe? %s", self:_CheckCoordSafe(playerData.unit:GetCoordinate()))
+      text=text..string.format("Destroy missiles: %s", tostring(playerData.destroy))
+      text=text..string.format("Launch alert: %s", tostring(playerData.launchalert))      
+      text=text..string.format("Am I safe? %s", tostring(safe))
+      text=text..string.format("Me target: %d\n%s", m, mtext)
+      
+      MESSAGE:New(text, 10, "FOX", true):ToClient(playerData.client)
     
     end
   end
 end
 
+--- Turn player's launch alert on/off.
+-- @param #FOX self
+-- @param #string playername Name of the player.
+-- @return #number Number of missiles targeting the player.
+-- @return #string Missile info.
+function FOX:_GetTargetMissiles(playername)
+
+  local text=""
+  local n=0
+  for _,_missile in pairs(self.missiles) do
+    local missile=_missile --#FOX.MissileData
+    
+    if missile.targetPlayer.name==playername then
+      n=n+1
+      text=text..string.format("Type %s: active %s\n", missile.missileType, tostring(missile.active))
+    end
+    
+  end
+
+  return n,text
+end
 
 --- Turn player's launch alert on/off.
 -- @param #FOX self
@@ -1010,7 +1034,7 @@ function FOX:_ToggleLaunchAlert(_unitname)
   end
 end
 
---- Turn player's 
+--- Turn destruction of missiles on/off for player.
 -- @param #FOX self
 -- @param #string _unitname Name of the player unit.
 function FOX:_ToggleDestroyMissiles(_unitname)
