@@ -595,15 +595,33 @@ do -- Event Handling
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
   --- Occurs when any unit begins firing a weapon that has a high rate of fire. Most common with aircraft cannons (GAU-8), autocannons, and machine guns.
-  -- initiator : The unit that is doing the shooing.
+  -- initiator : The unit that is doing the shooting.
   -- target: The unit that is being targeted. 
   -- @function [parent=#BASE] OnEventShootingStart
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
   --- Occurs when any unit stops firing its weapon. Event will always correspond with a shooting start event.
-  -- initiator : The unit that was doing the shooing. 
+  -- initiator : The unit that was doing the shooting. 
   -- @function [parent=#BASE] OnEventShootingEnd
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when a new mark was added.
+  -- MarkID: ID of the mark. 
+  -- @function [parent=#BASE] OnEventMarkAdded
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when a mark was removed.
+  -- MarkID: ID of the mark. 
+  -- @function [parent=#BASE] OnEventMarkRemoved
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when a mark text was changed.
+  -- MarkID: ID of the mark. 
+  -- @function [parent=#BASE] OnEventMarkChange
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
