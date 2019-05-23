@@ -110,10 +110,43 @@ AI_FORMATION = {
   dtFollow = 0.5,
 }
 
---- AI_FORMATION.Mode class
--- @type AI_FORMATION.MODE
--- @field #number FOLLOW
--- @field #number MISSION
+AI_FORMATION.__Enum = {}
+
+--- @type AI_FORMATION.__Enum.Formation
+-- @field #number None
+-- @field #number Line
+-- @field #number Trail
+-- @field #number Stack
+-- @field #number LeftLine
+-- @field #number RightLine
+-- @field #number LeftWing
+-- @field #number RightWing
+-- @field #number Vic
+-- @field #number Box
+AI_FORMATION.__Enum.Formation = {
+  None = 0,
+  Mission = 1,
+  Line = 2,
+  Trail = 3,
+  Stack = 4,
+  LeftLine = 5,
+  RightLine = 6,
+  LeftWing = 7,
+  RightWing = 8,
+  Vic = 9,
+  Box = 10,
+}
+
+--- @type AI_FORMATION.__Enum.Mode
+-- @field #number Mission
+-- @field #number Formation
+AI_FORMATION.__Enum.Mode = {
+  Mission = 0,
+  Formation = 1,
+}
+
+
+
 
 --- MENUPARAM type
 -- @type MENUPARAM
@@ -139,7 +172,7 @@ function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefin
   self.FollowGroupSet:ForEachGroup(
     function( FollowGroup )
       self:E("Following")
-      FollowGroup.Following = true
+      FollowGroup:SetState( self, "Mode", self.__Enum.Mode.Formation )
     end
   )
   
@@ -663,8 +696,8 @@ end
 -- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
 -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
 -- @return #AI_FORMATION
-function AI_FORMATION:onafterFormationLine( FollowGroupSet, From , Event , To, XStart, XSpace, YStart, YSpace, ZStart, ZSpace ) --R2.1
-  self:F( { FollowGroupSet, From , Event ,To, XStart, XSpace, YStart, YSpace, ZStart, ZSpace } )
+function AI_FORMATION:onafterFormationLine( FollowGroupSet, From , Event , To, XStart, XSpace, YStart, YSpace, ZStart, ZSpace, Formation ) --R2.1
+  self:F( { FollowGroupSet, From , Event ,To, XStart, XSpace, YStart, YSpace, ZStart, ZSpace, Formation } )
 
   FollowGroupSet:Flush( self )
   
@@ -682,6 +715,9 @@ function AI_FORMATION:onafterFormationLine( FollowGroupSet, From , Event , To, X
     local Vec3 = PointVec3:GetVec3()
     FollowGroup:SetState( self, "FormationVec3", Vec3 )
     i = i + 1
+
+    FollowGroup:SetState( FollowGroup, "Formation", Formation )
+    FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Formation )
   end
   
   return self
@@ -700,7 +736,7 @@ end
 -- @return #AI_FORMATION
 function AI_FORMATION:onafterFormationTrail( FollowGroupSet, From , Event , To, XStart, XSpace, YStart ) --R2.1
 
-  self:onafterFormationLine(FollowGroupSet,From,Event,To,XStart,XSpace,YStart,0,0,0)
+  self:onafterFormationLine(FollowGroupSet,From,Event,To,XStart,XSpace,YStart,0,0,0, self.__Enum.Formation.Trail )
 
   return self
 end
@@ -719,7 +755,7 @@ end
 -- @return #AI_FORMATION
 function AI_FORMATION:onafterFormationStack( FollowGroupSet, From , Event , To, XStart, XSpace, YStart, YSpace ) --R2.1
 
-  self:onafterFormationLine(FollowGroupSet,From,Event,To,XStart,XSpace,YStart,YSpace,0,0)
+  self:onafterFormationLine(FollowGroupSet,From,Event,To,XStart,XSpace,YStart,YSpace,0,0, self.__Enum.Formation.Stack )
 
   return self
 end
@@ -740,7 +776,7 @@ end
 -- @return #AI_FORMATION
 function AI_FORMATION:onafterFormationLeftLine( FollowGroupSet, From , Event , To, XStart, YStart, ZStart, ZSpace ) --R2.1
 
-  self:onafterFormationLine(FollowGroupSet,From,Event,To,XStart,0,YStart,0,-ZStart,-ZSpace)
+  self:onafterFormationLine(FollowGroupSet,From,Event,To,XStart,0,YStart,0,-ZStart,-ZSpace, self.__Enum.Formation.LeftLine )
 
   return self
 end
@@ -759,7 +795,7 @@ end
 -- @return #AI_FORMATION
 function AI_FORMATION:onafterFormationRightLine( FollowGroupSet, From , Event , To, XStart, YStart, ZStart, ZSpace ) --R2.1
 
-  self:onafterFormationLine(FollowGroupSet,From,Event,To,XStart,0,YStart,0,ZStart,ZSpace)
+  self:onafterFormationLine(FollowGroupSet,From,Event,To,XStart,0,YStart,0,ZStart,ZSpace,self.__Enum.Formation.RightLine)
 
   return self
 end
@@ -778,7 +814,7 @@ end
 -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
 function AI_FORMATION:onafterFormationLeftWing( FollowGroupSet, From , Event , To, XStart, XSpace, YStart, ZStart, ZSpace ) --R2.1
 
-  self:onafterFormationLine(FollowGroupSet,From,Event,To,XStart,XSpace,YStart,0,-ZStart,-ZSpace)
+  self:onafterFormationLine(FollowGroupSet,From,Event,To,XStart,XSpace,YStart,0,-ZStart,-ZSpace,self.__Enum.Formation.LeftWing)
 
   return self
 end
@@ -798,7 +834,7 @@ end
 -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
 function AI_FORMATION:onafterFormationRightWing( FollowGroupSet, From , Event , To, XStart, XSpace, YStart, ZStart, ZSpace ) --R2.1
 
-  self:onafterFormationLine(FollowGroupSet,From,Event,To,XStart,XSpace,YStart,0,ZStart,ZSpace)
+  self:onafterFormationLine(FollowGroupSet,From,Event,To,XStart,XSpace,YStart,0,ZStart,ZSpace,self.__Enum.Formation.RightWing)
 
   return self
 end
@@ -836,6 +872,8 @@ function AI_FORMATION:onafterFormationCenterWing( FollowGroupSet, From , Event ,
     local Vec3 = PointVec3:GetVec3()
     FollowGroup:SetState( self, "FormationVec3", Vec3 )
     i = i + 1
+    FollowGroup:SetState( FollowGroup, "Formation", self.__Enum.Formation.Vic )
+    FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Formation )
   end
   
   return self
@@ -895,6 +933,8 @@ function AI_FORMATION:onafterFormationBox( FollowGroupSet, From , Event , To, XS
     local Vec3 = PointVec3:GetVec3()
     FollowGroup:SetState( self, "FormationVec3", Vec3 )
     i = i + 1
+    FollowGroup:SetState( FollowGroup, "Formation", self.__Enum.Formation.Box )
+    FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Formation )
   end
 
   return self
@@ -919,7 +959,7 @@ end
 -- @return #AI_FORMATION
 function AI_FORMATION:ReleaseFormation( FollowGroup )
 
-  FollowGroup.Following = false
+  FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Mission )
   
   return self
 end
@@ -931,7 +971,9 @@ end
 -- @return #AI_FORMATION
 function AI_FORMATION:JoinFormation( FollowGroup )
 
-  FollowGroup.Following = true
+  -- If a formation type was defined for the AI_FORMATION object, then we can joinup.
+  
+  FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Formation )
   
   return self
 end
@@ -989,7 +1031,7 @@ function AI_FORMATION:onenterFollowing( FollowGroupSet ) --R2.1
       -- @param Wrapper.Unit#UNIT ClientUnit
       function( FollowGroup, Formation, ClientUnit, CT1, CV1, CT2, CV2 )
       
-        if FollowGroup.Following == true then
+        if FollowGroup:GetState( FollowGroup, "Mode" ) == self.__Enum.Mode.Formation then
         
           FollowGroup:OptionROTEvadeFire()
           FollowGroup:OptionROEReturnFire()

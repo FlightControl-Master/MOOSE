@@ -176,10 +176,6 @@ AI_ESCORT = {
   EscortUnit = nil,
   EscortGroup = nil,
   EscortMode = 1,
-  MODE = {
-    FOLLOW = 1,
-    MISSION = 2,
-  },
   Targets = {}, -- The identified targets
   FollowScheduler = nil,
   ReportTargets = true,
@@ -191,11 +187,6 @@ AI_ESCORT = {
 
 --- @field Functional.Detection#DETECTION_AREAS
 AI_ESCORT.Detection = nil
-
---- AI_ESCORT.Mode class
--- @type AI_ESCORT.MODE
--- @field #number FOLLOW
--- @field #number MISSION
 
 --- MENUPARAM type
 -- @type MENUPARAM
@@ -225,8 +216,6 @@ function AI_ESCORT:New( EscortUnit, EscortGroupSet, EscortName, EscortBriefing )
   local self = BASE:Inherit( self, AI_FORMATION:New( EscortUnit, EscortGroupSet, EscortName, EscortBriefing ) ) -- #AI_ESCORT
   self:F( { EscortUnit, EscortGroupSet } )
 
-  self.EscortUnit = self.FollowUnit -- Wrapper.Unit#UNIT
-  
   self.PlayerUnit = self.FollowUnit -- Wrapper.Unit#UNIT
   self.PlayerGroup = self.FollowUnit:GetGroup() -- Wrapper.Group#GROUP
   
@@ -261,18 +250,16 @@ function AI_ESCORT:New( EscortUnit, EscortGroupSet, EscortName, EscortBriefing )
     --- @param Core.Group#GROUP EscortGroup
     function( EscortGroup )
       -- Set EscortGroup known at EscortUnit.
-      if not self.EscortUnit._EscortGroups then
-        self.EscortUnit._EscortGroups = {}
+      if not self.PlayerUnit._EscortGroups then
+        self.PlayerUnit._EscortGroups = {}
       end
     
-      if not self.EscortUnit._EscortGroups[EscortGroup:GetName()] then
-        self.EscortUnit._EscortGroups[EscortGroup:GetName()] = {}
-        self.EscortUnit._EscortGroups[EscortGroup:GetName()].EscortGroup = EscortGroup
-        self.EscortUnit._EscortGroups[EscortGroup:GetName()].EscortName = self.EscortName
-        self.EscortUnit._EscortGroups[EscortGroup:GetName()].Detection = self.Detection
+      if not self.PlayerUnit._EscortGroups[EscortGroup:GetName()] then
+        self.PlayerUnit._EscortGroups[EscortGroup:GetName()] = {}
+        self.PlayerUnit._EscortGroups[EscortGroup:GetName()].EscortGroup = EscortGroup
+        self.PlayerUnit._EscortGroups[EscortGroup:GetName()].EscortName = self.EscortName
+        self.PlayerUnit._EscortGroups[EscortGroup:GetName()].Detection = self.Detection
       end  
-  
-    EscortGroup.EscortMode = AI_ESCORT.MODE.FOLLOW
     end
   )
    
@@ -297,11 +284,9 @@ function AI_ESCORT:onafterStart( EscortGroupSet )
   local LeaderEscort = EscortGroupSet:GetFirst() -- Wrapper.Group#GROUP
   
   local Report = REPORT:New( "Escort reporting:" )
-  Report:Add( "Current coordinate: " .. LeaderEscort:GetCoordinate():ToString( self.EscortUnit ) )
-  Report:Add( "Configuration: " .. EscortGroupSet:GetUnitTypeNames():Text( ", " ) )
-  Report:Add( "Joining Up ..." )
+  Report:Add( "Joining Up " .. EscortGroupSet:GetUnitTypeNames():Text( ", " ) .. " from " .. LeaderEscort:GetCoordinate():ToString( self.PlayerUnit ) )
   
-  LeaderEscort:MessageTypeToGroup( Report:Text(),  MESSAGE.Type.Information, self.EscortUnit )
+  LeaderEscort:MessageTypeToGroup( Report:Text(),  MESSAGE.Type.Information, self.PlayerUnit )
 
   self.Detection = DETECTION_AREAS:New( EscortGroupSet, 5000 )
 
@@ -317,7 +302,7 @@ function AI_ESCORT:SetDetection( Detection )
 
   self.Detection = Detection
   self.EscortGroup.Detection = self.Detection
-  self.EscortUnit._EscortGroups[self.EscortGroup:GetName()].Detection = self.EscortGroup.Detection
+  self.PlayerUnit._EscortGroups[self.EscortGroup:GetName()].Detection = self.EscortGroup.Detection
   
   Detection:__Start( 1 )
   
@@ -935,7 +920,7 @@ function AI_ESCORT:MenuReportTargets( Seconds )
         -- Attack Targets
         local EscortMenuAttackTargets = MENU_GROUP:New( self.PlayerGroup, "Attack targets", EscortMenu )
       
-        --EscortGroup.ReportTargetsScheduler = SCHEDULER:New( self, self._ReportTargetsScheduler, { EscortGroup }, timer, Seconds )
+        EscortGroup.ReportTargetsScheduler = SCHEDULER:New( self, self._ReportTargetsScheduler, { EscortGroup }, timer, Seconds )
         timer=timer+1
       end
     end
@@ -1078,7 +1063,7 @@ end
 -- @param #number OrbitSeconds
 function AI_ESCORT:_HoldPosition( OrbitGroup, EscortGroup, OrbitHeight, OrbitSeconds )
 
-  local EscortUnit = self.EscortUnit
+  local EscortUnit = self.PlayerUnit
 
   local OrbitUnit = OrbitGroup:GetUnit(1) -- Wrapper.Unit#UNIT
   
@@ -1121,7 +1106,7 @@ end
 -- @param #number OrbitSeconds
 function AI_ESCORT:_FlightHoldPosition( OrbitGroup, OrbitHeight, OrbitSeconds )
 
-  local EscortUnit = self.EscortUnit
+  local EscortUnit = self.PlayerUnit
 
   self.EscortGroupSet:ForSomeGroupAlive(
     --- @param Core.Group#GROUP EscortGroup
@@ -1141,10 +1126,11 @@ end
 
 function AI_ESCORT:_JoinUp( EscortGroup )
 
-  local EscortUnit = self.EscortUnit
+  local EscortUnit = self.PlayerUnit
 
   self:JoinFormation( EscortGroup )
-  EscortGroup.EscortMode = AI_ESCORT.MODE.FOLLOW
+  
+  EscortGroup:SetState( self, "Mode", self.__Enum.Mode.Follow )
 end
 
 
@@ -1218,7 +1204,7 @@ end
 
 function AI_ESCORT:_Flare( EscortGroup, Color, Message )
 
-  local EscortUnit = self.EscortUnit
+  local EscortUnit = self.PlayerUnit
 
   EscortGroup:GetUnit(1):Flare( Color )
   EscortGroup:MessageTypeToGroup( Message, MESSAGE.Type.Information, EscortUnit:GetGroup() )
@@ -1242,7 +1228,7 @@ end
 
 function AI_ESCORT:_Smoke( EscortGroup, Color, Message )
 
-  local EscortUnit = self.EscortUnit
+  local EscortUnit = self.PlayerUnit
 
   EscortGroup:GetUnit(1):Smoke( Color )
   EscortGroup:MessageTypeToGroup( Message, MESSAGE.Type.Information, EscortUnit:GetGroup() )
@@ -1264,7 +1250,7 @@ end
 
 function AI_ESCORT:_ReportNearbyTargetsNow( EscortGroup )
 
-  local EscortUnit = self.EscortUnit
+  local EscortUnit = self.PlayerUnit
 
   self:_ReportTargetsScheduler( EscortGroup )
 
@@ -1280,7 +1266,7 @@ end
 
 function AI_ESCORT:_SwitchReportNearbyTargets( EscortGroup, ReportTargets )
 
-  local EscortUnit = self.EscortUnit
+  local EscortUnit = self.PlayerUnit
 
   self.ReportTargets = ReportTargets
 
@@ -1312,7 +1298,7 @@ end
 function AI_ESCORT:_ScanTargets( ScanDuration )
 
   local EscortGroup = self.EscortGroup -- Wrapper.Group#GROUP
-  local EscortUnit = self.EscortUnit
+  local EscortUnit = self.PlayerUnit
 
   self.FollowScheduler:Stop( self.FollowSchedule )
 
@@ -1344,10 +1330,8 @@ function AI_ESCORT.___Resume( EscortGroup, self )
 
   local PlayerGroup = self.PlayerGroup
   
-  if EscortGroup.EscortMode == AI_ESCORT.MODE.FOLLOW then
-    self:JoinFormation( EscortGroup )
-    EscortGroup:MessageTypeToClient( "Destroyed all targets. Rejoining.", MESSAGE.Type.Information, PlayerGroup )
-  end
+  self:JoinFormation( EscortGroup )
+  EscortGroup:MessageTypeToClient( "Destroyed all targets. Rejoining.", MESSAGE.Type.Information, PlayerGroup )
 
 end
 
@@ -1359,7 +1343,7 @@ function AI_ESCORT:_AttackTarget( EscortGroup, DetectedItem )
 
   self:F( EscortGroup )
   
-  local EscortUnit = self.EscortUnit
+  local EscortUnit = self.PlayerUnit
   
   self:ReleaseFormation( EscortGroup )
 
@@ -1383,7 +1367,7 @@ function AI_ESCORT:_AttackTarget( EscortGroup, DetectedItem )
     )    
 
     Tasks[#Tasks+1] = EscortGroup:TaskCombo( AttackUnitTasks )
-    Tasks[#Tasks+1] = EscortGroup:TaskFunction( "AI_ESCORT.___Resume", self, EscortGroup )
+    Tasks[#Tasks+1] = EscortGroup:TaskFunction( "AI_ESCORT.___Resume", EscortGroup, self )
     
     EscortGroup:SetTask( 
       EscortGroup:TaskCombo(
@@ -1439,7 +1423,7 @@ end
 -- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
 function AI_ESCORT:_AssistTarget( EscortGroup, DetectedItem )
 
-  local EscortUnit = self.EscortUnit
+  local EscortUnit = self.PlayerUnit
 
   local DetectedSet = self.Detection:GetDetectedItemSet( DetectedItem )
   
@@ -1500,7 +1484,7 @@ end
 function AI_ESCORT:_ResumeMission( WayPoint )
 
   local EscortGroup = self.EscortGroup
-  local EscortUnit = self.EscortUnit
+  local EscortUnit = self.PlayerUnit
 
   self.FollowScheduler:Stop( self.FollowSchedule )
 
@@ -1540,7 +1524,7 @@ end
 function AI_ESCORT:_ReportTargetsScheduler( EscortGroup )
   self:F( EscortGroup:GetName() )
 
-  if EscortGroup:IsAlive() and self.EscortUnit:IsAlive() then
+  if EscortGroup:IsAlive() and self.PlayerUnit:IsAlive() then
 
     if true then
 
@@ -1563,7 +1547,7 @@ function AI_ESCORT:_ReportTargetsScheduler( EscortGroup )
 
       for DetectedItemIndex, DetectedItem in pairs( DetectedItems ) do
 
-        local DetectedItemReportSummary = self.Detection:DetectedItemReportMenu( DetectedItem, EscortGroup, _DATABASE:GetPlayerSettings( self.EscortUnit:GetPlayerName() ) )
+        local DetectedItemReportSummary = self.Detection:DetectedItemReportMenu( DetectedItem, EscortGroup, _DATABASE:GetPlayerSettings( self.PlayerUnit:GetPlayerName() ) )
 
         local DetectedMenu = DetectedItemReportSummary:Text("\n")
 
@@ -1615,7 +1599,7 @@ function AI_ESCORT:_FlightReportTargetsScheduler()
   
   local DetectedTargetsReport = REPORT:New( "Reporting detected targets:\n" ) -- A new report to display the detected targets as a message to the player.
 
-  if EscortGroup and ( self.EscortUnit:IsAlive() and EscortGroup:IsAlive() ) then
+  if EscortGroup and ( self.PlayerUnit:IsAlive() and EscortGroup:IsAlive() ) then
 
     local ClientGroup = self.PlayerGroup
 
@@ -1637,7 +1621,7 @@ function AI_ESCORT:_FlightReportTargetsScheduler()
 
       DetectedTargets = true -- There are detected targets, when the content of the for loop is executed. We use it to display a message.
       
-      local DetectedItemReportMenu = self.Detection:DetectedItemReportMenu( DetectedItem, ClientGroup, _DATABASE:GetPlayerSettings( self.EscortUnit:GetPlayerName() ) )
+      local DetectedItemReportMenu = self.Detection:DetectedItemReportMenu( DetectedItem, ClientGroup, _DATABASE:GetPlayerSettings( self.PlayerUnit:GetPlayerName() ) )
       local ReportMenuText = DetectedItemReportMenu:Text(", ")
       
       MENU_GROUP_COMMAND:New( self.PlayerGroup,
@@ -1648,7 +1632,7 @@ function AI_ESCORT:_FlightReportTargetsScheduler()
         DetectedItem
       ):SetTag( "Flight" ):SetTime( TimeUpdate )
 
-      local DetectedItemReportSummary = self.Detection:DetectedItemReportSummary( DetectedItem, ClientGroup, _DATABASE:GetPlayerSettings( self.EscortUnit:GetPlayerName() ) )
+      local DetectedItemReportSummary = self.Detection:DetectedItemReportSummary( DetectedItem, ClientGroup, _DATABASE:GetPlayerSettings( self.PlayerUnit:GetPlayerName() ) )
       local ReportSummary = DetectedItemReportSummary:Text(", ")
       DetectedTargetsReport:AddIndent( ReportSummary, "-" )
     end

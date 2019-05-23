@@ -212,7 +212,7 @@ function AI_ESCORT_REQUEST:New( EscortUnit, EscortSpawn, EscortAirbase, EscortNa
 
   local self = BASE:Inherit( self, AI_ESCORT:New( EscortUnit, self.EscortGroupSet, EscortName, EscortBriefing ) ) -- #AI_ESCORT_REQUEST
 
-  self.LeaderGroup = self.EscortUnit:GetGroup()
+  self.LeaderGroup = self.PlayerUnit:GetGroup()
 
   self.Detection = DETECTION_AREAS:New( self.EscortGroupSet, 5000 )
   self.Detection:__Start( 30 )
@@ -235,15 +235,14 @@ function AI_ESCORT_REQUEST:SpawnEscort()
     function()
       local LeaderEscort = self.EscortGroupSet:GetFirst() -- Wrapper.Group#GROUP
       
-      local Report = REPORT:New( "Escorts Reporting." )
-      Report:Add( "Current coordinate: " .. LeaderEscort:GetCoordinate():ToString( self.EscortUnit ) )
-      Report:Add( "Configuration: " .. self.EscortGroupSet:GetUnitTypeNames():Text( ", " ) )
-      Report:Add( "Joining Up ..." )
-      
-      LeaderEscort:MessageTypeToGroup( Report:Text(),  MESSAGE.Type.Information, self.EscortUnit )
+      local Report = REPORT:New()
+    
+      Report:Add( "Joining Up " .. self.EscortGroupSet:GetUnitTypeNames():Text( ", " ) .. " from " .. LeaderEscort:GetCoordinate():ToString( self.EscortUnit ) )
+            
+      LeaderEscort:MessageTypeToGroup( Report:Text(),  MESSAGE.Type.Information, self.PlayerUnit )
       self:FormationTrail( 50, 50, 50 )
       self:JoinFormation( EscortGroup )
-      self:Menus()
+      self:Menus( self.XStart, self.XSpace, self.YStart, self.YSpace, self.ZStart, self.ZSpace, self.ZLevels )
     end
   )
 
@@ -254,7 +253,7 @@ end
 function AI_ESCORT_REQUEST:onafterStart( EscortGroupSet )
 
   if not self.MenuRequestEscort then
-    self.MenuRequestEscort = MENU_GROUP_COMMAND:New( self.LeaderGroup, "Request A2G Escort", self.FlightMenu, 
+    self.MenuRequestEscort = MENU_GROUP_COMMAND:New( self.LeaderGroup, "Request A2G Escort", self.MainMenu, 
       function()
         self:SpawnEscort()
       end
