@@ -495,13 +495,13 @@ function FOX:onafterMissileLaunch(From, Event, To, missile)
       
         -- Alert directly targeted players or players that are within missile max range.
         if (missile.targetPlayer and player.unitname==missile.targetPlayer.unitname) or (distance<missile.missileRange)  then
-        
-          local nr, nl=self:_GetNotchingHeadings(missile.weapon)
-      
+              
           -- Inform player.
           local text=string.format("Missile launch detected! Distance %.1f NM, bearing %03d°.", UTILS.MetersToNM(distance), bearing)
-          text=text..string.format("\nNotching heading %03d or %03d", nr, nl)
           
+          -- Say notching headings.
+          BASE:ScheduleOnce(5, FOX._SayNotchingHeadings, self, player, missile.weapon)
+                    
           --TODO: ALERT or INFO depending on whether this is a direct target.
           --TODO: lauchalertall option.
           MESSAGE:New(text, 5, "ALERT"):ToClient(player.client)
@@ -935,6 +935,7 @@ function FOX:_AddF10Commands(_unitName)
         missionCommands.addCommandForGroup(gid, "Launch Alerts On/Off",    _rootPath, self._ToggleLaunchAlert,     self, _unitName) -- F1
         missionCommands.addCommandForGroup(gid, "Destroy Missiles On/Off", _rootPath, self._ToggleDestroyMissiles, self, _unitName) -- F2
         missionCommands.addCommandForGroup(gid, "My Status",               _rootPath, self._MyStatus,              self, _unitName) -- F3
+        
       end
     else
       self:E(self.lid..string.format("ERROR: Could not find group or group ID in AddF10Menu() function. Unit name: %s.", _unitName))
@@ -965,12 +966,12 @@ function FOX:_MyStatus(_unitname)
     
       local m,mtext=self:_GetTargetMissiles(playerData.name)
     
-      local text=string.format("Status of player %s:", playerData.name)
+      local text=string.format("Status of player %s:\n", playerData.name)
       local safe=self:_CheckCoordSafe(playerData.unit:GetCoordinate())
       
-      text=text..string.format("Destroy missiles: %s", tostring(playerData.destroy))
-      text=text..string.format("Launch alert: %s", tostring(playerData.launchalert))      
-      text=text..string.format("Am I safe? %s", tostring(safe))
+      text=text..string.format("Destroy missiles: %s\n", tostring(playerData.destroy))
+      text=text..string.format("Launch alert: %s\n", tostring(playerData.launchalert))      
+      text=text..string.format("Am I safe? %s\n", tostring(safe))
       text=text..string.format("Me target: %d\n%s", m, mtext)
       
       MESSAGE:New(text, 10, "FOX", true):ToClient(playerData.client)
@@ -1159,6 +1160,25 @@ function FOX:_GetWeapongHeading(weapon)
   end
 
   return -1
+end
+
+--- Tell player notching headings. 
+-- @param #FOX self
+-- @param #FOX.PlayerData playerData Player data.
+-- @param DCS#Weapon weapon The weapon.
+function FOX:_SayNotchingHeadings(playerData, weapon)
+
+  if playerData and playerData.unit and playerData.unit:IsAlive() then
+  
+    local nr, nl=self:_GetNotchingHeadings(weapon)
+    
+    if nr and nl then
+      local text=string.format("Notching heading %03d° or %03d°", nr, nl)    
+      MESSAGE:New(text, 5, "FOX"):ToClient(playerData.client)
+    end
+  
+  end
+
 end
 
 --- Returns the unit of a player and the player name. If the unit does not belong to a player, nil is returned. 
