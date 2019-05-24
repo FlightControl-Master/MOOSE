@@ -1,19 +1,21 @@
 --- **Functional** - (R2.5) - Yet another missile trainer.
 -- 
 -- 
--- Train to evade missiles without being destroyed.
+-- Practice to evade missiles without being destroyed.
 -- 
 --
 -- ## Main Features:
 -- 
---    * Adaptive update of missile-to-player distance.
---    * Define your own training zones on the map. Player in this zone will be protected.
---    * Define launch zones. Only 
---    * F10 radio menu to adjust settings for each player.
---    * Easy to use.
 --    * Handles air-to-air and surface-to-air missiles.
+--    * Define your own training zones on the map. Players in this zone will be protected.
+--    * Define launch zones. Only missiles launched in these zones are tracked. 
+--    * Define protected AI groups.
+--    * F10 radio menu to adjust settings for each player.
 --    * Alert on missile launch (optional).
 --    * Marker of missile launch position (optional).
+--    * Adaptive update of missile-to-player distance.
+--    * Finite State Machine (FSM) implementation.
+--    * Easy to use.
 --     
 -- ===
 --
@@ -28,6 +30,10 @@
 -- @field #boolean Debug Debug mode. Messages to all about status.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #table menuadded Table of groups the menu was added for.
+-- @field #boolean menudisabled If true, F10 menu for players is disabled.
+-- @field #boolean destroy Default player setting for destroying missiles.
+-- @field #boolean launchalert Default player setting for launch alerts.
+-- @field #boolean marklaunch Default player setting for mark launch coordinates.
 -- @field #table players Table of players.
 -- @field #table missiles Table of tracked missiles.
 -- @field #table safezones Table of practice zones.
@@ -52,8 +58,19 @@
 -- # The FOX Concept
 -- 
 -- As you probably know [Fox](https://en.wikipedia.org/wiki/Fox_(code_word)) is a NATO brevity code for launching air-to-air munition. Therefore, the class name is not 100% accurate as this
--- script handles air-to-air and surface-to-air missiles.
+-- script handles air-to-air but also surface-to-air missiles.
 -- 
+-- # Basic Script
+-- 
+-- # Training Zones
+-- 
+-- # Launch Zones
+-- 
+-- # Protected Groups
+-- 
+-- # Fine Tuning
+-- 
+-- # Special Events
 -- 
 -- 
 -- @field #FOX
@@ -62,6 +79,10 @@ FOX = {
   Debug          = false,
   lid            =   nil,
   menuadded      =    {},
+  menudisabled   =   nil,
+  destroy        =   nil,
+  launchalert    =   nil,
+  marklaunch     =   nil,
   missiles       =    {},
   players        =    {},
   safezones      =    {},
@@ -120,7 +141,7 @@ FOX.MenuF10Root=nil
 
 --- FOX class version.
 -- @field #string version
-FOX.version="0.3.0"
+FOX.version="0.5.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -143,6 +164,12 @@ function FOX:New()
 
   -- Inherit everthing from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #FOX
+  
+  -- Defaults:
+  self:SetDefaultMissileDestruction(true)
+  self:SetDefaultLaunchAlerts(true)
+  self:SetDefaultLaunchMarks(true)
+  self:SetExplosionPower()
   
   -- Start State.
   self:SetStartState("Stopped")
@@ -334,9 +361,102 @@ function FOX:AddLaunchZone(zone)
   return self
 end
 
---- Set debug mode on/off.
+--- Add a protected set of groups.
+-- @param #FOX self
+-- @param Core.Set#SET_GROUP groupset The set of groups.
+-- @return #FOX self
+function FOX:SetProtectedGroupSet(groupset)
+  self.protectedset=groupset
+  return self
+end
+
+--- Add a group to the protected set.
+-- @param #FOX self
+-- @param Wrapper.Group#GROUP group Protected group.
+-- @return #FOX self
+function FOX:AddProtectedGroup(group)
+  
+  if not self.protectedset then
+    self.protectedset=SET_GROUP:New()
+  end
+  
+  self.protectedset:AddGroup(group)
+  
+  return self
+end
+
+--- Set explosion power.
+-- @param #FOX self
+-- @param #number power Explosion power in kg TNT. Default 5.
+-- @return #FOX self
+function FOX:SetExplosionPower(power)
+
+  self.explosionpower=power or 5
+
+  return self
+end
+
+
+--- Disable F10 menu for all players.
 -- @param #FOX self
 -- @param #boolean switch If true debug mode on. If false/nil debug mode off
+-- @return #FOX self
+function FOX:SetDisableF10Menu()
+
+  self.menudisabled=true
+
+  return self
+end
+
+--- Set default player setting for missile destruction.
+-- @param #FOX self
+-- @param #boolean switch If true missiles are destroyed. If false/nil missiles are not destroyed.
+-- @return #FOX self
+function FOX:SetDefaultMissileDestruction(switch)
+
+  if switch==nil then
+    self.destroy=false
+  else
+    self.destroy=switch
+  end
+
+  return self
+end
+
+--- Set default player setting for launch alerts.
+-- @param #FOX self
+-- @param #boolean switch If true launch alerts to players are active. If false/nil no launch alerts are given.
+-- @return #FOX self
+function FOX:SetDefaultLaunchAlerts(switch)
+
+  if switch==nil then
+    self.launchalert=false
+  else
+    self.launchalert=switch
+  end
+
+  return self
+end
+
+--- Set default player setting for marking missile launch coordinates
+-- @param #FOX self
+-- @param #boolean switch If true missile launches are marked. If false/nil marks are disabled.
+-- @return #FOX self
+function FOX:SetDefaultLaunchMarks(switch)
+
+  if switch==nil then
+    self.marklaunch=false
+  else
+    self.marklaunch=switch
+  end
+
+  return self
+end
+
+
+--- Set debug mode on/off.
+-- @param #FOX self
+-- @param #boolean switch If true debug mode on. If false/nil debug mode off.
 -- @return #FOX self
 function FOX:SetDebugOnOff(switch)
 
@@ -376,11 +496,17 @@ end
 -- @param #string To To state.
 function FOX:onafterStatus(From, Event, To)
 
+  -- Get FSM state.
   local fsmstate=self:GetState()
   
+  -- Status.
   self:I(self.lid..string.format("Missile trainer status: %s", fsmstate))
   
+  -- Check missile status.
   self:_CheckMissileStatus()
+  
+  -- Check player status.
+  self:_CheckPlayers()
 
   if fsmstate=="Running" then
     self:__Status(-10)
@@ -389,7 +515,6 @@ end
 
 --- Check status of players.
 -- @param #FOX self
--- @param #string _unitName Name of player unit.
 function FOX:_CheckPlayers()
 
   for playername,_playersettings in pairs(self.players) do
@@ -433,12 +558,29 @@ function FOX:_CheckPlayers()
 
 end
 
+--- Remove missile.
+-- @param #FOX self
+-- @param #FOX.MissileData missile Missile data.
+function FOX:_RemoveMissile(missile)
 
---- Missile status 
+  if missile then
+    for i,_missile in pairs(self.missiles) do
+      local m=_missile --#FOX.MissileData
+      if missile.missileName==m.missileName then
+        table.remove(self.missiles, i)
+        return
+      end
+    end  
+  end
+
+end
+
+--- Missile status.
 -- @param #FOX self
 function FOX:_CheckMissileStatus()
 
   local text="Missiles:"
+  local inactive={}
   for i,_missile in pairs(self.missiles) do
     local missile=_missile --#FOX.MissileData
     
@@ -454,6 +596,10 @@ function FOX:_CheckMissileStatus()
     local mtype=missile.missileType
     local dtype=missile.missileType
     local range=UTILS.MetersToNM(missile.missileRange)
+    
+    if not active then
+      table.insert(inactive,i)
+    end
     local heading=self:_GetWeapongHeading(missile.weapon)
     
     text=text..string.format("\n[%d] %s: active=%s, range=%.1f NM, heading=%03d, target=%s, player=%s, missilename=%s", i, mtype, active, range, heading, targetname, playername, missile.missileName)
@@ -461,9 +607,54 @@ function FOX:_CheckMissileStatus()
   end
   self:I(self.lid..text)
 
+  -- Remove inactive missiles.  
+  for i=#self.missiles,1,-1 do
+    local missile=self.missiles[i] --#FOX.MissileData
+    if missile and not missile.active then
+      table.remove(self.missiles, i)
+    end
+  end
+
 end
 
---- Missle launch.
+--- Check if missile target is protected.
+-- @param #FOX self
+-- @param Wrapper.Unit#UNIT targetunit Target unit.
+-- @return #boolean If true, unit is protected.
+function FOX:_IsProtected(targetunit)
+
+  if not self.protectedset then
+    return false
+  end
+  
+  if targetunit and targetunit:IsAlive() then
+
+    -- Get Group.
+    local targetgroup=targetunit:GetGroup()
+    
+    if targetgroup then
+      local targetname=targetgroup:GetName()
+      
+      for _,_group in pairs(self.protectedset:GetSetObjects()) do
+        local group=_group --Wrapper.Group#GROUP
+        
+        if group then
+          local groupname=group:GetName()
+          
+          -- Target belongs to a protected set.
+          if targetname==groupname then
+            return true
+          end
+        end
+        
+      end
+    end
+  end
+  
+  return false
+end
+
+--- Missle launch event.
 -- @param #FOX self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -554,6 +745,7 @@ function FOX:onafterMissileLaunch(From, Event, To, missile)
       local missileVelocity=UTILS.VecNorm(_ordnance:getVelocity())
       
       if missile.targetUnit then
+      
         -----------------------------------
         -- Missile has a specific target --
         -----------------------------------
@@ -564,7 +756,10 @@ function FOX:onafterMissileLaunch(From, Event, To, missile)
             target=missile.targetUnit
           end
         else
-          --TODO: Check if unit is protected.
+          -- Check if unit is protected.
+          if self:_IsProtected(missile.targetUnit) then
+            target=missile.targetUnit
+          end
         end
         
       else
@@ -623,11 +818,24 @@ function FOX:onafterMissileLaunch(From, Event, To, missile)
           self:T(self.lid..string.format("Destroying missile at distance %.1f m", distance))
           _ordnance:destroy()
           
+          -- Missile is not active any more.
+          missile.active=false
+          
+          -- Create event.
+          self:MissileDestroyed(missile)
+          
           -- Little explosion for the visual effect.
-          missileCoord:Explosion(self.explosionpower)
+          if self.explosionpower>0 then
+            missileCoord:Explosion(self.explosionpower)
+          end
           
           local text=string.format("Destroying missile. %s", self:_DeadText())
           MESSAGE:New(text, 10):ToGroup(target:GetGroup())
+          
+          -- Increase dead counter.
+          if missile.targetPlayer then
+            missile.targetPlayer.dead=missile.targetPlayer.dead+1
+          end
           
           -- Terminate timer.
           return nil
@@ -676,6 +884,9 @@ function FOX:onafterMissileLaunch(From, Event, To, missile)
         if player and player.unit:IsAlive() then -- and missileCoord and player.unit:GetCoordinate():Get3DDistance(missileCoord)<10*1000 then
           local text=string.format("Missile defeated. Well done, %s!", player.name)
           MESSAGE:New(text, 10):ToClient(player.client)
+          
+          -- Increase defeated counter.
+          player.defeated=player.defeated+1          
         end
         
       end
@@ -740,9 +951,10 @@ function FOX:OnEventBirth(EventData)
     self:T(self.lid..text)
     MESSAGE:New(text, 5):ToAllIf(self.Debug)
             
-    -- Add Menu commands.
-    --self:_AddF10Commands(_unitName)
-    SCHEDULER:New(nil, self._AddF10Commands, {self,_unitName}, 0.1)
+    -- Add F10 radio menu for player.
+    if not self.menudisabled then
+      SCHEDULER:New(nil, self._AddF10Commands, {self,_unitName}, 0.1)
+    end
     
     -- Player data.
     local playerData={} --#FOX.PlayerData
@@ -757,9 +969,9 @@ function FOX:OnEventBirth(EventData)
     playerData.client    = CLIENT:FindByName(_unitName, nil, true)
     playerData.coalition = _group:GetCoalition()
     
-    playerData.destroy=playerData.destroy or true
-    playerData.launchalert=playerData.launchalert or true
-    playerData.marklaunch=playerData.marklaunch or true
+    playerData.destroy=playerData.destroy or self.destroy
+    playerData.launchalert=playerData.launchalert or self.launchalert
+    playerData.marklaunch=playerData.marklaunch or self.marklaunch
     
     playerData.defeated=playerData.defeated or 0
     playerData.dead=playerData.dead or 0
@@ -851,8 +1063,8 @@ function FOX:OnEventShot(EventData)
     missile.targetUnit=_targetUnit
     missile.targetPlayer=self:_GetPlayerFromUnit(missile.targetUnit)
     
-    -- TODO: or in protected set!
-    if missile.targetPlayer then
+    -- Only track if target was a player or target is protected.
+    if missile.targetPlayer or self:_IsProtected(missile.targetUnit) then
     
       -- Add missile table.
       table.insert(self.missiles, missile)
@@ -931,10 +1143,11 @@ function FOX:_AddF10Commands(_unitName)
         -------------------------
         -- F10/F<X> FOX/
         -------------------------
-        
-        missionCommands.addCommandForGroup(gid, "Launch Alerts On/Off",    _rootPath, self._ToggleLaunchAlert,     self, _unitName) -- F1
-        missionCommands.addCommandForGroup(gid, "Destroy Missiles On/Off", _rootPath, self._ToggleDestroyMissiles, self, _unitName) -- F2
-        missionCommands.addCommandForGroup(gid, "My Status",               _rootPath, self._MyStatus,              self, _unitName) -- F3
+                
+        missionCommands.addCommandForGroup(gid, "Destroy Missiles On/Off", _rootPath, self._ToggleDestroyMissiles, self, _unitName) -- F1
+        missionCommands.addCommandForGroup(gid, "Launch Alerts On/Off",    _rootPath, self._ToggleLaunchAlert,     self, _unitName) -- F2
+        missionCommands.addCommandForGroup(gid, "Mark Launch On/Off",      _rootPath, self._ToggleLaunchMark,      self, _unitName) -- F3
+        missionCommands.addCommandForGroup(gid, "My Status",               _rootPath, self._MyStatus,              self, _unitName) -- F4
         
       end
     else
@@ -969,12 +1182,15 @@ function FOX:_MyStatus(_unitname)
       local text=string.format("Status of player %s:\n", playerData.name)
       local safe=self:_CheckCoordSafe(playerData.unit:GetCoordinate())
       
-      text=text..string.format("Destroy missiles: %s\n", tostring(playerData.destroy))
-      text=text..string.format("Launch alert: %s\n", tostring(playerData.launchalert))      
+      text=text..string.format("Destroy missiles? %s\n", tostring(playerData.destroy))
+      text=text..string.format("Launch alert? %s\n", tostring(playerData.launchalert))
+      text=text..string.format("Launch marks? %s\n", tostring(playerData.marklaunch))
       text=text..string.format("Am I safe? %s\n", tostring(safe))
+      text=text..string.format("Missiles defeated: %d\n", playerData.defeated)
+      text=text..string.format("Missiles destroyed: %d\n", playerData.dead)
       text=text..string.format("Me target: %d\n%s", m, mtext)
       
-      MESSAGE:New(text, 10, "FOX", true):ToClient(playerData.client)
+      MESSAGE:New(text, 10, nil, true):ToClient(playerData.client)
     
     end
   end
@@ -992,7 +1208,7 @@ function FOX:_GetTargetMissiles(playername)
   for _,_missile in pairs(self.missiles) do
     local missile=_missile --#FOX.MissileData
     
-    if missile.targetPlayer.name==playername then
+    if missile.targetPlayer and missile.targetPlayer.name==playername then
       n=n+1
       text=text..string.format("Type %s: active %s\n", missile.missileType, tostring(missile.active))
     end
@@ -1034,6 +1250,40 @@ function FOX:_ToggleLaunchAlert(_unitname)
     end
   end
 end
+
+--- Turn player's launch marks on/off.
+-- @param #FOX self
+-- @param #string _unitname Name of the player unit.
+function FOX:_ToggleLaunchMark(_unitname)
+  self:F2(_unitname)
+  
+  -- Get player unit and player name.
+  local unit, playername = self:_GetPlayerUnitAndName(_unitname)
+  
+  -- Check if we have a player.
+  if unit and playername then
+  
+    -- Player data.  
+    local playerData=self.players[playername]  --#FOX.PlayerData
+    
+    if playerData then
+    
+      -- Invert state.
+      playerData.marklaunch=not playerData.marklaunch
+      
+      -- Inform player.
+      local text=""
+      if playerData.marklaunch==true then
+        text=string.format("%s, missile launch marks are now ENABLED.", playerData.name)
+      else
+        text=string.format("%s, missile launch marks are now DISABLED.", playerData.name)
+      end
+      MESSAGE:New(text, 5):ToClient(playerData.client)
+            
+    end
+  end
+end
+
 
 --- Turn destruction of missiles on/off for player.
 -- @param #FOX self

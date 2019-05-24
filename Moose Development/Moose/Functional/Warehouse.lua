@@ -1733,7 +1733,7 @@ _WAREHOUSEDB  = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.7.1"
+WAREHOUSE.version="0.8.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -1747,7 +1747,7 @@ WAREHOUSE.version="0.7.1"
 -- TODO: Handle the case when units of a group die during the transfer.
 -- TODO: Added habours as interface for transport to from warehouses? Could make a rudimentary shipping dispatcher.
 -- DONE: Test capturing a neutral warehouse.
--- DONE: Add save/load capability of warehouse <==> percistance after mission restart. Difficult in lua!
+-- DONE: Add save/load capability of warehouse <==> persistance after mission restart. Difficult in lua!
 -- DONE: Get cargo bay and weight from CARGO_GROUP and GROUP. No necessary any more!
 -- DONE: Add possibility to set weight and cargo bay manually in AddAsset function as optional parameters.
 -- DONE: Check overlapping aircraft sometimes.
@@ -5513,7 +5513,6 @@ end
 -- @param #WAREHOUSE self
 -- @param Wrapper.Group#GROUP group The ground group to be routed
 -- @param #WAREHOUSE.Queueitem request The request for this group.
--- @param #number Speed Speed in km/h to drive to the destination coordinate. Default is 60% of max possible speed the unit can go.
 function WAREHOUSE:_RouteGround(group, request)
 
   if group and group:IsAlive() then
@@ -5556,18 +5555,25 @@ function WAREHOUSE:_RouteGround(group, request)
       local FromWP=group:GetCoordinate():WaypointGround(_speed, "Off Road")
       table.insert(Waypoints, 1, FromWP)
 
-      -- Final coordinate.
-      local ToWP=request.warehouse.spawnzone:GetRandomCoordinate():WaypointGround(_speed, "Off Road")
-      table.insert(Waypoints, #Waypoints+1, ToWP)
+      -- Final coordinate. Note, this can lead to errors if the final WP is too close the the point on the road. The vehicle will stop driving and not reach the final WP!
+      --local ToCO=request.warehouse.spawnzone:GetRandomCoordinate()
+      --local ToWP=ToCO:WaypointGround(_speed, "Off Road")
+      --table.insert(Waypoints, #Waypoints+1, ToWP)
 
+    end
+    
+    for n,wp in ipairs(Waypoints) do
+      env.info(n)
+      local tf=self:_SimpleTaskFunctionWP("warehouse:_PassingWaypoint",group, n, #Waypoints)
+      group:SetTaskWaypoint(wp, tf)
     end
 
     -- Task function triggering the arrived event at the last waypoint.
-    local TaskFunction = self:_SimpleTaskFunction("warehouse:_Arrived", group)
+    --local TaskFunction = self:_SimpleTaskFunction("warehouse:_Arrived", group)
 
     -- Put task function on last waypoint.
-    local Waypoint = Waypoints[#Waypoints]
-    group:SetTaskWaypoint(Waypoint, TaskFunction)
+    --local Waypoint = Waypoints[#Waypoints]
+    --group:SetTaskWaypoint(Waypoint, TaskFunction)
 
     -- Route group to destination.
     group:Route(Waypoints, 1)
@@ -5692,9 +5698,30 @@ end
 -- @param Wrapper.Group#GROUP group The group that arrived.
 function WAREHOUSE:_Arrived(group)
   self:_DebugMessage(string.format("Group %s arrived!", tostring(group:GetName())))
+  --self:E(string.format("Group %s arrived!", tostring(group:GetName())))
 
   if group then
     --Trigger "Arrived event.
+    --group:SmokeBlue()
+    self:__Arrived(1, group)
+  end
+
+end
+
+--- Task function for when passing a waypoint.
+-- @param #WAREHOUSE self
+-- @param Wrapper.Group#GROUP group The group that arrived.
+-- @param #number n Waypoint passed.
+-- @param #number N Final waypoint.
+function WAREHOUSE:_PassingWaypoint(group,n,N)
+  self:T(string.format("Group %s passing waypoint %d of %d!", tostring(group:GetName()), n, N))
+
+  if group then
+    --group:SmokeGreen()
+  end
+  
+  if n==N then
+    --group:SmokeBlue()
     self:__Arrived(1, group)
   end
 
@@ -6983,15 +7010,46 @@ function WAREHOUSE:_SimpleTaskFunction(Function, group)
 
   -- Task script.
   local DCSScript = {}
-  --DCSScript[#DCSScript+1] = string.format('env.info(\"WAREHOUSE: Simple task function called!\") ')
-  DCSScript[#DCSScript+1] = string.format('local mygroup     = GROUP:FindByName(\"%s\") ', groupname)              -- The group that executes the task function. Very handy with the "...".
+  
+  DCSScript[#DCSScript+1]   = string.format('local mygroup     = GROUP:FindByName(\"%s\") ', groupname)               -- The group that executes the task function. Very handy with the "...".
   if self.isunit then
-    DCSScript[#DCSScript+1] = string.format("local mywarehouse = UNIT:FindByName(\"%s\") ", warehouse)             -- The unit that holds the warehouse self object.
+    DCSScript[#DCSScript+1] = string.format("local mywarehouse = UNIT:FindByName(\"%s\") ", warehouse)                -- The unit that holds the warehouse self object.
   else
-    DCSScript[#DCSScript+1] = string.format("local mywarehouse = STATIC:FindByName(\"%s\") ", warehouse)           -- The static that holds the warehouse self object.
+    DCSScript[#DCSScript+1] = string.format("local mywarehouse = STATIC:FindByName(\"%s\") ", warehouse)              -- The static that holds the warehouse self object.
   end
-  DCSScript[#DCSScript+1] = string.format('local warehouse   = mywarehouse:GetState(mywarehouse, \"WAREHOUSE\") ') -- Get the warehouse self object from the static.
-  DCSScript[#DCSScript+1] = string.format('%s(mygroup)', Function)                                                 -- Call the function, e.g. myfunction.(warehouse,mygroup)
+  DCSScript[#DCSScript+1]   = string.format('local warehouse   = mywarehouse:GetState(mywarehouse, \"WAREHOUSE\") ')  -- Get the warehouse self object from the static.
+  DCSScript[#DCSScript+1]   = string.format('%s(mygroup)', Function)                                                  -- Call the function, e.g. myfunction.(warehouse,mygroup)
+
+  -- Create task.
+  local DCSTask = CONTROLLABLE.TaskWrappedAction(self, CONTROLLABLE.CommandDoScript(self, table.concat(DCSScript)))
+
+  return DCSTask
+end
+
+--- Simple task function. Can be used to call a function which has the warehouse and the executing group as parameters.
+-- @param #WAREHOUSE self
+-- @param #string Function The name of the function to call passed as string.
+-- @param Wrapper.Group#GROUP group The group which is meant.
+-- @param #number n Waypoint passed.
+-- @param #number N Final waypoint number.
+function WAREHOUSE:_SimpleTaskFunctionWP(Function, group, n, N)
+  self:F2({Function})
+
+  -- Name of the warehouse (static) object.
+  local warehouse=self.warehouse:GetName()
+  local groupname=group:GetName()
+
+  -- Task script.
+  local DCSScript = {}
+  
+  DCSScript[#DCSScript+1]   = string.format('local mygroup     = GROUP:FindByName(\"%s\") ', groupname)               -- The group that executes the task function. Very handy with the "...".
+  if self.isunit then
+    DCSScript[#DCSScript+1] = string.format("local mywarehouse = UNIT:FindByName(\"%s\") ", warehouse)                -- The unit that holds the warehouse self object.
+  else
+    DCSScript[#DCSScript+1] = string.format("local mywarehouse = STATIC:FindByName(\"%s\") ", warehouse)              -- The static that holds the warehouse self object.
+  end
+  DCSScript[#DCSScript+1]   = string.format('local warehouse   = mywarehouse:GetState(mywarehouse, \"WAREHOUSE\") ')  -- Get the warehouse self object from the static.
+  DCSScript[#DCSScript+1]   = string.format('%s(mygroup, %d, %d)', Function, n ,N)                                    -- Call the function, e.g. myfunction.(warehouse,mygroup)
 
   -- Create task.
   local DCSTask = CONTROLLABLE.TaskWrappedAction(self, CONTROLLABLE.CommandDoScript(self, table.concat(DCSScript)))
