@@ -1,4 +1,4 @@
---- **Functional** - (R2.5) - Yet another missile trainer.
+--- **Functional** - (R2.5) - Yet Another Missile Trainer.
 -- 
 -- 
 -- Practice to evade missiles without being destroyed.
@@ -15,7 +15,7 @@
 --    * Marker of missile launch position (optional).
 --    * Adaptive update of missile-to-player distance.
 --    * Finite State Machine (FSM) implementation.
---    * Easy to use.
+--    * Easy to use. See examples below.
 --     
 -- ===
 --
@@ -62,15 +62,63 @@
 -- 
 -- # Basic Script
 -- 
+--     -- Create a new missile trainer object.
+--     fox=FOX:New()
+--     
+--     -- Start missile trainer.
+--     fox:Start()
+-- 
 -- # Training Zones
+-- 
+-- Players are only protected if they are inside one of the training zones.
+-- 
+--     -- Create a new missile trainer object.
+--     fox=FOX:New()
+--     
+--     -- Add training zones.
+--     fox:AddSafeZone(ZONE:New("Training Zone Alpha")
+--     fox:AddSafeZone(ZONE:New("Training Zone Bravo")
+--     
+--     -- Start missile trainer.
+--     fox:Start()
 -- 
 -- # Launch Zones
 -- 
--- # Protected Groups
+-- Missile launches are only monitored if the shooter is inside the defined launch zone.
+-- 
+--     -- Create a new missile trainer object.
+--     fox=FOX:New()
+--     
+--     -- Add training zones.
+--     fox:AddLaunchZone(ZONE:New("Launch Zone SA-10 Krim")
+--     fox:AddLaunchZone(ZONE:New("Training Zone Bravo")
+--     
+--     -- Start missile trainer.
+--     fox:Start()
+-- 
+-- # Protected AI Groups
+-- 
+-- Define AI protected groups. These groups cannot be harmed by missiles.
+-- 
+-- ## Add Individual Groups
+-- 
+--     -- Create a new missile trainer object.
+--     fox=FOX:New()
+--     
+--     -- Add single protected group(s).
+--     fox:AddProtectedGroup(GROUP:FindByName("A-10 Protected"))
+--     fox:AddProtectedGroup(GROUP:FindByName("Yak-40"))
+--     
+--     -- Start missile trainer.
+--     fox:Start()
 -- 
 -- # Fine Tuning
 -- 
+-- Todo!
+-- 
 -- # Special Events
+-- 
+-- Todo!
 -- 
 -- 
 -- @field #FOX

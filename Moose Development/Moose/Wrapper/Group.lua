@@ -655,7 +655,7 @@ end
 
 --- Count number of alive units in the group.
 -- @param #GROUP self
--- @return #number Number of alive units
+-- @return #number Number of alive units. If DCS group is nil, 0 is returned.
 function GROUP:CountAliveUnits()
   self:F3( { self.GroupName } )
   local DCSGroup = self:GetDCSObject()
@@ -672,7 +672,7 @@ function GROUP:CountAliveUnits()
     return n
   end
 
-  return nil
+  return 0
 end
 
 --- Get the first unit of the group which is alive.
