@@ -17,6 +17,13 @@
 --
 -- ===
 --
+-- ## Youtube Videos:
+--
+--    * [Warehouse Trailer](https://www.youtube.com/watch?v=e98jzLi5fGk)
+--    * [DCS Warehouse Airbase Resources Proof Of Concept](https://www.youtube.com/watch?v=YeuGL0duEgY)
+--
+-- ===
+--
 -- ## Missions:
 --
 -- ===
@@ -24,8 +31,6 @@
 -- The MOOSE warehouse concept simulates the organization and implementation of complex operations regarding the flow of assets between the point of origin and the point of consumption
 -- in order to meet requirements of a potential conflict. In particular, this class is concerned with maintaining army supply lines while disrupting those of the enemy, since an armed
 -- force without resources and transportation is defenseless.
---
--- Please note that his class is work in progress and in an **alpha** stage.
 --
 -- ===
 --
@@ -71,6 +76,7 @@
 -- @field #string autosavefile File name of the auto asset save file. Default is auto generated from warehouse id and name.
 -- @field #boolean safeparking If true, parking spots for aircraft are considered as occupied if e.g. a client aircraft is parked there. Default false.
 -- @field #boolean isunit If true, warehouse is represented by a unit instead of a static.
+-- @field #number lowfuelthresh Low fuel threshold. Triggers the event AssetLowFuel if for any unit fuel goes below this number.
 -- @extends Core.Fsm#FSM
 
 --- Have your assets at the right place at the right time - or not!
@@ -83,7 +89,7 @@
 -- to another in a realistic and highly automatic fashion. In contrast to a "DCS warehouse" these assets have a physical representation in game. In particular,
 -- this means they can be destroyed during the transport and add more life to the DCS world.
 --
--- This comes along with some additional interesting stategic aspects since capturing/defending and destroying/protecting an enemy or your
+-- This comes along with some additional interesting strategic aspects since capturing/defending and destroying/protecting an enemy or your
 -- own warehouse becomes of critical importance for the development of a conflict.
 --
 -- In essence, creating an efficient network of warehouses is vital for the success of a battle or even the whole war. Likewise, of course, cutting off the enemy
@@ -109,12 +115,12 @@
 --
 -- * Ground vehicles will use the road infrastructure. So a good road connection for both warehouses is important but also off road connections can be added if necessary.
 -- * Airborne units get a flightplan from the airbase of the sending warehouse to the airbase of the receiving warehouse. This already implies that for airborne
--- assets both warehouses need an airbase. If either one of the warehouses does not have an associated airbase, direct transportation of airborne assest is not possible.
+-- assets both warehouses need an airbase. If either one of the warehouses does not have an associated airbase, direct transportation of airborne assets is not possible.
 -- * Naval units can be exchanged between warehouses which possess a port, which can be defined by the user. Also shipping lanes must be specified manually but the user since DCS does not provide these.
 -- * Trains (would) use the available railroad infrastructure and both warehouses must have a connection to the railroad. Unfortunately, however, trains are not yet implemented to
 -- a reasonable degree in DCS at the moment and hence cannot be used yet.
 --
--- Furthermore, ground assets can be transferred between warehouses by transport units. These are APCs, helicopters and airplanes. The transportation process is modelled
+-- Furthermore, ground assets can be transferred between warehouses by transport units. These are APCs, helicopters and airplanes. The transportation process is modeled
 -- in a realistic way by using the corresponding cargo dispatcher classes, i.e.
 --
 -- * @{AI.AI_Cargo_Dispatcher_APC#AI_DISPATCHER_APC}
@@ -239,13 +245,13 @@
 --
 --     warehouseBatumi:AddAsset("Mi-8", nil, nil, nil, nil, nil, nil, "China UN")
 --
--- would spawn the asset with a chinese UN livery.
+-- would spawn the asset with a Chinese UN livery.
 --
 -- Or
 --
 --     warehouseBatumi:AddAsset("Mi-8", nil, nil, nil, nil, nil, nil, {"China UN", "German"})
 --
--- would spawn the asset with either a chinese UN or German livery. Mind the curly brackets **{}** when you want to specify multiple liveries.
+-- would spawn the asset with either a Chinese UN or German livery. Mind the curly brackets **{}** when you want to specify multiple liveries.
 --
 -- Four each unit type, the livery names can be found in the DCS root folder under Bazar\Liveries. You have to use the name of the livery subdirectory. The names of the liveries
 -- as displayed in the mission editor might be different and won't work in general.
@@ -524,7 +530,7 @@
 --
 -- # Why is my request not processed?
 --
--- For each request, the warehouse class logic does a lot of consistancy and validation checks under the hood.
+-- For each request, the warehouse class logic does a lot of consistency and validation checks under the hood.
 -- This helps to circumvent a lot of DCS issues and shortcomings. For example, it is checked that enough free
 -- parking spots at an airport are available *before* the assets are spawned.
 -- However, this also means that sometimes a request is deemed to be *invalid* in which case they are deleted
@@ -535,7 +541,7 @@
 -- Invalid request are requests which can **never** be processes because there is some logical or physical argument against it.
 -- (Or simply because that feature was not implemented (yet).)
 --
--- * All airborne assets need an associated airbase of any kind on the sending *and* receiving warhouse.
+-- * All airborne assets need an associated airbase of any kind on the sending *and* receiving warehouse.
 -- * Airplanes need an airdrome at the sending and receiving warehouses.
 -- * Not enough parking spots of the right terminal type at the sending warehouse. This avoids planes spawning on runways or on top of each other.
 -- * No parking spots of the right terminal type at the receiving warehouse. This avoids DCS despawning planes on landing if they have no valid parking spot.
@@ -552,7 +558,7 @@
 --
 -- ## Temporarily Unprocessable Requests
 --
--- Temporarily unprocessable requests are possible in priciple, but cannot be processed at the given time the warehouse checks its queue.
+-- Temporarily unprocessable requests are possible in principle, but cannot be processed at the given time the warehouse checks its queue.
 --
 -- * No enough parking spaces are available for all requested assets but the airbase has enough parking spots in total so that this request is possible once other aircraft have taken off.
 -- * The requesting warehouse is not in state "Running" (could be paused, not yet started or under attack).
@@ -564,11 +570,11 @@
 --
 -- ## Cargo Bay and Weight Limitations
 --
--- The transporation of cargo is handled by the AI\_Dispatcher classes. These take the cargo bay of a carrier and the weight of
+-- The transportation of cargo is handled by the AI\_Dispatcher classes. These take the cargo bay of a carrier and the weight of
 -- the cargo into account so that a carrier can only load a realistic amount of cargo.
 --
 -- However, if troops are supposed to be transported between warehouses, there is one important limitations one has to keep in mind.
--- This is that **cargo asset groups cannot be split** and devided into separate carrier units!
+-- This is that **cargo asset groups cannot be split** and divided into separate carrier units!
 --
 -- For example, a TPz Fuchs has a cargo bay large enough to carry up to 10 soldiers at once, which is a realistic number.
 -- If a group consisting of more than ten soldiers needs to be transported, it cannot be loaded into the APC.
@@ -601,7 +607,7 @@
 -- # Strategic Considerations
 --
 -- Due to the fact that a warehouse holds (or can hold) a lot of valuable assets, it makes a (potentially) juicy target for enemy attacks.
--- There are several interesting situations, which can occurr.
+-- There are several interesting situations, which can occur.
 --
 -- ## Capturing a Warehouses Airbase
 --
@@ -621,7 +627,7 @@
 --
 -- A warehouse can be captured by the enemy coalition. If enemy ground troops enter the warehouse zone the event **Attacked** is triggered which can be captured by the
 -- @{#WAREHOUSE.OnAfterAttacked} event. By default the warehouse zone circular zone with a radius of 500 meters located at the center of the physical warehouse.
--- The warehouse zone can be set via the @{#WAREHOUSE.SetWarehouseZone}(*zone*) function. The parameter *zone* must also be a cirular zone.
+-- The warehouse zone can be set via the @{#WAREHOUSE.SetWarehouseZone}(*zone*) function. The parameter *zone* must also be a circular zone.
 --
 -- The @{#WAREHOUSE.OnAfterAttacked} function can be used by the mission designer to react to the enemy attack. For example by deploying some or all ground troops
 -- currently in stock to defend the warehouse. Note that the warehouse also has a self defence option which can be enabled by the @{#WAREHOUSE.SetAutoDefenceOn}()
@@ -632,8 +638,8 @@
 -- If only ground troops of the enemy coalition are present in the warehouse zone, the warehouse and all its assets falls into the hands of the enemy.
 -- In this case the event **Captured** is triggered which can be captured by the @{#WAREHOUSE.OnAfterCaptured} function.
 --
--- The warehouse turns to the capturing coalition, i.e. its physical representation, and all assets as well. In paticular, all requests to the warehouse will
--- spawn assets beloning to the new owner.
+-- The warehouse turns to the capturing coalition, i.e. its physical representation, and all assets as well. In particular, all requests to the warehouse will
+-- spawn assets belonging to the new owner.
 --
 -- If the enemy troops could be defeated, i.e. no more troops of the opposite coalition are in the warehouse zone, the event **Defeated** is triggered and
 -- the @{#WAREHOUSE.OnAfterDefeated} function can be used to adapt to the new situation. For example putting back all spawned defender troops back into
@@ -641,11 +647,11 @@
 --
 -- ## Destroying a Warehouse
 --
--- If an enemy destroy the physical warehouse structure, the warehouse will of course stop all its services. In priciple, all assets contained in the warehouse are
+-- If an enemy destroy the physical warehouse structure, the warehouse will of course stop all its services. In principle, all assets contained in the warehouse are
 -- gone as well. So a warehouse should be properly defended.
 --
 -- Upon destruction of the warehouse, the event **Destroyed** is triggered, which can be captured by the @{#WAREHOUSE.OnAfterDestroyed} function.
--- So the mission designer can intervene at this point and for example choose to spawn all or paricular types of assets before the warehouse is gone for good.
+-- So the mission designer can intervene at this point and for example choose to spawn all or particular types of assets before the warehouse is gone for good.
 --
 -- ===
 --
@@ -670,7 +676,9 @@
 -- * "Attacked" --> "Captured" --> "Running" (warehouse was captured by the enemy)
 -- * "*" --> "AirbaseCaptured" --> "*" (airbase belonging to the warehouse was captured by the enemy)
 -- * "*" --> "AirbaseRecaptured" --> "*" (airbase was re-captured)
--- * "*" --> "AssetDead" --> "*" (a whole asset group is dead)
+-- * "*" --> "AssetSpawned" --> "*" (an asset has been spawned into the world)
+-- * "*" --> "AssetLowFuel" --> "*" (an asset is running low on fuel)
+-- * "*" --> "AssetDead" --> "*" (a whole asset, i.e. all its units/groups, is dead)
 -- * "*" --> "Destroyed" --> "Destroyed" (warehouse was destroyed)
 -- * "Running" --> "Pause" --> "Paused" (warehouse is paused)
 -- * "Paused" --> "Unpause" --> "Running" (warehouse is unpaused)
@@ -822,7 +830,7 @@
 -- ## Example 2: Self propelled Ground Troops
 --
 -- Warehouse Berlin, which is a FARP near Batumi, requests infantry and troop transports from the warehouse at Batumi.
--- The groups are spawned at Batumi and move by themselfs from Batumi to Berlin using the roads.
+-- The groups are spawned at Batumi and move by themselves from Batumi to Berlin using the roads.
 -- Once the troops have arrived at Berlin, the troops are automatically added to the warehouse stock of Berlin.
 -- While on the road, Batumi has requested back two APCs from Berlin. Since Berlin does not have the assets in stock,
 -- the request is queued. After the troops have arrived, Berlin is sending back the APCs to Batumi.
@@ -943,7 +951,7 @@
 -- If the red coalition manages to capture our warehouse, all assets go into their possession. Now red tries to steal three F/A-18 flights and send them to
 -- Sukhumi. These aircraft will be spawned and begin to taxi. However, ...
 --
--- A blue Bradley is in the area and will attemt to recapture the warehouse. It might also catch the red F/A-18s before they take off.
+-- A blue Bradley is in the area and will attempt to recapture the warehouse. It might also catch the red F/A-18s before they take off.
 --
 --     -- Start warehouses.
 --     warehouse.Senaki:Start()
@@ -1110,7 +1118,7 @@
 -- After 30 and 45 seconds requests for five groups of armed speedboats are made. These will be spawned in the port zone right behind the carrier.
 -- The first five groups will go port of the carrier an form a left wing formation. The seconds groups will to the analogue on the starboard side.
 -- **Note** that in order to spawn naval assets a warehouse needs a port (zone). Since the carrier and hence the warehouse is mobile, we define a moving
--- zone as @{Core.Zone#ZONE_UNIT} with the carrier as reference unit. The "port" of the Stennis at its stern so all naval assets are spawned behing the carrier.
+-- zone as @{Core.Zone#ZONE_UNIT} with the carrier as reference unit. The "port" of the Stennis at its stern so all naval assets are spawned behind the carrier.
 --
 --     -- Start warehouse on USS Stennis.
 --     warehouse.Stennis:Start()
@@ -1317,7 +1325,7 @@
 --
 -- ## Example 14: Strategic Bombing
 --
--- This example shows how to employ stategic bombers in a mission. Three B-52s are lauched at Kobuleti with the assignment to wipe out the enemy warehouse at Sukhumi.
+-- This example shows how to employ strategic bombers in a mission. Three B-52s are launched at Kobuleti with the assignment to wipe out the enemy warehouse at Sukhumi.
 -- The bombers will get a flight path and make their approach from the South at an altitude of 5000 m ASL. After their bombing run, they will return to Kobuleti and
 -- added back to stock.
 --
@@ -1560,6 +1568,7 @@ WAREHOUSE = {
   autosavefile  =   nil,
   saveparking   = false,
   isunit        = false,
+  lowfuelthresh =  0.15,
 }
 
 --- Item of the warehouse stock table.
@@ -1582,7 +1591,7 @@ WAREHOUSE = {
 -- @field #number loadradius Distance when cargo is loaded into the carrier.
 -- @field DCS#AI.Skill skill Skill of AI unit.
 -- @field #string livery Livery of the asset.
--- @field #string assignment Assignment of the asset. This could, e.g., be used in the @{#WAREHOUSE.OnAfterNewAsset) funktion.
+-- @field #string assignment Assignment of the asset. This could, e.g., be used in the @{#WAREHOUSE.OnAfterNewAsset) function.
 
 --- Item of the warehouse queue table.
 -- @type WAREHOUSE.Queueitem
@@ -1616,6 +1625,7 @@ WAREHOUSE = {
 -- @field Core.Set#SET_CARGO transportcargoset Set of cargo objects.
 -- @field #table carriercargo Table holding the cargo groups of each carrier unit.
 -- @field #number ntransporthome Number of transports back home.
+-- @field #boolean lowfuel If true, at least one asset group is low on fuel.
 -- @extends #WAREHOUSE.Queueitem
 
 --- Descriptors enumerator describing the type of the asset.
@@ -1733,7 +1743,7 @@ _WAREHOUSEDB  = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.7.0"
+WAREHOUSE.version="0.9.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -1747,7 +1757,7 @@ WAREHOUSE.version="0.7.0"
 -- TODO: Handle the case when units of a group die during the transfer.
 -- TODO: Added habours as interface for transport to from warehouses? Could make a rudimentary shipping dispatcher.
 -- DONE: Test capturing a neutral warehouse.
--- DONE: Add save/load capability of warehouse <==> percistance after mission restart. Difficult in lua!
+-- DONE: Add save/load capability of warehouse <==> persistance after mission restart. Difficult in lua!
 -- DONE: Get cargo bay and weight from CARGO_GROUP and GROUP. No necessary any more!
 -- DONE: Add possibility to set weight and cargo bay manually in AddAsset function as optional parameters.
 -- DONE: Check overlapping aircraft sometimes.
@@ -1876,6 +1886,8 @@ function WAREHOUSE:New(warehouse, alias)
   self:AddTransition("Running",         "Request",           "*")           -- Process a request. Only in running mode.
   self:AddTransition("Attacked",        "Request",           "*")           -- Process a request. Only in running mode.
   self:AddTransition("*",               "Unloaded",          "*")           -- Cargo has been unloaded from the carrier (unused ==> unnecessary?).
+  self:AddTransition("*",               "AssetSpawned",      "*")           -- Asset has been spawned into the world.
+  self:AddTransition("*",               "AssetLowFuel",      "*")           -- Asset is low on fuel.
   self:AddTransition("*",               "Arrived",           "*")           -- Cargo or transport group has arrived.
   self:AddTransition("*",               "Delivered",         "*")           -- All cargo groups of a request have been delivered to the requesting warehouse.
   self:AddTransition("Running",         "SelfRequest",       "*")           -- Request to warehouse itself. Requested assets are only spawned but not delivered anywhere.
@@ -2301,6 +2313,52 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #string To To state.
 
 
+  --- Triggers the FSM event "AssetSpawned" when the warehouse has spawned an asset.
+  -- @function [parent=#WAREHOUSE] AssetSpawned
+  -- @param #WAREHOUSE self
+  -- @param Wrapper.Group#GROUP group the group that was spawned.
+  -- @param #WAREHOUSE.Assetitem asset The asset that was spawned.
+
+  --- Triggers the FSM event "AssetSpawned" with a delay when the warehouse has spawned an asset.
+  -- @function [parent=#WAREHOUSE] __AssetSpawned
+  -- @param #WAREHOUSE self
+  -- @param #number delay Delay in seconds.
+  -- @param Wrapper.Group#GROUP group the group that was spawned.
+  -- @param #WAREHOUSE.Assetitem asset The asset that was spawned.
+
+  --- On after "AssetSpawned" event user function. Called when the warehouse has spawned an asset.
+  -- @function [parent=#WAREHOUSE] OnAfterAssetSpawned
+  -- @param #WAREHOUSE self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Wrapper.Group#GROUP group the group that was spawned.
+  -- @param #WAREHOUSE.Assetitem asset The asset that was spawned.
+
+
+  --- Triggers the FSM event "AssetLowFuel" when an asset runs low on fuel
+  -- @function [parent=#WAREHOUSE] AssetLowFuel
+  -- @param #WAREHOUSE self
+  -- @param #WAREHOUSE.Assetitem asset The asset that is low on fuel.
+  -- @param #WAREHOUSE.Pendingitem request The request of the asset that is low on fuel.
+
+  --- Triggers the FSM event "AssetLowFuel" with a delay when an asset  runs low on fuel.
+  -- @function [parent=#WAREHOUSE] __AssetLowFuel
+  -- @param #WAREHOUSE self
+  -- @param #number delay Delay in seconds.
+  -- @param #WAREHOUSE.Assetitem asset The asset that is low on fuel.
+  -- @param #WAREHOUSE.Pendingitem request The request of the asset that is low on fuel.
+
+  --- On after "AssetLowFuel" event user function. Called when the an asset is low on fuel.
+  -- @function [parent=#WAREHOUSE] OnAfterAssetLowFuel
+  -- @param #WAREHOUSE self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #WAREHOUSE.Assetitem asset The asset that is low on fuel.
+  -- @param #WAREHOUSE.Pendingitem request The request of the asset that is low on fuel.
+
+
   --- Triggers the FSM event "Save" when the warehouse assets are saved to file on disk.
   -- @function [parent=#WAREHOUSE] Save
   -- @param #WAREHOUSE self
@@ -2403,6 +2461,14 @@ function WAREHOUSE:SetSafeParkingOff()
   return self
 end
 
+--- Set low fuel threshold. If one unit of an asset has less fuel than this number, the event AssetLowFuel will be fired.
+-- @param #WAREHOUSE self
+-- @param #number threshold Relative low fuel threshold, i.e. a number in [0,1]. Default 0.15 (15%).
+-- @return #WAREHOUSE self
+function WAREHOUSE:SetLowFuelThreshold(threshold)
+  self.lowfuelthresh=threshold or 0.15
+  return self
+end
 
 --- Set interval of status updates. Note that normally only one request can be processed per time interval.
 -- @param #WAREHOUSE self
@@ -3030,7 +3096,7 @@ function WAREHOUSE:FindAssetInDB(group)
   if aid~=nil then
 
     local asset=_WAREHOUSEDB.Assets[aid]
-    self:E({asset=asset})
+    self:T2({asset=asset})
     if asset==nil then
       self:_ErrorMessage(string.format("ERROR: Asset for group %s not found in the data base!", group:GetName()), 0)
     end
@@ -3212,7 +3278,7 @@ end
 function WAREHOUSE:onafterStatus(From, Event, To)
   self:I(self.wid..string.format("Checking status of warehouse %s. Current FSM state %s. Global warehouse assets = %d.", self.alias, self:GetState(), #_WAREHOUSEDB.Assets))
 
-  -- Check if any pending jobs are done and can be deleted from the
+  -- Check if any pending jobs are done and can be deleted from the queue.
   self:_JobDone()
 
   -- Print status.
@@ -3240,6 +3306,9 @@ function WAREHOUSE:onafterStatus(From, Event, To)
   -- Print queue after processing requests.
   self:_PrintQueue(self.queue, "Queue waiting")
   self:_PrintQueue(self.pending, "Queue pending")
+
+  -- Check fuel for all assets.
+  self:_CheckFuel()
 
   -- Update warhouse marker on F10 map.
   self:_UpdateWarehouseMarkText()
@@ -3675,7 +3744,7 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute, forcecargobay,
   local SpeedMax=group:GetSpeedMax()
   local RangeMin=group:GetRange()
   local smax,sx,sy,sz=_GetObjectSize(Descriptors)
-  
+
   --self:E(Descriptors)
 
   -- Get weight and cargo bay size in kg.
@@ -4259,6 +4328,9 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
       -- Add transport assets.
       table.insert(_transportassets,_assetitem)
+
+      -- Asset spawned FSM function.
+      self:__AssetSpawned(1, spawngroup, _assetitem)
     end
   end
 
@@ -5175,7 +5247,7 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
       -- Spawn train.
       if self.rail then
         --TODO: Rail should only get one asset because they would spawn on top!
-        
+
         -- Spawn naval assets.
         _group=self:_SpawnAssetGroundNaval(_alias,_assetitem, Request, self.spawnzone)
       end
@@ -5195,6 +5267,9 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
     if _group then
       _groupset:AddGroup(_group)
       table.insert(_assets, _assetitem)
+
+      -- Call FSM function.
+      self:__AssetSpawned(1,_group,_assetitem)
     else
       self:E(self.wid.."ERROR: Cargo asset could not be spawned!")
     end
@@ -5235,7 +5310,7 @@ function WAREHOUSE:_SpawnAssetGroundNaval(alias, asset, request, spawnzone, aiof
 
     -- Get a random coordinate in the spawn zone.
     local coord=spawnzone:GetRandomCoordinate()
-    
+
     -- For trains, we use the rail connection point.
     if asset.category==Group.Category.TRAIN then
       coord=self.rail
@@ -5483,7 +5558,6 @@ end
 -- @param #WAREHOUSE self
 -- @param Wrapper.Group#GROUP group The ground group to be routed
 -- @param #WAREHOUSE.Queueitem request The request for this group.
--- @param #number Speed Speed in km/h to drive to the destination coordinate. Default is 60% of max possible speed the unit can go.
 function WAREHOUSE:_RouteGround(group, request)
 
   if group and group:IsAlive() then
@@ -5526,18 +5600,25 @@ function WAREHOUSE:_RouteGround(group, request)
       local FromWP=group:GetCoordinate():WaypointGround(_speed, "Off Road")
       table.insert(Waypoints, 1, FromWP)
 
-      -- Final coordinate.
-      local ToWP=request.warehouse.spawnzone:GetRandomCoordinate():WaypointGround(_speed, "Off Road")
-      table.insert(Waypoints, #Waypoints+1, ToWP)
+      -- Final coordinate. Note, this can lead to errors if the final WP is too close the the point on the road. The vehicle will stop driving and not reach the final WP!
+      --local ToCO=request.warehouse.spawnzone:GetRandomCoordinate()
+      --local ToWP=ToCO:WaypointGround(_speed, "Off Road")
+      --table.insert(Waypoints, #Waypoints+1, ToWP)
 
     end
 
+    for n,wp in ipairs(Waypoints) do
+      env.info(n)
+      local tf=self:_SimpleTaskFunctionWP("warehouse:_PassingWaypoint",group, n, #Waypoints)
+      group:SetTaskWaypoint(wp, tf)
+    end
+
     -- Task function triggering the arrived event at the last waypoint.
-    local TaskFunction = self:_SimpleTaskFunction("warehouse:_Arrived", group)
+    --local TaskFunction = self:_SimpleTaskFunction("warehouse:_Arrived", group)
 
     -- Put task function on last waypoint.
-    local Waypoint = Waypoints[#Waypoints]
-    group:SetTaskWaypoint(Waypoint, TaskFunction)
+    --local Waypoint = Waypoints[#Waypoints]
+    --group:SetTaskWaypoint(Waypoint, TaskFunction)
 
     -- Route group to destination.
     group:Route(Waypoints, 1)
@@ -5662,9 +5743,30 @@ end
 -- @param Wrapper.Group#GROUP group The group that arrived.
 function WAREHOUSE:_Arrived(group)
   self:_DebugMessage(string.format("Group %s arrived!", tostring(group:GetName())))
+  --self:E(string.format("Group %s arrived!", tostring(group:GetName())))
 
   if group then
     --Trigger "Arrived event.
+    --group:SmokeBlue()
+    self:__Arrived(1, group)
+  end
+
+end
+
+--- Task function for when passing a waypoint.
+-- @param #WAREHOUSE self
+-- @param Wrapper.Group#GROUP group The group that arrived.
+-- @param #number n Waypoint passed.
+-- @param #number N Final waypoint.
+function WAREHOUSE:_PassingWaypoint(group,n,N)
+  self:T(string.format("Group %s passing waypoint %d of %d!", tostring(group:GetName()), n, N))
+
+  if group then
+    --group:SmokeGreen()
+  end
+
+  if n==N then
+    --group:SmokeBlue()
     self:__Arrived(1, group)
   end
 
@@ -5888,39 +5990,26 @@ end
 -- @param #WAREHOUSE.Pendingitem request Request that needs to be updated.
 function WAREHOUSE:_UnitDead(deadunit, request)
 
-  -- Flare unit
-  deadunit:FlareRed()
+  -- Flare unit.
+  if self.Debug then
+    deadunit:FlareRed()
+  end
 
   -- Group the dead unit belongs to.
   local group=deadunit:GetGroup()
 
-  -- Check if this was the last unit of the group ==> whole group dead.
+  -- Number of alive units in group.
+  local nalive=group:CountAliveUnits()
+
+  -- Whole group is dead?
   local groupdead=true
-  local nunits=0
-  local nunits0=0
-  if group then
-    -- Get current size of group and substract the unit that just died because it is not counted yet!
-    nunits=group:GetSize()-1
-    nunits0=group:GetInitialSize()
-
-    if nunits > 0 then
-      groupdead=false
-    end
+  if nalive>0 then
+    groupdead=false
   end
-
 
   -- Here I need to get rid of the #CARGO at the end to obtain the original name again!
   local unitname=self:_GetNameWithOut(deadunit)
   local groupname=self:_GetNameWithOut(group)
-
-  -- Debug message.
-  local text=string.format("Unit %s died! #units=%d/%d ==> Group dead=%s (IsAlive=%s).", unitname, nunits, nunits0, tostring(groupdead), tostring(group:IsAlive()))
-  self:T2(self.wid..text)
-
-  -- Check if this really works as expected!
-  if nunits<0 then
-    self:E(self.wid.."ERROR: Number of units negative! This should not happen.")
-  end
 
   -- Group is dead!
   if groupdead then
@@ -5943,7 +6032,7 @@ function WAREHOUSE:_UnitDead(deadunit, request)
     -- Easy case: Group can simply be removed from the cargogroupset.
     ---
 
-    -- Remove dead group from carg group set.
+    -- Remove dead group from cargo group set.
     if groupdead==true then
       request.cargogroupset:Remove(groupname, NoTriggerEvent)
       self:T(self.wid..string.format("Removed selfpropelled cargo %s: ncargo=%d.", groupname, request.cargogroupset:Count()))
@@ -6953,15 +7042,46 @@ function WAREHOUSE:_SimpleTaskFunction(Function, group)
 
   -- Task script.
   local DCSScript = {}
-  --DCSScript[#DCSScript+1] = string.format('env.info(\"WAREHOUSE: Simple task function called!\") ')
-  DCSScript[#DCSScript+1] = string.format('local mygroup     = GROUP:FindByName(\"%s\") ', groupname)              -- The group that executes the task function. Very handy with the "...".
+
+  DCSScript[#DCSScript+1]   = string.format('local mygroup     = GROUP:FindByName(\"%s\") ', groupname)               -- The group that executes the task function. Very handy with the "...".
   if self.isunit then
-    DCSScript[#DCSScript+1] = string.format("local mywarehouse = UNIT:FindByName(\"%s\") ", warehouse)             -- The unit that holds the warehouse self object.
+    DCSScript[#DCSScript+1] = string.format("local mywarehouse = UNIT:FindByName(\"%s\") ", warehouse)                -- The unit that holds the warehouse self object.
   else
-    DCSScript[#DCSScript+1] = string.format("local mywarehouse = STATIC:FindByName(\"%s\") ", warehouse)           -- The static that holds the warehouse self object.
+    DCSScript[#DCSScript+1] = string.format("local mywarehouse = STATIC:FindByName(\"%s\") ", warehouse)              -- The static that holds the warehouse self object.
   end
-  DCSScript[#DCSScript+1] = string.format('local warehouse   = mywarehouse:GetState(mywarehouse, \"WAREHOUSE\") ') -- Get the warehouse self object from the static.
-  DCSScript[#DCSScript+1] = string.format('%s(mygroup)', Function)                                                 -- Call the function, e.g. myfunction.(warehouse,mygroup)
+  DCSScript[#DCSScript+1]   = string.format('local warehouse   = mywarehouse:GetState(mywarehouse, \"WAREHOUSE\") ')  -- Get the warehouse self object from the static.
+  DCSScript[#DCSScript+1]   = string.format('%s(mygroup)', Function)                                                  -- Call the function, e.g. myfunction.(warehouse,mygroup)
+
+  -- Create task.
+  local DCSTask = CONTROLLABLE.TaskWrappedAction(self, CONTROLLABLE.CommandDoScript(self, table.concat(DCSScript)))
+
+  return DCSTask
+end
+
+--- Simple task function. Can be used to call a function which has the warehouse and the executing group as parameters.
+-- @param #WAREHOUSE self
+-- @param #string Function The name of the function to call passed as string.
+-- @param Wrapper.Group#GROUP group The group which is meant.
+-- @param #number n Waypoint passed.
+-- @param #number N Final waypoint number.
+function WAREHOUSE:_SimpleTaskFunctionWP(Function, group, n, N)
+  self:F2({Function})
+
+  -- Name of the warehouse (static) object.
+  local warehouse=self.warehouse:GetName()
+  local groupname=group:GetName()
+
+  -- Task script.
+  local DCSScript = {}
+
+  DCSScript[#DCSScript+1]   = string.format('local mygroup     = GROUP:FindByName(\"%s\") ', groupname)               -- The group that executes the task function. Very handy with the "...".
+  if self.isunit then
+    DCSScript[#DCSScript+1] = string.format("local mywarehouse = UNIT:FindByName(\"%s\") ", warehouse)                -- The unit that holds the warehouse self object.
+  else
+    DCSScript[#DCSScript+1] = string.format("local mywarehouse = STATIC:FindByName(\"%s\") ", warehouse)              -- The static that holds the warehouse self object.
+  end
+  DCSScript[#DCSScript+1]   = string.format('local warehouse   = mywarehouse:GetState(mywarehouse, \"WAREHOUSE\") ')  -- Get the warehouse self object from the static.
+  DCSScript[#DCSScript+1]   = string.format('%s(mygroup, %d, %d)', Function, n ,N)                                    -- Call the function, e.g. myfunction.(warehouse,mygroup)
 
   -- Create task.
   local DCSTask = CONTROLLABLE.TaskWrappedAction(self, CONTROLLABLE.CommandDoScript(self, table.concat(DCSScript)))
@@ -7052,6 +7172,17 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
       local _name=unit:GetName()
       table.insert(obstacles, {coord=_coord, size=_size, name=_name, type="unit"})
     end
+
+    -- Check all clients.
+    --[[
+    for _,_unit in pairs(_units) do
+      local unit=_unit --Wrapper.Unit#UNIT
+      local _coord=unit:GetCoordinate()
+      local _size=self:_GetObjectSize(unit:GetDCSObject())
+      local _name=unit:GetName()
+      table.insert(obstacles, {coord=_coord, size=_size, name=_name, type="client"})
+    end
+    ]]
 
     -- Check all statics.
     for _,static in pairs(_statics) do
@@ -7610,6 +7741,75 @@ function WAREHOUSE:_SortQueue()
   table.sort(self.queue, _sort)
 end
 
+--- Checks fuel on all pening assets.
+-- @param #WAREHOUSE self
+function WAREHOUSE:_CheckFuel()
+
+  for i,qitem in ipairs(self.pending) do
+    local qitem=qitem --#WAREHOUSE.Pendingitem
+
+    if qitem.transportgroupset then
+      for _,_group in pairs(qitem.transportgroupset:GetSet()) do
+        local group=_group --Wrapper.Group#GROUP
+
+        if group and group:IsAlive() then
+          
+          -- Get min fuel of group.
+          local fuel=group:GetFuelMin()
+
+          -- Debug info.
+          self:T2(self.wid..string.format("Transport group %s min fuel state = %.2f", group:GetName(), fuel))
+
+          -- Check if fuel is below threshold for first time.
+          if fuel<self.lowfuelthresh and not qitem.lowfuel then
+          
+            -- Set low fuel flag.
+            self:I(self.wid..string.format("Transport group %s is low on fuel! Min fuel state = %.2f", group:GetName(), fuel))
+            qitem.lowfuel=true
+            
+            -- Trigger low fuel event.
+            local asset=self:FindAssetInDB(group)
+            self:AssetLowFuel(asset, qitem)
+            break
+          end
+
+        end
+      end
+    end
+
+    if qitem.cargogroupset then
+      for _,_group in pairs(qitem.cargogroupset:GetSet()) do
+        local group=_group --Wrapper.Group#GROUP
+
+        if group and group:IsAlive() then
+
+          -- Get min fuel of group.
+          local fuel=group:GetFuelMin()
+
+          -- Debug output.
+          self:T2(self.wid..string.format("Cargo group %s min fuel state = %.2f. Threshold = %.2f", group:GetName(), fuel, self.lowfuelthresh))
+
+          -- Check if fuel is below threshold for first time.
+          if fuel<self.lowfuelthresh and not qitem.lowfuel then
+          
+            -- Set low fuel flag.
+            self:I(self.wid..string.format("Cargo group %s is low on fuel! Min fuel state = %.2f", group:GetName(), fuel))
+            qitem.lowfuel=true
+            
+            -- Trigger low fuel event.
+            local asset=self:FindAssetInDB(group)
+            self:AssetLowFuel(asset, qitem)
+            break
+          end
+
+        end
+      end
+    end
+
+  end
+end
+
+
 --- Prints the queue to DCS.log file.
 -- @param #WAREHOUSE self
 -- @param #table queue Queue to print.
@@ -8158,42 +8358,3 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
---[[
-  --- Departure/Take-off
-  c[#c+1]=Pdeparture
-  wp[#wp+1]=Pdeparture:WaypointAir("RADIO", COORDINATE.WaypointType.TakeOffParking, COORDINATE.WaypointAction.FromParkingArea, VxClimb, true, departure, nil, "Departure")
-
-  --- Climb
-  local Pclimb=Pdeparture:Translate(d_climb/2, heading)
-  Pclimb.y=H_departure+(FLcruise-H_departure)/2
-  c[#c+1]=Pclimb
-  wp[#wp+1]=Pclimb:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, VxClimb, true, nil, nil, "Climb")
-
-  --- Begin of Cruise
-  local Pcruise1=Pclimb:Translate(d_climb/2, heading)
-  Pcruise1.y=FLcruise
-  c[#c+1]=Pcruise1
-  wp[#wp+1]=Pcruise1:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, VxCruise, true, nil, nil, "Begin of Cruise")
-
-  --- End of Cruise
-  local Pcruise2=Pcruise1:Translate(d_cruise, heading)
-  Pcruise2.y=FLcruise
-  c[#c+1]=Pcruise2
-  wp[#wp+1]=Pcruise2:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, VxCruise, true, nil, nil, "End of Cruise")
-
-  --- Descent
-  local Pdescent=Pcruise2:Translate(d_descent/2, heading)
-  Pdescent.y=FLcruise-(FLcruise-(h_holding+H_holding))/2
-  c[#c+1]=Pdescent
-  wp[#wp+1]=Pcruise2:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, VxDescent, true, nil, nil, "Descent")
-
-  --- Holding point
-   Pholding.y=H_holding+h_holding
-  c[#c+1]=Pholding
-  wp[#wp+1]=Pholding:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, VxHolding, true, nil, nil, "Holding")
-
-  --- Final destination.
-  c[#c+1]=Pdestination
-  wp[#wp+1]=Pdestination:WaypointAir("RADIO", COORDINATE.WaypointType.Land, COORDINATE.WaypointAction.Landing, VxFinal, true,  destination, nil, "Final Destination")
-]]

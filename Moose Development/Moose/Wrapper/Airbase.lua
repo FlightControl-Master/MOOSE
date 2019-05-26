@@ -887,6 +887,14 @@ function AIRBASE:CheckOnRunWay(group, radius, despawn)
   return false
 end
 
+--- Get category of airbase.
+-- @param #WAREHOUSE self
+-- @return #number Category of airbase from GetDesc().category.
+function AIRBASE:GetAirbaseCategory()
+  return self:GetDesc().category
+end
+
+
 --- Helper function to check for the correct terminal type including "artificial" ones.
 -- @param #number Term_Type Termial type from getParking routine.
 -- @param #AIRBASE.TerminalType termtype Terminal type from AIRBASE.TerminalType enumerator.

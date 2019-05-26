@@ -8320,7 +8320,6 @@ end
 --- Airboss event handler for event that a unit takes off.
 -- @param #AIRBOSS self
 -- @param Core.Event#EVENTDATA EventData
---function AIRBOSS:OnEventPlayerLeaveUnit(EventData)
 function AIRBOSS:OnEventTakeoff(EventData)
   self:F3({eventtakeoff=EventData})
 

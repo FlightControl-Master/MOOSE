@@ -291,7 +291,7 @@ end
 -- @param #SPAWNSTATIC self
 -- @param Core.Zone#ZONE_BASE Zone The Zone where to spawn the static.
 -- @param #number Heading The heading of the static, which is a number in degrees from 0 to 360.
--- @param #string (optional) The name of the new static.
+-- @param #string NewName (optional) The name of the new static.
 -- @return #SPAWNSTATIC
 function SPAWNSTATIC:SpawnFromZone( Zone, Heading, NewName ) --R2.1
   self:F( { Zone, Heading, NewName  } )
