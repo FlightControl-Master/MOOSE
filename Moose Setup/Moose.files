@@ -58,8 +58,8 @@ Functional/Artillery.lua
 Functional/Suppression.lua
 Functional/PseudoATC.lua
 Functional/Warehouse.lua
+Functional/Fox.lua
 Functional/RAT2.lua
-Functional/Fox2.lua
 Functional/FlightModelData.lua
 
 Ops/Airboss.lua
