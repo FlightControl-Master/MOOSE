@@ -14,11 +14,11 @@
 --    * Possibility to hook into events and customize actions.
 --    * Persistence of assets. Warehouse assets can be saved and loaded from file.
 --    * Can be easily interfaced to other MOOSE classes.
---    
+--
 -- ===
--- 
+--
 -- ## Youtube Videos:
--- 
+--
 --    * [Warehouse Trailer](https://www.youtube.com/watch?v=e98jzLi5fGk)
 --    * [DCS Warehouse Airbase Resources Proof Of Concept](https://www.youtube.com/watch?v=YeuGL0duEgY)
 --
@@ -3306,7 +3306,7 @@ function WAREHOUSE:onafterStatus(From, Event, To)
   -- Print queue after processing requests.
   self:_PrintQueue(self.queue, "Queue waiting")
   self:_PrintQueue(self.pending, "Queue pending")
-  
+
   -- Check fuel for all assets.
   self:_CheckFuel()
 
@@ -3744,7 +3744,7 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute, forcecargobay,
   local SpeedMax=group:GetSpeedMax()
   local RangeMin=group:GetRange()
   local smax,sx,sy,sz=_GetObjectSize(Descriptors)
-  
+
   --self:E(Descriptors)
 
   -- Get weight and cargo bay size in kg.
@@ -4328,7 +4328,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
       -- Add transport assets.
       table.insert(_transportassets,_assetitem)
-      
+
       -- Asset spawned FSM function.
       self:__AssetSpawned(1, spawngroup, _assetitem)
     end
@@ -5247,7 +5247,7 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
       -- Spawn train.
       if self.rail then
         --TODO: Rail should only get one asset because they would spawn on top!
-        
+
         -- Spawn naval assets.
         _group=self:_SpawnAssetGroundNaval(_alias,_assetitem, Request, self.spawnzone)
       end
@@ -5267,7 +5267,7 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
     if _group then
       _groupset:AddGroup(_group)
       table.insert(_assets, _assetitem)
-      
+
       -- Call FSM function.
       self:__AssetSpawned(1,_group,_assetitem)
     else
@@ -5310,7 +5310,7 @@ function WAREHOUSE:_SpawnAssetGroundNaval(alias, asset, request, spawnzone, aiof
 
     -- Get a random coordinate in the spawn zone.
     local coord=spawnzone:GetRandomCoordinate()
-    
+
     -- For trains, we use the rail connection point.
     if asset.category==Group.Category.TRAIN then
       coord=self.rail
@@ -5606,7 +5606,7 @@ function WAREHOUSE:_RouteGround(group, request)
       --table.insert(Waypoints, #Waypoints+1, ToWP)
 
     end
-    
+
     for n,wp in ipairs(Waypoints) do
       env.info(n)
       local tf=self:_SimpleTaskFunctionWP("warehouse:_PassingWaypoint",group, n, #Waypoints)
@@ -5764,7 +5764,7 @@ function WAREHOUSE:_PassingWaypoint(group,n,N)
   if group then
     --group:SmokeGreen()
   end
-  
+
   if n==N then
     --group:SmokeBlue()
     self:__Arrived(1, group)
@@ -5997,11 +5997,11 @@ function WAREHOUSE:_UnitDead(deadunit, request)
 
   -- Group the dead unit belongs to.
   local group=deadunit:GetGroup()
-  
+
   -- Number of alive units in group.
   local nalive=group:CountAliveUnits()
 
-  -- Whole group is dead?  
+  -- Whole group is dead?
   local groupdead=true
   if nalive>0 then
     groupdead=false
@@ -7042,7 +7042,7 @@ function WAREHOUSE:_SimpleTaskFunction(Function, group)
 
   -- Task script.
   local DCSScript = {}
-  
+
   DCSScript[#DCSScript+1]   = string.format('local mygroup     = GROUP:FindByName(\"%s\") ', groupname)               -- The group that executes the task function. Very handy with the "...".
   if self.isunit then
     DCSScript[#DCSScript+1] = string.format("local mywarehouse = UNIT:FindByName(\"%s\") ", warehouse)                -- The unit that holds the warehouse self object.
@@ -7073,7 +7073,7 @@ function WAREHOUSE:_SimpleTaskFunctionWP(Function, group, n, N)
 
   -- Task script.
   local DCSScript = {}
-  
+
   DCSScript[#DCSScript+1]   = string.format('local mygroup     = GROUP:FindByName(\"%s\") ', groupname)               -- The group that executes the task function. Very handy with the "...".
   if self.isunit then
     DCSScript[#DCSScript+1] = string.format("local mywarehouse = UNIT:FindByName(\"%s\") ", warehouse)                -- The unit that holds the warehouse self object.
@@ -7172,7 +7172,7 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
       local _name=unit:GetName()
       table.insert(obstacles, {coord=_coord, size=_size, name=_name, type="unit"})
     end
-    
+
     -- Check all clients.
     --[[
     for _,_unit in pairs(_units) do
@@ -7747,17 +7747,17 @@ function WAREHOUSE:_CheckFuel()
 
   for i,qitem in ipairs(self.pending) do
     local qitem=qitem --#WAREHOUSE.Pendingitem
-    
+
     if qitem.transportgroupset then
       for _,_group in pairs(qitem.transportgroupset:GetSet()) do
         local group=_group --Wrapper.Group#GROUP
-       
+
         if group and group:IsAlive() then
-         
+
           local fuel=group:GetFuelMin()
-          
+
           self:T2(self.wid..string.format("Transport group %s min fuel state = %.2f %%", group:GetName(), fuel))
-          
+
           if fuel<self.lowfuelthresh and not qitem.lowfuel then
             self:I(self.wid..string.format("Transport group %s is low on fuel! Min fuel state = %.2f %%", group:GetName(), fuel))
             qitem.lowfuel=true
@@ -7765,7 +7765,7 @@ function WAREHOUSE:_CheckFuel()
             self:AssetLowFuel(asset, qitem)
             break
           end
-          
+
         end
       end
     end
@@ -7773,13 +7773,13 @@ function WAREHOUSE:_CheckFuel()
     if qitem.cargogroupset then
       for _,_group in pairs(qitem.cargogroupset:GetSet()) do
         local group=_group --Wrapper.Group#GROUP
-       
+
         if group and group:IsAlive() then
-         
+
           local fuel=group:GetFuelMin()
-          
+
           self:T2(self.wid..string.format("Cargo group %s min fuel state = %.2f %%", group:GetName(), fuel))
-          
+
           if fuel<self.lowfuelthresh and qitem.lowfuel then
             self:I(self.wid..string.format("Cargo group %s is low on fuel! Min fuel state = %.2f %%", group:GetName(), fuel))
             qitem.lowfuel=true
@@ -7787,11 +7787,11 @@ function WAREHOUSE:_CheckFuel()
             self:AssetLowFuel(asset, qitem)
             break
           end
-          
+
         end
       end
     end
-    
+
   end
 end
 
