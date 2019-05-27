@@ -149,7 +149,7 @@
 
 
 --- @type AI_ESCORT_REQUEST
--- @extends AI.AI_Formation#AI_FORMATION
+-- @extends AI.AI_Escort#AI_ESCORT
 
 --- AI_ESCORT_REQUEST class
 -- 
@@ -216,7 +216,8 @@ function AI_ESCORT_REQUEST:New( EscortUnit, EscortSpawn, EscortAirbase, EscortNa
 
   self.Detection = DETECTION_AREAS:New( self.EscortGroupSet, 5000 )
   self.Detection:__Start( 30 )
-
+  
+  self.SpawnMode = self.__Enum.Mode.Mission
   
   return self
 end
@@ -240,8 +241,10 @@ function AI_ESCORT_REQUEST:SpawnEscort()
       Report:Add( "Joining Up " .. self.EscortGroupSet:GetUnitTypeNames():Text( ", " ) .. " from " .. LeaderEscort:GetCoordinate():ToString( self.EscortUnit ) )
             
       LeaderEscort:MessageTypeToGroup( Report:Text(),  MESSAGE.Type.Information, self.PlayerUnit )
-      self:FormationTrail( 50, 50, 50 )
-      self:JoinFormation( EscortGroup )
+      if self.SpawnMode == self.__Enum.Mode.Formation then
+        self:FormationTrail( 50, 50, 50 )
+        self:JoinFormation( EscortGroup )
+      end
       self:Menus( self.XStart, self.XSpace, self.YStart, self.YSpace, self.ZStart, self.ZSpace, self.ZLevels )
     end
   )
@@ -253,7 +256,7 @@ end
 function AI_ESCORT_REQUEST:onafterStart( EscortGroupSet )
 
   if not self.MenuRequestEscort then
-    self.MenuRequestEscort = MENU_GROUP_COMMAND:New( self.LeaderGroup, "Request A2G Escort", self.MainMenu, 
+    self.MenuRequestEscort = MENU_GROUP_COMMAND:New( self.LeaderGroup, "Request new escort ", self.MainMenu, 
       function()
         self:SpawnEscort()
       end
@@ -262,3 +265,10 @@ function AI_ESCORT_REQUEST:onafterStart( EscortGroupSet )
     
 end
 
+--- Set the spawn mode to be mission execution.
+-- @param #AI_ESCORT_REQUEST self
+function AI_ESCORT_REQUEST:SetEscortSpawnMission()
+
+  self.SpawnMode = self.__Enum.Mode.Mission
+    
+end

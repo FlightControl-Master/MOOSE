@@ -274,7 +274,7 @@ function AI_ESCORT:onafterStart( EscortGroupSet )
     --- @param Core.Group#GROUP EscortGroup
     function( EscortGroup )
       EscortGroup.EscortMenu = MENU_GROUP:New( self.PlayerGroup, EscortGroup:GetName(), self.MainMenu )
-      EscortGroup:WayPointInitialize( 1 )
+      EscortGroup:WayPointInitialize()
     
       EscortGroup:OptionROTVertical()
       EscortGroup:OptionROEOpenFire()
@@ -361,7 +361,7 @@ function AI_ESCORT:Menus( XStart, XSpace, YStart, YSpace, ZStart, ZSpace, ZLevel
   self:MenuROE()
   self:MenuROT()
 
---  self:MenuResumeMission()
+  self:MenuResumeMission()
 
 
   return self
@@ -1047,10 +1047,16 @@ end
 function AI_ESCORT:MenuResumeMission()
   self:F()
 
-  if not self.EscortMenuResumeMission then
-    -- Mission Resume Menu Root
-    self.EscortMenuResumeMission = MENU_GROUP:New( self.PlayerGroup, "Resume mission from", self.EscortMenu )
-  end
+  self.EscortGroupSet:ForSomeGroupAlive(
+    --- @param Core.Group#GROUP EscortGroup
+    function( EscortGroup )
+      if EscortGroup:IsAir() then
+        local EscortGroupName = EscortGroup:GetName()
+        local EscortMenu = MENU_GROUP:New( self.PlayerGroup, EscortGroupName, self.MainMenu )
+        EscortGroup.EscortMenuResumeMission = MENU_GROUP:New( self.PlayerGroup, "Resume from", EscortMenu )
+      end
+    end
+  )
 
   return self
 end
@@ -1324,15 +1330,37 @@ function AI_ESCORT:_ScanTargets( ScanDuration )
 
 end
 
---- @param #AI_ESCORT self
--- @param Wrapper.Group#GROUP EscortGroup
+--- @param Wrapper.Group#GROUP EscortGroup
+-- @param #AI_ESCORT self
 function AI_ESCORT.___Resume( EscortGroup, self )
+
+  self:F( { self=self } )
 
   local PlayerGroup = self.PlayerGroup
   
   self:JoinFormation( EscortGroup )
   EscortGroup:MessageTypeToClient( "Destroyed all targets. Rejoining.", MESSAGE.Type.Information, PlayerGroup )
 
+end
+
+
+--- @param #AI_ESCORT self
+-- @param Wrapper.Group#GROUP EscortGroup
+-- @param #number WayPoint
+function AI_ESCORT._ResumeMission( EscortGroup, WayPoint )
+
+  --self.FollowScheduler:Stop( self.FollowSchedule )
+
+  local WayPoints = EscortGroup:GetTaskRoute()
+  self:T( WayPoint, WayPoints )
+
+  for WayPointIgnore = 1, WayPoint do
+    table.remove( WayPoints, 1 )
+  end
+
+  EscortGroup:SetTask( EscortGroup:TaskRoute( WayPoints ), 1 )
+  
+  EscortGroup:MessageTypeToClient( "Resuming mission from waypoint ", MESSAGE.Type.Information, self.PlayerGroup )
 end
 
 
@@ -1481,26 +1509,6 @@ end
 
 
 
-function AI_ESCORT:_ResumeMission( WayPoint )
-
-  local EscortGroup = self.EscortGroup
-  local EscortUnit = self.PlayerUnit
-
-  self.FollowScheduler:Stop( self.FollowSchedule )
-
-  local WayPoints = EscortGroup:GetTaskRoute()
-  self:T( WayPoint, WayPoints )
-
-  for WayPointIgnore = 1, WayPoint do
-    table.remove( WayPoints, 1 )
-  end
-
-  SCHEDULER:New( EscortGroup, EscortGroup.SetTask, { EscortGroup:TaskRoute( WayPoints ) }, 1 )
-
-  EscortGroup:MessageToClient( "Resuming mission from waypoint " .. WayPoint .. ".", 10, EscortUnit )
-end
-
-
 --- Registers the waypoints
 -- @param #AI_ESCORT self
 -- @return #table
@@ -1579,6 +1587,20 @@ function AI_ESCORT:_ReportTargetsScheduler( EscortGroup )
       end
 
       EscortMenuAttackTargets:RemoveSubMenus( TimeUpdate, "Esort" )
+
+      if EscortGroup.EscortMenuResumeMission then
+        EscortGroup.EscortMenuResumeMission:RemoveSubMenus()
+  
+        local TaskPoints = EscortGroup:GetTaskRoute()
+        
+        for WayPointID, WayPoint in pairs( TaskPoints ) do
+          local EscortVec3 = EscortGroup:GetVec3()
+          local Distance = ( ( WayPoint.x - EscortVec3.x )^2 +
+            ( WayPoint.y - EscortVec3.z )^2
+            ) ^ 0.5 / 1000
+          MENU_GROUP_COMMAND:New( self.PlayerGroup, "Waypoint " .. WayPointID .. " at " .. string.format( "%.2f", Distance ).. "km", EscortGroup.EscortMenuResumeMission, AI_ESCORT._ResumeMission, self, EscortGroup, WayPointID )
+        end
+      end
 
       return true
     else
