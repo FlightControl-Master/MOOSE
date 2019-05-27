@@ -1175,7 +1175,7 @@ function RADIOQUEUE:_CheckRadioQueue()
           
         else
         
-          if time-Tlast>=transmission.interval then
+          if Tlast==nil or time-Tlast>=transmission.interval then
             next=transmission            
           else
             

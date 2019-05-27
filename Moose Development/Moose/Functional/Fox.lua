@@ -76,8 +76,8 @@
 --     fox=FOX:New()
 --     
 --     -- Add training zones.
---     fox:AddSafeZone(ZONE:New("Training Zone Alpha")
---     fox:AddSafeZone(ZONE:New("Training Zone Bravo")
+--     fox:AddSafeZone(ZONE:New("Training Zone Alpha"))
+--     fox:AddSafeZone(ZONE:New("Training Zone Bravo"))
 --     
 --     -- Start missile trainer.
 --     fox:Start()
@@ -90,8 +90,8 @@
 --     fox=FOX:New()
 --     
 --     -- Add training zones.
---     fox:AddLaunchZone(ZONE:New("Launch Zone SA-10 Krim")
---     fox:AddLaunchZone(ZONE:New("Training Zone Bravo")
+--     fox:AddLaunchZone(ZONE:New("Launch Zone SA-10 Krim"))
+--     fox:AddLaunchZone(ZONE:New("Training Zone Bravo"))
 --     
 --     -- Start missile trainer.
 --     fox:Start()
@@ -189,7 +189,7 @@ FOX.MenuF10Root=nil
 
 --- FOX class version.
 -- @field #string version
-FOX.version="0.5.0"
+FOX.version="0.5.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -440,6 +440,17 @@ end
 function FOX:SetExplosionPower(power)
 
   self.explosionpower=power or 5
+
+  return self
+end
+
+--- Set missile-player distance when missile is destroyed.
+-- @param #FOX self
+-- @param #number distance Distance in meters. Default 100 m.
+-- @return #FOX self
+function FOX:SetExplosionDistance(distance)
+
+  self.explosiondist=distance or 100
 
   return self
 end
@@ -1065,13 +1076,13 @@ function FOX:OnEventShot(EventData)
   end
   
   -- Debug info.
-  self:E(FOX.lid.."EVENT SHOT: FOX")
-  self:E(FOX.lid..string.format("EVENT SHOT: Ini unit     = %s", tostring(EventData.IniUnitName)))
-  self:E(FOX.lid..string.format("EVENT SHOT: Ini group    = %s", tostring(EventData.IniGroupName)))
-  self:E(FOX.lid..string.format("EVENT SHOT: Weapon type  = %s", tostring(_weapon)))
-  self:E(FOX.lid..string.format("EVENT SHOT: Weapon categ = %s", tostring(weaponcategory)))
-  self:E(FOX.lid..string.format("EVENT SHOT: Missil categ = %s", tostring(missilecategory)))
-  self:E(FOX.lid..string.format("EVENT SHOT: Missil range = %s", tostring(missilerange)))
+  self:T2(FOX.lid.."EVENT SHOT: FOX")
+  self:T2(FOX.lid..string.format("EVENT SHOT: Ini unit     = %s", tostring(EventData.IniUnitName)))
+  self:T2(FOX.lid..string.format("EVENT SHOT: Ini group    = %s", tostring(EventData.IniGroupName)))
+  self:T2(FOX.lid..string.format("EVENT SHOT: Weapon type  = %s", tostring(_weapon)))
+  self:T2(FOX.lid..string.format("EVENT SHOT: Weapon categ = %s", tostring(weaponcategory)))
+  self:T2(FOX.lid..string.format("EVENT SHOT: Missil categ = %s", tostring(missilecategory)))
+  self:T2(FOX.lid..string.format("EVENT SHOT: Missil range = %s", tostring(missilerange)))
   
   
   -- Check if fired in launch zone.
