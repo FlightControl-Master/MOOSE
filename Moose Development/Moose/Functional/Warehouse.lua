@@ -1743,7 +1743,7 @@ _WAREHOUSEDB  = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.9.0"
+WAREHOUSE.version="0.9.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -2318,6 +2318,7 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #WAREHOUSE self
   -- @param Wrapper.Group#GROUP group the group that was spawned.
   -- @param #WAREHOUSE.Assetitem asset The asset that was spawned.
+  -- @param #WAREHOUSE.Pendingitem request The request of the spawned asset.
 
   --- Triggers the FSM event "AssetSpawned" with a delay when the warehouse has spawned an asset.
   -- @function [parent=#WAREHOUSE] __AssetSpawned
@@ -2325,6 +2326,7 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #number delay Delay in seconds.
   -- @param Wrapper.Group#GROUP group the group that was spawned.
   -- @param #WAREHOUSE.Assetitem asset The asset that was spawned.
+  -- @param #WAREHOUSE.Pendingitem request The request of the spawned asset.
 
   --- On after "AssetSpawned" event user function. Called when the warehouse has spawned an asset.
   -- @function [parent=#WAREHOUSE] OnAfterAssetSpawned
@@ -2334,6 +2336,7 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #string To To state.
   -- @param Wrapper.Group#GROUP group the group that was spawned.
   -- @param #WAREHOUSE.Assetitem asset The asset that was spawned.
+  -- @param #WAREHOUSE.Pendingitem request The request of the spawned asset.
 
 
   --- Triggers the FSM event "AssetLowFuel" when an asset runs low on fuel
@@ -4330,7 +4333,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
       table.insert(_transportassets,_assetitem)
 
       -- Asset spawned FSM function.
-      self:__AssetSpawned(1, spawngroup, _assetitem)
+      self:__AssetSpawned(1, spawngroup, _assetitem, Request)
     end
   end
 
@@ -5269,7 +5272,7 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
       table.insert(_assets, _assetitem)
 
       -- Call FSM function.
-      self:__AssetSpawned(1,_group,_assetitem)
+      self:__AssetSpawned(1,_group,_assetitem, Request)
     else
       self:E(self.wid.."ERROR: Cargo asset could not be spawned!")
     end
