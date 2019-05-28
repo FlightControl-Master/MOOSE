@@ -225,6 +225,7 @@ function AI_ESCORT:New( EscortUnit, EscortGroupSet, EscortName, EscortBriefing )
   
   self.EscortBriefing = EscortBriefing
  
+  self.Menu = {}
   
 --  if not EscortBriefing then
 --    EscortGroup:MessageToClient( EscortGroup:GetCategoryName() .. " '" .. EscortName .. "' (" .. EscortGroup:GetCallsign() .. ") reporting! " ..
@@ -545,11 +546,28 @@ function AI_ESCORT:MenuFormationBox( XStart, XSpace, YStart, YSpace, ZStart, ZSp
 end
 
 
+--- Sets a menu slot to join formation for an escort.
+-- @param #AI_ESCORT self
+-- @return #AI_ESCORT
+function AI_ESCORT:EscortMenuJoinUp( EscortGroup )
+
+  if self.Menu.JoinUp == true then
+    if EscortGroup:IsAir() then
+      local EscortGroupName = EscortGroup:GetName()
+      local EscortMenu = MENU_GROUP:New( self.PlayerGroup, EscortGroupName, self.MainMenu )
+      local EscortMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", EscortMenu )
+      local EscortMenuJoinUp = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Join Up", EscortMenuReportNavigation, AI_ESCORT._JoinUp, self, EscortGroup )
+    end
+  end
+end
+
+
 --- Defines --- Defines a menu slot to let the escort to join formation.
--- This menu will appear under **Formation**.
 -- @param #AI_ESCORT self
 -- @return #AI_ESCORT
 function AI_ESCORT:MenuJoinUp()
+
+  self.Menu.JoinUp = true
 
   local FlightMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", self.FlightMenu )
   local FlightMenuJoinUp  = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Join Up",  FlightMenuReportNavigation, AI_ESCORT._FlightJoinUp, self )
@@ -557,17 +575,36 @@ function AI_ESCORT:MenuJoinUp()
   self.EscortGroupSet:ForSomeGroupAlive(
     --- @param Core.Group#GROUP EscortGroup
     function( EscortGroup )
-      if EscortGroup:IsAir() then
-
-        local EscortGroupName = EscortGroup:GetName()
-        local EscortMenu = MENU_GROUP:New( self.PlayerGroup, EscortGroupName, self.MainMenu )
-        local EscortMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", EscortMenu )
-        local EscortMenuJoinUp = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Join Up", EscortMenuReportNavigation, AI_ESCORT._JoinUp, self )
-
-      end
+      self:EscortSetMenuJoinUp( EscortGroup )
     end
   )
 
+  return self
+end
+
+
+function AI_ESCORT:EscortMenuHoldAtEscortPosition( EscortGroup )
+
+  for _, HoldAtEscortPosition in pairs( self.Menu.HoldAtEscortPosition ) do
+    if EscortGroup:IsAir() then
+      local EscortGroupName = EscortGroup:GetName()
+      local EscortMenu = MENU_GROUP:New( self.PlayerGroup, EscortGroupName, self.MainMenu )
+      local EscortMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", EscortMenu )
+      local EscortMenuHoldPosition = MENU_GROUP_COMMAND
+        :New(
+          self.PlayerGroup,
+          HoldAtEscortPosition.MenuText,
+          EscortMenuReportNavigation,
+          AI_ESCORT._HoldPosition,
+          self,
+          EscortGroup,
+          EscortGroup,
+          HoldAtEscortPosition.Height,
+          HoldAtEscortPosition.Speed
+        )
+    end
+  end
+  
   return self
 end
 
@@ -619,34 +656,49 @@ function AI_ESCORT:MenuHoldAtEscortPosition( Height, Speed, MenuTextFormat )
       Speed
     )
 
+  self.Menu.HoldAtEscortPosition = self.Menu.HoldAtEscortPosition or {}
+  self.Menu.HoldAtEscortPosition[#self.Menu.HoldAtEscortPosition+1] = {}
+  self.Menu.HoldAtEscortPosition[#self.Menu.HoldAtEscortPosition].Height = Height
+  self.Menu.HoldAtEscortPosition[#self.Menu.HoldAtEscortPosition].Speed = Speed
+  self.Menu.HoldAtEscortPosition[#self.Menu.HoldAtEscortPosition].MenuText = MenuText
+
   self.EscortGroupSet:ForSomeGroupAlive(
     --- @param Core.Group#GROUP EscortGroup
     function( EscortGroup )
-      if EscortGroup:IsAir() then
-      
-        local EscortGroupName = EscortGroup:GetName()
-        local EscortMenu = MENU_GROUP:New( self.PlayerGroup, EscortGroupName, self.MainMenu )
-        local EscortMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", EscortMenu )
-    
-        local EscortMenuHoldPosition = MENU_GROUP_COMMAND
-          :New(
-            self.PlayerGroup,
-            MenuText,
-            EscortMenuReportNavigation,
-            AI_ESCORT._HoldPosition,
-            self,
-            EscortGroup,
-            EscortGroup,
-            Height,
-            Speed
-          )
-      end
+      self:EscortMenuHoldAtEscortPosition( EscortGroup )
     end
   )
   
   return self
 end
 
+
+function AI_ESCORT:EscortMenuHoldAtLeaderPosition( EscortGroup )
+
+  for _, HoldAtLeaderPosition in pairs( self.Menu.HoldAtLeaderPosition ) do
+    if EscortGroup:IsAir() then
+      
+      local EscortGroupName = EscortGroup:GetName()
+      local EscortMenu = MENU_GROUP:New( self.PlayerGroup, EscortGroupName, self.MainMenu )
+      local EscortMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", EscortMenu )
+  
+      local EscortMenuHoldAtLeaderPosition = MENU_GROUP_COMMAND
+        :New(
+          self.PlayerGroup,
+          HoldAtLeaderPosition.MenuText,
+          EscortMenuReportNavigation,
+          AI_ESCORT._HoldPosition,
+          self,
+          self.PlayerGroup,
+          EscortGroup,
+          HoldAtLeaderPosition.Height,
+          HoldAtLeaderPosition.Speed
+        )
+    end
+  end
+
+  return self
+end
 
 --- Defines a menu slot to let the escort hold at the client position and stay low with a specified height during a specified time in seconds.
 -- This menu will appear under **Navigation**.
@@ -695,28 +747,16 @@ function AI_ESCORT:MenuHoldAtLeaderPosition( Height, Speed, MenuTextFormat )
       Speed
     )
 
+  self.Menu.HoldAtLeaderPosition = self.Menu.HoldAtLeaderPosition or {}
+  self.Menu.HoldAtLeaderPosition[#self.Menu.HoldAtLeaderPosition+1] = {}
+  self.Menu.HoldAtLeaderPosition[#self.Menu.HoldAtLeaderPosition].Height = Height
+  self.Menu.HoldAtLeaderPosition[#self.Menu.HoldAtLeaderPosition].Speed = Speed
+  self.Menu.HoldAtLeaderPosition[#self.Menu.HoldAtLeaderPosition].MenuText = MenuText
+
   self.EscortGroupSet:ForSomeGroupAlive(
     --- @param Core.Group#GROUP EscortGroup
     function( EscortGroup )
-      if EscortGroup:IsAir() then
-        
-        local EscortGroupName = EscortGroup:GetName()
-        local EscortMenu = MENU_GROUP:New( self.PlayerGroup, EscortGroupName, self.MainMenu )
-        local EscortMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", EscortMenu )
-
-        local EscortMenuHoldAtLeaderPosition = MENU_GROUP_COMMAND
-          :New(
-            self.PlayerGroup,
-            MenuText,
-            EscortMenuReportNavigation,
-            AI_ESCORT._HoldPosition,
-            self,
-            self.PlayerGroup,
-            EscortGroup,
-            Height,
-            Speed
-          )
-      end
+      self:EscortMenuHoldAtLeaderPosition( EscortGroup )
     end
   )
 
@@ -1140,7 +1180,7 @@ function AI_ESCORT:_JoinUp( EscortGroup )
 end
 
 
-function AI_ESCORT:_FlightJoinUp( EscortGroup )
+function AI_ESCORT:_FlightJoinUp()
 
   self.EscortGroupSet:ForSomeGroupAlive(
     --- @param Core.Group#GROUP EscortGroup
@@ -1339,7 +1379,7 @@ function AI_ESCORT.___Resume( EscortGroup, self )
   local PlayerGroup = self.PlayerGroup
   
   self:JoinFormation( EscortGroup )
-  EscortGroup:MessageTypeToClient( "Destroyed all targets. Rejoining.", MESSAGE.Type.Information, PlayerGroup )
+  EscortGroup:MessageTypeToGroup( "Destroyed all targets. Rejoining.", MESSAGE.Type.Information, PlayerGroup )
 
 end
 
@@ -1347,7 +1387,7 @@ end
 --- @param #AI_ESCORT self
 -- @param Wrapper.Group#GROUP EscortGroup
 -- @param #number WayPoint
-function AI_ESCORT._ResumeMission( EscortGroup, WayPoint )
+function AI_ESCORT:_ResumeMission( EscortGroup, WayPoint )
 
   --self.FollowScheduler:Stop( self.FollowSchedule )
 
@@ -1360,7 +1400,7 @@ function AI_ESCORT._ResumeMission( EscortGroup, WayPoint )
 
   EscortGroup:SetTask( EscortGroup:TaskRoute( WayPoints ), 1 )
   
-  EscortGroup:MessageTypeToClient( "Resuming mission from waypoint ", MESSAGE.Type.Information, self.PlayerGroup )
+  EscortGroup:MessageTypeToGroup( "Resuming mission from waypoint ", MESSAGE.Type.Information, self.PlayerGroup )
 end
 
 

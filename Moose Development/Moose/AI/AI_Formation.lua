@@ -717,7 +717,6 @@ function AI_FORMATION:onafterFormationLine( FollowGroupSet, From , Event , To, X
     i = i + 1
 
     FollowGroup:SetState( FollowGroup, "Formation", Formation )
-    FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Formation )
   end
   
   return self
@@ -873,7 +872,6 @@ function AI_FORMATION:onafterFormationCenterWing( FollowGroupSet, From , Event ,
     FollowGroup:SetState( self, "FormationVec3", Vec3 )
     i = i + 1
     FollowGroup:SetState( FollowGroup, "Formation", self.__Enum.Formation.Vic )
-    FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Formation )
   end
   
   return self
@@ -934,7 +932,6 @@ function AI_FORMATION:onafterFormationBox( FollowGroupSet, From , Event , To, XS
     FollowGroup:SetState( self, "FormationVec3", Vec3 )
     i = i + 1
     FollowGroup:SetState( FollowGroup, "Formation", self.__Enum.Formation.Box )
-    FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Formation )
   end
 
   return self
@@ -1026,7 +1023,7 @@ function AI_FORMATION:onenterFollowing( FollowGroupSet ) --R2.1
       ClientUnit:SetState( self, "CV1", CV2 )
     end
         
-    FollowGroupSet:ForEachGroup(
+    FollowGroupSet:ForEachGroupAlive(
       --- @param Wrapper.Group#GROUP FollowGroup
       -- @param Wrapper.Unit#UNIT ClientUnit
       function( FollowGroup, Formation, ClientUnit, CT1, CV1, CT2, CV2 )

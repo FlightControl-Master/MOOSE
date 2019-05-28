@@ -193,7 +193,7 @@ AI_ESCORT_REQUEST = {
 -- @param Wrapper.Airbase#AIRBASE EscortAirbase The airbase where escorts will be spawned once requested.
 -- @param #string EscortName Name of the escort.
 -- @param #string EscortBriefing A text showing the AI_ESCORT_REQUEST briefing to the player. Note that if no EscortBriefing is provided, the default briefing will be shown.
--- @return #AI_ESCORT_REQUEST self
+-- @return #AI_ESCORT_REQUEST
 -- @usage
 -- EscortSpawn = SPAWN:NewWithAlias( "Red A2G Escort Template", "Red A2G Escort AI" ):InitLimit( 10, 10 )
 -- EscortSpawn:ParkAtAirbase( AIRBASE:FindByName( AIRBASE.Caucasus.Sochi_Adler ), AIRBASE.TerminalType.OpenBig )
@@ -223,10 +223,9 @@ function AI_ESCORT_REQUEST:New( EscortUnit, EscortSpawn, EscortAirbase, EscortNa
 end
 
 --- @param #AI_ESCORT_REQUEST self
--- @param Core.Set#SET_GROUP EscortGroupSet
 function AI_ESCORT_REQUEST:SpawnEscort()
 
-  local EscortGroup = self.EscortSpawn:SpawnAtAirbase( self.EscortAirbase, SPAWN.Takeoff.Cold )
+  local EscortGroup = self.EscortSpawn:SpawnAtAirbase( self.EscortAirbase, SPAWN.Takeoff.Hot )
   self.EscortGroupSet:AddGroup( EscortGroup )
 
   EscortGroup:OptionROTVertical()
@@ -241,11 +240,27 @@ function AI_ESCORT_REQUEST:SpawnEscort()
       Report:Add( "Joining Up " .. self.EscortGroupSet:GetUnitTypeNames():Text( ", " ) .. " from " .. LeaderEscort:GetCoordinate():ToString( self.EscortUnit ) )
             
       LeaderEscort:MessageTypeToGroup( Report:Text(),  MESSAGE.Type.Information, self.PlayerUnit )
+      self:FormationTrail( 50, 50, 50 )
       if self.SpawnMode == self.__Enum.Mode.Formation then
-        self:FormationTrail( 50, 50, 50 )
         self:JoinFormation( EscortGroup )
       end
-      self:Menus( self.XStart, self.XSpace, self.YStart, self.YSpace, self.ZStart, self.ZSpace, self.ZLevels )
+
+      --self:Menus( self.XStart, self.XSpace, self.YStart, self.YSpace, self.ZStart, self.ZSpace, self.ZLevels )
+      
+      self:EscortMenuJoinUp( EscortGroup )
+
+      self:EscortMenuHoldAtEscortPosition( EscortGroup )
+      self:EscortMenuHoldAtLeaderPosition( EscortGroup )
+      
+      self:MenuFlare()
+      self:MenuSmoke()
+    
+      self:MenuReportTargets( 60 )
+      self:MenuAssistedAttack()
+      self:MenuROE()
+      self:MenuROT()
+    
+      self:MenuResumeMission()
     end
   )
 
