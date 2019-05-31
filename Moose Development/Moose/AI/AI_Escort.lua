@@ -293,6 +293,9 @@ function AI_ESCORT:onafterStart( EscortGroupSet )
 
   self.Detection:__Start( 30 )
     
+  self:HandleEvent( EVENTS.Dead, OnEventDeadOrCrash )
+  self:HandleEvent( EVENTS.Crash, OnEventDeadOrCrash )
+  
 end
 
 --- Set a Detection method for the EscortUnit to be reported upon.
@@ -554,8 +557,7 @@ function AI_ESCORT:EscortMenuJoinUp( EscortGroup )
   if self.Menu.JoinUp == true then
     if EscortGroup:IsAir() then
       local EscortGroupName = EscortGroup:GetName()
-      local EscortMenu = MENU_GROUP:New( self.PlayerGroup, EscortGroupName, self.MainMenu )
-      local EscortMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", EscortMenu )
+      local EscortMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", EscortGroup.EscortMenu )
       local EscortMenuJoinUp = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Join Up", EscortMenuReportNavigation, AI_ESCORT._JoinUp, self, EscortGroup )
     end
   end
@@ -588,8 +590,7 @@ function AI_ESCORT:EscortMenuHoldAtEscortPosition( EscortGroup )
   for _, HoldAtEscortPosition in pairs( self.Menu.HoldAtEscortPosition ) do
     if EscortGroup:IsAir() then
       local EscortGroupName = EscortGroup:GetName()
-      local EscortMenu = MENU_GROUP:New( self.PlayerGroup, EscortGroupName, self.MainMenu )
-      local EscortMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", EscortMenu )
+      local EscortMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", EscortGroup.EscortMenu )
       local EscortMenuHoldPosition = MENU_GROUP_COMMAND
         :New(
           self.PlayerGroup,
@@ -679,8 +680,7 @@ function AI_ESCORT:EscortMenuHoldAtLeaderPosition( EscortGroup )
     if EscortGroup:IsAir() then
       
       local EscortGroupName = EscortGroup:GetName()
-      local EscortMenu = MENU_GROUP:New( self.PlayerGroup, EscortGroupName, self.MainMenu )
-      local EscortMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", EscortMenu )
+      local EscortMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", EscortGroup.EscortMenu )
   
       local EscortMenuHoldAtLeaderPosition = MENU_GROUP_COMMAND
         :New(
@@ -850,8 +850,7 @@ function AI_ESCORT:MenuFlare( MenuTextFormat )
     function( EscortGroup )
 
       local EscortGroupName = EscortGroup:GetName()
-      local EscortMenu = MENU_GROUP:New( self.PlayerGroup, EscortGroupName, self.MainMenu )
-      local EscortMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", EscortMenu )
+      local EscortMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", EscortGroup.EscortMenu )
       local EscortMenuFlare = MENU_GROUP:New( self.PlayerGroup, MenuText, EscortMenuReportNavigation )
 
       local EscortMenuFlareGreen  = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Release green flare",  EscortMenuFlare, AI_ESCORT._Flare, self, EscortGroup, FLARECOLOR.Green,  "Released a green flare!"   )
@@ -897,8 +896,7 @@ function AI_ESCORT:MenuSmoke( MenuTextFormat )
       if not EscortGroup:IsAir() then
 
       local EscortGroupName = EscortGroup:GetName()
-      local EscortMenu = MENU_GROUP:New( self.PlayerGroup, EscortGroupName, self.MainMenu )
-      local EscortMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", EscortMenu )
+      local EscortMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", EscortGroup.EscortMenu )
       local EscortMenuSmoke = MENU_GROUP:New( self.PlayerGroup, MenuText, EscortMenuReportNavigation )
 
       local EscortMenuSmokeGreen  = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Release green smoke",  EscortMenuSmoke, AI_ESCORT._Smoke, self, EscortGroup, SMOKECOLOR.Green,  "Releasing green smoke!"   )
@@ -948,8 +946,7 @@ function AI_ESCORT:MenuReportTargets( Seconds )
       if EscortGroup:IsAir() then
 
         local EscortGroupName = EscortGroup:GetName()
-        local EscortMenu = MENU_GROUP:New( self.PlayerGroup, EscortGroupName, self.MainMenu )
-        local EscortMenuReportTargets = MENU_GROUP:New( self.PlayerGroup, "Report targets", EscortMenu )
+        local EscortMenuReportTargets = MENU_GROUP:New( self.PlayerGroup, "Report targets", EscortGroup.EscortMenu )
         
       
         -- Report Targets
@@ -958,7 +955,7 @@ function AI_ESCORT:MenuReportTargets( Seconds )
         --EscortGroup.EscortMenuReportNearbyTargetsOff = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Report targets off", EscortGroup.EscortMenuReportNearbyTargets, AI_ESCORT._SwitchReportNearbyTargets, self, EscortGroup, false )
       
         -- Attack Targets
-        local EscortMenuAttackTargets = MENU_GROUP:New( self.PlayerGroup, "Attack targets", EscortMenu )
+        local EscortMenuAttackTargets = MENU_GROUP:New( self.PlayerGroup, "Attack targets", EscortGroup.EscortMenu )
       
         EscortGroup.ReportTargetsScheduler = SCHEDULER:New( self, self._ReportTargetsScheduler, { EscortGroup }, timer, Seconds )
         timer=timer+1
@@ -1012,8 +1009,7 @@ function AI_ESCORT:MenuROE( MenuTextFormat )
         -- Rules of Engagement
         
         local EscortGroupName = EscortGroup:GetName()
-        local EscortMenu = MENU_GROUP:New( self.PlayerGroup, EscortGroupName, self.MainMenu )
-        local EscortMenuROE = MENU_GROUP:New( self.PlayerGroup, "Rule Of Engagement", EscortMenu )
+        local EscortMenuROE = MENU_GROUP:New( self.PlayerGroup, "Rule Of Engagement", EscortGroup.EscortMenu )
         
         if EscortGroup:OptionROEHoldFirePossible() then
           local EscortMenuROEHoldFire         = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Hold fire",          EscortMenuROE, AI_ESCORT._ROE, self, EscortGroup, GROUP.OptionROEHoldFire, "Holding weapons!" )
@@ -1055,8 +1051,7 @@ function AI_ESCORT:MenuROT( MenuTextFormat )
       if EscortGroup:IsAir() then
 
         local EscortGroupName = EscortGroup:GetName()
-        local EscortMenu = MENU_GROUP:New( self.PlayerGroup, EscortGroupName, self.MainMenu )
-        local EscortMenuROT = MENU_GROUP:New( self.PlayerGroup, "Reaction On Threat", EscortMenu )
+        local EscortMenuROT = MENU_GROUP:New( self.PlayerGroup, "Reaction On Threat", EscortGroup.EscortMenu )
 
         if not EscortGroup.EscortMenuEvasion then
           -- Reaction to Threats
@@ -1092,8 +1087,7 @@ function AI_ESCORT:MenuResumeMission()
     function( EscortGroup )
       if EscortGroup:IsAir() then
         local EscortGroupName = EscortGroup:GetName()
-        local EscortMenu = MENU_GROUP:New( self.PlayerGroup, EscortGroupName, self.MainMenu )
-        EscortGroup.EscortMenuResumeMission = MENU_GROUP:New( self.PlayerGroup, "Resume from", EscortMenu )
+        EscortGroup.EscortMenuResumeMission = MENU_GROUP:New( self.PlayerGroup, "Resume from", EscortGroup.EscortMenu )
       end
     end
   )
@@ -1435,7 +1429,7 @@ function AI_ESCORT:_AttackTarget( EscortGroup, DetectedItem )
     )    
 
     Tasks[#Tasks+1] = EscortGroup:TaskCombo( AttackUnitTasks )
-    Tasks[#Tasks+1] = EscortGroup:TaskFunction( "AI_ESCORT.___Resume", EscortGroup, self )
+    Tasks[#Tasks+1] = EscortGroup:TaskFunction( "AI_ESCORT.___Resume", self )
     
     EscortGroup:SetTask( 
       EscortGroup:TaskCombo(
@@ -1590,8 +1584,7 @@ function AI_ESCORT:_ReportTargetsScheduler( EscortGroup )
       local TimeUpdate = timer.getTime()
       
       local EscortGroupName = EscortGroup:GetName()
-      local EscortMenu = MENU_GROUP:New( self.PlayerGroup, EscortGroupName, self.MainMenu )
-      local EscortMenuAttackTargets = MENU_GROUP:New( self.PlayerGroup, "Attack targets", EscortMenu )
+      local EscortMenuAttackTargets = MENU_GROUP:New( self.PlayerGroup, "Attack targets", EscortGroup.EscortMenu )
 
       for DetectedItemIndex, DetectedItem in pairs( DetectedItems ) do
 
@@ -1712,3 +1705,5 @@ function AI_ESCORT:_FlightReportTargetsScheduler()
   
   return false
 end
+
+

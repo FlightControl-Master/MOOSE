@@ -231,22 +231,24 @@ function AI_ESCORT_REQUEST:SpawnEscort()
   EscortGroup:OptionROTVertical()
   EscortGroup:OptionROEHoldFire()
   
-  self:ScheduleOnce( 5,
-    function()
+  self:ScheduleOnce( 0.1,
+    function( EscortGroup )
       local LeaderEscort = self.EscortGroupSet:GetFirst() -- Wrapper.Group#GROUP
       
       local Report = REPORT:New()
     
       Report:Add( "Joining Up " .. self.EscortGroupSet:GetUnitTypeNames():Text( ", " ) .. " from " .. LeaderEscort:GetCoordinate():ToString( self.EscortUnit ) )
-            
       LeaderEscort:MessageTypeToGroup( Report:Text(),  MESSAGE.Type.Information, self.PlayerUnit )
+
       self:FormationTrail( 50, 50, 50 )
       if self.SpawnMode == self.__Enum.Mode.Formation then
         self:JoinFormation( EscortGroup )
       end
 
       --self:Menus( self.XStart, self.XSpace, self.YStart, self.YSpace, self.ZStart, self.ZSpace, self.ZLevels )
-      
+
+      EscortGroup.EscortMenu = MENU_GROUP:New( self.PlayerGroup, EscortGroup:GetName(), self.MainMenu )      
+
       self:EscortMenuJoinUp( EscortGroup )
 
       self:EscortMenuHoldAtEscortPosition( EscortGroup )
@@ -261,7 +263,18 @@ function AI_ESCORT_REQUEST:SpawnEscort()
       self:MenuROT()
     
       self:MenuResumeMission()
-    end
+
+      --- @param #AI_ESCORT self
+      -- @param Core.Event#EVENTDATA EventData
+      function EscortGroup:OnEventDeadOrCrash( EventData )
+        self:F( { "EventDead", EventData } )
+        self.EscortMenu:Remove()
+      end
+
+      EscortGroup:HandleEvent( EVENTS.Dead, EscortGroup.OnEventDeadOrCrash )
+      EscortGroup:HandleEvent( EVENTS.Crash, EscortGroup.OnEventDeadOrCrash )
+
+    end, EscortGroup
   )
 
 end
@@ -277,6 +290,9 @@ function AI_ESCORT_REQUEST:onafterStart( EscortGroupSet )
       end
       )
   end
+
+  self:HandleEvent( EVENTS.Dead, self.OnEventDeadOrCrash )
+  self:HandleEvent( EVENTS.Crash, self.OnEventDeadOrCrash )
     
 end
 
