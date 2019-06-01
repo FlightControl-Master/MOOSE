@@ -242,7 +242,7 @@ function AI_ESCORT_REQUEST:SpawnEscort()
 
       self:FormationTrail( 50, 50, 50 )
       if self.SpawnMode == self.__Enum.Mode.Formation then
-        self:JoinFormation( EscortGroup )
+        self:ModeFormation( EscortGroup )
       end
 
       --self:Menus( self.XStart, self.XSpace, self.YStart, self.YSpace, self.ZStart, self.ZSpace, self.ZLevels )

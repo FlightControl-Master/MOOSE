@@ -950,30 +950,49 @@ function AI_FORMATION:SetFlightRandomization( FlightRandomization ) --R2.1
 end
 
 
---- This releases the air unit in your flight from the formation flight.
+
+--- This sets your escorts to fly a mission.
 -- @param #AI_FORMATION self
 -- @param Wrapper.Group#GROUP FollowGroup FollowGroup.
 -- @return #AI_FORMATION
-function AI_FORMATION:ReleaseFormation( FollowGroup )
+function AI_FORMATION:ModeMission( FollowGroup )
 
-  FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Mission )
+  if FollowGroup then
+    FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Mission )
+  else
+    self.EscortGroupSet:ForSomeGroupAlive(
+      --- @param Core.Group#GROUP EscortGroup
+      function( FollowGroup )
+        FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Mission )
+      end
+    )
+  end
+  
   
   return self
 end
 
 
---- This joins up the air unit in your formation flight.
+--- This sets your escorts to fly in a formation.
 -- @param #AI_FORMATION self
 -- @param Wrapper.Group#GROUP FollowGroup FollowGroup.
 -- @return #AI_FORMATION
-function AI_FORMATION:JoinFormation( FollowGroup )
+function AI_FORMATION:ModeFormation( FollowGroup )
 
-  -- If a formation type was defined for the AI_FORMATION object, then we can joinup.
-  
-  FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Formation )
+  if FollowGroup then
+    FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Formation )
+  else
+    self.EscortGroupSet:ForSomeGroupAlive(
+      --- @param Core.Group#GROUP EscortGroup
+      function( FollowGroup )
+        FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Formation )
+      end
+    )
+  end
   
   return self
 end
+
 
 
 

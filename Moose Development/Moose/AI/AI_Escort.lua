@@ -250,6 +250,8 @@ function AI_ESCORT:New( EscortUnit, EscortGroupSet, EscortName, EscortBriefing )
   EscortGroupSet:ForEachGroup(
     --- @param Core.Group#GROUP EscortGroup
     function( EscortGroup )
+      EscortGroup.EscortMenu = MENU_GROUP:New( self.PlayerGroup, EscortGroup:GetName(), self.MainMenu )
+
       -- Set EscortGroup known at EscortUnit.
       if not self.PlayerUnit._EscortGroups then
         self.PlayerUnit._EscortGroups = {}
@@ -577,7 +579,7 @@ function AI_ESCORT:MenuJoinUp()
   self.EscortGroupSet:ForSomeGroupAlive(
     --- @param Core.Group#GROUP EscortGroup
     function( EscortGroup )
-      self:EscortSetMenuJoinUp( EscortGroup )
+      self:EscortMenuJoinUp( EscortGroup )
     end
   )
 
@@ -997,10 +999,10 @@ function AI_ESCORT:MenuROE( MenuTextFormat )
 
   local FlightMenuROE = MENU_GROUP:New( self.PlayerGroup, "Rule Of Engagement", self.FlightMenu )
 
-  local FlightMenuROEHoldFire   = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Hold fire",          FlightMenuROE, AI_ESCORT._ROE, self,  GROUP.OptionROEHoldFire, "Holding weapons!" )
-  local FlightMenuROEReturnFire = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Return fire",        FlightMenuROE, AI_ESCORT._ROE, self,  GROUP.OptionROEReturnFire, "Returning fire!" )
-  local FlightMenuROEOpenFire   = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Open Fire",          FlightMenuROE, AI_ESCORT._ROE, self,  GROUP.OptionROEOpenFire, "Open fire at designated targets!" )
-  local FlightMenuROEWeaponFree = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Engage all targets", FlightMenuROE, AI_ESCORT._ROE, self,  GROUP.OptionROEWeaponFree, "Engaging all targets!" )
+  local FlightMenuROEHoldFire   = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Hold fire",          FlightMenuROE, AI_ESCORT._FlightROEHoldFire,   self,  "Holding weapons!" )
+  local FlightMenuROEReturnFire = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Return fire",        FlightMenuROE, AI_ESCORT._FlightROEReturnFire, self, "Returning fire!" )
+  local FlightMenuROEOpenFire   = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Open Fire",          FlightMenuROE, AI_ESCORT._FlightROEOpenFire,   self,  "Open fire at designated targets!" )
+  local FlightMenuROEWeaponFree = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Engage all targets", FlightMenuROE, AI_ESCORT._FlightROEWeaponFree, self,  "Engaging all targets!" )
 
   self.EscortGroupSet:ForSomeGroupAlive(
     --- @param Core.Group#GROUP EscortGroup
@@ -1012,16 +1014,16 @@ function AI_ESCORT:MenuROE( MenuTextFormat )
         local EscortMenuROE = MENU_GROUP:New( self.PlayerGroup, "Rule Of Engagement", EscortGroup.EscortMenu )
         
         if EscortGroup:OptionROEHoldFirePossible() then
-          local EscortMenuROEHoldFire         = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Hold fire",          EscortMenuROE, AI_ESCORT._ROE, self, EscortGroup, GROUP.OptionROEHoldFire, "Holding weapons!" )
+          local EscortMenuROEHoldFire         = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Hold fire",          EscortMenuROE, AI_ESCORT._ROE, self, EscortGroup, EscortGroup.OptionROEHoldFire, "Holding weapons!" )
         end
         if EscortGroup:OptionROEReturnFirePossible() then
-          local EscortMenuROEReturnFire       = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Return fire",        EscortMenuROE, AI_ESCORT._ROE, self, EscortGroup, GROUP.OptionROEReturnFire, "Returning fire!" )
+          local EscortMenuROEReturnFire       = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Return fire",        EscortMenuROE, AI_ESCORT._ROE, self, EscortGroup, EscortGroup.OptionROEReturnFire, "Returning fire!" )
         end
         if EscortGroup:OptionROEOpenFirePossible() then
-          EscortGroup.EscortMenuROEOpenFire   = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Open Fire",          EscortMenuROE, AI_ESCORT._ROE, self, EscortGroup, GROUP.OptionROEOpenFire, "Opening fire on designated targets!!" )
+          EscortGroup.EscortMenuROEOpenFire   = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Open Fire",          EscortMenuROE, AI_ESCORT._ROE, self, EscortGroup, EscortGroup.OptionROEOpenFire, "Opening fire on designated targets!!" )
         end
         if EscortGroup:OptionROEWeaponFreePossible() then
-          EscortGroup.EscortMenuROEWeaponFree = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Engage all targets", EscortMenuROE, AI_ESCORT._ROE, self, EscortGroup, GROUP.OptionROEWeaponFree, "Opening fire on targets of opportunity!" )
+          EscortGroup.EscortMenuROEWeaponFree = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Engage all targets", EscortMenuROE, AI_ESCORT._ROE, self, EscortGroup, EscortGroup.OptionROEWeaponFree, "Opening fire on targets of opportunity!" )
         end
       end
     end
@@ -1040,10 +1042,10 @@ function AI_ESCORT:MenuROT( MenuTextFormat )
 
   local FlightMenuROT = MENU_GROUP:New( self.PlayerGroup, "Reaction On Threat", self.FlightMenu )
 
-  local FlightMenuROTNoReaction     = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Fight until death",             FlightMenuROT, AI_ESCORT._ROT, self,  GROUP.OptionROTNoReaction, "Fighting until death!" )
-  local FlightMenuROTPassiveDefense = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Use flares, chaff and jammers", FlightMenuROT, AI_ESCORT._ROT, self,  GROUP.OptionROTPassiveDefense, "Defending using jammers, chaff and flares!" )
-  local FlightMenuROTEvadeFire      = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Open fire",                     FlightMenuROT, AI_ESCORT._ROT, self,  GROUP.OptionROTEvadeFire, "Evading on enemy fire!" )
-  local FlightMenuROTVertical       = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Avoid radar and evade fire",    FlightMenuROT, AI_ESCORT._ROT, self,  GROUP.OptionROTVertical, "Evading on enemy fire with vertical manoeuvres!" )
+  local FlightMenuROTNoReaction     = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Fight until death",             FlightMenuROT, AI_ESCORT._FlightROTNoReaction,     self, "Fighting until death!" )
+  local FlightMenuROTPassiveDefense = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Use flares, chaff and jammers", FlightMenuROT, AI_ESCORT._FlightROTPassiveDefense, self, "Defending using jammers, chaff and flares!" )
+  local FlightMenuROTEvadeFire      = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Open fire",                     FlightMenuROT, AI_ESCORT._FlightROTEvadeFire,      self, "Evading on enemy fire!" )
+  local FlightMenuROTVertical       = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Avoid radar and evade fire",    FlightMenuROT, AI_ESCORT._FlightROTVertical,       self, "Evading on enemy fire with vertical manoeuvres!" )
 
   self.EscortGroupSet:ForSomeGroupAlive(
     --- @param Core.Group#GROUP EscortGroup
@@ -1056,16 +1058,16 @@ function AI_ESCORT:MenuROT( MenuTextFormat )
         if not EscortGroup.EscortMenuEvasion then
           -- Reaction to Threats
           if EscortGroup:OptionROTNoReactionPossible() then
-            local EscortMenuEvasionNoReaction     = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Fight until death",             EscortMenuROT, AI_ESCORT._ROT, self, EscortGroup, GROUP.OptionROTNoReaction, "Fighting until death!" )
+            local EscortMenuEvasionNoReaction     = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Fight until death",             EscortMenuROT, AI_ESCORT._ROT, self, EscortGroup, EscortGroup.OptionROTNoReaction, "Fighting until death!" )
           end
           if EscortGroup:OptionROTPassiveDefensePossible() then
-            local EscortMenuEvasionPassiveDefense = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Use flares, chaff and jammers", EscortMenuROT, AI_ESCORT._ROT, self, EscortGroup, GROUP.OptionROTPassiveDefense, "Defending using jammers, chaff and flares!" )
+            local EscortMenuEvasionPassiveDefense = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Use flares, chaff and jammers", EscortMenuROT, AI_ESCORT._ROT, self, EscortGroup, EscortGroup.OptionROTPassiveDefense, "Defending using jammers, chaff and flares!" )
           end
           if EscortGroup:OptionROTEvadeFirePossible() then
-            local EscortMenuEvasionEvadeFire      = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Open fire",                     EscortMenuROT, AI_ESCORT._ROT, self, EscortGroup, GROUP.OptionROTEvadeFire, "Evading on enemy fire!" )
+            local EscortMenuEvasionEvadeFire      = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Open fire",                     EscortMenuROT, AI_ESCORT._ROT, self, EscortGroup, EscortGroup.OptionROTEvadeFire, "Evading on enemy fire!" )
           end
           if EscortGroup:OptionROTVerticalPossible() then
-            local EscortMenuOptionEvasionVertical = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Avoid radar and evade fire",    EscortMenuROT, AI_ESCORT._ROT, self, EscortGroup, GROUP.OptionROTVertical, "Evading on enemy fire with vertical manoeuvres!" )
+            local EscortMenuOptionEvasionVertical = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Avoid radar and evade fire",    EscortMenuROT, AI_ESCORT._ROT, self, EscortGroup, EscortGroup.OptionROTVertical, "Evading on enemy fire with vertical manoeuvres!" )
           end
         end
       end
@@ -1107,7 +1109,7 @@ function AI_ESCORT:_HoldPosition( OrbitGroup, EscortGroup, OrbitHeight, OrbitSec
 
   local OrbitUnit = OrbitGroup:GetUnit(1) -- Wrapper.Unit#UNIT
   
-  self:ReleaseFormation( EscortGroup )
+  self:ModeMission( EscortGroup )
 
   local PointFrom = {}
   local GroupVec3 = EscortGroup:GetUnit(1):GetVec3()
@@ -1168,7 +1170,7 @@ function AI_ESCORT:_JoinUp( EscortGroup )
 
   local EscortUnit = self.PlayerUnit
 
-  self:JoinFormation( EscortGroup )
+  self:ModeFormation( EscortGroup )
   
   EscortGroup:SetState( self, "Mode", self.__Enum.Mode.Follow )
 end
@@ -1372,7 +1374,6 @@ function AI_ESCORT.___Resume( EscortGroup, self )
 
   local PlayerGroup = self.PlayerGroup
   
-  self:JoinFormation( EscortGroup )
   EscortGroup:MessageTypeToGroup( "Destroyed all targets. Rejoining.", MESSAGE.Type.Information, PlayerGroup )
 
 end
@@ -1407,7 +1408,7 @@ function AI_ESCORT:_AttackTarget( EscortGroup, DetectedItem )
   
   local EscortUnit = self.PlayerUnit
   
-  self:ReleaseFormation( EscortGroup )
+  self:ModeMission( EscortGroup )
 
   if EscortGroup:IsAir() then
     EscortGroup:OptionROEOpenFire()
@@ -1512,36 +1513,89 @@ function AI_ESCORT:_AssistTarget( EscortGroup, DetectedItem )
 end
 
 function AI_ESCORT:_ROE( EscortGroup, EscortROEFunction, EscortROEMessage )
-    pcall( function() EscortROEFunction() end )
+    pcall( function() EscortROEFunction( EscortGroup ) end )
     EscortGroup:MessageTypeToGroup( EscortROEMessage, MESSAGE.Type.Information, self.PlayerGroup )
 end
 
-function AI_ESCORT:_FlightROE( EscortROEFunction, EscortROEMessage )
-  self.EscortGroupSet:ForSomeGroupAlive(
+
+function AI_ESCORT:_FlightROEHoldFire( EscortROEMessage )
+  self.EscortGroupSet:ForEachGroupAlive(
     --- @param Wrapper.Group#GROUP EscortGroup
     function( EscortGroup )
-      self:_ROE( EscortGroup, EscortROEFunction, EscortROEMessage )
+      self:_ROE( EscortGroup, EscortGroup.OptionROEHoldFire, EscortROEMessage )
+    end
+  )
+end
+
+function AI_ESCORT:_FlightROEOpenFire( EscortROEMessage )
+  self.EscortGroupSet:ForEachGroupAlive(
+    --- @param Wrapper.Group#GROUP EscortGroup
+    function( EscortGroup )
+      self:_ROE( EscortGroup, EscortGroup.OptionROEOpenFire, EscortROEMessage )
+    end
+  )
+end
+
+function AI_ESCORT:_FlightROEReturnFire( EscortROEMessage )
+  self.EscortGroupSet:ForEachGroupAlive(
+    --- @param Wrapper.Group#GROUP EscortGroup
+    function( EscortGroup )
+      self:_ROE( EscortGroup, EscortGroup.OptionROEReturnFire, EscortROEMessage )
+    end
+  )
+end
+
+function AI_ESCORT:_FlightROEWeaponFree( EscortROEMessage )
+  self.EscortGroupSet:ForEachGroupAlive(
+    --- @param Wrapper.Group#GROUP EscortGroup
+    function( EscortGroup )
+      self:_ROE( EscortGroup, EscortGroup.OptionROEWeaponFree, EscortROEMessage )
     end
   )
 end
 
 
 function AI_ESCORT:_ROT( EscortGroup, EscortROTFunction, EscortROTMessage )
-  pcall( function() EscortROTFunction() end )
+  pcall( function() EscortROTFunction( EscortGroup ) end )
   EscortGroup:MessageTypeToGroup( EscortROTMessage, MESSAGE.Type.Information, self.PlayerGroup )
 end
 
 
-function AI_ESCORT:_FlightROT( EscortROTFunction, EscortROTMessage )
-  self.EscortGroupSet:ForSomeGroupAlive(
+function AI_ESCORT:_FlightROTNoReaction( EscortROTMessage )
+  self.EscortGroupSet:ForEachGroupAlive(
     --- @param Wrapper.Group#GROUP EscortGroup
     function( EscortGroup )
-      self:_ROT( EscortGroup, EscortROTFunction, EscortROTMessage )
+      self:_ROT( EscortGroup, EscortGroup.OptionROTNoReaction, EscortROTMessage )
     end
   )
 end
 
+function AI_ESCORT:_FlightROTPassiveDefense( EscortROTMessage )
+  self.EscortGroupSet:ForEachGroupAlive(
+    --- @param Wrapper.Group#GROUP EscortGroup
+    function( EscortGroup )
+      self:_ROT( EscortGroup, EscortGroup.OptionROTPassiveDefense, EscortROTMessage )
+    end
+  )
+end
 
+function AI_ESCORT:_FlightROTEvadeFire( EscortROTMessage )
+  self.EscortGroupSet:ForEachGroupAlive(
+    --- @param Wrapper.Group#GROUP EscortGroup
+    function( EscortGroup )
+      self:_ROT( EscortGroup, EscortGroup.OptionROTEvadeFire, EscortROTMessage )
+    end
+  )
+end
+
+function AI_ESCORT:_FlightROTVertical( EscortROTMessage )
+  self.EscortGroupSet:ForEachGroupAlive(
+    --- @param Wrapper.Group#GROUP EscortGroup
+    function( EscortGroup )
+      self:_ROT( EscortGroup, EscortGroup.OptionROTVertical, EscortROTMessage )
+    end
+  )
+end
 
 --- Registers the waypoints
 -- @param #AI_ESCORT self
