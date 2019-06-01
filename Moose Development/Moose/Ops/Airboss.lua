@@ -207,6 +207,7 @@
 -- @field Core.Set#SET_GROUP excludesetAI AI groups in this set will be explicitly excluded from handling by the airboss and not forced into the Marshal pattern.
 -- @field #boolean menusingle If true, menu is optimized for a single carrier.
 -- @field #number collisiondist Distance up to which collision checks are done.
+-- @field #nubmer holdtimestamp Timestamp when the carrier first came to an unexpected hold.
 -- @field #number Tmessage Default duration in seconds messages are displayed to players.
 -- @field #string soundfolder Folder within the mission (miz) file where airboss sound files are located.
 -- @field #string soundfolderLSO Folder withing the mission (miz) file where LSO sound files are stored.
@@ -271,7 +272,7 @@
 -- The flight that transitions form the holding pattern to the landing approach, it should leave the Marshal stack at the 3 position and make a left hand turn to the *Initial*
 -- position, which is 3 NM astern of the boat. Note that you need to be below 1300 feet to be registered in the initial zone.
 -- The altitude can be set via the function @{AIRBOSS.SetInitialMaxAlt}(*altitude*) function.
--- As described belwo, the initial zone can be smoked or flared via the AIRBOSS F10 Help radio menu.
+-- As described below, the initial zone can be smoked or flared via the AIRBOSS F10 Help radio menu.
 -- 
 -- ### Landing Pattern
 -- 
@@ -1208,6 +1209,7 @@ AIRBOSS = {
   excludesetAI   = nil,
   menusingle     = nil,
   collisiondist  = nil,
+  holdtimestamp  = nil,
   Tmessage       = nil,
   soundfolder    = nil,
   soundfolderLSO = nil,
@@ -1673,7 +1675,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="1.0.0"
+AIRBOSS.version="1.0.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -3227,13 +3229,36 @@ function AIRBOSS:onafterStatus(From, Event, To)
     -- Current heading and position of the carrier.
     local hdg=self:GetHeading()
     local pos=self:GetCoordinate()
+    local speed=self.carrier:GetVelocityKNOTS()
     
     -- Check water is ahead.
     local collision=self:_CheckCollisionCoord(pos:Translate(self.collisiondist, hdg))
+    
+    local holdtime=0
+    if self.holdtimestamp then
+      holdtime=timer.getTime()-self.holdtimestamp
+    end
+    
+    -- Check if carrier is stationary.
+    local NextWP=self:_GetNextWaypoint()
+    local ExpectedSpeed=UTILS.MpsToKnots(NextWP:GetVelocity())
+    if speed<0.5 and ExpectedSpeed>0 and not (self.detour or self.turnintowind) then      
+      if not self.holdtimestamp then
+        self:E(self.lid.."Carrier came to an unexpected standstill. Trying to re-route in 3 min.")
+        self.holdtimestamp=timer.getTime()
+      else 
+        if holdtime>3*60 then
+          local coord=self:GetCoordinate():Translate(500, hdg+10)
+          --coord:MarkToAll("Re-route after standstill.")
+          self:CarrierResumeRoute(coord)
+          self.holdtimestamp=nil
+        end
+      end
+    end
 
     -- Debug info.
-    local text=string.format("Time %s - Status %s (case=%d) - Speed=%.1f kts - Heading=%d - WP=%d - ETA=%s - Turning=%s - Collision Warning=%s",
-    clock, self:GetState(), self.case, self.carrier:GetVelocityKNOTS(), hdg, self.currentwp, eta, tostring(self.turning), tostring(collision))
+    local text=string.format("Time %s - Status %s (case=%d) - Speed=%.1f kts - Heading=%d - WP=%d - ETA=%s - Turning=%s - Collision Warning=%s - Detour=%s - Turn Into Wind=%s - Holdtime=%d sec",
+    clock, self:GetState(), self.case, speed, hdg, self.currentwp, eta, tostring(self.turning), tostring(collision), tostring(self.detour), tostring(self.turnintowind), holdtime)
     self:T(self.lid..text)
     
     -- Players online:
@@ -13130,7 +13155,7 @@ end
 --- Get next waypoint of the carrier.
 -- @param #AIRBOSS self
 -- @return Core.Point#COORDINATE Coordinate of the next waypoint.
--- @return #number Number of waypoint
+-- @return #number Number of waypoint.
 function AIRBOSS:_GetNextWaypoint()
 
   -- Next waypoint.  
@@ -13459,6 +13484,7 @@ function AIRBOSS._ResumeRoute(group, airboss, gotocoord)
   
   -- First goto this coordinate.
   if gotocoord then
+    --gotocoord:MarkToAll(string.format("Goto waypoint speed=%.1f km/h", speedkmh))
     local wp1=gotocoord:WaypointGround(speedkmh)
     table.insert(waypoints, wp1)  
   end
@@ -13468,7 +13494,7 @@ function AIRBOSS._ResumeRoute(group, airboss, gotocoord)
   
   -- Debug message.
   MESSAGE:New(text,10):ToAllIf(airboss.Debug)
-  airboss:I(airboss.lid..text)  
+  airboss:I(airboss.lid..text)
   
   -- Loop over all remaining waypoints.
   for i=Nextwp, #airboss.waypoints do
@@ -13483,6 +13509,8 @@ function AIRBOSS._ResumeRoute(group, airboss, gotocoord)
     if speed<1 then
       speed=UTILS.KnotsToKmph(10)
     end
+    
+    --coord:MarkToAll(string.format("Resume route WP %d, speed=%.1f km/h", i, speed))
     
     -- Create waypoint.
     local wp=coord:WaypointGround(speed)
