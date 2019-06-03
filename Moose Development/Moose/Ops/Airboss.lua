@@ -76,6 +76,7 @@
 --    * [[MOOSE] Airboss - CASE I Walkthrough in the F/A-18C by TG](https://www.youtube.com/watch?v=o1UrP4Q6PMM)
 --    * [[MOOSE] Airboss - New LSO/Marshal Voice Overs by Raynor](https://www.youtube.com/watch?v=_Suo68bRu8k)
 --    * [[MOOSE] Airboss - CASE I, "Until We Go Down" featuring the F-14B by Pikes](https://www.youtube.com/watch?v=ojgHDSw3Doc)
+--    * [[MOOSE] Airboss - Skipper Menu](https://youtu.be/awnecCxRoNQ)
 -- 
 -- ### Lex explaining Boat Ops:
 -- 
