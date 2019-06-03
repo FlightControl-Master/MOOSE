@@ -3273,7 +3273,7 @@ function AIRBOSS:onafterStatus(From, Event, To)
     local ExpectedSpeed=UTILS.MpsToKnots(NextWP:GetVelocity())
     if speed<0.5 and ExpectedSpeed>0 and not (self.detour or self.turnintowind) then      
       if not self.holdtimestamp then
-        self:E(self.lid.."Carrier came to an unexpected standstill. Trying to re-route in 3 min.")
+        self:E(self.lid..string.format("Carrier came to an unexpected standstill. Trying to re-route in 3 min. Speed=%.1f knots, expected=%.1f knots", speed, ExpectedSpeed))
         self.holdtimestamp=timer.getTime()
       else 
         if holdtime>3*60 then
@@ -13528,15 +13528,19 @@ function AIRBOSS._ResumeRoute(group, airboss, gotocoord)
     --env.info(string.format("FF hdg1=%d, hdg2=%d, delta=%d", hdg1, hdg2, delta))
 
   
+    -- Add additional turn points 
     if delta>90 then
+    
+      -- Turn radius 3 NM.
+      local turnradius=UTILS.NMToMeters(3)
 
-      local gotocoordh=c0:Translate(2500, hdg1+45)
+      local gotocoordh=c0:Translate(turnradius, hdg1+45)
       --gotocoordh:MarkToAll(string.format("Goto help waypoint 1 speed=%.1f km/h", speedkmh))
       
       local wp=gotocoordh:WaypointGround(speedkmh)
       table.insert(waypoints, wp)
 
-      gotocoordh=c0:Translate(5000, hdg1+90)
+      gotocoordh=c0:Translate(turnradius, hdg1+90)
       --gotocoordh:MarkToAll(string.format("Goto help waypoint 2 speed=%.1f km/h", speedkmh))
       
       wp=gotocoordh:WaypointGround(speedkmh)
