@@ -1743,7 +1743,7 @@ _WAREHOUSEDB  = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.9.1"
+WAREHOUSE.version="0.9.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -3152,7 +3152,7 @@ function WAREHOUSE:onafterStart(From, Event, To)
   end
   -- Mark point at road connection.
   if self.road then
-    self.road:MarkToAll(string.format("%s road connection.", self.alias), true)
+    self.markroad=self.road:MarkToCoalition(string.format("%s road connection.",self.alias), self:GetCoalition(), true)
   end
 
   -- Get the closest point on railroad wrt spawnzone of ground assets.
@@ -3166,7 +3166,7 @@ function WAREHOUSE:onafterStart(From, Event, To)
   end
   -- Mark point at rail connection.
   if self.rail then
-    self.rail:MarkToAll(string.format("%s rail connection.", self.alias), true)
+    self.markrail=self.rail:MarkToCoalition(string.format("%s rail connection.", self.alias), self:GetCoalition(), true)
   end
 
   -- Handle events:

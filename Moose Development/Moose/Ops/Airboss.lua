@@ -76,6 +76,7 @@
 --    * [[MOOSE] Airboss - CASE I Walkthrough in the F/A-18C by TG](https://www.youtube.com/watch?v=o1UrP4Q6PMM)
 --    * [[MOOSE] Airboss - New LSO/Marshal Voice Overs by Raynor](https://www.youtube.com/watch?v=_Suo68bRu8k)
 --    * [[MOOSE] Airboss - CASE I, "Until We Go Down" featuring the F-14B by Pikes](https://www.youtube.com/watch?v=ojgHDSw3Doc)
+--    * [[MOOSE] Airboss - Skipper Menu](https://youtu.be/awnecCxRoNQ)
 -- 
 -- ### Lex explaining Boat Ops:
 -- 
@@ -207,6 +208,7 @@
 -- @field Core.Set#SET_GROUP excludesetAI AI groups in this set will be explicitly excluded from handling by the airboss and not forced into the Marshal pattern.
 -- @field #boolean menusingle If true, menu is optimized for a single carrier.
 -- @field #number collisiondist Distance up to which collision checks are done.
+-- @field #nubmer holdtimestamp Timestamp when the carrier first came to an unexpected hold.
 -- @field #number Tmessage Default duration in seconds messages are displayed to players.
 -- @field #string soundfolder Folder within the mission (miz) file where airboss sound files are located.
 -- @field #string soundfolderLSO Folder withing the mission (miz) file where LSO sound files are stored.
@@ -228,6 +230,11 @@
 -- @field #string trapprefix File prefix for trap sheet files.
 -- @field #number initialmaxalt Max altitude in meters to register in the inital zone.
 -- @field #boolean welcome If true, display welcome message to player.
+-- @field #boolean skipperMenu If true, add skipper menu.
+-- @field #number skipperSpeed Speed in knots for manual recovery start.
+-- @field #number skipperCase Manual recovery case.
+-- @field #boolean skipperUturn U-turn on/off via menu.
+-- @field #number skipperTime Recovery time in min for manual recovery.
 -- @extends Core.Fsm#FSM
 
 --- Be the boss!
@@ -271,7 +278,7 @@
 -- The flight that transitions form the holding pattern to the landing approach, it should leave the Marshal stack at the 3 position and make a left hand turn to the *Initial*
 -- position, which is 3 NM astern of the boat. Note that you need to be below 1300 feet to be registered in the initial zone.
 -- The altitude can be set via the function @{AIRBOSS.SetInitialMaxAlt}(*altitude*) function.
--- As described belwo, the initial zone can be smoked or flared via the AIRBOSS F10 Help radio menu.
+-- As described below, the initial zone can be smoked or flared via the AIRBOSS F10 Help radio menu.
 -- 
 -- ### Landing Pattern
 -- 
@@ -1208,6 +1215,7 @@ AIRBOSS = {
   excludesetAI   = nil,
   menusingle     = nil,
   collisiondist  = nil,
+  holdtimestamp  = nil,
   Tmessage       = nil,
   soundfolder    = nil,
   soundfolderLSO = nil,
@@ -1227,6 +1235,10 @@ AIRBOSS = {
   trapprefix     = nil,
   initialmaxalt  = nil,
   welcome        = nil,
+  skipperMenu    = nil,
+  skipperSpeed   = nil,
+  skipperTime    = nil,
+  skipperUturn   = nil,
 }
 
 --- Aircraft types capable of landing on carrier (human+AI).
@@ -1673,7 +1685,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="1.0.0"
+AIRBOSS.version="1.0.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -2306,6 +2318,26 @@ function AIRBOSS:SetHoldingOffsetAngle(offset)
   
   -- Current offset init.
   self.holdingoffset=self.defaultoffset
+  
+  return self
+end
+
+--- Enable F10 menu to manually start recoveries.
+-- @param #AIRBOSS self
+-- @param #number duration Default duration of the recovery in minutes. Default 30 min.
+-- @param #number windondeck Default wind on deck in knots. Default 25 knots.
+-- @param #boolean uturn U-turn after recovery window closes on=true or off=false/nil. Default off.
+-- @return #AIRBOSS self
+function AIRBOSS:SetMenuRecovery(duration, windondeck, uturn)
+
+  self.skipperMenu=true
+  self.skipperTime=duration or 30
+  self.skipperSpeed=windondeck or 25
+  if uturn then
+    self.skipperUturn=true
+  else
+    self.skipperUturn=false
+  end
   
   return self
 end
@@ -3227,13 +3259,36 @@ function AIRBOSS:onafterStatus(From, Event, To)
     -- Current heading and position of the carrier.
     local hdg=self:GetHeading()
     local pos=self:GetCoordinate()
+    local speed=self.carrier:GetVelocityKNOTS()
     
     -- Check water is ahead.
     local collision=self:_CheckCollisionCoord(pos:Translate(self.collisiondist, hdg))
+    
+    local holdtime=0
+    if self.holdtimestamp then
+      holdtime=timer.getTime()-self.holdtimestamp
+    end
+    
+    -- Check if carrier is stationary.
+    local NextWP=self:_GetNextWaypoint()
+    local ExpectedSpeed=UTILS.MpsToKnots(NextWP:GetVelocity())
+    if speed<0.5 and ExpectedSpeed>0 and not (self.detour or self.turnintowind) then      
+      if not self.holdtimestamp then
+        self:E(self.lid..string.format("Carrier came to an unexpected standstill. Trying to re-route in 3 min. Speed=%.1f knots, expected=%.1f knots", speed, ExpectedSpeed))
+        self.holdtimestamp=timer.getTime()
+      else 
+        if holdtime>3*60 then
+          local coord=self:GetCoordinate():Translate(500, hdg+10)
+          --coord:MarkToAll("Re-route after standstill.")
+          self:CarrierResumeRoute(coord)
+          self.holdtimestamp=nil
+        end
+      end
+    end
 
     -- Debug info.
-    local text=string.format("Time %s - Status %s (case=%d) - Speed=%.1f kts - Heading=%d - WP=%d - ETA=%s - Turning=%s - Collision Warning=%s",
-    clock, self:GetState(), self.case, self.carrier:GetVelocityKNOTS(), hdg, self.currentwp, eta, tostring(self.turning), tostring(collision))
+    local text=string.format("Time %s - Status %s (case=%d) - Speed=%.1f kts - Heading=%d - WP=%d - ETA=%s - Turning=%s - Collision Warning=%s - Detour=%s - Turn Into Wind=%s - Holdtime=%d sec",
+    clock, self:GetState(), self.case, speed, hdg, self.currentwp, eta, tostring(self.turning), tostring(collision), tostring(self.detour), tostring(self.turnintowind), holdtime)
     self:T(self.lid..text)
     
     -- Players online:
@@ -13130,7 +13185,7 @@ end
 --- Get next waypoint of the carrier.
 -- @param #AIRBOSS self
 -- @return Core.Point#COORDINATE Coordinate of the next waypoint.
--- @return #number Number of waypoint
+-- @return #number Number of waypoint.
 function AIRBOSS:_GetNextWaypoint()
 
   -- Next waypoint.  
@@ -13453,14 +13508,50 @@ function AIRBOSS._ResumeRoute(group, airboss, gotocoord)
   -- Waypoints array.
   local waypoints={}
   
+  -- Current position.
+  local c0=group:GetCoordinate()
+  
   -- Current positon as first waypoint.
-  local wp0=group:GetCoordinate():WaypointGround(speedkmh)
+  local wp0=c0:WaypointGround(speedkmh)
   table.insert(waypoints, wp0)
   
   -- First goto this coordinate.
   if gotocoord then
+  
+    --gotocoord:MarkToAll(string.format("Goto waypoint speed=%.1f km/h", speedkmh))
+    
+    local headingto=c0:HeadingTo(gotocoord)
+    
+    local hdg1=airboss:GetHeading()
+    local hdg2=c0:HeadingTo(gotocoord)
+    local delta=airboss:_GetDeltaHeading(hdg1, hdg2)
+    
+    --env.info(string.format("FF hdg1=%d, hdg2=%d, delta=%d", hdg1, hdg2, delta))
+
+  
+    -- Add additional turn points 
+    if delta>90 then
+    
+      -- Turn radius 3 NM.
+      local turnradius=UTILS.NMToMeters(3)
+
+      local gotocoordh=c0:Translate(turnradius, hdg1+45)
+      --gotocoordh:MarkToAll(string.format("Goto help waypoint 1 speed=%.1f km/h", speedkmh))
+      
+      local wp=gotocoordh:WaypointGround(speedkmh)
+      table.insert(waypoints, wp)
+
+      gotocoordh=c0:Translate(turnradius, hdg1+90)
+      --gotocoordh:MarkToAll(string.format("Goto help waypoint 2 speed=%.1f km/h", speedkmh))
+      
+      wp=gotocoordh:WaypointGround(speedkmh)
+      table.insert(waypoints, wp)
+          
+    end
+    
     local wp1=gotocoord:WaypointGround(speedkmh)
-    table.insert(waypoints, wp1)  
+    table.insert(waypoints, wp1)    
+    
   end
   
   -- Debug message.
@@ -13468,7 +13559,7 @@ function AIRBOSS._ResumeRoute(group, airboss, gotocoord)
   
   -- Debug message.
   MESSAGE:New(text,10):ToAllIf(airboss.Debug)
-  airboss:I(airboss.lid..text)  
+  airboss:I(airboss.lid..text)
   
   -- Loop over all remaining waypoints.
   for i=Nextwp, #airboss.waypoints do
@@ -13483,6 +13574,8 @@ function AIRBOSS._ResumeRoute(group, airboss, gotocoord)
     if speed<1 then
       speed=UTILS.KnotsToKmph(10)
     end
+    
+    --coord:MarkToAll(string.format("Resume route WP %d, speed=%.1f km/h", i, speed))
     
     -- Create waypoint.
     local wp=coord:WaypointGround(speed)
@@ -15252,6 +15345,29 @@ function AIRBOSS:_AddF10Commands(_unitName)
         missionCommands.addCommandForGroup(gid, "Greenie Board", _resultsPath, self._DisplayScoreBoard,   self, _unitName) -- F1
         missionCommands.addCommandForGroup(gid, "My LSO Grades", _resultsPath, self._DisplayPlayerGrades, self, _unitName) -- F2
         missionCommands.addCommandForGroup(gid, "Last Debrief",  _resultsPath, self._DisplayDebriefing,   self, _unitName) -- F3
+      
+        -- F10/Airboss/<Carrier>/F2 Kneeboard/F2 Skipper/
+        if self.skipperMenu then
+          local _skipperPath =missionCommands.addSubMenuForGroup(gid, "Skipper", _kneeboardPath)
+          local _menusetspeed=missionCommands.addSubMenuForGroup(gid, "Set Speed", _skipperPath)
+          missionCommands.addCommandForGroup(gid, "10 knots",   _menusetspeed, self._SkipperRecoverySpeed, self, _unitName, 10)
+          missionCommands.addCommandForGroup(gid, "15 knots",   _menusetspeed, self._SkipperRecoverySpeed, self, _unitName, 15)
+          missionCommands.addCommandForGroup(gid, "20 knots",   _menusetspeed, self._SkipperRecoverySpeed, self, _unitName, 20)
+          missionCommands.addCommandForGroup(gid, "25 knots",   _menusetspeed, self._SkipperRecoverySpeed, self, _unitName, 25)
+          missionCommands.addCommandForGroup(gid, "30 knots",   _menusetspeed, self._SkipperRecoverySpeed, self, _unitName, 30)
+          local _menusetrtime=missionCommands.addSubMenuForGroup(gid, "Set Time",  _skipperPath)
+          missionCommands.addCommandForGroup(gid, "15 min", _menusetrtime, self._SkipperRecoveryTime, self, _unitName, 15)
+          missionCommands.addCommandForGroup(gid, "30 min", _menusetrtime, self._SkipperRecoveryTime, self, _unitName, 30)
+          missionCommands.addCommandForGroup(gid, "45 min", _menusetrtime, self._SkipperRecoveryTime, self, _unitName, 45)
+          missionCommands.addCommandForGroup(gid, "60 min", _menusetrtime, self._SkipperRecoveryTime, self, _unitName, 60)
+          missionCommands.addCommandForGroup(gid, "90 min", _menusetrtime, self._SkipperRecoveryTime, self, _unitName, 90)
+          missionCommands.addCommandForGroup(gid, "U-turn On/Off", _skipperPath, self._SkipperRecoveryUturn, self, _unitName)
+          missionCommands.addCommandForGroup(gid, "Start CASE I",  _skipperPath, self._SkipperStartRecovery, self, _unitName, 1)
+          missionCommands.addCommandForGroup(gid, "Start CASE II", _skipperPath, self._SkipperStartRecovery, self, _unitName, 2)
+          missionCommands.addCommandForGroup(gid, "Start CASE III",_skipperPath, self._SkipperStartRecovery, self, _unitName, 3)
+          missionCommands.addCommandForGroup(gid, "Stop Recovery", _skipperPath, self._SkipperStopRecovery,  self, _unitName)
+        end          
+              
         -- F10/Airboss/<Carrier/F2 Kneeboard/
         missionCommands.addCommandForGroup(gid, "Carrier Info",     _kneeboardPath, self._DisplayCarrierInfo,    self, _unitName) -- F2
         missionCommands.addCommandForGroup(gid, "Weather Report",   _kneeboardPath, self._DisplayCarrierWeather, self, _unitName) -- F3
@@ -15278,6 +15394,149 @@ function AIRBOSS:_AddF10Commands(_unitName)
   end
 
 end
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- SKIPPER MENU
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Reset player status. Player is removed from all queues and its status is set to undefined.
+-- @param #AIRBOSS self
+-- @param #string _unitName Name fo the player unit.
+-- @param #number case Recovery case.
+function AIRBOSS:_SkipperStartRecovery(_unitName, case)
+
+  -- Get player unit and name.
+  local _unit, _playername = self:_GetPlayerUnitAndName(_unitName)
+    
+  -- Check if we have a unit which is a player.
+  if _unit and _playername then
+    local playerData=self.players[_playername] --#AIRBOSS.PlayerData
+        
+    if playerData then
+      
+      -- Inform player.
+      local text=string.format("affirm, Case %d recovery will start in 5 min for %d min. Wind on deck %d knots. U-turn=%s.", case, self.skipperTime, self.skipperSpeed, tostring(self.skipperUturn))
+      if self:IsRecovering() then
+        text="negative, carrier is already recovering."
+        self:MessageToPlayer(playerData, text, "AIRBOSS")
+        return
+      end
+      self:MessageToPlayer(playerData, text, "AIRBOSS")
+
+      -- Recovery staring in 5 min for 30 min.
+      local t0=timer.getAbsTime()+5*60
+      local t9=t0+self.skipperTime*60
+      local C0=UTILS.SecondsToClock(t0)
+      local C9=UTILS.SecondsToClock(t9)
+    
+      -- Carrier will turn into the wind. Wind on deck 25 knots. U-turn on.
+      self:AddRecoveryWindow(C0, C9, case, 30, true, self.skipperSpeed, self.skipperUturn)
+      
+    end
+  end
+end
+
+--- Skipper Stop recovery function.
+-- @param #AIRBOSS self
+-- @param #string _unitName Name fo the player unit.
+function AIRBOSS:_SkipperStopRecovery(_unitName)
+
+  -- Get player unit and name.
+  local _unit, _playername = self:_GetPlayerUnitAndName(_unitName)
+    
+  -- Check if we have a unit which is a player.
+  if _unit and _playername then
+    local playerData=self.players[_playername] --#AIRBOSS.PlayerData
+        
+    if playerData then
+      
+      -- Inform player.
+      local text="roger, stopping recovery right away."
+      if not self:IsRecovering() then
+        text="negative, carrier is currently not recovering."
+        self:MessageToPlayer(playerData, text, "AIRBOSS")
+        return        
+      end
+      self:MessageToPlayer(playerData, text, "AIRBOSS")
+      
+      self:RecoveryStop()
+    end
+  end
+end
+
+--- Skipper set recovery time.
+-- @param #AIRBOSS self
+-- @param #string _unitName Name fo the player unit.
+-- @param #number time Recovery time in minutes.
+function AIRBOSS:_SkipperRecoveryTime(_unitName, time)
+
+  -- Get player unit and name.
+  local _unit, _playername = self:_GetPlayerUnitAndName(_unitName)
+    
+  -- Check if we have a unit which is a player.
+  if _unit and _playername then
+    local playerData=self.players[_playername] --#AIRBOSS.PlayerData
+        
+    if playerData then
+      
+      -- Inform player.
+      local text=string.format("roger, manual recovery time set to %d min.", time)
+      self:MessageToPlayer(playerData, text, "AIRBOSS")
+      
+      self.skipperTime=time
+      
+    end
+  end
+end
+
+--- Skipper set recovery speed.
+-- @param #AIRBOSS self
+-- @param #string _unitName Name fo the player unit.
+-- @param #number speed Recovery speed in knots.
+function AIRBOSS:_SkipperRecoverySpeed(_unitName, speed)
+
+  -- Get player unit and name.
+  local _unit, _playername = self:_GetPlayerUnitAndName(_unitName)
+    
+  -- Check if we have a unit which is a player.
+  if _unit and _playername then
+    local playerData=self.players[_playername] --#AIRBOSS.PlayerData
+        
+    if playerData then
+      
+      -- Inform player.
+      local text=string.format("roger, wind on deck set to %d knots.", speed)
+      self:MessageToPlayer(playerData, text, "AIRBOSS")
+      
+      self.skipperSpeed=speed
+    end
+  end
+end  
+
+--- Skipper set recovery speed.
+-- @param #AIRBOSS self
+-- @param #string _unitName Name fo the player unit.
+function AIRBOSS:_SkipperRecoveryUturn(_unitName)
+
+  -- Get player unit and name.
+  local _unit, _playername = self:_GetPlayerUnitAndName(_unitName)
+    
+  -- Check if we have a unit which is a player.
+  if _unit and _playername then
+    local playerData=self.players[_playername] --#AIRBOSS.PlayerData
+        
+    if playerData then
+    
+      self.skipperUturn=not self.skipperUturn
+      
+      -- Inform player.
+      local text=string.format("roger, U-turn is now %s.", tostring(self.skipperUturn))
+      self:MessageToPlayer(playerData, text, "AIRBOSS")
+      
+    end
+  end
+end  
+
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ROOT MENU
