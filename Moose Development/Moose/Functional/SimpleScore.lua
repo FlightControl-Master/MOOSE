@@ -646,4 +646,112 @@ function SCORING:_EventOnDeadOrCrash( Event )
   end
 end
 
+--- On before "Save" event. Checks if io and lfs are available.
+-- @param #SCORE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #string path (Optional) Path where the file is saved. Default is the DCS root installation folder or your "Saved Games\\DCS" folder if the lfs module is desanitized.
+-- @param #string filename (Optional) File name for saving the player grades. Default is "SCORE-<ALIAS>_LSOgrades.csv".
+function SCORE:onbeforeSave(From, Event, To, path, filename)
+
+  -- Check io module is available.
+  if not io then
+    self:E(self.lid.."ERROR: io not desanitized. Can't save player grades.")
+    return false
+  end
+  
+  -- Check default path.
+  if path==nil and not lfs then
+    self:E(self.lid.."WARNING: lfs not desanitized. Results will be saved in DCS installation root directory rather than your \"Saved Games\DCS\" folder.")
+  end
+
+  return true
+end
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- FSM Functions
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--- On after "Save" event. Player data is saved to file.
+-- @param #SCORE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #string path Path where the file is saved. If nil, file is saved in the DCS root installtion directory or your "Saved Games" folder if lfs was desanitized.
+-- @param #string filename (Optional) File name for saving the player grades. Default is "SCORE-<ALIAS>_LSOgrades.csv".
+function SCORE:onafterSave(From, Event, To, path, filename)
+
+  --- Function that saves data to file
+  local function _savefile(filename, data)
+    local f = io.open(filename, "wb")
+    if f then
+      f:write(data)
+      f:close()
+    end
+  end
+  
+  -- Set path or default.
+  if lfs then
+    path=path or lfs.writedir()
+  end
+
+  -- Set file name.
+  filename=filename or string.format("Score.csv")
+
+  -- Set path.
+  if path~=nil then
+    filename=path.."\\"..filename
+  end
+
+  -- Header line
+  local scores="Name,Pass,Points Final,Points Pass,Grade,Details,Wire,Tgroove,Case,Wind,Modex,Airframe,Carrier Type,Carrier Name,Theatre,Mission Time,Mission Date,OS Date\n"
+  
+  local scores="Name,Player Unit,Player Coalition,Player Category,Score Type,Target Category,Target Name, Target Coalition,Target Player,Target Score,Mission Date, Mission Time, OS Date"
+  
+  -- Loop over all players.
+  local n=0
+  for playername,grades in pairs(self.playerscores) do
+  
+    -- Loop over player grades table.
+    for i,_grade in pairs(grades) do
+      local grade=_grade --#SCORE.LSOgrade
+      
+      -- Check some stuff that could be nil.
+      local wire="n/a"
+      if grade.wire and grade.wire<=4 then
+        wire=tostring(grade.wire)
+      end
+      
+      local Tgroove="n/a"
+      if grade.Tgroove and grade.Tgroove<=360 and grade.case<3 then
+        Tgroove=tostring(UTILS.Round(grade.Tgroove, 1))
+      end
+      
+      local finalscore="n/a"
+      if grade.finalscore then
+        finalscore=tostring(UTILS.Round(grade.finalscore, 1))
+      end
+      
+      -- Compile grade line.
+      scores=scores..string.format("%s,%d,%s,%.1f,%s,%s,%s,%s,%d,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+      playername, i, finalscore, grade.points, grade.grade, grade.details, wire, Tgroove, grade.case,
+      grade.wind, grade.modex, grade.airframe, grade.carriertype, grade.carriername, grade.theatre, grade.mitime, grade.midate, grade.osdate)
+      n=n+1
+    end
+  end
+  
+  -- Info
+  local text=string.format("Saving %d player LSO grades to file %s", n, filename)
+  self:I(self.lid..text)  
+  
+  -- Save file.
+  _savefile(filename, scores)
+end
+
+
+
+
+
 
