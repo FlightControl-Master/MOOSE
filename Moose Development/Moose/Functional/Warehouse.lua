@@ -1743,7 +1743,7 @@ _WAREHOUSEDB  = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.9.0"
+WAREHOUSE.version="0.9.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -2318,6 +2318,7 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #WAREHOUSE self
   -- @param Wrapper.Group#GROUP group the group that was spawned.
   -- @param #WAREHOUSE.Assetitem asset The asset that was spawned.
+  -- @param #WAREHOUSE.Pendingitem request The request of the spawned asset.
 
   --- Triggers the FSM event "AssetSpawned" with a delay when the warehouse has spawned an asset.
   -- @function [parent=#WAREHOUSE] __AssetSpawned
@@ -2325,6 +2326,7 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #number delay Delay in seconds.
   -- @param Wrapper.Group#GROUP group the group that was spawned.
   -- @param #WAREHOUSE.Assetitem asset The asset that was spawned.
+  -- @param #WAREHOUSE.Pendingitem request The request of the spawned asset.
 
   --- On after "AssetSpawned" event user function. Called when the warehouse has spawned an asset.
   -- @function [parent=#WAREHOUSE] OnAfterAssetSpawned
@@ -2334,6 +2336,7 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #string To To state.
   -- @param Wrapper.Group#GROUP group the group that was spawned.
   -- @param #WAREHOUSE.Assetitem asset The asset that was spawned.
+  -- @param #WAREHOUSE.Pendingitem request The request of the spawned asset.
 
 
   --- Triggers the FSM event "AssetLowFuel" when an asset runs low on fuel
@@ -3096,7 +3099,7 @@ function WAREHOUSE:FindAssetInDB(group)
   if aid~=nil then
 
     local asset=_WAREHOUSEDB.Assets[aid]
-    self:E({asset=asset})
+    self:T2({asset=asset})
     if asset==nil then
       self:_ErrorMessage(string.format("ERROR: Asset for group %s not found in the data base!", group:GetName()), 0)
     end
@@ -3149,7 +3152,7 @@ function WAREHOUSE:onafterStart(From, Event, To)
   end
   -- Mark point at road connection.
   if self.road then
-    self.road:MarkToAll(string.format("%s road connection.", self.alias), true)
+    self.markroad=self.road:MarkToCoalition(string.format("%s road connection.",self.alias), self:GetCoalition(), true)
   end
 
   -- Get the closest point on railroad wrt spawnzone of ground assets.
@@ -3163,7 +3166,7 @@ function WAREHOUSE:onafterStart(From, Event, To)
   end
   -- Mark point at rail connection.
   if self.rail then
-    self.rail:MarkToAll(string.format("%s rail connection.", self.alias), true)
+    self.markrail=self.rail:MarkToCoalition(string.format("%s rail connection.", self.alias), self:GetCoalition(), true)
   end
 
   -- Handle events:
@@ -4330,7 +4333,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
       table.insert(_transportassets,_assetitem)
 
       -- Asset spawned FSM function.
-      self:__AssetSpawned(1, spawngroup, _assetitem)
+      self:__AssetSpawned(1, spawngroup, _assetitem, Request)
     end
   end
 
@@ -5269,7 +5272,7 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
       table.insert(_assets, _assetitem)
 
       -- Call FSM function.
-      self:__AssetSpawned(1,_group,_assetitem)
+      self:__AssetSpawned(1,_group,_assetitem, Request)
     else
       self:E(self.wid.."ERROR: Cargo asset could not be spawned!")
     end
@@ -7753,14 +7756,21 @@ function WAREHOUSE:_CheckFuel()
         local group=_group --Wrapper.Group#GROUP
 
         if group and group:IsAlive() then
-
+          
+          -- Get min fuel of group.
           local fuel=group:GetFuelMin()
 
-          self:T2(self.wid..string.format("Transport group %s min fuel state = %.2f %%", group:GetName(), fuel))
+          -- Debug info.
+          self:T2(self.wid..string.format("Transport group %s min fuel state = %.2f", group:GetName(), fuel))
 
+          -- Check if fuel is below threshold for first time.
           if fuel<self.lowfuelthresh and not qitem.lowfuel then
-            self:I(self.wid..string.format("Transport group %s is low on fuel! Min fuel state = %.2f %%", group:GetName(), fuel))
+          
+            -- Set low fuel flag.
+            self:I(self.wid..string.format("Transport group %s is low on fuel! Min fuel state = %.2f", group:GetName(), fuel))
             qitem.lowfuel=true
+            
+            -- Trigger low fuel event.
             local asset=self:FindAssetInDB(group)
             self:AssetLowFuel(asset, qitem)
             break
@@ -7776,13 +7786,20 @@ function WAREHOUSE:_CheckFuel()
 
         if group and group:IsAlive() then
 
+          -- Get min fuel of group.
           local fuel=group:GetFuelMin()
 
-          self:T2(self.wid..string.format("Cargo group %s min fuel state = %.2f %%", group:GetName(), fuel))
+          -- Debug output.
+          self:T2(self.wid..string.format("Cargo group %s min fuel state = %.2f. Threshold = %.2f", group:GetName(), fuel, self.lowfuelthresh))
 
-          if fuel<self.lowfuelthresh and qitem.lowfuel then
-            self:I(self.wid..string.format("Cargo group %s is low on fuel! Min fuel state = %.2f %%", group:GetName(), fuel))
+          -- Check if fuel is below threshold for first time.
+          if fuel<self.lowfuelthresh and not qitem.lowfuel then
+          
+            -- Set low fuel flag.
+            self:I(self.wid..string.format("Cargo group %s is low on fuel! Min fuel state = %.2f", group:GetName(), fuel))
             qitem.lowfuel=true
+            
+            -- Trigger low fuel event.
             local asset=self:FindAssetInDB(group)
             self:AssetLowFuel(asset, qitem)
             break

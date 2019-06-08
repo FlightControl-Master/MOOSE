@@ -78,7 +78,7 @@
 -- @field #boolean trackrockets If true (default), all rocket types are tracked and impact point to closest bombing target is evaluated.
 -- @field #boolean trackmissiles If true (default), all missile types are tracked and impact point to closest bombing target is evaluated.
 -- @field #boolean defaultsmokebomb If true, initialize player settings to smoke bomb.
--- @field #boolean autosafe If true, automatically save results every X seconds.
+-- @field #boolean autosave If true, automatically save results every X seconds.
 -- @extends Core.Base#BASE
 
 --- Enables a mission designer to easily set up practice ranges in DCS. A new RANGE object can be created with the @{#RANGE.New}(rangename) contructor.
@@ -340,7 +340,7 @@ RANGE.MenuF10Root=nil
 
 --- Range script version.
 -- @field #string version
-RANGE.version="2.1.1"
+RANGE.version="2.1.2"
 
 --TODO list:
 --TODO: Verbosity level for messages.
@@ -617,19 +617,19 @@ function RANGE:SetMessageTimeDuration(time)
   return self
 end
 
---- Automatically safe player results to disc.
+--- Automatically save player results to disc.
 -- @param #RANGE self
 -- @return #RANGE self
-function RANGE:SetAutosafeOn()
-  self.autosafe=true
+function RANGE:SetAutosaveOn()
+  self.autosave=true
   return self
 end
 
---- Switch off auto safe player results.
+--- Switch off auto save player results.
 -- @param #RANGE self
 -- @return #RANGE self
-function RANGE:SetAutosafeOff()
-  self.autosafe=false
+function RANGE:SetAutosaveOff()
+  self.autosave=false
   return self
 end
 
@@ -662,7 +662,7 @@ function RANGE:SetRangeRadius(radius)
   return self
 end
 
---- Set player setting whether bomb impact points are smoked or not
+--- Set player setting whether bomb impact points are smoked or not.
 -- @param #RANGE self
 -- @param #boolean switch If true nor nil default is to smoke impact points of bombs.
 -- @return #RANGE self
@@ -1650,7 +1650,7 @@ function RANGE:onafterStatus(From, Event, To)
   self:_CheckPlayers()
 
   -- Save results.
-  if self.autosafe then
+  if self.autosave then
     self:Save()
   end
 
@@ -1725,10 +1725,10 @@ function RANGE:onafterSave(From, Event, To)
   end
 
   -- Path.
-  local path=lfs.writedir()
+  local path=lfs.writedir()..[[Logs\]]
 
   -- Set file name.
-  local filename=path..string.format("\\RANGE-%s_BombingResults.csv", self.rangename)
+  local filename=path..string.format("RANGE-%s_BombingResults.csv", self.rangename)
 
   -- Header line.
   local scores="Name,Pass,Target,Distance,Radial,Quality,Weapon,Airframe,Mission Time"
@@ -1788,11 +1788,11 @@ function RANGE:onafterLoad(From, Event, To)
     end
   end
 
-  -- Path.
-  local path=lfs.writedir()
+  -- Path in DCS log file.
+  local path=lfs.writedir()..[[Logs\]]
 
   -- Set file name.
-  local filename=path..string.format("\\RANGE-%s_BombingResults.csv", self.rangename)
+  local filename=path..string.format("RANGE-%s_BombingResults.csv", self.rangename)
 
   -- Info message.
   local text=string.format("Loading player bomb results from file %s", filename)
@@ -2185,15 +2185,16 @@ function RANGE:_DisplayBombTargets(_unitname)
     local _text="Bomb Target Locations:"
 
     for _,_bombtarget in pairs(self.bombingTargets) do
-      local _target=_bombtarget.target --Wrapper.Positionable#POSITIONABLE
+      local bombtarget=_bombtarget --#RANGE.BombTarget
 
       -- Coordinate of bombtarget.
-      local coord=self:_GetBombTargetCoordinate(_bombtarget)
+      local coord=self:_GetBombTargetCoordinate(bombtarget)
 
       if coord then
 
-        local mycoord=coord:ToStringA2G(_unit, _settings)
-        _text=_text..string.format("\n- %s: %s",_bombtarget.name or "unknown", mycoord)
+        local ca2g=coord:ToStringA2G(_unit, _settings)
+        local lldms=coord:ToStringLLDMS()        
+        _text=_text..string.format("\n- %s: %s %s", bombtarget.name or "unknown", ca2g, lldms)
       end
     end
 
@@ -2708,21 +2709,19 @@ function RANGE:_MarkTargetsOnMap(_unitName)
   self:F(_unitName)
 
   -- Get group.
-  local group=nil
+  local group=nil  --Wrapper.Group#GROUP
   if _unitName then
     group=UNIT:FindByName(_unitName):GetGroup()
   end
 
   -- Mark bomb targets.
   for _,_bombtarget in pairs(self.bombingTargets) do
-    local _target=_bombtarget.target --Wrapper.Positionable#POSITIONABLE
-    if _target and _target:IsAlive() then
-      local coord=_target:GetCoordinate() --Core.Point#COORDINATE
-      if group then
-        coord:MarkToGroup("Bomb target ".._bombtarget.name, group)
-      else
-        coord:MarkToAll("Bomb target ".._bombtarget.name)
-      end
+    local bombtarget=_bombtarget --#RANGE.BombTarget
+    local coord=self:_GetBombTargetCoordinate(_bombtarget)
+    if group then
+      coord:MarkToGroup(string.format("Bomb target %s:\n%s\n%s", bombtarget.name, coord:ToStringLLDMS(), coord:ToStringBULLS(group:GetCoalition())), group)
+    else
+      coord:MarkToAll(string.format("Bomb target %s", bombtarget.name))
     end
   end
 
@@ -2733,7 +2732,8 @@ function RANGE:_MarkTargetsOnMap(_unitName)
       if _target and _target:IsAlive() then
         local coord=_target:GetCoordinate() --Core.Point#COORDINATE
         if group then
-          coord:MarkToGroup("Strafe target ".._target:GetName(), group)
+          --coord:MarkToGroup("Strafe target ".._target:GetName(), group)
+          coord:MarkToGroup(string.format("Strafe target %s:\n%s\n%s", _target:GetName(), coord:ToStringLLDMS(), coord:ToStringBULLS(group:GetCoalition())), group)
         else
           coord:MarkToAll("Strafe target ".._target:GetName())
         end

@@ -2204,9 +2204,8 @@ end
 -- end
 function SPAWN:GetLastAliveGroup()
 	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix } )
-
-  self.SpawnIndex = self:_GetLastIndex()
-  for SpawnIndex = self.SpawnIndex, 1, -1 do
+  
+  for SpawnIndex = self.SpawnCount, 1, -1 do -- Added
     local SpawnGroup = self:GetGroupFromIndex( SpawnIndex )
     if SpawnGroup and SpawnGroup:IsAlive() then
       self.SpawnIndex = SpawnIndex

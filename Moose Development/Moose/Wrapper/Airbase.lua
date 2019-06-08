@@ -226,7 +226,7 @@ AIRBASE.Normandy = {
 -- * AIRBASE.PersianGulf.Al_Dhafra_AB
 -- * AIRBASE.PersianGulf.Al_Maktoum_Intl
 -- * AIRBASE.PersianGulf.Al_Minhad_AB
--- * AIRBASE.PersianGulf.Bandar-e-Jask_airfield
+-- * AIRBASE.PersianGulf.Bandar_e_Jask_airfield
 -- * AIRBASE.PersianGulf.Bandar_Abbas_Intl
 -- * AIRBASE.PersianGulf.Bandar_Lengeh
 -- * AIRBASE.PersianGulf.Dubai_Intl

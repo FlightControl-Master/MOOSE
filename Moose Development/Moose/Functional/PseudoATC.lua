@@ -98,7 +98,7 @@ PSEUDOATC.id="PseudoATC | "
 
 --- PSEUDOATC version.
 -- @field #number version
-PSEUDOATC.version="0.9.1"
+PSEUDOATC.version="0.9.2"
 
 -----------------------------------------------------------------------------------------------------------------------------------------
 
@@ -807,8 +807,9 @@ function PSEUDOATC:ReportBR(GID, UID, position, location)
   -- Message text.
   local text=string.format("%s: Bearing %s, Range %s.", location, Bs, Rs)
 
-  -- Send message to player group.  
-  MESSAGE:New(text, self.mdur):ToGroup(self.player[id].group)      
+  -- Send message
+  self:_DisplayMessageToGroup(self.group[GID].player[UID].unit, text, self.mdur, true)  
+  
 end
 
 --- Report altitude above ground level of player unit.

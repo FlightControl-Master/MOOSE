@@ -1491,7 +1491,7 @@ function RECOVERYTANKER:_ActivateTACAN(delay)
     local unit=self.tanker:GetUnit(1)
     
     -- Check if unit is alive.
-    if unit:IsAlive() then
+    if unit and unit:IsAlive() then
     
       -- Debug message.
       local text=string.format("Activating recovery tanker TACAN beacon: channel=%d mode=%s, morse=%s.", self.TACANchannel, self.TACANmode, self.TACANmorse)
