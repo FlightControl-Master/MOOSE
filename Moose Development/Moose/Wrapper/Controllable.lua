@@ -863,11 +863,17 @@ function CONTROLLABLE:TaskAttackGroup( AttackGroup, WeaponType, WeaponExpend, At
   local DirectionEnabled = nil
   if Direction then
     DirectionEnabled = true
+  else
+    DirectionEnabled = false
+    Direction=0
   end
 
   local AltitudeEnabled = nil
   if Altitude then
     AltitudeEnabled = true
+  else
+    AltitudeEnabled = false
+    Altitude=0
   end
 
   local DCSTask
@@ -3165,7 +3171,7 @@ function CONTROLLABLE:OptionAlarmStateAuto()
     if self:IsGround() then
       Controller:setOption(AI.Option.Ground.id.ALARM_STATE, AI.Option.Ground.val.ALARM_STATE.AUTO)
     elseif self:IsShip() then 
-      Controller:setOption(AI.Option.Naval.id.ALARM_STATE, AI.Option.Naval.val.ALARM_STATE.AUTO)
+      Controller:setOption(AI.Option.Ground.id.ALARM_STATE, AI.Option.Ground.val.ALARM_STATE.AUTO)
     end
 
     return self
@@ -3188,7 +3194,7 @@ function CONTROLLABLE:OptionAlarmStateGreen()
       Controller:setOption( AI.Option.Ground.id.ALARM_STATE, AI.Option.Ground.val.ALARM_STATE.GREEN )
     elseif self:IsShip() then
       -- AI.Option.Naval.id.ALARM_STATE does not seem to exist!
-      --Controller:setOption( AI.Option.Naval.id.ALARM_STATE, AI.Option.Naval.val.ALARM_STATE.GREEN )
+      Controller:setOption( AI.Option.Ground.id.ALARM_STATE, AI.Option.Ground.val.ALARM_STATE.GREEN )
     end
 
     return self
@@ -3210,7 +3216,7 @@ function CONTROLLABLE:OptionAlarmStateRed()
     if self:IsGround() then
       Controller:setOption(AI.Option.Ground.id.ALARM_STATE, AI.Option.Ground.val.ALARM_STATE.RED)
     elseif self:IsShip() then 
-      Controller:setOption(AI.Option.Naval.id.ALARM_STATE, AI.Option.Naval.val.ALARM_STATE.RED)
+      Controller:setOption(AI.Option.Ground.id.ALARM_STATE, AI.Option.Ground.val.ALARM_STATE.RED)
     end
 
     return self
