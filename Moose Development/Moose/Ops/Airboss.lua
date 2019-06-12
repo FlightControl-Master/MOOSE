@@ -1685,7 +1685,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="1.0.2"
+AIRBOSS.version="1.0.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -3617,15 +3617,27 @@ function AIRBOSS:_CheckRecoveryTimes()
       
         if self:IsRecovering() and not recovery.OVER then
         
-          -- Set carrier to idle.
-          self:RecoveryStop()
-          state="closing now"
+          if #self.Qpattern>0 then
+
+            local extmin=5*#self.Qpattern
+            recovery.STOP=recovery.STOP+extmin*60
+            
+            local text=string.format("We still got flights in the pattern.\nRecovery time prolonged by %d minutes.\nNow get your act together and no more bolters!", extmin)
+            self:MessageToPattern(text, "AIRBOSS", "99", 10, false, nil)
           
-          -- Closed.
-          recovery.OPEN=false
+          else
+        
+            -- Set carrier to idle.
+            self:RecoveryStop()
+            state="closing now"
+            
+            -- Closed.
+            recovery.OPEN=false
+            
+            -- Window just closed.
+            recovery.OVER=true
           
-          -- Window just closed.
-          recovery.OVER=true
+          end          
         else
         
           -- Carrier is already idle.
@@ -3689,10 +3701,11 @@ function AIRBOSS:_CheckRecoveryTimes()
       
         --Debug info
         self:T(self.lid..string.format("Heading=%03d°, Wind=%03d° %.1f kts, Delta=%03d° ==> U-turn=%s", hdg, wind,UTILS.MpsToKnots(vwind), delta, tostring(uturn)))
+              
+        -- Time into the wind 1 day or if longer recovery time + the 5 min early.
+        local t=math.max(nextwindow.STOP-nextwindow.START+300, 60*60*24)
         
-      
-        -- Time into the wind + the 5 min early.
-        local t=nextwindow.STOP-nextwindow.START+300
+        -- Recovery wind on deck in knots.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
         local v=UTILS.KnotsToMps(nextwindow.SPEED)
         
         -- Check that we do not go above max possible speed.

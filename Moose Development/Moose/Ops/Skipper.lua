@@ -73,7 +73,7 @@ SKIPPER = {
 
 --- FlightControl class version.
 -- @field #string version
-SKIPPER.version="0.0.1"
+SKIPPER.version="0.0.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -135,6 +135,57 @@ function SKIPPER:New(carriername)
   --                 From State  -->   Event      -->     To State
   self:AddTransition("Stopped",       "Start",           "Running")     -- Start FSM.
   self:AddTransition("*",             "Status",          "*")           -- Update status.
+  self:AddTransition("*",             "IntruderAlert",   "*")           -- New intruder detected.
+  
+  ------------------------
+  --- Pseudo Functions ---
+  ------------------------
+
+  --- Triggers the FSM event "Start". Starts the SKIPPER. Initializes parameters and starts event handlers.
+  -- @function [parent=#SKIPPER] Start
+  -- @param #SKIPPER self
+
+  --- Triggers the FSM event "Start" after a delay. Starts the SKIPPER. Initializes parameters and starts event handlers.
+  -- @function [parent=#SKIPPER] __Start
+  -- @param #SKIPPER self
+  -- @param #number delay Delay in seconds.
+
+  --- Triggers the FSM event "Stop". Stops the SKIPPER and all its event handlers.
+  -- @param #SKIPPER self
+
+  --- Triggers the FSM event "Stop" after a delay. Stops the SKIPPER and all its event handlers.
+  -- @function [parent=#SKIPPER] __Stop
+  -- @param #SKIPPER self
+  -- @param #number delay Delay in seconds.
+
+  --- Triggers the FSM event "Status".
+  -- @function [parent=#SKIPPER] Status
+  -- @param #SKIPPER self
+
+  --- Triggers the FSM event "Status" after a delay.
+  -- @function [parent=#SKIPPER] __Status
+  -- @param #SKIPPER self
+  -- @param #number delay Delay in seconds.  
+
+  --- Triggers the FSM event "IntruderAlert".
+  -- @function [parent=#SKIPPER] IntruderAlert
+  -- @param #SKIPPER self
+  -- @param #SKIPPER.Intruder Intruder data table.
+
+  --- Triggers the FSM delayed event "IntruderAlert".
+  -- @function [parent=#SKIPPER] __IntruderAlert
+  -- @param #SKIPPER self
+  -- @param #number delay Delay in seconds before the function is called.
+  -- @param #SKIPPER.Intruder Intruder data table
+
+  --- On after "IntruderAlert" event user function. Called when a missile was launched.
+  -- @function [parent=#SKIPPER] OnAfterIntruderAlert
+  -- @param #SKIPPER self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #SKIPPER.Intruder Intruder data table.
+
 
   -- Debug trace.
   if true then
@@ -142,10 +193,9 @@ function SKIPPER:New(carriername)
     BASE:TraceOnOff(true)
     BASE:TraceClass(self.ClassName)
     BASE:TraceLevel(3)
+    self.arty:GetAmmo(true)
   end
-  
-  self.arty:GetAmmo(true)
-
+   
   return self  
 end
 
@@ -347,6 +397,9 @@ function SKIPPER:_CheckIntruder()
 
       -- Add intruder to list.
       table.insert(self.intruders, intruder)
+      
+      -- Trigger alert!
+      self:IntruderAlert(intruder)
       
     end    
   end
