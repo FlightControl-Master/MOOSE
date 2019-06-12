@@ -1391,12 +1391,16 @@ function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount, WeaponType )
   -- }
 
   local DCSTask
-  DCSTask = { id = 'FireAtPoint',
+  DCSTask = {
+    id = 'FireAtPoint',
     params = {
-      point = Vec2,
-      radius = Radius,
-      expendQty = 100, -- dummy value
-      expendQtyEnabled = false,
+      --point = Vec2,
+      x=Vec2.x,
+      y=Vec2.y,
+      zoneRadius=Radius,
+      expendQty=100,
+      expendQtyEnabled=false,
+      templateId="",
     }
   }
   

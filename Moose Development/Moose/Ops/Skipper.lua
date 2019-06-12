@@ -15,18 +15,22 @@
 -- @type SKIPPER
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug Debug mode. Messages to all about status.
--- @field #string theatre The DCS map used in the mission.
 -- @field #string lid Class id string for output to DCS log file.
--- @field Wrapper.Group#GROUP group The carrier strike group.
--- @field Wrapper.Unit#UNIT carrier The carrier unit.
+-- @field #string theatre The DCS map used in the mission.
 -- @field #string carriername The name of the carrier unit.
+-- @field Wrapper.Unit#UNIT carrier The carrier unit.
+-- @field Wrapper.Group#GROUP group The carrier strike group.
+-- @field #string alias Skipper alias.
+-- @field #table menu Table of menu items.
+-- @field #boolean menusingle If true, menus are optimized for a single carrier per coalition.
 -- @field #table waypoints Table of waypoint coordinates as defined in the mission editor.
 -- @field #number currentwp Current waypoint, i.e. the one that was passed last. Counting starts a one. 
--- @field Ops.Airboss#AIRBOSS airboss The airboss of the carrier.
+-- @field Ops.Airboss#SKIPPER airboss The airboss of the carrier.
 -- @field Functional.Warehouse#WAREHOUSE warehouse The warehouse of the carrier.
 -- @field Functional.Artillery#ARTY arty The artillery object of the carrier.
 -- @field Core.Zone#ZONE_UNIT zoneCCA Carrier Controlled Area, 50 NM zone around the carrier.
 -- @field #table intruders Table of intruders, i.e. groups inside the CCA. Each element is of type #SKIPPPER.Intruder.
+-- @field #boolean adinfinitum If true, carrier patrols ad infinitum, i.e. after reaching the final waypoint continues again.
 -- @extends Core.Fsm#FSM
 
 --- Be surprised!
@@ -48,6 +52,9 @@ SKIPPER = {
   carriername    =   nil,
   carrier        =   nil,
   group          =   nil,
+  alias          =   nil,
+  menu           =   nil,
+  menusingle     =   nil,
   waypoints      =   nil,
   currentwp      =   nil,
   airboss        =   nil,
@@ -56,6 +63,7 @@ SKIPPER = {
   zoneCCA        =   nil,
   zoneCCZ        =   nil,
   intruders      =    {},
+  adinfinitum    =   nil,
 }
 
 --- Intruder.
@@ -73,7 +81,7 @@ SKIPPER = {
 
 --- FlightControl class version.
 -- @field #string version
-SKIPPER.version="0.0.2"
+SKIPPER.version="0.0.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -88,8 +96,9 @@ SKIPPER.version="0.0.2"
 --- Create a new SKIPPER class object for a specific aircraft carrier unit.
 -- @param #SKIPPER self
 -- @param #string carriername Name of the carrier.
+-- @param #string alias Skipper alias.
 -- @return #SKIPPER self
-function SKIPPER:New(carriername)
+function SKIPPER:New(carriername, alias)
 
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #SKIPPER
@@ -102,13 +111,15 @@ function SKIPPER:New(carriername)
     return nil
   end
   
+  self.alias=alias or carriername
+  
   self.group=self.carrier:GetGroup()
   
-  self.arty=ARTY:New(self.group, carriername)
+  self.arty=ARTY:New(self.group, carriername, self.alias)
   
-  self.warehouse=WAREHOUSE:New(carriername)
+  self.warehouse=WAREHOUSE:New(carriername, self.alias)
   
-  self.airboss=AIRBOSS:New(carriername)
+  self.airboss=AIRBOSS:New(carriername, self.alias)
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("SKIPPER %s |", self.carriername)
@@ -176,7 +187,7 @@ function SKIPPER:New(carriername)
   -- @function [parent=#SKIPPER] __IntruderAlert
   -- @param #SKIPPER self
   -- @param #number delay Delay in seconds before the function is called.
-  -- @param #SKIPPER.Intruder Intruder data table
+  -- @param #SKIPPER.Intruder Intruder data table.
 
   --- On after "IntruderAlert" event user function. Called when a missile was launched.
   -- @function [parent=#SKIPPER] OnAfterIntruderAlert
@@ -203,6 +214,21 @@ end
 -- User Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Optimized F10 radio menu for a single carrier. The menu entries will be stored directly under F10 Other/Skipper/ and not F10 Other/Skipper/"Carrier Alias"/.
+-- **WARNING**: If you use this with two SKIPPER objects/carriers, the radio menu will be screwed up!
+-- @param #SKIPPER self
+-- @param #boolean switch If true or nil single menu is enabled. If false, menu is for multiple carriers in the mission.
+-- @return #SKIPPER self
+function SKIPPER:SetMenuSingleCarrier(switch)
+  if switch==true or switch==nil then
+    self.menusingle=true
+  else
+    self.menusingle=false
+  end
+  return self
+end
+
+
 --- Get carrier coalition.
 -- @param #SKIPPER self
 -- @return #number Coalition side of carrier.
@@ -218,7 +244,7 @@ function SKIPPER:GetCoordinate()
 end
 
 
---- Get AIRBOSS object associated with the carrier.
+--- Get SKIPPER object associated with the carrier.
 -- @param #SKIPPER self
 -- @return Ops.Airboss#AIRBOSS Airboss object.
 function SKIPPER:GetAirboss()
@@ -558,11 +584,30 @@ end
 -- @return #SKIPPER self
 function SKIPPER:_SetMenuCoalition()
 
+  if true then
+    return
+  end  
+
+  -- Get coalition.
   local Coalition=self:GetCoalition()
+  
+  -- Init menu table.
+  self.menu=self.menu or {}
 
-  local menu={}
-
-  menu.Skipper=MENU_COALITION:New(Coalition, "Skipper")
+  local menu=self.menu
+  
+  if self.menusingle then
+    -- F10/Skipper/...
+    if not menu.Skipper then
+      menu.Skipper=MENU_COALITION:New(Coalition, "Skipper")
+    end
+  else
+    -- F10/Skipper/<Carrier Alias>/...
+    if not menu.Root then
+      menu.Root=MENU_COALITION:New(Coalition, "Skipper")
+    end
+    menu.Skipper=MENU_COALITION:New(Coalition, self.alias, menu.Root)
+  end  
   
   menu.SetROE       = MENU_COALITION:New(Coalition, "Set ROE", menu.Skipper)
   menu.SetROE_Hold  = MENU_COALITION_COMMAND:New(Coalition, "Weapon Hold", menu.SetROE, self._SetROE, self, "Hold")
