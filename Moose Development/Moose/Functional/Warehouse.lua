@@ -1634,11 +1634,13 @@ WAREHOUSE = {
 -- @field #string UNITTYPE Typename of the DCS unit, e.g. "A-10C".
 -- @field #string ATTRIBUTE Generalized attribute @{#WAREHOUSE.Attribute}.
 -- @field #string CATEGORY Asset category of type DCS#Group.Category, i.e. GROUND, AIRPLANE, HELICOPTER, SHIP, TRAIN.
+-- @field #string ASSIGNMENT Assignment of asset when it was added.
 WAREHOUSE.Descriptor = {
   GROUPNAME="templatename",
   UNITTYPE="unittype",
   ATTRIBUTE="attribute",
   CATEGORY="category",
+  ASSIGNMENT="assignment",
 }
 
 --- Generalized asset attributes. Can be used to request assets with certain general characteristics. See [DCS attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes) on hoggit.
@@ -1743,7 +1745,7 @@ _WAREHOUSEDB  = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.9.2"
+WAREHOUSE.version="0.9.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.

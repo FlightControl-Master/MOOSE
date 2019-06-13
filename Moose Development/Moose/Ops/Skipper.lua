@@ -584,17 +584,17 @@ end
 -- @return #SKIPPER self
 function SKIPPER:_SetMenuCoalition()
 
-  if true then
-    return
-  end  
-
   -- Get coalition.
   local Coalition=self:GetCoalition()
   
   -- Init menu table.
   self.menu=self.menu or {}
 
-  local menu=self.menu
+  -- Init menu coalition table.
+  self.menu[Coalition]=self.menu[Coalition] or {}
+  
+  -- Shortcut.
+  local menu=self.menu[Coalition]
   
   if self.menusingle then
     -- F10/Skipper/...
@@ -630,8 +630,9 @@ function SKIPPER:_SetMenuCoalition()
   menu.SetSpeed_99  = MENU_COALITION_COMMAND:New(Coalition, "Restore Route", menu.SetSpeed, self.CarrierResume, self)
   
   menu.Defence           = MENU_COALITION:New(Coalition, "Defence", menu.Skipper)
+  menu.Defence_Intruders = MENU_COALITION:New(Coalition, "Intruders", menu.Defence)
   menu.Defence_Ammo      = MENU_COALITION_COMMAND:New(Coalition, "Report Ammo", menu.Defence, self.arty.GetAmmo, self.arty, true)
-  menu.Defence_Intruders = MENU_COALITION_COMMAND:New(Coalition, "Report Intruders", menu.Defence, self._ListIntruders, self)
+  menu.Defence_IntruderR = MENU_COALITION_COMMAND:New(Coalition, "Report Intruders", menu.Defence, self._ListIntruders, self)
   
   if self.airboss then
     menu.Recovery=MENU_COALITION:New(Coalition, "Recovery", menu.Skipper)
@@ -645,7 +646,7 @@ function SKIPPER:_SetMenuCoalition()
     menu.SetWoD_30 = MENU_COALITION_COMMAND:New(Coalition, "30 knots", menu.SetWoD, self._SetWoD, self, 30)
     
     -- Set Duration.
-    menu.SetRtime    = MENU_COALITION:New(Coalition, "Duration", menu.Recovery)    
+    menu.SetRtime    = MENU_COALITION:New(Coalition, "Duration", menu.Recovery)
     menu.SetRtime_15 = MENU_COALITION_COMMAND:New(Coalition, "15 min", menu.SetRtime, self._SetRtime, self, 15)
     menu.SetRtime_30 = MENU_COALITION_COMMAND:New(Coalition, "30 min", menu.SetRtime, self._SetRtime, self, 30)
     menu.SetRtime_45 = MENU_COALITION_COMMAND:New(Coalition, "45 min", menu.SetRtime, self._SetRtime, self, 45)
@@ -660,6 +661,80 @@ function SKIPPER:_SetMenuCoalition()
     menu.Rstop    = MENU_COALITION_COMMAND:New(Coalition, "Stop Recovery",  menu.Recovery, self._Rstop, self)
   end
   
+end
+
+--- Intruders.
+-- @param #SKIPPER self
+-- @param #SKIPPER.Intruder intruder The intruder data.
+-- @param #number weapontype Type of weapon.
+function SKIPPER:LaunchCAP(intruder, weapontype)
+
+  self.warehouse:AddRequest(self.warehouse, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.AIR_FIGHTER, 2, nil, nil, nil, "CAP")
+
+  function self.warehouse:OnAfterSelfRequest(From, Event, To, Groupset, Request)
+    local request=Request --Functional.Warehouse#WAREHOUSE.Pendingitem
+    local groupset=Groupset --Core.Set#SET_GROUP
+    
+    for _,group in pairs(groupset:GetSet()) do
+    
+      if request.assignment=="CAP" then
+      
+        local wp={}
+        wp[1]=self:GetCoordinate():WaypointAirTakeOffParking()
+        --wp[2]=
+          
+      end
+      
+    end
+  end
+end
+
+
+
+
+--- Intruders.
+-- @param #SKIPPER self
+-- @param #SKIPPER.Intruder intruder The intruder data.
+-- @param #number weapontype Type of weapon.
+function SKIPPER:EngageArty(intruder, weapontype)
+
+  weapontype=weapontype or ARTY.WeaponType.Auto
+
+  if intruder.group and intruder.group:IsAlive() then
+  
+    -- Current position.
+    local coord=intruder.group:GetCoordinate()
+  
+    if intruder.category==Group.Category.GROUND or intruder.category==Group.Category.TRAIN then
+      self.arty:AssignTargetCoord(coord, 50, 100, 5, 1, nil, weapontype, intruder.groupname, false)
+    elseif intruder.category==Group.Category.SHIP then
+      self.arty:AssignAttackGroup(intruder.group, 50, 100, 5, 1, nil, weapontype, intruder.groupname, false)
+    elseif intruder.category==Group.Category.AIRPLANE or intruder.category==Group.Category.HELICOPTER then    
+      self.arty:AssignAttackGroup(intruder.group, 50, 100, 5, 1, nil, weapontype, intruder.groupname, false)
+    end
+    
+  end
+end
+
+
+--- Intruders.
+-- @param #SKIPPER self
+-- @param #SKIPPER.Intruder intruder The intruder data.
+function SKIPPER:_AddIntruderMenu(intruder)
+
+  local Coalition=self:GetCoalition()
+
+  local root=self.menu[Coalition].Defence_Intruders
+  
+  local menu=MENU_COALITION:New(Coalition, intruder.typename, root)
+  
+  if intruder.category==Group.Category.GROUND then
+    MENU_COALITION_COMMAND:New(Coalition, "Engage Shells", menu, self.EngageArty, self, intruder, ARTY.WeaponType.Cannon)
+    MENU_COALITION_COMMAND:New(Coalition, "Engage Cruise M", menu, self.EngageArty, self, intruder, ARTY.WeaponType.CruiseMissile)
+  elseif intruder.category==Group.Category.SHIP then
+    MENU_COALITION_COMMAND:New(Coalition, "Engage", menu, self.EngageArty, self, intruder)
+  end
+
 end
 
 --- Intruders.
