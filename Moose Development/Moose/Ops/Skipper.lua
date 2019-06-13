@@ -424,6 +424,9 @@ function SKIPPER:_CheckIntruder()
       -- Add intruder to list.
       table.insert(self.intruders, intruder)
       
+      -- Add menu.
+      self:_AddIntruderMenu(intruder)
+      
       -- Trigger alert!
       self:IntruderAlert(intruder)
       
@@ -688,8 +691,6 @@ function SKIPPER:LaunchCAP(intruder, weapontype)
     end
   end
 end
-
-
 
 
 --- Intruders.
