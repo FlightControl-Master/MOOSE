@@ -25,7 +25,7 @@
 -- @field #boolean menusingle If true, menus are optimized for a single carrier per coalition.
 -- @field #table waypoints Table of waypoint coordinates as defined in the mission editor.
 -- @field #number currentwp Current waypoint, i.e. the one that was passed last. Counting starts a one. 
--- @field Ops.Airboss#SKIPPER airboss The airboss of the carrier.
+-- @field Ops.Airboss#AIRBOSS airboss The airboss of the carrier.
 -- @field Functional.Warehouse#WAREHOUSE warehouse The warehouse of the carrier.
 -- @field Functional.Artillery#ARTY arty The artillery object of the carrier.
 -- @field Core.Zone#ZONE_UNIT zoneCCA Carrier Controlled Area, 50 NM zone around the carrier.
@@ -78,6 +78,7 @@ SKIPPER = {
 -- @field #number category Group category.
 -- @field #string categoryname Group category name.
 -- @field #string typename Type name of group.
+-- @field #table menu The defence menu entries.
 
 --- FlightControl class version.
 -- @field #string version
@@ -673,19 +674,30 @@ end
 function SKIPPER:LaunchCAP(intruder, weapontype)
 
   self.warehouse:AddRequest(self.warehouse, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.AIR_FIGHTER, 2, nil, nil, nil, "CAP")
+  
+  local capcoord=self.zoneCCA:GetRandomCoordinate(self.zoneCCA:GetRadius()/2)
+  
+  local airboss=self.airboss
 
   function self.warehouse:OnAfterSelfRequest(From, Event, To, Groupset, Request)
     local request=Request --Functional.Warehouse#WAREHOUSE.Pendingitem
     local groupset=Groupset --Core.Set#SET_GROUP
     
-    for _,group in pairs(groupset:GetSet()) do
+    for _,_group in pairs(groupset:GetSet()) do
+      local group=_group --Wrapper.Group#GROUP
     
       if request.assignment=="CAP" then
       
+        local capcoord=self.zoneCCA
+        
+        local taskOrbit=group:TaskOrbit(capcoord, 100000, 1000, capcoord:Translate(UTILS.NMToMeters(20), 0))
+      
         local wp={}
         wp[1]=self:GetCoordinate():WaypointAirTakeOffParking()
-        --wp[2]=
-          
+        wp[2]=self:GetCoordinate():WaypointAirTurningPoint("Baro", 300 , {taskOrbit}, "CAP")
+        
+        --airboss:SetExcludeAI()
+        
       end
       
     end
@@ -718,7 +730,7 @@ function SKIPPER:EngageArty(intruder, weapontype)
 end
 
 
---- Intruders.
+--- Add sub menu for this intruder.
 -- @param #SKIPPER self
 -- @param #SKIPPER.Intruder intruder The intruder data.
 function SKIPPER:_AddIntruderMenu(intruder)
@@ -735,8 +747,27 @@ function SKIPPER:_AddIntruderMenu(intruder)
   elseif intruder.category==Group.Category.SHIP then
     MENU_COALITION_COMMAND:New(Coalition, "Engage", menu, self.EngageArty, self, intruder)
   end
+  
+  -- Set menu.
+  intruder.menu=menu
 
 end
+
+--- Remove sub menu for this intruder.
+-- @param #SKIPPER self
+-- @param #SKIPPER.Intruder intruder The intruder data.
+function SKIPPER:_RemoveIntruderMenu(intruder)
+
+  if intruder.menu then
+    local menu=intruder.menu --Core.Menu#MENU_COALITION
+    
+    menu:Remove()
+    
+    intruder.menu=nil
+  end
+
+end
+
 
 --- Intruders.
 -- @param #SKIPPER self
@@ -865,7 +896,7 @@ function SKIPPER:_SetROE(roe)
   MESSAGE:New(string.format("ROE set to %s", roe), 5, self.ClassName):ToCoalition(self:GetCoalition())
 end
 
---- Set alaram state.
+--- Set alarm state. (Not useful/working for ships.)
 -- @param #SKIPPER self
 -- @param #string state "Green", "Red", "Auto".
 function SKIPPER:_SetALS(state)
