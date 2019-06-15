@@ -151,6 +151,10 @@
 --- @type AI_ESCORT
 -- @extends AI.AI_Formation#AI_FORMATION
 
+
+-- TODO: Add the menus when the class Start method is activated.
+-- TODO: Remove the menus when the class Stop method is called.
+
 --- AI_ESCORT class
 -- 
 -- # AI_ESCORT construction methods.
@@ -323,7 +327,7 @@ function AI_ESCORT:TestSmokeDirectionVector( SmokeDirection )
 end
 
 
---- Defines the default menus
+--- Defines the default menus for helicopters.
 -- @param #AI_ESCORT self
 -- @param #number XStart The start position on the X-axis in meters for the first group.
 -- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
@@ -333,7 +337,60 @@ end
 -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
 -- @param #number ZLevels The amount of levels on the Z-axis.
 -- @return #AI_ESCORT
-function AI_ESCORT:Menus( XStart, XSpace, YStart, YSpace, ZStart, ZSpace, ZLevels )
+function AI_ESCORT:MenusHelicopter( XStart, XSpace, YStart, YSpace, ZStart, ZSpace, ZLevels )
+  self:F()
+
+--  self:MenuScanForTargets( 100, 60 )
+
+  self.XStart = XStart or self.XStart
+  self.XSpace = XSpace or self.XSpace
+  self.YStart = YStart or self.YStart
+  self.YSpace = YSpace or self.YSpace
+  self.ZStart = ZStart or self.ZStart
+  self.ZSpace = ZSpace or self.ZSpace
+  self.ZLevels = ZLevels or self.ZLevels
+
+  self:MenuJoinUp()
+  self:MenuFormationTrail(self.XStart,self.XSpace,self.YStart)
+  self:MenuFormationStack(self.XStart,self.XSpace,self.YStart,self.YSpace)
+  self:MenuFormationLeftLine(self.XStart,self.YStart,self.ZStart,self.ZSpace)
+  self:MenuFormationRightLine(self.XStart,self.YStart,self.ZStart,self.ZSpace)
+  self:MenuFormationLeftWing(self.XStart,self.XSpace,self.YStart,self.ZStart,self.ZSpace)
+  self:MenuFormationRightWing(self.XStart,self.XSpace,self.YStart,self.ZStart,self.ZSpace)
+  self:MenuFormationVic(self.XStart,self.XSpace,self.YStart,self.YSpace,self.ZStart,self.ZSpace)
+  self:MenuFormationBox(self.XStart,self.XSpace,self.YStart,self.YSpace,self.ZStart,self.ZSpace,self.ZLevels)
+  
+  self:MenuHoldAtEscortPosition( 30 )
+  self:MenuHoldAtEscortPosition( 100 )
+  self:MenuHoldAtEscortPosition( 500 )
+  self:MenuHoldAtLeaderPosition( 30, 500 )
+  
+  self:MenuFlare()
+  self:MenuSmoke()
+
+  self:MenuReportTargets( 60 )
+  self:MenuAssistedAttack()
+  self:MenuROE()
+  self:MenuROT()
+
+  self:MenuResumeMission()
+
+
+  return self
+end
+
+
+--- Defines the default menus for airplanes.
+-- @param #AI_ESCORT self
+-- @param #number XStart The start position on the X-axis in meters for the first group.
+-- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+-- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+-- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
+-- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+-- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+-- @param #number ZLevels The amount of levels on the Z-axis.
+-- @return #AI_ESCORT
+function AI_ESCORT:MenusAirplanes( XStart, XSpace, YStart, YSpace, ZStart, ZSpace, ZLevels )
   self:F()
 
 --  self:MenuScanForTargets( 100, 60 )
@@ -940,7 +997,7 @@ function AI_ESCORT:MenuReportTargets( Seconds )
   -- Attack Targets
   local FlightMenuAttackNearbyTargets = MENU_GROUP:New( self.PlayerGroup, "Attack targets", self.FlightMenu )
 
-  self.FlightReportTargetsScheduler = SCHEDULER:New( self, self._FlightReportTargetsScheduler, {}, 5, Seconds )
+  self.FlightReportTargetsScheduler = SCHEDULER:New( self, self._FlightReportTargetsScheduler, {}, Seconds, Seconds )
 
   self.EscortGroupSet:ForSomeGroupAlive(
     --- @param Core.Group#GROUP EscortGroup
@@ -1150,7 +1207,7 @@ function AI_ESCORT:_FlightHoldPosition( OrbitGroup, OrbitHeight, OrbitSeconds )
 
   local EscortUnit = self.PlayerUnit
 
-  self.EscortGroupSet:ForSomeGroupAlive(
+  self.EscortGroupSet:ForEachGroupAlive(
     --- @param Core.Group#GROUP EscortGroup
     function( EscortGroup, OrbitGroup )
       if EscortGroup:IsAir() then
@@ -1178,7 +1235,7 @@ end
 
 function AI_ESCORT:_FlightJoinUp()
 
-  self.EscortGroupSet:ForSomeGroupAlive(
+  self.EscortGroupSet:ForEachGroupAlive(
     --- @param Core.Group#GROUP EscortGroup
     function( EscortGroup )
       if EscortGroup:IsAir() then
@@ -1205,7 +1262,7 @@ end
 
 function AI_ESCORT:_FlightFormationTrail( XStart, XSpace, YStart )
 
-  self.EscortGroupSet:ForSomeGroupAlive(
+  self.EscortGroupSet:ForEachGroupAlive(
     --- @param Core.Group#GROUP EscortGroup
     function( EscortGroup )
       if EscortGroup:IsAir() then
@@ -1232,7 +1289,7 @@ end
 
 function AI_ESCORT:_FlightFormationStack( XStart, XSpace, YStart, YSpace )
 
-  self.EscortGroupSet:ForSomeGroupAlive(
+  self.EscortGroupSet:ForEachGroupAlive(
     --- @param Core.Group#GROUP EscortGroup
     function( EscortGroup )
       if EscortGroup:IsAir() then
@@ -1255,7 +1312,7 @@ end
 
 function AI_ESCORT:_FlightFlare( Color, Message )
 
-  self.EscortGroupSet:ForSomeGroupAlive(
+  self.EscortGroupSet:ForEachGroupAlive(
     --- @param Core.Group#GROUP EscortGroup
     function( EscortGroup )
       if EscortGroup:IsAir() then
@@ -1278,7 +1335,7 @@ end
 
 function AI_ESCORT:_FlightSmoke( Color, Message )
 
-  self.EscortGroupSet:ForSomeGroupAlive(
+  self.EscortGroupSet:ForEachGroupAlive(
     --- @param Core.Group#GROUP EscortGroup
     function( EscortGroup )
       if EscortGroup:IsAir() then
@@ -1325,7 +1382,7 @@ end
 
 function AI_ESCORT:_FlightSwitchReportNearbyTargets( ReportTargets )
 
-  self.EscortGroupSet:ForSomeGroupAlive(
+  self.EscortGroupSet:ForEachGroupAlive(
     --- @param Core.Group#GROUP EscortGroup
     function( EscortGroup )
       if EscortGroup:IsAir() then
@@ -1468,7 +1525,7 @@ end
 
 function AI_ESCORT:_FlightAttackTarget( DetectedItem )
 
-  self.EscortGroupSet:ForSomeGroupAlive(
+  self.EscortGroupSet:ForEachGroupAlive(
     --- @param Core.Group#GROUP EscortGroup
     function( EscortGroup, DetectedItem )
       if EscortGroup:IsAir() then
