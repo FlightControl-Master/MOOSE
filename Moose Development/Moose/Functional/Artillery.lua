@@ -3428,7 +3428,7 @@ function ARTY:_FireAtCoord(coord, radius, nshells, weapontype)
   local fire=group:TaskFireAtPoint(vec2, radius, nshells, weapontype)
   
   -- Execute task.
-  group:PushTask(fire)
+  group:SetTask(fire)
 end
 
 --- Set task for firing at a coordinate.

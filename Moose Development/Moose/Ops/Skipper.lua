@@ -15,23 +15,14 @@
 -- @type SKIPPER
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug Debug mode. Messages to all about status.
--- @field #string lid Class id string for output to DCS log file.
--- @field #string theatre The DCS map used in the mission.
+-- @field #string sid Class id string for output to DCS log file.
 -- @field #string carriername The name of the carrier unit.
--- @field Wrapper.Unit#UNIT carrier The carrier unit.
 -- @field Wrapper.Group#GROUP group The carrier strike group.
--- @field #string alias Skipper alias.
 -- @field #table menu Table of menu items.
--- @field #boolean menusingle If true, menus are optimized for a single carrier per coalition.
--- @field #table waypoints Table of waypoint coordinates as defined in the mission editor.
--- @field #number currentwp Current waypoint, i.e. the one that was passed last. Counting starts a one. 
--- @field Ops.Airboss#AIRBOSS airboss The airboss of the carrier.
 -- @field Functional.Warehouse#WAREHOUSE warehouse The warehouse of the carrier.
 -- @field Functional.Artillery#ARTY arty The artillery object of the carrier.
--- @field Core.Zone#ZONE_UNIT zoneCCA Carrier Controlled Area, 50 NM zone around the carrier.
 -- @field #table intruders Table of intruders, i.e. groups inside the CCA. Each element is of type #SKIPPPER.Intruder.
--- @field #boolean adinfinitum If true, carrier patrols ad infinitum, i.e. after reaching the final waypoint continues again.
--- @extends Core.Fsm#FSM
+-- @extends Ops.Airboss#AIRBOSS
 
 --- Be surprised!
 --
@@ -46,24 +37,13 @@
 -- @field #SKIPPER
 SKIPPER = {
   ClassName      = "SKIPPER",
-  Debug          = false,
-  lid            =   nil,
-  theatre        =   nil,
+  sid            =   nil,
   carriername    =   nil,
-  carrier        =   nil,
   group          =   nil,
-  alias          =   nil,
   menu           =   nil,
-  menusingle     =   nil,
-  waypoints      =   nil,
-  currentwp      =   nil,
-  airboss        =   nil,
   warehouse      =   nil,
   arty           =   nil,
-  zoneCCA        =   nil,
-  zoneCCZ        =   nil,
   intruders      =    {},
-  adinfinitum    =   nil,
 }
 
 --- Intruder.
@@ -82,7 +62,7 @@ SKIPPER = {
 
 --- FlightControl class version.
 -- @field #string version
-SKIPPER.version="0.0.3"
+SKIPPER.version="0.0.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -102,17 +82,19 @@ SKIPPER.version="0.0.3"
 function SKIPPER:New(carriername, alias)
 
   -- Inherit everything from FSM class.
-  local self=BASE:Inherit(self, FSM:New()) -- #SKIPPER
-  
-  self.carriername=carriername
-  self.carrier=UNIT:FindByName(carriername)
+  --local self=BASE:Inherit(self, FSM:New()) -- #SKIPPER
+  local self=BASE:Inherit(self, AIRBOSS:New(carriername, alias)) -- #SKIPPER
   
   if not self.carrier then
     BASE:E(string.format("ERROR: Could not find carrier %s!", carriername))
     return nil
   end
   
-  self.alias=alias or carriername
+  --self.alias=alias or carriername
+  
+  --self:
+  
+  self.carriername=carriername
   
   self.group=self.carrier:GetGroup()
   
@@ -120,10 +102,19 @@ function SKIPPER:New(carriername, alias)
   
   self.warehouse=WAREHOUSE:New(carriername, self.alias)
   
-  self.airboss=AIRBOSS:New(carriername, self.alias)
+  local skipper=self
+  
+  --- Function for WAREHOUSE self request events.
+  function self.warehouse:OnAfterSelfRequest(From,Event,To,groupset,request)
+    env.info("FF Warehous self request!")
+    skipper:_SelfRequest(self, groupset, request)
+  end
+  
   
   -- Set some string id for output to DCS.log file.
-  self.lid=string.format("SKIPPER %s |", self.carriername)
+  self.sid=string.format("SKIPPER %s |", self.carriername)
+  
+  --[[
   
   -- Current map.
   self.theatre=env.mission.theatre    
@@ -143,10 +134,14 @@ function SKIPPER:New(carriername, alias)
   -- Start State.
   self:SetStartState("Stopped")
 
+  --]]
+
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
-  self:AddTransition("Stopped",       "Start",           "Running")     -- Start FSM.
-  self:AddTransition("*",             "Status",          "*")           -- Update status.
+  --self:AddTransition("Stopped",       "Start",           "Running")     -- Start FSM.
+  --self:AddTransition("*",             "Status",          "*")           -- Update status.
+  
+  self:AddTransition("*",             "SkipperStatus",   "*")           -- Skipper status update.
   self:AddTransition("*",             "IntruderAlert",   "*")           -- New intruder detected.
   
   ------------------------
@@ -244,14 +239,6 @@ function SKIPPER:GetCoordinate()
   return self.carrier:GetCoordinate()
 end
 
-
---- Get SKIPPER object associated with the carrier.
--- @param #SKIPPER self
--- @return Ops.Airboss#AIRBOSS Airboss object.
-function SKIPPER:GetAirboss()
-  return self.airboss
-end
-
 --- Get WAREHOUSE object associated with the carrier.
 -- @param #SKIPPER self
 -- @return Functional.Warehouse#WAREHOUSE Warehouse object.
@@ -273,19 +260,19 @@ end
 
 --- Start SKIPPER FSM. Handle events.
 -- @param #SKIPPER self
-function SKIPPER:onafterStart()
+function SKIPPER:onafterStart(From, Event, To)
 
-  -- Events are handled my MOOSE.
-  self:I(self.lid..string.format("Starting SKIPPER v%s for carrier %s on map %s.", SKIPPER.version, self.carriername, self.theatre))
+  -- Start parent airboss.
+  self:GetParent(self).onafterStart(self, From, Event, To)
+
+  -- Info.
+  self:I(self.sid..string.format("Starting SKIPPER v%s for carrier %s on map %s.", SKIPPER.version, self.carriername, self.theatre))
   
   -- Start ARTY.
   self.arty:Start()
   
   -- Start Warehouse.
   self.warehouse:Start()
-  
-  -- Start Airboss.
-  self.airboss:Start()
   
   -- Add F10 radio menu.
   self:_SetMenuCoalition()
@@ -299,29 +286,26 @@ function SKIPPER:onafterStart()
   self:HandleEvent(EVENTS.Crash)
   
   -- Init status updates.
-  self:__Status(-1)
+  self:__SkipperStatus(-1)
 end
 
 --- Update status.
 -- @param #SKIPPER self
-function SKIPPER:onafterStatus()
+function SKIPPER:onafterSkipperStatus(From, Event, To)
+
+  -- Get State of parent airboss.
+  --self:GetParent(self).onafterStatus(self, From, Event, To)
 
   local fsmstate=self:GetState()
 
   -- Check zone for flights inbound.
   self:_CheckIntruder()
 
-  -- Check parking spots.
-  --self:_CheckParking()
-  
-  -- Check waiting and landing queue.
-  --self:_CheckQueues()
-  
     -- Info text.
   local text=string.format("State %s", fsmstate)
-  self:I(self.lid..text)
+  self:I(self.sid..text)
 
-  self:__Status(-30)
+  self:__SkipperStatus(-30)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -343,7 +327,7 @@ function SKIPPER:_CheckIntruder()
   local RCCZ=self.zoneCCA:GetRadius()
   
   -- Debug info.
-  self:T(self.lid..string.format("Scanning Carrier Controlled Area. Radius=%.1f NM.", UTILS.MetersToNM(RCCZ)))
+  self:T(self.sid..string.format("Scanning Carrier Controlled Area. Radius=%.1f NM.", UTILS.MetersToNM(RCCZ)))
   
   -- Scan units in carrier zone.
   local _,_,_,unitscan=coord:ScanObjects(RCCZ, true, false, false)
@@ -372,6 +356,9 @@ function SKIPPER:_CheckIntruder()
     end
   end
   
+  -- Intruder menu needs update.
+  local updateintrudermenu=false
+  
   -- Find out if any known intruder is not in the CCA any more.
   for i=#self.intruders,1,-1 do
     local intruder=self.intruders[i] --#SKIPPER.Intruder
@@ -386,8 +373,10 @@ function SKIPPER:_CheckIntruder()
       end
     end
     
+    -- Intruder is gone!
     if not gotit then
       table.remove(self.intruders, i)
+      updateintrudermenu=true
     end
       
   end
@@ -406,15 +395,11 @@ function SKIPPER:_CheckIntruder()
     
     if not gotit then
 
-      -- Get thread level.
-      local tl, tt=group:GetThreatLevel()
-
       -- Create a new intruder table.
       local intruder={} --#SKIPPER.Intruder      
       intruder.coalition=group:GetCoalition()
       intruder.group=group
-      intruder.threadlevel=tl
-      intruder.threadtext=tt
+      intruder.threadlevel, intruder.threadtext=group:GetUnit(1):GetThreatLevel()
       intruder.time0=timer.getAbsTime()
       intruder.dist0=self:GetCoordinate():Get2DDistance(group:GetCoordinate())
       intruder.groupname=groupname
@@ -426,14 +411,20 @@ function SKIPPER:_CheckIntruder()
       table.insert(self.intruders, intruder)
       
       -- Add menu.
-      self:_AddIntruderMenu(intruder)
+      --self:_AddIntruderMenu(intruder)
       
       -- Trigger alert!
       self:IntruderAlert(intruder)
       
+      updateintrudermenu=true
     end    
   end
   
+  -- Update intruder menu if necessary.
+  if updateintrudermenu then
+    self:_SortIntruders()
+    self:_UpdateIntruderMenu()
+  end
   
 end
 
@@ -441,6 +432,8 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--[[
 
 --- Patrol carrier.
 -- @param #SKIPPER self
@@ -474,6 +467,8 @@ function SKIPPER:_InitWaypoints()
   
   return self
 end
+
+
 
 --- Patrol carrier.
 -- @param #SKIPPER self
@@ -579,6 +574,8 @@ function SKIPPER:_GetNextWaypoint()
   return nextwp,Nextwp
 end
 
+]]
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Menu Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -612,17 +609,11 @@ function SKIPPER:_SetMenuCoalition()
     end
     menu.Skipper=MENU_COALITION:New(Coalition, self.alias, menu.Root)
   end  
+
+  ------------------
+  -- Defence Menu --
+  ------------------
   
-  menu.SetROE       = MENU_COALITION:New(Coalition, "Set ROE", menu.Skipper)
-  menu.SetROE_Hold  = MENU_COALITION_COMMAND:New(Coalition, "Weapon Hold", menu.SetROE, self._SetROE, self, "Hold")
-  menu.SetROE_Free  = MENU_COALITION_COMMAND:New(Coalition, "Weapon Free", menu.SetROE, self._SetROE, self, "Free")
-  menu.SetROE_Return= MENU_COALITION_COMMAND:New(Coalition, "Return Fire", menu.SetROE, self._SetROE, self, "Return")
-  
-  -- Alarm state does not seem to apply for ships.
-  --menu.SetROE_Green = MENU_COALITION_COMMAND:New(Coalition, "State Green", menu.SetROE, self._SetALS, self, "Green")
-  --menu.SetROE_Red   = MENU_COALITION_COMMAND:New(Coalition, "State Red",   menu.SetROE, self._SetALS, self, "Red")
-  --menu.SetROE_Auto  = MENU_COALITION_COMMAND:New(Coalition, "State Auto",  menu.SetROE, self._SetALS, self, "Auto")
-    
   menu.SetSpeed     = MENU_COALITION:New(Coalition, "Set Speed", menu.Skipper)
   menu.SetSpeed_00  = MENU_COALITION_COMMAND:New(Coalition, "Hold Position", menu.SetSpeed, self._SetSpeed, self, 0)
   menu.SetSpeed_05  = MENU_COALITION_COMMAND:New(Coalition, "5 knots",       menu.SetSpeed, self._SetSpeed, self, 5)
@@ -633,79 +624,195 @@ function SKIPPER:_SetMenuCoalition()
   menu.SetSpeed_30  = MENU_COALITION_COMMAND:New(Coalition, "30 knots",      menu.SetSpeed, self._SetSpeed, self, 30)
   menu.SetSpeed_99  = MENU_COALITION_COMMAND:New(Coalition, "Restore Route", menu.SetSpeed, self.CarrierResume, self)
   
-  menu.Defence           = MENU_COALITION:New(Coalition, "Defence", menu.Skipper)
-  menu.Defence_Intruders = MENU_COALITION:New(Coalition, "Intruders", menu.Defence)
-  menu.Defence_Ammo      = MENU_COALITION_COMMAND:New(Coalition, "Report Ammo", menu.Defence, self.arty.GetAmmo, self.arty, true)
-  menu.Defence_IntruderR = MENU_COALITION_COMMAND:New(Coalition, "Report Intruders", menu.Defence, self._ListIntruders, self)
+  menu.Recovery=MENU_COALITION:New(Coalition, "Recovery", menu.Skipper)
   
-  if self.airboss then
-    menu.Recovery=MENU_COALITION:New(Coalition, "Recovery", menu.Skipper)
-    
-    -- Set wind on deck.
-    menu.SetWoD    = MENU_COALITION:New(Coalition, "Wind on Deck", menu.Recovery)
-    menu.SetWoD_10 = MENU_COALITION_COMMAND:New(Coalition, "10 knots", menu.SetWoD, self._SetWoD, self, 10)
-    menu.SetWoD_15 = MENU_COALITION_COMMAND:New(Coalition, "15 knots", menu.SetWoD, self._SetWoD, self, 15)
-    menu.SetWoD_20 = MENU_COALITION_COMMAND:New(Coalition, "20 knots", menu.SetWoD, self._SetWoD, self, 20)
-    menu.SetWoD_25 = MENU_COALITION_COMMAND:New(Coalition, "25 knots", menu.SetWoD, self._SetWoD, self, 25)
-    menu.SetWoD_30 = MENU_COALITION_COMMAND:New(Coalition, "30 knots", menu.SetWoD, self._SetWoD, self, 30)
-    
-    -- Set Duration.
-    menu.SetRtime    = MENU_COALITION:New(Coalition, "Duration", menu.Recovery)
-    menu.SetRtime_15 = MENU_COALITION_COMMAND:New(Coalition, "15 min", menu.SetRtime, self._SetRtime, self, 15)
-    menu.SetRtime_30 = MENU_COALITION_COMMAND:New(Coalition, "30 min", menu.SetRtime, self._SetRtime, self, 30)
-    menu.SetRtime_45 = MENU_COALITION_COMMAND:New(Coalition, "45 min", menu.SetRtime, self._SetRtime, self, 45)
-    menu.SetRtime_60 = MENU_COALITION_COMMAND:New(Coalition, "60 min", menu.SetRtime, self._SetRtime, self, 60)
-    menu.SetRtime_90 = MENU_COALITION_COMMAND:New(Coalition, "90 min", menu.SetRtime, self._SetRtime, self, 90)
-    
-    -- Start/Stop.
-    menu.SetUturn = MENU_COALITION_COMMAND:New(Coalition, "U-turn On/Off",  menu.Recovery, self._SetUturn, self)
-    menu.CaseI    = MENU_COALITION_COMMAND:New(Coalition, "Start CASE I",   menu.Recovery, self._StartCaseX, self, 1)
-    menu.CaseII   = MENU_COALITION_COMMAND:New(Coalition, "Start CASE II",  menu.Recovery, self._StartCaseX, self, 2)
-    menu.CaseIII  = MENU_COALITION_COMMAND:New(Coalition, "Start CASE III", menu.Recovery, self._StartCaseX, self, 3)
-    menu.Rstop    = MENU_COALITION_COMMAND:New(Coalition, "Stop Recovery",  menu.Recovery, self._Rstop, self)
+  -- Set wind on deck.
+  menu.SetWoD    = MENU_COALITION:New(Coalition, "Wind on Deck", menu.Recovery)
+  menu.SetWoD_10 = MENU_COALITION_COMMAND:New(Coalition, "10 knots", menu.SetWoD, self._SetWoD, self, 10)
+  menu.SetWoD_15 = MENU_COALITION_COMMAND:New(Coalition, "15 knots", menu.SetWoD, self._SetWoD, self, 15)
+  menu.SetWoD_20 = MENU_COALITION_COMMAND:New(Coalition, "20 knots", menu.SetWoD, self._SetWoD, self, 20)
+  menu.SetWoD_25 = MENU_COALITION_COMMAND:New(Coalition, "25 knots", menu.SetWoD, self._SetWoD, self, 25)
+  menu.SetWoD_30 = MENU_COALITION_COMMAND:New(Coalition, "30 knots", menu.SetWoD, self._SetWoD, self, 30)
+  
+  -- Set Duration.
+  menu.SetRtime    = MENU_COALITION:New(Coalition, "Duration", menu.Recovery)
+  menu.SetRtime_15 = MENU_COALITION_COMMAND:New(Coalition, "15 min", menu.SetRtime, self._SetRtime, self, 15)
+  menu.SetRtime_30 = MENU_COALITION_COMMAND:New(Coalition, "30 min", menu.SetRtime, self._SetRtime, self, 30)
+  menu.SetRtime_45 = MENU_COALITION_COMMAND:New(Coalition, "45 min", menu.SetRtime, self._SetRtime, self, 45)
+  menu.SetRtime_60 = MENU_COALITION_COMMAND:New(Coalition, "60 min", menu.SetRtime, self._SetRtime, self, 60)
+  menu.SetRtime_90 = MENU_COALITION_COMMAND:New(Coalition, "90 min", menu.SetRtime, self._SetRtime, self, 90)
+  
+  -- Start/Stop.
+  menu.SetUturn = MENU_COALITION_COMMAND:New(Coalition, "U-turn On/Off",  menu.Recovery, self._SetUturn, self)
+  menu.CaseI    = MENU_COALITION_COMMAND:New(Coalition, "Start CASE I",   menu.Recovery, self._StartCaseX, self, 1)
+  menu.CaseII   = MENU_COALITION_COMMAND:New(Coalition, "Start CASE II",  menu.Recovery, self._StartCaseX, self, 2)
+  menu.CaseIII  = MENU_COALITION_COMMAND:New(Coalition, "Start CASE III", menu.Recovery, self._StartCaseX, self, 3)
+  menu.Rstop    = MENU_COALITION_COMMAND:New(Coalition, "Stop Recovery",  menu.Recovery, self._Rstop, self)  
+
+
+  ------------------
+  -- Defence Menu --
+  ------------------  
+  
+  menu.Defence               = MENU_COALITION:New(Coalition, "Defence", menu.Skipper)
+  menu.Defence_SetROE        = MENU_COALITION:New(Coalition, "Set ROE", menu.Defence)
+  menu.Defence_SetROE_Hold   = MENU_COALITION_COMMAND:New(Coalition, "Weapon Hold", menu.Defence_SetROE, self._SetROE, self, "Hold")
+  menu.Defence_SetROE_Free   = MENU_COALITION_COMMAND:New(Coalition, "Weapon Free", menu.Defence_SetROE, self._SetROE, self, "Free")
+  menu.Defence_SetROE_Return = MENU_COALITION_COMMAND:New(Coalition, "Return Fire", menu.Defence_SetROE, self._SetROE, self, "Return")
+
+  menu.Defence_Intruders     = MENU_COALITION:New(Coalition, "Intruders", menu.Defence)
+  menu.Defence_Ammo          = MENU_COALITION_COMMAND:New(Coalition, "Report Ammo", menu.Defence, self.arty.GetAmmo, self.arty, true)
+  menu.Defence_IntruderR     = MENU_COALITION_COMMAND:New(Coalition, "Report Intruders", menu.Defence, self._ListIntruders, self)
+  menu.Defence_LaunchCAP     = MENU_COALITION_COMMAND:New(Coalition, "Lauch CAP", menu.Defence, self.LaunchCAP, self)
+
+  --------------------
+  -- Warehouse Menu --
+  --------------------
+
+  if self.warehouse then
+    menu.Warehouse=MENU_COALITION:New(Coalition, "Warehouse", menu.Skipper)
+    menu.Warehouse_Assets = MENU_COALITION_COMMAND:New(Coalition, "Reports On/Off", menu.Warehouse, self.WarehouseReportsToggle, self)
+    menu.Warehouse_Assets = MENU_COALITION_COMMAND:New(Coalition, "Report Assets",  menu.Warehouse, self.ReportWarehouseStock, self)
   end
   
 end
 
---- Intruders.
+--- Warehouse reports on/off.
 -- @param #SKIPPER self
--- @param #SKIPPER.Intruder intruder The intruder data.
--- @param #number weapontype Type of weapon.
-function SKIPPER:LaunchCAP(intruder, weapontype)
+function SKIPPER:WarehouseReportsToggle()
+  self.warehouse.Report=not self.warehouse.Report 
+  MESSAGE:New(string.format("Warehouse reports are now %s", tostring(self.warehouse.Report)), 10, "SKIPPER", true):ToCoalition(self:GetCoalition())
+end
 
-  self.warehouse:AddRequest(self.warehouse, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.AIR_FIGHTER, 2, nil, nil, nil, "CAP")
-  
-  local capcoord=self.zoneCCA:GetRandomCoordinate(self.zoneCCA:GetRadius()/2)
-  
-  local airboss=self.airboss
 
-  function self.warehouse:OnAfterSelfRequest(From, Event, To, Groupset, Request)
-    local request=Request --Functional.Warehouse#WAREHOUSE.Pendingitem
-    local groupset=Groupset --Core.Set#SET_GROUP
+--- Report warehouse stock.
+-- @param #SKIPPER self
+function SKIPPER:ReportWarehouseStock()
+  local text=self.warehouse:_GetStockAssetsText(false)
+  MESSAGE:New(text, 10, "SKIPPER", true):ToCoalition(self:GetCoalition())
+end
+
+
+--- Launch a Intercept flight.
+-- @param #SKIPPER self
+-- @param #SKIPPER.Intruder intruder Intruder group.
+function SKIPPER:LaunchIntercept(intruder)
+
+  --local n=self.warehouse:GetNumberOfAssets(WAREHOUSE.Descriptor.ASSIGNMENT, WAREHOUSE.Attribute.AIR_FIGHTER, false)
+  local n=self.warehouse:GetNumberOfAssets(WAREHOUSE.Descriptor.ASSIGNMENT, "Intercept", false)
+  
+  if n>0 then
+
+    self.warehouse:AddRequest(self.warehouse, WAREHOUSE.Descriptor.ASSIGNMENT, "Intercept", 1, nil, nil, nil, "Intercept")
     
-    for _,_group in pairs(groupset:GetSet()) do
-      local group=_group --Wrapper.Group#GROUP
+    local capcoord=intruder.group:GetCoordinate()
     
-      if request.assignment=="CAP" then
+    capcoord:MarkToAll("Intruder coord")
+
+    --[[  
+    function self.warehouse.OnAfterSelfRequest(warehouse, From, Event, To, Groupset, Request)
+      local request=Request --Functional.Warehouse#WAREHOUSE.Pendingitem
+      local groupset=Groupset --Core.Set#SET_GROUP
       
-        local capcoord=self.zoneCCA
-        
-        local taskOrbit=group:TaskOrbit(capcoord, 100000, 1000, capcoord:Translate(UTILS.NMToMeters(20), 0))
+      for _,_group in pairs(groupset:GetSet()) do
+        local group=_group --Wrapper.Group#GROUP
       
-        local wp={}
-        wp[1]=self:GetCoordinate():WaypointAirTakeOffParking()
-        wp[2]=self:GetCoordinate():WaypointAirTurningPoint("Baro", 300 , {taskOrbit}, "CAP")
+        if request.assignment=="Intercept" then
         
-        --airboss:SetExcludeAI()
+          -- Task orbit.
+          local tasks={}
+          local taskAttack=group:TaskAttackUnit(intruder.group:GetUnit(1))
+          
+          local speed=group:GetSpeedMax()
+          local altitude=intruder.group:GetAltitude()
+        
+          -- Create waypoints.
+          local wp={}
+          wp[1]=self:GetCoordinate():WaypointAirTakeOffParking()
+          wp[2]=self:GetCoordinate():SetAltitude(altitude):WaypointAirTurningPoint(COORDINATE.WaypointAltType.BARO, speed, {taskAttack}, "Attack Intruder")
+          
+          group:StartUncontrolled()
+          
+          --airboss:SetExcludeAI()
+          group:Route(wp)
+          
+        end
         
       end
-      
+
     end
+    ]]
+        
+  else
+    MESSAGE:New("No INTERCEPT fighters currently available", 5, "SKIPPER"):ToCoalition(self:GetCoalition())
+  end
+end
+
+--- Handle self requests from carrier warehouse.
+-- @param #SKIPPER self
+-- @param Functional.Warehouse#WAREHOUSE warehouse The (carrier) warehouse object.
+-- @param Core.Set#SET_GROUP groupset Group set.
+-- @param Functional.Warehouse#WAREHOUSE.Pendingitem request Request.
+function SKIPPER:_SelfRequest(warehouse, groupset, request)
+
+  local assignment=request.assignment
+  
+  env.info(string.format("FF warehouse self request assignment %s", tostring(assignment)))
+
+end
+
+
+--- Launch a CAP flight.
+-- @param #SKIPPER self
+function SKIPPER:LaunchCAP()
+
+  --local n=self.warehouse:GetNumberOfAssets(WAREHOUSE.Descriptor.ASSIGNMENT, WAREHOUSE.Attribute.AIR_FIGHTER, false)
+  local n=self.warehouse:GetNumberOfAssets(WAREHOUSE.Descriptor.ASSIGNMENT, "CAP", false)
+  
+  if n>0 then
+
+    self.warehouse:AddRequest(self.warehouse, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.AIR_FIGHTER, 1, nil, nil, nil, "CAP")
+    
+    local capcoord=self.zoneCCA:GetRandomCoordinate(self.zoneCCA:GetRadius()/2)
+    
+    capcoord:MarkToAll("CAP coord")
+    
+    
+    --[[
+    function self.warehouse.OnAfterSelfRequest(warehouse, From, Event, To, Groupset, Request)
+      local request=Request --Functional.Warehouse#WAREHOUSE.Pendingitem
+      local groupset=Groupset --Core.Set#SET_GROUP
+      
+      for _,_group in pairs(groupset:GetSet()) do
+        local group=_group --Wrapper.Group#GROUP
+      
+        if request.assignment=="CAP" then
+        
+          -- Task orbit.
+          local taskOrbit=group:TaskOrbit(capcoord, UTILS.FeetToMeters(20000), UTILS.KnotsToMps(400), capcoord:Translate(UTILS.NMToMeters(15), 0))
+        
+          local wp={}
+          wp[1]=self:GetCoordinate():WaypointAirTakeOffParking()
+          wp[2]=self:GetCoordinate():WaypointAirTurningPoint("Baro", UTILS.KnotsToKph(350), {taskOrbit}, "CAP")
+          
+          group:StartUncontrolled()
+          
+          --airboss:SetExcludeAI()
+          group:Route(wp)
+          
+        end
+        
+      end
+    end
+    ]]
+    
+  else
+    MESSAGE:New("No CAP fighters currently available", 5, "SKIPPER"):ToCoalition(self:GetCoalition())
   end
 end
 
 
---- Intruders.
+--- Enage an intruder by ARTY.
 -- @param #SKIPPER self
 -- @param #SKIPPER.Intruder intruder The intruder data.
 -- @param #number weapontype Type of weapon.
@@ -729,6 +836,32 @@ function SKIPPER:EngageArty(intruder, weapontype)
   end
 end
 
+--- Sort intruders table.
+-- @param #SKIPPER self
+function SKIPPER:_SortIntruders()
+
+  -- Sort potential section members wrt to distance to lead.
+  local function _sort(_a,_b)
+    local a=_a --#SKIPPER.Intruder
+    local b=_b --#SKIPPER.Intruder
+    return a.threadlevel>b.threadlevel
+  end
+  
+  table.sort(self.intruders, _sort)
+end
+
+--- Add sub menu for this intruder.
+-- @param #SKIPPER self
+-- @param #SKIPPER.Intruder intruder The intruder data.
+-- @param #boolean removed If true, an intruder was removed. If false or nil, a new intruder was added.
+function SKIPPER:_UpdateIntruderMenu()
+
+  for _,_intruder in ipairs(self.intruders) do
+    local intruder=_intruder --#SKIPPER.Intruder    
+    self:_AddIntruderMenu(intruder)
+  end
+
+end
 
 --- Add sub menu for this intruder.
 -- @param #SKIPPER self
@@ -746,6 +879,8 @@ function SKIPPER:_AddIntruderMenu(intruder)
     MENU_COALITION_COMMAND:New(Coalition, "Engage Cruise M", menu, self.EngageArty, self, intruder, ARTY.WeaponType.CruiseMissile)
   elseif intruder.category==Group.Category.SHIP then
     MENU_COALITION_COMMAND:New(Coalition, "Engage", menu, self.EngageArty, self, intruder)
+  elseif intruder.category==Group.Category.AIRPLANE or intruder.category==Group.Category.HELICOPTER then
+    MENU_COALITION_COMMAND:New(Coalition, "Engage A2A", menu, self.LaunchIntercept, self, intruder)
   end
   
   -- Set menu.
@@ -791,35 +926,34 @@ end
 -- @param #SKIPPER self
 -- @param #number case Recovery case (1,2,3).
 function SKIPPER:_StartCaseX(case)
-
-  if self.airboss then
   
-    self.airboss.skipperTime=self.airboss.skipperTime or 30
-    self.airboss.skipperSpeed=self.airboss.skipperSpeed or 25    
-    if self.airboss.skipperUturn==nil then
-      self.airboss.skipperUturn=false
-    end
-  
-    -- Inform player.
-    local text=string.format("Case %d recovery will start in 5 min for %d min. Wind on deck %d knots. U-turn=%s.", case, self.airboss.skipperTime, self.airboss.skipperSpeed, tostring(self.airboss.skipperUturn))
-    
-    if self.airboss:IsRecovering() then
-      text="negative, carrier is already recovering."
-      MESSAGE:New(string.format(text), 5, self.ClassName):ToCoalition(self:GetCoalition())
-      return
-    end
-
-    -- Recovery staring in 5 min for 30 min.
-    local t0=timer.getAbsTime()+5*60
-    local t9=t0+self.airboss.skipperTime*60
-    local C0=UTILS.SecondsToClock(t0)
-    local C9=UTILS.SecondsToClock(t9)
-  
-    -- Carrier will turn into the wind. Wind on deck 25 knots. U-turn on.
-    self.airboss:AddRecoveryWindow(C0, C9, case, 30, true, self.airboss.skipperSpeed, self.airboss.skipperUturn)
-    
-    MESSAGE:New(string.format(text), 5, self.ClassName):ToCoalition(self:GetCoalition())
+  --[[
+  self.skipperTime=self.skipperTime or 30
+  self.skipperSpeed=self.skipperSpeed or 25    
+  if self.skipperUturn==nil then
+    self.skipperUturn=false
   end
+  ]]
+
+  -- Inform player.
+  local text=string.format("Case %d recovery will start in 5 min for %d min. Wind on deck %d knots. U-turn=%s.", case, self.skipperTime, self.skipperSpeed, tostring(self.skipperUturn))
+  
+  if self:IsRecovering() then
+    text="negative, carrier is already recovering."
+    MESSAGE:New(string.format(text), 5, self.ClassName):ToCoalition(self:GetCoalition())
+    return
+  end
+
+  -- Recovery staring in 5 min for 30 min.
+  local t0=timer.getAbsTime()+5*60
+  local t9=t0+self.skipperTime*60
+  local C0=UTILS.SecondsToClock(t0)
+  local C9=UTILS.SecondsToClock(t9)
+
+  -- Carrier will turn into the wind. Wind on deck 25 knots. U-turn on.
+  self:AddRecoveryWindow(C0, C9, case, 30, true, self.skipperSpeed, self.skipperUturn)
+  
+  MESSAGE:New(string.format(text), 5, self.ClassName):ToCoalition(self:GetCoalition())
 
 end
 
@@ -829,12 +963,9 @@ end
 -- @param #SKIPPER self
 function SKIPPER:_SetUturn()
 
-  if self.airboss then
-    self.airboss.skipperUturn=not self.airboss.skipperUturn
+  self.skipperUturn=not self.skipperUturn
     
-    MESSAGE:New(string.format("Recovery U-turn is now %s.", tostring(self.airboss.skipperUturn)), 5, self.ClassName):ToCoalition(self:GetCoalition())
-  end
-
+  MESSAGE:New(string.format("Recovery U-turn is now %s.", tostring(self.skipperUturn)), 5, self.ClassName):ToCoalition(self:GetCoalition())
 end
 
 --- Set manual recovery duration.
@@ -842,12 +973,9 @@ end
 -- @param #number time Duration in minutes.
 function SKIPPER:_SetRtime(time)
 
-  if self.airboss then
-    self.airboss.skipperTime=time
-    
-    MESSAGE:New(string.format("Recovery duration set to %d min.", time), 5, self.ClassName):ToCoalition(self:GetCoalition())
-  end
-
+  self.skipperTime=time
+  
+  MESSAGE:New(string.format("Recovery duration set to %d min.", time), 5, self.ClassName):ToCoalition(self:GetCoalition())
 end
 
 
@@ -856,12 +984,9 @@ end
 -- @param #number speed Speed in knots.
 function SKIPPER:_SetWoD(speed)
 
-  if self.airboss then
-    self.airboss.skipperSpeed=speed
-    
-    MESSAGE:New(string.format("Wind on Deck set to %d knots.", speed), 5, self.ClassName):ToCoalition(self:GetCoalition())
-  end
-
+  self.skipperSpeed=speed
+  
+  MESSAGE:New(string.format("Wind on Deck set to %d knots.", speed), 5, self.ClassName):ToCoalition(self:GetCoalition())
 end
 
 --- Set new speed for all waypoints.

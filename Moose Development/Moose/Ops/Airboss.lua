@@ -16,7 +16,7 @@
 --    * Advanced F10 radio menu including carrier info, weather, radio frequencies, TACAN/ICLS channels, player LSO grades, marking of zones etc.
 --    * Recovery tanker and refueling option via integration of @{Ops.RecoveryTanker} class.
 --    * Rescue helicopter option via @{Ops.RescueHelo} class.
---    * Combine multiple human players to sections (WIP).
+--    * Combine multiple human players to sections.
 --    * Many parameters customizable by convenient user API functions.
 --    * Multiple carrier support due to object oriented approach.
 --    * Unlimited number of players.
@@ -32,7 +32,7 @@
 -- **Supported Aircraft:**
 -- 
 --    * [F/A-18C Hornet Lot 20](https://forums.eagle.ru/forumdisplay.php?f=557) (Player & AI)
---    * [F-14B Tomcat](https://forums.eagle.ru/forumdisplay.php?f=395) (Player & AI) [**WIP**]
+--    * [F-14B Tomcat](https://forums.eagle.ru/forumdisplay.php?f=395) (Player & AI)
 --    * [A-4E Skyhawk Community Mod](https://forums.eagle.ru/showthread.php?t=224989) (Player & AI)
 --    * [AV-8B N/A Harrier](https://forums.eagle.ru/forumdisplay.php?f=555) (Player & AI) [**WIP**]
 --    * F/A-18C Hornet (AI)
@@ -46,10 +46,8 @@
 -- the no other fixed wing aircraft (human or AI controlled) are supposed to land on the Tarawa. Currently only Case I is supported. Case II/III take slightly steps from the CVN carrier.
 -- However, the two Case II/III pattern are very similar so this is not a big drawback.
 -- 
--- Heatblur's mighty F-14B Tomcat has just been added (March 13th 2019). Beware that this is currently WIP - both the module and the AIRBOSS implementation.
+-- Heatblur's mighty F-14B Tomcat has been added (March 13th 2019) as well.
 --
--- **PLEASE NOTE** that his class is work in progress. Many/most things work already very nicely but there a lot of cases I did not run into yet.
---  Therefore, your *constructive* feedback is both necessary and appreciated!
 --  
 -- ## Discussion
 -- 
@@ -174,7 +172,6 @@
 -- @field #number NmaxStack Number of max flights per stack. Default 2.
 -- @field #boolean handleai If true (default), handle AI aircraft.
 -- @field Ops.RecoveryTanker#RECOVERYTANKER tanker Recovery tanker flying overhead of carrier.
--- @field Functional.Warehouse#WAREHOUSE warehouse Warehouse object of the carrier.
 -- @field DCS#Vec3 Corientation Carrier orientation in space.
 -- @field DCS#Vec3 Corientlast Last known carrier orientation.
 -- @field Core.Point#COORDINATE Cposition Carrier position.
@@ -1182,7 +1179,6 @@ AIRBOSS = {
   NmaxStack      = nil,
   handleai       = nil,
   tanker         = nil,
-  warehouse      = nil,
   Corientation   = nil,
   Corientlast    = nil,
   Cposition      = nil,
@@ -1802,6 +1798,15 @@ function AIRBOSS:New(carriername, alias)
   
   -- Init player scores table.
   self.playerscores={}
+  
+  -- Initialize ME waypoints.
+  self:_InitWaypoints()
+  
+  -- Current waypoint.
+  self.currentwp=1
+    
+  -- Patrol route.
+  self:_PatrolRoute()  
     
   -------------
   --- Defaults:
@@ -2432,6 +2437,19 @@ function AIRBOSS:SetExcludeAI(setgroup)
   return self
 end
 
+--- Add a group to the exclude set. If no set exists, it is created.
+-- @param #AIRBOSS self
+-- @param Wrapper.Group#GROUP group The group to be excluded.
+-- @return #AIRBOSS self
+function AIRBOSS:AddExcludeAI(group)
+  
+  self.excludesetAI=self.excludesetAI or SET_GROUP:New()
+  
+  self.excludesetAI:AddGroup(group)
+  
+  return self
+end
+
 --- Close currently running recovery window and stop recovery ops. Recovery window is deleted.
 -- @param #AIRBOSS self
 -- @param #number delay (Optional) Delay in seconds before the window is deleted.
@@ -3044,15 +3062,6 @@ function AIRBOSS:SetRecoveryTanker(recoverytanker)
   return self
 end
 
---- Define warehouse associated with the carrier.
--- @param #AIRBOSS self
--- @param Functional.Warehouse#WAREHOUSE warehouse Warehouse object of the carrier.
--- @return #AIRBOSS self
-function AIRBOSS:SetWarehouse(warehouse)
-  self.warehouse=warehouse
-  return self
-end
-
 --- Set default player skill. New players will be initialized with this skill.
 -- 
 -- * "Flight Student" = @{#AIRBOSS.Difficulty.Easy}
@@ -3202,9 +3211,6 @@ function AIRBOSS:onafterStart(From, Event, To)
   self.Corientlast=self.Corientation
   self.Tpupdate=timer.getTime()
   
-  -- Init patrol route of carrier.
-  self:_PatrolRoute(1)
-  
   -- Check if no recovery window is set. DISABLED!
   if #self.recoverytimes==0 and false then
   
@@ -3231,9 +3237,6 @@ function AIRBOSS:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.Ejection)
   self:HandleEvent(EVENTS.PlayerLeaveUnit, self._PlayerLeft)
   self:HandleEvent(EVENTS.MissionEnd)
-  
-  -- DCS event handler.
-  --world.addEventHandler(self)
   
   -- Start status check in 1 second.
   self:__Status(1)
@@ -13219,6 +13222,42 @@ function AIRBOSS:_GetNextWaypoint()
   return nextwp,Nextwp
 end
 
+
+--- Initialize Mission Editor waypoints.
+-- @param #AIRBOSS self
+-- @return #AIRBOSS self
+function AIRBOSS:_InitWaypoints()
+
+  -- Waypoints of group as defined in the ME.
+  local Waypoints=self.carrier:GetGroup():GetTemplateRoutePoints()
+
+  -- Init array.
+  self.waypoints={}
+
+  -- Set waypoint table.
+  for i,point in ipairs(Waypoints) do
+  
+    -- Coordinate of the waypoint
+    local coord=COORDINATE:New(point.x, point.alt, point.y)
+    
+    -- Set velocity of the coordinate.
+    coord:SetVelocity(point.speed)
+    
+    -- Add to table.
+    table.insert(self.waypoints, coord)
+    
+    -- Debug info.
+    if self.Debug then
+      coord:MarkToAll(string.format("Carrier Waypoint %d, Speed=%.1f knots", i, UTILS.MpsToKnots(point.speed)))
+    end
+    
+  end
+  
+  return self
+end
+
+--[[
+
 --- Patrol carrier.
 -- @param #AIRBOSS self
 -- @param #number n Current waypoint.
@@ -13271,6 +13310,58 @@ function AIRBOSS:_PatrolRoute(n)
   
   return self
 end
+
+]]
+
+--- Patrol carrier.
+-- @param #AIRBOSS self
+-- @param #number n Next waypoint number.
+-- @return #AIRBOSS self
+function AIRBOSS:_PatrolRoute(n)
+
+  -- Get next waypoint coordinate and number.
+  local nextWP, N=self:_GetNextWaypoint()
+  
+  -- Default resume is to next waypoint.
+  n=n or N
+
+  -- Get carrier group.
+  local CarrierGroup=self.carrier:GetGroup()
+  
+  -- Waypoints table.
+  local Waypoints={}
+  
+  -- Create a waypoint from the current coordinate.
+  local wp=self:GetCoordinate():WaypointGround(CarrierGroup:GetVelocityKMH())
+  
+  -- Add current position as first waypoint.
+  table.insert(Waypoints, wp)
+  
+  -- Loop over waypoints.
+  for i=n,#self.waypoints do
+    local coord=self.waypoints[i] --Core.Point#COORDINATE
+  
+    -- Create a waypoint from the coordinate.
+    local wp=coord:WaypointGround(UTILS.MpsToKmph(coord.Velocity))
+  
+    -- Passing waypoint taskfunction
+    local TaskPassingWP=CarrierGroup:TaskFunction("AIRBOSS._PassingWaypoint", self, i, #self.waypoints)
+    
+    -- Call task function when carrier arrives at waypoint.
+    CarrierGroup:SetTaskWaypoint(wp, TaskPassingWP)
+
+    -- Add waypoint to table.
+    table.insert(Waypoints, wp)
+  end
+
+  -- Route carrier group.
+  CarrierGroup:Route(Waypoints)
+  
+  return self
+end
+
+
+
 
 --- Estimated the carrier position at some point in the future given the current waypoints and speeds.
 -- @param #AIRBOSS self
