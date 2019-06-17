@@ -405,7 +405,7 @@ function AI_ESCORT:MenusHelicopter( XStart, XSpace, YStart, YSpace, ZStart, ZSpa
   self:MenuFlare()
   self:MenuSmoke()
 
-  self:MenuReportTargets( 60 )
+  self:MenuTargets( 60 )
   self:MenuAssistedAttack()
   self:MenuROE()
   self:MenuROT()
@@ -456,7 +456,7 @@ function AI_ESCORT:MenusAirplanes( XStart, XSpace, YStart, YSpace, ZStart, ZSpac
   self:MenuFlare()
   self:MenuSmoke()
 
-  self:MenuReportTargets( 60 )
+  self:MenuTargets( 60 )
   self:MenuAssistedAttack()
   self:MenuROE()
   self:MenuROT()
@@ -501,7 +501,7 @@ function AI_ESCORT:MenuFormation( Formation, ... )
   local FormationID = "Formation"..Formation
   self.Menu[FormationID] = self.Menu[FormationID] or {}
   self.Menu[FormationID][#self.Menu[FormationID]+1] = {}
-  self.Menu[FormationID][#self.Menu[FormationID]+1].Arguments = ...
+  self.Menu[FormationID][#self.Menu[FormationID]].Arguments = ...
 
 end
 
@@ -932,7 +932,7 @@ function AI_ESCORT:SetFlightMenuFlare()
 
   for _, MenuFlare in pairs( self.Menu.Flare) do
     local FlightMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", self.FlightMenu )
-    local FlightMenuFlare = MENU_GROUP:New( self.PlayerGroup, MenuText, FlightMenuReportNavigation )
+    local FlightMenuFlare = MENU_GROUP:New( self.PlayerGroup, MenuFlare.MenuText, FlightMenuReportNavigation )
   
     local FlightMenuFlareGreenFlight  = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Release green flare",  FlightMenuFlare, AI_ESCORT._FlightFlare, self, FLARECOLOR.Green,  "Released a green flare!"   )
     local FlightMenuFlareRedFlight    = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Release red flare",    FlightMenuFlare, AI_ESCORT._FlightFlare, self, FLARECOLOR.Red,    "Released a red flare!"     )
@@ -992,7 +992,7 @@ function AI_ESCORT:SetFlightMenuSmoke()
 
   for _, MenuSmoke in pairs( self.Menu.Smoke) do
     local FlightMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", self.FlightMenu )
-    local FlightMenuSmoke = MENU_GROUP:New( self.PlayerGroup, MenuText, FlightMenuReportNavigation )
+    local FlightMenuSmoke = MENU_GROUP:New( self.PlayerGroup, MenuSmoke.MenuText, FlightMenuReportNavigation )
   
     local FlightMenuSmokeGreenFlight  = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Release green smoke",  FlightMenuSmoke, AI_ESCORT._FlightSmoke, self, SMOKECOLOR.Green,  "Releasing green smoke!"   )
     local FlightMenuSmokeRedFlight    = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Release red smoke",    FlightMenuSmoke, AI_ESCORT._FlightSmoke, self, SMOKECOLOR.Red,    "Releasing red smoke!"     )
@@ -1086,7 +1086,7 @@ function AI_ESCORT:SetEscortMenuTargets( EscortGroup )
       -- Attack Targets
       local EscortMenuAttackTargets = MENU_GROUP:New( self.PlayerGroup, "Attack targets", EscortGroup.EscortMenu )
     
-      EscortGroup.ReportTargetsScheduler = SCHEDULER:New( self, self._ReportTargetsScheduler, { EscortGroup }, timer, MenuTargets.Interval )
+      EscortGroup.ReportTargetsScheduler = SCHEDULER:New( self, self._ReportTargetsScheduler, { EscortGroup }, 1, MenuTargets.Interval )
     end
   end
 
@@ -1117,7 +1117,7 @@ end
 
 --- Defines a menu slot to let the escort attack its detected targets using assisted attack from another escort joined also with the client.
 -- This menu will appear under **Request assistance from**.
--- Note that this method needs to be preceded with the method MenuReportTargets.
+-- Note that this method needs to be preceded with the method MenuTargets.
 -- @param #AI_ESCORT self
 -- @return #AI_ESCORT
 function AI_ESCORT:MenuAssistedAttack()
