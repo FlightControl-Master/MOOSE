@@ -223,9 +223,11 @@ function AI_ESCORT:New( EscortUnit, EscortGroupSet, EscortName, EscortBriefing )
   self.PlayerUnit = self.FollowUnit -- Wrapper.Unit#UNIT
   self.PlayerGroup = self.FollowUnit:GetGroup() -- Wrapper.Group#GROUP
   
+  self.EscortName = EscortName
+  
   self.EscortGroupSet = EscortGroupSet
   
-  self.EscortGroupSet:SetSomeIteratorLimit( 5 )
+  self.EscortGroupSet:SetSomeIteratorLimit( 8 )
   
   self.EscortBriefing = EscortBriefing
  
@@ -248,14 +250,9 @@ function AI_ESCORT:New( EscortUnit, EscortGroupSet, EscortName, EscortBriefing )
   self.GT1 = 0
 
 
-  self.MainMenu = MENU_GROUP:New( self.PlayerGroup, EscortName )
-  self.FlightMenu = MENU_GROUP:New( self.PlayerGroup, "Flight", self.MainMenu )
-
   EscortGroupSet:ForEachGroup(
     --- @param Core.Group#GROUP EscortGroup
     function( EscortGroup )
-      EscortGroup.EscortMenu = MENU_GROUP:New( self.PlayerGroup, EscortGroup:GetName(), self.MainMenu )
-
       -- Set EscortGroup known at EscortUnit.
       if not self.PlayerUnit._EscortGroups then
         self.PlayerUnit._EscortGroups = {}
@@ -280,7 +277,6 @@ function AI_ESCORT:onafterStart( EscortGroupSet )
   EscortGroupSet:ForEachGroup(
     --- @param Core.Group#GROUP EscortGroup
     function( EscortGroup )
-      EscortGroup.EscortMenu = MENU_GROUP:New( self.PlayerGroup, EscortGroup:GetName(), self.MainMenu )
       EscortGroup:WayPointInitialize()
     
       EscortGroup:OptionROTVertical()
@@ -302,6 +298,10 @@ function AI_ESCORT:onafterStart( EscortGroupSet )
   self:HandleEvent( EVENTS.Dead, OnEventDeadOrCrash )
   self:HandleEvent( EVENTS.Crash, OnEventDeadOrCrash )
 
+  self.MainMenu = MENU_GROUP:New( self.PlayerGroup, self.EscortName )
+  self.FlightMenu = MENU_GROUP:New( self.PlayerGroup, "Flight", self.MainMenu )
+
+  self:SetFlightMenuJoinUp()
   self:SetFlightMenuFormation( "Trail" )
   self:SetFlightMenuFormation( "Stack" )
   self:SetFlightMenuFormation( "LeftLine" )
@@ -325,6 +325,12 @@ function AI_ESCORT:onafterStart( EscortGroupSet )
   self.EscortGroupSet:ForSomeGroupAlive(
     --- @param Core.Group#GROUP EscortGroup
     function( EscortGroup )
+
+      EscortGroup.EscortMenu = MENU_GROUP:New( self.PlayerGroup, EscortGroup:GetCallsign(), self.MainMenu )
+      
+      self:SetEscortMenuJoinUp( EscortGroup )
+      self:SetEscortMenuResumeMission( EscortGroup )
+      
       self:SetEscortMenuHoldAtEscortPosition( EscortGroup )
       self:SetEscortMenuHoldAtLeaderPosition( EscortGroup )
       
@@ -335,10 +341,10 @@ function AI_ESCORT:onafterStart( EscortGroupSet )
       self:SetEscortMenuROT( EscortGroup )
       
       self:SetEscortMenuTargets( EscortGroup )
+      
     end
   )
 
-  
 end
 
 --- Set a Detection method for the EscortUnit to be reported upon.
@@ -379,13 +385,13 @@ function AI_ESCORT:MenusHelicopter( XStart, XSpace, YStart, YSpace, ZStart, ZSpa
 
 --  self:MenuScanForTargets( 100, 60 )
 
-  self.XStart = XStart or self.XStart
-  self.XSpace = XSpace or self.XSpace
-  self.YStart = YStart or self.YStart
-  self.YSpace = YSpace or self.YSpace
-  self.ZStart = ZStart or self.ZStart
-  self.ZSpace = ZSpace or self.ZSpace
-  self.ZLevels = ZLevels or self.ZLevels
+  self.XStart = XStart or 50
+  self.XSpace = XSpace or 50
+  self.YStart = YStart or 50
+  self.YSpace = YSpace or 50
+  self.ZStart = ZStart or 50
+  self.ZSpace = ZSpace or 50
+  self.ZLevels = ZLevels or 10
 
   self:MenuJoinUp()
   self:MenuFormationTrail(self.XStart,self.XSpace,self.YStart)
@@ -410,9 +416,6 @@ function AI_ESCORT:MenusHelicopter( XStart, XSpace, YStart, YSpace, ZStart, ZSpa
   self:MenuROE()
   self:MenuROT()
 
-  self:MenuResumeMission()
-
-
   return self
 end
 
@@ -432,13 +435,13 @@ function AI_ESCORT:MenusAirplanes( XStart, XSpace, YStart, YSpace, ZStart, ZSpac
 
 --  self:MenuScanForTargets( 100, 60 )
 
-  self.XStart = XStart or self.XStart
-  self.XSpace = XSpace or self.XSpace
-  self.YStart = YStart or self.YStart
-  self.YSpace = YSpace or self.YSpace
-  self.ZStart = ZStart or self.ZStart
-  self.ZSpace = ZSpace or self.ZSpace
-  self.ZLevels = ZLevels or self.ZLevels
+  self.XStart = XStart or 50
+  self.XSpace = XSpace or 50
+  self.YStart = YStart or 50
+  self.YSpace = YSpace or 50
+  self.ZStart = ZStart or 50
+  self.ZSpace = ZSpace or 50
+  self.ZLevels = ZLevels or 10
 
   self:MenuJoinUp()
   self:MenuFormationTrail(self.XStart,self.XSpace,self.YStart)
@@ -461,9 +464,6 @@ function AI_ESCORT:MenusAirplanes( XStart, XSpace, YStart, YSpace, ZStart, ZSpac
   self:MenuROE()
   self:MenuROT()
 
-  self:MenuResumeMission()
-
-
   return self
 end
 
@@ -476,17 +476,18 @@ function AI_ESCORT:SetFlightMenuFormation( Formation )
 
   if MenuFormation then
     local Arguments = MenuFormation.Arguments
+    self:I({Arguments=unpack(Arguments)})
     local FlightMenuFormation = MENU_GROUP:New( self.PlayerGroup, "Formation", self.MainMenu )
     local MenuFlightFormationID = MENU_GROUP_COMMAND:New( self.PlayerGroup, Formation, FlightMenuFormation, 
       function ( self, Formation, ... )
         self.EscortGroupSet:ForSomeGroupAlive(
           --- @param Core.Group#GROUP EscortGroup
-          function( EscortGroup, self, Formation, ... )
+          function( EscortGroup, self, Formation, Arguments )
             if EscortGroup:IsAir() then
               self:E({FormationID=FormationID})
-              self[FormationID]( self, ... )
+              self[FormationID]( self, unpack(Arguments) )
             end
-          end, self, Formation, ...
+          end, self, Formation, Arguments
         )
       end, self, Formation, Arguments
     )
@@ -500,8 +501,7 @@ function AI_ESCORT:MenuFormation( Formation, ... )
 
   local FormationID = "Formation"..Formation
   self.Menu[FormationID] = self.Menu[FormationID] or {}
-  self.Menu[FormationID][#self.Menu[FormationID]+1] = {}
-  self.Menu[FormationID][#self.Menu[FormationID]].Arguments = ...
+  self.Menu[FormationID].Arguments = arg
 
 end
 
@@ -656,11 +656,20 @@ function AI_ESCORT:MenuFormationBox( XStart, XSpace, YStart, YSpace, ZStart, ZSp
   return self
 end
 
+function AI_ESCORT:SetFlightMenuJoinUp()
+
+  if self.Menu.JoinUp == true then
+    local FlightMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", self.FlightMenu )
+    local FlightMenuJoinUp  = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Join Up",  FlightMenuReportNavigation, AI_ESCORT._FlightJoinUp, self )
+  end
+  
+end
+
 
 --- Sets a menu slot to join formation for an escort.
 -- @param #AI_ESCORT self
 -- @return #AI_ESCORT
-function AI_ESCORT:EscortMenuJoinUp( EscortGroup )
+function AI_ESCORT:SetEscortMenuJoinUp( EscortGroup )
 
   if self.Menu.JoinUp == true then
     if EscortGroup:IsAir() then
@@ -678,16 +687,6 @@ end
 function AI_ESCORT:MenuJoinUp()
 
   self.Menu.JoinUp = true
-
-  local FlightMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", self.FlightMenu )
-  local FlightMenuJoinUp  = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Join Up",  FlightMenuReportNavigation, AI_ESCORT._FlightJoinUp, self )
-  
-  self.EscortGroupSet:ForSomeGroupAlive(
-    --- @param Core.Group#GROUP EscortGroup
-    function( EscortGroup )
-      self:EscortMenuJoinUp( EscortGroup )
-    end
-  )
 
   return self
 end
@@ -1079,14 +1078,14 @@ function AI_ESCORT:SetEscortMenuTargets( EscortGroup )
       local EscortMenuReportTargets = MENU_GROUP:New( self.PlayerGroup, "Report targets", EscortGroup.EscortMenu )
 
       -- Report Targets
-      --EscortGroup.EscortMenuReportNearbyTargetsNow = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Report targets now!", EscortGroup.EscortMenuReportNearbyTargets, AI_ESCORT._ReportNearbyTargetsNow, self, EscortGroup, true )
+      EscortGroup.EscortMenuReportNearbyTargetsNow = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Report targets now!", EscortMenuReportTargets, AI_ESCORT._ReportNearbyTargetsNow, self, EscortGroup, true )
       --EscortGroup.EscortMenuReportNearbyTargetsOn = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Report targets on", EscortGroup.EscortMenuReportNearbyTargets, AI_ESCORT._SwitchReportNearbyTargets, self, EscortGroup, true )
       --EscortGroup.EscortMenuReportNearbyTargetsOff = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Report targets off", EscortGroup.EscortMenuReportNearbyTargets, AI_ESCORT._SwitchReportNearbyTargets, self, EscortGroup, false )
     
       -- Attack Targets
       local EscortMenuAttackTargets = MENU_GROUP:New( self.PlayerGroup, "Attack targets", EscortGroup.EscortMenu )
     
-      EscortGroup.ReportTargetsScheduler = SCHEDULER:New( self, self._ReportTargetsScheduler, { EscortGroup }, 1, MenuTargets.Interval )
+      --EscortGroup.ReportTargetsScheduler = SCHEDULER:New( self, self._ReportTargetsScheduler, { EscortGroup }, 1, MenuTargets.Interval )
     end
   end
 
@@ -1256,18 +1255,13 @@ end
 -- All rules of engagement will appear under the menu **Resume mission from**.
 -- @param #AI_ESCORT self
 -- @return #AI_ESCORT
-function AI_ESCORT:MenuResumeMission()
+function AI_ESCORT:SetEscortMenuResumeMission( EscortGroup )
   self:F()
 
-  self.EscortGroupSet:ForSomeGroupAlive(
-    --- @param Core.Group#GROUP EscortGroup
-    function( EscortGroup )
-      if EscortGroup:IsAir() then
-        local EscortGroupName = EscortGroup:GetName()
-        EscortGroup.EscortMenuResumeMission = MENU_GROUP:New( self.PlayerGroup, "Resume from", EscortGroup.EscortMenu )
-      end
-    end
-  )
+  if EscortGroup:IsAir() then
+    local EscortGroupName = EscortGroup:GetName()
+    EscortGroup.EscortMenuResumeMission = MENU_GROUP:New( self.PlayerGroup, "Resume from", EscortGroup.EscortMenu )
+  end
 
   return self
 end
@@ -1346,8 +1340,6 @@ function AI_ESCORT:_JoinUp( EscortGroup )
   local EscortUnit = self.PlayerUnit
 
   self:ModeFormation( EscortGroup )
-  
-  EscortGroup:SetState( self, "Mode", self.__Enum.Mode.Follow )
 end
 
 
@@ -1549,7 +1541,16 @@ function AI_ESCORT.___Resume( EscortGroup, self )
 
   local PlayerGroup = self.PlayerGroup
   
-  EscortGroup:MessageTypeToGroup( "Destroyed all targets. Rejoining.", MESSAGE.Type.Information, PlayerGroup )
+  EscortGroup:OptionROEHoldFire()
+  EscortGroup:OptionROTVertical()
+  
+  EscortGroup:SetState( EscortGroup, "Mode", EscortGroup:GetState( EscortGroup, "PreviousMode" ) )
+  
+  if EscortGroup:GetState( EscortGroup, "Mode" ) == self.__Enum.Mode.Mission then
+    EscortGroup:MessageTypeToGroup( "Destroyed all targets. Resuming route.", MESSAGE.Type.Information, PlayerGroup )
+  else
+    EscortGroup:MessageTypeToGroup( "Destroyed all targets. Rejoining formation.", MESSAGE.Type.Information, PlayerGroup )
+  end
 
 end
 
@@ -1583,7 +1584,7 @@ function AI_ESCORT:_AttackTarget( EscortGroup, DetectedItem )
   
   local EscortUnit = self.PlayerUnit
   
-  self:ModeMission( EscortGroup )
+  self:ModeAttack( EscortGroup )
 
   if EscortGroup:IsAir() then
     EscortGroup:OptionROEOpenFire()
@@ -1607,7 +1608,7 @@ function AI_ESCORT:_AttackTarget( EscortGroup, DetectedItem )
     Tasks[#Tasks+1] = EscortGroup:TaskCombo( AttackUnitTasks )
     Tasks[#Tasks+1] = EscortGroup:TaskFunction( "AI_ESCORT.___Resume", self )
     
-    EscortGroup:SetTask( 
+    EscortGroup:PushTask( 
       EscortGroup:TaskCombo(
         Tasks
       ), 1
@@ -1628,7 +1629,7 @@ function AI_ESCORT:_AttackTarget( EscortGroup, DetectedItem )
       end, Tasks
     )    
 
-    EscortGroup:SetTask( 
+    EscortGroup:PushTask( 
       EscortGroup:TaskCombo(
         Tasks
       ), 1
@@ -1797,9 +1798,10 @@ function AI_ESCORT:_ReportTargetsScheduler( EscortGroup )
 
   if EscortGroup:IsAlive() and self.PlayerUnit:IsAlive() then
 
-    if true then
 
-      local EscortGroupName = EscortGroup:GetName() 
+      local EscortGroupName = EscortGroup:GetCallsign() 
+ 
+      local DetectedTargetsReport = REPORT:New( "Reporting target locations from my position:\n" ) -- A new report to display the detected targets as a message to the player.
     
 
       if EscortGroup.EscortMenuTargetAssistance then
@@ -1812,14 +1814,17 @@ function AI_ESCORT:_ReportTargetsScheduler( EscortGroup )
 
       local TimeUpdate = timer.getTime()
       
-      local EscortGroupName = EscortGroup:GetName()
       local EscortMenuAttackTargets = MENU_GROUP:New( self.PlayerGroup, "Attack targets", EscortGroup.EscortMenu )
-
+      
+      local DetectedTargets = false
       for DetectedItemIndex, DetectedItem in pairs( DetectedItems ) do
+        DetectedTargets = true
 
-        local DetectedItemReportSummary = self.Detection:DetectedItemReportMenu( DetectedItem, EscortGroup, _DATABASE:GetPlayerSettings( self.PlayerUnit:GetPlayerName() ) )
+        local DetectedMenu = self.Detection:DetectedItemReportMenu( DetectedItem, EscortGroup, _DATABASE:GetPlayerSettings( self.PlayerUnit:GetPlayerName() ) ):Text("\n")
 
-        local DetectedMenu = DetectedItemReportSummary:Text("\n")
+        local DetectedItemReportSummary = self.Detection:DetectedItemReportSummary( DetectedItem, EscortGroup, _DATABASE:GetPlayerSettings( self.PlayerUnit:GetPlayerName() ) )
+        local ReportSummary = DetectedItemReportSummary:Text(", ")
+        DetectedTargetsReport:AddIndent( ReportSummary, "-" )
 
         if EscortGroup:IsAir() then
 
@@ -1850,6 +1855,12 @@ function AI_ESCORT:_ReportTargetsScheduler( EscortGroup )
 
       EscortMenuAttackTargets:RemoveSubMenus( TimeUpdate, "Esort" )
 
+      if DetectedTargets then
+        EscortGroup:MessageTypeToGroup( DetectedTargetsReport:Text( "\n" ), MESSAGE.Type.Information, self.PlayerGroup )
+      else
+        EscortGroup:MessageTypeToGroup( "No targets detected.", MESSAGE.Type.Information, self.PlayerGroup )
+      end
+
       if EscortGroup.EscortMenuResumeMission then
         EscortGroup.EscortMenuResumeMission:RemoveSubMenus()
   
@@ -1865,8 +1876,6 @@ function AI_ESCORT:_ReportTargetsScheduler( EscortGroup )
       end
 
       return true
-    else
-    end
   end
   
   return false
@@ -1881,7 +1890,7 @@ function AI_ESCORT:_FlightReportTargetsScheduler()
   
   local EscortGroup = self.EscortGroupSet:GetFirst() -- Wrapper.Group#GROUP
   
-  local DetectedTargetsReport = REPORT:New( "Reporting detected targets:\n" ) -- A new report to display the detected targets as a message to the player.
+  local DetectedTargetsReport = REPORT:New( "Reporting target locations from your position:\n" ) -- A new report to display the detected targets as a message to the player.
 
   if EscortGroup and ( self.PlayerUnit:IsAlive() and EscortGroup:IsAlive() ) then
 

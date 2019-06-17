@@ -143,6 +143,8 @@ AI_FORMATION.__Enum.Formation = {
 AI_FORMATION.__Enum.Mode = {
   Mission = 0,
   Formation = 1,
+  Attack = 2,
+  Reconnaissance = 3,
 }
 
 
@@ -958,12 +960,38 @@ end
 function AI_FORMATION:ModeMission( FollowGroup )
 
   if FollowGroup then
+    FollowGroup:SetState( FollowGroup, "PreviousMode", FollowGroup:GetState( FollowGroup, "Mode" ) )
     FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Mission )
   else
     self.EscortGroupSet:ForSomeGroupAlive(
       --- @param Core.Group#GROUP EscortGroup
       function( FollowGroup )
+        FollowGroup:SetState( FollowGroup, "PreviousMode", FollowGroup:GetState( FollowGroup, "Mode" ) )
         FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Mission )
+      end
+    )
+  end
+  
+  
+  return self
+end
+
+
+--- This sets your escorts to execute an attack.
+-- @param #AI_FORMATION self
+-- @param Wrapper.Group#GROUP FollowGroup FollowGroup.
+-- @return #AI_FORMATION
+function AI_FORMATION:ModeAttack( FollowGroup )
+
+  if FollowGroup then
+    FollowGroup:SetState( FollowGroup, "PreviousMode", FollowGroup:GetState( FollowGroup, "Mode" ) )
+    FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Attack )
+  else
+    self.EscortGroupSet:ForSomeGroupAlive(
+      --- @param Core.Group#GROUP EscortGroup
+      function( FollowGroup )
+        FollowGroup:SetState( FollowGroup, "PreviousMode", FollowGroup:GetState( FollowGroup, "Mode" ) )
+        FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Attack )
       end
     )
   end
@@ -980,11 +1008,13 @@ end
 function AI_FORMATION:ModeFormation( FollowGroup )
 
   if FollowGroup then
+    FollowGroup:SetState( FollowGroup, "PreviousMode", FollowGroup:GetState( FollowGroup, "Mode" ) )
     FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Formation )
   else
     self.EscortGroupSet:ForSomeGroupAlive(
       --- @param Core.Group#GROUP EscortGroup
       function( FollowGroup )
+        FollowGroup:SetState( FollowGroup, "PreviousMode", FollowGroup:GetState( FollowGroup, "Mode" ) )
         FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Formation )
       end
     )
@@ -1046,6 +1076,8 @@ function AI_FORMATION:onenterFollowing( FollowGroupSet ) --R2.1
       --- @param Wrapper.Group#GROUP FollowGroup
       -- @param Wrapper.Unit#UNIT ClientUnit
       function( FollowGroup, Formation, ClientUnit, CT1, CV1, CT2, CV2 )
+      
+        self:I({Mode=FollowGroup:GetState( FollowGroup, "Mode" )})
       
         if FollowGroup:GetState( FollowGroup, "Mode" ) == self.__Enum.Mode.Formation then
         
