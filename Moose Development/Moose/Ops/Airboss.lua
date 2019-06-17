@@ -13588,7 +13588,7 @@ function AIRBOSS._PassingWaypoint(group, airboss, i, final)
   
   -- If final waypoint reached, do route all over again.
   if i==final and final>1 and airboss.adinfinitum then
-    airboss:_PatrolRoute(i)
+    airboss:_PatrolRoute()
   end
 end
 

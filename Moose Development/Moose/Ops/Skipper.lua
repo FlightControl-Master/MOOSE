@@ -113,34 +113,9 @@ function SKIPPER:New(carriername, alias)
   
   -- Set some string id for output to DCS.log file.
   self.sid=string.format("SKIPPER %s |", self.carriername)
-  
-  --[[
-  
-  -- Current map.
-  self.theatre=env.mission.theatre    
-  
-  -- 30 NM zone around the airbase.
-  self.zoneCCA=ZONE_UNIT:New("CCA", self.carrier, UTILS.NMToMeters(50))
-  
-  -- Initialize ME waypoints.
-  self:_InitWaypoints()
-  
-  -- Current waypoint.
-  self.currentwp=1
-  
-  -- Patrol route.
-  self:_PatrolRoute()
-    
-  -- Start State.
-  self:SetStartState("Stopped")
-
-  --]]
 
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
-  --self:AddTransition("Stopped",       "Start",           "Running")     -- Start FSM.
-  --self:AddTransition("*",             "Status",          "*")           -- Update status.
-  
   self:AddTransition("*",             "SkipperStatus",   "*")           -- Skipper status update.
   self:AddTransition("*",             "IntruderAlert",   "*")           -- New intruder detected.
   
@@ -165,12 +140,12 @@ function SKIPPER:New(carriername, alias)
   -- @param #SKIPPER self
   -- @param #number delay Delay in seconds.
 
-  --- Triggers the FSM event "Status".
-  -- @function [parent=#SKIPPER] Status
+  --- Triggers the FSM event "SkipperStatus".
+  -- @function [parent=#SKIPPER] SkipperStatus
   -- @param #SKIPPER self
 
-  --- Triggers the FSM event "Status" after a delay.
-  -- @function [parent=#SKIPPER] __Status
+  --- Triggers the FSM event "SkipperStatus" after a delay.
+  -- @function [parent=#SKIPPER] __SkipperStatus
   -- @param #SKIPPER self
   -- @param #number delay Delay in seconds.  
 
@@ -199,7 +174,7 @@ function SKIPPER:New(carriername, alias)
     self.Debug=true
     BASE:TraceOnOff(true)
     BASE:TraceClass(self.ClassName)
-    BASE:TraceLevel(3)
+    BASE:TraceLevel(1)
     self.arty:GetAmmo(true)
   end
    
@@ -293,9 +268,6 @@ end
 -- @param #SKIPPER self
 function SKIPPER:onafterSkipperStatus(From, Event, To)
 
-  -- Get State of parent airboss.
-  --self:GetParent(self).onafterStatus(self, From, Event, To)
-
   local fsmstate=self:GetState()
 
   -- Check zone for flights inbound.
@@ -375,7 +347,11 @@ function SKIPPER:_CheckIntruder()
     
     -- Intruder is gone!
     if not gotit then
+    
+      -- Remove from table.
       table.remove(self.intruders, i)
+      
+      -- Menu update required.
       updateintrudermenu=true
     end
       
@@ -410,12 +386,10 @@ function SKIPPER:_CheckIntruder()
       -- Add intruder to list.
       table.insert(self.intruders, intruder)
       
-      -- Add menu.
-      --self:_AddIntruderMenu(intruder)
-      
       -- Trigger alert!
       self:IntruderAlert(intruder)
       
+      -- Menu update required.
       updateintrudermenu=true
     end    
   end
@@ -433,148 +407,6 @@ end
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---[[
-
---- Patrol carrier.
--- @param #SKIPPER self
--- @return #SKIPPER self
-function SKIPPER:_InitWaypoints()
-
-  -- Waypoints of group.
-  local Waypoints=self.group:GetTemplateRoutePoints()
-
-  -- Init array.
-  self.waypoints={}
-
-  -- Set waypoint table.
-  for i,point in ipairs(Waypoints) do
-  
-    -- Coordinate of the waypoint
-    local coord=COORDINATE:New(point.x, point.alt, point.y)
-    
-    -- Set velocity of the coordinate.
-    coord:SetVelocity(point.speed)
-    
-    -- Add to table.
-    table.insert(self.waypoints, coord)
-    
-    -- Debug info.
-    if self.Debug then
-      coord:MarkToAll(string.format("Carrier Waypoint %d, Speed=%.1f knots", i, UTILS.MpsToKnots(point.speed)))
-    end
-    
-  end
-  
-  return self
-end
-
-
-
---- Patrol carrier.
--- @param #SKIPPER self
--- @param #number n Next waypoint number.
--- @return #SKIPPER self
-function SKIPPER:_PatrolRoute(n)
-
-  -- Get next waypoint coordinate and number.
-  local nextWP, N=self:_GetNextWaypoint()
-  
-  -- Default resume is to next waypoint.
-  n=n or N
-
-  -- Get carrier group.
-  local CarrierGroup=self.group
-  
-  -- Waypoints table.
-  local Waypoints={}
-  
-  -- Create a waypoint from the current coordinate.
-  local wp=self:GetCoordinate():WaypointGround(CarrierGroup:GetVelocityKMH())
-  
-  -- Add current position as first waypoint.
-  table.insert(Waypoints, wp)
-  
-  -- Loop over waypoints.
-  for i=n,#self.waypoints do
-    local coord=self.waypoints[i] --Core.Point#COORDINATE
-  
-    -- Create a waypoint from the coordinate.
-    local wp=coord:WaypointGround(UTILS.MpsToKmph(coord.Velocity))
-  
-    -- Passing waypoint taskfunction
-    local TaskPassingWP=CarrierGroup:TaskFunction("SKIPPER._PassingWaypoint", self, i, #self.waypoints)
-    
-    -- Call task function when carrier arrives at waypoint.
-    CarrierGroup:SetTaskWaypoint(wp, TaskPassingWP)
-
-    --     
-    table.insert(Waypoints, wp)
-  end
-
-  -- Route carrier group.
-  CarrierGroup:Route(Waypoints)
-  
-  return self
-end
-
---- Function called when a group is passing a waypoint.
---@param Wrapper.Group#GROUP group Group that passed the waypoint.
---@param #SKIPPER skipper skipper object.
---@param #number i Waypoint number that has been reached.
---@param #number final Final waypoint number.
-function SKIPPER._PassingWaypoint(group, skipper, i, final)
-
-  -- Debug message.
-  local text=string.format("Group %s passing waypoint %d of %d.", group:GetName(), i, final)
-  
-  -- Debug smoke and marker.
-  if skipper.Debug and false then
-    local pos=group:GetCoordinate()
-    pos:SmokeRed()
-    local MarkerID=pos:MarkToAll(string.format("Group %s reached waypoint %d", group:GetName(), i))
-  end
-  
-  -- Debug message.
-  MESSAGE:New(text,10):ToAllIf(skipper.Debug)
-  skipper:T(skipper.lid..text)
-  
-  -- Set current waypoint.
-  skipper.currentwp=i
-  
-  -- Passing Waypoint event.
-  --skipper:PassingWaypoint(i)
-  
-  -- If final waypoint reached, do route all over again.
-  if i==final and final>1 and skipper.adinfinitum then
-    skipper:_PatrolRoute(i)
-  end
-end
-
---- Get next waypoint of the carrier.
--- @param #SKIPPER self
--- @return Core.Point#COORDINATE Coordinate of the next waypoint.
--- @return #number Number of waypoint.
-function SKIPPER:_GetNextWaypoint()
-
-  -- Next waypoint.  
-  local Nextwp=nil
-  if self.currentwp==#self.waypoints then
-    Nextwp=1
-  else
-    Nextwp=self.currentwp+1
-  end
-  
-  -- Debug output
-  local text=string.format("Current WP=%d/%d, next WP=%d", self.currentwp, #self.waypoints, Nextwp)
-  self:T2(self.lid..text)
-  
-  -- Next waypoint.
-  local nextwp=self.waypoints[Nextwp] --Core.Point#COORDINATE
-
-  return nextwp,Nextwp
-end
-
-]]
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Menu Functions
@@ -647,6 +479,7 @@ function SKIPPER:_SetMenuCoalition()
   menu.CaseI    = MENU_COALITION_COMMAND:New(Coalition, "Start CASE I",   menu.Recovery, self._StartCaseX, self, 1)
   menu.CaseII   = MENU_COALITION_COMMAND:New(Coalition, "Start CASE II",  menu.Recovery, self._StartCaseX, self, 2)
   menu.CaseIII  = MENU_COALITION_COMMAND:New(Coalition, "Start CASE III", menu.Recovery, self._StartCaseX, self, 3)
+  menu.Rstop    = MENU_COALITION_COMMAND:New(Coalition, "Pause/Unpause",  menu.Recovery, self._Rpause, self)
   menu.Rstop    = MENU_COALITION_COMMAND:New(Coalition, "Stop Recovery",  menu.Recovery, self._Rstop, self)  
 
 
@@ -692,6 +525,18 @@ function SKIPPER:ReportWarehouseStock()
   MESSAGE:New(text, 10, "SKIPPER", true):ToCoalition(self:GetCoalition())
 end
 
+--- Handle self requests from carrier warehouse.
+-- @param #SKIPPER self
+-- @param Functional.Warehouse#WAREHOUSE warehouse The (carrier) warehouse object.
+-- @param Core.Set#SET_GROUP groupset Group set.
+-- @param Functional.Warehouse#WAREHOUSE.Pendingitem request Request.
+function SKIPPER:_SelfRequest(warehouse, groupset, request)
+
+  local assignment=request.assignment
+  
+  env.info(string.format("FF warehouse self request assignment %s", tostring(assignment)))
+  
+end
 
 --- Launch a Intercept flight.
 -- @param #SKIPPER self
@@ -709,7 +554,6 @@ function SKIPPER:LaunchIntercept(intruder)
     
     capcoord:MarkToAll("Intruder coord")
 
-    --[[  
     function self.warehouse.OnAfterSelfRequest(warehouse, From, Event, To, Groupset, Request)
       local request=Request --Functional.Warehouse#WAREHOUSE.Pendingitem
       local groupset=Groupset --Core.Set#SET_GROUP
@@ -721,7 +565,10 @@ function SKIPPER:LaunchIntercept(intruder)
         
           -- Task orbit.
           local tasks={}
-          local taskAttack=group:TaskAttackUnit(intruder.group:GetUnit(1))
+          
+          for _,unit in pairs(intruder.group:GetUnits()) do
+            tasks[#tasks+1]=group:TaskAttackUnit(unit)
+          end
           
           local speed=group:GetSpeedMax()
           local altitude=intruder.group:GetAltitude()
@@ -729,36 +576,24 @@ function SKIPPER:LaunchIntercept(intruder)
           -- Create waypoints.
           local wp={}
           wp[1]=self:GetCoordinate():WaypointAirTakeOffParking()
-          wp[2]=self:GetCoordinate():SetAltitude(altitude):WaypointAirTurningPoint(COORDINATE.WaypointAltType.BARO, speed, {taskAttack}, "Attack Intruder")
+          wp[2]=self:GetCoordinate():SetAltitude(altitude):WaypointAirTurningPoint(COORDINATE.WaypointAltType.BARO, speed, {tasks}, "Attack Intruder")
           
+          -- Start uncontrolled group.
           group:StartUncontrolled()
           
           --airboss:SetExcludeAI()
-          group:Route(wp)
           
+          -- Route group
+          group:Route(wp)          
         end
         
       end
 
     end
-    ]]
         
   else
     MESSAGE:New("No INTERCEPT fighters currently available", 5, "SKIPPER"):ToCoalition(self:GetCoalition())
   end
-end
-
---- Handle self requests from carrier warehouse.
--- @param #SKIPPER self
--- @param Functional.Warehouse#WAREHOUSE warehouse The (carrier) warehouse object.
--- @param Core.Set#SET_GROUP groupset Group set.
--- @param Functional.Warehouse#WAREHOUSE.Pendingitem request Request.
-function SKIPPER:_SelfRequest(warehouse, groupset, request)
-
-  local assignment=request.assignment
-  
-  env.info(string.format("FF warehouse self request assignment %s", tostring(assignment)))
-
 end
 
 
@@ -777,34 +612,34 @@ function SKIPPER:LaunchCAP()
     
     capcoord:MarkToAll("CAP coord")
     
-    
-    --[[
     function self.warehouse.OnAfterSelfRequest(warehouse, From, Event, To, Groupset, Request)
       local request=Request --Functional.Warehouse#WAREHOUSE.Pendingitem
       local groupset=Groupset --Core.Set#SET_GROUP
-      
+
       for _,_group in pairs(groupset:GetSet()) do
         local group=_group --Wrapper.Group#GROUP
-      
+    
         if request.assignment=="CAP" then
         
+          local alt=UTILS.FeetToMeters(20000)
+        
           -- Task orbit.
-          local taskOrbit=group:TaskOrbit(capcoord, UTILS.FeetToMeters(20000), UTILS.KnotsToMps(400), capcoord:Translate(UTILS.NMToMeters(15), 0))
+          local taskOrbit=group:TaskOrbit(capcoord, alt, UTILS.KnotsToMps(400), capcoord:Translate(UTILS.NMToMeters(15), 0))
         
           local wp={}
           wp[1]=self:GetCoordinate():WaypointAirTakeOffParking()
-          wp[2]=self:GetCoordinate():WaypointAirTurningPoint("Baro", UTILS.KnotsToKph(350), {taskOrbit}, "CAP")
+          wp[2]=self:GetCoordinate():SetAltitude(alt):WaypointAirTurningPoint(COORDINATE.WaypointAltType.BARO, UTILS.KnotsToKmph(350), {taskOrbit}, "CAP")
           
+          -- Start uncontrolled group.
           group:StartUncontrolled()
           
           --airboss:SetExcludeAI()
-          group:Route(wp)
           
+          -- Route group.
+          group:Route(wp)          
         end
-        
-      end
+      end      
     end
-    ]]
     
   else
     MESSAGE:New("No CAP fighters currently available", 5, "SKIPPER"):ToCoalition(self:GetCoalition())
