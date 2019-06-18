@@ -270,36 +270,8 @@ function AI_ESCORT:New( EscortUnit, EscortGroupSet, EscortName, EscortBriefing )
   return self
 end
 
---- @param #AI_ESCORT self
--- @param Core.Set#SET_GROUP EscortGroupSet
-function AI_ESCORT:onafterStart( EscortGroupSet )
 
-  EscortGroupSet:ForEachGroup(
-    --- @param Core.Group#GROUP EscortGroup
-    function( EscortGroup )
-      EscortGroup:WayPointInitialize()
-    
-      EscortGroup:OptionROTVertical()
-      EscortGroup:OptionROEOpenFire()
-    end
-  )
-  
-  local LeaderEscort = EscortGroupSet:GetFirst() -- Wrapper.Group#GROUP
-  
-  local Report = REPORT:New( "Escort reporting:" )
-  Report:Add( "Joining Up " .. EscortGroupSet:GetUnitTypeNames():Text( ", " ) .. " from " .. LeaderEscort:GetCoordinate():ToString( self.PlayerUnit ) )
-  
-  LeaderEscort:MessageTypeToGroup( Report:Text(),  MESSAGE.Type.Information, self.PlayerUnit )
-
-  self.Detection = DETECTION_AREAS:New( EscortGroupSet, 5000 )
-
-  self.Detection:__Start( 30 )
-    
-  self:HandleEvent( EVENTS.Dead, OnEventDeadOrCrash )
-  self:HandleEvent( EVENTS.Crash, OnEventDeadOrCrash )
-
-  self.MainMenu = MENU_GROUP:New( self.PlayerGroup, self.EscortName )
-  self.FlightMenu = MENU_GROUP:New( self.PlayerGroup, "Flight", self.MainMenu )
+function AI_ESCORT:_InitFlightMenus()
 
   self:SetFlightMenuJoinUp()
   self:SetFlightMenuFormation( "Trail" )
@@ -322,25 +294,77 @@ function AI_ESCORT:onafterStart( EscortGroupSet )
 
   self:SetFlightMenuTargets()
 
+end
+
+function AI_ESCORT:_InitEscortMenus( EscortGroup )
+
+  EscortGroup.EscortMenu = MENU_GROUP:New( self.PlayerGroup, EscortGroup:GetCallsign(), self.MainMenu )
+  
+  self:SetEscortMenuJoinUp( EscortGroup )
+  self:SetEscortMenuResumeMission( EscortGroup )
+  
+  self:SetEscortMenuHoldAtEscortPosition( EscortGroup )
+  self:SetEscortMenuHoldAtLeaderPosition( EscortGroup )
+  
+  self:SetEscortMenuFlare( EscortGroup )
+  self:SetEscortMenuSmoke( EscortGroup )
+
+  self:SetEscortMenuROE( EscortGroup )
+  self:SetEscortMenuROT( EscortGroup )
+  
+  self:SetEscortMenuTargets( EscortGroup )
+
+end
+
+function AI_ESCORT:_InitEscortRoute( EscortGroup )
+
+  EscortGroup.MissionRoute = EscortGroup:GetTaskRoute()
+
+end
+
+
+--- @param #AI_ESCORT self
+-- @param Core.Set#SET_GROUP EscortGroupSet
+function AI_ESCORT:onafterStart( EscortGroupSet )
+
+  self:F()
+
+  EscortGroupSet:ForEachGroup(
+    --- @param Core.Group#GROUP EscortGroup
+    function( EscortGroup )
+      EscortGroup:WayPointInitialize()
+    
+      EscortGroup:OptionROTVertical()
+      EscortGroup:OptionROEOpenFire()
+    end
+  )
+
+  -- TODO:Revise this...  
+  local LeaderEscort = EscortGroupSet:GetFirst() -- Wrapper.Group#GROUP
+  if LeaderEscort then
+    local Report = REPORT:New( "Escort reporting:" )
+    Report:Add( "Joining Up " .. EscortGroupSet:GetUnitTypeNames():Text( ", " ) .. " from " .. LeaderEscort:GetCoordinate():ToString( self.PlayerUnit ) )
+    LeaderEscort:MessageTypeToGroup( Report:Text(),  MESSAGE.Type.Information, self.PlayerUnit )
+  end
+
+  self.Detection = DETECTION_AREAS:New( EscortGroupSet, 5000 )
+
+  self.Detection:__Start( 30 )
+    
+  self:HandleEvent( EVENTS.Dead, OnEventDeadOrCrash )
+  self:HandleEvent( EVENTS.Crash, OnEventDeadOrCrash )
+
+  self.MainMenu = MENU_GROUP:New( self.PlayerGroup, self.EscortName )
+  self.FlightMenu = MENU_GROUP:New( self.PlayerGroup, "Flight", self.MainMenu )
+
+  self:_InitFlightMenus()
+  
   self.EscortGroupSet:ForSomeGroupAlive(
     --- @param Core.Group#GROUP EscortGroup
     function( EscortGroup )
 
-      EscortGroup.EscortMenu = MENU_GROUP:New( self.PlayerGroup, EscortGroup:GetCallsign(), self.MainMenu )
-      
-      self:SetEscortMenuJoinUp( EscortGroup )
-      self:SetEscortMenuResumeMission( EscortGroup )
-      
-      self:SetEscortMenuHoldAtEscortPosition( EscortGroup )
-      self:SetEscortMenuHoldAtLeaderPosition( EscortGroup )
-      
-      self:SetEscortMenuFlare( EscortGroup )
-      self:SetEscortMenuSmoke( EscortGroup )
-
-      self:SetEscortMenuROE( EscortGroup )
-      self:SetEscortMenuROT( EscortGroup )
-      
-      self:SetEscortMenuTargets( EscortGroup )
+      self:_InitEscortMenus( EscortGroup )
+      self:_InitEscortRoute( EscortGroup )
       
     end
   )
@@ -1086,6 +1110,7 @@ function AI_ESCORT:SetEscortMenuTargets( EscortGroup )
       local EscortMenuAttackTargets = MENU_GROUP:New( self.PlayerGroup, "Attack targets", EscortGroup.EscortMenu )
     
       --EscortGroup.ReportTargetsScheduler = SCHEDULER:New( self, self._ReportTargetsScheduler, { EscortGroup }, 1, MenuTargets.Interval )
+      EscortGroup.ResumeScheduler = SCHEDULER:New( self, self._ResumeScheduler, { EscortGroup }, 1, 60 )
     end
   end
 
@@ -1561,8 +1586,10 @@ end
 function AI_ESCORT:_ResumeMission( EscortGroup, WayPoint )
 
   --self.FollowScheduler:Stop( self.FollowSchedule )
+  
+  self:ModeMission( EscortGroup )
 
-  local WayPoints = EscortGroup:GetTaskRoute()
+  local WayPoints = EscortGroup.MissionRoute
   self:T( WayPoint, WayPoints )
 
   for WayPointIgnore = 1, WayPoint do
@@ -1788,6 +1815,32 @@ function AI_ESCORT:RegisterRoute()
   return TaskPoints
 end
 
+--- Resume Scheduler.
+-- @param #AI_ESCORT self
+-- @param Wrapper.Group#GROUP EscortGroup
+function AI_ESCORT:_ResumeScheduler( EscortGroup )
+  self:F( EscortGroup:GetName() )
+
+  if EscortGroup:IsAlive() and self.PlayerUnit:IsAlive() then
+
+
+    local EscortGroupName = EscortGroup:GetCallsign() 
+
+    if EscortGroup.EscortMenuResumeMission then
+      EscortGroup.EscortMenuResumeMission:RemoveSubMenus()
+
+      local TaskPoints = EscortGroup.MissionRoute
+      
+      for WayPointID, WayPoint in pairs( TaskPoints ) do
+        local EscortVec3 = EscortGroup:GetVec3()
+        local Distance = ( ( WayPoint.x - EscortVec3.x )^2 +
+          ( WayPoint.y - EscortVec3.z )^2
+          ) ^ 0.5 / 1000
+        MENU_GROUP_COMMAND:New( self.PlayerGroup, "Waypoint " .. WayPointID .. " at " .. string.format( "%.2f", Distance ).. "km", EscortGroup.EscortMenuResumeMission, AI_ESCORT._ResumeMission, self, EscortGroup, WayPointID )
+      end
+    end
+  end
+end
 
 
 --- Report Targets Scheduler.
@@ -1859,20 +1912,6 @@ function AI_ESCORT:_ReportTargetsScheduler( EscortGroup )
         EscortGroup:MessageTypeToGroup( DetectedTargetsReport:Text( "\n" ), MESSAGE.Type.Information, self.PlayerGroup )
       else
         EscortGroup:MessageTypeToGroup( "No targets detected.", MESSAGE.Type.Information, self.PlayerGroup )
-      end
-
-      if EscortGroup.EscortMenuResumeMission then
-        EscortGroup.EscortMenuResumeMission:RemoveSubMenus()
-  
-        local TaskPoints = EscortGroup:GetTaskRoute()
-        
-        for WayPointID, WayPoint in pairs( TaskPoints ) do
-          local EscortVec3 = EscortGroup:GetVec3()
-          local Distance = ( ( WayPoint.x - EscortVec3.x )^2 +
-            ( WayPoint.y - EscortVec3.z )^2
-            ) ^ 0.5 / 1000
-          MENU_GROUP_COMMAND:New( self.PlayerGroup, "Waypoint " .. WayPointID .. " at " .. string.format( "%.2f", Distance ).. "km", EscortGroup.EscortMenuResumeMission, AI_ESCORT._ResumeMission, self, EscortGroup, WayPointID )
-        end
       end
 
       return true

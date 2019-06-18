@@ -226,43 +226,27 @@ end
 function AI_ESCORT_REQUEST:SpawnEscort()
 
   local EscortGroup = self.EscortSpawn:SpawnAtAirbase( self.EscortAirbase, SPAWN.Takeoff.Hot )
-  self.EscortGroupSet:AddGroup( EscortGroup )
 
   EscortGroup:OptionROTVertical()
   EscortGroup:OptionROEHoldFire()
   
   self:ScheduleOnce( 0.1,
     function( EscortGroup )
+
+      self.EscortGroupSet:AddGroup( EscortGroup )
+
       local LeaderEscort = self.EscortGroupSet:GetFirst() -- Wrapper.Group#GROUP
-      
       local Report = REPORT:New()
-    
       Report:Add( "Joining Up " .. self.EscortGroupSet:GetUnitTypeNames():Text( ", " ) .. " from " .. LeaderEscort:GetCoordinate():ToString( self.EscortUnit ) )
       LeaderEscort:MessageTypeToGroup( Report:Text(),  MESSAGE.Type.Information, self.PlayerUnit )
 
-      self:FormationTrail( 50, 50, 50 )
       if self.SpawnMode == self.__Enum.Mode.Formation then
         self:ModeFormation( EscortGroup )
       end
 
-      --self:Menus( self.XStart, self.XSpace, self.YStart, self.YSpace, self.ZStart, self.ZSpace, self.ZLevels )
-
-      EscortGroup.EscortMenu = MENU_GROUP:New( self.PlayerGroup, EscortGroup:GetName(), self.MainMenu )      
-
-      self:EscortMenuJoinUp( EscortGroup )
-
-      self:EscortMenuHoldAtEscortPosition( EscortGroup )
-      self:EscortMenuHoldAtLeaderPosition( EscortGroup )
-      
-      self:MenuFlare()
-      self:MenuSmoke()
-    
-      self:MenuReportTargets( 60 )
-      self:MenuAssistedAttack()
-      self:MenuROE()
-      self:MenuROT()
-    
-      self:MenuResumeMission()
+      self:_InitFlightMenus()
+      self:_InitEscortMenus( EscortGroup )
+      self:_InitEscortRoute( EscortGroup )
 
       --- @param #AI_ESCORT self
       -- @param Core.Event#EVENTDATA EventData
@@ -283,6 +267,8 @@ end
 -- @param Core.Set#SET_GROUP EscortGroupSet
 function AI_ESCORT_REQUEST:onafterStart( EscortGroupSet )
 
+  self:F()
+
   if not self.MenuRequestEscort then
     self.MenuRequestEscort = MENU_GROUP_COMMAND:New( self.LeaderGroup, "Request new escort ", self.MainMenu, 
       function()
@@ -290,6 +276,8 @@ function AI_ESCORT_REQUEST:onafterStart( EscortGroupSet )
       end
       )
   end
+
+  self:GetParent( self ).onafterStart( self, EscortGroupSet )
 
   self:HandleEvent( EVENTS.Dead, self.OnEventDeadOrCrash )
   self:HandleEvent( EVENTS.Crash, self.OnEventDeadOrCrash )
