@@ -19,6 +19,7 @@
 -- @field #string carriername The name of the carrier unit.
 -- @field Wrapper.Group#GROUP group The carrier strike group.
 -- @field #table menu Table of menu items.
+-- @field #table squadrons Table of squadrons.
 -- @extends Functional.Warehouse#WAREHOUSE
 
 --- Be surprised!
@@ -38,14 +39,13 @@ CVW = {
   carriername    =   nil,
   group          =   nil,
   menu           =   nil,
+  squadrons      =   nil,
 }
 
 --- Squadron
 -- @type CVW.Squadron
--- @field Wrapper.Group#GROUP group Intruder group object.
--- @field #string groupname Name of the intruder group.
--- @field #number time0 Abs. mission time first detected inside CCA.
--- @field #number dist0 Distance first detected inside CCA.
+-- @field #string name Name of the squadron.
+-- @field #table assets Assets of the squadron.
 -- @field DCS#Coalition.Side coalition Coalition side.
 -- @field #number threadlevel Thread level of intruder.
 -- @field #string threadtext Thread text.
@@ -56,7 +56,7 @@ CVW = {
 
 --- FlightControl class version.
 -- @field #string version
-CVW.version="0.0.1"
+CVW.version="0.0.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -87,14 +87,19 @@ function CVW:New(carriername, alias)
   
   self.group=self.carrier:GetGroup()
   
+  self.squadrons={}
+  
   
   -- Set some string id for output to DCS.log file.
   self.sid=string.format("CVW %s |", self.carriername)
 
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
-  self:AddTransition("*",             "AirwingStatus",   "*")           -- Skipper status update.
-  self:AddTransition("*",             "RequestCAP",      "*")           -- New intruder detected.
+  self:AddTransition("*",             "AirwingStatus",    "*")           -- CVW status update.
+  self:AddTransition("*",             "RequestCAP",       "*")           -- Request CAP flight.
+  self:AddTransition("*",             "RequestIntercept", "*")           -- Request Intercept.
+  self:AddTransition("*",             "RequestCAS",       "*")           -- Request Intercept.
+  self:AddTransition("*",             "RequestSEAD",      "*")           -- Request Intercept.
   
   ------------------------
   --- Pseudo Functions ---
@@ -118,11 +123,11 @@ function CVW:New(carriername, alias)
   -- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "SkipperStatus".
-  -- @function [parent=#CVW] SkipperStatus
+  -- @function [parent=#CVW] AirwingStatus
   -- @param #CVW self
 
   --- Triggers the FSM event "SkipperStatus" after a delay.
-  -- @function [parent=#CVW] __SkipperStatus
+  -- @function [parent=#CVW] __AirwingStatus
   -- @param #CVW self
   -- @param #number delay Delay in seconds.  
 
@@ -170,9 +175,12 @@ function CVW:AddSquadron(name)
   table.insert(self.squadrons, squadron)
 end
 
---- Add squadron
+--- Add flight group to squadron.
 -- @param #CVW self
--- @param #string groupname Name of the template group.
+-- @param #CVW.Squadron squadron Air wing squadron
+-- @param Wrapper.Group#GROUP flightgroup Flight group.
+-- @param #number ngroups Number of groups to be added.
+-- @param #string livery Livery for group.
 -- @return #CVW self
 function CVW:AddFlightToSquadron(squadron, flightgroup, ngroups, livery)
 
@@ -217,6 +225,12 @@ function CVW:onafterStart(From, Event, To)
     
   -- Add F10 radio menu.
   self:_SetMenuCoalition()
+  
+  for _,_squadron in pairs(self.squadrons) do
+    local squadron=_squadron --#CVW.Squadron
+    self:_AddSquadonMenu(squadron)
+  
+  end
 
   -- Init status updates.
   self:__AirwingStatus(-1)
@@ -293,12 +307,12 @@ function CVW:_SetMenuCoalition()
   if self.menusingle then
     -- F10/Skipper/...
     if not menu.Skipper then
-      menu.Skipper=MENU_COALITION:New(Coalition, "Skipper")
+      menu.Skipper=MENU_COALITION:New(Coalition, "CVW")
     end
   else
     -- F10/Skipper/<Carrier Alias>/...
     if not menu.Root then
-      menu.Root=MENU_COALITION:New(Coalition, "Skipper")
+      menu.Root=MENU_COALITION:New(Coalition, "CVW")
     end
     menu.Skipper=MENU_COALITION:New(Coalition, self.alias, menu.Root)
   end  
@@ -307,33 +321,12 @@ function CVW:_SetMenuCoalition()
   -- Squadron Menu --
   -------------------
   
-  menu.Squadron= MENU_COALITION:New(Coalition, "Squadrons", menu.Skipper)
+  menu.Squadron={}
+  menu.Squadron.Main= MENU_COALITION:New(Coalition, "Squadrons", menu.Skipper)
   
-
-  ------------------
-  -- Defence Menu --
-  ------------------  
-  
-  menu.Defence               = MENU_COALITION:New(Coalition, "Defence", menu.Skipper)
-  menu.Defence_SetROE        = MENU_COALITION:New(Coalition, "Set ROE", menu.Defence)
-  menu.Defence_SetROE_Hold   = MENU_COALITION_COMMAND:New(Coalition, "Weapon Hold", menu.Defence_SetROE, self._SetROE, self, "Hold")
-  menu.Defence_SetROE_Free   = MENU_COALITION_COMMAND:New(Coalition, "Weapon Free", menu.Defence_SetROE, self._SetROE, self, "Free")
-  menu.Defence_SetROE_Return = MENU_COALITION_COMMAND:New(Coalition, "Return Fire", menu.Defence_SetROE, self._SetROE, self, "Return")
-
-  menu.Defence_Intruders     = MENU_COALITION:New(Coalition, "Intruders", menu.Defence)
-  menu.Defence_Ammo          = MENU_COALITION_COMMAND:New(Coalition, "Report Ammo", menu.Defence, self.arty.GetAmmo, self.arty, true)
-  menu.Defence_IntruderR     = MENU_COALITION_COMMAND:New(Coalition, "Report Intruders", menu.Defence, self._ListIntruders, self)
-  menu.Defence_LaunchCAP     = MENU_COALITION_COMMAND:New(Coalition, "Lauch CAP", menu.Defence, self.LaunchCAP, self)
-
-  --------------------
-  -- Warehouse Menu --
-  --------------------
-
-  if self.warehouse then
-    menu.Warehouse=MENU_COALITION:New(Coalition, "Warehouse", menu.Skipper)
-    menu.Warehouse_Assets = MENU_COALITION_COMMAND:New(Coalition, "Reports On/Off", menu.Warehouse, self.WarehouseReportsToggle, self)
-    menu.Warehouse_Assets = MENU_COALITION_COMMAND:New(Coalition, "Report Assets",  menu.Warehouse, self.ReportWarehouseStock, self)
-  end
+  menu.Warehouse=MENU_COALITION:New(Coalition, "Warehouse", menu.Skipper)
+  menu.Warehouse_Reports = MENU_COALITION_COMMAND:New(Coalition, "Reports On/Off", menu.Warehouse, self.WarehouseReportsToggle, self)
+  menu.Warehouse_Assets  = MENU_COALITION_COMMAND:New(Coalition, "Report Assets",  menu.Warehouse, self.ReportWarehouseStock, self)
   
 end
 
@@ -345,21 +338,15 @@ function CVW:_AddSquadonMenu(squadron)
 
   local Coalition=self:GetCoalition()
 
-  local root=self.menu[Coalition].Squadrons
+  local root=self.menu[Coalition].Squadrons.Main
   
   local menu=MENU_COALITION:New(Coalition, squadron.name, root)
   
-  if intruder.category==Group.Category.GROUND then
-    MENU_COALITION_COMMAND:New(Coalition, "Engage Shells", menu, self.EngageArty, self, intruder, ARTY.WeaponType.Cannon)
-    MENU_COALITION_COMMAND:New(Coalition, "Engage Cruise M", menu, self.EngageArty, self, intruder, ARTY.WeaponType.CruiseMissile)
-  elseif intruder.category==Group.Category.SHIP then
-    MENU_COALITION_COMMAND:New(Coalition, "Engage", menu, self.EngageArty, self, intruder)
-  elseif intruder.category==Group.Category.AIRPLANE or intruder.category==Group.Category.HELICOPTER then
-    MENU_COALITION_COMMAND:New(Coalition, "Engage A2A", menu, self.LaunchIntercept, self, intruder)
-  end
-  
+  MENU_COALITION_COMMAND:New(Coalition, "Report",    menu, self._Report, self, squadron)
+  MENU_COALITION_COMMAND:New(Coalition, "Launch CAP", menu, self._LaunchCAP, self, squadron)
+    
   -- Set menu.
-  intruder.menu=menu
+  squadron.menu=menu
 
 end
 
