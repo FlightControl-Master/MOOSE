@@ -2059,7 +2059,7 @@ do -- COORDINATE
   --   * Uses default settings in COORDINATE.
   --   * Can be overridden if for a GROUP containing x clients, a menu was selected to override the default.
   -- @param #COORDINATE self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The controllable to retrieve the settings from, otherwise the default settings will be chosen.
   -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @param Tasking.Task#TASK Task The task for which coordinates need to be calculated.
   -- @return #string The coordinate Text in the configured coordinate system.

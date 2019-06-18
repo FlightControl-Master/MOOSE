@@ -125,7 +125,7 @@ do -- SET_BASE
     self.Index = {}
     
     self.CallScheduler = SCHEDULER:New( self )
-  
+
     self:SetEventPriority( 2 )
   
     return self
@@ -339,6 +339,25 @@ do -- SET_BASE
     self.TimeInterval = TimeInterval
     
     return self
+  end
+  
+  --- Define the SET iterator **"limit"**.
+  -- @param #SET_BASE self
+  -- @param #number Limit Defines how many objects are evaluated of the set as part of the Some iterators. The default is 1.
+  -- @return #SET_BASE self
+  function SET_BASE:SetSomeIteratorLimit( Limit )
+  
+    self.SomeIteratorLimit = Limit or 1
+    
+    return self
+  end
+  
+   --- Get the SET iterator **"limit"**.
+  -- @param #SET_BASE self
+  -- @return #number Defines how many objects are evaluated of the set as part of the Some iterators.
+  function SET_BASE:GetSomeIteratorLimit()
+  
+    return self.SomeIteratorLimit or self:Count()
   end
   
   
@@ -559,6 +578,66 @@ do -- SET_BASE
             IteratorFunction( Object, unpack( arg ) )
           end
           Count = Count + 1
+  --        if Count % self.YieldInterval == 0 then
+  --          coroutine.yield( false )
+  --        end    
+      end
+      return true
+    end
+    
+  --  local co = coroutine.create( CoRoutine )
+    local co = CoRoutine
+    
+    local function Schedule()
+    
+  --    local status, res = coroutine.resume( co )
+      local status, res = co()
+      self:T3( { status, res } )
+      
+      if status == false then
+        error( res )
+      end
+      if res == false then
+        return true -- resume next time the loop
+      end
+      
+      return false
+    end
+  
+    --self.CallScheduler:Schedule( self, Schedule, {}, self.TimeInterval, self.TimeInterval, 0 )
+    Schedule()
+    
+    return self
+  end
+
+  --- Iterate the SET_BASE and derived classes and call an iterator function for the given SET_BASE, providing the Object for each element within the set and optional parameters.
+  -- @param #SET_BASE self
+  -- @param #function IteratorFunction The function that will be called.
+  -- @return #SET_BASE self
+  function SET_BASE:ForSome( IteratorFunction, arg, Set, Function, FunctionArguments )
+    self:F3( arg )
+    
+    Set = Set or self:GetSet()
+    arg = arg or {}
+    
+    local Limit = self:GetSomeIteratorLimit()
+    
+    local function CoRoutine()
+      local Count = 0
+      for ObjectID, ObjectData in pairs( Set ) do
+        local Object = ObjectData
+          self:T3( Object )
+          if Function then
+            if Function( unpack( FunctionArguments ), Object ) == true then
+              IteratorFunction( Object, unpack( arg ) )
+            end
+          else
+            IteratorFunction( Object, unpack( arg ) )
+          end
+          Count = Count + 1
+          if Count >= Limit then
+            break
+          end
   --        if Count % self.YieldInterval == 0 then
   --          coroutine.yield( false )
   --        end    
@@ -845,7 +924,40 @@ do -- SET_GROUP
     
     return AliveSet.Set or {}
   end
+
+  --- Returns a report of of unit types.
+  -- @param #SET_GROUP self
+  -- @return Core.Report#REPORT A report of the unit types found. The key is the UnitTypeName and the value is the amount of unit types found.
+  function SET_GROUP:GetUnitTypeNames()
+    self:F2()
   
+    local MT = {} -- Message Text
+    local UnitTypes = {}
+    
+    local ReportUnitTypes = REPORT:New()
+    
+    for GroupID, GroupData in pairs( self:GetSet() ) do
+      local Units = GroupData:GetUnits()
+      for UnitID, UnitData in pairs( Units ) do
+        if UnitData:IsAlive() then
+          local UnitType = UnitData:GetTypeName()
+      
+          if not UnitTypes[UnitType] then
+            UnitTypes[UnitType] = 1
+          else
+            UnitTypes[UnitType] = UnitTypes[UnitType] + 1
+          end
+        end
+      end
+    end
+  
+    for UnitTypeID, UnitType in pairs( UnitTypes ) do
+      ReportUnitTypes:Add( UnitType .. " of " .. UnitTypeID )
+    end
+  
+    return ReportUnitTypes
+  end
+
   --- Add a GROUP to SET_GROUP.
   -- Note that for each unit in the group that is set, a default cargo bay limit is initialized.
   -- @param Core.Set#SET_GROUP self
@@ -1144,12 +1256,24 @@ do -- SET_GROUP
   
   --- Iterate the SET_GROUP and call an iterator function for each GROUP object, providing the GROUP and optional parameters.
   -- @param #SET_GROUP self
-  -- @param #function IteratorFunction The function that will be called when there is an alive GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
+  -- @param #function IteratorFunction The function that will be called for all GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
   -- @return #SET_GROUP self
   function SET_GROUP:ForEachGroup( IteratorFunction, ... )
     self:F2( arg )
     
     self:ForEach( IteratorFunction, arg, self:GetSet() )
+  
+    return self
+  end
+  
+  --- Iterate the SET_GROUP and call an iterator function for some GROUP objects, providing the GROUP and optional parameters.
+  -- @param #SET_GROUP self
+  -- @param #function IteratorFunction The function that will be called for some GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
+  -- @return #SET_GROUP self
+  function SET_GROUP:ForSomeGroup( IteratorFunction, ... )
+    self:F2( arg )
+    
+    self:ForSome( IteratorFunction, arg, self:GetSet() )
   
     return self
   end
@@ -1162,6 +1286,18 @@ do -- SET_GROUP
     self:F2( arg )
     
     self:ForEach( IteratorFunction, arg, self:GetAliveSet() )
+  
+    return self
+  end
+  
+  --- Iterate the SET_GROUP and call an iterator function for some **alive** GROUP objects, providing the GROUP and optional parameters.
+  -- @param #SET_GROUP self
+  -- @param #function IteratorFunction The function that will be called when there is an alive GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
+  -- @return #SET_GROUP self
+  function SET_GROUP:ForSomeGroupAlive( IteratorFunction, ... )
+    self:F2( arg )
+    
+    self:ForSome( IteratorFunction, arg, self:GetAliveSet() )
   
     return self
   end
