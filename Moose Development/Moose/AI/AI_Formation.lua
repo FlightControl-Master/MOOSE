@@ -1141,8 +1141,12 @@ function AI_FORMATION:onenterFollowing( FollowGroupSet ) --R2.1
   
               -- Now we calculate the intersecting vector between the circle around CV2 with radius FollowDistance and GH2.
               -- From the GeoGebra model: CVI = (x(CV2) + FollowDistance cos(alpha), y(GH2) + FollowDistance sin(alpha), z(CV2))
+              local Inclination = ( Distance + FollowFormation.x ) / 10
+              if Inclination < -30 then
+                Inclination = - 30
+              end
               local CVI = { x = CV2.x + CS * 10 * math.sin(Ca),
-                --y = GH2.y + ( Distance + FollowFormation.x ) / 10, -- + FollowFormation.y,
+                y = GH2.y + Inclination, -- + FollowFormation.y,
                 y = GH2.y,
                 z = CV2.z + CS * 10 * math.cos(Ca),
               }
