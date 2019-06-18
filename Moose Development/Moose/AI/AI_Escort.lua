@@ -1099,17 +1099,17 @@ function AI_ESCORT:SetEscortMenuTargets( EscortGroup )
   for _, MenuTargets in pairs( self.Menu.Targets) do
     if EscortGroup:IsAir() then
       local EscortGroupName = EscortGroup:GetName()
-      local EscortMenuReportTargets = MENU_GROUP:New( self.PlayerGroup, "Report targets", EscortGroup.EscortMenu )
+      --local EscortMenuReportTargets = MENU_GROUP:New( self.PlayerGroup, "Report targets", EscortGroup.EscortMenu )
 
       -- Report Targets
-      EscortGroup.EscortMenuReportNearbyTargetsNow = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Report targets now!", EscortMenuReportTargets, AI_ESCORT._ReportNearbyTargetsNow, self, EscortGroup, true )
+      EscortGroup.EscortMenuReportNearbyTargetsNow = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Report targets", EscortGroup.EscortMenu, AI_ESCORT._ReportNearbyTargetsNow, self, EscortGroup, true )
       --EscortGroup.EscortMenuReportNearbyTargetsOn = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Report targets on", EscortGroup.EscortMenuReportNearbyTargets, AI_ESCORT._SwitchReportNearbyTargets, self, EscortGroup, true )
       --EscortGroup.EscortMenuReportNearbyTargetsOff = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Report targets off", EscortGroup.EscortMenuReportNearbyTargets, AI_ESCORT._SwitchReportNearbyTargets, self, EscortGroup, false )
     
       -- Attack Targets
-      local EscortMenuAttackTargets = MENU_GROUP:New( self.PlayerGroup, "Attack targets", EscortGroup.EscortMenu )
+      --local EscortMenuAttackTargets = MENU_GROUP:New( self.PlayerGroup, "Attack targets", EscortGroup.EscortMenu )
     
-      --EscortGroup.ReportTargetsScheduler = SCHEDULER:New( self, self._ReportTargetsScheduler, { EscortGroup }, 1, MenuTargets.Interval )
+      EscortGroup.ReportTargetsScheduler = SCHEDULER:New( self, self._ReportTargetsScheduler, { EscortGroup }, 1, MenuTargets.Interval )
       EscortGroup.ResumeScheduler = SCHEDULER:New( self, self._ResumeScheduler, { EscortGroup }, 1, 60 )
     end
   end
@@ -1365,6 +1365,8 @@ function AI_ESCORT:_JoinUp( EscortGroup )
   local EscortUnit = self.PlayerUnit
 
   self:ModeFormation( EscortGroup )
+
+  EscortGroup:MessageTypeToGroup( "Joining up!", MESSAGE.Type.Information, EscortUnit:GetGroup() )
 end
 
 
@@ -1615,7 +1617,7 @@ function AI_ESCORT:_AttackTarget( EscortGroup, DetectedItem )
 
   if EscortGroup:IsAir() then
     EscortGroup:OptionROEOpenFire()
-    EscortGroup:OptionROTPassiveDefense()
+    EscortGroup:OptionROTVertical()
     EscortGroup:SetState( EscortGroup, "Escort", self )
 
     local DetectedSet = self.Detection:GetDetectedItemSet( DetectedItem )
@@ -1664,8 +1666,7 @@ function AI_ESCORT:_AttackTarget( EscortGroup, DetectedItem )
 
   end
   
-  EscortGroup:MessageTypeToGroup( "Engaging!", MESSAGE.Type.Information, EscortUnit )
-
+  EscortGroup:MessageTypeToGroup( "Engaging Target!", MESSAGE.Type.Information, self.PlayerGroup )
 end
 
 
@@ -1846,7 +1847,7 @@ end
 --- Report Targets Scheduler.
 -- @param #AI_ESCORT self
 -- @param Wrapper.Group#GROUP EscortGroup
-function AI_ESCORT:_ReportTargetsScheduler( EscortGroup )
+function AI_ESCORT:_ReportTargetsScheduler( EscortGroup, Report )
   self:F( EscortGroup:GetName() )
 
   if EscortGroup:IsAlive() and self.PlayerUnit:IsAlive() then
@@ -1854,7 +1855,7 @@ function AI_ESCORT:_ReportTargetsScheduler( EscortGroup )
 
       local EscortGroupName = EscortGroup:GetCallsign() 
  
-      local DetectedTargetsReport = REPORT:New( "Reporting target locations from my position:\n" ) -- A new report to display the detected targets as a message to the player.
+      local DetectedTargetsReport = REPORT:New( "Reporting targets:\n" ) -- A new report to display the detected targets as a message to the player.
     
 
       if EscortGroup.EscortMenuTargetAssistance then
@@ -1908,10 +1909,12 @@ function AI_ESCORT:_ReportTargetsScheduler( EscortGroup )
 
       EscortMenuAttackTargets:RemoveSubMenus( TimeUpdate, "Esort" )
 
-      if DetectedTargets then
-        EscortGroup:MessageTypeToGroup( DetectedTargetsReport:Text( "\n" ), MESSAGE.Type.Information, self.PlayerGroup )
-      else
-        EscortGroup:MessageTypeToGroup( "No targets detected.", MESSAGE.Type.Information, self.PlayerGroup )
+      if Report then
+        if DetectedTargets then
+          EscortGroup:MessageTypeToGroup( DetectedTargetsReport:Text( "\n" ), MESSAGE.Type.Information, self.PlayerGroup )
+        else
+          EscortGroup:MessageTypeToGroup( "No targets detected.", MESSAGE.Type.Information, self.PlayerGroup )
+        end
       end
 
       return true
@@ -1929,7 +1932,7 @@ function AI_ESCORT:_FlightReportTargetsScheduler()
   
   local EscortGroup = self.EscortGroupSet:GetFirst() -- Wrapper.Group#GROUP
   
-  local DetectedTargetsReport = REPORT:New( "Reporting target locations from your position:\n" ) -- A new report to display the detected targets as a message to the player.
+  local DetectedTargetsReport = REPORT:New( "Reporting your targets:\n" ) -- A new report to display the detected targets as a message to the player.
 
   if EscortGroup and ( self.PlayerUnit:IsAlive() and EscortGroup:IsAlive() ) then
 
