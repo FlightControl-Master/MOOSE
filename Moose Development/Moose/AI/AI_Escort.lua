@@ -404,7 +404,7 @@ end
 -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
 -- @param #number ZLevels The amount of levels on the Z-axis.
 -- @return #AI_ESCORT
-function AI_ESCORT:MenusHelicopter( XStart, XSpace, YStart, YSpace, ZStart, ZSpace, ZLevels )
+function AI_ESCORT:MenusHelicopters( XStart, XSpace, YStart, YSpace, ZStart, ZSpace, ZLevels )
   self:F()
 
 --  self:MenuScanForTargets( 100, 60 )
