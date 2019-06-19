@@ -365,9 +365,11 @@ function AI_ESCORT:onafterStart( EscortGroupSet )
 
       self:_InitEscortMenus( EscortGroup )
       self:_InitEscortRoute( EscortGroup )
-      
+
+      self:ModeFormation( EscortGroup )
     end
   )
+  
 
 end
 
@@ -1907,7 +1909,7 @@ function AI_ESCORT:_ReportTargetsScheduler( EscortGroup, Report )
 
       end
 
-      EscortMenuAttackTargets:RemoveSubMenus( TimeUpdate, "Esort" )
+      EscortMenuAttackTargets:RemoveSubMenus( TimeUpdate, "Escort" )
 
       if Report then
         if DetectedTargets then
