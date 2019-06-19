@@ -1,4 +1,4 @@
---- **CVW** - (R2.5) - Carrier Air Wing (CVW) Warehouse.
+--- **Ops** - (R2.5) - Carrier Air Wing (CVW) Warehouse.
 --
 -- **Main Features:**
 --
@@ -15,9 +15,8 @@
 -- @type CVW
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug Debug mode. Messages to all about status.
--- @field #string cid Class id string for output to DCS log file.
+-- @field #string sid Class id string for output to DCS log file.
 -- @field #string carriername The name of the carrier unit.
--- @field Wrapper.Group#GROUP group The carrier strike group.
 -- @field #table menu Table of menu items.
 -- @field #table squadrons Table of squadrons.
 -- @extends Functional.Warehouse#WAREHOUSE
@@ -37,7 +36,6 @@ CVW = {
   ClassName      = "CVW",
   sid            =   nil,
   carriername    =   nil,
-  group          =   nil,
   menu           =   nil,
   squadrons      =   nil,
 }
@@ -46,18 +44,19 @@ CVW = {
 -- @type CVW.Squadron
 -- @field #string name Name of the squadron.
 -- @field #table assets Assets of the squadron.
+-- @field #table tasks Task(s) of the squadron.
+-- @field #string livery Livery of the squadron.
 -- @field DCS#Coalition.Side coalition Coalition side.
 -- @field #number threadlevel Thread level of intruder.
 -- @field #string threadtext Thread text.
 -- @field #number category Group category.
 -- @field #string categoryname Group category name.
 -- @field #string typename Type name of group.
--- @field #table menu The defence menu entries.
+-- @field #table menu The squadron menu entries.
 
 
 --- Squadron tasks.
 -- @type CVW.Task
--- @field #string INTERCEPT
 CVW.Task={
   INTERCEPT="Intercept",
   CAP="CAP",
@@ -71,7 +70,7 @@ CVW.Task={
 
 --- FlightControl class version.
 -- @field #string version
-CVW.version="0.0.2"
+CVW.version="0.0.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -86,21 +85,19 @@ CVW.version="0.0.2"
 --- Create a new CVW class object for a specific aircraft carrier unit.
 -- @param #CVW self
 -- @param #string carriername Name of the carrier.
--- @param #string alias Skipper alias.
+-- @param #string squadronname Name of the squadron.
 -- @return #CVW self
-function CVW:New(carriername, alias)
+function CVW:New(carriername, squadronname)
 
   -- Inherit everything from WAREHOUSE class.
-  local self=BASE:Inherit(self, WAREHOUSE:New(carriername, alias)) -- #CVW
+  local self=BASE:Inherit(self, WAREHOUSE:New(carriername, squadronname)) -- #CVW
 
-  if not self.carrier then
+  if not self then
     BASE:E(string.format("ERROR: Could not find carrier %s!", carriername))
     return nil
   end
 
   self.carriername=carriername
-
-  self.group=self.carrier:GetGroup()
 
   self.squadrons={}
 
@@ -147,6 +144,17 @@ function CVW:New(carriername, alias)
   -- @param #number delay Delay in seconds.
 
 
+  --- Triggers the FSM event "RequestCAP".
+  -- @function [parent=#CVW] RequestCAP
+  -- @param #CVW self
+  -- @param Core.Point#COORDINATE coordinate
+  -- @param #number altitude Altitude
+  -- @param #number leg Race track length.
+  -- @param #number heading Heading in degrees.
+  -- @param #number speed Speed in knots.
+  -- @param #CVW.Squadon squadron Explicitly request a specific squadron.
+
+
   -- Debug trace.
   if true then
     self.Debug=true
@@ -176,39 +184,43 @@ function CVW:SetMenuSingleCarrier(switch)
   return self
 end
 
---- Add squadron
+--- Add a squadron to the carrier air wing.
 -- @param #CVW self
--- @param #string name Name of the squadron, e.g. VFA-37.
--- @param #table Table of tasks.
--- @return #CVW self
-function CVW:AddSquadron(name, tasks)
+-- @param #string name Name of the squadron, e.g. "VFA-37".
+-- @param #table tasks Table of tasks the squadron is supposed to do.
+-- @param #string livery The livery for all added flight group. Default is the livery of the template group.
+-- @return #CVW.Squadron The squadron object.
+function CVW:AddSquadron(name, tasks, livery)
 
   local squadron={} --#CVW.Squadron
 
   squadron.name=name
   squadron.assets={}
   squadron.tasks=tasks or {}
+  squadron.livery=livery
 
   table.insert(self.squadrons, squadron)
+  
+  return squadron
 end
 
---- Add flight group to squadron.
+--- Add flight group(s) to squadron.
 -- @param #CVW self
 -- @param #CVW.Squadron squadron The squadron object.
 -- @param Wrapper.Group#GROUP flightgroup The flight group object.
 -- @param #number ngroups Number of groups to add.
--- @param #string livery The livery for all added flight group.
 -- @return #CVW self
-function CVW:AddFlightToSquadron(squadron, flightgroup, ngroups, livery)
+function CVW:AddFlightToSquadron(squadron, flightgroup, ngroups)
 
-  self:AddAsset(flightgroup, ngroups, nil, nil, nil, nil, nil, {livery}, squadron.name)
+  self:AddAsset(flightgroup, ngroups, nil, nil, nil, nil, nil, {squadron.livery}, squadron.name)
 
-  function self:OnAfterNewAsset(From,Event,To,asset,assignment)
+  function self:OnAfterNewAsset(From, Event, To, asset, assignment)
     if assignment==squadron.name then
       table.insert(squadron.assets, asset)
     end
   end
 
+  return self
 end
 
 --- Get squadron by name
@@ -238,7 +250,7 @@ function CVW:onafterStart(From, Event, To)
   self:GetParent(self).onafterStart(self, From, Event, To)
 
   -- Info.
-  self:I(self.sid..string.format("Starting CVW v%s for carrier %s on map %s.", CVW.version, self.carriername, self.theatre))
+  self:I(self.sid..string.format("Starting CVW v%s for carrier %s", CVW.version, self.carriername))
 
   -- Add F10 radio menu.
   self:_SetMenuCoalition()
@@ -246,7 +258,6 @@ function CVW:onafterStart(From, Event, To)
   for _,_squadron in pairs(self.squadrons) do
     local squadron=_squadron --#CVW.Squadron
     self:_AddSquadonMenu(squadron)
-
   end
 
   -- Init status updates.
@@ -255,13 +266,10 @@ end
 
 --- Update status.
 -- @param #CVW self
-function CVW:onafterSkipperStatus(From, Event, To)
+function CVW:onafterAirwingStatus(From, Event, To)
 
   local fsmstate=self:GetState()
-
-  -- Check zone for flights inbound.
-  self:_CheckIntruder()
-
+  
     -- Info text.
   local text=string.format("State %s", fsmstate)
   self:I(self.sid..text)
@@ -278,26 +286,36 @@ end
 -- @param #string From
 -- @param #string Event
 -- @param #string To
--- @param #CVW.Squadon squadron
 -- @param Core.Point#COORDINATE coordinate
-function CVW:onafterRequestCAP(From, Event, To, squadron, coordinate)
+-- @param #number altitude Altitude
+-- @param #number leg Race track length.
+-- @param #number heading Heading in degrees.
+-- @param #number speed Speed in knots.
+-- @param #CVW.Squadon squadron Explicitly request a specific squadron.
+function CVW:onafterRequestCAP(From, Event, To, coordinate, altitude, leg, heading, speed, squadron)
 
-  local n=self:GetNumberOfAssets(WAREHOUSE.Descriptor.ASSIGNMENT, "CAP", false)
+  local n=self:GetNumberOfAssets(WAREHOUSE.Descriptor.ASSIGNMENT, squadron.name, false)
 
   if n>0 then
 
-    self:__AddRequest(1, self, WAREHOUSE.Descriptor.ASSIGNMENT, squadron.name, 1, nil, nil, nil, CVW.Task.INTERCEPT)
+    self:__AddRequest(1, self, WAREHOUSE.Descriptor.ASSIGNMENT, squadron.name, 1, nil, nil, nil, CVW.Task.CAP)
 
     function self:OnAfterSelfRequest(From,Event,To,Groupset,Request)
+      local request=Request --Functional.Warehouse#WAREHOUSE.Pendingitem
+      local groupset=Groupset --Core.Set#SET_GROUP
 
-      if Request.assignment==CVW.Task.INTERCEPT then
-        local request=Request --Functional.Warehouse#WAREHOUSE.Pendingitem
-        local groupset=Groupset --Core.Set#SET_GROUP
+      if Request.assignment==CVW.Task.CAP then
+      
+        for _,_group in pairs(groupset:GetSet()) do
+          local group=_group --Wrapper.Group#GROUP
+          
+          self:LaunchCAP(group, coordinate, altitude, leg, speed, heading)
+        end
+        
       end
     end
-
   end
-
+  
 end
 
 --- Launch a CAP flight.
@@ -388,7 +406,7 @@ function CVW:_AddSquadonMenu(squadron)
 
   local Coalition=self:GetCoalition()
 
-  local root=self.menu[Coalition].Squadrons.Main
+  local root=self.menu[Coalition].Squadron.Main
 
   local menu=MENU_COALITION:New(Coalition, squadron.name, root)
 
@@ -404,15 +422,15 @@ end
 --- Warehouse reports on/off.
 -- @param #CVW self
 function CVW:WarehouseReportsToggle()
-  self.warehouse.Report=not self.warehouse.Report
-  MESSAGE:New(string.format("Warehouse reports are now %s", tostring(self.warehouse.Report)), 10, "CVW", true):ToCoalition(self:GetCoalition())
+  self.Report=not self.Report
+  MESSAGE:New(string.format("Warehouse reports are now %s", tostring(self.Report)), 10, "CVW", true):ToCoalition(self:GetCoalition())
 end
 
 
 --- Report warehouse stock.
 -- @param #CVW self
 function CVW:ReportWarehouseStock()
-  local text=self.warehouse:_GetStockAssetsText(false)
+  local text=self:_GetStockAssetsText(false)
   MESSAGE:New(text, 10, "CVW", true):ToCoalition(self:GetCoalition())
 end
 
@@ -426,13 +444,13 @@ function CVW:LaunchIntercept(intruder)
 
   if n>0 then
 
-    self.warehouse:AddRequest(self.warehouse, WAREHOUSE.Descriptor.ASSIGNMENT, "Intercept", 1, nil, nil, nil, "Intercept")
+    self:AddRequest(self, WAREHOUSE.Descriptor.ASSIGNMENT, "Intercept", 1, nil, nil, nil, "Intercept")
 
     local capcoord=intruder.group:GetCoordinate()
 
     capcoord:MarkToAll("Intruder coord")
 
-    function self.warehouse.OnAfterSelfRequest(warehouse, From, Event, To, Groupset, Request)
+    function self.OnAfterSelfRequest(warehouse, From, Event, To, Groupset, Request)
       local request=Request --Functional.Warehouse#WAREHOUSE.Pendingitem
       local groupset=Groupset --Core.Set#SET_GROUP
 
