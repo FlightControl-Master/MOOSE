@@ -957,7 +957,7 @@ end
 -- @param #AI_FORMATION self
 -- @param Wrapper.Group#GROUP FollowGroup FollowGroup.
 -- @return #AI_FORMATION
-function AI_FORMATION:ModeMission( FollowGroup )
+function AI_FORMATION:SetFlightModeMission( FollowGroup )
 
   if FollowGroup then
     FollowGroup:SetState( FollowGroup, "PreviousMode", FollowGroup:GetState( FollowGroup, "Mode" ) )
@@ -981,7 +981,7 @@ end
 -- @param #AI_FORMATION self
 -- @param Wrapper.Group#GROUP FollowGroup FollowGroup.
 -- @return #AI_FORMATION
-function AI_FORMATION:ModeAttack( FollowGroup )
+function AI_FORMATION:SetFlightModeAttack( FollowGroup )
 
   if FollowGroup then
     FollowGroup:SetState( FollowGroup, "PreviousMode", FollowGroup:GetState( FollowGroup, "Mode" ) )
@@ -1005,7 +1005,7 @@ end
 -- @param #AI_FORMATION self
 -- @param Wrapper.Group#GROUP FollowGroup FollowGroup.
 -- @return #AI_FORMATION
-function AI_FORMATION:ModeFormation( FollowGroup )
+function AI_FORMATION:SetFlightModeFormation( FollowGroup )
 
   if FollowGroup then
     FollowGroup:SetState( FollowGroup, "PreviousMode", FollowGroup:GetState( FollowGroup, "Mode" ) )

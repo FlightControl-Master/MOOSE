@@ -366,7 +366,7 @@ function AI_ESCORT:onafterStart( EscortGroupSet )
       self:_InitEscortMenus( EscortGroup )
       self:_InitEscortRoute( EscortGroup )
 
-      self:ModeFormation( EscortGroup )
+      self:SetFlightModeFormation( EscortGroup )
     end
   )
   
@@ -1305,7 +1305,7 @@ function AI_ESCORT:_HoldPosition( OrbitGroup, EscortGroup, OrbitHeight, OrbitSec
 
   local OrbitUnit = OrbitGroup:GetUnit(1) -- Wrapper.Unit#UNIT
   
-  self:ModeMission( EscortGroup )
+  self:SetFlightModeMission( EscortGroup )
 
   local PointFrom = {}
   local GroupVec3 = EscortGroup:GetUnit(1):GetVec3()
@@ -1366,7 +1366,7 @@ function AI_ESCORT:_JoinUp( EscortGroup )
 
   local EscortUnit = self.PlayerUnit
 
-  self:ModeFormation( EscortGroup )
+  self:SetFlightModeFormation( EscortGroup )
 
   EscortGroup:MessageTypeToGroup( "Joining up!", MESSAGE.Type.Information, EscortUnit:GetGroup() )
 end
@@ -1591,7 +1591,7 @@ function AI_ESCORT:_ResumeMission( EscortGroup, WayPoint )
 
   --self.FollowScheduler:Stop( self.FollowSchedule )
   
-  self:ModeMission( EscortGroup )
+  self:SetFlightModeMission( EscortGroup )
 
   local WayPoints = EscortGroup.MissionRoute
   self:T( WayPoint, WayPoints )
@@ -1615,7 +1615,7 @@ function AI_ESCORT:_AttackTarget( EscortGroup, DetectedItem )
   
   local EscortUnit = self.PlayerUnit
   
-  self:ModeAttack( EscortGroup )
+  self:SetFlightModeAttack( EscortGroup )
 
   if EscortGroup:IsAir() then
     EscortGroup:OptionROEOpenFire()

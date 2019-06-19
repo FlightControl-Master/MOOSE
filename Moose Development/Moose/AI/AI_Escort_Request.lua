@@ -241,7 +241,7 @@ function AI_ESCORT_REQUEST:SpawnEscort()
       LeaderEscort:MessageTypeToGroup( Report:Text(),  MESSAGE.Type.Information, self.PlayerUnit )
 
       if self.SpawnMode == self.__Enum.Mode.Formation then
-        self:ModeFormation( EscortGroup )
+        self:SetFlightModeFormation( EscortGroup )
       end
 
       self:_InitFlightMenus()
