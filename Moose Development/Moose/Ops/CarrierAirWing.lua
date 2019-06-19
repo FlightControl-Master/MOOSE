@@ -54,6 +54,21 @@ CVW = {
 -- @field #string typename Type name of group.
 -- @field #table menu The defence menu entries.
 
+
+--- Squadron tasks.
+-- @type CVW.Task
+-- @field #string INTERCEPT
+CVW.Task={
+  INTERCEPT="Intercept",
+  CAP="CAP",
+  BAI="BAI",
+  SEAD="SEAD",
+  STRIKE="Strike",
+  CAS="CAS",
+  AWACS="AWACS",
+  TANKER="Tanker",
+}
+
 --- FlightControl class version.
 -- @field #string version
 CVW.version="0.0.2"
@@ -265,16 +280,49 @@ end
 -- @param Core.Point#COORDINATE coordinate
 function CVW:onafterRequestCAP(From, Event, To, squadron, coordinate)
 
-
-  self:__AddRequest(1, self, WAREHOUSE.Descriptor.ASSIGNMENT, squadron.name, 1, nil, nil, nil, "CAP")
-
-  function self:OnAfterSelfRequest(From,Event,To,Groupset,Request)
+  local n=self:GetNumberOfAssets(WAREHOUSE.Descriptor.ASSIGNMENT, "CAP", false)
   
-    if Request.assignment=="CAP" then
-      
+  if n>0 then
+
+    self:__AddRequest(1, self, WAREHOUSE.Descriptor.ASSIGNMENT, squadron.name, 1, nil, nil, nil, CVW.Task.INTERCEPT)
+  
+    function self:OnAfterSelfRequest(From,Event,To,Groupset,Request)
+    
+      if Request.assignment==CVW.Task.INTERCEPT then
+        local request=Request --Functional.Warehouse#WAREHOUSE.Pendingitem
+        local groupset=Groupset --Core.Set#SET_GROUP      
+      end
     end
+    
   end
 
+end
+
+--- Launch a CAP flight.
+-- @param #CVW self
+-- @param Wrapper.Group#GROUP group Flight group.
+-- @param Core.Point#COORDINATE capcoord Coordinate of CAP.
+-- @param #number alt Altitude in feet.
+-- @param #number leg Length of race track pattern leg.
+-- @param #number speed Speed in knots.
+function CVW:LaunchCAP(group, capcoord, alt, leg, heading, speed)
+        
+  local alt=UTILS.FeetToMeters(20000)
+  
+  -- Task orbit.
+  local taskOrbit=group:TaskOrbit(capcoord, alt, UTILS.KnotsToMps(400), capcoord:Translate(UTILS.NMToMeters(15), 0))
+  
+  local wp={}
+  wp[1]=self:GetCoordinate():WaypointAirTakeOffParking()
+  wp[2]=self:GetCoordinate():SetAltitude(alt):WaypointAirTurningPoint(COORDINATE.WaypointAltType.BARO, UTILS.KnotsToKmph(350), {taskOrbit}, "CAP")
+  
+  -- Start uncontrolled group.
+  group:StartUncontrolled()
+  
+  --airboss:SetExcludeAI()
+  
+  -- Route group.
+  group:Route(wp)
 end
 
 
@@ -425,53 +473,7 @@ function CVW:LaunchIntercept(intruder)
 end
 
 
---- Launch a CAP flight.
--- @param #CVW self
-function CVW:LaunchCAP()
 
-  local n=self:GetNumberOfAssets(WAREHOUSE.Descriptor.ASSIGNMENT, "CAP", false)
-  
-  if n>0 then
-
-    self:AddRequest(self, WAREHOUSE.Descriptor.ATTRIBUTE, WAREHOUSE.Attribute.AIR_FIGHTER, 1, nil, nil, nil, "CAP")
-    
-    local capcoord=self.zoneCCA:GetRandomCoordinate(self.zoneCCA:GetRadius()/2)
-    
-    capcoord:MarkToAll("CAP coord")
-    
-    function self:OnAfterSelfRequest(From, Event, To, Groupset, Request)
-      local request=Request --Functional.Warehouse#WAREHOUSE.Pendingitem
-      local groupset=Groupset --Core.Set#SET_GROUP
-
-      for _,_group in pairs(groupset:GetSet()) do
-        local group=_group --Wrapper.Group#GROUP
-    
-        if request.assignment=="CAP" then
-        
-          local alt=UTILS.FeetToMeters(20000)
-        
-          -- Task orbit.
-          local taskOrbit=group:TaskOrbit(capcoord, alt, UTILS.KnotsToMps(400), capcoord:Translate(UTILS.NMToMeters(15), 0))
-        
-          local wp={}
-          wp[1]=self:GetCoordinate():WaypointAirTakeOffParking()
-          wp[2]=self:GetCoordinate():SetAltitude(alt):WaypointAirTurningPoint(COORDINATE.WaypointAltType.BARO, UTILS.KnotsToKmph(350), {taskOrbit}, "CAP")
-          
-          -- Start uncontrolled group.
-          group:StartUncontrolled()
-          
-          --airboss:SetExcludeAI()
-          
-          -- Route group.
-          group:Route(wp)          
-        end
-      end      
-    end
-    
-  else
-    MESSAGE:New("No CAP fighters currently available", 5, "CVW"):ToCoalition(self:GetCoalition())
-  end
-end
 
 --- Sort intruders table.
 -- @param #CVW self
@@ -499,8 +501,6 @@ function CVW:_UpdateIntruderMenu()
   end
 
 end
-
-
 
 --- Remove sub menu for this intruder.
 -- @param #CVW self
