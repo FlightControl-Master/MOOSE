@@ -1576,9 +1576,9 @@ function AI_ESCORT.___Resume( EscortGroup, self )
   EscortGroup:SetState( EscortGroup, "Mode", EscortGroup:GetState( EscortGroup, "PreviousMode" ) )
   
   if EscortGroup:GetState( EscortGroup, "Mode" ) == self.__Enum.Mode.Mission then
-    EscortGroup:MessageTypeToGroup( "Destroyed all targets. Resuming route.", MESSAGE.Type.Information, PlayerGroup )
+    EscortGroup:MessageTypeToGroup( "Resuming route.", MESSAGE.Type.Information, PlayerGroup )
   else
-    EscortGroup:MessageTypeToGroup( "Destroyed all targets. Rejoining formation.", MESSAGE.Type.Information, PlayerGroup )
+    EscortGroup:MessageTypeToGroup( "Rejoining formation.", MESSAGE.Type.Information, PlayerGroup )
   end
 
 end
@@ -1612,8 +1612,6 @@ end
 function AI_ESCORT:_AttackTarget( EscortGroup, DetectedItem )
 
   self:F( EscortGroup )
-  
-  local EscortUnit = self.PlayerUnit
   
   self:SetFlightModeAttack( EscortGroup )
 
@@ -1854,7 +1852,6 @@ function AI_ESCORT:_ReportTargetsScheduler( EscortGroup, Report )
 
   if EscortGroup:IsAlive() and self.PlayerUnit:IsAlive() then
 
-
       local EscortGroupName = EscortGroup:GetCallsign() 
  
       local DetectedTargetsReport = REPORT:New( "Reporting targets:\n" ) -- A new report to display the detected targets as a message to the player.
@@ -1881,7 +1878,7 @@ function AI_ESCORT:_ReportTargetsScheduler( EscortGroup, Report )
         local DetectedItemReportSummary = self.Detection:DetectedItemReportSummary( DetectedItem, EscortGroup, _DATABASE:GetPlayerSettings( self.PlayerUnit:GetPlayerName() ) )
         local ReportSummary = DetectedItemReportSummary:Text(", ")
         DetectedTargetsReport:AddIndent( ReportSummary, "-" )
-
+        
         if EscortGroup:IsAir() then
 
           MENU_GROUP_COMMAND:New( self.PlayerGroup,
