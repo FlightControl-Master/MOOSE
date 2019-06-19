@@ -141,10 +141,10 @@ AI_FORMATION.__Enum.Formation = {
 -- @field #number Mission
 -- @field #number Formation
 AI_FORMATION.__Enum.Mode = {
-  Mission = 0,
-  Formation = 1,
-  Attack = 2,
-  Reconnaissance = 3,
+  Mission = "M",
+  Formation = "F",
+  Attack = "A",
+  Reconnaissance = "R",
 }
 
 
@@ -949,6 +949,22 @@ function AI_FORMATION:SetFlightRandomization( FlightRandomization ) --R2.1
   self.FlightRandomization = FlightRandomization
   
   return self
+end
+
+
+--- Gets your escorts to flight mode.
+-- @param #AI_FORMATION self
+-- @param Wrapper.Group#GROUP FollowGroup FollowGroup.
+-- @return #AI_FORMATION
+function AI_FORMATION:GetFlightMode( FollowGroup )
+
+  if FollowGroup then
+    FollowGroup:SetState( FollowGroup, "PreviousMode", FollowGroup:GetState( FollowGroup, "Mode" ) )
+    FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Mission )
+  end
+  
+  
+  return FollowGroup:GetState( FollowGroup, "Mode" )
 end
 
 
