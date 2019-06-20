@@ -701,6 +701,13 @@ end
 function AI_FORMATION:onafterFormationLine( FollowGroupSet, From , Event , To, XStart, XSpace, YStart, YSpace, ZStart, ZSpace, Formation ) --R2.1
   self:F( { FollowGroupSet, From , Event ,To, XStart, XSpace, YStart, YSpace, ZStart, ZSpace, Formation } )
 
+  XStart = XStart or self.XStart
+  XSpace = XSpace or self.XSpace
+  YStart = YStart or self.YStart
+  YSpace = YSpace or self.YSpace
+  ZStart = ZStart or self.ZStart
+  ZSpace = ZSpace or self.ZSpace
+
   FollowGroupSet:Flush( self )
   
   local FollowSet = FollowGroupSet:GetSet()
@@ -1093,10 +1100,10 @@ function AI_FORMATION:onenterFollowing( FollowGroupSet ) --R2.1
       -- @param Wrapper.Unit#UNIT ClientUnit
       function( FollowGroup, Formation, ClientUnit, CT1, CV1, CT2, CV2 )
       
-        self:I({Mode=FollowGroup:GetState( FollowGroup, "Mode" )})
-      
         if FollowGroup:GetState( FollowGroup, "Mode" ) == self.__Enum.Mode.Formation then
         
+          self:I({Mode=FollowGroup:GetState( FollowGroup, "Mode" )})
+
           FollowGroup:OptionROTEvadeFire()
           FollowGroup:OptionROEReturnFire()
   

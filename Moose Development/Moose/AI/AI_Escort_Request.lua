@@ -240,9 +240,8 @@ function AI_ESCORT_REQUEST:SpawnEscort()
       Report:Add( "Joining Up " .. self.EscortGroupSet:GetUnitTypeNames():Text( ", " ) .. " from " .. LeaderEscort:GetCoordinate():ToString( self.EscortUnit ) )
       LeaderEscort:MessageTypeToGroup( Report:Text(),  MESSAGE.Type.Information, self.PlayerUnit )
 
-      if self.SpawnMode == self.__Enum.Mode.Formation then
-        self:SetFlightModeFormation( EscortGroup )
-      end
+      self:SetFlightModeFormation( EscortGroup )
+      self:FormationTrail()
 
       self:_InitFlightMenus()
       self:_InitEscortMenus( EscortGroup )
