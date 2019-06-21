@@ -322,19 +322,23 @@ end
 -- @param #CVW self
 -- @param Wrapper.Group#GROUP group Flight group.
 -- @param Core.Point#COORDINATE capcoord Coordinate of CAP.
--- @param #number alt Altitude in feet.
--- @param #number leg Length of race track pattern leg.
+-- @param #number alt Altitude in feet. Default 20000 ft.
+-- @param #number leg Length of race track pattern leg. Default 15 NM.
+-- 
 -- @param #number speed Speed in knots.
 function CVW:LaunchCAP(group, capcoord, alt, leg, heading, speed)
 
-  local alt=UTILS.FeetToMeters(20000)
+  alt=UTILS.FeetToMeters(alt or 20000)
+  
+  speed=speed or 350
+  leg=leg or 15
 
   -- Task orbit.
-  local taskOrbit=group:TaskOrbit(capcoord, alt, UTILS.KnotsToMps(400), capcoord:Translate(UTILS.NMToMeters(15), 0))
+  local taskOrbit=group:TaskOrbit(capcoord, alt, UTILS.KnotsToMps(speed+50), capcoord:Translate(UTILS.NMToMeters(leg), heading))
 
   local wp={}
   wp[1]=self:GetCoordinate():WaypointAirTakeOffParking()
-  wp[2]=self:GetCoordinate():SetAltitude(alt):WaypointAirTurningPoint(COORDINATE.WaypointAltType.BARO, UTILS.KnotsToKmph(350), {taskOrbit}, "CAP")
+  wp[2]=self:GetCoordinate():SetAltitude(alt):WaypointAirTurningPoint(COORDINATE.WaypointAltType.BARO, UTILS.KnotsToKmph(speed), {taskOrbit}, "CAP")
 
   -- Start uncontrolled group.
   group:StartUncontrolled()
