@@ -110,10 +110,45 @@ AI_FORMATION = {
   dtFollow = 0.5,
 }
 
---- AI_FORMATION.Mode class
--- @type AI_FORMATION.MODE
--- @field #number FOLLOW
--- @field #number MISSION
+AI_FORMATION.__Enum = {}
+
+--- @type AI_FORMATION.__Enum.Formation
+-- @field #number None
+-- @field #number Line
+-- @field #number Trail
+-- @field #number Stack
+-- @field #number LeftLine
+-- @field #number RightLine
+-- @field #number LeftWing
+-- @field #number RightWing
+-- @field #number Vic
+-- @field #number Box
+AI_FORMATION.__Enum.Formation = {
+  None = 0,
+  Mission = 1,
+  Line = 2,
+  Trail = 3,
+  Stack = 4,
+  LeftLine = 5,
+  RightLine = 6,
+  LeftWing = 7,
+  RightWing = 8,
+  Vic = 9,
+  Box = 10,
+}
+
+--- @type AI_FORMATION.__Enum.Mode
+-- @field #number Mission
+-- @field #number Formation
+AI_FORMATION.__Enum.Mode = {
+  Mission = "M",
+  Formation = "F",
+  Attack = "A",
+  Reconnaissance = "R",
+}
+
+
+
 
 --- MENUPARAM type
 -- @type MENUPARAM
@@ -139,7 +174,7 @@ function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefin
   self.FollowGroupSet:ForEachGroup(
     function( FollowGroup )
       self:E("Following")
-      FollowGroup.Following = true
+      FollowGroup:SetState( self, "Mode", self.__Enum.Mode.Formation )
     end
   )
   
@@ -663,8 +698,15 @@ end
 -- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
 -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
 -- @return #AI_FORMATION
-function AI_FORMATION:onafterFormationLine( FollowGroupSet, From , Event , To, XStart, XSpace, YStart, YSpace, ZStart, ZSpace ) --R2.1
-  self:F( { FollowGroupSet, From , Event ,To, XStart, XSpace, YStart, YSpace, ZStart, ZSpace } )
+function AI_FORMATION:onafterFormationLine( FollowGroupSet, From , Event , To, XStart, XSpace, YStart, YSpace, ZStart, ZSpace, Formation ) --R2.1
+  self:F( { FollowGroupSet, From , Event ,To, XStart, XSpace, YStart, YSpace, ZStart, ZSpace, Formation } )
+
+  XStart = XStart or self.XStart
+  XSpace = XSpace or self.XSpace
+  YStart = YStart or self.YStart
+  YSpace = YSpace or self.YSpace
+  ZStart = ZStart or self.ZStart
+  ZSpace = ZSpace or self.ZSpace
 
   FollowGroupSet:Flush( self )
   
@@ -682,6 +724,8 @@ function AI_FORMATION:onafterFormationLine( FollowGroupSet, From , Event , To, X
     local Vec3 = PointVec3:GetVec3()
     FollowGroup:SetState( self, "FormationVec3", Vec3 )
     i = i + 1
+
+    FollowGroup:SetState( FollowGroup, "Formation", Formation )
   end
   
   return self
@@ -700,7 +744,7 @@ end
 -- @return #AI_FORMATION
 function AI_FORMATION:onafterFormationTrail( FollowGroupSet, From , Event , To, XStart, XSpace, YStart ) --R2.1
 
-  self:onafterFormationLine(FollowGroupSet,From,Event,To,XStart,XSpace,YStart,0,0,0)
+  self:onafterFormationLine(FollowGroupSet,From,Event,To,XStart,XSpace,YStart,0,0,0, self.__Enum.Formation.Trail )
 
   return self
 end
@@ -719,7 +763,7 @@ end
 -- @return #AI_FORMATION
 function AI_FORMATION:onafterFormationStack( FollowGroupSet, From , Event , To, XStart, XSpace, YStart, YSpace ) --R2.1
 
-  self:onafterFormationLine(FollowGroupSet,From,Event,To,XStart,XSpace,YStart,YSpace,0,0)
+  self:onafterFormationLine(FollowGroupSet,From,Event,To,XStart,XSpace,YStart,YSpace,0,0, self.__Enum.Formation.Stack )
 
   return self
 end
@@ -740,7 +784,7 @@ end
 -- @return #AI_FORMATION
 function AI_FORMATION:onafterFormationLeftLine( FollowGroupSet, From , Event , To, XStart, YStart, ZStart, ZSpace ) --R2.1
 
-  self:onafterFormationLine(FollowGroupSet,From,Event,To,XStart,0,YStart,0,ZStart,ZSpace)
+  self:onafterFormationLine(FollowGroupSet,From,Event,To,XStart,0,YStart,0,-ZStart,-ZSpace, self.__Enum.Formation.LeftLine )
 
   return self
 end
@@ -759,7 +803,7 @@ end
 -- @return #AI_FORMATION
 function AI_FORMATION:onafterFormationRightLine( FollowGroupSet, From , Event , To, XStart, YStart, ZStart, ZSpace ) --R2.1
 
-  self:onafterFormationLine(FollowGroupSet,From,Event,To,XStart,0,YStart,0,-ZStart,-ZSpace)
+  self:onafterFormationLine(FollowGroupSet,From,Event,To,XStart,0,YStart,0,ZStart,ZSpace,self.__Enum.Formation.RightLine)
 
   return self
 end
@@ -778,7 +822,7 @@ end
 -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
 function AI_FORMATION:onafterFormationLeftWing( FollowGroupSet, From , Event , To, XStart, XSpace, YStart, ZStart, ZSpace ) --R2.1
 
-  self:onafterFormationLine(FollowGroupSet,From,Event,To,XStart,XSpace,YStart,0,ZStart,ZSpace)
+  self:onafterFormationLine(FollowGroupSet,From,Event,To,XStart,XSpace,YStart,0,-ZStart,-ZSpace,self.__Enum.Formation.LeftWing)
 
   return self
 end
@@ -798,7 +842,7 @@ end
 -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
 function AI_FORMATION:onafterFormationRightWing( FollowGroupSet, From , Event , To, XStart, XSpace, YStart, ZStart, ZSpace ) --R2.1
 
-  self:onafterFormationLine(FollowGroupSet,From,Event,To,XStart,XSpace,YStart,0,-ZStart,-ZSpace)
+  self:onafterFormationLine(FollowGroupSet,From,Event,To,XStart,XSpace,YStart,0,ZStart,ZSpace,self.__Enum.Formation.RightWing)
 
   return self
 end
@@ -836,6 +880,7 @@ function AI_FORMATION:onafterFormationCenterWing( FollowGroupSet, From , Event ,
     local Vec3 = PointVec3:GetVec3()
     FollowGroup:SetState( self, "FormationVec3", Vec3 )
     i = i + 1
+    FollowGroup:SetState( FollowGroup, "Formation", self.__Enum.Formation.Vic )
   end
   
   return self
@@ -895,6 +940,7 @@ function AI_FORMATION:onafterFormationBox( FollowGroupSet, From , Event , To, XS
     local Vec3 = PointVec3:GetVec3()
     FollowGroup:SetState( self, "FormationVec3", Vec3 )
     i = i + 1
+    FollowGroup:SetState( FollowGroup, "Formation", self.__Enum.Formation.Box )
   end
 
   return self
@@ -913,28 +959,93 @@ function AI_FORMATION:SetFlightRandomization( FlightRandomization ) --R2.1
 end
 
 
---- This releases the air unit in your flight from the formation flight.
+--- Gets your escorts to flight mode.
 -- @param #AI_FORMATION self
 -- @param Wrapper.Group#GROUP FollowGroup FollowGroup.
 -- @return #AI_FORMATION
-function AI_FORMATION:ReleaseFormation( FollowGroup )
+function AI_FORMATION:GetFlightMode( FollowGroup )
 
-  FollowGroup.Following = false
+  if FollowGroup then
+    FollowGroup:SetState( FollowGroup, "PreviousMode", FollowGroup:GetState( FollowGroup, "Mode" ) )
+    FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Mission )
+  end
+  
+  
+  return FollowGroup:GetState( FollowGroup, "Mode" )
+end
+
+
+
+--- This sets your escorts to fly a mission.
+-- @param #AI_FORMATION self
+-- @param Wrapper.Group#GROUP FollowGroup FollowGroup.
+-- @return #AI_FORMATION
+function AI_FORMATION:SetFlightModeMission( FollowGroup )
+
+  if FollowGroup then
+    FollowGroup:SetState( FollowGroup, "PreviousMode", FollowGroup:GetState( FollowGroup, "Mode" ) )
+    FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Mission )
+  else
+    self.EscortGroupSet:ForSomeGroupAlive(
+      --- @param Core.Group#GROUP EscortGroup
+      function( FollowGroup )
+        FollowGroup:SetState( FollowGroup, "PreviousMode", FollowGroup:GetState( FollowGroup, "Mode" ) )
+        FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Mission )
+      end
+    )
+  end
+  
   
   return self
 end
 
 
---- This joins up the air unit in your formation flight.
+--- This sets your escorts to execute an attack.
 -- @param #AI_FORMATION self
 -- @param Wrapper.Group#GROUP FollowGroup FollowGroup.
 -- @return #AI_FORMATION
-function AI_FORMATION:JoinFormation( FollowGroup )
+function AI_FORMATION:SetFlightModeAttack( FollowGroup )
 
-  FollowGroup.Following = true
+  if FollowGroup then
+    FollowGroup:SetState( FollowGroup, "PreviousMode", FollowGroup:GetState( FollowGroup, "Mode" ) )
+    FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Attack )
+  else
+    self.EscortGroupSet:ForSomeGroupAlive(
+      --- @param Core.Group#GROUP EscortGroup
+      function( FollowGroup )
+        FollowGroup:SetState( FollowGroup, "PreviousMode", FollowGroup:GetState( FollowGroup, "Mode" ) )
+        FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Attack )
+      end
+    )
+  end
+  
   
   return self
 end
+
+
+--- This sets your escorts to fly in a formation.
+-- @param #AI_FORMATION self
+-- @param Wrapper.Group#GROUP FollowGroup FollowGroup.
+-- @return #AI_FORMATION
+function AI_FORMATION:SetFlightModeFormation( FollowGroup )
+
+  if FollowGroup then
+    FollowGroup:SetState( FollowGroup, "PreviousMode", FollowGroup:GetState( FollowGroup, "Mode" ) )
+    FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Formation )
+  else
+    self.EscortGroupSet:ForSomeGroupAlive(
+      --- @param Core.Group#GROUP EscortGroup
+      function( FollowGroup )
+        FollowGroup:SetState( FollowGroup, "PreviousMode", FollowGroup:GetState( FollowGroup, "Mode" ) )
+        FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Formation )
+      end
+    )
+  end
+  
+  return self
+end
+
 
 
 
@@ -963,14 +1074,10 @@ end
 
 --- @param #AI_FORMATION self
 function AI_FORMATION:onenterFollowing( FollowGroupSet ) --R2.1
-  self:F( )
 
-  self:T( { self.FollowUnit.UnitName, self.FollowUnit:IsAlive() } )
   if self.FollowUnit:IsAlive() then
 
     local ClientUnit = self.FollowUnit
-
-    self:T( {ClientUnit.UnitName } )
 
     local CT1, CT2, CV1, CV2
     CT1 = ClientUnit:GetState( self, "CT1" )
@@ -988,13 +1095,15 @@ function AI_FORMATION:onenterFollowing( FollowGroupSet ) --R2.1
       ClientUnit:SetState( self, "CV1", CV2 )
     end
         
-    FollowGroupSet:ForEachGroup(
+    FollowGroupSet:ForEachGroupAlive(
       --- @param Wrapper.Group#GROUP FollowGroup
       -- @param Wrapper.Unit#UNIT ClientUnit
       function( FollowGroup, Formation, ClientUnit, CT1, CV1, CT2, CV2 )
       
-        if FollowGroup.Following == true then
+        if FollowGroup:GetState( FollowGroup, "Mode" ) == self.__Enum.Mode.Formation then
         
+          self:I({Mode=FollowGroup:GetState( FollowGroup, "Mode" )})
+
           FollowGroup:OptionROTEvadeFire()
           FollowGroup:OptionROEReturnFire()
   
@@ -1055,8 +1164,13 @@ function AI_FORMATION:onenterFollowing( FollowGroupSet ) --R2.1
   
               -- Now we calculate the intersecting vector between the circle around CV2 with radius FollowDistance and GH2.
               -- From the GeoGebra model: CVI = (x(CV2) + FollowDistance cos(alpha), y(GH2) + FollowDistance sin(alpha), z(CV2))
+              local Inclination = ( Distance + FollowFormation.x ) / 10
+              if Inclination < -30 then
+                Inclination = - 30
+              end
               local CVI = { x = CV2.x + CS * 10 * math.sin(Ca),
-                y = GH2.y - ( Distance + FollowFormation.x ) / 5, -- + FollowFormation.y,
+                y = GH2.y + Inclination, -- + FollowFormation.y,
+                y = GH2.y,
                 z = CV2.z + CS * 10 * math.cos(Ca),
               }
         
@@ -1087,13 +1201,22 @@ function AI_FORMATION:onenterFollowing( FollowGroupSet ) --R2.1
               
               
               
-              local Time = 60
+              local Time = 120
               
               local Speed = - ( Distance + FollowFormation.x ) / Time
-              local GS = Speed + CS
-              if Speed < 0 then
-                Speed = 0
+
+              if Distance > -10000 then
+                Speed = - ( Distance + FollowFormation.x ) / 60
               end
+ 
+              if Distance > -2500 then
+                Speed = - ( Distance + FollowFormation.x ) / 20
+              end
+              
+              local GS = Speed + CS
+
+              self:F( { Distance = Distance, Speed = Speed, CS = CS, GS = GS } )
+              
   
               -- Now route the escort to the desired point with the desired speed.
               FollowGroup:RouteToVec3( GDV_Formation, GS ) -- DCS models speed in Mps (Miles per second)

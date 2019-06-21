@@ -4108,7 +4108,7 @@ do -- AI_A2G_DISPATCHER
   
         self:F( { "Target ID", DetectedItem.ItemID } )
         
-        self:F( { DefenseLimit = self.DefenseLimitmit, DefenseTotal = DefenseTotal } )
+        self:F( { DefenseLimit = self.DefenseLimit, DefenseTotal = DefenseTotal } )
         DetectedSet:Flush( self )
   
         local DetectedID = DetectedItem.ID
@@ -4149,7 +4149,7 @@ do -- AI_A2G_DISPATCHER
           end
         end
         
-        if EngageCoordinate and DefenseTotal < self.DefenseLimit then
+        if EngageCoordinate and ( ( self.DefenseLimit and DefenseTotal < self.DefenseLimit ) or true ) then
           do 
             local DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies = self:Evaluate_SEAD( DetectedItem ) -- Returns a SET_UNIT with the SEAD targets to be engaged...
             if DefendersMissing > 0 then
