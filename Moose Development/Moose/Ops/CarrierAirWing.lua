@@ -281,7 +281,7 @@ end
 -- FSM Events
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Update status.
+--- Request CAP.
 -- @param #CVW self
 -- @param #string From
 -- @param #string Event
@@ -347,6 +347,78 @@ function CVW:LaunchCAP(group, capcoord, alt, leg, heading, speed)
 
   -- Route group.
   group:Route(wp)
+end
+
+
+
+--- Request CAP.
+-- @param #CVW self
+-- @param #string From
+-- @param #string Event
+-- @param #string To
+-- @param Core.Point#COORDINATE coordinate
+-- @param #number altitude Altitude
+-- @param #number leg Race track length.
+-- @param #number heading Heading in degrees.
+-- @param #number speed Speed in knots.
+-- @param #CVW.Squadon squadron Explicitly request a specific squadron.
+function CVW:onafterRequestIntercept(From, Event, To, coordinate, altitude, leg, heading, speed, squadron)
+
+  local n=self:GetNumberOfAssets(WAREHOUSE.Descriptor.ASSIGNMENT, squadron.name, false)
+
+  if n>0 then
+
+    self:__AddRequest(1, self, WAREHOUSE.Descriptor.ASSIGNMENT, squadron.name, 1, nil, nil, nil, CVW.Task.INTERCEPT)
+
+    function self:OnAfterSelfRequest(From,Event,To,Groupset,Request)
+      local request=Request --Functional.Warehouse#WAREHOUSE.Pendingitem
+      local groupset=Groupset --Core.Set#SET_GROUP
+
+      if Request.assignment==CVW.Task.INTERCEPT then
+      
+        for _,_group in pairs(groupset:GetSet()) do
+          local group=_group --Wrapper.Group#GROUP
+          
+          self:LaunchCAP(group, coordinate, altitude, leg, speed, heading)
+        end
+        
+      end
+    end
+    
+  else
+    MESSAGE:New("No INTERCEPT fighters currently available", 5, "CVW"):ToCoalition(self:GetCoalition())
+  end
+  
+end
+
+--- Launch a flight group to intercept an intruder.
+-- @param #CVW self
+-- @param Wrapper.Group#GROUP group Group to intercept.
+function CVW:LaunchIntercept(group)
+
+  -- Task orbit.
+  local tasks={}
+  
+  for _,unit in pairs(group:GetUnits()) do
+    tasks[#tasks+1]=group:TaskAttackUnit(unit)
+  end
+  
+  local speed=group:GetSpeedMax()
+  local altitude=group:GetAltitude()
+  
+  -- Create waypoints.
+  local wp={}
+  wp[1]=self:GetCoordinate():WaypointAirTakeOffParking()
+  wp[2]=self:GetCoordinate():SetAltitude(altitude):WaypointAirTurningPoint(COORDINATE.WaypointAltType.BARO, speed, {tasks}, "Intercept")
+  
+  -- Start uncontrolled group.
+  group:StartUncontrolled()
+  
+  --airboss:SetExcludeAI()
+  
+  -- Route group
+  group:Route(wp)
+  
 end
 
 
@@ -438,63 +510,7 @@ function CVW:ReportWarehouseStock()
   MESSAGE:New(text, 10, "CVW", true):ToCoalition(self:GetCoalition())
 end
 
---- Launch a Intercept flight.
--- @param #CVW self
--- @param #CVW.Intruder intruder Intruder group.
-function CVW:LaunchIntercept(intruder)
 
-  -- Get number of aircraft.
-  local n=self:GetNumberOfAssets(WAREHOUSE.Descriptor.ASSIGNMENT, "Intercept", false)
-
-  if n>0 then
-
-    self:AddRequest(self, WAREHOUSE.Descriptor.ASSIGNMENT, "Intercept", 1, nil, nil, nil, "Intercept")
-
-    local capcoord=intruder.group:GetCoordinate()
-
-    capcoord:MarkToAll("Intruder coord")
-
-    function self.OnAfterSelfRequest(warehouse, From, Event, To, Groupset, Request)
-      local request=Request --Functional.Warehouse#WAREHOUSE.Pendingitem
-      local groupset=Groupset --Core.Set#SET_GROUP
-
-      for _,_group in pairs(groupset:GetSet()) do
-        local group=_group --Wrapper.Group#GROUP
-
-        if request.assignment=="Intercept" then
-
-          -- Task orbit.
-          local tasks={}
-
-          for _,unit in pairs(intruder.group:GetUnits()) do
-            tasks[#tasks+1]=group:TaskAttackUnit(unit)
-          end
-
-          local speed=group:GetSpeedMax()
-          local altitude=intruder.group:GetAltitude()
-
-          -- Create waypoints.
-          local wp={}
-          wp[1]=self:GetCoordinate():WaypointAirTakeOffParking()
-          wp[2]=self:GetCoordinate():SetAltitude(altitude):WaypointAirTurningPoint(COORDINATE.WaypointAltType.BARO, speed, {tasks}, "Attack Intruder")
-
-          -- Start uncontrolled group.
-          group:StartUncontrolled()
-
-          --airboss:SetExcludeAI()
-
-          -- Route group
-          group:Route(wp)
-        end
-
-      end
-
-    end
-
-  else
-    MESSAGE:New("No INTERCEPT fighters currently available", 5, "CVW"):ToCoalition(self:GetCoalition())
-  end
-end
 
 
 

@@ -1,5 +1,5 @@
---- **ATC** - (R2.5) - Manage behavior of the Carrier Strike Group.
--- 2
+--- **Ops** - (R2.5) - Manage behavior of the Carrier Strike Group.
+-- 
 -- **Main Features:**
 --
 --    * Nice stuff.
