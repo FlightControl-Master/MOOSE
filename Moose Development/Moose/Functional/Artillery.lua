@@ -98,7 +98,8 @@
 -- @field #boolean markreadonly Marks for targets are readonly and cannot be removed by players. Default is false.
 -- @field #boolean autorelocate ARTY group will automatically move to within the max/min firing range.
 -- @field #number autorelocatemaxdist Max distance [m] the ARTY group will travel to get within firing range. Default 50000 m = 50 km.
--- @field #boolean autorelocateonroad ARTY group will use mainly road to automatically get within firing range. Default is false. 
+-- @field #boolean autorelocateonroad ARTY group will use mainly road to automatically get within firing range. Default is false.
+-- @field #number coalition The coalition of the arty group.
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
 --- Enables mission designers easily to assign targets for artillery units. Since the implementation is based on a Finite State Model (FSM), the mission designer can
@@ -587,6 +588,7 @@ ARTY={
   autorelocate=false,
   autorelocatemaxdist=50000,
   autorelocateonroad=false,
+  coalition=nil,
 }
 
 --- Weapong type ID. See [here](http://wiki.hoggit.us/view/DCS_enum_weapon_flag).
@@ -689,7 +691,7 @@ ARTY.id="ARTY | "
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="1.1.0"
+ARTY.version="1.1.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -781,6 +783,9 @@ function ARTY:New(group, alias)
   
   -- Set the group name
   self.groupname=group:GetName()
+  
+  -- Get coalition.
+  self.coalition=group:GetCoalition()
   
   -- Set an alias name.
   if alias~=nil then
@@ -1931,8 +1936,8 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   self.Controllable:OptionROEHoldFire()
   
   -- Add event handler.
-  self:HandleEvent(EVENTS.Shot, self._OnEventShot)
-  self:HandleEvent(EVENTS.Dead, self._OnEventDead)
+  self:HandleEvent(EVENTS.Shot) --, self._OnEventShot)
+  self:HandleEvent(EVENTS.Dead) --, self._OnEventDead)
   --self:HandleEvent(EVENTS.MarkAdded, self._OnEventMarkAdded)
 
   -- Add DCS event handler - necessary for S_EVENT_MARK_* events. So we only start it, if this was requested.
@@ -2010,7 +2015,7 @@ function ARTY:_StatusReport(display)
   end
   text=text..string.format("******************************************************")
   env.info(ARTY.id..text)
-  MESSAGE:New(text, 20):Clear():ToCoalitionIf(self.Controllable:GetCoalition(), display)
+  MESSAGE:New(text, 20):Clear():ToCoalitionIf(self.coalition, display)
   
 end
 
@@ -2021,7 +2026,7 @@ end
 --- Eventhandler for shot event.
 -- @param #ARTY self
 -- @param Core.Event#EVENTDATA EventData
-function ARTY:_OnEventShot(EventData)
+function ARTY:OnEventShot(EventData)
   self:F(EventData)
   
     -- Weapon data.
@@ -2299,7 +2304,7 @@ end
 function ARTY:_OnEventMarkRemove(Event)
 
   -- Get battery coalition and name.
-  local batterycoalition=self.Controllable:GetCoalition()
+  local batterycoalition=self.coalition
   --local batteryname=self.groupname
   
   if Event.text~=nil and Event.text:find("BATTERY") then
@@ -2385,7 +2390,7 @@ function ARTY:_OnEventMarkChange(Event)
     _coord.y=_coord:GetLandHeight()
   
     -- Get battery coalition and name.
-    local batterycoalition=self.Controllable:GetCoalition()
+    local batterycoalition=self.coalition
     local batteryname=self.groupname
   
     -- Check if the coalition is the same or an authorization key has been defined.
@@ -2496,7 +2501,7 @@ function ARTY:_OnEventMarkChange(Event)
         if _assign.setrearmingplace and self.ismobile then
           self:SetRearmingPlace(_coord)
           _coord:RemoveMark(Event.idx)
-          _coord:MarkToCoalition(string.format("Rearming place for battery %s", self.groupname), self.Controllable:GetCoalition(), false, string.format("New rearming place for battery %s defined.", self.groupname))
+          _coord:MarkToCoalition(string.format("Rearming place for battery %s", self.groupname), self.coalition, false, string.format("New rearming place for battery %s defined.", self.groupname))
           if self.Debug then
             _coord:SmokeOrange()
           end
@@ -2504,7 +2509,7 @@ function ARTY:_OnEventMarkChange(Event)
         if _assign.setrearminggroup then
           _coord:RemoveMark(Event.idx)
           local rearminggroupcoord=_assign.setrearminggroup:GetCoordinate()
-          rearminggroupcoord:MarkToCoalition(string.format("Rearming group for battery %s", self.groupname), self.Controllable:GetCoalition(), false, string.format("New rearming group for battery %s defined.", self.groupname))          
+          rearminggroupcoord:MarkToCoalition(string.format("Rearming group for battery %s", self.groupname), self.coalition, false, string.format("New rearming group for battery %s defined.", self.groupname))          
           self:SetRearmingGroup(_assign.setrearminggroup)
           if self.Debug then
             rearminggroupcoord:SmokeOrange()
@@ -2608,17 +2613,19 @@ end
 --- Event handler for event Dead.
 -- @param #ARTY self
 -- @param Core.Event#EVENTDATA EventData
-function ARTY:_OnEventDead(EventData)
+function ARTY:OnEventDead(EventData)
   self:F(EventData)
 
   -- Name of controllable.
   local _name=self.groupname
+  
+  env.info("FF Dead event for arty group")
 
   -- Check for correct group.
   if  EventData.IniGroupName==_name then
     
     -- Dead Unit.
-    self:T2(string.format("%s: Captured dead event for unit %s.", _name, EventData.IniUnitName))
+    self:I(string.format("%s: Captured dead event for unit %s.", _name, tostring(EventData.IniUnitName)))
     
     -- FSM Dead event. We give one second for update of data base.
     self:__Dead(1)
@@ -2639,145 +2646,155 @@ end
 function ARTY:onafterStatus(Controllable, From, Event, To)
   self:_EventFromTo("onafterStatus", Event, From, To)
   
-  -- We have a cargo group ==> check if group was loaded into a carrier.
-  if self.cargogroup then
-    if self.cargogroup:IsLoaded() and not self:is("InTransit")  then
-      -- Group is now InTransit state. Current target is canceled.
-      self:T(ARTY.id..string.format("Group %s has been loaded into a carrier and is now transported.", self.alias))
-      self:Loaded()
-    elseif self.cargogroup:IsUnLoaded() then
-      -- Group has been unloaded and is combat ready again.
-      self:T(ARTY.id..string.format("Group %s has been unloaded from the carrier.", self.alias))      
-      self:UnLoaded()
-    end
-  end
-
-  -- Debug current status info.
-  if self.Debug then
-    self:_StatusReport()
-  end
-
-  -- Group is being transported as cargo ==> skip everything and check again in 5 seconds.  
-  if self:is("InTransit") then
-    self:__Status(-5)
-    return
-  end
+  -- FSM state.
+  local fsmstate=self:GetState()  
+  self:I(ARTY.id..string.format("Status of group %s: %s", self.alias, fsmstate))
   
-  -- Group on the move.
-  if self:is("Moving") then
-    self:T2(ARTY.id..string.format("%s: Moving", Controllable:GetName()))
-  end
+  if self.Controllable and self.Controllable:IsAlive() then
   
-  -- Group is rearming.
-  if self:is("Rearming") then
-    local _rearmed=self:_CheckRearmed()
-    if _rearmed then
-      self:T2(ARTY.id..string.format("%s: Rearming ==> Rearmed", Controllable:GetName()))
-      self:Rearmed()
-    end
-  end
-  
-  -- Group finished rearming.
-  if self:is("Rearmed") then
-    local distance=self.Controllable:GetCoordinate():Get2DDistance(self.InitialCoord)
-    self:T2(ARTY.id..string.format("%s: Rearmed. Distance ARTY to InitalCoord = %d m", Controllable:GetName(), distance))
-    -- Check that ARTY group is back and set it to combat ready.
-    if distance <= self.RearmingDistance then
-      self:T2(ARTY.id..string.format("%s: Rearmed ==> CombatReady", Controllable:GetName()))
-      self:CombatReady()
-    end
-  end
-  
-  -- Group arrived at destination.
-  if self:is("Arrived") then
-    self:T2(ARTY.id..string.format("%s: Arrived ==> CombatReady", Controllable:GetName()))
-    self:CombatReady()
-  end
-  
-  -- Group is firing on target.
-  if self:is("Firing") then
-    -- Check that firing started after ~5 min. If not, target is removed.
-    self:_CheckShootingStarted()
-  end
-  
-  -- Check if targets are in range and update target.inrange value.
-  self:_CheckTargetsInRange()
-
-  -- Check if selected weapon type for target is possible at all. E.g. request rockets for Paladin.
-  local notpossible={}
-  for i=1,#self.targets do
-    local _target=self.targets[i]
-    local possible=self:_CheckWeaponTypePossible(_target)
-    if not possible then
-      table.insert(notpossible, _target.name)
-    end
-  end
-  for _,targetname in pairs(notpossible) do
-    self:E(ARTY.id..string.format("%s: Removing target %s because requested weapon is not possible with this type of unit.", self.groupname, targetname))  
-    self:RemoveTarget(targetname)
-  end
-
-  -- Get a valid timed target if it is due to be attacked.
-  local _timedTarget=self:_CheckTimedTargets()
-      
-  -- Get a valid normal target (one that is not timed).
-  local _normalTarget=self:_CheckNormalTargets()
-  
-  -- Get a commaned move to another location.
-  local _move=self:_CheckMoves()
-  
-  if _move then
-  
-    -- Command to move.
-    self:Move(_move)
-  
-  elseif _timedTarget then
-  
-    -- Cease fire on current target first.
-    if self.currentTarget then
-      self:CeaseFire(self.currentTarget)
-    end
-      
-    -- Open fire on timed target.
-    self:OpenFire(_timedTarget)
-  
-  elseif _normalTarget then
-
-    -- Open fire on normal target.
-    self:OpenFire(_normalTarget)
-
-  end
-  
-  -- Get ammo.
-  local nammo, nshells, nrockets, nmissiles=self:GetAmmo()
-  
-  -- Check if we have a target in the queue for which weapons are still available.
-  local gotsome=false
-  if #self.targets>0 then
-    for i=1,#self.targets do
-      local _target=self.targets[i]
-      if self:_CheckWeaponTypeAvailable(_target)>0 then
-        gotsome=true
+    -- We have a cargo group ==> check if group was loaded into a carrier.
+    if self.cargogroup then
+      if self.cargogroup:IsLoaded() and not self:is("InTransit")  then
+        -- Group is now InTransit state. Current target is canceled.
+        self:T(ARTY.id..string.format("Group %s has been loaded into a carrier and is now transported.", self.alias))
+        self:Loaded()
+      elseif self.cargogroup:IsUnLoaded() then
+        -- Group has been unloaded and is combat ready again.
+        self:T(ARTY.id..string.format("Group %s has been unloaded from the carrier.", self.alias))      
+        self:UnLoaded()
       end
     end
-  else
-    -- No targets in the queue.
-    gotsome=true
-  end
   
-  -- No ammo available. Either completely blank or only queued targets for ammo which is out.
-  if (nammo==0 or not gotsome) and not (self:is("Moving") or self:is("Rearming") or self:is("OutOfAmmo")) then
-    self:Winchester()
+    -- Debug current status info.
+    if self.Debug then
+      self:_StatusReport()
+    end
+  
+    -- Group is being transported as cargo ==> skip everything and check again in 5 seconds.  
+    if self:is("InTransit") then
+      self:__Status(-5)
+      return
+    end
+    
+    -- Group on the move.
+    if self:is("Moving") then
+      self:T2(ARTY.id..string.format("%s: Moving", Controllable:GetName()))
+    end
+    
+    -- Group is rearming.
+    if self:is("Rearming") then
+      local _rearmed=self:_CheckRearmed()
+      if _rearmed then
+        self:T2(ARTY.id..string.format("%s: Rearming ==> Rearmed", Controllable:GetName()))
+        self:Rearmed()
+      end
+    end
+    
+    -- Group finished rearming.
+    if self:is("Rearmed") then
+      local distance=self.Controllable:GetCoordinate():Get2DDistance(self.InitialCoord)
+      self:T2(ARTY.id..string.format("%s: Rearmed. Distance ARTY to InitalCoord = %d m", Controllable:GetName(), distance))
+      -- Check that ARTY group is back and set it to combat ready.
+      if distance <= self.RearmingDistance then
+        self:T2(ARTY.id..string.format("%s: Rearmed ==> CombatReady", Controllable:GetName()))
+        self:CombatReady()
+      end
+    end
+    
+    -- Group arrived at destination.
+    if self:is("Arrived") then
+      self:T2(ARTY.id..string.format("%s: Arrived ==> CombatReady", Controllable:GetName()))
+      self:CombatReady()
+    end
+    
+    -- Group is firing on target.
+    if self:is("Firing") then
+      -- Check that firing started after ~5 min. If not, target is removed.
+      self:_CheckShootingStarted()
+    end
+    
+    -- Check if targets are in range and update target.inrange value.
+    self:_CheckTargetsInRange()
+  
+    -- Check if selected weapon type for target is possible at all. E.g. request rockets for Paladin.
+    local notpossible={}
+    for i=1,#self.targets do
+      local _target=self.targets[i]
+      local possible=self:_CheckWeaponTypePossible(_target)
+      if not possible then
+        table.insert(notpossible, _target.name)
+      end
+    end
+    for _,targetname in pairs(notpossible) do
+      self:E(ARTY.id..string.format("%s: Removing target %s because requested weapon is not possible with this type of unit.", self.groupname, targetname))  
+      self:RemoveTarget(targetname)
+    end
+  
+    -- Get a valid timed target if it is due to be attacked.
+    local _timedTarget=self:_CheckTimedTargets()
+        
+    -- Get a valid normal target (one that is not timed).
+    local _normalTarget=self:_CheckNormalTargets()
+    
+    -- Get a commaned move to another location.
+    local _move=self:_CheckMoves()
+    
+    if _move then
+    
+      -- Command to move.
+      self:Move(_move)
+    
+    elseif _timedTarget then
+    
+      -- Cease fire on current target first.
+      if self.currentTarget then
+        self:CeaseFire(self.currentTarget)
+      end
+        
+      -- Open fire on timed target.
+      self:OpenFire(_timedTarget)
+    
+    elseif _normalTarget then
+  
+      -- Open fire on normal target.
+      self:OpenFire(_normalTarget)
+  
+    end
+    
+    -- Get ammo.
+    local nammo, nshells, nrockets, nmissiles=self:GetAmmo()
+    
+    -- Check if we have a target in the queue for which weapons are still available.
+    local gotsome=false
+    if #self.targets>0 then
+      for i=1,#self.targets do
+        local _target=self.targets[i]
+        if self:_CheckWeaponTypeAvailable(_target)>0 then
+          gotsome=true
+        end
+      end
+    else
+      -- No targets in the queue.
+      gotsome=true
+    end
+    
+    -- No ammo available. Either completely blank or only queued targets for ammo which is out.
+    if (nammo==0 or not gotsome) and not (self:is("Moving") or self:is("Rearming") or self:is("OutOfAmmo")) then
+      self:Winchester()
+    end
+  
+    -- Group is out of ammo.
+    if self:is("OutOfAmmo") then
+      self:T2(ARTY.id..string.format("%s: OutOfAmmo ==> Rearm ==> Rearming", Controllable:GetName()))
+      self:Rearm()
+    end  
+  
+    -- Call status again in ~10 sec.
+    self:__Status(self.StatusInterval)
+    
+  else
+    self:E(string.format("Arty group %s is not alive!", self.groupname))
   end
-
-  -- Group is out of ammo.
-  if self:is("OutOfAmmo") then
-    self:T2(ARTY.id..string.format("%s: OutOfAmmo ==> Rearm ==> Rearming", Controllable:GetName()))
-    self:Rearm()
-  end  
-
-  -- Call status again in ~10 sec.
-  self:__Status(self.StatusInterval)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2925,7 +2942,7 @@ function ARTY:onafterOpenFire(Controllable, From, Event, To, target)
   -- Send message.
   local text=string.format("%s, opening fire on target %s with %d %s. Distance %.1f km.", Controllable:GetName(), target.name, target.nshells, _type, range/1000)
   self:T(ARTY.id..text)
-  MESSAGE:New(text, 10):ToCoalitionIf(Controllable:GetCoalition(), self.report)
+  MESSAGE:New(text, 10):ToCoalitionIf(self.coalition, self.report)
   
   --if self.Debug then
   --  local _coord=target.coord --Core.Point#COORDINATE
@@ -2959,7 +2976,7 @@ function ARTY:onafterCeaseFire(Controllable, From, Event, To, target)
     -- Send message.
     local text=string.format("%s, ceasing fire on target %s.", Controllable:GetName(), target.name)
     self:T(ARTY.id..text)
-    MESSAGE:New(text, 10):ToCoalitionIf(Controllable:GetCoalition(), self.report)
+    MESSAGE:New(text, 10):ToCoalitionIf(self.coalition, self.report)
         
     -- Get target array index.
     local id=self:_GetTargetIndexByName(target.name)
@@ -3013,7 +3030,7 @@ function ARTY:onafterWinchester(Controllable, From, Event, To)
   -- Send message.
   local text=string.format("%s, winchester!", Controllable:GetName())
   self:T(ARTY.id..text)
-  MESSAGE:New(text, 10):ToCoalitionIf(Controllable:GetCoalition(), self.report or self.Debug)
+  MESSAGE:New(text, 10):ToCoalitionIf(self.coalition, self.report or self.Debug)
   
 end
 
@@ -3079,7 +3096,7 @@ function ARTY:onafterRearm(Controllable, From, Event, To)
       -- Send message.
       local text=string.format("%s, %s, request rearming at rearming place.", Controllable:GetName(), self.RearmingGroup:GetName())
       self:T(ARTY.id..text)
-      MESSAGE:New(text, 10):ToCoalitionIf(Controllable:GetCoalition(), self.report or self.Debug)
+      MESSAGE:New(text, 10):ToCoalitionIf(self.coalition, self.report or self.Debug)
       
       -- Distances.
       local dA=coordARTY:Get2DDistance(self.RearmingPlaceCoord)
@@ -3104,7 +3121,7 @@ function ARTY:onafterRearm(Controllable, From, Event, To)
       -- Send message.
       local text=string.format("%s, %s, request rearming.", Controllable:GetName(), self.RearmingGroup:GetName())
       self:T(ARTY.id..text)
-      MESSAGE:New(text, 10):ToCoalitionIf(Controllable:GetCoalition(), self.report or self.Debug)
+      MESSAGE:New(text, 10):ToCoalitionIf(self.coalition, self.report or self.Debug)
           
       -- Distance between ARTY group and rearming unit.
       local distance=coordARTY:Get2DDistance(coordRARM)
@@ -3123,7 +3140,7 @@ function ARTY:onafterRearm(Controllable, From, Event, To)
       -- Send message.
       local text=string.format("%s, moving to rearming place.", Controllable:GetName())
       self:T(ARTY.id..text)
-      MESSAGE:New(text, 10):ToCoalitionIf(Controllable:GetCoalition(), self.report or self.Debug)
+      MESSAGE:New(text, 10):ToCoalitionIf(self.coalition, self.report or self.Debug)
   
       -- Distance.
       local dA=coordARTY:Get2DDistance(self.RearmingPlaceCoord)
@@ -3152,7 +3169,7 @@ function ARTY:onafterRearmed(Controllable, From, Event, To)
   -- Send message.
   local text=string.format("%s, rearming complete.", Controllable:GetName())
   self:T(ARTY.id..text)
-  MESSAGE:New(text, 10):ToCoalitionIf(Controllable:GetCoalition(), self.report or self.Debug)
+  MESSAGE:New(text, 10):ToCoalitionIf(self.coalition, self.report or self.Debug)
   
   -- "Rearm" tactical nukes as well.
   self.Nukes=self.Nukes0
@@ -3204,7 +3221,7 @@ function ARTY:_CheckRearmed()
   if _rearmpc>1 then
     local text=string.format("%s, rearming %d %% complete.", self.alias, _rearmpc)
     self:T(ARTY.id..text)
-    MESSAGE:New(text, 10):ToCoalitionIf(self.Controllable:GetCoalition(), self.report or self.Debug)
+    MESSAGE:New(text, 10):ToCoalitionIf(self.coalition, self.report or self.Debug)
   end
       
   -- Return if ammo is full.
@@ -3299,7 +3316,7 @@ function ARTY:onafterArrived(Controllable, From, Event, To)
   -- Send message
   local text=string.format("%s, arrived at destination.", Controllable:GetName())
   self:T(ARTY.id..text)
-  MESSAGE:New(text, 10):ToCoalitionIf(Controllable:GetCoalition(), self.report or self.Debug)
+  MESSAGE:New(text, 10):ToCoalitionIf(self.coalition, self.report or self.Debug)
   
   -- Remove executed move from queue.
   if self.currentMove then
@@ -3354,16 +3371,20 @@ function ARTY:onafterDead(Controllable, From, Event, To)
   self:_EventFromTo("onafterDead", Event, From, To)
   
   -- Number of units left in the group.
+  --[[
   local units=self.Controllable:GetUnits()
   local nunits=0
   if units~=nil then
     nunits=#units
   end
+  ]]
+  
+  local nunits=self.Controllable:CountAliveUnits()
     
   -- Message.
   local text=string.format("%s, one of our units just died! %d units left.", self.groupname, nunits)
   MESSAGE:New(text, 5):ToAllIf(self.Debug)
-  self:T(ARTY.id..text)
+  self:I(ARTY.id..text)
       
   -- Go to stop state.
   if nunits==0 then
@@ -3382,7 +3403,7 @@ function ARTY:onafterStop(Controllable, From, Event, To)
   self:_EventFromTo("onafterStop", Event, From, To)
   
   -- Debug info.
-  self:T(ARTY.id..string.format("Stopping ARTY FSM for group %s.", Controllable:GetName()))
+  self:I(ARTY.id..string.format("Stopping ARTY FSM for group %s.", tostring(Controllable:GetName())))
   
     -- Cease Fire on current target.
   if self.currentTarget then
@@ -3933,7 +3954,7 @@ function ARTY:_MarkerKeyAuthentification(text)
 
   -- Set battery and coalition.
   --local batteryname=self.groupname
-  local batterycoalition=self.Controllable:GetCoalition()
+  local batterycoalition=self.coalition
 
   -- Get assignment.
   local mykey=nil
@@ -4248,7 +4269,7 @@ function ARTY:_MarkRequestMoves()
   else
     text=text..string.format("\n- no queued relocations")
   end
-  MESSAGE:New(text, 20):Clear():ToCoalition(self.Controllable:GetCoalition())
+  MESSAGE:New(text, 20):Clear():ToCoalition(self.coalition)
 end
 
 --- Request Targets.
@@ -4266,7 +4287,7 @@ function ARTY:_MarkRequestTargets()
   else
     text=text..string.format("\n- no queued targets")
   end
-  MESSAGE:New(text, 20):Clear():ToCoalition(self.Controllable:GetCoalition())
+  MESSAGE:New(text, 20):Clear():ToCoalition(self.coalition)
 end
 
 --- Create a name for an engagement initiated by placing a marker.
@@ -4448,7 +4469,7 @@ function ARTY:_CheckTargetsInRange()
           -- Inform coalition that target is now in range.
           local text=string.format("%s, target %s is now in range.", self.alias, _target.name)
           self:T(ARTY.id..text)
-          MESSAGE:New(text,10):ToCoalitionIf(self.Controllable:GetCoalition(), self.report or self.Debug)
+          MESSAGE:New(text,10):ToCoalitionIf(self.coalition, self.report or self.Debug)
         end
       
       end
@@ -4485,7 +4506,7 @@ function ARTY:_CheckTargetsInRange()
           end
     
           -- Send info message.
-          MESSAGE:New(_name.." assigned.", 10):ToCoalitionIf(self.Controllable:GetCoalition(), self.report or self.Debug)
+          MESSAGE:New(_name.." assigned.", 10):ToCoalitionIf(self.coalition, self.report or self.Debug)
           
           -- Assign relocation move.
           self:AssignMoveCoord(_tocoord, nil, nil, self.autorelocateonroad, false, _name, true)
@@ -4918,7 +4939,7 @@ function ARTY:_TargetInRange(target, message)
   -- Debug output.
   if not _inrange then
     self:T(ARTY.id..text)
-    MESSAGE:New(text, 5):ToCoalitionIf(self.Controllable:GetCoalition(), (self.report and message) or (self.Debug and message))
+    MESSAGE:New(text, 5):ToCoalitionIf(self.coalition, (self.report and message) or (self.Debug and message))
   end
     
   -- Remove target if ARTY group cannot move, e.g. Mortas. No chance to be ever in range - unless they are cargo.

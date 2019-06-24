@@ -1102,7 +1102,7 @@ function AI_FORMATION:onenterFollowing( FollowGroupSet ) --R2.1
       
         if FollowGroup:GetState( FollowGroup, "Mode" ) == self.__Enum.Mode.Formation then
         
-          self:I({Mode=FollowGroup:GetState( FollowGroup, "Mode" )})
+          self:T({Mode=FollowGroup:GetState( FollowGroup, "Mode" )})
 
           FollowGroup:OptionROTEvadeFire()
           FollowGroup:OptionROEReturnFire()
