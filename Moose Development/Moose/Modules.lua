@@ -1,3 +1,4 @@
+__Moose.Include( 'Scripts/Moose/Utilities/Enums.lua' )
 __Moose.Include( 'Scripts/Moose/Utilities/Routines.lua' )
 __Moose.Include( 'Scripts/Moose/Utilities/Utils.lua' )
 
@@ -91,6 +92,7 @@ __Moose.Include( 'Scripts/Moose/AI/AI_Cas.lua' )
 __Moose.Include( 'Scripts/Moose/AI/AI_Bai.lua' )
 __Moose.Include( 'Scripts/Moose/AI/AI_Formation.lua' )
 __Moose.Include( 'Scripts/Moose/AI/AI_Escort.lua' )
+__Moose.Include( 'Scripts/Moose/AI/AI_Escort_Request.lua' )
 __Moose.Include( 'Scripts/Moose/AI/AI_Cargo.lua' )
 __Moose.Include( 'Scripts/Moose/AI/AI_Cargo_APC.lua' )
 __Moose.Include( 'Scripts/Moose/AI/AI_Cargo_Helicopter.lua' )

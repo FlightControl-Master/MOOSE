@@ -879,7 +879,7 @@ end
 -- @param #DATABASE self
 -- @param Core.Event#EVENTDATA Event
 function DATABASE:_EventOnBirth( Event )
-  self:F2( { Event } )
+  self:F( { Event } )
 
   if Event.IniDCSUnit then
     if Event.IniObjectCategory == 3 then
@@ -896,6 +896,7 @@ function DATABASE:_EventOnBirth( Event )
       local PlayerName = Event.IniUnit:GetPlayerName()
       if PlayerName then
         self:I( { "Player Joined:", PlayerName } )
+        self:AddClient( Event.IniDCSUnitName )
         if not self.PLAYERS[PlayerName] then
           self:AddPlayer( Event.IniUnitName, PlayerName )
         end

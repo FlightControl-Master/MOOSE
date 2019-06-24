@@ -25,11 +25,49 @@
 -- 
 -- Allows you to interact with escorting AI on your flight and take the lead.
 -- 
--- Each escorting group can be commanded with a whole set of radio commands (radio menu in your flight, and then F10).
+-- Each escorting group can be commanded with a complete set of radio commands (radio menu in your flight, and then F10).
 --
--- The radio commands will vary according the category of the group. The richest set of commands are with Helicopters and AirPlanes.
+-- The radio commands will vary according the category of the group. The richest set of commands are with helicopters and airPlanes.
 -- Ships and Ground troops will have a more limited set, but they can provide support through the bombing of targets designated by the other escorts.
---
+-- 
+-- Escorts detect targets using a built-in detection mechanism. The detected targets are reported at a specified time interval.
+-- Once targets are reported, each escort has these targets as menu options to command the attack of these targets.
+-- Targets are by default grouped per area of 5000 meters, but the kind of detection and the grouping range can be altered.
+-- 
+-- Different formations can be selected in the Flight menu: Trail, Stack, Left Line, Right Line, Left Wing, Right Wing, Central Wing and Boxed formations are available.
+-- The Flight menu also allows for a mass attack, where all of the escorts are commanded to attack a target.
+-- 
+-- Escorts can emit flares to reports their location. They can be commanded to hold at a location, which can be their current or the leader location.
+-- In this way, you can spread out the escorts over the battle field before a coordinated attack.
+-- 
+-- But basically, the escort class provides 4 modes of operation, and depending on the mode, you are either leading the flight, or following the flight.
+-- 
+-- ## Leading the flight
+-- 
+-- When leading the flight, you are expected to guide the escorts towards the target areas, 
+-- and carefully coordinate the attack based on the threat levels reported, and the available weapons
+-- carried by the escorts. Ground ships or ground troops can execute A-assisted attacks, when they have long-range ground precision weapons for attack.
+-- 
+-- ## Following the flight
+-- 
+-- Escorts can be commanded to execute a specific mission path. In this mode, the escorts are in the lead.
+-- You as a player, are following the escorts, and are commanding them to progress the mission while
+-- ensuring that the escorts survive. You are joining the escorts in the battlefield. They will detect and report targets
+-- and you will ensure that the attacks are well coordinated, assigning the correct escort type for the detected target
+-- type. Once the attack is finished, the escort will resume the mission it was assigned.
+-- In other words, you can use the escorts for reconnaissance, and for guiding the attack.
+-- Imagine you as a mi-8 pilot, assigned to pickup cargo. Two ka-50s are guiding the way, and you are
+-- following. You are in control. The ka-50s detect targets, report them, and you command how the attack
+-- will commence and from where. You can control where the escorts are holding position and which targets
+-- are attacked first. You are in control how the ka-50s will follow their mission path.
+-- 
+-- Escorts can act as part of a AI A2G dispatcher offensive. In this way, You was a player are in control.
+-- The mission is defined by the A2G dispatcher, and you are responsible to join the flight and ensure that the
+-- attack is well coordinated.
+-- 
+-- It is with great proud that I present you this class, and I hope you will enjoy the functionality and the dynamism
+-- it brings in your DCS world simulations.
+-- 
 -- # RADIO MENUs that can be created:
 -- 
 -- Find a summary below of the current available commands:
@@ -38,7 +76,7 @@
 -- 
 -- Escort group navigation functions:
 --
---   * **"Join-Up and Follow at x meters":** The escort group fill follow you at about x meters, and they will follow you.
+--   * **"Join-Up":** The escort group fill follow you in the assigned formation.
 --   * **"Flare":** Provides menu commands to let the escort group shoot a flare in the air in a color.
 --   * **"Smoke":** Provides menu commands to let the escort group smoke the air in a color. Note that smoking is only available for ground and naval troops.
 --
@@ -46,32 +84,33 @@
 -- 
 -- Escort group navigation functions:
 --
---   * **"At current location":** Stops the escort group and they will hover 30 meters above the ground at the position they stopped.
---   * **"At client location":** Stops the escort group and they will hover 30 meters above the ground at the position they stopped.
+--   * **"At current location":** The escort group will hover above the ground at the position they were. The altitude can be specified as a parameter.
+--   * **"At my location":** The escort group will hover or orbit at the position where you are. The escort will fly to your location and hold position. The altitude can be specified as a parameter.
 --
 -- ## Report targets ...:
 -- 
--- Report targets will make the escort group to report any target that it identifies within a 8km range. Any detected target can be attacked using the 4. Attack nearby targets function. (see below).
+-- Report targets will make the escort group to report any target that it identifies within detection range. Any detected target can be attacked using the "Attack Targets" menu function. (see below).
 --
 --   * **"Report now":** Will report the current detected targets.
---   * **"Report targets on":** Will make the escort group to report detected targets and will fill the "Attack nearby targets" menu list.
+--   * **"Report targets on":** Will make the escorts to report the detected targets and will fill the "Attack Targets" menu list.
 --   * **"Report targets off":** Will stop detecting targets.
---
--- ## Scan targets ...:
--- 
--- Menu items to pop-up the escort group for target scanning. After scanning, the escort group will resume with the mission or defined task.
---
---   * **"Scan targets 30 seconds":** Scan 30 seconds for targets.
---   * **"Scan targets 60 seconds":** Scan 60 seconds for targets.
 --
 -- ## Attack targets ...:
 -- 
 -- This menu item will list all detected targets within a 15km range. Depending on the level of detection (known/unknown) and visuality, the targets type will also be listed.
+-- This menu will be available in Flight menu or in each Escort menu.
+--
+-- ## Scan targets ...:
+-- 
+-- Menu items to pop-up the escort group for target scanning. After scanning, the escort group will resume with the mission or rejoin formation.
+--
+--   * **"Scan targets 30 seconds":** Scan 30 seconds for targets.
+--   * **"Scan targets 60 seconds":** Scan 60 seconds for targets.
 --
 -- ## Request assistance from ...:
 -- 
--- This menu item will list all detected targets within a 15km range, as with the menu item **Attack Targets**.
--- This menu item allows to request attack support from other escorts supporting the current client group.
+-- This menu item will list all detected targets within a 15km range, similar as with the menu item **Attack Targets**.
+-- This menu item allows to request attack support from other ground based escorts supporting the current escort.
 -- eg. the function allows a player to request support from the Ship escort to attack a target identified by the Plane escort with its Tomahawk missiles.
 -- eg. the function allows a player to request support from other Planes escorting to bomb the unit with illumination missiles or bombs, so that the main plane escort can attack the area.
 --
@@ -111,22 +150,16 @@
 
 --- @type AI_ESCORT
 -- @extends AI.AI_Formation#AI_FORMATION
--- @field Wrapper.Client#CLIENT EscortUnit
--- @field Wrapper.Group#GROUP EscortGroup
--- @field #string EscortName
--- @field #AI_ESCORT.MODE EscortMode The mode the escort is in.
--- @field Core.Scheduler#SCHEDULER FollowScheduler The instance of the SCHEDULER class.
--- @field #number FollowDistance The current follow distance.
--- @field #boolean ReportTargets If true, nearby targets are reported.
--- @Field DCS#AI.Option.Air.val.ROE OptionROE Which ROE is set to the EscortGroup.
--- @field DCS#AI.Option.Air.val.REACTION_ON_THREAT OptionReactionOnThreat Which REACTION_ON_THREAT is set to the EscortGroup.
--- @field FunctionalMENU_GROUPDETECTION_BASE Detection
+
+
+-- TODO: Add the menus when the class Start method is activated.
+-- TODO: Remove the menus when the class Stop method is called.
 
 --- AI_ESCORT class
 -- 
 -- # AI_ESCORT construction methods.
 -- 
--- Create a new SPAWN object with the @{#AI_ESCORT.New} method:
+-- Create a new AI_ESCORT object with the @{#AI_ESCORT.New} method:
 --
 --  * @{#AI_ESCORT.New}: Creates a new AI_ESCORT object from a @{Wrapper.Group#GROUP} for a @{Wrapper.Client#CLIENT}, with an optional briefing text.
 --
@@ -147,10 +180,6 @@ AI_ESCORT = {
   EscortUnit = nil,
   EscortGroup = nil,
   EscortMode = 1,
-  MODE = {
-    FOLLOW = 1,
-    MISSION = 2,
-  },
   Targets = {}, -- The identified targets
   FollowScheduler = nil,
   ReportTargets = true,
@@ -162,11 +191,6 @@ AI_ESCORT = {
 
 --- @field Functional.Detection#DETECTION_AREAS
 AI_ESCORT.Detection = nil
-
---- AI_ESCORT.Mode class
--- @type AI_ESCORT.MODE
--- @field #number FOLLOW
--- @field #number MISSION
 
 --- MENUPARAM type
 -- @type MENUPARAM
@@ -196,13 +220,18 @@ function AI_ESCORT:New( EscortUnit, EscortGroupSet, EscortName, EscortBriefing )
   local self = BASE:Inherit( self, AI_FORMATION:New( EscortUnit, EscortGroupSet, EscortName, EscortBriefing ) ) -- #AI_ESCORT
   self:F( { EscortUnit, EscortGroupSet } )
 
-  self.EscortUnit = self.FollowUnit -- Wrapper.Unit#UNIT
+  self.PlayerUnit = self.FollowUnit -- Wrapper.Unit#UNIT
+  self.PlayerGroup = self.FollowUnit:GetGroup() -- Wrapper.Group#GROUP
+  
+  self.EscortName = EscortName
+  
   self.EscortGroupSet = EscortGroupSet
+  
+  self.EscortGroupSet:SetSomeIteratorLimit( 8 )
+  
   self.EscortBriefing = EscortBriefing
  
-
-
-
+  self.Menu = {}
   
 --  if not EscortBriefing then
 --    EscortGroup:MessageToClient( EscortGroup:GetCategoryName() .. " '" .. EscortName .. "' (" .. EscortGroup:GetCallsign() .. ") reporting! " ..
@@ -221,51 +250,127 @@ function AI_ESCORT:New( EscortUnit, EscortGroupSet, EscortName, EscortBriefing )
   self.GT1 = 0
 
 
-  self.FlightMenu = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Flight" )
-
   EscortGroupSet:ForEachGroup(
     --- @param Core.Group#GROUP EscortGroup
     function( EscortGroup )
-      EscortGroup.EscortMenu = MENU_GROUP:New( self.EscortUnit:GetGroup(), EscortGroup:GetName() )
-      
       -- Set EscortGroup known at EscortUnit.
-      if not self.EscortUnit._EscortGroups then
-        self.EscortUnit._EscortGroups = {}
+      if not self.PlayerUnit._EscortGroups then
+        self.PlayerUnit._EscortGroups = {}
       end
     
-      if not self.EscortUnit._EscortGroups[EscortGroup:GetName()] then
-        self.EscortUnit._EscortGroups[EscortGroup:GetName()] = {}
-        self.EscortUnit._EscortGroups[EscortGroup:GetName()].EscortGroup = EscortGroup
-        self.EscortUnit._EscortGroups[EscortGroup:GetName()].EscortName = self.EscortName
-        self.EscortUnit._EscortGroups[EscortGroup:GetName()].Detection = self.Detection
+      if not self.PlayerUnit._EscortGroups[EscortGroup:GetName()] then
+        self.PlayerUnit._EscortGroups[EscortGroup:GetName()] = {}
+        self.PlayerUnit._EscortGroups[EscortGroup:GetName()].EscortGroup = EscortGroup
+        self.PlayerUnit._EscortGroups[EscortGroup:GetName()].EscortName = self.EscortName
+        self.PlayerUnit._EscortGroups[EscortGroup:GetName()].Detection = self.Detection
       end  
-  
-    EscortGroup.EscortMode = AI_ESCORT.MODE.FOLLOW
     end
   )
-
-  self.Detection = DETECTION_AREAS:New( EscortGroupSet, 5000 )
-
-  self.Detection:Start()
- 
+   
   return self
 end
 
+
+function AI_ESCORT:_InitFlightMenus()
+
+  self:SetFlightMenuJoinUp()
+  self:SetFlightMenuFormation( "Trail" )
+  self:SetFlightMenuFormation( "Stack" )
+  self:SetFlightMenuFormation( "LeftLine" )
+  self:SetFlightMenuFormation( "RightLine" )
+  self:SetFlightMenuFormation( "LeftWing" )
+  self:SetFlightMenuFormation( "RightWing" )
+  self:SetFlightMenuFormation( "Vic" )
+  self:SetFlightMenuFormation( "Box" )
+
+  self:SetFlightMenuHoldAtEscortPosition()
+  self:SetFlightMenuHoldAtLeaderPosition()
+  
+  self:SetFlightMenuFlare()
+  self:SetFlightMenuSmoke()
+
+  self:SetFlightMenuROE()
+  self:SetFlightMenuROT()
+
+  self:SetFlightMenuTargets()
+
+end
+
+function AI_ESCORT:_InitEscortMenus( EscortGroup )
+
+  EscortGroup.EscortMenu = MENU_GROUP:New( self.PlayerGroup, EscortGroup:GetCallsign(), self.MainMenu )
+  
+  self:SetEscortMenuJoinUp( EscortGroup )
+  self:SetEscortMenuResumeMission( EscortGroup )
+  
+  self:SetEscortMenuHoldAtEscortPosition( EscortGroup )
+  self:SetEscortMenuHoldAtLeaderPosition( EscortGroup )
+  
+  self:SetEscortMenuFlare( EscortGroup )
+  self:SetEscortMenuSmoke( EscortGroup )
+
+  self:SetEscortMenuROE( EscortGroup )
+  self:SetEscortMenuROT( EscortGroup )
+  
+  self:SetEscortMenuTargets( EscortGroup )
+
+end
+
+function AI_ESCORT:_InitEscortRoute( EscortGroup )
+
+  EscortGroup.MissionRoute = EscortGroup:GetTaskRoute()
+
+end
+
+
+--- @param #AI_ESCORT self
+-- @param Core.Set#SET_GROUP EscortGroupSet
 function AI_ESCORT:onafterStart( EscortGroupSet )
 
-  self:E("Start")
+  self:F()
 
   EscortGroupSet:ForEachGroup(
     --- @param Core.Group#GROUP EscortGroup
     function( EscortGroup )
-      EscortGroup.EscortMenu = MENU_GROUP:New( self.EscortUnit:GetGroup(), EscortGroup:GetName() )
-      EscortGroup:WayPointInitialize( 1 )
+      EscortGroup:WayPointInitialize()
     
       EscortGroup:OptionROTVertical()
       EscortGroup:OptionROEOpenFire()
     end
   )
+
+  -- TODO:Revise this...  
+  local LeaderEscort = EscortGroupSet:GetFirst() -- Wrapper.Group#GROUP
+  if LeaderEscort then
+    local Report = REPORT:New( "Escort reporting:" )
+    Report:Add( "Joining Up " .. EscortGroupSet:GetUnitTypeNames():Text( ", " ) .. " from " .. LeaderEscort:GetCoordinate():ToString( self.PlayerUnit ) )
+    LeaderEscort:MessageTypeToGroup( Report:Text(),  MESSAGE.Type.Information, self.PlayerUnit )
+  end
+
+  self.Detection = DETECTION_AREAS:New( EscortGroupSet, 5000 )
+
+  self.Detection:__Start( 30 )
     
+  self:HandleEvent( EVENTS.Dead, OnEventDeadOrCrash )
+  self:HandleEvent( EVENTS.Crash, OnEventDeadOrCrash )
+
+  self.MainMenu = MENU_GROUP:New( self.PlayerGroup, self.EscortName )
+  self.FlightMenu = MENU_GROUP:New( self.PlayerGroup, "Flight", self.MainMenu )
+
+  self:_InitFlightMenus()
+  
+  self.EscortGroupSet:ForSomeGroupAlive(
+    --- @param Core.Group#GROUP EscortGroup
+    function( EscortGroup )
+
+      self:_InitEscortMenus( EscortGroup )
+      self:_InitEscortRoute( EscortGroup )
+
+      self:SetFlightModeFormation( EscortGroup )
+    end
+  )
+  
+
 end
 
 --- Set a Detection method for the EscortUnit to be reported upon.
@@ -276,7 +381,7 @@ function AI_ESCORT:SetDetection( Detection )
 
   self.Detection = Detection
   self.EscortGroup.Detection = self.Detection
-  self.EscortUnit._EscortGroups[self.EscortGroup:GetName()].Detection = self.EscortGroup.Detection
+  self.PlayerUnit._EscortGroups[self.EscortGroup:GetName()].Detection = self.EscortGroup.Detection
   
   Detection:__Start( 1 )
   
@@ -291,114 +396,139 @@ function AI_ESCORT:TestSmokeDirectionVector( SmokeDirection )
 end
 
 
---- Defines the default menus
+--- Defines the default menus for helicopters.
 -- @param #AI_ESCORT self
+-- @param #number XStart The start position on the X-axis in meters for the first group.
+-- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+-- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+-- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
+-- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+-- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+-- @param #number ZLevels The amount of levels on the Z-axis.
 -- @return #AI_ESCORT
-function AI_ESCORT:Menus()
+function AI_ESCORT:MenusHelicopters( XStart, XSpace, YStart, YSpace, ZStart, ZSpace, ZLevels )
   self:F()
 
 --  self:MenuScanForTargets( 100, 60 )
 
-  self:MenuJoinUp()
-  self:MenuFormationTrail( 0, 50, 100 )
-  self:MenuFormationStack( 0, 0, 100, 100 )
-  self:MenuFormationLeftLine( 0, 0, 100, 100 )
-  self:MenuFormationRightLine( 0, 0, 100, 100 )
-  self:MenuFormationLeftWing( 0, 50, 0, 100, 100 )
-  self:MenuFormationRightWing( 0, 50, 0, 100, 100 )
-  self:MenuFormationCenterWing( 50, 50, 0, 50, 100, 100 )
-  self:MenuFormationBox( 50, 100, 0, 50, 50, 100, 10 )
+  self.XStart = XStart or 50
+  self.XSpace = XSpace or 50
+  self.YStart = YStart or 50
+  self.YSpace = YSpace or 50
+  self.ZStart = ZStart or 50
+  self.ZSpace = ZSpace or 50
+  self.ZLevels = ZLevels or 10
 
+  self:MenuJoinUp()
+  self:MenuFormationTrail(self.XStart,self.XSpace,self.YStart)
+  self:MenuFormationStack(self.XStart,self.XSpace,self.YStart,self.YSpace)
+  self:MenuFormationLeftLine(self.XStart,self.YStart,self.ZStart,self.ZSpace)
+  self:MenuFormationRightLine(self.XStart,self.YStart,self.ZStart,self.ZSpace)
+  self:MenuFormationLeftWing(self.XStart,self.XSpace,self.YStart,self.ZStart,self.ZSpace)
+  self:MenuFormationRightWing(self.XStart,self.XSpace,self.YStart,self.ZStart,self.ZSpace)
+  self:MenuFormationVic(self.XStart,self.XSpace,self.YStart,self.YSpace,self.ZStart,self.ZSpace)
+  self:MenuFormationBox(self.XStart,self.XSpace,self.YStart,self.YSpace,self.ZStart,self.ZSpace,self.ZLevels)
+  
+  self:MenuHoldAtEscortPosition( 30 )
+  self:MenuHoldAtEscortPosition( 100 )
+  self:MenuHoldAtEscortPosition( 500 )
+  self:MenuHoldAtLeaderPosition( 30, 500 )
+  
+  self:MenuFlare()
+  self:MenuSmoke()
+
+  self:MenuTargets( 60 )
+  self:MenuAssistedAttack()
+  self:MenuROE()
+  self:MenuROT()
+
+  return self
+end
+
+
+--- Defines the default menus for airplanes.
+-- @param #AI_ESCORT self
+-- @param #number XStart The start position on the X-axis in meters for the first group.
+-- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+-- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+-- @param #number YSpace The space between groups on the Y-axis in meters for each sequent group.
+-- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+-- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+-- @param #number ZLevels The amount of levels on the Z-axis.
+-- @return #AI_ESCORT
+function AI_ESCORT:MenusAirplanes( XStart, XSpace, YStart, YSpace, ZStart, ZSpace, ZLevels )
+  self:F()
+
+--  self:MenuScanForTargets( 100, 60 )
+
+  self.XStart = XStart or 50
+  self.XSpace = XSpace or 50
+  self.YStart = YStart or 50
+  self.YSpace = YSpace or 50
+  self.ZStart = ZStart or 50
+  self.ZSpace = ZSpace or 50
+  self.ZLevels = ZLevels or 10
+
+  self:MenuJoinUp()
+  self:MenuFormationTrail(self.XStart,self.XSpace,self.YStart)
+  self:MenuFormationStack(self.XStart,self.XSpace,self.YStart,self.YSpace)
+  self:MenuFormationLeftLine(self.XStart,self.YStart,self.ZStart,self.ZSpace)
+  self:MenuFormationRightLine(self.XStart,self.YStart,self.ZStart,self.ZSpace)
+  self:MenuFormationLeftWing(self.XStart,self.XSpace,self.YStart,self.ZStart,self.ZSpace)
+  self:MenuFormationRightWing(self.XStart,self.XSpace,self.YStart,self.ZStart,self.ZSpace)
+  self:MenuFormationVic(self.XStart,self.XSpace,self.YStart,self.YSpace,self.ZStart,self.ZSpace)
+  self:MenuFormationBox(self.XStart,self.XSpace,self.YStart,self.YSpace,self.ZStart,self.ZSpace,self.ZLevels)
+  
   self:MenuHoldAtEscortPosition( 1000, 500 )
   self:MenuHoldAtLeaderPosition( 1000, 500 )
   
   self:MenuFlare()
   self:MenuSmoke()
 
-  self:MenuReportTargets( 60 )
+  self:MenuTargets( 60 )
   self:MenuAssistedAttack()
   self:MenuROE()
-  self:MenuEvasion()
-
---  self:MenuResumeMission()
-
+  self:MenuROT()
 
   return self
 end
 
+
+function AI_ESCORT:SetFlightMenuFormation( Formation )
+
+  local FormationID = "Formation" .. Formation
+  
+  local MenuFormation = self.Menu[FormationID]
+
+  if MenuFormation then
+    local Arguments = MenuFormation.Arguments
+    self:I({Arguments=unpack(Arguments)})
+    local FlightMenuFormation = MENU_GROUP:New( self.PlayerGroup, "Formation", self.MainMenu )
+    local MenuFlightFormationID = MENU_GROUP_COMMAND:New( self.PlayerGroup, Formation, FlightMenuFormation, 
+      function ( self, Formation, ... )
+        self.EscortGroupSet:ForSomeGroupAlive(
+          --- @param Core.Group#GROUP EscortGroup
+          function( EscortGroup, self, Formation, Arguments )
+            if EscortGroup:IsAir() then
+              self:E({FormationID=FormationID})
+              self[FormationID]( self, unpack(Arguments) )
+            end
+          end, self, Formation, Arguments
+        )
+      end, self, Formation, Arguments
+    )
+  end
+    
+  return self
+end
 
 
 function AI_ESCORT:MenuFormation( Formation, ... )
 
-  if not self.FlightMenuFormation then
-    self.FlightMenuFormation = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Formation", self.FlightMenu )
-  end
+  local FormationID = "Formation"..Formation
+  self.Menu[FormationID] = self.Menu[FormationID] or {}
+  self.Menu[FormationID].Arguments = arg
 
-  if not self["FlightMenuFormation"..Formation] then
-    self["FlightMenuFormation"..Formation]  = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), Formation, self.FlightMenuFormation, 
-      function ( self, Formation, ... )
-        self.EscortGroupSet:ForEachGroupAlive(
-          --- @param Core.Group#GROUP EscortGroup
-          function( EscortGroup, self, Formation, ... )
-            if EscortGroup:IsAir() then
-              self:E({Formation=Formation})
-              self["Formation"..Formation]( self, ... )
-            end
-          end, self, Formation, ...
-        )
-      end, self, Formation, ... 
-    )
-  end
-
---  self.EscortGroupSet:ForEachGroupAlive(
---    --- @param Core.Group#GROUP EscortGroup
---    function( EscortGroup )
---      if EscortGroup:IsAir() then
---        if not EscortGroup.EscortMenuReportNavigation then
---          EscortGroup.EscortMenuReportNavigation = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Navigation", EscortGroup.EscortMenu )
---        end
---    
---        if not EscortGroup["EscortMenuFormation"..Formation] then
---          EscortGroup["EscortMenuFormation"..Formation] = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), Formation, EscortGroup.EscortMenuReportNavigation, AI_ESCORT["_EscortFormation"..Formation], self, EscortGroup, ... )
---        end
---      end
---    end
---  )
-
-end
-
-
---- Defines --- Defines a menu slot to let the escort to join formation.
--- This menu will appear under **Formation**.
--- @param #AI_ESCORT self
--- @return #AI_ESCORT
-function AI_ESCORT:MenuJoinUp()
-
-  if not self.FlightMenuReportNavigation then
-    self.FlightMenuReportNavigation = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Navigation", self.FlightMenu )
-  end
-
-  if not self.FlightMenuJoinUp then
-    self.FlightMenuJoinUp  = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Join Up",  self.FlightMenuReportNavigation, AI_ESCORT._FlightJoinUp, self )
-  end
-
-  self.EscortGroupSet:ForEachGroupAlive(
-    --- @param Core.Group#GROUP EscortGroup
-    function( EscortGroup )
-      if EscortGroup:IsAir() then
-        if not EscortGroup.EscortMenuReportNavigation then
-          EscortGroup.EscortMenuReportNavigation = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Navigation", EscortGroup.EscortMenu )
-        end
-    
-        if not EscortGroup.EscortMenuJoinUpAndFollow then
-          EscortGroup.EscortMenuJoinUpAndFollow = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Join-Up", EscortGroup.EscortMenuReportNavigation, ESCORT._JoinUp, self, EscortGroup )
-        end
-    
-      end
-    end
-  )
-
-  return self
 end
 
 
@@ -552,6 +682,87 @@ function AI_ESCORT:MenuFormationBox( XStart, XSpace, YStart, YSpace, ZStart, ZSp
   return self
 end
 
+function AI_ESCORT:SetFlightMenuJoinUp()
+
+  if self.Menu.JoinUp == true then
+    local FlightMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", self.FlightMenu )
+    local FlightMenuJoinUp  = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Join Up",  FlightMenuReportNavigation, AI_ESCORT._FlightJoinUp, self )
+  end
+  
+end
+
+
+--- Sets a menu slot to join formation for an escort.
+-- @param #AI_ESCORT self
+-- @return #AI_ESCORT
+function AI_ESCORT:SetEscortMenuJoinUp( EscortGroup )
+
+  if self.Menu.JoinUp == true then
+    if EscortGroup:IsAir() then
+      local EscortGroupName = EscortGroup:GetName()
+      local EscortMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", EscortGroup.EscortMenu )
+      local EscortMenuJoinUp = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Join Up", EscortMenuReportNavigation, AI_ESCORT._JoinUp, self, EscortGroup )
+    end
+  end
+end
+
+
+--- Defines --- Defines a menu slot to let the escort to join formation.
+-- @param #AI_ESCORT self
+-- @return #AI_ESCORT
+function AI_ESCORT:MenuJoinUp()
+
+  self.Menu.JoinUp = true
+
+  return self
+end
+
+
+function AI_ESCORT:SetFlightMenuHoldAtEscortPosition()
+
+  for _, MenuHoldAtEscortPosition in pairs( self.Menu.HoldAtEscortPosition ) do
+    local FlightMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", self.FlightMenu )
+  
+    local FlightMenuHoldPosition = MENU_GROUP_COMMAND
+      :New(
+        self.PlayerGroup,
+        MenuHoldAtEscortPosition.MenuText,
+        FlightMenuReportNavigation,
+        AI_ESCORT._FlightHoldPosition,
+        self,
+        nil,
+        MenuHoldAtEscortPosition.Height,
+        MenuHoldAtEscortPosition.Speed
+      )
+  
+    end
+  return self
+end
+
+function AI_ESCORT:SetEscortMenuHoldAtEscortPosition( EscortGroup )
+
+  for _, HoldAtEscortPosition in pairs( self.Menu.HoldAtEscortPosition ) do
+    if EscortGroup:IsAir() then
+      local EscortGroupName = EscortGroup:GetName()
+      local EscortMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", EscortGroup.EscortMenu )
+      local EscortMenuHoldPosition = MENU_GROUP_COMMAND
+        :New(
+          self.PlayerGroup,
+          HoldAtEscortPosition.MenuText,
+          EscortMenuReportNavigation,
+          AI_ESCORT._HoldPosition,
+          self,
+          EscortGroup,
+          EscortGroup,
+          HoldAtEscortPosition.Height,
+          HoldAtEscortPosition.Speed
+        )
+    end
+  end
+  
+  return self
+end
+
 
 --- Defines a menu slot to let the escort hold at their current position and stay low with a specified height during a specified time in seconds.
 -- This menu will appear under **Hold position**.
@@ -586,59 +797,62 @@ function AI_ESCORT:MenuHoldAtEscortPosition( Height, Speed, MenuTextFormat )
     end
   end
 
-  if not self.FlightMenuHold then
-    self.FlightMenuHold = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Hold position", self.FlightMenu )
-  end
-
-  if not self.FlightMenuHoldPosition then
-    self.FlightMenuHoldPosition = {}
-  end
-    
-  self.FlightMenuHoldPosition[#self.FlightMenuHoldPosition+1] = MENU_GROUP_COMMAND
-    :New(
-      self.EscortUnit:GetGroup(),
-      MenuText,
-      self.FlightMenuHold,
-      AI_ESCORT._FlightHoldPosition,
-      self,
-      nil,
-      Height,
-      Speed
-    )
-  
-  self.EscortGroupSet:ForEachGroupAlive(
-    --- @param Core.Group#GROUP EscortGroup
-    function( EscortGroup )
-      if EscortGroup:IsAir() then
-    
-        if not EscortGroup.EscortMenuHold then
-          EscortGroup.EscortMenuHold = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Hold position", EscortGroup.EscortMenu )
-        end
-    
-    
-        if not EscortGroup.EscortMenuHoldPosition then
-          EscortGroup.EscortMenuHoldPosition = {}
-        end
-    
-        EscortGroup.EscortMenuHoldPosition[#EscortGroup.EscortMenuHoldPosition+1] = MENU_GROUP_COMMAND
-          :New(
-            self.EscortUnit:GetGroup(),
-            MenuText,
-            EscortGroup.EscortMenuHold,
-            AI_ESCORT._HoldPosition,
-            self,
-            EscortGroup,
-            EscortGroup,
-            Height,
-            Speed
-          )
-      end
-    end
-  )
+  self.Menu.HoldAtEscortPosition = self.Menu.HoldAtEscortPosition or {}
+  self.Menu.HoldAtEscortPosition[#self.Menu.HoldAtEscortPosition+1] = {}
+  self.Menu.HoldAtEscortPosition[#self.Menu.HoldAtEscortPosition].Height = Height
+  self.Menu.HoldAtEscortPosition[#self.Menu.HoldAtEscortPosition].Speed = Speed
+  self.Menu.HoldAtEscortPosition[#self.Menu.HoldAtEscortPosition].MenuText = MenuText
 
   return self
 end
 
+
+function AI_ESCORT:SetFlightMenuHoldAtLeaderPosition()
+
+  for _, MenuHoldAtLeaderPosition in pairs( self.Menu.HoldAtLeaderPosition ) do
+    local FlightMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", self.FlightMenu )
+  
+    local FlightMenuHoldAtLeaderPosition = MENU_GROUP_COMMAND
+      :New(
+        self.PlayerGroup,
+        MenuHoldAtLeaderPosition.MenuText,
+        FlightMenuReportNavigation,
+        AI_ESCORT._FlightHoldPosition,
+        self,
+        self.PlayerGroup,
+        MenuHoldAtLeaderPosition.Height,
+        MenuHoldAtLeaderPosition.Speed
+      )
+  end
+
+  return self
+end
+
+function AI_ESCORT:SetEscortMenuHoldAtLeaderPosition( EscortGroup )
+
+  for _, HoldAtLeaderPosition in pairs( self.Menu.HoldAtLeaderPosition ) do
+    if EscortGroup:IsAir() then
+      
+      local EscortGroupName = EscortGroup:GetName()
+      local EscortMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", EscortGroup.EscortMenu )
+  
+      local EscortMenuHoldAtLeaderPosition = MENU_GROUP_COMMAND
+        :New(
+          self.PlayerGroup,
+          HoldAtLeaderPosition.MenuText,
+          EscortMenuReportNavigation,
+          AI_ESCORT._HoldPosition,
+          self,
+          self.PlayerGroup,
+          EscortGroup,
+          HoldAtLeaderPosition.Height,
+          HoldAtLeaderPosition.Speed
+        )
+    end
+  end
+
+  return self
+end
 
 --- Defines a menu slot to let the escort hold at the client position and stay low with a specified height during a specified time in seconds.
 -- This menu will appear under **Navigation**.
@@ -649,10 +863,6 @@ end
 -- @return #AI_ESCORT
 function AI_ESCORT:MenuHoldAtLeaderPosition( Height, Speed, MenuTextFormat )
   self:F( { Height, Speed, MenuTextFormat } )
-
-  if not self.FlightMenuHold then
-    self.FlightMenuHold = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Hold position", self.FlightMenu )
-  end
 
   if not Height then
     Height = 30
@@ -677,73 +887,11 @@ function AI_ESCORT:MenuHoldAtLeaderPosition( Height, Speed, MenuTextFormat )
     end
   end
 
-  if not self.FlightMenuHoldAtLeaderPosition then
-    self.FlightMenuHoldAtLeaderPosition = {}
-  end
-
-  self.FlightMenuHoldAtLeaderPosition[#self.FlightMenuHoldAtLeaderPosition+1] = MENU_GROUP_COMMAND
-    :New(
-      self.EscortUnit:GetGroup(),
-      MenuText,
-      self.FlightMenuHold,
-      AI_ESCORT._FlightHoldPosition,
-      self,
-      self.EscortUnit:GetGroup(),
-      Height,
-      Speed
-    )
-
-  self.EscortGroupSet:ForEachGroupAlive(
-    --- @param Core.Group#GROUP EscortGroup
-    function( EscortGroup )
-      if EscortGroup:IsAir() then
-    
-        if not EscortGroup.EscortMenuHold then
-          EscortGroup.EscortMenuHold = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Hold position", EscortGroup.EscortMenu )
-        end
-    
-        if not Height then
-          Height = 30
-        end
-    
-        if not Speed then
-          Speed = 0
-        end
-    
-        local MenuText = ""
-        if not MenuTextFormat then
-          if Speed == 0 then
-            MenuText = string.format( "Rejoin and hold at %d meter", Height )
-          else
-            MenuText = string.format( "Rejoin and hold at %d meter at %d", Height, Speed )
-          end
-        else
-          if Speed == 0 then
-            MenuText = string.format( MenuTextFormat, Height )
-          else
-            MenuText = string.format( MenuTextFormat, Height, Speed )
-          end
-        end
-    
-        if not self.EscortMenuHoldAtLeaderPosition then
-          self.EscortMenuHoldAtLeaderPosition = {}
-        end
-    
-        self.EscortMenuHoldAtLeaderPosition[#self.EscortMenuHoldAtLeaderPosition+1] = MENU_GROUP_COMMAND
-          :New(
-            self.EscortUnit:GetGroup(),
-            MenuText,
-            EscortGroup.EscortMenuHold,
-            AI_ESCORT._HoldPosition,
-            self,
-            self.EscortUnit:GetGroup(),
-            EscortGroup,
-            Height,
-            Speed
-          )
-      end
-    end
-  )
+  self.Menu.HoldAtLeaderPosition = self.Menu.HoldAtLeaderPosition or {}
+  self.Menu.HoldAtLeaderPosition[#self.Menu.HoldAtLeaderPosition+1] = {}
+  self.Menu.HoldAtLeaderPosition[#self.Menu.HoldAtLeaderPosition].Height = Height
+  self.Menu.HoldAtLeaderPosition[#self.Menu.HoldAtLeaderPosition].Speed = Speed
+  self.Menu.HoldAtLeaderPosition[#self.Menu.HoldAtLeaderPosition].MenuText = MenuText
 
   return self
 end
@@ -760,7 +908,7 @@ function AI_ESCORT:MenuScanForTargets( Height, Seconds, MenuTextFormat )
 
   if self.EscortGroup:IsAir() then
     if not self.EscortMenuScan then
-      self.EscortMenuScan = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Scan for targets", self.EscortMenu )
+      self.EscortMenuScan = MENU_GROUP:New( self.PlayerGroup, "Scan for targets", self.EscortMenu )
     end
 
     if not Height then
@@ -792,13 +940,48 @@ function AI_ESCORT:MenuScanForTargets( Height, Seconds, MenuTextFormat )
 
     self.EscortMenuScanForTargets[#self.EscortMenuScanForTargets+1] = MENU_GROUP_COMMAND
       :New(
-        self.EscortUnit:GetGroup(),
+        self.PlayerGroup,
         MenuText,
         self.EscortMenuScan,
         AI_ESCORT._ScanTargets,
         self,
         30
       )
+  end
+
+  return self
+end
+
+
+function AI_ESCORT:SetFlightMenuFlare()
+
+  for _, MenuFlare in pairs( self.Menu.Flare) do
+    local FlightMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", self.FlightMenu )
+    local FlightMenuFlare = MENU_GROUP:New( self.PlayerGroup, MenuFlare.MenuText, FlightMenuReportNavigation )
+  
+    local FlightMenuFlareGreenFlight  = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Release green flare",  FlightMenuFlare, AI_ESCORT._FlightFlare, self, FLARECOLOR.Green,  "Released a green flare!"   )
+    local FlightMenuFlareRedFlight    = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Release red flare",    FlightMenuFlare, AI_ESCORT._FlightFlare, self, FLARECOLOR.Red,    "Released a red flare!"     )
+    local FlightMenuFlareWhiteFlight  = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Release white flare",  FlightMenuFlare, AI_ESCORT._FlightFlare, self, FLARECOLOR.White,  "Released a white flare!"   )
+    local FlightMenuFlareYellowFlight = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Release yellow flare", FlightMenuFlare, AI_ESCORT._FlightFlare, self, FLARECOLOR.Yellow, "Released a yellow flare!"  )
+  end
+
+  return self
+end
+
+function AI_ESCORT:SetEscortMenuFlare( EscortGroup )
+
+  for _, MenuFlare in pairs( self.Menu.Flare) do
+    if EscortGroup:IsAir() then
+      
+      local EscortGroupName = EscortGroup:GetName()
+      local EscortMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", EscortGroup.EscortMenu )
+      local EscortMenuFlare = MENU_GROUP:New( self.PlayerGroup, MenuFlare.MenuText, EscortMenuReportNavigation )
+
+      local EscortMenuFlareGreen  = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Release green flare",  EscortMenuFlare, AI_ESCORT._Flare, self, EscortGroup, FLARECOLOR.Green,  "Released a green flare!"   )
+      local EscortMenuFlareRed    = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Release red flare",    EscortMenuFlare, AI_ESCORT._Flare, self, EscortGroup, FLARECOLOR.Red,    "Released a red flare!"     )
+      local EscortMenuFlareWhite  = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Release white flare",  EscortMenuFlare, AI_ESCORT._Flare, self, EscortGroup, FLARECOLOR.White,  "Released a white flare!"   )
+      local EscortMenuFlareYellow = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Release yellow flare", EscortMenuFlare, AI_ESCORT._Flare, self, EscortGroup, FLARECOLOR.Yellow, "Released a yellow flare!"  )
+    end
   end
 
   return self
@@ -815,10 +998,6 @@ end
 function AI_ESCORT:MenuFlare( MenuTextFormat )
   self:F()
 
-  if not self.FlightMenuReportNavigation then
-    self.FlightMenuReportNavigation = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Navigation", self.FlightMenu )
-  end
-
   local MenuText = ""
   if not MenuTextFormat then
     MenuText = "Flare"
@@ -826,40 +1005,51 @@ function AI_ESCORT:MenuFlare( MenuTextFormat )
     MenuText = MenuTextFormat
   end
 
-  if not self.FlightMenuFlare then
-    self.FlightMenuFlare = MENU_GROUP:New( self.EscortUnit:GetGroup(), MenuText, self.FlightMenuReportNavigation )
-    self.FlightMenuFlareGreen  = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release green flare",  self.FlightMenuFlare, AI_ESCORT._FlightFlare, self, FLARECOLOR.Green,  "Released a green flare!"   )
-    self.FlightMenuFlareRed    = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release red flare",    self.FlightMenuFlare, AI_ESCORT._FlightFlare, self, FLARECOLOR.Red,    "Released a red flare!"     )
-    self.FlightMenuFlareWhite  = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release white flare",  self.FlightMenuFlare, AI_ESCORT._FlightFlare, self, FLARECOLOR.White,  "Released a white flare!"   )
-    self.FlightMenuFlareYellow = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release yellow flare", self.FlightMenuFlare, AI_ESCORT._FlightFlare, self, FLARECOLOR.Yellow, "Released a yellow flare!"  )
-  end
-
-  self.EscortGroupSet:ForEachGroupAlive(
-    --- @param Core.Group#GROUP EscortGroup
-    function( EscortGroup )
-      if not EscortGroup.EscortMenuReportNavigation then
-        EscortGroup.EscortMenuReportNavigation = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Navigation", EscortGroup.EscortMenu )
-      end
-    
-      local MenuText = ""
-      if not MenuTextFormat then
-        MenuText = "Flare"
-      else
-        MenuText = MenuTextFormat
-      end
-    
-      if not EscortGroup.EscortMenuFlare then
-        EscortGroup.EscortMenuFlare = MENU_GROUP:New( self.EscortUnit:GetGroup(), MenuText, EscortGroup.EscortMenuReportNavigation )
-        EscortGroup.EscortMenuFlareGreen  = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release green flare",  EscortGroup.EscortMenuFlare, AI_ESCORT._Flare, self, EscortGroup, FLARECOLOR.Green,  "Released a green flare!"   )
-        EscortGroup.EscortMenuFlareRed    = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release red flare",    EscortGroup.EscortMenuFlare, AI_ESCORT._Flare, self, EscortGroup, FLARECOLOR.Red,    "Released a red flare!"     )
-        EscortGroup.EscortMenuFlareWhite  = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release white flare",  EscortGroup.EscortMenuFlare, AI_ESCORT._Flare, self, EscortGroup, FLARECOLOR.White,  "Released a white flare!"   )
-        EscortGroup.EscortMenuFlareYellow = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release yellow flare", EscortGroup.EscortMenuFlare, AI_ESCORT._Flare, self, EscortGroup, FLARECOLOR.Yellow, "Released a yellow flare!"  )
-      end
-    end
-  )
+  self.Menu.Flare = self.Menu.Flare or {}
+  self.Menu.Flare[#self.Menu.Flare+1] = {}
+  self.Menu.Flare[#self.Menu.Flare].MenuText = MenuText
 
   return self
 end
+
+
+function AI_ESCORT:SetFlightMenuSmoke()
+
+  for _, MenuSmoke in pairs( self.Menu.Smoke) do
+    local FlightMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", self.FlightMenu )
+    local FlightMenuSmoke = MENU_GROUP:New( self.PlayerGroup, MenuSmoke.MenuText, FlightMenuReportNavigation )
+  
+    local FlightMenuSmokeGreenFlight  = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Release green smoke",  FlightMenuSmoke, AI_ESCORT._FlightSmoke, self, SMOKECOLOR.Green,  "Releasing green smoke!"   )
+    local FlightMenuSmokeRedFlight    = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Release red smoke",    FlightMenuSmoke, AI_ESCORT._FlightSmoke, self, SMOKECOLOR.Red,    "Releasing red smoke!"     )
+    local FlightMenuSmokeWhiteFlight  = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Release white smoke",  FlightMenuSmoke, AI_ESCORT._FlightSmoke, self, SMOKECOLOR.White,  "Releasing white smoke!"   )
+    local FlightMenuSmokeOrangeFlight = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Release orange smoke", FlightMenuSmoke, AI_ESCORT._FlightSmoke, self, SMOKECOLOR.Orange, "Releasing orange smoke!"  )
+    local FlightMenuSmokeBlueFlight   = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Release blue smoke",   FlightMenuSmoke, AI_ESCORT._FlightSmoke, self, SMOKECOLOR.Blue,   "Releasing blue smoke!"    )
+  end
+
+  return self
+end
+
+
+function AI_ESCORT:SetEscortMenuSmoke( EscortGroup )
+
+  for _, MenuSmoke in pairs( self.Menu.Smoke) do
+    if EscortGroup:IsAir() then
+      
+      local EscortGroupName = EscortGroup:GetName()
+      local EscortMenuReportNavigation = MENU_GROUP:New( self.PlayerGroup, "Navigation", EscortGroup.EscortMenu )
+      local EscortMenuSmoke = MENU_GROUP:New( self.PlayerGroup, MenuSmoke.MenuText, EscortMenuReportNavigation )
+
+      local EscortMenuSmokeGreen  = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Release green smoke",  EscortMenuSmoke, AI_ESCORT._Smoke, self, EscortGroup, SMOKECOLOR.Green,  "Releasing green smoke!"   )
+      local EscortMenuSmokeRed    = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Release red smoke",    EscortMenuSmoke, AI_ESCORT._Smoke, self, EscortGroup, SMOKECOLOR.Red,    "Releasing red smoke!"     )
+      local EscortMenuSmokeWhite  = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Release white smoke",  EscortMenuSmoke, AI_ESCORT._Smoke, self, EscortGroup, SMOKECOLOR.White,  "Releasing white smoke!"   )
+      local EscortMenuSmokeOrange = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Release orange smoke", EscortMenuSmoke, AI_ESCORT._Smoke, self, EscortGroup, SMOKECOLOR.Orange, "Releasing orange smoke!"  )
+      local EscortMenuSmokeBlue   = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Release blue smoke",   EscortMenuSmoke, AI_ESCORT._Smoke, self, EscortGroup, SMOKECOLOR.Blue,   "Releasing blue smoke!"    )
+    end
+  end
+
+  return self
+end
+
 
 --- Defines a menu slot to let the escort disperse a smoke in a certain color.
 -- This menu will appear under **Navigation**.
@@ -871,10 +1061,6 @@ end
 function AI_ESCORT:MenuSmoke( MenuTextFormat )
   self:F()
 
-  if not self.FlightMenuReportNavigation then
-    self.FlightMenuReportNavigation = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Navigation", self.FlightMenu )
-  end
-
   local MenuText = ""
   if not MenuTextFormat then
     MenuText = "Smoke"
@@ -882,44 +1068,58 @@ function AI_ESCORT:MenuSmoke( MenuTextFormat )
     MenuText = MenuTextFormat
   end
 
-  if not self.FlightMenuSmoke then
-    self.FlightMenuSmoke = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Smoke", self.FlightMenuReportNavigation )
-    self.FlightMenuSmokeGreen  = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release green smoke",  self.FlightMenuSmoke, AI_ESCORT._FlightSmoke, self, SMOKECOLOR.Green,  "Releasing green smoke!"   )
-    self.FlightMenuSmokeRed    = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release red smoke",    self.FlightMenuSmoke, AI_ESCORT._FlightSmoke, self, SMOKECOLOR.Red,    "Releasing red smoke!"     )
-    self.FlightMenuSmokeWhite  = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release white smoke",  self.FlightMenuSmoke, AI_ESCORT._FlightSmoke, self, SMOKECOLOR.White,  "Releasing white smoke!"   )
-    self.FlightMenuSmokeOrange = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release orange smoke", self.FlightMenuSmoke, AI_ESCORT._FlightSmoke, self, SMOKECOLOR.Orange, "Releasing orange smoke!"  )
-    self.FlightMenuSmokeBlue   = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release blue smoke",   self.FlightMenuSmoke, AI_ESCORT._FlightSmoke, self, SMOKECOLOR.Blue,   "Releasing blue smoke!"    )
-  end
-
-  self.EscortGroupSet:ForEachGroupAlive(
-    --- @param Core.Group#GROUP EscortGroup
-    function( EscortGroup )
-      if not EscortGroup:IsAir() then
-        if not EscortGroup.EscortMenuReportNavigation then
-          EscortGroup.EscortMenuReportNavigation = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Navigation", EscortGroup.EscortMenu )
-        end
-    
-        local MenuText = ""
-        if not MenuTextFormat then
-          MenuText = "Smoke"
-        else
-          MenuText = MenuTextFormat
-        end
-    
-        if not EscortGroup.EscortMenuSmoke then
-          EscortGroup.EscortMenuSmoke = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Smoke", EscortGroup.EscortMenuReportNavigation )
-          EscortGroup.EscortMenuSmokeGreen  = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release green smoke",  EscortGroup.EscortMenuSmoke, AI_ESCORT._Smoke, self, EscortGroup, SMOKECOLOR.Green,  "Releasing green smoke!"   )
-          EscortGroup.EscortMenuSmokeRed    = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release red smoke",    EscortGroup.EscortMenuSmoke, AI_ESCORT._Smoke, self, EscortGroup, SMOKECOLOR.Red,    "Releasing red smoke!"     )
-          EscortGroup.EscortMenuSmokeWhite  = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release white smoke",  EscortGroup.EscortMenuSmoke, AI_ESCORT._Smoke, self, EscortGroup, SMOKECOLOR.White,  "Releasing white smoke!"   )
-          EscortGroup.EscortMenuSmokeOrange = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release orange smoke", EscortGroup.EscortMenuSmoke, AI_ESCORT._Smoke, self, EscortGroup, SMOKECOLOR.Orange, "Releasing orange smoke!"  )
-          EscortGroup.EscortMenuSmokeBlue   = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Release blue smoke",   EscortGroup.EscortMenuSmoke, AI_ESCORT._Smoke, self, EscortGroup, SMOKECOLOR.Blue,   "Releasing blue smoke!"    )
-        end
-      end
-    end
-  )
+  self.Menu.Smoke = self.Menu.Smoke or {}
+  self.Menu.Smoke[#self.Menu.Smoke+1] = {}
+  self.Menu.Smoke[#self.Menu.Smoke].MenuText = MenuText
 
   return self
 end
+
+
+function AI_ESCORT:SetFlightMenuTargets()
+
+  for _, MenuTargets in pairs( self.Menu.Targets) do
+    local FlightMenuReportTargets = MENU_GROUP:New( self.PlayerGroup, "Report targets", self.FlightMenu )
+  
+    -- Report Targets
+    local FlightMenuReportTargetsNow = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Report targets now!", FlightMenuReportTargets, AI_ESCORT._FlightReportNearbyTargetsNow, self )
+    local FlightMenuReportTargetsOn =  MENU_GROUP_COMMAND:New( self.PlayerGroup, "Report targets on",   FlightMenuReportTargets, AI_ESCORT._FlightSwitchReportNearbyTargets, self, true )
+    local FlightMenuReportTargetsOff = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Report targets off",  FlightMenuReportTargets, AI_ESCORT._FlightSwitchReportNearbyTargets, self, false )
+  
+    -- Attack Targets
+    local FlightMenuAttackNearbyTargets = MENU_GROUP:New( self.PlayerGroup, "Attack targets", self.FlightMenu )
+  
+    MenuTargets.FlightReportTargetsScheduler = SCHEDULER:New( self, self._FlightReportTargetsScheduler, {}, MenuTargets.Interval, MenuTargets.Interval )
+  end
+
+  return self
+end
+
+
+function AI_ESCORT:SetEscortMenuTargets( EscortGroup )
+
+  for _, MenuTargets in pairs( self.Menu.Targets) do
+    if EscortGroup:IsAir() then
+      local EscortGroupName = EscortGroup:GetName()
+      --local EscortMenuReportTargets = MENU_GROUP:New( self.PlayerGroup, "Report targets", EscortGroup.EscortMenu )
+
+      -- Report Targets
+      EscortGroup.EscortMenuReportNearbyTargetsNow = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Report targets", EscortGroup.EscortMenu, AI_ESCORT._ReportNearbyTargetsNow, self, EscortGroup, true )
+      --EscortGroup.EscortMenuReportNearbyTargetsOn = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Report targets on", EscortGroup.EscortMenuReportNearbyTargets, AI_ESCORT._SwitchReportNearbyTargets, self, EscortGroup, true )
+      --EscortGroup.EscortMenuReportNearbyTargetsOff = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Report targets off", EscortGroup.EscortMenuReportNearbyTargets, AI_ESCORT._SwitchReportNearbyTargets, self, EscortGroup, false )
+    
+      -- Attack Targets
+      --local EscortMenuAttackTargets = MENU_GROUP:New( self.PlayerGroup, "Attack targets", EscortGroup.EscortMenu )
+    
+      EscortGroup.ReportTargetsScheduler = SCHEDULER:New( self, self._ReportTargetsScheduler, { EscortGroup }, 1, MenuTargets.Interval )
+      EscortGroup.ResumeScheduler = SCHEDULER:New( self, self._ResumeScheduler, { EscortGroup }, 1, 60 )
+    end
+  end
+
+  return self
+end
+
+
 
 --- Defines a menu slot to let the escort report their current detected targets with a specified time interval in seconds.
 -- This menu will appear under **Report targets**.
@@ -927,140 +1127,153 @@ end
 -- @param #AI_ESCORT self
 -- @param DCS#Time Seconds Optional parameter that lets the escort report their current detected targets after specified time interval in seconds. The default time is 30 seconds.
 -- @return #AI_ESCORT
-function AI_ESCORT:MenuReportTargets( Seconds )
+function AI_ESCORT:MenuTargets( Seconds )
   self:F( { Seconds } )
-
-  if not self.FlightMenuReportNearbyTargets then
-    self.FlightMenuReportNearbyTargets = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Report targets", self.FlightMenu )
-  end
 
   if not Seconds then
     Seconds = 30
   end
+
+  self.Menu.Targets = self.Menu.Targets or {}
+  self.Menu.Targets[#self.Menu.Targets+1] = {}
+  self.Menu.Targets[#self.Menu.Targets].Interval = Seconds
   
-  local timer = 1
-
-  -- Report Targets
-  self.FlightMenuReportNearbyTargetsNow = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Report targets now!", self.FlightMenuReportNearbyTargets, AI_ESCORT._FlightReportNearbyTargetsNow, self )
-  self.FlightMenuReportNearbyTargetsOn = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Report targets on", self.FlightMenuReportNearbyTargets, AI_ESCORT._FlightSwitchReportNearbyTargets, self, true )
-  self.FlightMenuReportNearbyTargetsOff = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Report targets off", self.FlightMenuReportNearbyTargets, AI_ESCORT._FlightSwitchReportNearbyTargets, self, false )
-
-  -- Attack Targets
-  self.FlightMenuAttackNearbyTargets = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Attack targets", self.FlightMenu )
-
-  self.FlightReportTargetsScheduler = SCHEDULER:New( self, self._FlightReportTargetsScheduler, {}, 5, Seconds )
-
-  self.EscortGroupSet:ForEachGroupAlive(
-    --- @param Core.Group#GROUP EscortGroup
-    function( EscortGroup )
-      if EscortGroup:IsAir() then
-        if not EscortGroup.EscortMenuReportNearbyTargets then
-          EscortGroup.EscortMenuReportNearbyTargets = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Report targets", EscortGroup.EscortMenu )
-        end
-      
-        -- Report Targets
-        EscortGroup.EscortMenuReportNearbyTargetsNow = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Report targets now!", EscortGroup.EscortMenuReportNearbyTargets, AI_ESCORT._ReportNearbyTargetsNow, self, EscortGroup )
-        EscortGroup.EscortMenuReportNearbyTargetsOn = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Report targets on", EscortGroup.EscortMenuReportNearbyTargets, AI_ESCORT._SwitchReportNearbyTargets, self, EscortGroup, true )
-        EscortGroup.EscortMenuReportNearbyTargetsOff = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Report targets off", EscortGroup.EscortMenuReportNearbyTargets, AI_ESCORT._SwitchReportNearbyTargets, self, EscortGroup, false )
-      
-        -- Attack Targets
-        EscortGroup.EscortMenuAttackNearbyTargets = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Attack targets", EscortGroup.EscortMenu )
-      
-      
-        EscortGroup.ReportTargetsScheduler = SCHEDULER:New( self, self._ReportTargetsScheduler, { EscortGroup }, timer, Seconds )
-        timer=timer+1
-      end
-    end
-  )
-
   return self
 end
 
 --- Defines a menu slot to let the escort attack its detected targets using assisted attack from another escort joined also with the client.
 -- This menu will appear under **Request assistance from**.
--- Note that this method needs to be preceded with the method MenuReportTargets.
+-- Note that this method needs to be preceded with the method MenuTargets.
 -- @param #AI_ESCORT self
 -- @return #AI_ESCORT
 function AI_ESCORT:MenuAssistedAttack()
   self:F()
 
-  self.EscortGroupSet:ForEachGroupAlive(
+  self.EscortGroupSet:ForSomeGroupAlive(
     --- @param Core.Group#GROUP EscortGroup
     function( EscortGroup )
       if not EscortGroup:IsAir() then
         -- Request assistance from other escorts.
         -- This is very useful to let f.e. an escorting ship attack a target detected by an escorting plane...
-        self.EscortMenuTargetAssistance = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Request assistance from", EscortGroup.EscortMenu )
+        self.EscortMenuTargetAssistance = MENU_GROUP:New( self.PlayerGroup, "Request assistance from", EscortGroup.EscortMenu )
       end
     end
   )
 
   return self
 end
+
+function AI_ESCORT:SetFlightMenuROE()
+
+  for _, MenuROE in pairs( self.Menu.ROE) do
+    local FlightMenuROE = MENU_GROUP:New( self.PlayerGroup, "Rule Of Engagement", self.FlightMenu )
+  
+    local FlightMenuROEHoldFire   = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Hold fire",          FlightMenuROE, AI_ESCORT._FlightROEHoldFire,   self,  "Holding weapons!" )
+    local FlightMenuROEReturnFire = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Return fire",        FlightMenuROE, AI_ESCORT._FlightROEReturnFire, self, "Returning fire!" )
+    local FlightMenuROEOpenFire   = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Open Fire",          FlightMenuROE, AI_ESCORT._FlightROEOpenFire,   self,  "Open fire at designated targets!" )
+    local FlightMenuROEWeaponFree = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Engage all targets", FlightMenuROE, AI_ESCORT._FlightROEWeaponFree, self,  "Engaging all targets!" )
+  end
+
+  return self
+end
+
+
+function AI_ESCORT:SetEscortMenuROE( EscortGroup )
+
+  for _, MenuROE in pairs( self.Menu.ROE) do
+    if EscortGroup:IsAir() then
+
+      local EscortGroupName = EscortGroup:GetName()
+      local EscortMenuROE = MENU_GROUP:New( self.PlayerGroup, "Rule Of Engagement", EscortGroup.EscortMenu )
+      
+      if EscortGroup:OptionROEHoldFirePossible() then
+        local EscortMenuROEHoldFire         = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Hold fire",          EscortMenuROE, AI_ESCORT._ROE, self, EscortGroup, EscortGroup.OptionROEHoldFire, "Holding weapons!" )
+      end
+      if EscortGroup:OptionROEReturnFirePossible() then
+        local EscortMenuROEReturnFire       = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Return fire",        EscortMenuROE, AI_ESCORT._ROE, self, EscortGroup, EscortGroup.OptionROEReturnFire, "Returning fire!" )
+      end
+      if EscortGroup:OptionROEOpenFirePossible() then
+        EscortGroup.EscortMenuROEOpenFire   = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Open Fire",          EscortMenuROE, AI_ESCORT._ROE, self, EscortGroup, EscortGroup.OptionROEOpenFire, "Opening fire on designated targets!!" )
+      end
+      if EscortGroup:OptionROEWeaponFreePossible() then
+        EscortGroup.EscortMenuROEWeaponFree = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Engage all targets", EscortMenuROE, AI_ESCORT._ROE, self, EscortGroup, EscortGroup.OptionROEWeaponFree, "Opening fire on targets of opportunity!" )
+      end
+    end
+  end
+
+  return self
+end
+
 
 --- Defines a menu to let the escort set its rules of engagement.
 -- All rules of engagement will appear under the menu **ROE**.
 -- @param #AI_ESCORT self
 -- @return #AI_ESCORT
-function AI_ESCORT:MenuROE( MenuTextFormat )
-  self:F( MenuTextFormat )
+function AI_ESCORT:MenuROE()
+  self:F()
 
-  self.EscortGroupSet:ForEachGroupAlive(
-    --- @param Core.Group#GROUP EscortGroup
-    function( EscortGroup )
-      if not EscortGroup.EscortMenuROE then
-        -- Rules of Engagement
-        EscortGroup.EscortMenuROE = MENU_GROUP:New( self.EscortUnit:GetGroup(), "ROE", EscortGroup.EscortMenu )
-        if EscortGroup:OptionROEHoldFirePossible() then
-          EscortGroup.EscortMenuROEHoldFire = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Hold Fire", EscortGroup.EscortMenuROE, AI_ESCORT._ROE, self, EscortGroup, EscortGroup:OptionROEHoldFire(), "Holding weapons!" )
-        end
-        if EscortGroup:OptionROEReturnFirePossible() then
-          EscortGroup.EscortMenuROEReturnFire = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Return Fire", EscortGroup.EscortMenuROE, AI_ESCORT._ROE, self, EscortGroup, EscortGroup:OptionROEReturnFire(), "Returning fire!" )
-        end
-        if EscortGroup:OptionROEOpenFirePossible() then
-          EscortGroup.EscortMenuROEOpenFire = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Open Fire", EscortGroup.EscortMenuROE, AI_ESCORT._ROE, self, EscortGroup, EscortGroup:OptionROEOpenFire(), "Opening fire on designated targets!!" )
-        end
-        if EscortGroup:OptionROEWeaponFreePossible() then
-          EscortGroup.EscortMenuROEWeaponFree = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Weapon Free", EscortGroup.EscortMenuROE, AI_ESCORT._ROE, self, EscortGroup, EscortGroup:OptionROEWeaponFree(), "Opening fire on targets of opportunity!" )
-        end
-      end
-    end
-  )
+  self.Menu.ROE = self.Menu.ROE or {}
+  self.Menu.ROE[#self.Menu.ROE+1] = {}
 
   return self
 end
+
+
+function AI_ESCORT:SetFlightMenuROT()
+
+  for _, MenuROT in pairs( self.Menu.ROT) do
+    local FlightMenuROT = MENU_GROUP:New( self.PlayerGroup, "Reaction On Threat", self.FlightMenu )
+  
+    local FlightMenuROTNoReaction     = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Fight until death",             FlightMenuROT, AI_ESCORT._FlightROTNoReaction,     self, "Fighting until death!" )
+    local FlightMenuROTPassiveDefense = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Use flares, chaff and jammers", FlightMenuROT, AI_ESCORT._FlightROTPassiveDefense, self, "Defending using jammers, chaff and flares!" )
+    local FlightMenuROTEvadeFire      = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Open fire",                     FlightMenuROT, AI_ESCORT._FlightROTEvadeFire,      self, "Evading on enemy fire!" )
+    local FlightMenuROTVertical       = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Avoid radar and evade fire",    FlightMenuROT, AI_ESCORT._FlightROTVertical,       self, "Evading on enemy fire with vertical manoeuvres!" )
+  end
+
+  return self
+end
+
+
+function AI_ESCORT:SetEscortMenuROT( EscortGroup )
+
+  for _, MenuROT in pairs( self.Menu.ROT) do
+    if EscortGroup:IsAir() then
+
+      local EscortGroupName = EscortGroup:GetName()
+      local EscortMenuROT = MENU_GROUP:New( self.PlayerGroup, "Reaction On Threat", EscortGroup.EscortMenu )
+
+      if not EscortGroup.EscortMenuEvasion then
+        -- Reaction to Threats
+        if EscortGroup:OptionROTNoReactionPossible() then
+          local EscortMenuEvasionNoReaction     = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Fight until death",             EscortMenuROT, AI_ESCORT._ROT, self, EscortGroup, EscortGroup.OptionROTNoReaction, "Fighting until death!" )
+        end
+        if EscortGroup:OptionROTPassiveDefensePossible() then
+          local EscortMenuEvasionPassiveDefense = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Use flares, chaff and jammers", EscortMenuROT, AI_ESCORT._ROT, self, EscortGroup, EscortGroup.OptionROTPassiveDefense, "Defending using jammers, chaff and flares!" )
+        end
+        if EscortGroup:OptionROTEvadeFirePossible() then
+          local EscortMenuEvasionEvadeFire      = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Open fire",                     EscortMenuROT, AI_ESCORT._ROT, self, EscortGroup, EscortGroup.OptionROTEvadeFire, "Evading on enemy fire!" )
+        end
+        if EscortGroup:OptionROTVerticalPossible() then
+          local EscortMenuOptionEvasionVertical = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Avoid radar and evade fire",    EscortMenuROT, AI_ESCORT._ROT, self, EscortGroup, EscortGroup.OptionROTVertical, "Evading on enemy fire with vertical manoeuvres!" )
+        end
+      end
+    end
+  end
+
+  return self
+end
+
 
 
 --- Defines a menu to let the escort set its evasion when under threat.
 -- All rules of engagement will appear under the menu **Evasion**.
 -- @param #AI_ESCORT self
 -- @return #AI_ESCORT
-function AI_ESCORT:MenuEvasion( MenuTextFormat )
+function AI_ESCORT:MenuROT( MenuTextFormat )
   self:F( MenuTextFormat )
 
-  self.EscortGroupSet:ForEachGroupAlive(
-    --- @param Core.Group#GROUP EscortGroup
-    function( EscortGroup )
-      if EscortGroup:IsAir() then
-        if not EscortGroup.EscortMenuEvasion then
-          -- Reaction to Threats
-          EscortGroup.EscortMenuEvasion = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Evasion", EscortGroup.EscortMenu )
-          if EscortGroup:OptionROTNoReactionPossible() then
-            EscortGroup.EscortMenuEvasionNoReaction = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Fight until death", EscortGroup.EscortMenuEvasion, AI_ESCORT._ROT, self, EscortGroup, EscortGroup:OptionROTNoReaction(), "Fighting until death!" )
-          end
-          if EscortGroup:OptionROTPassiveDefensePossible() then
-            EscortGroup.EscortMenuEvasionPassiveDefense = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Use flares, chaff and jammers", EscortGroup.EscortMenuEvasion, AI_ESCORT._ROT, self, EscortGroup, EscortGroup:OptionROTPassiveDefense(), "Defending using jammers, chaff and flares!" )
-          end
-          if EscortGroup:OptionROTEvadeFirePossible() then
-            EscortGroup.EscortMenuEvasionEvadeFire = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Evade enemy fire", EscortGroup.EscortMenuEvasion, AI_ESCORT._ROT, self, EscortGroup, EscortGroup:OptionROTEvadeFire(), "Evading on enemy fire!" )
-          end
-          if EscortGroup:OptionROTVerticalPossible() then
-            EscortGroup.EscortMenuOptionEvasionVertical = MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(), "Go below radar and evade fire", EscortGroup.EscortMenuEvasion, AI_ESCORT._ROT, self, EscortGroup, EscortGroup:OptionROTVertical(), "Evading on enemy fire with vertical manoeuvres!" )
-          end
-        end
-      end
-    end
-  )
+  self.Menu.ROT = self.Menu.ROT or {}
+  self.Menu.ROT[#self.Menu.ROT+1] = {}
 
   return self
 end
@@ -1069,12 +1282,12 @@ end
 -- All rules of engagement will appear under the menu **Resume mission from**.
 -- @param #AI_ESCORT self
 -- @return #AI_ESCORT
-function AI_ESCORT:MenuResumeMission()
+function AI_ESCORT:SetEscortMenuResumeMission( EscortGroup )
   self:F()
 
-  if not self.EscortMenuResumeMission then
-    -- Mission Resume Menu Root
-    self.EscortMenuResumeMission = MENU_GROUP:New( self.EscortUnit:GetGroup(), "Resume mission from", self.EscortMenu )
+  if EscortGroup:IsAir() then
+    local EscortGroupName = EscortGroup:GetName()
+    EscortGroup.EscortMenuResumeMission = MENU_GROUP:New( self.PlayerGroup, "Resume from", EscortGroup.EscortMenu )
   end
 
   return self
@@ -1088,11 +1301,11 @@ end
 -- @param #number OrbitSeconds
 function AI_ESCORT:_HoldPosition( OrbitGroup, EscortGroup, OrbitHeight, OrbitSeconds )
 
-  local EscortUnit = self.EscortUnit
+  local EscortUnit = self.PlayerUnit
 
   local OrbitUnit = OrbitGroup:GetUnit(1) -- Wrapper.Unit#UNIT
   
-  self:ReleaseFormation( EscortGroup )
+  self:SetFlightModeMission( EscortGroup )
 
   local PointFrom = {}
   local GroupVec3 = EscortGroup:GetUnit(1):GetVec3()
@@ -1131,7 +1344,7 @@ end
 -- @param #number OrbitSeconds
 function AI_ESCORT:_FlightHoldPosition( OrbitGroup, OrbitHeight, OrbitSeconds )
 
-  local EscortUnit = self.EscortUnit
+  local EscortUnit = self.PlayerUnit
 
   self.EscortGroupSet:ForEachGroupAlive(
     --- @param Core.Group#GROUP EscortGroup
@@ -1151,14 +1364,15 @@ end
 
 function AI_ESCORT:_JoinUp( EscortGroup )
 
-  local EscortUnit = self.EscortUnit
+  local EscortUnit = self.PlayerUnit
 
-  self:JoinFormation( EscortGroup )
-  EscortGroup.EscortMode = AI_ESCORT.MODE.FOLLOW
+  self:SetFlightModeFormation( EscortGroup )
+
+  EscortGroup:MessageTypeToGroup( "Joining up!", MESSAGE.Type.Information, EscortUnit:GetGroup() )
 end
 
 
-function AI_ESCORT:_FlightJoinUp( EscortGroup )
+function AI_ESCORT:_FlightJoinUp()
 
   self.EscortGroupSet:ForEachGroupAlive(
     --- @param Core.Group#GROUP EscortGroup
@@ -1228,7 +1442,7 @@ end
 
 function AI_ESCORT:_Flare( EscortGroup, Color, Message )
 
-  local EscortUnit = self.EscortUnit
+  local EscortUnit = self.PlayerUnit
 
   EscortGroup:GetUnit(1):Flare( Color )
   EscortGroup:MessageTypeToGroup( Message, MESSAGE.Type.Information, EscortUnit:GetGroup() )
@@ -1252,7 +1466,7 @@ end
 
 function AI_ESCORT:_Smoke( EscortGroup, Color, Message )
 
-  local EscortUnit = self.EscortUnit
+  local EscortUnit = self.PlayerUnit
 
   EscortGroup:GetUnit(1):Smoke( Color )
   EscortGroup:MessageTypeToGroup( Message, MESSAGE.Type.Information, EscortUnit:GetGroup() )
@@ -1274,7 +1488,7 @@ end
 
 function AI_ESCORT:_ReportNearbyTargetsNow( EscortGroup )
 
-  local EscortUnit = self.EscortUnit
+  local EscortUnit = self.PlayerUnit
 
   self:_ReportTargetsScheduler( EscortGroup )
 
@@ -1283,21 +1497,14 @@ end
 
 function AI_ESCORT:_FlightReportNearbyTargetsNow()
 
-  self.EscortGroupSet:ForEachGroupAlive(
-    --- @param Core.Group#GROUP EscortGroup
-    function( EscortGroup )
-      if EscortGroup:IsAir() then
-        self:_ReportNearbyTargetsNow( EscortGroup )
-      end
-    end
-  )
+  self:_FlightReportTargetsScheduler()
   
 end
 
 
 function AI_ESCORT:_SwitchReportNearbyTargets( EscortGroup, ReportTargets )
 
-  local EscortUnit = self.EscortUnit
+  local EscortUnit = self.PlayerUnit
 
   self.ReportTargets = ReportTargets
 
@@ -1329,7 +1536,7 @@ end
 function AI_ESCORT:_ScanTargets( ScanDuration )
 
   local EscortGroup = self.EscortGroup -- Wrapper.Group#GROUP
-  local EscortUnit = self.EscortUnit
+  local EscortUnit = self.PlayerUnit
 
   self.FollowScheduler:Stop( self.FollowSchedule )
 
@@ -1355,17 +1562,47 @@ function AI_ESCORT:_ScanTargets( ScanDuration )
 
 end
 
---- @param #AI_ESCORT self
--- @param Wrapper.Group#GROUP EscortGroup
+--- @param Wrapper.Group#GROUP EscortGroup
+-- @param #AI_ESCORT self
 function AI_ESCORT.___Resume( EscortGroup, self )
 
-  local PlayerGroup = self.EscortUnit:GetGroup()
+  self:F( { self=self } )
+
+  local PlayerGroup = self.PlayerGroup
   
-  if EscortGroup.EscortMode == AI_ESCORT.MODE.FOLLOW then
-    self:JoinFormation( EscortGroup )
-    EscortGroup:MessageTypeToClient( "Destroyed all targets. Rejoining.", MESSAGE.Type.Information, PlayerGroup )
+  EscortGroup:OptionROEHoldFire()
+  EscortGroup:OptionROTVertical()
+  
+  EscortGroup:SetState( EscortGroup, "Mode", EscortGroup:GetState( EscortGroup, "PreviousMode" ) )
+  
+  if EscortGroup:GetState( EscortGroup, "Mode" ) == self.__Enum.Mode.Mission then
+    EscortGroup:MessageTypeToGroup( "Resuming route.", MESSAGE.Type.Information, PlayerGroup )
+  else
+    EscortGroup:MessageTypeToGroup( "Rejoining formation.", MESSAGE.Type.Information, PlayerGroup )
   end
 
+end
+
+
+--- @param #AI_ESCORT self
+-- @param Wrapper.Group#GROUP EscortGroup
+-- @param #number WayPoint
+function AI_ESCORT:_ResumeMission( EscortGroup, WayPoint )
+
+  --self.FollowScheduler:Stop( self.FollowSchedule )
+  
+  self:SetFlightModeMission( EscortGroup )
+
+  local WayPoints = EscortGroup.MissionRoute
+  self:T( WayPoint, WayPoints )
+
+  for WayPointIgnore = 1, WayPoint do
+    table.remove( WayPoints, 1 )
+  end
+
+  EscortGroup:SetTask( EscortGroup:TaskRoute( WayPoints ), 1 )
+  
+  EscortGroup:MessageTypeToGroup( "Resuming mission from waypoint ", MESSAGE.Type.Information, self.PlayerGroup )
 end
 
 
@@ -1376,13 +1613,11 @@ function AI_ESCORT:_AttackTarget( EscortGroup, DetectedItem )
 
   self:F( EscortGroup )
   
-  local EscortUnit = self.EscortUnit
-  
-  self:ReleaseFormation( EscortGroup )
+  self:SetFlightModeAttack( EscortGroup )
 
   if EscortGroup:IsAir() then
     EscortGroup:OptionROEOpenFire()
-    EscortGroup:OptionROTPassiveDefense()
+    EscortGroup:OptionROTVertical()
     EscortGroup:SetState( EscortGroup, "Escort", self )
 
     local DetectedSet = self.Detection:GetDetectedItemSet( DetectedItem )
@@ -1400,9 +1635,9 @@ function AI_ESCORT:_AttackTarget( EscortGroup, DetectedItem )
     )    
 
     Tasks[#Tasks+1] = EscortGroup:TaskCombo( AttackUnitTasks )
-    Tasks[#Tasks+1] = EscortGroup:TaskFunction( "AI_ESCORT.___Resume", self, EscortGroup )
+    Tasks[#Tasks+1] = EscortGroup:TaskFunction( "AI_ESCORT.___Resume", self )
     
-    EscortGroup:SetTask( 
+    EscortGroup:PushTask( 
       EscortGroup:TaskCombo(
         Tasks
       ), 1
@@ -1423,7 +1658,7 @@ function AI_ESCORT:_AttackTarget( EscortGroup, DetectedItem )
       end, Tasks
     )    
 
-    EscortGroup:SetTask( 
+    EscortGroup:PushTask( 
       EscortGroup:TaskCombo(
         Tasks
       ), 1
@@ -1431,8 +1666,7 @@ function AI_ESCORT:_AttackTarget( EscortGroup, DetectedItem )
 
   end
   
-  EscortGroup:MessageTypeToGroup( "Engaging!", MESSAGE.Type.Information, EscortUnit )
-
+  EscortGroup:MessageTypeToGroup( "Engaging Target!", MESSAGE.Type.Information, self.PlayerGroup )
 end
 
 
@@ -1456,7 +1690,7 @@ end
 -- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
 function AI_ESCORT:_AssistTarget( EscortGroup, DetectedItem )
 
-  local EscortUnit = self.EscortUnit
+  local EscortUnit = self.PlayerUnit
 
   local DetectedSet = self.Detection:GetDetectedItemSet( DetectedItem )
   
@@ -1482,44 +1716,90 @@ function AI_ESCORT:_AssistTarget( EscortGroup, DetectedItem )
 
 end
 
-
 function AI_ESCORT:_ROE( EscortGroup, EscortROEFunction, EscortROEMessage )
+    pcall( function() EscortROEFunction( EscortGroup ) end )
+    EscortGroup:MessageTypeToGroup( EscortROEMessage, MESSAGE.Type.Information, self.PlayerGroup )
+end
 
-  local EscortUnit = self.EscortUnit
 
-  pcall( function() EscortROEFunction() end )
-  EscortGroup:MessageTypeToGroup( EscortROEMessage, MESSAGE.Type.Information, EscortUnit:GetGroup() )
+function AI_ESCORT:_FlightROEHoldFire( EscortROEMessage )
+  self.EscortGroupSet:ForEachGroupAlive(
+    --- @param Wrapper.Group#GROUP EscortGroup
+    function( EscortGroup )
+      self:_ROE( EscortGroup, EscortGroup.OptionROEHoldFire, EscortROEMessage )
+    end
+  )
+end
+
+function AI_ESCORT:_FlightROEOpenFire( EscortROEMessage )
+  self.EscortGroupSet:ForEachGroupAlive(
+    --- @param Wrapper.Group#GROUP EscortGroup
+    function( EscortGroup )
+      self:_ROE( EscortGroup, EscortGroup.OptionROEOpenFire, EscortROEMessage )
+    end
+  )
+end
+
+function AI_ESCORT:_FlightROEReturnFire( EscortROEMessage )
+  self.EscortGroupSet:ForEachGroupAlive(
+    --- @param Wrapper.Group#GROUP EscortGroup
+    function( EscortGroup )
+      self:_ROE( EscortGroup, EscortGroup.OptionROEReturnFire, EscortROEMessage )
+    end
+  )
+end
+
+function AI_ESCORT:_FlightROEWeaponFree( EscortROEMessage )
+  self.EscortGroupSet:ForEachGroupAlive(
+    --- @param Wrapper.Group#GROUP EscortGroup
+    function( EscortGroup )
+      self:_ROE( EscortGroup, EscortGroup.OptionROEWeaponFree, EscortROEMessage )
+    end
+  )
 end
 
 
 function AI_ESCORT:_ROT( EscortGroup, EscortROTFunction, EscortROTMessage )
-
-  local EscortUnit = self.EscortUnit
-
-  pcall( function() EscortROTFunction() end )
-  EscortGroup:MessageTypeToGroup( EscortROTMessage, MESSAGE.Type.Information, EscortUnit:GetGroup() )
+  pcall( function() EscortROTFunction( EscortGroup ) end )
+  EscortGroup:MessageTypeToGroup( EscortROTMessage, MESSAGE.Type.Information, self.PlayerGroup )
 end
 
 
-function AI_ESCORT:_ResumeMission( WayPoint )
-
-  local EscortGroup = self.EscortGroup
-  local EscortUnit = self.EscortUnit
-
-  self.FollowScheduler:Stop( self.FollowSchedule )
-
-  local WayPoints = EscortGroup:GetTaskRoute()
-  self:T( WayPoint, WayPoints )
-
-  for WayPointIgnore = 1, WayPoint do
-    table.remove( WayPoints, 1 )
-  end
-
-  SCHEDULER:New( EscortGroup, EscortGroup.SetTask, { EscortGroup:TaskRoute( WayPoints ) }, 1 )
-
-  EscortGroup:MessageToClient( "Resuming mission from waypoint " .. WayPoint .. ".", 10, EscortUnit )
+function AI_ESCORT:_FlightROTNoReaction( EscortROTMessage )
+  self.EscortGroupSet:ForEachGroupAlive(
+    --- @param Wrapper.Group#GROUP EscortGroup
+    function( EscortGroup )
+      self:_ROT( EscortGroup, EscortGroup.OptionROTNoReaction, EscortROTMessage )
+    end
+  )
 end
 
+function AI_ESCORT:_FlightROTPassiveDefense( EscortROTMessage )
+  self.EscortGroupSet:ForEachGroupAlive(
+    --- @param Wrapper.Group#GROUP EscortGroup
+    function( EscortGroup )
+      self:_ROT( EscortGroup, EscortGroup.OptionROTPassiveDefense, EscortROTMessage )
+    end
+  )
+end
+
+function AI_ESCORT:_FlightROTEvadeFire( EscortROTMessage )
+  self.EscortGroupSet:ForEachGroupAlive(
+    --- @param Wrapper.Group#GROUP EscortGroup
+    function( EscortGroup )
+      self:_ROT( EscortGroup, EscortGroup.OptionROTEvadeFire, EscortROTMessage )
+    end
+  )
+end
+
+function AI_ESCORT:_FlightROTVertical( EscortROTMessage )
+  self.EscortGroupSet:ForEachGroupAlive(
+    --- @param Wrapper.Group#GROUP EscortGroup
+    function( EscortGroup )
+      self:_ROT( EscortGroup, EscortGroup.OptionROTVertical, EscortROTMessage )
+    end
+  )
+end
 
 --- Registers the waypoints
 -- @param #AI_ESCORT self
@@ -1536,21 +1816,46 @@ function AI_ESCORT:RegisterRoute()
   return TaskPoints
 end
 
+--- Resume Scheduler.
+-- @param #AI_ESCORT self
+-- @param Wrapper.Group#GROUP EscortGroup
+function AI_ESCORT:_ResumeScheduler( EscortGroup )
+  self:F( EscortGroup:GetName() )
+
+  if EscortGroup:IsAlive() and self.PlayerUnit:IsAlive() then
+
+
+    local EscortGroupName = EscortGroup:GetCallsign() 
+
+    if EscortGroup.EscortMenuResumeMission then
+      EscortGroup.EscortMenuResumeMission:RemoveSubMenus()
+
+      local TaskPoints = EscortGroup.MissionRoute
+      
+      for WayPointID, WayPoint in pairs( TaskPoints ) do
+        local EscortVec3 = EscortGroup:GetVec3()
+        local Distance = ( ( WayPoint.x - EscortVec3.x )^2 +
+          ( WayPoint.y - EscortVec3.z )^2
+          ) ^ 0.5 / 1000
+        MENU_GROUP_COMMAND:New( self.PlayerGroup, "Waypoint " .. WayPointID .. " at " .. string.format( "%.2f", Distance ).. "km", EscortGroup.EscortMenuResumeMission, AI_ESCORT._ResumeMission, self, EscortGroup, WayPointID )
+      end
+    end
+  end
+end
 
 
 --- Report Targets Scheduler.
 -- @param #AI_ESCORT self
 -- @param Wrapper.Group#GROUP EscortGroup
-function AI_ESCORT:_ReportTargetsScheduler( EscortGroup )
+function AI_ESCORT:_ReportTargetsScheduler( EscortGroup, Report )
   self:F( EscortGroup:GetName() )
 
-  if EscortGroup:IsAlive() and self.EscortUnit:IsAlive() then
+  if EscortGroup:IsAlive() and self.PlayerUnit:IsAlive() then
 
-    if true then
-
-      local EscortGroupName = EscortGroup:GetName() 
+      local EscortGroupName = EscortGroup:GetCallsign() 
+ 
+      local DetectedTargetsReport = REPORT:New( "Reporting targets:\n" ) -- A new report to display the detected targets as a message to the player.
     
-      EscortGroup.EscortMenuAttackNearbyTargets:RemoveSubMenus()
 
       if EscortGroup.EscortMenuTargetAssistance then
         EscortGroup.EscortMenuTargetAssistance:RemoveSubMenus()
@@ -1559,28 +1864,35 @@ function AI_ESCORT:_ReportTargetsScheduler( EscortGroup )
       local DetectedItems = self.Detection:GetDetectedItems()
 
       local ClientEscortTargets = self.Detection
-      --local EscortUnit = EscortGroupData:GetUnit( 1 )
 
+      local TimeUpdate = timer.getTime()
+      
+      local EscortMenuAttackTargets = MENU_GROUP:New( self.PlayerGroup, "Attack targets", EscortGroup.EscortMenu )
+      
+      local DetectedTargets = false
       for DetectedItemIndex, DetectedItem in pairs( DetectedItems ) do
-        self:F( { DetectedItemIndex, DetectedItem } )
+        DetectedTargets = true
 
-        local DetectedItemReportSummary = self.Detection:DetectedItemReportMenu( DetectedItem, EscortGroup, _DATABASE:GetPlayerSettings( self.EscortUnit:GetPlayerName() ) )
+        local DetectedMenu = self.Detection:DetectedItemReportMenu( DetectedItem, EscortGroup, _DATABASE:GetPlayerSettings( self.PlayerUnit:GetPlayerName() ) ):Text("\n")
 
-        local DetectedMenu = DetectedItemReportSummary:Text("\n")
-
+        local DetectedItemReportSummary = self.Detection:DetectedItemReportSummary( DetectedItem, EscortGroup, _DATABASE:GetPlayerSettings( self.PlayerUnit:GetPlayerName() ) )
+        local ReportSummary = DetectedItemReportSummary:Text(", ")
+        DetectedTargetsReport:AddIndent( ReportSummary, "-" )
+        
         if EscortGroup:IsAir() then
-          MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(),
+
+          MENU_GROUP_COMMAND:New( self.PlayerGroup,
             DetectedMenu,
-            EscortGroup.EscortMenuAttackNearbyTargets,
+            EscortMenuAttackTargets,
             AI_ESCORT._AttackTarget,
             self,
             EscortGroup,
             DetectedItem
-          )
+          ):SetTag( "Escort" ):SetTime( TimeUpdate )
         else
           if self.EscortMenuTargetAssistance then
-            local MenuTargetAssistance = MENU_GROUP:New( self.EscortUnit:GetGroup(), EscortGroupName, EscortGroup.EscortMenuTargetAssistance )
-            MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(),
+            local MenuTargetAssistance = MENU_GROUP:New( self.PlayerGroup, EscortGroupName, EscortGroup.EscortMenuTargetAssistance )
+            MENU_GROUP_COMMAND:New( self.PlayerGroup,
               DetectedMenu,
               MenuTargetAssistance,
               AI_ESCORT._AssistTarget,
@@ -1594,9 +1906,17 @@ function AI_ESCORT:_ReportTargetsScheduler( EscortGroup )
 
       end
 
+      EscortMenuAttackTargets:RemoveSubMenus( TimeUpdate, "Escort" )
+
+      if Report then
+        if DetectedTargets then
+          EscortGroup:MessageTypeToGroup( DetectedTargetsReport:Text( "\n" ), MESSAGE.Type.Information, self.PlayerGroup )
+        else
+          EscortGroup:MessageTypeToGroup( "No targets detected.", MESSAGE.Type.Information, self.PlayerGroup )
+        end
+      end
+
       return true
-    else
-    end
   end
   
   return false
@@ -1611,13 +1931,14 @@ function AI_ESCORT:_FlightReportTargetsScheduler()
   
   local EscortGroup = self.EscortGroupSet:GetFirst() -- Wrapper.Group#GROUP
   
-  local DetectedTargetsReport = REPORT:New( "Reporting detected targets:\n" ) -- A new report to display the detected targets as a message to the player.
+  local DetectedTargetsReport = REPORT:New( "Reporting your targets:\n" ) -- A new report to display the detected targets as a message to the player.
 
-  if self.EscortUnit:IsAlive() and EscortGroup:IsAlive() then
+  if EscortGroup and ( self.PlayerUnit:IsAlive() and EscortGroup:IsAlive() ) then
 
-    local ClientGroup = self.EscortUnit:GetGroup()
+    local ClientGroup = self.PlayerGroup
 
-    self.FlightMenuAttackNearbyTargets:RemoveSubMenus()
+    local TimeUpdate = timer.getTime()
+
 
     local DetectedItems = self.Detection:GetDetectedItems()
 
@@ -1625,28 +1946,37 @@ function AI_ESCORT:_FlightReportTargetsScheduler()
 
     local ClientEscortTargets = self.Detection
 
+    local FlightMenuAttackTargets = MENU_GROUP:New( self.PlayerGroup, "Attack targets", self.FlightMenu )
+
     for DetectedItemIndex, DetectedItem in pairs( DetectedItems ) do
+    
+      self:F("FlightReportTargetScheduler Targets")
+    
 
       DetectedTargets = true -- There are detected targets, when the content of the for loop is executed. We use it to display a message.
       
-      local DetectedItemReportSummary = self.Detection:DetectedItemReportMenu( DetectedItem, ClientGroup, _DATABASE:GetPlayerSettings( self.EscortUnit:GetPlayerName() ) )
-
-      local DetectedMsg = DetectedItemReportSummary:Text(", ")
-      DetectedTargetsReport:AddIndent( DetectedMsg, "-" )
-
-      MENU_GROUP_COMMAND:New( self.EscortUnit:GetGroup(),
-        DetectedMsg,
-        self.FlightMenuAttackNearbyTargets,
+      local DetectedItemReportMenu = self.Detection:DetectedItemReportMenu( DetectedItem, ClientGroup, _DATABASE:GetPlayerSettings( self.PlayerUnit:GetPlayerName() ) )
+      local ReportMenuText = DetectedItemReportMenu:Text(", ")
+      
+      MENU_GROUP_COMMAND:New( self.PlayerGroup,
+        ReportMenuText,
+        FlightMenuAttackTargets,
         AI_ESCORT._FlightAttackTarget,
         self,
         DetectedItem
-      )
+      ):SetTag( "Flight" ):SetTime( TimeUpdate )
+
+      local DetectedItemReportSummary = self.Detection:DetectedItemReportSummary( DetectedItem, ClientGroup, _DATABASE:GetPlayerSettings( self.PlayerUnit:GetPlayerName() ) )
+      local ReportSummary = DetectedItemReportSummary:Text(", ")
+      DetectedTargetsReport:AddIndent( ReportSummary, "-" )
     end
 
+    FlightMenuAttackTargets:RemoveSubMenus( TimeUpdate, "Flight" )
+
     if DetectedTargets then
-      EscortGroup:MessageTypeToGroup( DetectedTargetsReport:Text( "\n" ), MESSAGE.Type.Information, self.EscortUnit:GetGroup() )
+      EscortGroup:MessageTypeToGroup( DetectedTargetsReport:Text( "\n" ), MESSAGE.Type.Information, self.PlayerGroup )
 --    else
---      EscortGroup:MessageTypeToGroup( "No targets detected.", MESSAGE.Type.Information, self.EscortUnit:GetGroup() )
+--      EscortGroup:MessageTypeToGroup( "No targets detected.", MESSAGE.Type.Information, self.PlayerGroup )
     end
 
     return true
@@ -1654,3 +1984,5 @@ function AI_ESCORT:_FlightReportTargetsScheduler()
   
   return false
 end
+
+

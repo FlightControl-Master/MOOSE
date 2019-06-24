@@ -553,11 +553,14 @@ function AIRBASE:GetParkingSpotsTable(termtype)
   local spots={}
   for _,_spot in pairs(parkingdata) do
     if AIRBASE._CheckTerminalType(_spot.Term_Type, termtype) then
+      self:I({_spot=_spot})
       local _free=_isfree(_spot)
       local _coord=COORDINATE:NewFromVec3(_spot.vTerminalPos)
       table.insert(spots, {Coordinate=_coord, TerminalID=_spot.Term_Index, TerminalType=_spot.Term_Type, TOAC=_spot.TO_AC, Free=_free, TerminalID0=_spot.Term_Index_0, DistToRwy=_spot.fDistToRW})
     end
   end
+  
+  self:I({ spots = spots } )
   
   return spots
 end
@@ -708,6 +711,8 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
     local _spot=parkingspot.Coordinate   -- Core.Point#COORDINATE
     local _termid=parkingspot.TerminalID
     
+    self:I({_termid=_termid})
+    
     if AIRBASE._CheckTerminalType(parkingspot.TerminalType, terminaltype) then
     
       -- Very safe uses the DCS getParking() info to check if a spot is free. Unfortunately, the function returns free=false until the aircraft has actually taken-off.
@@ -787,7 +792,7 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
               
         --_spot:MarkToAll(string.format("Parking spot %d free=%s", parkingspot.TerminalID, tostring(not occupied)))
         if occupied then
-          self:T(string.format("%s: Parking spot id %d occupied.", airport, _termid))
+          self:I(string.format("%s: Parking spot id %d occupied.", airport, _termid))
         else
           self:I(string.format("%s: Parking spot id %d free.", airport, _termid))
           if nvalid<_nspots then

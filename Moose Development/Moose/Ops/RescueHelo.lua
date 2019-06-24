@@ -235,7 +235,7 @@ RESCUEHELO.UID=0
 
 --- Class version.
 -- @field #string version
-RESCUEHELO.version="1.0.6"
+RESCUEHELO.version="1.0.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -926,6 +926,9 @@ function RESCUEHELO:onafterStart(From, Event, To)
   
   -- Formation parameters.
   self.formation:FormationCenterWing(-self.offsetX, 50, math.abs(self.altitude), 50, self.offsetZ, 50)
+  
+  -- Formation mode.
+  self.formation:SetFlightModeFormation(self.helo)
   
   -- Start formation FSM.
   self.formation:__Start(delay)

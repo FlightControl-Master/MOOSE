@@ -1184,6 +1184,24 @@ function POSITIONABLE:LaseUnit( Target, LaserCode, Duration ) --R2.1
   
 end
 
+--- Start Lasing a COORDINATE.
+-- @param #POSITIONABLE self
+-- @param Core.Point#COORDIUNATE Coordinate The coordinate where the lase is pointing at.
+-- @param #number LaserCode Laser code or random number in [1000, 9999].
+-- @param #number Duration Duration of lasing in seconds.
+-- @return Core.Spot#SPOT
+function POSITIONABLE:LaseCoordinate(Coordinate, LaserCode, Duration)
+  self:F2()
+
+  LaserCode = LaserCode or math.random(1000, 9999)
+  
+  self.Spot = SPOT:New(self) -- Core.Spot#SPOT
+  self.Spot:LaseOnCoordinate(Coordinate, LaserCode, Duration)
+  self.LaserCode = LaserCode
+  
+  return self.Spot
+end
+
 --- Stop Lasing a POSITIONABLE
 -- @param #POSITIONABLE self
 -- @return #POSITIONABLE
