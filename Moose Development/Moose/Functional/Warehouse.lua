@@ -1634,11 +1634,13 @@ WAREHOUSE = {
 -- @field #string UNITTYPE Typename of the DCS unit, e.g. "A-10C".
 -- @field #string ATTRIBUTE Generalized attribute @{#WAREHOUSE.Attribute}.
 -- @field #string CATEGORY Asset category of type DCS#Group.Category, i.e. GROUND, AIRPLANE, HELICOPTER, SHIP, TRAIN.
+-- @field #string ASSIGNMENT Assignment of asset when it was added.
 WAREHOUSE.Descriptor = {
   GROUPNAME="templatename",
   UNITTYPE="unittype",
   ATTRIBUTE="attribute",
   CATEGORY="category",
+  ASSIGNMENT="assignment",
 }
 
 --- Generalized asset attributes. Can be used to request assets with certain general characteristics. See [DCS attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes) on hoggit.
@@ -1743,7 +1745,7 @@ _WAREHOUSEDB  = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.9.2"
+WAREHOUSE.version="0.9.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -3684,7 +3686,7 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
       self:_DebugMessage(string.format("Warehouse %s: Adding %d NEW assets of group %s to stock.", self.alias, n, tostring(group:GetName())), 5)
 
       -- This is a group that is not in the db yet. Add it n times.
-      local assets=self:_RegisterAsset(group, n, forceattribute, forcecargobay, forceweight, loadradius, liveries, skill)
+      local assets=self:_RegisterAsset(group, n, forceattribute, forcecargobay, forceweight, loadradius, liveries, skill, assignment)
 
       -- Add created assets to stock of this warehouse.
       for _,asset in pairs(assets) do
@@ -3720,8 +3722,9 @@ end
 -- @param #number loadradius Radius in meters when cargo is loaded into the carrier.
 -- @param #table liveries Table of liveries.
 -- @param DCS#AI.Skill skill Skill of AI.
+-- @param #string assignment Assignment attached to the asset item.
 -- @return #table A table containing all registered assets.
-function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute, forcecargobay, forceweight, loadradius, liveries, skill)
+function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute, forcecargobay, forceweight, loadradius, liveries, skill, assignment)
   self:F({groupname=group:GetName(), ngroups=ngroups, forceattribute=forceattribute, forcecargobay=forcecargobay, forceweight=forceweight})
 
   -- Set default.
@@ -3823,6 +3826,7 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute, forcecargobay,
       asset.livery=liveries[math.random(#liveries)]
     end
     asset.skill=skill
+    asset.assignment=assignment
 
     if i==1 then
       self:_AssetItemInfo(asset)
@@ -3937,8 +3941,15 @@ function WAREHOUSE:onbeforeAddRequest(From, Event, To, warehouse, AssetDescripto
       okay=false
     end
 
+  elseif AssetDescriptor==WAREHOUSE.Descriptor.ASSIGNMENT then
+
+    if type(AssetDescriptorValue)~="string" then
+      self:_ErrorMessage("ERROR: Invalid request. Asset assignment type must be passed as a string!", 5)
+      okay=false
+    end
+
   else
-    self:_ErrorMessage("ERROR: Invalid request. Asset descriptor is not ATTRIBUTE, CATEGORY, GROUPNAME or UNITTYPE!", 5)
+    self:_ErrorMessage("ERROR: Invalid request. Asset descriptor is not ATTRIBUTE, CATEGORY, GROUPNAME, UNITTYPE or ASSIGNMENT!", 5)
     okay=false
   end
 

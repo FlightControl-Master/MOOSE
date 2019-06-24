@@ -40,7 +40,7 @@
 -- @field #boolean Debug Write Debug messages to DCS log file and send Debug messages to all players.
 -- @field #table targets All targets assigned.
 -- @field #table moves All moves assigned.
--- @field #table currentTarget Holds the current target, if there is one assigned.
+-- @field #ARTY.Target currentTarget Holds the current target, if there is one assigned.
 -- @field #table currentMove Holds the current commanded move, if there is one assigned.
 -- @field #number Nammo0 Initial amount total ammunition (shells+rockets+missiles) of the whole group.
 -- @field #number Nshells0 Initial amount of shells of the whole group.
@@ -668,13 +668,28 @@ ARTY.db={
   },
 }
 
+--- Target.
+-- @type ARTY.Target
+-- @field #string name Name of target.
+-- @field Core.Point#COORDINATE coord Target coordinates.
+-- @field #number radius Shelling radius in meters.
+-- @field #number nshells Number of shells (or other weapon types) fired upon target.
+-- @field #number engaged Number of times this target was engaged.
+-- @field #boolean underfire If true, target is currently under fire.
+-- @field #number prio Priority of target.
+-- @field #number maxengage Max number of times, the target will be engaged.
+-- @field #number time Abs. mission time in seconds, when the target is scheduled to be attacked.
+-- @field #number weapontype Type of weapon used for engagement. See #ARTY.WeaponType.
+-- @field #number Tassigned Abs. mission time when target was assigned.
+-- @field #boolean attackgroup If true, use task attack group rather than fire at point for engagement.
+
 --- Some ID to identify who we are in output of the DCS.log file.
 -- @field #string id
 ARTY.id="ARTY | "
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="1.0.7"
+ARTY.version="1.1.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -1208,6 +1223,97 @@ function ARTY:AssignTargetCoord(coord, prio, radius, nshells, maxengage, time, w
   
   return _name
 end
+
+--- Assign a target group to the ARTY group. Note that this will use the Attack Group Task rather than the Fire At Point Task.
+-- @param #ARTY self
+-- @param Wrapper.Group#GROUP group Target group.
+-- @param #number prio (Optional) Priority of target. Number between 1 (high) and 100 (low). Default 50.
+-- @param #number radius (Optional) Radius. Default is 100 m.
+-- @param #number nshells (Optional) How many shells (or rockets) are fired on target per engagement. Default 5.
+-- @param #number maxengage (Optional) How many times a target is engaged. Default 1.
+-- @param #string time (Optional) Day time at which the target should be engaged. Passed as a string in format "08:13:45". Current task will be canceled.
+-- @param #number weapontype (Optional) Type of weapon to be used to attack this target. Default ARTY.WeaponType.Auto, i.e. the DCS logic automatically determins the appropriate weapon.
+-- @param #string name (Optional) Name of the target. Default is LL DMS coordinate of the target. If the name was already given, the numbering "#01", "#02",... is appended automatically.
+-- @param #boolean unique (Optional) Target is unique. If the target name is already known, the target is rejected. Default false.
+-- @return #string Name of the target. Can be used for further reference, e.g. deleting the target from the list.
+-- @usage paladin=ARTY:New(GROUP:FindByName("Blue Paladin"))
+-- paladin:AssignTargetCoord(GROUP:FindByName("Red Targets 1"):GetCoordinate(), 10, 300, 10, 1, "08:02:00", ARTY.WeaponType.Auto, "Target 1")
+-- paladin:Start()
+function ARTY:AssignAttackGroup(group, prio, radius, nshells, maxengage, time, weapontype, name, unique)
+  
+  -- Set default values.
+  nshells=nshells or 5
+  radius=radius or 100
+  maxengage=maxengage or 1
+  prio=prio or 50
+  prio=math.max(  1, prio)
+  prio=math.min(100, prio)
+  if unique==nil then
+    unique=false
+  end
+  weapontype=weapontype or ARTY.WeaponType.Auto
+
+  -- TODO Check if we have a group object.
+  if type(group)=="string" then
+    group=GROUP:FindByName(group)
+  end
+  
+  if group and group:IsAlive() then
+  
+    local coord=group:GetCoordinate()
+    
+    -- Name of the target.
+    local _name=group:GetName()
+    local _unique=true
+      
+    -- Check if the name has already been used for another target. If so, the function returns a new unique name.
+    _name,_unique=self:_CheckName(self.targets, _name, not unique)
+    
+    -- Target name should be unique and is not.
+    if unique==true and _unique==false then
+      self:T(ARTY.id..string.format("%s: target %s should have a unique name but name was already given. Rejecting target!", self.groupname, _name))
+      return nil
+    end
+    
+    -- Time in seconds.
+    local _time
+    if type(time)=="string" then
+      _time=self:_ClockToSeconds(time)
+    elseif type(time)=="number" then
+      _time=timer.getAbsTime()+time
+    else
+      _time=timer.getAbsTime()
+    end
+    
+    -- Prepare target array.
+    local target={} --#ARTY.Target
+    target.attackgroup=true
+    target.name=_name
+    target.coord=coord
+    target.radius=radius
+    target.nshells=nshells
+    target.engaged=0
+    target.underfire=false
+    target.prio=prio
+    target.time=_time
+    target.maxengage=maxengage
+    target.weapontype=weapontype
+    
+    -- Add to table.
+    table.insert(self.targets, target)
+    
+    -- Trigger new target event.
+    self:__NewTarget(1, target)
+    
+    return _name
+  else
+    self:E("ERROR: Group does not exist!")
+  end
+  
+  return nil
+end
+
+
 
 --- Assign coordinate to where the ARTY group should move.
 -- @param #ARTY self
@@ -2766,7 +2872,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #table target Array holding the target info.
+-- @param #ARTY.Target target Array holding the target info.
 function ARTY:onafterOpenFire(Controllable, From, Event, To, target)
   self:_EventFromTo("onafterOpenFire", Event, From, To)
       
@@ -2828,7 +2934,11 @@ function ARTY:onafterOpenFire(Controllable, From, Event, To, target)
   --end
   
   -- Start firing.
-  self:_FireAtCoord(target.coord, target.radius, target.nshells, target.weapontype)
+  if target.attackgroup then
+    self:_AttackGroup(target)
+  else
+    self:_FireAtCoord(target.coord, target.radius, target.nshells, target.weapontype)
+  end
   
 end
 
@@ -3320,6 +3430,39 @@ function ARTY:_FireAtCoord(coord, radius, nshells, weapontype)
   -- Execute task.
   group:SetTask(fire)
 end
+
+--- Set task for firing at a coordinate.
+-- @param #ARTY self
+-- @param #ARTY.Target target Target data.
+function ARTY:_AttackGroup(target)
+
+  -- Controllable.
+  local group=self.Controllable --Wrapper.Group#GROUP
+  
+  local weapontype=target.weapontype
+  
+  -- Tactical nukes are actually cannon shells.
+  if weapontype==ARTY.WeaponType.TacticalNukes or weapontype==ARTY.WeaponType.IlluminationShells or weapontype==ARTY.WeaponType.SmokeShells then
+    weapontype=ARTY.WeaponType.Cannon
+  end
+
+  -- Set ROE to weapon free.
+  group:OptionROEOpenFire()
+  
+  -- Target group.
+  local targetgroup=GROUP:FindByName(target.name)
+  
+  -- Get task.
+  local fire=group:TaskAttackGroup(targetgroup, weapontype, AI.Task.WeaponExpend.ONE, 1)
+  
+  self:E("FF")
+  self:E(fire)
+  
+  -- Execute task.
+  group:PushTask(fire)
+end
+
+
 
 --- Model a nuclear blast/destruction by creating fires and destroy scenery.
 -- @param #ARTY self
@@ -4860,13 +5003,14 @@ end
 
 --- Returns the target parameters as formatted string.
 -- @param #ARTY self
+-- @param #ARTY.Target target The target data.
 -- @return #string name, prio, radius, nshells, engaged, maxengage, time, weapontype
 function ARTY:_TargetInfo(target)
   local clock=tostring(self:_SecondsToClock(target.time))
   local weapon=self:_WeaponTypeName(target.weapontype)
   local _underfire=tostring(target.underfire)
-  return string.format("%s: prio=%d, radius=%d, nshells=%d, engaged=%d/%d, weapontype=%s, time=%s, underfire=%s",
-  target.name, target.prio, target.radius, target.nshells, target.engaged, target.maxengage, weapon, clock,_underfire)
+  return string.format("%s: prio=%d, radius=%d, nshells=%d, engaged=%d/%d, weapontype=%s, time=%s, underfire=%s, attackgroup=%s",
+  target.name, target.prio, target.radius, target.nshells, target.engaged, target.maxengage, weapon, clock,_underfire, tostring(target.attackgroup))
 end
 
 --- Returns a formatted string with information about all move parameters.
