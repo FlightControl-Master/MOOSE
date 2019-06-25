@@ -1571,6 +1571,36 @@ do -- SET_GROUP
     return Count
   end
   
+  --- Iterate the SET_GROUP and count how many GROUPS are alive.
+  -- @param #SET_GROUP self
+  -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+  -- @return #number The number of GROUPs completely in the Zone
+  -- @return #number The number of UNITS alive.
+  function SET_GROUP:CountAlive()
+    local CountG = 0
+    local CountU = 0
+    
+    local Set = self:GetSet()
+    
+    for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+      if GroupData and GroupData:IsAlive() then
+      
+        CountG = CountG + 1
+        
+        --Count Units.
+        for _,_unit in pairs(GroupData:GetUnits()) do
+          local unit=_unit --Wrapper.Unit#UNIT
+          if unit and unit:IsAlive() then
+            CountU=CountU+1
+          end
+        end
+      end
+      
+    end
+    
+    return CountG,CountU
+  end
+  
   ----- Iterate the SET_GROUP and call an interator function for each **alive** player, providing the Group of the player and optional parameters.
   ---- @param #SET_GROUP self
   ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_GROUP. The function needs to accept a GROUP parameter.
