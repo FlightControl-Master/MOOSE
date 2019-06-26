@@ -553,14 +553,14 @@ function AIRBASE:GetParkingSpotsTable(termtype)
   local spots={}
   for _,_spot in pairs(parkingdata) do
     if AIRBASE._CheckTerminalType(_spot.Term_Type, termtype) then
-      self:I({_spot=_spot})
+      self:T2({_spot=_spot})
       local _free=_isfree(_spot)
       local _coord=COORDINATE:NewFromVec3(_spot.vTerminalPos)
       table.insert(spots, {Coordinate=_coord, TerminalID=_spot.Term_Index, TerminalType=_spot.Term_Type, TOAC=_spot.TO_AC, Free=_free, TerminalID0=_spot.Term_Index_0, DistToRwy=_spot.fDistToRW})
     end
   end
   
-  self:I({ spots = spots } )
+  self:T2({ spots = spots } )
   
   return spots
 end
@@ -711,7 +711,7 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
     local _spot=parkingspot.Coordinate   -- Core.Point#COORDINATE
     local _termid=parkingspot.TerminalID
     
-    self:I({_termid=_termid})
+    self:T2({_termid=_termid})
     
     if AIRBASE._CheckTerminalType(parkingspot.TerminalType, terminaltype) then
     

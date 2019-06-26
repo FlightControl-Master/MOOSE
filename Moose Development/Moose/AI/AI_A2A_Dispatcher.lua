@@ -1095,7 +1095,7 @@ do -- AI_A2A_DISPATCHER
           self:RemoveDefenderFromSquadron( Squadron, Defender )
         end
         DefenderUnit:Destroy()
-        self:ParkDefender( Squadron, Defender )
+        self:ParkDefender( Squadron )
         return
       end
       if DefenderUnit:GetLife() ~= DefenderUnit:GetLife0() then
@@ -1122,7 +1122,7 @@ do -- AI_A2A_DISPATCHER
           self:RemoveDefenderFromSquadron( Squadron, Defender )
         end
         DefenderUnit:Destroy()
-        self:ParkDefender( Squadron, Defender )
+        self:ParkDefender( Squadron )
       end
     end 
   end
@@ -2873,7 +2873,7 @@ do -- AI_A2A_DISPATCHER
             if Dispatcher:GetSquadronLanding( Squadron.Name ) == AI_A2A_DISPATCHER.Landing.NearAirbase then
               Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
               Defender:Destroy()
-              self:ParkDefender( Squadron, Defender )
+              Dispatcher:ParkDefender( Squadron )
             end
           end
         end
@@ -3060,7 +3060,7 @@ do -- AI_A2A_DISPATCHER
                     if Dispatcher:GetSquadronLanding( Squadron.Name ) == AI_A2A_DISPATCHER.Landing.NearAirbase then
                       Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
                       Defender:Destroy()
-                      self:ParkDefender( Squadron, Defender )
+                      Dispatcher:ParkDefender( Squadron )
                     end
                   end
                 end  -- if DefenderGCI then

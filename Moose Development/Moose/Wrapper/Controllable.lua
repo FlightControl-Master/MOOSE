@@ -1388,7 +1388,7 @@ function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount, WeaponType )
   DCSTask = { id = 'FireAtPoint',
     params = {
       point = Vec2,
-      radius = Radius,
+      zoneRadius = Radius,
       expendQty = 100, -- dummy value
       expendQtyEnabled = false,
     }
@@ -3165,7 +3165,8 @@ function CONTROLLABLE:OptionAlarmStateAuto()
     if self:IsGround() then
       Controller:setOption(AI.Option.Ground.id.ALARM_STATE, AI.Option.Ground.val.ALARM_STATE.AUTO)
     elseif self:IsShip() then 
-      Controller:setOption(AI.Option.Naval.id.ALARM_STATE, AI.Option.Naval.val.ALARM_STATE.AUTO)
+      --Controller:setOption(AI.Option.Naval.id.ALARM_STATE, AI.Option.Naval.val.ALARM_STATE.AUTO)
+      Controller:setOption(9, 0)
     end
 
     return self
@@ -3189,6 +3190,7 @@ function CONTROLLABLE:OptionAlarmStateGreen()
     elseif self:IsShip() then
       -- AI.Option.Naval.id.ALARM_STATE does not seem to exist!
       --Controller:setOption( AI.Option.Naval.id.ALARM_STATE, AI.Option.Naval.val.ALARM_STATE.GREEN )
+      Controller:setOption(9, 1)
     end
 
     return self
@@ -3210,7 +3212,8 @@ function CONTROLLABLE:OptionAlarmStateRed()
     if self:IsGround() then
       Controller:setOption(AI.Option.Ground.id.ALARM_STATE, AI.Option.Ground.val.ALARM_STATE.RED)
     elseif self:IsShip() then 
-      Controller:setOption(AI.Option.Naval.id.ALARM_STATE, AI.Option.Naval.val.ALARM_STATE.RED)
+      --Controller:setOption(AI.Option.Naval.id.ALARM_STATE, AI.Option.Naval.val.ALARM_STATE.RED)
+      Controller:setOption(9, 2)
     end
 
     return self
