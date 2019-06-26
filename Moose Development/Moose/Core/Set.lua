@@ -1571,9 +1571,8 @@ do -- SET_GROUP
     return Count
   end
   
-  --- Iterate the SET_GROUP and count how many GROUPS are alive.
+  --- Iterate the SET_GROUP and count how many GROUPs and UNITs are alive.
   -- @param #SET_GROUP self
-  -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @return #number The number of GROUPs completely in the Zone
   -- @return #number The number of UNITS alive.
   function SET_GROUP:CountAlive()
