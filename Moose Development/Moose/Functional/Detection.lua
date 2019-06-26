@@ -541,7 +541,8 @@ do -- DETECTION_BASE
       
       end
       
-      self.DetectionCount = self.DetectionSet:Count()
+      -- Count alive(!) groups only. Solves issue #1173 https://github.com/FlightControl-Master/MOOSE/issues/1173
+      self.DetectionCount = self.DetectionSet:CountAlive()
       
       self.DetectionSet:ForEachGroupAlive(
         function( DetectionGroup )

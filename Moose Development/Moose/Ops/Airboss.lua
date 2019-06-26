@@ -3620,9 +3620,13 @@ function AIRBOSS:_CheckRecoveryTimes()
       
         if self:IsRecovering() and not recovery.OVER then
         
-          if #self.Qpattern>0 then
+          -- Get number of airborne aircraft units(!) currently in pattern.
+          local _,npattern=self:_GetQueueInfo(self.Qpattern)        
+        
+          if npattern>0 then
 
-            local extmin=5*#self.Qpattern
+            -- Extend recovery time. 5 min per flight.
+            local extmin=5*npattern
             recovery.STOP=recovery.STOP+extmin*60
             
             local text=string.format("We still got flights in the pattern.\nRecovery time prolonged by %d minutes.\nNow get your act together and no more bolters!", extmin)
