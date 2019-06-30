@@ -1617,7 +1617,7 @@ do -- AI_A2A_DISPATCHER
   --- Check if the Squadron is visible before startup of the dispatcher.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The squadron name.
-  -- @return #bool true if visible.
+  -- @return #boolean true if visible.
   -- @usage
   -- 
   --        -- Set the Squadron visible before startup of dispatcher.
@@ -2733,7 +2733,7 @@ do -- AI_A2A_DISPATCHER
   end
 
 
-  ---
+  --- Activate resource.
   -- @param #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:ResourceActivate( DefenderSquadron, DefendersNeeded )
   

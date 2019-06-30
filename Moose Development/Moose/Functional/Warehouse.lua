@@ -4986,7 +4986,7 @@ function WAREHOUSE:onafterAirbaseRecaptured(From, Event, To, Coalition)
 end
 
 
---- On after "AssetDead" event triggerd when an asset group died.
+--- On after "AssetDead" event triggered when an asset group died.
 -- @param #WAREHOUSE self
 -- @param #string From From state.
 -- @param #string Event Event.
