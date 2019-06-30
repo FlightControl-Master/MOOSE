@@ -1898,7 +1898,7 @@ do -- DETECTION_BASE
   
   --- Get the Detection Set.
   -- @param #DETECTION_BASE self
-  -- @return Core.Set#SET_BASE
+  -- @return #DETECTION_BASE self
   function DETECTION_BASE:GetDetectionSet()
   
     local DetectionSet = self.DetectionSet

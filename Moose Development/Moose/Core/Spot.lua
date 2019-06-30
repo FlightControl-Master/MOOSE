@@ -285,11 +285,8 @@ do
     
     local RecceDcsUnit = self.Recce:GetDCSObject()
     
-    local aimat=Coordinate
-    aimat.y=aimat.y+1
-    
-    self.SpotIR = Spot.createInfraRed( RecceDcsUnit, { x = 0, y = 2, z = 0 }, aimat:GetVec3() )
-    self.SpotLaser = Spot.createLaser( RecceDcsUnit, { x = 0, y = 2, z = 0 }, aimat:GetVec3(), LaserCode )
+    self.SpotIR = Spot.createInfraRed( RecceDcsUnit, { x = 0, y = 1, z = 0 }, Coordinate:GetVec3() )
+    self.SpotLaser = Spot.createLaser( RecceDcsUnit, { x = 0, y = 1, z = 0 }, Coordinate:GetVec3(), LaserCode )
 
     if Duration then
       self.ScheduleID = self.LaseScheduler:Schedule( self, StopLase, {self}, Duration )
@@ -323,14 +320,14 @@ do
       self:__Lasing( -0.2 )
     elseif self.TargetCoord then
     
-      local aimat=self.TargetCoord --Core.Point#COORDINATE
-      aimat.y=aimat.y+1+math.random(-100,100)/100
-      aimat.x=aimat.x+math.random(-100,100)/100
+      -- Wiggle the IR spot a bit.  
+      local irvec3={x=self.TargetCoord.x+math.random(-100,100)/100, y=self.TargetCoord.y+math.random(-100,100)/100, z=self.TargetCoord.z} --#DCS.Vec3
+      local lsvec3={x=self.TargetCoord.x, y=self.TargetCoord.y, z=self.TargetCoord.z} --#DCS.Vec3
       
-      self.SpotIR:setPoint(aimat:GetVec3())
-      self.SpotLaser:setPoint(self.TargetCoord:GetVec3())
+      self.SpotIR:setPoint(irvec3)
+      self.SpotLaser:setPoint(lsvec3)
       
-      self:__Lasing( -0.2 )    
+      self:__Lasing(-0.25)    
     else
       self:F( { "Target is not alive", self.Target:IsAlive() } )
     end

@@ -12519,7 +12519,7 @@ end
 -- @param #number optdist Optimal distance in meters.
 -- @return #string Feedback message text.
 -- @return #string Debriefing text.
--- @#AIRBOSS.RadioCall Distance radio call. Not implemented yet.
+-- @return #AIRBOSS.RadioCall Distance radio call. Not implemented yet.
 function AIRBOSS:_DistanceCheck(playerData, optdist)
 
   if optdist==nil then
@@ -12554,8 +12554,10 @@ function AIRBOSS:_DistanceCheck(playerData, optdist)
     hint=hint..string.format(" Optimal distance is %.1f NM.", UTILS.MetersToNM(optdist))
   elseif playerData.difficulty==AIRBOSS.Difficulty.NORMAL then
     -- We keep it short normally.
+    hint=""
   elseif playerData.difficulty==AIRBOSS.Difficulty.HARD then
     -- No hint at all for the pros.
+    hint=""
   end
 
   -- Debriefing text.
