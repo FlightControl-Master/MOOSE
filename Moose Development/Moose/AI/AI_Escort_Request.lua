@@ -269,6 +269,7 @@ function AI_ESCORT_REQUEST:onafterStart( EscortGroupSet )
   self:F()
 
   if not self.MenuRequestEscort then
+    self.MainMenu = MENU_GROUP:New( self.PlayerGroup, self.EscortName )
     self.MenuRequestEscort = MENU_GROUP_COMMAND:New( self.LeaderGroup, "Request new escort ", self.MainMenu, 
       function()
         self:SpawnEscort()

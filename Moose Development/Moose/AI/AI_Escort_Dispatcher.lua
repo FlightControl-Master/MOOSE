@@ -98,6 +98,7 @@ function AI_ESCORT_DISPATCHER:OnEventBirth( EventData )
   local PlayerGroup = EventData.IniGroup
   local PlayerUnit = EventData.IniUnit
   
+  self:I({EscortAirbase= self.EscortAirbase } )
   self:I({PlayerGroupName = PlayerGroupName } )
   self:I({PlayerGroup = PlayerGroup})
   self:I({FirstGroup = self.CarrierSet:GetFirst()})
@@ -106,11 +107,13 @@ function AI_ESCORT_DISPATCHER:OnEventBirth( EventData )
   if self.CarrierSet:FindGroup( PlayerGroupName ) then
     if not self.AI_Escorts[PlayerGroupName] then
       local LeaderUnit = PlayerUnit
-      local EscortGroup = self.EscortSpawn:SpawnAtAirbase( self.EscortAirbase )
-      local EscortSet = SET_GROUP:New()
-      EscortSet:AddGroup( EscortGroup )
-      self:ScheduleOnce( 0.1,
-        function()
+      local EscortGroup = self.EscortSpawn:SpawnAtAirbase( self.EscortAirbase, SPAWN.Takeoff.Hot )
+      self:I({EscortGroup = EscortGroup})
+      
+      self:ScheduleOnce( 1,
+        function( EscortGroup )
+          local EscortSet = SET_GROUP:New()
+          EscortSet:AddGroup( EscortGroup )
           self.AI_Escorts[PlayerGroupName] = AI_ESCORT:New( LeaderUnit, EscortSet, self.EscortName, self.EscortBriefing )
           self.AI_Escorts[PlayerGroupName]:FormationTrail( 0, 100, 0 )
           if EscortGroup:IsHelicopter() then
@@ -119,7 +122,7 @@ function AI_ESCORT_DISPATCHER:OnEventBirth( EventData )
             self.AI_Escorts[PlayerGroupName]:MenusAirplanes()
           end
           self.AI_Escorts[PlayerGroupName]:__Start( 0.1 )
-        end
+        end, EscortGroup
       )
     end
   end

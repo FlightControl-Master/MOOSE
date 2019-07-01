@@ -2215,10 +2215,11 @@ function SPAWN:ParkAtAirbase( SpawnAirbase, TerminalType, Parkingdata ) -- R2.2,
   self:ParkAircraft( SpawnAirbase, TerminalType, Parkingdata, 1 )
 
   for SpawnIndex = 2, self.SpawnMaxGroups do
-    self:ScheduleOnce( SpawnIndex * 0.1, SPAWN.ParkAircraft, self, SpawnAirbase, TerminalType, Parkingdata, SpawnIndex )
+    self:ParkAircraft( SpawnAirbase, TerminalType, Parkingdata, SpawnIndex )
+    --self:ScheduleOnce( SpawnIndex * 0.1, SPAWN.ParkAircraft, self, SpawnAirbase, TerminalType, Parkingdata, SpawnIndex )
   end
   
-  self:SetSpawnIndex()
+  self:SetSpawnIndex( 0 )
   
   return nil
 end
