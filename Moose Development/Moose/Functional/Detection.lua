@@ -291,17 +291,34 @@ do -- DETECTION_BASE
   --- @type DETECTION_BASE.DetectedItems
   -- @list <#DETECTION_BASE.DetectedItem>
   
-  --- @type DETECTION_BASE.DetectedItem
+  --- Detected item data structrue.
+  -- @type DETECTION_BASE.DetectedItem
   -- @field #boolean IsDetected Indicates if the DetectedItem has been detected or not.
-  -- @field Core.Set#SET_UNIT Set
-  -- @field Core.Set#SET_UNIT Set -- The Set of Units in the detected area.
-  -- @field Core.Zone#ZONE_UNIT Zone -- The Zone of the detected area.
-  -- @field #boolean Changed Documents if the detected area has changes.
+  -- @field Core.Set#SET_UNIT Set The Set of Units in the detected area.
+  -- @field Core.Zone#ZONE_UNIT Zone The Zone of the detected area.
+  -- @field #boolean Changed Documents if the detected area has changed.
   -- @field #table Changes A list of the changes reported on the detected area. (It is up to the user of the detected area to consume those changes).
-  -- @field #number ID -- The identifier of the detected area.
+  -- @field #number ID The identifier of the detected area.
   -- @field #boolean FriendliesNearBy Indicates if there are friendlies within the detected area.
   -- @field Wrapper.Unit#UNIT NearestFAC The nearest FAC near the Area.
   -- @field Core.Point#COORDINATE Coordinate The last known coordinate of the DetectedItem.
+  -- @field Core.Point#COORDINATE InterceptCoord Intercept coordiante.
+  -- @field #number DistanceRecce Distance in meters of the Recce.
+  -- @field #number Index Detected item key. Could also be a string.
+  -- @field #string ItemID ItemPrefix .. "." .. self.DetectedItemMax.
+  -- @field #boolean Locked Lock detected item.
+  -- @field #table PlayersNearBy Table of nearby players.
+  -- @field #table FriendliesDistance Table of distances to friendly units.
+  -- @field #string TypeName Type name of the detected unit.
+  -- @field #string CategoryName Catetory name of the detected unit.
+  -- @field #string Name Name of the detected object.
+  -- @field #boolean IsVisible If true, detected object is visible.
+  -- @field #number LastTime Last time the detected item was seen.
+  -- @field DCS#Vec3 LastPos Last known position of the detected item.
+  -- @field DCS#Vec3 LastVelocity Last recorded 3D velocity vector of the detected item.
+  -- @field #boolean KnowType Type of detected item is known.
+  -- @field #boolean KnowDistance Distance to the detected item is known.
+  -- @field #number Distance Distance to the detected item.
   
   --- DETECTION constructor.
   -- @param #DETECTION_BASE self
@@ -1234,7 +1251,7 @@ do -- DETECTION_BASE
   
     --- Returns if there are friendlies nearby the FAC units ...
     -- @param #DETECTION_BASE self
-    -- @param DetectedItem
+    -- @param #DETECTION_BASE.DetectedItem DetectedItem
     -- @param DCS#Unit.Category Category The category of the unit.
     -- @return #boolean true if there are friendlies nearby 
     function DETECTION_BASE:IsFriendliesNearBy( DetectedItem, Category )
@@ -1244,7 +1261,7 @@ do -- DETECTION_BASE
   
     --- Returns friendly units nearby the FAC units ...
     -- @param #DETECTION_BASE self
-    -- @param DetectedItem
+    -- @param #DETECTION_BASE.DetectedItem DetectedItem
     -- @param DCS#Unit.Category Category The category of the unit.
     -- @return #map<#string,Wrapper.Unit#UNIT> The map of Friendly UNITs. 
     function DETECTION_BASE:GetFriendliesNearBy( DetectedItem, Category )
@@ -1254,6 +1271,7 @@ do -- DETECTION_BASE
     
     --- Returns if there are friendlies nearby the intercept ...
     -- @param #DETECTION_BASE self
+    -- @param #DETECTION_BASE.DetectedItem DetectedItem
     -- @return #boolean trhe if there are friendlies near the intercept.
     function DETECTION_BASE:IsFriendliesNearIntercept( DetectedItem )
       
@@ -1262,6 +1280,7 @@ do -- DETECTION_BASE
   
     --- Returns friendly units nearby the intercept point ...
     -- @param #DETECTION_BASE self
+    -- @param #DETECTION_BASE.DetectedItem DetectedItem The detected item.
     -- @return #map<#string,Wrapper.Unit#UNIT> The map of Friendly UNITs. 
     function DETECTION_BASE:GetFriendliesNearIntercept( DetectedItem )
       
@@ -1270,7 +1289,8 @@ do -- DETECTION_BASE
   
     --- Returns the distance used to identify friendlies near the deteted item ...
     -- @param #DETECTION_BASE self
-    -- @return #number The distance. 
+    -- @param #DETECTION_BASE.DetectedItem DetectedItem The detected item.
+    -- @return #table A table of distances to friendlies. 
     function DETECTION_BASE:GetFriendliesDistance( DetectedItem )
       
       return DetectedItem.FriendliesDistance
@@ -1278,6 +1298,7 @@ do -- DETECTION_BASE
   
     --- Returns if there are friendlies nearby the FAC units ...
     -- @param #DETECTION_BASE self
+    -- @param #DETECTION_BASE.DetectedItem DetectedItem
     -- @return #boolean trhe if there are friendlies nearby 
     function DETECTION_BASE:IsPlayersNearBy( DetectedItem )
       
@@ -1286,6 +1307,7 @@ do -- DETECTION_BASE
   
     --- Returns friendly units nearby the FAC units ...
     -- @param #DETECTION_BASE self
+    -- @param #DETECTION_BASE.DetectedItem DetectedItem The detected item.
     -- @return #map<#string,Wrapper.Unit#UNIT> The map of Friendly UNITs. 
     function DETECTION_BASE:GetPlayersNearBy( DetectedItem )
       
@@ -1294,10 +1316,11 @@ do -- DETECTION_BASE
   
     --- Background worker function to determine if there are friendlies nearby ...
     -- @param #DETECTION_BASE self
+    -- @param #table TargetData
     function DETECTION_BASE:ReportFriendliesNearBy( TargetData )
       --self:F( { "Search Friendlies", DetectedItem = TargetData.DetectedItem } )
       
-      local DetectedItem = TargetData.DetectedItem  -- Functional.Detection#DETECTION_BASE.DetectedItem    
+      local DetectedItem = TargetData.DetectedItem  --#DETECTION_BASE.DetectedItem    
       local DetectedSet = TargetData.DetectedItem.Set
       local DetectedUnit = DetectedSet:GetFirst() -- Wrapper.Unit#UNIT
     
@@ -1519,13 +1542,13 @@ do -- DETECTION_BASE
   --- Adds a new DetectedItem to the DetectedItems list.
   -- The DetectedItem is a table and contains a SET_UNIT in the field Set.
   -- @param #DETECTION_BASE self
-  -- @param ItemPrefix
-  -- @param DetectedItemKey The key of the DetectedItem.
+  -- @param #string ItemPrefix Prefix of detected item.
+  -- @param #number DetectedItemKey The key of the DetectedItem. Default self.DetectedItemMax. Could also be a string in principle.
   -- @param Core.Set#SET_UNIT Set (optional) The Set of Units to be added.
   -- @return #DETECTION_BASE.DetectedItem
   function DETECTION_BASE:AddDetectedItem( ItemPrefix, DetectedItemKey, Set )
   
-    local DetectedItem = {}
+    local DetectedItem = {} --#DETECTION_BASE.DetectedItem
     self.DetectedItemCount = self.DetectedItemCount + 1
     self.DetectedItemMax = self.DetectedItemMax + 1
     
@@ -1706,6 +1729,7 @@ do -- DETECTION_BASE
 
   --- Checks if there is at least one UNIT detected in the Set of the the DetectedItem.
   -- @param #DETECTION_BASE self
+  -- @param #DETECTION_BASE.DetectedItem DetectedItem
   -- @return #boolean true if at least one UNIT is detected from the DetectedSet, false if no UNIT was detected from the DetectedSet.
   function DETECTION_BASE:IsDetectedItemDetected( DetectedItem ) 
   
@@ -1832,8 +1856,7 @@ do -- DETECTION_BASE
 
   --- Get a list of the detected item coordinates.
   -- @param #DETECTION_BASE self
-  -- @param #DETECTION_BASE.DetectedItem DetectedItem The DetectedItem to set the coordinate at.
-  -- @return Core.Point#COORDINATE
+  -- @return #table A table of Core.Point#COORDINATE
   function DETECTION_BASE:GetDetectedItemCoordinates()
   
     local Coordinates = {}
@@ -2033,7 +2056,8 @@ do -- DETECTION_UNITS
   function DETECTION_UNITS:CreateDetectionItems()
     -- Loop the current detected items, and check if each object still exists and is detected.
     
-    for DetectedItemKey, DetectedItem in pairs( self.DetectedItems ) do
+    for DetectedItemKey, _DetectedItem in pairs( self.DetectedItems ) do
+      local DetectedItem=_DetectedItem --#DETECTION_BASE.DetectedItem
     
       local DetectedItemSet = DetectedItem.Set -- Core.Set#SET_UNIT
       
