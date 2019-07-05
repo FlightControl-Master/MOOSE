@@ -833,7 +833,7 @@ do -- AI_A2A_DISPATCHER
 
 
   --- Squadron data structure.
-  -- @type AI_A2A_Dispatcher.Squadron
+  -- @type AI_A2A_DISPATCHER.Squadron
   -- @field #string Name Name of the squadron.
   -- @field #number ResourceCount Number of resources.
   -- @field #string AirbaseName Name of the home airbase.
@@ -978,15 +978,24 @@ do -- AI_A2A_DISPATCHER
     -- @param #string From
     -- @param #string Event
     -- @param #string To
+    -- @param Functional.Detection#DETECTION_BASE.DetectedItem AttackerDetection Detected item.
+    -- @param #number DefendersMissing Number of missing defenders.
+    -- @param #table DefenderFriendlies Friendly defenders.
     
     --- GCI Trigger for AI_A2A_DISPATCHER
     -- @function [parent=#AI_A2A_DISPATCHER] GCI
     -- @param #AI_A2A_DISPATCHER self
+    -- @param Functional.Detection#DETECTION_BASE.DetectedItem AttackerDetection Detected item.
+    -- @param #number DefendersMissing Number of missing defenders.
+    -- @param #table DefenderFriendlies Friendly defenders.
     
     --- GCI Asynchronous Trigger for AI_A2A_DISPATCHER
     -- @function [parent=#AI_A2A_DISPATCHER] __GCI
     -- @param #AI_A2A_DISPATCHER self
     -- @param #number Delay
+    -- @param Functional.Detection#DETECTION_BASE.DetectedItem AttackerDetection Detected item.
+    -- @param #number DefendersMissing Number of missing defenders.
+    -- @param #table DefenderFriendlies Friendly defenders.
     
     self:AddTransition( "*", "ENGAGE", "*" )
         
@@ -996,6 +1005,8 @@ do -- AI_A2A_DISPATCHER
     -- @param #string From
     -- @param #string Event
     -- @param #string To
+    -- @param Functional.Detection#DETECTION_BASE.DetectedItem AttackerDetection Detected item.
+    -- @param #table Defenders Defenders table.
     -- @return #boolean
     
     --- ENGAGE Handler OnAfter for AI_A2A_DISPATCHER
@@ -1004,15 +1015,21 @@ do -- AI_A2A_DISPATCHER
     -- @param #string From
     -- @param #string Event
     -- @param #string To
-    
+    -- @param Functional.Detection#DETECTION_BASE.DetectedItem AttackerDetection Detected item.
+    -- @param #table Defenders Defenders table.
+
     --- ENGAGE Trigger for AI_A2A_DISPATCHER
     -- @function [parent=#AI_A2A_DISPATCHER] ENGAGE
     -- @param #AI_A2A_DISPATCHER self
+    -- @param Functional.Detection#DETECTION_BASE.DetectedItem AttackerDetection Detected item.
+    -- @param #table Defenders Defenders table.
     
     --- ENGAGE Asynchronous Trigger for AI_A2A_DISPATCHER
     -- @function [parent=#AI_A2A_DISPATCHER] __ENGAGE
     -- @param #AI_A2A_DISPATCHER self
     -- @param #number Delay
+    -- @param Functional.Detection#DETECTION_BASE.DetectedItem AttackerDetection Detected item.
+    -- @param #table Defenders Defenders table.
     
     
     -- Subscribe to the CRASH event so that when planes are shot
@@ -1062,7 +1079,7 @@ do -- AI_A2A_DISPATCHER
 
   --- Park defender.
   -- @param #AI_A2A_DISPATCHER self
-  -- @param #AI_A2A_Dispatcher.Squadron DefenderSquadron The squadron.
+  -- @param #AI_A2A_DISPATCHER.Squadron DefenderSquadron The squadron.
   function AI_A2A_DISPATCHER:ParkDefender( DefenderSquadron )
     local TemplateID = math.random( 1, #DefenderSquadron.Spawn )
     local Spawn = DefenderSquadron.Spawn[ TemplateID ] -- Core.Spawn#SPAWN
@@ -1384,7 +1401,7 @@ do -- AI_A2A_DISPATCHER
 
   --- Calculates which AI friendlies are nearby the area
   -- @param #AI_A2A_DISPATCHER self
-  -- @param DetectedItem
+  -- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
   -- @return #table A list of the friendlies nearby.
   function AI_A2A_DISPATCHER:GetAIFriendliesNearBy( DetectedItem )
   
@@ -1489,7 +1506,7 @@ do -- AI_A2A_DISPATCHER
   -- @return #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:SetDefenderTask( SquadronName, Defender, Type, Fsm, Target )
   
-    self:F( { SquadronName = SquadronName, Defender = Defender:GetName() } )
+    self:F( { SquadronName = SquadronName, Defender = Defender:GetName(), Type=Type, Target=Target } )
   
     self.DefenderTasks[Defender] = self.DefenderTasks[Defender] or {}
     self.DefenderTasks[Defender].Type = Type
@@ -1596,7 +1613,7 @@ do -- AI_A2A_DISPATCHER
   
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
 
-    local DefenderSquadron = self.DefenderSquadrons[SquadronName]  --#AI_A2A_Dispatcher.Squadron
+    local DefenderSquadron = self.DefenderSquadrons[SquadronName]  --#AI_A2A_DISPATCHER.Squadron
     
     DefenderSquadron.Name = SquadronName
     DefenderSquadron.Airbase = AIRBASE:FindByName( AirbaseName )
@@ -1628,7 +1645,7 @@ do -- AI_A2A_DISPATCHER
   --- Get an item from the Squadron table.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName Name of the squadron.
-  -- @return #AI_A2A_Dispatcher.Squadron Defender squadron table.
+  -- @return #AI_A2A_DISPATCHER.Squadron Defender squadron table.
   function AI_A2A_DISPATCHER:GetSquadron( SquadronName )
     local DefenderSquadron = self.DefenderSquadrons[SquadronName]
     
@@ -1655,7 +1672,7 @@ do -- AI_A2A_DISPATCHER
   
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
     
-    local DefenderSquadron = self:GetSquadron( SquadronName ) --#AI_A2A_Dispatcher.Squadron
+    local DefenderSquadron = self:GetSquadron( SquadronName ) --#AI_A2A_DISPATCHER.Squadron
     
     DefenderSquadron.Uncontrolled = true
 
@@ -1678,7 +1695,7 @@ do -- AI_A2A_DISPATCHER
   
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
     
-    local DefenderSquadron = self:GetSquadron( SquadronName ) --#AI_A2A_Dispatcher.Squadron
+    local DefenderSquadron = self:GetSquadron( SquadronName ) --#AI_A2A_DISPATCHER.Squadron
 
     if DefenderSquadron then
       return DefenderSquadron.Uncontrolled == true
@@ -2968,6 +2985,8 @@ do -- AI_A2A_DISPATCHER
   -- @param #table Defenders Defenders table.
   function AI_A2A_DISPATCHER:onafterENGAGE( From, Event, To, AttackerDetection, Defenders )
   
+    self:F("ENGAGING "..tostring(AttackerDetection.Name))
+  
     if Defenders then
 
       for DefenderID, Defender in pairs( Defenders ) do
@@ -2990,6 +3009,8 @@ do -- AI_A2A_DISPATCHER
   -- @param #number DefendersMissing Number of missing defenders.
   -- @param #table DefenderFriendlies Friendly defenders.
   function AI_A2A_DISPATCHER:onafterGCI( From, Event, To, AttackerDetection, DefendersMissing, DefenderFriendlies )
+  
+    self:F("GCI "..tostring(AttackerDetection.Name))
 
     self:F( { From, Event, To, AttackerDetection.Index, DefendersMissing, DefenderFriendlies } )
 
@@ -3262,7 +3283,7 @@ do -- AI_A2A_DISPATCHER
       end
     end
 
-    local Report = REPORT:New( "\nTactical Overview" )
+    local Report = REPORT:New( "Tactical Overview" )
 
     local DefenderGroupCount = 0
 
@@ -3299,15 +3320,15 @@ do -- AI_A2A_DISPATCHER
 
       if self.TacticalDisplay then      
         -- Show tactical situation
-        Report:Add( string.format( "\n - Target %s ( %s ): ( #%d ) %s" , DetectedItem.ItemID, DetectedItem.Index, DetectedItem.Set:Count(), DetectedItem.Set:GetObjectNames() ) )
+        Report:Add( string.format( "\n- Target %s ( %s ): ( #%d ) %s" , DetectedItem.ItemID, DetectedItem.Index, DetectedItem.Set:Count(), DetectedItem.Set:GetObjectNames() ) )
         for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
           local Defender = Defender -- Wrapper.Group#GROUP
            if DefenderTask.Target and DefenderTask.Target.Index == DetectedItem.Index then
-             if Defender:IsAlive() then
+             if Defender and Defender:IsAlive() then
                DefenderGroupCount = DefenderGroupCount + 1
                local Fuel = Defender:GetFuelMin() * 100
                local Damage = Defender:GetLife() / Defender:GetLife0() * 100
-               Report:Add( string.format( "   - %s ( %s - %s ): ( #%d ) F: %3d, D:%3d - %s", 
+               Report:Add( string.format( " - %s ( %s - %s ): ( #%d ) F: %3d, D:%3d - %s", 
                                           Defender:GetName(), 
                                           DefenderTask.Type, 
                                           DefenderTask.Fsm:GetState(), 
@@ -3322,7 +3343,7 @@ do -- AI_A2A_DISPATCHER
     end
 
     if self.TacticalDisplay then
-      Report:Add( "\n - No Targets:")
+      Report:Add( "\n- No Targets:")
       local TaskCount = 0
       for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
         TaskCount = TaskCount + 1
@@ -3333,7 +3354,7 @@ do -- AI_A2A_DISPATCHER
             local Fuel = Defender:GetFuelMin() * 100
             local Damage = Defender:GetLife() / Defender:GetLife0() * 100
             DefenderGroupCount = DefenderGroupCount + 1
-            Report:Add( string.format( "   - %s ( %s - %s ): ( #%d ) F: %3d, D:%3d - %s", 
+            Report:Add( string.format( " - %s ( %s - %s ): ( #%d ) F: %3d, D:%3d - %s", 
                                        Defender:GetName(), 
                                        DefenderTask.Type, 
                                        DefenderTask.Fsm:GetState(), 
@@ -3344,7 +3365,7 @@ do -- AI_A2A_DISPATCHER
           end
         end
       end
-      Report:Add( string.format( "\n - %d Tasks - %d Defender Groups", TaskCount, DefenderGroupCount ) )
+      Report:Add( string.format( "\n- %d Tasks - %d Defender Groups", TaskCount, DefenderGroupCount ) )
   
       self:F( Report:Text( "\n" ) )
       trigger.action.outText( Report:Text( "\n" ), 25 )
