@@ -263,10 +263,11 @@ end
 -- @param #number LegMax Max length of the race track leg in meters. Default 15,000 m.
 -- @param #number HeadingMin Min heading of the race track in degrees. Default 0 deg, i.e. from South to North.
 -- @param #number HeadingMax Max heading of the race track in degrees. Default 180 deg, i.e. from South to North.
--- @param #number duration (Optional) Min duration before switching the orbit position. Default is keep same orbit until RTB or engage.
--- @param #number duration (Optional) Max duration before switching the orbit position. Default is keep same orbit until RTB or engage.
+-- @param #number DurationMin (Optional) Min duration before switching the orbit position. Default is keep same orbit until RTB or engage.
+-- @param #number DurationMax (Optional) Max duration before switching the orbit position. Default is keep same orbit until RTB or engage.
+-- @param #table CapCoordinates Table of coordinates of first race track point. Second point is determined by leg length and heading. 
 -- @return #AI_A2A_PATROL self
-function AI_A2A_PATROL:SetRaceTrackPattern(LegMin, LegMax, HeadingMin, HeadingMax, DurationMin, DurationMax)
+function AI_A2A_PATROL:SetRaceTrackPattern(LegMin, LegMax, HeadingMin, HeadingMax, DurationMin, DurationMax, CapCoordinates)
   self:F2({leglength, duration})
   
   self.racetrack=true
@@ -279,7 +280,10 @@ function AI_A2A_PATROL:SetRaceTrackPattern(LegMin, LegMax, HeadingMin, HeadingMa
   
   if self.racetrackdurationmax and not self.racetrackdurationmin then
     self.racetrackdurationmin=self.racetrackdurationmax
-  end 
+  end
+  
+  self.racetrackcapcoordinates=CapCoordinates
+  
 end
 
 
@@ -365,8 +369,14 @@ function AI_A2A_PATROL:onafterRoute( AIPatrol, From, Event, To )
         duration=math.random(self.racetrackdurationmin, self.racetrackdurationmax)
       end
       
+      -- CAP coordinate.
+      local c0=self.PatrolZone:GetRandomCoordinate()
+      if self.racetrackcapcoordinates and #self.racetrackcapcoordinates>0 then
+        c0=self.racetrackcapcoordinates[math.random(#self.racetrackcapcoordinates)]
+      end
+      
       -- Race track points.
-      local c1=self.PatrolZone:GetRandomCoordinate():SetAltitude(altitude) --Core.Point#COORDINATE
+      local c1=c0:SetAltitude(altitude) --Core.Point#COORDINATE
       local c2=c1:Translate(leg, heading):SetAltitude(altitude)
       
       -- Debug:
