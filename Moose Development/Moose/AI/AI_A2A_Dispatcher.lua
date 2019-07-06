@@ -1902,12 +1902,14 @@ do -- AI_A2A_DISPATCHER
   --- Set race track pattern as default when any squadron is performing CAP.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #number LeglengthMin Min length of the race track leg in meters. Default 10,000 m.
-  -- @param #number HeadingMin Min heading of the race track in degrees. Default 0 deg, i.e. from South to North.
-  -- @param #number HeadingMax Max heading of the race track in degrees. Default 180 deg, i.e. from North to South.
+  -- @param #number LeglengthMax Max length of the race track leg in meters. Default 15,000 m.
+  -- @param #number HeadingMin Min heading of the race track in degrees. Default 0 deg, i.e. counter clockwise from South to North.
+  -- @param #number HeadingMax Max heading of the race track in degrees. Default 180 deg, i.e. counter clockwise from North to South.
   -- @param #number DurationMin (Optional) Min duration in seconds before switching the orbit position. Default is keep same orbit until RTB or engage.
   -- @param #number DurationMax (Optional) Max duration in seconds before switching the orbit position. Default is keep same orbit until RTB or engage.
+  -- @param #table CapCoordinates Table of coordinates of first race track point. Second point is determined by leg length and heading. 
   -- @return #AI_A2A_DISPATCHER self
-  function AI_A2A_DISPATCHER:SetDefaultCapRacetrack(LeglengthMin, LeglengthMax, HeadingMin, HeadingMax, DurationMin, DurationMax)
+  function AI_A2A_DISPATCHER:SetDefaultCapRacetrack(LeglengthMin, LeglengthMax, HeadingMin, HeadingMax, DurationMin, DurationMax, CapCoordinates)
     
     self.DefenderDefault.Racetrack=true
     self.DefenderDefault.RacetrackLengthMin=LeglengthMin
@@ -1916,6 +1918,7 @@ do -- AI_A2A_DISPATCHER
     self.DefenderDefault.RacetrackHeadingMax=HeadingMax
     self.DefenderDefault.RacetrackDurationMin=DurationMin
     self.DefenderDefault.RacetrackDurationMax=DurationMax
+    self.DefenderDefault.RacetrackCoordinates=CapCoordinates
 
     return self
   end
@@ -1924,12 +1927,14 @@ do -- AI_A2A_DISPATCHER
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName Name of the squadron.
   -- @param #number LeglengthMin Min length of the race track leg in meters. Default 10,000 m.
+  -- @param #number LeglengthMax Max length of the race track leg in meters. Default 15,000 m.
   -- @param #number HeadingMin Min heading of the race track in degrees. Default 0 deg, i.e. from South to North.
   -- @param #number HeadingMax Max heading of the race track in degrees. Default 180 deg, i.e. from North to South.
   -- @param #number DurationMin (Optional) Min duration in seconds before switching the orbit position. Default is keep same orbit until RTB or engage.
   -- @param #number DurationMax (Optional) Max duration in seconds before switching the orbit position. Default is keep same orbit until RTB or engage.
+  -- @param #table CapCoordinates Table of coordinates of first race track point. Second point is determined by leg length and heading. 
   -- @return #AI_A2A_DISPATCHER self
-  function AI_A2A_DISPATCHER:SetSquadronCapRacetrack(SquadronName, LeglengthMin, LeglengthMax, HeadingMin, HeadingMax, DurationMin, DurationMax)
+  function AI_A2A_DISPATCHER:SetSquadronCapRacetrack(SquadronName, LeglengthMin, LeglengthMax, HeadingMin, HeadingMax, DurationMin, DurationMax, CapCoordinates)
     
     local DefenderSquadron = self:GetSquadron( SquadronName )
     
@@ -1941,6 +1946,7 @@ do -- AI_A2A_DISPATCHER
       DefenderSquadron.RacetrackHeadingMax=HeadingMax
       DefenderSquadron.RacetrackDurationMin=DurationMin
       DefenderSquadron.RacetrackDurationMax=DurationMax
+      DefenderSquadron.RacetrackCoordinates=CapCoordinates
     end
     
     return self
@@ -3008,7 +3014,8 @@ do -- AI_A2A_DISPATCHER
                                     DefenderSquadron.RacetrackHeadingMin  or self.DefenderDefault.RacetrackHeadingMin,
                                     DefenderSquadron.RacetrackHeadingMax  or self.DefenderDefault.RacetrackHeadingMax,
                                     DefenderSquadron.RacetrackDurationMin or self.DefenderDefault.RacetrackDurationMin,
-                                    DefenderSquadron.RacetrackDurationMax or self.DefenderDefault.RacetrackDurationMax)
+                                    DefenderSquadron.RacetrackDurationMax or self.DefenderDefault.RacetrackDurationMax,
+                                    DefenderSquadron.RacetrackCoordinates or self.DefenderDefault.RacetrackCoordinates)
           end
           Fsm:Start()
   
@@ -3366,7 +3373,7 @@ do -- AI_A2A_DISPATCHER
       end
     end
 
-    local Report = REPORT:New( "Tactical Overview" )
+    local Report = REPORT:New( "Tactical Overviews" )
 
     local DefenderGroupCount = 0
 
@@ -3403,7 +3410,7 @@ do -- AI_A2A_DISPATCHER
 
       if self.TacticalDisplay then      
         -- Show tactical situation
-        Report:Add( string.format( "\n- Target %s ( %s ): ( #%d ) %s" , DetectedItem.ItemID, DetectedItem.Index, DetectedItem.Set:Count(), DetectedItem.Set:GetObjectNames() ) )
+        Report:Add( string.format( "\n- Target %s (%s): (#%d) %s" , DetectedItem.ItemID, DetectedItem.Index, DetectedItem.Set:Count(), DetectedItem.Set:GetObjectNames() ) )
         for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
           local Defender = Defender -- Wrapper.Group#GROUP
            if DefenderTask.Target and DefenderTask.Target.Index == DetectedItem.Index then
@@ -3411,7 +3418,7 @@ do -- AI_A2A_DISPATCHER
                DefenderGroupCount = DefenderGroupCount + 1
                local Fuel = Defender:GetFuelMin() * 100
                local Damage = Defender:GetLife() / Defender:GetLife0() * 100
-               Report:Add( string.format( " - %s*%d/%d ( %s - %s ): ( #%d ) F: %3d, D:%3d - %s", 
+               Report:Add( string.format( " - %s*%d/%d (%s - %s): (#%d) F: %3d, D:%3d - %s", 
                                           Defender:GetName(),
                                           Defender:GetSize(),
                                           Defender:GetInitialSize(),
@@ -3439,7 +3446,7 @@ do -- AI_A2A_DISPATCHER
             local Fuel = Defender:GetFuelMin() * 100
             local Damage = Defender:GetLife() / Defender:GetLife0() * 100
             DefenderGroupCount = DefenderGroupCount + 1
-            Report:Add( string.format( " - %s*%d/%d ( %s - %s ): ( #%d ) F: %3d, D:%3d - %s", 
+            Report:Add( string.format( " - %s*%d/%d (%s - %s): (#%d) F: %3d, D:%3d - %s", 
                                        Defender:GetName(), 
                                        Defender:GetSize(),
                                        Defender:GetInitialSize(),
