@@ -643,6 +643,25 @@ do -- AI_A2A_DISPATCHER
   --      -- Setup the Refuelling for squadron "Gelend", at tanker (group) "TankerGelend" when the fuel in the tank of the CAP defenders is less than 80%.
   --      A2ADispatcher:SetSquadronFuelThreshold( "Gelend", 0.8 )
   --      A2ADispatcher:SetSquadronTanker( "Gelend", "TankerGelend" )
+  --      
+  -- ## 7.4 Set up race track pattern
+  -- 
+  -- By default, flights patrol randomly within the CAP zone. It is also possible to let them fly a race track pattern using the
+  -- @{#AI_A2A_DISPATCHER.SetDefaultCapRacetrack}(*LeglengthMin*, *LeglengthMax*, *HeadingMin*, *HeadingMax*, *DurationMin*, *DurationMax*) or 
+  -- @{#AI_A2A_DISPATCHER.SetSquadronCapRacetrack}(*SquadronName*, *LeglengthMin*, *LeglengthMax*, *HeadingMin*, *HeadingMax*, *DurationMin*, *DurationMax*) functions.
+  -- The first function enables this for all squadrons, the latter only for specific squadrons. For example,
+  -- 
+  --      -- Enable race track pattern for CAP squadron "Mineralnye".
+  --      A2ADispatcher:SetSquadronCapRacetrack("Mineralnye", 10000, 20000, 90, 180, 10*60, 20*60)
+  --      
+  -- In this case the squadron "Mineralnye" will a race track pattern at a random point in the CAP zone. The leg length will be randomly selected between 10,000 and 20,000 meters. The heading
+  -- of the race track will randomly selected between 90 (West to East) and 180 (North to South) degrees.
+  -- After a random duration between 10 and 20 minutes, the flight will get a new random orbit location.
+  -- 
+  -- Note that all parameters except the squadron name are optional. If not specified, default values are taken. Speed and altitude are taken from the 
+  -- 
+  -- Also note that the center of the race track pattern is chosen randomly within the patrol zone and can be close the the boarder of the zone. Hence, it cannot be guaranteed that the
+  -- whole pattern lies within the patrol zone.
   --  
   -- ## 8. Setup a squadron for GCI:
   -- 
@@ -852,6 +871,13 @@ do -- AI_A2A_DISPATCHER
   -- @field #table Table of template group names of the squadron.
   -- @field #table Spawn Table of spaws Core.Spawn#SPAWN.
   -- @field #table TemplatePrefixes
+  -- @field #boolean Racetrack If true, CAP flights will perform a racetrack pattern rather than randomly patrolling the zone.
+  -- @field #number RacetrackLengthMin Min Length of race track in meters. Default 10,000 m.
+  -- @field #number RacetrackLengthMax Max Length of race track in meters. Default 15,000 m.
+  -- @field #number RacetrackHeadingMin Min heading of race track in degrees. Default 0 deg, i.e. from South to North.
+  -- @field #number RacetrackHeadingMax Max heading of race track in degrees. Default 180 deg, i.e. from North to South.
+  -- @field #number RacetrackDurationMin Min duration in seconds before the CAP flight changes its orbit position. Default never.
+  -- @field #number RacetrackDurationMax Max duration in seconds before the CAP flight changes its orbit position. Default never.
 
   --- Enumerator for spawns at airbases
   -- @type AI_A2A_DISPATCHER.Takeoff
@@ -1676,7 +1702,8 @@ do -- AI_A2A_DISPATCHER
     
     DefenderSquadron.Uncontrolled = true
 
-    for SpawnTemplate, DefenderSpawn in pairs( self.DefenderSpawns ) do
+    for SpawnTemplate,_DefenderSpawn in pairs( self.DefenderSpawns ) do
+      local DefenderSpawn=_DefenderSpawn --Core.Spawn#SPAWN
       DefenderSpawn:InitUnControlled()
     end
 
@@ -1842,7 +1869,7 @@ do -- AI_A2A_DISPATCHER
   --- Check if squadron can do CAP.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The squadron name.
-  -- @return #table DefenderSquadron
+  -- @return #AI_A2A_DISPATCHER.Squadron DefenderSquadron
   function AI_A2A_DISPATCHER:CanCAP( SquadronName )
     self:F({SquadronName = SquadronName})
   
@@ -1870,6 +1897,54 @@ do -- AI_A2A_DISPATCHER
     end
     return nil
   end
+
+
+  --- Set race track pattern as default when any squadron is performing CAP.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #number LeglengthMin Min length of the race track leg in meters. Default 10,000 m.
+  -- @param #number HeadingMin Min heading of the race track in degrees. Default 0 deg, i.e. from South to North.
+  -- @param #number HeadingMax Max heading of the race track in degrees. Default 180 deg, i.e. from North to South.
+  -- @param #number DurationMin (Optional) Min duration in seconds before switching the orbit position. Default is keep same orbit until RTB or engage.
+  -- @param #number DurationMax (Optional) Max duration in seconds before switching the orbit position. Default is keep same orbit until RTB or engage.
+  -- @return #AI_A2A_DISPATCHER self
+  function AI_A2A_DISPATCHER:SetDefaultCapRacetrack(LeglengthMin, LeglengthMax, HeadingMin, HeadingMax, DurationMin, DurationMax)
+    
+    self.DefenderDefault.Racetrack=true
+    self.DefenderDefault.RacetrackLengthMin=LeglengthMin
+    self.DefenderDefault.RacetrackLengthMax=LeglengthMax
+    self.DefenderDefault.RacetrackHeadingMin=HeadingMin
+    self.DefenderDefault.RacetrackHeadingMax=HeadingMax
+    self.DefenderDefault.RacetrackDurationMin=DurationMin
+    self.DefenderDefault.RacetrackDurationMax=DurationMax
+
+    return self
+  end
+  
+  --- Set race track pattern when squadron is performing CAP.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #string SquadronName Name of the squadron.
+  -- @param #number LeglengthMin Min length of the race track leg in meters. Default 10,000 m.
+  -- @param #number HeadingMin Min heading of the race track in degrees. Default 0 deg, i.e. from South to North.
+  -- @param #number HeadingMax Max heading of the race track in degrees. Default 180 deg, i.e. from North to South.
+  -- @param #number DurationMin (Optional) Min duration in seconds before switching the orbit position. Default is keep same orbit until RTB or engage.
+  -- @param #number DurationMax (Optional) Max duration in seconds before switching the orbit position. Default is keep same orbit until RTB or engage.
+  -- @return #AI_A2A_DISPATCHER self
+  function AI_A2A_DISPATCHER:SetSquadronCapRacetrack(SquadronName, LeglengthMin, LeglengthMax, HeadingMin, HeadingMax, DurationMin, DurationMax)
+    
+    local DefenderSquadron = self:GetSquadron( SquadronName )
+    
+    if DefenderSquadron then
+      DefenderSquadron.Racetrack=true
+      DefenderSquadron.RacetrackLengthMin=LeglengthMin
+      DefenderSquadron.RacetrackLengthMax=LeglengthMax
+      DefenderSquadron.RacetrackHeadingMin=HeadingMin
+      DefenderSquadron.RacetrackHeadingMax=HeadingMax
+      DefenderSquadron.RacetrackDurationMin=DurationMin
+      DefenderSquadron.RacetrackDurationMax=DurationMax
+    end
+    
+    return self
+  end  
 
 
   --- Check if squadron can do GCI.
@@ -2927,6 +3002,14 @@ do -- AI_A2A_DISPATCHER
           Fsm:SetDamageThreshold( self.DefenderDefault.DamageThreshold )
           Fsm:SetDisengageRadius( self.DisengageRadius )
           Fsm:SetTanker( DefenderSquadron.TankerName or self.DefenderDefault.TankerName )
+          if DefenderSquadron.Racetrack or self.DefenderDefault.Racetrack then
+            Fsm:SetRaceTrackPattern(DefenderSquadron.RacetrackLengthMin   or self.DefenderDefault.RacetrackLengthMin,
+                                    DefenderSquadron.RacetrackLengthMax   or self.DefenderDefault.RacetrackLengthMax,
+                                    DefenderSquadron.RacetrackHeadingMin  or self.DefenderDefault.RacetrackHeadingMin,
+                                    DefenderSquadron.RacetrackHeadingMax  or self.DefenderDefault.RacetrackHeadingMax,
+                                    DefenderSquadron.RacetrackDurationMin or self.DefenderDefault.RacetrackDurationMin,
+                                    DefenderSquadron.RacetrackDurationMax or self.DefenderDefault.RacetrackDurationMax)
+          end
           Fsm:Start()
   
           self:SetDefenderTask( SquadronName, DefenderCAP, "CAP", Fsm )
@@ -3328,8 +3411,10 @@ do -- AI_A2A_DISPATCHER
                DefenderGroupCount = DefenderGroupCount + 1
                local Fuel = Defender:GetFuelMin() * 100
                local Damage = Defender:GetLife() / Defender:GetLife0() * 100
-               Report:Add( string.format( " - %s ( %s - %s ): ( #%d ) F: %3d, D:%3d - %s", 
-                                          Defender:GetName(), 
+               Report:Add( string.format( " - %s*%d/%d ( %s - %s ): ( #%d ) F: %3d, D:%3d - %s", 
+                                          Defender:GetName(),
+                                          Defender:GetSize(),
+                                          Defender:GetInitialSize(),
                                           DefenderTask.Type, 
                                           DefenderTask.Fsm:GetState(), 
                                           Defender:GetSize(), 
@@ -3354,8 +3439,10 @@ do -- AI_A2A_DISPATCHER
             local Fuel = Defender:GetFuelMin() * 100
             local Damage = Defender:GetLife() / Defender:GetLife0() * 100
             DefenderGroupCount = DefenderGroupCount + 1
-            Report:Add( string.format( " - %s ( %s - %s ): ( #%d ) F: %3d, D:%3d - %s", 
+            Report:Add( string.format( " - %s*%d/%d ( %s - %s ): ( #%d ) F: %3d, D:%3d - %s", 
                                        Defender:GetName(), 
+                                       Defender:GetSize(),
+                                       Defender:GetInitialSize(),
                                        DefenderTask.Type, 
                                        DefenderTask.Fsm:GetState(), 
                                        Defender:GetSize(),
