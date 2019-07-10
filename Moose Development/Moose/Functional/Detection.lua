@@ -458,15 +458,18 @@ do -- DETECTION_BASE
     -- @param #string From The From State string.
     -- @param #string Event The Event string.
     -- @param #string To The To State string.
+    -- @param #table Units Table of detected units.
     	
     --- Synchronous Event Trigger for Event Detected.
     -- @function [parent=#DETECTION_BASE] Detected
     -- @param #DETECTION_BASE self
+    -- @param #table Units Table of detected units.
     
     --- Asynchronous Event Trigger for Event Detected.
     -- @function [parent=#DETECTION_BASE] __Detected
     -- @param #DETECTION_BASE self
     -- @param #number Delay The delay in seconds.
+    -- @param #table Units Table of detected units.
     
     self:AddTransition( "Detecting", "DetectedItem", "Detecting" )
     
@@ -586,7 +589,7 @@ do -- DETECTION_BASE
       
       local HasDetectedObjects = false
       
-      if Detection:IsAlive() then
+      if Detection and Detection:IsAlive() then
     
         --self:T( { "DetectionGroup is Alive", DetectionGroup:GetName() } )
         
@@ -817,12 +820,17 @@ do -- DETECTION_BASE
         end
 
         self:CreateDetectionItems() -- Polymorphic call to Create/Update the DetectionItems list for the DETECTION_ class grouping method.
+        
         for DetectedItemID, DetectedItem in pairs( self.DetectedItems ) do
+        
           self:UpdateDetectedItemDetection( DetectedItem )
+          
           self:CleanDetectionItem( DetectedItem, DetectedItemID ) -- Any DetectionItem that has a Set with zero elements in it, must be removed from the DetectionItems list.
+          
           if DetectedItem then
             self:__DetectedItem( 0.1, DetectedItem )
           end
+          
         end
       end
 
@@ -834,7 +842,7 @@ do -- DETECTION_BASE
   
   do -- DetectionItems Creation
   
-    -- Clean the DetectedItem table.
+    --- Clean the DetectedItem table.
     -- @param #DETECTION_BASE self
     -- @return #DETECTION_BASE
     function DETECTION_BASE:CleanDetectionItem( DetectedItem, DetectedItemID )

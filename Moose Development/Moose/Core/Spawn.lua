@@ -1816,7 +1816,7 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
       SpawnTemplate.x = PointVec3.x
       SpawnTemplate.y = PointVec3.z
       
-      SpawnTemplate.uncontrolled = nil
+      SpawnTemplate.uncontrolled = self.SpawnUnControlled
       
       -- Spawn group.
       local GroupSpawned = self:SpawnWithIndex( self.SpawnIndex )
