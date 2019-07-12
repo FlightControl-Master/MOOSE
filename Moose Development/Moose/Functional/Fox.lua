@@ -972,6 +972,12 @@ function FOX:onafterMissileLaunch(From, Event, To, missile)
         -- Distance from missile to target.
         local distance=missileCoord:Get3DDistance(targetCoord)
         
+        -- Distance missile to shooter.
+        local distShooter=nil
+        if missile.shooterUnit and missile.shooterUnit:IsAlive() then
+          distShooter=missileCoord:Get3DDistance(missile.shooterUnit:GetCoordinate())
+        end
+        
         
         -- Debug output.
         if self.Debug then
@@ -1011,16 +1017,18 @@ function FOX:onafterMissileLaunch(From, Event, To, missile)
           self:MissileDestroyed(missile)
           
           -- Little explosion for the visual effect.
-          if self.explosionpower>0 and distance>=50 then
+          if self.explosionpower>0 and distance>50 and (distShooter==nil or (distShooter and distShooter>50)) then
             missileCoord:Explosion(self.explosionpower)
           end
-          
-          -- Message to target.
-          local text=string.format("Destroying missile. %s", self:_DeadText())
-          MESSAGE:New(text, 10):ToGroup(target:GetGroup())
-          
-          -- Increase dead counter.
+                    
+          -- Target was a player.
           if missile.targetPlayer then
+          
+            -- Message to target.
+            local text=string.format("Destroying missile. %s", self:_DeadText())
+            MESSAGE:New(text, 10):ToGroup(target:GetGroup())
+                    
+            -- Increase dead counter.
             missile.targetPlayer.dead=missile.targetPlayer.dead+1
           end
           
