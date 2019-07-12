@@ -763,7 +763,9 @@ end
 function FOX:onafterMissileLaunch(From, Event, To, missile)
 
   -- Tracking info and init of last bomb position.
-  self:I(FOX.lid..string.format("FOX: Tracking %s - %s - target %s", missile.missileType, missile.missileName, tostring(missile.targetName)))
+  local text=string.format("FOX: Tracking missile %s(%s) - target %s - shooter %s", missile.missileType, missile.missileName, tostring(missile.targetName), missile.shooterName)
+  self:I(FOX.lid..text)
+  MESSAGE:New(text, 10):ToAllIf(self.Debug)
   
   -- Loop over players.
   for _,_player in pairs(self.players) do
