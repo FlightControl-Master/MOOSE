@@ -41,7 +41,7 @@
 -- @field Core.Set#SET_GROUP protectedset Set of protected groups.
 -- @field #number explosionpower Power of explostion when destroying the missile in kg TNT. Default 5 kg TNT.
 -- @field #number explosiondist Missile player distance in meters for destroying smaller missiles. Default 200 m.
--- @field #number explosiondist2 Missile player distance in meters for destroying big missiles. Default 400 m.
+-- @field #number explosiondist2 Missile player distance in meters for destroying big missiles. Default 500 m.
 -- @field #number bigmissilemass Explosion power of big missiles. Default 50 kg TNT. Big missiles will be destroyed earlier.
 -- @field #number dt50 Time step [sec] for missile position updates if distance to target > 50 km. Default 5 sec.
 -- @field #number dt10 Time step [sec] for missile position updates if distance to target > 10 km and < 50 km. Default 1 sec.
@@ -138,9 +138,9 @@ FOX = {
   safezones      =    {},
   launchzones    =    {},
   protectedset   =   nil,
-  explosionpower =   0.5,
+  explosionpower =   0.1,
   explosiondist  =   200,
-  explosiondist2 =   400,
+  explosiondist2 =   500,
   bigmissilemass =    50,
   destroy        =   nil,
   dt50           =     5,
@@ -371,7 +371,9 @@ function FOX:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.Birth)
   self:HandleEvent(EVENTS.Shot)
   
-  --self:HandleEvent(EVENTS.Hit)
+  if self.Debug then
+    self:HandleEvent(EVENTS.Hit)
+  end
   
   if self.Debug then
     self:TraceClass(self.ClassName)
@@ -396,7 +398,9 @@ function FOX:onafterStop(From, Event, To)
   self:UnHandleEvent(EVENTS.Birth)
   self:UnHandleEvent(EVENTS.Shot)
   
-  --self:UnhandleEvent(EVENTS.Hit)
+  if self.Debug then
+    self:UnhandleEvent(EVENTS.Hit)
+  end
 
 end
 
@@ -453,11 +457,11 @@ end
 --- Set explosion power. This is an "artificial" explosion generated when the missile is destroyed. Just for the visual effect.
 -- Don't set the explosion power too big or it will harm the aircraft in the vicinity.
 -- @param #FOX self
--- @param #number power Explosion power in kg TNT. Default 0.5 kg.
+-- @param #number power Explosion power in kg TNT. Default 0.1 kg.
 -- @return #FOX self
 function FOX:SetExplosionPower(power)
 
-  self.explosionpower=power or 0.5
+  self.explosionpower=power or 0.1
 
   return self
 end
@@ -475,12 +479,12 @@ end
 
 --- Set missile-player distance when BIG missiles are destroyed.
 -- @param #FOX self
--- @param #number distance Distance in meters. Default 400 m.
+-- @param #number distance Distance in meters. Default 500 m.
 -- @param #number explosivemass Explosive mass of missile threshold in kg TNT. Default 50 kg.
 -- @return #FOX self
 function FOX:SetExplosionDistanceBigMissiles(distance, explosivemass)
 
-  self.explosiondist2=distance or 400
+  self.explosiondist2=distance or 500
   
   self.bigmissilemass=explosivemass or 50
 
@@ -875,7 +879,6 @@ function FOX:onafterMissileLaunch(From, Event, To, missile)
         --       * Coalition check. But would not work in training situations where blue on blue is valid!
         --       * At least enable it for surface-to-air missiles.
         
-        --[[
         local function _GetTarget(_unit)
           local unit=_unit --Wrapper.Unit#UNIT
 
@@ -920,8 +923,8 @@ function FOX:onafterMissileLaunch(From, Event, To, missile)
         
         if self.protectedset then
         
-          -- Distance to closest player.
-          local mindist=nil
+          -- Distance to closest protected unit.
+          mindist=nil
         
           for _,_group in pairs(self.protectedset:GetSet()) do
             local group=_group --Wrapper.Group#GROUP
@@ -955,10 +958,8 @@ function FOX:onafterMissileLaunch(From, Event, To, missile)
         end
         
         if target then
-          self:I(self.lid..string.format("Missile %s with NO explicit target got closest unit to missile as target %s.", missile.missileType, target:GetName()))
+          self:I(self.lid..string.format("Missile %s with NO explicit target got closest unit to missile as target %s. Dist=%s m", missile.missileType, target:GetName(), tostring(mindist)))
         end
-        
-        --]]
              
       end
   
@@ -1001,8 +1002,10 @@ function FOX:onafterMissileLaunch(From, Event, To, missile)
           missile.active=false
           
           -- Debug smoke.
-          missileCoord:SmokeRed()          
-          targetCoord:SmokeGreen()
+          if self.Debug then
+            missileCoord:SmokeRed()          
+            targetCoord:SmokeGreen()
+          end
           
           -- Create event.
           self:MissileDestroyed(missile)
@@ -1284,14 +1287,16 @@ function FOX:OnEventShot(EventData)
     missile.shotCoord=EventData.IniUnit:GetCoordinate()
     missile.fuseDist=desc.fuseDist
     missile.explosive=desc.warhead.explosiveMass or desc.warhead.shapedExplosiveMass
+    missile.targetOrig=missile.targetName
     
     -- Set missile target name, unit and player.
     self:GetMissileTarget(missile)
     
-    self:I(FOX.lid..string.format("EVENT SHOT: Target name = %s, fuse dist=%s, explosive=%s", tostring(missile.targetName), tostring(missile.fuseDist), tostring(missile.explosive)))
+    self:I(FOX.lid..string.format("EVENT SHOT: Shooter=%s %s(%s) ==> Target=%s, fuse dist=%s, explosive=%s",
+    tostring(missile.shooterName), tostring(missile.missileType), tostring(missile.missileName), tostring(missile.targetName), tostring(missile.fuseDist), tostring(missile.explosive)))
     
-    -- Only track if target was a player or target is protected.
-    if missile.targetPlayer or self:_IsProtected(missile.targetUnit) then
+    -- Only track if target was a player or target is protected. Saw the 9M311 missiles have no target!
+    if missile.targetPlayer or self:_IsProtected(missile.targetUnit) or missile.targetName=="unknown" then
     
       -- Add missile table.
       table.insert(self.missiles, missile)
