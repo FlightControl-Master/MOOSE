@@ -476,7 +476,7 @@ end
 --- Set missile-player distance when BIG missiles are destroyed.
 -- @param #FOX self
 -- @param #number distance Distance in meters. Default 400 m.
--- @param #number explosivemass Explosive mass of missile in kg TNT. Default 50 kg.
+-- @param #number explosivemass Explosive mass of missile threshold in kg TNT. Default 50 kg.
 -- @return #FOX self
 function FOX:SetExplosionDistanceBigMissiles(distance, explosivemass)
 
