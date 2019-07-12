@@ -386,7 +386,7 @@ function AI_A2A_CAP:onafterEngage( AICap, From, Event, To, AttackSetUnit )
   
   if FirstAttackUnit and FirstAttackUnit:IsAlive() then -- If there is no attacker anymore, stop the engagement.
   
-    if AICap:IsAlive() then
+    if AICap and AICap:IsAlive() then
 
       local EngageRoute = {}
 
@@ -417,6 +417,8 @@ function AI_A2A_CAP:onafterEngage( AICap, From, Event, To, AttackSetUnit )
         local AttackUnit = AttackUnit -- Wrapper.Unit#UNIT
         self:T( { "Attacking Unit:", AttackUnit:GetName(), AttackUnit:IsAlive(), AttackUnit:IsAir() } )
         if AttackUnit:IsAlive() and AttackUnit:IsAir() then
+          -- TODO: Add coalition check? Only attack units of if AttackUnit:GetCoalition()~=AICap:GetCoalition()
+          -- Maybe the detected set also contains 
           AttackTasks[#AttackTasks+1] = AICap:TaskAttackUnit( AttackUnit )
         end
       end

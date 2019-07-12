@@ -1681,12 +1681,13 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="1.0.3"
+AIRBOSS.version="1.0.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- 
+
+-- TODO: Handle tanker and AWACS. Put them into pattern. 
 -- TODO: Handle cases where AI crashes on carrier deck ==> Clean up deck. 
 -- TODO: Player eject and crash debrief "gradings".
 -- TODO: PWO during case 2/3.
@@ -6862,8 +6863,8 @@ function AIRBOSS:_GetFreeStack(ai, case, empty)
       local n=flight.flag
       
       if n>0 then
-        if flight.ai then
-          stack[n]=0  -- AI get one stack on their own.
+        if flight.ai or flight.case>1 then
+          stack[n]=0  -- AI get one stack on their own. Also CASE II/III get one stack each.
         else
           stack[n]=stack[n]-1
         end
@@ -6878,7 +6879,7 @@ function AIRBOSS:_GetFreeStack(ai, case, empty)
   local nfree=nil
   for i=1,nmaxstacks do
     self:T2(self.lid..string.format("FF Stack[%d]=%d", i, stack[i]))
-    if ai or empty then
+    if ai or empty or case>1 then
       -- AI need the whole stack.
       if stack[i]==self.NmaxStack then
         nfree=i
