@@ -1178,7 +1178,7 @@ function RESCUEHELO:onafterReturned(From, Event, To, airbase)
 
   if airbase then
     local airbasename=airbase:GetName()
-    self:T(self.lid..string.format("Helo returned to airbase %s", tostring(airbasename)))
+    self:I(self.lid..string.format("Helo returned to airbase %s", tostring(airbasename)))
   else
     self:E(self.lid..string.format("WARNING: Helo landed but airbase (EventData.Place) is nil!"))
   end

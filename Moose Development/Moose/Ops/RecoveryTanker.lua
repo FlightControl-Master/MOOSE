@@ -1312,8 +1312,7 @@ function RECOVERYTANKER:OnEventEngineShutdown(EventData)
       group:InitRadioModulation(self.RadioModu)
       group:InitModex(self.modex)
            
-      -- Respawn tanker.
-      -- Delaying respawn due to DCS bug https://github.com/FlightControl-Master/MOOSE/issues/1076
+      -- Respawn tanker. Delaying respawn due to DCS bug https://github.com/FlightControl-Master/MOOSE/issues/1076
       SCHEDULER:New(nil , group.RespawnAtCurrentAirbase, {group}, 1)
       
       -- Create tanker beacon and activate TACAN.
