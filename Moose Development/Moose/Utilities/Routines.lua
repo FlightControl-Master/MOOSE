@@ -21,6 +21,11 @@ routines.build = 22
 -- Utils- conversion, Lua utils, etc.
 routines.utils = {}
 
+routines.utils.round = function(number, decimals)
+    local power = 10^decimals
+    return math.floor(number * power) / power
+end
+
 --from http://lua-users.org/wiki/CopyTable
 routines.utils.deepCopy = function(object)
 	local lookup_table = {}

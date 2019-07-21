@@ -60,6 +60,8 @@
 -- @field #number callsignname Number for the callsign name.
 -- @field #number callsignnumber Number of the callsign name.
 -- @field #string modex Tail number of the tanker.
+-- @field #boolean eplrs If true, enable data link, e.g. if used as AWACS.
+-- @field #boolean recovery If true, tanker will recover using the AIRBOSS marshal pattern.
 -- @extends Core.Fsm#FSM
 
 --- Recovery Tanker.
@@ -295,15 +297,16 @@ RECOVERYTANKER = {
   callsignnumber  = nil,
   modex           = nil,
   eplrs           = nil,
+  recovery        = nil,
 }
 
 --- Unique ID (global).
 -- @field #number UID Unique ID (global).
-RECOVERYTANKER.UID=0
+_RECOVERYTANKERID=0
 
 --- Class version.
 -- @field #string version
-RECOVERYTANKER.version="1.0.7"
+RECOVERYTANKER.version="1.0.8"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -349,16 +352,16 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   self.tankergroupname=tankergroupname
   
   -- Increase unique ID.
-  RECOVERYTANKER.UID=RECOVERYTANKER.UID+1
+  _RECOVERYTANKERID=_RECOVERYTANKERID+1
   
   -- Unique ID of this tanker.
-  self.uid=RECOVERYTANKER.UID
+  self.uid=_RECOVERYTANKERID
 
   -- Save self in static object. Easier to retrieve later.
   self.carrier:SetState(self.carrier, string.format("RECOVERYTANKER_%d", self.uid) , self)    
   
   -- Set unique spawn alias.
-  self.alias=string.format("%s_%s_%02d", self.carrier:GetName(), self.tankergroupname, RECOVERYTANKER.UID)
+  self.alias=string.format("%s_%s_%02d", self.carrier:GetName(), self.tankergroupname, _RECOVERYTANKERID)
   
   -- Log ID.
   self.lid=string.format("RECOVERYTANKER %s | ", self.alias)
@@ -377,6 +380,7 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   self:SetPatternUpdateHeading()
   self:SetPatternUpdateInterval()
   self:SetAWACS(false)
+  self:SetRecoveryAirboss(false)
   
   -- Debug trace.
   if false then
@@ -399,6 +403,7 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   self:AddTransition("*",             "RefuelStop",    "Running")        -- Tanker starts to refuel.
   self:AddTransition("*",             "Run",           "Running")        -- Tanker starts normal operation again.
   self:AddTransition("Running",       "RTB",           "Returning")      -- Tanker is returning to base (for fuel).
+  self:AddTransition("Returning",     "Returned",      "Returned")       -- Tanker has returned to its airbase (i.e. landed).
   self:AddTransition("*",             "Status",        "*")              -- Status update.
   self:AddTransition("Running",       "PatternUpdate", "*")              -- Update pattern wrt to carrier.
   self:AddTransition("*",             "Stop",          "Stopped")        -- Stop the FSM.
@@ -470,6 +475,26 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   -- @param #string Event Event.
   -- @param #string To To state.
   -- @param Wrapper.Airbase#AIRBASE airbase The airbase where the tanker should return to.
+
+
+  --- Triggers the FSM event "Returned" after the tanker has landed.
+  -- @function [parent=#RECOVERYTANKER] Returned
+  -- @param #RECOVERYTANKER self
+  -- @param Wrapper.Airbase#AIRBASE airbase The airbase the tanker has landed.
+
+  --- Triggers the delayed FSM event "Returned" after the tanker has landed.
+  -- @function [parent=#RECOVERYTANKER] __Returned
+  -- @param #RECOVERYTANKER self
+  -- @param #number delay Delay in seconds.
+  -- @param Wrapper.Airbase#AIRBASE airbase The airbase the tanker has landed.
+
+  --- On after "Returned" event user function. Called when a the the tanker has landed at an airbase.
+  -- @function [parent=#RECOVERYTANKER] OnAfterReturned
+  -- @param #RECOVERYTANKER self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Wrapper.Airbase#AIRBASE airbase The airbase the tanker has landed.
 
 
   --- Triggers the FSM event "Status" that updates the tanker status.
@@ -592,6 +617,19 @@ function RECOVERYTANKER:SetHomeBase(airbase)
   end
   if not self.airbase then
     self:E(self.lid.."ERROR: Airbase is nil!")
+  end
+  return self
+end
+
+--- Activate recovery by the AIRBOSS class. Tanker will get a Marshal stack and perform a CASE I, II or III recovery when RTB.
+-- @param #RECOVERYTANKER self
+-- @param #boolean switch If true or nil, recovery is done by AIRBOSS.
+-- @return #RECOVERYTANKER self
+function RECOVERYTANKER:SetRecoveryAirboss(switch)
+  if switch==true or switch==nil then
+    self.recovery=true
+  else
+    self.recovery=false
   end
   return self
 end
@@ -830,6 +868,7 @@ function RECOVERYTANKER:onafterStart(From, Event, To)
   
   -- Handle events.
   self:HandleEvent(EVENTS.EngineShutdown)
+  self:HandleEvent(EVENTS.Land)
   self:HandleEvent(EVENTS.Refueling,     self._RefuelingStart)      --Need explicit functions since OnEventRefueling and OnEventRefuelingStop did not hook!
   self:HandleEvent(EVENTS.RefuelingStop, self._RefuelingStop)
   self:HandleEvent(EVENTS.Crash,         self._OnEventCrashOrDead)
@@ -865,7 +904,7 @@ function RECOVERYTANKER:onafterStart(From, Event, To)
   else
   
     -- Check if an uncontrolled tanker group was requested.
-    if self.useuncontrolled then
+    if self.uncontrolledac then
     
       -- Use an uncontrolled aircraft group.
       self.tanker=GROUP:FindByName(self.tankergroupname)
@@ -884,14 +923,14 @@ function RECOVERYTANKER:onafterStart(From, Event, To)
     else
     
       -- Spawn tanker at airbase.
-      self.tanker=Spawn:SpawnAtAirbase(self.airbase, self.takeoff)
+      self.tanker=Spawn:SpawnAtAirbase(self.airbase, self.takeoff, nil, AIRBASE.TerminalType.OpenMedOrBig)
       
     end
     
   end
 
   -- Initialize route. self.distStern<0!
-  SCHEDULER:New(nil, self._InitRoute, {self, -self.distStern+UTILS.NMToMeters(3)}, 1)
+  self:ScheduleOnce(1, self._InitRoute, self, -self.distStern+UTILS.NMToMeters(3))
   
   -- Create tanker beacon.
   if self.TACANon then
@@ -929,7 +968,7 @@ function RECOVERYTANKER:onafterStatus(From, Event, To)
   -- Get current time.
   local time=timer.getTime()
   
-  if self.tanker:IsAlive() then
+  if self.tanker and self.tanker:IsAlive() then
   
     ---------------------
     -- TANKER is ALIVE --
@@ -937,8 +976,14 @@ function RECOVERYTANKER:onafterStatus(From, Event, To)
   
     -- Get fuel of tanker.
     local fuel=self.tanker:GetFuel()*100
-    local text=string.format("Recovery tanker %s: state=%s fuel=%.1f", self.tanker:GetName(), self:GetState(), fuel)
+    local life=self.tanker:GetUnit(1):GetLife()
+    local life0=self.tanker:GetUnit(1):GetLife0()
+    local lifeR=self.tanker:GetUnit(1):GetLifeRelative()    
+    
+    -- Report fuel and life.
+    local text=string.format("Recovery tanker %s: state=%s fuel=%.1f, life=%.1f/%.1f=%d", self.tanker:GetName(), self:GetState(), fuel, life, life0, lifeR*100)
     self:T(self.lid..text)
+    MESSAGE:New(text, 10):ToAllIf(self.Debug)
     
     -- Check if tanker is running and not RTBing or refueling.
     if self:IsRunning() then
@@ -947,7 +992,7 @@ function RECOVERYTANKER:onafterStatus(From, Event, To)
       if fuel<self.lowfuel then
       
         -- Check if spawn in air is activated.
-        if self.takeoff==SPAWN.Takeoff.Air or self.respawninair then
+        if (self.takeoff==SPAWN.Takeoff.Air or self.respawninair) and not self.recovery then
         
           -- Check that respawn should happen.
           if self.respawn then
@@ -1027,6 +1072,8 @@ function RECOVERYTANKER:onafterStatus(From, Event, To)
     --------------------
 
     if not self:IsStopped() then
+    
+      self:E(self.lid.."Recovery tanker is NOT alive (and not stopped)!")
     
       -- Stop FSM.
       self:Stop()
@@ -1133,7 +1180,14 @@ function RECOVERYTANKER:onafterRTB(From, Event, To, airbase)
   
   -- Set landing waypoint.
   wp[1]=self.tanker:GetCoordinate():WaypointAirTurningPoint(nil, speed, {}, "Current Position")
-  wp[2]=airbase:GetCoordinate():SetAltitude(500):WaypointAirLanding(speed, airbase, nil, "Land at airbase")
+  
+  
+  if self.recovery then
+    -- Fly a bit until the airboss takes over.
+    wp[2]=self.tanker:GetCoordinate():Translate(UTILS.NMToMeters(10), self.tanker:GetHeading(), true):WaypointAirTurningPoint(nil, speed, {}, "WP")
+  else  
+    wp[2]=airbase:GetCoordinate():SetAltitude(500):WaypointAirLanding(speed, airbase, nil, "Land at airbase")
+  end
   
   -- Initialize WP and route tanker.
   self.tanker:WayPointInitialize(wp)
@@ -1141,6 +1195,25 @@ function RECOVERYTANKER:onafterRTB(From, Event, To, airbase)
   -- Set task.
   self.tanker:Route(wp, 1)
 end
+
+
+--- On after Returned event. The tanker has landed.
+-- @param #RECOVERYTANKER self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Wrapper.Airbase#AIRBASE airbase The base at which the tanker landed.
+function RECOVERYTANKER:onafterReturned(From, Event, To, airbase)
+
+  if airbase then
+    local airbasename=airbase:GetName()
+    self:I(self.lid..string.format("Tanker returned to airbase %s", tostring(airbasename)))
+  else
+    self:E(self.lid..string.format("WARNING: Tanker landed but airbase (EventData.Place) is nil!"))
+  end
+  
+end
+
 
 --- On after Stop event. Unhandle events and stop status updates. 
 -- @param #RECOVERYTANKER self
@@ -1150,14 +1223,18 @@ end
 function RECOVERYTANKER:onafterStop(From, Event, To)
 
   -- Unhandle events.
+  self:UnHandleEvent(EVENTS.Land)
   self:UnHandleEvent(EVENTS.EngineShutdown)
   self:UnHandleEvent(EVENTS.Refueling)
   self:UnHandleEvent(EVENTS.RefuelingStop)
   self:UnHandleEvent(EVENTS.Dead)
   self:UnHandleEvent(EVENTS.Crash)
   
+  -- Clear all pending FSM events.
+  self.CallScheduler:Clear()
+  
   -- If tanker is alive, despawn it.
-  if self.helo and self.helo:IsAlive() then
+  if self.tanker and self.tanker:IsAlive() then
     self:I(self.lid.."Stopping FSM and despawning tanker.")
     self.tanker:Destroy()
   else
@@ -1170,6 +1247,42 @@ end
 -- EVENT functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Event handler for landing of recovery tanker.
+-- @param #RECOVERYTANKER self
+-- @param Core.Event#EVENTDATA EventData Event data.
+function RECOVERYTANKER:OnEventLand(EventData)
+
+  -- Group that shut down the engine.
+  local group=EventData.IniGroup --Wrapper.Group#GROUP
+  
+  -- Check if group is alive.
+  if group and group:IsAlive() then
+  
+    -- Group name. When spawning it will have #001 attached.
+    local groupname=group:GetName()
+    
+    -- Check that we have the right group and that it should be respawned.
+    if groupname==self.tanker:GetName() then
+    
+      local airbase=nil --Wrapper.Airbase#AIRBASE
+      local airbasename="unknown"
+      if EventData.Place then
+        airbase=EventData.Plase
+        airbasename=airbase:GetName()
+      end
+  
+      -- Debug info.
+      local text=string.format("Recovery tanker group %s landed at airbase %s.", group:GetName(), airbasename)
+      MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+      self:T(self.lid..text)
+      
+      -- Trigger returned event.
+      self:__Returned(1, airbase)      
+    end
+  end
+end
+
+
 --- Event handler for engine shutdown of recovery tanker.
 -- Respawn tanker group once it landed because it was out of fuel.
 -- @param #RECOVERYTANKER self
@@ -1180,7 +1293,7 @@ function RECOVERYTANKER:OnEventEngineShutdown(EventData)
   local group=EventData.IniGroup --Wrapper.Group#GROUP
   
   -- Check if group is alive.
-  if group:IsAlive() then
+  if group and group:IsAlive() then
   
     -- Group name. When spawning it will have #001 attached.
     local groupname=group:GetName()
@@ -1219,8 +1332,7 @@ function RECOVERYTANKER:OnEventEngineShutdown(EventData)
       end       
 
       -- Initial route.
-      SCHEDULER:New(nil, self._InitRoute, {self, -self.distStern+UTILS.NMToMeters(3)}, 2)
-      
+      SCHEDULER:New(nil, self._InitRoute, {self, -self.distStern+UTILS.NMToMeters(3)}, 2)     
     end
     
   end
@@ -1503,7 +1615,7 @@ function RECOVERYTANKER:_ActivateTACAN(delay)
       self.beacon:ActivateTACAN(self.TACANchannel, self.TACANmode, self.TACANmorse, true)
             
     else
-      self:E("ERROR: Recovery tanker is not alive!")
+      self:E(self.lid.."ERROR: Recovery tanker is not alive!")
     end
     
   end
