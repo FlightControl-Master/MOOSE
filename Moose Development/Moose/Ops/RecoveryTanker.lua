@@ -1361,8 +1361,7 @@ function RECOVERYTANKER:_RefuelingStart(EventData)
     self:T(self.lid..text)    
     
     -- FMS state "Refueling".
-    self:RefuelStart(receiver)
-  
+    self:RefuelStart(receiver) 
   end
 
 end
