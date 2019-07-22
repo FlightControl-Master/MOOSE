@@ -517,7 +517,7 @@ end
 -- local myUnit = UNIT:FindByName("MyUnit") 
 -- local myBeacon = myUnit:GetBeacon() -- Creates the beacon
 -- 
--- myBeacon:TACAN(20, "Y", "TEXACO", true) -- Activate the beacon
+-- myBeacon:ActivateTACAN(20, "Y", "TEXACO", true) -- Activate the beacon
 function BEACON:ActivateTACAN(Channel, Mode, Message, Bearing, Duration)
   self:T({channel=Channel, mode=Mode, callsign=Message, bearing=Bearing, duration=Duration})
   

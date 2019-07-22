@@ -813,6 +813,13 @@ function RECOVERYTANKER:IsReturning()
   return self:is("Returning")
 end
 
+--- Check if tanker has returned to base.
+-- @param #RECOVERYTANKER self
+-- @return #boolean If true, tanker has returned to base. 
+function RECOVERYTANKER:IsReturned()
+  return self:is("Returned")
+end
+
 --- Check if tanker is currently operating.
 -- @param #RECOVERYTANKER self
 -- @return #boolean If true, tanker is operating. 
@@ -1058,6 +1065,16 @@ function RECOVERYTANKER:onafterStatus(From, Event, To)
         end
       end
       
+    elseif self:IsReturning() then
+    
+      -- Tanker is returning to its base.
+      self:T2(self.lid.."Tanker is returning.")
+      
+    elseif self:IsReturned() then
+    
+      -- Tanker landed. Waiting for engine shutdown...
+      self:T2(self.lid.."Tanker returned. waiting for engine shutdown.")
+      
     end
     
     -- Call status again in 30 seconds.
@@ -1084,6 +1101,7 @@ function RECOVERYTANKER:onafterStatus(From, Event, To)
       end
       
     end
+    
   end
 
 end
@@ -1313,7 +1331,8 @@ function RECOVERYTANKER:OnEventEngineShutdown(EventData)
       group:InitModex(self.modex)
            
       -- Respawn tanker. Delaying respawn due to DCS bug https://github.com/FlightControl-Master/MOOSE/issues/1076
-      SCHEDULER:New(nil , group.RespawnAtCurrentAirbase, {group}, 1)
+      --SCHEDULER:New(nil , group.RespawnAtCurrentAirbase, {group}, 1)
+      self:ScheduleOnce(1, GROUP.RespawnAtCurrentAirbase, group)
       
       -- Create tanker beacon and activate TACAN.
       if self.TACANon then
@@ -1331,7 +1350,8 @@ function RECOVERYTANKER:OnEventEngineShutdown(EventData)
       end       
 
       -- Initial route.
-      SCHEDULER:New(nil, self._InitRoute, {self, -self.distStern+UTILS.NMToMeters(3)}, 2)     
+      --SCHEDULER:New(nil, self._InitRoute, {self, -self.distStern+UTILS.NMToMeters(3)}, 2)
+      self:ScheduleOnce(2, RECOVERYTANKER._InitRoute, self, -self.distStern+UTILS.NMToMeters(3))     
     end
     
   end
@@ -1593,7 +1613,8 @@ function RECOVERYTANKER:_ActivateTACAN(delay)
   if delay and delay>0 then
   
     -- Schedule TACAN activation.
-    SCHEDULER:New(nil, self._ActivateTACAN, {self}, delay)
+    --SCHEDULER:New(nil, self._ActivateTACAN, {self}, delay)
+    self:ScheduleOnce(delay, RECOVERYTANKER._ActivateTACAN, self)
     
   else
 
@@ -1604,7 +1625,7 @@ function RECOVERYTANKER:_ActivateTACAN(delay)
     if unit and unit:IsAlive() then
     
       -- Debug message.
-      local text=string.format("Activating recovery tanker TACAN beacon: channel=%d mode=%s, morse=%s.", self.TACANchannel, self.TACANmode, self.TACANmorse)
+      local text=string.format("Activating TACAN beacon: channel=%d mode=%s, morse=%s.", self.TACANchannel, self.TACANmode, self.TACANmorse)
       MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
       self:T(self.lid..text)      
     

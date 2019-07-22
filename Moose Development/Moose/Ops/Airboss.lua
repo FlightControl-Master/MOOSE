@@ -8395,28 +8395,35 @@ function AIRBOSS:OnEventEngineShutdown(EventData)
     -- Debug message.
     self:T(self.lid..string.format("AI unit %s shut down its engines!", _unitName))
     
-    if self.despawnshutdown then
+    -- Get flight.
+    local flight=self:_GetFlightFromGroupInQueue(EventData.IniGroup, self.flights)
+  
+    -- Only AI flights.
+    if flight and flight.ai then
     
-      -- Get flight.
-      local flight=self:_GetFlightFromGroupInQueue(EventData.IniGroup, self.flights)
-    
-      -- Only AI flights.
-      if flight and flight.ai then
+      -- Check if all elements were recovered.
+      local recovered=self:_CheckSectionRecovered(flight)
       
-        -- Check if all elements were recovered.
-        local recovered=self:_CheckSectionRecovered(flight)
+      -- Despawn group and completely remove flight.
+      if recovered then
+        self:T(self.lid..string.format("AI group %s completely recovered. Despawning group after engine shutdown event as requested in 5 seconds.", tostring(EventData.IniGroupName)))
         
-        -- Despawn group and completely remove flight.
-        if recovered then
-          self:T(self.lid..string.format("AI group %s completely recovered. Despawning group after engine shutdown event as requested in 5 seconds.", tostring(EventData.IniGroupName)))
+        -- Remove flight.
+        self:_RemoveFlight(flight)
+        
+        -- Check if this is a tanker or AWACS associated with the carrier.
+        local istanker=self.tanker and self.tanker.tanker:GetName()==EventData.IniGroupName
+        local isawacs=self.awacs and self.awacs.tanker:GetName()==EventData.IniGroupName
+        
+        -- Destroy group if desired. Recovery tankers have their own logic for despawning.
+        if self.despawnshutdown and not (istanker or isawacs) then
           EventData.IniGroup:Destroy(nil, 5)
-          self:_RemoveFlight(flight)
         end
+                  
       end
+      
     end
-    
-  end  
-
+  end
 end
 
 --- Airboss event handler for event that a unit takes off.
