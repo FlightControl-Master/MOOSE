@@ -205,7 +205,7 @@
 -- @field Core.Set#SET_GROUP excludesetAI AI groups in this set will be explicitly excluded from handling by the airboss and not forced into the Marshal pattern.
 -- @field #boolean menusingle If true, menu is optimized for a single carrier.
 -- @field #number collisiondist Distance up to which collision checks are done.
--- @field #nubmer holdtimestamp Timestamp when the carrier first came to an unexpected hold.
+-- @field #number holdtimestamp Timestamp when the carrier first came to an unexpected hold.
 -- @field #number Tmessage Default duration in seconds messages are displayed to players.
 -- @field #string soundfolder Folder within the mission (miz) file where airboss sound files are located.
 -- @field #string soundfolderLSO Folder withing the mission (miz) file where LSO sound files are stored.
@@ -1559,7 +1559,7 @@ AIRBOSS.Difficulty={
 -- @field #number Time Time in seconds.
 -- @field #number Rho Distance in meters.
 -- @field #number X Distance in meters.
--- @field #nubmer Z Distance in meters.
+-- @field #number Z Distance in meters.
 -- @field #number AoA Angle of Attack.
 -- @field #number Alt Altitude in meters.
 -- @field #number GSE Glideslope error in degrees.
@@ -1681,7 +1681,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="1.0.4"
+AIRBOSS.version="1.0.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -2127,6 +2127,13 @@ function AIRBOSS:New(carriername, alias)
   -- @function [parent=#AIRBOSS] __RecoveryStop
   -- @param #AIRBOSS self
   -- @param #number delay Delay in seconds.
+
+  --- On after "RecoveryStop" user function. Called when recovery of aircraft is stopped.
+  -- @function [parent=#AIRBOSS] OnAfterRecoveryStop
+  -- @param #AIRBOSS self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
 
 
   --- Triggers the FSM event "RecoveryPause" that pauses the recovery of aircraft.
@@ -3060,6 +3067,15 @@ end
 -- @return #AIRBOSS self
 function AIRBOSS:SetRecoveryTanker(recoverytanker)
   self.tanker=recoverytanker
+  return self
+end
+
+--- Define an AWACS associated with the carrier.
+-- @param #AIRBOSS self
+-- @param Ops.RecoveryTanker#RECOVERYTANKER awacs AWACS (recovery tanker) object.
+-- @return #AIRBOSS self
+function AIRBOSS:SetAWACS(awacs)
+  self.awacs=awacs
   return self
 end
 
@@ -5914,38 +5930,48 @@ function AIRBOSS:_ScanCarrierZone()
         -- Debug info.
         self:T3(self.lid..string.format("Known AI flight group %s closed in by %.1f NM", knownflight.groupname, UTILS.MetersToNM(closein)))
         
-        -- Send AI flight to marshal stack if group closes in more than 5 and has initial flag value.
-        if closein>UTILS.NMToMeters(5) and knownflight.flag==-100 and iscarriersquad then
+        -- Is this group the tanker?
+        local istanker=self.tanker and self.tanker.tanker:GetName()==groupname
         
-          -- Check that we do not add a recovery tanker for marshaling.
-          if self.tanker and self.tanker.tanker:GetName()==groupname then
+        -- Is this group the AWACS?
+        local isawacs=self.awacs and self.awacs.tanker:GetName()==groupname
+        
+        -- Send tanker to marshal stack?
+        local tanker2marshal = istanker and self.tanker:IsReturning() and self.tanker.airbase:GetName()==self.airbase:GetName() and knownflight.flag==-100 and self.tanker.recovery==true
+        
+        -- Send AWACS to marhsal stack?
+        local awacs2marshal  = isawacs  and self.awacs:IsReturning()  and self.awacs.airbase:GetName()==self.airbase:GetName()  and knownflight.flag==-100 and self.awacs.recovery==true
+        
+        -- Put flight into Marshal.
+        local putintomarshal=closein>UTILS.NMToMeters(5) and knownflight.flag==-100 and iscarriersquad and istanker==false and isawacs==false
+        
+        -- Send AI flight to marshal stack if group closes in more than 5 and has initial flag value.
+        if putintomarshal or tanker2marshal or awacs2marshal then
+                  
+          -- Get the next free stack for current recovery case.
+          local stack=self:_GetFreeStack(knownflight.ai)
+
+          -- Repawn.          
+          local respawn=self.respawnAI --or tanker2marshal
           
-            -- Don't touch the recovery tanker!
+          if stack then
+          
+            -- Send AI to marshal stack. We respawn the group to clean possible departure and destination airbases.
+            self:_MarshalAI(knownflight, stack, respawn)
             
           else
           
-            -- Get the next free stack for current recovery case.
-            local stack=self:_GetFreeStack(knownflight.ai)
-            
-            if stack then
-            
-              -- Send AI to marshal stack. We respawn the group to clean possible departure and destination airbases.
-              self:_MarshalAI(knownflight, stack, self.respawnAI)
-              
-            else
-            
-              -- Send AI to orbit outside 10 NM zone and wait until the next Marshal stack is available.
-              if not self:_InQueue(self.Qwaiting, knownflight.group) then
-                self:_WaitAI(knownflight, self.respawnAI)  -- Group is respawned to clear any attached airfields.
-              end
-            
+            -- Send AI to orbit outside 10 NM zone and wait until the next Marshal stack is available.
+            if not self:_InQueue(self.Qwaiting, knownflight.group) then
+              self:_WaitAI(knownflight, respawn)  -- Group is respawned to clear any attached airfields.
             end
-            
-            -- Break the loop to not have all flights at once! Spams the message screen.
-            break
-            
-          end -- Tanker          
-        end   -- Closed in
+          
+          end
+          
+          -- Break the loop to not have all flights at once! Spams the message screen.
+          break
+                      
+        end   -- Closed in or tanker/AWACS
       end     -- AI
       
     else
@@ -8369,28 +8395,35 @@ function AIRBOSS:OnEventEngineShutdown(EventData)
     -- Debug message.
     self:T(self.lid..string.format("AI unit %s shut down its engines!", _unitName))
     
-    if self.despawnshutdown then
+    -- Get flight.
+    local flight=self:_GetFlightFromGroupInQueue(EventData.IniGroup, self.flights)
+  
+    -- Only AI flights.
+    if flight and flight.ai then
     
-      -- Get flight.
-      local flight=self:_GetFlightFromGroupInQueue(EventData.IniGroup, self.flights)
-    
-      -- Only AI flights.
-      if flight and flight.ai then
+      -- Check if all elements were recovered.
+      local recovered=self:_CheckSectionRecovered(flight)
       
-        -- Check if all elements were recovered.
-        local recovered=self:_CheckSectionRecovered(flight)
+      -- Despawn group and completely remove flight.
+      if recovered then
+        self:T(self.lid..string.format("AI group %s completely recovered. Despawning group after engine shutdown event as requested in 5 seconds.", tostring(EventData.IniGroupName)))
         
-        -- Despawn group and completely remove flight.
-        if recovered then
-          self:T(self.lid..string.format("AI group %s completely recovered. Despawning group after engine shutdown event as requested in 5 seconds.", tostring(EventData.IniGroupName)))
+        -- Remove flight.
+        self:_RemoveFlight(flight)
+        
+        -- Check if this is a tanker or AWACS associated with the carrier.
+        local istanker=self.tanker and self.tanker.tanker:GetName()==EventData.IniGroupName
+        local isawacs=self.awacs and self.awacs.tanker:GetName()==EventData.IniGroupName
+        
+        -- Destroy group if desired. Recovery tankers have their own logic for despawning.
+        if self.despawnshutdown and not (istanker or isawacs) then
           EventData.IniGroup:Destroy(nil, 5)
-          self:_RemoveFlight(flight)
         end
+                  
       end
+      
     end
-    
-  end  
-
+  end
 end
 
 --- Airboss event handler for event that a unit takes off.
@@ -14329,7 +14362,7 @@ end
 -- @param #number delay Delay in seconds, before the message is broadcasted.
 -- @param #number interval Interval in seconds after the last sound has been played.
 -- @param #boolean click If true, play radio click at the end.
--- @param #booelan pilotcall If true, it's a pilot call.
+-- @param #boolean pilotcall If true, it's a pilot call.
 function AIRBOSS:RadioTransmission(radio, call, loud, delay, interval, click, pilotcall)
   self:F2({radio=radio, call=call, loud=loud, delay=delay, interval=interval, click=click})
   
