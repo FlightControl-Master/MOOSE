@@ -1267,7 +1267,7 @@ function RECOVERYTANKER:OnEventLand(EventData)
       local airbase=nil --Wrapper.Airbase#AIRBASE
       local airbasename="unknown"
       if EventData.Place then
-        airbase=EventData.Plase
+        airbase=EventData.Place
         airbasename=airbase:GetName()
       end
   
