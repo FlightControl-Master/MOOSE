@@ -231,6 +231,7 @@
 -- @field #number skipperSpeed Speed in knots for manual recovery start.
 -- @field #number skipperCase Manual recovery case.
 -- @field #boolean skipperUturn U-turn on/off via menu.
+-- @field #number skipperOffset Holding offset angle in degrees for Case II/III manual recoveries. 
 -- @field #number skipperTime Recovery time in min for manual recovery.
 -- @extends Core.Fsm#FSM
 
@@ -1234,6 +1235,7 @@ AIRBOSS = {
   skipperMenu    = nil,
   skipperSpeed   = nil,
   skipperTime    = nil,
+  skipperOffset  = nil,
   skipperUturn   = nil,
 }
 
@@ -1681,7 +1683,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="1.0.5"
+AIRBOSS.version="1.0.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1951,6 +1953,7 @@ function AIRBOSS:New(carriername, alias)
     local case=2
     self.holdingoffset=30
     self:_GetZoneGroove():SmokeZone(SMOKECOLOR.Red, 5)
+    self:_GetZoneLineup():SmokeZone(SMOKECOLOR.Green, 5)
     self:_GetZoneBullseye(case):SmokeZone(SMOKECOLOR.White, 45)
     self:_GetZoneDirtyUp(case):SmokeZone(SMOKECOLOR.Orange, 45)
     self:_GetZoneArcIn(case):SmokeZone(SMOKECOLOR.Blue, 45)
@@ -2340,12 +2343,15 @@ end
 -- @param #number duration Default duration of the recovery in minutes. Default 30 min.
 -- @param #number windondeck Default wind on deck in knots. Default 25 knots.
 -- @param #boolean uturn U-turn after recovery window closes on=true or off=false/nil. Default off.
+-- @param #number offset Relative Marshal radial in degrees for Case II/III recoveries. Default 30°.
 -- @return #AIRBOSS self
-function AIRBOSS:SetMenuRecovery(duration, windondeck, uturn)
+function AIRBOSS:SetMenuRecovery(duration, windondeck, uturn, offset)
 
   self.skipperMenu=true
   self.skipperTime=duration or 30
   self.skipperSpeed=windondeck or 25
+  self.skipperOffset=offset or 30
+  
   if uturn then
     self.skipperUturn=true
   else
@@ -9534,7 +9540,7 @@ function AIRBOSS:_Final(playerData, nocheck)
   local inzone=playerData.unit:IsInZone(zone)
   
   -- Check.
-  if inzone then
+  if inzone then --and math.abs(groovedata.Roll)<5 then
 
     -- Hint for player about altitude, AoA etc. Sound is off.
     self:_PlayerHint(playerData, nil, true)
@@ -9593,12 +9599,11 @@ function AIRBOSS:_Groove(playerData)
   local glideslopeError=groovedata.GSE
   local AoA=groovedata.AoA
   
-  -- Start time in groove when "wings are level", i.e. <= 5°.
-  if playerData.TIG0==nil and math.abs(groovedata.Roll)<=5.0 then
-    playerData.TIG0=timer.getTime()
-  end  
   
-  if rho<=RXX and playerData.step==AIRBOSS.PatternStep.GROOVE_XX then
+  if rho<=RXX and playerData.step==AIRBOSS.PatternStep.GROOVE_XX and (math.abs(groovedata.Roll)<=4.0 or playerData.unit:IsInZone(self:_GetZoneLineup())) then
+  
+    -- Start time in groove
+    playerData.TIG0=timer.getTime()
   
     -- LSO "Call the ball" call.
     self:RadioTransmission(self.LSORadio, self.LSOCall.CALLTHEBALL, nil, nil, nil, true)
@@ -9806,7 +9811,7 @@ function AIRBOSS:_Groove(playerData)
     
     -- Wait until player passed the 0.75 NM distance.
     local _advice=true
-    if rho>RXX and playerData.difficulty~=AIRBOSS.Difficulty.EASY then
+    if playerData.TIG0==nil and playerData.difficulty~=AIRBOSS.Difficulty.EASY then  --rho>RXX 
       _advice=false
     end
 
@@ -10317,15 +10322,45 @@ function AIRBOSS:_GetZoneInitial(case)
   return zone
 end
 
+--- Get lineup groove zone.
+-- @param #AIRBOSS self
+-- @return Core.Zone#ZONE_POLYGON_BASE Lineup zone.
+function AIRBOSS:_GetZoneLineup()
+
+  -- Get radial, i.e. inverse of BRC.
+  local fbi=self:GetRadial(1, false, false)
+  
+  -- Stern coordinate.
+  local st=self:_GetOptLandingCoordinate()
+  
+  -- Zone points.
+  local c1=st
+  local c2=st:Translate(UTILS.NMToMeters(0.50), fbi+15)
+  local c3=st:Translate(UTILS.NMToMeters(0.50), fbi+self.lue._max-0.05)
+  local c4=st:Translate(UTILS.NMToMeters(0.77), fbi+self.lue._max-0.05)
+  local c5=c4:Translate(UTILS.NMToMeters(0.25), fbi-90)
+    
+  -- Vec2 array.
+  local vec2={c1:GetVec2(), c2:GetVec2(), c3:GetVec2(), c4:GetVec2(), c5:GetVec2()}
+  
+  -- Polygon zone.
+  local zone=ZONE_POLYGON_BASE:New("Zone Lineup", vec2)
+
+  return zone
+end
+
+
 --- Get groove zone.
 -- @param #AIRBOSS self
 -- @param #number l Length of the groove in NM. Default 1.5 NM.
 -- @param #number w Width of the groove in NM. Default 0.25 NM.
--- @return Core.Zone#ZONE_POLYGON_BASE Initial zone.
-function AIRBOSS:_GetZoneGroove(l, w)
+-- @param #number b Width of the beginning in NM. Default 0.10 NM.
+-- @return Core.Zone#ZONE_POLYGON_BASE Groove zone.
+function AIRBOSS:_GetZoneGroove(l, w, b)
 
   l=l or 1.50
   w=w or 0.25
+  b=b or 0.10
 
   -- Get radial, i.e. inverse of BRC.
   local fbi=self:GetRadial(1, false, false)
@@ -10336,9 +10371,9 @@ function AIRBOSS:_GetZoneGroove(l, w)
   -- Zone points.
   local c1=st:Translate(self.carrierparam.totwidthstarboard, fbi-90)
   local c2=st:Translate(UTILS.NMToMeters(0.10), fbi-90):Translate(UTILS.NMToMeters(0.3), fbi)
-  local c3=st:Translate(UTILS.NMToMeters(w/2),  fbi-90):Translate(UTILS.NMToMeters(l),   fbi)
+  local c3=st:Translate(UTILS.NMToMeters(0.25), fbi-90):Translate(UTILS.NMToMeters(l),   fbi)
   local c4=st:Translate(UTILS.NMToMeters(w/2),  fbi+90):Translate(UTILS.NMToMeters(l),   fbi)
-  local c5=st:Translate(UTILS.NMToMeters(0.10), fbi+90):Translate(UTILS.NMToMeters(0.3), fbi)
+  local c5=st:Translate(UTILS.NMToMeters(b),    fbi+90):Translate(UTILS.NMToMeters(0.3), fbi)
   local c6=st:Translate(self.carrierparam.totwidthport, fbi+90)
     
   -- Vec2 array.
@@ -15505,6 +15540,12 @@ function AIRBOSS:_AddF10Commands(_unitName)
           missionCommands.addCommandForGroup(gid, "45 min", _menusetrtime, self._SkipperRecoveryTime, self, _unitName, 45)
           missionCommands.addCommandForGroup(gid, "60 min", _menusetrtime, self._SkipperRecoveryTime, self, _unitName, 60)
           missionCommands.addCommandForGroup(gid, "90 min", _menusetrtime, self._SkipperRecoveryTime, self, _unitName, 90)
+          local _menusetrtime=missionCommands.addSubMenuForGroup(gid, "Set Marshal Radial", _skipperPath)
+          missionCommands.addCommandForGroup(gid, "+30°", _menusetrtime, self._SkipperRecoveryOffset, self, _unitName,  30)
+          missionCommands.addCommandForGroup(gid, "+15°", _menusetrtime, self._SkipperRecoveryOffset, self, _unitName,  15)
+          missionCommands.addCommandForGroup(gid, "0°",   _menusetrtime, self._SkipperRecoveryOffset, self, _unitName,   0)
+          missionCommands.addCommandForGroup(gid, "-15°", _menusetrtime, self._SkipperRecoveryOffset, self, _unitName, -15)
+          missionCommands.addCommandForGroup(gid, "-30°", _menusetrtime, self._SkipperRecoveryOffset, self, _unitName, -30)
           missionCommands.addCommandForGroup(gid, "U-turn On/Off", _skipperPath, self._SkipperRecoveryUturn, self, _unitName)
           missionCommands.addCommandForGroup(gid, "Start CASE I",  _skipperPath, self._SkipperStartRecovery, self, _unitName, 1)
           missionCommands.addCommandForGroup(gid, "Start CASE II", _skipperPath, self._SkipperStartRecovery, self, _unitName, 2)
@@ -15560,6 +15601,9 @@ function AIRBOSS:_SkipperStartRecovery(_unitName, case)
       
       -- Inform player.
       local text=string.format("affirm, Case %d recovery will start in 5 min for %d min. Wind on deck %d knots. U-turn=%s.", case, self.skipperTime, self.skipperSpeed, tostring(self.skipperUturn))
+	  if case>1 then
+		text=text..string.format(" Marshal radial %d°.", self.skipperOffset)
+	  end
       if self:IsRecovering() then
         text="negative, carrier is already recovering."
         self:MessageToPlayer(playerData, text, "AIRBOSS")
@@ -15574,7 +15618,7 @@ function AIRBOSS:_SkipperStartRecovery(_unitName, case)
       local C9=UTILS.SecondsToClock(t9)
     
       -- Carrier will turn into the wind. Wind on deck 25 knots. U-turn on.
-      self:AddRecoveryWindow(C0, C9, case, 30, true, self.skipperSpeed, self.skipperUturn)
+      self:AddRecoveryWindow(C0, C9, case, self.skipperOffset, true, self.skipperSpeed, self.skipperUturn)
       
     end
   end
@@ -15607,6 +15651,30 @@ function AIRBOSS:_SkipperStopRecovery(_unitName)
     end
   end
 end
+
+--- Skipper set recovery offset angle.
+-- @param #AIRBOSS self
+-- @param #string _unitName Name fo the player unit.
+-- @param #number offset Recovery holding offset angle in degrees for Case II/III.
+function AIRBOSS:_SkipperRecoveryOffset(_unitName, offset)
+
+  -- Get player unit and name.
+  local _unit, _playername = self:_GetPlayerUnitAndName(_unitName)
+    
+  -- Check if we have a unit which is a player.
+  if _unit and _playername then
+    local playerData=self.players[_playername] --#AIRBOSS.PlayerData
+        
+    if playerData then
+      
+      -- Inform player.
+      local text=string.format("roger, relative CASE II/III Marshal radial set to %d°.", offset)
+      self:MessageToPlayer(playerData, text, "AIRBOSS")
+      
+      self.skipperOffset=offset
+    end
+  end
+end  
 
 --- Skipper set recovery time.
 -- @param #AIRBOSS self
