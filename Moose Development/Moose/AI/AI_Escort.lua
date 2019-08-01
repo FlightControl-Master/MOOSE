@@ -391,6 +391,7 @@ function AI_ESCORT:onafterStop( EscortGroupSet )
   self.MainMenu:Remove()
 
 end
+
 --- Set a Detection method for the EscortUnit to be reported upon.
 -- Detection methods are based on the derived classes from DETECTION_BASE.
 -- @param #AI_ESCORT self

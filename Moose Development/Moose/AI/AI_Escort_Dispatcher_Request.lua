@@ -69,10 +69,35 @@ function AI_ESCORT_DISPATCHER_REQUEST:onafterStart( From, Event, To )
 
   self:HandleEvent( EVENTS.Birth )
   
-  self:HandleEvent( EVENTS.PlayerLeaveUnit )
+  self:HandleEvent( EVENTS.PlayerLeaveUnit, self.OnEventExit )
+  self:HandleEvent( EVENTS.Crash, self.OnEventExit )
+  self:HandleEvent( EVENTS.Dead, self.OnEventExit )
 
 end
 
+--- @param #AI_ESCORT_DISPATCHER_REQUEST self
+-- @param Core.Event#EVENTDATA EventData
+function AI_ESCORT_DISPATCHER_REQUEST:OnEventExit( EventData )
+
+  local PlayerGroupName = EventData.IniGroupName
+  local PlayerGroup = EventData.IniGroup
+  local PlayerUnit = EventData.IniUnit
+  
+  self.CarrierSet:Flush(self)
+  self:I({EscortAirbase= self.EscortAirbase } )
+  self:I({PlayerGroupName = PlayerGroupName } )
+  self:I({PlayerGroup = PlayerGroup})
+  self:I({FirstGroup = self.CarrierSet:GetFirst()})
+  self:I({FindGroup = self.CarrierSet:FindGroup( PlayerGroupName )})
+  
+  if self.CarrierSet:FindGroup( PlayerGroupName ) then
+    if self.AI_Escorts[PlayerGroupName] then
+      self.AI_Escorts[PlayerGroupName]:Stop()
+      self.AI_Escorts[PlayerGroupName] = nil
+    end
+  end
+      
+end
 
 --- @param #AI_ESCORT_DISPATCHER_REQUEST self
 -- @param Core.Event#EVENTDATA EventData
