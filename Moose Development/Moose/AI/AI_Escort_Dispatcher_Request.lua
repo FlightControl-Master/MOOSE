@@ -1,21 +1,9 @@
---- **AI** -- (R2.4) - Models the assignment of AI escorts to player flights upon request using the radio menu.
+--- **AI** -- (R2.5) - Models the assignment of AI escorts to player flights upon request using the radio menu.
 --
 -- ## Features:
--- --     
+--     
 --   * Provides the facilities to trigger escorts when players join flight units.
---   * Provide different means how escorts can be triggered:
---     * Directly when a player joins a plane.
---     * Through the menu.
--- 
--- ===
--- 
--- ## Test Missions:
--- 
--- Test missions can be located on the main GITHUB site.
--- 
--- [FlightControl-Master/MOOSE_MISSIONS]
--- 
--- ===
+--   * Provide a menu for which escorts can be requested.
 -- 
 -- ===
 -- 
@@ -28,14 +16,10 @@
 
 
 --- @type AI_ESCORT_DISPATCHER_REQUEST
--- @field Core.Set#SET_GROUP CarrierSet The set of @{Wrapper.Group#GROUP} objects of carriers that will transport the cargo. 
--- @field Core.Set#SET_GROUP EscortGroupSet The set of group AI escorting the EscortUnit.
--- @field #string EscortName Name of the escort.
--- @field #string EscortBriefing A text showing the AI_ESCORT briefing to the player. Note that if no EscortBriefing is provided, the default briefing will be shown.
 -- @extends Core.Fsm#FSM
 
 
---- A dynamic cargo handling capability for AI groups.
+--- Models the assignment of AI escorts to player flights upon request using the radio menu.
 -- 
 -- ===
 --   
@@ -50,11 +34,11 @@ AI_ESCORT_DISPATCHER_REQUEST.AI_Escorts = {}
 
 --- Creates a new AI_ESCORT_DISPATCHER_REQUEST object.
 -- @param #AI_ESCORT_DISPATCHER_REQUEST self
--- @param Core.Set#SET_GROUP CarrierSet The set of @{Wrapper.Group#GROUP} objects of carriers that will transport the cargo. 
+-- @param Core.Set#SET_GROUP CarrierSet The set of @{Wrapper.Group#GROUP} objects of carriers for which escorts are requested. 
 -- @param Core.Spawn#SPAWN EscortSpawn The spawn object that will spawn in the Escorts.
 -- @param Wrapper.Airbase#AIRBASE EscortAirbase The airbase where the escorts are spawned.
--- @param #string EscortName Name of the escort.
--- @param #string EscortBriefing A text showing the AI_ESCORT briefing to the player. Note that if no EscortBriefing is provided, the default briefing will be shown.
+-- @param #string EscortName Name of the escort, which will also be the name of the escort menu.
+-- @param #string EscortBriefing A text showing the briefing to the player. Note that if no EscortBriefing is provided, the default briefing will be shown.
 -- @return #AI_ESCORT_DISPATCHER_REQUEST
 function AI_ESCORT_DISPATCHER_REQUEST:New( CarrierSet, EscortSpawn, EscortAirbase, EscortName, EscortBriefing )
 

@@ -351,9 +351,6 @@ function AI_ESCORT:onafterStart( EscortGroupSet )
 
   self.Detection:__Start( 30 )
     
-  self:HandleEvent( EVENTS.Dead, OnEventDeadOrCrash )
-  self:HandleEvent( EVENTS.Crash, OnEventDeadOrCrash )
-
   self.MainMenu = MENU_GROUP:New( self.PlayerGroup, self.EscortName )
   self.FlightMenu = MENU_GROUP:New( self.PlayerGroup, "Flight", self.MainMenu )
 
@@ -373,6 +370,27 @@ function AI_ESCORT:onafterStart( EscortGroupSet )
 
 end
 
+--- @param #AI_ESCORT self
+-- @param Core.Set#SET_GROUP EscortGroupSet
+function AI_ESCORT:onafterStop( EscortGroupSet )
+
+  self:F()
+
+  EscortGroupSet:ForEachGroup(
+    --- @param Core.Group#GROUP EscortGroup
+    function( EscortGroup )
+      EscortGroup:WayPointInitialize()
+    
+      EscortGroup:OptionROTVertical()
+      EscortGroup:OptionROEOpenFire()
+    end
+  )
+
+  self.Detection:Stop()
+    
+  self.MainMenu:Remove()
+
+end
 --- Set a Detection method for the EscortUnit to be reported upon.
 -- Detection methods are based on the derived classes from DETECTION_BASE.
 -- @param #AI_ESCORT self
@@ -705,6 +723,7 @@ function AI_ESCORT:SetEscortMenuJoinUp( EscortGroup )
     end
   end
 end
+
 
 
 --- Defines --- Defines a menu slot to let the escort to join formation.
