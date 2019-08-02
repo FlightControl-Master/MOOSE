@@ -364,6 +364,17 @@ function AI_ESCORT:onafterStart( EscortGroupSet )
       self:_InitEscortRoute( EscortGroup )
 
       self:SetFlightModeFormation( EscortGroup )
+      
+      --- @param #AI_ESCORT self
+      -- @param Core.Event#EVENTDATA EventData
+      function EscortGroup:OnEventDeadOrCrash( EventData )
+        self:F( { "EventDead", EventData } )
+        self.EscortMenu:Remove()
+      end
+
+      EscortGroup:HandleEvent( EVENTS.Dead, EscortGroup.OnEventDeadOrCrash )
+      EscortGroup:HandleEvent( EVENTS.Crash, EscortGroup.OnEventDeadOrCrash )
+      
     end
   )
   
