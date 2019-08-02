@@ -442,6 +442,33 @@ function ZONE_RADIUS:New( ZoneName, Vec2, Radius )
 	return self
 end
 
+--- Mark the zone with markers on the F10 map.
+-- @param #ZONE_RADIUS self
+-- @param #number Points (Optional) The amount of points in the circle. Default 360.
+-- @return #ZONE_RADIUS self
+function ZONE_RADIUS:MarkZone(Points)
+
+  local Point = {}
+  local Vec2 = self:GetVec2()
+
+  Points = Points and Points or 360
+
+  local Angle
+  local RadialBase = math.pi*2
+  
+  for Angle = 0, 360, (360 / Points ) do
+  
+    local Radial = Angle * RadialBase / 360
+    
+    Point.x = Vec2.x + math.cos( Radial ) * self:GetRadius()
+    Point.y = Vec2.y + math.sin( Radial ) * self:GetRadius()
+    
+    COORDINATE:NewFromVec2(Point):MarkToAll(self:GetName())
+
+  end
+  
+end
+
 --- Bounds the zone with tires.
 -- @param #ZONE_RADIUS self
 -- @param #number Points (optional) The amount of points in the circle. Default 360.

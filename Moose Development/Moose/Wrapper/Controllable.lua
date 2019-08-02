@@ -2813,6 +2813,8 @@ function CONTROLLABLE:GetDetectedTargets( DetectVisual, DetectOptical, DetectRad
   return nil
 end
 
+--- Check if a target is detected.
+-- @param Wrapper.Controllable#CONTROLLABLE self
 function CONTROLLABLE:IsTargetDetected( DCSObject, DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK )
   self:F2( self.ControllableName )
 
@@ -2858,7 +2860,7 @@ function CONTROLLABLE:OptionROEHoldFirePossible()
   return nil
 end
 
---- Holding weapons.
+--- Weapons Hold: AI will hold fire under all circumstances.
 -- @param Wrapper.Controllable#CONTROLLABLE self
 -- @return Wrapper.Controllable#CONTROLLABLE self
 function CONTROLLABLE:OptionROEHoldFire()
@@ -2900,7 +2902,7 @@ function CONTROLLABLE:OptionROEReturnFirePossible()
   return nil
 end
 
---- Return fire.
+--- Return Fire: AI will only engage threats that shoot first.
 -- @param #CONTROLLABLE self
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:OptionROEReturnFire()
@@ -2942,7 +2944,7 @@ function CONTROLLABLE:OptionROEOpenFirePossible()
   return nil
 end
 
---- Openfire.
+--- Open Fire (Only Designated): AI will engage only targets specified in its taskings.
 -- @param #CONTROLLABLE self
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:OptionROEOpenFire()
@@ -2958,6 +2960,45 @@ function CONTROLLABLE:OptionROEOpenFire()
       Controller:setOption( AI.Option.Ground.id.ROE, AI.Option.Ground.val.ROE.OPEN_FIRE )
     elseif self:IsShip() then
       Controller:setOption( AI.Option.Naval.id.ROE, AI.Option.Naval.val.ROE.OPEN_FIRE )
+    end
+
+    return self
+  end
+
+  return nil
+end
+
+--- Can the CONTROLLABLE attack priority designated targets? Only for AIR!
+-- @param #CONTROLLABLE self
+-- @return #boolean
+function CONTROLLABLE:OptionROEOpenFireWeaponFreePossible()
+  self:F2( { self.ControllableName } )
+
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    if self:IsAir() then
+      return true
+    end
+
+    return false
+  end
+
+  return nil
+end
+
+--- Open Fire, Weapons Free (Priority Designated): AI will engage any enemy group it detects, but will prioritize targets specified in the groups tasking.
+-- **Only for AIR units!**
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionROEOpenFireWeaponFree()
+  self:F2( { self.ControllableName } )
+
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+
+    if self:IsAir() then
+      Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.OPEN_FIRE_WEAPON_FREE )
     end
 
     return self
@@ -3238,7 +3279,10 @@ end
 function CONTROLLABLE:OptionRTBBingoFuel( RTB ) --R2.2
   self:F2( { self.ControllableName } )
 
-  RTB = RTB or true
+  --RTB = RTB or true
+  if RTB==nil then
+    RTB=true
+  end
 
   local DCSControllable = self:GetDCSObject()
   if DCSControllable then

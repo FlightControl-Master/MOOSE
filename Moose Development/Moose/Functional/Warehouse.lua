@@ -77,6 +77,8 @@
 -- @field #boolean safeparking If true, parking spots for aircraft are considered as occupied if e.g. a client aircraft is parked there. Default false.
 -- @field #boolean isunit If true, warehouse is represented by a unit instead of a static.
 -- @field #number lowfuelthresh Low fuel threshold. Triggers the event AssetLowFuel if for any unit fuel goes below this number.
+-- @field #boolean respawnafterdestroyed If true, warehouse is respawned after it was destroyed. Assets are kept.
+-- @field #number respawndelay Delay before respawn in seconds.
 -- @extends Core.Fsm#FSM
 
 --- Have your assets at the right place at the right time - or not!
@@ -1569,6 +1571,8 @@ WAREHOUSE = {
   saveparking   = false,
   isunit        = false,
   lowfuelthresh =  0.15,
+  respawnafterdestroyed=false,
+  respawndelay  =   nil,
 }
 
 --- Item of the warehouse stock table.
@@ -1747,7 +1751,7 @@ _WAREHOUSEDB  = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.9.4"
+WAREHOUSE.version="0.9.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -1910,6 +1914,7 @@ function WAREHOUSE:New(warehouse, alias)
   self:AddTransition("*",               "AirbaseRecaptured", "*")           -- Airbase was re-captured from other coalition.
   self:AddTransition("*",               "AssetDead",         "*")           -- An asset group died.
   self:AddTransition("*",               "Destroyed",         "Destroyed")   -- Warehouse was destroyed. All assets in stock are gone and warehouse is stopped.
+  self:AddTransition("Destroyed",       "Respawn",           "Running")     -- Respawn warehouse after it was destroyed.
 
   ------------------------
   --- Pseudo Functions ---
@@ -1941,6 +1946,22 @@ function WAREHOUSE:New(warehouse, alias)
   -- @function [parent=#WAREHOUSE] __Restart
   -- @param #WAREHOUSE self
   -- @param #number delay Delay in seconds.
+
+  --- Triggers the FSM event "Respawn".
+  -- @function [parent=#WAREHOUSE] Respawn
+  -- @param #WAREHOUSE self
+
+  --- Triggers the FSM event "Respawn" after a delay.
+  -- @function [parent=#WAREHOUSE] __Respawn
+  -- @param #WAREHOUSE self
+  -- @param #number delay Delay in seconds.
+
+  --- On after "Respawn" event user function.
+  -- @function [parent=#WAREHOUSE] OnAfterRespawn
+  -- @param #WAREHOUSE self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
 
   --- Triggers the FSM event "Pause". Pauses the warehouse. Assets can still be added and requests be made. However, requests are not processed.
   -- @function [parent=#WAREHOUSE] Pause
@@ -2532,6 +2553,15 @@ function WAREHOUSE:SetSaveOnMissionEnd(path, filename)
   self.autosave=true
   self.autosavepath=path
   self.autosavefile=filename
+  return self
+end
+
+--- Set respawn after destroy.
+-- @param #WAREHOUSE self
+-- @return #WAREHOUSE self
+function WAREHOUSE:SetRespawnAfterDestroyed(delay)
+  self.respawnafterdestroyed=true
+  self.respawndelay=delay
   return self
 end
 
@@ -3964,7 +3994,7 @@ function WAREHOUSE:onbeforeAddRequest(From, Event, To, warehouse, AssetDescripto
   end
 
   -- Warehouse is destroyed?
-  if self:IsDestroyed() then
+  if self:IsDestroyed() and not self.respawnafterdestroyed then
     self:_ErrorMessage("ERROR: Invalid request. Warehouse is destroyed!", 0)
     okay=false
   end
@@ -4348,9 +4378,9 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
       table.insert(_transportassets,_assetitem)
 
       -- Spawned into the world.
-      _assetitem.spawned=true      
+      _assetitem.spawned=true
       _assetitem.spawngroupname=spawngroup:GetName()
-  
+
       -- Asset spawned FSM function.
       self:__AssetSpawned(1, spawngroup, _assetitem, Request)
     end
@@ -4835,6 +4865,21 @@ function WAREHOUSE:onbeforeChangeCountry(From, Event, To, Country)
   return false
 end
 
+--- Respawn warehouse.
+-- @param #WAREHOUSE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function WAREHOUSE:onafterRespawn(From, Event, To)
+
+  -- Info message.
+  local text=string.format("Respawning warehouse %s.", self.alias)
+  self:_InfoMessage(text)
+
+  -- Respawn warehouse.
+  self.warehouse:ReSpawn()
+
+end
 
 --- On after "ChangeCountry" event. Warehouse is respawned with the specified country. All queued requests are deleted and the owned airbase is reset if the coalition is changed by changing the
 -- country.
@@ -4949,7 +4994,7 @@ function WAREHOUSE:onafterAirbaseRecaptured(From, Event, To, Coalition)
 end
 
 
---- On after "AssetDead" event triggerd when an asset group died.
+--- On after "AssetDead" event triggered when an asset group died.
 -- @param #WAREHOUSE self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -4971,22 +5016,34 @@ end
 function WAREHOUSE:onafterDestroyed(From, Event, To)
 
   -- Message.
-  local text=string.format("Warehouse %s was destroyed! Assets lost %d.", self.alias, #self.stock)
+  local text=string.format("Warehouse %s was destroyed! Assets lost %d. Respawn=%s", self.alias, #self.stock, tostring(self.respawnafterdestroyed))
   self:_InfoMessage(text)
 
-  -- Remove all table entries from waiting queue and stock.
-  for k,_ in pairs(self.queue) do
-    self.queue[k]=nil
-  end
-  for k,_ in pairs(self.stock) do
-    self.stock[k]=nil
-  end
+  if self.respawnafterdestroyed then
 
-  --self.queue=nil
-  --self.queue={}
+    if self.respawndelay then
+      self:Pause()
+      self:__Respawn(self.respawndelay)
+    else
+      self:Respawn()
+    end
 
-  --self.stock=nil
-  --self.stock={}
+  else
+
+    -- Remove all table entries from waiting queue and stock.
+    for k,_ in pairs(self.queue) do
+      self.queue[k]=nil
+    end
+    for k,_ in pairs(self.stock) do
+      self.stock[k]=nil
+    end
+
+    --self.queue=nil
+    --self.queue={}
+
+    --self.stock=nil
+    --self.stock={}
+  end
 
 end
 
@@ -5289,7 +5346,7 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
     if _group then
       _groupset:AddGroup(_group)
       table.insert(_assets, _assetitem)
-      
+
       -- Spawned into the world.
       _assetitem.spawned=true
       _assetitem.spawngroupname=_group:GetName()
@@ -6355,7 +6412,7 @@ function WAREHOUSE:_CheckRequestConsistancy(queue)
     end
 
     -- Is receiving warehouse destroyed?
-    if request.warehouse:IsDestroyed() then
+    if request.warehouse:IsDestroyed() and not self.respawnafterdestroyed then
       self:E(self.wid..string.format("ERROR: INVALID request. Requesting warehouse is destroyed!"))
       valid=false
     end
@@ -7779,7 +7836,7 @@ function WAREHOUSE:_CheckFuel()
         local group=_group --Wrapper.Group#GROUP
 
         if group and group:IsAlive() then
-          
+
           -- Get min fuel of group.
           local fuel=group:GetFuelMin()
 
@@ -7788,11 +7845,11 @@ function WAREHOUSE:_CheckFuel()
 
           -- Check if fuel is below threshold for first time.
           if fuel<self.lowfuelthresh and not qitem.lowfuel then
-          
+
             -- Set low fuel flag.
             self:I(self.wid..string.format("Transport group %s is low on fuel! Min fuel state = %.2f", group:GetName(), fuel))
             qitem.lowfuel=true
-            
+
             -- Trigger low fuel event.
             local asset=self:FindAssetInDB(group)
             self:AssetLowFuel(asset, qitem)
@@ -7817,11 +7874,11 @@ function WAREHOUSE:_CheckFuel()
 
           -- Check if fuel is below threshold for first time.
           if fuel<self.lowfuelthresh and not qitem.lowfuel then
-          
+
             -- Set low fuel flag.
             self:I(self.wid..string.format("Cargo group %s is low on fuel! Min fuel state = %.2f", group:GetName(), fuel))
             qitem.lowfuel=true
-            
+
             -- Trigger low fuel event.
             local asset=self:FindAssetInDB(group)
             self:AssetLowFuel(asset, qitem)

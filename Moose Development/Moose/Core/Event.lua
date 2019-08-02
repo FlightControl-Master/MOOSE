@@ -864,9 +864,9 @@ function EVENT:onEvent( Event )
         if Event.IniDCSGroup and Event.IniDCSGroup:isExist() then
           Event.IniDCSGroupName = Event.IniDCSGroup:getName()
           Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
-          if Event.IniGroup then
+          --if Event.IniGroup then
             Event.IniGroupName = Event.IniDCSGroupName
-          end
+          --end
         end
         Event.IniPlayerName = Event.IniDCSUnit:getPlayerName()
         Event.IniCoalition = Event.IniDCSUnit:getCoalition()
@@ -918,9 +918,9 @@ function EVENT:onEvent( Event )
         if Event.TgtDCSGroup and Event.TgtDCSGroup:isExist() then
           Event.TgtDCSGroupName = Event.TgtDCSGroup:getName()
           Event.TgtGroup = GROUP:FindByName( Event.TgtDCSGroupName )
-          if Event.TgtGroup then
+          --if Event.TgtGroup then
             Event.TgtGroupName = Event.TgtDCSGroupName
-          end
+          --end
         end
         Event.TgtPlayerName = Event.TgtDCSUnit:getPlayerName()
         Event.TgtCoalition = Event.TgtDCSUnit:getCoalition()

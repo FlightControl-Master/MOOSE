@@ -319,7 +319,7 @@ function SPAWN:New( SpawnTemplatePrefix )
     self.SpawnUnControlled = false
     self.SpawnInitKeepUnitNames = false             -- Overwrite unit names by default with group name.
     self.DelayOnOff = false                         -- No intial delay when spawning the first group.
-    self.Grouping = nil                             -- No grouping.
+    self.SpawnGrouping = nil                        -- No grouping.
     self.SpawnInitLivery = nil                      -- No special livery.
     self.SpawnInitSkill = nil                       -- No special skill.
     self.SpawnInitFreq  = nil                       -- No special frequency.
@@ -371,7 +371,7 @@ function SPAWN:NewWithAlias( SpawnTemplatePrefix, SpawnAliasPrefix )
     self.SpawnUnControlled = false
     self.SpawnInitKeepUnitNames = false             -- Overwrite unit names by default with group name.
     self.DelayOnOff = false                         -- No intial delay when spawning the first group.
-    self.Grouping = nil                             -- No grouping.
+    self.SpawnGrouping = nil                        -- No grouping.
     self.SpawnInitLivery = nil                      -- No special livery.
     self.SpawnInitSkill = nil                       -- No special skill.
     self.SpawnInitFreq  = nil                       -- No special frequency.
@@ -549,7 +549,7 @@ end
 
 --- Sets the country of the spawn group. Note that the country determins the coalition of the group depending on which country is defined to be on which side for each specific mission!
 -- @param #SPAWN self 
--- @param #DCS.country Country Country id as number or enumerator:
+-- @param #number Country Country id as number or enumerator:
 -- 
 --   * @{DCS#country.id.RUSSIA}
 --   * @{DCS#county.id.USA}
@@ -1438,7 +1438,7 @@ end
 -- @param Wrapper.Airbase#AIRBASE.TerminalType TerminalType (optional) The terminal type the aircraft should be spawned at. See @{Wrapper.Airbase#AIRBASE.TerminalType}.
 -- @param #boolean EmergencyAirSpawn (optional) If true (default), groups are spawned in air if there is no parking spot at the airbase. If false, nothing is spawned if no parking spot is available.
 -- @param #table Parkingdata (optional) Table holding the coordinates and terminal ids for all units of the group. Spawning will be forced to happen at exactily these spots!
--- @return Wrapper.Group#GROUP that was spawned or nil when nothing was spawned.
+-- @return Wrapper.Group#GROUP The group that was spawned or nil when nothing was spawned.
 -- @usage
 --   Spawn_Plane = SPAWN:New( "Plane" )
 --   Spawn_Plane:SpawnAtAirbase( AIRBASE:FindByName( AIRBASE.Caucasus.Krymsk ), SPAWN.Takeoff.Cold )
@@ -1498,11 +1498,7 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
       local TemplateGroup = GROUP:FindByName(self.SpawnTemplatePrefix)
       local TemplateUnit=TemplateGroup:GetUnit(1)
       
-      --local ishelo=TemplateUnit:HasAttribute("Helicopters")
-      --local isbomber=TemplateUnit:HasAttribute("Bombers")
-      --local istransport=TemplateUnit:HasAttribute("Transports")
-      --local isfighter=TemplateUnit:HasAttribute("Battleplanes")
-      
+      -- General category of spawned group.
       local group=TemplateGroup
       local istransport=group:HasAttribute("Transports") and group:HasAttribute("Planes")
       local isawacs=group:HasAttribute("AWACS")
@@ -1577,8 +1573,17 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
         
         -- Set terminal type.
         local termtype=TerminalType
-        if spawnonrunway then
-          termtype=AIRBASE.TerminalType.Runway
+        if spawnonrunway then          
+          if spawnonship then
+            -- Looks like there are no runway spawn spots on the stennis!
+            if ishelo then
+              termtype=AIRBASE.TerminalType.HelicopterUsable
+            else
+              termtype=AIRBASE.TerminalType.OpenMedOrBig
+            end
+          else
+            termtype=AIRBASE.TerminalType.Runway
+          end          
         end
         
         -- Scan options. Might make that input somehow.
@@ -1647,9 +1652,9 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
       
         -- Get parking data.
         local parkingdata=SpawnAirbase:GetParkingSpotsTable(termtype)
-        self:T2(string.format("Parking at %s, terminal type %s:", SpawnAirbase:GetName(), tostring(termtype)))
+        self:T(string.format("Parking at %s, terminal type %s:", SpawnAirbase:GetName(), tostring(termtype)))
         for _,_spot in pairs(parkingdata) do        
-          self:T2(string.format("%s, Termin Index = %3d, Term Type = %03d, Free = %5s, TOAC = %5s, Term ID0 = %3d, Dist2Rwy = %4d", 
+          self:T(string.format("%s, Termin Index = %3d, Term Type = %03d, Free = %5s, TOAC = %5s, Term ID0 = %3d, Dist2Rwy = %4d", 
           SpawnAirbase:GetName(), _spot.TerminalID, _spot.TerminalType,tostring(_spot.Free),tostring(_spot.TOAC),_spot.TerminalID0,_spot.DistToRwy))
         end
         self:T(string.format("%s at %s: free parking spots = %d - number of units = %d", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), nfree, nunits))
@@ -1802,8 +1807,8 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
           end
           
           -- Debug output.
-          self:T2(string.format("Group %s unit number %d: Parking    = %s",self.SpawnTemplatePrefix, UnitID, tostring(UnitTemplate.parking)))
-          self:T2(string.format("Group %s unit number %d: Parking ID = %s",self.SpawnTemplatePrefix, UnitID, tostring(UnitTemplate.parking_id)))        
+          self:T(string.format("Group %s unit number %d: Parking    = %s",self.SpawnTemplatePrefix, UnitID, tostring(UnitTemplate.parking)))
+          self:T(string.format("Group %s unit number %d: Parking ID = %s",self.SpawnTemplatePrefix, UnitID, tostring(UnitTemplate.parking_id)))        
           self:T2('After Translation SpawnTemplate.units['..UnitID..'].x = '..SpawnTemplate.units[UnitID].x..', SpawnTemplate.units['..UnitID..'].y = '..SpawnTemplate.units[UnitID].y)
         end
       end
@@ -1816,7 +1821,7 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
       SpawnTemplate.x = PointVec3.x
       SpawnTemplate.y = PointVec3.z
       
-      SpawnTemplate.uncontrolled = nil
+      SpawnTemplate.uncontrolled = self.SpawnUnControlled
       
       -- Spawn group.
       local GroupSpawned = self:SpawnWithIndex( self.SpawnIndex )
@@ -1840,6 +1845,66 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
   return nil
 end
 
+--- Spawn a group on an @{Wrapper.Airbase} at a specific parking spot. 
+-- @param #SPAWN self
+-- @param Wrapper.Airbase#AIRBASE Airbase The @{Wrapper.Airbase} where to spawn the group.
+-- @param #table Spots Table of parking spot IDs. Note that these in general are different from the numbering in the mission editor!
+-- @param #SPAWN.Takeoff Takeoff (Optional) Takeoff type, i.e. either SPAWN.Takeoff.Cold or SPAWN.Takeoff.Hot. Default is Hot.
+-- @return Wrapper.Group#GROUP The group that was spawned or nil when nothing was spawned.
+function SPAWN:SpawnAtParkingSpot(Airbase, Spots, Takeoff) -- R2.5
+  self:F({Airbase=Airbase, Spots=Spots, Takeoff=Takeoff})
+
+  -- Ensure that Spots parameter is a table.
+  if type(Spots)~="table" then
+    Spots={Spots}
+  end
+
+  -- Get template group.
+  local group=GROUP:FindByName(self.SpawnTemplatePrefix)
+  
+  -- Get number of units in group.
+  local nunits=self.SpawnGrouping or #group:GetUnits()
+
+  -- Quick check.
+  if nunits then
+        
+    -- Check that number of provided parking spots is large enough.
+    if #Spots<nunits then
+      self:E("ERROR: Number of provided parking spots is less than number of units in group!")
+      return nil
+    end
+    
+    -- Table of parking data.
+    local Parkingdata={}
+    
+    -- Loop over provided Terminal IDs.
+    for _,TerminalID in pairs(Spots) do
+    
+      -- Get parking spot data.
+      local spot=Airbase:GetParkingSpotData(TerminalID)
+      
+      self:T2({spot=spot})
+      
+      if spot and spot.Free then
+        self:T(string.format("Adding parking spot ID=%d TermType=%d", spot.TerminalID, spot.TerminalType))
+        table.insert(Parkingdata, spot)
+      end
+    
+    end
+    
+    if #Parkingdata>=nunits then
+      return self:SpawnAtAirbase(Airbase, Takeoff, nil, nil, nil, Parkingdata)
+    else
+      self:E("ERROR: Could not find enough free parking spots!")
+    end
+      
+      
+  else
+    self:E("ERROR: Could not get number of units in group!")
+  end
+
+  return nil
+end
 
 --- Will park a group at an @{Wrapper.Airbase}. 
 -- 
@@ -2215,10 +2280,11 @@ function SPAWN:ParkAtAirbase( SpawnAirbase, TerminalType, Parkingdata ) -- R2.2,
   self:ParkAircraft( SpawnAirbase, TerminalType, Parkingdata, 1 )
 
   for SpawnIndex = 2, self.SpawnMaxGroups do
-    self:ScheduleOnce( SpawnIndex * 0.1, SPAWN.ParkAircraft, self, SpawnAirbase, TerminalType, Parkingdata, SpawnIndex )
+    self:ParkAircraft( SpawnAirbase, TerminalType, Parkingdata, SpawnIndex )
+    --self:ScheduleOnce( SpawnIndex * 0.1, SPAWN.ParkAircraft, self, SpawnAirbase, TerminalType, Parkingdata, SpawnIndex )
   end
   
-  self:SetSpawnIndex()
+  self:SetSpawnIndex( 0 )
   
   return nil
 end
@@ -3023,6 +3089,9 @@ function SPAWN:_TranslateRotate( SpawnIndex, SpawnRootX, SpawnRootY, SpawnX, Spa
 end
 
 --- Get the next index of the groups to be spawned. This method is complicated, as it is used at several spaces.
+-- @param #SPAWN self
+-- @param #number SpawnIndex Spawn index.
+-- @return #number self.SpawnIndex
 function SPAWN:_GetSpawnIndex( SpawnIndex )
 	self:F2( { self.SpawnTemplatePrefix, SpawnIndex, self.SpawnMaxGroups, self.SpawnMaxUnitsAlive, self.AliveUnits, #self.SpawnTemplate.units } )
   

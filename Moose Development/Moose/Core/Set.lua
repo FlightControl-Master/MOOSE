@@ -558,6 +558,10 @@ do -- SET_BASE
   --- Iterate the SET_BASE and derived classes and call an iterator function for the given SET_BASE, providing the Object for each element within the set and optional parameters.
   -- @param #SET_BASE self
   -- @param #function IteratorFunction The function that will be called.
+  -- @param #table arg Arguments of the IteratorFunction.
+  -- @param #SET_BASE Set (Optional) The set to use. Default self:GetSet().
+  -- @param #function Function (Optional) A function returning a #boolean true/false. Only if true, the IteratorFunction is called.
+  -- @param #table FunctionArguments (Optional) Function arguments.
   -- @return #SET_BASE self
   function SET_BASE:ForEach( IteratorFunction, arg, Set, Function, FunctionArguments )
     self:F3( arg )
@@ -571,7 +575,7 @@ do -- SET_BASE
         local Object = ObjectData
           self:T3( Object )
           if Function then
-            if Function( unpack( FunctionArguments ), Object ) == true then
+            if Function( unpack( FunctionArguments or {} ), Object ) == true then
               IteratorFunction( Object, unpack( arg ) )
             end
           else

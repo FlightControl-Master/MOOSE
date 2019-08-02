@@ -311,7 +311,7 @@ AIRBASE.PersianGulf = {
 -- @field #number OpenMed 72: Open/Shelter air airplane only.
 -- @field #number OpenBig 104: Open air spawn points. Generally larger but does not guarantee large aircraft are capable of spawning there.
 -- @field #number OpenMedOrBig 176: Combines OpenMed and OpenBig spots.
--- @field #number HelicopterUnsable 216: Combines HelicopterOnly, OpenMed and OpenBig.
+-- @field #number HelicopterUsable 216: Combines HelicopterOnly, OpenMed and OpenBig.
 -- @field #number FighterAircraft 244: Combines Shelter. OpenMed and OpenBig spots. So effectively all spots usable by fixed wing aircraft.
 AIRBASE.TerminalType = {
   Runway=16,
@@ -553,14 +553,14 @@ function AIRBASE:GetParkingSpotsTable(termtype)
   local spots={}
   for _,_spot in pairs(parkingdata) do
     if AIRBASE._CheckTerminalType(_spot.Term_Type, termtype) then
-      self:I({_spot=_spot})
+      self:T2({_spot=_spot})
       local _free=_isfree(_spot)
       local _coord=COORDINATE:NewFromVec3(_spot.vTerminalPos)
       table.insert(spots, {Coordinate=_coord, TerminalID=_spot.Term_Index, TerminalType=_spot.Term_Type, TOAC=_spot.TO_AC, Free=_free, TerminalID0=_spot.Term_Index_0, DistToRwy=_spot.fDistToRW})
     end
   end
   
-  self:I({ spots = spots } )
+  self:T2({ spots = spots } )
   
   return spots
 end
@@ -578,7 +578,7 @@ function AIRBASE:GetFreeParkingSpotsTable(termtype, allowTOAC)
   -- Put coordinates of free spots into table.
   local freespots={}
   for _,_spot in pairs(parkingfree) do
-    if AIRBASE._CheckTerminalType(_spot.Term_Type, termtype) then
+    if AIRBASE._CheckTerminalType(_spot.Term_Type, termtype) and _spot.Term_Index>0 then
       if (allowTOAC and allowTOAC==true) or _spot.TO_AC==false then
         local _coord=COORDINATE:NewFromVec3(_spot.vTerminalPos)
         table.insert(freespots, {Coordinate=_coord, TerminalID=_spot.Term_Index, TerminalType=_spot.Term_Type, TOAC=_spot.TO_AC, Free=true, TerminalID0=_spot.Term_Index_0, DistToRwy=_spot.fDistToRW})
@@ -587,6 +587,31 @@ function AIRBASE:GetFreeParkingSpotsTable(termtype, allowTOAC)
   end
   
   return freespots
+end
+
+--- Get a table containing the coordinates, terminal index and terminal type of free parking spots at an airbase.
+-- @param #AIRBASE self
+-- @param #number TerminalID The terminal ID of the parking spot.
+-- @return #AIRBASE.ParkingSpot Table free parking spots. Table has the elements ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
+function AIRBASE:GetParkingSpotData(TerminalID)
+  self:F({TerminalID=TerminalID})
+
+  -- Get parking data.
+  local parkingdata=self:GetParkingSpotsTable()
+  
+  -- Debug output.
+  self:T2({parkingdata=parkingdata})
+  
+  for _,_spot in pairs(parkingdata) do
+    local spot=_spot --#AIRBASE.ParkingSpot
+    self:E({TerminalID=spot.TerminalID,TerminalType=spot.TerminalType})
+    if TerminalID==spot.TerminalID then
+      return spot
+    end
+  end
+  
+  self:E("ERROR: Could not find spot with Terminal ID="..tostring(TerminalID))
+  return nil
 end
 
 --- Place markers of parking spots on the F10 map.
@@ -711,7 +736,7 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
     local _spot=parkingspot.Coordinate   -- Core.Point#COORDINATE
     local _termid=parkingspot.TerminalID
     
-    self:I({_termid=_termid})
+    self:T2({_termid=_termid})
     
     if AIRBASE._CheckTerminalType(parkingspot.TerminalType, terminaltype) then
     
@@ -893,7 +918,7 @@ function AIRBASE:CheckOnRunWay(group, radius, despawn)
 end
 
 --- Get category of airbase.
--- @param #WAREHOUSE self
+-- @param #AIRBASE self
 -- @return #number Category of airbase from GetDesc().category.
 function AIRBASE:GetAirbaseCategory()
   return self:GetDesc().category

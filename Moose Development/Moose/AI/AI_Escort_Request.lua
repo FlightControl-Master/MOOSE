@@ -206,7 +206,7 @@ AI_ESCORT_REQUEST = {
 -- Escort:__Start( 5 )
 function AI_ESCORT_REQUEST:New( EscortUnit, EscortSpawn, EscortAirbase, EscortName, EscortBriefing )
   
-  self.EscortGroupSet = SET_GROUP:New()
+  self.EscortGroupSet = SET_GROUP:New():FilterDeads():FilterCrashes()
   self.EscortSpawn = EscortSpawn
   self.EscortAirbase = EscortAirbase
 
@@ -227,12 +227,12 @@ function AI_ESCORT_REQUEST:SpawnEscort()
 
   local EscortGroup = self.EscortSpawn:SpawnAtAirbase( self.EscortAirbase, SPAWN.Takeoff.Hot )
 
-  EscortGroup:OptionROTVertical()
-  EscortGroup:OptionROEHoldFire()
-  
   self:ScheduleOnce( 0.1,
     function( EscortGroup )
 
+      EscortGroup:OptionROTVertical()
+      EscortGroup:OptionROEHoldFire()
+  
       self.EscortGroupSet:AddGroup( EscortGroup )
 
       local LeaderEscort = self.EscortGroupSet:GetFirst() -- Wrapper.Group#GROUP
@@ -269,6 +269,7 @@ function AI_ESCORT_REQUEST:onafterStart( EscortGroupSet )
   self:F()
 
   if not self.MenuRequestEscort then
+    self.MainMenu = MENU_GROUP:New( self.PlayerGroup, self.EscortName )
     self.MenuRequestEscort = MENU_GROUP_COMMAND:New( self.LeaderGroup, "Request new escort ", self.MainMenu, 
       function()
         self:SpawnEscort()

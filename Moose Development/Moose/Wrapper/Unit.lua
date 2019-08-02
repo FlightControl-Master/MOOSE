@@ -612,8 +612,7 @@ end
 
 --- Returns the unit's health. Dead units has health <= 1.0.
 -- @param #UNIT self
--- @return #number The Unit's health value.
--- @return #nil The DCS Unit is not existing or alive.  
+-- @return #number The Unit's health value or -1 if unit does not exist any more.
 function UNIT:GetLife()
   self:F2( self.UnitName )
 
@@ -629,8 +628,7 @@ end
 
 --- Returns the Unit's initial health.
 -- @param #UNIT self
--- @return #number The Unit's initial health value.
--- @return #nil The DCS Unit is not existing or alive.  
+-- @return #number The Unit's initial health value or 0 if unit does not exist any more.  
 function UNIT:GetLife0()
   self:F2( self.UnitName )
 
@@ -642,6 +640,34 @@ function UNIT:GetLife0()
   end
   
   return 0
+end
+
+--- Returns the unit's relative health.
+-- @param #UNIT self
+-- @return #number The Unit's relative health value, i.e. a number in [0,1] or -1 if unit does not exist any more.
+function UNIT:GetLifeRelative()
+  self:F2(self.UnitName)
+
+  if self and self:IsAlive() then
+    local life0=self:GetLife0()
+    local lifeN=self:GetLife()
+    return lifeN/life0
+  end
+  
+  return -1
+end
+
+--- Returns the unit's relative damage, i.e. 1-life.
+-- @param #UNIT self
+-- @return #number The Unit's relative health value, i.e. a number in [0,1] or 1 if unit does not exist any more.
+function UNIT:GetDamageRelative()
+  self:F2(self.UnitName)
+
+  if self and self:IsAlive() then
+    return 1-self:GetLifeRelative()
+  end
+  
+  return 1
 end
 
 --- Returns the category name of the #UNIT.
