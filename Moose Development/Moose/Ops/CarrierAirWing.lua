@@ -57,6 +57,13 @@ CVW = {
 
 --- Squadron tasks.
 -- @type CVW.Task
+-- @param #string INTERCEPT Intercept task.
+-- @param #string CAP Combat Air Patrol task.s
+-- @param #string BAI Battlefield Air Interdiction task.
+-- @param #string SEAD Suppression/destruction of enemy air defences.
+-- @param #string STRIKE Strike task.
+-- @param #string AWACS AWACS task.
+-- @param #string TANKER Tanker task.
 CVW.Task={
   INTERCEPT="Intercept",
   CAP="CAP",
@@ -70,7 +77,7 @@ CVW.Task={
 
 --- FlightControl class version.
 -- @field #string version
-CVW.version="0.0.3"
+CVW.version="0.0.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -110,8 +117,8 @@ function CVW:New(carriername, squadronname)
   self:AddTransition("*",             "AirwingStatus",    "*")           -- CVW status update.
   self:AddTransition("*",             "RequestCAP",       "*")           -- Request CAP flight.
   self:AddTransition("*",             "RequestIntercept", "*")           -- Request Intercept.
-  self:AddTransition("*",             "RequestCAS",       "*")           -- Request Intercept.
-  self:AddTransition("*",             "RequestSEAD",      "*")           -- Request Intercept.
+  self:AddTransition("*",             "RequestCAS",       "*")           -- Request CAS.
+  self:AddTransition("*",             "RequestSEAD",      "*")           -- Request SEAD.
 
   ------------------------
   --- Pseudo Functions ---
@@ -152,7 +159,7 @@ function CVW:New(carriername, squadronname)
   -- @param #number leg Race track length.
   -- @param #number heading Heading in degrees.
   -- @param #number speed Speed in knots.
-  -- @param #CVW.Squadon squadron Explicitly request a specific squadron.
+  -- @param #CVW.Squadron squadron Explicitly request a specific squadron.
 
 
   -- Debug trace.
@@ -225,8 +232,8 @@ end
 
 --- Get squadron by name
 -- @param #CVW self
--- @param #string name Name of the squadron, e.g. VFA-37.
--- @return #CVW self
+-- @param #string name Name of the squadron, e.g. "VFA-37".
+-- @return #CVW self or nil.
 function CVW:GetSquadron(name)
 
   for _,_squadron in pairs(self.squadrons) do
@@ -242,7 +249,7 @@ end
 -- Status
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Start CVW FSM. Handle events.
+--- Start CVW FSM.
 -- @param #CVW self
 function CVW:onafterStart(From, Event, To)
 
@@ -291,7 +298,7 @@ end
 -- @param #number leg Race track length.
 -- @param #number heading Heading in degrees.
 -- @param #number speed Speed in knots.
--- @param #CVW.Squadon squadron Explicitly request a specific squadron.
+-- @param #CVW.Squadron squadron Explicitly request a specific squadron.
 function CVW:onafterRequestCAP(From, Event, To, coordinate, altitude, leg, heading, speed, squadron)
 
   local n=self:GetNumberOfAssets(WAREHOUSE.Descriptor.ASSIGNMENT, squadron.name, false)
@@ -314,6 +321,9 @@ function CVW:onafterRequestCAP(From, Event, To, coordinate, altitude, leg, headi
         
       end
     end
+    
+  else
+    MESSAGE:New("No CAP planes currently available", 5, "CVW"):ToCoalition(self:GetCoalition())
   end
   
 end
@@ -324,7 +334,7 @@ end
 -- @param Core.Point#COORDINATE capcoord Coordinate of CAP.
 -- @param #number alt Altitude in feet. Default 20000 ft.
 -- @param #number leg Length of race track pattern leg. Default 15 NM.
--- 
+-- @param #number heading Heading of race track in degrees. Default 180° i.e. from North to South.
 -- @param #number speed Speed in knots.
 function CVW:LaunchCAP(group, capcoord, alt, leg, heading, speed)
 
@@ -351,18 +361,14 @@ end
 
 
 
---- Request CAP.
+--- Request Intercept.
 -- @param #CVW self
 -- @param #string From
 -- @param #string Event
 -- @param #string To
--- @param Core.Point#COORDINATE coordinate
--- @param #number altitude Altitude
--- @param #number leg Race track length.
--- @param #number heading Heading in degrees.
--- @param #number speed Speed in knots.
--- @param #CVW.Squadon squadron Explicitly request a specific squadron.
-function CVW:onafterRequestIntercept(From, Event, To, coordinate, altitude, leg, heading, speed, squadron)
+-- @param Wrapper.Group#GROUP bandits Group of bandits to intercept.
+-- @param #CVW.Squadron squadron Explicitly request a specific squadron.
+function CVW:onafterRequestIntercept(From, Event, To, bandits, squadron)
 
   local n=self:GetNumberOfAssets(WAREHOUSE.Descriptor.ASSIGNMENT, squadron.name, false)
 
@@ -379,7 +385,7 @@ function CVW:onafterRequestIntercept(From, Event, To, coordinate, altitude, leg,
         for _,_group in pairs(groupset:GetSet()) do
           local group=_group --Wrapper.Group#GROUP
           
-          self:LaunchCAP(group, coordinate, altitude, leg, speed, heading)
+          self:LaunchIntercept(group)
         end
         
       end
@@ -393,18 +399,19 @@ end
 
 --- Launch a flight group to intercept an intruder.
 -- @param #CVW self
--- @param Wrapper.Group#GROUP group Group to intercept.
-function CVW:LaunchIntercept(group)
+-- @param Wrapper.Group#GROUP group Interceptor flight group.
+-- @param Wrapper.Group#GROUP bandits Bandit group.
+function CVW:LaunchIntercept(group, bandit)
 
   -- Task orbit.
   local tasks={}
   
-  for _,unit in pairs(group:GetUnits()) do
+  for _,unit in pairs(bandit:GetUnits()) do
     tasks[#tasks+1]=group:TaskAttackUnit(unit)
   end
   
   local speed=group:GetSpeedMax()
-  local altitude=group:GetAltitude()
+  local altitude=bandit:GetAltitude()
   
   -- Create waypoints.
   local wp={}
@@ -450,15 +457,15 @@ function CVW:_SetMenuCoalition()
 
   if self.menusingle then
     -- F10/Skipper/...
-    if not menu.Skipper then
-      menu.Skipper=MENU_COALITION:New(Coalition, "CVW")
+    if not menu.CVW then
+      menu.CVW=MENU_COALITION:New(Coalition, "CVW")
     end
   else
     -- F10/Skipper/<Carrier Alias>/...
     if not menu.Root then
       menu.Root=MENU_COALITION:New(Coalition, "CVW")
     end
-    menu.Skipper=MENU_COALITION:New(Coalition, self.alias, menu.Root)
+    menu.CVW=MENU_COALITION:New(Coalition, self.alias, menu.Root)
   end
 
   -------------------
@@ -466,11 +473,45 @@ function CVW:_SetMenuCoalition()
   -------------------
 
   menu.Squadron={}
-  menu.Squadron.Main= MENU_COALITION:New(Coalition, "Squadrons", menu.Skipper)
+  menu.Squadron.Main= MENU_COALITION:New(Coalition, "Squadrons", menu.CVW)
 
-  menu.Warehouse=MENU_COALITION:New(Coalition, "Warehouse", menu.Skipper)
-  menu.Warehouse_Reports = MENU_COALITION_COMMAND:New(Coalition, "Reports On/Off", menu.Warehouse, self.WarehouseReportsToggle, self)
-  menu.Warehouse_Assets  = MENU_COALITION_COMMAND:New(Coalition, "Report Assets",  menu.Warehouse, self.ReportWarehouseStock, self)
+  menu.Warehouse={}
+  menu.Warehouse.Main    = MENU_COALITION:New(Coalition, "Warehouse", menu.CVW)
+  menu.Warehouse.Reports = MENU_COALITION_COMMAND:New(Coalition, "Reports On/Off", menu.Warehouse.Main, self.WarehouseReportsToggle, self)
+  menu.Warehouse.Assets  = MENU_COALITION_COMMAND:New(Coalition, "Report Assets",  menu.Warehouse.Main, self.ReportWarehouseStock, self)
+  
+  menu.ReportSquadrons = MENU_COALITION_COMMAND:New(Coalition, "Report Squadrons",  menu.CVW, self.ReportSquadrons, self)
+
+end
+
+--- Report squadron status.
+-- @param #CVW self
+function CVW:ReportSquadrons()
+
+  local text="Squadron Report:"
+  for i,_squadron in pairs(self.squadrons) do
+    local squadron=_squadron --#CVW.Squadron
+    
+    local name=squadron.name
+    
+    local nspawned=0
+    local nstock=0
+    for _,_asset in pairs(squadron.assets) do
+      local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+      
+      if asset.spawned then
+        nspawned=nspawned+asset.nunits
+      else
+        nstock=nstock+asset.nunits
+      end
+      
+    end
+    
+    text=string.format("\n%s: AC on duty=%d, in stock=%d", name, nspawned, nstock)
+    
+  end
+  
+  MESSAGE:New(text, 10, "CVW", true):ToCoalition(self:GetCoalition())
 
 end
 
@@ -486,7 +527,7 @@ function CVW:_AddSquadonMenu(squadron)
 
   local menu=MENU_COALITION:New(Coalition, squadron.name, root)
 
-  MENU_COALITION_COMMAND:New(Coalition, "Report",    menu, self._Report, self, squadron)
+  MENU_COALITION_COMMAND:New(Coalition, "Report",    menu, self._ReportSq, self, squadron)
   MENU_COALITION_COMMAND:New(Coalition, "Launch CAP", menu, self._LaunchCAP, self, squadron)
 
   -- Set menu.
@@ -494,6 +535,17 @@ function CVW:_AddSquadonMenu(squadron)
 
 end
 
+
+--- Report squadron status.
+-- @param #CVW self
+-- @param 
+function CVW:_ReportSq(squadron)
+
+  for _,_asset in pairs(squadron.assets) do
+    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+    
+  end
+end
 
 --- Warehouse reports on/off.
 -- @param #CVW self
@@ -508,53 +560,6 @@ end
 function CVW:ReportWarehouseStock()
   local text=self:_GetStockAssetsText(false)
   MESSAGE:New(text, 10, "CVW", true):ToCoalition(self:GetCoalition())
-end
-
-
-
-
-
-
---- Sort intruders table.
--- @param #CVW self
-function CVW:_SortIntruders()
-
-  -- Sort potential section members wrt to distance to lead.
-  local function _sort(_a,_b)
-    local a=_a --#CVW.Intruder
-    local b=_b --#CVW.Intruder
-    return a.threadlevel>b.threadlevel
-  end
-
-  table.sort(self.intruders, _sort)
-end
-
---- Add sub menu for this intruder.
--- @param #CVW self
--- @param #CVW.Intruder intruder The intruder data.
--- @param #boolean removed If true, an intruder was removed. If false or nil, a new intruder was added.
-function CVW:_UpdateIntruderMenu()
-
-  for _,_intruder in ipairs(self.intruders) do
-    local intruder=_intruder --#CVW.Intruder
-    self:_AddIntruderMenu(intruder)
-  end
-
-end
-
---- Remove sub menu for this intruder.
--- @param #CVW self
--- @param #CVW.Intruder intruder The intruder data.
-function CVW:_RemoveIntruderMenu(intruder)
-
-  if intruder.menu then
-    local menu=intruder.menu --Core.Menu#MENU_COALITION
-
-    menu:Remove()
-
-    intruder.menu=nil
-  end
-
 end
 
 

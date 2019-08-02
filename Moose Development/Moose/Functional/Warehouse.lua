@@ -1592,6 +1592,8 @@ WAREHOUSE = {
 -- @field DCS#AI.Skill skill Skill of AI unit.
 -- @field #string livery Livery of the asset.
 -- @field #string assignment Assignment of the asset. This could, e.g., be used in the @{#WAREHOUSE.OnAfterNewAsset) function.
+-- @field #boolean spawned If true, asset was spawned into the cruel world. If false, it is still in stock.
+-- @field #string spawngroupname Name of the spawned group.
 
 --- Item of the warehouse queue table.
 -- @type WAREHOUSE.Queueitem
@@ -3672,6 +3674,8 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
       if asset~=nil then
         self:_DebugMessage(string.format("Warehouse %s: Adding KNOWN asset uid=%d with attribute=%s to stock.", self.alias, asset.uid, asset.attribute), 5)
         table.insert(self.stock, asset)
+        asset.spawned=false
+        asset.spawngroupname=nil
         self:NewAsset(asset, assignment or "")
       else
         self:_ErrorMessage(string.format("ERROR: Known asset could not be found in global warehouse db!"), 0)
@@ -4343,6 +4347,10 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
       -- Add transport assets.
       table.insert(_transportassets,_assetitem)
 
+      -- Spawned into the world.
+      _assetitem.spawned=true      
+      _assetitem.spawngroupname=spawngroup:GetName()
+  
       -- Asset spawned FSM function.
       self:__AssetSpawned(1, spawngroup, _assetitem, Request)
     end
@@ -5281,6 +5289,10 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
     if _group then
       _groupset:AddGroup(_group)
       table.insert(_assets, _assetitem)
+      
+      -- Spawned into the world.
+      _assetitem.spawned=true
+      _assetitem.spawngroupname=_group:GetName()
 
       -- Call FSM function.
       self:__AssetSpawned(1,_group,_assetitem, Request)
