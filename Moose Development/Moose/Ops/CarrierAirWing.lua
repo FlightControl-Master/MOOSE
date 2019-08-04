@@ -77,7 +77,7 @@ CVW.Task={
 
 --- FlightControl class version.
 -- @field #string version
-CVW.version="0.0.4"
+CVW.version="0.0.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -219,13 +219,18 @@ end
 -- @return #CVW self
 function CVW:AddFlightToSquadron(squadron, flightgroup, ngroups)
 
-  self:AddAsset(flightgroup, ngroups, nil, nil, nil, nil, nil, {squadron.livery}, squadron.name)
+  local text=string.format("FF Adding asset %s to squadron %s", flightgroup:GetName(), squadron.name)
+  env.info(text)
 
   function self:OnAfterNewAsset(From, Event, To, asset, assignment)
+    local text=string.format("FF assignment=%s, squadron=%s", assignment, squadron.name)
+    env.info(text)
     if assignment==squadron.name then
       table.insert(squadron.assets, asset)
     end
   end
+
+  self:AddAsset(flightgroup, ngroups, nil, nil, nil, nil, nil, {squadron.livery}, squadron.name)
 
   return self
 end
@@ -489,6 +494,7 @@ end
 function CVW:ReportSquadrons()
 
   local text="Squadron Report:"
+  
   for i,_squadron in pairs(self.squadrons) do
     local squadron=_squadron --#CVW.Squadron
     
@@ -498,11 +504,14 @@ function CVW:ReportSquadrons()
     local nstock=0
     for _,_asset in pairs(squadron.assets) do
       local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+      --env.info(string.format("Asset name=%s", asset.spawngroupname))
+      
+      local n=asset.nunits
       
       if asset.spawned then
-        nspawned=nspawned+asset.nunits
+        nspawned=nspawned+n
       else
-        nstock=nstock+asset.nunits
+        nstock=nstock+n
       end
       
     end
@@ -511,6 +520,7 @@ function CVW:ReportSquadrons()
     
   end
   
+  self:I(self.sid..text)
   MESSAGE:New(text, 10, "CVW", true):ToCoalition(self:GetCoalition())
 
 end
@@ -538,12 +548,13 @@ end
 
 --- Report squadron status.
 -- @param #CVW self
--- @param 
+-- @param #CVW.Squadron squadron The squadron object.
 function CVW:_ReportSq(squadron)
 
-  for _,_asset in pairs(squadron.assets) do
+  local text=string.format("%s: %s assets:", squadron.name, tostring(squadron.categoryname))
+  for i,_asset in pairs(squadron.assets) do
     local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
-    
+    text=text..string.format("%d.) ")
   end
 end
 
