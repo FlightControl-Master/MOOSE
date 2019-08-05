@@ -90,14 +90,14 @@ SWAPR = {
 
 --- Class version.
 -- @field #string version
-SWAPR.version="0.0.1"
+SWAPR.version="0.0.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Check for clients on ships ==> get airdrome id from first route point.
--- TODO: Check that harrier and helo clients are not spawned in shelters ==> get parking spot type for these units in _Prepare()
+-- DONE: Check for clients on ships ==> get airdrome id from first route point.
+-- DONE: Check that harrier and helo clients are not spawned in shelters ==> get parking spot type for these units in _Prepare()
 -- TODO: Check what happens if statics are destroyed.
 -- TODO: Check what happens if clients eject, crash or are shot down.
 -- TODO: Check that parking spot is not blocked by other aircraft or statics when spawning a static replacement.
@@ -207,7 +207,7 @@ function SWAPR:onEvent(Event)
   
   if Unit.getByName(Event.initiator:getName()) == nil then
     self:T3("Skipping onEvent. Initiator unit name unknown.")
-    --return true
+    return true
   end
 
   -- Get unit name and category.
@@ -219,7 +219,7 @@ function SWAPR:onEvent(Event)
   
   -- This is not an event involving a client in the defined set.
   if not client then
-    env.info("FF event not associated with client aircraft!")
+    self:T3(self.lid.."Event not associated with client aircraft!")
     return
   end
 
@@ -239,7 +239,7 @@ function SWAPR:onEvent(Event)
       local IniGroupName = Event.initiator:getGroup():getName()
     
       -- Debug info.
-      env.info(string.format("FF Event birth for unit %s of group %s", tostring(IniUnitName), tostring(IniGroupName)))
+      self:T(self.lid..string.format("Event birth of unit %s of group %s", tostring(IniUnitName), tostring(IniGroupName)))
 
       -- Get unit.
       local unit=UNIT:FindByName(IniUnitName)
@@ -261,6 +261,19 @@ function SWAPR:onEvent(Event)
           local coord=unit:GetCoordinate()
           local actype=unit:GetTypeName()
           local livery=self:_GetLiveryFromTemplate(IniUnitName)
+          local airbase=self:_GetAirbaseFromTemplate(IniUnitName)
+          
+          -- FARPS suck!
+          if airbase:GetAirbaseCategory()==Airbase.Category.HELIPAD then
+            local parkingid=self:_GetParkingFromTemplate(IniUnitName)
+            self:T2(self.lid..string.format("FARP parking id=%s", tostring(parkingid)))
+            if parkingid then
+              local spot=airbase:GetParkingSpotData(parkingid)
+              coord=spot.Coordinate
+              coord.z=coord.z+5
+              coord.x=coord.x+5
+            end
+          end
           
           -- Add static template to table.
           local statictemplate=self:_AddStaticTemplate(IniUnitName, actype, coord.x, coord.z, heading, unit:GetCountry(), livery)
@@ -272,20 +285,20 @@ function SWAPR:onEvent(Event)
           --self:_Aircraft2Static(unit)
           
         else
-          env.info("FF client spawned!")
+          self:I(self.lid..string.format("Client %s spawned!", IniUnitName))
         
           -- Get static that is in place of the spawned client.
           local static=self.statics[IniUnitName] --Wrapper.Static#STATIC
           
           -- Remove static.
           if static then
-            env.info("FF destroying static!")
+            self:I(self.lid..string.format("Destroying static %s!", IniUnitName))
             
             -- Looks like the MOOSE Destroy function is not fast enough!
             static:destroy()
             self.statics[IniUnitName]=nil
           else
-            env.info("FF no static to destroy!")
+            self:E(self.lid..string.format("WARNING: No static %s to destroy!", IniUnitName))
           end
         
         end
@@ -298,7 +311,7 @@ function SWAPR:onEvent(Event)
       -- STATIC BORN --
       -----------------
     
-      env.info(string.format("FF Event birth for static %s", tostring(IniUnitName)))
+      self:I(self.lid..string.format("Event birth of static %s", tostring(IniUnitName)))
             
       -- WORKS!
       local static=STATIC:FindByName(IniUnitName, true)
@@ -315,7 +328,7 @@ function SWAPR:onEvent(Event)
     -- PLAYER LEFT --
     -----------------
     
-    env.info(string.format("FF Event player leave unit for unit %s", IniUnitName))
+    self:I(self.lid..string.format("Event player leave unit %s", IniUnitName))
     
     -- Spawn static. Needs to be delayed a tad or DCS crashes to desktop.
     local statictemplate=self.statictemplate[IniUnitName]
@@ -335,7 +348,7 @@ function SWAPR:OnEventRemoveUnit(EventData)
   if EventData and EventData.IniUnitName then
   
     -- Debug info.
-    env.info(string.format("FF Event removed unit %s!", EventData.IniUnitName))
+    self:I(self.lid..string.format("Event removed unit %s!", EventData.IniUnitName))
       
     -- Spawn static aircraft.
     local statictemplate=self.statictemplate[EventData.IniUnitName]
@@ -381,7 +394,7 @@ function SWAPR:_AddStaticTemplate(name, actype, x, y, heading, country, livery)
   }
   
   -- Debug info.
-  self:I({statictemplate=static})
+  self:T2({statictemplate=static})
 
   self.statictemplate[name]=static
 
@@ -400,8 +413,8 @@ function SWAPR:_SpawnStaticAircraft(template)
     local static=coalition.addStaticObject(template.CountryID, template)
 
     -- Debug info.    
-    self:I({spawnedstatic=static})
-    env.info(string.format("FF spawned static name = %s", template.name))
+    self:T2({spawnedstatic=static})
+    self:T(self.lid..string.format("Spawned static %s", template.name))
     
   else
     self:T3(self.lid.."WARNING: Static template is nil!")
@@ -418,7 +431,7 @@ function SWAPR:_AircraftGroup2Statics(group)
   local grouptemplate=group:GetTemplate()
   
   -- Debug info.
-  self:I({groupname=grouptemplate})
+  self:T3({grouptemplate=grouptemplate})
   
   for i,_unit in pairs(group:GetUnits()) do
     local unit=_unit --Wrapper.Unit#UNIT
@@ -452,7 +465,7 @@ function SWAPR:_Aircraft2Static(unit)
     local grouptemplate=unit:GetGroup():GetTemplate()
     
     -- Debug info.
-    self:I({groupname=grouptemplate})
+    self:T3({grouptemplate=grouptemplate})
     
     -- Get unit name.
     local unitname=unit:GetName()
@@ -480,57 +493,98 @@ end
 -- @param #SWAPR self
 function SWAPR:_Prepare()
 
+  local remove={}
   for _,_client in pairs(self.clientset:GetSet()) do
     local client=_client --Wrapper.Client#CLIENT
     
     -- Unit name
     local unitname=client.ClientName
+    
+    -- Get airbase if any.
+    local airbase=self:_GetAirbaseFromTemplate(unitname)
+    
+    -- First check that this is not a cliened spawned in air or on a ship.
+    if airbase==nil then
+      -- Spawned in air ==> remove!
+      self:I(self.lid..string.format("Removing client %s because of air start.", unitname))
+      table.insert(remove, client)
+    elseif  airbase:GetAirbaseCategory()==Airbase.Category.SHIP then
+      self:I(self.lid..string.format("Removing client %s because spawned on ship.", unitname))
+      table.insert(remove, client)
+    else
         
-    if true then
-  
-      -- Client group name.
-      local groupname=_DATABASE.Templates.Units[unitname].GroupName
+      if true then
       
-      -- Client group template copy.
-      local grouptemplate=UTILS.DeepCopy(_DATABASE:GetGroupTemplate(groupname))
-      
-      -- Nillify the group ID.
-      grouptemplate.groupId=nil
+        -- Check that harriers are not spawned in shelters because they would appear on top of them.
+        local _continue=true
+        if self:_GetTypeFromTemplate(unitname)=="AV8BNA" then
+          local parkingid=self:_GetParkingFromTemplate(unitname)
+          if parkingid then
+            env.info(string.format("Harrier parking spot id %d", parkingid))
+            local spot=airbase:GetParkingSpotData(parkingid)
+            if spot and spot.TerminalType==AIRBASE.TerminalType.Shelter then
+              _continue=false
+              table.insert(remove, client)
+            end
+          end
+        end
+    
+        if _continue then
+    
+          -- Client group name.
+          local groupname=_DATABASE.Templates.Units[unitname].GroupName
+          
+          -- Client group template copy.
+          local grouptemplate=UTILS.DeepCopy(_DATABASE:GetGroupTemplate(groupname))
+          
+          -- Nillify the group ID.
+          grouptemplate.groupId=nil
+            
+          -- Set skill.
+          for i=1,#grouptemplate.units do
+            local unit=grouptemplate.units[i]
+            unit.skill="Good"
+            -- Nillify the unit ID.
+            unit.unitId=nil
+          end
+          
+          -- Uncontrolled
+          grouptemplate.uncontrolled=true
+          
+          -- Add _SWAPR to the group name so that we find it in birth event.
+          grouptemplate.name=string.format("%s_SWAPR", groupname)
+          
+          -- Debug info.
+          self:I({grouptemplate=grouptemplate})
+              
+          -- Spawn group.
+          local group=_DATABASE:Spawn(grouptemplate)
+          
+        end
         
-      -- Set skill.
-      for i=1,#grouptemplate.units do
-        local unit=grouptemplate.units[i]
-        unit.skill="Good"
-        -- Nillify the unit ID.
-        unit.unitId=nil
+      else
+      
+        local livery=self:_GetLiveryFromTemplate(unitname)
+        local x,y=self:_GetPositionFromTemplate(unitname)
+        local actype=self:_GetTypeFromTemplate(unitname)
+        local heading=self:_GetHeadingFromTemplate(unitname)
+        
+        local template=self:_AddStaticTemplate(unitname, actype, x, y, heading, 1, livery)
+        
+        self:_SpawnStaticAircraft(template)
+            
       end
       
-      -- Uncontrolled
-      grouptemplate.uncontrolled=true
-      
-      -- Add _SWAPR to the group name so that we find it in birth event.
-      grouptemplate.name=string.format("%s_SWAPR", groupname)
-      
-      -- Debug info.
-      self:I({grouptemplate=grouptemplate})
-          
-      -- Spawn group.
-      local group=_DATABASE:Spawn(grouptemplate)
-      
-    else
-    
-      local livery=self:_GetLiveryFromTemplate(unitname)
-      local x,y=self:_GetPositionFromTemplate(unitname)
-      local actype=self:_GetTypeFromTemplate(unitname)
-      local heading=self:_GetHeadingFromTemplate(unitname)
-      
-      local template=self:_AddStaticTemplate(unitname, actype, x, y, heading, 1, livery)
-      
-      self:_SpawnStaticAircraft(template)
-          
     end
     
   end
+  
+  for _,_client in pairs(remove) do
+    local client=_client --Wrapper.Client#CLIENT
+    self.clientset:RemoveClientsByName(client.ClientName)
+  end
+  
+  self:I(self.lid..string.format("Number of clients left after prepare = %d", self.clientset:Count()))
 
 end
 
@@ -602,6 +656,55 @@ function SWAPR:_GetHeadingFromTemplate(unitname)
   for _,unit in pairs(grouptemplate.units) do
     if unit.name==unitname then
       return tonumber(unit.heading)
+    end
+  end
+
+  return nil
+end
+
+--- Get airbase from template.
+-- @param #SWAPR self
+-- @param #string unitname Name of the unit.
+-- @return Wrapper.Airbase#AIRBASE The airbase object or nil.
+function SWAPR:_GetAirbaseFromTemplate(unitname)
+
+  local grouptemplate=_DATABASE:GetGroupTemplateFromUnitName(unitname)
+
+  -- First waypoint.  
+  local wp=grouptemplate.route.points[1]
+
+  local airbase=nil --Wrapper.Airbase#AIRBASE
+  local id=-666
+  if wp.airdromeId then
+    id=tonumber(wp.airdromeId)
+  elseif wp.helipadId then    
+    id=tonumber(wp.helipadId)
+  end
+  
+  -- Find airbase by its id.
+  airbase=AIRBASE:FindByID(id)
+  
+  -- Debug info.
+  if airbase then
+    self:T3(self.lid..string.format("Found airbase %s for unit %s, id=%d", airbase:GetName(), unitname, id))
+  else
+    self:T3(self.lid..string.format("Found NO airbase for unit %s, id=%d", unitname,id))
+  end
+  
+  return airbase
+end
+
+--- Get parking id from template.
+-- @param #SWAPR self
+-- @param #string unitname Name of the unit.
+-- @return #number Parking id or nil.
+function SWAPR:_GetParkingFromTemplate(unitname)
+
+  local grouptemplate=_DATABASE:GetGroupTemplateFromUnitName(unitname)
+  
+  for _,unit in pairs(grouptemplate.units) do
+    if unit.name==unitname then
+      return tonumber(unit.parking)
     end
   end
 

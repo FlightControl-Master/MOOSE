@@ -361,6 +361,26 @@ function AIRBASE:FindByName( AirbaseName )
   return AirbaseFound
 end
 
+--- Find a AIRBASE in the _DATABASE by its ID.
+-- @param #AIRBASE self
+-- @param #number id Airbase ID.
+-- @return #AIRBASE self
+function AIRBASE:FindByID(id)
+  
+  for name,_airbase in pairs(_DATABASE.AIRBASES) do
+    local airbase=_airbase --#AIRBASE
+    
+    local aid=tonumber(airbase:GetID())
+    
+    if aid==id then
+      return airbase
+    end
+  
+  end
+  
+  return nil
+end
+
 --- Get the DCS object of an airbase
 -- @param #AIRBASE self
 -- @return DCS#Airbase DCS airbase object.
@@ -604,7 +624,7 @@ function AIRBASE:GetParkingSpotData(TerminalID)
   
   for _,_spot in pairs(parkingdata) do
     local spot=_spot --#AIRBASE.ParkingSpot
-    self:E({TerminalID=spot.TerminalID,TerminalType=spot.TerminalType})
+    self:T({TerminalID=spot.TerminalID,TerminalType=spot.TerminalType})
     if TerminalID==spot.TerminalID then
       return spot
     end
