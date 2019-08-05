@@ -101,6 +101,9 @@ SWAPR.version="0.0.2"
 -- TODO: Check what happens if statics are destroyed.
 -- TODO: Check what happens if clients eject, crash or are shot down.
 -- TODO: Check that parking spot is not blocked by other aircraft or statics when spawning a static replacement.
+-- TODO: Add FSM events, e.g. static spawned, static destroyed etc.
+-- TODO: Add user functions, e.g. for defining the static FARP offset.
+-- TODO: Safe/load static templates to/from disk.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -108,7 +111,7 @@ SWAPR.version="0.0.2"
 
 --- Create a new SWAPR object. 
 -- @param #SWAPR self
--- @param Core.Set#SET_CLIENT clientset Set of clients to be replaced.
+-- @param Core.Set#SET_CLIENT clientset (Optional) Set of clients to be replaced. Default all.
 -- @return #SWAPR SWAPR object.
 function SWAPR:New(clientset)
 
@@ -116,7 +119,7 @@ function SWAPR:New(clientset)
   local self = BASE:Inherit(self, FSM:New()) -- #SWAPR
   
   -- Carrier type.
-  self.clientset=clientset
+  self.clientset=clientset or SET_CLIENT:New():FilterActive(false):FilterOnce()
     
   -- Log ID.
   self.lid=string.format("SWAPR | ")
@@ -514,8 +517,13 @@ function SWAPR:_Prepare()
     else
         
       if true then
+        
+        ---
+        -- Spawn a group to get parameters in particular the heading on the parking spot as this is not correct in the template.
+        ---
       
         -- Check that harriers are not spawned in shelters because they would appear on top of them.
+        -- TODO: Need to do the same of helos?
         local _continue=true
         if self:_GetTypeFromTemplate(unitname)=="AV8BNA" then
           local parkingid=self:_GetParkingFromTemplate(unitname)
@@ -564,11 +572,16 @@ function SWAPR:_Prepare()
         
       else
       
+        ---
+        -- Get all info from template. Unfortunately, heading is always 0 in the template, i.e. all statics would face due North!
+        ---
+
         local livery=self:_GetLiveryFromTemplate(unitname)
         local x,y=self:_GetPositionFromTemplate(unitname)
         local actype=self:_GetTypeFromTemplate(unitname)
         local heading=self:_GetHeadingFromTemplate(unitname)
         
+        -- TODO: country!
         local template=self:_AddStaticTemplate(unitname, actype, x, y, heading, 1, livery)
         
         self:_SpawnStaticAircraft(template)
