@@ -349,6 +349,15 @@ function AI_ESCORT:onafterStart( EscortGroupSet )
 
   self.Detection = DETECTION_AREAS:New( EscortGroupSet, 5000 )
 
+  -- This only makes the escort report detections made by the escort, not through DLINK.
+  -- These must be enquired using other facilities.
+  -- In this way, the escort will report the target areas that are relevant for the mission.
+  self.Detection:InitDetectVisual( true )
+  self.Detection:InitDetectIRST( true )
+  self.Detection:InitDetectOptical( true )
+  self.Detection:InitDetectRadar( true )
+  self.Detection:InitDetectRWR( true )
+
   self.Detection:__Start( 30 )
     
   self.MainMenu = MENU_GROUP:New( self.PlayerGroup, self.EscortName )
