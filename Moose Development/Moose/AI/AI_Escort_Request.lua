@@ -206,11 +206,12 @@ AI_ESCORT_REQUEST = {
 -- Escort:__Start( 5 )
 function AI_ESCORT_REQUEST:New( EscortUnit, EscortSpawn, EscortAirbase, EscortName, EscortBriefing )
   
-  self.EscortGroupSet = SET_GROUP:New():FilterDeads():FilterCrashes()
+  local EscortGroupSet = SET_GROUP:New():FilterDeads():FilterCrashes()
+  local self = BASE:Inherit( self, AI_ESCORT:New( EscortUnit, EscortGroupSet, EscortName, EscortBriefing ) ) -- #AI_ESCORT_REQUEST
+
+  self.EscortGroupSet = EscortGroupSet
   self.EscortSpawn = EscortSpawn
   self.EscortAirbase = EscortAirbase
-
-  local self = BASE:Inherit( self, AI_ESCORT:New( EscortUnit, self.EscortGroupSet, EscortName, EscortBriefing ) ) -- #AI_ESCORT_REQUEST
 
   self.LeaderGroup = self.PlayerUnit:GetGroup()
 
@@ -282,6 +283,28 @@ function AI_ESCORT_REQUEST:onafterStart( EscortGroupSet )
   self:HandleEvent( EVENTS.Dead, self.OnEventDeadOrCrash )
   self:HandleEvent( EVENTS.Crash, self.OnEventDeadOrCrash )
     
+end
+
+--- @param #AI_ESCORT_REQUEST self
+-- @param Core.Set#SET_GROUP EscortGroupSet
+function AI_ESCORT_REQUEST:onafterStop( EscortGroupSet )
+
+  self:F()
+  
+  EscortGroupSet:ForEachGroup(
+    --- @param Core.Group#GROUP EscortGroup
+    function( EscortGroup )
+      EscortGroup:WayPointInitialize()
+    
+      EscortGroup:OptionROTVertical()
+      EscortGroup:OptionROEOpenFire()
+    end
+  )
+
+  self.Detection:Stop()
+    
+  self.MainMenu:Remove()
+  
 end
 
 --- Set the spawn mode to be mission execution.

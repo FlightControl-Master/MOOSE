@@ -349,11 +349,17 @@ function AI_ESCORT:onafterStart( EscortGroupSet )
 
   self.Detection = DETECTION_AREAS:New( EscortGroupSet, 5000 )
 
+  -- This only makes the escort report detections made by the escort, not through DLINK.
+  -- These must be enquired using other facilities.
+  -- In this way, the escort will report the target areas that are relevant for the mission.
+  self.Detection:InitDetectVisual( true )
+  self.Detection:InitDetectIRST( true )
+  self.Detection:InitDetectOptical( true )
+  self.Detection:InitDetectRadar( true )
+  self.Detection:InitDetectRWR( true )
+
   self.Detection:__Start( 30 )
     
-  self:HandleEvent( EVENTS.Dead, OnEventDeadOrCrash )
-  self:HandleEvent( EVENTS.Crash, OnEventDeadOrCrash )
-
   self.MainMenu = MENU_GROUP:New( self.PlayerGroup, self.EscortName )
   self.FlightMenu = MENU_GROUP:New( self.PlayerGroup, "Flight", self.MainMenu )
 
@@ -367,9 +373,42 @@ function AI_ESCORT:onafterStart( EscortGroupSet )
       self:_InitEscortRoute( EscortGroup )
 
       self:SetFlightModeFormation( EscortGroup )
+      
+      --- @param #AI_ESCORT self
+      -- @param Core.Event#EVENTDATA EventData
+      function EscortGroup:OnEventDeadOrCrash( EventData )
+        self:F( { "EventDead", EventData } )
+        self.EscortMenu:Remove()
+      end
+
+      EscortGroup:HandleEvent( EVENTS.Dead, EscortGroup.OnEventDeadOrCrash )
+      EscortGroup:HandleEvent( EVENTS.Crash, EscortGroup.OnEventDeadOrCrash )
+      
     end
   )
   
+
+end
+
+--- @param #AI_ESCORT self
+-- @param Core.Set#SET_GROUP EscortGroupSet
+function AI_ESCORT:onafterStop( EscortGroupSet )
+
+  self:F()
+
+  EscortGroupSet:ForEachGroup(
+    --- @param Core.Group#GROUP EscortGroup
+    function( EscortGroup )
+      EscortGroup:WayPointInitialize()
+    
+      EscortGroup:OptionROTVertical()
+      EscortGroup:OptionROEOpenFire()
+    end
+  )
+
+  self.Detection:Stop()
+    
+  self.MainMenu:Remove()
 
 end
 
@@ -705,6 +744,7 @@ function AI_ESCORT:SetEscortMenuJoinUp( EscortGroup )
     end
   end
 end
+
 
 
 --- Defines --- Defines a menu slot to let the escort to join formation.
