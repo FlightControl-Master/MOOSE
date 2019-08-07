@@ -349,7 +349,8 @@ function GROUP:Destroy( GenerateEvent, delay )
   self:F2( self.GroupName )
   
   if delay and delay>0 then
-    SCHEDULER:New(nil, GROUP.Destroy, {self, GenerateEvent}, delay)
+    --SCHEDULER:New(nil, GROUP.Destroy, {self, GenerateEvent}, delay)
+    self:ScheduleOnce(delay, GROUP.Destroy, self, GenerateEvent)
   else
 
     local DCSGroup = self:GetDCSObject()
