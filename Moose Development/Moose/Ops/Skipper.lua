@@ -22,6 +22,7 @@
 -- @field Functional.Warehouse#WAREHOUSE warehouse The warehouse of the carrier.
 -- @field Functional.Artillery#ARTY arty The artillery object of the carrier.
 -- @field #table intruders Table of intruders, i.e. groups inside the CCA. Each element is of type #SKIPPPER.Intruder.
+-- @field Ops.CarrierAirWing#CVW cvw Carrier Air Wing.
 -- @extends Ops.Airboss#AIRBOSS
 
 --- Be surprised!
@@ -44,6 +45,7 @@ SKIPPER = {
   warehouse      =   nil,
   arty           =   nil,
   intruders      =    {},
+  cvw            =   nil,
 }
 
 --- Intruder.

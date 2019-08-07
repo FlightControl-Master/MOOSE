@@ -38,6 +38,7 @@ CVW = {
   carriername    =   nil,
   menu           =   nil,
   squadrons      =   nil,
+  taskqueue      =    {},
 }
 
 --- Squadron
@@ -75,7 +76,7 @@ CVW.Task={
   TANKER="Tanker",
 }
 
---- FlightControl class version.
+--- CVW class version.
 -- @field #string version
 CVW.version="0.0.5"
 
@@ -251,7 +252,7 @@ function CVW:GetSquadron(name)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- Status
+-- Start & Status
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Start CVW FSM.
@@ -285,6 +286,33 @@ function CVW:onafterAirwingStatus(From, Event, To)
     -- Info text.
   local text=string.format("State %s", fsmstate)
   self:I(self.sid..text)
+  
+  local text="Squadrons:"
+  for i,_squadron in pairs(self.squadrons) do
+    local squadron=_squadron --#CVW.Squadron
+    
+    
+    text=text..string.format("\n %s", squadron.name)
+    
+    for j,_asset in pairs(squadron.assets) do
+      local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+      local assignment=asset.assignment or "none"
+      local name=asset.templatename
+      local task=asset.CVWtask or "none"
+      local spawned=tostring(asset.spawned)
+      local groupname=asset.spawngroupname
+      local group=nil --Wrapper.Group#GROUP
+      local typename=asset.unittype
+      local fuel=100
+      if groupname then
+        group=GROUP:FindByName(groupname)
+        fuel=group:GetFuelMin()
+      end
+      
+      text=text..string.format("\n-[%d] %s*%d: spawned=%s, task=%s, fuel=%d", j, typename, asset.nunits, task)
+      
+    end
+  end
 
   self:__AirwingStatus(-30)
 end
@@ -315,6 +343,12 @@ function CVW:onafterRequestCAP(From, Event, To, coordinate, altitude, leg, headi
     function self:OnAfterSelfRequest(From,Event,To,Groupset,Request)
       local request=Request --Functional.Warehouse#WAREHOUSE.Pendingitem
       local groupset=Groupset --Core.Set#SET_GROUP
+      
+      for _,_asset in pairs(request.assets) do
+        local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+        
+        local a=asset.cargobay
+      end
 
       if Request.assignment==CVW.Task.CAP then
       
@@ -364,6 +398,18 @@ function CVW:LaunchCAP(group, capcoord, alt, leg, heading, speed)
   group:Route(wp)
 end
 
+--- Create a new task name.
+-- @param #CVW self
+-- @param #string task Task of type @{#CVW.Task}.
+-- @string Task name, e.g. Task0001_CAP, Task0002_BAI, Task0003_INTERCEPT, ...
+function CVW:_NewTaskName(task)
+
+  self.ntasks=self.ntasks+1
+  
+  local taskname=string.format("Task#%04d_%s", self.ntasks, task)
+  
+  return taskname
+end
 
 
 --- Request Intercept.
@@ -400,6 +446,10 @@ function CVW:onafterRequestIntercept(From, Event, To, bandits, squadron)
     MESSAGE:New("No INTERCEPT fighters currently available", 5, "CVW"):ToCoalition(self:GetCoalition())
   end
   
+end
+
+function CVW:OnAfterSelfRequest(From,Event,To,groupset,request)
+
 end
 
 --- Launch a flight group to intercept an intruder.
