@@ -1683,7 +1683,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="1.0.6"
+AIRBOSS.version="1.0.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -9944,15 +9944,9 @@ function AIRBOSS:_CheckFoulDeck(playerData)
 
   -- Assume no check necessary.
   local check=false
-  
-  -- Case I/II: Check is done, when AC is at the wake according to NATOPS. At the wake we switch to final.
-  if playerData.case<3 and playerData.step==AIRBOSS.PatternStep.FINAL then
-    check=true
-  end
-    
-  -- Case III: Check is done at 3/4 NM according to NATOPS.
-  if playerData.step==AIRBOSS.PatternStep.GROOVE_XX or
-     playerData.step==AIRBOSS.PatternStep.GROOVE_IM or
+      
+  -- Check if player is IM or IC.
+  if playerData.step==AIRBOSS.PatternStep.GROOVE_IM or
      playerData.step==AIRBOSS.PatternStep.GROOVE_IC then
     check=true
   end
