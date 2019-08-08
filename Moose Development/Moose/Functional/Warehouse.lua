@@ -1751,7 +1751,7 @@ _WAREHOUSEDB  = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.9.5"
+WAREHOUSE.version="0.9.6wip"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -4114,7 +4114,7 @@ function WAREHOUSE:onbeforeRequest(From, Event, To, Request)
 end
 
 
---- On after "Request" event. Initiates the transport of the assets to the requesting warehouse.
+--- On after "Request" event. Spawns the necessary cargo and transport assets.
 -- @param #WAREHOUSE self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -4132,32 +4132,156 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   -- Cargo assets.
   ------------------------------------------------------------------------------------------------------------------------------------
 
- -- Pending request. Add cargo groups to request.
-  local Pending=Request  --#WAREHOUSE.Pendingitem
-
   -- Set time stamp.
-  Pending.timestamp=timer.getAbsTime()
+  Request.timestamp=timer.getAbsTime()
 
   -- Init problem table.
-  Pending.assetproblem={}
+  --Pending.assetproblem={}
 
   -- Spawn assets of this request.
-  local _spawngroups=self:_SpawnAssetRequest(Pending) --Core.Set#SET_GROUP
+  self:_SpawnAssetRequest(Request)
 
-  -- Check if any group was spawned. If not, delete the request.
-  if _spawngroups:Count()==0 then
-    self:_DebugMessage(string.format("ERROR: Groups or request %d could not be spawned. Request is rejected and deleted from queue!", Request.uid))
-    -- Delete request from queue.
-    self:_DeleteQueueItem(Request, self.queue)
-    return
+
+  ------------------------------------------------------------------------------------------------------------------------------------
+  -- Transport assets
+  ------------------------------------------------------------------------------------------------------------------------------------
+
+  -- Shortcut to transport assets.
+  local _assetstock=Request.transportassets
+
+  -- General type and category.
+  local _transporttype=Request.transportattribute
+  local _transportcategory=Request.transportcategory
+
+  -- Now we try to find all parking spots for all cargo groups in advance. Due to the for loop, the parking spots do not get updated while spawning.
+  local Parking={}
+  if  _transportcategory==Group.Category.AIRPLANE or _transportcategory==Group.Category.HELICOPTER then
+    Parking=self:_FindParkingForAssets(self.airbase,_assetstock)
   end
+
+  -- Transport assets table.
+  local _transportassets={}
+
+  ----------------------------
+  -- Spawn Transport Groups --
+  ----------------------------
+
+  -- Spawn the transport groups.
+  for i=1,Request.ntransport do
+
+    -- Get stock item.
+    local _assetitem=_assetstock[i] --#WAREHOUSE.Assetitem
+
+       -- Create an alias name with the UIDs for the sending warehouse, asset and request.
+    local _alias=self:_alias(_assetitem.unittype, self.uid, _assetitem.uid, Request.uid)
+
+    local spawngroup=nil --Wrapper.Group#GROUP
+
+    -- Spawn assets depending on type.
+    if Request.transporttype==WAREHOUSE.TransportType.AIRPLANE then
+
+      -- Spawn plane at airport in uncontrolled state. Will get activated when cargo is loaded.
+      spawngroup=self:_SpawnAssetAircraft(_alias,_assetitem, Request, Parking[_assetitem.uid], true)
+
+    elseif Request.transporttype==WAREHOUSE.TransportType.HELICOPTER then
+
+      -- Spawn helos at airport in controlled state. They need to fly to the spawn zone.
+      spawngroup=self:_SpawnAssetAircraft(_alias,_assetitem, Request, Parking[_assetitem.uid], false)
+
+      -- Activate helo randomly within the next 10 seconds.
+      --spawngroup:StartUncontrolled(math.random(10))
+
+    elseif Request.transporttype==WAREHOUSE.TransportType.APC then
+
+      -- Spawn APCs in spawn zone.
+      spawngroup=self:_SpawnAssetGroundNaval(_alias, _assetitem, Request, self.spawnzone)
+
+    elseif Request.transporttype==WAREHOUSE.TransportType.TRAIN then
+
+      self:_ErrorMessage("ERROR: Cargo transport by train not supported yet!")
+      return
+
+    elseif Request.transporttype==WAREHOUSE.TransportType.SHIP then
+
+      self:_ErrorMessage("ERROR: Cargo transport by ship not supported yet!")
+      return
+
+    elseif Request.transporttype==WAREHOUSE.TransportType.SELFPROPELLED then
+
+      self:_ErrorMessage("ERROR: Transport type selfpropelled was already handled above. We should not get here!")
+      return
+
+    else
+      self:_ErrorMessage("ERROR: Unknown transport type!")
+      return
+    end
+    
+    -- Add asset by id.
+    Request.assets[_assetitem.uid]=_assetitem
+
+
+    -- Check if group was spawned.
+    if spawngroup then
+      -- Set state of warehouse so we can retrieve it later.
+      spawngroup:SetState(spawngroup, "WAREHOUSE", self)
+
+      -- Add group to transportset.
+      TransportSet:AddGroup(spawngroup)
+
+      -- Add assets to pending request.
+      
+
+      -- Add transport assets.
+      table.insert(_transportassets,_assetitem)
+
+      -- Spawned into the world.
+      _assetitem.spawned=true
+      _assetitem.spawngroupname=spawngroup:GetName()
+
+      -- Asset spawned FSM function.
+      self:__AssetSpawned(1, spawngroup, _assetitem, Request)
+    end
+  end
+
+  -- Delete spawned items from warehouse stock.
+  for _,_item in pairs(_transportassets) do
+    self:_DeleteStockItem(_item)
+  end
+
+  -- Add transport groups, i.e. the carriers to request.
+  Pending.transportgroupset=TransportSet
+
+  -- Add cargo group set.
+  Pending.transportcargoset=CargoGroups
+
+  -- Add request to pending queue.
+  table.insert(self.pending, Pending)
+
+  -- Delete request from queue.
+  self:_DeleteQueueItem(Request, self.queue)
+
+
+end
+
+--- On after "RequestSpawned" event. Initiates the transport of the assets to the requesting warehouse.
+-- @param #WAREHOUSE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #WAREHOUSE.Queueitem Request Information table of the request.
+-- @param Core.Set#SET_GROUP CargoGroupSet Set of cargo groups.
+-- @param Core.Set#SET_GROUP TransportGroupSet Set of transport groups if any.
+function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet, TransportGroupSet)
 
   -- General type and category.
   local _cargotype=Request.cargoattribute    --#WAREHOUSE.Attribute
   local _cargocategory=Request.cargocategory --DCS#Group.Category
+  
+ -- Pending request. Add cargo groups to request.
+  local Pending=Request  --#WAREHOUSE.Pendingitem  
 
   -- Add groups to pending item.
-  Pending.cargogroupset=_spawngroups
+  Pending.cargogroupset=CargoGroupSet
 
   ------------------------------------------------------------------------------------------------------------------------------------
   -- Self request: assets are spawned at warehouse but not transported anywhere.
@@ -4174,7 +4298,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     self:_DeleteQueueItem(Request, self.queue)
 
     -- Start self request.
-    self:__SelfRequest(1,_spawngroups, Pending)
+    self:__SelfRequest(1, CargoGroupSet, Pending)
 
     return
   end
@@ -4185,13 +4309,10 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
   -- No transport unit requested. Assets go by themselfes.
   if Request.transporttype==WAREHOUSE.TransportType.SELFPROPELLED then
-    self:T2(self.wid..string.format("Got selfpropelled request for %d assets.",_spawngroups:Count()))
+    self:T2(self.wid..string.format("Got selfpropelled request for %d assets.", CargoGroupSet:Count()))
 
-    for _,_spawngroup in pairs(_spawngroups:GetSetObjects()) do
-
-      -- Group intellisense.
-      local group=_spawngroup --Wrapper.Group#GROUP
-
+    for _,_group in pairs(CargoGroupSet:GetSetObjects()) do
+      local group=_group --Wrapper.Group#GROUP
 
       -- Route cargo to their destination.
       if _cargocategory==Group.Category.GROUND then
@@ -4232,6 +4353,9 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
       end
 
     end
+    
+    -- Transport group set.
+    Pending.transportgroupset=TransportGroupSet
 
     -- Add request to pending queue.
     table.insert(self.pending, Pending)
@@ -4247,9 +4371,6 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   -- Prepare cargo groups for transport
   ------------------------------------------------------------------------------------------------------------------------------------
 
-  -- Add groups to cargo if they don't go by themselfs.
-  local CargoGroups --Core.Set#SET_CARGO
-
   -- Board radius, i.e. when the cargo will begin to board the carrier
   local _boardradius=500
 
@@ -4263,15 +4384,10 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   end
 
   -- Empty cargo group set.
-  CargoGroups = SET_CARGO:New()
-
-  local function getasset(group)
-    local _,aid,_=self:_GetIDsFromGroup(group)
-    self:FindAssetInDB(group)
-  end
+  local CargoGroups=SET_CARGO:New()
 
   -- Add cargo groups to set.
-  for _i,_group in pairs(_spawngroups:GetSetObjects()) do
+  for _,_group in pairs(CargoGroupSet:GetSetObjects()) do
 
     -- Find asset belonging to this group.
     local asset=self:FindAssetInDB(_group)
@@ -4284,142 +4400,6 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
     -- Add group to group set.
     CargoGroups:AddCargo(cargogroup)
-  end
-
-  ------------------------------------------------------------------------------------------------------------------------------------
-  -- Transport assets and dispatchers
-  ------------------------------------------------------------------------------------------------------------------------------------
-
-  -- Set of cargo carriers.
-  local TransportSet = SET_GROUP:New()
-
-  -- Shortcut to transport assets.
-  local _assetstock=Request.transportassets
-
-  -- General type and category.
-  local _transporttype=Request.transportattribute
-  local _transportcategory=Request.transportcategory
-
-  -- Now we try to find all parking spots for all cargo groups in advance. Due to the for loop, the parking spots do not get updated while spawning.
-  local Parking={}
-  if  _transportcategory==Group.Category.AIRPLANE or _transportcategory==Group.Category.HELICOPTER then
-    Parking=self:_FindParkingForAssets(self.airbase,_assetstock)
-  end
-
-  -- Transport assets table.
-  local _transportassets={}
-
-  ----------------------------
-  -- Spawn Transport Groups --
-  ----------------------------
-
-  -- Spawn the transport groups.
-  for i=1,Request.ntransport do
-
-    -- Get stock item.
-    local _assetitem=_assetstock[i] --#WAREHOUSE.Assetitem
-
-       -- Create an alias name with the UIDs for the sending warehouse, asset and request.
-    local _alias=self:_alias(_assetitem.unittype, self.uid, _assetitem.uid, Request.uid)
-
-    local spawngroup=nil --Wrapper.Group#GROUP
-
-    -- Spawn assets depending on type.
-    if Request.transporttype==WAREHOUSE.TransportType.AIRPLANE then
-
-      -- Spawn plane at airport in uncontrolled state. Will get activated when cargo is loaded.
-      spawngroup=self:_SpawnAssetAircraft(_alias,_assetitem, Pending, Parking[_assetitem.uid], true)
-
-    elseif Request.transporttype==WAREHOUSE.TransportType.HELICOPTER then
-
-      -- Spawn helos at airport in controlled state. They need to fly to the spawn zone.
-      spawngroup=self:_SpawnAssetAircraft(_alias,_assetitem, Pending, Parking[_assetitem.uid], false)
-
-      -- Activate helo randomly within the next 10 seconds.
-      --spawngroup:StartUncontrolled(math.random(10))
-
-    elseif Request.transporttype==WAREHOUSE.TransportType.APC then
-
-      -- Spawn APCs in spawn zone.
-      spawngroup=self:_SpawnAssetGroundNaval(_alias, _assetitem, Request, self.spawnzone)
-
-    elseif Request.transporttype==WAREHOUSE.TransportType.TRAIN then
-
-      self:_ErrorMessage("ERROR: Cargo transport by train not supported yet!")
-      return
-
-    elseif Request.transporttype==WAREHOUSE.TransportType.SHIP then
-
-      self:_ErrorMessage("ERROR: Cargo transport by ship not supported yet!")
-      return
-
-    elseif Request.transporttype==WAREHOUSE.TransportType.SELFPROPELLED then
-
-      self:_ErrorMessage("ERROR: Transport type selfpropelled was already handled above. We should not get here!")
-      return
-
-    else
-      self:_ErrorMessage("ERROR: Unknown transport type!")
-      return
-    end
-
-    -- Check if group was spawned.
-    if spawngroup then
-      -- Set state of warehouse so we can retrieve it later.
-      spawngroup:SetState(spawngroup, "WAREHOUSE", self)
-
-      -- Add group to transportset.
-      TransportSet:AddGroup(spawngroup)
-
-      -- Add assets to pending request.
-      Pending.assets[_assetitem.uid]=_assetitem
-
-      -- Add transport assets.
-      table.insert(_transportassets,_assetitem)
-
-      -- Spawned into the world.
-      _assetitem.spawned=true
-      _assetitem.spawngroupname=spawngroup:GetName()
-
-      -- Asset spawned FSM function.
-      self:__AssetSpawned(1, spawngroup, _assetitem, Request)
-    end
-  end
-
-  -- Delete spawned items from warehouse stock.
-  for _,_item in pairs(_transportassets) do
-    self:_DeleteStockItem(_item)
-  end
-
-  -- Add transport groups, i.e. the carriers to request.
-  Pending.transportgroupset=TransportSet
-
-  -- Add cargo group set.
-  Pending.transportcargoset=CargoGroups
-
-  -- Add request to pending queue.
-  table.insert(self.pending, Pending)
-
-  -- Delete request from queue.
-  self:_DeleteQueueItem(Request, self.queue)
-
-  -- Adjust carrier units. This has to come AFTER the dispatchers have been defined because they set the cargobay free weight!
-  Pending.carriercargo={}
-  for _,carriergroup in pairs(TransportSet:GetSetObjects()) do
-    local asset=self:FindAssetInDB(carriergroup)
-    for _i,_carrierunit in pairs(carriergroup:GetUnits()) do
-      local carrierunit=_carrierunit --Wrapper.Unit#UNIT
-
-      -- Create empty tables which will be filled with the cargo groups of each carrier unit. Needed in case a carrier unit dies.
-      Pending.carriercargo[carrierunit:GetName()]={}
-
-      -- Adjust cargo bay of carrier unit.
-      local cargobay=asset.cargobay[_i]
-      carrierunit:SetCargoBayWeightLimit(cargobay)
-
-      -- Debug info.
-      self:T2(self.wid..string.format("Cargo bay weight limit of carrier unit %s: %.1f kg.", carrierunit:GetName(), carrierunit:GetCargoBayFreeWeight()))
-    end
   end
 
   ------------------------
@@ -4436,7 +4416,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     local DeployAirbaseSet = SET_ZONE:New():AddZone(ZONE_AIRBASE:New(Request.airbase:GetName()))
 
     -- Define dispatcher for this task.
-    CargoTransport = AI_CARGO_DISPATCHER_AIRPLANE:New(TransportSet, CargoGroups, PickupAirbaseSet, DeployAirbaseSet)
+    CargoTransport = AI_CARGO_DISPATCHER_AIRPLANE:New(TransportGroupSet, CargoGroups, PickupAirbaseSet, DeployAirbaseSet)
 
     -- Set home zone.
     CargoTransport:SetHomeZone(ZONE_AIRBASE:New(self.airbase:GetName()))
@@ -4448,7 +4428,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     local DeployZoneSet = SET_ZONE:New():AddZone(Request.warehouse.spawnzone)
 
     -- Define dispatcher for this task.
-    CargoTransport = AI_CARGO_DISPATCHER_HELICOPTER:New(TransportSet, CargoGroups, PickupZoneSet, DeployZoneSet)
+    CargoTransport = AI_CARGO_DISPATCHER_HELICOPTER:New(TransportGroupSet, CargoGroups, PickupZoneSet, DeployZoneSet)
 
     -- Home zone.
     CargoTransport:SetHomeZone(self.spawnzone)
@@ -4460,7 +4440,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     local DeployZoneSet = SET_ZONE:New():AddZone(Request.warehouse.spawnzone)
 
     -- Define dispatcher for this task.
-    CargoTransport = AI_CARGO_DISPATCHER_APC:New(TransportSet, CargoGroups, PickupZoneSet, DeployZoneSet, 0)
+    CargoTransport = AI_CARGO_DISPATCHER_APC:New(TransportGroupSet, CargoGroups, PickupZoneSet, DeployZoneSet, 0)
 
     -- Set home zone.
     CargoTransport:SetHomeZone(self.spawnzone)
@@ -4485,6 +4465,32 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   end
   CargoTransport:SetPickupRadius(pickupouter, pickupinner)
   CargoTransport:SetDeployRadius(deployouter, deployinner)
+  
+  
+  -- Adjust carrier units. This has to come AFTER the dispatchers have been defined because they set the cargobay free weight!
+  Pending.carriercargo={}
+  for _,carriergroup in pairs(TransportGroupSet:GetSetObjects()) do
+    local asset=self:FindAssetInDB(carriergroup)
+    for _i,_carrierunit in pairs(carriergroup:GetUnits()) do
+      local carrierunit=_carrierunit --Wrapper.Unit#UNIT
+
+      -- Create empty tables which will be filled with the cargo groups of each carrier unit. Needed in case a carrier unit dies.
+      Pending.carriercargo[carrierunit:GetName()]={}
+
+      -- Adjust cargo bay of carrier unit.
+      local cargobay=asset.cargobay[_i]
+      carrierunit:SetCargoBayWeightLimit(cargobay)
+
+      -- Debug info.
+      self:T2(self.wid..string.format("Cargo bay weight limit of carrier unit %s: %.1f kg.", carrierunit:GetName(), carrierunit:GetCargoBayFreeWeight()))
+    end
+  end
+  
+    -- Add request to pending queue.
+    table.insert(self.pending, Pending)
+
+    -- Delete request from queue.
+    self:_DeleteQueueItem(Request, self.queue)
 
   --------------------------------
   -- Dispatcher Event Functions --
@@ -4589,7 +4595,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   end
 
   -- Start dispatcher.
-  CargoTransport:__Start(5)
+  CargoTransport:__Start(5)  
 
 end
 
@@ -4993,6 +4999,40 @@ function WAREHOUSE:onafterAirbaseRecaptured(From, Event, To, Coalition)
 
 end
 
+--- On after "AssetSpawned" event triggered when an asset group is spawned into the cruel world.
+-- @param #WAREHOUSE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #WAREHOUSE.Assetitem asset The asset that is dead.
+-- @param #WAREHOUSE.Pendingitem request The request of the dead asset.
+function WAREHOUSE:onafterAssetSpawned(From, Event, To, asset, request)
+  local text=string.format("Asset %s from request id=%d was spawned!", asset.templatename, request.uid)
+  self:T(self.wid..text)
+  self:_DebugMessage(text)
+  
+  -- Check if all assets groups are spawned and trigger events.
+  
+  asset.spawned=true
+  
+  local allspawned=true
+  for _,_asset in pairs(request.assets) do
+    local asset=_asset --#WAREHOUSE.Assetitem
+    
+    if not asset.spawned then
+      allspawned=false
+    end
+  end
+  
+  if allspawned then
+  
+    self:SelfRequest()
+    
+    -- delete request from self.queue and put it into pending.
+    
+    
+  end
+end
 
 --- On after "AssetDead" event triggered when an asset group died.
 -- @param #WAREHOUSE self
@@ -5270,106 +5310,77 @@ end
 --- Spawns requested assets at warehouse or associated airbase.
 -- @param #WAREHOUSE self
 -- @param #WAREHOUSE.Queueitem Request Information table of the request.
--- @return Core.Set#SET_GROUP Set of groups that were spawned.
 function WAREHOUSE:_SpawnAssetRequest(Request)
   self:F2({requestUID=Request.uid})
 
   -- Shortcut to cargo assets.
-  local _assetstock=Request.cargoassets
-
-  -- General type and category.
-  local _cargotype=Request.cargoattribute    --#WAREHOUSE.Attribute
-  local _cargocategory=Request.cargocategory --DCS#Group.Category
+  local cargoassets=Request.cargoassets
 
   -- Now we try to find all parking spots for all cargo groups in advance. Due to the for loop, the parking spots do not get updated while spawning.
   local Parking={}
-  if _cargocategory==Group.Category.AIRPLANE or _cargocategory==Group.Category.HELICOPTER then
-    Parking=self:_FindParkingForAssets(self.airbase,_assetstock) or {}
+  if Request.cargocategory==Group.Category.AIRPLANE or Request.cargocategory==Group.Category.HELICOPTER then
+    Parking=self:_FindParkingForAssets(self.airbase, cargoassets) or {}
   end
 
   -- Spawn aircraft in uncontrolled state.
   local UnControlled=true
 
-  -- Create an empty group set.
-  local _groupset=SET_GROUP:New()
-
-  -- Table for all spawned assets.
-  local _assets={}
-
   -- Loop over cargo requests.
-  for i=1,#_assetstock do
+  for i=1,#cargoassets do
 
     -- Get stock item.
-    local _assetitem=_assetstock[i] --#WAREHOUSE.Assetitem
+    local asset=cargoassets[i] --#WAREHOUSE.Assetitem
+    
+    -- Set asset status to not spawned until we capture its birth event.
+    asset.spawned=false
+    asset.spawngroupname=nil
 
     -- Alias of the group.
-    local _alias=self:_Alias(_assetitem, Request)
+    local _alias=self:_Alias(asset, Request)
 
     -- Spawn an asset group.
     local _group=nil --Wrapper.Group#GROUP
-    if _assetitem.category==Group.Category.GROUND then
+    if asset.category==Group.Category.GROUND then
 
       -- Spawn ground troops.
-      _group=self:_SpawnAssetGroundNaval(_alias,_assetitem, Request, self.spawnzone)
+      _group=self:_SpawnAssetGroundNaval(_alias, asset, Request, self.spawnzone)
 
-    elseif _assetitem.category==Group.Category.AIRPLANE or _assetitem.category==Group.Category.HELICOPTER then
+    elseif asset.category==Group.Category.AIRPLANE or asset.category==Group.Category.HELICOPTER then
 
       -- Spawn air units.
-      if Parking[_assetitem.uid] then
-        _group=self:_SpawnAssetAircraft(_alias,_assetitem, Request, Parking[_assetitem.uid], UnControlled)
+      if Parking[asset.uid] then
+        _group=self:_SpawnAssetAircraft(_alias, asset, Request, Parking[asset.uid], UnControlled)
       else
-        _group=self:_SpawnAssetAircraft(_alias,_assetitem, Request, nil, UnControlled)
+        _group=self:_SpawnAssetAircraft(_alias, asset, Request, nil, UnControlled)
       end
 
-    elseif _assetitem.category==Group.Category.TRAIN then
+    elseif asset.category==Group.Category.TRAIN then
 
       -- Spawn train.
       if self.rail then
         --TODO: Rail should only get one asset because they would spawn on top!
 
         -- Spawn naval assets.
-        _group=self:_SpawnAssetGroundNaval(_alias,_assetitem, Request, self.spawnzone)
+        _group=self:_SpawnAssetGroundNaval(_alias, asset, Request, self.spawnzone)
       end
 
       --self:E(self.wid.."ERROR: Spawning of TRAIN assets not possible yet!")
 
-    elseif _assetitem.category==Group.Category.SHIP then
+    elseif asset.category==Group.Category.SHIP then
 
       -- Spawn naval assets.
-      _group=self:_SpawnAssetGroundNaval(_alias,_assetitem, Request, self.portzone)
+      _group=self:_SpawnAssetGroundNaval(_alias, asset, Request, self.portzone)
 
     else
       self:E(self.wid.."ERROR: Unknown asset category!")
     end
-
-    -- Add group to group set and asset list.
-    if _group then
-      _groupset:AddGroup(_group)
-      table.insert(_assets, _assetitem)
-
-      -- Spawned into the world.
-      _assetitem.spawned=true
-      _assetitem.spawngroupname=_group:GetName()
-
-      -- Call FSM function.
-      self:__AssetSpawned(1,_group,_assetitem, Request)
-    else
-      self:E(self.wid.."ERROR: Cargo asset could not be spawned!")
-    end
-
-  end
-
-  -- Delete spawned items from warehouse stock.
-  for _,_asset in pairs(_assets) do
-    local asset=_asset --#WAREHOUSE.Assetitem
+    
+    
+    --Request add asset by id.
     Request.assets[asset.uid]=asset
-    self:_DeleteStockItem(asset)
+    
   end
-
-  -- Overwrite the assets with the actually spawned ones.
-  Request.cargoassets=_assets
-
-  return _groupset
+  
 end
 
 
@@ -5859,6 +5870,44 @@ end
 -- Event handler functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Get a warehouse asset from its unique id.
+-- @param #WAREHOUSE self
+-- @param #number id Asset ID.
+-- @return #WAREHOUSE.Assetitem The warehouse asset.
+function WAREHOUSE:GetAssetByID(id)
+  if id then
+    return _WAREHOUSEDB.Assets[id]
+  else
+    return nil
+  end  
+end
+
+--- Get a warehouse request from its unique id.
+-- @param #WAREHOUSE self
+-- @param #number id Asset ID.
+-- @return #WAREHOUSE.PendingItem The warehouse requested - either queued or pending.
+-- @return #boolean If *true*, request is queued, if *false*, request is pending, if *nil*, request could not be found.
+function WAREHOUSE:GetRequestByID(id)
+  if id then
+  
+    for _,_request in pairs(self.queue) do
+      local request=_request --#WAREHOUSE.Pendingitem
+      if request.uid==id then
+        return request, true
+      end
+    end
+
+    for _,_request in pairs(self.pending) do
+      local request=_request --#WAREHOUSE.Pendingitem
+      if request.uid==id then
+        return request, false
+      end
+    end
+  
+  end
+  return nil,nil
+end
+
 --- Warehouse event function, handling the birth of a unit.
 -- @param #WAREHOUSE self
 -- @param Core.Event#EVENTDATA EventData Event data.
@@ -5867,10 +5916,27 @@ function WAREHOUSE:_OnEventBirth(EventData)
 
   if EventData and EventData.IniGroup then
     local group=EventData.IniGroup
+    
     -- Note: Remember, group:IsAlive might(?) not return true here.
     local wid,aid,rid=self:_GetIDsFromGroup(group)
+    
     if wid==self.uid then
       self:T(self.wid..string.format("Warehouse %s captured event birth of its asset unit %s.", self.alias, EventData.IniUnitName))
+      
+      -- Get asset and request from id.
+      local asset=self:GetAssetById(aid)
+      local request=self:GetRequestById(rid)
+
+      -- Remove asset from stock.
+      self:_DeleteStockItem(asset)
+
+      -- Set spawned switch.
+      asset.spawned=true
+      asset.spawngroupname=group:GetName()
+      
+      -- Asset spawned FSM function.
+      self:__AssetSpawned(1, group, asset, request)
+      
     else
       --self:T3({wid=wid, uid=self.uid, match=(wid==self.uid), tw=type(wid), tu=type(self.uid)})
     end
