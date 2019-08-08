@@ -1892,6 +1892,7 @@ function WAREHOUSE:New(warehouse, alias)
   self:AddTransition("*",               "NewAsset",          "*")           -- New asset was added to warehouse stock.
   self:AddTransition("*",               "AddRequest",        "*")           -- New request from other warehouse.
   self:AddTransition("Running",         "Request",           "*")           -- Process a request. Only in running mode.
+  self:AddTransition("Running",         "RequestSpawned",    "*")           -- Assets of request were spawned.
   self:AddTransition("Attacked",        "Request",           "*")           -- Process a request. Only in running mode.
   self:AddTransition("*",               "Unloaded",          "*")           -- Cargo has been unloaded from the carrier (unused ==> unnecessary?).
   self:AddTransition("*",               "AssetSpawned",      "*")           -- Asset has been spawned into the world.
@@ -4965,13 +4966,12 @@ function WAREHOUSE:onafterAssetSpawned(From, Event, To, group, asset, request)
     end
   end
   
-  if allspawned then
-  
-    self:SelfRequest()
-    
-    -- delete request from self.queue and put it into pending.
-    
-    
+  if allspawned then  
+    if request.toself then
+      self:SelfRequest(request.cargogroupset, request)
+    else
+      self:RequestSpawned(request, request.cargogroupset, request.transportgroupset)
+    end
   end
 end
 
