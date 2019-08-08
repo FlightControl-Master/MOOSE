@@ -4141,7 +4141,6 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   -- Spawn assets of this request.
   self:_SpawnAssetRequest(Request)
 
-
   ------------------------------------------------------------------------------------------------------------------------------------
   -- Transport assets
   ------------------------------------------------------------------------------------------------------------------------------------
@@ -4149,13 +4148,9 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   -- Shortcut to transport assets.
   local _assetstock=Request.transportassets
 
-  -- General type and category.
-  local _transporttype=Request.transportattribute
-  local _transportcategory=Request.transportcategory
-
   -- Now we try to find all parking spots for all cargo groups in advance. Due to the for loop, the parking spots do not get updated while spawning.
   local Parking={}
-  if  _transportcategory==Group.Category.AIRPLANE or _transportcategory==Group.Category.HELICOPTER then
+  if Request.transportcategory==Group.Category.AIRPLANE or Request.transportcategory==Group.Category.HELICOPTER then
     Parking=self:_FindParkingForAssets(self.airbase,_assetstock)
   end
 
@@ -4216,51 +4211,17 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
       return
     end
     
-    -- Add asset by id.
+    -- Add asset by id to all assets table.
     Request.assets[_assetitem.uid]=_assetitem
-
-
-    -- Check if group was spawned.
-    if spawngroup then
-      -- Set state of warehouse so we can retrieve it later.
-      spawngroup:SetState(spawngroup, "WAREHOUSE", self)
-
-      -- Add group to transportset.
-      TransportSet:AddGroup(spawngroup)
-
-      -- Add assets to pending request.
-      
-
-      -- Add transport assets.
-      table.insert(_transportassets,_assetitem)
-
-      -- Spawned into the world.
-      _assetitem.spawned=true
-      _assetitem.spawngroupname=spawngroup:GetName()
-
-      -- Asset spawned FSM function.
-      self:__AssetSpawned(1, spawngroup, _assetitem, Request)
-    end
+    
   end
-
-  -- Delete spawned items from warehouse stock.
-  for _,_item in pairs(_transportassets) do
-    self:_DeleteStockItem(_item)
-  end
-
-  -- Add transport groups, i.e. the carriers to request.
-  Pending.transportgroupset=TransportSet
-
-  -- Add cargo group set.
-  Pending.transportcargoset=CargoGroups
-
+  
   -- Add request to pending queue.
-  table.insert(self.pending, Pending)
+  table.insert(self.pending, Request)
 
   -- Delete request from queue.
   self:_DeleteQueueItem(Request, self.queue)
-
-
+  
 end
 
 --- On after "RequestSpawned" event. Initiates the transport of the assets to the requesting warehouse.
@@ -4268,7 +4229,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #WAREHOUSE.Queueitem Request Information table of the request.
+-- @param #WAREHOUSE.Pendingitem Request Information table of the request.
 -- @param Core.Set#SET_GROUP CargoGroupSet Set of cargo groups.
 -- @param Core.Set#SET_GROUP TransportGroupSet Set of transport groups if any.
 function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet, TransportGroupSet)
@@ -4277,11 +4238,8 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
   local _cargotype=Request.cargoattribute    --#WAREHOUSE.Attribute
   local _cargocategory=Request.cargocategory --DCS#Group.Category
   
- -- Pending request. Add cargo groups to request.
-  local Pending=Request  --#WAREHOUSE.Pendingitem  
-
   -- Add groups to pending item.
-  Pending.cargogroupset=CargoGroupSet
+  Request.cargogroupset=CargoGroupSet
 
   ------------------------------------------------------------------------------------------------------------------------------------
   -- Self request: assets are spawned at warehouse but not transported anywhere.
@@ -4291,14 +4249,8 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
   if Request.toself then
     self:_DebugMessage(string.format("Selfrequest! Current status %s", self:GetState()))
 
-    -- Add request to pending queue.
-    table.insert(self.pending, Pending)
-
-    -- Delete request from queue.
-    self:_DeleteQueueItem(Request, self.queue)
-
     -- Start self request.
-    self:__SelfRequest(1, CargoGroupSet, Pending)
+    self:__SelfRequest(1, CargoGroupSet, Request)
 
     return
   end
@@ -4355,14 +4307,8 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
     end
     
     -- Transport group set.
-    Pending.transportgroupset=TransportGroupSet
-
-    -- Add request to pending queue.
-    table.insert(self.pending, Pending)
-
-    -- Delete request from queue.
-    self:_DeleteQueueItem(Request, self.queue)
-
+    Request.transportgroupset=TransportGroupSet
+    
     -- No cargo transport necessary.
     return
   end
@@ -4468,14 +4414,14 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
   
   
   -- Adjust carrier units. This has to come AFTER the dispatchers have been defined because they set the cargobay free weight!
-  Pending.carriercargo={}
+  Request.carriercargo={}
   for _,carriergroup in pairs(TransportGroupSet:GetSetObjects()) do
     local asset=self:FindAssetInDB(carriergroup)
     for _i,_carrierunit in pairs(carriergroup:GetUnits()) do
       local carrierunit=_carrierunit --Wrapper.Unit#UNIT
 
       -- Create empty tables which will be filled with the cargo groups of each carrier unit. Needed in case a carrier unit dies.
-      Pending.carriercargo[carrierunit:GetName()]={}
+      Request.carriercargo[carrierunit:GetName()]={}
 
       -- Adjust cargo bay of carrier unit.
       local cargobay=asset.cargobay[_i]
@@ -4486,12 +4432,6 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
     end
   end
   
-    -- Add request to pending queue.
-    table.insert(self.pending, Pending)
-
-    -- Delete request from queue.
-    self:_DeleteQueueItem(Request, self.queue)
-
   --------------------------------
   -- Dispatcher Event Functions --
   --------------------------------
@@ -5004,9 +4944,10 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
+-- @param Wrapper.Group#GROUP group The group spawned.
 -- @param #WAREHOUSE.Assetitem asset The asset that is dead.
 -- @param #WAREHOUSE.Pendingitem request The request of the dead asset.
-function WAREHOUSE:onafterAssetSpawned(From, Event, To, asset, request)
+function WAREHOUSE:onafterAssetSpawned(From, Event, To, group, asset, request)
   local text=string.format("Asset %s from request id=%d was spawned!", asset.templatename, request.uid)
   self:T(self.wid..text)
   self:_DebugMessage(text)
@@ -5885,13 +5826,14 @@ end
 --- Get a warehouse request from its unique id.
 -- @param #WAREHOUSE self
 -- @param #number id Asset ID.
--- @return #WAREHOUSE.PendingItem The warehouse requested - either queued or pending.
+-- @return #WAREHOUSE.Pendingitem The warehouse requested - either queued or pending.
 -- @return #boolean If *true*, request is queued, if *false*, request is pending, if *nil*, request could not be found.
 function WAREHOUSE:GetRequestByID(id)
+
   if id then
   
     for _,_request in pairs(self.queue) do
-      local request=_request --#WAREHOUSE.Pendingitem
+      local request=_request --#WAREHOUSE.Queueitem
       if request.uid==id then
         return request, true
       end
@@ -5905,6 +5847,7 @@ function WAREHOUSE:GetRequestByID(id)
     end
   
   end
+  
   return nil,nil
 end
 
@@ -5924,8 +5867,8 @@ function WAREHOUSE:_OnEventBirth(EventData)
       self:T(self.wid..string.format("Warehouse %s captured event birth of its asset unit %s.", self.alias, EventData.IniUnitName))
       
       -- Get asset and request from id.
-      local asset=self:GetAssetById(aid)
-      local request=self:GetRequestById(rid)
+      local asset=self:GetAssetByID(aid)
+      local request=self:GetRequestByID(rid)
 
       -- Remove asset from stock.
       self:_DeleteStockItem(asset)
@@ -5934,13 +5877,17 @@ function WAREHOUSE:_OnEventBirth(EventData)
       asset.spawned=true
       asset.spawngroupname=group:GetName()
       
+      -- Set warehouse state.
+      group:SetState(group, "WAREHOUSE", self)
+      
       -- Asset spawned FSM function.
-      self:__AssetSpawned(1, group, asset, request)
+      self:__AssetSpawned(0.1, group, asset, request)
       
     else
       --self:T3({wid=wid, uid=self.uid, match=(wid==self.uid), tw=type(wid), tu=type(self.uid)})
     end
-  end
+    
+  end  
 end
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
