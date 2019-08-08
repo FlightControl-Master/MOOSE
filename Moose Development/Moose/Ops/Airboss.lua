@@ -2068,6 +2068,7 @@ function AIRBOSS:New(carriername, alias)
   self:AddTransition("*",             "Status",          "*")           -- Update status of players and queues.
   self:AddTransition("*",             "RecoveryCase",    "*")           -- Switch to another case recovery.
   self:AddTransition("*",             "PassingWaypoint", "*")           -- Carrier is passing a waypoint.
+  self:AddTransition("*",             "LSOgrade",        "*")           -- LSO grade.
   self:AddTransition("*",             "Save",            "*")           -- Save player scores to file.
   self:AddTransition("*",             "Stop",            "Stopped")     -- Stop AIRBOSS FMS.
 
@@ -2239,6 +2240,29 @@ function AIRBOSS:New(carriername, alias)
   -- @param #string To To state.
   -- @param #string path Path where the file is located. Default is the DCS installation root directory or your "Saved Games\DCS" folder if lfs was desanitized.
   -- @param #string filename (Optional) File name. Default is AIRBOSS-*ALIAS*_LSOgrades.csv.
+
+
+  --- Triggers the FSM event "LSOgrade". Called when the LSO grades a player
+  -- @function [parent=#AIRBOSS] LSOgrade
+  -- @param #AIRBOSS self
+  -- @param #AIRBOSS.PlayerData playerData Player Data.
+  -- @param #AIRBOSS.LSOgrade grade LSO grade.
+
+  --- Triggers the FSM event "LSOgrade". Delayed called when the LSO grades a player.
+  -- @function [parent=#AIRBOSS] __LSOgrade
+  -- @param #AIRBOSS self
+  -- @param #number delay Delay in seconds.
+  -- @param #AIRBOSS.PlayerData playerData Player Data.
+  -- @param #AIRBOSS.LSOgrade grade LSO grade.
+
+  --- On after "LSOgrade" user function. Called when the carrier passes a waypoint of its route.
+  -- @function [parent=#AIRBOSS] OnAfterLSOgrade
+  -- @param #AIRBOSS self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #AIRBOSS.PlayerData playerData Player Data.
+  -- @param #AIRBOSS.LSOgrade grade LSO grade.
 
 
   --- Triggers the FSM event "Stop" that stops the airboss. Event handlers are stopped.
