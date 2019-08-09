@@ -45,9 +45,9 @@ FLIGHTGROUP = {
 
 --- Flight group element.
 -- @type FLIGHTGROUP.Element
--- @param #string name Name of the element.
--- @param Wrapper.Unit#UNIT unit Element unit object.
--- @param #string status Status, i.e. born, parking, taxiing.
+-- @field #string name Name of the element.
+-- @field Wrapper.Unit#UNIT unit Element unit object.
+-- @field #string status Status, i.e. born, parking, taxiing.
 
 --- Flight group tasks.
 -- @type FLIGHTGROUP.Task
@@ -164,4 +164,112 @@ function FLIGHTGROUP:New(AIGroup)
   
 end
 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Start & Status
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+
+--- On after Start event. Starts the warehouse. Addes event handlers and schedules status updates of reqests and queue.
+-- @param #FLIGHTGROUP self
+-- @param Wrapper.Group#GROUP Group Flight group.
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function FLIGHTGROUP:onafterStart(Group, From, Event, To)
+
+  -- Short info.
+  local text=string.format("Starting flight group %s\n", self.groupname)
+  self:I(self.sid..text)
+
+
+  -- Handle events:
+  self:HandleEvent(EVENTS.Birth,          self.OnEventBirth)
+  self:HandleEvent(EVENTS.EngineStartup,  self.OnEventEngineStartup)
+  self:HandleEvent(EVENTS.Takeoff,        self.OnEventTakeOff)
+  self:HandleEvent(EVENTS.Land,           self.OnEventLanding)
+  self:HandleEvent(EVENTS.EngineShutdown, self.OnEventEngineShutdown)
+  self:HandleEvent(EVENTS.PilotDead,      self.OnEventPilotDead)
+  self:HandleEvent(EVENTS.Ejection,       self.OnEventEjection)
+  self:HandleEvent(EVENTS.Crash,          self.OnEventCrash)
+
+  -- Start the status monitoring.
+  self:__Status(-1)
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Events
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Flightgroup event function, handling the birth of a unit.
+-- @param #FLIGHTGROUP self
+-- @param Core.Event#EVENTDATA EventData Event data.
+function FLIGHTGROUP:OnEventBirth(EventData)
+
+  if EventData and EventData.IniGroup and EventData.IniUnit then
+    local unit=EventData.IniUnit
+    local group=EventData.IniGroup
+    local unitname=EventData.IniUnitName
+
+    local element=self:GetElementByName(unitname)
+
+    if element then
+      element.status="born"
+      
+      if unit:InAir() then
+        element.status="airborn"
+      end
+    end
+
+  end
+  
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- FSM functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Misc functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--- Check if a unit is and element of the flightgroup.
+-- @param #FLIGHTGROUP self
+-- @param #string unitname Name of unit.
+-- @return #FLIGHTGROUP.Element The element.
+function FLIGHTGROUP:GetElementByName(unitname)
+
+  for _,_element in pairs(self.element) do
+    local element=_element --#FLIGHTGROUP.Element
+    
+    if element.name==unitname then
+      return element
+    end
+  
+  end
+
+  return nil
+end
+
+
+--- Check if a unit is and element of the flightgroup.
+-- @param #FLIGHTGROUP self
+-- @param #string unitname Name of unit.
+function FLIGHTGROUP:_IsElement(unitname)
+
+  for _,_element in pairs(self.element) do
+    local element=_element --#FLIGHTGROUP.Element
+    
+    if element.name==unitname then
+      return true
+    end
+  
+  end
+
+  return false
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

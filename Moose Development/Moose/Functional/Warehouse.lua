@@ -1598,6 +1598,7 @@ WAREHOUSE = {
 -- @field #string assignment Assignment of the asset. This could, e.g., be used in the @{#WAREHOUSE.OnAfterNewAsset) function.
 -- @field #boolean spawned If true, asset was spawned into the cruel world. If false, it is still in stock.
 -- @field #string spawngroupname Name of the spawned group.
+-- @field #boolean iscargo If true, asset is cargo. If false asset is transport. Nil if in stock.
 
 --- Item of the warehouse queue table.
 -- @type WAREHOUSE.Queueitem
@@ -4170,6 +4171,11 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
        -- Create an alias name with the UIDs for the sending warehouse, asset and request.
     local _alias=self:_alias(_assetitem.unittype, self.uid, _assetitem.uid, Request.uid)
+    
+    -- Asset is transport.
+    _assetitem.spawned=false
+    _assetitem.spawngroupname=nil
+    _assetitem.iscargo=false
 
     local spawngroup=nil --Wrapper.Group#GROUP
 
@@ -4240,7 +4246,7 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
   local _cargocategory=Request.cargocategory --DCS#Group.Category
   
   -- Add groups to pending item.
-  Request.cargogroupset=CargoGroupSet
+  --Request.cargogroupset=CargoGroupSet
 
   ------------------------------------------------------------------------------------------------------------------------------------
   -- Self request: assets are spawned at warehouse but not transported anywhere.
@@ -4959,20 +4965,19 @@ function WAREHOUSE:onafterAssetSpawned(From, Event, To, group, asset, request)
   
   local allspawned=true
   for _,_asset in pairs(request.assets) do
-    local asset=_asset --#WAREHOUSE.Assetitem
+    local assetitem=_asset --#WAREHOUSE.Assetitem
     
-    if not asset.spawned then
+    self:I(string.format("FF Asset %s spawned %s as %s", assetitem.templatename, tostring(assetitem.spawned), tostring(assetitem.spawngroupname)))
+    
+    if not assetitem.spawned then
       allspawned=false
     end
   end
   
-  if allspawned then  
-    if request.toself then
-      self:SelfRequest(request.cargogroupset, request)
-    else
-      self:RequestSpawned(request, request.cargogroupset, request.transportgroupset)
-    end
+  if allspawned then
+    self:RequestSpawned(request, request.cargogroupset, request.transportgroupset)
   end
+  
 end
 
 --- On after "AssetDead" event triggered when an asset group died.
@@ -5275,6 +5280,7 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
     -- Set asset status to not spawned until we capture its birth event.
     asset.spawned=false
     asset.spawngroupname=nil
+    asset.iscargo=true
 
     -- Alias of the group.
     local _alias=self:_Alias(asset, Request)
@@ -5826,8 +5832,7 @@ end
 --- Get a warehouse request from its unique id.
 -- @param #WAREHOUSE self
 -- @param #number id Asset ID.
--- @return #WAREHOUSE.Pendingitem The warehouse requested - either queued or pending.
--- @return #boolean If *true*, request is queued, if *false*, request is pending, if *nil*, request could not be found.
+-- @return #WAREHOUSE.Pendingitem The warehouse requested - either queued or pending. #boolean If *true*, request is queued, if *false*, request is pending, if *nil*, request could not be found.
 function WAREHOUSE:GetRequestByID(id)
 
   if id then
@@ -5869,19 +5874,33 @@ function WAREHOUSE:_OnEventBirth(EventData)
       -- Get asset and request from id.
       local asset=self:GetAssetByID(aid)
       local request=self:GetRequestByID(rid)
-
-      -- Remove asset from stock.
-      self:_DeleteStockItem(asset)
-
-      -- Set spawned switch.
-      asset.spawned=true
-      asset.spawngroupname=group:GetName()
       
-      -- Set warehouse state.
-      group:SetState(group, "WAREHOUSE", self)
-      
-      -- Asset spawned FSM function.
-      self:__AssetSpawned(0.1, group, asset, request)
+      -- Birth is triggered for each unit. We need to make sure not to call this too often!
+      if not asset.spawned then
+
+        -- Remove asset from stock.
+        self:_DeleteStockItem(asset)
+  
+        -- Set spawned switch.
+        asset.spawned=true
+        asset.spawngroupname=group:GetName()
+        
+        -- Add group.
+        if asset.iscargo==true then
+          request.cargogroupset=request.cargogroupset or SET_GROUP:New()
+          request.cargogroupset:AddGroup(group)
+        else
+          request.transportgroupset=request.transportgroupset or SET_GROUP:New()
+          request.transportgroupset:AddGroup(group)
+        end
+        
+        -- Set warehouse state.
+        group:SetState(group, "WAREHOUSE", self)
+        
+        -- Asset spawned FSM function.
+        self:__AssetSpawned(1, group, asset, request)
+        
+      end
       
     else
       --self:T3({wid=wid, uid=self.uid, match=(wid==self.uid), tw=type(wid), tu=type(self.uid)})
