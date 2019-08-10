@@ -1277,6 +1277,7 @@ do -- COORDINATE
   -- @return Core.Point#COORDINATE Coordinate of the nearest parking spot.
   -- @return #number Terminal ID.
   -- @return #number Distance to closest parking spot in meters.
+  -- @return Wrapper.Airbase#AIRBASE#ParkingSpot Parking spot table.
   function COORDINATE:GetClosestParkingSpot(airbase, terminaltype, free)
     
     -- Get airbase table.
@@ -1291,6 +1292,7 @@ do -- COORDINATE
     local _closest=nil --Core.Point#COORDINATE
     local _termID=nil
     local _distmin=nil
+    local spot=nil --Wrapper.Airbase#AIRBASE.ParkingSpot
 
     -- Loop over all airbases.
     for _,_airbase in pairs(airbases) do
@@ -1310,11 +1312,13 @@ do -- COORDINATE
             _closest=_coord
             _distmin=_dist
             _termID=_spot.TerminalID
+            spot=_spot
           else    
             if _dist<_distmin then
               _distmin=_dist
               _closest=_coord
               _termID=_spot.TerminalID
+              spot=_spot
             end
           end
                           
@@ -1322,7 +1326,7 @@ do -- COORDINATE
       end
     end
    
-    return _closest, _termID, _distmin
+    return _closest, _termID, _distmin, spot
   end
 
   --- Gets the nearest free parking spot.
