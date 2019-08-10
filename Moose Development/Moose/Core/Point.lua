@@ -2065,31 +2065,32 @@ do -- COORDINATE
   -- @return #string The coordinate Text in the configured coordinate system.
   function COORDINATE:ToString( Controllable, Settings, Task )
   
-    self:F2( { Controllable = Controllable and Controllable:GetName() } )
+    self:E( { Controllable = Controllable and Controllable:GetName() } )
 
     local Settings = Settings or ( Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() ) ) or _SETTINGS
 
-    local ModeA2A = false
-    self:E('A2A false')
+    local ModeA2A = nil
     
     if Task then
-      self:E('Task ' .. Task.ClassName )
       if Task:IsInstanceOf( TASK_A2A ) then
         ModeA2A = true
-        self:E('A2A true')
       else
         if Task:IsInstanceOf( TASK_A2G ) then
           ModeA2A = false
         else
           if Task:IsInstanceOf( TASK_CARGO ) then
             ModeA2A = false
-          else
-            ModeA2A = false
           end
+            if Task:IsInstanceOf( TASK_CAPTURE_ZONE ) then
+              ModeA2A = false
+            end
         end
       end
-    else
-      local IsAir = Controllable and Controllable:IsAirPlane() or false
+    end
+    
+   
+    if ModeA2A == nil then
+      local IsAir = Controllable and ( Controllable:IsAirPlane() or Controllable:IsHelicopter() ) or false
       if IsAir  then
         ModeA2A = true
       else

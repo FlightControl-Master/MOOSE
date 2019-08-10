@@ -147,6 +147,17 @@ AI_FORMATION.__Enum.Mode = {
   Reconnaissance = "R",
 }
 
+--- @type AI_FORMATION.__Enum.ReportType
+-- @field #number All
+-- @field #number Airborne
+-- @field #number GroundRadar
+-- @field #number Ground
+AI_FORMATION.__Enum.ReportType = {
+  Airborne = "*",
+  Airborne = "A",
+  GroundRadar = "R",
+  Ground = "G",
+}
 
 
 

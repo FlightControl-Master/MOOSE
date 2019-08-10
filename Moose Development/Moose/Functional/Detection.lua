@@ -2560,9 +2560,17 @@ do -- DETECTION_AREAS
       local DetectedSet = self:GetDetectedItemSet( DetectedItem )
       local ReportSummaryItem
       
-      local DetectedZone = self:GetDetectedItemZone( DetectedItem )
-      local DetectedItemCoordinate = DetectedZone:GetCoordinate()
-      local DetectedItemCoordText = DetectedItemCoordinate:ToString( AttackGroup, Settings )
+      --local DetectedZone = self:GetDetectedItemZone( DetectedItem )
+      local DetectedItemCoordinate = self:GetDetectedItemCoordinate( DetectedItem )
+      local DetectedAir = DetectedSet:HasAirUnits()
+      local DetectedAltitude = self:GetDetectedItemCoordinate( DetectedItem )
+      local DetectedItemCoordText = ""
+      if DetectedAir > 0 then
+        DetectedItemCoordText = DetectedItemCoordinate:ToStringA2A( AttackGroup, Settings )
+      else
+        DetectedItemCoordText = DetectedItemCoordinate:ToStringA2G( AttackGroup, Settings )
+      end
+      
 
       local ThreatLevelA2G = self:GetDetectedItemThreatLevel( DetectedItem )
       local DetectedItemsCount = DetectedSet:Count()
