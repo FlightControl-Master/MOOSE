@@ -2624,6 +2624,23 @@ do -- SET_UNIT
     return GroundUnitCount
   end
   
+  --- Returns if the @{Set} has air targets.
+  -- @param #SET_UNIT self
+  -- @return #number The amount of air targets in the Set.
+  function SET_UNIT:HasAirUnits()
+    self:F2()
+  
+    local AirUnitCount = 0
+    for UnitID, UnitData in pairs( self:GetSet() ) do
+      local UnitTest = UnitData -- Wrapper.Unit#UNIT
+      if UnitTest:IsAir() then
+        AirUnitCount = AirUnitCount + 1
+      end
+    end
+  
+    return AirUnitCount
+  end
+  
   --- Returns if the @{Set} has friendly ground units.
   -- @param #SET_UNIT self
   -- @return #number The amount of ground targets in the Set.
