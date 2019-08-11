@@ -3511,7 +3511,7 @@ do -- AI_A2G_DISPATCHER
         self:F({"Defender Birth", Defender:GetName()})
         --self:GetParent(self).onafterBirth( self, Defender, From, Event, To )
         
-        local DefenderName = Defender:GetName()
+        local DefenderName = Defender:GetCallsign()
         local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
         
@@ -3525,7 +3525,7 @@ do -- AI_A2G_DISPATCHER
         self:F({"Defender PatrolRoute", Defender:GetName()})
         self:GetParent(self).onafterPatrolRoute( self, Defender, From, Event, To, AttackSetUnit )
         
-        local DefenderName = Defender:GetName()
+        local DefenderName = Defender:GetCallsign()
         local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
         if Squadron then
@@ -3539,7 +3539,7 @@ do -- AI_A2G_DISPATCHER
         self:F({"Defender RTB", Defender:GetName()})
         self:GetParent(self).onafterRTB( self, Defender, From, Event, To )
         
-        local DefenderName = Defender:GetName()
+        local DefenderName = Defender:GetCallsign()
         local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
         Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " returning." )
@@ -3552,7 +3552,7 @@ do -- AI_A2G_DISPATCHER
         self:F({"Defender LostControl", Defender:GetName()})
         self:GetParent(self).onafterHome( self, Defender, From, Event, To )
         
-        local DefenderName = Defender:GetName()
+        local DefenderName = Defender:GetCallsign()
         local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
         Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " lost control." )
@@ -3567,7 +3567,7 @@ do -- AI_A2G_DISPATCHER
         self:F({"Defender Home", Defender:GetName()})
         self:GetParent(self).onafterHome( self, Defender, From, Event, To )
         
-        local DefenderName = Defender:GetName()
+        local DefenderName = Defender:GetCallsign()
         local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
         Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " landing." )
@@ -3619,7 +3619,7 @@ do -- AI_A2G_DISPATCHER
         self:F({"Defender Birth", Defender:GetName()})
         --self:GetParent(self).onafterBirth( self, Defender, From, Event, To )
         
-        local DefenderName = Defender:GetName()
+        local DefenderName = Defender:GetCallsign()
         local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
         local DefenderTarget = Dispatcher:GetDefenderTaskTarget( Defender )
@@ -3636,7 +3636,7 @@ do -- AI_A2G_DISPATCHER
         self:F({"Engage Route", Defender:GetName()})
         self:GetParent(self).onafterEngageRoute( self, Defender, From, Event, To, AttackSetUnit )
         
-        local DefenderName = Defender:GetName()
+        local DefenderName = Defender:GetCallsign()
         local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
         
@@ -3652,7 +3652,7 @@ do -- AI_A2G_DISPATCHER
         self:F({"Engage Route", Defender:GetName()})
         --self:GetParent(self).onafterBirth( self, Defender, From, Event, To )
         
-        local DefenderName = Defender:GetName()
+        local DefenderName = Defender:GetCallsign()
         local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
         local FirstUnit = AttackSetUnit:GetFirst()
@@ -3666,7 +3666,7 @@ do -- AI_A2G_DISPATCHER
       function Fsm:onafterRTB( Defender, From, Event, To )
         self:F({"Defender RTB", Defender:GetName()})
         
-        local DefenderName = Defender:GetName()
+        local DefenderName = Defender:GetCallsign()
         local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
         Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " RTB." )
@@ -3681,7 +3681,7 @@ do -- AI_A2G_DISPATCHER
         self:F({"Defender LostControl", Defender:GetName()})
         self:GetParent(self).onafterHome( self, Defender, From, Event, To )
         
-        local DefenderName = Defender:GetName()
+        local DefenderName = Defender:GetCallsign()
         local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
         Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " lost control." )
@@ -3697,7 +3697,7 @@ do -- AI_A2G_DISPATCHER
         self:F({"Defender Home", Defender:GetName()})
         self:GetParent(self).onafterHome( self, Defender, From, Event, To )
         
-        local DefenderName = Defender:GetName()
+        local DefenderName = Defender:GetCallsign()
         local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
         Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " landing." )
@@ -4056,6 +4056,7 @@ do -- AI_A2G_DISPATCHER
     
     local TaskReport = REPORT:New()
 
+    local DefenseTotal = 0
           
     for DefenderGroup, DefenderTask in pairs( self:GetDefenderTasks() ) do
       local DefenderGroup = DefenderGroup -- Wrapper.Group#GROUP
@@ -4089,12 +4090,15 @@ do -- AI_A2G_DISPATCHER
       end
     end
 
+--    for DefenderGroup, DefenderTask in pairs( self:GetDefenderTasks() ) do
+--      DefenseTotal = DefenseTotal + 1
+--    end
+    
     local Report = REPORT:New( "\nTactical Overview" )
 
     local DefenderGroupCount = 0
 
     local DefendersTotal = 0
-    local DefenseTotal = 0
 
     -- Now that all obsolete tasks are removed, loop through the detected targets.
     --for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
@@ -4149,7 +4153,10 @@ do -- AI_A2G_DISPATCHER
           end
         end
         
-        if EngageCoordinate and ( ( self.DefenseLimit and DefenseTotal < self.DefenseLimit ) or true ) then
+        -- There needs to be an EngageCoordinate.
+        -- If self.DefenseLimit is set (thus limit the amount of defenses to one zone), then only start a new defense if the maximum has not been reached.
+        -- If self.DefenseLimit has not been set, there is an unlimited amount of zones to be defended.
+        if ( EngageCoordinate and ( self.DefenseLimit and DefenseTotal < self.DefenseLimit ) or not self.DefenseLimit ) then
           do 
             local DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies = self:Evaluate_SEAD( DetectedItem ) -- Returns a SET_UNIT with the SEAD targets to be engaged...
             if DefendersMissing > 0 then

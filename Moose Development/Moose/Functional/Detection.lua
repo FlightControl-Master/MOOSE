@@ -562,18 +562,38 @@ do -- DETECTION_BASE
       end
       
       -- Count alive(!) groups only. Solves issue #1173 https://github.com/FlightControl-Master/MOOSE/issues/1173
-      self.DetectionCount = self.DetectionSet:CountAlive()
+      self.DetectionCount = self:CountAliveRecce()
       
-      self.DetectionSet:ForEachGroupAlive(
+      local DetectionInterval = self.DetectionCount / ( self.RefreshTimeInterval - 1 )
+      
+      self:ForEachAliveRecce(
         function( DetectionGroup )
           self:__Detection( DetectDelay, DetectionGroup, DetectionTimeStamp ) -- Process each detection asynchronously.
-          DetectDelay = DetectDelay + 1
+          DetectDelay = DetectDelay + DetectionInterval
         end
       )
       
       self:__Detect( -self.RefreshTimeInterval )
       
     end
+
+    --- @param #DETECTION_BASE self
+    -- @param #number The amount of alive recce.
+    function DETECTION_BASE:CountAliveRecce()
+
+      return self.DetectionSet:CountAlive()
+
+    end    
+    
+    --- @param #DETECTION_BASE self
+    function DETECTION_BASE:ForEachAliveRecce( IteratorFunction, ... )
+      self:F2( arg )
+      
+      self.DetectionSet:ForEachGroupAlive( IteratorFunction, arg )
+    
+      return self
+    end
+  
     
     --- @param #DETECTION_BASE self
     -- @param #string From The From State string.
@@ -1412,14 +1432,14 @@ do -- DETECTION_BASE
         world.searchObjects( Object.Category.UNIT, SphereSearch, FindNearByFriendlies, TargetData )
 
         DetectedItem.PlayersNearBy = nil
-        local DetectionZone = ZONE_UNIT:New( "DetectionPlayers", DetectedUnit, self.FriendliesRange )
         
         _DATABASE:ForEachPlayer(
           --- @param Wrapper.Unit#UNIT PlayerUnit
           function( PlayerUnitName )
             local PlayerUnit = UNIT:FindByName( PlayerUnitName )
 
-            if PlayerUnit and PlayerUnit:IsInZone(DetectionZone) then
+            if PlayerUnit and PlayerUnit:GetCoordinate():IsInRadius( DetectedUnitCoord, self.FriendliesRange ) then
+            --if PlayerUnit and PlayerUnit:IsInZone(DetectionZone) then
 
               local PlayerUnitCategory = PlayerUnit:GetDesc().category
     
@@ -2560,9 +2580,17 @@ do -- DETECTION_AREAS
       local DetectedSet = self:GetDetectedItemSet( DetectedItem )
       local ReportSummaryItem
       
-      local DetectedZone = self:GetDetectedItemZone( DetectedItem )
-      local DetectedItemCoordinate = DetectedZone:GetCoordinate()
-      local DetectedItemCoordText = DetectedItemCoordinate:ToString( AttackGroup, Settings )
+      --local DetectedZone = self:GetDetectedItemZone( DetectedItem )
+      local DetectedItemCoordinate = self:GetDetectedItemCoordinate( DetectedItem )
+      local DetectedAir = DetectedSet:HasAirUnits()
+      local DetectedAltitude = self:GetDetectedItemCoordinate( DetectedItem )
+      local DetectedItemCoordText = ""
+      if DetectedAir > 0 then
+        DetectedItemCoordText = DetectedItemCoordinate:ToStringA2A( AttackGroup, Settings )
+      else
+        DetectedItemCoordText = DetectedItemCoordinate:ToStringA2G( AttackGroup, Settings )
+      end
+      
 
       local ThreatLevelA2G = self:GetDetectedItemThreatLevel( DetectedItem )
       local DetectedItemsCount = DetectedSet:Count()

@@ -2805,9 +2805,31 @@ function CONTROLLABLE:GetDetectedTargets( DetectVisual, DetectOptical, DetectRad
     local DetectionRWR = ( DetectRWR and DetectRWR == true ) and Controller.Detection.RWR or nil
     local DetectionDLINK = ( DetectDLINK and DetectDLINK == true ) and Controller.Detection.DLINK or nil
 
+
+    local Params = {}
+    if DetectionVisual then
+      Params[#Params+1] = DetectionVisual
+    end
+    if DetectionOptical then
+      Params[#Params+1] = DetectionOptical
+    end
+    if DetectionRadar then
+      Params[#Params+1] = DetectionRadar
+    end
+    if DetectionIRST then
+      Params[#Params+1] = DetectionIRST
+    end
+    if DetectionRWR then
+      Params[#Params+1] = DetectionRWR
+    end
+    if DetectionDLINK then
+      Params[#Params+1] = DetectionDLINK
+    end
+
+
     self:T2( { DetectionVisual, DetectionOptical, DetectionRadar, DetectionIRST, DetectionRWR, DetectionDLINK } )
 
-    return self:_GetController():getDetectedTargets( DetectionVisual, DetectionOptical, DetectionRadar, DetectionIRST, DetectionRWR, DetectionDLINK )
+    return self:_GetController():getDetectedTargets( Params[1], Params[2], Params[3], Params[4], Params[5], Params[6] )
   end
 
   return nil

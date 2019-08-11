@@ -238,7 +238,7 @@ do -- MENU_BASE
   	self.Path = ( self.ParentMenu and "@" .. table.concat( self.MenuParentPath or {}, "@" ) or "" ) .. "@" .. self.MenuText
     self.Menus = {}
     self.MenuCount = 0
-    self.MenuTime = timer.getTime()
+    self.MenuStamp = timer.getTime()
     self.MenuRemoveParent = false
   	
     if self.ParentMenu then
@@ -285,13 +285,31 @@ do -- MENU_BASE
   function MENU_BASE:GetMenu( MenuText )
     return self.Menus[MenuText]
   end
+
+  --- Sets a menu stamp for later prevention of menu removal.
+  -- @param #MENU_BASE self
+  -- @param MenuStamp
+  -- @return #MENU_BASE
+  function MENU_BASE:SetStamp( MenuStamp )
+    self.MenuStamp = MenuStamp
+    return self
+  end
+  
+  
+  --- Gets a menu stamp for later prevention of menu removal.
+  -- @param #MENU_BASE self
+  -- @return MenuStamp
+  function MENU_BASE:GetStamp()
+    return timer.getTime()
+  end
+  
   
   --- Sets a time stamp for later prevention of menu removal.
   -- @param #MENU_BASE self
-  -- @param MenuTime
+  -- @param MenuStamp
   -- @return #MENU_BASE
-  function MENU_BASE:SetTime( MenuTime )
-    self.MenuTime = MenuTime
+  function MENU_BASE:SetTime( MenuStamp )
+    self.MenuStamp = MenuStamp
     return self
   end
   
@@ -443,7 +461,7 @@ do -- MENU_MISSION
   --- Removes the main menu and the sub menus recursively of this MENU_MISSION.
   -- @param #MENU_MISSION self
   -- @return #nil
-  function MENU_MISSION:Remove( MenuTime, MenuTag )
+  function MENU_MISSION:Remove( MenuStamp, MenuTag )
   
     MENU_INDEX:PrepareMission()
     local Path = MENU_INDEX:ParentPath( self.ParentMenu, self.MenuText )
@@ -451,7 +469,7 @@ do -- MENU_MISSION
 
     if MissionMenu == self then
       self:RemoveSubMenus()
-      if not MenuTime or self.MenuTime ~= MenuTime then
+      if not MenuStamp or self.MenuStamp ~= MenuStamp then
         if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
           self:F( { Text = self.MenuText, Path = self.MenuPath } )
           if self.MenuPath ~= nil then
@@ -537,7 +555,7 @@ do -- MENU_MISSION_COMMAND
     local MissionMenu = MENU_INDEX:HasMissionMenu( Path )   
 
     if MissionMenu == self then
-      if not MenuTime or self.MenuTime ~= MenuTime then
+      if not MenuStamp or self.MenuStamp ~= MenuStamp then
         if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
           self:F( { Text = self.MenuText, Path = self.MenuPath } )
           if self.MenuPath ~= nil then
@@ -666,7 +684,7 @@ do -- MENU_COALITION
   --- Removes the main menu and the sub menus recursively of this MENU_COALITION.
   -- @param #MENU_COALITION self
   -- @return #nil
-  function MENU_COALITION:Remove( MenuTime, MenuTag )
+  function MENU_COALITION:Remove( MenuStamp, MenuTag )
   
     MENU_INDEX:PrepareCoalition( self.Coalition )
     local Path = MENU_INDEX:ParentPath( self.ParentMenu, self.MenuText )
@@ -674,7 +692,7 @@ do -- MENU_COALITION
 
     if CoalitionMenu == self then
       self:RemoveSubMenus()
-      if not MenuTime or self.MenuTime ~= MenuTime then
+      if not MenuStamp or self.MenuStamp ~= MenuStamp then
         if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
           self:F( { Coalition = self.Coalition, Text = self.MenuText, Path = self.MenuPath } )
           if self.MenuPath ~= nil then
@@ -758,14 +776,14 @@ do -- MENU_COALITION_COMMAND
   --- Removes a radio command item for a coalition
   -- @param #MENU_COALITION_COMMAND self
   -- @return #nil
-  function MENU_COALITION_COMMAND:Remove( MenuTime, MenuTag )
+  function MENU_COALITION_COMMAND:Remove( MenuStamp, MenuTag )
   
     MENU_INDEX:PrepareCoalition( self.Coalition )
     local Path = MENU_INDEX:ParentPath( self.ParentMenu, self.MenuText )
     local CoalitionMenu = MENU_INDEX:HasCoalitionMenu( self.Coalition, Path )   
 
     if CoalitionMenu == self then
-      if not MenuTime or self.MenuTime ~= MenuTime then
+      if not MenuStamp or self.MenuStamp ~= MenuStamp then
         if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
           self:F( { Coalition = self.Coalition, Text = self.MenuText, Path = self.MenuPath } )
           if self.MenuPath ~= nil then
@@ -907,13 +925,13 @@ do
   
   --- Removes the sub menus recursively of this MENU_GROUP.
   -- @param #MENU_GROUP self
-  -- @param MenuTime
+  -- @param MenuStamp
   -- @param MenuTag A Tag or Key to filter the menus to be refreshed with the Tag set.
   -- @return #MENU_GROUP self
-  function MENU_GROUP:RemoveSubMenus( MenuTime, MenuTag )
+  function MENU_GROUP:RemoveSubMenus( MenuStamp, MenuTag )
 
     for MenuText, Menu in pairs( self.Menus or {} ) do
-      Menu:Remove( MenuTime, MenuTag )
+      Menu:Remove( MenuStamp, MenuTag )
     end
     
     self.Menus = nil
@@ -923,18 +941,18 @@ do
 
   --- Removes the main menu and sub menus recursively of this MENU_GROUP.
   -- @param #MENU_GROUP self
-  -- @param MenuTime
+  -- @param MenuStamp
   -- @param MenuTag A Tag or Key to filter the menus to be refreshed with the Tag set.
   -- @return #nil
-  function MENU_GROUP:Remove( MenuTime, MenuTag )
+  function MENU_GROUP:Remove( MenuStamp, MenuTag )
 
     MENU_INDEX:PrepareGroup( self.Group )
     local Path = MENU_INDEX:ParentPath( self.ParentMenu, self.MenuText )
     local GroupMenu = MENU_INDEX:HasGroupMenu( self.Group, Path )   
 
     if GroupMenu == self then
-      self:RemoveSubMenus( MenuTime, MenuTag )
-      if not MenuTime or self.MenuTime ~= MenuTime then
+      self:RemoveSubMenus( MenuStamp, MenuTag )
+      if not MenuStamp or self.MenuStamp ~= MenuStamp then
         if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
           if self.MenuPath ~= nil then
             self:F( { Group = self.GroupID, Text = self.MenuText, Path = self.MenuPath } )
@@ -1014,17 +1032,17 @@ do
   
   --- Removes a menu structure for a group.
   -- @param #MENU_GROUP_COMMAND self
-  -- @param MenuTime
+  -- @param MenuStamp
   -- @param MenuTag A Tag or Key to filter the menus to be refreshed with the Tag set.
   -- @return #nil
-  function MENU_GROUP_COMMAND:Remove( MenuTime, MenuTag )
+  function MENU_GROUP_COMMAND:Remove( MenuStamp, MenuTag )
 
     MENU_INDEX:PrepareGroup( self.Group )
     local Path = MENU_INDEX:ParentPath( self.ParentMenu, self.MenuText )
     local GroupMenu = MENU_INDEX:HasGroupMenu( self.Group, Path )   
 
     if GroupMenu == self then
-      if not MenuTime or self.MenuTime ~= MenuTime then
+      if not MenuStamp or self.MenuStamp ~= MenuStamp then
         if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
           if self.MenuPath ~= nil then
            self:F( { Group = self.GroupID, Text = self.MenuText, Path = self.MenuPath } )
@@ -1136,13 +1154,13 @@ do
   
   --- Removes the sub menus recursively of this MENU_GROUP_DELAYED.
   -- @param #MENU_GROUP_DELAYED self
-  -- @param MenuTime
+  -- @param MenuStamp
   -- @param MenuTag A Tag or Key to filter the menus to be refreshed with the Tag set.
   -- @return #MENU_GROUP_DELAYED self
-  function MENU_GROUP_DELAYED:RemoveSubMenus( MenuTime, MenuTag )
+  function MENU_GROUP_DELAYED:RemoveSubMenus( MenuStamp, MenuTag )
 
     for MenuText, Menu in pairs( self.Menus or {} ) do
-      Menu:Remove( MenuTime, MenuTag )
+      Menu:Remove( MenuStamp, MenuTag )
     end
     
     self.Menus = nil
@@ -1152,18 +1170,18 @@ do
 
   --- Removes the main menu and sub menus recursively of this MENU_GROUP.
   -- @param #MENU_GROUP_DELAYED self
-  -- @param MenuTime
+  -- @param MenuStamp
   -- @param MenuTag A Tag or Key to filter the menus to be refreshed with the Tag set.
   -- @return #nil
-  function MENU_GROUP_DELAYED:Remove( MenuTime, MenuTag )
+  function MENU_GROUP_DELAYED:Remove( MenuStamp, MenuTag )
 
     MENU_INDEX:PrepareGroup( self.Group )
     local Path = MENU_INDEX:ParentPath( self.ParentMenu, self.MenuText )
     local GroupMenu = MENU_INDEX:HasGroupMenu( self.Group, Path )   
 
     if GroupMenu == self then
-      self:RemoveSubMenus( MenuTime, MenuTag )
-      if not MenuTime or self.MenuTime ~= MenuTime then
+      self:RemoveSubMenus( MenuStamp, MenuTag )
+      if not MenuStamp or self.MenuStamp ~= MenuStamp then
         if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
           if self.MenuPath ~= nil then
             self:F( { Group = self.GroupID, Text = self.MenuText, Path = self.MenuPath } )
@@ -1263,17 +1281,17 @@ do
   
   --- Removes a menu structure for a group.
   -- @param #MENU_GROUP_COMMAND_DELAYED self
-  -- @param MenuTime
+  -- @param MenuStamp
   -- @param MenuTag A Tag or Key to filter the menus to be refreshed with the Tag set.
   -- @return #nil
-  function MENU_GROUP_COMMAND_DELAYED:Remove( MenuTime, MenuTag )
+  function MENU_GROUP_COMMAND_DELAYED:Remove( MenuStamp, MenuTag )
 
     MENU_INDEX:PrepareGroup( self.Group )
     local Path = MENU_INDEX:ParentPath( self.ParentMenu, self.MenuText )
     local GroupMenu = MENU_INDEX:HasGroupMenu( self.Group, Path )   
 
     if GroupMenu == self then
-      if not MenuTime or self.MenuTime ~= MenuTime then
+      if not MenuStamp or self.MenuStamp ~= MenuStamp then
         if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
           if self.MenuPath ~= nil then
             self:F( { Group = self.GroupID, Text = self.MenuText, Path = self.MenuPath } )
