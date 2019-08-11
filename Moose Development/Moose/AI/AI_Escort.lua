@@ -1783,7 +1783,12 @@ function AI_ESCORT:_AttackTarget( EscortGroup, DetectedItem )
 
   end
   
-  EscortGroup:MessageTypeToGroup( "Engaging Target!", MESSAGE.Type.Information, self.PlayerGroup )
+  local DetectedTargetsReport = REPORT:New( "Engaging target:\n" )
+  local DetectedItemReportSummary = self.Detection:DetectedItemReportSummary( DetectedItem, self.PlayerGroup, _DATABASE:GetPlayerSettings( self.PlayerUnit:GetPlayerName() ) )
+  local ReportSummary = DetectedItemReportSummary:Text(", ")
+  DetectedTargetsReport:AddIndent( ReportSummary, "-" )
+
+  EscortGroup:MessageTypeToGroup( DetectedTargetsReport:Text(), MESSAGE.Type.Information, self.PlayerGroup )
 end
 
 
@@ -1803,6 +1808,10 @@ end
 
 function AI_ESCORT:_FlightAttackNearestTarget( TargetType )
 
+  self.Detection:Detect()
+  self:_FlightReportTargetsScheduler()
+  
+  local EscortGroup = self.EscortGroupSet:GetFirst()
   local AttackDetectedItem = nil
   local DetectedItems = self.Detection:GetDetectedItems()
 
@@ -1825,6 +1834,8 @@ function AI_ESCORT:_FlightAttackNearestTarget( TargetType )
   
   if AttackDetectedItem then
     self:_FlightAttackTarget( AttackDetectedItem )
+  else
+    EscortGroup:MessageTypeToGroup( "Nothing to attack!", MESSAGE.Type.Information, self.PlayerGroup )
   end
 
 end
