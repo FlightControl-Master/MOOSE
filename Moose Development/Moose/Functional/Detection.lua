@@ -562,9 +562,9 @@ do -- DETECTION_BASE
       end
       
       -- Count alive(!) groups only. Solves issue #1173 https://github.com/FlightControl-Master/MOOSE/issues/1173
-      self.DetectionCount = self.DetectionSet:CountAlive()
+      self.DetectionCount = self:CountAliveRecce()
       
-      self.DetectionSet:ForEachGroupAlive(
+      self:ForEachAliveRecce(
         function( DetectionGroup )
           self:__Detection( DetectDelay, DetectionGroup, DetectionTimeStamp ) -- Process each detection asynchronously.
           DetectDelay = DetectDelay + 1
@@ -574,6 +574,24 @@ do -- DETECTION_BASE
       self:__Detect( -self.RefreshTimeInterval )
       
     end
+
+    --- @param #DETECTION_BASE self
+    -- @param #number The amount of alive recce.
+    function DETECTION_BASE:CountAliveRecce()
+
+      return self.DetectionSet:CountAlive()
+
+    end    
+    
+    --- @param #DETECTION_BASE self
+    function DETECTION_BASE:ForEachAliveRecce( IteratorFunction, ... )
+      self:F2( arg )
+      
+      self.DetectionSet:ForEachGroupAlive( IteratorFunction, arg )
+    
+      return self
+    end
+  
     
     --- @param #DETECTION_BASE self
     -- @param #string From The From State string.
