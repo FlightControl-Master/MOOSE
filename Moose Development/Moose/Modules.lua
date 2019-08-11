@@ -62,7 +62,6 @@ __Moose.Include( 'Scripts/Moose/Functional/Suppression.lua' )
 __Moose.Include( 'Scripts/Moose/Functional/PseudoATC.lua' )
 __Moose.Include( 'Scripts/Moose/Functional/Warehouse.lua' )
 __Moose.Include( 'Scripts/Moose/Functional/Fox.lua' )
-__Moose.Include( 'Scripts/Moose/Functional/SWAPR.lua' )
 
 __Moose.Include( 'Scripts/Moose/Ops/Airboss.lua' )
 __Moose.Include( 'Scripts/Moose/Ops/RecoveryTanker.lua' )

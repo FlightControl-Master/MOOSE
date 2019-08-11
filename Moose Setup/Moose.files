@@ -59,7 +59,6 @@ Functional/Suppression.lua
 Functional/PseudoATC.lua
 Functional/Warehouse.lua
 Functional/Fox.lua
-Functional/SWAPR.lua
 
 Ops/Airboss.lua
 Ops/RecoveryTanker.lua
