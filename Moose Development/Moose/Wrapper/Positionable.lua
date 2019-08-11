@@ -63,7 +63,7 @@ POSITIONABLE.__.Cargo = {}
 -- @param #string PositionableName The POSITIONABLE name
 -- @return #POSITIONABLE self
 function POSITIONABLE:New( PositionableName )
-  local self = BASE:Inherit( self, IDENTIFIABLE:New( PositionableName ) )
+  local self = BASE:Inherit( self, IDENTIFIABLE:New( PositionableName ) ) -- #POSITIONABLE
 
   self.PositionableName = PositionableName
   return self

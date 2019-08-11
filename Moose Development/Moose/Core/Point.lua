@@ -1819,7 +1819,7 @@ do -- COORDINATE
 
   --- Returns if a Coordinate is in a certain Radius of this Coordinate in 2D plane using the X and Z axis.
   -- @param #COORDINATE self
-  -- @param #COORDINATE ToCoordinate The coordinate that will be tested if it is in the radius of this coordinate.
+  -- @param #COORDINATE Coordinate The coordinate that will be tested if it is in the radius of this coordinate.
   -- @param #number Radius The radius of the circle on the 2D plane around this coordinate.
   -- @return #boolean true if in the Radius.
   function COORDINATE:IsInRadius( Coordinate, Radius )
