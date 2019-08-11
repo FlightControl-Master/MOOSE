@@ -61,6 +61,7 @@ Functional/Warehouse.lua
 Functional/Fox.lua
 Functional/RAT2.lua
 Functional/FlightModelData.lua
+Functional/SWAPR.lua
 
 Ops/Airboss.lua
 Ops/RecoveryTanker.lua
