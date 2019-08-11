@@ -44,15 +44,15 @@ do -- DETECTION_ZONES
   
   --- DETECTION_ZONES constructor.
   -- @param #DETECTION_ZONES self
-  -- @param Core.Set#SET_ZONE_RADIUS DetectionSetZone The @{Set} of ZONE_RADIUS.
+  -- @param Core.Set#SET_ZONE DetectionSetZone The @{Set} of ZONE_RADIUS.
   -- @param DCS#Coalition.side DetectionCoalition The coalition of the detection.
   -- @return #DETECTION_ZONES
   function DETECTION_ZONES:New( DetectionSetZone, DetectionCoalition )
   
     -- Inherits from DETECTION_BASE
-    local self = BASE:Inherit( self, DETECTION_BASE:New( DetectionSetZone ) )
+    local self = BASE:Inherit( self, DETECTION_BASE:New( DetectionSetZone ) ) -- #DETECTION_ZONES
   
-    self.DetectionSetZone = DetectionSetZone
+    self.DetectionSetZone = DetectionSetZone  -- Core.Set#SET_ZONE
     self.DetectionCoalition = DetectionCoalition
     
     self._SmokeDetectedUnits = false
@@ -64,6 +64,22 @@ do -- DETECTION_ZONES
     return self
   end
 
+  --- @param #DETECTION_ZONES self
+  -- @param #number The amount of alive recce.
+  function DETECTION_ZONES:CountAliveRecce()
+
+    return self.DetectionSetZone:Count()
+
+  end    
+  
+  --- @param #DETECTION_ZONES self
+  function DETECTION_ZONES:ForEachAliveRecce( IteratorFunction, ... )
+    self:F2( arg )
+    
+    self.DetectionSetZone:ForEachZone( IteratorFunction, arg )
+  
+    return self
+  end
 
   --- Report summary of a detected item using a given numeric index.
   -- @param #DETECTION_ZONES self
@@ -379,7 +395,7 @@ do -- DETECTION_ZONES
           self:__DetectedItem( 0.1, DetectedItem )
         end
       end
-      self:__Detect( self.RefreshTimeInterval )
+      self:__Detect( -self.RefreshTimeInterval )
     end
   end
   
@@ -396,7 +412,5 @@ do -- DETECTION_ZONES
     
     return IsDetected
   end
-
-
   
 end 

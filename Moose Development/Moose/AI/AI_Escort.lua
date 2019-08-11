@@ -224,7 +224,6 @@ function AI_ESCORT:New( EscortUnit, EscortGroupSet, EscortName, EscortBriefing )
   self.PlayerGroup = self.FollowUnit:GetGroup() -- Wrapper.Group#GROUP
   
   self.EscortName = EscortName
-  
   self.EscortGroupSet = EscortGroupSet
   
   self.EscortGroupSet:SetSomeIteratorLimit( 8 )
@@ -266,7 +265,9 @@ function AI_ESCORT:New( EscortUnit, EscortGroupSet, EscortName, EscortBriefing )
       end  
     end
   )
-   
+  
+  self:SetFlightReportType( self.__Enum.ReportType.All )
+  
   return self
 end
 
@@ -293,6 +294,7 @@ function AI_ESCORT:_InitFlightMenus()
   self:SetFlightMenuROT()
 
   self:SetFlightMenuTargets()
+  self:SetFlightMenuReportType()
 
 end
 
@@ -357,6 +359,8 @@ function AI_ESCORT:onafterStart( EscortGroupSet )
   self.Detection:InitDetectOptical( true )
   self.Detection:InitDetectRadar( true )
   self.Detection:InitDetectRWR( true )
+  
+  self.Detection:SetAcceptRange( 100000 )
 
   self.Detection:__Start( 30 )
     
@@ -1115,20 +1119,57 @@ function AI_ESCORT:MenuSmoke( MenuTextFormat )
   return self
 end
 
+function AI_ESCORT:SetFlightMenuReportType()
+
+  local FlightMenuReportTargets = MENU_GROUP:New( self.PlayerGroup, "Report targets", self.FlightMenu )
+  local MenuStamp = FlightMenuReportTargets:GetStamp()
+
+  local FlightReportType = self:GetFlightReportType()
+  
+  if FlightReportType ~= self.__Enum.ReportType.All then
+    local FlightMenuReportTargetsAll = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Report all targets",  FlightMenuReportTargets, AI_ESCORT._FlightSwitchReportTypeAll, self )
+                                                         :SetTag( "ReportType" )
+                                                         :SetStamp( MenuStamp )
+  end
+  
+  if FlightReportType == self.__Enum.ReportType.All or FlightReportType ~= self.__Enum.ReportType.Airborne then
+    local FlightMenuReportTargetsAirborne = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Report airborne targets",  FlightMenuReportTargets, AI_ESCORT._FlightSwitchReportTypeAirborne, self )
+                                                              :SetTag( "ReportType" )
+                                                              :SetStamp( MenuStamp )
+  end
+  
+  if FlightReportType == self.__Enum.ReportType.All or FlightReportType ~= self.__Enum.ReportType.GroundRadar then
+    local FlightMenuReportTargetsGroundRadar = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Report gound radar targets",  FlightMenuReportTargets, AI_ESCORT._FlightSwitchReportTypeGroundRadar, self )
+                                                                 :SetTag( "ReportType" )
+                                                                 :SetStamp( MenuStamp )
+  end
+  if FlightReportType == self.__Enum.ReportType.All or FlightReportType ~= self.__Enum.ReportType.Ground then
+    local FlightMenuReportTargetsGround = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Report ground targets",  FlightMenuReportTargets, AI_ESCORT._FlightSwitchReportTypeGround, self )
+                                                            :SetTag( "ReportType" )
+                                                            :SetStamp( MenuStamp )
+  end
+  
+  FlightMenuReportTargets:RemoveSubMenus( MenuStamp, "ReportType" )
+
+end
+
 
 function AI_ESCORT:SetFlightMenuTargets()
 
+  local FlightMenuReportTargets = MENU_GROUP:New( self.PlayerGroup, "Report targets", self.FlightMenu )
+
+  -- Report Targets
+  local FlightMenuReportTargetsNow = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Report targets now!", FlightMenuReportTargets, AI_ESCORT._FlightReportNearbyTargetsNow, self )
+  local FlightMenuReportTargetsOn =  MENU_GROUP_COMMAND:New( self.PlayerGroup, "Report targets on",   FlightMenuReportTargets, AI_ESCORT._FlightSwitchReportNearbyTargets, self, true )
+  local FlightMenuReportTargetsOff = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Report targets off",  FlightMenuReportTargets, AI_ESCORT._FlightSwitchReportNearbyTargets, self, false )
+
+  -- Attack Targets
+  self.FlightMenuAttack = MENU_GROUP:New( self.PlayerGroup, "Attack targets", self.FlightMenu )
+  local FlightMenuAttackNearby = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Attack nearest targets",  self.FlightMenuAttack, AI_ESCORT._FlightAttackNearestTarget, self ):SetTag( "Attack" )
+  local FlightMenuAttackNearbyAir = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Attack nearest airborne targets",  self.FlightMenuAttack, AI_ESCORT._FlightAttackNearestTarget, self, self.__Enum.ReportType.Air ):SetTag( "Attack" )
+  local FlightMenuAttackNearbyGround = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Attack nearest ground targets",  self.FlightMenuAttack, AI_ESCORT._FlightAttackNearestTarget, self, self.__Enum.ReportType.Ground ):SetTag( "Attack" )
+  
   for _, MenuTargets in pairs( self.Menu.Targets) do
-    local FlightMenuReportTargets = MENU_GROUP:New( self.PlayerGroup, "Report targets", self.FlightMenu )
-  
-    -- Report Targets
-    local FlightMenuReportTargetsNow = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Report targets now!", FlightMenuReportTargets, AI_ESCORT._FlightReportNearbyTargetsNow, self )
-    local FlightMenuReportTargetsOn =  MENU_GROUP_COMMAND:New( self.PlayerGroup, "Report targets on",   FlightMenuReportTargets, AI_ESCORT._FlightSwitchReportNearbyTargets, self, true )
-    local FlightMenuReportTargetsOff = MENU_GROUP_COMMAND:New( self.PlayerGroup, "Report targets off",  FlightMenuReportTargets, AI_ESCORT._FlightSwitchReportNearbyTargets, self, false )
-  
-    -- Attack Targets
-    local FlightMenuAttackNearbyTargets = MENU_GROUP:New( self.PlayerGroup, "Attack targets", self.FlightMenu )
-  
     MenuTargets.FlightReportTargetsScheduler = SCHEDULER:New( self, self._FlightReportTargetsScheduler, {}, MenuTargets.Interval, MenuTargets.Interval )
   end
 
@@ -1542,22 +1583,6 @@ function AI_ESCORT:_FlightReportNearbyTargetsNow()
 end
 
 
-function AI_ESCORT:_SwitchReportNearbyTargets( EscortGroup, ReportTargets )
-
-  local EscortUnit = self.PlayerUnit
-
-  self.ReportTargets = ReportTargets
-
-  if self.ReportTargets then
-    if not EscortGroup.ReportTargetsScheduler then
-      EscortGroup.ReportTargetsScheduler:Schedule( self, self._ReportTargetsScheduler, {}, 1, 30 )
-    end
-  else
-    routines.removeFunction( EscortGroup.ReportTargetsScheduler )
-    EscortGroup.ReportTargetsScheduler = nil
-  end
-end
-
 
 function AI_ESCORT:_FlightSwitchReportNearbyTargets( ReportTargets )
 
@@ -1565,10 +1590,62 @@ function AI_ESCORT:_FlightSwitchReportNearbyTargets( ReportTargets )
     --- @param Core.Group#GROUP EscortGroup
     function( EscortGroup )
       if EscortGroup:IsAir() then
-        self:_SwitchReportNearbyTargets( EscortGroup, ReportTargets )
+        self:_EscortSwitchReportNearbyTargets( EscortGroup, ReportTargets )
       end
     end
   )
+
+end
+
+function AI_ESCORT:SetFlightReportType( ReportType )
+
+  self.FlightReportType = ReportType
+
+end
+
+function AI_ESCORT:GetFlightReportType()
+
+  return self.FlightReportType
+
+end
+
+function AI_ESCORT:_FlightSwitchReportTypeAll()
+
+  self:SetFlightReportType( self.__Enum.ReportType.All )
+  self:SetFlightMenuReportType()
+
+  local EscortGroup = self.EscortGroupSet:GetFirst()
+  EscortGroup:MessageTypeToGroup( "Reporting all targets.", MESSAGE.Type.Information, self.PlayerGroup )
+
+end
+
+function AI_ESCORT:_FlightSwitchReportTypeAirborne()
+
+  self:SetFlightReportType( self.__Enum.ReportType.Airborne )
+  self:SetFlightMenuReportType()
+
+  local EscortGroup = self.EscortGroupSet:GetFirst()
+  EscortGroup:MessageTypeToGroup( "Reporting airborne targets.", MESSAGE.Type.Information, self.PlayerGroup )
+
+end
+
+function AI_ESCORT:_FlightSwitchReportTypeGroundRadar()
+
+  self:SetFlightReportType( self.__Enum.ReportType.Ground )
+  self:SetFlightMenuReportType()
+
+  local EscortGroup = self.EscortGroupSet:GetFirst()
+  EscortGroup:MessageTypeToGroup( "Reporting ground radar targets.", MESSAGE.Type.Information, self.PlayerGroup )
+
+end
+
+function AI_ESCORT:_FlightSwitchReportTypeGround()
+
+  self:SetFlightReportType( self.__Enum.ReportType.Ground )
+  self:SetFlightMenuReportType()
+
+  local EscortGroup = self.EscortGroupSet:GetFirst()
+  EscortGroup:MessageTypeToGroup( "Reporting ground targets.", MESSAGE.Type.Information, self.PlayerGroup )
 
 end
 
@@ -1706,7 +1783,12 @@ function AI_ESCORT:_AttackTarget( EscortGroup, DetectedItem )
 
   end
   
-  EscortGroup:MessageTypeToGroup( "Engaging Target!", MESSAGE.Type.Information, self.PlayerGroup )
+  local DetectedTargetsReport = REPORT:New( "Engaging target:\n" )
+  local DetectedItemReportSummary = self.Detection:DetectedItemReportSummary( DetectedItem, self.PlayerGroup, _DATABASE:GetPlayerSettings( self.PlayerUnit:GetPlayerName() ) )
+  local ReportSummary = DetectedItemReportSummary:Text(", ")
+  DetectedTargetsReport:AddIndent( ReportSummary, "-" )
+
+  EscortGroup:MessageTypeToGroup( DetectedTargetsReport:Text(), MESSAGE.Type.Information, self.PlayerGroup )
 end
 
 
@@ -1720,6 +1802,41 @@ function AI_ESCORT:_FlightAttackTarget( DetectedItem )
       end
     end, DetectedItem
   )
+
+end
+
+
+function AI_ESCORT:_FlightAttackNearestTarget( TargetType )
+
+  self.Detection:Detect()
+  self:_FlightReportTargetsScheduler()
+  
+  local EscortGroup = self.EscortGroupSet:GetFirst()
+  local AttackDetectedItem = nil
+  local DetectedItems = self.Detection:GetDetectedItems()
+
+  for DetectedItemIndex, DetectedItem in UTILS.spairs( DetectedItems, function( t, a, b ) return self:Distance( self.PlayerUnit, t[a] ) < self:Distance( self.PlayerUnit, t[b] ) end  ) do
+  
+    local DetectedItemSet = self.Detection:GetDetectedItemSet( DetectedItem )
+    
+    local HasGround = DetectedItemSet:HasGroundUnits() > 0
+    local HasAir = DetectedItemSet:HasAirUnits() > 0
+    
+    local FlightReportType = self:GetFlightReportType()
+        
+    if ( TargetType and TargetType == self.__Enum.ReportType.Ground and HasGround ) or
+       ( TargetType and TargetType == self.__Enum.ReportType.Air and HasAir ) or
+       ( TargetType ==  nil ) then
+      AttackDetectedItem = DetectedItem
+      break
+    end
+  end
+  
+  if AttackDetectedItem then
+    self:_FlightAttackTarget( AttackDetectedItem )
+  else
+    EscortGroup:MessageTypeToGroup( "Nothing to attack!", MESSAGE.Type.Information, self.PlayerGroup )
+  end
 
 end
 
@@ -1884,6 +2001,17 @@ function AI_ESCORT:_ResumeScheduler( EscortGroup )
 end
 
 
+--- Measure distance between coordinate player and coordinate detected item.
+-- @param #AI_ESCORT self
+function AI_ESCORT:Distance( PlayerUnit, DetectedItem )
+
+  local DetectedCoordinate = self.Detection:GetDetectedItemCoordinate( DetectedItem )
+  local PlayerCoordinate = PlayerUnit:GetCoordinate()
+  
+  return DetectedCoordinate:Get3DDistance( PlayerCoordinate )
+
+end
+
 --- Report Targets Scheduler.
 -- @param #AI_ESCORT self
 -- @param Wrapper.Group#GROUP EscortGroup
@@ -1910,40 +2038,56 @@ function AI_ESCORT:_ReportTargetsScheduler( EscortGroup, Report )
       local EscortMenuAttackTargets = MENU_GROUP:New( self.PlayerGroup, "Attack targets", EscortGroup.EscortMenu )
       
       local DetectedTargets = false
-      for DetectedItemIndex, DetectedItem in pairs( DetectedItems ) do
-        DetectedTargets = true
+      
+      for DetectedItemIndex, DetectedItem in UTILS.spairs( DetectedItems, function( t, a, b ) return self:Distance( self.PlayerUnit, t[a] ) < self:Distance( self.PlayerUnit, t[b] ) end  ) do
+      --for DetectedItemIndex, DetectedItem in pairs( DetectedItems ) do
 
-        local DetectedMenu = self.Detection:DetectedItemReportMenu( DetectedItem, EscortGroup, _DATABASE:GetPlayerSettings( self.PlayerUnit:GetPlayerName() ) ):Text("\n")
-
-        local DetectedItemReportSummary = self.Detection:DetectedItemReportSummary( DetectedItem, EscortGroup, _DATABASE:GetPlayerSettings( self.PlayerUnit:GetPlayerName() ) )
-        local ReportSummary = DetectedItemReportSummary:Text(", ")
-        DetectedTargetsReport:AddIndent( ReportSummary, "-" )
+        local DetectedItemSet = self.Detection:GetDetectedItemSet( DetectedItem )
         
-        if EscortGroup:IsAir() then
+        local HasGround = DetectedItemSet:HasGroundUnits() > 0
+        local HasGroundRadar = HasGround and DetectedItemSet:HasRadar() > 0
+        local HasAir = DetectedItemSet:HasAirUnits() > 0
+        
+        local FlightReportType = self:GetFlightReportType()
+          
 
-          MENU_GROUP_COMMAND:New( self.PlayerGroup,
-            DetectedMenu,
-            EscortMenuAttackTargets,
-            AI_ESCORT._AttackTarget,
-            self,
-            EscortGroup,
-            DetectedItem
-          ):SetTag( "Escort" ):SetTime( TimeUpdate )
-        else
-          if self.EscortMenuTargetAssistance then
-            local MenuTargetAssistance = MENU_GROUP:New( self.PlayerGroup, EscortGroupName, EscortGroup.EscortMenuTargetAssistance )
+        if ( FlightReportType == self.__Enum.ReportType.All ) or
+           ( FlightReportType == self.__Enum.ReportType.Airborne and HasAir ) or
+           ( FlightReportType == self.__Enum.ReportType.Ground and HasGround ) or
+           ( FlightReportType == self.__Enum.ReportType.GroundRadar and HasGroundRadar ) then
+      
+          DetectedTargets = true
+  
+          local DetectedMenu = self.Detection:DetectedItemReportMenu( DetectedItem, EscortGroup, _DATABASE:GetPlayerSettings( self.PlayerUnit:GetPlayerName() ) ):Text("\n")
+  
+          local DetectedItemReportSummary = self.Detection:DetectedItemReportSummary( DetectedItem, EscortGroup, _DATABASE:GetPlayerSettings( self.PlayerUnit:GetPlayerName() ) )
+          local ReportSummary = DetectedItemReportSummary:Text(", ")
+          DetectedTargetsReport:AddIndent( ReportSummary, "-" )
+          
+          if EscortGroup:IsAir() then
+  
             MENU_GROUP_COMMAND:New( self.PlayerGroup,
               DetectedMenu,
-              MenuTargetAssistance,
-              AI_ESCORT._AssistTarget,
+              EscortMenuAttackTargets,
+              AI_ESCORT._AttackTarget,
               self,
               EscortGroup,
               DetectedItem
-            )
+            ):SetTag( "Escort" ):SetTime( TimeUpdate )
+          else
+            if self.EscortMenuTargetAssistance then
+              local MenuTargetAssistance = MENU_GROUP:New( self.PlayerGroup, EscortGroupName, EscortGroup.EscortMenuTargetAssistance )
+              MENU_GROUP_COMMAND:New( self.PlayerGroup,
+                DetectedMenu,
+                MenuTargetAssistance,
+                AI_ESCORT._AssistTarget,
+                self,
+                EscortGroup,
+                DetectedItem
+              )
+            end
           end
-          
         end
-
       end
 
       EscortMenuAttackTargets:RemoveSubMenus( TimeUpdate, "Escort" )
@@ -1975,10 +2119,7 @@ function AI_ESCORT:_FlightReportTargetsScheduler()
 
   if EscortGroup and ( self.PlayerUnit:IsAlive() and EscortGroup:IsAlive() ) then
 
-    local ClientGroup = self.PlayerGroup
-
     local TimeUpdate = timer.getTime()
-
 
     local DetectedItems = self.Detection:GetDetectedItems()
 
@@ -1986,32 +2127,45 @@ function AI_ESCORT:_FlightReportTargetsScheduler()
 
     local ClientEscortTargets = self.Detection
 
-    local FlightMenuAttackTargets = MENU_GROUP:New( self.PlayerGroup, "Attack targets", self.FlightMenu )
-
-    for DetectedItemIndex, DetectedItem in pairs( DetectedItems ) do
+    for DetectedItemIndex, DetectedItem in UTILS.spairs( DetectedItems, function( t, a, b ) return self:Distance( self.PlayerUnit, t[a] ) < self:Distance( self.PlayerUnit, t[b] ) end  ) do
     
       self:F("FlightReportTargetScheduler Targets")
-    
 
-      DetectedTargets = true -- There are detected targets, when the content of the for loop is executed. We use it to display a message.
+      local DetectedItemSet = self.Detection:GetDetectedItemSet( DetectedItem )
       
-      local DetectedItemReportMenu = self.Detection:DetectedItemReportMenu( DetectedItem, ClientGroup, _DATABASE:GetPlayerSettings( self.PlayerUnit:GetPlayerName() ) )
-      local ReportMenuText = DetectedItemReportMenu:Text(", ")
+      local HasGround = DetectedItemSet:HasGroundUnits() > 0
+      local HasGroundRadar = HasGround and DetectedItemSet:HasRadar() > 0
+      local HasAir = DetectedItemSet:HasAirUnits() > 0
       
-      MENU_GROUP_COMMAND:New( self.PlayerGroup,
-        ReportMenuText,
-        FlightMenuAttackTargets,
-        AI_ESCORT._FlightAttackTarget,
-        self,
-        DetectedItem
-      ):SetTag( "Flight" ):SetTime( TimeUpdate )
+      local FlightReportType = self:GetFlightReportType()
+          
 
-      local DetectedItemReportSummary = self.Detection:DetectedItemReportSummary( DetectedItem, ClientGroup, _DATABASE:GetPlayerSettings( self.PlayerUnit:GetPlayerName() ) )
-      local ReportSummary = DetectedItemReportSummary:Text(", ")
-      DetectedTargetsReport:AddIndent( ReportSummary, "-" )
+      if ( FlightReportType == self.__Enum.ReportType.All ) or
+         ( FlightReportType == self.__Enum.ReportType.Airborne and HasAir ) or
+         ( FlightReportType == self.__Enum.ReportType.Ground and HasGround ) or
+         ( FlightReportType == self.__Enum.ReportType.GroundRadar and HasGroundRadar ) then
+         
+
+        DetectedTargets = true -- There are detected targets, when the content of the for loop is executed. We use it to display a message.
+        
+        local DetectedItemReportMenu = self.Detection:DetectedItemReportMenu( DetectedItem, self.PlayerGroup, _DATABASE:GetPlayerSettings( self.PlayerUnit:GetPlayerName() ) )
+        local ReportMenuText = DetectedItemReportMenu:Text(", ")
+        
+        MENU_GROUP_COMMAND:New( self.PlayerGroup,
+          ReportMenuText,
+          self.FlightMenuAttack,
+          AI_ESCORT._FlightAttackTarget,
+          self,
+          DetectedItem
+        ):SetTag( "Flight" ):SetTime( TimeUpdate )
+  
+        local DetectedItemReportSummary = self.Detection:DetectedItemReportSummary( DetectedItem, self.PlayerGroup, _DATABASE:GetPlayerSettings( self.PlayerUnit:GetPlayerName() ) )
+        local ReportSummary = DetectedItemReportSummary:Text(", ")
+        DetectedTargetsReport:AddIndent( ReportSummary, "-" )
+      end
     end
 
-    FlightMenuAttackTargets:RemoveSubMenus( TimeUpdate, "Flight" )
+    self.FlightMenuAttack:RemoveSubMenus( TimeUpdate, "Flight" )
 
     if DetectedTargets then
       EscortGroup:MessageTypeToGroup( DetectedTargetsReport:Text( "\n" ), MESSAGE.Type.Information, self.PlayerGroup )
