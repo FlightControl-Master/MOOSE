@@ -62,6 +62,7 @@ FLIGHTGROUP.ElementStatus={
   TAXIING="taxiing",
   AIRBORNE="airborne",
   LANDED="landed",
+  ARRIVED="arrived",
   DEAD="dead",
 }
 
@@ -119,7 +120,7 @@ function FLIGHTGROUP:New(groupname)
   self.groupname=tostring(groupname)
 
   -- Set some string id for output to DCS.log file.
-  self.sid=string.format("FLIGHTGROUP %s |", self.groupname)
+  self.sid=string.format("FLIGHTGROUP %s | ", self.groupname)
 
   -- Start State.
   self:SetStartState("Stopped")
@@ -202,6 +203,17 @@ function FLIGHTGROUP:New(groupname)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- User functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Get set of decteded units.
+-- @param #FLIGHTGROUP self
+-- @return Core.Set#SET_UNIT Set of detected units.
+function FLIGHTGROUP:GetDetectedUnits()
+  return self.detectedunits
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start & Status
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -275,6 +287,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
         local unitname=unit:GetName()
         if self.detectedunits:FindUnit(unitname) then
           -- Unit is already in the detected unit set.
+          self:I(self.sid..string.format("Detected unit %s is already known.", unitname))
         else
           self:AddDetectedUnit(unit)
         end
@@ -443,6 +456,7 @@ end
 -- @parma #string assignment The (optional) assignment for the asset.
 function FLIGHTGROUP:onafterAddDetectedUnit(From, Event, To, Unit)
   self:I(self.sid..string.format("Detected unit %s.", Unit:GetName()))
+  self.detectedunits:AddUnit(Unit)
 end
 
 
