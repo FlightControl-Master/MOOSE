@@ -395,7 +395,7 @@ do -- DETECTION_ZONES
           self:__DetectedItem( 0.1, DetectedItem )
         end
       end
-      self:__Detect( self.RefreshTimeInterval )
+      self:__Detect( -self.RefreshTimeInterval )
     end
   end
   
