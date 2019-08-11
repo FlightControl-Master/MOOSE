@@ -1683,7 +1683,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="1.0.6"
+AIRBOSS.version="1.0.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -2068,7 +2068,7 @@ function AIRBOSS:New(carriername, alias)
   self:AddTransition("*",             "Status",          "*")           -- Update status of players and queues.
   self:AddTransition("*",             "RecoveryCase",    "*")           -- Switch to another case recovery.
   self:AddTransition("*",             "PassingWaypoint", "*")           -- Carrier is passing a waypoint.
-  self:AddTransition("*",             "LSOgrade",        "*")           -- LSO grade.
+  self:AddTransition("*",             "LSOGrade",        "*")           -- LSO grade.
   self:AddTransition("*",             "Save",            "*")           -- Save player scores to file.
   self:AddTransition("*",             "Stop",            "Stopped")     -- Stop AIRBOSS FMS.
 
@@ -2257,6 +2257,29 @@ function AIRBOSS:New(carriername, alias)
 
   --- On after "LSOgrade" user function. Called when the carrier passes a waypoint of its route.
   -- @function [parent=#AIRBOSS] OnAfterLSOgrade
+  -- @param #AIRBOSS self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #AIRBOSS.PlayerData playerData Player Data.
+  -- @param #AIRBOSS.LSOgrade grade LSO grade.
+
+
+  --- Triggers the FSM event "LSOGrade". Called when the LSO grades a player
+  -- @function [parent=#AIRBOSS] LSOGrade
+  -- @param #AIRBOSS self
+  -- @param #AIRBOSS.PlayerData playerData Player Data.
+  -- @param #AIRBOSS.LSOgrade grade LSO grade.
+
+  --- Triggers the FSM event "LSOGrade". Delayed called when the LSO grades a player.
+  -- @function [parent=#AIRBOSS] __LSOGrade
+  -- @param #AIRBOSS self
+  -- @param #number delay Delay in seconds.
+  -- @param #AIRBOSS.PlayerData playerData Player Data.
+  -- @param #AIRBOSS.LSOgrade grade LSO grade.
+
+  --- On after "LSOGrade" user function. Called when the carrier passes a waypoint of its route.
+  -- @function [parent=#AIRBOSS] OnAfterLSOGrade
   -- @param #AIRBOSS self
   -- @param #string From From state.
   -- @param #string Event Event.
@@ -3687,7 +3710,7 @@ function AIRBOSS:_CheckRecoveryTimes()
 
             -- Closed.
             recovery.OPEN=false
-            
+
             -- Window just closed.
             recovery.OVER=true
 
@@ -9969,14 +9992,8 @@ function AIRBOSS:_CheckFoulDeck(playerData)
   -- Assume no check necessary.
   local check=false
 
-  -- Case I/II: Check is done, when AC is at the wake according to NATOPS. At the wake we switch to final.
-  if playerData.case<3 and playerData.step==AIRBOSS.PatternStep.FINAL then
-    check=true
-  end
-
-  -- Case III: Check is done at 3/4 NM according to NATOPS.
-  if playerData.step==AIRBOSS.PatternStep.GROOVE_XX or
-     playerData.step==AIRBOSS.PatternStep.GROOVE_IM or
+  -- CVN: Check at IM and IC.
+  if playerData.step==AIRBOSS.PatternStep.GROOVE_IM or
      playerData.step==AIRBOSS.PatternStep.GROOVE_IC then
     check=true
   end
@@ -12741,6 +12758,9 @@ function AIRBOSS:_Debrief(playerData)
 
   -- Add LSO grade to player grades table.
   table.insert(self.playerscores[playerData.name], mygrade)
+
+  -- Trigger grading event.
+  self:LSOGrade(playerdata, mygrade)
 
   -- LSO grade: (OK) 3.0 PT - LURIM
   local text=string.format("%s %.1f PT - %s", grade, Points, analysis)

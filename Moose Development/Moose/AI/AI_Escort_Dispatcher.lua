@@ -1,21 +1,8 @@
---- **AI** -- (R2.4) - Models the assignment of AI escorts to player flights.
+--- **AI** -- (R2.5) - Models the automatic assignment of AI escorts to player flights.
 --
 -- ## Features:
 -- --     
---   * Provides the facilities to trigger escorts when players join flight units.
---   * Provide different means how escorts can be triggered:
---     * Directly when a player joins a plane.
---     * Through the menu.
--- 
--- ===
--- 
--- ## Test Missions:
--- 
--- Test missions can be located on the main GITHUB site.
--- 
--- [FlightControl-Master/MOOSE_MISSIONS]
--- 
--- ===
+--   * Provides the facilities to trigger escorts when players join flight slots.
 -- 
 -- ===
 -- 
@@ -28,14 +15,10 @@
 
 
 --- @type AI_ESCORT_DISPATCHER
--- @field Core.Set#SET_GROUP CarrierSet The set of @{Wrapper.Group#GROUP} objects of carriers that will transport the cargo. 
--- @field Core.Set#SET_GROUP EscortGroupSet The set of group AI escorting the EscortUnit.
--- @field #string EscortName Name of the escort.
--- @field #string EscortBriefing A text showing the AI_ESCORT briefing to the player. Note that if no EscortBriefing is provided, the default briefing will be shown.
 -- @extends Core.Fsm#FSM
 
 
---- A dynamic cargo handling capability for AI groups.
+--- Models the automatic assignment of AI escorts to player flights.
 -- 
 -- ===
 --   
@@ -50,12 +33,34 @@ AI_ESCORT_DISPATCHER.AI_Escorts = {}
 
 --- Creates a new AI_ESCORT_DISPATCHER object.
 -- @param #AI_ESCORT_DISPATCHER self
--- @param Core.Set#SET_GROUP CarrierSet The set of @{Wrapper.Group#GROUP} objects of carriers that will transport the cargo. 
+-- @param Core.Set#SET_GROUP CarrierSet The set of @{Wrapper.Group#GROUP} objects of carriers for which escorts are spawned in.
 -- @param Core.Spawn#SPAWN EscortSpawn The spawn object that will spawn in the Escorts.
 -- @param Wrapper.Airbase#AIRBASE EscortAirbase The airbase where the escorts are spawned.
--- @param #string EscortName Name of the escort.
--- @param #string EscortBriefing A text showing the AI_ESCORT briefing to the player. Note that if no EscortBriefing is provided, the default briefing will be shown.
+-- @param #string EscortName Name of the escort, which will also be the name of the escort menu.
+-- @param #string EscortBriefing A text showing the briefing to the player. Note that if no EscortBriefing is provided, the default briefing will be shown.
 -- @return #AI_ESCORT_DISPATCHER
+-- @usage
+-- 
+-- -- Create a new escort when a player joins an SU-25T plane.
+-- Create a carrier set, which contains the player slots that can be joined by the players, for which escorts will be defined.
+-- local Red_SU25T_CarrierSet = SET_GROUP:New():FilterPrefixes( "Red A2G Player Su-25T" ):FilterStart()
+-- 
+-- -- Create a spawn object that will spawn in the escorts, once the player has joined the player slot.
+-- local Red_SU25T_EscortSpawn = SPAWN:NewWithAlias( "Red A2G Su-25 Escort", "Red AI A2G SU-25 Escort" ):InitLimit( 10, 10 )
+-- 
+-- -- Create an airbase object, where the escorts will be spawned.
+-- local Red_SU25T_Airbase = AIRBASE:FindByName( AIRBASE.Caucasus.Maykop_Khanskaya )
+-- 
+-- -- Park the airplanes at the airbase, visible before start.
+-- Red_SU25T_EscortSpawn:ParkAtAirbase( Red_SU25T_Airbase, AIRBASE.TerminalType.OpenMedOrBig )
+-- 
+-- -- New create the escort dispatcher, using the carrier set, the escort spawn object at the escort airbase.
+-- -- Provide a name of the escort, which will be also the name appearing on the radio menu for the group.
+-- -- And a briefing to appear when the player joins the player slot.
+-- Red_SU25T_EscortDispatcher = AI_ESCORT_DISPATCHER:New( Red_SU25T_CarrierSet, Red_SU25T_EscortSpawn, Red_SU25T_Airbase, "Escort Su-25", "You Su-25T is escorted by one Su-25. Use the radio menu to control the escorts." )
+-- 
+-- -- The dispatcher needs to be started using the :Start() method.
+-- Red_SU25T_EscortDispatcher:Start()
 function AI_ESCORT_DISPATCHER:New( CarrierSet, EscortSpawn, EscortAirbase, EscortName, EscortBriefing )
 
   local self = BASE:Inherit( self, FSM:New() ) -- #AI_ESCORT_DISPATCHER
@@ -85,10 +90,34 @@ function AI_ESCORT_DISPATCHER:onafterStart( From, Event, To )
 
   self:HandleEvent( EVENTS.Birth )
   
-  self:HandleEvent( EVENTS.PlayerLeaveUnit )
+  self:HandleEvent( EVENTS.PlayerLeaveUnit, self.OnEventExit )
+  self:HandleEvent( EVENTS.Crash, self.OnEventExit )
+  self:HandleEvent( EVENTS.Dead, self.OnEventExit )
 
 end
 
+--- @param #AI_ESCORT_DISPATCHER self
+-- @param Core.Event#EVENTDATA EventData
+function AI_ESCORT_DISPATCHER:OnEventExit( EventData )
+
+  local PlayerGroupName = EventData.IniGroupName
+  local PlayerGroup = EventData.IniGroup
+  local PlayerUnit = EventData.IniUnit
+  
+  self:I({EscortAirbase= self.EscortAirbase } )
+  self:I({PlayerGroupName = PlayerGroupName } )
+  self:I({PlayerGroup = PlayerGroup})
+  self:I({FirstGroup = self.CarrierSet:GetFirst()})
+  self:I({FindGroup = self.CarrierSet:FindGroup( PlayerGroupName )})
+  
+  if self.CarrierSet:FindGroup( PlayerGroupName ) then
+    if self.AI_Escorts[PlayerGroupName] then
+      self.AI_Escorts[PlayerGroupName]:Stop()
+      self.AI_Escorts[PlayerGroupName] = nil
+    end
+  end
+      
+end
 
 --- @param #AI_ESCORT_DISPATCHER self
 -- @param Core.Event#EVENTDATA EventData

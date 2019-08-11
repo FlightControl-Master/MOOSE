@@ -4171,7 +4171,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
        -- Create an alias name with the UIDs for the sending warehouse, asset and request.
     local _alias=self:_alias(_assetitem.unittype, self.uid, _assetitem.uid, Request.uid)
-    
+
     -- Asset is transport.
     _assetitem.spawned=false
     _assetitem.spawngroupname=nil
@@ -4217,18 +4217,18 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
       self:_ErrorMessage("ERROR: Unknown transport type!")
       return
     end
-    
+
     -- Add asset by id to all assets table.
     Request.assets[_assetitem.uid]=_assetitem
-    
+
   end
-  
+
   -- Add request to pending queue.
   table.insert(self.pending, Request)
 
   -- Delete request from queue.
   self:_DeleteQueueItem(Request, self.queue)
-  
+
 end
 
 --- On after "RequestSpawned" event. Initiates the transport of the assets to the requesting warehouse.
@@ -4244,7 +4244,7 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
   -- General type and category.
   local _cargotype=Request.cargoattribute    --#WAREHOUSE.Attribute
   local _cargocategory=Request.cargocategory --DCS#Group.Category
-  
+
   -- Add groups to pending item.
   --Request.cargogroupset=CargoGroupSet
 
@@ -4312,10 +4312,10 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
       end
 
     end
-    
+
     -- Transport group set.
     Request.transportgroupset=TransportGroupSet
-    
+
     -- No cargo transport necessary.
     return
   end
@@ -4418,8 +4418,8 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
   end
   CargoTransport:SetPickupRadius(pickupouter, pickupinner)
   CargoTransport:SetDeployRadius(deployouter, deployinner)
-  
-  
+
+
   -- Adjust carrier units. This has to come AFTER the dispatchers have been defined because they set the cargobay free weight!
   Request.carriercargo={}
   for _,carriergroup in pairs(TransportGroupSet:GetSetObjects()) do
@@ -4438,7 +4438,7 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
       self:T2(self.wid..string.format("Cargo bay weight limit of carrier unit %s: %.1f kg.", carrierunit:GetName(), carrierunit:GetCargoBayFreeWeight()))
     end
   end
-  
+
   --------------------------------
   -- Dispatcher Event Functions --
   --------------------------------
@@ -4542,7 +4542,7 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
   end
 
   -- Start dispatcher.
-  CargoTransport:__Start(5)  
+  CargoTransport:__Start(5)
 
 end
 
@@ -4958,26 +4958,26 @@ function WAREHOUSE:onafterAssetSpawned(From, Event, To, group, asset, request)
   local text=string.format("Asset %s from request id=%d was spawned!", asset.templatename, request.uid)
   self:T(self.wid..text)
   self:_DebugMessage(text)
-  
+
   -- Check if all assets groups are spawned and trigger events.
-  
+
   asset.spawned=true
-  
+
   local allspawned=true
   for _,_asset in pairs(request.assets) do
     local assetitem=_asset --#WAREHOUSE.Assetitem
-    
+
     self:I(string.format("FF Asset %s spawned %s as %s", assetitem.templatename, tostring(assetitem.spawned), tostring(assetitem.spawngroupname)))
-    
+
     if not assetitem.spawned then
       allspawned=false
     end
   end
-  
+
   if allspawned then
     self:RequestSpawned(request, request.cargogroupset, request.transportgroupset)
   end
-  
+
 end
 
 --- On after "AssetDead" event triggered when an asset group died.
@@ -5276,7 +5276,7 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
 
     -- Get stock item.
     local asset=cargoassets[i] --#WAREHOUSE.Assetitem
-    
+
     -- Set asset status to not spawned until we capture its birth event.
     asset.spawned=false
     asset.spawngroupname=nil
@@ -5321,13 +5321,13 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
     else
       self:E(self.wid.."ERROR: Unknown asset category!")
     end
-    
-    
+
+
     --Request add asset by id.
     Request.assets[asset.uid]=asset
-    
+
   end
-  
+
 end
 
 
@@ -5784,11 +5784,9 @@ end
 -- @param Wrapper.Group#GROUP group The group that arrived.
 function WAREHOUSE:_Arrived(group)
   self:_DebugMessage(string.format("Group %s arrived!", tostring(group:GetName())))
-  --self:E(string.format("Group %s arrived!", tostring(group:GetName())))
 
   if group then
     --Trigger "Arrived event.
-    --group:SmokeBlue()
     self:__Arrived(1, group)
   end
 
@@ -5800,14 +5798,10 @@ end
 -- @param #number n Waypoint passed.
 -- @param #number N Final waypoint.
 function WAREHOUSE:_PassingWaypoint(group,n,N)
-  self:T(string.format("Group %s passing waypoint %d of %d!", tostring(group:GetName()), n, N))
+  self:T(self.wid..string.format("Group %s passing waypoint %d of %d!", tostring(group:GetName()), n, N))
 
-  if group then
-    --group:SmokeGreen()
-  end
-
+  -- Final waypoint reached.
   if n==N then
-    --group:SmokeBlue()
     self:__Arrived(1, group)
   end
 
@@ -5826,7 +5820,7 @@ function WAREHOUSE:GetAssetByID(id)
     return _WAREHOUSEDB.Assets[id]
   else
     return nil
-  end  
+  end
 end
 
 --- Get a warehouse request from its unique id.
@@ -5836,7 +5830,7 @@ end
 function WAREHOUSE:GetRequestByID(id)
 
   if id then
-  
+
     for _,_request in pairs(self.queue) do
       local request=_request --#WAREHOUSE.Queueitem
       if request.uid==id then
@@ -5850,9 +5844,9 @@ function WAREHOUSE:GetRequestByID(id)
         return request, false
       end
     end
-  
+
   end
-  
+
   return nil,nil
 end
 
@@ -5864,27 +5858,27 @@ function WAREHOUSE:_OnEventBirth(EventData)
 
   if EventData and EventData.IniGroup then
     local group=EventData.IniGroup
-    
+
     -- Note: Remember, group:IsAlive might(?) not return true here.
     local wid,aid,rid=self:_GetIDsFromGroup(group)
-    
+
     if wid==self.uid then
       self:T(self.wid..string.format("Warehouse %s captured event birth of its asset unit %s.", self.alias, EventData.IniUnitName))
-      
+
       -- Get asset and request from id.
       local asset=self:GetAssetByID(aid)
       local request=self:GetRequestByID(rid)
-      
+
       -- Birth is triggered for each unit. We need to make sure not to call this too often!
       if not asset.spawned then
 
         -- Remove asset from stock.
         self:_DeleteStockItem(asset)
-  
+
         -- Set spawned switch.
         asset.spawned=true
         asset.spawngroupname=group:GetName()
-        
+
         -- Add group.
         if asset.iscargo==true then
           request.cargogroupset=request.cargogroupset or SET_GROUP:New()
@@ -5893,20 +5887,20 @@ function WAREHOUSE:_OnEventBirth(EventData)
           request.transportgroupset=request.transportgroupset or SET_GROUP:New()
           request.transportgroupset:AddGroup(group)
         end
-        
+
         -- Set warehouse state.
         group:SetState(group, "WAREHOUSE", self)
-        
+
         -- Asset spawned FSM function.
         self:__AssetSpawned(1, group, asset, request)
-        
+
       end
-      
+
     else
       --self:T3({wid=wid, uid=self.uid, match=(wid==self.uid), tw=type(wid), tu=type(self.uid)})
     end
-    
-  end  
+
+  end
 end
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
