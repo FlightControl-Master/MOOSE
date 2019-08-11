@@ -4056,6 +4056,7 @@ do -- AI_A2G_DISPATCHER
     
     local TaskReport = REPORT:New()
 
+    local DefenseTotal = 0
           
     for DefenderGroup, DefenderTask in pairs( self:GetDefenderTasks() ) do
       local DefenderGroup = DefenderGroup -- Wrapper.Group#GROUP
@@ -4089,12 +4090,15 @@ do -- AI_A2G_DISPATCHER
       end
     end
 
+--    for DefenderGroup, DefenderTask in pairs( self:GetDefenderTasks() ) do
+--      DefenseTotal = DefenseTotal + 1
+--    end
+    
     local Report = REPORT:New( "\nTactical Overview" )
 
     local DefenderGroupCount = 0
 
     local DefendersTotal = 0
-    local DefenseTotal = 0
 
     -- Now that all obsolete tasks are removed, loop through the detected targets.
     --for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
@@ -4149,7 +4153,10 @@ do -- AI_A2G_DISPATCHER
           end
         end
         
-        if EngageCoordinate and ( ( self.DefenseLimit and DefenseTotal < self.DefenseLimit ) or true ) then
+        -- There needs to be an EngageCoordinate.
+        -- If self.DefenseLimit is set (thus limit the amount of defenses to one zone), then only start a new defense if the maximum has not been reached.
+        -- If self.DefenseLimit has not been set, there is an unlimited amount of zones to be defended.
+        if ( EngageCoordinate and ( self.DefenseLimit and DefenseTotal < self.DefenseLimit ) or not self.DefenseLimit ) then
           do 
             local DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies = self:Evaluate_SEAD( DetectedItem ) -- Returns a SET_UNIT with the SEAD targets to be engaged...
             if DefendersMissing > 0 then
