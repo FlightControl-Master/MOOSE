@@ -346,6 +346,12 @@ function RESCUEHELO:New(carrierunit, helogroupname)
   -- @param #RESCUEHELO self
   -- @param #number delay Delay in seconds.
 
+  --- On after "Start" event function. Called when FSM is started.
+  -- @function [parent=#RESCUEHELO] OnAfterStart
+  -- @param #RECOVERYTANKER self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
 
   --- Triggers the FSM event "Rescue" that sends the helo on a rescue mission to a specifc coordinate.
   -- @function [parent=#RESCUEHELO] Rescue
