@@ -70,6 +70,9 @@ FLIGHTGROUP.ElementStatus={
 --- Flight group element.
 -- @type FLIGHTGROUP.Element
 -- @field #string name Name of the element.
+-- @field #number modex Tail number.
+-- @field #boolean ai If true, element is AI.
+-- @field #string skill Skill level.
 -- @field Wrapper.Unit#UNIT unit Element unit object.
 -- @field #string status Status, i.e. born, parking, taxiing.
 
