@@ -136,11 +136,17 @@ function FLIGHTGROUP:New(groupname)
     for _,_unit in pairs(units) do
       local unit=_unit --Wrapper.Unit#UNIT
       local element=self:AddElementByName(unit:GetName())
+
+      -- Trigger Spawned event.      
+      element.status=FLIGHTGROUP.ElementStatus.SPAWNED
+      self:ElementSpawned(element)
+      
+      -- Trigger Airborne event if unit was spawned in air.
       if unit:InAir() then
         element.status=FLIGHTGROUP.ElementStatus.AIRBORNE
-      else
-        element.status=FLIGHTGROUP.ElementStatus.SPAWNED
+        self:ElementAirborne(element)
       end
+      
     end
   end
   
@@ -151,14 +157,23 @@ function FLIGHTGROUP:New(groupname)
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
   self:AddTransition("Stopped",       "Start",           "Running")     -- Start FSM.
+  
   self:AddTransition("*",             "FlightStatus",    "*")           -- FLIGHTGROUP status update.
+  self:AddTransition("*",             "AddDetectedUnit", "*")           -- Add a newly detected unit to the detected units set.
+    
+  self:AddTransition("*",             "ElementTakeoff",  "*")           -- An element took off.
+  self:AddTransition("*",             "ElementLanded",   "*")           -- An element landed.
+  self:AddTransition("*",             "ElementArrived",  "*")           -- An element arrived.
   self:AddTransition("*",             "ElementDead",     "*")           -- An element crashed, ejected, or pilot dead.
+  
+  self:AddTransition("*",             "FlightSpawned",   "Spawned")     -- The whole flight group is airborne.
+  self:AddTransition("*",             "FlightParking",   "Parking")     -- The whole flight group is airborne.
+  self:AddTransition("*",             "FlightTaxiing",   "Taxiing")     -- The whole flight group is airborne.
   self:AddTransition("*",             "FlightAirborne",  "Airborne")    -- The whole flight group is airborne.
-  self:AddTransition("*",             "FlightLanded",    "Landed")      -- The whole flight group has laned.
+  self:AddTransition("*",             "FlightLanded",    "Landed")      -- The whole flight group has landed.
   self:AddTransition("*",             "FlightArrived",   "Arrived")     -- The whole flight group has arrived.
   self:AddTransition("*",             "FlightDead",      "*")           -- The whole flight group is dead.
-  self:AddTransition("*",             "AddDetectedUnit", "*")           -- Add a newly detected unit to the detected units set.
-
+  
 
   ------------------------
   --- Pseudo Functions ---
@@ -214,6 +229,34 @@ end
 -- @return Core.Set#SET_UNIT Set of detected units.
 function FLIGHTGROUP:GetDetectedUnits()
   return self.detectedunits
+end
+
+--- Check if flight is airborne.
+-- @param #FLIGHTGROUP self
+-- @return #boolean
+function FLIGHTGROUP:IsAirborne()
+  return self:Is("Airborne")
+end
+
+--- Check if flight is airborne.
+-- @param #FLIGHTGROUP self
+-- @return #boolean
+function FLIGHTGROUP:IsLanded()
+  return self:Is("Landed")
+end
+
+--- Check if flight is arrived.
+-- @param #FLIGHTGROUP self
+-- @return #boolean
+function FLIGHTGROUP:IsArrived()
+  return self:Is("Arrived")
+end
+
+--- Check if flight is dead.
+-- @param #FLIGHTGROUP self
+-- @return #boolean
+function FLIGHTGROUP:IsDead()
+  return self:Is("Dead")
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -321,7 +364,8 @@ function FLIGHTGROUP:OnEventBirth(EventData)
     
     if not self:_IsElement(unitname) then
       local element=self:AddElementByName(unitname)
-      element.status=FLIGHTGROUP.ElementStatus.SPAWNED
+      self:_UpdateStatus(element, FLIGHTGROUP.ElementStatus.SPAWNED)
+      self:I(self.sid..string.format("Element %s spawned", element.name))
     end
     
   end
@@ -343,7 +387,8 @@ function FLIGHTGROUP:OnEventEngineStartup(EventData)
     local element=self:GetElementByName(unitname)
 
     if element then    
-      element.status=FLIGHTGROUP.ElementStatus.TAXIING
+      self:_UpdateStatus(element, FLIGHTGROUP.ElementStatus.TAXIING)
+      self:I(self.sid..string.format("Element %s started engines ==> taxiing", element.name))
     end
   
   end
@@ -365,7 +410,9 @@ function FLIGHTGROUP:OnEventTakeOff(EventData)
     local element=self:GetElementByName(unitname)
 
     if element then    
-      element.status=FLIGHTGROUP.ElementStatus.AIRBORNE
+      self:_UpdateStatus(element, FLIGHTGROUP.ElementStatus.AIRBORNE)      
+      self:ElementTakeoff(element)
+      self:I(self.sid..string.format("Element %s took off ==> airborne", element.name))
     end
   
   end
@@ -386,8 +433,10 @@ function FLIGHTGROUP:OnEventLanding(EventData)
     -- Get element.
     local element=self:GetElementByName(unitname)
 
-    if element then    
-      element.status=FLIGHTGROUP.ElementStatus.LANDED
+    if element then
+      self:_UpdateStatus(element, FLIGHTGROUP.ElementStatus.LANDED)
+      self:ElementLanded(element)
+      self:I(self.sid..string.format("Element %s landed", element.name))
     end
   
   end
@@ -413,9 +462,12 @@ function FLIGHTGROUP:OnEventEngineShutdown(EventData)
       local airbase=coord:GetClosestAirbase()
       local _,_,dist,parking=coord:GetClosestParkingSpot(airbase)
       if dist and dist<10 and unit:InAir()==false then
-        element.status=FLIGHTGROUP.ElementStatus.ARRIVED
+        self:_UpdateStatus(element, FLIGHTGROUP.ElementStatus.ARRIVED)
+        self:ElementArrived(element)
+        self:I(self.sid..string.format("Element %s shut down engines ==> arrived", element.name))
       else
          element.status=FLIGHTGROUP.ElementStatus.DEAD
+         self:I(self.sid..string.format("Element %s started engines (in air) ==> dead", element.name))
       end
     end
   
@@ -439,7 +491,9 @@ function FLIGHTGROUP:OnEventCrash(EventData)
     local element=self:GetElementByName(unitname)
 
     if element then
-      element.status=FLIGHTGROUP.ElementStatus.DEAD
+      self:_UpdateStatus(element, FLIGHTGROUP.ElementStatus.DEAD)
+      self:ElementDead(element)
+      self:I(self.sid..string.format("Element %s crashed ==> dead", element.name))
     end
 
   end
@@ -528,10 +582,10 @@ function FLIGHTGROUP:_IsElement(unitname)
   return false
 end
 
---- Check if all elements of the flight group have the same status or are dead.
+--- Check if all elements of the flight group have the same status (or are dead).
 -- @param #FLIGHTGROUP self
 -- @param #string unitname Name of unit.
-function FLIGHTGROUP:_AllStatus(status)
+function FLIGHTGROUP:_AllSameStatus(status)
 
   for _,_element in pairs(self.element) do
     local element=_element --#FLIGHTGROUP.Element
@@ -545,17 +599,243 @@ function FLIGHTGROUP:_AllStatus(status)
   
   end
   
-  if status==FLIGHTGROUP.ElementStatus.DEAD then
+  return true
+end
+
+--- Check if all elements of the flight group have the same status (or are dead).
+-- @param #FLIGHTGROUP self
+-- @param #string status Status to check.
+-- @return #boolean If true, all elements have a similar status.
+function FLIGHTGROUP:_AllSimilarStatus(status)
+
+  local similar=true
+  
+  for _,_element in pairs(self.element) do
+    local element=_element --#FLIGHTGROUP.Element
+    
+    if element.status~=FLIGHTGROUP.ElementStatus.DEAD then
+    
+      if status==FLIGHTGROUP.ElementStatus.SPAWNED then
+      
+        if element.status~=status or
+          element.status~=FLIGHTGROUP.ElementStatus.PARKING  or
+          element.status~=FLIGHTGROUP.ElementStatus.TAXIING  or
+          element.status~=FLIGHTGROUP.ElementStatus.AIRBORNE or
+          element.status~=FLIGHTGROUP.ElementStatus.LANDED   or
+          element.status~=FLIGHTGROUP.ElementStatus.ARRIVED  then
+          return false        
+        end
+        
+      elseif status==FLIGHTGROUP.ElementStatus.PARKING then
+      
+        if element.status~=status or
+          element.status~=FLIGHTGROUP.ElementStatus.TAXIING  or
+          element.status~=FLIGHTGROUP.ElementStatus.AIRBORNE or
+          element.status~=FLIGHTGROUP.ElementStatus.LANDED   or
+          element.status~=FLIGHTGROUP.ElementStatus.ARRIVED  then
+          return false        
+        end
+        
+      elseif status==FLIGHTGROUP.ElementStatus.TAXIING then
+      
+        if element.status~=status or
+          element.status~=FLIGHTGROUP.ElementStatus.AIRBORNE or
+          element.status~=FLIGHTGROUP.ElementStatus.LANDED   or
+          element.status~=FLIGHTGROUP.ElementStatus.ARRIVED  then
+          return false        
+        end    
+              
+        elseif  status==FLIGHTGROUP.ElementStatus.LANDED then
+        
+        if element.status~=status or element.status~=FLIGHTGROUP.ElementStatus.ARRIVED then
+          return false
+        end
+        
+      elseif status==FLIGHTGROUP.ElementStatus.ARRIVED then
+      
+        if element.status~=status then
+          return false
+        end
+        
+      end  
+      
+      if element.status==FLIGHTGROUP.ElementStatus.DEAD then
+        -- Do nothing. Element is already dead and does not count.
+      elseif element.status~=status then
+        -- At least this element has a different status.
+        return false
+      end
+      
+    end --DEAD
+  
+  end
+  
+  return true
+end
+
+
+
+--- Check if all elements of the flight group have the same status or are dead.
+-- @param #FLIGHTGROUP self
+-- @param #FLIGHTGROUP.Element element Element.
+-- @param #string newstatus New status of element
+function FLIGHTGROUP:_UpdateStatus(element, newstatus)
+
+  -- Old status.
+  local oldstatus=element.status
+
+  -- Update status of element.
+  element.status=newstatus
+  
+  local group=element.group
+  
+  if newstatus==FLIGHTGROUP.ElementStatus.SPAWNED then
+    ---
+    -- SPAWNED
+    ---
+    
+    self:ElementSpawned(element)
+    
+    if self:_AllSimilarStatus(newstatus) then
+      self:FlightSpawned(group)
+    end
+
+  elseif newstatus==FLIGHTGROUP.ElementStatus.PARKING then
+    ---
+    -- PARKING
+    ---
+    
+    self:ElementParking(element)
+    
+    if self:_AllSimilarStatus(newstatus) then
+      self:FlightParking(group)
+    end  
+      
+  elseif newstatus==FLIGHTGROUP.ElementStatus.TAXIING then
+    ---
+    -- TAXIING
+    ---
+    
+    self:ElementParking(element)
+    
+    if self:_AllSimilarStatus(newstatus) then
+      self:FlightParking(group)
+    end
+    
+  elseif newstatus==FLIGHTGROUP.ElementStatus.AIRBORNE then
+    ---
+    -- AIRBORNE
+    ---
+    
+    self:ElementAirborne(element)
+    
+    if self:_AllSimilarStatus(newstatus) then
+      if self:IsTaxiing() then
+        self:FlightAirborne(group)
+      elseif self:IsParking() then
+        self:FlightTaxiing(group)
+        self:FlightAirborne(group)
+      elseif self:IsSpawned() then
+        self:FlightParking(group)      
+        self:FlightTaxiing(group)
+        self:FlightAirborne(group)      
+      end
+      
+    end
+
+  elseif newstatus==FLIGHTGROUP.ElementStatus.LANDED then
+    ---
+    -- LANDED
+    ---
+    
+    self:ElementLanded(element)
+    
+    if self:_AllSimilarStatus(newstatus) then
+      self:FlightLanded(group)
+    end
+    
+  elseif newstatus==FLIGHTGROUP.ElementStatus.ARRIVED then
+    ---
+    -- ARRIVED
+    ---
+    
+    self:ElementArrived(element)
+    
+    if self:_AllSimilarStatus(newstatus) then
+      
+      if self:IsLanded() then
+        self:FlightArrived(group)
+      elseif self:IsAirborne() then
+        self:FlightLanded(group)
+        self:FlightArrived(group)
+      end
+        
+    end
+    
+    
+  end
+  
+end
+
+
+--- Check if all elements of the flight group have the same status or are dead.
+-- @param #FLIGHTGROUP self
+-- @param #string unitname Name of unit.
+function FLIGHTGROUP:_CheckAllStatus(status)
+  
+  if self:_CheckAllSameStatus(FLIGHTGROUP.ElementStatus.DEAD) and not self:IsDead() then
     -- All elements are dead.
     self:FlightDead()
-  elseif status==FLIGHTGROUP.ElementStatus.ARRIVED then
+  elseif self:_CheckAllSameStatus(FLIGHTGROUP.ElementStatus.SPAWNED) then
+    
+  elseif self:_CheckAllSameStatus(FLIGHTGROUP.ElementStatus.PARKING) then
+  
+  elseif self:_CheckAllSameStatus(FLIGHTGROUP.ElementStatus.TAXIING) then
+
+  elseif self:_CheckAllSameStatus(FLIGHTGROUP.ElementStatus.AIRBORNE) then
+
+  elseif self:_CheckAllSameStatus(FLIGHTGROUP.ElementStatus.LANDED) then
+    self:FlightArrived()          
+  elseif self:_CheckAllSameStatus(FLIGHTGROUP.ElementStatus.ARRIVED) and not self:IsArrived() then
     self:FlightArrived()
+  end
+  
+  if status==FLIGHTGROUP.ElementStatus.DEAD then
+    
+    
+  elseif status==FLIGHTGROUP.ElementStatus.ARRIVED then
+    
   elseif status==FLIGHTGROUP.ElementStatus.AIRBORNE then
     self:FlightAirborne()
   end
 
   return true
 end
+
+--- Get onboard number.
+-- @param #AIRBOSS self
+-- @param #string unitname Name of the unit.
+-- @return #string Modex.
+function FLIGHTGROUP:_GetOnboardNumber(unitname)
+
+  local group=UNIT:FindByName(unitname):GetGroup()
+
+  -- Units of template group.
+  local units=group:GetTemplate().units
+
+  -- Get numbers.
+  local numbers={}
+  for _,unit in pairs(units) do
+    
+    if unitname==unit.name then
+      return tostring(unit.onboard_num)
+    end
+
+  end
+  
+  return nil
+end
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
