@@ -12737,7 +12737,7 @@ function AIRBOSS:_Debrief(playerData)
   table.insert(self.playerscores[playerData.name], mygrade)
   
   -- Trigger grading event.
-  self:LSOGrade(playerdata, mygrade)
+  self:LSOGrade(playerData, mygrade)
 
   -- LSO grade: (OK) 3.0 PT - LURIM
   local text=string.format("%s %.1f PT - %s", grade, Points, analysis)
