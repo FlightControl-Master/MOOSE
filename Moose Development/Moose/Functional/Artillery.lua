@@ -695,7 +695,7 @@ ARTY.id="ARTY | "
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="1.1.2"
+ARTY.version="1.1.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -2474,9 +2474,10 @@ function ARTY:_OnEventMarkChange(Event)
   if Event.text~=nil and Event.text:lower():find("arty") then
  
     -- Convert (wrong x-->z, z-->x) vec3
-    -- TODO: This needs to be "fixed", once DCS gives the correct numbers for x and z.
-    -- local vec3={y=Event.pos.y, x=Event.pos.x, z=Event.pos.z}
-    local vec3={y=Event.pos.y, x=Event.pos.z, z=Event.pos.x}
+    -- DONE: This needs to be "fixed", once DCS gives the correct numbers for x and z.
+    -- Was fixed in DCS 2.5.5.34644!
+    local vec3={y=Event.pos.y, x=Event.pos.x, z=Event.pos.z}
+    --local vec3={y=Event.pos.y, x=Event.pos.z, z=Event.pos.x}
     
     -- Get coordinate from vec3.
     local _coord=COORDINATE:NewFromVec3(vec3)

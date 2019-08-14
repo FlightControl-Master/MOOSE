@@ -1749,7 +1749,7 @@ _WAREHOUSEDB  = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.9.5"
+WAREHOUSE.version="0.9.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -5029,12 +5029,7 @@ function WAREHOUSE:onafterDestroyed(From, Event, To)
     for k,_ in pairs(self.stock) do
       self.stock[k]=nil
     end
-  
-    --self.queue=nil
-    --self.queue={}
-  
-    --self.stock=nil
-    --self.stock={}
+    
   end
 
 end
@@ -5814,11 +5809,9 @@ end
 -- @param Wrapper.Group#GROUP group The group that arrived.
 function WAREHOUSE:_Arrived(group)
   self:_DebugMessage(string.format("Group %s arrived!", tostring(group:GetName())))
-  --self:E(string.format("Group %s arrived!", tostring(group:GetName())))
 
   if group then
     --Trigger "Arrived event.
-    --group:SmokeBlue()
     self:__Arrived(1, group)
   end
 
@@ -5830,14 +5823,10 @@ end
 -- @param #number n Waypoint passed.
 -- @param #number N Final waypoint.
 function WAREHOUSE:_PassingWaypoint(group,n,N)
-  self:T(string.format("Group %s passing waypoint %d of %d!", tostring(group:GetName()), n, N))
+  self:T(self.wid..string.format("Group %s passing waypoint %d of %d!", tostring(group:GetName()), n, N))
 
-  if group then
-    --group:SmokeGreen()
-  end
-
+  -- Final waypoint reached.
   if n==N then
-    --group:SmokeBlue()
     self:__Arrived(1, group)
   end
 

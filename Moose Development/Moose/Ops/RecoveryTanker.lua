@@ -418,6 +418,13 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   -- @param #RECOVERYTANKER self
   -- @param #number delay Delay in seconds.
 
+  --- On after "Start" event function. Called when FSM is started.
+  -- @function [parent=#RECOVERYTANKER] OnAfterStart
+  -- @param #RECOVERYTANKER self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
 
   --- Triggers the FSM event "RefuelStart" when the tanker starts refueling another aircraft.
   -- @function [parent=#RECOVERYTANKER] RefuelStart

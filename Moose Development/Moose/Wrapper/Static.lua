@@ -136,6 +136,7 @@ function STATIC:Destroy( GenerateEvent )
     end
     
     DCSObject:destroy()
+    return true
   end
 
   return nil
