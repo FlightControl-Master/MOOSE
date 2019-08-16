@@ -105,6 +105,8 @@ FLIGHTGROUP.version="0.0.1"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: A lot!
+-- TODO: Add tasks: 
+-- TODO: Add EPLRS, TACAN.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -324,12 +326,14 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   -- Get detected DCS units.
   local detectedtargets=self.flightgroup:GetDetectedTargets()
   
+  local detected={}
   for DetectionObjectID, Detection in pairs(detectedtargets) do
     local DetectedObject=Detection.object -- DCS#Object
           
     if DetectedObject and DetectedObject:isExist() and DetectedObject.id_<50000000 then
       local unit=UNIT:Find(DetectedObject)
       if unit and unit:IsAlive() then
+        table.insert(detected, unit)
         local unitname=unit:GetName()
         if self.detectedunits:FindUnit(unitname) then
           -- Unit is already in the detected unit set.
@@ -338,6 +342,20 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
           self:AddDetectedUnit(unit)
         end
       end
+    end
+  end
+  
+  for _,_unit in pairs(self.detectedunits:GetSet()) do
+    local unit=_unit --Wrapper.Unit#UNIT
+    local gotit=false
+    for _,_du in pairs(detected) do
+      local du=_du --Wrapper.Unit#UNIT
+      if unit:GetName()==du:GetName() then
+        gotit=true
+      end
+    end
+    if not gotit then
+      self:LostDetectedUnit()
     end
   end
   
