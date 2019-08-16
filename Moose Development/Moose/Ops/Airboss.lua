@@ -5996,7 +5996,7 @@ function AIRBOSS:_ScanCarrierZone()
         local awacs2marshal  = isawacs  and self.awacs:IsReturning()  and self.awacs.airbase:GetName()==self.airbase:GetName()  and knownflight.flag==-100 and self.awacs.recovery==true
 
         -- Put flight into Marshal.
-        local putintomarshal=closein>UTILS.NMToMeters(5) and knownflight.flag==-100 and iscarriersquad and istanker==false and isawacs==false
+        local putintomarshal=closein>UTILS.NMToMeters(5) and knownflight.flag==-100 and iscarriersquad and (not istanker) and (not isawacs)
 
         -- Send AI flight to marshal stack if group closes in more than 5 and has initial flag value.
         if putintomarshal or tanker2marshal or awacs2marshal then
@@ -12760,7 +12760,7 @@ function AIRBOSS:_Debrief(playerData)
   table.insert(self.playerscores[playerData.name], mygrade)
 
   -- Trigger grading event.
-  self:LSOGrade(playerdata, mygrade)
+  self:LSOGrade(playerData, mygrade)
 
   -- LSO grade: (OK) 3.0 PT - LURIM
   local text=string.format("%s %.1f PT - %s", grade, Points, analysis)
