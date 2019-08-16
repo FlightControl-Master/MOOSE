@@ -44,6 +44,8 @@ FLIGHTGROUP = {
   element        =    {},
   taskqueue      =    {},
   detectedunits  =   nil,
+  homebase       =   nil,
+  destination    =   nil,
 }
 
 
@@ -77,7 +79,7 @@ FLIGHTGROUP.ElementStatus={
 -- @field #string status Status, i.e. born, parking, taxiing.
 
 --- Flight group tasks.
--- @type FLIGHTGROUP.Task
+-- @type FLIGHTGROUP.Mission
 -- @param #string INTERCEPT Intercept task.
 -- @param #string CAP Combat Air Patrol task.s
 -- @param #string BAI Battlefield Air Interdiction task.
@@ -85,7 +87,7 @@ FLIGHTGROUP.ElementStatus={
 -- @param #string STRIKE Strike task.
 -- @param #string AWACS AWACS task.
 -- @param #string TANKER Tanker task.
-FLIGHTGROUP.Task={
+FLIGHTGROUP.Mission={
   INTERCEPT="Intercept",
   CAP="CAP",
   BAI="BAI",
@@ -95,6 +97,18 @@ FLIGHTGROUP.Task={
   AWACS="AWACS",
   TANKER="Tanker",
 }
+
+--- Flight group tasks.
+-- @type FLIGHTGROUP.Task
+-- @param #
+-- @param #number time Abs. mission time when to execute the task.
+
+--- Flight group tasks.
+-- @type FLIGHTGROUP.TaskCAP
+-- @param #
+-- @param #number time Abs. mission time when to execute the task.
+
+
 
 --- FLIGHTGROUP class version.
 -- @field #string version
@@ -162,8 +176,12 @@ function FLIGHTGROUP:New(groupname)
   
   self:AddTransition("*",             "FlightStatus",    "*")           -- FLIGHTGROUP status update.
   self:AddTransition("*",             "AddDetectedUnit", "*")           -- Add a newly detected unit to the detected units set.
+  self:AddTransition("*",             "LostDetectedUnit", "*")          -- Group lost a detected target.
     
-  self:AddTransition("*",             "ElementTakeoff",  "*")           -- An element took off.
+  self:AddTransition("*",             "ElementSpawned",  "*")           -- An element was spawned.
+  self:AddTransition("*",             "ElementParking",  "*")           -- An element was spawned.
+  self:AddTransition("*",             "ElementTaxiing",  "*")           -- An element spooled up the engines.
+  self:AddTransition("*",             "ElementAirborne", "*")           -- An element took off.
   self:AddTransition("*",             "ElementLanded",   "*")           -- An element landed.
   self:AddTransition("*",             "ElementArrived",  "*")           -- An element arrived.
   self:AddTransition("*",             "ElementDead",     "*")           -- An element crashed, ejected, or pilot dead.
@@ -231,6 +249,28 @@ end
 -- @return Core.Set#SET_UNIT Set of detected units.
 function FLIGHTGROUP:GetDetectedUnits()
   return self.detectedunits
+end
+
+
+--- Check if flight is airborne.
+-- @param #FLIGHTGROUP self
+-- @return #boolean
+function FLIGHTGROUP:IsSpawned()
+  return self:Is("Spawned")
+end
+
+--- Check if flight is parking.
+-- @param #FLIGHTGROUP self
+-- @return #boolean
+function FLIGHTGROUP:IsParking()
+  return self:Is("Parking")
+end
+
+--- Check if flight is parking.
+-- @param #FLIGHTGROUP self
+-- @return #boolean
+function FLIGHTGROUP:IsTaxiing()
+  return self:Is("Taxiing")
 end
 
 --- Check if flight is airborne.
@@ -534,6 +574,60 @@ function FLIGHTGROUP:onafterAddDetectedUnit(From, Event, To, Unit)
   self.detectedunits:AddUnit(Unit)
 end
 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Task functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Function called when a group has reached the holding zone.
+--@param Wrapper.Group#GROUP group Group that reached the holding zone.
+--@param #FLIGHTGROUP.Mission
+--@param #FLIGHTGROUP flight Flight group that has reached the holding zone.
+function FLIGHTGROUP._TaskDone(group, flightgroup, task)
+
+  -- Debug message.
+  local text=string.format("Flight %s reached holding zone.", group:GetName())
+
+  -- Set holding flag true and set timestamp for marshal time check.
+  if flightgroup then
+    flight.holding=true
+    flight.time=timer.getAbsTime()
+  end
+end
+
+
+--- Launch a flight group to intercept an intruder.
+-- @param #FLIGHTGROUP self
+-- @param Wrapper.Group#GROUP bandits Bandit group.
+function FLIGHTGROUP:TaskIntercept(bandit)
+
+  -- Task orbit.
+  local tasks={}
+  
+  for _,unit in pairs(bandit:GetUnits()) do
+    tasks[#tasks+1]=self.flightgroup:TaskAttackUnit(unit)
+  end
+  
+  -- Passing waypoint task function.
+  tasks[#tasks+1]=self.flightgroup:TaskFunction("FLIGHTGROUP._TaskDone", self)  
+  
+  local speed=self.flightgroup:GetSpeedMax()
+  local altitude=bandit:GetAltitude()
+  
+  -- Create waypoints.
+  local wp={}
+  wp[1]=self:GetCoordinate():WaypointAirTakeOffParking()
+  wp[2]=self:GetCoordinate():SetAltitude(altitude):WaypointAirTurningPoint(COORDINATE.WaypointAltType.BARO, speed, {tasks}, "Intercept")
+  
+  -- Start uncontrolled group.
+  self.flightgroup:StartUncontrolled()
+  
+  --airboss:SetExcludeAI()
+  
+  -- Route group
+  self.flightgroup:Route(wp)
+  
+end
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Misc functions
@@ -734,10 +828,10 @@ function FLIGHTGROUP:_UpdateStatus(element, newstatus)
     -- TAXIING
     ---
     
-    self:ElementParking(element)
+    self:ElementTaxiing(element)
     
     if self:_AllSimilarStatus(newstatus) then
-      self:FlightParking(group)
+      self:FlightTaxiing(group)
     end
     
   elseif newstatus==FLIGHTGROUP.ElementStatus.AIRBORNE then
@@ -831,7 +925,7 @@ function FLIGHTGROUP:_CheckAllStatus(status)
 end
 
 --- Get onboard number.
--- @param #AIRBOSS self
+-- @param #FLIGHTGROUP self
 -- @param #string unitname Name of the unit.
 -- @return #string Modex.
 function FLIGHTGROUP:_GetOnboardNumber(unitname)

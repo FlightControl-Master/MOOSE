@@ -1671,6 +1671,7 @@ AIRBOSS.Difficulty={
 -- @field #boolean showhints If true, show step hints.
 -- @field #table trapsheet Groove data table recorded every 0.5 seconds.
 -- @field #boolean trapon If true, save trap sheets.
+-- @field #string debriefschedulerID Debrief scheduler ID.
 -- @extends #AIRBOSS.FlightGroup
 
 --- Main group level radio menu: F10 Other/Airboss.
@@ -1683,7 +1684,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="1.0.7"
+AIRBOSS.version="1.0.8"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -2517,7 +2518,8 @@ end
 function AIRBOSS:CloseCurrentRecoveryWindow(delay)
 
   if delay and delay>0 then
-    SCHEDULER:New(nil, self.CloseCurrentRecoveryWindow, {self}, delay)
+    --SCHEDULER:New(nil, self.CloseCurrentRecoveryWindow, {self}, delay)
+    self:ScheduleOnce(delay, self.CloseCurrentRecoveryWindow, self)
   else
     if self:IsRecovering() and self.recoverywindow and self.recoverywindow.OPEN then
       self:RecoveryStop()
@@ -2567,7 +2569,8 @@ function AIRBOSS:DeleteRecoveryWindow(window, delay)
 
   if delay and delay>0 then
     -- Delayed call.
-    SCHEDULER:New(nil, self.DeleteRecoveryWindow, {self, window}, delay)
+    --SCHEDULER:New(nil, self.DeleteRecoveryWindow, {self, window}, delay)
+    self:ScheduleOnce(delay, self.DeleteRecoveryWindow, self, window)
   else
 
     for i,_recovery in pairs(self.recoverytimes) do
@@ -2987,7 +2990,8 @@ function AIRBOSS:SoundCheckLSO(delay)
 
   if delay and delay>0 then
     -- Delayed call.
-    SCHEDULER:New(nil, AIRBOSS.SoundCheckLSO, {self}, delay)
+    --SCHEDULER:New(nil, AIRBOSS.SoundCheckLSO, {self}, delay)
+    self:ScheduleOnce(delay, AIRBOSS.SoundCheckLSO, self)
   else
 
 
@@ -3022,7 +3026,8 @@ function AIRBOSS:SoundCheckMarshal(delay)
 
   if delay and delay>0 then
     -- Delayed call.
-    SCHEDULER:New(nil, AIRBOSS.SoundCheckMarshal, {self}, delay)
+    --SCHEDULER:New(nil, AIRBOSS.SoundCheckMarshal, {self}, delay)
+    self:ScheduleOnce(delay, AIRBOSS.SoundCheckMarshal, self)
   else
 
 
@@ -5871,7 +5876,8 @@ function AIRBOSS:_SetPlayerStep(playerData, step, delay)
 
   if delay and delay>0 then
     -- Delayed call.
-    SCHEDULER:New(nil, self._SetPlayerStep, {self, playerData, step}, delay)
+    --SCHEDULER:New(nil, self._SetPlayerStep, {self, playerData, step}, delay)
+    self:ScheduleOnce(delay, self._SetPlayerStep, self, playerData, step)
   else
 
     -- Check if player still exists after possible delay.
@@ -7339,6 +7345,7 @@ function AIRBOSS:_InitPlayer(playerData, step)
   playerData.TIG0=nil
   playerData.wire=nil
   playerData.flag=-100
+  playerData.debriefschedulerID=nil
 
   -- Set us up on final if group name contains "Groove". But only for the first pass.
   if playerData.group:GetName():match("Groove") and playerData.passes==0 then
@@ -7819,6 +7826,14 @@ function AIRBOSS:_RemoveFlight(flight, completely)
     self:_RemoveFlightFromQueue(self.flights, flight)
 
   else
+  
+    -- Remove all grades until a final grade is reached.
+    local grades=self.playerscores[flight.name]
+    if grades and #grades>0 then
+      while #grades>0 and grades[#grades].finalscore==nil do
+        table.remove(grades, #grades)
+      end
+    end  
 
     -- Check if flight should be completely removed, e.g. after the player died or simply left the slot.
     if completely then
@@ -7828,15 +7843,6 @@ function AIRBOSS:_RemoveFlight(flight, completely)
 
       -- Remove completely.
       self:_RemoveFlightFromQueue(self.flights, flight)
-
-      -- Remove all grades until a final grade is reached.
-      local grades=self.playerscores[flight.name]
-      if grades and #grades>0 then
-        while #grades>0 and grades[#grades].finalscore==nil do
-          table.remove(grades, #grades)
-        end
-      end
-
 
       -- Remove player from players table.
       local playerdata=self.players[flight.name]
@@ -8028,7 +8034,8 @@ function AIRBOSS:_CheckPlayerStatus()
           elseif playerData.step==AIRBOSS.PatternStep.DEBRIEF then
 
             -- Debriefing in 5 seconds.
-            SCHEDULER:New(nil, self._Debrief, {self, playerData}, 5)
+            --SCHEDULER:New(nil, self._Debrief, {self, playerData}, 5)
+            playerData.debriefschedulerID=self:ScheduleOnce(5, self._Debrief, self, playerData)
 
             -- Undefined status.
             playerData.step=AIRBOSS.PatternStep.UNDEFINED
@@ -8209,7 +8216,8 @@ function AIRBOSS:OnEventBirth(EventData)
     self:_AddF10Commands(_unitName)
 
     -- Delaying the new player for a second, because AI units of the flight would not be registered correctly.
-    SCHEDULER:New(nil, self._NewPlayer, {self, _unitName}, 1)
+    --SCHEDULER:New(nil, self._NewPlayer, {self, _unitName}, 1)
+    self:ScheduleOnce(1, self._NewPlayer, self, _unitName)
 
   end
 end
@@ -8362,7 +8370,8 @@ function AIRBOSS:OnEventLand(EventData)
             self:_SetPlayerStep(playerData, AIRBOSS.PatternStep.UNDEFINED)
 
             -- Call trapped function in 1 second to make sure we did not bolter.
-            SCHEDULER:New(nil, self._Trapped, {self, playerData}, 1)
+            --SCHEDULER:New(nil, self._Trapped, {self, playerData}, 1)
+            self:ScheduleOnce(1, self._Trapped, self, playerData)
 
           end
 
@@ -10256,7 +10265,8 @@ function AIRBOSS:_Trapped(playerData)
       end
 
       -- Call function again and check if converged or back in air.
-      SCHEDULER:New(nil, self._Trapped, {self, playerData}, 0.1)
+      --SCHEDULER:New(nil, self._Trapped, {self, playerData}, 0.1)
+      self:ScheduleOnce(0.1, self._Trapped, self, playerData)
       return
     end
 
@@ -12695,6 +12705,9 @@ end
 -- @param #AIRBOSS.PlayerData playerData Player data.
 function AIRBOSS:_Debrief(playerData)
   self:F(self.lid..string.format("Debriefing of player %s.", playerData.name))
+  
+  -- Delete scheduler ID.
+  playerData.debriefschedulerID=nil
 
   -- Switch attitude monitor off if on.
   playerData.attitudemonitor=false
@@ -14766,7 +14779,8 @@ function AIRBOSS:MessageToPlayer(playerData, message, sender, receiver, duration
 
     if delay and delay>0 then
       -- Delayed call.
-      SCHEDULER:New(nil, self.MessageToPlayer, {self, playerData, message, sender, receiver, duration, clear}, delay)
+      --SCHEDULER:New(nil, self.MessageToPlayer, {self, playerData, message, sender, receiver, duration, clear}, delay)
+      self:ScheduleOnce(delay, self.MessageToPlayer, self, playerData, message, sender, receiver, duration, clear)
     else
 
       -- Wait until previous sound finished.
@@ -15820,6 +15834,11 @@ function AIRBOSS:_ResetPlayerStatus(_unitName)
       -- Remove flight from queues. Collapse marshal stack if necessary.
       -- Section members are removed from the Spinning queue. If flight is member, he is removed from the section.
       self:_RemoveFlight(playerData)
+      
+      -- Stop pending debrief scheduler.
+      if playerData.debriefschedulerID and self.Scheduler then
+        self.Scheduler:Stop(playerData.debriefschedulerID)
+      end
 
       -- Initialize player data.
       self:_InitPlayer(playerData)
