@@ -3104,18 +3104,26 @@ do -- AI_A2A_DISPATCHER
             self:F({"CAP Birth", Defender:GetName()})
             --self:GetParent(self).onafterBirth( self, Defender, From, Event, To )
             
+            local DefenderName = Defender:GetCallsign()
             local Dispatcher = Fsm:GetDispatcher() -- #AI_A2A_DISPATCHER
             local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
 
             if Squadron then
+              Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " airborne. Starting Patrol." )
               Fsm:__Patrol( 2 ) -- Start Patrolling
             end
           end
   
           function Fsm:onafterRTB( Defender, From, Event, To )
+
             self:F({"CAP RTB", Defender:GetName()})
+
             self:GetParent(self).onafterRTB( self, Defender, From, Event, To )
+
+            local DefenderName = Defender:GetCallsign()
             local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
+            local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
+            Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " returning." )
             Dispatcher:ClearDefenderTaskTarget( Defender )
           end
   
@@ -3291,11 +3299,13 @@ do -- AI_A2A_DISPATCHER
                     self:F({"GCI Birth", Defender:GetName()})
                     --self:GetParent(self).onafterBirth( self, Defender, From, Event, To )
                     
+                    local DefenderName = Defender:GetCallsign()
                     local Dispatcher = Fsm:GetDispatcher() -- #AI_A2A_DISPATCHER
                     local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
                     local DefenderTarget = Dispatcher:GetDefenderTaskTarget( Defender )
                     
                     if DefenderTarget then
+                      Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " airborne. Engaging target!" )
                       Fsm:__Engage( 2, DefenderTarget.Set ) -- Engage on the TargetSetUnit
                     end
                   end
@@ -3304,7 +3314,10 @@ do -- AI_A2A_DISPATCHER
                     self:F({"GCI RTB", Defender:GetName()})
                     self:GetParent(self).onafterRTB( self, Defender, From, Event, To )
                     
+                    local DefenderName = Defender:GetCallsign()
                     local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
+                    local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
+                    Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " returning." )
                     Dispatcher:ClearDefenderTaskTarget( Defender )
                   end
   
@@ -3326,8 +3339,11 @@ do -- AI_A2A_DISPATCHER
                     self:F({"GCI Home", Defender:GetName()})
                     self:GetParent(self).onafterHome( self, Defender, From, Event, To )
                     
+                    local DefenderName = Defender:GetCallsign()
                     local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
                     local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
+
+                    Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " landing." )
   
                     if Action and Action == "Destroy" then
                       Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
@@ -3412,6 +3428,91 @@ do -- AI_A2A_DISPATCHER
     return nil, nil
   end
 
+  --- Shows the tactical display.
+  -- @param #AI_A2A_DISPATCHER self
+  function AI_A2A_DISPATCHER:ShowTacticalDisplay( Detection )
+
+    local AreaMsg = {}
+    local TaskMsg = {}
+    local ChangeMsg = {}
+    
+    local TaskReport = REPORT:New()
+          
+    local Report = REPORT:New( "Tactical Overviews" )
+
+    local DefenderGroupCount = 0
+
+    -- Now that all obsolete tasks are removed, loop through the detected targets.
+    for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
+    
+      local DetectedItem = DetectedItem -- Functional.Detection#DETECTION_BASE.DetectedItem
+      local DetectedSet = DetectedItem.Set -- Core.Set#SET_UNIT
+      local DetectedCount = DetectedSet:Count()
+      local DetectedZone = DetectedItem.Zone
+
+      self:F( { "Target ID", DetectedItem.ItemID } )
+      DetectedSet:Flush( self )
+
+      local DetectedID = DetectedItem.ID
+      local DetectionIndex = DetectedItem.Index
+      local DetectedItemChanged = DetectedItem.Changed
+      
+      -- Show tactical situation
+      Report:Add( string.format( "\n- Target %s (%s): (#%d) %s" , DetectedItem.ItemID, DetectedItem.Index, DetectedItem.Set:Count(), DetectedItem.Set:GetObjectNames() ) )
+      for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
+        local Defender = Defender -- Wrapper.Group#GROUP
+         if DefenderTask.Target and DefenderTask.Target.Index == DetectedItem.Index then
+           if Defender and Defender:IsAlive() then
+             DefenderGroupCount = DefenderGroupCount + 1
+             local Fuel = Defender:GetFuelMin() * 100
+             local Damage = Defender:GetLife() / Defender:GetLife0() * 100
+             Report:Add( string.format( " - %s*%d/%d (%s - %s): (#%d) F: %3d, D:%3d - %s", 
+                                        Defender:GetName(),
+                                        Defender:GetSize(),
+                                        Defender:GetInitialSize(),
+                                        DefenderTask.Type, 
+                                        DefenderTask.Fsm:GetState(), 
+                                        Defender:GetSize(), 
+                                        Fuel,
+                                        Damage, 
+                                        Defender:HasTask() == true and "Executing" or "Idle" ) )
+           end
+         end
+      end
+    end
+
+    Report:Add( "\n- No Targets:")
+    local TaskCount = 0
+    for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
+      TaskCount = TaskCount + 1
+      local Defender = Defender -- Wrapper.Group#GROUP
+      if not DefenderTask.Target then
+        if Defender:IsAlive() then
+          local DefenderHasTask = Defender:HasTask()
+          local Fuel = Defender:GetFuelMin() * 100
+          local Damage = Defender:GetLife() / Defender:GetLife0() * 100
+          DefenderGroupCount = DefenderGroupCount + 1
+          Report:Add( string.format( " - %s*%d/%d (%s - %s): (#%d) F: %3d, D:%3d - %s", 
+                                     Defender:GetName(), 
+                                     Defender:GetSize(),
+                                     Defender:GetInitialSize(),
+                                     DefenderTask.Type, 
+                                     DefenderTask.Fsm:GetState(), 
+                                     Defender:GetSize(),
+                                     Fuel,
+                                     Damage, 
+                                     Defender:HasTask() == true and "Executing" or "Idle" ) )
+        end
+      end
+    end
+    Report:Add( string.format( "\n- %d Tasks - %d Defender Groups", TaskCount, DefenderGroupCount ) )
+
+    self:F( Report:Text( "\n" ) )
+    trigger.action.outText( Report:Text( "\n" ), 25 )
+    
+    return true
+  
+  end
 
   --- Assigns A2A AI Tasks in relation to the detected items.
   -- @param #AI_A2A_DISPATCHER self
