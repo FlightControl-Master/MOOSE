@@ -1945,7 +1945,7 @@ function AIRBOSS:New(carriername, alias)
     self.Debug=true
     BASE:TraceOnOff(true)
     BASE:TraceClass(self.ClassName)
-    BASE:TraceLevel(1)
+    BASE:TraceLevel(3)
     --self.dTstatus=0.1
   end
 
@@ -3277,9 +3277,13 @@ function AIRBOSS:onafterStart(From, Event, To)
   self:_ActivateBeacons()
 
   -- Schedule radio queue checks.
-  self.RQLid=self.radiotimer:Schedule(self, self._CheckRadioQueue, {self.RQLSO,     "LSO"},     1, 0.01)
-  self.RQMid=self.radiotimer:Schedule(self, self._CheckRadioQueue, {self.RQMarshal, "MARSHAL"}, 1, 0.01)
-
+  --self.RQLid=self.radiotimer:Schedule(nil, AIRBOSS._CheckRadioQueue, {self, self.RQLSO,     "LSO"},     1, 0.1)
+  --self.RQMid=self.radiotimer:Schedule(nil, AIRBOSS._CheckRadioQueue, {self, self.RQMarshal, "MARSHAL"}, 1, 0.1)
+  
+  --self:I("FF: starting timer.scheduleFunction")
+  --timer.scheduleFunction(AIRBOSS._CheckRadioQueueT, {airboss=self, radioqueue=self.RQLSO,     name="LSO"},     timer.getTime()+1)
+  --timer.scheduleFunction(AIRBOSS._CheckRadioQueueT, {airboss=self, radioqueue=self.RQMarshal, name="MARSHAL"}, timer.getTime()+1)
+  
   -- Initial carrier position and orientation.
   self.Cposition=self:GetCoordinate()
   self.Corientation=self.carrier:GetOrientationX()
@@ -3324,11 +3328,18 @@ end
 -- @param #string To To state.
 function AIRBOSS:onafterStatus(From, Event, To)
 
+	if true then
+	  --env.info("FF Status ==> return")
+		--return
+	end
+
   -- Get current time.
   local time=timer.getTime()
 
   -- Update marshal and pattern queue every 30 seconds.
   if time-self.Tqueue>self.dTqueue then
+  
+	  --collectgarbage()
 
     -- Get time.
     local clock=UTILS.SecondsToClock(timer.getAbsTime())
@@ -4051,6 +4062,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function AIRBOSS:onafterStop(From, Event, To)
+  self:I(self.lid..string.format("Stopping airboss script."))
   -- Unhandle events.
   self:UnHandleEvent(EVENTS.Birth)
   self:UnHandleEvent(EVENTS.Land)
@@ -4060,6 +4072,10 @@ function AIRBOSS:onafterStop(From, Event, To)
   self:UnHandleEvent(EVENTS.Ejection)
   self:UnHandleEvent(EVENTS.PlayerLeaveUnit)
   self:UnHandleEvent(EVENTS.MissionEnd)
+  
+  self.CallScheduler:Clear()
+  
+  self=nil
 end
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -14335,6 +14351,12 @@ end
 -- RADIO MESSAGE Functions
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+function AIRBOSS._CheckRadioQueueT(param, time)
+	AIRBOSS._CheckRadioQueue(param.airboss, param.radioqueue, param.name)
+	return time+0.05
+end
+
+
 --- Radio queue item.
 -- @type AIRBOSS.Radioitem
 -- @field #number Tplay Abs time when transmission should be played.
@@ -14351,37 +14373,50 @@ end
 -- @param #string name Name of the queue.
 function AIRBOSS:_CheckRadioQueue(radioqueue, name)
 
+  --env.info(string.format("FF %s #radioqueue %d", name, #radioqueue))
+
   -- Check if queue is empty.
   if #radioqueue==0 then
+  
+  	if name=="LSO" then
+  	  self:I(self.lid..string.format("Stopping LSO radio queue."))
+  	  self.radiotimer:Stop(self.RQLid)
+  	  self.RQLid=nil
+  	elseif name=="MARSHAL" then
+  	  self:I(self.lid..string.format("Stopping Marshal radio queue."))
+  	  self.radiotimer:Stop(self.RQMid)
+  	  self.RQMid=nil
+  	end
+  	
     return
   end
 
   -- Get current abs time.
-  local time=timer.getAbsTime()
+  local _time=timer.getAbsTime()
 
   local playing=false
   local next=nil  --#AIRBOSS.Radioitem
-  local remove=nil
+  local _remove=nil
   for i,_transmission in ipairs(radioqueue) do
     local transmission=_transmission  --#AIRBOSS.Radioitem
 
     -- Check if transmission time has passed.
-    if time>=transmission.Tplay then
+    if _time>=transmission.Tplay then
 
       -- Check if transmission is currently playing.
       if transmission.isplaying then
 
         -- Check if transmission is finished.
-        if time>=transmission.Tstarted+transmission.call.duration then
+        if _time>=transmission.Tstarted+transmission.call.duration then
 
           -- Transmission over.
           transmission.isplaying=false
-          remove=i
+          _remove=i
 
           if transmission.radio.alias=="LSO" then
-            self.TQLSO=time
+            self.TQLSO=_time
           elseif transmission.radio.alias=="MARSHAL" then
-            self.TQMarshal=time
+            self.TQMarshal=_time
           end
 
         else -- still playing
@@ -14411,7 +14446,7 @@ function AIRBOSS:_CheckRadioQueue(radioqueue, name)
 
         else
 
-          if time-Tlast>=transmission.interval then
+          if _time-Tlast>=transmission.interval then
             next=transmission
           else
 
@@ -14436,14 +14471,15 @@ function AIRBOSS:_CheckRadioQueue(radioqueue, name)
   if next~=nil and not playing then
     self:Broadcast(next.radio, next.call, next.loud)
     next.isplaying=true
-    next.Tstarted=time
+    next.Tstarted=_time
   end
 
   -- Remove completed calls from queue.
-  if remove then
-    table.remove(radioqueue, remove)
+  if _remove then
+    table.remove(radioqueue, _remove)
   end
-
+  
+  return
 end
 
 --- Add Radio transmission to radio queue.
@@ -14491,12 +14527,23 @@ function AIRBOSS:RadioTransmission(radio, call, loud, delay, interval, click, pi
     table.insert(self.RQLSO, transmission)
 
     caller="LSOCall"
-
+	
+  	-- Schedule radio queue checks.
+  	if not self.RQLid then
+      self:I(self.lid..string.format("Starting LSO radio queue."))
+  	  self.RQLid=self.radiotimer:Schedule(nil, AIRBOSS._CheckRadioQueue, {self, self.RQLSO, "LSO"}, 0.02, 0.05)
+  	end
+  
   elseif radio.alias=="MARSHAL" then
 
     table.insert(self.RQMarshal, transmission)
 
     caller="MarshalCall"
+	
+  	if not self.RQMid then
+  		self:I(self.lid..string.format("Starting Marhal radio queue."))
+  		self.RQMid=self.radiotimer:Schedule(nil, AIRBOSS._CheckRadioQueue, {self, self.RQMarshal, "MARSHAL"}, 0.02, 0.05)
+  	end
 
   end
 
