@@ -194,6 +194,25 @@ do -- TASK_CAPTURE_DISPATCHER
   end
 
 
+  --- Link a task capture dispatcher from the other coalition to understand its plan for defenses.
+  -- This is used for the tactical overview, so the players also know the zones attacked by the other coalition!
+  -- @param #TASK_CAPTURE_DISPATCHER self
+  -- @param #TASK_CAPTURE_DISPATCHER DefenseTaskCaptureDispatcher
+  function TASK_CAPTURE_DISPATCHER:SetDefenseTaskCaptureDispatcher( DefenseTaskCaptureDispatcher )
+  
+    self.DefenseTaskCaptureDispatcher = DefenseTaskCaptureDispatcher
+  end
+
+
+  --- Get the linked task capture dispatcher from the other coalition to understand its plan for defenses.
+  -- This is used for the tactical overview, so the players also know the zones attacked by the other coalition!
+  -- @param #TASK_CAPTURE_DISPATCHER self
+  -- @return #TASK_CAPTURE_DISPATCHER
+  function TASK_CAPTURE_DISPATCHER:GetDefenseTaskCaptureDispatcher()
+  
+    return self.DefenseTaskCaptureDispatcher
+  end
+
 
   --- Add a capture zone task.
   -- @param #TASK_CAPTURE_DISPATCHER self
@@ -274,6 +293,9 @@ do -- TASK_CAPTURE_DISPATCHER
           CaptureZone.Task.TaskPrefix = CaptureZone.TaskPrefix -- We keep the TaskPrefix for further reference!
           Mission:AddTask( CaptureZone.Task )
           TaskReport:Add( TaskName )
+          
+          -- Link the Task Dispatcher to the capture zone task, because it is used on the UpdateTaskInfo.
+          CaptureZone.Task:SetDispatcher( self )
           CaptureZone.Task:UpdateTaskInfo()
 
           function CaptureZone.Task.OnEnterAssigned( Task, From, Event, To )

@@ -228,11 +228,28 @@ do -- TASK_CAPTURE_ZONE
     local ZoneCoordinate = self.ZoneGoal:GetZone():GetCoordinate() 
     self.TaskInfo:AddTaskName( 0, "MSOD", Persist )
     self.TaskInfo:AddCoordinate( ZoneCoordinate, 1, "SOD", Persist )
-    self.TaskInfo:AddText( "Zone Name", self.ZoneGoal:GetZoneName(), 10, "MOD", Persist )
-    self.TaskInfo:AddText( "Zone Coalition", self.ZoneGoal:GetCoalitionName(), 11, "MOD", Persist )
+--    self.TaskInfo:AddText( "Zone Name", self.ZoneGoal:GetZoneName(), 10, "MOD", Persist )
+--    self.TaskInfo:AddText( "Zone Coalition", self.ZoneGoal:GetCoalitionName(), 11, "MOD", Persist )
     local SetUnit = self.ZoneGoal.Zone:GetScannedSetUnit()
     local ThreatLevel, ThreatText = SetUnit:CalculateThreatLevelA2G()
     self.TaskInfo:AddThreat( ThreatText, ThreatLevel, 20, "MOD", Persist )
+    
+    if self.Dispatcher then
+      local DefenseTaskCaptureDispatcher = self.Dispatcher:GetDefenseTaskCaptureDispatcher() -- Tasking.Task_Capture_Dispatcher#TASK_CAPTURE_DISPATCHER
+      
+      if DefenseTaskCaptureDispatcher then
+        -- Loop through all zones of the Defenses, and check which zone has an assigned task!
+        for TaskName, CaptureZone in pairs( DefenseTaskCaptureDispatcher.Zones or {} ) do
+          local Task = CaptureZone.Task -- Tasking.Task_Capture_Zone#TASK_CAPTURE_ZONE
+          if Task then
+            if Task:IsStateAssigned() then
+              self.TaskInfo:AddInfo( "Defense", Task.ZoneGoal:GetName() .. ", " .. Task.ZoneGoal:GetZone():GetCoordinate(), 30, "MOD", Persist )
+            end
+          end
+        end
+      end
+    end
+    
   end
     
 

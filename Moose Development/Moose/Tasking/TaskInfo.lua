@@ -52,7 +52,7 @@ end
 
 --- Add taskinfo. 
 -- @param #TASKINFO self
--- @param #string The info key.
+-- @param #string Key The info key.
 -- @param Data The data of the info.
 -- @param #number Order The display order, which is a number from 0 to 100.
 -- @param #TASKINFO.Detail Detail The detail Level.
