@@ -669,7 +669,7 @@ function AI_A2A:onafterRefuel( AIGroup, From, Event, To )
       local ToRefuelSpeed = math.random( self.PatrolMinSpeed, self.PatrolMaxSpeed )
       
       --- Create a route point of type air.
-      local ToRefuelRoutePoint = ToRefuelCoord:WaypointAir( 
+      local ToRefuelRoutePoint = CurrentCoord:WaypointAir( 
         self.PatrolAltType, 
         POINT_VEC3.RoutePointType.TurningPoint, 
         POINT_VEC3.RoutePointAction.TurningPoint, 

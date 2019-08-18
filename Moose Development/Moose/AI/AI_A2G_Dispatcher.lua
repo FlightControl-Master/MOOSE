@@ -3521,15 +3521,15 @@ do -- AI_A2G_DISPATCHER
         end
       end
 
-      function Fsm:onafterPatrolRoute( Defender, From, Event, To, AttackSetUnit )
+      function Fsm:onafterPatrolRoute( Defender, From, Event, To )
         self:F({"Defender PatrolRoute", Defender:GetName()})
-        self:GetParent(self).onafterPatrolRoute( self, Defender, From, Event, To, AttackSetUnit )
+        self:GetParent(self).onafterPatrolRoute( self, Defender, From, Event, To )
         
         local DefenderName = Defender:GetCallsign()
         local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
         if Squadron then
-          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " returning." )
+          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " patrolling." )
         end
 
         Dispatcher:ClearDefenderTaskTarget( Defender )
@@ -3627,7 +3627,7 @@ do -- AI_A2G_DISPATCHER
         self:F( { DefenderTarget = DefenderTarget } )
         
         if DefenderTarget then
-          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " airborne." )
+          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " airborne. Engaging!" )
           Fsm:EngageRoute( DefenderTarget.Set ) -- Engage on the TargetSetUnit
         end
       end
@@ -3644,7 +3644,7 @@ do -- AI_A2G_DISPATCHER
           local FirstUnit = AttackSetUnit:GetFirst()
           local Coordinate = FirstUnit:GetCoordinate() -- Core.Point#COORDINATE
   
-          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " on route, bearing " .. Coordinate:ToString( Defender ) )
+          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " on route to ground target at " .. Coordinate:ToStringA2G( Defender ) )
         end
       end
 
@@ -3659,7 +3659,7 @@ do -- AI_A2G_DISPATCHER
         if FirstUnit then
           local Coordinate = FirstUnit:GetCoordinate()
   
-          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " engaging target, bearing " .. Coordinate:ToString( Defender ) )
+          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " engaging ground target at " .. Coordinate:ToStringA2G( Defender ) )
         end
       end
 
@@ -3669,7 +3669,7 @@ do -- AI_A2G_DISPATCHER
         local DefenderName = Defender:GetCallsign()
         local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " RTB." )
+        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " returning." )
 
         self:GetParent(self).onafterRTB( self, Defender, From, Event, To )
 
@@ -3684,7 +3684,7 @@ do -- AI_A2G_DISPATCHER
         local DefenderName = Defender:GetCallsign()
         local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " lost control." )
+        --Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " lost control." )
 
         if Defender:IsAboveRunway() then
           Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )

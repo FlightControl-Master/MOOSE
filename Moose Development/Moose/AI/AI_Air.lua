@@ -704,7 +704,7 @@ function AI_AIR:onafterRefuel( AIGroup, From, Event, To )
       )
 
       --- Create a route point of type air.
-      local ToRefuelRoutePoint = ToRefuelCoord:WaypointAir( 
+      local ToRefuelRoutePoint = FromRefuelCoord:WaypointAir( 
         self.PatrolAltType, 
         POINT_VEC3.RoutePointType.TurningPoint, 
         POINT_VEC3.RoutePointAction.TurningPoint, 
@@ -715,7 +715,7 @@ function AI_AIR:onafterRefuel( AIGroup, From, Event, To )
       self:F( { ToRefuelSpeed = ToRefuelSpeed } )
       
       RefuelRoute[#RefuelRoute+1] = FromRefuelRoutePoint
-      RefuelRoute[#RefuelRoute+1] = ToRefuelRoutePoint
+      --RefuelRoute[#RefuelRoute+1] = ToRefuelRoutePoint
       
       AIGroup:OptionROEHoldFire()
       AIGroup:OptionROTEvadeFire()
