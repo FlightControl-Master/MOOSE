@@ -907,7 +907,7 @@ function RESCUEHELO:onafterStart(From, Event, To)
       -- Use an uncontrolled aircraft group.
       self.helo=GROUP:FindByName(self.helogroupname)
       
-      if self.helo:IsAlive() then
+      if self.helo and self.helo:IsAlive() then
       
         -- Start uncontrolled group.
         self.helo:StartUncontrolled()
@@ -1020,7 +1020,7 @@ function RESCUEHELO:onafterStatus(From, Event, To)
         else
         
           -- Send helo back to base.
-          self:RTB()
+          self:RTB(self.airbase)
         
         end
       
@@ -1211,7 +1211,9 @@ function RESCUEHELO:onafterReturned(From, Event, To, airbase)
     self.helo:InitModex(self.modex)
   
     -- Respawn helo at current airbase.
-    self.helo:RespawnAtCurrentAirbase()
+    if self.helo and self.helo:IsAlive() then
+      self:ScheduleOnce(5, self.helo.RespawnAtCurrentAirbase, self.helo)
+    end
     
     -- Restart the formation.
     self:__Run(10)

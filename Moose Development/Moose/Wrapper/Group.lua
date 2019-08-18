@@ -1773,110 +1773,115 @@ end
 function GROUP:RespawnAtCurrentAirbase(SpawnTemplate, Takeoff, Uncontrolled) -- R2.4
   self:F2( { SpawnTemplate, Takeoff, Uncontrolled} )
 
-  -- Get closest airbase. Should be the one we are currently on.
-  local airbase=self:GetCoordinate():GetClosestAirbase()
-  
-  if airbase then
-    self:F2("Closest airbase = "..airbase:GetName())
-  else
-    self:E("ERROR: could not find closest airbase!")
-    return nil
-  end
-  -- Takeoff type. Default hot.
-  Takeoff = Takeoff or SPAWN.Takeoff.Hot
-  
-  -- Coordinate of the airbase.
-  local AirbaseCoord=airbase:GetCoordinate()
-  
-  -- Spawn template.  
-  SpawnTemplate = SpawnTemplate or self:GetTemplate()
+  if self and self:IsAlive() then
 
-  if SpawnTemplate then
-
-    local SpawnPoint = SpawnTemplate.route.points[1]
-
-    -- These are only for ships.
-    SpawnPoint.linkUnit = nil
-    SpawnPoint.helipadId = nil
-    SpawnPoint.airdromeId = nil
-
-    -- Aibase id and category.
-    local AirbaseID       = airbase:GetID()
-    local AirbaseCategory = airbase:GetDesc().category
+    -- Get closest airbase. Should be the one we are currently on.
+    local airbase=self:GetCoordinate():GetClosestAirbase()
     
-    if AirbaseCategory == Airbase.Category.SHIP or AirbaseCategory == Airbase.Category.HELIPAD then
-      SpawnPoint.linkUnit  = AirbaseID
-      SpawnPoint.helipadId = AirbaseID
-    elseif AirbaseCategory == Airbase.Category.AIRDROME then
-      SpawnPoint.airdromeId = AirbaseID
+    if airbase then
+      self:F2("Closest airbase = "..airbase:GetName())
+    else
+      self:E("ERROR: could not find closest airbase!")
+      return nil
     end
-
+    -- Takeoff type. Default hot.
+    Takeoff = Takeoff or SPAWN.Takeoff.Hot
     
-    SpawnPoint.type   = GROUPTEMPLATE.Takeoff[Takeoff][1] -- type
-    SpawnPoint.action = GROUPTEMPLATE.Takeoff[Takeoff][2] -- action
+    -- Coordinate of the airbase.
+    local AirbaseCoord=airbase:GetCoordinate()
     
-    -- Get the units of the group.
-    local units=self:GetUnits()
-
-    local x
-    local y
-    for UnitID=1,#units do
+    -- Spawn template.  
+    SpawnTemplate = SpawnTemplate or self:GetTemplate()
+  
+    if SpawnTemplate then
+  
+      local SpawnPoint = SpawnTemplate.route.points[1]
+  
+      -- These are only for ships.
+      SpawnPoint.linkUnit = nil
+      SpawnPoint.helipadId = nil
+      SpawnPoint.airdromeId = nil
+  
+      -- Aibase id and category.
+      local AirbaseID       = airbase:GetID()
+      local AirbaseCategory = airbase:GetDesc().category
+      
+      if AirbaseCategory == Airbase.Category.SHIP or AirbaseCategory == Airbase.Category.HELIPAD then
+        SpawnPoint.linkUnit  = AirbaseID
+        SpawnPoint.helipadId = AirbaseID
+      elseif AirbaseCategory == Airbase.Category.AIRDROME then
+        SpawnPoint.airdromeId = AirbaseID
+      end
+  
+      
+      SpawnPoint.type   = GROUPTEMPLATE.Takeoff[Takeoff][1] -- type
+      SpawnPoint.action = GROUPTEMPLATE.Takeoff[Takeoff][2] -- action
+      
+      -- Get the units of the group.
+      local units=self:GetUnits()
+  
+      local x
+      local y
+      for UnitID=1,#units do
+          
+        local unit=units[UnitID] --Wrapper.Unit#UNIT
+  
+        -- Get closest parking spot of current unit. Note that we look for occupied spots since the unit is currently sitting on it!
+        local Parkingspot, TermialID, Distance=unit:GetCoordinate():GetClosestParkingSpot(airbase)
         
-      local unit=units[UnitID] --Wrapper.Unit#UNIT
-
-      -- Get closest parking spot of current unit. Note that we look for occupied spots since the unit is currently sitting on it!
-      local Parkingspot, TermialID, Distance=unit:GetCoordinate():GetClosestParkingSpot(airbase)
-      
-      --Parkingspot:MarkToAll("parking spot")
-      self:T2(string.format("Closest parking spot distance = %s, terminal ID=%s", tostring(Distance), tostring(TermialID)))
-
-      -- Get unit coordinates for respawning position.
-      local uc=unit:GetCoordinate()
-      --uc:MarkToAll(string.format("re-spawnplace %s terminal %d", unit:GetName(), TermialID))
-      
-      SpawnTemplate.units[UnitID].x   = uc.x --Parkingspot.x
-      SpawnTemplate.units[UnitID].y   = uc.z --Parkingspot.z
-      SpawnTemplate.units[UnitID].alt = uc.y --Parkingspot.y
-
-      SpawnTemplate.units[UnitID].parking    = TermialID
-      SpawnTemplate.units[UnitID].parking_id = nil
-      
-      --SpawnTemplate.units[UnitID].unitId=nil
-    end
-    
-    --SpawnTemplate.groupId=nil
-    
-    SpawnPoint.x   = SpawnTemplate.units[1].x   --x --AirbaseCoord.x
-    SpawnPoint.y   = SpawnTemplate.units[1].y   --y --AirbaseCoord.z
-    SpawnPoint.alt = SpawnTemplate.units[1].alt --AirbaseCoord:GetLandHeight()
-               
-    SpawnTemplate.x = SpawnTemplate.units[1].x  --x --AirbaseCoord.x
-    SpawnTemplate.y = SpawnTemplate.units[1].y  --y --AirbaseCoord.z
-    
-    -- Set uncontrolled state.
-    SpawnTemplate.uncontrolled=Uncontrolled
-    
-    -- Set radio frequency and modulation.
-    if self.InitRespawnRadio then
-      SpawnTemplate.communication=self.InitRespawnRadio
-    end
-    if self.InitRespawnFreq then
-      SpawnTemplate.frequency=self.InitRespawnFreq
-    end
-    if self.InitRespawnModu then
-      SpawnTemplate.modulation=self.InitRespawnModu
-    end
-
-    -- Destroy old group.
-    self:Destroy(false)
-    
-    -- Spawn new group.
-    _DATABASE:Spawn(SpawnTemplate)
+        --Parkingspot:MarkToAll("parking spot")
+        self:T2(string.format("Closest parking spot distance = %s, terminal ID=%s", tostring(Distance), tostring(TermialID)))
   
-    -- Reset events.
-    self:ResetEvents()
-
-    return self
+        -- Get unit coordinates for respawning position.
+        local uc=unit:GetCoordinate()
+        --uc:MarkToAll(string.format("re-spawnplace %s terminal %d", unit:GetName(), TermialID))
+        
+        SpawnTemplate.units[UnitID].x   = uc.x --Parkingspot.x
+        SpawnTemplate.units[UnitID].y   = uc.z --Parkingspot.z
+        SpawnTemplate.units[UnitID].alt = uc.y --Parkingspot.y
+  
+        SpawnTemplate.units[UnitID].parking    = TermialID
+        SpawnTemplate.units[UnitID].parking_id = nil
+        
+        --SpawnTemplate.units[UnitID].unitId=nil
+      end
+      
+      --SpawnTemplate.groupId=nil
+      
+      SpawnPoint.x   = SpawnTemplate.units[1].x   --x --AirbaseCoord.x
+      SpawnPoint.y   = SpawnTemplate.units[1].y   --y --AirbaseCoord.z
+      SpawnPoint.alt = SpawnTemplate.units[1].alt --AirbaseCoord:GetLandHeight()
+                 
+      SpawnTemplate.x = SpawnTemplate.units[1].x  --x --AirbaseCoord.x
+      SpawnTemplate.y = SpawnTemplate.units[1].y  --y --AirbaseCoord.z
+      
+      -- Set uncontrolled state.
+      SpawnTemplate.uncontrolled=Uncontrolled
+      
+      -- Set radio frequency and modulation.
+      if self.InitRespawnRadio then
+        SpawnTemplate.communication=self.InitRespawnRadio
+      end
+      if self.InitRespawnFreq then
+        SpawnTemplate.frequency=self.InitRespawnFreq
+      end
+      if self.InitRespawnModu then
+        SpawnTemplate.modulation=self.InitRespawnModu
+      end
+  
+      -- Destroy old group.
+      self:Destroy(false)
+      
+      -- Spawn new group.
+      _DATABASE:Spawn(SpawnTemplate)
+    
+      -- Reset events.
+      self:ResetEvents()
+  
+      return self
+    end
+  else
+    self:E("WARNING: GROUP is not alive!")
   end
   
   return nil
