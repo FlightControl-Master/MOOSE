@@ -48,11 +48,15 @@
 --
 -- Heatblur's mighty F-14B Tomcat has been added (March 13th 2019) as well.
 --
---
 -- ## Discussion
 --
 -- If you have questions or suggestions, please visit the [MOOSE Discord](https://discord.gg/AeYAkHP) #ops-airboss channel.
 -- There you also find an example mission and the necessary voice over sound files. Check out the **pinned messages**.
+-- 
+-- ## Example Missions
+-- 
+-- Example missions can be found [here](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/OPS%20-%20Airboss).
+-- They contain the latest development Moose.lua file.
 --
 -- ## IMPORTANT
 --
@@ -14351,11 +14355,13 @@ end
 -- RADIO MESSAGE Functions
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Function called by DCS timer. Unused.
+-- @param #table param Parameters.
+-- @param #number time Time.
 function AIRBOSS._CheckRadioQueueT(param, time)
 	AIRBOSS._CheckRadioQueue(param.airboss, param.radioqueue, param.name)
 	return time+0.05
 end
-
 
 --- Radio queue item.
 -- @type AIRBOSS.Radioitem
@@ -14379,11 +14385,11 @@ function AIRBOSS:_CheckRadioQueue(radioqueue, name)
   if #radioqueue==0 then
   
   	if name=="LSO" then
-  	  self:I(self.lid..string.format("Stopping LSO radio queue."))
+  	  self:T(self.lid..string.format("Stopping LSO radio queue."))
   	  self.radiotimer:Stop(self.RQLid)
   	  self.RQLid=nil
   	elseif name=="MARSHAL" then
-  	  self:I(self.lid..string.format("Stopping Marshal radio queue."))
+  	  self:T(self.lid..string.format("Stopping Marshal radio queue."))
   	  self.radiotimer:Stop(self.RQMid)
   	  self.RQMid=nil
   	end
@@ -14530,7 +14536,7 @@ function AIRBOSS:RadioTransmission(radio, call, loud, delay, interval, click, pi
 	
   	-- Schedule radio queue checks.
   	if not self.RQLid then
-      self:I(self.lid..string.format("Starting LSO radio queue."))
+      self:T(self.lid..string.format("Starting LSO radio queue."))
   	  self.RQLid=self.radiotimer:Schedule(nil, AIRBOSS._CheckRadioQueue, {self, self.RQLSO, "LSO"}, 0.02, 0.05)
   	end
   
@@ -14541,7 +14547,7 @@ function AIRBOSS:RadioTransmission(radio, call, loud, delay, interval, click, pi
     caller="MarshalCall"
 	
   	if not self.RQMid then
-  		self:I(self.lid..string.format("Starting Marhal radio queue."))
+  		self:T(self.lid..string.format("Starting Marhal radio queue."))
   		self.RQMid=self.radiotimer:Schedule(nil, AIRBOSS._CheckRadioQueue, {self, self.RQMarshal, "MARSHAL"}, 0.02, 0.05)
   	end
 
