@@ -221,6 +221,26 @@ do -- DETECTION MANAGER
   
     return self._ReportDisplayTime
   end
+
+
+  --- Set a command center to communicate actions to the players reporting to the command center.
+  -- @param #DETECTION_MANAGER self
+  -- @param Tasking.CommandCenter#COMMANDCENTER CommandCenter The command center.
+  -- @return #DETECTION_MANGER self
+  function DETECTION_MANAGER:SetTacticalMenu( DispatcherMainMenuText, DispatcherMenuText )
+
+    local DispatcherMainMenu = MENU_MISSION:New( DispatcherMainMenuText, nil )
+    local DispatcherMenu = MENU_MISSION_COMMAND:New( DispatcherMenuText, DispatcherMainMenu,
+      function()
+        self:ShowTacticalDisplay( self.Detection )
+      end
+      )
+    
+    return self
+  end
+  
+  
+
   
   --- Set a command center to communicate actions to the players reporting to the command center.
   -- @param #DETECTION_MANAGER self
@@ -242,8 +262,11 @@ do -- DETECTION MANAGER
   
     self:F( { Message = Message } )
     
-    if self.CC then
-      self.CC:MessageToCoalition( Message )
+    if not self.PreviousMessage or self.PreviousMessage ~= Message then
+      self.PreviousMessage = Message
+      if self.CC then
+        self.CC:MessageToCoalition( Message )
+      end
     end
     
     return self

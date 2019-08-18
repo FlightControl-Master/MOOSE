@@ -52,9 +52,9 @@
 --
 -- If you have questions or suggestions, please visit the [MOOSE Discord](https://discord.gg/AeYAkHP) #ops-airboss channel.
 -- There you also find an example mission and the necessary voice over sound files. Check out the **pinned messages**.
--- 
+--
 -- ## Example Missions
--- 
+--
 -- Example missions can be found [here](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/OPS%20-%20Airboss).
 -- They contain the latest development Moose.lua file.
 --
@@ -2293,6 +2293,29 @@ function AIRBOSS:New(carriername, alias)
   -- @param #AIRBOSS.LSOgrade grade LSO grade.
 
 
+  --- Triggers the FSM event "LSOGrade". Called when the LSO grades a player
+  -- @function [parent=#AIRBOSS] LSOGrade
+  -- @param #AIRBOSS self
+  -- @param #AIRBOSS.PlayerData playerData Player Data.
+  -- @param #AIRBOSS.LSOgrade grade LSO grade.
+
+  --- Triggers the FSM event "LSOGrade". Delayed called when the LSO grades a player.
+  -- @function [parent=#AIRBOSS] __LSOGrade
+  -- @param #AIRBOSS self
+  -- @param #number delay Delay in seconds.
+  -- @param #AIRBOSS.PlayerData playerData Player Data.
+  -- @param #AIRBOSS.LSOgrade grade LSO grade.
+
+  --- On after "LSOGrade" user function. Called when the carrier passes a waypoint of its route.
+  -- @function [parent=#AIRBOSS] OnAfterLSOGrade
+  -- @param #AIRBOSS self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #AIRBOSS.PlayerData playerData Player Data.
+  -- @param #AIRBOSS.LSOgrade grade LSO grade.
+
+
   --- Triggers the FSM event "Stop" that stops the airboss. Event handlers are stopped.
   -- @function [parent=#AIRBOSS] Stop
   -- @param #AIRBOSS self
@@ -3283,11 +3306,11 @@ function AIRBOSS:onafterStart(From, Event, To)
   -- Schedule radio queue checks.
   --self.RQLid=self.radiotimer:Schedule(nil, AIRBOSS._CheckRadioQueue, {self, self.RQLSO,     "LSO"},     1, 0.1)
   --self.RQMid=self.radiotimer:Schedule(nil, AIRBOSS._CheckRadioQueue, {self, self.RQMarshal, "MARSHAL"}, 1, 0.1)
-  
+
   --self:I("FF: starting timer.scheduleFunction")
   --timer.scheduleFunction(AIRBOSS._CheckRadioQueueT, {airboss=self, radioqueue=self.RQLSO,     name="LSO"},     timer.getTime()+1)
   --timer.scheduleFunction(AIRBOSS._CheckRadioQueueT, {airboss=self, radioqueue=self.RQMarshal, name="MARSHAL"}, timer.getTime()+1)
-  
+
   -- Initial carrier position and orientation.
   self.Cposition=self:GetCoordinate()
   self.Corientation=self.carrier:GetOrientationX()
@@ -3342,7 +3365,7 @@ function AIRBOSS:onafterStatus(From, Event, To)
 
   -- Update marshal and pattern queue every 30 seconds.
   if time-self.Tqueue>self.dTqueue then
-  
+
 	  --collectgarbage()
 
     -- Get time.
@@ -4067,6 +4090,7 @@ end
 -- @param #string To To state.
 function AIRBOSS:onafterStop(From, Event, To)
   self:I(self.lid..string.format("Stopping airboss script."))
+  
   -- Unhandle events.
   self:UnHandleEvent(EVENTS.Birth)
   self:UnHandleEvent(EVENTS.Land)
@@ -4076,10 +4100,8 @@ function AIRBOSS:onafterStop(From, Event, To)
   self:UnHandleEvent(EVENTS.Ejection)
   self:UnHandleEvent(EVENTS.PlayerLeaveUnit)
   self:UnHandleEvent(EVENTS.MissionEnd)
-  
+
   self.CallScheduler:Clear()
-  
-  self=nil
 end
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -7846,14 +7868,14 @@ function AIRBOSS:_RemoveFlight(flight, completely)
     self:_RemoveFlightFromQueue(self.flights, flight)
 
   else
-  
+
     -- Remove all grades until a final grade is reached.
     local grades=self.playerscores[flight.name]
     if grades and #grades>0 then
       while #grades>0 and grades[#grades].finalscore==nil do
         table.remove(grades, #grades)
       end
-    end  
+    end
 
     -- Check if flight should be completely removed, e.g. after the player died or simply left the slot.
     if completely then
@@ -12725,7 +12747,7 @@ end
 -- @param #AIRBOSS.PlayerData playerData Player data.
 function AIRBOSS:_Debrief(playerData)
   self:F(self.lid..string.format("Debriefing of player %s.", playerData.name))
-  
+
   -- Delete scheduler ID.
   playerData.debriefschedulerID=nil
 
@@ -14383,7 +14405,7 @@ function AIRBOSS:_CheckRadioQueue(radioqueue, name)
 
   -- Check if queue is empty.
   if #radioqueue==0 then
-  
+
   	if name=="LSO" then
   	  self:T(self.lid..string.format("Stopping LSO radio queue."))
   	  self.radiotimer:Stop(self.RQLid)
@@ -14393,7 +14415,7 @@ function AIRBOSS:_CheckRadioQueue(radioqueue, name)
   	  self.radiotimer:Stop(self.RQMid)
   	  self.RQMid=nil
   	end
-  	
+
     return
   end
 
@@ -14484,7 +14506,7 @@ function AIRBOSS:_CheckRadioQueue(radioqueue, name)
   if _remove then
     table.remove(radioqueue, _remove)
   end
-  
+
   return
 end
 
@@ -14533,19 +14555,19 @@ function AIRBOSS:RadioTransmission(radio, call, loud, delay, interval, click, pi
     table.insert(self.RQLSO, transmission)
 
     caller="LSOCall"
-	
+
   	-- Schedule radio queue checks.
   	if not self.RQLid then
       self:T(self.lid..string.format("Starting LSO radio queue."))
   	  self.RQLid=self.radiotimer:Schedule(nil, AIRBOSS._CheckRadioQueue, {self, self.RQLSO, "LSO"}, 0.02, 0.05)
   	end
-  
+
   elseif radio.alias=="MARSHAL" then
 
     table.insert(self.RQMarshal, transmission)
 
     caller="MarshalCall"
-	
+
   	if not self.RQMid then
   		self:T(self.lid..string.format("Starting Marhal radio queue."))
   		self.RQMid=self.radiotimer:Schedule(nil, AIRBOSS._CheckRadioQueue, {self, self.RQMarshal, "MARSHAL"}, 0.02, 0.05)
@@ -15887,7 +15909,7 @@ function AIRBOSS:_ResetPlayerStatus(_unitName)
       -- Remove flight from queues. Collapse marshal stack if necessary.
       -- Section members are removed from the Spinning queue. If flight is member, he is removed from the section.
       self:_RemoveFlight(playerData)
-      
+
       -- Stop pending debrief scheduler.
       if playerData.debriefschedulerID and self.Scheduler then
         self.Scheduler:Stop(playerData.debriefschedulerID)
