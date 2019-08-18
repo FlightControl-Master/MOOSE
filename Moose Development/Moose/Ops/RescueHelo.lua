@@ -57,6 +57,7 @@
 -- @field #string alias Alias of the spawn group.
 -- @field #number uid Unique ID of this helo.
 -- @field #number modex Tail number of the helo.
+-- @field #number dtFollow Follow time update interval in seconds. Default 1.0 sec.
 -- @extends Core.Fsm#FSM
 
 --- Rescue Helo
@@ -227,6 +228,7 @@ RESCUEHELO = {
   alias          = nil,
   uid            =   0,
   modex          = nil,
+  dtFollow       = nil,
 }
 
 --- Unique ID (global).
@@ -235,7 +237,7 @@ _RESCUEHELOID=0
 
 --- Class version.
 -- @field #string version
-RESCUEHELO.version="1.0.8"
+RESCUEHELO.version="1.0.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -303,6 +305,7 @@ function RESCUEHELO:New(carrierunit, helogroupname)
   self:SetRescueZone()
   self:SetRescueHoverSpeed()
   self:SetRescueDuration()
+  self:SetFollowTimeInterval()
   self:SetRescueStopBoatOff()
   
   -- Some more.
@@ -644,6 +647,15 @@ function RESCUEHELO:SetModex(modex)
   return self
 end
 
+--- Set follow time update interval.
+-- @param #RESCUEHELO self
+-- @param #number dt Time interval in seconds. Default 1.0 sec.
+-- @return #RESCUEHELO self
+function RESCUEHELO:SetFollowTimeInterval(dt)
+  self.dtFollow=dt or 1.0
+  return self
+end
+
 --- Use an uncontrolled aircraft already present in the mission rather than spawning a new helo as initial rescue helo.
 -- This can be useful when interfaced with, e.g., a warehouse.
 -- The group name is the one specified in the @{#RESCUEHELO.New} function.
@@ -895,7 +907,7 @@ function RESCUEHELO:onafterStart(From, Event, To)
       -- Use an uncontrolled aircraft group.
       self.helo=GROUP:FindByName(self.helogroupname)
       
-      if self.helo:IsAlive() then
+      if self.helo and self.helo:IsAlive() then
       
         -- Start uncontrolled group.
         self.helo:StartUncontrolled()
@@ -939,6 +951,9 @@ function RESCUEHELO:onafterStart(From, Event, To)
   
   -- Formation parameters.
   self.formation:FormationCenterWing(-self.offsetX, 50, math.abs(self.altitude), 50, self.offsetZ, 50)
+  
+  -- Set follow time interval.
+  self.formation:SetFollowTimeInterval(self.dtFollow)
   
   -- Formation mode.
   self.formation:SetFlightModeFormation(self.helo)
@@ -1005,7 +1020,7 @@ function RESCUEHELO:onafterStatus(From, Event, To)
         else
         
           -- Send helo back to base.
-          self:RTB()
+          self:RTB(self.airbase)
         
         end
       
@@ -1196,7 +1211,9 @@ function RESCUEHELO:onafterReturned(From, Event, To, airbase)
     self.helo:InitModex(self.modex)
   
     -- Respawn helo at current airbase.
-    self.helo:RespawnAtCurrentAirbase()
+    if self.helo and self.helo:IsAlive() then
+      self:ScheduleOnce(5, self.helo.RespawnAtCurrentAirbase, self.helo)
+    end
     
     -- Restart the formation.
     self:__Run(10)
