@@ -76,6 +76,7 @@ FLIGHTGROUP.ElementStatus={
 -- @field #boolean ai If true, element is AI.
 -- @field #string skill Skill level.
 -- @field Wrapper.Unit#UNIT unit Element unit object.
+-- @field Wrapper.Group#GROUP group Group object of the element.
 -- @field #string status Status, i.e. born, parking, taxiing.
 
 --- Flight group tasks.
@@ -112,7 +113,7 @@ FLIGHTGROUP.Mission={
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.0.1"
+FLIGHTGROUP.version="0.0.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -143,28 +144,6 @@ function FLIGHTGROUP:New(groupname)
 
   -- Start State.
   self:SetStartState("Stopped")
-  
-  -- Check if the group is already alive and if so, add its elements.
-  local group=GROUP:FindByName(groupname)
-  if group and group:IsAlive() then
-    self.flightgroup=group
-    local units=group:GetUnits()
-    for _,_unit in pairs(units) do
-      local unit=_unit --Wrapper.Unit#UNIT
-      local element=self:AddElementByName(unit:GetName())
-
-      -- Trigger Spawned event.      
-      element.status=FLIGHTGROUP.ElementStatus.SPAWNED
-      self:ElementSpawned(element)
-      
-      -- Trigger Airborne event if unit was spawned in air.
-      if unit:InAir() then
-        element.status=FLIGHTGROUP.ElementStatus.AIRBORNE
-        self:ElementAirborne(element)
-      end
-      
-    end
-  end
   
   -- Init set of detected units.
   self.detectedunits=SET_UNIT:New()
@@ -234,7 +213,22 @@ function FLIGHTGROUP:New(groupname)
     BASE:TraceLevel(1)
   end
   
+  -- Check if the group is already alive and if so, add its elements.
+  local group=GROUP:FindByName(groupname)
+  if group and group:IsAlive() then
+    self.flightgroup=group
+    local units=group:GetUnits()
+    for _,_unit in pairs(units) do
+      local unit=_unit --Wrapper.Unit#UNIT
+      local element=self:AddElementByName(unit:GetName())
+
+      -- Trigger Spawned event.
+      self:__ElementSpawned(0.1, element)
+      
+    end
+  end
   
+  -- Autostart.
   self:Start()
 
   return self
@@ -347,6 +341,9 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   local text=string.format("Flight group FSM status %s.", fsmstate)
   self:I(self.sid..text)
   
+  
+  --TODO: check each element if it is alive?! despawn on runway etc.
+  
   text="Elements:"
   for i,_element in pairs(self.element) do
     local element=_element --#FLIGHTGROUP.Element
@@ -367,7 +364,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   local detectedtargets=self.flightgroup:GetDetectedTargets()
   
   local detected={}
-  for DetectionObjectID, Detection in pairs(detectedtargets) do
+  for DetectionObjectID, Detection in pairs(detectedtargets or {}) do
     local DetectedObject=Detection.object -- DCS#Object
           
     if DetectedObject and DetectedObject:isExist() and DetectedObject.id_<50000000 then
@@ -377,7 +374,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
         local unitname=unit:GetName()
         if self.detectedunits:FindUnit(unitname) then
           -- Unit is already in the detected unit set.
-          self:I(self.sid..string.format("Detected unit %s is already known.", unitname))
+          self:T(self.sid..string.format("Detected unit %s is already known.", unitname))
         else
           self:AddDetectedUnit(unit)
         end
@@ -422,8 +419,9 @@ function FLIGHTGROUP:OnEventBirth(EventData)
     
     if not self:_IsElement(unitname) then
       local element=self:AddElementByName(unitname)
-      self:_UpdateStatus(element, FLIGHTGROUP.ElementStatus.SPAWNED)
-      self:I(self.sid..string.format("Element %s spawned", element.name))
+      self:ElementSpawned(element)
+      --self:_UpdateStatus(element, FLIGHTGROUP.ElementStatus.SPAWNED)
+      --self:I(self.sid..string.format("Element %s spawned", element.name))
     end
     
   end
@@ -444,9 +442,10 @@ function FLIGHTGROUP:OnEventEngineStartup(EventData)
     -- Get element.
     local element=self:GetElementByName(unitname)
 
-    if element then    
-      self:_UpdateStatus(element, FLIGHTGROUP.ElementStatus.TAXIING)
+    if element then
       self:I(self.sid..string.format("Element %s started engines ==> taxiing", element.name))
+      self:ElementTaxiing(element)   
+      --self:_UpdateStatus(element, FLIGHTGROUP.ElementStatus.TAXIING)      
     end
   
   end
@@ -467,10 +466,9 @@ function FLIGHTGROUP:OnEventTakeOff(EventData)
     -- Get element.
     local element=self:GetElementByName(unitname)
 
-    if element then    
-      self:_UpdateStatus(element, FLIGHTGROUP.ElementStatus.AIRBORNE)      
-      self:ElementTakeoff(element)
-      self:I(self.sid..string.format("Element %s took off ==> airborne", element.name))
+    if element then
+      self:I(self.sid..string.format("EVENT: Element %s took off ==> airborne", element.name))      
+      self:ElementAirborne(element)      
     end
   
   end
@@ -492,9 +490,8 @@ function FLIGHTGROUP:OnEventLanding(EventData)
     local element=self:GetElementByName(unitname)
 
     if element then
-      self:_UpdateStatus(element, FLIGHTGROUP.ElementStatus.LANDED)
-      self:ElementLanded(element)
-      self:I(self.sid..string.format("Element %s landed", element.name))
+      self:I(self.sid..string.format("EVENT: Element %s landed ==> landed", element.name))
+      self:ElementLanded(element)      
     end
   
   end
@@ -520,12 +517,12 @@ function FLIGHTGROUP:OnEventEngineShutdown(EventData)
       local airbase=coord:GetClosestAirbase()
       local _,_,dist,parking=coord:GetClosestParkingSpot(airbase)
       if dist and dist<10 and unit:InAir()==false then
-        self:_UpdateStatus(element, FLIGHTGROUP.ElementStatus.ARRIVED)
+        --self:_UpdateStatus(element, FLIGHTGROUP.ElementStatus.ARRIVED)
         self:ElementArrived(element)
         self:I(self.sid..string.format("Element %s shut down engines ==> arrived", element.name))
       else
-         element.status=FLIGHTGROUP.ElementStatus.DEAD
-         self:I(self.sid..string.format("Element %s started engines (in air) ==> dead", element.name))
+        self:I(self.sid..string.format("Element %s shut down engines (in air) ==> dead", element.name))
+        self:ElementDead(element)        
       end
     end
   
@@ -549,9 +546,8 @@ function FLIGHTGROUP:OnEventCrash(EventData)
     local element=self:GetElementByName(unitname)
 
     if element then
-      self:_UpdateStatus(element, FLIGHTGROUP.ElementStatus.DEAD)
-      self:ElementDead(element)
       self:I(self.sid..string.format("Element %s crashed ==> dead", element.name))
+      self:ElementDead(element)      
     end
 
   end
@@ -561,6 +557,91 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- On after "ElementSpawned" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #FLIGHTGROUP.Element Element The flight group element.
+function FLIGHTGROUP:onafterElementSpawned(From, Event, To, Element)
+  self:I(self.sid..string.format("Element spawned %s.", Element.name))
+  
+  -- Set element status.
+  self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.SPAWNED)
+  
+  if Element.unit:InAir() then
+    self:ElementAirborne(Element)
+  else
+    self:ElementParking(Element)
+  end
+end
+
+--- On after "ElementParking" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #FLIGHTGROUP.Element Element The flight group element.
+function FLIGHTGROUP:onafterElementParking(From, Event, To, Element)
+  self:I(self.sid..string.format("Element parking %s.", Element.name))
+  
+  -- Set element status.
+  self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.PARKING)
+end
+
+--- On after "ElementTaxiing" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #FLIGHTGROUP.Element Element The flight group element.
+function FLIGHTGROUP:onafterElementTaxiing(From, Event, To, Element)
+  self:I(self.sid..string.format("Element taxiing %s.", Element.name))
+  
+  -- Set element status.
+  self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.TAXIING)
+end
+
+--- On after "ElementAirborne" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #FLIGHTGROUP.Element Element The flight group element.
+function FLIGHTGROUP:onafterElementAirborne(From, Event, To, Element)
+  self:I(self.sid..string.format("Element airborne %s.", Element.name))
+  
+  -- Set element status.
+  self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.AIRBORNE)
+end
+
+--- On after "ElementLanded" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #FLIGHTGROUP.Element Element The flight group element.
+function FLIGHTGROUP:onafterElementLanded(From, Event, To, Element)
+  self:I(self.sid..string.format("Element landed %s.", Element.name))
+  
+  -- Set element status.
+  self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.LANDED)
+end
+
+--- On after "ElementArrived" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #FLIGHTGROUP.Element Element The flight group element.
+function FLIGHTGROUP:onafterElementArrived(From, Event, To, Element)
+  self:I(self.sid..string.format("Element arrived %s.", Element.name))
+  
+  -- Set element status.
+  self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.ARRIVED)
+end
+
 
 --- On after "DetectedUnit" event. Add newly detected unit to detected units set.
 -- @param #FLIGHTGROUP self
@@ -648,6 +729,7 @@ function FLIGHTGROUP:AddElementByName(unitname)
     element.name=unitname
     element.unit=unit
     element.status="unknown"
+    element.group=unit:GetGroup()
     
     table.insert(self.element, element)
     
@@ -729,43 +811,52 @@ function FLIGHTGROUP:_AllSimilarStatus(status)
     
       if status==FLIGHTGROUP.ElementStatus.SPAWNED then
       
-        if element.status~=status or
-          element.status~=FLIGHTGROUP.ElementStatus.PARKING  or
-          element.status~=FLIGHTGROUP.ElementStatus.TAXIING  or
-          element.status~=FLIGHTGROUP.ElementStatus.AIRBORNE or
-          element.status~=FLIGHTGROUP.ElementStatus.LANDED   or
-          element.status~=FLIGHTGROUP.ElementStatus.ARRIVED  then
-          return false        
+        -- Element SPAWNED: Nothing to check.
+        if element.status~=status then
+        
         end
         
       elseif status==FLIGHTGROUP.ElementStatus.PARKING then
       
-        if element.status~=status or
-          element.status~=FLIGHTGROUP.ElementStatus.TAXIING  or
-          element.status~=FLIGHTGROUP.ElementStatus.AIRBORNE or
-          element.status~=FLIGHTGROUP.ElementStatus.LANDED   or
-          element.status~=FLIGHTGROUP.ElementStatus.ARRIVED  then
+        -- Element PARKING: Check that the other are not stil SPAWNED
+        if element.status~=status and
+          element.status==FLIGHTGROUP.ElementStatus.SPAWNED  then
           return false        
         end
         
       elseif status==FLIGHTGROUP.ElementStatus.TAXIING then
       
-        if element.status~=status or
-          element.status~=FLIGHTGROUP.ElementStatus.AIRBORNE or
-          element.status~=FLIGHTGROUP.ElementStatus.LANDED   or
-          element.status~=FLIGHTGROUP.ElementStatus.ARRIVED  then
+        -- Element TAXIING: Check that the other are not stil SPAWNED or PARKING
+        if element.status~=status and
+          element.status==FLIGHTGROUP.ElementStatus.SPAWNED or
+          element.status==FLIGHTGROUP.ElementStatus.PARKING then
           return false        
         end    
+
+      elseif status==FLIGHTGROUP.ElementStatus.AIRBORNE then
+      
+        -- Element AIRBORNE: Check that the other are not stil SPAWNED, PARKING or TAXIING
+        if element.status~=status and
+          element.status==FLIGHTGROUP.ElementStatus.SPAWNED or
+          element.status==FLIGHTGROUP.ElementStatus.PARKING or
+          element.status==FLIGHTGROUP.ElementStatus.TAXIING then
+          return false
+        end
               
-        elseif  status==FLIGHTGROUP.ElementStatus.LANDED then
+      elseif status==FLIGHTGROUP.ElementStatus.LANDED then
         
-        if element.status~=status or element.status~=FLIGHTGROUP.ElementStatus.ARRIVED then
+        -- Element LANDED: check that the others are not stil AIRBORNE
+        if element.status~=status and
+          element.status==FLIGHTGROUP.ElementStatus.AIRBORNE then
           return false
         end
         
       elseif status==FLIGHTGROUP.ElementStatus.ARRIVED then
       
-        if element.status~=status then
+        -- Element ARRIVED: check that the others are not stil AIRBORNE or TAXIING
+        if element.status~=status and
+          element.status==FLIGHTGROUP.ElementStatus.AIRBORNE or
+          element.status==FLIGHTGROUP.ElementStatus.TAXIING  then
           return false
         end
         
@@ -806,10 +897,16 @@ function FLIGHTGROUP:_UpdateStatus(element, newstatus)
     -- SPAWNED
     ---
     
-    self:ElementSpawned(element)
+    --self:ElementSpawned(element)
     
     if self:_AllSimilarStatus(newstatus) then
       self:FlightSpawned(group)
+    end
+    
+    if element.unit:InAir() then
+      self:ElementAirborne(element)
+    else
+      self:ElementParking(element)
     end
 
   elseif newstatus==FLIGHTGROUP.ElementStatus.PARKING then
@@ -817,7 +914,7 @@ function FLIGHTGROUP:_UpdateStatus(element, newstatus)
     -- PARKING
     ---
     
-    self:ElementParking(element)
+    --self:ElementParking(element)
     
     if self:_AllSimilarStatus(newstatus) then
       self:FlightParking(group)
@@ -828,7 +925,7 @@ function FLIGHTGROUP:_UpdateStatus(element, newstatus)
     -- TAXIING
     ---
     
-    self:ElementTaxiing(element)
+    --self:ElementTaxiing(element)
     
     if self:_AllSimilarStatus(newstatus) then
       self:FlightTaxiing(group)
@@ -839,17 +936,18 @@ function FLIGHTGROUP:_UpdateStatus(element, newstatus)
     -- AIRBORNE
     ---
     
-    self:ElementAirborne(element)
+    --self:ElementAirborne(element)
     
     if self:_AllSimilarStatus(newstatus) then
+    
       if self:IsTaxiing() then
         self:FlightAirborne(group)
       elseif self:IsParking() then
-        self:FlightTaxiing(group)
+        --self:FlightTaxiing(group)
         self:FlightAirborne(group)
       elseif self:IsSpawned() then
-        self:FlightParking(group)      
-        self:FlightTaxiing(group)
+        --self:FlightParking(group)      
+        --self:FlightTaxiing(group)
         self:FlightAirborne(group)      
       end
       
@@ -860,7 +958,7 @@ function FLIGHTGROUP:_UpdateStatus(element, newstatus)
     -- LANDED
     ---
     
-    self:ElementLanded(element)
+    --self:ElementLanded(element)
     
     if self:_AllSimilarStatus(newstatus) then
       self:FlightLanded(group)
@@ -871,7 +969,7 @@ function FLIGHTGROUP:_UpdateStatus(element, newstatus)
     -- ARRIVED
     ---
     
-    self:ElementArrived(element)
+    --self:ElementArrived(element)
     
     if self:_AllSimilarStatus(newstatus) then
       
