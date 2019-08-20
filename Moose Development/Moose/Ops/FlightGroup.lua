@@ -37,6 +37,7 @@
 -- @field #FLIGHTGROUP
 FLIGHTGROUP = {
   ClassName      = "FLIGHTGROUP",
+  Debug          =   nil,
   sid            =   nil,
   groupname      =   nil,
   flightgroup    =   nil,
@@ -117,6 +118,7 @@ FLIGHTGROUP.TaskStatus={
 
 --- Flight group tasks.
 -- @type FLIGHTGROUP.Task
+-- @field #number id Task ID. Running number to get the task.
 -- @field #number prio Priority.
 -- @field #number time Abs. mission time when to execute the task.
 -- @field #table dcstask DCS task structure.
@@ -126,7 +128,7 @@ FLIGHTGROUP.TaskStatus={
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.0.2"
+FLIGHTGROUP.version="0.0.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -170,9 +172,11 @@ function FLIGHTGROUP:New(groupname)
   self:AddTransition("*",             "AddDetectedUnit",  "*")           -- Add a newly detected unit to the detected units set.
   self:AddTransition("*",             "LostDetectedUnit", "*")           -- Group lost a detected target.
   
-  self:AddTransition("*",             "RTB",              "Returning")   -- Group lost a detected target.
+  self:AddTransition("*",             "RTB",              "Returning")   -- Group is returning to base.
+  self:AddTransition("*",             "Orbit",            "Orbiting")    -- Group is holding position.
   
-  self:AddTransition("*",             "TaskDone",         "")            -- Group lost a detected target.
+  self:AddTransition("*",             "TaskExecute",      "Airborne")    -- Group finshed a task.
+  self:AddTransition("*",             "TaskDone",         "Airborne")    -- Group finshed a task.
     
   self:AddTransition("*",             "ElementSpawned",   "*")           -- An element was spawned.
   self:AddTransition("*",             "ElementParking",   "*")           -- An element was spawned.
@@ -229,8 +233,10 @@ function FLIGHTGROUP:New(groupname)
     BASE:TraceClass(self.ClassName)
     BASE:TraceLevel(1)
   end
+  self.Debug=true
   
   -- Check if the group is already alive and if so, add its elements.
+  -- TODO: move this to start?
   local group=GROUP:FindByName(groupname)
   if group and group:IsAlive() then
     self.flightgroup=group
@@ -239,11 +245,13 @@ function FLIGHTGROUP:New(groupname)
       local unit=_unit --Wrapper.Unit#UNIT
       local element=self:AddElementByName(unit:GetName())
 
-      -- Trigger Spawned event.
+      -- Trigger Spawned event. Delay a bit to start 
       self:__ElementSpawned(0.1, element)
       
     end
   end
+  
+  self.taskcounter=0
   
   -- Autostart.
   self:Start()
@@ -265,15 +273,19 @@ end
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:AddTask(description, task, prio, clock)
 
+  -- Increase coutner.
+  self.taskcounter=self.taskcounter+1
+
   local newtask={} --#FLIGHTGROUP.Task
   
   newtask.description=description
   newtask.status=FLIGHTGROUP.TaskStatus.SCHEDULED
   newtask.dcstask=task
   newtask.prio=prio or 50
-  newtask.time=UTILS.ClockToSeconds(clock) or timer.getAbsTime()+60
+  newtask.time=clock and UTILS.ClockToSeconds(clock) or timer.getAbsTime()+60
+  newtask.id=self.taskcounter
   
-  self:I({newtask=newtask})
+  self:T2({newtask=newtask})
   
   table.insert(self.taskqueue, newtask)
 
@@ -285,6 +297,13 @@ end
 -- @return Core.Set#SET_UNIT Set of detected units.
 function FLIGHTGROUP:GetDetectedUnits()
   return self.detectedunits
+end
+
+--- Get MOOSE group object.
+-- @param #FLIGHTGROUP self
+-- @return Wrapper.Group#GROUP Moose group object.
+function FLIGHTGROUP:GetGroup()
+  return self.flightgroup
 end
 
 --- Check if flight is airborne.
@@ -362,6 +381,8 @@ function FLIGHTGROUP:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.PilotDead,      self.OnEventPilotDead)
   self:HandleEvent(EVENTS.Ejection,       self.OnEventEjection)
   self:HandleEvent(EVENTS.Crash,          self.OnEventCrash)
+  
+  self.taskcounter=0
 
   -- Start the status monitoring.
   self:__FlightStatus(-1)
@@ -407,27 +428,13 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   
   -- TODO: GetTask function. Sort tasks by time and prio. Figure out how to determine if task is finished ==> Task combo?
   if not self.taskcurrent then
-    if #self.taskqueue>0 then
-      local task=self.taskqueue[1] --#FLIGHTGROUP.Task
-      
-      if timer.getAbsTime()>=task.time then
-      
-        -- Clear all tasks.
-        self.flightgroup:ClearTasks()
-        
-        local TaskDCS=task.dcstask
-        local TaskDone=self.flightgroup:TaskFunction("FLIGHTGROUP._TaskDone", self, task)
-        
-        local TaskCombo=self.flightgroup:TaskCombo({TaskDCS, TaskDone})
-        
-        self.flightgroup:SetTask(TaskCombo, 1)
-        
-        --_TaskDone(group, flightgroup, task)
-        task.status=FLIGHTGROUP.TaskStatus.EXECUTING        
-        
-        self.taskcurrent=task
-      end
+  
+    local task=self:GetTask()
+    
+    if task then
+      self:TaskExecute(task)
     end
+          
   end
 
   -- Task queue
@@ -714,6 +721,56 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase)
   self:RouteRTB(airbase)
 end
 
+--- On after TaskExecute event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #FLIGHTGROUP.Task Task The task.
+function FLIGHTGROUP:onafterTaskExecute(From, Event, To, Task)
+
+  -- Debug message.
+  local text=string.format("Task %s ID=%d execute.", Task.description, Task.id)
+  MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+  self:I(self.sid..text)
+  
+  -- Set current task.
+  self.taskcurrent=Task
+
+  -- Clear all tasks.
+  self.flightgroup:ClearTasks()
+    
+  -- Task done.
+  local TaskDone=self.flightgroup:TaskFunction("FLIGHTGROUP._TaskDone", self, self.taskcurrent)
+    
+  -- Combo task.        
+  local TaskCombo=self.flightgroup:TaskCombo({self.taskcurrent.dcstask, TaskDone})
+    
+  -- Set task for group.
+  self.flightgroup:SetTask(TaskCombo, 1)
+    
+  -- Task status executing.
+  self.taskcurrent.status=FLIGHTGROUP.TaskStatus.EXECUTING
+  
+end
+
+
+--- On after TaskDone event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #FLIGHTGROUP.Task Task
+function FLIGHTGROUP:onafterTaskDone(From, Event, To, Task)
+
+  -- Debug message.
+  local text=string.format("Task %s ID=%d done.", Task.description, Task.id)
+  MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+  self:I(self.sid..text)
+
+  Task.status=FLIGHTGROUP.TaskStatus.ACCOMPLISHED
+end
+
 
 --- On after "DetectedUnit" event. Add newly detected unit to detected units set.
 -- @param #FLIGHTGROUP self
@@ -744,6 +801,39 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Task functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Sort task queue.
+-- @param #FLIGHTGROUP self
+function FLIGHTGROUP:GetTask()
+
+  if #self.taskqueue==0 then
+    return nil
+  else
+  
+    -- Sort results table wrt times they have already been engaged.
+    local function _sort(a, b)
+      local taskA=a --#FLIGHTGROUP.Task
+      local taskB=b --#FLIGHTGROUP.Task
+      return (taskA.time<taskB.time) or (taskA.time==taskB.time and taskA.prio<taskB.prio)
+    end
+    
+    table.sort(self.taskqueue, _sort)
+    
+    local time=timer.getAbsTime()
+    
+    -- Look for first task that is not accomplished.
+    for _,_task in pairs(self.taskqueue) do
+      local task=_task --#FLIGHTGROUP.Task
+      if task.status~=FLIGHTGROUP.TaskStatus.ACCOMPLISHED and task.time>=time then
+        return task
+      end
+    end
+    
+  end
+  
+  return nil  
+end
+
 
 --- Function called when a group has reached the holding zone.
 --@param Wrapper.Group#GROUP group Group that reached the holding zone.
