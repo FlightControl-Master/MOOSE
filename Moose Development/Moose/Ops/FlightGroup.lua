@@ -168,9 +168,11 @@ function FLIGHTGROUP:New(groupname)
   
   self:AddTransition("*",             "FlightStatus",     "*")           -- FLIGHTGROUP status update.
   self:AddTransition("*",             "AddDetectedUnit",  "*")           -- Add a newly detected unit to the detected units set.
-  self:AddTransition("*",             "LostDetectedUnit", "*")          -- Group lost a detected target.
+  self:AddTransition("*",             "LostDetectedUnit", "*")           -- Group lost a detected target.
   
-  self:AddTransition("*",             "RTB",              "Returning")  -- Group lost a detected target.
+  self:AddTransition("*",             "RTB",              "Returning")   -- Group lost a detected target.
+  
+  self:AddTransition("*",             "TaskDone",         "")            -- Group lost a detected target.
     
   self:AddTransition("*",             "ElementSpawned",   "*")           -- An element was spawned.
   self:AddTransition("*",             "ElementParking",   "*")           -- An element was spawned.
@@ -270,6 +272,8 @@ function FLIGHTGROUP:AddTask(description, task, prio, clock)
   newtask.dcstask=task
   newtask.prio=prio or 50
   newtask.time=UTILS.ClockToSeconds(clock) or timer.getAbsTime()+60
+  
+  self:I({newtask=newtask})
   
   table.insert(self.taskqueue, newtask)
 
@@ -407,9 +411,20 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
       local task=self.taskqueue[1] --#FLIGHTGROUP.Task
       
       if timer.getAbsTime()>=task.time then
+      
+        -- Clear all tasks.
         self.flightgroup:ClearTasks()
-        self.flightgroup:SetTask(task.dcstask, 1)
-        task.status=FLIGHTGROUP.TaskStatus.EXECUTING
+        
+        local TaskDCS=task.dcstask
+        local TaskDone=self.flightgroup:TaskFunction("FLIGHTGROUP._TaskDone", self, task)
+        
+        local TaskCombo=self.flightgroup:TaskCombo({TaskDCS, TaskDone})
+        
+        self.flightgroup:SetTask(TaskCombo, 1)
+        
+        --_TaskDone(group, flightgroup, task)
+        task.status=FLIGHTGROUP.TaskStatus.EXECUTING        
+        
         self.taskcurrent=task
       end
     end
@@ -733,16 +748,17 @@ end
 --- Function called when a group has reached the holding zone.
 --@param Wrapper.Group#GROUP group Group that reached the holding zone.
 --@param #FLIGHTGROUP.Mission
---@param #FLIGHTGROUP flight Flight group that has reached the holding zone.
+--@param #FLIGHTGROUP flightgroup Flight group.
+--@param #table task Task.
 function FLIGHTGROUP._TaskDone(group, flightgroup, task)
 
   -- Debug message.
-  local text=string.format("Flight %s reached holding zone.", group:GetName())
+  local text=string.format("Task Done")
+  flightgroup:I(flightgroup.sid..text)
 
-  -- Set holding flag true and set timestamp for marshal time check.
+  -- Set current task to nil so that the next in line can be executed.
   if flightgroup then
-    flight.holding=true
-    flight.time=timer.getAbsTime()
+    flightgroup.taskcurrent=nil
   end
 end
 
