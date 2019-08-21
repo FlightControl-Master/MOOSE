@@ -1968,6 +1968,8 @@ function AIRBOSS:New(carriername, alias)
     self:_GetZoneHolding(case, 1):SmokeZone(SMOKECOLOR.White, 45)
     self:_GetZoneInitial(case):SmokeZone(SMOKECOLOR.Orange, 45)
     self:_GetZoneCommence(case):SmokeZone(SMOKECOLOR.Red, 45)
+    self:_GetZoneAbeamLandingSpot():SmokeZone(SMOKECOLOR.Red, 5)
+    self:_GetZoneLandingSpot():SmokeZone(SMOKECOLOR.Red, 5)
   end
 
   -- Carrier parameter debug tests.
