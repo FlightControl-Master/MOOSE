@@ -252,6 +252,7 @@ function FLIGHTGROUP:New(groupname)
     end
   end
   
+  self.taskcurrent=0
   self.taskcounter=0
   
   -- Autostart.
@@ -428,7 +429,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   self:I(text)
   
   -- Check no current task.
-  if not self.taskcurrent then
+  if self.taskcurrent<=0 then
   
     -- Get task from queue.
     local task=self:GetTask()
@@ -755,22 +756,25 @@ function FLIGHTGROUP:onafterTaskExecute(From, Event, To, Task)
   self:I(self.sid..text)
   
   -- Set current task.
-  self.taskcurrent=Task
+  self.taskcurrent=Task.id
 
   -- Clear all tasks.
   self.flightgroup:ClearTasks()
+  
+  local Coord=self.flightgroup:GetCoordinate()
     
   -- Task done.
-  local TaskDone=self.flightgroup:TaskFunction("FLIGHTGROUP._TaskDone", self, self.taskcurrent)
+  local TaskDone=self.flightgroup:TaskFunction("FLIGHTGROUP._TaskDone", self, Task)
+  local TaskOrbit=self.flightgroup:TaskOrbit(Coord, 10000)
     
   -- Combo task.        
-  local TaskCombo=self.flightgroup:TaskCombo({self.taskcurrent.dcstask, TaskDone})
+  local TaskCombo=self.flightgroup:TaskCombo({Task.dcstask, TaskDone, TaskOrbit})
     
   -- Set task for group.
   self.flightgroup:SetTask(TaskCombo, 1)
     
   -- Task status executing.
-  self.taskcurrent.status=FLIGHTGROUP.TaskStatus.EXECUTING
+  Task.status=FLIGHTGROUP.TaskStatus.EXECUTING
   
 end
 
@@ -781,21 +785,19 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param #FLIGHTGROUP.Task Task The task.
-function FLIGHTGROUP:onafterTaskPause(From, Event, To)
+function FLIGHTGROUP:onafterTaskPause(From, Event, To, Task)
 
-  if self.taskcurrent then
+  if self.taskcurrent>0 then
 
     -- Clear all tasks.
     self.flightgroup:ClearTasks()
         
     -- Task status executing.
-    self.taskcurrent.status=FLIGHTGROUP.TaskStatus.PAUSED
+    Task.status=FLIGHTGROUP.TaskStatus.PAUSED
     
   end
   
 end
-
-
 
 
 --- On after TaskDone event.
@@ -811,6 +813,7 @@ function FLIGHTGROUP:onafterTaskDone(From, Event, To, Task)
   MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
   self:I(self.sid..text)
 
+  self.taskcurrent=0
   Task.status=FLIGHTGROUP.TaskStatus.ACCOMPLISHED
 end
 
@@ -882,16 +885,16 @@ end
 --@param Wrapper.Group#GROUP group Group that reached the holding zone.
 --@param #FLIGHTGROUP.Mission
 --@param #FLIGHTGROUP flightgroup Flight group.
---@param #table task Task.
+--@param #FLIGHTGROUP.Task task Task.
 function FLIGHTGROUP._TaskDone(group, flightgroup, task)
 
   -- Debug message.
-  local text=string.format("Task Done")
+  local text=string.format("Task Done %s", task.description)
   flightgroup:I(flightgroup.sid..text)
 
   -- Set current task to nil so that the next in line can be executed.
   if flightgroup then
-    flightgroup.taskcurrent=nil
+    flightgroup:TaskDone(task)
   end
 end
 
