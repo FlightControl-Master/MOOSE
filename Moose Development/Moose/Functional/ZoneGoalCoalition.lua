@@ -104,7 +104,7 @@ do -- ZoneGoal
     local State = self:GetState()
     self:F( { State = self:GetState() } )
   
-    self.Zone:Scan( { Object.Category.UNIT, Object.Category.STATIC } )
+    self:Scan( { Object.Category.UNIT, Object.Category.STATIC } )
   
   end
   

@@ -189,7 +189,9 @@ world.event.S_EVENT_NEW_CARGO = world.event.S_EVENT_MAX + 1000
 world.event.S_EVENT_DELETE_CARGO = world.event.S_EVENT_MAX + 1001
 world.event.S_EVENT_NEW_ZONE = world.event.S_EVENT_MAX + 1002
 world.event.S_EVENT_DELETE_ZONE = world.event.S_EVENT_MAX + 1003
-world.event.S_EVENT_REMOVE_UNIT = world.event.S_EVENT_MAX + 1004
+world.event.S_EVENT_NEW_ZONE_GOAL = world.event.S_EVENT_MAX + 1004
+world.event.S_EVENT_DELETE_ZONE_GOAL = world.event.S_EVENT_MAX + 1005
+world.event.S_EVENT_REMOVE_UNIT = world.event.S_EVENT_MAX + 1006
 
 
 --- The different types of events supported by MOOSE.
@@ -226,6 +228,8 @@ EVENTS = {
   DeleteCargo =       world.event.S_EVENT_DELETE_CARGO,
   NewZone =           world.event.S_EVENT_NEW_ZONE,
   DeleteZone =        world.event.S_EVENT_DELETE_ZONE,
+  NewZoneGoal =       world.event.S_EVENT_NEW_ZONE_GOAL,
+  DeleteZoneGoal =    world.event.S_EVENT_DELETE_ZONE_GOAL,
   RemoveUnit =        world.event.S_EVENT_REMOVE_UNIT,
 }
 
@@ -461,6 +465,16 @@ local _EVENTMETA = {
      Order = 1,
      Event = "OnEventDeleteZone",
      Text = "S_EVENT_DELETE_ZONE" 
+   },
+   [EVENTS.NewZoneGoal] = {
+     Order = 1,
+     Event = "OnEventNewZoneGoal",
+     Text = "S_EVENT_NEW_ZONE_GOAL" 
+   },
+   [EVENTS.DeleteZoneGoal] = {
+     Order = 1,
+     Event = "OnEventDeleteZoneGoal",
+     Text = "S_EVENT_DELETE_ZONE_GOAL" 
    },
    [EVENTS.RemoveUnit] = {
      Order = -1,
@@ -799,6 +813,38 @@ do -- Event Creation
   
     world.onEvent( Event )
   end
+
+  --- Creation of a New ZoneGoal Event.
+  -- @param #EVENT self
+  -- @param Core.Functional#ZONE_GOAL ZoneGoal The ZoneGoal created.
+  function EVENT:CreateEventNewZoneGoal( ZoneGoal )
+    self:F( { ZoneGoal } )
+  
+    local Event = {
+      id = EVENTS.NewZoneGoal,
+      time = timer.getTime(),
+      ZoneGoal = ZoneGoal,
+      }
+  
+    world.onEvent( Event )
+  end
+
+
+  --- Creation of a ZoneGoal Deletion Event.
+  -- @param #EVENT self
+  -- @param Core.ZoneGoal#ZONE_GOAL ZoneGoal The ZoneGoal created.
+  function EVENT:CreateEventDeleteZoneGoal( ZoneGoal )
+    self:F( { ZoneGoal } )
+  
+    local Event = {
+      id = EVENTS.DeleteZoneGoal,
+      time = timer.getTime(),
+      ZoneGoal = ZoneGoal,
+      }
+  
+    world.onEvent( Event )
+  end
+
 
   --- Creation of a S_EVENT_PLAYER_ENTER_UNIT Event.
   -- @param #EVENT self
