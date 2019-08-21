@@ -175,8 +175,9 @@ function FLIGHTGROUP:New(groupname)
   self:AddTransition("*",             "RTB",              "Returning")   -- Group is returning to base.
   self:AddTransition("*",             "Orbit",            "Orbiting")    -- Group is holding position.
   
-  self:AddTransition("*",             "TaskExecute",      "Airborne")    -- Group finshed a task.
-  self:AddTransition("*",             "TaskDone",         "Airborne")    -- Group finshed a task.
+  self:AddTransition("*",             "TaskExecute",      "Airborne")    -- Group will execute a task.
+  self:AddTransition("*",             "TaskDone",         "Airborne")    -- Group finished a task.
+  self:AddTransition("*",             "TaskCancel",       "Airborne")    -- Cancel current task.
     
   self:AddTransition("*",             "ElementSpawned",   "*")           -- An element was spawned.
   self:AddTransition("*",             "ElementParking",   "*")           -- An element was spawned.
@@ -426,18 +427,20 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   end
   self:I(text)
   
-  -- TODO: GetTask function. Sort tasks by time and prio. Figure out how to determine if task is finished ==> Task combo?
+  -- Check no current task.
   if not self.taskcurrent then
   
+    -- Get task from queue.
     local task=self:GetTask()
     
+    -- Execute task if any.
     if task then
       self:TaskExecute(task)
     end
           
   end
 
-  -- Task queue
+  -- Task queue.
   text="Tasks:"
   for i,_task in pairs(self.taskqueue) do
     local task=_task --#FLIGHTGROUP.Task
@@ -704,13 +707,30 @@ function FLIGHTGROUP:onafterElementArrived(From, Event, To, Element)
 end
 
 
---- On after RTB event. Send flightgroup back to base.
+--- On after "RTB" event. Send flightgroup back to base.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Wrapper.Airbase#AIRBASE airbase The base to return to.
 function FLIGHTGROUP:onafterRTB(From, Event, To, airbase)
+
+  -- Debug message.
+  local text=string.format("Flight group returning to airbase %s.", airbase:GetName())
+  MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+  self:I(self.sid..text)
+      
+  -- Route helo back home. It is respawned! But this is the only way to ensure that it actually lands at the airbase.
+  self:RouteRTB(airbase)
+end
+
+--- On after "Orbit" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Wrapper.Airbase#AIRBASE airbase The base to return to.
+function FLIGHTGROUP:onafterOrbit(From, Event, To, Coord)
 
   -- Debug message.
   local text=string.format("Flight group returning to airbase %s.", airbase:GetName())
@@ -753,6 +773,29 @@ function FLIGHTGROUP:onafterTaskExecute(From, Event, To, Task)
   self.taskcurrent.status=FLIGHTGROUP.TaskStatus.EXECUTING
   
 end
+
+
+--- On after TaskPause event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #FLIGHTGROUP.Task Task The task.
+function FLIGHTGROUP:onafterTaskPause(From, Event, To)
+
+  if self.taskcurrent then
+
+    -- Clear all tasks.
+    self.flightgroup:ClearTasks()
+        
+    -- Task status executing.
+    self.taskcurrent.status=FLIGHTGROUP.TaskStatus.PAUSED
+    
+  end
+  
+end
+
+
 
 
 --- On after TaskDone event.
@@ -930,6 +973,44 @@ function FLIGHTGROUP:RouteRTB(RTBAirbase, Speed, Altitude)
   -- Route the group or this will not work.
   self.flightgroup:Route(Points, 1)
   
+end
+
+
+--- Route flight group to orbit.
+-- @param #FLIGHTGROUP self
+-- @param Core.Point#COORDINATE CoordOrbit Orbit coordinate.
+-- @param #number Speed Speed in km/h. Default 60% of max group speed.
+-- @param #number Altitude Altitude in meters. Default 10,000 ft.
+-- @param Core.Point#COORDINATE CoordRaceTrack (Optional) Race track coordinate.
+function FLIGHTGROUP:RouteOrbit(CoordOrbit, Speed, Altitude, CoordRaceTrack)
+
+  -- If speed is not given take 80% of max speed.
+  local Speed=Speed or self.flightgroup:GetSpeedMax()*0.6
+  
+  -- Altitude.
+  local altitude=Altitude or UTILS.FeetToMeters(10000)
+  
+  -- Waypoints.
+  local wp={}
+  
+  -- Current coordinate.
+  wp[1]=self.flightgroup:GetCoordinate():SetAltitude(altitude):WaypointAirTurningPoint(nil, Speed, {}, "Current")
+  
+  -- Orbit
+  wp[2]=CoordOrbit:SetAltitude(altitude):WaypointAirTurningPoint(nil, Speed, {}, "Orbit")
+  
+  
+  local TaskOrbit=self.flightgroup:TaskOrbit(CoordOrbit, altitude, Speed, CoordRaceTrack)  
+  local TaskRoute=self.flightgroup:TaskRoute(wp)
+  
+  --local TaskCondi=self.flightgroup:TaskCondition(time,userFlag,userFlagValue,condition,duration,lastWayPoint)
+  
+  local TaskCombo=self.flightgroup:TaskControlled(TaskRoute, TaskOrbit)
+  
+  self.flightgroup:SetTask(TaskCombo, 1)
+  
+  -- Route the group or this will not work.
+  --self.flightgroup:Route(wp, 1)
 end
 
 
