@@ -402,7 +402,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   local fsmstate=self:GetState()
 
   -- Short info.
-  local text=string.format("Flight group status %s.", fsmstate)
+  local text=string.format("Flight group status %s. Task=%d", fsmstate, self.taskcurrent)
   self:I(self.sid..text)
   
   -- Element status.
@@ -433,6 +433,8 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   
     -- Get task from queue.
     local task=self:GetTask()
+    
+    self:I({self.sid, task=task})
     
     -- Execute task if any.
     if task then
@@ -870,7 +872,7 @@ function FLIGHTGROUP:GetTask()
     -- Look for first task that is not accomplished.
     for _,_task in pairs(self.taskqueue) do
       local task=_task --#FLIGHTGROUP.Task
-      if task.status~=FLIGHTGROUP.TaskStatus.ACCOMPLISHED and task.time>=time then
+      if task.status~=FLIGHTGROUP.TaskStatus.ACCOMPLISHED and time>=task.time then
         return task
       end
     end
