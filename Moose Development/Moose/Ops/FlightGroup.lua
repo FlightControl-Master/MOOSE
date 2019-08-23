@@ -2,7 +2,10 @@
 --
 -- **Main Features:**
 --
---    * Nice stuff.
+--    * Monitor flight status of elements or entire group.
+--    * Monitor fuel and ammo status.
+--    * Sophisicated task queueing system.
+--    
 --
 -- ===
 --
@@ -20,8 +23,14 @@
 -- @field Wrapper.Group#GROUP flightgroup Flight group object.
 -- @field #string type Aircraft type of flight group.
 -- @field #table element Table of elements, i.e. units of the group.
+-- @field #table waypoints Table of waypoints.
+-- @field #table coordinates Table of waypoint coordinates.
 -- @field #table taskqueue Queue of tasks.
+-- @field #number taskcounter Running number of task ids.
+-- @field #number taskcurrent ID of current task. If 0, there is no current task assigned.
 -- @field Core.Set#SET_UNIT detectedunits Set of detected units.
+-- @field Wrapper.Airbase#AIRBASE homebase The home base of the flight group.
+-- @field Wrapper.Airbase#AIRBASE destination The destination base of the flight group.
 -- @extends Core.Fsm#FSM
 
 --- Be surprised!
@@ -41,17 +50,20 @@ FLIGHTGROUP = {
   sid            =   nil,
   groupname      =   nil,
   flightgroup    =   nil,
+  grouptemplate  =   nil,
   type           =   nil,
+  waypoints      =   nil,
+  coordinates    =   nil,
   element        =    {},
   taskqueue      =    {},
+  taskcounter    =   nil,
+  taskcurrent    =   nil,
   detectedunits  =    {},
   homebase       =   nil,
   destination    =   nil,
   speedmax       =   nil,
   range          =   nil,
   altmax         =   nil,
-  taskcounter    =   nil,
-  taskcurrent    =   nil,
 }
 
 
@@ -107,9 +119,9 @@ FLIGHTGROUP.Mission={
 
 --- Flight group tasks.
 -- @type FLIGHTGROUP.TaskStatus
--- @param #string SCHEDULED Task is sheduled.
--- @param #string EXECUTING Task is being executed.
--- @param #string ACCOMPLISHED Task is accomplished.
+-- @field #string SCHEDULED Task is sheduled.
+-- @field #string EXECUTING Task is being executed.
+-- @field #string ACCOMPLISHED Task is accomplished.
 FLIGHTGROUP.TaskStatus={
   SCHEDULED="scheduled",
   EXECUTING="executing",
@@ -128,15 +140,23 @@ FLIGHTGROUP.TaskStatus={
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.0.3"
+FLIGHTGROUP.version="0.0.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: A lot!
--- TODO: Add tasks: 
+-- TODO: Add tasks.
 -- TODO: Add EPLRS, TACAN.
+-- TODO: Get ammo.
+-- TODO: Get pylons.
+-- TODO: Fuel threshhold ==> RTB.
+-- TODO: ROE, Afterburner restrict
+-- TODO: Respawn? With correct loadout, fuelstate.
+-- TODO: Waypoints, read, add, insert, detour.
+-- TODO: Damage?
+-- TODO: shot events?
+-- TODO: 
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -169,15 +189,19 @@ function FLIGHTGROUP:New(groupname)
   self:AddTransition("Stopped",       "Start",            "Running")     -- Start FSM.
   
   self:AddTransition("*",             "FlightStatus",     "*")           -- FLIGHTGROUP status update.
+  self:AddTransition("*",             "QueueUpdate",      "*")           -- Update task queue.
   self:AddTransition("*",             "AddDetectedUnit",  "*")           -- Add a newly detected unit to the detected units set.
   self:AddTransition("*",             "LostDetectedUnit", "*")           -- Group lost a detected target.
   
   self:AddTransition("*",             "RTB",              "Returning")   -- Group is returning to base.
   self:AddTransition("*",             "Orbit",            "Orbiting")    -- Group is holding position.
   
+  self:AddTransition("*",             "PassingWaypoint",  "*")           -- Group passed a waypoint.
+  
   self:AddTransition("*",             "TaskExecute",      "Airborne")    -- Group will execute a task.
   self:AddTransition("*",             "TaskDone",         "Airborne")    -- Group finished a task.
   self:AddTransition("*",             "TaskCancel",       "Airborne")    -- Cancel current task.
+  self:AddTransition("*",             "TaskPause",        "Airborne")    -- Pause current task.  
     
   self:AddTransition("*",             "ElementSpawned",   "*")           -- An element was spawned.
   self:AddTransition("*",             "ElementParking",   "*")           -- An element was spawned.
@@ -187,6 +211,8 @@ function FLIGHTGROUP:New(groupname)
   self:AddTransition("*",             "ElementArrived",   "*")           -- An element arrived.
   self:AddTransition("*",             "ElementDead",      "*")           -- An element crashed, ejected, or pilot dead.
   
+  self:AddTransition("*",             "ElementOutOfAmmo", "*")           -- An element is completely out of ammo.
+  
   self:AddTransition("*",             "FlightSpawned",    "Spawned")     -- The whole flight group is airborne.
   self:AddTransition("*",             "FlightParking",    "Parking")     -- The whole flight group is airborne.
   self:AddTransition("*",             "FlightTaxiing",    "Taxiing")     -- The whole flight group is airborne.
@@ -195,7 +221,8 @@ function FLIGHTGROUP:New(groupname)
   self:AddTransition("*",             "FlightArrived",    "Arrived")     -- The whole flight group has arrived.
   self:AddTransition("*",             "FlightDead",       "Dead")        -- The whole flight group is dead.
   
-
+  self:AddTransition("*",             "FlightOutOfAmmo",  "*")           -- Flight is completely out of ammo.
+  
   ------------------------
   --- Pseudo Functions ---
   ------------------------
@@ -271,24 +298,35 @@ end
 -- @param #string description Brief text describing the task, e.g. "Attack SAM".
 -- @param #table task DCS task table stucture.
 -- @param #number prio Priority of the task.
--- @param #string clock Mission time when task is executed.
+-- @param #string clock Mission time when task is executed. Default in 60 seconds. If argument passed as #number, it defines a relative delay in seconds.
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:AddTask(description, task, prio, clock)
 
   -- Increase coutner.
   self.taskcounter=self.taskcounter+1
-
-  local newtask={} --#FLIGHTGROUP.Task
   
+  -- Set time.
+  local time=timer.getAbsTime()+60
+  if clock then
+    if type(clock)=="string" then
+      time=UTILS.ClockToSeconds(clock)
+    elseif type(clock)=="number" then
+      time=timer.getAbsTime()+clock
+    end
+  end
+
+  -- Task data structure.
+  local newtask={} --#FLIGHTGROUP.Task
   newtask.description=description
   newtask.status=FLIGHTGROUP.TaskStatus.SCHEDULED
   newtask.dcstask=task
   newtask.prio=prio or 50
-  newtask.time=clock and UTILS.ClockToSeconds(clock) or timer.getAbsTime()+60
+  newtask.time=time
   newtask.id=self.taskcounter
   
   self:T2({newtask=newtask})
   
+  -- Add to table.
   table.insert(self.taskqueue, newtask)
 
   return self
@@ -390,6 +428,22 @@ function FLIGHTGROUP:onafterStart(From, Event, To)
   self:__FlightStatus(-1)
 end
 
+--- On after Start event. Starts the FLIGHTGROUP FSM and event handlers.
+-- @param #FLIGHTGROUP self
+-- @param Wrapper.Group#GROUP Group Flight group.
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Wrapper.Group#GROUP Group The group object.
+function FLIGHTGROUP:onafterFlightSpawned(From, Event, To, Group)
+
+  self.template=self.flightgroup:GetTemplate()
+  
+  -- Init waypoints.
+  self:_InitWaypoints()
+  
+end
+
 --- On after "FlightStatus" event.
 -- @param #FLIGHTGROUP self
 -- @param Wrapper.Group#GROUP Group Flight group.
@@ -428,19 +482,6 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   end
   self:I(text)
   
-  -- Check no current task.
-  if self.taskcurrent<=0 then
-  
-    -- Get task from queue.
-    local task=self:GetTask()
-    
-    -- Execute task if any.
-    if task then
-      self:TaskExecute(task)
-    end
-          
-  end
-
   -- Task queue.
   text="Tasks:"
   for i,_task in pairs(self.taskqueue) do
@@ -460,6 +501,30 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   
   -- Next check in ~30 seconds.
   self:__FlightStatus(-30)
+end
+
+--- On after "FlightStatus" event.
+-- @param #FLIGHTGROUP self
+-- @param Wrapper.Group#GROUP Group Flight group.
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function FLIGHTGROUP:onafterQueueUpdate(From, Event, To)
+
+  -- Check no current task.
+  if self.taskcurrent<=0 then
+  
+    -- Get task from queue.
+    local task=self:GetTask()
+    
+    -- Execute task if any.
+    if task then
+      self:TaskExecute(task)
+    end
+          
+  end
+  
+  self:__QueueUpdate(-1)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -793,7 +858,7 @@ function FLIGHTGROUP:onafterTaskPause(From, Event, To, Task)
     self.flightgroup:ClearTasks()
         
     -- Task status executing.
-    Task.status=FLIGHTGROUP.TaskStatus.PAUSED
+    Task.status=1 --FLIGHTGROUP.TaskStatus.PAUSED
     
   end
   
@@ -925,7 +990,7 @@ function FLIGHTGROUP:TaskIntercept(bandit)
   -- Start uncontrolled group.
   self.flightgroup:StartUncontrolled()
   
-  --airboss:SetExcludeAI()
+  --FLIGHTGROUP:SetExcludeAI()
   
   -- Route group
   self.flightgroup:Route(wp)
@@ -1063,6 +1128,139 @@ function FLIGHTGROUP:GetElementByName(unitname)
 
   return nil
 end
+
+--- Get task by its id.
+-- @param #FLIGHTGROUP self
+-- @param #number id Task id.
+-- @param #string status (Optional) Only return tasks with this status, e.g. FLIGHTGROUP.TaskStatus.SCHEDULED.
+-- @return #FLIGHTGROUP.Task The task or nil.
+function FLIGHTGROUP:GetTaskByID(id, status)
+
+  for _,_task in pairs(self.taskqueue) do
+    local task=_task --#FLIGHTGROUP.Task    
+    
+    if task.id==id then
+      if status==nil or status==task.status then
+        return task
+      end
+    end
+  
+  end
+
+  return nil
+end
+
+
+--- Get next waypoint of the flight group.
+-- @param #FLIGHTGROUP self
+-- @return Core.Point#COORDINATE Coordinate of the next waypoint.
+-- @return #number Number of waypoint.
+function FLIGHTGROUP:GetNextWaypoint()
+
+  -- Next waypoint.
+  local Nextwp=nil
+  if self.currentwp==#self.waypoints then
+    Nextwp=1
+  else
+    Nextwp=self.currentwp+1
+  end
+
+  -- Debug output
+  local text=string.format("Current WP=%d/%d, next WP=%d", self.currentwp, #self.waypoints, Nextwp)
+  self:T2(self.lid..text)
+
+  -- Next waypoint.
+  local nextwp=self.waypoints[Nextwp] --Core.Point#COORDINATE
+
+  return nextwp,Nextwp
+end
+
+
+--- Update route of group, e.g after new waypoints and/or waypoint tasks have been added.
+-- @param #FLIGHTGROUP self
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:_UpdateRoute()
+
+  local wp={}
+  
+  for i=self.currentwp,#self.waypoints do
+    table.insert(wp, self.waypoints[i])
+  end
+  
+  self.flightgroup:GetTaskRoute()
+  self.flightgroup:TaskRoute(wp)
+  self.flightgroup:Route(wp, 1)
+end
+
+--- Initialize Mission Editor waypoints.
+-- @param #FLIGHTGROUP self
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:_InitWaypoints()
+
+  -- Waypoints of group as defined in the ME.
+  self.waypoints=self.flightgroup:GetTemplateRoutePoints()
+
+  -- Init array.
+  self.coordinates={}
+
+  -- Set waypoint table.
+  for i,point in ipairs(self.waypoints or {}) do
+
+    -- Coordinate of the waypoint
+    local coord=COORDINATE:New(point.x, point.alt, point.y)
+
+    -- Set velocity of the coordinate.
+    coord:SetVelocity(point.speed)
+
+    -- Add to table.
+    table.insert(self.coordinates, coord)
+
+    -- Debug info.
+    if self.Debug then
+      coord:MarkToAll(string.format("Flight %s waypoint %d, Speed=%.1f knots", self.groupname, i, UTILS.MpsToKnots(point.speed)))
+    end
+
+  end
+  
+  self.currentwp=1
+
+  return self
+end
+
+--- Function called when a group is passing a waypoint.
+--@param Wrapper.Group#GROUP group Group that passed the waypoint
+--@param #FLIGHTGROUP flightgroup Flightgroup object.
+--@param #number i Waypoint number that has been reached.
+--@param #number final Final waypoint number.
+function FLIGHGROUP._PassingWaypoint(group, flightgroup, i, final)
+
+  -- Debug message.
+  local text=string.format("Group %s passing waypoint %d of %d.", group:GetName(), i, final)
+
+  -- Debug smoke and marker.
+  if flightgroup.Debug then
+    local pos=group:GetCoordinate()
+    pos:SmokeRed()
+    local MarkerID=pos:MarkToAll(string.format("Group %s reached waypoint %d", group:GetName(), i))
+  end
+
+  -- Debug message.
+  MESSAGE:New(text,10):ToAllIf(flightgroup.Debug)
+  flightgroup:T(flightgroup.sid..text)
+
+  -- Set current waypoint.
+  flightgroup.currentwp=i
+
+  -- Passing Waypoint event.
+  flightgroup:PassingWaypoint(i)
+
+  -- If final waypoint reached, do route all over again.
+  if i==final and final>1 then
+    --TODO: final waypoint reached! what next?
+  end
+end
+
+
 
 
 --- Check if a unit is and element of the flightgroup.
@@ -1365,6 +1563,138 @@ function FLIGHTGROUP:_GetOnboardNumber(unitname)
   end
   
   return nil
+end
+
+--- Get the number of shells a unit or group currently has. For a group the ammo count of all units is summed up.
+-- @param #FLIGHTGROUP self
+-- @param #FLIGHTGROUP.Element element The element.
+-- @param #boolean display Display ammo table as message to all. Default false.
+-- @return #number Total amount of ammo the whole group has left.
+-- @return #number Number of shells left.
+-- @return #number Number of rockets left.
+-- @return #number Number of bombs left.
+-- @return #number Number of missiles left.
+function FLIGHTGROUP:GetAmmoElement(element, display)
+
+  -- Default is display false.
+  if display==nil then
+    display=false
+  end
+
+  -- Init counter.
+  local nammo=0
+  local nshells=0
+  local nrockets=0
+  local nmissiles=0
+  local nbombs=0
+  
+  local unit=element.unit
+
+
+  -- Output.
+  local text=string.format("FLIGHTGROUP group %s - unit %s:\n", self.groupname, unit:GetName())
+
+  -- Get ammo table.
+  local ammotable=unit:GetAmmo()
+
+  if ammotable then
+
+    local weapons=#ammotable
+
+    -- Display ammo table
+    if display then
+      self:E(FLIGHTGROUP.id..string.format("Number of weapons %d.", weapons))
+      self:E({ammotable=ammotable})
+      self:E(FLIGHTGROUP.id.."Ammotable:")
+      for id,bla in pairs(ammotable) do
+        self:E({id=id, ammo=bla})
+      end
+    end
+
+    -- Loop over all weapons.
+    for w=1,weapons do
+
+      -- Number of current weapon.
+      local Nammo=ammotable[w]["count"]
+
+      -- Type name of current weapon.
+      local Tammo=ammotable[w]["desc"]["typeName"]
+
+      local _weaponString = UTILS.Split(Tammo,"%.")
+      local _weaponName   = _weaponString[#_weaponString]
+
+      -- Get the weapon category: shell=0, missile=1, rocket=2, bomb=3
+      local Category=ammotable[w].desc.category
+
+      -- Get missile category: Weapon.MissileCategory AAM=1, SAM=2, BM=3, ANTI_SHIP=4, CRUISE=5, OTHER=6
+      local MissileCategory=nil
+      if Category==Weapon.Category.MISSILE then
+        MissileCategory=ammotable[w].desc.missileCategory
+      end
+      
+      -- We are specifically looking for shells or rockets here.
+      if Category==Weapon.Category.SHELL then
+
+        -- Add up all shells.
+        nshells=nshells+Nammo
+
+        -- Debug info.
+        text=text..string.format("- %d shells of type %s\n", Nammo, _weaponName)
+
+      elseif Category==Weapon.Category.ROCKET then
+
+        -- Add up all rockets.
+        nrockets=nrockets+Nammo
+
+        -- Debug info.
+        text=text..string.format("- %d rockets of type %s\n", Nammo, _weaponName)
+
+      elseif Category==Weapon.Category.BOMB then
+      
+        -- Add up all rockets.
+        nbombs=nbombs+Nammo
+
+        -- Debug info.
+        text=text..string.format("- %d bombs of type %s\n", Nammo, _weaponName)      
+
+      elseif Category==Weapon.Category.MISSILE then
+
+        -- Add up all cruise missiles (category 5)
+        if MissileCategory==Weapon.MissileCategory.AAM then
+          nmissiles=nmissiles+Nammo
+        elseif MissileCategory==Weapon.MissileCategory.ANTI_SHIP then
+          nmissiles=nmissiles+Nammo
+        elseif MissileCategory==Weapon.MissileCategory.BM then
+          nmissiles=nmissiles+Nammo
+        elseif MissileCategory==Weapon.MissileCategory.OTHER then
+          nmissiles=nmissiles+Nammo
+        end
+
+        -- Debug info.
+        text=text..string.format("- %d %s missiles of type %s\n", Nammo, self:_MissileCategoryName(MissileCategory), _weaponName)
+
+      else
+
+        -- Debug info.
+        text=text..string.format("- %d unknown ammo of type %s (category=%d, missile category=%s)\n", Nammo, Tammo, Category, tostring(MissileCategory))
+
+      end
+
+    end
+  end
+
+  -- Debug text and send message.
+  if display then
+    self:I(self.sid..text)
+  else
+    self:T3(self.sid..text)
+  end
+  MESSAGE:New(text, 10):ToAllIf(display or self.Debug)
+
+  -- Total amount of ammunition.
+  nammo=nshells+nrockets+nmissiles+nbombs
+
+  return nammo, nshells, nrockets, nbombs, nmissiles
 end
 
 
