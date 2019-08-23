@@ -5,7 +5,7 @@
 --    * Monitor flight status of elements or entire group.
 --    * Monitor fuel and ammo status.
 --    * Sophisicated task queueing system.
---    
+--
 --
 -- ===
 --
@@ -156,7 +156,7 @@ FLIGHTGROUP.version="0.0.4"
 -- TODO: Waypoints, read, add, insert, detour.
 -- TODO: Damage?
 -- TODO: shot events?
--- TODO: 
+-- TODO:
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -170,7 +170,7 @@ function FLIGHTGROUP:New(groupname)
 
   -- Inherit everything from WAREHOUSE class.
   local self=BASE:Inherit(self, FSM:New()) -- #FLIGHTGROUP
-  
+
   --self.flightgroup=AIGroup
   self.groupname=tostring(groupname)
 
@@ -179,7 +179,7 @@ function FLIGHTGROUP:New(groupname)
 
   -- Start State.
   self:SetStartState("Stopped")
-  
+
   -- Init set of detected units.
   self.detectedunits=SET_UNIT:New()
 
@@ -187,22 +187,22 @@ function FLIGHTGROUP:New(groupname)
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
   self:AddTransition("Stopped",       "Start",            "Running")     -- Start FSM.
-  
+
   self:AddTransition("*",             "FlightStatus",     "*")           -- FLIGHTGROUP status update.
   self:AddTransition("*",             "QueueUpdate",      "*")           -- Update task queue.
   self:AddTransition("*",             "AddDetectedUnit",  "*")           -- Add a newly detected unit to the detected units set.
   self:AddTransition("*",             "LostDetectedUnit", "*")           -- Group lost a detected target.
-  
+
   self:AddTransition("*",             "RTB",              "Returning")   -- Group is returning to base.
   self:AddTransition("*",             "Orbit",            "Orbiting")    -- Group is holding position.
-  
+
   self:AddTransition("*",             "PassingWaypoint",  "*")           -- Group passed a waypoint.
-  
+
   self:AddTransition("*",             "TaskExecute",      "Airborne")    -- Group will execute a task.
   self:AddTransition("*",             "TaskDone",         "Airborne")    -- Group finished a task.
   self:AddTransition("*",             "TaskCancel",       "Airborne")    -- Cancel current task.
-  self:AddTransition("*",             "TaskPause",        "Airborne")    -- Pause current task.  
-    
+  self:AddTransition("*",             "TaskPause",        "Airborne")    -- Pause current task.
+
   self:AddTransition("*",             "ElementSpawned",   "*")           -- An element was spawned.
   self:AddTransition("*",             "ElementParking",   "*")           -- An element was spawned.
   self:AddTransition("*",             "ElementTaxiing",   "*")           -- An element spooled up the engines.
@@ -210,9 +210,9 @@ function FLIGHTGROUP:New(groupname)
   self:AddTransition("*",             "ElementLanded",    "*")           -- An element landed.
   self:AddTransition("*",             "ElementArrived",   "*")           -- An element arrived.
   self:AddTransition("*",             "ElementDead",      "*")           -- An element crashed, ejected, or pilot dead.
-  
+
   self:AddTransition("*",             "ElementOutOfAmmo", "*")           -- An element is completely out of ammo.
-  
+
   self:AddTransition("*",             "FlightSpawned",    "Spawned")     -- The whole flight group is airborne.
   self:AddTransition("*",             "FlightParking",    "Parking")     -- The whole flight group is airborne.
   self:AddTransition("*",             "FlightTaxiing",    "Taxiing")     -- The whole flight group is airborne.
@@ -220,9 +220,9 @@ function FLIGHTGROUP:New(groupname)
   self:AddTransition("*",             "FlightLanded",     "Landed")      -- The whole flight group has landed.
   self:AddTransition("*",             "FlightArrived",    "Arrived")     -- The whole flight group has arrived.
   self:AddTransition("*",             "FlightDead",       "Dead")        -- The whole flight group is dead.
-  
+
   self:AddTransition("*",             "FlightOutOfAmmo",  "*")           -- Flight is completely out of ammo.
-  
+
   ------------------------
   --- Pseudo Functions ---
   ------------------------
@@ -262,7 +262,7 @@ function FLIGHTGROUP:New(groupname)
     BASE:TraceLevel(1)
   end
   self.Debug=true
-  
+
   -- Check if the group is already alive and if so, add its elements.
   -- TODO: move this to start?
   local group=GROUP:FindByName(groupname)
@@ -273,15 +273,15 @@ function FLIGHTGROUP:New(groupname)
       local unit=_unit --Wrapper.Unit#UNIT
       local element=self:AddElementByName(unit:GetName())
 
-      -- Trigger Spawned event. Delay a bit to start 
+      -- Trigger Spawned event. Delay a bit to start
       self:__ElementSpawned(0.1, element)
-      
+
     end
   end
-  
+
   self.taskcurrent=0
   self.taskcounter=0
-  
+
   -- Autostart.
   self:Start()
 
@@ -304,7 +304,7 @@ function FLIGHTGROUP:AddTask(description, task, prio, clock)
 
   -- Increase coutner.
   self.taskcounter=self.taskcounter+1
-  
+
   -- Set time.
   local time=timer.getAbsTime()+60
   if clock then
@@ -323,9 +323,9 @@ function FLIGHTGROUP:AddTask(description, task, prio, clock)
   newtask.prio=prio or 50
   newtask.time=time
   newtask.id=self.taskcounter
-  
+
   self:T2({newtask=newtask})
-  
+
   -- Add to table.
   table.insert(self.taskqueue, newtask)
 
@@ -421,7 +421,7 @@ function FLIGHTGROUP:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.PilotDead,      self.OnEventPilotDead)
   self:HandleEvent(EVENTS.Ejection,       self.OnEventEjection)
   self:HandleEvent(EVENTS.Crash,          self.OnEventCrash)
-  
+
   self.taskcounter=0
 
   -- Start the status monitoring.
@@ -438,10 +438,10 @@ end
 function FLIGHTGROUP:onafterFlightSpawned(From, Event, To, Group)
 
   self.template=self.flightgroup:GetTemplate()
-  
+
   -- Init waypoints.
   self:_InitWaypoints()
-  
+
 end
 
 --- On after "FlightStatus" event.
@@ -456,9 +456,9 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   local fsmstate=self:GetState()
 
   -- Short info.
-  local text=string.format("Flight group status %s.", fsmstate)
+  local text=string.format("Flight group status %s. Task=%d", fsmstate, self.taskcurrent)
   self:I(self.sid..text)
-  
+
   -- Element status.
   text="Elements:"
   for i,_element in pairs(self.element) do
@@ -468,12 +468,12 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
     local unit=element.unit
     local fuel=unit:GetFuel() or 0
     local life=unit:GetLifeRelative() or 0
-    
+
     -- Check if element is not dead and we missed an event.
     if life<0 and element.status~=FLIGHTGROUP.ElementStatus.DEAD then
       self:ElementDead(element)
     end
-    
+
     -- Output text for element.
     text=text..string.format("\n[%d] %s: status=%s, fuel=%.1f, life=%.1f", i, name, status, fuel*100, life*100)
   end
@@ -481,7 +481,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
     text=text.." none!"
   end
   self:I(text)
-  
+
   -- Task queue.
   text="Tasks:"
   for i,_task in pairs(self.taskqueue) do
@@ -497,8 +497,8 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
     text=text.." none!"
   end
   self:I(text)
-  
-  
+
+
   -- Next check in ~30 seconds.
   self:__FlightStatus(-30)
 end
@@ -513,17 +513,17 @@ function FLIGHTGROUP:onafterQueueUpdate(From, Event, To)
 
   -- Check no current task.
   if self.taskcurrent<=0 then
-  
+
     -- Get task from queue.
     local task=self:GetTask()
-    
+
     -- Execute task if any.
     if task then
       self:TaskExecute(task)
     end
-          
+
   end
-  
+
   self:__QueueUpdate(-1)
 end
 
@@ -541,16 +541,16 @@ function FLIGHTGROUP:OnEventBirth(EventData)
     local unit=EventData.IniUnit
     local group=EventData.IniGroup
     local unitname=EventData.IniUnitName
-    
+
     self.flightgroup=self.flightgroup or EventData.IniGroup
-    
+
     if not self:_IsElement(unitname) then
       local element=self:AddElementByName(unitname)
       self:ElementSpawned(element)
     end
-    
+
   end
-  
+
 end
 
 --- Flightgroup event function handling the crash of a unit.
@@ -562,18 +562,18 @@ function FLIGHTGROUP:OnEventEngineStartup(EventData)
   if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
     local unit=EventData.IniUnit
     local group=EventData.IniGroup
-    local unitname=EventData.IniUnitName  
+    local unitname=EventData.IniUnitName
 
     -- Get element.
     local element=self:GetElementByName(unitname)
 
     if element then
       self:I(self.sid..string.format("Element %s started engines ==> taxiing", element.name))
-      self:ElementTaxiing(element)         
+      self:ElementTaxiing(element)
     end
-  
+
   end
-  
+
 end
 
 --- Flightgroup event function handling the crash of a unit.
@@ -585,18 +585,18 @@ function FLIGHTGROUP:OnEventTakeOff(EventData)
   if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
     local unit=EventData.IniUnit
     local group=EventData.IniGroup
-    local unitname=EventData.IniUnitName  
+    local unitname=EventData.IniUnitName
 
     -- Get element.
     local element=self:GetElementByName(unitname)
 
     if element then
-      self:I(self.sid..string.format("EVENT: Element %s took off ==> airborne", element.name))      
-      self:ElementAirborne(element)      
+      self:I(self.sid..string.format("EVENT: Element %s took off ==> airborne", element.name))
+      self:ElementAirborne(element)
     end
-  
+
   end
-  
+
 end
 
 --- Flightgroup event function handling the crash of a unit.
@@ -608,13 +608,13 @@ function FLIGHTGROUP:OnEventLanding(EventData)
   if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
     local unit=EventData.IniUnit
     local group=EventData.IniGroup
-    local unitname=EventData.IniUnitName  
+    local unitname=EventData.IniUnitName
 
     -- Get element.
     local element=self:GetElementByName(unitname)
-    
+
     local airbase=EventData.Place
-    
+
     local airbasename="unknown"
     if airbase then
       airbasename=tostring(airbase:GetName())
@@ -624,9 +624,9 @@ function FLIGHTGROUP:OnEventLanding(EventData)
       self:I(self.sid..string.format("EVENT: Element %s landed at %s ==> landed", element.name, airbasename))
       self:ElementLanded(element, airbase)
     end
-  
+
   end
-  
+
 end
 
 --- Flightgroup event function handling the crash of a unit.
@@ -638,7 +638,7 @@ function FLIGHTGROUP:OnEventEngineShutdown(EventData)
   if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
     local unit=EventData.IniUnit
     local group=EventData.IniGroup
-    local unitname=EventData.IniUnitName  
+    local unitname=EventData.IniUnitName
 
     -- Get element.
     local element=self:GetElementByName(unitname)
@@ -652,12 +652,12 @@ function FLIGHTGROUP:OnEventEngineShutdown(EventData)
         self:I(self.sid..string.format("Element %s shut down engines ==> arrived", element.name))
       else
         self:I(self.sid..string.format("Element %s shut down engines (in air) ==> dead", element.name))
-        self:ElementDead(element)        
+        self:ElementDead(element)
       end
     end
-  
+
   end
-  
+
 end
 
 
@@ -677,11 +677,11 @@ function FLIGHTGROUP:OnEventCrash(EventData)
 
     if element then
       self:I(self.sid..string.format("Element %s crashed ==> dead", element.name))
-      self:ElementDead(element)      
+      self:ElementDead(element)
     end
 
   end
-  
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -696,10 +696,10 @@ end
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 function FLIGHTGROUP:onafterElementSpawned(From, Event, To, Element)
   self:I(self.sid..string.format("Element spawned %s.", Element.name))
-  
+
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.SPAWNED)
-  
+
   if Element.unit:InAir() then
     self:ElementAirborne(Element)
   else
@@ -715,7 +715,7 @@ end
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 function FLIGHTGROUP:onafterElementParking(From, Event, To, Element)
   self:I(self.sid..string.format("Element parking %s.", Element.name))
-  
+
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.PARKING)
 end
@@ -728,7 +728,7 @@ end
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 function FLIGHTGROUP:onafterElementTaxiing(From, Event, To, Element)
   self:I(self.sid..string.format("Element taxiing %s.", Element.name))
-  
+
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.TAXIING)
 end
@@ -741,7 +741,7 @@ end
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 function FLIGHTGROUP:onafterElementAirborne(From, Event, To, Element)
   self:I(self.sid..string.format("Element airborne %s.", Element.name))
-  
+
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.AIRBORNE)
 end
@@ -754,7 +754,7 @@ end
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 function FLIGHTGROUP:onafterElementLanded(From, Event, To, Element)
   self:I(self.sid..string.format("Element landed %s.", Element.name))
-  
+
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.LANDED)
 end
@@ -767,7 +767,7 @@ end
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 function FLIGHTGROUP:onafterElementArrived(From, Event, To, Element)
   self:I(self.sid..string.format("Element arrived %s.", Element.name))
-  
+
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.ARRIVED)
 end
@@ -785,7 +785,7 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase)
   local text=string.format("Flight group returning to airbase %s.", airbase:GetName())
   MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
   self:I(self.sid..text)
-      
+
   -- Route helo back home. It is respawned! But this is the only way to ensure that it actually lands at the airbase.
   self:RouteRTB(airbase)
 end
@@ -802,7 +802,7 @@ function FLIGHTGROUP:onafterOrbit(From, Event, To, Coord)
   local text=string.format("Flight group returning to airbase %s.", airbase:GetName())
   MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
   self:I(self.sid..text)
-      
+
   -- Route helo back home. It is respawned! But this is the only way to ensure that it actually lands at the airbase.
   self:RouteRTB(airbase)
 end
@@ -819,28 +819,28 @@ function FLIGHTGROUP:onafterTaskExecute(From, Event, To, Task)
   local text=string.format("Task %s ID=%d execute.", Task.description, Task.id)
   MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
   self:I(self.sid..text)
-  
+
   -- Set current task.
   self.taskcurrent=Task.id
 
   -- Clear all tasks.
   self.flightgroup:ClearTasks()
-  
+
   local Coord=self.flightgroup:GetCoordinate()
-    
+
   -- Task done.
   local TaskDone=self.flightgroup:TaskFunction("FLIGHTGROUP._TaskDone", self, Task)
   local TaskOrbit=self.flightgroup:TaskOrbit(Coord, 10000)
-    
-  -- Combo task.        
+
+  -- Combo task.
   local TaskCombo=self.flightgroup:TaskCombo({Task.dcstask, TaskDone, TaskOrbit})
-    
+
   -- Set task for group.
   self.flightgroup:SetTask(TaskCombo, 1)
-    
+
   -- Task status executing.
   Task.status=FLIGHTGROUP.TaskStatus.EXECUTING
-  
+
 end
 
 
@@ -856,12 +856,12 @@ function FLIGHTGROUP:onafterTaskPause(From, Event, To, Task)
 
     -- Clear all tasks.
     self.flightgroup:ClearTasks()
-        
+
     -- Task status executing.
     Task.status=1 --FLIGHTGROUP.TaskStatus.PAUSED
-    
+
   end
-  
+
 end
 
 
@@ -904,7 +904,7 @@ end
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 function FLIGHTGROUP:onafterElementDead(From, Event, To, Element)
   self:I(self.sid..string.format("Element dead %s.", Element.name))
-  
+
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.DEAD)
 end
@@ -920,29 +920,29 @@ function FLIGHTGROUP:GetTask()
   if #self.taskqueue==0 then
     return nil
   else
-  
+
     -- Sort results table wrt times they have already been engaged.
     local function _sort(a, b)
       local taskA=a --#FLIGHTGROUP.Task
       local taskB=b --#FLIGHTGROUP.Task
       return (taskA.time<taskB.time) or (taskA.time==taskB.time and taskA.prio<taskB.prio)
     end
-    
+
     table.sort(self.taskqueue, _sort)
-    
+
     local time=timer.getAbsTime()
-    
+
     -- Look for first task that is not accomplished.
     for _,_task in pairs(self.taskqueue) do
       local task=_task --#FLIGHTGROUP.Task
-      if task.status~=FLIGHTGROUP.TaskStatus.ACCOMPLISHED and task.time>=time then
+      if task.status~=FLIGHTGROUP.TaskStatus.ACCOMPLISHED and time>=task.time then
         return task
       end
     end
-    
+
   end
-  
-  return nil  
+
+  return nil
 end
 
 
@@ -971,30 +971,30 @@ function FLIGHTGROUP:TaskIntercept(bandit)
 
   -- Task orbit.
   local tasks={}
-  
+
   for _,unit in pairs(bandit:GetUnits()) do
     tasks[#tasks+1]=self.flightgroup:TaskAttackUnit(unit)
   end
-  
+
   -- Passing waypoint task function.
-  tasks[#tasks+1]=self.flightgroup:TaskFunction("FLIGHTGROUP._TaskDone", self)  
-  
+  tasks[#tasks+1]=self.flightgroup:TaskFunction("FLIGHTGROUP._TaskDone", self)
+
   local speed=self.flightgroup:GetSpeedMax()
   local altitude=bandit:GetAltitude()
-  
+
   -- Create waypoints.
   local wp={}
   wp[1]=self:GetCoordinate():WaypointAirTakeOffParking()
   wp[2]=self:GetCoordinate():SetAltitude(altitude):WaypointAirTurningPoint(COORDINATE.WaypointAltType.BARO, speed, {tasks}, "Intercept")
-  
+
   -- Start uncontrolled group.
   self.flightgroup:StartUncontrolled()
-  
+
   --FLIGHTGROUP:SetExcludeAI()
-  
+
   -- Route group
   self.flightgroup:Route(wp)
-  
+
 end
 
 --- Route flight group back to base.
@@ -1006,41 +1006,41 @@ function FLIGHTGROUP:RouteRTB(RTBAirbase, Speed, Altitude)
 
   -- If speed is not given take 80% of max speed.
   local Speed=Speed or self.flightgroup:GetSpeedMax()*0.8
-  
+
   -- Curent (from) waypoint.
   local coord=self.flightgroup:GetCoordinate()
-  
+
   if Altitude then
     coord:SetAltitude(Altitude)
   end
-  
+
   -- Current coordinate.
   local PointFrom=coord:WaypointAirTurningPoint(nil, Speed, {}, "Current")
-  
+
   -- Overhead pass.
   local PointOverhead=RTBAirbase:GetCoordinate():SetAltitude(Altitude or coord.y):WaypointAirTurningPoint(nil, Speed, {}, "Overhead Pass")
-  
+
   -- Landing waypoint.
   local PointLanding=RTBAirbase:GetCoordinate():SetAltitude(20):WaypointAirLanding(Speed, RTBAirbase, {}, "Landing")
-  
+
   -- Waypoint table.
   local Points={PointFrom, PointOverhead, PointLanding}
-  
+
   -- Get group template.
   local Template=self.flightgroup:GetTemplate()
-  
+
   -- Set route points.
   Template.route.points=Points
-  
+
   -- Set modex for respawn.
-  --self.flightgroup:InitModex(self.modex)          
-    
+  --self.flightgroup:InitModex(self.modex)
+
   -- Respawn the group.
   self.flightgroup=self.flightgroup:Respawn(Template, true)
-  
+
   -- Route the group or this will not work.
   self.flightgroup:Route(Points, 1)
-  
+
 end
 
 
@@ -1054,29 +1054,29 @@ function FLIGHTGROUP:RouteOrbit(CoordOrbit, Speed, Altitude, CoordRaceTrack)
 
   -- If speed is not given take 80% of max speed.
   local Speed=Speed or self.flightgroup:GetSpeedMax()*0.6
-  
+
   -- Altitude.
   local altitude=Altitude or UTILS.FeetToMeters(10000)
-  
+
   -- Waypoints.
   local wp={}
-  
+
   -- Current coordinate.
   wp[1]=self.flightgroup:GetCoordinate():SetAltitude(altitude):WaypointAirTurningPoint(nil, Speed, {}, "Current")
-  
+
   -- Orbit
   wp[2]=CoordOrbit:SetAltitude(altitude):WaypointAirTurningPoint(nil, Speed, {}, "Orbit")
-  
-  
-  local TaskOrbit=self.flightgroup:TaskOrbit(CoordOrbit, altitude, Speed, CoordRaceTrack)  
+
+
+  local TaskOrbit=self.flightgroup:TaskOrbit(CoordOrbit, altitude, Speed, CoordRaceTrack)
   local TaskRoute=self.flightgroup:TaskRoute(wp)
-  
+
   --local TaskCondi=self.flightgroup:TaskCondition(time,userFlag,userFlagValue,condition,duration,lastWayPoint)
-  
+
   local TaskCombo=self.flightgroup:TaskControlled(TaskRoute, TaskOrbit)
-  
+
   self.flightgroup:SetTask(TaskCombo, 1)
-  
+
   -- Route the group or this will not work.
   --self.flightgroup:Route(wp, 1)
 end
@@ -1093,18 +1093,18 @@ end
 function FLIGHTGROUP:AddElementByName(unitname)
 
   local unit=UNIT:FindByName(unitname)
-  
+
   if unit then
-  
+
     local element={} --#FLIGHTGROUP.Element
-    
+
     element.name=unitname
     element.unit=unit
     element.status="unknown"
     element.group=unit:GetGroup()
-    
+
     table.insert(self.element, element)
-    
+
     return element
   end
 
@@ -1119,11 +1119,11 @@ function FLIGHTGROUP:GetElementByName(unitname)
 
   for _,_element in pairs(self.element) do
     local element=_element --#FLIGHTGROUP.Element
-    
+
     if element.name==unitname then
       return element
     end
-  
+
   end
 
   return nil
@@ -1137,14 +1137,14 @@ end
 function FLIGHTGROUP:GetTaskByID(id, status)
 
   for _,_task in pairs(self.taskqueue) do
-    local task=_task --#FLIGHTGROUP.Task    
-    
+    local task=_task --#FLIGHTGROUP.Task
+
     if task.id==id then
       if status==nil or status==task.status then
         return task
       end
     end
-  
+
   end
 
   return nil
@@ -1182,11 +1182,11 @@ end
 function FLIGHTGROUP:_UpdateRoute()
 
   local wp={}
-  
+
   for i=self.currentwp,#self.waypoints do
     table.insert(wp, self.waypoints[i])
   end
-  
+
   self.flightgroup:GetTaskRoute()
   self.flightgroup:TaskRoute(wp)
   self.flightgroup:Route(wp, 1)
@@ -1221,7 +1221,7 @@ function FLIGHTGROUP:_InitWaypoints()
     end
 
   end
-  
+
   self.currentwp=1
 
   return self
@@ -1271,11 +1271,11 @@ function FLIGHTGROUP:_IsElement(unitname)
 
   for _,_element in pairs(self.element) do
     local element=_element --#FLIGHTGROUP.Element
-    
+
     if element.name==unitname then
       return true
     end
-  
+
   end
 
   return false
@@ -1288,16 +1288,16 @@ function FLIGHTGROUP:_AllSameStatus(status)
 
   for _,_element in pairs(self.element) do
     local element=_element --#FLIGHTGROUP.Element
-    
+
     if element.status==FLIGHTGROUP.ElementStatus.DEAD then
       -- Do nothing. Element is already dead and does not count.
     elseif element.status~=status then
       -- At least this element has a different status.
       return false
     end
-  
+
   end
-  
+
   return true
 end
 
@@ -1308,39 +1308,39 @@ end
 function FLIGHTGROUP:_AllSimilarStatus(status)
 
   local similar=true
-  
+
   for _,_element in pairs(self.element) do
     local element=_element --#FLIGHTGROUP.Element
-    
+
     -- Dead units dont count.
     if element.status~=FLIGHTGROUP.ElementStatus.DEAD then
-    
+
       if status==FLIGHTGROUP.ElementStatus.SPAWNED then
-      
+
         -- Element SPAWNED: Nothing to check.
         if element.status~=status then
-        
+
         end
-        
+
       elseif status==FLIGHTGROUP.ElementStatus.PARKING then
-      
+
         -- Element PARKING: Check that the other are not stil SPAWNED
         if element.status~=status and
           element.status==FLIGHTGROUP.ElementStatus.SPAWNED  then
-          return false        
+          return false
         end
-        
+
       elseif status==FLIGHTGROUP.ElementStatus.TAXIING then
-      
+
         -- Element TAXIING: Check that the other are not stil SPAWNED or PARKING
         if element.status~=status and
           element.status==FLIGHTGROUP.ElementStatus.SPAWNED or
           element.status==FLIGHTGROUP.ElementStatus.PARKING then
-          return false        
-        end    
+          return false
+        end
 
       elseif status==FLIGHTGROUP.ElementStatus.AIRBORNE then
-      
+
         -- Element AIRBORNE: Check that the other are not stil SPAWNED, PARKING or TAXIING
         if element.status~=status and
           element.status==FLIGHTGROUP.ElementStatus.SPAWNED or
@@ -1348,37 +1348,37 @@ function FLIGHTGROUP:_AllSimilarStatus(status)
           element.status==FLIGHTGROUP.ElementStatus.TAXIING then
           return false
         end
-              
+
       elseif status==FLIGHTGROUP.ElementStatus.LANDED then
-        
+
         -- Element LANDED: check that the others are not stil AIRBORNE
         if element.status~=status and
           element.status==FLIGHTGROUP.ElementStatus.AIRBORNE then
           return false
         end
-        
+
       elseif status==FLIGHTGROUP.ElementStatus.ARRIVED then
-      
+
         -- Element ARRIVED: check that the others are not stil AIRBORNE or TAXIING
         if element.status~=status and
           element.status==FLIGHTGROUP.ElementStatus.AIRBORNE or
           element.status==FLIGHTGROUP.ElementStatus.TAXIING  then
           return false
         end
-        
-      end  
-      
+
+      end
+
       if element.status==FLIGHTGROUP.ElementStatus.DEAD then
         -- Do nothing. Element is already dead and does not count.
       elseif element.status~=status then
         -- At least this element has a different status.
         return false
       end
-      
+
     end --DEAD
-  
+
   end
-  
+
   return true
 end
 
@@ -1393,18 +1393,18 @@ function FLIGHTGROUP:_UpdateStatus(element, newstatus)
 
   -- Update status of element.
   element.status=newstatus
-  
+
   local group=element.group
-  
+
   if newstatus==FLIGHTGROUP.ElementStatus.SPAWNED then
     ---
     -- SPAWNED
     ---
-    
+
     if self:_AllSimilarStatus(newstatus) then
       self:FlightSpawned(group)
     end
-    
+
     --[[
     if element.unit:InAir() then
       self:ElementAirborne(element)
@@ -1420,71 +1420,71 @@ function FLIGHTGROUP:_UpdateStatus(element, newstatus)
 
     if self:_AllSimilarStatus(newstatus) then
       self:FlightParking(group)
-    end  
-      
+    end
+
   elseif newstatus==FLIGHTGROUP.ElementStatus.TAXIING then
     ---
     -- TAXIING
     ---
-   
+
     if self:_AllSimilarStatus(newstatus) then
       self:FlightTaxiing(group)
     end
-    
+
   elseif newstatus==FLIGHTGROUP.ElementStatus.AIRBORNE then
     ---
     -- AIRBORNE
     ---
-   
+
     if self:_AllSimilarStatus(newstatus) then
-    
+
       if self:IsTaxiing() then
         self:FlightAirborne(group)
       elseif self:IsParking() then
         --self:FlightTaxiing(group)
         self:FlightAirborne(group)
       elseif self:IsSpawned() then
-        --self:FlightParking(group)      
+        --self:FlightParking(group)
         --self:FlightTaxiing(group)
-        self:FlightAirborne(group)      
+        self:FlightAirborne(group)
       end
-      
+
     end
 
   elseif newstatus==FLIGHTGROUP.ElementStatus.LANDED then
     ---
     -- LANDED
     ---
-    
+
     if self:_AllSimilarStatus(newstatus) then
       self:FlightLanded(group)
     end
-    
+
   elseif newstatus==FLIGHTGROUP.ElementStatus.ARRIVED then
     ---
     -- ARRIVED
     ---
-    
+
     if self:_AllSimilarStatus(newstatus) then
-      
+
       if self:IsLanded() then
         self:FlightArrived(group)
       elseif self:IsAirborne() then
         self:FlightLanded(group)
         self:FlightArrived(group)
       end
-        
+
     end
- 
+
   elseif newstatus==FLIGHTGROUP.ElementStatus.DEAD then
     ---
     -- DEAD
     ---
-    
+
     if self:_AllSimilarStatus(newstatus) then
       self:FlightDead(group)
     end
-        
+
   end
 end
 
@@ -1494,14 +1494,14 @@ end
 function FLIGHTGROUP:_CheckDetectedUnits()
 
   if self.flightgroup and not self:IsDead() then
-  
+
     -- Get detected DCS units.
     local detectedtargets=self.flightgroup:GetDetectedTargets()
-    
+
     local detected={}
     for DetectionObjectID, Detection in pairs(detectedtargets or {}) do
       local DetectedObject=Detection.object -- DCS#Object
-            
+
       if DetectedObject and DetectedObject:isExist() and DetectedObject.id_<50000000 then
         local unit=UNIT:Find(DetectedObject)
         if unit and unit:IsAlive() then
@@ -1516,11 +1516,11 @@ function FLIGHTGROUP:_CheckDetectedUnits()
         end
       end
     end
-    
+
     -- Loop over units in detected set.
     for _,_unit in pairs(self.detectedunits:GetSet()) do
       local unit=_unit --Wrapper.Unit#UNIT
-      
+
       -- Loop over detected units
       local gotit=false
       for _,_du in pairs(detected) do
@@ -1529,13 +1529,13 @@ function FLIGHTGROUP:_CheckDetectedUnits()
           gotit=true
         end
       end
-      
+
       if not gotit then
         self:LostDetectedUnit(unit)
       end
-      
+
     end
-  
+
   end
 
 
@@ -1555,13 +1555,13 @@ function FLIGHTGROUP:_GetOnboardNumber(unitname)
   -- Get numbers.
   local numbers={}
   for _,unit in pairs(units) do
-    
+
     if unitname==unit.name then
       return tostring(unit.onboard_num)
     end
 
   end
-  
+
   return nil
 end
 
@@ -1587,7 +1587,7 @@ function FLIGHTGROUP:GetAmmoElement(element, display)
   local nrockets=0
   local nmissiles=0
   local nbombs=0
-  
+
   local unit=element.unit
 
 
@@ -1631,7 +1631,7 @@ function FLIGHTGROUP:GetAmmoElement(element, display)
       if Category==Weapon.Category.MISSILE then
         MissileCategory=ammotable[w].desc.missileCategory
       end
-      
+
       -- We are specifically looking for shells or rockets here.
       if Category==Weapon.Category.SHELL then
 
@@ -1650,12 +1650,12 @@ function FLIGHTGROUP:GetAmmoElement(element, display)
         text=text..string.format("- %d rockets of type %s\n", Nammo, _weaponName)
 
       elseif Category==Weapon.Category.BOMB then
-      
+
         -- Add up all rockets.
         nbombs=nbombs+Nammo
 
         -- Debug info.
-        text=text..string.format("- %d bombs of type %s\n", Nammo, _weaponName)      
+        text=text..string.format("- %d bombs of type %s\n", Nammo, _weaponName)
 
       elseif Category==Weapon.Category.MISSILE then
 
