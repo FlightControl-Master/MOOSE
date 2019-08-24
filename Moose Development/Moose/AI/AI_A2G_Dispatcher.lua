@@ -4292,7 +4292,7 @@ do -- AI_A2G_DISPATCHER
         
         for DefenseQueueID, DefenseQueueItem in pairs( self.DefenseQueue ) do
           local DefenseQueueItem = DefenseQueueItem -- #AI_A2G_DISPATCHER.DefenseQueueItem
-          if DefenseQueueItem.AttackerDetection.Index == DetectedItem.Index then
+          if DefenseQueueItem.AttackerDetection and DefenseQueueItem.AttackerDetection.Index and DefenseQueueItem.AttackerDetection.Index == DetectedItem.Index then
             DefenseTotal = DefenseTotal + 1
           end
         end
