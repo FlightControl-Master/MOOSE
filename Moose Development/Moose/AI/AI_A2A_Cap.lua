@@ -278,6 +278,8 @@ function AI_A2A_CAP:New( AICap, PatrolZone, PatrolFloorAltitude, PatrolCeilingAl
   -- @param #AI_A2A_CAP self
   -- @param #number Delay The delay in seconds.  
 
+  self:AddTransition( { "Patrolling", "Engaging" }, "Refuel", "Refuelling" ) 
+
   return self
 end
 

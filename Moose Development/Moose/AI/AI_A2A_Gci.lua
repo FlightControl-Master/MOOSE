@@ -279,6 +279,8 @@ function AI_A2A_GCI:New( AIIntercept, EngageMinSpeed, EngageMaxSpeed )
   -- @param #AI_A2A_GCI self
   -- @param #number Delay The delay in seconds.  
 
+  self:AddTransition( { "Patrolling", "Engaging" }, "Refuel", "Refuelling" ) 
+
   return self
 end
 

@@ -316,8 +316,8 @@ function AI_A2G_PATROL.Resume( AIPatrol, Fsm )
 
   AIPatrol:F( { "AI_A2G_PATROL.Resume:", AIPatrol:GetName() } )
   if AIPatrol:IsAlive() then
-    Fsm:__Reset( self.TaskDelay )
-    Fsm:__PatrolRoute( self.TaskDelay )
+    Fsm:__Reset( Fsm.TaskDelay )
+    Fsm:__PatrolRoute( Fsm.TaskDelay )
   end
   
 end
