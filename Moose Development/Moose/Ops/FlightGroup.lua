@@ -52,8 +52,8 @@ FLIGHTGROUP = {
   flightgroup    =   nil,
   grouptemplate  =   nil,
   type           =   nil,
-  waypoints      =   nil,
-  coordinates    =   nil,
+  waypoints      =    {},
+  coordinates    =    {},
   element        =    {},
   taskqueue      =    {},
   taskcounter    =   nil,
@@ -95,7 +95,7 @@ FLIGHTGROUP.ElementStatus={
 -- @field #string skill Skill level.
 -- @field Wrapper.Unit#UNIT unit Element unit object.
 -- @field Wrapper.Group#GROUP group Group object of the element.
--- @field #string status Status, i.e. born, parking, taxiing.
+-- @field #string status Status, i.e. born, parking, taxiing. See @{#FLIGHTGROUP.ElementStatus}.
 
 --- Flight group tasks.
 -- @type FLIGHTGROUP.Mission
@@ -136,6 +136,8 @@ FLIGHTGROUP.TaskStatus={
 -- @field #table dcstask DCS task structure.
 -- @field #string description Brief text which describes the task.
 -- @field #string status Task status.
+-- @field #number duration Duration before task is cancelled in seconds. Default never.
+-- @field #number timestamp Abs. mission time, when task was started. 
 
 
 --- FLIGHTGROUP class version.
@@ -298,15 +300,16 @@ end
 -- @param #string description Brief text describing the task, e.g. "Attack SAM".
 -- @param #table task DCS task table stucture.
 -- @param #number prio Priority of the task.
--- @param #string clock Mission time when task is executed. Default in 60 seconds. If argument passed as #number, it defines a relative delay in seconds.
+-- @param #string clock Mission time when task is executed. Default in 5 seconds. If argument passed as #number, it defines a relative delay in seconds.
+-- @param #number duration Duration before task is cancelled in seconds counted after task started. Default never.
 -- @return #FLIGHTGROUP self
-function FLIGHTGROUP:AddTask(description, task, prio, clock)
+function FLIGHTGROUP:AddTask(description, task, prio, clock, duration)
 
   -- Increase coutner.
   self.taskcounter=self.taskcounter+1
 
   -- Set time.
-  local time=timer.getAbsTime()+60
+  local time=timer.getAbsTime()+5
   if clock then
     if type(clock)=="string" then
       time=UTILS.ClockToSeconds(clock)
@@ -323,6 +326,7 @@ function FLIGHTGROUP:AddTask(description, task, prio, clock)
   newtask.prio=prio or 50
   newtask.time=time
   newtask.id=self.taskcounter
+  newtask.duration=duration
 
   self:T2({newtask=newtask})
 
@@ -428,7 +432,7 @@ function FLIGHTGROUP:onafterStart(From, Event, To)
   self:__FlightStatus(-1)
 end
 
---- On after Start event. Starts the FLIGHTGROUP FSM and event handlers.
+--- On after "FlightSpawned" event. Sets the template, initializes the waypoints.
 -- @param #FLIGHTGROUP self
 -- @param Wrapper.Group#GROUP Group Flight group.
 -- @param #string From From state.
@@ -437,10 +441,27 @@ end
 -- @param Wrapper.Group#GROUP Group The group object.
 function FLIGHTGROUP:onafterFlightSpawned(From, Event, To, Group)
 
+  -- Get template of group.
   self.template=self.flightgroup:GetTemplate()
 
   -- Init waypoints.
   self:_InitWaypoints()
+  
+  -- Route flight group but now with passing waypoint tasks.
+  self.flightgroup:Route(self.waypoints)
+end
+
+--- On after "FlightAirborne" event.
+-- @param #FLIGHTGROUP self
+-- @param Wrapper.Group#GROUP Group Flight group.
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Wrapper.Group#GROUP Group The group object.
+function FLIGHTGROUP:onafterFlightAirborne(From, Event, To, Group)
+
+  -- Update
+  self:__QueueUpdate(-1)
 
 end
 
@@ -456,7 +477,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   local fsmstate=self:GetState()
 
   -- Short info.
-  local text=string.format("Flight group status %s. Task=%d", fsmstate, self.taskcurrent)
+  local text=string.format("Flight status %s. Task=%d. Waypoint=%d/%d.", fsmstate, self.taskcurrent, self.currentwp or 0, #self.waypoints or 0)
   self:I(self.sid..text)
 
   -- Element status.
@@ -483,18 +504,25 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   self:I(text)
 
   -- Task queue.
-  text="Tasks:"
+  text=string.format("Tasks #%d", #self.taskqueue)
   for i,_task in pairs(self.taskqueue) do
     local task=_task --#FLIGHTGROUP.Task
     local name=task.description
     local status=task.status
     local clock=UTILS.SecondsToClock(task.time)
     local eta=task.time-timer.getAbsTime()
+    local started=UTILS.SecondsToClock(task.timestamp or 0)
+    local duration=-1
+    if task.duration then
+      duration=task.duration
+      if task.timestamp then
+        duration=task.duration-(timer.getAbsTime()-task.timestamp)
+      else
+        duration=task.duration
+      end
+    end
     -- Output text for element.
-    text=text..string.format("\n[%d] %s: status=%s, scheduled at %s (ETA %d seconds)", i, name, status, clock, eta)
-  end
-  if #self.taskqueue==0 then
-    text=text.." none!"
+    text=text..string.format("\n[%d] %s: status=%s, scheduled=%s (%d sec), started=%s, duration=%s", i, name, status, clock, eta, started, duration)
   end
   self:I(text)
 
@@ -521,10 +549,30 @@ function FLIGHTGROUP:onafterQueueUpdate(From, Event, To)
     if task then
       self:TaskExecute(task)
     end
+    
+  else
+  
+    -- Get current task.
+    local task=self:GetTaskCurrent()
+    
+    -- Check if task has a defined duration.
+    if task and task.duration and task.timestamp then
+          
+      -- Check if max task duration is over.
+      local cancel=timer.getAbsTime()>task.timestamp+task.duration
+      
+      --self:E(string.format("FF timestap=%d , duration=%d, time=%d, stamp+duration=%s < time = %s", task.timestamp, task.duration, timer.getAbsTime(), task.timestamp+task.duration, tostring(cancel)))
+      
+      -- Cancel task if task is running longer than duration.
+      if cancel then
+        self:TaskCancel()
+      end
+    end
 
   end
 
-  self:__QueueUpdate(-1)
+  -- Update queue every ~5 sec.
+  self:__QueueUpdate(-5)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -773,6 +821,21 @@ function FLIGHTGROUP:onafterElementArrived(From, Event, To, Element)
 end
 
 
+--- On after "PassingWaypoint" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #number n Waypoint number passed.
+-- @param #number N Final waypoint number.
+function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
+  local text=string.format("Group %s passed waypoint %d/%d", self.groupname, n, N)
+  self:I(self.sid..text)
+  MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
+  
+end
+
+
 --- On after "RTB" event. Send flightgroup back to base.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
@@ -830,17 +893,19 @@ function FLIGHTGROUP:onafterTaskExecute(From, Event, To, Task)
 
   -- Task done.
   local TaskDone=self.flightgroup:TaskFunction("FLIGHTGROUP._TaskDone", self, Task)
-  local TaskOrbit=self.flightgroup:TaskOrbit(Coord, 10000)
 
   -- Combo task.
-  local TaskCombo=self.flightgroup:TaskCombo({Task.dcstask, TaskDone, TaskOrbit})
-
-  -- Set task for group.
-  self.flightgroup:SetTask(TaskCombo, 1)
+  local TaskCombo=self.flightgroup:TaskCombo({Task.dcstask, TaskDone})
+  
+  -- Set time stamp.
+  Task.timestamp=timer.getAbsTime()
 
   -- Task status executing.
   Task.status=FLIGHTGROUP.TaskStatus.EXECUTING
 
+  -- Set task for group.
+  self.flightgroup:SetTask(TaskCombo)
+  
 end
 
 
@@ -864,6 +929,32 @@ function FLIGHTGROUP:onafterTaskPause(From, Event, To, Task)
 
 end
 
+--- On after TaskCancel event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #FLIGHTGROUP.Task Task
+function FLIGHTGROUP:onafterTaskCancel(From, Event, To)
+
+  -- Clear tasks.
+  self.flightgroup:ClearTasks()
+  
+  -- Get current task.
+  local task=self:GetTaskCurrent()
+  
+  if task then
+    local text=string.format("Task %s ID=%d cancelled.", task.description, task.id)
+    MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)    
+    self:I(self.sid..text)
+    self:TaskDone(task)  
+  else
+    local text=string.format("WARNING: No current task to cancel!")
+    MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+    self:I(self.sid..text)      
+  end
+end
+
 
 --- On after TaskDone event.
 -- @param #FLIGHTGROUP self
@@ -874,12 +965,19 @@ end
 function FLIGHTGROUP:onafterTaskDone(From, Event, To, Task)
 
   -- Debug message.
-  local text=string.format("Task %s ID=%d done.", Task.description, Task.id)
+  local text=string.format("Task done: %s ID=%d", Task.description, Task.id)
   MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
   self:I(self.sid..text)
 
+  -- No current task.
   self.taskcurrent=0
+  
+  -- Task status done.
   Task.status=FLIGHTGROUP.TaskStatus.ACCOMPLISHED
+  
+  -- Update route.
+  self:_UpdateRoute()
+  
 end
 
 
@@ -913,7 +1011,7 @@ end
 -- Task functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Sort task queue.
+--- Get next task in queue. Task needs to be in state SCHEDULED and time must have passed.
 -- @param #FLIGHTGROUP self
 function FLIGHTGROUP:GetTask()
 
@@ -935,7 +1033,7 @@ function FLIGHTGROUP:GetTask()
     -- Look for first task that is not accomplished.
     for _,_task in pairs(self.taskqueue) do
       local task=_task --#FLIGHTGROUP.Task
-      if task.status~=FLIGHTGROUP.TaskStatus.ACCOMPLISHED and time>=task.time then
+      if task.status==FLIGHTGROUP.TaskStatus.SCHEDULED and time>=task.time then
         return task
       end
     end
@@ -1129,6 +1227,13 @@ function FLIGHTGROUP:GetElementByName(unitname)
   return nil
 end
 
+--- Get the currently executed task if there is any.
+-- @param #FLIGHTGROUP self
+-- @return #FLIGHTGROUP.Task Current task or nil.
+function FLIGHTGROUP:GetTaskCurrent()
+  return self:GetTaskByID(self.taskcurrent, FLIGHTGROUP.TaskStatus.EXECUTING)
+end
+
 --- Get task by its id.
 -- @param #FLIGHTGROUP self
 -- @param #number id Task id.
@@ -1178,18 +1283,41 @@ end
 
 --- Update route of group, e.g after new waypoints and/or waypoint tasks have been added.
 -- @param #FLIGHTGROUP self
+-- @param #number n Number of next waypoint. Default self.currentwp+1.
 -- @return #FLIGHTGROUP self
-function FLIGHTGROUP:_UpdateRoute()
+function FLIGHTGROUP:_UpdateRoute(n)
+
+  -- TODO: what happens if currentwp=#waypoints
+  n=n or self.currentwp+1
 
   local wp={}
 
-  for i=self.currentwp,#self.waypoints do
+  -- Set "remaining" waypoits.
+  for i=n, #self.waypoints do
     table.insert(wp, self.waypoints[i])
   end
+  
+  if #wp>0 then
 
-  self.flightgroup:GetTaskRoute()
-  self.flightgroup:TaskRoute(wp)
-  self.flightgroup:Route(wp, 1)
+    -- Route group to all defined waypoints remaining.
+    self.flightgroup:Route(wp, 1)
+    
+  else
+  
+    -- Get destination or home airbase.
+    local airbase=self.destination or self.homebase
+    
+    if airbase then
+      -- Route flight home.
+      self:RTB(airbase)
+    else
+      -- Let flight orbit.
+      self:Orbit()
+    end
+    
+  end
+  
+  return self
 end
 
 --- Initialize Mission Editor waypoints.
@@ -1199,9 +1327,17 @@ function FLIGHTGROUP:_InitWaypoints()
 
   -- Waypoints of group as defined in the ME.
   self.waypoints=self.flightgroup:GetTemplateRoutePoints()
+  
+  for i,wp in pairs(self.waypoints) do
+    local Task=self.flightgroup:TaskFunction("FLIGHTGROUP._PassingWaypoint", self, i)
+    self.flightgroup:SetTaskWaypoint(wp, Task)
+    self:I({wptask=Task})
+  end
 
   -- Init array.
   self.coordinates={}
+  
+  self:I(self.sid..string.format("FF number of waypoints = %d", #self.waypoints))
 
   -- Set waypoint table.
   for i,point in ipairs(self.waypoints or {}) do
@@ -1222,6 +1358,7 @@ function FLIGHTGROUP:_InitWaypoints()
 
   end
 
+  -- Set current waypoint. Counting starts a one.
   self.currentwp=1
 
   return self
@@ -1231,8 +1368,9 @@ end
 --@param Wrapper.Group#GROUP group Group that passed the waypoint
 --@param #FLIGHTGROUP flightgroup Flightgroup object.
 --@param #number i Waypoint number that has been reached.
---@param #number final Final waypoint number.
-function FLIGHGROUP._PassingWaypoint(group, flightgroup, i, final)
+function FLIGHTGROUP._PassingWaypoint(group, flightgroup, i)
+
+  local final=#flightgroup.waypoints or 1
 
   -- Debug message.
   local text=string.format("Group %s passing waypoint %d of %d.", group:GetName(), i, final)
@@ -1246,13 +1384,13 @@ function FLIGHGROUP._PassingWaypoint(group, flightgroup, i, final)
 
   -- Debug message.
   MESSAGE:New(text,10):ToAllIf(flightgroup.Debug)
-  flightgroup:T(flightgroup.sid..text)
+  flightgroup:I(flightgroup.sid..text)
 
   -- Set current waypoint.
   flightgroup.currentwp=i
 
   -- Passing Waypoint event.
-  flightgroup:PassingWaypoint(i)
+  flightgroup:PassingWaypoint(i, final)
 
   -- If final waypoint reached, do route all over again.
   if i==final and final>1 then

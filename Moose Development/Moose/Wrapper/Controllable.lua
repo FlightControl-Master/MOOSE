@@ -994,15 +994,15 @@ function CONTROLLABLE:TaskBombing( Vec2, GroupAttack, WeaponExpend, AttackQty, D
   return DCSTask
 end
 
---- (AIR) Attacking the map object (building, structure, e.t.c).
+--- (AIR) Attacking the map object (building, structure, etc).
 -- @param #CONTROLLABLE self
 -- @param DCS#Vec2 Vec2 2D-coordinates of the point to deliver weapon at.
--- @param #boolean GroupAttack (optional) If true, all units in the group will attack the Unit when found.
--- @param DCS#AI.Task.WeaponExpend WeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
--- @param #number AttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
--- @param DCS#Azimuth Direction (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
--- @param #number Altitude (optional) The altitude from where to attack.
--- @param #number WeaponType (optional) The WeaponType.
+-- @param #boolean GroupAttack (Optional) If true, all units in the group will attack the Unit when found.
+-- @param DCS#AI.Task.WeaponExpend WeaponExpend (Optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
+-- @param #number AttackQty (Optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
+-- @param DCS#Azimuth Direction (Optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
+-- @param #number Altitude (Optional) The altitude [meters] from where to attack. Default 30 m.
+-- @param #number WeaponType (Optional) The WeaponType. Default Auto=1073741822.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskAttackMapObject( Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType )
   self:F2( { self.ControllableName, Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType } )
@@ -1012,6 +1012,8 @@ function CONTROLLABLE:TaskAttackMapObject( Vec2, GroupAttack, WeaponExpend, Atta
     id = 'AttackMapObject',
     params = {
       point = Vec2,
+      x = Vec2.x,
+      y = Vec2.y,
       groupAttack = GroupAttack or false,
       expend = WeaponExpend or "Auto",
       attackQtyLimit = AttackQty and true or false,
@@ -1020,7 +1022,7 @@ function CONTROLLABLE:TaskAttackMapObject( Vec2, GroupAttack, WeaponExpend, Atta
       direction = Direction,
       altitudeEnabled = Altitude and true or false,
       altitude = Altitude or 30,
-      weaponType = WeaponType,
+      weaponType = WeaponType or 1073741822,
     },
   },
 
