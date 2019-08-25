@@ -477,7 +477,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   local fsmstate=self:GetState()
 
   -- Short info.
-  local text=string.format("Flight status %s. Task=%d. Waypoint=%d/%d.", fsmstate, self.taskcurrent, self.currentwp or 0, #self.waypoints or 0)
+  local text=string.format("Flight status %s [%d/%d]. Task=%d/%d. Waypoint=%d/%d. Detected=%d", fsmstate, #self.element, #self.element, self.taskcurrent, #self.taskqueue, self.currentwp or 0, #self.waypoints or 0, #self.detectedunits)
   self:I(self.sid..text)
 
   -- Element status.
@@ -522,7 +522,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
       end
     end
     -- Output text for element.
-    text=text..string.format("\n[%d] %s: status=%s, scheduled=%s (%d sec), started=%s, duration=%s", i, name, status, clock, eta, started, duration)
+    text=text..string.format("\n[%d] %s: status=%s, scheduled=%s (%d sec), started=%s, duration=%d", i, name, status, clock, eta, started, duration)
   end
   self:I(text)
 
