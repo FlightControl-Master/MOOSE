@@ -1246,7 +1246,7 @@ function DATABASE:_RegisterTemplates()
       
       local CoalitionSide = coalition.side[string.upper(CoalitionName)]
       if CoalitionName=="red" then
-        CoalitionSide=coalition.side.NEUTRAL
+        CoalitionSide=coalition.side.RED
       elseif CoalitionName=="blue" then
         CoalitionSide=coalition.side.BLUE
       else
