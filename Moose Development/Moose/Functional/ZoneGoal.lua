@@ -44,14 +44,13 @@ do -- Zone
   
   --- ZONE_GOAL Constructor.
   -- @param #ZONE_GOAL self
-  -- @param Core.Zone#ZONE_BASE Zone A @{Zone} object with the goal to be achieved.
+  -- @param Core.Zone#ZONE_RADIUS Zone A @{Zone} object with the goal to be achieved.
   -- @return #ZONE_GOAL
   function ZONE_GOAL:New( Zone )
   
-    local self = BASE:Inherit( self, FSM:New() ) -- #ZONE_GOAL
+    local self = BASE:Inherit( self, ZONE_RADIUS:New( Zone:GetName(), Zone:GetVec2(), Zone:GetRadius() ) ) -- #ZONE_GOAL
     self:F( { Zone = Zone } )
 
-    self.Zone = Zone -- Core.Zone#ZONE_BASE
     self.Goal = GOAL:New()
 
     self.SmokeTime = nil
@@ -67,6 +66,7 @@ do -- Zone
     -- @param Wrapper.Unit#UNIT DestroyedUnit The destroyed unit.
     -- @param #string PlayerName The name of the player.
 
+
     return self
   end
   
@@ -74,7 +74,7 @@ do -- Zone
   -- @param #ZONE_GOAL self
   -- @return Core.Zone#ZONE_BASE
   function ZONE_GOAL:GetZone()
-    return self.Zone
+    return self
   end
   
   
@@ -82,7 +82,7 @@ do -- Zone
   -- @param #ZONE_GOAL self
   -- @return #string
   function ZONE_GOAL:GetZoneName()
-    return self.Zone:GetName()
+    return self:GetName()
   end
 
 
@@ -101,7 +101,7 @@ do -- Zone
   -- @param #ZONE_GOAL self
   -- @param #SMOKECOLOR.Color FlareColor
   function ZONE_GOAL:Flare( FlareColor )
-    self.Zone:FlareZone( FlareColor, math.random( 1, 360 ) )
+    self:FlareZone( FlareColor, math.random( 1, 360 ) )
   end
 
 
@@ -130,7 +130,7 @@ do -- Zone
   
     if self.SmokeTime == nil or self.SmokeTime + 300 <= CurrentTime then
       if self.SmokeColor then
-        self.Zone:GetCoordinate():Smoke( self.SmokeColor )
+        self:GetCoordinate():Smoke( self.SmokeColor )
         --self.SmokeColor = nil
         self.SmokeTime = CurrentTime
       end
@@ -147,11 +147,9 @@ do -- Zone
     
     local Vec3 = EventData.IniDCSUnit:getPosition().p
     self:F( { Vec3 = Vec3 } )
-    local ZoneGoal = self:GetZone()
-    self:F({ZoneGoal})
 
     if EventData.IniDCSUnit then
-      if ZoneGoal:IsVec3InZone(Vec3)  then
+      if self:IsVec3InZone(Vec3)  then
         local PlayerHits = _DATABASE.HITS[EventData.IniUnitName]
         if PlayerHits then
           for PlayerName, PlayerHit in pairs( PlayerHits.Players or {} ) do

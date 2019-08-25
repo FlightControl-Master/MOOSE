@@ -228,11 +228,44 @@ do -- TASK_CAPTURE_ZONE
     local ZoneCoordinate = self.ZoneGoal:GetZone():GetCoordinate() 
     self.TaskInfo:AddTaskName( 0, "MSOD", Persist )
     self.TaskInfo:AddCoordinate( ZoneCoordinate, 1, "SOD", Persist )
-    self.TaskInfo:AddText( "Zone Name", self.ZoneGoal:GetZoneName(), 10, "MOD", Persist )
-    self.TaskInfo:AddText( "Zone Coalition", self.ZoneGoal:GetCoalitionName(), 11, "MOD", Persist )
-    local SetUnit = self.ZoneGoal.Zone:GetScannedSetUnit()
+--    self.TaskInfo:AddText( "Zone Name", self.ZoneGoal:GetZoneName(), 10, "MOD", Persist )
+--    self.TaskInfo:AddText( "Zone Coalition", self.ZoneGoal:GetCoalitionName(), 11, "MOD", Persist )
+    local SetUnit = self.ZoneGoal:GetScannedSetUnit()
     local ThreatLevel, ThreatText = SetUnit:CalculateThreatLevelA2G()
+    local ThreatCount = SetUnit:Count()
     self.TaskInfo:AddThreat( ThreatText, ThreatLevel, 20, "MOD", Persist )
+    self.TaskInfo:AddInfo( "Remaining Units", ThreatCount, 21, "MOD", Persist, true)
+    
+    if self.Dispatcher then
+      local DefenseTaskCaptureDispatcher = self.Dispatcher:GetDefenseTaskCaptureDispatcher() -- Tasking.Task_Capture_Dispatcher#TASK_CAPTURE_DISPATCHER
+      
+      if DefenseTaskCaptureDispatcher then
+        -- Loop through all zones of the Defenses, and check which zone has an assigned task!
+        for TaskName, CaptureZone in pairs( DefenseTaskCaptureDispatcher.Zones or {} ) do
+          local Task = CaptureZone.Task -- Tasking.Task_Capture_Zone#TASK_CAPTURE_ZONE
+          if Task then
+            self.TaskInfo:AddInfo( "Defense Player Zone", Task.ZoneGoal:GetName(), 30, "MOD", Persist ) 
+            self.TaskInfo:AddCoordinate( Task.ZoneGoal:GetZone():GetCoordinate(), 31, "MOD", Persist, false, "Defense Player Coordinate" )
+          end
+        end
+      end
+      local DefenseAIA2GDispatcher = self.Dispatcher:GetDefenseAIA2GDispatcher() -- AI.AI_A2G_Dispatcher#AI_A2G_DISPATCHER
+      
+      if DefenseAIA2GDispatcher then
+        -- Loop through all zones of the Defenses, and check which zone has an assigned task!
+        for Defender, Task in pairs( DefenseAIA2GDispatcher:GetDefenderTasks() or {} ) do
+          local DetectedItem = DefenseAIA2GDispatcher:GetDefenderTaskTarget( Defender )
+          if DetectedItem then
+            local DetectedZone = DefenseAIA2GDispatcher.Detection:GetDetectedItemZone( DetectedItem )
+            if DetectedZone then
+              self.TaskInfo:AddInfo( "Defense AI Zone", DetectedZone:GetName(), 40, "MOD", Persist  )
+              self.TaskInfo:AddCoordinate( DetectedZone:GetCoordinate(), 41, "MOD", Persist, false, "Defense AI Coordinate" )
+            end
+          end
+        end
+      end
+    end
+    
   end
     
 
@@ -274,7 +307,7 @@ do -- TASK_CAPTURE_ZONE
   -- @param #number AutoAssignMethod The method to be applied to the task.
   -- @param Tasking.CommandCenter#COMMANDCENTER CommandCenter The command center.
   -- @param Wrapper.Group#GROUP TaskGroup The player group.
-  function TASK_CAPTURE_ZONE:GetAutoAssignPriority( AutoAssignMethod, CommandCenter, TaskGroup )
+  function TASK_CAPTURE_ZONE:GetAutoAssignPriority( AutoAssignMethod, CommandCenter, TaskGroup, AutoAssignReference )
   
     if     AutoAssignMethod == COMMANDCENTER.AutoAssignMethods.Random then
       return math.random( 1, 9 )

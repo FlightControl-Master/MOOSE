@@ -52,16 +52,16 @@ end
 
 --- Add taskinfo. 
 -- @param #TASKINFO self
--- @param #string The info key.
+-- @param #string Key The info key.
 -- @param Data The data of the info.
 -- @param #number Order The display order, which is a number from 0 to 100.
 -- @param #TASKINFO.Detail Detail The detail Level.
 -- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
 -- @return #TASKINFO self
-function TASKINFO:AddInfo( Key, Data, Order, Detail, Keep )
-  self.VolatileInfo:Add( Key, { Data = Data, Order = Order, Detail = Detail } )
+function TASKINFO:AddInfo( Key, Data, Order, Detail, Keep, ShowKey, Type )
+  self.VolatileInfo:Add( Key, { Data = Data, Order = Order, Detail = Detail, ShowKey = ShowKey, Type = Type } )
   if Keep == true then
-    self.PersistentInfo:Add( Key, { Data = Data, Order = Order, Detail = Detail } )
+    self.PersistentInfo:Add( Key, { Data = Data, Order = Order, Detail = Detail, ShowKey = ShowKey, Type = Type } )
   end
   return self
 end
@@ -124,8 +124,8 @@ end
 -- @param #TASKINFO.Detail Detail The detail Level.
 -- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
 -- @return #TASKINFO self
-function TASKINFO:AddCoordinate( Coordinate, Order, Detail, Keep )
-  self:AddInfo( "Coordinate", Coordinate, Order, Detail, Keep )
+function TASKINFO:AddCoordinate( Coordinate, Order, Detail, Keep, ShowKey, Name )
+  self:AddInfo( Name or "Coordinate", Coordinate, Order, Detail, Keep, ShowKey, "Coordinate" )
   return self
 end
 
@@ -133,8 +133,8 @@ end
 --- Get the Coordinate. 
 -- @param #TASKINFO self
 -- @return Core.Point#COORDINATE Coordinate
-function TASKINFO:GetCoordinate()
-  return self:GetData( "Coordinate" )
+function TASKINFO:GetCoordinate( Name )
+  return self:GetData( Name or "Coordinate" )
 end
 
 
@@ -308,10 +308,11 @@ function TASKINFO:Report( Report, Detail, ReportGroup, Task )
 
     if Data.Detail:find( Detail ) then
       local Text = ""
+      local ShowKey = ( Data.ShowKey == nil or Data.ShowKey == true )
       if     Key == "TaskName" then
         Key = nil
         Text = Data.Data
-      elseif Key == "Coordinate" then
+      elseif Data.Type and Data.Type == "Coordinate" then
         local Coordinate = Data.Data -- Core.Point#COORDINATE
         Text = Coordinate:ToString( ReportGroup:GetUnit(1), nil, Task )
       elseif Key == "Threat" then
@@ -357,7 +358,7 @@ function TASKINFO:Report( Report, Detail, ReportGroup, Task )
       end
 
       if Text ~= "" then
-        LineReport:Add( ( Key and ( Key .. ":" ) or "" ) .. Text )
+        LineReport:Add( ( ( Key and ShowKey == true ) and ( Key .. ": " ) or "" ) .. Text )
       end
 
     end

@@ -81,6 +81,7 @@ DATABASE = {
   HITS = {},
   DESTROYS = {},
   ZONES = {},
+  ZONES_GOAL = {},
 }
 
 local _DATABASECoalition =
@@ -338,6 +339,39 @@ do -- Zones
 
 end -- zone
 
+do -- Zone_Goal
+
+  --- Finds a @{Zone} based on the zone name.
+  -- @param #DATABASE self
+  -- @param #string ZoneName The name of the zone.
+  -- @return Core.Zone#ZONE_BASE The found ZONE.
+  function DATABASE:FindZoneGoal( ZoneName )
+  
+    local ZoneFound = self.ZONES_GOAL[ZoneName]
+    return ZoneFound
+  end
+  
+  --- Adds a @{Zone} based on the zone name in the DATABASE.
+  -- @param #DATABASE self
+  -- @param #string ZoneName The name of the zone.
+  -- @param Core.Zone#ZONE_BASE Zone The zone.
+  function DATABASE:AddZoneGoal( ZoneName, Zone )
+  
+    if not self.ZONES_GOAL[ZoneName] then
+      self.ZONES_GOAL[ZoneName] = Zone
+    end
+  end
+  
+  
+  --- Deletes a @{Zone} from the DATABASE based on the zone name.
+  -- @param #DATABASE self
+  -- @param #string ZoneName The name of the zone.
+  function DATABASE:DeleteZoneGoal( ZoneName )
+  
+    self.ZONES_GOAL[ZoneName] = nil 
+  end
+
+end -- Zone_Goal
 do -- cargo
 
   --- Adds a Cargo based on the Cargo Name in the DATABASE.

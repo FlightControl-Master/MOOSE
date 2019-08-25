@@ -461,7 +461,7 @@ function AI_AIR:onafterStatus()
 --    end
     
 
-    if not self:Is( "Fuel" ) and not self:Is( "Home" ) then
+    if not self:Is( "Fuel" ) and not self:Is( "Home" ) and not self:is( "Refuelling" )then
       
       local Fuel = self.Controllable:GetFuelMin()
       
@@ -680,11 +680,13 @@ end
 function AI_AIR:onafterRefuel( AIGroup, From, Event, To )
   self:F( { AIGroup, From, Event, To } )
 
-  self:E( "Group " .. self.Controllable:GetName() .. " ... Refuelling! ( " .. self:GetState() .. " )" )
   
   if AIGroup and AIGroup:IsAlive() then
     local Tanker = GROUP:FindByName( self.TankerName )
+
     if Tanker:IsAlive() and Tanker:IsAirPlane() then
+
+      self:E( "Group " .. self.Controllable:GetName() .. " ... Refuelling! ( " .. self:GetState() .. "), at tanker " .. self.TankerName )
 
       local RefuelRoute = {}
   

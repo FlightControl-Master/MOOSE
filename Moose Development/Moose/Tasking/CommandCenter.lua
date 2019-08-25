@@ -180,7 +180,7 @@ COMMANDCENTER = {
 COMMANDCENTER.AutoAssignMethods = {
   ["Random"] = 1,
   ["Distance"] = 2,
-  ["Priority"] = 3
+  ["Priority"] = 3,
   }
 
 --- The constructor takes an IDENTIFIABLE as the HQ command center.

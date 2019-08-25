@@ -4043,6 +4043,107 @@ do -- AI_A2G_DISPATCHER
     
     return ShortestDistance
   end
+  
+  --- Shows the tactical display.
+  -- @param #AI_A2G_DISPATCHER self
+  function AI_A2G_DISPATCHER:ShowTacticalDisplay( Detection )
+
+    local AreaMsg = {}
+    local TaskMsg = {}
+    local ChangeMsg = {}
+    
+    local TaskReport = REPORT:New()
+
+    local DefenseTotal = 0
+
+    local Report = REPORT:New( "\nTactical Overview" )
+
+    local DefenderGroupCount = 0
+    local DefendersTotal = 0
+
+    -- Now that all obsolete tasks are removed, loop through the detected targets.
+    --for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
+    for DetectedItemID, DetectedItem in UTILS.spairs( Detection:GetDetectedItems(), function( t, a, b ) return self:Order(t[a]) <  self:Order(t[b]) end  ) do
+    
+      if not self.Detection:IsDetectedItemLocked( DetectedItem ) == true then
+        local DetectedItem = DetectedItem -- Functional.Detection#DETECTION_BASE.DetectedItem
+        local DetectedSet = DetectedItem.Set -- Core.Set#SET_UNIT
+        local DetectedCount = DetectedSet:Count()
+        local DetectedZone = DetectedItem.Zone
+  
+        self:F( { "Target ID", DetectedItem.ItemID } )
+        
+        self:F( { DefenseLimit = self.DefenseLimit, DefenseTotal = DefenseTotal } )
+        DetectedSet:Flush( self )
+  
+        local DetectedID = DetectedItem.ID
+        local DetectionIndex = DetectedItem.Index
+        local DetectedItemChanged = DetectedItem.Changed
+  
+        -- Show tactical situation
+        local ThreatLevel = DetectedItem.Set:CalculateThreatLevelA2G()
+        Report:Add( string.format( " - %1s%s ( %4s ): ( #%d - %4s ) %s" , ( DetectedItem.IsDetected == true ) and "!" or " ", DetectedItem.ItemID, DetectedItem.Index, DetectedItem.Set:Count(), DetectedItem.Type or " --- ", string.rep(  "■", ThreatLevel ) ) )
+        for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
+          local Defender = Defender -- Wrapper.Group#GROUP
+           if DefenderTask.Target and DefenderTask.Target.Index == DetectedItem.Index then
+             if Defender:IsAlive() then
+               DefenderGroupCount = DefenderGroupCount + 1
+               local Fuel = Defender:GetFuelMin() * 100
+               local Damage = Defender:GetLife() / Defender:GetLife0() * 100
+               Report:Add( string.format( "   - %s ( %s - %s ): ( #%d ) F: %3d, D:%3d - %s", 
+                                          Defender:GetName(), 
+                                          DefenderTask.Type, 
+                                          DefenderTask.Fsm:GetState(), 
+                                          Defender:GetSize(), 
+                                          Fuel,
+                                          Damage, 
+                                          Defender:HasTask() == true and "Executing" or "Idle" ) )
+             end
+           end
+        end
+      end
+    end
+
+    Report:Add( "\n - No Targets:")
+    local TaskCount = 0
+    for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
+      TaskCount = TaskCount + 1
+      local Defender = Defender -- Wrapper.Group#GROUP
+      if not DefenderTask.Target then
+        if Defender:IsAlive() then
+          local DefenderHasTask = Defender:HasTask()
+          local Fuel = Defender:GetFuelMin() * 100
+          local Damage = Defender:GetLife() / Defender:GetLife0() * 100
+          DefenderGroupCount = DefenderGroupCount + 1
+          Report:Add( string.format( "   - %s ( %s - %s ): ( #%d ) F: %3d, D:%3d - %s", 
+                                     Defender:GetName(), 
+                                     DefenderTask.Type, 
+                                     DefenderTask.Fsm:GetState(), 
+                                     Defender:GetSize(),
+                                     Fuel,
+                                     Damage, 
+                                     Defender:HasTask() == true and "Executing" or "Idle" ) )
+        end
+      end
+    end
+    Report:Add( string.format( "\n - %d Tasks - %d Defender Groups", TaskCount, DefenderGroupCount ) )
+
+    Report:Add( string.format( "\n - %d Queued Aircraft Launches", #self.DefenseQueue ) )
+    for DefenseQueueID, DefenseQueueItem in pairs( self.DefenseQueue ) do
+      local DefenseQueueItem = DefenseQueueItem -- #AI_A2G_DISPATCHER.DefenseQueueItem
+      Report:Add( string.format( "   - %s - %s", DefenseQueueItem.SquadronName, DefenseQueueItem.DefenderSquadron.TakeoffTime, DefenseQueueItem.DefenderSquadron.TakeoffInterval) )
+      
+    end
+    
+    Report:Add( string.format( "\n - Squadron Resources: ", #self.DefenseQueue ) )
+    for DefenderSquadronName, DefenderSquadron in pairs( self.DefenderSquadrons ) do
+      Report:Add( string.format( "   - %s - %d", DefenderSquadronName, DefenderSquadron.ResourceCount and DefenderSquadron.ResourceCount or "n/a" ) )
+    end
+
+    self:F( Report:Text( "\n" ) )
+    trigger.action.outText( Report:Text( "\n" ), 25 )
+    
+  end
 
   --- Assigns A2G AI Tasks in relation to the detected items.
   -- @param #AI_A2G_DISPATCHER self
@@ -4191,7 +4292,7 @@ do -- AI_A2G_DISPATCHER
         
         for DefenseQueueID, DefenseQueueItem in pairs( self.DefenseQueue ) do
           local DefenseQueueItem = DefenseQueueItem -- #AI_A2G_DISPATCHER.DefenseQueueItem
-          if DefenseQueueItem.AttackerDetection.Index == DetectedItem.Index then
+          if DefenseQueueItem.AttackerDetection and DefenseQueueItem.AttackerDetection.Index and DefenseQueueItem.AttackerDetection.Index == DetectedItem.Index then
             DefenseTotal = DefenseTotal + 1
           end
         end

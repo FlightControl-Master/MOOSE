@@ -120,7 +120,7 @@ ZONE_BASE = {
 -- @param #string ZoneName Name of the zone.
 -- @return #ZONE_BASE self
 function ZONE_BASE:New( ZoneName )
-  local self = BASE:Inherit( self, BASE:New() )
+  local self = BASE:Inherit( self, FSM:New() )
   self:F( ZoneName )
 
   self.ZoneName = ZoneName
