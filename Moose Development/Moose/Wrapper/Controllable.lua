@@ -1302,8 +1302,10 @@ function CONTROLLABLE:TaskFollow( FollowControllable, Vec3, LastWaypointIndex )
 --  }
 
   local LastWaypointIndexFlag = false
+  local lastWptIndexFlagChangedManually = false
   if LastWaypointIndex then
     LastWaypointIndexFlag = true
+    lastWptIndexFlagChangedManually = true
   end
 
   local DCSTask
@@ -1313,7 +1315,8 @@ function CONTROLLABLE:TaskFollow( FollowControllable, Vec3, LastWaypointIndex )
       groupId = FollowControllable:GetID(),
       pos = Vec3,
       lastWptIndexFlag = LastWaypointIndexFlag,
-      lastWptIndex = LastWaypointIndex
+      lastWptIndex = LastWaypointIndex,
+      lastWptIndexFlagChangedManually = lastWptIndexFlagChangedManually,
     }
   }
 

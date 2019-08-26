@@ -117,19 +117,31 @@ FLIGHTGROUP.Mission={
   TANKER="Tanker",
 }
 
---- Flight group tasks.
+--- Flight group task status.
 -- @type FLIGHTGROUP.TaskStatus
 -- @field #string SCHEDULED Task is sheduled.
 -- @field #string EXECUTING Task is being executed.
 -- @field #string ACCOMPLISHED Task is accomplished.
+-- @field #string WAYPOINT Task is executed at a waypoint.
 FLIGHTGROUP.TaskStatus={
   SCHEDULED="scheduled",
   EXECUTING="executing",
   ACCOMPLISHED="accomplished",
 }
 
+--- Flight group task status.
+-- @type FLIGHTGROUP.TaskType
+-- @field #string SCHEDULED Task is sheduled.
+-- @field #string EXECUTING Task is being executed.
+FLIGHTGROUP.TaskType={
+  SCHEDULED="scheduled",
+  WAYPOINT="waypoint",
+}
+
+
 --- Flight group tasks.
 -- @type FLIGHTGROUP.Task
+-- @field #string type Type of task: either SCHEDULED or WAYPOINT.
 -- @field #number id Task ID. Running number to get the task.
 -- @field #number prio Priority.
 -- @field #number time Abs. mission time when to execute the task.
@@ -137,12 +149,13 @@ FLIGHTGROUP.TaskStatus={
 -- @field #string description Brief text which describes the task.
 -- @field #string status Task status.
 -- @field #number duration Duration before task is cancelled in seconds. Default never.
--- @field #number timestamp Abs. mission time, when task was started. 
+-- @field #number timestamp Abs. mission time, when task was started.
+-- @field #number waypoint Waypoint index if task is a waypoint task.
 
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.0.4"
+FLIGHTGROUP.version="0.0.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -200,10 +213,10 @@ function FLIGHTGROUP:New(groupname)
 
   self:AddTransition("*",             "PassingWaypoint",  "*")           -- Group passed a waypoint.
 
-  self:AddTransition("*",             "TaskExecute",      "Airborne")    -- Group will execute a task.
-  self:AddTransition("*",             "TaskDone",         "Airborne")    -- Group finished a task.
-  self:AddTransition("*",             "TaskCancel",       "Airborne")    -- Cancel current task.
-  self:AddTransition("*",             "TaskPause",        "Airborne")    -- Pause current task.
+  self:AddTransition("*",             "TaskExecute",      "*")           -- Group will execute a task.
+  self:AddTransition("*",             "TaskDone",         "*")           -- Group finished a task.
+  self:AddTransition("*",             "TaskCancel",       "*")           -- Cancel current task.
+  self:AddTransition("*",             "TaskPause",        "*")           -- Pause current task.
 
   self:AddTransition("*",             "ElementSpawned",   "*")           -- An element was spawned.
   self:AddTransition("*",             "ElementParking",   "*")           -- An element was spawned.
@@ -215,9 +228,9 @@ function FLIGHTGROUP:New(groupname)
 
   self:AddTransition("*",             "ElementOutOfAmmo", "*")           -- An element is completely out of ammo.
 
-  self:AddTransition("*",             "FlightSpawned",    "Spawned")     -- The whole flight group is airborne.
-  self:AddTransition("*",             "FlightParking",    "Parking")     -- The whole flight group is airborne.
-  self:AddTransition("*",             "FlightTaxiing",    "Taxiing")     -- The whole flight group is airborne.
+  self:AddTransition("*",             "FlightSpawned",    "Spawned")     -- The whole flight group was spawned.
+  self:AddTransition("*",             "FlightParking",    "Parking")     -- The whole flight group is parking.
+  self:AddTransition("*",             "FlightTaxiing",    "Taxiing")     -- The whole flight group is taxiing.
   self:AddTransition("*",             "FlightAirborne",   "Airborne")    -- The whole flight group is airborne.
   self:AddTransition("*",             "FlightLanded",     "Landed")      -- The whole flight group has landed.
   self:AddTransition("*",             "FlightArrived",    "Arrived")     -- The whole flight group has arrived.
@@ -295,7 +308,7 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
---- Get set of decteded units.
+--- Add scheduled task.
 -- @param #FLIGHTGROUP self
 -- @param #string description Brief text describing the task, e.g. "Attack SAM".
 -- @param #table task DCS task table stucture.
@@ -327,6 +340,8 @@ function FLIGHTGROUP:AddTask(description, task, prio, clock, duration)
   newtask.time=time
   newtask.id=self.taskcounter
   newtask.duration=duration
+  newtask.waypoint=-1
+  newtask.type=FLIGHTGROUP.TaskType.SCHEDULED
 
   self:T2({newtask=newtask})
 
@@ -335,6 +350,40 @@ function FLIGHTGROUP:AddTask(description, task, prio, clock, duration)
 
   return self
 end
+
+--- Add waypoint task.
+-- @param #FLIGHTGROUP self
+-- @param #string description Brief text describing the task, e.g. "Attack SAM".
+-- @param #table task DCS task table stucture.
+-- @param #number waypointindex Number of waypoint. Counting starts at one! 
+-- @param #number prio Priority of the task.
+-- @param #number duration Duration before task is cancelled in seconds counted after task started. Default never.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:AddTaskWaypoint(description, task, waypointindex, prio, duration)
+
+  -- Increase coutner.
+  self.taskcounter=self.taskcounter+1
+
+  -- Task data structure.
+  local newtask={} --#FLIGHTGROUP.Task
+  newtask.description=description
+  newtask.status=FLIGHTGROUP.TaskStatus.SCHEDULED
+  newtask.dcstask=task
+  newtask.prio=prio or 50
+  newtask.id=self.taskcounter
+  newtask.duration=duration
+  newtask.time=0
+  newtask.waypoint=waypointindex
+  newtask.type=FLIGHTGROUP.TaskType.WAYPOINT
+
+  self:T2({newtask=newtask})
+
+  -- Add to table.
+  table.insert(self.taskqueue, newtask)
+
+  return self
+end
+
 
 --- Get set of decteded units.
 -- @param #FLIGHTGROUP self
@@ -494,9 +543,17 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
     if life<0 and element.status~=FLIGHTGROUP.ElementStatus.DEAD then
       self:ElementDead(element)
     end
+    
+    local nammo=0
+    local nshells=0
+    local nrockets=0
+    local nmissiles=0
+    if element.status~=FLIGHTGROUP.ElementStatus.DEAD then
+      nammo, nshells, nrockets, nbombs, nmissiles=self:GetAmmoElement(element)
+    end
 
     -- Output text for element.
-    text=text..string.format("\n[%d] %s: status=%s, fuel=%.1f, life=%.1f", i, name, status, fuel*100, life*100)
+    text=text..string.format("\n[%d] %s: status=%s, fuel=%.1f, life=%.1f, shells=%d, rockets=%d, bombs=%d, missiles=%d", i, name, status, fuel*100, life*100, nshells, nrockets, nbombs, nmissiles)
   end
   if #self.element==0 then
     text=text.." none!"
@@ -885,17 +942,6 @@ function FLIGHTGROUP:onafterTaskExecute(From, Event, To, Task)
 
   -- Set current task.
   self.taskcurrent=Task.id
-
-  -- Clear all tasks.
-  self.flightgroup:ClearTasks()
-
-  local Coord=self.flightgroup:GetCoordinate()
-
-  -- Task done.
-  local TaskDone=self.flightgroup:TaskFunction("FLIGHTGROUP._TaskDone", self, Task)
-
-  -- Combo task.
-  local TaskCombo=self.flightgroup:TaskCombo({Task.dcstask, TaskDone})
   
   -- Set time stamp.
   Task.timestamp=timer.getAbsTime()
@@ -903,8 +949,22 @@ function FLIGHTGROUP:onafterTaskExecute(From, Event, To, Task)
   -- Task status executing.
   Task.status=FLIGHTGROUP.TaskStatus.EXECUTING
 
-  -- Set task for group.
-  self.flightgroup:SetTask(TaskCombo)
+  -- If task is scheduled (not waypoint) set task.
+  if Task.type==FLIGHTGROUP.TaskType.SCHEDULED then
+
+    -- Clear all tasks.
+    self.flightgroup:ClearTasks()
+  
+    -- Task done.
+    local TaskDone=self.flightgroup:TaskFunction("FLIGHTGROUP._TaskDone", self, Task)
+  
+    -- Combo task.
+    local TaskCombo=self.flightgroup:TaskCombo({Task.dcstask, TaskDone})
+  
+    -- Set task for group.
+    self.flightgroup:SetTask(TaskCombo)
+    
+  end
   
 end
 
@@ -1033,7 +1093,7 @@ function FLIGHTGROUP:GetTask()
     -- Look for first task that is not accomplished.
     for _,_task in pairs(self.taskqueue) do
       local task=_task --#FLIGHTGROUP.Task
-      if task.status==FLIGHTGROUP.TaskStatus.SCHEDULED and time>=task.time then
+      if task.type==FLIGHTGROUP.TaskType.SCHEDULED and task.status==FLIGHTGROUP.TaskStatus.SCHEDULED and time>=task.time then
         return task
       end
     end
@@ -1043,6 +1103,61 @@ function FLIGHTGROUP:GetTask()
   return nil
 end
 
+
+--- Get the unfinished waypoint tasks
+-- @param #FLIGHTGROUP self
+-- @param #number n Waypoint index. Counting starts at one.
+-- @return #table Table of tasks. Table could also be empty {}.
+function FLIGHTGROUP:GetTasksWaypoint(n)
+
+  if #self.taskqueue==0 then
+    return {}
+  else
+
+    -- Sort results table wrt times they have already been engaged.
+    local function _sort(a, b)
+      local taskA=a --#FLIGHTGROUP.Task
+      local taskB=b --#FLIGHTGROUP.Task
+      return (taskA.time<taskB.time) or (taskA.time==taskB.time and taskA.prio<taskB.prio)
+    end
+
+    table.sort(self.taskqueue, _sort)
+
+
+    -- Tasks table.    
+    local tasks={}
+
+    -- Look for first task that is not accomplished.
+    for _,_task in pairs(self.taskqueue) do
+      local task=_task --#FLIGHTGROUP.Task
+      if task.type==FLIGHTGROUP.TaskType.WAYPOINT and task.status==FLIGHTGROUP.TaskStatus.SCHEDULED and task.waypoint==n then
+        table.insert(tasks, task)
+      end
+    end
+
+    return tasks
+  end
+
+  return nil
+end
+
+
+--- Function called when a group has reached the holding zone.
+--@param Wrapper.Group#GROUP group Group that reached the holding zone.
+--@param #FLIGHTGROUP.Mission
+--@param #FLIGHTGROUP flightgroup Flight group.
+--@param #FLIGHTGROUP.Task task Task.
+function FLIGHTGROUP._TaskExecute(group, flightgroup, task)
+
+  -- Debug message.
+  local text=string.format("Task Execute %s", task.description)
+  flightgroup:I(flightgroup.sid..text)
+
+  -- Set current task to nil so that the next in line can be executed.
+  if flightgroup then
+    flightgroup:TaskExecute(task)
+  end
+end
 
 --- Function called when a group has reached the holding zone.
 --@param Wrapper.Group#GROUP group Group that reached the holding zone.
@@ -1323,21 +1438,58 @@ end
 --- Initialize Mission Editor waypoints.
 -- @param #FLIGHTGROUP self
 -- @return #FLIGHTGROUP self
+function FLIGHTGROUP:_UpdateWaypointTasks()
+
+  for i,wp in pairs(self.waypoints) do
+  
+    -- Tasks of this waypoint
+    local taskswp={}
+  
+    -- At each waypoint report passing.
+    local TaskPassingWaypoint=self.flightgroup:TaskFunction("FLIGHTGROUP._PassingWaypoint", self, i)
+    
+    table.insert(taskswp, TaskPassingWaypoint)
+    
+    -- Get taks
+    local tasks=self:GetTasksWaypoint(i)
+    
+    if #tasks>0 then
+      for _,task in pairs(tasks) do
+        local Task=task --#FLIGHTGROUP.Task
+        
+        -- Add task execute.
+        table.insert(taskswp, self.flightgroup:TaskFunction("FLIGHTGROUP._TaskExecute", self, Task))
+
+        -- Add task itself.
+        table.insert(taskswp, Task.dcstask)
+        
+        -- Add task done.
+        table.insert(taskswp, self.flightgroup:TaskFunction("FLIGHTGROUP._TaskDone", self, Task))
+      end
+    end
+        
+    -- Waypoint task combo.
+    wp.task=self.flightgroup:TaskCombo(taskswp)
+        
+    -- Debug info.
+    self:T3({wptask=taskswp})
+  end
+
+end
+
+--- Initialize Mission Editor waypoints.
+-- @param #FLIGHTGROUP self
+-- @return #FLIGHTGROUP self
 function FLIGHTGROUP:_InitWaypoints()
 
   -- Waypoints of group as defined in the ME.
   self.waypoints=self.flightgroup:GetTemplateRoutePoints()
   
-  for i,wp in pairs(self.waypoints) do
-    local Task=self.flightgroup:TaskFunction("FLIGHTGROUP._PassingWaypoint", self, i)
-    self.flightgroup:SetTaskWaypoint(wp, Task)
-    self:I({wptask=Task})
-  end
+  -- Update waypoint tasks.
+  self:_UpdateWaypointTasks()
 
   -- Init array.
   self.coordinates={}
-  
-  self:I(self.sid..string.format("FF number of waypoints = %d", #self.waypoints))
 
   -- Set waypoint table.
   for i,point in ipairs(self.waypoints or {}) do
