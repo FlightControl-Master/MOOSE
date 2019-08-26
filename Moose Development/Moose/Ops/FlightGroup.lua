@@ -155,7 +155,7 @@ FLIGHTGROUP.TaskType={
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.0.5"
+FLIGHTGROUP.version="0.0.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -205,8 +205,12 @@ function FLIGHTGROUP:New(groupname)
 
   self:AddTransition("*",             "FlightStatus",     "*")           -- FLIGHTGROUP status update.
   self:AddTransition("*",             "QueueUpdate",      "*")           -- Update task queue.
-  self:AddTransition("*",             "AddDetectedUnit",  "*")           -- Add a newly detected unit to the detected units set.
-  self:AddTransition("*",             "LostDetectedUnit", "*")           -- Group lost a detected target.
+  
+  
+  self:AddTransition("*",             "DetectedUnit",   "*")              -- Add a newly detected unit to the detected units set.
+  self:AddTransition("*",             "DetectedUnitNew",   "*")           -- Add a newly detected unit to the detected units set.
+  self:AddTransition("*",             "DetectedUnitKnown", "*")           -- Add a newly detected unit to the detected units set.
+  self:AddTransition("*",             "DetectedUnitLost",  "*")           -- Group lost a detected target.
 
   self:AddTransition("*",             "RTB",              "Returning")   -- Group is returning to base.
   self:AddTransition("*",             "Orbit",            "Orbiting")    -- Group is holding position.
@@ -524,9 +528,12 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
 
   -- FSM state.
   local fsmstate=self:GetState()
+  
+  -- Check if group has detected any units.
+  self:_CheckDetectedUnits()
 
   -- Short info.
-  local text=string.format("Flight status %s [%d/%d]. Task=%d/%d. Waypoint=%d/%d. Detected=%d", fsmstate, #self.element, #self.element, self.taskcurrent, #self.taskqueue, self.currentwp or 0, #self.waypoints or 0, #self.detectedunits)
+  local text=string.format("Flight status %s [%d/%d]. Task=%d/%d. Waypoint=%d/%d. Detected=%d", fsmstate, #self.element, #self.element, self.taskcurrent, #self.taskqueue, self.currentwp or 0, #self.waypoints or 0, self.detectedunits:Count())
   self:I(self.sid..text)
 
   -- Element status.
@@ -558,7 +565,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   if #self.element==0 then
     text=text.." none!"
   end
-  self:I(text)
+  self:I(self.sid..text)
 
   -- Task queue.
   text=string.format("Tasks #%d", #self.taskqueue)
@@ -581,7 +588,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
     -- Output text for element.
     text=text..string.format("\n[%d] %s: status=%s, scheduled=%s (%d sec), started=%s, duration=%d", i, name, status, clock, eta, started, duration)
   end
-  self:I(text)
+  self:I(self.sid..text)
 
 
   -- Next check in ~30 seconds.
@@ -989,16 +996,13 @@ function FLIGHTGROUP:onafterTaskPause(From, Event, To, Task)
 
 end
 
---- On after TaskCancel event.
+--- On after "TaskCancel" event.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param #FLIGHTGROUP.Task Task
 function FLIGHTGROUP:onafterTaskCancel(From, Event, To)
-
-  -- Clear tasks.
-  self.flightgroup:ClearTasks()
   
   -- Get current task.
   local task=self:GetTaskCurrent()
@@ -1007,6 +1011,8 @@ function FLIGHTGROUP:onafterTaskCancel(From, Event, To)
     local text=string.format("Task %s ID=%d cancelled.", task.description, task.id)
     MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)    
     self:I(self.sid..text)
+    -- Clear tasks.
+    self.flightgroup:ClearTasks()
     self:TaskDone(task)  
   else
     local text=string.format("WARNING: No current task to cancel!")
@@ -1048,7 +1054,7 @@ end
 -- @param #string To To state.
 -- @param Wrapper.Unit#UNIT Unit The detected unit
 -- @parma #string assignment The (optional) assignment for the asset.
-function FLIGHTGROUP:onafterAddDetectedUnit(From, Event, To, Unit)
+function FLIGHTGROUP:onafterDetectedUnit(From, Event, To, Unit)
   self:I(self.sid..string.format("Detected unit %s.", Unit:GetName()))
   self.detectedunits:AddUnit(Unit)
 end
@@ -1151,7 +1157,7 @@ function FLIGHTGROUP._TaskExecute(group, flightgroup, task)
 
   -- Debug message.
   local text=string.format("Task Execute %s", task.description)
-  flightgroup:I(flightgroup.sid..text)
+  flightgroup:T2(flightgroup.sid..text)
 
   -- Set current task to nil so that the next in line can be executed.
   if flightgroup then
@@ -1168,46 +1174,12 @@ function FLIGHTGROUP._TaskDone(group, flightgroup, task)
 
   -- Debug message.
   local text=string.format("Task Done %s", task.description)
-  flightgroup:I(flightgroup.sid..text)
+  flightgroup:T2(flightgroup.sid..text)
 
   -- Set current task to nil so that the next in line can be executed.
   if flightgroup then
     flightgroup:TaskDone(task)
   end
-end
-
-
---- Launch a flight group to intercept an intruder.
--- @param #FLIGHTGROUP self
--- @param Wrapper.Group#GROUP bandits Bandit group.
-function FLIGHTGROUP:TaskIntercept(bandit)
-
-  -- Task orbit.
-  local tasks={}
-
-  for _,unit in pairs(bandit:GetUnits()) do
-    tasks[#tasks+1]=self.flightgroup:TaskAttackUnit(unit)
-  end
-
-  -- Passing waypoint task function.
-  tasks[#tasks+1]=self.flightgroup:TaskFunction("FLIGHTGROUP._TaskDone", self)
-
-  local speed=self.flightgroup:GetSpeedMax()
-  local altitude=bandit:GetAltitude()
-
-  -- Create waypoints.
-  local wp={}
-  wp[1]=self:GetCoordinate():WaypointAirTakeOffParking()
-  wp[2]=self:GetCoordinate():SetAltitude(altitude):WaypointAirTurningPoint(COORDINATE.WaypointAltType.BARO, speed, {tasks}, "Intercept")
-
-  -- Start uncontrolled group.
-  self.flightgroup:StartUncontrolled()
-
-  --FLIGHTGROUP:SetExcludeAI()
-
-  -- Route group
-  self.flightgroup:Route(wp)
-
 end
 
 --- Route flight group back to base.
@@ -1340,6 +1312,24 @@ function FLIGHTGROUP:GetElementByName(unitname)
   end
 
   return nil
+end
+
+
+--- Check if task description is unique.
+-- @param #FLIGHTGROUP self
+-- @param #string description Task destription
+-- @return #boolean If true, no other task has the same description.
+function FLIGHTGROUP:CheckTaskDescriptionUnique(description)
+
+  -- Loop over tasks in queue
+  for _,_task in pairs(self.taskqueue) do
+    local task=_task --#FLIGHTGROUP.Task
+    if task.description==description then
+      return false
+    end    
+  end
+  
+  return true
 end
 
 --- Get the currently executed task if there is any.
@@ -1780,7 +1770,6 @@ end
 
 --- Check detected units.
 -- @param #FLIGHTGROUP self
--- @param #string unitname Name of the unit.
 function FLIGHTGROUP:_CheckDetectedUnits()
 
   if self.flightgroup and not self:IsDead() then
@@ -1794,15 +1783,25 @@ function FLIGHTGROUP:_CheckDetectedUnits()
 
       if DetectedObject and DetectedObject:isExist() and DetectedObject.id_<50000000 then
         local unit=UNIT:Find(DetectedObject)
+        
         if unit and unit:IsAlive() then
-          table.insert(detected, unit)
+          -- Name of detected unit
           local unitname=unit:GetName()
+
+          -- Add unit to detected table of this run.        
+          table.insert(detected, unit)
+          
+          -- Trigger detected unit event.
+          self:DetectedUnit(unit)
+          
           if self.detectedunits:FindUnit(unitname) then
-            -- Unit is already in the detected unit set.
-            self:T(self.sid..string.format("Detected unit %s is already known.", unitname))
+            -- Unit is already in the detected unit set ==> Trigger "DetectedUnitKnown" event.
+            self:DetectedUnitKnown(unit)
           else
-            self:AddDetectedUnit(unit)
+            -- Unit is was not detected ==> Trigger "DetectedUnitNew" event.
+            self:DetectedUnitNew(unit)
           end
+          
         end
       end
     end
@@ -1821,7 +1820,7 @@ function FLIGHTGROUP:_CheckDetectedUnits()
       end
 
       if not gotit then
-        self:LostDetectedUnit(unit)
+        self:DetectedUnitLost(unit)
       end
 
     end
@@ -1979,12 +1978,35 @@ function FLIGHTGROUP:GetAmmoElement(element, display)
   else
     self:T3(self.sid..text)
   end
-  MESSAGE:New(text, 10):ToAllIf(display or self.Debug)
+  MESSAGE:New(text, 10):ToAllIf(display)
 
   -- Total amount of ammunition.
   nammo=nshells+nrockets+nmissiles+nbombs
 
   return nammo, nshells, nrockets, nbombs, nmissiles
+end
+
+
+--- Returns a name of a missile category.
+-- @param #FLIGHTGROUP self
+-- @param #number categorynumber Number of missile category from weapon missile category enumerator. See https://wiki.hoggitworld.com/view/DCS_Class_Weapon
+-- @return #string Missile category name.
+function FLIGHTGROUP:_MissileCategoryName(categorynumber)
+  local cat="unknown"
+  if categorynumber==Weapon.MissileCategory.AAM then
+    cat="air-to-air"
+  elseif categorynumber==Weapon.MissileCategory.SAM then
+    cat="surface-to-air"
+  elseif categorynumber==Weapon.MissileCategory.BM then
+    cat="ballistic"
+  elseif categorynumber==Weapon.MissileCategory.ANTI_SHIP then
+    cat="anti-ship"
+  elseif categorynumber==Weapon.MissileCategory.CRUISE then
+    cat="cruise"
+  elseif categorynumber==Weapon.MissileCategory.OTHER then
+    cat="other"
+  end
+  return cat
 end
 
 

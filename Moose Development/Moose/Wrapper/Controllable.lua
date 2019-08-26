@@ -903,7 +903,7 @@ end
 -- @param DCS#AI.Task.WeaponExpend WeaponExpend (Optional) Determines how many weapons will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
 -- @param #number AttackQty (Optional) Limits maximal quantity of attack. The aicraft/controllable will not make more attacks than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
 -- @param DCS#Azimuth Direction (Optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction.
--- @param #number Altitude (Optional) The (minimum) altitude in meters from where to attack. Default 2000 m.
+-- @param #number Altitude (Optional) The (minimum) altitude in meters from where to attack. Default is altitude of unit to attack but at least 1000 m.
 -- @param #number WeaponType (optional) The WeaponType. See [DCS Enumerator Weapon Type](https://wiki.hoggitworld.com/view/DCS_enum_weapon_flag) on Hoggit.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskAttackUnit(AttackUnit, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType)
@@ -919,7 +919,7 @@ function CONTROLLABLE:TaskAttackUnit(AttackUnit, GroupAttack, WeaponExpend, Atta
       directionEnabled = Direction and true or false,
       direction = math.rad(Direction or 0),
       altitudeEnabled = Altitude and true or false,
-      altitude = Altitude or 2000,
+      altitude = Altitude or math.max(1000, AttackUnit:GetAltitude()),
       attackQtyLimit = AttackQty and true or false,
       attackQty = AttackQty,
       weaponType = WeaponType
@@ -1080,7 +1080,7 @@ end
 -- @param #CONTROLLABLE self
 -- @param Core.Point#COORDINATE Coord Coordinate at which the CONTROLLABLE orbits.
 -- @param #number Altitude Altitude in meters of the orbit pattern.
--- @param #number Speed Speed [m/s] flying the orbit pattern
+-- @param #number Speed Speed [m/s] flying the orbit pattern.
 -- @param Core.Point#COORDINATE CoordRaceTrack (Optional) If this coordinate is specified, the CONTROLLABLE will fly a race-track pattern using this and the initial coordinate.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:TaskOrbit(Coord, Altitude, Speed, CoordRaceTrack)
