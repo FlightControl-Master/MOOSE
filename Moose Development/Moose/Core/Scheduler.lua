@@ -216,7 +216,7 @@ function SCHEDULER:New( SchedulerObject, SchedulerFunction, SchedulerArguments, 
   self.MasterObject = SchedulerObject
   
   if SchedulerFunction then
-    ScheduleID = self:Schedule( SchedulerObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop )
+    ScheduleID = self:Schedule( SchedulerObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop, 4 )
   end
 
   return self, ScheduleID
@@ -238,7 +238,7 @@ end
 -- @param #number RandomizeFactor Specifies a randomization factor between 0 and 1 to randomize the Repeat.
 -- @param #number Stop Specifies the amount of seconds when the scheduler will be stopped.
 -- @return #number The ScheduleID of the planned schedule.
-function SCHEDULER:Schedule( SchedulerObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop )
+function SCHEDULER:Schedule( SchedulerObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop, TraceLevel )
   self:F2( { Start, Repeat, RandomizeFactor, Stop } )
   self:T3( { SchedulerArguments } )
 
@@ -256,7 +256,8 @@ function SCHEDULER:Schedule( SchedulerObject, SchedulerFunction, SchedulerArgume
     Start,
     Repeat,
     RandomizeFactor,
-    Stop
+    Stop,
+    TraceLevel or 3
   )
   
   self.Schedules[#self.Schedules+1] = ScheduleID

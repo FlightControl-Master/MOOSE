@@ -307,7 +307,6 @@ end
 -- @param #CONTROLLABLE self
 -- @return #CONTROLLABLE
 function CONTROLLABLE:ClearTasks()
-  self:E( "ClearTasks" )
 
   local DCSControllable = self:GetDCSObject()
 
@@ -937,7 +936,7 @@ end
 -- @param #boolean Divebomb (optional) Perform dive bombing. Default false.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskBombing( Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType, Divebomb )
-  self:E( { self.ControllableName, Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType, Divebomb } )
+  self:F( { self.ControllableName, Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType, Divebomb } )
   
   local _groupattack=false
   if GroupAttack then
@@ -983,7 +982,7 @@ function CONTROLLABLE:TaskBombing( Vec2, GroupAttack, WeaponExpend, AttackQty, D
       },
   }
 
-  self:E( { TaskBombing=DCSTask } )
+  self:F( { TaskBombing=DCSTask } )
   return DCSTask
 end
 

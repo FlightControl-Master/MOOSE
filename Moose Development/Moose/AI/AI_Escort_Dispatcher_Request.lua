@@ -83,13 +83,6 @@ function AI_ESCORT_DISPATCHER_REQUEST:OnEventExit( EventData )
   local PlayerGroup = EventData.IniGroup
   local PlayerUnit = EventData.IniUnit
   
-  self.CarrierSet:Flush(self)
-  self:I({EscortAirbase= self.EscortAirbase } )
-  self:I({PlayerGroupName = PlayerGroupName } )
-  self:I({PlayerGroup = PlayerGroup})
-  self:I({FirstGroup = self.CarrierSet:GetFirst()})
-  self:I({FindGroup = self.CarrierSet:FindGroup( PlayerGroupName )})
-  
   if self.CarrierSet:FindGroup( PlayerGroupName ) then
     if self.AI_Escorts[PlayerGroupName] then
       self.AI_Escorts[PlayerGroupName]:Stop()
@@ -106,11 +99,6 @@ function AI_ESCORT_DISPATCHER_REQUEST:OnEventBirth( EventData )
   local PlayerGroupName = EventData.IniGroupName
   local PlayerGroup = EventData.IniGroup
   local PlayerUnit = EventData.IniUnit
-  
-  self:I({PlayerGroupName = PlayerGroupName } )
-  self:I({PlayerGroup = PlayerGroup})
-  self:I({FirstGroup = self.CarrierSet:GetFirst()})
-  self:I({FindGroup = self.CarrierSet:FindGroup( PlayerGroupName )})
   
   if self.CarrierSet:FindGroup( PlayerGroupName ) then
     if not self.AI_Escorts[PlayerGroupName] then

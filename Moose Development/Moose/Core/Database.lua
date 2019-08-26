@@ -1051,7 +1051,8 @@ function DATABASE:ForEach( IteratorFunction, FinalizeFunction, arg, Set )
     return false
   end
 
-  local Scheduler = SCHEDULER:New( self, Schedule, {}, 0.001, 0.001, 0 )
+  --local Scheduler = SCHEDULER:New( self, Schedule, {}, 0.001, 0.001, 0 )
+  Schedule()
   
   return self
 end

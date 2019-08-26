@@ -183,7 +183,7 @@ function AI_A2G_SEAD:onafterEngage( DefenderGroup, From, Event, To, AttackSetUni
         end
           
         if #AttackUnitTasks == 0 then
-          self:E( DefenderGroupName .. ": No targets found -> Going RTB")
+          self:I( DefenderGroupName .. ": No targets found -> Going RTB")
           self:Return()
           self:__RTB( self.TaskDelay )
         else
@@ -202,7 +202,7 @@ function AI_A2G_SEAD:onafterEngage( DefenderGroup, From, Event, To, AttackSetUni
       DefenderGroup:Route( EngageRoute, self.TaskDelay )
     end
   else
-    self:E( DefenderGroupName .. ": No targets found -> Going RTB")
+    self:I( DefenderGroupName .. ": No targets found -> Going RTB")
     self:Return()
     self:__RTB( self.TaskDelay )
   end

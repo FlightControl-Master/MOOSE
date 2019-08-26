@@ -1393,7 +1393,7 @@ end
 function ZONE_POLYGON_BASE:Flush()
   self:F2()
 
-  self:E( { Polygon = self.ZoneName, Coordinates = self._.Polygon } )
+  self:F( { Polygon = self.ZoneName, Coordinates = self._.Polygon } )
 
   return self
 end

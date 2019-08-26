@@ -52,8 +52,8 @@ end
 -- Nothing of this code should be modified without testing it thoroughly.
 -- @param #SCHEDULEDISPATCHER self
 -- @param Core.Scheduler#SCHEDULER Scheduler
-function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleArguments, Start, Repeat, Randomize, Stop )
-  self:F2( { Scheduler, ScheduleFunction, ScheduleArguments, Start, Repeat, Randomize, Stop } )
+function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleArguments, Start, Repeat, Randomize, Stop, TraceLevel )
+  self:F2( { Scheduler, ScheduleFunction, ScheduleArguments, Start, Repeat, Randomize, Stop, TraceLevel } )
 
   self.CallID = self.CallID + 1
   local CallID = self.CallID .. "#" .. ( Scheduler.MasterObject and Scheduler.MasterObject.GetClassNameAndID and Scheduler.MasterObject:GetClassNameAndID() or "" ) or ""
@@ -84,11 +84,23 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
   self.Schedule[Scheduler][CallID].Repeat = Repeat or 0
   self.Schedule[Scheduler][CallID].Randomize = Randomize or 0
   self.Schedule[Scheduler][CallID].Stop = Stop
+  
+  local Source = ""
+  local Line = ""
+  
+  if debug then
+    TraceLevel = TraceLevel or 2
+    Source = debug.getinfo( TraceLevel, "S" ).source
+    Line = debug.getinfo( TraceLevel, "nl" ).currentline
+  end
 
   self:T3( self.Schedule[Scheduler][CallID] )
 
-  self.Schedule[Scheduler][CallID].CallHandler = function( CallID )
-    --self:E( CallID )
+  self.Schedule[Scheduler][CallID].CallHandler = function( Params )
+    
+    local CallID = Params.CallID
+    local Source = Params.Source
+    local Line = Params.Line
 
     local ErrorHandler = function( errmsg )
       env.info( "Error in timer function: " .. errmsg )
@@ -122,15 +134,19 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
       local Stop = Schedule.Stop or 0
       local ScheduleID = Schedule.ScheduleID
       
+      local Prefix = ( Repeat == 0 ) and " ---> " or " +++> "
+      
       local Status, Result
       --self:E( { SchedulerObject = SchedulerObject } )
       if SchedulerObject then
         local function Timer()
+          SchedulerObject:T( Prefix .. ( Source or "-" ) .. ": " .. ( Line or "-" ) )
           return ScheduleFunction( SchedulerObject, unpack( ScheduleArguments ) ) 
         end
         Status, Result = xpcall( Timer, ErrorHandler )
       else
         local function Timer()
+          self:T( Prefix .. ( Source or "-" ) .. ": " .. ( Line or "-" ) )
           return ScheduleFunction( unpack( ScheduleArguments ) ) 
         end
         Status, Result = xpcall( Timer, ErrorHandler )
@@ -161,13 +177,13 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
         self:Stop( Scheduler, CallID )
       end
     else
-      self:E( "Scheduled obsolete call for CallID: " .. CallID )
+      self:I( " <<<> " .. ( Source or "-" ) .. ": " .. ( Line or "-" ) )
     end
     
     return nil
   end
   
-  self:Start( Scheduler, CallID )
+  self:Start( Scheduler, CallID, Source, Line )
   
   return CallID
 end
@@ -181,7 +197,7 @@ function SCHEDULEDISPATCHER:RemoveSchedule( Scheduler, CallID )
   end
 end
 
-function SCHEDULEDISPATCHER:Start( Scheduler, CallID )
+function SCHEDULEDISPATCHER:Start( Scheduler, CallID, Source, Line )
   self:F2( { Start = CallID, Scheduler = Scheduler } )
 
   if CallID then
@@ -192,13 +208,13 @@ function SCHEDULEDISPATCHER:Start( Scheduler, CallID )
       Schedule[CallID].StartTime = timer.getTime()  -- Set the StartTime field to indicate when the scheduler started.
       Schedule[CallID].ScheduleID = timer.scheduleFunction( 
         Schedule[CallID].CallHandler, 
-        CallID, 
+        { CallID = CallID, Source = Source, Line = Line }, 
         timer.getTime() + Schedule[CallID].Start 
       )
     end
   else
     for CallID, Schedule in pairs( self.Schedule[Scheduler] or {} ) do
-      self:Start( Scheduler, CallID ) -- Recursive
+      self:Start( Scheduler, CallID, Source, Line ) -- Recursive
     end
   end
 end

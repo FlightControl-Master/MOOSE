@@ -126,7 +126,7 @@ function AI_A2G_CAS:onafterEngage( DefenderGroup, From, Event, To, AttackSetUnit
   
           
         if #AttackUnitTasks == 0 then
-          self:E( DefenderGroupName .. ": No targets found -> Going RTB")
+          self:I( DefenderGroupName .. ": No targets found -> Going RTB")
           self:Return()
           self:__RTB( self.TaskDelay )
         else
@@ -144,7 +144,7 @@ function AI_A2G_CAS:onafterEngage( DefenderGroup, From, Event, To, AttackSetUnit
       DefenderGroup:Route( EngageRoute, self.TaskDelay )
     end
   else
-    self:E( DefenderGroupName .. ": No targets found -> Going RTB")
+    self:I( DefenderGroupName .. ": No targets found -> Going RTB")
     self:Return()
     self:__RTB( self.TaskDelay )
   end

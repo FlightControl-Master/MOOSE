@@ -384,7 +384,6 @@ do -- SET_BASE
     for ObjectName, Object in pairs( self.Database ) do
   
       if self:IsIncludeObject( Object ) then
-        self:E( { "Adding Object:", ObjectName } )
         self:Add( ObjectName, Object )
       end
     end

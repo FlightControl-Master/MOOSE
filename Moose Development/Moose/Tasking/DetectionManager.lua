@@ -279,7 +279,6 @@ do -- DETECTION MANAGER
   -- @param Functional.Detection#DETECTION_BASE Detection
   -- @return #DETECTION_MANAGER self
   function DETECTION_MANAGER:ProcessDetected( Detection )
-  	self:E()
   
   end
 

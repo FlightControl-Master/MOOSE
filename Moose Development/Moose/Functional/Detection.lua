@@ -1682,9 +1682,7 @@ do -- DETECTION_BASE
   -- @return #DETECTION_BASE.DetectedItem
   function DETECTION_BASE:GetDetectedItemByIndex( Index )
   
-    self:I( { DetectedItemsByIndex = self.DetectedItemsByIndex } )
-    
-    self:I( { self.DetectedItemsByIndex } )
+    self:F( { self.DetectedItemsByIndex } )
     
     local DetectedItem = self.DetectedItemsByIndex[Index]
     if DetectedItem then

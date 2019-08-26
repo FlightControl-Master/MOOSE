@@ -718,13 +718,13 @@ do -- FSM
         if DelaySeconds < 0 then -- Only call the event ONCE!
           DelaySeconds = math.abs( DelaySeconds )
           if not self._EventSchedules[EventName] then
-            CallID = self.CallScheduler:Schedule( self, self._handler, { EventName, ... }, DelaySeconds or 1 )
+            CallID = self.CallScheduler:Schedule( self, self._handler, { EventName, ... }, DelaySeconds or 1, nil, nil, nil, 4 )
             self._EventSchedules[EventName] = CallID
           else
             -- reschedule
           end
         else
-          CallID = self.CallScheduler:Schedule( self, self._handler, { EventName, ... }, DelaySeconds or 1 )
+          CallID = self.CallScheduler:Schedule( self, self._handler, { EventName, ... }, DelaySeconds or 1, nil, nil, nil, 4 )
         end
       else
         error( "FSM: An asynchronous event trigger requires a DelaySeconds parameter!!! This can be positive or negative! Sorry, but will not process this." )

@@ -506,7 +506,7 @@ function AI_A2G_ENGAGE:onafterEngageRoute( DefenderGroup, From, Event, To, Attac
 
     end
   else
-    self:E( DefenderGroupName .. ": No targets found -> Going RTB")
+    self:I( DefenderGroupName .. ": No targets found -> Going RTB")
     self:Return()
     self:__RTB( self.TaskDelay )
   end
