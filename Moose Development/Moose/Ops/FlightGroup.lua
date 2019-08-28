@@ -64,6 +64,7 @@ FLIGHTGROUP = {
   speedmax       =   nil,
   range          =   nil,
   altmax         =   nil,
+  fuelthresh     =   nil,
 }
 
 
@@ -155,7 +156,7 @@ FLIGHTGROUP.TaskType={
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.0.6"
+FLIGHTGROUP.version="0.0.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -197,6 +198,9 @@ function FLIGHTGROUP:New(groupname)
 
   -- Init set of detected units.
   self.detectedunits=SET_UNIT:New()
+  
+  -- Defaults
+  self:SetFuelLowThreshold()
 
 
   -- Add FSM transitions.
@@ -216,6 +220,13 @@ function FLIGHTGROUP:New(groupname)
   self:AddTransition("*",             "Orbit",            "Orbiting")    -- Group is holding position.
 
   self:AddTransition("*",             "PassingWaypoint",  "*")           -- Group passed a waypoint.
+  
+  self:AddTransition("*",             "OutOfFuel",         "*")          -- Group is out of fuel
+  self:AddTransition("*",             "OutOfAmmo",         "*")          -- Group is out of ammo
+  self:AddTransition("*",             "OutOfGuns",         "*")          -- Group is out of ammo
+  self:AddTransition("*",             "OutOfRockets",      "*")          -- Group is out of ammo
+  self:AddTransition("*",             "OutOfBombs",        "*")          -- Group is out of ammo
+  self:AddTransition("*",             "OutOfMissiles",     "*")          -- Group is out of ammo 
 
   self:AddTransition("*",             "TaskExecute",      "*")           -- Group will execute a task.
   self:AddTransition("*",             "TaskDone",         "*")           -- Group finished a task.
@@ -388,6 +399,16 @@ function FLIGHTGROUP:AddTaskWaypoint(description, task, waypointindex, prio, dur
   return self
 end
 
+--- Fuel threshold for RTB.
+-- @param #FLIGHTGROUP self
+-- @param #number threshold Fuel threshold in percent. Default 15 %.
+-- @param #boolean rtb If true, RTB on low fuel event.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetFuelLowThreshold(threshold, rtb)
+  self.fuellow=threshold or 15
+  self.fuellowrtb=rtb
+  return self
+end
 
 --- Get set of decteded units.
 -- @param #FLIGHTGROUP self
@@ -538,6 +559,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
 
   -- Element status.
   text="Elements:"
+  local fuelmin=999999
   for i,_element in pairs(self.element) do
     local element=_element --#FLIGHTGROUP.Element
     local name=element.name
@@ -545,6 +567,10 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
     local unit=element.unit
     local fuel=unit:GetFuel() or 0
     local life=unit:GetLifeRelative() or 0
+    
+    if fuel<fuelmin then
+      fuelmin=fuel
+    end
 
     -- Check if element is not dead and we missed an event.
     if life<0 and element.status~=FLIGHTGROUP.ElementStatus.DEAD then
@@ -554,6 +580,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
     local nammo=0
     local nshells=0
     local nrockets=0
+    local nbombs=0
     local nmissiles=0
     if element.status~=FLIGHTGROUP.ElementStatus.DEAD then
       nammo, nshells, nrockets, nbombs, nmissiles=self:GetAmmoElement(element)
@@ -566,6 +593,10 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
     text=text.." none!"
   end
   self:I(self.sid..text)
+  
+  if fuelmin<self.fuellowthresh and not self.fuellow then
+    self:FuelLow(self.flightgroup)
+  end
 
   -- Task queue.
   text=string.format("Tasks #%d", #self.taskqueue)
@@ -897,6 +928,29 @@ function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
   self:I(self.sid..text)
   MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
   
+end
+
+--- On after "FuelLow" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function FLIGHTGROUP:onafterFuelLow(From, Event, To)
+
+  -- Debug message.
+  local text=string.format("Low fuel for flight group", self.groupname)
+  MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+  self:I(self.sid..text)
+  
+  -- Set switch to true.
+  self.fuellow=true
+
+  -- Route helo back home. It is respawned! But this is the only way to ensure that it actually lands at the airbase.
+  local airbase=self.destination or self.homebase
+  
+  if airbase and self.fuellowrtb then
+    self:RouteRTB(airbase)
+  end
 end
 
 
