@@ -2,7 +2,7 @@
 --
 -- **Main Features:**
 --
---    * Nice stuff.
+--    * Manage squadrons.
 --
 -- ===
 --
@@ -93,12 +93,12 @@ CVW.version="0.0.5"
 --- Create a new CVW class object for a specific aircraft carrier unit.
 -- @param #CVW self
 -- @param #string carriername Name of the carrier.
--- @param #string squadronname Name of the squadron.
+-- @param #string cvwname Name of the carrier air wing, e.g. "CVW-8".
 -- @return #CVW self
-function CVW:New(carriername, squadronname)
+function CVW:New(carriername, cvwname)
 
   -- Inherit everything from WAREHOUSE class.
-  local self=BASE:Inherit(self, WAREHOUSE:New(carriername, squadronname)) -- #CVW
+  local self=BASE:Inherit(self, WAREHOUSE:New(carriername, cvwname)) -- #CVW
 
   if not self then
     BASE:E(string.format("ERROR: Could not find carrier %s!", carriername))

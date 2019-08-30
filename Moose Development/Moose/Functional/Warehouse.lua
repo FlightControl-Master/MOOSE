@@ -1752,7 +1752,7 @@ _WAREHOUSEDB  = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.9.6"
+WAREHOUSE.version="0.9.6wip"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -3664,8 +3664,11 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
 
       -- Get the original warehouse this group belonged to.
       local warehouse=self:FindWarehouseInDB(wid)
+      
       if warehouse then
+      
         local request=warehouse:_GetRequestOfGroup(group, warehouse.pending)
+        
         if request then
 
           -- Increase number of cargo delivered and transports home.
@@ -3693,21 +3696,33 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
       -- Get the asset from the global DB.
       local asset=self:FindAssetInDB(group)
 
-      -- Set livery.
-      if liveries then
-        asset.livery=liveries[math.random(#liveries)]
-      end
-
-      -- Set skill.
-      asset.skill=skill
-
       -- Note the group is only added once, i.e. the ngroups parameter is ignored here.
       -- This is because usually these request comes from an asset that has been transfered from another warehouse and hence should only be added once.
       if asset~=nil then
-        self:_DebugMessage(string.format("Warehouse %s: Adding KNOWN asset uid=%d with attribute=%s to stock.", self.alias, asset.uid, asset.attribute), 5)
-        table.insert(self.stock, asset)
+        self:_DebugMessage(string.format("Warehouse %s: Adding KNOWN asset uid=%d with attribute=%s to stock.", self.alias, asset.uid, asset.attribute), 5)        
+        
+        -- Set warehouse ID
+        asset.wid=self.wid
+        
+        -- No request associated with this asset.
+        asset.rid=nil
+        
+        -- Set livery.
+        if liveries then
+          asset.livery=liveries[math.random(#liveries)]
+        end
+  
+        -- Set skill.
+        asset.skill=skill        
+        
+        -- Asset is not spawned.
         asset.spawned=false
         asset.spawngroupname=nil
+        
+        -- Add asset to stock.
+        table.insert(self.stock, asset)
+        
+        -- Trigger New asset event.
         self:NewAsset(asset, assignment or "")
       else
         self:_ErrorMessage(string.format("ERROR: Known asset could not be found in global warehouse db!"), 0)
@@ -3726,7 +3741,12 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
 
       -- Add created assets to stock of this warehouse.
       for _,asset in pairs(assets) do
+              
+        asset.wid=self.wid
+        asset.rid=nil
+        
         table.insert(self.stock, asset)
+        
         self:NewAsset(asset, assignment or "")
       end
 
@@ -3863,6 +3883,8 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute, forcecargobay,
     end
     asset.skill=skill
     asset.assignment=assignment
+    asset.spawned=false
+    asset.spawngroupname=string.format("%s_AID-%d", templategroupname, asset.uid)
 
     if i==1 then
       self:_AssetItemInfo(asset)
@@ -4170,11 +4192,15 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     local _assetitem=_assetstock[i] --#WAREHOUSE.Assetitem
 
        -- Create an alias name with the UIDs for the sending warehouse, asset and request.
-    local _alias=self:_alias(_assetitem.unittype, self.uid, _assetitem.uid, Request.uid)
+    --local _alias=self:_alias(_assetitem.unittype, self.uid, _assetitem.uid, Request.uid)
+    
+    local _alias=_assetitem.spawngroupname
+    
+    _assetitem.rid=Request.uid
 
     -- Asset is transport.
     _assetitem.spawned=false
-    _assetitem.spawngroupname=nil
+    --_assetitem.spawngroupname=nil
     _assetitem.iscargo=false
 
     local spawngroup=nil --Wrapper.Group#GROUP
@@ -5279,11 +5305,14 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
 
     -- Set asset status to not spawned until we capture its birth event.
     asset.spawned=false
-    asset.spawngroupname=nil
+    --asset.spawngroupname=nil
     asset.iscargo=true
+    asset.rid=Request.uid
 
     -- Alias of the group.
-    local _alias=self:_Alias(asset, Request)
+    --local _alias=self:_Alias(asset, Request)
+    
+    local _alias=asset.spawngroupname
 
     -- Spawn an asset group.
     local _group=nil --Wrapper.Group#GROUP
@@ -7526,6 +7555,72 @@ end
 -- @return #number Asset ID.
 -- @return #number Request ID.
 function WAREHOUSE:_GetIDsFromGroup(group)
+
+  ---@param #string text The text to analyse.
+  local function analyse(text)
+
+    -- Get rid of #0001 tail from spawn.
+    local unspawned=UTILS.Split(text, "#")[1]
+
+    -- Split keywords.
+    local keywords=UTILS.Split(unspawned, "_")
+    local _wid=nil  -- warehouse UID
+    local _aid=nil  -- asset UID
+    local _rid=nil  -- request UID
+
+    -- Loop over keys.
+    for _,keys in pairs(keywords) do
+      local str=UTILS.Split(keys, "-")
+      local key=str[1]
+      local val=str[2]
+      if key:find("WID") then
+        _wid=tonumber(val)
+      elseif key:find("AID") then
+        _aid=tonumber(val)
+      elseif key:find("RID") then
+        _rid=tonumber(val)
+      end
+    end
+
+    return _wid,_aid,_rid
+  end
+
+  if group then
+
+    -- Group name
+    local name=group:GetName()
+
+    -- Get asset id from group name.
+    local wid,aid,rid=analyse(name)
+    
+    -- Get Asset.
+    local asset=self:GetAssetByID(aid)
+    
+    -- Get warehouse and request id from asset table.
+    wid=asset.wid
+    rid=asset.rid
+
+    -- Debug info
+    self:T3(self.wid..string.format("Group Name   = %s", tostring(name)))
+    self:T3(self.wid..string.format("Warehouse ID = %s", tostring(wid)))
+    self:T3(self.wid..string.format("Asset     ID = %s", tostring(aid)))
+    self:T3(self.wid..string.format("Request   ID = %s", tostring(rid)))
+
+    return wid,aid,rid
+  else
+    self:E("WARNING: Group not found in GetIDsFromGroup() function!")
+  end
+
+end
+
+
+--- Get warehouse id, asset id and request id from group name (alias).
+-- @param #WAREHOUSE self
+-- @param Wrapper.Group#GROUP group The group from which the info is gathered.
+-- @return #number Warehouse ID.
+-- @return #number Asset ID.
+-- @return #number Request ID.
+function WAREHOUSE:_GetIDsFromGroupOLD(group)
 
   ---@param #string text The text to analyse.
   local function analyse(text)
