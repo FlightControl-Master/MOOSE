@@ -3701,7 +3701,7 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
       if asset~=nil then
         self:_DebugMessage(string.format("Warehouse %s: Adding KNOWN asset uid=%d with attribute=%s to stock.", self.alias, asset.uid, asset.attribute), 5)        
         
-        -- Set warehouse ID
+        -- Asset now belongs to this warehouse. Set warehouse ID.
         asset.wid=self.wid
         
         -- No request associated with this asset.
@@ -3723,7 +3723,7 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
         table.insert(self.stock, asset)
         
         -- Trigger New asset event.
-        self:NewAsset(asset, assignment or "")
+        self:__NewAsset(0.1, asset, assignment or "")
       else
         self:_ErrorMessage(string.format("ERROR: Known asset could not be found in global warehouse db!"), 0)
       end
@@ -3741,13 +3741,18 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
 
       -- Add created assets to stock of this warehouse.
       for _,asset in pairs(assets) do
-              
+        
+        -- Asset belongs to this warehouse. Set warehouse ID.
         asset.wid=self.wid
+        
+        -- No request associated with this asset.
         asset.rid=nil
         
+        -- Add asset to stock.
         table.insert(self.stock, asset)
         
-        self:NewAsset(asset, assignment or "")
+        -- Trigger NewAsset event. Delay a bit for OnAfterNewAsset functions to work properly.
+        self:__NewAsset(0.1, asset, assignment or "")
       end
 
     end
@@ -3906,21 +3911,22 @@ end
 function WAREHOUSE:_AssetItemInfo(asset)
   -- Info about asset:
   local text=string.format("\nNew asset with id=%d for warehouse %s:\n", asset.uid, self.alias)
-  text=text..string.format("Template name = %s\n", asset.templatename)
-  text=text..string.format("Unit type     = %s\n", asset.unittype)
-  text=text..string.format("Attribute     = %s\n", asset.attribute)
-  text=text..string.format("Category      = %d\n", asset.category)
-  text=text..string.format("Units #       = %d\n", asset.nunits)
-  text=text..string.format("Speed max     = %5.2f km/h\n", asset.speedmax)
-  text=text..string.format("Range max     = %5.2f km\n", asset.range/1000)
-  text=text..string.format("Size  max     = %5.2f m\n", asset.size)
-  text=text..string.format("Weight total  = %5.2f kg\n", asset.weight)
-  text=text..string.format("Cargo bay tot = %5.2f kg\n", asset.cargobaytot)
-  text=text..string.format("Cargo bay max = %5.2f kg\n", asset.cargobaymax)
-  text=text..string.format("Load radius   = %s m\n", tostring(asset.loadradius))
-  text=text..string.format("Skill         = %s\n", tostring(asset.skill))
-  text=text..string.format("Livery        = %s", tostring(asset.livery))
-  self:T(self.wid..text)
+  text=text..string.format("Spawngroup name= %s\n", asset.spawngroupname)
+  text=text..string.format("Template name  = %s\n", asset.templatename)
+  text=text..string.format("Unit type      = %s\n", asset.unittype)
+  text=text..string.format("Attribute      = %s\n", asset.attribute)
+  text=text..string.format("Category       = %d\n", asset.category)
+  text=text..string.format("Units #        = %d\n", asset.nunits)
+  text=text..string.format("Speed max      = %5.2f km/h\n", asset.speedmax)
+  text=text..string.format("Range max      = %5.2f km\n", asset.range/1000)
+  text=text..string.format("Size  max      = %5.2f m\n", asset.size)
+  text=text..string.format("Weight total   = %5.2f kg\n", asset.weight)
+  text=text..string.format("Cargo bay tot  = %5.2f kg\n", asset.cargobaytot)
+  text=text..string.format("Cargo bay max  = %5.2f kg\n", asset.cargobaymax)
+  text=text..string.format("Load radius    = %s m\n", tostring(asset.loadradius))
+  text=text..string.format("Skill          = %s\n", tostring(asset.skill))
+  text=text..string.format("Livery         = %s", tostring(asset.livery))
+  self:I(self.wid..text)
   self:T({DCSdesc=asset.DCSdesc})
   self:T3({Template=asset.template})
 end
@@ -5581,6 +5587,8 @@ function WAREHOUSE:_SpawnAssetPrepareTemplate(asset, alias)
 
   -- Set unique name.
   template.name=alias
+  
+  env.info(string.format("FF template name %s", alias))
 
   -- Set current(!) coalition and country.
   template.CoalitionID=self:GetCoalition()
@@ -7597,8 +7605,10 @@ function WAREHOUSE:_GetIDsFromGroup(group)
     local asset=self:GetAssetByID(aid)
     
     -- Get warehouse and request id from asset table.
-    wid=asset.wid
-    rid=asset.rid
+    if asset then
+      wid=asset.wid
+      rid=asset.rid
+    end
 
     -- Debug info
     self:T3(self.wid..string.format("Group Name   = %s", tostring(name)))

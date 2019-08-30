@@ -549,8 +549,9 @@ end
 -- This method is used by the SPAWN class.
 -- @param #DATABASE self
 -- @param #table SpawnTemplate Template of the group to spawn.
+-- @param #string Groupname (Optional) Name of the group.
 -- @return Wrapper.Group#GROUP Spawned group.
-function DATABASE:Spawn( SpawnTemplate )
+function DATABASE:Spawn( SpawnTemplate, Groupname )
   self:F( SpawnTemplate.name )
 
   self:T( { SpawnTemplate.SpawnCountryID, SpawnTemplate.SpawnCategoryID } )
@@ -565,7 +566,7 @@ function DATABASE:Spawn( SpawnTemplate )
   SpawnTemplate.CountryID = nil
   SpawnTemplate.CategoryID = nil
 
-  self:_RegisterGroupTemplate( SpawnTemplate, SpawnCoalitionID, SpawnCategoryID, SpawnCountryID  )
+  self:_RegisterGroupTemplate( SpawnTemplate, SpawnCoalitionID, SpawnCategoryID, SpawnCountryID, Groupname  )
 
   self:T3( SpawnTemplate )
   coalition.addGroup( SpawnCountryID, SpawnCategoryID, SpawnTemplate )

@@ -211,22 +211,24 @@ function FLIGHTGROUP:New(groupname)
   self:AddTransition("*",             "QueueUpdate",      "*")           -- Update task queue.
   
   
-  self:AddTransition("*",             "DetectedUnit",   "*")              -- Add a newly detected unit to the detected units set.
+  self:AddTransition("*",             "DetectedUnit",      "*")           -- Add a newly detected unit to the detected units set.
   self:AddTransition("*",             "DetectedUnitNew",   "*")           -- Add a newly detected unit to the detected units set.
   self:AddTransition("*",             "DetectedUnitKnown", "*")           -- Add a newly detected unit to the detected units set.
   self:AddTransition("*",             "DetectedUnitLost",  "*")           -- Group lost a detected target.
 
-  self:AddTransition("*",             "RTB",              "Returning")   -- Group is returning to base.
-  self:AddTransition("*",             "Orbit",            "Orbiting")    -- Group is holding position.
+  self:AddTransition("*",             "RTB",               "Returning")   -- Group is returning to base.
+  self:AddTransition("*",             "Orbit",             "Orbiting")    -- Group is holding position.
 
-  self:AddTransition("*",             "PassingWaypoint",  "*")           -- Group passed a waypoint.
+  self:AddTransition("*",             "PassingWaypoint",   "*")           -- Group passed a waypoint.
   
-  self:AddTransition("*",             "OutOfFuel",         "*")          -- Group is out of fuel
-  self:AddTransition("*",             "OutOfAmmo",         "*")          -- Group is out of ammo
-  self:AddTransition("*",             "OutOfGuns",         "*")          -- Group is out of ammo
-  self:AddTransition("*",             "OutOfRockets",      "*")          -- Group is out of ammo
-  self:AddTransition("*",             "OutOfBombs",        "*")          -- Group is out of ammo
-  self:AddTransition("*",             "OutOfMissiles",     "*")          -- Group is out of ammo 
+  self:AddTransition("*",             "FuelLow",           "*")          -- Fuel state of group is low. Default ~25%.
+  self:AddTransition("*",             "FuelCritical",      "*")          -- Fuel state of group is critical. Default ~10%.
+  
+  self:AddTransition("*",             "OutOfAmmo",         "*")          -- Group is completely out of ammo.
+  self:AddTransition("*",             "OutOfGuns",         "*")          -- Group is out of gun shells.
+  self:AddTransition("*",             "OutOfRockets",      "*")          -- Group is out of rockets.
+  self:AddTransition("*",             "OutOfBombs",        "*")          -- Group is out of bombs.
+  self:AddTransition("*",             "OutOfMissiles",     "*")          -- Group is out of missiles.
 
   self:AddTransition("*",             "TaskExecute",      "*")           -- Group will execute a task.
   self:AddTransition("*",             "TaskDone",         "*")           -- Group finished a task.
@@ -250,8 +252,6 @@ function FLIGHTGROUP:New(groupname)
   self:AddTransition("*",             "FlightLanded",     "Landed")      -- The whole flight group has landed.
   self:AddTransition("*",             "FlightArrived",    "Arrived")     -- The whole flight group has arrived.
   self:AddTransition("*",             "FlightDead",       "Dead")        -- The whole flight group is dead.
-
-  self:AddTransition("*",             "FlightOutOfAmmo",  "*")           -- Flight is completely out of ammo.
 
   ------------------------
   --- Pseudo Functions ---
@@ -405,7 +405,8 @@ end
 -- @param #boolean rtb If true, RTB on low fuel event.
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:SetFuelLowThreshold(threshold, rtb)
-  self.fuellow=threshold or 15
+  self.fuellowthresh=threshold or 15
+  self.fuellow=false
   self.fuellowrtb=rtb
   return self
 end
@@ -595,7 +596,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   self:I(self.sid..text)
   
   if fuelmin<self.fuellowthresh and not self.fuellow then
-    self:FuelLow(self.flightgroup)
+    self:FuelLow()
   end
 
   -- Task queue.
@@ -787,16 +788,31 @@ function FLIGHTGROUP:OnEventEngineShutdown(EventData)
     local element=self:GetElementByName(unitname)
 
     if element then
-      local coord=unit:GetCoordinate()
-      local airbase=coord:GetClosestAirbase()
-      local _,_,dist,parking=coord:GetClosestParkingSpot(airbase)
-      if dist and dist<10 and unit:InAir()==false then
-        self:ElementArrived(element, airbase, parking)
-        self:I(self.sid..string.format("Element %s shut down engines ==> arrived", element.name))
+    
+      if element.unit and element.unit:IsAlive() then
+    
+        local coord=unit:GetCoordinate()
+        
+        local airbase=coord:GetClosestAirbase()
+        
+        local _,_,dist,parking=coord:GetClosestParkingSpot(airbase)
+        
+        if dist and dist<10 and unit:InAir()==false then
+          self:ElementArrived(element, airbase, parking)
+          self:I(self.sid..string.format("Element %s shut down engines ==> arrived", element.name))
+        else
+          self:I(self.sid..string.format("Element %s shut down engines (in air) ==> dead", element.name))
+          self:ElementDead(element)
+        end
+        
       else
-        self:I(self.sid..string.format("Element %s shut down engines (in air) ==> dead", element.name))
-        self:ElementDead(element)
+      
+        self:I(self.sid..string.format("Element %s shut down engines (bug is not alive) ==> dead", element.name))
+        self:ElementDead(element)    
+          
       end
+      
+    else
     end
 
   end

@@ -1251,17 +1251,19 @@ do -- COORDINATE
     -- Loop over all airbases.
     for _,_airbase in pairs(airbases) do
       local airbase=_airbase --Wrapper.Airbase#AIRBASE
-      local category=airbase:GetDesc().category
-      if Category and Category==category or Category==nil then
-        local dist=self:Get2DDistance(airbase:GetCoordinate())
-        if closest==nil then
-          distmin=dist
-          closest=airbase
-        else
-          if dist<distmin then
+      if airbase then
+        local category=airbase:GetCategory()
+        if Category and Category==category or Category==nil then
+          local dist=self:Get2DDistance(airbase:GetCoordinate())
+          if closest==nil then
             distmin=dist
             closest=airbase
-          end 
+          else
+            if dist<distmin then
+              distmin=dist
+              closest=airbase
+            end 
+          end
         end
       end
     end
