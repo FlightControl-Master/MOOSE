@@ -238,7 +238,7 @@ end
 -- @param #number RandomizeFactor Specifies a randomization factor between 0 and 1 to randomize the Repeat.
 -- @param #number Stop Specifies the amount of seconds when the scheduler will be stopped.
 -- @return #number The ScheduleID of the planned schedule.
-function SCHEDULER:Schedule( SchedulerObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop, TraceLevel )
+function SCHEDULER:Schedule( SchedulerObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop, TraceLevel, Fsm )
   self:F2( { Start, Repeat, RandomizeFactor, Stop } )
   self:T3( { SchedulerArguments } )
 
@@ -257,7 +257,8 @@ function SCHEDULER:Schedule( SchedulerObject, SchedulerFunction, SchedulerArgume
     Repeat,
     RandomizeFactor,
     Stop,
-    TraceLevel or 3
+    TraceLevel or 3,
+    Fsm
   )
   
   self.Schedules[#self.Schedules+1] = ScheduleID

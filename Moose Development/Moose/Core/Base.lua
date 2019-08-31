@@ -891,6 +891,26 @@ end
 -- Log a trace (only shown when trace is on)
 -- TODO: Make trace function using variable parameters.
 
+--- Set trace on.
+-- @param #BASE self
+-- @usage
+-- -- Switch the tracing On
+-- BASE:TraceOn()
+function BASE:TraceOn()
+  self:TraceOnOff( true )
+end
+
+--- Set trace off.
+-- @param #BASE self
+-- @usage
+-- -- Switch the tracing Off
+-- BASE:TraceOff()
+function BASE:TraceOff()
+  self:TraceOnOff( false )
+end
+
+
+
 --- Set trace on or off
 -- Note that when trace is off, no BASE.Debug statement is performed, increasing performance!
 -- When Moose is loaded statically, (as one file), tracing is switched off by default.
@@ -905,7 +925,7 @@ end
 -- -- Switch the tracing Off
 -- BASE:TraceOnOff( false )
 function BASE:TraceOnOff( TraceOnOff )
-  _TraceOnOff = TraceOnOff
+  _TraceOnOff = TraceOnOff or true
 end
 
 
@@ -925,8 +945,8 @@ end
 -- @param #BASE self
 -- @param #number Level
 function BASE:TraceLevel( Level )
-  _TraceLevel = Level
-  self:I( "Tracing level " .. Level )
+  _TraceLevel = Level or 1
+  self:I( "Tracing level " .. _TraceLevel )
 end
 
 --- Trace all methods in MOOSE
@@ -934,7 +954,7 @@ end
 -- @param #boolean TraceAll true = trace all methods in MOOSE.
 function BASE:TraceAll( TraceAll )
   
-  _TraceAll = TraceAll
+  _TraceAll = TraceAll or true
   
   if _TraceAll then
     self:I( "Tracing all methods in MOOSE " )
@@ -989,7 +1009,7 @@ function BASE:_F( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
       if DebugInfoFrom then
         LineFrom = DebugInfoFrom.currentline
       end
-      env.info( string.format( "%6d(%6d)/%1s:%25s%05d.%s(%s)" , LineCurrent, LineFrom, "F", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
+      env.info( string.format( "%6d(%6d)/%1s:%30s%05d.%s(%s)" , LineCurrent, LineFrom, "F", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
     end
   end
 end
@@ -1064,7 +1084,7 @@ function BASE:_T( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
   		if DebugInfoFrom then
   		  LineFrom = DebugInfoFrom.currentline
   	  end
-  		env.info( string.format( "%6d(%6d)/%1s:%25s%05d.%s" , LineCurrent, LineFrom, "T", self.ClassName, self.ClassID, routines.utils.oneLineSerialize( Arguments ) ) )
+  		env.info( string.format( "%6d(%6d)/%1s:%30s%05d.%s" , LineCurrent, LineFrom, "T", self.ClassName, self.ClassID, routines.utils.oneLineSerialize( Arguments ) ) )
     end
 	end
 end
@@ -1135,9 +1155,9 @@ function BASE:E( Arguments )
   	  LineFrom = DebugInfoFrom.currentline
   	end
   
-  	env.info( string.format( "%6d(%6d)/%1s:%25s%05d.%s(%s)" , LineCurrent, LineFrom, "E", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
+  	env.info( string.format( "%6d(%6d)/%1s:%30s%05d.%s(%s)" , LineCurrent, LineFrom, "E", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
   else
-    env.info( string.format( "%1s:%25s%05d(%s)" , "E", self.ClassName, self.ClassID, routines.utils.oneLineSerialize( Arguments ) ) )
+    env.info( string.format( "%1s:%30s%05d(%s)" , "E", self.ClassName, self.ClassID, routines.utils.oneLineSerialize( Arguments ) ) )
   end
   
 end
@@ -1163,9 +1183,9 @@ function BASE:I( Arguments )
       LineFrom = DebugInfoFrom.currentline
     end
   
-    env.info( string.format( "%6d(%6d)/%1s:%25s%05d.%s(%s)" , LineCurrent, LineFrom, "I", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
+    env.info( string.format( "%6d(%6d)/%1s:%30s%05d.%s(%s)" , LineCurrent, LineFrom, "I", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
   else
-    env.info( string.format( "%1s:%25s%05d(%s)" , "I", self.ClassName, self.ClassID, routines.utils.oneLineSerialize( Arguments ) ) )
+    env.info( string.format( "%1s:%30s%05d(%s)" , "I", self.ClassName, self.ClassID, routines.utils.oneLineSerialize( Arguments ) ) )
   end
   
 end
