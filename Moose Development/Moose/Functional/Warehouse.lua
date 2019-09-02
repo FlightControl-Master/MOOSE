@@ -1752,7 +1752,7 @@ _WAREHOUSEDB  = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.9.6wip"
+WAREHOUSE.version="0.9.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -3315,7 +3315,9 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function WAREHOUSE:onafterStatus(From, Event, To)
-  self:I(self.wid..string.format("Checking status of warehouse %s. Current FSM state %s. Global warehouse assets = %d.", self.alias, self:GetState(), #_WAREHOUSEDB.Assets))
+
+  -- Info.
+  self:I(self.wid..string.format("FSM state %s. Assets=%d (global %d). Requests waiting=%d, pending=%d", self:GetState(), #self.stock, #_WAREHOUSEDB.Assets, #self.queue, #self.pending))
 
   -- Check if any pending jobs are done and can be deleted from the queue.
   self:_JobDone()
@@ -3702,7 +3704,7 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
         self:_DebugMessage(string.format("Warehouse %s: Adding KNOWN asset uid=%d with attribute=%s to stock.", self.alias, asset.uid, asset.attribute), 5)        
         
         -- Asset now belongs to this warehouse. Set warehouse ID.
-        asset.wid=self.wid
+        asset.wid=self.uid
         
         -- No request associated with this asset.
         asset.rid=nil
@@ -3717,7 +3719,7 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
         
         -- Asset is not spawned.
         asset.spawned=false
-        asset.spawngroupname=nil
+        asset.iscargo=nil
         
         -- Add asset to stock.
         table.insert(self.stock, asset)
@@ -3743,7 +3745,7 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
       for _,asset in pairs(assets) do
         
         -- Asset belongs to this warehouse. Set warehouse ID.
-        asset.wid=self.wid
+        asset.wid=self.uid
         
         -- No request associated with this asset.
         asset.rid=nil
@@ -4044,7 +4046,7 @@ end
 -- @param #WAREHOUSE.TransportType TransportType Type of transport.
 -- @param #number nTransport Number of transport units requested.
 -- @param #number Prio Priority of the request. Number ranging from 1=high to 100=low.
--- @param #string Assignment A keyword or text that later be used to identify this request and postprocess the assets.
+-- @param #string Assignment A keyword or text that can later be used to identify this request and postprocess the assets.
 function WAREHOUSE:onafterAddRequest(From, Event, To, warehouse, AssetDescriptor, AssetDescriptorValue, nAsset, TransportType, nTransport, Prio, Assignment)
 
   -- Defaults.
@@ -4206,7 +4208,6 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
     -- Asset is transport.
     _assetitem.spawned=false
-    --_assetitem.spawngroupname=nil
     _assetitem.iscargo=false
 
     local spawngroup=nil --Wrapper.Group#GROUP
@@ -4991,21 +4992,22 @@ function WAREHOUSE:onafterAssetSpawned(From, Event, To, group, asset, request)
   self:T(self.wid..text)
   self:_DebugMessage(text)
 
-  -- Check if all assets groups are spawned and trigger events.
-
+  -- Sete asset state to spawned.
   asset.spawned=true
 
+  -- Check if all assets groups are spawned and trigger events.
   local allspawned=true
   for _,_asset in pairs(request.assets) do
     local assetitem=_asset --#WAREHOUSE.Assetitem
 
-    self:I(string.format("FF Asset %s spawned %s as %s", assetitem.templatename, tostring(assetitem.spawned), tostring(assetitem.spawngroupname)))
+    --self:I(string.format("FF Asset %s spawned %s as %s", assetitem.templatename, tostring(assetitem.spawned), tostring(assetitem.spawngroupname)))
 
     if not assetitem.spawned then
       allspawned=false
     end
   end
 
+  -- Trigger event.
   if allspawned then
     self:RequestSpawned(request, request.cargogroupset, request.transportgroupset)
   end
@@ -5311,7 +5313,6 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
 
     -- Set asset status to not spawned until we capture its birth event.
     asset.spawned=false
-    --asset.spawngroupname=nil
     asset.iscargo=true
     asset.rid=Request.uid
 
@@ -5462,7 +5463,12 @@ function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrol
     if request.transporttype==WAREHOUSE.TransportType.SELFPROPELLED then
 
       -- Get flight path if the group goes to another warehouse by itself.
-      template.route.points=self:_GetFlightplan(asset, self.airbase, request.warehouse.airbase)
+      if request.toself then
+        local wp=self.airbase:GetCoordinate():WaypointAir("RADIO", COORDINATE.WaypointType.TakeOffParking, COORDINATE.WaypointAction.FromParkingArea, 0, false, self.airbase, {}, "Parking")
+        template.route.points={wp}
+      else
+        template.route.points=self:_GetFlightplan(asset, self.airbase, request.warehouse.airbase)
+      end
 
     else
 
@@ -5587,8 +5593,6 @@ function WAREHOUSE:_SpawnAssetPrepareTemplate(asset, alias)
 
   -- Set unique name.
   template.name=alias
-  
-  env.info(string.format("FF template name %s", alias))
 
   -- Set current(!) coalition and country.
   template.CoalitionID=self:GetCoalition()
@@ -6043,10 +6047,14 @@ function WAREHOUSE:_OnEventArrived(EventData)
         if self.uid==wid then
 
           local request=self:_GetRequestOfGroup(group, self.pending)
-          local istransport=self:_GroupIsTransport(group,request)
+          local istransport=self:_GroupIsTransport(group, request)
+          
+          -- Get closest airbase.
+          -- Note, this crashed at somepoint when the Tarawa was in the mission. Don't know why. Deleting the Tarawa and adding it again solved the problem.
+          local closest=group:GetCoordinate():GetClosestAirbase()
 
           -- Check if engine shutdown happend at right airbase because the event is also triggered in other situations.
-          local rightairbase=group:GetCoordinate():GetClosestAirbase():GetName()==request.warehouse:GetAirbase():GetName()
+          local rightairbase=closest:GetName()==request.warehouse:GetAirbase():GetName()
 
           -- Check that group is cargo and not transport.
           if istransport==false and rightairbase then
@@ -6729,7 +6737,7 @@ function WAREHOUSE:_CheckRequestValid(request)
     if request.transporttype==WAREHOUSE.TransportType.AIRPLANE or request.transporttype==WAREHOUSE.TransportType.HELICOPTER then
 
       -- Check if number of requested assets is in stock.
-      local _assets,_nassets,_enough=self:_FilterStock(self.stock, WAREHOUSE.Descriptor.ATTRIBUTE, request.transporttype, request.ntransport)
+      local _assets,_nassets,_enough=self:_FilterStock(self.stock, WAREHOUSE.Descriptor.ATTRIBUTE, request.transporttype, request.ntransport, true)
 
       -- Convert relative to absolute number if necessary.
       local nasset=request.ntransport
@@ -6952,7 +6960,7 @@ end
 function WAREHOUSE:_GetTransportsForAssets(request)
 
   -- Get all transports of the requested type in stock.
-  local transports=self:_FilterStock(self.stock, WAREHOUSE.Descriptor.ATTRIBUTE, request.transporttype)
+  local transports=self:_FilterStock(self.stock, WAREHOUSE.Descriptor.ATTRIBUTE, request.transporttype, true)
 
   -- Copy asset.
   local cargoassets=UTILS.DeepCopy(request.cargoassets)

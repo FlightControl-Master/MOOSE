@@ -1254,7 +1254,10 @@ do -- COORDINATE
       if airbase then
         local category=airbase:GetCategory()
         if Category and Category==category or Category==nil then
+
+          -- Distance to airbase.         
           local dist=self:Get2DDistance(airbase:GetCoordinate())
+          
           if closest==nil then
             distmin=dist
             closest=airbase
@@ -1264,6 +1267,7 @@ do -- COORDINATE
               closest=airbase
             end 
           end
+          
         end
       end
     end

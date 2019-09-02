@@ -1042,3 +1042,82 @@ do -- Detection
   
 
 end
+
+--- Get the unit table from a unit's template.
+-- @param #UNIT self
+-- @return #table Table of the unit template (deep copy) or #nil.
+function UNIT:GetTemplate()
+
+  local group=self:GetGroup()
+  
+  local name=self:GetName()
+  
+  if group then
+    local template=group:GetTemplate()
+    
+    if template then
+    
+      for _,unit in pairs(template.units) do
+      
+        self:I(string.format("FF template unit %s = %s", unit.name, name))
+      
+        if unit.name==name then
+          return UTILS.DeepCopy(unit) 
+        end
+      end
+      
+    end     
+  end
+  
+  return nil
+end
+
+
+--- Get the payload table from a unit's template.
+-- The payload table has elements:
+-- 
+--    * pylons
+--    * fuel
+--    * chaff
+--    * gun
+--    
+-- @param #UNIT self
+-- @return #table Payload table (deep copy) or #nil.
+function UNIT:GetTemplatePayload()
+
+  local unit=self:GetTemplate()
+  
+  if unit then
+    return unit.payload
+  end
+  
+  return nil
+end
+
+--- Get the pylons table from a unit's template. This can be a complex table depending on the weapons the unit is carrying.
+-- @param #UNIT self
+-- @return #table Table of pylons (deepcopy) or #nil.
+function UNIT:GetTemplatePylons()
+
+  local payload=self:GetTemplatePayload()
+  
+  if payload then
+    return payload.pylons
+  end
+
+  return nil
+end
+
+--- Get the fuel of the unit from its template.
+-- @param #UNIT self
+-- @return #number Fuel of unit in kg.
+function UNIT:GetTemplateFuel()
+
+  local payload=self:GetTemplatePayload()
+  
+  if payload then
+    return payload.fuel
+  end
+
+  return nil
+end

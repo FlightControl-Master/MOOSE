@@ -31,6 +31,12 @@
 -- @field Core.Set#SET_UNIT detectedunits Set of detected units.
 -- @field Wrapper.Airbase#AIRBASE homebase The home base of the flight group.
 -- @field Wrapper.Airbase#AIRBASE destination The destination base of the flight group.
+-- @field #boolean fuellow Fuel low switch.
+-- @field #number fuellowthresh Low fuel threshold in percent.
+-- @field #boolean fuellowrtb RTB on low fuel switch.
+-- @field #boolean fuelcritical Fuel critical switch.
+-- @field #number fuelcriticalthresh Critical fuel threshold in percent.
+-- @field #boolean fuelcriticalrtb RTB on critical fuel switch. 
 -- @extends Core.Fsm#FSM
 
 --- Be surprised!
@@ -46,25 +52,30 @@
 -- @field #FLIGHTGROUP
 FLIGHTGROUP = {
   ClassName      = "FLIGHTGROUP",
-  Debug          =   nil,
-  sid            =   nil,
-  groupname      =   nil,
-  flightgroup    =   nil,
-  grouptemplate  =   nil,
-  type           =   nil,
-  waypoints      =    {},
-  coordinates    =    {},
-  element        =    {},
-  taskqueue      =    {},
-  taskcounter    =   nil,
-  taskcurrent    =   nil,
-  detectedunits  =    {},
-  homebase       =   nil,
-  destination    =   nil,
-  speedmax       =   nil,
-  range          =   nil,
-  altmax         =   nil,
-  fuelthresh     =   nil,
+  Debug              =   nil,
+  sid                =   nil,
+  groupname          =   nil,
+  flightgroup        =   nil,
+  grouptemplate      =   nil,
+  type               =   nil,
+  waypoints          =    {},
+  coordinates        =    {},
+  element            =    {},
+  taskqueue          =    {},
+  taskcounter        =   nil,
+  taskcurrent        =   nil,
+  detectedunits      =    {},
+  homebase           =   nil,
+  destination        =   nil,
+  speedmax           =   nil,
+  range              =   nil,
+  altmax             =   nil,
+  fuellow            = false,
+  fuellowthresh      =   nil,
+  fuellowrtb         =   nil,
+  fuelcritical       =   nil,  
+  fuelcriticalthresh =   nil,
+  fuelcriticalrtb    = false,
 }
 
 
@@ -156,7 +167,7 @@ FLIGHTGROUP.TaskType={
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.0.7"
+FLIGHTGROUP.version="0.0.8"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -201,6 +212,7 @@ function FLIGHTGROUP:New(groupname)
   
   -- Defaults
   self:SetFuelLowThreshold()
+  self:SetFuelCriticalThreshold()
 
 
   -- Add FSM transitions.
@@ -291,7 +303,6 @@ function FLIGHTGROUP:New(groupname)
     BASE:TraceClass(self.ClassName)
     BASE:TraceLevel(1)
   end
-  self.Debug=true
 
   -- Check if the group is already alive and if so, add its elements.
   -- TODO: move this to start?
@@ -399,15 +410,27 @@ function FLIGHTGROUP:AddTaskWaypoint(description, task, waypointindex, prio, dur
   return self
 end
 
---- Fuel threshold for RTB.
+--- Set low fuel threshold. Triggers event "FuelLow" and calls event function "OnAfterFuelLow".
 -- @param #FLIGHTGROUP self
--- @param #number threshold Fuel threshold in percent. Default 15 %.
--- @param #boolean rtb If true, RTB on low fuel event.
+-- @param #number threshold Fuel threshold in percent. Default 25 %.
+-- @param #boolean rtb If true, RTB on fuel low event.
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:SetFuelLowThreshold(threshold, rtb)
-  self.fuellowthresh=threshold or 15
   self.fuellow=false
+  self.fuellowthresh=threshold or 25
   self.fuellowrtb=rtb
+  return self
+end
+
+--- Set fuel critical threshold. Triggers event "FuelCritical" and event function "OnAfterFuelCritical".
+-- @param #FLIGHTGROUP self
+-- @param #number threshold Fuel threshold in percent. Default 10 %.
+-- @param #boolean rtb If true, RTB on fuel critical event.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetFuelCriticalThreshold(threshold, rtb)
+  self.fuelcritical=false
+  self.fuelcriticalthresh=threshold or 10
+  self.fuelcriticalrtb=rtb
   return self
 end
 
@@ -569,8 +592,8 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
     local fuel=unit:GetFuel() or 0
     local life=unit:GetLifeRelative() or 0
     
-    if fuel<fuelmin then
-      fuelmin=fuel
+    if fuel*100<fuelmin then
+      fuelmin=fuel*100
     end
 
     -- Check if element is not dead and we missed an event.
@@ -595,9 +618,15 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   end
   self:I(self.sid..text)
   
+  -- Low fuel?
   if fuelmin<self.fuellowthresh and not self.fuellow then
     self:FuelLow()
   end
+  
+  -- Critical fuel?
+  if fuelmin<self.fuelcriticalthresh and not self.fuelcritical then
+    self:FuelCritical()
+  end  
 
   -- Task queue.
   text=string.format("Tasks #%d", #self.taskqueue)
@@ -954,7 +983,7 @@ end
 function FLIGHTGROUP:onafterFuelLow(From, Event, To)
 
   -- Debug message.
-  local text=string.format("Low fuel for flight group", self.groupname)
+  local text=string.format("Low fuel for flight group %s", self.groupname)
   MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
   self:I(self.sid..text)
   
@@ -965,7 +994,30 @@ function FLIGHTGROUP:onafterFuelLow(From, Event, To)
   local airbase=self.destination or self.homebase
   
   if airbase and self.fuellowrtb then
-    self:RouteRTB(airbase)
+    self:RTB(airbase)
+  end
+end
+
+--- On after "FuelCritical" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function FLIGHTGROUP:onafterFuelCritical(From, Event, To)
+
+  -- Debug message.
+  local text=string.format("Critical fuel for flight group %s", self.groupname)
+  MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+  self:I(self.sid..text)
+  
+  -- Set switch to true.
+  self.fuelcritical=true
+
+  -- Route helo back home. It is respawned! But this is the only way to ensure that it actually lands at the airbase.
+  local airbase=self.destination or self.homebase
+  
+  if airbase and self.fuelcriticalrtb then
+    self:RTB(airbase)
   end
 end
 
@@ -992,16 +1044,19 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Wrapper.Airbase#AIRBASE airbase The base to return to.
-function FLIGHTGROUP:onafterOrbit(From, Event, To, Coord)
+-- @param Core.Point#COORDINATE Coord Coordinate where to orbit.
+-- @param #number Altitude Altitude in meters.
+-- @param #number Speed Speed in km/h.
+function FLIGHTGROUP:onafterOrbit(From, Event, To, Coord, Altitude, Speed)
 
   -- Debug message.
-  local text=string.format("Flight group returning to airbase %s.", airbase:GetName())
+  local text=string.format("Flight group set to orbit at altitude %d m and speed %.1f km/h", Altitude, Speed)
   MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
   self:I(self.sid..text)
+  
+  local TaskOrbit=self.flightgroup:TaskOrbit(Coord, Altitude, UTILS.KmphToMps(Speed))
 
-  -- Route helo back home. It is respawned! But this is the only way to ensure that it actually lands at the airbase.
-  self:RouteRTB(airbase)
+  self.flightgroup:SetTask(TaskOrbit)
 end
 
 --- On after TaskExecute event.
@@ -1487,7 +1542,7 @@ function FLIGHTGROUP:_UpdateRoute(n)
       self:RTB(airbase)
     else
       -- Let flight orbit.
-      self:Orbit()
+      --self:Orbit(self.flightgroup:GetCoordinate(), UTILS.FeetToMeters(20000), self.flightgroup:GetSpeedMax()*0.4)
     end
     
   end

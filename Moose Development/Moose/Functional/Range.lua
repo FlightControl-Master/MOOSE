@@ -2193,8 +2193,8 @@ function RANGE:_DisplayBombTargets(_unitname)
       if coord then
 
         local ca2g=coord:ToStringA2G(_unit, _settings)
-        local lldms=coord:ToStringLLDMS()        
-        _text=_text..string.format("\n- %s: %s %s", bombtarget.name or "unknown", ca2g, lldms)
+        local lldms=coord:ToStringLLDMS(_settings)        
+        _text=_text..string.format("\n- %s:\n%s\n%s", bombtarget.name or "unknown", ca2g, lldms)
       end
     end
 
