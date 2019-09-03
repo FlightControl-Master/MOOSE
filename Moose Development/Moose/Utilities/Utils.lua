@@ -959,3 +959,11 @@ function UTILS.FileExists(file)
     return nil
   end  
 end
+
+--- Checks the current memory usage collectgarbage("count"). Info is printed to the DCS log file. Time stamp is the current mission runtime.
+function UTILS.CheckMemory()
+  local time=timer.getTime()
+  local clock=UTILS.SecondsToClock(time)
+  local mem=collectgarbage("count")
+  env.info(string.format("T=%s  Memory usage %d kByte = %.2f MByte", clock, mem, mem/1024))
+end

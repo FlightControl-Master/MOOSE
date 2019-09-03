@@ -2082,6 +2082,22 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #number Delay Delay in seconds.
   -- @param #WAREHOUSE.Queueitem Request Information table of the request.
 
+  --- On before "Request" user function. The necessary cargo and transport assets will be spawned. Time to set some additional asset parameters.
+  -- @function [parent=#WAREHOUSE] OnBeforeRequest
+  -- @param #WAREHOUSE self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #WAREHOUSE.Queueitem Request Information table of the request.
+
+  --- On after "Request" user function. The necessary cargo and transport assets were spawned.
+  -- @function [parent=#WAREHOUSE] OnAfterRequest
+  -- @param #WAREHOUSE self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #WAREHOUSE.Queueitem Request Information table of the request.
+
 
   --- Triggers the FSM event "Arrived" when a group has arrived at the destination warehouse.
   -- This function should always be called from the sending and not the receiving warehouse.
@@ -3711,7 +3727,11 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
         
         -- Set livery.
         if liveries then
-          asset.livery=liveries[math.random(#liveries)]
+          if type(liveries)=="table" then
+            asset.livery=liveries[math.random(#liveries)]
+          else
+            asset.livery=liveries
+          end
         end
   
         -- Set skill.
@@ -4167,9 +4187,6 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
   -- Set time stamp.
   Request.timestamp=timer.getAbsTime()
 
-  -- Init problem table.
-  --Pending.assetproblem={}
-
   -- Spawn assets of this request.
   self:_SpawnAssetRequest(Request)
 
@@ -4255,6 +4272,9 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     Request.assets[_assetitem.uid]=_assetitem
 
   end
+  
+  -- Init problem table.
+  Request.assetproblem={}  
 
   -- Add request to pending queue.
   table.insert(self.pending, Request)
@@ -5545,8 +5565,13 @@ function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrol
       if asset.livery then
         unit.livery_id = asset.livery
       end
+      
       if asset.skill then
         unit.skill= asset.skill
+      end
+      
+      if asset.payload then
+        unit.payload=asset.payload
       end
 
     end

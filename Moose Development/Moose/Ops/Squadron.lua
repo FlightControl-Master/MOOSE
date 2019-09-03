@@ -94,6 +94,12 @@ function SQUADRON:New(squadronname, airbase, tasks)
   self:AddTransition("Stopped",       "Start",              "Running")     -- Start FSM.
 
   self:AddTransition("*",             "SquadronStatus",     "*")           -- SQUADRON status update
+  
+  self:AddTransition("*",             "DetectedUnit",       "*")           --
+  
+  self:AddTransition("*",             "FlightSpawned",      "*")           --
+  self:AddTransition("*",             "FlightAirborne",     "*")           --
+  self:AddTransition("*",             "FlightDead",         "*")           --
 
   ------------------------
   --- Pseudo Functions ---
