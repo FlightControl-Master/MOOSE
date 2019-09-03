@@ -676,7 +676,7 @@ do -- ZONE_CAPTURE_COALITION
     --BASE:GetParent( self ).onafterGuard( self )
   
     if not self.SmokeScheduler then
-      self.SmokeScheduler = self:ScheduleRepeat( 1, 1, 0.1, nil, self.StatusSmoke, self )
+      self.SmokeScheduler = self:ScheduleRepeat( self.StartInterval, self.RepeatInterval, 0.1, nil, self.StatusSmoke, self )
     end
   end
 
@@ -747,13 +747,13 @@ do -- ZONE_CAPTURE_COALITION
   -- 
   function ZONE_CAPTURE_COALITION:Start( StartInterval, RepeatInterval )
   
-    StartInterval = StartInterval or 15
-    RepeatInterval = RepeatInterval or 15
+    self.StartInterval = StartInterval or 15
+    self.RepeatInterval = RepeatInterval or 15
   
     if self.ScheduleStatusZone then
       self:ScheduleStop( self.ScheduleStatusZone )
     end
-    self.ScheduleStatusZone = self:ScheduleRepeat( StartInterval, RepeatInterval, 0.1, nil, self.StatusZone, self )
+    self.ScheduleStatusZone = self:ScheduleRepeat( self.StartInterval, self.RepeatInterval, 1.5, nil, self.StatusZone, self )
   end
   
 

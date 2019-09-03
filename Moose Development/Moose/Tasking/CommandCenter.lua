@@ -201,6 +201,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
   self:SetAutoAssignTasks( false )
   self:SetAutoAcceptTasks( true )
   self:SetAutoAssignMethod( COMMANDCENTER.AutoAssignMethods.Random )
+  self:SetFlashStatus( false )
   
   self:HandleEvent( EVENTS.Birth,
     --- @param #COMMANDCENTER self
@@ -791,3 +792,12 @@ function COMMANDCENTER:ReportDetails( ReportGroup, Task )
   self:MessageToGroup( Report:Text(), ReportGroup )
 end
 
+
+--- Let the command center flash a report of the status of the subscribed task to a group.
+-- @param #COMMANDCENTER self
+function COMMANDCENTER:SetFlashStatus( Flash )
+  self:F()
+
+  self.FlashStatus = Flash or true
+
+end

@@ -856,6 +856,8 @@ do -- Group Assignment
 
     CommandCenter:SetMenu()
     
+    self:MenuFlashTaskStatus( TaskGroup, self:GetMission():GetCommandCenter().FlashStatus )
+    
     return self
   end
   
