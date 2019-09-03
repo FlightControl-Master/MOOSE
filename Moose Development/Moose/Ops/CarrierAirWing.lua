@@ -92,7 +92,7 @@ CVW.version="0.0.5"
 
 --- Create a new CVW class object for a specific aircraft carrier unit.
 -- @param #CVW self
--- @param #string carriername Name of the carrier.
+-- @param #string carriername Name of the carrier unit.
 -- @param #string cvwname Name of the carrier air wing, e.g. "CVW-8".
 -- @return #CVW self
 function CVW:New(carriername, cvwname)

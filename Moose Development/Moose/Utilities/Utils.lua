@@ -436,6 +436,7 @@ UTILS.tostringLL = function( lat, lon, acc, DMS)
       secFrmtStr = '%0' .. width .. '.' .. acc .. 'f'
     end
 
+    -- 024 23' 12"N or 024 23' 12.031"N
     return string.format('%03d', latDeg) .. ' ' .. string.format('%02d', latMin) .. '\' ' .. string.format(secFrmtStr, latSec) .. '"' .. latHemi .. '   '
            .. string.format('%03d', lonDeg) .. ' ' .. string.format('%02d', lonMin) .. '\' ' .. string.format(secFrmtStr, lonSec) .. '"' .. lonHemi
 
@@ -461,6 +462,7 @@ UTILS.tostringLL = function( lat, lon, acc, DMS)
       minFrmtStr = '%0' .. width .. '.' .. acc .. 'f'
     end
 
+    -- 024 23'N or 024 23.123'N
     return string.format('%03d', latDeg) .. ' ' .. string.format(minFrmtStr, latMin) .. '\'' .. latHemi .. '   '
      .. string.format('%03d', lonDeg) .. ' ' .. string.format(minFrmtStr, lonMin) .. '\'' .. lonHemi
 

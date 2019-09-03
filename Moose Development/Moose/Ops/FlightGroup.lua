@@ -5,6 +5,7 @@
 --    * Monitor flight status of elements or entire group.
 --    * Monitor fuel and ammo status.
 --    * Sophisicated task queueing system.
+--    * Many additional events for each element and the whole group.
 --
 --
 -- ===
@@ -37,6 +38,7 @@
 -- @field #boolean fuelcritical Fuel critical switch.
 -- @field #number fuelcriticalthresh Critical fuel threshold in percent.
 -- @field #boolean fuelcriticalrtb RTB on critical fuel switch. 
+-- @field Ops.Squadron#SQUADRON squadron The squadron the flight group belongs to.
 -- @extends Core.Fsm#FSM
 
 --- Be surprised!
@@ -76,6 +78,7 @@ FLIGHTGROUP = {
   fuelcritical       =   nil,  
   fuelcriticalthresh =   nil,
   fuelcriticalrtb    = false,
+  squadron           =   nil,
 }
 
 
@@ -178,7 +181,7 @@ FLIGHTGROUP.version="0.0.8"
 -- TODO: Get ammo.
 -- TODO: Get pylons.
 -- TODO: Fuel threshhold ==> RTB.
--- TODO: ROE, Afterburner restrict
+-- TODO: ROE, Afterburner restrict.
 -- TODO: Respawn? With correct loadout, fuelstate.
 -- TODO: Waypoints, read, add, insert, detour.
 -- TODO: Damage?
@@ -410,6 +413,23 @@ function FLIGHTGROUP:AddTaskWaypoint(description, task, waypointindex, prio, dur
   return self
 end
 
+--- Set squadron the flight group belongs to.
+-- @param #FLIGHTGROUP self
+-- @param Ops.Squadron#SQUADRON squadron The squadron object.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetSquadron(squadron)
+  self.squadron=squadron
+  return self
+end
+
+--- Get squadron the flight group belongs to.
+-- @param #FLIGHTGROUP self
+-- @return Ops.Squadron#SQUADRON The squadron object.
+function FLIGHTGROUP:GetSquadron()
+  return self.squadron
+end
+
+
 --- Set low fuel threshold. Triggers event "FuelLow" and calls event function "OnAfterFuelLow".
 -- @param #FLIGHTGROUP self
 -- @param #number threshold Fuel threshold in percent. Default 25 %.
@@ -446,6 +466,13 @@ end
 -- @return Wrapper.Group#GROUP Moose group object.
 function FLIGHTGROUP:GetGroup()
   return self.flightgroup
+end
+
+--- Get flight group name.
+-- @param #FLIGHTGROUP self
+-- @return #string Group name.
+function FLIGHTGROUP:GetName()
+  return self.flightgroup:GetName()
 end
 
 --- Check if flight is airborne.
