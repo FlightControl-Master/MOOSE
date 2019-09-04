@@ -432,13 +432,13 @@ UTILS.tostringLL = function( lat, lon, acc, DMS)
     if acc <= 0 then  -- no decimal place.
       secFrmtStr = '%02d'
     else
-      local width = 3 + acc  -- 01.310 - that's a width of 6, for example.
-      secFrmtStr = '%0' .. width .. '.' .. acc .. 'f'
+      local width = 3 + acc  -- 01.310 - that's a width of 6, for example. Acc is limited to 2 for DMS!
+      secFrmtStr = '%0' .. width .. '.' .. math.min(acc, 2) .. 'f'
     end
 
-    -- 024 23' 12"N or 024 23' 12.031"N
-    return string.format('%03d', latDeg) .. ' ' .. string.format('%02d', latMin) .. '\' ' .. string.format(secFrmtStr, latSec) .. '"' .. latHemi .. '   '
-           .. string.format('%03d', lonDeg) .. ' ' .. string.format('%02d', lonMin) .. '\' ' .. string.format(secFrmtStr, lonSec) .. '"' .. lonHemi
+    -- 024� 23' 12"N or 024� 23' 12.03"N
+    return string.format('%03d째', latDeg) .. ' ' .. string.format('%02d', latMin) .. '\' ' .. string.format(secFrmtStr, latSec) .. '"' .. latHemi .. '   '
+        .. string.format('%03d째', lonDeg) .. ' ' .. string.format('%02d', lonMin) .. '\' ' .. string.format(secFrmtStr, lonSec) .. '"' .. lonHemi
 
   else  -- degrees, decimal minutes.
     latMin = UTILS.Round(latMin, acc)
@@ -463,8 +463,8 @@ UTILS.tostringLL = function( lat, lon, acc, DMS)
     end
 
     -- 024 23'N or 024 23.123'N
-    return string.format('%03d', latDeg) .. ' ' .. string.format(minFrmtStr, latMin) .. '\'' .. latHemi .. '   '
-     .. string.format('%03d', lonDeg) .. ' ' .. string.format(minFrmtStr, lonMin) .. '\'' .. lonHemi
+    return string.format('%03d째', latDeg) .. ' ' .. string.format(minFrmtStr, latMin) .. '\'' .. latHemi .. '   '
+        .. string.format('%03d째', lonDeg) .. ' ' .. string.format(minFrmtStr, lonMin) .. '\'' .. lonHemi
 
   end
 end

@@ -1659,7 +1659,7 @@ function FLIGHTGROUP:_UpdateRoute(n)
           self:RTB(airbase)        
       else
         -- Let flight orbit.
-        self:Orbit(self.flightgroup:GetCoordinate(), UTILS.FeetToMeters(20000), self.flightgroup:GetSpeedMax()*0.4)
+        --self:Orbit(self.flightgroup:GetCoordinate(), UTILS.FeetToMeters(20000), self.flightgroup:GetSpeedMax()*0.4)
       end
       
     end

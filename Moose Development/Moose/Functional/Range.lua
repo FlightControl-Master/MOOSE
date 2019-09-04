@@ -2106,6 +2106,7 @@ function RANGE:_DisplayRangeInfo(_unitname)
       local position=self.location --Core.Point#COORDINATE
       local bulls=position:ToStringBULLS(unit:GetCoalition(), settings)
       local lldms=position:ToStringLLDMS(settings)
+      local llddm=position:ToStringLLDDM(settings)
       local rangealt=position:GetLandHeight()
       local vec3=coord:GetDirectionVec3(position)
       local angle=coord:GetAngleDegrees(vec3)
@@ -2149,6 +2150,7 @@ function RANGE:_DisplayRangeInfo(_unitname)
       text=text..string.format("Bearing %s, Range %s\n", Bs, trange)
       text=text..string.format("%s\n", bulls)
       text=text..string.format("%s\n", lldms)
+      text=text..string.format("%s\n", llddm)
       text=text..string.format("Altitude ASL: %s\n", trangealt)
       text=text..string.format("Max strafing alt AGL: %s\n", tstrafemaxalt)
       text=text..string.format("# of strafe targets: %d\n", self.nstrafetargets)
@@ -2193,8 +2195,8 @@ function RANGE:_DisplayBombTargets(_unitname)
       if coord then
 
         local ca2g=coord:ToStringA2G(_unit,_settings)
-        local lldms=coord:ToStringLLDMS(_settings)        
-        _text=_text..string.format("\n- %s:\n%s\n%s", bombtarget.name or "unknown", ca2g, lldms)
+        --local lldms=coord:ToStringLLDMS(_settings)        
+        _text=_text..string.format("\n- %s:\n%s", bombtarget.name or "unknown", ca2g)
       end
     end
 
@@ -2235,7 +2237,7 @@ function RANGE:_DisplayStrafePits(_unitname)
       end
 
       local mycoord=coord:ToStringA2G(_unit, _settings)
-      _text=_text..string.format("\n- %s: %s - heading %03d°",_strafepit.name, mycoord, heading)
+      _text=_text..string.format("\n- %s: heading %03d°\n%s",_strafepit.name, heading, mycoord)
     end
 
     self:_DisplayMessageToGroup(_unit,_text, nil, true, true)
@@ -2283,7 +2285,7 @@ function RANGE:_DisplayRangeWeather(_unitname)
       local tW=string.format("%.1f m/s", Ws)
       local tP=string.format("%.1f mmHg", P*hPa2mmHg)
       if settings:IsImperial() then
-        tT=string.format("%d°F", UTILS.CelciusToFarenheit(T))
+        --tT=string.format("%d°F", UTILS.CelciusToFarenheit(T))
         tW=string.format("%.1f knots", UTILS.MpsToKnots(Ws))
         tP=string.format("%.2f inHg", P*hPa2inHg)
       end

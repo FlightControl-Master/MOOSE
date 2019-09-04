@@ -1934,7 +1934,7 @@ do -- COORDINATE
 
     local LL_Accuracy = Settings and Settings.LL_Accuracy or _SETTINGS.LL_Accuracy
     local lat, lon = coord.LOtoLL( self:GetVec3() )
-    return "LL DMS, " .. UTILS.tostringLL( lat, lon, LL_Accuracy, true )
+    return "LL DMS " .. UTILS.tostringLL( lat, lon, LL_Accuracy, true )
   end
 
   --- Provides a Lat Lon string in Degree Decimal Minute format.
@@ -1945,7 +1945,7 @@ do -- COORDINATE
 
     local LL_Accuracy = Settings and Settings.LL_Accuracy or _SETTINGS.LL_Accuracy
     local lat, lon = coord.LOtoLL( self:GetVec3() )
-    return "LL DDM, " .. UTILS.tostringLL( lat, lon, LL_Accuracy, false )
+    return "LL DDM " .. UTILS.tostringLL( lat, lon, LL_Accuracy, false )
   end
 
   --- Provides a MGRS string
@@ -1957,7 +1957,7 @@ do -- COORDINATE
     local MGRS_Accuracy = Settings and Settings.MGRS_Accuracy or _SETTINGS.MGRS_Accuracy
     local lat, lon = coord.LOtoLL( self:GetVec3() )
     local MGRS = coord.LLtoMGRS( lat, lon )
-    return "MGRS, " .. UTILS.tostringMGRS( MGRS, MGRS_Accuracy )
+    return "MGRS " .. UTILS.tostringMGRS( MGRS, MGRS_Accuracy )
   end
 
   --- Provides a coordinate string of the point, based on a coordinate format system:

@@ -165,7 +165,7 @@ function FLIGHTCONTROL:New(airbasename)
   self.airbasetype=self.airbase:GetDesc().category
   
   -- Set some string id for output to DCS.log file.
-  self.lid=string.format("FLIGHTCONTROL %s | ", airbasename)
+  self.lid=string.format("FLIGHTCONTROL %s |", airbasename)
   
   -- Current map.
   self.theatre=env.mission.theatre    
@@ -192,7 +192,7 @@ function FLIGHTCONTROL:New(airbasename)
     self.Debug=true
     BASE:TraceOnOff(true)
     BASE:TraceClass(self.ClassName)
-    BASE:TraceLevel(1)
+    BASE:TraceLevel(3)
     --self.dTstatus=0.1
   end
 
