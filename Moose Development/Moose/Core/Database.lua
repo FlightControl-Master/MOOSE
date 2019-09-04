@@ -81,6 +81,9 @@ DATABASE = {
   HITS = {},
   DESTROYS = {},
   ZONES = {},
+  WAREHOUSES = {},
+  FLIGHTGROUPS = {},
+  FLIGHTCONTROLS = {},
 }
 
 local _DATABASECoalition =
@@ -1197,6 +1200,37 @@ end
 
 
 
+--- Add a flight group to the data base.
+-- @param #DATABASE self
+-- @param Ops.FlightGroup#FLIGHTGROUP flightgroup
+function DATABASE:AddFlightGroup(flightgroup)
+  self:F2( { flightgroup } )
+  self.FLIGHTGROUPS[flightgroup.groupname]=flightgroup
+end
+
+--- Get a flight group from the data base.
+-- @param #DATABASE self
+-- @param #string groupname Group name of the flight group.
+-- @return Ops.FlightGroup#FLIGHTGROUP Flight group object.
+function DATABASE:GetFlightGroup(groupname)
+  return self.FLIGHTGROUPS[groupname]
+end
+
+--- Add a flight control to the data base.
+-- @param #DATABASE self
+-- @param Ops.FlightControl#FLIGHTCONTROL flightcontrol
+function DATABASE:AddFlightControl(flightcontrol)
+  self:F2( { flightcontrol } )
+  self.FLIGHTCONTROLS[flightcontrol.airbasename]=flightcontrol
+end
+
+--- Get a flight control object from the data base.
+-- @param #DATABASE self
+-- @param #string airbasename Name of the associated airbase.
+-- @return Ops.FlightControl#FLIGHTCONTROL The FLIGHTCONTROL object.s
+function DATABASE:GetFlightControl(airbasename)
+  return self.FLIGHTCONTROLS[airbasename]
+end
 
 --- @param #DATABASE self
 function DATABASE:_RegisterTemplates()

@@ -4,7 +4,7 @@
 --
 --    * Monitor flight status of elements or entire group.
 --    * Monitor fuel and ammo status.
---    * Sophisicated task queueing system.
+--    * Sophisticated task queueing system.
 --    * Many additional events for each element and the whole group.
 --
 --
@@ -84,6 +84,7 @@ FLIGHTGROUP = {
 
 --- Status of flight group element.
 -- @type FLIGHTGROUP.ElementStatus
+-- @field #string INUTERO Element was not spawned yet or its status is unknown so far.
 -- @field #string SPAWNED Element was spawned into the world.
 -- @field #string PARKING Element is parking after spawned on ramp.
 -- @field #string TAXIING Element is taxiing after engine startup.
@@ -92,6 +93,7 @@ FLIGHTGROUP = {
 -- @field #string ARRIVED Element arrived at its parking spot and shut down its engines.
 -- @field #string DEAD Element is dead after it crashed, pilot ejected or pilot dead events.
 FLIGHTGROUP.ElementStatus={
+  INUTERO="inutero",
   SPAWNED="spawned",
   PARKING="parking",
   TAXIING="taxiing",
@@ -111,6 +113,8 @@ FLIGHTGROUP.ElementStatus={
 -- @field Wrapper.Unit#UNIT unit Element unit object.
 -- @field Wrapper.Group#GROUP group Group object of the element.
 -- @field #string status Status, i.e. born, parking, taxiing. See @{#FLIGHTGROUP.ElementStatus}.
+-- @field #table pylons Table of pylons.
+-- @field #number damage Damage of element in percent.
 
 --- Flight group tasks.
 -- @type FLIGHTGROUP.Mission
@@ -134,7 +138,7 @@ FLIGHTGROUP.Mission={
 
 --- Flight group task status.
 -- @type FLIGHTGROUP.TaskStatus
--- @field #string SCHEDULED Task is sheduled.
+-- @field #string SCHEDULED Task is scheduled.
 -- @field #string EXECUTING Task is being executed.
 -- @field #string ACCOMPLISHED Task is accomplished.
 -- @field #string WAYPOINT Task is executed at a waypoint.
@@ -146,7 +150,7 @@ FLIGHTGROUP.TaskStatus={
 
 --- Flight group task status.
 -- @type FLIGHTGROUP.TaskType
--- @field #string SCHEDULED Task is sheduled.
+-- @field #string SCHEDULED Task is scheduled.
 -- @field #string EXECUTING Task is being executed.
 FLIGHTGROUP.TaskType={
   SCHEDULED="scheduled",
@@ -170,7 +174,7 @@ FLIGHTGROUP.TaskType={
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.0.8"
+FLIGHTGROUP.version="0.0.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -233,6 +237,7 @@ function FLIGHTGROUP:New(groupname)
 
   self:AddTransition("*",             "RTB",               "Returning")   -- Group is returning to base.
   self:AddTransition("*",             "Orbit",             "Orbiting")    -- Group is holding position.
+  self:AddTransition("*",             "Hold",              "Holding")     -- Group is holding position.
 
   self:AddTransition("*",             "PassingWaypoint",   "*")           -- Group passed a waypoint.
   
@@ -307,22 +312,8 @@ function FLIGHTGROUP:New(groupname)
     BASE:TraceLevel(1)
   end
 
-  -- Check if the group is already alive and if so, add its elements.
-  -- TODO: move this to start?
-  local group=GROUP:FindByName(groupname)
-  if group and group:IsAlive() then
-    self.flightgroup=group
-    local units=group:GetUnits()
-    for _,_unit in pairs(units) do
-      local unit=_unit --Wrapper.Unit#UNIT
-      local element=self:AddElementByName(unit:GetName())
 
-      -- Trigger Spawned event. Delay a bit to start
-      self:__ElementSpawned(0.1, element)
-
-    end
-  end
-
+  -- Init task counter.
   self.taskcurrent=0
   self.taskcounter=0
 
@@ -335,7 +326,6 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- User functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 
 --- Add scheduled task.
 -- @param #FLIGHTGROUP self
@@ -429,7 +419,6 @@ function FLIGHTGROUP:GetSquadron()
   return self.squadron
 end
 
-
 --- Set low fuel threshold. Triggers event "FuelLow" and calls event function "OnAfterFuelLow".
 -- @param #FLIGHTGROUP self
 -- @param #number threshold Fuel threshold in percent. Default 25 %.
@@ -473,6 +462,36 @@ end
 -- @return #string Group name.
 function FLIGHTGROUP:GetName()
   return self.flightgroup:GetName()
+end
+
+--- Get waypoint.
+-- @param #FLIGHTGROUP self
+-- @param #number indx Waypoint index.
+-- @return #table Waypoint table.
+function FLIGHTGROUP:GetWaypoint(indx)
+  return self.waypoints[indx]
+end
+
+--- Get final waypoint.
+-- @param #FLIGHTGROUP self
+-- @return #table Waypoint table.
+function FLIGHTGROUP:GetWaypointFinal()
+  return self.waypoints[#self.waypoints]
+end
+
+--- Get next waypoint.
+-- @param #FLIGHTGROUP self
+-- @return #table Waypoint table.
+function FLIGHTGROUP:GetWaypointNext()
+  local n=math.min(self.currentwp+1, #self.waypoints)
+  return self.waypoints[n]
+end
+
+--- Get current waypoint.
+-- @param #FLIGHTGROUP self
+-- @return #table Waypoint table.
+function FLIGHTGROUP:GetWaypointCurrent()
+  return self.waypoints[self.currentwp]
 end
 
 --- Check if flight is airborne.
@@ -528,7 +547,6 @@ end
 -- Start & Status
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-
 --- On after Start event. Starts the FLIGHTGROUP FSM and event handlers.
 -- @param #FLIGHTGROUP self
 -- @param Wrapper.Group#GROUP Group Flight group.
@@ -540,6 +558,21 @@ function FLIGHTGROUP:onafterStart(From, Event, To)
   -- Short info.
   local text=string.format("Starting flight group %s.", self.groupname)
   self:I(self.sid..text)
+  
+  -- Check if the group is already alive and if so, add its elements.
+  local group=GROUP:FindByName(self.groupname)
+  if group and group:IsAlive() then
+    self.flightgroup=group
+    local units=group:GetUnits()
+    for _,_unit in pairs(units) do
+      local unit=_unit --Wrapper.Unit#UNIT
+      local element=self:AddElementByName(unit:GetName())
+
+      -- Trigger Spawned event. Delay a bit to start.
+      self:__ElementSpawned(0.1, element)
+
+    end
+  end  
 
   -- Handle events:
   self:HandleEvent(EVENTS.Birth,          self.OnEventBirth)
@@ -550,8 +583,6 @@ function FLIGHTGROUP:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.PilotDead,      self.OnEventPilotDead)
   self:HandleEvent(EVENTS.Ejection,       self.OnEventEjection)
   self:HandleEvent(EVENTS.Crash,          self.OnEventCrash)
-
-  self.taskcounter=0
 
   -- Start the status monitoring.
   self:__FlightStatus(-1)
@@ -628,6 +659,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
       self:ElementDead(element)
     end
     
+    -- Get ammo.
     local nammo=0
     local nshells=0
     local nrockets=0
@@ -742,8 +774,15 @@ function FLIGHTGROUP:OnEventBirth(EventData)
     local group=EventData.IniGroup
     local unitname=EventData.IniUnitName
 
+    -- Set group.
     self.flightgroup=self.flightgroup or EventData.IniGroup
+    
+    -- Set homebase if not already set.
+    if EventData.Place then
+      self.homebase=self.homebase or EventData.Place
+    end
 
+    -- Create element spawned event if not already present.
     if not self:_IsElement(unitname) then
       local element=self:AddElementByName(unitname)
       self:ElementSpawned(element)
@@ -1369,8 +1408,6 @@ function FLIGHTGROUP:RouteRTB(RTBAirbase, Speed, Altitude)
   -- Set route points.
   Template.route.points=Points
 
-  -- Set modex for respawn.
-  --self.flightgroup:InitModex(self.modex)
 
   -- Respawn the group.
   self.flightgroup=self.flightgroup:Respawn(Template, true)
@@ -1437,8 +1474,23 @@ function FLIGHTGROUP:AddElementByName(unitname)
 
     element.name=unitname
     element.unit=unit
-    element.status="unknown"
+    element.status=FLIGHTGROUP.ElementStatus.INUTERO
     element.group=unit:GetGroup()
+    
+    element.modex=element.unit:GetTemplate().onboard_num
+    element.skill=element.unit:GetTemplate().skill
+    element.pylons=element.unit:GetTemplatePylons()
+    element.fuelmass=element.unit:GetTemplatePayload().fuel
+    element.category=element.unit:GetCategory()
+    element.categoryname=element.unit:GetCategoryName()
+    element.callsign=element.unit:GetCallsign()
+    
+    if element.skill=="Client" or element.skill=="Player" then
+      element.ai=false
+    else
+      element.ai=true
+    end
+    
 
     table.insert(self.element, element)
 
@@ -1461,6 +1513,33 @@ function FLIGHTGROUP:GetElementByName(unitname)
       return element
     end
 
+  end
+
+  return nil
+end
+
+--- Check if a unit is and element of the flightgroup.
+-- @param #FLIGHTGROUP self
+-- @return Wrapper.Airbase#AIRBASE Final destination airbase or #nil.
+function FLIGHTGROUP:GetDestinationFromWaypoints()
+
+  local wp=self:GetWaypointFinal()
+  
+  if wp then
+    
+    if wp and wp.action and wp.action==COORDINATE.WaypointAction.Landing then
+      
+      -- Get airbase ID depending on airbase category.
+      local airbaseID=wp.airdromeId or wp.helipadId
+      
+      local airbase=AIRBASE:FindByID(airbaseID)
+      
+      return airbase    
+    end
+    
+    --TODO: Handle case where e.g. only one WP but that is not landing.
+    --TODO: Probably other cases need to be taken care of.
+    
   end
 
   return nil
@@ -1554,6 +1633,9 @@ function FLIGHTGROUP:_UpdateRoute(n)
     table.insert(wp, self.waypoints[i])
   end
   
+  -- Get destination airbase from waypoints.
+  self.destination=self:GetDestinationFromWaypoints() or self.destination
+  
   if #wp>0 then
 
     -- Route group to all defined waypoints remaining.
@@ -1561,15 +1643,25 @@ function FLIGHTGROUP:_UpdateRoute(n)
     
   else
   
+    ---
+    -- No waypoints left
+    ---
+  
     -- Get destination or home airbase.
     local airbase=self.destination or self.homebase
     
-    if airbase then
-      -- Route flight home.
-      self:RTB(airbase)
-    else
-      -- Let flight orbit.
-      --self:Orbit(self.flightgroup:GetCoordinate(), UTILS.FeetToMeters(20000), self.flightgroup:GetSpeedMax()*0.4)
+    if self:IsAirborne() then
+    
+      -- TODO: check if no more scheduled tasks.
+      
+      if airbase then
+          -- Route flight to destination/home.
+          self:RTB(airbase)        
+      else
+        -- Let flight orbit.
+        self:Orbit(self.flightgroup:GetCoordinate(), UTILS.FeetToMeters(20000), self.flightgroup:GetSpeedMax()*0.4)
+      end
+      
     end
     
   end
@@ -1579,7 +1671,6 @@ end
 
 --- Initialize Mission Editor waypoints.
 -- @param #FLIGHTGROUP self
--- @return #FLIGHTGROUP self
 function FLIGHTGROUP:_UpdateWaypointTasks()
 
   for i,wp in pairs(self.waypoints) do

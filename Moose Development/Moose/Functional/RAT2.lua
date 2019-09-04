@@ -169,7 +169,6 @@ end
 -- @param #RATAC ratcraft Ratcraft to spawn.
 -- @param #table parking Parking data for this asset.
 -- @param #boolean uncontrolled Spawn aircraft in uncontrolled state.
-
 -- @return Wrapper.Group#GROUP The spawned group or nil if the group could not be spawned.
 function RAT2:_SpawnRatcraft(ratcraft, departure, destination, parking, uncontrolled)
 

@@ -110,7 +110,6 @@ FLIGHTCONTROL.FlightState={
 -- @field #number angelsmin Smallest holding altitude in angels.
 -- @field #number angelsmax Largest holding alitude in angels.
 
-
 --- Parking spot data.
 -- @type FLIGHTCONTROL.ParkingSpot
 -- @field #number index Parking index.
@@ -131,7 +130,7 @@ FLIGHTCONTROL.FlightState={
 
 --- FlightControl class version.
 -- @field #string version
-FLIGHTCONTROL.version="0.0.2"
+FLIGHTCONTROL.version="0.0.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -139,12 +138,16 @@ FLIGHTCONTROL.version="0.0.2"
  
 -- TODO: Add FARPS.
 -- TODO: Add helos.
+-- TODO: Task me down option.
+-- TODO: ATIS option.
+-- TODO: ATC voice overs.
+-- TODO: Check runways and clean up.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Create a new FLIGHTCONTROL class object for a specific aircraft carrier unit.
+--- Create a new FLIGHTCONTROL class object for an associated airbase.
 -- @param #FLIGHTCONTROL self
 -- @param #string airbasename Name of the airbase.
 -- @return #FLIGHTCONTROL self
@@ -197,7 +200,7 @@ function FLIGHTCONTROL:New(airbasename)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- User Fuctions
+-- User API Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Set runway. This clears all auto generated runways.
@@ -245,7 +248,7 @@ end
 function FLIGHTCONTROL:onafterStart()
 
   -- Events are handled my MOOSE.
-  self:I(self.lid..string.format("Starting FLIGHTCONTROL v%s for airbase %s of type %d on map %s.", FLIGHTCONTROL.version, self.airbasename, self.airbasetype, self.theatre))
+  self:I(self.lid..string.format("Starting FLIGHTCONTROL v%s for airbase %s of type %d on map %s", FLIGHTCONTROL.version, self.airbasename, self.airbasetype, self.theatre))
 
   -- Handle events.
   self:HandleEvent(EVENTS.Birth)
@@ -284,6 +287,7 @@ function FLIGHTCONTROL:onafterStatus()
   local text=string.format("State %s - Active Runway %03d - Free Parking %d", self:GetState(), runway.direction, nfree)
   self:I(self.lid..text)
 
+  -- Next status update in ~30 seconds.
   self:__Status(-30)
 end
 
@@ -313,7 +317,7 @@ function FLIGHTCONTROL:_InitRunwayData()
     local hdg=c1:HeadingTo(c2)
     
     -- Debug info.
-    self:T(self.lid..string.format("Runway %d heading=%03d°", j, hdg))
+    self:T(self.lid..string.format("Runway %d heading=%03dï¿½", j, hdg))
     
     -- Runway table.
     local runway={} --#FLIGHTCONTROL.Runway
@@ -675,6 +679,7 @@ function FLIGHTCONTROL:_CheckParking()
     end
   end
 
+  -- Loop over all parking spots.
   for i,_spot in pairs(self.parking) do
     local spot=_spot --#FLIGHTCONTROL.ParkingSpot
     
@@ -735,6 +740,7 @@ function FLIGHTCONTROL:_GetNextWaitingFight()
     if flight.holding~=nil and Tmarshal>=TmarshalMin then
       return flight
     end
+    
   end
 
   return nil

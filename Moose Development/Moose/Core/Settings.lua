@@ -201,7 +201,7 @@ SETTINGS = {
   ClassName = "SETTINGS",
   ShowPlayerMenu = true,
   MenuShort = false,
-  staticmenu = true,
+  MenuStatic = true,
 }
 
 
@@ -696,69 +696,106 @@ do -- SETTINGS
       local PlayerMenu = MENU_GROUP:New( PlayerGroup, 'Settings "' .. PlayerName .. '"' )
       
       self.PlayerMenu = PlayerMenu
-  
-      local A2GCoordinateMenu = MENU_GROUP:New( PlayerGroup, "A2G Coordinate System", PlayerMenu )
+      
+      ------
+      -- A2G Coordinate System
+      ------
+
+      local text="A2G Coordinate System"
+      if self.MenuShort then
+        text="A2G Coordinates"
+      end  
+      local A2GCoordinateMenu = MENU_GROUP:New( PlayerGroup, text, PlayerMenu )
     
-      if not self:IsA2G_LL_DMS() or self.staticmenu then
-        MENU_GROUP_COMMAND:New( PlayerGroup, "Lat/Lon Degree Min Sec (LL DMS)", A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL DMS" )
+      if not self:IsA2G_LL_DMS() or self.MenuStatic then
+        local text="Lat/Lon Degree Min Sec (LL DMS)"
+        if self.MenuShort then
+          text="LL DMS"
+        end      
+        MENU_GROUP_COMMAND:New( PlayerGroup, text, A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL DMS" )
       end
     
-      if not self:IsA2G_LL_DDM() or self.staticmenu then
-        MENU_GROUP_COMMAND:New( PlayerGroup, "Lat/Lon Degree Dec Min (LL DDM)", A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL DDM" )
+      if not self:IsA2G_LL_DDM() or self.MenuStatic then
+        local text="Lat/Lon Degree Dec Min (LL DDM)"
+        if self.MenuShort then
+          text="LL DDM"
+        end            
+        MENU_GROUP_COMMAND:New( PlayerGroup, text, A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL DDM" )
       end
     
-      if self:IsA2G_LL_DDM() or self.staticmenu then
-        MENU_GROUP_COMMAND:New( PlayerGroup, "LL DDM Accuracy 1", A2GCoordinateMenu, self.MenuGroupLL_DDM_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 1 )
-        MENU_GROUP_COMMAND:New( PlayerGroup, "LL DDM Accuracy 2", A2GCoordinateMenu, self.MenuGroupLL_DDM_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 2 )
-        MENU_GROUP_COMMAND:New( PlayerGroup, "LL DDM Accuracy 3", A2GCoordinateMenu, self.MenuGroupLL_DDM_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 3 )
+      if self:IsA2G_LL_DDM() or self.MenuStatic then
+        local submenu=A2GCoordinateMenu
+        if self.MenuStatic then
+          submenu = MENU_GROUP:New( PlayerGroup, "A2G LL DDM Accuracy", A2GCoordinateMenu )
+        end
+        MENU_GROUP_COMMAND:New( PlayerGroup, "LL DDM Accuracy 1", submenu, self.MenuGroupLL_DDM_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 1 )
+        MENU_GROUP_COMMAND:New( PlayerGroup, "LL DDM Accuracy 2", submenu, self.MenuGroupLL_DDM_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 2 )
+        MENU_GROUP_COMMAND:New( PlayerGroup, "LL DDM Accuracy 3", submenu, self.MenuGroupLL_DDM_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 3 )
       end
       
-      if not self:IsA2G_BR() or self.staticmenu then
-        MENU_GROUP_COMMAND:New( PlayerGroup, "Bearing, Range (BR)", A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "BR" )
+      if not self:IsA2G_BR() or self.MenuStatic then
+        local text="Bearing, Range (BR)"
+        if self.MenuShort then
+          text="BR"
+        end                  
+        MENU_GROUP_COMMAND:New( PlayerGroup, text, A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "BR" )
       end
       
-      if not self:IsA2G_MGRS() or self.staticmenu then
+      if not self:IsA2G_MGRS() or self.MenuStatic then
         MENU_GROUP_COMMAND:New( PlayerGroup, "Military Grid (MGRS)", A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "MGRS" )
       end    
   
-      if self:IsA2G_MGRS() or self.staticmenu then
-        MENU_GROUP_COMMAND:New( PlayerGroup, "MGRS Accuracy 1", A2GCoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 1 )
-        MENU_GROUP_COMMAND:New( PlayerGroup, "MGRS Accuracy 2", A2GCoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 2 )
-        MENU_GROUP_COMMAND:New( PlayerGroup, "MGRS Accuracy 3", A2GCoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 3 )
-        MENU_GROUP_COMMAND:New( PlayerGroup, "MGRS Accuracy 4", A2GCoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 4 )
-        MENU_GROUP_COMMAND:New( PlayerGroup, "MGRS Accuracy 5", A2GCoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 5 )
+      if self:IsA2G_MGRS() or self.MenuStatic then   
+        local submenu=A2GCoordinateMenu
+        if self.MenuStatic then
+          submenu = MENU_GROUP:New( PlayerGroup, "A2G MGRS Accuracy", A2GCoordinateMenu )
+        end         
+        MENU_GROUP_COMMAND:New( PlayerGroup, "MGRS Accuracy 1", submenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 1 )
+        MENU_GROUP_COMMAND:New( PlayerGroup, "MGRS Accuracy 2", submenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 2 )
+        MENU_GROUP_COMMAND:New( PlayerGroup, "MGRS Accuracy 3", submenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 3 )
+        MENU_GROUP_COMMAND:New( PlayerGroup, "MGRS Accuracy 4", submenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 4 )
+        MENU_GROUP_COMMAND:New( PlayerGroup, "MGRS Accuracy 5", submenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 5 )
       end
   
-      local A2ACoordinateMenu = MENU_GROUP:New( PlayerGroup, "A2A Coordinate System", PlayerMenu )
+      ------
+      -- A2A Coordinates Menu
+      ------
+  
+      -- Submenu.
+      local text="A2A Coordinate System"
+      if self.MenuShort then
+        text="A2A Coordinates"
+      end        
+      local A2ACoordinateMenu = MENU_GROUP:New( PlayerGroup, text, PlayerMenu )
   
   
-      if not self:IsA2A_LL_DMS() or self.staticmenu then
+      if not self:IsA2A_LL_DMS() or self.MenuStatic then
         MENU_GROUP_COMMAND:New( PlayerGroup, "Lat/Lon Degree Min Sec (LL DMS)", A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL DMS" )
       end
     
-      if not self:IsA2A_LL_DDM() or self.staticmenu then
+      if not self:IsA2A_LL_DDM() or self.MenuStatic then
         MENU_GROUP_COMMAND:New( PlayerGroup, "Lat/Lon Degree Dec Min (LL DDM)", A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL DDM" )
       end
     
-      if self:IsA2A_LL_DDM() or self.staticmenu then
+      if self:IsA2A_LL_DDM() or self.MenuStatic then
         MENU_GROUP_COMMAND:New( PlayerGroup, "LL DDM Accuracy 1", A2GCoordinateMenu, self.MenuGroupLL_DDM_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 1 )
         MENU_GROUP_COMMAND:New( PlayerGroup, "LL DDM Accuracy 2", A2GCoordinateMenu, self.MenuGroupLL_DDM_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 2 )
         MENU_GROUP_COMMAND:New( PlayerGroup, "LL DDM Accuracy 3", A2GCoordinateMenu, self.MenuGroupLL_DDM_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 3 )
       end
   
-      if not self:IsA2A_BULLS() or self.staticmenu then
+      if not self:IsA2A_BULLS() or self.MenuStatic then
         MENU_GROUP_COMMAND:New( PlayerGroup, "Bullseye (BULLS)", A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "BULLS" )
       end
       
-      if not self:IsA2A_BRAA() or self.staticmenu then
+      if not self:IsA2A_BRAA() or self.MenuStatic then
         MENU_GROUP_COMMAND:New( PlayerGroup, "Bearing Range Altitude Aspect (BRAA)", A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "BRAA" )
       end
       
-      if not self:IsA2A_MGRS() or self.staticmenu then
+      if not self:IsA2A_MGRS() or self.MenuStatic then
         MENU_GROUP_COMMAND:New( PlayerGroup, "Military Grid (MGRS)", A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "MGRS" )
       end
       
-      if self:IsA2A_MGRS() or self.staticmenu then
+      if self:IsA2A_MGRS() or self.MenuStatic then
         MENU_GROUP_COMMAND:New( PlayerGroup, "MGRS Accuracy 1", A2ACoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 1 )
         MENU_GROUP_COMMAND:New( PlayerGroup, "MGRS Accuracy 2", A2ACoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 2 )
         MENU_GROUP_COMMAND:New( PlayerGroup, "MGRS Accuracy 3", A2ACoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 3 )
@@ -768,11 +805,11 @@ do -- SETTINGS
   
       local MetricsMenu = MENU_GROUP:New( PlayerGroup, "Measures and Weights System", PlayerMenu )
       
-      if self:IsMetric() or self.staticmenu then
+      if self:IsMetric() or self.MenuStatic then
         MENU_GROUP_COMMAND:New( PlayerGroup, "Imperial (Miles,Feet)", MetricsMenu, self.MenuGroupMWSystem, self, PlayerUnit, PlayerGroup, PlayerName, false )
       end
       
-      if self:IsImperial() or self.staticmenu then
+      if self:IsImperial() or self.MenuStatic then
         MENU_GROUP_COMMAND:New( PlayerGroup, "Metric (Kilometers,Meters)", MetricsMenu, self.MenuGroupMWSystem, self, PlayerUnit, PlayerGroup, PlayerName, true )
       end    
   
