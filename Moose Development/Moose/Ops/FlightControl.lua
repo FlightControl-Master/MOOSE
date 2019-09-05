@@ -130,7 +130,7 @@ FLIGHTCONTROL.FlightState={
 
 --- FlightControl class version.
 -- @field #string version
-FLIGHTCONTROL.version="0.0.3"
+FLIGHTCONTROL.version="0.0.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list

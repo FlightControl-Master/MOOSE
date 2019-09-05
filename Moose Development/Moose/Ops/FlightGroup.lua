@@ -39,6 +39,7 @@
 -- @field #number fuelcriticalthresh Critical fuel threshold in percent.
 -- @field #boolean fuelcriticalrtb RTB on critical fuel switch. 
 -- @field Ops.Squadron#SQUADRON squadron The squadron the flight group belongs to.
+-- @field Ops.FlightControl#FLIGHTCONTROL flightcontrol The flightcontrol handling this group.
 -- @extends Core.Fsm#FSM
 
 --- Be surprised!
@@ -79,6 +80,7 @@ FLIGHTGROUP = {
   fuelcriticalthresh =   nil,
   fuelcriticalrtb    = false,
   squadron           =   nil,
+  flightcontrol      =   nil,
 }
 
 
@@ -316,6 +318,9 @@ function FLIGHTGROUP:New(groupname)
   -- Init task counter.
   self.taskcurrent=0
   self.taskcounter=0
+  
+  -- Add to data base.
+  _DATABASE:AddFlightGroup(self)
 
   -- Autostart.
   self:Start()
