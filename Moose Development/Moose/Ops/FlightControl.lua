@@ -63,46 +63,6 @@ FLIGHTCONTROL = {
   activerwyno    =     1,
 }
 
---- Parameters of a flight group.
--- @type FLIGHTCONTROL.FlightGroup
--- @field #string groupname Name of the group.
--- @field Wrapper.Group#GROUP group Flight group.
--- @field #number nunits Number of units in group.
--- @field #number time Timestamp in seconds of timer.getAbsTime() of the last important event, e.g. added to the queue.
--- @field #number dist0 Distance in meters when group was first detected.
--- @field #number flag Flag value describing the current stack.
--- @field #boolean ai If true, flight is purly AI.
--- @field #string actype Aircraft type name.
--- @field #table onboardnumbers Onboard numbers of aircraft in the group.
--- @field #string onboard Onboard number of player or first unit in group.
--- @field #boolean holding If true, flight is in holding zone.
--- @field #boolean inzone If true, flight is inside airbase zone.
--- @field #table elements Flight group elements.
-
---- Parameters of an element in a flight group.
--- @type FLIGHTCONTROL.FlightElement
--- @field #string unitname Name of the unit.
--- @field Wrapper.Unit#UNIT unit Aircraft unit.
--- @field #boolean ai If true, AI sits inside. If false, human player is flying.
--- @field #string onboard Onboard number of the aircraft.
--- @field #boolean recovered If true, element was successfully recovered.
--- @field #boolean tookoff If true, element took off.
--- @field #boolean parking If true, element is parking.
--- @field #number sizemax Max size (length or width) of aircraft in meters.
-
---- Parameters of an element in a flight group.
--- @type FLIGHTCONTROL.FlightState
--- @field #string LANDED
--- @field #string PARKED
--- @field #string HOLDING
--- @field #string TAXIING
-FLIGHTCONTROL.FlightState={
-  LANDED="Landed",
-  PARKED="Parked",
-  HOLDING="Holding",
-  TAXIING="Taxiing",
-}
-
 --- Holding point
 -- @type FLIGHTCONTROL.HoldingPoint
 -- @field Core.Point#COORDINATE pos0 First poosition of racetrack holding point.
@@ -130,7 +90,7 @@ FLIGHTCONTROL.FlightState={
 
 --- FlightControl class version.
 -- @field #string version
-FLIGHTCONTROL.version="0.0.4"
+FLIGHTCONTROL.version="0.0.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -142,6 +102,7 @@ FLIGHTCONTROL.version="0.0.4"
 -- TODO: ATIS option.
 -- TODO: ATC voice overs.
 -- TODO: Check runways and clean up.
+-- TODO: Interface with FLIGHTGROUP
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -317,7 +278,7 @@ function FLIGHTCONTROL:_InitRunwayData()
     local hdg=c1:HeadingTo(c2)
     
     -- Debug info.
-    self:T(self.lid..string.format("Runway %d heading=%03d�", j, hdg))
+    self:T(self.lid..string.format("Runway %d heading=%03d", j, hdg))
     
     -- Runway table.
     local runway={} --#FLIGHTCONTROL.Runway
@@ -474,44 +435,6 @@ function FLIGHTCONTROL:OnEventLand(EventData)
   self:T2(self.lid..string.format("LAND: unit  = %s", tostring(EventData.IniUnitName)))
   self:T2(self.lid..string.format("LAND: group = %s", tostring(EventData.IniGroupName)))
   
-
-  -- This would be the closest airbase.
-  local airbase=EventData.Place
-  
-  -- Nil check for airbase. Crashed as player gave me no airbase.
-  if airbase==nil then
-    return
-  end
-  
-  -- Get airbase name.
-  local airbasename=tostring(airbase:GetName())
-  
-  -- Check if landed at this airbase.
-  if airbasename==self.airbasename then
-  
-    -- AI always lands ==> remove unit from flight group and queues.
-    local flight=self:_ElementRecovered(EventData.IniUnit)
-    
-    if flight then
-    
-      -- Check if everybody is home.
-      local recovered=true
-      for _,_elem in pairs(flight.elements) do
-        local element=_elem --#FLIGHTCONTROL.FlightElement
-        if not element.recovered then
-          recovered=false
-        end
-      end
-    
-      -- Remove flight.
-      if recovered then
-        self:_RemoveFlightFromQueue(self.Qlanding, flight)
-      end
-    
-    end
-  
-  end
-
 end
 
 --- Event handler for event takeoff.
@@ -688,10 +611,11 @@ function FLIGHTCONTROL:_CheckParking()
     
     -- Loop over all flights.
     for _,_flight in pairs(self.flights) do
+      local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
     
       -- Loop over all elements.
       for _,_element in pairs(_flight.elements) do
-        local element=_element --#FLIGHTCONTROL.FlightElement
+        local element=_element --Ops.FlightGroup#FLIGHTGROUP.Element
         
         local unit=element.unit
         
@@ -720,12 +644,12 @@ end
 
 --- Get next flight waiting for landing clearance.
 -- @param #FLIGHTCONTROL self
--- @return #FLIGHTCONTROL.FlightGroup Marshal flight next in line and ready to enter the pattern. Or nil if no flight is ready.
+-- @return Ops.FlightGroup#FLIGHTGROUP Marshal flight next in line and ready to enter the pattern. Or nil if no flight is ready.
 function FLIGHTCONTROL:_GetNextWaitingFight()
 
   -- Loop over all marshal flights.
   for _,_flight in pairs(self.Qwaiting) do
-    local flight=_flight --#FLIGHTCONTROL.FlightGroup
+    local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
     
     -- Current stack.
     local stack=flight.flag
@@ -760,7 +684,7 @@ function FLIGHTCONTROL:_PrintQueue(queue, name)
   
     -- Loop over all flights in queue.
     for i,_flight in ipairs(queue) do
-      local flight=_flight --#FLIGHTCONTROL.FlightGroup
+      local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
       
       -- Gather info.
       local clock=UTILS.SecondsToClock(timer.getAbsTime()-flight.time)
@@ -792,14 +716,14 @@ end
 --- Remove a flight group from a queue.
 -- @param #FLIGHTCONTROL self
 -- @param #table queue The queue from which the group will be removed.
--- @param #FLIGHTCONTROL.FlightGroup flight Flight group that will be removed from queue.
+-- @param Ops.FlightGroup#FLIGHTGROUP flight Flight group that will be removed from queue.
 -- @return #boolean True, flight was in Queue and removed. False otherwise.
 -- @return #number Table index of removed queue element or nil.
 function FLIGHTCONTROL:_RemoveFlightFromQueue(queue, flight)
 
   -- Loop over all flights in group.
   for i,_flight in pairs(queue) do
-    local qflight=_flight --#FLIGHTCONTROL.FlightGroup
+    local qflight=_flight --Ops.FlightGroup#FLIGHTGROUP
     
     -- Check for name.
     if qflight.groupname==flight.groupname then
@@ -812,28 +736,10 @@ function FLIGHTCONTROL:_RemoveFlightFromQueue(queue, flight)
   return false, nil
 end
 
---- Sets flag recovered=true and tookoff=false for a flight element, which was successfully recovered (landed).
--- @param #FLIGHTCONTROL self
--- @param Wrapper.Unit#UNIT unit The aircraft unit that was recovered.
--- @return #FLIGHTCONTROL.FlightGroup Flight group of element.
-function FLIGHTCONTROL:_ElementRecovered(unit)
-
-  -- Get element of flight.
-  local element, idx, flight=self:_GetFlightElement(unit:GetName())  --#FLIGHTCONTROL.FlightElement
-  
-  -- Nil check. Could be if a helo landed or something else we dont know!
-  if element then
-    element.recovered=true
-    element.tookoff=false
-  end
-  
-  return flight
-end
-
 --- Set tookoff to true for the flight element.
 -- @param #FLIGHTCONTROL self
 -- @param Wrapper.Unit#UNIT unit The aircraft unit that was recovered.
--- @return #FLIGHTCONTROL.FlightGroup Flight group of element.
+-- @return Ops.FlightGroup#FLIGHTGROUP Flight group of element.
 function FLIGHTCONTROL:_ElementTookOff(unit)
 
   -- Get element of flight.
@@ -849,7 +755,7 @@ end
 
 --- Add flight to landing queue and set recovered to false for all elements of the flight and its section members.
 -- @param #FLIGHTCONTROL self
--- @param #FLIGHTCONTROL.FlightGroup flight Flight group of element.
+-- @param Ops.FlightGroup#FLIGHTGROUP flight Flight group of element.
 function FLIGHTCONTROL:_AddFlightToLandingQueue(flight)
 
   -- Add flight to table.
@@ -871,7 +777,7 @@ end
 
 --- Add flight to takeoff queue.
 -- @param #FLIGHTCONTROL self
--- @param #FLIGHTCONTROL.FlightGroup flight Flight group of element.
+-- @param Ops.FlightGroup#FLIGHTGROUP flight Flight group of element.
 function FLIGHTCONTROL:_AddFlightToTakeoffQueue(flight)
 
   -- Check if already in queue.
@@ -904,7 +810,7 @@ end
 function FLIGHTCONTROL:_InQueue(queue, group)
   local name=group:GetName()
   for _,_flight in pairs(queue) do
-    local flight=_flight  --#FLIGHTCONTROL.FlightGroup
+    local flight=_flight  --Ops.FlightGroup#FLIGHTGROUP
     if name==flight.groupname then
       return true
     end
@@ -919,7 +825,7 @@ end
 --- Create a new flight group. Usually when a flight appears in the CCA.
 -- @param #FLIGHTCONTROL self
 -- @param Wrapper.Group#GROUP group Aircraft group.
--- @return #FLIGHTCONTROL.FlightGroup Flight group.
+-- @return Ops.FlightGroup#FLIGHTGROUP Flight group.
 function FLIGHTCONTROL:_CreateFlightGroup(group)
   
   -- Check if not already in flights
@@ -931,7 +837,7 @@ function FLIGHTCONTROL:_CreateFlightGroup(group)
   self:T(self.lid..string.format("Creating new flight for group %s of aircraft type %s.", group:GetName(), group:GetTypeName()))    
   
   -- New flight.
-  local flight={} --#FLIGHTCONTROL.FlightGroup
+  local flight={} --Ops.FlightGroup#FLIGHTGROUP
   
   -- Flight group name
   local groupname=group:GetName()
@@ -991,7 +897,7 @@ end
 -- @param #FLIGHTCONTROL self
 -- @param Wrapper.Group#GROUP group Group that will be removed from queue.
 -- @param #table queue The queue from which the group will be removed.
--- @return #FLIGHTCONTROL.FlightGroup Flight group or nil.
+-- @return Ops.FlightGroup#FLIGHTGROUP Flight group or nil.
 -- @return #number Queue index or nil.
 function FLIGHTCONTROL:_GetFlightFromGroup(group)
 
@@ -1002,7 +908,7 @@ function FLIGHTCONTROL:_GetFlightFromGroup(group)
     
     -- Loop over all flight groups in queue
     for i,_flight in pairs(self.flights) do
-      local flight=_flight --#FLIGHTCONTROL.FlightGroup
+      local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
       
       if flight.groupname==name then
         return flight, i
@@ -1021,7 +927,7 @@ end
 -- @param #string unitname Name of the unit.
 -- @return #FLIGHTCONTROL.FlightElement Element of the flight or nil.
 -- @return #number Element index or nil.
--- @return #FLIGHTCONTROL.FlightGroup The Flight group or nil.
+-- @return Ops.FlightGroup#FLIGHTGROUP The Flight group or nil.
 function FLIGHTCONTROL:_GetFlightElement(unitname)
 
   -- Get the unit.
@@ -1072,7 +978,7 @@ end
 
 --- Get parking spot of flight element.
 -- @param #FLIGHTCONTROL self
--- @param #FLIGHTCONTROL.FlightElement element Element of flight group.
+-- @param Ops.FlightGroup#FLIGHTGROUP.Element element Element of flight group.
 -- @return #FLIGHTCONTROL.ParkingSpot Parking spot of flight element or nil.
 function FLIGHTCONTROL:_GetElementParkingSpot(element)
 
@@ -1159,7 +1065,7 @@ function FLIGHTCONTROL:_CheckInbound()
   end
   
   for _,_flight in pairs(self.flights) do
-    local flight=_flight --#FLIGHTCONTROL.FlightGroup
+    local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
     
     local inzone=flight.group:IsCompletelyInZone(self.zoneAirbase)
     
@@ -1174,7 +1080,7 @@ function FLIGHTCONTROL:_CheckInbound()
   
   
   for _,_flight in pairs(self.flights) do
-    local flight=_flight --#FLIGHTCONTROL.FlightGroup
+    local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
         
     --TODO: Check if aircraft has a landing waypoint for this airbase.
     
@@ -1207,7 +1113,7 @@ end
 
 --- Command AI flight to orbit.
 -- @param #FLIGHTCONTROL self
--- @param #FLIGHTCONTROL.FlightGroup flight Flight group.
+-- @param Ops.FlightGroup#FLIGHTGROUP flight Flight group.
 -- @param #number stack Holding stack.
 -- @param #boolean respawn If true respawn the group. Otherwise reset the mission task with new waypoints.
 function FLIGHTCONTROL:_WaitAI(flight, stack, respawn)
@@ -1290,7 +1196,7 @@ end
 
 --- Tell AI to land at the airbase. Flight is added to the landing queue.
 -- @param #FLIGHTCONTROL self
--- @param #FLIGHTCONTROL.FlightGroup flight Flight group.
+-- @param Ops.FlightGroup#FLIGHTGROUP flight Flight group.
 function FLIGHTCONTROL:_LandAI(flight)
 
    -- Debug info.
@@ -1340,7 +1246,7 @@ end
 --- Function called when a group has reached the holding zone.
 --@param Wrapper.Group#GROUP group Group that reached the holding zone.
 --@param #FLIGHTCONTROL flightcontrol Flightcontrol object.
---@param #FLIGHTCONTROL.FlightGroup flight Flight group that has reached the holding zone.
+--@param Ops.FlightGroup#FLIGHTGROUP flight Flight group that has reached the holding zone.
 function FLIGHTCONTROL._ReachedHoldingZone(group, flightcontrol, flight)
 
   -- Debug message.
@@ -1362,7 +1268,7 @@ end
 
 --- Get holding point.
 -- @param #FLIGHTCONTROL self
--- @param #FLIGHTCONTROL.FlightGroup flight Flight group.
+-- @param Ops.FlightGroup#FLIGHTGROUP flight Flight group.
 -- @return #FLIGHTCONTROL.HoldingPoint Holding point.
 function FLIGHTCONTROL:_GetHoldingpoint(flight)
 

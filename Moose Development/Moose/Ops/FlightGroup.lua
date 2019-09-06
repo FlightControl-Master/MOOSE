@@ -21,9 +21,9 @@
 -- @field #boolean Debug Debug mode. Messages to all about status.
 -- @field #string sid Class id string for output to DCS log file.
 -- @field #string groupname Name of flight group.
--- @field Wrapper.Group#GROUP flightgroup Flight group object.
+-- @field Wrapper.Group#GROUP group Flight group object.
 -- @field #string type Aircraft type of flight group.
--- @field #table element Table of elements, i.e. units of the group.
+-- @field #table elements Table of elements, i.e. units of the group.
 -- @field #table waypoints Table of waypoints.
 -- @field #table coordinates Table of waypoint coordinates.
 -- @field #table taskqueue Queue of tasks.
@@ -63,7 +63,7 @@ FLIGHTGROUP = {
   type               =   nil,
   waypoints          =    {},
   coordinates        =    {},
-  element            =    {},
+  elements           =    {},
   taskqueue          =    {},
   taskcounter        =   nil,
   taskcurrent        =   nil,
@@ -207,7 +207,7 @@ function FLIGHTGROUP:New(groupname)
   -- Inherit everything from WAREHOUSE class.
   local self=BASE:Inherit(self, FSM:New()) -- #FLIGHTGROUP
 
-  --self.flightgroup=AIGroup
+  --self.group=AIGroup
   self.groupname=tostring(groupname)
 
   -- Set some string id for output to DCS.log file.
@@ -459,14 +459,14 @@ end
 -- @param #FLIGHTGROUP self
 -- @return Wrapper.Group#GROUP Moose group object.
 function FLIGHTGROUP:GetGroup()
-  return self.flightgroup
+  return self.group
 end
 
 --- Get flight group name.
 -- @param #FLIGHTGROUP self
 -- @return #string Group name.
 function FLIGHTGROUP:GetName()
-  return self.flightgroup:GetName()
+  return self.group:GetName()
 end
 
 --- Get waypoint.
@@ -567,7 +567,7 @@ function FLIGHTGROUP:onafterStart(From, Event, To)
   -- Check if the group is already alive and if so, add its elements.
   local group=GROUP:FindByName(self.groupname)
   if group and group:IsAlive() then
-    self.flightgroup=group
+    self.group=group
     local units=group:GetUnits()
     for _,_unit in pairs(units) do
       local unit=_unit --Wrapper.Unit#UNIT
@@ -593,39 +593,6 @@ function FLIGHTGROUP:onafterStart(From, Event, To)
   self:__FlightStatus(-1)
 end
 
---- On after "FlightSpawned" event. Sets the template, initializes the waypoints.
--- @param #FLIGHTGROUP self
--- @param Wrapper.Group#GROUP Group Flight group.
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Wrapper.Group#GROUP Group The group object.
-function FLIGHTGROUP:onafterFlightSpawned(From, Event, To, Group)
-
-  -- Get template of group.
-  self.template=self.flightgroup:GetTemplate()
-
-  -- Init waypoints.
-  self:_InitWaypoints()
-  
-  -- Route flight group but now with passing waypoint tasks.
-  self.flightgroup:Route(self.waypoints)
-end
-
---- On after "FlightAirborne" event.
--- @param #FLIGHTGROUP self
--- @param Wrapper.Group#GROUP Group Flight group.
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Wrapper.Group#GROUP Group The group object.
-function FLIGHTGROUP:onafterFlightAirborne(From, Event, To, Group)
-
-  -- Update
-  self:__QueueUpdate(-1)
-
-end
-
 --- On after "FlightStatus" event.
 -- @param #FLIGHTGROUP self
 -- @param Wrapper.Group#GROUP Group Flight group.
@@ -641,13 +608,13 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   self:_CheckDetectedUnits()
 
   -- Short info.
-  local text=string.format("Flight status %s [%d/%d]. Task=%d/%d. Waypoint=%d/%d. Detected=%d", fsmstate, #self.element, #self.element, self.taskcurrent, #self.taskqueue, self.currentwp or 0, #self.waypoints or 0, self.detectedunits:Count())
+  local text=string.format("Flight status %s [%d/%d]. Task=%d/%d. Waypoint=%d/%d. Detected=%d", fsmstate, #self.elements, #self.elements, self.taskcurrent, #self.taskqueue, self.currentwp or 0, #self.waypoints or 0, self.detectedunits:Count())
   self:I(self.sid..text)
 
   -- Element status.
   text="Elements:"
   local fuelmin=999999
-  for i,_element in pairs(self.element) do
+  for i,_element in pairs(self.elements) do
     local element=_element --#FLIGHTGROUP.Element
     local name=element.name
     local status=element.status
@@ -677,7 +644,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
     -- Output text for element.
     text=text..string.format("\n[%d] %s: status=%s, fuel=%.1f, life=%.1f, shells=%d, rockets=%d, bombs=%d, missiles=%d", i, name, status, fuel*100, life*100, nshells, nrockets, nbombs, nmissiles)
   end
-  if #self.element==0 then
+  if #self.elements==0 then
     text=text.." none!"
   end
   self:I(self.sid..text)
@@ -780,7 +747,7 @@ function FLIGHTGROUP:OnEventBirth(EventData)
     local unitname=EventData.IniUnitName
 
     -- Set group.
-    self.flightgroup=self.flightgroup or EventData.IniGroup
+    self.group=self.group or EventData.IniGroup
     
     -- Set homebase if not already set.
     if EventData.Place then
@@ -1032,6 +999,60 @@ function FLIGHTGROUP:onafterElementArrived(From, Event, To, Element)
 end
 
 
+--- On after "FlightSpawned" event. Sets the template, initializes the waypoints.
+-- @param #FLIGHTGROUP self
+-- @param Wrapper.Group#GROUP Group Flight group.
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Wrapper.Group#GROUP Group The group object.
+function FLIGHTGROUP:onafterFlightSpawned(From, Event, To, Group)
+
+  -- Get template of group.
+  self.template=self.group:GetTemplate()
+
+  -- Init waypoints.
+  self:_InitWaypoints()
+  
+  -- Route flight group but now with passing waypoint tasks.
+  self.group:Route(self.waypoints)
+end
+
+--- On after "FlightAirborne" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Wrapper.Airbase#AIRBASE airbase The airbase the flight landed.
+function FLIGHTGROUP:onafterFlightAirborne(From, Event, To, airbase)
+  self:I(self.sid..string.format("Flight airborne %s.", self.groupname))
+
+  if self.flightcontrol and airbase and self.flightcontrol.airbasename==airbase:GetName() then
+    self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qtakeoff, self)
+  end
+  
+  -- Update
+  self:__QueueUpdate(-1)
+  
+end
+
+--- On after "FlightLanded" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Wrapper.Airbase#AIRBASE airbase The airbase the flight landed.
+function FLIGHTGROUP:onafterFlightLanded(From, Event, To, airbase)
+  self:I(self.sid..string.format("Flight landed %s.", self.groupname))
+
+  if self.flightcontrol and airbase and self.flightcontrol.airbasename==airbase:GetName() then
+    self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qlanding, self)
+  end
+end
+
+
+
+
 --- On after "PassingWaypoint" event.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
@@ -1125,9 +1146,33 @@ function FLIGHTGROUP:onafterOrbit(From, Event, To, Coord, Altitude, Speed)
   MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
   self:I(self.sid..text)
   
-  local TaskOrbit=self.flightgroup:TaskOrbit(Coord, Altitude, UTILS.KmphToMps(Speed))
+  --TODO: set ROE passive. introduce roe event/state/variable.
+  
+  local TaskOrbit=self.group:TaskOrbit(Coord, Altitude, UTILS.KmphToMps(Speed))
 
-  self.flightgroup:SetTask(TaskOrbit)
+  self.group:SetTask(TaskOrbit)
+end
+
+--- On after "Hold" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Core.Point#COORDINATE Coord Coordinate where to orbit.
+-- @param #number Altitude Altitude in meters.
+-- @param #number Speed Speed in km/h.
+function FLIGHTGROUP:onafterHold(From, Event, To, Coord, Altitude, Speed)
+
+  -- Debug message.
+  local text=string.format("Flight group set to hold at altitude %d m and speed %.1f km/h", Altitude, Speed)
+  MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+  self:I(self.sid..text)
+  
+  self.group:ClearTasks()
+  
+  local TaskOrbit=self.group:TaskOrbit(Coord, Altitude, UTILS.KmphToMps(Speed))
+
+  self.group:SetTask(TaskOrbit)
 end
 
 --- On after TaskExecute event.
@@ -1156,16 +1201,16 @@ function FLIGHTGROUP:onafterTaskExecute(From, Event, To, Task)
   if Task.type==FLIGHTGROUP.TaskType.SCHEDULED then
 
     -- Clear all tasks.
-    self.flightgroup:ClearTasks()
+    self.group:ClearTasks()
   
     -- Task done.
-    local TaskDone=self.flightgroup:TaskFunction("FLIGHTGROUP._TaskDone", self, Task)
+    local TaskDone=self.group:TaskFunction("FLIGHTGROUP._TaskDone", self, Task)
   
     -- Combo task.
-    local TaskCombo=self.flightgroup:TaskCombo({Task.dcstask, TaskDone})
+    local TaskCombo=self.group:TaskCombo({Task.dcstask, TaskDone})
   
     -- Set task for group.
-    self.flightgroup:SetTask(TaskCombo)
+    self.group:SetTask(TaskCombo)
     
   end
   
@@ -1183,7 +1228,7 @@ function FLIGHTGROUP:onafterTaskPause(From, Event, To, Task)
   if self.taskcurrent>0 then
 
     -- Clear all tasks.
-    self.flightgroup:ClearTasks()
+    self.group:ClearTasks()
 
     -- Task status executing.
     Task.status=1 --FLIGHTGROUP.TaskStatus.PAUSED
@@ -1208,7 +1253,7 @@ function FLIGHTGROUP:onafterTaskCancel(From, Event, To)
     MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)    
     self:I(self.sid..text)
     -- Clear tasks.
-    self.flightgroup:ClearTasks()
+    self.group:ClearTasks()
     self:TaskDone(task)  
   else
     local text=string.format("WARNING: No current task to cancel!")
@@ -1386,10 +1431,10 @@ end
 function FLIGHTGROUP:RouteRTB(RTBAirbase, Speed, Altitude)
 
   -- If speed is not given take 80% of max speed.
-  local Speed=Speed or self.flightgroup:GetSpeedMax()*0.8
+  local Speed=Speed or self.group:GetSpeedMax()*0.8
 
   -- Curent (from) waypoint.
-  local coord=self.flightgroup:GetCoordinate()
+  local coord=self.group:GetCoordinate()
 
   if Altitude then
     coord:SetAltitude(Altitude)
@@ -1408,17 +1453,17 @@ function FLIGHTGROUP:RouteRTB(RTBAirbase, Speed, Altitude)
   local Points={PointFrom, PointOverhead, PointLanding}
 
   -- Get group template.
-  local Template=self.flightgroup:GetTemplate()
+  local Template=self.group:GetTemplate()
 
   -- Set route points.
   Template.route.points=Points
 
 
   -- Respawn the group.
-  self.flightgroup=self.flightgroup:Respawn(Template, true)
+  self.group=self.group:Respawn(Template, true)
 
   -- Route the group or this will not work.
-  self.flightgroup:Route(Points, 1)
+  self.group:Route(Points, 1)
 
 end
 
@@ -1432,7 +1477,7 @@ end
 function FLIGHTGROUP:RouteOrbit(CoordOrbit, Speed, Altitude, CoordRaceTrack)
 
   -- If speed is not given take 80% of max speed.
-  local Speed=Speed or self.flightgroup:GetSpeedMax()*0.6
+  local Speed=Speed or self.group:GetSpeedMax()*0.6
 
   -- Altitude.
   local altitude=Altitude or UTILS.FeetToMeters(10000)
@@ -1441,23 +1486,23 @@ function FLIGHTGROUP:RouteOrbit(CoordOrbit, Speed, Altitude, CoordRaceTrack)
   local wp={}
 
   -- Current coordinate.
-  wp[1]=self.flightgroup:GetCoordinate():SetAltitude(altitude):WaypointAirTurningPoint(nil, Speed, {}, "Current")
+  wp[1]=self.group:GetCoordinate():SetAltitude(altitude):WaypointAirTurningPoint(nil, Speed, {}, "Current")
 
   -- Orbit
   wp[2]=CoordOrbit:SetAltitude(altitude):WaypointAirTurningPoint(nil, Speed, {}, "Orbit")
 
 
-  local TaskOrbit=self.flightgroup:TaskOrbit(CoordOrbit, altitude, Speed, CoordRaceTrack)
-  local TaskRoute=self.flightgroup:TaskRoute(wp)
+  local TaskOrbit=self.group:TaskOrbit(CoordOrbit, altitude, Speed, CoordRaceTrack)
+  local TaskRoute=self.group:TaskRoute(wp)
 
-  --local TaskCondi=self.flightgroup:TaskCondition(time,userFlag,userFlagValue,condition,duration,lastWayPoint)
+  --local TaskCondi=self.group:TaskCondition(time,userFlag,userFlagValue,condition,duration,lastWayPoint)
 
-  local TaskCombo=self.flightgroup:TaskControlled(TaskRoute, TaskOrbit)
+  local TaskCombo=self.group:TaskControlled(TaskRoute, TaskOrbit)
 
-  self.flightgroup:SetTask(TaskCombo, 1)
+  self.group:SetTask(TaskCombo, 1)
 
   -- Route the group or this will not work.
-  --self.flightgroup:Route(wp, 1)
+  --self.group:Route(wp, 1)
 end
 
 
@@ -1497,7 +1542,7 @@ function FLIGHTGROUP:AddElementByName(unitname)
     end
     
 
-    table.insert(self.element, element)
+    table.insert(self.elements, element)
 
     return element
   end
@@ -1511,7 +1556,7 @@ end
 -- @return #FLIGHTGROUP.Element The element.
 function FLIGHTGROUP:GetElementByName(unitname)
 
-  for _,_element in pairs(self.element) do
+  for _,_element in pairs(self.elements) do
     local element=_element --#FLIGHTGROUP.Element
 
     if element.name==unitname then
@@ -1644,7 +1689,7 @@ function FLIGHTGROUP:_UpdateRoute(n)
   if #wp>0 then
 
     -- Route group to all defined waypoints remaining.
-    self.flightgroup:Route(wp, 1)
+    self.group:Route(wp, 1)
     
   else
   
@@ -1664,7 +1709,7 @@ function FLIGHTGROUP:_UpdateRoute(n)
           self:RTB(airbase)        
       else
         -- Let flight orbit.
-        --self:Orbit(self.flightgroup:GetCoordinate(), UTILS.FeetToMeters(20000), self.flightgroup:GetSpeedMax()*0.4)
+        --self:Orbit(self.group:GetCoordinate(), UTILS.FeetToMeters(20000), self.group:GetSpeedMax()*0.4)
       end
       
     end
@@ -1684,7 +1729,7 @@ function FLIGHTGROUP:_UpdateWaypointTasks()
     local taskswp={}
   
     -- At each waypoint report passing.
-    local TaskPassingWaypoint=self.flightgroup:TaskFunction("FLIGHTGROUP._PassingWaypoint", self, i)
+    local TaskPassingWaypoint=self.group:TaskFunction("FLIGHTGROUP._PassingWaypoint", self, i)
     
     table.insert(taskswp, TaskPassingWaypoint)
     
@@ -1696,18 +1741,18 @@ function FLIGHTGROUP:_UpdateWaypointTasks()
         local Task=task --#FLIGHTGROUP.Task
         
         -- Add task execute.
-        table.insert(taskswp, self.flightgroup:TaskFunction("FLIGHTGROUP._TaskExecute", self, Task))
+        table.insert(taskswp, self.group:TaskFunction("FLIGHTGROUP._TaskExecute", self, Task))
 
         -- Add task itself.
         table.insert(taskswp, Task.dcstask)
         
         -- Add task done.
-        table.insert(taskswp, self.flightgroup:TaskFunction("FLIGHTGROUP._TaskDone", self, Task))
+        table.insert(taskswp, self.group:TaskFunction("FLIGHTGROUP._TaskDone", self, Task))
       end
     end
         
     -- Waypoint task combo.
-    wp.task=self.flightgroup:TaskCombo(taskswp)
+    wp.task=self.group:TaskCombo(taskswp)
         
     -- Debug info.
     self:T3({wptask=taskswp})
@@ -1721,7 +1766,7 @@ end
 function FLIGHTGROUP:_InitWaypoints()
 
   -- Waypoints of group as defined in the ME.
-  self.waypoints=self.flightgroup:GetTemplateRoutePoints()
+  self.waypoints=self.group:GetTemplateRoutePoints()
   
   -- Update waypoint tasks.
   self:_UpdateWaypointTasks()
@@ -1797,7 +1842,7 @@ end
 -- @return #boolean If true, unit is element of the flight group or false if otherwise.
 function FLIGHTGROUP:_IsElement(unitname)
 
-  for _,_element in pairs(self.element) do
+  for _,_element in pairs(self.elements) do
     local element=_element --#FLIGHTGROUP.Element
 
     if element.name==unitname then
@@ -1814,7 +1859,7 @@ end
 -- @param #string unitname Name of unit.
 function FLIGHTGROUP:_AllSameStatus(status)
 
-  for _,_element in pairs(self.element) do
+  for _,_element in pairs(self.elements) do
     local element=_element --#FLIGHTGROUP.Element
 
     if element.status==FLIGHTGROUP.ElementStatus.DEAD then
@@ -1837,7 +1882,7 @@ function FLIGHTGROUP:_AllSimilarStatus(status)
 
   local similar=true
 
-  for _,_element in pairs(self.element) do
+  for _,_element in pairs(self.elements) do
     local element=_element --#FLIGHTGROUP.Element
 
     -- Dead units dont count.
@@ -2020,10 +2065,10 @@ end
 -- @param #FLIGHTGROUP self
 function FLIGHTGROUP:_CheckDetectedUnits()
 
-  if self.flightgroup and not self:IsDead() then
+  if self.group and not self:IsDead() then
 
     -- Get detected DCS units.
-    local detectedtargets=self.flightgroup:GetDetectedTargets()
+    local detectedtargets=self.group:GetDetectedTargets()
 
     local detected={}
     for DetectionObjectID, Detection in pairs(detectedtargets or {}) do
