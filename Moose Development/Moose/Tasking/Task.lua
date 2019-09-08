@@ -1232,12 +1232,16 @@ end
 
 --- Report the task status.
 -- @param #TASK self
+-- @param Wrapper.Group#GROUP TaskGroup
 function TASK:MenuTaskStatus( TaskGroup )
 
-  local ReportText = self:ReportDetails( TaskGroup )
-  
-  self:T( ReportText )
-  self:GetMission():GetCommandCenter():MessageTypeToGroup( ReportText, TaskGroup, MESSAGE.Type.Detailed )
+  if TaskGroup:IsAlive() then
+
+    local ReportText = self:ReportDetails( TaskGroup )
+    
+    self:T( ReportText )
+    self:GetMission():GetCommandCenter():MessageTypeToGroup( ReportText, TaskGroup, MESSAGE.Type.Detailed )
+  end
 
 end
 

@@ -240,10 +240,13 @@ do -- TASK_CAPTURE_ZONE
       local DefenseTaskCaptureDispatcher = self.Dispatcher:GetDefenseTaskCaptureDispatcher() -- Tasking.Task_Capture_Dispatcher#TASK_CAPTURE_DISPATCHER
       
       if DefenseTaskCaptureDispatcher then
-        -- Loop through all zones of the Defenses, and check which zone has an assigned task!
+        -- Loop through all zones of the player Defenses, and check which zone has an assigned task!
+        -- The Zones collection contains a Task. This Task is checked if it is assigned.
+        -- If Assigned, then this task will be the task that is the closest to the defense zone.
         for TaskName, CaptureZone in pairs( DefenseTaskCaptureDispatcher.Zones or {} ) do
           local Task = CaptureZone.Task -- Tasking.Task_Capture_Zone#TASK_CAPTURE_ZONE
-          if Task then
+          if Task  and Task:IsStateAssigned() then -- We also check assigned.
+            -- Now we register the defense player zone information to the task report.
             self.TaskInfo:AddInfo( "Defense Player Zone", Task.ZoneGoal:GetName(), 30, "MOD", Persist ) 
             self.TaskInfo:AddCoordinate( Task.ZoneGoal:GetZone():GetCoordinate(), 31, "MOD", Persist, false, "Defense Player Coordinate" )
           end
@@ -252,7 +255,7 @@ do -- TASK_CAPTURE_ZONE
       local DefenseAIA2GDispatcher = self.Dispatcher:GetDefenseAIA2GDispatcher() -- AI.AI_A2G_Dispatcher#AI_A2G_DISPATCHER
       
       if DefenseAIA2GDispatcher then
-        -- Loop through all zones of the Defenses, and check which zone has an assigned task!
+        -- Loop through all the tasks of the AI Defenses, and check which zone is involved in the defenses and is active!
         for Defender, Task in pairs( DefenseAIA2GDispatcher:GetDefenderTasks() or {} ) do
           local DetectedItem = DefenseAIA2GDispatcher:GetDefenderTaskTarget( Defender )
           if DetectedItem then

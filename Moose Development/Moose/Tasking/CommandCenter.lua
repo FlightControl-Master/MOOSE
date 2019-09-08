@@ -200,7 +200,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
 
   self:SetAutoAssignTasks( false )
   self:SetAutoAcceptTasks( true )
-  self:SetAutoAssignMethod( COMMANDCENTER.AutoAssignMethods.Random )
+  self:SetAutoAssignMethod( COMMANDCENTER.AutoAssignMethods.Distance )
   self:SetFlashStatus( false )
   
   self:HandleEvent( EVENTS.Birth,
@@ -210,7 +210,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
       if EventData.IniObjectCategory == 1 then
         local EventGroup = GROUP:Find( EventData.IniDCSGroup )
         --self:E( { CommandCenter = self:GetName(), EventGroup = EventGroup:GetName(), HasGroup = self:HasGroup( EventGroup ), EventData = EventData } )
-        if EventGroup and self:HasGroup( EventGroup ) then
+        if EventGroup and EventGroup:IsAlive() and self:HasGroup( EventGroup ) then
           local CommandCenterMenu = MENU_GROUP:New( EventGroup, self:GetText() )
           local MenuReporting = MENU_GROUP:New( EventGroup, "Missions Reports", CommandCenterMenu )
           local MenuMissionsSummary = MENU_GROUP_COMMAND:New( EventGroup, "Missions Status Report", MenuReporting, self.ReportSummary, self, EventGroup )
