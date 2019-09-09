@@ -187,6 +187,7 @@ end
 function DATABASE:AddUnit( DCSUnitName )
 
   if not  self.UNITS[DCSUnitName] then
+    self:I( { "Add UNIT:", DCSUnitName } )
     local UnitRegister = UNIT:Register( DCSUnitName )
     self.UNITS[DCSUnitName] = UNIT:Register( DCSUnitName )
     

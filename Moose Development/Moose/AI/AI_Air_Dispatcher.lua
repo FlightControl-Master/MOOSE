@@ -3289,6 +3289,9 @@ do
     self:Patrol( SquadronName, PatrolTaskType )    
   end
 
+
+
+
 end
 
 

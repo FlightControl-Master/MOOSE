@@ -193,7 +193,20 @@
 -- 
 --   - @{#SETTINGS.SetMessageTime}(): Define for a specific @{Message.MESSAGE.MessageType} the duration to be displayed in seconds. 
 --   - @{#SETTINGS.GetMessageTime}(): Retrieves for a specific @{Message.MESSAGE.MessageType} the duration to be displayed in seconds. 
---   
+-- 
+-- ## 3.5) **Era** of the battle
+-- 
+-- The threat level metric is scaled according the era of the battle. A target that is AAA, will pose a much greather threat in WWII than on modern warfare.
+-- Therefore, there are 4 era that are defined within the settings:
+-- 
+--   - **WWII** era: Use for warfare with equipment during the world war II time.
+--   - **Korea** era: Use for warfare with equipment during the Korea war time.
+--   - **Cold War** era: Use for warfare with equipment during the cold war time. 
+--   - **Modern** era: Use for warfare with modern equipment in the 2000s.
+-- 
+-- There are different API defined that you can use with the _SETTINGS object to configure your mission script to work in one of the 4 era: 
+-- @{#SETTINGS.SetEraWWII}(), @{#SETTINGS.SetEraKorea}(), @{#SETTINGS.SetEraCold}(), @{#SETTINGS.SetEraModern}()
+-- 
 -- ===
 -- 
 -- @field #SETTINGS
@@ -202,6 +215,19 @@ SETTINGS = {
   ShowPlayerMenu = true,
 }
 
+SETTINGS.__Enum = {}
+
+--- @type SETTINGS.__Enum.Era
+-- @field #number WWII
+-- @field #number Korea
+-- @field #number Cold
+-- @field #number Modern
+SETTINGS.__Enum.Era = {
+  WWII = 1,
+  Korea = 2,
+  Cold = 3,
+  Modern = 4,
+}
 
 
 do -- SETTINGS
@@ -223,6 +249,7 @@ do -- SETTINGS
       self:SetMessageTime( MESSAGE.Type.Information, 30 )
       self:SetMessageTime( MESSAGE.Type.Overview, 60 )
       self:SetMessageTime( MESSAGE.Type.Update, 15 )
+      self:SetEraModern()
       return self
     else
       local Settings = _DATABASE:GetPlayerSettings( PlayerName )
@@ -838,6 +865,47 @@ do -- SETTINGS
     end
   
   end
+  
+  --- Configures the era of the mission to be WWII.
+  -- @param #SETTINGS self
+  -- @return #SETTINGS self
+  function SETTINGS:SetEraWWII()
+  
+    self.Era = SETTINGS.__Enum.Era.WWII
+  
+  end
+  
+  --- Configures the era of the mission to be Korea.
+  -- @param #SETTINGS self
+  -- @return #SETTINGS self
+  function SETTINGS:SetEraKorea()
+  
+    self.Era = SETTINGS.__Enum.Era.Korea
+  
+  end
+  
+  
+  --- Configures the era of the mission to be Cold war.
+  -- @param #SETTINGS self
+  -- @return #SETTINGS self
+  function SETTINGS:SetEraCold()
+  
+    self.Era = SETTINGS.__Enum.Era.Cold
+  
+  end
+  
+
+  --- Configures the era of the mission to be Modern war.
+  -- @param #SETTINGS self
+  -- @return #SETTINGS self
+  function SETTINGS:SetEraModern()
+  
+    self.Era = SETTINGS.__Enum.Era.Modern
+  
+  end
+  
+  
+  
 
 end
 
