@@ -290,10 +290,9 @@ do -- DETECTION MANAGER
   -- @param #string SoundFile The name of the sound file .wav or .ogg.
   -- @param #number SoundDuration The duration of the sound.
   -- @param #string SoundPath The path pointing to the folder in the mission file.
-  -- @param #table Squadron The squadron.
-  -- @param Wrapper.Unit#UNIT Defender The defender sending the message.
+  -- @param Wrapper.Group#GROUP DefenderGroup The defender group sending the message.
   -- @return #DETECTION_MANGER self
-  function DETECTION_MANAGER:MessageToPlayers( Message, SoundFile, SoundDuration, SoundPath, Squadron, Defender )
+  function DETECTION_MANAGER:MessageToPlayers( Message, SoundFile, SoundDuration, SoundPath, DefenderGroup )
   
     self:F( { Message = Message } )
     
@@ -308,11 +307,9 @@ do -- DETECTION MANAGER
     -- If for a certain reason the Defender does not exist, we use the coordinate of the airbase to send the message from.
     if SoundFile then
       local RadioQueue = self.RadioQueue -- Core.RadioQueue#RADIOQUEUE
-      if Defender and Defender:IsAlive() then
-        RadioQueue:SetSenderUnitName( Defender:GetName() )
-      else
-        -- Use the airbase of the squadron as the coordinate of send.
-        RadioQueue:SetSenderCoordinate( Squadron.Airbase:GetCoordinate() )
+      local DefenderUnit = DefenderGroup:GetUnit(1)
+      if DefenderUnit and DefenderUnit:IsAlive() then
+        RadioQueue:SetSenderUnitName( DefenderUnit:GetName() )
       end
       RadioQueue:NewTransmission( SoundFile, SoundDuration, SoundPath )
     end
