@@ -1133,7 +1133,7 @@ do -- AI_A2G_DISPATCHER
     
     self.TakeoffScheduleID = self:ScheduleRepeat( 10, 10, 0, nil, self.ResourceTakeoff, self )
     
-    self:__Start( 1 )
+    self:__Start( 1 )    
     
     return self
   end
@@ -3508,15 +3508,16 @@ do -- AI_A2G_DISPATCHER
       self:SetDefenderTask( SquadronName, DefenderGroup, DefenseTaskType, Fsm, nil, DefenderGrouping )
       
       function Fsm:onafterTakeoff( Defender, From, Event, To )
-        self:F({"Defender Birth", Defender:GetName()})
+        self:F({"Defender Takeoff", Defender:GetName()})
         --self:GetParent(self).onafterBirth( self, Defender, From, Event, To )
         
         local DefenderName = Defender:GetCallsign()
+        local DefenderUnitName = Defender:GetName()
         local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
         
         if Squadron then
-          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " airborne." )
+          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " airborne.", "Wheels_up.wav", 3, "A2G/", Squadron, Defender )
           Fsm:Patrol() -- Engage on the TargetSetUnit
         end
       end
@@ -3526,10 +3527,11 @@ do -- AI_A2G_DISPATCHER
         self:GetParent(self).onafterPatrolRoute( self, Defender, From, Event, To )
         
         local DefenderName = Defender:GetCallsign()
+        local DefenderUnitName = Defender:GetName()
         local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
         if Squadron then
-          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " patrolling." )
+          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " patrolling.", "Patrolling.wav", 3, "A2G/", Squadron, Defender )
         end
 
         Dispatcher:ClearDefenderTaskTarget( Defender )
@@ -3540,9 +3542,10 @@ do -- AI_A2G_DISPATCHER
         self:GetParent(self).onafterRTB( self, Defender, From, Event, To )
         
         local DefenderName = Defender:GetCallsign()
+        local DefenderUnitName = Defender:GetName()
         local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " returning." )
+        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " returning.", "Returning_to_base.wav", 3, "A2G/", Squadron, Defender )
 
         Dispatcher:ClearDefenderTaskTarget( Defender )
       end
@@ -3568,9 +3571,10 @@ do -- AI_A2G_DISPATCHER
         self:GetParent(self).onafterHome( self, Defender, From, Event, To )
         
         local DefenderName = Defender:GetCallsign()
+        local DefenderUnitName = Defender:GetName()
         local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " landing." )
+        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " landing.", "Landing_at_base.wav", 3, "A2G/", Squadron, Defender )
 
         if Action and Action == "Destroy" then
           Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
@@ -3620,6 +3624,7 @@ do -- AI_A2G_DISPATCHER
         --self:GetParent(self).onafterBirth( self, Defender, From, Event, To )
         
         local DefenderName = Defender:GetCallsign()
+        local DefenderUnitName = Defender:GetName()
         local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
         local DefenderTarget = Dispatcher:GetDefenderTaskTarget( Defender )
@@ -3627,16 +3632,16 @@ do -- AI_A2G_DISPATCHER
         self:F( { DefenderTarget = DefenderTarget } )
         
         if DefenderTarget then
-          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " airborne. Engaging!" )
+          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " airborne. Engaging!", "Wheels_up.wav", 3, "A2G/", Squadron, Defender )
           Fsm:EngageRoute( DefenderTarget.Set ) -- Engage on the TargetSetUnit
         end
       end
 
       function Fsm:onafterEngageRoute( Defender, From, Event, To, AttackSetUnit )
         self:F({"Engage Route", Defender:GetName()})
-        self:GetParent(self).onafterEngageRoute( self, Defender, From, Event, To, AttackSetUnit )
         
         local DefenderName = Defender:GetCallsign()
+        local DefenderUnitName = Defender:GetName()
         local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
         
@@ -3644,8 +3649,9 @@ do -- AI_A2G_DISPATCHER
           local FirstUnit = AttackSetUnit:GetFirst()
           local Coordinate = FirstUnit:GetCoordinate() -- Core.Point#COORDINATE
   
-          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " on route to ground target at " .. Coordinate:ToStringA2G( Defender ) )
+          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " on route to ground target at " .. Coordinate:ToStringA2G( Defender ), "Moving_on_to_ground_target.wav", 3, "A2G/", Squadron, Defender )
         end
+        self:GetParent(self).onafterEngageRoute( self, Defender, From, Event, To, AttackSetUnit )
       end
 
       function Fsm:OnAfterEngage( Defender, From, Event, To, AttackSetUnit )
@@ -3653,13 +3659,14 @@ do -- AI_A2G_DISPATCHER
         --self:GetParent(self).onafterBirth( self, Defender, From, Event, To )
         
         local DefenderName = Defender:GetCallsign()
+        local DefenderUnitName = Defender:GetName()
         local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
         local FirstUnit = AttackSetUnit:GetFirst()
         if FirstUnit then
           local Coordinate = FirstUnit:GetCoordinate()
   
-          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " engaging ground target at " .. Coordinate:ToStringA2G( Defender ) )
+          Dispatcher:MessageToPlayers( Squadron, "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " engaging ground target at " .. Coordinate:ToStringA2G( Defender ), "Engaging_ground_target.wav", 3, "A2G/", DefenderUnitName )
         end
       end
 
@@ -3667,9 +3674,10 @@ do -- AI_A2G_DISPATCHER
         self:F({"Defender RTB", Defender:GetName()})
         
         local DefenderName = Defender:GetCallsign()
+        local DefenderUnitName = Defender:GetName()
         local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " returning." )
+        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " returning.", "Returning_to_base.wav", 3, "A2G/", Squadron, Defender )
 
         self:GetParent(self).onafterRTB( self, Defender, From, Event, To )
 
@@ -3698,9 +3706,10 @@ do -- AI_A2G_DISPATCHER
         self:GetParent(self).onafterHome( self, Defender, From, Event, To )
         
         local DefenderName = Defender:GetCallsign()
+        local DefenderUnitName = Defender:GetName()
         local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " landing." )
+        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " landing.", "Landing_at_base.wav", 3, "A2G/", Squadron, Defender )
 
         if Action and Action == "Destroy" then
           Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
