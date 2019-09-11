@@ -1683,7 +1683,7 @@ function GROUP:Respawn( Template, Reset )
         end
       end
       
-    else  -- Reset=false or nil
+    elseif Reset==false then  -- Reset=false or nil
     
       -- Loop over template units.
       for UnitID, TemplateUnitData in pairs( Template.units ) do
@@ -1725,7 +1725,30 @@ function GROUP:Respawn( Template, Reset )
         self:F( { UnitID, Template.units[UnitID], Template.units[UnitID] } )
       end
       
-    end      
+    else
+    
+      local units=self:GetUnits()
+    
+      -- Loop over template units.
+      for UnitID, Unit in pairs(Template.units) do
+      
+        for _,_unit in pairs(units) do
+          local unit=_unit --Wrapper.Unit#UNIT
+          
+          if unit:GetName()==Unit.name then
+            local coord=unit:GetCoordinate()
+            local heading=unit:GetHeading()
+            Unit.x=coord.x
+            Unit.z=coord.y
+            Unit.alt=coord.alt
+            Unit.heading=math.rad(heading)
+            Unit.psi=-Unit.heading
+          end
+        end
+      
+      end
+      
+    end
     
   end
   

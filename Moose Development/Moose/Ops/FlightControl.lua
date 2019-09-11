@@ -1,4 +1,4 @@
---- **ATC** - (R2.5) - Manage recovery of aircraft at airdromes and FARPS.
+--- **OPS** - (R2.5) - Manage recovery of aircraft at airdromes and FARPS.
 -- 
 -- 
 --
@@ -9,8 +9,8 @@
 -- ===
 --
 -- ### Author: **funkyfranky**
--- @module ATC.FlightControl
--- @image ATC_FlightControl.png
+-- @module OPS.FlightControl
+-- @image OPS_FlightControl.png
 
 
 --- FLIGHTCONTROL class.
@@ -156,6 +156,9 @@ function FLIGHTCONTROL:New(airbasename)
     BASE:TraceLevel(1)
     --self.dTstatus=0.1
   end
+  
+  -- Add to data base.
+  _DATABASE:AddFlightControl(self)
 
   return self  
 end
@@ -458,36 +461,6 @@ function FLIGHTCONTROL:OnEventTakeoff(EventData)
     return
   end
   
-  -- Get airbase name.
-  local airbasename=tostring(airbase:GetName())
-  
-  -- Check if landed at this airbase.
-  if airbasename==self.airbasename then
-  
-    -- AI always lands ==> remove unit from flight group and queues.
-    local flight=self:_ElementTookOff(unit)
-    
-    if flight then
-    
-      self:T(self.lid..string.format("Flight element %s took off.", EventData.IniUnitName))
-    
-      -- Check if everybody is in the air.
-      local all=true
-      for _,_elem in pairs(flight.elements) do
-        local element=_elem --#FLIGHTCONTROL.FlightElement        
-        if not element.tookoff then
-          all=false
-        end
-      end
-    
-      -- Remove flight.
-      if all then
-        self:T(self.lid..string.format("Flight group %s took off.", flight.groupname))
-        self:_RemoveFlightFromQueue(self.Qtakeoff, flight)
-      end
-    
-    end
-  end
 end
 
 --- Event handler for event engine startup.
@@ -506,17 +479,7 @@ function FLIGHTCONTROL:OnEventEngineStartup(EventData)
   if not unit then
     return
   end
-  
-  -- Get flight element.
-  local element, idx, flight=self:_GetFlightElement(EventData.IniUnitName)
-  
-  if element then
-    local parkingspot=self:_GetElementParkingSpot(element)
-    if parkingspot then
-      self:_AddFlightToTakeoffQueue(flight)
-    end
-  end
-  
+
 end
 
 --- Event handler for event engine shutdown.
@@ -541,22 +504,12 @@ end
 --- Event handler for event crash.
 -- @param #FLIGHTCONTROL self
 -- @param Core.Event#EVENTDATA EventData
-function FLIGHTCONTROL:OnEventEngineCrash(EventData)
+function FLIGHTCONTROL:OnEventCrash(EventData)
   self:F3({EvendData=EventData})
   
   self:T2(self.lid..string.format("CRASH: unit  = %s", tostring(EventData.IniUnitName)))
   self:T2(self.lid..string.format("CRASH: group = %s", tostring(EventData.IniGroupName)))
-    
-  -- Unit that took off.
-  local unit=EventData.IniUnit
-
-  -- Nil check for unit.
-  if not unit then
-    return
-  end
-
-  self:_RemoveFlightElement(EventData.IniUnitName)
-
+  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -617,9 +570,7 @@ function FLIGHTCONTROL:_CheckParking()
       for _,_element in pairs(_flight.elements) do
         local element=_element --Ops.FlightGroup#FLIGHTGROUP.Element
         
-        local unit=element.unit
-        
-        if unit and unit:IsAlive() then
+        if element.unit and element.unit:IsAlive() then
 
           -- Distance to parking spot.
           local dist=element.unit:GetCoordinate():Get3DDistance(spot.position)
@@ -632,7 +583,6 @@ function FLIGHTCONTROL:_CheckParking()
           
         else
           self:E(self.lid..string.format("ERROR: Element %s is not alive any more!", element.unitname))
-          self:_RemoveFlightElement(element.unitname)
         end
         
       end
@@ -651,19 +601,9 @@ function FLIGHTCONTROL:_GetNextWaitingFight()
   for _,_flight in pairs(self.Qwaiting) do
     local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
     
-    -- Current stack.
-    local stack=flight.flag
+    -- TODO: Sort by fuel, holding time.
     
-    -- Total marshal time in seconds.
-    local Tmarshal=timer.getAbsTime()-flight.time
-    
-    -- Min time in marshal stack.
-    local TmarshalMin=3*60 --Three minutes for human players.
-    
-    -- Check if conditions are right.
-    if flight.holding~=nil and Tmarshal>=TmarshalMin then
-      return flight
-    end
+    return flight
     
   end
 
@@ -687,12 +627,12 @@ function FLIGHTCONTROL:_PrintQueue(queue, name)
       local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
       
       -- Gather info.
-      local clock=UTILS.SecondsToClock(timer.getAbsTime()-flight.time)
+      local clock="0:0" --UTILS.SecondsToClock(timer.getAbsTime()-flight.time)
       local fuel=flight.group:GetFuelMin()*100
       local ai=tostring(flight.ai)
-      local actype=flight.actype
+      local actype=tostring(flight.actype)
       local holding=tostring(flight.holding)
-      local nunits=flight.nunits
+      local nunits=flight.nunits or 1
       
       -- Main info.
       text=text..string.format("\n[%d] %s (%s*%d): ai=%s, timestamp=%s, fuel=%d, inzone=%s, holding=%s",
@@ -700,11 +640,11 @@ function FLIGHTCONTROL:_PrintQueue(queue, name)
 
       -- Elements info.                                 
       for j,_element in pairs(flight.elements) do
-        local element=_element --#FLIGHTCONTROL.FlightElement
+        local element=_element --Ops.FlightGroup#FLIGHTGROUP.Element
         local life=element.unit:GetLife()
         local life0=element.unit:GetLife0()
-        text=text..string.format("\n  (%d) %s (%s): ai=%s, parking=%s, recovered=%s, tookoff=%s, airborne=%s life=%.1f/%.1f",
-        j, element.onboard, element.unitname, tostring(element.ai), tostring(element.parking), tostring(element.recovered), tostring(element.tookoff), tostring(element.unit:InAir()), life, life0)
+        text=text..string.format("\n  (%d) %s (%s): ai=%s, status=%s,, airborne=%s life=%.1f/%.1f",
+        j, tostring(element.modex), element.name, tostring(element.ai) ,tostring(element.status), tostring(element.unit:InAir()), life, life0)
       end
     end
   end
@@ -727,12 +667,13 @@ function FLIGHTCONTROL:_RemoveFlightFromQueue(queue, flight)
     
     -- Check for name.
     if qflight.groupname==flight.groupname then
-      self:T(self.lid..string.format("Removing flight group %s from queue.", flight.groupname))
+      self:I(self.lid..string.format("Removing flight group %s from queue.", flight.groupname))
       table.remove(queue, i)
       return true, i
     end
   end
   
+  self:I(self.lid..string.format("Could NOT remove flight group %s from queue.", flight.groupname))
   return false, nil
 end
 
@@ -822,7 +763,7 @@ end
 -- Flight and Element Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Create a new flight group. Usually when a flight appears in the CCA.
+--- Create a new flight group.
 -- @param #FLIGHTCONTROL self
 -- @param Wrapper.Group#GROUP group Aircraft group.
 -- @return Ops.FlightGroup#FLIGHTGROUP Flight group.
@@ -834,7 +775,20 @@ function FLIGHTCONTROL:_CreateFlightGroup(group)
   end
   
   -- Debug info.
-  self:T(self.lid..string.format("Creating new flight for group %s of aircraft type %s.", group:GetName(), group:GetTypeName()))    
+  self:I(self.lid..string.format("Creating new flight for group %s of aircraft type %s.", group:GetName(), group:GetTypeName()))
+  
+  -- Get flightgroup from data base.
+  local flight=_DATABASE:GetFlightGroup(group:GetName())
+  
+  -- If it does not exist yet, create one.
+  if not flight then
+    flight=FLIGHTGROUP:New(group:GetName())
+    flight:__Start(1)
+  end
+  
+  flight:SetFlightControl(self)
+  
+  --[[
   
   -- New flight.
   local flight={} --Ops.FlightGroup#FLIGHTGROUP
@@ -886,6 +840,8 @@ function FLIGHTCONTROL:_CreateFlightGroup(group)
   else
     flight.onboard=self:_GetOnboardNumberPlayer(group)
   end
+  
+  ]]
   
   -- Add to known flights.
   table.insert(self.flights, flight)
@@ -958,24 +914,6 @@ function FLIGHTCONTROL:_GetFlightElement(unitname)
   return nil, nil, nil
 end
 
---- Remove element from flight.
--- @param #FLIGHTCONTROL self
--- @param #string unitname Name of the unit.
--- @return #boolean If true, element could be removed or nil otherwise.
-function FLIGHTCONTROL:_RemoveFlightElement(unitname)
-
-  -- Get table index.
-  local element,idx, flight=self:_GetFlightElement(unitname)
-
-  if idx then
-    table.remove(flight.elements, idx)
-    return true
-  else
-    self:T("WARNING: Flight element could not be removed from flight group. Index=nil!")
-    return nil
-  end
-end
-
 --- Get parking spot of flight element.
 -- @param #FLIGHTCONTROL self
 -- @param Ops.FlightGroup#FLIGHTGROUP.Element element Element of flight group.
@@ -1040,12 +978,12 @@ function FLIGHTCONTROL:_CheckInbound()
     local unit=_unit --Wrapper.Unit#UNIT
     
     -- Necessary conditions to be met:
-    local airborne=unit:IsAir()
+    local aircraft=unit:IsAir()
     local inzone=unit:IsInZone(self.zoneAirbase)
     local friendly=self:GetCoalition()==unit:GetCoalition()
     
-    -- Check if this an aircraft and that it is airborne and closing in.
-    if airborne and inzone and friendly then
+    -- Check if this an aircraft and that it is inside the airbase zone and friendly.
+    if aircraft and inzone and friendly then
     
       local group=unit:GetGroup()
       local groupname=group:GetName()
@@ -1058,7 +996,7 @@ function FLIGHTCONTROL:_CheckInbound()
     end
   end
   
-  -- Find new flights that are inside CCA.
+  -- Find new flights that are inside the airbase zone.
   for groupname,_group in pairs(insideZone) do
     local group=_group --Wrapper.Group#GROUP
     self:_CreateFlightGroup(group)
@@ -1067,47 +1005,16 @@ function FLIGHTCONTROL:_CheckInbound()
   for _,_flight in pairs(self.flights) do
     local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
     
-    local inzone=flight.group:IsCompletelyInZone(self.zoneAirbase)
-    
-    if inzone and not flight.inzone then
-      flight.inzone=true
-      flight.dist0=flight.group:GetCoordinate():Get2DDistance(self:GetCoordinate())
-    end
-
-    -- Set currently in zone or not.    
-    flight.inzone=inzone  
-  end
-  
-  
-  for _,_flight in pairs(self.flights) do
-    local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
-        
-    --TODO: Check if aircraft has a landing waypoint for this airbase.
-    
-    -- Get distance to carrier.
-    local dist=flight.group:GetCoordinate():Get2DDistance(self:GetCoordinate())
-    
-    -- Close in distance. Is >0 if AC comes closer wrt to first detected distance d0.
-    local closein=flight.dist0-dist
-    
-    -- TODO refine for current case.
-    
-    -- Flight closed in.
-    if closein>UTILS.NMToMeters(5) and flight.group:IsAirborne(true) then
-    
-      -- Debug info.
-      self:T3(self.lid..string.format("AI flight group %s closed in by %.1f NM", flight.groupname, UTILS.MetersToNM(closein)))    
-      
-      -- Send AI to orbit outside 10 NM zone and wait until the next Marshal stack is available.
+    if flight and flight.destination and flight.destination:GetName()==self.airbasename then
+ 
+       -- Send AI to orbit outside 10 NM zone and wait until the next Marshal stack is available.
       if not (self:_InQueue(self.Qwaiting, flight.group) or self:_InQueue(self.Qlanding, flight.group)) then
         self:_WaitAI(flight, 1, true)
-      end
-      
-      -- Break the loop to not have all flights at once! Spams the message screen.
-      break
+      end 
+    
     end
-          
-  end  
+    
+  end
 
 end
 
@@ -1123,6 +1030,17 @@ function FLIGHTCONTROL:_WaitAI(flight, stack, respawn)
 
   -- Add AI flight to waiting queue.
   table.insert(self.Qwaiting, flight)
+
+  -- Holding point.
+  local holding=self:_GetHoldingpoint(flight)
+  local altitude=holding.pos0.y
+  local angels=UTILS.MetersToFeet(altitude)/1000
+  
+  flight:Hold(holding, altitude)
+  
+  if true then
+    return
+  end
 
   -- Flight group name.
   local group=flight.group
@@ -1154,10 +1072,7 @@ function FLIGHTCONTROL:_WaitAI(flight, stack, respawn)
   -- Task function when arriving at the holding zone. This will set flight.holding=true.
   local TaskHolding=flight.group:TaskFunction("FLIGHTCONTROL._ReachedHoldingZone", self, flight)
   
-  -- Holding point.
-  local holding=self:_GetHoldingpoint(flight)
-  local altitude=holding.pos0.y
-  local angels=UTILS.MetersToFeet(altitude)/1000
+
   
   -- Set orbit task.
   local TaskOrbit=group:TaskOrbit(holding.pos0, altitude, speedOrbitMps, holding.pos1)

@@ -433,7 +433,7 @@ UTILS.tostringLL = function( lat, lon, acc, DMS)
       secFrmtStr = '%02d'
     else
       local width = 3 + acc  -- 01.310 - that's a width of 6, for example. Acc is limited to 2 for DMS!
-      secFrmtStr = '%0' .. width .. '.' .. math.min(acc, 2) .. 'f'
+      secFrmtStr = '%0' .. width .. '.' .. acc .. 'f'
     end
 
     -- 024° 23' 12"N or 024° 23' 12.03"N

@@ -621,7 +621,7 @@ do -- SETTINGS
 
     local text="Messages and Reports"
     if self.MenuShort then
-      text="Messages"
+      text="Messages & Reports"
     end            
     local MessagesMenu = MENU_GROUP:New( MenuGroup, text, SettingsMenu ):SetTime( MenuTime )
 
@@ -848,9 +848,9 @@ do -- SETTINGS
 
       local text="Messages and Reports"
       if self.MenuShort then
-        text="Messages"
+        text="Messages & Reports"
       end  
-      local MessagesMenu = MENU_GROUP:New( PlayerGroup, "Messages and Reports", PlayerMenu )
+      local MessagesMenu = MENU_GROUP:New( PlayerGroup, text, PlayerMenu )
   
       local UpdateMessagesMenu = MENU_GROUP:New( PlayerGroup, "Update Messages", MessagesMenu )
       MENU_GROUP_COMMAND:New( PlayerGroup, "Off", UpdateMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Update, 0 )

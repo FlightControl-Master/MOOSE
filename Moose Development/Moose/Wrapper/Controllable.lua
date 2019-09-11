@@ -442,12 +442,12 @@ end
 
 --- Return a condition section for a controlled task.
 -- @param #CONTROLLABLE self
--- @param DCS#Time time
--- @param #string userFlag
--- @param #boolean userFlagValue
--- @param #string condition
--- @param DCS#Time duration
--- @param #number lastWayPoint
+-- @param DCS#Time time DCS mission time.
+-- @param #string userFlag Name of the user flag.
+-- @param #boolean userFlagValue User flag value *true* or *false*. Could also be numeric, i.e. either 0=*false* or 1=*true*. Other numeric values don't work! 
+-- @param #string condition Lua string.
+-- @param DCS#Time duration Duration in seconds.
+-- @param #number lastWayPoint Last waypoint.
 -- return DCS#Task
 function CONTROLLABLE:TaskCondition( time, userFlag, userFlagValue, condition, duration, lastWayPoint )
   self:F2( { time, userFlag, userFlagValue, condition, duration, lastWayPoint } )
@@ -1079,8 +1079,8 @@ end
 --- (AIR) Orbit at a position with at a given altitude and speed. Optionally, a race track pattern can be specified.
 -- @param #CONTROLLABLE self
 -- @param Core.Point#COORDINATE Coord Coordinate at which the CONTROLLABLE orbits.
--- @param #number Altitude Altitude in meters of the orbit pattern.
--- @param #number Speed Speed [m/s] flying the orbit pattern.
+-- @param #number Altitude Altitude in meters of the orbit pattern. Default y component of Coord.
+-- @param #number Speed Speed [m/s] flying the orbit pattern. Default 250 knots.
 -- @param Core.Point#COORDINATE CoordRaceTrack (Optional) If this coordinate is specified, the CONTROLLABLE will fly a race-track pattern using this and the initial coordinate.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:TaskOrbit(Coord, Altitude, Speed, CoordRaceTrack)
@@ -1100,8 +1100,8 @@ function CONTROLLABLE:TaskOrbit(Coord, Altitude, Speed, CoordRaceTrack)
       pattern  = Pattern,
       point    = P1,
       point2   = P2,
-      speed    = Speed,
-      altitude = Altitude,
+      speed    = Speed or UTILS.KnotsToMps(250),
+      altitude = Altitude or Coord.y,
     }
   }
 
