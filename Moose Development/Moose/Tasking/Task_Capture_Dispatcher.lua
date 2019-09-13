@@ -194,6 +194,45 @@ do -- TASK_CAPTURE_DISPATCHER
   end
 
 
+  --- Link a task capture dispatcher from the other coalition to understand its plan for defenses.
+  -- This is used for the tactical overview, so the players also know the zones attacked by the other coalition!
+  -- @param #TASK_CAPTURE_DISPATCHER self
+  -- @param #TASK_CAPTURE_DISPATCHER DefenseTaskCaptureDispatcher
+  function TASK_CAPTURE_DISPATCHER:SetDefenseTaskCaptureDispatcher( DefenseTaskCaptureDispatcher )
+  
+    self.DefenseTaskCaptureDispatcher = DefenseTaskCaptureDispatcher
+  end
+
+
+  --- Get the linked task capture dispatcher from the other coalition to understand its plan for defenses.
+  -- This is used for the tactical overview, so the players also know the zones attacked by the other coalition!
+  -- @param #TASK_CAPTURE_DISPATCHER self
+  -- @return #TASK_CAPTURE_DISPATCHER
+  function TASK_CAPTURE_DISPATCHER:GetDefenseTaskCaptureDispatcher()
+  
+    return self.DefenseTaskCaptureDispatcher
+  end
+
+
+  --- Link an AI A2G dispatcher from the other coalition to understand its plan for defenses.
+  -- This is used for the tactical overview, so the players also know the zones attacked by the other AI A2G dispatcher!
+  -- @param #TASK_CAPTURE_DISPATCHER self
+  -- @param AI.AI_A2G_Dispatcher#AI_A2G_DISPATCHER DefenseAIA2GDispatcher
+  function TASK_CAPTURE_DISPATCHER:SetDefenseAIA2GDispatcher( DefenseAIA2GDispatcher )
+  
+    self.DefenseAIA2GDispatcher = DefenseAIA2GDispatcher
+  end
+
+
+  --- Get the linked AI A2G dispatcher from the other coalition to understand its plan for defenses.
+  -- This is used for the tactical overview, so the players also know the zones attacked by the AI A2G dispatcher!
+  -- @param #TASK_CAPTURE_DISPATCHER self
+  -- @return AI.AI_A2G_Dispatcher#AI_A2G_DISPATCHER
+  function TASK_CAPTURE_DISPATCHER:GetDefenseAIA2GDispatcher()
+  
+    return self.DefenseAIA2GDispatcher
+  end
+
 
   --- Add a capture zone task.
   -- @param #TASK_CAPTURE_DISPATCHER self
@@ -274,6 +313,9 @@ do -- TASK_CAPTURE_DISPATCHER
           CaptureZone.Task.TaskPrefix = CaptureZone.TaskPrefix -- We keep the TaskPrefix for further reference!
           Mission:AddTask( CaptureZone.Task )
           TaskReport:Add( TaskName )
+          
+          -- Link the Task Dispatcher to the capture zone task, because it is used on the UpdateTaskInfo.
+          CaptureZone.Task:SetDispatcher( self )
           CaptureZone.Task:UpdateTaskInfo()
 
           function CaptureZone.Task.OnEnterAssigned( Task, From, Event, To )
@@ -281,6 +323,7 @@ do -- TASK_CAPTURE_DISPATCHER
               self.AI_A2G_Dispatcher:Unlock( Task.TaskZoneName ) -- This will unlock the zone to be defended by AI.
             end        
             CaptureZone.Task:UpdateTaskInfo()
+            CaptureZone.Task.ZoneGoal.Attacked = true
           end
           
           function CaptureZone.Task.OnEnterSuccess( Task, From, Event, To )
@@ -289,6 +332,7 @@ do -- TASK_CAPTURE_DISPATCHER
               self.AI_A2G_Dispatcher:Lock( Task.TaskZoneName ) -- This will lock the zone from being defended by AI.
             end
             CaptureZone.Task:UpdateTaskInfo()
+            CaptureZone.Task.ZoneGoal.Attacked = false
           end
 
           function CaptureZone.Task.OnEnterCancelled( Task, From, Event, To )
@@ -297,6 +341,7 @@ do -- TASK_CAPTURE_DISPATCHER
               self.AI_A2G_Dispatcher:Lock( Task.TaskZoneName ) -- This will lock the zone from being defended by AI.
             end
             CaptureZone.Task:UpdateTaskInfo()
+            CaptureZone.Task.ZoneGoal.Attacked = false
           end
             
           function CaptureZone.Task.OnEnterFailed( Task, From, Event, To )
@@ -305,6 +350,7 @@ do -- TASK_CAPTURE_DISPATCHER
               self.AI_A2G_Dispatcher:Lock( Task.TaskZoneName ) -- This will lock the zone from being defended by AI.
             end
             CaptureZone.Task:UpdateTaskInfo()
+            CaptureZone.Task.ZoneGoal.Attacked = false
           end
 
           function CaptureZone.Task.OnEnterAborted( Task, From, Event, To )
@@ -313,6 +359,7 @@ do -- TASK_CAPTURE_DISPATCHER
               self.AI_A2G_Dispatcher:Lock( Task.TaskZoneName ) -- This will lock the zone from being defended by AI.
             end
             CaptureZone.Task:UpdateTaskInfo()
+            CaptureZone.Task.ZoneGoal.Attacked = false
           end
 
           -- Now broadcast the onafterCargoPickedUp event to the Task Cargo Dispatcher.
@@ -322,6 +369,7 @@ do -- TASK_CAPTURE_DISPATCHER
               self.AI_A2G_Dispatcher:Lock( Task.TaskZoneName ) -- This will lock the zone from being defended by AI.
             end
             CaptureZone.Task:UpdateTaskInfo()
+            CaptureZone.Task.ZoneGoal.Attacked = false
           end
 
         end

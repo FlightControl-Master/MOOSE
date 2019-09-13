@@ -52,8 +52,8 @@ end
 -- Nothing of this code should be modified without testing it thoroughly.
 -- @param #SCHEDULEDISPATCHER self
 -- @param Core.Scheduler#SCHEDULER Scheduler
-function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleArguments, Start, Repeat, Randomize, Stop )
-  self:F2( { Scheduler, ScheduleFunction, ScheduleArguments, Start, Repeat, Randomize, Stop } )
+function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleArguments, Start, Repeat, Randomize, Stop, TraceLevel, Fsm )
+  self:F2( { Scheduler, ScheduleFunction, ScheduleArguments, Start, Repeat, Randomize, Stop, TraceLevel } )
 
   self.CallID = self.CallID + 1
   local CallID = self.CallID .. "#" .. ( Scheduler.MasterObject and Scheduler.MasterObject.GetClassNameAndID and Scheduler.MasterObject:GetClassNameAndID() or "" ) or ""
@@ -84,11 +84,52 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
   self.Schedule[Scheduler][CallID].Repeat = Repeat or 0
   self.Schedule[Scheduler][CallID].Randomize = Randomize or 0
   self.Schedule[Scheduler][CallID].Stop = Stop
+  
+  
+  -- This section handles the tracing of the scheduled calls.
+  -- Because these calls will be executed with a delay, we inspect the place where these scheduled calls are initiated.
+  -- The Info structure contains the output of the debug.getinfo() calls, which inspects the call stack for the function name, line number and source name.
+  -- The call stack has many levels, and the correct semantical function call depends on where in the code AddSchedule was "used".
+  --   - Using SCHEDULER:New()
+  --   - Using Schedule:AddSchedule()
+  --   - Using Fsm:__Func()
+  --   - Using Class:ScheduleOnce()
+  --   - Using Class:ScheduleRepeat()
+  --   - ...
+  -- So for each of these scheduled call variations, AddSchedule is the workhorse which will schedule the call.
+  -- But the correct level with the correct semantical function location will differ depending on the above scheduled call invocation forms.
+  -- That's where the field TraceLevel contains optionally the level in the call stack where the call information is obtained.
+  -- The TraceLevel field indicates the correct level where the semantical scheduled call was invoked within the source, ensuring that function name, line number and source name are correct.
+  -- There is one quick ...
+  -- The FSM class models scheduled calls using the __Func syntax. However, these functions are "tailed".
+  -- There aren't defined anywhere within the source code, but rather implemented as triggers within the FSM logic, 
+  -- and using the onbefore, onafter, onenter, onleave prefixes. (See the FSM for details).
+  -- Therefore, in the call stack, at the TraceLevel these functions are mentioned as "tail calls", and the Info.name field will be nil as a result.
+  -- To obtain the correct function name for FSM object calls, the function is mentioned in the call stack at a higher stack level.
+  -- So when function name stored in Info.name is nil, then I inspect the function name within the call stack one level higher.
+  -- So this little piece of code does its magic wonderfully, preformance overhead is neglectible, as scheduled calls don't happen that often.
+
+  local Info = {}
+  
+  if debug then
+    TraceLevel = TraceLevel or 2
+    Info = debug.getinfo( TraceLevel, "nlS" )
+    local name_fsm = debug.getinfo( TraceLevel - 1, "n" ).name -- #string
+    if name_fsm then
+      Info.name = name_fsm
+    end
+    --env.info( debug.traceback() )
+  end
 
   self:T3( self.Schedule[Scheduler][CallID] )
 
-  self.Schedule[Scheduler][CallID].CallHandler = function( CallID )
-    --self:E( CallID )
+  self.Schedule[Scheduler][CallID].CallHandler = function( Params )
+    
+    local CallID = Params.CallID
+    local Info = Params.Info
+    local Source = Info.source or "?"
+    local Line = Info.currentline or "?"
+    local Name = Info.name or "?"
 
     local ErrorHandler = function( errmsg )
       env.info( "Error in timer function: " .. errmsg )
@@ -122,15 +163,19 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
       local Stop = Schedule.Stop or 0
       local ScheduleID = Schedule.ScheduleID
       
+      local Prefix = ( Repeat == 0 ) and "--->" or "+++>"
+      
       local Status, Result
       --self:E( { SchedulerObject = SchedulerObject } )
       if SchedulerObject then
         local function Timer()
+          SchedulerObject:T( Prefix .. Name .. ":" .. Line .. " (" .. Source .. ")" )
           return ScheduleFunction( SchedulerObject, unpack( ScheduleArguments ) ) 
         end
         Status, Result = xpcall( Timer, ErrorHandler )
       else
         local function Timer()
+          self:T( Prefix .. Name .. ":" .. Line .. " (" .. Source .. ")" )
           return ScheduleFunction( unpack( ScheduleArguments ) ) 
         end
         Status, Result = xpcall( Timer, ErrorHandler )
@@ -161,13 +206,13 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
         self:Stop( Scheduler, CallID )
       end
     else
-      self:E( "Scheduled obsolete call for CallID: " .. CallID )
+      self:I( "<<<>" .. Name .. ":" .. Line .. " (" .. Source .. ")" )
     end
     
     return nil
   end
   
-  self:Start( Scheduler, CallID )
+  self:Start( Scheduler, CallID, Info )
   
   return CallID
 end
@@ -181,7 +226,7 @@ function SCHEDULEDISPATCHER:RemoveSchedule( Scheduler, CallID )
   end
 end
 
-function SCHEDULEDISPATCHER:Start( Scheduler, CallID )
+function SCHEDULEDISPATCHER:Start( Scheduler, CallID, Info )
   self:F2( { Start = CallID, Scheduler = Scheduler } )
 
   if CallID then
@@ -192,13 +237,13 @@ function SCHEDULEDISPATCHER:Start( Scheduler, CallID )
       Schedule[CallID].StartTime = timer.getTime()  -- Set the StartTime field to indicate when the scheduler started.
       Schedule[CallID].ScheduleID = timer.scheduleFunction( 
         Schedule[CallID].CallHandler, 
-        CallID, 
+        { CallID = CallID, Info = Info }, 
         timer.getTime() + Schedule[CallID].Start 
       )
     end
   else
     for CallID, Schedule in pairs( self.Schedule[Scheduler] or {} ) do
-      self:Start( Scheduler, CallID ) -- Recursive
+      self:Start( Scheduler, CallID, Info ) -- Recursive
     end
   end
 end

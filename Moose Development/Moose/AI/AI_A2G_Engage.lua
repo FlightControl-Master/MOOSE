@@ -304,6 +304,8 @@ function AI_A2G_ENGAGE:New( AIGroup, EngageMinSpeed, EngageMaxSpeed, EngageFloor
   -- @param #AI_A2G_ENGAGE self
   -- @param #number Delay The delay in seconds.  
 
+  self:AddTransition( { "Patrolling", "Engaging" }, "Refuel", "Refuelling" ) 
+
   return self
 end
 
@@ -390,17 +392,6 @@ end
 
 
 --- @param #AI_A2G_ENGAGE self
--- @param Wrapper.Group#GROUP DefenderGroup The GroupGroup managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
-function AI_A2G_ENGAGE:onafterEngageRoute( DefenderGroup, From, Event, To, AttackSetUnit )
-
-  self:F( { DefenderGroup, From, Event, To, AttackSetUnit} )
-  
-end
-
---- @param #AI_A2G_ENGAGE self
 -- @param Wrapper.Group#GROUP AIGroup The Group Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
@@ -445,6 +436,8 @@ function AI_A2G_ENGAGE:onafterEngageRoute( DefenderGroup, From, Event, To, Attac
   self:F( { DefenderGroup, From, Event, To, AttackSetUnit} )
   
   local DefenderGroupName = DefenderGroup:GetName()
+
+  self.AttackSetUnit = AttackSetUnit -- Kept in memory in case of resume from refuel in air!
 
   local AttackCount = AttackSetUnit:Count()
   
@@ -513,8 +506,9 @@ function AI_A2G_ENGAGE:onafterEngageRoute( DefenderGroup, From, Event, To, Attac
 
     end
   else
-    self:E( DefenderGroupName .. ": No targets found -> Going RTB")
+    self:I( DefenderGroupName .. ": No targets found -> Going RTB")
     self:Return()
     self:__RTB( self.TaskDelay )
   end
 end
+

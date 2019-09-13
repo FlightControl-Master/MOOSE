@@ -180,7 +180,7 @@ COMMANDCENTER = {
 COMMANDCENTER.AutoAssignMethods = {
   ["Random"] = 1,
   ["Distance"] = 2,
-  ["Priority"] = 3
+  ["Priority"] = 3,
   }
 
 --- The constructor takes an IDENTIFIABLE as the HQ command center.
@@ -200,7 +200,8 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
 
   self:SetAutoAssignTasks( false )
   self:SetAutoAcceptTasks( true )
-  self:SetAutoAssignMethod( COMMANDCENTER.AutoAssignMethods.Random )
+  self:SetAutoAssignMethod( COMMANDCENTER.AutoAssignMethods.Distance )
+  self:SetFlashStatus( false )
   
   self:HandleEvent( EVENTS.Birth,
     --- @param #COMMANDCENTER self
@@ -208,8 +209,8 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
     function( self, EventData )
       if EventData.IniObjectCategory == 1 then
         local EventGroup = GROUP:Find( EventData.IniDCSGroup )
-        self:E( { CommandCenter = self:GetName(), EventGroup = EventGroup:GetName(), HasGroup = self:HasGroup( EventGroup ), EventData = EventData } )
-        if EventGroup and self:HasGroup( EventGroup ) then
+        --self:E( { CommandCenter = self:GetName(), EventGroup = EventGroup:GetName(), HasGroup = self:HasGroup( EventGroup ), EventData = EventData } )
+        if EventGroup and EventGroup:IsAlive() and self:HasGroup( EventGroup ) then
           local CommandCenterMenu = MENU_GROUP:New( EventGroup, self:GetText() )
           local MenuReporting = MENU_GROUP:New( EventGroup, "Missions Reports", CommandCenterMenu )
           local MenuMissionsSummary = MENU_GROUP_COMMAND:New( EventGroup, "Missions Status Report", MenuReporting, self.ReportSummary, self, EventGroup )
@@ -791,3 +792,12 @@ function COMMANDCENTER:ReportDetails( ReportGroup, Task )
   self:MessageToGroup( Report:Text(), ReportGroup )
 end
 
+
+--- Let the command center flash a report of the status of the subscribed task to a group.
+-- @param #COMMANDCENTER self
+function COMMANDCENTER:SetFlashStatus( Flash )
+  self:F()
+
+  self.FlashStatus = Flash or true
+
+end

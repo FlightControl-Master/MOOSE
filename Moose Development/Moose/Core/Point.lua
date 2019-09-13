@@ -2075,7 +2075,7 @@ do -- COORDINATE
   -- @return #string The coordinate Text in the configured coordinate system.
   function COORDINATE:ToString( Controllable, Settings, Task )
   
-    self:E( { Controllable = Controllable and Controllable:GetName() } )
+--    self:E( { Controllable = Controllable and Controllable:GetName() } )
 
     local Settings = Settings or ( Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() ) ) or _SETTINGS
 

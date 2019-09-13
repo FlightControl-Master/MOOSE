@@ -549,6 +549,9 @@ do -- ZONE_CAPTURE_COALITION
     -- If it is, then we must move the zone to attack state.
     self:HandleEvent( EVENTS.Hit, self.OnEventHit )
 
+    -- ZoneGoal objects are added to the _DATABASE.ZONES_GOAL and SET_ZONE_GOAL sets.
+    _EVENTDISPATCHER:CreateEventNewZoneGoal( self )
+
     return self
   end
   
@@ -566,7 +569,7 @@ do -- ZONE_CAPTURE_COALITION
 
   function ZONE_CAPTURE_COALITION:IsGuarded()
   
-    local IsGuarded = self.Zone:IsAllInZoneOfCoalition( self.Coalition )
+    local IsGuarded = self:IsAllInZoneOfCoalition( self.Coalition )
     self:F( { IsGuarded = IsGuarded } )
     return IsGuarded
   end
@@ -574,7 +577,7 @@ do -- ZONE_CAPTURE_COALITION
 
   function ZONE_CAPTURE_COALITION:IsEmpty()
   
-    local IsEmpty = self.Zone:IsNoneInZone()
+    local IsEmpty = self:IsNoneInZone()
     self:F( { IsEmpty = IsEmpty } )
     return IsEmpty
   end
@@ -582,7 +585,7 @@ do -- ZONE_CAPTURE_COALITION
 
   function ZONE_CAPTURE_COALITION:IsCaptured()
   
-    local IsCaptured = self.Zone:IsAllInZoneOfOtherCoalition( self.Coalition )
+    local IsCaptured = self:IsAllInZoneOfOtherCoalition( self.Coalition )
     self:F( { IsCaptured = IsCaptured } )
     return IsCaptured
   end
@@ -590,7 +593,7 @@ do -- ZONE_CAPTURE_COALITION
   
   function ZONE_CAPTURE_COALITION:IsAttacked()
   
-    local IsAttacked = self.Zone:IsSomeInZoneOfCoalition( self.Coalition )
+    local IsAttacked = self:IsSomeInZoneOfCoalition( self.Coalition )
     self:F( { IsAttacked = IsAttacked } )
     return IsAttacked
   end
@@ -601,7 +604,7 @@ do -- ZONE_CAPTURE_COALITION
   -- @param #ZONE_CAPTURE_COALITION self
   function ZONE_CAPTURE_COALITION:Mark()
   
-    local Coord = self.Zone:GetCoordinate()
+    local Coord = self:GetCoordinate()
     local ZoneName = self:GetZoneName()
     local State = self:GetState()
     
@@ -640,7 +643,7 @@ do -- ZONE_CAPTURE_COALITION
   
     --self:GetParent( self ):onenterCaptured()
 
-    local NewCoalition = self.Zone:GetScannedCoalition()
+    local NewCoalition = self:GetScannedCoalition()
     self:F( { NewCoalition = NewCoalition } )
     self:SetCoalition( NewCoalition )
   
@@ -673,14 +676,14 @@ do -- ZONE_CAPTURE_COALITION
     --BASE:GetParent( self ).onafterGuard( self )
   
     if not self.SmokeScheduler then
-      self.SmokeScheduler = self:ScheduleRepeat( 1, 1, 0.1, nil, self.StatusSmoke, self )
+      self.SmokeScheduler = self:ScheduleRepeat( self.StartInterval, self.RepeatInterval, 0.1, nil, self.StatusSmoke, self )
     end
   end
 
 
   function ZONE_CAPTURE_COALITION:IsCaptured()
   
-    local IsCaptured = self.Zone:IsAllInZoneOfOtherCoalition( self.Coalition )
+    local IsCaptured = self:IsAllInZoneOfOtherCoalition( self.Coalition )
     self:F( { IsCaptured = IsCaptured } )
     return IsCaptured
   end
@@ -688,7 +691,7 @@ do -- ZONE_CAPTURE_COALITION
   
   function ZONE_CAPTURE_COALITION:IsAttacked()
   
-    local IsAttacked = self.Zone:IsSomeInZoneOfCoalition( self.Coalition )
+    local IsAttacked = self:IsSomeInZoneOfCoalition( self.Coalition )
     self:F( { IsAttacked = IsAttacked } )
     return IsAttacked
   end
@@ -744,13 +747,13 @@ do -- ZONE_CAPTURE_COALITION
   -- 
   function ZONE_CAPTURE_COALITION:Start( StartInterval, RepeatInterval )
   
-    StartInterval = StartInterval or 15
-    RepeatInterval = RepeatInterval or 15
+    self.StartInterval = StartInterval or 15
+    self.RepeatInterval = RepeatInterval or 15
   
     if self.ScheduleStatusZone then
       self:ScheduleStop( self.ScheduleStatusZone )
     end
-    self.ScheduleStatusZone = self:ScheduleRepeat( StartInterval, RepeatInterval, 0.1, nil, self.StatusZone, self )
+    self.ScheduleStatusZone = self:ScheduleRepeat( self.StartInterval, self.RepeatInterval, 1.5, nil, self.StatusZone, self )
   end
   
 
@@ -803,7 +806,7 @@ do -- ZONE_CAPTURE_COALITION
     local UnitHit = EventData.TgtUnit
     
     if UnitHit then
-      if UnitHit:IsInZone( self.Zone ) then
+      if UnitHit:IsInZone( self ) then
         self:Attack()
       end
     end

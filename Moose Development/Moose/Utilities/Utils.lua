@@ -521,6 +521,32 @@ function UTILS.spairs( t, order )
     end
 end
 
+
+-- Here is a customized version of pairs, which I called kpairs because it iterates over the table in a sorted order, based on a function that will determine the keys as reference first.
+function UTILS.kpairs( t, getkey, order )
+    -- collect the keys
+    local keys = {}
+    local keyso = {}
+    for k, o in pairs(t) do keys[#keys+1] = k keyso[#keyso+1] = getkey( o ) end
+
+    -- if order function given, sort by it by passing the table and keys a, b,
+    -- otherwise just sort the keys 
+    if order then
+        table.sort(keys, function(a,b) return order(t, a, b) end)
+    else
+        table.sort(keys)
+    end
+
+    -- return the iterator function
+    local i = 0
+    return function()
+        i = i + 1
+        if keys[i] then
+            return keyso[i], t[keys[i]]
+        end
+    end
+end
+
 -- Here is a customized version of pairs, which I called rpairs because it iterates over the table in a random order.
 function UTILS.rpairs( t )
     -- collect the keys

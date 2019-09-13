@@ -696,7 +696,9 @@ end
 
 
 --- Returns the Unit's A2G threat level on a scale from 1 to 10 ...
--- The following threat levels are foreseen:
+-- Depending on the era and the type of unit, the following threat levels are foreseen:
+-- 
+-- **Modern**:
 -- 
 --   * Threat level  0: Unit is unarmed.
 --   * Threat level  1: Unit is infantry.
@@ -709,13 +711,49 @@ end
 --   * Threat level  8: Unit is a Short Range SAM, radar guided.
 --   * Threat level  9: Unit is a Medium Range SAM, radar guided.
 --   * Threat level 10: Unit is a Long Range SAM, radar guided.
+-- 
+-- **Cold**:
+-- 
+--   * Threat level  0: Unit is unarmed.
+--   * Threat level  1: Unit is infantry.
+--   * Threat level  2: Unit is an infantry vehicle.
+--   * Threat level  3: Unit is ground artillery.
+--   * Threat level  4: Unit is a tank.
+--   * Threat level  5: Unit is a modern tank or ifv with ATGM.
+--   * Threat level  6: Unit is a AAA.
+--   * Threat level  7: Unit is a SAM or manpad, IR guided.
+--   * Threat level  8: Unit is a Short Range SAM, radar guided.
+--   * Threat level  10: Unit is a Medium Range SAM, radar guided.
+--  
+-- **Korea**:
+-- 
+--   * Threat level  0: Unit is unarmed.
+--   * Threat level  1: Unit is infantry.
+--   * Threat level  2: Unit is an infantry vehicle.
+--   * Threat level  3: Unit is ground artillery.
+--   * Threat level  5: Unit is a tank.
+--   * Threat level  6: Unit is a AAA.
+--   * Threat level  7: Unit is a SAM or manpad, IR guided.
+--   * Threat level  10: Unit is a Short Range SAM, radar guided.
+--  
+-- **WWII**:
+-- 
+--   * Threat level  0: Unit is unarmed.
+--   * Threat level  1: Unit is infantry.
+--   * Threat level  2: Unit is an infantry vehicle.
+--   * Threat level  3: Unit is ground artillery.
+--   * Threat level  5: Unit is a tank.
+--   * Threat level  7: Unit is FLAK.
+--   * Threat level  10: Unit is AAA.
+--  
+-- 
 --   @param #UNIT self
 function UNIT:GetThreatLevel()
 
 
   local ThreatLevel = 0
   local ThreatText = ""
-
+  
   local Descriptor = self:GetDesc()
   
   if Descriptor then 

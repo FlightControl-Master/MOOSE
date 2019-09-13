@@ -1133,7 +1133,7 @@ do -- AI_A2G_DISPATCHER
     
     self.TakeoffScheduleID = self:ScheduleRepeat( 10, 10, 0, nil, self.ResourceTakeoff, self )
     
-    self:__Start( 1 )
+    self:__Start( 1 )    
     
     return self
   end
@@ -3496,91 +3496,123 @@ do -- AI_A2G_DISPATCHER
 
       local AI_A2G_PATROL = { SEAD = AI_A2G_SEAD, BAI = AI_A2G_BAI, CAS = AI_A2G_CAS }
       
-      local Fsm = AI_A2G_PATROL[DefenseTaskType]:New( DefenderGroup, Patrol.EngageMinSpeed, Patrol.EngageMaxSpeed, Patrol.EngageFloorAltitude, Patrol.EngageCeilingAltitude, Patrol.Zone, Patrol.PatrolFloorAltitude, Patrol.PatrolCeilingAltitude, Patrol.PatrolMinSpeed, Patrol.PatrolMaxSpeed, Patrol.AltType )
-      Fsm:SetDispatcher( self )
-      Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
-      Fsm:SetFuelThreshold( DefenderSquadron.FuelThreshold or self.DefenderDefault.FuelThreshold, 60 )
-      Fsm:SetDamageThreshold( self.DefenderDefault.DamageThreshold )
-      Fsm:SetDisengageRadius( self.DisengageRadius )
-      Fsm:SetTanker( DefenderSquadron.TankerName or self.DefenderDefault.TankerName )
-      Fsm:Start()
+      local AI_A2G_Fsm = AI_A2G_PATROL[DefenseTaskType]:New( DefenderGroup, Patrol.EngageMinSpeed, Patrol.EngageMaxSpeed, Patrol.EngageFloorAltitude, Patrol.EngageCeilingAltitude, Patrol.Zone, Patrol.PatrolFloorAltitude, Patrol.PatrolCeilingAltitude, Patrol.PatrolMinSpeed, Patrol.PatrolMaxSpeed, Patrol.AltType )
+      AI_A2G_Fsm:SetDispatcher( self )
+      AI_A2G_Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
+      AI_A2G_Fsm:SetFuelThreshold( DefenderSquadron.FuelThreshold or self.DefenderDefault.FuelThreshold, 60 )
+      AI_A2G_Fsm:SetDamageThreshold( self.DefenderDefault.DamageThreshold )
+      AI_A2G_Fsm:SetDisengageRadius( self.DisengageRadius )
+      AI_A2G_Fsm:SetTanker( DefenderSquadron.TankerName or self.DefenderDefault.TankerName )
+      AI_A2G_Fsm:Start()
 
-      self:SetDefenderTask( SquadronName, DefenderGroup, DefenseTaskType, Fsm, nil, DefenderGrouping )
+      self:SetDefenderTask( SquadronName, DefenderGroup, DefenseTaskType, AI_A2G_Fsm, nil, DefenderGrouping )
       
-      function Fsm:onafterTakeoff( Defender, From, Event, To )
-        self:F({"Defender Birth", Defender:GetName()})
+      function AI_A2G_Fsm:onafterTakeoff( DefenderGroup, From, Event, To )
+        self:F({"Defender Takeoff", DefenderGroup:GetName()})
         --self:GetParent(self).onafterBirth( self, Defender, From, Event, To )
         
-        local DefenderName = Defender:GetCallsign()
-        local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
-        local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
+        local DefenderName = DefenderGroup:GetCallsign()
+        local Dispatcher = AI_A2G_Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
+        local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
         
         if Squadron then
-          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " airborne." )
-          Fsm:Patrol() -- Engage on the TargetSetUnit
+          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " airborne.", "Wheels_up.wav", 3, "A2G/", DefenderGroup )
+          AI_A2G_Fsm:Patrol() -- Engage on the TargetSetUnit
         end
       end
 
-      function Fsm:onafterPatrolRoute( Defender, From, Event, To )
-        self:F({"Defender PatrolRoute", Defender:GetName()})
-        self:GetParent(self).onafterPatrolRoute( self, Defender, From, Event, To )
+      function AI_A2G_Fsm:onafterPatrolRoute( DefenderGroup, From, Event, To )
+        self:F({"Defender PatrolRoute", DefenderGroup:GetName()})
+        self:GetParent(self).onafterPatrolRoute( self, DefenderGroup, From, Event, To )
         
-        local DefenderName = Defender:GetCallsign()
+        local DefenderName = DefenderGroup:GetCallsign()
         local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
-        local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
+        local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
         if Squadron then
-          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " patrolling." )
+          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " patrolling.", "Patrolling.wav", 3, "A2G/", DefenderGroup )
         end
 
-        Dispatcher:ClearDefenderTaskTarget( Defender )
+        Dispatcher:ClearDefenderTaskTarget( DefenderGroup )
       end
 
-      function Fsm:onafterRTB( Defender, From, Event, To )
-        self:F({"Defender RTB", Defender:GetName()})
-        self:GetParent(self).onafterRTB( self, Defender, From, Event, To )
+      function AI_A2G_Fsm:onafterEngageRoute( DefenderGroup, From, Event, To, AttackSetUnit )
+        self:F({"Engage Route", DefenderGroup:GetName()})
         
-        local DefenderName = Defender:GetCallsign()
-        local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
-        local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " returning." )
+        self:GetParent(self).onafterEngageRoute( self, DefenderGroup, From, Event, To, AttackSetUnit )
+        
+        local DefenderName = DefenderGroup:GetCallsign()
+        local Dispatcher = AI_A2G_Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
+        local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
+        
+        if Squadron then
+          local FirstUnit = AttackSetUnit:GetFirst()
+          local Coordinate = FirstUnit:GetCoordinate() -- Core.Point#COORDINATE
+  
+          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " on route to ground target at " .. Coordinate:ToStringA2G( DefenderGroup ), "Moving_on_to_ground_target.wav", 3, "A2G/", DefenderGroup )
+        end
+      end
 
-        Dispatcher:ClearDefenderTaskTarget( Defender )
+      function AI_A2G_Fsm:OnAfterEngage( DefenderGroup, From, Event, To, AttackSetUnit )
+        self:F({"Engage Route", DefenderGroup:GetName()})
+        --self:GetParent(self).onafterBirth( self, Defender, From, Event, To )
+        
+        local DefenderName = DefenderGroup:GetCallsign()
+        local Dispatcher = AI_A2G_Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
+        local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
+        local FirstUnit = AttackSetUnit:GetFirst()
+        if FirstUnit then
+          local Coordinate = FirstUnit:GetCoordinate()
+  
+          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " engaging ground target at " .. Coordinate:ToStringA2G( DefenderGroup ), "Engaging_ground_target.wav", 3, "A2G/", DefenderGroup )
+        end
+      end
+
+      function AI_A2G_Fsm:onafterRTB( DefenderGroup, From, Event, To )
+        self:F({"Defender RTB", DefenderGroup:GetName()})
+        self:GetParent(self).onafterRTB( self, DefenderGroup, From, Event, To )
+        
+        local DefenderName = DefenderGroup:GetCallsign()
+        local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
+        local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
+        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " returning.", "Returning_to_base.wav", 3, "A2G/", DefenderGroup )
+
+        Dispatcher:ClearDefenderTaskTarget( DefenderGroup )
       end
 
       --- @param #AI_A2G_DISPATCHER self
-      function Fsm:onafterLostControl( Defender, From, Event, To )
-        self:F({"Defender LostControl", Defender:GetName()})
-        self:GetParent(self).onafterHome( self, Defender, From, Event, To )
+      function AI_A2G_Fsm:onafterLostControl( DefenderGroup, From, Event, To )
+        self:F({"Defender LostControl", DefenderGroup:GetName()})
+        self:GetParent(self).onafterHome( self, DefenderGroup, From, Event, To )
         
-        local DefenderName = Defender:GetCallsign()
-        local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
-        local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
+        local DefenderName = DefenderGroup:GetCallsign()
+        local Dispatcher = AI_A2G_Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
+        local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
         Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " lost control." )
-        if Defender:IsAboveRunway() then
-          Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
-          Defender:Destroy()
+        if DefenderGroup:IsAboveRunway() then
+          Dispatcher:RemoveDefenderFromSquadron( Squadron, DefenderGroup )
+          DefenderGroup:Destroy()
         end
       end
       
       --- @param #AI_A2G_DISPATCHER self
-      function Fsm:onafterHome( Defender, From, Event, To, Action )
-        self:F({"Defender Home", Defender:GetName()})
-        self:GetParent(self).onafterHome( self, Defender, From, Event, To )
+      function AI_A2G_Fsm:onafterHome( DefenderGroup, From, Event, To, Action )
+        self:F({"Defender Home", DefenderGroup:GetName()})
+        self:GetParent(self).onafterHome( self, DefenderGroup, From, Event, To )
         
-        local DefenderName = Defender:GetCallsign()
+        local DefenderName = DefenderGroup:GetCallsign()
         local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
-        local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " landing." )
+        local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
+        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " landing.", "Landing_at_base.wav", 3, "A2G/", DefenderGroup )
 
         if Action and Action == "Destroy" then
-          Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
-          Defender:Destroy()
+          Dispatcher:RemoveDefenderFromSquadron( Squadron, DefenderGroup )
+          DefenderGroup:Destroy()
         end
 
         if Dispatcher:GetSquadronLanding( Squadron.Name ) == AI_A2G_DISPATCHER.Landing.NearAirbase then
-          Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
-          Defender:Destroy()
-          Dispatcher:ResourcePark( Squadron, Defender )
+          Dispatcher:RemoveDefenderFromSquadron( Squadron, DefenderGroup )
+          DefenderGroup:Destroy()
+          Dispatcher:ResourcePark( Squadron, DefenderGroup )
         end
       end
     end
@@ -3605,112 +3637,112 @@ do -- AI_A2G_DISPATCHER
 
       local AI_A2G = { SEAD = AI_A2G_SEAD, BAI = AI_A2G_BAI, CAS = AI_A2G_CAS }
 
-      local Fsm = AI_A2G[DefenseTaskType]:New( DefenderGroup, Defense.EngageMinSpeed, Defense.EngageMaxSpeed, Defense.EngageFloorAltitude, Defense.EngageCeilingAltitude ) -- AI.AI_A2G_ENGAGE
-      Fsm:SetDispatcher( self )
-      Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
-      Fsm:SetFuelThreshold( DefenderSquadron.FuelThreshold or self.DefenderDefault.FuelThreshold, 60 )
-      Fsm:SetDamageThreshold( self.DefenderDefault.DamageThreshold )
-      Fsm:SetDisengageRadius( self.DisengageRadius )
-      Fsm:Start()
+      local AI_A2G_Fsm = AI_A2G[DefenseTaskType]:New( DefenderGroup, Defense.EngageMinSpeed, Defense.EngageMaxSpeed, Defense.EngageFloorAltitude, Defense.EngageCeilingAltitude ) -- AI.AI_A2G_ENGAGE
+      AI_A2G_Fsm:SetDispatcher( self )
+      AI_A2G_Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
+      AI_A2G_Fsm:SetFuelThreshold( DefenderSquadron.FuelThreshold or self.DefenderDefault.FuelThreshold, 60 )
+      AI_A2G_Fsm:SetDamageThreshold( self.DefenderDefault.DamageThreshold )
+      AI_A2G_Fsm:SetDisengageRadius( self.DisengageRadius )
+      AI_A2G_Fsm:Start()
 
-      self:SetDefenderTask( SquadronName, DefenderGroup, DefenseTaskType, Fsm, AttackerDetection, DefenderGrouping )
+      self:SetDefenderTask( SquadronName, DefenderGroup, DefenseTaskType, AI_A2G_Fsm, AttackerDetection, DefenderGrouping )
       
-      function Fsm:onafterTakeoff( Defender, From, Event, To )
-        self:F({"Defender Birth", Defender:GetName()})
+      function AI_A2G_Fsm:onafterTakeoff( DefenderGroup, From, Event, To )
+        self:F({"Defender Birth", DefenderGroup:GetName()})
         --self:GetParent(self).onafterBirth( self, Defender, From, Event, To )
         
-        local DefenderName = Defender:GetCallsign()
-        local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
-        local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-        local DefenderTarget = Dispatcher:GetDefenderTaskTarget( Defender )
+        local DefenderName = DefenderGroup:GetCallsign()
+        local Dispatcher = AI_A2G_Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
+        local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
+        local DefenderTarget = Dispatcher:GetDefenderTaskTarget( DefenderGroup )
         
         self:F( { DefenderTarget = DefenderTarget } )
         
         if DefenderTarget then
-          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " airborne. Engaging!" )
-          Fsm:EngageRoute( DefenderTarget.Set ) -- Engage on the TargetSetUnit
+          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " airborne. Engaging!", "Wheels_up.wav", 3, "A2G/", DefenderGroup )
+          AI_A2G_Fsm:EngageRoute( DefenderTarget.Set ) -- Engage on the TargetSetUnit
         end
       end
 
-      function Fsm:onafterEngageRoute( Defender, From, Event, To, AttackSetUnit )
-        self:F({"Engage Route", Defender:GetName()})
-        self:GetParent(self).onafterEngageRoute( self, Defender, From, Event, To, AttackSetUnit )
+      function AI_A2G_Fsm:onafterEngageRoute( DefenderGroup, From, Event, To, AttackSetUnit )
+        self:F({"Engage Route", DefenderGroup:GetName()})
         
-        local DefenderName = Defender:GetCallsign()
-        local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
-        local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
+        local DefenderName = DefenderGroup:GetCallsign()
+        local Dispatcher = AI_A2G_Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
+        local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
         
         if Squadron then
           local FirstUnit = AttackSetUnit:GetFirst()
           local Coordinate = FirstUnit:GetCoordinate() -- Core.Point#COORDINATE
   
-          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " on route to ground target at " .. Coordinate:ToStringA2G( Defender ) )
+          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " on route to ground target at " .. Coordinate:ToStringA2G( DefenderGroup ), "Moving_on_to_ground_target.wav", 3, "A2G/", DefenderGroup )
         end
+        self:GetParent(self).onafterEngageRoute( self, DefenderGroup, From, Event, To, AttackSetUnit )
       end
 
-      function Fsm:OnAfterEngage( Defender, From, Event, To, AttackSetUnit )
-        self:F({"Engage Route", Defender:GetName()})
+      function AI_A2G_Fsm:OnAfterEngage( DefenderGroup, From, Event, To, AttackSetUnit )
+        self:F({"Engage Route", DefenderGroup:GetName()})
         --self:GetParent(self).onafterBirth( self, Defender, From, Event, To )
         
-        local DefenderName = Defender:GetCallsign()
-        local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
-        local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
+        local DefenderName = DefenderGroup:GetCallsign()
+        local Dispatcher = AI_A2G_Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
+        local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
         local FirstUnit = AttackSetUnit:GetFirst()
         if FirstUnit then
           local Coordinate = FirstUnit:GetCoordinate()
   
-          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " engaging ground target at " .. Coordinate:ToStringA2G( Defender ) )
+          Dispatcher:MessageToPlayers( Squadron, "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " engaging ground target at " .. Coordinate:ToStringA2G( DefenderGroup ), "Engaging_ground_target.wav", 3, "A2G/", DefenderGroup )
         end
       end
 
-      function Fsm:onafterRTB( Defender, From, Event, To )
-        self:F({"Defender RTB", Defender:GetName()})
+      function AI_A2G_Fsm:onafterRTB( DefenderGroup, From, Event, To )
+        self:F({"Defender RTB", DefenderGroup:GetName()})
         
-        local DefenderName = Defender:GetCallsign()
+        local DefenderName = DefenderGroup:GetCallsign()
         local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
-        local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " returning." )
+        local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
+        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " returning.", "Returning_to_base.wav", 3, "A2G/", DefenderGroup )
 
-        self:GetParent(self).onafterRTB( self, Defender, From, Event, To )
+        self:GetParent(self).onafterRTB( self, DefenderGroup, From, Event, To )
 
-        Dispatcher:ClearDefenderTaskTarget( Defender )
+        Dispatcher:ClearDefenderTaskTarget( DefenderGroup )
       end
 
       --- @param #AI_A2G_DISPATCHER self
-      function Fsm:onafterLostControl( Defender, From, Event, To )
-        self:F({"Defender LostControl", Defender:GetName()})
-        self:GetParent(self).onafterHome( self, Defender, From, Event, To )
+      function AI_A2G_Fsm:onafterLostControl( DefenderGroup, From, Event, To )
+        self:F({"Defender LostControl", DefenderGroup:GetName()})
+        self:GetParent(self).onafterHome( self, DefenderGroup, From, Event, To )
         
-        local DefenderName = Defender:GetCallsign()
-        local Dispatcher = Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
-        local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
+        local DefenderName = DefenderGroup:GetCallsign()
+        local Dispatcher = AI_A2G_Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
+        local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
         --Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " lost control." )
 
-        if Defender:IsAboveRunway() then
-          Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
-          Defender:Destroy()
+        if DefenderGroup:IsAboveRunway() then
+          Dispatcher:RemoveDefenderFromSquadron( Squadron, DefenderGroup )
+          DefenderGroup:Destroy()
         end
       end
       
       --- @param #AI_A2G_DISPATCHER self
-      function Fsm:onafterHome( Defender, From, Event, To, Action )
-        self:F({"Defender Home", Defender:GetName()})
-        self:GetParent(self).onafterHome( self, Defender, From, Event, To )
+      function AI_A2G_Fsm:onafterHome( DefenderGroup, From, Event, To, Action )
+        self:F({"Defender Home", DefenderGroup:GetName()})
+        self:GetParent(self).onafterHome( self, DefenderGroup, From, Event, To )
         
-        local DefenderName = Defender:GetCallsign()
+        local DefenderName = DefenderGroup:GetCallsign()
         local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
-        local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " landing." )
+        local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
+        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " landing.", "Landing_at_base.wav", 3, "A2G/", DefenderGroup )
 
         if Action and Action == "Destroy" then
-          Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
-          Defender:Destroy()
+          Dispatcher:RemoveDefenderFromSquadron( Squadron, DefenderGroup )
+          DefenderGroup:Destroy()
         end
 
         if Dispatcher:GetSquadronLanding( Squadron.Name ) == AI_A2G_DISPATCHER.Landing.NearAirbase then
-          Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
-          Defender:Destroy()
-          Dispatcher:ResourcePark( Squadron, Defender )
+          Dispatcher:RemoveDefenderFromSquadron( Squadron, DefenderGroup )
+          DefenderGroup:Destroy()
+          Dispatcher:ResourcePark( Squadron, DefenderGroup )
         end
       end
     end
@@ -4024,6 +4056,29 @@ do -- AI_A2G_DISPATCHER
   end
 
 
+  --- Determine the distance as the keys of reference of the detected items.
+  -- @param #AI_A2G_DISPATCHER self
+  function AI_A2G_DISPATCHER:Keys( DetectedItem )
+  
+    self:F( { DetectedItem = DetectedItem } )
+  
+    local AttackCoordinate = self.Detection:GetDetectedItemCoordinate( DetectedItem )
+    
+    local ShortestDistance = 999999999
+  
+    for DefenseCoordinateName, DefenseCoordinate in pairs( self.DefenseCoordinates ) do
+      local DefenseCoordinate = DefenseCoordinate -- Core.Point#COORDINATE
+
+      local EvaluateDistance = AttackCoordinate:Get2DDistance( DefenseCoordinate )
+      
+      if EvaluateDistance <= ShortestDistance then
+        ShortestDistance = EvaluateDistance
+      end
+    end
+    
+    return ShortestDistance
+  end
+
   --- Assigns A2G AI Tasks in relation to the detected items.
   -- @param #AI_A2G_DISPATCHER self
   function AI_A2G_DISPATCHER:Order( DetectedItem )
@@ -4042,6 +4097,107 @@ do -- AI_A2G_DISPATCHER
     end
     
     return ShortestDistance
+  end
+  
+  --- Shows the tactical display.
+  -- @param #AI_A2G_DISPATCHER self
+  function AI_A2G_DISPATCHER:ShowTacticalDisplay( Detection )
+
+    local AreaMsg = {}
+    local TaskMsg = {}
+    local ChangeMsg = {}
+    
+    local TaskReport = REPORT:New()
+
+    local DefenseTotal = 0
+
+    local Report = REPORT:New( "\nTactical Overview" )
+
+    local DefenderGroupCount = 0
+    local DefendersTotal = 0
+
+    -- Now that all obsolete tasks are removed, loop through the detected targets.
+    --for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
+    for DetectedItemID, DetectedItem in UTILS.spairs( Detection:GetDetectedItems(), function( t, a, b ) return self:Order(t[a]) <  self:Order(t[b]) end  ) do
+    
+      if not self.Detection:IsDetectedItemLocked( DetectedItem ) == true then
+        local DetectedItem = DetectedItem -- Functional.Detection#DETECTION_BASE.DetectedItem
+        local DetectedSet = DetectedItem.Set -- Core.Set#SET_UNIT
+        local DetectedCount = DetectedSet:Count()
+        local DetectedZone = DetectedItem.Zone
+  
+        self:F( { "Target ID", DetectedItem.ItemID } )
+        
+        self:F( { DefenseLimit = self.DefenseLimit, DefenseTotal = DefenseTotal } )
+        DetectedSet:Flush( self )
+  
+        local DetectedID = DetectedItem.ID
+        local DetectionIndex = DetectedItem.Index
+        local DetectedItemChanged = DetectedItem.Changed
+  
+        -- Show tactical situation
+        local ThreatLevel = DetectedItem.Set:CalculateThreatLevelA2G()
+        Report:Add( string.format( " - %1s%s ( %04s ): ( #%02d - %-4s ) %s" , ( DetectedItem.IsDetected == true ) and "!" or " ", DetectedItem.ItemID, DetectedItem.Index, DetectedItem.Set:Count(), DetectedItem.Type or " --- ", string.rep(  "■", ThreatLevel ) ) )
+        for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
+          local Defender = Defender -- Wrapper.Group#GROUP
+           if DefenderTask.Target and DefenderTask.Target.Index == DetectedItem.Index then
+             if Defender:IsAlive() then
+               DefenderGroupCount = DefenderGroupCount + 1
+               local Fuel = Defender:GetFuelMin() * 100
+               local Damage = Defender:GetLife() / Defender:GetLife0() * 100
+               Report:Add( string.format( "   - %s ( %s - %s ): ( #%d ) F: %3d, D:%3d - %s", 
+                                          Defender:GetName(), 
+                                          DefenderTask.Type, 
+                                          DefenderTask.Fsm:GetState(), 
+                                          Defender:GetSize(), 
+                                          Fuel,
+                                          Damage, 
+                                          Defender:HasTask() == true and "Executing" or "Idle" ) )
+             end
+           end
+        end
+      end
+    end
+
+    Report:Add( "\n - No Targets:")
+    local TaskCount = 0
+    for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
+      TaskCount = TaskCount + 1
+      local Defender = Defender -- Wrapper.Group#GROUP
+      if not DefenderTask.Target then
+        if Defender:IsAlive() then
+          local DefenderHasTask = Defender:HasTask()
+          local Fuel = Defender:GetFuelMin() * 100
+          local Damage = Defender:GetLife() / Defender:GetLife0() * 100
+          DefenderGroupCount = DefenderGroupCount + 1
+          Report:Add( string.format( "   - %s ( %s - %s ): ( #%d ) F: %3d, D:%3d - %s", 
+                                     Defender:GetName(), 
+                                     DefenderTask.Type, 
+                                     DefenderTask.Fsm:GetState(), 
+                                     Defender:GetSize(),
+                                     Fuel,
+                                     Damage, 
+                                     Defender:HasTask() == true and "Executing" or "Idle" ) )
+        end
+      end
+    end
+    Report:Add( string.format( "\n - %d Tasks - %d Defender Groups", TaskCount, DefenderGroupCount ) )
+
+    Report:Add( string.format( "\n - %d Queued Aircraft Launches", #self.DefenseQueue ) )
+    for DefenseQueueID, DefenseQueueItem in pairs( self.DefenseQueue ) do
+      local DefenseQueueItem = DefenseQueueItem -- #AI_A2G_DISPATCHER.DefenseQueueItem
+      Report:Add( string.format( "   - %s - %s", DefenseQueueItem.SquadronName, DefenseQueueItem.DefenderSquadron.TakeoffTime, DefenseQueueItem.DefenderSquadron.TakeoffInterval) )
+      
+    end
+    
+    Report:Add( string.format( "\n - Squadron Resources: ", #self.DefenseQueue ) )
+    for DefenderSquadronName, DefenderSquadron in pairs( self.DefenderSquadrons ) do
+      Report:Add( string.format( "   - %s - %d", DefenderSquadronName, DefenderSquadron.ResourceCount and DefenderSquadron.ResourceCount or "n/a" ) )
+    end
+
+    self:F( Report:Text( "\n" ) )
+    trigger.action.outText( Report:Text( "\n" ), 25 )
+    
   end
 
   --- Assigns A2G AI Tasks in relation to the detected items.
@@ -4102,7 +4258,7 @@ do -- AI_A2G_DISPATCHER
 
     -- Now that all obsolete tasks are removed, loop through the detected targets.
     --for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
-    for DetectedItemID, DetectedItem in UTILS.spairs( Detection:GetDetectedItems(), function( t, a, b ) return self:Order(t[a]) <  self:Order(t[b]) end  ) do
+    for DetectedDistance, DetectedItem in UTILS.kpairs( Detection:GetDetectedItems(), function( t ) return self:Keys( t ) end, function( t, a, b ) return self:Order(t[a]) <  self:Order(t[b]) end  ) do
     
       if not self.Detection:IsDetectedItemLocked( DetectedItem ) == true then
         local DetectedItem = DetectedItem -- Functional.Detection#DETECTION_BASE.DetectedItem
@@ -4124,44 +4280,43 @@ do -- AI_A2G_DISPATCHER
         -- Calculate if for this DetectedItem if a defense needs to be initiated.
         -- This calculation is based on the distance between the defense point and the attackers, and the defensiveness parameter.
         -- The attackers closest to the defense coordinates will be handled first, or course!
-        
-        local EngageCoordinate = nil
-        
-        for DefenseCoordinateName, DefenseCoordinate in pairs( self.DefenseCoordinates ) do
-          local DefenseCoordinate = DefenseCoordinate -- Core.Point#COORDINATE
-  
-          local EvaluateDistance = AttackCoordinate:Get2DDistance( DefenseCoordinate )
+
+        local EngageDefenses = nil        
           
-          if EvaluateDistance <= self.DefenseRadius then
-          
-            local DistanceProbability = ( self.DefenseRadius / EvaluateDistance * self.DefenseReactivity )
+        self:F( { DetectedDistance = DetectedDistance, DefenseRadius = self.DefenseRadius } )
+        if DetectedDistance <= self.DefenseRadius then
+        
+          self:F( { DetectedApproach = self._DefenseApproach } )
+          if self._DefenseApproach == AI_A2G_DISPATCHER.DefenseApproach.Distance then
+            EngageDefenses = true
+            self:F( { EngageDefenses = EngageDefenses } )
+          end
+
+          if self._DefenseApproach == AI_A2G_DISPATCHER.DefenseApproach.Random then
+            local DistanceProbability = ( self.DefenseRadius / DetectedDistance * self.DefenseReactivity )
             local DefenseProbability = math.random()
-            
+  
             self:F( { DistanceProbability = DistanceProbability, DefenseProbability = DefenseProbability } )
-            
-            if self._DefenseApproach == AI_A2G_DISPATCHER.DefenseApproach.Random then
-            
-              if DefenseProbability <= DistanceProbability / ( 300 / 30 ) then
-                EngageCoordinate = DefenseCoordinate
-                break
-              end
-            end
-            if self._DefenseApproach == AI_A2G_DISPATCHER.DefenseApproach.Distance then
-              EngageCoordinate = DefenseCoordinate
-              break
+  
+            if DefenseProbability <= DistanceProbability / ( 300 / 30 ) then
+              EngageDefenses = true
             end
           end
+          
+          
         end
+        
+        self:F( { EngageDefenses = EngageDefenses, DefenseLimit = self.DefenseLimit, DefenseTotal = DefenseTotal } )
         
         -- There needs to be an EngageCoordinate.
         -- If self.DefenseLimit is set (thus limit the amount of defenses to one zone), then only start a new defense if the maximum has not been reached.
         -- If self.DefenseLimit has not been set, there is an unlimited amount of zones to be defended.
-        if ( EngageCoordinate and ( self.DefenseLimit and DefenseTotal < self.DefenseLimit ) or not self.DefenseLimit ) then
+        if ( EngageDefenses and ( self.DefenseLimit and DefenseTotal < self.DefenseLimit ) or not self.DefenseLimit ) then
           do 
             local DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies = self:Evaluate_SEAD( DetectedItem ) -- Returns a SET_UNIT with the SEAD targets to be engaged...
             if DefendersMissing > 0 then
               self:F( { DefendersTotal = DefendersTotal, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing } )
-              self:Defend( DetectedItem, DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies, "SEAD", EngageCoordinate )
+              self:Defend( DetectedItem, DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies, "SEAD" )
             end
           end
     
@@ -4169,7 +4324,7 @@ do -- AI_A2G_DISPATCHER
             local DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies = self:Evaluate_CAS( DetectedItem ) -- Returns a SET_UNIT with the CAS targets to be engaged...
             if DefendersMissing > 0 then
               self:F( { DefendersTotal = DefendersTotal, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing } )
-              self:Defend( DetectedItem, DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies, "CAS", EngageCoordinate )
+              self:Defend( DetectedItem, DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies, "CAS" )
             end
           end
     
@@ -4177,7 +4332,7 @@ do -- AI_A2G_DISPATCHER
             local DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies = self:Evaluate_BAI( DetectedItem ) -- Returns a SET_UNIT with the CAS targets to be engaged...
             if DefendersMissing > 0 then
               self:F( { DefendersTotal = DefendersTotal, DefendersEngaged = DefendersEngaged, DefendersMissing = DefendersMissing } )
-              self:Defend( DetectedItem, DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies, "BAI", EngageCoordinate )
+              self:Defend( DetectedItem, DefendersTotal, DefendersEngaged, DefendersMissing, Friendlies, "BAI" )
             end
           end
         end
@@ -4191,7 +4346,7 @@ do -- AI_A2G_DISPATCHER
         
         for DefenseQueueID, DefenseQueueItem in pairs( self.DefenseQueue ) do
           local DefenseQueueItem = DefenseQueueItem -- #AI_A2G_DISPATCHER.DefenseQueueItem
-          if DefenseQueueItem.AttackerDetection.Index == DetectedItem.Index then
+          if DefenseQueueItem.AttackerDetection and DefenseQueueItem.AttackerDetection.Index and DefenseQueueItem.AttackerDetection.Index == DetectedItem.Index then
             DefenseTotal = DefenseTotal + 1
           end
         end

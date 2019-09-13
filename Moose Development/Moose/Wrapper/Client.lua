@@ -133,7 +133,8 @@ function CLIENT:FindByName( ClientName, ClientBriefing, Error )
 end
 
 function CLIENT:Register( ClientName )
-  local self = BASE:Inherit( self, UNIT:Register( ClientName ) )
+
+  local self = BASE:Inherit( self, UNIT:Register( ClientName ) ) -- #CLIENT
 
   self:F( ClientName )
   self.ClientName = ClientName
@@ -141,7 +142,7 @@ function CLIENT:Register( ClientName )
   self.ClientAlive2 = false
   
   --self.AliveCheckScheduler = routines.scheduleFunction( self._AliveCheckScheduler, { self }, timer.getTime() + 1, 5 )
-  self.AliveCheckScheduler = SCHEDULER:New( self, self._AliveCheckScheduler, { "Client Alive " .. ClientName }, 1, 5 )
+  self.AliveCheckScheduler = SCHEDULER:New( self, self._AliveCheckScheduler, { "Client Alive " .. ClientName }, 1, 5, 0.5 )
 
   self:F( self )
   return self

@@ -1,9 +1,9 @@
---- **Core** - Manages several databases containing templates, mission objects, and mission information. 
--- 
+--- **Core** - Manages several databases containing templates, mission objects, and mission information.
+--
 -- ===
--- 
+--
 -- ## Features:
--- 
+--
 --   * During mission startup, scan the mission environment, and create / instantiate intelligently the different objects as defined within the mission.
 --   * Manage database of DCS Group templates (as modelled using the mission editor).
 --     - Group templates.
@@ -20,14 +20,14 @@
 --   * Manage database of hits to units and statics.
 --   * Manage database of destroys of units and statics.
 --   * Manage database of @{Core.Zone#ZONE_BASE} objects.
--- 
+--
 -- ===
--- 
+--
 -- ### Author: **FlightControl**
--- ### Contributions: 
--- 
+-- ### Contributions:
+--
 -- ===
--- 
+--
 -- @module Core.Database
 -- @image Core_Database.JPG
 
@@ -36,9 +36,9 @@
 -- @extends Core.Base#BASE
 
 --- Contains collections of wrapper objects defined within MOOSE that reflect objects within the simulator.
--- 
+--
 -- Mission designers can use the DATABASE class to refer to:
--- 
+--
 --  * STATICS
 --  * UNITS
 --  * GROUPS
@@ -47,12 +47,12 @@
 --  * PLAYERSJOINED
 --  * PLAYERS
 --  * CARGOS
---  
+--
 -- On top, for internal MOOSE administration purposes, the DATBASE administers the Unit and Group TEMPLATES as defined within the Mission Editor.
--- 
+--
 -- The singleton object **_DATABASE** is automatically created by MOOSE, that administers all objects within the mission.
 -- Moose refers to **_DATABASE** within the framework extensively, but you can also refer to the _DATABASE object within your missions if required.
--- 
+--
 -- @field #DATABASE
 DATABASE = {
   ClassName = "DATABASE",
@@ -81,6 +81,7 @@ DATABASE = {
   HITS = {},
   DESTROYS = {},
   ZONES = {},
+  ZONES_GOAL = {},  
   WAREHOUSES = {},
   FLIGHTGROUPS = {},
   FLIGHTCONTROLS = {},
@@ -115,7 +116,7 @@ function DATABASE:New()
   local self = BASE:Inherit( self, BASE:New() ) -- #DATABASE
 
   self:SetEventPriority( 1 )
-  
+
   self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
   self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
   self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
@@ -125,11 +126,11 @@ function DATABASE:New()
   self:HandleEvent( EVENTS.DeleteCargo )
   self:HandleEvent( EVENTS.NewZone )
   self:HandleEvent( EVENTS.DeleteZone )
-  
+
   -- Follow alive players and clients
   --self:HandleEvent( EVENTS.PlayerEnterUnit, self._EventOnPlayerEnterUnit ) -- This is not working anymore!, handling this through the birth event.
   self:HandleEvent( EVENTS.PlayerLeaveUnit, self._EventOnPlayerLeaveUnit )
-  
+
   self:_RegisterTemplates()
   self:_RegisterGroupsAndUnits()
   self:_RegisterClients()
@@ -138,16 +139,16 @@ function DATABASE:New()
   self:_RegisterAirbases()
 
   self.UNITS_Position = 0
-  
+
   --- @param #DATABASE self
   local function CheckPlayers( self )
-  
+
     local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ), AlivePlayersNeutral = coalition.getPlayers( coalition.side.NEUTRAL )}
     for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
       --self:E( { "CoalitionData:", CoalitionData } )
       for UnitId, UnitData in pairs( CoalitionData ) do
         if UnitData and UnitData:isExist() then
-        
+
           local UnitName = UnitData:getName()
           local PlayerName = UnitData:getPlayerName()
           local PlayerUnit = UNIT:Find( UnitData )
@@ -166,10 +167,10 @@ function DATABASE:New()
       end
     end
   end
-  
+
   --self:E( "Scheduling" )
   --PlayerCheckSchedule = SCHEDULER:New( nil, CheckPlayers, { self }, 1, 1 )
-  
+
   return self
 end
 
@@ -189,12 +190,13 @@ end
 function DATABASE:AddUnit( DCSUnitName )
 
   if not  self.UNITS[DCSUnitName] then
+    self:I( { "Add UNIT:", DCSUnitName } )
     local UnitRegister = UNIT:Register( DCSUnitName )
     self.UNITS[DCSUnitName] = UNIT:Register( DCSUnitName )
-    
+
     table.insert( self.UNITS_Index, DCSUnitName )
   end
-  
+
   return self.UNITS[DCSUnitName]
 end
 
@@ -203,7 +205,7 @@ end
 -- @param #DATABASE self
 function DATABASE:DeleteUnit( DCSUnitName )
 
-  self.UNITS[DCSUnitName] = nil 
+  self.UNITS[DCSUnitName] = nil
 end
 
 --- Adds a Static based on the Static Name in the DATABASE.
@@ -214,7 +216,7 @@ function DATABASE:AddStatic( DCSStaticName )
     self.STATICS[DCSStaticName] = STATIC:Register( DCSStaticName )
     return self.STATICS[DCSStaticName]
   end
-  
+
   return nil
 end
 
@@ -223,7 +225,7 @@ end
 -- @param #DATABASE self
 function DATABASE:DeleteStatic( DCSStaticName )
 
-  --self.STATICS[DCSStaticName] = nil 
+  --self.STATICS[DCSStaticName] = nil
 end
 
 --- Finds a STATIC based on the StaticName.
@@ -262,7 +264,7 @@ end
 -- @param #string AirbaseName The name of the airbase
 function DATABASE:DeleteAirbase( AirbaseName )
 
-  self.AIRBASES[AirbaseName] = nil 
+  self.AIRBASES[AirbaseName] = nil
 end
 
 --- Finds an AIRBASE based on the AirbaseName.
@@ -283,29 +285,29 @@ do -- Zones
   -- @param #string ZoneName The name of the zone.
   -- @return Core.Zone#ZONE_BASE The found ZONE.
   function DATABASE:FindZone( ZoneName )
-  
+
     local ZoneFound = self.ZONES[ZoneName]
     return ZoneFound
   end
-  
+
   --- Adds a @{Zone} based on the zone name in the DATABASE.
   -- @param #DATABASE self
   -- @param #string ZoneName The name of the zone.
   -- @param Core.Zone#ZONE_BASE Zone The zone.
   function DATABASE:AddZone( ZoneName, Zone )
-  
+
     if not self.ZONES[ZoneName] then
       self.ZONES[ZoneName] = Zone
     end
   end
-  
-  
+
+
   --- Deletes a @{Zone} from the DATABASE based on the zone name.
   -- @param #DATABASE self
   -- @param #string ZoneName The name of the zone.
   function DATABASE:DeleteZone( ZoneName )
-  
-    self.ZONES[ZoneName] = nil 
+
+    self.ZONES[ZoneName] = nil
   end
 
 
@@ -322,56 +324,89 @@ do -- Zones
       self.ZONENAMES[ZoneName] = ZoneName
       self:AddZone( ZoneName, Zone )
     end
-  
+
     for ZoneGroupName, ZoneGroup in pairs( self.GROUPS ) do
       if ZoneGroupName:match("#ZONE_POLYGON") then
         local ZoneName1 = ZoneGroupName:match("(.*)#ZONE_POLYGON")
         local ZoneName2 = ZoneGroupName:match(".*#ZONE_POLYGON(.*)")
         local ZoneName = ZoneName1 .. ( ZoneName2 or "" )
-        
+
         self:I( { "Register ZONE_POLYGON:", Name = ZoneName } )
         local Zone_Polygon = ZONE_POLYGON:New( ZoneName, ZoneGroup )
         self.ZONENAMES[ZoneName] = ZoneName
         self:AddZone( ZoneName, Zone_Polygon )
       end
     end
-    
+
   end
 
 
 end -- zone
 
+do -- Zone_Goal
+
+  --- Finds a @{Zone} based on the zone name.
+  -- @param #DATABASE self
+  -- @param #string ZoneName The name of the zone.
+  -- @return Core.Zone#ZONE_BASE The found ZONE.
+  function DATABASE:FindZoneGoal( ZoneName )
+
+    local ZoneFound = self.ZONES_GOAL[ZoneName]
+    return ZoneFound
+  end
+
+  --- Adds a @{Zone} based on the zone name in the DATABASE.
+  -- @param #DATABASE self
+  -- @param #string ZoneName The name of the zone.
+  -- @param Core.Zone#ZONE_BASE Zone The zone.
+  function DATABASE:AddZoneGoal( ZoneName, Zone )
+
+    if not self.ZONES_GOAL[ZoneName] then
+      self.ZONES_GOAL[ZoneName] = Zone
+    end
+  end
+
+
+  --- Deletes a @{Zone} from the DATABASE based on the zone name.
+  -- @param #DATABASE self
+  -- @param #string ZoneName The name of the zone.
+  function DATABASE:DeleteZoneGoal( ZoneName )
+
+    self.ZONES_GOAL[ZoneName] = nil
+  end
+
+end -- Zone_Goal
 do -- cargo
 
   --- Adds a Cargo based on the Cargo Name in the DATABASE.
   -- @param #DATABASE self
   -- @param #string CargoName The name of the airbase
   function DATABASE:AddCargo( Cargo )
-  
+
     if not self.CARGOS[Cargo.Name] then
       self.CARGOS[Cargo.Name] = Cargo
     end
   end
-  
-  
+
+
   --- Deletes a Cargo from the DATABASE based on the Cargo Name.
   -- @param #DATABASE self
   -- @param #string CargoName The name of the airbase
   function DATABASE:DeleteCargo( CargoName )
-  
-    self.CARGOS[CargoName] = nil 
+
+    self.CARGOS[CargoName] = nil
   end
-  
+
   --- Finds an CARGO based on the CargoName.
   -- @param #DATABASE self
   -- @param #string CargoName
   -- @return Wrapper.Cargo#CARGO The found CARGO.
   function DATABASE:FindCargo( CargoName )
-  
+
     local CargoFound = self.CARGOS[CargoName]
     return CargoFound
   end
-  
+
   --- Checks if the Template name has a #CARGO tag.
   -- If yes, the group is a cargo.
   -- @param #DATABASE self
@@ -380,10 +415,10 @@ do -- cargo
   function DATABASE:IsCargo( TemplateName )
 
     TemplateName = env.getValueDictByKey( TemplateName )
-  
+
     local Cargo = TemplateName:match( "#(CARGO)" )
 
-    return Cargo and Cargo == "CARGO"    
+    return Cargo and Cargo == "CARGO"
   end
 
   --- Private method that registers new Static Templates within the DATABASE Object.
@@ -392,7 +427,7 @@ do -- cargo
   function DATABASE:_RegisterCargos()
 
     local Groups = UTILS.DeepCopy( self.GROUPS ) -- This is a very important statement. CARGO_GROUP:New creates a new _DATABASE.GROUP entry, which will confuse the loop. I searched 4 hours on this to find the bug!
-  
+
     for CargoGroupName, CargoGroup in pairs( Groups ) do
       self:I( { Cargo = CargoGroupName } )
       if self:IsCargo( CargoGroupName ) then
@@ -405,12 +440,12 @@ do -- cargo
         local Name = CargoParam and CargoParam:match( "N=([%a%d]+),?") or CargoName
         local LoadRadius = CargoParam and tonumber( CargoParam:match( "RR=([%a%d]+),?") )
         local NearRadius = CargoParam and tonumber( CargoParam:match( "NR=([%a%d]+),?") )
-        
+
         self:I({"Register CargoGroup:",Type=Type,Name=Name,LoadRadius=LoadRadius,NearRadius=NearRadius})
         CARGO_GROUP:New( CargoGroup, Type, Name, LoadRadius, NearRadius )
       end
     end
-    
+
     for CargoStaticName, CargoStatic in pairs( self.STATICS ) do
       if self:IsCargo( CargoStaticName ) then
         local CargoInfo = CargoStaticName:match("#CARGO(.*)")
@@ -421,7 +456,7 @@ do -- cargo
         local Name = CargoParam and CargoParam:match( "N=([%a%d]+),?") or CargoName
         local LoadRadius = CargoParam and tonumber( CargoParam:match( "RR=([%a%d]+),?") )
         local NearRadius = CargoParam and tonumber( CargoParam:match( "NR=([%a%d]+),?") )
-        
+
         if Category == "SLING" then
           self:I({"Register CargoSlingload:",Type=Type,Name=Name,LoadRadius=LoadRadius,NearRadius=NearRadius})
           CARGO_SLINGLOAD:New( CargoStatic, Type, Name, LoadRadius, NearRadius )
@@ -433,7 +468,7 @@ do -- cargo
         end
       end
     end
-    
+
   end
 
 end -- cargo
@@ -479,9 +514,9 @@ function DATABASE:AddGroup( GroupName )
   if not self.GROUPS[GroupName] then
     self:I( { "Add GROUP:", GroupName } )
     self.GROUPS[GroupName] = GROUP:Register( GroupName )
-  end  
-  
-  return self.GROUPS[GroupName] 
+  end
+
+  return self.GROUPS[GroupName]
 end
 
 --- Adds a player based on the Player Name in the DATABASE.
@@ -584,7 +619,7 @@ function DATABASE:Spawn( SpawnTemplate )
   for UnitID, UnitData in pairs( SpawnTemplate.units ) do
     self:AddUnit( UnitData.name )
   end
-  
+
   return SpawnGroup
 end
 
@@ -616,21 +651,21 @@ end
 function DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionSide, CategoryID, CountryID, GroupName )
 
   local GroupTemplateName = GroupName or env.getValueDictByKey( GroupTemplate.name )
-  
+
   if not self.Templates.Groups[GroupTemplateName] then
     self.Templates.Groups[GroupTemplateName] = {}
     self.Templates.Groups[GroupTemplateName].Status = nil
   end
-  
+
   -- Delete the spans from the route, it is not needed and takes memory.
-  if GroupTemplate.route and GroupTemplate.route.spans then 
+  if GroupTemplate.route and GroupTemplate.route.spans then
     GroupTemplate.route.spans = nil
   end
-  
+
   GroupTemplate.CategoryID = CategoryID
   GroupTemplate.CoalitionID = CoalitionSide
   GroupTemplate.CountryID = CountryID
-  
+
   self.Templates.Groups[GroupTemplateName].GroupName = GroupTemplateName
   self.Templates.Groups[GroupTemplateName].Template = GroupTemplate
   self.Templates.Groups[GroupTemplateName].groupId = GroupTemplate.groupId
@@ -645,7 +680,7 @@ function DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionSide, Category
   for unit_num, UnitTemplate in pairs( GroupTemplate.units ) do
 
     UnitTemplate.name = env.getValueDictByKey(UnitTemplate.name)
-    
+
     self.Templates.Units[UnitTemplate.name] = {}
     self.Templates.Units[UnitTemplate.name].UnitName = UnitTemplate.name
     self.Templates.Units[UnitTemplate.name].Template = UnitTemplate
@@ -663,8 +698,8 @@ function DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionSide, Category
       self.Templates.ClientsByName[UnitTemplate.name].CountryID = CountryID
       self.Templates.ClientsByID[UnitTemplate.unitId] = UnitTemplate
     end
-    
-    UnitNames[#UnitNames+1] = self.Templates.Units[UnitTemplate.name].UnitName 
+
+    UnitNames[#UnitNames+1] = self.Templates.Units[UnitTemplate.name].UnitName
   end
 
   self:I( { Group = self.Templates.Groups[GroupTemplateName].GroupName,
@@ -693,13 +728,13 @@ function DATABASE:_RegisterStaticTemplate( StaticTemplate, CoalitionID, Category
   local StaticTemplate = UTILS.DeepCopy( StaticTemplate )
 
   local StaticTemplateName = env.getValueDictByKey(StaticTemplate.name)
-  
+
   self.Templates.Statics[StaticTemplateName] = self.Templates.Statics[StaticTemplateName] or {}
-  
+
   StaticTemplate.CategoryID = CategoryID
   StaticTemplate.CoalitionID = CoalitionID
   StaticTemplate.CountryID = CountryID
-  
+
   self.Templates.Statics[StaticTemplateName].StaticName = StaticTemplateName
   self.Templates.Statics[StaticTemplateName].GroupTemplate = StaticTemplate
   self.Templates.Statics[StaticTemplateName].UnitTemplate = StaticTemplate.units[1]
@@ -710,12 +745,12 @@ function DATABASE:_RegisterStaticTemplate( StaticTemplate, CoalitionID, Category
   self:I( { Static = self.Templates.Statics[StaticTemplateName].StaticName,
             Coalition = self.Templates.Statics[StaticTemplateName].CoalitionID,
             Category = self.Templates.Statics[StaticTemplateName].CategoryID,
-            Country = self.Templates.Statics[StaticTemplateName].CountryID 
+            Country = self.Templates.Statics[StaticTemplateName].CountryID
           }
         )
-        
+
   self:AddStatic( StaticTemplateName )
-  
+
 end
 
 
@@ -783,7 +818,7 @@ function DATABASE:_RegisterPlayers()
       end
     end
   end
-  
+
   return self
 end
 
@@ -799,12 +834,12 @@ function DATABASE:_RegisterGroupsAndUnits()
 
       if DCSGroup:isExist() then
         local DCSGroupName = DCSGroup:getName()
-  
+
         self:I( { "Register Group:", DCSGroupName } )
         self:AddGroup( DCSGroupName )
 
         for DCSUnitId, DCSUnit in pairs( DCSGroup:getUnits() ) do
-  
+
           local DCSUnitName = DCSUnit:getName()
           self:I( { "Register Unit:", DCSUnitName } )
           self:AddUnit( DCSUnitName )
@@ -812,10 +847,10 @@ function DATABASE:_RegisterGroupsAndUnits()
       else
         self:E( { "Group does not exist: ",  DCSGroup } )
       end
-      
+
     end
   end
-  
+
   self:I("Groups:")
   for GroupName, Group in pairs( self.GROUPS ) do
     self:I( { "Group:", GroupName } )
@@ -833,7 +868,7 @@ function DATABASE:_RegisterClients()
     self:I( { "Register Client:", ClientName } )
     self:AddClient( ClientName )
   end
-  
+
   return self
 end
 
@@ -847,7 +882,7 @@ function DATABASE:_RegisterStatics()
 
       if DCSStatic:isExist() then
         local DCSStaticName = DCSStatic:getName()
-  
+
         self:I( { "Register Static:", DCSStaticName } )
         self:AddStatic( DCSStaticName )
       else
@@ -887,7 +922,7 @@ function DATABASE:_EventOnBirth( Event )
 
   if Event.IniDCSUnit then
     if Event.IniObjectCategory == 3 then
-      self:AddStatic( Event.IniDCSUnitName )    
+      self:AddStatic( Event.IniDCSUnitName )
     else
       if Event.IniObjectCategory == 1 then
         self:AddUnit( Event.IniDCSUnitName )
@@ -923,7 +958,7 @@ function DATABASE:_EventOnDeadOrCrash( Event )
     if Event.IniObjectCategory == 3 then
       if self.STATICS[Event.IniDCSUnitName] then
         self:DeleteStatic( Event.IniDCSUnitName )
-      end    
+      end
     else
       if Event.IniObjectCategory == 1 then
         if self.UNITS[Event.IniDCSUnitName] then
@@ -932,7 +967,7 @@ function DATABASE:_EventOnDeadOrCrash( Event )
       end
     end
   end
-  
+
   self:AccountDestroys( Event )
 end
 
@@ -986,7 +1021,7 @@ end
 -- @return #DATABASE self
 function DATABASE:ForEach( IteratorFunction, FinalizeFunction, arg, Set )
   self:F2( arg )
-  
+
   local function CoRoutine()
     local Count = 0
     for ObjectID, Object in pairs( Set ) do
@@ -995,20 +1030,20 @@ function DATABASE:ForEach( IteratorFunction, FinalizeFunction, arg, Set )
         Count = Count + 1
 --        if Count % 100 == 0 then
 --          coroutine.yield( false )
---        end    
+--        end
     end
     return true
   end
-  
+
 --  local co = coroutine.create( CoRoutine )
   local co = CoRoutine
-  
+
   local function Schedule()
-  
+
 --    local status, res = coroutine.resume( co )
     local status, res = co()
     self:T3( { status, res } )
-    
+
     if status == false then
       error( res )
     end
@@ -1021,8 +1056,9 @@ function DATABASE:ForEach( IteratorFunction, FinalizeFunction, arg, Set )
     return false
   end
 
-  local Scheduler = SCHEDULER:New( self, Schedule, {}, 0.001, 0.001, 0 )
-  
+  --local Scheduler = SCHEDULER:New( self, Schedule, {}, 0.001, 0.001, 0 )
+  Schedule()
+
   return self
 end
 
@@ -1033,7 +1069,7 @@ end
 -- @return #DATABASE self
 function DATABASE:ForEachStatic( IteratorFunction, FinalizeFunction, ... )  --R2.1
   self:F2( arg )
-  
+
   self:ForEach( IteratorFunction, FinalizeFunction, arg, self.STATICS )
 
   return self
@@ -1046,7 +1082,7 @@ end
 -- @return #DATABASE self
 function DATABASE:ForEachUnit( IteratorFunction, FinalizeFunction, ... )
   self:F2( arg )
-  
+
   self:ForEach( IteratorFunction, FinalizeFunction, arg, self.UNITS )
 
   return self
@@ -1059,7 +1095,7 @@ end
 -- @return #DATABASE self
 function DATABASE:ForEachGroup( IteratorFunction, FinalizeFunction, ... )
   self:F2( arg )
-  
+
   self:ForEach( IteratorFunction, FinalizeFunction, arg, self.GROUPS )
 
   return self
@@ -1072,9 +1108,9 @@ end
 -- @return #DATABASE self
 function DATABASE:ForEachPlayer( IteratorFunction, FinalizeFunction, ... )
   self:F2( arg )
-  
+
   self:ForEach( IteratorFunction, FinalizeFunction, arg, self.PLAYERS )
-  
+
   return self
 end
 
@@ -1085,9 +1121,9 @@ end
 -- @return #DATABASE self
 function DATABASE:ForEachPlayerJoined( IteratorFunction, FinalizeFunction, ... )
   self:F2( arg )
-  
+
   self:ForEach( IteratorFunction, FinalizeFunction, arg, self.PLAYERSJOINED )
-  
+
   return self
 end
 
@@ -1097,9 +1133,9 @@ end
 -- @return #DATABASE self
 function DATABASE:ForEachPlayerUnit( IteratorFunction, FinalizeFunction, ... )
   self:F2( arg )
-  
+
   self:ForEach( IteratorFunction, FinalizeFunction, arg, self.PLAYERUNITS )
-  
+
   return self
 end
 
@@ -1110,7 +1146,7 @@ end
 -- @return #DATABASE self
 function DATABASE:ForEachClient( IteratorFunction, ... )
   self:F2( arg )
-  
+
   self:ForEach( IteratorFunction, arg, self.CLIENTS )
 
   return self
@@ -1122,7 +1158,7 @@ end
 -- @return #DATABASE self
 function DATABASE:ForEachCargo( IteratorFunction, ... )
   self:F2( arg )
-  
+
   self:ForEach( IteratorFunction, arg, self.CARGOS )
 
   return self
@@ -1244,10 +1280,10 @@ function DATABASE:_RegisterTemplates()
 
     if (CoalitionName == 'red' or CoalitionName == 'blue' or CoalitionName == 'neutrals') and type(coa_data) == 'table' then
       --self.Units[coa_name] = {}
-      
+
       local CoalitionSide = coalition.side[string.upper(CoalitionName)]
       if CoalitionName=="red" then
-        CoalitionSide=coalition.side.NEUTRAL
+        CoalitionSide=coalition.side.RED
       elseif CoalitionName=="blue" then
         CoalitionSide=coalition.side.BLUE
       else
@@ -1277,10 +1313,10 @@ function DATABASE:_RegisterTemplates()
 
           local CountryName = string.upper(cntry_data.name)
           local CountryID = cntry_data.id
-          
+
           self.COUNTRY_ID[CountryName] = CountryID
           self.COUNTRY_NAME[CountryID] = CountryName
-          
+
           --self.Units[coa_name][countryName] = {}
           --self.Units[coa_name][countryName]["countryId"] = cntry_data.id
 
@@ -1299,18 +1335,18 @@ function DATABASE:_RegisterTemplates()
                   for group_num, Template in pairs(obj_type_data.group) do
 
                     if obj_type_name ~= "static" and Template and Template.units and type(Template.units) == 'table' then  --making sure again- this is a valid group
-                      self:_RegisterGroupTemplate( 
-                        Template, 
-                        CoalitionSide, 
-                        _DATABASECategory[string.lower(CategoryName)], 
-                        CountryID 
+                      self:_RegisterGroupTemplate(
+                        Template,
+                        CoalitionSide,
+                        _DATABASECategory[string.lower(CategoryName)],
+                        CountryID
                       )
                     else
-                      self:_RegisterStaticTemplate( 
-                        Template, 
-                        CoalitionSide, 
-                        _DATABASECategory[string.lower(CategoryName)], 
-                        CountryID 
+                      self:_RegisterStaticTemplate(
+                        Template,
+                        CoalitionSide,
+                        _DATABASECategory[string.lower(CategoryName)],
+                        CountryID
                       )
                     end --if GroupTemplate and GroupTemplate.units then
                   end --for group_num, GroupTemplate in pairs(obj_type_data.group) do
@@ -1331,35 +1367,35 @@ end
   -- @param Core.Event#EVENTDATA Event
   function DATABASE:AccountHits( Event )
     self:F( { Event } )
-  
+
     if Event.IniPlayerName ~= nil then -- It is a player that is hitting something
       self:T( "Hitting Something" )
-      
+
       -- What is he hitting?
       if Event.TgtCategory then
-  
+
         -- A target got hit
         self.HITS[Event.TgtUnitName] = self.HITS[Event.TgtUnitName] or {}
         local Hit = self.HITS[Event.TgtUnitName]
-        
+
         Hit.Players = Hit.Players or {}
         Hit.Players[Event.IniPlayerName] = true
       end
     end
-    
+
     -- It is a weapon initiated by a player, that is hitting something
     -- This seems to occur only with scenery and static objects.
-    if Event.WeaponPlayerName ~= nil then 
+    if Event.WeaponPlayerName ~= nil then
         self:T( "Hitting Scenery" )
-      
+
       -- What is he hitting?
       if Event.TgtCategory then
-  
+
         if Event.WeaponCoalition then -- A coalition object was hit, probably a static.
           -- A target got hit
           self.HITS[Event.TgtUnitName] = self.HITS[Event.TgtUnitName] or {}
           local Hit = self.HITS[Event.TgtUnitName]
-          
+
           Hit.Players = Hit.Players or {}
           Hit.Players[Event.WeaponPlayerName] = true
         else -- A scenery object was hit.
@@ -1367,13 +1403,13 @@ end
       end
     end
   end
-  
+
   --- Account the destroys.
   -- @param #DATABASE self
   -- @param Core.Event#EVENTDATA Event
   function DATABASE:AccountDestroys( Event )
     self:F( { Event } )
-  
+
     local TargetUnit = nil
     local TargetGroup = nil
     local TargetUnitName = ""
@@ -1385,26 +1421,26 @@ end
     local TargetUnitCoalition = nil
     local TargetUnitCategory = nil
     local TargetUnitType = nil
-  
+
     if Event.IniDCSUnit then
-  
+
       TargetUnit = Event.IniUnit
       TargetUnitName = Event.IniDCSUnitName
       TargetGroup = Event.IniDCSGroup
       TargetGroupName = Event.IniDCSGroupName
       TargetPlayerName = Event.IniPlayerName
-  
+
       TargetCoalition = Event.IniCoalition
       --TargetCategory = TargetUnit:getCategory()
       --TargetCategory = TargetUnit:getDesc().category  -- Workaround
       TargetCategory = Event.IniCategory
       TargetType = Event.IniTypeName
-  
+
       TargetUnitType = TargetType
-  
+
       self:T( { TargetUnitName, TargetGroupName, TargetPlayerName, TargetCoalition, TargetCategory, TargetType } )
     end
-  
+
     local Destroyed = false
 
     -- What is the player destroying?
@@ -1413,8 +1449,3 @@ end
       self.DESTROYS[Event.IniUnitName] = true
     end
   end
-
-
-
-
-

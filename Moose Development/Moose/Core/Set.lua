@@ -384,7 +384,6 @@ do -- SET_BASE
     for ObjectName, Object in pairs( self.Database ) do
   
       if self:IsIncludeObject( Object ) then
-        self:E( { "Adding Object:", ObjectName } )
         self:Add( ObjectName, Object )
       end
     end
@@ -5486,6 +5485,326 @@ do -- SET_ZONE
   -- @return Core.Zone#ZONE_BASE The zone that validates the coordinate location.
   -- @return #nil No zone has been found.
   function SET_ZONE:IsCoordinateInZone( Coordinate )
+  
+    for _, Zone in pairs( self:GetSet() ) do
+      local Zone = Zone -- Core.Zone#ZONE_BASE
+      if Zone:IsCoordinateInZone( Coordinate ) then
+        return Zone
+      end
+    end
+  
+    return nil
+  end
+
+end
+
+do -- SET_ZONE_GOAL
+
+  --- @type SET_ZONE_GOAL
+  -- @extends Core.Set#SET_BASE
+  
+  --- Mission designers can use the @{Core.Set#SET_ZONE_GOAL} class to build sets of zones of various types.
+  -- 
+  -- ## SET_ZONE_GOAL constructor
+  -- 
+  -- Create a new SET_ZONE_GOAL object with the @{#SET_ZONE_GOAL.New} method:
+  -- 
+  --    * @{#SET_ZONE_GOAL.New}: Creates a new SET_ZONE_GOAL object.
+  --   
+  -- ## Add or Remove ZONEs from SET_ZONE_GOAL 
+  -- 
+  -- ZONEs can be added and removed using the @{Core.Set#SET_ZONE_GOAL.AddZonesByName} and @{Core.Set#SET_ZONE_GOAL.RemoveZonesByName} respectively. 
+  -- These methods take a single ZONE name or an array of ZONE names to be added or removed from SET_ZONE_GOAL.
+  -- 
+  -- ## SET_ZONE_GOAL filter criteria 
+  -- 
+  -- You can set filter criteria to build the collection of zones in SET_ZONE_GOAL.
+  -- Filter criteria are defined by:
+  -- 
+  --    * @{#SET_ZONE_GOAL.FilterPrefixes}: Builds the SET_ZONE_GOAL with the zones having a certain text pattern of prefix.
+  --   
+  -- Once the filter criteria have been set for the SET_ZONE_GOAL, you can start filtering using:
+  -- 
+  --   * @{#SET_ZONE_GOAL.FilterStart}: Starts the filtering of the zones within the SET_ZONE_GOAL.
+  -- 
+  -- ## SET_ZONE_GOAL iterators
+  -- 
+  -- Once the filters have been defined and the SET_ZONE_GOAL has been built, you can iterate the SET_ZONE_GOAL with the available iterator methods.
+  -- The iterator methods will walk the SET_ZONE_GOAL set, and call for each airbase within the set a function that you provide.
+  -- The following iterator methods are currently available within the SET_ZONE_GOAL:
+  -- 
+  --   * @{#SET_ZONE_GOAL.ForEachZone}: Calls a function for each zone it finds within the SET_ZONE_GOAL.
+  -- 
+  -- ===
+  -- @field #SET_ZONE_GOAL SET_ZONE_GOAL
+  SET_ZONE_GOAL = {
+    ClassName = "SET_ZONE_GOAL",
+    Zones = {},
+    Filter = {
+      Prefixes = nil,
+    },
+    FilterMeta = {
+    },
+  }
+  
+  
+  --- Creates a new SET_ZONE_GOAL object, building a set of zones.
+  -- @param #SET_ZONE_GOAL self
+  -- @return #SET_ZONE_GOAL self
+  -- @usage
+  -- -- Define a new SET_ZONE_GOAL Object. The DatabaseSet will contain a reference to all Zones.
+  -- DatabaseSet = SET_ZONE_GOAL:New()
+  function SET_ZONE_GOAL:New()
+    -- Inherits from BASE
+    local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.ZONES_GOAL ) )
+  
+    return self
+  end
+  
+  --- Add ZONEs to SET_ZONE_GOAL.
+  -- @param Core.Set#SET_ZONE_GOAL self
+  -- @param Core.Zone#ZONE_BASE Zone A ZONE_BASE object.
+  -- @return self
+  function SET_ZONE_GOAL:AddZone( Zone )
+  
+    self:Add( Zone:GetName(), Zone )
+      
+    return self
+  end
+  
+  
+  --- Remove ZONEs from SET_ZONE_GOAL.
+  -- @param Core.Set#SET_ZONE_GOAL self
+  -- @param Core.Zone#ZONE_BASE RemoveZoneNames A single name or an array of ZONE_BASE names.
+  -- @return self
+  function SET_ZONE_GOAL:RemoveZonesByName( RemoveZoneNames )
+  
+    local RemoveZoneNamesArray = ( type( RemoveZoneNames ) == "table" ) and RemoveZoneNames or { RemoveZoneNames }
+    
+    for RemoveZoneID, RemoveZoneName in pairs( RemoveZoneNamesArray ) do
+      self:Remove( RemoveZoneName )
+    end
+      
+    return self
+  end
+  
+  
+  --- Finds a Zone based on the Zone Name.
+  -- @param #SET_ZONE_GOAL self
+  -- @param #string ZoneName
+  -- @return Core.Zone#ZONE_BASE The found Zone.
+  function SET_ZONE_GOAL:FindZone( ZoneName )
+  
+    local ZoneFound = self.Set[ZoneName]
+    return ZoneFound
+  end
+  
+  
+  --- Get a random zone from the set.
+  -- @param #SET_ZONE_GOAL self
+  -- @return Core.Zone#ZONE_BASE The random Zone.
+  -- @return #nil if no zone in the collection.
+  function SET_ZONE_GOAL:GetRandomZone()
+  
+    if self:Count() ~= 0 then
+  
+      local Index = self.Index
+      local ZoneFound = nil -- Core.Zone#ZONE_BASE
+  
+      -- Loop until a zone has been found.
+      -- The :GetZoneMaybe() call will evaluate the probability for the zone to be selected.
+      -- If the zone is not selected, then nil is returned by :GetZoneMaybe() and the loop continues!  
+      while not ZoneFound do
+        local ZoneRandom = math.random( 1, #Index )
+        ZoneFound = self.Set[Index[ZoneRandom]]:GetZoneMaybe() 
+      end
+    
+      return ZoneFound
+    end
+    
+    return nil
+  end
+  
+  
+  --- Set a zone probability.
+  -- @param #SET_ZONE_GOAL self
+  -- @param #string ZoneName The name of the zone.
+  function SET_ZONE_GOAL:SetZoneProbability( ZoneName, ZoneProbability )
+    local Zone = self:FindZone( ZoneName )
+    Zone:SetZoneProbability( ZoneProbability )
+  end
+  
+  
+  
+  
+  --- Builds a set of zones of defined zone prefixes.
+  -- All the zones starting with the given prefixes will be included within the set.
+  -- @param #SET_ZONE_GOAL self
+  -- @param #string Prefixes The prefix of which the zone name starts with.
+  -- @return #SET_ZONE_GOAL self
+  function SET_ZONE_GOAL:FilterPrefixes( Prefixes )
+    if not self.Filter.Prefixes then
+      self.Filter.Prefixes = {}
+    end
+    if type( Prefixes ) ~= "table" then
+      Prefixes = { Prefixes }
+    end
+    for PrefixID, Prefix in pairs( Prefixes ) do
+      self.Filter.Prefixes[Prefix] = Prefix
+    end
+    return self
+  end
+  
+  
+  --- Starts the filtering.
+  -- @param #SET_ZONE_GOAL self
+  -- @return #SET_ZONE_GOAL self
+  function SET_ZONE_GOAL:FilterStart()
+  
+    if _DATABASE then
+    
+      -- We initialize the first set.
+      for ObjectName, Object in pairs( self.Database ) do
+        if self:IsIncludeObject( Object ) then
+          self:Add( ObjectName, Object )
+        else
+          self:RemoveZonesByName( ObjectName )
+        end
+      end
+    end
+  
+    self:HandleEvent( EVENTS.NewZoneGoal )
+    self:HandleEvent( EVENTS.DeleteZoneGoal )
+    
+    return self
+  end
+  
+  --- Stops the filtering for the defined collection.
+  -- @param #SET_ZONE_GOAL self
+  -- @return #SET_ZONE_GOAL self
+  function SET_ZONE_GOAL:FilterStop()
+  
+    self:UnHandleEvent( EVENTS.NewZoneGoal )
+    self:UnHandleEvent( EVENTS.DeleteZoneGoal )
+    
+    return self
+  end
+  
+  --- Handles the Database to check on an event (birth) that the Object was added in the Database.
+  -- This is required, because sometimes the _DATABASE birth event gets called later than the SET_BASE birth event!
+  -- @param #SET_ZONE_GOAL self
+  -- @param Core.Event#EVENTDATA Event
+  -- @return #string The name of the AIRBASE
+  -- @return #table The AIRBASE
+  function SET_ZONE_GOAL:AddInDatabase( Event )
+    self:F3( { Event } )
+  
+    return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
+  end
+  
+  --- Handles the Database to check on any event that Object exists in the Database.
+  -- This is required, because sometimes the _DATABASE event gets called later than the SET_BASE event or vise versa!
+  -- @param #SET_ZONE_GOAL self
+  -- @param Core.Event#EVENTDATA Event
+  -- @return #string The name of the AIRBASE
+  -- @return #table The AIRBASE
+  function SET_ZONE_GOAL:FindInDatabase( Event )
+    self:F3( { Event } )
+  
+    return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
+  end
+  
+  --- Iterate the SET_ZONE_GOAL and call an interator function for each ZONE, providing the ZONE and optional parameters.
+  -- @param #SET_ZONE_GOAL self
+  -- @param #function IteratorFunction The function that will be called when there is an alive ZONE in the SET_ZONE_GOAL. The function needs to accept a AIRBASE parameter.
+  -- @return #SET_ZONE_GOAL self
+  function SET_ZONE_GOAL:ForEachZone( IteratorFunction, ... )
+    self:F2( arg )
+    
+    self:ForEach( IteratorFunction, arg, self:GetSet() )
+  
+    return self
+  end
+  
+  
+  ---
+  -- @param #SET_ZONE_GOAL self
+  -- @param Core.Zone#ZONE_BASE MZone
+  -- @return #SET_ZONE_GOAL self
+  function SET_ZONE_GOAL:IsIncludeObject( MZone )
+    self:F2( MZone )
+  
+    local MZoneInclude = true
+  
+    if MZone then
+      local MZoneName = MZone:GetName()
+    
+      if self.Filter.Prefixes then
+        local MZonePrefix = false
+        for ZonePrefixId, ZonePrefix in pairs( self.Filter.Prefixes ) do
+          self:T3( { "Prefix:", string.find( MZoneName, ZonePrefix, 1 ), ZonePrefix } )
+          if string.find( MZoneName, ZonePrefix, 1 ) then
+            MZonePrefix = true
+          end
+        end
+        self:T( { "Evaluated Prefix", MZonePrefix } )
+        MZoneInclude = MZoneInclude and MZonePrefix
+      end
+    end
+     
+    self:T2( MZoneInclude )
+    return MZoneInclude
+  end
+  
+  --- Handles the OnEventNewZone event for the Set.
+  -- @param #SET_ZONE_GOAL self
+  -- @param Core.Event#EVENTDATA EventData
+  function SET_ZONE_GOAL:OnEventNewZoneGoal( EventData )
+  
+    self:I( { "New Zone Capture Coalition", EventData } )
+    self:I( { "Zone Capture Coalition", EventData.ZoneGoal } )
+  
+    if EventData.ZoneGoal then
+      if EventData.ZoneGoal and self:IsIncludeObject( EventData.ZoneGoal ) then
+        self:I( { "Adding Zone Capture Coalition", EventData.ZoneGoal.ZoneName, EventData.ZoneGoal } )
+        self:Add( EventData.ZoneGoal.ZoneName , EventData.ZoneGoal  )
+      end
+    end
+  end
+  
+  --- Handles the OnDead or OnCrash event for alive units set.
+  -- @param #SET_ZONE_GOAL self
+  -- @param Core.Event#EVENTDATA EventData
+  function SET_ZONE_GOAL:OnEventDeleteZoneGoal( EventData ) --R2.1
+    self:F3( { EventData } )
+  
+    if EventData.ZoneGoal then
+      local Zone = _DATABASE:FindZone( EventData.ZoneGoal.ZoneName )
+      if Zone and Zone.ZoneName then
+  
+      -- When cargo was deleted, it may probably be because of an S_EVENT_DEAD.
+      -- However, in the loading logic, an S_EVENT_DEAD is also generated after a Destroy() call.
+      -- And this is a problem because it will remove all entries from the SET_ZONE_GOALs.
+      -- To prevent this from happening, the Zone object has a flag NoDestroy.
+      -- When true, the SET_ZONE_GOAL won't Remove the Zone object from the set.
+      -- This flag is switched off after the event handlers have been called in the EVENT class.
+        self:F( { ZoneNoDestroy=Zone.NoDestroy } )
+        if Zone.NoDestroy then
+        else
+          self:Remove( Zone.ZoneName )
+        end
+      end
+    end
+  end
+  
+  --- Validate if a coordinate is in one of the zones in the set.
+  -- Returns the ZONE object where the coordiante is located.
+  -- If zones overlap, the first zone that validates the test is returned.
+  -- @param #SET_ZONE_GOAL self
+  -- @param Core.Point#COORDINATE Coordinate The coordinate to be searched.
+  -- @return Core.Zone#ZONE_BASE The zone that validates the coordinate location.
+  -- @return #nil No zone has been found.
+  function SET_ZONE_GOAL:IsCoordinateInZone( Coordinate )
   
     for _, Zone in pairs( self:GetSet() ) do
       local Zone = Zone -- Core.Zone#ZONE_BASE

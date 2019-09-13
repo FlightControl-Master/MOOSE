@@ -433,7 +433,7 @@ function AI_A2A:onafterStatus()
       self:F({DistanceFromHomeBase=DistanceFromHomeBase})
       
       if DistanceFromHomeBase > self.DisengageRadius then
-        self:E( self.Controllable:GetName() .. " is too far from home base, RTB!" )
+        self:I( self.Controllable:GetName() .. " is too far from home base, RTB!" )
         self:Hold( 300 )
         RTB = false
       end
@@ -453,10 +453,10 @@ function AI_A2A:onafterStatus()
       self:F({Fuel=Fuel, PatrolFuelThresholdPercentage=self.PatrolFuelThresholdPercentage})
       if Fuel < self.PatrolFuelThresholdPercentage then
         if self.TankerName then
-          self:E( self.Controllable:GetName() .. " is out of fuel: " .. Fuel .. " ... Refuelling at Tanker!" )
+          self:I( self.Controllable:GetName() .. " is out of fuel: " .. Fuel .. " ... Refuelling at Tanker!" )
           self:Refuel()
         else
-          self:E( self.Controllable:GetName() .. " is out of fuel: " .. Fuel .. " ... RTB!" )
+          self:I( self.Controllable:GetName() .. " is out of fuel: " .. Fuel .. " ... RTB!" )
           local OldAIControllable = self.Controllable
           
           local OrbitTask = OldAIControllable:TaskOrbitCircle( math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude ), self.PatrolMinSpeed )
@@ -475,7 +475,7 @@ function AI_A2A:onafterStatus()
     local InitialLife = self.Controllable:GetLife0()
     self:F( { Damage = Damage, InitialLife = InitialLife, DamageThreshold = self.PatrolDamageThreshold } )
     if ( Damage / InitialLife ) < self.PatrolDamageThreshold then
-      self:E( self.Controllable:GetName() .. " is damaged: " .. Damage .. " ... RTB!" )
+      self:I( self.Controllable:GetName() .. " is damaged: " .. Damage .. " ... RTB!" )
       self:Damaged()
       RTB = true
       self:SetStatusOff()
@@ -493,7 +493,7 @@ function AI_A2A:onafterStatus()
           if Damage ~= InitialLife then
             self:Damaged()
           else  
-            self:E( self.Controllable:GetName() .. " control lost! " )
+            self:I( self.Controllable:GetName() .. " control lost! " )
             self:LostControl()
           end
         else
@@ -549,7 +549,7 @@ function AI_A2A:onafterRTB( AIGroup, From, Event, To )
   
   if AIGroup and AIGroup:IsAlive() then
 
-    self:E( "Group " .. AIGroup:GetName() .. " ... RTB! ( " .. self:GetState() .. " )" )
+    self:I( "Group " .. AIGroup:GetName() .. " ... RTB! ( " .. self:GetState() .. " )" )
     
     self:ClearTargetDistance()
     AIGroup:ClearTasks()
@@ -567,7 +567,7 @@ function AI_A2A:onafterRTB( AIGroup, From, Event, To )
     
     local ToAirbaseCoord = CurrentCoord:Translate( 5000, ToAirbaseAngle )
     if Distance < 5000 then
-      self:E( "RTB and near the airbase!" )
+      self:I( "RTB and near the airbase!" )
       self:Home()
       return
     end
@@ -608,7 +608,7 @@ end
 function AI_A2A:onafterHome( AIGroup, From, Event, To )
   self:F( { AIGroup, From, Event, To } )
 
-  self:E( "Group " .. self.Controllable:GetName() .. " ... Home! ( " .. self:GetState() .. " )" )
+  self:I( "Group " .. self.Controllable:GetName() .. " ... Home! ( " .. self:GetState() .. " )" )
   
   if AIGroup and AIGroup:IsAlive() then
   end
@@ -622,7 +622,7 @@ end
 function AI_A2A:onafterHold( AIGroup, From, Event, To, HoldTime )
   self:F( { AIGroup, From, Event, To } )
 
-  self:E( "Group " .. self.Controllable:GetName() .. " ... Holding! ( " .. self:GetState() .. " )" )
+  self:I( "Group " .. self.Controllable:GetName() .. " ... Holding! ( " .. self:GetState() .. " )" )
   
   if AIGroup and AIGroup:IsAlive() then
     local OrbitTask = AIGroup:TaskOrbitCircle( math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude ), self.PatrolMinSpeed )
@@ -654,7 +654,7 @@ end
 function AI_A2A:onafterRefuel( AIGroup, From, Event, To )
   self:F( { AIGroup, From, Event, To } )
 
-  self:E( "Group " .. self.Controllable:GetName() .. " ... Refuelling! ( " .. self:GetState() .. " )" )
+  self:I( "Group " .. self.Controllable:GetName() .. " ... Refuelling! ( " .. self:GetState() .. " )" )
   
   if AIGroup and AIGroup:IsAlive() then
     local Tanker = GROUP:FindByName( self.TankerName )
@@ -711,7 +711,7 @@ end
 function AI_A2A:OnCrash( EventData )
 
   if self.Controllable:IsAlive() and EventData.IniDCSGroupName == self.Controllable:GetName() then
-    self:E( self.Controllable:GetUnits() )
+    self:I( self.Controllable:GetUnits() )
     if #self.Controllable:GetUnits() == 1 then
       self:__Crash( 1, EventData )
     end

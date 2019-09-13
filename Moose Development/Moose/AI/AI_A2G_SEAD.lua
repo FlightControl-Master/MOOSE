@@ -117,6 +117,8 @@ function AI_A2G_SEAD:onafterEngage( DefenderGroup, From, Event, To, AttackSetUni
   
   local DefenderGroupName = DefenderGroup:GetName()
 
+  self.AttackSetUnit = AttackSetUnit -- Kept in memory in case of resume from refuel in air!
+
   local AttackCount = AttackSetUnit:Count()
   
   if AttackCount > 0 then
@@ -181,7 +183,7 @@ function AI_A2G_SEAD:onafterEngage( DefenderGroup, From, Event, To, AttackSetUni
         end
           
         if #AttackUnitTasks == 0 then
-          self:E( DefenderGroupName .. ": No targets found -> Going RTB")
+          self:I( DefenderGroupName .. ": No targets found -> Going RTB")
           self:Return()
           self:__RTB( self.TaskDelay )
         else
@@ -200,9 +202,19 @@ function AI_A2G_SEAD:onafterEngage( DefenderGroup, From, Event, To, AttackSetUni
       DefenderGroup:Route( EngageRoute, self.TaskDelay )
     end
   else
-    self:E( DefenderGroupName .. ": No targets found -> Going RTB")
+    self:I( DefenderGroupName .. ": No targets found -> Going RTB")
     self:Return()
     self:__RTB( self.TaskDelay )
   end
 end
 
+--- @param Wrapper.Group#GROUP AIEngage
+function AI_A2G_SEAD.Resume( AIEngage, Fsm )
+
+  AIEngage:F( { "AI_A2G_SEAD.Resume:", AIEngage:GetName() } )
+  if AIEngage:IsAlive() then
+    Fsm:__Reset( Fsm.TaskDelay )
+    Fsm:__EngageRoute( Fsm.TaskDelay, Fsm.AttackSetUnit )
+  end
+  
+end

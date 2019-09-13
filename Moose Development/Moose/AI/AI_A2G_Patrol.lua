@@ -286,9 +286,18 @@ function AI_A2G_PATROL:onafterPatrolRoute( AIPatrol, From, Event, To )
     self:SetTargetDistance( ToTargetCoord ) -- For RTB status check
     
     local ToTargetSpeed = math.random( self.PatrolMinSpeed, self.PatrolMaxSpeed )
+
+    local FromWP = CurrentCoord:WaypointAir( 
+      self.PatrolAltType or "RADIO", 
+      POINT_VEC3.RoutePointType.TurningPoint, 
+      POINT_VEC3.RoutePointAction.TurningPoint, 
+      ToTargetSpeed, 
+      true 
+    )
+    PatrolRoute[#PatrolRoute+1] = FromWP
     
     --- Create a route point of type air.
-    local ToPatrolRoutePoint = ToTargetCoord:WaypointAir( 
+    local ToWP = ToTargetCoord:WaypointAir( 
       self.PatrolAltType, 
       POINT_VEC3.RoutePointType.TurningPoint, 
       POINT_VEC3.RoutePointAction.TurningPoint, 
@@ -296,8 +305,7 @@ function AI_A2G_PATROL:onafterPatrolRoute( AIPatrol, From, Event, To )
       true 
     )
 
-    PatrolRoute[#PatrolRoute+1] = ToPatrolRoutePoint
-    PatrolRoute[#PatrolRoute+1] = ToPatrolRoutePoint
+    PatrolRoute[#PatrolRoute+1] = ToWP
     
     local Tasks = {}
     Tasks[#Tasks+1] = AIPatrol:TaskFunction( "AI_A2G_PATROL.___PatrolRoute", self )
@@ -316,8 +324,8 @@ function AI_A2G_PATROL.Resume( AIPatrol, Fsm )
 
   AIPatrol:F( { "AI_A2G_PATROL.Resume:", AIPatrol:GetName() } )
   if AIPatrol:IsAlive() then
-    Fsm:__Reset( self.TaskDelay )
-    Fsm:__PatrolRoute( self.TaskDelay )
+    Fsm:__Reset( Fsm.TaskDelay )
+    Fsm:__PatrolRoute( Fsm.TaskDelay )
   end
   
 end
