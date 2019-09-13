@@ -127,8 +127,8 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
     
     local CallID = Params.CallID
     local Info = Params.Info
-    local Source = Info.source or "unknown source"
-    local Line = Info.currentline or -1
+    local Source = Info.source or "?"
+    local Line = Info.currentline or "?"
     local Name = Info.name or "?"
 
     local ErrorHandler = function( errmsg )
