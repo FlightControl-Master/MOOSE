@@ -1301,8 +1301,7 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold)
   local wp={}
   wp[1]=self.group:GetCoordinate():WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint,SpeedTo, true , nil, {}, "Current Pos")
   wp[2]=coordAB:WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint,SpeedTo, true , nil, {TaskArrived, TaskControlled}, "Holding Point")
-  wp[3]=coordAB:Translate(50000, 270):WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint,SpeedTo, true , nil, {}, "Test 50 km")
-  wp[4]=coordAB:WaypointAirLanding(SpeedHold, airbase, {}, "Landing")
+  wp[3]=coordAB:WaypointAirLanding(SpeedHold, airbase, {}, "Landing")
   
   local respawn=true
   
@@ -1316,13 +1315,12 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold)
     
     MESSAGE:New("Respawning group"):ToAll()
 
-
     --Respawn the group.
-    self.group=self.group:Respawn(Template, nil)
+    self.group=self.group:Respawn(Template, true)
     
   end  
   
-  self.group:Route(wp, 0.1)
+  --self.group:Route(wp, 1)
 
   --self:RouteRTB(RTBAirbase,Speed,Altitude,TaskOverhead)
 end

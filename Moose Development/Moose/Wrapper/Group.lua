@@ -1639,7 +1639,7 @@ function GROUP:Respawn( Template, Reset )
         self:F(GroupUnit:GetName())
         
         if GroupUnit:IsAlive() then
-          self:F("Alive")
+          self:I("FF Alive")
           
           -- Get unit position vector.
           local GroupUnitVec3 = GroupUnit:GetVec3()
@@ -1739,8 +1739,8 @@ function GROUP:Respawn( Template, Reset )
             local coord=unit:GetCoordinate()
             local heading=unit:GetHeading()
             Unit.x=coord.x
-            Unit.z=coord.y
-            Unit.alt=coord.alt
+            Unit.y=coord.z
+            Unit.alt=coord.y
             Unit.heading=math.rad(heading)
             Unit.psi=-Unit.heading
           end
