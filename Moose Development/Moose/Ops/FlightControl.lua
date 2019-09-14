@@ -582,7 +582,7 @@ function FLIGHTCONTROL:_CheckParking()
           end
           
         else
-          self:E(self.lid..string.format("ERROR: Element %s is not alive any more!", element.unitname))
+          self:E(self.lid..string.format("ERROR: Element %s is not alive any more!", element.name))
         end
         
       end
@@ -783,10 +783,11 @@ function FLIGHTCONTROL:_CreateFlightGroup(group)
   -- If it does not exist yet, create one.
   if not flight then
     flight=FLIGHTGROUP:New(group:GetName())
-    flight:__Start(1)
   end
   
-  flight:SetFlightControl(self)
+  if flight.destination and flight.destination:GetName()==self.airbasename then
+    flight:SetFlightControl(self)
+  end
   
   --[[
   
@@ -1008,7 +1009,7 @@ function FLIGHTCONTROL:_CheckInbound()
     if flight and flight.destination and flight.destination:GetName()==self.airbasename then
  
        -- Send AI to orbit outside 10 NM zone and wait until the next Marshal stack is available.
-      if not (self:_InQueue(self.Qwaiting, flight.group) or self:_InQueue(self.Qlanding, flight.group)) then
+      if not (self:_InQueue(self.Qwaiting, flight.group) or self:_InQueue(self.Qlanding, flight.group) or flight:IsHolding()) then
         self:_WaitAI(flight, 1, true)
       end 
     
@@ -1028,15 +1029,12 @@ function FLIGHTCONTROL:_WaitAI(flight, stack, respawn)
   -- Set flag to something other than -100 and <0
   flight.flag=stack
 
-  -- Add AI flight to waiting queue.
-  table.insert(self.Qwaiting, flight)
-
   -- Holding point.
   local holding=self:_GetHoldingpoint(flight)
   local altitude=holding.pos0.y
   local angels=UTILS.MetersToFeet(altitude)/1000
   
-  flight:Hold(holding, altitude)
+  flight:Hold(self.airbase, holding.pos0)
   
   if true then
     return
@@ -1116,6 +1114,17 @@ function FLIGHTCONTROL:_LandAI(flight)
 
    -- Debug info.
   self:T(self.lid..string.format("Landing AI flight %s.", flight.groupname))
+
+  -- Add flight to landing queue.
+  table.insert(self.Qlanding, flight)
+  
+  flight.flaghold:Set(1)
+  
+  if true then
+    return
+  end
+
+
         
   -- Airbase position.
   local airbase=self.airbase:GetCoordinate()

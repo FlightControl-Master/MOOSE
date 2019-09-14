@@ -568,6 +568,13 @@ function FLIGHTGROUP:IsArrived()
   return self:Is("Arrived")
 end
 
+--- Check if flight is holding.
+-- @param #FLIGHTGROUP self
+-- @return #boolean If true, flight is holding.
+function FLIGHTGROUP:IsHolding()
+  return self:Is("Holding")
+end
+
 --- Check if flight is dead.
 -- @param #FLIGHTGROUP self
 -- @return #boolean
@@ -807,8 +814,11 @@ function FLIGHTGROUP:OnEventEngineStartup(EventData)
     local element=self:GetElementByName(unitname)
 
     if element then
-      self:I(self.sid..string.format("Element %s started engines ==> taxiing", element.name))
-      self:ElementTaxiing(element)
+      if self:IsAirborne() or self:IsHolding() then
+      else
+        self:I(self.sid..string.format("Element %s started engines ==> taxiing", element.name))
+        self:ElementTaxiing(element)
+      end
     end
 
   end
@@ -1248,7 +1258,7 @@ function FLIGHTGROUP:onafterOrbit(From, Event, To, Coord, Altitude, Speed)
   self.group:SetTask(TaskOrbit)
 end
 
---- On after "Hold" event.
+--- On before "Hold" event.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -1256,7 +1266,31 @@ end
 -- @param Wrapper.Airbase#AIRBASE airbase The airbase to hold at.
 -- @param #number SpeedTo Speed used for travelling from current position to holding point in knots.
 -- @param #number SpeedHold Holding speed in knots.
-function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold)
+function FLIGHTGROUP:onbeforeHold(From, Event, To, airbase, SpeedTo, SpeedHold)
+
+  if airbase==nil then
+    self:E("FF airbase is nil!")
+    return false
+  end
+
+  if airbase and airbase:GetCoalition()~=self.group:GetCoalition() then
+    self:E("FF wrong coalition!")
+    return false
+  end
+  
+  return true
+end
+
+--- On after "Hold" event. Order flight to hold at an airbase and wait for signal to land.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Wrapper.Airbase#AIRBASE airbase The airbase to hold at.
+-- @param Core.Point#COORDINATE Holdingpoint Coordinate where to hold.
+-- @param #number SpeedTo Speed used for travelling from current position to holding point in knots. Default 350 kts.
+-- @param #number SpeedHold Holding speed in knots. Default 250 kts.
+function FLIGHTGROUP:onafterHold(From, Event, To, airbase, HoldingPoint, SpeedTo, SpeedHold)
 
   -- Debug message.
   local text=string.format("Flight group set to hold at airbase %s", airbase:GetName())
@@ -1265,43 +1299,28 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold)
  
   
   self.group:ClearTasks()
+  
+  SpeedTo=SpeedTo or 350
+  SpeedHold=SpeedHold or 250
     
-  local Coord=airbase:GetZone():GetRandomCoordinate():SetAltitude(UTILS.FeetToMeters(6000))
-  if self.flightcontrol then
-    Coord=self.flightcontrol:_GetHoldingpoint(self)
-  end
+  -- Holding point.
+  HoldingPoint=HoldingPoint or airbase:GetZone():GetRandomCoordinate():SetAltitude(UTILS.FeetToMeters(6000))
   
   self.flaghold:Set(333)
   
+  -- Task fuction when reached holding point.
   local TaskArrived=self.group:TaskFunction("FLIGHTGROUP._ReachedHolding", self)
 
-  
-  local wp=airbase:GetCoordinate():WaypointAir(nil , COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint,SpeedTo, true , nil, {}, "Holding Point")
-  
-  local Task2Hold=self.group:TaskRoute(wp)
-
-  local TaskOrbit=self.group:TaskOrbit(Coord)
-  
-  local TaskStop=self.group:TaskCondition(nil, self.flaghold.UserFlagName, 1)
-  --local TaskStop=self.group:TaskCondition(nil, nil, nil, nil, 30*60)
-  
-  local wp=airbase:GetCoordinate():WaypointAirLanding(SpeedHold, airbase, {}, "Landing")
-  
-  local TaskLand=self.group:TaskRoute(wp)
-  
+  -- Orbit until flaghold=1 (=true)
+  local TaskOrbit=self.group:TaskOrbit(HoldingPoint, nil, UTILS.KnotsToMps(SpeedHold))
+  local TaskStop=self.group:TaskCondition(nil, self.flaghold.UserFlagName, 1)  
   local TaskControlled=self.group:TaskControlled(TaskOrbit, TaskStop)
   
-  local TaskCombo=self.group:TaskCombo({Task2Hold, TaskArrived, TaskControlled, TaskLand})
-  local TaskCombo=self.group:TaskCombo({Task2Hold, TaskArrived, TaskLand})
-  
-  --self.group:SetTask(TaskCombo)
-  
-  local coordAB=airbase:GetCoordinate()
-  
+  -- Waypoints.
   local wp={}
-  wp[1]=self.group:GetCoordinate():WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint,SpeedTo, true , nil, {}, "Current Pos")
-  wp[2]=coordAB:WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint,SpeedTo, true , nil, {TaskArrived, TaskControlled}, "Holding Point")
-  wp[3]=coordAB:WaypointAirLanding(SpeedHold, airbase, {}, "Landing")
+  wp[1]=self.group:GetCoordinate():WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {}, "Current Pos")
+  wp[2]=HoldingPoint:WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {TaskArrived, TaskControlled}, "Holding Point")
+  wp[3]=airbase:GetCoordinate():WaypointAirLanding(SpeedHold, airbase, {}, "Landing")
   
   local respawn=true
   
@@ -1320,9 +1339,8 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold)
     
   end  
   
-  --self.group:Route(wp, 1)
-
-  --self:RouteRTB(RTBAirbase,Speed,Altitude,TaskOverhead)
+  self.group:Route(wp, 1)
+  
 end
 
 --- On after TaskPause event.
@@ -1333,6 +1351,10 @@ function FLIGHTGROUP._ReachedHolding(group, flightgroup)
   group:GetCoordinate():MarkToAll("Holding Point Reached")
   --TODO: add flight to FC waiting queue.
   flightgroup.flaghold:Set(666)
+  
+  if flightgroup.flightcontrol then
+    table.insert(flightgroup.flightcontrol.Qwaiting, flightgroup)
+  end
 end
 
 --- On after TaskExecute event.

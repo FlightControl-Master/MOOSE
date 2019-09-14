@@ -1079,7 +1079,7 @@ end
 -- @param #CONTROLLABLE self
 -- @param Core.Point#COORDINATE Coord Coordinate at which the CONTROLLABLE orbits.
 -- @param #number Altitude Altitude in meters of the orbit pattern. Default y component of Coord.
--- @param #number Speed Speed [m/s] flying the orbit pattern. Default 250 knots.
+-- @param #number Speed Speed [m/s] flying the orbit pattern. Default 128 m/s = 250 knots.
 -- @param Core.Point#COORDINATE CoordRaceTrack (Optional) If this coordinate is specified, the CONTROLLABLE will fly a race-track pattern using this and the initial coordinate.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:TaskOrbit(Coord, Altitude, Speed, CoordRaceTrack)
