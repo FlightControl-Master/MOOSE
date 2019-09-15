@@ -3100,31 +3100,31 @@ do -- AI_A2A_DISPATCHER
   
           self:SetDefenderTask( SquadronName, DefenderCAP, "CAP", Fsm )
 
-          function Fsm:onafterTakeoff( Defender, From, Event, To )
-            self:F({"CAP Birth", Defender:GetName()})
+          function Fsm:onafterTakeoff( DefenderGroup, From, Event, To )
+            self:F({"CAP Birth", DefenderGroup:GetName()})
             --self:GetParent(self).onafterBirth( self, Defender, From, Event, To )
             
-            local DefenderName = Defender:GetCallsign()
+            local DefenderName = DefenderGroup:GetCallsign()
             local Dispatcher = Fsm:GetDispatcher() -- #AI_A2A_DISPATCHER
-            local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
+            local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
 
             if Squadron then
-              Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " airborne. Starting Patrol." )
+              Dispatcher:MessageToPlayers( DefenderName .. " Wheels up.", DefenderGroup )
               Fsm:__Patrol( 2 ) -- Start Patrolling
             end
           end
   
-          function Fsm:onafterRTB( Defender, From, Event, To )
+          function Fsm:onafterRTB( DefenderGroup, From, Event, To )
 
-            self:F({"CAP RTB", Defender:GetName()})
+            self:F({"CAP RTB", DefenderGroup:GetName()})
 
-            self:GetParent(self).onafterRTB( self, Defender, From, Event, To )
+            self:GetParent(self).onafterRTB( self, DefenderGroup, From, Event, To )
 
-            local DefenderName = Defender:GetCallsign()
+            local DefenderName = DefenderGroup:GetCallsign()
             local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
-            local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-            Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " returning." )
-            Dispatcher:ClearDefenderTaskTarget( Defender )
+            local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
+            Dispatcher:MessageToPlayers( DefenderName .. " returning to base.", DefenderGroup )
+            Dispatcher:ClearDefenderTaskTarget( DefenderGroup )
           end
   
           --- @param #AI_A2A_DISPATCHER self
@@ -3295,30 +3295,30 @@ do -- AI_A2A_DISPATCHER
                   self:SetDefenderTask( ClosestDefenderSquadronName, DefenderGCI, "GCI", Fsm, AttackerDetection )
                   
                   
-                  function Fsm:onafterTakeoff( Defender, From, Event, To )
-                    self:F({"GCI Birth", Defender:GetName()})
+                  function Fsm:onafterTakeoff( DefenderGroup, From, Event, To )
+                    self:F({"GCI Birth", DefenderGroup:GetName()})
                     --self:GetParent(self).onafterBirth( self, Defender, From, Event, To )
                     
-                    local DefenderName = Defender:GetCallsign()
+                    local DefenderName = DefenderGroup:GetCallsign()
                     local Dispatcher = Fsm:GetDispatcher() -- #AI_A2A_DISPATCHER
-                    local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-                    local DefenderTarget = Dispatcher:GetDefenderTaskTarget( Defender )
+                    local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
+                    local DefenderTarget = Dispatcher:GetDefenderTaskTarget( DefenderGroup )
                     
                     if DefenderTarget then
-                      Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " airborne. Engaging target!" )
+                      Dispatcher:MessageToPlayers( DefenderName .. " wheels up.", DefenderGroup )
                       Fsm:__Engage( 2, DefenderTarget.Set ) -- Engage on the TargetSetUnit
                     end
                   end
   
-                  function Fsm:onafterRTB( Defender, From, Event, To )
-                    self:F({"GCI RTB", Defender:GetName()})
-                    self:GetParent(self).onafterRTB( self, Defender, From, Event, To )
+                  function Fsm:onafterRTB( DefenderGroup, From, Event, To )
+                    self:F({"GCI RTB", DefenderGroup:GetName()})
+                    self:GetParent(self).onafterRTB( self, DefenderGroup, From, Event, To )
                     
-                    local DefenderName = Defender:GetCallsign()
+                    local DefenderName = DefenderGroup:GetCallsign()
                     local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
-                    local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-                    Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " returning." )
-                    Dispatcher:ClearDefenderTaskTarget( Defender )
+                    local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
+                    Dispatcher:MessageToPlayers( DefenderName .. " returning to base.", DefenderGroup )
+                    Dispatcher:ClearDefenderTaskTarget( DefenderGroup )
                   end
   
                   --- @param #AI_A2A_DISPATCHER self
@@ -3335,24 +3335,24 @@ do -- AI_A2A_DISPATCHER
                   end
                   
                   --- @param #AI_A2A_DISPATCHER self
-                  function Fsm:onafterHome( Defender, From, Event, To, Action )
-                    self:F({"GCI Home", Defender:GetName()})
-                    self:GetParent(self).onafterHome( self, Defender, From, Event, To )
+                  function Fsm:onafterHome( DefenderGroup, From, Event, To, Action )
+                    self:F({"GCI Home", DefenderGroup:GetName()})
+                    self:GetParent(self).onafterHome( self, DefenderGroup, From, Event, To )
                     
-                    local DefenderName = Defender:GetCallsign()
+                    local DefenderName = DefenderGroup:GetCallsign()
                     local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
-                    local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
+                    local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
 
-                    Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " landing." )
+                    Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " landing at base.", DefenderGroup )
   
                     if Action and Action == "Destroy" then
-                      Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
-                      Defender:Destroy()
+                      Dispatcher:RemoveDefenderFromSquadron( Squadron, DefenderGroup )
+                      DefenderGroup:Destroy()
                     end
   
                     if Dispatcher:GetSquadronLanding( Squadron.Name ) == AI_A2A_DISPATCHER.Landing.NearAirbase then
-                      Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
-                      Defender:Destroy()
+                      Dispatcher:RemoveDefenderFromSquadron( Squadron, DefenderGroup )
+                      DefenderGroup:Destroy()
                       Dispatcher:ParkDefender( Squadron )
                     end
                   end

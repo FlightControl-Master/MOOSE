@@ -312,11 +312,13 @@ do -- DETECTION MANAGER
   -- Here we handle the transmission of the voice over.
   -- If for a certain reason the Defender does not exist, we use the coordinate of the airbase to send the message from.
     local RadioQueue = self.RadioQueue -- Core.RadioQueue#RADIOQUEUE
-    local DefenderUnit = DefenderGroup:GetUnit(1)
-    if DefenderUnit and DefenderUnit:IsAlive() then
-      RadioQueue:SetSenderUnitName( DefenderUnit:GetName() )
+    if RadioQueue then
+      local DefenderUnit = DefenderGroup:GetUnit(1)
+      if DefenderUnit and DefenderUnit:IsAlive() then
+        RadioQueue:SetSenderUnitName( DefenderUnit:GetName() )
+      end
+      RadioQueue:Speak( Message )
     end
-    RadioQueue:Speak( Message )
     
     return self
   end
