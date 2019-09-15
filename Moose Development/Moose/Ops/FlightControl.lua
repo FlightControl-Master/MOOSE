@@ -231,7 +231,7 @@ end
 function FLIGHTCONTROL:onafterStatus()
 
   -- Check zone for flights inbound.
-  self:_CheckInbound()
+  --self:_CheckInbound()
   
   --self:_UpdateParkingSpots()
   
@@ -522,9 +522,10 @@ function FLIGHTCONTROL:_CheckQueues()
 
   -- Print queues
   self:_PrintQueue(self.flights,  "All flights")
-  self:_PrintQueue(self.Qwaiting, "Waiting")
+  self:_PrintQueue(self.Qparking, "Parking")  
   self:_PrintQueue(self.Qtakeoff, "Takeoff")
-  self:_PrintQueue(self.Qparking, "Parking")
+  self:_PrintQueue(self.Qwaiting, "Holding")
+  self:_PrintQueue(self.Qlanding, "Landing")  
 
   -- Get next wairing flight.
   local flight=self:_GetNextWaitingFight()
@@ -1113,7 +1114,7 @@ end
 function FLIGHTCONTROL:_LandAI(flight)
 
    -- Debug info.
-  self:T(self.lid..string.format("Landing AI flight %s.", flight.groupname))
+  self:I(self.lid..string.format("Landing AI flight %s.", flight.groupname))
 
   -- Add flight to landing queue.
   table.insert(self.Qlanding, flight)
@@ -1211,6 +1212,7 @@ function FLIGHTCONTROL:_GetHoldingpoint(flight)
 
   return holdingpoint
 end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1282,73 +1284,6 @@ function FLIGHTCONTROL:_GetOnboardNumbers(group, playeronly)
   return numbers
 end
 
---- Checks if a human player sits in the unit.
--- @param #FLIGHTCONTROL self
--- @param Wrapper.Unit#UNIT unit Aircraft unit.
--- @return #boolean If true, human player inside the unit.
-function FLIGHTCONTROL:_IsHumanUnit(unit)
-  
-  -- Get player unit or nil if no player unit.
-  local playerunit=self:_GetPlayerUnitAndName(unit:GetName())
-  
-  if playerunit then
-    return true
-  else
-    return false
-  end
-end
-
---- Checks if a group has a human player.
--- @param #FLIGHTCONTROL self
--- @param Wrapper.Group#GROUP group Aircraft group.
--- @return #boolean If true, human player inside group.
-function FLIGHTCONTROL:_IsHuman(group)
-
-  -- Get all units of the group.
-  local units=group:GetUnits()
-  
-  -- Loop over all units.
-  for _,_unit in pairs(units) do
-    -- Check if unit is human.
-    local human=self:_IsHumanUnit(_unit)
-    if human then
-      return true
-    end
-  end
-
-  return false
-end
-
---- Returns the unit of a player and the player name. If the unit does not belong to a player, nil is returned. 
--- @param #FLIGHTCONTROL self
--- @param #string _unitName Name of the player unit.
--- @return Wrapper.Unit#UNIT Unit of player or nil.
--- @return #string Name of the player or nil.
-function FLIGHTCONTROL:_GetPlayerUnitAndName(_unitName)
-  self:F2(_unitName)
-
-  if _unitName ~= nil then
-  
-    -- Get DCS unit from its name.
-    local DCSunit=Unit.getByName(_unitName)
-    
-    if DCSunit then
-    
-      local playername=DCSunit:getPlayerName()
-      local unit=UNIT:Find(DCSunit)
-    
-      self:T2({DCSunit=DCSunit, unit=unit, playername=playername})
-      if DCSunit and unit and playername then
-        return unit, playername
-      end
-      
-    end
-    
-  end
-  
-  -- Return nil if we could not find a player.
-  return nil,nil
-end
-
-
-
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

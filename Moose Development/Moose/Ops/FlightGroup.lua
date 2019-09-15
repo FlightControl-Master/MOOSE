@@ -55,7 +55,7 @@
 --
 -- @field #FLIGHTGROUP
 FLIGHTGROUP = {
-  ClassName      = "FLIGHTGROUP",
+  ClassName          = "FLIGHTGROUP",
   Debug              =   nil,
   sid                =   nil,
   groupname          =   nil,
@@ -125,7 +125,7 @@ FLIGHTGROUP.ElementStatus={
 --- Flight group tasks.
 -- @type FLIGHTGROUP.Mission
 -- @param #string INTERCEPT Intercept task.
--- @param #string CAP Combat Air Patrol task.s
+-- @param #string CAP Combat Air Patrol task.
 -- @param #string BAI Battlefield Air Interdiction task.
 -- @param #string SEAD Suppression/destruction of enemy air defences.
 -- @param #string STRIKE Strike task.
@@ -180,7 +180,7 @@ FLIGHTGROUP.TaskType={
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.1.0"
+FLIGHTGROUP.version="0.1.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -196,7 +196,6 @@ FLIGHTGROUP.version="0.1.0"
 -- TODO: Waypoints, read, add, insert, detour.
 -- TODO: Damage?
 -- TODO: shot events?
--- TODO:
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -324,7 +323,8 @@ function FLIGHTGROUP:New(groupname)
   -- Init task counter.
   self.taskcurrent=0
   self.taskcounter=0
-  
+
+  -- Holding flag.  
   self.flaghold=USERFLAG:New(string.format("%s_FlagHold", self.groupname))
   self.flaghold:Set(0)
   
@@ -526,7 +526,7 @@ function FLIGHTGROUP:GetWaypointCurrent()
   return self.waypoints[self.currentwp]
 end
 
---- Check if flight is airborne.
+--- Check if flight is in state spawned.
 -- @param #FLIGHTGROUP self
 -- @return #boolean
 function FLIGHTGROUP:IsSpawned()
@@ -554,21 +554,21 @@ function FLIGHTGROUP:IsAirborne()
   return self:Is("Airborne")
 end
 
---- Check if flight is airborne.
+--- Check if flight has landed and is now taxiing to its parking spot.
 -- @param #FLIGHTGROUP self
 -- @return #boolean
 function FLIGHTGROUP:IsLanded()
   return self:Is("Landed")
 end
 
---- Check if flight is arrived.
+--- Check if flight has arrived at its destination parking spot.
 -- @param #FLIGHTGROUP self
 -- @return #boolean
 function FLIGHTGROUP:IsArrived()
   return self:Is("Arrived")
 end
 
---- Check if flight is holding.
+--- Check if flight is holding and waiting for landing clearance.
 -- @param #FLIGHTGROUP self
 -- @return #boolean If true, flight is holding.
 function FLIGHTGROUP:IsHolding()
@@ -792,6 +792,9 @@ function FLIGHTGROUP:OnEventBirth(EventData)
     -- Create element spawned event if not already present.
     if not self:_IsElement(unitname) then
       local element=self:AddElementByName(unitname)
+      
+      self:I(self.sid..string.format("EVENT: Element %s born ==> spawned", element.name))
+            
       self:ElementSpawned(element)
     end
 
@@ -816,7 +819,7 @@ function FLIGHTGROUP:OnEventEngineStartup(EventData)
     if element then
       if self:IsAirborne() or self:IsHolding() then
       else
-        self:I(self.sid..string.format("Element %s started engines ==> taxiing", element.name))
+        self:I(self.sid..string.format("EVENT: Element %s started engines ==> taxiing", element.name))
         self:ElementTaxiing(element)
       end
     end
@@ -904,17 +907,16 @@ function FLIGHTGROUP:OnEventEngineShutdown(EventData)
         
         if dist and dist<10 and unit:InAir()==false then
           self:ElementArrived(element, airbase, parking)
-          self:I(self.sid..string.format("Element %s shut down engines ==> arrived", element.name))
+          self:I(self.sid..string.format("EVENT: Element %s shut down engines ==> arrived", element.name))
         else
-          self:I(self.sid..string.format("Element %s shut down engines (in air) ==> dead", element.name))
+          self:I(self.sid..string.format("EVENT: Element %s shut down engines (in air) ==> dead", element.name))
           self:ElementDead(element)
         end
         
       else
       
-        self:I(self.sid..string.format("Element %s shut down engines (bug is not alive) ==> dead", element.name))
-        --self:ElementDead(element)    
-          
+        self:I(self.sid..string.format("EVENT: Element %s shut down engines but is NOT alive ==> waiting for crash event (==> dead)", element.name))
+
       end
       
     else
@@ -940,7 +942,7 @@ function FLIGHTGROUP:OnEventCrash(EventData)
     local element=self:GetElementByName(unitname)
 
     if element then
-      self:I(self.sid..string.format("Element %s crashed ==> dead", element.name))
+      self:I(self.sid..string.format("EVENT: Element %s crashed ==> dead", element.name))
       self:ElementDead(element)
     end
 
@@ -1075,6 +1077,9 @@ function FLIGHTGROUP:onafterFlightSpawned(From, Event, To)
 
   -- Get template of group.
   self.template=self.group:GetTemplate()
+  
+  -- Max speed in km/h.
+  self.speedmax=self.group:GetSpeedMax()
 
   -- Init waypoints.
   self:_InitWaypoints()
@@ -1093,7 +1098,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function FLIGHTGROUP:onafterFlightTaxiing(From, Event, To)
-  self:I(self.sid..string.format("Flight is taxxing %s.", self.groupname))
+  self:I(self.sid..string.format("Flight is taxiing %s.", self.groupname))
 
   -- TODO: need a better check for the airbase.
   local airbase=self.group:GetCoordinate():GetClosestAirbase(nil, self.group:GetCoalition())
@@ -1117,9 +1122,8 @@ function FLIGHTGROUP:onafterFlightTakeoff(From, Event, To, airbase)
     self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qtakeoff, self)
   end
   
-  -- Update
+  -- Trigger airborne event.
   self:FlightAirborne(airbase)
-  --self:__QueueUpdate(-1)
   
 end
 
@@ -1132,11 +1136,12 @@ end
 function FLIGHTGROUP:onafterFlightAirborne(From, Event, To, airbase)
   self:I(self.sid..string.format("Flight airborne %s at %s.", self.groupname,airbase and airbase:GetName() or "unknown airbase"))
 
+  -- Remove flight from FC takeoff queue.
   if self.flightcontrol and airbase and self.flightcontrol.airbasename==airbase:GetName() then
     self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qtakeoff, self)
   end
   
-  -- Update
+  -- Update queue.
   self:__QueueUpdate(-1)
   
 end
@@ -1287,24 +1292,50 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Wrapper.Airbase#AIRBASE airbase The airbase to hold at.
--- @param Core.Point#COORDINATE Holdingpoint Coordinate where to hold.
 -- @param #number SpeedTo Speed used for travelling from current position to holding point in knots. Default 350 kts.
 -- @param #number SpeedHold Holding speed in knots. Default 250 kts.
-function FLIGHTGROUP:onafterHold(From, Event, To, airbase, HoldingPoint, SpeedTo, SpeedHold)
+function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold)
+  
+  -- Defaults:
+  SpeedTo=SpeedTo or 350
+  SpeedHold=SpeedHold or 250
 
   -- Debug message.
   local text=string.format("Flight group set to hold at airbase %s", airbase:GetName())
   MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
   self:I(self.sid..text)
  
+  local fc=_DATABASE:GetFlightControl(airbase:GetName())
+  
+  local p0=airbase:GetZone():GetRandomCoordinate():SetAltitude(UTILS.FeetToMeters(6000))
+  local p1=nil
+  local wpap=nil
+  if fc then
+    -- Get holding point from flight control.
+    local HoldingPoint=fc:_GetHoldingpoint(self)
+    p0=HoldingPoint.pos0
+    p1=HoldingPoint.pos1
+    
+    p0:MarkToAll("P0")
+    p1:MarkToAll("P1")
+    
+    -- Get active runway.
+    local runway=fc:_GetActiveRunway()
+  
+    -- TODO: make dependend on AC type helos etc.
+  
+    -- Approach point: 10 NN in direction of runway.
+    local papproach=runway.position:Translate(UTILS.NMToMeters(10), runway.direction):SetAltitude(1000)
+    papproach:MarkToAll("Approach Point")
+  
+    -- Approach waypoint.
+    wpap=papproach:WaypointAirTurningPoint(nil, UTILS.KnotsToKmph(SpeedTo), {}, "Final Approach")
+    
+    -- Set flightcontrol for this flight.
+    self:SetFlightControl(fc)
+  end
   
   self.group:ClearTasks()
-  
-  SpeedTo=SpeedTo or 350
-  SpeedHold=SpeedHold or 250
-    
-  -- Holding point.
-  HoldingPoint=HoldingPoint or airbase:GetZone():GetRandomCoordinate():SetAltitude(UTILS.FeetToMeters(6000))
   
   self.flaghold:Set(333)
   
@@ -1312,15 +1343,18 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, HoldingPoint, SpeedTo
   local TaskArrived=self.group:TaskFunction("FLIGHTGROUP._ReachedHolding", self)
 
   -- Orbit until flaghold=1 (=true)
-  local TaskOrbit=self.group:TaskOrbit(HoldingPoint, nil, UTILS.KnotsToMps(SpeedHold))
+  local TaskOrbit=self.group:TaskOrbit(p0, nil, UTILS.KnotsToMps(SpeedHold), p1)
   local TaskStop=self.group:TaskCondition(nil, self.flaghold.UserFlagName, 1)  
   local TaskControlled=self.group:TaskControlled(TaskOrbit, TaskStop)
   
   -- Waypoints.
   local wp={}
-  wp[1]=self.group:GetCoordinate():WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {}, "Current Pos")
-  wp[2]=HoldingPoint:WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {TaskArrived, TaskControlled}, "Holding Point")
-  wp[3]=airbase:GetCoordinate():WaypointAirLanding(SpeedHold, airbase, {}, "Landing")
+  wp[#wp+1]=self.group:GetCoordinate():WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {}, "Current Pos")
+  wp[#wp+1]=                        p0:WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {TaskArrived, TaskControlled}, "Holding Point")
+  if wpap then
+    wp[#wp+1]=wpap
+  end
+  wp[#wp+1]=airbase:GetCoordinate():WaypointAirLanding(SpeedHold, airbase, {}, "Landing")
   
   local respawn=true
   
@@ -1349,7 +1383,7 @@ end
 function FLIGHTGROUP._ReachedHolding(group, flightgroup)
   env.info(string.format("FF group %s reached holding point", group:GetName()))
   group:GetCoordinate():MarkToAll("Holding Point Reached")
-  --TODO: add flight to FC waiting queue.
+  
   flightgroup.flaghold:Set(666)
   
   if flightgroup.flightcontrol then
@@ -1908,7 +1942,10 @@ function FLIGHTGROUP:_UpdateRoute(n)
   self.destination=self:GetDestinationFromWaypoints() or self.destination
   
   if self.destination and #wp>0 then
-    local wpoverhead=self.destination:GetCoordinate():WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint, 500, false, nil, {}, "Destination Overhead")
+  
+    local TaskOverhead=self.group:TaskFunction("FLIGHTGROUP._DestinationOverhead", self, self.destination)
+  
+    local wpoverhead=self.destination:GetCoordinate():SetAltitude(3000):WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint, 500, false, nil, {TaskOverhead}, "Destination Overhead")
     self:I(self.sid..string.format("Adding overhead waypoint as #%d", #wp))
     table.insert(wp, #wp, wpoverhead)
   end
@@ -1946,6 +1983,18 @@ function FLIGHTGROUP:_UpdateRoute(n)
   end
   
   return self
+end
+
+--- Update route of group, e.g after new waypoints and/or waypoint tasks have been added.
+-- @param Wrapper.Group#GROUP group The Moose group object.
+-- @param #FLIGHTGROUP flightgroup The flight group object.
+-- @param Wrapper.Airbase#AIRBASE destination Destination airbase
+function FLIGHTGROUP._DestinationOverhead(group, flightgroup, destination)
+
+  -- Tell the flight to hold.
+  -- WARNING: This needs to be delayed or we get a CTD!
+  flightgroup:__Hold(1, destination)
+
 end
 
 --- Initialize Mission Editor waypoints.
@@ -2553,6 +2602,73 @@ function FLIGHTGROUP:_MissileCategoryName(categorynumber)
   return cat
 end
 
+--- Checks if a human player sits in the unit.
+-- @param #FLIGHTGROUP self
+-- @param Wrapper.Unit#UNIT unit Aircraft unit.
+-- @return #boolean If true, human player inside the unit.
+function FLIGHTGROUP:_IsHumanUnit(unit)
+  
+  -- Get player unit or nil if no player unit.
+  local playerunit=self:_GetPlayerUnitAndName(unit:GetName())
+  
+  if playerunit then
+    return true
+  else
+    return false
+  end
+end
+
+--- Checks if a group has a human player.
+-- @param #FLIGHTGROUP self
+-- @param Wrapper.Group#GROUP group Aircraft group.
+-- @return #boolean If true, human player inside group.
+function FLIGHTGROUP:_IsHuman(group)
+
+  -- Get all units of the group.
+  local units=group:GetUnits()
+  
+  -- Loop over all units.
+  for _,_unit in pairs(units) do
+    -- Check if unit is human.
+    local human=self:_IsHumanUnit(_unit)
+    if human then
+      return true
+    end
+  end
+
+  return false
+end
+
+--- Returns the unit of a player and the player name. If the unit does not belong to a player, nil is returned. 
+-- @param #FLIGHTGROUP self
+-- @param #string _unitName Name of the player unit.
+-- @return Wrapper.Unit#UNIT Unit of player or nil.
+-- @return #string Name of the player or nil.
+function FLIGHTGROUP:_GetPlayerUnitAndName(_unitName)
+  self:F2(_unitName)
+
+  if _unitName ~= nil then
+  
+    -- Get DCS unit from its name.
+    local DCSunit=Unit.getByName(_unitName)
+    
+    if DCSunit then
+    
+      local playername=DCSunit:getPlayerName()
+      local unit=UNIT:Find(DCSunit)
+    
+      self:T2({DCSunit=DCSunit, unit=unit, playername=playername})
+      if DCSunit and unit and playername then
+        return unit, playername
+      end
+      
+    end
+    
+  end
+  
+  -- Return nil if we could not find a player.
+  return nil,nil
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
