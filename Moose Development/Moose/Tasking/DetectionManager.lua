@@ -225,7 +225,6 @@ do -- DETECTION MANAGER
 
   --- Set a command center to communicate actions to the players reporting to the command center.
   -- @param #DETECTION_MANAGER self
-  -- @param Tasking.CommandCenter#COMMANDCENTER CommandCenter The command center.
   -- @return #DETECTION_MANGER self
   function DETECTION_MANAGER:SetTacticalMenu( DispatcherMainMenuText, DispatcherMenuText )
 
@@ -279,7 +278,7 @@ do -- DETECTION MANAGER
 
     self.RadioQueue = nil
 
-    self.RadioQueue = RADIOQUEUE:New( self.RadioFrequency, self.RadioModulation )
+    self.RadioQueue = RADIOSPEECH:New( self.RadioFrequency, self.RadioModulation )
     self.RadioQueue.power = self.RadioPower
     self.RadioQueue:Start( 0.5 )
   end 
@@ -292,27 +291,32 @@ do -- DETECTION MANAGER
   -- @param #string SoundPath The path pointing to the folder in the mission file.
   -- @param Wrapper.Group#GROUP DefenderGroup The defender group sending the message.
   -- @return #DETECTION_MANGER self
-  function DETECTION_MANAGER:MessageToPlayers( Message, SoundFile, SoundDuration, SoundPath, DefenderGroup )
+  function DETECTION_MANAGER:MessageToPlayers( Message, DefenderGroup )
   
     self:F( { Message = Message } )
     
-    if not self.PreviousMessage or self.PreviousMessage ~= Message then
-      self.PreviousMessage = Message
-      if self.CC then
-        self.CC:MessageToCoalition( Message )
-      end
+--    if not self.PreviousMessage or self.PreviousMessage ~= Message then
+--      self.PreviousMessage = Message
+--      if self.CC then
+--        self.CC:MessageToCoalition( Message )
+--      end
+--    end
+
+    if self.CC then
+      self.CC:MessageToCoalition( Message )
     end
     
-    -- Here we handle the transmission of the voice over.
-    -- If for a certain reason the Defender does not exist, we use the coordinate of the airbase to send the message from.
-    if SoundFile then
-      local RadioQueue = self.RadioQueue -- Core.RadioQueue#RADIOQUEUE
-      local DefenderUnit = DefenderGroup:GetUnit(1)
-      if DefenderUnit and DefenderUnit:IsAlive() then
-        RadioQueue:SetSenderUnitName( DefenderUnit:GetName() )
-      end
-      RadioQueue:NewTransmission( SoundFile, SoundDuration, SoundPath )
+    Message = Message:gsub( "°", "degrees" )
+    Message = Message:gsub( "(%d)%.(%d)", "%1dot%2" )
+    
+  -- Here we handle the transmission of the voice over.
+  -- If for a certain reason the Defender does not exist, we use the coordinate of the airbase to send the message from.
+    local RadioQueue = self.RadioQueue -- Core.RadioQueue#RADIOQUEUE
+    local DefenderUnit = DefenderGroup:GetUnit(1)
+    if DefenderUnit and DefenderUnit:IsAlive() then
+      RadioQueue:SetSenderUnitName( DefenderUnit:GetName() )
     end
+    RadioQueue:Speak( Message )
     
     return self
   end
