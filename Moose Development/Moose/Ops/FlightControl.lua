@@ -31,6 +31,8 @@
 -- @field #table Qtakeoff Queue of aircraft about to takeoff.
 -- @field #table Qparking Queue of aircraft parking.
 -- @field #number activerwyno Number of active runway.
+-- @field #number atcfreq ATC radio frequency.
+-- @field Core.RadioQueue#RADIOQUEUE atcradio ATC radio queue.
 -- @extends Core.Fsm#FSM
 
 --- Be surprised!
@@ -61,6 +63,8 @@ FLIGHTCONTROL = {
   Qtakeoff       =    {},
   Qparking       =    {},
   activerwyno    =     1,
+  atcfreq        =   nil,
+  atcradio       =   nil,
 }
 
 --- Holding point
@@ -221,6 +225,9 @@ function FLIGHTCONTROL:onafterStart()
   self:HandleEvent(EVENTS.Land)
   self:HandleEvent(EVENTS.EngineShutdown)
   self:HandleEvent(EVENTS.Crash)
+  
+  self.atcradio=RADIOQUEUE:New(self.atcfreq or 305)
+  self.atcradio:Start(1, 0.01)
   
   -- Init status updates.
   self:__Status(-1)
@@ -522,23 +529,44 @@ function FLIGHTCONTROL:_CheckQueues()
 
   -- Print queues
   self:_PrintQueue(self.flights,  "All flights")
-  self:_PrintQueue(self.Qparking, "Parking")  
+  self:_PrintQueue(self.Qparking, "Parking")
   self:_PrintQueue(self.Qtakeoff, "Takeoff")
   self:_PrintQueue(self.Qwaiting, "Holding")
-  self:_PrintQueue(self.Qlanding, "Landing")  
+  self:_PrintQueue(self.Qlanding, "Landing")
 
   -- Get next wairing flight.
-  local flight=self:_GetNextWaitingFight()
+  local flight=self:_GetNextFightWaiting()
   
-  -- Number of groups landing.
-  local nlanding=#self.Qlanding
+  if flight then
   
-  -- Number of groups taking off.
-  local ntakeoff=#self.Qtakeoff
+    -- Number of groups landing.
+    local nlanding=#self.Qlanding
+    
+    -- Number of groups taking off.
+    local ntakeoff=#self.Qtakeoff
+    
+    if nlanding==0 and ntakeoff==0 then
+      local text=string.format("Flight %s, you are cleared to taxi to runway.", flight.groupname)
+      MESSAGE:New(text, 5, "FLIGHTCONTROL"):ToAll()    
+      self:_LandAI(flight)
+    end
+    
+  else
   
-  if flight and nlanding==0 and ntakeoff==0 then
-    self:_LandAI(flight)
-    self:_RemoveFlightFromQueue(self.Qwaiting, flight)
+    -- Get next wairing flight.
+    local flight=self:_GetNextFightParking()
+    
+    if flight then
+      local text=string.format("Flight %s, you are cleared to taxi to runway.", flight.groupname)
+      MESSAGE:New(text, 5, "FLIGHTCONTROL"):ToAll()
+      
+      flight.group:StartUncontrolled()
+      
+      flight:_UpdateRoute(1)
+      
+      self:_RemoveFlightFromQueue(self.Qparking, flight, "parking")
+    end
+  
   end
 
 end
@@ -596,10 +624,29 @@ end
 --- Get next flight waiting for landing clearance.
 -- @param #FLIGHTCONTROL self
 -- @return Ops.FlightGroup#FLIGHTGROUP Marshal flight next in line and ready to enter the pattern. Or nil if no flight is ready.
-function FLIGHTCONTROL:_GetNextWaitingFight()
+function FLIGHTCONTROL:_GetNextFightWaiting()
 
   -- Loop over all marshal flights.
   for _,_flight in pairs(self.Qwaiting) do
+    local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
+    
+    -- TODO: Sort by fuel, holding time.
+    
+    return flight
+    
+  end
+
+  return nil
+end
+
+
+--- Get next flight waiting for landing clearance.
+-- @param #FLIGHTCONTROL self
+-- @return Ops.FlightGroup#FLIGHTGROUP Marshal flight next in line and ready to enter the pattern. Or nil if no flight is ready.
+function FLIGHTCONTROL:_GetNextFightParking()
+
+  -- Loop over all marshal flights.
+  for _,_flight in pairs(self.Qparking) do
     local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
     
     -- TODO: Sort by fuel, holding time.
@@ -658,9 +705,12 @@ end
 -- @param #FLIGHTCONTROL self
 -- @param #table queue The queue from which the group will be removed.
 -- @param Ops.FlightGroup#FLIGHTGROUP flight Flight group that will be removed from queue.
+-- @param #string queuename Name of the queue.
 -- @return #boolean True, flight was in Queue and removed. False otherwise.
 -- @return #number Table index of removed queue element or nil.
-function FLIGHTCONTROL:_RemoveFlightFromQueue(queue, flight)
+function FLIGHTCONTROL:_RemoveFlightFromQueue(queue, flight, queuename)
+
+  queuename=queuename or "unknown"
 
   -- Loop over all flights in group.
   for i,_flight in pairs(queue) do
@@ -668,31 +718,14 @@ function FLIGHTCONTROL:_RemoveFlightFromQueue(queue, flight)
     
     -- Check for name.
     if qflight.groupname==flight.groupname then
-      self:I(self.lid..string.format("Removing flight group %s from queue.", flight.groupname))
+      self:I(self.lid..string.format("Removing flight group %s from %s queue.", flight.groupname, queuename))
       table.remove(queue, i)
       return true, i
     end
   end
   
-  self:I(self.lid..string.format("Could NOT remove flight group %s from queue.", flight.groupname))
+  self:I(self.lid..string.format("Could NOT remove flight group %s from %s queue.", flight.groupname, queuename))
   return false, nil
-end
-
---- Set tookoff to true for the flight element.
--- @param #FLIGHTCONTROL self
--- @param Wrapper.Unit#UNIT unit The aircraft unit that was recovered.
--- @return Ops.FlightGroup#FLIGHTGROUP Flight group of element.
-function FLIGHTCONTROL:_ElementTookOff(unit)
-
-  -- Get element of flight.
-  local element, idx, flight=self:_GetFlightElement(unit:GetName())  --#FLIGHTCONTROL.FlightElement
-  
-  -- Nil check. Could be if a helo landed or something else we dont know!
-  if element then
-    element.tookoff=true
-  end
-  
-  return flight
 end
 
 --- Add flight to landing queue and set recovered to false for all elements of the flight and its section members.
@@ -1119,53 +1152,11 @@ function FLIGHTCONTROL:_LandAI(flight)
   -- Add flight to landing queue.
   table.insert(self.Qlanding, flight)
   
+  -- Give signal to land.
   flight.flaghold:Set(1)
   
-  if true then
-    return
-  end
-
-
-        
-  -- Airbase position.
-  local airbase=self.airbase:GetCoordinate()
-  
-  -- Waypoints array.
-  local wp={}
-  
-  -- Current speed.
-  local CurrentSpeed=flight.group:GetVelocityKMH()
-  
-  -- Aircraft speed when flying the pattern.
-  local Speed=UTILS.KnotsToKmph(150)
-
-  -- Current positon.
-  wp[#wp+1]=flight.group:GetCoordinate():WaypointAirTurningPoint(nil, CurrentSpeed, {}, "Current position")
-  
-  
-  -- Get active runway.
-  local runway=self:_GetActiveRunway()
-  
-  -- TODO: make dependend on AC type helos etc.
-  
-  -- Approach point: 10 NN in direction of runway.
-  local papproach=runway.position:Translate(UTILS.NMToMeters(10), runway.direction):SetAltitude(1000)
-  papproach:MarkToAll("Approach Point")
-  
-  -- Approach waypoint.
-  wp[#wp+1]=papproach:WaypointAirTurningPoint(nil ,Speed, {}, "Final Approach")
-
-  -- Landing waypoint.
-  wp[#wp+1]=airbase:WaypointAirLanding(Speed, self.airbase, nil, "Landing")
-
-  -- Reinit waypoints.
-  flight.group:WayPointInitialize(wp)
-  
-  -- Route group.
-  flight.group:Route(wp, 1)
-  
-  -- Add flight to landing queue.
-  table.insert(self.Qlanding, flight)
+  -- Remove flight from waiting queue.
+  self:_RemoveFlightFromQueue(self.Qwaiting, flight, "holding")
 end
 
 --- Function called when a group has reached the holding zone.

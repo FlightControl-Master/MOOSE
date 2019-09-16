@@ -169,6 +169,8 @@ function RADIOQUEUE:AddTransmission(transmission)
 
   -- Add to queue.
   table.insert(self.queue, transmission)
+  
+  --TODO: Start scheduler.
 
   return self
 end
@@ -343,6 +345,7 @@ function RADIOQUEUE:_CheckRadioQueue()
 
   -- Check if queue is empty.
   if #self.queue==0 then
+    --TODO: stop scheduler.
     return
   end
 

@@ -62,7 +62,7 @@ FLIGHTGROUP = {
   flightgroup        =   nil,
   grouptemplate      =   nil,
   type               =   nil,
-  waypoints          =    {},
+  waypoints          =   nil,
   coordinates        =    {},
   elements           =    {},
   taskqueue          =    {},
@@ -121,6 +121,7 @@ FLIGHTGROUP.ElementStatus={
 -- @field #string status Status, i.e. born, parking, taxiing. See @{#FLIGHTGROUP.ElementStatus}.
 -- @field #table pylons Table of pylons.
 -- @field #number damage Damage of element in percent.
+-- @field Wrapper.Airbase#AIRBASE.ParkingSpot parking The parking spot table the element is parking on.
 
 --- Flight group tasks.
 -- @type FLIGHTGROUP.Mission
@@ -180,7 +181,7 @@ FLIGHTGROUP.TaskType={
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.1.1"
+FLIGHTGROUP.version="0.1.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -595,7 +596,7 @@ end
 function FLIGHTGROUP:onafterStart(From, Event, To)
 
   -- Short info.
-  local text=string.format("Starting flight group %s.", self.groupname)
+  local text=string.format("Starting flight group v%s", FLIGHTGROUP.version)
   self:I(self.sid..text)
   
   -- Check if the group is already alive and if so, add its elements.
@@ -969,7 +970,18 @@ function FLIGHTGROUP:onafterElementSpawned(From, Event, To, Element)
   if Element.unit:InAir() then
     self:ElementAirborne(Element)
   else
-    self:ElementParking(Element)
+      
+    -- Get parking spot.
+    local spot, dist=self:GetParkingSpot(Element)
+    
+    if dist<10 then
+    
+      Element.parking=spot
+  
+      self:ElementParking(Element)
+    else
+      self:E(self.sid..string.format("Element spawned not in air but not on any parking spot."))
+    end
   end
 end
 
@@ -980,8 +992,8 @@ end
 -- @param #string To To state.
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 function FLIGHTGROUP:onafterElementParking(From, Event, To, Element)
-  self:I(self.sid..string.format("Element parking %s.", Element.name))
-
+  self:I(self.sid..string.format("Element parking %s at spot %s.", Element.name, tostring(Element.parking.TerminalID)))
+  
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.PARKING)
 end
@@ -994,6 +1006,9 @@ end
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 function FLIGHTGROUP:onafterElementTaxiing(From, Event, To, Element)
   self:I(self.sid..string.format("Element taxiing %s.", Element.name))
+  
+  -- Not parking any more.
+  Element.parking=nil
 
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.TAXIING)
@@ -1082,14 +1097,37 @@ function FLIGHTGROUP:onafterFlightSpawned(From, Event, To)
   self.speedmax=self.group:GetSpeedMax()
 
   -- Init waypoints.
-  self:_InitWaypoints()
-  
-  -- Update route.
-  self:_UpdateRoute(1)
-  
-  -- Route flight group but now with passing waypoint tasks.
-  --self.group:Route(self.waypoints)
+  if not self.waypoints then
+    self:InitWaypoints()
+  end
+    
 end
+
+--- On after "FlightParking" event. Add flight to flightcontrol of airbase.
+-- @param #FLIGHTGROUP self
+-- @param Wrapper.Group#GROUP Group Flight group.
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function FLIGHTGROUP:onafterFlightParking(From, Event, To)
+
+  local airbase=self.group:GetCoordinate():GetClosestAirbase()
+  
+  local airbasename=airbase:GetName() or "unknown"
+
+  local flightcontrol=_DATABASE:GetFlightControl(airbasename)
+  
+  if flightcontrol then
+    self:SetFlightControl(flightcontrol)
+  
+    if self.flightcontrol then
+    
+      table.insert(self.flightcontrol.Qparking, self) 
+      
+    end
+  end  
+end
+
 
 --- On after "FlightTaxiing" event.
 -- @param #FLIGHTGROUP self
@@ -1119,7 +1157,7 @@ function FLIGHTGROUP:onafterFlightTakeoff(From, Event, To, airbase)
   self:I(self.sid..string.format("Flight takeoff %s at %s.", self.groupname, airbase and airbase:GetName() or "unknown airbase"))
 
   if self.flightcontrol and airbase and self.flightcontrol.airbasename==airbase:GetName() then
-    self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qtakeoff, self)
+    self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qtakeoff, self, "takeoff")
   end
   
   -- Trigger airborne event.
@@ -1138,7 +1176,7 @@ function FLIGHTGROUP:onafterFlightAirborne(From, Event, To, airbase)
 
   -- Remove flight from FC takeoff queue.
   if self.flightcontrol and airbase and self.flightcontrol.airbasename==airbase:GetName() then
-    self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qtakeoff, self)
+    self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qtakeoff, self, "takeoff")
   end
   
   -- Update queue.
@@ -1156,7 +1194,7 @@ function FLIGHTGROUP:onafterFlightLanded(From, Event, To, airbase)
   self:I(self.sid..string.format("Flight landed %s at %s.", self.groupname, airbase and airbase:GetName() or "unknown airbase"))
 
   if self.flightcontrol and airbase and self.flightcontrol.airbasename==airbase:GetName() then
-    self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qlanding, self)
+    self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qlanding, self, "landing")
   end
 end
 
@@ -1305,11 +1343,14 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold)
   MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
   self:I(self.sid..text)
  
-  local fc=_DATABASE:GetFlightControl(airbase:GetName())
   
+  -- Holding points.
   local p0=airbase:GetZone():GetRandomCoordinate():SetAltitude(UTILS.FeetToMeters(6000))
   local p1=nil
   local wpap=nil
+  
+  -- Do we have a flight control?
+  local fc=_DATABASE:GetFlightControl(airbase:GetName())
   if fc then
     -- Get holding point from flight control.
     local HoldingPoint=fc:_GetHoldingpoint(self)
@@ -1325,11 +1366,11 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold)
     -- TODO: make dependend on AC type helos etc.
   
     -- Approach point: 10 NN in direction of runway.
-    local papproach=runway.position:Translate(UTILS.NMToMeters(10), runway.direction):SetAltitude(1000)
+    local papproach=runway.position:Translate(UTILS.NMToMeters(15), runway.direction):SetAltitude(UTILS.FeetToMeters(1700))
     papproach:MarkToAll("Approach Point")
   
     -- Approach waypoint.
-    wpap=papproach:WaypointAirTurningPoint(nil, UTILS.KnotsToKmph(SpeedTo), {}, "Final Approach")
+    wpap=papproach:WaypointAirTurningPoint(nil, UTILS.KnotsToKmph(170), {}, "Final Approach")
     
     -- Set flightcontrol for this flight.
     self:SetFlightControl(fc)
@@ -1373,19 +1414,21 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold)
     
   end  
   
+  -- Route the group.
   self.group:Route(wp, 1)
   
 end
 
---- On after TaskPause event.
--- @param Wrapper.Group#GROUP group
--- @param #FLIGHTGROUP flightgroup
+--- Function called when flight has reached the holding point.
+-- @param Wrapper.Group#GROUP group Group object.
+-- @param #FLIGHTGROUP flightgroup Flight group object.
 function FLIGHTGROUP._ReachedHolding(group, flightgroup)
   env.info(string.format("FF group %s reached holding point", group:GetName()))
   group:GetCoordinate():MarkToAll("Holding Point Reached")
   
   flightgroup.flaghold:Set(666)
   
+  -- Add flight to waiting/holding queue.
   if flightgroup.flightcontrol then
     table.insert(flightgroup.flightcontrol.Qwaiting, flightgroup)
   end
@@ -2040,11 +2083,12 @@ end
 
 --- Initialize Mission Editor waypoints.
 -- @param #FLIGHTGROUP self
+-- @param #table waypoints Table of waypoints. Default is from group template.
 -- @return #FLIGHTGROUP self
-function FLIGHTGROUP:_InitWaypoints()
+function FLIGHTGROUP:InitWaypoints(waypoints)
 
   -- Waypoints of group as defined in the ME.
-  self.waypoints=self.group:GetTemplateRoutePoints()
+  self.waypoints=waypoints or self.group:GetTemplateRoutePoints()
   
   -- Update waypoint tasks.
   self:_UpdateWaypointTasks()
@@ -2073,6 +2117,11 @@ function FLIGHTGROUP:_InitWaypoints()
 
   -- Set current waypoint. Counting starts a one.
   self.currentwp=1
+  
+  -- Update route.
+  if #self.waypoints>0 then
+    self:_UpdateRoute(1)
+  end
 
   return self
 end
@@ -2668,6 +2717,29 @@ function FLIGHTGROUP:_GetPlayerUnitAndName(_unitName)
   
   -- Return nil if we could not find a player.
   return nil,nil
+end
+
+--- Returns the coalition side.
+-- @param #FLIGHTGROUP self
+-- @return #number Coalition side number.
+function FLIGHTGROUP:GetCoalition()
+  return self.group:GetCoalition()
+end
+
+--- Returns the coalition side.
+-- @param #FLIGHTGROUP self
+-- @param #FLIGHTGROUP.Element element Element of the flight group.
+-- @return Wrapper.Airbase#AIRBASE.ParkingSpot
+-- @return #number Distance to spot in meters.
+function FLIGHTGROUP:GetParkingSpot(element)
+
+  local coord=element.unit:GetCoordinate()
+
+  local ab=coord:GetClosestAirbase(nil, self:GetCoalition())
+  
+  local _,_,dist,spot=coord:GetClosestParkingSpot(ab)
+
+  return spot, dist
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
