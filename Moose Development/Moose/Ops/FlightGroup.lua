@@ -94,6 +94,7 @@ FLIGHTGROUP = {
 -- @field #string TAXIING Element is taxiing after engine startup.
 -- @field #string TAKEOFF Element took of after takeoff event.
 -- @field #string AIRBORNE Element is airborne. Either after takeoff or after air start.
+-- @field #string LANDING Element is landing.
 -- @field #string LANDED Element landed and is taxiing to its parking spot.
 -- @field #string ARRIVED Element arrived at its parking spot and shut down its engines.
 -- @field #string DEAD Element is dead after it crashed, pilot ejected or pilot dead events.
@@ -104,6 +105,7 @@ FLIGHTGROUP.ElementStatus={
   TAXIING="taxiing",
   TAKEOFF="takeoff",
   AIRBORNE="airborne",
+  LANDING="landing",
   LANDED="landed",
   ARRIVED="arrived",
   DEAD="dead",
@@ -277,6 +279,7 @@ function FLIGHTGROUP:New(groupname)
   self:AddTransition("*",             "FlightTaxiing",    "Taxiing")     -- The whole flight group is taxiing.
   self:AddTransition("*",             "FlightTakeoff",    "Airborne")    -- The whole flight group is airborne.
   self:AddTransition("*",             "FlightAirborne",   "Airborne")    -- The whole flight group is airborne.
+  self:AddTransition("*",             "FlightLanding",    "Landing")     -- The whole flight group is landing.
   self:AddTransition("*",             "FlightLanded",     "Landed")      -- The whole flight group has landed.
   self:AddTransition("*",             "FlightArrived",    "Arrived")     -- The whole flight group has arrived.
   self:AddTransition("*",             "FlightDead",       "Dead")        -- The whole flight group is dead.
@@ -553,6 +556,13 @@ end
 -- @return #boolean
 function FLIGHTGROUP:IsAirborne()
   return self:Is("Airborne")
+end
+
+--- Check if flight is landing.
+-- @param #FLIGHTGROUP self
+-- @return #boolean
+function FLIGHTGROUP:IsLanded()
+  return self:Is("Landing")
 end
 
 --- Check if flight has landed and is now taxiing to its parking spot.
@@ -1026,6 +1036,9 @@ function FLIGHTGROUP:onafterElementTakeoff(From, Event, To, Element, airbase)
 
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.TAKEOFF, airbase)
+  
+  -- Trigger element airborne event.
+  self:__ElementAirborne(1, Element)
 end
 
 --- On after "ElementAirborne" event.
@@ -1049,7 +1062,7 @@ end
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 -- @param Wrapper.Airbase#AIRBASE airbase The airbase if applicable or nil.
 function FLIGHTGROUP:onafterElementLanded(From, Event, To, Element, airbase)
-  self:I(self.sid..string.format("Element landed %s.", Element.name))
+  self:I(self.sid..string.format("Element landed %s at %s", Element.name, airbase and airbase:GetName() or "unknown"))
 
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.LANDED, airbase)
@@ -1161,7 +1174,7 @@ function FLIGHTGROUP:onafterFlightTakeoff(From, Event, To, airbase)
   end
   
   -- Trigger airborne event.
-  self:FlightAirborne(airbase)
+  self:__FlightAirborne(1, airbase)
   
 end
 
@@ -1189,6 +1202,18 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
+function FLIGHTGROUP:onafterFlightLanding(From, Event, To)
+  self:I(self.sid..string.format("Flight landing %s", self.groupname))
+
+  self:_SetElementStatusAll(FLIGHTGROUP.ElementStatus.LANDING)
+  
+end
+
+--- On after "FlightLanded" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
 -- @param Wrapper.Airbase#AIRBASE airbase The airbase the flight landed.
 function FLIGHTGROUP:onafterFlightLanded(From, Event, To, airbase)
   self:I(self.sid..string.format("Flight landed %s at %s.", self.groupname, airbase and airbase:GetName() or "unknown airbase"))
@@ -1197,9 +1222,6 @@ function FLIGHTGROUP:onafterFlightLanded(From, Event, To, airbase)
     self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qlanding, self, "landing")
   end
 end
-
-
-
 
 --- On after "PassingWaypoint" event.
 -- @param #FLIGHTGROUP self
@@ -1211,8 +1233,7 @@ end
 function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
   local text=string.format("Group %s passed waypoint %d/%d", self.groupname, n, N)
   self:I(self.sid..text)
-  MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
-  
+  MESSAGE:New(text, 20, "DEBUG"):ToAllIf(self.Debug)
 end
 
 --- On after "FuelLow" event.
@@ -1337,6 +1358,7 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold)
   -- Defaults:
   SpeedTo=SpeedTo or 350
   SpeedHold=SpeedHold or 250
+  local SpeedLand=190
 
   -- Debug message.
   local text=string.format("Flight group set to hold at airbase %s", airbase:GetName())
@@ -1366,11 +1388,12 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold)
     -- TODO: make dependend on AC type helos etc.
   
     -- Approach point: 10 NN in direction of runway.
-    local papproach=runway.position:Translate(UTILS.NMToMeters(15), runway.direction):SetAltitude(UTILS.FeetToMeters(1700))
-    papproach:MarkToAll("Approach Point")
+    local papproach=airbase:GetCoordinate():Translate(UTILS.NMToMeters(10), runway.direction-180):SetAltitude(UTILS.FeetToMeters(3000))
+    
+    papproach:MarkToAll("Final Approach")
   
     -- Approach waypoint.
-    wpap=papproach:WaypointAirTurningPoint(nil, UTILS.KnotsToKmph(170), {}, "Final Approach")
+    wpap=papproach:WaypointAirTurningPoint(nil, UTILS.KnotsToKmph(SpeedLand), {}, "Final Approach")
     
     -- Set flightcontrol for this flight.
     self:SetFlightControl(fc)
@@ -1395,7 +1418,7 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold)
   if wpap then
     wp[#wp+1]=wpap
   end
-  wp[#wp+1]=airbase:GetCoordinate():WaypointAirLanding(SpeedHold, airbase, {}, "Landing")
+  wp[#wp+1]=airbase:GetCoordinate():SetAltitude(UTILS.FeetToMeters(500)):WaypointAirLanding(UTILS.KnotsToKmph(SpeedLand), airbase, {}, "Landing")
   
   local respawn=true
   
@@ -2140,13 +2163,13 @@ function FLIGHTGROUP._PassingWaypoint(group, flightgroup, i)
   -- Debug smoke and marker.
   if flightgroup.Debug then
     local pos=group:GetCoordinate()
-    pos:SmokeRed()
+    --pos:SmokeRed()
     local MarkerID=pos:MarkToAll(string.format("Group %s reached waypoint %d", group:GetName(), i))
   end
 
   -- Debug message.
-  MESSAGE:New(text,10):ToAllIf(flightgroup.Debug)
-  flightgroup:I(flightgroup.sid..text)
+  --MESSAGE:New(text,10):ToAllIf(flightgroup.Debug)
+  flightgroup:T2(flightgroup.sid..text)
 
   -- Set current waypoint.
   flightgroup.currentwp=i
@@ -2241,7 +2264,7 @@ function FLIGHTGROUP:_AllSimilarStatus(status)
 
       elseif status==FLIGHTGROUP.ElementStatus.TAKEOFF then
 
-        -- Element AIRBORNE: Check that the other are not stil SPAWNED, PARKING or TAXIING
+        -- Element TAKEOFF: Check that the other are not stil SPAWNED, PARKING or TAXIING
         if element.status~=status and
           element.status==FLIGHTGROUP.ElementStatus.SPAWNED or
           element.status==FLIGHTGROUP.ElementStatus.PARKING or
@@ -2251,7 +2274,7 @@ function FLIGHTGROUP:_AllSimilarStatus(status)
 
       elseif status==FLIGHTGROUP.ElementStatus.AIRBORNE then
 
-        -- Element AIRBORNE: Check that the other are not stil SPAWNED, PARKING or TAXIING
+        -- Element AIRBORNE: Check that the other are not stil SPAWNED, PARKING, TAXIING or TAKEOFF
         if element.status~=status and
           element.status==FLIGHTGROUP.ElementStatus.SPAWNED or
           element.status==FLIGHTGROUP.ElementStatus.PARKING or
@@ -2349,8 +2372,8 @@ function FLIGHTGROUP:_UpdateStatus(element, newstatus, airbase)
     ---
 
     if self:_AllSimilarStatus(newstatus) then
+      -- Trigger takeoff event. Also triggers airborne event.
       self:FlightTakeoff(airbase)
-      --TODO: also trigger Airborne() ?
     end
 
   elseif newstatus==FLIGHTGROUP.ElementStatus.AIRBORNE then
@@ -2363,11 +2386,11 @@ function FLIGHTGROUP:_UpdateStatus(element, newstatus, airbase)
       if self:IsTaxiing() then
         self:FlightAirborne()
       elseif self:IsParking() then
-        --self:FlightTaxiing(group)
+        --self:FlightTaxiing()
         self:FlightAirborne()
       elseif self:IsSpawned() then
-        --self:FlightParking(group)
-        --self:FlightTaxiing(group)
+        --self:FlightParking()
+        --self:FlightTaxiing()
         self:FlightAirborne()
       end
 
@@ -2379,7 +2402,7 @@ function FLIGHTGROUP:_UpdateStatus(element, newstatus, airbase)
     ---
 
     if self:_AllSimilarStatus(newstatus) then
-      self:FlightLanded(group)
+      self:FlightLanded(airbase)
     end
 
   elseif newstatus==FLIGHTGROUP.ElementStatus.ARRIVED then
@@ -2408,6 +2431,20 @@ function FLIGHTGROUP:_UpdateStatus(element, newstatus, airbase)
     end
 
   end
+end
+
+--- Set status for all elements (except dead ones).
+-- @param #FLIGHTGROUP self
+-- @param #string status Element status.
+function FLIGHTGROUP:_SetElementStatusAll(status)
+
+  for _,_element in pairs(self.elements) do
+    local element=_element --#FLIGHTGROUP.Element
+    if element.status~=FLIGHTGROUP.ElementStatus.DEAD then
+      element.status=status
+    end
+  end
+
 end
 
 --- Check detected units.

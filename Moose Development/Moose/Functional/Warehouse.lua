@@ -79,6 +79,7 @@
 -- @field #number lowfuelthresh Low fuel threshold. Triggers the event AssetLowFuel if for any unit fuel goes below this number.
 -- @field #boolean respawnafterdestroyed If true, warehouse is respawned after it was destroyed. Assets are kept.
 -- @field #number respawndelay Delay before respawn in seconds.
+-- @field Ops.FlightControl#FLIGHTCONTROL flightcontrol The flightcontrol for this airbase.
 -- @extends Core.Fsm#FSM
 
 --- Have your assets at the right place at the right time - or not!
@@ -1573,6 +1574,7 @@ WAREHOUSE = {
   lowfuelthresh =  0.15,
   respawnafterdestroyed=false,
   respawndelay  =   nil,
+  flightcontrol =   nil,
 }
 
 --- Item of the warehouse stock table.
@@ -1752,7 +1754,7 @@ _WAREHOUSEDB  = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.9.7"
+WAREHOUSE.version="0.9.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -2506,6 +2508,16 @@ function WAREHOUSE:SetSafeParkingOff()
   self.safeparking=false
   return self
 end
+
+--- Set flight control.
+-- @param #WAREHOUSE self
+-- @param Ops.FlightControl#FLIGHTCONTROL flightcontrol Flight control object.
+-- @return #WAREHOUSE self
+function WAREHOUSE:SetFlightControl(flightcontrol)
+  self.flightcontrol=flightcontrol
+  return self
+end
+
 
 --- Set low fuel threshold. If one unit of an asset has less fuel than this number, the event AssetLowFuel will be fired.
 -- @param #WAREHOUSE self
@@ -5592,6 +5604,8 @@ function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrol
 
     -- Debug info.
     self:T2({airtemplate=template})
+    
+    FLIGHTGROUP:New(template.name)
 
     -- Spawn group.
     local group=_DATABASE:Spawn(template) --Wrapper.Group#GROUP
@@ -5805,7 +5819,13 @@ function WAREHOUSE:_RouteAir(aircraft)
 
     -- Give start command to activate uncontrolled aircraft within the next 60 seconds.
     local starttime=math.random(60)
-    aircraft:StartUncontrolled(starttime)
+    
+    local fc=_DATABASE:GetFlightControl(self.airbasename)
+    if fc then
+      --local flightgroup=FLIGHTGROUP:New(aircraft:GetName())
+    else
+      aircraft:StartUncontrolled(starttime)
+    end
 
     -- Debug info.
     self:T2(self.wid..string.format("RouteAir aircraft group %s alive=%s (after start command)", aircraft:GetName(), tostring(aircraft:IsAlive())))

@@ -1,4 +1,4 @@
---- **OPS** - (R2.5) - Manage recovery of aircraft at airdromes and FARPS.
+--- **OPS** - (R2.5) - Manage recovery of aircraft at airdromes.
 -- 
 -- 
 --
@@ -94,7 +94,7 @@ FLIGHTCONTROL = {
 
 --- FlightControl class version.
 -- @field #string version
-FLIGHTCONTROL.version="0.0.5"
+FLIGHTCONTROL.version="0.0.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -262,165 +262,6 @@ function FLIGHTCONTROL:onafterStatus()
   self:__Status(-30)
 end
 
---- Initialize data of runways.
--- @param #FLIGHTCONTROL self
-function FLIGHTCONTROL:_InitRunwayData()
-
-  -- Get spawn points on runway.
-  local runwaycoords=self.airbase:GetParkingSpotsCoordinates(AIRBASE.TerminalType.Runway)
-  
-  self:E(self.lid..string.format("Runway coords # = %d", #runwaycoords))
-  
-  for i=1,#runwaycoords,2 do
-    
-    -- Assuming each runway has two points.
-    local j=(i+1)/2
-  
-    -- Coordinates of the two runway points.
-    local c1=runwaycoords[i]   --Core.Point#COORDINATES
-    local c2=runwaycoords[i+1] --Core.Point#COORDINATES
-    
-    -- Debug mark
-    c1:MarkToAll("Runway Point 1")
-    c2:MarkToAll("Runway Point 2")
-   
-    -- Heading of runway.
-    local hdg=c1:HeadingTo(c2)
-    
-    -- Debug info.
-    self:T(self.lid..string.format("Runway %d heading=%03d", j, hdg))
-    
-    -- Runway table.
-    local runway={} --#FLIGHTCONTROL.Runway
-    runway.direction=hdg    
-    runway.length=c1:Get2DDistance(c2)    
-    runway.position=c1
-    
-    -- Add runway.
-    table.insert(self.runways, runway)
-    
-    -- Inverse runway.
-    local runway={} --#FLIGHTCONTROL.Runway
-    local hdg=hdg-180
-    if hdg<0 then
-      hdg=hdg+360
-    end
-    runway.direction=hdg
-    runway.length=c1:Get2DDistance(c2)    
-    runway.position=c2
-
-    -- Add inverse runway.
-    table.insert(self.runways, runway)    
-  end
-
-end
-
---- Get the active runway based on current wind direction.
--- @param #FLIGHTCONTROL self
--- @return #FLIGHTCONTROL.Runway Active runway.
-function FLIGHTCONTROL:_GetActiveRunway()
-  -- TODO: get runway.
-  local i=math.max(self.activerwyno, #self.runways)
-  return self.runways[i]
-end
-
---- Init parking spots.
--- @param #FLIGHTCONTROL self
-function FLIGHTCONTROL:_InitParkingSpots()
-
-  -- Parking spots of airbase.
-  local parkingdata=self.airbase:GetParkingSpotsTable()
-  
-  self.parking={}
-  
-  for _,_spot in pairs(parkingdata) do
-    local spot=_spot --Wrapper.Airbase#AIRBASE.ParkingData
-    
-    local parking={} --#FLIGHTCONTROL.ParkingSpot
-    
-    parking.position=spot.Coordinate
-    parking.drunway=spot.DistToRwy
-    parking.terminal=spot.TerminalType
-    parking.id=spot.TerminalID
-    parking.free=spot.Free
-    parking.reserved=spot.TOAC
-    
-    -- Mark position.
-    local text=string.format("ID=%d, Terminal=%d, Free=%s, Reserved=%s, Dist=%.1f", parking.id, parking.terminal, tostring(parking.free), tostring(parking.reserved), parking.drunway)
-    parking.markerid=parking.position:MarkToAll(text)
-    
-    -- Add to table.
-    table.insert(self.parking, parking)
-  end
-
-end
-
---- Get free parking spots.
--- @param #FLIGHTCONTROL self
--- @param #number terminal Terminal type or nil.
--- @return #number Number of free spots. Total if terminal=nil or of the requested terminal type.
--- @return #table Table of free parking spots of data type #FLIGHCONTROL.ParkingSpot.
-function FLIGHTCONTROL:_GetFreeParkingSpots(terminal)
-  
-  local freespots={}
-  
-  local n=0
-  for _,_parking in pairs(self.parking) do
-    local parking=_parking --#FLIGHTCONTROL.ParkingSpot
-    
-    if parking.free then
-      if terminal==nil or terminal==parking.terminal then
-        n=n+1
-        table.insert(freespots, parking)
-      end
-    end
-  end
-
-  return n,freespots
-end
-
---- Init parking spots.
--- @param #FLIGHTCONTROL self
-function FLIGHTCONTROL:_UpdateParkingSpots()
-
-  -- Parking spots of airbase.
-  local parkingdata=self.airbase:GetParkingSpotsTable()
-  
-  local message="Parking Spots:"
-  for _,_parkingspot in pairs(self.parking) do
-    local parking=_parkingspot --#FLIGHTCONTROL.ParkingSpot
-    
-    for _,_spot in pairs(parkingdata) do
-      local spot=_spot --Wrapper.Airbase#AIRBASE.ParkingSpot 
-    
-      if parking.id==spot.TerminalID then
-
-        parking.position=spot.Coordinate
-        parking.drunway=spot.DistToRwy
-        parking.terminal=spot.TerminalType
-        parking.id=spot.TerminalID
-        parking.free=spot.Free
-        parking.reserved=spot.TOAC
-        
-        -- Mark position.
-        if parking.markerid then
-          parking.position:RemoveMark(parking.markerid)
-        end
-        
-        local text=string.format("ID=%d, Terminal=%d, Free=%s, Reserved=%s, Dist=%.1f", parking.id, parking.terminal, tostring(parking.free), tostring(parking.reserved), parking.drunway)
-        message=message.."\n"..text
-        parking.markerid=parking.position:MarkToAll(text)
-          
-        break
-      end
-      
-    end
-  end
-
-  self:E(self.lid..message)
-end
-
-
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Event Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -528,26 +369,36 @@ end
 function FLIGHTCONTROL:_CheckQueues()
 
   -- Print queues
-  self:_PrintQueue(self.flights,  "All flights")
+  --self:_PrintQueue(self.flights,  "All flights")
   self:_PrintQueue(self.Qparking, "Parking")
   self:_PrintQueue(self.Qtakeoff, "Takeoff")
   self:_PrintQueue(self.Qwaiting, "Holding")
   self:_PrintQueue(self.Qlanding, "Landing")
+  
+  -- Number of groups landing.
+  local nlanding=#self.Qlanding
+    
+  -- Number of groups taking off.
+  local ntakeoff=#self.Qtakeoff
+  
+  -- Number of holding groups.
+  local nholding=#self.Qwaiting
+  
+  -- Number of parking groups.
+  local nparking=#self.Qparking  
 
-  -- Get next wairing flight.
-  local flight=self:_GetNextFightWaiting()
+  -- Get next flight in holding queue.
+  local flight=self:_GetNextFightHolding()
   
   if flight then
-  
-    -- Number of groups landing.
-    local nlanding=#self.Qlanding
-    
-    -- Number of groups taking off.
-    local ntakeoff=#self.Qtakeoff
     
     if nlanding==0 and ntakeoff==0 then
+    
+      -- Message.
       local text=string.format("Flight %s, you are cleared to taxi to runway.", flight.groupname)
-      MESSAGE:New(text, 5, "FLIGHTCONTROL"):ToAll()    
+      MESSAGE:New(text, 5, "FLIGHTCONTROL"):ToAll()
+      
+      flight:FlightLanding()
       self:_LandAI(flight)
     end
     
@@ -556,7 +407,9 @@ function FLIGHTCONTROL:_CheckQueues()
     -- Get next wairing flight.
     local flight=self:_GetNextFightParking()
     
-    if flight then
+    if flight and ntakeoff==0 and nlanding==0 then
+    
+      -- Message.
       local text=string.format("Flight %s, you are cleared to taxi to runway.", flight.groupname)
       MESSAGE:New(text, 5, "FLIGHTCONTROL"):ToAll()
       
@@ -571,60 +424,12 @@ function FLIGHTCONTROL:_CheckQueues()
 
 end
 
---- Check parking spots.
--- @param #FLIGHTCONTROL self
-function FLIGHTCONTROL:_CheckParking()
 
-  -- Init all elements as NOT parking anywhere.
-  for _,_flight in pairs(self.flights) do    
-    -- Loop over all elements.
-    for _,_element in pairs(_flight.elements) do
-      local element=_element --#FLIGHTCONTROL.FlightElement
-      element.parking=false
-    end
-  end
-
-  -- Loop over all parking spots.
-  for i,_spot in pairs(self.parking) do
-    local spot=_spot --#FLIGHTCONTROL.ParkingSpot
-    
-    -- Assume spot is free.
-    spot.free=true
-    
-    -- Loop over all flights.
-    for _,_flight in pairs(self.flights) do
-      local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
-    
-      -- Loop over all elements.
-      for _,_element in pairs(_flight.elements) do
-        local element=_element --Ops.FlightGroup#FLIGHTGROUP.Element
-        
-        if element.unit and element.unit:IsAlive() then
-
-          -- Distance to parking spot.
-          local dist=element.unit:GetCoordinate():Get3DDistance(spot.position)
-          
-          -- Element is parking on this spot
-          if dist<5 and not element.unit:InAir() then
-            element.parking=true
-            spot.free=false
-          end
-          
-        else
-          self:E(self.lid..string.format("ERROR: Element %s is not alive any more!", element.name))
-        end
-        
-      end
-    
-    
-    end
-  end
-end
 
 --- Get next flight waiting for landing clearance.
 -- @param #FLIGHTCONTROL self
 -- @return Ops.FlightGroup#FLIGHTGROUP Marshal flight next in line and ready to enter the pattern. Or nil if no flight is ready.
-function FLIGHTCONTROL:_GetNextFightWaiting()
+function FLIGHTCONTROL:_GetNextFightHolding()
 
   -- Loop over all marshal flights.
   for _,_flight in pairs(self.Qwaiting) do
@@ -730,51 +535,42 @@ end
 
 --- Add flight to landing queue and set recovered to false for all elements of the flight and its section members.
 -- @param #FLIGHTCONTROL self
--- @param Ops.FlightGroup#FLIGHTGROUP flight Flight group of element.
+-- @param Ops.FlightGroup#FLIGHTGROUP flight Flight group.
+-- @return #boolean If true, flight was added. False otherwise.
 function FLIGHTCONTROL:_AddFlightToLandingQueue(flight)
+
+  -- Check if already in queue.
+  if self:_InQueue(self.Qlanding, flight.group) then
+    return false
+  end
 
   -- Add flight to table.
   table.insert(self.Qlanding, flight)
   
-  -- Set flag to -1.
-  flight.flag=-1
+  -- Flight is not holding any more.
+  flight.Tholding=nil
   
-  -- New time stamp for time in pattern.
-  flight.time=timer.getAbsTime()
-  
-  -- Init recovered switch.
-  flight.recovered=false
-  for _,elem in pairs(flight.elements) do
-    elem.recoverd=false
-  end
-  
+  return true
 end
 
 --- Add flight to takeoff queue.
 -- @param #FLIGHTCONTROL self
--- @param Ops.FlightGroup#FLIGHTGROUP flight Flight group of element.
+-- @param Ops.FlightGroup#FLIGHTGROUP flight Flight group.
+-- @return #boolean If true, flight was added. False otherwise.
 function FLIGHTCONTROL:_AddFlightToTakeoffQueue(flight)
 
   -- Check if already in queue.
-  if self:_InQueue(self.Qtakeoff,flight.group) then
-    return
+  if self:_InQueue(self.Qtakeoff, flight.group) then
+    return false
   end
 
   -- Add flight to table.
   table.insert(self.Qtakeoff, flight)
   
-  -- Set flag to -1.
-  flight.flag=-1
-  
   -- New time stamp for time in pattern.
-  flight.time=timer.getAbsTime()
+  flight.Tholding=timer.getAbsTime()
   
-  -- Init recovered switch.
-  flight.tookoff=false
-  for _,elem in pairs(flight.elements) do
-    elem.tookoff=false
-  end
-  
+  return true
 end
 
 --- Check if a group is in a queue.
@@ -784,14 +580,244 @@ end
 -- @return #boolean If true, group is in the queue. False otherwise.
 function FLIGHTCONTROL:_InQueue(queue, group)
   local name=group:GetName()
+  
   for _,_flight in pairs(queue) do
     local flight=_flight  --Ops.FlightGroup#FLIGHTGROUP
     if name==flight.groupname then
       return true
     end
   end
+  
   return false
 end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Runway Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Initialize data of runways.
+-- @param #FLIGHTCONTROL self
+function FLIGHTCONTROL:_InitRunwayData()
+
+  -- Get spawn points on runway.
+  local runwaycoords=self.airbase:GetParkingSpotsCoordinates(AIRBASE.TerminalType.Runway)
+  
+  self:E(self.lid..string.format("Runway coords # = %d", #runwaycoords))
+  
+  for i=1,#runwaycoords,2 do
+    
+    -- Assuming each runway has two points.
+    local j=(i+1)/2
+  
+    -- Coordinates of the two runway points.
+    local c1=runwaycoords[i]   --Core.Point#COORDINATES
+    local c2=runwaycoords[i+1] --Core.Point#COORDINATES
+    
+    -- Debug mark
+    c1:MarkToAll("Runway Point 1")
+    c2:MarkToAll("Runway Point 2")
+   
+    -- Heading of runway.
+    local hdg=c1:HeadingTo(c2)
+    
+    -- Debug info.
+    self:T(self.lid..string.format("Runway %d heading=%03d", j, hdg))
+    
+    -- Runway table.
+    local runway={} --#FLIGHTCONTROL.Runway
+    runway.direction=hdg    
+    runway.length=c1:Get2DDistance(c2)    
+    runway.position=c1
+    
+    self:I(self.lid..string.format("Adding runway #%d: heading=%03d, lendth=%d m", #self.runways+1, runway.direction, runway.length))
+    
+    -- Add runway.
+    table.insert(self.runways, runway)
+    
+    -- Inverse runway.
+    local runway={} --#FLIGHTCONTROL.Runway
+    local hdg=hdg-180
+    if hdg<0 then
+      hdg=hdg+360
+    end
+    runway.direction=hdg
+    runway.length=c1:Get2DDistance(c2)    
+    runway.position=c2
+    
+    self:I(self.lid..string.format("Adding runway #%d: heading=%03d, lendth=%d m", #self.runways+1, runway.direction, runway.length))
+
+    -- Add inverse runway.
+    table.insert(self.runways, runway)    
+  end
+
+end
+
+--- Get the active runway based on current wind direction.
+-- @param #FLIGHTCONTROL self
+-- @return #FLIGHTCONTROL.Runway Active runway.
+function FLIGHTCONTROL:_GetActiveRunway()
+  -- TODO: get runway.
+  local i=math.max(self.activerwyno, #self.runways)
+  return self.runways[i]
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Parking Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Init parking spots.
+-- @param #FLIGHTCONTROL self
+function FLIGHTCONTROL:_InitParkingSpots()
+
+  -- Parking spots of airbase.
+  local parkingdata=self.airbase:GetParkingSpotsTable()
+  
+  self.parking={}
+  
+  for _,_spot in pairs(parkingdata) do
+    local spot=_spot --Wrapper.Airbase#AIRBASE.ParkingData
+    
+    local parking={} --#FLIGHTCONTROL.ParkingSpot
+    
+    parking.position=spot.Coordinate
+    parking.drunway=spot.DistToRwy
+    parking.terminal=spot.TerminalType
+    parking.id=spot.TerminalID
+    parking.free=spot.Free
+    parking.reserved=spot.TOAC
+    
+    -- Mark position.
+    local text=string.format("ID=%d, Terminal=%d, Free=%s, Reserved=%s, Dist=%.1f", parking.id, parking.terminal, tostring(parking.free), tostring(parking.reserved), parking.drunway)
+    parking.markerid=parking.position:MarkToAll(text)
+    
+    -- Add to table.
+    table.insert(self.parking, parking)
+  end
+
+end
+
+--- Check parking spots.
+-- @param #FLIGHTCONTROL self
+function FLIGHTCONTROL:_CheckParking()
+
+  -- Init all elements as NOT parking anywhere.
+  for _,_flight in pairs(self.flights) do    
+    -- Loop over all elements.
+    for _,_element in pairs(_flight.elements) do
+      local element=_element --#FLIGHTCONTROL.FlightElement
+      element.parking=false
+    end
+  end
+
+  -- Loop over all parking spots.
+  for i,_spot in pairs(self.parking) do
+    local spot=_spot --#FLIGHTCONTROL.ParkingSpot
+    
+    -- Assume spot is free.
+    spot.free=true
+    
+    -- Loop over all flights.
+    for _,_flight in pairs(self.flights) do
+      local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
+    
+      -- Loop over all elements.
+      for _,_element in pairs(_flight.elements) do
+        local element=_element --Ops.FlightGroup#FLIGHTGROUP.Element
+        
+        if element.unit and element.unit:IsAlive() then
+
+          -- Distance to parking spot.
+          local dist=element.unit:GetCoordinate():Get3DDistance(spot.position)
+          
+          -- Element is parking on this spot
+          if dist<5 and not element.unit:InAir() then
+            element.parking=true
+            spot.free=false
+          end
+          
+        else
+          self:E(self.lid..string.format("ERROR: Element %s is not alive any more!", element.name))
+        end
+        
+      end
+    
+    
+    end
+  end
+end
+
+--- Get free parking spots.
+-- @param #FLIGHTCONTROL self
+-- @param #number terminal Terminal type or nil.
+-- @return #number Number of free spots. Total if terminal=nil or of the requested terminal type.
+-- @return #table Table of free parking spots of data type #FLIGHCONTROL.ParkingSpot.
+function FLIGHTCONTROL:_GetFreeParkingSpots(terminal)
+  
+  local freespots={}
+  
+  local n=0
+  for _,_parking in pairs(self.parking) do
+    local parking=_parking --#FLIGHTCONTROL.ParkingSpot
+    
+    if parking.free then
+      if terminal==nil or terminal==parking.terminal then
+        n=n+1
+        table.insert(freespots, parking)
+      end
+    end
+  end
+
+  return n,freespots
+end
+
+--- Init parking spots.
+-- @param #FLIGHTCONTROL self
+function FLIGHTCONTROL:_UpdateParkingSpots()
+
+  -- Parking spots of airbase.
+  local parkingdata=self.airbase:GetParkingSpotsTable()
+  
+  local message="Parking Spots:"
+  for _,_parkingspot in pairs(self.parking) do
+    local parking=_parkingspot --#FLIGHTCONTROL.ParkingSpot
+    
+    for _,_spot in pairs(parkingdata) do
+      local spot=_spot --Wrapper.Airbase#AIRBASE.ParkingSpot 
+    
+      if parking.id==spot.TerminalID then
+
+        parking.position=spot.Coordinate
+        parking.drunway=spot.DistToRwy
+        parking.terminal=spot.TerminalType
+        parking.id=spot.TerminalID
+        parking.free=spot.Free
+        parking.reserved=spot.TOAC
+        
+        -- Mark position.
+        if parking.markerid then
+          parking.position:RemoveMark(parking.markerid)
+        end
+        
+        local text=string.format("ID=%d, Terminal=%d, Free=%s, Reserved=%s, Dist=%.1f", parking.id, parking.terminal, tostring(parking.free), tostring(parking.reserved), parking.drunway)
+        message=message.."\n"..text
+        parking.markerid=parking.position:MarkToAll(text)
+          
+        break
+      end
+      
+    end
+  end
+
+  self:E(self.lid..message)
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- ATIS Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- ATC Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Flight and Element Functions
@@ -1070,75 +1096,6 @@ function FLIGHTCONTROL:_WaitAI(flight, stack, respawn)
   
   flight:Hold(self.airbase, holding.pos0)
   
-  if true then
-    return
-  end
-
-  -- Flight group name.
-  local group=flight.group
-  local groupname=flight.groupname
-  
-  ----------------
-  -- Set Speeds --
-  ----------------
-
-  -- Aircraft speed 274 knots TAS ~= 250 KIAS when orbiting the pattern. (Orbit expects m/s.)
-  local speedOrbitMps=UTILS.KnotsToMps(274)
-  
-  -- Orbit speed in km/h for waypoints.
-  local speedOrbitKmh=UTILS.KnotsToKmph(274)
-  
-  -- Aircraft speed 400 knots when transiting to holding zone. (Waypoint expects km/h.)
-  local speedTransit=UTILS.KnotsToKmph(370)
-  
-  ---------------
-  -- Waypoints --
-  ---------------
-
-  -- Waypoints array to be filled depending on case etc.
-  local wp={}
-
-  -- Current position. Always good for as the first waypoint.
-  wp[1]=group:GetCoordinate():WaypointAirTurningPoint(nil, speedTransit, {}, "Current Position")
-  
-  -- Task function when arriving at the holding zone. This will set flight.holding=true.
-  local TaskHolding=flight.group:TaskFunction("FLIGHTCONTROL._ReachedHoldingZone", self, flight)
-  
-
-  
-  -- Set orbit task.
-  local TaskOrbit=group:TaskOrbit(holding.pos0, altitude, speedOrbitMps, holding.pos1)
-  
-  -- Orbit at waypoint.
-  wp[#wp+1]=holding.pos0:WaypointAirTurningPoint(nil, speedOrbitKmh, {TaskHolding, TaskOrbit}, string.format("Holding at Angels %d", angels))
-  
-  -- Debug markers.
-  if self.Debug then
-    holding.pos0:MarkToAll(string.format("Waiting Orbit of flight %s at Angels %s", groupname, angels))
-  end
-  
-  if respawn then
-  
-    -- This should clear the landing waypoints.  
-    -- Note: This resets the weapons and the fuel state. But not the units fortunately.
-
-    -- Get group template.
-    local Template=group:GetTemplate()
-    
-    -- Set route points.
-    Template.route.points=wp
-    
-    -- Respawn the group.
-    group=group:Respawn(Template, true)  
-    
-  end
-  
-  -- Reinit waypoints.
-  group:WayPointInitialize(wp)
-  
-  -- Route group.
-  group:Route(wp, 1)
-  
 end
 
 --- Tell AI to land at the airbase. Flight is added to the landing queue.
@@ -1157,29 +1114,6 @@ function FLIGHTCONTROL:_LandAI(flight)
   
   -- Remove flight from waiting queue.
   self:_RemoveFlightFromQueue(self.Qwaiting, flight, "holding")
-end
-
---- Function called when a group has reached the holding zone.
---@param Wrapper.Group#GROUP group Group that reached the holding zone.
---@param #FLIGHTCONTROL flightcontrol Flightcontrol object.
---@param Ops.FlightGroup#FLIGHTGROUP flight Flight group that has reached the holding zone.
-function FLIGHTCONTROL._ReachedHoldingZone(group, flightcontrol, flight)
-
-  -- Debug message.
-  local text=string.format("Flight %s reached holding zone.", group:GetName())
-  MESSAGE:New(text,10):ToAllIf(flightcontrol.Debug)
-  flightcontrol:T(flightcontrol.lid..text)
- 
-  -- Debug mark.
-  if flightcontrol.Debug then
-    group:GetCoordinate():MarkToAll(text)
-  end
-  
-  -- Set holding flag true and set timestamp for marshal time check.
-  if flight then
-    flight.holding=true
-    flight.time=timer.getAbsTime()
-  end
 end
 
 --- Get holding point.
