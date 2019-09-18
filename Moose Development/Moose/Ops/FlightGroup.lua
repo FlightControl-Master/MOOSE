@@ -41,6 +41,8 @@
 -- @field Ops.Squadron#SQUADRON squadron The squadron the flight group belongs to.
 -- @field Ops.FlightControl#FLIGHTCONTROL flightcontrol The flightcontrol handling this group.
 -- @field Core.UserFlag#USERFLAG flaghold Flag for holding.
+-- @field #number Tholding Abs. mission time stamp when the group reached the holding point.
+-- @field #number Tparking Abs. mission time stamp when the group was spawned uncontrolled and is parking.
 -- @extends Core.Fsm#FSM
 
 --- Be surprised!
@@ -83,6 +85,8 @@ FLIGHTGROUP = {
   squadron           =   nil,
   flightcontrol      =   nil,
   flaghold           =   nil,
+  Tholding           =   nil,
+  Tparking           =   nil,
 }
 
 
@@ -592,6 +596,21 @@ end
 function FLIGHTGROUP:IsDead()
   return self:Is("Dead")
 end
+
+--- Check if flight low on fuel.
+-- @param #FLIGHTGROUP self
+-- @return #boolean If true, flight is low on fuel.
+function FLIGHTGROUP:IsFuelLow()
+  return self.fuellow
+end
+
+--- Check if flight critical on fuel
+-- @param #FLIGHTGROUP self
+-- @return #boolean If true, flight is critical on fuel.
+function FLIGHTGROUP:IsFuelCritical()
+  return self.fuelcritical
+end
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start & Status
@@ -1127,6 +1146,9 @@ function FLIGHTGROUP:onafterFlightParking(From, Event, To)
   local airbase=self.group:GetCoordinate():GetClosestAirbase()
   
   local airbasename=airbase:GetName() or "unknown"
+  
+  -- Parking time stamp.
+  self.Tparking=timer.getAbsTime()
 
   local flightcontrol=_DATABASE:GetFlightControl(airbasename)
   
@@ -1135,7 +1157,8 @@ function FLIGHTGROUP:onafterFlightParking(From, Event, To)
   
     if self.flightcontrol then
     
-      table.insert(self.flightcontrol.Qparking, self) 
+      -- Add flight to parking queue, waiting for takeoff cleance.
+      self.flightcontrol:_AddFlightToParkingQueue(self)
       
     end
   end  
@@ -1150,12 +1173,19 @@ end
 -- @param #string To To state.
 function FLIGHTGROUP:onafterFlightTaxiing(From, Event, To)
   self:I(self.sid..string.format("Flight is taxiing %s.", self.groupname))
+  
+  -- Parking over.
+  self.Tparking=nil
 
   -- TODO: need a better check for the airbase.
   local airbase=self.group:GetCoordinate():GetClosestAirbase(nil, self.group:GetCoalition())
 
   if self.flightcontrol and airbase and self.flightcontrol.airbasename==airbase:GetName() then
+    -- Add flight to takeoff queue.
     self.flightcontrol:_AddFlightToTakeoffQueue(self)
+    
+    -- Remove flight from parking queue.
+    self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qparking, self, "parking")
   end
 
 end
@@ -1189,7 +1219,7 @@ function FLIGHTGROUP:onafterFlightAirborne(From, Event, To, airbase)
 
   -- Remove flight from FC takeoff queue.
   if self.flightcontrol and airbase and self.flightcontrol.airbasename==airbase:GetName() then
-    self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qtakeoff, self, "takeoff")
+    --self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qtakeoff, self, "takeoff")
   end
   
   -- Update queue.
@@ -1197,7 +1227,7 @@ function FLIGHTGROUP:onafterFlightAirborne(From, Event, To, airbase)
   
 end
 
---- On after "FlightLanded" event.
+--- On after "FlightLanding" event.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -1353,12 +1383,13 @@ end
 -- @param Wrapper.Airbase#AIRBASE airbase The airbase to hold at.
 -- @param #number SpeedTo Speed used for travelling from current position to holding point in knots. Default 350 kts.
 -- @param #number SpeedHold Holding speed in knots. Default 250 kts.
-function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold)
+-- @param #number SpeedLand Landing speed in knots. Default 170 kts.
+function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold, SpeedLand)
   
   -- Defaults:
   SpeedTo=SpeedTo or 350
   SpeedHold=SpeedHold or 250
-  local SpeedLand=190
+  local SpeedLand=170
 
   -- Debug message.
   local text=string.format("Flight group set to hold at airbase %s", airbase:GetName())
@@ -1371,6 +1402,16 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold)
   local p1=nil
   local wpap=nil
   
+  -- Altitude above ground for a glide slope of 3°.
+  local alpha=math.rad(3)
+  local x1=UTILS.NMToMeters(10)
+  local x2=UTILS.NMToMeters(5)
+  local h1=x1*math.tan(alpha)
+  local h2=x2*math.tan(alpha)
+  
+  -- Get a landing point
+  local pland=airbase:GetZone():GetRandomCoordinate(x2,x1):SetAltitude(x2)
+  
   -- Do we have a flight control?
   local fc=_DATABASE:GetFlightControl(airbase:GetName())
   if fc then
@@ -1379,21 +1420,23 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold)
     p0=HoldingPoint.pos0
     p1=HoldingPoint.pos1
     
-    p0:MarkToAll("P0")
-    p1:MarkToAll("P1")
+    -- Debug marks.
+    p0:MarkToAll("Holding point P0")
+    p1:MarkToAll("Holding point P1")
     
     -- Get active runway.
-    local runway=fc:_GetActiveRunway()
+    local runway=fc:GetActiveRunway()
+    
+    -- Approach point: 10 NN in direction of runway.
+    local papp=airbase:GetCoordinate():Translate(x1, runway.direction-180):SetAltitude(h1)
+    papp:MarkToAll(string.format("Final Approach: d=%d m, h=%d m", x1, h1))
+    wpap=papp:WaypointAirTurningPoint(nil, UTILS.KnotsToKmph(SpeedLand), {}, "Final Approach")    
   
     -- TODO: make dependend on AC type helos etc.
   
     -- Approach point: 10 NN in direction of runway.
-    local papproach=airbase:GetCoordinate():Translate(UTILS.NMToMeters(10), runway.direction-180):SetAltitude(UTILS.FeetToMeters(3000))
-    
-    papproach:MarkToAll("Final Approach")
-  
-    -- Approach waypoint.
-    wpap=papproach:WaypointAirTurningPoint(nil, UTILS.KnotsToKmph(SpeedLand), {}, "Final Approach")
+    pland=airbase:GetCoordinate():Translate(x2, runway.direction-180):SetAltitude(h2)
+    pland:MarkToAll(string.format("Landing: d=%d m, h=%d m", x2, h2))
     
     -- Set flightcontrol for this flight.
     self:SetFlightControl(fc)
@@ -1417,8 +1460,13 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold)
   wp[#wp+1]=                        p0:WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {TaskArrived, TaskControlled}, "Holding Point")
   if wpap then
     wp[#wp+1]=wpap
-  end
-  wp[#wp+1]=airbase:GetCoordinate():SetAltitude(UTILS.FeetToMeters(500)):WaypointAirLanding(UTILS.KnotsToKmph(SpeedLand), airbase, {}, "Landing")
+  end  
+  
+  -- Okay, it looks like it's best to specify the coordinates not at the airbase but a bit away. This causes a more direct landing approach.
+  wp[#wp+1]=pland:WaypointAirLanding(UTILS.KnotsToKmph(SpeedLand), airbase, {}, "Landing")
+  
+  -- This is NOT good! It causes the AC to fly to the airbase and then start landing, i.e. go back.
+  --wp[#wp+1]=airbase:GetCoordinate():SetAltitude(UTILS.FeetToMeters(0)):WaypointAirLanding(UTILS.KnotsToKmph(SpeedLand), airbase, {}, "Landing")
   
   local respawn=true
   
@@ -1440,21 +1488,6 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold)
   -- Route the group.
   self.group:Route(wp, 1)
   
-end
-
---- Function called when flight has reached the holding point.
--- @param Wrapper.Group#GROUP group Group object.
--- @param #FLIGHTGROUP flightgroup Flight group object.
-function FLIGHTGROUP._ReachedHolding(group, flightgroup)
-  env.info(string.format("FF group %s reached holding point", group:GetName()))
-  group:GetCoordinate():MarkToAll("Holding Point Reached")
-  
-  flightgroup.flaghold:Set(666)
-  
-  -- Add flight to waiting/holding queue.
-  if flightgroup.flightcontrol then
-    table.insert(flightgroup.flightcontrol.Qwaiting, flightgroup)
-  end
 end
 
 --- On after TaskExecute event.
@@ -1696,6 +1729,68 @@ function FLIGHTGROUP._TaskDone(group, flightgroup, task)
   end
 end
 
+--- Function called when a group is passing a waypoint.
+--@param Wrapper.Group#GROUP group Group that passed the waypoint
+--@param #FLIGHTGROUP flightgroup Flightgroup object.
+--@param #number i Waypoint number that has been reached.
+function FLIGHTGROUP._PassingWaypoint(group, flightgroup, i)
+
+  local final=#flightgroup.waypoints or 1
+
+  -- Debug message.
+  local text=string.format("Group %s passing waypoint %d of %d.", group:GetName(), i, final)
+
+  -- Debug smoke and marker.
+  if flightgroup.Debug then
+    local pos=group:GetCoordinate()
+    --pos:SmokeRed()
+    local MarkerID=pos:MarkToAll(string.format("Group %s reached waypoint %d", group:GetName(), i))
+  end
+
+  -- Debug message.
+  --MESSAGE:New(text,10):ToAllIf(flightgroup.Debug)
+  flightgroup:T2(flightgroup.sid..text)
+
+  -- Set current waypoint.
+  flightgroup.currentwp=i
+
+  -- Passing Waypoint event.
+  flightgroup:PassingWaypoint(i, final)
+
+  -- If final waypoint reached, do route all over again.
+  if i==final and final>1 then
+    --TODO: final waypoint reached! what next?
+  end
+end
+
+--- Function called when flight has reached the holding point.
+-- @param Wrapper.Group#GROUP group Group object.
+-- @param #FLIGHTGROUP flightgroup Flight group object.
+function FLIGHTGROUP._ReachedHolding(group, flightgroup)
+  env.info(string.format("FF group %s reached holding point", group:GetName()))
+  group:GetCoordinate():MarkToAll("Holding Point Reached")
+  
+  flightgroup.flaghold:Set(666)
+  
+  -- Add flight to waiting/holding queue.
+  if flightgroup.flightcontrol then
+    flightgroup.flightcontrol:_AddFlightToHoldingQueue(flightgroup)
+  end
+end
+
+--- Update route of group, e.g after new waypoints and/or waypoint tasks have been added.
+-- @param Wrapper.Group#GROUP group The Moose group object.
+-- @param #FLIGHTGROUP flightgroup The flight group object.
+-- @param Wrapper.Airbase#AIRBASE destination Destination airbase
+function FLIGHTGROUP._DestinationOverhead(group, flightgroup, destination)
+
+  -- Tell the flight to hold.
+  -- WARNING: This needs to be delayed or we get a CTD!
+  flightgroup:__Hold(1, destination)
+
+end
+
+
 --- Route flight group back to base.
 -- @param #FLIGHTGROUP self
 -- @param Wrapper.Airbase#AIRBASE RTBAirbase
@@ -1868,7 +1963,7 @@ function FLIGHTGROUP:GetHomebaseFromWaypoints()
   
   if wp then
     
-    if wp and wp.action and wp.action==COORDINATE.WaypointAction.Landing then
+    if wp and wp.action and wp.action==COORDINATE.WaypointAction.FromParkingArea or wp.action==COORDINATE.WaypointAction.FromParkingAreaHot or wp.action==COORDINATE.WaypointAction.FromRunway  then
       
       -- Get airbase ID depending on airbase category.
       local airbaseID=wp.airdromeId or wp.helipadId
@@ -2010,8 +2105,10 @@ function FLIGHTGROUP:_UpdateRoute(n)
   if self.destination and #wp>0 then
   
     local TaskOverhead=self.group:TaskFunction("FLIGHTGROUP._DestinationOverhead", self, self.destination)
+    
+    local coordoverhead=self.destination:GetZone():GetRandomCoordinate():SetAltitude(UTILS.FeetToMeters(6000))
   
-    local wpoverhead=self.destination:GetCoordinate():SetAltitude(3000):WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint, 500, false, nil, {TaskOverhead}, "Destination Overhead")
+    local wpoverhead=coordoverhead:WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint, 500, false, nil, {TaskOverhead}, "Destination Overhead")
     self:I(self.sid..string.format("Adding overhead waypoint as #%d", #wp))
     table.insert(wp, #wp, wpoverhead)
   end
@@ -2049,18 +2146,6 @@ function FLIGHTGROUP:_UpdateRoute(n)
   end
   
   return self
-end
-
---- Update route of group, e.g after new waypoints and/or waypoint tasks have been added.
--- @param Wrapper.Group#GROUP group The Moose group object.
--- @param #FLIGHTGROUP flightgroup The flight group object.
--- @param Wrapper.Airbase#AIRBASE destination Destination airbase
-function FLIGHTGROUP._DestinationOverhead(group, flightgroup, destination)
-
-  -- Tell the flight to hold.
-  -- WARNING: This needs to be delayed or we get a CTD!
-  flightgroup:__Hold(1, destination)
-
 end
 
 --- Initialize Mission Editor waypoints.
@@ -2148,43 +2233,6 @@ function FLIGHTGROUP:InitWaypoints(waypoints)
 
   return self
 end
-
---- Function called when a group is passing a waypoint.
---@param Wrapper.Group#GROUP group Group that passed the waypoint
---@param #FLIGHTGROUP flightgroup Flightgroup object.
---@param #number i Waypoint number that has been reached.
-function FLIGHTGROUP._PassingWaypoint(group, flightgroup, i)
-
-  local final=#flightgroup.waypoints or 1
-
-  -- Debug message.
-  local text=string.format("Group %s passing waypoint %d of %d.", group:GetName(), i, final)
-
-  -- Debug smoke and marker.
-  if flightgroup.Debug then
-    local pos=group:GetCoordinate()
-    --pos:SmokeRed()
-    local MarkerID=pos:MarkToAll(string.format("Group %s reached waypoint %d", group:GetName(), i))
-  end
-
-  -- Debug message.
-  --MESSAGE:New(text,10):ToAllIf(flightgroup.Debug)
-  flightgroup:T2(flightgroup.sid..text)
-
-  -- Set current waypoint.
-  flightgroup.currentwp=i
-
-  -- Passing Waypoint event.
-  flightgroup:PassingWaypoint(i, final)
-
-  -- If final waypoint reached, do route all over again.
-  if i==final and final>1 then
-    --TODO: final waypoint reached! what next?
-  end
-end
-
-
-
 
 --- Check if a unit is and element of the flightgroup.
 -- @param #FLIGHTGROUP self

@@ -1097,8 +1097,6 @@ function UNIT:GetTemplate()
     
       for _,unit in pairs(template.units) do
       
-        self:I(string.format("FF template unit %s = %s", unit.name, name))
-      
         if unit.name==name then
           return UTILS.DeepCopy(unit) 
         end

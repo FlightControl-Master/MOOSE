@@ -1081,10 +1081,8 @@ do -- COORDINATE
       elseif AirbaseCategory == Airbase.Category.AIRDROME then
         RoutePoint.airdromeId = AirbaseID
       else
-        self:T("ERROR: Unknown airbase category in COORDINATE:WaypointAir()!")
+        self:E("ERROR: Unknown airbase category in COORDINATE:WaypointAir()!")
       end
-      
-      --self:MarkToAll(string.format("Landing waypoint at airbase %s, ID=%d, Category=%d", airbase:GetName(), AirbaseID, AirbaseCategory  ))
     end
     
     -- Time in minutes to stay at the airbase before resuming route. 
@@ -1104,7 +1102,7 @@ do -- COORDINATE
     --RoutePoint.formation_template=""
 
     -- Debug.
-    self:T({RoutePoint=RoutePoint})
+    self:I({RoutePoint=RoutePoint})
     
     -- Return waypoint.
     return RoutePoint

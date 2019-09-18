@@ -249,7 +249,7 @@ function FLIGHTCONTROL:onafterStatus()
   self:_CheckQueues()
   
   -- Get runway.
-  local runway=self:_GetActiveRunway()
+  local runway=self:GetActiveRunway()
   
   -- Get free parking spots.
   local nfree=self:_GetFreeParkingSpots()  
@@ -385,30 +385,24 @@ function FLIGHTCONTROL:_CheckQueues()
   local nholding=#self.Qwaiting
   
   -- Number of parking groups.
-  local nparking=#self.Qparking  
+  local nparking=#self.Qparking
 
-  -- Get next flight in holding queue.
-  local flight=self:_GetNextFightHolding()
+  local flight, isholding=self:_GetNextFight()
   
-  if flight then
+
+  if flight and ntakeoff==0 and nlanding==0 then  
     
-    if nlanding==0 and ntakeoff==0 then
-    
+    if isholding then
+
       -- Message.
-      local text=string.format("Flight %s, you are cleared to taxi to runway.", flight.groupname)
+      local text=string.format("Flight %s, you are cleared to land.", flight.groupname)
       MESSAGE:New(text, 5, "FLIGHTCONTROL"):ToAll()
       
       flight:FlightLanding()
       self:_LandAI(flight)
-    end
     
-  else
-  
-    -- Get next wairing flight.
-    local flight=self:_GetNextFightParking()
-    
-    if flight and ntakeoff==0 and nlanding==0 then
-    
+    else
+
       -- Message.
       local text=string.format("Flight %s, you are cleared to taxi to runway.", flight.groupname)
       MESSAGE:New(text, 5, "FLIGHTCONTROL"):ToAll()
@@ -418,12 +412,52 @@ function FLIGHTCONTROL:_CheckQueues()
       flight:_UpdateRoute(1)
       
       self:_RemoveFlightFromQueue(self.Qparking, flight, "parking")
+    
     end
-  
+    
   end
 
 end
 
+--- Get next flight in line, either waiting for landing or waiting for takeoff.
+-- @param #FLIGHTCONTROL self
+-- @return Ops.FlightGroup#FLIGHTGROUP Marshal flight next in line and ready to enter the pattern. Or nil if no flight is ready.
+-- @return #boolean If true, flight is holding and waiting for landing, if false, flight is parking and waiting for takeoff.
+function FLIGHTCONTROL:_GetNextFight()
+
+  local flightholding=self:_GetNextFightHolding()
+  local flightparking=self:_GetNextFightParking()
+  
+  -- If no flight is waiting for takeoff return the holding flight or nil.
+  if not flightparking then
+    return flightholding, true
+  end
+  
+  -- If no flight is waiting for landing return the takeoff flight or nil.
+  if not flightholding then
+    return flightparking, false
+  end
+  
+  -- We got flights waiting for landing and for takeoff.
+  if flightholding and flightparking then
+  
+    -- Return holding flight if fuel is low.
+    if flightholding.fuellow then
+      return flightholding, true
+    end
+    
+    
+    -- Return the flight which is waiting longer.
+    if flightholding.Tholding<flightparking.Tparking then
+      return flightholding, true
+    else
+      return flightparking, false
+    end
+    
+  end
+
+  return nil, nil
+end
 
 
 --- Get next flight waiting for landing clearance.
@@ -431,17 +465,46 @@ end
 -- @return Ops.FlightGroup#FLIGHTGROUP Marshal flight next in line and ready to enter the pattern. Or nil if no flight is ready.
 function FLIGHTCONTROL:_GetNextFightHolding()
 
+  if #self.Qwaiting==0 then
+    return nil
+  end
+
+  -- Sort flights by low fuel
+  local function _sortByFuel(a, b)
+    local flightA=a --Ops.FlightGroup#FLIGHTGROUP
+    local flightB=b --Ops.FlightGroup#FLIGHTGROUP
+    local fuelA=flightA.group:GetFuelMin()
+    local fuelB=flightB.group:GetFuelMin()
+    return fuelA<fuelB
+  end
+
+  -- Sort flights by holding time.
+  local function _sortByTholding(a, b)
+    local flightA=a --Ops.FlightGroup#FLIGHTGROUP
+    local flightB=b --Ops.FlightGroup#FLIGHTGROUP
+    return flightA.Tholding<flightB.Tholding
+  end
+
+
+  -- Sort flights by fuel.
+  table.sort(self.Qwaiting, _sortByFuel)
+  
   -- Loop over all marshal flights.
   for _,_flight in pairs(self.Qwaiting) do
     local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
     
-    -- TODO: Sort by fuel, holding time.
-    
-    return flight
+    -- Return flight that is lowest on fuel.
+    if flight.fuellow then  
+      return flight
+    end
     
   end
+  
 
-  return nil
+  -- Return flight waiting longest.
+  table.sort(self.Qwaiting, _sortByTholding)  
+  return self.Qwaiting[1]
+
 end
 
 
@@ -450,17 +513,21 @@ end
 -- @return Ops.FlightGroup#FLIGHTGROUP Marshal flight next in line and ready to enter the pattern. Or nil if no flight is ready.
 function FLIGHTCONTROL:_GetNextFightParking()
 
-  -- Loop over all marshal flights.
-  for _,_flight in pairs(self.Qparking) do
-    local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
-    
-    -- TODO: Sort by fuel, holding time.
-    
-    return flight
-    
+  if #self.Qparking==0 then
+    return nil
   end
 
-  return nil
+  -- Sort flights parking time.
+  local function _sortByTholding(a, b)
+    local flightA=a --Ops.FlightGroup#FLIGHTGROUP
+    local flightB=b --Ops.FlightGroup#FLIGHTGROUP
+    return flightA.Tparking<flightB.Tparking
+  end
+
+  -- Return flight waiting longest.
+  table.sort(self.Qwaiting, _sortByTholding)  
+  return self.Qparking[1]
+
 end
 
 --- Print queue.
@@ -533,6 +600,27 @@ function FLIGHTCONTROL:_RemoveFlightFromQueue(queue, flight, queuename)
   return false, nil
 end
 
+--- Add flight to holding queue.
+-- @param #FLIGHTCONTROL self
+-- @param Ops.FlightGroup#FLIGHTGROUP flight Flight group.
+-- @return #boolean If true, flight was added. False otherwise.
+function FLIGHTCONTROL:_AddFlightToHoldingQueue(flight)
+
+  -- Check if already in queue.
+  if self:_InQueue(self.Qwaiting, flight.group) then
+    return false
+  end
+
+  -- Add flight to table.
+  table.insert(self.Qwaiting, flight)
+  
+  -- Flight is not holding any more.
+  flight.Tholding=timer.getAbsTime()
+  
+  return true
+end
+
+
 --- Add flight to landing queue and set recovered to false for all elements of the flight and its section members.
 -- @param #FLIGHTCONTROL self
 -- @param Ops.FlightGroup#FLIGHTGROUP flight Flight group.
@@ -553,6 +641,26 @@ function FLIGHTCONTROL:_AddFlightToLandingQueue(flight)
   return true
 end
 
+--- Add flight to parking queue.
+-- @param #FLIGHTCONTROL self
+-- @param Ops.FlightGroup#FLIGHTGROUP flight Flight group.
+-- @return #boolean If true, flight was added. False otherwise.
+function FLIGHTCONTROL:_AddFlightToParkingQueue(flight)
+
+  -- Check if already in queue.
+  if self:_InQueue(self.Qparking, flight.group) then
+    return false
+  end
+
+  -- Add flight to table.
+  table.insert(self.Qparking, flight)
+  
+  -- Flight is not holding any more.
+  flight.Tparking=timer.getAbsTime()
+  
+  return true
+end
+
 --- Add flight to takeoff queue.
 -- @param #FLIGHTCONTROL self
 -- @param Ops.FlightGroup#FLIGHTGROUP flight Flight group.
@@ -567,8 +675,8 @@ function FLIGHTCONTROL:_AddFlightToTakeoffQueue(flight)
   -- Add flight to table.
   table.insert(self.Qtakeoff, flight)
   
-  -- New time stamp for time in pattern.
-  flight.Tholding=timer.getAbsTime()
+  -- New time stamp for time waiting for takeoff.
+  flight.Tparking=nil
   
   return true
 end
@@ -652,13 +760,63 @@ function FLIGHTCONTROL:_InitRunwayData()
 
 end
 
+--- Get wind.
+-- @param #FLIGHTCONTROL self
+-- @return #FLIGHTCONTROL.Runway Active runway.
+function FLIGHTCONTROL:GetWindVector(altitude)
+
+end
+
 --- Get the active runway based on current wind direction.
 -- @param #FLIGHTCONTROL self
 -- @return #FLIGHTCONTROL.Runway Active runway.
-function FLIGHTCONTROL:_GetActiveRunway()
+function FLIGHTCONTROL:GetActiveRunway()
+
   -- TODO: get runway.
-  local i=math.max(self.activerwyno, #self.runways)
-  return self.runways[i]
+  local iact=math.max(self.activerwyno, #self.runways)
+
+  -- Get wind vector.
+  local Vwind=self:GetCoordinate():GetWindWithTurbulenceVec3()
+  local norm=UTILS.VecNorm(Vwind)
+  
+  -- Check if wind is blowing (norm>0).
+  if norm>0 then
+  
+    -- Normalize wind (not necessary).
+    Vwind.x=Vwind.x/norm
+    Vwind.y=0
+    Vwind.z=Vwind.z/norm
+    
+    -- Debug.
+    self:T3({Vwind=Vwind})
+    
+    -- Loop over runways.
+    local dotmin=nil
+    for i,_runway in pairs(self.runways) do
+      local runway=_runway --#FLIGHTCONTROL.Runway
+      
+      -- Angle in rad.
+      local alpha=math.rad(runway.direction)
+      
+      -- Runway vector.
+      local Vrunway={x=math.cos(alpha), y=0, z=math.sin(alpha)}
+      
+      -- Dot product: parallel component of the two vectors.
+      local dot=UTILS.VecDot(Vwind, Vrunway)
+      
+      -- Debug.
+      env.info(string.format("runway=%03d° dot=%.3f", runway.direction, dot))
+      
+      -- New min?
+      if dotmin==nil or dot<dotmin then
+        dotmin=dot
+        iact=i
+      end
+      
+    end
+  end
+  
+  return self.runways[iact]
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1107,7 +1265,8 @@ function FLIGHTCONTROL:_LandAI(flight)
   self:I(self.lid..string.format("Landing AI flight %s.", flight.groupname))
 
   -- Add flight to landing queue.
-  table.insert(self.Qlanding, flight)
+  --table.insert(self.Qlanding, flight)
+  self:_AddFlightToLandingQueue(flight)
   
   -- Give signal to land.
   flight.flaghold:Set(1)
@@ -1124,7 +1283,7 @@ function FLIGHTCONTROL:_GetHoldingpoint(flight)
 
   local holdingpoint={} --#FLIGHTCONTROL.HoldingPoint
   
-  local runway=self:_GetActiveRunway()
+  local runway=self:GetActiveRunway()
   
   local hdg=runway.direction+90
   local dx=UTILS.NMToMeters(5)

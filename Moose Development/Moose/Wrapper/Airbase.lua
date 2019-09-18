@@ -13,6 +13,8 @@
 
 
 --- @type AIRBASE
+-- @field #string ClassName Name of the class, i.e. "AIRBASE".
+-- @field #table CategoryName Names of airbase categories.
 -- @extends Wrapper.Positionable#POSITIONABLE
 
 --- Wrapper class to handle the DCS Airbase objects:
@@ -990,3 +992,8 @@ function AIRBASE._CheckTerminalType(Term_Type, termtype)
   
   return match
 end
+
+
+
+
+

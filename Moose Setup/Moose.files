@@ -68,6 +68,7 @@ Ops/RecoveryTanker.lua
 Ops/RescueHelo.lua
 Ops/FlightControl.lua
 Ops/Skipper.lua
+Ops/ATIS.lua
 
 AI/AI_Balancer.lua
 AI/AI_Air.lua
