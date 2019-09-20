@@ -22,6 +22,7 @@
 -- @field #number modulation Radio modulation 0=AM or 1=FM.
 -- @field Core.RadioQueue#RADIOQUEUE radioqueue Radio queue for broadcasing messages.
 -- @field #string soundpath Path to sound files.
+-- @field #string relayunitname Name of the radio relay unit.
 -- @extends Core.Fsm#FSM
 
 --- Be surprised!
@@ -46,6 +47,7 @@ ATIS = {
   modulation     =   nil,
   radioqueue     =   nil,
   soundpath      =   nil,
+  relayunitname  =   nil,
 }
 
 --- ATIS class version.
@@ -92,8 +94,8 @@ function ATIS:New(airbasename, frequency, modulation)
   --                 From State  -->   Event      -->     To State
   self:AddTransition("Stopped",       "Start",           "Running")     -- Start FSM.
   self:AddTransition("*",             "Status",          "*")           -- Update status.
-  self:AddTransition("*",             "Broadcast",       "*")           -- Update status.
-  self:AddTransition("*",             "CheckQueue",      "*")           -- Update status.
+  self:AddTransition("*",             "Broadcast",       "*")           -- Broadcast ATIS message.
+  self:AddTransition("*",             "CheckQueue",      "*")           -- Check if radio queue is empty.
   
   ------------------------
   --- Pseudo Functions ---
@@ -123,8 +125,6 @@ function ATIS:New(airbasename, frequency, modulation)
     BASE:TraceClass(self.ClassName)
     BASE:TraceLevel(1)
   end
-  
-  self:__Start(1)
 
   return self
 end
@@ -142,6 +142,14 @@ function ATIS:SetSoundfilesPath(path)
   self:I(self.lid..string.format("Setting sound files path to %s", self.soundpath))
 end
 
+--- Set sound files folder within miz file.
+-- @param #ATIS self
+-- @param #string unitname
+-- @return #ATIS self
+function ATIS:SetRadioRelayUnitName(unitname)
+  self.relayunitname=unitname
+  self:I(self.lid..string.format("Setting radio relay unit to %s", self.relayunitname))
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start & Status
@@ -158,24 +166,24 @@ function ATIS:onafterStart(From, Event, To)
   self.radioqueue=RADIOQUEUE:New(self.frequency, self.modulation)
   
   self.radioqueue:SetSenderCoordinate(self.airbase:GetCoordinate())
+  self.radioqueue:SetSenderUnitName(self.relayunitname)
   
-  self.radioqueue:Start(1, 0.01)
+  self.radioqueue:SetDigit(0, "N-0.ogg", 0.55, self.soundpath)
+  self.radioqueue:SetDigit(1, "N-1.ogg", 0.40, self.soundpath)
+  self.radioqueue:SetDigit(2, "N-2.ogg", 0.35, self.soundpath)
+  self.radioqueue:SetDigit(3, "N-3.ogg", 0.40, self.soundpath)
+  self.radioqueue:SetDigit(4, "N-4.ogg", 0.36, self.soundpath)
+  self.radioqueue:SetDigit(5, "N-5.ogg", 0.42, self.soundpath)
+  self.radioqueue:SetDigit(6, "N-6.ogg", 0.53, self.soundpath)
+  self.radioqueue:SetDigit(7, "N-7.ogg", 0.42, self.soundpath)
+  self.radioqueue:SetDigit(8, "N-8.ogg", 0.37, self.soundpath)
+  self.radioqueue:SetDigit(9, "N-9.ogg", 0.38, self.soundpath)
   
-  self.radioqueue:SetDigit(0, "0-continue.wav", 0.8, self.soundpath)
-  self.radioqueue:SetDigit(1, "1-continue.wav", 0.8, self.soundpath)
-  self.radioqueue:SetDigit(2, "2-continue.wav", 0.8, self.soundpath)
-  self.radioqueue:SetDigit(3, "3-continue.wav", 0.8, self.soundpath)
-  self.radioqueue:SetDigit(4, "4-continue.wav", 0.8, self.soundpath)
-  self.radioqueue:SetDigit(5, "5-continue.wav", 0.8, self.soundpath)
-  self.radioqueue:SetDigit(6, "6-continue.wav", 0.8, self.soundpath)
-  self.radioqueue:SetDigit(7, "7-continue.wav", 0.8, self.soundpath)
-  self.radioqueue:SetDigit(8, "8-continue.wav", 0.8, self.soundpath)
-  self.radioqueue:SetDigit(9, "9-continue.wav", 0.8, self.soundpath)
-  
+  self.radioqueue:Start(1, 0.05)
 
   -- Init status updates.
-  self:__Status(-1)
-  self:__CheckQueue(-2)
+  self:__Status(-2)
+  self:__CheckQueue(-3)
 end
 
 --- Update status.
@@ -188,7 +196,7 @@ function ATIS:onafterStatus(From, Event, To)
   local text=string.format("State %s", fsmstate)
   self:I(self.lid..text)
   
-  self:__Status(-30)
+  self:__Status(30)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -202,17 +210,106 @@ function ATIS:onafterCheckQueue(From, Event, To)
   if #self.radioqueue.queue==0 then
     self:I(self.lid..string.format("Radio queue empty. Repeating message."))
     self:Broadcast()
+  else
+    self:I(self.lid..string.format("Radio queue %d transmissions queued.", #self.radioqueue.queue))
   end
   
   -- Check back in 5 seconds.
-  self:__CheckQueue(-5)
+  self:__CheckQueue(5)
 end
 
 --- Update status.
 -- @param #ATIS self
 function ATIS:onafterBroadcast(From, Event, To)
 
-  self.radioqueue:Number2Transmission("0123456789", 0, 0)
+  local coord=self.airbase:GetCoordinate()
+  
+  local height=coord:GetLandHeight()
+  
+  ----------------
+  --- Pressure ---
+  ----------------
+  local qfe=coord:GetPressure(height+5)
+  local qnh=coord:GetPressure(0)
+  
+  -- Convert to inHg
+  qfe=UTILS.hPa2inHg(qfe)
+  qnh=UTILS.hPa2inHg(qnh)
+      
+  local QFE=UTILS.Split(string.format("%.2f", qfe), ".")
+  local QNH=UTILS.Split(string.format("%.2f", qnh), ".")
+  
+  
+  local runway=self.airbase:GetActiveRunway()
+  
+  local windFrom, windSpeed=coord:GetWind()
+  local WINDFROM=string.format("%03d", windFrom)
+  local WINDSPEED=string.format("%d", UTILS.MpsToKnots(windSpeed))
+  
+  -- Time
+  local time=timer.getAbsTime()
+  
+  -- TODO add zulu time correction.
+  
+  local clock=UTILS.SecondsToClock(time)
+  local zulu=UTILS.Split(clock, ":")
+  local ZULU=string.format("%s%s", zulu[1], zulu[2])
+  
+  -- Temperature
+  local temperature=coord:GetTemperature(height+5)
+  local TEMPERATURE=string.format("%d", temperature)
+  
+  -- Weather
+  local clouds, visibility, fog, dust=self:GetStaticWeather()
+  local cloudbase=clouds.base
+  local cloudceiling=clouds.base+clouds.thickness
+  local clouddensity=clouds.density
+  
+  local subduration=10
+  
+  -- Batumi Airbase.
+  self.radioqueue:NewTransmission("Batumi.ogg",  0.52, self.soundpath, nil, nil, "Batumi Airport", subduration)
+  self.radioqueue:NewTransmission("Airport.ogg", 0.65, self.soundpath)
+  
+  -- 1300 Zulu
+  self.radioqueue:Number2Transmission(ZULU)
+  self.radioqueue:NewTransmission("TimeZulu.ogg", 0.89, self.soundpath, nil, nil, string.format("%s Zulu Time", ZULU), subduration)
+  
+  -- Visibility
+  local visibility="3"
+  self.radioqueue:NewTransmission("Visibility.ogg", 0.8, self.soundpath, nil, 1.0, string.format("Visibility %s NM", visibility), subduration)
+  self.radioqueue:Number2Transmission(visibility)
+  -- TODO: 0.8
+  self.radioqueue:NewTransmission("NauticalMiles.ogg", 0.8, self.soundpath, nil, 0.2)
+  
+  -- Altimeter QFE.
+  self.radioqueue:NewTransmission("Altimeter.ogg", 0.7, self.soundpath, nil, 2.0, string.format("Altimeter QFE %s.%s inHg, QNH %s.%s inHg", QFE[1], QFE[2], QNH[1], QNH[2]), subduration)
+  self.radioqueue:NewTransmission("QFE.ogg", 0.62, self.soundpath)
+  self.radioqueue:Number2Transmission(QFE[1])
+  self.radioqueue:NewTransmission("Decimal.ogg", 0.58, self.soundpath, nil, 0.2)
+  self.radioqueue:Number2Transmission(QFE[2])
+  self.radioqueue:NewTransmission("QNH.ogg", 0.70, self.soundpath, nil, 2.0)
+  self.radioqueue:Number2Transmission(QNH[1])
+  self.radioqueue:NewTransmission("Decimal.ogg", 0.58, self.soundpath, nil, 0.2)
+  self.radioqueue:Number2Transmission(QNH[2])
+  
+  -- Temperature
+  self.radioqueue:NewTransmission("Temperature.ogg", 0.7, self.soundpath, nil, 2.0, string.format("Temperature %s C", TEMPERATURE), subduration)
+  self.radioqueue:Number2Transmission(TEMPERATURE)
+  -- TODO: Celcius --> Celsius, 0.9?
+  self.radioqueue:NewTransmission("DegreesCelsius.ogg", 0.9, self.soundpath, nil, 0.2)
+  
+  -- Wind
+  self.radioqueue:NewTransmission("WindFrom.ogg", 0.7, self.soundpath, nil, 2.0, string.format("Wind from %s at %s knots", WINDFROM, WINDSPEED), subduration)
+  self.radioqueue:Number2Transmission(WINDFROM)
+  self.radioqueue:NewTransmission("At.ogg", 0.7, self.soundpath, nil, 0.2)
+  self.radioqueue:Number2Transmission(WINDSPEED)
+  self.radioqueue:NewTransmission("Knots.ogg", 0.7, self.soundpath, nil, 0.2)
+  
+  -- Active runway.
+  self.radioqueue:NewTransmission("ActiveRunway.ogg", 1.05, self.soundpath, nil, 2.0, string.format("Active runway %s", runway.idx), subduration)
+  self.radioqueue:Number2Transmission(runway.idx)
+  
   
 end
 

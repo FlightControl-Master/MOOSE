@@ -56,6 +56,7 @@ RADIOQUEUE = {
 -- @field #number Tstarted Mission time (abs) in seconds when the transmission started.
 -- @field #boolean isplaying If true, transmission is currently playing.
 -- @field #number Tplay Mission time (abs) in seconds when the transmission should be played.
+-- @field #number interval Interval in seconds before next transmission.
 
 
 --- Create a new RADIOQUEUE object for a given radio frequency/modulation.
@@ -219,6 +220,7 @@ function RADIOQUEUE:NewTransmission(filename, duration, path, tstart, interval, 
   transmission.path=path or "l10n/DEFAULT/"
   transmission.Tplay=tstart or timer.getAbsTime()
   transmission.subtitle=subtitle
+  transmission.interval=interval or 0
   if transmission.subtitle then
     transmission.subduration=subduration or 5
   else
@@ -322,7 +324,7 @@ function RADIOQUEUE:Broadcast(transmission)
   else
     
     -- Broadcasting from carrier. No subtitle possible. Need to send messages to players.
-    self:I(self.lid..string.format("Broadcasting from carrier via trigger.action.radioTransmission()."))
+    self:I(self.lid..string.format("Broadcasting via trigger.action.radioTransmission()."))
   
     -- Position from where to transmit.
     local vec3=nil

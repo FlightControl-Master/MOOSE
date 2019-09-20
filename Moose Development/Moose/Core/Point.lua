@@ -562,7 +562,7 @@ do -- COORDINATE
   
   --- Return the height of the land at the coordinate.
   -- @param #COORDINATE self
-  -- @return #number
+  -- @return #number Land height (ASL) in meters.
   function COORDINATE:GetLandHeight()
     local Vec2 = { x = self.x, y = self.z }
     return land.getHeight( Vec2 )

@@ -15,6 +15,8 @@
 --- @type AIRBASE
 -- @field #string ClassName Name of the class, i.e. "AIRBASE".
 -- @field #table CategoryName Names of airbase categories.
+-- @field #table runways Table of runway data.
+-- @field #number activerwyno Active runway number (forced).
 -- @extends Wrapper.Positionable#POSITIONABLE
 
 --- Wrapper class to handle the DCS Airbase objects:
@@ -56,6 +58,8 @@ AIRBASE = {
     [Airbase.Category.HELIPAD]    = "Helipad",
     [Airbase.Category.SHIP]       = "Ship",
     },
+  runways=nil,
+  activerwyno=nil,
   }
 
 --- Enumeration to identify the airbases in the Caucasus region.
@@ -326,6 +330,14 @@ AIRBASE.TerminalType = {
   FighterAircraft=244,
 }
 
+--- Runway data.
+-- @type AIRBASE.Runway
+-- @field #number heading Heading of the runway in degrees.
+-- @field #string idx Runway ID: heading 070° ==> idx="07".
+-- @field #number length Length of runway in meters.
+-- @field Core.Point#COORDINATE position Position of runway start.
+-- @field Core.Point#COORDINATE endpoint End point of runway.
+
 -- Registration.
   
 --- Create a new AIRBASE from DCSAirbase.
@@ -405,13 +417,17 @@ end
 
 --- Get all airbases of the current map. This includes ships and FARPS.
 -- @param DCS#Coalition coalition (Optional) Return only airbases belonging to the specified coalition. By default, all airbases of the map are returned.
+-- @param #number category (Optional) Return only airbases of a certain category, e.g. Airbase.Category.FARP
 -- @return #table Table containing all airbase objects of the current map.
-function AIRBASE.GetAllAirbases(coalition)
+function AIRBASE.GetAllAirbases(coalition, category)
   
   local airbases={}
-  for _,airbase in pairs(_DATABASE.AIRBASES) do
+  for _,_airbase in pairs(_DATABASE.AIRBASES) do
+    local airbase=_airbase --#AIRBASE
     if (coalition~=nil and airbase:GetCoalition()==coalition) or coalition==nil then
-      table.insert(airbases, airbase)
+      if category==nil or category==airbase:GetAirbaseCategory() then
+        table.insert(airbases, airbase)
+      end
     end
   end
   
@@ -993,7 +1009,153 @@ function AIRBASE._CheckTerminalType(Term_Type, termtype)
   return match
 end
 
+--- Get runways data. Only for airdromes!
+-- @param #AIRBASE self
+-- @return #table Runway data.
+function AIRBASE:GetRunwayData()
 
+  -- Check if data is already initialized.
+  if self.runways then
+    return self.runways
+  else
+    self.runways={}
+  end
+  
+  if self:GetAirbaseCategory()~=Airbase.Category.AIRDROME then
+    return {}
+  end
+
+  -- Get spawn points on runway.
+  local runwaycoords=self:GetParkingSpotsCoordinates(AIRBASE.TerminalType.Runway)
+  
+  self:T(string.format("Runway coords # = %d", #runwaycoords))
+  
+  for i=1,#runwaycoords,2 do
+    
+    -- Assuming each runway has two points.
+    local j=(i+1)/2
+  
+    -- Coordinates of the two runway points.
+    local c1=runwaycoords[i]   --Core.Point#COORDINATES
+    local c2=runwaycoords[i+1] --Core.Point#COORDINATES
+    
+    -- Debug mark
+    --c1:MarkToAll("Runway Point 1")
+    --c2:MarkToAll("Runway Point 2")
+   
+    -- Heading of runway.
+    local hdg=c1:HeadingTo(c2)
+    
+    -- Runway ID: heading=070° ==> idx="07"
+    local idx=string.format("%02d", UTILS.Round(hdg/10, 0))
+    
+    -- Debug info.
+    self:T(string.format("Runway %d heading=%03d", j, hdg))
+    
+    -- Runway table.
+    local runway={} --#AIRBASE.Runway
+    runway.heading=hdg
+    runway.idx=idx
+    runway.length=c1:Get2DDistance(c2)    
+    runway.position=c1
+    runway.endpoint=c2
+    
+    self:I(string.format("Airbase %s: Adding runway #%d: id=%s, heading=%03d, lendth=%d m", self:GetName(), #self.runways+1, runway.idx, runway.heading, runway.length))
+    
+    -- Add runway.
+    table.insert(self.runways, runway)
+    
+    -- Inverse runway.
+    local hdg=hdg-180
+    if hdg<0 then
+      hdg=hdg+360
+    end
+    
+    -- Runway ID: heading=070° ==> ID="07"
+    local idx=string.format("%02d", UTILS.Round(hdg/10, 0))
+    
+    local runway={} --#AIRBASE.Runway    
+    runway.heading=hdg
+    runway.idx=idx
+    runway.length=c1:Get2DDistance(c2)
+    runway.position=c2
+    runway.endpoint=c1
+    
+    self:I(string.format("Airbase %s: Adding runway #%d: id=%s, heading=%03d, lendth=%d m", self:GetName(), #self.runways+1, runway.idx, runway.heading, runway.length))
+
+    -- Add inverse runway.
+    table.insert(self.runways, runway)
+  end
+
+  return self.runways
+end
+
+--- Set the active runway in case it cannot be determined by the wind direction.
+-- @param #AIRBASE self
+-- @param #number iactive Number of the active runway in the runway data table.
+function AIRBASE:SetActiveRunway(iactive)
+  self.activerwyno=iactive
+end
+
+--- Get the active runway based on current wind direction.
+-- @param #AIRBASE self
+-- @return #AIRBASE.Runway Active runway data table.
+function AIRBASE:GetActiveRunway()
+
+  -- Get runways data (initialize if necessary).
+  local runways=self:GetRunwayData()
+
+  -- Return user forced active runway if it was set.
+  if self.activerwyno then
+    return runways[self.activerwyno]
+  end
+
+  -- Get wind vector.
+  local Vwind=self:GetCoordinate():GetWindWithTurbulenceVec3()
+  local norm=UTILS.VecNorm(Vwind)
+  
+  -- Active runway number.
+  local iact=1
+  
+  -- Check if wind is blowing (norm>0).
+  if norm>0 then
+  
+    -- Normalize wind (not necessary).
+    Vwind.x=Vwind.x/norm
+    Vwind.y=0
+    Vwind.z=Vwind.z/norm
+    
+    -- Debug.
+    self:T3({Vwind=Vwind})
+    
+    -- Loop over runways.
+    local dotmin=nil
+    for i,_runway in pairs(runways) do
+      local runway=_runway --#AIRBASE.Runway
+      
+      -- Angle in rad.
+      local alpha=math.rad(runway.heading)
+      
+      -- Runway vector.
+      local Vrunway={x=math.cos(alpha), y=0, z=math.sin(alpha)}
+      
+      -- Dot product: parallel component of the two vectors.
+      local dot=UTILS.VecDot(Vwind, Vrunway)
+      
+      -- Debug.
+      --env.info(string.format("runway=%03d° dot=%.3f", runway.heading, dot))
+      
+      -- New min?
+      if dotmin==nil or dot<dotmin then
+        dotmin=dot
+        iact=i
+      end
+      
+    end
+  end
+  
+  return runways[iact]
+end
 
 
 
