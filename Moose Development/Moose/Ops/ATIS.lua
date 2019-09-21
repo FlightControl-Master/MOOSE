@@ -2,7 +2,13 @@
 --
 -- **Main Features:**
 --
---    * Broadcast 
+--    * Active runway
+--    * Wind direction and speed
+--    * Visibility
+--    * Cloud coverage, base and ceiling
+--    * Temprature
+--    * Pressure QNH/QFE
+--    * Weather phenomena: rain, thunderstorm, fog, dust
 --
 -- ===
 --
@@ -16,6 +22,7 @@
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug Debug mode. Messages to all about status.
 -- @field #string lid Class id string for output to DCS log file.
+-- @field #string theatre DCS map name.
 -- @field #string airbasename The name of the airbase.
 -- @field Wrapper.Airbase#AIRBASE airbase The airbase object.
 -- @field #number frequency Radio frequency in MHz.
@@ -41,6 +48,7 @@ ATIS = {
   ClassName      = "ATIS",
   Debug          = false,
   lid            =   nil,
+  theatre        =   nil,
   airbasename    =   nil,
   airbase        =   nil,
   frequency      =   nil,
@@ -80,6 +88,8 @@ function ATIS:New(airbasename, frequency, modulation)
   
   self.frequency=frequency or 143.00
   self.modulation=modulation or 0
+  
+  self.theatre=env.mission.theatre
 
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("ATIS %s | ", self.airbasename)
@@ -239,14 +249,21 @@ function ATIS:onafterBroadcast(From, Event, To)
   local QFE=UTILS.Split(string.format("%.2f", qfe), ".")
   local QNH=UTILS.Split(string.format("%.2f", qnh), ".")
   
-  
+  --------------
+  --- Runway ---
+  --------------
   local runway=self.airbase:GetActiveRunway()
   
-  local windFrom, windSpeed=coord:GetWind()
+  ------------
+  --- Wind ---
+  ------------
+  local windFrom, windSpeed=coord:GetWind(height+10)
   local WINDFROM=string.format("%03d", windFrom)
   local WINDSPEED=string.format("%d", UTILS.MpsToKnots(windSpeed))
   
-  -- Time
+  ------------
+  --- Time ---
+  ------------
   local time=timer.getAbsTime()
   
   -- TODO add zulu time correction.
@@ -255,61 +272,171 @@ function ATIS:onafterBroadcast(From, Event, To)
   local zulu=UTILS.Split(clock, ":")
   local ZULU=string.format("%s%s", zulu[1], zulu[2])
   
-  -- Temperature
-  local temperature=coord:GetTemperature(height+5)
+  -------------------
+  --- Temperature ---
+  -------------------
+  local temperature=coord:GetTemperature(height+10)
   local TEMPERATURE=string.format("%d", temperature)
   
   -- Weather
-  local clouds, visibility, fog, dust=self:GetStaticWeather()
+  local clouds, visibility, turbulence, fog, dust=self:GetStaticWeather()
+
+
+  ------------------
+  --- Visibility ---
+  ------------------
+  local visibilitymin=visibility
+  if fog then
+    if fog.visibility<visibilitymin then
+      visibilitymin=fog.visibility
+    end    
+  end
+  if dust then
+    if dust<visibilitymin then
+      visibilitymin=dust
+    end
+  end
+  
+  local VISIBILITY=string.format("%d", UTILS.Round(UTILS.MetersToNM(visibilitymin)))
+  
+
+  --------------
+  --- Clouds ---
+  --------------
   local cloudbase=clouds.base
   local cloudceiling=clouds.base+clouds.thickness
-  local clouddensity=clouds.density
+  local clouddensity=clouds.density  
+  local precepitation=tonumber(clouds.iprecptns)
+  
+  local CLOUDBASE=string.format("%d", UTILS.MetersToFeet(cloudbase))
+  local CLOUDCEILING=string.format("%d", UTILS.MetersToFeet(cloudceiling))
+  
+  local CLOUDSogg="CloudsFew.ogg"
+  local CLOUDSsub="Few clouds"
+  local CLOUDSdur=1.00
+  if clouddensity>=8 then
+    -- Overcast 8,9,10
+    CLOUDSogg="CloudsOvercast.ogg"
+    CLOUDSsub="Overcast"
+    CLOUDSdur=0.85
+  elseif clouddensity>=6 then
+    -- Broken 6,7
+    CLOUDSogg="CloudsBroken.ogg"
+    CLOUDSsub="Broken clouds"
+    CLOUDSdur=1.10
+  elseif clouddensity>=4 then
+    -- Scattered 4,5
+    CLOUDSogg="CloudsScattered.ogg"
+    CLOUDSsub="Scattered clouds"
+    CLOUDSdur=1.20
+  elseif clouddensity>=1 then
+    -- Few 1,2,3
+    CLOUDSogg="CloudsFew.ogg"
+    CLOUDSsub="Few clouds"
+    CLOUDSdur=1.00
+  else
+    -- No clouds
+    CLOUDBASE=nil
+    CLOUDCEILING=nil
+    CLOUDSogg="CloudsFew.ogg"
+    CLOUDSsub="Few clouds"
+    CLOUDSdur=1.00
+  end
+  
   
   local subduration=10
   
-  -- Batumi Airbase.
-  self.radioqueue:NewTransmission("Batumi.ogg",  0.52, self.soundpath, nil, nil, "Batumi Airport", subduration)
-  self.radioqueue:NewTransmission("Airport.ogg", 0.65, self.soundpath)
+  --Airbase.
+  self.radioqueue:NewTransmission(string.format("%s/%s.ogg", self.theatre, self.airbasename), 1.0, self.soundpath, nil, nil, string.format("%s Airport", self.airbasename), subduration)
+  self.radioqueue:NewTransmission(string.format("%s/Airport.ogg", self.theatre), 0.70, self.soundpath)
   
-  -- 1300 Zulu
+  -- Time
   self.radioqueue:Number2Transmission(ZULU)
-  self.radioqueue:NewTransmission("TimeZulu.ogg", 0.89, self.soundpath, nil, nil, string.format("%s Zulu Time", ZULU), subduration)
+  self.radioqueue:NewTransmission("TimeZulu.ogg", 0.89, self.soundpath, nil, 0.2, string.format("%s Zulu Time", ZULU), subduration)
   
   -- Visibility
-  local visibility="3"
-  self.radioqueue:NewTransmission("Visibility.ogg", 0.8, self.soundpath, nil, 1.0, string.format("Visibility %s NM", visibility), subduration)
-  self.radioqueue:Number2Transmission(visibility)
-  -- TODO: 0.8
-  self.radioqueue:NewTransmission("NauticalMiles.ogg", 0.8, self.soundpath, nil, 0.2)
+  self.radioqueue:NewTransmission("Visibility.ogg", 0.8, self.soundpath, nil, 1.0, string.format("Visibility %s NM", VISIBILITY), subduration)
+  self.radioqueue:Number2Transmission(VISIBILITY)
+  self.radioqueue:NewTransmission("NauticalMiles.ogg", 1.05, self.soundpath, nil, 0.2)
+  
+  -- Cloud base
+  self.radioqueue:NewTransmission(CLOUDSogg, CLOUDSdur, self.soundpath, nil, 1.0, CLOUDSsub, subduration)
+  if CLOUDBASE then
+    self.radioqueue:NewTransmission("CloudBase.ogg", 0.81, self.soundpath, nil, 1.0, string.format("Cloudbase %s, ceiling %s ft", CLOUDBASE, CLOUDCEILING), subduration)
+    self.radioqueue:Number2Transmission(CLOUDBASE)    
+    self.radioqueue:NewTransmission("CloudCeiling.ogg", 0.62, self.soundpath, nil, 0.5)
+    self.radioqueue:Number2Transmission(CLOUDCEILING)
+    self.radioqueue:NewTransmission("Feet.ogg", 0.45, self.soundpath, nil, 0.1)
+  end
+  
+  -- Weather phenomena
+  local wp=false
+  local wpsub=""
+  if precepitation==1 then
+    wp=true
+    wpsub=wpsub.." rain,"
+  elseif precepitation==2 then
+    wp=true
+    wpsub=wpsub.." thunderstorm,"
+  end
+  if fog then
+    wp=true
+    wpsub=wpsub.." fog,"      
+  end
+  if dust then
+    wp=true
+    wpsub=wpsub.." dust,"        
+  end
+  -- Actual output
+  if wp then
+    self.radioqueue:NewTransmission("WeatherPhenomena.ogg", 1.07, self.soundpath, nil, 1.0, string.format("Weather phenomena:%s", wpsub), subduration)
+    if precepitation==1 then
+      self.radioqueue:NewTransmission("Rain.ogg", 0.41, self.soundpath, nil, 0.5)
+    elseif precepitation==2 then
+      self.radioqueue:NewTransmission("ThunderStorm.ogg", 0.81, self.soundpath, nil, 0.5)
+    end
+    if fog then
+      self.radioqueue:NewTransmission("Fog.ogg", 0.81, self.soundpath, nil, 0.5)
+    end
+    if dust then
+      self.radioqueue:NewTransmission("Dust.ogg", 0.81, self.soundpath, nil, 0.5)    
+    end  
+  end  
   
   -- Altimeter QFE.
-  self.radioqueue:NewTransmission("Altimeter.ogg", 0.7, self.soundpath, nil, 2.0, string.format("Altimeter QFE %s.%s inHg, QNH %s.%s inHg", QFE[1], QFE[2], QNH[1], QNH[2]), subduration)
-  self.radioqueue:NewTransmission("QFE.ogg", 0.62, self.soundpath)
-  self.radioqueue:Number2Transmission(QFE[1])
-  self.radioqueue:NewTransmission("Decimal.ogg", 0.58, self.soundpath, nil, 0.2)
-  self.radioqueue:Number2Transmission(QFE[2])
-  self.radioqueue:NewTransmission("QNH.ogg", 0.70, self.soundpath, nil, 2.0)
+  self.radioqueue:NewTransmission("Altimeter.ogg", 0.7, self.soundpath, nil, 1.0, string.format("Altimeter QNH %s.%s, QFE %s.%s inHg", QNH[1], QNH[2], QFE[1], QFE[2]), subduration)
+  self.radioqueue:NewTransmission("QNH.ogg", 0.70, self.soundpath, nil, 0.5)
   self.radioqueue:Number2Transmission(QNH[1])
   self.radioqueue:NewTransmission("Decimal.ogg", 0.58, self.soundpath, nil, 0.2)
   self.radioqueue:Number2Transmission(QNH[2])
+  self.radioqueue:NewTransmission("QFE.ogg", 0.62, self.soundpath, nil, 0.2)
+  self.radioqueue:Number2Transmission(QFE[1])
+  self.radioqueue:NewTransmission("Decimal.ogg", 0.58, self.soundpath, nil, 0.2)
+  self.radioqueue:Number2Transmission(QFE[2])
+  self.radioqueue:NewTransmission("InchesOfMercury.ogg", 1.16, self.soundpath, nil, 0.1)
   
   -- Temperature
-  self.radioqueue:NewTransmission("Temperature.ogg", 0.7, self.soundpath, nil, 2.0, string.format("Temperature %s C", TEMPERATURE), subduration)
+  self.radioqueue:NewTransmission("Temperature.ogg", 0.55, self.soundpath, nil, 1.0, string.format("Temperature %s C", TEMPERATURE), subduration)
   self.radioqueue:Number2Transmission(TEMPERATURE)
-  -- TODO: Celcius --> Celsius, 0.9?
-  self.radioqueue:NewTransmission("DegreesCelsius.ogg", 0.9, self.soundpath, nil, 0.2)
+  self.radioqueue:NewTransmission("DegreesCelsius.ogg", 1.28, self.soundpath, nil, 0.2)
   
   -- Wind
-  self.radioqueue:NewTransmission("WindFrom.ogg", 0.7, self.soundpath, nil, 2.0, string.format("Wind from %s at %s knots", WINDFROM, WINDSPEED), subduration)
+  local subtitle=string.format("Wind from %s at %s knots", WINDFROM, WINDSPEED)
+  if turbulence>0 then
+    subtitle=subtitle..", gusting"
+  end
+  self.radioqueue:NewTransmission("WindFrom.ogg", 0.60, self.soundpath, nil, 1.0, subtitle, subduration)
   self.radioqueue:Number2Transmission(WINDFROM)
-  self.radioqueue:NewTransmission("At.ogg", 0.7, self.soundpath, nil, 0.2)
+  self.radioqueue:NewTransmission("At.ogg", 0.40, self.soundpath, nil, 0.2)
   self.radioqueue:Number2Transmission(WINDSPEED)
-  self.radioqueue:NewTransmission("Knots.ogg", 0.7, self.soundpath, nil, 0.2)
+  self.radioqueue:NewTransmission("Knots.ogg", 0.60, self.soundpath, nil, 0.2)
+  if turbulence>0 then
+    self.radioqueue:NewTransmission("Gusting.ogg", 0.55, self.soundpath, nil, 0.2)
+  end
   
   -- Active runway.
   self.radioqueue:NewTransmission("ActiveRunway.ogg", 1.05, self.soundpath, nil, 2.0, string.format("Active runway %s", runway.idx), subduration)
   self.radioqueue:Number2Transmission(runway.idx)
-  
   
 end
 
@@ -319,10 +446,11 @@ end
 
 --- Get static weather of this mission from env.mission.weather.
 -- @param #ATIS self
--- @param #table Clouds table which has entries "thickness", "density", "base", "iprecptns".
--- @param #number Visibility distance in meters.
--- @param #table Fog table, which has entries "thickness", "visibility" or nil if fog is disabled in the mission.
--- @param #number Dust density or nil if dust is disabled in the mission.
+-- @return #table Clouds table which has entries "thickness", "density", "base", "iprecptns".
+-- @return #number Visibility distance in meters.
+-- @return #number Ground turbulence in m/s. 
+-- @return #table Fog table, which has entries "thickness", "visibility" or nil if fog is disabled in the mission.
+-- @return #number Dust density or nil if dust is disabled in the mission.
 function ATIS:GetStaticWeather()
 
   -- Weather data from mission file.
@@ -342,6 +470,8 @@ function ATIS:GetStaticWeather()
 
   -- Visibilty distance in meters.
   local visibility=weather.visibility.distance
+  
+  local turbulence=weather.groundTurbulence
 
   -- Dust
   --[[
@@ -367,8 +497,13 @@ function ATIS:GetStaticWeather()
     fog=weather.fog
   end
 
-
-  return clouds, visibility, fog, dust
+  self:I("FF weather:")
+  self:I({clouds=clouds})
+  self:I({visibility=visibility})
+  self:I({turbulence=turbulence})
+  self:I({fog=fog})
+  self:I({dust=dust})
+  return clouds, visibility, turbulence, fog, dust
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

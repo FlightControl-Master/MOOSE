@@ -1152,6 +1152,8 @@ function AIRBASE:GetActiveRunway()
       end
       
     end
+  else
+    self:I("WARNING: Norm of wind is zero! Cannot determine active runway based on wind direction.")
   end
   
   return runways[iact]
