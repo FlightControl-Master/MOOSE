@@ -10,7 +10,8 @@
 -- @image AI_Combat_Air_Patrol.JPG
 
 --- @type AI_A2A_CAP
--- @extends AI.AI_A2A_Patrol#AI_A2A_PATROL
+-- @extends AI.AI_Air_Patrol#AI_AIR_PATROL
+-- @extends AI.AI_Air_Engage#AI_AIR_ENGAGE
 
 
 --- The AI_A2A_CAP class implements the core functions to patrol a @{Zone} by an AI @{Wrapper.Group} or @{Wrapper.Group} 
@@ -100,6 +101,36 @@ AI_A2A_CAP = {
 --- Creates a new AI_A2A_CAP object
 -- @param #AI_A2A_CAP self
 -- @param Wrapper.Group#GROUP AICap
+-- @param DCS#Speed  EngageMinSpeed The minimum speed of the @{Wrapper.Group} in km/h when engaging a target.
+-- @param DCS#Speed  EngageMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h when engaging a target.
+-- @param DCS#Altitude EngageFloorAltitude The lowest altitude in meters where to execute the engagement.
+-- @param DCS#Altitude EngageCeilingAltitude The highest altitude in meters where to execute the engagement.
+-- @param DCS#AltitudeType EngageAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to "RADIO".
+-- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
+-- @param DCS#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Group} in km/h.
+-- @param DCS#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Group} in km/h.
+-- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+-- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+-- @param DCS#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to "RADIO".
+-- @return #AI_A2A_CAP
+function AI_A2A_CAP:New2( AICap, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType, PatrolZone, PatrolMinSpeed, PatrolMaxSpeed, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolAltType )
+
+  -- Multiple inheritance ... :-)
+  local AI_Air = AI_AIR:New( AICap )
+  local AI_Air_Patrol = AI_AIR_PATROL:New( AI_Air, AICap, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType ) -- #AI_AIR_PATROL
+  local AI_Air_Engage = AI_AIR_ENGAGE:New( AI_Air_Patrol, AICap, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType )
+  local self = BASE:Inherit( self, AI_Air_Engage )
+
+  self:SetFuelThreshold( .2, 60 )
+  self:SetDamageThreshold( 0.4 )
+  self:SetDisengageRadius( 70000 )
+  
+  return self
+end
+
+--- Creates a new AI_A2A_CAP object
+-- @param #AI_A2A_CAP self
+-- @param Wrapper.Group#GROUP AICap
 -- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
 -- @param DCS#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
 -- @param DCS#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
@@ -111,176 +142,8 @@ AI_A2A_CAP = {
 -- @return #AI_A2A_CAP
 function AI_A2A_CAP:New( AICap, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageMinSpeed, EngageMaxSpeed, PatrolAltType )
 
-  -- Inherits from BASE
-  local self = BASE:Inherit( self, AI_A2A_PATROL:New( AICap, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType ) ) -- #AI_A2A_CAP
+  return self:New2( AICap, EngageMinSpeed, EngageMaxSpeed, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolZone, PatrolMinSpeed, PatrolMaxSpeed, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolAltType, PatrolAltType )
 
-  self.Accomplished = false
-  self.Engaging = false
-  
-  self.EngageMinSpeed = EngageMinSpeed
-  self.EngageMaxSpeed = EngageMaxSpeed
-  
-  self:AddTransition( { "Patrolling", "Engaging", "Returning", "Airborne" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_A2A_CAP.
-
-  --- OnBefore Transition Handler for Event Engage.
-  -- @function [parent=#AI_A2A_CAP] OnBeforeEngage
-  -- @param #AI_A2A_CAP self
-  -- @param Wrapper.Group#GROUP AICap The Group Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
-  -- @return #boolean Return false to cancel Transition.
-  
-  --- OnAfter Transition Handler for Event Engage.
-  -- @function [parent=#AI_A2A_CAP] OnAfterEngage
-  -- @param #AI_A2A_CAP self
-  -- @param Wrapper.Group#GROUP AICap The Group Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
-  	
-  --- Synchronous Event Trigger for Event Engage.
-  -- @function [parent=#AI_A2A_CAP] Engage
-  -- @param #AI_A2A_CAP self
-  
-  --- Asynchronous Event Trigger for Event Engage.
-  -- @function [parent=#AI_A2A_CAP] __Engage
-  -- @param #AI_A2A_CAP self
-  -- @param #number Delay The delay in seconds.
-
---- OnLeave Transition Handler for State Engaging.
--- @function [parent=#AI_A2A_CAP] OnLeaveEngaging
--- @param #AI_A2A_CAP self
--- @param Wrapper.Group#GROUP AICap The Group Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
--- @return #boolean Return false to cancel Transition.
-
---- OnEnter Transition Handler for State Engaging.
--- @function [parent=#AI_A2A_CAP] OnEnterEngaging
--- @param #AI_A2A_CAP self
--- @param Wrapper.Group#GROUP AICap The Group Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
-
-  self:AddTransition( "Engaging", "Fired", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_A2A_CAP.
-  
-  --- OnBefore Transition Handler for Event Fired.
-  -- @function [parent=#AI_A2A_CAP] OnBeforeFired
-  -- @param #AI_A2A_CAP self
-  -- @param Wrapper.Group#GROUP AICap The Group Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
-  -- @return #boolean Return false to cancel Transition.
-  
-  --- OnAfter Transition Handler for Event Fired.
-  -- @function [parent=#AI_A2A_CAP] OnAfterFired
-  -- @param #AI_A2A_CAP self
-  -- @param Wrapper.Group#GROUP AICap The Group Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
-  	
-  --- Synchronous Event Trigger for Event Fired.
-  -- @function [parent=#AI_A2A_CAP] Fired
-  -- @param #AI_A2A_CAP self
-  
-  --- Asynchronous Event Trigger for Event Fired.
-  -- @function [parent=#AI_A2A_CAP] __Fired
-  -- @param #AI_A2A_CAP self
-  -- @param #number Delay The delay in seconds.
-
-  self:AddTransition( "*", "Destroy", "*" ) -- FSM_CONTROLLABLE Transition for type #AI_A2A_CAP.
-
-  --- OnBefore Transition Handler for Event Destroy.
-  -- @function [parent=#AI_A2A_CAP] OnBeforeDestroy
-  -- @param #AI_A2A_CAP self
-  -- @param Wrapper.Group#GROUP AICap The Group Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
-  -- @return #boolean Return false to cancel Transition.
-  
-  --- OnAfter Transition Handler for Event Destroy.
-  -- @function [parent=#AI_A2A_CAP] OnAfterDestroy
-  -- @param #AI_A2A_CAP self
-  -- @param Wrapper.Group#GROUP AICap The Group Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
-  	
-  --- Synchronous Event Trigger for Event Destroy.
-  -- @function [parent=#AI_A2A_CAP] Destroy
-  -- @param #AI_A2A_CAP self
-  
-  --- Asynchronous Event Trigger for Event Destroy.
-  -- @function [parent=#AI_A2A_CAP] __Destroy
-  -- @param #AI_A2A_CAP self
-  -- @param #number Delay The delay in seconds.
-
-
-  self:AddTransition( "Engaging", "Abort", "Patrolling" ) -- FSM_CONTROLLABLE Transition for type #AI_A2A_CAP.
-
-  --- OnBefore Transition Handler for Event Abort.
-  -- @function [parent=#AI_A2A_CAP] OnBeforeAbort
-  -- @param #AI_A2A_CAP self
-  -- @param Wrapper.Group#GROUP AICap The Group Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
-  -- @return #boolean Return false to cancel Transition.
-  
-  --- OnAfter Transition Handler for Event Abort.
-  -- @function [parent=#AI_A2A_CAP] OnAfterAbort
-  -- @param #AI_A2A_CAP self
-  -- @param Wrapper.Group#GROUP AICap The Group Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
-  	
-  --- Synchronous Event Trigger for Event Abort.
-  -- @function [parent=#AI_A2A_CAP] Abort
-  -- @param #AI_A2A_CAP self
-  
-  --- Asynchronous Event Trigger for Event Abort.
-  -- @function [parent=#AI_A2A_CAP] __Abort
-  -- @param #AI_A2A_CAP self
-  -- @param #number Delay The delay in seconds.
-
-  self:AddTransition( "Engaging", "Accomplish", "Patrolling" ) -- FSM_CONTROLLABLE Transition for type #AI_A2A_CAP.
-
-  --- OnBefore Transition Handler for Event Accomplish.
-  -- @function [parent=#AI_A2A_CAP] OnBeforeAccomplish
-  -- @param #AI_A2A_CAP self
-  -- @param Wrapper.Group#GROUP AICap The Group Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
-  -- @return #boolean Return false to cancel Transition.
-  
-  --- OnAfter Transition Handler for Event Accomplish.
-  -- @function [parent=#AI_A2A_CAP] OnAfterAccomplish
-  -- @param #AI_A2A_CAP self
-  -- @param Wrapper.Group#GROUP AICap The Group Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
-  	
-  --- Synchronous Event Trigger for Event Accomplish.
-  -- @function [parent=#AI_A2A_CAP] Accomplish
-  -- @param #AI_A2A_CAP self
-  
-  --- Asynchronous Event Trigger for Event Accomplish.
-  -- @function [parent=#AI_A2A_CAP] __Accomplish
-  -- @param #AI_A2A_CAP self
-  -- @param #number Delay The delay in seconds.  
-
-  self:AddTransition( { "Patrolling", "Engaging" }, "Refuel", "Refuelling" ) 
-
-  return self
 end
 
 --- onafter State Transition for Event Patrol.
@@ -291,7 +154,7 @@ end
 -- @param #string To The To State string.
 function AI_A2A_CAP:onafterStart( AICap, From, Event, To )
 
-  self:GetParent( self ).onafterStart( self, AICap, From, Event, To )
+  self:GetParent( self, AI_A2A_CAP ).onafterStart( self, AICap, From, Event, To )
   AICap:HandleEvent( EVENTS.Takeoff, nil, self )
 
 end
@@ -324,168 +187,26 @@ function AI_A2A_CAP:SetEngageRange( EngageRange )
   end
 end
 
---- onafter State Transition for Event Patrol.
+--- Evaluate the attack and create an AttackUnitTask list. 
 -- @param #AI_A2A_CAP self
--- @param Wrapper.Group#GROUP AICap The AI Group managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
-function AI_A2A_CAP:onafterPatrol( AICap, From, Event, To )
+-- @param Core.Set#SET_UNIT AttackSetUnit The set of units to attack.
+-- @param Wrappper.Group#GROUP DefenderGroup The group of defenders.
+-- @param #number EngageAltitude The altitude to engage the targets.
+-- @return #AI_A2A_CAP self
+function AI_A2A_CAP:CreateAttackUnitTasks( AttackSetUnit, DefenderGroup, EngageAltitude )
 
-  -- Call the parent Start event handler
-  self:GetParent(self).onafterPatrol( self, AICap, From, Event, To )
-  self:HandleEvent( EVENTS.Dead )
+  local AttackUnitTasks = {}
 
-end
-
--- todo: need to fix this global function
-
---- @param Wrapper.Group#GROUP AICap
-function AI_A2A_CAP.AttackRoute( AICap, Fsm )
-
-  AICap:F( { "AI_A2A_CAP.AttackRoute:", AICap:GetName() } )
-
-  if AICap:IsAlive() then
-    Fsm:__Engage( 0.5 )
-  end
-end
-
---- @param #AI_A2A_CAP self
--- @param Wrapper.Group#GROUP AICap The Group Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
-function AI_A2A_CAP:onbeforeEngage( AICap, From, Event, To )
-  
-  if self.Accomplished == true then
-    return false
-  end
-end
-
---- @param #AI_A2A_CAP self
--- @param Wrapper.Group#GROUP AICap The AI Group managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
-function AI_A2A_CAP:onafterAbort( AICap, From, Event, To )
-  AICap:ClearTasks()
-  self:__Route( 0.5 )
-end
-
-
---- @param #AI_A2A_CAP self
--- @param Wrapper.Group#GROUP AICap The AICap Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
-function AI_A2A_CAP:onafterEngage( AICap, From, Event, To, AttackSetUnit )
-
-  self:F( { AICap, From, Event, To, AttackSetUnit} )
-
-  self.AttackSetUnit = AttackSetUnit or self.AttackSetUnit -- Core.Set#SET_UNIT
-  
-  local FirstAttackUnit = self.AttackSetUnit:GetFirst() -- Wrapper.Unit#UNIT
-  
-  if FirstAttackUnit and FirstAttackUnit:IsAlive() then -- If there is no attacker anymore, stop the engagement.
-  
-    if AICap and AICap:IsAlive() then
-
-      local EngageRoute = {}
-
-      --- Calculate the target route point.
-      local CurrentCoord = AICap:GetCoordinate()
-      local ToTargetCoord = self.AttackSetUnit:GetFirst():GetCoordinate()
-      local ToTargetSpeed = math.random( self.EngageMinSpeed, self.EngageMaxSpeed )
-      local ToInterceptAngle = CurrentCoord:GetAngleDegrees( CurrentCoord:GetDirectionVec3( ToTargetCoord ) )
-      
-      --- Create a route point of type air.
-      local ToPatrolRoutePoint = CurrentCoord:Translate( 5000, ToInterceptAngle ):WaypointAir( 
-        self.PatrolAltType, 
-        POINT_VEC3.RoutePointType.TurningPoint, 
-        POINT_VEC3.RoutePointAction.TurningPoint, 
-        ToTargetSpeed, 
-        true 
-      )
-  
-      self:F( { Angle = ToInterceptAngle, ToTargetSpeed = ToTargetSpeed } )
-      self:T2( { self.MinSpeed, self.MaxSpeed, ToTargetSpeed } )
-      
-      EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
-      EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
-
-      local AttackTasks = {}
-  
-      for AttackUnitID, AttackUnit in pairs( self.AttackSetUnit:GetSet() ) do
-        local AttackUnit = AttackUnit -- Wrapper.Unit#UNIT
-        self:T( { "Attacking Unit:", AttackUnit:GetName(), AttackUnit:IsAlive(), AttackUnit:IsAir() } )
-        if AttackUnit:IsAlive() and AttackUnit:IsAir() then
-          -- TODO: Add coalition check? Only attack units of if AttackUnit:GetCoalition()~=AICap:GetCoalition()
-          -- Maybe the detected set also contains 
-          AttackTasks[#AttackTasks+1] = AICap:TaskAttackUnit( AttackUnit )
-        end
-      end
-  
-      if #AttackTasks == 0 then
-        self:E("No targets found -> Going back to Patrolling")
-        self:__Abort( 0.5 )
-      else
-        AICap:OptionROEOpenFire()
-        AICap:OptionROTEvadeFire()
-
-        AttackTasks[#AttackTasks+1] = AICap:TaskFunction( "AI_A2A_CAP.AttackRoute", self )
-        EngageRoute[#EngageRoute].task = AICap:TaskCombo( AttackTasks )
-      end
-      
-      AICap:Route( EngageRoute, 0.5 )
+  for AttackUnitID, AttackUnit in pairs( self.AttackSetUnit:GetSet() ) do
+    local AttackUnit = AttackUnit -- Wrapper.Unit#UNIT
+    self:T( { "Attacking Unit:", AttackUnit:GetName(), AttackUnit:IsAlive(), AttackUnit:IsAir() } )
+    if AttackUnit:IsAlive() and AttackUnit:IsAir() then
+      -- TODO: Add coalition check? Only attack units of if AttackUnit:GetCoalition()~=AICap:GetCoalition()
+      -- Maybe the detected set also contains 
+      AttackUnitTasks[#AttackUnitTasks+1] = DefenderGroup:TaskAttackUnit( AttackUnit )
     end
-  else
-    self:E("No targets found -> Going back to Patrolling")
-    self:__Abort( 0.5 )
-  end
-end
-
---- @param #AI_A2A_CAP self
--- @param Wrapper.Group#GROUP AICap The Group Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
-function AI_A2A_CAP:onafterAccomplish( AICap, From, Event, To )
-  self.Accomplished = true
-  self:SetDetectionOff()
-end
-
---- @param #AI_A2A_CAP self
--- @param Wrapper.Group#GROUP AICap The Group Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
--- @param Core.Event#EVENTDATA EventData
-function AI_A2A_CAP:onafterDestroy( AICap, From, Event, To, EventData )
-
-  if EventData.IniUnit then
-    self.AttackUnits[EventData.IniUnit] = nil
-  end
-end
-
---- @param #AI_A2A_CAP self
--- @param Core.Event#EVENTDATA EventData
-function AI_A2A_CAP:OnEventDead( EventData )
-  self:F( { "EventDead", EventData } )
-
-  if EventData.IniDCSUnit then
-    if self.AttackUnits and self.AttackUnits[EventData.IniUnit] then
-      self:__Destroy( 1, EventData )
-    end
-  end  
-end
-
---- @param Wrapper.Group#GROUP AICap
-function AI_A2A_CAP.Resume( AICap, Fsm )
-
-  AICap:I( { "AI_A2A_CAP.Resume:", AICap:GetName() } )
-  if AICap:IsAlive() then
-    Fsm:__Reset( 1 )
-    Fsm:__Route( 5 )
   end
   
+  return AttackUnitTasks
 end
+

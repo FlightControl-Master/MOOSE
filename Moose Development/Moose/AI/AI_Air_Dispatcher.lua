@@ -2577,7 +2577,7 @@ do -- AI_AIR_DISPATCHER
 
       local AI_A2G = { SEAD = AI_A2G_SEAD, BAI = AI_A2G_BAI, CAS = AI_A2G_CAS }
 
-      local Fsm = AI_A2G[DefenseTaskType]:New( DefenderGroup, Defense.EngageMinSpeed, Defense.EngageMaxSpeed, Defense.EngageFloorAltitude, Defense.EngageCeilingAltitude ) -- AI.AI_A2G_ENGAGE
+      local Fsm = AI_A2G[DefenseTaskType]:New( DefenderGroup, Defense.EngageMinSpeed, Defense.EngageMaxSpeed, Defense.EngageFloorAltitude, Defense.EngageCeilingAltitude ) -- AI.AI_AIR_ENGAGE
       Fsm:SetDispatcher( self )
       Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
       Fsm:SetFuelThreshold( DefenderSquadron.FuelThreshold or self.DefenderDefault.FuelThreshold, 60 )

@@ -1770,13 +1770,87 @@ do -- AI_A2A_DISPATCHER
   --- Set a CAP for a Squadron.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The squadron name.
-  -- @param Core.Zone#ZONE_BASE Zone The @{Zone} object derived from @{Core.Zone#ZONE_BASE} that defines the zone wherein the CAP will be executed.
-  -- @param #number FloorAltitude The minimum altitude at which the cap can be executed.
-  -- @param #number CeilingAltitude the maximum altitude at which the cap can be executed.
-  -- @param #number PatrolMinSpeed The minimum speed at which the cap can be executed.
-  -- @param #number PatrolMaxSpeed The maximum speed at which the cap can be executed.
   -- @param #number EngageMinSpeed The minimum speed at which the engage can be executed.
   -- @param #number EngageMaxSpeed The maximum speed at which the engage can be executed.
+  -- @param DCS#Altitude EngageFloorAltitude The lowest altitude in meters where to execute the engagement.
+  -- @param DCS#Altitude EngageCeilingAltitude The highest altitude in meters where to execute the engagement.
+  -- @param #number EngageAltType The altitude type to engage, which is a string "BARO" defining Barometric or "RADIO" defining radio controlled altitude.
+  -- @param Core.Zone#ZONE_BASE Zone The @{Zone} object derived from @{Core.Zone#ZONE_BASE} that defines the zone wherein the CAP will be executed.
+  -- @param #number PatrolMinSpeed The minimum speed at which the cap can be executed.
+  -- @param #number PatrolMaxSpeed The maximum speed at which the cap can be executed.
+  -- @param #number PatrolFloorAltitude The minimum altitude at which the cap can be executed.
+  -- @param #number PatrolCeilingAltitude the maximum altitude at which the cap can be executed.
+  -- @param #number PatrolAltType The altitude type to patrol, which is a string "BARO" defining Barometric or "RADIO" defining radio controlled altitude.
+  -- @return #AI_A2A_DISPATCHER
+  -- @usage
+  -- 
+  --        -- CAP Squadron execution.
+  --        CAPZoneEast = ZONE_POLYGON:New( "CAP Zone East", GROUP:FindByName( "CAP Zone East" ) )
+  --        -- Setup a CAP, engaging between 800 and 900 km/h, altitude 30 (above the sea), radio altitude measurement,
+  --        -- patrolling speed between 500 and 600 km/h, altitude between 4000 and 10000 meters, barometric altitude measurement.
+  --        A2ADispatcher:SetSquadronCapV2( "Mineralnye", 800, 900, 30, 30, "RADIO", CAPZoneEast, 500, 600, 4000, 10000, "BARO" )
+  --        A2ADispatcher:SetSquadronCapInterval( "Mineralnye", 2, 30, 60, 1 )
+  --        
+  --        CAPZoneWest = ZONE_POLYGON:New( "CAP Zone West", GROUP:FindByName( "CAP Zone West" ) )
+  --        -- Setup a CAP, engaging between 800 and 1200 km/h, altitude between 4000 and 10000 meters, radio altitude measurement,
+  --        -- patrolling speed between 600 and 800 km/h, altitude between 4000 and 8000, barometric altitude measurement.
+  --        A2ADispatcher:SetSquadronCapV2( "Sochi", 800, 1200, 2000, 3000, "RADIO", CAPZoneWest, 600, 800, 4000, 8000, "BARO" )
+  --        A2ADispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
+  --        
+  --        CAPZoneMiddle = ZONE:New( "CAP Zone Middle")
+  --        -- Setup a CAP, engaging between 800 and 1200 km/h, altitude between 5000 and 8000 meters, barometric altitude measurement,
+  --        -- patrolling speed between 600 and 800 km/h, altitude between 4000 and 8000, radio altitude.
+  --        A2ADispatcher:SetSquadronCapV2( "Maykop", 800, 1200, 5000, 8000, "BARO", CAPZoneMiddle, 600, 800, 4000, 8000, "RADIO" )
+  --        A2ADispatcher:SetSquadronCapInterval( "Maykop", 2, 30, 120, 1 )
+  -- 
+  function AI_A2A_DISPATCHER:SetSquadronCap2( SquadronName, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType, Zone, PatrolMinSpeed, PatrolMaxSpeed, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolAltType )
+
+    self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
+    self.DefenderSquadrons[SquadronName].Cap = self.DefenderSquadrons[SquadronName].Cap or {}
+    
+    local DefenderSquadron = self:GetSquadron( SquadronName )
+
+    local Cap = self.DefenderSquadrons[SquadronName].Cap
+    Cap.Name = SquadronName
+    Cap.EngageMinSpeed = EngageMinSpeed
+    Cap.EngageMaxSpeed = EngageMaxSpeed
+    Cap.EngageFloorAltitude = EngageFloorAltitude
+    Cap.EngageCeilingAltitude = EngageCeilingAltitude
+    Cap.Zone = Zone
+    Cap.PatrolMinSpeed = PatrolMinSpeed
+    Cap.PatrolMaxSpeed = PatrolMaxSpeed
+    Cap.PatrolFloorAltitude = PatrolFloorAltitude
+    Cap.PatrolCeilingAltitude = PatrolCeilingAltitude
+    Cap.PatrolAltType = PatrolAltType
+    Cap.EngageAltType = EngageAltType
+
+    self:SetSquadronCapInterval( SquadronName, self.DefenderDefault.CapLimit, self.DefenderDefault.CapMinSeconds, self.DefenderDefault.CapMaxSeconds, 1 )
+
+    self:I( { CAP = { SquadronName, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, Zone, PatrolMinSpeed, PatrolMaxSpeed, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolAltType, EngageAltType } } )
+   
+    -- Add the CAP to the EWR network.
+    
+    local RecceSet = self.Detection:GetDetectionSet()
+    RecceSet:FilterPrefixes( DefenderSquadron.TemplatePrefixes )
+    RecceSet:FilterStart()
+    
+    self.Detection:SetFriendlyPrefixes( DefenderSquadron.TemplatePrefixes )
+    
+    return self
+  end
+  
+  --- Set a CAP for a Squadron.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #string SquadronName The squadron name.
+  -- @param #number EngageMinSpeed The minimum speed at which the engage can be executed.
+  -- @param #number EngageMaxSpeed The maximum speed at which the engage can be executed.
+  -- @param DCS#Altitude EngageFloorAltitude The lowest altitude in meters where to execute the engagement.
+  -- @param DCS#Altitude EngageCeilingAltitude The highest altitude in meters where to execute the engagement.
+  -- @param Core.Zone#ZONE_BASE Zone The @{Zone} object derived from @{Core.Zone#ZONE_BASE} that defines the zone wherein the CAP will be executed.
+  -- @param #number PatrolFloorAltitude The minimum altitude at which the cap can be executed.
+  -- @param #number PatrolCeilingAltitude the maximum altitude at which the cap can be executed.
+  -- @param #number PatrolMinSpeed The minimum speed at which the cap can be executed.
+  -- @param #number PatrolMaxSpeed The maximum speed at which the cap can be executed.
   -- @param #number AltType The altitude type, which is a string "BARO" defining Barometric or "RADIO" defining radio controlled altitude.
   -- @return #AI_A2A_DISPATCHER
   -- @usage
@@ -1794,37 +1868,9 @@ do -- AI_A2A_DISPATCHER
   --        A2ADispatcher:SetSquadronCap( "Maykop", CAPZoneMiddle, 4000, 8000, 600, 800, 800, 1200, "RADIO" )
   --        A2ADispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
   -- 
-  function AI_A2A_DISPATCHER:SetSquadronCap( SquadronName, Zone, FloorAltitude, CeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageMinSpeed, EngageMaxSpeed, AltType )
-  
-    self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
-    self.DefenderSquadrons[SquadronName].Cap = self.DefenderSquadrons[SquadronName].Cap or {}
-    
-    local DefenderSquadron = self:GetSquadron( SquadronName )
+  function AI_A2A_DISPATCHER:SetSquadronCap( SquadronName, Zone, PatrolMinSpeed, PatrolMaxSpeed, PatrolFloorAltitude, PatrolCeilingAltitude, EngageMinSpeed, EngageMaxSpeed, AltType )
 
-    local Cap = self.DefenderSquadrons[SquadronName].Cap
-    Cap.Name = SquadronName
-    Cap.Zone = Zone
-    Cap.FloorAltitude = FloorAltitude
-    Cap.CeilingAltitude = CeilingAltitude
-    Cap.PatrolMinSpeed = PatrolMinSpeed
-    Cap.PatrolMaxSpeed = PatrolMaxSpeed
-    Cap.EngageMinSpeed = EngageMinSpeed
-    Cap.EngageMaxSpeed = EngageMaxSpeed
-    Cap.AltType = AltType
-
-    self:SetSquadronCapInterval( SquadronName, self.DefenderDefault.CapLimit, self.DefenderDefault.CapMinSeconds, self.DefenderDefault.CapMaxSeconds, 1 )
-
-    self:F( { CAP = { SquadronName, Zone, FloorAltitude, CeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageMinSpeed, EngageMaxSpeed, AltType } } )
-   
-    -- Add the CAP to the EWR network.
-    
-    local RecceSet = self.Detection:GetDetectionSet()
-    RecceSet:FilterPrefixes( DefenderSquadron.TemplatePrefixes )
-    RecceSet:FilterStart()
-    
-    self.Detection:SetFriendlyPrefixes( DefenderSquadron.TemplatePrefixes )
-    
-    return self
+    return self:SetSquadronCap2( SquadronName, EngageMinSpeed, EngageMaxSpeed, PatrolFloorAltitude, PatrolCeilingAltitude, AltType, Zone, PatrolMinSpeed, PatrolMaxSpeed, PatrolFloorAltitude, PatrolCeilingAltitude, AltType )  
   end
   
   --- Set the squadron CAP parameters.  
@@ -2012,6 +2058,37 @@ do -- AI_A2A_DISPATCHER
     return nil
   end
 
+  --- Set squadron GCI.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #string SquadronName The squadron name.
+  -- @param #number EngageMinSpeed The minimum speed [km/h] at which the GCI can be executed.
+  -- @param #number EngageMaxSpeed The maximum speed [km/h] at which the GCI can be executed.
+  -- @param DCS#Altitude EngageFloorAltitude The lowest altitude in meters where to execute the engagement.
+  -- @param DCS#Altitude EngageCeilingAltitude The highest altitude in meters where to execute the engagement.
+  -- @param DCS#AltitudeType EngageAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to "RADIO".
+  -- @usage 
+  -- 
+  --        -- GCI Squadron execution.
+  --        A2ADispatcher:SetSquadronGci2( "Mozdok", 900, 1200, 5000, 5000, "BARO" )
+  --        A2ADispatcher:SetSquadronGci2( "Novo", 900, 2100, 30, 30, "RADIO" )
+  --        A2ADispatcher:SetSquadronGci2( "Maykop", 900, 1200, 100, 300, "RADIO" )
+  -- 
+  -- @return #AI_A2A_DISPATCHER
+  function AI_A2A_DISPATCHER:SetSquadronGci2( SquadronName, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType )
+  
+    self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
+    self.DefenderSquadrons[SquadronName].Gci = self.DefenderSquadrons[SquadronName].Gci or {}
+    
+    local Intercept = self.DefenderSquadrons[SquadronName].Gci
+    Intercept.Name = SquadronName
+    Intercept.EngageMinSpeed = EngageMinSpeed
+    Intercept.EngageMaxSpeed = EngageMaxSpeed
+    Intercept.EngageFloorAltitude = EngageFloorAltitude
+    Intercept.EngageCeilingAltitude = EngageCeilingAltitude
+    Intercept.EngageAltType = EngageAltType
+    
+    self:I( { GCI = { SquadronName, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType } } )
+  end
   
   --- Set squadron GCI.
   -- @param #AI_A2A_DISPATCHER self
@@ -3080,7 +3157,7 @@ do -- AI_A2A_DISPATCHER
         
         if DefenderCAP then
   
-          local Fsm = AI_A2A_CAP:New( DefenderCAP, Cap.Zone, Cap.FloorAltitude, Cap.CeilingAltitude, Cap.PatrolMinSpeed, Cap.PatrolMaxSpeed, Cap.EngageMinSpeed, Cap.EngageMaxSpeed, Cap.AltType )
+          local Fsm = AI_A2A_CAP:New2( DefenderCAP, Cap.EngageMinSpeed, Cap.EngageMaxSpeed, Cap.EngageFloorAltitude, Cap.EngageCeilingAltitude, Cap.EngageAltType, Cap.Zone, Cap.PatrolMinSpeed, Cap.PatrolMaxSpeed, Cap.PatrolFloorAltitude, Cap.PatrolCeilingAltitude, Cap.PatrolAltType )
           Fsm:SetDispatcher( self )
           Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
           Fsm:SetFuelThreshold( DefenderSquadron.FuelThreshold or self.DefenderDefault.FuelThreshold, 60 )
@@ -3101,7 +3178,7 @@ do -- AI_A2A_DISPATCHER
           self:SetDefenderTask( SquadronName, DefenderCAP, "CAP", Fsm )
 
           function Fsm:onafterTakeoff( DefenderGroup, From, Event, To )
-            self:F({"CAP Birth", DefenderGroup:GetName()})
+            self:F({"CAP Takeoff", DefenderGroup:GetName()})
             --self:GetParent(self).onafterBirth( self, Defender, From, Event, To )
             
             local DefenderName = DefenderGroup:GetCallsign()
@@ -3113,7 +3190,7 @@ do -- AI_A2A_DISPATCHER
               Fsm:__Patrol( 2 ) -- Start Patrolling
             end
           end
-  
+
           function Fsm:onafterRTB( DefenderGroup, From, Event, To )
 
             self:F({"CAP RTB", DefenderGroup:GetName()})
@@ -3169,7 +3246,7 @@ do -- AI_A2A_DISPATCHER
       for DefenderID, Defender in pairs( Defenders ) do
 
         local Fsm = self:GetDefenderTaskFsm( Defender )
-        Fsm:__Engage( 1, AttackerDetection.Set ) -- Engage on the TargetSetUnit
+        Fsm:__EngageRoute( 1, AttackerDetection.Set ) -- Engage on the TargetSetUnit
         
         self:SetDefenderTaskTarget( Defender, AttackerDetection )
 
@@ -3201,7 +3278,7 @@ do -- AI_A2A_DISPATCHER
       for DefenderID, DefenderGroup in pairs( DefenderFriendlies or {} ) do
   
         local Fsm = self:GetDefenderTaskFsm( DefenderGroup )
-        Fsm:__Engage( 1, AttackerSet ) -- Engage on the TargetSetUnit
+        Fsm:__EngageRoute( 1, AttackerSet ) -- Engage on the TargetSetUnit
         
         self:SetDefenderTaskTarget( DefenderGroup, AttackerDetection )
   
@@ -3283,7 +3360,7 @@ do -- AI_A2A_DISPATCHER
                 
                   DefenderCount = DefenderCount - DefenderGrouping / DefenderOverhead
         
-                  local Fsm = AI_A2A_GCI:New( DefenderGCI, Gci.EngageMinSpeed, Gci.EngageMaxSpeed )
+                  local Fsm = AI_A2A_GCI:New2( DefenderGCI, Gci.EngageMinSpeed, Gci.EngageMaxSpeed, Gci.EngageFloorAltitude, Gci.EngageCeilingAltitude, Gci.EngageAltType )
                   Fsm:SetDispatcher( self )
                   Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
                   Fsm:SetFuelThreshold( DefenderSquadron.FuelThreshold or self.DefenderDefault.FuelThreshold, 60 )
@@ -3306,8 +3383,25 @@ do -- AI_A2A_DISPATCHER
                     
                     if DefenderTarget then
                       Dispatcher:MessageToPlayers( DefenderName .. " wheels up.", DefenderGroup )
-                      Fsm:__Engage( 2, DefenderTarget.Set ) -- Engage on the TargetSetUnit
+                      --Fsm:__Engage( 2, DefenderTarget.Set ) -- Engage on the TargetSetUnit
+                      Fsm:EngageRoute( DefenderTarget.Set ) -- Engage on the TargetSetUnit
                     end
+                  end
+  
+                  function Fsm:onafterEngageRoute( DefenderGroup, From, Event, To, AttackSetUnit )
+                    self:F({"GCI Route", DefenderGroup:GetName()})
+                    
+                    local DefenderName = DefenderGroup:GetCallsign()
+                    local Dispatcher = Fsm:GetDispatcher() -- #AI_A2A_DISPATCHER
+                    local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
+                    
+                    if Squadron then
+                      local FirstUnit = AttackSetUnit:GetFirst()
+                      local Coordinate = FirstUnit:GetCoordinate() -- Core.Point#COORDINATE
+              
+                      Dispatcher:MessageToPlayers( DefenderName .. ", intercepting bogeys at " .. Coordinate:ToStringA2A( DefenderGroup ), DefenderGroup )
+                    end
+                    self:GetParent( Fsm ).onafterEngageRoute( self, DefenderGroup, From, Event, To, AttackSetUnit )
                   end
   
                   function Fsm:onafterRTB( DefenderGroup, From, Event, To )

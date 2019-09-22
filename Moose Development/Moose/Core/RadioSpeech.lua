@@ -58,6 +58,14 @@ RADIOSPEECH.Vocabulary.EN = {
   ["80"] = { "80", 0.26 },
   ["90"] = { "90", 0.36 },
   ["100"] = { "100", 0.55 },    
+  ["200"] = { "200", 0.55 },    
+  ["300"] = { "300", 0.61 },    
+  ["400"] = { "400", 0.60 },    
+  ["500"] = { "500", 0.61 },    
+  ["600"] = { "600", 0.65 },    
+  ["700"] = { "700", 0.70 },    
+  ["800"] = { "800", 0.54 },    
+  ["900"] = { "900", 0.60 },    
   ["1000"] = { "1000", 1 },    
 
   ["chevy"] = { "chevy", 0.35 },
@@ -70,7 +78,6 @@ RADIOSPEECH.Vocabulary.EN = {
   ["uzi"] = { "uzi", 0.28 },
 
   ["degrees"] = { "degrees", 0.5 },
-  ["�"] = { "degrees", 0.5 },
   ["kilometers"] = { "kilometers", 0.65 },
   ["km"] = { "kilometers", 0.65 },
   ["miles"] = { "miles", 0.45 },
@@ -81,7 +88,7 @@ RADIOSPEECH.Vocabulary.EN = {
   
 
   ["returning to base"] = { "returning_to_base", 0.85 },
-  ["moving on to ground target"] = { "moving_on_to_ground_target", 1.20 },
+  ["on route to ground target"] = { "on_route_to_ground_target", 1.05 },
   ["engaging ground target"] = { "engaging_ground_target", 1.20 },
   ["wheels up"] = { "wheels_up", 0.42 },
   ["landing at base"] = { "landing at base", 0.8 },
