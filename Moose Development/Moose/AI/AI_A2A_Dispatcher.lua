@@ -3157,15 +3157,15 @@ do -- AI_A2A_DISPATCHER
         
         if DefenderCAP then
   
-          local Fsm = AI_A2A_CAP:New2( DefenderCAP, Cap.EngageMinSpeed, Cap.EngageMaxSpeed, Cap.EngageFloorAltitude, Cap.EngageCeilingAltitude, Cap.EngageAltType, Cap.Zone, Cap.PatrolMinSpeed, Cap.PatrolMaxSpeed, Cap.PatrolFloorAltitude, Cap.PatrolCeilingAltitude, Cap.PatrolAltType )
-          Fsm:SetDispatcher( self )
-          Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
-          Fsm:SetFuelThreshold( DefenderSquadron.FuelThreshold or self.DefenderDefault.FuelThreshold, 60 )
-          Fsm:SetDamageThreshold( self.DefenderDefault.DamageThreshold )
-          Fsm:SetDisengageRadius( self.DisengageRadius )
-          Fsm:SetTanker( DefenderSquadron.TankerName or self.DefenderDefault.TankerName )
+          local AI_A2A_Fsm = AI_A2A_CAP:New2( DefenderCAP, Cap.EngageMinSpeed, Cap.EngageMaxSpeed, Cap.EngageFloorAltitude, Cap.EngageCeilingAltitude, Cap.EngageAltType, Cap.Zone, Cap.PatrolMinSpeed, Cap.PatrolMaxSpeed, Cap.PatrolFloorAltitude, Cap.PatrolCeilingAltitude, Cap.PatrolAltType )
+          AI_A2A_Fsm:SetDispatcher( self )
+          AI_A2A_Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
+          AI_A2A_Fsm:SetFuelThreshold( DefenderSquadron.FuelThreshold or self.DefenderDefault.FuelThreshold, 60 )
+          AI_A2A_Fsm:SetDamageThreshold( self.DefenderDefault.DamageThreshold )
+          AI_A2A_Fsm:SetDisengageRadius( self.DisengageRadius )
+          AI_A2A_Fsm:SetTanker( DefenderSquadron.TankerName or self.DefenderDefault.TankerName )
           if DefenderSquadron.Racetrack or self.DefenderDefault.Racetrack then
-            Fsm:SetRaceTrackPattern(DefenderSquadron.RacetrackLengthMin   or self.DefenderDefault.RacetrackLengthMin,
+            AI_A2A_Fsm:SetRaceTrackPattern(DefenderSquadron.RacetrackLengthMin   or self.DefenderDefault.RacetrackLengthMin,
                                     DefenderSquadron.RacetrackLengthMax   or self.DefenderDefault.RacetrackLengthMax,
                                     DefenderSquadron.RacetrackHeadingMin  or self.DefenderDefault.RacetrackHeadingMin,
                                     DefenderSquadron.RacetrackHeadingMax  or self.DefenderDefault.RacetrackHeadingMax,
@@ -3173,25 +3173,39 @@ do -- AI_A2A_DISPATCHER
                                     DefenderSquadron.RacetrackDurationMax or self.DefenderDefault.RacetrackDurationMax,
                                     DefenderSquadron.RacetrackCoordinates or self.DefenderDefault.RacetrackCoordinates)
           end
-          Fsm:Start()
+          AI_A2A_Fsm:Start()
   
-          self:SetDefenderTask( SquadronName, DefenderCAP, "CAP", Fsm )
+          self:SetDefenderTask( SquadronName, DefenderCAP, "CAP", AI_A2A_Fsm )
 
-          function Fsm:onafterTakeoff( DefenderGroup, From, Event, To )
+          function AI_A2A_Fsm:onafterTakeoff( DefenderGroup, From, Event, To )
             self:F({"CAP Takeoff", DefenderGroup:GetName()})
             --self:GetParent(self).onafterBirth( self, Defender, From, Event, To )
             
             local DefenderName = DefenderGroup:GetCallsign()
-            local Dispatcher = Fsm:GetDispatcher() -- #AI_A2A_DISPATCHER
+            local Dispatcher = AI_A2A_Fsm:GetDispatcher() -- #AI_A2A_DISPATCHER
             local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
 
             if Squadron then
               Dispatcher:MessageToPlayers( DefenderName .. " Wheels up.", DefenderGroup )
-              Fsm:__Patrol( 2 ) -- Start Patrolling
+              AI_A2A_Fsm:__Patrol( 2 ) -- Start Patrolling
             end
           end
 
-          function Fsm:onafterRTB( DefenderGroup, From, Event, To )
+          function AI_A2A_Fsm:onafterPatrolRoute( DefenderGroup, From, Event, To )
+            self:F({"CAP PatrolRoute", DefenderGroup:GetName()})
+            self:GetParent(self).onafterPatrolRoute( self, DefenderGroup, From, Event, To )
+            
+            local DefenderName = DefenderGroup:GetCallsign()
+            local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
+            local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
+            if Squadron then
+              Dispatcher:MessageToPlayers( DefenderName .. ", patrolling.", DefenderGroup )
+            end
+    
+            Dispatcher:ClearDefenderTaskTarget( DefenderGroup )
+          end
+
+          function AI_A2A_Fsm:onafterRTB( DefenderGroup, From, Event, To )
 
             self:F({"CAP RTB", DefenderGroup:GetName()})
 
@@ -3205,7 +3219,7 @@ do -- AI_A2A_DISPATCHER
           end
   
           --- @param #AI_A2A_DISPATCHER self
-          function Fsm:onafterHome( Defender, From, Event, To, Action )
+          function AI_A2A_Fsm:onafterHome( Defender, From, Event, To, Action )
             self:F({"CAP Home", Defender:GetName()})
             self:GetParent(self).onafterHome( self, Defender, From, Event, To )
             
@@ -3278,7 +3292,7 @@ do -- AI_A2A_DISPATCHER
       for DefenderID, DefenderGroup in pairs( DefenderFriendlies or {} ) do
   
         local Fsm = self:GetDefenderTaskFsm( DefenderGroup )
-        Fsm:__EngageRoute( 1, AttackerSet ) -- Engage on the TargetSetUnit
+        Fsm:__EngageRoute( 0.1, AttackerSet ) -- Engage on the TargetSetUnit
         
         self:SetDefenderTaskTarget( DefenderGroup, AttackerDetection )
   
@@ -3395,13 +3409,29 @@ do -- AI_A2A_DISPATCHER
                     local Dispatcher = Fsm:GetDispatcher() -- #AI_A2A_DISPATCHER
                     local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
                     
-                    if Squadron then
+                    if Squadron and AttackSetUnit:Count() > 0 then
                       local FirstUnit = AttackSetUnit:GetFirst()
                       local Coordinate = FirstUnit:GetCoordinate() -- Core.Point#COORDINATE
               
                       Dispatcher:MessageToPlayers( DefenderName .. ", intercepting bogeys at " .. Coordinate:ToStringA2A( DefenderGroup ), DefenderGroup )
                     end
                     self:GetParent( Fsm ).onafterEngageRoute( self, DefenderGroup, From, Event, To, AttackSetUnit )
+                  end
+  
+                  function Fsm:onafterEngage( DefenderGroup, From, Event, To, AttackSetUnit )
+                    self:F({"GCI Engage", DefenderGroup:GetName()})
+                    
+                    local DefenderName = DefenderGroup:GetCallsign()
+                    local Dispatcher = Fsm:GetDispatcher() -- #AI_A2A_DISPATCHER
+                    local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
+                    
+                    if Squadron and AttackSetUnit:Count() > 0 then
+                      local FirstUnit = AttackSetUnit:GetFirst()
+                      local Coordinate = FirstUnit:GetCoordinate() -- Core.Point#COORDINATE
+              
+                      Dispatcher:MessageToPlayers( DefenderName .. ", engaging bogeys at " .. Coordinate:ToStringA2A( DefenderGroup ), DefenderGroup )
+                    end
+                    self:GetParent( Fsm ).onafterEngage( self, DefenderGroup, From, Event, To, AttackSetUnit )
                   end
   
                   function Fsm:onafterRTB( DefenderGroup, From, Event, To )
@@ -3437,7 +3467,7 @@ do -- AI_A2A_DISPATCHER
                     local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
                     local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
 
-                    Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " landing at base.", DefenderGroup )
+                    Dispatcher:MessageToPlayers( DefenderName .. " landing at base.", DefenderGroup )
   
                     if Action and Action == "Destroy" then
                       Dispatcher:RemoveDefenderFromSquadron( Squadron, DefenderGroup )

@@ -470,7 +470,7 @@ function RADIOQUEUE:_GetRadioSenderCoord()
     end
     
     -- Now try a static. 
-    local sender=STATIC:FindByName(self.sendername)
+    local sender=STATIC:FindByName( self.sendername, false )
 
     -- Check that sender is alive and an aircraft.
     if sender then
