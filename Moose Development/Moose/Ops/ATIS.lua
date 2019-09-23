@@ -234,12 +234,12 @@ function ATIS:onafterBroadcast(From, Event, To)
 
   local coord=self.airbase:GetCoordinate()
   
-  local height=coord:GetLandHeight()
+  local height=coord:GetLandHeight()+10
   
   ----------------
   --- Pressure ---
   ----------------
-  local qfe=coord:GetPressure(height+5)
+  local qfe=coord:GetPressure(height)
   local qnh=coord:GetPressure(0)
   
   -- Convert to inHg
@@ -257,7 +257,7 @@ function ATIS:onafterBroadcast(From, Event, To)
   ------------
   --- Wind ---
   ------------
-  local windFrom, windSpeed=coord:GetWind(height+10)
+  local windFrom, windSpeed=coord:GetWind(height)
   local WINDFROM=string.format("%03d", windFrom)
   local WINDSPEED=string.format("%d", UTILS.MpsToKnots(windSpeed))
   
@@ -267,6 +267,9 @@ function ATIS:onafterBroadcast(From, Event, To)
   local time=timer.getAbsTime()
   
   -- TODO add zulu time correction.
+  if self.theatre==DCSMAP.Caucasus then
+    time=time-4*60*60  -- Caucasus i UTC+4 hours  
+  end
   
   local clock=UTILS.SecondsToClock(time)
   local zulu=UTILS.Split(clock, ":")
@@ -275,7 +278,7 @@ function ATIS:onafterBroadcast(From, Event, To)
   -------------------
   --- Temperature ---
   -------------------
-  local temperature=coord:GetTemperature(height+10)
+  local temperature=coord:GetTemperature(height)
   local TEMPERATURE=string.format("%d", temperature)
   
   -- Weather
@@ -347,8 +350,7 @@ function ATIS:onafterBroadcast(From, Event, To)
   local subduration=10
   
   --Airbase.
-  self.radioqueue:NewTransmission(string.format("%s/%s.ogg", self.theatre, self.airbasename), 1.0, self.soundpath, nil, nil, string.format("%s Airport", self.airbasename), subduration)
-  self.radioqueue:NewTransmission(string.format("%s/Airport.ogg", self.theatre), 0.70, self.soundpath)
+  self.radioqueue:NewTransmission(string.format("%s/%s.ogg", self.theatre, self.airbasename), 3.0, self.soundpath, nil, nil, string.format("%s Airport", self.airbasename), subduration)
   
   -- Time
   self.radioqueue:Number2Transmission(ZULU)
@@ -435,7 +437,7 @@ function ATIS:onafterBroadcast(From, Event, To)
   end
   
   -- Active runway.
-  self.radioqueue:NewTransmission("ActiveRunway.ogg", 1.05, self.soundpath, nil, 2.0, string.format("Active runway %s", runway.idx), subduration)
+  self.radioqueue:NewTransmission("ActiveRunway.ogg", 1.05, self.soundpath, nil, 1.0, string.format("Active runway %s", runway.idx), subduration)
   self.radioqueue:Number2Transmission(runway.idx)
   
 end
@@ -497,12 +499,12 @@ function ATIS:GetStaticWeather()
     fog=weather.fog
   end
 
-  self:I("FF weather:")
-  self:I({clouds=clouds})
-  self:I({visibility=visibility})
-  self:I({turbulence=turbulence})
-  self:I({fog=fog})
-  self:I({dust=dust})
+  self:T("FF weather:")
+  self:T({clouds=clouds})
+  self:T({visibility=visibility})
+  self:T({turbulence=turbulence})
+  self:T({fog=fog})
+  self:T({dust=dust})
   return clouds, visibility, turbulence, fog, dust
 end
 

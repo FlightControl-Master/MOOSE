@@ -1030,6 +1030,9 @@ function AIRBASE:GetRunwayData()
   
   self:T(string.format("Runway coords # = %d", #runwaycoords))
   
+  -- Magnetic declination.
+  local magvar=0 --UTILS.GetMagneticDeclination()
+  
   for i=1,#runwaycoords,2 do
     
     -- Assuming each runway has two points.
@@ -1047,7 +1050,7 @@ function AIRBASE:GetRunwayData()
     local hdg=c1:HeadingTo(c2)
     
     -- Runway ID: heading=070° ==> idx="07"
-    local idx=string.format("%02d", UTILS.Round(hdg/10, 0))
+    local idx=string.format("%02d", UTILS.Round((hdg-magvar)/10, 0))
     
     -- Debug info.
     self:T(string.format("Runway %d heading=%03d", j, hdg))
@@ -1072,7 +1075,7 @@ function AIRBASE:GetRunwayData()
     end
     
     -- Runway ID: heading=070° ==> ID="07"
-    local idx=string.format("%02d", UTILS.Round(hdg/10, 0))
+    local idx=string.format("%02d", UTILS.Round((hdg-magvar)/10, 0))
     
     local runway={} --#AIRBASE.Runway    
     runway.heading=hdg
