@@ -867,7 +867,7 @@ do -- COORDINATE
   -- @param #number Precision The precision.
   -- @param Core.Settings#SETTINGS Settings
   -- @return #string The bearing text in degrees.
-  function COORDINATE:GetBearingText( AngleRadians, Precision, Settings )
+  function COORDINATE:GetBearingText( AngleRadians, Precision, Settings, Language )
 
     local Settings = Settings or _SETTINGS -- Core.Settings#SETTINGS
 
@@ -883,16 +883,25 @@ do -- COORDINATE
   -- @param #number Distance The distance in meters.
   -- @param Core.Settings#SETTINGS Settings
   -- @return #string The distance text expressed in the units of measurement.
-  function COORDINATE:GetDistanceText( Distance, Settings )
+  function COORDINATE:GetDistanceText( Distance, Settings, Language )
 
     local Settings = Settings or _SETTINGS -- Core.Settings#SETTINGS
+    local Language = Language or "EN"
 
     local DistanceText
 
     if Settings:IsMetric() then
-      DistanceText = " for " .. UTILS.Round( Distance / 1000, 2 ) .. " km"
+      if     Language == "EN" then
+        DistanceText = " for " .. UTILS.Round( Distance / 1000, 2 ) .. " km"
+      elseif Language == "RU" then
+        DistanceText = " за " .. UTILS.Round( Distance / 1000, 2 ) .. " километров"
+      end
     else
-      DistanceText = " for " .. UTILS.Round( UTILS.MetersToNM( Distance ), 2 ) .. " miles"
+      if     Language == "EN" then
+        DistanceText = " for " .. UTILS.Round( UTILS.MetersToNM( Distance ), 2 ) .. " miles"
+      elseif Language == "RU" then
+        DistanceText = " за " .. UTILS.Round( UTILS.MetersToNM( Distance ), 2 ) .. " миль"
+      end
     end
     
     return DistanceText
@@ -901,14 +910,24 @@ do -- COORDINATE
   --- Return the altitude text of the COORDINATE.
   -- @param #COORDINATE self
   -- @return #string Altitude text.
-  function COORDINATE:GetAltitudeText( Settings )
+  function COORDINATE:GetAltitudeText( Settings, Language )
     local Altitude = self.y
     local Settings = Settings or _SETTINGS
+    local Language = Language or "EN"
+    
     if Altitude ~= 0 then
       if Settings:IsMetric() then
-        return " at " .. UTILS.Round( self.y, -3 ) .. " meters"
+        if     Language == "EN" then
+          return " at " .. UTILS.Round( self.y, -3 ) .. " meters"
+        elseif Language == "RU" then
+          return " в " .. UTILS.Round( self.y, -3 ) .. " метры"
+        end
       else
-        return " at " .. UTILS.Round( UTILS.MetersToFeet( self.y ), -3 ) .. " feet"
+        if     Language == "EN" then
+          return " at " .. UTILS.Round( UTILS.MetersToFeet( self.y ), -3 ) .. " feet"
+        elseif Language == "RU" then
+          return " в " .. UTILS.Round( self.y, -3 ) .. " ноги"
+        end
       end
     else
       return ""
@@ -954,12 +973,12 @@ do -- COORDINATE
   -- @param #number Distance The distance
   -- @param Core.Settings#SETTINGS Settings
   -- @return #string The BR Text
-  function COORDINATE:GetBRText( AngleRadians, Distance, Settings )
+  function COORDINATE:GetBRText( AngleRadians, Distance, Settings, Language )
 
     local Settings = Settings or _SETTINGS -- Core.Settings#SETTINGS
 
-    local BearingText = self:GetBearingText( AngleRadians, 0, Settings )
-    local DistanceText = self:GetDistanceText( Distance, Settings )
+    local BearingText = self:GetBearingText( AngleRadians, 0, Settings, Language )
+    local DistanceText = self:GetDistanceText( Distance, Settings, Language )
     
     local BRText = BearingText .. DistanceText
 
@@ -972,13 +991,13 @@ do -- COORDINATE
   -- @param #number Distance The distance
   -- @param Core.Settings#SETTINGS Settings
   -- @return #string The BRA Text
-  function COORDINATE:GetBRAText( AngleRadians, Distance, Settings )
+  function COORDINATE:GetBRAText( AngleRadians, Distance, Settings, Language )
 
     local Settings = Settings or _SETTINGS -- Core.Settings#SETTINGS
 
-    local BearingText = self:GetBearingText( AngleRadians, 0, Settings )
-    local DistanceText = self:GetDistanceText( Distance, Settings )
-    local AltitudeText = self:GetAltitudeText( Settings )
+    local BearingText = self:GetBearingText( AngleRadians, 0, Settings, Language )
+    local DistanceText = self:GetDistanceText( Distance, Settings, Language  )
+    local AltitudeText = self:GetAltitudeText( Settings, Language  )
 
     local BRAText = BearingText .. DistanceText .. AltitudeText -- When the POINT is a VEC2, there will be no altitude shown.
 
@@ -1867,12 +1886,12 @@ do -- COORDINATE
   -- @param #COORDINATE FromCoordinate The coordinate to measure the distance and the bearing from.
   -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @return #string The BR text.
-  function COORDINATE:ToStringBRA( FromCoordinate, Settings )
+  function COORDINATE:ToStringBRA( FromCoordinate, Settings, Language )
     local DirectionVec3 = FromCoordinate:GetDirectionVec3( self )
     local AngleRadians =  self:GetAngleRadians( DirectionVec3 )
     local Distance = FromCoordinate:Get2DDistance( self )
     local Altitude = self:GetAltitudeText()
-    return "BRA, " .. self:GetBRAText( AngleRadians, Distance, Settings )
+    return "BRA, " .. self:GetBRAText( AngleRadians, Distance, Settings, Language )
   end
 
   --- Return a BULLS string out of the BULLS of the coalition to the COORDINATE.
@@ -2023,7 +2042,7 @@ do -- COORDINATE
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable
   -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @return #string The coordinate Text in the configured coordinate system.
-  function COORDINATE:ToStringA2A( Controllable, Settings ) -- R2.2
+  function COORDINATE:ToStringA2A( Controllable, Settings, Language ) -- R2.2
   
     self:F2( { Controllable = Controllable and Controllable:GetName() } )
 
@@ -2032,23 +2051,23 @@ do -- COORDINATE
     if Settings:IsA2A_BRAA()  then
       if Controllable then
         local Coordinate = Controllable:GetCoordinate()
-        return self:ToStringBRA( Coordinate, Settings ) 
+        return self:ToStringBRA( Coordinate, Settings, Language ) 
       else
-        return self:ToStringMGRS( Settings )
+        return self:ToStringMGRS( Settings, Language )
       end
     end
     if Settings:IsA2A_BULLS() then
       local Coalition = Controllable:GetCoalition()
-      return self:ToStringBULLS( Coalition, Settings )
+      return self:ToStringBULLS( Coalition, Settings, Language )
     end
     if Settings:IsA2A_LL_DMS()  then
-      return self:ToStringLLDMS( Settings )
+      return self:ToStringLLDMS( Settings, Language )
     end
     if Settings:IsA2A_LL_DDM()  then
-      return self:ToStringLLDDM( Settings )
+      return self:ToStringLLDDM( Settings, Language )
     end
     if Settings:IsA2A_MGRS() then
-      return self:ToStringMGRS( Settings )
+      return self:ToStringMGRS( Settings, Language )
     end
 
     return nil

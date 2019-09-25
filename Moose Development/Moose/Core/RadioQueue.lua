@@ -81,6 +81,7 @@ function RADIOQUEUE:New(frequency, modulation)
   
   -- Scheduler
   self.scheduler=SCHEDULER:New()
+  self.scheduler:NoTrace()
   
   return self
 end

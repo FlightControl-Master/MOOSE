@@ -2502,7 +2502,7 @@ do -- AI_AIR_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
         
         if Squadron then
-          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " airborne." )
+          Dispatcher:MessageToPlayers( Squadron,  "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " airborne." )
           Fsm:Patrol() -- Engage on the TargetSetUnit
         end
       end
@@ -2514,7 +2514,7 @@ do -- AI_AIR_DISPATCHER
         local DefenderName = Defender:GetName()
         local Dispatcher = self:GetDispatcher() -- #AI_AIR_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " returning." )
+        Dispatcher:MessageToPlayers( Squadron,  "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " returning." )
 
         Dispatcher:ClearDefenderTaskTarget( Defender )
       end
@@ -2527,7 +2527,7 @@ do -- AI_AIR_DISPATCHER
         local DefenderName = Defender:GetName()
         local Dispatcher = Fsm:GetDispatcher() -- #AI_AIR_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " lost control." )
+        Dispatcher:MessageToPlayers( Squadron,  "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " lost control." )
         if Defender:IsAboveRunway() then
           Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
           Defender:Destroy()
@@ -2542,7 +2542,7 @@ do -- AI_AIR_DISPATCHER
         local DefenderName = Defender:GetName()
         local Dispatcher = self:GetDispatcher() -- #AI_AIR_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " landing." )
+        Dispatcher:MessageToPlayers( Squadron,  "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " landing." )
 
         if Action and Action == "Destroy" then
           Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
@@ -2599,7 +2599,7 @@ do -- AI_AIR_DISPATCHER
         self:F( { DefenderTarget = DefenderTarget } )
         
         if DefenderTarget then
-          Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " airborne." )
+          Dispatcher:MessageToPlayers( Squadron,  "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " airborne." )
           Fsm:EngageRoute( DefenderTarget.Set ) -- Engage on the TargetSetUnit
         end
       end
@@ -2614,7 +2614,7 @@ do -- AI_AIR_DISPATCHER
         local FirstUnit = AttackSetUnit:GetFirst()
         local Coordinate = FirstUnit:GetCoordinate() -- Core.Point#COORDINATE
 
-        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " on route, bearing " .. Coordinate:ToString( Defender ) )
+        Dispatcher:MessageToPlayers( Squadron,  "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " on route, bearing " .. Coordinate:ToString( Defender ) )
       end
 
       function Fsm:OnAfterEngage( Defender, From, Event, To, AttackSetUnit )
@@ -2627,7 +2627,7 @@ do -- AI_AIR_DISPATCHER
         local FirstUnit = AttackSetUnit:GetFirst()
         local Coordinate = FirstUnit:GetCoordinate()
 
-        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " engaging target, bearing " .. Coordinate:ToString( Defender ) )
+        Dispatcher:MessageToPlayers( Squadron,  "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " engaging target, bearing " .. Coordinate:ToString( Defender ) )
       end
 
       function Fsm:onafterRTB( Defender, From, Event, To )
@@ -2636,7 +2636,7 @@ do -- AI_AIR_DISPATCHER
         local DefenderName = Defender:GetName()
         local Dispatcher = self:GetDispatcher() -- #AI_AIR_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " RTB." )
+        Dispatcher:MessageToPlayers( Squadron,  "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " RTB." )
 
         self:GetParent(self).onafterRTB( self, Defender, From, Event, To )
 
@@ -2651,7 +2651,7 @@ do -- AI_AIR_DISPATCHER
         local DefenderName = Defender:GetName()
         local Dispatcher = Fsm:GetDispatcher() -- #AI_AIR_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " lost control." )
+        Dispatcher:MessageToPlayers( Squadron,  "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " lost control." )
 
         if Defender:IsAboveRunway() then
           Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
@@ -2667,7 +2667,7 @@ do -- AI_AIR_DISPATCHER
         local DefenderName = Defender:GetName()
         local Dispatcher = self:GetDispatcher() -- #AI_AIR_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-        Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " landing." )
+        Dispatcher:MessageToPlayers( Squadron,  "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " landing." )
 
         if Action and Action == "Destroy" then
           Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )

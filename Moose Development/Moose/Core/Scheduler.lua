@@ -301,6 +301,14 @@ function SCHEDULER:Clear()
   _SCHEDULEDISPATCHER:Clear( self )
 end
 
+--- No tracing for this scheduler.
+-- @param #SCHEDULER self
+-- @param #number ScheduleID (optional) The ScheduleID of the planned (repeating) schedule.
+function SCHEDULER:NoTrace()
+
+  _SCHEDULEDISPATCHER:NoTrace( self )
+end
+
 
 
 

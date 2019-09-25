@@ -11,7 +11,7 @@
 --
 -- ### Authors: FlightControl
 --
--- @module Core.Speech
+-- @module Core.RadioSpeech
 -- @image Core_Radio.JPG
 
 --- Makes the radio speak.
@@ -25,6 +25,8 @@ RADIOSPEECH = {
   ClassName = "RADIOSPEECH",
   Vocabulary = {
     EN = {},
+    DE = {},
+    RU = {},
   }
 }
 
@@ -91,6 +93,7 @@ RADIOSPEECH.Vocabulary.EN = {
   ["miles"] = { "miles", 0.45 },
   ["meters"] = { "meters", 0.41 },
   ["mi"] = { "miles", 0.45 },
+  ["feet"] = { "feet", 0.29 },
   
   ["br"] = { "br", 1.1 },
   ["bra"] = { "bra", 0.3 },
@@ -112,7 +115,81 @@ RADIOSPEECH.Vocabulary.EN = {
   ["defender"] = { "defender", 0.45 },
 }
 
+RADIOSPEECH.Vocabulary.RU = {
+  ["1"] = { "1", 0.34 },
+  ["2"] = { "2", 0.30 },
+  ["3"] = { "3", 0.23 },
+  ["4"] = { "4", 0.51 },
+  ["5"] = { "5", 0.31 },
+  ["6"] = { "6", 0.44 },
+  ["7"] = { "7", 0.25 },
+  ["8"] = { "8", 0.43 },
+  ["9"] = { "9", 0.45 },
+  ["10"] = { "10", 0.53 },
+  ["11"] = { "11", 0.66 },
+  ["12"] = { "12", 0.70 },
+  ["13"] = { "13", 0.66 },
+  ["14"] = { "14", 0.80 },
+  ["15"] = { "15", 0.65 },
+  ["16"] = { "16", 0.75 },
+  ["17"] = { "17", 0.74 },
+  ["18"] = { "18", 0.85 },
+  ["19"] = { "19", 0.80 },
+  ["20"] = { "20", 0.58 },
+  ["30"] = { "30", 0.51 },
+  ["40"] = { "40", 0.51 },
+  ["50"] = { "50", 0.67 },
+  ["60"] = { "60", 0.76 },
+  ["70"] = { "70", 0.68 },
+  ["80"] = { "80", 0.84 },
+  ["90"] = { "90", 0.71 },
+  ["100"] = { "100", 0.35 },    
+  ["200"] = { "200", 0.59 },    
+  ["300"] = { "300", 0.53 },    
+  ["400"] = { "400", 0.70 },    
+  ["500"] = { "500", 0.50 },    
+  ["600"] = { "600", 0.58 },    
+  ["700"] = { "700", 0.64 },    
+  ["800"] = { "800", 0.77 },    
+  ["900"] = { "900", 0.75 },    
+  ["1000"] = { "1000", 0.87 },    
+  ["2000"] = { "2000", 0.83 },    
+  ["3000"] = { "3000", 0.84 },    
+  ["4000"] = { "4000", 1.00 },    
+  ["5000"] = { "5000", 0.77 },    
+  ["6000"] = { "6000", 0.90 },    
+  ["7000"] = { "7000", 0.77 },    
+  ["8000"] = { "8000", 0.92 },    
+  ["9000"] = { "9000", 0.87 },    
 
+  ["степени"] = { "degrees", 0.5 },
+  ["километров"] = { "kilometers", 0.65 },
+  ["km"] = { "kilometers", 0.65 },
+  ["миль"] = { "miles", 0.45 },
+  ["mi"] = { "miles", 0.45 },
+  ["метры"] = { "meters", 0.41 },
+  ["m"] = { "meters", 0.41 },
+  ["ноги"] = { "feet", 0.37 },
+  
+  ["br"] = { "br", 1.1 },
+  ["bra"] = { "bra", 0.3 },
+  
+
+  ["возвращаясь на базу"] = { "returning_to_base", 1.40 },
+  ["на пути к наземной цели"] = { "on_route_to_ground_target", 1.45 },
+  ["перехват самолетов"] = { "intercepting_bogeys", 1.22 },
+  ["поражение наземной цели"] = { "engaging_ground_target", 1.53 },
+  ["захватывающие самолеты"] = { "engaging_bogeys", 1.68 },
+  ["колеса вверх"] = { "wheels_up", 0.92 },
+  ["посадка на базу"] = { "landing at base", 1.04 },
+  ["патрулирующий"] = { "patrolling", 0.96 },
+
+  ["за"] = { "for", 0.27 },
+  ["и"] = { "and", 0.17 },
+  ["в"] = { "at", 0.19 },
+  ["dot"] = { "dot", 0.51 },
+  ["defender"] = { "defender", 0.45 },
+}
 
 --- Create a new RADIOSPEECH object for a given radio frequency/modulation.
 -- @param #RADIOSPEECH self
@@ -131,6 +208,11 @@ function RADIOSPEECH:New(frequency, modulation)
   return self
 end
 
+function RADIOSPEECH:SetLanguage( Langauge )
+
+  self.Language = Langauge
+end
+
 
 --- Add Sentence to the Speech collection.
 -- @param #RADIOSPEECH self
@@ -143,7 +225,7 @@ function RADIOSPEECH:AddSentenceToSpeech( RemainingSentence, Speech, Sentence, D
 
   self:I( { RemainingSentence, Speech, Sentence, Data } )
 
-  local Token, RemainingSentence = RemainingSentence:match( "^ *(%w+)(.*)" )
+  local Token, RemainingSentence = RemainingSentence:match( "^ *([^ ]+)(.*)" )
   self:I( { Token = Token, RemainingSentence = RemainingSentence } )
 
   -- Is there a Token?
@@ -198,122 +280,117 @@ end
 --- Speak a sentence.
 -- @param #RADIOSPEECH self
 -- @param #string Sentence The sentence to be spoken.
-function RADIOSPEECH:SpeakWords( Sentence, Speech )
+function RADIOSPEECH:SpeakWords( Sentence, Speech, Language )
 
-  local Word, RemainderSentence = Sentence:match( "^[^%d%a]*(%a*)(.*)" )
+  local OriginalSentence = Sentence
+
+  -- lua does not parse UTF-8, so the match statement will fail on cyrillic using %a.
+  -- therefore, the only way to parse the statement is to use blank, comma or dot as a delimiter.
+  -- and then check if the character can be converted to a number or not.
+  local Word, RemainderSentence = Sentence:match( "^[., ]*([^ .,]+)(.*)" )
 
   self:I( { Word = Word, Speech = Speech[Word], RemainderSentence = RemainderSentence } )
+  
 
-  if Word and Word ~= "" then
+  if Word then
+    if Word ~= "" and tonumber(Word) == nil then
 
-    -- Construct of words
-    Word = Word:lower()
-    if Speech[Word] then
-      -- The end of the sentence has been reached. Now Speech.Next should be nil, otherwise there is an error.
-      if Speech[Word].Next == nil then
-        self:I( { Sentence = Speech[Word].Sentence, Data = Speech[Word].Data } )
-        self:NewTransmission( Speech[Word].Data[1] .. ".wav", Speech[Word].Data[2], "EN/" )
-      else 
-        if RemainderSentence and RemainderSentence ~= "" then
-          RemainderSentence = self:SpeakWords( RemainderSentence, Speech[Word].Next )
+      -- Construct of words
+      Word = Word:lower()
+      if Speech[Word] then
+        -- The end of the sentence has been reached. Now Speech.Next should be nil, otherwise there is an error.
+        if Speech[Word].Next == nil then
+          self:I( { Sentence = Speech[Word].Sentence, Data = Speech[Word].Data } )
+          self:NewTransmission( Speech[Word].Data[1] .. ".wav", Speech[Word].Data[2], Language .. "/" )
+        else 
+          if RemainderSentence and RemainderSentence ~= "" then
+            return self:SpeakWords( RemainderSentence, Speech[Word].Next, Language )
+          end
         end
       end
+      return RemainderSentence
     end
+    return OriginalSentence  
+  else
+    return ""
   end        
   
-  return RemainderSentence
-
 end
 
 --- Speak a sentence.
 -- @param #RADIOSPEECH self
 -- @param #string Sentence The sentence to be spoken.
-function RADIOSPEECH:SpeakDigits( Sentence, Speech )
+function RADIOSPEECH:SpeakDigits( Sentence, Speech, Langauge )
 
-  local Digits, RemainderSentence = Sentence:match( "^[^%a%d]*(%d*)(.*)" )
+  local OriginalSentence = Sentence
+
+  -- lua does not parse UTF-8, so the match statement will fail on cyrillic using %a.
+  -- therefore, the only way to parse the statement is to use blank, comma or dot as a delimiter.
+  -- and then check if the character can be converted to a number or not.
+  local Digits, RemainderSentence = Sentence:match( "^[., ]*([^ .,]+)(.*)" )
 
   self:I( { Digits = Digits, Speech = Speech[Digits], RemainderSentence = RemainderSentence } )
 
-  if Digits and Digits ~= "" then
+  if Digits then
+    if Digits ~= "" and tonumber( Digits ) ~= nil then
     
-    -- Construct numbers
-    local Number = tonumber( Digits )
-    local Multiple = nil
-    while Number >= 0 do
-      if Number > 1000 then
-        Multiple = math.floor( Number / 1000 ) * 1000
-      elseif Number > 100 then
-        Multiple = math.floor( Number / 100 ) * 100
-      elseif Number > 20 then
-        Multiple = math.floor( Number / 10 ) * 10
-      elseif Number >= 0 then
-        Multiple = Number
+      -- Construct numbers
+      local Number = tonumber( Digits )
+      local Multiple = nil
+      while Number >= 0 do
+        if Number > 1000 then
+          Multiple = math.floor( Number / 1000 ) * 1000
+        elseif Number > 100 then
+          Multiple = math.floor( Number / 100 ) * 100
+        elseif Number > 20 then
+          Multiple = math.floor( Number / 10 ) * 10
+        elseif Number >= 0 then
+          Multiple = Number
+        end
+        Sentence = tostring( Multiple )
+        if Speech[Sentence] then
+          self:I( { Speech = Speech[Sentence].Sentence, Data = Speech[Sentence].Data } )
+          self:NewTransmission( Speech[Sentence].Data[1] .. ".wav", Speech[Sentence].Data[2], Langauge .. "/" )
+        end
+        Number = Number - Multiple
+        Number = ( Number == 0 ) and -1 or Number
       end
-      Sentence = tostring( Multiple )
-      if Speech[Sentence] then
-        self:I( { Speech = Speech[Sentence].Sentence, Data = Speech[Sentence].Data } )
-        self:NewTransmission( Speech[Sentence].Data[1] .. ".wav", Speech[Sentence].Data[2], "EN/" )
-      end
-      Number = Number - Multiple
-      Number = ( Number == 0 ) and -1 or Number
+      return RemainderSentence
     end
+    return OriginalSentence  
+  else
+    return ""
   end
 
-  return RemainderSentence
 end
+
 
 
 --- Speak a sentence.
 -- @param #RADIOSPEECH self
 -- @param #string Sentence The sentence to be spoken.
-function RADIOSPEECH:SpeakSymbols( Sentence, Speech )
+function RADIOSPEECH:Speak( Sentence, Language )
 
-  local Symbol, RemainderSentence = Sentence:match( "^[^%a%d]*(°*)(.*)" )
+  self:I( { Sentence, Language } )
 
-  self:I( { Sentence = Sentence, Symbol = Symbol, Speech = Speech[Symbol], RemainderSentence = RemainderSentence } )
-
-  if Symbol and Symbol ~= "" then
-    local Word = nil
-    if Symbol == "°" then    
-      Word = "degrees"
-    end
-    if Word then
-      if Speech[Word] then
-        self:I( { Speech = Speech[Word].Sentence, Data = Speech[Word].Data } )
-        self:NewTransmission( Speech[Word].Data[1] .. ".wav", Speech[Word].Data[2], "EN/" )
-      end
-    end
-  end
-
-  return RemainderSentence
-end
-
-
---- Speak a sentence.
--- @param #RADIOSPEECH self
--- @param #string Sentence The sentence to be spoken.
-function RADIOSPEECH:Speak( Sentence, Speech )
-
-  self:I( { Sentence, Speech } )
-
-  local Language = self.Language
+  local Language = Language or "EN"
+  
+  self:I( { Language = Language } )
   
   -- If there is no node for Speech, then we start at the first nodes of the language.
-  if not Speech then
-    Speech = self.Speech[Language]
-  end
+  local Speech = self.Speech[Language]
   
   self:I( { Speech = Speech, Language = Language } )
   
-  self:NewTransmission( "_In.wav", 0.52, "EN/" )
+  self:NewTransmission( "_In.wav", 0.52, Language .. "/" )
   
   repeat
 
-    Sentence = self:SpeakWords( Sentence, Speech )
+    Sentence = self:SpeakWords( Sentence, Speech, Language )
     
     self:I( { Sentence = Sentence } )
 
-    Sentence = self:SpeakDigits( Sentence, Speech )
+    Sentence = self:SpeakDigits( Sentence, Speech, Language )
 
     self:I( { Sentence = Sentence } )
     
@@ -323,6 +400,6 @@ function RADIOSPEECH:Speak( Sentence, Speech )
 
   until not Sentence or Sentence == ""
 
-  self:NewTransmission( "_Out.wav", 0.28, "EN/" )
+  self:NewTransmission( "_Out.wav", 0.28, Language .. "/" )
 
 end

@@ -1685,6 +1685,8 @@ do -- AI_A2A_DISPATCHER
     DefenderSquadron.TemplatePrefixes = TemplatePrefixes
     DefenderSquadron.Captured = false -- Not captured. This flag will be set to true, when the airbase where the squadron is located, is captured.
 
+    self:SetSquadronLanguage( SquadronName, "EN" ) -- Squadrons speak English by default.
+
     self:F( { Squadron = {SquadronName, AirbaseName, TemplatePrefixes, ResourceCount } } )
     
     return self
@@ -2830,6 +2832,59 @@ do -- AI_A2A_DISPATCHER
   end  
 
 
+  --- Set the squadron language.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #string SquadronName The name of the squadron.
+  -- @param #string Language A string defining the language to be embedded within the miz file.
+  -- @return #AI_A2A_DISPATCHER
+  -- @usage
+  -- 
+  --   -- Now Setup the A2A dispatcher, and initialize it using the Detection object.
+  --   A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )  
+  --   
+  --   -- Set for English.
+  --   A2ADispatcher:SetSquadronLanguage( "SquadronName", "EN" ) -- This squadron speaks English.
+  --   
+  --   -- Set for Russian.
+  --   A2ADispatcher:SetSquadronLanguage( "SquadronName", "RU" ) -- This squadron speaks Russian.
+  function AI_A2A_DISPATCHER:SetSquadronLanguage( SquadronName, Language )
+    
+    local DefenderSquadron = self:GetSquadron( SquadronName )
+    DefenderSquadron.Language = Language
+    
+    if DefenderSquadron.RadioQueue then
+      DefenderSquadron.RadioQueue:SetLanguage( Language )
+    end
+    
+    return self
+  end  
+
+
+  --- Set the frequency of communication and the mode of communication for voice overs.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #string SquadronName The name of the squadron.
+  -- @param #number RadioFrequency The frequency of communication.
+  -- @param #number RadioModulation The modulation of communication.
+  -- @param #number RadioPower The power in Watts of communication.
+  function AI_A2A_DISPATCHER:SetSquadronRadioFrequency( SquadronName, RadioFrequency, RadioModulation, RadioPower )
+  
+    local DefenderSquadron = self:GetSquadron( SquadronName )
+    DefenderSquadron.RadioFrequency = RadioFrequency
+    DefenderSquadron.RadioModulation = RadioModulation or radio.modulation.AM 
+    DefenderSquadron.RadioPower = RadioPower or 100
+
+    if DefenderSquadron.RadioQueue then
+      DefenderSquadron.RadioQueue:Stop()
+    end
+
+    DefenderSquadron.RadioQueue = nil
+
+    DefenderSquadron.RadioQueue = RADIOSPEECH:New( DefenderSquadron.RadioFrequency, DefenderSquadron.RadioModulation )
+    DefenderSquadron.RadioQueue.power = DefenderSquadron.RadioPower
+    DefenderSquadron.RadioQueue:Start( 0.5 )
+    
+    DefenderSquadron.RadioQueue:SetLanguage( DefenderSquadron.Language )
+  end 
 
   --- Add defender to squadron. Resource count will get smaller.
   -- @param #AI_A2A_DISPATCHER self
@@ -3186,7 +3241,7 @@ do -- AI_A2A_DISPATCHER
             local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
 
             if Squadron then
-              Dispatcher:MessageToPlayers( DefenderName .. " Wheels up.", DefenderGroup )
+              Dispatcher:MessageToPlayers( Squadron,  DefenderName .. " Wheels up.", DefenderGroup )
               AI_A2A_Fsm:__Patrol( 2 ) -- Start Patrolling
             end
           end
@@ -3199,7 +3254,7 @@ do -- AI_A2A_DISPATCHER
             local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
             local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
             if Squadron then
-              Dispatcher:MessageToPlayers( DefenderName .. ", patrolling.", DefenderGroup )
+              Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", patrolling.", DefenderGroup )
             end
     
             Dispatcher:ClearDefenderTaskTarget( DefenderGroup )
@@ -3214,7 +3269,7 @@ do -- AI_A2A_DISPATCHER
             local DefenderName = DefenderGroup:GetCallsign()
             local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
             local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
-            Dispatcher:MessageToPlayers( DefenderName .. " returning to base.", DefenderGroup )
+            Dispatcher:MessageToPlayers( Squadron,  DefenderName .. " returning to base.", DefenderGroup )
             Dispatcher:ClearDefenderTaskTarget( DefenderGroup )
           end
   
@@ -3396,7 +3451,11 @@ do -- AI_A2A_DISPATCHER
                     local DefenderTarget = Dispatcher:GetDefenderTaskTarget( DefenderGroup )
                     
                     if DefenderTarget then
-                      Dispatcher:MessageToPlayers( DefenderName .. " wheels up.", DefenderGroup )
+                      if Squadron.Language == "EN" then
+                        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. " wheels up.", DefenderGroup )
+                      elseif Squadron.Language == "RU" then
+                        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. " колеса вверх.", DefenderGroup )
+                      end
                       --Fsm:__Engage( 2, DefenderTarget.Set ) -- Engage on the TargetSetUnit
                       Fsm:EngageRoute( DefenderTarget.Set ) -- Engage on the TargetSetUnit
                     end
@@ -3412,8 +3471,14 @@ do -- AI_A2A_DISPATCHER
                     if Squadron and AttackSetUnit:Count() > 0 then
                       local FirstUnit = AttackSetUnit:GetFirst()
                       local Coordinate = FirstUnit:GetCoordinate() -- Core.Point#COORDINATE
-              
-                      Dispatcher:MessageToPlayers( DefenderName .. ", intercepting bogeys at " .. Coordinate:ToStringA2A( DefenderGroup ), DefenderGroup )
+                      
+                      if Squadron.Language == "EN" then
+                        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", intercepting bogeys at " .. Coordinate:ToStringA2A( DefenderGroup, nil, Squadron.Language ), DefenderGroup )
+                      elseif Squadron.Language == "RU" then
+                        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", перехват самолетов в " .. Coordinate:ToStringA2A( DefenderGroup, nil, Squadron.Language ), DefenderGroup )
+                      elseif Squadron.Language == "DE" then
+                        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", Eindringlinge abfangen bei" .. Coordinate:ToStringA2A( DefenderGroup, nil, Squadron.Language ), DefenderGroup )
+                      end
                     end
                     self:GetParent( Fsm ).onafterEngageRoute( self, DefenderGroup, From, Event, To, AttackSetUnit )
                   end
@@ -3429,7 +3494,11 @@ do -- AI_A2A_DISPATCHER
                       local FirstUnit = AttackSetUnit:GetFirst()
                       local Coordinate = FirstUnit:GetCoordinate() -- Core.Point#COORDINATE
               
-                      Dispatcher:MessageToPlayers( DefenderName .. ", engaging bogeys at " .. Coordinate:ToStringA2A( DefenderGroup ), DefenderGroup )
+                      if Squadron.Language == "EN" then
+                        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", engaging bogeys at " .. Coordinate:ToStringA2A( DefenderGroup, nil, Squadron.Language ), DefenderGroup )
+                      elseif Squadron.Language == "RU" then
+                        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", захватывающие самолеты в " .. Coordinate:ToStringA2A( DefenderGroup, nil, Squadron.Language ), DefenderGroup )
+                      end
                     end
                     self:GetParent( Fsm ).onafterEngage( self, DefenderGroup, From, Event, To, AttackSetUnit )
                   end
@@ -3441,7 +3510,14 @@ do -- AI_A2A_DISPATCHER
                     local DefenderName = DefenderGroup:GetCallsign()
                     local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
                     local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
-                    Dispatcher:MessageToPlayers( DefenderName .. " returning to base.", DefenderGroup )
+
+                    if Squadron then
+                      if Squadron.Language == "EN" then
+                        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. " returning to base.", DefenderGroup )
+                      elseif Squadron.Language == "RU" then
+                        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", возвращаясь на базу.", DefenderGroup )
+                      end
+                    end
                     Dispatcher:ClearDefenderTaskTarget( DefenderGroup )
                   end
   
@@ -3467,7 +3543,11 @@ do -- AI_A2A_DISPATCHER
                     local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
                     local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
 
-                    Dispatcher:MessageToPlayers( DefenderName .. " landing at base.", DefenderGroup )
+                      if Squadron.Language == "EN" then
+                        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. " landing at base.", DefenderGroup )
+                      elseif Squadron.Language == "RU" then
+                        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", захватывающие самолеты в посадка на базу.", DefenderGroup )
+                      end
   
                     if Action and Action == "Destroy" then
                       Dispatcher:RemoveDefenderFromSquadron( Squadron, DefenderGroup )

@@ -3313,6 +3313,31 @@ do -- AI_A2G_DISPATCHER
   end  
 
 
+  --- Set the frequency of communication and the mode of communication for voice overs.
+  -- @param #AI_A2G_DISPATCHER self
+  -- @param #string SquadronName The name of the squadron.
+  -- @param #number RadioFrequency The frequency of communication.
+  -- @param #number RadioModulation The modulation of communication.
+  -- @param #number RadioPower The power in Watts of communication.
+  function AI_A2G_DISPATCHER:SetSquadronRadioFrequency( SquadronName, RadioFrequency, RadioModulation, RadioPower )
+  
+    local DefenderSquadron = self:GetSquadron( SquadronName )
+    DefenderSquadron.RadioFrequency = RadioFrequency
+    DefenderSquadron.RadioModulation = RadioModulation or radio.modulation.AM 
+    DefenderSquadron.RadioPower = RadioPower or 100
+
+    if DefenderSquadron.RadioQueue then
+      DefenderSquadron.RadioQueue:Stop()
+    end
+
+    DefenderSquadron.RadioQueue = nil
+
+    DefenderSquadron.RadioQueue = RADIOSPEECH:New( DefenderSquadron.RadioFrequency, DefenderSquadron.RadioModulation )
+    DefenderSquadron.RadioQueue.power = DefenderSquadron.RadioPower
+    DefenderSquadron.RadioQueue:Start( 0.5 )
+    
+    DefenderSquadron.RadioQueue:SetLanguage( DefenderSquadron.Language )
+  end 
 
 
   --- @param #AI_A2G_DISPATCHER self
@@ -3674,7 +3699,7 @@ do -- AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
         
         if Squadron then
-          Dispatcher:MessageToPlayers( DefenderName .. ", wheels up.", DefenderGroup )
+          Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", wheels up.", DefenderGroup )
           AI_A2G_Fsm:Patrol() -- Engage on the TargetSetUnit
         end
       end
@@ -3687,7 +3712,7 @@ do -- AI_A2G_DISPATCHER
         local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
         if Squadron then
-          Dispatcher:MessageToPlayers( DefenderName .. ", patrolling.", DefenderGroup )
+          Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", patrolling.", DefenderGroup )
         end
 
         Dispatcher:ClearDefenderTaskTarget( DefenderGroup )
@@ -3706,7 +3731,7 @@ do -- AI_A2G_DISPATCHER
           local FirstUnit = AttackSetUnit:GetFirst()
           local Coordinate = FirstUnit:GetCoordinate() -- Core.Point#COORDINATE
   
-          Dispatcher:MessageToPlayers( DefenderName .. ", moving on to ground target at " .. Coordinate:ToStringA2G( DefenderGroup ), DefenderGroup )
+          Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", moving on to ground target at " .. Coordinate:ToStringA2G( DefenderGroup ), DefenderGroup )
         end
       end
 
@@ -3721,7 +3746,7 @@ do -- AI_A2G_DISPATCHER
         if FirstUnit then
           local Coordinate = FirstUnit:GetCoordinate()
   
-          Dispatcher:MessageToPlayers( DefenderName .. ", engaging ground target at " .. Coordinate:ToStringA2G( DefenderGroup ), DefenderGroup )
+          Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", engaging ground target at " .. Coordinate:ToStringA2G( DefenderGroup ), DefenderGroup )
         end
       end
 
@@ -3732,7 +3757,7 @@ do -- AI_A2G_DISPATCHER
         local DefenderName = DefenderGroup:GetCallsign()
         local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
-        Dispatcher:MessageToPlayers( DefenderName .. ", returning to base.", DefenderGroup )
+        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", returning to base.", DefenderGroup )
 
         Dispatcher:ClearDefenderTaskTarget( DefenderGroup )
       end
@@ -3745,7 +3770,7 @@ do -- AI_A2G_DISPATCHER
         local DefenderName = DefenderGroup:GetCallsign()
         local Dispatcher = AI_A2G_Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
-        Dispatcher:MessageToPlayers( DefenderName .. ", lost control." )
+        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", lost control." )
         if DefenderGroup:IsAboveRunway() then
           Dispatcher:RemoveDefenderFromSquadron( Squadron, DefenderGroup )
           DefenderGroup:Destroy()
@@ -3760,7 +3785,7 @@ do -- AI_A2G_DISPATCHER
         local DefenderName = DefenderGroup:GetCallsign()
         local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
-        Dispatcher:MessageToPlayers( DefenderName .. ", landing at base.", DefenderGroup )
+        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", landing at base.", DefenderGroup )
 
         if Action and Action == "Destroy" then
           Dispatcher:RemoveDefenderFromSquadron( Squadron, DefenderGroup )
@@ -3817,7 +3842,7 @@ do -- AI_A2G_DISPATCHER
         self:F( { DefenderTarget = DefenderTarget } )
         
         if DefenderTarget then
-          Dispatcher:MessageToPlayers( DefenderName .. ", wheels up.", DefenderGroup )
+          Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", wheels up.", DefenderGroup )
           AI_A2G_Fsm:EngageRoute( DefenderTarget.Set ) -- Engage on the TargetSetUnit
         end
       end
@@ -3833,7 +3858,7 @@ do -- AI_A2G_DISPATCHER
           local FirstUnit = AttackSetUnit:GetFirst()
           local Coordinate = FirstUnit:GetCoordinate() -- Core.Point#COORDINATE
   
-          Dispatcher:MessageToPlayers( DefenderName .. ", on route to ground target at " .. Coordinate:ToStringA2G( DefenderGroup ), DefenderGroup )
+          Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", on route to ground target at " .. Coordinate:ToStringA2G( DefenderGroup ), DefenderGroup )
         end
         self:GetParent(self).onafterEngageRoute( self, DefenderGroup, From, Event, To, AttackSetUnit )
       end
@@ -3849,7 +3874,7 @@ do -- AI_A2G_DISPATCHER
         if FirstUnit then
           local Coordinate = FirstUnit:GetCoordinate()
   
-          Dispatcher:MessageToPlayers( DefenderName .. ", engaging ground target at " .. Coordinate:ToStringA2G( DefenderGroup ), DefenderGroup )
+          Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", engaging ground target at " .. Coordinate:ToStringA2G( DefenderGroup ), DefenderGroup )
         end
       end
 
@@ -3859,7 +3884,7 @@ do -- AI_A2G_DISPATCHER
         local DefenderName = DefenderGroup:GetCallsign()
         local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
-        Dispatcher:MessageToPlayers( DefenderName .. ", returning to base.", DefenderGroup )
+        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", returning to base.", DefenderGroup )
 
         self:GetParent(self).onafterRTB( self, DefenderGroup, From, Event, To )
 
@@ -3874,7 +3899,7 @@ do -- AI_A2G_DISPATCHER
         local DefenderName = DefenderGroup:GetCallsign()
         local Dispatcher = AI_A2G_Fsm:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
-        --Dispatcher:MessageToPlayers( "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " lost control." )
+        --Dispatcher:MessageToPlayers( Squadron,  "Squadron " .. Squadron.Name .. ", " .. DefenderName .. " lost control." )
 
         if DefenderGroup:IsAboveRunway() then
           Dispatcher:RemoveDefenderFromSquadron( Squadron, DefenderGroup )
@@ -3890,7 +3915,7 @@ do -- AI_A2G_DISPATCHER
         local DefenderName = DefenderGroup:GetCallsign()
         local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
-        Dispatcher:MessageToPlayers( DefenderName .. ", landing at base.", DefenderGroup )
+        Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", landing at base.", DefenderGroup )
 
         if Action and Action == "Destroy" then
           Dispatcher:RemoveDefenderFromSquadron( Squadron, DefenderGroup )
