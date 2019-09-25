@@ -1102,7 +1102,7 @@ do -- COORDINATE
     --RoutePoint.formation_template=""
 
     -- Debug.
-    self:I({RoutePoint=RoutePoint})
+    self:T({RoutePoint=RoutePoint})
     
     -- Return waypoint.
     return RoutePoint

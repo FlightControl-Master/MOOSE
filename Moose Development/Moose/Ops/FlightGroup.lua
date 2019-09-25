@@ -32,6 +32,11 @@
 -- @field Core.Set#SET_UNIT detectedunits Set of detected units.
 -- @field Wrapper.Airbase#AIRBASE homebase The home base of the flight group.
 -- @field Wrapper.Airbase#AIRBASE destination The destination base of the flight group.
+-- @field #string actype Type name of the aircraft.
+-- @field #number speedmax Max speed in km/h.
+-- @field #number range Range of the aircraft in km.
+-- @field #number ceiling Max altitude the aircraft can fly at in meters.
+-- @field #boolean ai If true, flight is purely AI. If false, flight contains at least one human player.
 -- @field #boolean fuellow Fuel low switch.
 -- @field #number fuellowthresh Low fuel threshold in percent.
 -- @field #boolean fuellowrtb RTB on low fuel switch.
@@ -61,7 +66,7 @@ FLIGHTGROUP = {
   Debug              =   nil,
   sid                =   nil,
   groupname          =   nil,
-  flightgroup        =   nil,
+  group              =   nil,
   grouptemplate      =   nil,
   type               =   nil,
   waypoints          =   nil,
@@ -73,9 +78,10 @@ FLIGHTGROUP = {
   detectedunits      =    {},
   homebase           =   nil,
   destination        =   nil,
+  actype             =   nil,
   speedmax           =   nil,
   range              =   nil,
-  altmax             =   nil,
+  ceiling            =   nil,
   fuellow            = false,
   fuellowthresh      =   nil,
   fuellowrtb         =   nil,
@@ -214,6 +220,13 @@ FLIGHTGROUP.version="0.1.2"
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:New(groupname)
 
+  -- First check if we already have a flight group for this group.
+  local fg=_DATABASE:GetFlightGroup(groupname)
+  if fg then
+    fg:I(fg.sid..string.format("WARNING: Flight group %s already exists in data base!", groupname))
+    return fg
+  end
+
   -- Inherit everything from WAREHOUSE class.
   local self=BASE:Inherit(self, FSM:New()) -- #FLIGHTGROUP
 
@@ -271,7 +284,7 @@ function FLIGHTGROUP:New(groupname)
   self:AddTransition("*",             "ElementParking",   "*")           -- An element was spawned.
   self:AddTransition("*",             "ElementTaxiing",   "*")           -- An element spooled up the engines.
   self:AddTransition("*",             "ElementTakeoff",   "*")           -- An element took off.
-  self:AddTransition("*",             "ElementAirborne",  "*")           -- An element took off.
+  self:AddTransition("*",             "ElementAirborne",  "*")           -- An element is airborne.
   self:AddTransition("*",             "ElementLanded",    "*")           -- An element landed.
   self:AddTransition("*",             "ElementArrived",   "*")           -- An element arrived.
   self:AddTransition("*",             "ElementDead",      "*")           -- An element crashed, ejected, or pilot dead.
@@ -320,7 +333,7 @@ function FLIGHTGROUP:New(groupname)
 
 
   -- Debug trace.
-  if false then
+  if true then
     self.Debug=true
     BASE:TraceOnOff(true)
     BASE:TraceClass(self.ClassName)
@@ -349,7 +362,7 @@ end
 -- User functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Add scheduled task.
+--- Add a *scheduled* task.
 -- @param #FLIGHTGROUP self
 -- @param #string description Brief text describing the task, e.g. "Attack SAM".
 -- @param #table task DCS task table stucture.
@@ -392,7 +405,7 @@ function FLIGHTGROUP:AddTask(description, task, prio, clock, duration)
   return self
 end
 
---- Add waypoint task.
+--- Add a *waypoint* task.
 -- @param #FLIGHTGROUP self
 -- @param #string description Brief text describing the task, e.g. "Attack SAM".
 -- @param #table task DCS task table stucture.
@@ -823,7 +836,7 @@ function FLIGHTGROUP:OnEventBirth(EventData)
     if not self:_IsElement(unitname) then
       local element=self:AddElementByName(unitname)
       
-      self:I(self.sid..string.format("EVENT: Element %s born ==> spawned", element.name))
+      self:T3(self.sid..string.format("EVENT: Element %s born ==> spawned", element.name))
             
       self:ElementSpawned(element)
     end
@@ -849,7 +862,7 @@ function FLIGHTGROUP:OnEventEngineStartup(EventData)
     if element then
       if self:IsAirborne() or self:IsHolding() then
       else
-        self:I(self.sid..string.format("EVENT: Element %s started engines ==> taxiing", element.name))
+        self:T3(self.sid..string.format("EVENT: Element %s started engines ==> taxiing", element.name))
         self:ElementTaxiing(element)
       end
     end
@@ -873,7 +886,7 @@ function FLIGHTGROUP:OnEventTakeOff(EventData)
     local element=self:GetElementByName(unitname)
 
     if element then
-      self:I(self.sid..string.format("EVENT: Element %s took off ==> airborne", element.name))
+      self:T3(self.sid..string.format("EVENT: Element %s took off ==> airborne", element.name))
       self:ElementTakeoff(element, EventData.Place)
     end
 
@@ -903,7 +916,7 @@ function FLIGHTGROUP:OnEventLanding(EventData)
     end
 
     if element then
-      self:I(self.sid..string.format("EVENT: Element %s landed at %s ==> landed", element.name, airbasename))
+      self:T3(self.sid..string.format("EVENT: Element %s landed at %s ==> landed", element.name, airbasename))
       self:ElementLanded(element, airbase)      
     end
 
@@ -937,15 +950,15 @@ function FLIGHTGROUP:OnEventEngineShutdown(EventData)
         
         if dist and dist<10 and unit:InAir()==false then
           self:ElementArrived(element, airbase, parking)
-          self:I(self.sid..string.format("EVENT: Element %s shut down engines ==> arrived", element.name))
+          self:T3(self.sid..string.format("EVENT: Element %s shut down engines ==> arrived", element.name))
         else
-          self:I(self.sid..string.format("EVENT: Element %s shut down engines (in air) ==> dead", element.name))
+          self:T3(self.sid..string.format("EVENT: Element %s shut down engines (in air) ==> dead", element.name))
           self:ElementDead(element)
         end
         
       else
       
-        self:I(self.sid..string.format("EVENT: Element %s shut down engines but is NOT alive ==> waiting for crash event (==> dead)", element.name))
+        self:T(self.sid..string.format("EVENT: Element %s shut down engines but is NOT alive ==> waiting for crash event (==> dead)", element.name))
 
       end
       
@@ -972,7 +985,7 @@ function FLIGHTGROUP:OnEventCrash(EventData)
     local element=self:GetElementByName(unitname)
 
     if element then
-      self:I(self.sid..string.format("EVENT: Element %s crashed ==> dead", element.name))
+      self:T3(self.sid..string.format("EVENT: Element %s crashed ==> dead", element.name))
       self:ElementDead(element)
     end
 
@@ -1034,7 +1047,7 @@ end
 -- @param #string To To state.
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 function FLIGHTGROUP:onafterElementTaxiing(From, Event, To, Element)
-  self:I(self.sid..string.format("Element taxiing %s.", Element.name))
+  self:T2(self.sid..string.format("Element taxiing %s.", Element.name))
   
   -- Not parking any more.
   Element.parking=nil
@@ -1051,13 +1064,13 @@ end
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 -- @param Wrapper.Airbase#AIRBASE airbase The airbase if applicable or nil.
 function FLIGHTGROUP:onafterElementTakeoff(From, Event, To, Element, airbase)
-  self:I(self.sid..string.format("Element airborne %s.", Element.name))
+  self:T(self.sid..string.format("Element takeoff %s at %s airbase.", Element.name, airbase and airbase:GetName() or "unknown"))
 
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.TAKEOFF, airbase)
   
   -- Trigger element airborne event.
-  self:__ElementAirborne(1, Element)
+  self:__ElementAirborne(10, Element)
 end
 
 --- On after "ElementAirborne" event.
@@ -1067,7 +1080,7 @@ end
 -- @param #string To To state.
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 function FLIGHTGROUP:onafterElementAirborne(From, Event, To, Element)
-  self:I(self.sid..string.format("Element airborne %s.", Element.name))
+  self:T2(self.sid..string.format("Element airborne %s", Element.name))
 
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.AIRBORNE)
@@ -1081,7 +1094,7 @@ end
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 -- @param Wrapper.Airbase#AIRBASE airbase The airbase if applicable or nil.
 function FLIGHTGROUP:onafterElementLanded(From, Event, To, Element, airbase)
-  self:I(self.sid..string.format("Element landed %s at %s", Element.name, airbase and airbase:GetName() or "unknown"))
+  self:T2(self.sid..string.format("Element landed %s at %s airbase", Element.name, airbase and airbase:GetName() or "unknown"))
 
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.LANDED, airbase)
@@ -1094,7 +1107,7 @@ end
 -- @param #string To To state.
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 function FLIGHTGROUP:onafterElementArrived(From, Event, To, Element)
-  self:I(self.sid..string.format("Element arrived %s.", Element.name))
+  self:T2(self.sid..string.format("Element arrived %s.", Element.name))
 
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.ARRIVED)
@@ -1107,7 +1120,7 @@ end
 -- @param #string To To state.
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 function FLIGHTGROUP:onafterElementDead(From, Event, To, Element)
-  self:I(self.sid..string.format("Element dead %s.", Element.name))
+  self:T2(self.sid..string.format("Element dead %s.", Element.name))
 
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.DEAD)
@@ -1127,6 +1140,22 @@ function FLIGHTGROUP:onafterFlightSpawned(From, Event, To)
   
   -- Max speed in km/h.
   self.speedmax=self.group:GetSpeedMax()
+  
+  local unit=self.group:GetUnit(1)
+  
+  self.descriptors=unit:GetDesc()
+  
+  self.actype=unit:GetTypeName()
+  
+  self.ceiling=self.descriptors.Hmax
+  
+  self.ai=self:_IsHuman(self.group)
+  
+  for _,_element in pairs(self.elements) do
+    local element=_element --#FLIGHTGROUP.Element
+    element.ai=self:_IsHumanUnit(element.unit)
+      
+  end
 
   -- Init waypoints.
   if not self.waypoints then
@@ -1172,7 +1201,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function FLIGHTGROUP:onafterFlightTaxiing(From, Event, To)
-  self:I(self.sid..string.format("Flight is taxiing %s.", self.groupname))
+  self:T(self.sid..string.format("Flight is taxiing %s.", self.groupname))
   
   -- Parking over.
   self.Tparking=nil
@@ -1197,7 +1226,7 @@ end
 -- @param #string To To state.
 -- @param Wrapper.Airbase#AIRBASE airbase The airbase the flight landed.
 function FLIGHTGROUP:onafterFlightTakeoff(From, Event, To, airbase)
-  self:I(self.sid..string.format("Flight takeoff %s at %s.", self.groupname, airbase and airbase:GetName() or "unknown airbase"))
+  self:T(self.sid..string.format("Flight takeoff %s at %s.", self.groupname, airbase and airbase:GetName() or "unknown airbase"))
 
   if self.flightcontrol and airbase and self.flightcontrol.airbasename==airbase:GetName() then
     self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qtakeoff, self, "takeoff")
@@ -1215,7 +1244,7 @@ end
 -- @param #string To To state.
 -- @param Wrapper.Airbase#AIRBASE airbase The airbase the flight landed.
 function FLIGHTGROUP:onafterFlightAirborne(From, Event, To, airbase)
-  self:I(self.sid..string.format("Flight airborne %s at %s.", self.groupname,airbase and airbase:GetName() or "unknown airbase"))
+  self:T(self.sid..string.format("Flight airborne %s at %s.", self.groupname,airbase and airbase:GetName() or "unknown airbase"))
 
   -- Remove flight from FC takeoff queue.
   if self.flightcontrol and airbase and self.flightcontrol.airbasename==airbase:GetName() then
@@ -1233,7 +1262,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function FLIGHTGROUP:onafterFlightLanding(From, Event, To)
-  self:I(self.sid..string.format("Flight landing %s", self.groupname))
+  self:T(self.sid..string.format("Flight landing %s", self.groupname))
 
   self:_SetElementStatusAll(FLIGHTGROUP.ElementStatus.LANDING)
   
@@ -1246,7 +1275,7 @@ end
 -- @param #string To To state.
 -- @param Wrapper.Airbase#AIRBASE airbase The airbase the flight landed.
 function FLIGHTGROUP:onafterFlightLanded(From, Event, To, airbase)
-  self:I(self.sid..string.format("Flight landed %s at %s.", self.groupname, airbase and airbase:GetName() or "unknown airbase"))
+  self:T(self.sid..string.format("Flight landed %s at %s.", self.groupname, airbase and airbase:GetName() or "unknown airbase"))
 
   if self.flightcontrol and airbase and self.flightcontrol.airbasename==airbase:GetName() then
     self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qlanding, self, "landing")
@@ -1261,9 +1290,9 @@ end
 -- @param #number n Waypoint number passed.
 -- @param #number N Final waypoint number.
 function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
-  local text=string.format("Group %s passed waypoint %d/%d", self.groupname, n, N)
-  self:I(self.sid..text)
-  MESSAGE:New(text, 20, "DEBUG"):ToAllIf(self.Debug)
+  local text=string.format("Flight %s passed waypoint %d/%d", self.groupname, n, N)
+  self:T(self.sid..text)
+  MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
 end
 
 --- On after "FuelLow" event.
@@ -1275,7 +1304,7 @@ function FLIGHTGROUP:onafterFuelLow(From, Event, To)
 
   -- Debug message.
   local text=string.format("Low fuel for flight group %s", self.groupname)
-  MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+  MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
   self:I(self.sid..text)
   
   -- Set switch to true.
@@ -1298,7 +1327,7 @@ function FLIGHTGROUP:onafterFuelCritical(From, Event, To)
 
   -- Debug message.
   local text=string.format("Critical fuel for flight group %s", self.groupname)
-  MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+  MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
   self:I(self.sid..text)
   
   -- Set switch to true.
@@ -1323,7 +1352,7 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase)
 
   -- Debug message.
   local text=string.format("Flight group returning to airbase %s.", airbase:GetName())
-  MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+  MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
   self:I(self.sid..text)
 
   -- Route helo back home. It is respawned! But this is the only way to ensure that it actually lands at the airbase.
@@ -1342,7 +1371,7 @@ function FLIGHTGROUP:onafterOrbit(From, Event, To, Coord, Altitude, Speed)
 
   -- Debug message.
   local text=string.format("Flight group set to orbit at altitude %d m and speed %.1f km/h", Altitude, Speed)
-  MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
+  MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
   self:I(self.sid..text)
   
   --TODO: set ROE passive. introduce roe event/state/variable.
@@ -1428,14 +1457,14 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold, S
     local runway=fc:GetActiveRunway()
     
     -- Approach point: 10 NN in direction of runway.
-    local papp=airbase:GetCoordinate():Translate(x1, runway.direction-180):SetAltitude(h1)
+    local papp=airbase:GetCoordinate():Translate(x1, runway.heading-180):SetAltitude(h1)
     papp:MarkToAll(string.format("Final Approach: d=%d m, h=%d m", x1, h1))
     wpap=papp:WaypointAirTurningPoint(nil, UTILS.KnotsToKmph(SpeedLand), {}, "Final Approach")    
   
     -- TODO: make dependend on AC type helos etc.
   
     -- Approach point: 10 NN in direction of runway.
-    pland=airbase:GetCoordinate():Translate(x2, runway.direction-180):SetAltitude(h2)
+    pland=airbase:GetCoordinate():Translate(x2, runway.heading-180):SetAltitude(h2)
     pland:MarkToAll(string.format("Landing: d=%d m, h=%d m", x2, h2))
     
     -- Set flightcontrol for this flight.
@@ -1525,9 +1554,20 @@ function FLIGHTGROUP:onafterTaskExecute(From, Event, To, Task)
   
     -- Task done.
     local TaskDone=self.group:TaskFunction("FLIGHTGROUP._TaskDone", self, Task)
+    
+    local DCStasks={}
+    if Task.dcstask.id=='ComboTask' then
+      -- Loop over all combo tasks.
+      for TaskID, Task in ipairs( Task.dcstask.params.tasks ) do
+        table.insert(DCStasks, Task)
+      end    
+    else
+      table.insert(DCStasks, Task.dcstask)
+    end
+    table.insert(DCStasks, TaskDone)
   
     -- Combo task.
-    local TaskCombo=self.group:TaskCombo({Task.dcstask, TaskDone})
+    local TaskCombo=self.group:TaskCombo(DCStasks)
   
     -- Set task for group.
     self.group:SetTask(TaskCombo)
@@ -1800,7 +1840,7 @@ end
 function FLIGHTGROUP:RouteRTB(RTBAirbase, Speed, Altitude, TaskOverhead)
 
   -- If speed is not given take 80% of max speed.
-  local Speed=Speed or self.group:GetSpeedMax()*0.8
+  Speed=Speed or self.speedmax*0.8
 
   -- Curent (from) waypoint.
   local coord=self.group:GetCoordinate()
@@ -1863,7 +1903,7 @@ end
 function FLIGHTGROUP:RouteOrbit(CoordOrbit, Speed, Altitude, CoordRaceTrack)
 
   -- If speed is not given take 80% of max speed.
-  local Speed=Speed or self.group:GetSpeedMax()*0.6
+  Speed=Speed or self.group:GetSpeedMax()*0.6
 
   -- Altitude.
   local altitude=Altitude or UTILS.FeetToMeters(10000)
@@ -2278,13 +2318,29 @@ end
 -- @return #boolean If true, all elements have a similar status.
 function FLIGHTGROUP:_AllSimilarStatus(status)
 
-  local similar=true
+  -- Check if all are dead.
+  if status==FLIGHTGROUP.ElementStatus.DEAD then
+    for _,_element in pairs(self.elements) do
+      local element=_element --#FLIGHTGROUP.Element
+      if element.status~=FLIGHTGROUP.ElementStatus.DEAD then
+        -- At least one is still alive.
+        return false
+      end
+    end
+    return true
+  end
 
   for _,_element in pairs(self.elements) do
     local element=_element --#FLIGHTGROUP.Element
+    
+    self:I(string.format("FF status=%s, element %s status=%s", status, element.name, element.status))
 
-    -- Dead units dont count.
+    -- Dead units dont count ==> We wont return false for those.
     if element.status~=FLIGHTGROUP.ElementStatus.DEAD then
+    
+      ----------
+      -- ALIVE
+      ----------
 
       if status==FLIGHTGROUP.ElementStatus.SPAWNED then
 
@@ -2305,8 +2361,8 @@ function FLIGHTGROUP:_AllSimilarStatus(status)
 
         -- Element TAXIING: Check that the other are not stil SPAWNED or PARKING
         if element.status~=status and
-          element.status==FLIGHTGROUP.ElementStatus.SPAWNED or
-          element.status==FLIGHTGROUP.ElementStatus.PARKING then
+         (element.status==FLIGHTGROUP.ElementStatus.SPAWNED or
+          element.status==FLIGHTGROUP.ElementStatus.PARKING) then
           return false
         end
 
@@ -2314,9 +2370,10 @@ function FLIGHTGROUP:_AllSimilarStatus(status)
 
         -- Element TAKEOFF: Check that the other are not stil SPAWNED, PARKING or TAXIING
         if element.status~=status and
-          element.status==FLIGHTGROUP.ElementStatus.SPAWNED or
+         (element.status==FLIGHTGROUP.ElementStatus.SPAWNED or
           element.status==FLIGHTGROUP.ElementStatus.PARKING or
-          element.status==FLIGHTGROUP.ElementStatus.TAXIING then
+          element.status==FLIGHTGROUP.ElementStatus.TAXIING) then
+          self:I(string.format("FF status=%s, element %s status=%s ==> returning FALSE", status, element.name, element.status))
           return false
         end
 
@@ -2324,43 +2381,44 @@ function FLIGHTGROUP:_AllSimilarStatus(status)
 
         -- Element AIRBORNE: Check that the other are not stil SPAWNED, PARKING, TAXIING or TAKEOFF
         if element.status~=status and
-          element.status==FLIGHTGROUP.ElementStatus.SPAWNED or
+         (element.status==FLIGHTGROUP.ElementStatus.SPAWNED or
           element.status==FLIGHTGROUP.ElementStatus.PARKING or
           element.status==FLIGHTGROUP.ElementStatus.TAXIING or 
-          element.status==FLIGHTGROUP.ElementStatus.TAKEOFF then
+          element.status==FLIGHTGROUP.ElementStatus.TAKEOFF) then
           return false
         end
 
       elseif status==FLIGHTGROUP.ElementStatus.LANDED then
 
-        -- Element LANDED: check that the others are not stil AIRBORNE
+        -- Element LANDED: check that the others are not stil AIRBORNE or LANDING
         if element.status~=status and
-          element.status==FLIGHTGROUP.ElementStatus.AIRBORNE then
+         (element.status==FLIGHTGROUP.ElementStatus.AIRBORNE or
+          element.status==FLIGHTGROUP.ElementStatus.LANDING) then
           return false
         end
 
       elseif status==FLIGHTGROUP.ElementStatus.ARRIVED then
 
-        -- Element ARRIVED: check that the others are not stil AIRBORNE or TAXIING
+        -- Element ARRIVED: check that the others are not stil AIRBORNE, LANDING, or LANDED (taxiing).
         if element.status~=status and
-          element.status==FLIGHTGROUP.ElementStatus.AIRBORNE or
-          element.status==FLIGHTGROUP.ElementStatus.TAXIING  then
+         (element.status==FLIGHTGROUP.ElementStatus.AIRBORNE or
+          element.status==FLIGHTGROUP.ElementStatus.LANDING  or
+          element.status==FLIGHTGROUP.ElementStatus.LANDED)  then
           return false
         end
 
       end
-
-      if element.status==FLIGHTGROUP.ElementStatus.DEAD then
-        -- Do nothing. Element is already dead and does not count.
-      elseif element.status~=status then
-        -- At least this element has a different status.
-        return false
-      end
-
+      
+    else
+      -- Element is dead. We don't care unless all are dead.
     end --DEAD
 
   end
 
+  self:I(string.format("FF status=%s ==> returning TRUE", status))
+  if status==FLIGHTGROUP.ElementStatus.TAKEOFF then
+    --self:I(string.format("FF returning true"))
+  end
   return true
 end
 
@@ -2826,6 +2884,29 @@ function FLIGHTGROUP:GetParkingSpot(element)
 
   return spot, dist
 end
+
+--- Get holding time.
+-- @param #FLIGHTGROUP self
+-- @return #number Holding time in seconds or 0 if flight is not holding.
+function FLIGHTGROUP:GetHoldingTime()
+  if self.Tholding then
+    return timer.getAbsTime()-self.Tholding
+  end
+  
+  return 0
+end
+
+--- Get parking time.
+-- @param #FLIGHTGROUP self
+-- @return #number Holding time in seconds or 0 if flight is not holding.
+function FLIGHTGROUP:GetParkingTime()
+  if self.Tparking then
+    return timer.getAbsTime()-self.Tparking
+  end
+  
+  return 0
+end
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

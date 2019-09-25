@@ -478,8 +478,7 @@ end
 
 --- Returns the Unit's ammunition.
 -- @param #UNIT self
--- @return DCS#Unit.Ammo
--- @return #nil The DCS Unit is not existing or alive.  
+-- @return DCS#Unit.Ammo Table with ammuntion of the unit (or nil). This can be a complex table!  
 function UNIT:GetAmmo()
   self:F2( self.UnitName )
 

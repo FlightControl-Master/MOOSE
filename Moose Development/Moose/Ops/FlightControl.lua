@@ -65,6 +65,7 @@ FLIGHTCONTROL = {
   activerwyno    =     1,
   atcfreq        =   nil,
   atcradio       =   nil,
+  atcradiounitname = nil,
 }
 
 --- Holding point
@@ -122,6 +123,15 @@ function FLIGHTCONTROL:New(airbasename)
   local self=BASE:Inherit(self, FSM:New()) -- #FLIGHTCONTROL
   
   self.airbase=AIRBASE:FindByName(airbasename)
+  
+  if not self.airbase then
+    self:E(string.format("ERROR: Could not find airbase %s!", tostring(airbasename)))
+    return nil
+  end
+  if self.airbase:GetAirbaseCategory()~=Airbase.Category.AIRDROME then
+    self:E(string.format("ERROR: Airbase %s is not an AIRDROMOE! Script does not handle FARPS or ships.", tostring(airbasename)))
+    return nil
+  end
   
   -- Name of the airbase.
   self.airbasename=airbasename
@@ -255,7 +265,7 @@ function FLIGHTCONTROL:onafterStatus()
   local nfree=self:_GetFreeParkingSpots()  
 
   -- Info text.
-  local text=string.format("State %s - Active Runway %03d - Free Parking %d", self:GetState(), runway.direction, nfree)
+  local text=string.format("State %s - Active Runway %s - Free Parking %d", self:GetState(), runway.idx, nfree)
   self:I(self.lid..text)
 
   -- Next status update in ~30 seconds.
@@ -518,16 +528,15 @@ function FLIGHTCONTROL:_GetNextFightParking()
   end
 
   -- Sort flights parking time.
-  local function _sortByTholding(a, b)
+  local function _sortByTparking(a, b)
     local flightA=a --Ops.FlightGroup#FLIGHTGROUP
     local flightB=b --Ops.FlightGroup#FLIGHTGROUP
     return flightA.Tparking<flightB.Tparking
   end
 
   -- Return flight waiting longest.
-  table.sort(self.Qwaiting, _sortByTholding)  
+  table.sort(self.Qparking, _sortByTparking)  
   return self.Qparking[1]
-
 end
 
 --- Print queue.
@@ -541,30 +550,33 @@ function FLIGHTCONTROL:_PrintQueue(queue, name)
     -- Queue is empty.
     text=text.." empty."
   else
+    
+    local time=timer.getAbsTime()
   
     -- Loop over all flights in queue.
     for i,_flight in ipairs(queue) do
       local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
       
       -- Gather info.
-      local clock="0:0" --UTILS.SecondsToClock(timer.getAbsTime()-flight.time)
       local fuel=flight.group:GetFuelMin()*100
       local ai=tostring(flight.ai)
       local actype=tostring(flight.actype)
-      local holding=tostring(flight.holding)
+      local holding=flight.Tholding and UTILS.SecondsToClock(flight.Tholding-time, true) or "X"
+      local parking=flight.Tparking and UTILS.SecondsToClock(flight.Tparking-time, true) or "X"
+      
       local nunits=flight.nunits or 1
       
       -- Main info.
-      text=text..string.format("\n[%d] %s (%s*%d): ai=%s, timestamp=%s, fuel=%d, inzone=%s, holding=%s",
-                                 i, flight.groupname, actype, nunits, ai, clock, fuel, tostring(flight.inzone), holding)
+      text=text..string.format("\n[%d] %s (%s*%d): status=%s, ai=%s, fuel=%d, holding=%s, parking=%s",
+                                 i, flight.groupname, actype, nunits, flight:GetState(), ai, fuel, holding, parking)
 
       -- Elements info.                                 
       for j,_element in pairs(flight.elements) do
         local element=_element --Ops.FlightGroup#FLIGHTGROUP.Element
         local life=element.unit:GetLife()
         local life0=element.unit:GetLife0()
-        text=text..string.format("\n  (%d) %s (%s): ai=%s, status=%s,, airborne=%s life=%.1f/%.1f",
-        j, tostring(element.modex), element.name, tostring(element.ai) ,tostring(element.status), tostring(element.unit:InAir()), life, life0)
+        text=text..string.format("\n  (%d) %s (%s): status=%s, ai=%s, airborne=%s life=%.1f/%.1f",
+        j, tostring(element.modex), element.name, tostring(element.status), tostring(element.ai), tostring(element.unit:InAir()), life, life0)
       end
     end
   end
@@ -706,117 +718,14 @@ end
 --- Initialize data of runways.
 -- @param #FLIGHTCONTROL self
 function FLIGHTCONTROL:_InitRunwayData()
-
-  -- Get spawn points on runway.
-  local runwaycoords=self.airbase:GetParkingSpotsCoordinates(AIRBASE.TerminalType.Runway)
-  
-  self:E(self.lid..string.format("Runway coords # = %d", #runwaycoords))
-  
-  for i=1,#runwaycoords,2 do
-    
-    -- Assuming each runway has two points.
-    local j=(i+1)/2
-  
-    -- Coordinates of the two runway points.
-    local c1=runwaycoords[i]   --Core.Point#COORDINATES
-    local c2=runwaycoords[i+1] --Core.Point#COORDINATES
-    
-    -- Debug mark
-    c1:MarkToAll("Runway Point 1")
-    c2:MarkToAll("Runway Point 2")
-   
-    -- Heading of runway.
-    local hdg=c1:HeadingTo(c2)
-    
-    -- Debug info.
-    self:T(self.lid..string.format("Runway %d heading=%03d", j, hdg))
-    
-    -- Runway table.
-    local runway={} --#FLIGHTCONTROL.Runway
-    runway.direction=hdg    
-    runway.length=c1:Get2DDistance(c2)    
-    runway.position=c1
-    
-    self:I(self.lid..string.format("Adding runway #%d: heading=%03d, lendth=%d m", #self.runways+1, runway.direction, runway.length))
-    
-    -- Add runway.
-    table.insert(self.runways, runway)
-    
-    -- Inverse runway.
-    local runway={} --#FLIGHTCONTROL.Runway
-    local hdg=hdg-180
-    if hdg<0 then
-      hdg=hdg+360
-    end
-    runway.direction=hdg
-    runway.length=c1:Get2DDistance(c2)    
-    runway.position=c2
-    
-    self:I(self.lid..string.format("Adding runway #%d: heading=%03d, lendth=%d m", #self.runways+1, runway.direction, runway.length))
-
-    -- Add inverse runway.
-    table.insert(self.runways, runway)    
-  end
-
-end
-
---- Get wind.
--- @param #FLIGHTCONTROL self
--- @return #FLIGHTCONTROL.Runway Active runway.
-function FLIGHTCONTROL:GetWindVector(altitude)
-
+  self.runways=self.airbase:GetRunwayData()
 end
 
 --- Get the active runway based on current wind direction.
 -- @param #FLIGHTCONTROL self
--- @return #FLIGHTCONTROL.Runway Active runway.
+-- @return Wrapper.Airbase#AIRBASE.Runway Active runway.
 function FLIGHTCONTROL:GetActiveRunway()
-
-  -- TODO: get runway.
-  local iact=math.max(self.activerwyno, #self.runways)
-
-  -- Get wind vector.
-  local Vwind=self:GetCoordinate():GetWindWithTurbulenceVec3()
-  local norm=UTILS.VecNorm(Vwind)
-  
-  -- Check if wind is blowing (norm>0).
-  if norm>0 then
-  
-    -- Normalize wind (not necessary).
-    Vwind.x=Vwind.x/norm
-    Vwind.y=0
-    Vwind.z=Vwind.z/norm
-    
-    -- Debug.
-    self:T3({Vwind=Vwind})
-    
-    -- Loop over runways.
-    local dotmin=nil
-    for i,_runway in pairs(self.runways) do
-      local runway=_runway --#FLIGHTCONTROL.Runway
-      
-      -- Angle in rad.
-      local alpha=math.rad(runway.direction)
-      
-      -- Runway vector.
-      local Vrunway={x=math.cos(alpha), y=0, z=math.sin(alpha)}
-      
-      -- Dot product: parallel component of the two vectors.
-      local dot=UTILS.VecDot(Vwind, Vrunway)
-      
-      -- Debug.
-      env.info(string.format("runway=%03d° dot=%.3f", runway.direction, dot))
-      
-      -- New min?
-      if dotmin==nil or dot<dotmin then
-        dotmin=dot
-        iact=i
-      end
-      
-    end
-  end
-  
-  return self.runways[iact]
+  return self.airbase:GetActiveRunway()
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1285,14 +1194,14 @@ function FLIGHTCONTROL:_GetHoldingpoint(flight)
   
   local runway=self:GetActiveRunway()
   
-  local hdg=runway.direction+90
+  local hdg=runway.heading+90
   local dx=UTILS.NMToMeters(5)
   local dz=UTILS.NMToMeters(1)
   
   local angels=UTILS.FeetToMeters(math.random(6,10)*1000)
   
   holdingpoint.pos0=runway.position:Translate(dx, hdg):SetAltitude(angels)
-  holdingpoint.pos1=holdingpoint.pos0:Translate(dz, runway.direction):SetAltitude(angels)
+  holdingpoint.pos1=holdingpoint.pos0:Translate(dz, runway.heading):SetAltitude(angels)
 
   return holdingpoint
 end

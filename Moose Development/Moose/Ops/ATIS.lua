@@ -268,7 +268,13 @@ function ATIS:onafterBroadcast(From, Event, To)
   
   -- TODO add zulu time correction.
   if self.theatre==DCSMAP.Caucasus then
-    time=time-4*60*60  -- Caucasus i UTC+4 hours  
+    time=time-4*60*60  -- Caucasus i UTC+4 hours
+  elseif self.theatre==DCSMAP.PersianGulf then
+    time=time-4*60*60  -- Abu Dhabi UTC+4 hours
+  elseif self.theatre==DCSMAP.NTTR then
+    time=time+7*60*60  -- Las Vegas UTC-7 hours
+  elseif self.theatre==DCSMAP.Normandy then
+    time=time-1*60*60  -- Calais UTC+1 hour
   end
   
   local clock=UTILS.SecondsToClock(time)
@@ -302,7 +308,6 @@ function ATIS:onafterBroadcast(From, Event, To)
   
   local VISIBILITY=string.format("%d", UTILS.Round(UTILS.MetersToNM(visibilitymin)))
   
-
   --------------
   --- Clouds ---
   --------------

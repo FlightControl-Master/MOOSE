@@ -659,8 +659,9 @@ end
 
 --- Convert time in seconds to hours, minutes and seconds.
 -- @param #number seconds Time in seconds, e.g. from timer.getAbsTime() function.
+-- @param #boolean short (Optional) If true, use short output, i.e. (HH:)MM:SS without day.
 -- @return #string Time in format Hours:Minutes:Seconds+Days (HH:MM:SS+D).
-function UTILS.SecondsToClock(seconds)
+function UTILS.SecondsToClock(seconds, short)
   
   -- Nil check.
   if seconds==nil then
@@ -680,7 +681,15 @@ function UTILS.SecondsToClock(seconds)
     local mins  = string.format("%02.f", math.floor(_seconds/60 - (hours*60)))
     local secs  = string.format("%02.f", math.floor(_seconds - hours*3600 - mins *60))
     local days  = string.format("%d", seconds/(60*60*24))
-    return hours..":"..mins..":"..secs.."+"..days
+    local clock=hours..":"..mins..":"..secs.."+"..days
+    if short then
+      if hours=="00" then
+        clock=mins..":"..secs
+      else
+        clock=hours..":"..mins..":"..secs
+      end
+    end
+    return clock
   end
 end
 

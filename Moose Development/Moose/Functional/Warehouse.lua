@@ -5605,6 +5605,7 @@ function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrol
     -- Debug info.
     self:T2({airtemplate=template})
     
+    -- Create a flight group.
     FLIGHTGROUP:New(template.name)
 
     -- Spawn group.
@@ -8597,10 +8598,12 @@ function WAREHOUSE:_GetFlightplan(asset, departure, destination)
   wp[#wp+1]=Pdescent:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, VxDescent*3.6, true, nil, nil, "Descent")
 
   --- Holding point
-  Pholding.y=H_holding+h_holding
-  c[#c+1]=Pholding
-  wp[#wp+1]=Pholding:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, VxHolding*3.6, true, nil, nil, "Holding")
-
+  if not _DATABASE:GetFlightControl(destination:GetName()) then
+    Pholding.y=H_holding+h_holding
+    c[#c+1]=Pholding
+    wp[#wp+1]=Pholding:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, VxHolding*3.6, true, nil, nil, "Holding")
+  end
+  
   --- Final destination.
   c[#c+1]=Pdestination
   wp[#wp+1]=Pdestination:WaypointAir("RADIO", COORDINATE.WaypointType.Land, COORDINATE.WaypointAction.Landing, VxFinal*3.6, true,  destination, nil, "Final Destination")
