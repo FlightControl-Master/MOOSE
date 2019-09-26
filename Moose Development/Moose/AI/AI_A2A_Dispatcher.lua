@@ -1844,15 +1844,13 @@ do -- AI_A2A_DISPATCHER
   --- Set a CAP for a Squadron.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The squadron name.
-  -- @param #number EngageMinSpeed The minimum speed at which the engage can be executed.
-  -- @param #number EngageMaxSpeed The maximum speed at which the engage can be executed.
-  -- @param DCS#Altitude EngageFloorAltitude The lowest altitude in meters where to execute the engagement.
-  -- @param DCS#Altitude EngageCeilingAltitude The highest altitude in meters where to execute the engagement.
   -- @param Core.Zone#ZONE_BASE Zone The @{Zone} object derived from @{Core.Zone#ZONE_BASE} that defines the zone wherein the CAP will be executed.
   -- @param #number PatrolFloorAltitude The minimum altitude at which the cap can be executed.
   -- @param #number PatrolCeilingAltitude the maximum altitude at which the cap can be executed.
   -- @param #number PatrolMinSpeed The minimum speed at which the cap can be executed.
   -- @param #number PatrolMaxSpeed The maximum speed at which the cap can be executed.
+  -- @param #number EngageMinSpeed The minimum speed at which the engage can be executed.
+  -- @param #number EngageMaxSpeed The maximum speed at which the engage can be executed.
   -- @param #number AltType The altitude type, which is a string "BARO" defining Barometric or "RADIO" defining radio controlled altitude.
   -- @return #AI_A2A_DISPATCHER
   -- @usage
@@ -1870,7 +1868,7 @@ do -- AI_A2A_DISPATCHER
   --        A2ADispatcher:SetSquadronCap( "Maykop", CAPZoneMiddle, 4000, 8000, 600, 800, 800, 1200, "RADIO" )
   --        A2ADispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
   -- 
-  function AI_A2A_DISPATCHER:SetSquadronCap( SquadronName, Zone, PatrolMinSpeed, PatrolMaxSpeed, PatrolFloorAltitude, PatrolCeilingAltitude, EngageMinSpeed, EngageMaxSpeed, AltType )
+  function AI_A2A_DISPATCHER:SetSquadronCap( SquadronName, Zone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageMinSpeed, EngageMaxSpeed, AltType )
 
     return self:SetSquadronCap2( SquadronName, EngageMinSpeed, EngageMaxSpeed, PatrolFloorAltitude, PatrolCeilingAltitude, AltType, Zone, PatrolMinSpeed, PatrolMaxSpeed, PatrolFloorAltitude, PatrolCeilingAltitude, AltType )  
   end
