@@ -25,6 +25,7 @@
 -- @field #string type Aircraft type of flight group.
 -- @field #table elements Table of elements, i.e. units of the group.
 -- @field #table waypoints Table of waypoints.
+-- @field #table waypoints0 Table of initial waypoints.
 -- @field #table coordinates Table of waypoint coordinates.
 -- @field #table taskqueue Queue of tasks.
 -- @field #number taskcounter Running number of task ids.
@@ -70,6 +71,7 @@ FLIGHTGROUP = {
   grouptemplate      =   nil,
   type               =   nil,
   waypoints          =   nil,
+  waypoints0         =   nil,
   coordinates        =    {},
   elements           =    {},
   taskqueue          =    {},
@@ -333,7 +335,7 @@ function FLIGHTGROUP:New(groupname)
 
 
   -- Debug trace.
-  if true then
+  if false then
     self.Debug=true
     BASE:TraceOnOff(true)
     BASE:TraceClass(self.ClassName)
@@ -434,6 +436,10 @@ function FLIGHTGROUP:AddTaskWaypoint(description, task, waypointindex, prio, dur
 
   -- Add to table.
   table.insert(self.taskqueue, newtask)
+  
+  if self.group and self.group:IsAlive() then
+    self:_UpdateRoute(self.currentwp)
+  end
 
   return self
 end
@@ -643,19 +649,25 @@ function FLIGHTGROUP:onafterStart(From, Event, To)
   
   -- Check if the group is already alive and if so, add its elements.
   local group=GROUP:FindByName(self.groupname)
+  
   if group and group:IsAlive() then
+  
+    -- Set group object.
+    env.info("FF setting self.group object")
     self.group=group
+    
     local units=group:GetUnits()
+    
     for _,_unit in pairs(units) do
       local unit=_unit --Wrapper.Unit#UNIT
       local element=self:AddElementByName(unit:GetName())
 
-      -- Trigger Spawned event. Delay a bit to start.
-      self:__ElementSpawned(0.1, element)
+      -- Trigger Spawned event.
+      self:ElementSpawned(element)
 
     end
-  end  
-
+  end    
+  
   -- Handle events:
   self:HandleEvent(EVENTS.Birth,          self.OnEventBirth)
   self:HandleEvent(EVENTS.EngineStartup,  self.OnEventEngineStartup)
@@ -665,6 +677,7 @@ function FLIGHTGROUP:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.PilotDead,      self.OnEventPilotDead)
   self:HandleEvent(EVENTS.Ejection,       self.OnEventEjection)
   self:HandleEvent(EVENTS.Crash,          self.OnEventCrash)
+  self:HandleEvent(EVENTS.RemoveUnit,     self.OnEventRemoveUnit)
 
   -- Start the status monitoring.
   self:__FlightStatus(-1)
@@ -686,7 +699,8 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
 
   -- Short info.
   local text=string.format("Flight status %s [%d/%d]. Task=%d/%d. Waypoint=%d/%d. Detected=%d. FC=%s. Destination=%s",
-  fsmstate, #self.elements, #self.elements, self.taskcurrent, #self.taskqueue, self.currentwp or 0, #self.waypoints or 0, self.detectedunits:Count(), self.flightcontrol and self.flightcontrol.airbasename or "none", self.destination and self.destination:GetName() or "unknown")
+  fsmstate, #self.elements, #self.elements, self.taskcurrent, #self.taskqueue, self.currentwp or 0, self.waypoints and #self.waypoints or 0, 
+  self.detectedunits:Count(), self.flightcontrol and self.flightcontrol.airbasename or "none", self.destination and self.destination:GetName() or "unknown")
   self:I(self.sid..text)
 
   -- Element status.
@@ -831,16 +845,19 @@ function FLIGHTGROUP:OnEventBirth(EventData)
     if EventData.Place then
       self.homebase=self.homebase or EventData.Place
     end
+        
+    -- Get element.
+    local element=self:GetElementByName(unitname)
 
     -- Create element spawned event if not already present.
     if not self:_IsElement(unitname) then
-      local element=self:AddElementByName(unitname)
-      
-      self:T3(self.sid..string.format("EVENT: Element %s born ==> spawned", element.name))
-            
-      self:ElementSpawned(element)
+      element=self:AddElementByName(unitname)
     end
-
+      
+    self:T3(self.sid..string.format("EVENT: Element %s born ==> spawned", element.name))
+            
+    self:ElementSpawned(element)
+    
   end
 
 end
@@ -986,6 +1003,29 @@ function FLIGHTGROUP:OnEventCrash(EventData)
 
     if element then
       self:T3(self.sid..string.format("EVENT: Element %s crashed ==> dead", element.name))
+      self:ElementDead(element)
+    end
+
+  end
+
+end
+
+--- Flightgroup event function handling the crash of a unit.
+-- @param #FLIGHTGROUP self
+-- @param Core.Event#EVENTDATA EventData Event data.
+function FLIGHTGROUP:OnEventRemoveUnit(EventData)
+
+  -- Check that this is the right group.
+  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
+    local unit=EventData.IniUnit
+    local group=EventData.IniGroup
+    local unitname=EventData.IniUnitName
+
+    -- Get element.
+    local element=self:GetElementByName(unitname)
+
+    if element then
+      self:T3(self.sid..string.format("EVENT: Element %s removed ==> dead", element.name))
       self:ElementDead(element)
     end
 
@@ -1282,6 +1322,28 @@ function FLIGHTGROUP:onafterFlightLanded(From, Event, To, airbase)
   end
 end
 
+--- On after "FlightArrived" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function FLIGHTGROUP:onafterFlightArrived(From, Event, To)
+  self:T(self.sid..string.format("Flight arrived %s", self.groupname))
+end
+
+--- On after "FlightDead" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function FLIGHTGROUP:onafterFlightDead(From, Event, To)
+  self:T(self.sid..string.format("Flight dead %s", self.groupname))
+
+  -- Delete waypoints so they are re-initialized at the next spawn.
+  self.waypoints=nil
+end
+
+
 --- On after "PassingWaypoint" event.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
@@ -1291,7 +1353,7 @@ end
 -- @param #number N Final waypoint number.
 function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
   local text=string.format("Flight %s passed waypoint %d/%d", self.groupname, n, N)
-  self:T(self.sid..text)
+  self:I(self.sid..text)
   MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
 end
 
@@ -1789,7 +1851,7 @@ function FLIGHTGROUP._PassingWaypoint(group, flightgroup, i)
 
   -- Debug message.
   --MESSAGE:New(text,10):ToAllIf(flightgroup.Debug)
-  flightgroup:T2(flightgroup.sid..text)
+  flightgroup:T3(flightgroup.sid..text)
 
   -- Set current waypoint.
   flightgroup.currentwp=i
@@ -2128,6 +2190,9 @@ function FLIGHTGROUP:_UpdateRoute(n)
 
   -- TODO: what happens if currentwp=#waypoints
   n=n or self.currentwp+1
+  
+  -- Update waypoint tasks, i.e. inject WP tasks into waypoint table.
+  self:_UpdateWaypointTasks()
 
   local wp={}
 
@@ -2142,8 +2207,9 @@ function FLIGHTGROUP:_UpdateRoute(n)
   -- Get destination airbase from waypoints.
   self.destination=self:GetDestinationFromWaypoints() or self.destination
   
-  if self.destination and #wp>0 then
+  if self.destination and #wp>0 and _DATABASE:GetFlightControl(self.destination:GetName())then
   
+    -- Task to hold.
     local TaskOverhead=self.group:TaskFunction("FLIGHTGROUP._DestinationOverhead", self, self.destination)
     
     local coordoverhead=self.destination:GetZone():GetRandomCoordinate():SetAltitude(UTILS.FeetToMeters(6000))
@@ -2152,6 +2218,8 @@ function FLIGHTGROUP:_UpdateRoute(n)
     self:I(self.sid..string.format("Adding overhead waypoint as #%d", #wp))
     table.insert(wp, #wp, wpoverhead)
   end
+  
+  
   
   self:I(self.sid..string.format("Updating route: #WP=%d homebase=%s destination=%s", #wp, self.homebase and self.homebase:GetName() or "unknown", self.destination and self.destination:GetName() or "unknown"))
   
@@ -2235,11 +2303,10 @@ end
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:InitWaypoints(waypoints)
 
+  self.waypoints0=self.group:GetTemplateRoutePoints()
+
   -- Waypoints of group as defined in the ME.
   self.waypoints=waypoints or self.group:GetTemplateRoutePoints()
-  
-  -- Update waypoint tasks.
-  self:_UpdateWaypointTasks()
 
   -- Init array.
   self.coordinates={}

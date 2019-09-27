@@ -163,7 +163,7 @@ function FLIGHTCONTROL:New(airbasename)
   self:AddTransition("*",             "Status",          "*")           -- Update status.
 
   -- Debug trace.
-  if true then
+  if false then
     self.Debug=true
     BASE:TraceOnOff(true)
     BASE:TraceClass(self.ClassName)
