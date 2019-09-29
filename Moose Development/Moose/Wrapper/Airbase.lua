@@ -1031,7 +1031,7 @@ function AIRBASE:GetRunwayData()
   self:T(string.format("Runway coords # = %d", #runwaycoords))
   
   -- Magnetic declination.
-  local magvar=0 --UTILS.GetMagneticDeclination()
+  local magvar=UTILS.GetMagneticDeclination()
   
   for i=1,#runwaycoords,2 do
     

@@ -30,6 +30,8 @@
 -- @field Core.RadioQueue#RADIOQUEUE radioqueue Radio queue for broadcasing messages.
 -- @field #string soundpath Path to sound files.
 -- @field #string relayunitname Name of the radio relay unit.
+-- @field #table towerfrequency Table with tower frequencies.
+-- @field #string activerunway The active runway specified by the user.
 -- @extends Core.Fsm#FSM
 
 --- Be surprised!
@@ -56,11 +58,46 @@ ATIS = {
   radioqueue     =   nil,
   soundpath      =   nil,
   relayunitname  =   nil,
+  towerfrequency =   nil,
+  activerunway   =   nil,
+}
+
+--- NATO alphabet.
+-- @type ATIS.Alphabet
+ATIS.Alphabet = {
+  [1]  = "Alfa",
+  [2]  = "Bravo",
+  [3]  = "Charlie",
+  [4]  = "Delta",
+  [5]  = "Echo",
+  [6]  = "Delta",
+  [7]  = "Echo",
+  [8]  = "Foxtrot",
+  [9]  = "Golf",
+  [10] = "Hotel",
+  [11] = "India",
+  [12] = "Juliett",
+  [13] = "Kilo",
+  [15] = "Lima",
+  [16] = "Mike",
+  [17] = "November",
+  [18] = "Oscar",
+  [19] = "Papa",
+  [20] = "Quebec",
+  [21] = "Romeo",
+  [22] = "Sierra",
+  [23] = "Tango",
+  [24] = "Uniform",
+  [25] = "Victor",
+  [26] = "Whiskey",
+  [27] = "Xray",
+  [28] = "Yankee",
+  [29] = "Zulu",
 }
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version="0.0.1"
+ATIS.version="0.2.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -161,6 +198,29 @@ function ATIS:SetRadioRelayUnitName(unitname)
   self:I(self.lid..string.format("Setting radio relay unit to %s", self.relayunitname))
 end
 
+--- Set tower frequencies.
+-- @param #ATIS self
+-- @param #table freqs Frequencies in MHz. A single frequency can be given as a number.
+-- @return #ATIS self
+function ATIS:SetTowerFrequencies(freqs)
+  if type(freqs)=="table" then
+    -- nothing to do
+  else  
+    freqs={freqs}
+  end
+  self.towerfrequency=freqs
+end
+
+--- Set active runway. This can be used if the automatic runway determination via the wind direction gives incorrect results.
+-- For example, use this if there are two runways with the same directions.
+-- @param #ATIS self
+-- @param #string runway Active runway, e.g. "31L".
+-- @return #ATIS self
+function ATIS:SetActiveRunway(runway)
+  self.activerunway=tostring(runway)
+end
+
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start & Status
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -189,7 +249,7 @@ function ATIS:onafterStart(From, Event, To)
   self.radioqueue:SetDigit(8, "N-8.ogg", 0.37, self.soundpath)
   self.radioqueue:SetDigit(9, "N-9.ogg", 0.38, self.soundpath)
   
-  self.radioqueue:Start(1, 0.05)
+  self.radioqueue:Start(1, 0.1)
 
   -- Init status updates.
   self:__Status(-2)
@@ -252,7 +312,20 @@ function ATIS:onafterBroadcast(From, Event, To)
   --------------
   --- Runway ---
   --------------
-  local runway=self.airbase:GetActiveRunway()
+  
+  -- Get runway based on wind direction.
+  local runway=self.airbase:GetActiveRunway().idx
+  
+  -- Left or right in case there are two runways with the same heading.
+  local rleft=false
+  local rright=false
+  
+  -- Check if user explicitly specified a runway.
+  if self.activerunway then
+    runway=self.activerunway:gsub("%D+", "")
+    rleft=self.activerunway:lower():find("l")
+    rright=self.activerunway:lower():find("r")
+  end
   
   ------------
   --- Wind ---
@@ -266,9 +339,9 @@ function ATIS:onafterBroadcast(From, Event, To)
   ------------
   local time=timer.getAbsTime()
   
-  -- TODO add zulu time correction.
+  -- Conversion to Zulu time.
   if self.theatre==DCSMAP.Caucasus then
-    time=time-4*60*60  -- Caucasus i UTC+4 hours
+    time=time-4*60*60  -- Caucasus UTC+4 hours
   elseif self.theatre==DCSMAP.PersianGulf then
     time=time-4*60*60  -- Abu Dhabi UTC+4 hours
   elseif self.theatre==DCSMAP.NTTR then
@@ -280,6 +353,12 @@ function ATIS:onafterBroadcast(From, Event, To)
   local clock=UTILS.SecondsToClock(time)
   local zulu=UTILS.Split(clock, ":")
   local ZULU=string.format("%s%s", zulu[1], zulu[2])
+  
+  
+  -- NATO time stamp.
+  local NATO=ATIS.Alphabet[tonumber(zulu[1])-1]
+  
+  self:I({nato=NATO})
   
   -------------------
   --- Temperature ---
@@ -312,67 +391,111 @@ function ATIS:onafterBroadcast(From, Event, To)
   --- Clouds ---
   --------------
   local cloudbase=clouds.base
-  local cloudceiling=clouds.base+clouds.thickness
-  local clouddensity=clouds.density  
+  local cloudceil=clouds.base+clouds.thickness
+  local clouddens=clouds.density  
   local precepitation=tonumber(clouds.iprecptns)
   
   local CLOUDBASE=string.format("%d", UTILS.MetersToFeet(cloudbase))
-  local CLOUDCEILING=string.format("%d", UTILS.MetersToFeet(cloudceiling))
+  local CLOUDCEIL=string.format("%d", UTILS.MetersToFeet(cloudceil))
   
-  local CLOUDSogg="CloudsFew.ogg"
-  local CLOUDSsub="Few clouds"
-  local CLOUDSdur=1.00
-  if clouddensity>=8 then
-    -- Overcast 8,9,10
-    CLOUDSogg="CloudsOvercast.ogg"
-    CLOUDSsub="Overcast"
-    CLOUDSdur=0.85
-  elseif clouddensity>=6 then
-    -- Broken 6,7
-    CLOUDSogg="CloudsBroken.ogg"
-    CLOUDSsub="Broken clouds"
-    CLOUDSdur=1.10
-  elseif clouddensity>=4 then
-    -- Scattered 4,5
-    CLOUDSogg="CloudsScattered.ogg"
-    CLOUDSsub="Scattered clouds"
-    CLOUDSdur=1.20
-  elseif clouddensity>=1 then
-    -- Few 1,2,3
-    CLOUDSogg="CloudsFew.ogg"
-    CLOUDSsub="Few clouds"
-    CLOUDSdur=1.00
-  else
-    -- No clouds
-    CLOUDBASE=nil
-    CLOUDCEILING=nil
-    CLOUDSogg="CloudsFew.ogg"
-    CLOUDSsub="Few clouds"
-    CLOUDSdur=1.00
+  local CLOUDBASE0100=tostring(self:_GetHundreds( UTILS.MetersToFeet(cloudbase)))
+  local CLOUDBASE1000=tostring(self:_GetThousands(UTILS.MetersToFeet(cloudbase)))
+  local CLOUDCEIL0100=tostring(self:_GetHundreds( UTILS.MetersToFeet(cloudceil)))
+  local CLOUDCEIL1000=tostring(self:_GetThousands(UTILS.MetersToFeet(cloudceil)))
+  
+  self:I({cloudbase0100=CLOUDBASE0100})
+  self:I({cloudbase1000=CLOUDBASE1000})
+  
+  -- No cloud info for dynamic weather.
+  local CLOUDSogg="CloudsNotAvailable.ogg"
+  local CLOUDSsub="Cloud coverage information not available"
+  local CLOUDSdur=2.40
+  
+  -- TODO: add static weather switch
+  if true then
+    if clouddens>=9 then
+      -- Overcast 9,10
+      CLOUDSogg="CloudsOvercast.ogg"
+      CLOUDSsub="Overcast"
+      CLOUDSdur=0.85
+    elseif clouddens>=7 then
+      -- Broken 7,8
+      CLOUDSogg="CloudsBroken.ogg"
+      CLOUDSsub="Broken clouds"
+      CLOUDSdur=1.10
+    elseif clouddens>=4 then
+      -- Scattered 4,5,6
+      CLOUDSogg="CloudsScattered.ogg"
+      CLOUDSsub="Scattered clouds"
+      CLOUDSdur=1.20
+    elseif clouddens>=1 then
+      -- Few 1,2,3
+      CLOUDSogg="CloudsFew.ogg"
+      CLOUDSsub="Few clouds"
+      CLOUDSdur=1.00
+    else
+      -- No clouds
+      CLOUDBASE=nil
+      CLOUDCEIL=nil
+      CLOUDSogg="CloudsNo.ogg"
+      CLOUDSsub="No clouds"
+      CLOUDSdur=1.00
+    end
   end
   
+  --------------------
+  --- Transmission ---
+  --------------------
   
   local subduration=10
+  local subtitle=""
   
-  --Airbase.
-  self.radioqueue:NewTransmission(string.format("%s/%s.ogg", self.theatre, self.airbasename), 3.0, self.soundpath, nil, nil, string.format("%s Airport", self.airbasename), subduration)
+  --Airbase name
+  subtitle=string.format("%s", self.airbasename)
+  if self.airbasename:find("AFB")==nil and self.airbasename:find("Airport")==nil and self.airbasename:find("Airstrip")==nil and self.airbasename:find("airfield")==nil then
+    subtitle=subtitle.." Airport"
+  end
+  self.radioqueue:NewTransmission(string.format("%s/%s.ogg", self.theatre, self.airbasename), 3.0, self.soundpath, nil, nil, subtitle, subduration)
   
-  -- Time
-  self.radioqueue:Number2Transmission(ZULU)
-  self.radioqueue:NewTransmission("TimeZulu.ogg", 0.89, self.soundpath, nil, 0.2, string.format("%s Zulu Time", ZULU), subduration)
+  -- Information tag
+  subtitle=string.format("Information %s", NATO)
+  self.radioqueue:NewTransmission("Information.ogg", 0.85, self.soundpath, nil, 0.5, subtitle, subduration)
+  self.radioqueue:NewTransmission(string.format("NATO Alphabet/%s.ogg", NATO), 0.75, self.soundpath)
+  
+  -- Zulu Time
+  subtitle=string.format("%s Zulu Time", ZULU)
+  self.radioqueue:Number2Transmission(ZULU, nil, 0.5)
+  self.radioqueue:NewTransmission("TimeZulu.ogg", 0.89, self.soundpath, nil, 0.2, subtitle, subduration)
   
   -- Visibility
-  self.radioqueue:NewTransmission("Visibility.ogg", 0.8, self.soundpath, nil, 1.0, string.format("Visibility %s NM", VISIBILITY), subduration)
+  subtitle=string.format("Visibility %s NM", VISIBILITY)
+  self.radioqueue:NewTransmission("Visibility.ogg", 0.8, self.soundpath, nil, 1.0, subtitle, subduration)
   self.radioqueue:Number2Transmission(VISIBILITY)
   self.radioqueue:NewTransmission("NauticalMiles.ogg", 1.05, self.soundpath, nil, 0.2)
   
   -- Cloud base
   self.radioqueue:NewTransmission(CLOUDSogg, CLOUDSdur, self.soundpath, nil, 1.0, CLOUDSsub, subduration)
   if CLOUDBASE then
-    self.radioqueue:NewTransmission("CloudBase.ogg", 0.81, self.soundpath, nil, 1.0, string.format("Cloudbase %s, ceiling %s ft", CLOUDBASE, CLOUDCEILING), subduration)
-    self.radioqueue:Number2Transmission(CLOUDBASE)    
+    -- Base
+    self.radioqueue:NewTransmission("CloudBase.ogg", 0.81, self.soundpath, nil, 1.0, string.format("Cloudbase %s, ceiling %s ft", CLOUDBASE, CLOUDCEIL), subduration)
+    if tonumber(CLOUDBASE1000)>0 then
+      self.radioqueue:Number2Transmission(CLOUDBASE1000)
+      self.radioqueue:NewTransmission("Thousand.ogg", 0.55, self.soundpath, nil, 0.1)
+    end 
+    if tonumber(CLOUDBASE0100)>0 then
+      self.radioqueue:Number2Transmission(CLOUDBASE0100)
+      self.radioqueue:NewTransmission("Hundred.ogg", 0.47, self.soundpath, nil, 0.1)
+    end
+    -- Ceiling
     self.radioqueue:NewTransmission("CloudCeiling.ogg", 0.62, self.soundpath, nil, 0.5)
-    self.radioqueue:Number2Transmission(CLOUDCEILING)
+    if tonumber(CLOUDCEIL1000)>0 then
+      self.radioqueue:Number2Transmission(CLOUDCEIL1000)
+      self.radioqueue:NewTransmission("Thousand.ogg", 0.55, self.soundpath, nil, 0.1)
+    end 
+    if tonumber(CLOUDCEIL0100)>0 then
+      self.radioqueue:Number2Transmission(CLOUDCEIL0100)
+      self.radioqueue:NewTransmission("Hundred.ogg", 0.47, self.soundpath, nil, 0.1)
+    end
     self.radioqueue:NewTransmission("Feet.ogg", 0.45, self.soundpath, nil, 0.1)
   end
   
@@ -381,18 +504,27 @@ function ATIS:onafterBroadcast(From, Event, To)
   local wpsub=""
   if precepitation==1 then
     wp=true
-    wpsub=wpsub.." rain,"
+    wpsub=wpsub.." rain"
   elseif precepitation==2 then
+    if wp then
+      wpsub=wpsub..","
+    end
+    wpsub=wpsub.." thunderstorm"
     wp=true
-    wpsub=wpsub.." thunderstorm,"
   end
   if fog then
-    wp=true
-    wpsub=wpsub.." fog,"      
+    if wp then
+      wpsub=wpsub..","
+    end  
+    wpsub=wpsub.." fog"
+    wp=true    
   end
   if dust then
-    wp=true
-    wpsub=wpsub.." dust,"        
+    if wp then
+      wpsub=wpsub..","
+    end  
+    wpsub=wpsub.." dust"
+    wp=true    
   end
   -- Actual output
   if wp then
@@ -442,8 +574,39 @@ function ATIS:onafterBroadcast(From, Event, To)
   end
   
   -- Active runway.
-  self.radioqueue:NewTransmission("ActiveRunway.ogg", 1.05, self.soundpath, nil, 1.0, string.format("Active runway %s", runway.idx), subduration)
-  self.radioqueue:Number2Transmission(runway.idx)
+  local subtitle=string.format("Active runway %s", runway)
+  if rleft then
+    subtitle=subtitle.." Left"
+  elseif rright then
+    subtitle=subtitle.." Right"
+  end
+  self.radioqueue:NewTransmission("ActiveRunway.ogg", 1.05, self.soundpath, nil, 1.0, subtitle, subduration)
+  self.radioqueue:Number2Transmission(runway)
+  if rleft then
+    self.radioqueue:NewTransmission("Left.ogg", 0.53, self.soundpath, nil, 0.2)
+  elseif rright then
+    self.radioqueue:NewTransmission("Right.ogg", 0.43, self.soundpath, nil, 0.2)
+  end
+  
+  -- Tower frequency.
+  if self.towerfrequency then
+    local freqs=""
+    for i,freq in pairs(self.towerfrequency) do
+      freqs=freqs..string.format("%.3f MHz", freq)
+      if i<#self.towerfrequency then
+        freqs=freqs..", "
+      end
+    end
+    self.radioqueue:NewTransmission("TowerFrequency.ogg", 1.19, self.soundpath, nil, 1.0, string.format("Tower frequency %s", freqs), subduration)
+    for _,freq in pairs(self.towerfrequency) do
+      local f=string.format("%.3f", freq)
+      f=UTILS.Split(f, ".")      
+      self.radioqueue:Number2Transmission(f[1], nil, 0.5)
+      self.radioqueue:NewTransmission("Decimal.ogg", 0.58, self.soundpath, nil, 0.2)
+      self.radioqueue:Number2Transmission(f[2])
+      self.radioqueue:NewTransmission("MegaHertz.ogg", 0.86, self.soundpath, nil, 0.2)
+    end    
+  end
   
 end
 
@@ -511,6 +674,31 @@ function ATIS:GetStaticWeather()
   self:T({fog=fog})
   self:T({dust=dust})
   return clouds, visibility, turbulence, fog, dust
+end
+
+--- Get rounded hundreds of a number.
+-- @param #ATIS self
+-- @param #number n Number, e.g. 4359.
+-- @return #number Thousands of n, e.g. 4 for 4359.
+function ATIS:_GetHundreds(n)
+  local h=UTILS.Round(n/100 % 10, 0)
+  if h==10 then
+    h=0
+  end
+  return h 
+end
+
+--- Get thousands of a number.
+-- @param #ATIS self
+-- @param #number n Number, e.g. 4359.
+-- @return #number Thousands of n, e.g. 4 for 4359.
+function ATIS:_GetThousands(n)
+  local h=UTILS.Round(n/100 % 10, 0)
+  local t=math.floor(n/1000 % 10)
+  if h==10 then
+    t=t+1
+  end
+  return t
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
