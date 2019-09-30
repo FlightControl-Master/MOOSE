@@ -214,6 +214,7 @@ function SCHEDULER:New( SchedulerObject, SchedulerFunction, SchedulerArguments, 
   local ScheduleID = nil
   
   self.MasterObject = SchedulerObject
+  self.ShowTrace = true
   
   if SchedulerFunction then
     ScheduleID = self:Schedule( SchedulerObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop, 4 )
@@ -299,6 +300,14 @@ function SCHEDULER:Clear()
   self:F3( )
 
   _SCHEDULEDISPATCHER:Clear( self )
+end
+
+--- No tracing for this scheduler.
+-- @param #SCHEDULER self
+-- @param #number ScheduleID (optional) The ScheduleID of the planned (repeating) schedule.
+function SCHEDULER:NoTrace()
+
+  _SCHEDULEDISPATCHER:NoTrace( self )
 end
 
 

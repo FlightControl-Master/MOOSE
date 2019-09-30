@@ -136,8 +136,14 @@ AI_A2A_PATROL = {
 -- PatrolArea = AI_A2A_PATROL:New( PatrolZone, 3000, 6000, 600, 900 )
 function AI_A2A_PATROL:New( AIPatrol, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType )
 
-  -- Inherits from BASE
-  local self = BASE:Inherit( self, AI_A2A:New( AIPatrol ) ) -- #AI_A2A_PATROL
+  local AI_Air = AI_AIR:New( AIPatrol )
+  local AI_Air_Patrol = AI_A2A_PATROL:New( AI_Air, AIPatrol, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType  )
+  local self = BASE:Inherit( self, AI_Air_Patrol ) -- #AI_A2A_PATROL
+  
+  self:SetFuelThreshold( .2, 60 )
+  self:SetDamageThreshold( 0.4 )
+  self:SetDisengageRadius( 70000 )
+
   
   self.PatrolZone = PatrolZone
   self.PatrolFloorAltitude = PatrolFloorAltitude
@@ -255,35 +261,6 @@ function AI_A2A_PATROL:SetAltitude( PatrolFloorAltitude, PatrolCeilingAltitude )
   
   self.PatrolFloorAltitude = PatrolFloorAltitude
   self.PatrolCeilingAltitude = PatrolCeilingAltitude
-end
-
---- Set race track parameters. CAP flights will perform race track patterns rather than randomly patrolling the zone.
--- @param #AI_A2A_PATROL self
--- @param #number LegMin Min Length of the race track leg in meters. Default 10,000 m.
--- @param #number LegMax Max length of the race track leg in meters. Default 15,000 m.
--- @param #number HeadingMin Min heading of the race track in degrees. Default 0 deg, i.e. from South to North.
--- @param #number HeadingMax Max heading of the race track in degrees. Default 180 deg, i.e. from South to North.
--- @param #number DurationMin (Optional) Min duration before switching the orbit position. Default is keep same orbit until RTB or engage.
--- @param #number DurationMax (Optional) Max duration before switching the orbit position. Default is keep same orbit until RTB or engage.
--- @param #table CapCoordinates Table of coordinates of first race track point. Second point is determined by leg length and heading. 
--- @return #AI_A2A_PATROL self
-function AI_A2A_PATROL:SetRaceTrackPattern(LegMin, LegMax, HeadingMin, HeadingMax, DurationMin, DurationMax, CapCoordinates)
-  self:F2({leglength, duration})
-  
-  self.racetrack=true
-  self.racetracklegmin=LegMin or 10000
-  self.racetracklegmax=LegMax or 15000
-  self.racetrackheadingmin=HeadingMin or 0
-  self.racetrackheadingmax=HeadingMax or 180
-  self.racetrackdurationmin=DurationMin
-  self.racetrackdurationmax=DurationMax
-  
-  if self.racetrackdurationmax and not self.racetrackdurationmin then
-    self.racetrackdurationmin=self.racetrackdurationmax
-  end
-  
-  self.racetrackcapcoordinates=CapCoordinates
-  
 end
 
 
@@ -426,13 +403,3 @@ function AI_A2A_PATROL:onafterRoute( AIPatrol, From, Event, To )
 
 end
 
---- @param Wrapper.Group#GROUP AIPatrol
-function AI_A2A_PATROL.Resume( AIPatrol, Fsm )
-
-  AIPatrol:I( { "AI_A2A_PATROL.Resume:", AIPatrol:GetName() } )
-  if AIPatrol:IsAlive() then
-    Fsm:__Reset( 1 )
-    Fsm:__Route( 5 )
-  end
-  
-end

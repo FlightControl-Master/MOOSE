@@ -143,6 +143,7 @@ function CLIENT:Register( ClientName )
   
   --self.AliveCheckScheduler = routines.scheduleFunction( self._AliveCheckScheduler, { self }, timer.getTime() + 1, 5 )
   self.AliveCheckScheduler = SCHEDULER:New( self, self._AliveCheckScheduler, { "Client Alive " .. ClientName }, 1, 5, 0.5 )
+  self.AliveCheckScheduler:NoTrace()
 
   self:F( self )
   return self

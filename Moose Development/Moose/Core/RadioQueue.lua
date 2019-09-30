@@ -84,6 +84,7 @@ function RADIOQUEUE:New(frequency, modulation)
   
   -- Scheduler
   self.scheduler=SCHEDULER:New()
+  self.scheduler:NoTrace()
   
   return self
 end
@@ -486,7 +487,7 @@ function RADIOQUEUE:_GetRadioSenderCoord()
     end
     
     -- Now try a static. 
-    local sender=STATIC:FindByName(self.sendername)
+    local sender=STATIC:FindByName( self.sendername, false )
 
     -- Check that sender is alive and an aircraft.
     if sender then

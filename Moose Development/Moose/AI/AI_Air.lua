@@ -308,7 +308,7 @@ end
 -- @param DCS#Speed  RTBMaxSpeed The maximum speed of the @{Wrapper.Controllable} in km/h.
 -- @return #AI_AIR self
 function AI_AIR:SetRTBSpeed( RTBMinSpeed, RTBMaxSpeed )
-  self:F2( { RTBMinSpeed, RTBMaxSpeed } )
+  self:F( { RTBMinSpeed, RTBMaxSpeed } )
   
   self.RTBMinSpeed = RTBMinSpeed
   self.RTBMaxSpeed = RTBMaxSpeed
@@ -425,7 +425,18 @@ function AI_AIR:onafterStart( Controllable, From, Event, To )
   Controllable:OptionROTVertical()
 end
 
+--- Coordinates the approriate returning action.
+-- @param #AI_AIR self
+-- @return #AI_AIR self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+function AI_AIR:onafterReturn( Controllable, From, Event, To )
 
+  self:__RTB( self.TaskDelay )
+  
+end
 
 --- @param #AI_AIR self
 function AI_AIR:onbeforeStatus()
@@ -481,10 +492,13 @@ function AI_AIR:onafterStatus()
           OldAIControllable:SetTask( TimedOrbitTask, 10 )
     
           self:Fuel()
-          RTB = true
         end
       else
       end
+    end
+
+    if self:Is( "Fuel" ) and not self:Is( "Home" ) and not self:is( "Refuelling" ) then
+      RTB = true
     end
     
     -- TODO: Check GROUP damage function.
@@ -581,7 +595,13 @@ function AI_AIR:onafterRTB( AIGroup, From, Event, To )
     
     local FromCoord = AIGroup:GetCoordinate()
     local ToTargetCoord = self.HomeAirbase:GetCoordinate()
-    local ToTargetSpeed = math.random( self.RTBMinSpeed, self.RTBMaxSpeed )
+
+    if not self.RTBMinSpeed and not self.RTBMaxSpeed then    
+      local RTBSpeedMax = AIGroup:GetSpeedMax()
+      self:SetRTBSpeed( RTBSpeedMax * 0.25, RTBSpeedMax * 0.25 )  
+    end
+    
+    local RTBSpeed = math.random( self.RTBMinSpeed, self.RTBMaxSpeed )
     local ToAirbaseAngle = FromCoord:GetAngleDegrees( FromCoord:GetDirectionVec3( ToTargetCoord ) )
 
     local Distance = FromCoord:Get2DDistance( ToTargetCoord )
@@ -593,12 +613,19 @@ function AI_AIR:onafterRTB( AIGroup, From, Event, To )
       return
     end
     
+    if not AIGroup:InAir() == true then
+      self:I( "Not anymore in the air, considered Home." )
+      self:Home()
+      return
+    end
+      
+    
     --- Create a route point of type air.
     local FromRTBRoutePoint = FromCoord:WaypointAir( 
       self.PatrolAltType, 
       POINT_VEC3.RoutePointType.TurningPoint, 
       POINT_VEC3.RoutePointAction.TurningPoint, 
-      ToTargetSpeed, 
+      RTBSpeed, 
       true 
     )
 
@@ -607,7 +634,7 @@ function AI_AIR:onafterRTB( AIGroup, From, Event, To )
       self.PatrolAltType, 
       POINT_VEC3.RoutePointType.TurningPoint, 
       POINT_VEC3.RoutePointAction.TurningPoint, 
-      ToTargetSpeed, 
+      RTBSpeed, 
       true 
     )
 

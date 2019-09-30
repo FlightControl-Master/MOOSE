@@ -162,6 +162,7 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
       local Randomize = Schedule.Randomize or 0
       local Stop = Schedule.Stop or 0
       local ScheduleID = Schedule.ScheduleID
+      local ShowTrace = Scheduler.ShowTrace
       
       local Prefix = ( Repeat == 0 ) and "--->" or "+++>"
       
@@ -169,13 +170,17 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
       --self:E( { SchedulerObject = SchedulerObject } )
       if SchedulerObject then
         local function Timer()
-          SchedulerObject:T( Prefix .. Name .. ":" .. Line .. " (" .. Source .. ")" )
+          if ShowTrace then
+            SchedulerObject:T( Prefix .. Name .. ":" .. Line .. " (" .. Source .. ")" )
+          end
           return ScheduleFunction( SchedulerObject, unpack( ScheduleArguments ) ) 
         end
         Status, Result = xpcall( Timer, ErrorHandler )
       else
         local function Timer()
-          self:T( Prefix .. Name .. ":" .. Line .. " (" .. Source .. ")" )
+          if ShowTrace then
+            self:T( Prefix .. Name .. ":" .. Line .. " (" .. Source .. ")" )
+          end
           return ScheduleFunction( unpack( ScheduleArguments ) ) 
         end
         Status, Result = xpcall( Timer, ErrorHandler )
@@ -274,5 +279,9 @@ function SCHEDULEDISPATCHER:Clear( Scheduler )
   end
 end
 
+function SCHEDULEDISPATCHER:NoTrace( Scheduler )
+  self:F2( { Scheduler = Scheduler } )
 
+  Scheduler.ShowTrace = nil
+end
 
