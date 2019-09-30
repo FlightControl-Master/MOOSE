@@ -364,7 +364,6 @@ end
 function AI_AIR_ENGAGE:onafterAbort( AIGroup, From, Event, To )
   AIGroup:ClearTasks()
   self:Return()
-  self:__RTB( self.TaskDelay )
 end
 
 
@@ -500,7 +499,6 @@ function AI_AIR_ENGAGE:onafterEngageRoute( DefenderGroup, From, Event, To, Attac
   else
     self:I( DefenderGroupName .. ": No targets found -> Going RTB")
     self:Return()
-    self:__RTB( self.TaskDelay )
   end
 end
 
@@ -574,14 +572,14 @@ function AI_AIR_ENGAGE:onafterEngage( DefenderGroup, From, Event, To, AttackSetU
       
       if TargetDistance <= EngageDistance * 3 then
       
-        local AttackUnitTasks = self:CreateAttackUnitTasks( AttackSetUnit, DefenderGroup, EngageAltitude )
+        local AttackUnitTasks = self:CreateAttackUnitTasks( AttackSetUnit, DefenderGroup, EngageAltitude ) -- Polymorphic
         
         if #AttackUnitTasks == 0 then
-          self:I( DefenderGroupName .. ": No targets found -> Going RTB")
+          self:I( DefenderGroupName .. ": No valid targets found -> Going RTB")
           self:Return()
-          self:__RTB( self.TaskDelay )
           return
         else
+          self:I( DefenderGroupName .. ": Engaging targets " )
           DefenderGroup:OptionROEOpenFire()
           DefenderGroup:OptionROTEvadeFire()
           DefenderGroup:OptionKeepWeaponsOnThreat()
@@ -597,9 +595,8 @@ function AI_AIR_ENGAGE:onafterEngage( DefenderGroup, From, Event, To, AttackSetU
       
     end
   else
-    self:I( DefenderGroupName .. ": No targets found -> Going RTB")
+    self:I( DefenderGroupName .. ": No targets found -> returning.")
     self:Return()
-    self:__RTB( self.TaskDelay )
     return
   end
 end

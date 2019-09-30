@@ -50,10 +50,6 @@ function AI_A2G_CAS:New2( AIGroup, EngageMinSpeed, EngageMaxSpeed, EngageFloorAl
   local AI_Air_Engage = AI_AIR_ENGAGE:New( AI_Air_Patrol, AIGroup, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType )
   local self = BASE:Inherit( self, AI_Air_Engage )
 
-  local RTBSpeedMax = AIGroup:GetSpeedMax() or 9999
-
-  self:SetRTBSpeed( RTBSpeedMax * 0.50, RTBSpeedMax * 0.75 )
-
   return self
 end
 

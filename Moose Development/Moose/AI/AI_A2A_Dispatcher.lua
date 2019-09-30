@@ -3267,7 +3267,9 @@ do -- AI_A2A_DISPATCHER
             local DefenderName = DefenderGroup:GetCallsign()
             local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
             local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
-            Dispatcher:MessageToPlayers( Squadron,  DefenderName .. " returning to base.", DefenderGroup )
+            if Squadron then
+              Dispatcher:MessageToPlayers( Squadron,  DefenderName .. " returning to base.", DefenderGroup )
+            end
             Dispatcher:ClearDefenderTaskTarget( DefenderGroup )
           end
   
@@ -3313,7 +3315,7 @@ do -- AI_A2A_DISPATCHER
       for DefenderID, Defender in pairs( Defenders ) do
 
         local Fsm = self:GetDefenderTaskFsm( Defender )
-        Fsm:__EngageRoute( 1, AttackerDetection.Set ) -- Engage on the TargetSetUnit
+        Fsm:EngageRoute( AttackerDetection.Set ) -- Engage on the TargetSetUnit
         
         self:SetDefenderTaskTarget( Defender, AttackerDetection )
 
@@ -3630,6 +3632,32 @@ do -- AI_A2A_DISPATCHER
     return nil, nil
   end
 
+
+  --- Assigns A2G AI Tasks in relation to the detected items.
+  -- @param #AI_A2G_DISPATCHER self
+  function AI_A2A_DISPATCHER:Order( DetectedItem )
+    local AttackCoordinate = self.Detection:GetDetectedItemCoordinate( DetectedItem )
+    
+    local ShortestDistance = 999999999
+  
+    for DefenderSquadronName, DefenderSquadron in pairs( self.DefenderSquadrons ) do
+    
+      self:I( { DefenderSquadron = DefenderSquadron.Name } )
+    
+      local Airbase = DefenderSquadron.Airbase
+      local AirbaseCoordinate = Airbase:GetCoordinate()
+
+      local EvaluateDistance = AttackCoordinate:Get2DDistance( AirbaseCoordinate )
+      
+      if EvaluateDistance <= ShortestDistance then
+        ShortestDistance = EvaluateDistance
+      end
+    end
+    
+    return ShortestDistance
+  end
+  
+
   --- Shows the tactical display.
   -- @param #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:ShowTacticalDisplay( Detection )
@@ -3645,7 +3673,8 @@ do -- AI_A2A_DISPATCHER
     local DefenderGroupCount = 0
 
     -- Now that all obsolete tasks are removed, loop through the detected targets.
-    for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
+    --for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
+    for DetectedItemID, DetectedItem in UTILS.spairs( Detection:GetDetectedItems(), function( t, a, b ) return self:Order(t[a]) <  self:Order(t[b]) end  ) do
     
       local DetectedItem = DetectedItem -- Functional.Detection#DETECTION_BASE.DetectedItem
       local DetectedSet = DetectedItem.Set -- Core.Set#SET_UNIT
@@ -3761,7 +3790,9 @@ do -- AI_A2A_DISPATCHER
     local DefenderGroupCount = 0
 
     -- Now that all obsolete tasks are removed, loop through the detected targets.
-    for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
+    -- Closest detected targets to be considered first!
+    --for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
+    for DetectedItemID, DetectedItem in UTILS.spairs( Detection:GetDetectedItems(), function( t, a, b ) return self:Order(t[a]) <  self:Order(t[b]) end  ) do
     
       local DetectedItem = DetectedItem -- Functional.Detection#DETECTION_BASE.DetectedItem
       local DetectedSet = DetectedItem.Set -- Core.Set#SET_UNIT
@@ -3790,62 +3821,10 @@ do -- AI_A2A_DISPATCHER
           self:GCI( DetectedItem, DefendersMissing, Friendlies )
         end
       end
-
-      if self.TacticalDisplay then      
-        -- Show tactical situation
-        Report:Add( string.format( "\n- Target %s (%s): (#%d) %s" , DetectedItem.ItemID, DetectedItem.Index, DetectedItem.Set:Count(), DetectedItem.Set:GetObjectNames() ) )
-        for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
-          local Defender = Defender -- Wrapper.Group#GROUP
-           if DefenderTask.Target and DefenderTask.Target.Index == DetectedItem.Index then
-             if Defender and Defender:IsAlive() then
-               DefenderGroupCount = DefenderGroupCount + 1
-               local Fuel = Defender:GetFuelMin() * 100
-               local Damage = Defender:GetLife() / Defender:GetLife0() * 100
-               Report:Add( string.format( " - %s*%d/%d (%s - %s): (#%d) F: %3d, D:%3d - %s", 
-                                          Defender:GetName(),
-                                          Defender:GetSize(),
-                                          Defender:GetInitialSize(),
-                                          DefenderTask.Type, 
-                                          DefenderTask.Fsm:GetState(), 
-                                          Defender:GetSize(), 
-                                          Fuel,
-                                          Damage, 
-                                          Defender:HasTask() == true and "Executing" or "Idle" ) )
-             end
-           end
-        end
-      end
     end
 
     if self.TacticalDisplay then
-      Report:Add( "\n- No Targets:")
-      local TaskCount = 0
-      for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
-        TaskCount = TaskCount + 1
-        local Defender = Defender -- Wrapper.Group#GROUP
-        if not DefenderTask.Target then
-          if Defender:IsAlive() then
-            local DefenderHasTask = Defender:HasTask()
-            local Fuel = Defender:GetFuelMin() * 100
-            local Damage = Defender:GetLife() / Defender:GetLife0() * 100
-            DefenderGroupCount = DefenderGroupCount + 1
-            Report:Add( string.format( " - %s*%d/%d (%s - %s): (#%d) F: %3d, D:%3d - %s", 
-                                       Defender:GetName(), 
-                                       Defender:GetSize(),
-                                       Defender:GetInitialSize(),
-                                       DefenderTask.Type, 
-                                       DefenderTask.Fsm:GetState(), 
-                                       Defender:GetSize(),
-                                       Fuel,
-                                       Damage, 
-                                       Defender:HasTask() == true and "Executing" or "Idle" ) )
-          end
-        end
-      end
-      Report:Add( string.format( "\n- %d Tasks - %d Defender Groups", TaskCount, DefenderGroupCount ) )
-  
-      self:F( Report:Text( "\n" ) )
-      trigger.action.outText( Report:Text( "\n" ), 25 )
+      self:ShowTacticalDisplay( Detection )
     end
     
     return true

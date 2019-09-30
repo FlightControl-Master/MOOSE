@@ -214,6 +214,7 @@ function SCHEDULER:New( SchedulerObject, SchedulerFunction, SchedulerArguments, 
   local ScheduleID = nil
   
   self.MasterObject = SchedulerObject
+  self.ShowTrace = true
   
   if SchedulerFunction then
     ScheduleID = self:Schedule( SchedulerObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop, 4 )

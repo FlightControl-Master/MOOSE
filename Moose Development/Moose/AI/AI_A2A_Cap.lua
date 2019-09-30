@@ -125,6 +125,7 @@ function AI_A2A_CAP:New2( AICap, EngageMinSpeed, EngageMaxSpeed, EngageFloorAlti
   self:SetDamageThreshold( 0.4 )
   self:SetDisengageRadius( 70000 )
   
+
   return self
 end
 
@@ -203,6 +204,7 @@ function AI_A2A_CAP:CreateAttackUnitTasks( AttackSetUnit, DefenderGroup, EngageA
     if AttackUnit:IsAlive() and AttackUnit:IsAir() then
       -- TODO: Add coalition check? Only attack units of if AttackUnit:GetCoalition()~=AICap:GetCoalition()
       -- Maybe the detected set also contains 
+      self:T( { "Attacking Task:", AttackUnit:GetName(), AttackUnit:IsAlive(), AttackUnit:IsAir() } )
       AttackUnitTasks[#AttackUnitTasks+1] = DefenderGroup:TaskAttackUnit( AttackUnit )
     end
   end
