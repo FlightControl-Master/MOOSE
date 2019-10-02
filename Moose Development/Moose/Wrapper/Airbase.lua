@@ -13,6 +13,9 @@
 
 
 --- @type AIRBASE
+-- @field #string ClassName Name of the class, i.e. "AIRBASE".
+-- @field #table CategoryName Names of airbase categories.
+-- @field #number activerwyno Active runway number (forced).
 -- @extends Wrapper.Positionable#POSITIONABLE
 
 --- Wrapper class to handle the DCS Airbase objects:
@@ -54,6 +57,7 @@ AIRBASE = {
     [Airbase.Category.HELIPAD]    = "Helipad",
     [Airbase.Category.SHIP]       = "Ship",
     },
+  activerwyno=nil,
   }
 
 --- Enumeration to identify the airbases in the Caucasus region.
@@ -324,6 +328,14 @@ AIRBASE.TerminalType = {
   FighterAircraft=244,
 }
 
+--- Runway data.
+-- @type AIRBASE.Runway
+-- @field #number heading Heading of the runway in degrees.
+-- @field #string idx Runway ID: heading 070° ==> idx="07".
+-- @field #number length Length of runway in meters.
+-- @field Core.Point#COORDINATE position Position of runway start.
+-- @field Core.Point#COORDINATE endpoint End point of runway.
+
 -- Registration.
   
 --- Create a new AIRBASE from DCSAirbase.
@@ -403,13 +415,17 @@ end
 
 --- Get all airbases of the current map. This includes ships and FARPS.
 -- @param DCS#Coalition coalition (Optional) Return only airbases belonging to the specified coalition. By default, all airbases of the map are returned.
+-- @param #number category (Optional) Return only airbases of a certain category, e.g. Airbase.Category.FARP
 -- @return #table Table containing all airbase objects of the current map.
-function AIRBASE.GetAllAirbases(coalition)
+function AIRBASE.GetAllAirbases(coalition, category)
   
   local airbases={}
-  for _,airbase in pairs(_DATABASE.AIRBASES) do
+  for _,_airbase in pairs(_DATABASE.AIRBASES) do
+    local airbase=_airbase --#AIRBASE
     if (coalition~=nil and airbase:GetCoalition()==coalition) or coalition==nil then
-      table.insert(airbases, airbase)
+      if category==nil or category==airbase:GetAirbaseCategory() then
+        table.insert(airbases, airbase)
+      end
     end
   end
   
@@ -530,7 +546,7 @@ function AIRBASE:GetParkingSpotsCoordinates(termtype)
   
   -- Put coordinates of free spots into table.
   local spots={}
-  for _,parkingspot in pairs(parkingdata) do
+  for _,parkingspot in ipairs(parkingdata) do
   
     -- Coordinates on runway are not returned unless explicitly requested.
     if AIRBASE._CheckTerminalType(parkingspot.Term_Type, termtype) then
@@ -990,3 +1006,180 @@ function AIRBASE._CheckTerminalType(Term_Type, termtype)
   
   return match
 end
+
+--- Get runways data. Only for airdromes!
+-- @param #AIRBASE self
+-- @param #number magvar (Optional) Magnetic variation in degrees.
+-- @return #table Runway data.
+function AIRBASE:GetRunwayData(magvar)
+
+  -- Runway table.
+  local runways={}
+  
+  if self:GetAirbaseCategory()~=Airbase.Category.AIRDROME then
+    return {}
+  end
+
+  -- Get spawn points on runway.
+  local runwaycoords=self:GetParkingSpotsCoordinates(AIRBASE.TerminalType.Runway)
+  
+  -- Magnetic declination.
+  magvar=magvar or UTILS.GetMagneticDeclination()
+  
+  local N=#runwaycoords
+  local dN=2
+  local ex=false
+  
+  local name=self:GetName()
+  if name==AIRBASE.Nevada.Jean_Airport or 
+     name==AIRBASE.Nevada.Creech_AFB   or 
+     name==AIRBASE.PersianGulf.Abu_Dhabi_International_Airport or
+     name==AIRBASE.PersianGulf.Dubai_Intl or
+     name==AIRBASE.PersianGulf.Shiraz_International_Airport or
+     name==AIRBASE.PersianGulf.Kish_International_Airport then
+     
+    N=#runwaycoords/2
+    dN=1
+    ex=true
+  end
+  
+  
+  for i=1,N,dN do
+  
+    local j=i+1
+    if ex then
+      --j=N+i
+      j=#runwaycoords-i+1
+    end
+    
+    -- Coordinates of the two runway points.
+    local c1=runwaycoords[i] --Core.Point#COORDINATES
+    local c2=runwaycoords[j] --Core.Point#COORDINATES
+   
+    -- Heading of runway.
+    local hdg=c1:HeadingTo(c2)
+    
+    -- Runway ID: heading=070° ==> idx="07"
+    local idx=string.format("%02d", UTILS.Round((hdg-magvar)/10, 0))
+        
+    -- Runway table.
+    local runway={} --#AIRBASE.Runway
+    runway.heading=hdg
+    runway.idx=idx
+    runway.length=c1:Get2DDistance(c2)    
+    runway.position=c1
+    runway.endpoint=c2
+    
+    -- Debug info.
+    self:T(string.format("Airbase %s: Adding runway id=%s, heading=%03d, length=%d m", self:GetName(), runway.idx, runway.heading, runway.length))
+    
+    -- Debug mark
+    runway.position:MarkToAll(string.format("Runway %s Heading=%03d", runway.idx, runway.heading))
+    
+    -- Add runway.
+    table.insert(runways, runway)
+    
+  end
+  
+  -- Get inverse runways
+  local inverse={}
+  for _,_runway in pairs(runways) do
+    local r=_runway --#AIRBASE.Runway
+    
+    local runway={} --#AIRBASE.Runway    
+    runway.heading=r.heading-180
+    if runway.heading<0 then
+      runway.heading=runway.heading+360
+    end    
+    runway.idx=string.format("%02d", math.max(0, UTILS.Round((runway.heading-magvar)/10, 0)))
+    runway.length=r.length
+    runway.position=r.endpoint
+    runway.endpoint=r.position
+    
+    -- Debug info.
+    self:T(string.format("Airbase %s: Adding runway id=%s, heading=%03d, length=%d m", self:GetName(), runway.idx, runway.heading, runway.length))
+    
+    -- Debug mark
+    runway.position:MarkToAll(string.format("Runway %s Heading=%03d", runway.idx, runway.heading))    
+    
+    -- Add runway.
+    table.insert(inverse, runway)    
+  end
+  
+  for _,runway in pairs(inverse) do
+    -- Add runway.
+    table.insert(runways, runway)        
+  end
+  
+  return runways
+end
+
+--- Set the active runway in case it cannot be determined by the wind direction.
+-- @param #AIRBASE self
+-- @param #number iactive Number of the active runway in the runway data table.
+function AIRBASE:SetActiveRunway(iactive)
+  self.activerwyno=iactive
+end
+
+--- Get the active runway based on current wind direction.
+-- @param #AIRBASE self
+-- @param #number magvar (Optional) Magnetic variation in degrees.
+-- @return #AIRBASE.Runway Active runway data table.
+function AIRBASE:GetActiveRunway(magvar)
+
+  -- Get runways data (initialize if necessary).
+  local runways=self:GetRunwayData(magvar)
+
+  -- Return user forced active runway if it was set.
+  if self.activerwyno then
+    return runways[self.activerwyno]
+  end
+
+  -- Get wind vector.
+  local Vwind=self:GetCoordinate():GetWindWithTurbulenceVec3()
+  local norm=UTILS.VecNorm(Vwind)
+  
+  -- Active runway number.
+  local iact=1
+  
+  -- Check if wind is blowing (norm>0).
+  if norm>0 then
+  
+    -- Normalize wind (not necessary).
+    Vwind.x=Vwind.x/norm
+    Vwind.y=0
+    Vwind.z=Vwind.z/norm
+    
+    -- Loop over runways.
+    local dotmin=nil
+    for i,_runway in pairs(runways) do
+      local runway=_runway --#AIRBASE.Runway
+      
+      -- Angle in rad.
+      local alpha=math.rad(runway.heading)
+      
+      -- Runway vector.
+      local Vrunway={x=math.cos(alpha), y=0, z=math.sin(alpha)}
+      
+      -- Dot product: parallel component of the two vectors.
+      local dot=UTILS.VecDot(Vwind, Vrunway)
+      
+      -- Debug.
+      env.info(string.format("runway=%03d° dot=%.3f", runway.heading, dot))
+      
+      -- New min?
+      if dotmin==nil or dot<dotmin then
+        dotmin=dot
+        iact=i
+      end
+      
+    end
+  else
+    self:E("WARNING: Norm of wind is zero! Cannot determine active runway based on wind direction.")
+  end
+  
+  return runways[iact]
+end
+
+
+
