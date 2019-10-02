@@ -562,7 +562,7 @@ do -- COORDINATE
   
   --- Return the height of the land at the coordinate.
   -- @param #COORDINATE self
-  -- @return #number
+  -- @return #number Land height (ASL) in meters.
   function COORDINATE:GetLandHeight()
     local Vec2 = { x = self.x, y = self.z }
     return land.getHeight( Vec2 )
@@ -1100,10 +1100,8 @@ do -- COORDINATE
       elseif AirbaseCategory == Airbase.Category.AIRDROME then
         RoutePoint.airdromeId = AirbaseID
       else
-        self:T("ERROR: Unknown airbase category in COORDINATE:WaypointAir()!")
+        self:E("ERROR: Unknown airbase category in COORDINATE:WaypointAir()!")
       end
-      
-      --self:MarkToAll(string.format("Landing waypoint at airbase %s, ID=%d, Category=%d", airbase:GetName(), AirbaseID, AirbaseCategory  ))
     end
     
     -- Time in minutes to stay at the airbase before resuming route. 
@@ -1270,17 +1268,23 @@ do -- COORDINATE
     -- Loop over all airbases.
     for _,_airbase in pairs(airbases) do
       local airbase=_airbase --Wrapper.Airbase#AIRBASE
-      local category=airbase:GetDesc().category
-      if Category and Category==category or Category==nil then
-        local dist=self:Get2DDistance(airbase:GetCoordinate())
-        if closest==nil then
-          distmin=dist
-          closest=airbase
-        else
-          if dist<distmin then
+      if airbase then
+        local category=airbase:GetCategory()
+        if Category and Category==category or Category==nil then
+
+          -- Distance to airbase.         
+          local dist=self:Get2DDistance(airbase:GetCoordinate())
+          
+          if closest==nil then
             distmin=dist
             closest=airbase
-          end 
+          else
+            if dist<distmin then
+              distmin=dist
+              closest=airbase
+            end 
+          end
+          
         end
       end
     end
@@ -1296,6 +1300,7 @@ do -- COORDINATE
   -- @return Core.Point#COORDINATE Coordinate of the nearest parking spot.
   -- @return #number Terminal ID.
   -- @return #number Distance to closest parking spot in meters.
+  -- @return Wrapper.Airbase#AIRBASE#ParkingSpot Parking spot table.
   function COORDINATE:GetClosestParkingSpot(airbase, terminaltype, free)
     
     -- Get airbase table.
@@ -1310,6 +1315,7 @@ do -- COORDINATE
     local _closest=nil --Core.Point#COORDINATE
     local _termID=nil
     local _distmin=nil
+    local spot=nil --Wrapper.Airbase#AIRBASE.ParkingSpot
 
     -- Loop over all airbases.
     for _,_airbase in pairs(airbases) do
@@ -1329,11 +1335,13 @@ do -- COORDINATE
             _closest=_coord
             _distmin=_dist
             _termID=_spot.TerminalID
+            spot=_spot
           else    
             if _dist<_distmin then
               _distmin=_dist
               _closest=_coord
               _termID=_spot.TerminalID
+              spot=_spot
             end
           end
                           
@@ -1341,7 +1349,7 @@ do -- COORDINATE
       end
     end
    
-    return _closest, _termID, _distmin
+    return _closest, _termID, _distmin, spot
   end
 
   --- Gets the nearest free parking spot.
@@ -1943,7 +1951,7 @@ do -- COORDINATE
 
     local LL_Accuracy = Settings and Settings.LL_Accuracy or _SETTINGS.LL_Accuracy
     local lat, lon = coord.LOtoLL( self:GetVec3() )
-    return "LL DMS, " .. UTILS.tostringLL( lat, lon, LL_Accuracy, true )
+    return "LL DMS " .. UTILS.tostringLL( lat, lon, LL_Accuracy, true )
   end
 
   --- Provides a Lat Lon string in Degree Decimal Minute format.
@@ -1954,7 +1962,7 @@ do -- COORDINATE
 
     local LL_Accuracy = Settings and Settings.LL_Accuracy or _SETTINGS.LL_Accuracy
     local lat, lon = coord.LOtoLL( self:GetVec3() )
-    return "LL DDM, " .. UTILS.tostringLL( lat, lon, LL_Accuracy, false )
+    return "LL DDM " .. UTILS.tostringLL( lat, lon, LL_Accuracy, false )
   end
 
   --- Provides a MGRS string
@@ -1966,7 +1974,7 @@ do -- COORDINATE
     local MGRS_Accuracy = Settings and Settings.MGRS_Accuracy or _SETTINGS.MGRS_Accuracy
     local lat, lon = coord.LOtoLL( self:GetVec3() )
     local MGRS = coord.LLtoMGRS( lat, lon )
-    return "MGRS, " .. UTILS.tostringMGRS( MGRS, MGRS_Accuracy )
+    return "MGRS " .. UTILS.tostringMGRS( MGRS, MGRS_Accuracy )
   end
 
   --- Provides a coordinate string of the point, based on a coordinate format system:
