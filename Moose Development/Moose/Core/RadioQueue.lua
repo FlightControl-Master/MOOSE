@@ -51,9 +51,12 @@ RADIOQUEUE = {
 -- @field #string filename Name of the file to be transmitted.
 -- @field #string path Path in miz file where the file is located.
 -- @field #number duration Duration in seconds.
+-- @field #string subtitle Subtitle of the transmission.
+-- @field #number subduration Duration of the subtitle being displayed.
 -- @field #number Tstarted Mission time (abs) in seconds when the transmission started.
 -- @field #boolean isplaying If true, transmission is currently playing.
 -- @field #number Tplay Mission time (abs) in seconds when the transmission should be played.
+-- @field #number interval Interval in seconds before next transmission.
 
 
 --- Create a new RADIOQUEUE object for a given radio frequency/modulation.
@@ -97,7 +100,7 @@ function RADIOQUEUE:Start(delay, dt)
   
   dt=dt or 0.01
   
-  self:I(self.lid..string.format("Starting RADIOQUEUE in %.1f seconds with interval dt=%.3f seconds.", delay, dt))
+  self:I(self.lid..string.format("Starting RADIOQUEUE on Frequency %.2f MHz [modulation=%d] in %.1f seconds (dt=%.3f sec)", self.frequency/1000000, self.modulation, delay, dt))
 
   self.RQid=self.scheduler:Schedule(self, self._CheckRadioQueue, {}, delay, dt)
   
@@ -138,13 +141,17 @@ end
 -- @param #string filename The name of the sound file.
 -- @param #number duration The duration of the sound file in seconds.
 -- @param #string path The directory within the miz file where the sound is located. Default "l10n/DEFAULT/".
+-- @param #string subtitle Subtitle of the transmission.
+-- @param #number subduration Duration [sec] of the subtitle being displayed. Default 5 sec.
 -- @return #RADIOQUEUE self The RADIOQUEUE object.
-function RADIOQUEUE:SetDigit(digit, filename, duration, path)
+function RADIOQUEUE:SetDigit(digit, filename, duration, path, subtitle, subduration)
 
   local transmission={} --#RADIOQUEUE.Transmission
   transmission.filename=filename
   transmission.duration=duration
   transmission.path=path or "l10n/DEFAULT/"
+  transmission.subtitle=nil
+  transmission.subduration=nil
   
   -- Convert digit to string in case it is given as a number.
   if type(digit)=="number" then
@@ -170,6 +177,8 @@ function RADIOQUEUE:AddTransmission(transmission)
 
   -- Add to queue.
   table.insert(self.queue, transmission)
+  
+  --TODO: Start scheduler.
 
   return self
 end
@@ -181,8 +190,10 @@ end
 -- @param #number path Directory path inside the miz file where the sound file is located. Default "l10n/DEFAULT/".
 -- @param #number tstart Start time (abs) seconds. Default now.
 -- @param #number interval Interval in seconds after the last transmission finished.
+-- @param #string subtitle Subtitle of the transmission.
+-- @param #number subduration Duration [sec] of the subtitle being displayed. Default 5 sec.
 -- @return #RADIOQUEUE self The RADIOQUEUE object.
-function RADIOQUEUE:NewTransmission(filename, duration, path, tstart, interval)
+function RADIOQUEUE:NewTransmission(filename, duration, path, tstart, interval, subtitle, subduration)
 
   -- Sanity checks.
   if not filename then
@@ -209,6 +220,13 @@ function RADIOQUEUE:NewTransmission(filename, duration, path, tstart, interval)
   transmission.duration=duration
   transmission.path=path or "l10n/DEFAULT/"
   transmission.Tplay=tstart or timer.getAbsTime()
+  transmission.subtitle=subtitle
+  transmission.interval=interval or 0
+  if transmission.subtitle then
+    transmission.subduration=subduration or 5
+  else
+    transmission.subduration=nil
+  end
   
   -- Add transmission to queue.  
   self:AddTransmission(transmission)
@@ -275,9 +293,6 @@ function RADIOQUEUE:Broadcast(transmission)
   -- Construct file name.
   local filename=string.format("%s%s", transmission.path, transmission.filename)
   
-  -- Create subtitle for transmission.
-  --local subtitle=self:_RadioSubtitle(radio, call, loud)
-  
   if sender then
     
     -- Broadcasting from aircraft. Only players tuned in to the right frequency will see the message.
@@ -296,7 +311,7 @@ function RADIOQUEUE:Broadcast(transmission)
       id = "TransmitMessage",
       params = {
         file=filename,
-        duration=transmission.subduration or 5,
+        duration=transmission.subduration,
         subtitle=transmission.subtitle or "",
         loop=false,
       }}
@@ -310,7 +325,7 @@ function RADIOQUEUE:Broadcast(transmission)
   else
     
     -- Broadcasting from carrier. No subtitle possible. Need to send messages to players.
-    self:T(self.lid..string.format("Broadcasting from carrier via trigger.action.radioTransmission()."))
+    self:T(self.lid..string.format("Broadcasting via trigger.action.radioTransmission()."))
   
     -- Position from where to transmit.
     local vec3=nil
@@ -330,8 +345,8 @@ function RADIOQUEUE:Broadcast(transmission)
     
     -- Transmit via trigger.
     if vec3 then
-      self:E("Sending")
-      self:E( { filename = filename, vec3 = vec3, modulation = self.modulation, frequency = self.frequency, power = self.power } )
+      self:T("Sending")
+      self:T( { filename = filename, vec3 = vec3, modulation = self.modulation, frequency = self.frequency, power = self.power } )
       trigger.action.radioTransmission(filename, vec3, self.modulation, false, self.frequency, self.power)
     end
 
@@ -344,6 +359,7 @@ function RADIOQUEUE:_CheckRadioQueue()
 
   -- Check if queue is empty.
   if #self.queue==0 then
+    --TODO: stop scheduler.
     return
   end
 

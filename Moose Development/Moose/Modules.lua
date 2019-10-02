@@ -68,6 +68,7 @@ __Moose.Include( 'Scripts/Moose/Functional/Fox.lua' )
 __Moose.Include( 'Scripts/Moose/Ops/Airboss.lua' )
 __Moose.Include( 'Scripts/Moose/Ops/RecoveryTanker.lua' )
 __Moose.Include( 'Scripts/Moose/Ops/RescueHelo.lua' )
+__Moose.Include( 'Scripts/Moose/Ops/ATIS.lua' )
 
 __Moose.Include( 'Scripts/Moose/AI/AI_Balancer.lua' )
 __Moose.Include( 'Scripts/Moose/AI/AI_Air.lua' )

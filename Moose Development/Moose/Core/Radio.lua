@@ -420,6 +420,7 @@ end
 BEACON = {
   ClassName = "BEACON",
   Positionable = nil,
+  name=nil,
 }
 
 --- Beacon types supported by DCS. 
@@ -496,6 +497,8 @@ function BEACON:New(Positionable)
   -- Set positionable.
   if Positionable:GetPointVec2() then -- It's stupid, but the only way I found to make sure positionable is valid
     self.Positionable = Positionable
+    self.name=Positionable:GetName()
+    self:I(string.format("New BEACON %s", tostring(self.name)))
     return self
   end
   
@@ -550,7 +553,7 @@ function BEACON:ActivateTACAN(Channel, Mode, Message, Bearing, Duration)
   local UnitID=self.Positionable:GetID()
   
   -- Debug.
-  self:T({"TACAN BEACON started!"})
+  self:I({string.format("BEACON Activating TACAN %s: Channel=%d%s, Morse=%s, Bearing=%s, Duration=%s!", tostring(self.name), Channel, Mode, Message, tostring(Bearing), tostring(Duration))})
     
   -- Start beacon.
   self.Positionable:CommandActivateBeacon(Type, System, Frequency, UnitID, Channel, Mode, AA, Message, Bearing)

@@ -432,12 +432,13 @@ UTILS.tostringLL = function( lat, lon, acc, DMS)
     if acc <= 0 then  -- no decimal place.
       secFrmtStr = '%02d'
     else
-      local width = 3 + acc  -- 01.310 - that's a width of 6, for example.
+      local width = 3 + acc  -- 01.310 - that's a width of 6, for example. Acc is limited to 2 for DMS!
       secFrmtStr = '%0' .. width .. '.' .. acc .. 'f'
     end
 
-    return string.format('%03d', latDeg) .. ' ' .. string.format('%02d', latMin) .. '\' ' .. string.format(secFrmtStr, latSec) .. '"' .. latHemi .. '   '
-           .. string.format('%03d', lonDeg) .. ' ' .. string.format('%02d', lonMin) .. '\' ' .. string.format(secFrmtStr, lonSec) .. '"' .. lonHemi
+    -- 024� 23' 12"N or 024� 23' 12.03"N
+    return string.format('%03d째', latDeg) .. ' ' .. string.format('%02d', latMin) .. '\' ' .. string.format(secFrmtStr, latSec) .. '"' .. latHemi .. '   '
+        .. string.format('%03d째', lonDeg) .. ' ' .. string.format('%02d', lonMin) .. '\' ' .. string.format(secFrmtStr, lonSec) .. '"' .. lonHemi
 
   else  -- degrees, decimal minutes.
     latMin = UTILS.Round(latMin, acc)
@@ -461,8 +462,9 @@ UTILS.tostringLL = function( lat, lon, acc, DMS)
       minFrmtStr = '%0' .. width .. '.' .. acc .. 'f'
     end
 
-    return string.format('%03d', latDeg) .. ' ' .. string.format(minFrmtStr, latMin) .. '\'' .. latHemi .. '   '
-     .. string.format('%03d', lonDeg) .. ' ' .. string.format(minFrmtStr, lonMin) .. '\'' .. lonHemi
+    -- 024 23'N or 024 23.123'N
+    return string.format('%03d째', latDeg) .. ' ' .. string.format(minFrmtStr, latMin) .. '\'' .. latHemi .. '   '
+        .. string.format('%03d째', lonDeg) .. ' ' .. string.format(minFrmtStr, lonMin) .. '\'' .. lonHemi
 
   end
 end
@@ -657,8 +659,9 @@ end
 
 --- Convert time in seconds to hours, minutes and seconds.
 -- @param #number seconds Time in seconds, e.g. from timer.getAbsTime() function.
+-- @param #boolean short (Optional) If true, use short output, i.e. (HH:)MM:SS without day.
 -- @return #string Time in format Hours:Minutes:Seconds+Days (HH:MM:SS+D).
-function UTILS.SecondsToClock(seconds)
+function UTILS.SecondsToClock(seconds, short)
   
   -- Nil check.
   if seconds==nil then
@@ -678,7 +681,15 @@ function UTILS.SecondsToClock(seconds)
     local mins  = string.format("%02.f", math.floor(_seconds/60 - (hours*60)))
     local secs  = string.format("%02.f", math.floor(_seconds - hours*3600 - mins *60))
     local days  = string.format("%d", seconds/(60*60*24))
-    return hours..":"..mins..":"..secs.."+"..days
+    local clock=hours..":"..mins..":"..secs.."+"..days
+    if short then
+      if hours=="00" then
+        clock=mins..":"..secs
+      else
+        clock=hours..":"..mins..":"..secs
+      end
+    end
+    return clock
   end
 end
 
@@ -982,4 +993,17 @@ function UTILS.FileExists(file)
   else
     return nil
   end  
+end
+
+--- Checks the current memory usage collectgarbage("count"). Info is printed to the DCS log file. Time stamp is the current mission runtime.
+-- @param #boolean output If true, print to DCS log file. 
+-- @return #number Memory usage in kByte. 
+function UTILS.CheckMemory(output)
+  local time=timer.getTime()
+  local clock=UTILS.SecondsToClock(time)
+  local mem=collectgarbage("count")
+  if output then
+    env.info(string.format("T=%s  Memory usage %d kByte = %.2f MByte", clock, mem, mem/1024))
+  end
+  return mem
 end
