@@ -296,7 +296,7 @@ function RADIOQUEUE:Broadcast(transmission)
   if sender then
     
     -- Broadcasting from aircraft. Only players tuned in to the right frequency will see the message.
-    self:I(self.lid..string.format("Broadcasting from aircraft %s", sender:GetName()))
+    self:T(self.lid..string.format("Broadcasting from aircraft %s", sender:GetName()))
     
     -- Command to set the Frequency for the transmission.
     local commandFrequency={
@@ -325,7 +325,7 @@ function RADIOQUEUE:Broadcast(transmission)
   else
     
     -- Broadcasting from carrier. No subtitle possible. Need to send messages to players.
-    self:I(self.lid..string.format("Broadcasting via trigger.action.radioTransmission()."))
+    self:T(self.lid..string.format("Broadcasting via trigger.action.radioTransmission()."))
   
     -- Position from where to transmit.
     local vec3=nil
