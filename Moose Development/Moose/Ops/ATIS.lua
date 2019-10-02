@@ -113,8 +113,10 @@
 -- 
 -- ## Active Runway
 -- 
--- By default, the currently active runway is determined automatically by analysing the wind direction. However, there are special cases, where this does not yield the correct result.
--- Also, there are airports with more than one runway facing in the same direction (usually denoted left and right). In this case, there is obviously no *unique* result depending on the wind vector.
+-- By default, the currently active runway is determined automatically by analysing the wind direction. Therefore, you should obviously set the wind speed to be greater zero in your mission.
+-- 
+-- Note however, there are a few special cases, where automatic detection does not yield the correct or desired result.
+-- For example, there are airports with more than one runway facing in the same direction (usually denoted left and right). In this case, there is obviously no *unique* result depending on the wind vector.
 -- 
 -- If the automatic runway detection fails, the active runway can be specified manually in the script via the @{#ATIS.SetActiveRunway}(*runway*) function.
 -- The parameter *runway* is a string which can be used to specify the runway heading and, if applicable, whether the left or right runway is in use.

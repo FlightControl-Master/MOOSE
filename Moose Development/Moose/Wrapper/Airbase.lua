@@ -1010,8 +1010,9 @@ end
 --- Get runways data. Only for airdromes!
 -- @param #AIRBASE self
 -- @param #number magvar (Optional) Magnetic variation in degrees.
+-- @param #boolean mark (Optional) Place markers with runway data on F10 map.
 -- @return #table Runway data.
-function AIRBASE:GetRunwayData(magvar)
+function AIRBASE:GetRunwayData(magvar, mark)
 
   -- Runway table.
   local runways={}
@@ -1074,7 +1075,9 @@ function AIRBASE:GetRunwayData(magvar)
     self:T(string.format("Airbase %s: Adding runway id=%s, heading=%03d, length=%d m", self:GetName(), runway.idx, runway.heading, runway.length))
     
     -- Debug mark
-    runway.position:MarkToAll(string.format("Runway %s Heading=%03d", runway.idx, runway.heading))
+    if mark then
+      runway.position:MarkToAll(string.format("Runway %s: true heading=%03d, length=%d m", runway.idx, runway.heading, runway.length))
+    end
     
     -- Add runway.
     table.insert(runways, runway)
@@ -1100,14 +1103,16 @@ function AIRBASE:GetRunwayData(magvar)
     self:T(string.format("Airbase %s: Adding runway id=%s, heading=%03d, length=%d m", self:GetName(), runway.idx, runway.heading, runway.length))
     
     -- Debug mark
-    runway.position:MarkToAll(string.format("Runway %s Heading=%03d", runway.idx, runway.heading))    
-    
+    if mark then
+      runway.position:MarkToAll(string.format("Runway %s: true heading=%03d, length=%d m", runway.idx, runway.heading, runway.length))
+    end
+     
     -- Add runway.
     table.insert(inverse, runway)    
   end
   
+  -- Add inverse runway.
   for _,runway in pairs(inverse) do
-    -- Add runway.
     table.insert(runways, runway)        
   end
   
@@ -1165,7 +1170,7 @@ function AIRBASE:GetActiveRunway(magvar)
       local dot=UTILS.VecDot(Vwind, Vrunway)
       
       -- Debug.
-      env.info(string.format("runway=%03d° dot=%.3f", runway.heading, dot))
+      --env.info(string.format("runway=%03d° dot=%.3f", runway.heading, dot))
       
       -- New min?
       if dotmin==nil or dot<dotmin then
