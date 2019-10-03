@@ -227,26 +227,26 @@ ATIS.Alphabet = {
   [11] = "India",
   [12] = "Juliett",
   [13] = "Kilo",
-  [15] = "Lima",
-  [16] = "Mike",
-  [17] = "November",
-  [18] = "Oscar",
-  [19] = "Papa",
-  [20] = "Quebec",
-  [21] = "Romeo",
-  [22] = "Sierra",
-  [23] = "Tango",
-  [24] = "Uniform",
-  [25] = "Victor",
-  [26] = "Whiskey",
-  [27] = "Xray",
-  [28] = "Yankee",
-  [29] = "Zulu",
+  [14] = "Lima",
+  [15] = "Mike",
+  [16] = "November",
+  [17] = "Oscar",
+  [18] = "Papa",
+  [19] = "Quebec",
+  [20] = "Romeo",
+  [21] = "Sierra",
+  [22] = "Tango",
+  [23] = "Uniform",
+  [24] = "Victor",
+  [25] = "Whiskey",
+  [26] = "Xray",
+  [27] = "Yankee",
+  [28] = "Zulu",
 }
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version="0.3.0"
+ATIS.version="0.3.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -642,7 +642,11 @@ function ATIS:onafterBroadcast(From, Event, To)
   local NATO=ATIS.Alphabet[tonumber(zulu[1])+1]
 
   -- Debug.
-  self:T3({nato=NATO})
+  self:T3(string.format("clock=%s", tostring(clock)))
+  self:T3(string.format("zulu1=%s", tostring(zulu[1])))
+  self:T3(string.format("zulu2=%s", tostring(zulu[2])))
+  self:T3(string.format("ZULU =%s", tostring(ZULU)))
+  self:T3(string.format("NATO =%s", tostring(NATO)))
 
   -------------------
   --- Temperature ---
