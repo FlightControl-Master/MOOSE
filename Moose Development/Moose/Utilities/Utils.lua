@@ -872,6 +872,23 @@ function UTILS.VecHdg(a)
   return h
 end
 
+--- Calculate the difference between two "heading", i.e. angles in [0,360) deg.
+-- @param #number h1 Heading one.
+-- @param #number h2 Heading two.
+-- @return #number Heading difference in degrees.
+function UTILS.HdgDiff(h1, h2)
+
+  -- Angle in rad.
+  local alpha=math.rad(h1)
+  local beta=math.rad(h2)
+      
+  -- Runway vector.
+  local v1={x=math.cos(alpha), y=0, z=math.sin(alpha)}
+  local v2={x=math.cos(beta),  y=0, z=math.sin(beta)}
+  
+  return math.abs(UTILS.VecAngle(v1, v2))
+end
+
 
 --- Rotate 3D vector in the 2D (x,z) plane. y-component (usually altitude) unchanged. 
 -- @param DCS#Vec3 a Vector in 3D with x, y, z components.
