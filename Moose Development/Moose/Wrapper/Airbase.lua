@@ -1076,7 +1076,7 @@ function AIRBASE:GetRunwayData(magvar, mark)
 
     -- Debug mark
     if mark then
-      runway.position:MarkToAll(string.format("Runway %s: true heading=%03d, length=%d m", runway.idx, runway.heading, runway.length))
+      runway.position:MarkToAll(string.format("Runway %s: true heading=%03d (magvar=%d), length=%d m", runway.idx, runway.heading, magvar, runway.length))
     end
 
     -- Add runway.
@@ -1104,7 +1104,7 @@ function AIRBASE:GetRunwayData(magvar, mark)
 
     -- Debug mark
     if mark then
-      runway.position:MarkToAll(string.format("Runway %s: true heading=%03d, length=%d m", runway.idx, runway.heading, runway.length))
+      runway.position:MarkToAll(string.format("Runway %s: true heading=%03d (magvar=%d), length=%d m", runway.idx, runway.heading, magvar, runway.length))
     end
 
     -- Add runway.

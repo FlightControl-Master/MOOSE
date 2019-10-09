@@ -321,6 +321,8 @@ function RADIOQUEUE:Broadcast(transmission)
     
     -- Set command for radio transmission. 
     sender:SetCommand(commandTransmit)
+    
+    --MESSAGE:New(string.format("transmissing file %s duration=%.2f sec, subtitle=%s", filename, transmission.duration, transmission.subtitle or ""), 5, "RADIOQUEUE"):ToAll()
       
   else
     
@@ -347,6 +349,7 @@ function RADIOQUEUE:Broadcast(transmission)
     if vec3 then
       self:T("Sending")
       self:T( { filename = filename, vec3 = vec3, modulation = self.modulation, frequency = self.frequency, power = self.power } )
+      --MESSAGE:New(string.format("transmissing file %s duration=%.2f sec, subtitle=%s", filename, transmission.duration, transmission.subtitle or ""), 5, "RADIOQUEUE (trigger)"):ToAll()
       trigger.action.radioTransmission(filename, vec3, self.modulation, false, self.frequency, self.power)
     end
 
