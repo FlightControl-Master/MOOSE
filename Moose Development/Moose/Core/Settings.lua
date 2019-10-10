@@ -213,8 +213,8 @@
 SETTINGS = {
   ClassName = "SETTINGS",
   ShowPlayerMenu = true,
-  MenuShort      = true,
-  MenuStatic     = true,
+  MenuShort      = false,
+  MenuStatic     = false,
 }
 
 SETTINGS.__Enum = {}
@@ -252,8 +252,8 @@ do -- SETTINGS
       self:SetMessageTime( MESSAGE.Type.Overview, 60 )
       self:SetMessageTime( MESSAGE.Type.Update, 15 )
       self:SetEraModern()
-      self:SetMenutextShort(true)
-      self:SetMenuStatic(true)
+      --self:SetMenutextShort(true)
+      --self:SetMenuStatic(true)
       return self
     else
       local Settings = _DATABASE:GetPlayerSettings( PlayerName )
@@ -755,38 +755,38 @@ do -- SETTINGS
       ------
 
       local text="A2G Coordinate System"
-      if self.MenuShort then
+      if _SETTINGS.MenuShort then
         text="A2G Coordinates"
       end
       local A2GCoordinateMenu = MENU_GROUP:New( PlayerGroup, text, PlayerMenu )
 
-      if not self:IsA2G_LL_DMS() or self.MenuStatic then
+      if not self:IsA2G_LL_DMS() or _SETTINGS.MenuStatic then
         local text="Lat/Lon Degree Min Sec (LL DMS)"
-        if self.MenuShort then
+        if _SETTINGS.MenuShort then
           text="LL DMS"
         end
         MENU_GROUP_COMMAND:New( PlayerGroup, text, A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL DMS" )
       end
 
-      if not self:IsA2G_LL_DDM() or self.MenuStatic then
+      if not self:IsA2G_LL_DDM() or _SETTINGS.MenuStatic then
         local text="Lat/Lon Degree Dec Min (LL DDM)"
-        if self.MenuShort then
+        if _SETTINGS.MenuShort then
           text="LL DDM"
         end
         MENU_GROUP_COMMAND:New( PlayerGroup, text, A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL DDM" )
       end
 
-      if not self:IsA2G_BR() or self.MenuStatic then
+      if not self:IsA2G_BR() or _SETTINGS.MenuStatic then
         local text="Bearing, Range (BR)"
-        if self.MenuShort then
+        if _SETTINGS.MenuShort then
           text="BR"
         end
         MENU_GROUP_COMMAND:New( PlayerGroup, text, A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "BR" )
       end
 
-      if not self:IsA2G_MGRS() or self.MenuStatic then
+      if not self:IsA2G_MGRS() or _SETTINGS.MenuStatic then
         local text="Military Grid (MGRS)"
-        if self.MenuShort then
+        if _SETTINGS.MenuShort then
           text="MGRS"
         end
         MENU_GROUP_COMMAND:New( PlayerGroup, text, A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "MGRS" )
@@ -797,13 +797,13 @@ do -- SETTINGS
       ------
 
       local text="A2A Coordinate System"
-      if self.MenuShort then
+      if _SETTINGS.MenuShort then
         text="A2A Coordinates"
       end
       local A2ACoordinateMenu = MENU_GROUP:New( PlayerGroup, text, PlayerMenu )
 
 
-      if not self:IsA2A_LL_DMS() or self.MenuStatic then
+      if not self:IsA2A_LL_DMS() or _SETTINGS.MenuStatic then
         local text="Lat/Lon Degree Min Sec (LL DMS)"
         if self.MenuShort then
           text="LL DMS"
@@ -811,33 +811,33 @@ do -- SETTINGS
         MENU_GROUP_COMMAND:New( PlayerGroup, text, A2ACoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL DMS" )
       end
 
-      if not self:IsA2A_LL_DDM() or self.MenuStatic then
+      if not self:IsA2A_LL_DDM() or _SETTINGS.MenuStatic then
         local text="Lat/Lon Degree Dec Min (LL DDM)"
-        if self.MenuShort then
+        if _SETTINGS.MenuShort then
           text="LL DDM"
         end
         MENU_GROUP_COMMAND:New( PlayerGroup, text, A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL DDM" )
       end
 
-      if not self:IsA2A_BULLS() or self.MenuStatic then
+      if not self:IsA2A_BULLS() or _SETTINGS.MenuStatic then
         local text="Bullseye (BULLS)"
-        if self.MenuShort then
+        if _SETTINGS.MenuShort then
           text="BULLS"
         end
         MENU_GROUP_COMMAND:New( PlayerGroup, text, A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "BULLS" )
       end
 
-      if not self:IsA2A_BRAA() or self.MenuStatic then
+      if not self:IsA2A_BRAA() or _SETTINGS.MenuStatic then
         local text="Bearing Range Altitude Aspect (BRAA)"
-        if self.MenuShort then
+        if _SETTINGS.MenuShort then
           text="BRAA"
         end
         MENU_GROUP_COMMAND:New( PlayerGroup, text, A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "BRAA" )
       end
 
-      if not self:IsA2A_MGRS() or self.MenuStatic then
+      if not self:IsA2A_MGRS() or _SETTINGS.MenuStatic then
         local text="Military Grid (MGRS)"
-        if self.MenuShort then
+        if _SETTINGS.MenuShort then
           text="MGRS"
         end
         MENU_GROUP_COMMAND:New( PlayerGroup, text, A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "MGRS" )
@@ -848,22 +848,22 @@ do -- SETTINGS
       ---
 
       local text="Measures and Weights System"
-      if self.MenuShort then
+      if _SETTINGS.MenuShort then
         text="Unit System"
       end
       local MetricsMenu = MENU_GROUP:New( PlayerGroup, text, PlayerMenu )
 
-      if self:IsMetric() or self.MenuStatic then
+      if self:IsMetric() or _SETTINGS.MenuStatic then
         local text="Imperial (Miles,Feet)"
-        if self.MenuShort then
+        if _SETTINGS.MenuShort then
           text="Imperial"
         end
         MENU_GROUP_COMMAND:New( PlayerGroup, text, MetricsMenu, self.MenuGroupMWSystem, self, PlayerUnit, PlayerGroup, PlayerName, false )
       end
 
-      if self:IsImperial() or self.MenuStatic then
+      if self:IsImperial() or _SETTINGS.MenuStatic then
         local text="Metric (Kilometers,Meters)"
-        if self.MenuShort then
+        if _SETTINGS.MenuShort then
           text="Metric"
         end
         MENU_GROUP_COMMAND:New( PlayerGroup, text, MetricsMenu, self.MenuGroupMWSystem, self, PlayerUnit, PlayerGroup, PlayerName, true )
@@ -874,7 +874,7 @@ do -- SETTINGS
       ---
 
       local text="Messages and Reports"
-      if self.MenuShort then
+      if _SETTINGS.MenuShort then
         text="Messages & Reports"
       end
       local MessagesMenu = MENU_GROUP:New( PlayerGroup, text, PlayerMenu )
