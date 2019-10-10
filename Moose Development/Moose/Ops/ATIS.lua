@@ -14,20 +14,21 @@
 --    * Tower frequencies,
 --    * More than 180 voice overs,
 --    * Airbase names pronounced in locale accent (russian, US, french, arabic),
---    * Option to present information in imperial or metric units.
+--    * Option to present information in imperial or metric units,
+--    * Frequencies/channels of nav aids (ILS, VOR, NDB, TACAN, PRMG, RSBN).
 --
 -- ===
 --
 -- ## Youtube Videos:
 --
 --    * [ATIS v0.1 Caucasus - Batumi (WIP)](https://youtu.be/MdH9FmbNabo)
---    * [ATIS Airport Names Sound Check](https://youtu.be/qIE_OUQNAc0)
 --    * [ATIS v0.2 Nevada - Nellis AFB (WIP)](https://youtu.be/8CT_9AoPrTk)
 --    * [ATIS v0.3 Persion Gulf - Abu Dhabi/Dubai International](https://youtu.be/NjkKvPz6ovM)
+--    * [ATIS Airport Names Sound Check](https://youtu.be/qIE_OUQNAc0)
 --
 -- ===
 --
--- ## Missions: Example missions will be added later.
+-- ## Missions: Example missions can be found [here](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/OPS%20-%20ATIS)
 -- 
 -- ===
 -- 
@@ -66,6 +67,17 @@
 -- @field #boolean TDegF If true, give temperature in degrees Fahrenheit. Default is in degrees Celsius independent of chosen unit system. 
 -- @field #number zuludiff Time difference local vs. zulu in hours.
 -- @field #number magvar Magnetic declination/variation at the airport in degrees.
+-- @field #table ils Table of ILS frequencies (can be runway specific).
+-- @field #table ndbinner Table of inner NDB frequencies (can be runway specific).
+-- @field #table ndbouter Table of outer NDB frequencies (can be runway specific).
+-- @field #number tacan TACAN channel.
+-- @field #number vor VOR frequency.
+-- @field #number rsbn RSBN channel.
+-- @field #table prmg PRMG channels (can be runway specific).
+-- @field #boolean rwylength If true, give info on runway length.
+-- @field #table runwaymag Table of magnetic runway headings.
+-- @field #number runwaym2t Optional correction for magnetic to true runway heading conversion (and vice versa) in degrees.
+-- @field #boolean windtrue Report true (from) heading of wind. Default is magnetic.
 -- @extends Core.Fsm#FSM
 
 --- Be informed!
@@ -109,6 +121,8 @@
 --     
 -- With a unit set in the mission editor with name "Radio Relay Batumi".
 -- 
+-- **Note** that you should use a different relay unit for each ATIS!
+-- 
 -- By default, subtitles are displayed for 10 seconds. This can be changed using @{#ATIS.SetSubtitleDuration}(*duration*) with *duration* being the duration in seconds.
 -- 
 -- ## Active Runway
@@ -132,12 +146,75 @@
 --     atisAbuDhabi:SetActiveRunway("L")
 -- 
 -- The first two digits of the runway are determined by converting the *true* runway heading into its magnetic heading. The magnetic declination (or variation) is assumed to be constant on the given map.
--- The magnatic declinatin can also be specified for the specific airport using the @{#ATIS.SetMagneticDeclination}(*magvar*).
+-- An explicit correction factor can be set via @{#ATIS.SetRunwayCorrectionMagnetic2True}.
 -- 
 -- ## Tower Frequencies
 -- 
 -- The tower frequency (or frequencies) can also be included in the ATIS information. However, there is no way to get these automatically. Therefore, it is necessary to manually specify them in the script via the
 -- @{#ATIS.SetTowerFrequencies}(*frequencies*) function. The parameter *frequencies* can be a plain number if only one frequency is necessary or it can be a table of frequencies.
+-- 
+-- ## Nav Aids
+-- 
+-- Frequencies or channels of navigation aids can be specified by the user and are then provided as additional information. Unfortunately, it is **not possible** to aquire this information via the DCS API
+-- we have access to.
+-- 
+-- As they say, all road lead to Rome but (for me) the easiest way to obtain the available nav aids data of an airport, is to start a mission and click on an airport symbol.
+-- 
+-- For example, the *AIRDROME DATA* for **Batumi** reads:
+-- 
+--    * **TACAN** *16X* - set via @{#ATIS.SetTACAN}
+--    * **VOR** *N/A* - set via @{#ATIS.SetVOR}
+--    * **RSBN** *N/A* - set via @{#ATIS.SetRSBN}
+--    * **ATC** *260.000*, *131.000*, *40.400*, *4.250* - set via @{#ATIS.SetTowerFrequencies}
+--    * **Runways** *31* and *13* - automatic but can be set manually via @{#ATIS.SetRunwayHeadingsMagnetic}
+--    * **ILS** *110.30* for runway *13* - set via @{#ATIS.AddILS}
+--    * **PRMG** *N/A* - set via @{#ATIS.AddPRMG}
+--    * **OUTER NDB** *N/A* - set via @{#ATIS.AddNDBinner}
+--    * **INNER NDB** *N/A* - set via @{#ATIS.AddNDBinner}
+--    
+-- ![Banner Image](..\Presentations\ATIS\NavAid_Batumi.png)
+-- 
+-- And the *AIRDROME DATA* for **Kobuleti** reads:
+-- 
+--    * **TACAN** *67X* - set via @{#ATIS.SetTACAN}
+--    * **VOR** *N/A* - set via @{#ATIS.SetVOR}
+--    * **RSBN** *N/A* - set via @{#ATIS.SetRSBN}
+--    * **ATC** *262.000*, *133.000*, *40.800*, *4.350* - set via @{#ATIS.SetTowerFrequencies}
+--    * **Runways** *25* and *07* - automatic but can be set manually via @{#ATIS.SetRunwayHeadingsMagnetic}
+--    * **ILS** *111.50* for runway *07* - set via @{#ATIS.AddILS}
+--    * **PRMG** *N/A* - set via @{#ATIS.AddPRMG}
+--    * **OUTER NDB** *870.00* - set via @{#ATIS.AddNDBinner}
+--    * **INNER NDB** *490.00* - set via @{#ATIS.AddNDBinner}
+--    
+-- ![Banner Image](..\Presentations\ATIS\NavAid_Kobuleti.png)
+-- 
+-- ### TACAN
+-- 
+-- The TACtical Air Navigation system [(TACAN)](https://en.wikipedia.org/wiki/Tactical_air_navigation_system) channel can be set via the @{#ATIS.SetTACAN}(*channel*) function, where *channel* is the TACAN channel. Band is always assumed to be X-ray.
+-- 
+-- ### VOR
+-- 
+-- The Very high frequency Omni-directional Range [(VOR)](https://en.wikipedia.org/wiki/VHF_omnidirectional_range) frequency can be set via the @{#ATIS.SetVOR}(*frequency*) function, where *frequency* is the VOR frequency.
+-- 
+-- ### ILS
+-- 
+-- The Instrument Landing System [(ILS)](https://en.wikipedia.org/wiki/Instrument_landing_system) frequency can be set via the @{#ATIS.AddILS}(*frequency*, *runway*) function, where *frequency* is the ILS frequency and *runway* the two letter string of the corresponding runway, e.g. "31".
+-- If the parameter *runway* is omitted (nil) then the frequency is supposed to be valid for all runways of the airport.
+-- 
+-- ### NDB
+-- 
+-- Inner and outer Non-Directional (radio) Beacons [NDBs](https://en.wikipedia.org/wiki/Non-directional_beacon) can be set via the @{#ATIS.AddNDBinner}(*frequency*, *runway*) and @{#ATIS.AddNDBouter}(*frequency*, *runway*) functions, respectively.
+-- 
+-- In both cases, the parameter *frequency* is the NDB frequency and *runway* the two letter string of the corresponding runway, e.g. "31".
+-- If the parameter *runway* is omitted (nil) then the frequency is supposed to be valid for all runways of the airport.
+-- 
+-- ## RSBN
+-- 
+-- The RSBN channel can be set via the @{#ATIS.SetRSBN}(*channel*) function.
+-- 
+-- ## PRMG
+-- 
+-- The PRMG channel can be set via the @{#ATIS.AddPRMG}(*channel*, *runway*) function for each *runway*.
 -- 
 -- ## Unit System
 -- 
@@ -171,20 +248,25 @@
 --     atisBatumi:Start()
 -- 
 -- ## Nevada: Nellis AFB
--- 
---     -- ATIS Nellis AFB on 270.100 MHz AM.
---     atisNellis=ATIS:New(AIRBASE.Nevada.Nellis_AFB, 270.100)
+--
+--     -- ATIS Nellis AFB on 270.10 MHz AM.
+--     atisNellis=ATIS:New(AIRBASE.Nevada.Nellis_AFB, 270.1)
 --     atisNellis:SetRadioRelayUnitName("Radio Relay Nellis")
 --     atisNellis:SetActiveRunway("21L")
 --     atisNellis:SetTowerFrequencies({327.000, 132.550})
+--     atisNellis:SetTACAN(12)
+--     atisNellis:AddILS(109.1, "21")
 --     atisNellis:Start()
 -- 
 -- ## Persian Gulf: Abu Dhabi International Airport
 --
+--     -- ATIS Abu Dhabi International on 125.1 MHz AM.
 --     atisAbuDhabi=ATIS:New(AIRBASE.PersianGulf.Abu_Dhabi_International_Airport, 125.1)
 --     atisAbuDhabi:SetRadioRelayUnitName("Radio Relay Abu Dhabi International Airport")
 --     atisAbuDhabi:SetMetricUnits()
 --     atisAbuDhabi:SetActiveRunway("L")
+--     atisAbuDhabi:SetTowerFrequencies({250.5, 119.2})
+--     atisAbuDhabi:SetVOR(114.25)
 --     atisAbuDhabi:Start()
 -- 
 --
@@ -209,6 +291,17 @@ ATIS = {
   TDegF          =   nil,
   zuludiff       =   nil,
   magvar         =   nil,
+  ils            =    {},
+  ndbinner       =    {},
+  ndbouter       =    {},
+  vor            =   nil,
+  tacan          =   nil,
+  rsbn           =   nil,
+  prmg           =    {},
+  rwylength      =   nil,
+  runwaymag      =    {},
+  runwaym2t      =   nil,
+  windtrue       =   nil,
 }
 
 --- NATO alphabet.
@@ -244,19 +337,178 @@ ATIS.Alphabet = {
   [28] = "Zulu",
 }
 
+--- Runway correction for converting true to magnetic heading.
+-- @type ATIS.RunwayM2T
+-- @field #number Caucasus 0� (East).
+-- @field #number Nevada +12� (East).
+-- @field #number Normandy -10� (West).
+-- @field #number PersianGulf +2� (East).
+ATIS.RunwayM2T={
+  Caucasus=0,
+  Nevada=12,
+  Normany=-10,
+  PersianGulf=2,
+}
+
+--- Nav point data.
+-- @type ATIS.NavPoint
+-- @field #number frequency Nav point frequency.
+-- @field #string runway Runway, e.g. "21".
+
+--- Sound file data.
+-- @type ATIS.Soundfile
+-- @field #string filename Name of the file
+-- @field #number duration Duration in seconds.
+
+--- Sound files.
+-- @type ATIS.Sound
+-- @field #ATIS.Soundfile ActiveRunway
+-- @field #ATIS.Soundfile Airport
+-- @field #ATIS.Soundfile Altimeter
+-- @field #ATIS.Soundfile At
+-- @field #ATIS.Soundfile CloudBase
+-- @field #ATIS.Soundfile CloudCeiling
+-- @field #ATIS.Soundfile CloudsBroken
+-- @field #ATIS.Soundfile CloudsFew
+-- @field #ATIS.Soundfile CloudsNo
+-- @field #ATIS.Soundfile CloudsNotAvailable
+-- @field #ATIS.Soundfile CloudsOvercast
+-- @field #ATIS.Soundfile CloudsScattered
+-- @field #ATIS.Soundfile Decimal
+-- @field #ATIS.Soundfile DegreesCelsius
+-- @field #ATIS.Soundfile DegreesFahrenheit
+-- @field #ATIS.Soundfile Dust
+-- @field #ATIS.Soundfile Feet
+-- @field #ATIS.Soundfile Fog
+-- @field #ATIS.Soundfile Gusting
+-- @field #ATIS.Soundfile HectoPascal
+-- @field #ATIS.Soundfile Hundred
+-- @field #ATIS.Soundfile InchesOfMercury
+-- @field #ATIS.Soundfile Information
+-- @field #ATIS.Soundfile Kilometers
+-- @field #ATIS.Soundfile Knots
+-- @field #ATIS.Soundfile Left
+-- @field #ATIS.Soundfile MegaHertz
+-- @field #ATIS.Soundfile Meters
+-- @field #ATIS.Soundfile MetersPerSecond
+-- @field #ATIS.Soundfile MillimetersOfMercury
+-- @field #ATIS.Soundfile N0
+-- @field #ATIS.Soundfile N1
+-- @field #ATIS.Soundfile N2
+-- @field #ATIS.Soundfile N3
+-- @field #ATIS.Soundfile N4
+-- @field #ATIS.Soundfile N5
+-- @field #ATIS.Soundfile N6
+-- @field #ATIS.Soundfile N7
+-- @field #ATIS.Soundfile N8
+-- @field #ATIS.Soundfile N9
+-- @field #ATIS.Soundfile NauticalMiles
+-- @field #ATIS.Soundfile None
+-- @field #ATIS.Soundfile QFE
+-- @field #ATIS.Soundfile QNH
+-- @field #ATIS.Soundfile Rain
+-- @field #ATIS.Soundfile Right
+-- @field #ATIS.Soundfile Snow
+-- @field #ATIS.Soundfile SnowStorm
+-- @field #ATIS.Soundfile Temperature
+-- @field #ATIS.Soundfile Thousand
+-- @field #ATIS.Soundfile ThunderStorm
+-- @field #ATIS.Soundfile TimeLocal
+-- @field #ATIS.Soundfile TimeZulu
+-- @field #ATIS.Soundfile TowerFrequency
+-- @field #ATIS.Soundfile Visibilty
+-- @field #ATIS.Soundfile WeatherPhenomena
+-- @field #ATIS.Soundfile WindFrom
+-- @field #ATIS.Soundfile ILSFrequency
+-- @field #ATIS.Soundfile InnerNDBFrequency
+-- @field #ATIS.Soundfile OuterNDBFrequency
+-- @field #ATIS.Soundfile PRMGChannel
+-- @field #ATIS.Soundfile RSBNChannel
+-- @field #ATIS.Soundfile RunwayLength
+-- @field #ATIS.Soundfile TACANChannel
+-- @field #ATIS.Soundfile VORFrequency
+ATIS.Sound = {
+  ActiveRunway={filename="ActiveRunway.ogg", duration=0.99},
+  Airport={filename="Airport.ogg", duration=0.66},
+  Altimeter={filename="Altimeter.ogg", duration=0.68},
+  At={filename="At.ogg", duration=0.41},
+  CloudBase={filename="CloudBase.ogg", duration=0.82},
+  CloudCeiling={filename="CloudCeiling.ogg", duration=0.61},
+  CloudsBroken={filename="CloudsBroken.ogg", duration=1.07},
+  CloudsFew={filename="CloudsFew.ogg", duration=0.99},
+  CloudsNo={filename="CloudsNo.ogg", duration=1.01},
+  CloudsNotAvailable={filename="CloudsNotAvailable.ogg", duration=2.35},
+  CloudsOvercast={filename="CloudsOvercast.ogg", duration=0.83},
+  CloudsScattered={filename="CloudsScattered.ogg", duration=1.18},
+  Decimal={filename="Decimal.ogg", duration=0.54},
+  DegreesCelsius={filename="DegreesCelsius.ogg", duration=1.27},
+  DegreesFahrenheit={filename="DegreesFahrenheit.ogg", duration=1.23},
+  Dust={filename="Dust.ogg", duration=0.54},
+  Feet={filename="Feet.ogg", duration=0.45},
+  Fog={filename="Fog.ogg", duration=0.47},
+  Gusting={filename="Gusting.ogg", duration=0.55},
+  HectoPascal={filename="HectoPascal.ogg", duration=1.15},
+  Hundred={filename="Hundred.ogg", duration=0.47},
+  InchesOfMercury={filename="InchesOfMercury.ogg", duration=1.16},
+  Information={filename="Information.ogg", duration=0.85},
+  Kilometers={filename="Kilometers.ogg", duration=0.78},
+  Knots={filename="Knots.ogg", duration=0.59},
+  Left={filename="Left.ogg", duration=0.54},
+  MegaHertz={filename="MegaHertz.ogg", duration=0.87},
+  Meters={filename="Meters.ogg", duration=0.59},
+  MetersPerSecond={filename="MetersPerSecond.ogg", duration=1.14},
+  MillimetersOfMercury={filename="MillimetersOfMercury.ogg", duration=1.53},
+  Minus={filename="Minus.ogg", duration=0.64},
+  N0={filename="N-0.ogg", duration=0.55},
+  N1={filename="N-1.ogg", duration=0.41},
+  N2={filename="N-2.ogg", duration=0.37},
+  N3={filename="N-3.ogg", duration=0.41},
+  N4={filename="N-4.ogg", duration=0.37},
+  N5={filename="N-5.ogg", duration=0.43},
+  N6={filename="N-6.ogg", duration=0.55},
+  N7={filename="N-7.ogg", duration=0.43},
+  N8={filename="N-8.ogg", duration=0.38},
+  N9={filename="N-9.ogg", duration=0.55},
+  NauticalMiles={filename="NauticalMiles.ogg", duration=1.04},
+  None={filename="None.ogg", duration=0.43},
+  QFE={filename="QFE.ogg", duration=0.63},
+  QNH={filename="QNH.ogg", duration=0.71},
+  Rain={filename="Rain.ogg", duration=0.41},
+  Right={filename="Right.ogg", duration=0.44},
+  Snow={filename="Snow.ogg", duration=0.48},
+  SnowStorm={filename="SnowStorm.ogg", duration=0.82},
+  Temperature={filename="Temperature.ogg", duration=0.64},
+  Thousand={filename="Thousand.ogg", duration=0.55},
+  ThunderStorm={filename="ThunderStorm.ogg", duration=0.81},
+  TimeLocal={filename="TimeLocal.ogg", duration=0.90},
+  TimeZulu={filename="TimeZulu.ogg", duration=0.86},
+  TowerFrequency={filename="TowerFrequency.ogg", duration=1.19},
+  Visibilty={filename="Visibility.ogg", duration=0.79},
+  WeatherPhenomena={filename="WeatherPhenomena.ogg", duration=1.07},
+  WindFrom={filename="WindFrom.ogg", duration=0.60},
+  ILSFrequency={filename="ILSFrequency.ogg", duration=1.30},
+  InnerNDBFrequency={filename="InnerNDBFrequency.ogg", duration=1.56},
+  OuterNDBFrequency={filename="OuterNDBFrequency.ogg", duration=1.59},
+  RunwayLength={filename="RunwayLength.ogg", duration=0.91},
+  VORFrequency={filename="VORFrequency.ogg", duration=1.38},
+  TACANChannel={filename="TACANChannel.ogg", duration=0.88},
+  PRMGChannel={filename="PRMGChannel.ogg", duration=1.18},
+  RSBNChannel={filename="RSBNChannel.ogg", duration=1.14},
+}
+
 --- ATIS class version.
 -- @field #string version
-ATIS.version="0.3.1"
+ATIS.version="0.4.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Metric units.
+-- DONE: Metric units.
 -- TODO: Correct fog for elevation.
--- TODO: Set UTC correction.
+-- DONE: Set UTC correction.
 -- TODO: Use local time.
--- TODO: Set magnetic variation.
+-- DONE: Set magnetic variation.
 -- TODO: Add stop/pause FMS functions.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -294,6 +546,8 @@ function ATIS:New(airbasename, frequency, modulation)
   -- Defaults:
   self:SetSoundfilesPath()
   self:SetSubtitleDuration()
+  self:SetMagneticDeclination()
+  self:SetRunwayCorrectionMagnetic2True()
 
   -- Start State.
   self:SetStartState("Stopped")
@@ -386,6 +640,41 @@ function ATIS:SetActiveRunway(runway)
   return self
 end
 
+--- Give information on runway length.
+-- @param #ATIS self
+-- @return #ATIS self
+function ATIS:SetRunwayLength()
+  self.rwylength=true
+  return self
+end
+
+--- Set magnetic runway headings as depicted on the runway, e.g. 13 for 130.
+-- @param #ATIS self
+-- @param #table headings Magnetic headings. Inverse (-180�) headings are added automatically.
+-- @return #ATIS self
+function ATIS:SetRunwayHeadingsMagnetic(headings)
+  if type(headings)=="table" then
+    -- nothing to do
+  else  
+    headings={headings}
+  end
+  
+  for _,heading in pairs(headings) do
+    heading=tonumber(heading)
+    table.insert(self.runwaymag, heading)
+    
+    local head2=heading-18
+    if head2<0 then
+      head2=head2+36
+    end
+    
+    self:I(self.lid..string.format("Adding magnetic runway heading %d", head2))
+    table.insert(self.runwaymag, head2)
+  end
+  
+  return self
+end
+
 --- Set duration how long subtitles are displayed.
 -- @param #ATIS self
 -- @param #number duration Duration in seconds. Default 10 seconds.
@@ -437,11 +726,39 @@ end
 -- * Normandy -10 (West), year ~ 1944
 -- * Persian Gulf +2 (East), year ~ 2011
 -- 
+-- To get *true* from *magnetic* heading one has to add easterly or substract westerly variation, e.g
+-- 
+-- A magnetic heading of 180� corresponds to a true heading of 
+-- 
+--   * 186� on the Caucaus map
+--   * 192� on the Nevada map
+--   * 170� on the Normany map
+--   * 182� on the Persian Gulf map
+--   
+-- Likewise, to convert *magnetic* into *true* heading, one has to substract easterly and add westerly variation.
+-- 
 -- @param #ATIS self
--- @param #number magvar Magnetic variation in degrees.
+-- @param #number magvar Magnetic variation in degrees. Positive for easterly and negative for westerly variation. Default is magnatic declinaton of the used map, c.f. @{Utilities.UTils#UTILS.GetMagneticDeclination}.
 -- @return #ATIS self
 function ATIS:SetMagneticDeclination(magvar)
-  self.magvar=magvar
+  self.magvar=magvar or UTILS.GetMagneticDeclination()
+  return self
+end
+
+--- Explicitly set correction of magnetic to true heading for runways.
+-- @param #ATIS self
+-- @param #number correction Correction of magnetic to true heading for runways in degrees.
+-- @return #ATIS self
+function ATIS:SetRunwayCorrectionMagnetic2True(correction)
+  self.runwaym2t=correction or ATIS.RunwayM2T[UTILS.GetDCSMap()]
+  return self
+end
+
+--- Set wind direction (from) to be reported as *true* heading. Default is magnetic.
+-- @param #ATIS self
+-- @return #ATIS self
+function ATIS:SetReportWindTrue()
+  self.windtrue=true
   return self
 end
 
@@ -459,6 +776,99 @@ end
 function ATIS:SetZuluTimeDifference(delta)
   self.zuludiff=delta
   return self
+end
+
+--- Add ILS station.
+-- @param #ATIS self
+-- @param #number frequency ILS frequency.
+-- @param #string runway Runway. Default all (*nil*).
+-- @return #ATIS self
+function ATIS:AddILS(frequency, runway)
+  local ils={} --#ATIS.NavPoint
+  ils.frequency=tonumber(frequency)
+  ils.runway=runway and tostring(runway) or nil
+  table.insert(self.ils, ils)
+  return self
+end
+
+--- Set VOR station.
+-- @param #ATIS self
+-- @param #number frequency VOR frequency.
+-- @return #ATIS self
+function ATIS:SetVOR(frequency)
+  self.vor=frequency
+  return self
+end
+
+--- Add outer NDB.
+-- @param #ATIS self
+-- @param #number frequency NDB frequency.
+-- @param #string runway Runway. Default all (*nil*).
+-- @return #ATIS self
+function ATIS:AddNDBouter(frequency, runway)
+  local ndb={} --#ATIS.NavPoint
+  ndb.frequency=tonumber(frequency)
+  ndb.runway=runway and tostring(runway) or nil
+  table.insert(self.ndbouter, ndb)
+  return self
+end
+
+--- Add inner NDB.
+-- @param #ATIS self
+-- @param #number frequency NDB frequency.
+-- @param #string runway Runway. Default all (*nil*).
+-- @return #ATIS self
+function ATIS:AddNDBinner(frequency, runway)
+  local ndb={} --#ATIS.NavPoint
+  ndb.frequency=tonumber(frequency)
+  ndb.runway=runway and tostring(runway) or nil
+  table.insert(self.ndbinner, ndb)
+  return self
+end
+
+--- Set TACAN channel.
+-- @param #ATIS self
+-- @param #number channel TACAN channel.
+-- @return #ATIS self
+function ATIS:SetTACAN(channel)
+  self.tacan=channel
+  return self
+end
+
+--- Set RSBN channel.
+-- @param #ATIS self
+-- @param #number channel RSBN channel.
+-- @return #ATIS self
+function ATIS:SetRSBN(channel)
+  self.rsbn=channel
+  return self
+end
+
+--- Add PRMG channel.
+-- @param #ATIS self
+-- @param #number channel PRMG channel.
+-- @param #string runway Runway. Default all (*nil*).
+-- @return #ATIS self
+function ATIS:AddPRMG(channel, runway)
+  local ndb={} --#ATIS.NavPoint
+  ndb.frequency=tonumber(channel)
+  ndb.runway=runway and tostring(runway) or nil
+  table.insert(self.prmg, ndb)
+  return self
+end
+
+
+--- Place marks with runway data on the F10 map.
+-- @param #ATIS self
+-- @param #boolean markall If true, mark all runways of the map. By default only the current ATIS runways are marked.
+function ATIS:MarkRunways(markall)
+  local airbases=AIRBASE.GetAllAirbases()
+  for _,_airbase in pairs(airbases) do
+    local airbase=_airbase --Wrapper.Airbase#AIRBASE
+    if (not markall and airbase:GetName()==self.airbasename) or markall==true then
+      airbase:GetRunwayData(self.runwaym2t, true)
+    end
+  end
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -482,16 +892,16 @@ function ATIS:onafterStart(From, Event, To)
   self.radioqueue:SetSenderUnitName(self.relayunitname)
   
   -- Init numbers.
-  self.radioqueue:SetDigit(0, "N-0.ogg", 0.55, self.soundpath)
-  self.radioqueue:SetDigit(1, "N-1.ogg", 0.40, self.soundpath)
-  self.radioqueue:SetDigit(2, "N-2.ogg", 0.35, self.soundpath)
-  self.radioqueue:SetDigit(3, "N-3.ogg", 0.40, self.soundpath)
-  self.radioqueue:SetDigit(4, "N-4.ogg", 0.36, self.soundpath)
-  self.radioqueue:SetDigit(5, "N-5.ogg", 0.42, self.soundpath)
-  self.radioqueue:SetDigit(6, "N-6.ogg", 0.53, self.soundpath)
-  self.radioqueue:SetDigit(7, "N-7.ogg", 0.42, self.soundpath)
-  self.radioqueue:SetDigit(8, "N-8.ogg", 0.37, self.soundpath)
-  self.radioqueue:SetDigit(9, "N-9.ogg", 0.38, self.soundpath)
+  self.radioqueue:SetDigit(0, ATIS.Sound.N0.filename, ATIS.Sound.N0.duration, self.soundpath)
+  self.radioqueue:SetDigit(1, ATIS.Sound.N1.filename, ATIS.Sound.N1.duration, self.soundpath)
+  self.radioqueue:SetDigit(2, ATIS.Sound.N2.filename, ATIS.Sound.N2.duration, self.soundpath)
+  self.radioqueue:SetDigit(3, ATIS.Sound.N3.filename, ATIS.Sound.N3.duration, self.soundpath)
+  self.radioqueue:SetDigit(4, ATIS.Sound.N4.filename, ATIS.Sound.N4.duration, self.soundpath)
+  self.radioqueue:SetDigit(5, ATIS.Sound.N5.filename, ATIS.Sound.N5.duration, self.soundpath)
+  self.radioqueue:SetDigit(6, ATIS.Sound.N6.filename, ATIS.Sound.N6.duration, self.soundpath)
+  self.radioqueue:SetDigit(7, ATIS.Sound.N7.filename, ATIS.Sound.N7.duration, self.soundpath)
+  self.radioqueue:SetDigit(8, ATIS.Sound.N8.filename, ATIS.Sound.N8.duration, self.soundpath)
+  self.radioqueue:SetDigit(9, ATIS.Sound.N9.filename, ATIS.Sound.N9.duration, self.soundpath)
   
   -- Start radio queue.
   self.radioqueue:Start(1, 0.1)
@@ -512,7 +922,7 @@ function ATIS:onafterStatus(From, Event, To)
   local text=string.format("State %s", fsmstate)
   self:I(self.lid..text)
   
-  self:__Status(30)
+  self:__Status(60)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -575,13 +985,36 @@ function ATIS:onafterBroadcast(From, Event, To)
       QNH=UTILS.Split(string.format("%.1f", qnh), ".")
     end
   end
+    
+  ------------
+  --- Wind ---
+  ------------
+  
+  -- Get wind direction and speed in m/s.
+  local windFrom, windSpeed=coord:GetWind(height)
+  
+  -- Wind in magnetic or true.
+  local magvar=self.magvar
+  if self.windtrue then
+    magvar=0
+  end
+  
+  local WINDFROM=string.format("%03d", windFrom-magvar)
+  local WINDSPEED=string.format("%d", UTILS.MpsToKnots(windSpeed))
+  
+  if self.metric then
+    WINDSPEED=string.format("%d", windSpeed)
+  end
   
   --------------
   --- Runway ---
   --------------
   
-  -- Get runway based on wind direction.
-  local runway=self.airbase:GetActiveRunway(self.magvar).idx
+  -- Active runway data based on wind direction.
+  local runact=self.airbase:GetActiveRunway(self.runwaym2t)
+  
+  -- Active runway "31".
+  local runway=self:GetMagneticRunway(windFrom) or runact.idx
   
   -- Left or right in case there are two runways with the same heading.
   local rleft=false
@@ -595,21 +1028,6 @@ function ATIS:onafterBroadcast(From, Event, To)
     end
     rleft=self.activerunway:lower():find("l")
     rright=self.activerunway:lower():find("r")
-  end
-  
-  ------------
-  --- Wind ---
-  ------------
-  
-  -- Get wind direction and speed in m/s.
-  local windFrom, windSpeed=coord:GetWind(height)
-  
-  
-  local WINDFROM=string.format("%03d", windFrom)
-  local WINDSPEED=string.format("%d", UTILS.MpsToKnots(windSpeed))
-  
-  if self.metric then
-    WINDSPEED=string.format("%d", windSpeed)
   end
   
   ------------
@@ -652,15 +1070,16 @@ function ATIS:onafterBroadcast(From, Event, To)
   --- Temperature ---
   -------------------
   
-  -- Temperature in 캜.
+  -- Temperature in 캜 (or 캟).
   local temperature=coord:GetTemperature(height)
   
-  local TEMPERATURE=string.format("%d", temperature)
-  
+  -- Convert to 캟.
   if self.TDegF then
-    TEMPERATURE=string.format("%d", UTILS.CelciusToFarenheit(temperature))
+    temperature=UTILS.CelciusToFarenheit(temperature)
   end
   
+  local TEMPERATURE=string.format("%d", math.abs(temperature))
+    
   ---------------
   --- Weather ---
   ---------------
@@ -713,7 +1132,7 @@ function ATIS:onafterBroadcast(From, Event, To)
   local cloudceil=clouds.base+clouds.thickness
   local clouddens=clouds.density
   
-  -- Precepitation: 0=None, 1=Rain, 2=Thunderstorm.
+  -- Precepitation: 0=None, 1=Rain, 2=Thunderstorm, 3=Snow, 4=Snowstorm.
   local precepitation=tonumber(clouds.iprecptns)
   
   local CLOUDBASE=string.format("%d", UTILS.MetersToFeet(cloudbase))
@@ -734,39 +1153,34 @@ function ATIS:onafterBroadcast(From, Event, To)
   end
   
   -- No cloud info for dynamic weather.
-  local CLOUDSogg="CloudsNotAvailable.ogg"
+  local CloudCover={} --#ATIS.Soundfile
+  CloudCover=ATIS.Sound.CloudsNotAvailable
   local CLOUDSsub="Cloud coverage information not available"
-  local CLOUDSdur=2.40
   
   -- Only valid for static weather.
   if static then
     if clouddens>=9 then
       -- Overcast 9,10
-      CLOUDSogg="CloudsOvercast.ogg"
+      CloudCover=ATIS.Sound.CloudsOvercast
       CLOUDSsub="Overcast"
-      CLOUDSdur=0.85
     elseif clouddens>=7 then
       -- Broken 7,8
-      CLOUDSogg="CloudsBroken.ogg"
+      CloudCover=ATIS.Sound.CloudsBroken
       CLOUDSsub="Broken clouds"
-      CLOUDSdur=1.10
     elseif clouddens>=4 then
       -- Scattered 4,5,6
-      CLOUDSogg="CloudsScattered.ogg"
+      CloudCover=ATIS.Sound.CloudsScattered
       CLOUDSsub="Scattered clouds"
-      CLOUDSdur=1.20
     elseif clouddens>=1 then
       -- Few 1,2,3
-      CLOUDSogg="CloudsFew.ogg"
+      CloudCover=ATIS.Sound.CloudsFew
       CLOUDSsub="Few clouds"
-      CLOUDSdur=1.00
     else
       -- No clouds
       CLOUDBASE=nil
       CLOUDCEIL=nil
-      CLOUDSogg="CloudsNo.ogg"
+      CloudCover=ATIS.Sound.CloudsNo
       CLOUDSsub="No clouds"
-      CLOUDSdur=1.00
     end
   end
   
@@ -774,7 +1188,7 @@ function ATIS:onafterBroadcast(From, Event, To)
   --- Transmission ---
   --------------------
   
-  local subduration=self.subduration
+  -- Subtitle
   local subtitle=""
   
   --Airbase name
@@ -782,17 +1196,17 @@ function ATIS:onafterBroadcast(From, Event, To)
   if self.airbasename:find("AFB")==nil and self.airbasename:find("Airport")==nil and self.airbasename:find("Airstrip")==nil and self.airbasename:find("airfield")==nil and self.airbasename:find("AB")==nil then
     subtitle=subtitle.." Airport"
   end
-  self.radioqueue:NewTransmission(string.format("%s/%s.ogg", self.theatre, self.airbasename), 3.0, self.soundpath, nil, nil, subtitle, subduration)
+  self.radioqueue:NewTransmission(string.format("%s/%s.ogg", self.theatre, self.airbasename), 3.0, self.soundpath, nil, nil, subtitle, self.subduration)
   
   -- Information tag
   subtitle=string.format("Information %s", NATO)
-  self.radioqueue:NewTransmission("Information.ogg", 0.85, self.soundpath, nil, 0.5, subtitle, subduration)
+  self:Transmission(ATIS.Sound.Information, 0.5, subtitle)
   self.radioqueue:NewTransmission(string.format("NATO Alphabet/%s.ogg", NATO), 0.75, self.soundpath)
   
   -- Zulu Time
   subtitle=string.format("%s Zulu Time", ZULU)
   self.radioqueue:Number2Transmission(ZULU, nil, 0.5)
-  self.radioqueue:NewTransmission("TimeZulu.ogg", 0.89, self.soundpath, nil, 0.2, subtitle, subduration)
+  self:Transmission(ATIS.Sound.TimeZulu, 0.2, subtitle)
   
   -- Visibility
   if self.metric then
@@ -800,16 +1214,16 @@ function ATIS:onafterBroadcast(From, Event, To)
   else
     subtitle=string.format("Visibility %s NM", VISIBILITY)
   end
-  self.radioqueue:NewTransmission("Visibility.ogg", 0.8, self.soundpath, nil, 1.0, subtitle, subduration)
+  self:Transmission(ATIS.Sound.Visibilty, 1.0, subtitle)
   self.radioqueue:Number2Transmission(VISIBILITY)
   if self.metric then
-    self.radioqueue:NewTransmission("Kilometers.ogg", 0.78, self.soundpath, nil, 0.2)
+    self:Transmission(ATIS.Sound.Kilometers, 0.2)
   else
-    self.radioqueue:NewTransmission("NauticalMiles.ogg", 1.05, self.soundpath, nil, 0.2)    
+    self:Transmission(ATIS.Sound.NauticalMiles, 0.2)    
   end
   
   -- Cloud base
-  self.radioqueue:NewTransmission(CLOUDSogg, CLOUDSdur, self.soundpath, nil, 1.0, CLOUDSsub, subduration)
+  self:Transmission(CloudCover, 1.0, CLOUDSsub)
   if CLOUDBASE and static then
     -- Base
     if self.metric then
@@ -817,29 +1231,29 @@ function ATIS:onafterBroadcast(From, Event, To)
     else
       subtitle=string.format("Cloudbase %s, ceiling %s ft", CLOUDBASE, CLOUDCEIL)
     end
-    self.radioqueue:NewTransmission("CloudBase.ogg", 0.81, self.soundpath, nil, 1.0, subtitle, subduration)
+    self:Transmission(ATIS.Sound.CloudBase, 1.0, subtitle)
     if tonumber(CLOUDBASE1000)>0 then
       self.radioqueue:Number2Transmission(CLOUDBASE1000)
-      self.radioqueue:NewTransmission("Thousand.ogg", 0.55, self.soundpath, nil, 0.1)
+      self:Transmission(ATIS.Sound.Thousand, 0.1)
     end 
     if tonumber(CLOUDBASE0100)>0 then
       self.radioqueue:Number2Transmission(CLOUDBASE0100)
-      self.radioqueue:NewTransmission("Hundred.ogg", 0.47, self.soundpath, nil, 0.1)
+      self:Transmission(ATIS.Sound.Hundred, 0.1)
     end
     -- Ceiling
-    self.radioqueue:NewTransmission("CloudCeiling.ogg", 0.62, self.soundpath, nil, 0.5)
+    self:Transmission(ATIS.Sound.CloudCeiling, 0.5)
     if tonumber(CLOUDCEIL1000)>0 then
       self.radioqueue:Number2Transmission(CLOUDCEIL1000)
-      self.radioqueue:NewTransmission("Thousand.ogg", 0.55, self.soundpath, nil, 0.1)
+      self:Transmission(ATIS.Sound.Thousand, 0.1)
     end 
     if tonumber(CLOUDCEIL0100)>0 then
       self.radioqueue:Number2Transmission(CLOUDCEIL0100)
-      self.radioqueue:NewTransmission("Hundred.ogg", 0.47, self.soundpath, nil, 0.1)
+      self:Transmission(ATIS.Sound.Hundred, 0.1)
     end
     if self.metric then
-      self.radioqueue:NewTransmission("Meters.ogg", 0.59, self.soundpath, nil, 0.1)
+      self:Transmission(ATIS.Sound.Meters, 0.1)
     else
-      self.radioqueue:NewTransmission("Feet.ogg", 0.45, self.soundpath, nil, 0.1)
+      self:Transmission(ATIS.Sound.Feet, 0.1)
     end
   end
   
@@ -855,6 +1269,12 @@ function ATIS:onafterBroadcast(From, Event, To)
     end
     wpsub=wpsub.." thunderstorm"
     wp=true
+  elseif precepitation==3 then
+    wpsub=wpsub.." snow"
+    wp=true
+  elseif precepitation==4 then
+    wpsub=wpsub.." snowstorm"
+    wp=true      
   end
   if fog then
     if wp then
@@ -872,17 +1292,22 @@ function ATIS:onafterBroadcast(From, Event, To)
   end
   -- Actual output
   if wp then
-    self.radioqueue:NewTransmission("WeatherPhenomena.ogg", 1.07, self.soundpath, nil, 1.0, string.format("Weather phenomena:%s", wpsub), subduration)
+    subtitle=string.format("Weather phenomena:%s", wpsub)
+    self:Transmission(ATIS.Sound.WeatherPhenomena, 1.0, subtitle)
     if precepitation==1 then
-      self.radioqueue:NewTransmission("Rain.ogg", 0.41, self.soundpath, nil, 0.5)
+      self:Transmission(ATIS.Sound.Rain, 0.5)
     elseif precepitation==2 then
-      self.radioqueue:NewTransmission("ThunderStorm.ogg", 0.81, self.soundpath, nil, 0.5)
+      self:Transmission(ATIS.Sound.ThunderStorm, 0.5)
+    elseif precepitation==3 then
+      self:Transmission(ATIS.Sound.Snow, 0.5)
+    elseif precepitation==4 then
+      self:Transmission(ATIS.Sound.SnowStorm, 0.5)
     end
     if fog then
-      self.radioqueue:NewTransmission("Fog.ogg", 0.81, self.soundpath, nil, 0.5)
+      self:Transmission(ATIS.Sound.Fog, 0.5)
     end
     if dust then
-      self.radioqueue:NewTransmission("Dust.ogg", 0.81, self.soundpath, nil, 0.5)    
+      self:Transmission(ATIS.Sound.Dust, 0.5)    
     end  
   end  
   
@@ -896,37 +1321,48 @@ function ATIS:onafterBroadcast(From, Event, To)
       subtitle=string.format("Altimeter QNH %s.%s, QFE %s.%s inHg", QNH[1], QNH[2], QFE[1], QFE[2])
     end
   end
-  self.radioqueue:NewTransmission("Altimeter.ogg", 0.7, self.soundpath, nil, 1.0, subtitle, subduration)
-  self.radioqueue:NewTransmission("QNH.ogg", 0.70, self.soundpath, nil, 0.5)
+  self:Transmission(ATIS.Sound.Altimeter, 1.0, subtitle)
+  self:Transmission(ATIS.Sound.QNH, 0.5)
   self.radioqueue:Number2Transmission(QNH[1])
-  self.radioqueue:NewTransmission("Decimal.ogg", 0.58, self.soundpath, nil, 0.2)
+  self:Transmission(ATIS.Sound.Decimal, 0.2)
   self.radioqueue:Number2Transmission(QNH[2])
-  self.radioqueue:NewTransmission("QFE.ogg", 0.62, self.soundpath, nil, 0.2)
+  self:Transmission(ATIS.Sound.QFE, 0.75)
   self.radioqueue:Number2Transmission(QFE[1])
-  self.radioqueue:NewTransmission("Decimal.ogg", 0.58, self.soundpath, nil, 0.2)
+  self:Transmission(ATIS.Sound.Decimal, 0.2)
   self.radioqueue:Number2Transmission(QFE[2])
   if self.PmmHg then
-    self.radioqueue:NewTransmission("MillimetersOfMercury.ogg", 1.53, self.soundpath, nil, 0.1)
+    self:Transmission(ATIS.Sound.MillimetersOfMercury, 0.1)
   else
     if self.metric then
-      self.radioqueue:NewTransmission("HectoPascal.ogg", 1.15, self.soundpath, nil, 0.1)
+      self:Transmission(ATIS.Sound.HectoPascal, 0.1)
     else
-      self.radioqueue:NewTransmission("InchesOfMercury.ogg", 1.16, self.soundpath, nil, 0.1)
+      self:Transmission(ATIS.Sound.InchesOfMercury, 0.1)
     end
   end
   
   -- Temperature
   if self.TDegF then
-    subtitle=string.format("Temperature %s 째F", TEMPERATURE)
+    if temperature<0 then
+      subtitle=string.format("Temperature -%s 째F", TEMPERATURE)
+    else
+      subtitle=string.format("Temperature %s 째F", TEMPERATURE)
+    end
   else
-    subtitle=string.format("Temperature %s 째C", TEMPERATURE)
+    if temperature<0 then
+      subtitle=string.format("Temperature -%s 째C", TEMPERATURE)
+    else
+      subtitle=string.format("Temperature %s 째C", TEMPERATURE)
+    end
   end
-  self.radioqueue:NewTransmission("Temperature.ogg", 0.55, self.soundpath, nil, 1.0, subtitle, subduration)
+  self:Transmission(ATIS.Sound.Temperature, 1.0, subtitle)
+  if temperature<0 then
+    self:Transmission(ATIS.Sound.Minus, 0.2)
+  end  
   self.radioqueue:Number2Transmission(TEMPERATURE)
   if self.TDegF then
-    self.radioqueue:NewTransmission("DegreesFahrenheit.ogg", 1.23, self.soundpath, nil, 0.2)
+    self:Transmission(ATIS.Sound.DegreesFahrenheit, 0.2)
   else
-    self.radioqueue:NewTransmission("DegreesCelsius.ogg", 1.28, self.soundpath, nil, 0.2)
+    self:Transmission(ATIS.Sound.DegreesCelsius, 0.2)
   end
   
   -- Wind
@@ -938,17 +1374,17 @@ function ATIS:onafterBroadcast(From, Event, To)
   if turbulence>0 then
     subtitle=subtitle..", gusting"
   end
-  self.radioqueue:NewTransmission("WindFrom.ogg", 0.60, self.soundpath, nil, 1.0, subtitle, subduration)
+  self:Transmission(ATIS.Sound.WindFrom, 1.0, subtitle)
   self.radioqueue:Number2Transmission(WINDFROM)
-  self.radioqueue:NewTransmission("At.ogg", 0.40, self.soundpath, nil, 0.2)
+  self:Transmission(ATIS.Sound.At, 0.2)
   self.radioqueue:Number2Transmission(WINDSPEED)
   if self.metric then
-    self.radioqueue:NewTransmission("MetersPerSecond.ogg", 1.14, self.soundpath, nil, 0.2)
+    self:Transmission(ATIS.Sound.MetersPerSecond, 0.2)
   else
-    self.radioqueue:NewTransmission("Knots.ogg", 0.60, self.soundpath, nil, 0.2)
+    self:Transmission(ATIS.Sound.Knots, 0.2)
   end
   if turbulence>0 then
-    self.radioqueue:NewTransmission("Gusting.ogg", 0.55, self.soundpath, nil, 0.2)
+    self:Transmission(ATIS.Sound.Gusting, 0.2)
   end
   
   -- Active runway.
@@ -958,12 +1394,49 @@ function ATIS:onafterBroadcast(From, Event, To)
   elseif rright then
     subtitle=subtitle.." Right"
   end
-  self.radioqueue:NewTransmission("ActiveRunway.ogg", 1.05, self.soundpath, nil, 1.0, subtitle, subduration)
+  self:Transmission(ATIS.Sound.ActiveRunway, 1.0, subtitle)
   self.radioqueue:Number2Transmission(runway)
   if rleft then
-    self.radioqueue:NewTransmission("Left.ogg", 0.53, self.soundpath, nil, 0.2)
+    self:Transmission(ATIS.Sound.Left, 0.2)
   elseif rright then
-    self.radioqueue:NewTransmission("Right.ogg", 0.43, self.soundpath, nil, 0.2)
+    self:Transmission(ATIS.Sound.Right, 0.2)
+  end
+  
+  -- Runway length.
+  if self.rwylength then
+  
+    local length=runact.length
+    if not self.metric then
+      length=UTILS.MetersToFeet(length)
+    end
+    
+    -- Length in thousands and hundrets of ft/meters.
+    local L1000, L0100=self:_GetThousandsAndHundreds(length)
+    
+    -- Subtitle.    
+    local subtitle=string.format("Runway length %d", length)
+    if self.metric then
+      subtitle=subtitle.." meters"
+    else
+      subtitle=subtitle.." feet"
+    end
+
+    -- Transmitt.
+    self:Transmission(ATIS.Sound.RunwayLength, 1.0, subtitle)
+    if tonumber(L1000)>0 then
+      self.radioqueue:Number2Transmission(L1000)
+      self:Transmission(ATIS.Sound.Thousand, 0.1)
+    end 
+    if tonumber(L0100)>0 then
+      self.radioqueue:Number2Transmission(L0100)
+      self:Transmission(ATIS.Sound.Hundred, 0.1)
+    end
+    if self.metric then
+      self:Transmission(ATIS.Sound.Meters, 0.1)
+    else
+      self:Transmission(ATIS.Sound.Feet, 0.1)
+    end
+    
   end
   
   -- Tower frequency.
@@ -975,15 +1448,100 @@ function ATIS:onafterBroadcast(From, Event, To)
         freqs=freqs..", "
       end
     end
-    self.radioqueue:NewTransmission("TowerFrequency.ogg", 1.19, self.soundpath, nil, 1.0, string.format("Tower frequency %s", freqs), subduration)
+    subtitle=string.format("Tower frequency %s", freqs)
+    self:Transmission(ATIS.Sound.TowerFrequency, 1.0, subtitle)
     for _,freq in pairs(self.towerfrequency) do
       local f=string.format("%.3f", freq)
       f=UTILS.Split(f, ".")      
-      self.radioqueue:Number2Transmission(f[1], nil, 0.5)
-      self.radioqueue:NewTransmission("Decimal.ogg", 0.58, self.soundpath, nil, 0.2)
-      self.radioqueue:Number2Transmission(f[2])
-      self.radioqueue:NewTransmission("MegaHertz.ogg", 0.86, self.soundpath, nil, 0.2)
+      self.radioqueue:Number2Transmission(f[1], nil, 0.5)      
+      if tonumber(f[2])>0 then
+        self:Transmission(ATIS.Sound.Decimal, 0.2)      
+        self.radioqueue:Number2Transmission(f[2])        
+      end
+      self:Transmission(ATIS.Sound.MegaHertz, 0.2)
     end    
+  end
+  
+  -- ILS
+  local ils=self:GetNavPoint(self.ils, runway)
+  if ils then
+    subtitle=string.format("ILS frequency %.2f MHz", ils.frequency)
+    self:Transmission(ATIS.Sound.ILSFrequency, 1.0, subtitle)
+    local f=string.format("%.2f", ils.frequency)
+    f=UTILS.Split(f, ".")      
+    self.radioqueue:Number2Transmission(f[1], nil, 0.5)
+    if tonumber(f[2])>0 then
+      self:Transmission(ATIS.Sound.Decimal, 0.2)
+      self.radioqueue:Number2Transmission(f[2])
+    end
+    self:Transmission(ATIS.Sound.MegaHertz, 0.2)
+  end  
+    
+  -- Outer NDB
+  local ndb=self:GetNavPoint(self.ndbouter, runway)
+  if ndb then
+    subtitle=string.format("Outer NDB frequency %.2f MHz", ndb.frequency)
+    self:Transmission(ATIS.Sound.OuterNDBFrequency, 1.0, subtitle)
+    local f=string.format("%.2f", ndb.frequency)
+    f=UTILS.Split(f, ".")      
+    self.radioqueue:Number2Transmission(f[1], nil, 0.5)
+    if tonumber(f[2])>0 then
+      self:Transmission(ATIS.Sound.Decimal, 0.2)
+      self.radioqueue:Number2Transmission(f[2])    
+    end
+    self:Transmission(ATIS.Sound.MegaHertz, 0.2)
+  end
+
+  -- Inner NDB
+  local ndb=self:GetNavPoint(self.ndbinner, runway)
+  if ndb then
+    subtitle=string.format("Inner NDB frequency %.2f MHz", ndb.frequency)
+    self:Transmission(ATIS.Sound.InnerNDBFrequency, 1.0, subtitle)
+    local f=string.format("%.2f", ndb.frequency)
+    f=UTILS.Split(f, ".")      
+    self.radioqueue:Number2Transmission(f[1], nil, 0.5)
+    if tonumber(f[2])>0 then
+      self:Transmission(ATIS.Sound.Decimal, 0.2)
+      self.radioqueue:Number2Transmission(f[2])
+    end
+    self:Transmission(ATIS.Sound.MegaHertz, 0.2)
+  end
+  
+  -- VOR
+  if self.vor then
+    subtitle=string.format("VOR frequency %.2f MHz", self.vor)
+    self:Transmission(ATIS.Sound.VORFrequency, 1.0, subtitle)
+    local f=string.format("%.2f", self.vor)
+    f=UTILS.Split(f, ".")      
+    self.radioqueue:Number2Transmission(f[1], nil, 0.5)
+    if tonumber(f[2])>0 then
+      self:Transmission(ATIS.Sound.Decimal, 0.2)
+      self.radioqueue:Number2Transmission(f[2])
+    end
+    self:Transmission(ATIS.Sound.MegaHertz, 0.2)
+  end
+  
+  -- TACAN
+  if self.tacan then
+    subtitle=string.format("TACAN channel %dX", self.tacan)
+    self:Transmission(ATIS.Sound.TACANChannel, 1.0, subtitle)
+    self.radioqueue:Number2Transmission(tostring(self.tacan), nil, 0.2)
+    self.radioqueue:NewTransmission("NATO Alphabet/Xray.ogg", 0.75, self.soundpath, nil, 0.2)
+  end
+  
+  -- RSBN
+  if self.rsbn then
+    subtitle=string.format("RSBN channel %d", self.rsbn)
+    self:Transmission(ATIS.Sound.RSBNChannel, 1.0, subtitle)
+    self.radioqueue:Number2Transmission(tostring(self.rsbn), nil, 0.2) 
+  end
+  
+  -- PRMG
+  local ndb=self:GetNavPoint(self.prmg, runway)
+  if ndb then
+    subtitle=string.format("PRMG channel %d", ndb.frequency)
+    self:Transmission(ATIS.Sound.PRMGChannel, 1.0, subtitle)
+    self.radioqueue:Number2Transmission(tostring(ndb.frequency), nil, 0.5)
   end
   
 end
@@ -991,6 +1549,75 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Get runway from user supplied magnetic heading.
+-- @param #ATIS self
+-- @param #number windfrom Wind direction (from) in degrees.
+-- @return #string Runway magnetic heading divided by ten (and rounded). Eg, "13" for 130�.
+function ATIS:GetMagneticRunway(windfrom)
+
+  local diffmin=nil
+  local runway=nil
+  for _,heading in pairs(self.runwaymag) do
+  
+    local diff=UTILS.HdgDiff(windfrom, tonumber(heading)*10)
+    if diffmin==nil or diff<diffmin then
+      diffmin=diff
+      runway=heading
+    end
+  
+  end
+
+  if runway then
+    return string.format("%02d", runway)
+  else
+    return nil
+  end
+end
+
+--- Get Nav point data.
+-- @param #ATIS self
+-- @param #table navpoints Nav points data table.
+-- @param #string runway (Active) runway, e.g. "31"
+-- @return #ATIS.NavPoint Nav point data table.
+function ATIS:GetNavPoint(navpoints, runway)
+  for _,_nav in pairs(navpoints or {}) do
+    local nav=_nav --#ATIS.NavPoint
+    if nav.runway==nil then
+      return nav
+    else
+      local nr=tonumber(nav.runway)
+      local r=tonumber(runway)
+      if math.abs(nr-r)<=2 then --We allow an error of +-20� here.
+        return nav
+      end
+    end  
+  end
+  return nil
+end
+
+--- Transmission via RADIOQUEUE.
+-- @param #ATIS self
+-- @param #ATIS.Soundfile sound ATIS sound object.
+-- @param #number interval Interval in seconds after the last transmission finished.
+-- @param #string subtitle Subtitle of the transmission.
+-- @param #string path Path to sound file. Default self.soundpath.
+function ATIS:Transmission(sound, interval, subtitle, path)
+  self.radioqueue:NewTransmission(sound.filename, sound.duration, path or self.soundpath, nil, interval, subtitle, self.subduration)
+end
+
+--- Play all audio files.
+-- @param #ATIS self
+function ATIS:SoundCheck()
+
+  for _,_sound in pairs(ATIS.Sound) do
+    local sound=_sound --#ATIS.Soundfile
+    local subtitle=string.format("Playing sound file %s, duration %.2f sec", sound.filename, sound.duration)
+    self:Transmission(sound, nil, subtitle)
+    MESSAGE:New(subtitle, 5, "ATIS"):ToAll()
+  end
+
+end
 
 --- Get weather of this mission from env.mission.weather variable.
 -- @param #ATIS self
