@@ -584,10 +584,11 @@ do -- SETTINGS
       MENU_GROUP_COMMAND:New( MenuGroup, text, A2ACoordinateMenu, self.A2AMenuSystem, self, MenuGroup, RootMenu, "LL DDM" ):SetTime( MenuTime )
     end
 
-    if self:IsA2A_LL_DDM() then
-      MENU_GROUP_COMMAND:New( MenuGroup, "LL DDM Accuracy 1", A2ACoordinateMenu, self.MenuLL_DDM_Accuracy, self, MenuGroup, RootMenu, 1 ):SetTime( MenuTime )
-      MENU_GROUP_COMMAND:New( MenuGroup, "LL DDM Accuracy 2", A2ACoordinateMenu, self.MenuLL_DDM_Accuracy, self, MenuGroup, RootMenu, 2 ):SetTime( MenuTime )
-      MENU_GROUP_COMMAND:New( MenuGroup, "LL DDM Accuracy 3", A2ACoordinateMenu, self.MenuLL_DDM_Accuracy, self, MenuGroup, RootMenu, 3 ):SetTime( MenuTime )
+    if self:IsA2A_LL_DDM() or self:IsA2A_LL_DMS() then
+      MENU_GROUP_COMMAND:New( MenuGroup, "LL Accuracy 0", A2ACoordinateMenu, self.MenuLL_DDM_Accuracy, self, MenuGroup, RootMenu, 0 ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "LL Accuracy 1", A2ACoordinateMenu, self.MenuLL_DDM_Accuracy, self, MenuGroup, RootMenu, 1 ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "LL Accuracy 2", A2ACoordinateMenu, self.MenuLL_DDM_Accuracy, self, MenuGroup, RootMenu, 2 ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "LL Accuracy 3", A2ACoordinateMenu, self.MenuLL_DDM_Accuracy, self, MenuGroup, RootMenu, 3 ):SetTime( MenuTime )
     end
 
     if not self:IsA2A_BULLS() then
@@ -731,7 +732,7 @@ do -- SETTINGS
 
       self.PlayerMenu = PlayerMenu
 
-      self:I(string.format("FF Setting menu for player %s", tostring(PlayerName)))
+      self:I(string.format("Setting menu for player %s", tostring(PlayerName)))
 
       local submenu = MENU_GROUP:New( PlayerGroup, "LL Accuracy", PlayerMenu )
       MENU_GROUP_COMMAND:New( PlayerGroup, "LL 0 Decimals", submenu, self.MenuGroupLL_DDM_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 0 )
@@ -761,7 +762,7 @@ do -- SETTINGS
       if not self:IsA2G_LL_DMS() or _SETTINGS.MenuStatic then
         local text="Lat/Lon Degree Min Sec (LL DMS)"
         if _SETTINGS.MenuShort then
-          text="LL DMS"
+          text="A2G LL DMS"
         end
         MENU_GROUP_COMMAND:New( PlayerGroup, text, A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL DMS" )
       end
@@ -769,7 +770,7 @@ do -- SETTINGS
       if not self:IsA2G_LL_DDM() or _SETTINGS.MenuStatic then
         local text="Lat/Lon Degree Dec Min (LL DDM)"
         if _SETTINGS.MenuShort then
-          text="LL DDM"
+          text="A2G LL DDM"
         end
         MENU_GROUP_COMMAND:New( PlayerGroup, text, A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL DDM" )
       end
@@ -777,7 +778,7 @@ do -- SETTINGS
       if not self:IsA2G_BR() or _SETTINGS.MenuStatic then
         local text="Bearing, Range (BR)"
         if _SETTINGS.MenuShort then
-          text="BR"
+          text="A2G BR"
         end
         MENU_GROUP_COMMAND:New( PlayerGroup, text, A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "BR" )
       end
@@ -785,7 +786,7 @@ do -- SETTINGS
       if not self:IsA2G_MGRS() or _SETTINGS.MenuStatic then
         local text="Military Grid (MGRS)"
         if _SETTINGS.MenuShort then
-          text="MGRS"
+          text="A2G MGRS"
         end
         MENU_GROUP_COMMAND:New( PlayerGroup, text, A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "MGRS" )
       end
@@ -804,7 +805,7 @@ do -- SETTINGS
       if not self:IsA2A_LL_DMS() or _SETTINGS.MenuStatic then
         local text="Lat/Lon Degree Min Sec (LL DMS)"
         if _SETTINGS.MenuShort then
-          text="LL DMS"
+          text="A2A LL DMS"
         end
         MENU_GROUP_COMMAND:New( PlayerGroup, text, A2ACoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL DMS" )
       end
@@ -812,7 +813,7 @@ do -- SETTINGS
       if not self:IsA2A_LL_DDM() or _SETTINGS.MenuStatic then
         local text="Lat/Lon Degree Dec Min (LL DDM)"
         if _SETTINGS.MenuShort then
-          text="LL DDM"
+          text="A2A LL DDM"
         end
         MENU_GROUP_COMMAND:New( PlayerGroup, text, A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL DDM" )
       end
@@ -820,7 +821,7 @@ do -- SETTINGS
       if not self:IsA2A_BULLS() or _SETTINGS.MenuStatic then
         local text="Bullseye (BULLS)"
         if _SETTINGS.MenuShort then
-          text="BULLS"
+          text="A2A BULLS"
         end
         MENU_GROUP_COMMAND:New( PlayerGroup, text, A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "BULLS" )
       end
@@ -828,7 +829,7 @@ do -- SETTINGS
       if not self:IsA2A_BRAA() or _SETTINGS.MenuStatic then
         local text="Bearing Range Altitude Aspect (BRAA)"
         if _SETTINGS.MenuShort then
-          text="BRAA"
+          text="A2A BRAA"
         end
         MENU_GROUP_COMMAND:New( PlayerGroup, text, A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "BRAA" )
       end
@@ -836,7 +837,7 @@ do -- SETTINGS
       if not self:IsA2A_MGRS() or _SETTINGS.MenuStatic then
         local text="Military Grid (MGRS)"
         if _SETTINGS.MenuShort then
-          text="MGRS"
+          text="A2A MGRS"
         end
         MENU_GROUP_COMMAND:New( PlayerGroup, text, A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "MGRS" )
       end
