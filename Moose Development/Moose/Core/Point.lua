@@ -1269,7 +1269,7 @@ do -- COORDINATE
     for _,_airbase in pairs(airbases) do
       local airbase=_airbase --Wrapper.Airbase#AIRBASE
       if airbase then
-        local category=airbase:GetCategory()
+        local category=airbase:GetAirbaseCategory()
         if Category and Category==category or Category==nil then
 
           -- Distance to airbase.         
