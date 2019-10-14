@@ -252,8 +252,6 @@ do -- SETTINGS
       self:SetMessageTime( MESSAGE.Type.Overview, 60 )
       self:SetMessageTime( MESSAGE.Type.Update, 15 )
       self:SetEraModern()
-      --self:SetMenutextShort(true)
-      --self:SetMenuStatic(true)
       return self
     else
       local Settings = _DATABASE:GetPlayerSettings( PlayerName )
@@ -270,14 +268,14 @@ do -- SETTINGS
   -- @param #SETTINGS self
   -- @param #boolean onoff If *true* use short menu texts. If *false* long ones (default).
   function SETTINGS:SetMenutextShort(onoff)
-    self.MenuShort = onoff
+    _SETTINGS.MenuShort = onoff
   end
 
   --- Set menu to be static.
   -- @param #SETTINGS self
   -- @param #boolean onoff If *true* menu is static. If *false* menu will be updated after changes (default).
   function SETTINGS:SetMenuStatic(onoff)
-    self.MenuStatic = onoff
+    _SETTINGS.MenuStatic = onoff
   end
 
   --- Sets the SETTINGS metric.
@@ -496,8 +494,8 @@ do -- SETTINGS
     -- A2G Coordinate System
     -------
 
-    local text="A2G Coordinate System XXX"
-    if self.MenuShort then
+    local text="A2G Coordinate System"
+    if _SETTINGS.MenuShort then
       text="A2G Coordinates"
     end
     local A2GCoordinateMenu = MENU_GROUP:New( MenuGroup, text, SettingsMenu ):SetTime( MenuTime )
@@ -505,7 +503,7 @@ do -- SETTINGS
     -- Set LL DMS
     if not self:IsA2G_LL_DMS() then
       local text="Lat/Lon Degree Min Sec (LL DMS)"
-      if self.MenuShort then
+      if _SETTINGS.MenuShort then
         text="LL DMS"
       end
       MENU_GROUP_COMMAND:New( MenuGroup, text, A2GCoordinateMenu, self.A2GMenuSystem, self, MenuGroup, RootMenu, "LL DMS" ):SetTime( MenuTime )
@@ -514,7 +512,7 @@ do -- SETTINGS
     -- Set LL DDM
     if not self:IsA2G_LL_DDM() then
       local text="Lat/Lon Degree Dec Min (LL DDM)"
-      if self.MenuShort then
+      if _SETTINGS.MenuShort then
         text="LL DDM"
       end
       MENU_GROUP_COMMAND:New( MenuGroup, "Lat/Lon Degree Dec Min (LL DDM)", A2GCoordinateMenu, self.A2GMenuSystem, self, MenuGroup, RootMenu, "LL DDM" ):SetTime( MenuTime )
@@ -525,7 +523,7 @@ do -- SETTINGS
       local text1="LL DDM Accuracy 1"
       local text2="LL DDM Accuracy 2"
       local text3="LL DDM Accuracy 3"
-      if self.MenuShort then
+      if _SETTINGS.MenuShort then
         text1="LL DDM"
       end
       MENU_GROUP_COMMAND:New( MenuGroup, "LL DDM Accuracy 1", A2GCoordinateMenu, self.MenuLL_DDM_Accuracy, self, MenuGroup, RootMenu, 1 ):SetTime( MenuTime )
@@ -536,7 +534,7 @@ do -- SETTINGS
     -- Set BR.
     if not self:IsA2G_BR() then
       local text="Bearing, Range (BR)"
-      if self.MenuShort then
+      if _SETTINGS.MenuShort then
         text="BR"
       end
       MENU_GROUP_COMMAND:New( MenuGroup, text , A2GCoordinateMenu, self.A2GMenuSystem, self, MenuGroup, RootMenu, "BR" ):SetTime( MenuTime )
@@ -545,7 +543,7 @@ do -- SETTINGS
     -- Set MGRS.
     if not self:IsA2G_MGRS() then
       local text="Military Grid (MGRS)"
-      if self.MenuShort then
+      if _SETTINGS.MenuShort then
         text="MGRS"
       end
       MENU_GROUP_COMMAND:New( MenuGroup, text, A2GCoordinateMenu, self.A2GMenuSystem, self, MenuGroup, RootMenu, "MGRS" ):SetTime( MenuTime )
@@ -565,14 +563,14 @@ do -- SETTINGS
     -------
 
     local text="A2A Coordinate System"
-    if self.MenuShort then
+    if _SETTINGS.MenuShort then
       text="A2A Coordinates"
     end
     local A2ACoordinateMenu = MENU_GROUP:New( MenuGroup, text, SettingsMenu ):SetTime( MenuTime )
 
     if not self:IsA2A_LL_DMS() then
       local text="Lat/Lon Degree Min Sec (LL DMS)"
-      if self.MenuShort then
+      if _SETTINGS.MenuShort then
         text="LL DMS"
       end
       MENU_GROUP_COMMAND:New( MenuGroup, text, A2ACoordinateMenu, self.A2AMenuSystem, self, MenuGroup, RootMenu, "LL DMS" ):SetTime( MenuTime )
@@ -580,7 +578,7 @@ do -- SETTINGS
 
     if not self:IsA2A_LL_DDM() then
       local text="Lat/Lon Degree Dec Min (LL DDM)"
-      if self.MenuShort then
+      if _SETTINGS.MenuShort then
         text="LL DDM"
       end
       MENU_GROUP_COMMAND:New( MenuGroup, text, A2ACoordinateMenu, self.A2AMenuSystem, self, MenuGroup, RootMenu, "LL DDM" ):SetTime( MenuTime )
@@ -594,7 +592,7 @@ do -- SETTINGS
 
     if not self:IsA2A_BULLS() then
       local text="Bullseye (BULLS)"
-      if self.MenuShort then
+      if _SETTINGS.MenuShort then
         text="Bulls"
       end
       MENU_GROUP_COMMAND:New( MenuGroup, text, A2ACoordinateMenu, self.A2AMenuSystem, self, MenuGroup, RootMenu, "BULLS" ):SetTime( MenuTime )
@@ -602,7 +600,7 @@ do -- SETTINGS
 
     if not self:IsA2A_BRAA() then
       local text="Bearing Range Altitude Aspect (BRAA)"
-      if self.MenuShort then
+      if _SETTINGS.MenuShort then
         text="BRAA"
       end
       MENU_GROUP_COMMAND:New( MenuGroup, text, A2ACoordinateMenu, self.A2AMenuSystem, self, MenuGroup, RootMenu, "BRAA" ):SetTime( MenuTime )
@@ -610,7 +608,7 @@ do -- SETTINGS
 
     if not self:IsA2A_MGRS() then
       local text="Military Grid (MGRS)"
-      if self.MenuShort then
+      if _SETTINGS.MenuShort then
         text="MGRS"
       end
       MENU_GROUP_COMMAND:New( MenuGroup, text, A2ACoordinateMenu, self.A2AMenuSystem, self, MenuGroup, RootMenu, "MGRS" ):SetTime( MenuTime )
@@ -625,14 +623,14 @@ do -- SETTINGS
     end
 
     local text="Measures and Weights System"
-    if self.MenuShort then
+    if _SETTINGS.MenuShort then
       text="Unit System"
     end
     local MetricsMenu = MENU_GROUP:New( MenuGroup, text, SettingsMenu ):SetTime( MenuTime )
 
     if self:IsMetric() then
       local text="Imperial (Miles,Feet)"
-      if self.MenuShort then
+      if _SETTINGS.MenuShort then
         text="Imperial"
       end
       MENU_GROUP_COMMAND:New( MenuGroup, text, MetricsMenu, self.MenuMWSystem, self, MenuGroup, RootMenu, false ):SetTime( MenuTime )
@@ -640,14 +638,14 @@ do -- SETTINGS
 
     if self:IsImperial() then
       local text="Metric (Kilometers,Meters)"
-      if self.MenuShort then
+      if _SETTINGS.MenuShort then
         text="Metric"
       end
       MENU_GROUP_COMMAND:New( MenuGroup, text, MetricsMenu, self.MenuMWSystem, self, MenuGroup, RootMenu, true ):SetTime( MenuTime )
     end
 
     local text="Messages and Reports"
-    if self.MenuShort then
+    if _SETTINGS.MenuShort then
       text="Messages & Reports"
     end
     local MessagesMenu = MENU_GROUP:New( MenuGroup, text, SettingsMenu ):SetTime( MenuTime )
@@ -805,7 +803,7 @@ do -- SETTINGS
 
       if not self:IsA2A_LL_DMS() or _SETTINGS.MenuStatic then
         local text="Lat/Lon Degree Min Sec (LL DMS)"
-        if self.MenuShort then
+        if _SETTINGS.MenuShort then
           text="LL DMS"
         end
         MENU_GROUP_COMMAND:New( PlayerGroup, text, A2ACoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL DMS" )
@@ -983,7 +981,7 @@ do -- SETTINGS
       BASE:E( {self, PlayerUnit:GetName(), A2GSystem} )
       self.A2GSystem = A2GSystem
       MESSAGE:New( string.format( "Settings: A2G format set to %s for player %s.", A2GSystem, PlayerName ), 5 ):ToGroup( PlayerGroup )
-      if self.MenuStatic==false then
+      if _SETTINGS.MenuStatic==false then
         self:RemovePlayerMenu(PlayerUnit)
         self:SetPlayerMenu(PlayerUnit)
       end
@@ -993,7 +991,7 @@ do -- SETTINGS
     function SETTINGS:MenuGroupA2ASystem( PlayerUnit, PlayerGroup, PlayerName, A2ASystem )
       self.A2ASystem = A2ASystem
       MESSAGE:New( string.format( "Settings: A2A format set to %s for player %s.", A2ASystem, PlayerName ), 5 ):ToGroup( PlayerGroup )
-      if self.MenuStatic==false then
+      if _SETTINGS.MenuStatic==false then
         self:RemovePlayerMenu(PlayerUnit)
         self:SetPlayerMenu(PlayerUnit)
       end
@@ -1003,7 +1001,7 @@ do -- SETTINGS
     function SETTINGS:MenuGroupLL_DDM_AccuracySystem( PlayerUnit, PlayerGroup, PlayerName, LL_Accuracy )
       self.LL_Accuracy = LL_Accuracy
       MESSAGE:New( string.format( "Settings: LL format accuracy set to %d decimal places for player %s.", LL_Accuracy, PlayerName ), 5 ):ToGroup( PlayerGroup )
-      if self.MenuStatic==false then
+      if _SETTINGS.MenuStatic==false then
         self:RemovePlayerMenu(PlayerUnit)
         self:SetPlayerMenu(PlayerUnit)
       end
@@ -1013,7 +1011,7 @@ do -- SETTINGS
     function SETTINGS:MenuGroupMGRS_AccuracySystem( PlayerUnit, PlayerGroup, PlayerName, MGRS_Accuracy )
       self.MGRS_Accuracy = MGRS_Accuracy
       MESSAGE:New( string.format( "Settings: MGRS format accuracy set to %d for player %s.", MGRS_Accuracy, PlayerName ), 5 ):ToGroup( PlayerGroup )
-      if self.MenuStatic==false then
+      if _SETTINGS.MenuStatic==false then
         self:RemovePlayerMenu(PlayerUnit)
         self:SetPlayerMenu(PlayerUnit)
       end
@@ -1023,7 +1021,7 @@ do -- SETTINGS
     function SETTINGS:MenuGroupMWSystem( PlayerUnit, PlayerGroup, PlayerName, MW )
       self.Metric = MW
       MESSAGE:New( string.format( "Settings: Measurement format set to %s for player %s.", MW and "Metric" or "Imperial", PlayerName ), 5 ):ToGroup( PlayerGroup )
-      if self.MenuStatic==false then
+      if _SETTINGS.MenuStatic==false then
         self:RemovePlayerMenu(PlayerUnit)
         self:SetPlayerMenu(PlayerUnit)
       end

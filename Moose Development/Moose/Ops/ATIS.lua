@@ -80,7 +80,7 @@
 -- @field #boolean windtrue Report true (from) heading of wind. Default is magnetic.
 -- @extends Core.Fsm#FSM
 
---- Be informed!
+--- *It is a very sad thing that nowadays there is so little useless information.* - Oscar Wilde
 --
 -- ===
 --
@@ -339,10 +339,10 @@ ATIS.Alphabet = {
 
 --- Runway correction for converting true to magnetic heading.
 -- @type ATIS.RunwayM2T
--- @field #number Caucasus 0ï¿½ (East).
--- @field #number Nevada +12ï¿½ (East).
--- @field #number Normandy -10ï¿½ (West).
--- @field #number PersianGulf +2ï¿½ (East).
+-- @field #number Caucasus 0° (East).
+-- @field #number Nevada +12° (East).
+-- @field #number Normandy -10° (West).
+-- @field #number PersianGulf +2° (East).
 ATIS.RunwayM2T={
   Caucasus=0,
   Nevada=12,
@@ -523,7 +523,7 @@ ATIS.version="0.4.0"
 -- @return #ATIS self
 function ATIS:New(airbasename, frequency, modulation)
 
-  -- Inherit everything from WAREHOUSE class.
+  -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #ATIS
 
   self.airbasename=airbasename
@@ -650,7 +650,7 @@ end
 
 --- Set magnetic runway headings as depicted on the runway, e.g. 13 for 130.
 -- @param #ATIS self
--- @param #table headings Magnetic headings. Inverse (-180ï¿½) headings are added automatically.
+-- @param #table headings Magnetic headings. Inverse (-180°) headings are added automatically.
 -- @return #ATIS self
 function ATIS:SetRunwayHeadingsMagnetic(headings)
   if type(headings)=="table" then
@@ -728,12 +728,12 @@ end
 --
 -- To get *true* from *magnetic* heading one has to add easterly or substract westerly variation, e.g
 --
--- A magnetic heading of 180ï¿½ corresponds to a true heading of
+-- A magnetic heading of 180° corresponds to a true heading of
 --
---   * 186ï¿½ on the Caucaus map
---   * 192ï¿½ on the Nevada map
---   * 170ï¿½ on the Normany map
---   * 182ï¿½ on the Persian Gulf map
+--   * 186° on the Caucaus map
+--   * 192° on the Nevada map
+--   * 170° on the Normany map
+--   * 182° on the Persian Gulf map
 --
 -- Likewise, to convert *magnetic* into *true* heading, one has to substract easterly and add westerly variation.
 --
@@ -922,7 +922,7 @@ function ATIS:onafterStatus(From, Event, To)
   local text=string.format("State %s", fsmstate)
   self:I(self.lid..text)
 
-  self:__Status(60)
+  self:__Status(-60)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -941,7 +941,7 @@ function ATIS:onafterCheckQueue(From, Event, To)
   end
 
   -- Check back in 5 seconds.
-  self:__CheckQueue(5)
+  self:__CheckQueue(-5)
 end
 
 --- Broadcast ATIS radio message.
@@ -1070,10 +1070,10 @@ function ATIS:onafterBroadcast(From, Event, To)
   --- Temperature ---
   -------------------
 
-  -- Temperature in ï¿½C (or ï¿½F).
+  -- Temperature in °C (or °F).
   local temperature=coord:GetTemperature(height)
 
-  -- Convert to ï¿½F.
+  -- Convert to °F.
   if self.TDegF then
     temperature=UTILS.CelciusToFarenheit(temperature)
   end
@@ -1553,7 +1553,7 @@ end
 --- Get runway from user supplied magnetic heading.
 -- @param #ATIS self
 -- @param #number windfrom Wind direction (from) in degrees.
--- @return #string Runway magnetic heading divided by ten (and rounded). Eg, "13" for 130ï¿½.
+-- @return #string Runway magnetic heading divided by ten (and rounded). Eg, "13" for 130°.
 function ATIS:GetMagneticRunway(windfrom)
 
   local diffmin=nil
@@ -1588,7 +1588,7 @@ function ATIS:GetNavPoint(navpoints, runway)
     else
       local nr=tonumber(nav.runway)
       local r=tonumber(runway)
-      if math.abs(nr-r)<=2 then --We allow an error of +-20ï¿½ here.
+      if math.abs(nr-r)<=2 then --We allow an error of +-20° here.
         return nav
       end
     end
