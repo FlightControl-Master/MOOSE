@@ -331,7 +331,7 @@ AIRBASE.TerminalType = {
 --- Runway data.
 -- @type AIRBASE.Runway
 -- @field #number heading Heading of the runway in degrees.
--- @field #string idx Runway ID: heading 070ï¿½ ==> idx="07".
+-- @field #string idx Runway ID: heading 070° ==> idx="07".
 -- @field #number length Length of runway in meters.
 -- @field Core.Point#COORDINATE position Position of runway start.
 -- @field Core.Point#COORDINATE endpoint End point of runway.
@@ -1060,7 +1060,7 @@ function AIRBASE:GetRunwayData(magvar, mark)
     -- Heading of runway.
     local hdg=c1:HeadingTo(c2)
 
-    -- Runway ID: heading=070ï¿½ ==> idx="07"
+    -- Runway ID: heading=070° ==> idx="07"
     local idx=string.format("%02d", UTILS.Round((hdg-magvar)/10, 0))
 
     -- Runway table.
@@ -1170,7 +1170,7 @@ function AIRBASE:GetActiveRunway(magvar)
       local dot=UTILS.VecDot(Vwind, Vrunway)
 
       -- Debug.
-      --env.info(string.format("runway=%03dï¿½ dot=%.3f", runway.heading, dot))
+      --env.info(string.format("runway=%03d° dot=%.3f", runway.heading, dot))
 
       -- New min?
       if dotmin==nil or dot<dotmin then

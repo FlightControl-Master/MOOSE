@@ -183,7 +183,7 @@
 --    * **Runways** *25* and *07* - automatic but can be set manually via @{#ATIS.SetRunwayHeadingsMagnetic}
 --    * **ILS** *111.50* for runway *07* - set via @{#ATIS.AddILS}
 --    * **PRMG** *N/A* - set via @{#ATIS.AddPRMG}
---    * **OUTER NDB** *870.00* - set via @{#ATIS.AddNDBinner}
+--    * **OUTER NDB** *870.00* - set via @{#ATIS.AddNDBouter}
 --    * **INNER NDB** *490.00* - set via @{#ATIS.AddNDBinner}
 --
 -- ![Banner Image](..\Presentations\ATIS\NavAid_Kobuleti.png)
@@ -496,9 +496,14 @@ ATIS.Sound = {
   RSBNChannel={filename="RSBNChannel.ogg", duration=1.14},
 }
 
+
+--- ATIS table containing all defined ATISes.
+-- @field #table _ATIS
+_ATIS={}
+
 --- ATIS class version.
 -- @field #string version
-ATIS.version="0.4.0"
+ATIS.version="0.4.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -542,6 +547,9 @@ function ATIS:New(airbasename, frequency, modulation)
 
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("ATIS %s | ", self.airbasename)
+  
+  -- This is just to hinder the garbage collector deallocating the ATIS object.
+  _ATIS[#_ATIS+1]=self
 
   -- Defaults:
   self:SetSoundfilesPath()
@@ -883,7 +891,7 @@ function ATIS:onafterStart(From, Event, To)
   self:I(self.lid..string.format("Starting ATIS v%s for airbase %s on %.3f MHz Modulation=%d", ATIS.version, self.airbasename, self.frequency, self.modulation))
 
   -- Start radio queue.
-  self.radioqueue=RADIOQUEUE:New(self.frequency, self.modulation)
+  self.radioqueue=RADIOQUEUE:New(self.frequency, self.modulation, string.format("ATIS %s", self.airbasename))
 
   -- Send coordinate is airbase coord.
   self.radioqueue:SetSenderCoordinate(self.airbase:GetCoordinate())

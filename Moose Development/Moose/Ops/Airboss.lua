@@ -6722,7 +6722,8 @@ function AIRBOSS:_GetCharlieTime(flightgroup)
     -- Time in seconds until the next recovery starts or 0 if window is already open.
     Trecovery=math.max(self.recoverywindow.START-Tnow, 0)
   else
-    return nil
+    -- Set ~7 min if no future recovery window is defined. Otherwise radio call function crashes.
+    Trecovery=7*60
   end
 
   -- Loop over flights currently in the marshal queue.
@@ -6742,7 +6743,7 @@ function AIRBOSS:_GetCharlieTime(flightgroup)
 
       -- Check if flight is already holding or just on its way.
       if flight.holding==nil then
-        -- Flight is also on its way to the marshal stack.
+        -- Flight is on its way to the marshal stack.
 
         -- Coordinate of the holding zone.
         local holdingzone=self:_GetZoneHolding(flight.case, 1):GetCoordinate()
