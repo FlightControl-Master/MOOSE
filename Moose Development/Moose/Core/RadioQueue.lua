@@ -17,33 +17,45 @@
 -- 
 -- @type RADIOQUEUE
 -- @field #string ClassName Name of the class "RADIOQUEUE".
+-- @field #boolean Debug Debug mode. More info.
 -- @field #string lid ID for dcs.log.
 -- @field #number frequency The radio frequency in Hz.
 -- @field #number modulation The radio modulation. Either radio.modulation.AM or radio.modulation.FM.
 -- @field Core.Scheduler#SCHEDULER scheduler The scheduler.
 -- @field #string RQid The radio queue scheduler ID.
--- @field #table queue The queue of transmissions. 
+-- @field #table queue The queue of transmissions.
+-- @field #string alias Name of the radio.
+-- @field #number dt Time interval in seconds for checking the radio queue.
+-- @field #number delay Time delay before starting the radio queue. 
 -- @field #number Tlast Time (abs) when the last transmission finished.
 -- @field Core.Point#COORDINATE sendercoord Coordinate from where transmissions are broadcasted.
 -- @field #number sendername Name of the sending unit or static.
--- @field Wrapper.Positionable#POSITIONABLE positionable The positionable to broadcast the message.
+-- @field #boolean senderinit Set frequency was initialized.
 -- @field #number power Power of radio station in Watts. Default 100 W.
 -- @field #table numbers Table of number transmission parameters.
+-- @field #boolean checking Scheduler is checking the radio queue. 
+-- @field #boolean schedonce Call ScheduleOnce instead of normal scheduler.
 -- @extends Core.Base#BASE
 RADIOQUEUE = {
-  ClassName = "RADIOQUEUE",
-  lid=nil,
-  frequency=nil,
-  modulation=nil,
-  scheduler=nil,
-  RQid=nil,
-  queue={},
-  Tlast=nil,
-  sendercoord=nil,
-  sendername=nil,
-  positionable=nil,
-  power=100,
-  numbers={},
+  ClassName   = "RADIOQUEUE",
+  Debug       = nil,
+  lid         = nil,
+  frequency   = nil,
+  modulation  = nil,
+  scheduler   = nil,
+  RQid        = nil,
+  queue       =  {},
+  alias       = nil,
+  dt          = nil,
+  delay       = nil,
+  Tlast       = nil,
+  sendercoord = nil,
+  sendername  = nil,
+  senderinit  = nil,
+  power       = 100,
+  numbers     =  {},
+  checking    = nil,
+  schedonce   = nil,
 }
 
 --- Radio queue transmission data.
@@ -63,13 +75,16 @@ RADIOQUEUE = {
 -- @param #RADIOQUEUE self
 -- @param #number frequency The radio frequency in MHz.
 -- @param #number modulation (Optional) The radio modulation. Default radio.modulation.AM.
+-- @param #string alias (Optional) Name of the radio queue.
 -- @return #RADIOQUEUE self The RADIOQUEUE object.
-function RADIOQUEUE:New(frequency, modulation)
+function RADIOQUEUE:New(frequency, modulation, alias)
 
   -- Inherit base
   local self=BASE:Inherit(self, BASE:New()) -- #RADIOQUEUE
   
-  self.lid="RADIOQUEUE | "
+  self.alias=alias or "My Radio"
+  
+  self.lid=string.format("RADIOQUEUE %s | ", self.alias)
   
   if frequency==nil then
     self:E(self.lid.."ERROR: No frequency specified as first parameter!")
@@ -82,7 +97,7 @@ function RADIOQUEUE:New(frequency, modulation)
   -- Modulation.
   self.modulation=modulation or radio.modulation.AM
   
-  -- Scheduler
+  -- Scheduler.
   self.scheduler=SCHEDULER:New()
   self.scheduler:NoTrace()
   
@@ -96,13 +111,19 @@ end
 -- @return #RADIOQUEUE self The RADIOQUEUE object.
 function RADIOQUEUE:Start(delay, dt)
 
-  delay=delay or 1
+  self.delay=delay or 1
   
-  dt=dt or 0.01
+  self.dt=dt or 0.01
   
-  self:I(self.lid..string.format("Starting RADIOQUEUE on Frequency %.2f MHz [modulation=%d] in %.1f seconds (dt=%.3f sec)", self.frequency/1000000, self.modulation, delay, dt))
+  self:I(self.lid..string.format("Starting RADIOQUEUE %s on Frequency %.2f MHz [modulation=%d] in %.1f seconds (dt=%.3f sec)", self.alias, self.frequency/1000000, self.modulation, delay, dt))
 
-  self.RQid=self.scheduler:Schedule(self, self._CheckRadioQueue, {}, delay, dt)
+  
+  if self.schedonce then
+    self:_CheckRadioQueueDelayed(self.delta)
+  else
+    --self.RQid=self.scheduler:Schedule(self, self._CheckRadioQueue, {}, delay, dt)
+    self.RQid=self.scheduler:Schedule(nil, RADIOQUEUE._CheckRadioQueue, {self}, delay, dt)
+  end
   
   return self
 end
@@ -178,7 +199,10 @@ function RADIOQUEUE:AddTransmission(transmission)
   -- Add to queue.
   table.insert(self.queue, transmission)
   
-  --TODO: Start scheduler.
+  -- Start checking.
+  if self.schedonce and not self.checking then
+    self:_CheckRadioQueueDelayed()
+  end
 
   return self
 end
@@ -298,13 +322,22 @@ function RADIOQUEUE:Broadcast(transmission)
     -- Broadcasting from aircraft. Only players tuned in to the right frequency will see the message.
     self:T(self.lid..string.format("Broadcasting from aircraft %s", sender:GetName()))
     
-    -- Command to set the Frequency for the transmission.
-    local commandFrequency={
-      id="SetFrequency",
-      params={
-        frequency=self.frequency,  -- Frequency in Hz.
-        modulation=self.modulation,
-      }}
+    
+    if not self.senderinit then
+    
+      -- Command to set the Frequency for the transmission.
+      local commandFrequency={
+        id="SetFrequency",
+        params={
+          frequency=self.frequency,  -- Frequency in Hz.
+          modulation=self.modulation,
+        }}
+          
+      -- Set commend for frequency
+      sender:SetCommand(commandFrequency)
+      
+      self.senderinit=true
+    end
     
     -- Command to tranmit the call.
     local commandTransmit={
@@ -314,15 +347,14 @@ function RADIOQUEUE:Broadcast(transmission)
         duration=transmission.subduration,
         subtitle=transmission.subtitle or "",
         loop=false,
-      }}
-    
-    -- Set commend for frequency
-    sender:SetCommand(commandFrequency)
+      }}    
     
     -- Set command for radio transmission. 
     sender:SetCommand(commandTransmit)
     
-    --MESSAGE:New(string.format("transmissing file %s duration=%.2f sec, subtitle=%s", filename, transmission.duration, transmission.subtitle or ""), 5, "RADIOQUEUE"):ToAll()
+    -- Debug message.
+    local text=string.format("file=%s, freq=%.2f MHz, duration=%.2f sec, subtitle=%s", filename, self.frequency/1000000, transmission.duration, transmission.subtitle or "")
+    MESSAGE:New(text, 2, "RADIOQUEUE "..self.alias):ToAllIf(self.Debug)
       
   else
     
@@ -349,20 +381,35 @@ function RADIOQUEUE:Broadcast(transmission)
     if vec3 then
       self:T("Sending")
       self:T( { filename = filename, vec3 = vec3, modulation = self.modulation, frequency = self.frequency, power = self.power } )
-      --MESSAGE:New(string.format("transmissing file %s duration=%.2f sec, subtitle=%s", filename, transmission.duration, transmission.subtitle or ""), 5, "RADIOQUEUE (trigger)"):ToAll()
+      
+      -- Trigger transmission.
       trigger.action.radioTransmission(filename, vec3, self.modulation, false, self.frequency, self.power)
+      
+      -- Debug message.
+      local text=string.format("file=%s, freq=%.2f MHz, duration=%.2f sec, subtitle=%s", filename, self.frequency/1000000, transmission.duration, transmission.subtitle or "")
+      MESSAGE:New(string.format(text, filename, transmission.duration, transmission.subtitle or ""), 5, "RADIOQUEUE "..self.alias):ToAllIf(self.Debug)
     end
 
   end
 end
 
+--- Start checking the radio queue.
+-- @param #RADIOQUEUE self
+-- @param #number delay Delay in seconds before checking.
+function RADIOQUEUE:_CheckRadioQueueDelayed(delay)
+  self.checking=true
+  self:ScheduleOnce(delay or self.dt, RADIOQUEUE._CheckRadioQueue, self)
+end
+
 --- Check radio queue for transmissions to be broadcasted.
 -- @param #RADIOQUEUE self
 function RADIOQUEUE:_CheckRadioQueue()
+  --env.info("FF check radio queue "..self.alias)
 
   -- Check if queue is empty.
   if #self.queue==0 then
-    --TODO: stop scheduler.
+    -- Queue is now empty. Nothing to else to do.
+    self.checking=false
     return
   end
 
@@ -445,7 +492,12 @@ function RADIOQUEUE:_CheckRadioQueue()
   if remove then
     table.remove(self.queue, remove)
   end
-
+  
+  -- Check queue.
+  if self.schedonce then
+    self:_CheckRadioQueueDelayed()
+  end
+  
 end
 
 --- Get unit from which we want to transmit a radio message. This has to be an aircraft for subtitles to work.
