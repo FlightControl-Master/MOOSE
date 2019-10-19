@@ -1694,7 +1694,7 @@ AIRBOSS.version="1.0.9"
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Handle tanker and AWACS. Put them into pattern.
+-- DONE: Handle tanker and AWACS. Put them into pattern.
 -- TODO: Handle cases where AI crashes on carrier deck ==> Clean up deck.
 -- TODO: Player eject and crash debrief "gradings".
 -- TODO: PWO during case 2/3.
@@ -1954,29 +1954,24 @@ function AIRBOSS:New(carriername, alias)
   end
 
   -- Smoke zones.
-  if true then
+  if false then
     local case=3
     self.holdingoffset=30
-	--[[
     self:_GetZoneGroove():SmokeZone(SMOKECOLOR.Red, 5)
     self:_GetZoneLineup():SmokeZone(SMOKECOLOR.Green, 5)
     self:_GetZoneBullseye(case):SmokeZone(SMOKECOLOR.White, 45)
-    self:_GetZoneDirtyUp(case):SmokeZone(SMOKECOLOR.Orange, 45)
-	]]		
+    self:_GetZoneDirtyUp(case):SmokeZone(SMOKECOLOR.Orange, 45)		
     self:_GetZoneArcIn(case):SmokeZone(SMOKECOLOR.Blue, 45)
     self:_GetZoneArcOut(case):SmokeZone(SMOKECOLOR.Blue, 45)
     self:_GetZonePlatform(case):SmokeZone(SMOKECOLOR.Blue, 45)
     self:_GetZoneCorridor(case):SmokeZone(SMOKECOLOR.Green, 45)
     self:_GetZoneHolding(case, 1):SmokeZone(SMOKECOLOR.White, 45)
-	self:_GetZoneHolding(case, 2):SmokeZone(SMOKECOLOR.White, 45)
+	  self:_GetZoneHolding(case, 2):SmokeZone(SMOKECOLOR.White, 45)
     self:_GetZoneInitial(case):SmokeZone(SMOKECOLOR.Orange, 45)
-
     self:_GetZoneCommence(case, 1):SmokeZone(SMOKECOLOR.Red, 45)
-	self:_GetZoneCommence(case, 2):SmokeZone(SMOKECOLOR.Red, 45)
-	--[[
+	  self:_GetZoneCommence(case, 2):SmokeZone(SMOKECOLOR.Red, 45)
     self:_GetZoneAbeamLandingSpot():SmokeZone(SMOKECOLOR.Red, 5)
     self:_GetZoneLandingSpot():SmokeZone(SMOKECOLOR.Red, 5)
-	]]
   end
 
   -- Carrier parameter debug tests.
