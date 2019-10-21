@@ -52,7 +52,7 @@ RADIOQUEUE = {
   sendercoord = nil,
   sendername  = nil,
   senderinit  = nil,
-  power       = 100,
+  power       = nil,
   numbers     =  {},
   checking    = nil,
   schedonce   = nil,
@@ -96,6 +96,9 @@ function RADIOQUEUE:New(frequency, modulation, alias)
   
   -- Modulation.
   self.modulation=modulation or radio.modulation.AM
+  
+  -- Set radio power.
+  self:SetRadioPower()
   
   -- Scheduler.
   self.scheduler=SCHEDULER:New()
@@ -153,6 +156,15 @@ end
 -- @return #RADIOQUEUE self The RADIOQUEUE object.
 function RADIOQUEUE:SetSenderUnitName(name)
   self.sendername=name
+  return self
+end
+
+--- Set radio power. Note that this only applies if no relay unit is used.
+-- @param #RADIOQUEUE self
+-- @param #number power Radio power in Watts. Default 100 W.
+-- @return #RADIOQUEUE self The RADIOQUEUE object.
+function RADIOQUEUE:SetRadioPower(power)
+  self.power=power or 100
   return self
 end
 
