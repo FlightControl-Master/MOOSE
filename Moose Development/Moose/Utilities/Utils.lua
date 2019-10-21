@@ -857,7 +857,18 @@ end
 -- @param DCS#Vec3 b Vector in 3D with x, y, z components.
 -- @return #number Angle alpha between and b in degrees. alpha=acos(a*b)/(|a||b|), (* denotes the dot product). 
 function UTILS.VecAngle(a, b)
-  local alpha=math.acos(UTILS.VecDot(a,b)/(UTILS.VecNorm(a)*UTILS.VecNorm(b)))
+
+  local cosalpha=UTILS.VecDot(a,b)/(UTILS.VecNorm(a)*UTILS.VecNorm(b))
+  
+  local alpha=0
+  if cosalpha>=0.9999999999 then  --acos(1) is not defined.
+    alpha=0
+  elseif cosalpha<=-0.999999999 then --acos(-1) is not defined.
+    alpha=math.pi()
+  else
+    alpha=math.acos(cosalpha)
+  end 
+  
   return math.deg(alpha)
 end
 
@@ -879,14 +890,16 @@ end
 function UTILS.HdgDiff(h1, h2)
 
   -- Angle in rad.
-  local alpha=math.rad(h1)
-  local beta=math.rad(h2)
+  local alpha= math.rad(tonumber(h1))
+  local beta = math.rad(tonumber(h2))
       
   -- Runway vector.
   local v1={x=math.cos(alpha), y=0, z=math.sin(alpha)}
   local v2={x=math.cos(beta),  y=0, z=math.sin(beta)}
+
+  local delta=UTILS.VecAngle(v1, v2)
   
-  return math.abs(UTILS.VecAngle(v1, v2))
+  return math.abs(delta)
 end
 
 

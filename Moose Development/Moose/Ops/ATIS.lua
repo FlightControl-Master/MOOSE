@@ -1699,13 +1699,13 @@ function ATIS:GetNavPoint(navpoints, runway, left)
       local rwyy=tonumber(self:GetRunwayWithoutLR(runway))*10
       
       local navL=self:GetRunwayLR(nav.runway)
+      local hdgD=UTILS.HdgDiff(navy,rwyy)
       
-      if UTILS.HdgDiff(navy,rwyy)<=15 then --We allow an error of +-15° here.
-        if navL==nil or navL==left then
+      if hdgD<=15 then --We allow an error of +-15° here.
+        if navL==nil or (navL==true and left==true) or (navL==false and left==false) then
           return nav
         end
       end
-      
     end
   end
   
