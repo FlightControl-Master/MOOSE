@@ -864,7 +864,7 @@ function UTILS.VecAngle(a, b)
   if cosalpha>=0.9999999999 then  --acos(1) is not defined.
     alpha=0
   elseif cosalpha<=-0.999999999 then --acos(-1) is not defined.
-    alpha=math.pi()
+    alpha=math.pi
   else
     alpha=math.acos(cosalpha)
   end 

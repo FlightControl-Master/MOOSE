@@ -452,7 +452,7 @@ ATIS.Sound = {
   DegreesCelsius={filename="DegreesCelsius.ogg", duration=1.27},
   DegreesFahrenheit={filename="DegreesFahrenheit.ogg", duration=1.23},
   Dust={filename="Dust.ogg", duration=0.54},
-  Elevation={filename="Elevation.ogg", duration=0.50},
+  Elevation={filename="Elevation.ogg", duration=0.78},
   EndOfInformation={filename="EndOfInformation.ogg", duration=1.15},
   Feet={filename="Feet.ogg", duration=0.45},
   Fog={filename="Fog.ogg", duration=0.47},
@@ -513,7 +513,7 @@ _ATIS={}
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version="0.4.2"
+ATIS.version="0.5.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
