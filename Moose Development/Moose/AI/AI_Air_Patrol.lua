@@ -386,11 +386,12 @@ function AI_AIR_PATROL:onafterPatrolRoute( AIPatrol, From, Event, To )
       Tasks[#Tasks+1] = AIPatrol:TaskFunction( "AI_AIR_PATROL.___PatrolRoute", self )
       PatrolRoute[#PatrolRoute].task = AIPatrol:TaskCombo( Tasks )
       
-      AIPatrol:OptionROEReturnFire()
-      AIPatrol:OptionROTEvadeFire()
-  
-      AIPatrol:Route( PatrolRoute, self.TaskDelay )
     end
+    
+    AIPatrol:OptionROEReturnFire()
+    AIPatrol:OptionROTEvadeFire()
+  
+    AIPatrol:Route( PatrolRoute, self.TaskDelay )
     
   end
 
