@@ -307,11 +307,14 @@ function AI_AIR_PATROL:onafterPatrolRoute( AIPatrol, From, Event, To )
     
     local CurrentCoord = AIPatrol:GetCoordinate()
     
+    local altitude= math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude )
+    
     local ToTargetCoord = self.PatrolZone:GetRandomPointVec2()
-    ToTargetCoord:SetAlt( math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude ) )
+    ToTargetCoord:SetAlt( altitude )
     self:SetTargetDistance( ToTargetCoord ) -- For RTB status check
     
     local ToTargetSpeed = math.random( self.PatrolMinSpeed, self.PatrolMaxSpeed )
+    local speedkmh=ToTargetSpeed
 
     local FromWP = CurrentCoord:WaypointAir( 
       self.PatrolAltType or "RADIO", 
