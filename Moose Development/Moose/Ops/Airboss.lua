@@ -52,9 +52,9 @@
 --
 -- If you have questions or suggestions, please visit the [MOOSE Discord](https://discord.gg/AeYAkHP) #ops-airboss channel.
 -- There you also find an example mission and the necessary voice over sound files. Check out the **pinned messages**.
--- 
+--
 -- ## Example Missions
--- 
+--
 -- Example missions can be found [here](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/OPS%20-%20Airboss).
 -- They contain the latest development Moose.lua file.
 --
@@ -1688,13 +1688,13 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="1.0.8"
+AIRBOSS.version="1.0.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Handle tanker and AWACS. Put them into pattern.
+-- DONE: Handle tanker and AWACS. Put them into pattern.
 -- TODO: Handle cases where AI crashes on carrier deck ==> Clean up deck.
 -- TODO: Player eject and crash debrief "gradings".
 -- TODO: PWO during case 2/3.
@@ -1955,19 +1955,23 @@ function AIRBOSS:New(carriername, alias)
 
   -- Smoke zones.
   if false then
-    local case=2
+    local case=3
     self.holdingoffset=30
     self:_GetZoneGroove():SmokeZone(SMOKECOLOR.Red, 5)
     self:_GetZoneLineup():SmokeZone(SMOKECOLOR.Green, 5)
     self:_GetZoneBullseye(case):SmokeZone(SMOKECOLOR.White, 45)
-    self:_GetZoneDirtyUp(case):SmokeZone(SMOKECOLOR.Orange, 45)
+    self:_GetZoneDirtyUp(case):SmokeZone(SMOKECOLOR.Orange, 45)		
     self:_GetZoneArcIn(case):SmokeZone(SMOKECOLOR.Blue, 45)
     self:_GetZoneArcOut(case):SmokeZone(SMOKECOLOR.Blue, 45)
-    self:_GetZonePlatform(case):SmokeZone(SMOKECOLOR.Red, 45)
+    self:_GetZonePlatform(case):SmokeZone(SMOKECOLOR.Blue, 45)
     self:_GetZoneCorridor(case):SmokeZone(SMOKECOLOR.Green, 45)
     self:_GetZoneHolding(case, 1):SmokeZone(SMOKECOLOR.White, 45)
+	  self:_GetZoneHolding(case, 2):SmokeZone(SMOKECOLOR.White, 45)
     self:_GetZoneInitial(case):SmokeZone(SMOKECOLOR.Orange, 45)
-    self:_GetZoneCommence(case):SmokeZone(SMOKECOLOR.Red, 45)
+    self:_GetZoneCommence(case, 1):SmokeZone(SMOKECOLOR.Red, 45)
+	  self:_GetZoneCommence(case, 2):SmokeZone(SMOKECOLOR.Red, 45)
+    self:_GetZoneAbeamLandingSpot():SmokeZone(SMOKECOLOR.Red, 5)
+    self:_GetZoneLandingSpot():SmokeZone(SMOKECOLOR.Red, 5)
   end
 
   -- Carrier parameter debug tests.
@@ -2245,6 +2249,29 @@ function AIRBOSS:New(carriername, alias)
   -- @param #string To To state.
   -- @param #string path Path where the file is located. Default is the DCS installation root directory or your "Saved Games\DCS" folder if lfs was desanitized.
   -- @param #string filename (Optional) File name. Default is AIRBOSS-*ALIAS*_LSOgrades.csv.
+
+
+  --- Triggers the FSM event "LSOgrade". Called when the LSO grades a player
+  -- @function [parent=#AIRBOSS] LSOgrade
+  -- @param #AIRBOSS self
+  -- @param #AIRBOSS.PlayerData playerData Player Data.
+  -- @param #AIRBOSS.LSOgrade grade LSO grade.
+
+  --- Triggers the FSM event "LSOgrade". Delayed called when the LSO grades a player.
+  -- @function [parent=#AIRBOSS] __LSOgrade
+  -- @param #AIRBOSS self
+  -- @param #number delay Delay in seconds.
+  -- @param #AIRBOSS.PlayerData playerData Player Data.
+  -- @param #AIRBOSS.LSOgrade grade LSO grade.
+
+  --- On after "LSOgrade" user function. Called when the carrier passes a waypoint of its route.
+  -- @function [parent=#AIRBOSS] OnAfterLSOgrade
+  -- @param #AIRBOSS self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #AIRBOSS.PlayerData playerData Player Data.
+  -- @param #AIRBOSS.LSOgrade grade LSO grade.
 
 
   --- Triggers the FSM event "LSOGrade". Called when the LSO grades a player
@@ -3283,11 +3310,11 @@ function AIRBOSS:onafterStart(From, Event, To)
   -- Schedule radio queue checks.
   --self.RQLid=self.radiotimer:Schedule(nil, AIRBOSS._CheckRadioQueue, {self, self.RQLSO,     "LSO"},     1, 0.1)
   --self.RQMid=self.radiotimer:Schedule(nil, AIRBOSS._CheckRadioQueue, {self, self.RQMarshal, "MARSHAL"}, 1, 0.1)
-  
+
   --self:I("FF: starting timer.scheduleFunction")
   --timer.scheduleFunction(AIRBOSS._CheckRadioQueueT, {airboss=self, radioqueue=self.RQLSO,     name="LSO"},     timer.getTime()+1)
   --timer.scheduleFunction(AIRBOSS._CheckRadioQueueT, {airboss=self, radioqueue=self.RQMarshal, name="MARSHAL"}, timer.getTime()+1)
-  
+
   -- Initial carrier position and orientation.
   self.Cposition=self:GetCoordinate()
   self.Corientation=self.carrier:GetOrientationX()
@@ -3332,11 +3359,18 @@ end
 -- @param #string To To state.
 function AIRBOSS:onafterStatus(From, Event, To)
 
+	if true then
+	  --env.info("FF Status ==> return")
+		--return
+	end
+
   -- Get current time.
   local time=timer.getTime()
 
   -- Update marshal and pattern queue every 30 seconds.
   if time-self.Tqueue>self.dTqueue then
+
+	  --collectgarbage()
 
     -- Get time.
     local clock=UTILS.SecondsToClock(timer.getAbsTime())
@@ -4070,7 +4104,7 @@ function AIRBOSS:onafterStop(From, Event, To)
   self:UnHandleEvent(EVENTS.Ejection)
   self:UnHandleEvent(EVENTS.PlayerLeaveUnit)
   self:UnHandleEvent(EVENTS.MissionEnd)
-  
+
   self.CallScheduler:Clear()
 end
 
@@ -5683,14 +5717,16 @@ function AIRBOSS:_GetNextMarshalFight()
     end
 
     -- Check if conditions are right.
-    if stack==1 and flight.holding~=nil and Tmarshal>=TmarshalMin then
-      if flight.ai then
-        -- Return AI flight.
-        return flight
-      else
-        -- Check for human player if they are already commencing.
-        if flight.step~=AIRBOSS.PatternStep.COMMENCING then
+    if flight.holding~=nil and Tmarshal>=TmarshalMin then
+      if flight.case==1 and stack==1 or flight.case>1 then
+        if flight.ai then
+          -- Return AI flight.
           return flight
+        else
+          -- Check for human player if they are already commencing.
+          if flight.step~=AIRBOSS.PatternStep.COMMENCING then
+            return flight
+          end
         end
       end
     end
@@ -6681,7 +6717,8 @@ function AIRBOSS:_GetCharlieTime(flightgroup)
     -- Time in seconds until the next recovery starts or 0 if window is already open.
     Trecovery=math.max(self.recoverywindow.START-Tnow, 0)
   else
-    return nil
+    -- Set ~7 min if no future recovery window is defined. Otherwise radio call function crashes.
+    Trecovery=7*60
   end
 
   -- Loop over flights currently in the marshal queue.
@@ -6701,7 +6738,7 @@ function AIRBOSS:_GetCharlieTime(flightgroup)
 
       -- Check if flight is already holding or just on its way.
       if flight.holding==nil then
-        -- Flight is also on its way to the marshal stack.
+        -- Flight is on its way to the marshal stack.
 
         -- Coordinate of the holding zone.
         local holdingzone=self:_GetZoneHolding(flight.case, 1):GetCoordinate()
@@ -6831,8 +6868,8 @@ function AIRBOSS:_CollapseMarshalStack(flight, nopattern)
   for _,_flight in pairs(self.Qmarshal) do
     local mflight=_flight --#AIRBOSS.PlayerData
 
-    -- Only collapse stack of which the flight left. CASE II/III stack is the same.
-    if (case==1 and mflight.case==1) or (case>1 and mflight.case>1) then
+    -- Only collapse stack of which the flight left. CASE II/III stacks are not collapsed.
+    if (case==1 and mflight.case==1) then --or (case>1 and mflight.case>1) then
 
       -- Get current flag/stack value.
       local mstack=mflight.flag
@@ -6933,6 +6970,96 @@ end
 -- @param #boolean empty Return lowest stack that is completely empty.
 -- @return #number Lowest free stack available for the given case or nil if all Case I stacks are taken.
 function AIRBOSS:_GetFreeStack(ai, case, empty)
+
+  -- Recovery case.
+  case=case or self.case
+  
+  if case==1 then
+    return self:_GetFreeStack_Old(ai, case, empty)
+  end
+
+  -- Max number of stacks available.
+  local nmaxstacks=100
+  if case==1 then
+    nmaxstacks=self.Nmaxmarshal
+  end
+
+  -- Assume up to two (human) flights per stack. All are free.
+  local stack={}
+  for i=1,nmaxstacks do
+    stack[i]=self.NmaxStack  -- Number of human flights per stack.
+  end
+  
+  local nmax=1
+
+  -- Loop over all flights in marshal stack.
+  for _,_flight in pairs(self.Qmarshal) do
+    local flight=_flight --#AIRBOSS.FlightGroup
+
+    -- Check that the case is right.
+    if flight.case==case then
+
+      -- Get stack of flight.
+      local n=flight.flag
+      
+      if n>nmax then
+        nmax=n
+      end
+
+      if n>0 then
+        if flight.ai or flight.case>1 then
+          stack[n]=0  -- AI get one stack on their own. Also CASE II/III get one stack each.
+        else
+          stack[n]=stack[n]-1
+        end
+      else
+        self:E(string.format("ERROR: Flight %s in marshal stack has stack value <= 0. Stack value is %d.", flight.groupname, n))
+      end
+
+    end
+  end
+  
+  local nfree=nil
+  if stack[nmax]==0 then
+    -- Max occupied stack is completely full!
+    if case==1 then
+      if nmax>=nmaxstacks then
+        -- Already all Case I stacks are occupied ==> wait outside 10 NM zone.
+        nfree=nil
+      else
+        -- Return next free stack.
+        nfree=nmax+1
+      end
+    else
+      -- Case II/III return next stack
+      nfree=nmax+1
+    end
+  
+  elseif stack[nmax]==self.NmaxStack then
+    -- Max occupied stack is completely empty! This should happen only when there is no other flight in the marshal queue.
+    self:E(self.lid..string.format("ERROR: Max occupied stack is empty. Should not happen! Nmax=%d, stack[nmax]=%d", nmax, stack[nmax]))
+    nfree=nmax
+  else
+    -- Max occupied stack is partly full.
+    if ai or empty or case>1 then
+      nfree=nmax+1
+    else
+      nfree=nmax
+    end
+    
+  end
+
+  self:I(self.lid..string.format("Returning free stack %s", tostring(nfree)))
+  return nfree
+end
+
+--- Get next free Marshal stack. Depending on AI/human and recovery case.
+-- @param #AIRBOSS self
+-- @param #boolean ai If true, get a free stack for an AI flight group.
+-- @param #number case Recovery case. Default current (self) case in progress.
+-- @param #boolean empty Return lowest stack that is completely empty.
+-- @return #number Lowest free stack available for the given case or nil if all Case I stacks are taken.
+function AIRBOSS:_GetFreeStack_Old(ai, case, empty)
 
   -- Recovery case.
   case=case or self.case
@@ -7838,14 +7965,14 @@ function AIRBOSS:_RemoveFlight(flight, completely)
     self:_RemoveFlightFromQueue(self.flights, flight)
 
   else
-  
+
     -- Remove all grades until a final grade is reached.
     local grades=self.playerscores[flight.name]
     if grades and #grades>0 then
       while #grades>0 and grades[#grades].finalscore==nil do
         table.remove(grades, #grades)
       end
-    end  
+    end
 
     -- Check if flight should be completely removed, e.g. after the player died or simply left the slot.
     if completely then
@@ -8976,7 +9103,7 @@ function AIRBOSS:_Commencing(playerData, zonecheck)
   if zonecheck then
 
     -- Get auto commence zone.
-    local zoneCommence=self:_GetZoneCommence(playerData.case)
+    local zoneCommence=self:_GetZoneCommence(playerData.case, playerData.flag)
 
     -- Check if unit is in the zone.
     local inzone=playerData.unit:IsInZone(zoneCommence)
@@ -10911,8 +11038,9 @@ end
 --- Get zone where player are automatically commence when enter.
 -- @param #AIRBOSS self
 -- @param #number case Recovery case.
+-- @param #number stack Stack for Case II/III as we commence from stack>=1.
 -- @return Core.Zone#ZONE Holding zone.
-function AIRBOSS:_GetZoneCommence(case)
+function AIRBOSS:_GetZoneCommence(case, stack)
 
   -- Commence zone.
   local zone
@@ -10949,12 +11077,11 @@ function AIRBOSS:_GetZoneCommence(case)
 
   else
     -- Case II/III
+	
+	stack=stack or 1
 
-    -- We simply take the corridor for now. But a bit shorter. Holding starts at 21 and add 2 NM box as commence.
-    --zone=self:_GetZoneCorridor(case, 23)
-
-     -- Total length.
-    local l=21
+     -- Start point at 21 NM for stack=1.
+    local l=20+stack
 
     -- Offset angle
     local offset=self:GetRadial(case, false, true)
@@ -12717,7 +12844,7 @@ end
 -- @param #AIRBOSS.PlayerData playerData Player data.
 function AIRBOSS:_Debrief(playerData)
   self:F(self.lid..string.format("Debriefing of player %s.", playerData.name))
-  
+
   -- Delete scheduler ID.
   playerData.debriefschedulerID=nil
 
@@ -14375,7 +14502,7 @@ function AIRBOSS:_CheckRadioQueue(radioqueue, name)
 
   -- Check if queue is empty.
   if #radioqueue==0 then
-  
+
   	if name=="LSO" then
   	  self:T(self.lid..string.format("Stopping LSO radio queue."))
   	  self.radiotimer:Stop(self.RQLid)
@@ -14385,7 +14512,7 @@ function AIRBOSS:_CheckRadioQueue(radioqueue, name)
   	  self.radiotimer:Stop(self.RQMid)
   	  self.RQMid=nil
   	end
-  	
+
     return
   end
 
@@ -14476,7 +14603,7 @@ function AIRBOSS:_CheckRadioQueue(radioqueue, name)
   if _remove then
     table.remove(radioqueue, _remove)
   end
-  
+
   return
 end
 
@@ -14525,19 +14652,19 @@ function AIRBOSS:RadioTransmission(radio, call, loud, delay, interval, click, pi
     table.insert(self.RQLSO, transmission)
 
     caller="LSOCall"
-	
+
   	-- Schedule radio queue checks.
   	if not self.RQLid then
       self:T(self.lid..string.format("Starting LSO radio queue."))
   	  self.RQLid=self.radiotimer:Schedule(nil, AIRBOSS._CheckRadioQueue, {self, self.RQLSO, "LSO"}, 0.02, 0.05)
   	end
-  
+
   elseif radio.alias=="MARSHAL" then
 
     table.insert(self.RQMarshal, transmission)
 
     caller="MarshalCall"
-	
+
   	if not self.RQMid then
   		self:T(self.lid..string.format("Starting Marhal radio queue."))
   		self.RQMid=self.radiotimer:Schedule(nil, AIRBOSS._CheckRadioQueue, {self, self.RQMarshal, "MARSHAL"}, 0.02, 0.05)
@@ -15879,7 +16006,7 @@ function AIRBOSS:_ResetPlayerStatus(_unitName)
       -- Remove flight from queues. Collapse marshal stack if necessary.
       -- Section members are removed from the Spinning queue. If flight is member, he is removed from the section.
       self:_RemoveFlight(playerData)
-      
+
       -- Stop pending debrief scheduler.
       if playerData.debriefschedulerID and self.Scheduler then
         self.Scheduler:Stop(playerData.debriefschedulerID)
@@ -17301,7 +17428,7 @@ function AIRBOSS:_MarkMarshalZone(_unitName, flare)
         local zoneHolding=self:_GetZoneHolding(case, stack)
 
         -- Get Case I commence zone at three position.
-        local zoneThree=self:_GetZoneCommence(case)
+        local zoneThree=self:_GetZoneCommence(case, stack)
 
         -- Pattern alitude.
         local patternalt=self:_GetMarshalAltitude(stack, case)
