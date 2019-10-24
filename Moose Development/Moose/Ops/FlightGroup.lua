@@ -126,16 +126,22 @@ FLIGHTGROUP.ElementStatus={
 
 --- Flight group element.
 -- @type FLIGHTGROUP.Element
--- @field #string name Name of the element.
--- @field #number modex Tail number.
--- @field #boolean ai If true, element is AI.
--- @field #string skill Skill level.
+-- @field #string name Name of the element, i.e. the unit/client.
 -- @field Wrapper.Unit#UNIT unit Element unit object.
 -- @field Wrapper.Group#GROUP group Group object of the element.
--- @field #string status Status, i.e. born, parking, taxiing. See @{#FLIGHTGROUP.ElementStatus}.
+-- @field #string modex Tail number.
+-- @field #string skill Skill level.
+-- @field #boolean ai If true, element is AI.
+-- @field Wrapper.Client#CLIENT client The client if element is occupied by a human player.
 -- @field #table pylons Table of pylons.
+-- @field #number fuelmass Mass of fuel in kg.
+-- @field #number category Aircraft category.
+-- @field #string categoryname Aircraft category name.
+-- @field #string callsign Call sign, e.g. "Uzi 1-1".
+-- @field #string status Status, i.e. born, parking, taxiing. See @{#FLIGHTGROUP.ElementStatus}.
 -- @field #number damage Damage of element in percent.
 -- @field Wrapper.Airbase#AIRBASE.ParkingSpot parking The parking spot table the element is parking on.
+
 
 --- Flight group tasks.
 -- @type FLIGHTGROUP.Mission
@@ -195,7 +201,7 @@ FLIGHTGROUP.TaskType={
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.1.2"
+FLIGHTGROUP.version="0.1.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1174,6 +1180,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function FLIGHTGROUP:onafterFlightSpawned(From, Event, To)
+  self:I("FF Flight group spawned!")
 
   -- Get template of group.
   self.template=self.group:GetTemplate()
@@ -1193,8 +1200,7 @@ function FLIGHTGROUP:onafterFlightSpawned(From, Event, To)
   
   for _,_element in pairs(self.elements) do
     local element=_element --#FLIGHTGROUP.Element
-    element.ai=self:_IsHumanUnit(element.unit)
-      
+    element.ai=self:_IsHumanUnit(element.unit)      
   end
 
   -- Init waypoints.
@@ -2025,11 +2031,13 @@ function FLIGHTGROUP:AddElementByName(unitname)
     
     if element.skill=="Client" or element.skill=="Player" then
       element.ai=false
+      element.client=CLIENT:FindByName(unitname)
     else
       element.ai=true
     end
     
 
+    -- Add element to table.
     table.insert(self.elements, element)
 
     return element
@@ -2212,16 +2220,20 @@ function FLIGHTGROUP:_UpdateRoute(n)
     -- Task to hold.
     local TaskOverhead=self.group:TaskFunction("FLIGHTGROUP._DestinationOverhead", self, self.destination)
     
+    
     local coordoverhead=self.destination:GetZone():GetRandomCoordinate():SetAltitude(UTILS.FeetToMeters(6000))
   
+    -- Add overhead waypoint.
     local wpoverhead=coordoverhead:WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint, 500, false, nil, {TaskOverhead}, "Destination Overhead")
     self:I(self.sid..string.format("Adding overhead waypoint as #%d", #wp))
+    
+    
     table.insert(wp, #wp, wpoverhead)
   end
   
   
   
-  self:I(self.sid..string.format("Updating route: #WP=%d homebase=%s destination=%s", #wp, self.homebase and self.homebase:GetName() or "unknown", self.destination and self.destination:GetName() or "unknown"))
+  self:I(self.sid..string.format("Updating route: nWP=%d-%d homebase=%s destination=%s", n, #wp, self.homebase and self.homebase:GetName() or "unknown", self.destination and self.destination:GetName() or "unknown"))
   
   if #wp>0 then
 
@@ -2339,6 +2351,29 @@ function FLIGHTGROUP:InitWaypoints(waypoints)
   end
 
   return self
+end
+
+--- Add a waypoint to the flight plan.
+-- @param #FLIGHTGROUP self
+-- @param #number wpnumber Waypoint number.
+-- @param Core.Point#COORDINATE coordinate The coordinate of the waypoint. Use COORDINATE:SetAltitude(altitude) to define the altitude.
+-- @param #number speed Speed in knots. Default 350 kts.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:AddWaypointAir(wpnumber, coordinate, speed)
+  
+
+  local speedkmh=UTILS.KnotsToKmph(speed or 350)
+
+  local wp=coordinate:WaypointAir(COORDINATE.WaypointAltType.BARO, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, speedkmh, true)
+  
+  local text=string.format("Adding waypoint %d, speed=%.1f knots", wpnumber, speed)
+  coordinate:MarkToAll(text)  
+  self:I(self.sid..text)
+  
+  -- Add to table.
+  table.insert(self.waypoints, wpnumber, wp)
+  
+  self:_UpdateRoute()
 end
 
 --- Check if a unit is and element of the flightgroup.
