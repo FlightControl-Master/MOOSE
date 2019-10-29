@@ -361,7 +361,7 @@ function FLIGHTGROUP:New(groupname)
   _DATABASE:AddFlightGroup(self)
 
   -- Autostart.
-  self:Start()
+  self:__Start(0.1)
 
   return self
 end
@@ -2189,6 +2189,13 @@ function FLIGHTGROUP:GetNextWaypoint()
   return nextwp,Nextwp
 end
 
+--- Get next waypoint coordinates.
+-- @param #FLIGHTGROUP self
+-- @param #table wp Waypoint table.
+-- @return Core.Point#COORDINATE Coordinate of the next waypoint.
+function FLIGHTGROUP:GetWaypointCoordinate(wp)
+  return COORDINATE:New(wp.x,wp.alt,wp.y)
+end
 
 --- Update route of group, e.g after new waypoints and/or waypoint tasks have been added.
 -- @param #FLIGHTGROUP self
@@ -2206,7 +2213,9 @@ function FLIGHTGROUP:_UpdateRoute(n)
 
   -- Set "remaining" waypoits.
   for i=n, #self.waypoints do
-    table.insert(wp, self.waypoints[i])
+    local w=self.waypoints[i]
+    self:GetWaypointCoordinate(w):MarkToAll(string.format("Waypoint %d", i))
+    table.insert(wp, w)
   end
   
   -- Get destination airbase from waypoints.
@@ -2233,7 +2242,7 @@ function FLIGHTGROUP:_UpdateRoute(n)
   
   
   
-  self:I(self.sid..string.format("Updating route: nWP=%d-%d homebase=%s destination=%s", n, #wp, self.homebase and self.homebase:GetName() or "unknown", self.destination and self.destination:GetName() or "unknown"))
+  self:I(self.sid..string.format("Updating route: nWP=%d-%d/%d homebase=%s destination=%s", n, #wp, #self.waypoints, self.homebase and self.homebase:GetName() or "unknown", self.destination and self.destination:GetName() or "unknown"))
   
   if #wp>0 then
 
@@ -2273,38 +2282,44 @@ end
 function FLIGHTGROUP:_UpdateWaypointTasks()
 
   for i,wp in pairs(self.waypoints) do
+    
+    if i>self.currentwp or #self.waypoints==1 then
+    
+      self:I(self.sid..string.format("Updating waypoint task for waypoint %d/%d. Last waypoint passed %d.", i, #self.waypoints, self.currentwp))
   
-    -- Tasks of this waypoint
-    local taskswp={}
+      -- Tasks of this waypoint
+      local taskswp={}
+    
+      -- At each waypoint report passing.
+      local TaskPassingWaypoint=self.group:TaskFunction("FLIGHTGROUP._PassingWaypoint", self, i)
+      
+      table.insert(taskswp, TaskPassingWaypoint)
+      
+      -- Get taks
+      local tasks=self:GetTasksWaypoint(i)
+      
+      if #tasks>0 then
+        for _,task in pairs(tasks) do
+          local Task=task --#FLIGHTGROUP.Task
+          
+          -- Add task execute.
+          table.insert(taskswp, self.group:TaskFunction("FLIGHTGROUP._TaskExecute", self, Task))
   
-    -- At each waypoint report passing.
-    local TaskPassingWaypoint=self.group:TaskFunction("FLIGHTGROUP._PassingWaypoint", self, i)
-    
-    table.insert(taskswp, TaskPassingWaypoint)
-    
-    -- Get taks
-    local tasks=self:GetTasksWaypoint(i)
-    
-    if #tasks>0 then
-      for _,task in pairs(tasks) do
-        local Task=task --#FLIGHTGROUP.Task
-        
-        -- Add task execute.
-        table.insert(taskswp, self.group:TaskFunction("FLIGHTGROUP._TaskExecute", self, Task))
-
-        -- Add task itself.
-        table.insert(taskswp, Task.dcstask)
-        
-        -- Add task done.
-        table.insert(taskswp, self.group:TaskFunction("FLIGHTGROUP._TaskDone", self, Task))
+          -- Add task itself.
+          table.insert(taskswp, Task.dcstask)
+          
+          -- Add task done.
+          table.insert(taskswp, self.group:TaskFunction("FLIGHTGROUP._TaskDone", self, Task))
+        end
       end
+          
+      -- Waypoint task combo.
+      wp.task=self.group:TaskCombo(taskswp)
+          
+      -- Debug info.
+      self:T3({wptask=taskswp})
+      
     end
-        
-    -- Waypoint task combo.
-    wp.task=self.group:TaskCombo(taskswp)
-        
-    -- Debug info.
-    self:T3({wptask=taskswp})
   end
 
 end
@@ -2319,6 +2334,8 @@ function FLIGHTGROUP:InitWaypoints(waypoints)
 
   -- Waypoints of group as defined in the ME.
   self.waypoints=waypoints or self.group:GetTemplateRoutePoints()
+  
+  self:I(self.sid..string.format("Initializing %d waypoints", #self.waypoints))
 
   -- Init array.
   self.coordinates={}
@@ -2360,20 +2377,20 @@ end
 -- @param #number speed Speed in knots. Default 350 kts.
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:AddWaypointAir(wpnumber, coordinate, speed)
-  
 
   local speedkmh=UTILS.KnotsToKmph(speed or 350)
 
   local wp=coordinate:WaypointAir(COORDINATE.WaypointAltType.BARO, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, speedkmh, true)
   
   local text=string.format("Adding waypoint %d, speed=%.1f knots", wpnumber, speed)
-  coordinate:MarkToAll(text)  
-  self:I(self.sid..text)
+  coordinate:MarkToAll(text)
   
   -- Add to table.
   table.insert(self.waypoints, wpnumber, wp)
   
-  self:_UpdateRoute()
+  self:I(self.sid..string.format("Adding AIR waypoint #%d, speed=%.1f knots. Last waypoint passed was #%s. Total waypoints #%d", wpnumber, speed, self.currentwp, #self.waypoints))
+  
+  self:_UpdateRoute(self.currentwp+1)
 end
 
 --- Check if a unit is and element of the flightgroup.
