@@ -2194,7 +2194,7 @@ end
 -- @param #table wp Waypoint table.
 -- @return Core.Point#COORDINATE Coordinate of the next waypoint.
 function FLIGHTGROUP:GetWaypointCoordinate(wp)
-  return COORDINATE:New(wp.x,wp.alt,wp.y)
+  return COORDINATE:New(wp.x, wp.alt, wp.y)
 end
 
 --- Update route of group, e.g after new waypoints and/or waypoint tasks have been added.
@@ -2210,11 +2210,15 @@ function FLIGHTGROUP:_UpdateRoute(n)
   self:_UpdateWaypointTasks()
 
   local wp={}
+  
+  -- Set current waypoint or we get problem that the _PassingWaypoint function is triggered too early, i.e. right now and not when passing the next WP.
+  local current=self.group:GetCoordinate():WaypointAir(nil,COORDINATE.WaypointType.TurningPoint,COORDINATE.WaypointAction.TurningPoint, 350, true, nil, {}, "Current")  
+  table.insert(wp, current)
 
   -- Set "remaining" waypoits.
   for i=n, #self.waypoints do
     local w=self.waypoints[i]
-    self:GetWaypointCoordinate(w):MarkToAll(string.format("Waypoint %d", i))
+    self:GetWaypointCoordinate(w):MarkToAll(string.format("UpdateRoute Waypoint %d", i))
     table.insert(wp, w)
   end
   
@@ -2354,7 +2358,7 @@ function FLIGHTGROUP:InitWaypoints(waypoints)
 
     -- Debug info.
     if self.Debug then
-      coord:MarkToAll(string.format("Flight %s waypoint %d, Speed=%.1f knots", self.groupname, i, UTILS.MpsToKnots(point.speed)))
+      --coord:MarkToAll(string.format("Flight %s waypoint %d, Speed=%.1f knots", self.groupname, i, UTILS.MpsToKnots(point.speed)))
     end
 
   end
@@ -2383,7 +2387,7 @@ function FLIGHTGROUP:AddWaypointAir(wpnumber, coordinate, speed)
   local wp=coordinate:WaypointAir(COORDINATE.WaypointAltType.BARO, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, speedkmh, true)
   
   local text=string.format("Adding waypoint %d, speed=%.1f knots", wpnumber, speed)
-  coordinate:MarkToAll(text)
+  --coordinate:MarkToAll(text)
   
   -- Add to table.
   table.insert(self.waypoints, wpnumber, wp)
@@ -2452,7 +2456,7 @@ function FLIGHTGROUP:_AllSimilarStatus(status)
   for _,_element in pairs(self.elements) do
     local element=_element --#FLIGHTGROUP.Element
     
-    self:I(string.format("FF status=%s, element %s status=%s", status, element.name, element.status))
+    self:T(self.sid..string.format("Status=%s, element %s status=%s", status, element.name, element.status))
 
     -- Dead units dont count ==> We wont return false for those.
     if element.status~=FLIGHTGROUP.ElementStatus.DEAD then
@@ -2492,7 +2496,7 @@ function FLIGHTGROUP:_AllSimilarStatus(status)
          (element.status==FLIGHTGROUP.ElementStatus.SPAWNED or
           element.status==FLIGHTGROUP.ElementStatus.PARKING or
           element.status==FLIGHTGROUP.ElementStatus.TAXIING) then
-          self:I(string.format("FF status=%s, element %s status=%s ==> returning FALSE", status, element.name, element.status))
+          self:T(self.sid..string.format("Status=%s, element %s status=%s ==> returning FALSE", status, element.name, element.status))
           return false
         end
 
@@ -2534,10 +2538,8 @@ function FLIGHTGROUP:_AllSimilarStatus(status)
 
   end
 
-  self:I(string.format("FF status=%s ==> returning TRUE", status))
-  if status==FLIGHTGROUP.ElementStatus.TAKEOFF then
-    --self:I(string.format("FF returning true"))
-  end
+  self:T(self.sid..string.format("Status=%s ==> returning TRUE", status))
+  
   return true
 end
 
