@@ -201,7 +201,7 @@ FLIGHTGROUP.TaskType={
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.1.3"
+FLIGHTGROUP.version="0.1.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -217,6 +217,7 @@ FLIGHTGROUP.version="0.1.3"
 -- TODO: Waypoints, read, add, insert, detour.
 -- TODO: Damage?
 -- TODO: shot events?
+-- TODO: Marks to add waypoints/tasks on-the-fly.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -404,7 +405,11 @@ function FLIGHTGROUP:AddTask(description, task, prio, clock, duration)
   newtask.duration=duration
   newtask.waypoint=-1
   newtask.type=FLIGHTGROUP.TaskType.SCHEDULED
+  
+  -- Info.
+  self:I(self.sid..string.format("Adding task %s scheduled at %s", newtask.description, UTILS.SecondsToClock(time, true)))
 
+  -- Debug info.
   self:T2({newtask=newtask})
 
   -- Add to table.
@@ -444,7 +449,7 @@ function FLIGHTGROUP:AddTaskWaypoint(description, task, waypointindex, prio, dur
   table.insert(self.taskqueue, newtask)
   
   if self.group and self.group:IsAlive() then
-    self:_UpdateRoute(self.currentwp)
+    self:_UpdateRoute()
   end
 
   return self
@@ -762,6 +767,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   for i,_task in pairs(self.taskqueue) do
     local task=_task --#FLIGHTGROUP.Task
     local name=task.description
+    local taskid=task.dcstask.id or "unknown"
     local status=task.status
     local clock=UTILS.SecondsToClock(task.time)
     local eta=task.time-timer.getAbsTime()
@@ -776,7 +782,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
       end
     end
     -- Output text for element.
-    text=text..string.format("\n[%d] %s: status=%s, scheduled=%s (%d sec), started=%s, duration=%d", i, name, status, clock, eta, started, duration)
+    text=text..string.format("\n[%d] %s: %s: status=%s, scheduled=%s (%d sec), started=%s, duration=%d", i, taskid, name, status, clock, eta, started, duration)
   end
   self:I(self.sid..text)
 
@@ -2212,13 +2218,15 @@ function FLIGHTGROUP:_UpdateRoute(n)
   local wp={}
   
   -- Set current waypoint or we get problem that the _PassingWaypoint function is triggered too early, i.e. right now and not when passing the next WP.
-  local current=self.group:GetCoordinate():WaypointAir(nil,COORDINATE.WaypointType.TurningPoint,COORDINATE.WaypointAction.TurningPoint, 350, true, nil, {}, "Current")  
+  local current=self.group:GetCoordinate():WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, 350, true, nil, {}, "Current")
   table.insert(wp, current)
 
   -- Set "remaining" waypoits.
   for i=n, #self.waypoints do
     local w=self.waypoints[i]
-    self:GetWaypointCoordinate(w):MarkToAll(string.format("UpdateRoute Waypoint %d", i))
+    if self.Debug then
+      self:GetWaypointCoordinate(w):MarkToAll(string.format("UpdateRoute Waypoint %d", i))
+    end
     table.insert(wp, w)
   end
   
@@ -2245,8 +2253,8 @@ function FLIGHTGROUP:_UpdateRoute(n)
   end
   
   
-  
-  self:I(self.sid..string.format("Updating route: nWP=%d-%d/%d homebase=%s destination=%s", n, #wp, #self.waypoints, self.homebase and self.homebase:GetName() or "unknown", self.destination and self.destination:GetName() or "unknown"))
+  -- Debug info.
+  self:I(self.sid..string.format("Updating route for WP>=%d (%d/%d) homebase=%s destination=%s", n, #wp, #self.waypoints, self.homebase and self.homebase:GetName() or "unknown", self.destination and self.destination:GetName() or "unknown"))
   
   if #wp>0 then
 
@@ -2289,7 +2297,7 @@ function FLIGHTGROUP:_UpdateWaypointTasks()
     
     if i>self.currentwp or #self.waypoints==1 then
     
-      self:I(self.sid..string.format("Updating waypoint task for waypoint %d/%d. Last waypoint passed %d.", i, #self.waypoints, self.currentwp))
+      self:T(self.sid..string.format("Updating waypoint task for waypoint %d/%d. Last waypoint passed %d.", i, #self.waypoints, self.currentwp))
   
       -- Tasks of this waypoint
       local taskswp={}
@@ -2334,10 +2342,11 @@ end
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:InitWaypoints(waypoints)
 
+  -- Template waypoints.
   self.waypoints0=self.group:GetTemplateRoutePoints()
 
   -- Waypoints of group as defined in the ME.
-  self.waypoints=waypoints or self.group:GetTemplateRoutePoints()
+  self.waypoints=waypoints or self.waypoints0
   
   self:I(self.sid..string.format("Initializing %d waypoints", #self.waypoints))
 
@@ -2376,25 +2385,39 @@ end
 
 --- Add a waypoint to the flight plan.
 -- @param #FLIGHTGROUP self
--- @param #number wpnumber Waypoint number.
 -- @param Core.Point#COORDINATE coordinate The coordinate of the waypoint. Use COORDINATE:SetAltitude(altitude) to define the altitude.
+-- @param #number wpnumber Waypoint number. Default at the end.
 -- @param #number speed Speed in knots. Default 350 kts.
 -- @return #FLIGHTGROUP self
-function FLIGHTGROUP:AddWaypointAir(wpnumber, coordinate, speed)
+function FLIGHTGROUP:AddWaypointAir(coordinate, wpnumber, speed)
 
-  local speedkmh=UTILS.KnotsToKmph(speed or 350)
-
-  local wp=coordinate:WaypointAir(COORDINATE.WaypointAltType.BARO, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, speedkmh, true)
+  -- Waypoint number.
+  wpnumber=wpnumber or #self.waypoints+1
   
-  local text=string.format("Adding waypoint %d, speed=%.1f knots", wpnumber, speed)
-  --coordinate:MarkToAll(text)
+  -- Speed in knots.
+  speed=speed or 350
+
+  -- Speed at waypoint.
+  local speedkmh=UTILS.KnotsToKmph(speed)
+
+  -- Create air waypoint.
+  local wp=coordinate:WaypointAir(COORDINATE.WaypointAltType.BARO, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, speedkmh, true, nil, {}, string.format("Added Waypoint #%d", wpnumber))
   
   -- Add to table.
   table.insert(self.waypoints, wpnumber, wp)
   
+  -- Debug info.
   self:I(self.sid..string.format("Adding AIR waypoint #%d, speed=%.1f knots. Last waypoint passed was #%s. Total waypoints #%d", wpnumber, speed, self.currentwp, #self.waypoints))
   
-  self:_UpdateRoute(self.currentwp+1)
+  -- Shift all waypoint tasks after the inserted waypoint.
+  for _,_task in pairs(self.taskqueue) do
+    local task=_task --#FLIGHTGROUP.Task
+    if task.type==FLIGHTGROUP.TaskType.WAYPOINT and task.status==FLIGHTGROUP.TaskStatus.SCHEDULED and task.waypoint>=wpnumber then
+      task.waypoint=task.waypoint+1
+    end
+  end  
+  
+  self:_UpdateRoute()
 end
 
 --- Check if a unit is and element of the flightgroup.
