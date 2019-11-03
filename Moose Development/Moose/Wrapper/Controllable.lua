@@ -912,16 +912,16 @@ function CONTROLLABLE:TaskAttackUnit(AttackUnit, GroupAttack, WeaponExpend, Atta
   DCSTask = {
     id = 'AttackUnit',
     params = {
-      unitId = AttackUnit:GetID(),
-      groupAttack = GroupAttack or false,
-      expend = WeaponExpend or "Auto",
+      unitId           = AttackUnit:GetID(),
+      groupAttack      = GroupAttack or false,
+      expend           = WeaponExpend or "Auto",
       directionEnabled = Direction and true or false,
-      direction = math.rad(Direction or 0),
-      altitudeEnabled = Altitude and true or false,
-      altitude = Altitude or math.max(1000, AttackUnit:GetAltitude()),
-      attackQtyLimit = AttackQty and true or false,
-      attackQty = AttackQty,
-      weaponType = WeaponType
+      direction        = math.rad(Direction or 0),
+      altitudeEnabled  = Altitude and true or false,
+      altitude         = Altitude or math.max(1000, AttackUnit:GetAltitude()),
+      attackQtyLimit   = AttackQty and true or false,
+      attackQty        = AttackQty,
+      weaponType       = WeaponType
     }
   }
 

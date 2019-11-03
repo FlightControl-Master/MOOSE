@@ -1642,6 +1642,9 @@ function FLIGHTGROUP:onafterTaskExecute(From, Event, To, Task)
   
     -- Combo task.
     local TaskCombo=self.group:TaskCombo(DCStasks)
+    
+    env.info("FF executing Taskcombo:")
+    self:I({task=TaskCombo})
   
     -- Set task for group.
     self.group:SetTask(TaskCombo)
