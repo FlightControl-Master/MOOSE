@@ -927,6 +927,12 @@ function DATABASE:_EventOnBirth( Event )
       if Event.IniObjectCategory == 1 then
         self:AddUnit( Event.IniDCSUnitName )
         self:AddGroup( Event.IniDCSGroupName )
+        -- Add airbase if it was spawned later in the mission.
+        local DCSAirbase = Airbase.getByName(Event.IniDCSUnitName)
+        if DCSAirbase then
+          self:I(string.format("Adding airbase %s", tostring(Event.IniDCSUnitName)))
+          self:AddAirbase(Event.IniDCSUnitName)
+        end
       end
     end
     if Event.IniObjectCategory == 1 then
