@@ -550,7 +550,7 @@ RAT.id="RAT | "
 --- RAT version.
 -- @list version
 RAT.version={
-  version = "2.3.7",
+  version = "2.3.8",
   print = true,
 }
 
@@ -3392,11 +3392,19 @@ function RAT:_GetAirportsOfMap()
       local _name=airbase:getName()
       local _myab=AIRBASE:FindByName(_name)
       
-      -- Add airport to table.
-      table.insert(self.airports_map, _myab)
+      if _myab then
       
-      local text="MOOSE: Airport ID = ".._myab:GetID().." and Name = ".._myab:GetName()..", Category = ".._myab:GetCategory()..", TypeName = ".._myab:GetTypeName()
-      self:T(RAT.id..text)
+        -- Add airport to table.
+        table.insert(self.airports_map, _myab)
+        
+        local text="MOOSE: Airport ID = ".._myab:GetID().." and Name = ".._myab:GetName()..", Category = ".._myab:GetCategory()..", TypeName = ".._myab:GetTypeName()
+        self:T(RAT.id..text)
+        
+      else
+      
+        self:E(RAT.id..string.format("WARNING: Airbase %s does not exsist as MOOSE object!", tostring(_name)))
+      
+      end
     end
     
   end
