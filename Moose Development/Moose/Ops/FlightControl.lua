@@ -36,7 +36,9 @@
 -- @field #table playermenu Player Menu.
 -- @extends Core.Fsm#FSM
 
---- Be surprised!
+--- **Ground Control**: Airliner X, Good news, you are clear to taxi to the active.
+--  **Pilot**: Roger, What’s the bad news?
+--  **Ground Control**: No bad news at the moment, but you probably want to get gone before I find any.
 --
 -- ===
 --
@@ -925,21 +927,45 @@ end
 -- @param #FLIGHTCONTROL self
 -- @param Ops.FlightGroup#FLIGHTGROUP flight Flight group.
 function FLIGHTCONTROL:_CreatePlayerMenu(flight)
-
+  
   local group=flight.group
+  local groupname=flight.groupname
   local gid=group:GetID()
+  
+  self:I(self.lid..string.format("Creating player menu for flight group %s (ID=%d)", tostring(flight.groupname), gid))
   
   if not self.playermenu[gid] then
     self.playermenu[gid]={}
   end
   
   local playermenu=self.playermenu[gid]  --#FLIGHTCONTROL.PlayerMenu
+
+  playermenu.root       = MENU_GROUP:New(group, "ATC")
+  playermenu.MyStatus   = MENU_GROUP_COMMAND:New(group, "My Status",    playermenu.root, self._PlayerMyStatus,    self, groupname)
+  playermenu.RequestTaxi= MENU_GROUP_COMMAND:New(group, "Request Taxi", playermenu.root, self._PlayerRequestTaxi, self, groupname)
+
+end
+
+
+--- Create player menu.
+-- @param #FLIGHTCONTROL self
+-- @param #string groupname Name of the flight group.
+function FLIGHTCONTROL:_PlayerMyStatus(groupname)
+
+  -- Get flight group.
+  local flight=_DATABASE:GetFlightGroup(groupname)
   
-  group:SmokeRed()
+  if flight then
+  
+    local text=string.format("My Status:\n")
+    text=text..string.format("Flight status: %s", tostring(flight:GetState()))
 
-  playermenu.root=MENU_GROUP:New(group, "ATC")
-  playermenu.RequestTaxi=MENU_GROUP_COMMAND:New(group, "Request Taxi", playermenu.root, self._PlayerRequestTaxi, flight.groupname)
-
+    MESSAGE:New(text, 5):ToAll()
+  
+  else
+    MESSAGE:New(string.format("Cannot find flight group %s.", tostring(groupname)), 5):ToAll()
+  end
+  
 end
 
 --- Create player menu.
