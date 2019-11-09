@@ -342,7 +342,7 @@ function FLIGHTGROUP:New(groupname)
 
 
   -- Debug trace.
-  if false then
+  if true then
     self.Debug=true
     BASE:TraceOnOff(true)
     BASE:TraceClass(self.ClassName)
@@ -362,7 +362,8 @@ function FLIGHTGROUP:New(groupname)
   _DATABASE:AddFlightGroup(self)
 
   -- Autostart.
-  self:__Start(0.1)
+  --self:__Start(0.1)
+  self:Start()
 
   return self
 end
@@ -664,19 +665,25 @@ function FLIGHTGROUP:onafterStart(From, Event, To)
   if group and group:IsAlive() then
   
     -- Set group object.
-    env.info("FF setting self.group object")
     self.group=group
     
+    -- Get units of group.
     local units=group:GetUnits()
+
+    -- Debug info.    
+    self:I(self.sid..string.format("FF Found alive group %s at start with %d units", group:GetName(), #units))
     
-    for _,_unit in pairs(units) do
-      local unit=_unit --Wrapper.Unit#UNIT
+    
+    -- Add elemets.
+    for _,unit in pairs(units) do
       local element=self:AddElementByName(unit:GetName())
-
-      -- Trigger Spawned event.
-      self:ElementSpawned(element)
-
     end
+    
+    -- Trigger spawned event for all elements.
+    for _,element in pairs(self.elements) do
+      self:ElementSpawned(element)    
+    end
+    
   end    
   
   -- Handle events:
@@ -866,9 +873,9 @@ function FLIGHTGROUP:OnEventBirth(EventData)
       element=self:AddElementByName(unitname)
     end
       
-    self:T3(self.sid..string.format("EVENT: Element %s born ==> spawned", element.name))
-            
-    self:ElementSpawned(element)
+    -- Set element to spawned state.
+    self:T(self.sid..string.format("EVENT: Element %s born ==> spawned", element.name))            
+    self:ElementSpawned(element)    
     
   end
 
@@ -890,9 +897,15 @@ function FLIGHTGROUP:OnEventEngineStartup(EventData)
 
     if element then
       if self:IsAirborne() or self:IsHolding() then
+        -- TODO: what?
       else
-        self:T3(self.sid..string.format("EVENT: Element %s started engines ==> taxiing", element.name))
-        self:ElementTaxiing(element)
+        self:T(self.sid..string.format("EVENT: Element %s started engines ==> taxiing (if AI)", element.name))
+        -- TODO: could be that this element is part of a human flight group.
+        -- Problem: when player starts hot, the AI does too and starts to taxi immidiately :(
+        --          when player starts cold, ?
+        if self.ai then
+          self:ElementTaxiing(element)
+        end
       end
     end
 
@@ -1186,7 +1199,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function FLIGHTGROUP:onafterFlightSpawned(From, Event, To)
-  self:I("FF Flight group spawned!")
+  self:I(string.format("FF Flight group %s spawned!", tostring(self.groupname)))
 
   -- Get template of group.
   self.template=self.group:GetTemplate()
@@ -1202,17 +1215,23 @@ function FLIGHTGROUP:onafterFlightSpawned(From, Event, To)
   
   self.ceiling=self.descriptors.Hmax
   
-  self.ai=self:_IsHuman(self.group)
+  self.ai=not self:_IsHuman(self.group)
   
   for _,_element in pairs(self.elements) do
     local element=_element --#FLIGHTGROUP.Element
-    element.ai=self:_IsHumanUnit(element.unit)      
+    element.ai=self:_IsHumanUnit(element.unit)
   end
 
   -- Init waypoints.
   if not self.waypoints then
     self:InitWaypoints()
   end
+  
+  if not self.ai then
+    if self.flightcontrol then
+      --self.flightcontrol:_CreatePlayerMenu(self)
+    end
+  end  
     
 end
 
@@ -2045,6 +2064,9 @@ function FLIGHTGROUP:AddElementByName(unitname)
       element.ai=true
     end
     
+    local text=string.format("Adding element %s: status=%s, skill=%s, modex=%s, fuelmass=%.1f, category=%d, categoryname=%s, callsign=%s, ai=%s",
+    element.name, element.status, element.skill, element.modex, element.fuelmass, element.category, element.categoryname, element.callsign, tostring(element.ai))
+    self:I(self.sid..text)
 
     -- Add element to table.
     table.insert(self.elements, element)
@@ -2203,6 +2225,7 @@ end
 -- @param #table wp Waypoint table.
 -- @return Core.Point#COORDINATE Coordinate of the next waypoint.
 function FLIGHTGROUP:GetWaypointCoordinate(wp)
+  -- TODO: move this to COORDINATE class.
   return COORDINATE:New(wp.x, wp.alt, wp.y)
 end
 
@@ -2239,7 +2262,7 @@ function FLIGHTGROUP:_UpdateRoute(n)
   -- Get destination airbase from waypoints.
   self.destination=self:GetDestinationFromWaypoints() or self.destination
   
-  if self.destination and #wp>0 and _DATABASE:GetFlightControl(self.destination:GetName())then
+  if self.destination and #wp>0 and _DATABASE:GetFlightControl(self.destination:GetName()) then
   
     -- Task to hold.
     local TaskOverhead=self.group:TaskFunction("FLIGHTGROUP._DestinationOverhead", self, self.destination)
@@ -2493,16 +2516,18 @@ function FLIGHTGROUP:_AllSimilarStatus(status)
 
       if status==FLIGHTGROUP.ElementStatus.SPAWNED then
 
-        -- Element SPAWNED: Nothing to check.
-        if element.status~=status then
-
+        -- Element SPAWNED: Check that others are not still IN UTERO
+        if element.status~=status and
+          element.status==FLIGHTGROUP.ElementStatus.INUTERO  then
+          return false
         end
 
       elseif status==FLIGHTGROUP.ElementStatus.PARKING then
 
         -- Element PARKING: Check that the other are not stil SPAWNED
-        if element.status~=status and
-          element.status==FLIGHTGROUP.ElementStatus.SPAWNED  then
+        if element.status~=status or
+         (element.status==FLIGHTGROUP.ElementStatus.INUTERO or
+          element.status==FLIGHTGROUP.ElementStatus.SPAWNED) then
           return false
         end
 
@@ -2510,7 +2535,8 @@ function FLIGHTGROUP:_AllSimilarStatus(status)
 
         -- Element TAXIING: Check that the other are not stil SPAWNED or PARKING
         if element.status~=status and
-         (element.status==FLIGHTGROUP.ElementStatus.SPAWNED or
+         (element.status==FLIGHTGROUP.ElementStatus.INUTERO or
+          element.status==FLIGHTGROUP.ElementStatus.SPAWNED or
           element.status==FLIGHTGROUP.ElementStatus.PARKING) then
           return false
         end
@@ -2519,7 +2545,8 @@ function FLIGHTGROUP:_AllSimilarStatus(status)
 
         -- Element TAKEOFF: Check that the other are not stil SPAWNED, PARKING or TAXIING
         if element.status~=status and
-         (element.status==FLIGHTGROUP.ElementStatus.SPAWNED or
+         (element.status==FLIGHTGROUP.ElementStatus.INUTERO or
+          element.status==FLIGHTGROUP.ElementStatus.SPAWNED or
           element.status==FLIGHTGROUP.ElementStatus.PARKING or
           element.status==FLIGHTGROUP.ElementStatus.TAXIING) then
           self:T(self.sid..string.format("Status=%s, element %s status=%s ==> returning FALSE", status, element.name, element.status))
@@ -2530,7 +2557,8 @@ function FLIGHTGROUP:_AllSimilarStatus(status)
 
         -- Element AIRBORNE: Check that the other are not stil SPAWNED, PARKING, TAXIING or TAKEOFF
         if element.status~=status and
-         (element.status==FLIGHTGROUP.ElementStatus.SPAWNED or
+         (element.status==FLIGHTGROUP.ElementStatus.INUTERO or
+          element.status==FLIGHTGROUP.ElementStatus.SPAWNED or
           element.status==FLIGHTGROUP.ElementStatus.PARKING or
           element.status==FLIGHTGROUP.ElementStatus.TAXIING or 
           element.status==FLIGHTGROUP.ElementStatus.TAKEOFF) then
@@ -2564,7 +2592,7 @@ function FLIGHTGROUP:_AllSimilarStatus(status)
 
   end
 
-  self:T(self.sid..string.format("Status=%s ==> returning TRUE", status))
+  self:T(self.sid..string.format("All similar status %s ==> returning TRUE", status))
   
   return true
 end
@@ -2581,8 +2609,6 @@ function FLIGHTGROUP:_UpdateStatus(element, newstatus, airbase)
 
   -- Update status of element.
   element.status=newstatus
-
-  local group=element.group
 
   if newstatus==FLIGHTGROUP.ElementStatus.SPAWNED then
     ---

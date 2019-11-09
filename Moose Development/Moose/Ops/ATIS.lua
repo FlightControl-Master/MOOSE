@@ -1657,6 +1657,13 @@ end
 
 --- Get runway from user supplied magnetic heading.
 -- @param #ATIS self
+-- @return #string Runway magnetic heading divided by ten (and rounded). Eg, "13" for 130°.
+function ATIS:GetActiveRunway()
+  
+end
+
+--- Get runway from user supplied magnetic heading.
+-- @param #ATIS self
 -- @param #number windfrom Wind direction (from) in degrees.
 -- @return #string Runway magnetic heading divided by ten (and rounded). Eg, "13" for 130°.
 function ATIS:GetMagneticRunway(windfrom)

@@ -5606,7 +5606,7 @@ function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrol
     self:T2({airtemplate=template})
     
     -- Create a flight group.
-    FLIGHTGROUP:New(template.name)
+    --FLIGHTGROUP:New(template.name)
 
     -- Spawn group.
     local group=_DATABASE:Spawn(template) --Wrapper.Group#GROUP
@@ -5823,7 +5823,7 @@ function WAREHOUSE:_RouteAir(aircraft)
     
     local fc=_DATABASE:GetFlightControl(self.airbasename)
     if fc then
-      --local flightgroup=FLIGHTGROUP:New(aircraft:GetName())
+      -- Nothing to do. FC will start the aircraft once it gets taxi clearance.
     else
       aircraft:StartUncontrolled(starttime)
     end

@@ -33,6 +33,7 @@
 -- @field #number activerwyno Number of active runway.
 -- @field #number atcfreq ATC radio frequency.
 -- @field Core.RadioQueue#RADIOQUEUE atcradio ATC radio queue.
+-- @field #table playermenu Player Menu.
 -- @extends Core.Fsm#FSM
 
 --- Be surprised!
@@ -66,6 +67,7 @@ FLIGHTCONTROL = {
   atcfreq        =   nil,
   atcradio       =   nil,
   atcradiounitname = nil,
+  playermenu       = nil,
 }
 
 --- Holding point
@@ -74,6 +76,11 @@ FLIGHTCONTROL = {
 -- @field Core.Point#COORDINATE pos1 Second position of racetrack holding point.
 -- @field #number angelsmin Smallest holding altitude in angels.
 -- @field #number angelsmax Largest holding alitude in angels.
+
+--- Player menu data.
+-- @type FLIGHTCONTROL.PlayerMenu
+-- @field Core.Menu#MENU_GROUP root Root menu.
+-- @field Core.Menu#MENU_GROUP_COMMAND RequestTaxi Request taxi.
 
 --- Parking spot data.
 -- @type FLIGHTCONTROL.ParkingSpot
@@ -95,7 +102,7 @@ FLIGHTCONTROL = {
 
 --- FlightControl class version.
 -- @field #string version
-FLIGHTCONTROL.version="0.0.6"
+FLIGHTCONTROL.version="0.0.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -122,14 +129,17 @@ function FLIGHTCONTROL:New(airbasename)
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #FLIGHTCONTROL
   
+  -- Try to get the airbase.
   self.airbase=AIRBASE:FindByName(airbasename)
   
+  -- Check if the airbase exists.
   if not self.airbase then
     self:E(string.format("ERROR: Could not find airbase %s!", tostring(airbasename)))
     return nil
   end
+  -- Check if airbase is an airdrome.
   if self.airbase:GetAirbaseCategory()~=Airbase.Category.AIRDROME then
-    self:E(string.format("ERROR: Airbase %s is not an AIRDROMOE! Script does not handle FARPS or ships.", tostring(airbasename)))
+    self:E(string.format("ERROR: Airbase %s is not an AIRDROME! Script does not handle FARPS or ships.", tostring(airbasename)))
     return nil
   end
   
@@ -154,6 +164,8 @@ function FLIGHTCONTROL:New(airbasename)
   -- Init parking spots.
   self:_InitParkingSpots()  
   
+  self.playermenu={}
+  
   -- Start State.
   self:SetStartState("Stopped")
 
@@ -168,7 +180,6 @@ function FLIGHTCONTROL:New(airbasename)
     BASE:TraceOnOff(true)
     BASE:TraceClass(self.ClassName)
     BASE:TraceLevel(1)
-    --self.dTstatus=0.1
   end
   
   -- Add to data base.
@@ -236,7 +247,7 @@ function FLIGHTCONTROL:onafterStart()
   self:HandleEvent(EVENTS.EngineShutdown)
   self:HandleEvent(EVENTS.Crash)
   
-  self.atcradio=RADIOQUEUE:New(self.atcfreq or 305)
+  self.atcradio=RADIOQUEUE:New(self.atcfreq or 305, nil, string.format("FC %s", self.airbasename))
   self.atcradio:Start(1, 0.01)
   
   -- Init status updates.
@@ -265,7 +276,7 @@ function FLIGHTCONTROL:onafterStatus()
   local nfree=self:_GetFreeParkingSpots()  
 
   -- Info text.
-  local text=string.format("State %s - Active Runway %s - Free Parking %d", self:GetState(), runway.idx, nfree)
+  local text=string.format("State %s - Runway %s - Parking %d/%d - Qpark=%d Qtakeoff=%d Qland=%d Qhold=%d", self:GetState(), runway.idx, nfree, #self.parking, #self.Qparking, #self.Qtakeoff, #self.Qlanding, #self.Qwaiting)
   self:I(self.lid..text)
 
   -- Next status update in ~30 seconds.
@@ -282,8 +293,15 @@ end
 function FLIGHTCONTROL:OnEventBirth(EventData)
   self:F3({EvendData=EventData})
   
-  self:T2(self.lid..string.format("BIRTH: unit  = %s", tostring(EventData.IniUnitName)))
-  self:T2(self.lid..string.format("BIRTH: group = %s", tostring(EventData.IniGroupName)))
+  self:I(self.lid..string.format("BIRTH: unit  = %s", tostring(EventData.IniUnitName)))
+  self:I(self.lid..string.format("BIRTH: group = %s", tostring(EventData.IniGroupName)))
+  
+  if EventData and EventData.IniGroupName and EventData.Place and EventData.Place:GetName()==self.airbasename then
+  
+    -- We delay this, to have all elements of the group in the game.
+    self:ScheduleOnce(0.1, self._CreateFlightGroup, self, EventData.IniGroup)
+  
+  end
   
 end
 
@@ -407,21 +425,34 @@ function FLIGHTCONTROL:_CheckQueues()
       -- Message.
       local text=string.format("Flight %s, you are cleared to land.", flight.groupname)
       MESSAGE:New(text, 5, "FLIGHTCONTROL"):ToAll()
-      
-      flight:FlightLanding()
-      self:_LandAI(flight)
+
+      -- Give AI the landing signal.
+      -- TODO: Humans have to confirm via F10 menu.
+      if flight.ai then      
+        flight:FlightLanding()
+        self:_LandAI(flight)
+      end
     
     else
-
-      -- Message.
-      local text=string.format("Flight %s, you are cleared to taxi to runway.", flight.groupname)
-      MESSAGE:New(text, 5, "FLIGHTCONTROL"):ToAll()
+     
+      -- Check if flight is AI. Humans have to request taxi via F10 menu.
+      if flight.ai then
       
-      flight.group:StartUncontrolled()
-      
-      flight:_UpdateRoute(1)
-      
-      self:_RemoveFlightFromQueue(self.Qparking, flight, "parking")
+        -- Message.
+        -- TODO: Which runway!
+        local text=string.format("Flight %s, you are cleared to taxi to runway.", flight.groupname)
+        self:I(self.lid..text)
+        MESSAGE:New(text, 5, "FLIGHTCONTROL"):ToAll()
+        
+        flight.group:StartUncontrolled()
+        
+        flight:_UpdateRoute(1)
+        
+        self:_RemoveFlightFromQueue(self.Qparking, flight, "parking")
+        
+        self:_AddFlightToTakeoffQueue(flight)
+        
+      end
     
     end
     
@@ -512,9 +543,9 @@ function FLIGHTCONTROL:_GetNextFightHolding()
   
 
   -- Return flight waiting longest.
-  table.sort(self.Qwaiting, _sortByTholding)  
+  table.sort(self.Qwaiting, _sortByTholding)
+    
   return self.Qwaiting[1]
-
 end
 
 
@@ -887,6 +918,52 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Human Player Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Create player menu.
+-- @param #FLIGHTCONTROL self
+-- @param Ops.FlightGroup#FLIGHTGROUP flight Flight group.
+function FLIGHTCONTROL:_CreatePlayerMenu(flight)
+
+  local group=flight.group
+  local gid=group:GetID()
+  
+  if not self.playermenu[gid] then
+    self.playermenu[gid]={}
+  end
+  
+  local playermenu=self.playermenu[gid]  --#FLIGHTCONTROL.PlayerMenu
+  
+  group:SmokeRed()
+
+  playermenu.root=MENU_GROUP:New(group, "ATC")
+  playermenu.RequestTaxi=MENU_GROUP_COMMAND:New(group, "Request Taxi", playermenu.root, self._PlayerRequestTaxi, flight.groupname)
+
+end
+
+--- Create player menu.
+-- @param #FLIGHTCONTROL self
+-- @param #string groupname Name of the flight group.
+function FLIGHTCONTROL:_PlayerRequestTaxi(groupname)
+
+  MESSAGE:New("Request taxi to runway", 5):ToAll()
+  
+  MESSAGE:New("You are cleared to taxi", 5):ToAll()
+  
+  local flight=_DATABASE:GetFlightGroup(groupname)
+  
+  if flight then
+  
+    for _,_element in pairs(flight.elements) do
+      local element=_element --Ops.FlightGroup#FLIGHTGROUP.Element
+      flight:ElementTaxiing(element)
+    end
+  end  
+
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Flight and Element Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -898,6 +975,7 @@ function FLIGHTCONTROL:_CreateFlightGroup(group)
   
   -- Check if not already in flights
   if self:_InQueue(self.flights, group) then
+    self:E(self.lid..string.format("WARNING: Flight group %s does already exist!", group:GetName()))
     return
   end
   
@@ -915,64 +993,17 @@ function FLIGHTCONTROL:_CreateFlightGroup(group)
   if flight.destination and flight.destination:GetName()==self.airbasename then
     flight:SetFlightControl(self)
   end
-  
-  --[[
-  
-  -- New flight.
-  local flight={} --Ops.FlightGroup#FLIGHTGROUP
-  
-  -- Flight group name
-  local groupname=group:GetName()
-  local human, playername=self:_IsHuman(group)
-  
-  -- Queue table item.    
-  flight.group=group
-  flight.groupname=group:GetName()
-  flight.nunits=#group:GetUnits()
-  flight.time=timer.getAbsTime()
-  flight.dist0=group:GetCoordinate():Get2DDistance(self:GetCoordinate())
-  flight.flag=-100
-  flight.ai=not human
-  flight.actype=group:GetTypeName()
-  flight.onboardnumbers=self:_GetOnboardNumbers(group)
-  flight.inzone=flight.group:IsCompletelyInZone(self.zoneAirbase)
-  flight.holding=nil
-      
-  -- Flight elements.
-  local text=string.format("Flight elements of group %s:", flight.groupname)
-  
-  flight.elements={}
-  local units=group:GetUnits()
-  for i,_unit in pairs(units) do
-    local unit=_unit --Wrapper.Unit#UNIT
     
-    local element={} --#FLIGHTCONTROL.FlightElement
-    element.unit=unit
-    element.unitname=unit:GetName()
-    element.onboard=flight.onboardnumbers[element.unitname]
-    element.sizemax=unit:GetObjectSize()
-    element.ai=not self:_IsHumanUnit(unit)
-    
-    -- Debug text.
-    text=text..string.format("\n[%d] %s onboard #%s, AI=%s", i, element.unitname, tostring(element.onboard), tostring(element.ai))
-    
-    -- Add to table.
-    table.insert(flight.elements, element)
-  end
-  self:T(self.lid..text)  
-  
-  -- Onboard.
-  if flight.ai then
-    local onboard=flight.onboardnumbers[flight.seclead]
-    flight.onboard=onboard
-  else
-    flight.onboard=self:_GetOnboardNumberPlayer(group)
-  end
-  
-  ]]
-  
   -- Add to known flights.
   table.insert(self.flights, flight)
+  
+  -- Create player menu.
+  if flight.ai then
+    self:E("FF AI no player menu")
+  else
+    self:E("FF Not purly AI ==> player menu")
+    self:_CreatePlayerMenu(flight)
+  end
     
   return flight
 end
