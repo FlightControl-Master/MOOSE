@@ -345,8 +345,8 @@ end
 function FLIGHTCONTROL:OnEventEngineStartup(EventData)
   self:F3({EvendData=EventData})
   
-  self:T2(self.lid..string.format("ENGINESTARTUP: unit  = %s", tostring(EventData.IniUnitName)))
-  self:T2(self.lid..string.format("ENGINESTARTUP: group = %s", tostring(EventData.IniGroupName)))
+  self:I(self.lid..string.format("ENGINESTARTUP: unit  = %s", tostring(EventData.IniUnitName)))
+  self:I(self.lid..string.format("ENGINESTARTUP: group = %s", tostring(EventData.IniGroupName)))
     
   -- Unit that took off.
   local unit=EventData.IniUnit

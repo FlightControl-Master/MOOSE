@@ -51,7 +51,7 @@
 -- @field #number Tparking Abs. mission time stamp when the group was spawned uncontrolled and is parking.
 -- @extends Core.Fsm#FSM
 
---- Be surprised!
+--- *To invent an airplane is nothing. To build one is something. To fly is everything.* -- Otto Lilienthal
 --
 -- ===
 --
