@@ -9,24 +9,34 @@
 --
 -- [476th - Air Weapons Range Objects mod](http://www.476vfightergroup.com/downloads.php?do=file&id=287) is highly recommended for this class.
 --
--- ## Features:
+-- **Main Features:**
 --
 --   * Impact points of bombs, rockets and missiles are recorded and distance to closest range target is measured and reported to the player.
 --   * Number of hits on strafing passes are counted and reported. Also the percentage of hits w.r.t fired shots is evaluated.
 --   * Results of all bombing and strafing runs are stored and top 10 results can be displayed.
 --   * Range targets can be marked by smoke.
---   * Range can be illuminated by illumination bombs for night practices.
+--   * Range can be illuminated by illumination bombs for night missions.
 --   * Bomb, rocket and missile impact points can be marked by smoke.
 --   * Direct hits on targets can trigger flares.
 --   * Smoke and flare colors can be adjusted for each player via radio menu.
 --   * Range information and weather report at the range can be reported via radio menu.
---
--- More information and examples can be found below.
+--   * Persistence: Bombing range results can be saved to disk and loaded the next time the mission is started.
+--   * Range control voice overs (>40) for hit assessment.
 --
 -- ===
 --
--- ### [MOOSE YouTube Channel](https://www.youtube.com/channel/UCjrA9j5LQoWsG4SpS8i79Qg)
--- ### [MOOSE - On the Range - Demonstration Video](https://www.youtube.com/watch?v=kIXcxNB9_3M)
+-- ## Youtube Videos:
+ --
+--    * [MOOSE YouTube Channel](https://www.youtube.com/channel/UCjrA9j5LQoWsG4SpS8i79Qg)
+--    * [MOOSE - On the Range - Demonstration Video](https://www.youtube.com/watch?v=kIXcxNB9_3M)
+-- 
+-- ===
+--
+-- ## Missions: Example missions will be added later.
+-- 
+-- ===
+--
+-- ## Sound files: Check out the pinned messages in the Moose discord *#func-range* channel.
 --
 -- ===
 --
@@ -79,10 +89,23 @@
 -- @field #boolean trackmissiles If true (default), all missile types are tracked and impact point to closest bombing target is evaluated.
 -- @field #boolean defaultsmokebomb If true, initialize player settings to smoke bomb.
 -- @field #boolean autosave If true, automatically save results every X seconds.
--- @extends Core.Base#BASE
+-- @field #number instructorfreq Frequency on which the range control transmitts.
+-- @field Core.RadioQueue#RADIOQUEUE instructor Instructor radio queue.
+-- @field #number rangecontrolfreq Frequency on which the range control transmitts.
+-- @field Core.RadioQueue#RADIOQUEUE rangecontrol Range control radio queue.
+-- @field #string soundpath Path inside miz file where the sound files are located. Default is "Range Soundfiles/".
+-- @extends Core.Fsm#FSM
 
---- Enables a mission designer to easily set up practice ranges in DCS. A new RANGE object can be created with the @{#RANGE.New}(rangename) contructor.
--- The parameter "rangename" defines the name of the range. It has to be unique since this is also the name displayed in the radio menu.
+--- *Don't only practice your art, but force your way into its secrets; art deserves that, for it and knowledge can raise man to the Divine.* - Ludwig van Beethoven
+-- 
+-- ===
+--
+-- ![Banner Image](..\Presentations\RANGE\RANGE_Main.png)
+--
+-- # The Range Concept
+--
+-- The RANGE class enables a mission designer to easily set up practice ranges in DCS. A new RANGE object can be created with the @{#RANGE.New}(*rangename*) contructor.
+-- The parameter *rangename* defines the name of the range. It has to be unique since this is also the name displayed in the radio menu.
 --
 -- Generally, a range consists of strafe pits and bombing targets. For strafe pits the number of hits for each pass is counted and tabulated.
 -- For bombing targets, the distance from the impact point of the bomb, rocket or missile to the closest range target is measured and tabulated.
@@ -97,7 +120,8 @@
 -- If that is not done, the script is not started correctly. This can be checked by looking at the radio menues. If the mission was entered correctly,
 -- there should be an "On the Range" menu items in the "F10. Other..." menu.
 --
--- ## Strafe Pits
+-- # Strafe Pits
+-- 
 -- Each strafe pit can consist of multiple targets. Often one finds two or three strafe targets next to each other.
 --
 -- A strafe pit can be added to the range by the @{#RANGE.AddStrafePit}(*targetnames, boxlength, boxwidth, heading, inverseheading, goodpass, foulline*) function.
@@ -117,7 +141,8 @@
 -- Finally, a valid approach has to be performed below a certain maximum altitude. The default is 914 meters (3000 ft) AGL. This is a parameter valid for all
 -- strafing pits of the range and can be adjusted by the @{#RANGE.SetMaxStrafeAlt}(maxalt) function.
 --
--- ## Bombing targets
+-- # Bombing targets
+-- 
 -- One ore multiple bombing targets can be added to the range by the @{#RANGE.AddBombingTargets}(targetnames, goodhitrange, randommove) function.
 --
 -- * The first parameter *targetnames* has to be a lua table, which contains the names of @{Wrapper.Unit} and/or @{Static} objects defined in the mission editor.
@@ -126,10 +151,18 @@
 -- * If final (optional) parameter "*randommove*" can be enabled to create moving targets. If this parameter is set to true, the units of this bombing target will randomly move within the range zone.
 --   Note that there might be quirks since DCS units can get stuck in buildings etc. So it might be safer to manually define a route for the units in the mission editor if moving targets are desired.
 --
+-- ## Adding Groups
+-- 
 -- Another possibility to add bombing targets is the @{#RANGE.AddBombingTargetGroup}(*group, goodhitrange, randommove*) function. Here the parameter *group* is a MOOSE @{Wrapper.Group} object
 -- and **all** units in this group are defined as bombing targets.
+-- 
+-- ## Specifying Coordinates
+-- 
+-- It is also possible to specify coordinates rather than unit or static objects as bombing target locations. This has the advantage, that even when the unit/static object is dead, the specified 
+-- coordinate will still be a valid impact point. This can be done via the @{#RANGE.AddBombingTargetCoordinate}(*coord*, *name*, *goodhitrange*) function.
 --
--- ## Fine Tuning
+-- # Fine Tuning
+-- 
 -- Many range parameters have good default values. However, the mission designer can change these settings easily with the supplied user functions:
 --
 -- * @{#RANGE.SetMaxStrafeAlt}() sets the max altitude for valid strafing runs.
@@ -144,22 +177,61 @@
 -- * @{#RANGE.TrackRocketsON}() or @{#RANGE.TrackRocketsOFF}() can be used to enable/disable tracking and evaluating of all rocket types a player fires.
 -- * @{#RANGE.TrackMissilesON}() or @{#RANGE.TrackMissilesOFF}() can be used to enable/disable tracking and evaluating of all missile types a player fires.
 --
--- ## Radio Menu
+-- # Radio Menu
+-- 
 -- Each range gets a radio menu with various submenus where each player can adjust his individual settings or request information about the range or his scores.
 --
--- The main range menu can be found at "F10. Other..." --> "Fxx. On the Range..." --> "F1. Your Range Name...".
+-- The main range menu can be found at "F10. Other..." --> "F*X*. On the Range..." --> "F1. <Range Name>...".
 --
 -- The range menu contains the following submenues:
+-- 
+-- ![Banner Image](..\Presentations\RANGE\Menu_Main.png)
 --
--- * "F1. Mark Targets": Various ways to mark targets.
--- * "F2. My Settings": Player specific settings.
--- * "F3. Stats" Player: statistics and scores.
--- * "Range Information": Information about the range, such as bearing and range. Also range and player specific settings are displayed.
--- * "Weather Report": Temperature, wind and QFE pressure information is provided.
+-- * "F1. Statistics...": Range results of all players and personal stats.
+-- * "F2. Mark Targets": Mark range targets by smoke or flares.
+-- * "F3. My Settings" Personal settings.
+-- * "F4. Range Info": Information about the range, such as bearing and range.
+-- 
+-- ## F1 Statistics
+-- 
+-- ![Banner Image](..\Presentations\RANGE\Menu_Stats.png)
+-- 
+-- ## F2 Mark Targets
+-- 
+-- ![Banner Image](..\Presentations\RANGE\Menu_Stats.png)
+-- 
+-- ## F3 My Settings
+-- 
+-- ![Banner Image](..\Presentations\RANGE\Menu_MySettings.png)
+-- 
+-- ## F4 Range Info
+-- 
+-- ![Banner Image](..\Presentations\RANGE\Menu_RangeInfo.png)
+-- 
+-- # Voice Overs
+-- 
+-- Voice over sound files can be downloaded from the Moose Discord. Check the pinned messages in the *#func-range* channel.
+-- 
+-- Instructor radio will inform players when they enter or exit the range zone and provide the radio frequency of the range control for hit assessment.
+-- This can be enabled via the @{#RANGE.SetInstructorRadio}(*frequency*) functions, where *frequency* is the AM frequency in MHz.
+-- 
+-- The range control can be enabled via the @{#RANGE.SetRangeControl}(*frequency*) functions, where *frequency* is the AM frequency in MHz.
+-- 
+-- By default, the sound files are placed in the "Range Soundfiles/" folder inside the mission (.miz) file. Another folder can be specified via the @{#RANGE.SetSoundfilesPath}(*path*) function.
+-- 
+-- # Persistence
+-- 
+-- To automatically save bombing results to disk, use the @{#RANGE.SetAutosave}() function. Bombing results will be saved as csv file in your "Saved Games\DCS.openbeta\Logs" directory.
+-- Each range has a separate file, which is named "RANGE-<*RangeName*>_BombingResults.csv".
+-- 
+-- The next time you start the mission, these results are also automatically loaded.
+-- 
+-- Strafing results are currently **not** saved.
 --
--- ## Examples
+-- # Examples
 --
--- ### Goldwater Range
+-- ## Goldwater Range
+-- 
 -- This example shows hot to set up the [Barry M. Goldwater range](https://en.wikipedia.org/wiki/Barry_M._Goldwater_Air_Force_Range).
 -- It consists of two strafe pits each has two targets plus three bombing targets.
 --
@@ -190,7 +262,7 @@
 --
 -- The [476th - Air Weapons Range Objects mod](http://www.476vfightergroup.com/downloads.php?do=file&id=287) is (implicitly) used in this example.
 --
--- ## Debugging
+-- # Debugging
 --
 -- In case you have problems, it is always a good idea to have a look at your DCS log file. You find it in your "Saved Games" folder, so for example in
 --      C:\Users\<yourname>\Saved Games\DCS\Logs\dcs.log
@@ -213,44 +285,49 @@
 --
 -- @field #RANGE
 RANGE={
-  ClassName = "RANGE",
-  Debug=false,
-  id=nil,
-  rangename=nil,
-  location=nil,
-  messages=true,
-  rangeradius=5000,
-  rangezone=nil,
-  strafeTargets={},
-  bombingTargets={},
-  nbombtargets=0,
-  nstrafetargets=0,
-  MenuAddedTo = {},
-  planes = {},
-  strafeStatus = {},
+  ClassName           = "RANGE",
+  Debug               = false,
+  id                  = nil,
+  rangename           = nil,
+  location            = nil,
+  messages            = true,
+  rangeradius         = 5000,
+  rangezone           = nil,
+  strafeTargets       = {},
+  bombingTargets      = {},
+  nbombtargets        = 0,
+  nstrafetargets      = 0,
+  MenuAddedTo         = {},
+  planes              = {},
+  strafeStatus        = {},
   strafePlayerResults = {},
-  bombPlayerResults = {},
-  PlayerSettings = {},
-  dtBombtrack=0.005,
-  BombtrackThreshold=25000,
-  Tmsg=30,
-  examinergroupname=nil,
-  examinerexclusive=nil,
-  strafemaxalt=914,
-  ndisplayresult=10,
-  BombSmokeColor=SMOKECOLOR.Red,
-  StrafeSmokeColor=SMOKECOLOR.Green,
-  StrafePitSmokeColor=SMOKECOLOR.White,
-  illuminationminalt=500,
-  illuminationmaxalt=1000,
-  scorebombdistance=1000,
-  TdelaySmoke=3.0,
-  eventmoose=true,
-  trackbombs=true,
-  trackrockets=true,
-  trackmissiles=true,
-  defaultsmokebomb=true,
-  autosave=false,
+  bombPlayerResults   = {},
+  PlayerSettings      = {},
+  dtBombtrack         = 0.005,
+  BombtrackThreshold  = 25000,
+  Tmsg                = 30,
+  examinergroupname   = nil,
+  examinerexclusive   = nil,
+  strafemaxalt        = 914,
+  ndisplayresult      = 10,
+  BombSmokeColor      = SMOKECOLOR.Red,
+  StrafeSmokeColor    = SMOKECOLOR.Green,
+  StrafePitSmokeColor = SMOKECOLOR.White,
+  illuminationminalt  = 500,
+  illuminationmaxalt  = 1000,
+  scorebombdistance   = 1000,
+  TdelaySmoke         = 3.0,
+  eventmoose          = true,
+  trackbombs          = true,
+  trackrockets        = true,
+  trackmissiles       = true,
+  defaultsmokebomb    = true,
+  autosave            = false,
+  instructorfreq      = nil,
+  instructor          = nil,
+  rangecontrolfreq    = nil,
+  rangecontrol        = nil,
+  soundpath           = "Range Soundfiles/"
 }
 
 --- Default range parameters.
@@ -325,6 +402,105 @@ RANGE.TargetType={
 -- @field #string player Player name.
 -- @field #string airframe Aircraft type of player.
 -- @field #number time Time via timer.getAbsTime() in seconds of impact.
+-- @field #string date OS date.
+
+--- Sound file data.
+-- @type RANGE.Soundfile
+-- @field #string filename Name of the file
+-- @field #number duration Duration in seconds.
+
+--- Sound files.
+-- @type RANGE.Sound
+-- @field #RANGE.Soundfile RC0
+-- @field #RANGE.Soundfile RC1
+-- @field #RANGE.Soundfile RC2
+-- @field #RANGE.Soundfile RC3
+-- @field #RANGE.Soundfile RC4
+-- @field #RANGE.Soundfile RC5
+-- @field #RANGE.Soundfile RC6
+-- @field #RANGE.Soundfile RC7
+-- @field #RANGE.Soundfile RC8
+-- @field #RANGE.Soundfile RC9
+-- @field #RANGE.Soundfile RCAccuracy
+-- @field #RANGE.Soundfile RCDegrees
+-- @field #RANGE.Soundfile RCExcellentHit
+-- @field #RANGE.Soundfile RCExcellentPass
+-- @field #RANGE.Soundfile RCFeet
+-- @field #RANGE.Soundfile RCFor
+-- @field #RANGE.Soundfile RCGoodHit
+-- @field #RANGE.Soundfile RCGoodPass
+-- @field #RANGE.Soundfile RCHitsOnTarget
+-- @field #RANGE.Soundfile RCImpact
+-- @field #RANGE.Soundfile RCIneffectiveHit
+-- @field #RANGE.Soundfile RCIneffectivePass
+-- @field #RANGE.Soundfile RCInvalidHit
+-- @field #RANGE.Soundfile RCLeftStrafePitTooQuickly
+-- @field #RANGE.Soundfile RCPercent
+-- @field #RANGE.Soundfile RCPoorHit
+-- @field #RANGE.Soundfile RCPoorPass
+-- @field #RANGE.Soundfile RCRollingInOnStrafeTarget
+-- @field #RANGE.Soundfile RCTotalRoundsFired
+-- @field #RANGE.Soundfile RCWeaponImpactedTooFar
+-- @field #RANGE.Soundfile IR0
+-- @field #RANGE.Soundfile IR1
+-- @field #RANGE.Soundfile IR2
+-- @field #RANGE.Soundfile IR3
+-- @field #RANGE.Soundfile IR4
+-- @field #RANGE.Soundfile IR5
+-- @field #RANGE.Soundfile IR6
+-- @field #RANGE.Soundfile IR7
+-- @field #RANGE.Soundfile IR8
+-- @field #RANGE.Soundfile IR9
+-- @field #RANGE.Soundfile IRDecimal
+-- @field #RANGE.Soundfile IRMegaHertz
+-- @field #RANGE.Soundfile IREnterRange
+-- @field #RANGE.Soundfile IRExitRange
+RANGE.Sound = {
+  RC0={filename="RC-0.ogg", duration=0.60},
+  RC1={filename="RC-1.ogg", duration=0.47},
+  RC2={filename="RC-2.ogg", duration=0.43},
+  RC3={filename="RC-3.ogg", duration=0.50},
+  RC4={filename="RC-4.ogg", duration=0.58},
+  RC5={filename="RC-5.ogg", duration=0.54},
+  RC6={filename="RC-6.ogg", duration=0.61},
+  RC7={filename="RC-7.ogg", duration=0.53},
+  RC8={filename="RC-8.ogg", duration=0.34},
+  RC9={filename="RC-9.ogg", duration=0.54},
+  RCAccuracy={filename="RC-Accuracy.ogg", duration=0.67},
+  RCDegrees={filename="RC-Degrees.ogg", duration=0.59},
+  RCExcellentHit={filename="RC-ExcellentHit.ogg", duration=0.76},
+  RCExcellentPass={filename="RC-ExcellentPass.ogg", duration=0.89},
+  RCFeet={filename="RC-Feet.ogg", duration=0.49},
+  RCFor={filename="RC-For.ogg", duration=0.64},
+  RCGoodHit={filename="RC-GoodHit.ogg", duration=0.52},
+  RCGoodPass={filename="RC-GoodPass.ogg", duration=0.62},
+  RCHitsOnTarget={filename="RC-HitsOnTarget.ogg", duration=0.88},
+  RCImpact={filename="RC-Impact.ogg", duration=0.61},
+  RCIneffectiveHit={filename="RC-IneffectiveHit.ogg", duration=0.86},
+  RCIneffectivePass={filename="RC-IneffectivePass.ogg", duration=0.99},
+  RCInvalidHit={filename="RC-InvalidHit.ogg", duration=2.97},
+  RCLeftStrafePitTooQuickly={filename="RC-LeftStrafePitTooQuickly.ogg", duration=3.09},
+  RCPercent={filename="RC-Percent.ogg", duration=0.56},
+  RCPoorHit={filename="RC-PoorHit.ogg", duration=0.54},
+  RCPoorPass={filename="RC-PoorPass.ogg", duration=0.68},
+  RCRollingInOnStrafeTarget={filename="RC-RollingInOnStrafeTarget.ogg", duration=1.38},
+  RCTotalRoundsFired={filename="RC-TotalRoundsFired.ogg", duration=1.22},
+  RCWeaponImpactedTooFar={filename="RC-WeaponImpactedTooFar.ogg", duration=3.73},
+  IR0={filename="IR-0.ogg", duration=0.55},
+  IR1={filename="IR-1.ogg", duration=0.41},
+  IR2={filename="IR-2.ogg", duration=0.37},
+  IR3={filename="IR-3.ogg", duration=0.41},
+  IR4={filename="IR-4.ogg", duration=0.37},
+  IR5={filename="IR-5.ogg", duration=0.43},
+  IR6={filename="IR-6.ogg", duration=0.55},
+  IR7={filename="IR-7.ogg", duration=0.43},
+  IR8={filename="IR-8.ogg", duration=0.38},
+  IR9={filename="IR-9.ogg", duration=0.55},
+  IRDecimal={filename="IR-Decimal.ogg", duration=0.54},
+  IRMegaHertz={filename="IR-MegaHertz.ogg", duration=0.87},
+  IREnterRange={filename="IR-EnterRange.ogg", duration=4.83},
+  IRExitRange={filename="IR-ExitRange.ogg", duration=3.10},
+}
 
 --- Global list of all defined range names.
 -- @field #table Names
@@ -340,7 +516,7 @@ RANGE.MenuF10Root=nil
 
 --- Range script version.
 -- @field #string version
-RANGE.version="2.1.2"
+RANGE.version="2.2.0"
 
 --TODO list:
 --TODO: Verbosity level for messages.
@@ -431,14 +607,14 @@ function RANGE:New(rangename)
   -- @function [parent=#RANGE] Impact
   -- @param #RANGE self
   -- @param #RANGE.BombResult result Data of bombing run.
-  -- @param #RANGE.Playerdata player Data of player settings etc.
+  -- @param #RANGE.PlayerData player Data of player settings etc.
 
   --- Triggers the FSM delayed event "Impact".
   -- @function [parent=#RANGE] __Impact
   -- @param #RANGE self
   -- @param #number delay Delay in seconds before the function is called.
   -- @param #RANGE.BombResult result Data of the bombing run.
-  -- @param #RANGE.Playerdata player Data of player settings etc.
+  -- @param #RANGE.PlayerData player Data of player settings etc.
 
   --- On after "Impact" event user function. Called when a bomb/rocket/missile impacted.
   -- @function [parent=#RANGE] OnAfterImpact
@@ -447,18 +623,18 @@ function RANGE:New(rangename)
   -- @param #string Event Event.
   -- @param #string To To state.
   -- @param #RANGE.BombResult result Data of the bombing run.
-  -- @param #RANGE.Playerdata player Data of player settings etc.
+  -- @param #RANGE.PlayerData player Data of player settings etc.
 
   --- Triggers the FSM event "EnterRange".
   -- @function [parent=#RANGE] EnterRange
   -- @param #RANGE self
-  -- @param #RANGE.Playerdata player Data of player settings etc.
+  -- @param #RANGE.PlayerData player Data of player settings etc.
 
   --- Triggers the FSM delayed event "EnterRange".
   -- @function [parent=#RANGE] __EnterRange
   -- @param #RANGE self
   -- @param #number delay Delay in seconds before the function is called.
-  -- @param #RANGE.Playerdata player Data of player settings etc.
+  -- @param #RANGE.PlayerData player Data of player settings etc.
 
   --- On after "EnterRange" event user function. Called when a player enters the range zone.
   -- @function [parent=#RANGE] OnAfterEnterRange
@@ -466,18 +642,18 @@ function RANGE:New(rangename)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  -- @param #RANGE.Playerdata player Data of player settings etc.
+  -- @param #RANGE.PlayerData player Data of player settings etc.
 
   --- Triggers the FSM event "ExitRange".
   -- @function [parent=#RANGE] ExitRange
   -- @param #RANGE self
-  -- @param #RANGE.Playerdata player Data of player settings etc.
+  -- @param #RANGE.PlayerData player Data of player settings etc.
 
   --- Triggers the FSM delayed event "ExitRange".
   -- @function [parent=#RANGE] __ExitRange
   -- @param #RANGE self
   -- @param #number delay Delay in seconds before the function is called.
-  -- @param #RANGE.Playerdata player Data of player settings etc.
+  -- @param #RANGE.PlayerData player Data of player settings etc.
 
   --- On after "ExitRange" event user function. Called when a player leaves the range zone.
   -- @function [parent=#RANGE] OnAfterExitRange
@@ -485,7 +661,7 @@ function RANGE:New(rangename)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  -- @param #RANGE.Playerdata player Data of player settings etc.
+  -- @param #RANGE.PlayerData player Data of player settings etc.
 
   -- Return object.
   return self
@@ -572,6 +748,63 @@ function RANGE:onafterStart()
       _target.target:PatrolZones({self.rangezone}, _target.speed*0.75, "Off road")
     end
 
+  end
+  
+  -- Init range control.
+  if self.rangecontrolfreq then
+  
+    -- Radio queue.
+    self.rangecontrol=RADIOQUEUE:New(self.rangecontrolfreq)
+  
+    -- Init numbers.
+    self.rangecontrol:SetDigit(0, RANGE.Sound.RC0.filename, RANGE.Sound.RC0.duration, self.soundpath)
+    self.rangecontrol:SetDigit(1, RANGE.Sound.RC1.filename, RANGE.Sound.RC1.duration, self.soundpath)
+    self.rangecontrol:SetDigit(2, RANGE.Sound.RC2.filename, RANGE.Sound.RC2.duration, self.soundpath)
+    self.rangecontrol:SetDigit(3, RANGE.Sound.RC3.filename, RANGE.Sound.RC3.duration, self.soundpath)
+    self.rangecontrol:SetDigit(4, RANGE.Sound.RC4.filename, RANGE.Sound.RC4.duration, self.soundpath)
+    self.rangecontrol:SetDigit(5, RANGE.Sound.RC5.filename, RANGE.Sound.RC5.duration, self.soundpath)
+    self.rangecontrol:SetDigit(6, RANGE.Sound.RC6.filename, RANGE.Sound.RC6.duration, self.soundpath)
+    self.rangecontrol:SetDigit(7, RANGE.Sound.RC7.filename, RANGE.Sound.RC7.duration, self.soundpath)
+    self.rangecontrol:SetDigit(8, RANGE.Sound.RC8.filename, RANGE.Sound.RC8.duration, self.soundpath)
+    self.rangecontrol:SetDigit(9, RANGE.Sound.RC9.filename, RANGE.Sound.RC9.duration, self.soundpath)
+    
+    -- Set location where the messages are transmitted from.
+    self.rangecontrol:SetSenderCoordinate(self.location)
+    
+    -- Start range control radio queue.
+    self.rangecontrol:Start(1, 0.1)
+
+    -- Init range control.
+    if self.instructorfreq then
+        
+      -- Radio queue.
+      self.instructor=RADIOQUEUE:New(self.instructorfreq)
+      
+      -- Init numbers.
+      self.instructor:SetDigit(0, RANGE.Sound.IR0.filename, RANGE.Sound.IR0.duration, self.soundpath)
+      self.instructor:SetDigit(1, RANGE.Sound.IR1.filename, RANGE.Sound.IR1.duration, self.soundpath)
+      self.instructor:SetDigit(2, RANGE.Sound.IR2.filename, RANGE.Sound.IR2.duration, self.soundpath)
+      self.instructor:SetDigit(3, RANGE.Sound.IR3.filename, RANGE.Sound.IR3.duration, self.soundpath)
+      self.instructor:SetDigit(4, RANGE.Sound.IR4.filename, RANGE.Sound.IR4.duration, self.soundpath)
+      self.instructor:SetDigit(5, RANGE.Sound.IR5.filename, RANGE.Sound.IR5.duration, self.soundpath)
+      self.instructor:SetDigit(6, RANGE.Sound.IR6.filename, RANGE.Sound.IR6.duration, self.soundpath)
+      self.instructor:SetDigit(7, RANGE.Sound.IR7.filename, RANGE.Sound.IR7.duration, self.soundpath)
+      self.instructor:SetDigit(8, RANGE.Sound.IR8.filename, RANGE.Sound.IR8.duration, self.soundpath)
+      self.instructor:SetDigit(9, RANGE.Sound.IR9.filename, RANGE.Sound.IR9.duration, self.soundpath)
+      
+      -- Set location where the messages are transmitted from.
+      self.instructor:SetSenderCoordinate(self.location)
+    
+      -- Start instructor radio queue.
+      self.instructor:Start(1, 0.1)       
+    
+    end
+    
+  end
+  
+  -- Load prev results.
+  if self.autosave then
+    self:Load()
   end
 
   -- Debug mode: smoke all targets and range zone.
@@ -830,6 +1063,34 @@ function RANGE:TrackMissilesOFF()
   return self
 end
 
+
+--- Enable range control and set frequency.
+-- @param #RANGE self
+-- @param #number frequency Frequency in MHz. Default 256 MHz.
+-- @return #RANGE self
+function RANGE:SetRangeControl(frequency)
+  self.rangecontrolfreq=frequency or 256
+  return self
+end
+
+--- Enable instructor radio and set frequency.
+-- @param #RANGE self
+-- @param #number frequency Frequency in MHz. Default 305 MHz.
+-- @return #RANGE self
+function RANGE:SetInstructorRadio(frequency)
+  self.instructorfreq=frequency or 305
+  return self
+end
+
+--- Set sound files folder within miz file.
+-- @param #RANGE self
+-- @param #string path Path for sound files. Default "ATIS Soundfiles/". Mind the slash "/" at the end!
+-- @return #RANGE self
+function RANGE:SetSoundfilesPath(path)
+  self.soundpath=tostring(path or "Range Soundfiles/")
+  self:I(self.lid..string.format("Setting sound files path to %s", self.soundpath))
+  return self
+end
 
 --- Add new strafe pit. For a strafe pit, hits from guns are counted. One pit can consist of several units.
 -- Note, an approach is only valid, if the player enters via a zone in front of the pit, which defined by boxlength and boxheading.
@@ -1565,7 +1826,7 @@ function RANGE:OnEventShot(EventData)
             if _distance == nil or _temp < _distance then
               _distance = _temp
               _closetTarget = _bombtarget
-              _closeCoord=targetcoord
+              _closeCoord=targetcoord              
               if _distance <= 0.5*_bombtarget.goodhitrange then
                 _hitquality = "EXCELLENT"
               elseif _distance <= _bombtarget.goodhitrange then
@@ -1609,8 +1870,12 @@ function RANGE:OnEventShot(EventData)
         elseif insidezone then
 
           -- Send message.
-          local _message=string.format("%s, weapon fell more than %.1f km away from nearest range target. No score!", _callsign, self.scorebombdistance/1000)
+          local _message=string.format("%s, weapon impacted too far from nearest range target (>%.1f km). No score!", _callsign, self.scorebombdistance/1000)
           self:_DisplayMessageToGroup(_unit, _message, nil, false)
+          
+          if self.rangecontrol then
+            self.rangecontrol:NewTransmission(RANGE.Sound.RCWeaponImpactedTooFar.filename, RANGE.Sound.RCWeaponImpactedTooFar.duration, self.soundpath, nil, nil, _message, self.subduration)     
+          end
 
         else
           self:T(self.id.."Weapon impacted outside range zone.")
@@ -1649,13 +1914,47 @@ function RANGE:onafterStatus(From, Event, To)
   -- Check player status.
   self:_CheckPlayers()
 
-  -- Save results.
-  if self.autosave then
-    self:Save()
-  end
-
   -- Check back in ~10 seconds.
   self:__Status(-10)
+end
+
+--- Function called after player enters the range zone.
+-- @param #RANGE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #RANGE.PlayerData player Player data.
+function RANGE:onafterEnterRange(From, Event, To, player)
+    
+  if self.instructor and self.rangecontrol then
+    
+    -- Range control radio frequency split.
+    local RF=UTILS.Split(string.format("%.3f", self.rangecontrolfreq), ".")
+    
+    -- Radio message that player entered the range
+    self.instructor:NewTransmission(RANGE.Sound.IREnterRange.filename, RANGE.Sound.IREnterRange.duration, self.soundpath)
+    self.instructor:Number2Transmission(RF[1])
+    if tonumber(RF[2])>0 then
+      self.instructor:NewTransmission(RANGE.Sound.IRDecimal.filename, RANGE.Sound.IRDecimal.duration, self.soundpath)
+      self.instructor:Number2Transmission(RF[2])
+    end
+    self.instructor:NewTransmission(RANGE.Sound.IRMegaHertz.filename, RANGE.Sound.IRMegaHertz.duration, self.soundpath)
+  end
+  
+end
+
+--- Function called after player leaves the range zone.
+-- @param #RANGE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #RANGE.PlayerData player Player data.
+function RANGE:onafterExitRange(From, Event, To, player)
+
+  if self.instructor then
+    self.instructor:NewTransmission(RANGE.Sound.IRExitRange.filename, RANGE.Sound.IRExitRange.duration, self.soundpath)
+  end
+
 end
 
 
@@ -1665,7 +1964,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param #RANGE.BombResult result Result of bomb impact.
--- @param #RANGE.PlayerData player
+-- @param #RANGE.PlayerData player Player data table.
 function RANGE:onafterImpact(From, Event, To, result, player)
 
   -- Only display target name if there is more than one bomb target.
@@ -1682,6 +1981,25 @@ function RANGE:onafterImpact(From, Event, To, result, player)
     text=text.."."
   end
   text=text..string.format(" %s hit.", result.quality)
+  
+  if self.rangecontrol then
+    self.rangecontrol:NewTransmission(RANGE.Sound.RCImpact.filename, RANGE.Sound.RCImpact.duration, self.soundpath, nil, nil, text, self.subduration)
+    self.rangecontrol:Number2Transmission(string.format("%03d", result.radial), nil, 0.1)
+    self.rangecontrol:NewTransmission(RANGE.Sound.RCDegrees.filename, RANGE.Sound.RCDegrees.duration, self.soundpath)
+    self.rangecontrol:NewTransmission(RANGE.Sound.RCFor.filename, RANGE.Sound.RCFor.duration, self.soundpath)
+    self.rangecontrol:Number2Transmission(string.format("%d", UTILS.MetersToFeet(result.distance)))
+    self.rangecontrol:NewTransmission(RANGE.Sound.RCFeet.filename, RANGE.Sound.RCFeet.duration, self.soundpath)
+    if result.quality=="POOR" then
+      self.rangecontrol:NewTransmission(RANGE.Sound.RCPoorHit.filename, RANGE.Sound.RCPoorHit.duration, self.soundpath, nil, 0.5)
+    elseif result.quality=="INEFFECTIVE" then
+      self.rangecontrol:NewTransmission(RANGE.Sound.RCIneffectiveHit.filename, RANGE.Sound.RCIneffectiveHit.duration, self.soundpath, nil, 0.5)
+    elseif result.quality=="GOOD" then
+      self.rangecontrol:NewTransmission(RANGE.Sound.RCGoodHit.filename, RANGE.Sound.RCGoodHit.duration, self.soundpath, nil, 0.5)
+    elseif result.quality=="EXCELLENT" then
+      self.rangecontrol:NewTransmission(RANGE.Sound.RCExcellentHit.filename, RANGE.Sound.RCExcellentHit.duration, self.soundpath, nil, 0.5)
+    end
+    
+  end  
 
   -- Unit.
   local unit=UNIT:FindByName(player.unitname)
@@ -1689,6 +2007,11 @@ function RANGE:onafterImpact(From, Event, To, result, player)
   -- Send message.
   self:_DisplayMessageToGroup(unit, text, nil, true)
   self:T(self.id..text)
+  
+  -- Save results.
+  if self.autosave then
+    self:Save()
+  end
 
 end
 
@@ -1746,7 +2069,11 @@ function RANGE:onafterSave(From, Event, To)
       local quality=result.quality
       local time=UTILS.SecondsToClock(result.time)
       local airframe=result.airframe
-      scores=scores..string.format("\n%s,%d,%s,%.2f,%03d,%s,%s,%s,%s", playername, i, target, distance, radial, quality, weapon, airframe, time)
+      local date="n/a"
+      if os then
+        date=os.date()
+      end
+      scores=scores..string.format("\n%s,%d,%s,%.2f,%03d,%s,%s,%s,%s,%s", playername, i, target, distance, radial, quality, weapon, airframe, time, date)
     end
   end
 
@@ -1783,7 +2110,7 @@ function RANGE:onafterLoad(From, Event, To)
       f:close()
       return data
     else
-      self:E(self.id..string.format("ERROR: Could not load player results from file %s", tostring(filename)))
+      self:E(self.id..string.format("WARNING: Could not load player results from file %s. File might not exist just yet.", tostring(filename)))
       return nil
     end
   end
@@ -1833,6 +2160,7 @@ function RANGE:onafterLoad(From, Event, To)
       result.weapon=tostring(resultdata[7])
       result.airframe=tostring(resultdata[8])
       result.time=UTILS.ClockToSeconds(resultdata[9] or "00:00:00")
+      result.date=resultdata[10] or "n/a"
 
       -- Create player array if necessary.
       self.bombPlayerResults[playername]=self.bombPlayerResults[playername] or {}
@@ -2106,6 +2434,7 @@ function RANGE:_DisplayRangeInfo(_unitname)
       local position=self.location --Core.Point#COORDINATE
       local bulls=position:ToStringBULLS(unit:GetCoalition(), settings)
       local lldms=position:ToStringLLDMS(settings)
+      local llddm=position:ToStringLLDDM(settings)
       local rangealt=position:GetLandHeight()
       local vec3=coord:GetDirectionVec3(position)
       local angle=coord:GetAngleDegrees(vec3)
@@ -2149,6 +2478,7 @@ function RANGE:_DisplayRangeInfo(_unitname)
       text=text..string.format("Bearing %s, Range %s\n", Bs, trange)
       text=text..string.format("%s\n", bulls)
       text=text..string.format("%s\n", lldms)
+      text=text..string.format("%s\n", llddm)
       text=text..string.format("Altitude ASL: %s\n", trangealt)
       text=text..string.format("Max strafing alt AGL: %s\n", tstrafemaxalt)
       text=text..string.format("# of strafe targets: %d\n", self.nstrafetargets)
@@ -2192,13 +2522,13 @@ function RANGE:_DisplayBombTargets(_unitname)
 
       if coord then
 
-        local ca2g=coord:ToStringA2G(_unit, _settings)
-        local lldms=coord:ToStringLLDMS()        
-        _text=_text..string.format("\n- %s: %s %s", bombtarget.name or "unknown", ca2g, lldms)
+        local ca2g=coord:ToStringA2G(_unit,_settings)
+        --local lldms=coord:ToStringLLDMS(_settings)        
+        _text=_text..string.format("\n- %s:\n%s", bombtarget.name or "unknown", ca2g)
       end
     end
 
-    self:_DisplayMessageToGroup(_unit,_text, nil, true, true)
+    self:_DisplayMessageToGroup(_unit,_text, 60, true, true)
   end
 end
 
@@ -2235,7 +2565,7 @@ function RANGE:_DisplayStrafePits(_unitname)
       end
 
       local mycoord=coord:ToStringA2G(_unit, _settings)
-      _text=_text..string.format("\n- %s: %s - heading %03d°",_strafepit.name, mycoord, heading)
+      _text=_text..string.format("\n- %s: heading %03d°\n%s",_strafepit.name, heading, mycoord)
     end
 
     self:_DisplayMessageToGroup(_unit,_text, nil, true, true)
@@ -2283,7 +2613,7 @@ function RANGE:_DisplayRangeWeather(_unitname)
       local tW=string.format("%.1f m/s", Ws)
       local tP=string.format("%.1f mmHg", P*hPa2mmHg)
       if settings:IsImperial() then
-        tT=string.format("%d°F", UTILS.CelciusToFarenheit(T))
+        --tT=string.format("%d°F", UTILS.CelciusToFarenheit(T))
         tW=string.format("%.1f knots", UTILS.MpsToKnots(Ws))
         tP=string.format("%.2f inHg", P*hPa2inHg)
       end
@@ -2332,8 +2662,8 @@ function RANGE:_CheckPlayers()
         ------------------------------
 
         if not playersettings.inzone then
-          self:EnterRange(playersettings)
           playersettings.inzone=true
+          self:EnterRange(playersettings)          
         end
 
       else
@@ -2343,8 +2673,8 @@ function RANGE:_CheckPlayers()
         -------------------------------
 
         if playersettings.inzone==true then
-          self:ExitRange(playersettings)
           playersettings.inzone=false
+          self:ExitRange(playersettings)          
         end
 
       end
@@ -2409,6 +2739,10 @@ function RANGE:_CheckInZone(_unitName)
 
           -- Send message.
           self:_DisplayMessageToGroup(_unit, _msg, nil, true)
+          
+          if self.rangecontrol then
+            self.rangecontrol:NewTransmission(RANGE.Sound.RCLeftStrafePitTooQuickly.filename, RANGE.Sound.RCLeftStrafePitTooQuickly.duration, self.soundpath)
+          end
 
         else
 
@@ -2417,16 +2751,21 @@ function RANGE:_CheckInZone(_unitName)
 
           -- Result.
           local _result = self.strafeStatus[_unitID]
+          local _sound  = nil --#RANGE.Soundfile
 
           -- Judge this pass. Text is displayed on summary.
           if _result.hits >= _result.zone.goodPass*2 then
             _result.text = "EXCELLENT PASS"
+            _sound=RANGE.Sound.RCExcellentPass
           elseif _result.hits >= _result.zone.goodPass then
             _result.text = "GOOD PASS"
+            _sound=RANGE.Sound.RCGoodPass
           elseif _result.hits >= _result.zone.goodPass/2 then
             _result.text = "INEFFECTIVE PASS"
+            _sound=RANGE.Sound.RCIneffectivePass
           else
             _result.text = "POOR PASS"
+            _sound=RANGE.Sound.RCPoorPass
           end
 
           -- Calculate accuracy of run. Number of hits wrt number of rounds fired.
@@ -2437,13 +2776,28 @@ function RANGE:_CheckInZone(_unitName)
           end
 
           -- Message text.
-          local _text=string.format("%s, %s with %d hits on target %s.", self:_myname(_unitName), _result.text, _result.hits, _result.zone.name)
+          local _text=string.format("%s, hits on target %s: %d", self:_myname(_unitName), _result.zone.name, _result.hits)
           if shots and accur then
             _text=_text..string.format("\nTotal rounds fired %d. Accuracy %.1f %%.", shots, accur)
           end
+          _text=_text..string.format("\n%s", _result.text)
 
           -- Send message.
           self:_DisplayMessageToGroup(_unit, _text)
+          
+          -- Voice over.
+          if self.rangecontrol then                        
+            self.rangecontrol:NewTransmission(RANGE.Sound.RCHitsOnTarget.filename, RANGE.Sound.RCHitsOnTarget.duration, self.soundpath)
+            self.rangecontrol:Number2Transmission(string.format("%d", _result.hits))
+            if shots and accur then
+              self.rangecontrol:NewTransmission(RANGE.Sound.RCTotalRoundsFired.filename, RANGE.Sound.RCTotalRoundsFired.duration, self.soundpath, nil, 0.2)
+              self.rangecontrol:Number2Transmission(string.format("%d", shots), nil, 0.2)
+              self.rangecontrol:NewTransmission(RANGE.Sound.RCAccuracy.filename, RANGE.Sound.RCAccuracy.duration, self.soundpath, nil, 0.2)
+              self.rangecontrol:Number2Transmission(string.format("%d", UTILS.Round(accur, 0)))
+              self.rangecontrol:NewTransmission(RANGE.Sound.RCPercent.filename, RANGE.Sound.RCPercent.duration, self.soundpath)
+            end
+            self.rangecontrol:NewTransmission(_sound.filename, _sound.duration, self.soundpath, nil, 0.5)
+          end
 
           -- Set strafe status to nil.
           self.strafeStatus[_unitID] = nil
@@ -2490,6 +2844,10 @@ function RANGE:_CheckInZone(_unitName)
 
           -- Rolling in!
           local _msg=string.format("%s, rolling in on strafe pit %s.", self:_myname(_unitName), _targetZone.name)
+          
+          if self.rangecontrol then
+            self.rangecontrol:NewTransmission(RANGE.Sound.RCRollingInOnStrafeTarget.filename, RANGE.Sound.RCRollingInOnStrafeTarget.duration, self.soundpath)
+          end          
 
           -- Send message.
           self:_DisplayMessageToGroup(_unit, _msg, 10, true)
@@ -2996,7 +3354,7 @@ function RANGE:_SmokeStrafeTargetBoxes(unitname)
 
   for _,_target in pairs(self.strafeTargets) do
     local zone=_target.polygon --Core.Zone#ZONE
-    zone:SmokeZone(self.StrafePitSmokeColor)
+    zone:SmokeZone(self.StrafePitSmokeColor, 4)
     for _,_point in pairs(_target.smokepoints) do
       _point:SmokeOrange()  --Corners are smoked orange.
     end
@@ -3189,7 +3547,8 @@ function RANGE:_myname(unitname)
   local pname=unit:GetPlayerName()
   local csign=unit:GetCallsign()
 
-  return string.format("%s (%s)", csign, pname)
+  --return string.format("%s (%s)", csign, pname)
+  return string.format("%s", pname)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
