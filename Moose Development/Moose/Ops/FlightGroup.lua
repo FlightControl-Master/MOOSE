@@ -342,7 +342,7 @@ function FLIGHTGROUP:New(groupname)
 
 
   -- Debug trace.
-  if true then
+  if false then
     self.Debug=true
     BASE:TraceOnOff(true)
     BASE:TraceClass(self.ClassName)
@@ -1219,7 +1219,7 @@ function FLIGHTGROUP:onafterFlightSpawned(From, Event, To)
   
   for _,_element in pairs(self.elements) do
     local element=_element --#FLIGHTGROUP.Element
-    element.ai=self:_IsHumanUnit(element.unit)
+    element.ai=not self:_IsHumanUnit(element.unit)
   end
 
   -- Init waypoints.
@@ -1543,22 +1543,30 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold, S
     p1=HoldingPoint.pos1
     
     -- Debug marks.
-    p0:MarkToAll("Holding point P0")
-    p1:MarkToAll("Holding point P1")
+    if self.Debug then
+      p0:MarkToAll("Holding point P0")
+      p1:MarkToAll("Holding point P1")
+    end
     
     -- Get active runway.
     local runway=fc:GetActiveRunway()
     
     -- Approach point: 10 NN in direction of runway.
     local papp=airbase:GetCoordinate():Translate(x1, runway.heading-180):SetAltitude(h1)
-    papp:MarkToAll(string.format("Final Approach: d=%d m, h=%d m", x1, h1))
-    wpap=papp:WaypointAirTurningPoint(nil, UTILS.KnotsToKmph(SpeedLand), {}, "Final Approach")    
+    wpap=papp:WaypointAirTurningPoint(nil, UTILS.KnotsToKmph(SpeedLand), {}, "Final Approach")
+    
+    if self.Debug then
+      papp:MarkToAll(string.format("Final Approach: d=%d m, h=%d m", x1, h1))
+    end    
   
     -- TODO: make dependend on AC type helos etc.
   
     -- Approach point: 10 NN in direction of runway.
     pland=airbase:GetCoordinate():Translate(x2, runway.heading-180):SetAltitude(h2)
-    pland:MarkToAll(string.format("Landing: d=%d m, h=%d m", x2, h2))
+    
+    if self.Debug then
+      pland:MarkToAll(string.format("Landing: d=%d m, h=%d m", x2, h2))
+    end
     
     -- Set flightcontrol for this flight.
     self:SetFlightControl(fc)
@@ -1587,8 +1595,7 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold, S
   -- Okay, it looks like it's best to specify the coordinates not at the airbase but a bit away. This causes a more direct landing approach.
   wp[#wp+1]=pland:WaypointAirLanding(UTILS.KnotsToKmph(SpeedLand), airbase, {}, "Landing")
   
-  -- This is NOT good! It causes the AC to fly to the airbase and then start landing, i.e. go back.
-  --wp[#wp+1]=airbase:GetCoordinate():SetAltitude(UTILS.FeetToMeters(0)):WaypointAirLanding(UTILS.KnotsToKmph(SpeedLand), airbase, {}, "Landing")
+  
   
   local respawn=true
   
@@ -1904,7 +1911,10 @@ end
 -- @param #FLIGHTGROUP flightgroup Flight group object.
 function FLIGHTGROUP._ReachedHolding(group, flightgroup)
   env.info(string.format("FF group %s reached holding point", group:GetName()))
-  group:GetCoordinate():MarkToAll("Holding Point Reached")
+  
+  if flightgroup.Debug then
+    group:GetCoordinate():MarkToAll("Holding Point Reached")
+  end
   
   flightgroup.flaghold:Set(666)
   

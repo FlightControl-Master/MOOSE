@@ -177,7 +177,7 @@ function FLIGHTCONTROL:New(airbasename)
   self:AddTransition("*",             "Status",          "*")           -- Update status.
 
   -- Debug trace.
-  if false then
+  if true then
     self.Debug=true
     BASE:TraceOnOff(true)
     BASE:TraceClass(self.ClassName)
@@ -263,10 +263,9 @@ function FLIGHTCONTROL:onafterStatus()
   -- Check zone for flights inbound.
   --self:_CheckInbound()
   
-  --self:_UpdateParkingSpots()
-  
   -- Check parking spots.
   self:_CheckParking()
+  self:_UpdateParkingSpots()
   
   -- Check waiting and landing queue.
   self:_CheckQueues()
@@ -450,6 +449,7 @@ function FLIGHTCONTROL:_CheckQueues()
         
         flight:_UpdateRoute(1)
         
+        env.info("FF remove flight from parking queue - if possible.")
         self:_RemoveFlightFromQueue(self.Qparking, flight, "parking")
         
         self:_AddFlightToTakeoffQueue(flight)
@@ -491,7 +491,7 @@ function FLIGHTCONTROL:_GetNextFight()
     
     
     -- Return the flight which is waiting longer.
-    if flightholding.Tholding<flightparking.Tparking then
+    if flightholding.Tholding>flightparking.Tparking then
       return flightholding, true
     else
       return flightparking, false
@@ -788,7 +788,7 @@ function FLIGHTCONTROL:_InitParkingSpots()
     
     -- Mark position.
     local text=string.format("ID=%d, Terminal=%d, Free=%s, Reserved=%s, Dist=%.1f", parking.id, parking.terminal, tostring(parking.free), tostring(parking.reserved), parking.drunway)
-    parking.markerid=parking.position:MarkToAll(text)
+    --parking.markerid=parking.position:MarkToAll(text)
     
     -- Add to table.
     table.insert(self.parking, parking)
@@ -821,7 +821,7 @@ function FLIGHTCONTROL:_CheckParking()
       local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
     
       -- Loop over all elements.
-      for _,_element in pairs(_flight.elements) do
+      for _,_element in pairs(flight.elements) do
         local element=_element --Ops.FlightGroup#FLIGHTGROUP.Element
         
         if element.unit and element.unit:IsAlive() then
@@ -840,7 +840,6 @@ function FLIGHTCONTROL:_CheckParking()
         end
         
       end
-    
     
     end
   end
@@ -900,7 +899,9 @@ function FLIGHTCONTROL:_UpdateParkingSpots()
         
         local text=string.format("ID=%d, Terminal=%d, Free=%s, Reserved=%s, Dist=%.1f", parking.id, parking.terminal, tostring(parking.free), tostring(parking.reserved), parking.drunway)
         message=message.."\n"..text
-        parking.markerid=parking.position:MarkToAll(text)
+        if parking.free==false or parking.reserved then
+          parking.markerid=parking.position:MarkToAll(text)
+        end
           
         break
       end
@@ -940,9 +941,12 @@ function FLIGHTCONTROL:_CreatePlayerMenu(flight)
   
   local playermenu=self.playermenu[gid]  --#FLIGHTCONTROL.PlayerMenu
 
-  playermenu.root       = MENU_GROUP:New(group, "ATC")
-  playermenu.MyStatus   = MENU_GROUP_COMMAND:New(group, "My Status",    playermenu.root, self._PlayerMyStatus,    self, groupname)
-  playermenu.RequestTaxi= MENU_GROUP_COMMAND:New(group, "Request Taxi", playermenu.root, self._PlayerRequestTaxi, self, groupname)
+  playermenu.root           = MENU_GROUP:New(group, "ATC")
+  playermenu.MyStatus       = MENU_GROUP_COMMAND:New(group, "My Status",       playermenu.root, self._PlayerMyStatus,       self, groupname)
+  playermenu.RequestTaxi    = MENU_GROUP_COMMAND:New(group, "Request Taxi",    playermenu.root, self._PlayerRequestTaxi,    self, groupname)
+  playermenu.RequestTakeoff = MENU_GROUP_COMMAND:New(group, "Request Takeoff", playermenu.root, self._PlayerRequestTakeoff, self, groupname)
+  playermenu.Inbound        = MENU_GROUP_COMMAND:New(group, "Inbound",         playermenu.root, self._PlayerInbound,        self, groupname)
+  
 
 end
 
@@ -975,18 +979,39 @@ function FLIGHTCONTROL:_PlayerRequestTaxi(groupname)
 
   MESSAGE:New("Request taxi to runway", 5):ToAll()
   
-  MESSAGE:New("You are cleared to taxi", 5):ToAll()
-  
+    
   local flight=_DATABASE:GetFlightGroup(groupname)
   
   if flight then
   
+    MESSAGE:New("You are cleared to taxi", 5):ToAll()
+    
     for _,_element in pairs(flight.elements) do
       local element=_element --Ops.FlightGroup#FLIGHTGROUP.Element
       flight:ElementTaxiing(element)
     end
+    
+  else
+    MESSAGE:New(string.format("Could not clear group %s for taxi!", groupname), 5):ToAll()
   end  
 
+end
+
+--- Create player menu.
+-- @param #FLIGHTCONTROL self
+-- @param #string groupname Name of the flight group.
+function FLIGHTCONTROL:_PlayerRequestTakeoff(groupname)
+
+  MESSAGE:New("Request takeoff", 5):ToAll()
+      
+  local flight=_DATABASE:GetFlightGroup(groupname)
+  
+  if flight then
+    if flight:IsTaxiing() then    
+    else
+    end
+  end
+  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1142,6 +1167,82 @@ end
 
 --- Scan airbase zone and find new flights.
 -- @param #FLIGHTCONTROL self
+function FLIGHTCONTROL:_CheckACstatus()
+  
+  -- Airbase position.
+  local coord=self:GetCoordinate()
+  
+  -- Scan radius = 20 NM.
+  local RCCZ=UTILS.NMToMeters(20)
+  
+  -- Debug info.
+  self:T(self.lid..string.format("Scanning airbase zone. Radius=%.1f NM.", UTILS.MetersToNM(RCCZ)))
+  
+  -- Scan units in carrier zone.
+  local _,_,_,unitscan=coord:ScanObjects(RCCZ, true, false, false)
+
+  -- Make a table with all groups currently in the CCA zone.
+  local insideZone={}
+  
+  for _,_unit in pairs(unitscan) do
+    local unit=_unit --Wrapper.Unit#UNIT
+    
+    -- Necessary conditions to be met:
+    local aircraft=unit:IsAir()
+    local inzone=unit:IsInZone(self.zoneAirbase)
+    local friendly=self:GetCoalition()==unit:GetCoalition()
+    
+    -- Check if this an aircraft and that it is inside the airbase zone and friendly.
+    if aircraft and inzone then
+    
+      local group=unit:GetGroup()
+      local groupname=group:GetName()
+      
+      -- Add group to table.
+      if insideZone[groupname]==nil then
+        insideZone[groupname]=groupname
+      end
+      
+    end
+  end
+  
+  -- Find new flights that are inside the airbase zone.
+  for groupname,_ in pairs(insideZone) do
+    local flight=_DATABASE:GetFlightGroup(groupname)
+
+    if flight then
+    
+      for _,_element in pairs(flight.elements) do
+        local element=_element --Ops.FlightGroup#FLIGHTGROUP.Element
+        
+        local unit=element.unit
+        
+        if unit and unit:IsAlive() then
+        
+          if unit:InAir() then
+          
+          else
+          
+            if element.status==FLIGHTGROUP.ElementStatus.PARKING then
+              if element.parking then
+              
+              end
+            end
+          
+          end
+        
+        end
+        
+      end
+    
+    end
+
+  end
+  
+end
+
+--- Scan airbase zone and find new flights.
+-- @param #FLIGHTCONTROL self
 function FLIGHTCONTROL:_CheckInbound()
   
   -- Airbase position.
@@ -1180,6 +1281,8 @@ function FLIGHTCONTROL:_CheckInbound()
       
     end
   end
+
+
   
   -- Find new flights that are inside the airbase zone.
   for groupname,_group in pairs(insideZone) do
