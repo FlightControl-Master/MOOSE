@@ -1616,6 +1616,7 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold, S
           local spot=parking[i] --Ops.FlightControl#FLIGHTCONTROL.ParkingSpot
           spot.reserved4=unit.name
           unit.parking_landing=spot.id
+          unit.onboard_num=string.format("%03d", spot.id)
           local text=string.format("FF Reserving parking spot %d for unit %s", spot.id, tostring(unit.name))
           env.info(text)
         end
@@ -2273,6 +2274,7 @@ function FLIGHTGROUP:_UpdateRoute(n)
   local wp={}
   
   -- Set current waypoint or we get problem that the _PassingWaypoint function is triggered too early, i.e. right now and not when passing the next WP.
+  -- TODO: This, however, leads to the flight to go right over this point when it is on an airport ==> Need to test Waypoint takeoff 
   local current=self.group:GetCoordinate():WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, 350, true, nil, {}, "Current")
   table.insert(wp, current)
 
