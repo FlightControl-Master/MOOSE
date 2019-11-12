@@ -93,6 +93,7 @@ FLIGHTCONTROL = {
 -- @field #boolean free If true, spot is free.
 -- @field #number drunway Distance to runway.
 -- @field #boolean reserved If true, reserved.
+-- @field #string reserved4 Flight group the spot is reserved for. Applies only to landing.
 -- @field #number markerid ID of the marker.
 
 --- Runway data.
@@ -104,7 +105,7 @@ FLIGHTCONTROL = {
 
 --- FlightControl class version.
 -- @field #string version
-FLIGHTCONTROL.version="0.0.7"
+FLIGHTCONTROL.version="0.0.8"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -265,6 +266,8 @@ function FLIGHTCONTROL:onafterStatus()
   
   -- Check parking spots.
   self:_CheckParking()
+  
+  -- Update parking spots.
   self:_UpdateParkingSpots()
   
   -- Check waiting and landing queue.
@@ -594,8 +597,21 @@ function FLIGHTCONTROL:_PrintQueue(queue, name)
       local fuel=flight.group:GetFuelMin()*100
       local ai=tostring(flight.ai)
       local actype=tostring(flight.actype)
+      env.info("FF")
+      self:I({holding=flight.Tholding})
+      self:I({parking=flight.Tparking})
       local holding=flight.Tholding and UTILS.SecondsToClock(flight.Tholding-time, true) or "X"
       local parking=flight.Tparking and UTILS.SecondsToClock(flight.Tparking-time, true) or "X"
+      
+      local holding=flight:GetHoldingTime()
+      if holding>=0 then
+        holding=UTILS.SecondsToClock(holding, true)
+      end
+      local parking=flight:GetParkingTime()
+      if parking>=0 then
+        parking=UTILS.SecondsToClock(parking, true)
+      end      
+      
       
       local nunits=flight.nunits or 1
       
@@ -772,6 +788,7 @@ function FLIGHTCONTROL:_InitParkingSpots()
   -- Parking spots of airbase.
   local parkingdata=self.airbase:GetParkingSpotsTable()
   
+  -- Init parking spots table.
   self.parking={}
   
   for _,_spot in pairs(parkingdata) do
@@ -785,6 +802,7 @@ function FLIGHTCONTROL:_InitParkingSpots()
     parking.id=spot.TerminalID
     parking.free=spot.Free
     parking.reserved=spot.TOAC
+    parking.reserved4="none"
     
     -- Mark position.
     local text=string.format("ID=%d, Terminal=%d, Free=%s, Reserved=%s, Dist=%.1f", parking.id, parking.terminal, tostring(parking.free), tostring(parking.reserved), parking.drunway)
@@ -858,7 +876,7 @@ function FLIGHTCONTROL:_GetFreeParkingSpots(terminal)
   for _,_parking in pairs(self.parking) do
     local parking=_parking --#FLIGHTCONTROL.ParkingSpot
     
-    if parking.free then
+    if parking.free and parking.reserved4=="none" then
       if terminal==nil or terminal==parking.terminal then
         n=n+1
         table.insert(freespots, parking)
@@ -897,9 +915,9 @@ function FLIGHTCONTROL:_UpdateParkingSpots()
           parking.position:RemoveMark(parking.markerid)
         end
         
-        local text=string.format("ID=%d, Terminal=%d, Free=%s, Reserved=%s, Dist=%.1f", parking.id, parking.terminal, tostring(parking.free), tostring(parking.reserved), parking.drunway)
+        local text=string.format("ID=%03d, Terminal=%03d, Free=%s, Reserved=%s, reserved4=%s, Dist=%.1f", parking.id, parking.terminal, tostring(parking.free), tostring(parking.reserved), parking.reserved4, parking.drunway)
         message=message.."\n"..text
-        if parking.free==false or parking.reserved then
+        if parking.free==false or parking.reserved or parking.reserved4~="none" then
           parking.markerid=parking.position:MarkToAll(text)
         end
           
@@ -1334,7 +1352,6 @@ function FLIGHTCONTROL:_LandAI(flight)
   self:I(self.lid..string.format("Landing AI flight %s.", flight.groupname))
 
   -- Add flight to landing queue.
-  --table.insert(self.Qlanding, flight)
   self:_AddFlightToLandingQueue(flight)
   
   -- Give signal to land.

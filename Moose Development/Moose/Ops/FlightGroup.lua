@@ -1242,6 +1242,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function FLIGHTGROUP:onafterFlightParking(From, Event, To)
+  self:I(self.sid..string.format("Flight is parking %s.", self.groupname))
 
   local airbase=self.group:GetCoordinate():GetClosestAirbase()
   
@@ -1596,7 +1597,7 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold, S
   wp[#wp+1]=pland:WaypointAirLanding(UTILS.KnotsToKmph(SpeedLand), airbase, {}, "Landing")
   
   
-  
+  -- Respawn?
   local respawn=true
   
   if respawn then
@@ -1606,6 +1607,25 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold, S
   
     -- Set route points.
     Template.route.points=wp
+    
+    if fc then
+      local n,parking=fc:_GetFreeParkingSpots()
+      -- TODO: getsize
+      if n>=1 then
+        for i,unit in pairs(Template.units) do
+          local spot=parking[i] --Ops.FlightControl#FLIGHTCONTROL.ParkingSpot
+          spot.reserved4=unit.name
+          unit.parking_landing=spot.id
+          local text=string.format("FF Reserving parking spot %d for unit %s", spot.id, tostring(unit.name))
+          env.info(text)
+        end
+        --[[
+        for _,_spot in pairs(parking) do
+          local spot=_spot --Ops.FlightControl#FLIGHTCONTROL.ParkingSpot
+        end
+        ]]
+      end
+    end
     
     MESSAGE:New("Respawning group"):ToAll()
 
@@ -1887,11 +1907,10 @@ function FLIGHTGROUP._PassingWaypoint(group, flightgroup, i)
   if flightgroup.Debug then
     local pos=group:GetCoordinate()
     --pos:SmokeRed()
-    local MarkerID=pos:MarkToAll(string.format("Group %s reached waypoint %d", group:GetName(), i))
+    --local MarkerID=pos:MarkToAll(string.format("Group %s reached waypoint %d", group:GetName(), i))
   end
 
   -- Debug message.
-  --MESSAGE:New(text,10):ToAllIf(flightgroup.Debug)
   flightgroup:T3(flightgroup.sid..text)
 
   -- Set current waypoint.
@@ -1910,7 +1929,7 @@ end
 -- @param Wrapper.Group#GROUP group Group object.
 -- @param #FLIGHTGROUP flightgroup Flight group object.
 function FLIGHTGROUP._ReachedHolding(group, flightgroup)
-  env.info(string.format("FF group %s reached holding point", group:GetName()))
+  flightgroup:T(flightgroup.sid..string.format("Group %s reached holding point", group:GetName()))
   
   if flightgroup.Debug then
     group:GetCoordinate():MarkToAll("Holding Point Reached")
@@ -2261,7 +2280,7 @@ function FLIGHTGROUP:_UpdateRoute(n)
   for i=n, #self.waypoints do
     local w=self.waypoints[i]
     if self.Debug then
-      self:GetWaypointCoordinate(w):MarkToAll(string.format("UpdateRoute Waypoint %d", i))
+      --self:GetWaypointCoordinate(w):MarkToAll(string.format("UpdateRoute Waypoint %d", i))
     end
     table.insert(wp, w)
   end
@@ -3070,24 +3089,24 @@ end
 
 --- Get holding time.
 -- @param #FLIGHTGROUP self
--- @return #number Holding time in seconds or 0 if flight is not holding.
+-- @return #number Holding time in seconds or -1 if flight is not holding.
 function FLIGHTGROUP:GetHoldingTime()
   if self.Tholding then
     return timer.getAbsTime()-self.Tholding
   end
   
-  return 0
+  return -1
 end
 
 --- Get parking time.
 -- @param #FLIGHTGROUP self
--- @return #number Holding time in seconds or 0 if flight is not holding.
+-- @return #number Holding time in seconds or -1 if flight is not holding.
 function FLIGHTGROUP:GetParkingTime()
   if self.Tparking then
     return timer.getAbsTime()-self.Tparking
   end
   
-  return 0
+  return -1
 end
 
 
