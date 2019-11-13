@@ -1525,7 +1525,7 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold, S
   local p1=nil
   local wpap=nil
   
-  -- Altitude above ground for a glide slope of 3°.
+  -- Altitude above ground for a glide slope of 3ï¿½.
   local alpha=math.rad(3)
   local x1=UTILS.NMToMeters(10)
   local x2=UTILS.NMToMeters(5)
@@ -1610,13 +1610,14 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold, S
     
     if fc then
       local n,parking=fc:_GetFreeParkingSpots()
-      -- TODO: getsize
-      if n>=1 then
+      -- Get number of alive elements.
+      local Ne=self:GetNelements()
+      
+      if n>=Ne then
         for i,unit in pairs(Template.units) do
           local spot=parking[i] --Ops.FlightControl#FLIGHTCONTROL.ParkingSpot
           spot.reserved4=unit.name
           unit.parking_landing=spot.id
-          unit.onboard_num=string.format("%03d", spot.id)
           local text=string.format("FF Reserving parking spot %d for unit %s", spot.id, tostring(unit.name))
           env.info(text)
         end
@@ -3109,6 +3110,28 @@ function FLIGHTGROUP:GetParkingTime()
   end
   
   return -1
+end
+
+--- Get number of elements alive.
+-- @param #FLIGHTGROUP self
+-- @param #string status (Optional) Only count number, which are in a special status.
+-- @return #number Holding time in seconds or -1 if flight is not holding.
+function FLIGHTGROUP:GetNelements(status)
+
+  local n=0
+  for _,_element in pairs(self.elements) do
+    local element=_element --#FLIGHTGROUP.Element
+    if element.status~=FLIGHTGROUP.ElementStatus.DEAD then
+      if element.unit and element.unit:IsAlive() then
+        if status==nil or element.status==status then
+          n=n+1
+        end
+      end
+    end
+  end
+
+  
+  return n
 end
 
 
