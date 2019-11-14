@@ -7011,7 +7011,7 @@ end
 function WAREHOUSE:_GetTransportsForAssets(request)
 
   -- Get all transports of the requested type in stock.
-  local transports=self:_FilterStock(self.stock, WAREHOUSE.Descriptor.ATTRIBUTE, request.transporttype, true)
+  local transports=self:_FilterStock(self.stock, WAREHOUSE.Descriptor.ATTRIBUTE, request.transporttype, nil, true)
 
   -- Copy asset.
   local cargoassets=UTILS.DeepCopy(request.cargoassets)
