@@ -1532,9 +1532,6 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold, S
   local h1=x1*math.tan(alpha)
   local h2=x2*math.tan(alpha)
   
-  -- Get a landing point
-  local pland=airbase:GetZone():GetRandomCoordinate(x2,x1):SetAltitude(x2)
-  
   -- Do we have a flight control?
   local fc=_DATABASE:GetFlightControl(airbase:GetName())
   if fc then
@@ -1547,26 +1544,6 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold, S
     if self.Debug then
       p0:MarkToAll("Holding point P0")
       p1:MarkToAll("Holding point P1")
-    end
-    
-    -- Get active runway.
-    local runway=fc:GetActiveRunway()
-    
-    -- Approach point: 10 NN in direction of runway.
-    local papp=airbase:GetCoordinate():Translate(x1, runway.heading-180):SetAltitude(h1)
-    wpap=papp:WaypointAirTurningPoint(nil, UTILS.KnotsToKmph(SpeedLand), {}, "Final Approach")
-    
-    if self.Debug then
-      papp:MarkToAll(string.format("Final Approach: d=%d m, h=%d m", x1, h1))
-    end    
-  
-    -- TODO: make dependend on AC type helos etc.
-  
-    -- Approach point: 10 NN in direction of runway.
-    pland=airbase:GetCoordinate():Translate(x2, runway.heading-180):SetAltitude(h2)
-    
-    if self.Debug then
-      pland:MarkToAll(string.format("Landing: d=%d m, h=%d m", x2, h2))
     end
     
     -- Set flightcontrol for this flight.
@@ -1589,16 +1566,10 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold, S
   local wp={}
   wp[#wp+1]=self.group:GetCoordinate():WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {}, "Current Pos")
   wp[#wp+1]=                        p0:WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {TaskArrived, TaskControlled}, "Holding Point")
-  if wpap then
-    wp[#wp+1]=wpap
-  end  
   
-  -- Okay, it looks like it's best to specify the coordinates not at the airbase but a bit away. This causes a more direct landing approach.
-  wp[#wp+1]=pland:WaypointAirLanding(UTILS.KnotsToKmph(SpeedLand), airbase, {}, "Landing")
-  
-  
+ 
   -- Respawn?
-  local respawn=true
+  local respawn=false
   
   if respawn then
   

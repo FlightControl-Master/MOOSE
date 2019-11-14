@@ -259,7 +259,7 @@ function FLIGHTCONTROL:onafterStatus()
   --self:_CheckInbound()
   
   -- Check parking spots.
-  self:_CheckParking()
+  --self:_CheckParking()
   
   -- Update parking spots.
   self:_UpdateParkingSpots()
@@ -419,7 +419,12 @@ function FLIGHTCONTROL:_CheckQueues()
   if flight and ntakeoff==0 and nlanding==0 then  
     
     if isholding then
-
+    
+      local n,parking=self:_GetFreeParkingSpots()
+      
+      -- Get number of alive elements.
+      local Ne=self:GetNelements()
+        
       -- Message.
       local text=string.format("Flight %s, you are cleared to land.", flight.groupname)
       MESSAGE:New(text, 5, "FLIGHTCONTROL"):ToAll()
@@ -428,7 +433,7 @@ function FLIGHTCONTROL:_CheckQueues()
       -- TODO: Humans have to confirm via F10 menu.
       if flight.ai then      
         flight:FlightLanding()
-        self:_LandAI(flight)
+        self:_LandAI(flight, parking)
       end
     
     else
@@ -468,9 +473,22 @@ function FLIGHTCONTROL:_GetNextFight()
   local flightholding=self:_GetNextFightHolding()
   local flightparking=self:_GetNextFightParking()
   
+  -- Free parking spots.
+  local nP=self:_GetFreeParkingSpots()
+      
+  -- Get number of alive elements of the holding flight.
+  local nH=0
+  if flightholding then
+    nH=flightholding:GetNelements()
+  end
+  
   -- If no flight is waiting for takeoff return the holding flight or nil.
   if not flightparking then
-    return flightholding, true
+    if nP>=nH then
+      return flightholding, true
+    else
+      return nil, nil
+    end
   end
   
   -- If no flight is waiting for landing return the takeoff flight or nil.
@@ -483,12 +501,16 @@ function FLIGHTCONTROL:_GetNextFight()
   
     -- Return holding flight if fuel is low.
     if flightholding.fuellow then
-      return flightholding, true
+      if nP>=nH then
+        return flightholding, true
+      else
+        return nil, nil
+      end
     end
     
     
     -- Return the flight which is waiting longer.
-    if flightholding.Tholding>flightparking.Tparking then
+    if flightholding.Tholding>flightparking.Tparking and nP>=nH then
       return flightholding, true
     else
       return flightparking, false
@@ -792,7 +814,7 @@ function FLIGHTCONTROL:_InitParkingSpots()
     parking.reserved="none"
     
     -- Mark position.
-    local text=string.format("ID=%d, Terminal=%d, Free=%s, Reserved=%s, Dist=%.1f", parking.id, parking.terminal, tostring(parking.free), tostring(parking.reserved), parking.drunway)
+    local text=string.format("ID=%d, Terminal=%d, Free=%s, Reserved=%s, Dist=%.1f", parking.TerminalID, parking.TerminalType, tostring(parking.Free), tostring(parking.reserved), parking.DistToRwy)
     --parking.markerid=parking.position:MarkToAll(text)
     
     -- Add to table.
@@ -895,10 +917,10 @@ function FLIGHTCONTROL:_UpdateParkingSpots()
           parking.Coordinate:RemoveMark(parking.markerid)
         end
         
-        local text=string.format("ID=%03d, Terminal=%03d, Free=%s, Reserved=%s, reserved4=%s, Dist=%.1f", parking.id, parking.terminal, tostring(parking.free), tostring(parking.reserved), parking.reserved4, parking.drunway)
+        local text=string.format("ID=%03d, Terminal=%03d, Free=%s, Reserved=%s, reserved4=%s, Dist=%.1f", parking.TerminalID, parking.TerminalType, tostring(parking.Free), tostring(parking.TOAC), parking.reserved, parking.DistToRwy)
         message=message.."\n"..text
-        if parking.free==false or parking.reserved or parking.reserved4~="none" then
-          parking.markerid=parking.position:MarkToAll(text)
+        if parking.Free==false or parking.TOAC or parking.reserved~="none" then
+          parking.markerid=parking.Coordinate:MarkToAll(text)
         end
           
         break
@@ -1165,6 +1187,35 @@ end
 
 --- Scan airbase zone and find new flights.
 -- @param #FLIGHTCONTROL self
+function FLIGHTCONTROL:_CheckAirbase()
+  
+  -- Airbase position.
+  local coord=self:GetCoordinate()
+  
+  -- Scan radius = 5 NM.
+  local RCCZ=UTILS.NMToMeters(5)
+  
+  -- Debug info.
+  self:T(self.lid..string.format("Scanning airbase zone. Radius=%.1f NM.", UTILS.MetersToNM(RCCZ)))
+  
+  -- Scan units in carrier zone.
+  local _,_,_,unitscan=coord:ScanObjects(RCCZ, true, false, false)
+  
+  local su=SET_UNIT:New()
+  for _,_unit in pairs(unitscan) do
+    local unit=_unit --Wrapper.Unit#UNIT
+    if unit and unit:IsAlive() and unit:InAir()==false then
+      su:AddUnit(unit)
+    end  
+  end
+  
+  return su  
+end
+
+
+
+--- Scan airbase zone and find new flights.
+-- @param #FLIGHTCONTROL self
 function FLIGHTCONTROL:_CheckACstatus()
   
   -- Airbase position.
@@ -1326,19 +1377,71 @@ end
 --- Tell AI to land at the airbase. Flight is added to the landing queue.
 -- @param #FLIGHTCONTROL self
 -- @param Ops.FlightGroup#FLIGHTGROUP flight Flight group.
-function FLIGHTCONTROL:_LandAI(flight)
+function FLIGHTCONTROL:_LandAI(flight, parking)
 
    -- Debug info.
   self:I(self.lid..string.format("Landing AI flight %s.", flight.groupname))
 
   -- Add flight to landing queue.
   self:_AddFlightToLandingQueue(flight)
+
+  -- Remove flight from waiting queue.
+  self:_RemoveFlightFromQueue(self.Qwaiting, flight, "holding")
+ 
+ 
+   -- Altitude above ground for a glide slope of 3�.
+  local alpha=math.rad(3)
+  local x1=UTILS.NMToMeters(10)
+  local x2=UTILS.NMToMeters(5)
+  local h1=x1*math.tan(alpha)
+  local h2=x2*math.tan(alpha)
+  local SpeedLand=150
+  
+  local runway=self:GetActiveRunway()
+  
+  -- Waypoints.
+  local wp={}
+  wp[#wp+1]=self.group:GetCoordinate():WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {}, "Current Pos")
+  
+  -- Approach point: 10 NN in direction of runway.
+  local papp=self.airbase:GetCoordinate():Translate(x1, runway.heading-180):SetAltitude(h1)
+  wp[#wp+1]=papp:WaypointAirTurningPoint(nil, UTILS.KnotsToKmph(SpeedLand), {}, "Final Approach")  
+  
+  -- Okay, it looks like it's best to specify the coordinates not at the airbase but a bit away. This causes a more direct landing approach.
+  local pland=self.airbase:GetCoordinate():Translate(x2, runway.heading-180):SetAltitude(h2)  
+  wp[#wp+1]=pland:WaypointAirLanding(UTILS.KnotsToKmph(SpeedLand), self.airbase, {}, "Landing")
+  
+
+  if self.Debug then
+    papp:MarkToAll(string.format("Final Approach: d=%d m, h=%d m", x1, h1))
+    pland:MarkToAll(string.format("Landing: d=%d m, h=%d m", x2, h2))
+  end      
   
   -- Give signal to land.
   flight.flaghold:Set(1)
   
-  -- Remove flight from waiting queue.
-  self:_RemoveFlightFromQueue(self.Qwaiting, flight, "holding")
+  -- Get group template.
+  local Template=self.group:GetTemplate()
+
+  -- Set route points.
+  Template.route.points=wp
+  
+  for i,unit in pairs(Template.units) do
+    local spot=parking[i] --Ops.FlightControl#FLIGHTCONTROL.ParkingSpot
+    spot.reserved=unit.name
+    unit.parking_landing=spot.TerminalID
+    local text=string.format("FF Reserving parking spot %d for unit %s", spot.TerminalID, tostring(unit.name))
+    env.info(text)        
+  end      
+  
+  MESSAGE:New("Respawning group"):ToAll()
+
+  --Respawn the group.
+  self.group=self.group:Respawn(Template, true)
+      
+  -- Route the group.
+  self.group:Route(wp, 1)
+  
 end
 
 --- Get holding point.
