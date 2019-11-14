@@ -1616,9 +1616,9 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold, S
       if n>=Ne then
         for i,unit in pairs(Template.units) do
           local spot=parking[i] --Ops.FlightControl#FLIGHTCONTROL.ParkingSpot
-          spot.reserved4=unit.name
-          unit.parking_landing=spot.id
-          local text=string.format("FF Reserving parking spot %d for unit %s", spot.id, tostring(unit.name))
+          spot.reserved=unit.name
+          unit.parking_landing=spot.TerminalID
+          local text=string.format("FF Reserving parking spot %d for unit %s", spot.TerminalID, tostring(unit.name))
           env.info(text)
         end
         --[[

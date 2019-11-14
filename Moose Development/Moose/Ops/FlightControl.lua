@@ -37,7 +37,7 @@
 -- @extends Core.Fsm#FSM
 
 --- **Ground Control**: Airliner X, Good news, you are clear to taxi to the active.
---  **Pilot**: Roger, What’s the bad news?
+--  **Pilot**: Roger, What's the bad news?
 --  **Ground Control**: No bad news at the moment, but you probably want to get gone before I find any.
 --
 -- ===
@@ -86,15 +86,9 @@ FLIGHTCONTROL = {
 
 --- Parking spot data.
 -- @type FLIGHTCONTROL.ParkingSpot
--- @field #number index Parking index.
--- @field #number id Parking id.
--- @field Core.Point#COORDINATE position Coordinate of the spot.
--- @field #number terminal Terminal type.
--- @field #boolean free If true, spot is free.
--- @field #number drunway Distance to runway.
 -- @field #boolean reserved If true, reserved.
--- @field #string reserved4 Flight group the spot is reserved for. Applies only to landing.
 -- @field #number markerid ID of the marker.
+-- @extends Wrapper.Airbase#AIRBASE.ParkingSpot
 
 --- Runway data.
 -- @type FLIGHTCONTROL.Runway
@@ -792,17 +786,10 @@ function FLIGHTCONTROL:_InitParkingSpots()
   self.parking={}
   
   for _,_spot in pairs(parkingdata) do
-    local spot=_spot --Wrapper.Airbase#AIRBASE.ParkingData
+    local spot=_spot --Wrapper.Airbase#AIRBASE.ParkingSpot
     
-    local parking={} --#FLIGHTCONTROL.ParkingSpot
-    
-    parking.position=spot.Coordinate
-    parking.drunway=spot.DistToRwy
-    parking.terminal=spot.TerminalType
-    parking.id=spot.TerminalID
-    parking.free=spot.Free
-    parking.reserved=spot.TOAC
-    parking.reserved4="none"
+    local parking=spot --#FLIGHTCONTROL.ParkingSpot
+    parking.reserved="none"
     
     -- Mark position.
     local text=string.format("ID=%d, Terminal=%d, Free=%s, Reserved=%s, Dist=%.1f", parking.id, parking.terminal, tostring(parking.free), tostring(parking.reserved), parking.drunway)
@@ -832,7 +819,7 @@ function FLIGHTCONTROL:_CheckParking()
     local spot=_spot --#FLIGHTCONTROL.ParkingSpot
     
     -- Assume spot is free.
-    spot.free=true
+    spot.Free=true
     
     -- Loop over all flights.
     for _,_flight in pairs(self.flights) do
@@ -850,7 +837,7 @@ function FLIGHTCONTROL:_CheckParking()
           -- Element is parking on this spot
           if dist<5 and not element.unit:InAir() then
             element.parking=true
-            spot.free=false
+            spot.Free=false
           end
           
         else
@@ -876,7 +863,7 @@ function FLIGHTCONTROL:_GetFreeParkingSpots(terminal)
   for _,_parking in pairs(self.parking) do
     local parking=_parking --#FLIGHTCONTROL.ParkingSpot
     
-    if parking.free and parking.reserved4=="none" then
+    if parking.Free and parking.reserved=="none" then
       if terminal==nil or terminal==parking.terminal then
         n=n+1
         table.insert(freespots, parking)
@@ -901,18 +888,11 @@ function FLIGHTCONTROL:_UpdateParkingSpots()
     for _,_spot in pairs(parkingdata) do
       local spot=_spot --Wrapper.Airbase#AIRBASE.ParkingSpot 
     
-      if parking.id==spot.TerminalID then
-
-        parking.position=spot.Coordinate
-        parking.drunway=spot.DistToRwy
-        parking.terminal=spot.TerminalType
-        parking.id=spot.TerminalID
-        parking.free=spot.Free
-        parking.reserved=spot.TOAC
-        
+      if parking.TerminalID==spot.TerminalID then
+      
         -- Mark position.
         if parking.markerid then
-          parking.position:RemoveMark(parking.markerid)
+          parking.Coordinate:RemoveMark(parking.markerid)
         end
         
         local text=string.format("ID=%03d, Terminal=%03d, Free=%s, Reserved=%s, reserved4=%s, Dist=%.1f", parking.id, parking.terminal, tostring(parking.free), tostring(parking.reserved), parking.reserved4, parking.drunway)
@@ -1161,7 +1141,7 @@ function FLIGHTCONTROL:_GetElementParkingSpot(element)
         local parkingspot=_parkingspot --#FLIGHTCONTROL.ParkingSpot
         
         -- Spot position.
-        local spos=parkingspot.position
+        local spos=parkingspot.Coordinate
         
         -- 3D distance from unit to spot.
         local dist=spos:Get3DDistance(upos)
