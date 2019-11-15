@@ -1525,13 +1525,6 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold, S
   local p1=nil
   local wpap=nil
   
-  -- Altitude above ground for a glide slope of 3�.
-  local alpha=math.rad(3)
-  local x1=UTILS.NMToMeters(10)
-  local x2=UTILS.NMToMeters(5)
-  local h1=x1*math.tan(alpha)
-  local h2=x2*math.tan(alpha)
-  
   -- Do we have a flight control?
   local fc=_DATABASE:GetFlightControl(airbase:GetName())
   if fc then
@@ -1578,27 +1571,6 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold, S
   
     -- Set route points.
     Template.route.points=wp
-    
-    if fc then
-      local n,parking=fc:_GetFreeParkingSpots()
-      -- Get number of alive elements.
-      local Ne=self:GetNelements()
-      
-      if n>=Ne then
-        for i,unit in pairs(Template.units) do
-          local spot=parking[i] --Ops.FlightControl#FLIGHTCONTROL.ParkingSpot
-          spot.reserved=unit.name
-          unit.parking_landing=spot.TerminalID
-          local text=string.format("FF Reserving parking spot %d for unit %s", spot.TerminalID, tostring(unit.name))
-          env.info(text)
-        end
-        --[[
-        for _,_spot in pairs(parking) do
-          local spot=_spot --Ops.FlightControl#FLIGHTCONTROL.ParkingSpot
-        end
-        ]]
-      end
-    end
     
     MESSAGE:New("Respawning group"):ToAll()
 

@@ -290,11 +290,12 @@ end
 -- @param Core.Event#EVENTDATA EventData
 function FLIGHTCONTROL:OnEventBirth(EventData)
   self:F3({EvendData=EventData})
-  
-  self:I(self.lid..string.format("BIRTH: unit  = %s", tostring(EventData.IniUnitName)))
-  self:I(self.lid..string.format("BIRTH: group = %s", tostring(EventData.IniGroupName)))
-  
+    
   if EventData and EventData.IniGroupName and EventData.Place and EventData.Place:GetName()==self.airbasename then
+  
+    self:I(self.lid..string.format("BIRTH: unit  = %s", tostring(EventData.IniUnitName)))
+    self:I(self.lid..string.format("BIRTH: group = %s", tostring(EventData.IniGroupName)))
+
   
     -- We delay this, to have all elements of the group in the game.
     self:ScheduleOnce(0.1, self._CreateFlightGroup, self, EventData.IniGroup)
@@ -395,7 +396,7 @@ end
 function FLIGHTCONTROL:_CheckQueues()
 
   -- Print queues
-  --self:_PrintQueue(self.flights,  "All flights")
+  self:_PrintQueue(self.flights,  "All flights")
   self:_PrintQueue(self.Qparking, "Parking")
   self:_PrintQueue(self.Qtakeoff, "Takeoff")
   self:_PrintQueue(self.Qwaiting, "Holding")
@@ -413,14 +414,22 @@ function FLIGHTCONTROL:_CheckQueues()
   -- Number of parking groups.
   local nparking=#self.Qparking
 
+  -- Get next flight in line: either holding or parking.
   local flight, isholding=self:_GetNextFight()
   
 
+  -- Check if somebody wants something.
   if flight and ntakeoff==0 and nlanding==0 then  
     
     if isholding then
     
+      --------------------
+      -- Holding flight --
+      --------------------
+    
+      -- Get free parking spots.
       local n,parking=self:_GetFreeParkingSpots()
+     
       
       -- Get number of alive elements.
       local Ne=self:GetNelements()
@@ -437,6 +446,10 @@ function FLIGHTCONTROL:_CheckQueues()
       end
     
     else
+    
+      --------------------
+      -- Takeoff flight --
+      --------------------
      
       -- Check if flight is AI. Humans have to request taxi via F10 menu.
       if flight.ai then
@@ -1401,6 +1414,8 @@ function FLIGHTCONTROL:_LandAI(flight, parking)
   
   -- Waypoints.
   local wp={}
+  
+  -- Current pos.
   wp[#wp+1]=self.group:GetCoordinate():WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {}, "Current Pos")
   
   -- Approach point: 10 NN in direction of runway.
