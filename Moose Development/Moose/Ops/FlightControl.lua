@@ -99,7 +99,7 @@ FLIGHTCONTROL = {
 
 --- FlightControl class version.
 -- @field #string version
-FLIGHTCONTROL.version="0.0.8"
+FLIGHTCONTROL.version="0.0.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -415,7 +415,7 @@ function FLIGHTCONTROL:_CheckQueues()
   local nparking=#self.Qparking
 
   -- Get next flight in line: either holding or parking.
-  local flight, isholding=self:_GetNextFight()
+  local flight, isholding=self:_GetNextFlight()
   
 
   -- Check if somebody wants something.
@@ -432,7 +432,7 @@ function FLIGHTCONTROL:_CheckQueues()
      
       
       -- Get number of alive elements.
-      local Ne=self:GetNelements()
+      local Ne=flight:GetNelements()
         
       -- Message.
       local text=string.format("Flight %s, you are cleared to land.", flight.groupname)
@@ -481,10 +481,11 @@ end
 -- @param #FLIGHTCONTROL self
 -- @return Ops.FlightGroup#FLIGHTGROUP Marshal flight next in line and ready to enter the pattern. Or nil if no flight is ready.
 -- @return #boolean If true, flight is holding and waiting for landing, if false, flight is parking and waiting for takeoff.
-function FLIGHTCONTROL:_GetNextFight()
+function FLIGHTCONTROL:_GetNextFlight()
 
   local flightholding=self:_GetNextFightHolding()
   local flightparking=self:_GetNextFightParking()
+  
   
   -- Free parking spots.
   local nP=self:_GetFreeParkingSpots()
@@ -494,12 +495,18 @@ function FLIGHTCONTROL:_GetNextFight()
   if flightholding then
     nH=flightholding:GetNelements()
   end
+
+  env.info("FF")
+  self:I({nextholding=flightholding})
+  self:I({nextparking=flightparking})  
+  self:I(string.format("GetNext: holding=%d - parking=%d", nH, nP))
   
   -- If no flight is waiting for takeoff return the holding flight or nil.
   if not flightparking then
     if nP>=nH then
       return flightholding, true
     else
+      self:E(string.format("WARNING: No flight parking but no parking spots! nP=%d nH=%d", nP, nH))
       return nil, nil
     end
   end
@@ -515,13 +522,14 @@ function FLIGHTCONTROL:_GetNextFight()
     -- Return holding flight if fuel is low.
     if flightholding.fuellow then
       if nP>=nH then
+        -- Enough parking ==> land
         return flightholding, true
       else
-        return nil, nil
+        -- Not enough parking ==> take off
+        return flightparking, false
       end
     end
-    
-    
+       
     -- Return the flight which is waiting longer.
     if flightholding.Tholding>flightparking.Tparking and nP>=nH then
       return flightholding, true
@@ -1408,7 +1416,8 @@ function FLIGHTCONTROL:_LandAI(flight, parking)
   local x2=UTILS.NMToMeters(5)
   local h1=x1*math.tan(alpha)
   local h2=x2*math.tan(alpha)
-  local SpeedLand=150
+  local SpeedLand=140
+  local SpeedTo=180
   
   local runway=self:GetActiveRunway()
   
@@ -1416,7 +1425,7 @@ function FLIGHTCONTROL:_LandAI(flight, parking)
   local wp={}
   
   -- Current pos.
-  wp[#wp+1]=self.group:GetCoordinate():WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {}, "Current Pos")
+  wp[#wp+1]=flight.group:GetCoordinate():WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {}, "Current Pos")
   
   -- Approach point: 10 NN in direction of runway.
   local papp=self.airbase:GetCoordinate():Translate(x1, runway.heading-180):SetAltitude(h1)
@@ -1436,7 +1445,7 @@ function FLIGHTCONTROL:_LandAI(flight, parking)
   flight.flaghold:Set(1)
   
   -- Get group template.
-  local Template=self.group:GetTemplate()
+  local Template=flight.group:GetTemplate()
 
   -- Set route points.
   Template.route.points=wp
@@ -1452,10 +1461,10 @@ function FLIGHTCONTROL:_LandAI(flight, parking)
   MESSAGE:New("Respawning group"):ToAll()
 
   --Respawn the group.
-  self.group=self.group:Respawn(Template, true)
+  flight.group=flight.group:Respawn(Template, true)
       
   -- Route the group.
-  self.group:Route(wp, 1)
+  flight.group:Route(wp, 1)
   
 end
 
