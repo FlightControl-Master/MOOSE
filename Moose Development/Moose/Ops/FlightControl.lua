@@ -261,6 +261,7 @@ function FLIGHTCONTROL:onafterStatus()
   -- Check parking spots.
   --self:_CheckParking()
   
+  
   -- Update parking spots.
   self:_UpdateParkingSpots()
   
@@ -396,11 +397,14 @@ end
 function FLIGHTCONTROL:_CheckQueues()
 
   -- Print queues
-  self:_PrintQueue(self.flights,  "All flights")
-  self:_PrintQueue(self.Qparking, "Parking")
-  self:_PrintQueue(self.Qtakeoff, "Takeoff")
-  self:_PrintQueue(self.Qwaiting, "Holding")
-  self:_PrintQueue(self.Qlanding, "Landing")
+  if false then
+    self:_PrintQueue(self.flights,  "All flights")
+    self:_PrintQueue(self.Qparking, "Parking")
+    self:_PrintQueue(self.Qtakeoff, "Takeoff")
+    self:_PrintQueue(self.Qwaiting, "Holding")
+    self:_PrintQueue(self.Qlanding, "Landing")
+  end
+    
   
   -- Number of groups landing.
   local nlanding=#self.Qlanding
@@ -429,8 +433,7 @@ function FLIGHTCONTROL:_CheckQueues()
     
       -- Get free parking spots.
       local n,parking=self:_GetFreeParkingSpots()
-     
-      
+           
       -- Get number of alive elements.
       local Ne=flight:GetNelements()
         
@@ -495,11 +498,11 @@ function FLIGHTCONTROL:_GetNextFlight()
   if flightholding then
     nH=flightholding:GetNelements()
   end
-
-  env.info("FF")
-  self:I({nextholding=flightholding})
-  self:I({nextparking=flightparking})  
-  self:I(string.format("GetNext: holding=%d - parking=%d", nH, nP))
+  
+  --env.info("FF")
+  --self:I({nextholding=flightholding})
+  --self:I({nextparking=flightparking})  
+  --self:I(string.format("GetNext: holding=%d - parking=%d", nH, nP))
   
   -- If no flight is waiting for takeoff return the holding flight or nil.
   if not flightparking then
@@ -906,7 +909,7 @@ function FLIGHTCONTROL:_GetFreeParkingSpots(terminal)
   for _,_parking in pairs(self.parking) do
     local parking=_parking --#FLIGHTCONTROL.ParkingSpot
     
-    if parking.Free and parking.reserved=="none" then
+    if parking.Free and parking.TOAC==false and parking.reserved=="none" then
       if terminal==nil or terminal==parking.terminal then
         n=n+1
         table.insert(freespots, parking)
