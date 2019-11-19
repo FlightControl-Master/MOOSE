@@ -947,6 +947,7 @@ function FLIGHTCONTROL:_UpdateParkingSpots()
           parking.markerid=parking.Coordinate:MarkToAll(text)
         end
           
+        -- Got it ==> break inner loop.
         break
       end
       
