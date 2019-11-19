@@ -33,6 +33,7 @@
 -- @field Core.Set#SET_UNIT detectedunits Set of detected units.
 -- @field Wrapper.Airbase#AIRBASE homebase The home base of the flight group.
 -- @field Wrapper.Airbase#AIRBASE destination The destination base of the flight group.
+-- @field #string attribute Generalized attribute.
 -- @field #string actype Type name of the aircraft.
 -- @field #number speedmax Max speed in km/h.
 -- @field #number range Range of the aircraft in km.
@@ -80,6 +81,7 @@ FLIGHTGROUP = {
   detectedunits      =    {},
   homebase           =   nil,
   destination        =   nil,
+  attribute          =   nil,
   actype             =   nil,
   speedmax           =   nil,
   range              =   nil,
@@ -123,6 +125,27 @@ FLIGHTGROUP.ElementStatus={
   DEAD="dead",
 }
 
+--- Generalized attribute. See [DCS attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes) on hoggit.
+-- @type FLIGHTGROUP.Attribute
+-- @field #string TRANSPORTPLANE Airplane with transport capability. This can be used to transport other assets.
+-- @field #string AWACS Airborne Early Warning and Control System.
+-- @field #string FIGHTER Fighter, interceptor, ... airplane.
+-- @field #string BOMBER Aircraft which can be used for strategic bombing.
+-- @field #string TANKER Airplane which can refuel other aircraft.
+-- @field #string TRANSPORTHELO Helicopter with transport capability. This can be used to transport other assets.
+-- @field #string ATTACKHELO Attack helicopter.
+-- @field #string UAV Unpiloted Aerial Vehicle, e.g. drones.
+FLIGHTGROUP.Attribute = {
+  TRANSPORTPLANE="TransportPlane",
+  AWACS="AWACS",
+  FIGHTER="Fighter",
+  BOMBER="Bomber",
+  TANKER="Tanker",
+  TRANSPORTHELO="TransportHelo",
+  ATTACKHELO="AttackHelo",
+  UAV="UAV",
+  OTHER="Other",
+}
 
 --- Flight group element.
 -- @type FLIGHTGROUP.Element
@@ -1079,9 +1102,9 @@ function FLIGHTGROUP:onafterElementSpawned(From, Event, To, Element)
   else
       
     -- Get parking spot.
-    local spot, dist=self:GetParkingSpot(Element)
+    local spot=self:GetParkingSpot(Element, 10)
     
-    if dist<10 then
+    if spot then
     
       Element.parking=spot
   
@@ -1185,7 +1208,19 @@ end
 -- @param #string To To state.
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 function FLIGHTGROUP:onafterElementDead(From, Event, To, Element)
-  self:T2(self.sid..string.format("Element dead %s.", Element.name))
+  self:I(self.sid..string.format("Element dead %s.", Element.name))
+  
+  -- Clear reserved parking spot.
+  local spot=self:GetParkingSpot(Element, 10)
+  if self.flightcontrol and spot then
+    for _,p in pairs(self.flightcontrol.parking) do
+      local parking=p --Ops.FlightControl#FLIGHTCONTROL.ParkingSpot
+      if parking.TerminalID==spot.TerminalID then
+        parking.reserved="none"
+        break
+      end
+    end
+  end
 
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.DEAD)
@@ -2030,6 +2065,7 @@ function FLIGHTGROUP:AddElementByName(unitname)
     element.category=element.unit:GetCategory()
     element.categoryname=element.unit:GetCategoryName()
     element.callsign=element.unit:GetCallsign()
+    element.size=element.unit:GetObjectSize()
     
     if element.skill=="Client" or element.skill=="Player" then
       element.ai=false
@@ -3017,12 +3053,12 @@ function FLIGHTGROUP:GetCoalition()
   return self.group:GetCoalition()
 end
 
---- Returns the coalition side.
+--- Returns the parking spot of the element.
 -- @param #FLIGHTGROUP self
 -- @param #FLIGHTGROUP.Element element Element of the flight group.
--- @return Wrapper.Airbase#AIRBASE.ParkingSpot
--- @return #number Distance to spot in meters.
-function FLIGHTGROUP:GetParkingSpot(element)
+-- @param #number maxdist Distance threshold in meters. Default 5 m.
+-- @return Wrapper.Airbase#AIRBASE.ParkingSpot Parking spot or nil if no spot is within distance threshold.
+function FLIGHTGROUP:GetParkingSpot(element, maxdist)
 
   local coord=element.unit:GetCoordinate()
 
@@ -3030,7 +3066,11 @@ function FLIGHTGROUP:GetParkingSpot(element)
   
   local _,_,dist,spot=coord:GetClosestParkingSpot(ab)
 
-  return spot, dist
+  if dist<=maxdist and not element.unit:InAir() then
+    return spot
+  else
+    return nil
+  end
 end
 
 --- Get holding time.
@@ -3077,6 +3117,204 @@ function FLIGHTGROUP:GetNelements(status)
   return n
 end
 
+--- Seach unoccupied parking spots at the airbase for all flight elements.
+-- @param #FLIGHTGROUP self
+-- @param Wrapper.Airbase#AIRBASE airbase The airbase where we search for parking spots.
+-- @return #table Table of coordinates and terminal IDs of free parking spots.
+function FLIGHTGROUP:GetParking(airbase)
+
+  -- Init default
+  local scanradius=50
+  local scanunits=true
+  local scanstatics=true
+  local scanscenery=false
+  local verysafe=true
+
+  -- Function calculating the overlap of two (square) objects.
+  local function _overlap(l1,l2,dist)
+    local safedist=(l1/2+l2/2)*1.05  -- 5% safety margine added to safe distance!
+    local safe = (dist > safedist)
+    self:T3(string.format("l1=%.1f l2=%.1f s=%.1f d=%.1f ==> safe=%s", l1,l2,safedist,dist,tostring(safe)))
+    return safe
+  end
+  
+  -- Get airbase category.
+  local airbasecategory=airbase:GetAirbaseCategory()
+
+  -- Get parking spot data table. This contains all free and "non-free" spots.
+  local parkingdata
+  
+  if self.flightcontrol then
+    parkingdata=self.flightcontrol.parking
+  else
+    parkingdata=airbase:GetParkingSpotsTable()
+  end
+  parkingdata=airbase:GetParkingSpotsTable()
+
+  -- List of obstacles.
+  local obstacles={}
+
+  -- Loop over all parking spots and get the currently present obstacles.
+  -- How long does this take on very large airbases, i.e. those with hundereds of parking spots? Seems to be okay!
+  -- The alternative would be to perform the scan once but with a much larger radius and store all data.
+  for _,_parkingspot in pairs(parkingdata) do
+    local parkingspot=_parkingspot --Wrapper.Airbase#AIRBASE.ParkingSpot
+
+    -- Coordinate of the parking spot.
+    local _spot=parkingspot.Coordinate   -- Core.Point#COORDINATE
+    local _termid=parkingspot.TerminalID
+
+    -- Scan a radius of 100 meters around the spot.
+    local _,_,_,_units,_statics,_sceneries=_spot:ScanObjects(scanradius, scanunits, scanstatics, scanscenery)
+
+    -- Check all units.
+    for _,_unit in pairs(_units) do
+      local unit=_unit --Wrapper.Unit#UNIT
+      local _coord=unit:GetCoordinate()
+      local _size=self:_GetObjectSize(unit:GetDCSObject())
+      local _name=unit:GetName()
+      table.insert(obstacles, {coord=_coord, size=_size, name=_name, type="unit"})
+    end
+
+    -- Check all clients.
+    --[[
+    for _,_unit in pairs(_units) do
+      local unit=_unit --Wrapper.Unit#UNIT
+      local _coord=unit:GetCoordinate()
+      local _size=self:_GetObjectSize(unit:GetDCSObject())
+      local _name=unit:GetName()
+      table.insert(obstacles, {coord=_coord, size=_size, name=_name, type="client"})
+    end
+    ]]
+
+    -- Check all statics.
+    for _,static in pairs(_statics) do
+      local _vec3=static:getPoint()
+      local _coord=COORDINATE:NewFromVec3(_vec3)
+      local _name=static:getName()
+      local _size=self:_GetObjectSize(static)
+      table.insert(obstacles, {coord=_coord, size=_size, name=_name, type="static"})
+    end
+
+    -- Check all scenery.
+    for _,scenery in pairs(_sceneries) do
+      local _vec3=scenery:getPoint()
+      local _coord=COORDINATE:NewFromVec3(_vec3)
+      local _name=scenery:getTypeName()
+      local _size=self:_GetObjectSize(scenery)
+      table.insert(obstacles,{coord=_coord, size=_size, name=_name, type="scenery"})
+    end
+
+  end
+
+  -- Parking data for all assets.
+  local parking={}
+
+  -- Get terminal type.  
+  -- TODO: get terminal type
+  --local terminaltype=self:_GetTerminal(asset.attribute, self:GetAirbaseCategory())
+  local terminaltype=AIRBASE.TerminalType.OpenMedOrBig
+
+  -- Loop over all units - each one needs a spot.
+  for i,_element in pairs(self.elements) do
+    local element=_element --#FLIGHTGROUP.Element
+
+    -- Loop over all parking spots.
+    local gotit=false
+    for _,_parkingspot in pairs(parkingdata) do
+      local parkingspot=_parkingspot --Wrapper.Airbase#AIRBASE.ParkingSpot
+
+      -- Check correct terminal type for asset. We don't want helos in shelters etc.
+      if AIRBASE._CheckTerminalType(parkingspot.TerminalType, terminaltype) then
+
+        -- Coordinate of the parking spot.
+        local _spot=parkingspot.Coordinate   -- Core.Point#COORDINATE
+        local _termid=parkingspot.TerminalID
+        local _toac=parkingspot.TOAC
+
+        local free=true
+        local problem=nil
+
+        -- Safe parking using TO_AC from DCS result.
+        if verysafe and _toac then
+          free=false
+          self:I(self.sid..string.format("Parking spot %d is occupied by other aircraft taking off or landing.", _termid))
+        end
+
+        -- Loop over all obstacles.
+        for _,obstacle in pairs(obstacles) do
+
+          -- Check if aircraft overlaps with any obstacle.
+          local dist=_spot:Get2DDistance(obstacle.coord)
+          local safe=_overlap(element.size, obstacle.size, dist)
+
+          -- Spot is blocked.
+          if not safe then
+            free=false
+            problem=obstacle
+            problem.dist=dist
+            break
+          end
+
+        end
+
+        -- Check if spot is free
+        if free then
+
+          -- Add parkingspot for this element.
+          table.insert(parking, parkingspot)
+
+          self:I(self.sid..string.format("Parking spot #%d is free for element %s!", _termid, element.name))
+
+          -- Add the unit as obstacle so that this spot will not be available for the next unit.
+          table.insert(obstacles, {coord=_spot, size=element.size, name=element.name, type="element"})
+
+          gotit=true
+          break
+
+        else
+
+          -- Debug output for occupied spots.
+          self:I(self.sid..string.format("Parking spot #%d is occupied or not big enough!", _termid))
+          --if self.Debug then
+          --  local coord=problem.coord --Core.Point#COORDINATE
+          --  local text=string.format("Obstacle blocking spot #%d is %s type %s with size=%.1f m and distance=%.1f m.", _termid, problem.name, problem.type, problem.size, problem.dist)
+          --  coord:MarkToAll(string.format(text))
+          --end
+
+        end
+
+      end -- check terminal type
+    end -- loop over parking spots
+
+    -- No parking spot for at least one asset :(
+    if not gotit then
+      self:I(self.sid..string.format("WARNING: No free parking spot for element %s", element.name))
+      return nil
+    end
+    
+  end -- loop over asset units
+
+  return parking
+end
+
+--- Size of the bounding box of a DCS object derived from the DCS descriptor table. If boundinb box is nil, a size of zero is returned.
+-- @param #FLIGHTGROUP self
+-- @param DCS#Object DCSobject The DCS object for which the size is needed.
+-- @return #number Max size of object in meters (length (x) or width (z) components not including height (y)).
+-- @return #number Length (x component) of size.
+-- @return #number Height (y component) of size.
+-- @return #number Width (z component) of size.
+function FLIGHTGROUP:_GetObjectSize(DCSobject)
+  local DCSdesc=DCSobject:getDesc()
+  if DCSdesc.box then
+    local x=DCSdesc.box.max.x+math.abs(DCSdesc.box.min.x)  --length
+    local y=DCSdesc.box.max.y+math.abs(DCSdesc.box.min.y)  --height
+    local z=DCSdesc.box.max.z+math.abs(DCSdesc.box.min.z)  --width
+    return math.max(x,z), x , y, z
+  end
+  return 0,0,0,0
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -419,23 +419,17 @@ function FLIGHTCONTROL:_CheckQueues()
   local nparking=#self.Qparking
 
   -- Get next flight in line: either holding or parking.
-  local flight, isholding=self:_GetNextFlight()
+  local flight, isholding, parking=self:_GetNextFlight()
   
 
   -- Check if somebody wants something.
-  if flight and ntakeoff==0 and nlanding==0 then  
+  if flight and ntakeoff==0 and nlanding==0 then
     
-    if isholding then
+    if isholding and parking then
     
       --------------------
       -- Holding flight --
       --------------------
-    
-      -- Get free parking spots.
-      local n,parking=self:_GetFreeParkingSpots()
-           
-      -- Get number of alive elements.
-      local Ne=flight:GetNelements()
         
       -- Message.
       local text=string.format("Flight %s, you are cleared to land.", flight.groupname)
@@ -484,65 +478,60 @@ end
 -- @param #FLIGHTCONTROL self
 -- @return Ops.FlightGroup#FLIGHTGROUP Marshal flight next in line and ready to enter the pattern. Or nil if no flight is ready.
 -- @return #boolean If true, flight is holding and waiting for landing, if false, flight is parking and waiting for takeoff.
+-- @return #table Parking data for holding flights or nil.
 function FLIGHTCONTROL:_GetNextFlight()
 
   local flightholding=self:_GetNextFightHolding()
   local flightparking=self:_GetNextFightParking()
   
-  
-  -- Free parking spots.
-  local nP=self:_GetFreeParkingSpots()
-      
-  -- Get number of alive elements of the holding flight.
-  local nH=0
-  if flightholding then
-    nH=flightholding:GetNelements()
+  -- If no flight is waiting for landing just return the takeoff flight or nil.
+  if not flightholding then
+    return flightparking, false, nil
   end
   
-  --env.info("FF")
-  --self:I({nextholding=flightholding})
-  --self:I({nextparking=flightparking})  
-  --self:I(string.format("GetNext: holding=%d - parking=%d", nH, nP))
+  -- Get number of alive elements of the holding flight.
+  local nH=flightholding:GetNelements()  
   
+  -- Free parking spots.
+  local parking=flightholding:GetParking(self.airbase)
+      
+    
   -- If no flight is waiting for takeoff return the holding flight or nil.
   if not flightparking then
-    if nP>=nH then
-      return flightholding, true
+    if parking then
+      return flightholding, true, parking
     else
-      self:E(string.format("WARNING: No flight parking but no parking spots! nP=%d nH=%d", nP, nH))
-      return nil, nil
+      self:E(string.format("WARNING: No flight parking but no parking spots! nP=%d nH=%d", #parking, nH))
+      return nil, nil, nil
     end
   end
   
-  -- If no flight is waiting for landing return the takeoff flight or nil.
-  if not flightholding then
-    return flightparking, false
-  end
+
   
   -- We got flights waiting for landing and for takeoff.
   if flightholding and flightparking then
   
     -- Return holding flight if fuel is low.
     if flightholding.fuellow then
-      if nP>=nH then
+      if parking then
         -- Enough parking ==> land
-        return flightholding, true
+        return flightholding, true, parking
       else
         -- Not enough parking ==> take off
-        return flightparking, false
+        return flightparking, false, nil
       end
     end
        
     -- Return the flight which is waiting longer.
-    if flightholding.Tholding>flightparking.Tparking and nP>=nH then
-      return flightholding, true
+    if flightholding.Tholding>flightparking.Tparking and parking then
+      return flightholding, true, parking
     else
-      return flightparking, false
+      return flightparking, false, nil
     end
     
   end
 
-  return nil, nil
+  return nil, nil, nil
 end
 
 
@@ -941,7 +930,7 @@ function FLIGHTCONTROL:_UpdateParkingSpots()
           parking.Coordinate:RemoveMark(parking.markerid)
         end
         
-        local text=string.format("ID=%03d, Terminal=%03d, Free=%s, Reserved=%s, reserved4=%s, Dist=%.1f", parking.TerminalID, parking.TerminalType, tostring(parking.Free), tostring(parking.TOAC), parking.reserved, parking.DistToRwy)
+        local text=string.format("ID=%03d, Terminal=%03d, Free=%s, TOAC=%s, reserved=%s", parking.TerminalID, parking.TerminalType, tostring(parking.Free), tostring(parking.TOAC), parking.reserved)
         message=message.."\n"..text
         if parking.Free==false or parking.TOAC or parking.reserved~="none" then
           parking.markerid=parking.Coordinate:MarkToAll(text)
@@ -1459,7 +1448,7 @@ function FLIGHTCONTROL:_LandAI(flight, parking)
     spot.reserved=unit.name
     unit.parking_landing=spot.TerminalID
     local text=string.format("FF Reserving parking spot %d for unit %s", spot.TerminalID, tostring(unit.name))
-    env.info(text)        
+    self:I(self.lid..text)
   end      
   
   MESSAGE:New("Respawning group"):ToAll()
