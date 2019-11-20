@@ -619,7 +619,7 @@ end
 --- Check if flight is landing.
 -- @param #FLIGHTGROUP self
 -- @return #boolean
-function FLIGHTGROUP:IsLanded()
+function FLIGHTGROUP:IsLanding()
   return self:Is("Landing")
 end
 
@@ -1209,6 +1209,10 @@ end
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 function FLIGHTGROUP:onafterElementDead(From, Event, To, Element)
   self:I(self.sid..string.format("Element dead %s.", Element.name))
+  
+  Element.parking=nil
+  
+  --TODO: remove from FC queues?
   
   -- Clear reserved parking spot.
   local spot=self:GetParkingSpot(Element, 10)
@@ -3121,7 +3125,7 @@ end
 -- @param #FLIGHTGROUP self
 -- @param Wrapper.Airbase#AIRBASE airbase The airbase where we search for parking spots.
 -- @return #table Table of coordinates and terminal IDs of free parking spots.
-function FLIGHTGROUP:GetParking(airbase)
+function FLIGHTGROUP:GetPasrking(airbase)
 
   -- Init default
   local scanradius=50
@@ -3160,12 +3164,8 @@ function FLIGHTGROUP:GetParking(airbase)
   for _,_parkingspot in pairs(parkingdata) do
     local parkingspot=_parkingspot --Wrapper.Airbase#AIRBASE.ParkingSpot
 
-    -- Coordinate of the parking spot.
-    local _spot=parkingspot.Coordinate   -- Core.Point#COORDINATE
-    local _termid=parkingspot.TerminalID
-
     -- Scan a radius of 100 meters around the spot.
-    local _,_,_,_units,_statics,_sceneries=_spot:ScanObjects(scanradius, scanunits, scanstatics, scanscenery)
+    local _,_,_,_units,_statics,_sceneries=parkingspot.Coordinate:ScanObjects(scanradius, scanunits, scanstatics, scanscenery)
 
     -- Check all units.
     for _,_unit in pairs(_units) do
@@ -3227,25 +3227,21 @@ function FLIGHTGROUP:GetParking(airbase)
       -- Check correct terminal type for asset. We don't want helos in shelters etc.
       if AIRBASE._CheckTerminalType(parkingspot.TerminalType, terminaltype) then
 
-        -- Coordinate of the parking spot.
-        local _spot=parkingspot.Coordinate   -- Core.Point#COORDINATE
-        local _termid=parkingspot.TerminalID
-        local _toac=parkingspot.TOAC
-
+        -- Assume free and no problematic obstacle.
         local free=true
         local problem=nil
 
         -- Safe parking using TO_AC from DCS result.
-        if verysafe and _toac then
+        if verysafe and parkingspot.TOAC then
           free=false
-          self:I(self.sid..string.format("Parking spot %d is occupied by other aircraft taking off or landing.", _termid))
+          self:I(self.sid..string.format("Parking spot %d is occupied by other aircraft taking off or landing.", parkingspot.TerminalID))
         end
 
         -- Loop over all obstacles.
         for _,obstacle in pairs(obstacles) do
 
           -- Check if aircraft overlaps with any obstacle.
-          local dist=_spot:Get2DDistance(obstacle.coord)
+          local dist=parkingspot.Coordinate:Get2DDistance(obstacle.coord)
           local safe=_overlap(element.size, obstacle.size, dist)
 
           -- Spot is blocked.
@@ -3264,10 +3260,10 @@ function FLIGHTGROUP:GetParking(airbase)
           -- Add parkingspot for this element.
           table.insert(parking, parkingspot)
 
-          self:I(self.sid..string.format("Parking spot #%d is free for element %s!", _termid, element.name))
+          self:I(self.sid..string.format("Parking spot #%d is free for element %s!", parkingspot.TerminalID, element.name))
 
           -- Add the unit as obstacle so that this spot will not be available for the next unit.
-          table.insert(obstacles, {coord=_spot, size=element.size, name=element.name, type="element"})
+          table.insert(obstacles, {coord=parkingspot.Coordinate, size=element.size, name=element.name, type="element"})
 
           gotit=true
           break
@@ -3275,7 +3271,7 @@ function FLIGHTGROUP:GetParking(airbase)
         else
 
           -- Debug output for occupied spots.
-          self:I(self.sid..string.format("Parking spot #%d is occupied or not big enough!", _termid))
+          self:I(self.sid..string.format("Parking spot #%d is occupied or not big enough!", parkingspot.TerminalID))
           --if self.Debug then
           --  local coord=problem.coord --Core.Point#COORDINATE
           --  local text=string.format("Obstacle blocking spot #%d is %s type %s with size=%.1f m and distance=%.1f m.", _termid, problem.name, problem.type, problem.size, problem.dist)

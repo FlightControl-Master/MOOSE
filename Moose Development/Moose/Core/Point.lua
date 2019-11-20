@@ -357,7 +357,7 @@ do -- COORDINATE
   -- @return #table Table of DCS static objects found.
   -- @return #table Table of DCS scenery objects found.
   function COORDINATE:ScanObjects(radius, scanunits, scanstatics, scanscenery)
-    self:F(string.format("Scanning in radius %.1f m.", radius))
+    self:F(string.format("Scanning in radius %.1f m.", radius or 100))
 
     local SphereSearch = {
       id = world.VolumeType.SPHERE,
@@ -437,9 +437,11 @@ do -- COORDINATE
     end
     for _,static in pairs(Statics) do
       self:T(string.format("Scan found static %s", static:getName()))
+      _DATABASE:AddStatic(static:getName())
     end
     for _,scenery in pairs(Scenery) do
-      self:T(string.format("Scan found scenery %s", scenery:getTypeName()))
+      self:T(string.format("Scan found scenery %s typename=%s", scenery:getName(), scenery:getTypeName()))
+      SCENERY:Register(scenery:getName(), scenery)
     end
     
     return gotunits, gotstatics, gotscenery, Units, Statics, Scenery

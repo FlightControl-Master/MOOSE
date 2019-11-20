@@ -7446,8 +7446,19 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
           -- Safe parking using TO_AC from DCS result.
           if self.safeparking and _toac then
             free=false
-            self:T("Parking spot %d is occupied by other aircraft taking off or landing.", _termid)
+            self:T(self.wid..string.format("Parking spot %d is occupied by other aircraft taking off or landing.", _termid))
           end
+          
+          -- Check if spot is reserved.
+          local fc=_DATABASE:GetFlightControl(self.airbasename)
+          if fc then
+            local reserved=fc:IsParkingReserved(parkingspot)
+            if reserved then
+              free=false
+              self:T(self.wid..string.format("Parking spot %d is reserved for flight element %s", _termid, tostring(reserved)))
+            end
+          end
+          
 
           -- Loop over all obstacles.
           for _,obstacle in pairs(obstacles) do
