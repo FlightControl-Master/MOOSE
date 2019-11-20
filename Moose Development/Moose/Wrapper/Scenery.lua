@@ -31,6 +31,11 @@ SCENERY = {
 }
 
 
+--- Register scenery object as POSITIONABLE.
+--@param #SCENERY self
+--@param #string SceneryName Scenery name.
+--@param #DCS.Object SceneryObject DCS scenery object.
+--@return #SCENERY Scenery object.
 function SCENERY:Register( SceneryName, SceneryObject )
   local self = BASE:Inherit( self, POSITIONABLE:New( SceneryName ) )
   self.SceneryName = SceneryName
@@ -38,11 +43,17 @@ function SCENERY:Register( SceneryName, SceneryObject )
   return self
 end
 
+--- Register scenery object as POSITIONABLE.
+--@param #SCENERY self
+--@return #DCS.Object DCS scenery object.
 function SCENERY:GetDCSObject()
   return self.SceneryObject
 end
 
+--- Register scenery object as POSITIONABLE.
+--@param #SCENERY self
+--@return #number Threat level 0.
+--@return #string  "Scenery".
 function SCENERY:GetThreatLevel()
-
   return 0, "Scenery"
 end

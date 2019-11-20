@@ -749,11 +749,16 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   local fuelmin=999999
   for i,_element in pairs(self.elements) do
     local element=_element --#FLIGHTGROUP.Element
+    
     local name=element.name
     local status=element.status
     local unit=element.unit
     local fuel=unit:GetFuel() or 0
     local life=unit:GetLifeRelative() or 0
+    local parking="X"
+    if element.parking then
+      parking=tostring(element.parking.TerminalID)
+    end
     
     if fuel*100<fuelmin then
       fuelmin=fuel*100
@@ -775,7 +780,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
     end
 
     -- Output text for element.
-    text=text..string.format("\n[%d] %s: status=%s, fuel=%.1f, life=%.1f, shells=%d, rockets=%d, bombs=%d, missiles=%d", i, name, status, fuel*100, life*100, nshells, nrockets, nbombs, nmissiles)
+    text=text..string.format("\n[%d] %s: status=%s, fuel=%.1f, life=%.1f, shells=%d, rockets=%d, bombs=%d, missiles=%d, parking=%s", i, name, status, fuel*100, life*100, nshells, nrockets, nbombs, nmissiles, parking)
   end
   if #self.elements==0 then
     text=text.." none!"
@@ -814,7 +819,9 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
     -- Output text for element.
     text=text..string.format("\n[%d] %s: %s: status=%s, scheduled=%s (%d sec), started=%s, duration=%d", i, taskid, name, status, clock, eta, started, duration)
   end
-  self:I(self.sid..text)
+  if #self.taskqueue>0 then
+    self:I(self.sid..text)
+  end
 
 
   -- Next check in ~30 seconds.
@@ -1210,21 +1217,10 @@ end
 function FLIGHTGROUP:onafterElementDead(From, Event, To, Element)
   self:I(self.sid..string.format("Element dead %s.", Element.name))
   
+  -- Not parking any more.
   Element.parking=nil
   
   --TODO: remove from FC queues?
-  
-  -- Clear reserved parking spot.
-  local spot=self:GetParkingSpot(Element, 10)
-  if self.flightcontrol and spot then
-    for _,p in pairs(self.flightcontrol.parking) do
-      local parking=p --Ops.FlightControl#FLIGHTCONTROL.ParkingSpot
-      if parking.TerminalID==spot.TerminalID then
-        parking.reserved="none"
-        break
-      end
-    end
-  end
 
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.DEAD)
@@ -3125,7 +3121,7 @@ end
 -- @param #FLIGHTGROUP self
 -- @param Wrapper.Airbase#AIRBASE airbase The airbase where we search for parking spots.
 -- @return #table Table of coordinates and terminal IDs of free parking spots.
-function FLIGHTGROUP:GetPasrking(airbase)
+function FLIGHTGROUP:GetParking(airbase)
 
   -- Init default
   local scanradius=50
@@ -3146,15 +3142,8 @@ function FLIGHTGROUP:GetPasrking(airbase)
   local airbasecategory=airbase:GetAirbaseCategory()
 
   -- Get parking spot data table. This contains all free and "non-free" spots.
-  local parkingdata
+  local parkingdata=airbase:GetParkingSpotsTable()
   
-  if self.flightcontrol then
-    parkingdata=self.flightcontrol.parking
-  else
-    parkingdata=airbase:GetParkingSpotsTable()
-  end
-  parkingdata=airbase:GetParkingSpotsTable()
-
   -- List of obstacles.
   local obstacles={}
 
@@ -3234,7 +3223,7 @@ function FLIGHTGROUP:GetPasrking(airbase)
         -- Safe parking using TO_AC from DCS result.
         if verysafe and parkingspot.TOAC then
           free=false
-          self:I(self.sid..string.format("Parking spot %d is occupied by other aircraft taking off or landing.", parkingspot.TerminalID))
+          self:I(self.sid..string.format("Parking spot %d is occupied by other aircraft taking off (TOAC).", parkingspot.TerminalID))
         end
 
         -- Loop over all obstacles.
@@ -3260,7 +3249,7 @@ function FLIGHTGROUP:GetPasrking(airbase)
           -- Add parkingspot for this element.
           table.insert(parking, parkingspot)
 
-          self:I(self.sid..string.format("Parking spot #%d is free for element %s!", parkingspot.TerminalID, element.name))
+          self:I(self.sid..string.format("Parking spot %d is free for element %s!", parkingspot.TerminalID, element.name))
 
           -- Add the unit as obstacle so that this spot will not be available for the next unit.
           table.insert(obstacles, {coord=parkingspot.Coordinate, size=element.size, name=element.name, type="element"})
@@ -3271,7 +3260,7 @@ function FLIGHTGROUP:GetPasrking(airbase)
         else
 
           -- Debug output for occupied spots.
-          self:I(self.sid..string.format("Parking spot #%d is occupied or not big enough!", parkingspot.TerminalID))
+          self:I(self.sid..string.format("Parking spot %d is occupied or not big enough!", parkingspot.TerminalID))
           --if self.Debug then
           --  local coord=problem.coord --Core.Point#COORDINATE
           --  local text=string.format("Obstacle blocking spot #%d is %s type %s with size=%.1f m and distance=%.1f m.", _termid, problem.name, problem.type, problem.size, problem.dist)
