@@ -50,6 +50,7 @@
 -- @field Core.UserFlag#USERFLAG flaghold Flag for holding.
 -- @field #number Tholding Abs. mission time stamp when the group reached the holding point.
 -- @field #number Tparking Abs. mission time stamp when the group was spawned uncontrolled and is parking.
+-- @field #table menu F10 radio menu.
 -- @extends Core.Fsm#FSM
 
 --- *To invent an airplane is nothing. To build one is something. To fly is everything.* -- Otto Lilienthal
@@ -97,6 +98,7 @@ FLIGHTGROUP = {
   flaghold           =   nil,
   Tholding           =   nil,
   Tparking           =   nil,
+  menu               =   nil,
 }
 
 
@@ -135,6 +137,7 @@ FLIGHTGROUP.ElementStatus={
 -- @field #string TRANSPORTHELO Helicopter with transport capability. This can be used to transport other assets.
 -- @field #string ATTACKHELO Attack helicopter.
 -- @field #string UAV Unpiloted Aerial Vehicle, e.g. drones.
+-- @field #string OTHER Other aircraft type.
 FLIGHTGROUP.Attribute = {
   TRANSPORTPLANE="TransportPlane",
   AWACS="AWACS",
@@ -224,17 +227,17 @@ FLIGHTGROUP.TaskType={
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.1.4"
+FLIGHTGROUP.version="0.1.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Add tasks.
+-- DONE: Add tasks.
 -- TODO: Add EPLRS, TACAN.
--- TODO: Get ammo.
--- TODO: Get pylons.
--- TODO: Fuel threshhold ==> RTB.
+-- DONE: Get ammo.
+-- DONE: Get pylons.
+-- DONE: Fuel threshhold ==> RTB.
 -- TODO: ROE, Afterburner restrict.
 -- TODO: Respawn? With correct loadout, fuelstate.
 -- TODO: Waypoints, read, add, insert, detour.
@@ -1014,13 +1017,10 @@ function FLIGHTGROUP:OnEventEngineShutdown(EventData)
     
       if element.unit and element.unit:IsAlive() then
     
-        local coord=unit:GetCoordinate()
+        local airbase=element.unit:GetCoordinate():GetClosestAirbase()
+        local parking=self:GetParkingSpot(element, 10)
         
-        local airbase=coord:GetClosestAirbase()
-        
-        local _,_,dist,parking=coord:GetClosestParkingSpot(airbase)
-        
-        if dist and dist<10 and unit:InAir()==false then
+        if airbase and parking then
           self:ElementArrived(element, airbase, parking)
           self:T3(self.sid..string.format("EVENT: Element %s shut down engines ==> arrived", element.name))
         else
@@ -1219,8 +1219,6 @@ function FLIGHTGROUP:onafterElementDead(From, Event, To, Element)
   
   -- Not parking any more.
   Element.parking=nil
-  
-  --TODO: remove from FC queues?
 
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.DEAD)
@@ -1263,6 +1261,9 @@ function FLIGHTGROUP:onafterFlightSpawned(From, Event, To)
   end
   
   if not self.ai then
+    self.menu=self.menu or {}
+    self.menu.atc=self.menu.atc or {}
+    self.menu.atc.root=self.menu.atc.root or MENU_GROUP:New(self.group, "ATC")
     if self.flightcontrol then
       --self.flightcontrol:_CreatePlayerMenu(self)
     end
@@ -1335,8 +1336,11 @@ end
 function FLIGHTGROUP:onafterFlightTakeoff(From, Event, To, airbase)
   self:T(self.sid..string.format("Flight takeoff %s at %s.", self.groupname, airbase and airbase:GetName() or "unknown airbase"))
 
+  -- Remove flight from all FC queues.
   if self.flightcontrol and airbase and self.flightcontrol.airbasename==airbase:GetName() then
-    self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qtakeoff, self, "takeoff")
+    --self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qtakeoff, self, "takeoff")
+    self.flightcontrol:_RemoveFlight(self)
+    self.flightcontrol=nil
   end
   
   -- Trigger airborne event.
@@ -1352,11 +1356,6 @@ end
 -- @param Wrapper.Airbase#AIRBASE airbase The airbase the flight landed.
 function FLIGHTGROUP:onafterFlightAirborne(From, Event, To, airbase)
   self:T(self.sid..string.format("Flight airborne %s at %s.", self.groupname,airbase and airbase:GetName() or "unknown airbase"))
-
-  -- Remove flight from FC takeoff queue.
-  if self.flightcontrol and airbase and self.flightcontrol.airbasename==airbase:GetName() then
-    --self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qtakeoff, self, "takeoff")
-  end
   
   -- Update queue.
   self:__QueueUpdate(-1)
@@ -1384,6 +1383,7 @@ end
 function FLIGHTGROUP:onafterFlightLanded(From, Event, To, airbase)
   self:T(self.sid..string.format("Flight landed %s at %s.", self.groupname, airbase and airbase:GetName() or "unknown airbase"))
 
+  -- Remove flight from landing queue.
   if self.flightcontrol and airbase and self.flightcontrol.airbasename==airbase:GetName() then
     self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qlanding, self, "landing")
   end
@@ -1408,6 +1408,12 @@ function FLIGHTGROUP:onafterFlightDead(From, Event, To)
 
   -- Delete waypoints so they are re-initialized at the next spawn.
   self.waypoints=nil
+  
+  -- Remove flight from all FC queues.
+  if self.flightcontrol then
+    self.flightcontrol:_RemoveFlight(self)
+    self.flightcontrol=nil
+  end  
 end
 
 
@@ -2251,12 +2257,21 @@ function FLIGHTGROUP:_UpdateRoute(n)
   -- Update waypoint tasks, i.e. inject WP tasks into waypoint table.
   self:_UpdateWaypointTasks()
 
+  -- Waypoints.
   local wp={}
   
   -- Set current waypoint or we get problem that the _PassingWaypoint function is triggered too early, i.e. right now and not when passing the next WP.
-  -- TODO: This, however, leads to the flight to go right over this point when it is on an airport ==> Need to test Waypoint takeoff 
-  local current=self.group:GetCoordinate():WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, 350, true, nil, {}, "Current")
-  table.insert(wp, current)
+  -- TODO: This, however, leads to the flight to go right over this point when it is on an airport ==> Need to test Waypoint takeoff
+  if self:IsAirborne() then 
+    local current=self.group:GetCoordinate():WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, 350, true, nil, {}, "Current")
+    table.insert(wp, current)
+  else
+    if self:IsTaxiing() or self:IsParking() or self:IsSpawned() then
+      local coord=self.group:GetCoordinate()
+      local current=coord:WaypointAirTakeOffParking(nil, 50)
+      table.insert(wp, current)
+    end
+  end
 
   -- Set "remaining" waypoits.
   for i=n, #self.waypoints do
@@ -3201,8 +3216,8 @@ function FLIGHTGROUP:GetParking(airbase)
 
   -- Get terminal type.  
   -- TODO: get terminal type
-  --local terminaltype=self:_GetTerminal(asset.attribute, self:GetAirbaseCategory())
-  local terminaltype=AIRBASE.TerminalType.OpenMedOrBig
+  local terminaltype=self:_GetTerminal(self.attribute, airbase:GetAirbaseCategory())
+  --local terminaltype=AIRBASE.TerminalType.OpenMedOrBig
 
   -- Loop over all units - each one needs a spot.
   for i,_element in pairs(self.elements) do
@@ -3299,6 +3314,86 @@ function FLIGHTGROUP:_GetObjectSize(DCSobject)
     return math.max(x,z), x , y, z
   end
   return 0,0,0,0
+end
+
+--- Get the generalized attribute of a group.
+-- @param #FLIGHTGROUP self
+-- @return #string Generalized attribute of the group.
+function FLIGHTGROUP:_GetAttribute()
+
+  -- Default
+  local attribute=FLIGHTGROUP.Attribute.OTHER
+  
+  local group=self.group
+
+  if group then
+
+    --- Planes
+    local transportplane=group:HasAttribute("Transports") and group:HasAttribute("Planes")
+    local awacs=group:HasAttribute("AWACS")
+    local fighter=group:HasAttribute("Fighters") or group:HasAttribute("Interceptors") or group:HasAttribute("Multirole fighters") or (group:HasAttribute("Bombers") and not group:HasAttribute("Strategic bombers"))
+    local bomber=group:HasAttribute("Strategic bombers")
+    local tanker=group:HasAttribute("Tankers")
+    local uav=group:HasAttribute("UAVs")
+    --- Helicopters
+    local transporthelo=group:HasAttribute("Transport helicopters")
+    local attackhelicopter=group:HasAttribute("Attack helicopters")
+    
+    -- Define attribute. Order is important.
+    if transportplane then
+      attribute=FLIGHTGROUP.Attribute.AIR_TRANSPORTPLANE
+    elseif awacs then
+      attribute=FLIGHTGROUP.Attribute.AIR_AWACS
+    elseif fighter then
+      attribute=FLIGHTGROUP.Attribute.AIR_FIGHTER
+    elseif bomber then
+      attribute=FLIGHTGROUP.Attribute.AIR_BOMBER
+    elseif tanker then
+      attribute=FLIGHTGROUP.Attribute.AIR_TANKER
+    elseif transporthelo then
+      attribute=FLIGHTGROUP.Attribute.AIR_TRANSPORTHELO
+    elseif attackhelicopter then
+      attribute=FLIGHTGROUP.Attribute.AIR_ATTACKHELO
+    elseif uav then
+      attribute=FLIGHTGROUP.Attribute.AIR_UAV
+    end    
+    
+  end
+  
+  return attribute
+end
+
+--- Get the proper terminal type based on generalized attribute of the group.
+--@param #FLIGHTGROUP self
+--@param #FLIGHTGROUP.Attribute _attribute Generlized attibute of unit.
+--@param #number _category Airbase category.
+--@return Wrapper.Airbase#AIRBASE.TerminalType Terminal type for this group.
+function FLIGHTGROUP:_GetTerminal(_attribute, _category)
+
+  -- Default terminal is "large".
+  local _terminal=AIRBASE.TerminalType.OpenBig
+
+  if _attribute==FLIGHTGROUP.Attribute.AIR_FIGHTER then
+    -- Fighter ==> small.
+    _terminal=AIRBASE.TerminalType.FighterAircraft
+  elseif _attribute==FLIGHTGROUP.Attribute.AIR_BOMBER or _attribute==FLIGHTGROUP.Attribute.AIR_TRANSPORTPLANE or _attribute==FLIGHTGROUP.Attribute.AIR_TANKER or _attribute==FLIGHTGROUP.Attribute.AIR_AWACS then
+    -- Bigger aircraft.
+    _terminal=AIRBASE.TerminalType.OpenBig
+  elseif _attribute==FLIGHTGROUP.Attribute.AIR_TRANSPORTHELO or _attribute==FLIGHTGROUP.Attribute.AIR_ATTACKHELO then
+    -- Helicopter.
+    _terminal=AIRBASE.TerminalType.HelicopterUsable
+  else
+    --_terminal=AIRBASE.TerminalType.OpenMedOrBig
+  end
+
+  -- For ships, we allow medium spots for all fixed wing aircraft. There are smaller tankers and AWACS aircraft that can use a carrier.
+  if _category==Airbase.Category.SHIP then
+    if not (_attribute==FLIGHTGROUP.Attribute.AIR_TRANSPORTHELO or _attribute==FLIGHTGROUP.Attribute.AIR_ATTACKHELO) then
+      _terminal=AIRBASE.TerminalType.OpenMedOrBig
+    end
+  end
+
+  return _terminal
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

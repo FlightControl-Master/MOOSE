@@ -99,7 +99,7 @@ FLIGHTCONTROL = {
 
 --- FlightControl class version.
 -- @field #string version
-FLIGHTCONTROL.version="0.1.0"
+FLIGHTCONTROL.version="0.1.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -291,7 +291,7 @@ function FLIGHTCONTROL:OnEventBirth(EventData)
   if EventData and EventData.IniGroupName and EventData.Place and EventData.Place:GetName()==self.airbasename then
   
     self:I(self.lid..string.format("BIRTH: unit  = %s", tostring(EventData.IniUnitName)))
-    self:I(self.lid..string.format("BIRTH: group = %s", tostring(EventData.IniGroupName)))
+    self:T2(self.lid..string.format("BIRTH: group = %s", tostring(EventData.IniGroupName)))
 
   
     -- We delay this, to have all elements of the group in the game.
@@ -342,7 +342,7 @@ function FLIGHTCONTROL:OnEventEngineStartup(EventData)
   self:F3({EvendData=EventData})
   
   self:I(self.lid..string.format("ENGINESTARTUP: unit  = %s", tostring(EventData.IniUnitName)))
-  self:I(self.lid..string.format("ENGINESTARTUP: group = %s", tostring(EventData.IniGroupName)))
+  self:T2(self.lid..string.format("ENGINESTARTUP: group = %s", tostring(EventData.IniGroupName)))
     
   -- Unit that took off.
   local unit=EventData.IniUnit
@@ -360,7 +360,7 @@ end
 function FLIGHTCONTROL:OnEventEngineShutdown(EventData)
   self:F3({EvendData=EventData})
   
-  self:T2(self.lid..string.format("ENGINESHUTDOWN: unit  = %s", tostring(EventData.IniUnitName)))
+  self:I(self.lid..string.format("ENGINESHUTDOWN: unit  = %s", tostring(EventData.IniUnitName)))
   self:T2(self.lid..string.format("ENGINESHUTDOWN: group = %s", tostring(EventData.IniGroupName)))
     
   -- Unit that took off.
@@ -944,21 +944,20 @@ function FLIGHTCONTROL:_CreatePlayerMenu(flight)
   local groupname=flight.groupname
   local gid=group:GetID()
   
-  self:I(self.lid..string.format("Creating player menu for flight group %s (ID=%d)", tostring(flight.groupname), gid))
+  self:I(self.lid..string.format("Creating ATC player menu for flight group %s (ID=%d)", tostring(flight.groupname), gid))  
   
-  if not self.playermenu[gid] then
-    self.playermenu[gid]={}
-  end
   
-  local playermenu=self.playermenu[gid]  --#FLIGHTCONTROL.PlayerMenu
+  local airbasename=self.airbasename
 
-  playermenu.root           = MENU_GROUP:New(group, "ATC")
-  playermenu.MyStatus       = MENU_GROUP_COMMAND:New(group, "My Status",       playermenu.root, self._PlayerMyStatus,       self, groupname)
-  playermenu.RequestTaxi    = MENU_GROUP_COMMAND:New(group, "Request Taxi",    playermenu.root, self._PlayerRequestTaxi,    self, groupname)
-  playermenu.RequestTakeoff = MENU_GROUP_COMMAND:New(group, "Request Takeoff", playermenu.root, self._PlayerRequestTakeoff, self, groupname)
-  playermenu.Inbound        = MENU_GROUP_COMMAND:New(group, "Inbound",         playermenu.root, self._PlayerInbound,        self, groupname)
+  local playermenu=flight.menu.atc  --#FLIGHTCONTROL.PlayerMenu
+  playermenu[airbasename] = playermenu[airbasename] or {}
+  playermenu[airbasename].root = MENU_GROUP:New(group, airbasename, playermenu)
   
-
+  playermenu[airbasename].MyStatus       = MENU_GROUP_COMMAND:New(group, "My Status",       playermenu[airbasename].root, self._PlayerMyStatus,       self, groupname)
+  playermenu[airbasename].RequestTaxi    = MENU_GROUP_COMMAND:New(group, "Request Taxi",    playermenu[airbasename].root, self._PlayerRequestTaxi,    self, groupname)
+  playermenu[airbasename].RequestTakeoff = MENU_GROUP_COMMAND:New(group, "Request Takeoff", playermenu[airbasename].root, self._PlayerRequestTakeoff, self, groupname)
+  playermenu[airbasename].Inbound        = MENU_GROUP_COMMAND:New(group, "Inbound",         playermenu[airbasename].root, self._PlayerInbound,        self, groupname)
+  
 end
 
 
@@ -975,7 +974,7 @@ function FLIGHTCONTROL:_PlayerMyStatus(groupname)
     local text=string.format("My Status:\n")
     text=text..string.format("Flight status: %s", tostring(flight:GetState()))
 
-    MESSAGE:New(text, 5):ToAll()
+    MESSAGE:New(text, 5):ToGroup(flight.group)
   
   else
     MESSAGE:New(string.format("Cannot find flight group %s.", tostring(groupname)), 5):ToAll()
@@ -1068,6 +1067,18 @@ function FLIGHTCONTROL:_CreateFlightGroup(group)
   end
     
   return flight
+end
+
+--- Create a new flight group.
+-- @param #FLIGHTCONTROL self
+-- @param Ops.FlightGroup#FLIGHTGROUP flight The flight to be removed.
+function FLIGHTCONTROL:_RemoveFlight(flight)
+
+  self:_RemoveFlightFromQueue(self.Qwaiting, flight, "holding")
+  self:_RemoveFlightFromQueue(self.Qlanding, flight, "landing")
+  self:_RemoveFlightFromQueue(self.Qparking, flight, "parking")
+  self:_RemoveFlightFromQueue(self.flight, flight, "all flights")
+
 end
 
 --- Get flight from group. 
