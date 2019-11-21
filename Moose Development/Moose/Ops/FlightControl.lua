@@ -25,7 +25,7 @@
 -- @field Core.Zone#ZONE zoneAirbase Zone around the airbase.
 -- @field #table parking Parking spots table.
 -- @field #table runways Runway table.
--- @field #table flight All flights table.
+-- @field #table flights All flights table.
 -- @field #table Qwaiting Queue of aircraft waiting for landing permission.
 -- @field #table Qlanding Queue of aircraft currently on final approach.
 -- @field #table Qtakeoff Queue of aircraft about to takeoff.
@@ -34,6 +34,8 @@
 -- @field #number atcfreq ATC radio frequency.
 -- @field Core.RadioQueue#RADIOQUEUE atcradio ATC radio queue.
 -- @field #table playermenu Player Menu.
+-- @field #number Nlading Max number of aircraft groups in the landing pattern.
+-- @field #number dTlanding Time interval in seconds between landing clearance.
 -- @extends Core.Fsm#FSM
 
 --- **Ground Control**: Airliner X, Good news, you are clear to taxi to the active.
@@ -70,6 +72,8 @@ FLIGHTCONTROL = {
   atcradio       =   nil,
   atcradiounitname = nil,
   playermenu       = nil,
+  Nlanding         = nil,
+  dTlanding        = nil,
 }
 
 --- Holding point
@@ -155,6 +159,11 @@ function FLIGHTCONTROL:New(airbasename)
   -- 5 NM zone around the airbase.
   self.zoneAirbase=ZONE_RADIUS:New("FC", self:GetCoordinate():GetVec2(), UTILS.NMToMeters(5))
   
+  -- Defaults
+  self:SetLandingMax()
+  self:SetLandingInterval()
+  
+  
   -- Init runways.
   self:_InitRunwayData()
   
@@ -188,6 +197,29 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- User API Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Set the number of aircraft groups, that are allowed to land simultaniously.
+-- @param #FLIGHTCONTROL self
+-- @param #number n Max number of aircraft landing simultaniously. Default 2.
+-- @return #FLIGHTCONTROL self
+function FLIGHTCONTROL:SetLandingMax(n)
+
+  self.Nlanding=n or 2
+
+  return self
+end
+
+--- Set time interval between landing clearance of groups.
+-- @param #FLIGHTCONTROL self
+-- @param #number dt Time interval in seconds. Default 180 sec (3 min).
+-- @return #FLIGHTCONTROL self
+function FLIGHTCONTROL:SetLandingInterval(dt)
+
+  self.dTlanding=dt or 180
+
+  return self
+end
+
 
 --- Set runway. This clears all auto generated runways.
 -- @param #FLIGHTCONTROL self
@@ -419,23 +451,36 @@ function FLIGHTCONTROL:_CheckQueues()
   
 
   -- Check if somebody wants something.
-  if flight and ntakeoff==0 and nlanding==0 then
-    
-    if isholding and parking then
-    
+  if flight and ntakeoff==0 and nlanding<self.Nlanding then
+      
+    if isholding then
+
       --------------------
       -- Holding flight --
       --------------------
-        
-      -- Message.
-      local text=string.format("Flight %s, you are cleared to land.", flight.groupname)
-      MESSAGE:New(text, 5, "FLIGHTCONTROL"):ToAll()
 
-      -- Give AI the landing signal.
-      -- TODO: Humans have to confirm via F10 menu.
-      if flight.ai then      
-        flight:FlightLanding()
-        self:_LandAI(flight, parking)
+      -- Get interval to last flight that got landing clearance.
+      local dTlanding=99999
+      if self.Tlanding then
+        dTlanding=timer.getAbsTime()-self.Tlanding
+      end
+    
+      if parking and dTlanding>=self.dTlanding then
+              
+        -- Message.
+        local text=string.format("Flight %s, you are cleared to land.", flight.groupname)
+        MESSAGE:New(text, 5, "FLIGHTCONTROL"):ToAll()
+  
+        -- Give AI the landing signal.
+        -- TODO: Humans have to confirm via F10 menu.
+        if flight.ai then      
+          flight:FlightLanding()
+          self:_LandAI(flight, parking)
+        end
+      
+        -- Set time last flight got landing clearance.  
+        self.Tlanding=timer.getAbsTime()
+        
       end
     
     else
@@ -888,7 +933,9 @@ function FLIGHTCONTROL:_UpdateParkingSpots()
     local reserved=self:IsParkingReserved(spot)
     
     local text=string.format("ID=%03d, Terminal=%03d, Free=%s, TOAC=%s, reserved=%s", parking.TerminalID, parking.TerminalType, tostring(parking.Free), tostring(parking.TOAC), tostring(reserved))
-    message=message.."\n"..text
+    if reserved then
+      message=message.."\n"..text
+    end
     
     -- Place marker on non-free spots.
     if parking.Free==false or parking.TOAC or reserved~=nil then
@@ -1077,7 +1124,8 @@ function FLIGHTCONTROL:_RemoveFlight(flight)
   self:_RemoveFlightFromQueue(self.Qwaiting, flight, "holding")
   self:_RemoveFlightFromQueue(self.Qlanding, flight, "landing")
   self:_RemoveFlightFromQueue(self.Qparking, flight, "parking")
-  self:_RemoveFlightFromQueue(self.flight, flight, "all flights")
+  self:_RemoveFlightFromQueue(self.Qtakeoff, flight, "takeoff")
+  self:_RemoveFlightFromQueue(self.flights,  flight, "flights")
 
 end
 

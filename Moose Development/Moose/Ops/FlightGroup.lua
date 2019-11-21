@@ -1287,9 +1287,12 @@ function FLIGHTGROUP:onafterFlightParking(From, Event, To)
   -- Parking time stamp.
   self.Tparking=timer.getAbsTime()
 
+  -- Get FC of this airbase.
   local flightcontrol=_DATABASE:GetFlightControl(airbasename)
   
   if flightcontrol then
+  
+    -- Set FC for this flight
     self:SetFlightControl(flightcontrol)
   
     if self.flightcontrol then
@@ -1338,7 +1341,6 @@ function FLIGHTGROUP:onafterFlightTakeoff(From, Event, To, airbase)
 
   -- Remove flight from all FC queues.
   if self.flightcontrol and airbase and self.flightcontrol.airbasename==airbase:GetName() then
-    --self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qtakeoff, self, "takeoff")
     self.flightcontrol:_RemoveFlight(self)
     self.flightcontrol=nil
   end
