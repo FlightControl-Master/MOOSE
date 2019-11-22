@@ -7351,6 +7351,28 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
     self:T3(string.format("l1=%.1f l2=%.1f s=%.1f d=%.1f ==> safe=%s", l1,l2,safedist,dist,tostring(safe)))
     return safe
   end
+  
+  -- Get client coordinates.
+  local function _clients()
+    local clients=_DATABASE.CLIENTS
+    local coords={}
+    for clientname, client in pairs(clients) do
+      local template=_DATABASE:GetGroupTemplateFromUnitName(clientname)
+      local units=template.units
+      for i,unit in pairs(units) do
+        local coord=COORDINATE:New(unit.x, unit.alt, unit.y)
+        coords[unit.name]=coord
+        --[[
+        local airbase=coord:GetClosestAirbase()
+        local _,TermID, dist, spot=coord:GetClosestParkingSpot(airbase)
+        if dist<=10 then
+          env.info(string.format("Found client %s on parking spot %d at airbase %s", unit.name, TermID, airbase:GetName()))
+        end
+        ]]
+      end     
+    end
+    return coords
+  end
 
   -- Get parking spot data table. This contains all free and "non-free" spots.
   local parkingdata=airbase:GetParkingSpotsTable()
@@ -7379,15 +7401,10 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
     end
 
     -- Check all clients.
-    --[[
-    for _,_unit in pairs(_units) do
-      local unit=_unit --Wrapper.Unit#UNIT
-      local _coord=unit:GetCoordinate()
-      local _size=self:_GetObjectSize(unit:GetDCSObject())
-      local _name=unit:GetName()
-      table.insert(obstacles, {coord=_coord, size=_size, name=_name, type="client"})
+    local clientcoords=_clients()
+    for clientname,_coord in pairs(clientcoords) do
+      table.insert(obstacles, {coord=_coord, size=15, name=clientname, type="client"})
     end
-    ]]
 
     -- Check all statics.
     for _,static in pairs(_statics) do
@@ -7444,9 +7461,10 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
           local problem=nil
 
           -- Safe parking using TO_AC from DCS result.
+          self:I(self.wid..string.format("Parking spot %d TOAC=%s (safe park=%s).", _termid, tostring(_toac), tostring(self.safeparking)))
           if self.safeparking and _toac then
             free=false
-            self:T(self.wid..string.format("Parking spot %d is occupied by other aircraft taking off or landing.", _termid))
+            self:I(self.wid..string.format("Parking spot %d is occupied by other aircraft taking off (TOAC).", _termid))
           end
           
           -- Check if spot is reserved.
@@ -7455,7 +7473,7 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
             local reserved=fc:IsParkingReserved(parkingspot)
             if reserved then
               free=false
-              self:T(self.wid..string.format("Parking spot %d is reserved for flight element %s", _termid, tostring(reserved)))
+              self:I(self.wid..string.format("Parking spot %d is reserved for flight element %s", _termid, tostring(reserved)))
             end
           end
           
@@ -7486,7 +7504,7 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
             -- Add parkingspot for this asset unit.
             table.insert(parking[_asset.uid], parkingspot)
 
-            self:T(self.wid..string.format("Parking spot #%d is free for asset id=%d!", _termid, _asset.uid))
+            self:I(self.wid..string.format("Parking spot %d is free for asset id=%d!", _termid, _asset.uid))
 
             -- Add the unit as obstacle so that this spot will not be available for the next unit.
             table.insert(obstacles, {coord=_spot, size=_asset.size, name=_asset.templatename, type="asset"})
@@ -7497,7 +7515,7 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
           else
 
             -- Debug output for occupied spots.
-            self:T(self.wid..string.format("Parking spot #%d is occupied or not big enough!", _termid))
+            self:I(self.wid..string.format("Parking spot %d is occupied or not big enough!", _termid))
             if self.Debug then
               local coord=problem.coord --Core.Point#COORDINATE
               local text=string.format("Obstacle blocking spot #%d is %s type %s with size=%.1f m and distance=%.1f m.", _termid, problem.name, problem.type, problem.size, problem.dist)
@@ -7511,7 +7529,7 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
 
       -- No parking spot for at least one asset :(
       if not gotit then
-        self:T(self.wid..string.format("WARNING: No free parking spot for asset id=%d",_asset.uid))
+        self:I(self.wid..string.format("WARNING: No free parking spot for asset id=%d",_asset.uid))
         return nil
       end
     end -- loop over asset units

@@ -66,7 +66,7 @@
 -- @field #FLIGHTGROUP
 FLIGHTGROUP = {
   ClassName          = "FLIGHTGROUP",
-  Debug              =   nil,
+  Debug              = false,
   sid                =   nil,
   groupname          =   nil,
   group              =   nil,
@@ -369,7 +369,7 @@ function FLIGHTGROUP:New(groupname)
 
   -- Debug trace.
   if false then
-    self.Debug=true
+    self.Debug=false
     BASE:TraceOnOff(true)
     BASE:TraceClass(self.ClassName)
     BASE:TraceLevel(1)
@@ -727,6 +727,33 @@ function FLIGHTGROUP:onafterStart(From, Event, To)
   self:__FlightStatus(-1)
 end
 
+--- On after Start event. Starts the FLIGHTGROUP FSM and event handlers.
+-- @param #FLIGHTGROUP self
+-- @param Wrapper.Group#GROUP Group Flight group.
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function FLIGHTGROUP:onafterStop(From, Event, To)
+
+  -- Handle events:
+  self:UnHandleEvent(EVENTS.Birth)
+  self:UnHandleEvent(EVENTS.EngineStartup)
+  self:UnHandleEvent(EVENTS.Takeoff)
+  self:UnHandleEvent(EVENTS.Land)
+  self:UnHandleEvent(EVENTS.EngineShutdown)
+  self:UnHandleEvent(EVENTS.PilotDead)
+  self:UnHandleEvent(EVENTS.Ejection)
+  self:UnHandleEvent(EVENTS.Crash)
+  self:UnHandleEvent(EVENTS.RemoveUnit)
+  
+  _DATABASE.FLIGHTGROUPS[self.groupname]=nil
+  
+  self={}
+  self=nil
+
+end
+
+
 --- On after "FlightStatus" event.
 -- @param #FLIGHTGROUP self
 -- @param Wrapper.Group#GROUP Group Flight group.
@@ -788,7 +815,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   if #self.elements==0 then
     text=text.." none!"
   end
-  self:I(self.sid..text)
+  self:T(self.sid..text)
   
   -- Low fuel?
   if fuelmin<self.fuellowthresh and not self.fuellow then
@@ -823,7 +850,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
     text=text..string.format("\n[%d] %s: %s: status=%s, scheduled=%s (%d sec), started=%s, duration=%d", i, taskid, name, status, clock, eta, started, duration)
   end
   if #self.taskqueue>0 then
-    self:I(self.sid..text)
+    self:T(self.sid..text)
   end
 
 
@@ -1099,7 +1126,7 @@ end
 -- @param #string To To state.
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 function FLIGHTGROUP:onafterElementSpawned(From, Event, To, Element)
-  self:I(self.sid..string.format("Element spawned %s.", Element.name))
+  self:T(self.sid..string.format("Element spawned %s.", Element.name))
 
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.SPAWNED)
@@ -1129,7 +1156,7 @@ end
 -- @param #string To To state.
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 function FLIGHTGROUP:onafterElementParking(From, Event, To, Element)
-  self:I(self.sid..string.format("Element parking %s at spot %s.", Element.name, tostring(Element.parking.TerminalID)))
+  self:T(self.sid..string.format("Element parking %s at spot %s.", Element.name, tostring(Element.parking.TerminalID)))
   
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.PARKING)
@@ -1278,7 +1305,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function FLIGHTGROUP:onafterFlightParking(From, Event, To)
-  self:I(self.sid..string.format("Flight is parking %s.", self.groupname))
+  self:T(self.sid..string.format("Flight is parking %s.", self.groupname))
 
   local airbase=self.group:GetCoordinate():GetClosestAirbase()
   
@@ -1428,8 +1455,8 @@ end
 -- @param #number N Final waypoint number.
 function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
   local text=string.format("Flight %s passed waypoint %d/%d", self.groupname, n, N)
-  self:I(self.sid..text)
-  MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
+  self:T(self.sid..text)
+  --MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
 end
 
 --- On after "FuelLow" event.
@@ -1927,6 +1954,8 @@ function FLIGHTGROUP._ReachedHolding(group, flightgroup)
   
   -- Add flight to waiting/holding queue.
   if flightgroup.flightcontrol then
+    -- Add flight to all flights.
+    table.insert(flightgroup.flightcontrol.flights, flightgroup)
     flightgroup.flightcontrol:_AddFlightToHoldingQueue(flightgroup)
   end
 end
@@ -2300,7 +2329,7 @@ function FLIGHTGROUP:_UpdateRoute(n)
   
     -- Add overhead waypoint.
     local wpoverhead=coordoverhead:WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint, 500, false, nil, {TaskOverhead}, "Destination Overhead")
-    self:I(self.sid..string.format("Adding overhead waypoint as #%d", #wp))
+    self:T(self.sid..string.format("Adding overhead waypoint as #%d", #wp))
     
     
     table.insert(wp, #wp, wpoverhead)
@@ -2308,7 +2337,7 @@ function FLIGHTGROUP:_UpdateRoute(n)
   
   
   -- Debug info.
-  self:I(self.sid..string.format("Updating route for WP>=%d (%d/%d) homebase=%s destination=%s", n, #wp, #self.waypoints, self.homebase and self.homebase:GetName() or "unknown", self.destination and self.destination:GetName() or "unknown"))
+  self:T(self.sid..string.format("Updating route for WP>=%d (%d/%d) homebase=%s destination=%s", n, #wp, #self.waypoints, self.homebase and self.homebase:GetName() or "unknown", self.destination and self.destination:GetName() or "unknown"))
   
   if #wp>0 then
 
@@ -3154,6 +3183,21 @@ function FLIGHTGROUP:GetParking(airbase)
     self:T3(string.format("l1=%.1f l2=%.1f s=%.1f d=%.1f ==> safe=%s", l1,l2,safedist,dist,tostring(safe)))
     return safe
   end
+
+  -- Get client coordinates.  
+  local function _clients()
+    local clients=_DATABASE.CLIENTS
+    local coords={}
+    for clientname, client in pairs(clients) do
+      local template=_DATABASE:GetGroupTemplateFromUnitName(clientname)
+      local units=template.units
+      for i,unit in pairs(units) do
+        local coord=COORDINATE:New(unit.x, unit.alt, unit.y)
+        coords[unit.name]=coord
+      end     
+    end
+    return coords 
+  end
   
   -- Get airbase category.
   local airbasecategory=airbase:GetAirbaseCategory()
@@ -3181,17 +3225,12 @@ function FLIGHTGROUP:GetParking(airbase)
       local _name=unit:GetName()
       table.insert(obstacles, {coord=_coord, size=_size, name=_name, type="unit"})
     end
-
+    
     -- Check all clients.
-    --[[
-    for _,_unit in pairs(_units) do
-      local unit=_unit --Wrapper.Unit#UNIT
-      local _coord=unit:GetCoordinate()
-      local _size=self:_GetObjectSize(unit:GetDCSObject())
-      local _name=unit:GetName()
-      table.insert(obstacles, {coord=_coord, size=_size, name=_name, type="client"})
+    local clientcoords=_clients()
+    for clientname,_coord in pairs(clientcoords) do
+      table.insert(obstacles, {coord=_coord, size=15, name=clientname, type="client"})
     end
-    ]]
 
     -- Check all statics.
     for _,static in pairs(_statics) do
@@ -3217,9 +3256,7 @@ function FLIGHTGROUP:GetParking(airbase)
   local parking={}
 
   -- Get terminal type.  
-  -- TODO: get terminal type
   local terminaltype=self:_GetTerminal(self.attribute, airbase:GetAirbaseCategory())
-  --local terminaltype=AIRBASE.TerminalType.OpenMedOrBig
 
   -- Loop over all units - each one needs a spot.
   for i,_element in pairs(self.elements) do

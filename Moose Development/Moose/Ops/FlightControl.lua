@@ -307,7 +307,21 @@ function FLIGHTCONTROL:onafterStatus()
   self:I(self.lid..text)
 
   -- Next status update in ~30 seconds.
-  self:__Status(-30)
+  self:__Status(-20)
+end
+
+--- Start FLIGHTCONTROL FSM. Handle events.
+-- @param #FLIGHTCONTROL self
+function FLIGHTCONTROL:onafterStop()
+
+  -- Handle events.
+  self:HandleEvent(EVENTS.Birth)
+  self:HandleEvent(EVENTS.EngineStartup)
+  self:HandleEvent(EVENTS.Takeoff)
+  self:HandleEvent(EVENTS.Land)
+  self:HandleEvent(EVENTS.EngineShutdown)
+  self:HandleEvent(EVENTS.Crash)
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -432,7 +446,6 @@ function FLIGHTCONTROL:_CheckQueues()
     self:_PrintQueue(self.Qwaiting, "Holding")
     self:_PrintQueue(self.Qlanding, "Landing")
   end
-    
       
   -- Number of groups landing.
   local nlanding=#self.Qlanding
@@ -915,6 +928,14 @@ function FLIGHTCONTROL:_UpdateParkingSpots()
   -- Parking spots of airbase.
   local parkingdata=self.airbase:GetParkingSpotsTable()
   
+  for _,_parking in pairs(self.parking) do
+    local parking=_parking --#FLIGHTCONTROL.ParkingSpot
+    if parking.markerid then
+      parking.Coordinate:RemoveMark(parking.markerid)
+      parking.markerid=nil    
+    end
+  end
+  
   -- Loop over all spots.
   local message="Parking Spots:"    
   for _,_spot in pairs(parkingdata) do
@@ -923,23 +944,17 @@ function FLIGHTCONTROL:_UpdateParkingSpots()
     -- Parking.
     local parking=self.parking[spot.TerminalID] --#FLIGHTCONTROL.ParkingSpot
     
-    -- Mark position.
-    if parking.markerid then
-      parking.Coordinate:RemoveMark(parking.markerid)
-      parking.markerid=nil
-    end
-    
     -- Check if any known flight has reserved this spot.
     local reserved=self:IsParkingReserved(spot)
-    
-    local text=string.format("ID=%03d, Terminal=%03d, Free=%s, TOAC=%s, reserved=%s", parking.TerminalID, parking.TerminalType, tostring(parking.Free), tostring(parking.TOAC), tostring(reserved))
-    if reserved then
-      message=message.."\n"..text
-    end
+
+    -- Message text.    
+    --local text=string.format("ID=%03d, Terminal=%03d, Free=%s, TOAC=%s, reserved=%s", parking.TerminalID, parking.TerminalType, tostring(parking.Free), tostring(parking.TOAC), tostring(reserved))
+    local text=string.format("ID=%03d, Terminal=%03d, Free=%s, TOAC=%s, reserved=%s", spot.TerminalID, spot.TerminalType, tostring(spot.Free), tostring(spot.TOAC), tostring(reserved))
     
     -- Place marker on non-free spots.
     if parking.Free==false or parking.TOAC or reserved~=nil then
       parking.markerid=parking.Coordinate:MarkToAll(text)
+      message=message.."\n"..text
     end
     
   end
@@ -1405,7 +1420,7 @@ function FLIGHTCONTROL:_LandAI(flight, parking)
       element.parking=spot
       unit.parking_landing=spot.TerminalID
       local text=string.format("FF Reserving parking spot %d for unit %s", spot.TerminalID, tostring(unit.name))
-      spot.Coordinate:MarkToAll(text)
+      --spot.Coordinate:MarkToAll(text)
       self:I(self.lid..text)
     else
       env.info("FF error could not get element to assign parking!")      
