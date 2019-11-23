@@ -39,6 +39,8 @@
 --    * F-14A Tomcat (AI)
 --    * E-2D Hawkeye (AI)
 --    * S-3B Viking & tanker version (AI)
+--    * [C-2A Greyhound](https://forums.eagle.ru/showthread.php?t=255641) (AI)
+--    * [P-3C Orion](https://forums.eagle.ru/showthread.php?t=255641) (AI)
 --
 -- At the moment, optimized parameters are available for the F/A-18C Hornet (Lot 20) and A-4E community mod as aircraft and the USS John C. Stennis as carrier.
 --
@@ -1255,6 +1257,8 @@ AIRBOSS = {
 -- @field #string S3B Lockheed S-3B Viking.
 -- @field #string S3BTANKER Lockheed S-3B Viking tanker.
 -- @field #string E2D Grumman E-2D Hawkeye AWACS.
+-- @field #string C2A Grumman C-2A Greyhound from Military Aircraft Mod.
+-- @field #string P3C Lockheed P-3C Orion from Military Aircraft Mod.
 AIRBOSS.AircraftCarrier={
   AV8B="AV8BNA",
   HORNET="FA-18C_hornet",
@@ -1266,6 +1270,8 @@ AIRBOSS.AircraftCarrier={
   S3B="S-3B",
   S3BTANKER="S-3B Tanker",
   E2D="E-2C",
+  C2A="C2A_Greyhound",
+  P3C="P3C_Orion"
 }
 
 --- Carrier types.
@@ -1688,7 +1694,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="1.0.9"
+AIRBOSS.version="1.1.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -15544,7 +15550,7 @@ end
 function AIRBOSS:_MarshalCallRecoveryStart(case)
 
   -- Marshal radial.
-  local radial=self:GetRadial(case, true, true, true)
+  local radial=self:GetRadial(case, true, true, false)
 
   -- Debug output.
   local text=string.format("Starting aircraft recovery Case %d ops.", case)
@@ -17013,7 +17019,7 @@ function AIRBOSS:_DisplayCarrierInfo(_unitname)
       if self.case==1 then
         text=text..string.format("Case %d recovery ops\n", self.case)
       else
-        local radial=self:GetRadial(self.case, true, true, true)
+        local radial=self:GetRadial(self.case, true, true, false)
         text=text..string.format("Case %d recovery ops\nMarshal radial %03d°\n", self.case, radial)
       end
       text=text..string.format("BRC %03d° - FB %03d°\n", self:GetBRC(), self:GetFinalBearing(true))
