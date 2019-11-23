@@ -925,7 +925,13 @@ end
 -- -- Switch the tracing Off
 -- BASE:TraceOnOff( false )
 function BASE:TraceOnOff( TraceOnOff )
-  _TraceOnOff = TraceOnOff or true
+  if TraceOnOff==false then
+    self:I( "Tracing in MOOSE is OFF" )
+    _TraceOnOff = false
+  else
+  self:I( "Tracing in MOOSE is ON" )
+    _TraceOnOff = true
+  end
 end
 
 
@@ -954,7 +960,11 @@ end
 -- @param #boolean TraceAll true = trace all methods in MOOSE.
 function BASE:TraceAll( TraceAll )
   
-  _TraceAll = TraceAll or true
+  if TraceAll==false then
+    _TraceAll=false
+  else
+    _TraceAll = true
+  end
   
   if _TraceAll then
     self:I( "Tracing all methods in MOOSE " )
