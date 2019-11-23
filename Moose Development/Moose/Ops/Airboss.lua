@@ -40,7 +40,6 @@
 --    * E-2D Hawkeye (AI)
 --    * S-3B Viking & tanker version (AI)
 --    * [C-2A Greyhound](https://forums.eagle.ru/showthread.php?t=255641) (AI)
---    * [P-3C Orion](https://forums.eagle.ru/showthread.php?t=255641) (AI)
 --
 -- At the moment, optimized parameters are available for the F/A-18C Hornet (Lot 20) and A-4E community mod as aircraft and the USS John C. Stennis as carrier.
 --
@@ -1258,7 +1257,6 @@ AIRBOSS = {
 -- @field #string S3BTANKER Lockheed S-3B Viking tanker.
 -- @field #string E2D Grumman E-2D Hawkeye AWACS.
 -- @field #string C2A Grumman C-2A Greyhound from Military Aircraft Mod.
--- @field #string P3C Lockheed P-3C Orion from Military Aircraft Mod.
 AIRBOSS.AircraftCarrier={
   AV8B="AV8BNA",
   HORNET="FA-18C_hornet",
@@ -1271,7 +1269,6 @@ AIRBOSS.AircraftCarrier={
   S3BTANKER="S-3B Tanker",
   E2D="E-2C",
   C2A="C2A_Greyhound",
-  P3C="P3C_Orion"
 }
 
 --- Carrier types.
