@@ -36,6 +36,7 @@
 -- @field #table playermenu Player Menu.
 -- @field #number Nlading Max number of aircraft groups in the landing pattern.
 -- @field #number dTlanding Time interval in seconds between landing clearance.
+-- @field #number Nparkingspots Total number of parking spots.
 -- @extends Core.Fsm#FSM
 
 --- **Ground Control**: Airliner X, Good news, you are clear to taxi to the active.
@@ -74,6 +75,7 @@ FLIGHTCONTROL = {
   playermenu       = nil,
   Nlanding         = nil,
   dTlanding        = nil,
+  Nparkingspots    = nil,
 }
 
 --- Holding point
@@ -291,7 +293,7 @@ function FLIGHTCONTROL:onafterStatus()
   --self:_CheckAirbase()
 
   -- Update parking spots.
-  self:_UpdateParkingSpots()
+  --self:_UpdateParkingSpots()
   
   -- Check waiting and landing queue.
   self:_CheckQueues()
@@ -300,10 +302,11 @@ function FLIGHTCONTROL:onafterStatus()
   local runway=self:GetActiveRunway()
   
   -- Get free parking spots.
-  local nfree=self:_GetFreeParkingSpots()
+  --local nfree=self:_GetFreeParkingSpots()
+  local nfree=self.Nparkingspots
 
   -- Info text.
-  local text=string.format("State %s - Runway %s - Parking %d/%d - Qpark=%d Qtakeoff=%d Qland=%d Qhold=%d", self:GetState(), runway.idx, nfree, #self.parking, #self.Qparking, #self.Qtakeoff, #self.Qlanding, #self.Qwaiting)
+  local text=string.format("State %s - Runway %s - Parking %d/%d - Qpark=%d Qtakeoff=%d Qland=%d Qhold=%d", self:GetState(), runway.idx, nfree, self.Nparkingspots, #self.Qparking, #self.Qtakeoff, #self.Qlanding, #self.Qwaiting)
   self:I(self.lid..text)
 
   -- Next status update in ~30 seconds.
@@ -439,7 +442,7 @@ end
 function FLIGHTCONTROL:_CheckQueues()
 
   -- Print queues
-  if true then
+  if false then
     self:_PrintQueue(self.flights,  "All flights")
     self:_PrintQueue(self.Qparking, "Parking")
     self:_PrintQueue(self.Qtakeoff, "Takeoff")
@@ -881,6 +884,7 @@ function FLIGHTCONTROL:_InitParkingSpots()
   -- Init parking spots table.
   self.parking={}
   
+  self.Nparkingspots=0
   for _,_spot in pairs(parkingdata) do
     local spot=_spot --Wrapper.Airbase#AIRBASE.ParkingSpot
     
@@ -892,6 +896,8 @@ function FLIGHTCONTROL:_InitParkingSpots()
     
     -- Add to table.
     self.parking[parking.TerminalID]=parking
+    
+    self.Nparkingspots=self.Nparkingspots+1
   end
   
 end
