@@ -667,21 +667,27 @@ function AI_PATROL_ZONE:onafterDetect( Controllable, From, Event, To )
     if TargetObject and TargetObject:isExist() and TargetObject.id_ < 50000000 then
 
       local TargetUnit = UNIT:Find( TargetObject )
-      local TargetUnitName = TargetUnit:GetName()
       
-      if self.DetectionZone then
-        if TargetUnit:IsInZone( self.DetectionZone ) then
-          self:T( {"Detected ", TargetUnit } )
+      -- Check that target is alive due to issue https://github.com/FlightControl-Master/MOOSE/issues/1234
+      if TargetUnit and TargetUnit:IsAlive() then
+      
+        local TargetUnitName = TargetUnit:GetName()
+        
+        if self.DetectionZone then
+          if TargetUnit:IsInZone( self.DetectionZone ) then
+            self:T( {"Detected ", TargetUnit } )
+            if self.DetectedUnits[TargetUnit] == nil then
+              self.DetectedUnits[TargetUnit] = true
+            end
+            Detected = true 
+          end
+        else       
           if self.DetectedUnits[TargetUnit] == nil then
             self.DetectedUnits[TargetUnit] = true
           end
-          Detected = true 
+          Detected = true
         end
-      else       
-        if self.DetectedUnits[TargetUnit] == nil then
-          self.DetectedUnits[TargetUnit] = true
-        end
-        Detected = true
+        
       end
     end
   end
