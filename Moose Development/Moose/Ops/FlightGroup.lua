@@ -2804,6 +2804,7 @@ function FLIGHTGROUP:_CheckDetectedUnits()
         local unit=UNIT:Find(DetectedObject)
         
         if unit and unit:IsAlive() then
+        
           -- Name of detected unit
           local unitname=unit:GetName()
 
