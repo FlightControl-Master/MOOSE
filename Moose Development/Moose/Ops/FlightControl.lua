@@ -183,7 +183,7 @@ function FLIGHTCONTROL:New(airbasename)
   self:AddTransition("*",             "Status",          "*")           -- Update status.
 
   -- Debug trace.
-  if true then
+  if false then
     self.Debug=true
     BASE:TraceOnOff(true)
     BASE:TraceClass(self.ClassName)
@@ -279,7 +279,7 @@ function FLIGHTCONTROL:onafterStart()
   self:HandleEvent(EVENTS.Crash)
   
   self.atcradio=RADIOQUEUE:New(self.atcfreq or 305, nil, string.format("FC %s", self.airbasename))
-  self.atcradio:Start(1, 0.01)
+  self.atcradio:Start(1, 0.1)
   
   -- Init status updates.
   self:__Status(-1)

@@ -285,6 +285,7 @@ function FLIGHTGROUP:New(groupname)
   -- Add FSM transitions.
   --                 From State  -->   Event      -->      To State
   self:AddTransition("Stopped",       "Start",             "Running")     -- Start FSM.
+  self:AddTransition("*",             "Stop",              "Stopped")     -- Stop FSM.
 
   self:AddTransition("*",             "FlightStatus",      "*")           -- FLIGHTGROUP status update.
   self:AddTransition("*",             "QueueUpdate",       "*")           -- Update task queue.
@@ -368,8 +369,7 @@ function FLIGHTGROUP:New(groupname)
 
 
   -- Debug trace.
-  if false then
-    self.Debug=false
+  if true then
     BASE:TraceOnOff(true)
     BASE:TraceClass(self.ClassName)
     BASE:TraceLevel(1)
@@ -707,7 +707,8 @@ function FLIGHTGROUP:onafterStart(From, Event, To)
     
     -- Trigger spawned event for all elements.
     for _,element in pairs(self.elements) do
-      self:ElementSpawned(element)    
+      -- Add a little delay or the OnAfterSpawned function is not even initialized and will not be called.
+      self:__ElementSpawned(0.1, element)    
     end
     
   end    
@@ -1443,6 +1444,9 @@ function FLIGHTGROUP:onafterFlightDead(From, Event, To)
     self.flightcontrol:_RemoveFlight(self)
     self.flightcontrol=nil
   end  
+  
+  -- Stop
+  self:__Stop(0.5)
 end
 
 
