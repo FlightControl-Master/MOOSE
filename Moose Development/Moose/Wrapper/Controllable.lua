@@ -3480,3 +3480,48 @@ function CONTROLLABLE:IsAirPlane()
 
   return nil
 end
+
+--- Returns if the Controllable contains Helicopters.
+-- @param #CONTROLLABLE self
+-- @return #boolean true if Controllable contains Helicopters.
+function CONTROLLABLE:IsHelicopter()
+  self:F2()
+  
+  local DCSObject = self:GetDCSObject()
+  
+  if DCSObject then
+    local Category = DCSObject:getDesc().category
+    return Category == Unit.Category.HELICOPTER
+  end
+  
+  return nil
+end
+
+--- Sets Controllable Option for Restriction of Afterburner.
+-- @param #CONTROLLABLE self
+-- @param #boolean RestrictBurner If true, restrict burner. If false or nil, allow (unrestrict) burner. 
+function CONTROLLABLE:OptionRestrictBurner(RestrictBurner)
+  self:F2({self.ControllableName})
+  
+  local DCSControllable = self:GetDCSObject()
+  
+  if DCSControllable then
+    local Controller = self:_GetController()
+    
+    if Controller then
+    
+      -- Issue https://github.com/FlightControl-Master/MOOSE/issues/1216
+      if RestrictBurner == true then
+        if self:IsAir() then
+          Controller:setOption(16, true)
+        end
+      else
+        if self:IsAir() then
+          Controller:setOption(16, false)
+        end
+      end
+      
+    end
+  end
+  
+end

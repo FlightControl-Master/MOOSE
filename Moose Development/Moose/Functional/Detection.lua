@@ -1438,27 +1438,31 @@ do -- DETECTION_BASE
           function( PlayerUnitName )
             local PlayerUnit = UNIT:FindByName( PlayerUnitName )
 
-            if PlayerUnit and PlayerUnit:GetCoordinate():IsInRadius( DetectedUnitCoord, self.FriendliesRange ) then
-            --if PlayerUnit and PlayerUnit:IsInZone(DetectionZone) then
+            -- Fix for issue https://github.com/FlightControl-Master/MOOSE/issues/1225
+            if PlayerUnit and PlayerUnit:IsAlive() then
+              local coord=PlayerUnit:GetCoordinate()
+              
+              if coord and coord:IsInRadius( DetectedUnitCoord, self.FriendliesRange ) then
 
-              local PlayerUnitCategory = PlayerUnit:GetDesc().category
-    
-              if ( not self.FriendliesCategory ) or ( self.FriendliesCategory and ( self.FriendliesCategory == PlayerUnitCategory ) ) then
-
-                local PlayerUnitName = PlayerUnit:GetName()
+                local PlayerUnitCategory = PlayerUnit:GetDesc().category
       
-                DetectedItem.PlayersNearBy = DetectedItem.PlayersNearBy or {}
-                DetectedItem.PlayersNearBy[PlayerUnitName] = PlayerUnit
-      
-                -- Friendlies are sorted per unit category.            
-                DetectedItem.FriendliesNearBy = DetectedItem.FriendliesNearBy or {}
-                DetectedItem.FriendliesNearBy[PlayerUnitCategory] = DetectedItem.FriendliesNearBy[PlayerUnitCategory] or {}
-                DetectedItem.FriendliesNearBy[PlayerUnitCategory][PlayerUnitName] = PlayerUnit
-      
-                local Distance = DetectedUnitCoord:Get2DDistance( PlayerUnit:GetCoordinate() )
-                DetectedItem.FriendliesDistance = DetectedItem.FriendliesDistance or {}
-                DetectedItem.FriendliesDistance[Distance] = PlayerUnit
-
+                if ( not self.FriendliesCategory ) or ( self.FriendliesCategory and ( self.FriendliesCategory == PlayerUnitCategory ) ) then
+  
+                  local PlayerUnitName = PlayerUnit:GetName()
+        
+                  DetectedItem.PlayersNearBy = DetectedItem.PlayersNearBy or {}
+                  DetectedItem.PlayersNearBy[PlayerUnitName] = PlayerUnit
+        
+                  -- Friendlies are sorted per unit category.            
+                  DetectedItem.FriendliesNearBy = DetectedItem.FriendliesNearBy or {}
+                  DetectedItem.FriendliesNearBy[PlayerUnitCategory] = DetectedItem.FriendliesNearBy[PlayerUnitCategory] or {}
+                  DetectedItem.FriendliesNearBy[PlayerUnitCategory][PlayerUnitName] = PlayerUnit
+        
+                  local Distance = DetectedUnitCoord:Get2DDistance( PlayerUnit:GetCoordinate() )
+                  DetectedItem.FriendliesDistance = DetectedItem.FriendliesDistance or {}
+                  DetectedItem.FriendliesDistance[Distance] = PlayerUnit
+  
+                end
               end
             end
           end
