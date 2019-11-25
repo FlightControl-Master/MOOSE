@@ -3231,65 +3231,73 @@ do -- AI_A2A_DISPATCHER
           self:SetDefenderTask( SquadronName, DefenderCAP, "CAP", AI_A2A_Fsm )
 
           function AI_A2A_Fsm:onafterTakeoff( DefenderGroup, From, Event, To )
-            self:F({"CAP Takeoff", DefenderGroup:GetName()})
-            --self:GetParent(self).onafterBirth( self, Defender, From, Event, To )
-            
-            local DefenderName = DefenderGroup:GetCallsign()
-            local Dispatcher = AI_A2A_Fsm:GetDispatcher() -- #AI_A2A_DISPATCHER
-            local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
-
-            if Squadron then
-              Dispatcher:MessageToPlayers( Squadron,  DefenderName .. " Wheels up.", DefenderGroup )
-              AI_A2A_Fsm:__Patrol( 2 ) -- Start Patrolling
+            -- Issue GetCallsign() returns nil, see https://github.com/FlightControl-Master/MOOSE/issues/1228 
+            if DefenderGroup and DefenderGroup:IsAlive() then
+              self:F({"CAP Takeoff", DefenderGroup:GetName()})
+              --self:GetParent(self).onafterBirth( self, Defender, From, Event, To )
+              
+              local DefenderName = DefenderGroup:GetCallsign()
+              local Dispatcher = AI_A2A_Fsm:GetDispatcher() -- #AI_A2A_DISPATCHER
+              local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
+  
+              if Squadron then
+                Dispatcher:MessageToPlayers( Squadron,  DefenderName .. " Wheels up.", DefenderGroup )
+                AI_A2A_Fsm:__Patrol( 2 ) -- Start Patrolling
+              end
             end
           end
 
           function AI_A2A_Fsm:onafterPatrolRoute( DefenderGroup, From, Event, To )
-            self:F({"CAP PatrolRoute", DefenderGroup:GetName()})
-            self:GetParent(self).onafterPatrolRoute( self, DefenderGroup, From, Event, To )
-            
-            local DefenderName = DefenderGroup:GetCallsign()
-            local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
-            local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
-            if Squadron then
-              Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", patrolling.", DefenderGroup )
+            if DefenderGroup and DefenderGroup:IsAlive() then
+              self:F({"CAP PatrolRoute", DefenderGroup:GetName()})
+              self:GetParent(self).onafterPatrolRoute( self, DefenderGroup, From, Event, To )
+              
+              local DefenderName = DefenderGroup:GetCallsign()
+              local Dispatcher = self:GetDispatcher() -- #AI_A2G_DISPATCHER
+              local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
+              if Squadron then
+                Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", patrolling.", DefenderGroup )
+              end
+      
+              Dispatcher:ClearDefenderTaskTarget( DefenderGroup )
             end
-    
-            Dispatcher:ClearDefenderTaskTarget( DefenderGroup )
           end
 
           function AI_A2A_Fsm:onafterRTB( DefenderGroup, From, Event, To )
-
-            self:F({"CAP RTB", DefenderGroup:GetName()})
-
-            self:GetParent(self).onafterRTB( self, DefenderGroup, From, Event, To )
-
-            local DefenderName = DefenderGroup:GetCallsign()
-            local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
-            local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
-            if Squadron then
-              Dispatcher:MessageToPlayers( Squadron,  DefenderName .. " returning to base.", DefenderGroup )
+            if DefenderGroup and DefenderGroup:IsAlive() then
+              self:F({"CAP RTB", DefenderGroup:GetName()})
+  
+              self:GetParent(self).onafterRTB( self, DefenderGroup, From, Event, To )
+  
+              local DefenderName = DefenderGroup:GetCallsign()
+              local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
+              local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
+              if Squadron then
+                Dispatcher:MessageToPlayers( Squadron,  DefenderName .. " returning to base.", DefenderGroup )
+              end
+              Dispatcher:ClearDefenderTaskTarget( DefenderGroup )
             end
-            Dispatcher:ClearDefenderTaskTarget( DefenderGroup )
           end
   
           --- @param #AI_A2A_DISPATCHER self
           function AI_A2A_Fsm:onafterHome( Defender, From, Event, To, Action )
-            self:F({"CAP Home", Defender:GetName()})
-            self:GetParent(self).onafterHome( self, Defender, From, Event, To )
-            
-            local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
-            local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-  
-            if Action and Action == "Destroy" then
-              Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
-              Defender:Destroy()
-            end
-            
-            if Dispatcher:GetSquadronLanding( Squadron.Name ) == AI_A2A_DISPATCHER.Landing.NearAirbase then
-              Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
-              Defender:Destroy()
-              Dispatcher:ParkDefender( Squadron )
+            if Defender and Defender:IsAlive() then
+              self:F({"CAP Home", Defender:GetName()})
+              self:GetParent(self).onafterHome( self, Defender, From, Event, To )
+              
+              local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
+              local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
+    
+              if Action and Action == "Destroy" then
+                Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
+                Defender:Destroy()
+              end
+              
+              if Dispatcher:GetSquadronLanding( Squadron.Name ) == AI_A2A_DISPATCHER.Landing.NearAirbase then
+                Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
+                Defender:Destroy()
+                Dispatcher:ParkDefender( Squadron )
+              end
             end
           end
         end
@@ -3636,22 +3644,31 @@ do -- AI_A2A_DISPATCHER
   --- Assigns A2G AI Tasks in relation to the detected items.
   -- @param #AI_A2G_DISPATCHER self
   function AI_A2A_DISPATCHER:Order( DetectedItem )
-    local AttackCoordinate = self.Detection:GetDetectedItemCoordinate( DetectedItem )
+  
+    local detection=self.Detection -- Functional.Detection#DETECTION_AREAS
     
     local ShortestDistance = 999999999
+    
+    -- Get coordinate (or nil).
+    local AttackCoordinate = detection:GetDetectedItemCoordinate( DetectedItem )
+    
+    -- Issue https://github.com/FlightControl-Master/MOOSE/issues/1232
+    if AttackCoordinate then
   
-    for DefenderSquadronName, DefenderSquadron in pairs( self.DefenderSquadrons ) do
-    
-      self:I( { DefenderSquadron = DefenderSquadron.Name } )
-    
-      local Airbase = DefenderSquadron.Airbase
-      local AirbaseCoordinate = Airbase:GetCoordinate()
-
-      local EvaluateDistance = AttackCoordinate:Get2DDistance( AirbaseCoordinate )
+      for DefenderSquadronName, DefenderSquadron in pairs( self.DefenderSquadrons ) do
       
-      if EvaluateDistance <= ShortestDistance then
-        ShortestDistance = EvaluateDistance
+        self:I( { DefenderSquadron = DefenderSquadron.Name } )
+      
+        local Airbase = DefenderSquadron.Airbase
+        local AirbaseCoordinate = Airbase:GetCoordinate()
+  
+        local EvaluateDistance = AttackCoordinate:Get2DDistance( AirbaseCoordinate )
+        
+        if EvaluateDistance <= ShortestDistance then
+          ShortestDistance = EvaluateDistance
+        end
       end
+      
     end
     
     return ShortestDistance
@@ -3660,6 +3677,7 @@ do -- AI_A2A_DISPATCHER
 
   --- Shows the tactical display.
   -- @param #AI_A2A_DISPATCHER self
+  -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Functional.Detection#DETECTION_BASE} derived object.
   function AI_A2A_DISPATCHER:ShowTacticalDisplay( Detection )
 
     local AreaMsg = {}

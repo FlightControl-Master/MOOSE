@@ -200,8 +200,7 @@ function AI_A2A_CAP:CreateAttackUnitTasks( AttackSetUnit, DefenderGroup, EngageA
 
   for AttackUnitID, AttackUnit in pairs( self.AttackSetUnit:GetSet() ) do
     local AttackUnit = AttackUnit -- Wrapper.Unit#UNIT
-    self:T( { "Attacking Unit:", AttackUnit:GetName(), AttackUnit:IsAlive(), AttackUnit:IsAir() } )
-    if AttackUnit:IsAlive() and AttackUnit:IsAir() then
+    if AttackUnit and AttackUnit:IsAlive() and AttackUnit:IsAir() then
       -- TODO: Add coalition check? Only attack units of if AttackUnit:GetCoalition()~=AICap:GetCoalition()
       -- Maybe the detected set also contains 
       self:T( { "Attacking Task:", AttackUnit:GetName(), AttackUnit:IsAlive(), AttackUnit:IsAir() } )
