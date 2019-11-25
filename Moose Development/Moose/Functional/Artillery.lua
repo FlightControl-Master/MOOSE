@@ -693,7 +693,7 @@ ARTY.db={
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="1.1.5"
+ARTY.version="1.1.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -2555,6 +2555,13 @@ function ARTY:_OnEventMarkChange(Event)
       if not _assigned then
         self:T3(self.lid..string.format("INFO: ARTY group %s was not addressed! Mark text:\n%s", self.groupname, Event.text))
         return
+      else
+        if self.Controllable and self.Controllable:IsAlive() then
+        
+        else
+          self:T3(self.lid..string.format("INFO: ARTY group %s was addressed but is NOT alive! Mark text:\n%s", self.groupname, Event.text))
+          return
+        end
       end
 
       -- Coordinate was given in text, e.g. as lat, long.
