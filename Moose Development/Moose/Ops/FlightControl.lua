@@ -1223,7 +1223,6 @@ end
 -- @param #FLIGHTCONTROL self
 -- @return Core.Set#SET_UNIT Set of scanned units.
 -- @return Core.Set#SET_STATIC Set of scanned static objects.
--- @return #tabe Table of scenery objects.
 function FLIGHTCONTROL:_CheckAirbase()
   
   -- Airbase position.
@@ -1426,7 +1425,6 @@ function FLIGHTCONTROL:_LandAI(flight, parking)
       element.parking=spot
       unit.parking_landing=spot.TerminalID
       local text=string.format("FF Reserving parking spot %d for unit %s", spot.TerminalID, tostring(unit.name))
-      --spot.Coordinate:MarkToAll(text)
       self:I(self.lid..text)
     else
       env.info("FF error could not get element to assign parking!")      

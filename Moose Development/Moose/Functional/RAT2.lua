@@ -102,9 +102,12 @@ end
 function RAT2:_CheckQueueSpawn()
 
   for i,_ratcraft in pairs(self.Qspawn) do
-    local ratcraft=_ratcraft --#RATAC
+    local ratcraft=_ratcraft --Functional.RatCraft#RATCRAFT
     
     --ratcraft.actype
+    
+    local departure, parking=ratcraft:GetDeparture()
+    local destination=ratcraft:GetDestination(departure)
     
     --- Check if
     -- Time has passed.
@@ -125,45 +128,6 @@ end
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Spawn functions
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
---- Spawn an aircraft asset (plane or helo) at the airbase associated with the warehouse.
--- @param #RAT2 self
--- @param #RATAC ratcraft
--- @return #boolean If true, ratcraft was spawned.
-function RAT2:_TrySpawnRatcraft(ratcraft)
-
-  -- TODO: loop over departure airbases.
-  
-  for _,_departure in pairs(ratcraft.departures) do
-  
-    local departure=_departure --#RATAC.Departure
-    
-    local parking=nil
-    
-    if departure.type==RATAC.DeType.AIRBASE then
-    
-      -- Get parking data.
-      local parking=self:_FindParking(departure.airbase, ratcraft)
-    
-      -- Check if enough parking is available.
-      if parking then
-        self:_SpawnRatcraft()
-        return true
-      end      
-    
-    
-    elseif departure.type==RATAC.DeType.ZONE then
-    
-    end
-
-
-    
-  end
-  
-  
-  return false
-end
-
 
 --- Spawn an aircraft asset (plane or helo) at the airbase associated with the warehouse.
 -- @param #RAT2 self

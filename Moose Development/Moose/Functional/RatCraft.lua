@@ -59,6 +59,7 @@ RATCRAFT = {
   commute        = nil,
   takeoff        = nil,
   landing        = nil,
+  flights        =  {},
 }
 
 --- Generalized asset attributes. Can be used to request assets with certain general characteristics. See [DCS attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes) on hoggit.
@@ -233,9 +234,10 @@ function RATCRAFT:GetDeparture()
       
       if airbase then
         
-        local group=nil --Wrapper.Group#GROUP
+        local group=self.templategroup --Wrapper.Group#GROUP
         
-        local parking=airbase:FindFreeParkingSpotForAircraft(group,terminaltype,scanradius,scanunits,scanstatics,scanscenery,verysafe,nspots,parkingdata)
+        -- Get number of free parking spots.
+        local parking=airbase:FindFreeParkingSpotForAircraft(group)
       
         if #parking>=#group:GetUnits() then
           
@@ -263,6 +265,71 @@ function RATCRAFT:GetDeparture()
   end
 
 end
+
+
+--- Get destination.
+-- @param #RATCRAFT self
+-- @param #RATCRAFT.Departure departure The chosen departure.
+-- @return #RATCRAFT.Departure
+function RATCRAFT:GetDestination(departure)
+
+  -- Create copy of all destinations.
+  local destinations=UTILS.DeepCopy(self.destinations)
+  
+  -- Try each departure in random order.
+  for i=1,#destinations do
+    
+    -- Roll dice.
+    local r=math.random(#destinations)
+    
+    -- Get random departure
+    local destination=destinations[r] --#RATCRAFT.Departure
+    
+    -- Check if airbase or zone.
+    if destination.type==RATCRAFT.DeType.AIRBASE then
+    
+      ---
+      -- Airbase
+      ---
+    
+      -- Get airbase.
+      local airbase=AIRBASE:FindByName(destination.name)
+      
+      local dest=AIRBASE:FindByName(departure.name)
+      
+      if airbase then
+        -- TODO: check
+        -- coalition, terminal type, distance
+        
+        local distance=dest:GetCoordinate():Get2DDistance(airbase:GetCoordinate())
+      
+        if distance then
+          
+          return departure
+        
+        else
+        
+          -- Remove from table so it does not get selected again.
+          table.remove(destinations, r)
+          
+        end
+      
+      else
+        self:E("ERROR: Could not find airbase!")
+      end
+      
+    else
+    
+      ---
+      -- Zone
+      ---
+    
+    end
+    
+  end
+
+end
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Status Functions
