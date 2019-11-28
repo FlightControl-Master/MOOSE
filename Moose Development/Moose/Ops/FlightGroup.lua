@@ -747,6 +747,8 @@ function FLIGHTGROUP:onafterStop(From, Event, To)
   self:UnHandleEvent(EVENTS.Crash)
   self:UnHandleEvent(EVENTS.RemoveUnit)
   
+  self.CallScheduler:Clear()
+  
   _DATABASE.FLIGHTGROUPS[self.groupname]=nil
   
   self={}

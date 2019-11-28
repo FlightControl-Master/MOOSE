@@ -1131,7 +1131,7 @@ function FLIGHTCONTROL:_CreateFlightGroup(group)
     self:E("FF AI no player menu")
   else
     self:E("FF Not purly AI ==> player menu")
-    self:_CreatePlayerMenu(flight)
+    --self:_CreatePlayerMenu(flight)
   end
     
   return flight
