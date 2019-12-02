@@ -242,7 +242,7 @@
 -- * AIRBASE.TerminalType.OpenMed: Open/Shelter air airplane only.
 -- * AIRBASE.TerminalType.OpenBig: Open air spawn points. Generally larger but does not guarantee large aircraft are capable of spawning there.
 -- * AIRBASE.TerminalType.OpenMedOrBig: Combines OpenMed and OpenBig spots.
--- * AIRBASE.TerminalType.HelicopterUnsable: Combines HelicopterOnly, OpenMed and OpenBig.
+-- * AIRBASE.TerminalType.HelicopterUsable: Combines HelicopterOnly, OpenMed and OpenBig.
 -- * AIRBASE.TerminalType.FighterAircraft: Combines Shelter, OpenMed and OpenBig spots. So effectively all spots usable by fixed wing aircraft.
 -- 
 -- So for example
