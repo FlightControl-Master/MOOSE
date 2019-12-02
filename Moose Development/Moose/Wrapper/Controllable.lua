@@ -1181,6 +1181,10 @@ function CONTROLLABLE:TaskBombingRunway(Airbase, WeaponType, WeaponExpend, Attac
   WeaponType=WeaponType or 2147485694
   WeaponExpend=WeaponExpend or AI.Task.WeaponExpend.ALL
   AttackQty=AttackQty or 1
+  
+  if Direction then
+    Direction=math.rad(Direction)
+  end
 
   local DCSTask
   DCSTask = { id = 'BombingRunway',
