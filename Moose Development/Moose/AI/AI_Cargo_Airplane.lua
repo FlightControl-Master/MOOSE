@@ -76,25 +76,31 @@ function AI_CARGO_AIRPLANE:New( Airplane, CargoSet )
   --- Pickup Handler OnAfter for AI_CARGO_AIRPLANE
   -- @function [parent=#AI_CARGO_AIRPLANE] OnAfterPickup
   -- @param #AI_CARGO_AIRPLANE self
-  -- @param Wrapper.Group#GROUP Airplane Cargo plane.
-  -- @param #string From
-  -- @param #string Event
-  -- @param #string To
-  -- @param Wrapper.Airbase#AIRBASE Airbase Airbase where troops are picked up.
-  -- @param #number Speed in km/h for travelling to pickup base.
+  -- @param Wrapper.Group#GROUP Airplane Cargo transport plane.
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Core.Point#COORDINATE Coordinate The coordinate where to pickup stuff.
+  -- @param #number Speed Speed in km/h for travelling to pickup base.
+  -- @param #number Height Height in meters to move to the pickup coordinate.
+  -- @param Core.Zone#ZONE_AIRBASE PickupZone The airbase zone where the cargo will be picked up.
   
   --- Pickup Trigger for AI_CARGO_AIRPLANE
   -- @function [parent=#AI_CARGO_AIRPLANE] Pickup
   -- @param #AI_CARGO_AIRPLANE self
-  -- @param Wrapper.Airbase#AIRBASE Airbase Airbase where troops are picked up.
-  -- @param #number Speed in km/h for travelling to pickup base.
+  -- @param Core.Point#COORDINATE Coordinate The coordinate where to pickup stuff.
+  -- @param #number Speed Speed in km/h for travelling to pickup base.
+  -- @param #number Height Height in meters to move to the pickup coordinate.
+  -- @param Core.Zone#ZONE_AIRBASE PickupZone The airbase zone where the cargo will be picked up.
   
   --- Pickup Asynchronous Trigger for AI_CARGO_AIRPLANE
   -- @function [parent=#AI_CARGO_AIRPLANE] __Pickup
   -- @param #AI_CARGO_AIRPLANE self
   -- @param #number Delay Delay in seconds.
-  -- @param Wrapper.Airbase#AIRBASE Airbase Airbase where troops are picked up.
-  -- @param #number Speed in km/h for travelling to pickup base.
+  -- @param Core.Point#COORDINATE Coordinate The coordinate where to pickup stuff.
+  -- @param #number Speed Speed in km/h for travelling to pickup base.
+  -- @param #number Height Height in meters to move to the pickup coordinate.
+  -- @param Core.Zone#ZONE_AIRBASE PickupZone The airbase zone where the cargo will be picked up.
   
   --- Deploy Handler OnBefore for AI_CARGO_AIRPLANE
   -- @function [parent=#AI_CARGO_AIRPLANE] OnBeforeDeploy
@@ -111,24 +117,30 @@ function AI_CARGO_AIRPLANE:New( Airplane, CargoSet )
   -- @function [parent=#AI_CARGO_AIRPLANE] OnAfterDeploy
   -- @param #AI_CARGO_AIRPLANE self
   -- @param Wrapper.Group#GROUP Airplane Cargo plane.
-  -- @param #string From
-  -- @param #string Event
-  -- @param #string To
-  -- @param Wrapper.Airbase#AIRBASE Airbase Destination airbase where troops are deployed.
-  -- @param #number Speed Speed in km/h for travelling to deploy base.
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Core.Point#COORDINATE Coordinate Coordinate where to deploy stuff.
+  -- @param #number Speed Speed in km/h for travelling to the deploy base.
+  -- @param #number Height Height in meters to move to the home coordinate.
+  -- @param Core.Zone#ZONE_AIRBASE DeployZone The airbase zone where the cargo will be deployed.
   
   --- Deploy Trigger for AI_CARGO_AIRPLANE
   -- @function [parent=#AI_CARGO_AIRPLANE] Deploy
   -- @param #AI_CARGO_AIRPLANE self
-  -- @param Wrapper.Airbase#AIRBASE Airbase Destination airbase where troops are deployed.
-  -- @param #number Speed Speed in km/h for travelling to deploy base.
+  -- @param Core.Point#COORDINATE Coordinate Coordinate where to deploy stuff.
+  -- @param #number Speed Speed in km/h for travelling to the deploy base.
+  -- @param #number Height Height in meters to move to the home coordinate.
+  -- @param Core.Zone#ZONE_AIRBASE DeployZone The airbase zone where the cargo will be deployed. 
   
   --- Deploy Asynchronous Trigger for AI_CARGO_AIRPLANE
   -- @function [parent=#AI_CARGO_AIRPLANE] __Deploy
   -- @param #AI_CARGO_AIRPLANE self
   -- @param #number Delay Delay in seconds.
-  -- @param Wrapper.Airbase#AIRBASE Airbase Destination airbase where troops are deployed.
-  -- @param #number Speed Speed in km/h for travelling to deploy base.
+  -- @param Core.Point#COORDINATE Coordinate Coordinate where to deploy stuff.
+  -- @param #number Speed Speed in km/h for travelling to the deploy base.
+  -- @param #number Height Height in meters to move to the home coordinate.
+  -- @param Core.Zone#ZONE_AIRBASE DeployZone The airbase zone where the cargo will be deployed.
 
   --- On after Loaded event, i.e. triggered when the cargo is inside the carrier.
   -- @function [parent=#AI_CARGO_AIRPLANE] OnAfterLoaded
@@ -137,6 +149,16 @@ function AI_CARGO_AIRPLANE:New( Airplane, CargoSet )
   -- @param From
   -- @param Event
   -- @param To
+
+
+  --- On after Deployed event.
+  -- @function [parent=#AI_CARGO_AIRPLANE] OnAfterDeployed
+  -- @param #AI_CARGO_AIRPLANE self
+  -- @param Wrapper.Group#GROUP Airplane Cargo plane.
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Core.Zone#ZONE DeployZone The zone wherein the cargo is deployed.
   
   -- Set carrier. 
   self:SetCarrier( Airplane )
@@ -259,15 +281,17 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Core.Point#COORDINATE Coordinate
--- @param #number Speed in km/h for travelling to pickup base.
+-- @param Core.Point#COORDINATE Coordinate The coordinate where to pickup stuff.
+-- @param #number Speed Speed in km/h for travelling to pickup base.
 -- @param #number Height Height in meters to move to the pickup coordinate.
--- @param Core.Zone#ZONE_AIRBASE (optional) PickupZone The zone where the cargo will be picked up.
+-- @param Core.Zone#ZONE_AIRBASE PickupZone The airbase zone where the cargo will be picked up.
 function AI_CARGO_AIRPLANE:onafterPickup( Airplane, From, Event, To, Coordinate, Speed, Height, PickupZone )
 
   if Airplane and Airplane:IsAlive() then
     
-    self.PickupZone = PickupZone
+    local airbasepickup=Coordinate:GetClosestAirbase()
+    
+    self.PickupZone = PickupZone or ZONE_AIRBASE:New(airbasepickup:GetName())
   
     -- Get closest airbase of current position.
     local ClosestAirbase, DistToAirbase=Airplane:GetCoordinate():GetClosestAirbase()
@@ -280,11 +304,10 @@ function AI_CARGO_AIRPLANE:onafterPickup( Airplane, From, Event, To, Coordinate,
     end
     
     -- Set pickup airbase.
-    local Airbase = PickupZone:GetAirbase()
+    local Airbase = self.PickupZone:GetAirbase()
     
     -- Distance from closest to pickup airbase ==> we need to know if we are already at the pickup airbase. 
     local Dist = Airbase:GetCoordinate():Get2DDistance(ClosestAirbase:GetCoordinate())
-    --env.info("Distance closest to pickup airbase = "..Dist)
     
     if Airplane:InAir() or Dist>500 then
     
@@ -305,7 +328,7 @@ function AI_CARGO_AIRPLANE:onafterPickup( Airplane, From, Event, To, Coordinate,
       
     end
 
-    self:GetParent( self, AI_CARGO_AIRPLANE ).onafterPickup( self, Airplane, From, Event, To, Coordinate, Speed, Height, PickupZone )
+    self:GetParent( self, AI_CARGO_AIRPLANE ).onafterPickup( self, Airplane, From, Event, To, Coordinate, Speed, Height, self.PickupZone )
     
   end
 
@@ -318,15 +341,19 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Core.Point#COORDINATE Coordinate
--- @param #number Speed in km/h for travelling to pickup base.
+-- @param Core.Point#COORDINATE Coordinate Coordinate where to deploy stuff.
+-- @param #number Speed Speed in km/h for travelling to the deploy base.
 -- @param #number Height Height in meters to move to the home coordinate.
--- @param Core.Zone#ZONE_AIRBASE DeployZone The zone where the cargo will be deployed.
+-- @param Core.Zone#ZONE_AIRBASE DeployZone The airbase zone where the cargo will be deployed.
 function AI_CARGO_AIRPLANE:onafterDeploy( Airplane, From, Event, To, Coordinate, Speed, Height, DeployZone )
 
   if Airplane and Airplane:IsAlive()~=nil then
     
-    local Airbase = DeployZone:GetAirbase()
+    local Airbase = Coordinate:GetClosestAirbase()
+    
+    if DeployZone then
+      Airbase=DeployZone:GetAirbase()
+    end
     
     -- Activate uncontrolled airplane.
     if Airplane:IsAlive()==false then
@@ -354,6 +381,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
+-- @param Core.Zone#ZONE_AIRBASE DeployZone The airbase zone where the cargo will be deployed.
 function AI_CARGO_AIRPLANE:onafterUnload( Airplane, From, Event, To, DeployZone )
 
   local UnboardInterval = 10
