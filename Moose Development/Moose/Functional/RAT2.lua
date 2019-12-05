@@ -57,6 +57,8 @@ function RAT2:New()
   
   -- Start State.
   self:SetStartState("Stopped")
+  
+  self.lid="RAT2 | "
 
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
@@ -64,6 +66,7 @@ function RAT2:New()
   self:AddTransition("Stopped",       "Start",           "Running")     -- Start RAT2 script.
   self:AddTransition("*",             "Status",          "*")           -- Start RAT2 script.
   
+  return self
 end
 
 --- Create a new RAT2 class object.
@@ -81,6 +84,17 @@ end
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Status Functions
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Start random air traffic.
+-- @param #RAT2 self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function RAT2:onafterStart(From, Event, To)
+
+  self:__Status(-1)
+end
+
 
 --- Check spawn queue and spawn aircraft if necessary.
 -- @param #RAT2 self
@@ -104,17 +118,17 @@ function RAT2:_CheckQueueSpawn()
     local ratcraft=_ratcraft --Functional.RatCraft#RATCRAFT
 
     -- Check if new groups should be spawned.    
-    if ratcraft.nspawned<ratcraft.Nspawn then
+    if ratcraft.Nalive<ratcraft.Nspawn then
     
       local departure, parking=ratcraft:GetDeparture()
       local destination=ratcraft:GetDestination(departure)
       
       -- Try to spawn a ratcraft group.
-      local group=self:_SpawnRatcraft(ratcraft)
+      local group=self:_SpawnRatcraft(ratcraft, departure, destination, parking)
       
       -- Remove queue item and break loop.
       if group then
-        ratcraft.nspawned=ratcraft.nspawned+1
+        ratcraft.Nalive=ratcraft.Nalive+1
         break
       end
       
@@ -130,8 +144,8 @@ end
 --- Spawn an aircraft asset (plane or helo) at the airbase associated with the warehouse.
 -- @param #RAT2 self
 -- @param #RATAC ratcraft Ratcraft to spawn.
--- @param #RAT2.Departure departure Departure.
--- @param #RAT2.Destination destination Destination.
+-- @param Functional.RatCraft#RATCRAFT.Departure departure Departure.
+-- @param Functional.RatCraft#RATCRAFT.Departure destination Destination.
 -- @param #table parking Parking data for this group.
 -- @return Wrapper.Group#GROUP The spawned group or nil if the group could not be spawned.
 function RAT2:_SpawnRatcraft(ratcraft, departure, destination, parking)
@@ -140,9 +154,9 @@ function RAT2:_SpawnRatcraft(ratcraft, departure, destination, parking)
   local template=self:_SpawnAssetPrepareTemplate(ratcraft)
   
     -- Get flight path if the group goes to another warehouse by itself.
-  template.route.points=self:_GetFlightplan(ratcraft, departure, destination)
+  template.route.points=self:_GetFlightplan(ratcraft, AIRBASE:FindByName(departure.name), AIRBASE:FindByName(destination.name))
   
-  local airbase=self:_GetAirbase(departure)
+  local airbase=AIRBASE:FindByName(departure.name) --self:_GetAirbase(departure)
   
   -- Get airbase ID and category.
   local AirbaseID = airbase:GetID()
@@ -199,9 +213,12 @@ function RAT2:_SpawnRatcraft(ratcraft, departure, destination, parking)
   
     end
   
+    -- Set livery.
     if ratcraft.livery then
       unit.livery_id = ratcraft.livery
     end
+    
+    -- Set skill.
     if ratcraft.skill then
       unit.skill= ratcraft.skill
     end
@@ -437,7 +454,7 @@ function RAT2:_FindParking(airbase, ratcraft)
           -- Add parkingspot for this asset unit.
           table.insert(parking, parkingspot)
 
-          self:T(self.wid..string.format("Parking spot #%d is free for ratcraft unit id=%d!", _termid, i))
+          self:T(self.lid..string.format("Parking spot #%d is free for ratcraft unit id=%d!", _termid, i))
 
           -- Add the unit as obstacle so that this spot will not be available for the next unit.
           -- TODO: ratcraft templatename.
@@ -450,7 +467,7 @@ function RAT2:_FindParking(airbase, ratcraft)
         else
 
           -- Debug output for occupied spots.
-          self:T(self.wid..string.format("Parking spot #%d is occupied or not big enough!", _termid))
+          self:T(self.lid..string.format("Parking spot #%d is occupied or not big enough!", _termid))
           if self.Debug then
             local coord=problem.coord --Core.Point#COORDINATE
             local text=string.format("Obstacle blocking spot #%d is %s type %s with size=%.1f m and distance=%.1f m.", _termid, problem.name, problem.type, problem.size, problem.dist)
@@ -464,7 +481,7 @@ function RAT2:_FindParking(airbase, ratcraft)
 
     -- No parking spot for at least one unit :(
     if not gotit then
-      self:T(self.wid..string.format("WARNING: No free parking spot for ratcraft unit i=%d", i))
+      self:T(self.lid..string.format("WARNING: No free parking spot for ratcraft unit i=%d", i))
       return nil
     end
     
@@ -705,7 +722,7 @@ function RAT2:_GetFlightplan(ratcraft, departure, destination)
   text=text..string.format("FL max        = %.3f km\n",   FLmax/1000)
   text=text..string.format("Ceiling       = %.3f km\n",   ceiling/1000)
   text=text..string.format("Max range     = %.3f km\n",   Range/1000)
-  self:T(self.wid..text)
+  self:T(self.lid..text)
 
   -- Ensure that cruise distance is positve. Can be slightly negative in special cases. And we don't want to turn back.
   if d_cruise<0 then

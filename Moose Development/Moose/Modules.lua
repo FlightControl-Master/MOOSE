@@ -65,6 +65,7 @@ __Moose.Include( 'Scripts/Moose/Functional/PseudoATC.lua' )
 __Moose.Include( 'Scripts/Moose/Functional/Warehouse.lua' )
 __Moose.Include( 'Scripts/Moose/Functional/Fox.lua' )
 __Moose.Include( 'Scripts/Moose/Functional/RAT2.lua' )
+__Moose.Include( 'Scripts/Moose/Functional/RatCraft.lua' )
 __Moose.Include( 'Scripts/Moose/Functional/FlightModelData.lua' )
 __Moose.Include( 'Scripts/Moose/Functional/SWAPR.lua' )
 

@@ -60,6 +60,8 @@ RATCRAFT = {
   takeoff        = nil,
   landing        = nil,
   flights        =  {},
+  Nalive         =   0,
+  Nspawn         =   1,
 }
 
 --- Generalized asset attributes. Can be used to request assets with certain general characteristics. See [DCS attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes) on hoggit.
@@ -110,7 +112,15 @@ function RATCRAFT:New(groupname, alias)
   
   self.templategroup=GROUP:FindByName(groupname)
   self.templatename=groupname
-  self.alias=alias
+  self.template=self.templategroup:GetTemplate()
+  self.alias=alias or groupname
+  
+  self.speedmax=self.templategroup:GetSpeedMax()
+  self.range=1000000
+  self.DCSdesc=self.templategroup:GetDCSDesc(1)
+  
+  self.coalition=self.templategroup:GetCoalition()
+  self.country=self.templategroup:GetUnit(1):GetCountry()
   
   
   -- Start State.
@@ -186,6 +196,35 @@ function RATCRAFT:AddDepartureAirbase(airbase)
   return self
 end
 
+--- Add one or multiple destination airbase(s) for the aircraft.
+-- @param #RATCRAFT self
+-- @param #string airbase Destination airbase name or a table of names.
+-- @return #RATCRAFT self
+function RATCRAFT:AddDestinationAirbase(airbase)
+
+  local departure={} --#RATCRAFT.Departure  
+    
+  if type(airbase)=="table" then
+  
+    for _,ab in pairs(airbase) do
+      departure.name=ab
+      departure.type=RATCRAFT.DeType.AIRBASE
+      table.insert(self.destinations, departure)
+    end
+  
+  else
+  
+    departure.name=airbase
+    departure.type=RATCRAFT.DeType.AIRBASE  
+    table.insert(self.destinations, departure)
+    
+  end
+  
+  return self
+end
+
+
+
 --- Add a departure for the aircraft.
 -- @param #RATCRAFT self
 -- @param Core.Zone#ZONE zone Zone.
@@ -241,9 +280,12 @@ function RATCRAFT:GetDeparture()
       
         if #parking>=#group:GetUnits() then
           
+          self:I(string.format("Returning departure %s", departure.name))
           return departure, parking
         
         else
+        
+          self:I(string.format("Removing departure %s", departure.name))
         
           -- Remove from table so it does not get selected again.
           table.remove(departures, r)

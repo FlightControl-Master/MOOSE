@@ -60,6 +60,7 @@ Functional/PseudoATC.lua
 Functional/Warehouse.lua
 Functional/Fox.lua
 Functional/RAT2.lua
+Functional/RatCraft.lua
 Functional/FlightModelData.lua
 Functional/SWAPR.lua
 
