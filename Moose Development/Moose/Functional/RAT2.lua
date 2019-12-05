@@ -22,7 +22,7 @@
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug Debug mode. Messages to all about status.
 -- @field #string lid Class id string for output to DCS log file.
--- @field #table Qspawn Queue of ratcraft to spawn.
+-- @field #table Qcraft Table of rat crafts.
 -- @extends Core.Fsm#FSM
 
 --- Be surprised!
@@ -40,8 +40,7 @@ RAT2 = {
   ClassName      = "RAT2",
   Debug          =  false,
   lid            =    nil,
-  Qflights       =     {},
-  Qspawn         =     {},
+  Qcraft         =     {},
 }
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -74,7 +73,7 @@ end
 function RAT2:AddAircraft(ratcraft)
 
   -- Add ratcraft to spawn queue.
-  table.insert(self.Qspawn, ratcraft)
+  table.insert(self.Qcraft, ratcraft)
 
   return self
 end
@@ -93,7 +92,7 @@ function RAT2:onafterStatus(From, Event, To)
   -- Check queue of aircraft to spawn.
   self:_CheckQueueSpawn()
   
-  self:__Status(-30)
+  self:__Status(-10)
 end
 
 
@@ -101,27 +100,26 @@ end
 -- @param #RAT2 self
 function RAT2:_CheckQueueSpawn()
 
-  for i,_ratcraft in pairs(self.Qspawn) do
+  for i,_ratcraft in pairs(self.Qcraft) do
     local ratcraft=_ratcraft --Functional.RatCraft#RATCRAFT
+
+    -- Check if new groups should be spawned.    
+    if ratcraft.nspawned<ratcraft.Nspawn then
     
-    --ratcraft.actype
-    
-    local departure, parking=ratcraft:GetDeparture()
-    local destination=ratcraft:GetDestination(departure)
-    
-    --- Check if
-    -- Time has passed.
-    -- Already enough aircraft are alive
-    
+      local departure, parking=ratcraft:GetDeparture()
+      local destination=ratcraft:GetDestination(departure)
+      
       -- Try to spawn a ratcraft group.
-    local spawned=self:_TrySpawnRatcraft(ratcraft)
-    
-    -- Remove queue item and break loop.
-    if spawned then
-      table.remove(self.Qspawn, i)
-      break
-    end
-  end  
+      local group=self:_SpawnRatcraft(ratcraft)
+      
+      -- Remove queue item and break loop.
+      if group then
+        ratcraft.nspawned=ratcraft.nspawned+1
+        break
+      end
+      
+    end    
+  end
   
 end
 
@@ -132,20 +130,23 @@ end
 --- Spawn an aircraft asset (plane or helo) at the airbase associated with the warehouse.
 -- @param #RAT2 self
 -- @param #RATAC ratcraft Ratcraft to spawn.
--- @param #table parking Parking data for this asset.
--- @param #boolean uncontrolled Spawn aircraft in uncontrolled state.
+-- @param #RAT2.Departure departure Departure.
+-- @param #RAT2.Destination destination Destination.
+-- @param #table parking Parking data for this group.
 -- @return Wrapper.Group#GROUP The spawned group or nil if the group could not be spawned.
-function RAT2:_SpawnRatcraft(ratcraft, departure, destination, parking, uncontrolled)
+function RAT2:_SpawnRatcraft(ratcraft, departure, destination, parking)
 
   -- Prepare the spawn template.
-  local template=self:_SpawnAssetPrepareTemplate(ratcraft, alias)
+  local template=self:_SpawnAssetPrepareTemplate(ratcraft)
   
     -- Get flight path if the group goes to another warehouse by itself.
   template.route.points=self:_GetFlightplan(ratcraft, departure, destination)
   
+  local airbase=self:_GetAirbase(departure)
+  
   -- Get airbase ID and category.
-  local AirbaseID = self.airbase:GetID()
-  local AirbaseCategory = self:GetAirbaseCategory()
+  local AirbaseID = airbase:GetID()
+  local AirbaseCategory = airbase:GetAirbaseCategory()
   
   -- Check enough parking spots.
   if AirbaseCategory==Airbase.Category.HELIPAD or AirbaseCategory==Airbase.Category.SHIP then
@@ -171,7 +172,7 @@ function RAT2:_SpawnRatcraft(ratcraft, departure, destination, parking, uncontro
     if AirbaseCategory == Airbase.Category.HELIPAD or AirbaseCategory == Airbase.Category.SHIP then
   
       -- Helipads we take the position of the airbase location, since the exact location of the spawn point does not make sense.
-      local coord=self.airbase:GetCoordinate()
+      local coord=airbase:GetCoordinate()
   
       unit.x=coord.x
       unit.y=coord.z
@@ -198,11 +199,11 @@ function RAT2:_SpawnRatcraft(ratcraft, departure, destination, parking, uncontro
   
     end
   
-    if asset.livery then
-      unit.livery_id = asset.livery
+    if ratcraft.livery then
+      unit.livery_id = ratcraft.livery
     end
-    if asset.skill then
-      unit.skill= asset.skill
+    if ratcraft.skill then
+      unit.skill= ratcraft.skill
     end
   
   end
@@ -212,7 +213,7 @@ function RAT2:_SpawnRatcraft(ratcraft, departure, destination, parking, uncontro
   template.y = template.units[1].y
   
   -- Uncontrolled spawning.
-  template.uncontrolled=uncontrolled
+  template.uncontrolled=ratcraft.uncontrolled
   
   -- Debug info.
   self:T2({airtemplate=template})
@@ -227,15 +228,14 @@ end
 --- Prepare a spawn template for the asset. Deep copy of asset template, adjusting template and unit names, nillifying group and unit ids.
 -- @param #RAT2 self
 -- @param #RATAC ratcraft Aircraft that will be spawned.
--- @param #string alias Alias name of the group.
 -- @return #table Prepared new spawn template.
-function RAT2:_SpawnAssetPrepareTemplate(ratcraft, alias)
+function RAT2:_SpawnAssetPrepareTemplate(ratcraft)
 
   -- Create an own copy of the template!
   local template=UTILS.DeepCopy(ratcraft.template)
 
   -- Set unique name.
-  template.name=alias
+  template.name=ratcraft.alias
 
   -- Set current(!) coalition and country.
   template.CoalitionID=ratcraft.coalition
