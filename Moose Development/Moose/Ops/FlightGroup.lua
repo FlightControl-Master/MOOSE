@@ -51,6 +51,7 @@
 -- @field #number Tholding Abs. mission time stamp when the group reached the holding point.
 -- @field #number Tparking Abs. mission time stamp when the group was spawned uncontrolled and is parking.
 -- @field #table menu F10 radio menu.
+-- @field #string livery Livery.
 -- @extends Core.Fsm#FSM
 
 --- *To invent an airplane is nothing. To build one is something. To fly is everything.* -- Otto Lilienthal
@@ -99,6 +100,7 @@ FLIGHTGROUP = {
   Tholding           =   nil,
   Tparking           =   nil,
   menu               =   nil,
+  livery             =   nil,
 }
 
 

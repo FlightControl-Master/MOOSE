@@ -20,43 +20,65 @@
 -- 
 -- @type RATCRAFT
 -- @field #string ClassName Name of the class.
--- @field #boolean Debug Debug mode. Messages to all about status.
+-- @field #boolean Debugmode Debug mode. Messages to all about status.
 -- @field #string lid Class id string for output to DCS log file.
+-- @field #string templatename Name of the group template.
+-- @field #string alias Alias for spawn prefix. Default template group name.
+-- @field #table template Table of the group template.
+-- @field Wrapper.Group#GROUP templategroup Template group.
 -- @field #number coalition Coalition side.
 -- @field #number country Country number.
--- @field #number size Max size in meters.
--- @field #table liveries Table of liveries.
--- @field #string livery Livery.
 -- @field #string actype Aircraft type name.
 -- @field #number category Category (plane=X, helo=Y).
--- @field #string attribute Attribute.
--- @field #table template Spawn template table.
+-- @field #string attribute Generalized attribute.
+-- @field #number ceiling Max altitude in meters of the aircraft group.
+-- @field #number speedmax Max speed in km/h of the aircraft group. 
+-- @field #number sizex Size X-axis in meters.
+-- @field #number sizez Size Z-axis in meters.
+-- @field #number size Max size (X, Z) in meters.
+-- @field #table liveries Table of liveries.
+-- @field #string livery Current livery.
+-- @field #string skill Skill of group.
+-- @field #string onboard Onboard number. This should better be on UNIT level!
+-- @field #table departures Defined departures.
+-- @field #table departure Current departure airbase or zone.
+-- @field #table destinations Defined destinations.
+-- @field #table destination Current destination.
+-- @field #boolean commute If true, commute between to airbases/zones.
+-- @field #boolean journey If true, continue journey from the current destination.
+-- @field #string takeoff Takeoff type cold, hot, air.
+-- @field #string landing Landing type.
+-- @field #table Table of flight groups.
+-- @field #number Nspawn Number of max spawned aircraft groups. 
 -- @extends Core.Fsm#FSM
 RATCRAFT = {
   ClassName      = "RATCRAFT",
-  Debug          = false,
+  Debugmode      = false,
   lid            = nil,
   templatename   = nil,
   alias          = nil,
-  idx            =   0,
-  liveries       =  {},
-  livery         = nil,
+  template       = nil,
+  templategroup  = nil,
+  coalition      = nil,
+  country        = nil,  
   actype         = nil,
+  category       = nil,
   attribute      = nil,
   ceiling        = nil,
   speedmax       = nil,
   sizex          = nil,
   sizez          = nil,
   size           = nil,
-  coalition      = nil,
-  country        = nil,
-  skill          = nil,
+  liveries       =  {},
+  livery         = nil,
+  skill          = nil,  
   onboard        = nil,
   departures     =  {},
   destinations   =  {},
   departure      = nil,
   destination    = nil,
   commute        = nil,
+  journey        = nil,
   takeoff        = nil,
   landing        = nil,
   flights        =  {},
@@ -86,7 +108,7 @@ RATCRAFT.Attribute = {
   OTHER="Other",
 }
 
---- Departure/destination 
+--- Departure/destination type, i.e. airbase or zone.
 -- @type RATCRAFT.DeType
 -- @field #string AIRBASE Departure/destination is an airbase.
 -- @field #string ZONE Departure/destination is a zone.
@@ -95,15 +117,33 @@ RATCRAFT.DeType={
   ZONE="Zone",
 }
 
---- Departure/destination 
+--- Departure/destination parameters.
 -- @type RATCRAFT.Departure
--- @field #string name
--- @field #string type
+-- @field #string name Name of the departure/destination airbase/zone.
+-- @field #string type Type of the departure/destination, i.e. an airbase or a zone.
+-- @field #table parking Number of parking spot IDs for the aircraft.
 
---- Create a new AIRBOSS class object for a specific aircraft carrier unit.
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- TODO list
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+-- TODO: helos
+-- TODO: despawn when arrived
+-- TODO: zones as departures
+-- TODO: zones as destinations
+-- TODO: monitor if stationary
+-- TODO: commute
+-- TODO: continue journey
+-- TODO: return zone
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Constructor
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Create a new RATCRAFT class object from a template group defined in the mission editor.
 -- @param #RATCRAFT self
--- @param #string groupname Name of the late activated template group.
--- @param #string alias Alias for the group name used as spawning name prefix. 
+-- @param #string groupname Name of the **late activated** template group.
+-- @param #string alias (Optional) Alias for the group name used as spawn name prefix. Default is the group name. 
 -- @return #RATCRAFT self
 function RATCRAFT:New(groupname, alias)
 
@@ -122,15 +162,25 @@ function RATCRAFT:New(groupname, alias)
   self.coalition=self.templategroup:GetCoalition()
   self.country=self.templategroup:GetUnit(1):GetCountry()
   
+  self.category=self.templategroup:GetUnit(1):GetCategory()
+
+  -- aircraft dimensions
+  self.sizex=self.DCSdesc.box.max.x
+  self.sizey=self.DCSdesc.box.max.y
+  self.sizez=self.DCSdesc.box.max.z
+  self.size =math.max(self.sizex, self.sizez)
+  
   
   -- Start State.
   self:SetStartState("Stopped")
 
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
-  self:AddTransition("Stopped",       "Load",            "Stopped")     -- Load player scores from file.
+  self:AddTransition("Stopped",       "Load",            "Stopped")     -- Load ratcraft from file.
   self:AddTransition("Stopped",       "Start",           "Running")     -- Start RAT2 script.
-  
+  self:AddTransition("Running",       "Pause",           "Paused")      -- Pause spawning RATCRAFT.
+  self:AddTransition("Paused",        "Unpause",         "Running")     -- UnPause spawning RATCRAFT.
+   
   return self
 end
 
@@ -146,80 +196,71 @@ end
 -- User Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Add a departure for the aircraft.
+--- Add adeparture airbase for the aircraft.
 -- @param #RATCRAFT self
+-- @param #string airbasename Departure airbase name.
+-- @param #table parking (Optional) Table of parking spot IDs. At least the number of units in the group must be given.
 -- @return #RATCRAFT self
-function RATCRAFT:AddDeparture(departure)
+function RATCRAFT:AddDepartureAirbase(airbasename, parking)
 
-  if type(departure)=="string" then
+  local departure={} --#RATCRAFT.Departure
   
-    -- Try to find an airbase.
-    local airbase=AIRBASE:FindByName(departure)
-    local zone=ZONE:New(ZoneName)
-    
-    if airbase then
-      self:AddDepartureAirbase(airbase)
-    else
-      self:AddDepartureZone(departure)
+  local spots=nil
+  if parking then
+    if type(parking)=="number" then
+      parking={parking}
     end
-  
-  else
-  
-  end
-
-end
-
---- Add one or multiple departure airbase(s) for the aircraft.
--- @param #RATCRAFT self
--- @param #string airbase Departure airbase name or a table of names.
--- @return #RATCRAFT self
-function RATCRAFT:AddDepartureAirbase(airbase)
-
-  local departure={} --#RATCRAFT.Departure  
     
-  if type(airbase)=="table" then
-  
-    for _,ab in pairs(airbase) do
-      departure.name=ab
-      departure.type=RATCRAFT.DeType.AIRBASE
-      table.insert(self.departures, departure)
+    -- Convert parking IDs to complete parking data.
+    spots={}
+    local airbase=AIRBASE:FindByName(airbasename)
+    for _,TerminalID in pairs(parking) do
+      local spot=airbase:GetParkingSpotData(TerminalID)
+      if spot then
+        table.insert(spots, spot)
+      end
     end
-  
-  else
-  
-    departure.name=airbase
-    departure.type=RATCRAFT.DeType.AIRBASE  
-    table.insert(self.departures, departure)
-    
   end
+  
+  departure.name=airbasename
+  departure.type=RATCRAFT.DeType.AIRBASE
+  departure.parking=parking  
+  table.insert(self.departures, departure)
   
   return self
 end
 
---- Add one or multiple destination airbase(s) for the aircraft.
+--- Add destination airbase for the aircraft and optionally specific parking spot IDs to be used by this group.
 -- @param #RATCRAFT self
--- @param #string airbase Destination airbase name or a table of names.
+-- @param #string airbasename Destination airbase name.
+-- @param #table parking (Optional) Table of parking spot IDs. At least the number of units in the group must be given.
 -- @return #RATCRAFT self
-function RATCRAFT:AddDestinationAirbase(airbase)
+function RATCRAFT:AddDestinationAirbase(airbasename, parking)
 
-  local departure={} --#RATCRAFT.Departure  
-    
-  if type(airbase)=="table" then
-  
-    for _,ab in pairs(airbase) do
-      departure.name=ab
-      departure.type=RATCRAFT.DeType.AIRBASE
-      table.insert(self.destinations, departure)
+  local destination={} --#RATCRAFT.Departure  
+
+  local spots=nil
+  if parking then
+    if type(parking)=="number" then
+      parking={parking}
     end
-  
-  else
-  
-    departure.name=airbase
-    departure.type=RATCRAFT.DeType.AIRBASE  
-    table.insert(self.destinations, departure)
     
+    -- Convert parking IDs to complete parking data.
+    spots={}
+    local airbase=AIRBASE:FindByName(airbasename)
+    for _,TerminalID in pairs(parking) do
+      local spot=airbase:GetParkingSpotData(TerminalID)
+      if spot then
+        table.insert(spots, spot)
+      end
+    end
   end
-  
+    
+  destination.name=airbasename
+  destination.type=RATCRAFT.DeType.AIRBASE
+  destination.parking=spots
+  table.insert(self.destinations, destination)
+    
   return self
 end
 
@@ -251,6 +292,8 @@ end
 -- @return #table Parking data table.
 function RATCRAFT:GetDeparture()
 
+  -- TODO: for commute/continue, set departure to current airbase/zone. Get same parking spot.
+
   local departures=UTILS.DeepCopy(self.departures)
   
   -- Try each departure in random order.
@@ -269,15 +312,18 @@ function RATCRAFT:GetDeparture()
       -- Airbase
       ---
     
+      -- Departure airbase.
       local airbase=AIRBASE:FindByName(departure.name)
       
       if airbase then
         
+        -- Template group.
         local group=self.templategroup --Wrapper.Group#GROUP
         
         -- Get number of free parking spots.
         local parking=airbase:FindFreeParkingSpotForAircraft(group)
       
+        -- Check if parking is sufficient.
         if #parking>=#group:GetUnits() then
           
           self:I(string.format("Returning departure %s", departure.name))
@@ -308,17 +354,23 @@ function RATCRAFT:GetDeparture()
 
 end
 
-
 --- Get destination.
 -- @param #RATCRAFT self
 -- @param #RATCRAFT.Departure departure The chosen departure.
 -- @return #RATCRAFT.Departure
 function RATCRAFT:GetDestination(departure)
 
+  if departure==nil then
+    return nil
+  end
+  
+
+  -- TODO: for commute, switch departure and destination.
+
   -- Create copy of all destinations.
   local destinations=UTILS.DeepCopy(self.destinations)
   
-  -- Try each departure in random order.
+  -- Try each destination in random order.
   for i=1,#destinations do
     
     -- Roll dice.
@@ -337,19 +389,23 @@ function RATCRAFT:GetDestination(departure)
       -- Get airbase.
       local airbase=AIRBASE:FindByName(destination.name)
       
-      local dest=AIRBASE:FindByName(departure.name)
+      local depart=AIRBASE:FindByName(departure.name)
       
       if airbase then
         -- TODO: check
         -- coalition, terminal type, distance
         
-        local distance=dest:GetCoordinate():Get2DDistance(airbase:GetCoordinate())
+        -- Distance between departure and destination.
+        local distance=depart:GetCoordinate():Get2DDistance(airbase:GetCoordinate())
       
         if distance then
           
-          return departure
+          self:I(string.format("Returning destination %s", destination.name))
+          return destination
         
         else
+        
+          self:I(string.format("Removing destination %s", destination.name))
         
           -- Remove from table so it does not get selected again.
           table.remove(destinations, r)
@@ -381,6 +437,16 @@ end
 -- @param #RATCRAFT self
 -- @return #number N live.
 function RATCRAFT:_GetAliveGroups()
+  local n=0
+  
+  for _,_flight in pairs(self.flights) do
+    local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
+    
+    if not flight:IsDead() then
+      n=n+1
+    end
+  end
 
-  return 0
+
+  return n
 end
