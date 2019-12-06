@@ -104,10 +104,10 @@ end
 -- @param #string To To state.
 function RAT2:onafterStatus(From, Event, To)
 
+  self:I(string.format("RAT status %s", self:GetState()))
+
   -- Check queue of aircraft to spawn.
   self:_CheckQueueSpawn()
-  
-  self:_CheckArrived()
   
   self:__Status(-10)
 end
@@ -117,58 +117,69 @@ end
 -- @param #RAT2 self
 function RAT2:_CheckQueueSpawn()
 
+  self:I(string.format("Checking flights"))
+
+  -- Loop over all ratcraft.
   for i,_ratcraft in pairs(self.Qcraft) do
     local ratcraft=_ratcraft --Functional.RatCraft#RATCRAFT
 
     -- Get number of alive groups.
     local Nalive=ratcraft:_GetAliveGroups()
-
-    -- Check if new groups should be spawned.    
-    if Nalive<ratcraft.Nspawn then
     
-      -- Get departure and parking.
-      local departure, parking=ratcraft:GetDeparture()
+    for _,_flight in pairs(ratcraft.flights) do
+      local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
       
-      -- Get destination depending on departure.
-      local destination=ratcraft:GetDestination(departure)
+      self:I(string.format("Checking flight group %s in status %s", flight.groupname, flight:GetState()))
       
-      if departure and destination then
+      if flight:IsInUtero() or flight:IsArrived() or flight:IsDead() then
       
-        parking=departure.parking or parking
-      
-        -- Try to spawn a ratcraft group.
-        local group=self:_SpawnRatcraft(ratcraft, departure, destination, parking)
-        
-        -- Remove queue item and break loop.
-        if group then
-  
-          -- We add a little delay
-          self:__Spawned(0.1, group, ratcraft)
+        self:I(string.format("Spawning new flight group %s in status %s", flight.groupname, flight:GetState()))
           
-          break
-        end
+        -- Get departure and parking.
+        local departure, parking=ratcraft:GetDeparture()
         
-      end
-      
-    end    
-  end
-  
+        -- Get destination depending on departure.
+        local destination=ratcraft:GetDestination(departure)
+        
+        if departure and destination then
+        
+          parking=departure.parking or parking
+        
+          -- Try to spawn a ratcraft group.
+          local group=self:_SpawnRatcraft(ratcraft, flight, departure, destination, parking)
+          
+          -- Remove queue item and break loop.
+          if group then
+    
+            -- We add a little delay
+            self:__Spawned(0.1, group, flight, ratcraft)
+            
+            break
+          end -- if group
+          
+        end -- if departure        
+      end -- if spawn flight    
+    end -- for flights
+  end -- for ratcraft
 end
 
 --- Check spawn queue and spawn aircraft if necessary.
 -- @param #RAT2 self
 function RAT2:_CheckArrived()
 
-  for _,_flight in pairs(self.flights) do
-    local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
-    
-    if flight:IsArrived() then
-      -- Destroy group and create a remove unit event.
-      flight.group:Destroy(nil)
+  for _,_ratcraft in pairs(self.Qcraft) do
+    local ratcraft=_ratcraft --Functional.RatCraft#RATCRAFT
+    for _,_flight in pairs(ratcraft.flights) do
+      local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
+      
+      if flight:IsArrived() then
+        -- Destroy group and create a remove unit event.
+        flight.group:Destroy(nil)
+      end
+      
     end
-    
   end
-
+  
 end
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -177,11 +188,15 @@ end
 
 --- Function called after a RAT group was spawned.
 -- @param #RAT2 self
-function RAT2:onafterSpawned(From, Event, To, group, ratcraft)
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Wrapper.Group#GROUP group The spawned group.
+-- @param Ops.FlightGroup#FLIGHTGROUP flight The flight group.
+-- @param Functional.RatCraft#RATCRAFT ratcraft The ratcraft object.
+function RAT2:onafterSpawned(From, Event, To, group, flight, ratcraft)
 
-  local flightgroup=FLIGHTGROUP:New(group:GetName())
-        
-  table.insert(ratcraft.flights, flightgroup)      
+  group:SmokeGreen()
 
 end
 
@@ -191,15 +206,16 @@ end
 
 --- Spawn an aircraft asset (plane or helo) at the airbase associated with the warehouse.
 -- @param #RAT2 self
--- @param #RATAC ratcraft Ratcraft to spawn.
+-- @param Functional.RatCraft#RATCRAFT ratcraft Ratcraft to spawn.
+-- @param Ops.FlightGroup#FLIGHTGROUP flight Flight group.
 -- @param Functional.RatCraft#RATCRAFT.Departure departure Departure.
 -- @param Functional.RatCraft#RATCRAFT.Departure destination Destination.
 -- @param #table parking Parking data for this group.
 -- @return Wrapper.Group#GROUP The spawned group or nil if the group could not be spawned.
-function RAT2:_SpawnRatcraft(ratcraft, departure, destination, parking)
+function RAT2:_SpawnRatcraft(ratcraft, flight, departure, destination, parking)
 
   -- Prepare the spawn template.
-  local template=self:_SpawnAssetPrepareTemplate(ratcraft)
+  local template=self:_SpawnAssetPrepareTemplate(ratcraft, flight.groupname)
   
     -- Get flight path if the group goes to another warehouse by itself.
   template.route.points=self:_GetFlightplan(ratcraft, AIRBASE:FindByName(departure.name), AIRBASE:FindByName(destination.name))
@@ -301,15 +317,16 @@ end
 
 --- Prepare a spawn template for the asset. Deep copy of asset template, adjusting template and unit names, nillifying group and unit ids.
 -- @param #RAT2 self
--- @param #RATAC ratcraft Aircraft that will be spawned.
+-- @param Functional.RatCraft#RATCRAFT ratcraft Aircraft that will be spawned.
+-- @param #string groupname Name for the group to be spawned.
 -- @return #table Prepared new spawn template.
-function RAT2:_SpawnAssetPrepareTemplate(ratcraft)
+function RAT2:_SpawnAssetPrepareTemplate(ratcraft, groupname)
 
   -- Create an own copy of the template!
   local template=UTILS.DeepCopy(ratcraft.template)
 
   -- Set unique name.
-  template.name=ratcraft.alias
+  template.name=groupname
 
   -- Set current(!) coalition and country.
   template.CoalitionID=ratcraft.coalition
@@ -330,7 +347,7 @@ function RAT2:_SpawnAssetPrepareTemplate(ratcraft)
   for i=1,#template.units do
 
     -- Unit template.
-    local unit = template.units[i]
+    local unit=template.units[i]
 
     -- Nillify the unit ID.
     unit.unitId=nil

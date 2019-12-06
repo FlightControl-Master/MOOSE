@@ -286,7 +286,7 @@ function FLIGHTGROUP:New(groupname)
 
   -- Add FSM transitions.
   --                 From State  -->   Event      -->      To State
-  self:AddTransition("Stopped",       "Start",             "Running")     -- Start FSM.
+  self:AddTransition("Stopped",       "Start",             "InUtero")     -- Start FSM.
   self:AddTransition("*",             "Stop",              "Stopped")     -- Stop FSM.
 
   self:AddTransition("*",             "FlightStatus",      "*")           -- FLIGHTGROUP status update.
@@ -593,51 +593,58 @@ function FLIGHTGROUP:GetWaypointCurrent()
   return self.waypoints[self.currentwp]
 end
 
+--- Check if flight is in state in utero.
+-- @param #FLIGHTGROUP self
+-- @return #boolean If true, flight is not spawned yet.
+function FLIGHTGROUP:IsInUtero()
+  return self:Is("InUtero")
+end
+
 --- Check if flight is in state spawned.
 -- @param #FLIGHTGROUP self
--- @return #boolean
+-- @return #boolean If true, flight is spawned.
 function FLIGHTGROUP:IsSpawned()
   return self:Is("Spawned")
 end
 
 --- Check if flight is parking.
 -- @param #FLIGHTGROUP self
--- @return #boolean
+-- @return #boolean If true, flight is parking after spawned.
 function FLIGHTGROUP:IsParking()
   return self:Is("Parking")
 end
 
 --- Check if flight is parking.
 -- @param #FLIGHTGROUP self
--- @return #boolean
+-- @return #boolean If true, flight is taxiing after engine start up.
 function FLIGHTGROUP:IsTaxiing()
   return self:Is("Taxiing")
 end
 
 --- Check if flight is airborne.
 -- @param #FLIGHTGROUP self
--- @return #boolean
+-- @return #boolean If true, flight is airborne.
 function FLIGHTGROUP:IsAirborne()
   return self:Is("Airborne")
 end
 
 --- Check if flight is landing.
 -- @param #FLIGHTGROUP self
--- @return #boolean
+-- @return #boolean If true, flight is landing, i.e. on final approach.
 function FLIGHTGROUP:IsLanding()
   return self:Is("Landing")
 end
 
 --- Check if flight has landed and is now taxiing to its parking spot.
 -- @param #FLIGHTGROUP self
--- @return #boolean
+-- @return #boolean If true, flight has landed
 function FLIGHTGROUP:IsLanded()
   return self:Is("Landed")
 end
 
 --- Check if flight has arrived at its destination parking spot.
 -- @param #FLIGHTGROUP self
--- @return #boolean
+-- @return #boolean If true, flight has arrived at its destination and is parking.
 function FLIGHTGROUP:IsArrived()
   return self:Is("Arrived")
 end
@@ -651,7 +658,7 @@ end
 
 --- Check if flight is dead.
 -- @param #FLIGHTGROUP self
--- @return #boolean
+-- @return #boolean If true, all units/elements of the flight are dead.
 function FLIGHTGROUP:IsDead()
   return self:Is("Dead")
 end

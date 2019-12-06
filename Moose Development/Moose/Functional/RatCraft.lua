@@ -48,7 +48,7 @@
 -- @field #boolean journey If true, continue journey from the current destination.
 -- @field #string takeoff Takeoff type cold, hot, air.
 -- @field #string landing Landing type.
--- @field #table Table of flight groups.
+-- @field #table flights Table of flight groups.
 -- @field #number Nspawn Number of max spawned aircraft groups. 
 -- @extends Core.Fsm#FSM
 RATCRAFT = {
@@ -82,8 +82,7 @@ RATCRAFT = {
   takeoff        = nil,
   landing        = nil,
   flights        =  {},
-  Nalive         =   0,
-  Nspawn         =   1,
+  Nspawn         =   2,
 }
 
 --- Generalized asset attributes. Can be used to request assets with certain general characteristics. See [DCS attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes) on hoggit.
@@ -143,17 +142,46 @@ RATCRAFT.DeType={
 --- Create a new RATCRAFT class object from a template group defined in the mission editor.
 -- @param #RATCRAFT self
 -- @param #string groupname Name of the **late activated** template group.
+-- @param #number nspawn Number of groups to spawn. Default 1.
 -- @param #string alias (Optional) Alias for the group name used as spawn name prefix. Default is the group name. 
 -- @return #RATCRAFT self
-function RATCRAFT:New(groupname, alias)
+function RATCRAFT:New(groupname, nspawn, alias)
 
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) --#RATCRAFT
   
-  self.templategroup=GROUP:FindByName(groupname)
-  self.templatename=groupname
-  self.template=self.templategroup:GetTemplate()
+  -- Defaults
+  self.Nspawn=nspawn or 1
   self.alias=alias or groupname
+  
+  -- Start State.
+  self:SetStartState("Stopped")
+
+  -- Add FSM transitions.
+  --                 From State  -->   Event      -->     To State
+  self:AddTransition("Stopped",       "Load",            "Stopped")     -- Load ratcraft from file.
+  self:AddTransition("Stopped",       "Start",           "Running")     -- Start RAT2 script.
+  self:AddTransition("Running",       "Pause",           "Paused")      -- Pause spawning RATCRAFT.
+  self:AddTransition("Paused",        "Unpause",         "Running")     -- UnPause spawning RATCRAFT.
+  
+  -- Initialize aircraft parameters.
+  self:_Init(groupname)
+  
+  self:Start()
+  
+  return self
+end
+
+--- Init aircraft parameters.
+-- @param #RATCRAFT self
+-- @param #string groupname Name of the template group.
+-- @return #RATCRAFT self
+function RATCRAFT:_Init(groupname)
+
+  self.templatename=groupname  
+  self.templategroup=GROUP:FindByName(groupname)
+  self.template=self.templategroup:GetTemplate()
+  
   
   self.speedmax=self.templategroup:GetSpeedMax()
   self.range=1000000
@@ -169,26 +197,6 @@ function RATCRAFT:New(groupname, alias)
   self.sizey=self.DCSdesc.box.max.y
   self.sizez=self.DCSdesc.box.max.z
   self.size =math.max(self.sizex, self.sizez)
-  
-  
-  -- Start State.
-  self:SetStartState("Stopped")
-
-  -- Add FSM transitions.
-  --                 From State  -->   Event      -->     To State
-  self:AddTransition("Stopped",       "Load",            "Stopped")     -- Load ratcraft from file.
-  self:AddTransition("Stopped",       "Start",           "Running")     -- Start RAT2 script.
-  self:AddTransition("Running",       "Pause",           "Paused")      -- Pause spawning RATCRAFT.
-  self:AddTransition("Paused",        "Unpause",         "Running")     -- UnPause spawning RATCRAFT.
-   
-  return self
-end
-
---- Init aircraft parameters.
--- @param #RATCRAFT self
--- @return #RATCRAFT self
-function RATCRAFT:_Init()
-
 
 end
 
@@ -239,13 +247,13 @@ function RATCRAFT:AddDestinationAirbase(airbasename, parking)
 
   local destination={} --#RATCRAFT.Departure  
 
+  -- Convert parking IDs to complete parking data.
   local spots=nil
   if parking then
     if type(parking)=="number" then
       parking={parking}
     end
     
-    -- Convert parking IDs to complete parking data.
     spots={}
     local airbase=AIRBASE:FindByName(airbasename)
     for _,TerminalID in pairs(parking) do
@@ -280,6 +288,30 @@ function RATCRAFT:AddDepartureZone(zone)
   
 
   return self
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- FSM Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Add a departure for the aircraft.
+-- @param #RATCRAFT self
+function RATCRAFT:onafterStart()
+
+  -- Create flight groups.
+  for i=1,self.Nspawn do
+  
+    -- Group name.
+    local groupname=string.format("%s-%02d", self.alias, i)
+    
+    -- New flight group.
+    local flightgroup=FLIGHTGROUP:New(groupname)
+    
+    -- Add flight to tabloe.
+    table.insert(self.flights, flightgroup)
+    
+  end
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
