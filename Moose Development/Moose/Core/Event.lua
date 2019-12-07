@@ -488,6 +488,9 @@ local _EVENTMETA = {
 -- @type EVENT.Events
 -- @field #number IniUnit
 
+--- Create new event handler.
+-- @param #EVENT self
+-- @return #EVENT self
 function EVENT:New()
   local self = BASE:Inherit( self, BASE:New() )
   self:F2()
@@ -1223,7 +1226,7 @@ EVENTHANDLER = {
 
 --- The EVENTHANDLER constructor
 -- @param #EVENTHANDLER self
--- @return #EVENTHANDLER
+-- @return #EVENTHANDLER self
 function EVENTHANDLER:New()
   self = BASE:Inherit( self, BASE:New() ) -- #EVENTHANDLER
   return self

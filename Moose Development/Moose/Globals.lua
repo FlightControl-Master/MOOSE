@@ -5,7 +5,7 @@
 _EVENTDISPATCHER = EVENT:New() -- Core.Event#EVENT
 
 --- Declare the timer dispatcher based on the SCHEDULEDISPATCHER class
-_SCHEDULEDISPATCHER = SCHEDULEDISPATCHER:New() -- Core.Timer#SCHEDULEDISPATCHER
+_SCHEDULEDISPATCHER = SCHEDULEDISPATCHER:New() -- Core.ScheduleDispatcher#SCHEDULEDISPATCHER
 
 --- Declare the main database object, which is used internally by the MOOSE classes.
 _DATABASE = DATABASE:New() -- Core.Database#DATABASE
