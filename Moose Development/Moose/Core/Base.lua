@@ -764,9 +764,7 @@ do -- Scheduling
     if not self.Scheduler then
       self.Scheduler = SCHEDULER:New( self )
     end
-    
-    self.Scheduler.SchedulerObject = self.Scheduler
-    
+  
     local ScheduleID = _SCHEDULEDISPATCHER:AddSchedule( 
       self, 
       SchedulerFunction,
@@ -803,9 +801,6 @@ do -- Scheduling
     if not self.Scheduler then
       self.Scheduler = SCHEDULER:New( self )
     end
-    
-    self.Scheduler.SchedulerObject = self.Scheduler
-    --self.MasterObject = self
     
     local ScheduleID = self.Scheduler:Schedule( 
       self, 
