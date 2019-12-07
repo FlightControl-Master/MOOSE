@@ -4,7 +4,7 @@
 -- 
 -- Takes care of the creation and dispatching of scheduled functions for SCHEDULER objects.
 -- 
--- This class is tricky and needs some thorought explanation.
+-- This class is tricky and needs some thorough explanation.
 -- SCHEDULE classes are used to schedule functions for objects, or as persistent objects.
 -- The SCHEDULEDISPATCHER class ensures that:
 -- 
@@ -13,9 +13,10 @@
 --   - Scheduled functions are automatically removed when the schedule is finished, according the SCHEDULER object parameters.
 -- 
 -- The SCHEDULEDISPATCHER class will manage SCHEDULER object in memory during garbage collection:
---   - When a SCHEDULER object is not attached to another object (that is, it's first :Schedule() parameter is nil), then the SCHEDULER  
---     object is _persistent_ within memory.
+-- 
+--   - When a SCHEDULER object is not attached to another object (that is, it's first :Schedule() parameter is nil), then the SCHEDULER object is _persistent_ within memory.
 --   - When a SCHEDULER object *is* attached to another object, then the SCHEDULER object is _not persistent_ within memory after a garbage collection!
+--   
 -- The none persistency of SCHEDULERS attached to objects is required to allow SCHEDULER objects to be garbage collectged, when the parent object is also desroyed or nillified and garbage collected.
 -- Even when there are pending timer scheduled functions to be executed for the SCHEDULER object,  
 -- these will not be executed anymore when the SCHEDULER object has been destroyed.
@@ -33,13 +34,28 @@
 -- @module Core.ScheduleDispatcher
 -- @image Core_Schedule_Dispatcher.JPG
 
+--- SCHEDULEDISPATCHER class.
+-- @type SCHEDULEDISPATCHER
+-- @field #string ClassName Name of the class.
+-- @field #number CallID Call ID counter.
+-- @field #table PersistentSchedulers Persistant schedulers.
+-- @field #table ObjectSchedulers Schedulers that only exist as long as the master object exists.
+-- @field #table Schedule Meta table setmetatable( {}, { __mode = "k" } ).
+-- @extends Core.Base#BASE
+
 --- The SCHEDULEDISPATCHER structure
 -- @type SCHEDULEDISPATCHER
 SCHEDULEDISPATCHER = {
-  ClassName = "SCHEDULEDISPATCHER",
-  CallID = 0,
+  ClassName            = "SCHEDULEDISPATCHER",
+  CallID               =   0,
+  PersistentSchedulers =  {},
+  ObjectSchedulers     =  {},
+  Schedule             = nil,
 }
 
+--- Create a new schedule dispatcher object.
+-- @param #SCHEDULEDISPATCHER self
+-- @return #SCHEDULEDISPATCHER self
 function SCHEDULEDISPATCHER:New()
   local self = BASE:Inherit( self, BASE:New() )
   self:F3()
@@ -51,11 +67,23 @@ end
 -- It is constructed as such that a garbage collection is executed on the weak tables, when the Scheduler is nillified.
 -- Nothing of this code should be modified without testing it thoroughly.
 -- @param #SCHEDULEDISPATCHER self
--- @param Core.Scheduler#SCHEDULER Scheduler
+-- @param Core.Scheduler#SCHEDULER Scheduler Scheduler object.
+-- @param #function ScheduleFunction Scheduler function.
+-- @param #table ScheduleArguments Table of arguments passed to the ScheduleFunction.
+-- @param #number Start Start time in seconds.
+-- @param #number Repeat Repeat interval in seconds.
+-- @param #number Randomize Radomization factor [0,1].
+-- @param #number Stop Stop time in seconds.
+-- @param #number TraceLevel Trace level [0,3].
+-- @param Core.Fsm#FSM Fsm Finite state model.
+-- @return #table Call ID or nil.
 function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleArguments, Start, Repeat, Randomize, Stop, TraceLevel, Fsm )
-  self:F2( { Scheduler, ScheduleFunction, ScheduleArguments, Start, Repeat, Randomize, Stop, TraceLevel } )
+  self:F2( { Scheduler, ScheduleFunction, ScheduleArguments, Start, Repeat, Randomize, Stop, TraceLevel, Fsm } )
 
+  -- Increase counter.
   self.CallID = self.CallID + 1
+  
+  -- Create ID.
   local CallID = self.CallID .. "#" .. ( Scheduler.MasterObject and Scheduler.MasterObject.GetClassNameAndID and Scheduler.MasterObject:GetClassNameAndID() or "" ) or ""
 
   -- Initialize the ObjectSchedulers array, which is a weakly coupled table.
@@ -118,7 +146,6 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
     if name_fsm then
       Info.name = name_fsm
     end
-    --env.info( debug.traceback() )
   end
 
   self:T3( self.Schedule[Scheduler][CallID] )
@@ -126,7 +153,7 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
   self.Schedule[Scheduler][CallID].CallHandler = function( Params )
     
     local CallID = Params.CallID
-    local Info = Params.Info
+    local Info = Params.Info or {}
     local Source = Info.source or "?"
     local Line = Info.currentline or "?"
     local Name = Info.name or "?"
@@ -153,10 +180,9 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
       
       --self:T3( { Schedule = Schedule } )
 
-      local SchedulerObject = Scheduler.SchedulerObject
-      --local ScheduleObjectName = Scheduler.SchedulerObject:GetNameAndClassID()
+      local SchedulerObject = Scheduler.MasterObject --Scheduler.SchedulerObject Now is this the Maste or Scheduler object?
       local ScheduleFunction = Schedule.Function
-      local ScheduleArguments = Schedule.Arguments
+      local ScheduleArguments = Schedule.Arguments or {}
       local Start = Schedule.Start
       local Repeat = Schedule.Repeat or 0
       local Randomize = Schedule.Randomize or 0
@@ -201,7 +227,7 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
               - ( Randomize * Repeat / 2 ),
               ( Randomize * Repeat  / 2 )
             ) +
-            0.01
+            0.0001  -- Accuracy
           --self:T3( { Repeat = CallID, CurrentTime, ScheduleTime, ScheduleArguments } )
           return ScheduleTime -- returns the next time the function needs to be called.
         else
@@ -222,6 +248,10 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
   return CallID
 end
 
+--- Remove schedule.
+-- @param #SCHEDULEDISPATCHER self
+-- @param Core.Scheduler#SCHEDULER Scheduler Scheduler object.
+-- @param #table CallID Call ID.
 function SCHEDULEDISPATCHER:RemoveSchedule( Scheduler, CallID )
   self:F2( { Remove = CallID, Scheduler = Scheduler } )
 
@@ -231,11 +261,19 @@ function SCHEDULEDISPATCHER:RemoveSchedule( Scheduler, CallID )
   end
 end
 
+--- Start dispatcher.
+-- @param #SCHEDULEDISPATCHER self
+-- @param Core.Scheduler#SCHEDULER Scheduler Scheduler object.
+-- @param #table CallID (Optional) Call ID.
+-- @param #table CallID Call ID.
+-- @param #string Info (Optional) Debug info.
 function SCHEDULEDISPATCHER:Start( Scheduler, CallID, Info )
   self:F2( { Start = CallID, Scheduler = Scheduler } )
-
+  
   if CallID then
+  
     local Schedule = self.Schedule[Scheduler]
+    
     -- Only start when there is no ScheduleID defined!
     -- This prevents to "Start" the scheduler twice with the same CallID...
     if not Schedule[CallID].ScheduleID then
@@ -246,31 +284,46 @@ function SCHEDULEDISPATCHER:Start( Scheduler, CallID, Info )
         timer.getTime() + Schedule[CallID].Start 
       )
     end
+    
   else
+  
+    -- Recursive.
     for CallID, Schedule in pairs( self.Schedule[Scheduler] or {} ) do
       self:Start( Scheduler, CallID, Info ) -- Recursive
     end
+    
   end
 end
 
+--- Stop dispatcher.
+-- @param #SCHEDULEDISPATCHER self
+-- @param Core.Scheduler#SCHEDULER Scheduler Scheduler object.
+-- @param #table CallID Call ID.
 function SCHEDULEDISPATCHER:Stop( Scheduler, CallID )
   self:F2( { Stop = CallID, Scheduler = Scheduler } )
 
   if CallID then
+  
     local Schedule = self.Schedule[Scheduler]
-    -- Only stop when there is a ScheduleID defined for the CallID.
-    -- So, when the scheduler was stopped before, do nothing.
+    
+    -- Only stop when there is a ScheduleID defined for the CallID. So, when the scheduler was stopped before, do nothing.
     if Schedule[CallID].ScheduleID then
       timer.removeFunction( Schedule[CallID].ScheduleID )
       Schedule[CallID].ScheduleID = nil
     end
+    
   else
+  
     for CallID, Schedule in pairs( self.Schedule[Scheduler] or {} ) do
       self:Stop( Scheduler, CallID ) -- Recursive
     end
+    
   end
 end
 
+--- Clear all schedules by stopping all dispatchers.
+-- @param #SCHEDULEDISPATCHER self
+-- @param Core.Scheduler#SCHEDULER Scheduler Scheduler object.
 function SCHEDULEDISPATCHER:Clear( Scheduler )
   self:F2( { Scheduler = Scheduler } )
 
@@ -279,9 +332,19 @@ function SCHEDULEDISPATCHER:Clear( Scheduler )
   end
 end
 
+--- Shopw tracing info.
+-- @param #SCHEDULEDISPATCHER self
+-- @param Core.Scheduler#SCHEDULER Scheduler Scheduler object.
+function SCHEDULEDISPATCHER:ShowTrace( Scheduler )
+  self:F2( { Scheduler = Scheduler } )
+  Scheduler.ShowTrace = true
+end
+
+--- No tracing info.
+-- @param #SCHEDULEDISPATCHER self
+-- @param Core.Scheduler#SCHEDULER Scheduler Scheduler object.
 function SCHEDULEDISPATCHER:NoTrace( Scheduler )
   self:F2( { Scheduler = Scheduler } )
-
-  Scheduler.ShowTrace = nil
+  Scheduler.ShowTrace = false
 end
 

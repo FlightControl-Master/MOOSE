@@ -43,7 +43,9 @@
 
 --- The SCHEDULER class
 -- @type SCHEDULER
--- @field #number ScheduleID the ID of the scheduler.
+-- @field #table Schedules Table of schedules.
+-- @field #table MasterObject Master object.
+-- @field #boolean ShowTrace Trace info if true.
 -- @extends Core.Base#BASE
 
 
@@ -69,53 +71,53 @@
 -- 
 --   * @{#SCHEDULER.New}( nil ): Setup a new SCHEDULER object, which is persistently executed after garbage collection.
 -- 
---     SchedulerObject = SCHEDULER:New()
---     SchedulerID = SchedulerObject:Schedule( nil, ScheduleFunction, {} )
+--     MasterObject = SCHEDULER:New()
+--     SchedulerID = MasterObject:Schedule( nil, ScheduleFunction, {} )
 -- 
--- The above example creates a new SchedulerObject, but does not schedule anything.
--- A separate schedule is created by using the SchedulerObject using the method :Schedule..., which returns a ScheduleID
+-- The above example creates a new MasterObject, but does not schedule anything.
+-- A separate schedule is created by using the MasterObject using the method :Schedule..., which returns a ScheduleID
 -- 
 -- ### Construct a SCHEDULER object without a volatile schedule, but volatile to the Object existence...
 -- 
 --   * @{#SCHEDULER.New}( Object ): Setup a new SCHEDULER object, which is linked to the Object. When the Object is nillified or destroyed, the SCHEDULER object will also be destroyed and stopped after garbage collection.
 -- 
 --     ZoneObject = ZONE:New( "ZoneName" )
---     SchedulerObject = SCHEDULER:New( ZoneObject )
---     SchedulerID = SchedulerObject:Schedule( ZoneObject, ScheduleFunction, {} )
+--     MasterObject = SCHEDULER:New( ZoneObject )
+--     SchedulerID = MasterObject:Schedule( ZoneObject, ScheduleFunction, {} )
 --     ...
 --     ZoneObject = nil
 --     garbagecollect()
 -- 
--- The above example creates a new SchedulerObject, but does not schedule anything, and is bound to the existence of ZoneObject, which is a ZONE.
--- A separate schedule is created by using the SchedulerObject using the method :Schedule()..., which returns a ScheduleID
+-- The above example creates a new MasterObject, but does not schedule anything, and is bound to the existence of ZoneObject, which is a ZONE.
+-- A separate schedule is created by using the MasterObject using the method :Schedule()..., which returns a ScheduleID
 -- Later in the logic, the ZoneObject is put to nil, and garbage is collected.
--- As a result, the ScheduleObject will cancel any planned schedule.
+-- As a result, the MasterObject will cancel any planned schedule.
 --      
 -- ### Construct a SCHEDULER object with a persistent schedule.
 -- 
 --   * @{#SCHEDULER.New}( nil, Function, FunctionArguments, Start, ... ): Setup a new persistent SCHEDULER object, and start a new schedule for the Function with the defined FunctionArguments according the Start and sequent parameters.
 --   
---     SchedulerObject, SchedulerID = SCHEDULER:New( nil, ScheduleFunction, {} )
+--     MasterObject, SchedulerID = SCHEDULER:New( nil, ScheduleFunction, {} )
 --     
--- The above example creates a new SchedulerObject, and does schedule the first schedule as part of the call.
--- Note that 2 variables are returned here: SchedulerObject, ScheduleID...
+-- The above example creates a new MasterObject, and does schedule the first schedule as part of the call.
+-- Note that 2 variables are returned here: MasterObject, ScheduleID...
 --   
 -- ### Construct a SCHEDULER object without a schedule, but volatile to the Object existence...
 -- 
 --   * @{#SCHEDULER.New}( Object, Function, FunctionArguments, Start, ... ): Setup a new SCHEDULER object, linked to Object, and start a new schedule for the Function with the defined FunctionArguments according the Start and sequent parameters.
 --
 --     ZoneObject = ZONE:New( "ZoneName" )
---     SchedulerObject, SchedulerID = SCHEDULER:New( ZoneObject, ScheduleFunction, {} )
---     SchedulerID = SchedulerObject:Schedule( ZoneObject, ScheduleFunction, {} )
+--     MasterObject, SchedulerID = SCHEDULER:New( ZoneObject, ScheduleFunction, {} )
+--     SchedulerID = MasterObject:Schedule( ZoneObject, ScheduleFunction, {} )
 --     ...
 --     ZoneObject = nil
 --     garbagecollect()
 --     
--- The above example creates a new SchedulerObject, and schedules a method call (ScheduleFunction), 
+-- The above example creates a new MasterObject, and schedules a method call (ScheduleFunction), 
 -- and is bound to the existence of ZoneObject, which is a ZONE object (ZoneObject).
--- Both a ScheduleObject and a SchedulerID variable are returned.
+-- Both a MasterObject and a SchedulerID variable are returned.
 -- Later in the logic, the ZoneObject is put to nil, and garbage is collected.
--- As a result, the ScheduleObject will cancel the planned schedule.
+-- As a result, the MasterObject will cancel the planned schedule.
 --  
 -- ## SCHEDULER timer stopping and (re-)starting.
 --
@@ -125,15 +127,15 @@
 --  * @{#SCHEDULER.Stop}(): Stop the schedules within the SCHEDULER object. If a CallID is provided to :Stop(), then only the schedule referenced by CallID will be stopped.
 --
 --     ZoneObject = ZONE:New( "ZoneName" )
---     SchedulerObject, SchedulerID = SCHEDULER:New( ZoneObject, ScheduleFunction, {} )
---     SchedulerID = SchedulerObject:Schedule( ZoneObject, ScheduleFunction, {}, 10, 10 )
+--     MasterObject, SchedulerID = SCHEDULER:New( ZoneObject, ScheduleFunction, {} )
+--     SchedulerID = MasterObject:Schedule( ZoneObject, ScheduleFunction, {}, 10, 10 )
 --     ...
---     SchedulerObject:Stop( SchedulerID )
+--     MasterObject:Stop( SchedulerID )
 --     ...
---     SchedulerObject:Start( SchedulerID )
+--     MasterObject:Start( SchedulerID )
 --     
--- The above example creates a new SchedulerObject, and does schedule the first schedule as part of the call.
--- Note that 2 variables are returned here: SchedulerObject, ScheduleID...  
+-- The above example creates a new MasterObject, and does schedule the first schedule as part of the call.
+-- Note that 2 variables are returned here: MasterObject, ScheduleID...  
 -- Later in the logic, the repeating schedule with SchedulerID is stopped.  
 -- A bit later, the repeating schedule with SchedulerId is (re)-started.  
 -- 
@@ -145,32 +147,32 @@
 -- Consider the following code fragment of the SCHEDULER object creation.
 -- 
 --     ZoneObject = ZONE:New( "ZoneName" )
---     SchedulerObject = SCHEDULER:New( ZoneObject )
+--     MasterObject = SCHEDULER:New( ZoneObject )
 -- 
 -- Several parameters can be specified that influence the behaviour of a Schedule.
 -- 
 -- ### A single schedule, immediately executed
 -- 
---     SchedulerID = SchedulerObject:Schedule( ZoneObject, ScheduleFunction, {} )
+--     SchedulerID = MasterObject:Schedule( ZoneObject, ScheduleFunction, {} )
 -- 
 -- The above example schedules a new ScheduleFunction call to be executed asynchronously, within milleseconds ...
 -- 
 -- ### A single schedule, planned over time
 -- 
---     SchedulerID = SchedulerObject:Schedule( ZoneObject, ScheduleFunction, {}, 10 )
+--     SchedulerID = MasterObject:Schedule( ZoneObject, ScheduleFunction, {}, 10 )
 --     
 -- The above example schedules a new ScheduleFunction call to be executed asynchronously, within 10 seconds ...
 -- 
 -- ### A schedule with a repeating time interval, planned over time
 -- 
---     SchedulerID = SchedulerObject:Schedule( ZoneObject, ScheduleFunction, {}, 10, 60 )
+--     SchedulerID = MasterObject:Schedule( ZoneObject, ScheduleFunction, {}, 10, 60 )
 --     
 -- The above example schedules a new ScheduleFunction call to be executed asynchronously, within 10 seconds, 
 -- and repeating 60 every seconds ...
 -- 
 -- ### A schedule with a repeating time interval, planned over time, with time interval randomization
 -- 
---     SchedulerID = SchedulerObject:Schedule( ZoneObject, ScheduleFunction, {}, 10, 60, 0.5 )
+--     SchedulerID = MasterObject:Schedule( ZoneObject, ScheduleFunction, {}, 10, 60, 0.5 )
 --     
 -- The above example schedules a new ScheduleFunction call to be executed asynchronously, within 10 seconds, 
 -- and repeating 60 seconds, with a 50% time interval randomization ...
@@ -180,7 +182,7 @@
 -- 
 -- ### A schedule with a repeating time interval, planned over time, with time interval randomization, and stop after a time interval
 -- 
---     SchedulerID = SchedulerObject:Schedule( ZoneObject, ScheduleFunction, {}, 10, 60, 0.5, 300 )
+--     SchedulerID = MasterObject:Schedule( ZoneObject, ScheduleFunction, {}, 10, 60, 0.5, 300 )
 --     
 -- The above example schedules a new ScheduleFunction call to be executed asynchronously, within 10 seconds, 
 -- The schedule will repeat every 60 seconds.
@@ -191,13 +193,15 @@
 -- 
 -- @field #SCHEDULER
 SCHEDULER = {
-  ClassName = "SCHEDULER",
-  Schedules = {},
+  ClassName       = "SCHEDULER",
+  Schedules       = {},
+  MasterObject    = nil,
+  ShowTrace       = nil,
 }
 
 --- SCHEDULER constructor.
 -- @param #SCHEDULER self
--- @param #table SchedulerObject Specified for which Moose object the timer is setup. If a value of nil is provided, a scheduler will be setup without an object reference.
+-- @param #table MasterObject Specified for which Moose object the timer is setup. If a value of nil is provided, a scheduler will be setup without an object reference.
 -- @param #function SchedulerFunction The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in SchedulerArguments.
 -- @param #table SchedulerArguments Optional arguments that can be given as part of scheduler. The arguments need to be given as a table { param1, param 2, ... }.
 -- @param #number Start Specifies the amount of seconds that will be waited before the scheduling is started, and the event function is called.
@@ -205,50 +209,46 @@ SCHEDULER = {
 -- @param #number RandomizeFactor Specifies a randomization factor between 0 and 1 to randomize the Repeat.
 -- @param #number Stop Specifies the amount of seconds when the scheduler will be stopped.
 -- @return #SCHEDULER self.
--- @return #number The ScheduleID of the planned schedule.
-function SCHEDULER:New( SchedulerObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop )
+-- @return #table The ScheduleID of the planned schedule.
+function SCHEDULER:New( MasterObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop )
   
   local self = BASE:Inherit( self, BASE:New() ) -- #SCHEDULER
   self:F2( { Start, Repeat, RandomizeFactor, Stop } )
 
   local ScheduleID = nil
   
-  self.MasterObject = SchedulerObject
-  self.ShowTrace = true
+  self.MasterObject = MasterObject
+  self.ShowTrace = false
   
   if SchedulerFunction then
-    ScheduleID = self:Schedule( SchedulerObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop, 4 )
+    ScheduleID = self:Schedule( MasterObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop, 4 )
   end
 
   return self, ScheduleID
 end
 
---function SCHEDULER:_Destructor()
---  --self:E("_Destructor")
---
---  _SCHEDULEDISPATCHER:RemoveSchedule( self.CallID )
---end
-
 --- Schedule a new time event. Note that the schedule will only take place if the scheduler is *started*. Even for a single schedule event, the scheduler needs to be started also.
 -- @param #SCHEDULER self
--- @param #table SchedulerObject Specified for which Moose object the timer is setup. If a value of nil is provided, a scheduler will be setup without an object reference.
+-- @param #table MasterObject Specified for which Moose object the timer is setup. If a value of nil is provided, a scheduler will be setup without an object reference.
 -- @param #function SchedulerFunction The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in SchedulerArguments.
 -- @param #table SchedulerArguments Optional arguments that can be given as part of scheduler. The arguments need to be given as a table { param1, param 2, ... }.
 -- @param #number Start Specifies the amount of seconds that will be waited before the scheduling is started, and the event function is called.
--- @param #number Repeat Specifies the interval in seconds when the scheduler will call the event function.
+-- @param #number Repeat Specifies the time interval in seconds when the scheduler will call the event function.
 -- @param #number RandomizeFactor Specifies a randomization factor between 0 and 1 to randomize the Repeat.
--- @param #number Stop Specifies the amount of seconds when the scheduler will be stopped.
--- @return #number The ScheduleID of the planned schedule.
-function SCHEDULER:Schedule( SchedulerObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop, TraceLevel, Fsm )
+-- @param #number Stop Time interval in seconds after which the scheduler will be stoppe.
+-- @param #number TraceLevel Trace level [0,3]. Default 3.
+-- @param Core.Fsm#FSM Fsm Finite state model.
+-- @return #table The ScheduleID of the planned schedule.
+function SCHEDULER:Schedule( MasterObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop, TraceLevel, Fsm )
   self:F2( { Start, Repeat, RandomizeFactor, Stop } )
   self:T3( { SchedulerArguments } )
 
   local ObjectName = "-"
-  if SchedulerObject and SchedulerObject.ClassName and SchedulerObject.ClassID then 
-    ObjectName = SchedulerObject.ClassName .. SchedulerObject.ClassID
+  if MasterObject and MasterObject.ClassName and MasterObject.ClassID then 
+    ObjectName = MasterObject.ClassName .. MasterObject.ClassID
   end
-  self:F3( { "Schedule :", ObjectName, tostring( SchedulerObject ),  Start, Repeat, RandomizeFactor, Stop } )
-  self.SchedulerObject = SchedulerObject
+  self:F3( { "Schedule :", ObjectName, tostring( MasterObject ),  Start, Repeat, RandomizeFactor, Stop } )
+  self.MasterObject = MasterObject
   
   local ScheduleID = _SCHEDULEDISPATCHER:AddSchedule( 
     self, 
@@ -269,19 +269,17 @@ end
 
 --- (Re-)Starts the schedules or a specific schedule if a valid ScheduleID is provided.
 -- @param #SCHEDULER self
--- @param #number ScheduleID (optional) The ScheduleID of the planned (repeating) schedule.
+-- @param #table ScheduleID (Optional) The ScheduleID of the planned (repeating) schedule.
 function SCHEDULER:Start( ScheduleID )
   self:F3( { ScheduleID } )
-
   _SCHEDULEDISPATCHER:Start( self, ScheduleID )
 end
 
 --- Stops the schedules or a specific schedule if a valid ScheduleID is provided.
 -- @param #SCHEDULER self
--- @param #number ScheduleID (optional) The ScheduleID of the planned (repeating) schedule.
+-- @param #table ScheduleID (Optional) The ScheduleID of the planned (repeating) schedule.
 function SCHEDULER:Stop( ScheduleID )
   self:F3( { ScheduleID } )
-
   _SCHEDULEDISPATCHER:Stop( self, ScheduleID )
 end
 
@@ -290,7 +288,6 @@ end
 -- @param #number ScheduleID (optional) The ScheduleID of the planned (repeating) schedule.
 function SCHEDULER:Remove( ScheduleID )
   self:F3( { ScheduleID } )
-
   _SCHEDULEDISPATCHER:Remove( self, ScheduleID )
 end
 
@@ -298,28 +295,17 @@ end
 -- @param #SCHEDULER self
 function SCHEDULER:Clear()
   self:F3( )
-
   _SCHEDULEDISPATCHER:Clear( self )
+end
+
+--- Show tracing for this scheduler.
+-- @param #SCHEDULER self
+function SCHEDULER:ShowTrace()
+  _SCHEDULEDISPATCHER:ShowTrace( self )
 end
 
 --- No tracing for this scheduler.
 -- @param #SCHEDULER self
--- @param #number ScheduleID (optional) The ScheduleID of the planned (repeating) schedule.
 function SCHEDULER:NoTrace()
-
   _SCHEDULEDISPATCHER:NoTrace( self )
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
