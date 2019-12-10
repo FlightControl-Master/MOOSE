@@ -654,6 +654,7 @@ end
 -- @param #AIRBASE self
 -- @param #AIRBASE.TerminalType termtype Terminal type for which marks should be placed.
 -- @param #boolean mark If false, do not place markers but only give output to DCS.log file. Default true.
+-- @return #table Table with marker IDs.
 function AIRBASE:MarkParkingSpots(termtype, mark)
 
   -- Default is true.
@@ -668,6 +669,8 @@ function AIRBASE:MarkParkingSpots(termtype, mark)
   local airbasename=self:GetName()
   self:E(string.format("Parking spots at %s for termial type %s:", airbasename, tostring(termtype)))
 
+  self.parkingmarks=self.parkingmarks or {}
+  
   for _,_spot in pairs(parkingdata) do
 
     -- Mark text.
@@ -676,15 +679,33 @@ function AIRBASE:MarkParkingSpots(termtype, mark)
 
     -- Create mark on the F10 map.
     if mark then
-      _spot.Coordinate:MarkToAll(_text)
+      local mid=_spot.Coordinate:MarkToAll(_text)
+      if self.parkingmarks[_spot.TerminalID] then
+        _spot.Coordinate:RemoveMark(self.parkingmarks[_spot.TerminalID])
+      end
+      self.parkingmarks[_spot.TerminalID]=mid
     end
 
     -- Info to DCS.log file.
     local _text=string.format("%s, Term Index=%3d, Term Type=%03d, Free=%5s, TOAC=%5s, Term ID0=%3d, Dist2Rwy=%.1f m",
     airbasename, _spot.TerminalID, _spot.TerminalType,tostring(_spot.Free),tostring(_spot.TOAC),_spot.TerminalID0,_spot.DistToRwy)
-    self:E(_text)
+    self:I(_text)
   end
+  
+  return markers
 end
+
+--- Place markers of parking spots on the F10 map and update regularly.
+-- @param #AIRBASE self
+-- @param #AIRBASE.TerminalType termtype Terminal type for which marks should be placed.
+-- @param #boolean mark If false, do not place markers but only give output to DCS.log file. Default true.
+function AIRBASE:MonitorParkingSpots(termtype, mark)
+
+  local sched,shedid=SCHEDULER:New(self, self.MarkParkingSpots, {self,termtype,mark}, 5, 5)
+
+
+end
+
 
 --- Seach unoccupied parking spots at the airbase for a specific group of aircraft. The routine also optionally checks for other unit, static and scenery options in a certain radius around the parking spot.
 -- The dimension of the spawned aircraft and of the potential obstacle are taken into account. Note that the routine can only return so many spots that are free.

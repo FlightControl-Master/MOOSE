@@ -50,6 +50,7 @@
 -- @field #string landing Landing type.
 -- @field #table flights Table of flight groups.
 -- @field #number Nspawn Number of max spawned aircraft groups. 
+-- @field #number Nunits Number of units in group.
 -- @extends Core.Fsm#FSM
 RATCRAFT = {
   ClassName      = "RATCRAFT",
@@ -83,6 +84,7 @@ RATCRAFT = {
   landing        = nil,
   flights        =  {},
   Nspawn         =   2,
+  Nunits         = nil,
 }
 
 --- Generalized asset attributes. Can be used to request assets with certain general characteristics. See [DCS attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes) on hoggit.
@@ -191,6 +193,9 @@ function RATCRAFT:_Init(groupname)
   self.country=self.templategroup:GetUnit(1):GetCountry()
   
   self.category=self.templategroup:GetUnit(1):GetCategory()
+  
+  
+  self.Nunits=#self.templategroup:GetUnits()
 
   -- aircraft dimensions
   self.sizex=self.DCSdesc.box.max.x
@@ -225,6 +230,7 @@ function RATCRAFT:AddDepartureAirbase(airbasename, parking)
     for _,TerminalID in pairs(parking) do
       local spot=airbase:GetParkingSpotData(TerminalID)
       if spot then
+        self:I(string.format("Add in parking spot %d", spot.TerminalID))
         table.insert(spots, spot)
       end
     end
@@ -232,7 +238,7 @@ function RATCRAFT:AddDepartureAirbase(airbasename, parking)
   
   departure.name=airbasename
   departure.type=RATCRAFT.DeType.AIRBASE
-  departure.parking=parking  
+  departure.parking=spots
   table.insert(self.departures, departure)
   
   return self
@@ -353,10 +359,12 @@ function RATCRAFT:GetDeparture()
         local group=self.templategroup --Wrapper.Group#GROUP
         
         -- Get number of free parking spots.
-        local parking=airbase:FindFreeParkingSpotForAircraft(group)
+        --local parking=airbase:FindFreeParkingSpotForAircraft(group)
+        local parking=self:GetParkingDeparture(departure)
+        
       
         -- Check if parking is sufficient.
-        if #parking>=#group:GetUnits() then
+        if parking and #parking>=self.Nunits then
           
           self:I(string.format("Returning departure %s", departure.name))
           return departure, parking
@@ -385,6 +393,84 @@ function RATCRAFT:GetDeparture()
   end
 
 end
+
+--- Get parking at departure.
+-- @param #RATCRAFT self
+-- @param #RATCRAFT.Departure departure The chosen departure.
+-- @return #table Parking data table or nil if not enough spots.
+function RATCRAFT:GetParkingDeparture(departure)
+
+  if departure.type==RATCRAFT.DeType.AIRBASE then
+  
+    local airbase=AIRBASE:FindByName(departure.name)
+    
+    if airbase then
+    
+      local parkingdata=airbase:GetParkingSpotsTable()
+    
+      if departure.parking then
+        ---
+        -- User specified parking spots
+        ---
+        
+        -- Check if free?
+        local parking={}
+        for _,_spot in pairs(parkingdata) do
+          local spot=_spot --Wrapper.Airbase#AIRBASE.ParkingSpot
+          self:I(string.format("Checking spot %d", spot.TerminalID))
+          -- Check if spot if free?
+          if spot.Free then
+          
+            self:I(string.format("Spot %d is FREE", spot.TerminalID))
+            -- Check if spot is in user table?
+            for _,_park in pairs(departure.parking) do
+              local park=_park --Wrapper.Airbase#AIRBASE.ParkingSpot
+              
+              if park.TerminalID==spot.TerminalID then
+                self:I(string.format("Adding spot %d to parking", spot.TerminalID))
+                table.insert(parking, spot)
+              end
+                           
+            end
+            
+          end
+        end
+        
+        -- Only return data if sufficient spots available.
+        if #parking>=self.Nunits then
+          self:I(string.format("Found valid parking for %d spots", #parking)) 
+          return parking
+        end
+      
+      else
+        ---
+        -- Choose parking from what is free
+        ---
+        
+        local parking={}
+        for _,_spot in pairs(parkingdata) do
+          local spot=_spot --Wrapper.Airbase#AIRBASE.ParkingSpot
+          
+          if spot.Free then        
+            table.insert(parking, spot)
+          end
+          
+          if #parking>=self.Nunits then
+            return parking
+          end
+          
+        end
+      end
+    
+    
+    end
+  
+  end
+
+  self:I(string.format("Could not find valid parking data")) 
+  return nil
+end
+
 
 --- Get destination.
 -- @param #RATCRAFT self

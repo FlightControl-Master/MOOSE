@@ -2297,6 +2297,10 @@ end
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:_UpdateRoute(n)
 
+  if true then
+    --return
+  end
+
   -- TODO: what happens if currentwp=#waypoints
   n=n or self.currentwp+1
   
@@ -2314,7 +2318,8 @@ function FLIGHTGROUP:_UpdateRoute(n)
   else
     if self:IsTaxiing() or self:IsParking() or self:IsSpawned() then
       local coord=self.group:GetCoordinate()
-      local current=coord:WaypointAirTakeOffParking(nil, 50)
+      --local current=coord:WaypointAirTakeOffParking(nil, 50)
+      local current=coord:WaypointAir( AltType, COORDINATE.WaypointType.TakeOffParkingHot, COORDINATE.WaypointAction.FromParkingAreaHot, 50, true, coord:GetClosestAirbase(), {}, "Takeoff")
       table.insert(wp, current)
     end
   end
@@ -2374,7 +2379,7 @@ function FLIGHTGROUP:_UpdateRoute(n)
       
       if airbase then
           -- Route flight to destination/home.
-          self:RTB(airbase)        
+          --self:RTB(airbase)        
       else
         -- Let flight orbit.
         --self:Orbit(self.group:GetCoordinate(), UTILS.FeetToMeters(20000), self.group:GetSpeedMax()*0.4)
@@ -2410,7 +2415,7 @@ function FLIGHTGROUP:_UpdateWaypointTasks()
       
       if #tasks>0 then
         for _,task in pairs(tasks) do
-          local Task=task --#FLIGHTGROUP.Task
+          local Task=task --#FLIGHTGROUP.Task          
           
           -- Add task execute.
           table.insert(taskswp, self.group:TaskFunction("FLIGHTGROUP._TaskExecute", self, Task))

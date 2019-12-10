@@ -133,7 +133,7 @@ function RAT2:_CheckQueueSpawn()
       
       if flight:IsInUtero() or flight:IsArrived() or flight:IsDead() then
       
-        self:I(string.format("Spawning new flight group %s in status %s", flight.groupname, flight:GetState()))
+        self:I(string.format("Try Spawning new flight group %s in status %s", flight.groupname, flight:GetState()))
           
         -- Get departure and parking.
         local departure, parking=ratcraft:GetDeparture()
@@ -141,9 +141,9 @@ function RAT2:_CheckQueueSpawn()
         -- Get destination depending on departure.
         local destination=ratcraft:GetDestination(departure)
         
-        if departure and destination then
+        if departure and destination and parking then
         
-          parking=departure.parking or parking
+          self:I(string.format("Spawning new flight group %s in status %s", flight.groupname, flight:GetState()))
         
           -- Try to spawn a ratcraft group.
           local group=self:_SpawnRatcraft(ratcraft, flight, departure, destination, parking)
@@ -836,7 +836,7 @@ function RAT2:_GetFlightplan(ratcraft, departure, destination)
 
 
   -- Mark points at waypoints for debugging.
-  if self.Debug then
+  if self.Debug or true then
     for i,coord in pairs(c) do
       local coord=coord --Core.Point#COORDINATE
       local dist=0

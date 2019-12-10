@@ -1341,9 +1341,9 @@ function RANGE:AddBombingTargetUnit(unit, goodhitrange, randommove)
 
   -- Debug or error output.
   if _isstatic==true then
-    self:T(self.id..string.format("Adding STATIC bombing target %s with good hit range %d. Random move = %s.", name, goodhitrange, tostring(randommove)))
+    self:I(self.id..string.format("Adding STATIC bombing target %s with good hit range %d. Random move = %s.", name, goodhitrange, tostring(randommove)))
   elseif _isstatic==false then
-    self:T(self.id..string.format("Adding UNIT bombing target %s with good hit range %d. Random move = %s.", name, goodhitrange, tostring(randommove)))
+    self:I(self.id..string.format("Adding UNIT bombing target %s with good hit range %d. Random move = %s.", name, goodhitrange, tostring(randommove)))
   else
     self:E(self.id..string.format("ERROR! No bombing target with name %s could be found. Carefully check all UNIT and STATIC names defined in the mission editor!", name))
   end
