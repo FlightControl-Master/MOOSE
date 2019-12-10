@@ -326,6 +326,7 @@ function SPAWN:New( SpawnTemplatePrefix )
     self.SpawnInitModu  = nil                       -- No special modulation.
     self.SpawnInitRadio = nil                       -- No radio comms setting.
     self.SpawnInitModex = nil
+    self.SpawnInitAirbase = nil
 
 		self.SpawnGroups = {}														-- Array containing the descriptions of each Group to be Spawned.
 	else
@@ -378,6 +379,7 @@ function SPAWN:NewWithAlias( SpawnTemplatePrefix, SpawnAliasPrefix )
     self.SpawnInitModu  = nil                       -- No special modulation.
     self.SpawnInitRadio = nil                       -- No radio comms setting.
     self.SpawnInitModex = nil
+    self.SpawnInitAirbase = nil
     
 		self.SpawnGroups = {}														-- Array containing the descriptions of each Group to be Spawned.
 	else
@@ -433,6 +435,7 @@ function SPAWN:NewFromTemplate( SpawnTemplate, SpawnTemplatePrefix, SpawnAliasPr
     self.SpawnInitModu  = nil                       -- No special modulation.
     self.SpawnInitRadio = nil                       -- No radio comms setting.
     self.SpawnInitModex = nil
+    self.SpawnInitAirbase = nil
     
     self.SpawnGroups = {}                           -- Array containing the descriptions of each Group to be Spawned.
   else
@@ -499,6 +502,21 @@ function SPAWN:InitLateActivated( LateActivated )
   self:F( )
 
   self.LateActivated = LateActivated or true
+  
+  return self
+end
+
+--- Set spawns to happen at a particular airbase. Only for aircraft, of course.
+-- @param #SPAWN self
+-- @param #string AirbaseName Name of the airbase.
+-- @param #number Takeoff (Optional) Takeoff type. Can be SPAWN.Takeoff.Hot (default), SPAWN.Takeoff.Cold or SPAWN.Takeoff.Runway.
+-- @return #SPAWN self
+function SPAWN:InitAirbase( AirbaseName, Takeoff )
+  self:F( )
+
+  self.SpawnInitAirbase=AIRBASE:FindByName(AirbaseName)
+  
+  self.SpawnInitTakeoff=Takeoff or SPAWN.Takeoff.Hot
   
   return self
 end
@@ -1115,7 +1133,12 @@ end -- Delay methods
 function SPAWN:Spawn()
 	self:F( { self.SpawnTemplatePrefix, self.SpawnIndex, self.AliveUnits } )
 
-	return self:SpawnWithIndex( self.SpawnIndex + 1 )
+  if self.SpawnInitAirbase then
+    return self:SpawnAtAirbase(self.SpawnInitAirbase, self.SpawnInitTakeoff)
+  else
+	  return self:SpawnWithIndex( self.SpawnIndex + 1 )
+ end
+ 
 end
 
 --- Will re-spawn a group based on a given index.
@@ -3239,6 +3262,7 @@ end
 
 --- This function is called automatically by the Spawning scheduler.
 -- It is the internal worker method SPAWNing new Groups on the defined time intervals.
+-- @param #SPAWN self
 function SPAWN:_Scheduler()
 	self:F2( { "_Scheduler", self.SpawnTemplatePrefix, self.SpawnAliasPrefix, self.SpawnIndex, self.SpawnMaxGroups, self.SpawnMaxUnitsAlive } )
 	

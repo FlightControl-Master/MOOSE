@@ -196,8 +196,12 @@ function AI_BALANCER:onenterDestroying( SetGroup, From, Event, To, ClientName, A
   SetGroup:Flush( self )
 end
 
---- @param #AI_BALANCER self
+--- RTB
+-- @param #AI_BALANCER self
 -- @param Core.Set#SET_GROUP SetGroup
+-- @param #string From
+-- @param #string Event
+-- @param #string To
 -- @param Wrapper.Group#GROUP AIGroup
 function AI_BALANCER:onenterReturning( SetGroup, From, Event, To, AIGroup )
 
@@ -213,10 +217,13 @@ function AI_BALANCER:onenterReturning( SetGroup, From, Event, To, AIGroup )
       local PointVec2 = POINT_VEC2:New( AIGroup:GetVec2().x, AIGroup:GetVec2().y  )
       local ClosestAirbase = self.ReturnAirbaseSet:FindNearestAirbaseFromPointVec2( PointVec2 )
       self:T( ClosestAirbase.AirbaseName )
+      --[[
       AIGroup:MessageToRed( "Returning to " .. ClosestAirbase:GetName().. " ...", 30 )
       local RTBRoute = AIGroup:RouteReturnToAirbase( ClosestAirbase )
       AIGroupTemplate.route = RTBRoute
       AIGroup:Respawn( AIGroupTemplate )
+      ]]
+      AIGroup:RouteRTB(ClosestAirbase)
     end
 
 end
