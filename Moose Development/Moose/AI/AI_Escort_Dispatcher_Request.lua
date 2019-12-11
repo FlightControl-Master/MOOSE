@@ -1,4 +1,4 @@
---- **AI** -- (R2.5) - Models the assignment of AI escorts to player flights upon request using the radio menu.
+--- **AI** - Models the assignment of AI escorts to player flights upon request using the radio menu.
 --
 -- ## Features:
 --     
@@ -12,7 +12,7 @@
 -- ===       
 --
 -- @module AI.AI_ESCORT_DISPATCHER_REQUEST
--- @image AI_ESCORT_DISPATCHER_REQUEST.JPG
+-- @image MOOSE.JPG
 
 
 --- @type AI_ESCORT_DISPATCHER_REQUEST
