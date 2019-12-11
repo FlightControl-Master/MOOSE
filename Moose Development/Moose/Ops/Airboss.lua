@@ -1,4 +1,4 @@
---- **Ops** - (R2.5) - Manages aircraft CASE X recoveries for carrier operations (X=I, II, III).
+--- **Ops** - Manages aircraft CASE X recoveries for carrier operations (X=I, II, III).
 --
 -- The AIRBOSS class manages recoveries of human pilots and AI aircraft on aircraft carriers.
 --

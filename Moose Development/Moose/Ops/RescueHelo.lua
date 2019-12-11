@@ -1,4 +1,4 @@
---- **Ops** - (R2.5) - Rescue helicopter for carrier operations.
+--- **Ops** - Rescue helicopter for carrier operations.
 -- 
 -- Recue helicopter for carrier operations.
 --

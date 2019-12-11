@@ -1,4 +1,4 @@
---- **Ops** - (R2.5) - Recovery tanker for carrier operations.
+--- **Ops** - Recovery tanker for carrier operations.
 -- 
 -- Tanker aircraft flying a racetrack pattern overhead an aircraft carrier.
 --
