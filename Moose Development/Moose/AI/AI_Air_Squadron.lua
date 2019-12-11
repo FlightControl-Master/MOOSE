@@ -1,4 +1,4 @@
---- **AI** -- Models squadrons for airplanes and helicopters.
+--- **AI** - Models squadrons for airplanes and helicopters.
 --
 -- This is a class used in the @{AI_Air_Dispatcher} and derived dispatcher classes.
 -- 
@@ -9,7 +9,7 @@
 -- ===       
 --
 -- @module AI.AI_Air_Squadron
--- @image AI_Air_To_Air_Engage.JPG
+-- @image MOOSE.JPG
 
 
 
