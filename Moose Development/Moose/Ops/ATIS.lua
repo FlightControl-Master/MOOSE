@@ -81,6 +81,7 @@
 -- @field #table runwaymag Table of magnetic runway headings.
 -- @field #number runwaym2t Optional correction for magnetic to true runway heading conversion (and vice versa) in degrees.
 -- @field #boolean windtrue Report true (from) heading of wind. Default is magnetic.
+-- @field #boolean altimeterQNH Report altimeter QNH.
 -- @extends Core.Fsm#FSM
 
 --- *It is a very sad thing that nowadays there is so little useless information.* - Oscar Wilde
@@ -307,6 +308,7 @@ ATIS = {
   runwaymag      =    {},
   runwaym2t      =   nil,
   windtrue       =   nil,
+  altimeterQNH   =   nil,
 }
 
 --- NATO alphabet.
@@ -513,7 +515,7 @@ _ATIS={}
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version="0.5.0"
+ATIS.version="0.6.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -567,6 +569,7 @@ function ATIS:New(airbasename, frequency, modulation)
   self:SetMagneticDeclination()
   self:SetRunwayCorrectionMagnetic2True()
   self:SetRadioPower()
+  self:SetAltimeterQNH(true)
 
   -- Start State.
   self:SetStartState("Stopped")
@@ -772,6 +775,21 @@ end
 -- @return #ATIS self
 function ATIS:SetTemperatureFahrenheit()
   self.TDegF=true
+  return self
+end
+
+--- Report altimeter QNH.
+-- @param #ATIS self
+-- @param #boolean switch If true or nil, report altimeter QHN. If false, report QFF.
+-- @return #ATIS self
+function ATIS:SetAltimeterQNH(switch)
+  
+  if switch==true or switch==nil then
+    self.altimeterQNH=true
+  else
+    self.altimeterQNH=false
+  end
+  
   return self
 end
 
@@ -1013,7 +1031,7 @@ function ATIS:onafterBroadcast(From, Event, To)
   local coord=self.airbase:GetCoordinate()
 
   -- Get elevation.
-  local height=coord:GetLandHeight()+10
+  local height=coord:GetLandHeight()
 
   ----------------
   --- Pressure ---
@@ -1022,6 +1040,32 @@ function ATIS:onafterBroadcast(From, Event, To)
   -- Pressure in hPa.
   local qfe=coord:GetPressure(height)
   local qnh=coord:GetPressure(0)
+  
+  if self.altimeterQNH then
+  
+    -- Some constants.
+    local L=-0.0065    --[K/m]
+    local R= 8.31446   --[J/mol/K]
+    local g= 9.80665   --[m/s^2]
+    local M= 0.0289644 --[kg/mol]
+    local T0=coord:GetTemperature(0)+273.15 --[K] Temp at sea level.
+    local TS=288.15   -- Standard Temperature assumed by Altimeter is 15°C 
+    local q=qnh*100
+    
+    -- Calculate Pressure.
+    local P=q*(1+L*height/T0)^(-g*M/(R*L))    -- Pressure at sea level
+    local Q=P/(1+L*height/TS)^(-g*M/(R*L))    -- Altimeter QNH
+    local A=(T0/L)*((P/q)^(((-R*L)/(g*M)))-1) -- Altitude check
+     
+    
+    -- Debug aoutput
+    self:T2(self.lid..string.format("height=%.1f, A=%.1f, T0=%.1f, QFE=%.1f, QNH=%.1f, P=%.1f, Q=%.1f hPa = %.2f", height, A, T0-273.15, qfe, qnh, P/100, Q/100, UTILS.hPa2inHg(Q/100)))
+    
+    -- Set QNH value in hPa.
+    qnh=Q/100
+    
+  end
+  
 
   -- Convert to inHg.
   if self.PmmHg then
@@ -1052,7 +1096,7 @@ function ATIS:onafterBroadcast(From, Event, To)
   ------------
 
   -- Get wind direction and speed in m/s.
-  local windFrom, windSpeed=coord:GetWind(height)
+  local windFrom, windSpeed=coord:GetWind(height+10)
 
   -- Wind in magnetic or true.
   local magvar=self.magvar
@@ -1134,7 +1178,7 @@ function ATIS:onafterBroadcast(From, Event, To)
   -------------------
 
   -- Temperature in °C (or °F).
-  local temperature=coord:GetTemperature(height)
+  local temperature=coord:GetTemperature(height+5)
 
   -- Convert to °F.
   if self.TDegF then
@@ -1151,12 +1195,12 @@ function ATIS:onafterBroadcast(From, Event, To)
   local clouds, visibility, turbulence, fog, dust, static=self:GetMissionWeather()
 
   -- Check that fog is actually "thick" enough to reach the airport. If an airport is in the mountains, fog might not affect it as it is measured from sea level.
-  if fog and fog.thickness<height then
+  if fog and fog.thickness<height+25 then
     fog=nil
   end
 
   -- Dust only up to 1500 ft = 457 m ASL.
-  if dust and height>UTILS.FeetToMeters(1500) then
+  if dust and height+25>UTILS.FeetToMeters(1500) then
     dust=nil
   end
 
