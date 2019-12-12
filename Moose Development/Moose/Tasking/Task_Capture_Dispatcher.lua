@@ -55,7 +55,7 @@
 -- ===
 -- 
 -- @module Tasking.Task_Zone_Capture_Dispatcher
--- @image Task_Zone_Capture_Dispatcher.JPG
+-- @image MOOSE.JPG
 
 do -- TASK_CAPTURE_DISPATCHER
 

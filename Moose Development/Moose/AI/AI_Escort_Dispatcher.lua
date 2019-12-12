@@ -1,4 +1,4 @@
---- **AI** -- (R2.5) - Models the automatic assignment of AI escorts to player flights.
+--- **AI** - Models the automatic assignment of AI escorts to player flights.
 --
 -- ## Features:
 -- --     
@@ -12,7 +12,7 @@
 -- ===       
 --
 -- @module AI.AI_Escort_Dispatcher
--- @image AI_Escort_Dispatcher.JPG
+-- @image MOOSE.JPG
 
 
 --- @type AI_ESCORT_DISPATCHER

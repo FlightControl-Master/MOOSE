@@ -1,4 +1,4 @@
---- **AI** -- Models the process of AI air operations.
+--- **AI** - Models the process of AI air operations.
 -- 
 -- ===
 -- 

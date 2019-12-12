@@ -1,4 +1,4 @@
---- **Ops** - (R2.5) - Automatic Terminal Information Service (ATIS).
+--- **Ops** - Automatic Terminal Information Service (ATIS).
 --
 -- ===
 --
