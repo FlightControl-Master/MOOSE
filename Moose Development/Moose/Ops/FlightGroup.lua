@@ -1471,7 +1471,13 @@ end
 function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
   local text=string.format("Flight %s passed waypoint %d/%d", self.groupname, n, N)
   self:T(self.sid..text)
-  --MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
+  MESSAGE:New(text, 30, "DEBUG"):ToAll()
+  
+  
+  if self.destination and n>1 and n==N-1 then
+    self:__Hold(1, self.destination)
+  end
+  
 end
 
 --- On after "FuelLow" event.
@@ -1628,8 +1634,21 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold, S
     self:SetFlightControl(fc)
   end
   
+   -- Altitude above ground for a glide slope of 3°.
+  local alpha=math.rad(3)
+  local x1=UTILS.NMToMeters(10)
+  local x2=UTILS.NMToMeters(5)
+  local h1=x1*math.tan(alpha)
+  local h2=x2*math.tan(alpha)
+  local SpeedLand=140
+  local SpeedTo=180
+  
+  local runway=airbase:GetActiveRunway()
+  
+  -- Clear all tasks.
   self.group:ClearTasks()
   
+  -- Set holding flag to 333.
   self.flaghold:Set(333)
   
   -- Task fuction when reached holding point.
@@ -1637,7 +1656,7 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold, S
 
   -- Orbit until flaghold=1 (=true)
   local TaskOrbit=self.group:TaskOrbit(p0, nil, UTILS.KnotsToMps(SpeedHold), p1)
-  local TaskStop=self.group:TaskCondition(nil, self.flaghold.UserFlagName, 1)  
+  local TaskStop=self.group:TaskCondition(nil, self.flaghold.UserFlagName, 1, nil, 10*60)  
   local TaskControlled=self.group:TaskControlled(TaskOrbit, TaskStop)
   
   -- Waypoints.
@@ -1645,11 +1664,16 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold, S
   wp[#wp+1]=self.group:GetCoordinate():WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {}, "Current Pos")
   wp[#wp+1]=                        p0:WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {TaskArrived, TaskControlled}, "Holding Point")
   
+   -- Approach point: 10 NN in direction of runway.
+  local papp=airbase:GetCoordinate():Translate(x1, runway.heading-180):SetAltitude(h1)
+  wp[#wp+1]=papp:WaypointAirTurningPoint(nil, UTILS.KnotsToKmph(SpeedLand), {}, "Final Approach")  
+  
+  -- Okay, it looks like it's best to specify the coordinates not at the airbase but a bit away. This causes a more direct landing approach.
+  local pland=airbase:GetCoordinate():Translate(x2, runway.heading-180):SetAltitude(h2)  
+  wp[#wp+1]=pland:WaypointAirLanding(UTILS.KnotsToKmph(SpeedLand), airbase, {}, "Landing") 
  
   -- Respawn?
-  local respawn=false
-  
-  if respawn then
+  if not fc then
   
     -- Get group template.
     local Template=self.group:GetTemplate()
@@ -1662,11 +1686,13 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold, S
     --Respawn the group.
     self.group=self.group:Respawn(Template, true)
     
+  else
+
+    -- Route the group.
+    self.group:Route(wp, 1)
+
   end  
-  
-  -- Route the group.
-  self.group:Route(wp, 1)
-  
+    
 end
 
 --- On after TaskExecute event.
@@ -2300,6 +2326,8 @@ function FLIGHTGROUP:_UpdateRoute(n)
   if true then
     --return
   end
+  
+  MESSAGE:New("Updating route", 10):ToAll()
 
   -- TODO: what happens if currentwp=#waypoints
   n=n or self.currentwp+1
@@ -2312,17 +2340,26 @@ function FLIGHTGROUP:_UpdateRoute(n)
   
   -- Set current waypoint or we get problem that the _PassingWaypoint function is triggered too early, i.e. right now and not when passing the next WP.
   -- TODO: This, however, leads to the flight to go right over this point when it is on an airport ==> Need to test Waypoint takeoff
+
+  --local current=self.group:GetCoordinate():WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, 350, true, nil, {}, "Current")
+  --table.insert(wp, current)        
+
+  --[[  
   if self:IsAirborne() then 
     local current=self.group:GetCoordinate():WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, 350, true, nil, {}, "Current")
     table.insert(wp, current)
   else
     if self:IsTaxiing() or self:IsParking() or self:IsSpawned() then
-      local coord=self.group:GetCoordinate()
+      --local coord=self.group:GetCoordinate()
       --local current=coord:WaypointAirTakeOffParking(nil, 50)
-      local current=coord:WaypointAir( AltType, COORDINATE.WaypointType.TakeOffParkingHot, COORDINATE.WaypointAction.FromParkingAreaHot, 50, true, coord:GetClosestAirbase(), {}, "Takeoff")
-      table.insert(wp, current)
+      --local current=coord:WaypointAir( AltType, COORDINATE.WaypointType.TakeOffParkingHot, COORDINATE.WaypointAction.FromParkingAreaHot, 50, true, coord:GetClosestAirbase(), {}, "Takeoff")
+      --table.insert(wp, current)
     end
+    
+    local current=self.group:GetCoordinate():WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, 350, true, nil, {}, "Current")
+    table.insert(wp, current)      
   end
+  ]]
 
   -- Set "remaining" waypoits.
   for i=n, #self.waypoints do
@@ -2344,14 +2381,16 @@ function FLIGHTGROUP:_UpdateRoute(n)
     -- Task to hold.
     local TaskOverhead=self.group:TaskFunction("FLIGHTGROUP._DestinationOverhead", self, self.destination)
     
-    
+    -- Random overhead coordinate at destination.
     local coordoverhead=self.destination:GetZone():GetRandomCoordinate():SetAltitude(UTILS.FeetToMeters(6000))
   
     -- Add overhead waypoint.
     local wpoverhead=coordoverhead:WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint, 500, false, nil, {TaskOverhead}, "Destination Overhead")
+    
+    -- Debug info.
     self:T(self.sid..string.format("Adding overhead waypoint as #%d", #wp))
     
-    
+    -- Add overhead to waypoints.
     table.insert(wp, #wp, wpoverhead)
   end
   
@@ -2582,7 +2621,7 @@ function FLIGHTGROUP:_AllSimilarStatus(status)
   for _,_element in pairs(self.elements) do
     local element=_element --#FLIGHTGROUP.Element
     
-    self:T(self.sid..string.format("Status=%s, element %s status=%s", status, element.name, element.status))
+    self:T2(self.sid..string.format("Status=%s, element %s status=%s", status, element.name, element.status))
 
     -- Dead units dont count ==> We wont return false for those.
     if element.status~=FLIGHTGROUP.ElementStatus.DEAD then
@@ -2626,7 +2665,7 @@ function FLIGHTGROUP:_AllSimilarStatus(status)
           element.status==FLIGHTGROUP.ElementStatus.SPAWNED or
           element.status==FLIGHTGROUP.ElementStatus.PARKING or
           element.status==FLIGHTGROUP.ElementStatus.TAXIING) then
-          self:T(self.sid..string.format("Status=%s, element %s status=%s ==> returning FALSE", status, element.name, element.status))
+          self:T3(self.sid..string.format("Status=%s, element %s status=%s ==> returning FALSE", status, element.name, element.status))
           return false
         end
 
@@ -2669,7 +2708,8 @@ function FLIGHTGROUP:_AllSimilarStatus(status)
 
   end
 
-  self:T(self.sid..string.format("All similar status %s ==> returning TRUE", status))
+  -- Debug info.
+  self:T2(self.sid..string.format("All similar status %s ==> returning TRUE", status))
   
   return true
 end

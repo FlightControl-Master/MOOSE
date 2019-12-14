@@ -1438,7 +1438,7 @@ function FLIGHTCONTROL:_LandAI(flight, parking)
   flight.group=flight.group:Respawn(Template, true)
       
   -- Route the group.
-  flight.group:Route(wp, 1)
+  --flight.group:Route(wp, 1)
   
 end
 
