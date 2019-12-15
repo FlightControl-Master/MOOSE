@@ -198,7 +198,7 @@ FOX.MenuF10Root=nil
 
 --- FOX class version.
 -- @field #string version
-FOX.version="0.6.0"
+FOX.version="0.6.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -243,6 +243,7 @@ function FOX:New()
   self:AddTransition("*",      "MissileDestroyed",          "*")           -- Missile was destroyed before impact.
   self:AddTransition("*",         "EnterSafeZone",          "*")           -- Player enters a safe zone.
   self:AddTransition("*",          "ExitSafeZone",          "*")           -- Player exists a safe zone.
+  self:AddTransition("Running",            "Stop",          "Stopped")     -- Stop FOX script.
 
   ------------------------
   --- Pseudo Functions ---
