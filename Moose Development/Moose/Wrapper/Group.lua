@@ -1046,6 +1046,45 @@ function GROUP:GetFuel()
 end
 
 
+--- Get the number of shells, rockets, bombs and missiles the whole group currently has.
+-- @param #GROUP self
+-- @return #number Total amount of ammo the group has left. This is the sum of shells, rockets, bombs and missiles of all units.
+-- @return #number Number of shells left.
+-- @return #number Number of rockets left.
+-- @return #number Number of bombs left.
+-- @return #number Number of missiles left. 
+function GROUP:GetAmmunition()
+  self:F( self.ControllableName )
+
+  local DCSControllable = self:GetDCSObject()
+  
+  local Ntot=0
+  local Nshells=0
+  local Nrockets=0
+  local Nmissiles=0
+  
+  if DCSControllable then
+    
+    -- Loop over units.
+    for UnitID, UnitData in pairs( self:GetUnits() ) do
+      local Unit = UnitData -- Wrapper.Unit#UNIT
+      
+      -- Get ammo of the unit
+      local ntot, nshells, nrockets, nmissiles = Unit:GetAmmunition()
+      
+      Ntot=Ntot+ntot
+      Nshells=Nshells+nshells
+      Nrockets=Nrockets+nrockets
+      Nmissiles=Nmissiles+nmissiles 
+      
+    end
+    
+  end
+  
+  return Ntot, Nshells, Nrockets, Nmissiles
+end
+
+
 do -- Is Zone methods
 
 --- Returns true if all units of the group are within a @{Zone}.
