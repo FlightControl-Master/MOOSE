@@ -493,6 +493,94 @@ function UNIT:GetAmmo()
   return nil
 end
 
+--- Get the number of ammunition and in particular the number of shells, rockets, bombs and missiles a unit currently has.
+-- @param #UNIT self
+-- @return #number Total amount of ammo the unit has left. This is the sum of shells, rockets, bombs and missiles.
+-- @return #number Number of shells left.
+-- @return #number Number of rockets left.
+-- @return #number Number of bombs left.
+-- @return #number Number of missiles left.
+function UNIT:GetAmmunition()
+
+  -- Init counter.
+  local nammo=0
+  local nshells=0
+  local nrockets=0
+  local nmissiles=0
+  local nbombs=0
+
+  local unit=self
+
+  -- Get ammo table.
+  local ammotable=unit:GetAmmo()
+
+  if ammotable then
+
+    local weapons=#ammotable
+    
+    -- Loop over all weapons.
+    for w=1,weapons do
+
+      -- Number of current weapon.
+      local Nammo=ammotable[w]["count"]
+
+      -- Type name of current weapon.
+      local Tammo=ammotable[w]["desc"]["typeName"]
+
+      local _weaponString = UTILS.Split(Tammo,"%.")
+      local _weaponName   = _weaponString[#_weaponString]
+
+      -- Get the weapon category: shell=0, missile=1, rocket=2, bomb=3
+      local Category=ammotable[w].desc.category
+
+      -- Get missile category: Weapon.MissileCategory AAM=1, SAM=2, BM=3, ANTI_SHIP=4, CRUISE=5, OTHER=6
+      local MissileCategory=nil
+      if Category==Weapon.Category.MISSILE then
+        MissileCategory=ammotable[w].desc.missileCategory
+      end
+
+      -- We are specifically looking for shells or rockets here.
+      if Category==Weapon.Category.SHELL then
+
+        -- Add up all shells.
+        nshells=nshells+Nammo
+
+      elseif Category==Weapon.Category.ROCKET then
+
+        -- Add up all rockets.
+        nrockets=nrockets+Nammo
+
+      elseif Category==Weapon.Category.BOMB then
+
+        -- Add up all rockets.
+        nbombs=nbombs+Nammo
+        
+      elseif Category==Weapon.Category.MISSILE then
+
+        -- Add up all cruise missiles (category 5)
+        if MissileCategory==Weapon.MissileCategory.AAM then
+          nmissiles=nmissiles+Nammo
+        elseif MissileCategory==Weapon.MissileCategory.ANTI_SHIP then
+          nmissiles=nmissiles+Nammo
+        elseif MissileCategory==Weapon.MissileCategory.BM then
+          nmissiles=nmissiles+Nammo
+        elseif MissileCategory==Weapon.MissileCategory.OTHER then
+          nmissiles=nmissiles+Nammo
+        end
+
+      end
+
+    end
+  end
+
+  -- Total amount of ammunition.
+  nammo=nshells+nrockets+nmissiles+nbombs
+
+  return nammo, nshells, nrockets, nbombs, nmissiles
+end
+
+
+
 --- Returns the unit sensors.
 -- @param #UNIT self
 -- @return DCS#Unit.Sensors
