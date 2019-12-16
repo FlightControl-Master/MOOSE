@@ -421,7 +421,7 @@ end
 -- @param #string To The To State string.
 function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
 
-  if Controllable:IsAlive() then
+  if Controllable and Controllable:IsAlive() then
 
     local EngageRoute = {}
 

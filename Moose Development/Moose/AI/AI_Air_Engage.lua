@@ -334,9 +334,8 @@ end
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
 function AI_AIR_ENGAGE:onafterEngage( AIGroup, From, Event, To )
-
+  -- TODO: This function is overwritten below!
   self:HandleEvent( EVENTS.Dead )
-
 end
 
 -- todo: need to fix this global function
@@ -349,10 +348,10 @@ end
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
 function AI_AIR_ENGAGE:onbeforeEngage( AIGroup, From, Event, To )
-  
   if self.Accomplished == true then
     return false
-  end
+  end  
+  return true
 end
 
 --- onafter event handler for Abort event.
@@ -405,14 +404,10 @@ end
 
 --- @param Wrapper.Group#GROUP AIControllable
 function AI_AIR_ENGAGE.___EngageRoute( AIGroup, Fsm, AttackSetUnit )
-
-  Fsm:I( { "AI_AIR_ENGAGE.___EngageRoute:", AIGroup:GetName() } )
+  Fsm:I(string.format("AI_AIR_ENGAGE.___EngageRoute: %s", tostring(AIGroup:GetName())))
   
-  if AIGroup:IsAlive() then
-    Fsm:__EngageRoute( Fsm.TaskDelay, AttackSetUnit )
-  
-    --local Task = AIGroup:TaskOrbitCircle( 4000, 400 )
-    --AIGroup:SetTask( Task )
+  if AIGroup and AIGroup:IsAlive() then
+    Fsm:__EngageRoute( Fsm.TaskDelay or 0.1, AttackSetUnit )
   end
 end
 
@@ -423,7 +418,6 @@ end
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
 function AI_AIR_ENGAGE:onafterEngageRoute( DefenderGroup, From, Event, To, AttackSetUnit )
-
   self:I( { DefenderGroup, From, Event, To, AttackSetUnit } )
   
   local DefenderGroupName = DefenderGroup:GetName()
@@ -450,39 +444,33 @@ function AI_AIR_ENGAGE:onafterEngageRoute( DefenderGroup, From, Event, To, Attac
       TargetCoord:SetY( EngageAltitude ) -- Ground targets don't have an altitude.
       
       local TargetDistance = DefenderCoord:Get2DDistance( TargetCoord )
-      local EngageDistance = ( DefenderGroup:IsHelicopter() and 5000 ) or ( DefenderGroup:IsAirPlane() and 10000 ) 
+      local EngageDistance = ( DefenderGroup:IsHelicopter() and 5000 ) or ( DefenderGroup:IsAirPlane() and 10000 )
       
-      if TargetDistance <= EngageDistance * 3 then
+      -- TODO: A factor of * 3 is way too close. This causes the AI not to engange until merged sometimes!
+      if TargetDistance <= EngageDistance * 9 then
 
+        self:I(string.format("AI_AIR_ENGAGE onafterEngageRoute ==> __Engage - target distance = %.1f km", TargetDistance/1000))
         self:__Engage( 0.1, AttackSetUnit )
 
       else
+      
+        self:I(string.format("FF AI_AIR_ENGAGE onafterEngageRoute ==> Routing - target distance = %.1f km", TargetDistance/1000))
 
         local EngageRoute = {}
         local AttackTasks = {}
         
         --- Calculate the target route point.
         
-        local FromWP = DefenderCoord:WaypointAir( 
-          self.PatrolAltType or "RADIO", 
-          POINT_VEC3.RoutePointType.TurningPoint, 
-          POINT_VEC3.RoutePointAction.TurningPoint, 
-          EngageSpeed, 
-          true 
-        )
+        local FromWP = DefenderCoord:WaypointAir(self.PatrolAltType or "RADIO", POINT_VEC3.RoutePointType.TurningPoint, POINT_VEC3.RoutePointAction.TurningPoint, EngageSpeed, true)
         
         EngageRoute[#EngageRoute+1] = FromWP
   
         self:SetTargetDistance( TargetCoord ) -- For RTB status check
         
         local FromEngageAngle = DefenderCoord:GetAngleDegrees( DefenderCoord:GetDirectionVec3( TargetCoord ) )
-        local ToWP = DefenderCoord:Translate( EngageDistance, FromEngageAngle, true ):WaypointAir( 
-          self.PatrolAltType or "RADIO", 
-          POINT_VEC3.RoutePointType.TurningPoint, 
-          POINT_VEC3.RoutePointAction.TurningPoint, 
-          EngageSpeed, 
-          true 
-        )
+        local ToCoord=DefenderCoord:Translate( EngageDistance, FromEngageAngle, true )
+        
+        local ToWP = ToCoord:WaypointAir(self.PatrolAltType or "RADIO", POINT_VEC3.RoutePointType.TurningPoint, POINT_VEC3.RoutePointAction.TurningPoint, EngageSpeed, true)
   
         EngageRoute[#EngageRoute+1] = ToWP
 
@@ -492,11 +480,12 @@ function AI_AIR_ENGAGE:onafterEngageRoute( DefenderGroup, From, Event, To, Attac
         DefenderGroup:OptionROEReturnFire()
         DefenderGroup:OptionROTEvadeFire()
         
-        DefenderGroup:Route( EngageRoute, self.TaskDelay )
+        DefenderGroup:Route( EngageRoute, self.TaskDelay or 0.1 )
       end
 
     end
   else
+    -- TODO: This will make an A2A Dispatcher CAP flight to return rather than going back to patrolling!
     self:I( DefenderGroupName .. ": No targets found -> Going RTB")
     self:Return()
   end
@@ -506,10 +495,11 @@ end
 --- @param Wrapper.Group#GROUP AIControllable
 function AI_AIR_ENGAGE.___Engage( AIGroup, Fsm, AttackSetUnit )
 
-  Fsm:I( { "AI_AIR_ENGAGE.___Engage:", AIGroup:GetName() } )
+  Fsm:I(string.format("AI_AIR_ENGAGE.___Engage: %s", tostring(AIGroup:GetName())))
   
-  if AIGroup:IsAlive() then
-    Fsm:__Engage( Fsm.TaskDelay, AttackSetUnit )
+  if AIGroup and AIGroup:IsAlive() then
+    local delay=Fsm.TaskDelay or 0.1
+    Fsm:__Engage(delay, AttackSetUnit)
   end
 end
 
@@ -520,7 +510,6 @@ end
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
 function AI_AIR_ENGAGE:onafterEngage( DefenderGroup, From, Event, To, AttackSetUnit )
-
   self:F( { DefenderGroup, From, Event, To, AttackSetUnit} )
   
   local DefenderGroupName = DefenderGroup:GetName()
@@ -532,7 +521,7 @@ function AI_AIR_ENGAGE:onafterEngage( DefenderGroup, From, Event, To, AttackSetU
   
   if AttackCount > 0 then
 
-    if DefenderGroup:IsAlive() then
+    if DefenderGroup and DefenderGroup:IsAlive() then
 
       local EngageAltitude = math.random( self.EngageFloorAltitude or 500, self.EngageCeilingAltitude or 1000 )
       local EngageSpeed = math.random( self.EngageMinSpeed, self.EngageMaxSpeed )
@@ -544,33 +533,25 @@ function AI_AIR_ENGAGE:onafterEngage( DefenderGroup, From, Event, To, AttackSetU
       TargetCoord:SetY( EngageAltitude ) -- Ground targets don't have an altitude.
       
       local TargetDistance = DefenderCoord:Get2DDistance( TargetCoord )
+      
       local EngageDistance = ( DefenderGroup:IsHelicopter() and 5000 ) or ( DefenderGroup:IsAirPlane() and 10000 )
       
       local EngageRoute = {}
       local AttackTasks = {}
       
-      local FromWP = DefenderCoord:WaypointAir( 
-        self.EngageAltType or "RADIO", 
-        POINT_VEC3.RoutePointType.TurningPoint, 
-        POINT_VEC3.RoutePointAction.TurningPoint, 
-        EngageSpeed, 
-        true 
-      )
+      local FromWP = DefenderCoord:WaypointAir(self.EngageAltType or "RADIO", POINT_VEC3.RoutePointType.TurningPoint, POINT_VEC3.RoutePointAction.TurningPoint, EngageSpeed, true)
       EngageRoute[#EngageRoute+1] = FromWP
 
       self:SetTargetDistance( TargetCoord ) -- For RTB status check
 
       local FromEngageAngle = DefenderCoord:GetAngleDegrees( DefenderCoord:GetDirectionVec3( TargetCoord ) )
-      local ToWP = DefenderCoord:Translate( EngageDistance, FromEngageAngle, true ):WaypointAir( 
-        self.EngageAltType or "RADIO", 
-        POINT_VEC3.RoutePointType.TurningPoint, 
-        POINT_VEC3.RoutePointAction.TurningPoint, 
-        EngageSpeed, 
-        true 
-      )
+      local ToCoord=DefenderCoord:Translate( EngageDistance, FromEngageAngle, true )
+      
+      local ToWP = ToCoord:WaypointAir(self.EngageAltType or "RADIO", POINT_VEC3.RoutePointType.TurningPoint, POINT_VEC3.RoutePointAction.TurningPoint, EngageSpeed, true)
       EngageRoute[#EngageRoute+1] = ToWP
       
-      if TargetDistance <= EngageDistance * 3 then
+      -- TODO: A factor of * 3 this way too low. This causes the AI NOT to engage until very close or even merged sometimes. Some A2A missiles have a much longer range! Needs more frequent updates of the task!
+      if TargetDistance <= EngageDistance * 9 then
       
         local AttackUnitTasks = self:CreateAttackUnitTasks( AttackSetUnit, DefenderGroup, EngageAltitude ) -- Polymorphic
         
@@ -579,7 +560,8 @@ function AI_AIR_ENGAGE:onafterEngage( DefenderGroup, From, Event, To, AttackSetU
           self:Return()
           return
         else
-          self:I( DefenderGroupName .. ": Engaging targets " )
+          local text=string.format("%s: Engaging targets at distance %.2f NM", DefenderGroupName, UTILS.MetersToNM(TargetDistance))
+          self:I(text)
           DefenderGroup:OptionROEOpenFire()
           DefenderGroup:OptionROTEvadeFire()
           DefenderGroup:OptionKeepWeaponsOnThreat()
@@ -591,10 +573,11 @@ function AI_AIR_ENGAGE:onafterEngage( DefenderGroup, From, Event, To, AttackSetU
       AttackTasks[#AttackTasks+1] = DefenderGroup:TaskFunction( "AI_AIR_ENGAGE.___Engage", self, AttackSetUnit )
       EngageRoute[#EngageRoute].task = DefenderGroup:TaskCombo( AttackTasks )
       
-      DefenderGroup:Route( EngageRoute, self.TaskDelay )
+      DefenderGroup:Route( EngageRoute, self.TaskDelay or 0.1 )
       
     end
   else
+    -- TODO: This will make an A2A Dispatcher CAP flight to return rather than going back to patrolling!
     self:I( DefenderGroupName .. ": No targets found -> returning.")
     self:Return()
     return
@@ -605,9 +588,9 @@ end
 function AI_AIR_ENGAGE.Resume( AIEngage, Fsm )
 
   AIEngage:F( { "Resume:", AIEngage:GetName() } )
-  if AIEngage:IsAlive() then
-    Fsm:__Reset( Fsm.TaskDelay )
-    Fsm:__EngageRoute( Fsm.TaskDelay, Fsm.AttackSetUnit )
+  if AIEngage and AIEngage:IsAlive() then
+    Fsm:__Reset( Fsm.TaskDelay or 0.1 )
+    Fsm:__EngageRoute( Fsm.TaskDelay or 0.2, Fsm.AttackSetUnit )
   end
   
 end
