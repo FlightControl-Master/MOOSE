@@ -3045,8 +3045,7 @@ do -- AI_A2A_DISPATCHER
             if DefenderTask.Type == "CAP" or DefenderTask.Type == "GCI" then
               -- If there is no target, then add the AIGroup to the ResultAIGroups for Engagement to the AttackerSet
               if DefenderTask.Target == nil then
-                if DefenderTask.Fsm:Is( "Returning" )
-                or DefenderTask.Fsm:Is( "Patrolling" ) then
+                if DefenderTask.Fsm:Is( "Returning" ) or DefenderTask.Fsm:Is( "Patrolling" ) then
                   Friendlies = Friendlies or {}
                   Friendlies[Friendly] = Friendly
                   DefenderCount = DefenderCount + Friendly:GetSize()
@@ -3315,19 +3314,20 @@ do -- AI_A2A_DISPATCHER
   -- @param Functional.Detection#DETECTION_BASE.DetectedItem AttackerDetection Detected item.
   -- @param #table Defenders Defenders table.
   function AI_A2A_DISPATCHER:onafterENGAGE( From, Event, To, AttackerDetection, Defenders )
-  
-    self:F("ENGAGING "..tostring(AttackerDetection.Name))
+    self:F("ENGAGING Detection ID="..tostring(AttackerDetection.ID))
   
     if Defenders then
 
       for DefenderID, Defender in pairs( Defenders ) do
 
         local Fsm = self:GetDefenderTaskFsm( Defender )
+
         Fsm:EngageRoute( AttackerDetection.Set ) -- Engage on the TargetSetUnit
-        
+
         self:SetDefenderTaskTarget( Defender, AttackerDetection )
 
       end
+      
     end
   end
 
@@ -3341,7 +3341,7 @@ do -- AI_A2A_DISPATCHER
   -- @param #table DefenderFriendlies Friendly defenders.
   function AI_A2A_DISPATCHER:onafterGCI( From, Event, To, AttackerDetection, DefendersMissing, DefenderFriendlies )
   
-    self:F("GCI "..tostring(AttackerDetection.Name))
+    self:F("GCI Detection ID="..tostring(AttackerDetection.ID))
 
     self:F( { From, Event, To, AttackerDetection.Index, DefendersMissing, DefenderFriendlies } )
 
@@ -3606,8 +3606,7 @@ do -- AI_A2A_DISPATCHER
     -- 2. There is sufficient fuel
     -- 3. There is sufficient ammo
     -- 4. The plane is not damaged
-    if DefenderGroups and DetectedItem.IsDetected == true then
-      
+    if DefenderGroups and DetectedItem.IsDetected == true then      
       return DefenderGroups
     end
     
@@ -3686,13 +3685,13 @@ do -- AI_A2A_DISPATCHER
     
     local TaskReport = REPORT:New()
           
-    local Report = REPORT:New( "Tactical Overviews" )
+    local Report = REPORT:New( "Tactical Overview:" )
 
     local DefenderGroupCount = 0
 
     -- Now that all obsolete tasks are removed, loop through the detected targets.
     --for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
-    for DetectedItemID, DetectedItem in UTILS.spairs( Detection:GetDetectedItems(), function( t, a, b ) return self:Order(t[a]) <  self:Order(t[b]) end  ) do
+    for DetectedItemID, DetectedItem in UTILS.spairs( Detection:GetDetectedItems(), function( t, a, b ) return self:Order(t[a]) <  self:Order(t[b]) end  ) do    
     
       local DetectedItem = DetectedItem -- Functional.Detection#DETECTION_BASE.DetectedItem
       local DetectedSet = DetectedItem.Set -- Core.Set#SET_UNIT
