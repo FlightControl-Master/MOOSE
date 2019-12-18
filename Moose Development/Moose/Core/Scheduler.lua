@@ -221,7 +221,7 @@ function SCHEDULER:New( MasterObject, SchedulerFunction, SchedulerArguments, Sta
   self.ShowTrace = false
   
   if SchedulerFunction then
-    ScheduleID = self:Schedule( MasterObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop, 4 )
+    ScheduleID = self:Schedule( MasterObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop, 3 )
   end
 
   return self, ScheduleID
@@ -243,13 +243,17 @@ function SCHEDULER:Schedule( MasterObject, SchedulerFunction, SchedulerArguments
   self:F2( { Start, Repeat, RandomizeFactor, Stop } )
   self:T3( { SchedulerArguments } )
 
+  -- Debug info.
   local ObjectName = "-"
   if MasterObject and MasterObject.ClassName and MasterObject.ClassID then 
     ObjectName = MasterObject.ClassName .. MasterObject.ClassID
   end
   self:F3( { "Schedule :", ObjectName, tostring( MasterObject ),  Start, Repeat, RandomizeFactor, Stop } )
+  
+  -- Set master object.
   self.MasterObject = MasterObject
   
+  -- Add schedule.
   local ScheduleID = _SCHEDULEDISPATCHER:AddSchedule( 
     self, 
     SchedulerFunction,
@@ -269,32 +273,36 @@ end
 
 --- (Re-)Starts the schedules or a specific schedule if a valid ScheduleID is provided.
 -- @param #SCHEDULER self
--- @param #table ScheduleID (Optional) The ScheduleID of the planned (repeating) schedule.
+-- @param #string ScheduleID (Optional) The ScheduleID of the planned (repeating) schedule.
 function SCHEDULER:Start( ScheduleID )
   self:F3( { ScheduleID } )
+  self:T(string.format("Starting scheduler ID=%s", tostring(ScheduleID)))
   _SCHEDULEDISPATCHER:Start( self, ScheduleID )
 end
 
 --- Stops the schedules or a specific schedule if a valid ScheduleID is provided.
 -- @param #SCHEDULER self
--- @param #table ScheduleID (Optional) The ScheduleID of the planned (repeating) schedule.
+-- @param #string ScheduleID (Optional) The ScheduleID of the planned (repeating) schedule.
 function SCHEDULER:Stop( ScheduleID )
   self:F3( { ScheduleID } )
+  self:T(string.format("Stopping scheduler ID=%s", tostring(ScheduleID)))
   _SCHEDULEDISPATCHER:Stop( self, ScheduleID )
 end
 
 --- Removes a specific schedule if a valid ScheduleID is provided.
 -- @param #SCHEDULER self
--- @param #number ScheduleID (optional) The ScheduleID of the planned (repeating) schedule.
+-- @param #string ScheduleID (optional) The ScheduleID of the planned (repeating) schedule.
 function SCHEDULER:Remove( ScheduleID )
   self:F3( { ScheduleID } )
-  _SCHEDULEDISPATCHER:Remove( self, ScheduleID )
+  self:T(string.format("Removing scheduler ID=%s", tostring(ScheduleID)))
+  _SCHEDULEDISPATCHER:RemoveSchedule( self, ScheduleID )
 end
 
 --- Clears all pending schedules.
 -- @param #SCHEDULER self
 function SCHEDULER:Clear()
   self:F3( )
+  self:T(string.format("Clearing scheduler"))
   _SCHEDULEDISPATCHER:Clear( self )
 end
 
