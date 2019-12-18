@@ -53,6 +53,19 @@ SCHEDULEDISPATCHER = {
   Schedule             = nil,
 }
 
+--- Player data table holding all important parameters of each player.
+-- @type SCHEDULEDISPATCHER.ScheduleData
+-- @field #function Function The schedule function to be called.
+-- @field #table Arguments Schedule function arguments.
+-- @field #number Start Start time in seconds.
+-- @field #number Repeat Repeat time intervall in seconds.
+-- @field #number Randomize Randomization factor [0,1].
+-- @field #number Stop Stop time in seconds.
+-- @field #number StartTime Time in seconds when the scheduler is created.
+-- @field #number ScheduleID Schedule ID.
+-- @field #function CallHandler Function to be passed to the DCS timer.scheduleFunction().
+-- @field #boolean ShowTrace If true, show tracing info.
+
 --- Create a new schedule dispatcher object.
 -- @param #SCHEDULEDISPATCHER self
 -- @return #SCHEDULEDISPATCHER self
@@ -76,7 +89,7 @@ end
 -- @param #number Stop Stop time in seconds.
 -- @param #number TraceLevel Trace level [0,3].
 -- @param Core.Fsm#FSM Fsm Finite state model.
--- @return #table Call ID or nil.
+-- @return #string Call ID or nil.
 function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleArguments, Start, Repeat, Randomize, Stop, TraceLevel, Fsm )
   self:F2( { Scheduler, ScheduleFunction, ScheduleArguments, Start, Repeat, Randomize, Stop, TraceLevel, Fsm } )
 
@@ -85,9 +98,10 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
   
   -- Create ID.
   local CallID = self.CallID .. "#" .. ( Scheduler.MasterObject and Scheduler.MasterObject.GetClassNameAndID and Scheduler.MasterObject:GetClassNameAndID() or "" ) or ""
+  
+  self:T2(string.format("Adding schedule #%d CallID=%s", self.CallID, CallID))
 
-  -- Initialize the ObjectSchedulers array, which is a weakly coupled table.
-  -- If the object used as the key is nil, then the garbage collector will remove the item from the Functions array.
+  -- Initialize PersistentSchedulers
   self.PersistentSchedulers = self.PersistentSchedulers or {}
 
   -- Initialize the ObjectSchedulers array, which is a weakly coupled table.
@@ -104,11 +118,11 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
   
   self.Schedule = self.Schedule or setmetatable( {}, { __mode = "k" } )
   self.Schedule[Scheduler] = self.Schedule[Scheduler] or {}
-  self.Schedule[Scheduler][CallID] = {}
+  self.Schedule[Scheduler][CallID] = {}  --#SCHEDULEDISPATCHER.ScheduleData
   self.Schedule[Scheduler][CallID].Function = ScheduleFunction
   self.Schedule[Scheduler][CallID].Arguments = ScheduleArguments
   self.Schedule[Scheduler][CallID].StartTime = timer.getTime() + ( Start or 0 )
-  self.Schedule[Scheduler][CallID].Start = Start + .1
+  self.Schedule[Scheduler][CallID].Start = Start + 0.1
   self.Schedule[Scheduler][CallID].Repeat = Repeat or 0
   self.Schedule[Scheduler][CallID].Randomize = Randomize or 0
   self.Schedule[Scheduler][CallID].Stop = Stop
@@ -150,6 +164,7 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
 
   self:T3( self.Schedule[Scheduler][CallID] )
 
+  --- Function passed to the DCS timer.scheduleFunction()
   self.Schedule[Scheduler][CallID].CallHandler = function( Params )
     
     local CallID = Params.CallID
@@ -166,7 +181,8 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
       return errmsg
     end
     
-    local Scheduler = self.ObjectSchedulers[CallID]
+    -- Get object or persistant scheduler object.
+    local Scheduler = self.ObjectSchedulers[CallID]  --Core.Scheduler#SCHEDULER
     if not Scheduler then
       Scheduler = self.PersistentSchedulers[CallID]
     end
@@ -175,20 +191,24 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
     
     if Scheduler then
 
-      local MasterObject = tostring(Scheduler.MasterObject) 
-      local Schedule = self.Schedule[Scheduler][CallID]
+      local MasterObject = tostring(Scheduler.MasterObject)
+      
+      -- Schedule object.
+      local Schedule = self.Schedule[Scheduler][CallID]  --#SCHEDULEDISPATCHER.ScheduleData
       
       --self:T3( { Schedule = Schedule } )
 
       local SchedulerObject = Scheduler.MasterObject --Scheduler.SchedulerObject Now is this the Maste or Scheduler object?
-      local ScheduleFunction = Schedule.Function
+      local ShowTrace       = Scheduler.ShowTrace
+      
+      local ScheduleFunction  = Schedule.Function
       local ScheduleArguments = Schedule.Arguments or {}
-      local Start = Schedule.Start
-      local Repeat = Schedule.Repeat or 0
-      local Randomize = Schedule.Randomize or 0
-      local Stop = Schedule.Stop or 0
-      local ScheduleID = Schedule.ScheduleID
-      local ShowTrace = Scheduler.ShowTrace
+      local Start             = Schedule.Start
+      local Repeat            = Schedule.Repeat or 0
+      local Randomize         = Schedule.Randomize or 0
+      local Stop              = Schedule.Stop or 0
+      local ScheduleID        = Schedule.ScheduleID
+      
       
       local Prefix = ( Repeat == 0 ) and "--->" or "+++>"
       
@@ -215,24 +235,20 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
       local CurrentTime = timer.getTime()
       local StartTime = Schedule.StartTime
 
-      self:F3( { Master = MasterObject, CurrentTime = CurrentTime, StartTime = StartTime, Start = Start, Repeat = Repeat, Randomize = Randomize, Stop = Stop } )
+      -- Debug info.
+      self:F3( { CallID=CallID, ScheduleID=ScheduleID, Master = MasterObject, CurrentTime = CurrentTime, StartTime = StartTime, Start = Start, Repeat = Repeat, Randomize = Randomize, Stop = Stop } )
       
       
       if Status and (( Result == nil ) or ( Result and Result ~= false ) ) then
+      
         if Repeat ~= 0 and ( ( Stop == 0 ) or ( Stop ~= 0 and CurrentTime <= StartTime + Stop ) ) then
-          local ScheduleTime =
-            CurrentTime +
-            Repeat +
-            math.random(
-              - ( Randomize * Repeat / 2 ),
-              ( Randomize * Repeat  / 2 )
-            ) +
-            0.0001  -- Accuracy
+          local ScheduleTime = CurrentTime + Repeat + math.random(- ( Randomize * Repeat / 2 ), ( Randomize * Repeat  / 2 )) + 0.0001  -- Accuracy
           --self:T3( { Repeat = CallID, CurrentTime, ScheduleTime, ScheduleArguments } )
           return ScheduleTime -- returns the next time the function needs to be called.
         else
           self:Stop( Scheduler, CallID )
         end
+        
       else
         self:Stop( Scheduler, CallID )
       end
@@ -265,24 +281,27 @@ end
 -- @param #SCHEDULEDISPATCHER self
 -- @param Core.Scheduler#SCHEDULER Scheduler Scheduler object.
 -- @param #table CallID (Optional) Call ID.
--- @param #table CallID Call ID.
 -- @param #string Info (Optional) Debug info.
 function SCHEDULEDISPATCHER:Start( Scheduler, CallID, Info )
   self:F2( { Start = CallID, Scheduler = Scheduler } )
   
   if CallID then
   
-    local Schedule = self.Schedule[Scheduler]
+    local Schedule = self.Schedule[Scheduler][CallID] --#SCHEDULEDISPATCHER.ScheduleData
     
     -- Only start when there is no ScheduleID defined!
     -- This prevents to "Start" the scheduler twice with the same CallID...
-    if not Schedule[CallID].ScheduleID then
-      Schedule[CallID].StartTime = timer.getTime()  -- Set the StartTime field to indicate when the scheduler started.
-      Schedule[CallID].ScheduleID = timer.scheduleFunction( 
-        Schedule[CallID].CallHandler, 
-        { CallID = CallID, Info = Info }, 
-        timer.getTime() + Schedule[CallID].Start 
-      )
+    if not Schedule.ScheduleID then
+    
+      -- Current time in seconds.
+      local Tnow=timer.getTime()
+    
+      Schedule.StartTime = Tnow  -- Set the StartTime field to indicate when the scheduler started.
+            
+      -- Start DCS schedule function https://wiki.hoggitworld.com/view/DCS_func_scheduleFunction
+      Schedule.ScheduleID = timer.scheduleFunction(Schedule.CallHandler, { CallID = CallID, Info = Info }, Tnow + Schedule.Start)
+      
+      self:T(string.format("Starting scheduledispatcher Call ID=%s ==> Schedule ID=%s", tostring(CallID), tostring(Schedule.ScheduleID)))
     end
     
   else
@@ -304,12 +323,20 @@ function SCHEDULEDISPATCHER:Stop( Scheduler, CallID )
 
   if CallID then
   
-    local Schedule = self.Schedule[Scheduler]
+    local Schedule = self.Schedule[Scheduler][CallID] --#SCHEDULEDISPATCHER.ScheduleData
     
     -- Only stop when there is a ScheduleID defined for the CallID. So, when the scheduler was stopped before, do nothing.
-    if Schedule[CallID].ScheduleID then
-      timer.removeFunction( Schedule[CallID].ScheduleID )
-      Schedule[CallID].ScheduleID = nil
+    if Schedule.ScheduleID then
+    
+      self:T(string.format("scheduledispatcher stopping scheduler CallID=%s, ScheduleID=%s", tostring(CallID), tostring(Schedule.ScheduleID)))
+    
+      -- Remove schedule function https://wiki.hoggitworld.com/view/DCS_func_removeFunction
+      timer.removeFunction(Schedule.ScheduleID)
+      
+      Schedule.ScheduleID = nil
+      
+    else
+      self:E(string.format("Error no ScheduleID for CallID=%s", tostring(CallID)))
     end
     
   else
