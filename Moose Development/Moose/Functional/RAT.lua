@@ -5173,6 +5173,7 @@ function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace, departure, take
       if self.uncontrolled then
         -- This is used in the SPAWN:SpawnWithIndex() function. Some values are overwritten there!
         self.SpawnUnControlled=true
+        SpawnTemplate.uncontrolled=true
       end
       
       -- Number of units in the group. With grouping this can actually differ from the template group size!
