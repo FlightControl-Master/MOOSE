@@ -550,7 +550,7 @@ RAT.id="RAT | "
 --- RAT version.
 -- @list version
 RAT.version={
-  version = "2.3.8",
+  version = "2.3.9",
   print = true,
 }
 
