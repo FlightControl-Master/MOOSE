@@ -636,7 +636,7 @@ function AI_PATROL_ZONE:onafterStart( Controllable, From, Event, To )
 
   self.Controllable:OnReSpawn(
     function( PatrolGroup )
-      self:E( "ReSpawn" )
+      self:T( "ReSpawn" )
       self:__Reset( 1 )
       self:__Route( 5 )
     end
@@ -741,7 +741,7 @@ function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
     -- This will make the plane fly immediately to the patrol zone.
     
     if self.Controllable:InAir() == false then
-      self:E( "Not in the air, finding route path within PatrolZone" )
+      self:T( "Not in the air, finding route path within PatrolZone" )
       local CurrentVec2 = self.Controllable:GetVec2()
       --TODO: Create GetAltitude function for GROUP, and delete GetUnit(1).
       local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
@@ -756,7 +756,7 @@ function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
         )
       PatrolRoute[#PatrolRoute+1] = CurrentRoutePoint
     else
-      self:E( "In the air, finding route path within PatrolZone" )
+      self:T( "In the air, finding route path within PatrolZone" )
       local CurrentVec2 = self.Controllable:GetVec2()
       --TODO: Create GetAltitude function for GROUP, and delete GetUnit(1).
       local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
