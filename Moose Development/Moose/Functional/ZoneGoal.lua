@@ -17,10 +17,10 @@
 do -- Zone
 
   --- @type ZONE_GOAL
-  -- @extends Core.Fsm#FSM
+  -- @extends Core.Zone#ZONE_RADIUS
 
 
-  -- Models processes that have a Goal with a defined achievement involving a Zone. 
+  --- Models processes that have a Goal with a defined achievement involving a Zone. 
   -- Derived classes implement the ways how the achievements can be realized.
   -- 
   -- ## 1. ZONE_GOAL constructor
@@ -39,7 +39,10 @@ do -- Zone
   -- 
   -- @field #ZONE_GOAL
   ZONE_GOAL = {
-    ClassName = "ZONE_GOAL",
+    ClassName      = "ZONE_GOAL",
+    Goal           = nil,
+    SmokeTime      = nil,
+    SmokeScheduler = nil,
   }
   
   --- ZONE_GOAL Constructor.

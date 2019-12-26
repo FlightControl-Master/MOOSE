@@ -38,6 +38,8 @@ do -- ZoneGoal
   -- @field #ZONE_GOAL_COALITION
   ZONE_GOAL_COALITION = {
     ClassName = "ZONE_GOAL_COALITION",
+    Coalition = nil,
+    
   }
   
   --- @field #table ZONE_GOAL_COALITION.States
@@ -104,6 +106,7 @@ do -- ZoneGoal
     local State = self:GetState()
     self:F( { State = self:GetState() } )
   
+    env.info("scanning")
     self:Scan( { Object.Category.UNIT, Object.Category.STATIC } )
   
   end
