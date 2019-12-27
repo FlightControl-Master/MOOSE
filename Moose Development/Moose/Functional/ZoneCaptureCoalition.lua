@@ -544,6 +544,41 @@ do -- ZONE_CAPTURE_COALITION
     -- @param #ZONE_CAPTURE_COALITION self
     -- @param #number Delay
 
+    self:AddTransition( "*", "ChangeCoalition", "*" )
+   
+    --- ChangeCoalition Handler OnBefore for ZONE_CAPTURE_COALITION
+    -- @function [parent=#ZONE_CAPTURE_COALITION] OnBeforeChangeCoalition
+    -- @param #ZONE_CAPTURE_COALITION self
+    -- @param #string From
+    -- @param #string Event
+    -- @param #string To
+    -- @param #number NewCoalition New coalition ID, i.e. after the change.
+    -- @param #number OldCoalition Old coalition ID, i.e. before the change.
+    -- @return #boolean
+    
+    --- ChangeCoalition Handler OnAfter for ZONE_CAPTURE_COALITION
+    -- @function [parent=#ZONE_CAPTURE_COALITION] OnAfterChangeCoalition
+    -- @param #ZONE_CAPTURE_COALITION self
+    -- @param #string From
+    -- @param #string Event
+    -- @param #string To
+    -- @param #number NewCoalition New coalition ID, i.e. after the change.
+    -- @param #number OldCoalition Old coalition ID, i.e. before the change.
+
+    --- ChangeCoalition Trigger for ZONE_CAPTURE_COALITION
+    -- @function [parent=#ZONE_CAPTURE_COALITION] ChangeCoalition
+    -- @param #ZONE_CAPTURE_COALITION self
+    -- @param #number NewCoalition New coalition ID, i.e. after the change.
+    -- @param #number OldCoalition Old coalition ID, i.e. before the change.
+    
+    --- ChangeCoalition Asynchronous Trigger for ZONE_CAPTURE_COALITION
+    -- @function [parent=#ZONE_CAPTURE_COALITION] __ChangeCoalition
+    -- @param #ZONE_CAPTURE_COALITION self
+    -- @param #number Delay
+    -- @param #number NewCoalition New coalition ID, i.e. after the change.
+    -- @param #number OldCoalition Old coalition ID, i.e. before the change.
+
+
     -- We check if a unit within the zone is hit.
     -- If it is, then we must move the zone to attack state.
     self:HandleEvent( EVENTS.Hit, self.OnEventHit )
@@ -586,6 +621,8 @@ do -- ZONE_CAPTURE_COALITION
     end
     
     self.ScheduleStatusZone = self:ScheduleRepeat( self.StartInterval, self.RepeatInterval, 1.5, nil, self.StatusZone, self )
+    
+    self:StatusZone()
   end
   
 
@@ -671,13 +708,19 @@ do -- ZONE_CAPTURE_COALITION
     self:F( { NewCoalition = NewCoalition } )
     
     -- Set new owner of zone.
-    self:SetCoalition( NewCoalition )
+    self:ChangeCoalition(NewCoalition, self.Coalition)
   
     -- Update mark.
     self:Mark()
     
     -- Goal achieved.
     self.Goal:Achieved()
+  end
+  
+  --- On after "ChangeCoalition" state.
+  -- @param #ZONE_CAPTURE_COALITION self  
+  function ZONE_CAPTURE_COALITION:onafterChangeCoalition(From, Event, To, NewCoalition, OldCoalition)
+    self:SetCoalition(NewCoalition)
   end
   
   --- On enter "Empty" state.
