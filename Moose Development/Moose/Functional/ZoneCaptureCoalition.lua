@@ -347,6 +347,8 @@ do -- ZONE_CAPTURE_COALITION
   -- @param #ZONE_CAPTURE_COALITION self
   -- @param Core.Zone#ZONE Zone A @{Zone} object with the goal to be achieved.
   -- @param DCSCoalition.DCSCoalition#coalition Coalition The initial coalition owning the zone.
+  -- @param #table UnitCategories Table of unit categories. See [DCS Class Unit](https://wiki.hoggitworld.com/view/DCS_Class_Unit). Default {Unit.Category.GROUND_UNIT}.
+  -- @param #table ObjectCategories Table of unit categories. See [DCS Class Object](https://wiki.hoggitworld.com/view/DCS_Class_Object). Default {Object.Category.UNIT, Object.Category.STATIC}, i.e. all UNITS and STATICS.
   -- @return #ZONE_CAPTURE_COALITION
   -- @usage
   -- 
@@ -355,11 +357,13 @@ do -- ZONE_CAPTURE_COALITION
   --  ZoneCaptureCoalition = ZONE_CAPTURE_COALITION:New( AttackZone, coalition.side.RED ) -- Create a new ZONE_CAPTURE_COALITION object of zone AttackZone with ownership RED coalition.
   --  ZoneCaptureCoalition:__Guard( 1 ) -- Start the Guarding of the AttackZone.
   --  
-  function ZONE_CAPTURE_COALITION:New( Zone, Coalition, UnitCategories )
+  function ZONE_CAPTURE_COALITION:New( Zone, Coalition, UnitCategories, ObjectCategories )
   
     local self = BASE:Inherit( self, ZONE_GOAL_COALITION:New( Zone, Coalition, UnitCategories ) ) -- #ZONE_CAPTURE_COALITION
 
-    self:F( { Zone = Zone, Coalition  = Coalition, UnitCategories = UnitCategories } )
+    self:F( { Zone = Zone, Coalition  = Coalition, UnitCategories = UnitCategories, ObjectCategories = ObjectCategories } )
+    
+    self:SetObjectCategories(ObjectCategories)
 
     do 
     
@@ -613,16 +617,15 @@ do -- ZONE_CAPTURE_COALITION
   -- 
   function ZONE_CAPTURE_COALITION:Start( StartInterval, RepeatInterval )
   
-    self.StartInterval = StartInterval or 15
+    self.StartInterval = StartInterval or 1
     self.RepeatInterval = RepeatInterval or 15
   
     if self.ScheduleStatusZone then
       self:ScheduleStop( self.ScheduleStatusZone )
     end
     
-    self.ScheduleStatusZone = self:ScheduleRepeat( self.StartInterval, self.RepeatInterval, 1.5, nil, self.StatusZone, self )
-    
-    self:StatusZone()
+    -- Start Status scheduler.
+    self.ScheduleStatusZone = self:ScheduleRepeat( self.StartInterval, self.RepeatInterval, 0.1, nil, self.StatusZone, self )
   end
   
 
@@ -696,12 +699,14 @@ do -- ZONE_CAPTURE_COALITION
   --- On enter "Guarded" state.
   -- @param #ZONE_CAPTURE_COALITION self
   function ZONE_CAPTURE_COALITION:onenterGuarded()
+    env.info("FF enter Guarded")
     self:Mark()
   end
 
   --- On enter "Captured" state.
   -- @param #ZONE_CAPTURE_COALITION self  
   function ZONE_CAPTURE_COALITION:onenterCaptured()
+    env.info("FF enter Captured")
 
     -- Get new coalition.
     local NewCoalition = self:GetScannedCoalition()
@@ -720,18 +725,21 @@ do -- ZONE_CAPTURE_COALITION
   --- On after "ChangeCoalition" state.
   -- @param #ZONE_CAPTURE_COALITION self  
   function ZONE_CAPTURE_COALITION:onafterChangeCoalition(From, Event, To, NewCoalition, OldCoalition)
+    env.info("FF after ChangeCoalition")
     self:SetCoalition(NewCoalition)
   end
   
   --- On enter "Empty" state.
   -- @param #ZONE_CAPTURE_COALITION self    
   function ZONE_CAPTURE_COALITION:onenterEmpty()
+    env.info("FF enter Empty")
     self:Mark()
   end
   
   --- On enter "Attacked" state.
   -- @param #ZONE_CAPTURE_COALITION self    
   function ZONE_CAPTURE_COALITION:onenterAttacked()
+    env.info("FF enter Attacked")
     self:Mark()
   end
 

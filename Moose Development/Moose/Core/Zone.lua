@@ -56,7 +56,7 @@
 --- @type ZONE_BASE
 -- @field #string ZoneName Name of the zone.
 -- @field #number ZoneProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
--- @extends Core.Base#BASE
+-- @extends Core.Fsm#FSM
 
 
 --- This class is an abstract BASE class for derived classes, and is not meant to be instantiated.
