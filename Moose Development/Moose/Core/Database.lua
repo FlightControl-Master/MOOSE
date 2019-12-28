@@ -81,7 +81,7 @@ DATABASE = {
   HITS = {},
   DESTROYS = {},
   ZONES = {},
-  ZONES_GOAL = {},  
+  ZONES_GOAL = {},
   WAREHOUSES = {},
   FLIGHTGROUPS = {},
   FLIGHTCONTROLS = {},
@@ -190,7 +190,7 @@ end
 function DATABASE:AddUnit( DCSUnitName )
 
   if not  self.UNITS[DCSUnitName] then
-    self:I( { "Add UNIT:", DCSUnitName } )
+    self:T( { "Add UNIT:", DCSUnitName } )
     local UnitRegister = UNIT:Register( DCSUnitName )
     self.UNITS[DCSUnitName] = UNIT:Register( DCSUnitName )
 
@@ -512,7 +512,7 @@ end
 function DATABASE:AddGroup( GroupName )
 
   if not self.GROUPS[GroupName] then
-    self:I( { "Add GROUP:", GroupName } )
+    self:T( { "Add GROUP:", GroupName } )
     self.GROUPS[GroupName] = GROUP:Register( GroupName )
   end
 
@@ -524,7 +524,7 @@ end
 function DATABASE:AddPlayer( UnitName, PlayerName )
 
   if PlayerName then
-    self:I( { "Add player for unit:", UnitName, PlayerName } )
+    self:T( { "Add player for unit:", UnitName, PlayerName } )
     self.PLAYERS[PlayerName] = UnitName
     self.PLAYERUNITS[PlayerName] = self:FindUnit( UnitName )
     self.PLAYERSJOINED[PlayerName] = PlayerName
@@ -536,7 +536,7 @@ end
 function DATABASE:DeletePlayer( UnitName, PlayerName )
 
   if PlayerName then
-    self:I( { "Clean player:", PlayerName } )
+    self:T( { "Clean player:", PlayerName } )
     self.PLAYERS[PlayerName] = nil
     self.PLAYERUNITS[PlayerName] = nil
   end
@@ -702,11 +702,11 @@ function DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionSide, Category
     UnitNames[#UnitNames+1] = self.Templates.Units[UnitTemplate.name].UnitName
   end
 
-  self:I( { Group = self.Templates.Groups[GroupTemplateName].GroupName,
+  self:T( { Group     = self.Templates.Groups[GroupTemplateName].GroupName,
             Coalition = self.Templates.Groups[GroupTemplateName].CoalitionID,
-            Category = self.Templates.Groups[GroupTemplateName].CategoryID,
-            Country = self.Templates.Groups[GroupTemplateName].CountryID,
-            Units = UnitNames
+            Category  = self.Templates.Groups[GroupTemplateName].CategoryID,
+            Country   = self.Templates.Groups[GroupTemplateName].CountryID,
+            Units     = UnitNames
           }
         )
 end
@@ -851,9 +851,9 @@ function DATABASE:_RegisterGroupsAndUnits()
     end
   end
 
-  self:I("Groups:")
+  self:T("Groups:")
   for GroupName, Group in pairs( self.GROUPS ) do
-    self:I( { "Group:", GroupName } )
+    self:T( { "Group:", GroupName } )
   end
 
   return self
@@ -865,7 +865,7 @@ end
 function DATABASE:_RegisterClients()
 
   for ClientName, ClientTemplate in pairs( self.Templates.ClientsByName ) do
-    self:I( { "Register Client:", ClientName } )
+    self:T( { "Register Client:", ClientName } )
     self:AddClient( ClientName )
   end
 
@@ -903,7 +903,7 @@ function DATABASE:_RegisterAirbases()
 
       local DCSAirbaseName = DCSAirbase:getName()
 
-      self:I( { "Register Airbase:", DCSAirbaseName, DCSAirbase:getID() } )
+      self:T( { "Register Airbase:", DCSAirbaseName, DCSAirbase:getID() } )
       self:AddAirbase( DCSAirbaseName )
     end
   end
