@@ -99,7 +99,8 @@ AI_AIR_PATROL = {
 
 --- Creates a new AI_AIR_PATROL object
 -- @param #AI_AIR_PATROL self
--- @param Wrapper.Group#GROUP AIGroup
+-- @param AI.AI_Air#AI_AIR AI_Air The AI_AIR FSM.
+-- @param Wrapper.Group#GROUP AIGroup The AI group.
 -- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
 -- @param DCS#Altitude PatrolFloorAltitude (optional, default = 1000m ) The lowest altitude in meters where to execute the patrol.
 -- @param DCS#Altitude PatrolCeilingAltitude (optional, default = 1500m ) The highest altitude in meters where to execute the patrol.
@@ -270,14 +271,15 @@ function AI_AIR_PATROL:onafterPatrol( AIPatrol, From, Event, To )
   )
 end
 
---- @param Wrapper.Group#GROUP AIPatrol
--- This statis method is called from the route path within the last task at the last waaypoint of the AIPatrol.
+--- This statis method is called from the route path within the last task at the last waaypoint of the AIPatrol.
 -- Note that this method is required, as triggers the next route when patrolling for the AIPatrol.
+-- @param Wrapper.Group#GROUP AIPatrol The AI group.
+-- @param #AI_AIR_PATROL Fsm The FSM.
 function AI_AIR_PATROL.___PatrolRoute( AIPatrol, Fsm )
 
   AIPatrol:F( { "AI_AIR_PATROL.___PatrolRoute:", AIPatrol:GetName() } )
 
-  if AIPatrol:IsAlive() then
+  if AIPatrol and AIPatrol:IsAlive() then
     Fsm:PatrolRoute()
   end
   
@@ -299,7 +301,7 @@ function AI_AIR_PATROL:onafterPatrolRoute( AIPatrol, From, Event, To )
   end
 
   
-  if AIPatrol:IsAlive() then
+  if AIPatrol and  AIPatrol:IsAlive() then
     
     local PatrolRoute = {}
 
@@ -316,13 +318,7 @@ function AI_AIR_PATROL:onafterPatrolRoute( AIPatrol, From, Event, To )
     local ToTargetSpeed = math.random( self.PatrolMinSpeed, self.PatrolMaxSpeed )
     local speedkmh=ToTargetSpeed
 
-    local FromWP = CurrentCoord:WaypointAir( 
-      self.PatrolAltType or "RADIO", 
-      POINT_VEC3.RoutePointType.TurningPoint, 
-      POINT_VEC3.RoutePointAction.TurningPoint, 
-      ToTargetSpeed, 
-      true 
-    )
+    local FromWP = CurrentCoord:WaypointAir(self.PatrolAltType or "RADIO", POINT_VEC3.RoutePointType.TurningPoint, POINT_VEC3.RoutePointAction.TurningPoint, ToTargetSpeed, true)
     PatrolRoute[#PatrolRoute+1] = FromWP
 
     if self.racetrack then
@@ -360,7 +356,8 @@ function AI_AIR_PATROL:onafterPatrolRoute( AIPatrol, From, Event, To )
       local taskOrbit=AIPatrol:TaskOrbit(c1, altitude, UTILS.KmphToMps(speedkmh), c2)
       
       -- Task function to redo the patrol at other random position.
-      local taskPatrol=AIPatrol:TaskFunction("AI_A2A_PATROL.PatrolRoute", self)
+      --local taskPatrol=AIPatrol:TaskFunction("AI_A2A_PATROL.PatrolRoute", self)
+      local taskPatrol=AIPatrol:TaskFunction("AI_AIR_PATROL.___PatrolRoute", self)
       
       -- Controlled task with task condition.
       local taskCond=AIPatrol:TaskCondition(nil, nil, nil, nil, duration, nil)
@@ -372,18 +369,11 @@ function AI_AIR_PATROL:onafterPatrolRoute( AIPatrol, From, Event, To )
     else
     
       --- Create a route point of type air.
-      local ToWP = ToTargetCoord:WaypointAir( 
-        self.PatrolAltType, 
-        POINT_VEC3.RoutePointType.TurningPoint, 
-        POINT_VEC3.RoutePointAction.TurningPoint, 
-        ToTargetSpeed, 
-        true 
-      )
-  
+      local ToWP = ToTargetCoord:WaypointAir(self.PatrolAltType, POINT_VEC3.RoutePointType.TurningPoint, POINT_VEC3.RoutePointAction.TurningPoint, ToTargetSpeed, true)  
       PatrolRoute[#PatrolRoute+1] = ToWP
       
       local Tasks = {}
-      Tasks[#Tasks+1] = AIPatrol:TaskFunction( "AI_AIR_PATROL.___PatrolRoute", self )
+      Tasks[#Tasks+1] = AIPatrol:TaskFunction("AI_AIR_PATROL.___PatrolRoute", self)
       PatrolRoute[#PatrolRoute].task = AIPatrol:TaskCombo( Tasks )
       
     end
@@ -401,7 +391,7 @@ end
 function AI_AIR_PATROL.Resume( AIPatrol, Fsm )
 
   AIPatrol:F( { "AI_AIR_PATROL.Resume:", AIPatrol:GetName() } )
-  if AIPatrol:IsAlive() then
+  if AIPatrol and AIPatrol:IsAlive() then
     Fsm:__Reset( Fsm.TaskDelay )
     Fsm:__PatrolRoute( Fsm.TaskDelay )
   end
