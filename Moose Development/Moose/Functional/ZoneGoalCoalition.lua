@@ -19,6 +19,7 @@ do -- ZoneGoal
   --- @type ZONE_GOAL_COALITION
   -- @field #string ClassName Name of the Class.
   -- @field #number Coalition The current coalition ID of the zone owner.
+  -- @field #number PreviousCoalition The previous owner of the zone.
   -- @field #table UnitCategories Table of unit categories that are able to capture and hold the zone. Default is only GROUND units.
   -- @field #table ObjectCategories Table of object categories that are able to hold a zone. Default is UNITS and STATICS.
   -- @extends Functional.ZoneGoal#ZONE_GOAL
@@ -43,6 +44,7 @@ do -- ZoneGoal
   ZONE_GOAL_COALITION = {
     ClassName        = "ZONE_GOAL_COALITION",
     Coalition        = nil,
+    PreviousCoaliton = nil,
     UnitCategories   = nil,
     ObjectCategories = nil,
   }
@@ -83,6 +85,7 @@ do -- ZoneGoal
   -- @param DCSCoalition.DCSCoalition#coalition Coalition The coalition ID, e.g. *coalition.side.RED*.
   -- @return #ZONE_GOAL_COALITION
   function ZONE_GOAL_COALITION:SetCoalition( Coalition )
+    self.PreviousCoalition=self.Coalition or Coalition
     self.Coalition = Coalition
     return self
   end
@@ -124,25 +127,19 @@ do -- ZoneGoal
     return self.Coalition
   end
 
+  --- Get the previous coaliton, i.e. the one owning the zone before the current one. 
+  -- @param #ZONE_GOAL_COALITION self
+  -- @return DCSCoalition.DCSCoalition#coalition Coalition.
+  function ZONE_GOAL_COALITION:GetPreviousCoalition()
+    return self.PreviousCoalition
+  end
+
   
   --- Get the owning coalition name of the zone.
   -- @param #ZONE_GOAL_COALITION self
   -- @return #string Coalition name.
   function ZONE_GOAL_COALITION:GetCoalitionName()
-  
-    if self.Coalition == coalition.side.BLUE then
-      return "Blue"
-    end
-    
-    if self.Coalition == coalition.side.RED then
-      return "Red"
-    end
-    
-    if self.Coalition == coalition.side.NEUTRAL then
-      return "Neutral"
-    end
-    
-    return "Unknown"
+    return UTILS.GetCoalitionName(self.Coalition)
   end
 
 
@@ -151,13 +148,14 @@ do -- ZoneGoal
   -- @return #ZONE_GOAL_COALITION
   function ZONE_GOAL_COALITION:StatusZone()
   
+    -- Get current state.
     local State = self:GetState()
-    self:F( { State = self:GetState() } )
   
     -- Debug text.
     local text=string.format("Zone state=%s, Owner=%s, Scanning...", State, self:GetCoalitionName())
-    env.info(text)
-    
+    self:F(text)
+        
+    -- Scan zone.
     self:Scan( self.ObjectCategories, self.UnitCategories )
   
     return self

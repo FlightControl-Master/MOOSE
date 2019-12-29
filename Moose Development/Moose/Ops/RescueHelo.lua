@@ -237,7 +237,7 @@ _RESCUEHELOID=0
 
 --- Class version.
 -- @field #string version
-RESCUEHELO.version="1.0.9"
+RESCUEHELO.version="1.1.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -902,7 +902,7 @@ function RESCUEHELO:onafterStart(From, Event, To)
   else  
  
     -- Check if an uncontrolled helo group was requested.
-    if self.useuncontrolled then
+    if self.uncontrolledac then
     
       -- Use an uncontrolled aircraft group.
       self.helo=GROUP:FindByName(self.helogroupname)
