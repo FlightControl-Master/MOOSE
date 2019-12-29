@@ -1037,3 +1037,26 @@ function UTILS.CheckMemory(output)
   end
   return mem
 end
+
+
+--- Get the coalition name from its numerical ID, e.g. coaliton.side.RED.
+-- @param #number Coalition The coalition ID.
+-- @return #string The coalition name, i.e. "Neutral", "Red" or "Blue" (or "Unknown").
+function UTILS.GetCoalitionName(Coalition)
+
+  if Coalition then
+    if Coalition==coalition.side.BLUE then
+      return "Blue"
+    elseif Coalition==coalition.side.RED then
+      return "Red"
+    elseif Coalition==coalition.side.NEUTRAL then
+      return "Neutral"
+    else
+      return "Unknown"
+    end
+  else
+    return "Unknown"
+  end
+    
+end
+

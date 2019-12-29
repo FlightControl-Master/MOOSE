@@ -62,6 +62,7 @@
 -- @field #string modex Tail number of the tanker.
 -- @field #boolean eplrs If true, enable data link, e.g. if used as AWACS.
 -- @field #boolean recovery If true, tanker will recover using the AIRBOSS marshal pattern.
+-- @field #number terminaltype Terminal type of used parking spots on airbases.
 -- @extends Core.Fsm#FSM
 
 --- Recovery Tanker.
@@ -298,6 +299,7 @@ RECOVERYTANKER = {
   modex           = nil,
   eplrs           = nil,
   recovery        = nil,
+  terminaltype    = nil,
 }
 
 --- Unique ID (global).
@@ -306,7 +308,7 @@ _RECOVERYTANKERID=0
 
 --- Class version.
 -- @field #string version
-RECOVERYTANKER.version="1.0.8"
+RECOVERYTANKER.version="1.0.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -381,6 +383,7 @@ function RECOVERYTANKER:New(carrierunit, tankergroupname)
   self:SetPatternUpdateInterval()
   self:SetAWACS(false)
   self:SetRecoveryAirboss(false)
+  self.terminaltype=AIRBASE.TerminalType.OpenMedOrBig
   
   -- Debug trace.
   if false then
@@ -615,8 +618,9 @@ end
 --- Set home airbase of the tanker. This is the airbase where the tanker will go when it is out of fuel.
 -- @param #RECOVERYTANKER self
 -- @param Wrapper.Airbase#AIRBASE airbase The home airbase. Can be the airbase name or a Moose AIRBASE object.
+-- @param #number terminaltype (Optional) The terminal type of parking spots used for spawning at airbases. Default AIRBASE.TerminalType.OpenMedOrBig.
 -- @return #RECOVERYTANKER self
-function RECOVERYTANKER:SetHomeBase(airbase)
+function RECOVERYTANKER:SetHomeBase(airbase, terminaltype)
   if type(airbase)=="string" then
     self.airbase=AIRBASE:FindByName(airbase)
   else
@@ -624,6 +628,9 @@ function RECOVERYTANKER:SetHomeBase(airbase)
   end
   if not self.airbase then
     self:E(self.lid.."ERROR: Airbase is nil!")
+  end
+  if termialtype then
+    self.terminaltype=terminaltype
   end
   return self
 end
@@ -937,7 +944,7 @@ function RECOVERYTANKER:onafterStart(From, Event, To)
     else
     
       -- Spawn tanker at airbase.
-      self.tanker=Spawn:SpawnAtAirbase(self.airbase, self.takeoff, nil, AIRBASE.TerminalType.OpenMedOrBig)
+      self.tanker=Spawn:SpawnAtAirbase(self.airbase, self.takeoff, nil, self.terminaltype)
       
     end
     

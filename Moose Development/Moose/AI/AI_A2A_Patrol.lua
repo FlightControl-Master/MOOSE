@@ -296,11 +296,7 @@ function AI_A2A_PATROL.PatrolRoute( AIPatrol, Fsm )
   AIPatrol:F( { "AI_A2A_PATROL.PatrolRoute:", AIPatrol:GetName() } )
 
   if AIPatrol and AIPatrol:IsAlive() then
-    if Fsm then
-      Fsm:Route()
-    else
-      AIPatrol:E("WARNING: FSM in AI_A2A_PATROL.PatrolRoute is nil!")
-    end
+    Fsm:Route()
   end
   
 end
@@ -313,7 +309,6 @@ end
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
 function AI_A2A_PATROL:onafterRoute( AIPatrol, From, Event, To )
-
   self:F2()
 
   -- When RTB, don't allow anymore the routing.

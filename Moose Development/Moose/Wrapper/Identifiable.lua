@@ -168,20 +168,13 @@ function IDENTIFIABLE:GetCoalitionName()
   local DCSIdentifiable = self:GetDCSObject()
   
   if DCSIdentifiable then
+  
+    -- Get coaliton ID.
     local IdentifiableCoalition = DCSIdentifiable:getCoalition()
     self:T3( IdentifiableCoalition )
     
-    if IdentifiableCoalition == coalition.side.BLUE then
-      return "Blue"
-    end
+    return UTILS.GetCoalitionName(IdentifiableCoalition)
     
-    if IdentifiableCoalition == coalition.side.RED then
-      return "Red"
-    end
-    
-    if IdentifiableCoalition == coalition.side.NEUTRAL then
-      return "Neutral"
-    end
   end 
   
   self:F( self.ClassName .. " " .. self.IdentifiableName .. " not found!" )

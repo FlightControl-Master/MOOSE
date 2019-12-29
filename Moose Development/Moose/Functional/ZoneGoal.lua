@@ -8,6 +8,7 @@
 -- ===
 -- 
 -- ### Author: **FlightControl**
+-- ### Contributions: **funkyfranky**
 -- 
 -- ===
 -- 
@@ -111,14 +112,17 @@ do -- Zone
 
   --- Activate smoking of zone with the color or the current owner.
   -- @param #ZONE_GOAL self
-  -- @param #boolean switch If *true* or *nil* activate smoke. If false, no smoke.
+  -- @param #boolean switch If *true* or *nil* activate smoke. If *false* or *nil*, no smoke.
   -- @return #ZONE_GOAL
   function ZONE_GOAL:SetSmokeZone(switch)
+    self.SmokeZone=switch
+    --[[
     if switch==nil or switch==true then
       self.SmokeZone=true
     else
       self.SmokeZone=false
     end
+    ]]
     return self
   end
 
@@ -145,8 +149,9 @@ do -- Zone
   function ZONE_GOAL:onafterGuard()
     self:F("Guard")
 
+    -- Start smoke
     if self.SmokeZone and not self.SmokeScheduler then
-      self.SmokeScheduler = self:ScheduleRepeat( 1, 1, 0.1, nil, self.StatusSmoke, self )
+      self.SmokeScheduler = self:ScheduleRepeat(1, 1, 0.1, nil, self.StatusSmoke, self)
     end
   end
 
