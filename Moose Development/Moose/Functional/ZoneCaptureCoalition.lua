@@ -39,7 +39,7 @@
 -- ===
 -- 
 -- ### Author: **FlightControl**
--- ### Contributions: **Millertime** - Concept
+-- ### Contributions: **Millertime** - Concept, **funkyfranky**
 -- 
 -- ===
 -- 
@@ -49,6 +49,15 @@
 do -- ZONE_CAPTURE_COALITION
 
   --- @type ZONE_CAPTURE_COALITION
+  -- @field #string ClassName Name of the class.
+  -- @field #number MarkBlue ID of blue F10 mark.
+  -- @field #number MarkRed ID of red F10 mark.
+  -- @field #number StartInterval Time in seconds after the status monitor is started.
+  -- @field #number RepeatInterval Time in seconds after which the zone status is updated.
+  -- @field #boolean HitsOn If true, hit events are monitored and trigger the "Attack" event when a defending unit is hit.
+  -- @field #number HitTimeLast Time stamp in seconds when the last unit inside the zone was hit.
+  -- @field #number HitTimeAttackOver Time interval in seconds before the zone goes from "Attacked" to "Guarded" state after the last hit.
+  -- @field #boolean MarkOn If true, create marks of zone status on F10 map.
   -- @extends Functional.ZoneGoalCoalition#ZONE_GOAL_COALITION
 
 
@@ -197,8 +206,7 @@ do -- ZONE_CAPTURE_COALITION
   --   
   -- ### IMPORTANT
   -- 
-  -- **Each capture zone object must have the monitoring process started specifically.
-  -- The monitoring process is NOT started by default!!!**
+  -- **Each capture zone object must have the monitoring process started specifically. The monitoring process is NOT started by default!**
   --   
   -- 
   -- # Full Example
@@ -338,29 +346,48 @@ do -- ZONE_CAPTURE_COALITION
   -- 
   -- @field #ZONE_CAPTURE_COALITION
   ZONE_CAPTURE_COALITION = {
-    ClassName = "ZONE_CAPTURE_COALITION",
+    ClassName         = "ZONE_CAPTURE_COALITION",
+    MarkBlue          = nil,
+    MarkRed           = nil,
+    StartInterval     = nil,
+    RepeatInterval    = nil,
+    HitsOn            = nil,
+    HitTimeLast       = nil,
+    HitTimeAttackOver = nil,
+    MarkOn            = nil,
   }
-  
-  --- @field #table ZONE_CAPTURE_COALITION.States
-  ZONE_CAPTURE_COALITION.States = {}
-  
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Constructor and Start/Stop Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
   --- ZONE_CAPTURE_COALITION Constructor.
   -- @param #ZONE_CAPTURE_COALITION self
   -- @param Core.Zone#ZONE Zone A @{Zone} object with the goal to be achieved.
   -- @param DCSCoalition.DCSCoalition#coalition Coalition The initial coalition owning the zone.
+  -- @param #table UnitCategories Table of unit categories. See [DCS Class Unit](https://wiki.hoggitworld.com/view/DCS_Class_Unit). Default {Unit.Category.GROUND_UNIT}.
+  -- @param #table ObjectCategories Table of unit categories. See [DCS Class Object](https://wiki.hoggitworld.com/view/DCS_Class_Object). Default {Object.Category.UNIT, Object.Category.STATIC}, i.e. all UNITS and STATICS.
   -- @return #ZONE_CAPTURE_COALITION
   -- @usage
   -- 
   --  AttackZone = ZONE:New( "AttackZone" )
   --
-  --  ZoneCaptureCoalition = ZONE_CAPTURE_COALITION:New( AttackZone, coalition.side.RED ) -- Create a new ZONE_CAPTURE_COALITION object of zone AttackZone with ownership RED coalition.
+  --  ZoneCaptureCoalition = ZONE_CAPTURE_COALITION:New( AttackZone, coalition.side.RED, {UNITS ) -- Create a new ZONE_CAPTURE_COALITION object of zone AttackZone with ownership RED coalition.
   --  ZoneCaptureCoalition:__Guard( 1 ) -- Start the Guarding of the AttackZone.
   --  
-  function ZONE_CAPTURE_COALITION:New( Zone, Coalition, UnitCategories )
+  function ZONE_CAPTURE_COALITION:New( Zone, Coalition, UnitCategories, ObjectCategories )
   
     local self = BASE:Inherit( self, ZONE_GOAL_COALITION:New( Zone, Coalition, UnitCategories ) ) -- #ZONE_CAPTURE_COALITION
-
-    self:F( { Zone = Zone, Coalition  = Coalition, UnitCategories = UnitCategories } )
+    self:F( { Zone = Zone, Coalition  = Coalition, UnitCategories = UnitCategories, ObjectCategories = ObjectCategories } )
+    
+    self:SetObjectCategories(ObjectCategories)
+    
+    -- Default is no smoke.
+    self:SetSmokeZone(false)
+    -- Default is F10 marks ON.
+    self:SetMarkZone(true)
+    -- Start in state "Empty".
+    self:SetStartState("Empty")
 
     do 
     
@@ -545,184 +572,12 @@ do -- ZONE_CAPTURE_COALITION
     -- @param #ZONE_CAPTURE_COALITION self
     -- @param #number Delay
 
-    -- We check if a unit within the zone is hit.
-    -- If it is, then we must move the zone to attack state.
-    self:HandleEvent( EVENTS.Hit, self.OnEventHit )
-
     -- ZoneGoal objects are added to the _DATABASE.ZONES_GOAL and SET_ZONE_GOAL sets.
-    _EVENTDISPATCHER:CreateEventNewZoneGoal( self )
+    _EVENTDISPATCHER:CreateEventNewZoneGoal(self)
 
     return self
   end
-  
 
-  --- @param #ZONE_CAPTURE_COALITION self
-  function ZONE_CAPTURE_COALITION:onenterCaptured()
-  
-    self:F({"hello"})
-  
-    self:GetParent( self, ZONE_CAPTURE_COALITION ).onenterCaptured( self )
-    
-    self.Goal:Achieved()
-  end
-
-
-  function ZONE_CAPTURE_COALITION:IsGuarded()
-  
-    local IsGuarded = self:IsAllInZoneOfCoalition( self.Coalition )
-    self:F( { IsGuarded = IsGuarded } )
-    return IsGuarded
-  end
-
-
-  function ZONE_CAPTURE_COALITION:IsEmpty()
-  
-    local IsEmpty = self:IsNoneInZone()
-    self:F( { IsEmpty = IsEmpty } )
-    return IsEmpty
-  end
-
-
-  function ZONE_CAPTURE_COALITION:IsCaptured()
-  
-    local IsCaptured = self:IsAllInZoneOfOtherCoalition( self.Coalition )
-    self:F( { IsCaptured = IsCaptured } )
-    return IsCaptured
-  end
-  
-  
-  function ZONE_CAPTURE_COALITION:IsAttacked()
-  
-    local IsAttacked = self:IsSomeInZoneOfCoalition( self.Coalition )
-    self:F( { IsAttacked = IsAttacked } )
-    return IsAttacked
-  end
-  
-  
-
-  --- Mark.
-  -- @param #ZONE_CAPTURE_COALITION self
-  function ZONE_CAPTURE_COALITION:Mark()
-  
-    local Coord = self:GetCoordinate()
-    local ZoneName = self:GetZoneName()
-    local State = self:GetState()
-    
-    if self.MarkRed and self.MarkBlue then
-      self:F( { MarkRed = self.MarkRed, MarkBlue = self.MarkBlue } )
-      Coord:RemoveMark( self.MarkRed )
-      Coord:RemoveMark( self.MarkBlue )
-    end
-    
-    if self.Coalition == coalition.side.BLUE then
-      self.MarkBlue = Coord:MarkToCoalitionBlue( "Coalition: Blue\nGuard Zone: " .. ZoneName .. "\nStatus: " .. State )  
-      self.MarkRed = Coord:MarkToCoalitionRed( "Coalition: Blue\nCapture Zone: " .. ZoneName .. "\nStatus: " .. State )
-    else
-      self.MarkRed = Coord:MarkToCoalitionRed( "Coalition: Red\nGuard Zone: " .. ZoneName .. "\nStatus: " .. State )  
-      self.MarkBlue = Coord:MarkToCoalitionBlue( "Coalition: Red\nCapture Zone: " .. ZoneName .. "\nStatus: " .. State )  
-    end
-  end
-
-  --- Bound.
-  -- @param #ZONE_CAPTURE_COALITION self
-  function ZONE_CAPTURE_COALITION:onenterGuarded()
-  
-    --self:GetParent( self ):onenterGuarded()
-  
-    if self.Coalition == coalition.side.BLUE then
-      --elf.ProtectZone:BoundZone( 12, country.id.USA )
-    else
-      --self.ProtectZone:BoundZone( 12, country.id.RUSSIA )
-    end
-    
-    self:Mark()
-    
-  end
-  
-  function ZONE_CAPTURE_COALITION:onenterCaptured()
-  
-    --self:GetParent( self ):onenterCaptured()
-
-    local NewCoalition = self:GetScannedCoalition()
-    self:F( { NewCoalition = NewCoalition } )
-    self:SetCoalition( NewCoalition )
-  
-    self:Mark()
-    self.Goal:Achieved()
-  end
-  
-  
-  function ZONE_CAPTURE_COALITION:onenterEmpty()
-
-    --self:GetParent( self ):onenterEmpty()
-  
-    self:Mark()
-  end
-  
-  
-  function ZONE_CAPTURE_COALITION:onenterAttacked()
-  
-    --self:GetParent( self ):onenterAttacked()
-  
-    self:Mark()
-  end
-
-
-  --- When started, check the Coalition status.
-  -- @param #ZONE_CAPTURE_COALITION self
-  function ZONE_CAPTURE_COALITION:onafterGuard()
-  
-    --self:F({BASE:GetParent( self )})
-    --BASE:GetParent( self ).onafterGuard( self )
-  
-    if not self.SmokeScheduler then
-      self.SmokeScheduler = self:ScheduleRepeat( self.StartInterval, self.RepeatInterval, 0.1, nil, self.StatusSmoke, self )
-    end
-  end
-
-
-  function ZONE_CAPTURE_COALITION:IsCaptured()
-  
-    local IsCaptured = self:IsAllInZoneOfOtherCoalition( self.Coalition )
-    self:F( { IsCaptured = IsCaptured } )
-    return IsCaptured
-  end
-  
-  
-  function ZONE_CAPTURE_COALITION:IsAttacked()
-  
-    local IsAttacked = self:IsSomeInZoneOfCoalition( self.Coalition )
-    self:F( { IsAttacked = IsAttacked } )
-    return IsAttacked
-  end
-  
-
-  --- Check status Coalition ownership.
-  -- @param #ZONE_CAPTURE_COALITION self
-  function ZONE_CAPTURE_COALITION:StatusZone()
-  
-    local State = self:GetState()
-    self:F( { State = self:GetState() } )
-  
-    self:GetParent( self, ZONE_CAPTURE_COALITION ).StatusZone( self )
-    
-    if State ~= "Guarded" and self:IsGuarded() then
-      self:Guard()
-    end
-    
-    if State ~= "Empty" and self:IsEmpty() then  
-      self:Empty()
-    end
-
-    if State ~= "Attacked" and self:IsAttacked() then
-      self:Attack()
-    end
-    
-    if State ~= "Captured" and self:IsCaptured() then  
-      self:Capture()
-    end
-    
-  end
 
   --- Starts the zone capturing monitoring process.
   -- This process can be CPU intensive, ensure that you specify reasonable time intervals for the monitoring process.
@@ -733,6 +588,7 @@ do -- ZONE_CAPTURE_COALITION
   -- @param #ZONE_CAPTURE_COALITION self
   -- @param #number StartInterval (optional) Specifies the start time interval in seconds when the zone state will be checked for the first time.
   -- @param #number RepeatInterval (optional) Specifies the repeat time interval in seconds when the zone state will be checked repeatedly.
+  -- @return #ZONE_CAPTURE_COALITION self
   -- @usage
   -- 
   -- -- Setup the zone.
@@ -747,13 +603,23 @@ do -- ZONE_CAPTURE_COALITION
   -- 
   function ZONE_CAPTURE_COALITION:Start( StartInterval, RepeatInterval )
   
-    self.StartInterval = StartInterval or 15
+    self.StartInterval = StartInterval or 1
     self.RepeatInterval = RepeatInterval or 15
   
     if self.ScheduleStatusZone then
       self:ScheduleStop( self.ScheduleStatusZone )
     end
-    self.ScheduleStatusZone = self:ScheduleRepeat( self.StartInterval, self.RepeatInterval, 1.5, nil, self.StatusZone, self )
+    
+    -- Start Status scheduler.
+    self.ScheduleStatusZone = self:ScheduleRepeat( self.StartInterval, self.RepeatInterval, 0.1, nil, self.StatusZone, self )
+    
+    -- We check if a unit within the zone is hit. If it is, then we must move the zone to attack state.
+    self:HandleEvent(EVENTS.Hit, self.OnEventHit)
+    
+    -- Create mark on F10 map.
+    self:Mark()
+    
+    return self
   end
   
 
@@ -795,24 +661,266 @@ do -- ZONE_CAPTURE_COALITION
   function ZONE_CAPTURE_COALITION:Stop()
   
     if self.ScheduleStatusZone then
-      self:ScheduleStop( self.ScheduleStatusZone )
+      self:ScheduleStop(self.ScheduleStatusZone)
     end
+    
+    if self.SmokeScheduler then
+      self:ScheduleStop(self.SmokeScheduler)
+    end
+    
+    self:UnHandleEvent(EVENTS.Hit)
+    
   end
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- User API Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  --- Set whether hit events of defending units are monitored and trigger "Attack" events.
+  -- @param #ZONE_CAPTURE_COALITION self
+  -- @param #boolean Switch If *true*, hit events are monitored. If *false* or *nil*, hit events are not monitored.
+  -- @param #number TimeAttackOver (Optional) Time in seconds after an attack is over after the last hit and the zone state goes to "Guarded". Default is 300 sec = 5 min.
+  -- @return #ZONE_CAPTURE_COALITION self
+  function ZONE_CAPTURE_COALITION:SetMonitorHits(Switch, TimeAttackOver)
+    self.HitsOn=Switch
+    self.HitTimeAttackOver=TimeAttackOver or 5*60
+    return self
+  end
+
+  --- Set whether marks on the F10 map are shown, which display the current zone status.
+  -- @param #ZONE_CAPTURE_COALITION self
+  -- @param #boolean Switch If *true* or *nil*, marks are shown. If *false*, marks are not displayed.
+  -- @return #ZONE_CAPTURE_COALITION self
+  function ZONE_CAPTURE_COALITION:SetMarkZone(Switch)
+    if Switch==nil or Switch==true then
+      self.MarkOn=true
+    else
+      self.MarkOn=false
+    end
+    return self
+  end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- DCS Event Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
   
-  --- @param #ZONE_CAPTURE_COALITION self
+  --- Monitor hit events.
+  -- @param #ZONE_CAPTURE_COALITION self
   -- @param Core.Event#EVENTDATA EventData The event data.
   function ZONE_CAPTURE_COALITION:OnEventHit( EventData )
   
-    local UnitHit = EventData.TgtUnit
-    
-    if UnitHit then
-      if UnitHit:IsInZone( self ) then
-        self:Attack()
+    if self.HitsOn then
+  
+      local UnitHit = EventData.TgtUnit
+      
+      -- Check if unit is inside the capture zone and that it is of the defending coalition.
+      if UnitHit and UnitHit:IsInZone(self) and UnitHit:GetCoalition()==self.Coalition then
+      
+        -- Update last hit time.
+        self.HitTimeLast=timer.getTime()
+        
+        -- Only trigger attacked event if not already in state "Attacked".
+        if self:GetState()~="Attacked" then
+          self:F2("Hit ==> Attack")
+          self:Attack()
+        end
+        
       end
+
     end
   
   end
-  
-  
-end
 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- FSM Event Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  --- On after "Guard" event.
+  -- @param #ZONE_CAPTURE_COALITION self
+  function ZONE_CAPTURE_COALITION:onafterGuard()
+    self:F2("After Guard")
+
+    if self.SmokeZone and not self.SmokeScheduler then
+      self.SmokeScheduler = self:ScheduleRepeat( self.StartInterval, self.RepeatInterval, 0.1, nil, self.StatusSmoke, self )
+    end
+    
+  end
+  
+  --- On enter "Guarded" state.
+  -- @param #ZONE_CAPTURE_COALITION self
+  function ZONE_CAPTURE_COALITION:onenterGuarded()
+    self:F2("Enter Guarded")
+    self:Mark()
+  end
+
+  --- On enter "Captured" state.
+  -- @param #ZONE_CAPTURE_COALITION self  
+  function ZONE_CAPTURE_COALITION:onenterCaptured()
+    self:F2("Enter Captured")
+
+    -- Get new coalition.
+    local NewCoalition = self:GetScannedCoalition()
+    self:F( { NewCoalition = NewCoalition } )
+    
+    -- Set new owner of zone.
+    self:SetCoalition(NewCoalition)
+  
+    -- Update mark.
+    self:Mark()
+    
+    -- Goal achieved.
+    self.Goal:Achieved()
+  end
+    
+  --- On enter "Empty" state.
+  -- @param #ZONE_CAPTURE_COALITION self    
+  function ZONE_CAPTURE_COALITION:onenterEmpty()
+    self:F2("Enter Empty")
+    self:Mark()
+  end
+  
+  --- On enter "Attacked" state.
+  -- @param #ZONE_CAPTURE_COALITION self    
+  function ZONE_CAPTURE_COALITION:onenterAttacked()
+    self:F2("Enter Attacked")
+    self:Mark()
+  end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Status Check Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  --- Check if zone is "Empty".
+  -- @param #ZONE_CAPTURE_COALITION self
+  -- @return #boolean self:IsNoneInZone()
+  function ZONE_CAPTURE_COALITION:IsEmpty()
+  
+    local IsEmpty = self:IsNoneInZone()
+    self:F( { IsEmpty = IsEmpty } )
+    
+    return IsEmpty
+  end
+
+  --- Check if zone is "Guarded", i.e. only one (the defending) coaliton is present inside the zone.
+  -- @param #ZONE_CAPTURE_COALITION self
+  -- @return #boolean self:IsAllInZoneOfCoalition( self.Coalition )
+  function ZONE_CAPTURE_COALITION:IsGuarded()
+  
+    local IsGuarded = self:IsAllInZoneOfCoalition( self.Coalition )
+    self:F( { IsGuarded = IsGuarded } )
+    
+    return IsGuarded
+  end
+
+  --- Check if zone is "Captured", i.e. another coalition took control over the zone and is the only one present.
+  -- @param #ZONE_CAPTURE_COALITION self
+  -- @return #boolean self:IsAllInZoneOfOtherCoalition( self.Coalition )
+  function ZONE_CAPTURE_COALITION:IsCaptured()
+  
+    local IsCaptured = self:IsAllInZoneOfOtherCoalition( self.Coalition )
+    self:F( { IsCaptured = IsCaptured } )
+    
+    return IsCaptured
+  end
+  
+  --- Check if zone is "Attacked", i.e. another coaliton entered the zone.
+  -- @param #ZONE_CAPTURE_COALITION self
+  -- @return #boolean self:IsSomeInZoneOfCoalition( self.Coalition )
+  function ZONE_CAPTURE_COALITION:IsAttacked()
+  
+    local IsAttacked = self:IsSomeInZoneOfCoalition( self.Coalition )
+    self:F( { IsAttacked = IsAttacked } )
+    
+    return IsAttacked
+  end
+
+  
+  --- Check status Coalition ownership.
+  -- @param #ZONE_CAPTURE_COALITION self
+  function ZONE_CAPTURE_COALITION:StatusZone()
+  
+    -- Get FSM state.  
+    local State = self:GetState()
+  
+    -- Scan zone in parent class ZONE_GOAL_COALITION
+    self:GetParent( self, ZONE_CAPTURE_COALITION ).StatusZone( self )
+    
+    local Tnow=timer.getTime()
+    
+    -- Check if zone is guarded.
+    if State ~= "Guarded" and self:IsGuarded() then
+      
+      -- Check that there was a sufficient amount of time after the last hit before going back to "Guarded".
+      if self.HitTimeLast==nil or Tnow>=self.HitTimeLast+self.HitTimeAttackOver then
+        self:Guard()
+        self.HitTimeLast=nil
+      end
+    end
+    
+    -- Check if zone is empty.
+    if State ~= "Empty" and self:IsEmpty() then  
+      self:Empty()
+    end
+
+    -- Check if zone is attacked.
+    if State ~= "Attacked" and self:IsAttacked() then
+      self:Attack()
+    end
+    
+    -- Check if zone is captured.
+    if State ~= "Captured" and self:IsCaptured() then  
+      self:Capture()
+    end
+    
+    -- Status text.
+    local text=string.format("CAPTURE ZONE %s: Owner=%s (Previous=%s): Status %s", self:GetZoneName(), self:GetCoalitionName(), UTILS.GetCoalitionName(self:GetPreviousCoalition()), State)
+    local NewState = self:GetState()
+    if NewState~=State then
+      text=text..string.format(" --> %s", NewState)
+    end
+    self:I(text)
+    
+  end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Misc Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  
+  --- Update Mark on F10 map.
+  -- @param #ZONE_CAPTURE_COALITION self
+  function ZONE_CAPTURE_COALITION:Mark()
+  
+    if self.MarkOn then
+    
+      local Coord    = self:GetCoordinate()
+      local ZoneName = self:GetZoneName()
+      local State    = self:GetState()
+      
+      -- Remove marks.
+      if self.MarkRed then
+        Coord:RemoveMark(self.MarkRed)
+      end
+      if self.MarkBlue then
+        Coord:RemoveMark(self.MarkBlue)
+      end
+      
+      -- Create new marks for each coaliton.
+      if self.Coalition == coalition.side.BLUE then
+        self.MarkBlue = Coord:MarkToCoalitionBlue( "Coalition: Blue\nGuard Zone: " .. ZoneName .. "\nStatus: " .. State )  
+        self.MarkRed  = Coord:MarkToCoalitionRed(  "Coalition: Blue\nCapture Zone: " .. ZoneName .. "\nStatus: " .. State )
+      elseif self.Coalition == coalition.side.RED then
+        self.MarkRed  = Coord:MarkToCoalitionRed(  "Coalition: Red\nGuard Zone: " .. ZoneName .. "\nStatus: " .. State )  
+        self.MarkBlue = Coord:MarkToCoalitionBlue( "Coalition: Red\nCapture Zone: " .. ZoneName .. "\nStatus: " .. State )
+      else
+        self.MarkRed  = Coord:MarkToCoalitionRed(  "Coalition: Neutral\nCapture Zone: " .. ZoneName .. "\nStatus: " .. State )  
+        self.MarkBlue = Coord:MarkToCoalitionBlue( "Coalition: Neutral\nCapture Zone: " .. ZoneName .. "\nStatus: " .. State )
+      end
+      
+    end
+    
+  end
+
+end

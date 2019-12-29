@@ -80,7 +80,8 @@ AI_AIR_ENGAGE = {
 
 --- Creates a new AI_AIR_ENGAGE object
 -- @param #AI_AIR_ENGAGE self
--- @param Wrapper.Group#GROUP AIGroup
+-- @param AI.AI_Air#AI_AIR AI_Air The AI_AIR FSM.
+-- @param Wrapper.Group#GROUP AIGroup The AI group.
 -- @param DCS#Speed EngageMinSpeed (optional, default = 50% of max speed) The minimum speed of the @{Wrapper.Group} in km/h when engaging a target.
 -- @param DCS#Speed  EngageMaxSpeed (optional, default = 75% of max speed) The maximum speed of the @{Wrapper.Group} in km/h when engaging a target.
 -- @param DCS#Altitude EngageFloorAltitude (optional, default = 1000m ) The lowest altitude in meters where to execute the engagement.

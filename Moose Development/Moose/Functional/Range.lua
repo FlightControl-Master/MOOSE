@@ -516,7 +516,7 @@ RANGE.MenuF10Root=nil
 
 --- Range script version.
 -- @field #string version
-RANGE.version="2.2.0"
+RANGE.version="2.2.1"
 
 --TODO list:
 --TODO: Verbosity level for messages.
@@ -2521,10 +2521,17 @@ function RANGE:_DisplayBombTargets(_unitname)
       local coord=self:_GetBombTargetCoordinate(bombtarget)
 
       if coord then
+      
+        -- Get elevation
+        local elevation=coord:GetLandHeight()
+        local eltxt=string.format("%d m", elevation)
+        if _settings:IsImperial() then
+          elevation=UTILS.MetersToFeet(elevation)
+          eltxt=string.format("%d ft", elevation)
+        end
 
         local ca2g=coord:ToStringA2G(_unit,_settings)
-        --local lldms=coord:ToStringLLDMS(_settings)        
-        _text=_text..string.format("\n- %s:\n%s", bombtarget.name or "unknown", ca2g)
+        _text=_text..string.format("\n- %s:\n%s @ %s", bombtarget.name or "unknown", ca2g, eltxt)
       end
     end
 

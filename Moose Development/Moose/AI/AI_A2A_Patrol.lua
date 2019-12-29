@@ -287,15 +287,15 @@ function AI_A2A_PATROL:onafterPatrol( AIPatrol, From, Event, To )
 end
 
 
-
---- @param Wrapper.Group#GROUP AIPatrol
--- This statis method is called from the route path within the last task at the last waaypoint of the AIPatrol.
+--- This statis method is called from the route path within the last task at the last waaypoint of the AIPatrol.
 -- Note that this method is required, as triggers the next route when patrolling for the AIPatrol.
+-- @param Wrapper.Group#GROUP AIPatrol The AI group.
+-- @param #AI_A2A_PATROL Fsm The FSM.
 function AI_A2A_PATROL.PatrolRoute( AIPatrol, Fsm )
 
   AIPatrol:F( { "AI_A2A_PATROL.PatrolRoute:", AIPatrol:GetName() } )
 
-  if AIPatrol:IsAlive() then
+  if AIPatrol and AIPatrol:IsAlive() then
     Fsm:Route()
   end
   
@@ -309,7 +309,6 @@ end
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
 function AI_A2A_PATROL:onafterRoute( AIPatrol, From, Event, To )
-
   self:F2()
 
   -- When RTB, don't allow anymore the routing.

@@ -868,13 +868,15 @@ end
 -- @param #boolean message Send message to all players.
 function SUPPRESSION:StatusReport(message)
 
-  local name=self.Controllable:GetName()
-  local nunits=#self.Controllable:GetUnits()
+  local group=self.Controllable --Wrapper.Group#GROUP
+
+  local nunits=group:CountAliveUnits()
   local roe=self.CurrentROE
   local state=self.CurrentAlarmState
   local life_min, life_max, life_ave, life_ave0, groupstrength=self:_GetLife()
-  local at=self.Controllable:GetAmmunition()
+  local ammotot=self.Controllable:GetAmmunition()
   
+  --[[
   local text=string.format("Status of group %s\n", name)
   text=text..string.format("Number of units: %d of %d\n", nunits, self.IniGroupStrength)
   text=text..string.format("Current state: %s\n", self:GetState())
@@ -887,6 +889,10 @@ function SUPPRESSION:StatusReport(message)
   text=text..string.format("Life ave0: %3.0f\n", life_ave0)
   text=text..string.format("Ammo tot: %d\n", at)
   text=text..string.format("Group strength: %3.0f", groupstrength)
+  ]]
+  
+  local text=string.format("State %s, Units=%d/%d, ROE=%s Alarm State=%s, Hits=%d, Life=%d/%d/%d/%d, Ammo=%d", 
+  self:GetState(), nunits, self.IniGroupStrength, self.CurrentROE, self.CurrentAlarmState, self.Nhit, life_min, life_max, life_ave, life_ave0, ammotot)
   
   MESSAGE:New(text, 10):ToAllIf(message or self.Debug)
   self:I(self.lid.."\n"..text)
