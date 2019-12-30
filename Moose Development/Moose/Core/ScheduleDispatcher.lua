@@ -336,7 +336,7 @@ function SCHEDULEDISPATCHER:Stop( Scheduler, CallID )
       Schedule.ScheduleID = nil
       
     else
-      self:E(string.format("Error no ScheduleID for CallID=%s", tostring(CallID)))
+      self:T(string.format("Error no ScheduleID for CallID=%s", tostring(CallID)))
     end
     
   else
