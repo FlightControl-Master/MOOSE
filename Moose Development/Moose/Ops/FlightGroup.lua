@@ -371,7 +371,7 @@ function FLIGHTGROUP:New(groupname)
 
 
   -- Debug trace.
-  if true then
+  if false then
     BASE:TraceOnOff(true)
     BASE:TraceClass(self.ClassName)
     BASE:TraceLevel(1)
