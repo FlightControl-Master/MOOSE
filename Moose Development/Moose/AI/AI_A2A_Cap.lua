@@ -119,7 +119,7 @@ function AI_A2A_CAP:New2( AICap, EngageMinSpeed, EngageMaxSpeed, EngageFloorAlti
   local AI_Air = AI_AIR:New( AICap )
   local AI_Air_Patrol = AI_AIR_PATROL:New( AI_Air, AICap, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType ) -- #AI_AIR_PATROL
   local AI_Air_Engage = AI_AIR_ENGAGE:New( AI_Air_Patrol, AICap, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType )
-  local self = BASE:Inherit( self, AI_Air_Engage )
+  local self = BASE:Inherit( self, AI_Air_Engage ) --#AI_A2A_CAP
 
   self:SetFuelThreshold( .2, 60 )
   self:SetDamageThreshold( 0.4 )
