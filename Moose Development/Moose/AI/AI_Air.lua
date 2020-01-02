@@ -748,10 +748,20 @@ function AI_AIR:onafterRefuel( AIGroup, From, Event, To )
       
       AIGroup:OptionROEHoldFire()
       AIGroup:OptionROTEvadeFire()
+      
+      -- Get Class name for .Resume function
+      local classname=self:GetClassName()
+      
+      -- AI_A2A_CAP can call this function but does not have a .Resume function. Try to fix.
+      local fsm=self
+      if classname=="AI_A2A_CAP" then
+        fsm=self:GetParent(self, AI_A2A_CAP)
+        classname=fsm:GetClassName()
+      end
   
       local Tasks = {}
       Tasks[#Tasks+1] = AIGroup:TaskRefueling()
-      Tasks[#Tasks+1] = AIGroup:TaskFunction( self:GetClassName() .. ".Resume", self )
+      Tasks[#Tasks+1] = AIGroup:TaskFunction(  classname .. ".Resume", fsm )
       RefuelRoute[#RefuelRoute].task = AIGroup:TaskCombo( Tasks )
   
       AIGroup:Route( RefuelRoute, self.TaskDelay )

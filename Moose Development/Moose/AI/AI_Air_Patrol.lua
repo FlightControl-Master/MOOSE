@@ -356,7 +356,6 @@ function AI_AIR_PATROL:onafterPatrolRoute( AIPatrol, From, Event, To )
       local taskOrbit=AIPatrol:TaskOrbit(c1, altitude, UTILS.KmphToMps(speedkmh), c2)
       
       -- Task function to redo the patrol at other random position.
-      --local taskPatrol=AIPatrol:TaskFunction("AI_A2A_PATROL.PatrolRoute", self)
       local taskPatrol=AIPatrol:TaskFunction("AI_AIR_PATROL.___PatrolRoute", self)
       
       -- Controlled task with task condition.
