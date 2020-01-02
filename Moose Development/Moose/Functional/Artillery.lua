@@ -693,7 +693,7 @@ ARTY.db={
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="1.1.6"
+ARTY.version="1.1.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -3848,26 +3848,23 @@ end
 -- @param #boolean final True if it is the final waypoint.
 function ARTY._PassingWaypoint(group, arty, i, final)
 
-  -- Debug message.
-  local text=string.format("%s, passing waypoint %d.", group:GetName(), i)
-  if final then
-    text=string.format("%s, arrived at destination.", group:GetName())
-  end
-  arty:T(self.lid..text)
+  if group and group:IsAlive() then
+  
+    local groupname=tostring(group:GetName())
 
-  --[[
-  if final then
-    MESSAGE:New(text, 10):ToCoalitionIf(group:GetCoalition(), arty.Debug or arty.report)
-  else
-    MESSAGE:New(text, 10):ToAllIf(arty.Debug)
+    -- Debug message.
+    local text=string.format("%s, passing waypoint %d.", groupname, i)
+    if final then
+      text=string.format("%s, arrived at destination.", groupname)
+    end
+    arty:T(arty.lid..text)
+  
+    -- Arrived event.
+    if final and arty.groupname==groupname then
+      arty:Arrived()
+    end
+    
   end
-  ]]
-
-  -- Arrived event.
-  if final and arty.groupname==group:GetName() then
-    arty:Arrived()
-  end
-
 end
 
 --- Relocate to another position, e.g. after an engagement to avoid couter strikes.

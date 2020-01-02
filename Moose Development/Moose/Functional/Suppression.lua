@@ -287,7 +287,7 @@ SUPPRESSION.MenuF10=nil
 
 --- PSEUDOATC version.
 -- @field #number version
-SUPPRESSION.version="0.9.1"
+SUPPRESSION.version="0.9.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -363,6 +363,7 @@ function SUPPRESSION:New(group)
   self:AddTransition("FallingBack", "FightBack", "CombatReady")
   self:AddTransition("Retreating",  "Retreated", "Retreated")
   self:AddTransition("*",           "Dead",      "*")
+  self:AddTransition("*",           "Stop",      "Stopped")
   
   self:AddTransition("TakingCover", "Hit",       "TakingCover")
   self:AddTransition("FallingBack", "Hit",       "FallingBack")
@@ -874,28 +875,14 @@ function SUPPRESSION:StatusReport(message)
   local roe=self.CurrentROE
   local state=self.CurrentAlarmState
   local life_min, life_max, life_ave, life_ave0, groupstrength=self:_GetLife()
-  local ammotot=self.Controllable:GetAmmunition()
+  local ammotot=group:GetAmmunition()
   
-  --[[
-  local text=string.format("Status of group %s\n", name)
-  text=text..string.format("Number of units: %d of %d\n", nunits, self.IniGroupStrength)
-  text=text..string.format("Current state: %s\n", self:GetState())
-  text=text..string.format("ROE: %s\n", roe)  
-  text=text..string.format("Alarm state: %s\n", state)
-  text=text..string.format("Hits taken: %d\n", self.Nhit)
-  text=text..string.format("Life min: %3.0f\n", life_min)
-  text=text..string.format("Life max: %3.0f\n", life_max)
-  text=text..string.format("Life ave: %3.0f\n", life_ave)
-  text=text..string.format("Life ave0: %3.0f\n", life_ave0)
-  text=text..string.format("Ammo tot: %d\n", at)
-  text=text..string.format("Group strength: %3.0f", groupstrength)
-  ]]
-  
-  local text=string.format("State %s, Units=%d/%d, ROE=%s Alarm State=%s, Hits=%d, Life=%d/%d/%d/%d, Ammo=%d", 
+
+  local text=string.format("State %s, Units=%d/%d, ROE=%s, AlarmState=%s, Hits=%d, Life(min/max/ave/ave0)=%d/%d/%d/%d, Total Ammo=%d", 
   self:GetState(), nunits, self.IniGroupStrength, self.CurrentROE, self.CurrentAlarmState, self.Nhit, life_min, life_max, life_ave, life_ave0, ammotot)
   
   MESSAGE:New(text, 10):ToAllIf(message or self.Debug)
-  self:I(self.lid.."\n"..text)
+  self:I(self.lid..text)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -983,7 +970,6 @@ function SUPPRESSION:onafterStart(Controllable, From, Event, To)
     world.addEventHandler(self)
   end
   
-  
   self:__Status(-1)
 end
 
@@ -995,23 +981,40 @@ end
 -- @param #string To To state.
 function SUPPRESSION:onafterStatus(Controllable, From, Event, To)
 
-  --local text=string.format("State=%s, ROE %d, Life=%.1f", Controllable:GetName())
-  --MESSAGE:New(text, 10):ToAllIf(self.Debug)
-  
+  -- Suppressed group.  
   local group=self.Controllable --Wrapper.Group#GROUP
   
-  local n=group:GetAmmunition()
+  -- Check if group object exists.
+  if group then
   
-  self:StatusReport(false)
-  
-  -- Retreat if completely out of ammo and retreat zone defined. 
-  if n==0 and self.RetreatZone then
-  
-    self:Retreat()
+    -- Number of alive units.
+    local nunits=group:CountAliveUnits()
     
-  end
+    -- Check if there are units.
+    if nunits>0 then      
+      
+      -- Retreat if completely out of ammo and retreat zone defined. 
+      local nammo=group:GetAmmunition()
+      if nammo==0 and self.RetreatZone then
+        self:Retreat()        
+      end
 
-  self:__Status(-30)
+      -- Status report.
+      self:StatusReport(false)
+    
+      -- Call status again if not "Stopped".
+      if self:GetState()~="Stopped" then
+        self:__Status(-30)
+      end
+      
+    else
+      self:Stop()
+    end
+    
+  else
+    self:Stop()
+  end
+  
 end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -1409,26 +1412,53 @@ end
 function SUPPRESSION:onafterDead(Controllable, From, Event, To)
   self:_EventFromTo("onafterDead", Event, From, To)
   
-  -- Number of units left in the group.
-  local nunits=#self.Controllable:GetUnits()
-      
-  local text=string.format("Group %s: One of our units just died! %d units left.", self.Controllable:GetName(), nunits)
-  MESSAGE:New(text, 10):ToAllIf(self.Debug)
-  self:T(self.lid..text)
-      
-  -- Go to stop state.
-  if nunits==0 then
-    self:T(self.lid..string.format("Stopping SUPPRESSION for group %s.", Controllable:GetName()))
-    self:Stop()
-    if self.mooseevents then
-      self:UnHandleEvent(EVENTS.Dead)
-      self:UnHandleEvent(EVENTS.Hit)
-    else
-      world.removeEventHandler(self)
+  local group=self.Controllable --Wrapper.Group#GROUP
+  
+  if group then
+  
+    -- Number of units left in the group.
+    local nunits=group:CountAliveUnits()
+        
+    local text=string.format("Group %s: One of our units just died! %d units left.", self.Controllable:GetName(), nunits)
+    MESSAGE:New(text, 10):ToAllIf(self.Debug)
+    self:T(self.lid..text)
+        
+    -- Go to stop state.
+    if nunits==0 then
+      self:Stop()
     end
+    
+  else
+    self:Stop()
   end
   
 end
+
+--- After "Stop" event.
+-- @param #SUPPRESSION self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function SUPPRESSION:onafterStop(Controllable, From, Event, To)
+  self:_EventFromTo("onafterStop", Event, From, To)
+      
+  local text=string.format("Stopping SUPPRESSION for group %s", self.Controllable:GetName())
+  MESSAGE:New(text, 10):ToAllIf(self.Debug)
+  self:I(self.lid..text)
+      
+  -- Clear all pending schedules
+  self.CallScheduler:Clear()
+  
+  if self.mooseevents then
+    self:UnHandleEvent(EVENTS.Dead)
+    self:UnHandleEvent(EVENTS.Hit)
+  else
+    world.removeEventHandler(self)
+  end
+  
+end
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --- Event Handler
@@ -1623,95 +1653,101 @@ function SUPPRESSION:_Run(fin, speed, formation, wait)
 
   local group=self.Controllable -- Wrapper.Controllable#CONTROLLABLE
   
-  -- Clear all tasks.
-  group:ClearTasks()
+  if group and group:IsAlive() then
   
-  -- Current coordinates of group.
-  local ini=group:GetCoordinate()
-  
-  -- Distance between current and final point. 
-  local dist=ini:Get2DDistance(fin)
-  
-  -- Heading from ini to fin.
-  local heading=self:_Heading(ini, fin)
-  
-  -- Number of waypoints.
-  local nx
-  if dist <= 50 then
-    nx=2
-  elseif dist <= 100 then
-    nx=3
-  elseif dist <= 500 then
-    nx=4
-  else
-    nx=5
-  end
-  
-  -- Number of intermediate waypoints.
-  local dx=dist/(nx-1)
+    -- Clear all tasks.
+    group:ClearTasks()
     
-  -- Waypoint and task arrays.
-  local wp={}
-  local tasks={}
-  
-  -- First waypoint is the current position of the group.
-  wp[1]=ini:WaypointGround(speed, formation)
-  tasks[1]=group:TaskFunction("SUPPRESSION._Passing_Waypoint", self, 1, false)
-
-  if self.Debug then  
-    local MarkerID=ini:MarkToAll(string.format("Waypoing %d of group %s (initial)", #wp, self.Controllable:GetName()))
-  end
-  
-  self:T2(self.lid..string.format("Number of waypoints %d", nx))
-  for i=1,nx-2 do
-  
-    local x=dx*i
-    local coord=ini:Translate(x, heading)
+    -- Current coordinates of group.
+    local ini=group:GetCoordinate()
     
-    wp[#wp+1]=coord:WaypointGround(speed, formation)
-    tasks[#tasks+1]=group:TaskFunction("SUPPRESSION._Passing_Waypoint", self, #wp, false)
+    -- Distance between current and final point. 
+    local dist=ini:Get2DDistance(fin)
     
-    self:T2(self.lid..string.format("%d x = %4.1f", i, x))
-    if self.Debug then
-      local MarkerID=coord:MarkToAll(string.format("Waypoing %d of group %s", #wp, self.Controllable:GetName()))
+    -- Heading from ini to fin.
+    local heading=self:_Heading(ini, fin)
+    
+    -- Number of waypoints.
+    local nx
+    if dist <= 50 then
+      nx=2
+    elseif dist <= 100 then
+      nx=3
+    elseif dist <= 500 then
+      nx=4
+    else
+      nx=5
     end
     
+    -- Number of intermediate waypoints.
+    local dx=dist/(nx-1)
+      
+    -- Waypoint and task arrays.
+    local wp={}
+    local tasks={}
+    
+    -- First waypoint is the current position of the group.
+    wp[1]=ini:WaypointGround(speed, formation)
+    tasks[1]=group:TaskFunction("SUPPRESSION._Passing_Waypoint", self, 1, false)
+  
+    if self.Debug then  
+      local MarkerID=ini:MarkToAll(string.format("Waypoing %d of group %s (initial)", #wp, self.Controllable:GetName()))
+    end
+    
+    self:T2(self.lid..string.format("Number of waypoints %d", nx))
+    for i=1,nx-2 do
+    
+      local x=dx*i
+      local coord=ini:Translate(x, heading)
+      
+      wp[#wp+1]=coord:WaypointGround(speed, formation)
+      tasks[#tasks+1]=group:TaskFunction("SUPPRESSION._Passing_Waypoint", self, #wp, false)
+      
+      self:T2(self.lid..string.format("%d x = %4.1f", i, x))
+      if self.Debug then
+        local MarkerID=coord:MarkToAll(string.format("Waypoing %d of group %s", #wp, self.Controllable:GetName()))
+      end
+      
+    end
+    self:T2(self.lid..string.format("Total distance: %4.1f", dist))
+    
+    -- Final waypoint.
+    wp[#wp+1]=fin:WaypointGround(speed, formation)
+    if self.Debug then
+      local MarkerID=fin:MarkToAll(string.format("Waypoing %d of group %s (final)", #wp, self.Controllable:GetName()))
+    end
+    
+      -- Task to hold.
+    local ConditionWait=group:TaskCondition(nil, nil, nil, nil, wait, nil)
+    local TaskHold = group:TaskHold()
+    
+    -- Task combo to make group hold at final waypoint.
+    local TaskComboFin = {}
+    TaskComboFin[#TaskComboFin+1] = group:TaskFunction("SUPPRESSION._Passing_Waypoint", self, #wp, true)
+    TaskComboFin[#TaskComboFin+1] = group:TaskControlled(TaskHold, ConditionWait)
+  
+    -- Add final task.  
+    tasks[#tasks+1]=group:TaskCombo(TaskComboFin)
+  
+    -- Original waypoints of the group.
+    local Waypoints = group:GetTemplateRoutePoints()
+    
+    -- New points are added to the default route.
+    for i,p in ipairs(wp) do
+      table.insert(Waypoints, i, wp[i])
+    end
+    
+    -- Set task for all waypoints.
+    for i,wp in ipairs(Waypoints) do
+      group:SetTaskWaypoint(Waypoints[i], tasks[i])
+    end
+    
+    -- Submit task and route group along waypoints.
+    group:Route(Waypoints)
+    
+  else
+    self:E(self.lid..string.format("ERROR: Group is not alive!"))
   end
-  self:T2(self.lid..string.format("Total distance: %4.1f", dist))
-  
-  -- Final waypoint.
-  wp[#wp+1]=fin:WaypointGround(speed, formation)
-  if self.Debug then
-    local MarkerID=fin:MarkToAll(string.format("Waypoing %d of group %s (final)", #wp, self.Controllable:GetName()))
-  end
-  
-    -- Task to hold.
-  local ConditionWait=group:TaskCondition(nil, nil, nil, nil, wait, nil)
-  local TaskHold = group:TaskHold()
-  
-  -- Task combo to make group hold at final waypoint.
-  local TaskComboFin = {}
-  TaskComboFin[#TaskComboFin+1] = group:TaskFunction("SUPPRESSION._Passing_Waypoint", self, #wp, true)
-  TaskComboFin[#TaskComboFin+1] = group:TaskControlled(TaskHold, ConditionWait)
-
-  -- Add final task.  
-  tasks[#tasks+1]=group:TaskCombo(TaskComboFin)
-
-  -- Original waypoints of the group.
-  local Waypoints = group:GetTemplateRoutePoints()
-  
-  -- New points are added to the default route.
-  for i,p in ipairs(wp) do
-    table.insert(Waypoints, i, wp[i])
-  end
-  
-  -- Set task for all waypoints.
-  for i,wp in ipairs(Waypoints) do
-    group:SetTaskWaypoint(Waypoints[i], tasks[i])
-  end
-  
-  -- Submit task and route group along waypoints.
-  group:Route(Waypoints)
 
 end
 

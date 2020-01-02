@@ -707,13 +707,14 @@ end
 function AI_AIR:onafterRefuel( AIGroup, From, Event, To )
   self:F( { AIGroup, From, Event, To } )
 
-  
   if AIGroup and AIGroup:IsAlive() then
+  
+    -- Get tanker group.
     local Tanker = GROUP:FindByName( self.TankerName )
 
-    if Tanker:IsAlive() and Tanker:IsAirPlane() then
+    if Tanker and Tanker:IsAlive() and Tanker:IsAirPlane() then
 
-      self:I( "Group " .. self.Controllable:GetName() .. " ... Refuelling! ( " .. self:GetState() .. "), at tanker " .. self.TankerName )
+      self:I( "Group " .. self.Controllable:GetName() .. " ... Refuelling! State=" .. self:GetState() .. ", Refuelling tanker " .. self.TankerName )
 
       local RefuelRoute = {}
   
@@ -724,40 +725,43 @@ function AI_AIR:onafterRefuel( AIGroup, From, Event, To )
       local ToRefuelSpeed = math.random( self.PatrolMinSpeed, self.PatrolMaxSpeed )
       
       --- Create a route point of type air.
-      local FromRefuelRoutePoint = FromRefuelCoord:WaypointAir( 
-        self.PatrolAltType, 
-        POINT_VEC3.RoutePointType.TurningPoint, 
-        POINT_VEC3.RoutePointAction.TurningPoint, 
-        ToRefuelSpeed, 
-        true 
-      )
+      local FromRefuelRoutePoint = FromRefuelCoord:WaypointAir(self.PatrolAltType, POINT_VEC3.RoutePointType.TurningPoint, POINT_VEC3.RoutePointAction.TurningPoint, ToRefuelSpeed, true)
 
-      --- Create a route point of type air.
-      local ToRefuelRoutePoint = FromRefuelCoord:WaypointAir( 
-        self.PatrolAltType, 
-        POINT_VEC3.RoutePointType.TurningPoint, 
-        POINT_VEC3.RoutePointAction.TurningPoint, 
-        ToRefuelSpeed, 
-        true 
-      )
+      --- Create a route point of type air. NOT used!
+      local ToRefuelRoutePoint = Tanker:GetCoordinate():WaypointAir(self.PatrolAltType, POINT_VEC3.RoutePointType.TurningPoint, POINT_VEC3.RoutePointAction.TurningPoint, ToRefuelSpeed, true)
   
       self:F( { ToRefuelSpeed = ToRefuelSpeed } )
       
       RefuelRoute[#RefuelRoute+1] = FromRefuelRoutePoint
-      --RefuelRoute[#RefuelRoute+1] = ToRefuelRoutePoint
+      RefuelRoute[#RefuelRoute+1] = ToRefuelRoutePoint
       
       AIGroup:OptionROEHoldFire()
       AIGroup:OptionROTEvadeFire()
+      
+      -- Get Class name for .Resume function
+      local classname=self:GetClassName()
+      
+      -- AI_A2A_CAP can call this function but does not have a .Resume function. Try to fix.
+      if classname=="AI_A2A_CAP" then
+        classname="AI_AIR_PATROL"
+      end
+      
+      env.info("FF refueling classname="..classname)
   
       local Tasks = {}
       Tasks[#Tasks+1] = AIGroup:TaskRefueling()
-      Tasks[#Tasks+1] = AIGroup:TaskFunction( self:GetClassName() .. ".Resume", self )
+      Tasks[#Tasks+1] = AIGroup:TaskFunction(  classname .. ".Resume", self )
       RefuelRoute[#RefuelRoute].task = AIGroup:TaskCombo( Tasks )
   
       AIGroup:Route( RefuelRoute, self.TaskDelay )
+      
     else
+    
+      -- No tanker defined ==> RTB!
       self:RTB()
+      
     end
+    
   end
 
 end

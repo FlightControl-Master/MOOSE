@@ -298,7 +298,8 @@ end
 --     
 --     
 -- @param #BASE self
--- @param #BASE Child is the Child class from which the Parent class needs to be retrieved.
+-- @param #BASE Child This is the Child class from which the Parent class needs to be retrieved.
+-- @param #BASE FromClass (Optional) The class from which to get the parent.
 -- @return #BASE
 function BASE:GetParent( Child, FromClass )
 
