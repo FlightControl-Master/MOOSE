@@ -629,7 +629,7 @@ function RECOVERYTANKER:SetHomeBase(airbase, terminaltype)
   if not self.airbase then
     self:E(self.lid.."ERROR: Airbase is nil!")
   end
-  if termialtype then
+  if terminaltype then
     self.terminaltype=terminaltype
   end
   return self
