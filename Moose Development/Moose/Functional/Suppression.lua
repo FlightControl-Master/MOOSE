@@ -266,7 +266,10 @@ SUPPRESSION={
 }
 
 --- Enumerator of possible rules of engagement.
--- @field #list ROE
+-- @type SUPPRESSION.ROE
+-- @field #string Hold Hold fire.
+-- @field #string Free Weapon fire.
+-- @field #string Return Return fire.
 SUPPRESSION.ROE={
   Hold="Weapon Hold",
   Free="Weapon Free",
@@ -274,7 +277,10 @@ SUPPRESSION.ROE={
 }
 
 --- Enumerator of possible alarm states.
--- @field #list AlarmState
+-- @type SUPPRESSION.AlarmState
+-- @field #string Auto Automatic.
+-- @field #string Green Green.
+-- @field #string Red Red.
 SUPPRESSION.AlarmState={
   Auto="Auto",
   Green="Green",
@@ -287,7 +293,7 @@ SUPPRESSION.MenuF10=nil
 
 --- PSEUDOATC version.
 -- @field #number version
-SUPPRESSION.version="0.9.2"
+SUPPRESSION.version="0.9.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
