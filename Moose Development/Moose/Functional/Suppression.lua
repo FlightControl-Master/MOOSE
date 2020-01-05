@@ -22,7 +22,7 @@
 -- 
 -- The implementation is based on an idea and script by MBot. See the [DCS forum threat](https://forums.eagle.ru/showthread.php?t=107635) for details.
 -- 
--- In addition to suppressing the fire, conditions can be specified which let the group retreat to a defined zone, move away from the attacker
+-- In addition to suppressing the fire, conditions can be specified, which let the group retreat to a defined zone, move away from the attacker
 -- or hide at a nearby scenery object.
 -- 
 -- ====
@@ -882,10 +882,11 @@ function SUPPRESSION:StatusReport(message)
   local state=self.CurrentAlarmState
   local life_min, life_max, life_ave, life_ave0, groupstrength=self:_GetLife()
   local ammotot=group:GetAmmunition()
+  local detectedG=group:GetDetectedGroupSet():CountAlive()
+  local detectedU=group:GetDetectedUnitSet():Count()
   
-
-  local text=string.format("State %s, Units=%d/%d, ROE=%s, AlarmState=%s, Hits=%d, Life(min/max/ave/ave0)=%d/%d/%d/%d, Total Ammo=%d", 
-  self:GetState(), nunits, self.IniGroupStrength, self.CurrentROE, self.CurrentAlarmState, self.Nhit, life_min, life_max, life_ave, life_ave0, ammotot)
+  local text=string.format("State %s, Units=%d/%d, ROE=%s, AlarmState=%s, Hits=%d, Life(min/max/ave/ave0)=%d/%d/%d/%d, Total Ammo=%d, Detected=%d/%d", 
+  self:GetState(), nunits, self.IniGroupStrength, self.CurrentROE, self.CurrentAlarmState, self.Nhit, life_min, life_max, life_ave, life_ave0, ammotot, detectedG, detectedU)
   
   MESSAGE:New(text, 10):ToAllIf(message or self.Debug)
   self:I(self.lid..text)
@@ -997,11 +998,12 @@ function SUPPRESSION:onafterStatus(Controllable, From, Event, To)
     local nunits=group:CountAliveUnits()
     
     -- Check if there are units.
-    if nunits>0 then      
+    if nunits>0 then
       
       -- Retreat if completely out of ammo and retreat zone defined. 
       local nammo=group:GetAmmunition()
       if nammo==0 and self.RetreatZone then
+        self:I(self.lid..string.format("Out of ammo!"))
         self:Retreat()        
       end
 

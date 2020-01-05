@@ -874,6 +874,12 @@ do -- ZONE_CAPTURE_COALITION
       self:Capture()
     end
     
+    if self:IsAttacked() then
+      local unitset=self:GetScannedSetUnit() --Core.Set#SET_UNIT
+      
+      unitset:ForEachUnitInZone(self)
+    end
+    
     -- Status text.
     local text=string.format("CAPTURE ZONE %s: Owner=%s (Previous=%s): Status %s", self:GetZoneName(), self:GetCoalitionName(), UTILS.GetCoalitionName(self:GetPreviousCoalition()), State)
     local NewState = self:GetState()

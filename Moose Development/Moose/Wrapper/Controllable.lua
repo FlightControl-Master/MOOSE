@@ -2802,7 +2802,9 @@ function CONTROLLABLE:GetDetectedTargets( DetectVisual, DetectOptical, DetectRad
   self:F2( self.ControllableName )
 
   local DCSControllable = self:GetDCSObject()
+  
   if DCSControllable then
+  
     local DetectionVisual = ( DetectVisual and DetectVisual == true ) and Controller.Detection.VISUAL or nil
     local DetectionOptical = ( DetectOptical and DetectOptical == true ) and Controller.Detection.OPTICAL or nil
     local DetectionRadar = ( DetectRadar and DetectRadar == true ) and Controller.Detection.RADAR or nil
@@ -2841,7 +2843,25 @@ function CONTROLLABLE:GetDetectedTargets( DetectVisual, DetectOptical, DetectRad
 end
 
 --- Check if a target is detected.
+-- The optional parametes specify the detection methods that can be applied.
+-- If **no** detection method is given, the detection will use **all** the available methods by default.
+-- If **at least one** detection method is specified, only the methods set to *true* will be used.
 -- @param Wrapper.Controllable#CONTROLLABLE self
+-- @param DCS#Object DCSObject The DCS object that is checked.
+-- @param Wrapper.Controllable#CONTROLLABLE self
+-- @param #boolean DetectVisual (Optional) If *false*, do not include visually detected targets.
+-- @param #boolean DetectOptical (Optional) If *false*, do not include optically detected targets.
+-- @param #boolean DetectRadar (Optional) If *false*, do not include targets detected by radar.
+-- @param #boolean DetectIRST (Optional) If *false*, do not include targets detected by IRST.
+-- @param #boolean DetectRWR (Optional) If *false*, do not include targets detected by RWR.
+-- @param #boolean DetectDLINK (Optional) If *false*, do not include targets detected by data link.
+-- @return #boolean True if target is detected.
+-- @return #boolean True if target is visible by line of sight.
+-- @return #number Mission time when target was detected.
+-- @return #boolean True if target type is known.
+-- @return #boolean True if distance to target is known.
+-- @return DCS#Vec3 Last known position vector of the target.
+-- @return DCS#Vec3 Last known velocity vector of the target.
 function CONTROLLABLE:IsTargetDetected( DCSObject, DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK )
   self:F2( self.ControllableName )
 
@@ -2866,6 +2886,147 @@ function CONTROLLABLE:IsTargetDetected( DCSObject, DetectVisual, DetectOptical, 
 
   return nil
 end
+
+--- Check if a certain UNIT is detected by the controllable.
+-- The optional parametes specify the detection methods that can be applied.
+-- If **no** detection method is given, the detection will use **all** the available methods by default.
+-- If **at least one** detection method is specified, only the methods set to *true* will be used.
+-- @param #CONTROLLABLE self
+-- @param Wrapper.Unit#UNIT Unit The unit that is supposed to be detected.
+-- @param #boolean DetectVisual (Optional) If *false*, do not include visually detected targets.
+-- @param #boolean DetectOptical (Optional) If *false*, do not include optically detected targets.
+-- @param #boolean DetectRadar (Optional) If *false*, do not include targets detected by radar.
+-- @param #boolean DetectIRST (Optional) If *false*, do not include targets detected by IRST.
+-- @param #boolean DetectRWR (Optional) If *false*, do not include targets detected by RWR.
+-- @param #boolean DetectDLINK (Optional) If *false*, do not include targets detected by data link.
+-- @return #boolean True if target is detected.
+-- @return #boolean True if target is visible by line of sight.
+-- @return #number Mission time when target was detected.
+-- @return #boolean True if target type is known.
+-- @return #boolean True if distance to target is known.
+-- @return DCS#Vec3 Last known position vector of the target.
+-- @return DCS#Vec3 Last known velocity vector of the target.
+function CONTROLLABLE:IsUnitDetected( Unit, DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK )
+  self:F2( self.ControllableName )
+
+  if Unit and Unit:IsAlive() then
+    return self:IsTargetDetected(Unit:GetDCSObject(), DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK)
+  end
+
+  return nil
+end
+
+--- Check if a certain GROUP is detected by the controllable.
+-- The optional parametes specify the detection methods that can be applied.
+-- If **no** detection method is given, the detection will use **all** the available methods by default.
+-- If **at least one** detection method is specified, only the methods set to *true* will be used.
+-- @param #CONTROLLABLE self
+-- @param Wrapper.Group#GROUP Group The group that is supposed to be detected.
+-- @param #boolean DetectVisual (Optional) If *false*, do not include visually detected targets.
+-- @param #boolean DetectOptical (Optional) If *false*, do not include optically detected targets.
+-- @param #boolean DetectRadar (Optional) If *false*, do not include targets detected by radar.
+-- @param #boolean DetectIRST (Optional) If *false*, do not include targets detected by IRST.
+-- @param #boolean DetectRWR (Optional) If *false*, do not include targets detected by RWR.
+-- @param #boolean DetectDLINK (Optional) If *false*, do not include targets detected by data link.
+-- @return #boolean True if any unit of the group is detected.
+function CONTROLLABLE:IsGroupDetected( Group, DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK )
+  self:F2( self.ControllableName )
+
+  if Group and Group:IsAlive() then
+    for _,_unit in pairs(Group:GetUnits()) do
+      local unit=_unit --Wrapper.Unit#UNIT
+      if unit and unit:IsAlive() then
+        
+        local isdetected=self:IsUnitDetected(unit, DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK)
+        
+        if isdetected then
+          return true
+        end
+      end
+    end
+    return false
+  end
+
+  return nil
+end
+
+
+--- Return the detected targets of the controllable.
+-- The optional parametes specify the detection methods that can be applied.
+-- If **no** detection method is given, the detection will use **all** the available methods by default.
+-- If **at least one** detection method is specified, only the methods set to *true* will be used.
+-- @param Wrapper.Controllable#CONTROLLABLE self
+-- @param #boolean DetectVisual (Optional) If *false*, do not include visually detected targets.
+-- @param #boolean DetectOptical (Optional) If *false*, do not include optically detected targets.
+-- @param #boolean DetectRadar (Optional) If *false*, do not include targets detected by radar.
+-- @param #boolean DetectIRST (Optional) If *false*, do not include targets detected by IRST.
+-- @param #boolean DetectRWR (Optional) If *false*, do not include targets detected by RWR.
+-- @param #boolean DetectDLINK (Optional) If *false*, do not include targets detected by data link.
+-- @return Core.Set#SET_UNIT Set of detected units.
+function CONTROLLABLE:GetDetectedUnitSet(DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK)
+
+  -- Get detected DCS units.
+  local detectedtargets=self:GetDetectedTargets(DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK)
+
+  local unitset=SET_UNIT:New()
+  
+  for DetectionObjectID, Detection in pairs(detectedtargets or {}) do
+    local DetectedObject=Detection.object -- DCS#Object
+
+    if DetectedObject and DetectedObject:isExist() and DetectedObject.id_<50000000 then
+      local unit=UNIT:Find(DetectedObject)
+      
+      if unit and unit:IsAlive() then
+        
+        if not unitset:FindUnit(unit:GetName()) then
+          unitset:AddUnit(unit)        
+        end
+        
+      end
+    end
+  end
+    
+  return unitset
+end
+
+--- Return the detected target groups of the controllable as a @{SET_GROUP}.
+-- The optional parametes specify the detection methods that can be applied.
+-- If no detection method is given, the detection will use all the available methods by default.
+-- @param Wrapper.Controllable#CONTROLLABLE self
+-- @param #boolean DetectVisual (Optional) If *false*, do not include visually detected targets.
+-- @param #boolean DetectOptical (Optional) If *false*, do not include optically detected targets.
+-- @param #boolean DetectRadar (Optional) If *false*, do not include targets detected by radar.
+-- @param #boolean DetectIRST (Optional) If *false*, do not include targets detected by IRST.
+-- @param #boolean DetectRWR (Optional) If *false*, do not include targets detected by RWR.
+-- @param #boolean DetectDLINK (Optional) If *false*, do not include targets detected by data link.
+-- @return Core.Set#SET_GROUP Set of detected groups.
+function CONTROLLABLE:GetDetectedGroupSet(DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK)
+
+  -- Get detected DCS units.
+  local detectedtargets=self:GetDetectedTargets(DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK)
+
+  local groupset=SET_GROUP:New()
+  
+  for DetectionObjectID, Detection in pairs(detectedtargets or {}) do
+    local DetectedObject=Detection.object -- DCS#Object
+
+    if DetectedObject and DetectedObject:isExist() and DetectedObject.id_<50000000 then
+      local unit=UNIT:Find(DetectedObject)
+      
+      if unit and unit:IsAlive() then
+        local group=unit:GetGroup()
+        
+        if group and not groupset:FindGroup(group:GetName()) then
+          groupset:AddGroup(group)
+        end
+        
+      end
+    end
+  end
+    
+  return groupset
+end
+
 
 -- Options
 

@@ -1576,8 +1576,8 @@ do -- SET_GROUP
   
   --- Iterate the SET_GROUP and count how many GROUPs and UNITs are alive.
   -- @param #SET_GROUP self
-  -- @return #number The number of GROUPs completely in the Zone
-  -- @return #number The number of UNITS alive.
+  -- @return #number The number of GROUPs alive.
+  -- @return #number The number of UNITs alive.
   function SET_GROUP:CountAlive()
     local CountG = 0
     local CountU = 0

@@ -78,7 +78,7 @@ CALLSIGN={
   },
   -- AWACS
   AWACS={
-    Overloard=1,
+    Overlord=1,
     Magic=2,
     Wizard=3,
     Focus=4,

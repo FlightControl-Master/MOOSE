@@ -1165,6 +1165,45 @@ do -- Detection
 
     return IsLOS
   end
+
+  --- Forces the unit to become aware of the specified target, without the unit manually detecting the other unit itself.
+  -- Applies only to a Unit Controller. Cannot be used at the group level.
+  -- @param #UNIT self
+  -- @param #UNIT TargetUnit The unit to be known.
+  -- @param #boolean TypeKnown The target type is known. If *false*, the type is not known.
+  -- @param #boolean DistanceKnown The distance to the target is known. If *false*, distance is unknown.
+  function UNIT:KnowUnit(TargetUnit, TypeKnown, DistanceKnown)
+
+    -- Defaults.
+    if TypeKnown~=false then
+      TypeKnown=true
+    end
+    if DistanceKnown~=false then
+      DistanceKnown=true
+    end
   
+    local DCSControllable = self:GetDCSObject()
+  
+    if DCSControllable then
+  
+      local Controller = DCSControllable:getController()  --self:_GetController()
+      
+      if Controller then
+      
+        local object=TargetUnit:GetDCSObject()
+        
+        if object then
+          
+          self:I(string.format("Unit %s now knows target unit %s. Type known=%s, distance known=%s", self:GetName(), TargetUnit:GetName(), tostring(TypeKnown), tostring(DistanceKnown)))
+      
+          Controller:knowTarget(object, TypeKnown, DistanceKnown)
+          
+        end
+        
+      end
+  
+    end
+    
+  end
 
 end
