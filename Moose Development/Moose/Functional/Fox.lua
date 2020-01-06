@@ -961,7 +961,7 @@ function FOX:onafterMissileLaunch(From, Event, To, missile)
         end
         
         if target then
-          self:I(self.lid..string.format("Missile %s with NO explicit target got closest unit to missile as target %s. Dist=%s m", missile.missileType, target:GetName(), tostring(mindist)))
+          self:T(self.lid..string.format("Missile %s with NO explicit target got closest unit to missile as target %s. Dist=%s m", missile.missileType, target:GetName(), tostring(mindist)))
         end
              
       end
@@ -1066,7 +1066,7 @@ function FOX:onafterMissileLaunch(From, Event, To, missile)
       else
       
         -- Destroy missile.
-        self:I(self.lid..string.format("Missile %s(%s) fired by %s has no current target. Checking back in 0.1 sec.",  missile.missileType, missile.missileName, missile.shooterName))
+        self:T(self.lid..string.format("Missile %s(%s) fired by %s has no current target. Checking back in 0.1 sec.",  missile.missileType, missile.missileName, missile.shooterName))
         return timer.getTime()+0.1
       
         -- No target ==> terminate timer.
