@@ -1691,7 +1691,7 @@ AIRBOSS.MenuF10Root=nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version="1.1.0"
+AIRBOSS.version="1.1.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -2081,6 +2081,7 @@ function AIRBOSS:New(carriername, alias)
   self:AddTransition("*",             "RecoveryCase",    "*")           -- Switch to another case recovery.
   self:AddTransition("*",             "PassingWaypoint", "*")           -- Carrier is passing a waypoint.
   self:AddTransition("*",             "LSOGrade",        "*")           -- LSO grade.
+  self:AddTransition("*",             "Marshal",         "*")           -- A flight was send into the marshal stack.
   self:AddTransition("*",             "Save",            "*")           -- Save player scores to file.
   self:AddTransition("*",             "Stop",            "Stopped")     -- Stop AIRBOSS FMS.
 
@@ -2254,29 +2255,6 @@ function AIRBOSS:New(carriername, alias)
   -- @param #string filename (Optional) File name. Default is AIRBOSS-*ALIAS*_LSOgrades.csv.
 
 
-  --- Triggers the FSM event "LSOgrade". Called when the LSO grades a player
-  -- @function [parent=#AIRBOSS] LSOgrade
-  -- @param #AIRBOSS self
-  -- @param #AIRBOSS.PlayerData playerData Player Data.
-  -- @param #AIRBOSS.LSOgrade grade LSO grade.
-
-  --- Triggers the FSM event "LSOgrade". Delayed called when the LSO grades a player.
-  -- @function [parent=#AIRBOSS] __LSOgrade
-  -- @param #AIRBOSS self
-  -- @param #number delay Delay in seconds.
-  -- @param #AIRBOSS.PlayerData playerData Player Data.
-  -- @param #AIRBOSS.LSOgrade grade LSO grade.
-
-  --- On after "LSOgrade" user function. Called when the carrier passes a waypoint of its route.
-  -- @function [parent=#AIRBOSS] OnAfterLSOgrade
-  -- @param #AIRBOSS self
-  -- @param #string From From state.
-  -- @param #string Event Event.
-  -- @param #string To To state.
-  -- @param #AIRBOSS.PlayerData playerData Player Data.
-  -- @param #AIRBOSS.LSOgrade grade LSO grade.
-
-
   --- Triggers the FSM event "LSOGrade". Called when the LSO grades a player
   -- @function [parent=#AIRBOSS] LSOGrade
   -- @param #AIRBOSS self
@@ -2300,27 +2278,24 @@ function AIRBOSS:New(carriername, alias)
   -- @param #AIRBOSS.LSOgrade grade LSO grade.
 
 
-  --- Triggers the FSM event "LSOGrade". Called when the LSO grades a player
-  -- @function [parent=#AIRBOSS] LSOGrade
+  --- Triggers the FSM event "Marshal". Called when a flight is send to the Marshal stack.
+  -- @function [parent=#AIRBOSS] Marshal
   -- @param #AIRBOSS self
-  -- @param #AIRBOSS.PlayerData playerData Player Data.
-  -- @param #AIRBOSS.LSOgrade grade LSO grade.
+  -- @param #AIRBOSS.FlightGroup flight The flight group data.
 
-  --- Triggers the FSM event "LSOGrade". Delayed called when the LSO grades a player.
-  -- @function [parent=#AIRBOSS] __LSOGrade
+  --- Triggers the FSM event "Marshal". Delayed call when a flight is send to the Marshal stack.
+  -- @function [parent=#AIRBOSS] __Marshal
   -- @param #AIRBOSS self
   -- @param #number delay Delay in seconds.
-  -- @param #AIRBOSS.PlayerData playerData Player Data.
-  -- @param #AIRBOSS.LSOgrade grade LSO grade.
+  -- @param #AIRBOSS.FlightGroup flight The flight group data.
 
-  --- On after "LSOGrade" user function. Called when the carrier passes a waypoint of its route.
-  -- @function [parent=#AIRBOSS] OnAfterLSOGrade
+  --- On after "Marshal" user function. Called when a flight is send to the Marshal stack.
+  -- @function [parent=#AIRBOSS] OnAfterMarshal
   -- @param #AIRBOSS self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  -- @param #AIRBOSS.PlayerData playerData Player Data.
-  -- @param #AIRBOSS.LSOgrade grade LSO grade.
+  -- @param #AIRBOSS.FlightGroup flight The flight group data.
 
 
   --- Triggers the FSM event "Stop" that stops the airboss. Event handlers are stopped.
@@ -6187,6 +6162,9 @@ function AIRBOSS:_MarshalPlayer(playerData, stack)
 
       -- Set stack flag.
       flight.flag=stack
+	  
+	  -- Trigger Marshal event.
+	  self:Marshal(flight)
     end
 
   else
@@ -6443,6 +6421,9 @@ function AIRBOSS:_MarshalAI(flight, nstack, respawn)
 
   -- Route group.
   flight.group:Route(wp, 1)
+  
+  -- Trigger Marshal event.
+  self:Marshal(flight)
 
 end
 

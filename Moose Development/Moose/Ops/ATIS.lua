@@ -515,7 +515,7 @@ _ATIS={}
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version="0.6.0"
+ATIS.version="0.6.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -996,9 +996,15 @@ function ATIS:onafterStatus(From, Event, To)
 
   -- Get FSM state.
   local fsmstate=self:GetState()
+  
+  local relayunitstatus="N/A"
+  if self.relayunitname then
+    local ru=UNIT:FindByName(self.relayunitname)
+    relayunitstatus=tostring(ru:IsAlive())
+  end
 
     -- Info text.
-  local text=string.format("State %s", fsmstate)
+  local text=string.format("State %s: Freq=%.3f MHz %s, Relay unit=%s (alive=%s)", fsmstate, self.frequency, UTILS.GetModulationName(self.modulation), tostring(self.relayunitname), relayunitstatus)
   self:I(self.lid..text)
 
   self:__Status(-60)
