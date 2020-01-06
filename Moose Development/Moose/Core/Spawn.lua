@@ -214,9 +214,8 @@
 -- ### **Scheduled** spawning methods
 -- 
 --   * @{#SPAWN.SpawnScheduled}(): Spawn groups at scheduled but randomized intervals. 
---   * @{#SPAWN.SpawnScheduledStart}(): Start or continue to spawn groups at scheduled time intervals. 
---   * @{#SPAWN.SpawnScheduledStop}(): Stop the spawning of groups at scheduled time intervals. 
--- 
+---  * @{#SPAWN.SpawnScheduleStart}(): Start or continue to spawn groups at scheduled time intervals. 
+--   * @{#SPAWN.SpawnScheduleStop}(): Stop the spawning of groups at scheduled time intervals. 
 -- 
 --  
 -- ## Retrieve alive GROUPs spawned by the SPAWN object
@@ -260,7 +259,7 @@
 -- immediately when :SpawnScheduled() is initiated. The methods @{#SPAWN.InitDelayOnOff}() and @{#SPAWN.InitDelayOn}() can be used to
 -- activate a delay before the first @{Wrapper.Group} is spawned. For completeness, a method @{#SPAWN.InitDelayOff}() is also available, that
 -- can be used to switch off the initial delay. Because there is no delay by default, this method would only be used when a 
--- @{#SPAWN.SpawnScheduledStop}() ; @{#SPAWN.SpawnScheduledStart}() sequence would have been used.
+-- @{#SPAWN.SpawnScheduleStop}() ; @{#SPAWN.SpawnScheduleStart}() sequence would have been used.
 -- 
 -- 
 -- @field #SPAWN SPAWN

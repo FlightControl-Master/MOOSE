@@ -78,7 +78,7 @@ CALLSIGN={
   },
   -- AWACS
   AWACS={
-    Overloard=1,
+    Overlord=1,
     Magic=2,
     Wizard=3,
     Focus=4,
@@ -1059,4 +1059,24 @@ function UTILS.GetCoalitionName(Coalition)
   end
     
 end
+
+--- Get the modulation name from its numerical value.
+-- @param #number Modulation The modulation enumerator number. Can be either 0 or 1.
+-- @return #string The modulation name, i.e. "AM"=0 or "FM"=1. Anything else will return "Unknown".
+function UTILS.GetModulationName(Modulation)
+
+  if Modulation then
+    if Modulation==0  then
+      return "AM"
+    elseif Modulation==1  then
+      return "FM"
+    else
+      return "Unknown"
+    end
+  else
+    return "Unknown"
+  end
+    
+end
+
 
