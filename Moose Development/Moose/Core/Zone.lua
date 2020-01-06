@@ -949,7 +949,7 @@ function ZONE_RADIUS:SearchZone( EvaluateFunction, ObjectCategories )
 
   local function EvaluateZone( ZoneDCSUnit )
   
-    env.info( ZoneDCSUnit:getName() ) 
+    --env.info( ZoneDCSUnit:getName() ) 
   
     local ZoneUnit = UNIT:Find( ZoneDCSUnit )
 

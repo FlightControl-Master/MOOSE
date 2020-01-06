@@ -874,14 +874,16 @@ do -- ZONE_CAPTURE_COALITION
       self:Capture()
     end
     
-    if self:IsAttacked() then
-      local unitset=self:GetScannedSetUnit() --Core.Set#SET_UNIT
-      
-      unitset:ForEachUnitInZone(self)
-    end
+    -- Get red and blue unit sets.
+    local unitsetRed=self:GetScannedSetUnit():FilterCoalitions(coalition.side.RED):FilterActive(true):FilterOnce()
+    local unitsetBlu=self:GetScannedSetUnit():FilterCoalitions(coalition.side.BLUE):FilterActive(true):FilterOnce()
+    
+    -- Count number of units.
+    local nRed=unitsetRed:Count()
+    local nBlu=unitsetBlu:Count()
     
     -- Status text.
-    local text=string.format("CAPTURE ZONE %s: Owner=%s (Previous=%s): Status %s", self:GetZoneName(), self:GetCoalitionName(), UTILS.GetCoalitionName(self:GetPreviousCoalition()), State)
+    local text=string.format("CAPTURE ZONE %s: Owner=%s (Previous=%s): #blue=%d, #red=%d, Status %s", self:GetZoneName(), self:GetCoalitionName(), UTILS.GetCoalitionName(self:GetPreviousCoalition()), nBlu, nRed, State)
     local NewState = self:GetState()
     if NewState~=State then
       text=text..string.format(" --> %s", NewState)

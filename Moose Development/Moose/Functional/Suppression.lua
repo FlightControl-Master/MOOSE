@@ -83,6 +83,8 @@
 -- @field #string DefaultAlarmState Alarm state the group will go to when it is changed back from another state. Default is "Auto".
 -- @field #string DefaultROE ROE the group will get once suppression is over. Default is "Free".
 -- @field #boolean eventmoose If true, events are handled by MOOSE. If false, events are handled directly by DCS eventhandler. Default true.
+-- @field Core.Zone#ZONE BattleZone 
+-- @field #boolean AutoEngage
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 -- 
 
@@ -307,8 +309,7 @@ SUPPRESSION.version="0.9.3"
 --- Creates a new AI_suppression object.
 -- @param #SUPPRESSION self
 -- @param Wrapper.Group#GROUP group The GROUP object for which suppression should be applied.
--- @return #SUPPRESSION SUPPRESSION object.
--- @return nil If group does not exist or is not a ground group.
+-- @return #SUPPRESSION SUPPRESSION object or *nil* if group does not exist or is not a ground group.
 function SUPPRESSION:New(group)
 
   -- Inherits from FSM_CONTROLLABLE
@@ -333,18 +334,16 @@ function SUPPRESSION:New(group)
   self:SetControllable(group)
   
   -- Get DCS descriptors of group.
-  local DCSgroup=Group.getByName(group:GetName())
-  local DCSunit=DCSgroup:getUnit(1)
-  self.DCSdesc=DCSunit:getDesc()
+  self.DCSdesc=group:GetDCSDesc(1)
   
   -- Get max speed the group can do and convert to km/h.
-  self.SpeedMax=self.DCSdesc.speedMaxOffRoad*3.6
+  self.SpeedMax=group:GetSpeedMax()
   
   -- Set speed to maximum.
   self.Speed=self.SpeedMax
   
   -- Is this infantry or not.
-  self.IsInfantry=DCSunit:hasAttribute("Infantry")
+  self.IsInfantry=group:GetUnit(1):HasAttribute("Infantry")
   
   -- Type of group.
   self.Type=group:GetTypeName()
@@ -368,6 +367,7 @@ function SUPPRESSION:New(group)
   self:AddTransition("TakingCover", "FightBack", "CombatReady")
   self:AddTransition("FallingBack", "FightBack", "CombatReady")
   self:AddTransition("Retreating",  "Retreated", "Retreated")
+  self:AddTransition("*",           "OutOfAmmo", "*")
   self:AddTransition("*",           "Dead",      "*")
   self:AddTransition("*",           "Stop",      "Stopped")
   
@@ -591,6 +591,24 @@ function SUPPRESSION:New(group)
   
   --- User function for OnAfter "FlightBack" event.
   -- @function [parent=#SUPPRESSION] OnAfterFightBack
+  -- @param #SUPPRESSION self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+
+  --- Trigger "OutOfAmmo" event.
+  -- @function [parent=#SUPPRESSION] OutOfAmmo
+  -- @param #SUPPRESSION self
+
+  --- Trigger "OutOfAmmo" event after a delay.
+  -- @function [parent=#SUPPRESSION] __OutOfAmmo
+  -- @param #SUPPRESSION self
+  -- @param #number Delay Delay in seconds. 
+
+  --- User function for OnAfter "OutOfAmmo" event.
+  -- @function [parent=#SUPPRESSION] OnAfterOutOfAmmo
   -- @param #SUPPRESSION self
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
   -- @param #string From From state.
@@ -1002,9 +1020,8 @@ function SUPPRESSION:onafterStatus(Controllable, From, Event, To)
       
       -- Retreat if completely out of ammo and retreat zone defined. 
       local nammo=group:GetAmmunition()
-      if nammo==0 and self.RetreatZone then
-        self:I(self.lid..string.format("Out of ammo!"))
-        self:Retreat()        
+      if nammo==0 then
+        self:OutOfAmmo()
       end
 
       -- Status report.
@@ -1016,33 +1033,17 @@ function SUPPRESSION:onafterStatus(Controllable, From, Event, To)
       end
       
     else
+      -- Stop FSM as there are no units left.
       self:Stop()
     end
     
   else
+    -- Stop FSM as there group object does not exist.
     self:Stop()
   end
   
 end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
---- Before "Hit" event. (Of course, this is not really before the group got hit.)
--- @param #SUPPRESSION self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Wrapper.Unit#UNIT Unit Unit that was hit.
--- @param Wrapper.Unit#UNIT AttackUnit Unit that attacked.
--- @return boolean
-function SUPPRESSION:onbeforeHit(Controllable, From, Event, To, Unit, AttackUnit)
-  self:_EventFromTo("onbeforeHit", Event, From, To)
-  
-  --local Tnow=timer.getTime()
-  --env.info(self.lid..string.format("Last hit = %s  %s", tostring(self.LastHit), tostring(Tnow)))
-  
-  return true
-end
 
 --- After "Hit" event.
 -- @param #SUPPRESSION self
@@ -1312,6 +1313,25 @@ function SUPPRESSION:onafterTakeCover(Controllable, From, Event, To, Hideout)
   -- Make the group run away.
   self:_Run(Hideout, self.Speed, self.Formation, self.TakecoverWait)
     
+end
+
+--- After "OutOfAmmo" event. Triggered when group is completely out of ammo.
+-- @param #SUPPRESSION self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function SUPPRESSION:onafterOutOfAmmo(Controllable, From, Event, To)
+  self:_EventFromTo("onafterOutOfAmmo", Event, From, To)
+
+  -- Info to log.
+  self:I(self.lid..string.format("Out of ammo!"))
+    
+  -- Order retreat if retreat zone was specified.
+  if self.RetreatZone then
+    self:Retreat()
+  end
+  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

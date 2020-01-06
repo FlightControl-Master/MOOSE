@@ -2186,20 +2186,6 @@ do -- SET_UNIT
       return IsNotInZone
     end
     
-  
-    --- Check if minimal one element of the SET_UNIT is in the Zone.
-    -- @param #SET_UNIT self
-    -- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the SET_UNIT. The function needs to accept a UNIT parameter.
-    -- @return #SET_UNIT self
-    function SET_UNIT:ForEachUnitInZone( IteratorFunction, ... )
-      self:F2( arg )
-      
-      self:ForEach( IteratorFunction, arg, self:GetSet() )
-    
-      return self
-    end
-    
-  
   end
   
   
