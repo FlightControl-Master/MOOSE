@@ -1471,7 +1471,7 @@ end
 function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
   local text=string.format("Flight %s passed waypoint %d/%d", self.groupname, n, N)
   self:T(self.sid..text)
-  MESSAGE:New(text, 30, "DEBUG"):ToAll()
+  MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
   
   
   if self.destination and n>1 and n==N-1 then
