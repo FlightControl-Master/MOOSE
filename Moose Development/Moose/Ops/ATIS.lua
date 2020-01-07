@@ -515,7 +515,7 @@ _ATIS={}
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version="0.6.1"
+ATIS.version="0.6.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1000,7 +1000,9 @@ function ATIS:onafterStatus(From, Event, To)
   local relayunitstatus="N/A"
   if self.relayunitname then
     local ru=UNIT:FindByName(self.relayunitname)
-    relayunitstatus=tostring(ru:IsAlive())
+    if ru then
+      relayunitstatus=tostring(ru:IsAlive())
+    end
   end
 
     -- Info text.

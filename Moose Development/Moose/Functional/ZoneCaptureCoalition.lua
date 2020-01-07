@@ -875,8 +875,8 @@ do -- ZONE_CAPTURE_COALITION
     end
     
     -- Get red and blue unit sets.
-    local unitsetRed=self:GetScannedSetUnit():FilterCoalitions(coalition.side.RED):FilterActive(true):FilterOnce()
-    local unitsetBlu=self:GetScannedSetUnit():FilterCoalitions(coalition.side.BLUE):FilterActive(true):FilterOnce()
+    local unitsetRed=self:GetScannedSetUnit():FilterCoalitions("red"):FilterActive(true):FilterOnce()
+    local unitsetBlu=self:GetScannedSetUnit():FilterCoalitions("blue"):FilterActive(true):FilterOnce()
     
     -- Count number of units.
     local nRed=unitsetRed:Count()

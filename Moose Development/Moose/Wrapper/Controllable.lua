@@ -2136,8 +2136,10 @@ do -- Patrol methods
   -- @param #table ZoneList Table of zones.
   -- @param #number Speed Speed in km/h the group moves at.
   -- @param #string Formation (Optional) Formation the group should use.
+  -- @param #number DelayMin Delay in seconds before the group progresses to the next route point. Default 1 sec.
+  -- @param #number DelayMax Max. delay in seconds. Actual delay is randomly chosen between DelayMin and DelayMax. Default equal to DelayMin.
   -- @return #CONTROLLABLE
-  function CONTROLLABLE:PatrolZones( ZoneList, Speed, Formation )
+  function CONTROLLABLE:PatrolZones( ZoneList, Speed, Formation, DelayMin, DelayMax )
 
     if not type( ZoneList ) == "table" then
       ZoneList = { ZoneList }
@@ -2148,13 +2150,17 @@ do -- Patrol methods
     if not self:IsInstanceOf( "GROUP" ) then
       PatrolGroup = self:GetGroup() -- Wrapper.Group#GROUP
     end
+    
+    DelayMin=DelayMin or 1
+    if not DelayMax or DelayMax<DelayMin then
+      DelayMax=DelayMin
+    end
+      
+    local Delay=math.random(DelayMin, DelayMax)
 
     self:F( { PatrolGroup = PatrolGroup:GetName() } )
 
     if PatrolGroup:IsGround() or PatrolGroup:IsShip() then
-
-      local Waypoints = PatrolGroup:GetTemplateRoutePoints()
-      local Waypoint = Waypoints[math.random( 1, #Waypoints )] -- Select random waypoint.
 
       -- Calculate the new Route.
       local FromCoord = PatrolGroup:GetCoordinate()
@@ -2169,11 +2175,11 @@ do -- Patrol methods
       Route[#Route+1] = ToCoord:WaypointGround( Speed, Formation )
 
 
-      local TaskRouteToZone = PatrolGroup:TaskFunction( "CONTROLLABLE.PatrolZones", ZoneList, Speed, Formation )
+      local TaskRouteToZone = PatrolGroup:TaskFunction( "CONTROLLABLE.PatrolZones", ZoneList, Speed, Formation, DelayMin, DelayMax )
 
       PatrolGroup:SetTaskWaypoint( Route[#Route], TaskRouteToZone ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
 
-      PatrolGroup:Route( Route, 1 ) -- Move after a random seconds to the Route. See the Route method for details.
+      PatrolGroup:Route( Route, Delay ) -- Move after a random seconds to the Route. See the Route method for details.
     end
   end
 
@@ -2374,7 +2380,7 @@ do -- Route methods
 
     local FromCoordinate = self:GetCoordinate()
 
-    local FromWP = FromCoordinate:WaypointGround()
+    local FromWP = FromCoordinate:WaypointGround(Speed, Formation)
     local ToWP = ToCoordinate:WaypointGround( Speed, Formation )
 
     self:Route( { FromWP, ToWP }, DelaySeconds )
