@@ -1217,11 +1217,11 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param #number Speed (optional) Speed in km/h. The default speed is 20 km/h.
   -- @param #string Formation (optional) The route point Formation, which is a text string that specifies exactly the Text in the Type of the route point, like "Vee", "Echelon Right".
+  -- @param #table DCSTasks A table of DCS tasks that are executed at the waypoints. Mind the curly brackets {}!
   -- @return #table The route point.
-  function COORDINATE:WaypointGround( Speed, Formation )
+  function COORDINATE:WaypointGround( Speed, Formation, DCSTasks )
     self:F2( { Formation, Speed } )
 
- 
     local RoutePoint = {}
     RoutePoint.x = self.x
     RoutePoint.y = self.z
@@ -1244,12 +1244,10 @@ do -- COORDINATE
     --      }, -- end of ["params"]
     --  }, -- end of ["task"]
 
-
     RoutePoint.task = {}
     RoutePoint.task.id = "ComboTask"
     RoutePoint.task.params = {}
-    RoutePoint.task.params.tasks = {}
-
+    RoutePoint.task.params.tasks = DCSTasks or {}
 
     return RoutePoint
   end

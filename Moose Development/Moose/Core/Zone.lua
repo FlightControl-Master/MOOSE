@@ -750,7 +750,7 @@ function ZONE_RADIUS:GetScannedUnits()
 end
 
 
---- Count the number of different coalitions inside the zone.
+--- Get a set of scanned units.
 -- @param #ZONE_RADIUS self
 -- @return Core.Set#SET_UNIT Set of units and statics inside the zone.
 function ZONE_RADIUS:GetScannedSetUnit()
@@ -949,7 +949,6 @@ function ZONE_RADIUS:SearchZone( EvaluateFunction, ObjectCategories )
 
   local function EvaluateZone( ZoneDCSUnit )
   
-    --env.info( ZoneDCSUnit:getName() ) 
   
     local ZoneUnit = UNIT:Find( ZoneDCSUnit )
 
