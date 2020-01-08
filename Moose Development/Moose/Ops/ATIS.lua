@@ -82,6 +82,8 @@
 -- @field #number runwaym2t Optional correction for magnetic to true runway heading conversion (and vice versa) in degrees.
 -- @field #boolean windtrue Report true (from) heading of wind. Default is magnetic.
 -- @field #boolean altimeterQNH Report altimeter QNH.
+-- @field #boolean usemarker Use mark on the F10 map.
+-- @field #number markerid Numerical ID of the F10 map mark point.
 -- @extends Core.Fsm#FSM
 
 --- *It is a very sad thing that nowadays there is so little useless information.* - Oscar Wilde
@@ -241,6 +243,10 @@
 -- ![Banner Image](..\Presentations\ATIS\ATIS_SoundFolder.png)
 --
 -- **Note** that the default folder name is *ATIS Soundfiles/*. If you want to change it, you can use the @{#ATIS.SetSoundfilesPath}(*path*), where *path* is the path of the directory. This must end with a slash "/"!
+-- 
+-- # Marks on the F10 Map
+-- 
+-- You can place marks on the F10 map via the @{#ATIS.SetMapMarks}() function. These will contain info about the ATIS frequency, the currently active runway and some basic info about the weather (wind, pressure and temperature).
 --
 -- # Examples
 --
@@ -309,6 +315,8 @@ ATIS = {
   runwaym2t      =   nil,
   windtrue       =   nil,
   altimeterQNH   =   nil,
+  usemarker      =   nil,
+  markerid       =   nil,
 }
 
 --- NATO alphabet.
@@ -515,7 +523,7 @@ _ATIS={}
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version="0.6.1"
+ATIS.version="0.6.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -570,6 +578,7 @@ function ATIS:New(airbasename, frequency, modulation)
   self:SetRunwayCorrectionMagnetic2True()
   self:SetRadioPower()
   self:SetAltimeterQNH(true)
+  self:SetMapMarks(false)
 
   -- Start State.
   self:SetStartState("Stopped")
@@ -684,6 +693,19 @@ end
 -- @return #ATIS self
 function ATIS:SetRadioPower(power)
   self.power=power or 100
+  return self
+end
+
+--- Use F10 map mark points.
+-- @param #ATIS self
+-- @param #boolean switch If *true* or *nil*, marks are placed on F10 map. If *false* this feature is set to off (default).
+-- @return #ATIS self
+function ATIS:SetMapMarks(switch)
+  if switch==nil or switch==true then
+    self.usemarker=true
+  else
+    self.usemarker=false
+  end
   return self
 end
 
@@ -955,6 +977,12 @@ end
 -- @param #ATIS self
 function ATIS:onafterStart(From, Event, To)
 
+  -- Check that this is an airdrome.
+  if self.airbase:GetAirbaseCategory()~=Airbase.Category.AIRDROME then
+    self:E(self.lid..string.format("ERROR: Cannot start ATIS for airbase %s! Only AIRDROMES are supported but NOT FARPS or SHIPS.", self.airbasename))
+    return
+  end
+
   -- Info.
   self:I(self.lid..string.format("Starting ATIS v%s for airbase %s on %.3f MHz Modulation=%d", ATIS.version, self.airbasename, self.frequency, self.modulation))
 
@@ -1000,7 +1028,9 @@ function ATIS:onafterStatus(From, Event, To)
   local relayunitstatus="N/A"
   if self.relayunitname then
     local ru=UNIT:FindByName(self.relayunitname)
-    relayunitstatus=tostring(ru:IsAlive())
+    if ru then
+      relayunitstatus=tostring(ru:IsAlive())
+    end
   end
 
     -- Info text.
@@ -1313,6 +1343,7 @@ function ATIS:onafterBroadcast(From, Event, To)
 
   -- Information tag
   subtitle=string.format("Information %s", NATO)
+  local _INFORMATION=subtitle
   self:Transmission(ATIS.Sound.Information, 0.5, subtitle)
   self.radioqueue:NewTransmission(string.format("NATO Alphabet/%s.ogg", NATO), 0.75, self.soundpath)
 
@@ -1434,6 +1465,7 @@ function ATIS:onafterBroadcast(From, Event, To)
       subtitle=string.format("Altimeter QNH %s.%s, QFE %s.%s inHg", QNH[1], QNH[2], QFE[1], QFE[2])
     end
   end
+  local _ALTIMETER=subtitle
   self:Transmission(ATIS.Sound.Altimeter, 1.0, subtitle)
   self:Transmission(ATIS.Sound.QNH, 0.5)
   self.radioqueue:Number2Transmission(QNH[1])
@@ -1467,6 +1499,7 @@ function ATIS:onafterBroadcast(From, Event, To)
       subtitle=string.format("Temperature %s °C", TEMPERATURE)
     end
   end
+  local _TEMPERATURE=subtitle
   self:Transmission(ATIS.Sound.Temperature, 1.0, subtitle)
   if temperature<0 then
     self:Transmission(ATIS.Sound.Minus, 0.2)
@@ -1487,6 +1520,7 @@ function ATIS:onafterBroadcast(From, Event, To)
   if turbulence>0 then
     subtitle=subtitle..", gusting"
   end
+  local _WIND=subtitle
   self:Transmission(ATIS.Sound.WindFrom, 1.0, subtitle)
   self.radioqueue:Number2Transmission(WINDFROM)
   self:Transmission(ATIS.Sound.At, 0.2)
@@ -1507,6 +1541,7 @@ function ATIS:onafterBroadcast(From, Event, To)
   elseif rwyLeft==false then
     subtitle=subtitle.." Right"
   end
+  local _RUNACT=subtitle
   self:Transmission(ATIS.Sound.ActiveRunway, 1.0, subtitle)
   self.radioqueue:Number2Transmission(runway)
   if rwyLeft==true then
@@ -1534,7 +1569,7 @@ function ATIS:onafterBroadcast(From, Event, To)
       subtitle=subtitle.." feet"
     end
 
-    -- Transmitt.
+    -- Transmit.
     self:Transmission(ATIS.Sound.RunwayLength, 1.0, subtitle)
     if tonumber(L1000)>0 then
       self.radioqueue:Number2Transmission(L1000)
@@ -1698,7 +1733,39 @@ function ATIS:onafterBroadcast(From, Event, To)
   subtitle=string.format("End of information %s", NATO)
   self:Transmission(ATIS.Sound.EndOfInformation, 0.5, subtitle)
   self.radioqueue:NewTransmission(string.format("NATO Alphabet/%s.ogg", NATO), 0.75, self.soundpath)
+  
+  -- Update F10 marker.
+  if self.usemarker then
+    self:UpdateMarker(_INFORMATION, _RUNACT, _WIND, _ALTIMETER, _TEMPERATURE)
+  end
 
+end
+
+--- Update F10 map marker.
+-- @param #ATIS self
+-- @param #string information Information tag text.
+-- @param #string runact Active runway text.
+-- @param #string wind Wind text.
+-- @param #string altimeter Altimeter text.
+-- @param #string temperature Temperature text.
+-- @return #number Marker ID.
+function ATIS:UpdateMarker(information, runact, wind, altimeter, temperature)
+
+  if self.markerid then
+    self.airbase:GetCoordinate():RemoveMark(self.markerid)
+  end
+  
+  local text=string.format("ATIS on %.3f %s, %s:\n", self.frequency, UTILS.GetModulationName(self.modulation), tostring(information))
+  text=text..string.format("%s\n", tostring(runact))
+  text=text..string.format("%s\n", tostring(wind))
+  text=text..string.format("%s\n", tostring(altimeter))
+  text=text..string.format("%s",   tostring(temperature))
+  -- More info is not displayed on the marker!    
+  
+  -- Place new mark
+  self.markerid=self.airbase:GetCoordinate():MarkToAll(text, true)
+    
+  return self.markerid
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

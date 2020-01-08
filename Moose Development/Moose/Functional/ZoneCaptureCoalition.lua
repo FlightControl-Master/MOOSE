@@ -874,16 +874,23 @@ do -- ZONE_CAPTURE_COALITION
       self:Capture()
     end
     
-    -- Get red and blue unit sets.
-    local unitsetRed=self:GetScannedSetUnit():FilterCoalitions(coalition.side.RED):FilterActive(true):FilterOnce()
-    local unitsetBlu=self:GetScannedSetUnit():FilterCoalitions(coalition.side.BLUE):FilterActive(true):FilterOnce()
-    
-    -- Count number of units.
-    local nRed=unitsetRed:Count()
-    local nBlu=unitsetBlu:Count()
+    -- Count stuff in zone.
+    local unitset=self:GetScannedSetUnit()    
+    local nRed=0
+    local nBlue=0
+    for _,object in pairs(unitset:GetSet()) do
+      local coal=object:GetCoalition()
+      if object:IsAlive() then          
+        if coal==coalition.side.RED then
+          nRed=nRed+1
+        elseif coal==coalition.side.BLUE then
+          nBlue=nBlue+1
+        end
+      end
+    end
     
     -- Status text.
-    local text=string.format("CAPTURE ZONE %s: Owner=%s (Previous=%s): #blue=%d, #red=%d, Status %s", self:GetZoneName(), self:GetCoalitionName(), UTILS.GetCoalitionName(self:GetPreviousCoalition()), nBlu, nRed, State)
+    local text=string.format("CAPTURE ZONE %s: Owner=%s (Previous=%s): #blue=%d, #red=%d, Status %s", self:GetZoneName(), self:GetCoalitionName(), UTILS.GetCoalitionName(self:GetPreviousCoalition()), nBlue, nRed, State)
     local NewState = self:GetState()
     if NewState~=State then
       text=text..string.format(" --> %s", NewState)
