@@ -2380,6 +2380,7 @@ do -- Route methods
 
     local FromCoordinate = self:GetCoordinate()
 
+    --local FromWP = FromCoordinate:WaypointGround()
     local FromWP = FromCoordinate:WaypointGround(Speed, Formation)
     local ToWP = ToCoordinate:WaypointGround( Speed, Formation )
 

@@ -243,6 +243,10 @@
 -- ![Banner Image](..\Presentations\ATIS\ATIS_SoundFolder.png)
 --
 -- **Note** that the default folder name is *ATIS Soundfiles/*. If you want to change it, you can use the @{#ATIS.SetSoundfilesPath}(*path*), where *path* is the path of the directory. This must end with a slash "/"!
+-- 
+-- # Marks on the F10 Map
+-- 
+-- You can place marks on the F10 map via the @{#ATIS.SetMapMarks}() function. These will contain info about the ATIS frequency, the currently active runway and some basic info about the weather (wind, pressure and temperature).
 --
 -- # Examples
 --
