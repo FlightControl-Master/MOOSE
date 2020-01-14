@@ -379,7 +379,7 @@ function RATCRAFT:GetDeparture()
         end
       
       else
-        self:E("ERROR: Could not find airbase!")
+        self:E("ERROR: Could not find departure airbase!")
       end
       
     else
@@ -387,6 +387,19 @@ function RATCRAFT:GetDeparture()
       ---
       -- Zone
       ---
+    
+      -- Departure airbase.
+      local zone=ZONE:New(departure.name)
+      
+      if zone then
+      
+        -- TODO: check if in range.
+      
+        return departure
+      
+      else
+        self:E("ERROR: Could not find departure zone!")
+      end    
     
     end
     
@@ -539,6 +552,19 @@ function RATCRAFT:GetDestination(departure)
       ---
       -- Zone
       ---
+
+      -- Departure airbase.
+      local zone=ZONE:New(destination.name)
+      
+      if zone then
+      
+        -- TODO: check if in range.      
+        return destination
+      
+      else
+        self:E("ERROR: Could not find destination zone!")
+      end    
+
     
     end
     
