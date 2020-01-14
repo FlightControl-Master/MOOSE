@@ -2910,7 +2910,7 @@ end
 function FLIGHTGROUP:_CheckInZones()
 
   if self.checkzones then
-    env.info("FF Check in Zones")
+    --env.info("FF Check in Zones")
     
     for _,_zone in pairs(self.checkzones:GetSet()) do
       local zone=_zone --Core.Zone#ZONE
