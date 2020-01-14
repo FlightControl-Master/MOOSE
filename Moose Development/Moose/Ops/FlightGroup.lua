@@ -52,6 +52,8 @@
 -- @field #number Tparking Abs. mission time stamp when the group was spawned uncontrolled and is parking.
 -- @field #table menu F10 radio menu.
 -- @field #string livery Livery.
+-- @field Core.Set#SET_ZONE checkzones Set of zones.
+-- @field Core.Zone#ZONE inzone Zone in which the group is currently in.
 -- @extends Core.Fsm#FSM
 
 --- *To invent an airplane is nothing. To build one is something. To fly is everything.* -- Otto Lilienthal
@@ -101,6 +103,8 @@ FLIGHTGROUP = {
   Tparking           =   nil,
   menu               =   nil,
   livery             =   nil,
+  checkzones         =   nil,
+  inzone             =   nil,
 }
 
 
@@ -229,7 +233,7 @@ FLIGHTGROUP.TaskType={
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.1.5"
+FLIGHTGROUP.version="0.2.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -328,6 +332,10 @@ function FLIGHTGROUP:New(groupname)
   self:AddTransition("*",             "ElementDead",      "*")           -- An element crashed, ejected, or pilot dead.
 
   self:AddTransition("*",             "ElementOutOfAmmo", "*")           -- An element is completely out of ammo.
+  
+  self:AddTransition("*",             "CheckZone",        "*")           -- Check if flight enters/leaves a certain zone.
+  self:AddTransition("*",             "EnterZone",        "*")           -- Flight entered a certain zone.
+  self:AddTransition("*",             "LeaveZone",        "*")           -- Flight leaves a certain zone.
 
   self:AddTransition("*",             "FlightSpawned",    "Spawned")     -- The whole flight group was spawned.
   self:AddTransition("*",             "FlightParking",    "Parking")     -- The whole flight group is parking.
@@ -542,6 +550,27 @@ function FLIGHTGROUP:SetFuelCriticalThreshold(threshold, rtb)
   return self
 end
 
+--- Define a SET of zones that trigger and event if the group enters or leaves any of the zones.
+-- @param #FLIGHTGROUP self
+-- @param Core.Set#SET_ZONE CheckZonesSet Set of zones.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetCheckZones(CheckZonesSet)
+  self.checkzones=CheckZonesSet
+  return self
+end
+
+--- Add a zone that triggers and event if the group enters or leaves any of the zones.
+-- @param #FLIGHTGROUP self
+-- @param Core.Zone#ZONE CheckZone Zone to check.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:AddCheckZone(CheckZone)
+  if not self.checkzones then
+    self.checkzones=SET_ZONE:New()
+  end
+  self.checkzones:AddZone(CheckZone)
+  return self
+end
+
 --- Get set of decteded units.
 -- @param #FLIGHTGROUP self
 -- @return Core.Set#SET_UNIT Set of detected units.
@@ -734,6 +763,7 @@ function FLIGHTGROUP:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.RemoveUnit,     self.OnEventRemoveUnit)
 
   -- Start the status monitoring.
+  self:__CheckZone(-1)
   self:__FlightStatus(-1)
 end
 
@@ -912,6 +942,19 @@ function FLIGHTGROUP:onafterQueueUpdate(From, Event, To)
 
   -- Update queue every ~5 sec.
   self:__QueueUpdate(-5)
+end
+
+--- On after "CheckZone" event.
+-- @param #FLIGHTGROUP self
+-- @param Wrapper.Group#GROUP Group Flight group.
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function FLIGHTGROUP:onafterCheckZone(From, Event, To)
+
+  self:_CheckInZones()
+
+  self:__CheckZone(-1)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1833,10 +1876,32 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Wrapper.Unit#UNIT Unit The detected unit
--- @parma #string assignment The (optional) assignment for the asset.
 function FLIGHTGROUP:onafterDetectedUnit(From, Event, To, Unit)
   self:I(self.sid..string.format("Detected unit %s.", Unit:GetName()))
   self.detectedunits:AddUnit(Unit)
+end
+
+
+--- On after "EnterZone" event. Sets self.inzone=Zone.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Core.Zone#ZONE Zone The zone that the group entered.
+function FLIGHTGROUP:onafterEnterZone(From, Event, To, Zone)
+  self:I(self.sid..string.format("Entered Zone %s", Zone:GetName()))
+  self.inzone=Zone
+end
+
+--- On after "LeaveZone" event. Sets self.inzone=nil.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Core.Zone#ZONE Zone The zone that the group entered.
+function FLIGHTGROUP:onafterLeaveZone(From, Event, To, Zone)
+  self:I(self.sid..string.format("Left Zone %s", Zone:GetName()))
+  self.inzone=nil
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2323,11 +2388,8 @@ end
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:_UpdateRoute(n)
 
-  if true then
-    --return
-  end
-  
   MESSAGE:New("Updating route", 10):ToAll()
+  env.info("FF updating route")
 
   -- TODO: what happens if currentwp=#waypoints
   n=n or self.currentwp+1
@@ -2839,6 +2901,44 @@ function FLIGHTGROUP:_SetElementStatusAll(status)
     if element.status~=FLIGHTGROUP.ElementStatus.DEAD then
       element.status=status
     end
+  end
+
+end
+
+--- Check if flight is in zones.
+-- @param #FLIGHTGROUP self
+function FLIGHTGROUP:_CheckInZones()
+
+  if self.checkzones then
+    env.info("FF Check in Zones")
+    
+    for _,_zone in pairs(self.checkzones:GetSet()) do
+      local zone=_zone --Core.Zone#ZONE
+    
+      local inzone=self.group:IsPartlyOrCompletelyInZone(zone)
+      
+      if inzone then
+      
+        if self.inzone and zone:GetName()==self.inzone:GetName() then
+          -- Nothing to do.
+        else
+          -- Group has entered the zone.
+          self:EnterZone(zone)
+        end
+      
+      else
+      
+        if self.inzone and zone:GetName()==self.inzone:GetName() then
+          -- Group has left the zone.
+          self:LeaveZone(zone)          
+        else
+          -- Nothing to do.
+        end
+      
+      end
+    
+    end
+  
   end
 
 end
