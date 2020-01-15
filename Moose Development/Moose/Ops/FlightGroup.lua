@@ -952,9 +952,13 @@ end
 -- @param #string To To state.
 function FLIGHTGROUP:onafterCheckZone(From, Event, To)
 
-  self:_CheckInZones()
+  if self.group and self.group:IsAlive() then
+    self:_CheckInZones()
+  end
 
-  self:__CheckZone(-1)
+  if not self:IsDead() then
+    self:__CheckZone(-1)
+  end
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1677,7 +1681,7 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold, S
     self:SetFlightControl(fc)
   end
   
-   -- Altitude above ground for a glide slope of 3°.
+   -- Altitude above ground for a glide slope of 3ï¿½.
   local alpha=math.rad(3)
   local x1=UTILS.NMToMeters(10)
   local x2=UTILS.NMToMeters(5)
@@ -2257,7 +2261,9 @@ function FLIGHTGROUP:GetHomebaseFromWaypoints()
   
   if wp then
     
-    if wp and wp.action and wp.action==COORDINATE.WaypointAction.FromParkingArea or wp.action==COORDINATE.WaypointAction.FromParkingAreaHot or wp.action==COORDINATE.WaypointAction.FromRunway  then
+    if wp and wp.action and wp.action==COORDINATE.WaypointAction.FromParkingArea 
+                         or wp.action==COORDINATE.WaypointAction.FromParkingAreaHot 
+                         or wp.action==COORDINATE.WaypointAction.FromRunway  then
       
       -- Get airbase ID depending on airbase category.
       local airbaseID=wp.airdromeId or wp.helipadId
@@ -3594,6 +3600,66 @@ function FLIGHTGROUP:_GetTerminal(_attribute, _category)
   end
 
   return _terminal
+end
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- MENU FUNCTIONS
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Get the proper terminal type based on generalized attribute of the group.
+--@param #FLIGHTGROUP self
+function FLIGHTGROUP:_UpdateMenu()
+
+  local position=self.group:GetCoordinate()
+
+  local fc={}
+  for airbasename,_flightcontrol in pairs(_DATABASE.FLIGHTCONTROLS) do
+    
+    local airbase=AIRBASE:FindByName(airbasename)
+  
+    local coord=airbase:GetCoordinate()
+    
+    local dist=coord:Get2DDistance(position)
+    
+    local fcitem={airbasename=airbasename, dist=dist}
+    
+    table.insert(fc, fcitem)
+  
+  end
+  
+  -- Sort table wrt to distance
+  local function _sort(a,b)
+    return a.dist<b.dist
+  end
+  table.sort(fc, _sort)
+  
+  --self.menu.atc
+
+  local playermenu=self.menu.atc.root --Ops.FlightControl#FLIGHTCONTROL.PlayerMenu
+
+  playermenu:RemoveSubMenus()  --Core.Menu#MENU_GROUP
+  
+  for i=1,math.min(#fc,8) do
+    self:_UpdateMenuFlightControl(fc[i])
+  end
+
+end
+
+
+--- Get the proper terminal type based on generalized attribute of the group.
+--@param #FLIGHTGROUP self
+--@param Ops.FlightControl#FLIGHTCONTROL flightcontrol Flight control object.
+function FLIGHTGROUP:_UpdateMenuFlightControl(flightcontrol)
+
+  local playermenu=self.menu.atc.root --Ops.FlightControl#FLIGHTCONTROL.PlayerMenu
+
+  
+  playermenu[flightcontrol.airbasename]=MENU_GROUP:New(self.group, flightcontrol.airbasename, playermenu)
+  
+  MENU_GROUP:New(self.group,MenuText,ParentMenu)
+  
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

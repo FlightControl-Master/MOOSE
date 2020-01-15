@@ -1017,7 +1017,8 @@ function FLIGHTCONTROL:_CreatePlayerMenu(flight)
   
   local airbasename=self.airbasename
 
-  local playermenu=flight.menu.atc  --#FLIGHTCONTROL.PlayerMenu
+  --local playermenu=flight.menu.atc  --#FLIGHTCONTROL.PlayerMenu
+  local playermenu=flight.menu.atc.root --#FLIGHTCONTROL.PlayerMenu
   playermenu[airbasename] = playermenu[airbasename] or {}
   playermenu[airbasename].root = MENU_GROUP:New(group, airbasename, playermenu)
   
