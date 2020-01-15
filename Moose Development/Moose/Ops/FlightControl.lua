@@ -1006,7 +1006,8 @@ end
 --- Create player menu.
 -- @param #FLIGHTCONTROL self
 -- @param Ops.FlightGroup#FLIGHTGROUP flight Flight group.
-function FLIGHTCONTROL:_CreatePlayerMenu(flight)
+-- @param #table atcmenu ATC root menu.
+function FLIGHTCONTROL:_CreatePlayerMenu(flight, atcmenu)
   
   local group=flight.group
   local groupname=flight.groupname
@@ -1018,14 +1019,16 @@ function FLIGHTCONTROL:_CreatePlayerMenu(flight)
   local airbasename=self.airbasename
 
   --local playermenu=flight.menu.atc  --#FLIGHTCONTROL.PlayerMenu
-  local playermenu=flight.menu.atc.root --#FLIGHTCONTROL.PlayerMenu
-  playermenu[airbasename] = playermenu[airbasename] or {}
-  playermenu[airbasename].root = MENU_GROUP:New(group, airbasename, playermenu)
   
-  playermenu[airbasename].MyStatus       = MENU_GROUP_COMMAND:New(group, "My Status",       playermenu[airbasename].root, self._PlayerMyStatus,       self, groupname)
-  playermenu[airbasename].RequestTaxi    = MENU_GROUP_COMMAND:New(group, "Request Taxi",    playermenu[airbasename].root, self._PlayerRequestTaxi,    self, groupname)
-  playermenu[airbasename].RequestTakeoff = MENU_GROUP_COMMAND:New(group, "Request Takeoff", playermenu[airbasename].root, self._PlayerRequestTakeoff, self, groupname)
-  playermenu[airbasename].Inbound        = MENU_GROUP_COMMAND:New(group, "Inbound",         playermenu[airbasename].root, self._PlayerInbound,        self, groupname)
+  local rootmenu=flight.menu.atc.root
+   
+  atcmenu[airbasename] = atcmenu[airbasename] or {}
+  atcmenu[airbasename].root = MENU_GROUP:New(group, airbasename, rootmenu)
+  
+  atcmenu[airbasename].MyStatus       = MENU_GROUP_COMMAND:New(group, "My Status",       atcmenu[airbasename].root, self._PlayerMyStatus,       self, groupname)
+  atcmenu[airbasename].RequestTaxi    = MENU_GROUP_COMMAND:New(group, "Request Taxi",    atcmenu[airbasename].root, self._PlayerRequestTaxi,    self, groupname)
+  atcmenu[airbasename].RequestTakeoff = MENU_GROUP_COMMAND:New(group, "Request Takeoff", atcmenu[airbasename].root, self._PlayerRequestTakeoff, self, groupname)
+  atcmenu[airbasename].Inbound        = MENU_GROUP_COMMAND:New(group, "Inbound",         atcmenu[airbasename].root, self._PlayerInbound,        self, groupname)
   
 end
 
@@ -1126,14 +1129,6 @@ function FLIGHTCONTROL:_CreateFlightGroup(group)
     
   -- Add to known flights.
   table.insert(self.flights, flight)
-  
-  -- Create player menu.
-  if flight.ai then
-    self:E("FF AI no player menu")
-  else
-    self:E("FF Not purly AI ==> player menu")
-    --self:_CreatePlayerMenu(flight)
-  end
     
   return flight
 end

@@ -1346,13 +1346,12 @@ function FLIGHTGROUP:onafterFlightSpawned(From, Event, To)
     self:InitWaypoints()
   end
   
+  -- F10 menu.
   if not self.ai then
     self.menu=self.menu or {}
     self.menu.atc=self.menu.atc or {}
     self.menu.atc.root=self.menu.atc.root or MENU_GROUP:New(self.group, "ATC")
-    if self.flightcontrol then
-      --self.flightcontrol:_CreatePlayerMenu(self)
-    end
+    self:_UpdateMenu()
   end  
     
 end
@@ -1731,7 +1730,7 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold, S
     MESSAGE:New("Respawning group"):ToAll()
 
     --Respawn the group.
-    self.group=self.group:Respawn(Template, true)
+    self.group=self.group:Respawn(Template)
     
   else
 
@@ -3628,37 +3627,21 @@ function FLIGHTGROUP:_UpdateMenu()
   
   end
   
-  -- Sort table wrt to distance
+  -- Sort table wrt distance to airbases.
   local function _sort(a,b)
     return a.dist<b.dist
   end
   table.sort(fc, _sort)
-  
-  --self.menu.atc
 
   local playermenu=self.menu.atc.root --Ops.FlightControl#FLIGHTCONTROL.PlayerMenu
 
   playermenu:RemoveSubMenus()  --Core.Menu#MENU_GROUP
   
   for i=1,math.min(#fc,8) do
-    self:_UpdateMenuFlightControl(fc[i])
+    local airbasename=fc[i].airbasename
+    local flightcontrol=_DATABASE:GetFlightControl(airbasename)
+    flightcontrol:_CreatePlayerMenu(self, self.menu.atc)
   end
-
-end
-
-
---- Get the proper terminal type based on generalized attribute of the group.
---@param #FLIGHTGROUP self
---@param Ops.FlightControl#FLIGHTCONTROL flightcontrol Flight control object.
-function FLIGHTGROUP:_UpdateMenuFlightControl(flightcontrol)
-
-  local playermenu=self.menu.atc.root --Ops.FlightControl#FLIGHTCONTROL.PlayerMenu
-
-  
-  playermenu[flightcontrol.airbasename]=MENU_GROUP:New(self.group, flightcontrol.airbasename, playermenu)
-  
-  MENU_GROUP:New(self.group,MenuText,ParentMenu)
-  
 
 end
 
