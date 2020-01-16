@@ -233,7 +233,7 @@ FLIGHTGROUP.TaskType={
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.2.0"
+FLIGHTGROUP.version="0.2.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -296,12 +296,12 @@ function FLIGHTGROUP:New(groupname)
   self:AddTransition("*",             "FlightStatus",      "*")           -- FLIGHTGROUP status update.
   self:AddTransition("*",             "QueueUpdate",       "*")           -- Update task queue.
   
-  
   self:AddTransition("*",             "DetectedUnit",      "*")           -- Add a newly detected unit to the detected units set.
   self:AddTransition("*",             "DetectedUnitNew",   "*")           -- Add a newly detected unit to the detected units set.
   self:AddTransition("*",             "DetectedUnitKnown", "*")           -- Add a newly detected unit to the detected units set.
   self:AddTransition("*",             "DetectedUnitLost",  "*")           -- Group lost a detected target.
 
+  self:AddTransition("*",             "UpdateRoute",       "*")           -- Update route of group. Only if airborne.
   self:AddTransition("*",             "RTB",               "Returning")   -- Group is returning to base.
   self:AddTransition("*",             "Orbit",             "Orbiting")    -- Group is holding position.
   self:AddTransition("*",             "Hold",              "Holding")     -- Group is holding position.
@@ -485,9 +485,8 @@ function FLIGHTGROUP:AddTaskWaypoint(description, task, waypointindex, prio, dur
   -- Add to table.
   table.insert(self.taskqueue, newtask)
   
-  if self.group and self.group:IsAlive() then
-    self:_UpdateRoute()
-  end
+  -- Update route.
+  self:__UpdateRoute(-0.1)
 
   return self
 end
@@ -1509,6 +1508,128 @@ function FLIGHTGROUP:onafterFlightDead(From, Event, To)
 end
 
 
+--- On before "UpdateRoute" event. Update route of group, e.g after new waypoints and/or waypoint tasks have been added.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #number n Waypoint number.
+function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
+
+  if self.group and self.group:IsAlive() and self:IsAirborne() then
+    -- Alive & Airborne ==> Update route possible.
+    env.info("FF update route allowed")
+    return true
+  elseif self:IsDead() then
+    -- Group is dead! No more updates.
+    return false
+  else
+    -- Not airborne yet. Try again in 1 sec.
+    env.info("FF update route denied ==> checking back in 1 sec")
+    self:__UpdateRoute(-1, n)
+    return false
+  end
+
+end
+
+--- On after "UpdateRoute" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #number n Waypoint number.
+function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
+
+  MESSAGE:New("Updating route", 10):ToAll()
+  env.info("FF updating route")
+
+  -- TODO: what happens if currentwp=#waypoints
+  n=n or self.currentwp+1
+  
+  -- Update waypoint tasks, i.e. inject WP tasks into waypoint table.
+  self:_UpdateWaypointTasks()
+
+  -- Waypoints.
+  local wp={}
+  
+  -- Set current waypoint or we get problem that the _PassingWaypoint function is triggered too early, i.e. right now and not when passing the next WP.
+  -- TODO: This, however, leads to the flight to go right over this point when it is on an airport ==> Need to test Waypoint takeoff
+  local current=self.group:GetCoordinate():WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, 350, true, nil, {}, "Current")
+  table.insert(wp, current)        
+
+  -- Set "remaining" waypoits.
+  for i=n, #self.waypoints do
+    local w=self.waypoints[i]
+    if self.Debug then
+      --self:GetWaypointCoordinate(w):MarkToAll(string.format("UpdateRoute Waypoint %d", i))
+    end
+    table.insert(wp, w)
+  end
+  
+  -- Get destination airbase from waypoints.
+  self.homebase=self:GetHomebaseFromWaypoints() or self.homebase
+  
+  -- Get destination airbase from waypoints.
+  self.destination=self:GetDestinationFromWaypoints() or self.destination
+  
+  if self.destination and #wp>0 and _DATABASE:GetFlightControl(self.destination:GetName()) then
+  
+    -- Task to hold.
+    local TaskOverhead=self.group:TaskFunction("FLIGHTGROUP._DestinationOverhead", self, self.destination)
+    
+    -- Random overhead coordinate at destination.
+    local coordoverhead=self.destination:GetZone():GetRandomCoordinate():SetAltitude(UTILS.FeetToMeters(6000))
+  
+    -- Add overhead waypoint.
+    local wpoverhead=coordoverhead:WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint, 500, false, nil, {TaskOverhead}, "Destination Overhead")
+    
+    -- Debug info.
+    self:T(self.sid..string.format("Adding overhead waypoint as #%d", #wp))
+    
+    -- Add overhead to waypoints.
+    table.insert(wp, #wp, wpoverhead)
+  end
+  
+  
+  -- Debug info.
+  local hb=self.homebase and self.homebase:GetName() or "unknown"
+  local db=self.destination and self.destination:GetName() or "unknown"
+  self:I(self.sid..string.format("Updating route for WP>=%d (%d/%d) homebase=%s destination=%s", n, #wp, #self.waypoints, hb, db))
+  
+  if #wp>0 then
+
+    -- Route group to all defined waypoints remaining.
+    self.group:Route(wp, 1)
+    
+  else
+  
+    ---
+    -- No waypoints left
+    ---
+  
+    -- Get destination or home airbase.
+    local airbase=self.destination or self.homebase
+    
+    if self:IsAirborne() then
+    
+      -- TODO: check if no more scheduled tasks.
+      
+      if airbase then
+          -- Route flight to destination/home.
+          --self:RTB(airbase)        
+      else
+        -- Let flight orbit.
+        --self:Orbit(self.group:GetCoordinate(), UTILS.FeetToMeters(20000), self.group:GetSpeedMax()*0.4)
+      end
+      
+    end
+    
+  end
+
+end
+
+
+
 --- On after "PassingWaypoint" event.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
@@ -1518,12 +1639,12 @@ end
 -- @param #number N Final waypoint number.
 function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
   local text=string.format("Flight %s passed waypoint %d/%d", self.groupname, n, N)
-  self:T(self.sid..text)
+  self:I(self.sid..text)
   MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
   
   
   if self.destination and n>1 and n==N-1 then
-    self:__Hold(1, self.destination)
+    --self:__Hold(1, self.destination)
   end
   
 end
@@ -1870,7 +1991,7 @@ function FLIGHTGROUP:onafterTaskDone(From, Event, To, Task)
   Task.status=FLIGHTGROUP.TaskStatus.ACCOMPLISHED
   
   -- Update route.
-  self:_UpdateRoute()
+  self:__UpdateRoute(-0.1)
   
 end
 
@@ -1882,8 +2003,18 @@ end
 -- @param #string To To state.
 -- @param Wrapper.Unit#UNIT Unit The detected unit
 function FLIGHTGROUP:onafterDetectedUnit(From, Event, To, Unit)
-  self:I(self.sid..string.format("Detected unit %s.", Unit:GetName()))
+  self:T(self.sid..string.format("Detected unit %s", Unit:GetName()))
   self.detectedunits:AddUnit(Unit)
+end
+
+--- On after "DetectedUnitNew" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Wrapper.Unit#UNIT Unit The detected unit
+function FLIGHTGROUP:onafterDetectedUnitNew(From, Event, To, Unit)
+  self:T(self.sid..string.format("Detected New unit %s", Unit:GetName()))
 end
 
 
@@ -2389,117 +2520,6 @@ function FLIGHTGROUP:GetWaypointCoordinate(wp)
   return COORDINATE:New(wp.x, wp.alt, wp.y)
 end
 
---- Update route of group, e.g after new waypoints and/or waypoint tasks have been added.
--- @param #FLIGHTGROUP self
--- @param #number n Number of next waypoint. Default self.currentwp+1.
--- @return #FLIGHTGROUP self
-function FLIGHTGROUP:_UpdateRoute(n)
-
-  MESSAGE:New("Updating route", 10):ToAll()
-  env.info("FF updating route")
-
-  -- TODO: what happens if currentwp=#waypoints
-  n=n or self.currentwp+1
-  
-  -- Update waypoint tasks, i.e. inject WP tasks into waypoint table.
-  self:_UpdateWaypointTasks()
-
-  -- Waypoints.
-  local wp={}
-  
-  -- Set current waypoint or we get problem that the _PassingWaypoint function is triggered too early, i.e. right now and not when passing the next WP.
-  -- TODO: This, however, leads to the flight to go right over this point when it is on an airport ==> Need to test Waypoint takeoff
-
-  --local current=self.group:GetCoordinate():WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, 350, true, nil, {}, "Current")
-  --table.insert(wp, current)        
-
-  --[[  
-  if self:IsAirborne() then 
-    local current=self.group:GetCoordinate():WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, 350, true, nil, {}, "Current")
-    table.insert(wp, current)
-  else
-    if self:IsTaxiing() or self:IsParking() or self:IsSpawned() then
-      --local coord=self.group:GetCoordinate()
-      --local current=coord:WaypointAirTakeOffParking(nil, 50)
-      --local current=coord:WaypointAir( AltType, COORDINATE.WaypointType.TakeOffParkingHot, COORDINATE.WaypointAction.FromParkingAreaHot, 50, true, coord:GetClosestAirbase(), {}, "Takeoff")
-      --table.insert(wp, current)
-    end
-    
-    local current=self.group:GetCoordinate():WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, 350, true, nil, {}, "Current")
-    table.insert(wp, current)      
-  end
-  ]]
-
-  -- Set "remaining" waypoits.
-  for i=n, #self.waypoints do
-    local w=self.waypoints[i]
-    if self.Debug then
-      --self:GetWaypointCoordinate(w):MarkToAll(string.format("UpdateRoute Waypoint %d", i))
-    end
-    table.insert(wp, w)
-  end
-  
-  -- Get destination airbase from waypoints.
-  self.homebase=self:GetHomebaseFromWaypoints() or self.homebase
-  
-  -- Get destination airbase from waypoints.
-  self.destination=self:GetDestinationFromWaypoints() or self.destination
-  
-  if self.destination and #wp>0 and _DATABASE:GetFlightControl(self.destination:GetName()) then
-  
-    -- Task to hold.
-    local TaskOverhead=self.group:TaskFunction("FLIGHTGROUP._DestinationOverhead", self, self.destination)
-    
-    -- Random overhead coordinate at destination.
-    local coordoverhead=self.destination:GetZone():GetRandomCoordinate():SetAltitude(UTILS.FeetToMeters(6000))
-  
-    -- Add overhead waypoint.
-    local wpoverhead=coordoverhead:WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint, 500, false, nil, {TaskOverhead}, "Destination Overhead")
-    
-    -- Debug info.
-    self:T(self.sid..string.format("Adding overhead waypoint as #%d", #wp))
-    
-    -- Add overhead to waypoints.
-    table.insert(wp, #wp, wpoverhead)
-  end
-  
-  
-  -- Debug info.
-  self:T(self.sid..string.format("Updating route for WP>=%d (%d/%d) homebase=%s destination=%s", n, #wp, #self.waypoints, self.homebase and self.homebase:GetName() or "unknown", self.destination and self.destination:GetName() or "unknown"))
-  
-  if #wp>0 then
-
-    -- Route group to all defined waypoints remaining.
-    self.group:Route(wp, 1)
-    
-  else
-  
-    ---
-    -- No waypoints left
-    ---
-  
-    -- Get destination or home airbase.
-    local airbase=self.destination or self.homebase
-    
-    if self:IsAirborne() then
-    
-      -- TODO: check if no more scheduled tasks.
-      
-      if airbase then
-          -- Route flight to destination/home.
-          --self:RTB(airbase)        
-      else
-        -- Let flight orbit.
-        --self:Orbit(self.group:GetCoordinate(), UTILS.FeetToMeters(20000), self.group:GetSpeedMax()*0.4)
-      end
-      
-    end
-    
-  end
-  
-  return self
-end
-
 --- Initialize Mission Editor waypoints.
 -- @param #FLIGHTGROUP self
 function FLIGHTGROUP:_UpdateWaypointTasks()
@@ -2588,7 +2608,7 @@ function FLIGHTGROUP:InitWaypoints(waypoints)
   
   -- Update route.
   if #self.waypoints>0 then
-    self:_UpdateRoute(1)
+    self:__UpdateRoute(-0.1, 1)
   end
 
   return self
@@ -2628,7 +2648,8 @@ function FLIGHTGROUP:AddWaypointAir(coordinate, wpnumber, speed)
     end
   end  
   
-  self:_UpdateRoute()
+  -- Update route.
+  self:__UpdateRoute(-0.1)
 end
 
 --- Check if a unit is and element of the flightgroup.

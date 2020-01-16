@@ -587,7 +587,6 @@ end
 -- This method is used by the SPAWN class.
 -- @param #DATABASE self
 -- @param #table SpawnTemplate Template of the group to spawn.
--- @param #string Groupname (Optional) Name of the group.
 -- @return Wrapper.Group#GROUP Spawned group.
 function DATABASE:Spawn( SpawnTemplate )
   self:F( SpawnTemplate.name )
