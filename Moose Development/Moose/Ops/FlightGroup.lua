@@ -1405,12 +1405,14 @@ function FLIGHTGROUP:onafterFlightTaxiing(From, Event, To)
   -- TODO: need a better check for the airbase.
   local airbase=self.group:GetCoordinate():GetClosestAirbase(nil, self.group:GetCoalition())
 
-  if self.flightcontrol and airbase and self.flightcontrol.airbasename==airbase:GetName() then
-    -- Add flight to takeoff queue.
-    self.flightcontrol:_AddFlightToTakeoffQueue(self)
-    
+  if self.flightcontrol and airbase and self.flightcontrol.airbasename==airbase:GetName() then    
     -- Remove flight from parking queue.
     self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qparking, self, "parking")
+    
+    -- Add AI flight to takeoff queue.
+    if self.ai then
+      self.flightcontrol:_AddFlightToTakeoffQueue(self)    
+    end
   end
 
 end
@@ -3612,6 +3614,7 @@ function FLIGHTGROUP:_UpdateMenu()
 
   local position=self.group:GetCoordinate()
 
+  -- Get all FLIGHTCONTROLS
   local fc={}
   for airbasename,_flightcontrol in pairs(_DATABASE.FLIGHTCONTROLS) do
     
@@ -3623,8 +3626,7 @@ function FLIGHTGROUP:_UpdateMenu()
     
     local fcitem={airbasename=airbasename, dist=dist}
     
-    table.insert(fc, fcitem)
-  
+    table.insert(fc, fcitem)  
   end
   
   -- Sort table wrt distance to airbases.
@@ -3637,7 +3639,15 @@ function FLIGHTGROUP:_UpdateMenu()
 
   playermenu:RemoveSubMenus()  --Core.Menu#MENU_GROUP
   
-  for i=1,math.min(#fc,8) do
+  -- If there is a designated FC, we put it first.
+  local N=8
+  if self.flightcontrol then
+    self.flightcontrol:_CreatePlayerMenu(self, self.menu.atc)
+    N=7
+  end
+  
+  -- Max 8 entries in F10 menu.
+  for i=1,math.min(#fc,N) do
     local airbasename=fc[i].airbasename
     local flightcontrol=_DATABASE:GetFlightControl(airbasename)
     flightcontrol:_CreatePlayerMenu(self, self.menu.atc)

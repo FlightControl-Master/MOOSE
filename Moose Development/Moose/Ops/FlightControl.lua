@@ -30,6 +30,7 @@
 -- @field #table Qlanding Queue of aircraft currently on final approach.
 -- @field #table Qtakeoff Queue of aircraft about to takeoff.
 -- @field #table Qparking Queue of aircraft parking.
+-- @field Ops.ATIS#ATIS atis ATIS object.
 -- @field #number activerwyno Number of active runway.
 -- @field #number atcfreq ATC radio frequency.
 -- @field Core.RadioQueue#RADIOQUEUE atcradio ATC radio queue.
@@ -68,6 +69,7 @@ FLIGHTCONTROL = {
   Qlanding       =    {},
   Qtakeoff       =    {},
   Qparking       =    {},
+  atis           =   nil,
   activerwyno    =     1,
   atcfreq        =   nil,
   atcradio       =   nil,
@@ -105,19 +107,19 @@ FLIGHTCONTROL = {
 
 --- FlightControl class version.
 -- @field #string version
-FLIGHTCONTROL.version="0.1.1"
+FLIGHTCONTROL.version="0.1.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  
--- TODO: Add FARPS.
+-- TODO: Add FARPS?
 -- TODO: Add helos.
--- TODO: Task me down option.
+-- TODO: Take me down option.
 -- TODO: ATIS option.
 -- TODO: ATC voice overs.
 -- TODO: Check runways and clean up.
--- TODO: Interface with FLIGHTGROUP
+-- TODO: Interface with FLIGHTGROUP.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -325,6 +327,7 @@ function FLIGHTCONTROL:onafterStop()
   self:HandleEvent(EVENTS.EngineShutdown)
   self:HandleEvent(EVENTS.Crash)
 
+  self.atcradio:Stop()
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -449,18 +452,19 @@ function FLIGHTCONTROL:_CheckQueues()
     self:_PrintQueue(self.Qwaiting, "Holding")
     self:_PrintQueue(self.Qlanding, "Landing")
   end
+
+  -- Number of holding groups.
+  local nholding=#self.Qwaiting
       
   -- Number of groups landing.
   local nlanding=#self.Qlanding
+
+  -- Number of parking groups.
+  local nparking=#self.Qparking
     
   -- Number of groups taking off.
   local ntakeoff=#self.Qtakeoff
-  
-  -- Number of holding groups.
-  local nholding=#self.Qwaiting
-  
-  -- Number of parking groups.
-  local nparking=#self.Qparking
+    
 
   -- Get next flight in line: either holding or parking.
   local flight, isholding, parking=self:_GetNextFlight()
@@ -506,14 +510,15 @@ function FLIGHTCONTROL:_CheckQueues()
       --------------------
      
       -- Check if flight is AI. Humans have to request taxi via F10 menu.
-      if flight.ai then
+      if flight.ai then       
       
         -- Message.
-        -- TODO: Which runway!
         local text=string.format("Flight %s, you are cleared to taxi to runway.", flight.groupname)
         self:I(self.lid..text)
         MESSAGE:New(text, 5, "FLIGHTCONTROL"):ToAll()
         
+        -- Start uncontrolled aircraft.
+        -- TODO: handle case with engines hot. That does not trigger a ENGINE_START event. More a FLIGHTGROUP issue.
         flight.group:StartUncontrolled()
         
         flight:_UpdateRoute(1)
@@ -642,7 +647,7 @@ function FLIGHTCONTROL:_GetNextFightHolding()
 end
 
 
---- Get next flight waiting for landing clearance.
+--- Get next flight waiting for taxi and takeoff clearance.
 -- @param #FLIGHTCONTROL self
 -- @return Ops.FlightGroup#FLIGHTGROUP Marshal flight next in line and ready to enter the pattern. Or nil if no flight is ready.
 function FLIGHTCONTROL:_GetNextFightParking()
@@ -870,6 +875,25 @@ function FLIGHTCONTROL:GetActiveRunway()
   return self.airbase:GetActiveRunway()
 end
 
+--- Get the active runway based on current wind direction.
+-- @param #FLIGHTCONTROL self
+-- @return #string Runway text, e.g. "31L" or "09".
+function FLIGHTCONTROL:GetActiveRunwayText()
+  local rwy=""
+  local rwyL
+  if self.atis then
+    rwy, rwyL=self.atis:GetActiveRunway()
+    if rwyL==true then
+      rwy=rwy.."L"
+    elseif rwyL==false then
+      rwy=rwy.."R"
+    end
+  else
+    rwy=self.airbase:GetActiveRunway().idx
+  end
+  return rwy
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Parking Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1006,7 +1030,7 @@ end
 --- Create player menu.
 -- @param #FLIGHTCONTROL self
 -- @param Ops.FlightGroup#FLIGHTGROUP flight Flight group.
--- @param #table atcmenu ATC root menu.
+-- @param #table atcmenu ATC root menu table.
 function FLIGHTCONTROL:_CreatePlayerMenu(flight, atcmenu)
   
   local group=flight.group
@@ -1023,11 +1047,15 @@ function FLIGHTCONTROL:_CreatePlayerMenu(flight, atcmenu)
   local rootmenu=flight.menu.atc.root
    
   atcmenu[airbasename] = atcmenu[airbasename] or {}
-  atcmenu[airbasename].root = MENU_GROUP:New(group, airbasename, rootmenu)
   
+  -- Root menu
+  atcmenu[airbasename].root           = MENU_GROUP:New(group, airbasename, rootmenu)
+  
+  -- Commands
   atcmenu[airbasename].MyStatus       = MENU_GROUP_COMMAND:New(group, "My Status",       atcmenu[airbasename].root, self._PlayerMyStatus,       self, groupname)
   atcmenu[airbasename].RequestTaxi    = MENU_GROUP_COMMAND:New(group, "Request Taxi",    atcmenu[airbasename].root, self._PlayerRequestTaxi,    self, groupname)
   atcmenu[airbasename].RequestTakeoff = MENU_GROUP_COMMAND:New(group, "Request Takeoff", atcmenu[airbasename].root, self._PlayerRequestTakeoff, self, groupname)
+  atcmenu[airbasename].RequestParking = MENU_GROUP_COMMAND:New(group, "Request Parking", atcmenu[airbasename].root, self._PlayerRequestParking, self, groupname)  
   atcmenu[airbasename].Inbound        = MENU_GROUP_COMMAND:New(group, "Inbound",         atcmenu[airbasename].root, self._PlayerInbound,        self, groupname)
   
 end
@@ -1065,8 +1093,10 @@ function FLIGHTCONTROL:_PlayerRequestTaxi(groupname)
   local flight=_DATABASE:GetFlightGroup(groupname)
   
   if flight then
+    
+    local runway=self:GetActiveRunwayText()
   
-    MESSAGE:New("You are cleared to taxi", 5):ToAll()
+    MESSAGE:New(string.format("You are cleared to taxi to runway %s", runway), 5):ToAll()
     
     for _,_element in pairs(flight.elements) do
       local element=_element --Ops.FlightGroup#FLIGHTGROUP.Element
@@ -1089,7 +1119,18 @@ function FLIGHTCONTROL:_PlayerRequestTakeoff(groupname)
   local flight=_DATABASE:GetFlightGroup(groupname)
   
   if flight then
-    if flight:IsTaxiing() then    
+    if flight:IsTaxiing() then
+    
+      if #self.Qlanding==0 and self.Qtakeoff==0 then
+        MESSAGE:New("You are cleared for takeoff as there is no one else landing or queueing for takeoff", 5):ToAll()
+      elseif #self.Qlanding>0 then
+        MESSAGE:New("Negative ghostrider, other flights are currently landing.", 5):ToAll()
+      elseif #self.Qtakeoff>0 then
+        MESSAGE:New("Negative ghostrider, other flights are ahead of you.", 5):ToAll()
+      end
+      
+      self:_AddFlightToTakeoffQueue(flight)
+    
     else
     end
   end
