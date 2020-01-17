@@ -1041,25 +1041,121 @@ function FLIGHTCONTROL:_CreatePlayerMenu(flight, atcmenu)
   
   
   local airbasename=self.airbasename
-
-  --local playermenu=flight.menu.atc  --#FLIGHTCONTROL.PlayerMenu
-  
-  local rootmenu=flight.menu.atc.root
+  local Tag=airbasename
+  local Tnow=timer.getTime()
    
   atcmenu[airbasename] = atcmenu[airbasename] or {}
   
   -- Root menu
-  atcmenu[airbasename].root           = MENU_GROUP:New(group, airbasename, rootmenu)
+  atcmenu[airbasename].root = MENU_GROUP_DELAYED:New(group, airbasename, nil):SetTime(Tnow):SetTag(Tag)
   
+  local rootmenu=atcmenu[airbasename].root --Core.Menu#MENU_GROUP_DELAYED
+
   -- Commands
+  MENU_GROUP_COMMAND_DELAYED:New(group, "Request Info",    rootmenu, self._PlayerRequestInfo,    self, groupname):SetTime(Tnow):SetTag(Tag)
+  MENU_GROUP_COMMAND_DELAYED:New(group, "Request Taxi",    rootmenu, self._PlayerRequestTaxi,    self, groupname):SetTime(Tnow):SetTag(Tag)
+  MENU_GROUP_COMMAND_DELAYED:New(group, "Request Takeoff", rootmenu, self._PlayerRequestTakeoff, self, groupname):SetTime(Tnow):SetTag(Tag)
+  MENU_GROUP_COMMAND_DELAYED:New(group, "Request Parking", rootmenu, self._PlayerRequestParking, self, groupname):SetTime(Tnow):SetTag(Tag)
+  MENU_GROUP_COMMAND_DELAYED:New(group, "Inbound",         rootmenu, self._PlayerInbound,        self, groupname):SetTime(Tnow):SetTag(Tag)
+  if flight.flightcontrol.airbasename==self.airbasename then
+  MENU_GROUP_COMMAND_DELAYED:New(group, "My Status",       rootmenu, self._PlayerMyStatus,       self, groupname):SetTime(Tnow):SetTag(Tag)
+  end
+
+  
+  rootmenu:Remove(Tnow, Tag)
+  rootmenu:Set()  
+  
+  --[[
   atcmenu[airbasename].MyStatus       = MENU_GROUP_COMMAND:New(group, "My Status",       atcmenu[airbasename].root, self._PlayerMyStatus,       self, groupname)
   atcmenu[airbasename].RequestTaxi    = MENU_GROUP_COMMAND:New(group, "Request Taxi",    atcmenu[airbasename].root, self._PlayerRequestTaxi,    self, groupname)
   atcmenu[airbasename].RequestTakeoff = MENU_GROUP_COMMAND:New(group, "Request Takeoff", atcmenu[airbasename].root, self._PlayerRequestTakeoff, self, groupname)
   atcmenu[airbasename].RequestParking = MENU_GROUP_COMMAND:New(group, "Request Parking", atcmenu[airbasename].root, self._PlayerRequestParking, self, groupname)  
   atcmenu[airbasename].Inbound        = MENU_GROUP_COMMAND:New(group, "Inbound",         atcmenu[airbasename].root, self._PlayerInbound,        self, groupname)
+  ]]
+end
+
+--- Create player menu.
+-- @param #FLIGHTCONTROL self
+-- @param #string groupname Name of the flight group.
+function FLIGHTCONTROL:_PlayerRequestInfo(groupname)
+
+  -- Get flight group.
+  local flight=_DATABASE:GetFlightGroup(groupname)
+  
+  if flight then
+  
+    --
+    local text=string.format("Airbase %s Status:", self.airbasename)
+    text=text..string.format("\nQlanding %d", #self.Qlanding)
+    text=text..string.format("\nQholding %d", #self.Qwaiting)
+    text=text..string.format("\nQparking %d", #self.Qparking)
+    text=text..string.format("\nQtakeoff %d", #self.Qtakeoff)
+    text=text..string.format("\nRunway %s", self:GetActiveRunwayText())
+    if self.atis then
+      text=text..string.format("\nATIS %.3f MHz %s", self.atis.frequency, UTILS.GetModulationName(self.atis.modulation))
+      if self.atis.towerfrequency then
+        local tower=""
+        for _,freq in pairs(self.atis.towerfrequency) do
+          tower=tower..string.format("%.3f, ", freq)
+        end
+        text=text..string.format("\nTower %.3f MHz", self.atis.towerfrequency[1])
+      end
+      if self.atis.ils then
+      end
+      if self.atis.tacan then
+        --TACAN
+      end
+      if self.atis.ndbinner then
+      end
+      if self.atis.ndbouter then
+      
+      end
+      
+    end
+
+    MESSAGE:New(text, 5):ToGroup(flight.group)
+  
+  else
+    MESSAGE:New(string.format("Cannot find flight group %s.", tostring(groupname)), 5):ToAll()
+  end
   
 end
 
+--- Player calls inbound.
+-- @param #FLIGHTCONTROL self
+-- @param #string groupname Name of the flight group.
+function FLIGHTCONTROL:_PlayerInbound(groupname)
+
+  -- Get flight group.
+  local flight=_DATABASE:GetFlightGroup(groupname)
+  
+  if flight then
+      
+    if flight:IsAirborne() then
+
+      if flight.flightcontrol and flight.flightcontrol.airbasename==self.airbasename then
+      
+      else
+      
+        flight:SetFlightControl(self)
+      
+      end    
+
+      -- TODO: Better check in holding zone and then add to queue.
+      self:_AddFlightToHoldingQueue(flight)
+
+      local text=string.format("You have been added to the holding queue!")
+      MESSAGE:New(text, 5):ToGroup(flight.group)
+      
+    else
+      -- TODO: error you are not airborne!
+    end
+      
+  else
+    MESSAGE:New(string.format("Cannot find flight group %s.", tostring(groupname)), 5):ToAll()
+  end
+  
+end
 
 --- Create player menu.
 -- @param #FLIGHTCONTROL self

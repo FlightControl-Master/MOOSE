@@ -411,14 +411,14 @@ end
 --- Add a *scheduled* task.
 -- @param #FLIGHTGROUP self
 -- @param #string description Brief text describing the task, e.g. "Attack SAM".
--- @param #table task DCS task table stucture.
+-- @param #table task DCS task table structure.
 -- @param #number prio Priority of the task.
 -- @param #string clock Mission time when task is executed. Default in 5 seconds. If argument passed as #number, it defines a relative delay in seconds.
 -- @param #number duration Duration before task is cancelled in seconds counted after task started. Default never.
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:AddTask(description, task, prio, clock, duration)
 
-  -- Increase coutner.
+  -- Increase counter.
   self.taskcounter=self.taskcounter+1
 
   -- Set time.
@@ -3352,7 +3352,7 @@ function FLIGHTGROUP:GetNelements(status)
   return n
 end
 
---- Seach unoccupied parking spots at the airbase for all flight elements.
+--- Search unoccupied parking spots at the airbase for all flight elements.
 -- @param #FLIGHTGROUP self
 -- @param Wrapper.Airbase#AIRBASE airbase The airbase where we search for parking spots.
 -- @return #table Table of coordinates and terminal IDs of free parking spots.
@@ -3656,9 +3656,9 @@ function FLIGHTGROUP:_UpdateMenu()
   end
   table.sort(fc, _sort)
 
-  local playermenu=self.menu.atc.root --Ops.FlightControl#FLIGHTCONTROL.PlayerMenu
+  --local playermenu=self.menu.atc.root --Ops.FlightControl#FLIGHTCONTROL.PlayerMenu
 
-  playermenu:RemoveSubMenus()  --Core.Menu#MENU_GROUP
+  --playermenu:RemoveSubMenus()  --Core.Menu#MENU_GROUP
   
   -- If there is a designated FC, we put it first.
   local N=8
