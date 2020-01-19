@@ -5957,27 +5957,29 @@ function WAREHOUSE:_OnEventArrived(EventData)
         if self.uid==wid then
 
           local request=self:_GetRequestOfGroup(group, self.pending)
-          local istransport=self:_GroupIsTransport(group,request)
-
-          -- Check if engine shutdown happend at right airbase because the event is also triggered in other situations.
-          local rightairbase=group:GetCoordinate():GetClosestAirbase():GetName()==request.warehouse:GetAirbase():GetName()
-
-          -- Check that group is cargo and not transport.
-          if istransport==false and rightairbase then
-
-            -- Debug info.
-            local text=string.format("Air asset group %s from warehouse %s arrived at its destination.", group:GetName(), self.alias)
-            self:_InfoMessage(text)
-
-            -- Trigger arrived event for this group. Note that each unit of a group will trigger this event. So the onafterArrived function needs to take care of that.
-            -- Actually, we only take the first unit of the group that arrives. If it does, we assume the whole group arrived, which might not be the case, since
-            -- some units might still be taxiing or whatever. Therefore, we add 10 seconds for each additional unit of the group until the first arrived event is triggered.
-            local nunits=#group:GetUnits()
-            local dt=10*(nunits-1)+1  -- one unit = 1 sec, two units = 11 sec, three units = 21 sec before we call the group arrived.
-            self:__Arrived(dt, group)
-
+          
+          if request then
+            local istransport=self:_GroupIsTransport(group,request)
+  
+            -- Check if engine shutdown happend at right airbase because the event is also triggered in other situations.
+            local rightairbase=group:GetCoordinate():GetClosestAirbase():GetName()==request.warehouse:GetAirbase():GetName()
+  
+            -- Check that group is cargo and not transport.
+            if istransport==false and rightairbase then
+  
+              -- Debug info.
+              local text=string.format("Air asset group %s from warehouse %s arrived at its destination.", group:GetName(), self.alias)
+              self:_InfoMessage(text)
+  
+              -- Trigger arrived event for this group. Note that each unit of a group will trigger this event. So the onafterArrived function needs to take care of that.
+              -- Actually, we only take the first unit of the group that arrives. If it does, we assume the whole group arrived, which might not be the case, since
+              -- some units might still be taxiing or whatever. Therefore, we add 10 seconds for each additional unit of the group until the first arrived event is triggered.
+              local nunits=#group:GetUnits()
+              local dt=10*(nunits-1)+1  -- one unit = 1 sec, two units = 11 sec, three units = 21 sec before we call the group arrived.
+              self:__Arrived(dt, group)
+  
+            end
           end
-
         end
 
       else

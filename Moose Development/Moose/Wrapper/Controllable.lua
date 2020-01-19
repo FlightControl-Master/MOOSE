@@ -1,4 +1,4 @@
---- **Wrapper** -- CONTROLLABLE is an intermediate class wrapping Group and Unit classes "controllers".
+  --- **Wrapper** -- CONTROLLABLE is an intermediate class wrapping Group and Unit classes "controllers".
 --
 -- ===
 --
@@ -2375,16 +2375,30 @@ do -- Route methods
   -- @param #number Speed (optional) Speed in km/h. The default speed is 20 km/h.
   -- @param #string Formation (optional) The route point Formation, which is a text string that specifies exactly the Text in the Type of the route point, like "Vee", "Echelon Right".
   -- @param #number DelaySeconds Wait for the specified seconds before executing the Route.
+  -- @param #function WaypointFunction (Optional) Function called when passing a waypoint. First parameters of the function are the @{CONTROLLABLE} object, the number of the waypoint and the total number of waypoints.
+  -- @param #table WaypointFunctionArguments (Optional) List of parameters passed to the *WaypointFunction*.
   -- @return #CONTROLLABLE The CONTROLLABLE.
-  function CONTROLLABLE:RouteGroundTo( ToCoordinate, Speed, Formation, DelaySeconds )
+  function CONTROLLABLE:RouteGroundTo( ToCoordinate, Speed, Formation, DelaySeconds, WaypointFunction, WaypointFunctionArguments )
 
     local FromCoordinate = self:GetCoordinate()
 
-    --local FromWP = FromCoordinate:WaypointGround()
     local FromWP = FromCoordinate:WaypointGround(Speed, Formation)
     local ToWP = ToCoordinate:WaypointGround( Speed, Formation )
 
-    self:Route( { FromWP, ToWP }, DelaySeconds )
+    local route={FromWP, ToWP}
+
+    -- Add passing waypoint function.
+    if WaypointFunction then
+      local N=#route
+      for n,waypoint in pairs(route) do
+        waypoint.task = {}
+        waypoint.task.id = "ComboTask"
+        waypoint.task.params = {}
+        waypoint.task.params.tasks = {self:TaskFunction("CONTROLLABLE.___PassingWaypoint", n, N, WaypointFunction, unpack(WaypointFunctionArguments or {}))}      
+      end
+    end
+
+    self:Route( route, DelaySeconds )
 
     return self
   end
@@ -2395,8 +2409,10 @@ do -- Route methods
   -- @param #number Speed (Optional) Speed in km/h. The default speed is 20 km/h.
   -- @param #number DelaySeconds (Optional) Wait for the specified seconds before executing the Route. Default is one second.
   -- @param #string OffRoadFormation (Optional) The formation at initial and final waypoint. Default is "Off Road".
+  -- @param #function WaypointFunction (Optional) Function called when passing a waypoint. First parameters of the function are the @{CONTROLLABLE} object, the number of the waypoint and the total number of waypoints.
+  -- @param #table WaypointFunctionArguments (Optional) List of parameters passed to the *WaypointFunction*.
   -- @return #CONTROLLABLE The CONTROLLABLE.
-  function CONTROLLABLE:RouteGroundOnRoad( ToCoordinate, Speed, DelaySeconds, OffRoadFormation )
+  function CONTROLLABLE:RouteGroundOnRoad( ToCoordinate, Speed, DelaySeconds, OffRoadFormation, WaypointFunction, WaypointFunctionArguments )
 
     -- Defaults.
     Speed=Speed or 20
@@ -2404,7 +2420,7 @@ do -- Route methods
     OffRoadFormation=OffRoadFormation or "Off Road"
 
     -- Get the route task.
-    local route=self:TaskGroundOnRoad(ToCoordinate, Speed, OffRoadFormation)
+    local route=self:TaskGroundOnRoad(ToCoordinate, Speed, OffRoadFormation, nil, nil, WaypointFunction, WaypointFunctionArguments)
 
     -- Route controllable to destination.
     self:Route( route, DelaySeconds )
@@ -2417,15 +2433,17 @@ do -- Route methods
   -- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
   -- @param #number Speed (Optional) Speed in km/h. The default speed is 20 km/h.
   -- @param #number DelaySeconds (Optional) Wait for the specified seconds before executing the Route. Default is one second.
+  -- @param #function WaypointFunction (Optional) Function called when passing a waypoint. First parameters of the function are the @{CONTROLLABLE} object, the number of the waypoint and the total number of waypoints.
+  -- @param #table WaypointFunctionArguments (Optional) List of parameters passed to the *WaypointFunction*.
   -- @return #CONTROLLABLE The CONTROLLABLE.
-  function CONTROLLABLE:RouteGroundOnRailRoads( ToCoordinate, Speed, DelaySeconds)
+  function CONTROLLABLE:RouteGroundOnRailRoads( ToCoordinate, Speed, DelaySeconds, WaypointFunction, WaypointFunctionArguments )
 
     -- Defaults.
     Speed=Speed or 20
     DelaySeconds=DelaySeconds or 1
 
     -- Get the route task.
-    local route=self:TaskGroundOnRailRoads(ToCoordinate, Speed)
+    local route=self:TaskGroundOnRailRoads(ToCoordinate, Speed, WaypointFunction, WaypointFunctionArguments )
 
     -- Route controllable to destination.
     self:Route( route, DelaySeconds )
@@ -2442,10 +2460,12 @@ do -- Route methods
   -- @param #string OffRoadFormation (Optional) The formation at initial and final waypoint. Default is "Off Road".
   -- @param #boolean Shortcut (Optional) If true, controllable will take the direct route if the path on road is 10x longer or path on road is less than 5% of total path.
   -- @param Core.Point#COORDINATE FromCoordinate (Optional) Explicit initial coordinate. Default is the position of the controllable.
+  -- @param #function WaypointFunction (Optional) Function called when passing a waypoint. First parameters of the function are the @{CONTROLLABLE} object, the number of the waypoint and the total number of waypoints.
+  -- @param #table WaypointFunctionArguments (Optional) List of parameters passed to the *WaypointFunction*.
   -- @return DCS#Task Task.
   -- @return #boolean If true, path on road is possible. If false, task will route the group directly to its destination.
-  function CONTROLLABLE:TaskGroundOnRoad( ToCoordinate, Speed, OffRoadFormation, Shortcut, FromCoordinate )
-    self:F2({ToCoordinate=ToCoordinate, Speed=Speed, OffRoadFormation=OffRoadFormation})
+  function CONTROLLABLE:TaskGroundOnRoad( ToCoordinate, Speed, OffRoadFormation, Shortcut, FromCoordinate, WaypointFunction, WaypointFunctionArguments )
+    self:I({ToCoordinate=ToCoordinate, Speed=Speed, OffRoadFormation=OffRoadFormation, WaypointFunction=WaypointFunction, Args=WaypointFunctionArguments})
 
     -- Defaults.
     Speed=Speed or 20
@@ -2495,6 +2515,7 @@ do -- Route methods
       if LongRoad and Shortcut then
 
         -- Road is long ==> we take the short cut.
+        
         table.insert(route, FromCoordinate:WaypointGround(Speed, OffRoadFormation))
         table.insert(route, ToCoordinate:WaypointGround(Speed, OffRoadFormation))
 
@@ -2523,7 +2544,18 @@ do -- Route methods
       table.insert(route, ToCoordinate:WaypointGround(Speed, OffRoadFormation))
 
     end
-
+    
+    -- Add passing waypoint function.
+    if WaypointFunction then
+      local N=#route
+      for n,waypoint in pairs(route) do
+        waypoint.task = {}
+        waypoint.task.id = "ComboTask"
+        waypoint.task.params = {}
+        waypoint.task.params.tasks = {self:TaskFunction("CONTROLLABLE.___PassingWaypoint", n, N, WaypointFunction, unpack(WaypointFunctionArguments or {}))}      
+      end
+    end
+    
     return route, canroad
   end
 
@@ -2531,8 +2563,10 @@ do -- Route methods
   -- @param #CONTROLLABLE self
   -- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
   -- @param #number Speed (Optional) Speed in km/h. The default speed is 20 km/h.
+  -- @param #function WaypointFunction (Optional) Function called when passing a waypoint. First parameters of the function are the @{CONTROLLABLE} object, the number of the waypoint and the total number of waypoints.
+  -- @param #table WaypointFunctionArguments (Optional) List of parameters passed to the *WaypointFunction*.
   -- @return Task
-  function CONTROLLABLE:TaskGroundOnRailRoads(ToCoordinate, Speed)
+  function CONTROLLABLE:TaskGroundOnRailRoads(ToCoordinate, Speed, WaypointFunction, WaypointFunctionArguments )
     self:F2({ToCoordinate=ToCoordinate, Speed=Speed})
 
     -- Defaults.
@@ -2557,9 +2591,30 @@ do -- Route methods
       table.insert(route, PathOnRail[2]:WaypointGround(Speed, "On Railroad"))
 
     end
+    
+    -- Add passing waypoint function.
+    if WaypointFunction then
+      local N=#route
+      for n,waypoint in pairs(route) do
+        waypoint.task = {}
+        waypoint.task.id = "ComboTask"
+        waypoint.task.params = {}
+        waypoint.task.params.tasks = {self:TaskFunction("CONTROLLABLE.___PassingWaypoint", n, N, WaypointFunction, unpack(WaypointFunctionArguments or {}))}      
+      end
+    end
 
     return route
   end
+
+  --- Task function when controllable passes a waypoint.
+  -- @param #CONTROLLABLE controllable The controllable object.
+  -- @param #number n Current waypoint number passed.
+  -- @param #number N Total number of waypoints.
+  -- @param #function waypointfunction Function called when a waypoint is passed.
+  function CONTROLLABLE.___PassingWaypoint(controllable, n, N, waypointfunction, ...)
+    waypointfunction(controllable, n, N, ...)
+  end
+
 
   --- Make the AIR Controllable fly towards a specific point.
   -- @param #CONTROLLABLE self
