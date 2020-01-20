@@ -29,6 +29,7 @@
 -- @field #table Qwaiting Queue of aircraft waiting for landing permission.
 -- @field #table Qlanding Queue of aircraft currently on final approach.
 -- @field #table Qtakeoff Queue of aircraft about to takeoff.
+-- @field #table QtaxiInb Queue of aircraft taxiing to parking after landing.
 -- @field #table Qparking Queue of aircraft parking.
 -- @field Ops.ATIS#ATIS atis ATIS object.
 -- @field #number activerwyno Number of active runway.
@@ -69,6 +70,7 @@ FLIGHTCONTROL = {
   Qlanding       =    {},
   Qtakeoff       =    {},
   Qparking       =    {},
+  QtaxiInb       =    {},
   atis           =   nil,
   activerwyno    =     1,
   atcfreq        =   nil,
@@ -107,7 +109,7 @@ FLIGHTCONTROL = {
 
 --- FlightControl class version.
 -- @field #string version
-FLIGHTCONTROL.version="0.1.2"
+FLIGHTCONTROL.version="0.1.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -308,7 +310,8 @@ function FLIGHTCONTROL:onafterStatus()
   local nfree=self.Nparkingspots
 
   -- Info text.
-  local text=string.format("State %s - Runway %s - Parking %d/%d - Qpark=%d Qtakeoff=%d Qland=%d Qhold=%d", self:GetState(), runway.idx, nfree, self.Nparkingspots, #self.Qparking, #self.Qtakeoff, #self.Qlanding, #self.Qwaiting)
+  local text=string.format("State %s - Runway %s - Parking %d/%d - Flights=%s: Qpark=%d Qtakeoff=%d Qland=%d Qhold=%d", 
+  self:GetState(), runway.idx, nfree, self.Nparkingspots, #self.flights, #self.Qparking, #self.Qtakeoff, #self.Qlanding, #self.Qwaiting)
   self:I(self.lid..text)
 
   -- Next status update in ~30 seconds.
@@ -521,7 +524,9 @@ function FLIGHTCONTROL:_CheckQueues()
         -- TODO: handle case with engines hot. That does not trigger a ENGINE_START event. More a FLIGHTGROUP issue.
         flight.group:StartUncontrolled()
         
-        flight:_UpdateRoute(1)
+        
+        -- TODO: is this really necessary here?
+        flight:__UpdateRoute(-1)
         
         env.info("FF remove flight from parking queue - if possible.")
         self:_RemoveFlightFromQueue(self.Qparking, flight, "parking")
@@ -1046,18 +1051,20 @@ function FLIGHTCONTROL:_CreatePlayerMenu(flight, atcmenu)
    
   atcmenu[airbasename] = atcmenu[airbasename] or {}
   
-  -- Root menu
-  atcmenu[airbasename].root = MENU_GROUP_DELAYED:New(group, airbasename, nil):SetTime(Tnow):SetTag(Tag)
+  -- Airbase root menu.
+  atcmenu[airbasename].root = MENU_GROUP_DELAYED:New(group, airbasename, atcmenu.root):SetTime(Tnow):SetTag(Tag)
   
   local rootmenu=atcmenu[airbasename].root --Core.Menu#MENU_GROUP_DELAYED
 
   -- Commands
   MENU_GROUP_COMMAND_DELAYED:New(group, "Request Info",    rootmenu, self._PlayerRequestInfo,    self, groupname):SetTime(Tnow):SetTag(Tag)
+  if flight.flightcontrol and flight.flightcontrol.airbasename==self.airbasename then
   MENU_GROUP_COMMAND_DELAYED:New(group, "Request Taxi",    rootmenu, self._PlayerRequestTaxi,    self, groupname):SetTime(Tnow):SetTag(Tag)
   MENU_GROUP_COMMAND_DELAYED:New(group, "Request Takeoff", rootmenu, self._PlayerRequestTakeoff, self, groupname):SetTime(Tnow):SetTag(Tag)
   MENU_GROUP_COMMAND_DELAYED:New(group, "Request Parking", rootmenu, self._PlayerRequestParking, self, groupname):SetTime(Tnow):SetTag(Tag)
+  end
   MENU_GROUP_COMMAND_DELAYED:New(group, "Inbound",         rootmenu, self._PlayerInbound,        self, groupname):SetTime(Tnow):SetTag(Tag)
-  if flight.flightcontrol.airbasename==self.airbasename then
+  if flight.flightcontrol and flight.flightcontrol.airbasename==self.airbasename then
   MENU_GROUP_COMMAND_DELAYED:New(group, "My Status",       rootmenu, self._PlayerMyStatus,       self, groupname):SetTime(Tnow):SetTag(Tag)
   end
 
@@ -1086,6 +1093,7 @@ function FLIGHTCONTROL:_PlayerRequestInfo(groupname)
   
     --
     local text=string.format("Airbase %s Status:", self.airbasename)
+    text=text..string.format("\nFlights %d", #self.flights)
     text=text..string.format("\nQlanding %d", #self.Qlanding)
     text=text..string.format("\nQholding %d", #self.Qwaiting)
     text=text..string.format("\nQparking %d", #self.Qparking)
@@ -1134,9 +1142,10 @@ function FLIGHTCONTROL:_PlayerInbound(groupname)
     if flight:IsAirborne() then
 
       if flight.flightcontrol and flight.flightcontrol.airbasename==self.airbasename then
-      
+        -- Nothing to do as this flight has already the right flightcontrol.
       else
       
+        -- Set FC controlling this flight.
         flight:SetFlightControl(self)
       
       end    
@@ -1148,7 +1157,9 @@ function FLIGHTCONTROL:_PlayerInbound(groupname)
       MESSAGE:New(text, 5):ToGroup(flight.group)
       
     else
-      -- TODO: error you are not airborne!
+      -- Error you are not airborne!
+      local text=string.format("Negative, you must be AIRBORNE to call INBOUND!")
+      MESSAGE:New(text, 5):ToGroup(flight.group)      
     end
       
   else
@@ -1260,7 +1271,8 @@ function FLIGHTCONTROL:_CreateFlightGroup(group)
     flight=FLIGHTGROUP:New(group:GetName())
   end
   
-  if flight.destination and flight.destination:GetName()==self.airbasename then
+  --if flight.destination and flight.destination:GetName()==self.airbasename then
+  if flight.homebase and flight.homebase:GetName()==self.airbasename then
     flight:SetFlightControl(self)
   end
     
@@ -1270,7 +1282,7 @@ function FLIGHTCONTROL:_CreateFlightGroup(group)
   return flight
 end
 
---- Create a new flight group.
+--- Remove flight from all queues.
 -- @param #FLIGHTCONTROL self
 -- @param Ops.FlightGroup#FLIGHTGROUP flight The flight to be removed.
 function FLIGHTCONTROL:_RemoveFlight(flight)

@@ -233,7 +233,7 @@ FLIGHTGROUP.TaskType={
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.2.1"
+FLIGHTGROUP.version="0.2.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -514,7 +514,18 @@ end
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:SetFlightControl(flightcontrol)
   self:I(self.sid..string.format("Setting FLIGHTCONTROL to airbase %s", flightcontrol.airbasename))
+  -- Remove flight from previous FC.
+  if self.flightcontrol and self.flightcontrol.airbasename~=flightcontrol.airbasename then
+    self.flightcontrol:_RemoveFlight(self)
+  end
+  -- Set FC.
   self.flightcontrol=flightcontrol
+  -- Add flight to all flights.
+  table.insert(flightcontrol.flights, self)
+  -- Update flight's F10 menu.
+  if self.ai==false then
+    self:_UpdateMenu()
+  end
   return self
 end
 
@@ -1518,14 +1529,14 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
 
   if self.group and self.group:IsAlive() and self:IsAirborne() then
     -- Alive & Airborne ==> Update route possible.
-    env.info("FF update route allowed")
+    self:I(self.sid.."FF update route allowed")
     return true
   elseif self:IsDead() then
     -- Group is dead! No more updates.
     return false
   else
     -- Not airborne yet. Try again in 1 sec.
-    env.info("FF update route denied ==> checking back in 1 sec")
+    self:I(self.sid.."FF update route denied ==> checking back in 1 sec")
     self:__UpdateRoute(-1, n)
     return false
   end
@@ -1541,7 +1552,7 @@ end
 function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
 
   MESSAGE:New("Updating route", 10):ToAll()
-  env.info("FF updating route")
+  self:I(self.sid.."FF updating route")
 
   -- TODO: what happens if currentwp=#waypoints
   n=n or self.currentwp+1
@@ -1594,7 +1605,7 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
   -- Debug info.
   local hb=self.homebase and self.homebase:GetName() or "unknown"
   local db=self.destination and self.destination:GetName() or "unknown"
-  self:I(self.sid..string.format("Updating route for WP>=%d (%d/%d) homebase=%s destination=%s", n, #wp, #self.waypoints, hb, db))
+  self:I(self.sid..string.format("Updating route for WP>=%d/%d (%d) homebase=%s destination=%s", n, #wp, #self.waypoints, hb, db))
   
   if #wp>0 then
 
@@ -3659,6 +3670,8 @@ function FLIGHTGROUP:_UpdateMenu()
   --local playermenu=self.menu.atc.root --Ops.FlightControl#FLIGHTCONTROL.PlayerMenu
 
   --playermenu:RemoveSubMenus()  --Core.Menu#MENU_GROUP
+  
+  self.menu.atc.root=self.menu.atc.root or MENU
   
   -- If there is a designated FC, we put it first.
   local N=8

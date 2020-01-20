@@ -523,7 +523,7 @@ _ATIS={}
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version="0.6.2"
+ATIS.version="0.6.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1142,6 +1142,10 @@ function ATIS:onafterBroadcast(From, Event, To)
 
   local WINDFROM=string.format("%03d", windFrom-magvar)
   local WINDSPEED=string.format("%d", UTILS.MpsToKnots(windSpeed))
+  
+  if WINDFROM=="000" then
+    WINDFROM="360"
+  end
 
   if self.metric then
     WINDSPEED=string.format("%d", windSpeed)
