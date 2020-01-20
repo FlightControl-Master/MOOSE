@@ -689,6 +689,10 @@ function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
      
       local ObjectCategory = ZoneObject:getCategory()
       
+      --local name=ZoneObject:getName()
+      --env.info(string.format("Zone object %s", tostring(name)))
+      --self:E(ZoneObject)
+      
       if ( ObjectCategory == Object.Category.UNIT and ZoneObject:isExist() and ZoneObject:isActive() ) or (ObjectCategory == Object.Category.STATIC and ZoneObject:isExist()) then
       
         local CoalitionDCSUnit = ZoneObject:getCoalition()

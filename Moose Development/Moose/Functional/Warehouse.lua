@@ -3694,11 +3694,11 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
 
       -- Get the original warehouse this group belonged to.
       local warehouse=self:FindWarehouseInDB(wid)
-      
+
       if warehouse then
-      
+
         local request=warehouse:_GetRequestOfGroup(group, warehouse.pending)
-        
+
         if request then
 
           -- Increase number of cargo delivered and transports home.
@@ -3729,14 +3729,14 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
       -- Note the group is only added once, i.e. the ngroups parameter is ignored here.
       -- This is because usually these request comes from an asset that has been transfered from another warehouse and hence should only be added once.
       if asset~=nil then
-        self:_DebugMessage(string.format("Warehouse %s: Adding KNOWN asset uid=%d with attribute=%s to stock.", self.alias, asset.uid, asset.attribute), 5)        
-        
+        self:_DebugMessage(string.format("Warehouse %s: Adding KNOWN asset uid=%d with attribute=%s to stock.", self.alias, asset.uid, asset.attribute), 5)
+
         -- Asset now belongs to this warehouse. Set warehouse ID.
         asset.wid=self.uid
-        
+
         -- No request associated with this asset.
         asset.rid=nil
-        
+
         -- Set livery.
         if liveries then
           if type(liveries)=="table" then
@@ -3745,17 +3745,17 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
             asset.livery=liveries
           end
         end
-  
+
         -- Set skill.
-        asset.skill=skill        
-        
+        asset.skill=skill
+
         -- Asset is not spawned.
         asset.spawned=false
         asset.iscargo=nil
-        
+
         -- Add asset to stock.
         table.insert(self.stock, asset)
-        
+
         -- Trigger New asset event.
         self:__NewAsset(0.1, asset, assignment or "")
       else
@@ -3775,16 +3775,16 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
 
       -- Add created assets to stock of this warehouse.
       for _,asset in pairs(assets) do
-        
+
         -- Asset belongs to this warehouse. Set warehouse ID.
         asset.wid=self.uid
-        
+
         -- No request associated with this asset.
         asset.rid=nil
-        
+
         -- Add asset to stock.
         table.insert(self.stock, asset)
-        
+
         -- Trigger NewAsset event. Delay a bit for OnAfterNewAsset functions to work properly.
         self:__NewAsset(0.1, asset, assignment or "")
       end
@@ -4230,9 +4230,9 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
        -- Create an alias name with the UIDs for the sending warehouse, asset and request.
     --local _alias=self:_alias(_assetitem.unittype, self.uid, _assetitem.uid, Request.uid)
-    
+
     local _alias=_assetitem.spawngroupname
-    
+
     _assetitem.rid=Request.uid
 
     -- Asset is transport.
@@ -4284,9 +4284,9 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     Request.assets[_assetitem.uid]=_assetitem
 
   end
-  
+
   -- Init problem table.
-  Request.assetproblem={}  
+  Request.assetproblem={}
 
   -- Add request to pending queue.
   table.insert(self.pending, Request)
@@ -5350,7 +5350,7 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
 
     -- Alias of the group.
     --local _alias=self:_Alias(asset, Request)
-    
+
     local _alias=asset.spawngroupname
 
     -- Spawn an asset group.
@@ -5577,11 +5577,11 @@ function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrol
       if asset.livery then
         unit.livery_id = asset.livery
       end
-      
+
       if asset.skill then
         unit.skill= asset.skill
       end
-      
+
       if asset.payload then
         unit.payload=asset.payload
       end
@@ -5604,7 +5604,7 @@ function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrol
 
     -- Debug info.
     self:T2({airtemplate=template})
-    
+
     -- Create a flight group.
     --FLIGHTGROUP:New(template.name)
 
@@ -5820,7 +5820,7 @@ function WAREHOUSE:_RouteAir(aircraft)
 
     -- Give start command to activate uncontrolled aircraft within the next 60 seconds.
     local starttime=math.random(60)
-    
+
     local fc=_DATABASE:GetFlightControl(self.airbasename)
     if fc then
       -- Nothing to do. FC will start the aircraft once it gets taxi clearance.
@@ -6093,26 +6093,26 @@ function WAREHOUSE:_OnEventArrived(EventData)
         if self.uid==wid then
 
           local request=self:_GetRequestOfGroup(group, self.pending)
-          
-          -- Better check that the request still exists, because for a group with more units, the 
+
+          -- Better check that the request still exists, because for a group with more units, the
           if request then
-          
+
             local istransport=self:_GroupIsTransport(group, request)
-            
+
             -- Get closest airbase.
             -- Note, this crashed at somepoint when the Tarawa was in the mission. Don't know why. Deleting the Tarawa and adding it again solved the problem.
             local closest=group:GetCoordinate():GetClosestAirbase()
-  
+
             -- Check if engine shutdown happend at right airbase because the event is also triggered in other situations.
             local rightairbase=closest:GetName()==request.warehouse:GetAirbase():GetName()
-  
+
             -- Check that group is cargo and not transport.
             if istransport==false and rightairbase then
-  
+
               -- Debug info.
               local text=string.format("Air asset group %s from warehouse %s arrived at its destination.", group:GetName(), self.alias)
               self:_InfoMessage(text)
-  
+
               -- Trigger arrived event for this group. Note that each unit of a group will trigger this event. So the onafterArrived function needs to take care of that.
               -- Actually, we only take the first unit of the group that arrives. If it does, we assume the whole group arrived, which might not be the case, since
               -- some units might still be taxiing or whatever. Therefore, we add 10 seconds for each additional unit of the group until the first arrived event is triggered.
@@ -6120,9 +6120,8 @@ function WAREHOUSE:_OnEventArrived(EventData)
               local dt=10*(nunits-1)+1  -- one unit = 1 sec, two units = 11 sec, three units = 21 sec before we call the group arrived.
               self:__Arrived(dt, group)
             end
-            
-          end
 
+          end
         end
 
       else
@@ -7351,7 +7350,7 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
     self:T3(string.format("l1=%.1f l2=%.1f s=%.1f d=%.1f ==> safe=%s", l1,l2,safedist,dist,tostring(safe)))
     return safe
   end
-  
+
   -- Get client coordinates.
   local function _clients()
     local clients=_DATABASE.CLIENTS
@@ -7369,7 +7368,7 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
           env.info(string.format("Found client %s on parking spot %d at airbase %s", unit.name, TermID, airbase:GetName()))
         end
         ]]
-      end     
+      end
     end
     return coords
   end
@@ -7466,7 +7465,7 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
             free=false
             self:I(self.wid..string.format("Parking spot %d is occupied by other aircraft taking off (TOAC).", _termid))
           end
-          
+
           -- Check if spot is reserved.
           local fc=_DATABASE:GetFlightControl(self.airbasename)
           if fc then
@@ -7476,7 +7475,7 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
               self:I(self.wid..string.format("Parking spot %d is reserved for flight element %s", _termid, tostring(reserved)))
             end
           end
-          
+
 
           -- Loop over all obstacles.
           for _,obstacle in pairs(obstacles) do
@@ -7688,10 +7687,10 @@ function WAREHOUSE:_GetIDsFromGroup(group)
 
     -- Get asset id from group name.
     local wid,aid,rid=analyse(name)
-    
+
     -- Get Asset.
     local asset=self:GetAssetByID(aid)
-    
+
     -- Get warehouse and request id from asset table.
     if asset then
       wid=asset.wid
@@ -8637,7 +8636,7 @@ function WAREHOUSE:_GetFlightplan(asset, departure, destination)
     c[#c+1]=Pholding
     wp[#wp+1]=Pholding:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, VxHolding*3.6, true, nil, nil, "Holding")
   end
-  
+
   --- Final destination.
   c[#c+1]=Pdestination
   wp[#wp+1]=Pdestination:WaypointAir("RADIO", COORDINATE.WaypointType.Land, COORDINATE.WaypointAction.Landing, VxFinal*3.6, true,  destination, nil, "Final Destination")
