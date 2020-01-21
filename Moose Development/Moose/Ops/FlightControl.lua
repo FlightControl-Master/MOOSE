@@ -756,6 +756,11 @@ function FLIGHTCONTROL:_RemoveFlightFromQueue(queue, flight, queuename)
     if qflight.groupname==flight.groupname then
       self:I(self.lid..string.format("Removing flight group %s from %s queue.", flight.groupname, queuename))
       table.remove(queue, i)
+      
+      if not flight.ai then      
+        flight:_UpdateMenu()
+      end
+      
       return true, i
     end
   end

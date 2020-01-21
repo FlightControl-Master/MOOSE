@@ -508,6 +508,17 @@ function FLIGHTGROUP:GetSquadron()
   return self.squadron
 end
 
+--- Define parking spots to be used by the flight group.
+-- This is valid only for the specified airbase.
+-- @param #FLIGHTGROUP self
+-- @param #string airbasename Name of the airbase.
+-- @param #table Table of parking spot numbers.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetParkingSpots(airbase, spots)
+  self.parkingspots[airbase]=spots
+  return self
+end
+
 --- Set the FLIGHTCONTROL controlling this flight group.
 -- @param #FLIGHTGROUP self
 -- @param Ops.FlightControl#FLIGHTCONTROL flightcontrol The FLIGHTCONTROL object.
@@ -3643,6 +3654,7 @@ end
 --- Get the proper terminal type based on generalized attribute of the group.
 --@param #FLIGHTGROUP self
 function FLIGHTGROUP:_UpdateMenu()
+  env.info("FF updating menu")
 
   local position=self.group:GetCoordinate()
 
