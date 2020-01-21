@@ -1244,6 +1244,7 @@ function FLIGHTCONTROL:_PlayerRequestTakeoff(groupname)
       self:_AddFlightToTakeoffQueue(flight)
     
     else
+      MESSAGE:New(string.format("You must request TAXI before you can request TAKEOFF!"), 5):ToAll()  
     end
   end
   
@@ -1282,7 +1283,7 @@ function FLIGHTCONTROL:_CreateFlightGroup(group)
   end
     
   -- Add to known flights.
-  table.insert(self.flights, flight)
+  --table.insert(self.flights, flight)
     
   return flight
 end

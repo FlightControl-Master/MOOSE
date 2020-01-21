@@ -525,18 +525,23 @@ end
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:SetFlightControl(flightcontrol)
   self:I(self.sid..string.format("Setting FLIGHTCONTROL to airbase %s", flightcontrol.airbasename))
+  
   -- Remove flight from previous FC.
   if self.flightcontrol and self.flightcontrol.airbasename~=flightcontrol.airbasename then
     self.flightcontrol:_RemoveFlight(self)
   end
+  
   -- Set FC.
   self.flightcontrol=flightcontrol
+  
   -- Add flight to all flights.
   table.insert(flightcontrol.flights, self)
+  
   -- Update flight's F10 menu.
   if self.ai==false then
     self:_UpdateMenu()
   end
+  
   return self
 end
 
@@ -1540,14 +1545,14 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
 
   if self.group and self.group:IsAlive() and self:IsAirborne() then
     -- Alive & Airborne ==> Update route possible.
-    self:I(self.sid.."FF update route allowed")
+    self:T2(self.sid.."Update route allowed")
     return true
   elseif self:IsDead() then
     -- Group is dead! No more updates.
     return false
   else
     -- Not airborne yet. Try again in 1 sec.
-    self:I(self.sid.."FF update route denied ==> checking back in 1 sec")
+    self:T3(self.sid.."FF update route denied ==> checking back in 1 sec")
     self:__UpdateRoute(-1, n)
     return false
   end
@@ -1563,7 +1568,7 @@ end
 function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
 
   MESSAGE:New("Updating route", 10):ToAll()
-  self:I(self.sid.."FF updating route")
+  self:I(self.sid.."Updating route")
 
   -- TODO: what happens if currentwp=#waypoints
   n=n or self.currentwp+1
@@ -2219,7 +2224,7 @@ function FLIGHTGROUP._ReachedHolding(group, flightgroup)
   -- Add flight to waiting/holding queue.
   if flightgroup.flightcontrol then
     -- Add flight to all flights.
-    table.insert(flightgroup.flightcontrol.flights, flightgroup)
+    --table.insert(flightgroup.flightcontrol.flights, flightgroup)
     flightgroup.flightcontrol:_AddFlightToHoldingQueue(flightgroup)
   end
 end
