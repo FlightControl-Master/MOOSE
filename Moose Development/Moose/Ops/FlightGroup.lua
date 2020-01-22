@@ -64,6 +64,36 @@
 --
 -- # The FLIGHTGROUP Concept
 --
+-- # Events
+-- 
+-- This class introduces a lot of additional events that will be handy in many situations.
+-- Certain events like landing, takeoff etc. are triggered for each element and also have a corresponding event when the whole group reaches this state.
+-- 
+-- ## Spawning
+-- 
+-- ## Parking
+-- 
+-- ## Taxiing
+-- 
+-- ## Takeoff
+-- 
+-- ## Airborne
+-- 
+-- ## Landed
+-- 
+-- ## Arrived
+-- 
+-- ## Dead
+-- 
+-- ## Fuel
+-- 
+-- ## Ammo
+-- 
+-- ## Detected Units
+-- 
+-- ## Check In Zone
+-- 
+-- ## Passing Waypoint
 --
 --
 -- @field #FLIGHTGROUP
@@ -1434,11 +1464,14 @@ function FLIGHTGROUP:onafterFlightTaxiing(From, Event, To)
   if self.flightcontrol and airbase and self.flightcontrol.airbasename==airbase:GetName() then    
     -- Remove flight from parking queue.
     self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qparking, self, "parking")
-    
+
     -- Add AI flight to takeoff queue.
-    if self.ai then
-      self.flightcontrol:_AddFlightToTakeoffQueue(self)    
+    if self.ai then    
+      self.flightcontrol:_AddFlightToTakeoffQueue(self)
+    else
+      self.flightcontrol:_AddFlightToTaxiOutQueue(self)    
     end
+    
   end
 
 end
@@ -2990,10 +3023,8 @@ function FLIGHTGROUP:_CheckInZones()
           -- Nothing to do.
         end
       
-      end
-    
-    end
-  
+      end    
+    end  
   end
 
 end

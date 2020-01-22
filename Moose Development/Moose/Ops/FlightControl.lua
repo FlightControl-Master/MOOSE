@@ -28,9 +28,12 @@
 -- @field #table flights All flights table.
 -- @field #table Qwaiting Queue of aircraft waiting for landing permission.
 -- @field #table Qlanding Queue of aircraft currently on final approach.
+-- @field #table Qtaxiinb Queue of aircraft taxiing to parking after landing.
+-- @field #table Qarrived Queue of aircraft that have arrived at their parking spot after landing
+-- @field #table Qparking Queue of aircraft parking and waiting for taxi & takeoff clearance.
+-- @field #table Qtaxiout Queue of aircraft taxiing from parking to runway for takeoff.
+-- @field #table Qreadyto Queue of aircraft ready for takeoff. Only human players.
 -- @field #table Qtakeoff Queue of aircraft about to takeoff.
--- @field #table QtaxiInb Queue of aircraft taxiing to parking after landing.
--- @field #table Qparking Queue of aircraft parking.
 -- @field Ops.ATIS#ATIS atis ATIS object.
 -- @field #number activerwyno Number of active runway.
 -- @field #number atcfreq ATC radio frequency.
@@ -68,9 +71,12 @@ FLIGHTCONTROL = {
   flights        =    {},
   Qwaiting       =    {},
   Qlanding       =    {},
-  Qtakeoff       =    {},
+  Qtaxiinb       =    {},  
+  Qarrived       =    {},  
   Qparking       =    {},
-  QtaxiInb       =    {},
+  Qtaxiout       =    {},
+  Qreadyto       =    {},
+  Qtakeoff       =    {},  
   atis           =   nil,
   activerwyno    =     1,
   atcfreq        =   nil,
@@ -109,7 +115,7 @@ FLIGHTCONTROL = {
 
 --- FlightControl class version.
 -- @field #string version
-FLIGHTCONTROL.version="0.1.3"
+FLIGHTCONTROL.version="0.1.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -117,7 +123,7 @@ FLIGHTCONTROL.version="0.1.3"
  
 -- TODO: Add FARPS?
 -- TODO: Add helos.
--- TODO: Take me down option.
+-- TODO: Talk me down option.
 -- TODO: ATIS option.
 -- TODO: ATC voice overs.
 -- TODO: Check runways and clean up.
@@ -451,9 +457,13 @@ function FLIGHTCONTROL:_CheckQueues()
   if false then
     self:_PrintQueue(self.flights,  "All flights")
     self:_PrintQueue(self.Qparking, "Parking")
+    self:_PrintQueue(self.Qtaxiout, "TaxiOut")
+    self:_PrintQueue(self.Qreadyto, "ReadyTO")
     self:_PrintQueue(self.Qtakeoff, "Takeoff")
     self:_PrintQueue(self.Qwaiting, "Holding")
     self:_PrintQueue(self.Qlanding, "Landing")
+    self:_PrintQueue(self.Qtaxiinb, "TaxiInb")
+    self:_PrintQueue(self.Qarrived, "Arrived")
   end
 
   -- Number of holding groups.
@@ -513,7 +523,9 @@ function FLIGHTCONTROL:_CheckQueues()
       --------------------
      
       -- Check if flight is AI. Humans have to request taxi via F10 menu.
-      if flight.ai then       
+      if flight.ai then
+      
+        -- NOTE that AI will start taxiing once they started their engine.
       
         -- Message.
         local text=string.format("Flight %s, you are cleared to taxi to runway.", flight.groupname)
@@ -524,13 +536,10 @@ function FLIGHTCONTROL:_CheckQueues()
         -- TODO: handle case with engines hot. That does not trigger a ENGINE_START event. More a FLIGHTGROUP issue.
         flight.group:StartUncontrolled()
         
-        
-        -- TODO: is this really necessary here?
-        flight:__UpdateRoute(-1)
-        
         env.info("FF remove flight from parking queue - if possible.")
         self:_RemoveFlightFromQueue(self.Qparking, flight, "parking")
         
+        -- Add flight to takeoff queue.
         self:_AddFlightToTakeoffQueue(flight)
         
       end
@@ -613,7 +622,7 @@ function FLIGHTCONTROL:_GetNextFightHolding()
     return self.Qwaiting[1]
   end
 
-  -- Sort flights by low fuel
+  -- Sort flights by low fuel.
   local function _sortByFuel(a, b)
     local flightA=a --Ops.FlightGroup#FLIGHTGROUP
     local flightB=b --Ops.FlightGroup#FLIGHTGROUP
@@ -626,7 +635,7 @@ function FLIGHTCONTROL:_GetNextFightHolding()
   local function _sortByTholding(a, b)
     local flightA=a --Ops.FlightGroup#FLIGHTGROUP
     local flightB=b --Ops.FlightGroup#FLIGHTGROUP
-    return flightA.Tholding<flightB.Tholding
+    return flightA.Tholding>flightB.Tholding
   end
 
 
@@ -657,6 +666,15 @@ end
 -- @return Ops.FlightGroup#FLIGHTGROUP Marshal flight next in line and ready to enter the pattern. Or nil if no flight is ready.
 function FLIGHTCONTROL:_GetNextFightParking()
 
+  -- First check human players.
+  if #self.Qtaxiout>0 then
+    -- TODO: Could be sorted by distance to active runway! Take the runway spawn point for distance measure.
+    
+    -- First come, first serve.
+    return self.Qtaxiout[1]
+  end
+
+
   if #self.Qparking==0 then
     return nil
   elseif #self.Qparking==1 then
@@ -667,7 +685,7 @@ function FLIGHTCONTROL:_GetNextFightParking()
   local function _sortByTparking(a, b)
     local flightA=a --Ops.FlightGroup#FLIGHTGROUP
     local flightB=b --Ops.FlightGroup#FLIGHTGROUP
-    return flightA.Tparking<flightB.Tparking
+    return flightA.Tparking>flightB.Tparking
   end
 
   -- Return flight waiting longest.
@@ -830,6 +848,41 @@ function FLIGHTCONTROL:_AddFlightToParkingQueue(flight)
   return true
 end
 
+--- Add flight to taxi out for takeoff queue.
+-- @param #FLIGHTCONTROL self
+-- @param Ops.FlightGroup#FLIGHTGROUP flight Flight group.
+-- @return #boolean If true, flight was added. False otherwise.
+function FLIGHTCONTROL:_AddFlightToTaxiOutQueue(flight)
+
+  -- Check if already in queue.
+  if self:_InQueue(self.Qtaxiout, flight.group) then
+    return false
+  end
+
+  -- Add flight to table.
+  table.insert(self.Qtaxiout, flight)
+
+  return true
+end
+
+--- Add flight to taxi out for takeoff queue.
+-- @param #FLIGHTCONTROL self
+-- @param Ops.FlightGroup#FLIGHTGROUP flight Flight group.
+-- @return #boolean If true, flight was added. False otherwise.
+function FLIGHTCONTROL:_AddFlightToReady4TakoffQueue(flight)
+
+  -- Check if already in queue.
+  if self:_InQueue(self.Qtaxiout, flight.group) then
+    return false
+  end
+
+  -- Add flight to table.
+  table.insert(self.Qtaxiout, flight)
+
+  return true
+end
+
+
 --- Add flight to takeoff queue.
 -- @param #FLIGHTCONTROL self
 -- @param Ops.FlightGroup#FLIGHTGROUP flight Flight group.
@@ -849,6 +902,7 @@ function FLIGHTCONTROL:_AddFlightToTakeoffQueue(flight)
   
   return true
 end
+
 
 --- Check if a group is in a queue.
 -- @param #FLIGHTCONTROL self
@@ -1183,8 +1237,9 @@ function FLIGHTCONTROL:_PlayerMyStatus(groupname)
   
   if flight then
   
-    local text=string.format("My Status:\n")
-    text=text..string.format("Flight status: %s", tostring(flight:GetState()))
+    local text=string.format("My Status:")
+    text=text..string.format("\nFlight control: %s", tostring(flight.flightcontrol and flight.flightcontrol.airbasename or "N/A"))
+    text=text..string.format("\nFlight status: %s", tostring(flight:GetState()))
 
     MESSAGE:New(text, 5):ToGroup(flight.group)
   
@@ -1235,13 +1290,16 @@ function FLIGHTCONTROL:_PlayerRequestTakeoff(groupname)
     
       if #self.Qlanding==0 and self.Qtakeoff==0 then
         MESSAGE:New("You are cleared for takeoff as there is no one else landing or queueing for takeoff", 5):ToAll()
+        self:_AddFlightToTakeoffQueue(flight)
       elseif #self.Qlanding>0 then
-        MESSAGE:New("Negative ghostrider, other flights are currently landing.", 5):ToAll()
+        MESSAGE:New("Negative ghostrider, other flights are currently landing. Talk to you soon.", 5):ToAll()
+        self:_AddFlightToTakeoffQueue(flight)
       elseif #self.Qtakeoff>0 then
         MESSAGE:New("Negative ghostrider, other flights are ahead of you.", 5):ToAll()
+        
       end
       
-      self:_AddFlightToTakeoffQueue(flight)
+      
     
     else
       MESSAGE:New(string.format("You must request TAXI before you can request TAKEOFF!"), 5):ToAll()  
