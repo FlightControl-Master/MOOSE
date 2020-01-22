@@ -1466,9 +1466,11 @@ function FLIGHTGROUP:onafterFlightTaxiing(From, Event, To)
     self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qparking, self, "parking")
 
     -- Add AI flight to takeoff queue.
-    if self.ai then    
+    if self.ai then
+      -- AI flights go directly to takeoff as we don't know when they finished taxiing.
       self.flightcontrol:_AddFlightToTakeoffQueue(self)
     else
+      -- Human flights go to taxi out queue. They will go to the ready for takeoff queue when they request it.
       self.flightcontrol:_AddFlightToTaxiOutQueue(self)    
     end
     
@@ -1534,6 +1536,8 @@ function FLIGHTGROUP:onafterFlightLanded(From, Event, To, airbase)
   -- Remove flight from landing queue.
   if self.flightcontrol and airbase and self.flightcontrol.airbasename==airbase:GetName() then
     self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qlanding, self, "landing")
+    -- TODO: add flight to taxiinb queue.
+    --self.flightcontrol:_Add
   end
 end
 
@@ -1544,6 +1548,14 @@ end
 -- @param #string To To state.
 function FLIGHTGROUP:onafterFlightArrived(From, Event, To)
   self:T(self.sid..string.format("Flight arrived %s", self.groupname))
+
+  -- Remove flight from landing queue.
+  if self.flightcontrol then
+    self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qtaxiinb, self, "taxiINB")
+    -- TODO: add flight to arrived queue
+    --self.flightcontrol:_AddFl
+  end
+  
 end
 
 --- On after "FlightDead" event.
@@ -1704,7 +1716,7 @@ function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
   
   
   if self.destination and n>1 and n==N-1 then
-    --self:__Hold(1, self.destination)
+    self:__Hold(1, self.destination)
   end
   
 end
