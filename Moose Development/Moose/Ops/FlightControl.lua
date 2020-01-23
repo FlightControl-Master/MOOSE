@@ -1133,32 +1133,67 @@ function FLIGHTCONTROL:_CreatePlayerMenu(flight, atcmenu)
   
   local rootmenu=atcmenu[airbasename].root --Core.Menu#MENU_GROUP_DELAYED
 
-  -- Commands
-  MENU_GROUP_COMMAND_DELAYED:New(group, "Request Info",    rootmenu, self._PlayerRequestInfo,    self, groupname):SetTime(Tnow):SetTag(Tag)
+  -- Some info.
+  local infomenu=MENU_GROUP_DELAYED:New(group, "Info",  rootmenu):SetTime(Tnow):SetTag(Tag)
+  MENU_GROUP_COMMAND_DELAYED:New(group, "Request Info", infomenu, self._PlayerRequestInfo,    self, groupname):SetTime(Tnow):SetTag(Tag)
+
+  -- Root Commands  
   if flight.flightcontrol and flight.flightcontrol.airbasename==self.airbasename then
-  MENU_GROUP_COMMAND_DELAYED:New(group, "Request Taxi",    rootmenu, self._PlayerRequestTaxi,    self, groupname):SetTime(Tnow):SetTag(Tag)
-  MENU_GROUP_COMMAND_DELAYED:New(group, "Request Takeoff", rootmenu, self._PlayerRequestTakeoff, self, groupname):SetTime(Tnow):SetTag(Tag)
-  MENU_GROUP_COMMAND_DELAYED:New(group, "Request Parking", rootmenu, self._PlayerRequestParking, self, groupname):SetTime(Tnow):SetTag(Tag)
+    if flight:IsParking() then
+      MENU_GROUP_COMMAND_DELAYED:New(group, "Request Taxi",    rootmenu, self._PlayerRequestTaxi,    self, groupname):SetTime(Tnow):SetTag(Tag)
+    elseif flight:IsTaxiing() then
+      MENU_GROUP_COMMAND_DELAYED:New(group, "Request Takeoff", rootmenu, self._PlayerRequestTakeoff, self, groupname):SetTime(Tnow):SetTag(Tag)
+      MENU_GROUP_COMMAND_DELAYED:New(group, "Abort Takeoff",   rootmenu, self._PlayerAbortTakeoff,   self, groupname):SetTime(Tnow):SetTag(Tag)
+    elseif flight:IsAirborne() then
+    end
+  
+    if flight:IsLanding() or flight:IsLanded() then
+      MENU_GROUP_COMMAND_DELAYED:New(group, "Request Parking", rootmenu, self._PlayerRequestParking, self, groupname):SetTime(Tnow):SetTag(Tag)
+    end
+  else
+    if flight:IsAirborne() then
+      MENU_GROUP_COMMAND_DELAYED:New(group, "Inbound",         rootmenu, self._PlayerInbound,        self, groupname):SetTime(Tnow):SetTag(Tag)
+    end  
   end
-  MENU_GROUP_COMMAND_DELAYED:New(group, "Inbound",         rootmenu, self._PlayerInbound,        self, groupname):SetTime(Tnow):SetTag(Tag)
+  
   if flight.flightcontrol and flight.flightcontrol.airbasename==self.airbasename then
   MENU_GROUP_COMMAND_DELAYED:New(group, "My Status",       rootmenu, self._PlayerMyStatus,       self, groupname):SetTime(Tnow):SetTag(Tag)
   end
 
-  
+  -- Reset the menu.
   rootmenu:Remove(Tnow, Tag)
   rootmenu:Set()  
-  
-  --[[
-  atcmenu[airbasename].MyStatus       = MENU_GROUP_COMMAND:New(group, "My Status",       atcmenu[airbasename].root, self._PlayerMyStatus,       self, groupname)
-  atcmenu[airbasename].RequestTaxi    = MENU_GROUP_COMMAND:New(group, "Request Taxi",    atcmenu[airbasename].root, self._PlayerRequestTaxi,    self, groupname)
-  atcmenu[airbasename].RequestTakeoff = MENU_GROUP_COMMAND:New(group, "Request Takeoff", atcmenu[airbasename].root, self._PlayerRequestTakeoff, self, groupname)
-  atcmenu[airbasename].RequestParking = MENU_GROUP_COMMAND:New(group, "Request Parking", atcmenu[airbasename].root, self._PlayerRequestParking, self, groupname)  
-  atcmenu[airbasename].Inbound        = MENU_GROUP_COMMAND:New(group, "Inbound",         atcmenu[airbasename].root, self._PlayerInbound,        self, groupname)
-  ]]
+
 end
 
---- Create player menu.
+--- Player menu request info.
+-- @param #FLIGHTCONTROL self
+-- @param #string groupname Name of the flight group.
+function FLIGHTCONTROL:_PlayerRequestParking(groupname)
+
+  -- Get flight group.
+  local flight=_DATABASE:GetFlightGroup(groupname)
+  
+  if flight then
+  
+    local group=flight:GetGroup()
+    local coord=flight:GetGroup():GetCoordinate()
+    local spotcoord, TerminalID, _spot=coord:GetClosestParkingSpot(self.airbase, AIRBASE.TerminalType.FighterAircraft, true)
+  
+    local spot=_spot --Wrapper.Airbase#AIRBASE.ParkingSpot
+    
+    
+    
+    spot.markID=spot.Coordinate:MarkToGroup("Your assigned parking spot!", group)
+        
+    local element=flight.elements[1] --Ops.FlightGroup#FLIGHTGROUP.Element
+    
+    element.parking=spot
+  end
+  
+end
+
+--- Player menu request info.
 -- @param #FLIGHTCONTROL self
 -- @param #string groupname Name of the flight group.
 function FLIGHTCONTROL:_PlayerRequestInfo(groupname)

@@ -270,16 +270,20 @@ FLIGHTGROUP.version="0.2.2"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- DONE: Add tasks.
--- TODO: Add EPLRS, TACAN.
+-- DONE: Waypoints, read, add, insert, detour.
+
 -- DONE: Get ammo.
 -- DONE: Get pylons.
 -- DONE: Fuel threshhold ==> RTB.
 -- TODO: ROE, Afterburner restrict.
+-- TODO: Add EPLRS, TACAN.
 -- TODO: Respawn? With correct loadout, fuelstate.
--- TODO: Waypoints, read, add, insert, detour.
 -- TODO: Damage?
 -- TODO: shot events?
 -- TODO: Marks to add waypoints/tasks on-the-fly.
+-- TODO: Mark assigned parking spot on F10 map.
+-- TODO: Let user request a parking spot via F10 marker :)
+-- TODO: Get proper monitoring of parking spots! Try to avoid scan and getParking as much as possible for performance reasons.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
