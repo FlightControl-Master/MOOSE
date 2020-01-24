@@ -26,7 +26,9 @@
 -- @field #table parking Parking spots table.
 -- @field #table runways Runway table.
 -- @field #table flights All flights table.
--- @field #table Qwaiting Queue of aircraft waiting for landing permission.
+-- @field #table clients Table with all clients spawning at this airbase.
+-- @field #table Qinbound Queue of aircraft inbound and traveling to the holding position.
+-- @field #table Qholding Queue of aircraft waiting for landing permission.
 -- @field #table Qlanding Queue of aircraft currently on final approach.
 -- @field #table Qtaxiinb Queue of aircraft taxiing to parking after landing.
 -- @field #table Qarrived Queue of aircraft that have arrived at their parking spot after landing
@@ -69,7 +71,9 @@ FLIGHTCONTROL = {
   parking        =    {},
   runways        =    {},
   flights        =    {},
-  Qwaiting       =    {},
+  clients        =    {},
+  Qinbound       =    {},
+  Qholding       =    {},
   Qlanding       =    {},
   Qtaxiinb       =    {},  
   Qarrived       =    {},  
@@ -115,7 +119,7 @@ FLIGHTCONTROL = {
 
 --- FlightControl class version.
 -- @field #string version
-FLIGHTCONTROL.version="0.1.4"
+FLIGHTCONTROL.version="0.1.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -321,15 +325,15 @@ function FLIGHTCONTROL:onafterStatus()
   local NQreadyto=#self.Qreadyto
   local NQtakeoff=#self.Qtakeoff
   --local NQtravel2=#self.Qtravel2
-  local NQwaiting=#self.Qwaiting
+  local NQholding=#self.Qholding
   local NQlanding=#self.Qlanding
   local NQtaxiinb=#self.Qtaxiinb
   local NQarrived=#self.Qarrived
-  local Nqueues=NQparking+NQtaxiout+NQreadyto+NQtakeoff+NQwaiting+NQlanding+NQtaxiinb+NQarrived
+  local Nqueues=NQparking+NQtaxiout+NQreadyto+NQtakeoff+NQholding+NQlanding+NQtaxiinb+NQarrived
 
   -- Info text.
   local text=string.format("State %s - Runway %s - Parking %d/%d - Flights=%s: Qpark=%d Qtxout=%d Qready=%d Qto=%d | Qhold=%d Qland=%d Qtxinb=%d Qarr=%d", 
-  self:GetState(), runway.idx, nfree, self.Nparkingspots, #self.flights, #self.Qparking, #self.Qtaxiout, #self.Qreadyto, #self.Qtakeoff, #self.Qwaiting, #self.Qlanding, #self.Qtaxiinb, #self.Qarrived)
+  self:GetState(), runway.idx, nfree, self.Nparkingspots, #self.flights, #self.Qparking, #self.Qtaxiout, #self.Qreadyto, #self.Qtakeoff, #self.Qholding, #self.Qlanding, #self.Qtaxiinb, #self.Qarrived)
   self:I(self.lid..text)
   
   if Nflights==Nqueues then
@@ -478,14 +482,15 @@ function FLIGHTCONTROL:_CheckQueues()
     self:_PrintQueue(self.Qtaxiout, "TaxiOut")
     self:_PrintQueue(self.Qreadyto, "ReadyTO")
     self:_PrintQueue(self.Qtakeoff, "Takeoff")
-    self:_PrintQueue(self.Qwaiting, "Holding")
+    self:_PrintQueue(self.Qinbound, "Inbound")    
+    self:_PrintQueue(self.Qholding, "Holding")    
     self:_PrintQueue(self.Qlanding, "Landing")
     self:_PrintQueue(self.Qtaxiinb, "TaxiInb")
     self:_PrintQueue(self.Qarrived, "Arrived")
   end
 
   -- Number of holding groups.
-  local nholding=#self.Qwaiting
+  local nholding=#self.Qholding
       
   -- Number of groups landing.
   local nlanding=#self.Qlanding
@@ -634,10 +639,10 @@ end
 -- @return Ops.FlightGroup#FLIGHTGROUP Marshal flight next in line and ready to enter the pattern. Or nil if no flight is ready.
 function FLIGHTCONTROL:_GetNextFightHolding()
 
-  if #self.Qwaiting==0 then
+  if #self.Qholding==0 then
     return nil
-  elseif #self.Qwaiting==1 then
-    return self.Qwaiting[1]
+  elseif #self.Qholding==1 then
+    return self.Qholding[1]
   end
 
   -- Sort flights by low fuel.
@@ -658,10 +663,10 @@ function FLIGHTCONTROL:_GetNextFightHolding()
 
 
   -- Sort flights by fuel.
-  table.sort(self.Qwaiting, _sortByFuel)
+  table.sort(self.Qholding, _sortByFuel)
   
-  -- Loop over all marshal flights.
-  for _,_flight in pairs(self.Qwaiting) do
+  -- Loop over all holding flights.
+  for _,_flight in pairs(self.Qholding) do
     local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
     
     -- Return flight that is lowest on fuel.
@@ -673,9 +678,9 @@ function FLIGHTCONTROL:_GetNextFightHolding()
   
 
   -- Return flight waiting longest.
-  table.sort(self.Qwaiting, _sortByTholding)
+  table.sort(self.Qholding, _sortByTholding)
     
-  return self.Qwaiting[1]
+  return self.Qholding[1]
 end
 
 
@@ -812,12 +817,12 @@ end
 function FLIGHTCONTROL:_AddFlightToHoldingQueue(flight)
 
   -- Check if already in queue.
-  if self:_InQueue(self.Qwaiting, flight.group) then
+  if self:_InQueue(self.Qholding, flight.group) then
     return false
   end
 
   -- Add flight to table.
-  table.insert(self.Qwaiting, flight)
+  table.insert(self.Qholding, flight)
   
   -- Flight is not holding any more.
   flight.Tholding=timer.getAbsTime()
@@ -860,7 +865,7 @@ function FLIGHTCONTROL:_AddFlightToParkingQueue(flight)
   -- Add flight to table.
   table.insert(self.Qparking, flight)
   
-  -- Flight is not holding any more.
+  -- Set parking time stamp. This is also done in FLIGHTGROUP onafterFlightParking function.
   flight.Tparking=timer.getAbsTime()
   
   return true
@@ -995,7 +1000,10 @@ function FLIGHTCONTROL:_InitParkingSpots()
     local spot=_spot --Wrapper.Airbase#AIRBASE.ParkingSpot
     
     local parking=spot --#FLIGHTCONTROL.ParkingSpot
-    parking.reserved="none"
+    
+    --TODO: reserve client spots.
+    --TODO: scan spot for objects.
+    
     
     -- Mark position.
     local text=string.format("ID=%d, Terminal=%d, Free=%s, Reserved=%s, Dist=%.1f", parking.TerminalID, parking.TerminalType, tostring(parking.Free), tostring(parking.reserved), parking.DistToRwy)
@@ -1022,7 +1030,7 @@ function FLIGHTCONTROL:_GetFreeParkingSpots(terminal)
   for _,_parking in pairs(self.parking) do
     local parking=_parking --#FLIGHTCONTROL.ParkingSpot
     
-    if parking.Free and parking.TOAC==false and parking.reserved=="none" then
+    if parking.Free and parking.TOAC==false and not parking.reserved then
       if terminal==nil or terminal==parking.terminal then
         n=n+1
         table.insert(freespots, parking)
@@ -1095,6 +1103,39 @@ function FLIGHTCONTROL:IsParkingReserved(spot)
   end
 
   return nil
+end
+
+--- Get closest parking spot.
+-- @param #FLIGHTCONTROL self
+-- @param Core.Point#COORDINATE coordinate Reference coordinate.
+-- @param #number terminaltype (Optional) Check only this terminal type.
+-- @param #boolean free (Optional) If true, check only free spots.
+-- @return Wrapper.Airbase#AIRBASE.ParkingSpot Closest parking spot.
+function FLIGHTCONTROL:GetClosestParkingSpot(coord, terminaltype, free)
+
+  local distmin=math.huge
+  local spotmin=nil
+  
+  for TerminalID, Spot in pairs(self.parking) do
+    local spot=Spot --Wrapper.Airbase#AIRBASE.ParkingSpot
+    
+    if (not free) or free==true and not (self:IsParkingReserved(spot) or spot.Reserved) then 
+      if terminaltype==nil or terminaltype==spot.TerminalType then
+      
+        -- Get distance from coordinate to spot.
+        local dist=coord:Get2DDistance(spot.Coordinate)
+        
+        -- Check if distance is smaller.
+        if dist<distmin then
+          distmin=dist
+          spotmin=spot
+        end
+        
+      end
+    end
+  end
+  
+  return spotmin
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1178,17 +1219,25 @@ function FLIGHTCONTROL:_PlayerRequestParking(groupname)
   
     local group=flight:GetGroup()
     local coord=flight:GetGroup():GetCoordinate()
-    local spotcoord, TerminalID, _spot=coord:GetClosestParkingSpot(self.airbase, AIRBASE.TerminalType.FighterAircraft, true)
-  
-    local spot=_spot --Wrapper.Airbase#AIRBASE.ParkingSpot
+
+    --TODO: terminal type for helos!    
+    local spot=self:GetClosestParkingSpot(coord, AIRBASE.TerminalType.FighterAircraft, true)
     
+    --TODO: voice over.
+    local text=string.format("Flight XYZ, tower, your assigned parking position is terminal ID %d.\nCheck your F10 map for details.", spot.TerminalID)
+    MESSAGE:New(text, 10, "FLIGHCONTROL", true):ToAll()
     
-    
-    spot.markID=spot.Coordinate:MarkToGroup("Your assigned parking spot!", group)
+    -- Create mark on F10 map.
+    if spot.MarkerID then
+      coord:RemoveMark(spot.MarkerID)
+    end
+    spot.MarkerID=spot.Coordinate:MarkToGroup("Your assigned parking spot!", group)
         
-    local element=flight.elements[1] --Ops.FlightGroup#FLIGHTGROUP.Element
-    
+    -- TODO: get element of human player.
+    local element=flight.elements[1] --Ops.FlightGroup#FLIGHTGROUP.Element    
     element.parking=spot
+    
+    -- TODO: what about AI wingmen? I guess there is no way to set parking for those, right?!
   end
   
 end
@@ -1207,7 +1256,7 @@ function FLIGHTCONTROL:_PlayerRequestInfo(groupname)
     local text=string.format("Airbase %s Status:", self.airbasename)
     text=text..string.format("\nFlights %d", #self.flights)
     text=text..string.format("\nQlanding %d", #self.Qlanding)
-    text=text..string.format("\nQholding %d", #self.Qwaiting)
+    text=text..string.format("\nQholding %d", #self.Qholding)
     text=text..string.format("\nQparking %d", #self.Qparking)
     text=text..string.format("\nQtakeoff %d", #self.Qtakeoff)
     text=text..string.format("\nRunway %s", self:GetActiveRunwayText())
@@ -1411,7 +1460,7 @@ end
 -- @param Ops.FlightGroup#FLIGHTGROUP flight The flight to be removed.
 function FLIGHTCONTROL:_RemoveFlight(flight)
 
-  self:_RemoveFlightFromQueue(self.Qwaiting, flight, "holding")
+  self:_RemoveFlightFromQueue(self.Qholding, flight, "holding")
   self:_RemoveFlightFromQueue(self.Qlanding, flight, "landing")
   self:_RemoveFlightFromQueue(self.Qtaxiinb, flight, "taxiINB")
   self:_RemoveFlightFromQueue(self.Qparking, flight, "parking")
@@ -1629,7 +1678,7 @@ function FLIGHTCONTROL:_LandAI(flight, parking)
   self:_AddFlightToLandingQueue(flight)
 
   -- Remove flight from waiting queue.
-  self:_RemoveFlightFromQueue(self.Qwaiting, flight, "holding")
+  self:_RemoveFlightFromQueue(self.Qholding, flight, "holding")
  
    -- Altitude above ground for a glide slope of 3�.
   local alpha=math.rad(3)

@@ -294,6 +294,9 @@ AIRBASE.PersianGulf = {
 -- @field #boolean Free This spot is currently free, i.e. there is no alive aircraft on it at the present moment.
 -- @field #number TerminalID0 Unknown what this means. If you know, please tell us!
 -- @field #number DistToRwy Distance to runway in meters. Currently bugged and giving the same number as the TerminalID.
+-- @field #string AirbaseName Name of the airbase.
+-- @field #number MarkerID Numerical ID of marker placed at parking spot.
+-- @field #boolean Reserved If true, parking spot is reserved for an aircraft.
 
 --- Terminal Types of parking spots. See also https://wiki.hoggitworld.com/view/DCS_func_getParking
 --
@@ -331,7 +334,7 @@ AIRBASE.TerminalType = {
 --- Runway data.
 -- @type AIRBASE.Runway
 -- @field #number heading Heading of the runway in degrees.
--- @field #string idx Runway ID: heading 070° ==> idx="07".
+-- @field #string idx Runway ID: heading 070ï¿½ ==> idx="07".
 -- @field #number length Length of runway in meters.
 -- @field Core.Point#COORDINATE position Position of runway start.
 -- @field Core.Point#COORDINATE endpoint End point of runway.
@@ -592,7 +595,7 @@ function AIRBASE:GetParkingSpotsTable(termtype)
       self:T2({_spot=_spot})
       local _free=_isfree(_spot)
       local _coord=COORDINATE:NewFromVec3(_spot.vTerminalPos)
-      table.insert(spots, {Coordinate=_coord, TerminalID=_spot.Term_Index, TerminalType=_spot.Term_Type, TOAC=_spot.TO_AC, Free=_free, TerminalID0=_spot.Term_Index_0, DistToRwy=_spot.fDistToRW})
+      table.insert(spots, {AirbaseName=self.AirbaseName, Coordinate=_coord, TerminalID=_spot.Term_Index, TerminalType=_spot.Term_Type, TOAC=_spot.TO_AC, Free=_free, TerminalID0=_spot.Term_Index_0, DistToRwy=_spot.fDistToRW})
     end
   end
 
@@ -617,7 +620,7 @@ function AIRBASE:GetFreeParkingSpotsTable(termtype, allowTOAC)
     if AIRBASE._CheckTerminalType(_spot.Term_Type, termtype) and _spot.Term_Index>0 then
       if (allowTOAC and allowTOAC==true) or _spot.TO_AC==false then
         local _coord=COORDINATE:NewFromVec3(_spot.vTerminalPos)
-        table.insert(freespots, {Coordinate=_coord, TerminalID=_spot.Term_Index, TerminalType=_spot.Term_Type, TOAC=_spot.TO_AC, Free=true, TerminalID0=_spot.Term_Index_0, DistToRwy=_spot.fDistToRW})
+        table.insert(freespots, {AirbaseName=self.AirbaseName, Coordinate=_coord, TerminalID=_spot.Term_Index, TerminalType=_spot.Term_Type, TOAC=_spot.TO_AC, Free=true, TerminalID0=_spot.Term_Index_0, DistToRwy=_spot.fDistToRW})
       end
     end
   end
@@ -692,7 +695,7 @@ function AIRBASE:MarkParkingSpots(termtype, mark)
     self:I(_text)
   end
   
-  return markers
+  return self.parkingmarks
 end
 
 --- Place markers of parking spots on the F10 map and update regularly.
@@ -700,10 +703,7 @@ end
 -- @param #AIRBASE.TerminalType termtype Terminal type for which marks should be placed.
 -- @param #boolean mark If false, do not place markers but only give output to DCS.log file. Default true.
 function AIRBASE:MonitorParkingSpots(termtype, mark)
-
   local sched,shedid=SCHEDULER:New(self, self.MarkParkingSpots, {self,termtype,mark}, 5, 5)
-
-
 end
 
 
@@ -1081,7 +1081,7 @@ function AIRBASE:GetRunwayData(magvar, mark)
     -- Heading of runway.
     local hdg=c1:HeadingTo(c2)
 
-    -- Runway ID: heading=070° ==> idx="07"
+    -- Runway ID: heading=070ï¿½ ==> idx="07"
     local idx=string.format("%02d", UTILS.Round((hdg-magvar)/10, 0))
 
     -- Runway table.
@@ -1191,7 +1191,7 @@ function AIRBASE:GetActiveRunway(magvar)
       local dot=UTILS.VecDot(Vwind, Vrunway)
 
       -- Debug.
-      --env.info(string.format("runway=%03d° dot=%.3f", runway.heading, dot))
+      --env.info(string.format("runway=%03dï¿½ dot=%.3f", runway.heading, dot))
 
       -- New min?
       if dotmin==nil or dot<dotmin then

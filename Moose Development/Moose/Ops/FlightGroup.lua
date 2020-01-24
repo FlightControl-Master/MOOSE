@@ -338,7 +338,8 @@ function FLIGHTGROUP:New(groupname)
   self:AddTransition("*",             "UpdateRoute",       "*")           -- Update route of group. Only if airborne.
   self:AddTransition("*",             "RTB",               "Returning")   -- Group is returning to base.
   self:AddTransition("*",             "Orbit",             "Orbiting")    -- Group is holding position.
-  self:AddTransition("*",             "Hold",              "Holding")     -- Group is holding position.
+  self:AddTransition("*",             "Hold",              "Inbound")     -- Group is holding position.
+  self:AddTransition("Inbound",       "Holding",           "Holding")     -- Group is holding position.
 
   self:AddTransition("*",             "PassingWaypoint",   "*")           -- Group passed a waypoint.
   
@@ -1084,6 +1085,11 @@ function FLIGHTGROUP:OnEventEngineStartup(EventData)
         --          when player starts cold, ?
         if self.ai then
           self:ElementTaxiing(element)
+        else
+          if element.ai then
+            -- AI wingmen will start taxiing even if the player/client is still starting up his engines :(
+            self:ElementTaxiing(element)
+          end
         end
       end
     end
@@ -1260,6 +1266,7 @@ function FLIGHTGROUP:onafterElementSpawned(From, Event, To, Element)
     if spot then
     
       Element.parking=spot
+      
   
       self:ElementParking(Element)
     else
@@ -1276,6 +1283,7 @@ end
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 function FLIGHTGROUP:onafterElementParking(From, Event, To, Element)
   self:T(self.sid..string.format("Element parking %s at spot %s.", Element.name, tostring(Element.parking.TerminalID)))
+  
   
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.PARKING)
@@ -1642,12 +1650,6 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
     table.insert(wp, w)
   end
   
-  -- Get destination airbase from waypoints.
-  self.homebase=self:GetHomebaseFromWaypoints() or self.homebase
-  
-  -- Get destination airbase from waypoints.
-  self.destination=self:GetDestinationFromWaypoints() or self.destination
-  
   if self.destination and #wp>0 and _DATABASE:GetFlightControl(self.destination:GetName()) then
   
     -- Task to hold.
@@ -1938,6 +1940,25 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold, S
 
   end  
     
+end
+
+--- On after "Holding" event. Flight arrived at the holding point.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function FLIGHTGROUP:onafterHolding(From, Event, To)
+
+
+  self.flaghold:Set(666)
+  
+  -- Add flight to waiting/holding queue.
+  if self.flightcontrol then
+    -- Add flight to all flights.
+    --table.insert(flightgroup.flightcontrol.flights, flightgroup)
+    self.flightcontrol:_AddFlightToHoldingQueue(self)
+  end
+
 end
 
 --- On after TaskExecute event.
@@ -2268,14 +2289,7 @@ function FLIGHTGROUP._ReachedHolding(group, flightgroup)
     group:GetCoordinate():MarkToAll("Holding Point Reached")
   end
   
-  flightgroup.flaghold:Set(666)
-  
-  -- Add flight to waiting/holding queue.
-  if flightgroup.flightcontrol then
-    -- Add flight to all flights.
-    --table.insert(flightgroup.flightcontrol.flights, flightgroup)
-    flightgroup.flightcontrol:_AddFlightToHoldingQueue(flightgroup)
-  end
+  flightgroup:__Holding(1)
 end
 
 --- Update route of group, e.g after new waypoints and/or waypoint tasks have been added.
@@ -2681,6 +2695,8 @@ function FLIGHTGROUP:InitWaypoints(waypoints)
 
   -- Set current waypoint. Counting starts a one.
   self.currentwp=1
+  
+  
   
   -- Update route.
   if #self.waypoints>0 then
