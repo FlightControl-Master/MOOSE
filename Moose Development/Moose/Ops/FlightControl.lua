@@ -565,6 +565,11 @@ function FLIGHTCONTROL:_CheckQueues()
         -- Add flight to takeoff queue.
         self:_AddFlightToTakeoffQueue(flight)
         
+      else
+        local text=string.format("HUMAN Flight %s, you are cleared for takeoff.", flight.groupname)
+        self:I(self.lid..text)
+        MESSAGE:New(text, 5, "FLIGHTCONTROL"):ToAll()
+        
       end
     
     end
@@ -1397,7 +1402,7 @@ function FLIGHTCONTROL:_PlayerRequestTakeoff(groupname)
   
     if flight:IsTaxiing() then
     
-      if #self.Qlanding==0 and self.Qtakeoff==0 then
+      if #self.Qlanding==0 and #self.Qtakeoff==0 then
         MESSAGE:New("You are cleared for takeoff as there is no one else landing or queueing for takeoff", 5):ToAll()
         self:_AddFlightToTakeoffQueue(flight)
       elseif #self.Qlanding>0 then
