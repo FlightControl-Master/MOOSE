@@ -3656,7 +3656,7 @@ do -- AI_A2A_DISPATCHER
   
       for DefenderSquadronName, DefenderSquadron in pairs( self.DefenderSquadrons ) do
       
-        self:I( { DefenderSquadron = DefenderSquadron.Name } )
+        self:T( { DefenderSquadron = DefenderSquadron.Name } )
       
         local Airbase = DefenderSquadron.Airbase
         local AirbaseCoordinate = Airbase:GetCoordinate()
