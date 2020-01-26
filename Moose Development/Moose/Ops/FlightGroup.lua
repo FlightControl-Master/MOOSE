@@ -263,7 +263,7 @@ FLIGHTGROUP.TaskType={
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.2.3"
+FLIGHTGROUP.version="0.2.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1264,7 +1264,8 @@ function FLIGHTGROUP:onafterElementSpawned(From, Event, To, Element)
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.SPAWNED)
 
   if Element.unit:InAir() then
-    self:ElementAirborne(Element)
+    -- Trigger ElementAirborne event. Add a little delay because spawn is also delayed!
+    self:__ElementAirborne(0.11, Element)
   else
       
     -- Get parking spot.
@@ -1272,10 +1273,11 @@ function FLIGHTGROUP:onafterElementSpawned(From, Event, To, Element)
     
     if spot then
     
+      -- Set 
       Element.parking=spot
       
-  
-      self:ElementParking(Element)
+      -- Trigger ElementParking event. Add a little delay because spawn is also delayed!
+      self:__ElementParking(0.11, Element)
     else
       self:E(self.lid..string.format("Element spawned not in air but not on any parking spot."))
     end
@@ -1289,7 +1291,7 @@ end
 -- @param #string To To state.
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 function FLIGHTGROUP:onafterElementParking(From, Event, To, Element)
-  self:T(self.lid..string.format("Element parking %s at spot %s.", Element.name, tostring(Element.parking.TerminalID)))
+  self:I(self.lid..string.format("Element parking %s at spot %s", Element.name, tostring(Element.parking.TerminalID)))
   
   
   -- Set element status.
@@ -1303,13 +1305,15 @@ end
 -- @param #string To To state.
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 function FLIGHTGROUP:onafterElementTaxiing(From, Event, To, Element)
-  local TerminalID="N/A"
-  if Element.parking then
-    if Element.parking.MarkerID then
-      Element.parking.Coordinate:RemoveMark(Element.parking.MarkerID)
-    end
-    Element.parking.Reserved=nil
+
+  local TerminalID="N/A"  
+  -- Remove marker.
+  if self.flightcontrol and Element.parking then
     TerminalID=tostring(Element.parking.TerminalID)
+    local parking=self.flightcontrol.parking[Element.parking.TerminalID]  --Wrapper.Airbase#AIRBASE.ParkingSpot
+    if parking and parking.MarkerID then
+      parking.Coordinate:RemoveMark(parking.MarkerID)
+    end
   end
 
   self:I(self.lid..string.format("Element taxiing %s. Parking spot %s is now free", Element.name, TerminalID))
@@ -1372,7 +1376,23 @@ end
 -- @param #string To To state.
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 function FLIGHTGROUP:onafterElementArrived(From, Event, To, Element)
-  self:T2(self.lid..string.format("Element arrived %s.", Element.name))
+
+  -- Get parking spot  
+  local parking=self:GetParkingSpot(Element, 10, self.flightcontrol and self.flightcontrol.airbase or nil)
+  
+  if parking then
+    if self.flightcontrol then
+      local spot=self.flightcontrol.parking[parking.TerminalID] --Wrapper.Airbase#AIRBASE.ParkingSpot
+      self:I(self.lid..string.format("Element arrived %s at %s on parking spot %s reserved for %s", Element.name, parking.AirbaseName, parking.TerminalID, tostring(spot.Reserved)))
+      if spot.Reserved then
+        if spot.Reserved==Element.name then
+          spot.Reserved=nil
+        else
+          self:E(self.lid..string.format("WARNING: Parking spot was not reserved for this element!"))
+        end
+      end
+    end
+  end
 
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.ARRIVED)
@@ -3404,14 +3424,15 @@ end
 -- @param #FLIGHTGROUP self
 -- @param #FLIGHTGROUP.Element element Element of the flight group.
 -- @param #number maxdist Distance threshold in meters. Default 5 m.
+-- @param Wrapper.Airbase#AIRBASE airbase (Optional) The airbase to check for parking. Default is closest airbase to the element.
 -- @return Wrapper.Airbase#AIRBASE.ParkingSpot Parking spot or nil if no spot is within distance threshold.
-function FLIGHTGROUP:GetParkingSpot(element, maxdist)
+function FLIGHTGROUP:GetParkingSpot(element, maxdist, airbase)
 
   local coord=element.unit:GetCoordinate()
 
-  local ab=coord:GetClosestAirbase(nil, self:GetCoalition())
+  airbase=airbase or coord:GetClosestAirbase(nil, self:GetCoalition())
   
-  local _,_,dist,spot=coord:GetClosestParkingSpot(ab)
+  local _,_,dist,spot=coord:GetClosestParkingSpot(airbase)
 
   if dist<=maxdist and not element.unit:InAir() then
     return spot
@@ -3596,6 +3617,14 @@ function FLIGHTGROUP:GetParking(airbase)
             break
           end
 
+        end
+        
+        -- Check flightcontrol data.
+        if self.flightcontrol and self.flightcontrol.airbasename==airbase:GetName() then
+          local problem=self.flightcontrol:IsParkingReserved(parkingspot)
+          if problem then
+            free=false
+          end
         end
 
         -- Check if spot is free

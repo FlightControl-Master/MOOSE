@@ -250,12 +250,16 @@ end
 
 --- Adds a Airbase based on the Airbase Name in the DATABASE.
 -- @param #DATABASE self
--- @param #string AirbaseName The name of the airbase
+-- @param #string AirbaseName The name of the airbase.
+-- @return Wrapper.Airbase#AIRBASE The AIRBASE object.
 function DATABASE:AddAirbase( AirbaseName )
 
   if not self.AIRBASES[AirbaseName] then
     self.AIRBASES[AirbaseName] = AIRBASE:Register( AirbaseName )
+    self:I(string.format("Adding airbase %s with %d parking spots", tostring(self.AIRBASES[AirbaseName].AirbaseName), tonumber(#self.AIRBASES[AirbaseName].parking)))
   end
+  
+  return self.AIRBASES[AirbaseName]
 end
 
 
@@ -903,7 +907,7 @@ function DATABASE:_RegisterAirbases()
       local DCSAirbaseName = DCSAirbase:getName()
 
       self:T( { "Register Airbase:", DCSAirbaseName, DCSAirbase:getID() } )
-      self:AddAirbase( DCSAirbaseName )
+      local airbase=self:AddAirbase( DCSAirbaseName )
     end
   end
 

@@ -119,7 +119,7 @@ FLIGHTCONTROL = {
 
 --- FlightControl class version.
 -- @field #string version
-FLIGHTCONTROL.version="0.1.6"
+FLIGHTCONTROL.version="0.2.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1193,6 +1193,11 @@ end
 -- @return #string Name of element or nil.
 function FLIGHTCONTROL:IsParkingReserved(spot)
 
+  local park=self.parking[spot.TerminalID] --Wrapper.Airbase#AIRBASE.ParkingSpot
+  if park.Reserved then
+    return tostring(park.Reserved)
+  end
+
   -- Init all elements as NOT parking anywhere.
   for _,_flight in pairs(self.flights) do
     local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
@@ -1215,7 +1220,7 @@ end
 -- @param #number terminaltype (Optional) Check only this terminal type.
 -- @param #boolean free (Optional) If true, check only free spots.
 -- @return Wrapper.Airbase#AIRBASE.ParkingSpot Closest parking spot.
-function FLIGHTCONTROL:GetClosestParkingSpot(coord, terminaltype, free)
+function FLIGHTCONTROL:GetClosestParkingSpot(coordinate, terminaltype, free)
 
   local distmin=math.huge
   local spotmin=nil
@@ -1227,7 +1232,7 @@ function FLIGHTCONTROL:GetClosestParkingSpot(coord, terminaltype, free)
       if terminaltype==nil or terminaltype==spot.TerminalType then
       
         -- Get distance from coordinate to spot.
-        local dist=coord:Get2DDistance(spot.Coordinate)
+        local dist=coordinate:Get2DDistance(spot.Coordinate)
         
         -- Check if distance is smaller.
         if dist<distmin then
@@ -1591,14 +1596,15 @@ end
 -- @param Ops.FlightGroup#FLIGHTGROUP flight The flight to be removed.
 function FLIGHTCONTROL:_RemoveFlight(flight)
 
+  self:_RemoveFlightFromQueue(self.Qinbound, flight, "inbound")
   self:_RemoveFlightFromQueue(self.Qholding, flight, "holding")
   self:_RemoveFlightFromQueue(self.Qlanding, flight, "landing")
   self:_RemoveFlightFromQueue(self.Qtaxiinb, flight, "taxiINB")
+  self:_RemoveFlightFromQueue(self.Qarrived, flight, "arrived")  
   self:_RemoveFlightFromQueue(self.Qparking, flight, "parking")
   self:_RemoveFlightFromQueue(self.Qtaxiout, flight, "taxiOUT")
   self:_RemoveFlightFromQueue(self.Qreadyto, flight, "readyTO")
   self:_RemoveFlightFromQueue(self.Qtakeoff, flight, "takeoff")
-  self:_RemoveFlightFromQueue(self.Qarrived, flight, "arrived")
   self:_RemoveFlightFromQueue(self.flights,  flight, "flights")
 
 end
@@ -1700,11 +1706,11 @@ function FLIGHTCONTROL:_CheckParking()
       if spot.MarkerID then
         spot.Coordinate:RemoveMark(spot.MarkerID)
       end
-      spot.MarkerID=spot.Coordinate:MarkToCoalition(string.format("Parking reserved for %s", tostring(spot.Reserved)), self.airbase:GetCoalition())
+      spot.MarkerID=spot.Coordinate:MarkToCoalition(string.format("Parking reserved for %s", tostring(spot.Reserved)), self:GetCoalition())
     end
 
     -- First remove all dead flights.
-    for i=#self.flights,1,-1 do
+    for i=1,#self.flights do
       local flight=self.flights[i] --Ops.FlightGroup#FLIGHTGROUP    
       for _,_element in pairs(flight.elements) do
         local element=_element --Ops.FlightGroup#FLIGHTGROUP.Element
@@ -1712,7 +1718,7 @@ function FLIGHTCONTROL:_CheckParking()
           if spot.MarkerID then
             spot.Coordinate:RemoveMark(spot.MarkerID)            
           end
-          spot.MarkerID=spot.Coordinate:MarkToCoalition(string.format("Parking spot occupied by %s", tostring(element.name)), self.airbase:GetCoalition())
+          spot.MarkerID=spot.Coordinate:MarkToCoalition(string.format("Parking spot occupied by %s", tostring(element.name)), self:GetCoalition())
         end
       end
     end  
@@ -1780,72 +1786,6 @@ function FLIGHTCONTROL:_CheckAirbase()
   return su,setstatic  
 end
 
-
---- Scan airbase zone and find new flights.
--- @param #FLIGHTCONTROL self
--- @param Core.Set#SET_UNIT unitset Set of units.
-function FLIGHTCONTROL:_CheckACstatus(unitset)
-  
-  -- Make a table with all groups currently in the CCA zone.
-  local insideZone={}
-  
-  for _,_unit in pairs(unitset:GetSetObjects()) do
-    local unit=_unit --Wrapper.Unit#UNIT
-    
-    -- Necessary conditions to be met:
-    local aircraft=unit:IsAir()
-    local inzone=unit:IsInZone(self.zoneAirbase)
-    local friendly=self:GetCoalition()==unit:GetCoalition()
-    
-    -- Check if this an aircraft and that it is inside the airbase zone and friendly.
-    if aircraft and inzone then
-    
-      local group=unit:GetGroup()
-      local groupname=group:GetName()
-      
-      -- Add group to table.
-      if insideZone[groupname]==nil then
-        insideZone[groupname]=groupname
-      end
-      
-    end
-  end
-  
-  -- Find new flights that are inside the airbase zone.
-  for groupname,_ in pairs(insideZone) do
-    local flight=_DATABASE:GetFlightGroup(groupname)
-
-    if flight then
-    
-      for _,_element in pairs(flight.elements) do
-        local element=_element --Ops.FlightGroup#FLIGHTGROUP.Element
-        
-        local unit=element.unit
-        
-        if unit and unit:IsAlive() then
-        
-          if unit:InAir() then
-          
-          else
-          
-            if element.status==FLIGHTGROUP.ElementStatus.PARKING then
-              if element.parking then
-              
-              end
-            end
-          
-          end
-        
-        end
-        
-      end
-    
-    end
-
-  end
-  
-end
-
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Routing Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1906,14 +1846,15 @@ function FLIGHTCONTROL:_LandAI(flight, parking)
   Template.route.points=wp
   
   for i,unit in pairs(Template.units) do
-    local spot=parking[i] --Ops.FlightControl#FLIGHTCONTROL.ParkingSpot
+    local spot=parking[i] --Wrapper.Airbase#AIRBASE.ParkingSpot
     
     local element=flight:GetElementByName(unit.name)
     if element then
-      element.parking=spot
+      --element.parking=spot      
       unit.parking_landing=spot.TerminalID
       local text=string.format("FF Reserving parking spot %d for unit %s", spot.TerminalID, tostring(unit.name))
       self:I(self.lid..text)
+      self.parking[spot.TerminalID].Reserved=element.name
     else
       env.info("FF error could not get element to assign parking!")      
     end

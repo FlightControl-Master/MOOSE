@@ -15,7 +15,10 @@
 --- @type AIRBASE
 -- @field #string ClassName Name of the class, i.e. "AIRBASE".
 -- @field #table CategoryName Names of airbase categories.
+-- @field #string AirbaseName Name of the airbase.
+-- @field Core.Zone#ZONE_RADIUS Zone around the airbase.
 -- @field #number activerwyno Active runway number (forced).
+-- @field #table parking Table of parking spots.
 -- @extends Wrapper.Positionable#POSITIONABLE
 
 --- Wrapper class to handle the DCS Airbase objects:
@@ -57,7 +60,10 @@ AIRBASE = {
     [Airbase.Category.HELIPAD]    = "Helipad",
     [Airbase.Category.SHIP]       = "Ship",
     },
+  AirbaseName=nil,
+  AirbaseZone=nil,
   activerwyno=nil,
+  parking={},
   }
 
 --- Enumeration to identify the airbases in the Caucasus region.
@@ -346,10 +352,10 @@ AIRBASE.TerminalType = {
 -- @param #string AirbaseName The name of the airbase.
 -- @return Wrapper.Airbase#AIRBASE
 function AIRBASE:Register( AirbaseName )
-
-  local self = BASE:Inherit( self, POSITIONABLE:New( AirbaseName ) )
+  local self = BASE:Inherit( self, POSITIONABLE:New( AirbaseName ) )  --#AIRBASE
   self.AirbaseName = AirbaseName
   self.AirbaseZone = ZONE_RADIUS:New( AirbaseName, self:GetVec2(), 2500 )
+  self.parking=self:GetParkingSpotsTable()
   return self
 end
 
