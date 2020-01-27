@@ -1293,9 +1293,16 @@ end
 function FLIGHTGROUP:onafterElementParking(From, Event, To, Element)
   self:I(self.lid..string.format("Element parking %s at spot %s", Element.name, tostring(Element.parking.TerminalID)))
   
-  
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.PARKING)
+  
+  if self:IsStartCold() then
+    -- Wait for engine startup event.
+  elseif self:IsStartHot() then
+    self:ElementTaxiing(Element)
+  elseif self:IsStartRunway() then
+    self:ElementTaxiing(Element)
+  end
 end
 
 --- On after "ElementTaxiing" event.
@@ -1306,16 +1313,18 @@ end
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 function FLIGHTGROUP:onafterElementTaxiing(From, Event, To, Element)
 
-  local TerminalID="N/A"  
+  -- Get terminal ID.
+  local TerminalID=Element.parking and tostring(Element.parking.TerminalID) or "N/A"
+  
   -- Remove marker.
   if self.flightcontrol and Element.parking then
-    TerminalID=tostring(Element.parking.TerminalID)
     local parking=self.flightcontrol.parking[Element.parking.TerminalID]  --Wrapper.Airbase#AIRBASE.ParkingSpot
     if parking and parking.MarkerID then
       parking.Coordinate:RemoveMark(parking.MarkerID)
     end
   end
 
+  -- Debug info.
   self:I(self.lid..string.format("Element taxiing %s. Parking spot %s is now free", Element.name, TerminalID))
   
   -- Not parking any more.
@@ -1659,11 +1668,14 @@ end
 -- @param #number n Waypoint number.
 function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
 
-  MESSAGE:New("Updating route", 10):ToAll()
-  self:I(self.lid.."Updating route")
-
   -- TODO: what happens if currentwp=#waypoints
   n=n or self.currentwp+1
+
+  -- Debug info.
+  local text=string.format("Updating route n=%d for group %s", n, self.groupname)
+  MESSAGE:New(text, 10):ToAll()
+  self:I(self.lid..text)
+  
   
   -- Update waypoint tasks, i.e. inject WP tasks into waypoint table.
   self:_UpdateWaypointTasks()
@@ -2570,6 +2582,85 @@ function FLIGHTGROUP:GetDestinationFromWaypoints()
   return nil
 end
 
+--- Check if this is a hot start.
+-- @param #FLIGHTGROUP self
+-- @return #boolean Hot start?
+function FLIGHTGROUP:IsStartHot()
+
+  local wp=self:GetWaypoint(1)
+  
+  if wp then
+    
+    if wp.action and wp.action==COORDINATE.WaypointAction.FromParkingAreaHot then
+      return true
+    else
+      return false
+    end
+    
+  end
+
+  return nil
+end
+
+--- Check if this is a cold start.
+-- @param #FLIGHTGROUP self
+-- @return #boolean Cold start, i.e. engines off when spawned?
+function FLIGHTGROUP:IsStartCold()
+
+  local wp=self:GetWaypoint(1)
+  
+  if wp then
+    
+    if wp.action and wp.action==COORDINATE.WaypointAction.FromParkingArea then
+      return true
+    else
+      return false
+    end
+    
+  end
+
+  return nil
+end
+
+--- Check if this is a runway start.
+-- @param #FLIGHTGROUP self
+-- @return #boolean Runway start?
+function FLIGHTGROUP:IsStartRunway()
+
+  local wp=self:GetWaypoint(1)
+  
+  if wp then
+    
+    if wp.action and wp.action==COORDINATE.WaypointAction.FromRunway then
+      return true
+    else
+      return false
+    end
+    
+  end
+
+  return nil
+end
+
+--- Check if this is an air start.
+-- @param #FLIGHTGROUP self
+-- @return #boolean Air start?
+function FLIGHTGROUP:IsStartAir()
+
+  local wp=self:GetWaypoint(1)
+  
+  if wp then
+    
+    if wp.action and wp.action==COORDINATE.WaypointAction.TurningPoint or wp.action==COORDINATE.WaypointAction.FlyoverPoint then
+      return true
+    else
+      return false
+    end
+    
+  end
+
+  return nil
+end
 
 --- Check if task description is unique.
 -- @param #FLIGHTGROUP self
@@ -3143,6 +3234,7 @@ function FLIGHTGROUP:_CheckDetectedUnits()
     end
 
     -- Loop over units in detected set.
+    local lost={}
     for _,_unit in pairs(self.detectedunits:GetSet()) do
       local unit=_unit --Wrapper.Unit#UNIT
 
@@ -3156,10 +3248,14 @@ function FLIGHTGROUP:_CheckDetectedUnits()
       end
 
       if not gotit then
+        table.insert(lost, unit:GetName())
         self:DetectedUnitLost(unit)
       end
 
     end
+    
+    -- Remove lost units from detected set.
+    self.detectedunits:RemoveUnitsByName(lost)
 
   end
 
