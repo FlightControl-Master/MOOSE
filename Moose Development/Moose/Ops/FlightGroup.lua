@@ -30,6 +30,10 @@
 -- @field #table taskqueue Queue of tasks.
 -- @field #number taskcounter Running number of task ids.
 -- @field #number taskcurrent ID of current task. If 0, there is no current task assigned.
+-- @field #table taskenroute Enroute task of the group.
+-- @field #boolean istanker If true, group gets enroute task tanker.
+-- @field #boolean isawacs if True, group get enroute task AWACS.
+-- @field #boolean eplrs If true, group will activate it's datalink.
 -- @field Core.Set#SET_UNIT detectedunits Set of detected units.
 -- @field Wrapper.Airbase#AIRBASE homebase The home base of the flight group.
 -- @field Wrapper.Airbase#AIRBASE destination The destination base of the flight group.
@@ -112,6 +116,10 @@ FLIGHTGROUP = {
   taskqueue          =    {},
   taskcounter        =   nil,
   taskcurrent        =   nil,
+  taskenroute        =   nil,
+  istanker           =   nil,
+  isawacs            =   nil,
+  eplrs              =   nil,
   detectedunits      =    {},
   homebase           =   nil,
   destination        =   nil,
@@ -143,6 +151,7 @@ FLIGHTGROUP = {
 -- @field #string INUTERO Element was not spawned yet or its status is unknown so far.
 -- @field #string SPAWNED Element was spawned into the world.
 -- @field #string PARKING Element is parking after spawned on ramp.
+-- @field #string ENGINEON Element started its engines.
 -- @field #string TAXIING Element is taxiing after engine startup.
 -- @field #string TAKEOFF Element took of after takeoff event.
 -- @field #string AIRBORNE Element is airborne. Either after takeoff or after air start.
@@ -154,6 +163,7 @@ FLIGHTGROUP.ElementStatus={
   INUTERO="inutero",
   SPAWNED="spawned",
   PARKING="parking",
+  ENGINEON="engineon",
   TAXIING="taxiing",
   TAKEOFF="takeoff",
   AIRBORNE="airborne",
@@ -523,6 +533,15 @@ function FLIGHTGROUP:AddTaskWaypoint(description, task, waypointindex, prio, dur
   -- Update route.
   self:__UpdateRoute(-1)
 
+  return self
+end
+
+--- Set squadron the flight group belongs to.
+-- @param #FLIGHTGROUP self
+-- @param #boolean If true or nil, group get enroute task tanker. If false, not.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetTanker(swtich)
+  self.istanker=true
   return self
 end
 
@@ -1177,7 +1196,7 @@ function FLIGHTGROUP:OnEventEngineShutdown(EventData)
       if element.unit and element.unit:IsAlive() then
     
         local airbase=element.unit:GetCoordinate():GetClosestAirbase()
-        local parking=self:GetParkingSpot(element, 10)
+        local parking=self:GetParkingSpot(element, 10, airbase)
         
         if airbase and parking then
           self:ElementArrived(element, airbase, parking)
@@ -1303,6 +1322,21 @@ function FLIGHTGROUP:onafterElementParking(From, Event, To, Element)
   elseif self:IsStartRunway() then
     self:ElementTaxiing(Element)
   end
+end
+
+--- On after "ElementEngineOn" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #FLIGHTGROUP.Element Element The flight group element.
+function FLIGHTGROUP:onafterElementEngineOn(From, Event, To, Element)
+
+  -- Debug info.
+  self:I(self.lid..string.format("Element %s started engines", Element.name))
+
+  -- Set element status.
+  self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.ENGINEON)
 end
 
 --- On after "ElementTaxiing" event.
@@ -1563,6 +1597,18 @@ end
 -- @param Wrapper.Airbase#AIRBASE airbase The airbase the flight landed.
 function FLIGHTGROUP:onafterFlightAirborne(From, Event, To, airbase)
   self:T(self.lid..string.format("Flight airborne %s at %s.", self.groupname,airbase and airbase:GetName() or "unknown airbase"))
+
+  local task=nil
+  if self.istanker then
+    task=self.group:EnRouteTaskTanker()
+  end
+  if self.isawacs then
+    task=self.group:EnRouteTaskAWACS()
+  end
+  
+  if task then
+    self.group:PushTask(task, 0.1)
+  end
   
   -- Update queue.
   self:__QueueUpdate(-1)
@@ -2009,6 +2055,9 @@ function FLIGHTGROUP:onafterHolding(From, Event, To)
     -- Add flight to holding queue.
     self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qinbound, self, "inbound")
     self.flightcontrol:_AddFlightToHoldingQueue(self)
+    if not self.ai then
+      self:_UpdateMenu()
+    end
   end
 
 end
@@ -2877,7 +2926,7 @@ function FLIGHTGROUP:AddWaypointAir(coordinate, wpnumber, speed)
   self:__UpdateRoute(-1)
 end
 
---- Check if a unit is and element of the flightgroup.
+--- Check if a unit is an element of the flightgroup.
 -- @param #FLIGHTGROUP self
 -- @param #string unitname Name of unit.
 -- @return #boolean If true, unit is element of the flight group or false if otherwise.
@@ -2955,16 +3004,16 @@ function FLIGHTGROUP:_AllSimilarStatus(status)
 
       elseif status==FLIGHTGROUP.ElementStatus.PARKING then
 
-        -- Element PARKING: Check that the other are not stil SPAWNED
+        -- Element PARKING: Check that the other are not still SPAWNED
         if element.status~=status or
          (element.status==FLIGHTGROUP.ElementStatus.INUTERO or
           element.status==FLIGHTGROUP.ElementStatus.SPAWNED) then
           return false
         end
 
-      elseif status==FLIGHTGROUP.ElementStatus.TAXIING then
+      elseif status==FLIGHTGROUP.ElementStatus.ENGINEON then
 
-        -- Element TAXIING: Check that the other are not stil SPAWNED or PARKING
+        -- Element TAXIING: Check that the other are not still SPAWNED or PARKING
         if element.status~=status and
          (element.status==FLIGHTGROUP.ElementStatus.INUTERO or
           element.status==FLIGHTGROUP.ElementStatus.SPAWNED or
@@ -2972,13 +3021,25 @@ function FLIGHTGROUP:_AllSimilarStatus(status)
           return false
         end
 
+      elseif status==FLIGHTGROUP.ElementStatus.TAXIING then
+
+        -- Element TAXIING: Check that the other are not still SPAWNED or PARKING
+        if element.status~=status and
+         (element.status==FLIGHTGROUP.ElementStatus.INUTERO or
+          element.status==FLIGHTGROUP.ElementStatus.SPAWNED or
+          element.status==FLIGHTGROUP.ElementStatus.ENGINEON or
+          element.status==FLIGHTGROUP.ElementStatus.PARKING) then
+          return false
+        end        
+
       elseif status==FLIGHTGROUP.ElementStatus.TAKEOFF then
 
-        -- Element TAKEOFF: Check that the other are not stil SPAWNED, PARKING or TAXIING
+        -- Element TAKEOFF: Check that the other are not still SPAWNED, PARKING or TAXIING
         if element.status~=status and
          (element.status==FLIGHTGROUP.ElementStatus.INUTERO or
           element.status==FLIGHTGROUP.ElementStatus.SPAWNED or
           element.status==FLIGHTGROUP.ElementStatus.PARKING or
+          element.status==FLIGHTGROUP.ElementStatus.ENGINEON or
           element.status==FLIGHTGROUP.ElementStatus.TAXIING) then
           self:T3(self.lid..string.format("Status=%s, element %s status=%s ==> returning FALSE", status, element.name, element.status))
           return false
@@ -2986,11 +3047,12 @@ function FLIGHTGROUP:_AllSimilarStatus(status)
 
       elseif status==FLIGHTGROUP.ElementStatus.AIRBORNE then
 
-        -- Element AIRBORNE: Check that the other are not stil SPAWNED, PARKING, TAXIING or TAKEOFF
+        -- Element AIRBORNE: Check that the other are not still SPAWNED, PARKING, TAXIING or TAKEOFF
         if element.status~=status and
          (element.status==FLIGHTGROUP.ElementStatus.INUTERO or
           element.status==FLIGHTGROUP.ElementStatus.SPAWNED or
           element.status==FLIGHTGROUP.ElementStatus.PARKING or
+          element.status==FLIGHTGROUP.ElementStatus.ENGINEON or
           element.status==FLIGHTGROUP.ElementStatus.TAXIING or 
           element.status==FLIGHTGROUP.ElementStatus.TAKEOFF) then
           return false
@@ -2998,7 +3060,7 @@ function FLIGHTGROUP:_AllSimilarStatus(status)
 
       elseif status==FLIGHTGROUP.ElementStatus.LANDED then
 
-        -- Element LANDED: check that the others are not stil AIRBORNE or LANDING
+        -- Element LANDED: check that the others are not still AIRBORNE or LANDING
         if element.status~=status and
          (element.status==FLIGHTGROUP.ElementStatus.AIRBORNE or
           element.status==FLIGHTGROUP.ElementStatus.LANDING) then
@@ -3007,7 +3069,7 @@ function FLIGHTGROUP:_AllSimilarStatus(status)
 
       elseif status==FLIGHTGROUP.ElementStatus.ARRIVED then
 
-        -- Element ARRIVED: check that the others are not stil AIRBORNE, LANDING, or LANDED (taxiing).
+        -- Element ARRIVED: check that the others are not still AIRBORNE, LANDING, or LANDED (taxiing).
         if element.status~=status and
          (element.status==FLIGHTGROUP.ElementStatus.AIRBORNE or
           element.status==FLIGHTGROUP.ElementStatus.LANDING  or
@@ -3067,6 +3129,13 @@ function FLIGHTGROUP:_UpdateStatus(element, newstatus, airbase)
     if self:_AllSimilarStatus(newstatus) then
       self:FlightParking()
     end
+
+  elseif newstatus==FLIGHTGROUP.ElementStatus.ENGINEON then
+    ---
+    -- ENGINEON
+    ---
+
+    -- No FLIGHT status. Waiting for taxiing.
 
   elseif newstatus==FLIGHTGROUP.ElementStatus.TAXIING then
     ---
@@ -3528,7 +3597,20 @@ function FLIGHTGROUP:GetParkingSpot(element, maxdist, airbase)
 
   airbase=airbase or coord:GetClosestAirbase(nil, self:GetCoalition())
   
-  local _,_,dist,spot=coord:GetClosestParkingSpot(airbase)
+  -- Avoid calling this routine as we only need the coordinates!
+  --local _,_,dist,spot=coord:GetClosestParkingSpot(airbase)
+  
+  local spot=nil --Wrapper.Airbase#AIRBASE.ParkingSpot
+  local dist=nil
+  local distmin=math.huge 
+  for _,_parking in pairs(airbase.parking) do
+    local parking=_parking --Wrapper.Airbase#AIRBASE.ParkingSpot
+    local dist=coord:Get2DDistance(parking.Coordinate)
+    if dist<distmin then
+      dist=distmin
+      spot=parking
+    end
+  end
 
   if dist<=maxdist and not element.unit:InAir() then
     return spot

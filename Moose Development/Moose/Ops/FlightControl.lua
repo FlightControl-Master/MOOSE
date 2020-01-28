@@ -1307,7 +1307,12 @@ function FLIGHTCONTROL:_CreatePlayerMenu(flight, atcmenu)
     end
   else
     if flight:IsAirborne() then
-      MENU_GROUP_COMMAND_DELAYED:New(group, "Inbound",         rootmenu, self._PlayerInbound,        self, groupname):SetTime(Tnow):SetTag(Tag)
+      if self:_InQueue(self.Qinbound, flight.group) then
+        MENU_GROUP_COMMAND_DELAYED:New(group, "Holding", rootmenu, self._PlayerInbound, self, groupname):SetTime(Tnow):SetTag(Tag)
+        
+      else
+        MENU_GROUP_COMMAND_DELAYED:New(group, "Inbound", rootmenu, self._PlayerHolding, self, groupname):SetTime(Tnow):SetTag(Tag)
+      end
     end  
   end
   
@@ -1447,10 +1452,10 @@ function FLIGHTCONTROL:_PlayerInbound(groupname)
       
       end    
 
-      -- TODO: Better check in holding zone and then add to queue.
-      self:_AddFlightToHoldingQueue(flight)
+      -- Add flight to inbound queue.
+      self:_AddFlightToInboundQueue(flight)
 
-      local text=string.format("You have been added to the holding queue!")
+      local text=string.format("You have been added to the inbound queue!\nFly heading XYZ for ABC and report status when entering the holding pattern")
       MESSAGE:New(text, 5):ToGroup(flight.group)
       
     else
@@ -1463,6 +1468,44 @@ function FLIGHTCONTROL:_PlayerInbound(groupname)
     MESSAGE:New(string.format("Cannot find flight group %s.", tostring(groupname)), 5):ToAll()
   end
   
+end
+
+--- Player calls holding.
+-- @param #FLIGHTCONTROL self
+-- @param #string groupname Name of the flight group.
+function FLIGHTCONTROL:_PlayerHolding(groupname)
+
+  -- Get flight group.
+  local flight=_DATABASE:GetFlightGroup(groupname)
+  
+  if flight then
+      
+    if flight:IsAirborne() then
+
+      if flight.flightcontrol and flight.flightcontrol.airbasename==self.airbasename then
+        
+        --TODO: create holding zone and check inside zone.
+        -- Error you are not airborne!
+        local text=string.format("Roger, you are added to the holding queue!")
+        MESSAGE:New(text, 5):ToGroup(flight.group)              
+
+        -- Call holding event.        
+        flight:Holding()
+        
+      else
+      
+        -- Error you are not airborne!
+        local text=string.format("Negative, you are not controlled by us!")
+        MESSAGE:New(text, 5):ToGroup(flight.group)              
+      
+      end
+    else
+      -- Error you are not airborne!
+      local text=string.format("Negative, you must be AIRBORNE to call HOLDING!")
+      MESSAGE:New(text, 5):ToGroup(flight.group)              
+    end
+  else
+  end
 end
 
 --- Create player menu.
@@ -1549,6 +1592,30 @@ function FLIGHTCONTROL:_PlayerRequestTakeoff(groupname)
     else
       MESSAGE:New(string.format("Negative, you must request TAXI before you can request TAKEOFF!"), 5):ToAll()  
     end
+  end
+  
+end
+
+--- Player wants to abort takeoff.
+-- @param #FLIGHTCONTROL self
+-- @param #string groupname Name of the flight group.
+function FLIGHTCONTROL:_PlayerAbortTakeoff(groupname)
+
+  MESSAGE:New("Abort takeoff", 5):ToAll()
+      
+  local flight=_DATABASE:GetFlightGroup(groupname)
+  
+  if flight then
+  
+    if self:_InQueue(self.Qtakeoff, flight.group) then
+      MESSAGE:New("Afirm, You are removed from takeoff queue", 5):ToAll()
+      self:_RemoveFlightFromQueue(self.Qtakeoff, flight, "takeoff")
+      
+      --TODO: what now? taxi inbound? or just another later attempt to takeoff.
+    else
+      MESSAGE:New("Negative, You are NOT in the takeoff queue", 5):ToAll()
+    end
+  
   end
   
 end
@@ -1692,6 +1759,31 @@ function FLIGHTCONTROL:_CheckFlights()
   end
   
   --TODO: check parking?
+  
+  -- Check if parking flights started to taxi.
+  for _,_flight in pairs(self.Qparking) do
+    local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
+    for _,_element in pairs(flight.elements) do
+      local element=_element --Ops.FlightGroup#FLIGHTGROUP.Element
+      if element.parking then
+        -- Get distance to assigned parking spot.
+        local dist=element.unit:GetCoordinate():Get2DDistance(element.parking.Coordinate)
+        
+        -- If distance >10 meters or velocity of unit is >0, we consider the unit as taxiing.
+        -- TODO: Check distance threshold! If element is taxiing, the parking spot is free again.
+        --       When the next plane is spawned on this spot, collisions should be avoided!
+        if dist>10 or element.unit:GetVelocityMPS()>0 then
+          if element.status==FLIGHTGROUP.ElementStatus.ENGINEON then
+            self.flight:ElementTaxiing(element)
+          end
+        end
+        
+      else
+        self:E(self.lid..string.format("Element %s is in PARKING queue but has no parking spot assigned!", element.name))
+      end
+    end
+    
+  end
 
 end
 
