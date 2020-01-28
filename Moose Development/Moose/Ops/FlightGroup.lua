@@ -368,8 +368,9 @@ function FLIGHTGROUP:New(groupname)
   self:AddTransition("*",             "TaskPause",        "*")           -- Pause current task.
 
   self:AddTransition("*",             "ElementSpawned",   "*")           -- An element was spawned.
-  self:AddTransition("*",             "ElementParking",   "*")           -- An element was spawned.
-  self:AddTransition("*",             "ElementTaxiing",   "*")           -- An element spooled up the engines.
+  self:AddTransition("*",             "ElementParking",   "*")           -- An element is parking.
+  self:AddTransition("*",             "ElementEngineOn",  "*")           -- An element spooled up the engines.
+  self:AddTransition("*",             "ElementTaxiing",   "*")           -- An element is taxiing to the runway.
   self:AddTransition("*",             "ElementTakeoff",   "*")           -- An element took off.
   self:AddTransition("*",             "ElementAirborne",  "*")           -- An element is airborne.
   self:AddTransition("*",             "ElementLanded",    "*")           -- An element landed.
@@ -896,6 +897,29 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   
   -- Check if group has detected any units.
   self:_CheckDetectedUnits()
+  
+  if self:IsParking() then
+    for _,_element in pairs(self.elements) do
+      local element=_element --#FLIGHTGROUP.Element
+      if element.parking then
+      
+        -- Get distance to assigned parking spot.
+        local dist=element.unit:GetCoordinate():Get2DDistance(element.parking.Coordinate)
+        
+        -- If distance >10 meters or velocity of unit is >0, we consider the unit as taxiing.
+        -- TODO: Check distance threshold! If element is taxiing, the parking spot is free again.
+        --       When the next plane is spawned on this spot, collisions should be avoided!
+        if dist>10 or element.unit:GetVelocityMPS()>0 then
+          if element.status==FLIGHTGROUP.ElementStatus.ENGINEON then
+            self:ElementTaxiing(element)
+          end
+        end
+        
+      else
+        --self:E(self.lid..string.format("Element %s is in PARKING queue but has no parking spot assigned!", element.name))
+      end
+    end  
+  end
 
   -- Short info.
   local text=string.format("Flight status %s [%d/%d]. Task=%d/%d. Waypoint=%d/%d. Detected=%d. FC=%s. Destination=%s",
@@ -1110,11 +1134,13 @@ function FLIGHTGROUP:OnEventEngineStartup(EventData)
         -- Problem: when player starts hot, the AI does too and starts to taxi immidiately :(
         --          when player starts cold, ?
         if self.ai then
-          self:ElementTaxiing(element)
+          --self:ElementTaxiing(element)
+          self:ElementEngineOn(element)
         else
           if element.ai then
             -- AI wingmen will start taxiing even if the player/client is still starting up his engines :(
-            self:ElementTaxiing(element)
+            --self:ElementTaxiing(element)
+            self:ElementEngineOn(element)
           end
         end
       end
@@ -1318,9 +1344,9 @@ function FLIGHTGROUP:onafterElementParking(From, Event, To, Element)
   if self:IsStartCold() then
     -- Wait for engine startup event.
   elseif self:IsStartHot() then
-    self:ElementTaxiing(Element)
+    self:__ElementEngineOn(0.5, Element)  -- delay a bit to allow all elements
   elseif self:IsStartRunway() then
-    self:ElementTaxiing(Element)
+    self:__ElementEngineOn(0.5, Element)
   end
 end
 
@@ -1731,8 +1757,8 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
   
   -- Set current waypoint or we get problem that the _PassingWaypoint function is triggered too early, i.e. right now and not when passing the next WP.
   -- TODO: This, however, leads to the flight to go right over this point when it is on an airport ==> Need to test Waypoint takeoff
-  --local current=self.group:GetCoordinate():WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, 350, true, nil, {}, "Current")
-  --table.insert(wp, current)
+  local current=self.group:GetCoordinate():WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, 350, true, nil, {}, "Current")
+  table.insert(wp, current)
 
   -- Set "remaining" waypoits.
   for i=n, #self.waypoints do
@@ -2882,7 +2908,7 @@ function FLIGHTGROUP:InitWaypoints(waypoints)
   
   -- Update route.
   if #self.waypoints>0 then
-    self:__UpdateRoute(-1, 1)
+    self:__UpdateRoute(-1)
   end
 
   return self
@@ -3027,8 +3053,8 @@ function FLIGHTGROUP:_AllSimilarStatus(status)
         if element.status~=status and
          (element.status==FLIGHTGROUP.ElementStatus.INUTERO or
           element.status==FLIGHTGROUP.ElementStatus.SPAWNED or
-          element.status==FLIGHTGROUP.ElementStatus.ENGINEON or
-          element.status==FLIGHTGROUP.ElementStatus.PARKING) then
+          element.status==FLIGHTGROUP.ElementStatus.PARKING or
+          element.status==FLIGHTGROUP.ElementStatus.ENGINEON) then
           return false
         end        
 
@@ -3597,22 +3623,19 @@ function FLIGHTGROUP:GetParkingSpot(element, maxdist, airbase)
 
   airbase=airbase or coord:GetClosestAirbase(nil, self:GetCoalition())
   
-  -- Avoid calling this routine as we only need the coordinates!
-  --local _,_,dist,spot=coord:GetClosestParkingSpot(airbase)
-  
   local spot=nil --Wrapper.Airbase#AIRBASE.ParkingSpot
   local dist=nil
   local distmin=math.huge 
   for _,_parking in pairs(airbase.parking) do
     local parking=_parking --Wrapper.Airbase#AIRBASE.ParkingSpot
-    local dist=coord:Get2DDistance(parking.Coordinate)
+    dist=coord:Get2DDistance(parking.Coordinate)
     if dist<distmin then
-      dist=distmin
-      spot=parking
+      distmin=dist
+      spot=_parking   
     end
   end
 
-  if dist<=maxdist and not element.unit:InAir() then
+  if distmin<=maxdist and not element.unit:InAir() then
     return spot
   else
     return nil
