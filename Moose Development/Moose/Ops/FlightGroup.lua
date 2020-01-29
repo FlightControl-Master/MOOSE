@@ -57,7 +57,7 @@
 -- @field #table menu F10 radio menu.
 -- @field #string livery Livery.
 -- @field Core.Set#SET_ZONE checkzones Set of zones.
--- @field Core.Zone#ZONE inzone Zone in which the group is currently in.
+-- @field #table inzones Table of zones in which the group is currently in.
 -- @extends Core.Fsm#FSM
 
 --- *To invent an airplane is nothing. To build one is something. To fly is everything.* -- Otto Lilienthal
@@ -98,6 +98,39 @@
 -- ## Check In Zone
 -- 
 -- ## Passing Waypoint
+-- 
+-- 
+-- # Tasking
+-- 
+-- The FLIGHTGROUP class significantly simplifies the monitoring of DCS tasks. Two types of tasks can be set
+-- 
+--     * **Scheduled Tasks**
+--     * **Waypoint Tasks**
+-- 
+-- ## Scheduled Tasks
+-- 
+-- ## Waypoint Tasks
+-- 
+-- 
+-- # Examples
+-- 
+-- Here are some examples to show how things are done.
+-- 
+-- ## 1. Spawn
+-- 
+-- ## 2. Attack Group
+-- 
+-- ## 3. Whatever
+-- 
+-- ## 4. Simple Tanker
+-- 
+-- ## 5. Simple AWACS
+-- 
+-- ## 6. Scheduled Tasks
+-- 
+-- ## 7. Waypoint Tasks
+-- 
+--  
 --
 --
 -- @field #FLIGHTGROUP
@@ -142,7 +175,7 @@ FLIGHTGROUP = {
   menu               =   nil,
   livery             =   nil,
   checkzones         =   nil,
-  inzone             =   nil,
+  inzones            =    {},
 }
 
 
@@ -240,7 +273,6 @@ FLIGHTGROUP.Mission={
 -- @field #string SCHEDULED Task is scheduled.
 -- @field #string EXECUTING Task is being executed.
 -- @field #string ACCOMPLISHED Task is accomplished.
--- @field #string WAYPOINT Task is executed at a waypoint.
 FLIGHTGROUP.TaskStatus={
   SCHEDULED="scheduled",
   EXECUTING="executing",
@@ -249,8 +281,8 @@ FLIGHTGROUP.TaskStatus={
 
 --- Flight group task status.
 -- @type FLIGHTGROUP.TaskType
--- @field #string SCHEDULED Task is scheduled.
--- @field #string EXECUTING Task is being executed.
+-- @field #string SCHEDULED Task is scheduled and will be executed at a given time.
+-- @field #string WAYPOINT Task is executed at a specific waypoint.
 FLIGHTGROUP.TaskType={
   SCHEDULED="scheduled",
   WAYPOINT="waypoint",
@@ -273,7 +305,7 @@ FLIGHTGROUP.TaskType={
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.2.4"
+FLIGHTGROUP.version="0.2.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -350,6 +382,10 @@ function FLIGHTGROUP:New(groupname)
   self:AddTransition("*",             "Orbit",             "Orbiting")    -- Group is is orbiting.
   self:AddTransition("*",             "Hold",              "Inbound")     -- Group is inbound to holding pattern.
   self:AddTransition("Inbound",       "Holding",           "Holding")     -- Group is holding position.
+  self:AddTransition("*",             "Refuel",            "Going2Refuel")  -- Group is send to refuel at a tanker.
+  self:AddTransition("Going2Refuel",  "Refueling",         "Refueling")   -- Group is send to refuel at a tanker.
+  self:AddTransition("*",             "LandAt",            "LandingAt")   -- Helo group is ordered to land at a specific point.
+  self:AddTransition("LandingAt",     "LandedAt",          "LandedAt")    -- Helo group is landed at a specific point.
 
   self:AddTransition("*",             "PassingWaypoint",   "*")           -- Group passed a waypoint.
   
@@ -456,13 +492,13 @@ end
 
 --- Add a *scheduled* task.
 -- @param #FLIGHTGROUP self
--- @param #string description Brief text describing the task, e.g. "Attack SAM".
 -- @param #table task DCS task table structure.
--- @param #number prio Priority of the task.
 -- @param #string clock Mission time when task is executed. Default in 5 seconds. If argument passed as #number, it defines a relative delay in seconds.
+-- @param #string description Brief text describing the task, e.g. "Attack SAM".
+-- @param #number prio Priority of the task.
 -- @param #number duration Duration before task is cancelled in seconds counted after task started. Default never.
--- @return #FLIGHTGROUP self
-function FLIGHTGROUP:AddTask(description, task, prio, clock, duration)
+-- @return #number Task ID.
+function FLIGHTGROUP:AddTask(task, clock, description, prio, duration)
 
   -- Increase counter.
   self.taskcounter=self.taskcounter+1
@@ -498,20 +534,20 @@ function FLIGHTGROUP:AddTask(description, task, prio, clock, duration)
   -- Add to table.
   table.insert(self.taskqueue, newtask)
 
-  return self
+  return self.taskcounter
 end
 
 --- Add a *waypoint* task.
 -- @param #FLIGHTGROUP self
 -- @param #string description Brief text describing the task, e.g. "Attack SAM".
--- @param #table task DCS task table stucture.
--- @param #number waypointindex Number of waypoint. Counting starts at one! 
--- @param #number prio Priority of the task.
+-- @param #number waypointindex Number of waypoint. Counting starts at one!
+-- @param #table task DCS task table stucture. 
+-- @param #number prio Priority of the task. Number between 1 and 100. Default is 50.
 -- @param #number duration Duration before task is cancelled in seconds counted after task started. Default never.
--- @return #FLIGHTGROUP self
-function FLIGHTGROUP:AddTaskWaypoint(description, task, waypointindex, prio, duration)
+-- @return #number Task ID.
+function FLIGHTGROUP:AddTaskWaypoint(task, waypointindex, description, prio, duration)
 
-  -- Increase coutner.
+  -- Increase counter.
   self.taskcounter=self.taskcounter+1
 
   -- Task data structure.
@@ -523,7 +559,7 @@ function FLIGHTGROUP:AddTaskWaypoint(description, task, waypointindex, prio, dur
   newtask.id=self.taskcounter
   newtask.duration=duration
   newtask.time=0
-  newtask.waypoint=waypointindex
+  newtask.waypoint=waypointindex or self.currentwp+1
   newtask.type=FLIGHTGROUP.TaskType.WAYPOINT
 
   self:T2({newtask=newtask})
@@ -534,7 +570,32 @@ function FLIGHTGROUP:AddTaskWaypoint(description, task, waypointindex, prio, dur
   -- Update route.
   self:__UpdateRoute(-1)
 
-  return self
+  return self.taskcounter
+end
+
+--- Remove task.
+-- @param #FLIGHTGROUP self
+-- @param #number taskid ID of the task to remove.
+function FLIGHTGROUP:RemoveTask(taskid)
+
+  for i=#self.taskqueue,1,-1 do
+    local task=self.taskqueue[i] --#FLIGHTGROUP.Task
+  
+    if task.id==taskid then
+    
+      -- Remove task from queue.
+      table.remove(self.taskqueue, i)
+      
+      -- Update route if this is a waypoint task.
+      if task.type==FLIGHTGROUP.TaskType.WAYPOINT and task.status==FLIGHTGROUP.TaskStatus.SCHEDULED then
+        self:__UpdateRoute(-1)
+      end
+      
+      break
+    end
+  
+  end
+
 end
 
 --- Set squadron the flight group belongs to.
@@ -773,6 +834,28 @@ function FLIGHTGROUP:IsHolding()
   return self:Is("Holding")
 end
 
+--- Check if flight is refueling.
+-- @param #FLIGHTGROUP self
+-- @return #boolean If true, flight is refueling.
+function FLIGHTGROUP:IsRefueling()
+  return self:Is("Refueling")
+end
+
+--- Check if helo(!) flight is ordered to land at a specific point.
+-- @param #FLIGHTGROUP self
+-- @return #boolean If true, group has task to land somewhere.
+function FLIGHTGROUP:IsLandingAt()
+  return self:Is("LandingAt")
+end
+
+--- Check if helo(!) flight is currently landed at a specific point.
+-- @param #FLIGHTGROUP self
+-- @return #boolean If true, group is currently landed at the assigned position and waiting until task is complete.
+function FLIGHTGROUP:IsLandedAt()
+  return self:Is("LandedAt")
+end
+
+
 --- Check if flight is dead.
 -- @param #FLIGHTGROUP self
 -- @return #boolean If true, all units/elements of the flight are dead.
@@ -793,7 +876,6 @@ end
 function FLIGHTGROUP:IsFuelCritical()
   return self.fuelcritical
 end
-
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start & Status
@@ -877,9 +959,6 @@ function FLIGHTGROUP:onafterStop(From, Event, To)
   self.CallScheduler:Clear()
   
   _DATABASE.FLIGHTGROUPS[self.groupname]=nil
-  
-  self={}
-  self=nil
 
 end
 
@@ -953,11 +1032,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
     end
     
     -- Get ammo.
-    local nammo=0
-    local nshells=0
-    local nrockets=0
-    local nbombs=0
-    local nmissiles=0
+    local nammo=0; local nshells=0 ; local nrockets=0; local nbombs=0; local nmissiles=0
     if element.status~=FLIGHTGROUP.ElementStatus.DEAD then
       nammo, nshells, nrockets, nbombs, nmissiles=self:GetAmmoElement(element)
     end
@@ -1011,7 +1086,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   self:__FlightStatus(-30)
 end
 
---- On after "FlightStatus" event.
+--- On after "QueueUpdate" event.
 -- @param #FLIGHTGROUP self
 -- @param Wrapper.Group#GROUP Group Flight group.
 -- @param #string From From state.
@@ -1196,7 +1271,7 @@ function FLIGHTGROUP:OnEventLanding(EventData)
 
     if element then
       self:T3(self.lid..string.format("EVENT: Element %s landed at %s ==> landed", element.name, airbasename))
-      self:ElementLanded(element, airbase)      
+      self:ElementLanded(element, airbase)
     end
 
   end
@@ -1661,11 +1736,15 @@ end
 function FLIGHTGROUP:onafterFlightLanded(From, Event, To, airbase)
   self:T(self.lid..string.format("Flight landed %s at %s.", self.groupname, airbase and airbase:GetName() or "unknown airbase"))
 
-  -- Remove flight from landing queue.
-  if self.flightcontrol and airbase and self.flightcontrol.airbasename==airbase:GetName() then
-    self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qlanding, self, "LANDING")
-    -- Add flight to taxiinb queue.
-    self.flightcontrol:_AddFlightToTaxiInboundQueue(self)
+  if self:IsLandingAt() then
+    self:LandedAt()
+  else
+    -- Remove flight from landing queue.
+    if self.flightcontrol and airbase and self.flightcontrol.airbasename==airbase:GetName() then
+      self.flightcontrol:_RemoveFlightFromQueue(self.flightcontrol.Qlanding, self, "LANDING")
+      -- Add flight to taxiinb queue.
+      self.flightcontrol:_AddFlightToTaxiInboundQueue(self)
+    end
   end
 end
 
@@ -2088,6 +2167,23 @@ function FLIGHTGROUP:onafterHolding(From, Event, To)
 
 end
 
+--- On after "Holding" event. Flight arrived at the holding point.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Core.Point#COORDINATE Coordinate The coordinate where to land.
+-- @param #number Duration The duration in seconds to remain on ground. Default 600 sec.
+function FLIGHTGROUP:onafterLandAt(From, Event, To, Coordinate, Duration)
+  Duration=Duration or 500
+
+  local task=self.group:TaskLandAtVec2(Coordinate:GetVec2(), Duration)
+
+  -- Add task with high priority.
+  self:AddTask(task, 1, "Task_Land_At", 0)
+  
+end
+
 --- On after TaskExecute event.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
@@ -2169,12 +2265,11 @@ function FLIGHTGROUP:onafterTaskPause(From, Event, To, Task)
 
 end
 
---- On after "TaskCancel" event.
+--- On after "TaskCancel" event. Cancels the current task.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #FLIGHTGROUP.Task Task
 function FLIGHTGROUP:onafterTaskCancel(From, Event, To)
   
   -- Get current task.
@@ -2195,7 +2290,7 @@ function FLIGHTGROUP:onafterTaskCancel(From, Event, To)
 end
 
 
---- On after TaskDone event.
+--- On after "TaskDone" event.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -2215,6 +2310,7 @@ function FLIGHTGROUP:onafterTaskDone(From, Event, To, Task)
   Task.status=FLIGHTGROUP.TaskStatus.ACCOMPLISHED
   
   -- Update route.
+  -- TODO: Is this really necessary?
   self:__UpdateRoute(-1)
   
 end
@@ -2242,26 +2338,28 @@ function FLIGHTGROUP:onafterDetectedUnitNew(From, Event, To, Unit)
 end
 
 
---- On after "EnterZone" event. Sets self.inzone=Zone.
+--- On after "EnterZone" event. Sets self.inzones[zonename]=true.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Core.Zone#ZONE Zone The zone that the group entered.
 function FLIGHTGROUP:onafterEnterZone(From, Event, To, Zone)
-  self:I(self.lid..string.format("Entered Zone %s", Zone:GetName()))
-  self.inzone=Zone
+  local zonename=Zone and Zone:GetName() or "unknown"
+  self:I(self.lid..string.format("Entered Zone %s", zonename))
+  self.inzones[zonename]=true
 end
 
---- On after "LeaveZone" event. Sets self.inzone=nil.
+--- On after "LeaveZone" event. Sets self.inzones[zonename]=false.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Core.Zone#ZONE Zone The zone that the group entered.
 function FLIGHTGROUP:onafterLeaveZone(From, Event, To, Zone)
-  self:I(self.lid..string.format("Left Zone %s", Zone:GetName()))
-  self.inzone=nil
+  local zonename=Zone and Zone:GetName() or "unknown"
+  self:I(self.lid..string.format("Left Zone %s", zonename))
+  self.inzones[zonename]=false
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2282,9 +2380,9 @@ function FLIGHTGROUP:GetTask()
       local taskB=b --#FLIGHTGROUP.Task
       return (taskA.time<taskB.time) or (taskA.time==taskB.time and taskA.prio<taskB.prio)
     end
-
     table.sort(self.taskqueue, _sort)
 
+    -- Current time.
     local time=timer.getAbsTime()
 
     -- Look for first task that is not accomplished.
@@ -2317,7 +2415,6 @@ function FLIGHTGROUP:GetTasksWaypoint(n)
       local taskB=b --#FLIGHTGROUP.Task
       return (taskA.time<taskB.time) or (taskA.time==taskB.time and taskA.prio<taskB.prio)
     end
-
     table.sort(self.taskqueue, _sort)
 
 
@@ -2339,7 +2436,7 @@ function FLIGHTGROUP:GetTasksWaypoint(n)
 end
 
 
---- Function called when a group has reached the holding zone.
+--- Function called when a task is executed.
 --@param Wrapper.Group#GROUP group Group that reached the holding zone.
 --@param #FLIGHTGROUP.Mission
 --@param #FLIGHTGROUP flightgroup Flight group.
@@ -2356,7 +2453,7 @@ function FLIGHTGROUP._TaskExecute(group, flightgroup, task)
   end
 end
 
---- Function called when a group has reached the holding zone.
+--- Function called when a task is done.
 --@param Wrapper.Group#GROUP group Group that reached the holding zone.
 --@param #FLIGHTGROUP.Mission
 --@param #FLIGHTGROUP flightgroup Flight group.
@@ -2435,8 +2532,8 @@ end
 --- Route flight group back to base.
 -- @param #FLIGHTGROUP self
 -- @param Wrapper.Airbase#AIRBASE RTBAirbase
--- @param #number Speed Speed in km/h.
--- @param #number Altitude Altitude in meters.
+-- @param #number Speed Speed in km/h. Default is 80% of max possible speed.
+-- @param #number Altitude Altitude in meters. Default is current alitude.
 -- @param #table TaskOverhead Task to execute when reaching overhead waypoint.
 function FLIGHTGROUP:RouteRTB(RTBAirbase, Speed, Altitude, TaskOverhead)
 
@@ -3262,28 +3359,31 @@ function FLIGHTGROUP:_CheckInZones()
     
     for _,_zone in pairs(self.checkzones:GetSet()) do
       local zone=_zone --Core.Zone#ZONE
-    
-      local inzone=self.group:IsPartlyOrCompletelyInZone(zone)
       
-      if inzone then
+      for inzonename,isinzone in pairs(self.inzones) do
       
-        if self.inzone and zone:GetName()==self.inzone:GetName() then
-          -- Nothing to do.
+
+        if self.group and self.group:IsPartlyOrCompletelyInZone(zone) then
+        
+          if isinzone and zone:GetName()==inzonename then
+            -- Nothing to do.
+          else
+            -- Group has entered the zone.
+            self:EnterZone(zone)
+          end
+        
         else
-          -- Group has entered the zone.
-          self:EnterZone(zone)
+        
+          if isinzone and zone:GetName()==inzonename then
+            -- Group has left the zone.
+            self:LeaveZone(zone)          
+          else
+            -- Nothing to do.
+          end
+        
         end
-      
-      else
-      
-        if self.inzone and zone:GetName()==self.inzone:GetName() then
-          -- Group has left the zone.
-          self:LeaveZone(zone)          
-        else
-          -- Nothing to do.
-        end
-      
-      end    
+        
+      end          
     end  
   end
 
