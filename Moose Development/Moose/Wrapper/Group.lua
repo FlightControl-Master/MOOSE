@@ -810,7 +810,7 @@ end
 function GROUP:Activate()
   self:F2( { self.GroupName } )
   trigger.action.activateGroup( self:GetDCSObject() )
-  return self:GetDCSObject()
+  return self
 end
 
 

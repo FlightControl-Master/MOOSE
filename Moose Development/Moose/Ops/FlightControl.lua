@@ -1760,6 +1760,7 @@ function FLIGHTCONTROL:_CheckFlights()
   
   --TODO: check parking?
   
+  -- NOTE: This is now done in FLIGHTGROUP!
   -- Check if parking flights started to taxi.
   for _,_flight in pairs(self.Qparking) do
     local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
