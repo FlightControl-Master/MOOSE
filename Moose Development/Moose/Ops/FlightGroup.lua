@@ -539,9 +539,9 @@ end
 
 --- Add a *waypoint* task.
 -- @param #FLIGHTGROUP self
--- @param #string description Brief text describing the task, e.g. "Attack SAM".
+-- @param #table task DCS task table stucture.
 -- @param #number waypointindex Number of waypoint. Counting starts at one!
--- @param #table task DCS task table stucture. 
+-- @param #string description Brief text describing the task, e.g. "Attack SAM". 
 -- @param #number prio Priority of the task. Number between 1 and 100. Default is 50.
 -- @param #number duration Duration before task is cancelled in seconds counted after task started. Default never.
 -- @return #number Task ID.
@@ -883,7 +883,6 @@ end
 
 --- On after Start event. Starts the FLIGHTGROUP FSM and event handlers.
 -- @param #FLIGHTGROUP self
--- @param Wrapper.Group#GROUP Group Flight group.
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
@@ -943,7 +942,6 @@ end
 
 --- On after Start event. Starts the FLIGHTGROUP FSM and event handlers.
 -- @param #FLIGHTGROUP self
--- @param Wrapper.Group#GROUP Group Flight group.
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
@@ -969,7 +967,6 @@ end
 
 --- On after "FlightStatus" event.
 -- @param #FLIGHTGROUP self
--- @param Wrapper.Group#GROUP Group Flight group.
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
@@ -1092,7 +1089,6 @@ end
 
 --- On after "QueueUpdate" event.
 -- @param #FLIGHTGROUP self
--- @param Wrapper.Group#GROUP Group Flight group.
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
@@ -1136,7 +1132,6 @@ end
 
 --- On after "CheckZone" event.
 -- @param #FLIGHTGROUP self
--- @param Wrapper.Group#GROUP Group Flight group.
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.

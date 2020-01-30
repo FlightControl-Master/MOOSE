@@ -157,6 +157,19 @@ function SQUADRON:SetLivery(liveryname)
   self.livery=liveryname
 end
 
+--- Add a group to the squadron.
+-- @param #SQUADRON self
+-- @param #string groupname Name of the group as defined in the mission editor.
+-- @param #number n Number of groups that is added.
+-- @return #SQUADRON self
+function SQUADRON:AddGroup(groupname, n)
+
+  
+  
+
+end
+
+
 --- Add flight group(s) to squadron.
 -- @param #SQUADRON self
 -- @param Ops.FlightGroup#FLIGHTGROUP flightgroup Flight group.
