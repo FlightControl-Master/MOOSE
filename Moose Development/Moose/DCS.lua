@@ -428,6 +428,10 @@ do -- Types
   -- @type TaskArray
   -- @list <#Task>
 
+  ---
+  --@type WaypointAir
+  --@field #boolean lateActivated
+  --@field #boolean uncontrolled
 
 end --
 

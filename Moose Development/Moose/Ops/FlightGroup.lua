@@ -27,6 +27,7 @@
 -- @field #table waypoints Table of waypoints.
 -- @field #table waypoints0 Table of initial waypoints.
 -- @field #table coordinates Table of waypoint coordinates.
+-- @field #table currentwp Current waypoint.
 -- @field #table taskqueue Queue of tasks.
 -- @field #number taskcounter Running number of task ids.
 -- @field #number taskcurrent ID of current task. If 0, there is no current task assigned.
@@ -145,6 +146,7 @@ FLIGHTGROUP = {
   waypoints          =   nil,
   waypoints0         =   nil,
   coordinates        =    {},
+  currentwp          =  -100,
   elements           =    {},
   taskqueue          =    {},
   taskcounter        =   nil,
@@ -480,7 +482,6 @@ function FLIGHTGROUP:New(groupname)
   _DATABASE:AddFlightGroup(self)
 
   -- Autostart.
-  --self:__Start(0.1)
   self:Start()
 
   return self
@@ -559,13 +560,16 @@ function FLIGHTGROUP:AddTaskWaypoint(task, waypointindex, description, prio, dur
   newtask.id=self.taskcounter
   newtask.duration=duration
   newtask.time=0
-  newtask.waypoint=waypointindex or self.currentwp+1
+  newtask.waypoint=waypointindex or (self.currentwp and self.currentwp+1 or 2)
   newtask.type=FLIGHTGROUP.TaskType.WAYPOINT
 
   self:T2({newtask=newtask})
 
   -- Add to table.
   table.insert(self.taskqueue, newtask)
+  
+  -- Info.
+  self:I(self.lid..string.format("Adding WAYPOINT task %s at WP %d", newtask.description, newtask.waypoint))  
   
   -- Update route.
   self:__UpdateRoute(-1)
@@ -908,6 +912,11 @@ function FLIGHTGROUP:onafterStart(From, Event, To)
   
       -- Debug info.    
       self:I(self.lid..string.format("FF Found alive group %s at start with %d units", group:GetName(), #units))
+      
+      -- Init waypoints.
+      if not self.waypoints then
+        self:InitWaypoints()
+      end      
          
       -- Add elemets.
       for _,unit in pairs(units) do
@@ -937,7 +946,7 @@ function FLIGHTGROUP:onafterStart(From, Event, To)
 
   -- Start the status monitoring.
   self:__CheckZone(-1)
-  self:__FlightStatus(-1)
+  --self:__FlightStatus(-1)
 end
 
 --- On after Start event. Starts the FLIGHTGROUP FSM and event handlers.
@@ -1084,7 +1093,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
 
 
   -- Next check in ~30 seconds.
-  self:__FlightStatus(-30)
+  --self:__FlightStatus(-30)
 end
 
 --- On after "QueueUpdate" event.
@@ -1792,20 +1801,44 @@ end
 -- @param #number n Waypoint number.
 function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
 
+  -- Is transition allowed? We assume yes until proven otherwise.
+  local allowed=true
+
   if self.group and self.group:IsAlive() and self:IsAirborne() then
     -- Alive & Airborne ==> Update route possible.
-    self:T2(self.lid.."Update route allowed")
-    return true
+    self:T2(self.lid.."Update route possible. Group is ALIVE and AIRBORNE")
   elseif self:IsDead() then
     -- Group is dead! No more updates.
-    return false
+    self:T3(self.lid.."FF update route denied. Group is DEAD!")
+    allowed=false
   else
     -- Not airborne yet. Try again in 1 sec.
     self:T3(self.lid.."FF update route denied ==> checking back in 1 sec")
     self:__UpdateRoute(-1, n)
-    return false
+    allowed=false
   end
+  
+  if n and n<1 then
+    self:T3(self.lid.."FF update route denied because n<1")
+    self:__UpdateRoute(-1, n)
+    allowed=false  
+  end
+  
+  if not self.currentwp then
+    self:T3(self.lid.."FF update route denied because self.currentwp=nil")
+    self:__UpdateRoute(-1, n)
+    allowed=false    
+  end
+  
+  local N=n or self.currentwp+1
+  if not N or N<1 then
+    self:T3(self.lid.."FF update route denied because N=nil or N<1")
+    self:__UpdateRoute(-1, n)
+    allowed=false    
+  end
+  
 
+  return allowed
 end
 
 --- On after "UpdateRoute" event.
@@ -1815,6 +1848,8 @@ end
 -- @param #string To To state.
 -- @param #number n Waypoint number.
 function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
+
+  env.info(string.format("FF Update route n=%s current wp=%s", tostring(n), tostring(self.currentwp)))
 
   -- TODO: what happens if currentwp=#waypoints
   n=n or self.currentwp+1

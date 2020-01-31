@@ -19,6 +19,10 @@
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug Debug mode. Messages to all about status.
 -- @field #string lid Class id string for output to DCS log file.
+-- @field #table Qmissions Mission queue.
+-- @field #table Qclients Client queue.
+-- @field #TANKERGROUP.Mission currentmission Currently assigned mission.
+-- @field #number missioncounter Counter of total missions.
 -- @extends Ops.FlightGroup#FLIGHTGROUP
 
 --- *To invent an airplane is nothing. To build one is something. To fly is everything.* -- Otto Lilienthal
@@ -46,7 +50,6 @@ TANKERGROUP = {
   ClassName          = "TANKERGROUP",
   Debug              = false,
   lid                =   nil,
-  tankerzones        =   nil,
   Qmissions          =    {},
   Qclients           =    {},
   currentmission     =   nil,
@@ -98,7 +101,6 @@ function TANKERGROUP:New(groupname)
   
   -- Add FSM transitions.
   --                 From State     -->     Event     -->          To State
-  self:AddTransition("*",                 "TankerStatus",         "*")              -- Tanker is on station and ready to refuel.
   self:AddTransition("*",                 "OnStation",            "Ready2Refuel")   -- Tanker is on station and ready to refuel.
   self:AddTransition("*",                 "MissionStart",         "*")              -- Tanker is on station and ready to refuel.
   
@@ -106,13 +108,18 @@ function TANKERGROUP:New(groupname)
   
   self.lid=string.format("TANKERGROUP %s | ", groupname)
   
+  --[[
   BASE:TraceOn()
   BASE:TraceLevel(3)
   BASE:TraceClass(self.ClassName)
+  ]]
   
   env.info("FF NEW Tanker!")
   
-  self:TankerStatus()
+  
+  -- Call status update.
+  -- TODO: WARNING, if the call is delayed, it is NOT executed!
+  self:FlightStatus()
   
   return self
 end
@@ -123,13 +130,18 @@ end
 
 --- Add mission for tanker.
 -- @param #TANKERGROUP self
--- @return #TANKERGROUP self
+-- @param Core.Zone#ZONE Zone The mission zone. Orbit is picked at a random location.
+-- @param #number Altitude Orbit altitude in feet.
+-- @param #number Distance Length of the race-track pattern leg in NM.
+-- @param #number Speed Orbit speed in knots.
+-- @return #TANKERGROUP.Mission The mission table.
 function TANKERGROUP:AddMission(Zone, Altitude, Distance, Speed)
 
+  -- Increase mission counter.
   self.missioncounter=self.missioncounter+1
   
-  local mission={} --#TANKERGROUP.Mission
-  
+  -- Make mission table.
+  local mission={} --#TANKERGROUP.Mission  
   mission.zone=Zone
   mission.mid=self.missioncounter
   mission.altitude=UTILS.FeetToMeters(Altitude or 10000)
@@ -139,7 +151,12 @@ function TANKERGROUP:AddMission(Zone, Altitude, Distance, Speed)
   mission.heading=270
   mission.tid=nil
 
+  -- Add mission to queue.
   table.insert(self.Qmissions, mission)
+  
+  self:I(self.lid..string.format("Added mission"))
+  
+  return mission
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -151,32 +168,37 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function TANKERGROUP:onafterTankerStatus(From, Event, To)
+function TANKERGROUP:onafterFlightStatus(From, Event, To)
+
+  -- First call flight status.
+  self:GetParent(self).onafterFlightStatus(self, From, Event, To)
 
   env.info("FF Tanker status!")
+  env.info(string.format("FF current wp=%s", tostring(self.currentwp)))
 
   -- FSM state.
   local fsmstate=self:GetState()
   
   -- First check if group is alive?
-  if self.group and self.group:IsAlive()==true then
+  if self.group and self.group:IsAlive()==true and not self.currentmission then
   
     local mission=self:_GetNextMission()
     
     if mission then
       
+      env.info("FF starting mission")
       self:MissionStart(mission)
       
     end
   end
   
-  
+  -- Current mission name.
   local mymission=self.currentmission and self.currentmission.name or "N/A"
   
   local text=string.format("Tanker Status %s: Mission=%s (%d)", fsmstate, mymission, #self.Qmissions)
   self:I(self.lid..text)
   
-  self:__TankerStatus(30)
+  self:__FlightStatus(-30)
 end
 
 --- On after "MissionStart" event.
@@ -203,8 +225,11 @@ function TANKERGROUP:onafterMissionStart(From, Event, To, Mission)
   elseif self:IsParking() then
   
   end
+  
+  self.currentmission=Mission
 
-  self:RouteTo(Mission)
+  --
+  self:RouteToMission(Mission)
 
 end
 
@@ -228,17 +253,17 @@ function TANKERGROUP:_GetNextMission()
   return mission
 end
 
---- Get next mission.
+--- Route group to mission. Also sets the 
 -- @param #TANKERGROUP self
--- @param #TANKERGROUP.Mission mission
+-- @param #TANKERGROUP.Mission mission The mission table.
 -- @return #TANKERGROUP.Mission Next mission or *nil*.
-function TANKERGROUP:RouteTo(mission)
+function TANKERGROUP:RouteToMission(mission)
 
   local Coordinate=mission.zone:GetRandomCoordinate():SetAltitude(mission.altitude, true)
   
   local CoordRaceTrack=Coordinate:Translate(mission.distance, mission.heading, true)
 
-  self:AddWaypointAir(Coordinate, wpnumber, self.speedmax*0.8)
+  self:AddWaypointAir(Coordinate, nil, self.speedmax*0.8)
   
   local taskorbit=self.group:TaskOrbit(Coordinate, mission.altitude, mission.speed, CoordRaceTrack)
   
