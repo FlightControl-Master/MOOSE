@@ -2831,6 +2831,27 @@ function FLIGHTGROUP:IsStartAir()
   return nil
 end
 
+--- Check if this group is "late activated".
+-- @param #FLIGHTGROUP self
+-- @return #boolean Hot start?
+function FLIGHTGROUP:IsLateActivated()
+
+  local wp=self.group:GetTemplate()
+  local template=_DATABASE:GetGroupTemplate(self.groupname)
+  
+  if template then
+    
+    if template.lateActivation==true then
+      return true
+    else
+      return false
+    end
+    
+  end
+
+  return nil
+end
+
 --- Check if task description is unique.
 -- @param #FLIGHTGROUP self
 -- @param #string description Task destription

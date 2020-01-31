@@ -47,8 +47,8 @@ TANKERGROUP = {
   Debug              = false,
   lid                =   nil,
   tankerzones        =   nil,
-  missionqueue       =    {},
-  clientqueue        =    {},
+  Qmissions          =    {},
+  Qclients           =    {},
   currentmission     =   nil,
   missioncounter     =   nil,
 }
@@ -104,6 +104,16 @@ function TANKERGROUP:New(groupname)
   
   self.missioncounter=0
   
+  self.lid=string.format("TANKERGROUP %s | ", groupname)
+  
+  BASE:TraceOn()
+  BASE:TraceLevel(3)
+  BASE:TraceClass(self.ClassName)
+  
+  env.info("FF NEW Tanker!")
+  
+  self:TankerStatus()
+  
   return self
 end
 
@@ -114,7 +124,7 @@ end
 --- Add mission for tanker.
 -- @param #TANKERGROUP self
 -- @return #TANKERGROUP self
-function TANKERGROUP:AddMission(Zone)
+function TANKERGROUP:AddMission(Zone, Altitude, Distance, Speed)
 
   self.missioncounter=self.missioncounter+1
   
@@ -126,8 +136,10 @@ function TANKERGROUP:AddMission(Zone)
   mission.distance=UTILS.NMToMeters(Distance or 25)
   mission.name="Aerial Refueling"
   mission.speed=UTILS.KnotsToMps(Speed or 280)
+  mission.heading=270
   mission.tid=nil
 
+  table.insert(self.Qmissions, mission)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -141,17 +153,30 @@ end
 -- @param #string To To state.
 function TANKERGROUP:onafterTankerStatus(From, Event, To)
 
+  env.info("FF Tanker status!")
+
   -- FSM state.
   local fsmstate=self:GetState()
   
-  local mission=self:_GetNextMission()
+  -- First check if group is alive?
+  if self.group and self.group:IsAlive()==true then
   
-  if mission then
+    local mission=self:_GetNextMission()
     
-    self:MissionStart(mission)
-    
+    if mission then
+      
+      self:MissionStart(mission)
+      
+    end
   end
   
+  
+  local mymission=self.currentmission and self.currentmission.name or "N/A"
+  
+  local text=string.format("Tanker Status %s: Mission=%s (%d)", fsmstate, mymission, #self.Qmissions)
+  self:I(self.lid..text)
+  
+  self:__TankerStatus(30)
 end
 
 --- On after "MissionStart" event.
@@ -179,7 +204,7 @@ function TANKERGROUP:onafterMissionStart(From, Event, To, Mission)
   
   end
 
-  self:RouteTo()
+  self:RouteTo(Mission)
 
 end
 
@@ -192,13 +217,13 @@ end
 -- @return #TANKERGROUP.Mission Next mission or *nil*.
 function TANKERGROUP:_GetNextMission()
 
-  if #self.missionqueue==0 then
+  if #self.Qmissions==0 then
     return nil
   end
 
   --TODO: Sort wrt start time and priority.
 
-  local mission=self.missionqueue[1]
+  local mission=self.Qmissions[1]
 
   return mission
 end
