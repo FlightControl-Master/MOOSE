@@ -1088,7 +1088,7 @@ end
 -- @return #RANGE self
 function RANGE:SetSoundfilesPath(path)
   self.soundpath=tostring(path or "Range Soundfiles/")
-  self:I(self.lid..string.format("Setting sound files path to %s", self.soundpath))
+  self:I(self.id..string.format("Setting sound files path to %s", self.soundpath))
   return self
 end
 
