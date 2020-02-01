@@ -436,7 +436,7 @@ UTILS.tostringLL = function( lat, lon, acc, DMS)
       secFrmtStr = '%0' .. width .. '.' .. acc .. 'f'
     end
 
-    -- 024° 23' 12"N or 024° 23' 12.03"N
+    -- 024ï¿½ 23' 12"N or 024ï¿½ 23' 12.03"N
     return string.format('%03dÂ°', latDeg) .. ' ' .. string.format('%02d', latMin) .. '\' ' .. string.format(secFrmtStr, latSec) .. '"' .. latHemi .. '   '
         .. string.format('%03dÂ°', lonDeg) .. ' ' .. string.format('%02d', lonMin) .. '\' ' .. string.format(secFrmtStr, lonSec) .. '"' .. lonHemi
 
@@ -1080,3 +1080,4 @@ function UTILS.GetModulationName(Modulation)
 end
 
 
+-- Just a test to see commits in new environment for Wingthor
