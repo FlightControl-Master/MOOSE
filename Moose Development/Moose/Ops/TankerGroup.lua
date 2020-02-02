@@ -23,6 +23,7 @@
 -- @field #table Qclients Client queue.
 -- @field #TANKERGROUP.Mission currentmission Currently assigned mission.
 -- @field #number missioncounter Counter of total missions.
+-- @field Core.Scheduler#SCHEDULER Statusupdater Scheduler to update tanker status.
 -- @extends Ops.FlightGroup#FLIGHTGROUP
 
 --- *To invent an airplane is nothing. To build one is something. To fly is everything.* -- Otto Lilienthal
@@ -54,6 +55,7 @@ TANKERGROUP = {
   Qclients           =    {},
   currentmission     =   nil,
   missioncounter     =   nil,
+  Statusupdater      =   nil,
 }
 
 --- Tanker mission table.
@@ -97,8 +99,10 @@ _TANKERGROUPS={}
 -- @return #TANKERGROUP self
 function TANKERGROUP:New(groupname)
 
+  local fg=FLIGHTGROUP:New(groupname, false)
+
   -- Inherit everything from TANKERGROUP class.
-  local self=BASE:Inherit(self, FLIGHTGROUP:New(groupname)) -- #TANKERGROUP
+  local self=BASE:Inherit(self, fg) -- #TANKERGROUP
     
   self.missioncounter=0
   
@@ -114,16 +118,22 @@ function TANKERGROUP:New(groupname)
   
   -- Add FSM transitions.
   --                 From State     -->     Event     -->          To State
-  self:AddTransition("*",                 "TankerState",          "*")              -- Tanker is on station and ready to refuel.
+  --self:AddTransition("*",                 "TankerState",          "*")              -- Tanker is on station and ready to refuel.
   self:AddTransition("*",                 "OnStation",            "Ready2Refuel")   -- Tanker is on station and ready to refuel.
   self:AddTransition("*",                 "MissionStart",         "*")              -- Tanker is on station and ready to refuel.  
   
+  
+  -- Scheduler to update the status.
+  self.Statusupdater=SCHEDULER:New(self, TANKERGROUP.TankerState, {self}, 1, 5)
+  
   -- Call status update.
   -- TODO: WARNING, if the call is delayed, it is NOT executed!
-  self:__TankerState(5)
+  --self:__TankerState(5)
   
   --_TANKERGROUPS[groupname]=self
-  table.insert(_TANKERGROUPS, self)
+  --table.insert(_TANKERGROUPS, self)
+  
+  self:Start()
   
   return self
 end
@@ -201,16 +211,14 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function TANKERGROUP:onafterTankerState(From, Event, To)
+function TANKERGROUP:TankerState(From, Event, To)
 
   -- First call flight status.
   --self:GetParent(self).onafterFlightStatus(self, From, Event, To)
 
   -- FSM state.
   local fsmstate=self:GetState()
-  
-  self:I(self.lid.."FF Tanker status "..fsmstate)
-  
+
   -- First check if group is alive?
   if self.group and self.group:IsAlive()==true and not self.currentmission then
   
@@ -232,7 +240,7 @@ function TANKERGROUP:onafterTankerState(From, Event, To)
   self:I(self.lid..text)
   
   -- Nest status update in 30 sec.
-  self:__TankerState(0.5)
+  --self:__TankerState(0.5)
 end
 
 --- On after "MissionStart" event.
@@ -310,6 +318,9 @@ function TANKERGROUP:RouteToMission(mission, delay)
     
     -- Set second coordinate for race track pattern.
     local CoordRaceTrack=Coordinate:Translate(mission.distance, mission.heading, true)
+    
+    Coordinate:MarkToAll("Orbit 1")
+    CoordRaceTrack:MarkToAll("Orbit 2")
   
     -- Add waypoint.
     self:AddWaypointAir(Coordinate, nil, self.speedmax*0.8)
@@ -318,7 +329,7 @@ function TANKERGROUP:RouteToMission(mission, delay)
     local taskorbit=self.group:TaskOrbit(Coordinate, mission.altitude, mission.speed, CoordRaceTrack)
     
     -- Add waypoint task.
-    self:AddTaskWaypoint(taskorbit, 1, "Mission Refuel", 10, mission.duration)
+    self:AddTaskWaypoint(taskorbit, #self.waypoints, "Mission Refuel", 10, mission.duration)
   end
 end
 

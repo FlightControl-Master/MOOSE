@@ -58,7 +58,7 @@
 -- @field #table menu F10 radio menu.
 -- @field #string livery Livery.
 -- @field Core.Set#SET_ZONE checkzones Set of zones.
--- @field #table inzones Table of zones in which the group is currently in.
+-- @field Core.Set#SET_ZONE inzones Set of zones in which the group is currently in.
 -- @field #boolean groupinitialized If true, group parameters were initialized.
 -- @extends Core.Fsm#FSM
 
@@ -178,7 +178,7 @@ FLIGHTGROUP = {
   menu               =   nil,
   livery             =   nil,
   checkzones         =   nil,
-  inzones            =    {},
+  inzones            =   nil,
   groupinitialized   =   nil,
 }
 
@@ -338,8 +338,9 @@ FLIGHTGROUP.version="0.2.5"
 --- Create a new FLIGHTGROUP object and start the FSM.
 -- @param #FLIGHTGROUP self
 -- @param #string groupname Name of the group.
+-- @param #string autostart If *true* or *nil* automatically start the FSM. If *false*, use FLIGHTGROUP:Start() manually.
 -- @return #FLIGHTGROUP self
-function FLIGHTGROUP:New(groupname)
+function FLIGHTGROUP:New(groupname, autostart)
 
   -- First check if we already have a flight group for this group.
   local fg=_DATABASE:GetFlightGroup(groupname)
@@ -362,6 +363,9 @@ function FLIGHTGROUP:New(groupname)
 
   -- Init set of detected units.
   self.detectedunits=SET_UNIT:New()
+  
+  -- Init inzone set.
+  self.inzones=SET_ZONE:New()
   
   -- Defaults
   self:SetFuelLowThreshold()
@@ -484,7 +488,9 @@ function FLIGHTGROUP:New(groupname)
   _DATABASE:AddFlightGroup(self)
 
   -- Autostart.
-  self:Start()
+  if autostart==true or autostart==nil then
+    self:Start()
+  end
 
   return self
 end
@@ -1137,7 +1143,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
     text=text..string.format("\n[%d] %s: %s: status=%s, scheduled=%s (%d sec), started=%s, duration=%d", i, taskid, name, status, clock, eta, started, duration)
   end
   if #self.taskqueue>0 then
-    self:T(self.lid..text)
+    self:I(self.lid..text)
   end
 
 
@@ -1195,7 +1201,7 @@ end
 -- @param #string To To state.
 function FLIGHTGROUP:onafterCheckZone(From, Event, To)
 
-  if self.group and self.group:IsAlive() then
+  if self:IsAlive()==true then
     self:_CheckInZones()
   end
 
@@ -1885,11 +1891,6 @@ end
 -- @param #number n Waypoint number.
 function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
 
-  if true then
-    return false
-  end
-
-
   -- Is transition allowed? We assume yes until proven otherwise.
   local allowed=true
 
@@ -1966,6 +1967,7 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
     if self.Debug then
       --self:GetWaypointCoordinate(w):MarkToAll(string.format("UpdateRoute Waypoint %d", i))
     end
+    self:I({i=i, waypoint=w})
     table.insert(wp, w)
   end
   
@@ -2256,7 +2258,7 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold, S
     Template.route.points=wp
 
     --Respawn the group with new waypoints.
-    self.group=self.group:Respawn(Template)
+    self:Respawn(Template)
         
   end  
     
@@ -2468,7 +2470,7 @@ end
 function FLIGHTGROUP:onafterEnterZone(From, Event, To, Zone)
   local zonename=Zone and Zone:GetName() or "unknown"
   self:I(self.lid..string.format("Entered Zone %s", zonename))
-  self.inzones[zonename]=true
+  self.inzones:Add(Zone:GetName(), Zone)
 end
 
 --- On after "LeaveZone" event. Sets self.inzones[zonename]=false.
@@ -2480,7 +2482,7 @@ end
 function FLIGHTGROUP:onafterLeaveZone(From, Event, To, Zone)
   local zonename=Zone and Zone:GetName() or "unknown"
   self:I(self.lid..string.format("Left Zone %s", zonename))
-  self.inzones[zonename]=false
+  self.inzones:Remove(zonename, true)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2995,6 +2997,21 @@ function FLIGHTGROUP:IsUncontrolled()
   return nil
 end
 
+--- Respawn the group
+-- @param #FLIGHTGROUP self
+-- @param #table Template (Optional) The template used for respawning the group.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:Respawn(Template)
+  local Template=Template or self.template
+  
+  if self.group and self.group:InAir() then
+    Template.lateActivation=false
+    self.group=self.group:Respawn(Template)
+  end
+  
+  return self
+end
+
 
 --- Check if task description is unique.
 -- @param #FLIGHTGROUP self
@@ -3210,6 +3227,8 @@ function FLIGHTGROUP:AddWaypointAir(coordinate, wpnumber, speed)
   
   -- Update route.
   self:__UpdateRoute(-1)
+  
+  return self
 end
 
 --- Check if a unit is an element of the flightgroup.
@@ -3511,36 +3530,51 @@ end
 function FLIGHTGROUP:_CheckInZones()
 
   if self.checkzones then
-    --env.info("FF Check in Zones")
+  
+    local Ncheck=self.checkzones:Count()
+    local Ninside=self.inzones:Count()
     
-    for _,_zone in pairs(self.checkzones:GetSet()) do
-      local zone=_zone --Core.Zone#ZONE
-      
-      for inzonename,isinzone in pairs(self.inzones) do
-      
+    -- Debug info.
+    self:I(self.lid..string.format("FF Check if flight is in %d zones. Currently it is in %d zones.", self.checkzones:Count(), self.inzones:Count()))
 
-        if self.group and self.group:IsPartlyOrCompletelyInZone(zone) then
+    -- Firstly, check if group is still inside zone it was already in. If not, remove zones and trigger LeaveZone() event.
+    local leftzones={}
+    for inzonename, inzone in pairs(self.inzones:GetSet()) do
         
-          if isinzone and zone:GetName()==inzonename then
-            -- Nothing to do.
-          else
-            -- Group has entered the zone.
-            self:EnterZone(zone)
-          end
-        
-        else
-        
-          if isinzone and zone:GetName()==inzonename then
-            -- Group has left the zone.
-            self:LeaveZone(zone)          
-          else
-            -- Nothing to do.
-          end
-        
-        end
-        
-      end          
-    end  
+      -- Check if group is still inside the zone.
+      local isstillinzone=self.group:IsPartlyOrCompletelyInZone(inzone)
+      
+      -- If not, trigger, LeaveZone event.
+      if not isstillinzone then
+        table.insert(leftzones, inzone)
+        --self:LeaveZone(inzone)
+      end      
+    end
+    
+    for _,leftzone in pairs(leftzones) do
+      self:LeaveZone(leftzone)
+    end
+    
+    
+    -- Now, run of all check zones and see if the group entered a  zone.
+    local enterzones={}
+    for checkzonename,_checkzone in pairs(self.checkzones:GetSet()) do
+      local checkzone=_checkzone --Core.Zone#ZONE
+      
+      -- Is flight currtently in this check zone?
+      local isincheckzone=self.group:IsPartlyOrCompletelyInZone(checkzone)
+
+      if isincheckzone and not self.inzones:_Find(checkzonename) then
+        table.insert(enterzones, checkzone)
+        --self:__EnterZone(1, checkzone)
+      end
+    end
+    
+    for _,enterzone in pairs(enterzones) do
+      self:EnterZone(enterzone)
+    end
+    
+    
   end
 
 end
