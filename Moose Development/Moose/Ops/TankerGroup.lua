@@ -77,6 +77,8 @@ TANKERGROUP = {
 -- @field #string version
 TANKERGROUP.version="0.0.1"
 
+_TANKERGROUPS={}
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -97,29 +99,31 @@ function TANKERGROUP:New(groupname)
 
   -- Inherit everything from TANKERGROUP class.
   local self=BASE:Inherit(self, FLIGHTGROUP:New(groupname)) -- #TANKERGROUP
-  
-  
-  -- Add FSM transitions.
-  --                 From State     -->     Event     -->          To State
-  self:AddTransition("*",                 "OnStation",            "Ready2Refuel")   -- Tanker is on station and ready to refuel.
-  self:AddTransition("*",                 "MissionStart",         "*")              -- Tanker is on station and ready to refuel.
-  
+    
   self.missioncounter=0
   
   self.lid=string.format("TANKERGROUP %s | ", groupname)
   
-  --[[
-  BASE:TraceOn()
-  BASE:TraceLevel(3)
-  BASE:TraceClass(self.ClassName)
-  ]]
+  if false then
+    BASE:TraceOn()
+    BASE:TraceLevel(3)
+    BASE:TraceClass(self.ClassName)
+    BASE:TraceClass("FLIGHTGROUP")
+    --BASE:TraceAll(true)
+  end
   
-  env.info("FF NEW Tanker!")
-  
+  -- Add FSM transitions.
+  --                 From State     -->     Event     -->          To State
+  self:AddTransition("*",                 "TankerState",          "*")              -- Tanker is on station and ready to refuel.
+  self:AddTransition("*",                 "OnStation",            "Ready2Refuel")   -- Tanker is on station and ready to refuel.
+  self:AddTransition("*",                 "MissionStart",         "*")              -- Tanker is on station and ready to refuel.  
   
   -- Call status update.
   -- TODO: WARNING, if the call is delayed, it is NOT executed!
-  self:FlightStatus()
+  self:__TankerState(5)
+  
+  --_TANKERGROUPS[groupname]=self
+  table.insert(_TANKERGROUPS, self)
   
   return self
 end
@@ -133,13 +137,36 @@ end
 -- @param Core.Zone#ZONE Zone The mission zone. Orbit is picked at a random location.
 -- @param #number Altitude Orbit altitude in feet.
 -- @param #number Distance Length of the race-track pattern leg in NM.
--- @param #number Speed Orbit speed in knots.
+-- @param #number Heading Heading of the race-track pattern in degrees. Default is 90, i.e. from West to East.
+-- @param #number SpeedOrbit Orbit speed in knots. Default is 280 knots.
+-- @param #string ClockStart Time the mission is started, e.g. "05:00" for 5 am. If specified as a #number, it will be relative (in seconds) to the current mission time.
+-- @param #string ClockStop Time the mission is stopped, e.g. "13:00" for 1 pm. If mission could not be started at that time, it will be removed from the queue. If specified as a #number it will be relative (in seconds) to the current mission time.
+-- @param #string Name Mission name. Default "Aerial Refueling #00X", where "#00X" is a running mission counter index starting at "#001".
 -- @return #TANKERGROUP.Mission The mission table.
-function TANKERGROUP:AddMission(Zone, Altitude, Distance, Speed)
+function TANKERGROUP:AddMission(Zone, Altitude, Distance, Heading, SpeedOrbit, ClockStart, ClockStop, Name)
 
   -- Increase mission counter.
   self.missioncounter=self.missioncounter+1
   
+  -- Current mission time.
+  local Tnow=timer.getAbsTime()
+  
+  -- Set start time. Default in 5 sec.
+  local Tstart=Tnow+5
+  if ClockStart and type(ClockStart)=="number" then
+    Tstart=Tnow+ClockStart
+  elseif ClockStart and type(ClockStart)=="string" then
+    Tstart=UTILS.ClockToSeconds(ClockStart)
+  end
+
+  -- Set stop time. Default nil.
+  local Tstop=nil
+  if ClockStop and type(ClockStop)=="number" then
+    Tstop=Tnow+ClockStop
+  elseif ClockStop and type(ClockStop)=="string" then
+    Tstop=UTILS.ClockToSeconds(ClockStop)
+  end
+
   -- Make mission table.
   local mission={} --#TANKERGROUP.Mission  
   mission.zone=Zone
@@ -147,14 +174,20 @@ function TANKERGROUP:AddMission(Zone, Altitude, Distance, Speed)
   mission.altitude=UTILS.FeetToMeters(Altitude or 10000)
   mission.distance=UTILS.NMToMeters(Distance or 25)
   mission.name="Aerial Refueling"
-  mission.speed=UTILS.KnotsToMps(Speed or 280)
-  mission.heading=270
+  mission.speed=UTILS.KnotsToMps(SpeedOrbit or 280)
+  mission.heading=Heading or 270
+  mission.Tadded=Tnow
+  mission.Tstart=Tstart
+  mission.Tstop=Tstop
   mission.tid=nil
 
   -- Add mission to queue.
   table.insert(self.Qmissions, mission)
   
-  self:I(self.lid..string.format("Added mission"))
+  local text=string.format("Added mission %s at zone %s. Starting at %s. Stopping at %s. Altitude=%d ft, Leg=%s NM, Heading=%03d, Speed=%d kts",
+  mission.zone:GetName(), mission.name, UTILS.SecondsToClock(mission.Tstart, true), mission.Tstop and UTILS.SecondsToClock(mission.Tstop, true) or "never", 
+  UTILS.MetersToFeet(mission.altitude), UTILS.MetersToNM(mission.distance), mission.heading, UTILS.MpsToKnots(mission.speed))
+  self:I(self.lid..text)
   
   return mission
 end
@@ -168,16 +201,15 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function TANKERGROUP:onafterFlightStatus(From, Event, To)
+function TANKERGROUP:onafterTankerState(From, Event, To)
 
   -- First call flight status.
-  self:GetParent(self).onafterFlightStatus(self, From, Event, To)
-
-  env.info("FF Tanker status!")
-  env.info(string.format("FF current wp=%s", tostring(self.currentwp)))
+  --self:GetParent(self).onafterFlightStatus(self, From, Event, To)
 
   -- FSM state.
   local fsmstate=self:GetState()
+  
+  self:I(self.lid.."FF Tanker status "..fsmstate)
   
   -- First check if group is alive?
   if self.group and self.group:IsAlive()==true and not self.currentmission then
@@ -195,10 +227,12 @@ function TANKERGROUP:onafterFlightStatus(From, Event, To)
   -- Current mission name.
   local mymission=self.currentmission and self.currentmission.name or "N/A"
   
+  -- Current status.
   local text=string.format("Tanker Status %s: Mission=%s (%d)", fsmstate, mymission, #self.Qmissions)
   self:I(self.lid..text)
   
-  self:__FlightStatus(-30)
+  -- Nest status update in 30 sec.
+  self:__TankerState(0.5)
 end
 
 --- On after "MissionStart" event.
@@ -209,27 +243,33 @@ end
 -- @param #TANKERGROUP.Mission Mission The mission table.
 function TANKERGROUP:onafterMissionStart(From, Event, To, Mission)
 
-  -- TODO: figure out in which state the AC is in.
-  -- Cound be:
-  -- * late activated
-  -- * late activated and uncontrolled
-  -- * parking cold
-  -- * parking hot
-  -- * on the runway
-  -- * in air 
+  -- TODO: need to handle case that group is spawned at a later point in time!
 
+  -- Delay for route to mission. Group needs to be activated and controlled.
+  local delay=nil
+
+  -- Check if group is spawned.
   if self:IsInUtero() then
   
-  elseif self:IsSpawned() then
-  
-  elseif self:IsParking() then
+    -- Activate group if it is late activated.
+    if self:IsLateActivated() then   
+      self:Activate()
+      delay=1
+    end
+    
+    -- Activate group if it is uncontrolled.
+    if self:IsUncontrolled() then
+      self:StartUncontrolled(5)
+      delay=6
+    end
   
   end
   
+  -- Set current mission.
   self.currentmission=Mission
 
-  --
-  self:RouteToMission(Mission)
+  -- Route flight to mission zone.
+  self:RouteToMission(Mission, delay)
 
 end
 
@@ -256,18 +296,29 @@ end
 --- Route group to mission. Also sets the 
 -- @param #TANKERGROUP self
 -- @param #TANKERGROUP.Mission mission The mission table.
+-- @param #number delay Delay in seconds.
 -- @return #TANKERGROUP.Mission Next mission or *nil*.
-function TANKERGROUP:RouteToMission(mission)
+function TANKERGROUP:RouteToMission(mission, delay)
 
-  local Coordinate=mission.zone:GetRandomCoordinate():SetAltitude(mission.altitude, true)
-  
-  local CoordRaceTrack=Coordinate:Translate(mission.distance, mission.heading, true)
+  if delay and delay>0 then
+    -- Delay call.
+    self:ScheduleOnce(delay, TANKERGROUP.RouteToMission, self, mission)
+  else
 
-  self:AddWaypointAir(Coordinate, nil, self.speedmax*0.8)
+    -- Get random coordinate in mission zone.
+    local Coordinate=mission.zone:GetRandomCoordinate():SetAltitude(mission.altitude, true)
+    
+    -- Set second coordinate for race track pattern.
+    local CoordRaceTrack=Coordinate:Translate(mission.distance, mission.heading, true)
   
-  local taskorbit=self.group:TaskOrbit(Coordinate, mission.altitude, mission.speed, CoordRaceTrack)
-  
-  self:AddTaskWaypoint(taskorbit, 1, "Mission Refuel", 10, mission.duration)
-
+    -- Add waypoint.
+    self:AddWaypointAir(Coordinate, nil, self.speedmax*0.8)
+    
+    -- Create task to orbit.
+    local taskorbit=self.group:TaskOrbit(Coordinate, mission.altitude, mission.speed, CoordRaceTrack)
+    
+    -- Add waypoint task.
+    self:AddTaskWaypoint(taskorbit, 1, "Mission Refuel", 10, mission.duration)
+  end
 end
 

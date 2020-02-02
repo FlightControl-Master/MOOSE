@@ -59,6 +59,7 @@
 -- @field #string livery Livery.
 -- @field Core.Set#SET_ZONE checkzones Set of zones.
 -- @field #table inzones Table of zones in which the group is currently in.
+-- @field #boolean groupinitialized If true, group parameters were initialized.
 -- @extends Core.Fsm#FSM
 
 --- *To invent an airplane is nothing. To build one is something. To fly is everything.* -- Otto Lilienthal
@@ -178,6 +179,7 @@ FLIGHTGROUP = {
   livery             =   nil,
   checkzones         =   nil,
   inzones            =    {},
+  groupinitialized   =   nil,
 }
 
 
@@ -867,18 +869,62 @@ function FLIGHTGROUP:IsDead()
   return self:Is("Dead")
 end
 
---- Check if flight low on fuel.
+--- Check if flight is low on fuel.
 -- @param #FLIGHTGROUP self
 -- @return #boolean If true, flight is low on fuel.
 function FLIGHTGROUP:IsFuelLow()
   return self.fuellow
 end
 
---- Check if flight critical on fuel
+--- Check if flight is critical on fuel.
 -- @param #FLIGHTGROUP self
 -- @return #boolean If true, flight is critical on fuel.
 function FLIGHTGROUP:IsFuelCritical()
   return self.fuelcritical
+end
+
+--- Check if flight is alive.
+-- @param #FLIGHTGROUP self
+-- @return #boolean *true* if group is exists and is activated, *false* if group is exist but is NOT activated. *nil* otherwise, e.g. the GROUP object is *nil* or the group is not spawned yet.
+function FLIGHTGROUP:IsAlive()
+
+  if self.group then
+    return self.group:IsAlive()
+  end
+
+  return nil
+end
+
+--- Activate a *late activated* group.
+-- @param #FLIGHTGROUP self
+-- @param #number delay (Optional) Delay in seconds before the group is activated. Default is immediately.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:Activate(delay)
+
+  if self:IsAlive()==false then
+    if delay then
+      self:ScheduleOnce(delay, FLIGHTGROUP.Activate, self)
+    else
+      self.group:Activate()
+    end
+  end
+
+  return self
+end
+
+--- Start an *uncontrolled* group.
+-- @param #FLIGHTGROUP self
+-- @param #number delay (Optional) Delay in seconds before the group is started. Default is immediately.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:StartUncontrolled(delay)
+
+  if self:IsAlive() then
+    self.group:StartUncontrolled(delay)
+  else
+    self:E(self.lid.."ERROR: Could not start uncontrolled group as it is NOT alive (yet)!")
+  end
+
+  return self
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -903,32 +949,34 @@ function FLIGHTGROUP:onafterStart(From, Event, To)
   if group then
   
     -- Set group object.
-    self.group=group  
+    self.group=group
+
+    -- Get units of group.
+    local units=group:GetUnits()
+
+    -- Add elemets.
+    for _,unit in pairs(units) do
+      local element=self:AddElementByName(unit:GetName())
+    end
+    
+    if not self.groupinitialized then
+      self:_InitGroup()
+    end
   
     if group:IsAlive() then
-    
-      -- Get units of group.
-      local units=group:GetUnits()
-  
+      
       -- Debug info.    
-      self:I(self.lid..string.format("FF Found alive group %s at start with %d units", group:GetName(), #units))
-      
-      -- Init waypoints.
-      if not self.waypoints then
-        self:InitWaypoints()
-      end      
-         
-      -- Add elemets.
-      for _,unit in pairs(units) do
-        local element=self:AddElementByName(unit:GetName())
-      end
-      
+      self:I(self.lid..string.format("Found EXISTING and ALIVE group %s at start with %d/%d units/elements", group:GetName(), #units, #self.elements))
+                     
       -- Trigger spawned event for all elements.
       for _,element in pairs(self.elements) do
         -- Add a little delay or the OnAfterSpawned function is not even initialized and will not be called.
         self:__ElementSpawned(0.1, element)    
       end
-
+      
+    else
+      -- Debug info.    
+      self:I(self.lid..string.format("Found EXISTING but LATE ACTIVATED group %s at start with %d/%d units/elements", group:GetName(), #units, #self.elements))
     end
     
   end    
@@ -946,7 +994,7 @@ function FLIGHTGROUP:onafterStart(From, Event, To)
 
   -- Start the status monitoring.
   self:__CheckZone(-1)
-  --self:__FlightStatus(-1)
+  self:__FlightStatus(-1)
 end
 
 --- On after Start event. Starts the FLIGHTGROUP FSM and event handlers.
@@ -971,6 +1019,7 @@ function FLIGHTGROUP:onafterStop(From, Event, To)
   
   _DATABASE.FLIGHTGROUPS[self.groupname]=nil
 
+  self:I(self.lid.."STOPPED! Unhandled events, cleared scheduler and removed from database.")
 end
 
 
@@ -1037,7 +1086,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
     end
 
     -- Check if element is not dead and we missed an event.
-    if life<0 and element.status~=FLIGHTGROUP.ElementStatus.DEAD then
+    if life<0 and element.status~=FLIGHTGROUP.ElementStatus.DEAD and element.status~=FLIGHTGROUP.ElementStatus.INUTERO then
       self:ElementDead(element)
     end
     
@@ -1053,7 +1102,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   if #self.elements==0 then
     text=text.." none!"
   end
-  self:T(self.lid..text)
+  self:I(self.lid..text)
   
   -- Low fuel?
   if fuelmin<self.fuellowthresh and not self.fuellow then
@@ -1093,7 +1142,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
 
 
   -- Next check in ~30 seconds.
-  --self:__FlightStatus(-30)
+  self:__FlightStatus(-30)
 end
 
 --- On after "QueueUpdate" event.
@@ -1209,6 +1258,7 @@ function FLIGHTGROUP:OnEventEngineStartup(EventData)
     local element=self:GetElementByName(unitname)
 
     if element then
+    
       if self:IsAirborne() or self:IsInbound() or self:IsHolding() then
         -- TODO: what?
       else
@@ -1217,16 +1267,15 @@ function FLIGHTGROUP:OnEventEngineStartup(EventData)
         -- Problem: when player starts hot, the AI does too and starts to taxi immidiately :(
         --          when player starts cold, ?
         if self.ai then
-          --self:ElementTaxiing(element)
           self:ElementEngineOn(element)
         else
           if element.ai then
             -- AI wingmen will start taxiing even if the player/client is still starting up his engines :(
-            --self:ElementTaxiing(element)
             self:ElementEngineOn(element)
           end
         end
       end
+      
     end
 
   end
@@ -1566,15 +1615,15 @@ function FLIGHTGROUP:onafterElementDead(From, Event, To, Element)
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.DEAD)
 end
 
-
---- On after "FlightSpawned" event. Sets the template, initializes the waypoints.
+--- Initialize group parameters.
 -- @param #FLIGHTGROUP self
--- @param Wrapper.Group#GROUP Group Flight group.
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function FLIGHTGROUP:onafterFlightSpawned(From, Event, To)
-  self:I(string.format("FF Flight group %s spawned!", tostring(self.groupname)))
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:_InitGroup()
+
+  if self.groupinitialized then
+    self:E(self.lid.."WARNING: Group was already initialized!")
+    return
+  end
 
   -- Get template of group.
   self.template=self.group:GetTemplate()
@@ -1602,6 +1651,41 @@ function FLIGHTGROUP:onafterFlightSpawned(From, Event, To)
     self:InitWaypoints()
   end
   
+  -- Debug info.
+  local text=string.format("Initialized Flight Group %s:\n", self.groupname)
+  text=text..string.format("AC type      = %s\n", self.actype)
+  text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedmax))
+  text=text..string.format("Ceiling      = %.1f feet\n", UTILS.MetersToFeet(self.ceiling))
+  text=text..string.format("AI           = %s\n", tostring(self.ai))
+  text=text..string.format("Helicopter   = %s\n", tostring(self.group:IsHelicopter()))
+  text=text..string.format("Elements     = %d\n", #self.elements)
+  text=text..string.format("Waypoints    = %d\n", #self.waypoints)
+  text=text..string.format("FSM state    = %s\n", self:GetState())
+  text=text..string.format("Is alive     = %s\n", tostring(self.group:IsAlive()))
+  text=text..string.format("Late activat = %s\n", tostring(self:IsLateActivated()))
+  text=text..string.format("Uncontrolled = %s\n", tostring(self:IsUncontrolled()))
+  text=text..string.format("Start Air    = %s\n", tostring(self:IsStartAir()))
+  text=text..string.format("Start Cold   = %s\n", tostring(self:IsStartCold()))
+  text=text..string.format("Start Hot    = %s\n", tostring(self:IsStartHot()))
+  text=text..string.format("Start Rwy    = %s\n", tostring(self:IsStartRunway()))    
+  self:I(self.lid..text)
+  
+  -- Init done.
+  self.groupinitialized=true
+  
+  return self
+end
+
+
+--- On after "FlightSpawned" event. Sets the template, initializes the waypoints.
+-- @param #FLIGHTGROUP self
+-- @param Wrapper.Group#GROUP Group Flight group.
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function FLIGHTGROUP:onafterFlightSpawned(From, Event, To)
+  self:I(string.format("FF Flight group %s spawned!", tostring(self.groupname)))
+
   -- F10 menu.
   if not self.ai then
     self.menu=self.menu or {}
@@ -1800,6 +1884,11 @@ end
 -- @param #string To To state.
 -- @param #number n Waypoint number.
 function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
+
+  if true then
+    return false
+  end
+
 
   -- Is transition allowed? We assume yes until proven otherwise.
   local allowed=true
@@ -2866,12 +2955,11 @@ function FLIGHTGROUP:IsStartAir()
   return nil
 end
 
---- Check if this group is "late activated".
+--- Check if this group is "late activated" and needs to be "activated" to appear in the mission.
 -- @param #FLIGHTGROUP self
 -- @return #boolean Hot start?
 function FLIGHTGROUP:IsLateActivated()
 
-  local wp=self.group:GetTemplate()
   local template=_DATABASE:GetGroupTemplate(self.groupname)
   
   if template then
@@ -2886,6 +2974,27 @@ function FLIGHTGROUP:IsLateActivated()
 
   return nil
 end
+
+--- Check if this group is "uncontrolled" and needs to be "started" to begin its route.
+-- @param #FLIGHTGROUP self
+-- @return #boolean Hot start?
+function FLIGHTGROUP:IsUncontrolled()
+
+  local template=_DATABASE:GetGroupTemplate(self.groupname)
+  
+  if template then
+    
+    if template.uncontrolled==true then
+      return true
+    else
+      return false
+    end
+    
+  end
+
+  return nil
+end
+
 
 --- Check if task description is unique.
 -- @param #FLIGHTGROUP self
@@ -3024,8 +3133,6 @@ function FLIGHTGROUP:InitWaypoints(waypoints)
 
   -- Waypoints of group as defined in the ME.
   self.waypoints=waypoints or self.waypoints0
-  
-  self:I(self.lid..string.format("Initializing %d waypoints", #self.waypoints))
 
   -- Init array.
   self.coordinates={}
@@ -3055,6 +3162,9 @@ function FLIGHTGROUP:InitWaypoints(waypoints)
   -- Get home and destination airbases from waypoints.
   self.homebase=self:GetHomebaseFromWaypoints()
   self.destination=self:GetDestinationFromWaypoints()
+  
+  -- Debug info.
+  self:I(self.lid..string.format("Initializing %d waypoints. Home=%s ==> Destination=%s", #self.waypoints, self.homebase and self.homebase:GetName() or "unknown", self.destination and self.destination:GetName() or "uknown"))
   
   -- Update route.
   if #self.waypoints>0 then
