@@ -145,7 +145,7 @@ end
 --- Add mission for tanker.
 -- @param #TANKERGROUP self
 -- @param Core.Zone#ZONE Zone The mission zone. Orbit is picked at a random location.
--- @param #number Altitude Orbit altitude in feet.
+-- @param #number Altitude Orbit altitude in feet. Default is 10000 ft.
 -- @param #number Distance Length of the race-track pattern leg in NM.
 -- @param #number Heading Heading of the race-track pattern in degrees. Default is 90, i.e. from West to East.
 -- @param #number SpeedOrbit Orbit speed in knots. Default is 280 knots.
@@ -183,7 +183,7 @@ function TANKERGROUP:AddMission(Zone, Altitude, Distance, Heading, SpeedOrbit, C
   mission.mid=self.missioncounter
   mission.altitude=UTILS.FeetToMeters(Altitude or 10000)
   mission.distance=UTILS.NMToMeters(Distance or 25)
-  mission.name="Aerial Refueling"
+  mission.name=Name or string.format("Aerial Refueling #%03d", mission.mid) 
   mission.speed=UTILS.KnotsToMps(SpeedOrbit or 280)
   mission.heading=Heading or 270
   mission.Tadded=Tnow
@@ -220,7 +220,7 @@ function TANKERGROUP:TankerState(From, Event, To)
   local fsmstate=self:GetState()
 
   -- First check if group is alive?
-  if self.group and self.group:IsAlive()==true and not self.currentmission then
+  if self:IsAlive()~=nil and not self.currentmission then
   
     local mission=self:_GetNextMission()
     
@@ -329,7 +329,7 @@ function TANKERGROUP:RouteToMission(mission, delay)
     local taskorbit=self.group:TaskOrbit(Coordinate, mission.altitude, mission.speed, CoordRaceTrack)
     
     -- Add waypoint task.
-    self:AddTaskWaypoint(taskorbit, #self.waypoints, "Mission Refuel", 10, mission.duration)
+    self:AddTaskWaypoint(taskorbit, #self.waypoints, mission.name, 10, mission.duration)
   end
 end
 

@@ -386,6 +386,8 @@ function FLIGHTGROUP:New(groupname, autostart)
   self:AddTransition("*",             "DetectedUnitLost",  "*")           -- Group lost a detected target.
 
   self:AddTransition("*",             "UpdateRoute",       "*")           -- Update route of group. Only if airborne.
+  self:AddTransition("*",             "Respawn",           "*")           -- Respawn group.
+  
   self:AddTransition("*",             "RTB",               "Returning")   -- Group is returning to base.
   self:AddTransition("*",             "Orbit",             "Orbiting")    -- Group is is orbiting.
   self:AddTransition("*",             "Hold",              "Inbound")     -- Group is inbound to holding pattern.
@@ -1042,6 +1044,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   -- Check if group has detected any units.
   self:_CheckDetectedUnits()
   
+  -- Check if flight began to taxi (if it was parking).
   if self:IsParking() then
     for _,_element in pairs(self.elements) do
       local element=_element --#FLIGHTGROUP.Element
@@ -1053,7 +1056,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
         -- If distance >10 meters or velocity of unit is >0, we consider the unit as taxiing.
         -- TODO: Check distance threshold! If element is taxiing, the parking spot is free again.
         --       When the next plane is spawned on this spot, collisions should be avoided!
-        if dist>10 or element.unit:GetVelocityMPS()>0 then
+        if dist>10 then --or element.unit:GetVelocityMPS()>0 then
           if element.status==FLIGHTGROUP.ElementStatus.ENGINEON then
             self:ElementTaxiing(element)
           end
@@ -1064,10 +1067,12 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
       end
     end  
   end
+  
+  local nTaskTot, nTaskSched, nTaskWP=self:CountRemainingTasks()
 
   -- Short info.
-  local text=string.format("Flight status %s [%d/%d]. Task=%d/%d. Waypoint=%d/%d. Detected=%d. FC=%s. Destination=%s",
-  fsmstate, #self.elements, #self.elements, self.taskcurrent, #self.taskqueue, self.currentwp or 0, self.waypoints and #self.waypoints or 0, 
+  local text=string.format("Flight status %s [%d/%d]. Tasks=%d (%d,%d) Current=%d. Waypoint=%d/%d. Detected=%d. FC=%s. Destination=%s",
+  fsmstate, #self.elements, #self.elements, nTaskTot, nTaskSched, nTaskWP, self.taskcurrent, self.currentwp or 0, self.waypoints and #self.waypoints or 0, 
   self.detectedunits:Count(), self.flightcontrol and self.flightcontrol.airbasename or "none", self.destination and self.destination:GetName() or "unknown")
   self:I(self.lid..text)
 
@@ -1127,20 +1132,26 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
     local name=task.description
     local taskid=task.dcstask.id or "unknown"
     local status=task.status
-    local clock=UTILS.SecondsToClock(task.time)
+    local clock=UTILS.SecondsToClock(task.time, true)
     local eta=task.time-timer.getAbsTime()
-    local started=UTILS.SecondsToClock(task.timestamp or 0)
+    local started=task.timestamp and UTILS.SecondsToClock(task.timestamp, true) or "N/A"
     local duration=-1
     if task.duration then
       duration=task.duration
       if task.timestamp then
+        -- Time the task is running.
         duration=task.duration-(timer.getAbsTime()-task.timestamp)
       else
+        -- Time the task is supposed to run.
         duration=task.duration
       end
     end
     -- Output text for element.
-    text=text..string.format("\n[%d] %s: %s: status=%s, scheduled=%s (%d sec), started=%s, duration=%d", i, taskid, name, status, clock, eta, started, duration)
+    if task.type==FLIGHTGROUP.TaskType.SCHEDULED then
+      text=text..string.format("\n[%d] %s: %s: status=%s, scheduled=%s (%d sec), started=%s, duration=%d", i, taskid, name, status, clock, eta, started, duration)
+    elseif task.type==FLIGHTGROUP.TaskType.WAYPOINT then
+      text=text..string.format("\n[%d] %s: %s: status=%s, waypoint=%d, started=%s, duration=%d", i, taskid, name, status, task.waypoint, started, duration)
+    end
   end
   if #self.taskqueue>0 then
     self:I(self.lid..text)
@@ -1228,22 +1239,36 @@ function FLIGHTGROUP:OnEventBirth(EventData)
     -- Set group.
     self.group=self.group or EventData.IniGroup
     
-    -- Set homebase if not already set.
-    if EventData.Place then
-      self.homebase=self.homebase or EventData.Place
-    end
-        
-    -- Get element.
-    local element=self:GetElementByName(unitname)
-
-    -- Create element spawned event if not already present.
-    if not self:_IsElement(unitname) then
-      element=self:AddElementByName(unitname)
-    end
+    if self.respawning then
+    
+      local function reset()
+        self.respawning=nil
+      end
       
-    -- Set element to spawned state.
-    self:I(self.lid..string.format("EVENT: Element %s born ==> spawned", element.name))            
-    self:__ElementSpawned(0.1, element)    
+      -- Reset switch in 1 sec. This should allow all birth events of n>1 groups to have passed.
+      -- TODO: Can I do this more rigorously?
+      self:ScheduleOnce(1, reset)
+    
+    else
+    
+      -- Set homebase if not already set.
+      if EventData.Place then
+        self.homebase=self.homebase or EventData.Place
+      end
+          
+      -- Get element.
+      local element=self:GetElementByName(unitname)
+  
+      -- Create element spawned event if not already present.
+      if not self:_IsElement(unitname) then
+        element=self:AddElementByName(unitname)
+      end
+        
+      -- Set element to spawned state.
+      self:I(self.lid..string.format("EVENT: Element %s born ==> spawned", element.name))            
+      self:ElementSpawned(element)
+      
+    end    
     
   end
 
@@ -1479,11 +1504,11 @@ function FLIGHTGROUP:onafterElementParking(From, Event, To, Element)
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.PARKING)
   
-  if self:IsStartCold() then
+  if self:IsTakeoffCold() then
     -- Wait for engine startup event.
-  elseif self:IsStartHot() then
+  elseif self:IsTakeoffHot() then
     self:__ElementEngineOn(0.5, Element)  -- delay a bit to allow all elements
-  elseif self:IsStartRunway() then
+  elseif self:IsTakeoffRunway() then
     self:__ElementEngineOn(0.5, Element)
   end
 end
@@ -1582,15 +1607,22 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param #FLIGHTGROUP.Element Element The flight group element.
-function FLIGHTGROUP:onafterElementArrived(From, Event, To, Element)
+-- @param Wrapper.Airbase#AIRBASE airbase The airbase, where the element arrived.
+-- @param Wrapper.Airbase#AIRBASE.ParkingSpot Parking The Parking spot the element has.
+function FLIGHTGROUP:onafterElementArrived(From, Event, To, Element, airbase, Parking)
+  self:I(self.lid..string.format("Element arrived %s at %s airbase using parking spot %d", Element.name, airbase and airbase:GetName() or "unknown", Parking and Parking.TerminalID or -99))  
+
 
   -- Get parking spot  
-  local parking=self:GetParkingSpot(Element, 10, self.flightcontrol and self.flightcontrol.airbase or nil)
+  --local parking=self:GetParkingSpot(Element, 10, self.flightcontrol and self.flightcontrol.airbase or nil)
   
-  if parking then
+  -- Element is parking here.
+  Element.parking=Parking
+  
+  if Parking then
     if self.flightcontrol then
-      local spot=self.flightcontrol.parking[parking.TerminalID] --Wrapper.Airbase#AIRBASE.ParkingSpot
-      self:I(self.lid..string.format("Element arrived %s at %s on parking spot %s reserved for %s", Element.name, parking.AirbaseName, parking.TerminalID, tostring(spot.Reserved)))
+      local spot=self.flightcontrol.parking[Parking.TerminalID] --Wrapper.Airbase#AIRBASE.ParkingSpot
+      self:I(self.lid..string.format("Element arrived %s at %s on parking spot %s reserved for %s", Element.name, Parking.AirbaseName, Parking.TerminalID, tostring(spot.Reserved)))
       if spot.Reserved then
         if spot.Reserved==Element.name then
           spot.Reserved=nil
@@ -1670,10 +1702,10 @@ function FLIGHTGROUP:_InitGroup()
   text=text..string.format("Is alive     = %s\n", tostring(self.group:IsAlive()))
   text=text..string.format("Late activat = %s\n", tostring(self:IsLateActivated()))
   text=text..string.format("Uncontrolled = %s\n", tostring(self:IsUncontrolled()))
-  text=text..string.format("Start Air    = %s\n", tostring(self:IsStartAir()))
-  text=text..string.format("Start Cold   = %s\n", tostring(self:IsStartCold()))
-  text=text..string.format("Start Hot    = %s\n", tostring(self:IsStartHot()))
-  text=text..string.format("Start Rwy    = %s\n", tostring(self:IsStartRunway()))    
+  text=text..string.format("Start Air    = %s\n", tostring(self:IsTakeoffAir()))
+  text=text..string.format("Start Cold   = %s\n", tostring(self:IsTakeoffCold()))
+  text=text..string.format("Start Hot    = %s\n", tostring(self:IsTakeoffHot()))
+  text=text..string.format("Start Rwy    = %s\n", tostring(self:IsTakeoffRunway()))    
   self:I(self.lid..text)
   
   -- Init done.
@@ -1889,6 +1921,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param #number n Waypoint number.
+-- @return #boolean Transision allowed?
 function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
 
   -- Is transition allowed? We assume yes until proven otherwise.
@@ -1971,6 +2004,7 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
     table.insert(wp, w)
   end
   
+  
   if self.destination and #wp>0 and _DATABASE:GetFlightControl(self.destination:GetName()) then
   
     -- Task to hold.
@@ -1988,7 +2022,11 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
     -- Add overhead to waypoints.
     table.insert(wp, #wp, wpoverhead)
   end
+
+  -- Looks like waypoint tasks are not executed if the final waypoint is in air. Need to add another dummy waypoint to make it work properly.
+  if self:IsLandingAir() then
   
+  end  
   
   -- Debug info.
   local hb=self.homebase and self.homebase:GetName() or "unknown"
@@ -2027,7 +2065,23 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
 
 end
 
+--- On after "Respawn" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #table Template The template used to respawn the group.
+function FLIGHTGROUP:onafterRespawn(From, Event, To, Template)
 
+  local template=UTILS.DeepCopy(Template or self.template)
+  
+  if self.group and self.group:InAir() then
+    template.lateActivation=false
+    self.respawning=true
+    self.group=self.group:Respawn(template)
+  end
+
+end
 
 --- On after "PassingWaypoint" event.
 -- @param #FLIGHTGROUP self
@@ -2042,8 +2096,9 @@ function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
   MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
   
   
+  -- At the final AIR waypoint, we set the flight to hold.
   if self.destination and n>1 and n==N-1 then
-    self:__Hold(1, self.destination)
+    self:__Hold(-1, self.destination)
   end
   
 end
@@ -2144,17 +2199,46 @@ end
 -- @param #number SpeedHold Holding speed in knots.
 function FLIGHTGROUP:onbeforeHold(From, Event, To, airbase, SpeedTo, SpeedHold)
 
+  local allowed=true
+  local Tsuspend=nil
+
   if airbase==nil then
-    self:E("FF airbase is nil!")
-    return false
+    self:E(self.lid.."ERROR: Airbase is nil in Hold() call!")
+    allowed=false
   end
 
-  if airbase and airbase:GetCoalition()~=self.group:GetCoalition() then
-    self:E("FF wrong coalition!")
-    return false
+  -- Check that coaliton is okay. We allow same (blue=blue, red=red) or landing on neutral bases.
+  if airbase and airbase:GetCoalition()~=self.group:GetCoalition() and airbase:GetCoalition()>0 then
+    self:E(self.lid.."ERROR: Wrong airbase coalition in Hold() call! We allow only same as group or neutral airbases.")
+    allowed=false
+  end
+
+  -- Check if there are remaining tasks.
+  local Ntot,Nsched, Nwp=self:CountRemainingTasks()
+
+  if self.taskcurrent>0 then
+    self:I(self.lid..string.format("WARNING: Got current task ==> Hold event is suspended for 10 sec."))
+    Tsuspend=-10
+    allowed=false
   end
   
-  return true
+  if Nsched>0 then
+    self:I(self.lid..string.format("WARNING: Still got %d SCHEDULED tasks in the queue ==> Hold event is suspended for 10 sec.", Nsched))
+    Tsuspend=-10
+    allowed=false
+  end
+
+  if Nwp>0 then
+    self:I(self.lid..string.format("WARNING: Still got %d WAYPOINT tasks in the queue ==> Hold event is suspended for 10 sec.", Nsched))
+    Tsuspend=-10
+    allowed=false
+  end
+  
+  if Tsuspend and not allowed then
+    self:__Hold(Tsuspend, airbase, SpeedTo, SpeedHold)  
+  end
+  
+  return allowed
 end
 
 --- On after "Hold" event. Order flight to hold at an airbase and wait for signal to land.
@@ -2491,6 +2575,7 @@ end
 
 --- Get next task in queue. Task needs to be in state SCHEDULED and time must have passed.
 -- @param #FLIGHTGROUP self
+-- @return #FLIGHTGROUP.Task The next task in line or `nil`.
 function FLIGHTGROUP:GetTask()
 
   if #self.taskqueue==0 then
@@ -2558,6 +2643,39 @@ function FLIGHTGROUP:GetTasksWaypoint(n)
   return nil
 end
 
+--- Count the number of tasks that still pending in the queue.
+-- @param #FLIGHTGROUP self
+-- @return #number Total number of tasks remaining.
+-- @return #number Number of SCHEDULED tasks remaining.
+-- @return #number Number of WAYPOINT tasks remaining.
+function FLIGHTGROUP:CountRemainingTasks()
+
+  local Ntot=0
+  local Nwp=0
+  local Nsched=0
+
+  -- Look for first task that is not accomplished.
+  for _,_task in pairs(self.taskqueue) do
+    local task=_task --#FLIGHTGROUP.Task
+    
+    -- Task is still scheduled.
+    if task.status==FLIGHTGROUP.TaskStatus.SCHEDULED then
+      
+      -- Total number of tasks.
+      Ntot=Ntot+1
+    
+      if task.type==FLIGHTGROUP.TaskType.WAYPOINT then
+        Nwp=Nwp+1
+      elseif task.type==FLIGHTGROUP.TaskType.WAYPOINT then
+        Nsched=Nsched+1
+      end
+      
+    end
+    
+  end
+
+  return Ntot, Nsched, Nwp
+end
 
 --- Function called when a task is executed.
 --@param Wrapper.Group#GROUP group Group that reached the holding zone.
@@ -2636,7 +2754,7 @@ function FLIGHTGROUP._ReachedHolding(group, flightgroup)
     group:GetCoordinate():MarkToAll("Holding Point Reached")
   end
   
-  flightgroup:__Holding(1)
+  flightgroup:__Holding(-1)
 end
 
 --- Update route of group, e.g after new waypoints and/or waypoint tasks have been added.
@@ -2647,7 +2765,7 @@ function FLIGHTGROUP._DestinationOverhead(group, flightgroup, destination)
 
   -- Tell the flight to hold.
   -- WARNING: This needs to be delayed or we get a CTD!
-  flightgroup:__Hold(1, destination)
+  flightgroup:__Hold(-1, destination)
 
 end
 
@@ -2880,7 +2998,7 @@ end
 --- Check if this is a hot start.
 -- @param #FLIGHTGROUP self
 -- @return #boolean Hot start?
-function FLIGHTGROUP:IsStartHot()
+function FLIGHTGROUP:IsTakeoffHot()
 
   local wp=self:GetWaypoint(1)
   
@@ -2900,7 +3018,7 @@ end
 --- Check if this is a cold start.
 -- @param #FLIGHTGROUP self
 -- @return #boolean Cold start, i.e. engines off when spawned?
-function FLIGHTGROUP:IsStartCold()
+function FLIGHTGROUP:IsTakeoffCold()
 
   local wp=self:GetWaypoint(1)
   
@@ -2920,7 +3038,7 @@ end
 --- Check if this is a runway start.
 -- @param #FLIGHTGROUP self
 -- @return #boolean Runway start?
-function FLIGHTGROUP:IsStartRunway()
+function FLIGHTGROUP:IsTakeoffRunway()
 
   local wp=self:GetWaypoint(1)
   
@@ -2940,7 +3058,7 @@ end
 --- Check if this is an air start.
 -- @param #FLIGHTGROUP self
 -- @return #boolean Air start?
-function FLIGHTGROUP:IsStartAir()
+function FLIGHTGROUP:IsTakeoffAir()
 
   local wp=self:GetWaypoint(1)
   
@@ -2956,6 +3074,49 @@ function FLIGHTGROUP:IsStartAir()
 
   return nil
 end
+
+--- Check if the final waypoint is in the air.
+-- @param #FLIGHTGROUP self
+-- @param #table wp Waypoint. Default final waypoint.
+-- @return #boolean If `true` final waypoint is a turning or flyover but not a landing type waypoint.
+function FLIGHTGROUP:IsLandingAir(wp)
+
+  wp=wp or self:GetWaypointFinal()
+  
+  if wp then
+    
+    if wp.action and wp.action==COORDINATE.WaypointAction.TurningPoint or wp.action==COORDINATE.WaypointAction.FlyoverPoint then
+      return true
+    else
+      return false
+    end
+    
+  end
+
+  return nil
+end
+
+--- Check if the final waypoint is at an airbase.
+-- @param #FLIGHTGROUP self
+-- @param #table wp Waypoint. Default final waypoint.
+-- @return #boolean If `true`, final waypoint is a landing waypoint at an airbase.
+function FLIGHTGROUP:IsLandingAirbase(wp)
+
+  wp=wp or self:GetWaypointFinal()
+  
+  if wp then
+    
+    if wp.action and wp.action==COORDINATE.WaypointAction.LANDING then
+      return true
+    else
+      return false
+    end
+    
+  end
+
+  return nil
+end
+
 
 --- Check if this group is "late activated" and needs to be "activated" to appear in the mission.
 -- @param #FLIGHTGROUP self
@@ -2996,22 +3157,6 @@ function FLIGHTGROUP:IsUncontrolled()
 
   return nil
 end
-
---- Respawn the group
--- @param #FLIGHTGROUP self
--- @param #table Template (Optional) The template used for respawning the group.
--- @return #FLIGHTGROUP self
-function FLIGHTGROUP:Respawn(Template)
-  local Template=Template or self.template
-  
-  if self.group and self.group:InAir() then
-    Template.lateActivation=false
-    self.group=self.group:Respawn(Template)
-  end
-  
-  return self
-end
-
 
 --- Check if task description is unique.
 -- @param #FLIGHTGROUP self
@@ -3408,6 +3553,12 @@ function FLIGHTGROUP:_UpdateStatus(element, newstatus, airbase)
 
   -- Update status of element.
   element.status=newstatus
+  
+  env.info(string.format("FF UpdateStatus element=%s: %s --> %s", element.name, oldstatus, newstatus))
+  for _,_element in pairs(self.elements) do
+    local Element=_element -- #FLIGHTGROUP.Element
+    env.info(string.format("Element %s: %s", Element.name, Element.status))
+  end
 
   if newstatus==FLIGHTGROUP.ElementStatus.SPAWNED then
     ---
@@ -3415,7 +3566,7 @@ function FLIGHTGROUP:_UpdateStatus(element, newstatus, airbase)
     ---
 
     if self:_AllSimilarStatus(newstatus) then
-      self:FlightSpawned()
+      self:__FlightSpawned(0.5)
     end
     
   elseif newstatus==FLIGHTGROUP.ElementStatus.PARKING then
@@ -3424,7 +3575,7 @@ function FLIGHTGROUP:_UpdateStatus(element, newstatus, airbase)
     ---
 
     if self:_AllSimilarStatus(newstatus) then
-      self:FlightParking()
+      self:__FlightParking(0.5)
     end
 
   elseif newstatus==FLIGHTGROUP.ElementStatus.ENGINEON then
@@ -3440,7 +3591,7 @@ function FLIGHTGROUP:_UpdateStatus(element, newstatus, airbase)
     ---
 
     if self:_AllSimilarStatus(newstatus) then
-      self:FlightTaxiing()
+      self:__FlightTaxiing(0.5)
     end
     
   elseif newstatus==FLIGHTGROUP.ElementStatus.TAKEOFF then
@@ -3450,7 +3601,7 @@ function FLIGHTGROUP:_UpdateStatus(element, newstatus, airbase)
 
     if self:_AllSimilarStatus(newstatus) then
       -- Trigger takeoff event. Also triggers airborne event.
-      self:FlightTakeoff(airbase)
+      self:__FlightTakeoff(0.5, airbase)
     end
 
   elseif newstatus==FLIGHTGROUP.ElementStatus.AIRBORNE then
@@ -3459,7 +3610,7 @@ function FLIGHTGROUP:_UpdateStatus(element, newstatus, airbase)
     ---
 
     if self:_AllSimilarStatus(newstatus) then
-      self:FlightAirborne()      
+      self:__FlightAirborne(0.5)      
       --[[
       if self:IsTaxiing() then
         self:FlightAirborne()
@@ -3535,7 +3686,7 @@ function FLIGHTGROUP:_CheckInZones()
     local Ninside=self.inzones:Count()
     
     -- Debug info.
-    self:I(self.lid..string.format("FF Check if flight is in %d zones. Currently it is in %d zones.", self.checkzones:Count(), self.inzones:Count()))
+    self:T(self.lid..string.format("Check if flight is in %d zones. Currently it is in %d zones.", self.checkzones:Count(), self.inzones:Count()))
 
     -- Firstly, check if group is still inside zone it was already in. If not, remove zones and trigger LeaveZone() event.
     local leftzones={}
@@ -3547,10 +3698,10 @@ function FLIGHTGROUP:_CheckInZones()
       -- If not, trigger, LeaveZone event.
       if not isstillinzone then
         table.insert(leftzones, inzone)
-        --self:LeaveZone(inzone)
       end      
     end
     
+    -- Trigger leave zone event.
     for _,leftzone in pairs(leftzones) do
       self:LeaveZone(leftzone)
     end
@@ -3566,10 +3717,10 @@ function FLIGHTGROUP:_CheckInZones()
 
       if isincheckzone and not self.inzones:_Find(checkzonename) then
         table.insert(enterzones, checkzone)
-        --self:__EnterZone(1, checkzone)
       end
     end
     
+    -- Trigger enter zone event.
     for _,enterzone in pairs(enterzones) do
       self:EnterZone(enterzone)
     end

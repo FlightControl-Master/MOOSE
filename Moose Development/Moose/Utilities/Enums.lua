@@ -1,3 +1,11 @@
+--- **Utilities** Enumerators.
+-- 
+-- See the [Simulator Scripting Engine Documentation](https://wiki.hoggitworld.com/view/Simulator_Scripting_Engine_Documentation) on Hoggit for further explanation and examples.
+-- 
+-- @module DCS
+-- @image MOOSE.JPG
+
+
 ENUMS = {}
 
 ENUMS.ROE = {
@@ -15,6 +23,8 @@ ENUMS.ROT = {
 }
 
 ENUMS.WeaponFlag={
+  -- Auto
+  Auto=1073741822,
   -- Bombs
   LGB=2,
   TvGB=4,

@@ -15,4 +15,5 @@ _SETTINGS:SetPlayerMenuOn()
 
 _DATABASE:_RegisterCargos()
 _DATABASE:_RegisterZones()
+_DATABASE:_RegisterAirbases()
 

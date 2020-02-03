@@ -352,10 +352,23 @@ AIRBASE.TerminalType = {
 -- @param #string AirbaseName The name of the airbase.
 -- @return Wrapper.Airbase#AIRBASE
 function AIRBASE:Register( AirbaseName )
+
+  -- Inherit from POSITIONABLE.
   local self = BASE:Inherit( self, POSITIONABLE:New( AirbaseName ) )  --#AIRBASE
+  
+  -- Set airbase name.
   self.AirbaseName = AirbaseName
+  
+  -- Set airbase zone.
   self.AirbaseZone = ZONE_RADIUS:New( AirbaseName, self:GetVec2(), 2500 )
+  
+  -- Get Parking data.
   self.parking=self:GetParkingSpotsTable()
+  
+  -- Register zone.
+  _DATABASE.ZONENAMES[AirbaseName] = AirbaseName
+  _DATABASE:AddZone( AirbaseName, self.AirbaseZone )  
+    
   return self
 end
 
