@@ -312,6 +312,7 @@ function CONTROLLABLE:ClearTasks()
 
   if DCSControllable then
     local Controller = self:_GetController()
+    env.info("FF clearing tasks!")
     Controller:resetTask()
     return self
   end
