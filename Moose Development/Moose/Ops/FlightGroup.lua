@@ -305,6 +305,7 @@ FLIGHTGROUP.TaskType={
 -- @field #number duration Duration before task is cancelled in seconds. Default never.
 -- @field #number timestamp Abs. mission time, when task was started.
 -- @field #number waypoint Waypoint index if task is a waypoint task.
+-- @field Core.UserFlag#USERFLAG stopflag If flag is set to 1 (=true), the task is stopped.
 
 
 --- FLIGHTGROUP class version.
@@ -503,6 +504,14 @@ end
 
 --- Add a *scheduled* task.
 -- @param #FLIGHTGROUP self
+-- @param #number id Task id.
+-- @return #string Name of the stop flag
+function FLIGHTGROUP:StopTaskFlagname(id)
+  return string.format("StopTaskFlag %d", id)
+end
+
+--- Add a *scheduled* task.
+-- @param #FLIGHTGROUP self
 -- @param #table task DCS task table structure.
 -- @param #string clock Mission time when task is executed. Default in 5 seconds. If argument passed as #number, it defines a relative delay in seconds.
 -- @param #string description Brief text describing the task, e.g. "Attack SAM".
@@ -535,6 +544,9 @@ function FLIGHTGROUP:AddTask(task, clock, description, prio, duration)
   newtask.duration=duration
   newtask.waypoint=-1
   newtask.type=FLIGHTGROUP.TaskType.SCHEDULED
+  newtask.stopflag=USERFLAG:New(self:StopTaskFlagname(newtask.id))  
+  newtask.stopflag:Set(0)
+  
   
   -- Info.
   self:I(self.lid..string.format("Adding task %s scheduled at %s", newtask.description, UTILS.SecondsToClock(time, true)))
@@ -572,6 +584,8 @@ function FLIGHTGROUP:AddTaskWaypoint(task, waypointindex, description, prio, dur
   newtask.time=0
   newtask.waypoint=waypointindex or (self.currentwp and self.currentwp+1 or 2)
   newtask.type=FLIGHTGROUP.TaskType.WAYPOINT
+  newtask.stopflag=USERFLAG:New(self:StopTaskFlagname(newtask.id))  
+  newtask.stopflag:Set(0)
 
   self:T2({newtask=newtask})
 
@@ -586,6 +600,27 @@ function FLIGHTGROUP:AddTaskWaypoint(task, waypointindex, description, prio, dur
 
   return self.taskcounter
 end
+
+--- Add an *enroute* task.
+-- @param #FLIGHTGROUP self
+-- @param #table task DCS task table stucture.
+function FLIGHTGROUP:AddTaskEnroute(task)
+  if not self.taskenroute then
+    self.taskenroute={}
+  end
+  table.insert(self.taskenroute, task)
+end
+
+--- Add an *enroute* task to attack targets in a certain **cicular** zone.
+-- @param #FLIGHTGROUP self
+-- @param Core.Zone#ZONE_RADIUS ZoneRadius The circular zone, where to engage targets.
+-- @param #table TargetTypes (Optional) The target types, passed as a table, i.e. mind the cirly brackets {}.
+-- @param #number Priority (Optional) Priority.
+function FLIGHTGROUP:AddTaskEnrouteEngageTargetsInZone(ZoneRadius, TargetTypes, Priority)
+  local Task=self.group:EnRouteTaskEngageTargetsInZone(ZoneRadius:GetVec2(), ZoneRadius:GetRadius(), TargetTypes, Priority)
+  self:AddTaskEnroute(Task)
+end
+
 
 --- Remove task.
 -- @param #FLIGHTGROUP self
@@ -1150,7 +1185,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
     if task.type==FLIGHTGROUP.TaskType.SCHEDULED then
       text=text..string.format("\n[%d] %s: %s: status=%s, scheduled=%s (%d sec), started=%s, duration=%d", i, taskid, name, status, clock, eta, started, duration)
     elseif task.type==FLIGHTGROUP.TaskType.WAYPOINT then
-      text=text..string.format("\n[%d] %s: %s: status=%s, waypoint=%d, started=%s, duration=%d", i, taskid, name, status, task.waypoint, started, duration)
+      text=text..string.format("\n[%d] %s: %s: status=%s, waypoint=%d, started=%s, duration=%d, stopflag=%d", i, taskid, name, status, task.waypoint, started, duration, task.stopflag:Get())
     end
   end
   if #self.taskqueue>0 then
@@ -2110,7 +2145,7 @@ function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
   
   local tasks=self:GetTasksWaypoint(n)
   
-  local text=string.format("WP %d/N tasks:", n, N)
+  local text=string.format("WP %d/%d tasks:", n, N)
   if tasks then
     for i,_task in pairs(tasks) do
       local task=_task --#FLIGHTGROUP.Task
@@ -2121,9 +2156,36 @@ function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
   end
   self:I(self.lid..text)
   
+
+  local taskswp={}
+  for _,task in pairs(tasks) do
+    local Task=task --#FLIGHTGROUP.Task          
+    
+    -- Task execute.
+    table.insert(taskswp, self.group:TaskFunction("FLIGHTGROUP._TaskExecute", self, Task))
+
+    -- Stop condition if userflag is set to 1.    
+    local TaskCondition=self.group:TaskCondition(nil, Task.stopflag:GetName(), 1, nil, Task.duration)
+    
+    -- Controlled task.      
+    table.insert(taskswp, self.group:TaskControlled(Task.dcstask, TaskCondition))
+    
+     --table.insert(taskswp, Task.dcstask)
+    
+    -- Task done.
+    table.insert(taskswp, self.group:TaskFunction("FLIGHTGROUP._TaskDone", self, Task))
+    
+  end
+    
+  
   -- At the final AIR waypoint, we set the flight to hold.
   if self.destbase and n>1 and n==N-1 then
     self:__Hold(-1, self.destbase)
+  else
+    -- Waypoint task combo.
+    if #taskswp>0 then
+      self.group:SetTask(self.group:TaskCombo(taskswp))
+    end    
   end
   
 end
@@ -2416,6 +2478,15 @@ function FLIGHTGROUP:onafterLandAt(From, Event, To, Coordinate, Duration)
   
 end
 
+--- Create a DCS task sandwitch.
+-- @param #FLIGHTGROUP self
+-- @param #FLIGHTGROUP.Task Task The task.
+-- @param #table DCS task sandwitch
+function FLIGHTGROUP:_GetTaskSandwitch(Task)
+
+
+end
+
 --- On after TaskExecute event.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
@@ -2444,13 +2515,11 @@ function FLIGHTGROUP:onafterTaskExecute(From, Event, To, Task)
   Task.status=FLIGHTGROUP.TaskStatus.EXECUTING
 
   -- If task is scheduled (not waypoint) set task.
-  if Task.type==FLIGHTGROUP.TaskType.SCHEDULED or true then
+  if Task.type==FLIGHTGROUP.TaskType.SCHEDULED then
 
     -- Clear all tasks.
     --self.group:ClearTasks()
   
-    -- Task done.
-    local TaskDone=self.group:TaskFunction("FLIGHTGROUP._TaskDone", self, Task)
     
     local DCStasks={}
     if Task.dcstask.id=='ComboTask' then
@@ -2461,16 +2530,31 @@ function FLIGHTGROUP:onafterTaskExecute(From, Event, To, Task)
     else
       table.insert(DCStasks, Task.dcstask)
     end
+    
+    -- Task done.
+    local TaskDone=self.group:TaskFunction("FLIGHTGROUP._TaskDone", self, Task)    
     table.insert(DCStasks, TaskDone)
-  
+    
+    env.info("FF DCS task combo")
+    for i,DCStask in pairs(DCStasks) do
+      self:I{{DCStask=DCStask}}    
+    end
+
     -- Combo task.
     local TaskCombo=self.group:TaskCombo(DCStasks)
+
+
+    -- Stop condition!    
+    local TaskCondition=self.group:TaskCondition(nil, Task.stopflag:GetName(), 1)
     
-    env.info("FF executing Taskcombo:")
-    self:I({task=TaskCombo})
+    -- Controlled task.      
+    local TaskControlled=self.group:TaskControlled(TaskCombo, TaskCondition)
+    
+      env.info("FF executing controlled Task:")
+    self:I({task=TaskControlled})
   
     -- Set task for group.
-    self.group:SetTask(TaskCombo, 1)
+    self.group:SetTask(TaskControlled, 1)
     
   end
   
@@ -2512,7 +2596,9 @@ function FLIGHTGROUP:onafterTaskCancel(From, Event, To)
     MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)    
     self:I(self.lid..text)
     -- Clear tasks.
-    self.group:ClearTasks()
+    --self.group:ClearTasks()
+    --self.group:PopCurrentTask()
+    task.stopflag:Set(1)
     self:TaskDone(task)  
   else
     local text=string.format("WARNING: No current task to cancel!")
@@ -2702,8 +2788,8 @@ end
 function FLIGHTGROUP._TaskExecute(group, flightgroup, task)
 
   -- Debug message.
-  local text=string.format("Task Execute %s", task.description)
-  flightgroup:T2(flightgroup.lid..text)
+  local text=string.format("_TaskExecute %s", task.description)
+  flightgroup:I(flightgroup.lid..text)
 
   -- Set current task to nil so that the next in line can be executed.
   if flightgroup then
@@ -2719,8 +2805,8 @@ end
 function FLIGHTGROUP._TaskDone(group, flightgroup, task)
 
   -- Debug message.
-  local text=string.format("Task Done %s", task.description)
-  flightgroup:T2(flightgroup.lid..text)
+  local text=string.format("_TaskDone %s", task.description)
+  flightgroup:I(flightgroup.lid..text)
 
   -- Set current task to nil so that the next in line can be executed.
   if flightgroup then
@@ -2738,6 +2824,7 @@ function FLIGHTGROUP._PassingWaypoint(group, flightgroup, i)
 
   -- Debug message.
   local text=string.format("Group %s passing waypoint %d of %d.", group:GetName(), i, final)
+  env.info(text)
 
   -- Debug smoke and marker.
   if flightgroup.Debug then
@@ -3269,10 +3356,20 @@ function FLIGHTGROUP:_UpdateWaypointTasks()
   
       -- Tasks of this waypoint
       local taskswp={}
+      
+      if self.taskenroute then
+        table.insert(taskswp, self.taskenroute[1])
+      end
     
       -- At each waypoint report passing.
       local TaskPassingWaypoint=self.group:TaskFunction("FLIGHTGROUP._PassingWaypoint", self, i)      
       table.insert(taskswp, TaskPassingWaypoint)
+      
+      
+      -- For some reason THIS DOES NOT WORK if executed at the last waypoint if it is an AIR WAYPOINT.
+      -- I have moved it to the onafterpassingwaypoint function instead.
+      
+      --[[
       
       -- Get taks
       local tasks=self:GetTasksWaypoint(i)
@@ -3280,16 +3377,30 @@ function FLIGHTGROUP:_UpdateWaypointTasks()
       for _,task in pairs(tasks) do
         local Task=task --#FLIGHTGROUP.Task          
         
-        -- Add task execute.
+        -- Task execute.
         table.insert(taskswp, self.group:TaskFunction("FLIGHTGROUP._TaskExecute", self, Task))
+
+        -- Stop condition if userflag is set to 1.    
+        local TaskCondition=self.group:TaskCondition(nil, Task.stopflag:GetName(), 1, nil, Task.duration)
+        
+        -- Controlled task.      
+        table.insert(taskswp, self.group:TaskControlled(Task.dcstask, TaskCondition))
+        
+         --table.insert(taskswp, Task.dcstask)
+        
+        -- Task done.
+        table.insert(taskswp, self.group:TaskFunction("FLIGHTGROUP._TaskDone", self, Task))    
         
       end
+      
+      ]]
           
       -- Waypoint task combo.
       wp.task=self.group:TaskCombo(taskswp)
           
       -- Debug info.
-      self:T3({wptask=taskswp})
+      env.info("FF task waypoint combo:")
+      self:I({wptask=taskswp})
       
     end
   end

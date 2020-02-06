@@ -19,6 +19,8 @@
 do -- UserFlag
 
   --- @type USERFLAG
+  -- @field #string ClassName Name of the class
+  -- @field #string UserFlagName Name of the flag.
   -- @extends Core.Base#BASE
 
 
@@ -30,7 +32,8 @@ do -- UserFlag
   -- 
   -- @field #USERFLAG
   USERFLAG = {
-    ClassName = "USERFLAG",
+    ClassName    = "USERFLAG",
+    UserFlagName = nil,
   }
   
   --- USERFLAG Constructor.
@@ -46,6 +49,12 @@ do -- UserFlag
     return self
   end
 
+  --- Get the userflag name.
+  -- @param #USERFLAG self
+  -- @return #string Name of the user flag.
+  function USERFLAG:GetName()    
+    return self.UserFlagName
+  end  
 
   --- Set the userflag to a given Number.
   -- @param #USERFLAG self

@@ -75,11 +75,19 @@ TANKERGROUP = {
 -- @field #number Tstop Time the mission is stopped.
 -- @field #number Tsopped Time the mission was stopped.
 
+--- Mission status.
+-- @type TANKERGROUP.MissionStatus
+-- @field #string SCHEDULED Task is scheduled.
+-- @field #string EXECUTING Task is being executed.
+-- @field #string ACCOMPLISHED Task is accomplished.
+TANKERGROUP.MissionStatus={
+  SCHEDULED="scheduled",
+  EXECUTING="executing",
+  ACCOMPLISHED="accomplished",
+}
 --- TANKERGROUP class version.
 -- @field #string version
 TANKERGROUP.version="0.0.1"
-
-_TANKERGROUPS={}
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -118,20 +126,17 @@ function TANKERGROUP:New(groupname)
   
   -- Add FSM transitions.
   --                 From State     -->     Event     -->          To State
-  --self:AddTransition("*",                 "TankerState",          "*")              -- Tanker is on station and ready to refuel.
+  self:AddTransition("*",                 "TankerState",          "*")              -- Tanker is on station and ready to refuel.
   self:AddTransition("*",                 "OnStation",            "Ready2Refuel")   -- Tanker is on station and ready to refuel.
   self:AddTransition("*",                 "MissionStart",         "*")              -- Tanker is on station and ready to refuel.  
   
   
   -- Scheduler to update the status.
-  self.Statusupdater=SCHEDULER:New(self, TANKERGROUP.TankerState, {self}, 1, 5)
+  --self.Statusupdater=SCHEDULER:New(self, TANKERGROUP.TankerState, {self}, 1, 5)
   
   -- Call status update.
   -- TODO: WARNING, if the call is delayed, it is NOT executed!
-  --self:__TankerState(5)
-  
-  --_TANKERGROUPS[groupname]=self
-  --table.insert(_TANKERGROUPS, self)
+  self:__TankerState(-5)
   
   self:Start()
   
@@ -189,6 +194,9 @@ function TANKERGROUP:AddMission(Zone, Altitude, Distance, Heading, SpeedOrbit, C
   mission.Tadded=Tnow
   mission.Tstart=Tstart
   mission.Tstop=Tstop
+  if Tstop then
+    mission.duration=mission.Tstop-mission.Tstart
+  end
   mission.tid=nil
 
   -- Add mission to queue.
@@ -211,7 +219,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function TANKERGROUP:TankerState(From, Event, To)
+function TANKERGROUP:onafterTankerState(From, Event, To)
 
   -- First call flight status.
   --self:GetParent(self).onafterFlightStatus(self, From, Event, To)
@@ -240,7 +248,7 @@ function TANKERGROUP:TankerState(From, Event, To)
   self:I(self.lid..text)
   
   -- Nest status update in 30 sec.
-  --self:__TankerState(0.5)
+  self:__TankerState(-30)
 end
 
 --- On after "MissionStart" event.
@@ -275,6 +283,9 @@ function TANKERGROUP:onafterMissionStart(From, Event, To, Mission)
   
   -- Set current mission.
   self.currentmission=Mission
+  
+  -- Set Tstarted time stamp.
+  self.currentmission.Tstarted=timer.getAbsTime()
 
   -- Route flight to mission zone.
   self:RouteToMission(Mission, delay)
