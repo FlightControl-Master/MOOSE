@@ -222,3 +222,7 @@ _gsdata_/
 .gitignore
 Moose Test Missions/MOOSE_Test_Template.miz
 Moose Development/Moose/.vscode/launch.json
+MooseCodeWS.code-workspace
+.gitignore
+.gitignore
+/.gitignore
