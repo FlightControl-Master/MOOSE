@@ -614,8 +614,8 @@ end
 --- Add an *enroute* task to attack targets in a certain **cicular** zone.
 -- @param #FLIGHTGROUP self
 -- @param Core.Zone#ZONE_RADIUS ZoneRadius The circular zone, where to engage targets.
--- @param #table TargetTypes (Optional) The target types, passed as a table, i.e. mind the cirly brackets {}.
--- @param #number Priority (Optional) Priority.
+-- @param #table TargetTypes (Optional) The target types, passed as a table, i.e. mind the cirly brackets {}. Default {"Air"}.
+-- @param #number Priority (Optional) Priority. Default 0.
 function FLIGHTGROUP:AddTaskEnrouteEngageTargetsInZone(ZoneRadius, TargetTypes, Priority)
   local Task=self.group:EnRouteTaskEngageTargetsInZone(ZoneRadius:GetVec2(), ZoneRadius:GetRadius(), TargetTypes, Priority)
   self:AddTaskEnroute(Task)
@@ -969,6 +969,55 @@ function FLIGHTGROUP:StartUncontrolled(delay)
 
   return self
 end
+
+--- Set DCS task.
+-- @param #FLIGHTGROUP self
+-- @param #table DCSTask DCS task structure.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetTask(DCSTask)
+  if self:IsAlive() then
+    self.group:SetTask(DCSTask, 1)
+    local text=string.format("SETTING Task %s", tostring(DCSTask.id))
+    if tostring(DCSTask.id)=="ComboTask" then
+      for i,task in pairs(DCSTask.params.tasks) do
+        text=text..string.format("\n[%d] %s", i, tostring(task.id))
+      end
+    end
+    self:I(self.lid..text)    
+  end
+  return self
+end
+
+--- Push DCS task.
+-- @param #FLIGHTGROUP self
+-- @param #table DCSTask DCS task structure.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:PushTask(DCSTask)
+  if self:IsAlive() then
+    self.group:PushTask(DCSTask, 1)
+    local text=string.format("PUSHING Task %s", tostring(DCSTask.id))
+    if tostring(DCSTask.id)=="ComboTask" then
+      for i,task in pairs(DCSTask.params.tasks) do
+        text=text..string.format("\n[%d] %s", i, tostring(task.id))
+      end
+    end
+    self:I(self.lid..text)
+  end
+  return self
+end
+
+--- Push DCS task.
+-- @param #FLIGHTGROUP self
+-- @param #table DCSTask DCS task structure.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:ClearTasks()
+  if self:IsAlive() then
+    self.group:ClearTasks()
+    self:I(self.lid..string.format("CLEARING Tasks"))
+  end
+  return self
+end
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start & Status
@@ -1877,7 +1926,7 @@ function FLIGHTGROUP:onafterFlightAirborne(From, Event, To, airbase)
   end
   
   if task then
-    self.group:PushTask(task, 0.1)
+    self:PushTask(task, 0.1)
   end
   
   -- Update queue.
@@ -1944,6 +1993,7 @@ function FLIGHTGROUP:onafterFlightDead(From, Event, To)
 
   -- Delete waypoints so they are re-initialized at the next spawn.
   self.waypoints=nil
+  self.groupinitialized=false
   
   -- Remove flight from all FC queues.
   if self.flightcontrol then
@@ -1952,7 +2002,7 @@ function FLIGHTGROUP:onafterFlightDead(From, Event, To)
   end  
   
   -- Stop
-  self:__Stop(0.5)
+  self:Stop()
 end
 
 
@@ -2078,11 +2128,22 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
   local hb=self.homebase and self.homebase:GetName() or "unknown"
   local db=self.destbase and self.destbase:GetName() or "unknown"
   self:I(self.lid..string.format("Updating route for WP>=%d/%d (%d) homebase=%s destination=%s", n, #wp, #self.waypoints, hb, db))
+
+
+
   
   if #wp>0 then
 
     -- Route group to all defined waypoints remaining.
     self.group:Route(wp, 1)
+
+    if self.taskenroute then
+      for _,task in pairs(self.taskenroute) do
+        self:I(self.lid..string.format("Pushing enroute task %s", tostring(task.id)))
+        self:PushTask(task, 1.1)
+        --table.insert(taskswp, task)
+      end
+    end
     
   else
   
@@ -2157,7 +2218,17 @@ function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
   self:I(self.lid..text)
   
 
+  -- Tasks at this waypoints.
   local taskswp={}
+
+  -- Enroute tasks
+  if self.taskenroute and false then
+    for _,taskE in pairs(self.taskenroute) do
+      self:I(self.lid..string.format("Adding enroute task %s", tostring(taskE.id)))
+      table.insert(taskswp, taskE)
+    end
+  end
+    
   for _,task in pairs(tasks) do
     local Task=task --#FLIGHTGROUP.Task          
     
@@ -2168,9 +2239,9 @@ function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
     local TaskCondition=self.group:TaskCondition(nil, Task.stopflag:GetName(), 1, nil, Task.duration)
     
     -- Controlled task.      
-    table.insert(taskswp, self.group:TaskControlled(Task.dcstask, TaskCondition))
+    --table.insert(taskswp, self.group:TaskControlled(Task.dcstask, TaskCondition))
     
-     --table.insert(taskswp, Task.dcstask)
+     table.insert(taskswp, Task.dcstask)
     
     -- Task done.
     table.insert(taskswp, self.group:TaskFunction("FLIGHTGROUP._TaskDone", self, Task))
@@ -2184,7 +2255,7 @@ function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
   else
     -- Waypoint task combo.
     if #taskswp>0 then
-      self.group:SetTask(self.group:TaskCombo(taskswp))
+      self:SetTask(self.group:TaskCombo(taskswp))
     end    
   end
   
@@ -2273,7 +2344,7 @@ function FLIGHTGROUP:onafterOrbit(From, Event, To, Coord, Altitude, Speed)
   
   local TaskOrbit=self.group:TaskOrbit(Coord, Altitude, UTILS.KmphToMps(Speed))
 
-  self.group:SetTask(TaskOrbit)
+  self:SetTask(TaskOrbit)
 end
 
 --- On before "Hold" event.
@@ -2554,7 +2625,7 @@ function FLIGHTGROUP:onafterTaskExecute(From, Event, To, Task)
     self:I({task=TaskControlled})
   
     -- Set task for group.
-    self.group:SetTask(TaskControlled, 1)
+    self:SetTask(TaskControlled, 1)
     
   end
   
@@ -2968,7 +3039,7 @@ function FLIGHTGROUP:RouteOrbit(CoordOrbit, Speed, Altitude, CoordRaceTrack)
 
   local TaskCombo=self.group:TaskControlled(TaskRoute, TaskOrbit)
 
-  self.group:SetTask(TaskCombo, 1)
+  self:SetTask(TaskCombo, 1)
 
   -- Route the group or this will not work.
   --self.group:Route(wp, 1)
@@ -3356,10 +3427,6 @@ function FLIGHTGROUP:_UpdateWaypointTasks()
   
       -- Tasks of this waypoint
       local taskswp={}
-      
-      if self.taskenroute then
-        table.insert(taskswp, self.taskenroute[1])
-      end
     
       -- At each waypoint report passing.
       local TaskPassingWaypoint=self.group:TaskFunction("FLIGHTGROUP._PassingWaypoint", self, i)      

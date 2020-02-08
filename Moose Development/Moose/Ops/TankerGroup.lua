@@ -107,21 +107,23 @@ TANKERGROUP.version="0.0.1"
 -- @return #TANKERGROUP self
 function TANKERGROUP:New(groupname)
 
+  -- Create flight group.
   local fg=FLIGHTGROUP:New(groupname, false)
 
   -- Inherit everything from TANKERGROUP class.
   local self=BASE:Inherit(self, fg) -- #TANKERGROUP
     
+  -- Init mission counter.
   self.missioncounter=0
   
-  self.lid=string.format("TANKERGROUP %s | ", groupname)
+  -- Log id.
+  self.lid=string.format("FLIGHTGROUP %s (TANKER) | ", groupname)
   
   if false then
     BASE:TraceOn()
     BASE:TraceLevel(3)
     BASE:TraceClass(self.ClassName)
     BASE:TraceClass("FLIGHTGROUP")
-    --BASE:TraceAll(true)
   end
   
   -- Add FSM transitions.
@@ -130,14 +132,11 @@ function TANKERGROUP:New(groupname)
   self:AddTransition("*",                 "OnStation",            "Ready2Refuel")   -- Tanker is on station and ready to refuel.
   self:AddTransition("*",                 "MissionStart",         "*")              -- Tanker is on station and ready to refuel.  
   
-  
-  -- Scheduler to update the status.
-  --self.Statusupdater=SCHEDULER:New(self, TANKERGROUP.TankerState, {self}, 1, 5)
-  
+
   -- Call status update.
-  -- TODO: WARNING, if the call is delayed, it is NOT executed!
   self:__TankerState(-5)
   
+  -- Start FSM.
   self:Start()
   
   return self

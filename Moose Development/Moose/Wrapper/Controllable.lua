@@ -1524,8 +1524,8 @@ end
 -- @param #CONTROLLABLE self
 -- @param DCS#Vec2 Vec2 2D-coordinates of the zone.
 -- @param DCS#Distance Radius Radius of the zone.
--- @param DCS#AttributeNameArray TargetTypes Array of target categories allowed to engage.
--- @param #number Priority All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first.
+-- @param DCS#AttributeNameArray (Optional) TargetTypes Array of target categories allowed to engage. Default {"Air"}.
+-- @param #number Priority (Optional) All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. Default 0.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:EnRouteTaskEngageTargetsInZone( Vec2, Radius, TargetTypes, Priority )
   self:F2( { self.ControllableName, Vec2, Radius, TargetTypes, Priority } )
@@ -1545,8 +1545,8 @@ function CONTROLLABLE:EnRouteTaskEngageTargetsInZone( Vec2, Radius, TargetTypes,
     params = {
       point = Vec2,
       zoneRadius = Radius,
-      targetTypes = TargetTypes,
-      priority = Priority
+      targetTypes = TargetTypes or {"Air"},
+      priority = Priority or 0
     }
   }
 
