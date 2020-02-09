@@ -4894,8 +4894,14 @@ function WAREHOUSE:onafterChangeCountry(From, Event, To, Country)
   self.queue={}
 
   -- Airbase could have been captured before and already belongs to the new coalition.
-  local airbase=AIRBASE:FindByName(self.airbasename)
-  local airbasecoaltion=airbase:GetCoalition()
+  -- Check if Warehouse has a arbiase atthached
+  local airbasecoaltion
+  if self.airbase ~= nil then
+    local airbase=AIRBASE:FindByName(self.airbasename)
+    airbasecoaltion=airbase:GetCoalition() 
+  else -- Warehouse has no airbase attached so just keep whatever, self.airbase will still be nil since CoalitionNew will not be nil if Warehouse have a airbse attacjed.
+    airbasecoaltion = nil  
+  end
 
   if CoalitionNew==airbasecoaltion then
     -- Airbase already owned by the coalition that captured the warehouse. Airbase can be used by this warehouse.
