@@ -61,6 +61,9 @@
 -- @field Core.Set#SET_ZONE checkzones Set of zones.
 -- @field Core.Set#SET_ZONE inzones Set of zones in which the group is currently in.
 -- @field #boolean groupinitialized If true, group parameters were initialized.
+-- @field Core.Radio#BEACON beacon The beacon object.
+-- @field #number tacanchannel TACAN channel.
+-- @field #string tacanmorse TACAN morse code.
 -- @extends Core.Fsm#FSM
 
 --- *To invent an airplane is nothing. To build one is something. To fly is everything.* -- Otto Lilienthal
@@ -133,6 +136,8 @@
 -- 
 -- ## 7. Waypoint Tasks
 -- 
+-- ## 8. Enroute Tasks
+-- 
 --  
 --
 --
@@ -180,6 +185,8 @@ FLIGHTGROUP = {
   checkzones         =   nil,
   inzones            =   nil,
   groupinitialized   =   nil,
+  beacon             =   nil,
+  
 }
 
 
@@ -1006,7 +1013,7 @@ function FLIGHTGROUP:PushTask(DCSTask)
   return self
 end
 
---- Push DCS task.
+--- Clear DCS tasks.
 -- @param #FLIGHTGROUP self
 -- @param #table DCSTask DCS task structure.
 -- @return #FLIGHTGROUP self
@@ -1018,6 +1025,36 @@ function FLIGHTGROUP:ClearTasks()
   return self
 end
 
+
+--- Route group along waypoints. Enroute tasks are also applied.
+-- @param #FLIGHTGROUP self
+-- @param #table waypoints Table of waypoints.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:Route(waypoints)
+  if self:IsAlive() then
+
+    -- DCS task combo.
+    local Tasks={}
+    
+    -- Enroute tasks.
+    if self.taskenroute then
+      for _,TaskEnroute in pairs(self.taskenroute) do
+        table.insert(Tasks, TaskEnroute)
+      end
+    end
+
+    -- Mission (route) task.
+    local TaskRoute=self.group:TaskRoute(waypoints)
+    table.insert(Tasks, TaskRoute)
+    
+    -- TaskCombo of enroute and mission tasks.
+    local TaskCombo=self.group:TaskCombo(Tasks)
+        
+    -- Set tasks.
+    self:SetTask(TaskCombo)
+  end
+  return self
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start & Status
@@ -2135,13 +2172,12 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
   if #wp>0 then
 
     -- Route group to all defined waypoints remaining.
-    self.group:Route(wp, 1)
+    self:Route(wp, 1)
 
     if self.taskenroute then
       for _,task in pairs(self.taskenroute) do
-        self:I(self.lid..string.format("Pushing enroute task %s", tostring(task.id)))
-        self:PushTask(task, 1.1)
-        --table.insert(taskswp, task)
+        --self:I(self.lid..string.format("Pushing enroute task %s", tostring(task.id)))
+        --self:PushTask(task, 1.1)
       end
     end
     
@@ -2224,8 +2260,8 @@ function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
   -- Enroute tasks
   if self.taskenroute and false then
     for _,taskE in pairs(self.taskenroute) do
-      self:I(self.lid..string.format("Adding enroute task %s", tostring(taskE.id)))
-      table.insert(taskswp, taskE)
+      --self:I(self.lid..string.format("Adding enroute task %s", tostring(taskE.id)))
+      --table.insert(taskswp, taskE)
     end
   end
     
@@ -2489,7 +2525,7 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold, S
   if fc then
   
     -- Just route the group. Respawn will happen when going from holding to final.
-    self.group:Route(wp, 1)
+    self:Route(wp, 1)
  
   else 
   
