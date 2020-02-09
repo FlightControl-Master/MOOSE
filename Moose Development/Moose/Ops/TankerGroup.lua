@@ -62,7 +62,8 @@ TANKERGROUP = {
 -- @type TANKERGROUP.Mission
 -- @field #string name Name of the mission.
 -- @field #number mid ID of the mission.
--- @field #number tid ID of the assigned FLIGHTGROUP task.
+-- @field #string status Mission status.
+-- @field Ops.FlightGroup#FLIGHTGROUP.Task task Task of mission.
 -- @field Core.Zone#ZONE zone Mission zone.
 -- @field #number duration Duration of mission.
 -- @field #number altitude Altitude of orbit in meters ASL.
@@ -74,6 +75,7 @@ TANKERGROUP = {
 -- @field #number Tstarted Time the mission was started.
 -- @field #number Tstop Time the mission is stopped.
 -- @field #number Tsopped Time the mission was stopped.
+-- @field #number prio Priority of the mission.
 
 --- Mission status.
 -- @type TANKERGROUP.MissionStatus
@@ -87,7 +89,7 @@ TANKERGROUP.MissionStatus={
 }
 --- TANKERGROUP class version.
 -- @field #string version
-TANKERGROUP.version="0.0.1"
+TANKERGROUP.version="0.0.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -131,6 +133,7 @@ function TANKERGROUP:New(groupname)
   self:AddTransition("*",                 "TankerState",          "*")              -- Tanker is on station and ready to refuel.
   self:AddTransition("*",                 "OnStation",            "Ready2Refuel")   -- Tanker is on station and ready to refuel.
   self:AddTransition("*",                 "MissionStart",         "*")              -- Tanker is on station and ready to refuel.  
+  self:AddTransition("*",                 "MissionAccomplished",  "*")              -- Tanker is on station and ready to refuel.
   
 
   -- Call status update.
@@ -155,9 +158,10 @@ end
 -- @param #number SpeedOrbit Orbit speed in knots. Default is 280 knots.
 -- @param #string ClockStart Time the mission is started, e.g. "05:00" for 5 am. If specified as a #number, it will be relative (in seconds) to the current mission time.
 -- @param #string ClockStop Time the mission is stopped, e.g. "13:00" for 1 pm. If mission could not be started at that time, it will be removed from the queue. If specified as a #number it will be relative (in seconds) to the current mission time.
+-- @param #number Prio Priority of the mission, i.e. a number between 1 and 100. Default 50.
 -- @param #string Name Mission name. Default "Aerial Refueling #00X", where "#00X" is a running mission counter index starting at "#001".
 -- @return #TANKERGROUP.Mission The mission table.
-function TANKERGROUP:AddMission(Zone, Altitude, Distance, Heading, SpeedOrbit, ClockStart, ClockStop, Name)
+function TANKERGROUP:AddMission(Zone, Altitude, Distance, Heading, SpeedOrbit, ClockStart, ClockStop, Prio, Name)
 
   -- Increase mission counter.
   self.missioncounter=self.missioncounter+1
@@ -193,10 +197,12 @@ function TANKERGROUP:AddMission(Zone, Altitude, Distance, Heading, SpeedOrbit, C
   mission.Tadded=Tnow
   mission.Tstart=Tstart
   mission.Tstop=Tstop
+  mission.status=TANKERGROUP.MissionStatus.SCHEDULED
   if Tstop then
     mission.duration=mission.Tstop-mission.Tstart
   end
-  mission.tid=nil
+  mission.prio=Prio or 50
+  mission.task=nil
 
   -- Add mission to queue.
   table.insert(self.Qmissions, mission)
@@ -220,9 +226,6 @@ end
 -- @param #string To To state.
 function TANKERGROUP:onafterTankerState(From, Event, To)
 
-  -- First call flight status.
-  --self:GetParent(self).onafterFlightStatus(self, From, Event, To)
-
   -- FSM state.
   local fsmstate=self:GetState()
 
@@ -244,6 +247,10 @@ function TANKERGROUP:onafterTankerState(From, Event, To)
   
   -- Current status.
   local text=string.format("Tanker Status %s: Mission=%s (%d)", fsmstate, mymission, #self.Qmissions)
+  for i,_mission in pairs(self.Qmissions) do
+    local mission=_mission --#TANKERGROUP.Mission
+    text=text..string.format("\n[%d] %s status=%s", i, tostring(mission.name), tostring(mission.status))
+  end
   self:I(self.lid..text)
   
   -- Nest status update in 30 sec.
@@ -285,9 +292,47 @@ function TANKERGROUP:onafterMissionStart(From, Event, To, Mission)
   
   -- Set Tstarted time stamp.
   self.currentmission.Tstarted=timer.getAbsTime()
+  
+  -- Set mission status.
+  self.currentmission.status=TANKERGROUP.MissionStatus.EXECUTING
 
   -- Route flight to mission zone.
   self:RouteToMission(Mission, delay)
+
+end
+
+--- On after "TaskDone" event.
+-- @param #TANKERGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.FlightGroup#FLIGHTGROUP.Task Task.
+function TANKERGROUP:onafterTaskDone(From, Event, To, Task)
+
+  -- First call flight status.
+  self:GetParent(self).onafterTaskDone(self, From, Event, To, Task)
+  
+  if self.currentmission then
+  
+    local missiontask=self.currentmission.task
+    
+    if missiontask.id==Task.id then
+      self:MissionAccomplished(self.currentmission)
+    end
+    
+  end  
+end
+
+--- On after "MissionAccomplished" event.
+-- @param #TANKERGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #TANKERGROUP.Mission Mission
+function TANKERGROUP:onafterMissionAccomplished(From, Event, To, Mission)
+
+  Mission.status=TANKERGROUP.MissionStatus.ACCOMPLISHED
+  self.currentmission=nil
 
 end
 
@@ -300,22 +345,40 @@ end
 -- @return #TANKERGROUP.Mission Next mission or *nil*.
 function TANKERGROUP:_GetNextMission()
 
-  if #self.Qmissions==0 then
+  -- Number of missions.
+  local Nmissions=#self.Qmissions
+
+  -- Treat special cases.
+  if Nmissions==0 then
     return nil
   end
 
-  --TODO: Sort wrt start time and priority.
+  -- Sort results table wrt times they have already been engaged.
+  local function _sort(a, b)
+    local taskA=a --#TANKERGROUP.Mission
+    local taskB=b --#TANKERGROUP.Mission
+    return (taskA.Tstart<taskB.Tstart) or (taskA.Tstart==taskB.Tstart and taskA.prio<taskB.prio)
+  end
+  table.sort(self.Qmissions, _sort)
+  
+  -- Current time.
+  local time=timer.getAbsTime()
 
-  local mission=self.Qmissions[1]
+  -- Look for first task that is not accomplished.
+  for _,_mission in pairs(self.Qmissions) do
+    local mission=_mission --#TANKERGROUP.Mission
+    if mission.status==TANKERGROUP.MissionStatus.SCHEDULED and time>=mission.Tstart then
+      return mission
+    end
+  end
 
-  return mission
+  return nil
 end
 
 --- Route group to mission. Also sets the 
 -- @param #TANKERGROUP self
 -- @param #TANKERGROUP.Mission mission The mission table.
 -- @param #number delay Delay in seconds.
--- @return #TANKERGROUP.Mission Next mission or *nil*.
 function TANKERGROUP:RouteToMission(mission, delay)
 
   if delay and delay>0 then
@@ -339,7 +402,8 @@ function TANKERGROUP:RouteToMission(mission, delay)
     local taskorbit=self.group:TaskOrbit(Coordinate, mission.altitude, mission.speed, CoordRaceTrack)
     
     -- Add waypoint task.
-    self:AddTaskWaypoint(taskorbit, #self.waypoints, mission.name, 10, mission.duration)
+    -- TODO: find last AIR waypoint! We dont want this at landing waypoints.   
+    mission.task=self:AddTaskWaypoint(taskorbit, #self.waypoints, mission.name, 10, mission.duration)
   end
 end
 

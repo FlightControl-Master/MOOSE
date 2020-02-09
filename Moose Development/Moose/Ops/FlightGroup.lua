@@ -62,8 +62,14 @@
 -- @field Core.Set#SET_ZONE inzones Set of zones in which the group is currently in.
 -- @field #boolean groupinitialized If true, group parameters were initialized.
 -- @field Core.Radio#BEACON beacon The beacon object.
--- @field #number tacanchannel TACAN channel.
--- @field #string tacanmorse TACAN morse code.
+-- @field #number TACANchannel TACAN channel.
+-- @field #string TACANmode TACAN mode, i.e. "Y" (or "X").
+-- @field #string TACANmorse TACAN morse code.
+-- @field #number RadioFreq Radio frequency in MHz.
+-- @field #number RadioModu Radio modulation `radio.modulation.AM` or `radio.modulation.FM`.
+-- @field #number CallsignName Call sign name.
+-- @field #number CallsignNumber Call sign number.
+-- @field #boolean EPLRS If true, turn EPLRS data link on.
 -- @extends Core.Fsm#FSM
 
 --- *To invent an airplane is nothing. To build one is something. To fly is everything.* -- Otto Lilienthal
@@ -317,7 +323,7 @@ FLIGHTGROUP.TaskType={
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.2.5"
+FLIGHTGROUP.version="0.2.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -524,7 +530,7 @@ end
 -- @param #string description Brief text describing the task, e.g. "Attack SAM".
 -- @param #number prio Priority of the task.
 -- @param #number duration Duration before task is cancelled in seconds counted after task started. Default never.
--- @return #number Task ID.
+-- @return #FLIGHTGROUP.Task The task structure.
 function FLIGHTGROUP:AddTask(task, clock, description, prio, duration)
 
   -- Increase counter.
@@ -564,7 +570,7 @@ function FLIGHTGROUP:AddTask(task, clock, description, prio, duration)
   -- Add to table.
   table.insert(self.taskqueue, newtask)
 
-  return self.taskcounter
+  return newtask
 end
 
 --- Add a *waypoint* task.
@@ -574,7 +580,7 @@ end
 -- @param #string description Brief text describing the task, e.g. "Attack SAM". 
 -- @param #number prio Priority of the task. Number between 1 and 100. Default is 50.
 -- @param #number duration Duration before task is cancelled in seconds counted after task started. Default never.
--- @return #number Task ID.
+-- @return #FLIGHTGROUP.Task The task structure.
 function FLIGHTGROUP:AddTaskWaypoint(task, waypointindex, description, prio, duration)
 
   -- Increase counter.
@@ -605,7 +611,7 @@ function FLIGHTGROUP:AddTaskWaypoint(task, waypointindex, description, prio, dur
   -- Update route.
   self:__UpdateRoute(-1)
 
-  return self.taskcounter
+  return newtask
 end
 
 --- Add an *enroute* task.
@@ -2275,9 +2281,9 @@ function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
     local TaskCondition=self.group:TaskCondition(nil, Task.stopflag:GetName(), 1, nil, Task.duration)
     
     -- Controlled task.      
-    --table.insert(taskswp, self.group:TaskControlled(Task.dcstask, TaskCondition))
+    table.insert(taskswp, self.group:TaskControlled(Task.dcstask, TaskCondition))
     
-     table.insert(taskswp, Task.dcstask)
+    --table.insert(taskswp, Task.dcstask)
     
     -- Task done.
     table.insert(taskswp, self.group:TaskFunction("FLIGHTGROUP._TaskDone", self, Task))
@@ -2734,9 +2740,8 @@ function FLIGHTGROUP:onafterTaskDone(From, Event, To, Task)
   -- Task status done.
   Task.status=FLIGHTGROUP.TaskStatus.ACCOMPLISHED
   
-  -- Update route.
-  -- TODO: Is this really necessary?
-  --self:__UpdateRoute(-1)
+  -- Update route. This is necessary because of the route task beeing overwritten. But we want to fly to the remaining waypoints.
+  self:__UpdateRoute(-1)
   
 end
 
@@ -3559,6 +3564,7 @@ end
 function FLIGHTGROUP:AddWaypointAir(coordinate, wpnumber, speed)
 
   -- Waypoint number.
+  --TODO: by default add after last AIR waypoint! Last WP could be landing...
   wpnumber=wpnumber or #self.waypoints+1
   
   -- Speed in knots.
