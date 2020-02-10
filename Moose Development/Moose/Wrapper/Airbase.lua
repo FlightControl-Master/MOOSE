@@ -16,6 +16,8 @@
 -- @field #string ClassName Name of the class, i.e. "AIRBASE".
 -- @field #table CategoryName Names of airbase categories.
 -- @field #string AirbaseName Name of the airbase.
+-- @field #number AirbaseCategory Category.
+-- @field #string AirbaseCategoryName CategoryName.
 -- @field Core.Zone#ZONE_RADIUS Zone around the airbase.
 -- @field #number activerwyno Active runway number (forced).
 -- @field #table parking Table of parking spots.
@@ -62,6 +64,8 @@ AIRBASE = {
     },
   AirbaseName=nil,
   AirbaseZone=nil,
+  AirbaseCategory=nil,
+  AirbaseCategoryName=nil,
   activerwyno=nil,
   parking={},
   }
@@ -404,7 +408,7 @@ function AIRBASE:FindByID(id)
   for name,_airbase in pairs(_DATABASE.AIRBASES) do
     local airbase=_airbase --#AIRBASE
 
-    local aid=tonumber(airbase:GetID())
+    local aid=airbase:GetID()
 
     if aid==id then
       return airbase
@@ -423,6 +427,24 @@ function AIRBASE:GetDCSObject()
 
   if DCSAirbase then
     return DCSAirbase
+  end
+
+  return nil
+end
+
+--- Get ID of the airbase.
+-- @param #AIRBASE self
+-- @return #number The airbase ID.
+function AIRBASE:GetID()
+  local DCSAirbase = Airbase.getByName( self.AirbaseName )
+
+  if DCSAirbase then
+    local id=tonumber(DCSAirbase:getID())
+    if self.AirbaseCategory==Airbase.Category.SHIP then
+      return -id
+    else
+      return id
+    end
   end
 
   return nil

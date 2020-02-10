@@ -402,16 +402,16 @@ function FLIGHTGROUP:New(groupname, autostart)
   self:AddTransition("*",             "UpdateRoute",       "*")           -- Update route of group. Only if airborne.
   self:AddTransition("*",             "Respawn",           "*")           -- Respawn group.
   
-  self:AddTransition("*",             "RTB",               "Returning")   -- Group is returning to base.
-  self:AddTransition("*",             "Orbit",             "Orbiting")    -- Group is is orbiting.
-  self:AddTransition("*",             "Hold",              "Inbound")     -- Group is inbound to holding pattern.
-  self:AddTransition("Inbound",       "Holding",           "Holding")     -- Group is holding position.
+  self:AddTransition("*",             "RTB",               "Inbound")     -- Group is returning to destination base.
+  self:AddTransition("*",             "RTZ",               "Inbound")     -- Group is returning to destination zone.  
+  self:AddTransition("Inbound",       "Holding",           "Holding")     -- Group is in holding pattern.
   self:AddTransition("*",             "Refuel",            "Going2Refuel")  -- Group is send to refuel at a tanker.
   self:AddTransition("Going2Refuel",  "Refueling",         "Refueling")   -- Group is send to refuel at a tanker.
   self:AddTransition("*",             "LandAt",            "LandingAt")   -- Helo group is ordered to land at a specific point.
   self:AddTransition("LandingAt",     "LandedAt",          "LandedAt")    -- Helo group is landed at a specific point.
 
   self:AddTransition("*",             "PassingWaypoint",   "*")           -- Group passed a waypoint.
+  self:AddTransition("*",             "Orbit",             "Orbiting")    -- Group is is orbiting.  
   
   self:AddTransition("*",             "FuelLow",           "*")          -- Fuel state of group is low. Default ~25%.
   self:AddTransition("*",             "FuelCritical",      "*")          -- Fuel state of group is critical. Default ~10%.
@@ -1205,7 +1205,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
 
   -- Element status.
   text="Elements:"
-  local fuelmin=999999
+  local fuelmin=math.huge
   for i,_element in pairs(self.elements) do
     local element=_element --#FLIGHTGROUP.Element
     
@@ -2128,17 +2128,8 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
   local current=self.group:GetCoordinate():WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, 350, true, nil, {}, "Current")
   table.insert(wp, current)
 
-  -- Set "remaining" waypoits.
-  for i=n, #self.waypoints do
-    local w=self.waypoints[i]
-    if self.Debug then
-      --self:GetWaypointCoordinate(w):MarkToAll(string.format("UpdateRoute Waypoint %d", i))
-    end
-    self:I({i=i, waypoint=w})
-    table.insert(wp, w)
-  end
   
-  
+  --[[
   if self.destbase and #wp>0 and _DATABASE:GetFlightControl(self.destbase:GetName()) then
   
     -- Task to hold.
@@ -2156,36 +2147,18 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
     -- Add overhead to waypoints.
     table.insert(wp, #wp, wpoverhead)
   end
-
-  -- Looks like waypoint tasks are not executed if the final waypoint is in air. Need to add another dummy waypoint to make it work properly.
-  local lastwp=wp[#wp]
-  if self:IsLandingAir(lastwp) then
-    local tasks=self:GetTasksWaypoint(#wp)
-    if tasks and #tasks>0 then
-      --env.info("FF adding dummy waypoint")
-      --table.insert(wp, current)
-    end
-  end  
+  ]]
   
   -- Debug info.
   local hb=self.homebase and self.homebase:GetName() or "unknown"
   local db=self.destbase and self.destbase:GetName() or "unknown"
   self:I(self.lid..string.format("Updating route for WP>=%d/%d (%d) homebase=%s destination=%s", n, #wp, #self.waypoints, hb, db))
 
-
-
   
   if #wp>0 then
 
     -- Route group to all defined waypoints remaining.
     self:Route(wp, 1)
-
-    if self.taskenroute then
-      for _,task in pairs(self.taskenroute) do
-        --self:I(self.lid..string.format("Pushing enroute task %s", tostring(task.id)))
-        --self:PushTask(task, 1.1)
-      end
-    end
     
   else
   
@@ -2349,24 +2322,6 @@ function FLIGHTGROUP:onafterFuelCritical(From, Event, To)
   end
 end
 
-
---- On after "RTB" event. Send flightgroup back to base.
--- @param #FLIGHTGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Wrapper.Airbase#AIRBASE airbase The base to return to.
-function FLIGHTGROUP:onafterRTB(From, Event, To, airbase)
-
-  -- Debug message.
-  local text=string.format("Flight group returning to airbase %s.", airbase:GetName())
-  MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
-  self:I(self.lid..text)
-
-  -- Route helo back home. It is respawned! But this is the only way to ensure that it actually lands at the airbase.
-  self:RouteRTB(airbase)
-end
-
 --- On after "Orbit" event.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
@@ -2441,7 +2396,7 @@ function FLIGHTGROUP:onbeforeHold(From, Event, To, airbase, SpeedTo, SpeedHold)
   return allowed
 end
 
---- On after "Hold" event. Order flight to hold at an airbase and wait for signal to land.
+--- On after "RTB" event. Order flight to hold at an airbase and wait for signal to land.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -2450,7 +2405,7 @@ end
 -- @param #number SpeedTo Speed used for travelling from current position to holding point in knots. Default 350 kts.
 -- @param #number SpeedHold Holding speed in knots. Default 250 kts.
 -- @param #number SpeedLand Landing speed in knots. Default 170 kts.
-function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold, SpeedLand)
+function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, SpeedLand)
   
   -- Defaults:
   SpeedTo=SpeedTo or 350
@@ -2464,6 +2419,7 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold, S
  
   
   -- Holding points.
+  local c0=self.group:GetCoordinate()
   local p0=airbase:GetZone():GetRandomCoordinate():SetAltitude(UTILS.FeetToMeters(6000))
   local p1=nil
   local wpap=nil
@@ -2489,7 +2445,7 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold, S
     self.flightcontrol:_AddFlightToInboundQueue(self)
   end
   
-   -- Altitude above ground for a glide slope of 3ï¿½.
+   -- Altitude above ground for a glide slope of 3°.
   local alpha=math.rad(3)
   local x1=UTILS.NMToMeters(10)
   local x2=UTILS.NMToMeters(5)
@@ -2516,8 +2472,8 @@ function FLIGHTGROUP:onafterHold(From, Event, To, airbase, SpeedTo, SpeedHold, S
   
   -- Waypoints.
   local wp={}
-  wp[#wp+1]=self.group:GetCoordinate():WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {}, "Current Pos")
-  wp[#wp+1]=                        p0:WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {TaskArrived, TaskControlled}, "Holding Point")
+  wp[#wp+1]=c0:WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {}, "Current Pos")
+  wp[#wp+1]=p0:WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint, UTILS.KnotsToKmph(SpeedTo), true , nil, {TaskArrived, TaskControlled}, "Holding Point")
   
    -- Approach point: 10 NN in direction of runway.
   local papp=airbase:GetCoordinate():Translate(x1, runway.heading-180):SetAltitude(h1)
@@ -2589,15 +2545,6 @@ function FLIGHTGROUP:onafterLandAt(From, Event, To, Coordinate, Duration)
   -- Add task with high priority.
   self:AddTask(task, 1, "Task_Land_At", 0)
   
-end
-
---- Create a DCS task sandwitch.
--- @param #FLIGHTGROUP self
--- @param #FLIGHTGROUP.Task Task The task.
--- @param #table DCS task sandwitch
-function FLIGHTGROUP:_GetTaskSandwitch(Task)
-
-
 end
 
 --- On after TaskExecute event.
@@ -2801,6 +2748,10 @@ end
 -- @return #FLIGHTGROUP.Task The next task in line or `nil`.
 function FLIGHTGROUP:GetTask()
 
+  if self.taskpaused then
+    return self.taskpaused
+  end
+
   if #self.taskqueue==0 then
     return nil
   else
@@ -2954,9 +2905,13 @@ function FLIGHTGROUP._PassingWaypoint(group, flightgroup, i)
   -- Passing Waypoint event.
   flightgroup:PassingWaypoint(i, final)
 
-  -- If final waypoint reached, do route all over again.
-  if i==final and final>1 then
-    --TODO: final waypoint reached! what next?
+  -- If final waypoint reached, RTB.
+  if i==final then
+    if flightgroup.destbase then
+      flightgroup:__RTB(-10)
+    elseif flightgroup.destzone then
+      flightgroup:__RTZ(-10)
+    end
   end
 end
 
@@ -2982,69 +2937,6 @@ function FLIGHTGROUP._DestinationOverhead(group, flightgroup, destination)
   -- Tell the flight to hold.
   -- WARNING: This needs to be delayed or we get a CTD!
   flightgroup:__Hold(-1, destination)
-
-end
-
-
---- Route flight group back to base.
--- @param #FLIGHTGROUP self
--- @param Wrapper.Airbase#AIRBASE RTBAirbase
--- @param #number Speed Speed in km/h. Default is 80% of max possible speed.
--- @param #number Altitude Altitude in meters. Default is current alitude.
--- @param #table TaskOverhead Task to execute when reaching overhead waypoint.
-function FLIGHTGROUP:RouteRTB(RTBAirbase, Speed, Altitude, TaskOverhead)
-
-  -- If speed is not given take 80% of max speed.
-  Speed=Speed or self.speedmax*0.8
-
-  -- Curent (from) waypoint.
-  local coord=self.group:GetCoordinate()
-
-  if Altitude then
-    coord:SetAltitude(Altitude)
-  end
-
-  -- Current coordinate.
-  local PointFrom=coord:WaypointAirTurningPoint(nil, Speed, {}, "Current")
-
-  -- Overhead pass.
-  local PointOverhead=RTBAirbase:GetCoordinate():SetAltitude(Altitude or coord.y):WaypointAirTurningPoint(nil, Speed, TaskOverhead, "Overhead Pass")
-
-  -- Landing waypoint.
-  local PointLanding=RTBAirbase:GetCoordinate():SetAltitude(20):WaypointAirLanding(Speed, RTBAirbase, {}, "Landing")
-
-  -- Waypoint table.
-  local Points={PointFrom, PointOverhead, PointLanding}
-
-  -- Get group template.
-  local Template=self.group:GetTemplate()
-
-  -- Set route points.
-  Template.route.points=Points
-
-  -- Respawn the group.
-  --self.group=self.group:Respawn(Template, true)
-  
-  local TaskRTB=self.group:TaskRoute(Points)
-  
-  --[[
-  self.taskcounter=self.taskcounter+1
-  
-  local task={} --#FLIGHTGROUP.Task
-  task.dcstask=TaskRTB
-  task.description="RTB"
-  task.id=self.taskcounter
-  task.type=FLIGHTGROUP.TaskType.SCHEDULED
-  task.prio=0
-  task.time=timer.getAbsTime()
-  ]]
-  
-  self:AddTask("RTB", TaskRTB, 0)
-  
-  self:TaskCancel()
-
-  -- Route the group or this will not work.
-  --self.group:Route(Points, 1)
 
 end
 
@@ -3543,6 +3435,12 @@ function FLIGHTGROUP:InitWaypoints(waypoints)
   -- Get home and destination airbases from waypoints.
   self.homebase=self:GetHomebaseFromWaypoints()
   self.destbase=self:GetDestinationFromWaypoints()
+  
+  if self.destbase then
+    table.remove(self.waypoints, #self.waypoints)
+  else
+    self.destbase=self.homebase
+  end
   
   -- Debug info.
   self:I(self.lid..string.format("Initializing %d waypoints. Homebase %s ==> %s Destination", #self.waypoints, self.homebase and self.homebase:GetName() or "unknown", self.destbase and self.destbase:GetName() or "uknown"))

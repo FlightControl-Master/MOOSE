@@ -255,8 +255,18 @@ end
 function DATABASE:AddAirbase( AirbaseName )
 
   if not self.AIRBASES[AirbaseName] then
-    self.AIRBASES[AirbaseName] = AIRBASE:Register( AirbaseName )
-    self:I(string.format("Adding airbase %s with %d parking spots", tostring(self.AIRBASES[AirbaseName].AirbaseName), tonumber(#self.AIRBASES[AirbaseName].parking)))
+  
+    local airbase = AIRBASE:Register( AirbaseName )  --Wrapper.Airbase#AIRBASE
+    self.AIRBASES[AirbaseName]=airbase
+    
+    -- Category and name.
+    airbase.AirbaseCategory=airbase:GetAirbaseCategory()
+    airbase.AirbaseCategoryName=AIRBASE.CategoryName[airbase.AirbaseCategory]
+        
+    -- Get airbase ID. WARNING: For ships it gets the unit ID. This can be identical to an exising AIRDROME or FARM ID! Therefore, units get a negative sign.
+    airbase.AirbaseID=airbase:GetID()
+    
+    self:I(string.format("Adding airbase %s (ID=%d): %s with %d parking spots", tostring(airbase.AirbaseName), airbase.AirbaseID, airbase.AirbaseCategoryName, tonumber(#airbase.parking)))
   end
   
   return self.AIRBASES[AirbaseName]
