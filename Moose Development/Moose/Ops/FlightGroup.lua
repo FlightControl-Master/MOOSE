@@ -265,8 +265,8 @@ FLIGHTGROUP.Attribute = {
 -- @field Wrapper.Airbase#AIRBASE.ParkingSpot parking The parking spot table the element is parking on.
 
 
---- Flight group tasks.
--- @type FLIGHTGROUP.Mission
+--- Flight group missions.
+-- @type FLIGHTGROUP.MissionType
 -- @param #string INTERCEPT Intercept task.
 -- @param #string CAP Combat Air Patrol task.
 -- @param #string BAI Battlefield Air Interdiction task.
@@ -274,7 +274,7 @@ FLIGHTGROUP.Attribute = {
 -- @param #string STRIKE Strike task.
 -- @param #string AWACS AWACS task.
 -- @param #string TANKER Tanker task.
-FLIGHTGROUP.Mission={
+FLIGHTGROUP.MissionType={
   INTERCEPT="Intercept",
   CAP="CAP",
   BAI="BAI",
@@ -283,7 +283,27 @@ FLIGHTGROUP.Mission={
   CAS="CAS",
   AWACS="AWACS",
   TANKER="Tanker",
+  RECON="Recon",
+  TRANSPORT="Transport",
 }
+
+--- Flight group mission.
+-- @type FLIGHTGROUP.Mission
+-- @field #string type Mission Type.
+-- @field #string name Mission name.
+-- @field #number id Mission ID.
+-- @field #number Tstart Mission start time in seconds.
+-- @field #number Tstop Mission stop time in seconds.
+-- @field #number duration Mission duration in seconds.
+
+--- Flight group missions.
+-- @type FLIGHTGROUP.MissionCAP
+-- @field Core.Zone#ZONE zone CAP zone.
+-- @field #number leg Length of leg in meters.
+-- @field #number speedOrbit Orbit speed.
+-- @field #number speedTo Speed to go on station.
+-- @field #number altitude Altitude.
+-- @extends #FLIGHTGROUP.Mission
 
 --- Flight group task status.
 -- @type FLIGHTGROUP.TaskStatus
@@ -411,6 +431,7 @@ function FLIGHTGROUP:New(groupname, autostart)
   self:AddTransition("LandingAt",     "LandedAt",          "LandedAt")    -- Helo group is landed at a specific point.
 
   self:AddTransition("*",             "PassingWaypoint",   "*")           -- Group passed a waypoint.
+  self:AddTransition("*",             "GotoWaypoint",      "*")           -- Group resumes route at a give nwaypoint.
   self:AddTransition("*",             "Orbit",             "Orbiting")    -- Group is is orbiting.  
   
   self:AddTransition("*",             "FuelLow",           "*")          -- Fuel state of group is low. Default ~25%.
@@ -616,7 +637,7 @@ end
 
 --- Add an *enroute* task.
 -- @param #FLIGHTGROUP self
--- @param #table task DCS task table stucture.
+-- @param #table task DCS task table structure.
 function FLIGHTGROUP:AddTaskEnroute(task)
   if not self.taskenroute then
     self.taskenroute={}
@@ -624,10 +645,10 @@ function FLIGHTGROUP:AddTaskEnroute(task)
   table.insert(self.taskenroute, task)
 end
 
---- Add an *enroute* task to attack targets in a certain **cicular** zone.
+--- Add an *enroute* task to attack targets in a certain **circular** zone.
 -- @param #FLIGHTGROUP self
 -- @param Core.Zone#ZONE_RADIUS ZoneRadius The circular zone, where to engage targets.
--- @param #table TargetTypes (Optional) The target types, passed as a table, i.e. mind the cirly brackets {}. Default {"Air"}.
+-- @param #table TargetTypes (Optional) The target types, passed as a table, i.e. mind the curly brackets {}. Default {"Air"}.
 -- @param #number Priority (Optional) Priority. Default 0.
 function FLIGHTGROUP:AddTaskEnrouteEngageTargetsInZone(ZoneRadius, TargetTypes, Priority)
   local Task=self.group:EnRouteTaskEngageTargetsInZone(ZoneRadius:GetVec2(), ZoneRadius:GetRadius(), TargetTypes, Priority)
@@ -2276,6 +2297,21 @@ function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
   
 end
 
+--- On after "GotoWaypoint" event. Group will got to the given waypoint and execute its route from there.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #number n The goto waypoint number.
+function FLIGHTGROUP:onafterGotoWaypoint(From, Event, To, n)
+
+  self.currentwp=n
+  
+  self:UpdateRoute()
+
+end
+
+
 --- On after "FuelLow" event.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
@@ -2445,7 +2481,7 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
     self.flightcontrol:_AddFlightToInboundQueue(self)
   end
   
-   -- Altitude above ground for a glide slope of 3°.
+   -- Altitude above ground for a glide slope of 3ï¿½.
   local alpha=math.rad(3)
   local x1=UTILS.NMToMeters(10)
   local x2=UTILS.NMToMeters(5)
@@ -3511,6 +3547,7 @@ function FLIGHTGROUP:RemoveWaypoint(wpindex)
 
 
   --TODO update route?
+  -- no, if <= self.currentwaypoint or WP is landing.
 end
 
 
