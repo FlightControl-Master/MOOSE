@@ -76,6 +76,12 @@ AIRWING.Task={
   TANKER="Tanker",
 }
 
+--- Mission.
+-- @type AIRWING.Mission
+-- @field #string type Mission type.
+-- @field #string squadname Name of the assigned squadron.
+-- @field #number nassets Number of required assets.
+
 --- AIRWING class version.
 -- @field #string version
 AIRWING.version="0.0.5"
@@ -92,7 +98,7 @@ AIRWING.version="0.0.5"
 
 --- Create a new AIRWING class object for a specific aircraft carrier unit.
 -- @param #AIRWING self
--- @param #string warehousename Name of the warehouse static or unit object.
+-- @param #string warehousename Name of the warehouse static or unit object representing the warehouse.
 -- @param #string airwingname Name of the air wing, e.g. "AIRWING-8".
 -- @return #AIRWING self
 function AIRWING:New(warehousename, airwingname)
@@ -116,6 +122,9 @@ function AIRWING:New(warehousename, airwingname)
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
   self:AddTransition("*",             "AirwingStatus",    "*")           -- AIRWING status update.
+  
+  self:AddTransition("*",             "NewMission",        "*")           -- Request CAP flight.
+  
   self:AddTransition("*",             "RequestCAP",       "*")           -- Request CAP flight.
   self:AddTransition("*",             "RequestIntercept", "*")           -- Request Intercept.
   self:AddTransition("*",             "RequestCAS",       "*")           -- Request CAS.
@@ -178,20 +187,6 @@ end
 -- User Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Optimized F10 radio menu for a single carrier. The menu entries will be stored directly under F10 Other/Skipper/ and not F10 Other/Skipper/"Carrier Alias"/.
--- **WARNING**: If you use this with two AIRWING objects/carriers, the radio menu will be screwed up!
--- @param #AIRWING self
--- @param #boolean switch If true or nil single menu is enabled. If false, menu is for multiple carriers in the mission.
--- @return #AIRWING self
-function AIRWING:SetMenuSingleCarrier(switch)
-  if switch==true or switch==nil then
-    self.menusingle=true
-  else
-    self.menusingle=false
-  end
-  return self
-end
-
 --- Add a squadron to the carrier air wing.
 -- @param #AIRWING self
 -- @param #string name Name of the squadron, e.g. "VFA-37".
@@ -222,14 +217,6 @@ function AIRWING:AddFlightToSquadron(squadron, flightgroup, ngroups)
 
   local text=string.format("FF Adding asset %s to squadron %s", flightgroup:GetName(), squadron.name)
   env.info(text)
-
-  function self:OnAfterNewAsset(From, Event, To, asset, assignment)
-    local text=string.format("FF assignment=%s, squadron=%s", assignment, squadron.name)
-    env.info(text)
-    if assignment==squadron.name then
-      table.insert(squadron.assets, asset)
-    end
-  end
 
   self:AddAsset(flightgroup, ngroups, nil, nil, nil, nil, nil, {squadron.livery}, squadron.name)
 
@@ -320,6 +307,26 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM Events
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- On after "SelfRequest" event.
+-- @param #AIRWING self
+function AIRWING:onafterNewAsset(From, Event, To, asset, assignment)
+
+  -- Call parent warehouse function first.
+  self:GetParent(self).onafterNewAsset(From, Event, To, asset, assignment)
+  
+  local squad=self:GetSquadron(assignment)  
+
+  if squad then
+
+    local text=string.format("FF assignment=%s, squadron=%s", assignment, squad.name)
+    env.info(text)
+    
+    table.insert(squad.assets, asset)
+        
+  end
+end
+
 
 --- On after "SelfRequest" event.
 -- @param #AIRWING self

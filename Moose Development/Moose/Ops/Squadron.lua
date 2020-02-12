@@ -54,7 +54,6 @@ SQUADRON.version="0.0.1"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: Add tasks.
--- TODO:
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -62,13 +61,12 @@ SQUADRON.version="0.0.1"
 
 --- Create a new SQUADRON object and start the FSM.
 -- @param #SQUADRON self
--- @param #string squadronname Name of the squadron, e.g. "VFA-37".
--- @param Wrapper.Airbase#AIRBASE airbase Home airbase object of the squadron.
--- @param #table Table of squadron tasks, e.g. {SQUADRON.Task.INTERCEPT, SQUADRON.Task.SEAD}.
+-- @param #string SquadName Name of the squadron, e.g. "VFA-37".
+-- @param #table tasks Table of squadron tasks, e.g. `{SQUADRON.Task.INTERCEPT, SQUADRON.Task.SEAD}`.
 -- @return #SQUADRON self
-function SQUADRON:New(squadronname, airbase, tasks)
+function SQUADRON:New(squadronname)
 
-  -- Inherit everything from WAREHOUSE class.
+  -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #SQUADRON
 
   --self.flightgroup=AIGroup
@@ -93,13 +91,8 @@ function SQUADRON:New(squadronname, airbase, tasks)
   --                 From State  -->   Event        -->     To State
   self:AddTransition("Stopped",       "Start",              "Running")     -- Start FSM.
 
-  self:AddTransition("*",             "SquadronStatus",     "*")           -- SQUADRON status update
-  
-  self:AddTransition("*",             "DetectedUnit",       "*")           --
-  
-  self:AddTransition("*",             "FlightSpawned",      "*")           --
-  self:AddTransition("*",             "FlightAirborne",     "*")           --
-  self:AddTransition("*",             "FlightDead",         "*")           --
+  self:AddTransition("*",             "Status",             "*")           -- SQUADRON status update
+
 
   ------------------------
   --- Pseudo Functions ---
@@ -122,12 +115,12 @@ function SQUADRON:New(squadronname, airbase, tasks)
   -- @param #SQUADRON self
   -- @param #number delay Delay in seconds.
 
-  --- Triggers the FSM event "FlightStatus".
-  -- @function [parent=#SQUADRON] SquadronStatus
+  --- Triggers the FSM event "Status".
+  -- @function [parent=#SQUADRON] Status
   -- @param #SQUADRON self
 
-  --- Triggers the FSM event "SkipperStatus" after a delay.
-  -- @function [parent=#SQUADRON] __SquadronStatus
+  --- Triggers the FSM event "Status" after a delay.
+  -- @function [parent=#SQUADRON] __Status
   -- @param #SQUADRON self
   -- @param #number delay Delay in seconds.
 
@@ -156,6 +149,15 @@ end
 function SQUADRON:SetLivery(liveryname)
   self.livery=liveryname
 end
+
+--- Set home airbase.
+-- @param #SQUADRON self
+-- @param Wrapper.Airbase#AIRBASE airbase Home airbase object of the squadron.
+-- @return #SQUADRON self
+function SQUADRON:SetHomeBase(airbase)
+  self.homebase=airbase
+end
+
 
 --- Add a group to the squadron.
 -- @param #SQUADRON self

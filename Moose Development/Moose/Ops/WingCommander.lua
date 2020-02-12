@@ -1,4 +1,4 @@
---- **Ops** - (R2.5) - Wing Commander for Ops.
+--- **Ops** - Commander Air Wing.
 --
 -- **Main Features:**
 --
@@ -60,29 +60,19 @@ WINGCOMMANDER.version="0.0.1"
 
 --- Create a new WINGCOMMANDER object and start the FSM.
 -- @param #WINGCOMMANDER self
--- @param #string squadronname Name of the squadron, e.g. "VFA-37".
--- @param Wrapper.Airbase#AIRBASE airbase Home airbase object of the squadron.
--- @param #table Table of squadron tasks, e.g. {WINGCOMMANDER.Task.INTERCEPT, WINGCOMMANDER.Task.SEAD}.
+-- @param Core.Set#SET_UNITS AgentSet Set of agents (units) providing intel. 
 -- @return #WINGCOMMANDER self
-function WINGCOMMANDER:New(detection)
+function WINGCOMMANDER:New(AgentSet)
 
-  -- Inherit everything from WAREHOUSE class.
-  local self=BASE:Inherit(self, FSM:New()) -- #WINGCOMMANDER
-
-  --self.flightgroup=AIGroup
-  self.squadronname=tostring(squadronname)
-  
-  -- Set home airbase.
-  self.homebase=airbase
+  -- Inherit everything from INTEL class.
+  local self=BASE:Inherit(self, INTEL:New(AgentSet)) --#WINGCOMMANDER
 
   -- Set some string id for output to DCS.log file.
-  self.sid=string.format("WINGCOMMANDER %s | ", self.squadronname)
+  self.lid=string.format("WINGCOMMANDER | ")
 
   -- Start State.
   self:SetStartState("Stopped")
 
-  -- Init set of detected units.
-  self.detectedunits=SET_UNIT:New()
 
   -- TODO Tasks?
   self.tasks=tasks or {}
@@ -91,13 +81,8 @@ function WINGCOMMANDER:New(detection)
   --                 From State  -->   Event        -->     To State
   self:AddTransition("Stopped",       "Start",              "Running")     -- Start FSM.
 
-  self:AddTransition("*",             "WingCommanderStatus",     "*")           -- WINGCOMMANDER status update
-  
-  self:AddTransition("*",             "DetectedUnit",       "*")           --
-  
-  self:AddTransition("*",             "FlightSpawned",      "*")           --
-  self:AddTransition("*",             "FlightAirborne",     "*")           --
-  self:AddTransition("*",             "FlightDead",         "*")           --
+  self:AddTransition("*",             "Sitrep",             "*")          -- WINGCOMMANDER status update
+
 
   ------------------------
   --- Pseudo Functions ---
@@ -173,7 +158,7 @@ function WINGCOMMANDER:onafterStart(From, Event, To)
   self:I(self.sid..text)
 
   -- Start the status monitoring.
-  self:__WingCommanderStatus(-1)
+  self:__SitRep(-1)
 end
 
 --- On after "FlightStatus" event.
@@ -182,18 +167,62 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function WINGCOMMANDER:onafterWingCommanderStatus(From, Event, To)
+function WINGCOMMANDER:onafterSitrep(From, Event, To)
 
   -- FSM state.
   local fsmstate=self:GetState()
   
-  -- Check if group has detected any units.
-  self:_CheckFlightStatus()
-
   -- Short info.
-  local text=string.format("Flight status %s [%d/%d]. Task=%d/%d. Waypoint=%d/%d. Detected=%d", fsmstate, #self.element, #self.element, self.taskcurrent, #self.taskqueue, self.currentwp or 0, #self.waypoints or 0, self.detectedunits:Count())
+  local text=string.format("No activities")
   self:I(self.sid..text)
   
+  if DetectedGroupsUnknown then
+  
+  for _,_group in pairs(DetectedGroupsUnknown) do
+    local group=_group --Wrapper.Group#GROUP
+    
+    if group and group:IsAlive() then
+    
+      local category=group:GetCategory()
+      
+      if category==Group.Category.AIRPLANE or category==Group.Category.AIRPLANE then
+        
+      elseif category==Group.Category.GROUND then
+      
+      elseif category==Group.Category.SHIP then
+      
+      
+      
+      end
+    
+    
+    end
+    
+  end
+  
+  
+  end
   
 end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Resources
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Check resources.
+-- @param #WINGCOMMANDER self
+function WINGCOMMANDER:CheckResources()
+
+
+  for _,_airwing in pairs(self.airwings) do
+    local airwing=_airwing --Ops.AirWing#AIRWING
+    
+    airwing:GetFlightsWhoCan()
+  
+  
+  end
+
+end
+
+
 

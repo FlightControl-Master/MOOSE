@@ -447,6 +447,11 @@ function FLIGHTGROUP:New(groupname, autostart)
   self:AddTransition("*",             "TaskDone",         "*")           -- Group finished a task.
   self:AddTransition("*",             "TaskCancel",       "*")           -- Cancel current task.
   self:AddTransition("*",             "TaskPause",        "*")           -- Pause current task.
+  
+  self:AddTransition("*",             "MissionStart",     "OnMission") -- Tanker is on station and ready to refuel.  
+  self:AddTransition("OnMission",     "MissionDone",      "Airborne")  -- Tanker is on station and ready to refuel.
+  self:AddTransition("OnMission",     "MissionAbort",     "Airborne")  -- Tanker is on station and ready to refuel.
+    
 
   self:AddTransition("*",             "ElementSpawned",   "*")           -- An element was spawned.
   self:AddTransition("*",             "ElementParking",   "*")           -- An element is parking.

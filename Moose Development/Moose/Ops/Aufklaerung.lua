@@ -1,4 +1,4 @@
---- **Ops** - (R2.5) - AI Squadron for Ops.
+--- **Ops** - Office of Military Intelligence.
 --
 -- **Main Features:**
 --
@@ -7,72 +7,73 @@
 -- ===
 --
 -- ### Author: **funkyfranky**
--- @module Ops.Squadron
--- @image OPS_Squadron.png
+-- @module Ops.Intel
+-- @image OPS_Intel.png
 
 
---- AUFKLAERUNG class.
--- @type AUFKLAERUNG
+--- INTEL class.
+-- @type INTEL
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug Debug mode. Messages to all about status.
--- @field #string sid Class id string for output to DCS log file.
--- @field #string livery Livery of the squadron.
--- @field #table flights Table of flight groups.
+-- @field #string lid Class id string for output to DCS log file.
 -- @extends Core.Fsm#FSM
 
 --- Be surprised!
 --
 -- ===
 --
--- ![Banner Image](..\Presentations\CarrierAirWing\AUFKLAERUNG_Main.jpg)
+-- ![Banner Image](..\Presentations\CarrierAirWing\INTEL_Main.jpg)
 --
--- # The AUFKLAERUNG Concept
+-- # The INTEL Concept
 --
 --
 --
--- @field #AUFKLAERUNG
-AUFKLAERUNG = {
-  ClassName      = "AUFKLAERUNG",
+-- @field #INTEL
+INTEL = {
+  ClassName      = "INTEL",
   Debug          =   nil,
   lid            =   nil,
+  filter         =   nil,
   detectionset   =   nil,
   detecteditems  =    {},
+  DetectedGroups =    {}
 }
 
---- Flight group element.
--- @type AUFKLAERUNG.DetectedItem
--- @field Ops.FlightGroup#FLIGHTGROUP flightgroup The flight group object.
--- @field #string mission Mission assigned to the flight.
+--- Detected item info.
+-- @type INTEL.DetectedItem
+-- @field #string typename Type name of detected item.
+-- @field #number category
+-- @field #string categeryname
+-- @field #number Tdetected Time stamp when this item was last detected.
 
---- AUFKLAERUNG class version.
+--- INTEL class version.
 -- @field #string version
-AUFKLAERUNG.version="0.0.1"
+INTEL.version="0.0.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- TODO list
+-- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Add tasks.
--- TODO:
+-- TODO: A lot!
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Create a new AUFKLAERUNG object and start the FSM.
--- @param #AUFKLAERUNG self
+--- Create a new INTEL object and start the FSM.
+-- @param #INTEL self
 -- @param Core.Set#SET_GROUP DetectionSet Set of detection groups.
--- @return #AUFKLAERUNG self
-function AUFKLAERUNG:New(DetectionSet)
+-- @return #INTEL self
+function INTEL:New(DetectionSet)
 
-  -- Inherit everything from WAREHOUSE class.
-  local self=BASE:Inherit(self, FSM:New()) -- #AUFKLAERUNG
+  -- Inherit everything from FSM class.
+  local self=BASE:Inherit(self, FSM:New()) -- #INTEL
 
   --self.flightgroup=AIGroup
   self.detectionset=DetectionSet
   
   -- Set some string id for output to DCS.log file.
-  self.lid=string.format("AUFKLAERUNG %s | ", self.squadronname)
+  self.lid=string.format("INTEL %s | ", self.squadronname)
 
   -- Start State.
   self:SetStartState("Stopped")
@@ -83,40 +84,46 @@ function AUFKLAERUNG:New(DetectionSet)
   -- Add FSM transitions.
   --                 From State  -->   Event        -->     To State
   self:AddTransition("Stopped",       "Start",              "Running")     -- Start FSM.
-  self:AddTransition("*",             "Status",             "*")           -- AUFKLAERUNG status update
+  self:AddTransition("*",             "Status",             "*")           -- INTEL status update
   
-  self:AddTransition("*",             "Detect",             "*")           -- AUFKLAERUNG status update
+  self:AddTransition("*",             "Detect",             "*")           -- INTEL status update
   
   self:AddTransition("*",             "DetectedUnit",       "*")           --
+  
+  self:AddTransition("*",             "DetectedGroups",        "*")        -- All groups that are currently detected.
+  self:AddTransition("*",             "DetectedGroupsUnknown", "*")        -- Newly detected groups, which were previously unknown.
+  self:AddTransition("*",             "DetectedGroupsDead",     "*")       -- Previously detected groups that could not be detected any more.
+  self:AddTransition("*",             "DetectedGroupsLost",    "*")        -- Previously detected groups that could not be detected any more.
+  
 
   ------------------------
   --- Pseudo Functions ---
   ------------------------
 
-  --- Triggers the FSM event "Start". Starts the AUFKLAERUNG. Initializes parameters and starts event handlers.
-  -- @function [parent=#AUFKLAERUNG] Start
-  -- @param #AUFKLAERUNG self
+  --- Triggers the FSM event "Start". Starts the INTEL. Initializes parameters and starts event handlers.
+  -- @function [parent=#INTEL] Start
+  -- @param #INTEL self
 
-  --- Triggers the FSM event "Start" after a delay. Starts the AUFKLAERUNG. Initializes parameters and starts event handlers.
-  -- @function [parent=#AUFKLAERUNG] __Start
-  -- @param #AUFKLAERUNG self
+  --- Triggers the FSM event "Start" after a delay. Starts the INTEL. Initializes parameters and starts event handlers.
+  -- @function [parent=#INTEL] __Start
+  -- @param #INTEL self
   -- @param #number delay Delay in seconds.
 
-  --- Triggers the FSM event "Stop". Stops the AUFKLAERUNG and all its event handlers.
-  -- @param #AUFKLAERUNG self
+  --- Triggers the FSM event "Stop". Stops the INTEL and all its event handlers.
+  -- @param #INTEL self
 
-  --- Triggers the FSM event "Stop" after a delay. Stops the AUFKLAERUNG and all its event handlers.
-  -- @function [parent=#AUFKLAERUNG] __Stop
-  -- @param #AUFKLAERUNG self
+  --- Triggers the FSM event "Stop" after a delay. Stops the INTEL and all its event handlers.
+  -- @function [parent=#INTEL] __Stop
+  -- @param #INTEL self
   -- @param #number delay Delay in seconds.
 
-  --- Triggers the FSM event "FlightStatus".
-  -- @function [parent=#AUFKLAERUNG] SquadronStatus
-  -- @param #AUFKLAERUNG self
+  --- Triggers the FSM event "Status".
+  -- @function [parent=#INTEL] Status
+  -- @param #INTEL self
 
-  --- Triggers the FSM event "SkipperStatus" after a delay.
-  -- @function [parent=#AUFKLAERUNG] __SquadronStatus
-  -- @param #AUFKLAERUNG self
+  --- Triggers the FSM event "Status" after a delay.
+  -- @function [parent=#INTEL] __Status
+  -- @param #INTEL self
   -- @param #number delay Delay in seconds.
 
 
@@ -138,10 +145,10 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Set livery.
--- @param #AUFKLAERUNG self
+-- @param #INTEL self
 -- @param #string liveryname Name of the livery.
--- @return #AUFKLAERUNG self
-function AUFKLAERUNG:SetLivery(liveryname)
+-- @return #INTEL self
+function INTEL:SetLivery(liveryname)
   self.livery=liveryname
 end
 
@@ -151,12 +158,12 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- On after Start event. Starts the FLIGHTGROUP FSM and event handlers.
--- @param #AUFKLAERUNG self
+-- @param #INTEL self
 -- @param Wrapper.Group#GROUP Group Flight group.
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function AUFKLAERUNG:onafterStart(From, Event, To)
+function INTEL:onafterStart(From, Event, To)
 
   -- Short info.
   local text=string.format("Starting flight group %s.", self.groupname)
@@ -166,13 +173,13 @@ function AUFKLAERUNG:onafterStart(From, Event, To)
   self:__Status(-1)
 end
 
---- On after "FlightStatus" event.
--- @param #AUFKLAERUNG self
+--- On after "Status" event.
+-- @param #INTEL self
 -- @param Wrapper.Group#GROUP Group Flight group.
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function AUFKLAERUNG:onafterSquadronStatus(From, Event, To)
+function INTEL:onafterStatus(From, Event, To)
 
   -- FSM state.
   local fsmstate=self:GetState()
@@ -188,16 +195,31 @@ function AUFKLAERUNG:onafterSquadronStatus(From, Event, To)
 end
 
 
---- On after "FlightStatus" event.
--- @param #AUFKLAERUNG self
-function AUFKLAERUNG:_CheckFlightstatus()
+--- Update detected items.
+-- @param #INTEL self
+function INTEL:_UpdateIntel()
 
-  for _,_flight in pairs(self.flights) do
-    local flight=_flight --#AUFKLAERUNG.Flight
+  -- Set of all detected units.
+  local DetectedSet=SET_UNIT:New()
+
+  -- Loop over all units providing intel.
+  for _,_recce in pairs(self.detectionset:GetSet()) do
+    local recce=_recce --Wrapper.Unit#UNIT
     
-    flight.flightgroup:IsSpawned()
+    -- Get set of detected units.
+    local detectedunitset=recce:GetDetectedUnitSet()
+    
+    -- Add detected units to all set.
+    DetectedSet=DetectedSet:GetSetUnion(detectedunitset)
     
   end
+  
+  local detectednew=DetectedSet:GetSetComplement(self.detectedunits)
+  
+  local detectedlost=self.detectedunits:GetSetComplement(DetectedSet)
+  
+
+  
 
 end
 
