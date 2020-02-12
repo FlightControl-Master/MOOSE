@@ -1052,7 +1052,6 @@ end
 --    * `AIRBASE.Nevada.Laughlin_Airport`
 --    * `AIRBASE.Nevada.Lincoln_County`
 --    * `AIRBASE.Nevada.McCarran_International_Airport`
---    * `AIRBASE.Nevada.Mellan_Airstrip`
 --    * `AIRBASE.Nevada.Mesquite`
 --    * `AIRBASE.Nevada.Mina_Airport_3Q0`
 --    * `AIRBASE.Nevada.Nellis_AFB`
@@ -1096,8 +1095,7 @@ end
 --    
 --     -- Monitor specific airbases.
 --     ATC_Ground = ATC_GROUND_NEVADA:New(              
---       { AIRBASE.Nevada.Laughlin_Airport,             
---         AIRBASE.Nevada.Mellan_Airstrip,              
+--       { AIRBASE.Nevada.Laughlin_Airport,                        
 --         AIRBASE.Nevada.Lincoln_County,               
 --         AIRBASE.Nevada.North_Las_Vegas,              
 --         AIRBASE.Nevada.McCarran_International_Airport
