@@ -79,13 +79,16 @@ TANKERGROUP = {
 
 --- Mission status.
 -- @type TANKERGROUP.MissionStatus
--- @field #string SCHEDULED Task is scheduled.
--- @field #string EXECUTING Task is being executed.
--- @field #string ACCOMPLISHED Task is accomplished.
+-- @field #string SCHEDULED Mission is scheduled.
+-- @field #string EXECUTING Mission is being executed.
+-- @field #string ASSIGNED Mission was assigned.
+-- @field #string ACCOMPLISHED Mission is accomplished.
 TANKERGROUP.MissionStatus={
   SCHEDULED="scheduled",
   EXECUTING="executing",
+  ASSIGNED="assigned",
   ACCOMPLISHED="accomplished",
+  FAILED="failed",
 }
 --- TANKERGROUP class version.
 -- @field #string version

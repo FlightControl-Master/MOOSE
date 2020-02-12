@@ -1,4 +1,4 @@
---- **Ops** - (R2.5) - AI Flight Group for Ops.
+--- **Ops** - (AI) Flight Group.
 --
 -- **Main Features:**
 --
@@ -6,7 +6,6 @@
 --    * Monitor fuel and ammo status.
 --    * Sophisticated task queueing system.
 --    * Many additional events for each element and the whole group.
---
 --
 -- ===
 --
@@ -31,6 +30,9 @@
 -- @field #number taskcounter Running number of task ids.
 -- @field #number taskcurrent ID of current task. If 0, there is no current task assigned.
 -- @field #table taskenroute Enroute task of the group.
+-- @field #table missionqueue Queue of missions.
+-- @field #number missioncounter Running number of task ids.
+-- @field #number missioncurrent ID of current task. If 0, there is no current task assigned.
 -- @field #boolean istanker If true, group gets enroute task tanker.
 -- @field #boolean isawacs if True, group get enroute task AWACS.
 -- @field #boolean eplrs If true, group will activate it's datalink.
@@ -264,6 +266,39 @@ FLIGHTGROUP.Attribute = {
 -- @field #number damage Damage of element in percent.
 -- @field Wrapper.Airbase#AIRBASE.ParkingSpot parking The parking spot table the element is parking on.
 
+--- Flight group task status.
+-- @type FLIGHTGROUP.TaskStatus
+-- @field #string SCHEDULED Task is scheduled.
+-- @field #string EXECUTING Task is being executed.
+-- @field #string ACCOMPLISHED Task is accomplished.
+FLIGHTGROUP.TaskStatus={
+  SCHEDULED="scheduled",
+  EXECUTING="executing",
+  ACCOMPLISHED="accomplished",
+}
+
+--- Flight group task status.
+-- @type FLIGHTGROUP.TaskType
+-- @field #string SCHEDULED Task is scheduled and will be executed at a given time.
+-- @field #string WAYPOINT Task is executed at a specific waypoint.
+FLIGHTGROUP.TaskType={
+  SCHEDULED="scheduled",
+  WAYPOINT="waypoint",
+}
+
+--- Flight group task structure.
+-- @type FLIGHTGROUP.Task
+-- @field #string type Type of task: either SCHEDULED or WAYPOINT.
+-- @field #number id Task ID. Running number to get the task.
+-- @field #number prio Priority.
+-- @field #number time Abs. mission time when to execute the task.
+-- @field #table dcstask DCS task structure.
+-- @field #string description Brief text which describes the task.
+-- @field #string status Task status.
+-- @field #number duration Duration before task is cancelled in seconds. Default never.
+-- @field #number timestamp Abs. mission time, when task was started.
+-- @field #number waypoint Waypoint index if task is a waypoint task.
+-- @field Core.UserFlag#USERFLAG stopflag If flag is set to 1 (=true), the task is stopped.
 
 --- Flight group missions.
 -- @type FLIGHTGROUP.MissionType
@@ -287,16 +322,16 @@ FLIGHTGROUP.MissionType={
   TRANSPORT="Transport",
 }
 
---- Flight group mission.
+--- Generic mission.
 -- @type FLIGHTGROUP.Mission
 -- @field #string type Mission Type.
 -- @field #string name Mission name.
--- @field #number id Mission ID.
+-- @field #number mid Mission ID.
 -- @field #number Tstart Mission start time in seconds.
 -- @field #number Tstop Mission stop time in seconds.
 -- @field #number duration Mission duration in seconds.
 
---- Flight group missions.
+--- CAP mission.
 -- @type FLIGHTGROUP.MissionCAP
 -- @field Core.Zone#ZONE zone CAP zone.
 -- @field #number leg Length of leg in meters.
@@ -304,42 +339,6 @@ FLIGHTGROUP.MissionType={
 -- @field #number speedTo Speed to go on station.
 -- @field #number altitude Altitude.
 -- @extends #FLIGHTGROUP.Mission
-
---- Flight group task status.
--- @type FLIGHTGROUP.TaskStatus
--- @field #string SCHEDULED Task is scheduled.
--- @field #string EXECUTING Task is being executed.
--- @field #string ACCOMPLISHED Task is accomplished.
-FLIGHTGROUP.TaskStatus={
-  SCHEDULED="scheduled",
-  EXECUTING="executing",
-  ACCOMPLISHED="accomplished",
-}
-
---- Flight group task status.
--- @type FLIGHTGROUP.TaskType
--- @field #string SCHEDULED Task is scheduled and will be executed at a given time.
--- @field #string WAYPOINT Task is executed at a specific waypoint.
-FLIGHTGROUP.TaskType={
-  SCHEDULED="scheduled",
-  WAYPOINT="waypoint",
-}
-
-
---- Flight group tasks.
--- @type FLIGHTGROUP.Task
--- @field #string type Type of task: either SCHEDULED or WAYPOINT.
--- @field #number id Task ID. Running number to get the task.
--- @field #number prio Priority.
--- @field #number time Abs. mission time when to execute the task.
--- @field #table dcstask DCS task structure.
--- @field #string description Brief text which describes the task.
--- @field #string status Task status.
--- @field #number duration Duration before task is cancelled in seconds. Default never.
--- @field #number timestamp Abs. mission time, when task was started.
--- @field #number waypoint Waypoint index if task is a waypoint task.
--- @field Core.UserFlag#USERFLAG stopflag If flag is set to 1 (=true), the task is stopped.
-
 
 --- FLIGHTGROUP class version.
 -- @field #string version
@@ -372,7 +371,7 @@ FLIGHTGROUP.version="0.2.6"
 --- Create a new FLIGHTGROUP object and start the FSM.
 -- @param #FLIGHTGROUP self
 -- @param #string groupname Name of the group.
--- @param #string autostart If *true* or *nil* automatically start the FSM. If *false*, use FLIGHTGROUP:Start() manually.
+-- @param #string autostart (Optional) If `true` or `nil` automatically start the FSM (default). If `false`, use FLIGHTGROUP:Start() manually.
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:New(groupname, autostart)
 
@@ -383,7 +382,7 @@ function FLIGHTGROUP:New(groupname, autostart)
     return fg
   end
 
-  -- Inherit everything from WAREHOUSE class.
+  -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #FLIGHTGROUP
 
   --self.group=AIGroup
@@ -452,7 +451,6 @@ function FLIGHTGROUP:New(groupname, autostart)
   self:AddTransition("OnMission",     "MissionDone",      "Airborne")  -- Tanker is on station and ready to refuel.
   self:AddTransition("OnMission",     "MissionAbort",     "Airborne")  -- Tanker is on station and ready to refuel.
     
-
   self:AddTransition("*",             "ElementSpawned",   "*")           -- An element was spawned.
   self:AddTransition("*",             "ElementParking",   "*")           -- An element is parking.
   self:AddTransition("*",             "ElementEngineOn",  "*")           -- An element spooled up the engines.
@@ -543,14 +541,6 @@ end
 
 --- Add a *scheduled* task.
 -- @param #FLIGHTGROUP self
--- @param #number id Task id.
--- @return #string Name of the stop flag
-function FLIGHTGROUP:StopTaskFlagname(id)
-  return string.format("StopTaskFlag %d", id)
-end
-
---- Add a *scheduled* task.
--- @param #FLIGHTGROUP self
 -- @param #table task DCS task table structure.
 -- @param #string clock Mission time when task is executed. Default in 5 seconds. If argument passed as #number, it defines a relative delay in seconds.
 -- @param #string description Brief text describing the task, e.g. "Attack SAM".
@@ -583,7 +573,7 @@ function FLIGHTGROUP:AddTask(task, clock, description, prio, duration)
   newtask.duration=duration
   newtask.waypoint=-1
   newtask.type=FLIGHTGROUP.TaskType.SCHEDULED
-  newtask.stopflag=USERFLAG:New(self:StopTaskFlagname(newtask.id))  
+  newtask.stopflag=USERFLAG:New(string.format("StopTaskFlag %d", newtask.id))  
   newtask.stopflag:Set(0)
   
   
@@ -943,7 +933,6 @@ function FLIGHTGROUP:IsLandedAt()
   return self:Is("LandedAt")
 end
 
-
 --- Check if flight is dead.
 -- @param #FLIGHTGROUP self
 -- @return #boolean If true, all units/elements of the flight are dead.
@@ -1075,7 +1064,7 @@ function FLIGHTGROUP:Route(waypoints)
       end
     end
 
-    -- Mission (route) task.
+    -- Route (Mission) task.
     local TaskRoute=self.group:TaskRoute(waypoints)
     table.insert(Tasks, TaskRoute)
     
@@ -1086,6 +1075,28 @@ function FLIGHTGROUP:Route(waypoints)
     self:SetTask(TaskCombo)
   end
   return self
+end
+
+--- Route group along waypoints. Enroute tasks are also applied.
+-- @param #FLIGHTGROUP self
+-- @param #table waypoints Table of waypoints.
+-- @return #FLIGHTGROUP.MissionCAP
+function FLIGHTGROUP:CreateMissionCAP()
+
+  local mission={} --#FLIGHTGROUP.MissionCAP
+  
+  mission.mid=1
+  mission.type=FLIGHTGROUP.MissionType.CAP
+  mission.zone=Zone
+  mission.altitude=Altitude
+  mission.speedTo=SpeedTo
+  mission.speedOrbit=SpeedOrbit
+  mission.name=Name or string.format("Mission CAP %03d", mission.id)
+  
+  
+  mission.DCStask=self.group:TaskOrbit(Coord,Altitude,Speed,CoordRaceTrack)
+  
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2917,6 +2928,139 @@ function FLIGHTGROUP._TaskDone(group, flightgroup, task)
     flightgroup:TaskDone(task)
   end
 end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Mission functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- On after "MissionStart" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #FLIGHTGROUP.Mission Mission The mission table.
+function FLIGHTGROUP:onafterMissionStart(From, Event, To, Mission)
+
+  -- TODO: need to handle case that group is spawned at a later point in time!
+
+  -- Delay for route to mission. Group needs to be activated and controlled.
+  local delay=nil
+
+  -- Check if group is spawned.
+  if self:IsInUtero() then
+  
+    -- Activate group if it is late activated.
+    if self:IsLateActivated() then   
+      self:Activate()
+      delay=1
+    end
+    
+    -- Activate group if it is uncontrolled.
+    if self:IsUncontrolled() then
+      self:StartUncontrolled(5)
+      delay=6
+    end
+  
+  end
+  
+  -- Set current mission.
+  self.currentmission=Mission
+  
+  -- Set Tstarted time stamp.
+  self.currentmission.Tstarted=timer.getAbsTime()
+  
+  -- Set mission status.
+  self.currentmission.status=FLIGHTGROUP.MissionStatus.EXECUTING
+
+  -- Route flight to mission zone.
+  self:RouteToMission(Mission, delay)
+
+end
+
+--- On after "MissionAccomplished" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #FLIGHTGROUP.Mission Mission
+function FLIGHTGROUP:onafterMissionAccomplished(From, Event, To, Mission)
+
+  Mission.status=FLIGHTGROUP.MissionStatus.ACCOMPLISHED
+  self.currentmission=nil
+
+end
+
+
+--- Get next mission.
+-- @param #FLIGHTGROUP self
+-- @return #FLIGHTGROUP.Mission Next mission or *nil*.
+function FLIGHTGROUP:_GetNextMission()
+
+  -- Number of missions.
+  local Nmissions=#self.Qmissions
+
+  -- Treat special cases.
+  if Nmissions==0 then
+    return nil
+  end
+
+  -- Sort results table wrt times they have already been engaged.
+  local function _sort(a, b)
+    local taskA=a --#FLIGHTGROUP.Mission
+    local taskB=b --#FLIGHTGROUP.Mission
+    return (taskA.Tstart<taskB.Tstart) or (taskA.Tstart==taskB.Tstart and taskA.prio<taskB.prio)
+  end
+  table.sort(self.Qmissions, _sort)
+  
+  -- Current time.
+  local time=timer.getAbsTime()
+
+  -- Look for first task that is not accomplished.
+  for _,_mission in pairs(self.Qmissions) do
+    local mission=_mission --#FLIGHTGROUP.Mission
+    if mission.status==FLIGHTGROUP.MissionStatus.SCHEDULED and time>=mission.Tstart then
+      return mission
+    end
+  end
+
+  return nil
+end
+
+--- Route group to mission. Also sets the 
+-- @param #FLIGHTGROUP self
+-- @param #FLIGHTGROUP.Mission mission The mission table.
+-- @param #number delay Delay in seconds.
+function FLIGHTGROUP:RouteToMission(mission, delay)
+
+  if delay and delay>0 then
+    -- Delay call.
+    self:ScheduleOnce(delay, FLIGHTGROUP.RouteToMission, self, mission)
+  else
+
+    -- Get random coordinate in mission zone.
+    local Coordinate=mission.zone:GetRandomCoordinate():SetAltitude(mission.altitude, true)
+    
+    -- Set second coordinate for race track pattern.
+    local CoordRaceTrack=Coordinate:Translate(mission.distance, mission.heading, true)
+    
+    Coordinate:MarkToAll("Orbit 1")
+    CoordRaceTrack:MarkToAll("Orbit 2")
+  
+    -- Add waypoint.
+    self:AddWaypointAir(Coordinate, nil, self.speedmax*0.8)
+    
+    -- Create task to orbit.
+    local taskorbit=self.group:TaskOrbit(Coordinate, mission.altitude, mission.speed, CoordRaceTrack)
+    
+    -- Add waypoint task.
+    -- TODO: find last AIR waypoint! We dont want this at landing waypoints.   
+    mission.task=self:AddTaskWaypoint(taskorbit, #self.waypoints, mission.name, 10, mission.duration)
+  end
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Route functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Function called when a group is passing a waypoint.
 --@param Wrapper.Group#GROUP group Group that passed the waypoint

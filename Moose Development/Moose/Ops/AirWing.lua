@@ -1,4 +1,4 @@
---- **Ops** - (R2.5) - Airwing Warehouse.
+--- **Ops** - Airwing Warehouse.
 --
 -- **Main Features:**
 --
@@ -81,6 +81,7 @@ AIRWING.Task={
 -- @field #string type Mission type.
 -- @field #string squadname Name of the assigned squadron.
 -- @field #number nassets Number of required assets.
+-- @field #string status Mission status.
 
 --- AIRWING class version.
 -- @field #string version
@@ -123,7 +124,7 @@ function AIRWING:New(warehousename, airwingname)
   --                 From State  -->   Event      -->     To State
   self:AddTransition("*",             "AirwingStatus",    "*")           -- AIRWING status update.
   
-  self:AddTransition("*",             "NewMission",        "*")           -- Request CAP flight.
+  self:AddTransition("*",             "NewMission",        "*")          -- Request CAP flight.
   
   self:AddTransition("*",             "RequestCAP",       "*")           -- Request CAP flight.
   self:AddTransition("*",             "RequestIntercept", "*")           -- Request Intercept.
@@ -193,49 +194,60 @@ end
 -- @param #table tasks Table of tasks the squadron is supposed to do.
 -- @param #string livery The livery for all added flight group. Default is the livery of the template group.
 -- @return #AIRWING.Squadron The squadron object.
-function AIRWING:AddSquadron(name, tasks, livery)
+function AIRWING:AddSquadron(SquadronName, MissionTypes, Livery)
 
   local squadron={} --#AIRWING.Squadron
 
-  squadron.name=name
+  squadron.name=SquadronName
   squadron.assets={}
-  squadron.tasks=tasks or {}
-  squadron.livery=livery
+  squadron.tasks=MissionTypes or {}
+  squadron.livery=Livery
 
-  table.insert(self.squadrons, squadron)
+  self.squadrons[SquadronName]=squadron
   
   return squadron
 end
 
 --- Add flight group(s) to squadron.
 -- @param #AIRWING self
--- @param #AIRWING.Squadron squadron The squadron object.
--- @param Wrapper.Group#GROUP flightgroup The flight group object.
--- @param #number ngroups Number of groups to add.
+-- @param #AIRWING.Squadron SquadronName Name of the squadron.
+-- @param Wrapper.Group#GROUP Group The group object.
+-- @param #number Ngroups Number of groups to add.
 -- @return #AIRWING self
-function AIRWING:AddFlightToSquadron(squadron, flightgroup, ngroups)
+function AIRWING:AddAssetToSquadron(SquadronName, Group, Ngroups)
 
-  local text=string.format("FF Adding asset %s to squadron %s", flightgroup:GetName(), squadron.name)
-  env.info(text)
+  local squadron=self:GetSquadron(SquadronName)
 
-  self:AddAsset(flightgroup, ngroups, nil, nil, nil, nil, nil, {squadron.livery}, squadron.name)
+  if squadron then
+  
+    if type(Group)=="string" then
+      Group=GROUP:FindByName(Group)
+    end
+    
+    if Group then
+
+      local text=string.format("FF Adding asset %s to squadron %s", Group:GetName(), squadron.name)
+      env.info(text)
+    
+      self:AddAsset(Group, Ngroups, nil, nil, nil, nil, nil, {squadron.livery}, squadron.name)
+      
+    else
+      self:E("ERROR: Group does not exist!")
+    end
+    
+  else
+    self:E("ERROR: Squadron does not exit!")
+  end
 
   return self
 end
 
---- Get squadron by name
+--- Get squadron by name.
 -- @param #AIRWING self
 -- @param #string name Name of the squadron, e.g. "VFA-37".
 -- @return #AIRWING self or nil.
-function AIRWING:GetSquadron(name)
-
-  for _,_squadron in pairs(self.squadrons) do
-    if _squadron.name==name then
-      return _squadron
-    end
-  end
-
-  return nil
+function AIRWING:GetSquadron(SquadronName)
+  return self.squadrons[SquadronName]
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -250,7 +262,7 @@ function AIRWING:onafterStart(From, Event, To)
   self:GetParent(self).onafterStart(self, From, Event, To)
 
   -- Info.
-  self:I(self.sid..string.format("Starting AIRWING v%s for carrier %s", AIRWING.version, self.carriername))
+  self:I(self.sid..string.format("Starting AIRWING v%s %s (%s)", AIRWING.version, self.alias, self.warehousename))
 
   -- Add F10 radio menu.
   self:_SetMenuCoalition()
@@ -279,7 +291,7 @@ function AIRWING:onafterAirwingStatus(From, Event, To)
     local squadron=_squadron --#AIRWING.Squadron
     
     
-    text=text..string.format("\n %s", squadron.name)
+    text=text..string.format("\n* %s", squadron.name)
     
     for j,_asset in pairs(squadron.assets) do
       local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
@@ -293,13 +305,16 @@ function AIRWING:onafterAirwingStatus(From, Event, To)
       local fuel=100
       if groupname then
         group=GROUP:FindByName(groupname)
-        fuel=group:GetFuelMin()
+        if group then
+          fuel=group:GetFuelMin()
+        end
       end
       
-      text=text..string.format("\n-[%d] %s*%d: spawned=%s, task=%s, fuel=%d", j, typename, asset.nunits, task)
+      text=text..string.format("\n  -[%d] %s*%d: spawned=%s, task=%s, fuel=%d", j, typename, asset.nunits, spawned, task, fuel)
       
     end
   end
+  self:I(self.sid..text)
 
   self:__AirwingStatus(-30)
 end
@@ -313,7 +328,7 @@ end
 function AIRWING:onafterNewAsset(From, Event, To, asset, assignment)
 
   -- Call parent warehouse function first.
-  self:GetParent(self).onafterNewAsset(From, Event, To, asset, assignment)
+  self:GetParent(self).onafterNewAsset(self, From, Event, To, asset, assignment)
   
   local squad=self:GetSquadron(assignment)  
 
@@ -336,7 +351,7 @@ function AIRWING:onafterSelfRequest(From, Event, To, Groupset, Request)
 
 
   -- Call parent warehouse function first.
-  self:GetParent(self).onafterSelfRequest(From, Event, To, Groupset, Request)
+  self:GetParent(self).onafterSelfRequest(self, From, Event, To, Groupset, Request)
 
   
   for _,_asset in pairs(request.assets) do
