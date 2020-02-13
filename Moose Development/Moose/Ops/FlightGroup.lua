@@ -300,7 +300,7 @@ FLIGHTGROUP.TaskType={
 -- @field #number waypoint Waypoint index if task is a waypoint task.
 -- @field Core.UserFlag#USERFLAG stopflag If flag is set to 1 (=true), the task is stopped.
 
---- Flight group missions.
+--- Mission types.
 -- @type FLIGHTGROUP.MissionType
 -- @param #string INTERCEPT Intercept task.
 -- @param #string CAP Combat Air Patrol task.
@@ -322,6 +322,20 @@ FLIGHTGROUP.MissionType={
   TRANSPORT="Transport",
 }
 
+--- Mission status.
+-- @type FLIGHTGROUP.MissionStatus
+-- @field #string SCHEDULED Mission is scheduled.
+-- @field #string EXECUTING Mission is being executed.
+-- @field #string ASSIGNED Mission was assigned.
+-- @field #string ACCOMPLISHED Mission is accomplished.
+FLIGHTGROUP.MissionStatus={
+  SCHEDULED="scheduled",
+  EXECUTING="executing",
+  ASSIGNED="assigned",
+  ACCOMPLISHED="accomplished",
+  FAILED="failed",
+}
+
 --- Generic mission.
 -- @type FLIGHTGROUP.Mission
 -- @field #string type Mission Type.
@@ -330,6 +344,9 @@ FLIGHTGROUP.MissionType={
 -- @field #number Tstart Mission start time in seconds.
 -- @field #number Tstop Mission stop time in seconds.
 -- @field #number duration Mission duration in seconds.
+-- @field #table DCStask DCS task structure.
+-- @field #FLIGHTGROUP.Task Waypoint task.
+-- @field #number waypoint Waypoint number.
 
 --- CAP mission.
 -- @type FLIGHTGROUP.MissionCAP
@@ -1081,7 +1098,7 @@ end
 -- @param #FLIGHTGROUP self
 -- @param #table waypoints Table of waypoints.
 -- @return #FLIGHTGROUP.MissionCAP
-function FLIGHTGROUP:CreateMissionCAP()
+function FLIGHTGROUP:CreateMissionCAP(MissionType, Zone, Altitude, SpeedOrbit)
 
   local mission={} --#FLIGHTGROUP.MissionCAP
   
@@ -2977,13 +2994,13 @@ function FLIGHTGROUP:onafterMissionStart(From, Event, To, Mission)
 
 end
 
---- On after "MissionAccomplished" event.
+--- On after "MissionDone" event.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param #FLIGHTGROUP.Mission Mission
-function FLIGHTGROUP:onafterMissionAccomplished(From, Event, To, Mission)
+function FLIGHTGROUP:onafterMissionDone(From, Event, To, Mission)
 
   Mission.status=FLIGHTGROUP.MissionStatus.ACCOMPLISHED
   self.currentmission=nil
@@ -3026,14 +3043,14 @@ function FLIGHTGROUP:_GetNextMission()
   return nil
 end
 
---- Route group to mission. Also sets the 
+--- Route group to mission.
 -- @param #FLIGHTGROUP self
 -- @param #FLIGHTGROUP.Mission mission The mission table.
 -- @param #number delay Delay in seconds.
 function FLIGHTGROUP:RouteToMission(mission, delay)
 
   if delay and delay>0 then
-    -- Delay call.
+    -- Delayed call.
     self:ScheduleOnce(delay, FLIGHTGROUP.RouteToMission, self, mission)
   else
 
@@ -3643,8 +3660,9 @@ end
 -- @param Core.Point#COORDINATE coordinate The coordinate of the waypoint. Use COORDINATE:SetAltitude(altitude) to define the altitude.
 -- @param #number wpnumber Waypoint number. Default at the end.
 -- @param #number speed Speed in knots. Default 350 kts.
+-- @param #boolean updateroute If true or nil, call UpdateRoute. If false, no call.
 -- @return #FLIGHTGROUP self
-function FLIGHTGROUP:AddWaypointAir(coordinate, wpnumber, speed)
+function FLIGHTGROUP:AddWaypointAir(coordinate, wpnumber, speed, updateroute)
 
   -- Waypoint number.
   --TODO: by default add after last AIR waypoint! Last WP could be landing...
@@ -3672,9 +3690,19 @@ function FLIGHTGROUP:AddWaypointAir(coordinate, wpnumber, speed)
       task.waypoint=task.waypoint+1
     end
   end  
+
+  -- Shift all mission waypoints after the inserted waypoint.
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --#FLIGHTGROUP.Mission
+    if mission.status==FLIGHTGROUP.MissonStatus.SCHEDULED and mission.waypoint>=wpnumber then
+      mission.waypoint=mission.waypoint+1
+    end
+  end  
   
   -- Update route.
-  self:__UpdateRoute(-1)
+  if updateroute==nil or updateroute==true then
+    self:__UpdateRoute(-1)
+  end
   
   return self
 end
