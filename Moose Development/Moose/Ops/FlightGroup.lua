@@ -166,6 +166,9 @@ FLIGHTGROUP = {
   taskcounter        =   nil,
   taskcurrent        =   nil,
   taskenroute        =   nil,
+  missionqueue       =    {},
+  missioncounter     =   nil,
+  missioncurrent     =   nil,  
   istanker           =   nil,
   isawacs            =   nil,
   eplrs              =   nil,
@@ -341,20 +344,22 @@ FLIGHTGROUP.MissionStatus={
 -- @field #string type Mission Type.
 -- @field #string name Mission name.
 -- @field #number mid Mission ID.
+-- @field Core.Zone#ZONE zone Mission zone.
 -- @field #number Tstart Mission start time in seconds.
 -- @field #number Tstop Mission stop time in seconds.
 -- @field #number duration Mission duration in seconds.
 -- @field #table DCStask DCS task structure.
--- @field #FLIGHTGROUP.Task Waypoint task.
+-- @field #FLIGHTGROUP.Task task Waypoint task.
 -- @field #number waypoint Waypoint number.
+-- @field #number prio Mission priority.
+-- @field #string status Mission status.
 
 --- CAP mission.
 -- @type FLIGHTGROUP.MissionCAP
--- @field Core.Zone#ZONE zone CAP zone.
+-- @field #number heading Heading in degrees.
 -- @field #number leg Length of leg in meters.
--- @field #number speedOrbit Orbit speed.
--- @field #number speedTo Speed to go on station.
--- @field #number altitude Altitude.
+-- @field #number speedOrbit Orbit speed in m/s.
+-- @field #number altitude Altitude in meters.
 -- @extends #FLIGHTGROUP.Mission
 
 --- FLIGHTGROUP class version.
@@ -536,6 +541,8 @@ function FLIGHTGROUP:New(groupname, autostart)
   -- Init task counter.
   self.taskcurrent=0
   self.taskcounter=0
+  
+  self.missioncounter=0
 
   -- Holding flag.  
   self.flaghold=USERFLAG:New(string.format("%s_FlagHold", self.groupname))
@@ -630,7 +637,7 @@ function FLIGHTGROUP:AddTaskWaypoint(task, waypointindex, description, prio, dur
   newtask.time=0
   newtask.waypoint=waypointindex or (self.currentwp and self.currentwp+1 or 2)
   newtask.type=FLIGHTGROUP.TaskType.WAYPOINT
-  newtask.stopflag=USERFLAG:New(self:StopTaskFlagname(newtask.id))  
+  newtask.stopflag=USERFLAG:New(string.format("StopTaskFlag %d", newtask.id))  
   newtask.stopflag:Set(0)
 
   self:T2({newtask=newtask})
@@ -1007,6 +1014,7 @@ end
 function FLIGHTGROUP:StartUncontrolled(delay)
 
   if self:IsAlive() then
+    --TODO: check Alive==true and Alive==false ==> Activate first
     self.group:StartUncontrolled(delay)
   else
     self:E(self.lid.."ERROR: Could not start uncontrolled group as it is NOT alive (yet)!")
@@ -1094,26 +1102,96 @@ function FLIGHTGROUP:Route(waypoints)
   return self
 end
 
---- Route group along waypoints. Enroute tasks are also applied.
+--- Create a CAP mission.
 -- @param #FLIGHTGROUP self
--- @param #table waypoints Table of waypoints.
--- @return #FLIGHTGROUP.MissionCAP
-function FLIGHTGROUP:CreateMissionCAP(MissionType, Zone, Altitude, SpeedOrbit)
+-- @param #number Altitude Orbit altitude in feet. Default 10000 ft.
+-- @param #number SpeedOrbit Orbit speed in knots. Default 350 kts.
+-- @param #number Heading Heading in degrees. Default 270 (East to West).
+-- @param #number Leg Length of race-track in NM. Default 10 NM.
+-- @return #FLIGHTGROUP.MissionCAP The CAP mission table.
+function FLIGHTGROUP:CreateMissionCAP(Altitude, SpeedOrbit, Heading, Leg)
 
   local mission={} --#FLIGHTGROUP.MissionCAP
   
-  mission.mid=1
   mission.type=FLIGHTGROUP.MissionType.CAP
+  mission.altitude=UTILS.FeetToMeters(Altitude or 10000)
+  mission.speedOrbit=UTILS.KnotsToMps(SpeedOrbit or 350)
+  mission.heading=Heading or 270
+  mission.leg=UTILS.NMToMeters(Leg or 10)
+  
+  return mission
+end
+
+--- Add mission to queue.
+-- @param #FLIGHTGROUP self
+-- @param FLIGHTGROUP.Mission Mission for this group.
+-- @param Core.Zone#ZONE Zone The mission zone.
+-- @param #number WaypointIndex The waypoint index.
+-- @param #string ClockStart Time the mission is started, e.g. "05:00" for 5 am. If specified as a #number, it will be relative (in seconds) to the current mission time. Default is 5 seconds after mission was added.
+-- @param #string ClockStop Time the mission is stopped, e.g. "13:00" for 1 pm. If mission could not be started at that time, it will be removed from the queue. If specified as a #number it will be relative (in seconds) to the current mission time.
+-- @param #number Prio Priority of the mission, i.e. a number between 1 and 100. Default 50.
+-- @param #string Name Mission name. Default "Aerial Refueling #00X", where "#00X" is a running mission counter index starting at "#001".
+-- @return #FLIGHTGROUP.Mission The mission table.
+function FLIGHTGROUP:AddMission(Mission, Zone, WaypointIndex, ClockStart, ClockStop, Prio, Name)
+
+  -- Increase mission counter.
+  self.missioncounter=self.missioncounter+1
+  
+  -- Create copy of Mission template.
+  local mission=UTILS.DeepCopy(Mission)
+  
+  -- Current mission time.
+  local Tnow=timer.getAbsTime()
+  
+  -- Set start time. Default in 5 sec.
+  local Tstart=Tnow+5
+  if ClockStart and type(ClockStart)=="number" then
+    Tstart=Tnow+ClockStart
+  elseif ClockStart and type(ClockStart)=="string" then
+    Tstart=UTILS.ClockToSeconds(ClockStart)
+  end
+
+  -- Set stop time. Default nil.
+  local Tstop=nil
+  if ClockStop and type(ClockStop)=="number" then
+    Tstop=Tnow+ClockStop
+  elseif ClockStop and type(ClockStop)=="string" then
+    Tstop=UTILS.ClockToSeconds(ClockStop)
+  end
+
+  -- Make mission table.
   mission.zone=Zone
-  mission.altitude=Altitude
-  mission.speedTo=SpeedTo
-  mission.speedOrbit=SpeedOrbit
-  mission.name=Name or string.format("Mission CAP %03d", mission.id)
+  mission.mid=self.missioncounter
+  mission.Tstart=Tstart
+  mission.Tstop=Tstop
+  mission.status=FLIGHTGROUP.MissionStatus.SCHEDULED
+  if Tstop then
+    mission.duration=mission.Tstop-mission.Tstart
+  end
+  mission.prio=Prio or 50
+  mission.task=nil
+  mission.waypoint=WaypointIndex
   
+  if mission.type==FLIGHTGROUP.MissionType.CAP then
   
-  mission.DCStask=self.group:TaskOrbit(Coord,Altitude,Speed,CoordRaceTrack)
+    local Coord=mission.zone:GetRandomCoordinate()
+    
+    local CoordRaceTrack=Coord:Translate(mission.leg, mission.heading, true)
+  
+    mission.DCStask=self.group:TaskOrbit(Coord, mission.altitude, mission.speed, CoordRaceTrack)
+    
+    mission.name=Name or string.format("CAP mission ID%03d", mission.mid)
+    
+  end
   
 
+  -- Add mission to queue.
+  table.insert(self.missionqueue, mission)
+  
+  local text=string.format("Added %s mission %s at zone %s. Starting at %s. Stopping at %s", mission.type, mission.name, mission.zone:GetName(), UTILS.SecondsToClock(mission.Tstart, true), mission.Tstop and UTILS.SecondsToClock(mission.Tstop, true) or "never")
+  self:I(self.lid..text)
+  
+  return mission
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1225,6 +1303,10 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   -- Check if group has detected any units.
   self:_CheckDetectedUnits()
   
+  ---
+  -- Parking
+  ---
+  
   -- Check if flight began to taxi (if it was parking).
   if self:IsParking() then
     for _,_element in pairs(self.elements) do
@@ -1248,6 +1330,10 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
       end
     end  
   end
+  
+  ---
+  -- Elements
+  ---
   
   local nTaskTot, nTaskSched, nTaskWP=self:CountRemainingTasks()
 
@@ -1295,16 +1381,10 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
     text=text.." none!"
   end
   self:I(self.lid..text)
-  
-  -- Low fuel?
-  if fuelmin<self.fuellowthresh and not self.fuellow then
-    self:FuelLow()
-  end
-  
-  -- Critical fuel?
-  if fuelmin<self.fuelcriticalthresh and not self.fuelcritical then
-    self:FuelCritical()
-  end  
+
+  ---
+  -- Tasks
+  ---
 
   -- Task queue.
   text=string.format("Tasks #%d", #self.taskqueue)
@@ -1337,6 +1417,45 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   if #self.taskqueue>0 then
     self:I(self.lid..text)
   end
+  
+  ---
+  -- Mission
+  ---
+  
+   -- First check if group is alive?
+  if self:IsAlive()~=nil and not self.currentmission then
+  
+    local mission=self:_GetNextMission()
+    
+    if mission then
+      
+      env.info("FF starting mission")
+      self:MissionStart(mission)
+      
+    end
+  end
+  
+  -- Current mission name.
+  local mymission=self.currentmission and self.currentmission.name or "N/A"
+  
+  -- Current status.
+  local text=string.format("Tanker Status %s: Mission=%s (%d)", fsmstate, mymission, #self.missionqueue)
+  for i,_mission in pairs(self.missionqueue) do
+    local mission=_mission --#TANKERGROUP.Mission
+    text=text..string.format("\n[%d] %s status=%s", i, tostring(mission.name), tostring(mission.status))
+  end
+  self:I(self.lid..text)
+
+
+  -- Low fuel?
+  if fuelmin<self.fuellowthresh and not self.fuellow then
+    self:FuelLow()
+  end
+  
+  -- Critical fuel?
+  if fuelmin<self.fuelcriticalthresh and not self.fuelcritical then
+    self:FuelCritical()
+  end  
 
 
   -- Next check in ~30 seconds.
@@ -3014,7 +3133,7 @@ end
 function FLIGHTGROUP:_GetNextMission()
 
   -- Number of missions.
-  local Nmissions=#self.Qmissions
+  local Nmissions=#self.missionqueue
 
   -- Treat special cases.
   if Nmissions==0 then
@@ -3027,13 +3146,13 @@ function FLIGHTGROUP:_GetNextMission()
     local taskB=b --#FLIGHTGROUP.Mission
     return (taskA.Tstart<taskB.Tstart) or (taskA.Tstart==taskB.Tstart and taskA.prio<taskB.prio)
   end
-  table.sort(self.Qmissions, _sort)
+  table.sort(self.missionqueue, _sort)
   
   -- Current time.
   local time=timer.getAbsTime()
 
   -- Look for first task that is not accomplished.
-  for _,_mission in pairs(self.Qmissions) do
+  for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --#FLIGHTGROUP.Mission
     if mission.status==FLIGHTGROUP.MissionStatus.SCHEDULED and time>=mission.Tstart then
       return mission
@@ -3057,21 +3176,14 @@ function FLIGHTGROUP:RouteToMission(mission, delay)
     -- Get random coordinate in mission zone.
     local Coordinate=mission.zone:GetRandomCoordinate():SetAltitude(mission.altitude, true)
     
-    -- Set second coordinate for race track pattern.
-    local CoordRaceTrack=Coordinate:Translate(mission.distance, mission.heading, true)
-    
-    Coordinate:MarkToAll("Orbit 1")
-    CoordRaceTrack:MarkToAll("Orbit 2")
+    -- TODO: better marker text, mission.maker
+    mission.maker=Coordinate:MarkToCoalition(mission.name, self:GetCoalition(), true)
   
     -- Add waypoint.
-    self:AddWaypointAir(Coordinate, nil, self.speedmax*0.8)
-    
-    -- Create task to orbit.
-    local taskorbit=self.group:TaskOrbit(Coordinate, mission.altitude, mission.speed, CoordRaceTrack)
+    self:AddWaypointAir(Coordinate, mission.waypoint, self.speedmax*0.8, false)
     
     -- Add waypoint task.
-    -- TODO: find last AIR waypoint! We dont want this at landing waypoints.   
-    mission.task=self:AddTaskWaypoint(taskorbit, #self.waypoints, mission.name, 10, mission.duration)
+    mission.task=self:AddTaskWaypoint(mission.DCStask, mission.waypoint, mission.name, 10, mission.duration)
   end
 end
 
@@ -3694,7 +3806,7 @@ function FLIGHTGROUP:AddWaypointAir(coordinate, wpnumber, speed, updateroute)
   -- Shift all mission waypoints after the inserted waypoint.
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --#FLIGHTGROUP.Mission
-    if mission.status==FLIGHTGROUP.MissonStatus.SCHEDULED and mission.waypoint>=wpnumber then
+    if mission.status==FLIGHTGROUP.MissionStatus.SCHEDULED and mission.waypoint>=wpnumber then
       mission.waypoint=mission.waypoint+1
     end
   end  
@@ -3716,7 +3828,7 @@ end
 function FLIGHTGROUP:RemoveWaypoint(wpindex)
 
   for i, wp in pairs(self.waypoints) do
-    if i==index then
+    if i==wpindex then
       table.remove(self.waypoints, i)
       break
     end
@@ -3725,6 +3837,8 @@ function FLIGHTGROUP:RemoveWaypoint(wpindex)
 
   --TODO update route?
   -- no, if <= self.currentwaypoint or WP is landing.
+  
+  --TODO shift task and mission waypoints
 end
 
 
