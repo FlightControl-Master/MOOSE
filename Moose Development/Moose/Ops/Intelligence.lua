@@ -73,7 +73,7 @@ function INTEL:New(DetectionSet)
   self.detectionset=DetectionSet
   
   -- Set some string id for output to DCS.log file.
-  self.lid=string.format("INTEL %s | ", self.squadronname)
+  self.lid=string.format("INTEL %s | ", "KGB")
 
   -- Start State.
   self:SetStartState("Stopped")
@@ -217,8 +217,6 @@ function INTEL:_UpdateIntel()
   local detectednew=DetectedSet:GetSetComplement(self.detectedunits)
   
   local detectedlost=self.detectedunits:GetSetComplement(DetectedSet)
-  
-
   
 
 end

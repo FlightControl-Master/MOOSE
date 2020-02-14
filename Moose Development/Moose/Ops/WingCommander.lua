@@ -15,9 +15,8 @@
 -- @type WINGCOMMANDER
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug Debug mode. Messages to all about status.
--- @field #string sid Class id string for output to DCS log file.
--- @field #string livery Livery of the squadron.
--- @field #table flights Table of flight groups.
+-- @field #string ,id Class id string for output to DCS log file.
+-- @field #table airwings Table of airwings.
 -- @extends Core.Fsm#FSM
 
 --- Be surprised!
@@ -38,10 +37,21 @@ WINGCOMMANDER = {
   airwings       =    {},
 }
 
---- Flight group element.
--- @type WINGCOMMANDER.Flight
--- @field Ops.FlightGroup#FLIGHTGROUP flightgroup The flight group object.
--- @field #string mission Mission assigned to the flight.
+--- Mission capability.
+-- @type WINGCOMMANDER.Capability
+-- @field #string missiontype Mission Type.
+-- @field #number Ntot Total number of assets for this task.
+-- @field #number Navail Number of available assets
+-- @field #number Nonmission Number of assets currently on mission.
+
+--- Mission resources.
+-- @type WINGCOMMANDER.Recourses
+-- @field #string missiontype Mission Type.
+-- @field #number Ntot Total number of assets for this task.
+-- @field #number Navail Number of available assets
+-- @field #number Nonmission Number of assets currently on mission.
+
+
 
 --- WINGCOMMANDER class version.
 -- @field #string version
@@ -52,7 +62,7 @@ WINGCOMMANDER.version="0.0.1"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: Add tasks.
--- TODO:
+-- TODO: 
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -72,10 +82,6 @@ function WINGCOMMANDER:New(AgentSet)
 
   -- Start State.
   self:SetStartState("Stopped")
-
-
-  -- TODO Tasks?
-  self.tasks=tasks or {}
   
   -- Add FSM transitions.
   --                 From State  -->   Event        -->     To State
@@ -138,6 +144,8 @@ end
 -- @return #WINGCOMMANDER self
 function WINGCOMMANDER:SetLivery(liveryname)
   self.livery=liveryname
+  
+  return self
 end
 
 
@@ -161,7 +169,7 @@ function WINGCOMMANDER:onafterStart(From, Event, To)
   self:__SitRep(-1)
 end
 
---- On after "FlightStatus" event.
+--- On after "Sitrep" event.
 -- @param #WINGCOMMANDER self
 -- @param Wrapper.Group#GROUP Group Flight group.
 -- @param #string From From state.
@@ -172,8 +180,18 @@ function WINGCOMMANDER:onafterSitrep(From, Event, To)
   -- FSM state.
   local fsmstate=self:GetState()
   
+  
+  
   -- Short info.
   local text=string.format("No activities")
+
+
+  local capabilities=self:CheckResources()
+  
+  -- Number of assets total, on mission, available
+  -- Number of assets available of each mission type.
+    
+  
   self:I(self.sid..text)
   
   if DetectedGroupsUnknown then
@@ -184,14 +202,37 @@ function WINGCOMMANDER:onafterSitrep(From, Event, To)
     if group and group:IsAlive() then
     
       local category=group:GetCategory()
+      local attribute=group:GetAttribute()
+      local threatlevel=group:GetThreatLevel()
       
-      if category==Group.Category.AIRPLANE or category==Group.Category.AIRPLANE then
+      if category==Group.Category.AIRPLANE or category==Group.Category.HELICOPTER then
+      
+        if capability.INTERCEPT.Navail>0 then
+        
+          --TODO: Something like get closest AIRWING or squadron?
+          --      Launch even from multiple airwings? Currently Navail is like this. 
+          
+        end
         
       elseif category==Group.Category.GROUND then
       
+        --TODO: action depends on type
+        -- AA/SAM ==> SEAD
+        -- Tanks ==>
+        -- Artillery ==>
+        -- Infantry ==>
+        -- 
+                
+        if attribute==GROUP.Attribute.GROUND_AAA or attribute==GROUP.Attribute.GROUND_SAM then
+            
+            --TODO: SEAD/DEAD
+        
+        end
+        
+      
       elseif category==Group.Category.SHIP then
       
-      
+        --TODO: ANTISHIP
       
       end
     
@@ -211,17 +252,27 @@ end
 
 --- Check resources.
 -- @param #WINGCOMMANDER self
+-- @return #table 
 function WINGCOMMANDER:CheckResources()
 
-
-  for _,_airwing in pairs(self.airwings) do
-    local airwing=_airwing --Ops.AirWing#AIRWING
-    
-    airwing:GetFlightsWhoCan()
+  local capabilities={}
+   
+  for _,MissionType in pairs(FLIGHTGROUP.MissionType) do
+    capabilities[MissionType]=0
   
+    for _,_airwing in pairs(self.airwings) do
+      local airwing=_airwing --Ops.AirWing#AIRWING
+        
+      -- Get Number of assets that can do this type of missions.
+      local _,nassets=airwing:CanMission(MissionType)
+      
+      -- Add up airwing resources.
+      capabilities[MissionType]=capabilities[MissionType]+nassets
+    end
   
   end
 
+  return capabilities
 end
 
 

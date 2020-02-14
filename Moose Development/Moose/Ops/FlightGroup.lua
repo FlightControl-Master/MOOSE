@@ -305,13 +305,17 @@ FLIGHTGROUP.TaskType={
 
 --- Mission types.
 -- @type FLIGHTGROUP.MissionType
--- @param #string INTERCEPT Intercept task.
--- @param #string CAP Combat Air Patrol task.
--- @param #string BAI Battlefield Air Interdiction task.
+-- @param #string INTERCEPT Intercept.
+-- @param #string CAP Combat Air Patrol.
+-- @param #string BAI Battlefield Air Interdiction.
 -- @param #string SEAD Suppression/destruction of enemy air defences.
--- @param #string STRIKE Strike task.
--- @param #string AWACS AWACS task.
--- @param #string TANKER Tanker task.
+-- @param #string STRIKE Strike mission.
+-- @param #string AWACS AWACS mission.
+-- @param #string TANKER Tanker mission.
+-- @param #string RECON Recon mission.
+-- @param #string TRANSPORT Transport mission.
+-- @param #string FERRY Ferry flight mission.
+-- @param #string ANTISHIP Anti-ship mission.
 FLIGHTGROUP.MissionType={
   INTERCEPT="Intercept",
   CAP="CAP",
@@ -323,18 +327,20 @@ FLIGHTGROUP.MissionType={
   TANKER="Tanker",
   RECON="Recon",
   TRANSPORT="Transport",
+  FERRY="Ferry Flight",
+  ANTISHIP="Anti Ship"
 }
 
 --- Mission status.
 -- @type FLIGHTGROUP.MissionStatus
 -- @field #string SCHEDULED Mission is scheduled.
--- @field #string EXECUTING Mission is being executed.
 -- @field #string ASSIGNED Mission was assigned.
+-- @field #string EXECUTING Mission is being executed.
 -- @field #string ACCOMPLISHED Mission is accomplished.
 FLIGHTGROUP.MissionStatus={
   SCHEDULED="scheduled",
+  ASSIGNED="assigned",  
   EXECUTING="executing",
-  ASSIGNED="assigned",
   ACCOMPLISHED="accomplished",
   FAILED="failed",
 }
@@ -364,7 +370,7 @@ FLIGHTGROUP.MissionStatus={
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.2.6"
+FLIGHTGROUP.version="0.3.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1119,12 +1125,14 @@ function FLIGHTGROUP:CreateMissionCAP(Altitude, SpeedOrbit, Heading, Leg)
   mission.heading=Heading or 270
   mission.leg=UTILS.NMToMeters(Leg or 10)
   
+  mission.type="bla"
+  
   return mission
 end
 
 --- Add mission to queue.
 -- @param #FLIGHTGROUP self
--- @param FLIGHTGROUP.Mission Mission for this group.
+-- @param #FLIGHTGROUP.Mission Mission Mission for this group.
 -- @param Core.Zone#ZONE Zone The mission zone.
 -- @param #number WaypointIndex The waypoint index.
 -- @param #string ClockStart Time the mission is started, e.g. "05:00" for 5 am. If specified as a #number, it will be relative (in seconds) to the current mission time. Default is 5 seconds after mission was added.
@@ -1189,7 +1197,8 @@ function FLIGHTGROUP:AddMission(Mission, Zone, WaypointIndex, ClockStart, ClockS
   table.insert(self.missionqueue, mission)
   
   local text=string.format("Added %s mission %s at zone %s. Starting at %s. Stopping at %s", mission.type, mission.name, mission.zone:GetName(), UTILS.SecondsToClock(mission.Tstart, true), mission.Tstop and UTILS.SecondsToClock(mission.Tstop, true) or "never")
-  self:I(self.lid..text)
+  --self:I(self.lid..text)
+  self:I(text)
   
   return mission
 end
