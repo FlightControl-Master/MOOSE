@@ -185,19 +185,20 @@ function INTEL:onafterStatus(From, Event, To)
   local fsmstate=self:GetState()
   
   -- Check if group has detected any units.
-  self:_CheckFlightStatus()
+  self:UpdateIntel()
 
   -- Short info.
   local text=string.format("Flight status %s [%d/%d]. Task=%d/%d. Waypoint=%d/%d. Detected=%d", fsmstate, #self.element, #self.element, self.taskcurrent, #self.taskqueue, self.currentwp or 0, #self.waypoints or 0, self.detectedunits:Count())
   self:I(self.sid..text)
   
-  
+
+  self:__Status(-30) 
 end
 
 
 --- Update detected items.
 -- @param #INTEL self
-function INTEL:_UpdateIntel()
+function INTEL:UpdateIntel()
 
   -- Set of all detected units.
   local DetectedSet=SET_UNIT:New()
@@ -214,11 +215,15 @@ function INTEL:_UpdateIntel()
     
   end
   
+  -- Newly detected units.
   local detectednew=DetectedSet:GetSetComplement(self.detectedunits)
   
+  -- Previously detected units which got lost.
   local detectedlost=self.detectedunits:GetSetComplement(DetectedSet)
   
-
+  -- TODO: Loose units only if they remain undetected for a given time interval. We want to avoid fast oscillation between detected/lost states. Maybe 1-5 min would be a good time interval?!
+  -- TODO: Combine units to groups for all, new and lost.
+  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

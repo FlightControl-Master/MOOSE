@@ -1006,6 +1006,7 @@ function FLIGHTGROUP:Activate(delay)
     if delay then
       self:ScheduleOnce(delay, FLIGHTGROUP.Activate, self)
     else
+      self:I(self.lid.."Activating late activated group")
       self.group:Activate()
     end
   end
@@ -1021,6 +1022,7 @@ function FLIGHTGROUP:StartUncontrolled(delay)
 
   if self:IsAlive() then
     --TODO: check Alive==true and Alive==false ==> Activate first
+    self:I(self.lid.."Starting uncontrolled group")
     self.group:StartUncontrolled(delay)
   else
     self:E(self.lid.."ERROR: Could not start uncontrolled group as it is NOT alive (yet)!")
@@ -1125,8 +1127,6 @@ function FLIGHTGROUP:CreateMissionCAP(Altitude, SpeedOrbit, Heading, Leg)
   mission.heading=Heading or 270
   mission.leg=UTILS.NMToMeters(Leg or 10)
   
-  mission.type="bla"
-  
   return mission
 end
 
@@ -1186,7 +1186,7 @@ function FLIGHTGROUP:AddMission(Mission, Zone, WaypointIndex, ClockStart, ClockS
     
     local CoordRaceTrack=Coord:Translate(mission.leg, mission.heading, true)
   
-    mission.DCStask=self.group:TaskOrbit(Coord, mission.altitude, mission.speed, CoordRaceTrack)
+    mission.DCStask=CONTROLLABLE.TaskOrbit(self.group, Coord, mission.altitude, mission.speed, CoordRaceTrack)
     
     mission.name=Name or string.format("CAP mission ID%03d", mission.mid)
     
@@ -1196,7 +1196,8 @@ function FLIGHTGROUP:AddMission(Mission, Zone, WaypointIndex, ClockStart, ClockS
   -- Add mission to queue.
   table.insert(self.missionqueue, mission)
   
-  local text=string.format("Added %s mission %s at zone %s. Starting at %s. Stopping at %s", mission.type, mission.name, mission.zone:GetName(), UTILS.SecondsToClock(mission.Tstart, true), mission.Tstop and UTILS.SecondsToClock(mission.Tstop, true) or "never")
+  local text=string.format("Added %s mission %s at zone %s. Starting at %s. Stopping at %s", 
+  mission.type, mission.name, mission.zone:GetName(), UTILS.SecondsToClock(mission.Tstart, true), mission.Tstop and UTILS.SecondsToClock(mission.Tstop, true) or "never")
   --self:I(self.lid..text)
   self:I(text)
   
@@ -1431,16 +1432,13 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   -- Mission
   ---
   
-   -- First check if group is alive?
+   -- First check if group is alive? Late activated groups are activated and uncontrolled units are started automatically.
   if self:IsAlive()~=nil and not self.currentmission then
   
     local mission=self:_GetNextMission()
     
     if mission then
-      
-      env.info("FF starting mission")
-      self:MissionStart(mission)
-      
+      self:MissionStart(mission)      
     end
   end
   
@@ -1448,9 +1446,9 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   local mymission=self.currentmission and self.currentmission.name or "N/A"
   
   -- Current status.
-  local text=string.format("Tanker Status %s: Mission=%s (%d)", fsmstate, mymission, #self.missionqueue)
+  local text=string.format("Missions=%d Current: %s", #self.missionqueue, mymission)
   for i,_mission in pairs(self.missionqueue) do
-    local mission=_mission --#TANKERGROUP.Mission
+    local mission=_mission --#FLIGHTGROUP.Mission
     text=text..string.format("\n[%d] %s status=%s", i, tostring(mission.name), tostring(mission.status))
   end
   self:I(self.lid..text)
@@ -3078,6 +3076,37 @@ end
 -- Mission functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- On before "MissionStart" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #FLIGHTGROUP.Mission Mission The mission table.
+function FLIGHTGROUP:onbeforeMissionStart(From, Event, To, Mission)
+
+  self:I(self.lid..string.format("FF Starting mission %s, fsm=%s", tostring(Mission.name), self:GetState()))
+
+  -- Delay for route to mission. Group needs to be activated and controlled.
+  local delay=nil
+
+  -- Check if group is spawned.
+  if self:IsInUtero() then
+
+    -- Activate group if it is late activated.
+    if self:IsLateActivated() then
+      self:Activate()
+    end
+    
+    -- Activate group if it is uncontrolled.
+    if self:IsUncontrolled() then
+      self:StartUncontrolled(1)
+    end
+  
+  end
+
+  return true
+end
+
 --- On after "MissionStart" event.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
@@ -3086,28 +3115,6 @@ end
 -- @param #FLIGHTGROUP.Mission Mission The mission table.
 function FLIGHTGROUP:onafterMissionStart(From, Event, To, Mission)
 
-  -- TODO: need to handle case that group is spawned at a later point in time!
-
-  -- Delay for route to mission. Group needs to be activated and controlled.
-  local delay=nil
-
-  -- Check if group is spawned.
-  if self:IsInUtero() then
-  
-    -- Activate group if it is late activated.
-    if self:IsLateActivated() then   
-      self:Activate()
-      delay=1
-    end
-    
-    -- Activate group if it is uncontrolled.
-    if self:IsUncontrolled() then
-      self:StartUncontrolled(5)
-      delay=6
-    end
-  
-  end
-  
   -- Set current mission.
   self.currentmission=Mission
   
@@ -3118,7 +3125,7 @@ function FLIGHTGROUP:onafterMissionStart(From, Event, To, Mission)
   self.currentmission.status=FLIGHTGROUP.MissionStatus.EXECUTING
 
   -- Route flight to mission zone.
-  self:RouteToMission(Mission, delay)
+  self:RouteToMission(Mission, 5)
 
 end
 

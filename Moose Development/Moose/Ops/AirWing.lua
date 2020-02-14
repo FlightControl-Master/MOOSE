@@ -15,7 +15,7 @@
 -- @type AIRWING
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug Debug mode. Messages to all about status.
--- @field #string wid Class id string for output to DCS log file.
+-- @field #string lid Class id string for output to DCS log file.
 -- @field #string warehousename The name of the warehouse unit/static.
 -- @field #table menu Table of menu items.
 -- @field #table squadrons Table of squadrons.
@@ -36,7 +36,7 @@
 -- @field #AIRWING
 AIRWING = {
   ClassName      = "AIRWING",
-  wid            =   nil,
+  lid            =   nil,
   warehousename  =   nil,
   menu           =   nil,
   squadrons      =   nil,
@@ -102,10 +102,12 @@ function AIRWING:New(warehousename, airwingname)
   self.warehousename=warehousename
 
   self.squadrons={}
+  
+  self.missioncounter=0
 
 
   -- Set some string id for output to DCS.log file.
-  self.wid=string.format("AIRWING %s |", airwingname)
+  self.lid=string.format("AIRWING %s |", airwingname)
 
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
@@ -146,7 +148,7 @@ function AIRWING:New(warehousename, airwingname)
   -- @param #number delay Delay in seconds.
 
   -- Debug trace.
-  if true then
+  if false then
     self.Debug=true
     BASE:TraceOnOff(true)
     BASE:TraceClass(self.ClassName)
@@ -235,7 +237,7 @@ function AIRWING:SquadronCanMission(Squadron, MissionType, Nassets)
   local n=0
 
   local gotit=false
-  for _,canmission in pairs(Squadron.capability) do
+  for _,canmission in pairs(Squadron.capabilities) do
     if canmission==MissionType then
       gotit=true
       break
@@ -336,7 +338,7 @@ end
 function AIRWING:AddMission(Mission, Zone, WaypointIndex, ClockStart, ClockStop, Prio, Name)
 
   -- TODO: need to check that this call increases the correct mission counter and adds it to the mission queue.
-  local mission=FLIGHTGROUP.AddMission(self, Zone, WaypointIndex, ClockStart, ClockStop, Prio, Name, Mission)
+  local mission=FLIGHTGROUP.AddMission(self, Mission, Zone, WaypointIndex, ClockStart, ClockStop, Prio, Name)
 
   -- Mission needs the correct MID.
   mission.MID=self.missioncounter
@@ -356,7 +358,7 @@ function AIRWING:onafterStart(From, Event, To)
   self:GetParent(self).onafterStart(self, From, Event, To)
 
   -- Info.
-  self:I(self.wid..string.format("Starting AIRWING v%s %s (%s)", AIRWING.version, self.alias, self.warehousename))
+  self:I(self.lid..string.format("Starting AIRWING v%s %s (%s)", AIRWING.version, self.alias, self.warehousename))
 
   -- Add F10 radio menu.
   self:_SetMenuCoalition()
@@ -378,7 +380,7 @@ function AIRWING:onafterAirwingStatus(From, Event, To)
   
     -- Info text.
   local text=string.format("State %s", fsmstate)
-  self:I(self.wid..text)
+  self:I(self.lid..text)
   
   local text="Squadrons:"
   for i,_squadron in pairs(self.squadrons) do
@@ -409,7 +411,7 @@ function AIRWING:onafterAirwingStatus(From, Event, To)
       
     end
   end
-  self:I(self.wid..text)
+  self:I(self.lid..text)
   
   --------------
   -- Mission ---
@@ -456,7 +458,7 @@ function AIRWING:_GetNextMission()
     local mission=_mission --#AIRWING.Missiondata
     
     -- Check that mission is still scheduled, time has passed and enough assets are available.
-    if mission.status==AIRWING.MissionStatus.SCHEDULED and time>=mission.Tstart and self:CanMission(mission.type, mission.nassets) then
+    if mission.status==FLIGHTGROUP.MissionStatus.SCHEDULED and time>=mission.Tstart and self:CanMission(mission.type, mission.nassets) then
       return mission
     end
   end
@@ -534,6 +536,8 @@ end
 -- @param #string To To state.
 -- @param #AIRWING.Missiondata Mission The requested mission.
 function AIRWING:onafterRequestMission(From, Event, To, Mission)
+
+  Mission.status=FLIGHTGROUP.MissionStatus.ASSIGNED
 
   --TODO: request descriptor/attribute for given mission type! AWACS, Tankers, Fighters.
   --TODO: also check that mission prio is same as warehouse prio (small=high or the other way around).
@@ -695,7 +699,7 @@ function AIRWING:ReportSquadrons()
     
   end
   
-  self:I(self.wid..text)
+  self:I(self.lid..text)
   MESSAGE:New(text, 10, "AIRWING", true):ToCoalition(self:GetCoalition())
 
 end
