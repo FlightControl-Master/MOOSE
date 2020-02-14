@@ -1052,7 +1052,6 @@ end
 --    * `AIRBASE.Nevada.Laughlin_Airport`
 --    * `AIRBASE.Nevada.Lincoln_County`
 --    * `AIRBASE.Nevada.McCarran_International_Airport`
---    * `AIRBASE.Nevada.Mellan_Airstrip`
 --    * `AIRBASE.Nevada.Mesquite`
 --    * `AIRBASE.Nevada.Mina_Airport_3Q0`
 --    * `AIRBASE.Nevada.Nellis_AFB`
@@ -1096,8 +1095,7 @@ end
 --    
 --     -- Monitor specific airbases.
 --     ATC_Ground = ATC_GROUND_NEVADA:New(              
---       { AIRBASE.Nevada.Laughlin_Airport,             
---         AIRBASE.Nevada.Mellan_Airstrip,              
+--       { AIRBASE.Nevada.Laughlin_Airport,                        
 --         AIRBASE.Nevada.Lincoln_County,               
 --         AIRBASE.Nevada.North_Las_Vegas,              
 --         AIRBASE.Nevada.McCarran_International_Airport
@@ -2458,7 +2456,7 @@ end
 ATC_GROUND_PERSIANGULF = {
   ClassName = "ATC_GROUND_PERSIANGULF",
   Airbases = {
-    [AIRBASE.PersianGulf.Abu_Musa_Island_Airport] = {
+    [AIRBASE.PersianGulf.Al_Dhafra_AB] = { ---FIX by Wingthor Changed from Abu_Musa_Island_Airport
       PointsRunways = {
         [1] = {
           [1]={["y"]=-122813.71002344,["x"]=-31689.936027827,},

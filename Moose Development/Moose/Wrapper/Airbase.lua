@@ -134,7 +134,6 @@ AIRBASE.Caucasus = {
 --   * AIRBASE.Nevada.Jean_Airport
 --   * AIRBASE.Nevada.Laughlin_Airport
 --   * AIRBASE.Nevada.Lincoln_County
---   * AIRBASE.Nevada.Mellan_Airstrip
 --   * AIRBASE.Nevada.Mesquite
 --   * AIRBASE.Nevada.Mina_Airport_3Q0
 --   * AIRBASE.Nevada.North_Las_Vegas
@@ -154,7 +153,6 @@ AIRBASE.Nevada = {
   ["Jean_Airport"] = "Jean Airport",
   ["Laughlin_Airport"] = "Laughlin Airport",
   ["Lincoln_County"] = "Lincoln County",
-  ["Mellan_Airstrip"] = "Mellan Airstrip",
   ["Mesquite"] = "Mesquite",
   ["Mina_Airport_3Q0"] = "Mina Airport 3Q0",
   ["North_Las_Vegas"] = "North Las Vegas",
