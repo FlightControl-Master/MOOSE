@@ -516,7 +516,7 @@ RANGE.MenuF10Root=nil
 
 --- Range script version.
 -- @field #string version
-RANGE.version="2.2.1"
+RANGE.version="2.2.2"
 
 --TODO list:
 --TODO: Verbosity level for messages.
