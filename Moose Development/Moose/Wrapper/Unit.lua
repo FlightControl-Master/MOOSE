@@ -478,8 +478,7 @@ end
 
 --- Returns the Unit's ammunition.
 -- @param #UNIT self
--- @return DCS#Unit.Ammo
--- @return #nil The DCS Unit is not existing or alive.  
+-- @return DCS#Unit.Ammo Table with ammuntion of the unit (or nil). This can be a complex table!  
 function UNIT:GetAmmo()
   self:F2( self.UnitName )
 
@@ -664,8 +663,7 @@ end
 
 --- Returns relative amount of fuel (from 0.0 to 1.0) the UNIT has in its internal tanks. If there are additional fuel tanks the value may be greater than 1.0.
 -- @param #UNIT self
--- @return #number The relative amount of fuel (from 0.0 to 1.0).
--- @return #nil The DCS Unit is not existing or alive.  
+-- @return #number The relative amount of fuel (from 0.0 to 1.0) or *nil* if the DCS Unit is not existing or alive. 
 function UNIT:GetFuel()
   self:F3( self.UnitName )
 
@@ -1206,4 +1204,81 @@ do -- Detection
     
   end
 
+end
+
+--- Get the unit table from a unit's template.
+-- @param #UNIT self
+-- @return #table Table of the unit template (deep copy) or #nil.
+function UNIT:GetTemplate()
+
+  local group=self:GetGroup()
+  
+  local name=self:GetName()
+  
+  if group then
+    local template=group:GetTemplate()
+    
+    if template then
+    
+      for _,unit in pairs(template.units) do
+      
+        if unit.name==name then
+          return UTILS.DeepCopy(unit) 
+        end
+      end
+      
+    end     
+  end
+  
+  return nil
+end
+
+
+--- Get the payload table from a unit's template.
+-- The payload table has elements:
+-- 
+--    * pylons
+--    * fuel
+--    * chaff
+--    * gun
+--    
+-- @param #UNIT self
+-- @return #table Payload table (deep copy) or #nil.
+function UNIT:GetTemplatePayload()
+
+  local unit=self:GetTemplate()
+  
+  if unit then
+    return unit.payload
+  end
+  
+  return nil
+end
+
+--- Get the pylons table from a unit's template. This can be a complex table depending on the weapons the unit is carrying.
+-- @param #UNIT self
+-- @return #table Table of pylons (deepcopy) or #nil.
+function UNIT:GetTemplatePylons()
+
+  local payload=self:GetTemplatePayload()
+  
+  if payload then
+    return payload.pylons
+  end
+
+  return nil
+end
+
+--- Get the fuel of the unit from its template.
+-- @param #UNIT self
+-- @return #number Fuel of unit in kg.
+function UNIT:GetTemplateFuel()
+
+  local payload=self:GetTemplatePayload()
+  
+  if payload then
+    return payload.fuel
+  end
+
+  return nil
 end

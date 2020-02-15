@@ -173,6 +173,62 @@ GROUPTEMPLATE.Takeoff = {
   [GROUP.Takeoff.Cold] =    { "TakeOffParking", "From Parking Area" }
 }
 
+--- Generalized group attributes. See [DCS attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes) on hoggit.
+-- @type GROUP.Attribute
+-- @field #string AIR_TRANSPORTPLANE Airplane with transport capability. This can be used to transport other assets.
+-- @field #string AIR_AWACS Airborne Early Warning and Control System.
+-- @field #string AIR_FIGHTER Fighter, interceptor, ... airplane.
+-- @field #string AIR_BOMBER Aircraft which can be used for strategic bombing.
+-- @field #string AIR_TANKER Airplane which can refuel other aircraft.
+-- @field #string AIR_TRANSPORTHELO Helicopter with transport capability. This can be used to transport other assets.
+-- @field #string AIR_ATTACKHELO Attack helicopter.
+-- @field #string AIR_UAV Unpiloted Aerial Vehicle, e.g. drones.
+-- @field #string AIR_OTHER Any airborne unit that does not fall into any other airborne category.
+-- @field #string GROUND_APC Infantry carriers, in particular Amoured Personell Carrier. This can be used to transport other assets.
+-- @field #string GROUND_TRUCK Unarmed ground vehicles, which has the DCS "Truck" attribute.
+-- @field #string GROUND_INFANTRY Ground infantry assets.
+-- @field #string GROUND_ARTILLERY Artillery assets.
+-- @field #string GROUND_TANK Tanks (modern or old).
+-- @field #string GROUND_TRAIN Trains. Not that trains are **not** yet properly implemented in DCS and cannot be used currently.
+-- @field #string GROUND_EWR Early Warning Radar.
+-- @field #string GROUND_AAA Anti-Aircraft Artillery.
+-- @field #string GROUND_SAM Surface-to-Air Missile system or components.
+-- @field #string GROUND_OTHER Any ground unit that does not fall into any other ground category.
+-- @field #string NAVAL_AIRCRAFTCARRIER Aircraft carrier.
+-- @field #string NAVAL_WARSHIP War ship, i.e. cruisers, destroyers, firgates and corvettes.
+-- @field #string NAVAL_ARMEDSHIP Any armed ship that is not an aircraft carrier, a cruiser, destroyer, firgatte or corvette.
+-- @field #string NAVAL_UNARMEDSHIP Any unarmed naval vessel.
+-- @field #string NAVAL_OTHER Any naval unit that does not fall into any other naval category.
+-- @field #string OTHER_UNKNOWN Anything that does not fall into any other category.
+GROUP.Attribute = {
+  AIR_TRANSPORTPLANE="Air_TransportPlane",
+  AIR_AWACS="Air_AWACS",
+  AIR_FIGHTER="Air_Fighter",
+  AIR_BOMBER="Air_Bomber",
+  AIR_TANKER="Air_Tanker",
+  AIR_TRANSPORTHELO="Air_TransportHelo",
+  AIR_ATTACKHELO="Air_AttackHelo",
+  AIR_UAV="Air_UAV",
+  AIR_OTHER="Air_OtherAir",
+  GROUND_APC="Ground_APC",
+  GROUND_TRUCK="Ground_Truck",
+  GROUND_INFANTRY="Ground_Infantry",
+  GROUND_ARTILLERY="Ground_Artillery",
+  GROUND_TANK="Ground_Tank",
+  GROUND_TRAIN="Ground_Train",
+  GROUND_EWR="Ground_EWR",
+  GROUND_AAA="Ground_AAA",
+  GROUND_SAM="Ground_SAM",
+  GROUND_OTHER="Ground_OtherGround",
+  NAVAL_AIRCRAFTCARRIER="Naval_AircraftCarrier",
+  NAVAL_WARSHIP="Naval_WarShip",
+  NAVAL_ARMEDSHIP="Naval_ArmedShip",
+  NAVAL_UNARMEDSHIP="Naval_UnarmedShip",
+  NAVAL_OTHER="Naval_OtherNaval",
+  OTHER_UNKNOWN="Other_Unknown",
+}
+
+
 --- Create a new GROUP from a given GroupTemplate as a parameter.
 -- Note that the GroupTemplate is NOT spawned into the mission.
 -- It is merely added to the @{Core.Database}.
@@ -810,7 +866,7 @@ end
 function GROUP:Activate()
   self:F2( { self.GroupName } )
   trigger.action.activateGroup( self:GetDCSObject() )
-  return self:GetDCSObject()
+  return self
 end
 
 
@@ -1678,7 +1734,7 @@ function GROUP:Respawn( Template, Reset )
         self:F(GroupUnit:GetName())
         
         if GroupUnit:IsAlive() then
-          self:F("Alive")
+          self:I("FF Alive")
           
           -- Get unit position vector.
           local GroupUnitVec3 = GroupUnit:GetVec3()
@@ -1722,7 +1778,7 @@ function GROUP:Respawn( Template, Reset )
         end
       end
       
-    else  -- Reset=false or nil
+    elseif Reset==false then  -- Reset=false or nil
     
       -- Loop over template units.
       for UnitID, TemplateUnitData in pairs( Template.units ) do
@@ -1764,7 +1820,30 @@ function GROUP:Respawn( Template, Reset )
         self:F( { UnitID, Template.units[UnitID], Template.units[UnitID] } )
       end
       
-    end      
+    else
+    
+      local units=self:GetUnits()
+    
+      -- Loop over template units.
+      for UnitID, Unit in pairs(Template.units) do
+      
+        for _,_unit in pairs(units) do
+          local unit=_unit --Wrapper.Unit#UNIT
+          
+          if unit:GetName()==Unit.name then
+            local coord=unit:GetCoordinate()
+            local heading=unit:GetHeading()
+            Unit.x=coord.x
+            Unit.y=coord.z
+            Unit.alt=coord.y
+            Unit.heading=math.rad(heading)
+            Unit.psi=-Unit.heading
+          end
+        end
+      
+      end
+      
+    end
     
   end
   
@@ -2090,6 +2169,117 @@ function GROUP:GetDCSDesc(n)
   
   return nil
 end
+
+
+--- Get the generalized attribute of a self.
+-- Note that for a heterogenious self, the attribute is determined from the attribute of the first unit!
+-- @param #GROUP self
+-- @return #string Generalized attribute of the self.
+function GROUP:GetAttribute()
+
+  -- Default
+  local attribute=GROUP.Attribute.OTHER_UNKNOWN --#GROUP.Attribute
+
+  if self then
+
+    -----------
+    --- Air ---
+    -----------
+    -- Planes
+    local transportplane=self:HasAttribute("Transports") and self:HasAttribute("Planes")
+    local awacs=self:HasAttribute("AWACS")
+    local fighter=self:HasAttribute("Fighters") or self:HasAttribute("Interceptors") or self:HasAttribute("Multirole fighters") or (self:HasAttribute("Bombers") and not self:HasAttribute("Strategic bombers"))
+    local bomber=self:HasAttribute("Strategic bombers")
+    local tanker=self:HasAttribute("Tankers")
+    local uav=self:HasAttribute("UAVs")
+    -- Helicopters
+    local transporthelo=self:HasAttribute("Transport helicopters")
+    local attackhelicopter=self:HasAttribute("Attack helicopters")
+
+    --------------
+    --- Ground ---
+    --------------
+    -- Ground
+    local apc=self:HasAttribute("Infantry carriers")
+    local truck=self:HasAttribute("Trucks") and self:GetCategory()==Group.Category.GROUND
+    local infantry=self:HasAttribute("Infantry")
+    local artillery=self:HasAttribute("Artillery")
+    local tank=self:HasAttribute("Old Tanks") or self:HasAttribute("Modern Tanks")
+    local aaa=self:HasAttribute("AAA")
+    local ewr=self:HasAttribute("EWR")
+    local sam=self:HasAttribute("SAM elements") and (not self:HasAttribute("AAA"))
+    -- Train
+    local train=self:GetCategory()==Group.Category.TRAIN
+
+    -------------
+    --- Naval ---
+    -------------
+    -- Ships
+    local aircraftcarrier=self:HasAttribute("Aircraft Carriers")
+    local warship=self:HasAttribute("Heavy armed ships")
+    local armedship=self:HasAttribute("Armed ships")
+    local unarmedship=self:HasAttribute("Unarmed ships")
+
+
+    -- Define attribute. Order is important.
+    if transportplane then
+      attribute=GROUP.Attribute.AIR_TRANSPORTPLANE
+    elseif awacs then
+      attribute=GROUP.Attribute.AIR_AWACS
+    elseif fighter then
+      attribute=GROUP.Attribute.AIR_FIGHTER
+    elseif bomber then
+      attribute=GROUP.Attribute.AIR_BOMBER
+    elseif tanker then
+      attribute=GROUP.Attribute.AIR_TANKER
+    elseif transporthelo then
+      attribute=GROUP.Attribute.AIR_TRANSPORTHELO
+    elseif attackhelicopter then
+      attribute=GROUP.Attribute.AIR_ATTACKHELO
+    elseif uav then
+      attribute=GROUP.Attribute.AIR_UAV
+    elseif apc then
+      attribute=GROUP.Attribute.GROUND_APC
+    elseif infantry then
+      attribute=GROUP.Attribute.GROUND_INFANTRY
+    elseif artillery then
+      attribute=GROUP.Attribute.GROUND_ARTILLERY
+    elseif tank then
+      attribute=GROUP.Attribute.GROUND_TANK
+    elseif aaa then
+      attribute=GROUP.Attribute.GROUND_AAA
+    elseif ewr then
+      attribute=GROUP.Attribute.GROUND_EWR
+    elseif sam then
+      attribute=GROUP.Attribute.GROUND_SAM
+    elseif truck then
+      attribute=GROUP.Attribute.GROUND_TRUCK
+    elseif train then
+      attribute=GROUP.Attribute.GROUND_TRAIN
+    elseif aircraftcarrier then
+      attribute=GROUP.Attribute.NAVAL_AIRCRAFTCARRIER
+    elseif warship then
+      attribute=GROUP.Attribute.NAVAL_WARSHIP
+    elseif armedship then
+      attribute=GROUP.Attribute.NAVAL_ARMEDSHIP
+    elseif unarmedship then
+      attribute=GROUP.Attribute.NAVAL_UNARMEDSHIP
+    else
+      if self:IsGround() then
+        attribute=GROUP.Attribute.GROUND_OTHER
+      elseif self:IsShip() then
+        attribute=GROUP.Attribute.NAVAL_OTHER
+      elseif self:IsAir() then
+        attribute=GROUP.Attribute.AIR_OTHER
+      else
+        attribute=GROUP.Attribute.OTHER_UNKNOWN
+      end
+    end
+  end
+
+  return attribute
+end
+
 
 do -- Route methods
 

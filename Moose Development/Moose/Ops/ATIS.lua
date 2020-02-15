@@ -523,7 +523,7 @@ _ATIS={}
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version="0.6.2"
+ATIS.version="0.6.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1142,6 +1142,10 @@ function ATIS:onafterBroadcast(From, Event, To)
 
   local WINDFROM=string.format("%03d", windFrom-magvar)
   local WINDSPEED=string.format("%d", UTILS.MpsToKnots(windSpeed))
+  
+  if WINDFROM=="000" then
+    WINDFROM="360"
+  end
 
   if self.metric then
     WINDSPEED=string.format("%d", windSpeed)
@@ -1151,27 +1155,7 @@ function ATIS:onafterBroadcast(From, Event, To)
   --- Runway ---
   --------------
 
-  -- Get active runway data based on wind direction.
-  local runact=self.airbase:GetActiveRunway(self.runwaym2t)
-
-  -- Active runway "31".
-  local runway=self:GetMagneticRunway(windFrom) or runact.idx
-
-  -- Left or right in case there are two runways with the same heading.
-  local rwyLeft=nil
-
-  -- Check if user explicitly specified a runway.
-  if self.activerunway then
-  
-    -- Get explicit runway heading if specified.
-    local runwayno=self:GetRunwayWithoutLR(self.activerunway)
-    if runwayno~="" then
-      runway=runwayno
-    end
-    
-    -- Was "L"eft or "R"ight given?
-    rwyLeft=self:GetRunwayLR(self.activerunway)
-  end
+  local runway, rwyLeft=self:GetActiveRunway()
 
   ------------
   --- Time ---
@@ -1772,11 +1756,41 @@ end
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Get runway from user supplied magnetic heading.
+--- Get active runway runway.
 -- @param #ATIS self
--- @return #string Runway magnetic heading divided by ten (and rounded). Eg, "13" for 130°.
+-- @return #string Active runway, e.g. "31" for 310 deg.
+-- @return #boolean Use Left=true, Right=false, or nil.
 function ATIS:GetActiveRunway()
+
+  local coord=self.airbase:GetCoordinate()
+  local height=coord:GetLandHeight()
+
+  -- Get wind direction and speed in m/s.
+  local windFrom, windSpeed=coord:GetWind(height+10)
+
+  -- Get active runway data based on wind direction.
+  local runact=self.airbase:GetActiveRunway(self.runwaym2t)
+
+  -- Active runway "31".
+  local runway=self:GetMagneticRunway(windFrom) or runact.idx
+
+  -- Left or right in case there are two runways with the same heading.
+  local rwyLeft=nil
+
+  -- Check if user explicitly specified a runway.
+  if self.activerunway then
   
+    -- Get explicit runway heading if specified.
+    local runwayno=self:GetRunwayWithoutLR(self.activerunway)
+    if runwayno~="" then
+      runway=runwayno
+    end
+    
+    -- Was "L"eft or "R"ight given?
+    rwyLeft=self:GetRunwayLR(self.activerunway)
+  end
+  
+  return runway, rwyLeft
 end
 
 --- Get runway from user supplied magnetic heading.

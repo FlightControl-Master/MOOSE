@@ -312,6 +312,7 @@ function CONTROLLABLE:ClearTasks()
 
   if DCSControllable then
     local Controller = self:_GetController()
+    env.info("FF clearing tasks!")
     Controller:resetTask()
     return self
   end
@@ -879,15 +880,15 @@ function CONTROLLABLE:TaskAttackGroup( AttackGroup, WeaponType, WeaponExpend, At
   local DCSTask
   DCSTask = { id = 'AttackGroup',
     params = {
-      groupId = AttackGroup:GetID(),
-      weaponType = WeaponType,
-      expend = WeaponExpend,
-      attackQty = AttackQty,
+      groupId          = AttackGroup:GetID(),
+      weaponType       = WeaponType,
+      expend           = WeaponExpend,
+      attackQty        = AttackQty,
       directionEnabled = DirectionEnabled,
-      direction = Direction,
-      altitudeEnabled = AltitudeEnabled,
-      altitude = Altitude,
-      attackQtyLimit = AttackQtyLimit,
+      direction        = Direction,
+      altitudeEnabled  = AltitudeEnabled,
+      altitude         = Altitude,
+      attackQtyLimit   = AttackQtyLimit,
     },
   },
 
@@ -912,16 +913,16 @@ function CONTROLLABLE:TaskAttackUnit(AttackUnit, GroupAttack, WeaponExpend, Atta
   DCSTask = {
     id = 'AttackUnit',
     params = {
-      unitId = AttackUnit:GetID(),
-      groupAttack = GroupAttack or false,
-      expend = WeaponExpend or "Auto",
+      unitId           = AttackUnit:GetID(),
+      groupAttack      = GroupAttack or false,
+      expend           = WeaponExpend or "Auto",
       directionEnabled = Direction and true or false,
-      direction = math.rad(Direction or 0),
-      altitudeEnabled = Altitude and true or false,
-      altitude = Altitude or math.max(1000, AttackUnit:GetAltitude()),
-      attackQtyLimit = AttackQty and true or false,
-      attackQty = AttackQty,
-      weaponType = WeaponType
+      direction        = math.rad(Direction or 0),
+      altitudeEnabled  = Altitude and true or false,
+      altitude         = Altitude or math.max(1000, AttackUnit:GetAltitude()),
+      attackQtyLimit   = AttackQty and true or false,
+      attackQty        = AttackQty,
+      weaponType       = WeaponType
     }
   }
 
@@ -974,18 +975,18 @@ function CONTROLLABLE:TaskBombing( Vec2, GroupAttack, WeaponExpend, AttackQty, D
   DCSTask = {
     id = 'Bombing',
     params = {
-      x = Vec2.x,
-      y = Vec2.y,
-      groupAttack = _groupattack,
-      expend = WeaponExpend or "Auto",
-      attackQtyLimit = false, --AttackQty and true or false,
-      attackQty = AttackQty or 1,
+      x                = Vec2.x,
+      y                = Vec2.y,
+      groupAttack      = _groupattack,
+      expend           = WeaponExpend or "Auto",
+      attackQtyLimit   = false,
+      attackQty        = AttackQty or 1,
       directionEnabled = _directionenabled,
-      direction = _direction,
-      altitudeEnabled = _altitudeenabled,
-      altitude = _altitude,
-      weaponType = WeaponType,
-      --attackType=_attacktype,
+      direction        = _direction,
+      altitudeEnabled  = _altitudeenabled,
+      altitude         = _altitude,
+      weaponType       =  WeaponType,
+      attackType       = _attacktype,
       },
   }
 
@@ -1010,18 +1011,18 @@ function CONTROLLABLE:TaskAttackMapObject( Vec2, GroupAttack, WeaponExpend, Atta
   DCSTask = {
     id = 'AttackMapObject',
     params = {
-      point = Vec2,
-      x = Vec2.x,
-      y = Vec2.y,
-      groupAttack = GroupAttack or false,
-      expend = WeaponExpend or "Auto",
-      attackQtyLimit = AttackQty and true or false,
-      attackQty = AttackQty,
+      point            = Vec2,
+      x                = Vec2.x,
+      y                = Vec2.y,
+      groupAttack      = GroupAttack or false,
+      expend           = WeaponExpend or "Auto",
+      attackQtyLimit   = AttackQty and true or false,
+      attackQty        = AttackQty,
       directionEnabled = Direction and true or false,
-      direction = Direction,
-      altitudeEnabled = Altitude and true or false,
-      altitude = Altitude or 30,
-      weaponType = WeaponType or 1073741822,
+      direction        = Direction,
+      altitudeEnabled  = Altitude and true or false,
+      altitude         = Altitude or 30,
+      weaponType       = WeaponType or 1073741822,
     },
   },
 
@@ -1029,6 +1030,186 @@ function CONTROLLABLE:TaskAttackMapObject( Vec2, GroupAttack, WeaponExpend, Atta
   return DCSTask
 end
 
+
+--- (AIR) Delivering weapon via CarpetBombing (all bombers in formation release at same time) at the point on the ground.
+-- @param #CONTROLLABLE self
+-- @param DCS#Vec2 Vec2 2D-coordinates of the point to deliver weapon at.
+-- @param #boolean GroupAttack (optional) If true, all units in the group will attack the Unit when found.
+-- @param DCS#AI.Task.WeaponExpend WeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
+-- @param #number AttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
+-- @param DCS#Azimuth Direction (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
+-- @param #number Altitude (optional) The altitude from where to attack.
+-- @param #number WeaponType (optional) The WeaponType.
+-- @param #number CarpetLength (optional) default to 500 m. 
+-- @return DCS#Task The DCS task structure. 
+function CONTROLLABLE:TaskCarpetBombing(Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType, CarpetLength)
+  self:F2( { self.ControllableName, Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType, CarpetLength } )
+  
+  local _groupattack=false
+  if GroupAttack then
+    _groupattack=GroupAttack
+  end
+  
+  local _direction=0
+  local _directionenabled=false
+  if Direction then
+    _direction=math.rad(Direction)
+    _directionenabled=true
+  end
+  
+  local _altitude=0
+  local _altitudeenabled=false
+  if Altitude then
+    _altitude=Altitude
+    _altitudeenabled=true
+  end
+  
+  -- default to 500m
+  local _carpetLength = 500
+  if CarpetLength then
+     _carpetLength = CarpetLength
+  end
+  
+  local _weaponexpend = "Auto"
+  if WeaponExpend then 
+      _weaponexpend = WeaponExpend
+  end
+  
+  -- Build Task Structure
+  local DCSTask
+  DCSTask = { 
+    id = 'CarpetBombing',
+    params = {
+      attackType       = "Carpet",
+      point            = Vec2,
+      x                = Vec2.x,
+      y                = Vec2.y,      
+      groupAttack      = _groupattack,
+      carpetLength     = _carpetLength,
+      weaponType       = WeaponType,
+      expend           = "All",
+      attackQtyLimit   = false, --AttackQty and true or false,
+      attackQty        = AttackQty or  1,
+      directionEnabled = _directionenabled,
+      direction        = _direction, 
+      altitudeEnabled  = _altitudeenabled,
+      altitude         = _altitude
+      }
+  }
+  
+  return DCSTask
+end
+
+
+
+--- (AIR) Following another airborne controllable. 
+-- The unit / controllable will follow lead unit of another controllable, wingmens of both controllables will continue following their leaders. 
+-- Used to support CarpetBombing Task 
+-- @param #CONTROLLABLE self
+-- @param #CONTROLLABLE FollowControllable The controllable to be followed.
+-- @param DCS#Vec3 Vec3 Position of the unit / lead unit of the controllable relative lead unit of another controllable in frame reference oriented by course of lead unit of another controllable. If another controllable is on land the unit / controllable will orbit around.
+-- @param #number LastWaypointIndex Detach waypoint of another controllable. Once reached the unit / controllable Follow task is finished.
+-- @return DCS#Task The DCS task structure.
+function CONTROLLABLE:TaskFollowBigFormation(FollowControllable, Vec3, LastWaypointIndex )
+    
+  local DCSTask = { 
+    id = 'FollowBigFormation',
+    params = {
+      groupId          = FollowControllable:GetID(),
+      pos              = Vec3,      
+      lastWptIndexFlag = LastWaypointIndex and true or false,
+      lastWptIndex     = LastWaypointIndex
+    }
+  }
+    
+  return DCSTask
+end
+
+
+--- (AIR) Move the controllable to a Vec2 Point, wait for a defined duration and embark a controllable.
+-- @param #CONTROLLABLE self
+-- @param DCS#Vec2 Vec2 The point where to wait. Needs to have x and y components.
+-- @param Core.Set#SET_GROUP GroupSetForEmparking Set of groups to embark.
+-- @param #number Duration (Optional) The maximum duration in seconds to wait until all groups have embarked.
+-- @param Core.Set#SET_GROUP (Optional) DistributionGroupSet Set of groups identifying the groups needing to board specific helicopters.
+-- @return DCS#Task The DCS task structure.
+function CONTROLLABLE:TaskEmbarking(Vec2, GroupSetForEmbarking, Duration, DistributionGroupSet)
+
+  -- Table of group IDs for embarking.
+  local g4e={}
+  
+  if GroupSetForEmbarking then
+    for _,_group in pairs(GroupSetForEmbarking:GetSet()) do
+      local group=_group --Wrapper.Group#GROUP
+      table.insert(g4e, group:GetID())
+    end
+  else
+    self:E("ERROR: No groups for embarking specified!")
+    return nil
+  end
+  
+  
+  
+  local DCSTask = {
+    id = 'Embarking',
+    params = {
+      Vec2               = Vec2,
+      x                  = Vec2.x,
+      y                  = Vec2.y,
+      groupsForEmbarking = g4e,
+      durationFlag       = Duration and true or false,            
+      duration           = Duration,
+      distributionFlag   = DistributionGroupSet and true or false,
+      distribution       = Distribution,
+    }
+  }
+
+  self:T3( { DCSTask } )
+  return DCSTask
+end
+
+
+
+--- (AIR) Move the controllable to a Vec2 Point, wait for a defined duration and embark a controllable.
+-- @param #CONTROLLABLE self
+-- @param DCS#Vec2 Vec2 The point where to wait.
+-- @param #number Duration The duration in seconds to wait.
+-- @param #CONTROLLABLE EmbarkingControllable The controllable to be embarked.
+-- @return DCS#Task The DCS task structure
+function CONTROLLABLE:TaskDisembarking(Vec2, Duration, EmbarkingControllable)
+ 
+  -- Table of group IDs for embarking.
+  local g4e={}
+  
+  if GroupSetForEmbarking then
+    for _,_group in pairs(GroupSetForEmbarking:GetSet()) do
+      local group=_group --Wrapper.Group#GROUP
+      table.insert(g4e, group:GetID())
+    end
+  else
+    self:E("ERROR: No groups for embarking specified!")
+    return nil
+  end 
+ 
+  
+  local DCSTask =  {
+    id = 'Disembarking',       
+    params = {
+      point              = Vec2,
+      x                  = Vec2.x,
+      y                  = Vec2.y,
+      duration           = Duration,
+      groupsForEmbarking = { EmbarkingControllable:GetID() },
+      durationFlag       = durationflag,
+      distributionFlag   = false,
+      distribution       = {},
+    }
+  }
+
+  return DCSTask
+end
+
+----
 
 --- (AIR) Orbit at a specified position at a specified alititude during a specified duration with a specified speed.
 -- @param #CONTROLLABLE self
@@ -1039,38 +1220,19 @@ end
 function CONTROLLABLE:TaskOrbitCircleAtVec2( Point, Altitude, Speed )
   self:F2( { self.ControllableName, Point, Altitude, Speed } )
 
-  --  pattern = enum AI.Task.OribtPattern,
-  --    point = Vec2,
-  --    point2 = Vec2,
-  --    speed = Distance,
-  --    altitude = Distance
-
   local LandHeight = land.getHeight( Point )
 
   self:T3( { LandHeight } )
 
-  local DCSTask = { id = 'Orbit',
-    params = { pattern = AI.Task.OrbitPattern.CIRCLE,
-      point = Point,
-      speed = Speed,
+  local DCSTask = {
+    id = 'Orbit',
+    params = {
+      pattern  = AI.Task.OrbitPattern.CIRCLE,
+      point    = Point,
+      speed    = Speed,
       altitude = Altitude + LandHeight
     }
   }
-
-
-  --  local AITask = { id = 'ControlledTask',
-  --                   params = { task = { id = 'Orbit',
-  --                                       params = { pattern = AI.Task.OrbitPattern.CIRCLE,
-  --                                                  point = Point,
-  --                                                  speed = Speed,
-  --                                                  altitude = Altitude + LandHeight
-  --                                                }
-  --                                     },
-  --                              stopCondition = { duration = Duration
-  --                                              }
-  --                            }
-  --                 }
-  --               )
 
   return DCSTask
 end
@@ -1111,7 +1273,7 @@ end
 -- @param #CONTROLLABLE self
 -- @param #number Altitude The altitude [m] to hold the position.
 -- @param #number Speed The speed [m/s] flying when holding the position.
--- @param Core.Point#COORDINATE Coordinate (optional) The coordinate where to orbit. If the coordinate is not given, then the current position of the controllable is used.
+-- @param Core.Point#COORDINATE Coordinate (Optional) The coordinate where to orbit. If the coordinate is not given, then the current position of the controllable is used.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:TaskOrbitCircle( Altitude, Speed, Coordinate )
   self:F2( { self.ControllableName, Altitude, Speed } )
@@ -1139,10 +1301,6 @@ function CONTROLLABLE:TaskHoldPosition()
 end
 
 
-
-
-
-
 --- (AIR) Delivering weapon on the runway. See [hoggit](https://wiki.hoggitworld.com/view/DCS_task_bombingRunway)
 --
 -- Make sure the aircraft has the following role:
@@ -1165,36 +1323,18 @@ end
 function CONTROLLABLE:TaskBombingRunway(Airbase, WeaponType, WeaponExpend, AttackQty, Direction, GroupAttack)
   self:F2( { self.ControllableName, Airbase, WeaponType, WeaponExpend, AttackQty, Direction, GroupAttack } )
 
---  BombingRunway = {
---    id = 'BombingRunway',
---    params = {
---      runwayId = AirdromeId,
---      weaponType = number,
---      expend = enum AI.Task.WeaponExpend,
---      attackQty = number,
---      direction = Azimuth,
---      groupAttack = boolean,
---    }
---  }
-
-  -- Defaults.
-  WeaponType=WeaponType or 2147485694
-  WeaponExpend=WeaponExpend or AI.Task.WeaponExpend.ALL
-  AttackQty=AttackQty or 1
-
-  local DCSTask
-  DCSTask = { id = 'BombingRunway',
+  local DCSTask = {
+    id = 'BombingRunway',
     params = {
-    runwayId = Airbase:GetID(),
-    weaponType = WeaponType,
-    expend = WeaponExpend,
-    attackQty = AttackQty,
-    direction = Direction,
+    runwayId    = Airbase:GetID(),
+    weaponType  = WeaponType or ENUMS.WeaponFlag.AnyBomb,
+    expend      = WeaponExpend or AI.Task.WeaponExpend.ALL,
+    attackQty   = AttackQty or 1,
+    direction   = Direction and math.rad(Direction) or nil,
     groupAttack = GroupAttack,
     },
-  },
+  }
 
-  self:T3( { DCSTask } )
   return DCSTask
 end
 
@@ -1203,16 +1343,9 @@ end
 -- @param #CONTROLLABLE self
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskRefueling()
-  self:F2( { self.ControllableName } )
-
---  Refueling = {
---    id = 'Refueling',
---    params = {}
---  }
 
   local DCSTask={id='Refueling', params={}}
-
-  self:T3( { DCSTask } )
+  
   return DCSTask
 end
 
@@ -1222,37 +1355,16 @@ end
 -- @param DCS#Vec2 Point The point where to land.
 -- @param #number Duration The duration in seconds to stay on the ground.
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:TaskLandAtVec2( Point, Duration )
-  self:F2( { self.ControllableName, Point, Duration } )
+function CONTROLLABLE:TaskLandAtVec2(Vec2, Duration)
 
---  Land = {
---    id= 'Land',
---    params = {
---      point = Vec2,
---      durationFlag = boolean,
---      duration = Time
---    }
---  }
-
-  local DCSTask
-  if Duration and Duration > 0 then
-    DCSTask = { id = 'Land',
-      params = {
-        point = Point,
-        durationFlag = true,
-        duration = Duration,
-      },
-    }
-  else
-    DCSTask = { id = 'Land',
-      params = {
-        point = Point,
-        durationFlag = false,
-      },
-    }
-  end
-
-  self:T3( DCSTask )
+  local DCSTask = {
+    id = 'Land',
+    params = {
+      point        = Vec2,
+      durationFlag = Duration and true or false,
+      duration     = Duration,
+    },
+  }
   return DCSTask
 end
 
@@ -1423,21 +1535,7 @@ end
 -- @param #CONTROLLABLE self
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskHold()
-  self:F2( { self.ControllableName } )
-
---  Hold = {
---    id = 'Hold',
---    params = {
---    }
---  }
-
-  local DCSTask
-  DCSTask = { id = 'Hold',
-    params = {
-    }
-  }
-
-  self:T3( { DCSTask } )
+  local DCSTask = {id = 'Hold', params = {}}
   return DCSTask
 end
 
@@ -1456,23 +1554,13 @@ end
 function CONTROLLABLE:TaskFAC_AttackGroup( AttackGroup, WeaponType, Designation, Datalink )
   self:F2( { self.ControllableName, AttackGroup, WeaponType, Designation, Datalink } )
 
---  FAC_AttackGroup = {
---    id = 'FAC_AttackGroup',
---    params = {
---      groupId = Group.ID,
---      weaponType = number,
---      designation = enum AI.Task.Designation,
---      datalink = boolean
---    }
---  }
-
-  local DCSTask
-  DCSTask = { id = 'FAC_AttackGroup',
+  local DCSTask = {
+    id = 'FAC_AttackGroup',
     params = {
-      groupId = AttackGroup:GetID(),
-      weaponType = WeaponType,
+      groupId     = AttackGroup:GetID(),
+      weaponType  = WeaponType,
       designation = Designation,
-      datalink = Datalink,
+      datalink    = Datalink,
     }
   }
 
@@ -1486,26 +1574,18 @@ end
 -- @param #CONTROLLABLE self
 -- @param DCS#Distance Distance Maximal distance from the target to a route leg. If the target is on a greater distance it will be ignored.
 -- @param DCS#AttributeNameArray TargetTypes Array of target categories allowed to engage.
--- @param #number Priority All enroute tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first.
+-- @param #number Priority All enroute tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. Default 0.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:EnRouteTaskEngageTargets( Distance, TargetTypes, Priority )
   self:F2( { self.ControllableName, Distance, TargetTypes, Priority } )
 
---  EngageTargets ={
---    id = 'EngageTargets',
---    params = {
---      maxDist = Distance,
---      targetTypes = array of AttributeName,
---      priority = number
---    }
---  }
-
-  local DCSTask
-  DCSTask = { id = 'EngageTargets',
+  local DCSTask = {
+    id = 'EngageTargets',
     params = {
-      maxDist = Distance,
-      targetTypes = TargetTypes,
-      priority = Priority
+      maxDistEnabled = Distance and true or false,    
+      maxDist        = Distance,
+      targetTypes    = TargetTypes or {"Air"},
+      priority       = Priority or 0,
     }
   }
 
@@ -1519,29 +1599,19 @@ end
 -- @param #CONTROLLABLE self
 -- @param DCS#Vec2 Vec2 2D-coordinates of the zone.
 -- @param DCS#Distance Radius Radius of the zone.
--- @param DCS#AttributeNameArray TargetTypes Array of target categories allowed to engage.
--- @param #number Priority All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first.
+-- @param DCS#AttributeNameArray (Optional) TargetTypes Array of target categories allowed to engage. Default {"Air"}.
+-- @param #number Priority (Optional) All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. Default 0.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:EnRouteTaskEngageTargetsInZone( Vec2, Radius, TargetTypes, Priority )
   self:F2( { self.ControllableName, Vec2, Radius, TargetTypes, Priority } )
 
---  EngageTargetsInZone = {
---    id = 'EngageTargetsInZone',
---    params = {
---      point = Vec2,
---      zoneRadius = Distance,
---      targetTypes = array of AttributeName,
---      priority = number
---    }
---  }
-
-  local DCSTask
-  DCSTask = { id = 'EngageTargetsInZone',
+  local DCSTask = {
+    id = 'EngageTargetsInZone',
     params = {
-      point = Vec2,
-      zoneRadius = Radius,
-      targetTypes = TargetTypes,
-      priority = Priority
+      point       = Vec2,
+      zoneRadius  = Radius,
+      targetTypes = TargetTypes or {"Air"},
+      priority    = Priority or 0
     }
   }
 
@@ -1669,18 +1739,8 @@ end
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:EnRouteTaskAWACS( )
   self:F2( { self.ControllableName } )
-
---  AWACS = {
---    id = 'AWACS',
---    params = {
---    }
---  }
-
-  local DCSTask
-  DCSTask = { id = 'AWACS',
-    params = {
-    }
-  }
+  
+  local DCSTask = {id = 'AWACS', params = {}}
 
   self:T3( { DCSTask } )
   return DCSTask
@@ -1693,17 +1753,7 @@ end
 function CONTROLLABLE:EnRouteTaskTanker( )
   self:F2( { self.ControllableName } )
 
---  Tanker = {
---    id = 'Tanker',
---    params = {
---    }
---  }
-
-  local DCSTask
-  DCSTask = { id = 'Tanker',
-    params = {
-    }
-  }
+  local DCSTask = {id = 'Tanker', params = {}}
 
   self:T3( { DCSTask } )
   return DCSTask
@@ -1718,17 +1768,7 @@ end
 function CONTROLLABLE:EnRouteTaskEWR( )
   self:F2( { self.ControllableName } )
 
---  EWR = {
---    id = 'EWR',
---    params = {
---    }
---  }
-
-  local DCSTask
-  DCSTask = { id = 'EWR',
-    params = {
-    }
-  }
+  local DCSTask = {id = 'EWR', params = {}}
 
   self:T3( { DCSTask } )
   return DCSTask
