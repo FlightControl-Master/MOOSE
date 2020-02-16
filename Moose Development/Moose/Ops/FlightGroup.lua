@@ -1085,6 +1085,7 @@ end
 -- @param #table waypoints Table of waypoints.
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:Route(waypoints)
+
   if self:IsAlive() then
 
     -- DCS task combo.
@@ -1106,7 +1107,11 @@ function FLIGHTGROUP:Route(waypoints)
         
     -- Set tasks.
     self:SetTask(TaskCombo)
+    
+  else
+    self:I(self.lid.."FF ERROR!")
   end
+  
   return self
 end
 

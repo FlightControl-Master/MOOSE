@@ -2233,8 +2233,12 @@ end
 function CONTROLLABLE:TaskRoute( Points )
   self:F2( Points )
 
-  local DCSTask
-  DCSTask = { id = 'Mission', params = { route = { points = Points, }, }, }
+  local DCSTask = {
+    id = 'Mission',
+    params = {
+      route = { points = Points, }, 
+    },
+  }
 
   self:T3( { DCSTask } )
   return DCSTask
