@@ -509,13 +509,16 @@ end
 -- @param #SPAWN self
 -- @param #string AirbaseName Name of the airbase.
 -- @param #number Takeoff (Optional) Takeoff type. Can be SPAWN.Takeoff.Hot (default), SPAWN.Takeoff.Cold or SPAWN.Takeoff.Runway.
+-- @param #number TerminalTyple (Optional) The terminal type.
 -- @return #SPAWN self
-function SPAWN:InitAirbase( AirbaseName, Takeoff )
+function SPAWN:InitAirbase( AirbaseName, Takeoff, TerminalType )
   self:F( )
 
   self.SpawnInitAirbase=AIRBASE:FindByName(AirbaseName)
   
   self.SpawnInitTakeoff=Takeoff or SPAWN.Takeoff.Hot
+  
+  self.SpawnInitTerminalType=TerminalType
   
   return self
 end
@@ -1133,7 +1136,7 @@ function SPAWN:Spawn()
 	self:F( { self.SpawnTemplatePrefix, self.SpawnIndex, self.AliveUnits } )
 
   if self.SpawnInitAirbase then
-    return self:SpawnAtAirbase(self.SpawnInitAirbase, self.SpawnInitTakeoff)
+    return self:SpawnAtAirbase(self.SpawnInitAirbase, self.SpawnInitTakeoff, nil, self.SpawnInitTerminalType)
   else
 	  return self:SpawnWithIndex( self.SpawnIndex + 1 )
  end

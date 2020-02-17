@@ -342,8 +342,9 @@ AIRBASE.TerminalType = {
 -- @return Wrapper.Airbase#AIRBASE
 function AIRBASE:Register( AirbaseName )
 
-  local self = BASE:Inherit( self, POSITIONABLE:New( AirbaseName ) )
+  local self = BASE:Inherit( self, POSITIONABLE:New( AirbaseName ) ) --#AIRBASE
   self.AirbaseName = AirbaseName
+  self.AirbaseID   = self:GetID(true)
   self.AirbaseZone = ZONE_RADIUS:New( AirbaseName, self:GetVec2(), 2500 )
   return self
 end
@@ -380,7 +381,7 @@ function AIRBASE:FindByID(id)
   for name,_airbase in pairs(_DATABASE.AIRBASES) do
     local airbase=_airbase --#AIRBASE
     
-    local aid=tonumber(airbase:GetID())
+    local aid=tonumber(airbase:GetID(true))
     
     if aid==id then
       return airbase
@@ -428,6 +429,54 @@ function AIRBASE.GetAllAirbases(coalition, category)
   end
   
   return airbases
+end
+
+--- Get ID of the airbase.
+-- @param #AIRBASE self
+-- @param #boolean unique (Optional) If true, ships will get a negative sign as the unit ID might be the same as an airbase ID. Default off! 
+-- @return #number The airbase ID.
+function AIRBASE:GetID(unique)
+
+  if self.AirbaseID then
+  
+    return unique and self.AirbaseID or math.abs(self.AirbaseID)
+    
+  else
+  
+   for DCSAirbaseId, DCSAirbase in pairs(world.getAirbases()) do
+   
+      -- Get the airbase name.
+      local AirbaseName = DCSAirbase:getName()
+      
+      -- This gives the incorrect value to be inserted into the airdromeID for DCS 2.5.6!
+      local airbaseID=tonumber(DCSAirbase:getID())
+      
+      -- No way AFIK to get the DCS version. So we check if the event exists. That should tell us if we are on DCS 2.5.6 or prior to that.
+      if world.event.S_EVENT_KILL and world.event.S_EVENT_KILL>0 and self:GetAirbaseCategory()==Airbase.Category.AIRDROME then
+      
+        -- We have to take the key value of this loop!
+        airbaseID=DCSAirbaseId
+        
+        -- Now another quirk: for Caucasus, we need to add 11 to the key value to get the correct ID. See https://forums.eagle.ru/showpost.php?p=4210774&postcount=11
+        if UTILS.GetDCSMap()==DCSMAP.Caucasus then
+          airbaseID=airbaseID+11        
+        end
+      end
+      
+      if AirbaseName==self.AirbaseName then
+        if self:GetAirbaseCategory()==Airbase.Category.SHIP then
+          -- Ships get a negative sign as their unit number might be the same as the ID of another airbase.
+          return unique and -airbaseID or airbaseID
+        else
+          return airbaseID
+        end      
+      end
+            
+    end
+    
+  end
+
+  return nil
 end
 
 

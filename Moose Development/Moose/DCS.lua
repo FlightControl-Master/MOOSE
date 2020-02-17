@@ -428,6 +428,10 @@ do -- Types
   -- @type TaskArray
   -- @list <#Task>
 
+  ---
+  --@type WaypointAir
+  --@field #boolean lateActivated
+  --@field #boolean uncontrolled
 
 end --
 
@@ -1205,6 +1209,7 @@ do -- AI
   -- @field TAKEOFF
   -- @field TAKEOFF_PARKING
   -- @field TURNING_POINT
+  -- @field TAKEOFF_PARKING_HOT
   -- @field LAND
   
   --- @type AI.Task.TurnMethod
@@ -1241,8 +1246,8 @@ do -- AI
   --- @type AI.Option.Naval
   -- @field #AI.Option.Naval.id                     id
   -- @field #AI.Option.Naval.val                    val
-  
-  --TODO: work on formation
+ 
+ 
   --- @type AI.Option.Air.id
   -- @field NO_OPTION
   -- @field ROE
@@ -1251,7 +1256,34 @@ do -- AI
   -- @field FLARE_USING
   -- @field FORMATION
   -- @field RTB_ON_BINGO
-  -- @field SILENCE 
+  -- @field SILENCE
+  -- @field RTB_ON_OUT_OF_AMMO
+  -- @field ECM_USING
+  -- @field PROHIBIT_AA
+  -- @field PROHIBIT_JETT
+  -- @field PROHIBIT_AB
+  -- @field PROHIBIT_AG
+  -- @field MISSILE_ATTACK
+  -- @field PROHIBIT_WP_PASS_REPORT
+  
+  --- @type AI.Option.Air.id.FORMATION
+  -- @field LINE_ABREAST
+  -- @field TRAIL
+  -- @field WEDGE
+  -- @field ECHELON_RIGHT
+  -- @field ECHELON_LEFT
+  -- @field FINGER_FOUR
+  -- @field SPREAD_FOUR
+  -- @field WW2_BOMBER_ELEMENT
+  -- @field WW2_BOMBER_ELEMENT_HEIGHT
+  -- @field WW2_FIGHTER_VIC
+  -- @field HEL_WEDGE
+  -- @field HEL_ECHELON
+  -- @field HEL_FRONT
+  -- @field HEL_COLUMN
+  -- @field COMBAT_BOX
+  -- @field JAVELIN_DOWN
+
   
   --- @type AI.Option.Air.val
   -- @field #AI.Option.Air.val.ROE ROE
@@ -1284,12 +1316,27 @@ do -- AI
   -- @field AGAINST_FIRED_MISSILE
   -- @field WHEN_FLYING_IN_SAM_WEZ
   -- @field WHEN_FLYING_NEAR_ENEMIES
+
+  --- @type AI.Option.Air.val.ECM_USING
+  -- @field NEVER_USE
+  -- @field USE_IF_ONLY_LOCK_BY_RADAR
+  -- @field USE_IF_DETECTED_LOCK_BY_RADAR
+  -- @field ALWAYS_USE
+
+  --- @type AI.Option.Air.val.MISSILE_ATTACK
+  -- @field MAX_RANGE
+  -- @field NEZ_RANGE
+  -- @field HALF_WAY_RMAX_NEZ
+  -- @field TARGET_THREAT_EST
+  -- @field RANDOM_RANGE
+
   
   --- @type AI.Option.Ground.id
   -- @field NO_OPTION
   -- @field ROE @{#AI.Option.Ground.val.ROE}
   -- @field DISPERSE_ON_ATTACK true or false
   -- @field ALARM_STATE @{#AI.Option.Ground.val.ALARM_STATE}
+  -- @field ENGAGE_AIR_WEAPONS
   
   --- @type AI.Option.Ground.val
   -- @field #AI.Option.Ground.val.ROE               ROE

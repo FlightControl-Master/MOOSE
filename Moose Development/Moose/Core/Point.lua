@@ -357,7 +357,7 @@ do -- COORDINATE
   -- @return #table Table of DCS static objects found.
   -- @return #table Table of DCS scenery objects found.
   function COORDINATE:ScanObjects(radius, scanunits, scanstatics, scanscenery)
-    self:F(string.format("Scanning in radius %.1f m.", radius))
+    self:F(string.format("Scanning in radius %.1f m.", radius or 100))
 
     local SphereSearch = {
       id = world.VolumeType.SPHERE,
@@ -437,9 +437,11 @@ do -- COORDINATE
     end
     for _,static in pairs(Statics) do
       self:T(string.format("Scan found static %s", static:getName()))
+      _DATABASE:AddStatic(static:getName())
     end
     for _,scenery in pairs(Scenery) do
-      self:T(string.format("Scan found scenery %s", scenery:getTypeName()))
+      self:T(string.format("Scan found scenery %s typename=%s", scenery:getName(), scenery:getTypeName()))
+      SCENERY:Register(scenery:getName(), scenery)
     end
     
     return gotunits, gotstatics, gotscenery, Units, Statics, Scenery
@@ -1213,34 +1215,64 @@ do -- COORDINATE
   
   --- Build an ground type route point.
   -- @param #COORDINATE self
-  -- @param #number Speed (optional) Speed in km/h. The default speed is 20 km/h.
-  -- @param #string Formation (optional) The route point Formation, which is a text string that specifies exactly the Text in the Type of the route point, like "Vee", "Echelon Right".
-  -- @param #table DCSTasks A table of DCS tasks that are executed at the waypoints. Mind the curly brackets {}!
+  -- @param #number Speed (Optional) Speed in km/h. The default speed is 20 km/h.
+  -- @param #string Formation (Optional) The route point Formation, which is a text string that specifies exactly the Text in the Type of the route point, like "Vee", "Echelon Right".
+  -- @param #table DCSTasks (Optional) A table of DCS tasks that are executed at the waypoints. Mind the curly brackets {}!
   -- @return #table The route point.
   function COORDINATE:WaypointGround( Speed, Formation, DCSTasks )
-    self:F2( { Formation, Speed } )
+    self:F2( { Speed, Formation, DCSTasks } )
 
     local RoutePoint = {}
-    RoutePoint.x = self.x
-    RoutePoint.y = self.z
-
-    RoutePoint.action = Formation or ""
-    --RoutePoint.formation_template = Formation and "" or nil
-
+    
+    RoutePoint.x    = self.x
+    RoutePoint.y    = self.z
+    
+    RoutePoint.alt  = self:GetLandHeight()+1 -- self.y
+    RoutePoint.alt_type = COORDINATE.WaypointAltType.BARO
+ 
+    RoutePoint.action = Formation or "Off Road"
+    RoutePoint.formation_template=""
+    
+    RoutePoint.ETA=0
+    RoutePoint.ETA_locked=true
 
     RoutePoint.speed = ( Speed or 20 ) / 3.6
     RoutePoint.speed_locked = true
 
-    --  ["task"] =
-    --  {
-    --      ["id"] = "ComboTask",
-    --      ["params"] =
-    --      {
-    --          ["tasks"] =
-    --          {
-    --          }, -- end of ["tasks"]
-    --      }, -- end of ["params"]
-    --  }, -- end of ["task"]
+    RoutePoint.task = {}
+    RoutePoint.task.id = "ComboTask"
+    RoutePoint.task.params = {}
+    RoutePoint.task.params.tasks = DCSTasks or {}
+    
+    return RoutePoint
+  end
+  
+  --- Build route waypoint point for Naval units.
+  -- @param #COORDINATE self
+  -- @param #number Speed (Optional) Speed in km/h. The default speed is 20 km/h.
+  -- @param #string Depth (Optional) Dive depth in meters. Only for submarines. Default is COORDINATE.y component.
+  -- @param #table DCSTasks (Optional) A table of DCS tasks that are executed at the waypoints. Mind the curly brackets {}!
+  -- @return #table The route point.
+  function COORDINATE:WaypointNaval( Speed, Depth, DCSTasks )
+    self:F2( { Speed, Depth, DCSTasks } )
+
+    local RoutePoint = {}
+    
+    RoutePoint.x    = self.x
+    RoutePoint.y    = self.z
+    
+    RoutePoint.alt  = Depth or self.y  -- Depth is for submarines only. Ships should have alt=0.
+    RoutePoint.alt_type = "BARO"
+
+    RoutePoint.type   = "Turning Point"
+    RoutePoint.action = "Turning Point"
+    RoutePoint.formation_template = ""
+
+    RoutePoint.ETA=0
+    RoutePoint.ETA_locked=true
+
+    RoutePoint.speed = ( Speed or 20 ) / 3.6
+    RoutePoint.speed_locked = true
 
     RoutePoint.task = {}
     RoutePoint.task.id = "ComboTask"

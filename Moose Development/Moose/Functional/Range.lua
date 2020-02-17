@@ -516,7 +516,7 @@ RANGE.MenuF10Root=nil
 
 --- Range script version.
 -- @field #string version
-RANGE.version="2.2.1"
+RANGE.version="2.2.2"
 
 --TODO list:
 --TODO: Verbosity level for messages.
@@ -754,7 +754,7 @@ function RANGE:onafterStart()
   if self.rangecontrolfreq then
   
     -- Radio queue.
-    self.rangecontrol=RADIOQUEUE:New(self.rangecontrolfreq)
+    self.rangecontrol=RADIOQUEUE:New(self.rangecontrolfreq, nil, self.rangename)
   
     -- Init numbers.
     self.rangecontrol:SetDigit(0, RANGE.Sound.RC0.filename, RANGE.Sound.RC0.duration, self.soundpath)
@@ -778,7 +778,7 @@ function RANGE:onafterStart()
     if self.instructorfreq then
         
       -- Radio queue.
-      self.instructor=RADIOQUEUE:New(self.instructorfreq)
+      self.instructor=RADIOQUEUE:New(self.instructorfreq, nil, self.rangename)
       
       -- Init numbers.
       self.instructor:SetDigit(0, RANGE.Sound.IR0.filename, RANGE.Sound.IR0.duration, self.soundpath)
@@ -1341,9 +1341,9 @@ function RANGE:AddBombingTargetUnit(unit, goodhitrange, randommove)
 
   -- Debug or error output.
   if _isstatic==true then
-    self:T(self.id..string.format("Adding STATIC bombing target %s with good hit range %d. Random move = %s.", name, goodhitrange, tostring(randommove)))
+    self:I(self.id..string.format("Adding STATIC bombing target %s with good hit range %d. Random move = %s.", name, goodhitrange, tostring(randommove)))
   elseif _isstatic==false then
-    self:T(self.id..string.format("Adding UNIT bombing target %s with good hit range %d. Random move = %s.", name, goodhitrange, tostring(randommove)))
+    self:I(self.id..string.format("Adding UNIT bombing target %s with good hit range %d. Random move = %s.", name, goodhitrange, tostring(randommove)))
   else
     self:E(self.id..string.format("ERROR! No bombing target with name %s could be found. Carefully check all UNIT and STATIC names defined in the mission editor!", name))
   end
@@ -2967,10 +2967,10 @@ function RANGE:_AddF10Commands(_unitName)
         missionCommands.addCommandForGroup(_gid, "Strafe Pits",         _infoPath, self._DisplayStrafePits, self, _unitName)
       end
     else
-      self:T(self.id.."Could not find group or group ID in AddF10Menu() function. Unit name: ".._unitName)
+      self:E(self.id.."Could not find group or group ID in AddF10Menu() function. Unit name: ".._unitName)
     end
   else
-    self:T(self.id.."Player unit does not exist in AddF10Menu() function. Unit name: ".._unitName)
+    self:E(self.id.."Player unit does not exist in AddF10Menu() function. Unit name: ".._unitName)
   end
 
 end
