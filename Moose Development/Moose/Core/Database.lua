@@ -251,24 +251,24 @@ end
 --- Adds a Airbase based on the Airbase Name in the DATABASE.
 -- @param #DATABASE self
 -- @param #string AirbaseName The name of the airbase.
--- @return Wrapper.Airbase#AIRBASE The AIRBASE object.
+-- @return Wrapper.Airbase#AIRBASE Airbase object.
 function DATABASE:AddAirbase( AirbaseName )
 
   if not self.AIRBASES[AirbaseName] then
-  
+
     local airbase = AIRBASE:Register( AirbaseName )  --Wrapper.Airbase#AIRBASE
     self.AIRBASES[AirbaseName]=airbase
-    
+
     -- Category and name.
     airbase.AirbaseCategory=airbase:GetAirbaseCategory()
     airbase.AirbaseCategoryName=AIRBASE.CategoryName[airbase.AirbaseCategory]
-        
+
     -- Get airbase ID. WARNING: For ships it gets the unit ID. This can be identical to an exising AIRDROME or FARM ID! Therefore, units get a negative sign.
     airbase.AirbaseID=airbase:GetID()
-    
+
     self:I(string.format("Adding airbase %s (ID=%d): %s with %d parking spots", tostring(airbase.AirbaseName), airbase.AirbaseID, airbase.AirbaseCategoryName, tonumber(#airbase.parking)))
   end
-  
+
   return self.AIRBASES[AirbaseName]
 end
 
@@ -910,6 +910,7 @@ end
 --- @param #DATABASE self
 function DATABASE:_RegisterAirbases()
 
+  --[[
   local CoalitionsData = { AirbasesRed = coalition.getAirbases( coalition.side.RED ), AirbasesBlue = coalition.getAirbases( coalition.side.BLUE ), AirbasesNeutral = coalition.getAirbases( coalition.side.NEUTRAL ) }
   for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
     for DCSAirbaseId, DCSAirbase in pairs( CoalitionData ) do
@@ -919,6 +920,18 @@ function DATABASE:_RegisterAirbases()
       self:T( { "Register Airbase:", DCSAirbaseName, DCSAirbase:getID() } )
       local airbase=self:AddAirbase( DCSAirbaseName )
     end
+  end
+  ]]
+
+ for DCSAirbaseId, DCSAirbase in pairs(world.getAirbases()) do
+      local DCSAirbaseName = DCSAirbase:getName()
+
+      -- This gives the incorrect value to be inserted into the airdromeID for DCS 2.5.6!
+      local airbaseID=DCSAirbase:getID()
+
+      local airbase=self:AddAirbase( DCSAirbaseName )
+
+      self:I(string.format("Register Airbase: %s, getID=%d, GetID=%d (unique=%d)", DCSAirbaseName, DCSAirbase:getID(), airbase:GetID(), airbase:GetID(true)))
   end
 
   return self
