@@ -1100,13 +1100,19 @@ function FLIGHTGROUP:Route(waypoints)
 
     -- Route (Mission) task.
     local TaskRoute=self.group:TaskRoute(waypoints)
+    env.info("FF waypoints in route:")
+    self:I({waypoints=waypoints})
     table.insert(Tasks, TaskRoute)
     
     -- TaskCombo of enroute and mission tasks.
     local TaskCombo=self.group:TaskCombo(Tasks)
         
     -- Set tasks.
-    self:SetTask(TaskCombo)
+    if #Tasks>1 then
+      self:SetTask(TaskCombo)
+    else
+      self:SetTask(TaskRoute)
+    end
     
   else
     self:I(self.lid.."FF ERROR!")
@@ -1223,10 +1229,12 @@ function FLIGHTGROUP:onafterStart(From, Event, To)
   -- Short info.
   local text=string.format("Starting flight group v%s", FLIGHTGROUP.version)
   self:I(self.lid..text)
+
+  -- Set current waypoint. Counting starts a one.
+  self.currentwp=1
   
   -- Check if the group is already alive and if so, add its elements.
   local group=GROUP:FindByName(self.groupname)
-  
   
   if group then
   
@@ -1234,7 +1242,7 @@ function FLIGHTGROUP:onafterStart(From, Event, To)
     self.group=group
 
     -- Get units of group.
-    local units=group:GetUnits()
+    local units=group:GetUnits() or {}
 
     -- Add elemets.
     for _,unit in pairs(units) do
@@ -1987,47 +1995,51 @@ function FLIGHTGROUP:_InitGroup()
   
   local unit=self.group:GetUnit(1)
   
-  --local nunits=self.group:GetUnits()
+  if unit then
   
-  self.descriptors=unit:GetDesc()
+    --local nunits=self.group:GetUnits()
+    
+    self.descriptors=unit:GetDesc()
+    
+    self.actype=unit:GetTypeName()
+    
+    self.ceiling=self.descriptors.Hmax
+    
+    self.ai=not self:_IsHuman(self.group)
+    
+    for _,_element in pairs(self.elements) do
+      local element=_element --#FLIGHTGROUP.Element
+      element.ai=not self:_IsHumanUnit(element.unit)
+    end
   
-  self.actype=unit:GetTypeName()
-  
-  self.ceiling=self.descriptors.Hmax
-  
-  self.ai=not self:_IsHuman(self.group)
-  
-  for _,_element in pairs(self.elements) do
-    local element=_element --#FLIGHTGROUP.Element
-    element.ai=not self:_IsHumanUnit(element.unit)
+    -- Init waypoints.
+    if not self.waypoints then
+      self:InitWaypoints()
+    end
+    
+    -- Debug info.
+    local text=string.format("Initialized Flight Group %s:\n", self.groupname)
+    text=text..string.format("AC type      = %s\n", self.actype)
+    text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedmax))
+    text=text..string.format("Ceiling      = %.1f feet\n", UTILS.MetersToFeet(self.ceiling))
+    text=text..string.format("AI           = %s\n", tostring(self.ai))
+    text=text..string.format("Helicopter   = %s\n", tostring(self.group:IsHelicopter()))
+    text=text..string.format("Elements     = %d\n", #self.elements)
+    text=text..string.format("Waypoints    = %d\n", #self.waypoints)
+    text=text..string.format("FSM state    = %s\n", self:GetState())
+    text=text..string.format("Is alive     = %s\n", tostring(self.group:IsAlive()))
+    text=text..string.format("Late activat = %s\n", tostring(self:IsLateActivated()))
+    text=text..string.format("Uncontrolled = %s\n", tostring(self:IsUncontrolled()))
+    text=text..string.format("Start Air    = %s\n", tostring(self:IsTakeoffAir()))
+    text=text..string.format("Start Cold   = %s\n", tostring(self:IsTakeoffCold()))
+    text=text..string.format("Start Hot    = %s\n", tostring(self:IsTakeoffHot()))
+    text=text..string.format("Start Rwy    = %s\n", tostring(self:IsTakeoffRunway()))    
+    self:I(self.lid..text)
+    
+    -- Init done.
+    self.groupinitialized=true
+    
   end
-
-  -- Init waypoints.
-  if not self.waypoints then
-    self:InitWaypoints()
-  end
-  
-  -- Debug info.
-  local text=string.format("Initialized Flight Group %s:\n", self.groupname)
-  text=text..string.format("AC type      = %s\n", self.actype)
-  text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedmax))
-  text=text..string.format("Ceiling      = %.1f feet\n", UTILS.MetersToFeet(self.ceiling))
-  text=text..string.format("AI           = %s\n", tostring(self.ai))
-  text=text..string.format("Helicopter   = %s\n", tostring(self.group:IsHelicopter()))
-  text=text..string.format("Elements     = %d\n", #self.elements)
-  text=text..string.format("Waypoints    = %d\n", #self.waypoints)
-  text=text..string.format("FSM state    = %s\n", self:GetState())
-  text=text..string.format("Is alive     = %s\n", tostring(self.group:IsAlive()))
-  text=text..string.format("Late activat = %s\n", tostring(self:IsLateActivated()))
-  text=text..string.format("Uncontrolled = %s\n", tostring(self:IsUncontrolled()))
-  text=text..string.format("Start Air    = %s\n", tostring(self:IsTakeoffAir()))
-  text=text..string.format("Start Cold   = %s\n", tostring(self:IsTakeoffCold()))
-  text=text..string.format("Start Hot    = %s\n", tostring(self:IsTakeoffHot()))
-  text=text..string.format("Start Rwy    = %s\n", tostring(self:IsTakeoffRunway()))    
-  self:I(self.lid..text)
-  
-  -- Init done.
-  self.groupinitialized=true
   
   return self
 end
@@ -2312,6 +2324,10 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
   -- TODO: This, however, leads to the flight to go right over this point when it is on an airport ==> Need to test Waypoint takeoff
   local current=self.group:GetCoordinate():WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, 350, true, nil, {}, "Current")
   table.insert(wp, current)
+  
+  for i=n, #self.waypoints do
+    table.insert(wp, self.waypoints[i])
+  end
 
   
   --[[
@@ -2334,13 +2350,14 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
   end
   ]]
   
+  
   -- Debug info.
   local hb=self.homebase and self.homebase:GetName() or "unknown"
   local db=self.destbase and self.destbase:GetName() or "unknown"
   self:I(self.lid..string.format("Updating route for WP>=%d/%d (%d) homebase=%s destination=%s", n, #wp, #self.waypoints, hb, db))
 
   
-  if #wp>0 then
+  if #wp>1 then
 
     -- Route group to all defined waypoints remaining.
     self:Route(wp, 1)
@@ -3763,9 +3780,6 @@ function FLIGHTGROUP:InitWaypoints(waypoints)
     end
 
   end
-
-  -- Set current waypoint. Counting starts a one.
-  self.currentwp=1
   
   -- Get home and destination airbases from waypoints.
   self.homebase=self:GetHomebaseFromWaypoints()

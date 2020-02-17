@@ -626,6 +626,55 @@ do -- Event Handling
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
+
+  --- Unknown precisely what creates this event, likely tied into newer damage model. Will update this page when new information become available.
+  -- 
+  -- * initiator: The unit that had the failure.
+  -- 
+  -- @function [parent=#BASE] OnEventDetailedFailure
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when any modification to the "Score" as seen on the debrief menu would occur. 
+  -- There is no information on what values the score was changed to. Event is likely similar to player_comment in this regard.
+  -- @function [parent=#BASE] OnEventScore
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs on the death of a unit. Contains more and different information. Similar to unit_lost it will occur for aircraft before the aircraft crash event occurs.
+  -- 
+  -- * initiator: The unit that killed the target
+  -- * target: Target Object
+  -- * weapon: Weapon Object
+  -- 
+  -- @function [parent=#BASE] OnEventKill
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when any modification to the "Score" as seen on the debrief menu would occur. 
+  -- There is no information on what values the score was changed to. Event is likely similar to player_comment in this regard.
+  -- @function [parent=#BASE] OnEventScore
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when the game thinks an object is destroyed.
+  -- 
+  -- * initiator: The unit that is was destroyed.
+  -- 
+  -- @function [parent=#BASE] OnEventUnitLost
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs shortly after the landing animation of an ejected pilot touching the ground and standing up. Event does not occur if the pilot lands in the water and sub combs to Davey Jones Locker.
+  -- 
+  -- * initiator: Static object representing the ejected pilot. Place : Aircraft that the pilot ejected from.
+  -- * place: may not return as a valid object if the aircraft has crashed into the ground and no longer exists.
+  -- * subplace: is always 0 for unknown reasons.
+  -- 
+  -- @function [parent=#BASE] OnEventLandingAfterEjection
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
 end
  
 
