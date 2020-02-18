@@ -21,6 +21,7 @@
 -- @field #table squadrons Table of squadrons.
 -- @field #table missionqueue Mission queue table.
 -- @field #table missioncounter Running index counting the added missions.
+-- @field #table payloads Playloads for specific aircraft and mission types. 
 -- @extends Functional.Warehouse#WAREHOUSE
 
 --- Be surprised!
@@ -42,15 +43,17 @@ AIRWING = {
   squadrons      =   nil,
   missionqueue   =    {},
   missioncounter =   nil,
+  payloads       =    {},
 }
 
 --- Squadron data.
 -- @type AIRWING.Squadron
 -- @field #string name Name of the squadron.
 -- @field #table assets Assets of the squadron.
--- @field #table capabilities Mission types that the squadron can do.
+-- @field #table missiontypes Mission types that the squadron can do.
 -- @field #string livery Livery of the squadron.
 -- @field #table menu The squadron menu entries.
+-- @field #string skill Skill of squadron team members.
 
 --- Squadron asset.
 -- @type AIRWING.SquadronAsset
@@ -63,6 +66,14 @@ AIRWING = {
 -- @field #string squadname Name of the assigned squadron.
 -- @field #number nassets Number of required assets.
 -- @extends Ops.FlightGroup#FLIGHTGROUP.Mission
+
+--- Payload data.
+-- @type AIRWING.Payload
+-- @field #string aircrafttype Type of aircraft, which can use this payload.
+-- @field #table missiontypes Mission types for which this payload can be used.
+-- @field #table pylons Pylon data extracted for the unit template.
+-- @field #number navail Number of available payloads of this type.
+
 
 --- AIRWING class version.
 -- @field #string version
@@ -162,7 +173,7 @@ end
 -- User Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Add a squadron to the carrier air wing.
+--- Add a squadron to the air wing.
 -- @param #AIRWING self
 -- @param #string name Name of the squadron, e.g. "VFA-37".
 -- @param #table tasks Table of tasks the squadron is supposed to do.
@@ -174,13 +185,62 @@ function AIRWING:AddSquadron(SquadronName, MissionTypes, Livery)
 
   squadron.name=SquadronName
   squadron.assets={}
-  squadron.tasks=MissionTypes or {}
+  squadron.missiontypes=MissionTypes or {}
   squadron.livery=Livery
 
   self.squadrons[SquadronName]=squadron
   
   return squadron
 end
+
+--- Add a payload to air wing resources.
+-- @param #AIRWING self
+-- @param #string UnitName Name of the (template) unit from which the payload is extracted.
+-- @param #number Npayloads Number of payloads to add to the airwing resources. Default 999.
+-- @param #table MissionTypes Mission types this payload can be used for.
+function AIRWING:AddPayload(UnitName, Npayloads, MissionTypes)
+
+    local payload=self:GetPayloadByName(UnitName)
+    
+    if payload then
+    
+      -- Payload already exists. Increase the number.
+      payload.navail=payload.navail+Npayloads
+      
+      --TODO: maybe check if mission types given now are different from before.
+      
+    else
+    
+      local unit=UNIT:FindByName(UnitName)
+      
+      if unit then
+    
+        payload={} --#AIRWING.Payload
+        
+        payload.navail=Npayloads
+        payload.missiontypes=MissionTypes
+        payload.aircrafttype=unit:GetTypeName()
+        payload.pylons=unit:GetTemplatePylons()
+        
+        --TODO: maybe add fuel, chaff and gun?
+        
+        --table.insert(self.payloads, payload)
+        self.payloads[UnitName]=payload
+        
+      end
+    
+    end
+
+end
+
+--- Add a payload to air wing resources.
+-- @param #AIRWING self
+-- @param #string UnitName Name of the unit from which the payload was extracted.
+-- @return #AIRWING.Payload
+function AIRWING:GetPayloadByName(UnitName)
+  return self.payloads[UnitName]
+end
+
 
 --- Add flight group(s) to squadron.
 -- @param #AIRWING self
@@ -203,7 +263,7 @@ function AIRWING:AddAssetToSquadron(SquadronName, Group, Ngroups)
       local text=string.format("FF Adding asset %s to squadron %s", Group:GetName(), squadron.name)
       env.info(text)
     
-      self:AddAsset(Group, Ngroups, nil, nil, nil, nil, nil, {squadron.livery}, squadron.name)
+      self:AddAsset(Group, Ngroups, nil, nil, nil, nil, AI.Skill.EXCELLENT, squadron.livery, squadron.name)
       
     else
       self:E("ERROR: Group does not exist!")
@@ -218,7 +278,7 @@ end
 
 --- Get squadron by name.
 -- @param #AIRWING self
--- @param #string name Name of the squadron, e.g. "VFA-37".
+-- @param #string SquadronName Name of the squadron, e.g. "VFA-37".
 -- @return #AIRWING self or nil.
 function AIRWING:GetSquadron(SquadronName)
   return self.squadrons[SquadronName]
@@ -237,7 +297,7 @@ function AIRWING:SquadronCanMission(Squadron, MissionType, Nassets)
   local n=0
 
   local gotit=false
-  for _,canmission in pairs(Squadron.capabilities) do
+  for _,canmission in pairs(Squadron.missiontypes) do
     if canmission==MissionType then
       gotit=true
       break
@@ -319,9 +379,7 @@ function AIRWING:CreateMissionCAP(Altitude, SpeedOrbit, Heading, Leg)
   mission.speedOrbit=UTILS.KnotsToMps(SpeedOrbit or 350)
   mission.heading=Heading or 270
   mission.leg=UTILS.NMToMeters(Leg or 10)
-  
-  mission.waypoint=1
-  
+
   return mission
 end
 
@@ -341,6 +399,7 @@ function AIRWING:AddMission(Mission, Zone, WaypointIndex, ClockStart, ClockStop,
   local mission=FLIGHTGROUP.AddMission(self, Mission, Zone, WaypointIndex, ClockStart, ClockStop, Prio, Name)
 
   -- Mission needs the correct MID.
+  mission.mid=nil
   mission.MID=self.missioncounter
   
   return mission
@@ -394,7 +453,7 @@ function AIRWING:onafterAirwingStatus(From, Event, To)
       local asset=_asset --#AIRWING.SquadronAsset
       local assignment=asset.assignment or "none"
       local name=asset.templatename
-      local task=asset.AIRWINGtask or "none"
+      local task=asset.mission and asset.mission.name or "none"
       local spawned=tostring(asset.spawned)
       local groupname=asset.spawngroupname
       local group=nil --Wrapper.Group#GROUP
@@ -407,7 +466,7 @@ function AIRWING:onafterAirwingStatus(From, Event, To)
         end
       end
       
-      text=text..string.format("\n  -[%d] %s*%d: spawned=%s, task=%s, fuel=%d", j, typename, asset.nunits, spawned, task, fuel)
+      text=text..string.format("\n  -[%d] %s*%d: spawned=%s, mission=%s, fuel=%d", j, typename, asset.nunits, spawned, task, fuel)
       
     end
   end
@@ -430,7 +489,7 @@ end
 
 --- Get next mission.
 -- @param #AIRWING self
--- @return #AIRWING.Mission Next mission or *nil*.
+-- @return #AIRWING.Missiondata Next mission or *nil*.
 function AIRWING:_GetNextMission()
 
   -- Number of missions.
@@ -445,7 +504,7 @@ function AIRWING:_GetNextMission()
   local function _sort(a, b)
     local taskA=a --#AIRWING.Mission
     local taskB=b --#AIRWING.Mission
-    --TODO: probably sort by prio first and then by time as only missions for T>Tstart are executed. That would ensure that the highest prio mission is carried ot first!
+    --TODO: probably sort by prio first and then by time as only missions for T>Tstart are executed. That would ensure that the highest prio mission is carried out first!
     return (taskA.Tstart<taskB.Tstart) or (taskA.Tstart==taskB.Tstart and taskA.prio<taskB.prio)
   end
   table.sort(self.missionqueue, _sort)
@@ -470,7 +529,7 @@ end
 -- FSM Events
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- On after "NewAsset" event.
+--- On after "NewAsset" event. An asset has been added to the airwing stock.
 -- @param #AIRWING self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -541,8 +600,31 @@ function AIRWING:onafterRequestMission(From, Event, To, Mission)
 
   --TODO: request descriptor/attribute for given mission type! AWACS, Tankers, Fighters.
   --TODO: also check that mission prio is same as warehouse prio (small=high or the other way around).
-  self:AddRequest(self, WAREHOUSE.Descriptor.ATTRIBUTE, GROUP.Attribute.AIR_FIGHTER, Mission.nassets, nil, nil, Mission.prio, tostring(Mission.mid))  
+  self:AddRequest(self, WAREHOUSE.Descriptor.ASSIGNMENT, Mission.squadname, Mission.nassets, nil, nil, Mission.prio, tostring(Mission.mid))  
 
+end
+
+--- On after "Request" event. Spawns the necessary cargo and transport assets.
+-- @param #AIRWING self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Functional.Warehouse#WAREHOUSE.Queueitem Request Information table of the request.
+function AIRWING:onafterRequest(From, Event, To, Request)
+
+  -- Modify the cargo assets.
+  local assets=Request.cargoassets
+  
+  local Mission=self:GetMissionByID(Request.assignment)
+  
+  for _,_asset in pairs(assets) do
+    local asset=_asset --#AIRWING.SquadronAsset
+    
+    asset.payload=Mission.payload
+    
+  end
+
+  
 end
 
 --- On after "AssetSpawned" event triggered when an asset group is spawned into the cruel world.
@@ -564,10 +646,28 @@ function AIRWING:onafterAssetSpawned(From, Event, To, group, asset, request)
   asset.mission=self:GetMissionByID(mid)
   
   -- Create flightgroup.
-  asset.flightgroup=FLIGHTGROUP:New(group:GetName())
+  local flightgroup=FLIGHTGROUP:New(group:GetName())
+  
+  asset.flightgroup=flightgroup
   
   -- Add mission to flightgroup queue.
   asset.flightgroup:AddMission(asset.mission)
+  
+  --[[
+  local airwing=self
+  
+  function flightgroup:OnAfterMissionStart(From, Event, To, Mission)
+    local mission=Mission --#AIRWING.Missiondata
+   
+    
+    --mission.status.FLIGHTGROUP
+  
+  end
+  
+  function flightgroup:OnAfterMissionDone(From, Event, To, Mission)
+  
+  end
+  ]]
  
 end
 
@@ -616,6 +716,26 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Patrol carrier.
+-- @param #AIRWING self
+-- @param #number mid Mission ID.
+-- @return #AIRWING.Missiondata Mission table.
+function AIRWING:GetMissionByID(mid)
+
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --#AIRWING.Missiondata
+    
+    if mission.MID==mid then
+      return mission
+    end
+    
+  end
+
+  --return self.missionqueue[mid]
+
+  return nil
+end
 
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

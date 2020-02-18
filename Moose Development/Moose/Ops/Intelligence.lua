@@ -16,6 +16,8 @@
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug Debug mode. Messages to all about status.
 -- @field #string lid Class id string for output to DCS log file.
+-- @field #table filter Category filters.
+-- @field #table DetectedItems Table of detected items.
 -- @extends Core.Fsm#FSM
 
 --- Be surprised!
@@ -35,16 +37,22 @@ INTEL = {
   lid            =   nil,
   filter         =   nil,
   detectionset   =   nil,
-  detecteditems  =    {},
-  DetectedGroups =    {}
+  DetectedItems  =    {},
+  DetectedGroups =    {},
 }
 
 --- Detected item info.
 -- @type INTEL.DetectedItem
 -- @field #string typename Type name of detected item.
 -- @field #number category
--- @field #string categeryname
+-- @field #string categoryname
+-- @field #string attribute Generalized attribute.
 -- @field #number Tdetected Time stamp when this item was last detected.
+-- @field #number Tlost Time stamp when this item could not be detected any more.
+-- @field #number threatlevel Threat level of this item.
+-- @field Core.Point#COORDINATE position Last known position of the item.
+-- @field DCS#Vec3 velocity 3D velocity vector. Components x,y and z in m/s.
+-- @field #number speed Last known speed.
 
 --- INTEL class version.
 -- @field #string version
@@ -54,7 +62,7 @@ INTEL.version="0.0.1"
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: A lot!
+-- TODO: Accept and reject zones.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -223,7 +231,61 @@ function INTEL:UpdateIntel()
   
   -- TODO: Loose units only if they remain undetected for a given time interval. We want to avoid fast oscillation between detected/lost states. Maybe 1-5 min would be a good time interval?!
   -- TODO: Combine units to groups for all, new and lost.
+  -- TODO: process detected set asynchroniously for better performance.
+end
+
+--- Create detected items.
+-- @param #INTEL self
+-- @param Core.Set#SET_UNIT detectedunitset Set of detected units. 
+function INTEL:CreateDetectedItems(detectedunitset)
+
+  local detectedgroupset=SET_GROUP:New()
+
+  for _,_unit in pairs(detectedunitset:GetSet()) do
+    local unit=_unit --Wrapper.Unit#UNIT
+    
+    local group=unit:GetGroup()
+    
+    if group and group:IsAlive() then
+      local groupname=group:GetName()
+      
+      detectedgroupset:Add(groupname, group)
+
+    end
+      
+  end
   
+  for _,_group in pairs(detectedgroupset.Set) do
+    local group=_group --Wrapper.Group#GROUP
+    
+    local detecteditem=self:GetDetectedItemByName(group:GetName())
+    
+    if detecteditem then
+      ---
+      -- Detected item already exists ==> Update data.
+      ---
+    
+      
+    
+    else    
+      ---
+      -- Detected item does not exist in our list yet.
+      ---
+    
+    end
+    
+  end
+
+end
+
+--- Create detected items.
+-- @param #INTEL self
+-- @param #string name Name of the detected item.
+-- @return #INTEL.DetectedItem 
+function INTEL:GetDetectedItemByName(name)
+
+  return self.DetectedItems[name]
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

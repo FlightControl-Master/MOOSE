@@ -621,7 +621,7 @@ end
 
 --- Add a *waypoint* task.
 -- @param #FLIGHTGROUP self
--- @param #table task DCS task table stucture.
+-- @param #table task DCS task table structure.
 -- @param #number waypointindex Number of waypoint. Counting starts at one!
 -- @param #string description Brief text describing the task, e.g. "Attack SAM". 
 -- @param #number prio Priority of the task. Number between 1 and 100. Default is 50.
