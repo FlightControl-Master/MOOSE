@@ -1644,12 +1644,14 @@ WAREHOUSE = {
 -- @field #string ATTRIBUTE Generalized attribute @{#WAREHOUSE.Attribute}.
 -- @field #string CATEGORY Asset category of type DCS#Group.Category, i.e. GROUND, AIRPLANE, HELICOPTER, SHIP, TRAIN.
 -- @field #string ASSIGNMENT Assignment of asset when it was added.
+-- @field #string ASSETLIST List of specific assets gives as a table of assets. Mind the curly brackets {}.
 WAREHOUSE.Descriptor = {
   GROUPNAME="templatename",
   UNITTYPE="unittype",
   ATTRIBUTE="attribute",
   CATEGORY="category",
   ASSIGNMENT="assignment",
+  ASSETLIST="assetlist,"
 }
 
 --- Generalized asset attributes. Can be used to request assets with certain general characteristics. See [DCS attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes) on hoggit.
@@ -4048,6 +4050,13 @@ function WAREHOUSE:onbeforeAddRequest(From, Event, To, warehouse, AssetDescripto
       self:_ErrorMessage("ERROR: Invalid request. Asset assignment type must be passed as a string!", 5)
       okay=false
     end
+    
+  elseif AssetDescriptor==WAREHOUSE.Descriptor.ASSETLIST then
+
+    if type(AssetDescriptorValue)~="table" then
+      self:_ErrorMessage("ERROR: Invalid request. Asset assignment type must be passed as a table!", 5)
+      okay=false
+    end
 
   else
     self:_ErrorMessage("ERROR: Invalid request. Asset descriptor is not ATTRIBUTE, CATEGORY, GROUPNAME, UNITTYPE or ASSIGNMENT!", 5)
@@ -4191,7 +4200,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
   -- Info message.
   local text=string.format("Warehouse %s: Processing request id=%d from warehouse %s.\n", self.alias, Request.uid, Request.warehouse.alias)
-  text=text..string.format("Requested %s assets of %s=%s.\n", tostring(Request.nasset), Request.assetdesc, Request.assetdescval)
+  text=text..string.format("Requested %s assets of %s=%s.\n", tostring(Request.nasset), Request.assetdesc, Request.assetdesc==WAREHOUSE.Descriptor.ASSETLIST and "Asset list" or Request.assetdescval)
   text=text..string.format("Transports %s of type %s.", tostring(Request.ntransport), tostring(Request.transporttype))
   self:_InfoMessage(text, 5)
 
@@ -7778,6 +7787,19 @@ function WAREHOUSE:_GetIDsFromGroupOLD(group)
 
 end
 
+--- Filter stock assets by descriptor and attribute.
+-- @param #WAREHOUSE self
+-- @param #string descriptor Descriptor describing the filtered assets.
+-- @param attribute Value of the descriptor.
+-- @param #number nmax (Optional) Maximum number of items that will be returned. Default nmax=nil is all matching items are returned.
+-- @param #boolean mobile (Optional) If true, filter only mobile assets.
+-- @return #table Filtered assets in stock with the specified descriptor value.
+-- @return #number Total number of (requested) assets available.
+-- @return #boolean If true, enough assets are available.
+function WAREHOUSE:FilterStock(descriptor, attribute, nmax, mobile)
+  return self:_FilterStock(self.stock, descriptor, attribute, nmax, mobile)
+end
+
 --- Filter stock assets by table entry.
 -- @param #WAREHOUSE self
 -- @param #table stock Table holding all assets in stock of the warehouse. Each entry is of type @{#WAREHOUSE.Assetitem}.
@@ -7798,6 +7820,28 @@ function WAREHOUSE:_FilterStock(stock, descriptor, attribute, nmax, mobile)
 
   -- Filtered array.
   local filtered={}
+  
+  -- A specific list of assets was required.
+  if descriptor==WAREHOUSE.Descriptor.ASSETLIST then
+
+    -- Count total number in stock.
+    local ntot=0
+    for _,_asset in ipairs(stock) do
+      local asset=_asset --#WAREHOUSE.Assetitem
+      
+      for _,_rasset in pairs(attribute) do
+        local rasset=_rasset --#WAREHOUSE.Assetitem
+      
+        if rasset.uid==asset.uid then
+          table.insert(filtered, asset)
+        end  
+      
+      end
+      
+    end
+    
+    return filtered, #filtered, #filtered>=#attribute
+  end
 
   -- Count total number in stock.
   local ntot=0
@@ -8149,6 +8193,9 @@ function WAREHOUSE:_PrintQueue(queue, name)
     local requestorAirbaseCat=qitem.warehouse:GetAirbaseCategory()
     local assetdesc=qitem.assetdesc
     local assetdescval=qitem.assetdescval
+    if assetdesc==WAREHOUSE.Descriptor.ASSETLIST then
+      assetdescval="Asset list"
+    end
     local nasset=tostring(qitem.nasset)
     local ndelivered=tostring(qitem.ndelivered)
     local ncargogroupset="N/A"

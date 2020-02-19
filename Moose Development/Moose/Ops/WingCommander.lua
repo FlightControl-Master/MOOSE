@@ -15,7 +15,7 @@
 -- @type WINGCOMMANDER
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug Debug mode. Messages to all about status.
--- @field #string ,id Class id string for output to DCS log file.
+-- @field #string lid Class id string for output to DCS log file.
 -- @field #table airwings Table of airwings.
 -- @extends Core.Fsm#FSM
 
@@ -162,8 +162,8 @@ end
 function WINGCOMMANDER:onafterStart(From, Event, To)
 
   -- Short info.
-  local text=string.format("Starting flight group %s.", self.groupname)
-  self:I(self.sid..text)
+  local text=string.format("Starting Wing Commander")
+  self:I(self.lid..text)
 
   -- Start the status monitoring.
   self:__SitRep(-1)
@@ -192,7 +192,7 @@ function WINGCOMMANDER:onafterSitrep(From, Event, To)
   -- Number of assets available of each mission type.
     
   
-  self:I(self.sid..text)
+  self:I(self.lid..text)
   
   if DetectedGroupsUnknown then
   
@@ -273,6 +273,15 @@ function WINGCOMMANDER:CheckResources()
   end
 
   return capabilities
+end
+
+--- Check all airwings if they are able to do a specific mission type at a certain location with a given number of assets.
+-- @param #WINGCOMMANDER self
+-- @return #table 
+function WINGCOMMANDER:GetAirwingForMission(MissionType, Coordinate, Nassets)
+
+  --TODO: run over all airwings. sort by distance and available assets.
+
 end
 
 

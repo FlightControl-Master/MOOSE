@@ -53,7 +53,7 @@
 -- @field #boolean fuelcritical Fuel critical switch.
 -- @field #number fuelcriticalthresh Critical fuel threshold in percent.
 -- @field #boolean fuelcriticalrtb RTB on critical fuel switch. 
--- @field Ops.Squadron#SQUADRON squadron The squadron the flight group belongs to.
+-- @field Ops.Airwing#AIRWING airwing The airwing the flight group belongs to.
 -- @field Ops.FlightControl#FLIGHTCONTROL flightcontrol The flightcontrol handling this group.
 -- @field Core.UserFlag#USERFLAG flaghold Flag for holding.
 -- @field #number Tholding Abs. mission time stamp when the group reached the holding point.
@@ -715,21 +715,21 @@ function FLIGHTGROUP:SetTanker(swtich)
   return self
 end
 
---- Set squadron the flight group belongs to.
+--- Set AIRWING the flight group belongs to.
 -- @param #FLIGHTGROUP self
--- @param Ops.Squadron#SQUADRON squadron The squadron object.
+-- @param Ops.AirWing#AIRWING airwing The AIRWING object.
 -- @return #FLIGHTGROUP self
-function FLIGHTGROUP:SetSquadron(squadron)
-  self:I(self.lid..string.format("Add flight to SQUADRON %s", squadron.squadronname))
-  self.squadron=squadron
+function FLIGHTGROUP:SetAirwing(airwing)
+  self:I(self.lid..string.format("Add flight to AIRWING %s", airwing.alias))
+  self.airwing=airwing
   return self
 end
 
---- Get squadron the flight group belongs to.
+--- Get airwing the flight group belongs to.
 -- @param #FLIGHTGROUP self
--- @return Ops.Squadron#SQUADRON The squadron object.
-function FLIGHTGROUP:GetSquadron()
-  return self.squadron
+-- @return Ops.AirWing#AIRWING The AIRWING object.
+function FLIGHTGROUP:GetAirWing()
+  return self.airwing
 end
 
 --- Define parking spots to be used by the flight group.
@@ -2321,10 +2321,10 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
   local wp={}
   
   -- Set current waypoint or we get problem that the _PassingWaypoint function is triggered too early, i.e. right now and not when passing the next WP.
-  -- TODO: This, however, leads to the flight to go right over this point when it is on an airport ==> Need to test Waypoint takeoff
   local current=self.group:GetCoordinate():WaypointAir(nil, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, 350, true, nil, {}, "Current")
   table.insert(wp, current)
   
+  -- Add remaining waypoints to route.
   for i=n, #self.waypoints do
     table.insert(wp, self.waypoints[i])
   end
@@ -3106,10 +3106,10 @@ end
 -- @param #FLIGHTGROUP.Mission Mission The mission table.
 function FLIGHTGROUP:onbeforeMissionStart(From, Event, To, Mission)
 
-  self:I(self.lid..string.format("FF Starting mission %s, fsm=%s", tostring(Mission.name), self:GetState()))
+  self:I(self.lid..string.format("FF Starting mission %s, FSM=%s, LateActivated=%s, UnControlled=%s", tostring(Mission.name), self:GetState(), tostring(self:IsLateActivated()), tostring(self:IsUncontrolled())))
 
   -- Delay for route to mission. Group needs to be activated and controlled.
-  local delay=nil
+  local delay=0
 
   -- Check if group is spawned.
   if self:IsInUtero() then
@@ -3117,14 +3117,15 @@ function FLIGHTGROUP:onbeforeMissionStart(From, Event, To, Mission)
     -- Activate group if it is late activated.
     if self:IsLateActivated() then
       self:Activate()
-    end
-    
-    -- Activate group if it is uncontrolled.
-    if self:IsUncontrolled() then
-      self:StartUncontrolled(1)
+      delay=delay+2
     end
   
   end
+  
+  -- Startup group if it is uncontrolled.
+  if self:IsParking() and self:IsUncontrolled() then
+    self:StartUncontrolled(delay)
+  end  
 
   return true
 end

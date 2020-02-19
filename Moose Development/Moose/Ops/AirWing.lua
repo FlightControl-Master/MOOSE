@@ -63,9 +63,11 @@ AIRWING = {
 
 --- Mission data.
 -- @type AIRWING.Missiondata
--- @field #string squadname Name of the assigned squadron.
--- @field #number nassets Number of required assets.
 -- @extends Ops.FlightGroup#FLIGHTGROUP.Mission
+-- @field #number MID Mission ID.
+-- @field #string squadname Name of the assigned squadron.
+-- @field #table assets Assets assigned for this mission.
+-- @field #number nassets Number of required assets.
 
 --- Payload data.
 -- @type AIRWING.Payload
@@ -118,15 +120,14 @@ function AIRWING:New(warehousename, airwingname)
 
 
   -- Set some string id for output to DCS.log file.
-  self.lid=string.format("AIRWING %s |", airwingname)
+  self.lid=string.format("AIRWING %s | ", airwingname)
 
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
   self:AddTransition("*",             "AirwingStatus",    "*")           -- AIRWING status update.
   
-  self:AddTransition("*",             "AddMission",        "*")          -- Add a new mission.
-  
-  self:AddTransition("*",             "RequestMission",   "*")           -- Request CAP flight.
+  self:AddTransition("*",             "MissionNew",       "*")           -- Add a new mission.  
+  self:AddTransition("*",             "MissionRequest",   "*")           -- Add a (mission) request to the warehouse.
 
   ------------------------
   --- Pseudo Functions ---
@@ -175,11 +176,12 @@ end
 
 --- Add a squadron to the air wing.
 -- @param #AIRWING self
--- @param #string name Name of the squadron, e.g. "VFA-37".
--- @param #table tasks Table of tasks the squadron is supposed to do.
--- @param #string livery The livery for all added flight group. Default is the livery of the template group.
+-- @param #string SquadronName Name of the squadron, e.g. "VFA-37".
+-- @param #table MissionTypes Table of mission types this squadron is able to perform.
+-- @param #string Livery The livery for all added flight group. Default is the livery of the template group.
+-- @param #string Skill The skill of all squadron members.
 -- @return #AIRWING.Squadron The squadron object.
-function AIRWING:AddSquadron(SquadronName, MissionTypes, Livery)
+function AIRWING:AddSquadron(SquadronName, MissionTypes, Livery, Skill)
 
   local squadron={} --#AIRWING.Squadron
 
@@ -187,6 +189,7 @@ function AIRWING:AddSquadron(SquadronName, MissionTypes, Livery)
   squadron.assets={}
   squadron.missiontypes=MissionTypes or {}
   squadron.livery=Livery
+  squadron.skill=Skill
 
   self.squadrons[SquadronName]=squadron
   
@@ -196,7 +199,7 @@ end
 --- Add a payload to air wing resources.
 -- @param #AIRWING self
 -- @param #string UnitName Name of the (template) unit from which the payload is extracted.
--- @param #number Npayloads Number of payloads to add to the airwing resources. Default 999.
+-- @param #number Npayloads Number of payloads to add to the airwing resources. Default 99 (which should be enough for most scenarios).
 -- @param #table MissionTypes Mission types this payload can be used for.
 function AIRWING:AddPayload(UnitName, Npayloads, MissionTypes)
 
@@ -290,11 +293,11 @@ end
 -- @param #string MissionType Type of mission.
 -- @param #number Nassets Number of required assets for the mission. Use *nil* or 0 for none. Then only the general capability is checked.
 -- @return #boolean If true, Squadron can do that type of mission. Available assets are not checked.
--- @return #number Number of available assets that dont have a mission assigned.
+-- @return #table Assets that can do the required mission.
 function AIRWING:SquadronCanMission(Squadron, MissionType, Nassets)
 
-  local cando=false
-  local n=0
+  local cando=true
+  local assets={}
 
   local gotit=false
   for _,canmission in pairs(Squadron.missiontypes) do
@@ -307,7 +310,6 @@ function AIRWING:SquadronCanMission(Squadron, MissionType, Nassets)
   if not gotit then
     -- This squad cannot do this mission.
     cando=false
-    n=0
   else
 
     for _,_asset in pairs(Squadron.assets) do
@@ -315,7 +317,7 @@ function AIRWING:SquadronCanMission(Squadron, MissionType, Nassets)
       
       -- Check if has already a mission assigned.
       if asset.mission==nil then
-        n=n+1
+        table.insert(assets, asset)
       end
       
     end
@@ -323,13 +325,11 @@ function AIRWING:SquadronCanMission(Squadron, MissionType, Nassets)
   end
   
   -- Check if required assets are present.
-  if Nassets then
-    if Nassets<n then 
-      cando=false
-    end
+  if Nassets and Nassets > #assets then
+    cando=false
   end
-    
-  return cando, n
+
+  return cando, assets
 end
 
 --- Check if assets for a given mission type are available.
@@ -337,18 +337,22 @@ end
 -- @param #string MissionType Type of mission.
 -- @param #number Nassets Amount of assets required for the mission. Default 1.
 -- @return #boolean If true, enough assets are available.
--- @return #number Number of assets available for the mission type.
+-- @return #table Assets that can do the required mission.
 function AIRWING:CanMission(MissionType, Nassets)
 
+  -- Assume we CANNOT and NO assets are available.
   local Can=false
-  local N=0
+  local Assets={}
 
-  local n=0
   for squadname,_squadron in pairs(self.squadrons) do
     local squadron=_squadron --#AIRWING.Squadron
 
     -- Check if this squadron can.
-    local can, n=self:SquadronCanMission(squadron, MissionType, Nassets)
+    local can, assets=self:SquadronCanMission(squadron, MissionType, Nassets)
+    
+    -- Debug output.
+    local text=string.format("Mission=%s, squadron=%s, can=%s, assets=%d/%d", MissionType, squadron.name, tostring(can), #assets, Nassets)
+    self:I(self.lid..text)
     
     -- If anyone can, we Can.
     if can then
@@ -356,11 +360,13 @@ function AIRWING:CanMission(MissionType, Nassets)
     end
     
     -- Total number.
-    N=N+n
+    for _,asset in pairs(assets) do
+      table.insert(Assets, asset)
+    end
 
   end
   
-  return Can, N
+  return Can, Assets
 end
 
 --- Create a CAP mission.
@@ -369,34 +375,30 @@ end
 -- @param #number SpeedOrbit Orbit speed in knots. Default 350 kts.
 -- @param #number Heading Heading in degrees. Default 270° (East to West).
 -- @param #number Leg Length of race-track in NM. Default 10 NM.
--- @return #AIRWING.MissionCAP The CAP mission table.
+-- @return Ops.FlightGroup#FLIGHTGROUP.MissionCAP The CAP mission table.
 function AIRWING:CreateMissionCAP(Altitude, SpeedOrbit, Heading, Leg)
 
-  local mission={} --#AIRWING.Missiondata
-  
-  mission.type=FLIGHTGROUP.MissionType.CAP
-  mission.altitude=UTILS.FeetToMeters(Altitude or 10000)
-  mission.speedOrbit=UTILS.KnotsToMps(SpeedOrbit or 350)
-  mission.heading=Heading or 270
-  mission.leg=UTILS.NMToMeters(Leg or 10)
+  local mission=FLIGHTGROUP.CreateMissionCAP(self, Altitude, SpeedOrbit, Heading, Leg)
 
   return mission
 end
 
 --- Add mission to queue.
 -- @param #AIRWING self
--- @param AIRWING.Missiondata Mission for this group.
+-- @param #AIRWING.Missiondata Mission for this group.
 -- @param Core.Zone#ZONE Zone The mission zone.
--- @param #number WaypointIndex The waypoint index.
+-- @param #number Nassets Number of required assets for this mission. Default 1.
 -- @param #string ClockStart Time the mission is started, e.g. "05:00" for 5 am. If specified as a #number, it will be relative (in seconds) to the current mission time. Default is 5 seconds after mission was added.
 -- @param #string ClockStop Time the mission is stopped, e.g. "13:00" for 1 pm. If mission could not be started at that time, it will be removed from the queue. If specified as a #number it will be relative (in seconds) to the current mission time.
 -- @param #number Prio Priority of the mission, i.e. a number between 1 and 100. Default 50.
 -- @param #string Name Mission name. Default "Aerial Refueling #00X", where "#00X" is a running mission counter index starting at "#001".
 -- @return #AIRWING.Missiondata The mission table.
-function AIRWING:AddMission(Mission, Zone, WaypointIndex, ClockStart, ClockStop, Prio, Name)
+function AIRWING:AddMission(Mission, Zone, Nassets, ClockStart, ClockStop, Prio, Name)
 
   -- TODO: need to check that this call increases the correct mission counter and adds it to the mission queue.
-  local mission=FLIGHTGROUP.AddMission(self, Mission, Zone, WaypointIndex, ClockStart, ClockStop, Prio, Name)
+  local mission=FLIGHTGROUP.AddMission(self, Mission, Zone, nil, ClockStart, ClockStop, Prio, Name)
+  
+  mission.nassets=Nassets or 1
 
   -- Mission needs the correct MID.
   mission.mid=nil
@@ -438,7 +440,7 @@ function AIRWING:onafterAirwingStatus(From, Event, To)
   local fsmstate=self:GetState()
   
     -- Info text.
-  local text=string.format("State %s", fsmstate)
+  local text=string.format("FSM State %s: Missons=%d", fsmstate, #self.missionqueue)
   self:I(self.lid..text)
   
   local text="Squadrons:"
@@ -481,7 +483,7 @@ function AIRWING:onafterAirwingStatus(From, Event, To)
 
   -- Request mission execution.  
   if mission then
-    self:RequestMission(mission)
+    self:MissionRequest(mission)
   end
 
   self:__AirwingStatus(-30)
@@ -502,8 +504,8 @@ function AIRWING:_GetNextMission()
 
   -- Sort results table wrt times they have already been engaged.
   local function _sort(a, b)
-    local taskA=a --#AIRWING.Mission
-    local taskB=b --#AIRWING.Mission
+    local taskA=a --#AIRWING.Missiondata
+    local taskB=b --#AIRWING.Missiondata
     --TODO: probably sort by prio first and then by time as only missions for T>Tstart are executed. That would ensure that the highest prio mission is carried out first!
     return (taskA.Tstart<taskB.Tstart) or (taskA.Tstart==taskB.Tstart and taskA.prio<taskB.prio)
   end
@@ -515,9 +517,26 @@ function AIRWING:_GetNextMission()
   -- Look for first task that is not accomplished.
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --#AIRWING.Missiondata
+        
+    -- Check if airwing can do the mission and gather required assets.
+    local can, assets=self:CanMission(mission.type, mission.nassets)
+    
+    -- Debug output.
+    self:T3({self.lid.."Mission check:", MissionStatusScheduled=mission.status==FLIGHTGROUP.MissionStatus.SCHEDULED, TstartPassed=time>=mission.Tstart, CanMission=can, Nassets=#assets})
     
     -- Check that mission is still scheduled, time has passed and enough assets are available.
-    if mission.status==FLIGHTGROUP.MissionStatus.SCHEDULED and time>=mission.Tstart and self:CanMission(mission.type, mission.nassets) then
+    if mission.status==FLIGHTGROUP.MissionStatus.SCHEDULED and time>=mission.Tstart and can then
+    
+      -- TODO: check that mission.assets table is clean.
+      mission.assets=mission.assets or {}
+    
+      -- Assign assets to mission.
+      for i=1,mission.nassets do
+        local asset=assets[i] --#AIRWING.SquadronAsset
+        table.insert(mission.assets, asset)
+        asset.mission=mission
+      end
+      
       return mission
     end
   end
@@ -529,7 +548,7 @@ end
 -- FSM Events
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- On after "NewAsset" event. An asset has been added to the airwing stock.
+--- On after "NewAsset" event. Asset is added to the given squadron (asset assignment).
 -- @param #AIRWING self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -541,66 +560,48 @@ function AIRWING:onafterNewAsset(From, Event, To, asset, assignment)
   -- Call parent warehouse function first.
   self:GetParent(self).onafterNewAsset(self, From, Event, To, asset, assignment)
   
+  -- Get squadron.
   local squad=self:GetSquadron(assignment)  
 
   if squad then
+  
+    -- TODO: Check if asset is already part of the squadron. If an asset returns, it will be added again!
 
-    local text=string.format("FF assignment=%s, squadron=%s", assignment, squad.name)
-    env.info(text)
+    -- Debug text.
+    local text=string.format("Adding asset to squadron %s: assignment=%s, type=%s, attribute=%s", squad.name, assignment, asset.unittype, asset.attribute)
+    self:I(self.lid..text)
     
+    -- Add asset to squadron.
     table.insert(squad.assets, asset)
         
   end
 end
 
-
---- On before "NewAsset" event.
+--- On after "MissionNew" event.
 -- @param #AIRWING self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #AIRWING.Mission Mission
--- @return #boolean Allowed transition?
-function AIRWING:onbeforeAddMission(From, Event, To, Mission)
+-- @param #AIRWING.Missiondata Mission
+function AIRWING:onafterMissionNew(From, Event, To, Mission)
   
-  local allowed=true
-  
-  -- Check if any squadron can to this type of mission.
-  -- TODO: well, could be that new squadrons with the capability are added at a later time.
-  local cando=self:CanMission(Mission.type)  
-  if not cando then
-    allowed=false
-  end  
-    
-  return allowed
-end
-
---- On after "NewAsset" event.
--- @param #AIRWING self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #AIRWING.Mission Mission
-function AIRWING:onafterAddMission(From, Event, To, Mission)
-
-  -- Add Mission to queue.
-  table.insert(self.missionqueue, Mission)
+  self:I(self.lid..string.format("New mission %s", Mission.name))
 
 end
 
---- On after "RequestMission" event.
+--- On after "MissionRequest" event. Performs a self request to the warehouse for the mission assets. Sets mission status to ASSIGNED.
 -- @param #AIRWING self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param #AIRWING.Missiondata Mission The requested mission.
-function AIRWING:onafterRequestMission(From, Event, To, Mission)
+function AIRWING:onafterMissionRequest(From, Event, To, Mission)
 
+  -- Set mission status to ASSIGNED.
   Mission.status=FLIGHTGROUP.MissionStatus.ASSIGNED
 
-  --TODO: request descriptor/attribute for given mission type! AWACS, Tankers, Fighters.
-  --TODO: also check that mission prio is same as warehouse prio (small=high or the other way around).
-  self:AddRequest(self, WAREHOUSE.Descriptor.ASSIGNMENT, Mission.squadname, Mission.nassets, nil, nil, Mission.prio, tostring(Mission.mid))  
+  --TODO: Check that mission prio is same as warehouse prio (small=high or the other way around).
+  self:AddRequest(self, WAREHOUSE.Descriptor.ASSETLIST, Mission.assets, Mission.nassets, nil, nil, Mission.prio, tostring(Mission.MID))
 
 end
 
@@ -617,17 +618,23 @@ function AIRWING:onafterRequest(From, Event, To, Request)
   
   local Mission=self:GetMissionByID(Request.assignment)
   
-  for _,_asset in pairs(assets) do
-    local asset=_asset --#AIRWING.SquadronAsset
-    
-    asset.payload=Mission.payload
+  if Mission and assets then
+  
+    for _,_asset in pairs(assets) do
+      local asset=_asset --#AIRWING.SquadronAsset
+      
+      asset.payload=Mission.payload
+      
+    end
     
   end
 
+  -- Call parent warehouse function after assets have been adjusted.
+  self:GetParent(self).onafterRequest(self, From, Event, To, Request)
   
 end
 
---- On after "AssetSpawned" event triggered when an asset group is spawned into the cruel world.
+--- On after "AssetSpawned" event triggered when an asset group is spawned into the cruel world. Creates a new flightgroup element and adds the mission to the flightgroup queue.
 -- @param #AIRWING self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -650,24 +657,14 @@ function AIRWING:onafterAssetSpawned(From, Event, To, group, asset, request)
   
   asset.flightgroup=flightgroup
   
+  flightgroup:SetAirwing(self)
+  
   -- Add mission to flightgroup queue.
-  asset.flightgroup:AddMission(asset.mission)
-  
-  --[[
-  local airwing=self
-  
-  function flightgroup:OnAfterMissionStart(From, Event, To, Mission)
-    local mission=Mission --#AIRWING.Missiondata
-   
-    
-    --mission.status.FLIGHTGROUP
-  
+  if asset.mission then
+    local Cstart=UTILS.SecondsToClock(asset.mission.Tstart)
+    local Cstop=asset.mission.Tstop and UTILS.SecondsToClock(asset.mission.Tstop) or nil
+    asset.flightgroup:AddMission(asset.mission, asset.mission.zone, asset.mission.waypoint, Cstart, Cstop, asset.mission.name)
   end
-  
-  function flightgroup:OnAfterMissionDone(From, Event, To, Mission)
-  
-  end
-  ]]
  
 end
 
@@ -700,24 +697,11 @@ function AIRWING:onafterSelfRequest(From, Event, To, groupset, request)
 
 end
 
---- Create a new task name.
--- @param #AIRWING self
--- @param #string task Task of type @{#AIRWING.Task}.
--- @string Task name, e.g. Task0001_CAP, Task0002_BAI, Task0003_INTERCEPT, ...
-function AIRWING:_NewTaskName(task)
-
-  self.ntasks=self.ntasks+1
-  
-  local taskname=string.format("Task#%04d_%s", self.ntasks, task)
-  
-  return taskname
-end
-
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Patrol carrier.
+--- Returns the mission for a given mission ID (MID).
 -- @param #AIRWING self
 -- @param #number mid Mission ID.
 -- @return #AIRWING.Missiondata Mission table.
@@ -726,7 +710,7 @@ function AIRWING:GetMissionByID(mid)
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --#AIRWING.Missiondata
     
-    if mission.MID==mid then
+    if mission.MID==tonumber(mid) then
       return mission
     end
     

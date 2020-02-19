@@ -645,6 +645,7 @@ function CONTROLLABLE:StartUncontrolled(delay)
   if delay and delay>0 then
     SCHEDULER:New(nil, CONTROLLABLE.StartUncontrolled, {self}, delay)
   else
+    env.info("FF staring controllable")
     self:SetCommand({id='Start', params={}})
   end
   return self
