@@ -355,10 +355,10 @@ ATIS.Alphabet = {
 
 --- Runway correction for converting true to magnetic heading.
 -- @type ATIS.RunwayM2T
--- @field #number Caucasus 0� (East).
--- @field #number Nevada +12� (East).
--- @field #number Normandy -10� (West).
--- @field #number PersianGulf +2� (East).
+-- @field #number Caucasus 0° (East).
+-- @field #number Nevada +12° (East).
+-- @field #number Normandy -10° (West).
+-- @field #number PersianGulf +2° (East).
 ATIS.RunwayM2T={
   Caucasus=0,
   Nevada=12,
