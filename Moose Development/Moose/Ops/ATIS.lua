@@ -709,9 +709,9 @@ function ATIS:SetMapMarks(switch)
   return self
 end
 
---- Set magnetic runway headings as depicted on the runway, *e.g.* "13" for 130° or "25L" for the left runway with magnetic heading 250�.
+--- Set magnetic runway headings as depicted on the runway, *e.g.* "13" for 130° or "25L" for the left runway with magnetic heading 250°.
 -- @param #ATIS self
--- @param #table headings Magnetic headings. Inverse (-180�) headings are added automatically. You only need to specify one heading per runway direction. "L"eft and "R" right can also be appended.
+-- @param #table headings Magnetic headings. Inverse (-180°) headings are added automatically. You only need to specify one heading per runway direction. "L"eft and "R" right can also be appended.
 -- @return #ATIS self
 function ATIS:SetRunwayHeadingsMagnetic(headings)
 
@@ -1796,7 +1796,7 @@ end
 --- Get runway from user supplied magnetic heading.
 -- @param #ATIS self
 -- @param #number windfrom Wind direction (from) in degrees.
--- @return #string Runway magnetic heading divided by ten (and rounded). Eg, "13" for 130�.
+-- @return #string Runway magnetic heading divided by ten (and rounded). Eg, "13" for 130°.
 function ATIS:GetMagneticRunway(windfrom)
 
   local diffmin=nil
