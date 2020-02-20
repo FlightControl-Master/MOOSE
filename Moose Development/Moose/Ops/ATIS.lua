@@ -354,10 +354,10 @@ ATIS.Alphabet = {
 
 --- Runway correction for converting true to magnetic heading.
 -- @type ATIS.RunwayM2T
--- @field #number Caucasus 0° (East).
--- @field #number Nevada +12° (East).
--- @field #number Normandy -10° (West).
--- @field #number PersianGulf +2° (East).
+-- @field #number Caucasus 0Â° (East).
+-- @field #number Nevada +12Â° (East).
+-- @field #number Normandy -10Â° (West).
+-- @field #number PersianGulf +2Â° (East).
 ATIS.RunwayM2T={
   Caucasus=0,
   Nevada=12,
@@ -709,9 +709,9 @@ function ATIS:SetMapMarks(switch)
   return self
 end
 
---- Set magnetic runway headings as depicted on the runway, *e.g.* "13" for 130° or "25L" for the left runway with magnetic heading 250°.
+--- Set magnetic runway headings as depicted on the runway, *e.g.* "13" for 130Â° or "25L" for the left runway with magnetic heading 250ï¿½.
 -- @param #ATIS self
--- @param #table headings Magnetic headings. Inverse (-180°) headings are added automatically. You only need to specify one heading per runway direction. "L"eft and "R" right can also be appended.
+-- @param #table headings Magnetic headings. Inverse (-180ï¿½) headings are added automatically. You only need to specify one heading per runway direction. "L"eft and "R" right can also be appended.
 -- @return #ATIS self
 function ATIS:SetRunwayHeadingsMagnetic(headings)
 
@@ -826,12 +826,12 @@ end
 --
 -- To get *true* from *magnetic* heading one has to add easterly or substract westerly variation, e.g
 --
--- A magnetic heading of 180° corresponds to a true heading of
+-- A magnetic heading of 180Â° corresponds to a true heading of
 --
---   * 186° on the Caucaus map
---   * 192° on the Nevada map
---   * 170° on the Normany map
---   * 182° on the Persian Gulf map
+--   * 186Â° on the Caucaus map
+--   * 192Â° on the Nevada map
+--   * 170Â° on the Normany map
+--   * 182Â° on the Persian Gulf map
 --
 -- Likewise, to convert *magnetic* into *true* heading, one has to substract easterly and add westerly variation.
 --
@@ -1085,7 +1085,7 @@ function ATIS:onafterBroadcast(From, Event, To)
     local g= 9.80665   --[m/s^2]
     local M= 0.0289644 --[kg/mol]
     local T0=coord:GetTemperature(0)+273.15 --[K] Temp at sea level.
-    local TS=288.15   -- Standard Temperature assumed by Altimeter is 15°C 
+    local TS=288.15   -- Standard Temperature assumed by Altimeter is 15Â°C 
     local q=qnh*100
     
     -- Calculate Pressure.
@@ -1197,10 +1197,10 @@ function ATIS:onafterBroadcast(From, Event, To)
   --- Temperature ---
   -------------------
 
-  -- Temperature in °C (or °F).
+  -- Temperature in Â°C (or Â°F).
   local temperature=coord:GetTemperature(height+5)
 
-  -- Convert to °F.
+  -- Convert to Â°F.
   if self.TDegF then
     temperature=UTILS.CelciusToFarenheit(temperature)
   end
@@ -1796,7 +1796,7 @@ end
 --- Get runway from user supplied magnetic heading.
 -- @param #ATIS self
 -- @param #number windfrom Wind direction (from) in degrees.
--- @return #string Runway magnetic heading divided by ten (and rounded). Eg, "13" for 130°.
+-- @return #string Runway magnetic heading divided by ten (and rounded). Eg, "13" for 130ï¿½.
 function ATIS:GetMagneticRunway(windfrom)
 
   local diffmin=nil
@@ -1839,7 +1839,7 @@ function ATIS:GetNavPoint(navpoints, runway, left)
       local navL=self:GetRunwayLR(nav.runway)
       local hdgD=UTILS.HdgDiff(navy,rwyy)
       
-      if hdgD<=15 then --We allow an error of +-15° here.
+      if hdgD<=15 then --We allow an error of +-15Â° here.
         if navL==nil or (navL==true and left==true) or (navL==false and left==false) then
           return nav
         end
