@@ -710,9 +710,9 @@ function ATIS:SetMapMarks(switch)
   return self
 end
 
---- Set magnetic runway headings as depicted on the runway, *e.g.* "13" for 130� or "25L" for the left runway with magnetic heading 250�.
+--- Set magnetic runway headings as depicted on the runway, *e.g.* "13" for 130^° or "25L" for the left runway with magnetic heading 250°.
 -- @param #ATIS self
--- @param #table headings Magnetic headings. Inverse (-180�) headings are added automatically. You only need to specify one heading per runway direction. "L"eft and "R" right can also be appended.
+-- @param #table headings Magnetic headings. Inverse (-180°) headings are added automatically. You only need to specify one heading per runway direction. "L"eft and "R" right can also be appended.
 -- @return #ATIS self
 function ATIS:SetRunwayHeadingsMagnetic(headings)
 
@@ -827,12 +827,12 @@ end
 --
 -- To get *true* from *magnetic* heading one has to add easterly or substract westerly variation, e.g
 --
--- A magnetic heading of 180� corresponds to a true heading of
+-- A magnetic heading of 180° corresponds to a true heading of
 --
---   * 186� on the Caucaus map
---   * 192� on the Nevada map
---   * 170� on the Normany map
---   * 182� on the Persian Gulf map
+--   * 186° on the Caucaus map
+--   * 192° on the Nevada map
+--   * 170° on the Normany map
+--   * 182° on the Persian Gulf map
 --
 -- Likewise, to convert *magnetic* into *true* heading, one has to substract easterly and add westerly variation.
 --
@@ -1086,7 +1086,7 @@ function ATIS:onafterBroadcast(From, Event, To)
     local g= 9.80665   --[m/s^2]
     local M= 0.0289644 --[kg/mol]
     local T0=coord:GetTemperature(0)+273.15 --[K] Temp at sea level.
-    local TS=288.15   -- Standard Temperature assumed by Altimeter is 15�C 
+    local TS=288.15   -- Standard Temperature assumed by Altimeter is 15°C 
     local q=qnh*100
     
     -- Calculate Pressure.
