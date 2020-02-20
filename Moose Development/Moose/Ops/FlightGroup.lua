@@ -125,6 +125,14 @@
 -- 
 -- ## Waypoint Tasks
 -- 
+-- # Missions
+-- 
+-- ## Anti-ship
+-- 
+-- ## AWACS
+-- 
+-- ## INTERCEPT
+-- 
 -- 
 -- # Examples
 -- 
@@ -196,8 +204,7 @@ FLIGHTGROUP = {
   checkzones         =   nil,
   inzones            =   nil,
   groupinitialized   =   nil,
-  beacon             =   nil,
-  
+  beacon             =   nil,  
 }
 
 
@@ -305,30 +312,37 @@ FLIGHTGROUP.TaskType={
 
 --- Mission types.
 -- @type FLIGHTGROUP.MissionType
--- @param #string INTERCEPT Intercept.
--- @param #string CAP Combat Air Patrol.
+-- @param #string ANTISHIP Anti-ship mission.
+-- @param #string AWACS AWACS mission.
 -- @param #string BAI Battlefield Air Interdiction.
+-- @param #string BOMBING Bombing mission.
+-- @param #string CAP Combat Air Patrol.
+-- @param #string CAS Close Air Support.
+-- @param #string ESCORT Escort mission.
+-- @param #string FACA Forward AirController airborne mission.
+-- @param #string FERRY Ferry flight mission.
+-- @param #string INTERCEPT Intercept mission.
+-- @param #string RECON Recon mission.
 -- @param #string SEAD Suppression/destruction of enemy air defences.
 -- @param #string STRIKE Strike mission.
--- @param #string AWACS AWACS mission.
 -- @param #string TANKER Tanker mission.
--- @param #string RECON Recon mission.
 -- @param #string TRANSPORT Transport mission.
--- @param #string FERRY Ferry flight mission.
--- @param #string ANTISHIP Anti-ship mission.
 FLIGHTGROUP.MissionType={
-  INTERCEPT="Intercept",
-  CAP="CAP",
+  ANTISHIP="Anti Ship",
+  AWACS="AWACS",  
   BAI="BAI",
+  BOMBING="Bombing",
+  CAP="CAP",
+  CAS="CAS",
+  ESCORT="Escort",
+  FACA="FAC-A",
+  FERRY="Ferry Flight",
+  INTERCEPT="Intercept",  
+  RECON="Recon",
   SEAD="SEAD",
   STRIKE="Strike",
-  CAS="CAS",
-  AWACS="AWACS",
   TANKER="Tanker",
-  RECON="Recon",
   TRANSPORT="Transport",
-  FERRY="Ferry Flight",
-  ANTISHIP="Anti Ship"
 }
 
 --- Mission status.
@@ -469,15 +483,17 @@ function FLIGHTGROUP:New(groupname, autostart)
   self:AddTransition("*",             "OutOfRockets",      "*")          -- Group is out of rockets.
   self:AddTransition("*",             "OutOfBombs",        "*")          -- Group is out of bombs.
   self:AddTransition("*",             "OutOfMissiles",     "*")          -- Group is out of missiles.
+  self:AddTransition("*",             "OutOfMissilesA2A",  "*")          -- Group is out of A2A missiles.
+  self:AddTransition("*",             "OutOfMissilesA2G",  "*")          -- Group is out of A2G missiles.
 
   self:AddTransition("*",             "TaskExecute",      "*")           -- Group will execute a task.
   self:AddTransition("*",             "TaskDone",         "*")           -- Group finished a task.
   self:AddTransition("*",             "TaskCancel",       "*")           -- Cancel current task.
   self:AddTransition("*",             "TaskPause",        "*")           -- Pause current task.
   
-  self:AddTransition("*",             "MissionStart",     "OnMission") -- Tanker is on station and ready to refuel.  
-  self:AddTransition("OnMission",     "MissionDone",      "Airborne")  -- Tanker is on station and ready to refuel.
-  self:AddTransition("OnMission",     "MissionAbort",     "Airborne")  -- Tanker is on station and ready to refuel.
+  self:AddTransition("*",             "MissionStart",     "OnMission")   -- Tanker is on station and ready to refuel.  
+  self:AddTransition("OnMission",     "MissionDone",      "Airborne")    -- Tanker is on station and ready to refuel.
+  self:AddTransition("OnMission",     "MissionAbort",     "Airborne")    -- Tanker is on station and ready to refuel.
     
   self:AddTransition("*",             "ElementSpawned",   "*")           -- An element was spawned.
   self:AddTransition("*",             "ElementParking",   "*")           -- An element is parking.
@@ -1141,6 +1157,33 @@ function FLIGHTGROUP:CreateMissionCAP(Altitude, SpeedOrbit, Heading, Leg)
   return mission
 end
 
+--- Create an INTERCEPT mission.
+-- @param #FLIGHTGROUP self
+-- @param Core.Set#SET_GROUP TargetGroupSet The set of target groups to intercept.
+function FLIGHTGROUP:CreateMissionINTERCEPT(TargetGroupSet)
+
+  local mission={} --#FLIGHTGROUP.MissionINTERCEPT
+  
+  mission.type=FLIGHTGROUP.MissionType.INTERCEPT
+  mission.targetgroups=TargetGroupSet
+  
+  return mission
+end
+
+--- Create an INTERCEPT mission.
+-- @param #FLIGHTGROUP self
+-- @param Core.Set#SET_GROUP TargetGroupSet The set of target groups to intercept.
+function FLIGHTGROUP:CreateMissionINTERCEPT(TargetGroupSet)
+
+  local mission={} --#FLIGHTGROUP.MissionINTERCEPT
+  
+  mission.type=FLIGHTGROUP.MissionType.INTERCEPT
+  mission.targetgroups=TargetGroupSet
+  
+  return mission
+end
+
+
 --- Add mission to queue.
 -- @param #FLIGHTGROUP self
 -- @param #FLIGHTGROUP.Mission Mission Mission for this group.
@@ -1191,7 +1234,33 @@ function FLIGHTGROUP:AddMission(Mission, Zone, WaypointIndex, ClockStart, ClockS
   mission.task=nil
   mission.waypoint=WaypointIndex
   
-  if mission.type==FLIGHTGROUP.MissionType.CAP then
+  if mission.type==FLIGHTGROUP.MissionType.ANTISHIP then
+  
+    ----------------------
+    -- ANTISHIP Mission --
+    ----------------------
+
+  mission.DCStask=CONTROLLABLE.TaskAttackUnit(self.group, AttackUnit, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType)
+  
+  elseif mission.type==FLIGHTGROUP.MissionType.AWACS then
+  
+    -------------------
+    -- AWACS Mission --
+    -------------------  
+    
+  elseif mission.type==FLIGHTGROUP.MissionType.BAI then
+  
+    -----------------
+    -- BAI Mission --
+    -----------------  
+
+    mission.DCStask=CONTROLLABLE.TaskAttackGroup(self.group, TargetGroup, ENUMS.WeaponFlag.Auto, WeaponExpend,AttackQty,Direction,Altitude,AttackQtyLimit)
+  
+  elseif mission.type==FLIGHTGROUP.MissionType.CAP then
+  
+    -----------------
+    -- CAP Mission --
+    -----------------  
   
     local Coord=mission.zone:GetRandomCoordinate()
     
@@ -1199,7 +1268,73 @@ function FLIGHTGROUP:AddMission(Mission, Zone, WaypointIndex, ClockStart, ClockS
   
     mission.DCStask=CONTROLLABLE.TaskOrbit(self.group, Coord, mission.altitude, mission.speed, CoordRaceTrack)
     
-    mission.name=Name or string.format("CAP mission ID%03d", mission.mid)
+    mission.name=Name or string.format("CAP mission ID%03d", mission.mid)  
+  
+  elseif mission.type==FLIGHTGROUP.MissionType.CAS then
+  
+    -----------------
+    -- CAS Mission --
+    -----------------
+  
+    local Coord=mission.zone:GetRandomCoordinate()
+    
+    local CoordRaceTrack=Coord:Translate(mission.leg, mission.heading, true)
+  
+    mission.DCStask=CONTROLLABLE.TaskOrbit(self.group, Coord, mission.altitude, mission.speed, CoordRaceTrack)
+    
+    self:AddTaskEnrouteEngageTargetsInZone(mission.zone, mission.targettypes, mission.prio)
+
+  elseif mission.type==FLIGHTGROUP.MissionType.ESCORT then
+  
+    --------------------
+    -- ESCORT Mission --
+    --------------------
+
+    mission.DCStask=CONTROLLABLE.TaskEscort(self.group, FollowControllable, Vec3, LastWaypointIndex, EngagementDistance, TargetTypes)
+
+  elseif mission.type==FLIGHTGROUP.MissionType.FACA then
+  
+    -----------------
+    -- FAC Mission --
+    -----------------  
+
+    mission.DCStask=CONTROLLABLE.TaskFAC_AttackGroup(self.group, AttackGroup, WeaponType, Designation, Datalink)
+  
+  elseif mission.type==FLIGHTGROUP.MissionType.FERRY then
+  
+    -------------------
+    -- FERRY Mission --
+    -------------------
+  
+  elseif mission.type==FLIGHTGROUP.MissionType.INTERCEPT then
+
+    -----------------------
+    -- INTERCEPT Mission --
+    -----------------------
+  
+    mission.DCStask=CONTROLLABLE.TaskAttackGroup(self.group, TargetGroup, ENUMS.WeaponFlag.Auto, WeaponExpend,AttackQty,Direction,Altitude,AttackQtyLimit)
+  
+  elseif mission.type==FLIGHTGROUP.MissionType.RECON then
+  
+    -------------------
+    -- RECON Mission --
+    -------------------  
+  
+  elseif mission.type==FLIGHTGROUP.MissionType.STRIKE then
+  
+    -------------------
+    -- STIKE Mission --
+    -------------------  
+  
+    mission.DCStask=CONTROLLABLE.TaskAttackMapObject(self.group, Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType)
+  
+  elseif mission.type==FLIGHTGROUP.MissionType.TANKER then
+  
+    --------------------
+    -- TANKER Mission --
+    -------------------- 
+  
+  elseif mission.type==FLIGHTGROUP.MissionType.TRANSPORT then
     
   end
   
@@ -2904,7 +3039,11 @@ function FLIGHTGROUP:onafterTaskDone(From, Event, To, Task)
   -- Task status done.
   Task.status=FLIGHTGROUP.TaskStatus.ACCOMPLISHED
   
-  -- Update route. This is necessary because of the route task beeing overwritten. But we want to fly to the remaining waypoints.
+  if self.currentmission and self.currentmission.task and self.currentmission.task then
+  
+  end
+  
+  -- Update route. This is necessary because of the route task being overwritten. But we want to fly to the remaining waypoints.
   self:__UpdateRoute(-1)
   
 end
