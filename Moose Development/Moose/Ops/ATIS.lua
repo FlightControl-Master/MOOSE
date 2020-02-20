@@ -1198,10 +1198,10 @@ function ATIS:onafterBroadcast(From, Event, To)
   --- Temperature ---
   -------------------
 
-  -- Temperature in �C (or �F).
+  -- Temperature in °C (or °F).
   local temperature=coord:GetTemperature(height+5)
 
-  -- Convert to �F.
+  -- Convert to °F.
   if self.TDegF then
     temperature=UTILS.CelciusToFarenheit(temperature)
   end
@@ -1872,7 +1872,7 @@ end
 --- Get runway from user supplied magnetic heading.
 -- @param #ATIS self
 -- @param #number windfrom Wind direction (from) in degrees.
--- @return #string Runway magnetic heading divided by ten (and rounded). Eg, "13" for 130�.
+-- @return #string Runway magnetic heading divided by ten (and rounded). Eg, "13" for 130°.
 function ATIS:GetMagneticRunway(windfrom)
 
   local diffmin=nil
@@ -1915,7 +1915,7 @@ function ATIS:GetNavPoint(navpoints, runway, left)
       local navL=self:GetRunwayLR(nav.runway)
       local hdgD=UTILS.HdgDiff(navy,rwyy)
       
-      if hdgD<=15 then --We allow an error of +-15� here.
+      if hdgD<=15 then --We allow an error of +-15° here.
         if navL==nil or (navL==true and left==true) or (navL==false and left==false) then
           return nav
         end
