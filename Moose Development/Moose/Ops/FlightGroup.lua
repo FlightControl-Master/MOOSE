@@ -382,6 +382,12 @@ FLIGHTGROUP.MissionStatus={
 -- @field #number altitude Altitude in meters.
 -- @extends #FLIGHTGROUP.Mission
 
+--- STRIKE mission.
+-- @type FLIGHTGROUP.MissionSTRIKE
+-- @field Core.Point#COORDINATE Coordinate.
+-- @field #number altitude Altitude.
+-- @extends #FLIGHTGROUP.Mission
+
 --- FLIGHTGROUP class version.
 -- @field #string version
 FLIGHTGROUP.version="0.3.0"
@@ -1153,6 +1159,23 @@ function FLIGHTGROUP:CreateMissionCAP(Altitude, SpeedOrbit, Heading, Leg)
   mission.speedOrbit=UTILS.KnotsToMps(SpeedOrbit or 350)
   mission.heading=Heading or 270
   mission.leg=UTILS.NMToMeters(Leg or 10)
+  
+  return mission
+end
+
+--- Create a STRIKE mission.
+-- @param #FLIGHTGROUP self
+-- @param #Core.Point#COORDINATE Coordinate Target Coordinate.
+-- @param #number Altitude Altitude
+-- @return #FLIGHTGROUP.MissionSTRIKE The STRIKE mission table.
+function FLIGHTGROUP:CreateMissionSTRIKE(TargetCoordinate, IngressCoordinate, Altitude)
+
+  local mission={} --#FLIGHTGROUP.MissionSTIKE
+  
+  mission.type=FLIGHTGROUP.MissionType.STIKE
+  mission.coordingress=IngressCoordinate
+  mission.coordtarget=TargetCoordinate
+  mission.altitude=UTILS.FeetToMeters(Altitude or 5000)
   
   return mission
 end
