@@ -1,3 +1,5 @@
+
+
 --- **Ops** - Automatic Terminal Information Service (ATIS).
 --
 -- ===
@@ -1320,27 +1322,38 @@ function ATIS:onafterBroadcast(From, Event, To)
 
   --Airbase name
   subtitle=string.format("%s", self.airbasename)
-  if self.airbasename:find("AFB")==nil and self.airbasename:find("Airport")==nil and self.airbasename:find("Airstrip")==nil and self.airbasename:find("airfield")==nil and self.airbasename:find("AB")==nil then
+  if self.subduration >= 1 and self.airbasename:find("AFB")==nil and self.airbasename:find("Airport")==nil and self.airbasename:find("Airstrip")==nil and self.airbasename:find("airfield")==nil and self.airbasename:find("AB")==nil then
     subtitle=subtitle.." Airport"
+    else subtitle = ""
   end
   self.radioqueue:NewTransmission(string.format("%s/%s.ogg", self.theatre, self.airbasename), 3.0, self.soundpath, nil, nil, subtitle, self.subduration)
 
   -- Information tag
+   if self.subduration >= 1 then
   subtitle=string.format("Information %s", NATO)
-  local _INFORMATION=subtitle
+  local _INFORMATION=subtitle  
+  else subtitle = ""
+  local _INFORMATION=string.format("Information %s", NATO)
+  end  
   self:Transmission(ATIS.Sound.Information, 0.5, subtitle)
   self.radioqueue:NewTransmission(string.format("NATO Alphabet/%s.ogg", NATO), 0.75, self.soundpath)
 
   -- Zulu Time
-  subtitle=string.format("%s Zulu Time", ZULU)
+if self.subduration >= 1 then
+  subtitle=string.format("%s Zulu Time", ZULU) 
+else subtitle = ""
+end  
   self.radioqueue:Number2Transmission(ZULU, nil, 0.5)
   self:Transmission(ATIS.Sound.TimeZulu, 0.2, subtitle)
 
   -- Visibility
+  if self.subduration >= 1 then
   if self.metric then
     subtitle=string.format("Visibility %s km", VISIBILITY)
   else
     subtitle=string.format("Visibility %s NM", VISIBILITY)
+  end
+  else subtitle = ""
   end
   self:Transmission(ATIS.Sound.Visibilty, 1.0, subtitle)
   self.radioqueue:Number2Transmission(VISIBILITY)
@@ -1354,10 +1367,13 @@ function ATIS:onafterBroadcast(From, Event, To)
   self:Transmission(CloudCover, 1.0, CLOUDSsub)
   if CLOUDBASE and static then
     -- Base
+    if self.subduration >= 1 then
     if self.metric then
       subtitle=string.format("Cloudbase %s, ceiling %s meters", CLOUDBASE, CLOUDCEIL)
     else
       subtitle=string.format("Cloudbase %s, ceiling %s ft", CLOUDBASE, CLOUDCEIL)
+    end
+    else subtitle = ""
     end
     self:Transmission(ATIS.Sound.CloudBase, 1.0, subtitle)
     if tonumber(CLOUDBASE1000)>0 then
@@ -1420,7 +1436,10 @@ function ATIS:onafterBroadcast(From, Event, To)
   end
   -- Actual output
   if wp then
+  if self.subduration >= 1 then
     subtitle=string.format("Weather phenomena:%s", wpsub)
+    else subtitle = ""
+    end
     self:Transmission(ATIS.Sound.WeatherPhenomena, 1.0, subtitle)
     if precepitation==1 then
       self:Transmission(ATIS.Sound.Rain, 0.5)
@@ -1450,6 +1469,10 @@ function ATIS:onafterBroadcast(From, Event, To)
     end
   end
   local _ALTIMETER=subtitle
+  if self.subduration == 0 then
+  subtitle = ""
+  else
+  end
   self:Transmission(ATIS.Sound.Altimeter, 1.0, subtitle)
   self:Transmission(ATIS.Sound.QNH, 0.5)
   self.radioqueue:Number2Transmission(QNH[1])
@@ -1484,6 +1507,10 @@ function ATIS:onafterBroadcast(From, Event, To)
     end
   end
   local _TEMPERATURE=subtitle
+   if self.subduration == 0 then
+   subtitle = ""
+   else
+   end
   self:Transmission(ATIS.Sound.Temperature, 1.0, subtitle)
   if temperature<0 then
     self:Transmission(ATIS.Sound.Minus, 0.2)
@@ -1505,6 +1532,10 @@ function ATIS:onafterBroadcast(From, Event, To)
     subtitle=subtitle..", gusting"
   end
   local _WIND=subtitle
+   if self.subduration == 0 then
+   subtitle = ""
+   else
+   end
   self:Transmission(ATIS.Sound.WindFrom, 1.0, subtitle)
   self.radioqueue:Number2Transmission(WINDFROM)
   self:Transmission(ATIS.Sound.At, 0.2)
@@ -1526,6 +1557,10 @@ function ATIS:onafterBroadcast(From, Event, To)
     subtitle=subtitle.." Right"
   end
   local _RUNACT=subtitle
+   if self.subduration == 0 then
+   subtitle = ""
+   else 
+   end
   self:Transmission(ATIS.Sound.ActiveRunway, 1.0, subtitle)
   self.radioqueue:Number2Transmission(runway)
   if rwyLeft==true then
@@ -1552,7 +1587,10 @@ function ATIS:onafterBroadcast(From, Event, To)
     else
       subtitle=subtitle.." feet"
     end
-
+if self.subduration == 0 then
+   subtitle = ""
+   else 
+   end
     -- Transmit.
     self:Transmission(ATIS.Sound.RunwayLength, 1.0, subtitle)
     if tonumber(L1000)>0 then
@@ -1590,7 +1628,11 @@ function ATIS:onafterBroadcast(From, Event, To)
       subtitle=subtitle.." feet"
     end
 
-    -- Transmitt.
+    -- Transmit.
+    if self.subduration == 0 then
+   subtitle = ""
+   else 
+   end
     self:Transmission(ATIS.Sound.Elevation, 1.0, subtitle)
     if tonumber(L1000)>0 then
       self.radioqueue:Number2Transmission(L1000)
@@ -1618,6 +1660,10 @@ function ATIS:onafterBroadcast(From, Event, To)
       end
     end
     subtitle=string.format("Tower frequency %s", freqs)
+    if self.subduration == 0 then
+   subtitle = ""
+   else 
+   end
     self:Transmission(ATIS.Sound.TowerFrequency, 1.0, subtitle)
     for _,freq in pairs(self.towerfrequency) do
       local f=string.format("%.3f", freq)
@@ -1635,6 +1681,10 @@ function ATIS:onafterBroadcast(From, Event, To)
   local ils=self:GetNavPoint(self.ils, runway, rwyLeft)
   if ils then
     subtitle=string.format("ILS frequency %.2f MHz", ils.frequency)
+    if self.subduration == 0 then
+   subtitle = ""
+   else 
+   end
     self:Transmission(ATIS.Sound.ILSFrequency, 1.0, subtitle)
     local f=string.format("%.2f", ils.frequency)
     f=UTILS.Split(f, ".")
@@ -1650,6 +1700,10 @@ function ATIS:onafterBroadcast(From, Event, To)
   local ndb=self:GetNavPoint(self.ndbouter, runway, rwyLeft)
   if ndb then
     subtitle=string.format("Outer NDB frequency %.2f MHz", ndb.frequency)
+    if self.subduration == 0 then
+   subtitle = ""
+   else 
+   end
     self:Transmission(ATIS.Sound.OuterNDBFrequency, 1.0, subtitle)
     local f=string.format("%.2f", ndb.frequency)
     f=UTILS.Split(f, ".")
@@ -1665,6 +1719,10 @@ function ATIS:onafterBroadcast(From, Event, To)
   local ndb=self:GetNavPoint(self.ndbinner, runway, rwyLeft)
   if ndb then
     subtitle=string.format("Inner NDB frequency %.2f MHz", ndb.frequency)
+    if self.subduration == 0 then
+   subtitle = ""
+   else 
+   end
     self:Transmission(ATIS.Sound.InnerNDBFrequency, 1.0, subtitle)
     local f=string.format("%.2f", ndb.frequency)
     f=UTILS.Split(f, ".")
@@ -1679,6 +1737,10 @@ function ATIS:onafterBroadcast(From, Event, To)
   -- VOR
   if self.vor then
     subtitle=string.format("VOR frequency %.2f MHz", self.vor)
+    if self.subduration == 0 then
+   subtitle = ""
+   else 
+   end
     self:Transmission(ATIS.Sound.VORFrequency, 1.0, subtitle)
     local f=string.format("%.2f", self.vor)
     f=UTILS.Split(f, ".")
@@ -1693,6 +1755,10 @@ function ATIS:onafterBroadcast(From, Event, To)
   -- TACAN
   if self.tacan then
     subtitle=string.format("TACAN channel %dX", self.tacan)
+    if self.subduration == 0 then
+   subtitle = ""
+   else 
+   end
     self:Transmission(ATIS.Sound.TACANChannel, 1.0, subtitle)
     self.radioqueue:Number2Transmission(tostring(self.tacan), nil, 0.2)
     self.radioqueue:NewTransmission("NATO Alphabet/Xray.ogg", 0.75, self.soundpath, nil, 0.2)
@@ -1701,6 +1767,10 @@ function ATIS:onafterBroadcast(From, Event, To)
   -- RSBN
   if self.rsbn then
     subtitle=string.format("RSBN channel %d", self.rsbn)
+    if self.subduration == 0 then
+   subtitle = ""
+   else 
+   end
     self:Transmission(ATIS.Sound.RSBNChannel, 1.0, subtitle)
     self.radioqueue:Number2Transmission(tostring(self.rsbn), nil, 0.2)
   end
@@ -1709,12 +1779,20 @@ function ATIS:onafterBroadcast(From, Event, To)
   local ndb=self:GetNavPoint(self.prmg, runway, rwyLeft)
   if ndb then
     subtitle=string.format("PRMG channel %d", ndb.frequency)
+    if self.subduration == 0 then
+   subtitle = ""
+   else 
+   end
     self:Transmission(ATIS.Sound.PRMGChannel, 1.0, subtitle)
     self.radioqueue:Number2Transmission(tostring(ndb.frequency), nil, 0.5)
   end
   
   -- End of Information Alpha, Bravo, ...
   subtitle=string.format("End of information %s", NATO)
+  if self.subduration == 0 then
+   subtitle = ""
+   else 
+   end
   self:Transmission(ATIS.Sound.EndOfInformation, 0.5, subtitle)
   self.radioqueue:NewTransmission(string.format("NATO Alphabet/%s.ogg", NATO), 0.75, self.soundpath)
   
