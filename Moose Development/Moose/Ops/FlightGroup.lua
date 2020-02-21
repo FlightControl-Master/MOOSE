@@ -32,7 +32,7 @@
 -- @field #table taskenroute Enroute task of the group.
 -- @field #table missionqueue Queue of missions.
 -- @field #number missioncounter Running number of task ids.
--- @field #number missioncurrent ID of current task. If 0, there is no current task assigned.
+-- @field #FLIGHTGROUP.Mission currentmission The mission currently assigned or executed.
 -- @field #boolean istanker If true, group gets enroute task tanker.
 -- @field #boolean isawacs if True, group get enroute task AWACS.
 -- @field #boolean eplrs If true, group will activate it's datalink.
@@ -44,7 +44,7 @@
 -- @field #string attribute Generalized attribute.
 -- @field #string actype Type name of the aircraft.
 -- @field #number speedmax Max speed in km/h.
--- @field #number range Range of the aircraft in km.
+-- @field #number rangemax Max range in km.
 -- @field #number ceiling Max altitude the aircraft can fly at in meters.
 -- @field #boolean ai If true, flight is purely AI. If false, flight contains at least one human player.
 -- @field #boolean fuellow Fuel low switch.
@@ -186,7 +186,7 @@ FLIGHTGROUP = {
   attribute          =   nil,
   actype             =   nil,
   speedmax           =   nil,
-  range              =   nil,
+  rangemax           =   nil,
   ceiling            =   nil,
   fuellow            = false,
   fuellowthresh      =   nil,
@@ -362,35 +362,53 @@ FLIGHTGROUP.MissionStatus={
 --- Generic mission.
 -- @type FLIGHTGROUP.Mission
 -- @field #string type Mission Type.
+-- @field #string status Mission status.
 -- @field #string name Mission name.
 -- @field #number mid Mission ID.
--- @field Core.Zone#ZONE zone Mission zone.
+-- @field #number prio Mission priority.
 -- @field #number Tstart Mission start time in seconds.
 -- @field #number Tstop Mission stop time in seconds.
 -- @field #number duration Mission duration in seconds.
 -- @field #table DCStask DCS task structure.
--- @field #FLIGHTGROUP.Task task Waypoint task.
--- @field #number waypoint Waypoint number.
--- @field #number prio Mission priority.
--- @field #string status Mission status.
+-- @field Core.Point#COORDINATE waypointcoord Coordinate of the waypoint task. 
+-- @field #FLIGHTGROUP.Task waypointtask Waypoint task.
+-- @field #number waypointindex Waypoint number at which the task is executed.
+-- @field #number marker F10 map marker ID.
+
+--- ORBIT mission. Basis for other missions like TANKER, AWACS, CAP.
+-- @type FLIGHTGROUP.MissionORBIT
+-- @field Core.Point#COORDINATE coordOrbit Coordinate where to orbit.
+-- @field #number speedOrbit Orbit speed in m/s.
+-- @field #number heading Heading in degrees.
+-- @field #number leg Length of leg in meters.
+-- @extends #FLIGHTGROUP.Mission
 
 --- CAP mission.
 -- @type FLIGHTGROUP.MissionCAP
--- @field #number heading Heading in degrees.
--- @field #number leg Length of leg in meters.
--- @field #number speedOrbit Orbit speed in m/s.
--- @field #number altitude Altitude in meters.
--- @extends #FLIGHTGROUP.Mission
+-- @field Core.Zone#ZONE_RADIUS zoneEngage *Circular* engagement zone.
+-- @field #table typeTargets Table of target types that are engaged in the engagement zone. Default is {"Air"}.
+-- @extends #FLIGHTGROUP.MissionORBIT
+
+--- CAS mission.
+-- @type FLIGHTGROUP.MissionCAS
+-- @field Core.Zone#ZONE_RADIUS zoneEngage *Circular* engagement zone.
+-- @field #table typeTargets Table of target types that are engaged in the engagement zone. Default is {"LightArmoredUnits"}.
+-- @extends #FLIGHTGROUP.MissionORBIT
 
 --- STRIKE mission.
 -- @type FLIGHTGROUP.MissionSTRIKE
--- @field Core.Point#COORDINATE Coordinate.
--- @field #number altitude Altitude.
+-- @field Core.Point#COORDINATE coordTarget Coordinate of target location.
+-- @field #number altitude Attack altitude in meters.
+-- @extends #FLIGHTGROUP.Mission
+
+--- INTERCEPT mission.
+-- @type FLIGHTGROUP.MissionINTERCEPT
+-- @field Core.Set#SET_GROUP groupsetTargets Set of target groups to intercept.
 -- @extends #FLIGHTGROUP.Mission
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.3.0"
+FLIGHTGROUP.version="0.3.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -497,9 +515,11 @@ function FLIGHTGROUP:New(groupname, autostart)
   self:AddTransition("*",             "TaskCancel",       "*")           -- Cancel current task.
   self:AddTransition("*",             "TaskPause",        "*")           -- Pause current task.
   
-  self:AddTransition("*",             "MissionStart",     "OnMission")   -- Tanker is on station and ready to refuel.  
-  self:AddTransition("OnMission",     "MissionDone",      "Airborne")    -- Tanker is on station and ready to refuel.
-  self:AddTransition("OnMission",     "MissionAbort",     "Airborne")    -- Tanker is on station and ready to refuel.
+  self:AddTransition("*",             "MissionStart",     "OnMission")   -- Mission has started.
+  self:AddTransition("OnMission",     "MissionUpdate",    "OnMission")   -- Mission is updated with latest data.
+  self:AddTransition("OnMission",     "MissionDone",      "Airborne")    -- Mission is over.
+  self:AddTransition("OnMission",     "MissionAbort",     "Airborne")    -- Mission is aborted.
+  
     
   self:AddTransition("*",             "ElementSpawned",   "*")           -- An element was spawned.
   self:AddTransition("*",             "ElementParking",   "*")           -- An element is parking.
@@ -843,7 +863,7 @@ function FLIGHTGROUP:AddCheckZone(CheckZone)
   return self
 end
 
---- Get set of decteded units.
+--- Get set of detected units.
 -- @param #FLIGHTGROUP self
 -- @return Core.Set#SET_UNIT Set of detected units.
 function FLIGHTGROUP:GetDetectedUnits()
@@ -1116,6 +1136,7 @@ function FLIGHTGROUP:Route(waypoints)
     -- Enroute tasks.
     if self.taskenroute then
       for _,TaskEnroute in pairs(self.taskenroute) do
+        --TODO: maybe add option to enable enroute tasks after a specific waypoint?
         table.insert(Tasks, TaskEnroute)
       end
     end
@@ -1143,39 +1164,59 @@ function FLIGHTGROUP:Route(waypoints)
   return self
 end
 
---- Create a CAP mission.
+--- Create an ORBIT mission. This is also used as template for other mission types, e.g. TANKER, AWACS, CAP.
 -- @param #FLIGHTGROUP self
--- @param #number Altitude Orbit altitude in feet. Default 10000 ft.
--- @param #number SpeedOrbit Orbit speed in knots. Default 350 kts.
--- @param #number Heading Heading in degrees. Default 270 (East to West).
+-- @param Core.Point#COORDINATE OrbitCoordinate Where to orbit. Altitude is also taken from the coordinate. 
+-- @param #number OrbitSpeed Orbit speed in knots. Default 350 kts.
+-- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
 -- @param #number Leg Length of race-track in NM. Default 10 NM.
--- @return #FLIGHTGROUP.MissionCAP The CAP mission table.
-function FLIGHTGROUP:CreateMissionCAP(Altitude, SpeedOrbit, Heading, Leg)
+-- @return #FLIGHTGROUP.MissionORBIT The ORBIT mission table.
+function FLIGHTGROUP:CreateMissionORBIT(OrbitCoordinate, OrbitSpeed, Heading, Leg)
 
-  local mission={} --#FLIGHTGROUP.MissionCAP
+  local mission={} --#FLIGHTGROUP.MissionORBIT
   
-  mission.type=FLIGHTGROUP.MissionType.CAP
-  mission.altitude=UTILS.FeetToMeters(Altitude or 10000)
-  mission.speedOrbit=UTILS.KnotsToMps(SpeedOrbit or 350)
+  mission.type=FLIGHTGROUP.MissionType.ORBIT
+  mission.coordOrbit=OrbitCoordinate
+  mission.speedOrbit=UTILS.KnotsToMps(OrbitSpeed or 350)
   mission.heading=Heading or 270
   mission.leg=UTILS.NMToMeters(Leg or 10)
   
   return mission
 end
 
---- Create a STRIKE mission.
--- @param #FLIGHTGROUP self
--- @param #Core.Point#COORDINATE Coordinate Target Coordinate.
--- @param #number Altitude Altitude
--- @return #FLIGHTGROUP.MissionSTRIKE The STRIKE mission table.
-function FLIGHTGROUP:CreateMissionSTRIKE(TargetCoordinate, IngressCoordinate, Altitude)
 
-  local mission={} --#FLIGHTGROUP.MissionSTIKE
+--- Create a CAP mission.
+-- @param #FLIGHTGROUP self
+-- @param Core.Point#COORDINATE OrbitCoordinate Where to orbit. Altitude is also taken from the coordinate. 
+-- @param #number OrbitSpeed Orbit speed in knots. Default 350 kts.
+-- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
+-- @param #number Leg Length of race-track in NM. Default 10 NM.
+-- @param Core.Zone#ZONE_RADIUS ZoneCAP Circular CAP zone. Detected targets in this zone will be engaged.
+-- @param #table TargetTypes Table of target types. Default {"Air"}.
+-- @return #FLIGHTGROUP.MissionCAP The CAP mission table.
+function FLIGHTGROUP:CreateMissionCAP(OrbitCoordinate, OrbitSpeed, Heading, Leg, ZoneCap, TargetTypes)
+
+  local mission=self:CreateMissionORBIT(OrbitCoordinate, OrbitSpeed, Heading, Leg) --#FLIGHTGROUP.MissionCAP
+  
+  mission.type=FLIGHTGROUP.MissionType.CAP
+  mission.zoneEngage=ZoneCAP or ZONE_RADIUS:New("CAP Zone", OrbitCoordinate:GetVec2(), mission.leg)
+  mission.typeTargets=TargetTypes or {"Air"}
+  
+  return mission
+end
+
+--- Create a STRIKE mission. Flight will attack a specified coordinate.
+-- @param #FLIGHTGROUP self
+-- @param Core.Point#COORDINATE Coordinate Target Coordinate.
+-- @param #number Altitude Attack altitude in feet. Default 1000.
+-- @return #FLIGHTGROUP.MissionSTRIKE The STRIKE mission table.
+function FLIGHTGROUP:CreateMissionSTRIKE(TargetCoordinate, Altitude)
+
+  local mission={} --#FLIGHTGROUP.MissionSTRIKE
   
   mission.type=FLIGHTGROUP.MissionType.STIKE
-  mission.coordingress=IngressCoordinate
-  mission.coordtarget=TargetCoordinate
-  mission.altitude=UTILS.FeetToMeters(Altitude or 5000)
+  mission.coordTarget=TargetCoordinate
+  mission.altitude=UTILS.FeetToMeters(Altitude or 1000)
   
   return mission
 end
@@ -1188,20 +1229,7 @@ function FLIGHTGROUP:CreateMissionINTERCEPT(TargetGroupSet)
   local mission={} --#FLIGHTGROUP.MissionINTERCEPT
   
   mission.type=FLIGHTGROUP.MissionType.INTERCEPT
-  mission.targetgroups=TargetGroupSet
-  
-  return mission
-end
-
---- Create an INTERCEPT mission.
--- @param #FLIGHTGROUP self
--- @param Core.Set#SET_GROUP TargetGroupSet The set of target groups to intercept.
-function FLIGHTGROUP:CreateMissionINTERCEPT(TargetGroupSet)
-
-  local mission={} --#FLIGHTGROUP.MissionINTERCEPT
-  
-  mission.type=FLIGHTGROUP.MissionType.INTERCEPT
-  mission.targetgroups=TargetGroupSet
+  mission.groupsetTargets=TargetGroupSet
   
   return mission
 end
@@ -1210,20 +1238,20 @@ end
 --- Add mission to queue.
 -- @param #FLIGHTGROUP self
 -- @param #FLIGHTGROUP.Mission Mission Mission for this group.
--- @param Core.Zone#ZONE Zone The mission zone.
--- @param #number WaypointIndex The waypoint index.
+-- @param Core.Point#COORDINATE WaypointCoordinate Coordinate of the mission waypoint
+-- @param #number WaypointIndex The waypoint number. Default is after all current air waypoints.
 -- @param #string ClockStart Time the mission is started, e.g. "05:00" for 5 am. If specified as a #number, it will be relative (in seconds) to the current mission time. Default is 5 seconds after mission was added.
 -- @param #string ClockStop Time the mission is stopped, e.g. "13:00" for 1 pm. If mission could not be started at that time, it will be removed from the queue. If specified as a #number it will be relative (in seconds) to the current mission time.
 -- @param #number Prio Priority of the mission, i.e. a number between 1 and 100. Default 50.
 -- @param #string Name Mission name. Default "Aerial Refueling #00X", where "#00X" is a running mission counter index starting at "#001".
--- @return #FLIGHTGROUP.Mission The mission table.
-function FLIGHTGROUP:AddMission(Mission, Zone, WaypointIndex, ClockStart, ClockStop, Prio, Name)
+-- @return #FLIGHTGROUP.Mission The mission table. This is a deep copy of the input mission with adjusted parameters for the mission type.
+function FLIGHTGROUP:AddMission(Mission, WaypointCoordinate, WaypointIndex, ClockStart, ClockStop, Prio, Name)
 
   -- Increase mission counter.
   self.missioncounter=self.missioncounter+1
   
   -- Create copy of Mission template.
-  local mission=UTILS.DeepCopy(Mission)
+  local mission=UTILS.DeepCopy(Mission)  --#FLIGHTGROUP.Mission
   
   -- Current mission time.
   local Tnow=timer.getAbsTime()
@@ -1245,122 +1273,20 @@ function FLIGHTGROUP:AddMission(Mission, Zone, WaypointIndex, ClockStart, ClockS
   end
 
   -- Make mission table.
-  mission.zone=Zone
   mission.mid=self.missioncounter
+  mission.waypointcoord=WaypointCoordinate
+  mission.waypointindex=WaypointIndex
+  mission.waypointtask=nil
   mission.Tstart=Tstart
   mission.Tstop=Tstop
   mission.status=FLIGHTGROUP.MissionStatus.SCHEDULED
   if Tstop then
     mission.duration=mission.Tstop-mission.Tstart
   end
-  mission.prio=Prio or 50
-  mission.task=nil
-  mission.waypoint=WaypointIndex
-  
-  if mission.type==FLIGHTGROUP.MissionType.ANTISHIP then
-  
-    ----------------------
-    -- ANTISHIP Mission --
-    ----------------------
+  mission.prio=Prio or 50  
+  mission.name=Name or string.format("%s mission ID%03d", mission.type, mission.mid)  
+  mission.DCStask=self:GetDCSMissionTask(mission)
 
-  mission.DCStask=CONTROLLABLE.TaskAttackUnit(self.group, AttackUnit, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType)
-  
-  elseif mission.type==FLIGHTGROUP.MissionType.AWACS then
-  
-    -------------------
-    -- AWACS Mission --
-    -------------------  
-    
-  elseif mission.type==FLIGHTGROUP.MissionType.BAI then
-  
-    -----------------
-    -- BAI Mission --
-    -----------------  
-
-    mission.DCStask=CONTROLLABLE.TaskAttackGroup(self.group, TargetGroup, ENUMS.WeaponFlag.Auto, WeaponExpend,AttackQty,Direction,Altitude,AttackQtyLimit)
-  
-  elseif mission.type==FLIGHTGROUP.MissionType.CAP then
-  
-    -----------------
-    -- CAP Mission --
-    -----------------  
-  
-    local Coord=mission.zone:GetRandomCoordinate()
-    
-    local CoordRaceTrack=Coord:Translate(mission.leg, mission.heading, true)
-  
-    mission.DCStask=CONTROLLABLE.TaskOrbit(self.group, Coord, mission.altitude, mission.speed, CoordRaceTrack)
-    
-    mission.name=Name or string.format("CAP mission ID%03d", mission.mid)  
-  
-  elseif mission.type==FLIGHTGROUP.MissionType.CAS then
-  
-    -----------------
-    -- CAS Mission --
-    -----------------
-  
-    local Coord=mission.zone:GetRandomCoordinate()
-    
-    local CoordRaceTrack=Coord:Translate(mission.leg, mission.heading, true)
-  
-    mission.DCStask=CONTROLLABLE.TaskOrbit(self.group, Coord, mission.altitude, mission.speed, CoordRaceTrack)
-    
-    self:AddTaskEnrouteEngageTargetsInZone(mission.zone, mission.targettypes, mission.prio)
-
-  elseif mission.type==FLIGHTGROUP.MissionType.ESCORT then
-  
-    --------------------
-    -- ESCORT Mission --
-    --------------------
-
-    mission.DCStask=CONTROLLABLE.TaskEscort(self.group, FollowControllable, Vec3, LastWaypointIndex, EngagementDistance, TargetTypes)
-
-  elseif mission.type==FLIGHTGROUP.MissionType.FACA then
-  
-    -----------------
-    -- FAC Mission --
-    -----------------  
-
-    mission.DCStask=CONTROLLABLE.TaskFAC_AttackGroup(self.group, AttackGroup, WeaponType, Designation, Datalink)
-  
-  elseif mission.type==FLIGHTGROUP.MissionType.FERRY then
-  
-    -------------------
-    -- FERRY Mission --
-    -------------------
-  
-  elseif mission.type==FLIGHTGROUP.MissionType.INTERCEPT then
-
-    -----------------------
-    -- INTERCEPT Mission --
-    -----------------------
-  
-    mission.DCStask=CONTROLLABLE.TaskAttackGroup(self.group, TargetGroup, ENUMS.WeaponFlag.Auto, WeaponExpend,AttackQty,Direction,Altitude,AttackQtyLimit)
-  
-  elseif mission.type==FLIGHTGROUP.MissionType.RECON then
-  
-    -------------------
-    -- RECON Mission --
-    -------------------  
-  
-  elseif mission.type==FLIGHTGROUP.MissionType.STRIKE then
-  
-    -------------------
-    -- STIKE Mission --
-    -------------------  
-  
-    mission.DCStask=CONTROLLABLE.TaskAttackMapObject(self.group, Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType)
-  
-  elseif mission.type==FLIGHTGROUP.MissionType.TANKER then
-  
-    --------------------
-    -- TANKER Mission --
-    -------------------- 
-  
-  elseif mission.type==FLIGHTGROUP.MissionType.TRANSPORT then
-    
-  end
-  
 
   -- Add mission to queue.
   table.insert(self.missionqueue, mission)
@@ -1371,6 +1297,151 @@ function FLIGHTGROUP:AddMission(Mission, Zone, WaypointIndex, ClockStart, ClockS
   self:I(text)
   
   return mission
+end
+
+--- Get DCS task table for the given mission.
+-- @param #FLIGHTGROUP self
+-- @param #FLIGHTGROUP.Mission Mission Mission for this group.
+-- @return DCS#Task The DCS task table. If multiple tasks are necessary, this is returned as a combo task.
+function FLIGHTGROUP:GetDCSMissionTask(Mission)
+
+  local DCStasks={}
+
+  -- Create DCS task based on current mission.
+  if Mission.type==FLIGHTGROUP.MissionType.ANTISHIP then
+  
+    ----------------------
+    -- ANTISHIP Mission --
+    ----------------------
+
+    local DCStask=CONTROLLABLE.TaskAttackUnit(self.group, AttackUnit, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType)
+  
+  elseif Mission.type==FLIGHTGROUP.MissionType.AWACS then
+  
+    -------------------
+    -- AWACS Mission --
+    -------------------  
+    
+  elseif Mission.type==FLIGHTGROUP.MissionType.BAI then
+  
+    -----------------
+    -- BAI Mission --
+    -----------------  
+
+    local DCStask=CONTROLLABLE.TaskAttackGroup(self.group, TargetGroup, ENUMS.WeaponFlag.Auto, WeaponExpend,AttackQty, Direction, Altitude, AttackQtyLimit)
+
+  elseif Mission.type==FLIGHTGROUP.MissionType.BOMBING then
+  
+    ---------------------
+    -- BOMBING Mission --
+    ---------------------
+  
+  elseif Mission.type==FLIGHTGROUP.MissionType.CAP then
+  
+    -----------------
+    -- CAP Mission --
+    -----------------  
+  
+    local mission=Mission --#FLIGHTGROUP.MissionCAP
+          
+    local CoordRaceTrack=mission.coordOrbit:Translate(mission.leg, mission.heading, true)
+  
+    local DCStask=CONTROLLABLE.TaskOrbit(self.group, mission.coordOrbit, mission.coordOrbit.y, mission.speedOrbit, CoordRaceTrack)
+    
+    self:AddTaskEnrouteEngageTargetsInZone(mission.zoneEngage, mission.typeTargets, mission.prio)
+    
+    table.insert(DCStasks, DCStask)
+  
+  elseif Mission.type==FLIGHTGROUP.MissionType.CAS then
+  
+    -----------------
+    -- CAS Mission --
+    -----------------
+  
+    local mission=Mission --#FLIGHTGROUP.MissionCAS
+          
+    local CoordRaceTrack=mission.coordOrbit:Translate(mission.leg, mission.heading, true)
+  
+    local DCStask=CONTROLLABLE.TaskOrbit(self.group, mission.coordOrbit, mission.coordOrbit.y, mission.speedOrbit, CoordRaceTrack)
+    
+    self:AddTaskEnrouteEngageTargetsInZone(mission.zoneEngage, mission.typeTargets, mission.prio)
+    
+    table.insert(DCStasks, DCStask)
+
+  elseif Mission.type==FLIGHTGROUP.MissionType.ESCORT then
+  
+    --------------------
+    -- ESCORT Mission --
+    --------------------
+
+    local DCStask=CONTROLLABLE.TaskEscort(self.group, FollowControllable, Vec3, LastWaypointIndex, EngagementDistance, TargetTypes)
+
+  elseif Mission.type==FLIGHTGROUP.MissionType.FACA then
+  
+    -----------------
+    -- FAC Mission --
+    -----------------  
+
+    local DCStask=CONTROLLABLE.TaskFAC_AttackGroup(self.group, AttackGroup, WeaponType, Designation, Datalink)
+  
+  elseif Mission.type==FLIGHTGROUP.MissionType.FERRY then
+  
+    -------------------
+    -- FERRY Mission --
+    -------------------
+  
+  elseif Mission.type==FLIGHTGROUP.MissionType.INTERCEPT then
+
+    -----------------------
+    -- INTERCEPT Mission --
+    -----------------------
+  
+    local mission=Mission --#FLIGHTGROUP.MissionINTERCEPT
+  
+    for _,_group in pairs(mission.groupsetTargets:GetSet()) do
+      local TargetGroup=_group
+  
+      local DCStask=CONTROLLABLE.TaskAttackGroup(self.group, TargetGroup, ENUMS.WeaponFlag.Auto, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit)
+      
+      table.insert(DCStasks, DCStask)
+    end
+  
+  elseif Mission.type==FLIGHTGROUP.MissionType.RECON then
+  
+    -------------------
+    -- RECON Mission --
+    -------------------  
+  
+  elseif Mission.type==FLIGHTGROUP.MissionType.STRIKE then
+  
+    -------------------
+    -- STIKE Mission --
+    -------------------  
+  
+    local mission=Mission --#FLIGHTGROUP.MissionSTRIKE
+    
+    local Vec2=mission.coordtarget:GetVec2()
+  
+    local DCStask=CONTROLLABLE.TaskAttackMapObject(self.group, Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, mission.altitude, WeaponType)
+    
+    table.insert(DCStasks, DCStask)
+  
+  elseif Mission.type==FLIGHTGROUP.MissionType.TANKER then
+  
+    --------------------
+    -- TANKER Mission --
+    -------------------- 
+  
+  elseif Mission.type==FLIGHTGROUP.MissionType.TRANSPORT then
+    
+  end
+
+  if #DCStasks==1 then
+    return DCStasks[1]
+  else
+    return self.group:TaskCombo(DCStasks)
+  end
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2157,6 +2228,8 @@ function FLIGHTGROUP:_InitGroup()
   
     --local nunits=self.group:GetUnits()
     
+    self.rangemax=unit:GetRange()
+    
     self.descriptors=unit:GetDesc()
     
     self.actype=unit:GetTypeName()
@@ -2186,7 +2259,7 @@ function FLIGHTGROUP:_InitGroup()
     text=text..string.format("Waypoints    = %d\n", #self.waypoints)
     text=text..string.format("FSM state    = %s\n", self:GetState())
     text=text..string.format("Is alive     = %s\n", tostring(self.group:IsAlive()))
-    text=text..string.format("Late activat = %s\n", tostring(self:IsLateActivated()))
+    text=text..string.format("LateActivate = %s\n", tostring(self:IsLateActivated()))
     text=text..string.format("Uncontrolled = %s\n", tostring(self:IsUncontrolled()))
     text=text..string.format("Start Air    = %s\n", tostring(self:IsTakeoffAir()))
     text=text..string.format("Start Cold   = %s\n", tostring(self:IsTakeoffCold()))
@@ -3062,8 +3135,9 @@ function FLIGHTGROUP:onafterTaskDone(From, Event, To, Task)
   -- Task status done.
   Task.status=FLIGHTGROUP.TaskStatus.ACCOMPLISHED
   
-  if self.currentmission and self.currentmission.task and self.currentmission.task then
-  
+  -- Check if this task was the task of the current mission ==> Mission Done!
+  if self.currentmission and self.currentmission.waypointtask and self.currentmission.waypointtask.id==Task.id then
+    self:MissionDone(self.currentmission)
   end
   
   -- Update route. This is necessary because of the route task being overwritten. But we want to fly to the remaining waypoints.
@@ -3322,7 +3396,16 @@ end
 -- @param #FLIGHTGROUP.Mission Mission
 function FLIGHTGROUP:onafterMissionDone(From, Event, To, Mission)
 
+  -- TODO: evaluate mission success or failure! complicated!
+  
   Mission.status=FLIGHTGROUP.MissionStatus.ACCOMPLISHED
+  
+  local airwing=self:GetAirWing()
+  if airwing then
+    airwing:MissionDone()
+  end
+  
+  -- Set current mission to nil.
   self.currentmission=nil
 
 end
@@ -3374,17 +3457,20 @@ function FLIGHTGROUP:RouteToMission(mission, delay)
     self:ScheduleOnce(delay, FLIGHTGROUP.RouteToMission, self, mission)
   else
 
-    -- Get random coordinate in mission zone.
-    local Coordinate=mission.zone:GetRandomCoordinate():SetAltitude(mission.altitude, true)
+    -- Waypoint coordinate where the mission will start.    
+    local Coordinate=mission.waypointcoord
     
     -- TODO: better marker text, mission.maker
-    mission.maker=Coordinate:MarkToCoalition(mission.name, self:GetCoalition(), true)
+    mission.marker=Coordinate:MarkToCoalition(mission.name, self:GetCoalition(), true)
+  
+    -- Set waypointindex after last waypoint if not specified.
+    mission.waypointindex=mission.waypointindex or #self.waypoints+1
   
     -- Add waypoint.
-    self:AddWaypointAir(Coordinate, mission.waypoint, self.speedmax*0.8, false)
+    self:AddWaypointAir(Coordinate, mission.waypointindex, self.speedmax*0.8, false)
     
     -- Add waypoint task.
-    mission.task=self:AddTaskWaypoint(mission.DCStask, mission.waypoint, mission.name, 10, mission.duration)
+    mission.waypointtask=self:AddTaskWaypoint(mission.DCStask, mission.waypointindex, mission.name, mission.prio, mission.duration)
   end
 end
 
@@ -4005,7 +4091,7 @@ function FLIGHTGROUP:AddWaypointAir(coordinate, wpnumber, speed, updateroute)
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --#FLIGHTGROUP.Mission
     if mission.status==FLIGHTGROUP.MissionStatus.SCHEDULED and mission.waypoint>=wpnumber then
-      mission.waypoint=mission.waypoint+1
+      mission.waypointindex=mission.waypointindex+1
     end
   end  
   

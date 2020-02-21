@@ -79,7 +79,7 @@ AIRWING = {
 
 --- AIRWING class version.
 -- @field #string version
-AIRWING.version="0.1.0"
+AIRWING.version="0.1.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -126,6 +126,7 @@ function AIRWING:New(warehousename, airwingname)
   --                 From State  -->   Event      -->     To State
   self:AddTransition("*",             "MissionNew",       "*")           -- Add a new mission.  
   self:AddTransition("*",             "MissionRequest",   "*")           -- Add a (mission) request to the warehouse.
+  self:AddTransition("*",             "MissionDone",      "*")           -- Mission is over.
 
   ------------------------
   --- Pseudo Functions ---
@@ -281,14 +282,16 @@ end
 
 --- Create a CAP mission.
 -- @param #AIRWING self
--- @param #number Altitude Orbit altitude in feet. Default 10000 ft.
--- @param #number SpeedOrbit Orbit speed in knots. Default 350 kts.
--- @param #number Heading Heading in degrees. Default 270° (East to West).
+-- @param Core.Point#COORDINATE OrbitCoordinate Where to orbit. Altitude is also taken from the coordinate. 
+-- @param #number OrbitSpeed Orbit speed in knots. Default 350 kts.
+-- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
 -- @param #number Leg Length of race-track in NM. Default 10 NM.
+-- @param Core.Zone#ZONE_RADIUS ZoneCAP Circular CAP zone. Detected targets in this zone will be engaged.
+-- @param #table TargetTypes Table of target types. Default {"Air"}.
 -- @return Ops.FlightGroup#FLIGHTGROUP.MissionCAP The CAP mission table.
-function AIRWING:CreateMissionCAP(Altitude, SpeedOrbit, Heading, Leg)
+function AIRWING:CreateMissionCAP(OrbitCoordinate, OrbitSpeed, Heading, Leg, ZoneCap, TargetTypes)
 
-  local mission=FLIGHTGROUP.CreateMissionCAP(self, Altitude, SpeedOrbit, Heading, Leg)
+  local mission=FLIGHTGROUP.CreateMissionCAP(self, OrbitCoordinate, OrbitSpeed, Heading, Leg, ZoneCap, TargetTypes)
 
   return mission
 end
@@ -296,17 +299,17 @@ end
 --- Add mission to queue.
 -- @param #AIRWING self
 -- @param #AIRWING.Missiondata Mission for this group.
--- @param Core.Zone#ZONE Zone The mission zone.
 -- @param #number Nassets Number of required assets for this mission. Default 1.
+-- @param Core.Point#COORDINATE WaypointCoordinate Coordinate of the mission waypoint.
 -- @param #string ClockStart Time the mission is started, e.g. "05:00" for 5 am. If specified as a #number, it will be relative (in seconds) to the current mission time. Default is 5 seconds after mission was added.
 -- @param #string ClockStop Time the mission is stopped, e.g. "13:00" for 1 pm. If mission could not be started at that time, it will be removed from the queue. If specified as a #number it will be relative (in seconds) to the current mission time.
 -- @param #number Prio Priority of the mission, i.e. a number between 1 and 100. Default 50.
 -- @param #string Name Mission name. Default "Aerial Refueling #00X", where "#00X" is a running mission counter index starting at "#001".
 -- @return #AIRWING.Missiondata The mission table.
-function AIRWING:AddMission(Mission, Zone, Nassets, ClockStart, ClockStop, Prio, Name)
+function AIRWING:AddMission(Mission, Nassets, WaypointCoordinate, ClockStart, ClockStop, Prio, Name)
 
   -- TODO: need to check that this call increases the correct mission counter and adds it to the mission queue.
-  local mission=FLIGHTGROUP.AddMission(self, Mission, Zone, nil, ClockStart, ClockStop, Prio, Name)
+  local mission=FLIGHTGROUP.AddMission(self, Mission, WaypointCoordinate, nil, ClockStart, ClockStop, Prio, Name)
   
   mission.nassets=Nassets or 1
 
@@ -352,10 +355,19 @@ function AIRWING:onafterStatus(From, Event, To)
 
   local fsmstate=self:GetState()
   
-    -- Info text.
-  local text=string.format("FSM State %s: Missons=%d", fsmstate, #self.missionqueue)
+  ------------------
+  -- Mission Info --
+  ------------------
+  local text=string.format("Missions Total=%d:", #self.missionqueue)
+  for i,_mission in pairs(self.missionqueue) do
+    local mission=_mission --#AIRWING.Missiondata
+    text=text..string.format("\n[%d] %s: Status=%s, Nassets=%d, Prio=%d, ID=%d (%s)", i, mission.type, mission.status, mission.nassets, mission.prio, mission.MID, mission.name)
+  end
   self:I(self.lid..text)
-  
+
+  -------------------
+  -- Squadron Info --
+  -------------------
   local text="Squadrons:"
   for i,_squadron in pairs(self.squadrons) do
     local squadron=_squadron --#AIRWING.Squadron
@@ -565,8 +577,6 @@ function AIRWING:onafterAssetSpawned(From, Event, To, group, asset, request)
   -- Set mission.
   asset.mission=self:GetMissionByID(mid)
   
-
- 
 end
 
 --- On after "SelfRequest" event.
@@ -618,21 +628,20 @@ function AIRWING:_CreateFlightGroup(group, asset)
   
   --- Check if out of missiles. For A2A missions ==> RTB.
   function flightgroup:OnAfterOutOfMissiles()  
-    local airwing=self:GetAirWing()
+    local airwing=flightgroup:GetAirWing()
     
   end
   
   --- Check if out of missiles. For A2G missions ==> RTB. But need to check A2G missiles, rockets as well.
   function flightgroup:OnAfterOutOfBombs()  
-    local airwing=self:GetAirWing()
+    local airwing=flightgroup:GetAirWing()
   
   end
 
 
   --- Mission started.
   function flightgroup:OnAfterMissionStart(From, Event, To, Mission)
-  
-    local airwing=self:GetAirWing()
+    local airwing=flightgroup:GetAirWing()
 
     -- TODO: Add event? Set mission status!
     --airwing:MissionStart(Mission)
@@ -641,7 +650,7 @@ function AIRWING:_CreateFlightGroup(group, asset)
   
   --- Flight is DEAD.
   function flightgroup:OnAfterFlightDead(From, Event, To)  
-    local airwing=self:GetAirWing()
+    local airwing=flightgroup:GetAirWing()
     
     -- TODO
     -- Mission failed ==> launch new mission?
@@ -652,7 +661,7 @@ function AIRWING:_CreateFlightGroup(group, asset)
   if asset.mission then
     local Cstart=UTILS.SecondsToClock(asset.mission.Tstart)
     local Cstop=asset.mission.Tstop and UTILS.SecondsToClock(asset.mission.Tstop) or nil
-    asset.flightgroup:AddMission(asset.mission, asset.mission.zone, asset.mission.waypoint, Cstart, Cstop, asset.mission.name)
+    asset.flightgroup:AddMission(asset.mission, asset.mission.waypointcoord, asset.mission.waypointindex, Cstart, Cstop, asset.mission.name)
   end
 
 end

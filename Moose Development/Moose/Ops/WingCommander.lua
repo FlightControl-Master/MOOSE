@@ -277,7 +277,7 @@ end
 
 --- Check all airwings if they are able to do a specific mission type at a certain location with a given number of assets.
 -- @param #WINGCOMMANDER self
--- @return #table 
+-- @return Ops.AirWing#AIRWING The airwing object best for this mission.
 function WINGCOMMANDER:GetAirwingForMission(MissionType, Coordinate, Nassets)
 
   --TODO: run over all airwings. sort by distance and available assets.
