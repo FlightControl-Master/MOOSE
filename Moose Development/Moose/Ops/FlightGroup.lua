@@ -322,6 +322,7 @@ FLIGHTGROUP.TaskType={
 -- @param #string FACA Forward AirController airborne mission.
 -- @param #string FERRY Ferry flight mission.
 -- @param #string INTERCEPT Intercept mission.
+-- @param #string ORBIT Orbit mission.
 -- @param #string RECON Recon mission.
 -- @param #string SEAD Suppression/destruction of enemy air defences.
 -- @param #string STRIKE Strike mission.
@@ -337,7 +338,8 @@ FLIGHTGROUP.MissionType={
   ESCORT="Escort",
   FACA="FAC-A",
   FERRY="Ferry Flight",
-  INTERCEPT="Intercept",  
+  INTERCEPT="Intercept",
+  ORBIT="Orbit",
   RECON="Recon",
   SEAD="SEAD",
   STRIKE="Strike",
@@ -408,7 +410,7 @@ FLIGHTGROUP.MissionStatus={
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.3.1"
+FLIGHTGROUP.version="0.3.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1046,11 +1048,14 @@ function FLIGHTGROUP:Activate(delay)
 
   if self:IsAlive()==false then
     if delay then
+      self:I(self.lid..string.format("Activating late activated group in %d seconds", delay))
       self:ScheduleOnce(delay, FLIGHTGROUP.Activate, self)
     else
       self:I(self.lid.."Activating late activated group")
       self.group:Activate()
     end
+  else
+    self:E(self.lid..string.format("ERROR: Cannot activate group as IsAlive()==%s", tostring(self:IsAlive())))
   end
 
   return self
@@ -1194,7 +1199,7 @@ end
 -- @param Core.Zone#ZONE_RADIUS ZoneCAP Circular CAP zone. Detected targets in this zone will be engaged.
 -- @param #table TargetTypes Table of target types. Default {"Air"}.
 -- @return #FLIGHTGROUP.MissionCAP The CAP mission table.
-function FLIGHTGROUP:CreateMissionCAP(OrbitCoordinate, OrbitSpeed, Heading, Leg, ZoneCap, TargetTypes)
+function FLIGHTGROUP:CreateMissionCAP(OrbitCoordinate, OrbitSpeed, Heading, Leg, ZoneCAP, TargetTypes)
 
   local mission=self:CreateMissionORBIT(OrbitCoordinate, OrbitSpeed, Heading, Leg) --#FLIGHTGROUP.MissionCAP
   
@@ -1204,6 +1209,27 @@ function FLIGHTGROUP:CreateMissionCAP(OrbitCoordinate, OrbitSpeed, Heading, Leg,
   
   return mission
 end
+
+--- Create a CAS mission.
+-- @param #FLIGHTGROUP self
+-- @param Core.Point#COORDINATE OrbitCoordinate Where to orbit. Altitude is also taken from the coordinate. 
+-- @param #number OrbitSpeed Orbit speed in knots. Default 350 kts.
+-- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
+-- @param #number Leg Length of race-track in NM. Default 10 NM.
+-- @param Core.Zone#ZONE_RADIUS ZoneCAS Circular CAS zone. Detected targets in this zone will be engaged.
+-- @param #table TargetTypes Table of target types. Default {"LightArmoredUnits"}.
+-- @return #FLIGHTGROUP.MissionCAP The CAP mission table.
+function FLIGHTGROUP:CreateMissionCAS(OrbitCoordinate, OrbitSpeed, Heading, Leg, ZoneCAS, TargetTypes)
+
+  TargetTypes=TargetTypes or "LightArmoredUnits"
+  ZoneCAS=ZoneCAS or ZONE_RADIUS:New("CAS Zone", OrbitCoordinate:GetVec2(), Leg)
+
+  local mission=self:CreateMissionCAP(OrbitCoordinate, OrbitSpeed, Heading, Leg, ZoneCAS, TargetTypes) --#FLIGHTGROUP.MissionCAP
+  
+  return mission
+end
+
+
 
 --- Create a STRIKE mission. Flight will attack a specified coordinate.
 -- @param #FLIGHTGROUP self
@@ -1291,10 +1317,11 @@ function FLIGHTGROUP:AddMission(Mission, WaypointCoordinate, WaypointIndex, Cloc
   -- Add mission to queue.
   table.insert(self.missionqueue, mission)
   
-  local text=string.format("Added %s mission %s at zone %s. Starting at %s. Stopping at %s", 
-  mission.type, mission.name, mission.zone:GetName(), UTILS.SecondsToClock(mission.Tstart, true), mission.Tstop and UTILS.SecondsToClock(mission.Tstop, true) or "never")
-  --self:I(self.lid..text)
-  self:I(text)
+  -- Info text.
+  local text=string.format("Added %s mission %s at waypoint %s. Starting at %s. Stopping at %s", 
+  tostring(mission.type), tostring(mission.name), tostring(mission.waypointindex), UTILS.SecondsToClock(mission.Tstart, true), mission.Tstop and UTILS.SecondsToClock(mission.Tstop, true) or "never")
+  self:I(self.lid..text)
+  --self:I(text)
   
   return mission
 end
@@ -1405,6 +1432,20 @@ function FLIGHTGROUP:GetDCSMissionTask(Mission)
       
       table.insert(DCStasks, DCStask)
     end
+    
+  elseif Mission.type==FLIGHTGROUP.MissionType.ORBIT then
+  
+    -------------------
+    -- ORBIT Mission --
+    -------------------
+  
+    local mission=Mission --#FLIGHTGROUP.MissionORBIT
+          
+    local CoordRaceTrack=mission.coordOrbit:Translate(mission.leg, mission.heading, true)
+  
+    local DCStask=CONTROLLABLE.TaskOrbit(self.group, mission.coordOrbit, mission.coordOrbit.y, mission.speedOrbit, CoordRaceTrack)
+    
+    table.insert(DCStasks, DCStask)
   
   elseif Mission.type==FLIGHTGROUP.MissionType.RECON then
   
@@ -1433,13 +1474,16 @@ function FLIGHTGROUP:GetDCSMissionTask(Mission)
     -------------------- 
   
   elseif Mission.type==FLIGHTGROUP.MissionType.TRANSPORT then
-    
+  
+  else
+    self:E(self.lid..string.format("ERROR: Unknown mission task!"))
+    return nil
   end
 
   if #DCStasks==1 then
     return DCStasks[1]
   else
-    return self.group:TaskCombo(DCStasks)
+    return CONTROLLABLE.TaskCombo(self.group, DCStasks)
   end
 
 end
@@ -2668,14 +2712,8 @@ function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
 
   -- Tasks at this waypoints.
   local taskswp={}
-
-  -- Enroute tasks
-  if self.taskenroute and false then
-    for _,taskE in pairs(self.taskenroute) do
-      --self:I(self.lid..string.format("Adding enroute task %s", tostring(taskE.id)))
-      --table.insert(taskswp, taskE)
-    end
-  end
+  
+  -- TODO: maybe set waypoint enroute tasks?
     
   for _,task in pairs(tasks) do
     local Task=task --#FLIGHTGROUP.Task          
@@ -2698,10 +2736,16 @@ function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
     
   
   -- At the final AIR waypoint, we set the flight to hold.
-  if self.destbase and n>1 and n==N-1 then
-    self:__Hold(-1, self.destbase)
+  if n==N then
+    if self.destbase then
+      self:__RTB(-1, self.destbase)
+    elseif self.destzone then
+      self:__RTZ(-1, self.destzone)
+    else
+      self:E(self.lid.."ERROR: Reached final waypoint but no destination set! Don't know what to do?!")
+    end
   else
-    -- Waypoint task combo.
+    -- Execute waypoint tasks.
     if #taskswp>0 then
       self:SetTask(self.group:TaskCombo(taskswp))
     end    

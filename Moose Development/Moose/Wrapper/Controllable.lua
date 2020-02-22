@@ -450,7 +450,6 @@ end
 -- @param #number lastWayPoint Last waypoint.
 -- return DCS#Task
 function CONTROLLABLE:TaskCondition( time, userFlag, userFlagValue, condition, duration, lastWayPoint )
-  self:F2( { time, userFlag, userFlagValue, condition, duration, lastWayPoint } )
 
 --[[
  StopCondition = {
@@ -471,7 +470,6 @@ function CONTROLLABLE:TaskCondition( time, userFlag, userFlagValue, condition, d
   DCSStopCondition.duration = duration
   DCSStopCondition.lastWayPoint = lastWayPoint
 
-  self:T3( { DCSStopCondition } )
   return DCSStopCondition
 end
 
@@ -481,11 +479,8 @@ end
 -- @param DCS#DCSStopCondition DCSStopCondition
 -- @return DCS#Task
 function CONTROLLABLE:TaskControlled( DCSTask, DCSStopCondition )
-  self:F2( { DCSTask, DCSStopCondition } )
 
-  local DCSTaskControlled
-
-  DCSTaskControlled = {
+  local DCSTaskControlled = {
     id = 'ControlledTask',
     params = {
       task = DCSTask,
@@ -493,7 +488,6 @@ function CONTROLLABLE:TaskControlled( DCSTask, DCSStopCondition )
     }
   }
 
-  self:T3( { DCSTaskControlled } )
   return DCSTaskControlled
 end
 
@@ -502,22 +496,14 @@ end
 -- @param DCS#TaskArray DCSTasks Array of @{DCSTasking.Task#Task}
 -- @return DCS#Task
 function CONTROLLABLE:TaskCombo( DCSTasks )
-  self:F2( { DCSTasks } )
 
-  local DCSTaskCombo
-
-  DCSTaskCombo = {
+  local DCSTaskCombo = {
     id = 'ComboTask',
     params = {
       tasks = DCSTasks
     }
   }
-
-  for TaskID, Task in ipairs( DCSTasks ) do
-    self:T( Task )
-  end
-
-  self:T3( { DCSTaskCombo } )
+  
   return DCSTaskCombo
 end
 
@@ -526,11 +512,8 @@ end
 -- @param DCS#Command DCSCommand
 -- @return DCS#Task
 function CONTROLLABLE:TaskWrappedAction( DCSCommand, Index )
-  self:F2( { DCSCommand } )
 
-  local DCSTaskWrappedAction
-
-  DCSTaskWrappedAction = {
+  local DCSTaskWrappedAction = {
     id = "WrappedAction",
     enabled = true,
     number = Index or 1,
@@ -540,7 +523,6 @@ function CONTROLLABLE:TaskWrappedAction( DCSCommand, Index )
     },
   }
 
-  self:T3( { DCSTaskWrappedAction } )
   return DCSTaskWrappedAction
 end
 
@@ -704,7 +686,6 @@ end
 -- @param #number Delay (Optional) Delay in seconds before the ICLS is deactivated.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:CommandActivateICLS(Channel, UnitID, Callsign, Delay)
-  self:F()
 
   -- Command to activate ICLS system.
   local CommandActivateICLS= {
@@ -732,7 +713,6 @@ end
 -- @param #number Delay (Optional) Delay in seconds before the beacon is deactivated.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:CommandDeactivateBeacon(Delay)
-  self:F()
 
   -- Command to deactivate
   local CommandDeactivateBeacon={id='DeactivateBeacon', params={}}
@@ -751,7 +731,6 @@ end
 -- @param #number Delay (Optional) Delay in seconds before the ICLS is deactivated.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:CommandDeactivateICLS(Delay)
-  self:F()
 
   -- Command to deactivate
   local CommandDeactivateICLS={id='DeactivateICLS', params={}}
@@ -772,7 +751,6 @@ end
 -- @param #number Delay (Optional) Delay in seconds before the callsign is set. Default is immediately.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:CommandSetCallsign(CallName, CallNumber, Delay)
-  self:F()
 
   -- Command to set the callsign.
   local CommandSetCallsign={id='SetCallsign', params={callname=CallName, callnumber=CallNumber or 1}}
@@ -792,17 +770,19 @@ end
 -- @param #number Delay (Optional) Delay in seconds before the callsign is set. Default is immediately.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:CommandEPLRS(SwitchOnOff, Delay)
-  self:F()
 
   if SwitchOnOff==nil then
     SwitchOnOff=true
   end
 
-  -- ID
-  local _id=self:GetID()
-
   -- Command to set the callsign.
-  local CommandEPLRS={id='EPLRS', params={value=SwitchOnOff, groupId=_id}}
+  local CommandEPLRS={
+    id='EPLRS',
+    params={
+      value=SwitchOnOff,
+      groupId=self:GetID()
+    }
+  }
 
   if Delay and Delay>0 then
     SCHEDULER:New(nil, self.CommandEPLRS, {self, SwitchOnOff}, Delay)
@@ -821,14 +801,20 @@ end
 -- @return #table Task wrapped action.
 function CONTROLLABLE:TaskEPLRS(SwitchOnOff, idx)
 
-  -- ID
-  local _id=self:GetID()
+  if SwitchOnOff==nil then
+    SwitchOnOff=true
+  end
 
   -- Command to set the callsign.
-  local CommandEPLRS={id='EPLRS', params={value=SwitchOnOff, groupId=_id}}
+  local CommandEPLRS={
+    id='EPLRS',
+    params={
+      value=SwitchOnOff,
+      groupId=self:GetID()
+    }
+  }
 
   return self:TaskWrappedAction(CommandEPLRS, idx or 1)
-
 end
 
 
@@ -875,9 +861,8 @@ function CONTROLLABLE:TaskAttackGroup( AttackGroup, WeaponType, WeaponExpend, At
       altitudeEnabled  = Altitude and true or false,
       altitude         = Altitude,
     },
-  },
+  }
 
-  self:T3( { DCSTask } )
   return DCSTask
 end
 
@@ -892,10 +877,8 @@ end
 -- @param #number WeaponType (optional) The WeaponType. See [DCS Enumerator Weapon Type](https://wiki.hoggitworld.com/view/DCS_enum_weapon_flag) on Hoggit.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskAttackUnit(AttackUnit, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType)
-  self:F2({self.ControllableName, AttackUnit, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType})
 
-  local DCSTask
-  DCSTask = {
+  local DCSTask = {
     id = 'AttackUnit',
     params = {
       unitId           = AttackUnit:GetID(),
@@ -910,9 +893,7 @@ function CONTROLLABLE:TaskAttackUnit(AttackUnit, GroupAttack, WeaponExpend, Atta
       weaponType       = WeaponType or 1073741822,
     }
   }
-
-  self:T3( DCSTask )
-
+  
   return DCSTask
 end
 
@@ -929,16 +910,8 @@ end
 -- @param #boolean Divebomb (optional) Perform dive bombing. Default false.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskBombing( Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType, Divebomb )
-  self:F( { self.ControllableName, Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType, Divebomb } )
 
-  local _attacktype=nil
-  if Divebomb then
-    _attacktype="Dive"
-  end
-
-
-  local DCSTask
-  DCSTask = {
+  local DCSTask = {
     id = 'Bombing',
     params = {
       point            = Vec2,
@@ -953,11 +926,10 @@ function CONTROLLABLE:TaskBombing( Vec2, GroupAttack, WeaponExpend, AttackQty, D
       altitudeEnabled  = Altitude and true or false,
       altitude         = Altitude,
       weaponType       = WeaponType or 1073741822,
-      attackType       = _attacktype,
+      attackType       = Divebomb and "Dive" or nil,
       },
   }
 
-  self:F( { TaskBombing=DCSTask } )
   return DCSTask
 end
 
@@ -972,10 +944,8 @@ end
 -- @param #number WeaponType (Optional) The WeaponType. Default Auto=1073741822.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskAttackMapObject( Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType )
-  self:F2( { self.ControllableName, Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType } )
 
-  local DCSTask
-  DCSTask = {
+  local DCSTask = {
     id = 'AttackMapObject',
     params = {
       point            = Vec2,
@@ -991,9 +961,8 @@ function CONTROLLABLE:TaskAttackMapObject( Vec2, GroupAttack, WeaponExpend, Atta
       altitude         = Altitude,
       weaponType       = WeaponType or 1073741822,
     },
-  },
+  }
 
-  self:T3( { DCSTask } )
   return DCSTask
 end
 
@@ -1108,7 +1077,6 @@ function CONTROLLABLE:TaskEmbarking(Vec2, GroupSetForEmbarking, Duration, Distri
     }
   }
 
-  self:T3( { DCSTask } )
   return DCSTask
 end
 
@@ -1219,7 +1187,6 @@ end
 -- @param #boolean GroupAttack (optional) Flag indicates that the target must be engaged by all aircrafts of the controllable. Has effect only if the task is assigned to a group and not to a single aircraft.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskBombingRunway(Airbase, WeaponType, WeaponExpend, AttackQty, Direction, GroupAttack)
-  self:F2( { self.ControllableName, Airbase, WeaponType, WeaponExpend, AttackQty, Direction, GroupAttack } )
 
   local DCSTask = {
     id = 'BombingRunway',
@@ -1242,7 +1209,10 @@ end
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskRefueling()
 
-  local DCSTask={id='Refueling', params={}}
+  local DCSTask={
+    id='Refueling',
+    params={}
+  }
 
   return DCSTask
 end
@@ -1263,6 +1233,7 @@ function CONTROLLABLE:TaskLandAtVec2(Vec2, Duration)
       duration     = Duration,
     },
   }
+  
   return DCSTask
 end
 
@@ -1272,18 +1243,12 @@ end
 -- @param #number Duration The duration in seconds to stay on the ground.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:TaskLandAtZone( Zone, Duration, RandomPoint )
-  self:F2( { self.ControllableName, Zone, Duration, RandomPoint } )
 
-  local Point
-  if RandomPoint then
-    Point = Zone:GetRandomVec2()
-  else
-    Point = Zone:GetVec2()
-  end
+  -- Get landing point
+  local Point=RandomPoint and Zone:GetRandomVec2() or Zone:GetVec2()
 
-  local DCSTask = self:TaskLandAtVec2( Point, Duration )
+  local DCSTask = CONTROLLABLE.TaskLandAtVec2( self, Point, Duration )
 
-  self:T3( DCSTask )
   return DCSTask
 end
 
@@ -1344,7 +1309,6 @@ end
 -- @param DCS#AttributeNameArray TargetTypes Array of AttributeName that is contains threat categories allowed to engage. Default {"Air"}.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskEscort( FollowControllable, Vec3, LastWaypointIndex, EngagementDistance, TargetTypes )
-  self:F2( { self.ControllableName, FollowControllable, Vec3, LastWaypointIndex, EngagementDistance, TargetTypes } )
 
 --  Escort = {
 --    id = 'Escort',
@@ -1369,9 +1333,8 @@ function CONTROLLABLE:TaskEscort( FollowControllable, Vec3, LastWaypointIndex, E
       engagementDistMax = EngagementDistance,
       targetTypes       = TargetTypes or {"Air"},
     },
-  },
+  }
 
-  self:T3( { DCSTask } )
   return DCSTask
 end
 
@@ -1386,7 +1349,6 @@ end
 -- @param #number WeaponType (optional) Enum for weapon type ID. This value is only required if you want the group firing to use a specific weapon, for instance using the task on a ship to force it to fire guided missiles at targets within cannon range. See http://wiki.hoggit.us/view/DCS_enum_weapon_flag
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount, WeaponType )
-  self:F2( { self.ControllableName, Vec2, Radius, AmmoCount, WeaponType } )
 
   -- FireAtPoint = {
   --   id = 'FireAtPoint',
@@ -1398,13 +1360,12 @@ function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount, WeaponType )
   --   }
   -- }
 
-  local DCSTask
-  DCSTask = {
+  local DCSTask = {
     id = 'FireAtPoint',
     params = {
-      point = Vec2,
-      zoneRadius = Radius,
-      expendQty = 100, -- dummy value
+      point            = Vec2,
+      zoneRadius       = Radius,
+      expendQty        = 100, -- dummy value
       expendQtyEnabled = false,
     }
   }
@@ -1443,7 +1404,6 @@ end
 -- @param #boolean Datalink (optional) Allows to use datalink to send the target information to attack aircraft. Enabled by default.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskFAC_AttackGroup( AttackGroup, WeaponType, Designation, Datalink )
-  self:F2( { self.ControllableName, AttackGroup, WeaponType, Designation, Datalink } )
 
   local DCSTask = {
     id = 'FAC_AttackGroup',
@@ -1455,7 +1415,6 @@ function CONTROLLABLE:TaskFAC_AttackGroup( AttackGroup, WeaponType, Designation,
     }
   }
 
-  self:T3( { DCSTask } )
   return DCSTask
 end
 
@@ -1468,7 +1427,6 @@ end
 -- @param #number Priority All enroute tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. Default 0.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:EnRouteTaskEngageTargets( Distance, TargetTypes, Priority )
-  self:F2( { self.ControllableName, Distance, TargetTypes, Priority } )
 
   local DCSTask = {
     id = 'EngageTargets',
@@ -1480,7 +1438,6 @@ function CONTROLLABLE:EnRouteTaskEngageTargets( Distance, TargetTypes, Priority 
     }
   }
 
-  self:T3( { DCSTask } )
   return DCSTask
 end
 
@@ -1494,7 +1451,6 @@ end
 -- @param #number Priority (Optional) All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. Default 0.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:EnRouteTaskEngageTargetsInZone( Vec2, Radius, TargetTypes, Priority )
-  self:F2( { self.ControllableName, Vec2, Radius, TargetTypes, Priority } )
 
   local DCSTask = {
     id = 'EngageTargetsInZone',
@@ -1506,7 +1462,6 @@ function CONTROLLABLE:EnRouteTaskEngageTargetsInZone( Vec2, Radius, TargetTypes,
     }
   }
 
-  self:T3( { DCSTask } )
   return DCSTask
 end
 
@@ -1523,7 +1478,6 @@ end
 -- @param #boolean AttackQtyLimit (optional) The flag determines how to interpret attackQty parameter. If the flag is true then attackQty is a limit on maximal attack quantity for "AttackGroup" and "AttackUnit" tasks. If the flag is false then attackQty is a desired attack quantity for "Bombing" and "BombingRunway" tasks.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:EnRouteTaskEngageGroup( AttackGroup, Priority, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit )
-  self:F2( { self.ControllableName, AttackGroup, Priority, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit } )
 
   --  EngageControllable  = {
   --   id = 'EngageControllable ',
@@ -1555,9 +1509,8 @@ function CONTROLLABLE:EnRouteTaskEngageGroup( AttackGroup, Priority, WeaponType,
       attackQty        = AttackQty,
       priority         = Priority or 1,
     },
-  },
+  }
 
-  self:T3( { DCSTask } )
   return DCSTask
 end
 
@@ -1575,7 +1528,6 @@ end
 -- @param #boolean ControllableAttack (optional) Flag indicates that the target must be engaged by all aircrafts of the controllable. Has effect only if the task is assigned to a controllable, not to a single aircraft.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:EnRouteTaskEngageUnit( EngageUnit, Priority, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, Visible, ControllableAttack )
-  self:F2( { self.ControllableName, EngageUnit, Priority, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, Visible, ControllableAttack } )
 
   local DCSTask = {
     id = 'EngageUnit',
@@ -1593,9 +1545,8 @@ function CONTROLLABLE:EnRouteTaskEngageUnit( EngageUnit, Priority, GroupAttack, 
       attackQty          = AttackQty,
       controllableAttack = ControllableAttack,
     },
-  },
+  }
 
-  self:T3( { DCSTask } )
   return DCSTask
 end
 
@@ -1605,11 +1556,12 @@ end
 -- @param #CONTROLLABLE self
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:EnRouteTaskAWACS( )
-  self:F2( { self.ControllableName } )
 
-  local DCSTask = {id = 'AWACS', params = {}}
+  local DCSTask = {
+    id = 'AWACS',
+    params = {}
+  }
 
-  self:T3( { DCSTask } )
   return DCSTask
 end
 
@@ -1618,11 +1570,12 @@ end
 -- @param #CONTROLLABLE self
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:EnRouteTaskTanker( )
-  self:F2( { self.ControllableName } )
 
-  local DCSTask = {id = 'Tanker', params = {}}
+  local DCSTask = {
+    id = 'Tanker',
+    params = {}
+  }
 
-  self:T3( { DCSTask } )
   return DCSTask
 end
 
@@ -1633,11 +1586,12 @@ end
 -- @param #CONTROLLABLE self
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:EnRouteTaskEWR( )
-  self:F2( { self.ControllableName } )
 
-  local DCSTask = {id = 'EWR', params = {}}
+  local DCSTask = {
+    id = 'EWR',
+    params = {}
+  }
 
-  self:T3( { DCSTask } )
   return DCSTask
 end
 
@@ -1655,7 +1609,6 @@ end
 -- @param #boolean Datalink (optional) Allows to use datalink to send the target information to attack aircraft. Enabled by default.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:EnRouteTaskFAC_EngageGroup( AttackGroup, Priority, WeaponType, Designation, Datalink )
-  self:F2( { self.ControllableName, AttackGroup, WeaponType, Priority, Designation, Datalink } )
 
   local DCSTask = {
     id = 'FAC_EngageControllable',
@@ -1668,7 +1621,6 @@ function CONTROLLABLE:EnRouteTaskFAC_EngageGroup( AttackGroup, Priority, WeaponT
     }
   }
 
-  self:T3( { DCSTask } )
   return DCSTask
 end
 
@@ -1681,7 +1633,6 @@ end
 -- @param #number Priority All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:EnRouteTaskFAC( Radius, Priority )
-  self:F2( { self.ControllableName, Radius, Priority } )
 
 --  FAC = {
 --    id = 'FAC',
@@ -1691,15 +1642,14 @@ function CONTROLLABLE:EnRouteTaskFAC( Radius, Priority )
 --    }
 --  }
 
-  local DCSTask
-  DCSTask = { id = 'FAC',
+  local DCSTask = {
+    id = 'FAC',
     params = {
       radius = Radius,
       priority = Priority
     }
   }
 
-  self:T3( { DCSTask } )
   return DCSTask
 end
 
@@ -1807,21 +1757,20 @@ end
 -- @param #CONTROLLABLE EmbarkingControllable The controllable to be embarked.
 -- @return DCS#Task The DCS task structure
 function CONTROLLABLE:TaskEmbarking( Point, Duration, EmbarkingControllable )
-  self:F2( { self.ControllableName, Point, Duration, EmbarkingControllable.DCSControllable } )
 
-  local DCSTask
-  DCSTask =  { id = 'Embarking',
-    params = { x = Point.x,
-      y = Point.y,
-      duration = Duration,
+  local DCSTask =  {
+    id = 'Embarking',
+    params = {
+      x                         = Point.x,
+      y                         = Point.y,
+      duration                  = Duration,
       controllablesForEmbarking = { EmbarkingControllable.ControllableID },
-      durationFlag = true,
-      distributionFlag = false,
-      distribution = {},
+      durationFlag              = true,
+      distributionFlag          = false,
+      distribution              = {},
     }
   }
 
-  self:T3( { DCSTask } )
   return DCSTask
 end
 
@@ -1832,10 +1781,8 @@ end
 -- @param #number Radius The radius of the embarking zone around the Point.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskEmbarkToTransport( Point, Radius )
-  self:F2( { self.ControllableName, Point, Radius } )
 
-  local DCSTask --DCS#Task
-  DCSTask = {
+  local DCSTask = {
     id = 'EmbarkToTransport',
     params = {
       point      = Point,
@@ -1845,7 +1792,6 @@ function CONTROLLABLE:TaskEmbarkToTransport( Point, Radius )
     }
   }
 
-  self:T3( { DCSTask } )
   return DCSTask
 end
 
@@ -1900,12 +1846,9 @@ end
 --
 function CONTROLLABLE:TaskFunction( FunctionString, ... )
 
-  local DCSTask
-
+  -- Script
   local DCSScript = {}
   DCSScript[#DCSScript+1] = "local MissionControllable = GROUP:Find( ... ) "
-  --DCSScript[#DCSScript+1] = "env.info( 'TaskFunction: ' .. ( MissionControllable and MissionControllable:GetName() ) or 'No Group' )"
-
   if arg and arg.n > 0 then
     local ArgumentKey = '_' .. tostring( arg ):match("table: (.*)")
     self:SetState( self, ArgumentKey, arg )
@@ -1915,12 +1858,10 @@ function CONTROLLABLE:TaskFunction( FunctionString, ... )
     DCSScript[#DCSScript+1] = FunctionString .. "( MissionControllable )"
   end
 
-  DCSTask = self:TaskWrappedAction(self:CommandDoScript(table.concat( DCSScript )))
-
-  self:T( DCSTask )
-
+  -- DCS task.
+  local DCSTask = self:TaskWrappedAction(self:CommandDoScript(table.concat( DCSScript )))
+  
   return DCSTask
-
 end
 
 
@@ -1930,12 +1871,12 @@ end
 -- @param #table TaskMission A table containing the mission task.
 -- @return DCS#Task
 function CONTROLLABLE:TaskMission( TaskMission )
-  self:F2( Points )
 
-  local DCSTask
-  DCSTask = { id = 'Mission', params = { TaskMission, }, }
+  local DCSTask = {
+    id = 'Mission',
+    params = { TaskMission, },
+  }
 
-  self:T3( { DCSTask } )
   return DCSTask
 end
 
