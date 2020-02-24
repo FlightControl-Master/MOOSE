@@ -655,6 +655,28 @@ do -- COORDINATE
     return Angle
   end
 
+  --- Return an intermediate COORDINATE between this an another coordinate.
+  -- @param #COORDINATE self
+  -- @param #COORDINATE ToCoordinate The other coordinate.
+  -- @param #number Fraction The fraction (0,1) where the new coordinate is created. Default 0.5, i.e. in the middle.
+  -- @return #COORDINATE Coordinate between this and the other coordinate.
+  function COORDINATE:GetIntermediateCoordinate( ToCoordinate, Fraction )
+    
+    local f=Fraction or 0.5
+
+    -- Get the vector from A to B    
+    local vec=UTILS.VecSubstract(ToCoordinate, self)
+    
+    -- Scale the vector.
+    vec.x=f*vec.x
+    vec.y=f*vec.y
+    vec.z=f*vec.z
+    
+    -- Move the vector to start at the end of A.
+    vec=UTILS.VecAdd(self, vec)
+    
+    return self:New(vec.x,vec.y,vec.z)
+  end
 
   --- Return the 2D distance in meters between the target COORDINATE and the COORDINATE.
   -- @param #COORDINATE self

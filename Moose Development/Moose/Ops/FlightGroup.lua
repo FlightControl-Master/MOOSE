@@ -310,6 +310,12 @@ FLIGHTGROUP.TaskType={
 -- @field #number waypoint Waypoint index if task is a waypoint task.
 -- @field Core.UserFlag#USERFLAG stopflag If flag is set to 1 (=true), the task is stopped.
 
+--- Enroute task.
+-- @type FLIGHTGROUP.EnrouteTask
+-- @field DCS#Task DCStask DCS task structure table.
+-- @field #number WaypointIndex Waypoint number at which the enroute task is added.
+
+
 --- Mission types.
 -- @type FLIGHTGROUP.MissionType
 -- @param #string ANTISHIP Anti-ship mission.
@@ -401,6 +407,11 @@ FLIGHTGROUP.MissionStatus={
 -- @type FLIGHTGROUP.MissionSTRIKE
 -- @field Core.Point#COORDINATE coordTarget Coordinate of target location.
 -- @field #number altitude Attack altitude in meters.
+-- @extends #FLIGHTGROUP.Mission
+
+--- BAI mission.
+-- @type FLIGHTGROUP.MissionBAI
+-- @field Core.Set#SET_GROUP groupsetTargets Set of target groups to attack.
 -- @extends #FLIGHTGROUP.Mission
 
 --- INTERCEPT mission.
@@ -517,10 +528,10 @@ function FLIGHTGROUP:New(groupname, autostart)
   self:AddTransition("*",             "TaskCancel",       "*")           -- Cancel current task.
   self:AddTransition("*",             "TaskPause",        "*")           -- Pause current task.
   
-  self:AddTransition("*",             "MissionStart",     "OnMission")   -- Mission has started.
-  self:AddTransition("OnMission",     "MissionUpdate",    "OnMission")   -- Mission is updated with latest data.
-  self:AddTransition("OnMission",     "MissionDone",      "Airborne")    -- Mission is over.
-  self:AddTransition("OnMission",     "MissionAbort",     "Airborne")    -- Mission is aborted.
+  self:AddTransition("*",             "MissionStart",     "*")   -- Mission has started.
+  self:AddTransition("*",             "MissionUpdate",    "*")   -- Mission is updated with latest data.
+  self:AddTransition("*",             "MissionDone",      "*")    -- Mission is over.
+  self:AddTransition("*",             "MissionAbort",     "*")    -- Mission is aborted.
   
     
   self:AddTransition("*",             "ElementSpawned",   "*")           -- An element was spawned.
@@ -1142,14 +1153,14 @@ function FLIGHTGROUP:Route(waypoints)
     if self.taskenroute then
       for _,TaskEnroute in pairs(self.taskenroute) do
         --TODO: maybe add option to enable enroute tasks after a specific waypoint?
+        env.info(string.format("FF enroute task %s", tostring(TaskEnroute.id)))
+        self:I({pararms=TaskEnroute.parms})
         table.insert(Tasks, TaskEnroute)
       end
     end
 
     -- Route (Mission) task.
     local TaskRoute=self.group:TaskRoute(waypoints)
-    env.info("FF waypoints in route:")
-    self:I({waypoints=waypoints})
     table.insert(Tasks, TaskRoute)
     
     -- TaskCombo of enroute and mission tasks.
@@ -1163,7 +1174,7 @@ function FLIGHTGROUP:Route(waypoints)
     end
     
   else
-    self:I(self.lid.."FF ERROR!")
+    self:I(self.lid.."ERROR: Group is not alive!")
   end
   
   return self
@@ -1217,11 +1228,18 @@ end
 -- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
 -- @param #number Leg Length of race-track in NM. Default 10 NM.
 -- @param Core.Zone#ZONE_RADIUS ZoneCAS Circular CAS zone. Detected targets in this zone will be engaged.
--- @param #table TargetTypes Table of target types. Default {"LightArmoredUnits"}.
+-- @param #table TargetTypes Table of target types. Default {"Helicopters", "Ground Units", "Light armed ships"}.
 -- @return #FLIGHTGROUP.MissionCAP The CAP mission table.
 function FLIGHTGROUP:CreateMissionCAS(OrbitCoordinate, OrbitSpeed, Heading, Leg, ZoneCAS, TargetTypes)
 
-  TargetTypes=TargetTypes or "LightArmoredUnits"
+  -- Ensure given TargetTypes parameter is a table.
+  if TargetTypes then
+    if type(TargetTypes)~="table" then
+      TargetTypes={TargetTypes}
+    end
+  end
+
+  TargetTypes=TargetTypes or {"Helicopters", "Ground Units", "Light armed ships"}
   ZoneCAS=ZoneCAS or ZONE_RADIUS:New("CAS Zone", OrbitCoordinate:GetVec2(), Leg)
 
   local mission=self:CreateMissionCAP(OrbitCoordinate, OrbitSpeed, Heading, Leg, ZoneCAS, TargetTypes) --#FLIGHTGROUP.MissionCAP
@@ -1253,13 +1271,59 @@ end
 function FLIGHTGROUP:CreateMissionINTERCEPT(TargetGroupSet)
 
   local mission={} --#FLIGHTGROUP.MissionINTERCEPT
+
+  if TargetGroupSet:IsInstanceOf("GROUP") then
+    env.info("Converting group to set!")
+    TargetGroupSet=SET_GROUP:New():AddGroup(TargetGroupSet)
+  end
   
   mission.type=FLIGHTGROUP.MissionType.INTERCEPT
   mission.groupsetTargets=TargetGroupSet
   
+  mission.groupsetTargets:FilterDeads():FilterCrashes()
+  
   return mission
 end
 
+--- Create a BAI mission.
+-- @param #FLIGHTGROUP self
+-- @param Core.Set#SET_GROUP TargetGroupSet The set of target groups to attack. Instead of a SET an ordinary GROUP object can also be given if only a single group needs to be attacked.
+function FLIGHTGROUP:CreateMissionBAI(TargetGroupSet)
+
+  local mission={} --#FLIGHTGROUP.MissionBAI
+  
+  if TargetGroupSet:IsInstanceOf("GROUP") then
+    env.info("Converting group to set!")
+    TargetGroupSet=SET_GROUP:New():AddGroup(TargetGroupSet)
+  end
+
+  mission.type=FLIGHTGROUP.MissionType.BAI
+  mission.groupsetTargets=TargetGroupSet
+  
+  mission.groupsetTargets:FilterDeads():FilterCrashes()
+  
+  return mission
+end
+
+--- Create a BAI mission.
+-- @param #FLIGHTGROUP self
+-- @param #FLIGHTGROUP.Mission mission The mission.
+-- @param #number Number of alive targets.
+function FLIGHTGROUP:CountMissionTargets(mission)
+  
+  local N=0
+  if mission.groupsetTargets then
+    local n=mission.groupsetTargets:CountAlive()
+    N=N+n
+  end
+
+  if mission.unitsetTargets then
+    local n=mission.unitsetTargets:CountAlive()
+    N=N+n
+  end
+  
+  return N
+end
 
 --- Add mission to queue.
 -- @param #FLIGHTGROUP self
@@ -1318,10 +1382,9 @@ function FLIGHTGROUP:AddMission(Mission, WaypointCoordinate, WaypointIndex, Cloc
   table.insert(self.missionqueue, mission)
   
   -- Info text.
-  local text=string.format("Added %s mission %s at waypoint %s. Starting at %s. Stopping at %s", 
+  local text=string.format("Added %s mission %s at waypoint #%s. Starting at %s. Stopping at %s", 
   tostring(mission.type), tostring(mission.name), tostring(mission.waypointindex), UTILS.SecondsToClock(mission.Tstart, true), mission.Tstop and UTILS.SecondsToClock(mission.Tstop, true) or "never")
   self:I(self.lid..text)
-  --self:I(text)
   
   return mission
 end
@@ -1355,7 +1418,15 @@ function FLIGHTGROUP:GetDCSMissionTask(Mission)
     -- BAI Mission --
     -----------------  
 
-    local DCStask=CONTROLLABLE.TaskAttackGroup(self.group, TargetGroup, ENUMS.WeaponFlag.Auto, WeaponExpend,AttackQty, Direction, Altitude, AttackQtyLimit)
+    local mission=Mission --#FLIGHTGROUP.MissionBAI
+
+    for _,_group in pairs(mission.groupsetTargets:GetSet()) do
+      local TargetGroup=_group
+  
+      local DCStask=CONTROLLABLE.TaskAttackGroup(self.group, TargetGroup, ENUMS.WeaponFlag.Auto, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit)
+      
+      table.insert(DCStasks, DCStask)
+    end
 
   elseif Mission.type==FLIGHTGROUP.MissionType.BOMBING then
   
@@ -1735,7 +1806,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   local text=string.format("Missions=%d Current: %s", #self.missionqueue, mymission)
   for i,_mission in pairs(self.missionqueue) do
     local mission=_mission --#FLIGHTGROUP.Mission
-    text=text..string.format("\n[%d] %s status=%s", i, tostring(mission.name), tostring(mission.status))
+    text=text..string.format("\n[%d] %s %s status=%s, targets=%d", i, tostring(mission.name), mission.type, tostring(mission.status), self:CountMissionTargets(mission))
   end
   self:I(self.lid..text)
 
@@ -2327,7 +2398,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function FLIGHTGROUP:onafterFlightSpawned(From, Event, To)
-  self:I(string.format("FF Flight group %s spawned!", tostring(self.groupname)))
+  self:I(self.lid..string.format("FF Flight group %s spawned!", tostring(self.groupname)))
 
   -- F10 menu.
   if not self.ai then
@@ -3418,6 +3489,9 @@ end
 -- @param #FLIGHTGROUP.Mission Mission The mission table.
 function FLIGHTGROUP:onafterMissionStart(From, Event, To, Mission)
 
+  local text=string.format("Starting Mission %s", tostring(Mission.name))
+  MESSAGE:New(text, 120, "DEBUG"):ToAllIf(true)
+
   -- Set current mission.
   self.currentmission=Mission
   
@@ -3446,11 +3520,25 @@ function FLIGHTGROUP:onafterMissionDone(From, Event, To, Mission)
   
   local airwing=self:GetAirWing()
   if airwing then
-    airwing:MissionDone()
+    airwing:MissionDone(Mission)
   end
   
   -- Set current mission to nil.
   self.currentmission=nil
+
+end
+
+--- On after "MissionUpdate" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #FLIGHTGROUP.Mission Mission
+function FLIGHTGROUP:onafterMissionUpdate(From, Event, To, Mission)
+
+  if Mission.groupsetTarget then
+  
+  end
 
 end
 
@@ -4376,10 +4464,11 @@ function FLIGHTGROUP:_UpdateStatus(element, newstatus, airbase)
   -- Update status of element.
   element.status=newstatus
   
-  env.info(string.format("FF UpdateStatus element=%s: %s --> %s", element.name, oldstatus, newstatus))
+  -- Debug
+  self:T3(self.lid..string.format("UpdateStatus element=%s: %s --> %s", element.name, oldstatus, newstatus))  
   for _,_element in pairs(self.elements) do
     local Element=_element -- #FLIGHTGROUP.Element
-    env.info(string.format("Element %s: %s", Element.name, Element.status))
+    self:T3(self.lid..string.format("Element %s: %s", Element.name, Element.status))
   end
 
   if newstatus==FLIGHTGROUP.ElementStatus.SPAWNED then
