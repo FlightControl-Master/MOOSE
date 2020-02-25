@@ -351,13 +351,21 @@ function RADIOQUEUE:Broadcast(transmission)
       self.senderinit=true
     end
     
+    -- Set subtitle only if duration>0 sec.
+    local subtitle=nil
+    local duration=nil
+    if transmission.subtitle and transmission.subduration and transmission.subduration>0 then
+      subtitle=transmission.subtitle
+      duration=transmission.subduration
+    end
+    
     -- Command to tranmit the call.
     local commandTransmit={
       id = "TransmitMessage",
       params = {
         file=filename,
-        duration=transmission.subduration,
-        subtitle=transmission.subtitle or "",
+        duration=duration,
+        subtitle=subtitle,
         loop=false,
       }}    
     

@@ -474,8 +474,11 @@ UTILS.tostringMGRS = function(MGRS, acc) --R2.1
   if acc == 0 then
     return MGRS.UTMZone .. ' ' .. MGRS.MGRSDigraph
   else
-    return MGRS.UTMZone .. ' ' .. MGRS.MGRSDigraph .. ' ' .. string.format('%0' .. acc .. 'd', UTILS.Round(MGRS.Easting/(10^(5-acc)), 0))
-           .. ' ' .. string.format('%0' .. acc .. 'd', UTILS.Round(MGRS.Northing/(10^(5-acc)), 0))
+    --return MGRS.UTMZone .. ' ' .. MGRS.MGRSDigraph .. ' ' .. string.format('%0' .. acc .. 'd', UTILS.Round(MGRS.Easting/(10^(5-acc)), 0))
+    --       .. ' ' .. string.format('%0' .. acc .. 'd', UTILS.Round(MGRS.Northing/(10^(5-acc)), 0))
+    
+    -- Truncate rather than round MGRS grid!        
+    return string.format("%s %s %s %s", MGRS.UTMZone, MGRS.MGRSDigraph, string.sub(tostring(MGRS.Easting), 1, acc), string.sub(tostring(MGRS.Northing), 1, acc))
   end
 end
 

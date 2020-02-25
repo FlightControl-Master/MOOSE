@@ -130,6 +130,7 @@
 -- **Note** that you should use a different relay unit for each ATIS!
 --
 -- By default, subtitles are displayed for 10 seconds. This can be changed using @{#ATIS.SetSubtitleDuration}(*duration*) with *duration* being the duration in seconds.
+-- Setting a *duration* of 0 will completely disable all subtitles.
 --
 -- ## Active Runway
 --
@@ -243,9 +244,9 @@
 -- ![Banner Image](..\Presentations\ATIS\ATIS_SoundFolder.png)
 --
 -- **Note** that the default folder name is *ATIS Soundfiles/*. If you want to change it, you can use the @{#ATIS.SetSoundfilesPath}(*path*), where *path* is the path of the directory. This must end with a slash "/"!
--- 
+--
 -- # Marks on the F10 Map
--- 
+--
 -- You can place marks on the F10 map via the @{#ATIS.SetMapMarks}() function. These will contain info about the ATIS frequency, the currently active runway and some basic info about the weather (wind, pressure and temperature).
 --
 -- # Examples
@@ -354,10 +355,10 @@ ATIS.Alphabet = {
 
 --- Runway correction for converting true to magnetic heading.
 -- @type ATIS.RunwayM2T
--- @field #number Caucasus 0� (East).
--- @field #number Nevada +12� (East).
--- @field #number Normandy -10� (West).
--- @field #number PersianGulf +2� (East).
+-- @field #number Caucasus 0° (East).
+-- @field #number Nevada +12° (East).
+-- @field #number Normandy -10° (West).
+-- @field #number PersianGulf +2° (East).
 ATIS.RunwayM2T={
   Caucasus=0,
   Nevada=12,
@@ -523,7 +524,7 @@ _ATIS={}
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version="0.6.3"
+ATIS.version="0.6.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -567,7 +568,7 @@ function ATIS:New(airbasename, frequency, modulation)
 
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("ATIS %s | ", self.airbasename)
-  
+
   -- This is just to hinder the garbage collector deallocating the ATIS object.
   _ATIS[#_ATIS+1]=self
 
@@ -709,9 +710,9 @@ function ATIS:SetMapMarks(switch)
   return self
 end
 
---- Set magnetic runway headings as depicted on the runway, *e.g.* "13" for 130� or "25L" for the left runway with magnetic heading 250�.
+--- Set magnetic runway headings as depicted on the runway, *e.g.* "13" for 130° or "25L" for the left runway with magnetic heading 250°.
 -- @param #ATIS self
--- @param #table headings Magnetic headings. Inverse (-180�) headings are added automatically. You only need to specify one heading per runway direction. "L"eft and "R" right can also be appended.
+-- @param #table headings Magnetic headings. Inverse (-180°) headings are added automatically. You only need to specify one heading per runway direction. "L"eft and "R" right can also be appended.
 -- @return #ATIS self
 function ATIS:SetRunwayHeadingsMagnetic(headings)
 
@@ -723,25 +724,25 @@ function ATIS:SetRunwayHeadingsMagnetic(headings)
   end
 
   for _,heading in pairs(headings) do
-    
+
     if type(heading)=="number" then
       heading=string.format("%02d", heading)
     end
-    
+
     -- Add runway heading to table.
     self:I(self.lid..string.format("Adding user specified magnetic runway heading %s", heading))
     table.insert(self.runwaymag, heading)
 
     local h=self:GetRunwayWithoutLR(heading)
-        
-    local head2=tonumber(h)-18    
+
+    local head2=tonumber(h)-18
     if head2<0 then
       head2=head2+36
     end
-    
+
     -- Convert to string.
     head2=string.format("%02d", head2)
-    
+
     -- Append "L" or "R" if necessary.
     local left=self:GetRunwayLR(heading)
     if left==true then
@@ -805,13 +806,13 @@ end
 -- @param #boolean switch If true or nil, report altimeter QHN. If false, report QFF.
 -- @return #ATIS self
 function ATIS:SetAltimeterQNH(switch)
-  
+
   if switch==true or switch==nil then
     self.altimeterQNH=true
   else
     self.altimeterQNH=false
   end
-  
+
   return self
 end
 
@@ -826,12 +827,12 @@ end
 --
 -- To get *true* from *magnetic* heading one has to add easterly or substract westerly variation, e.g
 --
--- A magnetic heading of 180� corresponds to a true heading of
+-- A magnetic heading of 180° corresponds to a true heading of
 --
---   * 186� on the Caucaus map
---   * 192� on the Nevada map
---   * 170� on the Normany map
---   * 182� on the Persian Gulf map
+--   * 186° on the Caucaus map
+--   * 192° on the Nevada map
+--   * 170° on the Normany map
+--   * 182° on the Persian Gulf map
 --
 -- Likewise, to convert *magnetic* into *true* heading, one has to substract easterly and add westerly variation.
 --
@@ -994,7 +995,7 @@ function ATIS:onafterStart(From, Event, To)
 
   -- Set relay unit if we have one.
   self.radioqueue:SetSenderUnitName(self.relayunitname)
-  
+
   -- Set radio power.
   self.radioqueue:SetRadioPower(self.power)
 
@@ -1024,7 +1025,7 @@ function ATIS:onafterStatus(From, Event, To)
 
   -- Get FSM state.
   local fsmstate=self:GetState()
-  
+
   local relayunitstatus="N/A"
   if self.relayunitname then
     local ru=UNIT:FindByName(self.relayunitname)
@@ -1076,32 +1077,32 @@ function ATIS:onafterBroadcast(From, Event, To)
   -- Pressure in hPa.
   local qfe=coord:GetPressure(height)
   local qnh=coord:GetPressure(0)
-  
+
   if self.altimeterQNH then
-  
+
     -- Some constants.
     local L=-0.0065    --[K/m]
     local R= 8.31446   --[J/mol/K]
     local g= 9.80665   --[m/s^2]
     local M= 0.0289644 --[kg/mol]
     local T0=coord:GetTemperature(0)+273.15 --[K] Temp at sea level.
-    local TS=288.15   -- Standard Temperature assumed by Altimeter is 15�C 
+    local TS=288.15   -- Standard Temperature assumed by Altimeter is 15°C
     local q=qnh*100
-    
+
     -- Calculate Pressure.
     local P=q*(1+L*height/T0)^(-g*M/(R*L))    -- Pressure at sea level
     local Q=P/(1+L*height/TS)^(-g*M/(R*L))    -- Altimeter QNH
     local A=(T0/L)*((P/q)^(((-R*L)/(g*M)))-1) -- Altitude check
-     
-    
+
+
     -- Debug aoutput
     self:T2(self.lid..string.format("height=%.1f, A=%.1f, T0=%.1f, QFE=%.1f, QNH=%.1f, P=%.1f, Q=%.1f hPa = %.2f", height, A, T0-273.15, qfe, qnh, P/100, Q/100, UTILS.hPa2inHg(Q/100)))
-    
+
     -- Set QNH value in hPa.
     qnh=Q/100
-    
+
   end
-  
+
 
   -- Convert to inHg.
   if self.PmmHg then
@@ -1142,7 +1143,7 @@ function ATIS:onafterBroadcast(From, Event, To)
 
   local WINDFROM=string.format("%03d", windFrom-magvar)
   local WINDSPEED=string.format("%d", UTILS.MpsToKnots(windSpeed))
-  
+
   if WINDFROM=="000" then
     WINDFROM="360"
   end
@@ -1197,10 +1198,10 @@ function ATIS:onafterBroadcast(From, Event, To)
   --- Temperature ---
   -------------------
 
-  -- Temperature in �C (or �F).
+  -- Temperature in °C (or °F).
   local temperature=coord:GetTemperature(height+5)
 
-  -- Convert to �F.
+  -- Convert to °F.
   if self.TDegF then
     temperature=UTILS.CelciusToFarenheit(temperature)
   end
@@ -1537,6 +1538,7 @@ function ATIS:onafterBroadcast(From, Event, To)
   -- Runway length.
   if self.rwylength then
 
+    local runact=self.airbase:GetActiveRunway(self.runwaym2t)
     local length=runact.length
     if not self.metric then
       length=UTILS.MetersToFeet(length)
@@ -1570,7 +1572,7 @@ function ATIS:onafterBroadcast(From, Event, To)
     end
 
   end
-  
+
   -- Airfield elevation
   if self.elevation then
 
@@ -1712,12 +1714,12 @@ function ATIS:onafterBroadcast(From, Event, To)
     self:Transmission(ATIS.Sound.PRMGChannel, 1.0, subtitle)
     self.radioqueue:Number2Transmission(tostring(ndb.frequency), nil, 0.5)
   end
-  
+
   -- End of Information Alpha, Bravo, ...
   subtitle=string.format("End of information %s", NATO)
   self:Transmission(ATIS.Sound.EndOfInformation, 0.5, subtitle)
   self.radioqueue:NewTransmission(string.format("NATO Alphabet/%s.ogg", NATO), 0.75, self.soundpath)
-  
+
   -- Update F10 marker.
   if self.usemarker then
     self:UpdateMarker(_INFORMATION, _RUNACT, _WIND, _ALTIMETER, _TEMPERATURE)
@@ -1738,17 +1740,17 @@ function ATIS:UpdateMarker(information, runact, wind, altimeter, temperature)
   if self.markerid then
     self.airbase:GetCoordinate():RemoveMark(self.markerid)
   end
-  
+
   local text=string.format("ATIS on %.3f %s, %s:\n", self.frequency, UTILS.GetModulationName(self.modulation), tostring(information))
   text=text..string.format("%s\n", tostring(runact))
   text=text..string.format("%s\n", tostring(wind))
   text=text..string.format("%s\n", tostring(altimeter))
   text=text..string.format("%s",   tostring(temperature))
-  -- More info is not displayed on the marker!    
-  
+  -- More info is not displayed on the marker!
+
   -- Place new mark
   self.markerid=self.airbase:GetCoordinate():MarkToAll(text, true)
-    
+
   return self.markerid
 end
 
@@ -1779,30 +1781,30 @@ function ATIS:GetActiveRunway()
 
   -- Check if user explicitly specified a runway.
   if self.activerunway then
-  
+
     -- Get explicit runway heading if specified.
     local runwayno=self:GetRunwayWithoutLR(self.activerunway)
     if runwayno~="" then
       runway=runwayno
     end
-    
+
     -- Was "L"eft or "R"ight given?
     rwyLeft=self:GetRunwayLR(self.activerunway)
   end
-  
+
   return runway, rwyLeft
 end
 
 --- Get runway from user supplied magnetic heading.
 -- @param #ATIS self
 -- @param #number windfrom Wind direction (from) in degrees.
--- @return #string Runway magnetic heading divided by ten (and rounded). Eg, "13" for 130�.
+-- @return #string Runway magnetic heading divided by ten (and rounded). Eg, "13" for 130°.
 function ATIS:GetMagneticRunway(windfrom)
 
   local diffmin=nil
   local runway=nil
   for _,heading in pairs(self.runwaymag) do
-  
+
     local hdg=self:GetRunwayWithoutLR(heading)
 
     local diff=UTILS.HdgDiff(windfrom, tonumber(hdg)*10)
@@ -1827,26 +1829,26 @@ function ATIS:GetNavPoint(navpoints, runway, left)
   -- Loop over all defined nav aids.
   for _,_nav in pairs(navpoints or {}) do
     local nav=_nav --#ATIS.NavPoint
-    
+
     if nav.runway==nil then
       -- No explicit runway data specified ==> data is valid for all runways.
       return nav
     else
-    
+
       local navy=tonumber(self:GetRunwayWithoutLR(nav.runway))*10
       local rwyy=tonumber(self:GetRunwayWithoutLR(runway))*10
-      
+
       local navL=self:GetRunwayLR(nav.runway)
       local hdgD=UTILS.HdgDiff(navy,rwyy)
-      
-      if hdgD<=15 then --We allow an error of +-15� here.
+
+      if hdgD<=15 then --We allow an error of +-15° here.
         if navL==nil or (navL==true and left==true) or (navL==false and left==false) then
           return nav
         end
       end
     end
   end
-  
+
   return nil
 end
 
@@ -1869,7 +1871,7 @@ function ATIS:GetRunwayLR(runway)
   -- Get left/right if specified.
   local rwyL=runway:lower():find("l")
   local rwyR=runway:lower():find("r")
-  
+
   if rwyL then
     return true
   elseif rwyR then
@@ -1877,7 +1879,7 @@ function ATIS:GetRunwayLR(runway)
   else
     return nil
   end
-  
+
 end
 
 --- Transmission via RADIOQUEUE.
