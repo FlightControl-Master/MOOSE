@@ -282,6 +282,13 @@
 --
 -- Assets of the warehouse can be requested by other MOOSE warehouses. A request will first be scrutinized to check if can be fulfilled at all. If the request is valid, it is
 -- put into the warehouse queue and processed as soon as possible.
+
+-- Requested assets spawn in various "Rule of Engagement Rules" (ROE) and Alerts modes. If your assets will cross into dangerous areas, be sure to change these states. You can do this in @{#WAREHOUSE:OnAfterAssetSpawned}(*From, *Event, *To, *group, *asset, *request)) function.
+--
+-- Initial Spawn states is as follows:
+--    GROUND: ROE, "Return Fire" Alarm, "Green"
+--    AIR: 	ROE, "Return Fire" Reaction to Threat, "Passive Defense"
+--    NAVAL	ROE, "Return Fire" Alarm,"N/A"
 --
 -- A request can be added by the @{#WAREHOUSE.AddRequest}(*warehouse*, *AssetDescriptor*, *AssetDescriptorValue*, *nAsset*, *TransportType*, *nTransport*, *Prio*, *Assignment*) function.
 -- The parameters are
