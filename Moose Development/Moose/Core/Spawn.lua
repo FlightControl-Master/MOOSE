@@ -1545,7 +1545,7 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
 
       -- Get airbase ID and category.
       local AirbaseID = SpawnAirbase:GetID()
-      local AirbaseCategory = SpawnAirbase:GetDesc().category
+      local AirbaseCategory = SpawnAirbase:GetAirbaseCategory()
       self:F( { AirbaseCategory = AirbaseCategory } )
       
       -- Set airdromeId.

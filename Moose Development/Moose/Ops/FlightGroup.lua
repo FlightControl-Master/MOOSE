@@ -667,7 +667,7 @@ end
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:AddMission(Mission, WaypointCoordinate, WaypointIndex)
 
-  Mission.waypointcoordinate=WaypointCoordinate
+  Mission.waypointcoord=WaypointCoordinate
   Mission.waypointindex=WaypointIndex
 
   -- Add mission to queue.
@@ -1348,8 +1348,8 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   -- Current status.
   local text=string.format("Missions=%d Current: %s", #self.missionqueue, mymission)
   for i,_mission in pairs(self.missionqueue) do
-    local mission=_mission --#FLIGHTGROUP.Mission
-    text=text..string.format("\n[%d] %s %s status=%s, targets=%d", i, tostring(mission.name), mission.type, tostring(mission.status), self:CountMissionTargets(mission))
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+    text=text..string.format("\n[%d] %s %s status=%s, targets=%d", i, tostring(mission.name), mission.type, tostring(mission.status), mission:CountMissionTargets())
   end
   self:I(self.lid..text)
 
@@ -3029,7 +3029,7 @@ function FLIGHTGROUP:onafterMissionStart(From, Event, To, Mission)
   self.currentmission.Tstarted=timer.getAbsTime()
   
   -- Set mission status.
-  self.currentmission.status=FLIGHTGROUP.MissionStatus.EXECUTING
+  self.currentmission.status=AUFTRAG.Status.EXECUTING
 
   -- Route flight to mission zone.
   self:RouteToMission(Mission, 5)
@@ -3046,7 +3046,7 @@ function FLIGHTGROUP:onafterMissionDone(From, Event, To, Mission)
 
   -- TODO: evaluate mission success or failure! complicated!
   
-  Mission.status=FLIGHTGROUP.MissionStatus.ACCOMPLISHED
+  Mission.status=AUFTRAG.Status.ACCOMPLISHED
   
   local airwing=self:GetAirWing()
   if airwing then
@@ -3063,7 +3063,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #FLIGHTGROUP.Mission Mission
+-- @param Ops.Auftrag#AUFTRAG Mission
 function FLIGHTGROUP:onafterMissionUpdate(From, Event, To, Mission)
 
   if Mission.groupsetTarget then
@@ -3075,7 +3075,7 @@ end
 
 --- Get next mission.
 -- @param #FLIGHTGROUP self
--- @return #FLIGHTGROUP.Mission Next mission or *nil*.
+-- @return Ops.Auftrag#AUFTRAG Next mission or *nil*.
 function FLIGHTGROUP:_GetNextMission()
 
   -- Number of missions.
@@ -3088,8 +3088,8 @@ function FLIGHTGROUP:_GetNextMission()
 
   -- Sort results table wrt times they have already been engaged.
   local function _sort(a, b)
-    local taskA=a --#FLIGHTGROUP.Mission
-    local taskB=b --#FLIGHTGROUP.Mission
+    local taskA=a --Ops.Auftrag#AUFTRAG
+    local taskB=b --Ops.Auftrag#AUFTRAG
     return (taskA.Tstart<taskB.Tstart) or (taskA.Tstart==taskB.Tstart and taskA.prio<taskB.prio)
   end
   table.sort(self.missionqueue, _sort)
@@ -3099,8 +3099,8 @@ function FLIGHTGROUP:_GetNextMission()
 
   -- Look for first task that is not accomplished.
   for _,_mission in pairs(self.missionqueue) do
-    local mission=_mission --#FLIGHTGROUP.Mission
-    if mission.status==FLIGHTGROUP.MissionStatus.SCHEDULED and time>=mission.Tstart then
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+    if mission.status==AUFTRAG.Status.SCHEDULED and time>=mission.Tstart then
       return mission
     end
   end
@@ -3110,7 +3110,7 @@ end
 
 --- Route group to mission.
 -- @param #FLIGHTGROUP self
--- @param #FLIGHTGROUP.Mission mission The mission table.
+-- @param Ops.Auftrag#AUFTRAG mission The mission table.
 -- @param #number delay Delay in seconds.
 function FLIGHTGROUP:RouteToMission(mission, delay)
 
@@ -3752,7 +3752,7 @@ function FLIGHTGROUP:AddWaypointAir(coordinate, wpnumber, speed, updateroute)
   -- Shift all mission waypoints after the inserted waypoint.
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --#FLIGHTGROUP.Mission
-    if mission.status==FLIGHTGROUP.MissionStatus.SCHEDULED and mission.waypoint>=wpnumber then
+    if mission.status==AUFTRAG.Status.SCHEDULED and mission.waypoint>=wpnumber then
       mission.waypointindex=mission.waypointindex+1
     end
   end  

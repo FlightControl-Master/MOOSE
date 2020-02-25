@@ -27,9 +27,9 @@
 -- @field #number Tstop Mission stop time in seconds.
 -- @field #number duration Mission duration in seconds.
 -- @field #table DCStask DCS task structure.
--- @field Core.Point#COORDINATE waypointcoord Coordinate of the waypoint task. 
+-- @field Core.Point#COORDINATE waypointcoord Coordinate of the waypoint task.
+-- @field #number waypointindex Waypoint number at which the task is executed. 
 -- @field Ops.FlightGroup#AUFTRAG.Task waypointtask Waypoint task.
--- @field #number waypointindex Waypoint number at which the task is executed.
 -- @field #number marker F10 map marker ID.
 -- @field Core.Point#COORDINATE coordOrbit Coordinate where to orbit.
 -- @field #number speedOrbit Orbit speed in m/s.
@@ -158,6 +158,10 @@ function AUFTRAG:New(Type)
   
   self.type=Type
   self.auftragsnummer=_AUFTRAGSNR
+  self.status=AUFTRAG.Status.SCHEDULED
+  self.name=string.format("Auftrag #%d", self.auftragsnummer)
+  
+  self.lid=string.format("Auftrag #%d %s | ", self.auftragsnummer, self.type)
   
   self:AddTransition("*",             "Start",     "*")   -- Mission has started.
   self:AddTransition("*",             "Update",    "*")   -- Mission is updated with latest data.
@@ -183,7 +187,7 @@ function AUFTRAG:NewORBIT(OrbitCoordinate, OrbitSpeed, Heading, Leg)
   auftrag.heading=Heading or 270
   auftrag.leg=UTILS.NMToMeters(Leg or 10)
 
-  mission.DCStask=self:GetDCSMissionTask()
+  auftrag.DCStask=auftrag:GetDCSMissionTask()
 
   return auftrag
 end
@@ -214,7 +218,7 @@ function AUFTRAG:NewCAP(OrbitCoordinate, OrbitSpeed, Heading, Leg, ZoneCAP, Targ
   mission.zoneEngage=ZoneCAP or ZONE_RADIUS:New("CAP Zone", OrbitCoordinate:GetVec2(), mission.leg)
   mission.typeTargets=TargetTypes or {"Air"}
   
-  mission.DCStask=self:GetDCSMissionTask()
+  mission.DCStask=mission:GetDCSMissionTask()
   
   return mission
 end
@@ -245,7 +249,7 @@ function AUFTRAG:NewCAS(OrbitCoordinate, OrbitSpeed, Heading, Leg, ZoneCAS, Targ
   mission.zoneEngage=ZoneCAS or ZONE_RADIUS:New("CAS Zone", OrbitCoordinate:GetVec2(), Leg)
   mission.typeTargets=TargetTypes or {"Helicopters", "Ground Units", "Light armed ships"}
   
-  mission.DCStask=self:GetDCSMissionTask()
+  mission.DCStask=mission:GetDCSMissionTask()
   
   return mission
 end
@@ -264,7 +268,7 @@ function AUFTRAG:NewSTRIKE(TargetCoordinate, Altitude)
   mission.coordTarget=TargetCoordinate
   mission.altitude=UTILS.FeetToMeters(Altitude or 1000)
   
-  mission.DCStask=self:GetDCSMissionTask()
+  mission.DCStask=mission:GetDCSMissionTask()
   
   return mission
 end
@@ -285,7 +289,7 @@ function AUFTRAG:NewINTERCEPT(TargetGroupSet)
   mission.groupsetTargets=TargetGroupSet  
   mission.groupsetTargets:FilterDeads():FilterCrashes()
   
-  mission.DCStask=self:GetDCSMissionTask()
+  mission.DCStask=mission:GetDCSMissionTask()
   
   return mission
 end
@@ -306,7 +310,7 @@ function AUFTRAG:NewBAI(TargetGroupSet)
   mission.groupsetTargets=TargetGroupSet  
   mission.groupsetTargets:FilterDeads():FilterCrashes()
   
-  mission.DCStask=self:GetDCSMissionTask()
+  mission.DCStask=mission:GetDCSMissionTask()
   
   return mission
 end
@@ -319,7 +323,7 @@ end
 -- @param #AUFTRAG self
 -- @param #string ClockStart Time the mission is started, e.g. "05:00" for 5 am. If specified as a #number, it will be relative (in seconds) to the current mission time. Default is 5 seconds after mission was added.
 -- @param #string ClockStop (Optional) Time the mission is stopped, e.g. "13:00" for 1 pm. If mission could not be started at that time, it will be removed from the queue. If specified as a #number it will be relative (in seconds) to the current mission time.
--- @param #AUFTRAG self
+-- @return #AUFTRAG self
 function AUFTRAG:SetMissionTime(ClockStart, ClockStop)
 
   -- Current mission time.
@@ -354,7 +358,7 @@ end
 --- Set mission priority.
 -- @param #AUFTRAG self
 -- @param #number Prio Priority 1=high, 100=low. Default 50
--- @param #AUFTRAG self
+-- @return #AUFTRAG self
 function AUFTRAG:SetPriority(Prio)
   self.prio=Prio or 50
   return self
@@ -363,9 +367,10 @@ end
 --- Set mission name.
 -- @param #AUFTRAG self
 -- @param #string Name Name of the mission.
--- @param #AUFTRAG self
+-- @return #AUFTRAG self
 function AUFTRAG:SetName(Name)
   self.name=Name or string.format("Auftragsnummer %d", self.auftragsnummer)
+  return self
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
