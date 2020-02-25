@@ -5601,7 +5601,7 @@ function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrol
       end
 
       if asset.payload then
-        unit.payload=asset.payload
+        unit.payload.pylons=asset.payload.pylons
       end
 
     end

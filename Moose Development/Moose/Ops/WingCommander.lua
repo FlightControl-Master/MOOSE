@@ -52,7 +52,6 @@ WINGCOMMANDER = {
 -- @field #number Nonmission Number of assets currently on mission.
 
 
-
 --- WINGCOMMANDER class version.
 -- @field #string version
 WINGCOMMANDER.version="0.0.1"
@@ -257,7 +256,7 @@ function WINGCOMMANDER:CheckResources()
 
   local capabilities={}
    
-  for _,MissionType in pairs(FLIGHTGROUP.MissionType) do
+  for _,MissionType in pairs(AUFTRAG.Type) do
     capabilities[MissionType]=0
   
     for _,_airwing in pairs(self.airwings) do
