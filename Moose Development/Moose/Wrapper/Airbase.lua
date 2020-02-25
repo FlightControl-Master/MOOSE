@@ -352,7 +352,13 @@ function AIRBASE:Register( AirbaseName )
   local self = BASE:Inherit( self, POSITIONABLE:New( AirbaseName ) ) --#AIRBASE
   self.AirbaseName = AirbaseName
   self.AirbaseID   = self:GetID(true)
-  self.AirbaseZone = ZONE_RADIUS:New( AirbaseName, self:GetVec2(), 2500 )
+  local vec2=self:GetVec2()
+  if vec2 then
+    self.AirbaseZone = ZONE_RADIUS:New( AirbaseName, vec2, 2500 )
+  else
+    self:E(string.format("ERROR: Cound not get position Vec2 of airbase %s", AirbaseName))
+  end
+  
   return self
 end
 
@@ -450,7 +456,7 @@ function AIRBASE:GetID(unique)
     
   else
   
-   for DCSAirbaseId, DCSAirbase in pairs(world.getAirbases()) do
+   for DCSAirbaseId, DCSAirbase in ipairs(world.getAirbases()) do
    
       -- Get the airbase name.
       local AirbaseName = DCSAirbase:getName()
@@ -458,8 +464,12 @@ function AIRBASE:GetID(unique)
       -- This gives the incorrect value to be inserted into the airdromeID for DCS 2.5.6!
       local airbaseID=tonumber(DCSAirbase:getID())
       
+      local airbaseCategory=self:GetAirbaseCategory()
+      
+      --env.info(string.format("FF airbase=%s id=%s category=%s", tostring(AirbaseName), tostring(airbaseID), tostring(airbaseCategory)))
+      
       -- No way AFIK to get the DCS version. So we check if the event exists. That should tell us if we are on DCS 2.5.6 or prior to that.
-      if world.event.S_EVENT_KILL and world.event.S_EVENT_KILL>0 and self:GetAirbaseCategory()==Airbase.Category.AIRDROME then
+      if world.event.S_EVENT_KILL and world.event.S_EVENT_KILL>0 and airbaseCategory==Airbase.Category.AIRDROME then
       
         -- We have to take the key value of this loop!
         airbaseID=DCSAirbaseId
@@ -471,7 +481,7 @@ function AIRBASE:GetID(unique)
       end
       
       if AirbaseName==self.AirbaseName then
-        if self:GetAirbaseCategory()==Airbase.Category.SHIP then
+        if airbaseCategory==Airbase.Category.SHIP then
           -- Ships get a negative sign as their unit number might be the same as the ID of another airbase.
           return unique and -airbaseID or airbaseID
         else
@@ -1011,7 +1021,15 @@ end
 -- @param #AIRBASE self
 -- @return #number Category of airbase from GetDesc().category.
 function AIRBASE:GetAirbaseCategory()
-  return self:GetDesc().category
+  local desc=self:GetDesc()
+  local category=Airbase.Category.AIRDROME
+
+  if desc and desc.category then
+    category=desc.category
+  else
+    self:E(string.format("ERROR: Cannot get category of airbase %s due to DCS 2.5.6 bug! Assuming it is an AIRDROME for now...", tostring(self.AirbaseName)))
+  end
+  return category
 end
 
 

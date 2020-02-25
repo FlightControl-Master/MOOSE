@@ -130,6 +130,7 @@
 -- **Note** that you should use a different relay unit for each ATIS!
 --
 -- By default, subtitles are displayed for 10 seconds. This can be changed using @{#ATIS.SetSubtitleDuration}(*duration*) with *duration* being the duration in seconds.
+-- Setting a *duration* of 0 will completely disable all subtitles.
 --
 -- ## Active Runway
 --
@@ -523,7 +524,7 @@ _ATIS={}
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version="0.6.3"
+ATIS.version="0.6.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1537,6 +1538,7 @@ function ATIS:onafterBroadcast(From, Event, To)
   -- Runway length.
   if self.rwylength then
 
+    local runact=self.airbase:GetActiveRunway(self.runwaym2t)
     local length=runact.length
     if not self.metric then
       length=UTILS.MetersToFeet(length)
