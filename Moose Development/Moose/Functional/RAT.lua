@@ -3416,7 +3416,7 @@ function RAT:_GetAirportsOfCoalition()
   for _,coalition in pairs(self.ctable) do
     for _,_airport in pairs(self.airports_map) do
       local airport=_airport --Wrapper.Airbase#AIRBASE
-      local category=airport:GetDesc().category
+      local category=airport:GetAirbaseCategory()
       if airport:GetCoalition()==coalition then
         -- Planes cannot land on FARPs.
         --local condition1=self.category==RAT.cat.plane and airport:GetTypeName()=="FARP"
@@ -3847,7 +3847,7 @@ function RAT:_OnBirth(EventData)
         
         -- Check if any unit of the group was spawned on top of another unit in the MOOSE data base.
         local ontop=false
-        if self.checkontop and (_airbase and _airbase:GetDesc().category==Airbase.Category.AIRDROME) then
+        if self.checkontop and (_airbase and _airbase:GetAirbaseCategory()==Airbase.Category.AIRDROME) then
           ontop=self:_CheckOnTop(SpawnGroup, self.ontopradius)
         end
         
@@ -4457,7 +4457,7 @@ function RAT:_Waypoint(index, description, Type, Coord, Speed, Altitude, Airport
   
   if (Airport~=nil) and (Type~=RAT.wp.air) then
     local AirbaseID = Airport:GetID()
-    local AirbaseCategory = Airport:GetDesc().category
+    local AirbaseCategory = Airport:GetAirbaseCategory()
     if AirbaseCategory == Airbase.Category.SHIP then
       RoutePoint.linkUnit = AirbaseID
       RoutePoint.helipadId = AirbaseID
@@ -5141,7 +5141,7 @@ function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace, departure, take
   local spawnonrunway=false
   local spawnonairport=false
   if spawnonground then
-    local AirbaseCategory = departure:GetDesc().category      
+    local AirbaseCategory = departure:GetAirbaseCategory()  
     if AirbaseCategory == Airbase.Category.SHIP then
       spawnonship=true
     elseif AirbaseCategory == Airbase.Category.HELIPAD then

@@ -1922,7 +1922,7 @@ function GROUP:RespawnAtCurrentAirbase(SpawnTemplate, Takeoff, Uncontrolled) -- 
   
       -- Aibase id and category.
       local AirbaseID       = airbase:GetID()
-      local AirbaseCategory = airbase:GetDesc().category
+      local AirbaseCategory = airbase:GetAirbaseCategory()
       
       if AirbaseCategory == Airbase.Category.SHIP or AirbaseCategory == Airbase.Category.HELIPAD then
         SpawnPoint.linkUnit  = AirbaseID
