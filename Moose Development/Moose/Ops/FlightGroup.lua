@@ -2658,7 +2658,7 @@ end
 function FLIGHTGROUP:onafterTaskExecute(From, Event, To, Task)
 
   -- Debug message.
-  local text=string.format("Task %s ID=%d execute.", Task.description, Task.id)
+  local text=string.format("Task %s ID=%d execute.", tostring(Task.description), Task.id)
   MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
   self:I(self.lid..text)
   
@@ -2690,8 +2690,8 @@ function FLIGHTGROUP:onafterTaskExecute(From, Event, To, Task)
     end
     
     -- Task done.
-    local TaskDone=self.group:TaskFunction("FLIGHTGROUP._TaskDone", self, Task)    
-    table.insert(DCStasks, TaskDone)
+    --local TaskDone=self.group:TaskFunction("FLIGHTGROUP._TaskDone", self, Task)    
+    --table.insert(DCStasks, TaskDone)
     
     -- Combo task.
     local TaskCombo=self.group:TaskCombo(DCStasks)
@@ -2701,9 +2701,13 @@ function FLIGHTGROUP:onafterTaskExecute(From, Event, To, Task)
     
     -- Controlled task.      
     local TaskControlled=self.group:TaskControlled(TaskCombo, TaskCondition)
+    
+    -- Task done.
+    local TaskDone=self.group:TaskFunction("FLIGHTGROUP._TaskDone", self, Task)    
+    local TaskFinal=self.group:TaskCombo({TaskControlled, TaskDone})
       
     -- Set task for group.
-    self:SetTask(TaskControlled, 1)
+    self:SetTask(TaskFinal, 1)
     
   end
   
@@ -2762,7 +2766,7 @@ function FLIGHTGROUP:onafterTaskCancel(From, Event, To)
     task.stopflag:Set(1)
     
     -- Call task done.
-    self:TaskDone(task)
+    --self:TaskDone(task)
   else
     local text=string.format("WARNING: No current task to cancel!")
     MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
@@ -2857,7 +2861,7 @@ end
 function FLIGHTGROUP:GetTask()
 
   if self.taskpaused then
-    return self.taskpaused
+    --return self.taskpaused
   end
 
   if #self.taskqueue==0 then
