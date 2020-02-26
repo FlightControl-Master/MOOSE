@@ -30,12 +30,9 @@
 -- @field #number taskcounter Running number of task ids.
 -- @field #number taskcurrent ID of current task. If 0, there is no current task assigned.
 -- @field #table taskenroute Enroute task of the group.
+-- @field #table taskpaused Paused tasks.
 -- @field #table missionqueue Queue of missions.
--- @field #number missioncounter Running number of task ids.
--- @field #FLIGHTGROUP.Mission currentmission The mission currently assigned or executed.
--- @field #boolean istanker If true, group gets enroute task tanker.
--- @field #boolean isawacs if True, group get enroute task AWACS.
--- @field #boolean eplrs If true, group will activate it's datalink.
+-- @field Ops.Auftrag#AUFTRAG currentmission The mission currently assigned or executed.
 -- @field Core.Set#SET_UNIT detectedunits Set of detected units.
 -- @field Wrapper.Airbase#AIRBASE homebase The home base of the flight group.
 -- @field Wrapper.Airbase#AIRBASE destbase The destination base of the flight group.
@@ -67,8 +64,8 @@
 -- @field #number TACANchannel TACAN channel.
 -- @field #string TACANmode TACAN mode, i.e. "Y" (or "X").
 -- @field #string TACANmorse TACAN morse code.
--- @field #number RadioFreq Radio frequency in MHz.
--- @field #number RadioModu Radio modulation `radio.modulation.AM` or `radio.modulation.FM`.
+-- @field #number RadioFreq Default Radio frequency in MHz.
+-- @field #number RadioModu Default Radio modulation `radio.modulation.AM` or `radio.modulation.FM`.
 -- @field #number CallsignName Call sign name.
 -- @field #number CallsignNumber Call sign number.
 -- @field #boolean EPLRS If true, turn EPLRS data link on.
@@ -174,15 +171,14 @@ FLIGHTGROUP = {
   taskcounter        =   nil,
   taskcurrent        =   nil,
   taskenroute        =   nil,
+  taskpaused         =    {},
   missionqueue       =    {},
-  missioncounter     =   nil,
-  missioncurrent     =   nil,  
-  istanker           =   nil,
-  isawacs            =   nil,
-  eplrs              =   nil,
+  currentmission     =   nil,  
   detectedunits      =    {},
   homebase           =   nil,
-  destination        =   nil,
+  destbase           =   nil,
+  homezone           =   nil,
+  destzone           =   nil,
   attribute          =   nil,
   actype             =   nil,
   speedmax           =   nil,
@@ -500,8 +496,6 @@ function FLIGHTGROUP:New(groupname, autostart)
   -- Init task counter.
   self.taskcurrent=0
   self.taskcounter=0
-  
-  self.missioncounter=0
 
   -- Holding flag.  
   self.flaghold=USERFLAG:New(string.format("%s_FlagHold", self.groupname))
@@ -660,8 +654,8 @@ function FLIGHTGROUP:RemoveTask(taskid)
 end
 
 --- Add mission to queue.
--- @param #FLIUGHTGROUP self
--- @param Ops.Auftrag#AUFTRAG.Mission Mission Mission for this group.
+-- @param #FLIGHTGROUP self
+-- @param Ops.Auftrag#AUFTRAG Mission Mission for this group.
 -- @param Core.Point#COORDINATE WaypointCoordinate Coordinate of the mission waypoint
 -- @param #number WaypointIndex The waypoint number. Default is after all current air waypoints.
 -- @return #FLIGHTGROUP self
@@ -2378,6 +2372,8 @@ function FLIGHTGROUP:onafterGotoWaypoint(From, Event, To, n)
   self.currentwp=n
   
   self:UpdateRoute()
+  
+  --TODO: option to re-enable waypoint tasks.
 
 end
 
@@ -2714,24 +2710,35 @@ function FLIGHTGROUP:onafterTaskExecute(From, Event, To, Task)
 end
 
 
---- On after TaskPause event.
+--- On after "TaskPause" event. Pauses the current task
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #FLIGHTGROUP.Task Task The task.
-function FLIGHTGROUP:onafterTaskPause(From, Event, To, Task)
+function FLIGHTGROUP:onafterTaskPause(From, Event, To)
 
-  if self.taskcurrent>0 then
+  local Task=self:GetTaskCurrent()
+
+  if Task then
 
     -- Clear all tasks.
     self.group:ClearTasks()
 
     -- Task status executing.
-    Task.status=1 --FLIGHTGROUP.TaskStatus.PAUSED
+    Task.status=FLIGHTGROUP.TaskStatus.PAUSED
 
   end
 
+end
+
+--- On after "TaskUnPause" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function FLIGHTGROUP:onafterTaskUnpause(From, Event, To)
+
+  --self.task
 end
 
 --- On after "TaskCancel" event. Cancels the current task.
@@ -2745,14 +2752,17 @@ function FLIGHTGROUP:onafterTaskCancel(From, Event, To)
   local task=self:GetTaskCurrent()
   
   if task then
+  
+    -- Debug info.
     local text=string.format("Task %s ID=%d cancelled.", task.description, task.id)
     MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)    
     self:I(self.lid..text)
-    -- Clear tasks.
-    --self.group:ClearTasks()
-    --self.group:PopCurrentTask()
+    
+    -- Set stop flag.
     task.stopflag:Set(1)
-    self:TaskDone(task)  
+    
+    -- Call task done.
+    self:TaskDone(task)
   else
     local text=string.format("WARNING: No current task to cancel!")
     MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
@@ -2943,7 +2953,6 @@ end
 
 --- Function called when a task is executed.
 --@param Wrapper.Group#GROUP group Group that reached the holding zone.
---@param #FLIGHTGROUP.Mission
 --@param #FLIGHTGROUP flightgroup Flight group.
 --@param #FLIGHTGROUP.Task task Task.
 function FLIGHTGROUP._TaskExecute(group, flightgroup, task)
@@ -2960,7 +2969,6 @@ end
 
 --- Function called when a task is done.
 --@param Wrapper.Group#GROUP group Group that reached the holding zone.
---@param #FLIGHTGROUP.Mission
 --@param #FLIGHTGROUP flightgroup Flight group.
 --@param #FLIGHTGROUP.Task task Task.
 function FLIGHTGROUP._TaskDone(group, flightgroup, task)
@@ -2984,7 +2992,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #FLIGHTGROUP.Mission Mission The mission table.
+-- @param Ops.Auftrag#AUFTRAG Mission The mission table.
 function FLIGHTGROUP:onbeforeMissionStart(From, Event, To, Mission)
 
   self:I(self.lid..string.format("FF Starting mission %s, FSM=%s, LateActivated=%s, UnControlled=%s", tostring(Mission.name), self:GetState(), tostring(self:IsLateActivated()), tostring(self:IsUncontrolled())))
@@ -3016,7 +3024,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #FLIGHTGROUP.Mission Mission The mission table.
+-- @param Ops.Auftrag#AUFTRAG Mission The mission table.
 function FLIGHTGROUP:onafterMissionStart(From, Event, To, Mission)
 
   local text=string.format("Starting Mission %s", tostring(Mission.name))
@@ -3041,7 +3049,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #FLIGHTGROUP.Mission Mission
+-- @param Ops.Auftrag#AUFTRAG Mission
 function FLIGHTGROUP:onafterMissionDone(From, Event, To, Mission)
 
   -- TODO: evaluate mission success or failure! complicated!
@@ -3751,8 +3759,8 @@ function FLIGHTGROUP:AddWaypointAir(coordinate, wpnumber, speed, updateroute)
 
   -- Shift all mission waypoints after the inserted waypoint.
   for _,_mission in pairs(self.missionqueue) do
-    local mission=_mission --#FLIGHTGROUP.Mission
-    if mission.status==AUFTRAG.Status.SCHEDULED and mission.waypoint>=wpnumber then
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+    if mission.status==AUFTRAG.Status.SCHEDULED and mission.waypointindex and mission.waypointindex>=wpnumber then
       mission.waypointindex=mission.waypointindex+1
     end
   end  

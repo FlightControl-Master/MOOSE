@@ -137,8 +137,9 @@ AUFTRAG.version="0.0.1"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: A lot
--- TODO: mission roe, rot
--- TODO: mission formation
+-- TODO: Mission ROE and ROT
+-- TODO: Mission formation, etc.
+-- TODO: FSM events.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -157,8 +158,11 @@ function AUFTRAG:New(Type)
   _AUFTRAGSNR=_AUFTRAGSNR+1
   
   self.type=Type
+  
   self.auftragsnummer=_AUFTRAGSNR
+  
   self.status=AUFTRAG.Status.SCHEDULED
+  
   self.name=string.format("Auftrag #%d", self.auftragsnummer)
   
   self.lid=string.format("Auftrag #%d %s | ", self.auftragsnummer, self.type)
@@ -511,8 +515,8 @@ function AUFTRAG:GetDCSMissionTask()
     -- INTERCEPT Mission --
     -----------------------
 
-    for _,_group in pairs(self.groupsetTargets:GetSet()) do
-      local TargetGroup=_group
+    for _,group in pairs(self.groupsetTargets:GetSet()) do
+      local TargetGroup=group --Wrapper.Group#GROUP
   
       local DCStask=CONTROLLABLE.TaskAttackGroup(nil, TargetGroup, ENUMS.WeaponFlag.Auto, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit)
       
