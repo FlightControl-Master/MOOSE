@@ -471,15 +471,31 @@ end
 
 -- acc- the accuracy of each easting/northing.  0, 1, 2, 3, 4, or 5.
 UTILS.tostringMGRS = function(MGRS, acc) --R2.1
+
   if acc == 0 then
     return MGRS.UTMZone .. ' ' .. MGRS.MGRSDigraph
   else
-    --return MGRS.UTMZone .. ' ' .. MGRS.MGRSDigraph .. ' ' .. string.format('%0' .. acc .. 'd', UTILS.Round(MGRS.Easting/(10^(5-acc)), 0))
-    --       .. ' ' .. string.format('%0' .. acc .. 'd', UTILS.Round(MGRS.Northing/(10^(5-acc)), 0))
+
+    -- Test if Easting/Northing have less than 4 digits.
+    --MGRS.Easting=123    -- should be 00123
+    --MGRS.Northing=5432  -- should be 05432
     
-    -- Truncate rather than round MGRS grid!        
-    return string.format("%s %s %s %s", MGRS.UTMZone, MGRS.MGRSDigraph, string.sub(tostring(MGRS.Easting), 1, acc), string.sub(tostring(MGRS.Northing), 1, acc))
+    -- Truncate rather than round MGRS grid!
+    local Easting=tostring(MGRS.Easting)
+    local Northing=tostring(MGRS.Northing)
+    
+    -- Count number of missing digits. Easting/Northing should have 5 digits. However, it is passed as a number. Therefore, any leading zeros would not be displayed by lua.
+    local nE=5-string.len(Easting) 
+    local nN=5-string.len(Northing)
+    
+    -- Get leading zeros (if any).
+    for i=1,nE do Easting="0"..Easting end
+    for i=1,nN do Northing="0"..Northing end
+    
+    -- Return MGRS string.
+    return string.format("%s %s %s %s", MGRS.UTMZone, MGRS.MGRSDigraph, string.sub(Easting, 1, acc), string.sub(Northing, 1, acc))
   end
+  
 end
 
 
