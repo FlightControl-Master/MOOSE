@@ -1117,7 +1117,7 @@ do -- COORDINATE
     -- Airbase parameters for takeoff and landing points.
     if airbase then
       local AirbaseID = airbase:GetID()
-      local AirbaseCategory = airbase:GetDesc().category
+      local AirbaseCategory = airbase:GetAirbaseCategory()
       if AirbaseCategory == Airbase.Category.SHIP or AirbaseCategory == Airbase.Category.HELIPAD then
         RoutePoint.linkUnit = AirbaseID
         RoutePoint.helipadId = AirbaseID

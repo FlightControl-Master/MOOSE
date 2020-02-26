@@ -3045,7 +3045,7 @@ end
 function WAREHOUSE:GetAirbaseCategory()
   local category=-1
   if self.airbase then
-    category=self.airbase:GetDesc().category
+    category=self.airbase:GetAirbaseCategory()
   end
   return category
 end

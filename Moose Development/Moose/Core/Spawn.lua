@@ -1983,7 +1983,7 @@ function SPAWN:ParkAircraft( SpawnAirbase, TerminalType, Parkingdata, SpawnIndex
 
     -- Get airbase ID and category.
     local AirbaseID = SpawnAirbase:GetID()
-    local AirbaseCategory = SpawnAirbase:GetDesc().category
+    local AirbaseCategory = SpawnAirbase:GetAirbaseCategory()
     self:F( { AirbaseCategory = AirbaseCategory } )
     
     -- Set airdromeId.

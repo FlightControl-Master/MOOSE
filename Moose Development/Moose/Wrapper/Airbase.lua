@@ -1003,7 +1003,7 @@ function AIRBASE:CheckOnRunWay(group, radius, despawn)
   radius=radius or 50
 
   -- We only check at real airbases (not FARPS or ships).
-  if self:GetDesc().category~=Airbase.Category.AIRDROME then
+  if self:GetAirbaseCategory()~=Airbase.Category.AIRDROME then
     return false
   end
 
