@@ -595,7 +595,7 @@ function AIRWING:onafterMissionRequest(From, Event, To, Mission)
   -- Set mission status to ASSIGNED.
   Mission.status=AUFTRAG.Status.ASSIGNED
   
-  --TODO: Some assets might already be spawned and even on a different mission (orbit).
+  -- Some assets might already be spawned and even on a different mission (orbit).
   -- Need to dived to set into spawned and instock assets and handle the other
   
   -- Assets to be requested
@@ -603,18 +603,26 @@ function AIRWING:onafterMissionRequest(From, Event, To, Mission)
   
   for _,_asset in pairs(Mission.assets) do
     local asset=_asset --#AIRWING.SquadronAsset
+    
     if asset.spawned then
     
-      
-    
+      if asset.flightgroup then
+        --TODO: cancel current mission if there is any!
+        asset.flightgroup:AddMission(asset.mission, asset.mission.waypointcoord, asset.mission.waypointindex)
+      else
+        --TODO: create flightgroup. should already be there actually!
+      end    
     
     else
+      -- These assets need to be requested and spawned.
       table.insert(areq, asset)
     end
   end
 
-  --TODO: Check that mission prio is same as warehouse prio (small=high or the other way around).
-  self:AddRequest(self, WAREHOUSE.Descriptor.ASSETLIST, areq, #areq, nil, nil, Mission.prio, tostring(Mission.auftragsnummer))
+  -- Add request to airwing warehouse.
+  if #areq>0 then
+    self:AddRequest(self, WAREHOUSE.Descriptor.ASSETLIST, areq, #areq, nil, nil, Mission.prio, tostring(Mission.auftragsnummer))
+  end
 
 end
 
@@ -659,11 +667,22 @@ function AIRWING:onafterAssetSpawned(From, Event, To, group, asset, request)
 
   -- Call parent warehouse function first.
   self:GetParent(self).onafterAssetSpawned(self, From, Event, To, group, asset, request)
+
+  -- Create a flight group.
+  self:_CreateFlightGroup(asset)
   
-  local mid=tonumber(request.assignment)
+  -- Get Mission (if any).
+  local mission=self:GetMissionByID(request.assignment)  
+
+  -- Add mission to flightgroup queue.
+  if mission then
   
-  -- Set mission.
-  asset.mission=self:GetMissionByID(mid)
+    -- Set mission.
+    asset.mission=mission
+    
+    -- Add mission to flightgroup queue.  
+    asset.flightgroup:AddMission(asset.mission, asset.mission.waypointcoord, asset.mission.waypointindex)
+  end  
   
 end
 
@@ -702,17 +721,14 @@ end
 
 --- Create a new flight group after an asset was spawned.
 -- @param #AIRWING self
--- @param Wrapper.Group#GROUP group The group.
 -- @param #AIRWING.SquadronAsset asset The asset.
-function AIRWING:_CreateFlightGroup(group, asset)
+function AIRWING:_CreateFlightGroup(asset)
 
   -- Create flightgroup.
-  local flightgroup=FLIGHTGROUP:New(group:GetName())
-  
-  asset.flightgroup=flightgroup
-  
-  flightgroup:SetAirwing(self)
-  
+  local flightgroup=FLIGHTGROUP:New(asset.spawngroupname)
+
+  -- Set airwing.
+  flightgroup:SetAirwing(self)  
   
   --- Check if out of missiles. For A2A missions ==> RTB.
   function flightgroup:OnAfterOutOfMissiles()  
@@ -743,15 +759,8 @@ function AIRWING:_CreateFlightGroup(group, asset)
     -- TODO
     -- Mission failed ==> launch new mission?
     
-  end  
-  
-  -- Add mission to flightgroup queue.
-  if asset.mission then
-    local Cstart=UTILS.SecondsToClock(asset.mission.Tstart)
-    local Cstop=asset.mission.Tstop and UTILS.SecondsToClock(asset.mission.Tstop) or nil
-    asset.flightgroup:AddMission(asset.mission, asset.mission.waypointcoord, asset.mission.waypointindex, Cstart, Cstop, asset.mission.name)
   end
-
+  
 end
 
 
@@ -779,8 +788,21 @@ function AIRWING:SquadronCanMission(Squadron, MissionType, Nassets)
     for _,_asset in pairs(Squadron.assets) do
       local asset=_asset --#AIRWING.SquadronAsset
       
-      -- Check if has already a mission assigned.
-      if asset.mission==nil then
+      -- Check if has already any missions in the queue.
+      if self:IsAssetOnMission() then
+
+        --TODO: This only checks if it has an ORBIT mission. It could have others as well!
+        if self:IsAssetOnMission(AUFTRAG.Type.ORBIT) then
+      
+          -- Check if the payload of this asset is compatible with the mission.
+          if self:CheckMissionType(MissionType, asset.payload.missiontypes) then
+            -- TODO: check if asset actually has weapons left!
+            table.insert(assets, asset)
+          end
+          
+        end      
+      
+      else
       
         ---
         -- This asset as no current mission
@@ -801,13 +823,6 @@ function AIRWING:SquadronCanMission(Squadron, MissionType, Nassets)
           end
         end
         
-      elseif asset.mission==AUFTRAG.Type.ORBIT then
-      
-        -- Check if the payload of this asset is compatible with the mission.
-        if self:CheckMissionType(MissionType, asset.payload.missiontypes) then
-          -- TODO: check if asset actually has weapons left!
-          table.insert(assets, asset)
-        end
       end
       
     end
@@ -822,11 +837,38 @@ function AIRWING:SquadronCanMission(Squadron, MissionType, Nassets)
   return cando, assets
 end
 
---- Check if assets for a given mission type are available.
+--- Check if an asset is currently on a mission or has one in the queue.
 -- @param #AIRWING self
--- @return #boolean If true, enough assets are available.
-function AIRWING:IsAssetOnMission()
+-- @param #AIRWING.SquadronAsset asset The asset.
+-- @param #table MissionTypes Types on mission to be checked. Default all.
+-- @return #boolean If true, asset has at least one mission of that type in the queue.
+function AIRWING:IsAssetOnMission(asset, MissionTypes)
 
+  if MissionTypes then
+    if type(MissionTypes)~="table" then
+      MissionTypes={MissionTypes}
+    end
+  else
+    -- Check all possible types.
+    MissionTypes=AUFTRAG.Type
+  end
+
+  if asset.flightgroup then
+  
+    -- Loop over mission queue.
+    for _,_mission in pairs(asset.flightgroup.missionqueue or {}) do
+      local mission=_mission --Ops.Auftrag#AUFTRAG
+      
+      -- Only if mission is not already over.
+      if mission.status~=AUFTRAG.Status.DONE and self:CheckMissionType(mission.type, MissionTypes) then
+        return true
+      end
+      
+    end
+  
+  end
+
+  return false
 end
 
 --- Check if assets for a given mission type are available.
@@ -867,7 +909,7 @@ function AIRWING:CanMission(MissionType, Nassets)
   -- Now clear all reserved payloads.
   for _,_asset in pairs(Assets) do
     local asset=_asset --#AIRWING.SquadronAsset
-    self:ReturnPayloadFromAsset(asset,payload)
+    self:ReturnPayloadFromAsset(asset)
   end
   
   return Can, Assets

@@ -29,7 +29,7 @@
 -- @field #table DCStask DCS task structure.
 -- @field Core.Point#COORDINATE waypointcoord Coordinate of the waypoint task.
 -- @field #number waypointindex Waypoint number at which the task is executed. 
--- @field Ops.FlightGroup#AUFTRAG.Task waypointtask Waypoint task.
+-- @field Ops.FlightGroup#FLIGHTGROUP.Task waypointtask Waypoint task.
 -- @field #number marker F10 map marker ID.
 -- @field Core.Point#COORDINATE coordOrbit Coordinate where to orbit.
 -- @field #number speedOrbit Orbit speed in m/s.
@@ -42,7 +42,7 @@
 -- @field #string squadname Name of the assigned squadron.
 -- @field #table assets Assets assigned for this mission.
 -- @field #number nassets Number of required assets.
--- @extends Ops.FlightGroup#AUFTRAG
+-- @extends Core.Fsm#FSM
 
 --- *To invent an airplane is nothing. To build one is something. To fly is everything.* -- Otto Lilienthal
 --
@@ -115,16 +115,19 @@ AUFTRAG.Type={
 
 --- Mission status.
 -- @type AUFTRAG.Status
--- @field #string SCHEDULED Mission is scheduled.
--- @field #string ASSIGNED Mission was assigned.
+-- @field #string PLANNED Mission is at the early planning stage.
+-- @field #string SCHEDULED Mission is scheduled in a queue waiting to be assigned.
+-- @field #string ASSIGNED Mission was assigned to somebody.
+-- @field #string STARTED Mission started but is not executed yet.
 -- @field #string EXECUTING Mission is being executed.
--- @field #string ACCOMPLISHED Mission is accomplished.
+-- @field #string DONE Mission is over.
 AUFTRAG.Status={
+  PLANNED="planned",
   SCHEDULED="scheduled",
-  ASSIGNED="assigned",  
+  ASSIGNED="assigned",
+  STARTED="started",
   EXECUTING="executing",
-  ACCOMPLISHED="accomplished",
-  FAILED="failed",
+  DONE="Done",
 }
 
 
