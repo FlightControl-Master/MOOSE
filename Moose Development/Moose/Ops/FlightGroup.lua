@@ -665,6 +665,9 @@ function FLIGHTGROUP:AddMission(Mission, WaypointCoordinate, WaypointIndex)
 
   Mission.waypointcoord=WaypointCoordinate
   Mission.waypointindex=WaypointIndex
+  
+  -- Set status to scheduled.
+  Mission.status=AUFTRAG.Status.SCHEDULED
 
   -- Add mission to queue.
   table.insert(self.missionqueue, Mission)
@@ -932,6 +935,13 @@ function FLIGHTGROUP:IsDead()
   return self:Is("Dead")
 end
 
+--- Check if flight FSM is stopped.
+-- @param #FLIGHTGROUP self
+-- @return #boolean If true, FSM state is stopped.
+function FLIGHTGROUP:IsStopped()
+  return self:Is("Stopped")
+end
+
 --- Check if flight is low on fuel.
 -- @param #FLIGHTGROUP self
 -- @return #boolean If true, flight is low on fuel.
@@ -1158,7 +1168,8 @@ function FLIGHTGROUP:onafterStart(From, Event, To)
 
   -- Start the status monitoring.
   self:__CheckZone(-1)
-  self:__FlightStatus(-1)
+  self:__FlightStatus(-2)
+  self:__QueueUpdate(-3)
 end
 
 --- On after Start event. Starts the FLIGHTGROUP FSM and event handlers.
@@ -1348,7 +1359,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
 
 
   -- Next check in ~30 seconds.
-  if not self:IsDead() then
+  if not self:IsStopped() then
     self:__FlightStatus(-30)
   end
 end
@@ -1364,7 +1375,7 @@ function FLIGHTGROUP:onafterCheckZone(From, Event, To)
     self:_CheckInZones()
   end
 
-  if not self:IsDead() then
+  if not self:IsStopped() then
     self:__CheckZone(-1)
   end
 end
@@ -1399,7 +1410,7 @@ function FLIGHTGROUP:onafterQueueUpdate(From, Event, To)
   ---
 
   -- Check no current task.
-  if self.taskcurrent<=0 then
+  if self:IsAirborne() and self.taskcurrent<=0 then
 
     -- Get task from queue.
     local task=self:_GetNextTask()
@@ -1411,6 +1422,7 @@ function FLIGHTGROUP:onafterQueueUpdate(From, Event, To)
     
   else
   
+    --[[
     -- Get current task.
     local task=self:GetTaskCurrent()
     
@@ -1424,14 +1436,14 @@ function FLIGHTGROUP:onafterQueueUpdate(From, Event, To)
       
       -- Cancel task if task is running longer than duration.
       if cancel then
-        self:TaskCancel()
+        --self:TaskCancel()
       end
     end
-
+    ]]
   end
 
   -- Update queue every ~5 sec.
-  if not self:IsDead() then
+  if not self:IsStopped() then
     self:__QueueUpdate(-5)
   end
 end
@@ -2072,8 +2084,6 @@ function FLIGHTGROUP:onafterFlightAirborne(From, Event, To, airbase)
     self:PushTask(task, 0.1)
   end
   
-  -- Update queue.
-  self:__QueueUpdate(-1)
 end
 
 --- On after "FlightLanding" event.
@@ -2194,7 +2204,6 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
     allowed=false    
   end
   
-
   return allowed
 end
 
@@ -2205,8 +2214,6 @@ end
 -- @param #string To To state.
 -- @param #number n Waypoint number.
 function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
-
-  env.info(string.format("FF Update route n=%s current wp=%s", tostring(n), tostring(self.currentwp)))
 
   -- TODO: what happens if currentwp=#waypoints
   n=n or self.currentwp+1
@@ -2865,10 +2872,6 @@ function FLIGHTGROUP:onafterTaskExecute(From, Event, To, Task)
       table.insert(DCStasks, Task.dcstask)
     end
     
-    -- Task done.
-    --local TaskDone=self.group:TaskFunction("FLIGHTGROUP._TaskDone", self, Task)    
-    --table.insert(DCStasks, TaskDone)
-    
     -- Combo task.
     local TaskCombo=self.group:TaskCombo(DCStasks)
 
@@ -2879,11 +2882,18 @@ function FLIGHTGROUP:onafterTaskExecute(From, Event, To, Task)
     local TaskControlled=self.group:TaskControlled(TaskCombo, TaskCondition)
     
     -- Task done.
-    local TaskDone=self.group:TaskFunction("FLIGHTGROUP._TaskDone", self, Task)    
+    local TaskDone=self.group:TaskFunction("FLIGHTGROUP._TaskDone", self, Task)
+    
+    -- Final task.
     local TaskFinal=self.group:TaskCombo({TaskControlled, TaskDone})
       
     -- Set task for group.
     self:SetTask(TaskFinal, 1)
+    
+    -- Set AUFGRAG status.
+    if self.currentmission and self.currentmission.waypointtask and self.currentmission.waypointtask.id==self.taskcurrent then
+      self.currentmission.status=AUFTRAG.Status.EXECUTING
+    end
     
   end
   
@@ -3080,7 +3090,7 @@ function FLIGHTGROUP:onafterMissionStart(From, Event, To, Mission)
   self.currentmission.Tstarted=timer.getAbsTime()
   
   -- Set mission status.
-  self.currentmission.status=AUFTRAG.Status.EXECUTING
+  self.currentmission.status=AUFTRAG.Status.STARTED
 
   -- Route flight to mission zone.
   self:RouteToMission(Mission, 5)
@@ -3200,14 +3210,17 @@ function FLIGHTGROUP._PassingWaypoint(group, flightgroup, i)
   -- Passing Waypoint event.
   flightgroup:PassingWaypoint(i, final)
 
-  -- If final waypoint reached, RTB.
+  -- If final waypoint reached.
   if i==final then
+  
     if flightgroup.destbase then
       flightgroup:__RTB(-10)
     elseif flightgroup.destzone then
       flightgroup:__RTZ(-10)
     end
+    
   end
+  
 end
 
 --- Function called when flight has reached the holding point.

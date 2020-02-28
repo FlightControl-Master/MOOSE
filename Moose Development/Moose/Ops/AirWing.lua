@@ -166,6 +166,15 @@ end
 -- @return #AIRWING.Squadron The squadron object.
 function AIRWING:AddSquadron(SquadronName, MissionTypes, Livery, Skill)
 
+  if MissionTypes and type(MissionTypes)~="table" then
+    MissionTypes={MissionTypes}
+  end
+  
+  -- TODO: Mission types that anyone can do! ORBIT, Ferry, ???
+  if not self:CheckMissionType(AUFTRAG.Type.ORBIT, MissionTypes) then
+    table.insert(MissionTypes, AUFTRAG.Type.ORBIT)
+  end
+
   local squadron={} --#AIRWING.Squadron
 
   squadron.name=SquadronName
@@ -184,7 +193,9 @@ end
 -- @param #string UnitName Name of the unit, the payload is extracted from.
 -- @param #table MissionTypes Mission types this payload can be used for.
 -- @param #number Npayloads Number of payloads to add to the airwing resources. Default 99 (which should be enough for most scenarios).
-function AIRWING:NewPayload(UnitName, MissionTypes, Npayloads)
+-- @param #boolan Unlimited If true, this payload is unlimited.
+-- @return #AIRWING.Payload The payload table or nil if the unit does not exist.
+function AIRWING:NewPayload(UnitName, MissionTypes, Npayloads, Unlimited)
 
   local unit=UNIT:FindByName(UnitName)
   
@@ -199,11 +210,17 @@ function AIRWING:NewPayload(UnitName, MissionTypes, Npayloads)
     payload.missiontypes=MissionTypes or {}
     payload.pylons=unitpayload
     payload.navail=Npayloads or 99
-    payload.unlimited=false
+    payload.unlimited=Unlimited
+    if Unlimited then
+      payload.navail=1
+    end
         
-    table.insert(self.payloads, payload)  
+    table.insert(self.payloads, payload)
+    
+    return payload
   end
 
+  return nil
 end
 
 --- Fetch a payload from the airwing resources for a given unit and mission type.
@@ -312,8 +329,11 @@ function AIRWING:AddMission(Mission, Nassets, WaypointCoordinate)
   -- Number of assets.
   Mission.nassets=Nassets or 1
   
-  Mission.waypointcoordinate=WaypointCoordinate
+  Mission.waypointcoord=WaypointCoordinate
   Mission.waypointindex=nil
+  
+  -- Set status to scheduled.
+  Mission.status=AUFTRAG.Status.SCHEDULED
 
   -- Add mission to queue.
   table.insert(self.missionqueue, Mission)
@@ -462,7 +482,7 @@ function AIRWING:_GetNextMission()
        if can then
        
         -- Optimize the asset selection. Most useful assets will come first.
-        self:_OptimizeAssetSelection(assets, mission)
+        --self:_OptimizeAssetSelection(assets, mission)
       
         -- TODO: check that mission.assets table is clean.
         mission.assets=mission.assets or {}
@@ -669,7 +689,7 @@ function AIRWING:onafterAssetSpawned(From, Event, To, group, asset, request)
   self:GetParent(self).onafterAssetSpawned(self, From, Event, To, group, asset, request)
 
   -- Create a flight group.
-  self:_CreateFlightGroup(asset)
+  asset.flightgroup=self:_CreateFlightGroup(asset)
   
   -- Get Mission (if any).
   local mission=self:GetMissionByID(request.assignment)  
@@ -678,6 +698,7 @@ function AIRWING:onafterAssetSpawned(From, Event, To, group, asset, request)
   if mission then
   
     -- Set mission.
+    -- TODO: This should not be necessary!
     asset.mission=mission
     
     -- Add mission to flightgroup queue.  
@@ -722,6 +743,7 @@ end
 --- Create a new flight group after an asset was spawned.
 -- @param #AIRWING self
 -- @param #AIRWING.SquadronAsset asset The asset.
+-- @return Ops.FlightGroup#FLIGHTGROUP The created flightgroup object.
 function AIRWING:_CreateFlightGroup(asset)
 
   -- Create flightgroup.
@@ -761,6 +783,7 @@ function AIRWING:_CreateFlightGroup(asset)
     
   end
   
+  return flightgroup
 end
 
 
@@ -782,6 +805,7 @@ function AIRWING:SquadronCanMission(Squadron, MissionType, Nassets)
   
   if not gotit then
     -- This squad cannot do this mission.
+    env.info("100")
     cando=false
   else
 
@@ -789,11 +813,11 @@ function AIRWING:SquadronCanMission(Squadron, MissionType, Nassets)
       local asset=_asset --#AIRWING.SquadronAsset
       
       -- Check if has already any missions in the queue.
-      if self:IsAssetOnMission() then
-
+      if self:IsAssetOnMission(asset) then
+        env.info("200")
         --TODO: This only checks if it has an ORBIT mission. It could have others as well!
-        if self:IsAssetOnMission(AUFTRAG.Type.ORBIT) then
-      
+        if self:IsAssetOnMission(asset, AUFTRAG.Type.ORBIT) then
+          env.info("300")
           -- Check if the payload of this asset is compatible with the mission.
           if self:CheckMissionType(MissionType, asset.payload.missiontypes) then
             -- TODO: check if asset actually has weapons left!
@@ -807,7 +831,7 @@ function AIRWING:SquadronCanMission(Squadron, MissionType, Nassets)
         ---
         -- This asset as no current mission
         ---
-      
+        env.info("400")
         if asset.spawned then
           -- This asset is already spawned. Let's check if it has the right payload.
           if self:CheckMissionType(MissionType, asset.payload.missiontypes) then
@@ -832,6 +856,7 @@ function AIRWING:SquadronCanMission(Squadron, MissionType, Nassets)
   -- Check if required assets are present.
   if Nassets and Nassets > #assets then
     cando=false
+    env.info("500")
   end
 
   return cando, assets

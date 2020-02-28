@@ -31,10 +31,10 @@
 -- @field #number waypointindex Waypoint number at which the task is executed. 
 -- @field Ops.FlightGroup#FLIGHTGROUP.Task waypointtask Waypoint task.
 -- @field #number marker F10 map marker ID.
--- @field Core.Point#COORDINATE coordOrbit Coordinate where to orbit.
--- @field #number speedOrbit Orbit speed in m/s.
--- @field #number heading Heading in degrees.
--- @field #number leg Length of leg in meters.
+-- @field Core.Point#COORDINATE orbitCoord Coordinate where to orbit.
+-- @field #number orbitSpeed Orbit speed in m/s.
+-- @field #number orbitHeading Orbit heading in degrees.
+-- @field #number orbitLeg Length of orbit leg in meters.
 -- @field Core.Zone#ZONE_RADIUS zoneEngage *Circular* engagement zone.
 -- @field #table typeTargets Table of target types that are engaged in the engagement zone.
 -- @field Core.Point#COORDINATE coordTarget Coordinate of target location.
@@ -121,13 +121,15 @@ AUFTRAG.Type={
 -- @field #string STARTED Mission started but is not executed yet.
 -- @field #string EXECUTING Mission is being executed.
 -- @field #string DONE Mission is over.
+-- @field #string ANY The ANY "*" state.
 AUFTRAG.Status={
   PLANNED="planned",
   SCHEDULED="scheduled",
   ASSIGNED="assigned",
   STARTED="started",
   EXECUTING="executing",
-  DONE="Done",
+  DONE="done",
+  ANY="Any",
 }
 
 
@@ -148,7 +150,7 @@ AUFTRAG.version="0.0.1"
 -- Constructor
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Create a new AUFTRAG object and start the FSM.
+--- Create a new AUFTRAG object.
 -- @param #AUFTRAG self
 -- @param #string Type Mission type.
 -- @return #AUFTRAG self
@@ -164,35 +166,40 @@ function AUFTRAG:New(Type)
   
   self.auftragsnummer=_AUFTRAGSNR
   
-  self.status=AUFTRAG.Status.SCHEDULED
+  self.status=AUFTRAG.Status.PLANNED
   
   self.name=string.format("Auftrag #%d", self.auftragsnummer)
   
   self.lid=string.format("Auftrag #%d %s | ", self.auftragsnummer, self.type)
   
-  self:AddTransition("*",             "Start",     "*")   -- Mission has started.
-  self:AddTransition("*",             "Update",    "*")   -- Mission is updated with latest data.
-  self:AddTransition("*",             "Done",      "*")    -- Mission is over.
-  self:AddTransition("*",             "Abort",     "*")    -- Mission is aborted.
-
+  self:SetStartState(self.status)
+  
+  --[[
+  self:AddTransition(AUFTRAG.Status.PLANNED,   "Start",    AUFTRAG.Status.STARTED) -- Mission has started.
+  self:AddTransition(AUFTRAG.Status.,   "Start",    AUFTRAG.Status.STARTED) -- Mission has started.  
+  self:AddTransition("*",   "Done",     "*") -- Mission is over.
+  self:AddTransition(AUFTRAG.Status.ANY,       "Update",   AUFTRAG.Status.ANY) -- Mission is updated with latest data.
+  self:AddTransition("*",   "Abort",    "*") -- Mission is aborted.
+  ]]
+  
   return self
 end
 
 --- Create a new AUFTRAG object and start the FSM.
 -- @param #AUFTRAG self
--- @param Core.Point#COORDINATE OrbitCoordinate Where to orbit. Altitude is also taken from the coordinate. 
--- @param #number OrbitSpeed Orbit speed in knots. Default 350 kts.
+-- @param Core.Point#COORDINATE Coordinate Where to orbit. Altitude is also taken from the coordinate.
+-- @param #number Speed Orbit speed in knots. Default 350 kts. 
 -- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
 -- @param #number Leg Length of race-track in NM. Default 10 NM.
 -- @return #AUFTRAG self
-function AUFTRAG:NewORBIT(OrbitCoordinate, OrbitSpeed, Heading, Leg)
+function AUFTRAG:NewORBIT(Coordinate, Speed, Heading, Leg)
 
   local auftrag=AUFTRAG:New(AUFTRAG.Type.ORBIT)
   
-  auftrag.coordOrbit=OrbitCoordinate
-  auftrag.speedOrbit=UTILS.KnotsToMps(OrbitSpeed or 350)
-  auftrag.heading=Heading or 270
-  auftrag.leg=UTILS.NMToMeters(Leg or 10)
+  auftrag.orbitCoord   = Coordinate
+  auftrag.orbitHeading = Heading or 270
+  auftrag.orbitLeg     = UTILS.NMToMeters(Leg or 10)
+  auftrag.orbitSpeed   = UTILS.KnotsToMps(Speed or 350)  
 
   auftrag.DCStask=auftrag:GetDCSMissionTask()
 
@@ -222,7 +229,7 @@ function AUFTRAG:NewCAP(OrbitCoordinate, OrbitSpeed, Heading, Leg, ZoneCAP, Targ
   
   -- CAP paramters.
   mission.type=AUFTRAG.Type.CAP
-  mission.zoneEngage=ZoneCAP or ZONE_RADIUS:New("CAP Zone", OrbitCoordinate:GetVec2(), mission.leg)
+  mission.zoneEngage=ZoneCAP or ZONE_RADIUS:New("CAP Zone", OrbitCoordinate:GetVec2(), mission.orbitLeg)
   mission.typeTargets=TargetTypes or {"Air"}
   
   mission.DCStask=mission:GetDCSMissionTask()
@@ -467,9 +474,9 @@ function AUFTRAG:GetDCSMissionTask()
     -- CAP Mission --
     -----------------  
 
-    local CoordRaceTrack=self.coordOrbit:Translate(self.leg, self.heading, true)
+    local CoordRaceTrack=self.orbitCoord:Translate(self.orbitLeg, self.orbitHeading, true)
   
-    local DCStask=CONTROLLABLE.TaskOrbit(nil, self.coordOrbit, self.coordOrbit.y, self.speedOrbit, CoordRaceTrack)
+    local DCStask=CONTROLLABLE.TaskOrbit(nil, self.orbitCoord, self.orbitCoord.y, self.orbitSpeed, CoordRaceTrack)
     
     -- TODO! Could be added in the same task!
     self:AddTaskEnrouteEngageTargetsInZone(self.zoneEngage, self.typeTargets, self.prio)
@@ -482,9 +489,9 @@ function AUFTRAG:GetDCSMissionTask()
     -- CAS Mission --
     -----------------
 
-    local CoordRaceTrack=self.coordOrbit:Translate(self.leg, self.heading, true)
+    local CoordRaceTrack=self.orbitCoord:Translate(self.orbitLeg, self.orbitHeading, true)
   
-    local DCStask=CONTROLLABLE.TaskOrbit(nil, self.coordOrbit, self.coordOrbit.y, self.speedOrbit, CoordRaceTrack)
+    local DCStask=CONTROLLABLE.TaskOrbit(nil, self.orbitCoord, self.orbitCoord.y, self.orbitSpeed, CoordRaceTrack)
     
     self:AddTaskEnrouteEngageTargetsInZone(self.zoneEngage, self.typeTargets, self.prio)
     
@@ -532,9 +539,9 @@ function AUFTRAG:GetDCSMissionTask()
     -- ORBIT Mission --
     -------------------
           
-    local CoordRaceTrack=self.coordOrbit:Translate(self.leg, self.heading, true)
+    local CoordRaceTrack=self.orbitCoord:Translate(self.orbitLeg, self.orbitHeading, true)
   
-    local DCStask=CONTROLLABLE.TaskOrbit(nil, self.coordOrbit, self.coordOrbit.y, self.speedOrbit, CoordRaceTrack)
+    local DCStask=CONTROLLABLE.TaskOrbit(nil, self.orbitCoord, self.orbitCoord.y, self.orbitSpeed, CoordRaceTrack)
     
     table.insert(DCStasks, DCStask)
   
