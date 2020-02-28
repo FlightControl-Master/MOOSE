@@ -21,30 +21,45 @@
 -- @field #string type Mission type.
 -- @field #string status Mission status.
 -- @field #string name Mission name.
--- @field #number mid Mission ID.
 -- @field #number prio Mission priority.
 -- @field #number Tstart Mission start time in seconds.
 -- @field #number Tstop Mission stop time in seconds.
 -- @field #number duration Mission duration in seconds.
+-- @field #number marker F10 map marker ID.
 -- @field #table DCStask DCS task structure.
+-- 
 -- @field Core.Point#COORDINATE waypointcoord Coordinate of the waypoint task.
 -- @field #number waypointindex Waypoint number at which the task is executed. 
 -- @field Ops.FlightGroup#FLIGHTGROUP.Task waypointtask Waypoint task.
--- @field #number marker F10 map marker ID.
+-- 
 -- @field Core.Point#COORDINATE orbitCoord Coordinate where to orbit.
 -- @field #number orbitSpeed Orbit speed in m/s.
 -- @field #number orbitHeading Orbit heading in degrees.
 -- @field #number orbitLeg Length of orbit leg in meters.
--- @field Core.Zone#ZONE_RADIUS zoneEngage *Circular* engagement zone.
--- @field #table typeTargets Table of target types that are engaged in the engagement zone.
--- @field Core.Point#COORDINATE coordTarget Coordinate of target location.
--- @field Core.Set#SET_GROUP groupsetTargets Set of target groups to attack.
--- @field #string squadname Name of the assigned squadron.
--- @field #table assets Assets assigned for this mission.
--- @field #number nassets Number of required assets.
+-- 
+-- @field Core.Zone#ZONE_RADIUS engageZone *Circular* engagement zone.
+-- @field #table engageTargetTypes Table of target types that are engaged in the engagement zone.
+-- @field Core.Point#COORDINATE engageCoord Coordinate of target location.
+-- @field Core.Set#SET_GROUP engageTargetGroupset Set of target groups to attack.
+-- @field Core.Set#SET_GROUP engageTargetUnitset Set of target units to attack.
+-- @field #number engageAltitude Engagement altitude in meters.
+-- @field #number engageDirection Engagement direction in degrees.
+-- @field #number engageQuantity Number of times a target is engaged.
+-- @field #number engageWeaponType Weapon type used.
+-- @field #number engageWeaponExpend How many weapons are used.
+-- @field #boolean engageAsGroup Group attack.
+-- @field #number engageMaxDistance Max engage distance.
+-- 
+-- @field Wrapper.Group#GROUP escortGroup The group to be escorted.
+-- @field DCS#Vec3 escortVec3 The 3D offset vector from the escorted group to the escort group.
+-- 
+-- @field #string squadname Name of the assigned Airwing squadron.
+-- @field #table assets Airwing Assets assigned for this mission.
+-- @field #number nassets Number of required assets by the Airwing.
+-- 
 -- @extends Core.Fsm#FSM
 
---- *To invent an airplane is nothing. To build one is something. To fly is everything.* -- Otto Lilienthal
+--- *A warrior's mission is to foster the success of others.* --- Morihei Ueshiba
 --
 -- ===
 --
@@ -55,7 +70,7 @@
 -- # Events
 -- 
 -- 
--- # Tasking
+-- # Missions
 -- 
 -- 
 -- # Examples
@@ -116,32 +131,31 @@ AUFTRAG.Type={
 --- Mission status.
 -- @type AUFTRAG.Status
 -- @field #string PLANNED Mission is at the early planning stage.
--- @field #string SCHEDULED Mission is scheduled in a queue waiting to be assigned.
+-- @field #string QUEUED Mission is queued at an airwing.
 -- @field #string ASSIGNED Mission was assigned to somebody.
+-- @field #string SCHEDULED Mission is scheduled in a FLIGHGROUP queue waiting to be started.
 -- @field #string STARTED Mission started but is not executed yet.
 -- @field #string EXECUTING Mission is being executed.
 -- @field #string DONE Mission is over.
--- @field #string ANY The ANY "*" state.
 AUFTRAG.Status={
   PLANNED="planned",
-  SCHEDULED="scheduled",
+  QUEUED="queued",
   ASSIGNED="assigned",
+  SCHEDULED="scheduled",
   STARTED="started",
   EXECUTING="executing",
   DONE="done",
-  ANY="Any",
 }
 
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.0.1"
+AUFTRAG.version="0.0.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: A lot
 -- TODO: Mission ROE and ROT
 -- TODO: Mission formation, etc.
 -- TODO: FSM events.
@@ -170,22 +184,33 @@ function AUFTRAG:New(Type)
   
   self.name=string.format("Auftrag #%d", self.auftragsnummer)
   
+  self.prio=50
+  
   self.lid=string.format("Auftrag #%d %s | ", self.auftragsnummer, self.type)
   
   self:SetStartState(self.status)
   
-  --[[
-  self:AddTransition(AUFTRAG.Status.PLANNED,   "Start",    AUFTRAG.Status.STARTED) -- Mission has started.
-  self:AddTransition(AUFTRAG.Status.,   "Start",    AUFTRAG.Status.STARTED) -- Mission has started.  
-  self:AddTransition("*",   "Done",     "*") -- Mission is over.
-  self:AddTransition(AUFTRAG.Status.ANY,       "Update",   AUFTRAG.Status.ANY) -- Mission is updated with latest data.
-  self:AddTransition("*",   "Abort",    "*") -- Mission is aborted.
-  ]]
+  -- PLANNED --> (QUEUED) --> (ASSIGNED) --> SCHEDULED --> STARTED --> EXECUTING --> DONE
+  self:AddTransition(AUFTRAG.Status.PLANNED,   "Queue",    AUFTRAG.Status.QUEUED)    --
+  self:AddTransition(AUFTRAG.Status.QUEUED,    "Assign",   AUFTRAG.Status.ASSIGNED)  --
+  self:AddTransition(AUFTRAG.Status.ASSIGNED,  "Schedule", AUFTRAG.Status.SCHEDULED) --  
+  self:AddTransition(AUFTRAG.Status.PLANNED,   "Schedule", AUFTRAG.Status.SCHEDULED) -- From planned directly to scheduled.  
+  self:AddTransition(AUFTRAG.Status.SCHEDULED, "Start",    AUFTRAG.Status.STARTED)   --
+  self:AddTransition(AUFTRAG.Status.STARTED,   "Execute",  AUFTRAG.Status.EXECUTING) --
+  self:AddTransition(AUFTRAG.Status.EXECUTING, "Done",     AUFTRAG.Status.DONE)      --   
   
+  self:AddTransition("*",                      "Cancel",       "Cancelled")
+  self:AddTransition("*",                      "Accomplished", "Success")
+  self:AddTransition("*",                      "Failed",       "Failure")
+    
   return self
 end
 
---- Create a new AUFTRAG object and start the FSM.
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Create Missions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Create an ORBIT mission.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Where to orbit. Altitude is also taken from the coordinate.
 -- @param #number Speed Orbit speed in knots. Default 350 kts. 
@@ -229,8 +254,8 @@ function AUFTRAG:NewCAP(OrbitCoordinate, OrbitSpeed, Heading, Leg, ZoneCAP, Targ
   
   -- CAP paramters.
   mission.type=AUFTRAG.Type.CAP
-  mission.zoneEngage=ZoneCAP or ZONE_RADIUS:New("CAP Zone", OrbitCoordinate:GetVec2(), mission.orbitLeg)
-  mission.typeTargets=TargetTypes or {"Air"}
+  mission.engageZone=ZoneCAP or ZONE_RADIUS:New("CAP Zone", OrbitCoordinate:GetVec2(), mission.orbitLeg)
+  mission.engageTargetTypes=TargetTypes or {"Air"}
   
   mission.DCStask=mission:GetDCSMissionTask()
   
@@ -260,8 +285,8 @@ function AUFTRAG:NewCAS(OrbitCoordinate, OrbitSpeed, Heading, Leg, ZoneCAS, Targ
 
   -- CAS paramters.
   mission.type=AUFTRAG.Type.CAS
-  mission.zoneEngage=ZoneCAS or ZONE_RADIUS:New("CAS Zone", OrbitCoordinate:GetVec2(), Leg)
-  mission.typeTargets=TargetTypes or {"Helicopters", "Ground Units", "Light armed ships"}
+  mission.engageZone=ZoneCAS or ZONE_RADIUS:New("CAS Zone", OrbitCoordinate:GetVec2(), Leg)
+  mission.engageTargetTypes=TargetTypes or {"Helicopters", "Ground Units", "Light armed ships"}
   
   mission.DCStask=mission:GetDCSMissionTask()
   
@@ -273,14 +298,14 @@ end
 --- Create a STRIKE mission. Flight will attack a specified coordinate.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Target Coordinate.
--- @param #number Altitude Attack altitude in feet. Default 1000.
+-- @param #number Altitude Engage altitude in feet. Default 1000.
 -- @return #AUFTRAG self
 function AUFTRAG:NewSTRIKE(TargetCoordinate, Altitude)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.STRIKE)
   
-  mission.coordTarget=TargetCoordinate
-  mission.altitude=UTILS.FeetToMeters(Altitude or 1000)
+  mission.engageCoord=TargetCoordinate
+  mission.engageAltitude=UTILS.FeetToMeters(Altitude or 1000)
   
   mission.DCStask=mission:GetDCSMissionTask()
   
@@ -300,8 +325,8 @@ function AUFTRAG:NewINTERCEPT(TargetGroupSet)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.INTERCEPT)
   
-  mission.groupsetTargets=TargetGroupSet  
-  mission.groupsetTargets:FilterDeads():FilterCrashes()
+  mission.engageTargetGroupset=TargetGroupSet  
+  mission.engageTargetGroupset:FilterDeads():FilterCrashes()
   
   mission.DCStask=mission:GetDCSMissionTask()
   
@@ -321,8 +346,8 @@ function AUFTRAG:NewBAI(TargetGroupSet)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.BAI)
 
-  mission.groupsetTargets=TargetGroupSet  
-  mission.groupsetTargets:FilterDeads():FilterCrashes()
+  mission.engageTargetGroupset=TargetGroupSet  
+  mission.engageTargetGroupset:FilterDeads():FilterCrashes()
   
   mission.DCStask=mission:GetDCSMissionTask()
   
@@ -371,7 +396,7 @@ end
 
 --- Set mission priority.
 -- @param #AUFTRAG self
--- @param #number Prio Priority 1=high, 100=low. Default 50
+-- @param #number Prio Priority 1=high, 100=low. Default 50.
 -- @return #AUFTRAG self
 function AUFTRAG:SetPriority(Prio)
   self.prio=Prio or 50
@@ -387,6 +412,25 @@ function AUFTRAG:SetName(Name)
   return self
 end
 
+--- Set weapon type used for the engagement.
+-- @param #AUFTRAG self
+-- @param #number WeaponType Weapon type. Default is ENUMS.WeaponFlag.Auto
+-- @return #AUFTRAG self
+function AUFTRAG:SetWeaponType(WeaponType)
+  
+  self.engageWeaponType=WeaponType or ENUMS.WeaponFlag.Auto
+  
+  -- Update the DCS task parameter.
+  self.DCStask=self:GetDCSMissionTask()
+  
+  return self
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- FSM Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -397,29 +441,30 @@ end
 function AUFTRAG:CountMissionTargets()
   
   local N=0
-  if self.groupsetTargets then
-    local n=self.groupsetTargets:CountAlive()
+  if self.engageTargetGroupset then
+    local n=self.engageTargetGroupset:CountAlive()
     N=N+n
   end
 
-  if self.unitsetTargets then
-    local n=self.unitsetTargets:CountAlive()
+  if self.engageTargetUnitset then
+    local n=self.engageTargetUnitset:CountAlive()
     N=N+n
   end
   
   return N
 end
 
---- Count alive mission targets.
+--- Get coordinate of target. First unit/group of the set is used.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE The target coordinate or nil.
 function AUFTRAG:GetTargetCoordinate()
 
-  if self.groupsetTargets then
-    local group=self.groupsetTargets:GetFirst() --Wrapper.Group#GROUP
+  if self.engageTargetGroupset then
+  
+    local group=self.engageTargetGroupset:GetFirst() --Wrapper.Group#GROUP
     return group:GetCoordinate()
-  elseif self.unitsetTargets then
-    local unit=self.unitsetTargets:GetFirst() --Wraper.Unit#UNIT
+  elseif self.engageTargetUnitset then
+    local unit=self.engageTargetUnitset:GetFirst() --Wrapper.Unit#UNIT
     return unit:GetCoordinate()
   end
 
@@ -440,13 +485,22 @@ function AUFTRAG:GetDCSMissionTask()
     -- ANTISHIP Mission --
     ----------------------
 
-    local DCStask=CONTROLLABLE.TaskAttackUnit(nil, AttackUnit, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType)
+    for _,_unit in pairs(self.engageTargetUnitset:GetSet()) do
+      local TargetUnit=_unit
+
+      local DCStask=CONTROLLABLE.TaskAttackUnit(nil, TargetUnit, self.engageAltitude, self.WeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType)
+      
+    end
   
   elseif self.type==AUFTRAG.Type.AWACS then
   
     -------------------
     -- AWACS Mission --
     -------------------  
+
+    local DCStask=CONTROLLABLE.EnRouteTaskAWACS(nil)
+    
+    table.insert(DCStasks, DCStask)
     
   elseif self.type==AUFTRAG.Type.BAI then
   
@@ -454,10 +508,10 @@ function AUFTRAG:GetDCSMissionTask()
     -- BAI Mission --
     -----------------  
 
-    for _,_group in pairs(self.groupsetTargets:GetSet()) do
+    for _,_group in pairs(self.engageTargetGroupset:GetSet()) do
       local TargetGroup=_group
   
-      local DCStask=CONTROLLABLE.TaskAttackGroup(nil, TargetGroup, ENUMS.WeaponFlag.Auto, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit)
+      local DCStask=CONTROLLABLE.TaskAttackGroup(nil, TargetGroup, self.engageWeaponType, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude)
       
       table.insert(DCStasks, DCStask)
     end
@@ -468,18 +522,19 @@ function AUFTRAG:GetDCSMissionTask()
     -- BOMBING Mission --
     ---------------------
   
+    local Vec2=self.engageCoord:GetVec2()
+  
+    local DCStask=CONTROLLABLE.TaskBombing(self,Vec2, self.engageAsGroup, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType, Divebomb)
+  
+    table.insert(DCStasks, DCStask)
+  
   elseif self.type==AUFTRAG.Type.CAP then
   
     -----------------
     -- CAP Mission --
     -----------------  
 
-    local CoordRaceTrack=self.orbitCoord:Translate(self.orbitLeg, self.orbitHeading, true)
-  
-    local DCStask=CONTROLLABLE.TaskOrbit(nil, self.orbitCoord, self.orbitCoord.y, self.orbitSpeed, CoordRaceTrack)
-    
-    -- TODO! Could be added in the same task!
-    self:AddTaskEnrouteEngageTargetsInZone(self.zoneEngage, self.typeTargets, self.prio)
+    local DCStask=CONTROLLABLE.EnRouteTaskEngageTargetsInZone(self.engageZone:GetVec2(), self.engageZone:GetRadius(), self.engageTargetTypes, Priority)
     
     table.insert(DCStasks, DCStask)
   
@@ -489,11 +544,7 @@ function AUFTRAG:GetDCSMissionTask()
     -- CAS Mission --
     -----------------
 
-    local CoordRaceTrack=self.orbitCoord:Translate(self.orbitLeg, self.orbitHeading, true)
-  
-    local DCStask=CONTROLLABLE.TaskOrbit(nil, self.orbitCoord, self.orbitCoord.y, self.orbitSpeed, CoordRaceTrack)
-    
-    self:AddTaskEnrouteEngageTargetsInZone(self.zoneEngage, self.typeTargets, self.prio)
+    local DCStask=CONTROLLABLE.EnRouteTaskEngageTargetsInZone(self.engageZone:GetVec2(), self.engageZone:GetRadius(), self.engageTargetTypes, Priority)
     
     table.insert(DCStasks, DCStask)
 
@@ -503,7 +554,9 @@ function AUFTRAG:GetDCSMissionTask()
     -- ESCORT Mission --
     --------------------
 
-    local DCStask=CONTROLLABLE.TaskEscort(nil, FollowControllable, Vec3, LastWaypointIndex, EngagementDistance, TargetTypes)
+    local DCStask=CONTROLLABLE.TaskEscort(nil, self.escortGroup, self.escortVec3, LastWaypointIndex, self.engageMaxDistance, self.engageTargetTypes)
+    
+    table.insert(DCStasks, DCStask)
 
   elseif self.type==AUFTRAG.Type.FACA then
   
@@ -511,7 +564,9 @@ function AUFTRAG:GetDCSMissionTask()
     -- FAC Mission --
     -----------------  
 
-    local DCStask=CONTROLLABLE.TaskFAC_AttackGroup(nil, AttackGroup, WeaponType, Designation, Datalink)
+    local DCStask=CONTROLLABLE.TaskFAC_AttackGroup(nil, self.engageAsGroup, self.engageWeaponType, Designation, Datalink)
+    
+    table.insert(DCStasks, DCStask)
   
   elseif self.type==AUFTRAG.Type.FERRY then
   
@@ -525,10 +580,10 @@ function AUFTRAG:GetDCSMissionTask()
     -- INTERCEPT Mission --
     -----------------------
 
-    for _,group in pairs(self.groupsetTargets:GetSet()) do
+    for _,group in pairs(self.engageTargetGroupset:GetSet()) do
       local TargetGroup=group --Wrapper.Group#GROUP
   
-      local DCStask=CONTROLLABLE.TaskAttackGroup(nil, TargetGroup, ENUMS.WeaponFlag.Auto, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit)
+      local DCStask=CONTROLLABLE.TaskAttackGroup(nil, TargetGroup, self.engageWeaponType, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude)
       
       table.insert(DCStasks, DCStask)
     end
@@ -538,12 +593,8 @@ function AUFTRAG:GetDCSMissionTask()
     -------------------
     -- ORBIT Mission --
     -------------------
-          
-    local CoordRaceTrack=self.orbitCoord:Translate(self.orbitLeg, self.orbitHeading, true)
   
-    local DCStask=CONTROLLABLE.TaskOrbit(nil, self.orbitCoord, self.orbitCoord.y, self.orbitSpeed, CoordRaceTrack)
-    
-    table.insert(DCStasks, DCStask)
+    -- Done below as also other mission types use the orbit task.
   
   elseif self.type==AUFTRAG.Type.RECON then
   
@@ -557,9 +608,9 @@ function AUFTRAG:GetDCSMissionTask()
     -- STIKE Mission --
     -------------------  
 
-    local Vec2=self.coordtarget:GetVec2()
+    local Vec2=self.engageCoord:GetVec2()
   
-    local DCStask=CONTROLLABLE.TaskAttackMapObject(nil, Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, self.altitude, WeaponType)
+    local DCStask=CONTROLLABLE.TaskAttackMapObject(nil, Vec2, self.engageAsGroup, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType)
     
     table.insert(DCStasks, DCStask)
   
@@ -568,13 +619,38 @@ function AUFTRAG:GetDCSMissionTask()
     --------------------
     -- TANKER Mission --
     -------------------- 
+
+    local DCStask=CONTROLLABLE.EnRouteTaskTanker(nil)
+    
+    table.insert(DCStasks, DCStask)
   
   elseif self.type==AUFTRAG.Type.TRANSPORT then
+
+    -----------------------
+    -- TRANSPORT Mission --
+    ----------------------- 
   
   else
     self:E(self.lid..string.format("ERROR: Unknown mission task!"))
     return nil
   end
+  
+  
+  -- Set ORBIT task. Also applies to other missions: AWACS, TANKER, CAP, CAS.
+  if self.type==AUFTRAG.Type.ORBIT or self.type==AUFTRAG.Type.CAP or self.type==AUFTRAG.Type.CAS or self.type==AUFTRAG.Type.AWACS or self.type==AUFTRAG.Type.TANKER then
+
+    -------------------
+    -- ORBIT Mission --
+    -------------------
+          
+    local CoordRaceTrack=self.orbitCoord:Translate(self.orbitLeg, self.orbitHeading, true)
+  
+    local DCStask=CONTROLLABLE.TaskOrbit(nil, self.orbitCoord, self.orbitCoord.y, self.orbitSpeed, CoordRaceTrack)
+    
+    table.insert(DCStasks, DCStask)
+  
+  end
+  
 
   if #DCStasks==1 then
     return DCStasks[1]

@@ -137,12 +137,15 @@ end
 -- User functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Set livery.
+--- Add an airwing to the wingcommander.
 -- @param #WINGCOMMANDER self
--- @param #string liveryname Name of the livery.
+-- @param Ops.AirWing#AIRWING Airwing The airwing to add.
 -- @return #WINGCOMMANDER self
-function WINGCOMMANDER:SetLivery(liveryname)
-  self.livery=liveryname
+function WINGCOMMANDER:AddAirwing(Airwing)
+
+  --table.insert(self.airwings, Airwing)
+  
+  self.airwings[Airwing.alias]=Airwing
   
   return self
 end

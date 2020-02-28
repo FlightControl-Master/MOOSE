@@ -39,10 +39,9 @@ AIRWING = {
   Debug          = false,
   lid            =   nil,
   menu           =   nil,
-  squadrons      =   nil,
+  squadrons      =    {},
   missionqueue   =    {},
   payloads       =    {},
-  payloadcounter =   nil,
 }
 
 --- Squadron data.
@@ -84,7 +83,7 @@ AIRWING.version="0.1.2"
 -- DONE: Build mission queue.
 -- DONE: Find way to start missions.
 -- TODO: Check if missions are accomplished.
--- TODO: Paylods as assets.
+-- TODO: Payloads as resources.
 -- TODO: Spawn in air or hot.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -105,11 +104,6 @@ function AIRWING:New(warehousename, airwingname)
     BASE:E(string.format("ERROR: Could not find warehouse %s!", warehousename))
     return nil
   end
-
-  -- Squadrons.
-  self.squadrons={}
-
-  self.payloadcounter=0
 
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("AIRWING %s | ", self.alias)
@@ -333,7 +327,10 @@ function AIRWING:AddMission(Mission, Nassets, WaypointCoordinate)
   Mission.waypointindex=nil
   
   -- Set status to scheduled.
-  Mission.status=AUFTRAG.Status.SCHEDULED
+  Mission.status=AUFTRAG.Status.QUEUED
+  
+  -- Todo call FSM event.
+  --Mission:Queue()
 
   -- Add mission to queue.
   table.insert(self.missionqueue, Mission)
@@ -457,8 +454,7 @@ function AIRWING:_GetNextMission()
   local function _sort(a, b)
     local taskA=a --Ops.Auftrag#AUFTRAG
     local taskB=b --Ops.Auftrag#AUFTRAG
-    --TODO: probably sort by prio first and then by time as only missions for T>Tstart are executed. That would ensure that the highest prio mission is carried out first!
-    return (taskA.Tstart<taskB.Tstart) or (taskA.Tstart==taskB.Tstart and taskA.prio<taskB.prio)
+    return (taskA.prio<taskB.prio) or (taskA.prio==taskB.prio and taskA.Tstart<taskB.Tstart)
   end
   table.sort(self.missionqueue, _sort)
   
@@ -470,7 +466,7 @@ function AIRWING:_GetNextMission()
     local mission=_mission --Ops.Auftrag#AUFTRAG
     
     -- Firstly, check if mission is due?
-    if mission.status==AUFTRAG.Status.SCHEDULED and time>=mission.Tstart then
+    if mission.status==AUFTRAG.Status.QUEUED and time>=mission.Tstart then
         
       -- Check if airwing can do the mission and gather required assets.
       local can, assets=self:CanMission(mission.type, mission.nassets)
@@ -485,12 +481,13 @@ function AIRWING:_GetNextMission()
         --self:_OptimizeAssetSelection(assets, mission)
       
         -- TODO: check that mission.assets table is clean.
-        mission.assets=mission.assets or {}
+        mission.assets={}
       
         -- Assign assets to mission.
         for i=1,mission.nassets do      
           local asset=assets[i] --#AIRWING.SquadronAsset
           
+          -- Get payload for the asset.
           asset.payload=self:FetchPayloadFromStock(asset.unittype, mission.type)
           
           if not asset.payload then
@@ -619,7 +616,7 @@ function AIRWING:onafterMissionRequest(From, Event, To, Mission)
   -- Need to dived to set into spawned and instock assets and handle the other
   
   -- Assets to be requested
-  local areq={}
+  local Assetlist={}
   
   for _,_asset in pairs(Mission.assets) do
     local asset=_asset --#AIRWING.SquadronAsset
@@ -628,20 +625,20 @@ function AIRWING:onafterMissionRequest(From, Event, To, Mission)
     
       if asset.flightgroup then
         --TODO: cancel current mission if there is any!
-        asset.flightgroup:AddMission(asset.mission, asset.mission.waypointcoord, asset.mission.waypointindex)
+        asset.flightgroup:AddMission(Mission, Mission.waypointcoord, Mission.waypointindex)
       else
         --TODO: create flightgroup. should already be there actually!
       end    
     
     else
       -- These assets need to be requested and spawned.
-      table.insert(areq, asset)
+      table.insert(Assetlist, asset)
     end
   end
 
   -- Add request to airwing warehouse.
-  if #areq>0 then
-    self:AddRequest(self, WAREHOUSE.Descriptor.ASSETLIST, areq, #areq, nil, nil, Mission.prio, tostring(Mission.auftragsnummer))
+  if #Assetlist>0 then
+    self:AddRequest(self, WAREHOUSE.Descriptor.ASSETLIST, Assetlist, #Assetlist, nil, nil, Mission.prio, tostring(Mission.auftragsnummer))
   end
 
 end
@@ -654,18 +651,17 @@ end
 -- @param Functional.Warehouse#WAREHOUSE.Queueitem Request Information table of the request.
 function AIRWING:onafterRequest(From, Event, To, Request)
 
-  -- Modify the cargo assets.
+  -- Assets
   local assets=Request.cargoassets
   
+  -- Get Mission
   local Mission=self:GetMissionByID(Request.assignment)
   
   if Mission and assets then
   
     for _,_asset in pairs(assets) do
-      local asset=_asset --#AIRWING.SquadronAsset
-      
-      --asset.payload=Mission.payload
-      
+      local asset=_asset --#AIRWING.SquadronAsset      
+      -- This would be the place to modify the asset table before the asset is spawned.
     end
     
   end
@@ -696,13 +692,9 @@ function AIRWING:onafterAssetSpawned(From, Event, To, group, asset, request)
 
   -- Add mission to flightgroup queue.
   if mission then
-  
-    -- Set mission.
-    -- TODO: This should not be necessary!
-    asset.mission=mission
-    
+      
     -- Add mission to flightgroup queue.  
-    asset.flightgroup:AddMission(asset.mission, asset.mission.waypointcoord, asset.mission.waypointindex)
+    asset.flightgroup:AddMission(mission, mission.waypointcoord, mission.waypointindex)
   end  
   
 end
@@ -718,20 +710,16 @@ function AIRWING:onafterSelfRequest(From, Event, To, groupset, request)
 
   -- Call parent warehouse function first.
   self:GetParent(self).onafterSelfRequest(self, From, Event, To, groupset, request)
-  
-  local mid=tonumber(request.assignment)
-  
-  local mission=self:GetMissionByID(mid)
 
+  -- Get Mission
+  local mission=self:GetMissionByID(request.assignment)
   
   for _,_asset in pairs(request.assets) do
-    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem    
+    local asset=_asset --#AIRWING.SquadronAsset
   end
-  
-  
+    
   for _,_group in pairs(groupset:GetSet()) do
-    local group=_group --Wrapper.Group#GROUP
-      
+    local group=_group --Wrapper.Group#GROUP      
   end
 
 end
@@ -805,7 +793,6 @@ function AIRWING:SquadronCanMission(Squadron, MissionType, Nassets)
   
   if not gotit then
     -- This squad cannot do this mission.
-    env.info("100")
     cando=false
   else
 
@@ -814,13 +801,17 @@ function AIRWING:SquadronCanMission(Squadron, MissionType, Nassets)
       
       -- Check if has already any missions in the queue.
       if self:IsAssetOnMission(asset) then
-        env.info("200")
+
+        ---
+        -- This asset is already on a mission
+        ---
+
         --TODO: This only checks if it has an ORBIT mission. It could have others as well!
         if self:IsAssetOnMission(asset, AUFTRAG.Type.ORBIT) then
-          env.info("300")
+
           -- Check if the payload of this asset is compatible with the mission.
           if self:CheckMissionType(MissionType, asset.payload.missiontypes) then
-            -- TODO: check if asset actually has weapons left!
+            -- TODO: Check if asset actually has weapons left. Difficult!
             table.insert(assets, asset)
           end
           
@@ -831,7 +822,7 @@ function AIRWING:SquadronCanMission(Squadron, MissionType, Nassets)
         ---
         -- This asset as no current mission
         ---
-        env.info("400")
+
         if asset.spawned then
           -- This asset is already spawned. Let's check if it has the right payload.
           if self:CheckMissionType(MissionType, asset.payload.missiontypes) then
@@ -856,7 +847,6 @@ function AIRWING:SquadronCanMission(Squadron, MissionType, Nassets)
   -- Check if required assets are present.
   if Nassets and Nassets > #assets then
     cando=false
-    env.info("500")
   end
 
   return cando, assets
