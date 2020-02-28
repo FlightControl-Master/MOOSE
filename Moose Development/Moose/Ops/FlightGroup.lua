@@ -668,13 +668,16 @@ function FLIGHTGROUP:AddMission(Mission, WaypointCoordinate, WaypointIndex)
   
   -- Set status to scheduled.
   Mission.status=AUFTRAG.Status.SCHEDULED
+  
+  -- Route flight to mission zone.
+  --self:RouteToMission(Mission)  
 
   -- Add mission to queue.
   table.insert(self.missionqueue, Mission)
   
   -- Info text.
   local text=string.format("Added %s mission %s at waypoint #%s. Starting at %s. Stopping at %s", 
-  tostring(Mission.type), tostring(Mission.name), tostring(Mission.waypointindex), UTILS.SecondsToClock(Mission.Tstart, true), Mission.Tstop and UTILS.SecondsToClock(Mission.Tstop, true) or "never")
+  tostring(Mission.type), tostring(Mission.name), tostring(Mission.waypointindex), UTILS.SecondsToClock(Mission.Tstart, true), Mission.Tstop and UTILS.SecondsToClock(Mission.Tstop, true) or "N/A")
   self:I(self.lid..text)
   
   return self
@@ -1069,9 +1072,6 @@ function FLIGHTGROUP:Route(waypoints)
     -- Enroute tasks.
     if self.taskenroute then
       for _,TaskEnroute in pairs(self.taskenroute) do
-        --TODO: maybe add option to enable enroute tasks after a specific waypoint?
-        env.info(string.format("FF enroute task %s", tostring(TaskEnroute.id)))
-        self:I({pararms=TaskEnroute.parms})
         table.insert(Tasks, TaskEnroute)
       end
     end
@@ -1091,7 +1091,7 @@ function FLIGHTGROUP:Route(waypoints)
     end
     
   else
-    self:I(self.lid.."ERROR: Group is not alive!")
+    self:E(self.lid.."ERROR: Group is not alive!")
   end
   
   return self
@@ -1340,7 +1340,10 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   local text=string.format("Missions=%d Current: %s", #self.missionqueue, mymission)
   for i,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
-    text=text..string.format("\n[%d] %s %s status=%s, targets=%d", i, tostring(mission.name), mission.type, tostring(mission.status), mission:CountMissionTargets())
+    local Cstart= UTILS.SecondsToClock(mission.Tstart, true)
+    local Cstop = mission.Tstop and UTILS.SecondsToClock(mission.Tstop, true) or "N/A"
+    text=text..string.format("\n[%d] %s (%s) status=%s, Time=%s-%s, waypoint=%s, prio=%d targets=%d", 
+    i, tostring(mission.name), mission.type, tostring(mission.status), Cstart, Cstop, tostring(mission.waypointindex), mission.prio, mission:CountMissionTargets())
   end
   self:I(self.lid..text)
 
@@ -1564,7 +1567,7 @@ function FLIGHTGROUP:OnEventBirth(EventData)
       end
         
       -- Set element to spawned state.
-      self:I(self.lid..string.format("EVENT: Element %s born ==> spawned", element.name))            
+      self:T3(self.lid..string.format("EVENT: Element %s born ==> spawned", element.name))            
       self:ElementSpawned(element)
       
     end    
@@ -1592,7 +1595,7 @@ function FLIGHTGROUP:OnEventEngineStartup(EventData)
       if self:IsAirborne() or self:IsInbound() or self:IsHolding() then
         -- TODO: what?
       else
-        self:T(self.lid..string.format("EVENT: Element %s started engines ==> taxiing (if AI)", element.name))
+        self:T3(self.lid..string.format("EVENT: Element %s started engines ==> taxiing (if AI)", element.name))
         -- TODO: could be that this element is part of a human flight group.
         -- Problem: when player starts hot, the AI does too and starts to taxi immidiately :(
         --          when player starts cold, ?
@@ -1696,7 +1699,7 @@ function FLIGHTGROUP:OnEventEngineShutdown(EventData)
         
       else
       
-        self:T(self.lid..string.format("EVENT: Element %s shut down engines but is NOT alive ==> waiting for crash event (==> dead)", element.name))
+        self:T2(self.lid..string.format("EVENT: Element %s shut down engines but is NOT alive ==> waiting for crash event (==> dead)", element.name))
 
       end
       
@@ -1766,7 +1769,7 @@ end
 -- @param #string To To state.
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 function FLIGHTGROUP:onafterElementSpawned(From, Event, To, Element)
-  self:I(self.lid..string.format("Element spawned %s", Element.name))
+  self:T(self.lid..string.format("Element spawned %s", Element.name))
 
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.SPAWNED)
@@ -1799,7 +1802,7 @@ end
 -- @param #string To To state.
 -- @param #FLIGHTGROUP.Element Element The flight group element.
 function FLIGHTGROUP:onafterElementParking(From, Event, To, Element)
-  self:I(self.lid..string.format("Element parking %s at spot %s", Element.name, tostring(Element.parking.TerminalID)))
+  self:T(self.lid..string.format("Element parking %s at spot %s", Element.name, tostring(Element.parking.TerminalID)))
   
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.PARKING)
@@ -1822,7 +1825,7 @@ end
 function FLIGHTGROUP:onafterElementEngineOn(From, Event, To, Element)
 
   -- Debug info.
-  self:I(self.lid..string.format("Element %s started engines", Element.name))
+  self:T(self.lid..string.format("Element %s started engines", Element.name))
 
   -- Set element status.
   self:_UpdateStatus(Element, FLIGHTGROUP.ElementStatus.ENGINEON)
@@ -1961,7 +1964,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function FLIGHTGROUP:onafterFlightSpawned(From, Event, To)
-  self:I(self.lid..string.format("FF Flight group %s spawned!", tostring(self.groupname)))
+  self:T(self.lid..string.format("Flight spawned!"))
 
   -- F10 menu.
   if not self.ai then
@@ -1979,7 +1982,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function FLIGHTGROUP:onafterFlightParking(From, Event, To)
-  self:T(self.lid..string.format("Flight is parking %s.", self.groupname))
+  self:T(self.lid..string.format("Flight is parking"))
 
   local airbase=self.group:GetCoordinate():GetClosestAirbase()
   
@@ -2011,7 +2014,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function FLIGHTGROUP:onafterFlightTaxiing(From, Event, To)
-  self:T(self.lid..string.format("Flight is taxiing %s.", self.groupname))
+  self:T(self.lid..string.format("Flight is taxiing"))
   
   -- Parking over.
   self.Tparking=nil
@@ -2043,7 +2046,7 @@ end
 -- @param #string To To state.
 -- @param Wrapper.Airbase#AIRBASE airbase The airbase the flight landed.
 function FLIGHTGROUP:onafterFlightTakeoff(From, Event, To, airbase)
-  self:T(self.lid..string.format("Flight takeoff %s at %s.", self.groupname, airbase and airbase:GetName() or "unknown airbase"))
+  self:T(self.lid..string.format("Flight takeoff from %s.", airbase and airbase:GetName() or "unknown airbase"))
 
   -- Remove flight from all FC queues.
   if self.flightcontrol and airbase and self.flightcontrol.airbasename==airbase:GetName() then
@@ -2063,20 +2066,7 @@ end
 -- @param #string To To state.
 -- @param Wrapper.Airbase#AIRBASE airbase The airbase the flight landed.
 function FLIGHTGROUP:onafterFlightAirborne(From, Event, To, airbase)
-  self:T(self.lid..string.format("Flight airborne %s at %s.", self.groupname,airbase and airbase:GetName() or "unknown airbase"))
-
-  local task=nil
-  if self.istanker then
-    task=self.group:EnRouteTaskTanker()
-  end
-  if self.isawacs then
-    task=self.group:EnRouteTaskAWACS()
-  end
-  
-  if task then
-    self:PushTask(task, 0.1)
-  end
-  
+  self:T(self.lid..string.format("Flight airborne at %s.", airbase and airbase:GetName() or "unknown airbase"))
 end
 
 --- On after "FlightLanding" event.
@@ -2085,7 +2075,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function FLIGHTGROUP:onafterFlightLanding(From, Event, To)
-  self:T(self.lid..string.format("Flight landing %s", self.groupname))
+  self:T(self.lid..string.format("Flight is landing"))
 
   self:_SetElementStatusAll(FLIGHTGROUP.ElementStatus.LANDING)
   
@@ -2098,7 +2088,7 @@ end
 -- @param #string To To state.
 -- @param Wrapper.Airbase#AIRBASE airbase The airbase the flight landed.
 function FLIGHTGROUP:onafterFlightLanded(From, Event, To, airbase)
-  self:T(self.lid..string.format("Flight landed %s at %s.", self.groupname, airbase and airbase:GetName() or "unknown airbase"))
+  self:T(self.lid..string.format("Flight landed at %s.", airbase and airbase:GetName() or "unknown airbase"))
 
   if self:IsLandingAt() then
     self:LandedAt()
@@ -2118,7 +2108,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function FLIGHTGROUP:onafterFlightArrived(From, Event, To)
-  self:T(self.lid..string.format("Flight arrived %s", self.groupname))
+  self:T(self.lid..string.format("Flight arrived"))
 
   -- Remove flight from landing queue.
   if self.flightcontrol then
@@ -2135,7 +2125,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function FLIGHTGROUP:onafterFlightDead(From, Event, To)
-  self:T(self.lid..string.format("Flight dead %s", self.groupname))
+  self:T(self.lid..string.format("Flight dead"))
 
   -- Delete waypoints so they are re-initialized at the next spawn.
   self.waypoints=nil
@@ -2213,7 +2203,7 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
 
   -- Debug info.
   local text=string.format("Updating route n=%d for group %s", n, self.groupname)
-  MESSAGE:New(text, 10):ToAll()
+  MESSAGE:New(text, 10):ToAllIf(false)
   self:I(self.lid..text)
   
   
@@ -2324,6 +2314,8 @@ function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
   self:I(self.lid..text)
   MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
   
+  --[[
+  
   -- Get all waypoint tasks.
   local tasks=self:GetTasksWaypoint(n)
   
@@ -2358,16 +2350,21 @@ function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
     table.insert(taskswp, self.group:TaskControlled(Task.dcstask, TaskCondition))
    
     -- Task done.
-    -- TODO: Maybe the _TaskDone needs to be outside of the TaskCombo?! If task is cancelled, this is not called!
-    -- TODO: Similar with more than one waypoint task! Structure is a bit more complicated I'm afraid.
     table.insert(taskswp, self.group:TaskFunction("FLIGHTGROUP._TaskDone", self, Task))
     
   end
-    
+
+  -- Execute waypoint tasks.
+  if #taskswp>0 then
+    self:SetTask(self.group:TaskCombo(taskswp))
+  end
+  
+  ]]     
   
   -- Final AIR waypoint reached?
-  if n==N then
-  
+  if n==N and false then
+
+    --TODO: Find better way to RTB!  
   
     -- Send flight to destination.
     if self.destbase then
@@ -2377,12 +2374,7 @@ function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
     else
       self:E(self.lid.."ERROR: Reached final waypoint but no destination set! Don't know what to do?!")
     end
-    
-  else
-    -- Execute waypoint tasks.
-    if #taskswp>0 then
-      self:SetTask(self.group:TaskCombo(taskswp))
-    end    
+
   end
   
 end
@@ -3082,6 +3074,7 @@ end
 function FLIGHTGROUP:onafterMissionExecute(From, Event, To, Mission)
 
   local text=string.format("Executing Mission %s", tostring(Mission.name))
+  self:I(self.lid..text)
   MESSAGE:New(text, 120, "DEBUG"):ToAllIf(true)
   
   Mission.status=AUFTRAG.Status.EXECUTING
@@ -3139,21 +3132,22 @@ function FLIGHTGROUP:RouteToMission(mission, delay)
     -- Delayed call.
     self:ScheduleOnce(delay, FLIGHTGROUP.RouteToMission, self, mission)
   else
-
-    -- Waypoint coordinate where the mission will start.    
-    local Coordinate=mission.waypointcoord
-    
-    -- TODO: better marker text, mission.maker
-    mission.marker=Coordinate:MarkToCoalition(mission.name, self:GetCoalition(), true)
+        
+    -- Next waypoint.
+    local nextwaypoint=self.currentwp+1
   
-    -- Set waypointindex after last waypoint if not specified.
-    mission.waypointindex=mission.waypointindex or #self.waypoints+1
+    -- Execute mission at the given waypoint (but ensure it has not been passed already) or the next waypoint.
+    mission.waypointindex=mission.waypointindex and math.max(mission.waypointindex, nextwaypoint) or nextwaypoint
   
     -- Add waypoint.
-    self:AddWaypointAir(Coordinate, mission.waypointindex, self.speedmax*0.8, false)
+    self:AddWaypointAir(mission.waypointcoord, mission.waypointindex, self.speedmax*0.8, false)
     
     -- Add waypoint task. UpdateRoute is called inside.
     mission.waypointtask=self:AddTaskWaypoint(mission.DCStask, mission.waypointindex, mission.name, mission.prio, mission.duration)
+    
+    -- TODO: better marker text, mission.maker
+    mission.marker=mission.waypointcoord:MarkToCoalition(mission.name, self:GetCoalition(), true)
+    
   end
 end
 
@@ -3202,7 +3196,7 @@ function FLIGHTGROUP._PassingWaypoint(group, flightgroup, i)
   local final=#flightgroup.waypoints or 1
 
   -- Debug message.
-  local text=string.format("Group passing waypoint %d of %d.", group:GetName(), i, final)
+  local text=string.format("Group passing waypoint %d of %d.", i, final)
   flightgroup:T3(flightgroup.lid..text)
 
   -- Set current waypoint.
@@ -3737,7 +3731,7 @@ function FLIGHTGROUP:_UpdateWaypointTasks()
       -- For some reason THIS DOES NOT WORK if executed at the last waypoint if it is an AIR WAYPOINT.
       -- I have moved it to the onafterpassingwaypoint function instead.
       
-      --[[
+      if true then
       
       -- Get taks
       local tasks=self:GetTasksWaypoint(i)
@@ -3754,21 +3748,15 @@ function FLIGHTGROUP:_UpdateWaypointTasks()
         -- Controlled task.      
         table.insert(taskswp, self.group:TaskControlled(Task.dcstask, TaskCondition))
         
-         --table.insert(taskswp, Task.dcstask)
-        
         -- Task done.
         table.insert(taskswp, self.group:TaskFunction("FLIGHTGROUP._TaskDone", self, Task))    
         
       end
       
-      ]]
+      end
           
       -- Waypoint task combo.
       wp.task=self.group:TaskCombo(taskswp)
-          
-      -- Debug info.
-      env.info("FF task waypoint combo:")
-      self:I({wptask=taskswp})
       
     end
   end
@@ -3980,7 +3968,7 @@ function FLIGHTGROUP:_AllSimilarStatus(status)
   for _,_element in pairs(self.elements) do
     local element=_element --#FLIGHTGROUP.Element
     
-    self:T2(self.lid..string.format("Status=%s, element %s status=%s", status, element.name, element.status))
+    self:T3(self.lid..string.format("Status=%s, element %s status=%s", status, element.name, element.status))
 
     -- Dead units dont count ==> We wont return false for those.
     if element.status~=FLIGHTGROUP.ElementStatus.DEAD then
@@ -4036,7 +4024,6 @@ function FLIGHTGROUP:_AllSimilarStatus(status)
           element.status==FLIGHTGROUP.ElementStatus.PARKING or
           element.status==FLIGHTGROUP.ElementStatus.ENGINEON or
           element.status==FLIGHTGROUP.ElementStatus.TAXIING) then
-          self:T3(self.lid..string.format("Status=%s, element %s status=%s ==> returning FALSE", status, element.name, element.status))
           return false
         end
 
@@ -4081,7 +4068,7 @@ function FLIGHTGROUP:_AllSimilarStatus(status)
   end
 
   -- Debug info.
-  self:I(self.lid..string.format("All %d elements have similar status %s ==> returning TRUE", #self.elements, status))
+  self:T2(self.lid..string.format("All %d elements have similar status %s ==> returning TRUE", #self.elements, status))
   
   return true
 end

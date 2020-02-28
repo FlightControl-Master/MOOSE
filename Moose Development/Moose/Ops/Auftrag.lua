@@ -176,21 +176,28 @@ function AUFTRAG:New(Type)
   -- Increase global counter.
   _AUFTRAGSNR=_AUFTRAGSNR+1
   
+  -- Mission type.
   self.type=Type
   
+  -- Auftragsnummer.
   self.auftragsnummer=_AUFTRAGSNR
   
+  -- Log id.
+  self.lid=string.format("Auftrag #%d %s | ", self.auftragsnummer, tostring(self.type))
+  
+  -- State is planned.
   self.status=AUFTRAG.Status.PLANNED
   
-  self.name=string.format("Auftrag #%d", self.auftragsnummer)
+  -- Defaults
+  self:SetName()
+  self:SetPriority()
+  self:SetMissionTime()
   
-  self.prio=50
-  
-  self.lid=string.format("Auftrag #%d %s | ", self.auftragsnummer, self.type)
-  
+  -- FMS start state is PLANNED.
   self:SetStartState(self.status)
   
   -- PLANNED --> (QUEUED) --> (ASSIGNED) --> SCHEDULED --> STARTED --> EXECUTING --> DONE
+  
   self:AddTransition(AUFTRAG.Status.PLANNED,   "Queue",    AUFTRAG.Status.QUEUED)    --
   self:AddTransition(AUFTRAG.Status.QUEUED,    "Assign",   AUFTRAG.Status.ASSIGNED)  --
   self:AddTransition(AUFTRAG.Status.ASSIGNED,  "Schedule", AUFTRAG.Status.SCHEDULED) --  
@@ -394,12 +401,14 @@ function AUFTRAG:SetMissionTime(ClockStart, ClockStop)
   return self
 end
 
---- Set mission priority.
+--- Set mission priority and (optional) urgency. Urgent missions can cancel other running missions. 
 -- @param #AUFTRAG self
 -- @param #number Prio Priority 1=high, 100=low. Default 50.
+-- @param #boolean Urgent If *true*, another running mission might be cancelled if it has a lower priority.
 -- @return #AUFTRAG self
-function AUFTRAG:SetPriority(Prio)
+function AUFTRAG:SetPriority(Prio, Urgent)
   self.prio=Prio or 50
+  self.isurgent=Urgent
   return self
 end
 

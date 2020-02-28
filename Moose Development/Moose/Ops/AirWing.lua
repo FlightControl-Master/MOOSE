@@ -173,7 +173,7 @@ function AIRWING:AddSquadron(SquadronName, MissionTypes, Livery, Skill)
 
   squadron.name=SquadronName
   squadron.assets={}
-  squadron.missiontypes=MissionTypes or {}
+  squadron.missiontypes=MissionTypes
   squadron.livery=Livery
   squadron.skill=Skill
 
@@ -184,32 +184,37 @@ end
 
 --- Add a **new** payload to air wing resources.
 -- @param #AIRWING self
--- @param #string UnitName Name of the unit, the payload is extracted from.
+-- @param Wrapper.Unit#UNIT Unit The unit, the payload is extracted from. Can also be given as *#string* name of the unit.
 -- @param #table MissionTypes Mission types this payload can be used for.
 -- @param #number Npayloads Number of payloads to add to the airwing resources. Default 99 (which should be enough for most scenarios).
 -- @param #boolan Unlimited If true, this payload is unlimited.
 -- @return #AIRWING.Payload The payload table or nil if the unit does not exist.
-function AIRWING:NewPayload(UnitName, MissionTypes, Npayloads, Unlimited)
+function AIRWING:NewPayload(Unit, MissionTypes, Npayloads, Unlimited)
 
-  local unit=UNIT:FindByName(UnitName)
+  if type(Unit)=="string" then
+    Unit=UNIT:FindByName(Unit)
+  end
   
-  if unit then
-  
-    local unitpayload=unit:GetTemplatePayload()
+  if Unit then
     
     local payload={} --#AIRWING.Payload
     
-    payload.unitname=UnitName
-    payload.aircrafttype=unit:GetTypeName()
+    payload.unitname=Unit:GetName()
+    payload.aircrafttype=Unit:GetTypeName()
     payload.missiontypes=MissionTypes or {}
-    payload.pylons=unitpayload
+    payload.pylons=Unit:GetTemplatePayload()
     payload.navail=Npayloads or 99
     payload.unlimited=Unlimited
     if Unlimited then
       payload.navail=1
     end
         
+    -- Add payload
     table.insert(self.payloads, payload)
+    
+    -- Info
+    self:I(self.lid..string.format("Adding new payload from unit %s for aircraft type %s: N=%d (unlimited=%s), missions:", payload.unitname, payload.aircrafttype, payload.navail, tostring(payload.unlimited)))
+    self:I({MissionTypes=payload.missiontypes})
     
     return payload
   end
