@@ -3981,7 +3981,7 @@ end
 -- @param #WAREHOUSE.Assetitem asset The asset that has just been added.
 -- @param #string assignment The (optional) assignment for the asset.
 function WAREHOUSE:onafterNewAsset(From, Event, To, asset, assignment)
-  self:I(self.lid..string.format("New asset %s id=%d with assignment %s.", tostring(asset.templatename), asset.uid, tostring(assignment)))
+  self:T(self.lid..string.format("New asset %s id=%d with assignment %s.", tostring(asset.templatename), asset.uid, tostring(assignment)))
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -2354,7 +2354,7 @@ function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
 
   -- Execute waypoint tasks.
   if #taskswp>0 then
-    self:SetTask(self.group:TaskCombo(taskswp))
+    self:PushTask(self.group:TaskCombo(taskswp))
   end
   
   end
@@ -2954,7 +2954,7 @@ function FLIGHTGROUP:onafterTaskExecute(From, Event, To, Task)
     local TaskFinal=self.group:TaskCombo({TaskControlled, TaskDone})
       
     -- Set task for group.
-    self:SetTask(TaskFinal, 1)
+    self:PushTask(TaskFinal, 1)
         
   end
 
