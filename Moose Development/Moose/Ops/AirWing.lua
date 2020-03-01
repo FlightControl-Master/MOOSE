@@ -72,7 +72,7 @@ AIRWING = {
 
 --- AIRWING class version.
 -- @field #string version
-AIRWING.version="0.1.2"
+AIRWING.version="0.1.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -83,7 +83,7 @@ AIRWING.version="0.1.2"
 -- DONE: Build mission queue.
 -- DONE: Find way to start missions.
 -- TODO: Check if missions are accomplished.
--- TODO: Payloads as resources.
+-- DONE: Payloads as resources.
 -- TODO: Spawn in air or hot.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -332,10 +332,7 @@ function AIRWING:AddMission(Mission, Nassets, WaypointCoordinate)
   Mission.waypointindex=nil
   
   -- Set status to scheduled.
-  Mission.status=AUFTRAG.Status.QUEUED
-  
-  -- Todo call FSM event.
-  --Mission:Queue()
+  Mission:Queue()
 
   -- Add mission to queue.
   table.insert(self.missionqueue, Mission)
@@ -370,8 +367,6 @@ function AIRWING:onafterStart(From, Event, To)
     self:_AddSquadonMenu(squadron)
   end
 
-  -- Init status updates.
-  --self:__AirwingStatus(-1)
 end
 
 --- Update status.
@@ -408,20 +403,17 @@ function AIRWING:onafterStatus(From, Event, To)
       local asset=_asset --#AIRWING.SquadronAsset
       local assignment=asset.assignment or "none"
       local name=asset.templatename
-      local task=asset.mission and asset.mission.name or "none"
       local spawned=tostring(asset.spawned)
       local groupname=asset.spawngroupname
-      local group=nil --Wrapper.Group#GROUP
       local typename=asset.unittype
-      local fuel=100
-      if groupname then
-        group=GROUP:FindByName(groupname)
-        if group then
-          fuel=group:GetFuelMin()
-        end
-      end
       
-      text=text..string.format("\n  -[%d] %s*%d: spawned=%s, mission=%s, fuel=%d", j, typename, asset.nunits, spawned, task, fuel)
+      local mission=self:GetAssetCurrentMission(asset)
+      local missiontext=""
+      if mission then
+        missiontext=string.format(" [%s (%s): status=%s]", mission.type, mission.name, mission.status)
+      end
+            
+      text=text..string.format("\n  -[%d] %s*%d: spawned=%s, mission=%s%s", j, typename, asset.nunits, spawned, tostring(self:IsAssetOnMission(asset)), missiontext)
       
     end
   end
@@ -439,7 +431,6 @@ function AIRWING:onafterStatus(From, Event, To)
     self:MissionRequest(mission)
   end
 
-  --self:__AirwingStatus(-30)
 end
 
 --- Get next mission.
@@ -578,9 +569,9 @@ function AIRWING:onafterNewAsset(From, Event, To, asset, assignment)
   self:GetParent(self).onafterNewAsset(self, From, Event, To, asset, assignment)
   
   -- Get squadron.
-  local squad=self:GetSquadron(assignment)  
+  local squad=self:GetSquadron(asset.assignment)  
 
-  if squad then
+  if squad and asset.assignment==assignment then
   
     -- TODO: Check if asset is already part of the squadron. If an asset returns, it will be added again!
 
@@ -615,7 +606,7 @@ end
 function AIRWING:onafterMissionRequest(From, Event, To, Mission)
 
   -- Set mission status to ASSIGNED.
-  Mission.status=AUFTRAG.Status.ASSIGNED
+  Mission:Assign()
   
   -- Some assets might already be spawned and even on a different mission (orbit).
   -- Need to dived to set into spawned and instock assets and handle the other
@@ -812,7 +803,7 @@ function AIRWING:SquadronCanMission(Squadron, MissionType, Nassets)
         ---
 
         --TODO: This only checks if it has an ORBIT mission. It could have others as well!
-        if self:IsAssetOnMission(asset, AUFTRAG.Type.ORBIT) then
+        if self:IsAssetOnMission(asset, AUFTRAG.Type.ORBIT) and MissionType~=AUFTRAG.Type.ORBIT then
 
           -- Check if the payload of this asset is compatible with the mission.
           if self:CheckMissionType(MissionType, asset.payload.missiontypes) then
@@ -890,6 +881,20 @@ function AIRWING:IsAssetOnMission(asset, MissionTypes)
 
   return false
 end
+
+--- Get the current mission of the asset.
+-- @param #AIRWING self
+-- @param #AIRWING.SquadronAsset asset The asset.
+-- @return Ops.Auftrag#AUFTRAG Current mission or *nil*.
+function AIRWING:GetAssetCurrentMission(asset)
+
+  if asset.flightgroup then  
+    return asset.flightgroup:GetMissionCurrent()  
+  end
+
+  return nil
+end
+
 
 --- Check if assets for a given mission type are available.
 -- @param #AIRWING self

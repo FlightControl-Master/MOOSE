@@ -316,7 +316,7 @@ FLIGHTGROUP.TaskType={
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.3.2"
+FLIGHTGROUP.version="0.3.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -407,7 +407,7 @@ function FLIGHTGROUP:New(groupname, autostart)
 
   self:AddTransition("*",             "PassingWaypoint",   "*")           -- Group passed a waypoint.
   self:AddTransition("*",             "GotoWaypoint",      "*")           -- Group switches to a specific waypoint.
-  self:AddTransition("*",             "Orbit",             "Orbiting")    -- Group is orbiting.  
+  self:AddTransition("*",             "Wait",              "Waiting")     -- Group is orbiting.  
   
   self:AddTransition("*",             "FuelLow",           "*")          -- Fuel state of group is low. Default ~25%.
   self:AddTransition("*",             "FuelCritical",      "*")          -- Fuel state of group is critical. Default ~10%.
@@ -667,10 +667,8 @@ function FLIGHTGROUP:AddMission(Mission, WaypointCoordinate, WaypointIndex)
   Mission.waypointindex=WaypointIndex
   
   -- Set status to scheduled.
-  Mission.status=AUFTRAG.Status.SCHEDULED
-  
-  -- Route flight to mission zone.
-  --self:RouteToMission(Mission)  
+  Mission:Schedule()
+  --Mission.status=AUFTRAG.Status.SCHEDULED
 
   -- Add mission to queue.
   table.insert(self.missionqueue, Mission)
@@ -1319,9 +1317,9 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
     end
     -- Output text for element.
     if task.type==FLIGHTGROUP.TaskType.SCHEDULED then
-      text=text..string.format("\n[%d] %s: %s: status=%s, scheduled=%s (%d sec), started=%s, duration=%d", i, taskid, name, status, clock, eta, started, duration)
+      text=text..string.format("\n[%d] %s (%s): status=%s, scheduled=%s (%d sec), started=%s, duration=%d", i, taskid, name, status, clock, eta, started, duration)
     elseif task.type==FLIGHTGROUP.TaskType.WAYPOINT then
-      text=text..string.format("\n[%d] %s: %s: status=%s, waypoint=%d, started=%s, duration=%d, stopflag=%d", i, taskid, name, status, task.waypoint, started, duration, task.stopflag:Get())
+      text=text..string.format("\n[%d] %s (%s): status=%s, waypoint=%d, started=%s, duration=%d, stopflag=%d", i, taskid, name, status, task.waypoint, started, duration, task.stopflag:Get())
     end
   end
   if #self.taskqueue>0 then
@@ -1337,11 +1335,11 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   local mymission=Mission and Mission.name or "none"
   
   -- Current status.
-  local text=string.format("Missions=%d Current: %s", #self.missionqueue, mymission)
+  local text=string.format("Missions %d, Current: %s", self:CountRemainingMissison(), mymission)
   for i,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
     local Cstart= UTILS.SecondsToClock(mission.Tstart, true)
-    local Cstop = mission.Tstop and UTILS.SecondsToClock(mission.Tstop, true) or "N/A"
+    local Cstop = mission.Tstop and UTILS.SecondsToClock(mission.Tstop, true) or "INF"
     text=text..string.format("\n[%d] %s (%s) status=%s, Time=%s-%s, waypoint=%s, prio=%d targets=%d", 
     i, tostring(mission.name), mission.type, tostring(mission.status), Cstart, Cstop, tostring(mission.waypointindex), mission.prio, mission:CountMissionTargets())
   end
@@ -2310,11 +2308,11 @@ end
 -- @param #number n Waypoint number passed.
 -- @param #number N Final waypoint number.
 function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
-  local text=string.format("Flight %s passed waypoint %d/%d", self.groupname, n, N)
+  local text=string.format("Flight passed waypoint %d/%d", n, N)
   self:I(self.lid..text)
   MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
   
-  --[[
+  if true then
   
   -- Get all waypoint tasks.
   local tasks=self:GetTasksWaypoint(n)
@@ -2359,19 +2357,21 @@ function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
     self:SetTask(self.group:TaskCombo(taskswp))
   end
   
-  ]]     
+  end
   
   -- Final AIR waypoint reached?
-  if n==N and false then
+  if n==N then
 
-    --TODO: Find better way to RTB!  
+    --TODO: Find better way to RTB!
+    self:I(self.lid.."FF group passed final waypoint!")
   
-    -- Send flight to destination.
+    -- Send flight to destination. NOTE that if there are still remaining tasks, the RTB call is delayed by 10 sec until all tasks are done.
     if self.destbase then
       self:__RTB(-1, self.destbase)
     elseif self.destzone then
       self:__RTZ(-1, self.destzone)
     else
+      self:__Wait(-1)
       self:E(self.lid.."ERROR: Reached final waypoint but no destination set! Don't know what to do?!")
     end
 
@@ -2406,28 +2406,6 @@ function FLIGHTGROUP:onafterGotoWaypoint(From, Event, To, n)
   
 end
 
---- On after "Orbit" event.
--- @param #FLIGHTGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Core.Point#COORDINATE Coord Coordinate where to orbit.
--- @param #number Altitude Altitude in meters.
--- @param #number Speed Speed in km/h.
-function FLIGHTGROUP:onafterOrbit(From, Event, To, Coord, Altitude, Speed)
-
-  -- Debug message.
-  local text=string.format("Flight group set to orbit at altitude %d m and speed %.1f km/h", Altitude, Speed)
-  MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
-  self:I(self.lid..text)
-  
-  --TODO: set ROE passive. introduce roe event/state/variable.
-  
-  local TaskOrbit=self.group:TaskOrbit(Coord, Altitude, UTILS.KmphToMps(Speed))
-
-  self:SetTask(TaskOrbit)
-end
-
 --- On before "RTB" event.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
@@ -2442,13 +2420,13 @@ function FLIGHTGROUP:onbeforeRTB(From, Event, To, airbase, SpeedTo, SpeedHold)
   local Tsuspend=nil
 
   if airbase==nil then
-    self:E(self.lid.."ERROR: Airbase is nil in Hold() call!")
+    self:E(self.lid.."ERROR: Airbase is nil in RTB() call!")
     allowed=false
   end
 
   -- Check that coaliton is okay. We allow same (blue=blue, red=red) or landing on neutral bases.
   if airbase and airbase:GetCoalition()~=self.group:GetCoalition() and airbase:GetCoalition()>0 then
-    self:E(self.lid.."ERROR: Wrong airbase coalition in Hold() call! We allow only same as group or neutral airbases.")
+    self:E(self.lid.."ERROR: Wrong airbase coalition in RTB() call! We allow only same as group or neutral airbases.")
     allowed=false
   end
 
@@ -2456,19 +2434,19 @@ function FLIGHTGROUP:onbeforeRTB(From, Event, To, airbase, SpeedTo, SpeedHold)
   local Ntot,Nsched, Nwp=self:CountRemainingTasks()
 
   if self.taskcurrent>0 then
-    self:I(self.lid..string.format("WARNING: Got current task ==> Hold event is suspended for 10 sec."))
+    self:I(self.lid..string.format("WARNING: Got current task ==> RTB event is suspended for 10 sec."))
     Tsuspend=-10
     allowed=false
   end
   
   if Nsched>0 then
-    self:I(self.lid..string.format("WARNING: Still got %d SCHEDULED tasks in the queue ==> Hold event is suspended for 10 sec.", Nsched))
+    self:I(self.lid..string.format("WARNING: Still got %d SCHEDULED tasks in the queue ==> RTB event is suspended for 10 sec.", Nsched))
     Tsuspend=-10
     allowed=false
   end
 
   if Nwp>0 then
-    self:I(self.lid..string.format("WARNING: Still got %d WAYPOINT tasks in the queue ==> Hold event is suspended for 10 sec.", Nsched))
+    self:I(self.lid..string.format("WARNING: Still got %d WAYPOINT tasks in the queue ==> RTB event is suspended for 10 sec.", Nwp))
     Tsuspend=-10
     allowed=false
   end
@@ -2584,6 +2562,76 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
         
   end  
     
+end
+
+--- On before "Wait" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Core.Point#COORDINATE Coord Coordinate where to orbit. Default current position.
+-- @param #number Altitude Altitude in feet. Default 10000 ft.
+-- @param #number Speed Speed in knots. Default 250 kts.
+function FLIGHTGROUP:onafterWait(From, Event, To, Coord, Altitude, Speed)
+
+  local allowed=true
+  local Tsuspend=nil
+
+  -- Check if there are remaining tasks.
+  local Ntot,Nsched, Nwp=self:CountRemainingTasks()
+
+  if self.taskcurrent>0 then
+    self:I(self.lid..string.format("WARNING: Got current task ==> WAIT event is suspended for 10 sec."))
+    Tsuspend=-10
+    allowed=false
+  end
+  
+  if Nsched>0 then
+    self:I(self.lid..string.format("WARNING: Still got %d SCHEDULED tasks in the queue ==> WAIT event is suspended for 10 sec.", Nsched))
+    Tsuspend=-10
+    allowed=false
+  end
+
+  if Nwp>0 then
+    self:I(self.lid..string.format("WARNING: Still got %d WAYPOINT tasks in the queue ==> WAIT event is suspended for 10 sec.", Nwp))
+    Tsuspend=-10
+    allowed=false
+  end
+  
+  if Tsuspend and not allowed then
+    self:__WAIT(Tsuspend, Coord, Altitude, Speed)
+  end
+  
+  return allowed
+end
+
+
+--- On after "Wait" event.
+-- @param #FLIGHTGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Core.Point#COORDINATE Coord Coordinate where to orbit. Default current position.
+-- @param #number Altitude Altitude in feet. Default 10000 ft.
+-- @param #number Speed Speed in knots. Default 250 kts.
+function FLIGHTGROUP:onafterWait(From, Event, To, Coord, Altitude, Speed)
+  
+  Coord=Coord or self.group:GetCoordinate()
+  Altitude=Altitude or 10000
+  Speed=Speed or 250
+
+  -- Debug message.
+  local text=string.format("Flight group set to wait/orbit at altitude %d m and speed %.1f km/h", Altitude, Speed)
+  MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
+  self:I(self.lid..text)
+
+  --TODO: set ROE passive. introduce roe event/state/variable.
+
+  -- Orbit task.  
+  local TaskOrbit=self.group:TaskOrbit(Coord, UTILS.FeetToMeters(Altitude), UTILS.KnotsToMps(Speed))
+
+  -- Set task.
+  self:SetTask(TaskOrbit)
 end
 
 --- On after "Holding" event. Flight arrived at the holding point.
@@ -2819,8 +2867,9 @@ function FLIGHTGROUP:CountRemainingTasks()
       Ntot=Ntot+1
     
       if task.type==FLIGHTGROUP.TaskType.WAYPOINT then
+        --TODO: maybe check that waypoint was not already passed?
         Nwp=Nwp+1
-      elseif task.type==FLIGHTGROUP.TaskType.WAYPOINT then
+      elseif task.type==FLIGHTGROUP.TaskType.SCHEDULED then
         Nsched=Nsched+1
       end
       
@@ -2831,6 +2880,23 @@ function FLIGHTGROUP:CountRemainingTasks()
   return Ntot, Nsched, Nwp
 end
 
+--- Count remaining missons.
+-- @param #FLIGHTGROUP self
+-- @return #number Number of missions to be done.
+function FLIGHTGROUP:CountRemainingMissison()
+
+  local N=0
+
+  -- Loop over mission queue.
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+    if mission.status~=AUFTRAG.Status.DONE then
+      N=N+1
+    end
+  end
+  
+  return N
+end
 
 --- On after TaskExecute event.
 -- @param #FLIGHTGROUP self
@@ -2889,14 +2955,14 @@ function FLIGHTGROUP:onafterTaskExecute(From, Event, To, Task)
       
     -- Set task for group.
     self:SetTask(TaskFinal, 1)
-    
-    -- Get mission of this task (if any).
-    local Mission=self:GetMissionByTaskID(self.taskcurrent)
-    if Mission then
-      -- Set AUFTRAG status.
-      self:MissionExecute(Mission)
-    end
         
+  end
+
+  -- Get mission of this task (if any).
+  local Mission=self:GetMissionByTaskID(self.taskcurrent)
+  if Mission then
+    -- Set AUFTRAG status.
+    self:MissionExecute(Mission)
   end
   
 end
@@ -3058,7 +3124,8 @@ function FLIGHTGROUP:onafterMissionStart(From, Event, To, Mission)
   self.currentmission=Mission.auftragsnummer
     
   -- Set mission status.
-  Mission.status=AUFTRAG.Status.STARTED
+  Mission:Start()
+  --Mission.status=AUFTRAG.Status.STARTED
 
   -- Route flight to mission zone.
   self:RouteToMission(Mission, 5)
@@ -3077,7 +3144,8 @@ function FLIGHTGROUP:onafterMissionExecute(From, Event, To, Mission)
   self:I(self.lid..text)
   MESSAGE:New(text, 120, "DEBUG"):ToAllIf(true)
   
-  Mission.status=AUFTRAG.Status.EXECUTING
+  Mission:Execute()
+  --Mission.status=AUFTRAG.Status.EXECUTING
   
 end
 
@@ -3110,7 +3178,8 @@ function FLIGHTGROUP:onafterMissionDone(From, Event, To, Mission)
 
   -- TODO: evaluate mission success or failure! complicated!
   
-  Mission.status=AUFTRAG.Status.DONE
+  --Mission.status=AUFTRAG.Status.DONE
+  Mission:Done()
   
   local airwing=self:GetAirWing()
   if airwing then
@@ -3659,18 +3728,27 @@ end
 -- @return Ops.Auftrag#AUFTRAG The mission.
 function FLIGHTGROUP:GetMissionByTaskID(taskid)
 
-  for _,_mission in pairs(self.missionqueue) do
-    local mission=_mission --Ops.Auftrag#AUFTRAG
-
-    local task=mission.waypointtask
-
-    if task and task.id and task.id==taskid then      
-      return mission
+  if taskid then
+    for _,_mission in pairs(self.missionqueue) do
+      local mission=_mission --Ops.Auftrag#AUFTRAG
+  
+      local task=mission.waypointtask
+  
+      if task and task.id and task.id==taskid then      
+        return mission
+      end
+  
     end
-
   end
-
+  
   return nil
+end
+
+--- Get current mission.
+-- @param #FLIGHTGROUP self
+-- @return Ops.Auftrag#AUFTRAG The current mission or *nil*.
+function FLIGHTGROUP:GetMissionCurrent()
+  return self:GetMissionByID(self.currentmission)
 end
 
 
@@ -3731,27 +3809,27 @@ function FLIGHTGROUP:_UpdateWaypointTasks()
       -- For some reason THIS DOES NOT WORK if executed at the last waypoint if it is an AIR WAYPOINT.
       -- I have moved it to the onafterpassingwaypoint function instead.
       
-      if true then
+      if false then
       
-      -- Get taks
-      local tasks=self:GetTasksWaypoint(i)
-      
-      for _,task in pairs(tasks) do
-        local Task=task --#FLIGHTGROUP.Task          
+        -- Get taks
+        local tasks=self:GetTasksWaypoint(i)
         
-        -- Task execute.
-        table.insert(taskswp, self.group:TaskFunction("FLIGHTGROUP._TaskExecute", self, Task))
-
-        -- Stop condition if userflag is set to 1.    
-        local TaskCondition=self.group:TaskCondition(nil, Task.stopflag:GetName(), 1, nil, Task.duration)
-        
-        -- Controlled task.      
-        table.insert(taskswp, self.group:TaskControlled(Task.dcstask, TaskCondition))
-        
-        -- Task done.
-        table.insert(taskswp, self.group:TaskFunction("FLIGHTGROUP._TaskDone", self, Task))    
-        
-      end
+        for _,task in pairs(tasks) do
+          local Task=task --#FLIGHTGROUP.Task          
+          
+          -- Task execute.
+          table.insert(taskswp, self.group:TaskFunction("FLIGHTGROUP._TaskExecute", self, Task))
+  
+          -- Stop condition if userflag is set to 1.    
+          local TaskCondition=self.group:TaskCondition(nil, Task.stopflag:GetName(), 1, nil, Task.duration)
+          
+          -- Controlled task.      
+          table.insert(taskswp, self.group:TaskControlled(Task.dcstask, TaskCondition))
+          
+          -- Task done.
+          table.insert(taskswp, self.group:TaskFunction("FLIGHTGROUP._TaskDone", self, Task))    
+          
+        end
       
       end
           

@@ -150,7 +150,7 @@ AUFTRAG.Status={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.0.2"
+AUFTRAG.version="0.0.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -439,6 +439,65 @@ end
 -- FSM Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- On after "Queue" event.
+-- @param #AUFTRAG self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function AUFTRAG:onafterQueue(From, Event, To)
+  self.status=AUFTRAG.Status.QUEUED
+  self:I(self.lid..string.format("New mission status=%s", self.status))
+end
+
+--- On after "Assign" event.
+-- @param #AUFTRAG self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function AUFTRAG:onafterAssign(From, Event, To)
+  self.status=AUFTRAG.Status.ASSIGNED
+  self:I(self.lid..string.format("New mission status=%s", self.status))  
+end
+
+--- On after "Schedule" event.
+-- @param #AUFTRAG self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function AUFTRAG:onafterSchedule(From, Event, To)
+  self.status=AUFTRAG.Status.SCHEDULED
+  self:I(self.lid..string.format("New mission status=%s", self.status))  
+end
+
+--- On after "Start" event.
+-- @param #AUFTRAG self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function AUFTRAG:onafterStart(From, Event, To)
+  self.status=AUFTRAG.Status.STARTED
+  self:I(self.lid..string.format("New mission status=%s", self.status))  
+end
+
+--- On after "Execute" event.
+-- @param #AUFTRAG self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function AUFTRAG:onafterExecute(From, Event, To)
+  self.status=AUFTRAG.Status.EXECUTING
+  self:I(self.lid..string.format("New mission status=%s", self.status))  
+end
+
+--- On after "Done" event.
+-- @param #AUFTRAG self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function AUFTRAG:onafterDone(From, Event, To)
+  self.status=AUFTRAG.Status.DONE
+  self:I(self.lid..string.format("New mission status=%s", self.status))
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Misc Functions
@@ -468,13 +527,16 @@ end
 -- @param Core.Point#COORDINATE The target coordinate or nil.
 function AUFTRAG:GetTargetCoordinate()
 
-  if self.engageTargetGroupset then
-  
+  if self.engageTargetGroupset then  
     local group=self.engageTargetGroupset:GetFirst() --Wrapper.Group#GROUP
     return group:GetCoordinate()
   elseif self.engageTargetUnitset then
     local unit=self.engageTargetUnitset:GetFirst() --Wrapper.Unit#UNIT
     return unit:GetCoordinate()
+  elseif self.engageCoord then
+    return self.engageCoord
+  elseif self.orbitCoord then
+    return self.orbitCoord
   end
 
   return nil
@@ -661,6 +723,7 @@ function AUFTRAG:GetDCSMissionTask()
   end
   
 
+  -- Return the task.
   if #DCStasks==1 then
     return DCStasks[1]
   else

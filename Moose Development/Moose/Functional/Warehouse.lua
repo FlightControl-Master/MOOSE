@@ -1763,7 +1763,7 @@ _WAREHOUSEDB  = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="0.9.9"
+WAREHOUSE.version="1.0.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
@@ -1835,7 +1835,7 @@ function WAREHOUSE:New(warehouse, alias)
     local warehousename=warehouse
     warehouse=UNIT:FindByName(warehousename)
     if warehouse==nil then
-      env.info(string.format("No warehouse unit with name %s found trying static.", tostring(warehousename)))
+      --env.info(string.format("No warehouse unit with name %s found trying static.", tostring(warehousename)))
       warehouse=STATIC:FindByName(warehousename, true)
       self.isunit=false
     else
@@ -1870,12 +1870,9 @@ function WAREHOUSE:New(warehouse, alias)
   -- Set unique ID for this warehouse.
   self.uid=_WAREHOUSEDB.WarehouseID
 
-  -- As Kalbuth found out, this would fail when using SPAWNSTATIC https://forums.eagle.ru/showthread.php?p=3703488#post3703488
-  --self.uid=tonumber(warehouse:GetID())
-
-  -- Closest of the same coalition but within a certain range.
+  -- Closest of the same coalition but within 5 km range.
   local _airbase=self:GetCoordinate():GetClosestAirbase(nil, self:GetCoalition())
-  if _airbase and _airbase:GetCoordinate():Get2DDistance(self:GetCoordinate()) < 3000 then
+  if _airbase and _airbase:GetCoordinate():Get2DDistance(self:GetCoordinate()) <= 5000 then
     self:SetAirbase(_airbase)
   end
 
@@ -3354,7 +3351,7 @@ end
 function WAREHOUSE:onafterStatus(From, Event, To)
 
   -- Info.
-  self:I(self.lid..string.format("FSM state %s. Assets=%d (global %d). Requests waiting=%d, pending=%d", self:GetState(), #self.stock, #_WAREHOUSEDB.Assets, #self.queue, #self.pending))
+  self:I(self.lid..string.format("State=%s, Assets=%d,  Requests: waiting=%d, pending=%d", self:GetState(), #self.stock, #self.queue, #self.pending))
 
   -- Check if any pending jobs are done and can be deleted from the queue.
   self:_JobDone()
@@ -3729,8 +3726,7 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
 
           -- If no assignment was given we take the assignment of the request if there is any.
           if assignment==nil and request.assignment~=nil then
-            -- WARNING: not doing this any more
-            --assignment=request.assignment
+            assignment=request.assignment
           end
 
         end
@@ -3760,7 +3756,7 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
         end
 
         -- Set skill.
-        asset.skill=skill
+        asset.skill=skill or asset.skill
 
         -- Asset is not spawned.
         asset.spawned=false
@@ -3985,7 +3981,7 @@ end
 -- @param #WAREHOUSE.Assetitem asset The asset that has just been added.
 -- @param #string assignment The (optional) assignment for the asset.
 function WAREHOUSE:onafterNewAsset(From, Event, To, asset, assignment)
-  self:T(self.lid..string.format("New asset %s id=%d with assignment %s.", tostring(asset.templatename), asset.uid, tostring(assignment)))
+  self:I(self.lid..string.format("New asset %s id=%d with assignment %s.", tostring(asset.templatename), asset.uid, tostring(assignment)))
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -5608,7 +5604,7 @@ function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrol
       end
 
       if asset.payload then
-        unit.payload.pylons=asset.payload.pylons
+        unit.payload=asset.payload.pylons
       end
 
     end
