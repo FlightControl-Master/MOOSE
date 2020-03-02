@@ -1398,12 +1398,26 @@ function FLIGHTGROUP:onafterQueueUpdate(From, Event, To)
   ---
 
    -- First check if group is alive? Late activated groups are activated and uncontrolled units are started automatically.
-  if self:IsAlive()~=nil and not self.currentmission then
+  if self:IsAlive()~=nil then
   
     local mission=self:_GetNextMission()
     
     if mission then
-      self:MissionStart(mission)      
+    
+      local currentmission=self:GetMissionCurrent()
+      
+      if currentmission then
+      
+        -- Current mission but new mission is urgent with higher prio.
+        if mission.urgent and mission.prio<currentmission.prio then
+          self:MissionCancel(currentmission)
+          self:MissionStart(mission)
+        end
+        
+      else
+        -- No current mission.
+        self:MissionStart(mission)        
+      end
     end
   end
 
@@ -2260,23 +2274,20 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
     ---
   
     self:E(self.lid.."WARNING: No waypoints left. Dunno what to do!")
+    
+    --[[
   
-    -- Get destination or home airbase.
-    local airbase=self.destbase or self.homebase
-    
-    if self:IsAirborne() then
-    
-      -- TODO: check if no more scheduled tasks.
-      
-      if airbase then
-          -- Route flight to destination/home.
-          --self:RTB(airbase)        
-      else
-        -- Let flight orbit.
-        --self:Orbit(self.group:GetCoordinate(), UTILS.FeetToMeters(20000), self.group:GetSpeedMax()*0.4)
-      end
-      
+    -- Send flight to destination. NOTE that if there are still remaining tasks, the RTB call is delayed by 10 sec until all tasks are done.
+    if self.destbase then
+      self:__RTB(-1, self.destbase)
+    elseif self.destzone then
+      self:__RTZ(-1, self.destzone)
+    else
+      self:__Wait(-1)
+      self:E(self.lid.."ERROR: Reached final waypoint but no destination set! Don't know what to do?!")
     end
+    
+    ]]
     
   end
 
@@ -2365,6 +2376,8 @@ function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
     --TODO: Find better way to RTB!
     self:I(self.lid.."FF group passed final waypoint!")
   
+    --[[
+  
     -- Send flight to destination. NOTE that if there are still remaining tasks, the RTB call is delayed by 10 sec until all tasks are done.
     if self.destbase then
       self:__RTB(-1, self.destbase)
@@ -2374,6 +2387,8 @@ function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
       self:__Wait(-1)
       self:E(self.lid.."ERROR: Reached final waypoint but no destination set! Don't know what to do?!")
     end
+    
+    ]]
 
   end
   

@@ -113,6 +113,7 @@ function AIRWING:New(warehousename, airwingname)
   self:AddTransition("*",             "MissionNew",       "*")           -- Add a new mission.  
   self:AddTransition("*",             "MissionRequest",   "*")           -- Add a (mission) request to the warehouse.
   self:AddTransition("*",             "MissionDone",      "*")           -- Mission is over.
+  self:AddTransition("*",             "MissionCancel",    "*")           -- Mission is over.
 
   ------------------------
   --- Pseudo Functions ---
@@ -507,7 +508,7 @@ end
 --- Optimize chosen assets for the mission at hand.
 -- @param #AIRWING self
 -- @param #table assets Table of (unoptimized) assets.
--- @param Ops.Auftrag#AUFTRAG Next mission or *nil*.
+-- @param Ops.Auftrag#AUFTRAG Mission Next mission or *nil*.
 function AIRWING:_OptimizeAssetSelection(assets, Mission)
 
   local TargetCoordinate=Mission:GetTargetCoordinate()
@@ -585,15 +586,27 @@ function AIRWING:onafterNewAsset(From, Event, To, asset, assignment)
   end
 end
 
---- On after "MissionNew" event.
+--- On after "MissionCancel" event.
 -- @param #AIRWING self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Ops.Auftrag#AUFTRAG Mission
-function AIRWING:onafterMissionNew(From, Event, To, Mission)
+-- @param Ops.Auftrag#AUFTRAG Mission The mission to be cancelled.
+function AIRWING:onafterMissionCancel(From, Event, To, Mission)
   
-  self:I(self.lid..string.format("New mission %s", Mission.name))
+  self:I(self.lid..string.format("Cancel mission %s", Mission.name))
+  
+  for _,_asset in pairs(Mission.assets) do
+    local asset=_asset --#AIRWING.SquadronAsset
+    
+    local flightgroup=asset.flightgroup
+    
+    if flightgroup then
+      flightgroup:MissionCancel(Mission)
+    end
+  end
+  
+  
 
 end
 

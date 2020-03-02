@@ -22,6 +22,7 @@
 -- @field #string status Mission status.
 -- @field #string name Mission name.
 -- @field #number prio Mission priority.
+-- @field #boolean urgent Mission is urgent. Running missions with lower prio might be cancelled.
 -- @field #number Tstart Mission start time in seconds.
 -- @field #number Tstop Mission stop time in seconds.
 -- @field #number duration Mission duration in seconds.
@@ -408,7 +409,7 @@ end
 -- @return #AUFTRAG self
 function AUFTRAG:SetPriority(Prio, Urgent)
   self.prio=Prio or 50
-  self.isurgent=Urgent
+  self.urgent=Urgent
   return self
 end
 
