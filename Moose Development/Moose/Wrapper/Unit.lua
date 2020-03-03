@@ -833,7 +833,9 @@ end
 --   * Threat level  10: Unit is AAA.
 --  
 -- 
---   @param #UNIT self
+-- @param #UNIT self
+-- @return #number Number between 0 (low threat level) and 10 (high threat level).
+-- @return #string Some text.
 function UNIT:GetThreatLevel()
 
 

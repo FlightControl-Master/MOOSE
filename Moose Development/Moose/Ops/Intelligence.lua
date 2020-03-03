@@ -16,10 +16,14 @@
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug Debug mode. Messages to all about status.
 -- @field #string lid Class id string for output to DCS log file.
+-- @field #number coalition Coalition side number, e.g. coalition.side.RED.
 -- @field #table filter Category filters.
+-- @field Core.Set#SET_ZONE acceptzoneset Set of accept zones. If defined, only contacts in these zones are considered.
+-- @field Core.Set#SET_ZONE rejectzoneset Set of reject zones. Contacts in these zones are not considered.
 -- @field #table Contacts Table of detected items.
 -- @field #table ContactsLost Table of lost detected items.
 -- @field #table ContactsUnknown Table of new detected items.
+-- @field #number dTforget Time interval in seconds before a known contact which is not detected any more is forgotten.
 -- @extends Core.Fsm#FSM
 
 --- Be surprised!
@@ -46,20 +50,22 @@ INTEL = {
 
 --- Detected item info.
 -- @type INTEL.DetectedItem
+-- @field #string groupname Name of the group.
+-- @field Wrapper.Group#GROUP group The contact group.
 -- @field #string typename Type name of detected item.
--- @field #number category
--- @field #string categoryname
+-- @field #number category Category number.
+-- @field #string categoryname Category name.
 -- @field #string attribute Generalized attribute.
--- @field #number Tdetected Time stamp when this item was last detected.
--- @field #number Tlost Time stamp when this item could not be detected any more.
 -- @field #number threatlevel Threat level of this item.
+-- @field #number Tdetected Time stamp in abs. mission time seconds when this item was last detected.
 -- @field Core.Point#COORDINATE position Last known position of the item.
 -- @field DCS#Vec3 velocity 3D velocity vector. Components x,y and z in m/s.
 -- @field #number speed Last known speed.
+-- @field #number markerID F10 map marker ID.
 
 --- INTEL class version.
 -- @field #string version
-INTEL.version="0.0.2"
+INTEL.version="0.0.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -67,6 +73,9 @@ INTEL.version="0.0.2"
 
 -- TODO: Accept and reject zones.
 -- TODO: SetAttributeZone --> return groups of generalized attributes in a zone.
+-- TODO: Loose units only if they remain undetected for a given time interval. We want to avoid fast oscillation between detected/lost states. Maybe 1-5 min would be a good time interval?!
+-- TODO: Combine units to groups for all, new and lost.
+-- TODO: process detected set asynchroniously for better performance.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -81,11 +90,21 @@ function INTEL:New(DetectionSet)
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #INTEL
 
-  --self.flightgroup=AIGroup
+  -- Detection set.
   self.detectionset=DetectionSet
   
+  -- Determine coalition from first group in set.
+  self.coalition=DetectionSet:GetFirst():GetCoalition()
+  
+  local alias="SPECTRE"
+  if self.coalition==coalition.side.RED then
+    alias="KGB"
+  elseif self.coalition==coalition.side.BLUE then
+    alias="CIA"
+  end
+  
   -- Set some string id for output to DCS.log file.
-  self.lid=string.format("INTEL %s | ", "KGB")
+  self.lid=string.format("INTEL %s | ", alias)
 
   -- Start State.
   self:SetStartState("Stopped")
@@ -97,9 +116,13 @@ function INTEL:New(DetectionSet)
   
   self:AddTransition("*",             "Detect",             "*")           -- INTEL status update
   
-  self:AddTransition("*",             "NewContact",         "*")           --
-  self:AddTransition("*",             "LostContact",        "*")           --
+  self:AddTransition("*",             "NewContact",         "*")           -- New contact has been detected.
+  self:AddTransition("*",             "LostContact",        "*")           -- Contact could not be detected any more.
   
+  
+  -- Defaults
+  self:SetForgetTime()
+  self:SetAcceptZones()
 
   ------------------------
   --- Pseudo Functions ---
@@ -163,7 +186,18 @@ end
 -- @param Core.Zone#ZONE AcceptZone Add a zone to the accept zone set.
 -- @return #INTEL self
 function INTEL:AddAcceptZone(AcceptZone)
-  self.acceptzoneset=nil
+  self.acceptzoneset:AddZone(AcceptZone)
+  return self
+end
+
+--- Set forget contacts time interval. Previously known contacts that are not detected any more, are "lost" after this time.
+-- This avoids fast oscillations between a contact being detected and undetected.
+-- @param #INTEL self
+-- @param #number TimeInterval Time interval in seconds. Default is 120 sec.
+-- @return #INTEL self
+function INTEL:SetForgetTime(TimeInterval)
+  self.dTforget=TimeInterval or 120
+  return self
 end
 
 
@@ -180,11 +214,11 @@ end
 function INTEL:onafterStart(From, Event, To)
 
   -- Short info.
-  local text=string.format("Starting INTEL v%s.", self.version)
-  self:I(self.sid..text)
+  local text=string.format("Starting INTEL v%s", self.version)
+  self:I(self.lid..text)
 
   -- Start the status monitoring.
-  self:__Status(-1)
+  self:__Status(-math.random(10))
 end
 
 --- On after "Status" event.
@@ -198,13 +232,28 @@ function INTEL:onafterStatus(From, Event, To)
   -- FSM state.
   local fsmstate=self:GetState()
   
+  self.ContactsLost={}
+  self.ContactsUnknown={}
+  
   -- Check if group has detected any units.
   self:UpdateIntel()
+  
+  local Ncontacts=#self.Contacts
 
   -- Short info.
-  local text=string.format("Status=%s", fsmstate)
+  local text=string.format("Status %s: Agents=%s, Contacts=%d, New=%d, Lost=%d", fsmstate, self.detectionset:CountAlive(), Ncontacts, #self.ContactsUnknown, #self.ContactsLost)
   self:I(self.lid..text)
   
+  -- Detailed info.
+  if Ncontacts>0 then
+    text="Detected Contacts:"
+    for _,_contact in pairs(self.Contacts) do
+      local contact=_contact --#INTEL.DetectedItem
+      local dT=timer.getAbsTime()-contact.Tdetected
+      text=text..string.format("\n- %s (%s): %s, units=%d, T=%d sec", contact.categoryname, contact.attribute, contact.groupname, contact.group:CountAliveUnits(), dT)
+    end
+    self:I(self.lid..text)
+  end  
 
   self:__Status(-30) 
 end
@@ -218,36 +267,33 @@ function INTEL:UpdateIntel()
   local DetectedSet=SET_UNIT:New()
 
   -- Loop over all units providing intel.
-  for _,_recce in pairs(self.detectionset:GetSet()) do
-    local recce=_recce --Wrapper.Unit#UNIT
-    
-    -- Get set of detected units.
-    local detectedunitset=recce:GetDetectedUnitSet()
-    
-    -- Add detected units to all set.
-    DetectedSet=DetectedSet:GetSetUnion(detectedunitset)
-    
+  for _,_group in pairs(self.detectionset:GetSet()) do
+    local group=_group --Wrapper.Group#GROUP
+    if group and group:IsAlive() then
+      for _,_recce in pairs(group:GetUnits()) do
+        local recce=_recce --Wrapper.Unit#UNIT
+        
+        -- Get set of detected units.
+        local detectedunitset=recce:GetDetectedUnitSet()
+        
+        -- Add detected units to all set.
+        DetectedSet=DetectedSet:GetSetUnion(detectedunitset)
+      end
+    end    
   end
   
   -- TODO: Filter units from accept/reject zones.
   -- TODO: Filter unit types.
   -- TODO: Filter detection methods?
   
+  for _,_zone in pairs(self.acceptzoneset.Set) do
+    local zone=_zone --Core.Zone#ZONE
+    
+  end
+  
+  -- Create detected contacts.  
   self:CreateDetectedItems(DetectedSet)
   
-  --[[
-  
-  -- Newly detected units.
-  local detectednew=DetectedSet:GetSetComplement(self.detectedunits)
-  
-  -- Previously detected units which got lost.
-  local detectedlost=self.detectedunits:GetSetComplement(DetectedSet)
-  
-  ]]
-  
-  -- TODO: Loose units only if they remain undetected for a given time interval. We want to avoid fast oscillation between detected/lost states. Maybe 1-5 min would be a good time interval?!
-  -- TODO: Combine units to groups for all, new and lost.
-  -- TODO: process detected set asynchroniously for better performance.
 end
 
 --- Create detected items.
@@ -263,19 +309,22 @@ function INTEL:CreateDetectedItems(detectedunitset)
     local group=unit:GetGroup()
     
     if group and group:IsAlive() then
-      local groupname=group:GetName()
-      
+      local groupname=group:GetName()     
       detectedgroupset:Add(groupname, group)
-
     end
       
   end
   
+  -- Current time.
+  local Tnow=timer.getAbsTime()
+  
   for _,_group in pairs(detectedgroupset.Set) do
     local group=_group --Wrapper.Group#GROUP
     
+    -- Group name.
     local groupname=group:GetName()
     
+    -- Get contact if already known.
     local detecteditem=self:GetContactByName(groupname)
     
     if detecteditem then
@@ -283,26 +332,34 @@ function INTEL:CreateDetectedItems(detectedunitset)
       -- Detected item already exists ==> Update data.
       ---
     
-      detecteditem.Tdetected=timer.getAbsTime()
+      detecteditem.Tdetected=Tnow
       detecteditem.position=group:GetCoordinate()
+      detecteditem.velocity=group:GetVelocityVec3()
+      detecteditem.speed=group:GetVelocityMPS()
     
     else    
       ---
       -- Detected item does not exist in our list yet.
       ---
     
+      -- Create new contact.
       local item={} --#INTEL.DetectedItem
       
       item.groupname=groupname
-      item.Tdetected=timer.getAbsTime()
       item.group=group
-      item.position=group:GetCoordinate()
+      item.Tdetected=Tnow
       item.typename=group:GetTypeName()
       item.attribute=group:GetAttribute()
       item.category=group:GetCategory()
       item.categoryname=group:GetCategoryName()
+      item.position=group:GetCoordinate()
+      item.velocity=group:GetVelocityVec3()
+      item.speed=group:GetVelocityMPS()
+      
+      
     
       self:AddContact(item)
+      self:NewContact(item)
     end
     
   end
@@ -313,13 +370,44 @@ function INTEL:CreateDetectedItems(detectedunitset)
     
     local group=detectedgroupset:FindGroup(item.groupname)
     
-    if not group then
-      --TODO: check if deltaT>Tforget. we dont want quick oszillations between detected and undetected states.
-      self:RemoveContact(item)
+    -- Check if deltaT>Tforget. We dont want quick oszillations between detected and undetected states.
+    if self:CheckContactLost(item) then
+      self:LostContact(item)
+      self:RemoveContact(item)      
     end
   end
 
 end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- FSM Events
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- On after "NewContact" event.
+-- @param #INTEL self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #INTEL.DetectedItem Contact Detected contact.
+function INTEL:onafterNewContact(From, Event, To, Contact)
+  self:I(self.lid..string.format("NEW contact %s", Contact.groupname))
+  table.insert(self.ContactsUnknown, Contact)
+end
+
+--- On after "LostContact" event.
+-- @param #INTEL self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #INTEL.DetectedItem Contact Detected contact.
+function INTEL:onafterLostContact(From, Event, To, Contact)
+  self:I(self.lid..string.format("LOST contact %s", Contact.groupname))
+  table.insert(self.ContactsLost, Contact)
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Misc Fuctions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create detected items.
 -- @param #INTEL self
@@ -360,13 +448,20 @@ function INTEL:AddContact(Contact)
   table.insert(self.Contacts, Contact)
 end
 
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- FSM Events
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--- Remove a contact from our list.
+-- @param #INTEL self
+-- @param #INTEL.DetectedItem Contact The contact to be removed.
+-- @return #boolean If true, contact was not detected for at least *dTforget* seconds.
+function INTEL:CheckContactLost(Contact)
 
-
-
-
-
-
-
+  -- Time since last detected.
+  local dT=timer.getAbsTime()-Contact.Tdetected
+  
+  
+  if dT>self.dTforget then
+    return true
+  else
+    return false
+  end
+  
+end

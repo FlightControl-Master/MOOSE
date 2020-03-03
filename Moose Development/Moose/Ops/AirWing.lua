@@ -329,7 +329,7 @@ end
 function AIRWING:AddMission(Mission, Nassets, WaypointCoordinate)
   
   -- Number of assets.
-  Mission.nassets=Nassets or 1
+  Mission.nassets=Mission.nassets and Mission.nassets or (Nassets or 1)
   
   Mission.waypointcoord=WaypointCoordinate
   Mission.waypointindex=nil

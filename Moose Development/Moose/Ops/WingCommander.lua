@@ -256,6 +256,7 @@ function WINGCOMMANDER:onafterStatus(From, Event, To)
       
       -- Add mission to queue.
       if mission then
+        mission.nassets=1
         table.insert(self.missionqueue, mission)
       end
         
