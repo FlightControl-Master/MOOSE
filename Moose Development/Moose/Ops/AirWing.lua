@@ -85,6 +85,8 @@ AIRWING.version="0.1.3"
 -- TODO: Check if missions are accomplished.
 -- DONE: Payloads as resources.
 -- TODO: Spawn in air or hot.
+-- TODO: Define CAP zones.
+-- TODO: Define TANKER zones for refuelling.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor

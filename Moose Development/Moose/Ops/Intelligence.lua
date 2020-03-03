@@ -17,7 +17,9 @@
 -- @field #boolean Debug Debug mode. Messages to all about status.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #table filter Category filters.
--- @field #table DetectedItems Table of detected items.
+-- @field #table Contacts Table of detected items.
+-- @field #table ContactsLost Table of lost detected items.
+-- @field #table ContactsUnknown Table of new detected items.
 -- @extends Core.Fsm#FSM
 
 --- Be surprised!
@@ -32,13 +34,14 @@
 --
 -- @field #INTEL
 INTEL = {
-  ClassName      = "INTEL",
-  Debug          =   nil,
-  lid            =   nil,
-  filter         =   nil,
-  detectionset   =   nil,
-  DetectedItems  =    {},
-  DetectedGroups =    {},
+  ClassName       = "INTEL",
+  Debug           =   nil,
+  lid             =   nil,
+  filter          =   nil,
+  detectionset    =   nil,
+  Contacts        =    {},
+  ContactsLost    =    {},
+  ContactsUnknown =    {},
 }
 
 --- Detected item info.
@@ -56,7 +59,7 @@ INTEL = {
 
 --- INTEL class version.
 -- @field #string version
-INTEL.version="0.0.1"
+INTEL.version="0.0.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -87,9 +90,6 @@ function INTEL:New(DetectionSet)
   -- Start State.
   self:SetStartState("Stopped")
 
-  -- Init set of detected units.
-  self.detectedunits=SET_UNIT:New()
-
   -- Add FSM transitions.
   --                 From State  -->   Event        -->     To State
   self:AddTransition("Stopped",       "Start",              "Running")     -- Start FSM.
@@ -97,12 +97,8 @@ function INTEL:New(DetectionSet)
   
   self:AddTransition("*",             "Detect",             "*")           -- INTEL status update
   
-  self:AddTransition("*",             "DetectedUnit",       "*")           --
-  
-  self:AddTransition("*",             "DetectedGroups",        "*")        -- All groups that are currently detected.
-  self:AddTransition("*",             "DetectedGroupsUnknown", "*")        -- Newly detected groups, which were previously unknown.
-  self:AddTransition("*",             "DetectedGroupsDead",     "*")       -- Previously detected groups that could not be detected any more.
-  self:AddTransition("*",             "DetectedGroupsLost",    "*")        -- Previously detected groups that could not be detected any more.
+  self:AddTransition("*",             "NewContact",         "*")           --
+  self:AddTransition("*",             "LostContact",        "*")           --
   
 
   ------------------------
@@ -153,12 +149,21 @@ end
 -- User functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Set livery.
+--- Set accept zones.
 -- @param #INTEL self
--- @param #string liveryname Name of the livery.
+-- @param Core.Set#SET_ZONE AcceptZoneSet Set of accept zones
 -- @return #INTEL self
-function INTEL:SetLivery(liveryname)
-  self.livery=liveryname
+function INTEL:SetAcceptZones(AcceptZoneSet)
+  self.acceptzoneset=AcceptZoneSet or SET_ZONE:New()
+  return self
+end
+
+--- Set accept zones.
+-- @param #INTEL self
+-- @param Core.Zone#ZONE AcceptZone Add a zone to the accept zone set.
+-- @return #INTEL self
+function INTEL:AddAcceptZone(AcceptZone)
+  self.acceptzoneset=nil
 end
 
 
@@ -175,7 +180,7 @@ end
 function INTEL:onafterStart(From, Event, To)
 
   -- Short info.
-  local text=string.format("Starting flight group %s.", self.groupname)
+  local text=string.format("Starting INTEL v%s.", self.version)
   self:I(self.sid..text)
 
   -- Start the status monitoring.
@@ -197,8 +202,8 @@ function INTEL:onafterStatus(From, Event, To)
   self:UpdateIntel()
 
   -- Short info.
-  local text=string.format("Flight status %s [%d/%d]. Task=%d/%d. Waypoint=%d/%d. Detected=%d", fsmstate, #self.element, #self.element, self.taskcurrent, #self.taskqueue, self.currentwp or 0, #self.waypoints or 0, self.detectedunits:Count())
-  self:I(self.sid..text)
+  local text=string.format("Status=%s", fsmstate)
+  self:I(self.lid..text)
   
 
   self:__Status(-30) 
@@ -224,11 +229,21 @@ function INTEL:UpdateIntel()
     
   end
   
+  -- TODO: Filter units from accept/reject zones.
+  -- TODO: Filter unit types.
+  -- TODO: Filter detection methods?
+  
+  self:CreateDetectedItems(DetectedSet)
+  
+  --[[
+  
   -- Newly detected units.
   local detectednew=DetectedSet:GetSetComplement(self.detectedunits)
   
   -- Previously detected units which got lost.
   local detectedlost=self.detectedunits:GetSetComplement(DetectedSet)
+  
+  ]]
   
   -- TODO: Loose units only if they remain undetected for a given time interval. We want to avoid fast oscillation between detected/lost states. Maybe 1-5 min would be a good time interval?!
   -- TODO: Combine units to groups for all, new and lost.
@@ -259,34 +274,90 @@ function INTEL:CreateDetectedItems(detectedunitset)
   for _,_group in pairs(detectedgroupset.Set) do
     local group=_group --Wrapper.Group#GROUP
     
-    local detecteditem=self:GetDetectedItemByName(group:GetName())
+    local groupname=group:GetName()
+    
+    local detecteditem=self:GetContactByName(groupname)
     
     if detecteditem then
       ---
       -- Detected item already exists ==> Update data.
       ---
     
-      
+      detecteditem.Tdetected=timer.getAbsTime()
+      detecteditem.position=group:GetCoordinate()
     
     else    
       ---
       -- Detected item does not exist in our list yet.
       ---
     
+      local item={} --#INTEL.DetectedItem
+      
+      item.groupname=groupname
+      item.Tdetected=timer.getAbsTime()
+      item.group=group
+      item.position=group:GetCoordinate()
+      item.typename=group:GetTypeName()
+      item.attribute=group:GetAttribute()
+      item.category=group:GetCategory()
+      item.categoryname=group:GetCategoryName()
+    
+      self:AddContact(item)
     end
     
+  end
+  
+  -- Now check if there some groups could not be detected any more.
+  for i=#self.Contacts,1,-1 do
+    local item=self.Contacts[i] --#INTEL.DetectedItem
+    
+    local group=detectedgroupset:FindGroup(item.groupname)
+    
+    if not group then
+      --TODO: check if deltaT>Tforget. we dont want quick oszillations between detected and undetected states.
+      self:RemoveContact(item)
+    end
   end
 
 end
 
 --- Create detected items.
 -- @param #INTEL self
--- @param #string name Name of the detected item.
+-- @param #string groupname Name of the contact group.
 -- @return #INTEL.DetectedItem 
-function INTEL:GetDetectedItemByName(name)
+function INTEL:GetContactByName(groupname)
 
-  return self.DetectedItems[name]
+  for i,_contact in pairs(self.Contacts) do
+    local contact=_contact --#INTEL.DetectedItem
+    if contact.groupname==groupname then
+      return contact
+    end
+  end
 
+  return nil
+end
+
+--- Remove a contact from our list.
+-- @param #INTEL self
+-- @param #INTEL.DetectedItem Contact The contact to be removed.
+function INTEL:RemoveContact(Contact)
+
+  for i,_contact in pairs(self.Contacts) do
+    local contact=_contact --#INTEL.DetectedItem
+    
+    if contact.groupname==Contact.groupname then
+      table.remove(self.Contacts, i)
+    end
+  
+  end
+
+end
+
+--- Remove a contact from our list.
+-- @param #INTEL self
+-- @param #INTEL.DetectedItem Contact The contact to be removed.
+function INTEL:AddContact(Contact)
+  table.insert(self.Contacts, Contact)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

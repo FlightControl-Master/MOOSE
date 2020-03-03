@@ -3140,7 +3140,6 @@ function FLIGHTGROUP:onafterMissionStart(From, Event, To, Mission)
     
   -- Set mission status.
   Mission:Start()
-  --Mission.status=AUFTRAG.Status.STARTED
 
   -- Route flight to mission zone.
   self:RouteToMission(Mission, 5)
@@ -3159,19 +3158,20 @@ function FLIGHTGROUP:onafterMissionExecute(From, Event, To, Mission)
   self:I(self.lid..text)
   MESSAGE:New(text, 120, "DEBUG"):ToAllIf(true)
   
+  -- Set mission status.
   Mission:Execute()
-  --Mission.status=AUFTRAG.Status.EXECUTING
   
 end
 
---- On after "MissionCancel" event. Cancels the current mission.
+--- On after "MissionCancel" event. Cancels the mission.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function FLIGHTGROUP:onafterMissionCancel(From, Event, To)
+-- @param Ops.Auftrag#AUFTRAG Mission The mission to be cancelled.
+function FLIGHTGROUP:onafterMissionCancel(From, Event, To, Mission)
 
-  if self.currentmission then
+  if Mission.auftragsnummer==self.currentmission then
 
     -- Cancelling the mission is actually cancelling the current task.
     self:TaskCancel()

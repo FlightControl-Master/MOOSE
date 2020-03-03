@@ -54,6 +54,7 @@
 -- @field Wrapper.Group#GROUP escortGroup The group to be escorted.
 -- @field DCS#Vec3 escortVec3 The 3D offset vector from the escorted group to the escort group.
 -- 
+-- @field Ops.AirWing#AIRWING airwing The assigned airwing.
 -- @field #string squadname Name of the assigned Airwing squadron.
 -- @field #table assets Airwing Assets assigned for this mission.
 -- @field #number nassets Number of required assets by the Airwing.
@@ -436,6 +437,13 @@ function AUFTRAG:SetWeaponType(WeaponType)
   return self
 end
 
+--- Check if mission is executing.
+-- @param #AUFTRAG self
+-- @return #boolean If true, mission is currently executing.
+function AUFTRAG:IsExecuting()
+  return self.status==AUFTRAG.Status.EXECUTING
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -525,7 +533,7 @@ end
 
 --- Get coordinate of target. First unit/group of the set is used.
 -- @param #AUFTRAG self
--- @param Core.Point#COORDINATE The target coordinate or nil.
+-- @return Core.Point#COORDINATE The target coordinate or nil.
 function AUFTRAG:GetTargetCoordinate()
 
   if self.engageTargetGroupset then  

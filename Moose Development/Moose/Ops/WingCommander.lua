@@ -17,7 +17,8 @@
 -- @field #boolean Debug Debug mode. Messages to all about status.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #table airwings Table of airwings.
--- @extends Core.Fsm#FSM
+-- @field #table missionqueue Mission queue.
+-- @extends Ops.Intelligence#INTEL
 
 --- Be surprised!
 --
@@ -35,22 +36,21 @@ WINGCOMMANDER = {
   Debug          =   nil,
   lid            =   nil,
   airwings       =    {},
+  missionqueue   =    {},
 }
-
---- Mission capability.
--- @type WINGCOMMANDER.Capability
--- @field #string missiontype Mission Type.
--- @field #number Ntot Total number of assets for this task.
--- @field #number Navail Number of available assets
--- @field #number Nonmission Number of assets currently on mission.
 
 --- Mission resources.
 -- @type WINGCOMMANDER.Recourses
+-- 
 -- @field #string missiontype Mission Type.
 -- @field #number Ntot Total number of assets for this task.
 -- @field #number Navail Number of available assets
 -- @field #number Nonmission Number of assets currently on mission.
 
+--- Contact details.
+-- @type WINGCOMMANDER.Contact
+-- @field Ops.Auftrag#AUFTRAG mission The assigned mission.
+-- @extends Ops.Intelligence#INTEL.DetectedItem
 
 --- WINGCOMMANDER class version.
 -- @field #string version
@@ -84,9 +84,7 @@ function WINGCOMMANDER:New(AgentSet)
   
   -- Add FSM transitions.
   --                 From State  -->   Event        -->     To State
-  self:AddTransition("Stopped",       "Start",              "Running")     -- Start FSM.
-
-  self:AddTransition("*",             "Sitrep",             "*")          -- WINGCOMMANDER status update
+  --self:AddTransition("Stopped",       "Start",              "Running")     -- Start FSM.
 
 
   ------------------------
@@ -110,12 +108,12 @@ function WINGCOMMANDER:New(AgentSet)
   -- @param #WINGCOMMANDER self
   -- @param #number delay Delay in seconds.
 
-  --- Triggers the FSM event "FlightStatus".
-  -- @function [parent=#WINGCOMMANDER] WingCommanderStatus
+  --- Triggers the FSM event "Status".
+  -- @function [parent=#WINGCOMMANDER] Status
   -- @param #WINGCOMMANDER self
 
   --- Triggers the FSM event "SkipperStatus" after a delay.
-  -- @function [parent=#WINGCOMMANDER] __WingCommanderStatus
+  -- @function [parent=#WINGCOMMANDER] __Status
   -- @param #WINGCOMMANDER self
   -- @param #number delay Delay in seconds.
 
@@ -167,8 +165,10 @@ function WINGCOMMANDER:onafterStart(From, Event, To)
   local text=string.format("Starting Wing Commander")
   self:I(self.lid..text)
 
-  -- Start the status monitoring.
-  self:__SitRep(-1)
+  -- Start parent INTEL.
+  self:GetParent(self).onafterStart(self, From, Event, To)
+
+
 end
 
 --- On after "Sitrep" event.
@@ -177,18 +177,19 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function WINGCOMMANDER:onafterSitrep(From, Event, To)
+function WINGCOMMANDER:onafterStatus(From, Event, To)
+
+  -- Start parent INTEL.
+  self:GetParent(self).onafterStatus(self, From, Event, To)
 
   -- FSM state.
   local fsmstate=self:GetState()
-  
-  
   
   -- Short info.
   local text=string.format("No activities")
 
 
-  local capabilities=self:CheckResources()
+  --local capabilities=self:CheckResources()
   
   -- Number of assets total, on mission, available
   -- Number of assets available of each mission type.
@@ -196,10 +197,25 @@ function WINGCOMMANDER:onafterSitrep(From, Event, To)
   
   self:I(self.lid..text)
   
-  if DetectedGroupsUnknown then
   
-  for _,_group in pairs(DetectedGroupsUnknown) do
-    local group=_group --Wrapper.Group#GROUP
+  -- Clean up missions where the contact was lost.
+  for _,_contact in pairs(self.ContactsLost) do
+    local contact=_contact --#WINGCOMMANDER.Contact
+    
+    if contact.mission and contact.mission.airwing then
+    
+      -- Cancel this mission.
+      contact.mission.airwing:MissionCancel(contact.mission)
+          
+    end
+    
+  end
+  
+ 
+  -- Create missions for all new contacts.
+  for _,_contact in pairs(self.ContactsUnknown) do
+    local contact=_contact --#WINGCOMMANDER.Contact
+    local group=contact.group --Wrapper.Group#GROUP
     
     if group and group:IsAlive() then
     
@@ -207,14 +223,11 @@ function WINGCOMMANDER:onafterSitrep(From, Event, To)
       local attribute=group:GetAttribute()
       local threatlevel=group:GetThreatLevel()
       
-      if category==Group.Category.AIRPLANE or category==Group.Category.HELICOPTER then
+      local mission=nil --Ops.Auftrag#AUFTRAG
       
-        if capability.INTERCEPT.Navail>0 then
-        
-          --TODO: Something like get closest AIRWING or squadron?
-          --      Launch even from multiple airwings? Currently Navail is like this. 
-          
-        end
+      if category==Group.Category.AIRPLANE or category==Group.Category.HELICOPTER then
+                
+        mission=AUFTRAG:NewINTERCEPT(group)
         
       elseif category==Group.Category.GROUND then
       
@@ -231,26 +244,112 @@ function WINGCOMMANDER:onafterSitrep(From, Event, To)
         
         end
         
+        mission=AUFTRAG:NewBAI(group)
+        
       
       elseif category==Group.Category.SHIP then
       
         --TODO: ANTISHIP
       
       end
-    
-    
+      
+      
+      -- Add mission to queue.
+      if mission then
+        table.insert(self.missionqueue, mission)
+      end
+        
     end
     
   end
   
   
-  end
-  
+  -- Check mission queue and assign one PLANNED mission.
+  self:CheckMissionQueue()
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Resources
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Check mission queue and assign ONE planned mission.
+-- @param #WINGCOMMANDER self 
+function WINGCOMMANDER:CheckMissionQueue()
+
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+    
+    -- We look for PLANNED missions.
+    if mission.status==AUFTRAG.Status.PLANNED then
+    
+      ---
+      -- PLANNNED Mission
+      ---
+    
+      -- Table of airwings that can do the mission.
+      local airwings={}
+    
+      -- Loop over all airwings.
+      for _,_airwing in pairs(self.airwings) do
+        local airwing=_airwing --Ops.AirWing#AIRWING
+        
+        -- Check if airwing can do this mission.
+        local can,assets=airwing:CanMission(mission.type, mission.nassets)
+        
+        -- Can it?
+        if can then        
+          
+          -- Get coordinate of the target.
+          local coord=mission:GetTargetCoordinate()
+          
+          if coord then
+          
+            -- Distance from airwing to target.
+            local dist=coord:Get2DDistance(airwing:GetCoordinate())
+          
+            -- Add airwing to table of airwings that can.
+            table.insert(airwings, {airwing=airwing, dist=dist, targetcoord=coord})
+            
+          end
+          
+        end
+                
+      end
+      
+      -- Can anyone?
+      if #airwings>0 then
+      
+        -- Sort table wrt distace
+        local function sortdist(a,b)
+          return a.dist<b.dist
+        end
+        table.sort(airwings, sortdist)    
+    
+        local airwing=airwings[1].airwing  --Ops.AirWing#AIRWING
+        local targetcoord=airwings[1].targetcoord --Core.Point#COORDINATE
+        
+        -- Get waypoint coordinate. This is where the mission is actually executed. 
+        local WaypointCoordinate=airwing:GetCoordinate():GetIntermediateCoordinate(targetcoord, 0.5)
+        
+        -- Add mission to airwing.
+        airwing:AddMission(mission, Nassets, WaypointCoordinate)
+    
+        return
+      end
+      
+    else
+
+      ---
+      -- Missions NOT in PLANNED state
+      ---    
+    
+    end
+  
+  end
+  
+end
+
 
 --- Check resources.
 -- @param #WINGCOMMANDER self
@@ -266,10 +365,10 @@ function WINGCOMMANDER:CheckResources()
       local airwing=_airwing --Ops.AirWing#AIRWING
         
       -- Get Number of assets that can do this type of missions.
-      local _,nassets=airwing:CanMission(MissionType)
+      local _,assets=airwing:CanMission(MissionType)
       
       -- Add up airwing resources.
-      capabilities[MissionType]=capabilities[MissionType]+nassets
+      capabilities[MissionType]=capabilities[MissionType]+#assets
     end
   
   end
