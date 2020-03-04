@@ -618,7 +618,7 @@ end
 function AIRWING:onafterMissionRequest(From, Event, To, Mission)
 
   -- Set mission status to ASSIGNED.
-  Mission:Assign()
+  Mission:Requested()
   
   -- Some assets might already be spawned and even on a different mission (orbit).
   -- Need to dived to set into spawned and instock assets and handle the other

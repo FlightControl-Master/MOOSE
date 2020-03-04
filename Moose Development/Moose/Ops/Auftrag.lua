@@ -21,6 +21,8 @@
 -- @field #string type Mission type.
 -- @field #string status Mission status.
 -- @field #table flightstatus Status of flight missions.
+-- @field #table flightgroups Flight groups of this mission.
+-- @field #table flightdata Flight specific data.
 -- @field #string name Mission name.
 -- @field #number prio Mission priority.
 -- @field #boolean urgent Mission is urgent. Running missions with lower prio might be cancelled.
@@ -96,7 +98,9 @@ AUFTRAG = {
   Debug              = false,
   lid                =   nil,
   auftragsnummer     =   nil,
+  flightgroups       =    {},
   flightstatus       =    {},
+  flightdata         =    {},
 }
 
 --- Global mission counter.
@@ -144,9 +148,10 @@ AUFTRAG.Type={
 -- @type AUFTRAG.Status
 -- @field #string PLANNED Mission is at the early planning stage.
 -- @field #string QUEUED Mission is queued at an airwing.
+-- @field #string REQUESTED Mission assets were requested from the warehouse.
 -- @field #string ASSIGNED Mission was assigned to somebody.
 -- @field #string SCHEDULED Mission is scheduled in a FLIGHGROUP queue waiting to be started.
--- @field #string STARTED Mission started but is not executed yet.
+-- @field #string STARTED Mission has started but is not executed yet.
 -- @field #string EXECUTING Mission is being executed.
 -- @field #string DONE Mission is over.
 -- @field #string CANCELLED Mission was cancelled.
@@ -178,6 +183,14 @@ AUFTRAG.FlightStatus={
   EXECUTING="executing",
   DONE="done",
 }
+
+--- Flight specific data.
+-- @type AUFTRAG.FlightData
+-- @field Ops.FlightGroup#FLIGHTGROUP flightgroup The flight group.
+-- @field Core.Point#COORDINATE waypointcoordinate Waypoint coordinate.
+-- @field #number waypointindex Waypoint index.
+-- @field Ops.FlightGroup#FLIGHTGROUP.Task waypointtask Waypoint task.
+-- @field #string status Flight mission status.
 
 
 --- AUFTRAG class version.
@@ -228,7 +241,7 @@ function AUFTRAG:New(Type)
   -- FMS start state is PLANNED.
   self:SetStartState(self.status)
   
-  -- PLANNED --> (QUEUED) --> (ASSIGNED) --> SCHEDULED --> STARTED --> EXECUTING --> DONE
+  -- PLANNED --> (QUEUED) --> (REQUESTED) --> SCHEDULED --> STARTED --> EXECUTING --> DONE
   
   self:AddTransition(AUFTRAG.Status.PLANNED,   "Queued",        AUFTRAG.Status.QUEUED)      -- Mission is in queue of an AIRWING.
   self:AddTransition(AUFTRAG.Status.QUEUED,    "Requested",     AUFTRAG.Status.REQUESTED)   -- Mission assets have been requested from the warehouse.
@@ -242,8 +255,8 @@ function AUFTRAG:New(Type)
   self:AddTransition("*",                      "Done",          AUFTRAG.Status.DONE)        -- All assets have reported that mission is done.
   self:AddTransition("*",                      "Cancel",        AUFTRAG.Status.CANCELLED)   -- Command to cancel the mission.
   
-  self:AddTransition("*",                      "Accomplished",  "Success")
-  self:AddTransition("*",                      "Failed",        "Failure")
+  self:AddTransition("*",                      "Accomplished",  AUFTRAG.Status.SUCCESS)
+  self:AddTransition("*",                      "Failed",        AUFTRAG.Status.FAILED)
     
   self:AddTransition("*",                      "Status",        "*")
   
@@ -486,6 +499,23 @@ function AUFTRAG:SetROE(roe)
 end
 
 
+--- Add a flight group to the mission.
+-- @param #AUFTRAG self
+-- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup The FLIGHTGROUP object.
+function AUFTRAG:AddFlightGroup(FlightGroup)
+  self:I(self.lid..string.format("Adding flight group %s", FlightGroup.groupname))
+
+  --table.insert(self.flightgroups, FlightGroup)
+  
+  local flightdata={} --#AUFTRAG.FlightData
+  flightdata.flightgroup=FlightGroup
+  flightdata.status=AUFTRAG.FlightStatus.SCHEDULED
+  flightdata.waypointcoordinate=nil
+
+  self.flightdata[FlightGroup.groupname]=flightdata
+
+end
+
 --- Check if mission is executing.
 -- @param #AUFTRAG self
 -- @return #boolean If true, mission is currently executing.
@@ -515,39 +545,60 @@ function AUFTRAG:onafterStatus(From, Event, To)
 
   local fsmstate=self:GetState()
 
-  self:I(self.lid..string.format("FSM status %s, mission status=%s", fsmstate, self.status))
+  self:I(self.lid..string.format("FSM status %s, mission status=%s, flightgroups=%d", fsmstate, self.status, #self.flightdata))
 
+  self:__Status(-30)
 end
-
---- On after "Cancel" event. Cancells the mission.
--- @param #AUFTRAG self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function AUFTRAG:onafterCancel(From, Event, To)
-
-  for _,_asset in pairs(self.assets or {}) do
-    local asset=_asset --Ops.AirWing#AIRWING.SquadronAsset
-    asset.flightgroup:MissionCancel(self)
-  end
-
-end
-
 
 --- Set flightgroup mission status.
 -- @param #AUFTRAG self
 -- @param Ops.FlightGroup#FLIGHTGROUP flightgroup The flight group.
--- @param #string state New state.
-function AUFTRAG:SetFlightStatus(flightgroup, state)
-  self.flightstatus[flightgroup.groupname]=state
+-- @param #string status New status.
+function AUFTRAG:SetFlightStatus(flightgroup, status)
+  self.flightdata[flightgroup.groupname].status=status
 end
 
 --- Get flightgroup mission status.
 -- @param #AUFTRAG self
 -- @param Ops.FlightGroup#FLIGHTGROUP flightgroup The flight group.
 function AUFTRAG:GetFlightStatus(flightgroup)
-  return self.flightstatus[flightgroup.groupname]
+  return self.flightdata[flightgroup.groupname].status
 end
+
+
+--- Set flightgroup waypoint coordinate.
+-- @param #AUFTRAG self
+-- @param Ops.FlightGroup#FLIGHTGROUP flightgroup The flight group.
+-- @param Core.Point#COORDINATE coordinate Waypoint Coordinate.
+function AUFTRAG:SetFlightWaypointCoordinate(flightgroup, coordinate)
+  self.flightdata[flightgroup.groupname].waypointcoordinate=coordinate
+end
+
+--- Get flightgroup waypoint coordinate.
+-- @param #AUFTRAG self
+-- @return Core.Point#COORDINATE Waypoint Coordinate.
+function AUFTRAG:GetFlightWaypointCoordinate(flightgroup)
+  return self.flightdata[flightgroup.groupname].waypointcoordinate
+end
+
+
+--- Set flightgroup waypoint task.
+-- @param #AUFTRAG self
+-- @param Ops.FlightGroup#FLIGHTGROUP flightgroup The flight group.
+-- @param Ops.FlightGroup#FLIGHTGROUP.Task task Waypoint task.
+function AUFTRAG:SetFlightWaypointTask(flightgroup, task)
+  self:I(self.lid..string.format("Setting waypoint task %s", task and task.description or "WTF"))
+  self.flightdata[flightgroup.groupname].waypointtask=task
+end
+
+--- Get flightgroup waypoint task.
+-- @param #AUFTRAG self
+-- @param Ops.FlightGroup#FLIGHTGROUP flightgroup The flight group.
+-- @return Ops.FlightGroup#FLIGHTGROUP.Task task Waypoint task. Waypoint task.
+function AUFTRAG:GetFlightWaypointTask(flightgroup)
+  return self.flightdata[flightgroup.groupname].waypointtask
+end
+
 
 --- Get flightgroup mission status.
 -- @param #AUFTRAG self
@@ -617,7 +668,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function AUFTRAG:onafterStart(From, Event, To)
+function AUFTRAG:onafterStarted(From, Event, To)
   self.status=AUFTRAG.Status.STARTED
   self:I(self.lid..string.format("New mission status=%s", self.status))  
 end
@@ -627,7 +678,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function AUFTRAG:onafterExecute(From, Event, To)
+function AUFTRAG:onafterExecuting(From, Event, To)
   self.status=AUFTRAG.Status.EXECUTING
   self:I(self.lid..string.format("New mission status=%s", self.status))  
 end
@@ -642,15 +693,28 @@ function AUFTRAG:onafterDone(From, Event, To)
   self:I(self.lid..string.format("New mission status=%s", self.status))
 end
 
-
---- On after "Cancel" event.
+--- On after "Cancel" event. Cancells the mission.
 -- @param #AUFTRAG self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
 function AUFTRAG:onafterCancel(From, Event, To)
-  self.status=AUFTRAG.Status.DONE
+
+  self.status=AUFTRAG.Status.CANCELLED
   self:I(self.lid..string.format("New mission status=%s", self.status))
+
+  --[[
+  for _,_asset in pairs(self.assets or {}) do
+    local asset=_asset --Ops.AirWing#AIRWING.SquadronAsset
+    asset.flightgroup:MissionCancel(self)
+  end
+  ]]
+  
+  for _,_flightdata in pairs(self.flightdata) do
+    local flightdata=_flightdata --#AUFTRAG.FlightData
+    flightdata.flightgroup:MissionCancel(self)
+  end
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

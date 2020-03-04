@@ -659,20 +659,23 @@ end
 -- @param Core.Point#COORDINATE WaypointCoordinate Coordinate of the mission waypoint
 -- @param #number WaypointIndex The waypoint number. Default is after all current air waypoints.
 -- @return #FLIGHTGROUP self
-function FLIGHTGROUP:AddMission(Mission, WaypointCoordinate, WaypointIndex)
+function FLIGHTGROUP:AddMission(Mission, WaypointCoordinate)
 
   Mission.waypointcoord=WaypointCoordinate
-  Mission.waypointindex=WaypointIndex
+  
+  -- Add flight group to mission.
+  Mission:AddFlightGroup(self)
   
   -- Set status to scheduled.
   Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.SCHEDULED)
+  Mission:Scheduled()
 
   -- Add mission to queue.
   table.insert(self.missionqueue, Mission)
   
   -- Info text.
-  local text=string.format("Added %s mission %s at waypoint #%s. Starting at %s. Stopping at %s", 
-  tostring(Mission.type), tostring(Mission.name), tostring(Mission.waypointindex), UTILS.SecondsToClock(Mission.Tstart, true), Mission.Tstop and UTILS.SecondsToClock(Mission.Tstop, true) or "N/A")
+  local text=string.format("Added %s mission %s starting at %s, stopping at %s", 
+  tostring(Mission.type), tostring(Mission.name), UTILS.SecondsToClock(Mission.Tstart, true), Mission.Tstop and UTILS.SecondsToClock(Mission.Tstop, true) or "INF")
   self:I(self.lid..text)
   
   return self
@@ -1337,8 +1340,8 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
     local mission=_mission --Ops.Auftrag#AUFTRAG
     local Cstart= UTILS.SecondsToClock(mission.Tstart, true)
     local Cstop = mission.Tstop and UTILS.SecondsToClock(mission.Tstop, true) or "INF"
-    text=text..string.format("\n[%d] %s (%s) status=%s, Time=%s-%s, waypoint=%s, prio=%d targets=%d", 
-    i, tostring(mission.name), mission.type, tostring(mission.status), Cstart, Cstop, tostring(mission.waypointindex), mission.prio, mission:CountMissionTargets())
+    text=text..string.format("\n[%d] %s (%s) status=%s (%s), Time=%s-%s, prio=%d targets=%d", 
+    i, tostring(mission.name), mission.type, mission:GetFlightStatus(self), tostring(mission.status), Cstart, Cstop, mission.prio, mission:CountMissionTargets())
   end
   self:I(self.lid..text)
 
@@ -2990,30 +2993,48 @@ function FLIGHTGROUP:onafterTaskUnpause(From, Event, To)
   --self.task
 end
 
---- On after "TaskCancel" event. Cancels the current task.
+--- On after "TaskCancel" event. Cancels the current task or simply sets the status to DONE if the task is not the current one.
 -- @param #FLIGHTGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function FLIGHTGROUP:onafterTaskCancel(From, Event, To)
+-- @param #FLIGHTGROUP.Task Task The task to cancel. Default is the current task (if any).
+function FLIGHTGROUP:onafterTaskCancel(From, Event, To, Task)
   
   -- Get current task.
-  local task=self:GetTaskCurrent()
+  local currenttask=self:GetTaskCurrent()
   
-  if task then
+  Task=Task or currenttask
   
-    -- Debug info.
-    local text=string.format("Task %s ID=%d cancelled.", task.description, task.id)
-    MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)    
+  if Task then
+  
+    -- Check if the task is the current task?
+    if currenttask and Task.id==currenttask.id then
+    
+      -- Debug info.
+      local text=string.format("Current task %s ID=%d cancelled", Task.description, Task.id)
+      MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)    
+      self:I(self.lid..text)
+      
+      -- Set stop flag. When the flag is true, the _TaskDone function is executed and calls :TaskDone()
+      Task.stopflag:Set(1)
+  
+    else
+    
+      self:I(self.lid..string.format("TaskCancel: Setting task %s ID=%d to DONE", Task.description, Task.id))
+      Task.status=FLIGHTGROUP.TaskStatus.DONE
+      
+      if Task.type==FLIGHTGROUP.TaskType.WAYPOINT and Task.waypoint then
+        self:RemoveWaypoint(Task.waypoint)
+      end
+    end
+    
+  else
+  
+    local text=string.format("WARNING: No (current) task to cancel!")
+    MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
     self:I(self.lid..text)
     
-    -- Set stop flag. When the flag is true, the _TaskDone function is executed and calls :TaskDone()
-    task.stopflag:Set(1)
-
-  else
-    local text=string.format("WARNING: No current task to cancel!")
-    MESSAGE:New(text, 10, "DEBUG"):ToAllIf(self.Debug)
-    self:I(self.lid..text)      
   end
   
 end
@@ -3152,19 +3173,26 @@ end
 function FLIGHTGROUP:onafterMissionCancel(From, Event, To, Mission)
 
   if self.currentmission and Mission.auftragsnummer==self.currentmission then
+    
+    local Task=Mission:GetFlightWaypointTask(self)
+    
+    env.info(string.format("FF Cancel current mission %s. Task=%s", tostring(Mission.name), tostring(Task and Task.description or "WTF")))
 
     -- Cancelling the mission is actually cancelling the current task. This will trigger the task done.
-    self:TaskCancel()
+    self:TaskCancel(Task)
+    
+    self.currentmission=nil
     
   else
   
     -- Not the current mission. So set status in queue.
-    -- TODO: remove mission from queue?
-  
-    -- Set missin flight status.
-    Mission:SetFlightStatus(self, AUFTRAG.Status.CANCELLED)
+    -- TODO: remove mission from queue?  
     
   end
+  
+  -- Set missin flight status.
+  env.info("FF setting mission to cancelled")
+  Mission:SetFlightStatus(self, AUFTRAG.Status.CANCELLED)  
 
 end
 
@@ -3206,21 +3234,20 @@ function FLIGHTGROUP:RouteToMission(mission, delay)
     -- Next waypoint.
     local nextwaypoint=self.currentwp+1
   
-    -- Execute mission at the given waypoint (but ensure it has not been passed already) or the next waypoint.
-    mission.waypointindex=mission.waypointindex and math.max(mission.waypointindex, nextwaypoint) or nextwaypoint
-  
     -- Add waypoint.
-    self:AddWaypointAir(mission.waypointcoord, mission.waypointindex, self.speedmax*0.8, false)
+    self:AddWaypointAir(mission.waypointcoord, nextwaypoint, self.speedmax*0.8, false)
     
     -- Add waypoint task. UpdateRoute is called inside.
-    -- TODO: The waypoint task is different for all assinged flights!
-    mission.waypointtask=self:AddTaskWaypoint(mission.DCStask, mission.waypointindex, mission.name, mission.prio, mission.duration)
+    local waypointtask=self:AddTaskWaypoint(mission.DCStask, nextwaypoint, mission.name, mission.prio, mission.duration)
+    
+    -- Set waypoint task.
+    mission:SetFlightWaypointTask(self, waypointtask)
     
     -- TODO: better marker text, mission.maker
     mission.marker=mission.waypointcoord:MarkToCoalition(mission.name, self:GetCoalition(), true)
     
     
-    self:SetROE(mission.optionROE)
+    --self:SetROE(mission.optionROE)
     
   end
 end
@@ -3937,7 +3964,7 @@ function FLIGHTGROUP:AddWaypointAir(coordinate, wpnumber, speed, updateroute)
   -- Shift all waypoint tasks after the inserted waypoint.
   for _,_task in pairs(self.taskqueue) do
     local task=_task --#FLIGHTGROUP.Task
-    if task.type==FLIGHTGROUP.TaskType.WAYPOINT and task.status==FLIGHTGROUP.TaskStatus.SCHEDULED and task.waypoint>=wpnumber then
+    if task.type==FLIGHTGROUP.TaskType.WAYPOINT and task.waypoint and task.waypoint>=wpnumber then
       task.waypoint=task.waypoint+1
     end
   end  
@@ -3945,7 +3972,7 @@ function FLIGHTGROUP:AddWaypointAir(coordinate, wpnumber, speed, updateroute)
   -- Shift all mission waypoints after the inserted waypoint.
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
-    if mission.status==AUFTRAG.Status.SCHEDULED and mission.waypointindex and mission.waypointindex>=wpnumber then
+    if mission.waypointindex and mission.waypointindex>=wpnumber then
       mission.waypointindex=mission.waypointindex+1
     end
   end  
@@ -3958,26 +3985,36 @@ function FLIGHTGROUP:AddWaypointAir(coordinate, wpnumber, speed, updateroute)
   return self
 end
 
---- Set the landing waypoint.
+--- Remove a waypoint.
 -- @param #FLIGHTGROUP self
--- @param Wrapper.Airbase#AIRBASE airbase The destination airbase.
--- @param #number wpnumber Waypoint number. Default at the end.
--- @param #number speed Speed in knots. Default 350 kts.
+-- @param #number wpindex Waypoint number.
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:RemoveWaypoint(wpindex)
 
-  for i, wp in pairs(self.waypoints) do
-    if i==wpindex then
-      table.remove(self.waypoints, i)
-      break
-    end
-  end
+  -- Remove waypoint.
+  table.remove(self.waypoints, wpindex)
 
+  -- Shift all waypoint tasks after the removed waypoint.
+  for _,_task in pairs(self.taskqueue) do
+    local task=_task --#FLIGHTGROUP.Task
+    if task.type==FLIGHTGROUP.TaskType.WAYPOINT and task.waypoint and task.waypoint>wpindex then
+      task.waypoint=task.waypoint-1
+    end
+  end  
+
+  -- Shift all mission waypoints after the removerd waypoint.
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+    if mission.waypointindex and mission.waypointindex>wpindex then
+      mission.waypointindex=mission.waypointindex-1
+    end
+  end  
 
   --TODO update route?
   -- no, if <= self.currentwaypoint or WP is landing.
-  
-  --TODO shift task and mission waypoints
+
+  self:__UpdateRoute(-1)
+
 end
 
 
