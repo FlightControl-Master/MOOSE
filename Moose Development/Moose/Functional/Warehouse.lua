@@ -4143,8 +4143,6 @@ function WAREHOUSE:onafterAddRequest(From, Event, To, warehouse, AssetDescriptor
   self.alias, warehouse.alias, request.assetdesc, tostring(request.assetdescval), tostring(request.nasset), request.transporttype, tostring(request.ntransport))
   self:_DebugMessage(text, 5)
 
-  -- Update status
-  --self:__Status(-1)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -4181,8 +4179,10 @@ function WAREHOUSE:onbeforeRequest(From, Event, To, Request)
       self:_InfoMessage(text, 10)
 
       -- Delete request from queue because it will never be possible.
-      --TODO: Unless(!) this is a moving warehouse which could, e.g., be an aircraft carrier.
-      --self:_DeleteQueueItem(Request, self.queue)
+      -- Unless(!) at least one is a moving warehouse, which could, e.g., be an aircraft carrier.
+      if not (self.isunit or Request.warehouse.isunit) then
+        self:_DeleteQueueItem(Request, self.queue)
+      end
 
       return false
     end

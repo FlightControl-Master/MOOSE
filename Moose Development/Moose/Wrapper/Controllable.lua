@@ -2937,6 +2937,25 @@ end
 
 -- Options
 
+--- Set option.
+-- @param #CONTROLLABLE self
+-- @param #number OptionID ID/Type of the option.
+-- @param #number OptionValue Value of the option
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:SetOption(OptionID, OptionValue)
+
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+
+    Controller:setOption( OptionID, OptionValue )
+
+    return self
+  end
+
+  return nil
+end
+
 --- Can the CONTROLLABLE hold their weapons?
 -- @param #CONTROLLABLE self
 -- @return #boolean

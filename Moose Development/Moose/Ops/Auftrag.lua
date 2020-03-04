@@ -20,6 +20,7 @@
 -- @field #number auftragsnummer Auftragsnummer.
 -- @field #string type Mission type.
 -- @field #string status Mission status.
+-- @field #table flightstatus Status of flight missions.
 -- @field #string name Mission name.
 -- @field #number prio Mission priority.
 -- @field #boolean urgent Mission is urgent. Running missions with lower prio might be cancelled.
@@ -59,6 +60,14 @@
 -- @field #table assets Airwing Assets assigned for this mission.
 -- @field #number nassets Number of required assets by the Airwing.
 -- 
+-- @field #number optionROE ROE.
+-- @field #number optionROT ROT.
+-- @field #number optionCM Counter measures.
+-- @field #number optionFormation Formation.
+-- @field #number optionRTBammo RTB on out-of-ammo.
+-- @field #number optionRTBfuel RTB on out-of-fuel.
+-- @field #number optionECM ECM.
+-- 
 -- @extends Core.Fsm#FSM
 
 --- *A warrior's mission is to foster the success of others.* --- Morihei Ueshiba
@@ -87,6 +96,7 @@ AUFTRAG = {
   Debug              = false,
   lid                =   nil,
   auftragsnummer     =   nil,
+  flightstatus       =    {},
 }
 
 --- Global mission counter.
@@ -139,10 +149,30 @@ AUFTRAG.Type={
 -- @field #string STARTED Mission started but is not executed yet.
 -- @field #string EXECUTING Mission is being executed.
 -- @field #string DONE Mission is over.
+-- @field #string CANCELLED Mission was cancelled.
+-- @field #string SUCCESS Mission was a success.
+-- @field #string FAILED Mission failed.
 AUFTRAG.Status={
   PLANNED="planned",
   QUEUED="queued",
+  REQUESTED="requested",
   ASSIGNED="assigned",
+  SCHEDULED="scheduled",
+  STARTED="started",
+  EXECUTING="executing",
+  DONE="done",
+  CANCELLED="cancelled",
+  SUCCESS="success",
+  FAILED="failed",
+}
+
+--- FlightStatus
+-- @type AUFTRAG.FlightStatus
+-- @field #string SCHEDULED Mission is scheduled in a FLIGHGROUP queue waiting to be started.
+-- @field #string STARTED Flightgroup started this mission but it is not executed yet.
+-- @field #string EXECUTING Flightgroup is executing this mission.
+-- @field #string DONE Mission task of the flightgroup is done.
+AUFTRAG.FlightStatus={
   SCHEDULED="scheduled",
   STARTED="started",
   EXECUTING="executing",
@@ -200,18 +230,25 @@ function AUFTRAG:New(Type)
   
   -- PLANNED --> (QUEUED) --> (ASSIGNED) --> SCHEDULED --> STARTED --> EXECUTING --> DONE
   
-  self:AddTransition(AUFTRAG.Status.PLANNED,   "Queue",    AUFTRAG.Status.QUEUED)    --
-  self:AddTransition(AUFTRAG.Status.QUEUED,    "Assign",   AUFTRAG.Status.ASSIGNED)  --
-  self:AddTransition(AUFTRAG.Status.ASSIGNED,  "Schedule", AUFTRAG.Status.SCHEDULED) --  
-  self:AddTransition(AUFTRAG.Status.PLANNED,   "Schedule", AUFTRAG.Status.SCHEDULED) -- From planned directly to scheduled.  
-  self:AddTransition(AUFTRAG.Status.SCHEDULED, "Start",    AUFTRAG.Status.STARTED)   --
-  self:AddTransition(AUFTRAG.Status.STARTED,   "Execute",  AUFTRAG.Status.EXECUTING) --
-  self:AddTransition(AUFTRAG.Status.EXECUTING, "Done",     AUFTRAG.Status.DONE)      --   
+  self:AddTransition(AUFTRAG.Status.PLANNED,   "Queued",        AUFTRAG.Status.QUEUED)      -- Mission is in queue of an AIRWING.
+  self:AddTransition(AUFTRAG.Status.QUEUED,    "Requested",     AUFTRAG.Status.REQUESTED)   -- Mission assets have been requested from the warehouse.
+  self:AddTransition(AUFTRAG.Status.REQUESTED, "Scheduled",     AUFTRAG.Status.SCHEDULED)   -- Mission added to the first flight group queue.
   
-  self:AddTransition("*",                      "Cancel",       "Cancelled")
-  self:AddTransition("*",                      "Accomplished", "Success")
-  self:AddTransition("*",                      "Failed",       "Failure")
+  self:AddTransition(AUFTRAG.Status.PLANNED,   "Scheduled",     AUFTRAG.Status.SCHEDULED)   -- From planned directly to scheduled.
+  
+  self:AddTransition(AUFTRAG.Status.SCHEDULED, "Started",       AUFTRAG.Status.STARTED)     -- First asset has started the mission
+  self:AddTransition(AUFTRAG.Status.STARTED,   "Executing",     AUFTRAG.Status.EXECUTING)   -- First asset is executing the mission.
+  
+  self:AddTransition("*",                      "Done",          AUFTRAG.Status.DONE)        -- All assets have reported that mission is done.
+  self:AddTransition("*",                      "Cancel",        AUFTRAG.Status.CANCELLED)   -- Command to cancel the mission.
+  
+  self:AddTransition("*",                      "Accomplished",  "Success")
+  self:AddTransition("*",                      "Failed",        "Failure")
     
+  self:AddTransition("*",                      "Status",        "*")
+  
+  self:__Status(-1)
+  
   return self
 end
 
@@ -437,6 +474,18 @@ function AUFTRAG:SetWeaponType(WeaponType)
   return self
 end
 
+--- Set Rules of Engagement for this mission.
+-- @param #AUFTRAG self
+-- @param #number roe ROE
+-- @return #AUFTRAG self
+function AUFTRAG:SetROE(roe)
+  
+  self.optionROE=roe
+  
+  return self
+end
+
+
 --- Check if mission is executing.
 -- @param #AUFTRAG self
 -- @return #boolean If true, mission is currently executing.
@@ -444,21 +493,105 @@ function AUFTRAG:IsExecuting()
   return self.status==AUFTRAG.Status.EXECUTING
 end
 
+--- Check if mission is over. This could be state DONE or CANCELLED.
+-- @param #AUFTRAG self
+-- @return #boolean If true, mission is currently executing.
+function AUFTRAG:IsOver()
+  local over = self.status==AUFTRAG.Status.DONE or self.status==AUFTRAG.Status.CANCELLED or self.status==AUFTRAG.Status.SUCCESS or self.status==AUFTRAG.Status.FAILED
+  return over
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- FSM Functions
+-- Mission Status
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- On after "Queue" event.
+--- On after "Status" event.
 -- @param #AUFTRAG self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function AUFTRAG:onafterQueue(From, Event, To)
+-- @param Ops.AirWing#AIRWING Airwing The airwing.
+function AUFTRAG:onafterStatus(From, Event, To)
+
+  local fsmstate=self:GetState()
+
+  self:I(self.lid..string.format("FSM status %s, mission status=%s", fsmstate, self.status))
+
+end
+
+--- On after "Cancel" event. Cancells the mission.
+-- @param #AUFTRAG self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function AUFTRAG:onafterCancel(From, Event, To)
+
+  for _,_asset in pairs(self.assets or {}) do
+    local asset=_asset --Ops.AirWing#AIRWING.SquadronAsset
+    asset.flightgroup:MissionCancel(self)
+  end
+
+end
+
+
+--- Set flightgroup mission status.
+-- @param #AUFTRAG self
+-- @param Ops.FlightGroup#FLIGHTGROUP flightgroup The flight group.
+-- @param #string state New state.
+function AUFTRAG:SetFlightStatus(flightgroup, state)
+  self.flightstatus[flightgroup.groupname]=state
+end
+
+--- Get flightgroup mission status.
+-- @param #AUFTRAG self
+-- @param Ops.FlightGroup#FLIGHTGROUP flightgroup The flight group.
+function AUFTRAG:GetFlightStatus(flightgroup)
+  return self.flightstatus[flightgroup.groupname]
+end
+
+--- Get flightgroup mission status.
+-- @param #AUFTRAG self
+-- @return #boolean If true, all flights are done with the mission.
+function AUFTRAG:CheckFlightsDone()
+
+  local done=true
+  
+  for groupname,status in pairs(self.flightstatus) do
+    if status~=AUFTRAG.Status.DONE then
+      done=false
+    end
+  end
+
+  return done
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- FSM Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- On after "Queue" event. Mission is added to the mission queue of an AIRWING.
+-- @param #AUFTRAG self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.AirWing#AIRWING Airwing The airwing.
+function AUFTRAG:onafterQueued(From, Event, To, Airwing)
   self.status=AUFTRAG.Status.QUEUED
   self:I(self.lid..string.format("New mission status=%s", self.status))
 end
 
---- On after "Assign" event.
+
+--- On after "Requested" event.
+-- @param #AUFTRAG self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function AUFTRAG:onafterRequested(From, Event, TO)
+  self.status=AUFTRAG.Status.REQUESTED
+  self:I(self.lid..string.format("New mission status=%s", self.status))
+end
+
+--- On after "Assign" event. 
 -- @param #AUFTRAG self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -468,12 +601,13 @@ function AUFTRAG:onafterAssign(From, Event, To)
   self:I(self.lid..string.format("New mission status=%s", self.status))  
 end
 
---- On after "Schedule" event.
+--- On after "Schedule" event. Mission is added to the mission queue of a FLIGHTGROUP.
 -- @param #AUFTRAG self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function AUFTRAG:onafterSchedule(From, Event, To)
+-- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup
+function AUFTRAG:onafterScheduled(From, Event, To, FlightGroup)
   self.status=AUFTRAG.Status.SCHEDULED
   self:I(self.lid..string.format("New mission status=%s", self.status))  
 end
@@ -504,6 +638,17 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function AUFTRAG:onafterDone(From, Event, To)
+  self.status=AUFTRAG.Status.DONE
+  self:I(self.lid..string.format("New mission status=%s", self.status))
+end
+
+
+--- On after "Cancel" event.
+-- @param #AUFTRAG self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function AUFTRAG:onafterCancel(From, Event, To)
   self.status=AUFTRAG.Status.DONE
   self:I(self.lid..string.format("New mission status=%s", self.status))
 end

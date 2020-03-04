@@ -80,7 +80,7 @@ function WINGCOMMANDER:New(AgentSet)
   self.lid=string.format("WINGCOMMANDER | ")
 
   -- Start State.
-  self:SetStartState("Stopped")
+  --self:SetStartState("Stopped")
   
   -- Add FSM transitions.
   --                 From State  -->   Event        -->     To State
@@ -168,7 +168,6 @@ function WINGCOMMANDER:onafterStart(From, Event, To)
   -- Start parent INTEL.
   self:GetParent(self).onafterStart(self, From, Event, To)
 
-
 end
 
 --- On after "Sitrep" event.
@@ -184,19 +183,7 @@ function WINGCOMMANDER:onafterStatus(From, Event, To)
 
   -- FSM state.
   local fsmstate=self:GetState()
-  
-  -- Short info.
-  local text=string.format("No activities")
 
-
-  --local capabilities=self:CheckResources()
-  
-  -- Number of assets total, on mission, available
-  -- Number of assets available of each mission type.
-    
-  
-  self:I(self.lid..text)
-  
   
   -- Clean up missions where the contact was lost.
   for _,_contact in pairs(self.ContactsLost) do

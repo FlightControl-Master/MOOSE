@@ -56,7 +56,6 @@
 -- @field #number Tholding Abs. mission time stamp when the group reached the holding point.
 -- @field #number Tparking Abs. mission time stamp when the group was spawned uncontrolled and is parking.
 -- @field #table menu F10 radio menu.
--- @field #string livery Livery.
 -- @field Core.Set#SET_ZONE checkzones Set of zones.
 -- @field Core.Set#SET_ZONE inzones Set of zones in which the group is currently in.
 -- @field #boolean groupinitialized If true, group parameters were initialized.
@@ -196,7 +195,6 @@ FLIGHTGROUP = {
   Tholding           =   nil,
   Tparking           =   nil,
   menu               =   nil,
-  livery             =   nil,
   checkzones         =   nil,
   inzones            =   nil,
   groupinitialized   =   nil,
@@ -316,7 +314,7 @@ FLIGHTGROUP.TaskType={
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.3.3"
+FLIGHTGROUP.version="0.3.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -667,8 +665,7 @@ function FLIGHTGROUP:AddMission(Mission, WaypointCoordinate, WaypointIndex)
   Mission.waypointindex=WaypointIndex
   
   -- Set status to scheduled.
-  Mission:Schedule()
-  --Mission.status=AUFTRAG.Status.SCHEDULED
+  Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.SCHEDULED)
 
   -- Add mission to queue.
   table.insert(self.missionqueue, Mission)
@@ -1436,26 +1433,6 @@ function FLIGHTGROUP:onafterQueueUpdate(From, Event, To)
       self:TaskExecute(task)
     end
     
-  else
-  
-    --[[
-    -- Get current task.
-    local task=self:GetTaskCurrent()
-    
-    -- Check if task has a defined duration.
-    if task and task.duration and task.timestamp then
-          
-      -- Check if max task duration is over.
-      local cancel=timer.getAbsTime()>task.timestamp+task.duration
-      
-      --self:E(string.format("FF timestap=%d , duration=%d, time=%d, stamp+duration=%s < time = %s", task.timestamp, task.duration, timer.getAbsTime(), task.timestamp+task.duration, tostring(cancel)))
-      
-      -- Cancel task if task is running longer than duration.
-      if cancel then
-        --self:TaskCancel()
-      end
-    end
-    ]]
   end
 
   -- Update queue every ~5 sec.
@@ -1522,7 +1499,7 @@ function FLIGHTGROUP:_GetNextMission()
   -- Look for first mission that is SCHEDULED.
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
-    if mission.status==AUFTRAG.Status.SCHEDULED and time>=mission.Tstart then
+    if mission:GetFlightStatus(self)==AUFTRAG.Status.SCHEDULED and time>=mission.Tstart then
       return mission
     end
   end
@@ -3139,7 +3116,9 @@ function FLIGHTGROUP:onafterMissionStart(From, Event, To, Mission)
   self.currentmission=Mission.auftragsnummer
     
   -- Set mission status.
-  Mission:Start()
+  Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.STARTED)
+  
+  Mission:Started()
 
   -- Route flight to mission zone.
   self:RouteToMission(Mission, 5)
@@ -3159,7 +3138,8 @@ function FLIGHTGROUP:onafterMissionExecute(From, Event, To, Mission)
   MESSAGE:New(text, 120, "DEBUG"):ToAllIf(true)
   
   -- Set mission status.
-  Mission:Execute()
+  Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.EXECUTING)
+  Mission:Executing()
   
 end
 
@@ -3171,13 +3151,18 @@ end
 -- @param Ops.Auftrag#AUFTRAG Mission The mission to be cancelled.
 function FLIGHTGROUP:onafterMissionCancel(From, Event, To, Mission)
 
-  if Mission.auftragsnummer==self.currentmission then
+  if self.currentmission and Mission.auftragsnummer==self.currentmission then
 
-    -- Cancelling the mission is actually cancelling the current task.
+    -- Cancelling the mission is actually cancelling the current task. This will trigger the task done.
     self:TaskCancel()
     
   else
   
+    -- Not the current mission. So set status in queue.
+    -- TODO: remove mission from queue?
+  
+    -- Set missin flight status.
+    Mission:SetFlightStatus(self, AUFTRAG.Status.CANCELLED)
     
   end
 
@@ -3190,16 +3175,17 @@ end
 -- @param #string To To state.
 -- @param Ops.Auftrag#AUFTRAG Mission
 function FLIGHTGROUP:onafterMissionDone(From, Event, To, Mission)
-
-  -- TODO: evaluate mission success or failure! complicated!
   
-  --Mission.status=AUFTRAG.Status.DONE
-  Mission:Done()
+  -- Set Flight status.
+  Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.DONE)
   
+  -- TODO: This has to be done in AUFTRAG.
+  --[[
   local airwing=self:GetAirWing()
   if airwing then
     airwing:MissionDone(Mission)
   end
+  ]]
   
   -- Set current mission to nil.
   self.currentmission=nil
@@ -3227,10 +3213,14 @@ function FLIGHTGROUP:RouteToMission(mission, delay)
     self:AddWaypointAir(mission.waypointcoord, mission.waypointindex, self.speedmax*0.8, false)
     
     -- Add waypoint task. UpdateRoute is called inside.
+    -- TODO: The waypoint task is different for all assinged flights!
     mission.waypointtask=self:AddTaskWaypoint(mission.DCStask, mission.waypointindex, mission.name, mission.prio, mission.duration)
     
     -- TODO: better marker text, mission.maker
     mission.marker=mission.waypointcoord:MarkToCoalition(mission.name, self:GetCoalition(), true)
+    
+    
+    self:SetROE(mission.optionROE)
     
   end
 end
@@ -3312,6 +3302,23 @@ function FLIGHTGROUP._DestinationOverhead(group, flightgroup, destination)
   flightgroup:__RTB(-1, destination)
 
 end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Option functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Set ROE.
+-- @param #FLIGHTGROUP self
+-- @param #number roe ROE value.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetOptionROE(roe)
+
+  if self:IsAlive() then  
+    self.group:SetOption(AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.WEAPON_HOLD)
+  end
+
+end
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Misc functions

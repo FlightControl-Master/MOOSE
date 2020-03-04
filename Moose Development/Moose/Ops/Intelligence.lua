@@ -352,13 +352,15 @@ function INTEL:CreateDetectedItems(detectedunitset)
       item.attribute=group:GetAttribute()
       item.category=group:GetCategory()
       item.categoryname=group:GetCategoryName()
+      item.threatlevel=group:GetUnit(1):GetThreatLevel()
       item.position=group:GetCoordinate()
       item.velocity=group:GetVelocityVec3()
       item.speed=group:GetVelocityMPS()
       
-      
-    
+      -- Add contact to table.    
       self:AddContact(item)
+      
+      -- Trigger new contact event.
       self:NewContact(item)
     end
     
@@ -372,7 +374,9 @@ function INTEL:CreateDetectedItems(detectedunitset)
     
     -- Check if deltaT>Tforget. We dont want quick oszillations between detected and undetected states.
     if self:CheckContactLost(item) then
+      -- Trigger LostContact event.
       self:LostContact(item)
+      -- Remove contact from table.
       self:RemoveContact(item)      
     end
   end

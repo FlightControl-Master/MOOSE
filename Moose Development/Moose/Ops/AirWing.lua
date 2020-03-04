@@ -334,8 +334,8 @@ function AIRWING:AddMission(Mission, Nassets, WaypointCoordinate)
   Mission.waypointcoord=WaypointCoordinate
   Mission.waypointindex=nil
   
-  -- Set status to scheduled.
-  Mission:Queue()
+  -- Set status to QUEUED.
+  Mission:Queued()
 
   -- Add mission to queue.
   table.insert(self.missionqueue, Mission)
@@ -574,10 +574,9 @@ function AIRWING:onafterNewAsset(From, Event, To, asset, assignment)
   -- Get squadron.
   local squad=self:GetSquadron(asset.assignment)  
 
+  -- Check if asset is already part of the squadron. If an asset returns, it will be added again! We check that asset.assignment is also assignment.
   if squad and asset.assignment==assignment then
   
-    -- TODO: Check if asset is already part of the squadron. If an asset returns, it will be added again!
-
     -- Debug text.
     local text=string.format("Adding asset to squadron %s: assignment=%s, type=%s, attribute=%s", squad.name, assignment, asset.unittype, asset.attribute)
     self:I(self.lid..text)
@@ -608,8 +607,6 @@ function AIRWING:onafterMissionCancel(From, Event, To, Mission)
     end
   end
   
-  
-
 end
 
 --- On after "MissionRequest" event. Performs a self request to the warehouse for the mission assets. Sets mission status to ASSIGNED.
@@ -638,7 +635,7 @@ function AIRWING:onafterMissionRequest(From, Event, To, Mission)
         --TODO: cancel current mission if there is any!
         asset.flightgroup:AddMission(Mission, Mission.waypointcoord, Mission.waypointindex)
       else
-        --TODO: create flightgroup. should already be there actually!
+        self:E(self.lid.."ERROR: flight group for asset does NOT exist!")
       end    
     
     else
