@@ -16,7 +16,7 @@
 --   * Spawn late activated.
 --   * Spawn with or without an initial delay.
 --   * Respawn after landing, on the runway or at the ramp after engine shutdown.
---   * Spawn with custom heading.
+--   * Spawn with custom heading, both for a group formation and for the units in the group.
 --   * Spawn with different skills.
 --   * Spawn with different liveries.
 --   * Spawn with an inner and outer radius to set the initial position.
@@ -546,6 +546,41 @@ function SPAWN:InitHeading( HeadingMin, HeadingMax )
   self.SpawnInitHeadingMin = HeadingMin
   self.SpawnInitHeadingMax = HeadingMax
   
+  return self
+end
+
+
+--- Defines the heading of the overall formation of the new spawned group. 
+-- The heading can be given as one fixed degree, or can be randomized between minimum and maximum degrees.
+-- The Group's formation as laid out in its template will be rotated around the first unit in the group
+-- Group individual units facings will rotate to match.  If InitHeading is also applied to this SPAWN then that will take precedence for individual unit facings.
+-- Note that InitGroupHeading does *not* rotate the groups route; only its initial facing!
+-- @param #SPAWN self
+-- @param #number HeadingMin The minimum or fixed heading in degrees.
+-- @param #number HeadingMax (optional) The maximum heading in degrees. This there is no maximum heading, then the heading for the group will be HeadingMin.
+-- @param #number unitVar (optional) Individual units within the group will have their heading randomized by +/- unitVar degrees.  Default is zero.
+-- @return #SPAWN self
+-- @usage
+-- 
+-- mySpawner = SPAWN:New( ... )
+-- 
+-- -- Spawn the Group with the formation rotated +100 degrees around unit #1, compared to the mission template.
+-- mySpawner:InitGroupHeading( 100 )
+-- 
+-- Spawn the Group with the formation rotated units between +100 and +150 degrees around unit #1, compared to the mission template, and with individual units varying by +/- 10 degrees from their templated facing.
+-- mySpawner:InitGroupHeading( 100, 150, 10 )
+-- 
+-- Spawn the Group with the formation rotated -60 degrees around unit #1, compared to the mission template, but with all units facing due north regardless of how they were laid out in the template.
+-- mySpawner:InitGroupHeading(-60):InitHeading(0)
+--  or
+-- mySpawner:InitHeading(0):InitGroupHeading(-60)
+-- 
+function SPAWN:InitGroupHeading( HeadingMin, HeadingMax, unitVar )
+  self:F({HeadingMin=HeadingMin, HeadingMax=HeadingMax, unitVar=unitVar})
+
+  self.SpawnInitGroupHeadingMin = HeadingMin
+  self.SpawnInitGroupHeadingMax = HeadingMax
+  self.SpawnInitGroupUnitVar    = unitVar  
   return self
 end
 
@@ -1239,21 +1274,72 @@ function SPAWN:SpawnWithIndex( SpawnIndex, NoBirth )
           end
         end
         
-        -- Get correct heading.
-        local function _Heading(course)
+        -- Get correct heading in Radians.
+        local function _Heading(courseDeg)
           local h
-          if course<=180 then
-            h=math.rad(course)
+          if courseDeg<=180 then
+            h=math.rad(courseDeg)
           else
-            h=-math.rad(360-course)
+            h=-math.rad(360-courseDeg)
           end
           return h 
         end        
+
+        local Rad180 = math.rad(180)
+        local function _HeadingRad(courseRad)
+          if courseRad<=Rad180 then
+            return courseRad
+          else
+            return -((2*Rad180)-courseRad)
+          end
+        end        
+
+        -- Generate a random value somewhere between two floating point values.
+        local function _RandomInRange ( min, max )
+          if min and max then
+            return min + ( math.random()*(max-min) )
+          else
+            return min
+          end
+        end
+
+        -- Apply InitGroupHeading rotation if requested.
+        -- We do this before InitHeading unit rotation so that can take precedence
+        -- NOTE: Does *not* rotate the groups route; only its initial facing.
+        if self.SpawnInitGroupHeadingMin and #SpawnTemplate.units > 0 then
+
+          local pivotX = SpawnTemplate.units[1].x -- unit #1 is the pivot point
+          local pivotY = SpawnTemplate.units[1].y
+
+          local headingRad = math.rad(_RandomInRange(self.SpawnInitGroupHeadingMin or 0,self.SpawnInitGroupHeadingMax))
+          local cosHeading = math.cos(headingRad)
+          local sinHeading = math.sin(headingRad)  
+          
+          local unitVarRad = math.rad(self.SpawnInitGroupUnitVar or 0)
+
+          for UnitID = 1, #SpawnTemplate.units do
+          
+            if UnitID > 1 then -- don't rotate position of unit #1
+              local unitXOff = SpawnTemplate.units[UnitID].x - pivotX -- rotate position offset around unit #1
+              local unitYOff = SpawnTemplate.units[UnitID].y - pivotY
+
+              SpawnTemplate.units[UnitID].x = pivotX + (unitXOff*cosHeading) - (unitYOff*sinHeading)
+              SpawnTemplate.units[UnitID].y = pivotY + (unitYOff*cosHeading) + (unitXOff*sinHeading)
+            end
+            
+            -- adjust heading of all units, including unit #1
+            local unitHeading = SpawnTemplate.units[UnitID].heading + headingRad -- add group rotation to units default rotation
+            SpawnTemplate.units[UnitID].heading = _HeadingRad(_RandomInRange(unitHeading-unitVarRad, unitHeading+unitVarRad))
+            SpawnTemplate.units[UnitID].psi = -SpawnTemplate.units[UnitID].heading
+            
+          end
+
+        end
         
-        -- If Heading is given, point all the units towards the given Heading.
+        -- If Heading is given, point all the units towards the given Heading.  Overrides any heading set in InitGroupHeading above.
         if self.SpawnInitHeadingMin then
           for UnitID = 1, #SpawnTemplate.units do
-            SpawnTemplate.units[UnitID].heading = _Heading(self.SpawnInitHeadingMax and math.random( self.SpawnInitHeadingMin, self.SpawnInitHeadingMax ) or self.SpawnInitHeadingMin)
+            SpawnTemplate.units[UnitID].heading = _Heading(_RandomInRange(self.SpawnInitHeadingMin, self.SpawnInitHeadingMax))
             SpawnTemplate.units[UnitID].psi = -SpawnTemplate.units[UnitID].heading
           end
         end
