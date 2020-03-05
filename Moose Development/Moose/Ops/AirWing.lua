@@ -21,6 +21,12 @@
 -- @field #table missionqueue Mission queue table.
 -- @field #table payloads Playloads for specific aircraft and mission types. 
 -- @field #number payloadcounter Running index of payloads.
+-- @field Core.Set#SET_ZONE zonesetCAP Set of CAP zones.
+-- @field Core.Set#SET_ZONE zonesetTANKER Set of TANKER zones.
+-- @field Core.Set#SET_ZONE zonesetAWACS Set of AWACS zones.
+-- @field #number nflightsCAP Number of CAP flights constantly in the air.
+-- @field #number nflightsTANKER Number of TANKER flights constantly in the air.
+-- @field #number nflightsAWACS Number of AWACS flights constantly in the air.
 -- @extends Functional.Warehouse#WAREHOUSE
 
 --- Be surprised!
@@ -42,6 +48,7 @@ AIRWING = {
   squadrons      =    {},
   missionqueue   =    {},
   payloads       =    {},
+  cappoints      =    {},
 }
 
 --- Squadron data.
@@ -56,7 +63,6 @@ AIRWING = {
 --- Squadron asset.
 -- @type AIRWING.SquadronAsset
 -- @field #AIRWING.Payload payload The payload of the asset.
--- @field Ops.Auftrag#AUFTRAG mission The assigned mission.
 -- @field Ops.FlightGroup#FLIGHTGROUP flightgroup The flightgroup object.
 -- @extends Functional.Warehouse#WAREHOUSE.Assetitem
 
@@ -69,10 +75,17 @@ AIRWING = {
 -- @field #number navail Number of available payloads of this type.
 -- @field #boolean unlimited If true, this payload is unlimited and does not get consumed.
 
+--- CAP data.
+-- @type AIRWING.PatrolData
+-- @field Core.Point#COORDINATE coord CAP coordinate.
+-- @field #number heading heading
+-- @field #number leg Leg.
+-- @field #number speed Speed.
+-- @field #boolean occupied Is currently occupied.
 
 --- AIRWING class version.
 -- @field #string version
-AIRWING.version="0.1.3"
+AIRWING.version="0.1.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -82,11 +95,13 @@ AIRWING.version="0.1.3"
 -- TODO: Make special request to transfer squadrons to anther airwing (or warehouse).
 -- DONE: Build mission queue.
 -- DONE: Find way to start missions.
--- TODO: Check if missions are accomplished.
+-- TODO: Check if missions are done/cancelled.
 -- DONE: Payloads as resources.
 -- TODO: Spawn in air or hot.
 -- TODO: Define CAP zones.
 -- TODO: Define TANKER zones for refuelling.
+-- TODO: Border zone or even multiple zones.
+-- TODO: Check that airbase has enough parking spots if a request is BIG. Alternatively, split requests.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -112,7 +127,6 @@ function AIRWING:New(warehousename, airwingname)
 
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
-  self:AddTransition("*",             "MissionNew",       "*")           -- Add a new mission.  
   self:AddTransition("*",             "MissionRequest",   "*")           -- Add a (mission) request to the warehouse.
   self:AddTransition("*",             "MissionDone",      "*")           -- Mission is over.
   self:AddTransition("*",             "MissionCancel",    "*")           -- Mission is over.
@@ -190,7 +204,7 @@ end
 -- @param Wrapper.Unit#UNIT Unit The unit, the payload is extracted from. Can also be given as *#string* name of the unit.
 -- @param #table MissionTypes Mission types this payload can be used for.
 -- @param #number Npayloads Number of payloads to add to the airwing resources. Default 99 (which should be enough for most scenarios).
--- @param #boolan Unlimited If true, this payload is unlimited.
+-- @param #boolean Unlimited If true, this payload is unlimited.
 -- @return #AIRWING.Payload The payload table or nil if the unit does not exist.
 function AIRWING:NewPayload(Unit, MissionTypes, Npayloads, Unlimited)
 
@@ -323,28 +337,49 @@ end
 --- Add mission to queue.
 -- @param #AIRWING self
 -- @param Ops.Auftrag#AUFTRAG Mission for this group.
--- @param #number Nassets Number of required assets for this mission. Default 1.
--- @param Core.Point#COORDINATE WaypointCoordinate Coordinate of the mission waypoint.
 -- @return #AIRWING self
-function AIRWING:AddMission(Mission, Nassets, WaypointCoordinate)
-  
-  -- Number of assets.
-  Mission.nassets=Mission.nassets and Mission.nassets or (Nassets or 1)
-  
-  Mission.waypointcoord=WaypointCoordinate
-  Mission.waypointindex=nil
+function AIRWING:AddMission(Mission)
   
   -- Set status to QUEUED.
   Mission:Queued()
+  
+  -- Set airwing.
+  Mission.airwing=self
 
   -- Add mission to queue.
   table.insert(self.missionqueue, Mission)
   
   -- Info text.
-  local text=string.format("Added %s mission %s at waypoint #%s. Starting at %s. Stopping at %s", 
-  tostring(Mission.type), tostring(Mission.name), tostring(Mission.waypointindex), UTILS.SecondsToClock(Mission.Tstart, true), Mission.Tstop and UTILS.SecondsToClock(Mission.Tstop, true) or "never")
+  local text=string.format("Added %s mission %s. Starting at %s. Stopping at %s", 
+  tostring(Mission.type), tostring(Mission.name), UTILS.SecondsToClock(Mission.Tstart, true), Mission.Tstop and UTILS.SecondsToClock(Mission.Tstop, true) or "never")
   self:I(self.lid..text)
   
+  return self
+end
+
+--- Set CAP zones.
+-- @param #AIRWING self
+-- @param #number n Number of flights. Default 1.
+-- @return #AIRWING self
+function AIRWING:SetCAPflights(n)
+  self.nflightsCAP=n
+  return self
+end
+
+--- Add a CAP zone.
+-- @param #AIRWING self
+-- @param Core.Zone#ZONE AcceptZone Add a zone to the CAP zone set.
+-- @return #AIRWING self
+function AIRWING:AddCAPPoint(Coordinate, Heading, Leg, Speed)
+  
+  local cappoint={}  --#AIRWING.PatrolData
+  cappoint.coord=Coordinate
+  cappoint.heading=Heading or 090
+  cappoint.leg=Leg or 15
+  cappoint.speed=Speed or 350
+
+  table.insert(self.cappoints, cappoint)
+
   return self
 end
 
@@ -362,12 +397,17 @@ function AIRWING:onafterStart(From, Event, To)
   -- Info.
   self:I(self.lid..string.format("Starting AIRWING v%s", AIRWING.version))
 
-  -- Add F10 radio menu.
-  self:_SetMenuCoalition()
+  -- Menu.
+  if false then
 
-  for _,_squadron in pairs(self.squadrons) do
-    local squadron=_squadron --#AIRWING.Squadron
-    self:_AddSquadonMenu(squadron)
+    -- Add F10 radio menu.
+    self:_SetMenuCoalition()
+  
+    for _,_squadron in pairs(self.squadrons) do
+      local squadron=_squadron --#AIRWING.Squadron
+      self:_AddSquadonMenu(squadron)
+    end
+    
   end
 
 end
@@ -422,6 +462,8 @@ function AIRWING:onafterStatus(From, Event, To)
   end
   self:I(self.lid..text)
   
+  
+  
   --------------
   -- Mission ---
   --------------
@@ -471,7 +513,7 @@ function AIRWING:_GetNextMission()
       local can, assets=self:CanMission(mission.type, mission.nassets)
       
       -- Debug output.
-      self:T3({self.lid.."Mission check:", MissionStatusScheduled=mission.status==AUFTRAG.Status.SCHEDULED, TstartPassed=time>=mission.Tstart, CanMission=can, Nassets=#assets})
+      self:T3({self.lid.."Mission check:", TstartPassed=time>=mission.Tstart, CanMission=can, Nassets=#assets})
       
       -- Check that mission is still scheduled, time has passed and enough assets are available.
        if can then
@@ -494,8 +536,6 @@ function AIRWING:_GetNextMission()
           end
           
           table.insert(mission.assets, asset)
-          
-          asset.mission=mission
         end
         
         return mission
@@ -609,7 +649,7 @@ function AIRWING:onafterMissionCancel(From, Event, To, Mission)
   
 end
 
---- On after "MissionRequest" event. Performs a self request to the warehouse for the mission assets. Sets mission status to ASSIGNED.
+--- On after "MissionRequest" event. Performs a self request to the warehouse for the mission assets. Sets mission status to REQUESTED.
 -- @param #AIRWING self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -617,12 +657,14 @@ end
 -- @param Ops.Auftrag#AUFTRAG Mission The requested mission.
 function AIRWING:onafterMissionRequest(From, Event, To, Mission)
 
-  -- Set mission status to ASSIGNED.
+  -- Set mission status from QUEUED to REQUESTED. Ensures that it is not considered in the next selection.
   Mission:Requested()
   
+  ---
   -- Some assets might already be spawned and even on a different mission (orbit).
   -- Need to dived to set into spawned and instock assets and handle the other
-  
+  ---
+
   -- Assets to be requested
   local Assetlist={}
   
@@ -633,7 +675,7 @@ function AIRWING:onafterMissionRequest(From, Event, To, Mission)
     
       if asset.flightgroup then
         --TODO: cancel current mission if there is any!
-        asset.flightgroup:AddMission(Mission, Mission.waypointcoord, Mission.waypointindex)
+        asset.flightgroup:AddMission(Mission)
       else
         self:E(self.lid.."ERROR: flight group for asset does NOT exist!")
       end    
@@ -646,12 +688,18 @@ function AIRWING:onafterMissionRequest(From, Event, To, Mission)
 
   -- Add request to airwing warehouse.
   if #Assetlist>0 then
+  
+    -- Add request to airwing warehouse.
+    -- TODO: better Assignment string.
     self:AddRequest(self, WAREHOUSE.Descriptor.ASSETLIST, Assetlist, #Assetlist, nil, nil, Mission.prio, tostring(Mission.auftragsnummer))
+    
+    -- The queueid has been increased in the onafterAddRequest function. So we can simply use it here.
+    Mission.requestID=self.queueid
   end
 
 end
 
---- On after "Request" event. Spawns the necessary cargo and transport assets.
+--- On after "Request" event.
 -- @param #AIRWING self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -702,7 +750,7 @@ function AIRWING:onafterAssetSpawned(From, Event, To, group, asset, request)
   if mission then
       
     -- Add mission to flightgroup queue.  
-    asset.flightgroup:AddMission(mission, mission.waypointcoord, mission.waypointindex)
+    asset.flightgroup:AddMission(mission)
   end  
   
 end

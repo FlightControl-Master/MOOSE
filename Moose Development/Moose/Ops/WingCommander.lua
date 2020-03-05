@@ -54,7 +54,7 @@ WINGCOMMANDER = {
 
 --- WINGCOMMANDER class version.
 -- @field #string version
-WINGCOMMANDER.version="0.0.1"
+WINGCOMMANDER.version="0.0.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -78,13 +78,6 @@ function WINGCOMMANDER:New(AgentSet)
 
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("WINGCOMMANDER | ")
-
-  -- Start State.
-  --self:SetStartState("Stopped")
-  
-  -- Add FSM transitions.
-  --                 From State  -->   Event        -->     To State
-  --self:AddTransition("Stopped",       "Start",              "Running")     -- Start FSM.
 
 
   ------------------------
@@ -192,7 +185,7 @@ function WINGCOMMANDER:onafterStatus(From, Event, To)
     if contact.mission and contact.mission.airwing then
     
       -- Cancel this mission.
-      contact.mission.airwing:MissionCancel(contact.mission)
+      contact.mission:Cancel()
           
     end
     
@@ -314,14 +307,11 @@ function WINGCOMMANDER:CheckMissionQueue()
         end
         table.sort(airwings, sortdist)    
     
+        -- This is the closest airwing to the target.
         local airwing=airwings[1].airwing  --Ops.AirWing#AIRWING
-        local targetcoord=airwings[1].targetcoord --Core.Point#COORDINATE
-        
-        -- Get waypoint coordinate. This is where the mission is actually executed. 
-        local WaypointCoordinate=airwing:GetCoordinate():GetIntermediateCoordinate(targetcoord, 0.5)
         
         -- Add mission to airwing.
-        airwing:AddMission(mission, Nassets, WaypointCoordinate)
+        airwing:AddMission(mission)
     
         return
       end

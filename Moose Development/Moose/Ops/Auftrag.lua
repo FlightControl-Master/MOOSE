@@ -20,8 +20,6 @@
 -- @field #number auftragsnummer Auftragsnummer.
 -- @field #string type Mission type.
 -- @field #string status Mission status.
--- @field #table flightstatus Status of flight missions.
--- @field #table flightgroups Flight groups of this mission.
 -- @field #table flightdata Flight specific data.
 -- @field #string name Mission name.
 -- @field #number prio Mission priority.
@@ -33,8 +31,6 @@
 -- @field #table DCStask DCS task structure.
 -- 
 -- @field Core.Point#COORDINATE waypointcoord Coordinate of the waypoint task.
--- @field #number waypointindex Waypoint number at which the task is executed. 
--- @field Ops.FlightGroup#FLIGHTGROUP.Task waypointtask Waypoint task.
 -- 
 -- @field Core.Point#COORDINATE orbitCoord Coordinate where to orbit.
 -- @field #number orbitSpeed Orbit speed in m/s.
@@ -61,6 +57,7 @@
 -- @field #string squadname Name of the assigned Airwing squadron.
 -- @field #table assets Airwing Assets assigned for this mission.
 -- @field #number nassets Number of required assets by the Airwing.
+-- @field #number requestID The ID of the queued warehouse request. Necessary to cancel the request if the mission was cancelled before the request is processed.
 -- 
 -- @field #number optionROE ROE.
 -- @field #number optionROT ROT.
@@ -98,8 +95,6 @@ AUFTRAG = {
   Debug              = false,
   lid                =   nil,
   auftragsnummer     =   nil,
-  flightgroups       =    {},
-  flightstatus       =    {},
   flightdata         =    {},
 }
 
@@ -177,14 +172,16 @@ AUFTRAG.Status={
 -- @field #string STARTED Flightgroup started this mission but it is not executed yet.
 -- @field #string EXECUTING Flightgroup is executing this mission.
 -- @field #string DONE Mission task of the flightgroup is done.
+-- @field #string CANCELLED Mission was cancelled.
 AUFTRAG.FlightStatus={
   SCHEDULED="scheduled",
   STARTED="started",
   EXECUTING="executing",
   DONE="done",
+  CANCELLED="cancelled",
 }
 
---- Flight specific data.
+--- Flight specific data. Each flight subscribed to this mission has different data for this.
 -- @type AUFTRAG.FlightData
 -- @field Ops.FlightGroup#FLIGHTGROUP flightgroup The flight group.
 -- @field Core.Point#COORDINATE waypointcoordinate Waypoint coordinate.
@@ -195,7 +192,7 @@ AUFTRAG.FlightStatus={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.0.3"
+AUFTRAG.version="0.0.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -204,6 +201,8 @@ AUFTRAG.version="0.0.3"
 -- TODO: Mission ROE and ROT
 -- TODO: Mission formation, etc.
 -- TODO: FSM events.
+-- TODO: F10 marker functions that are updated on Status event.
+-- TODO: Evaluate mission result ==> SUCCESS/FAILURE
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -505,15 +504,43 @@ end
 function AUFTRAG:AddFlightGroup(FlightGroup)
   self:I(self.lid..string.format("Adding flight group %s", FlightGroup.groupname))
 
-  --table.insert(self.flightgroups, FlightGroup)
-  
   local flightdata={} --#AUFTRAG.FlightData
   flightdata.flightgroup=FlightGroup
   flightdata.status=AUFTRAG.FlightStatus.SCHEDULED
   flightdata.waypointcoordinate=nil
+  flightdata.waypointindex=nil
+  flightdata.waypointtask=nil
 
   self.flightdata[FlightGroup.groupname]=flightdata
 
+end
+
+--- Check if mission is PLANNED.
+-- @param #AUFTRAG self
+-- @return #boolean If true, mission is in the planning state.
+function AUFTRAG:IsPlanned()
+  return self.status==AUFTRAG.Status.PLANNED
+end
+
+--- Check if mission is QUEUED at an AIRWING mission queue.
+-- @param #AUFTRAG self
+-- @return #boolean If true, mission is queued.
+function AUFTRAG:IsQueued()
+  return self.status==AUFTRAG.Status.QUEUED
+end
+
+--- Check if mission is REQUESTED, i.e. request for WAREHOUSE assets is done.
+-- @param #AUFTRAG self
+-- @return #boolean If true, mission is requested.
+function AUFTRAG:IsRequested()
+  return self.status==AUFTRAG.Status.REQUESTED
+end
+
+--- Check if mission is SCHEDULED, i.e. request for WAREHOUSE assets is done.
+-- @param #AUFTRAG self
+-- @return #boolean If true, mission is queued.
+function AUFTRAG:IsScheduled()
+  return self.status==AUFTRAG.Status.SCHEDULED
 end
 
 --- Check if mission is executing.
@@ -521,6 +548,20 @@ end
 -- @return #boolean If true, mission is currently executing.
 function AUFTRAG:IsExecuting()
   return self.status==AUFTRAG.Status.EXECUTING
+end
+
+--- Check if mission was cancelled.
+-- @param #AUFTRAG self
+-- @return #boolean If true, mission was cancelled.
+function AUFTRAG:IsCancelled()
+  return self.status==AUFTRAG.Status.CANCELLED
+end
+
+--- Check if mission is done.
+-- @param #AUFTRAG self
+-- @return #boolean If true, mission is done.
+function AUFTRAG:IsCancelled()
+  return self.status==AUFTRAG.Status.DONE
 end
 
 --- Check if mission is over. This could be state DONE or CANCELLED.
@@ -544,8 +585,14 @@ end
 function AUFTRAG:onafterStatus(From, Event, To)
 
   local fsmstate=self:GetState()
+  
+  local Ntargets=self:CountMissionTargets()
+  
+  local Cstart=UTILS.SecondsToClock(self.Tstart, true)
+  local Cstop=self.Tstop and UTILS.SecondsToClock(self.Tstop, true) or "INF"
 
-  self:I(self.lid..string.format("FSM status %s, mission status=%s, flightgroups=%d", fsmstate, self.status, #self.flightdata))
+  -- Info message.
+  self:I(self.lid..string.format("FSM state %s (Mstatus=%s): T=%s-%s flights=%d, targets=%d", fsmstate, self.status, Cstart, Cstop, #self.flightdata, Ntargets))
 
   self:__Status(-30)
 end
@@ -605,10 +652,16 @@ end
 -- @return #boolean If true, all flights are done with the mission.
 function AUFTRAG:CheckFlightsDone()
 
+  -- These are early stages, where we might not even have a flightgroup defined to be checked.
+  if self:IsPlanned() or self:IsQueued() or self:IsRequested() then 
+    return false
+  end
+  
   local done=true
   
-  for groupname,status in pairs(self.flightstatus) do
-    if status~=AUFTRAG.Status.DONE then
+  for groupname,data in pairs(self.flightdata) do
+    local flightdata=data --#AUFTRAG.FlightData
+    if flightdata.status~=AUFTRAG.FlightStatus.DONE and flightdata.status~=AUFTRAG.FlightStatus.CANCELLED then
       done=false
     end
   end
@@ -703,16 +756,16 @@ function AUFTRAG:onafterCancel(From, Event, To)
   self.status=AUFTRAG.Status.CANCELLED
   self:I(self.lid..string.format("New mission status=%s", self.status))
 
-  --[[
-  for _,_asset in pairs(self.assets or {}) do
-    local asset=_asset --Ops.AirWing#AIRWING.SquadronAsset
-    asset.flightgroup:MissionCancel(self)
-  end
-  ]]
+  if self.airwing then
   
-  for _,_flightdata in pairs(self.flightdata) do
-    local flightdata=_flightdata --#AUFTRAG.FlightData
-    flightdata.flightgroup:MissionCancel(self)
+    self.airwing:MissionCancel(self)
+  
+  else
+  
+    for _,_flightdata in pairs(self.flightdata) do
+      local flightdata=_flightdata --#AUFTRAG.FlightData
+      flightdata.flightgroup:MissionCancel(self)
+    end
   end
 
 end
@@ -723,7 +776,7 @@ end
 
 --- Count alive mission targets.
 -- @param #AUFTRAG self
--- @param #number Number of alive targets.
+-- @return #number Number of alive targets.
 function AUFTRAG:CountMissionTargets()
   
   local N=0

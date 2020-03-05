@@ -232,12 +232,14 @@ function INTEL:onafterStatus(From, Event, To)
   -- FSM state.
   local fsmstate=self:GetState()
   
+  -- Fresh arrays.
   self.ContactsLost={}
   self.ContactsUnknown={}
   
   -- Check if group has detected any units.
   self:UpdateIntel()
   
+  -- Number of total contacts.
   local Ncontacts=#self.Contacts
 
   -- Short info.

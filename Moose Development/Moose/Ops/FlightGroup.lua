@@ -656,18 +656,16 @@ end
 --- Add mission to queue.
 -- @param #FLIGHTGROUP self
 -- @param Ops.Auftrag#AUFTRAG Mission Mission for this group.
--- @param Core.Point#COORDINATE WaypointCoordinate Coordinate of the mission waypoint
--- @param #number WaypointIndex The waypoint number. Default is after all current air waypoints.
 -- @return #FLIGHTGROUP self
-function FLIGHTGROUP:AddMission(Mission, WaypointCoordinate)
-
-  Mission.waypointcoord=WaypointCoordinate
+function FLIGHTGROUP:AddMission(Mission)
   
   -- Add flight group to mission.
   Mission:AddFlightGroup(self)
   
-  -- Set status to scheduled.
+  -- Set flight status to SCHEDULED..
   Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.SCHEDULED)
+  
+  -- Set mission status to SCHEDULED.
   Mission:Scheduled()
 
   -- Add mission to queue.
@@ -2539,7 +2537,7 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
   wp[#wp+1]=pland:WaypointAirLanding(UTILS.KnotsToKmph(SpeedLand), airbase, {}, "Landing") 
  
   -- Respawn?
-  if fc then
+  if fc or world.event.S_EVENT_KILL then
   
     -- Just route the group. Respawn will happen when going from holding to final.
     self:Route(wp, 1)
@@ -3004,6 +3002,7 @@ function FLIGHTGROUP:onafterTaskCancel(From, Event, To, Task)
   -- Get current task.
   local currenttask=self:GetTaskCurrent()
   
+  -- If no task, we take the current task. But this could also be *nil*!
   Task=Task or currenttask
   
   if Task then
@@ -3020,12 +3019,20 @@ function FLIGHTGROUP:onafterTaskCancel(From, Event, To, Task)
       Task.stopflag:Set(1)
   
     else
-    
-      self:I(self.lid..string.format("TaskCancel: Setting task %s ID=%d to DONE", Task.description, Task.id))
+      
+      -- Set task status to DONE (we have no CANCELLED defined yet).
       Task.status=FLIGHTGROUP.TaskStatus.DONE
       
+      -- Debug info.
+      self:I(self.lid..string.format("TaskCancel: Setting task %s ID=%d to DONE", Task.description, Task.id))
+      
+      -- Is this a waypoint task?
       if Task.type==FLIGHTGROUP.TaskType.WAYPOINT and Task.waypoint then
-        self:RemoveWaypoint(Task.waypoint)
+
+        -- Check that this is a mission waypoint and no other tasks are defined here.      
+        if self:GetMissionByTaskID(Task.id) and #self:GetTasksWaypoint(Task.waypoint) then
+          self:RemoveWaypoint(Task.waypoint)
+        end
       end
     end
     
@@ -3136,9 +3143,10 @@ function FLIGHTGROUP:onafterMissionStart(From, Event, To, Mission)
   -- Set current mission.
   self.currentmission=Mission.auftragsnummer
     
-  -- Set mission status.
+  -- Set flight mission status to STARTED.
   Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.STARTED)
   
+  -- Set mission status to STARTED.
   Mission:Started()
 
   -- Route flight to mission zone.
@@ -3158,8 +3166,10 @@ function FLIGHTGROUP:onafterMissionExecute(From, Event, To, Mission)
   self:I(self.lid..text)
   MESSAGE:New(text, 120, "DEBUG"):ToAllIf(true)
   
-  -- Set mission status.
+  -- Set flight mission status to EXECUTING.
   Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.EXECUTING)
+  
+  -- Set mission status to EXECUTING.
   Mission:Executing()
   
 end
@@ -3174,25 +3184,30 @@ function FLIGHTGROUP:onafterMissionCancel(From, Event, To, Mission)
 
   if self.currentmission and Mission.auftragsnummer==self.currentmission then
     
+    -- Get mission waypoint task.
     local Task=Mission:GetFlightWaypointTask(self)
     
     env.info(string.format("FF Cancel current mission %s. Task=%s", tostring(Mission.name), tostring(Task and Task.description or "WTF")))
 
-    -- Cancelling the mission is actually cancelling the current task. This will trigger the task done.
+    -- Cancelling the mission is actually cancelling the current task.
+    -- Note that two things can happen.
+    -- 1.) Flight is still on the way to the waypoint (status should be STARTED). In this case there would not be a current task!
+    -- 2.) Flight already passed the mission waypoint (status should be EXECUTING).
     self:TaskCancel(Task)
     
+    -- Set current mission to nil.
     self.currentmission=nil
     
   else
   
-    -- Not the current mission. So set status in queue.
+    -- Not the current mission.
     -- TODO: remove mission from queue?  
     
   end
   
   -- Set missin flight status.
   env.info("FF setting mission to cancelled")
-  Mission:SetFlightStatus(self, AUFTRAG.Status.CANCELLED)  
+  Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.CANCELLED)  
 
 end
 
@@ -3206,14 +3221,6 @@ function FLIGHTGROUP:onafterMissionDone(From, Event, To, Mission)
   
   -- Set Flight status.
   Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.DONE)
-  
-  -- TODO: This has to be done in AUFTRAG.
-  --[[
-  local airwing=self:GetAirWing()
-  if airwing then
-    airwing:MissionDone(Mission)
-  end
-  ]]
   
   -- Set current mission to nil.
   self.currentmission=nil
@@ -3233,9 +3240,14 @@ function FLIGHTGROUP:RouteToMission(mission, delay)
         
     -- Next waypoint.
     local nextwaypoint=self.currentwp+1
+    
+    -- Create waypoint coordinate half way between us and the target.
+    local targetcoord=mission:GetTargetCoordinate()
+    local flightcoord=self.group:GetCoordinate()    
+    local waypointcoord=flightcoord:GetIntermediateCoordinate(targetcoord, 0.5)
   
     -- Add waypoint.
-    self:AddWaypointAir(mission.waypointcoord, nextwaypoint, self.speedmax*0.8, false)
+    self:AddWaypointAir(waypointcoord, nextwaypoint, self.speedmax*0.8, false)
     
     -- Add waypoint task. UpdateRoute is called inside.
     local waypointtask=self:AddTaskWaypoint(mission.DCStask, nextwaypoint, mission.name, mission.prio, mission.duration)
@@ -3244,7 +3256,7 @@ function FLIGHTGROUP:RouteToMission(mission, delay)
     mission:SetFlightWaypointTask(self, waypointtask)
     
     -- TODO: better marker text, mission.maker
-    mission.marker=mission.waypointcoord:MarkToCoalition(mission.name, self:GetCoalition(), true)
+    mission.marker=waypointcoord:MarkToCoalition(mission.name, self:GetCoalition(), true)
     
     
     --self:SetROE(mission.optionROE)
@@ -3781,7 +3793,7 @@ function FLIGHTGROUP:GetMissionByTaskID(taskid)
     for _,_mission in pairs(self.missionqueue) do
       local mission=_mission --Ops.Auftrag#AUFTRAG
   
-      local task=mission.waypointtask
+      local task=mission:GetFlightWaypointTask(self)
   
       if task and task.id and task.id==taskid then      
         return mission
