@@ -316,9 +316,12 @@ function GROUP:GetPositionVec3() -- Overridden from POSITIONABLE:GetPositionVec3
   local DCSPositionable = self:GetDCSObject()
   
   if DCSPositionable then
-    local PositionablePosition = DCSPositionable:getUnits()[1]:getPosition().p
+   local unit = DCSPositionable:getUnits()[1]
+   if unit then
+     local PositionablePosition = unit:getPosition().p
     self:T3( PositionablePosition )
     return PositionablePosition
+    end
   end
   
   return nil
@@ -366,9 +369,11 @@ function GROUP:IsActive()
   local DCSGroup = self:GetDCSObject() -- DCS#Group
   
   if DCSGroup then
-  
-    local GroupIsActive = DCSGroup:getUnit(1):isActive()
+    local unit = DCSGroup:getUnit(1)
+    if unit then
+      local GroupIsActive = unit:isActive()
     return GroupIsActive 
+    end
   end
 
   return nil
