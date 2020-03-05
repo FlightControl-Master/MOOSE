@@ -8087,6 +8087,23 @@ function WAREHOUSE:_DeleteQueueItem(qitem, queue)
   end
 end
 
+--- Delete item from queue.
+-- @param #WAREHOUSE self
+-- @param #number qitemID ID of queue item to be removed.
+-- @param #table queue The queue from which the item should be deleted.
+function WAREHOUSE:_DeleteQueueItemByID(qitemID, queue)
+  self:F({qitem=qitem, queue=queue})
+
+  for i=1,#queue do
+    local _item=queue[i] --#WAREHOUSE.Queueitem
+    if _item.uid==qitemID then
+      self:T(self.lid..string.format("Deleting queue item id=%d.", qitemID))
+      table.remove(queue,i)
+      break
+    end
+  end
+end
+
 --- Sort requests queue wrt prio and request uid.
 -- @param #WAREHOUSE self
 function WAREHOUSE:_SortQueue()

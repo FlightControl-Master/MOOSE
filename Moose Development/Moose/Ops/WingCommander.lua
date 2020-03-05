@@ -79,6 +79,9 @@ function WINGCOMMANDER:New(AgentSet)
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("WINGCOMMANDER | ")
 
+  -- Add FSM transitions.
+  --                 From State   -->      Event           -->     To State
+  self:AddTransition("*",              "MissionAssign",            "*")           -- Mission was assigned to an AIRWING.
 
   ------------------------
   --- Pseudo Functions ---
@@ -160,6 +163,14 @@ function WINGCOMMANDER:onafterStart(From, Event, To)
 
   -- Start parent INTEL.
   self:GetParent(self).onafterStart(self, From, Event, To)
+  
+  -- Start attached airwings.
+  for _,_airwing in pairs(self.airwings) do
+    local airwing=_airwing --Ops.AirWing#AIRWING
+    if airwing:GetState()=="NotReadyYet" then
+      airwing:Start()
+    end
+  end
 
 end
 
@@ -251,6 +262,23 @@ function WINGCOMMANDER:onafterStatus(From, Event, To)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- FSM Events
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- On after "MissionAssign" event. Mission is added to the AIRWING mission queue.
+-- @param #WINGCOMMANDER self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.AirWing#AIRWING Airwing The AIRWING.
+-- @param Ops.Auftrag#AUFTRAG Mission The mission.
+function WINGCOMMANDER:onafterMissionAssign(From, Event, To, Airwing, Mission)
+
+  Airwing:AddMission(Mission)
+
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Resources
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -311,7 +339,7 @@ function WINGCOMMANDER:CheckMissionQueue()
         local airwing=airwings[1].airwing  --Ops.AirWing#AIRWING
         
         -- Add mission to airwing.
-        airwing:AddMission(mission)
+        self:MissionAssign(airwing, mission)
     
         return
       end

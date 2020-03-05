@@ -177,6 +177,7 @@ end
 -- @return #AIRWING.Squadron The squadron object.
 function AIRWING:AddSquadron(SquadronName, MissionTypes, Livery, Skill)
 
+  -- Ensure Missiontypes is a table.
   if MissionTypes and type(MissionTypes)~="table" then
     MissionTypes={MissionTypes}
   end
@@ -186,8 +187,8 @@ function AIRWING:AddSquadron(SquadronName, MissionTypes, Livery, Skill)
     table.insert(MissionTypes, AUFTRAG.Type.ORBIT)
   end
 
+  -- Set up new squadron data.
   local squadron={} --#AIRWING.Squadron
-
   squadron.name=SquadronName
   squadron.assets={}
   squadron.missiontypes=MissionTypes
@@ -210,6 +211,14 @@ function AIRWING:NewPayload(Unit, MissionTypes, Npayloads, Unlimited)
 
   if type(Unit)=="string" then
     Unit=UNIT:FindByName(Unit)
+    if not Unit then
+      Unit=GROUP:FindByName(Unit)
+    end
+  end
+
+  -- If a GROUP object was given, get the first unit.
+  if Unit:IsInstanceOf("GROUP") then
+    Unit=Unit:GetUnit(1)
   end
   
   if Unit then
@@ -351,7 +360,7 @@ function AIRWING:AddMission(Mission)
   
   -- Info text.
   local text=string.format("Added %s mission %s. Starting at %s. Stopping at %s", 
-  tostring(Mission.type), tostring(Mission.name), UTILS.SecondsToClock(Mission.Tstart, true), Mission.Tstop and UTILS.SecondsToClock(Mission.Tstop, true) or "never")
+  tostring(Mission.type), tostring(Mission.name), UTILS.SecondsToClock(Mission.Tstart, true), Mission.Tstop and UTILS.SecondsToClock(Mission.Tstop, true) or "INF")
   self:I(self.lid..text)
   
   return self
@@ -647,6 +656,11 @@ function AIRWING:onafterMissionCancel(From, Event, To, Mission)
     end
   end
   
+  -- Remove queued request (if any).
+  if Mission.requestID then
+    self:_DeleteQueueItemByID(Mission.requestID, self.queue)
+  end
+  
 end
 
 --- On after "MissionRequest" event. Performs a self request to the warehouse for the mission assets. Sets mission status to REQUESTED.
@@ -930,8 +944,10 @@ function AIRWING:IsAssetOnMission(asset, MissionTypes)
     for _,_mission in pairs(asset.flightgroup.missionqueue or {}) do
       local mission=_mission --Ops.Auftrag#AUFTRAG
       
+      local status=mission:GetFlightStatus(asset.flightgroup)
+      
       -- Only if mission is not already over.
-      if mission.status~=AUFTRAG.Status.DONE and self:CheckMissionType(mission.type, MissionTypes) then
+      if status~=AUFTRAG.FlightStatus.DONE and status~=AUFTRAG.FlightStatus.CANCELLED and self:CheckMissionType(mission.type, MissionTypes) then
         return true
       end
       

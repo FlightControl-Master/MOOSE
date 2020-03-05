@@ -29,6 +29,7 @@
 -- @field #number duration Mission duration in seconds.
 -- @field #number marker F10 map marker ID.
 -- @field #table DCStask DCS task structure.
+-- @field #number Ntargets Number of mission targets.
 -- 
 -- @field Core.Point#COORDINATE waypointcoord Coordinate of the waypoint task.
 -- 
@@ -192,7 +193,7 @@ AUFTRAG.FlightStatus={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.0.4"
+AUFTRAG.version="0.0.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -258,6 +259,7 @@ function AUFTRAG:New(Type)
   self:AddTransition("*",                      "Failed",        AUFTRAG.Status.FAILED)
     
   self:AddTransition("*",                      "Status",        "*")
+  self:AddTransition("*",                      "Stop",          "Stopped")
   
   self:__Status(-1)
   
@@ -572,6 +574,13 @@ function AUFTRAG:IsOver()
   return over
 end
 
+--- Check if mission is NOT over.
+-- @param #AUFTRAG self
+-- @return #boolean If true, mission is NOT over yet.
+function AUFTRAG:IsNotOver()
+  return not self:IsOver()
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Mission Status
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -584,17 +593,51 @@ end
 -- @param Ops.AirWing#AIRWING Airwing The airwing.
 function AUFTRAG:onafterStatus(From, Event, To)
 
-  local fsmstate=self:GetState()
-  
+  -- Number of alive mission targets.
   local Ntargets=self:CountMissionTargets()
   
+  -- Number of alive flights attached to this mission.
+  local Nflights=self:CountFlightGroups()
+
+  -- Cancel mission if stop time passed.
+  if self.Tstop and timer.getAbsTime()>self.Tstop then
+    self:Cancel()
+  end
+
+  -- Cancel mission if number of targest is 0 (and was >0 before as some missions, e.g. orbit, don't have any target).
+  if self:IsNotOver() and self.Ntargets>0 and Ntargets==0 then
+    self:Cancel()
+  end
+  
+  -- Check if ALL flights are done with their mission.
+  if self:IsNotOver() and self:CheckFlightsDone() then
+    self:Done()
+  end
+  
+  -- Current FSM state.
+  local fsmstate=self:GetState()
+  
+  -- Mission start stop time.
   local Cstart=UTILS.SecondsToClock(self.Tstart, true)
   local Cstop=self.Tstop and UTILS.SecondsToClock(self.Tstop, true) or "INF"
 
   -- Info message.
-  self:I(self.lid..string.format("FSM state %s (Mstatus=%s): T=%s-%s flights=%d, targets=%d", fsmstate, self.status, Cstart, Cstop, #self.flightdata, Ntargets))
+  self:I(self.lid..string.format("Status \"%s\": T=%s-%s flights=%d, targets=%d", self.status, Cstart, Cstop, Nflights, Ntargets))
 
-  self:__Status(-30)
+  -- Check for error.  
+  if fsmstate~=self.status then
+    self:E(self.lid..string.format("ERROR: FSM state %s != %s mission status!", fsmstate, self.status))
+  end
+
+
+  -- Check if mission is OVER.
+  if self:IsOver() then
+    -- TODO: evaluate mission result. self.Ntargets>0 and Ntargets=?
+    -- TODO: if failed, repeat mission, i.e. set status to PLANNED? if success, stop and remove from ALL queues.
+    self:Stop()
+  else
+    self:__Status(-30)
+  end
 end
 
 --- Set flightgroup mission status.
@@ -657,11 +700,13 @@ function AUFTRAG:CheckFlightsDone()
     return false
   end
   
+  -- Assume we are done.
   local done=true
   
   for groupname,data in pairs(self.flightdata) do
     local flightdata=data --#AUFTRAG.FlightData
     if flightdata.status~=AUFTRAG.FlightStatus.DONE and flightdata.status~=AUFTRAG.FlightStatus.CANCELLED then
+      -- At least one flight group is not DONE or CANCELLED yet!
       done=false
     end
   end
@@ -770,6 +815,18 @@ function AUFTRAG:onafterCancel(From, Event, To)
 
 end
 
+--- On after "Stop" event.
+-- @param #AUFTRAG self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function AUFTRAG:onafterStop(From, Event, To)
+
+  -- TODO: remove missions from queues in WINGCOMMANDER, AIRWING and FLIGHGROUPS!
+
+  self.CallScheduler:Clear()
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -793,6 +850,20 @@ function AUFTRAG:CountMissionTargets()
   return N
 end
 
+--- Count alive flight groups assigned for this mission.
+-- @param #AUFTRAG self
+-- @return #number Number of alive flight groups.
+function AUFTRAG:CountFlightGroups()
+  local N=0
+  for _,_flightdata in pairs(self.flightdata) do
+    local flightdata=_flightdata --#AUFTRAG.FlightData
+    if flightdata and flightdata.flightgroup and flightdata.flightgroup:IsAlive() then
+      N=N+1
+    end
+  end
+  return N
+end
+
 --- Get coordinate of target. First unit/group of the set is used.
 -- @param #AUFTRAG self
 -- @return Core.Point#COORDINATE The target coordinate or nil.
@@ -800,10 +871,14 @@ function AUFTRAG:GetTargetCoordinate()
 
   if self.engageTargetGroupset then  
     local group=self.engageTargetGroupset:GetFirst() --Wrapper.Group#GROUP
-    return group:GetCoordinate()
+    if group and group:IsAlive() then
+      return group:GetCoordinate()
+    end
   elseif self.engageTargetUnitset then
     local unit=self.engageTargetUnitset:GetFirst() --Wrapper.Unit#UNIT
-    return unit:GetCoordinate()
+    if unit and unit:IsAlive() then
+      return unit:GetCoordinate()
+    end
   elseif self.engageCoord then
     return self.engageCoord
   elseif self.orbitCoord then
@@ -993,6 +1068,8 @@ function AUFTRAG:GetDCSMissionTask()
   
   end
   
+  -- Count mission targets.
+  self.Ntargets=self:CountMissionTargets()
 
   -- Return the task.
   if #DCStasks==1 then
