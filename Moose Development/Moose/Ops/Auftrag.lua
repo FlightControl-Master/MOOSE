@@ -97,6 +97,7 @@ AUFTRAG = {
   lid                =   nil,
   auftragsnummer     =   nil,
   flightdata         =    {},
+  assets             =    {},
 }
 
 --- Global mission counter.
@@ -116,6 +117,7 @@ _AUFTRAGSNR=0
 -- @param #string FERRY Ferry flight mission.
 -- @param #string INTERCEPT Intercept mission.
 -- @param #string ORBIT Orbit mission.
+-- @param #string PATROL Similar to CAP but no auto engage targets.
 -- @param #string RECON Recon mission.
 -- @param #string SEAD Suppression/destruction of enemy air defences.
 -- @param #string STRIKE Strike mission.
@@ -133,6 +135,7 @@ AUFTRAG.Type={
   FERRY="Ferry Flight",
   INTERCEPT="Intercept",
   ORBIT="Orbit",
+  PATROL="Patrol",
   RECON="Recon",
   SEAD="SEAD",
   STRIKE="Strike",
@@ -289,6 +292,29 @@ function AUFTRAG:NewORBIT(Coordinate, Speed, Heading, Leg)
   auftrag.DCStask=auftrag:GetDCSMissionTask()
 
   return auftrag
+end
+
+--- Create a PATROL mission.
+-- @param #AUFTRAG self
+-- @param Core.Point#COORDINATE OrbitCoordinate Where to orbit. Altitude is also taken from the coordinate. 
+-- @param #number OrbitSpeed Orbit speed in knots. Default 350 kts.
+-- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
+-- @param #number Leg Length of race-track in NM. Default 10 NM.
+-- @param #number Altitude Orbit altitude in feet.
+-- @return #AUFTRAG self
+function AUFTRAG:NewPATROL(OrbitCoordinate, OrbitSpeed, Heading, Leg, Altitude)
+
+  -- Create ORBIT first.
+  local mission=self:NewORBIT(OrbitCoordinate, OrbitSpeed, Heading, Leg)
+  
+  if Altitude then
+    mission.orbitCoord.y=UTILS.FeetToMeters(Altitude)
+  end
+  
+  -- CAP paramters.
+  mission.type=AUFTRAG.Type.PATROL
+  
+  return mission
 end
 
 --- Create a CAP mission.
@@ -562,7 +588,7 @@ end
 --- Check if mission is done.
 -- @param #AUFTRAG self
 -- @return #boolean If true, mission is done.
-function AUFTRAG:IsCancelled()
+function AUFTRAG:IsDone()
   return self.status==AUFTRAG.Status.DONE
 end
 
@@ -639,6 +665,16 @@ function AUFTRAG:onafterStatus(From, Event, To)
     self:__Status(-30)
   end
 end
+
+--- Set flightgroup mission status.
+-- @param #AUFTRAG self
+-- @return #string status New status.
+function AUFTRAG:Evaluate()
+
+  local Ntargets=self:CountMissionTargets()
+
+end
+
 
 --- Set flightgroup mission status.
 -- @param #AUFTRAG self
@@ -735,7 +771,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function AUFTRAG:onafterRequested(From, Event, TO)
+function AUFTRAG:onafterRequested(From, Event, To)
   self.status=AUFTRAG.Status.REQUESTED
   self:I(self.lid..string.format("New mission status=%s", self.status))
 end
@@ -802,7 +838,8 @@ function AUFTRAG:onafterCancel(From, Event, To)
   self:I(self.lid..string.format("New mission status=%s", self.status))
 
   if self.airwing then
-  
+    
+    -- Airwing will cancel all flight missions and remove queued request from warehouse queue.
     self.airwing:MissionCancel(self)
   
   else
@@ -811,11 +848,12 @@ function AUFTRAG:onafterCancel(From, Event, To)
       local flightdata=_flightdata --#AUFTRAG.FlightData
       flightdata.flightgroup:MissionCancel(self)
     end
+    
   end
 
 end
 
---- On after "Stop" event.
+--- On after "Stop" event. Remove mission from AIRWING and FLIGHTGROUP mission queues.
 -- @param #AUFTRAG self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -823,6 +861,19 @@ end
 function AUFTRAG:onafterStop(From, Event, To)
 
   -- TODO: remove missions from queues in WINGCOMMANDER, AIRWING and FLIGHGROUPS!
+  
+  if self.wingcommander then
+    
+  end
+  
+  if self.airwing then
+    self.airwing:RemoveMission(self)
+  end
+
+  for _,_flightdata in pairs(self.flightdata) do
+    local flightdata=_flightdata --#AUFTRAG.FlightData
+    flightdata.flightgroup:RemoveMission(self)
+  end
 
   self.CallScheduler:Clear()
 end
@@ -831,15 +882,60 @@ end
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Add asset to mission.
+-- @param #AUFTRAG self
+-- @param Ops.AirWing#AIRWING.SquadronAsset Asset The asset to be added to the mission.
+-- @return #AIRWING self
+function AUFTRAG:AddAsset(Asset)
+
+  self.assets=self.assets or {}
+  
+  table.insert(self.assets, Asset)
+
+  return self
+end
+
+--- Delete asset from mission.
+-- @param #AUFTRAG self
+-- @param Ops.AirWing#AIRWING.SquadronAsset Asset  The asset to be removed.
+-- @return #AIRWING self
+function AUFTRAG:DelAsset(Asset)
+
+  for i,_asset in pairs(self.assets or {}) do
+    local asset=_asset --Ops.AirWing#AIRWING.SquadronAsset
+    
+    if asset.uid==Asset.uid then
+      table.remove(self.assets, i)
+    end
+    
+  end
+
+end
+
+
 --- Count alive mission targets.
 -- @param #AUFTRAG self
--- @return #number Number of alive targets.
+-- @return #number Number of alive target units.
 function AUFTRAG:CountMissionTargets()
   
   local N=0
   if self.engageTargetGroupset then
-    local n=self.engageTargetGroupset:CountAlive()
-    N=N+n
+    --local n=self.engageTargetGroupset:CountAlive()
+    
+    for _,_group in pairs(self.engageTargetGroupset.Set) do
+      local group=_group --Wrapper.Group#GROUP
+      
+      if group and group:IsAlive() then
+      
+        for _,_unit in pairs(group:GetUnits()) do
+          local unit=_unit --Wrapper.Unit#UNIT
+          if unit and unit:IsAlive() then
+            N=N+1
+          end          
+        end
+        
+      end
+    end
   end
 
   if self.engageTargetUnitset then

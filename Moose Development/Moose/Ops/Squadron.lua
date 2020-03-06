@@ -1,4 +1,4 @@
---- **Ops** - (R2.5) - AI Squadron for Ops.
+--- **Ops** - Airwing Squadron.
 --
 -- **Main Features:**
 --
@@ -15,9 +15,9 @@
 -- @type SQUADRON
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug Debug mode. Messages to all about status.
--- @field #string sid Class id string for output to DCS log file.
+-- @field #string lid Class id string for output to DCS log file.
 -- @field #string livery Livery of the squadron.
--- @field #table flights Table of flight groups.
+-- @field #table assets Table of assets.
 -- @extends Core.Fsm#FSM
 
 --- Be surprised!
@@ -34,10 +34,13 @@
 SQUADRON = {
   ClassName      = "SQUADRON",
   Debug          =   nil,
-  sid            =   nil,
-  flights        =    {},
-  tasks          =    {},
-  livery         =   nil,  
+  lid            =   nil,
+  name           =   nil,
+  templatename   =   nil,
+  assets         =    {},
+  livery         =   nil,
+  skill          =   nil,
+  airwing        =   nil,
 }
 
 --- Flight group element.
@@ -64,13 +67,13 @@ SQUADRON.version="0.0.1"
 -- @param #string SquadName Name of the squadron, e.g. "VFA-37".
 -- @param #table tasks Table of squadron tasks, e.g. `{SQUADRON.Task.INTERCEPT, SQUADRON.Task.SEAD}`.
 -- @return #SQUADRON self
-function SQUADRON:New(squadronname)
+function SQUADRON:New(SquadronName, TemplateGroupName)
 
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #SQUADRON
 
   --self.flightgroup=AIGroup
-  self.squadronname=tostring(squadronname)
+  self.name=tostring(SquadronName)
   
   -- Set home airbase.
   self.homebase=airbase
@@ -90,7 +93,6 @@ function SQUADRON:New(squadronname)
   -- Add FSM transitions.
   --                 From State  -->   Event        -->     To State
   self:AddTransition("Stopped",       "Start",              "Running")     -- Start FSM.
-
   self:AddTransition("*",             "Status",             "*")           -- SQUADRON status update
 
 
@@ -150,56 +152,14 @@ function SQUADRON:SetLivery(liveryname)
   self.livery=liveryname
 end
 
---- Set home airbase.
+--- Set airwing.
 -- @param #SQUADRON self
--- @param Wrapper.Airbase#AIRBASE airbase Home airbase object of the squadron.
+-- @param Ops.AirWing#AIRWING Airwing The airwing.
 -- @return #SQUADRON self
-function SQUADRON:SetHomeBase(airbase)
-  self.homebase=airbase
+function SQUADRON:SetAirwing(Airwing)
+  self.airwing=Airwing
 end
 
-
---- Add a group to the squadron.
--- @param #SQUADRON self
--- @param #string groupname Name of the group as defined in the mission editor.
--- @param #number n Number of groups that is added.
--- @return #SQUADRON self
-function SQUADRON:AddGroup(groupname, n)
-
-  
-  
-
-end
-
-
---- Add flight group(s) to squadron.
--- @param #SQUADRON self
--- @param Ops.FlightGroup#FLIGHTGROUP flightgroup Flight group.
--- @return #SQUADRON self
-function SQUADRON:AddFlightGroup(flightgroup)
-
-  local text=string.format("Adding flight group %s to squadron", flightgroup:GetName())
-  self:I(self.sid..text)
-  
-  -- Set squadron.
-  flightgroup:SetSquadron(self)
-  
-  table.insert(self.flightgroups, flightgroup)  
-
-  function flightgroup:OnAfterDetectedUnit(From,Event,To,Unit)
-    self:GetSquadron():DetectedUnit(Unit)
-  end
-  
-  function flightgroup:OnAfterFlightAirborne(From,Event,To)
-    self:GetSquadron():FlightAirborne(self)
-  end  
-  
-  function flightgroup:OnAfterFlightDead(From,Event,To)
-    self:GetSquadron():FlightDead(self)
-  end
-
-  return self
-end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start & Status
@@ -214,41 +174,40 @@ end
 function SQUADRON:onafterStart(From, Event, To)
 
   -- Short info.
-  local text=string.format("Starting flight group %s.", self.groupname)
-  self:I(self.sid..text)
+  local text=string.format("Starting SQUADRON %s.", self.name)
+  self:I(self.lid..text)
 
   -- Start the status monitoring.
-  self:__SquadronStatus(-1)
+  self:__Status(-1)
 end
 
---- On after "FlightStatus" event.
+--- On after "Status" event.
 -- @param #SQUADRON self
 -- @param Wrapper.Group#GROUP Group Flight group.
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function SQUADRON:onafterSquadronStatus(From, Event, To)
+function SQUADRON:onafterStatus(From, Event, To)
 
   -- FSM state.
   local fsmstate=self:GetState()
   
   -- Check if group has detected any units.
-  self:_CheckFlightStatus()
+  self:_CheckAssetStatus()
 
   -- Short info.
   local text=string.format("Flight status %s [%d/%d]. Task=%d/%d. Waypoint=%d/%d. Detected=%d", fsmstate, #self.element, #self.element, self.taskcurrent, #self.taskqueue, self.currentwp or 0, #self.waypoints or 0, self.detectedunits:Count())
   self:I(self.sid..text)
   
-  
 end
 
 
---- On after "FlightStatus" event.
+--- Check asset status.
 -- @param #SQUADRON self
-function SQUADRON:_CheckFlightstatus()
+function SQUADRON:_CheckAssetStatus()
 
-  for _,_flight in pairs(self.flights) do
-    local flight=_flight --#SQUADRON.Flight
+  for _,_assets in pairs(self.assets) do
+    local asset=_asset --#SQUADRON.Flight
     
     flight.flightgroup:IsSpawned()
     

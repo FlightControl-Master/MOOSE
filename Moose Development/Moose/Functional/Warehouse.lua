@@ -1894,19 +1894,26 @@ function WAREHOUSE:New(warehouse, alias)
   --                 From State   -->   Event        -->     To State
   self:AddTransition("NotReadyYet",     "Load",              "Loaded")      -- Load the warehouse state from scatch.
   self:AddTransition("Stopped",         "Load",              "Loaded")      -- Load the warehouse state stopped state.
+  
   self:AddTransition("NotReadyYet",     "Start",             "Running")     -- Start the warehouse from scratch.
   self:AddTransition("Loaded",          "Start",             "Running")     -- Start the warehouse when loaded from disk.
+  
   self:AddTransition("*",               "Status",            "*")           -- Status update.
+  
   self:AddTransition("*",               "AddAsset",          "*")           -- Add asset to warehouse stock.
   self:AddTransition("*",               "NewAsset",          "*")           -- New asset was added to warehouse stock.
+  
   self:AddTransition("*",               "AddRequest",        "*")           -- New request from other warehouse.
   self:AddTransition("Running",         "Request",           "*")           -- Process a request. Only in running mode.
   self:AddTransition("Running",         "RequestSpawned",    "*")           -- Assets of request were spawned.
   self:AddTransition("Attacked",        "Request",           "*")           -- Process a request. Only in running mode.
+  
   self:AddTransition("*",               "Unloaded",          "*")           -- Cargo has been unloaded from the carrier (unused ==> unnecessary?).
   self:AddTransition("*",               "AssetSpawned",      "*")           -- Asset has been spawned into the world.
   self:AddTransition("*",               "AssetLowFuel",      "*")           -- Asset is low on fuel.
+  
   self:AddTransition("*",               "Arrived",           "*")           -- Cargo or transport group has arrived.
+  
   self:AddTransition("*",               "Delivered",         "*")           -- All cargo groups of a request have been delivered to the requesting warehouse.
   self:AddTransition("Running",         "SelfRequest",       "*")           -- Request to warehouse itself. Requested assets are only spawned but not delivered anywhere.
   self:AddTransition("Attacked",        "SelfRequest",       "*")           -- Request to warehouse itself. Also possible when warehouse is under attack!
@@ -5933,8 +5940,9 @@ end
 
 --- Get a warehouse request from its unique id.
 -- @param #WAREHOUSE self
--- @param #number id Asset ID.
--- @return #WAREHOUSE.Pendingitem The warehouse requested - either queued or pending. #boolean If *true*, request is queued, if *false*, request is pending, if *nil*, request could not be found.
+-- @param #number id Request ID.
+-- @return #WAREHOUSE.Pendingitem The warehouse requested - either queued or pending. 
+-- @return #boolean If *true*, request is queued, if *false*, request is pending, if *nil*, request could not be found.
 function WAREHOUSE:GetRequestByID(id)
 
   if id then
@@ -8092,7 +8100,6 @@ end
 -- @param #number qitemID ID of queue item to be removed.
 -- @param #table queue The queue from which the item should be deleted.
 function WAREHOUSE:_DeleteQueueItemByID(qitemID, queue)
-  self:F({qitem=qitem, queue=queue})
 
   for i=1,#queue do
     local _item=queue[i] --#WAREHOUSE.Queueitem

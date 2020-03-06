@@ -71,10 +71,11 @@ INTEL.version="0.0.3"
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Accept and reject zones.
--- TODO: SetAttributeZone --> return groups of generalized attributes in a zone.
--- TODO: Loose units only if they remain undetected for a given time interval. We want to avoid fast oscillation between detected/lost states. Maybe 1-5 min would be a good time interval?!
--- TODO: Combine units to groups for all, new and lost.
+-- DONE: Accept zones.
+-- TODO: Reject zones.
+-- NOGO: SetAttributeZone --> return groups of generalized attributes in a zone.
+-- DONE: Loose units only if they remain undetected for a given time interval. We want to avoid fast oscillation between detected/lost states. Maybe 1-5 min would be a good time interval?!
+-- DONE: Combine units to groups for all, new and lost.
 -- TODO: process detected set asynchroniously for better performance.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -243,7 +244,7 @@ function INTEL:onafterStatus(From, Event, To)
   local Ncontacts=#self.Contacts
 
   -- Short info.
-  local text=string.format("Status %s: Agents=%s, Contacts=%d, New=%d, Lost=%d", fsmstate, self.detectionset:CountAlive(), Ncontacts, #self.ContactsUnknown, #self.ContactsLost)
+  local text=string.format("Status %s [Agents=%s]: Contacts=%d, New=%d, Lost=%d", fsmstate, self.detectionset:CountAlive(), Ncontacts, #self.ContactsUnknown, #self.ContactsLost)
   self:I(self.lid..text)
   
   -- Detailed info.
@@ -277,21 +278,38 @@ function INTEL:UpdateIntel()
         
         -- Get set of detected units.
         local detectedunitset=recce:GetDetectedUnitSet()
-        
+               
         -- Add detected units to all set.
         DetectedSet=DetectedSet:GetSetUnion(detectedunitset)
       end
     end    
   end
   
-  -- TODO: Filter units from accept/reject zones.
+  -- TODO: Filter units from reject zones.
   -- TODO: Filter unit types.
   -- TODO: Filter detection methods?
-  
-  for _,_zone in pairs(self.acceptzoneset.Set) do
-    local zone=_zone --Core.Zone#ZONE
+  local remove={}
+  for _,_unit in pairs(DetectedSet.Set) do
+    local unit=_unit --Wrapper.Unit#UNIT
     
+    -- Check if unit is in any of the accept zones.
+    local inzone=false
+    for _,_zone in pairs(self.acceptzoneset.Set) do
+      local zone=_zone --Core.Zone#ZONE
+      if unit:IsInZone(zone) then
+        inzone=true
+        break
+      end
+    end
+    
+    -- Unit is not in accept zone ==> remove!
+    if not inzone then
+      table.insert(remove, unit:GetName())
+    end
   end
+  
+  -- Remove filtered units.
+  DetectedSet:RemoveUnitsByName(remove)
   
   -- Create detected contacts.  
   self:CreateDetectedItems(DetectedSet)
@@ -305,6 +323,7 @@ function INTEL:CreateDetectedItems(detectedunitset)
 
   local detectedgroupset=SET_GROUP:New()
 
+  -- Convert detected UNIT set to detected GROUP set.
   for _,_unit in pairs(detectedunitset:GetSet()) do
     local unit=_unit --Wrapper.Unit#UNIT
     
@@ -374,9 +393,9 @@ function INTEL:CreateDetectedItems(detectedunitset)
     
     local group=detectedgroupset:FindGroup(item.groupname)
     
-    -- Check if deltaT>Tforget. We dont want quick oszillations between detected and undetected states.
+    -- Check if deltaT>Tforget. We dont want quick oscillations between detected and undetected states.
     if self:CheckContactLost(item) then
-      -- Trigger LostContact event.
+      -- Trigger LostContact event. This also adds the contact to the self.ContactsLost table.
       self:LostContact(item)
       -- Remove contact from table.
       self:RemoveContact(item)      
@@ -412,7 +431,7 @@ function INTEL:onafterLostContact(From, Event, To, Contact)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- Misc Fuctions
+-- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create detected items.

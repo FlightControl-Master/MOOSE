@@ -27,6 +27,8 @@
 -- @field #number nflightsCAP Number of CAP flights constantly in the air.
 -- @field #number nflightsTANKER Number of TANKER flights constantly in the air.
 -- @field #number nflightsAWACS Number of AWACS flights constantly in the air.
+-- @field #table cappoints Table of CAP points.
+-- @field Ops.WingCommander#WINGCOMMANDER wingcommander The wing commander responsible for this airwing.
 -- @extends Functional.Warehouse#WAREHOUSE
 
 --- Be surprised!
@@ -49,6 +51,7 @@ AIRWING = {
   missionqueue   =    {},
   payloads       =    {},
   cappoints      =    {},
+  wingcommander  =   nil,
 }
 
 --- Squadron data.
@@ -366,6 +369,25 @@ function AIRWING:AddMission(Mission)
   return self
 end
 
+--- Remove mission from queue.
+-- @param #AIRWING self
+-- @param Ops.Auftrag#AUFTRAG Mission Mission to be removed.
+-- @return #AIRWING self
+function AIRWING:RemoveMission(Mission)
+
+  for i,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+    
+    if mission.auftragsnummer==Mission.auftragsnummer then
+      table.remove(self.missionqueue, i)
+      break
+    end
+    
+  end
+
+  return self
+end
+
 --- Set CAP zones.
 -- @param #AIRWING self
 -- @param #number n Number of flights. Default 1.
@@ -375,11 +397,11 @@ function AIRWING:SetCAPflights(n)
   return self
 end
 
---- Add a CAP zone.
+--- Add a patrol Point for CAP missions.
 -- @param #AIRWING self
 -- @param Core.Zone#ZONE AcceptZone Add a zone to the CAP zone set.
 -- @return #AIRWING self
-function AIRWING:AddCAPPoint(Coordinate, Heading, Leg, Speed)
+function AIRWING:AddPatrolPointCAP(Coordinate, Heading, Leg, Speed)
   
   local cappoint={}  --#AIRWING.PatrolData
   cappoint.coord=Coordinate
@@ -429,6 +451,13 @@ function AIRWING:onafterStatus(From, Event, To)
   self:GetParent(self).onafterStatus(self, From, Event, To)
 
   local fsmstate=self:GetState()
+  
+  -- Check CAP missions.
+  self:CheckCAP()
+  
+  self:CheckTANKER()
+  
+  self:CheckAWACS()
   
   ------------------
   -- Mission Info --
@@ -487,6 +516,58 @@ function AIRWING:onafterStatus(From, Event, To)
 
 end
 
+--- Get patrol data
+-- @param #AIRWING self
+-- @param #table PatrolPoints Patrol data points.
+-- @return #AIRWING.PatrolData
+function AIRWING:_GetPatrolData(PatrolPoints)
+
+  local function sort(a,b)
+    return a.noccuied<b.noccuied
+  end
+
+  if PatrolPoints then
+  
+    -- Sort data wrt number of flights at that point.
+    table.sort(PatrolPoints, sort)
+    return PatrolPoints[1]
+
+  else
+  
+    local point={} --#AIRWING.PatrolData
+    
+    point.coord=self:GetCoordinate()
+    point.speed=math.random(250, 350)
+    point.heading=math.random(360)
+    point.occupied=false
+  
+  end
+
+
+end
+
+--- Get next mission.
+-- @param #AIRWING self
+-- @return Ops.Auftrag#AUFTRAG Next mission or *nil*.
+function AIRWING:_CheckCAP()
+
+  local Ncap=self:CountAssetsOnMission(AUFTRAG.Type.PATROL)
+  
+  for i=1,self.nflightsCAP-Ncap do
+  
+    local patrol=self:_GetPatrolData(self.cappoints)
+    
+    local missionCAP=AUFTRAG:NewPATROL(patrol.coord, patrol.speed, patrol.heading, patrol.leg)
+    
+    missionCAP.patroldata=patrol
+    
+    self:AddMission(missionCAP)
+      
+  end
+  
+end
+
+
 --- Get next mission.
 -- @param #AIRWING self
 -- @return Ops.Auftrag#AUFTRAG Next mission or *nil*.
@@ -528,9 +609,13 @@ function AIRWING:_GetNextMission()
        if can then
        
         -- Optimize the asset selection. Most useful assets will come first.
+        -- TODO: This could be moved to AUFTRAG, right?
         --self:_OptimizeAssetSelection(assets, mission)
       
-        -- TODO: check that mission.assets table is clean.
+        -- Check that mission.assets table is clean.
+        if mission.assets and #mission.assets>0 then
+          self:E(self.lid..string.format("ERROR: mission %s of type %s has already assets attached!", mission.name, mission.type))
+        end
         mission.assets={}
       
         -- Assign assets to mission.
@@ -544,7 +629,7 @@ function AIRWING:_GetNextMission()
             self:E("No payload for asset! This should not happen!")
           end
           
-          table.insert(mission.assets, asset)
+          mission:AddAsset(asset)
         end
         
         return mission
@@ -608,61 +693,6 @@ end
 -- FSM Events
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- On after "NewAsset" event. Asset is added to the given squadron (asset assignment).
--- @param #AIRWING self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Functional.Warehouse#WAREHOUSE.Assetitem asset The asset that has just been added.
--- @param #string assignment The (optional) assignment for the asset.
-function AIRWING:onafterNewAsset(From, Event, To, asset, assignment)
-
-  -- Call parent warehouse function first.
-  self:GetParent(self).onafterNewAsset(self, From, Event, To, asset, assignment)
-  
-  -- Get squadron.
-  local squad=self:GetSquadron(asset.assignment)  
-
-  -- Check if asset is already part of the squadron. If an asset returns, it will be added again! We check that asset.assignment is also assignment.
-  if squad and asset.assignment==assignment then
-  
-    -- Debug text.
-    local text=string.format("Adding asset to squadron %s: assignment=%s, type=%s, attribute=%s", squad.name, assignment, asset.unittype, asset.attribute)
-    self:I(self.lid..text)
-    
-    -- Add asset to squadron.
-    table.insert(squad.assets, asset)
-        
-  end
-end
-
---- On after "MissionCancel" event.
--- @param #AIRWING self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Ops.Auftrag#AUFTRAG Mission The mission to be cancelled.
-function AIRWING:onafterMissionCancel(From, Event, To, Mission)
-  
-  self:I(self.lid..string.format("Cancel mission %s", Mission.name))
-  
-  for _,_asset in pairs(Mission.assets) do
-    local asset=_asset --#AIRWING.SquadronAsset
-    
-    local flightgroup=asset.flightgroup
-    
-    if flightgroup then
-      flightgroup:MissionCancel(Mission)
-    end
-  end
-  
-  -- Remove queued request (if any).
-  if Mission.requestID then
-    self:_DeleteQueueItemByID(Mission.requestID, self.queue)
-  end
-  
-end
-
 --- On after "MissionRequest" event. Performs a self request to the warehouse for the mission assets. Sets mission status to REQUESTED.
 -- @param #AIRWING self
 -- @param #string From From state.
@@ -713,6 +743,132 @@ function AIRWING:onafterMissionRequest(From, Event, To, Mission)
 
 end
 
+--- On after "MissionCancel" event. Cancels the missions of all flightgroups. Deletes request from warehouse queue.
+-- @param #AIRWING self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.Auftrag#AUFTRAG Mission The mission to be cancelled.
+function AIRWING:onafterMissionCancel(From, Event, To, Mission)
+  
+  self:I(self.lid..string.format("Cancel mission %s", Mission.name))
+  
+  for _,_asset in pairs(Mission.assets) do
+    local asset=_asset --#AIRWING.SquadronAsset
+    
+    local flightgroup=asset.flightgroup
+    
+    if flightgroup then
+      flightgroup:MissionCancel(Mission)
+    end
+  end
+  
+  -- Remove queued request (if any).
+  if Mission.requestID then
+    self:_DeleteQueueItemByID(Mission.requestID, self.queue)
+  end
+  
+end
+
+--- On after "NewAsset" event. Asset is added to the given squadron (asset assignment).
+-- @param #AIRWING self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem asset The asset that has just been added.
+-- @param #string assignment The (optional) assignment for the asset.
+function AIRWING:onafterNewAsset(From, Event, To, asset, assignment)
+
+  -- Call parent warehouse function first.
+  self:GetParent(self).onafterNewAsset(self, From, Event, To, asset, assignment)
+  
+  -- Get squadron.
+  local squad=self:GetSquadron(asset.assignment)
+
+  -- Check if asset is already part of the squadron. If an asset returns, it will be added again! We check that asset.assignment is also assignment.
+  if squad then
+
+    if asset.assignment==assignment then
+  
+      -- Debug text.
+      local text=string.format("Adding asset to squadron %s: assignment=%s, type=%s, attribute=%s", squad.name, assignment, asset.unittype, asset.attribute)
+      self:I(self.lid..text)
+      
+      -- Add asset to squadron.
+      table.insert(squad.assets, asset)
+      
+    else
+    
+      local mission=self:GetMissionByID(assignment)
+      
+      if mission then
+        local text=string.format("Asset %s returned from %s mission %s", asset.spawngroupname, mission.type, mission.name)
+        self:I(self.lid..text)
+      else
+        self:E(self.lid.."ERROR: new asset not beloning to any s")
+      end
+    
+    end
+        
+  end
+end
+
+
+
+
+--- On after "AssetSpawned" event triggered when an asset group is spawned into the cruel world. 
+-- Creates a new flightgroup element and adds the mission to the flightgroup queue.
+-- @param #AIRWING self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Wrapper.Group#GROUP group The group spawned.
+-- @param #AIRWING.SquadronAsset asset The asset that was spawned.
+-- @param Functional.Warehouse#WAREHOUSE.Pendingitem request The request of the dead asset.
+function AIRWING:onafterAssetSpawned(From, Event, To, group, asset, request)
+
+  -- Call parent warehouse function first.
+  self:GetParent(self).onafterAssetSpawned(self, From, Event, To, group, asset, request)
+
+  -- Create a flight group.
+  asset.flightgroup=self:_CreateFlightGroup(asset)
+  
+  -- Get Mission (if any).
+  local mission=self:GetMissionByID(request.assignment)  
+
+  -- Add mission to flightgroup queue.
+  if mission then
+      
+    -- Add mission to flightgroup queue.  
+    asset.flightgroup:AddMission(mission)
+  end
+  
+  -- Add group to the detection set of the WINGCOMMANDER.
+  if self.wingcommander then
+    self.wingcommander.detectionset:AddGroup(asset.flightgroup.group)
+  end
+  
+end
+
+--- On after "AssetDead" event triggered when an asset group died.
+-- @param #AIRWING self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #AIRWING.SquadronAsset asset The asset that is dead.
+-- @param Functional.Warehouse#WAREHOUSE.Pendingitem request The request of the dead asset.
+function AIRWING:onafterAssetDead(From, Event, To, asset, request)
+
+  -- Call parent warehouse function first.
+  self:GetParent(self).onafterAssetDead(From, Event, To, asset, request)
+
+  -- Add group to the detection set of the WINGCOMMANDER.
+  if self.wingcommander then
+    self.wingcommander.detectionset:RemoveGroupsByName({asset.spawngroupname})
+  end  
+end
+
+
 --- On after "Request" event.
 -- @param #AIRWING self
 -- @param #string From From state.
@@ -738,34 +894,6 @@ function AIRWING:onafterRequest(From, Event, To, Request)
 
   -- Call parent warehouse function after assets have been adjusted.
   self:GetParent(self).onafterRequest(self, From, Event, To, Request)
-  
-end
-
---- On after "AssetSpawned" event triggered when an asset group is spawned into the cruel world. Creates a new flightgroup element and adds the mission to the flightgroup queue.
--- @param #AIRWING self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param Wrapper.Group#GROUP group The group spawned.
--- @param #AIRWING.SquadronAsset asset The asset that was spawned.
--- @param Functional.Warehouse#WAREHOUSE.Pendingitem request The request of the dead asset.
-function AIRWING:onafterAssetSpawned(From, Event, To, group, asset, request)
-
-  -- Call parent warehouse function first.
-  self:GetParent(self).onafterAssetSpawned(self, From, Event, To, group, asset, request)
-
-  -- Create a flight group.
-  asset.flightgroup=self:_CreateFlightGroup(asset)
-  
-  -- Get Mission (if any).
-  local mission=self:GetMissionByID(request.assignment)  
-
-  -- Add mission to flightgroup queue.
-  if mission then
-      
-    -- Add mission to flightgroup queue.  
-    asset.flightgroup:AddMission(mission)
-  end  
   
 end
 
@@ -971,6 +1099,41 @@ function AIRWING:GetAssetCurrentMission(asset)
   return nil
 end
 
+
+--- Count assets on mission.
+-- @param #AIRWING self
+-- @param #table MissionTypes Types on mission to be checked. Default all.
+-- @return #number Number of pending and queued assets.
+-- @return #number Number of pending assets.
+-- @return #number Number of queued assets.
+function AIRWING:CountAssetsOnMission(MissionTypes)
+  
+  local Nq=0
+  local Np=0
+
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+    
+    -- Check if this mission type is requested.
+    if self:CheckMissionType(mission.type, MissionTypes) then
+    
+      for _,_asset in pairs(mission.assets or {}) do
+        local asset=_asset --#AIRWING.SquadronAsset
+        
+        local request, isqueued=self:GetRequestByID(mission.requestID)
+        
+        if isqueued then
+          Nq=Nq+1
+        else
+          Np=Np+1
+        end
+        
+      end      
+    end
+  end
+
+  return Np+Nq, Np, Nq
+end
 
 --- Check if assets for a given mission type are available.
 -- @param #AIRWING self

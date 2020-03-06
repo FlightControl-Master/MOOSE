@@ -54,14 +54,17 @@ WINGCOMMANDER = {
 
 --- WINGCOMMANDER class version.
 -- @field #string version
-WINGCOMMANDER.version="0.0.2"
+WINGCOMMANDER.version="0.0.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Add tasks.
--- TODO: 
+-- DONE: Add/remove spawned flightgroups to detection set.
+-- TODO: Define A2A and A2G parameters. Engagedistance, etc.
+-- TODO: Borderzones.
+-- TODO: Improve airwing selection. Look at CAP flights near by etc.
+-- TODO: Maybe it's possible to preselect the assets for the mission.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -144,6 +147,35 @@ function WINGCOMMANDER:AddAirwing(Airwing)
   return self
 end
 
+--- Add mission to mission queue.
+-- @param #WINGCOMMANDER self
+-- @param Ops.Auftrag#AUFTRAG Mission Mission to be added.
+-- @return #WINGCOMMANDER self
+function WINGCOMMANDER:AddMission(Mission)
+
+  table.insert(self.missionqueue, Mission)
+
+  return self
+end
+
+--- Remove mission from queue.
+-- @param #WINGCOMMANDER self
+-- @param Ops.Auftrag#AUFTRAG Mission Mission to be removed.
+-- @return #WINGCOMMANDER self
+function WINGCOMMANDER:RemoveMission(Mission)
+
+  for i,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+    
+    if mission.auftragsnummer==Mission.auftragsnummer then
+      table.remove(self.missionqueue, i)
+      break
+    end
+    
+  end
+
+  return self
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start & Status
@@ -174,7 +206,7 @@ function WINGCOMMANDER:onafterStart(From, Event, To)
 
 end
 
---- On after "Sitrep" event.
+--- On after "Status" event.
 -- @param #WINGCOMMANDER self
 -- @param Wrapper.Group#GROUP Group Flight group.
 -- @param #string From From state.
@@ -193,7 +225,11 @@ function WINGCOMMANDER:onafterStatus(From, Event, To)
   for _,_contact in pairs(self.ContactsLost) do
     local contact=_contact --#WINGCOMMANDER.Contact
     
-    if contact.mission and contact.mission.airwing then
+    if contact.mission then
+    
+      local text=string.format("Lost contact to target! %s mission %s will be cancelled.", contact.mission.type:upper(), contact.mission.name)
+      MESSAGE:New(text, 120, "WINGCOMMANDER"):ToAll()
+      self:I(self.lid..text)
     
       -- Cancel this mission.
       contact.mission:Cancel()
@@ -248,7 +284,7 @@ function WINGCOMMANDER:onafterStatus(From, Event, To)
       -- Add mission to queue.
       if mission then
         mission.nassets=1
-        table.insert(self.missionqueue, mission)
+        self:AddMission(mission)
       end
         
     end
@@ -296,48 +332,10 @@ function WINGCOMMANDER:CheckMissionQueue()
       -- PLANNNED Mission
       ---
     
-      -- Table of airwings that can do the mission.
-      local airwings={}
-    
-      -- Loop over all airwings.
-      for _,_airwing in pairs(self.airwings) do
-        local airwing=_airwing --Ops.AirWing#AIRWING
+      local airwing=self:GetAirwingForMission(mission)
         
-        -- Check if airwing can do this mission.
-        local can,assets=airwing:CanMission(mission.type, mission.nassets)
-        
-        -- Can it?
-        if can then        
-          
-          -- Get coordinate of the target.
-          local coord=mission:GetTargetCoordinate()
-          
-          if coord then
-          
-            -- Distance from airwing to target.
-            local dist=coord:Get2DDistance(airwing:GetCoordinate())
-          
-            -- Add airwing to table of airwings that can.
-            table.insert(airwings, {airwing=airwing, dist=dist, targetcoord=coord})
-            
-          end
-          
-        end
-                
-      end
+      if airwing then
       
-      -- Can anyone?
-      if #airwings>0 then
-      
-        -- Sort table wrt distace
-        local function sortdist(a,b)
-          return a.dist<b.dist
-        end
-        table.sort(airwings, sortdist)    
-    
-        -- This is the closest airwing to the target.
-        local airwing=airwings[1].airwing  --Ops.AirWing#AIRWING
-        
         -- Add mission to airwing.
         self:MissionAssign(airwing, mission)
     
@@ -356,6 +354,59 @@ function WINGCOMMANDER:CheckMissionQueue()
   
 end
 
+--- Check all airwings if they are able to do a specific mission type at a certain location with a given number of assets.
+-- @param #WINGCOMMANDER self
+-- @param Ops.Auftrag#AUFTRAG Mission The mission.
+-- @return Ops.AirWing#AIRWING The airwing best for this mission.
+function WINGCOMMANDER:GetAirwingForMission(Mission)
+
+  -- Table of airwings that can do the mission.
+  local airwings={}
+  
+  -- Loop over all airwings.
+  for _,_airwing in pairs(self.airwings) do
+    local airwing=_airwing --Ops.AirWing#AIRWING
+    
+    -- Check if airwing can do this mission.
+    local can,assets=airwing:CanMission(Mission.type, Mission.nassets)
+    
+    -- Can it?
+    if can then        
+      
+      -- Get coordinate of the target.
+      local coord=Mission:GetTargetCoordinate()
+      
+      if coord then
+      
+        -- Distance from airwing to target.
+        local dist=coord:Get2DDistance(airwing:GetCoordinate())
+      
+        -- Add airwing to table of airwings that can.
+        table.insert(airwings, {airwing=airwing, dist=dist, targetcoord=coord})
+        
+      end
+      
+    end
+            
+  end
+  
+  -- Can anyone?
+  if #airwings>0 then
+  
+    -- Sort table wrt distace
+    local function sortdist(a,b)
+      return a.dist<b.dist
+    end
+    table.sort(airwings, sortdist)    
+  
+    -- This is the closest airwing to the target.
+    local airwing=airwings[1].airwing  --Ops.AirWing#AIRWING
+    
+    return airwing
+  end
+
+  return nil
+end
 
 --- Check resources.
 -- @param #WINGCOMMANDER self
@@ -381,15 +432,3 @@ function WINGCOMMANDER:CheckResources()
 
   return capabilities
 end
-
---- Check all airwings if they are able to do a specific mission type at a certain location with a given number of assets.
--- @param #WINGCOMMANDER self
--- @return Ops.AirWing#AIRWING The airwing object best for this mission.
-function WINGCOMMANDER:GetAirwingForMission(MissionType, Coordinate, Nassets)
-
-  --TODO: run over all airwings. sort by distance and available assets.
-
-end
-
-
-

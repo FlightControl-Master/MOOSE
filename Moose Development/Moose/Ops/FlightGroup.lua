@@ -679,6 +679,25 @@ function FLIGHTGROUP:AddMission(Mission)
   return self
 end
 
+--- Remove mission from queue.
+-- @param #FLIGHTGROUP self
+-- @param Ops.Auftrag#AUFTRAG Mission Mission to be removed.
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:RemoveMission(Mission)
+
+  for i,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+    
+    if mission.auftragsnummer==Mission.auftragsnummer then
+      table.remove(self.missionqueue, i)
+      break
+    end
+    
+  end
+
+  return self
+end
+
 --- Set AIRWING the flight group belongs to.
 -- @param #FLIGHTGROUP self
 -- @param Ops.AirWing#AIRWING airwing The AIRWING object.
