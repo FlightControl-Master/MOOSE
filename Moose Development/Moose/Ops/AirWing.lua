@@ -352,12 +352,9 @@ end
 -- @return #AIRWING self
 function AIRWING:AddMission(Mission)
   
-  -- Set status to QUEUED.
-  Mission:Queued()
+  -- Set status to QUEUED. This also attaches the airwing to this mission.
+  Mission:Queued(self)
   
-  -- Set airwing.
-  Mission.airwing=self
-
   -- Add mission to queue.
   table.insert(self.missionqueue, Mission)
   
@@ -388,14 +385,33 @@ function AIRWING:RemoveMission(Mission)
   return self
 end
 
---- Set CAP zones.
+--- Set number of CAP flights constantly carried out.
 -- @param #AIRWING self
 -- @param #number n Number of flights. Default 1.
 -- @return #AIRWING self
-function AIRWING:SetCAPflights(n)
-  self.nflightsCAP=n
+function AIRWING:SetNumberCAP(n)
+  self.nflightsCAP=n or 1
   return self
 end
+
+--- Set number of TANKER flights constantly in the air.
+-- @param #AIRWING self
+-- @param #number n Number of flights. Default 1.
+-- @return #AIRWING self
+function AIRWING:SetNumberTANKER(n)
+  self.nflightsTANKER=n or 1
+  return self
+end
+
+--- Set number of AWACS flights constantly in the air.
+-- @param #AIRWING self
+-- @param #number n Number of flights. Default 1.
+-- @return #AIRWING self
+function AIRWING:SetNumberAWACS(n)
+  self.nflightsAWACS=n or 1
+  return self
+end
+
 
 --- Add a patrol Point for CAP missions.
 -- @param #AIRWING self
@@ -453,11 +469,11 @@ function AIRWING:onafterStatus(From, Event, To)
   local fsmstate=self:GetState()
   
   -- Check CAP missions.
-  self:CheckCAP()
+  --self:CheckCAP()
   
-  self:CheckTANKER()
+  --self:CheckTANKER()
   
-  self:CheckAWACS()
+  --self:CheckAWACS()
   
   ------------------
   -- Mission Info --
@@ -549,7 +565,7 @@ end
 --- Get next mission.
 -- @param #AIRWING self
 -- @return Ops.Auftrag#AUFTRAG Next mission or *nil*.
-function AIRWING:_CheckCAP()
+function AIRWING:CheckCAP()
 
   local Ncap=self:CountAssetsOnMission(AUFTRAG.Type.PATROL)
   
@@ -1348,7 +1364,6 @@ function AIRWING:ReportWarehouseStock()
   local text=self:_GetStockAssetsText(false)
   MESSAGE:New(text, 10, "AIRWING", true):ToCoalition(self:GetCoalition())
 end
-
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

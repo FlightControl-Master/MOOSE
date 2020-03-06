@@ -1060,7 +1060,7 @@ do -- SET_GROUP
   -- Note that for each unit in the group that is set, a default cargo bay limit is initialized.
   -- @param Core.Set#SET_GROUP self
   -- @param Wrapper.Group#GROUP group The group which should be added to the set.
-  -- @return self
+  -- @return Core.Set#SET_GROUP self
   function SET_GROUP:AddGroup( group )
   
     self:Add( group:GetName(), group )
@@ -1076,7 +1076,7 @@ do -- SET_GROUP
   --- Add GROUP(s) to SET_GROUP.
   -- @param Core.Set#SET_GROUP self
   -- @param #string AddGroupNames A single name or an array of GROUP names.
-  -- @return self
+  -- @return Core.Set#SET_GROUP self
   function SET_GROUP:AddGroupsByName( AddGroupNames )
   
     local AddGroupNamesArray = ( type( AddGroupNames ) == "table" ) and AddGroupNames or { AddGroupNames }
@@ -1091,7 +1091,7 @@ do -- SET_GROUP
   --- Remove GROUP(s) from SET_GROUP.
   -- @param Core.Set#SET_GROUP self
   -- @param Wrapper.Group#GROUP RemoveGroupNames A single name or an array of GROUP names.
-  -- @return self
+  -- @return Core.Set#SET_GROUP self
   function SET_GROUP:RemoveGroupsByName( RemoveGroupNames )
   
     local RemoveGroupNamesArray = ( type( RemoveGroupNames ) == "table" ) and RemoveGroupNames or { RemoveGroupNames }
@@ -2004,8 +2004,8 @@ do -- SET_UNIT
   
   --- Remove UNIT(s) from SET_UNIT.
   -- @param Core.Set#SET_UNIT self
-  -- @param Wrapper.Unit#UNIT RemoveUnitNames A single name or an array of UNIT names.
-  -- @return self
+  -- @param #table RemoveUnitNames A single name or an array of UNIT names.
+  -- @return Core.Set#SET_UNIT self
   function SET_UNIT:RemoveUnitsByName( RemoveUnitNames )
   
     local RemoveUnitNamesArray = ( type( RemoveUnitNames ) == "table" ) and RemoveUnitNames or { RemoveUnitNames }

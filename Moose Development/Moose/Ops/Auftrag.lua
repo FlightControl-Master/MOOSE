@@ -42,7 +42,7 @@
 -- @field #table engageTargetTypes Table of target types that are engaged in the engagement zone.
 -- @field Core.Point#COORDINATE engageCoord Coordinate of target location.
 -- @field Core.Set#SET_GROUP engageTargetGroupset Set of target groups to attack.
--- @field Core.Set#SET_GROUP engageTargetUnitset Set of target units to attack.
+-- @field Core.Set#SET_UNIT engageTargetUnitset Set of target units to attack.
 -- @field #number engageAltitude Engagement altitude in meters.
 -- @field #number engageDirection Engagement direction in degrees.
 -- @field #number engageQuantity Number of times a target is engaged.
@@ -54,6 +54,7 @@
 -- @field Wrapper.Group#GROUP escortGroup The group to be escorted.
 -- @field DCS#Vec3 escortVec3 The 3D offset vector from the escorted group to the escort group.
 -- 
+-- @field Ops.WingCommander#WINGCOMMANDER wingcommander The WINGCOMMANDER managing this mission.
 -- @field Ops.AirWing#AIRWING airwing The assigned airwing.
 -- @field #string squadname Name of the assigned Airwing squadron.
 -- @field #table assets Airwing Assets assigned for this mission.
@@ -272,6 +273,26 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Create Missions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Create an ANTI-SHIP mission.
+-- @param #AUFTRAG self
+-- @param Core.Set#SET_UNIT TargetGroupSet The set of target units.
+-- @return #AUFTRAG self
+function AUFTRAG:NewANTISHIP(TargetUnitSet)
+  
+  if TargetUnitSet:IsInstanceOf("UNIT") then
+    TargetUnitSet=SET_UNIT:New():AddGroup(TargetUnitSet)
+  end
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.ANTISHIP)
+  
+  mission.engageTargetUnitset=TargetUnitSet
+  mission.engageTargetUnitset:FilterDeads():FilterCrashes()
+  
+  mission.DCStask=mission:GetDCSMissionTask()
+  
+  return mission
+end
 
 --- Create an ORBIT mission.
 -- @param #AUFTRAG self
@@ -762,7 +783,8 @@ end
 -- @param Ops.AirWing#AIRWING Airwing The airwing.
 function AUFTRAG:onafterQueued(From, Event, To, Airwing)
   self.status=AUFTRAG.Status.QUEUED
-  self:I(self.lid..string.format("New mission status=%s", self.status))
+  self.airwing=Airwing
+  self:I(self.lid..string.format("New mission status=%s at airwing %s", self.status, tostring(Airwing.alias)))
 end
 
 
@@ -939,7 +961,7 @@ function AUFTRAG:CountMissionTargets()
   end
 
   if self.engageTargetUnitset then
-    local n=self.engageTargetUnitset:CountAlive()
+    local n=self.engageTargetUnitset:Count()
     N=N+n
   end
   
@@ -1002,6 +1024,8 @@ function AUFTRAG:GetDCSMissionTask()
       local TargetUnit=_unit
 
       local DCStask=CONTROLLABLE.TaskAttackUnit(nil, TargetUnit, self.engageAltitude, self.WeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType)
+      
+      table.insert(DCStasks, DCStask)
       
     end
   
@@ -1108,6 +1132,14 @@ function AUFTRAG:GetDCSMissionTask()
     -------------------
   
     -- Done below as also other mission types use the orbit task.
+
+  elseif self.type==AUFTRAG.Type.PATROL then
+  
+    --------------------
+    -- PATROL Mission --
+    --------------------
+  
+    -- Done below as also other mission types use the orbit task.
   
   elseif self.type==AUFTRAG.Type.RECON then
   
@@ -1150,7 +1182,12 @@ function AUFTRAG:GetDCSMissionTask()
   
   
   -- Set ORBIT task. Also applies to other missions: AWACS, TANKER, CAP, CAS.
-  if self.type==AUFTRAG.Type.ORBIT or self.type==AUFTRAG.Type.CAP or self.type==AUFTRAG.Type.CAS or self.type==AUFTRAG.Type.AWACS or self.type==AUFTRAG.Type.TANKER then
+  if self.type==AUFTRAG.Type.ORBIT  or 
+     self.type==AUFTRAG.Type.CAP    or
+     self.type==AUFTRAG.Type.CAS    or
+     self.type==AUFTRAG.Type.PATROL or
+     self.type==AUFTRAG.Type.AWACS  or 
+     self.type==AUFTRAG.Type.TANKER then
 
     -------------------
     -- ORBIT Mission --
@@ -1176,5 +1213,6 @@ function AUFTRAG:GetDCSMissionTask()
 
 end
 
-
-
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

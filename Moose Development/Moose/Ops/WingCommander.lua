@@ -140,9 +140,11 @@ end
 -- @return #WINGCOMMANDER self
 function WINGCOMMANDER:AddAirwing(Airwing)
 
-  --table.insert(self.airwings, Airwing)
-  
-  self.airwings[Airwing.alias]=Airwing
+  -- This airwing is managed by this wing commander. 
+  Airwing.wingcommander=self
+
+  table.insert(self.airwings, Airwing)  
+  --self.airwings[Airwing.alias]=Airwing
   
   return self
 end
@@ -225,9 +227,9 @@ function WINGCOMMANDER:onafterStatus(From, Event, To)
   for _,_contact in pairs(self.ContactsLost) do
     local contact=_contact --#WINGCOMMANDER.Contact
     
-    if contact.mission then
+    if contact.mission and contact.mission:IsNotOver() then
     
-      local text=string.format("Lost contact to target! %s mission %s will be cancelled.", contact.mission.type:upper(), contact.mission.name)
+      local text=string.format("Lost contact to target %s! %s mission %s will be cancelled.", contact.groupname, contact.mission.type:upper(), contact.mission.name)
       MESSAGE:New(text, 120, "WINGCOMMANDER"):ToAll()
       self:I(self.lid..text)
     
@@ -277,13 +279,27 @@ function WINGCOMMANDER:onafterStatus(From, Event, To)
       elseif category==Group.Category.SHIP then
       
         --TODO: ANTISHIP
-      
+        
+        local TargetUnitSet=SET_UNIT:New()
+        
+        for _,_unit in pairs(group:GetUnits()) do
+          local unit=_unit --Wrapper.Unit#UNIT
+          if unit and unit:IsAlive() and unit:GetThreatLevel()>0 then
+            TargetUnitSet:AddUnit(unit)
+          end
+        end
+        
+        if TargetUnitSet:Count()>0 then
+          mission=AUFTRAG:NewANTISHIP(TargetUnitSet)
+        end
+              
       end
       
       
       -- Add mission to queue.
       if mission then
         mission.nassets=1
+        contact.mission=mission
         self:AddMission(mission)
       end
         
@@ -432,3 +448,7 @@ function WINGCOMMANDER:CheckResources()
 
   return capabilities
 end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -173,7 +173,7 @@ end
 -- User functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Set accept zones.
+--- Set accept zones. Only contacts detected in this/these zone(s) are considered. 
 -- @param #INTEL self
 -- @param Core.Set#SET_ZONE AcceptZoneSet Set of accept zones
 -- @return #INTEL self
@@ -182,7 +182,7 @@ function INTEL:SetAcceptZones(AcceptZoneSet)
   return self
 end
 
---- Set accept zones.
+--- Set accept zones. Only contacts detected in this zone are considered. 
 -- @param #INTEL self
 -- @param Core.Zone#ZONE AcceptZone Add a zone to the accept zone set.
 -- @return #INTEL self
@@ -191,7 +191,8 @@ function INTEL:AddAcceptZone(AcceptZone)
   return self
 end
 
---- Set forget contacts time interval. Previously known contacts that are not detected any more, are "lost" after this time.
+--- Set forget contacts time interval. 
+-- Previously known contacts that are not detected any more, are "lost" after this time.
 -- This avoids fast oscillations between a contact being detected and undetected.
 -- @param #INTEL self
 -- @param #number TimeInterval Time interval in seconds. Default is 120 sec.
@@ -309,7 +310,7 @@ function INTEL:UpdateIntel()
   end
   
   -- Remove filtered units.
-  DetectedSet:RemoveUnitsByName(remove)
+  --DetectedSet:RemoveUnitsByName(remove)
   
   -- Create detected contacts.  
   self:CreateDetectedItems(DetectedSet)
@@ -395,10 +396,13 @@ function INTEL:CreateDetectedItems(detectedunitset)
     
     -- Check if deltaT>Tforget. We dont want quick oscillations between detected and undetected states.
     if self:CheckContactLost(item) then
+    
       -- Trigger LostContact event. This also adds the contact to the self.ContactsLost table.
       self:LostContact(item)
+      
       -- Remove contact from table.
-      self:RemoveContact(item)      
+      self:RemoveContact(item)
+            
     end
   end
 
@@ -450,6 +454,13 @@ function INTEL:GetContactByName(groupname)
   return nil
 end
 
+--- Add a contact to our list.
+-- @param #INTEL self
+-- @param #INTEL.DetectedItem Contact The contact to be removed.
+function INTEL:AddContact(Contact)
+  table.insert(self.Contacts, Contact)
+end
+
 --- Remove a contact from our list.
 -- @param #INTEL self
 -- @param #INTEL.DetectedItem Contact The contact to be removed.
@@ -469,13 +480,6 @@ end
 --- Remove a contact from our list.
 -- @param #INTEL self
 -- @param #INTEL.DetectedItem Contact The contact to be removed.
-function INTEL:AddContact(Contact)
-  table.insert(self.Contacts, Contact)
-end
-
---- Remove a contact from our list.
--- @param #INTEL self
--- @param #INTEL.DetectedItem Contact The contact to be removed.
 -- @return #boolean If true, contact was not detected for at least *dTforget* seconds.
 function INTEL:CheckContactLost(Contact)
 
@@ -490,3 +494,7 @@ function INTEL:CheckContactLost(Contact)
   end
   
 end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

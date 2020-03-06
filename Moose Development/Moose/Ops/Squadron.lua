@@ -50,7 +50,7 @@ SQUADRON = {
 
 --- SQUADRON class version.
 -- @field #string version
-SQUADRON.version="0.0.1"
+SQUADRON.version="0.0.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -75,20 +75,11 @@ function SQUADRON:New(SquadronName, TemplateGroupName)
   --self.flightgroup=AIGroup
   self.name=tostring(SquadronName)
   
-  -- Set home airbase.
-  self.homebase=airbase
-
   -- Set some string id for output to DCS.log file.
   self.sid=string.format("SQUADRON %s | ", self.squadronname)
 
   -- Start State.
   self:SetStartState("Stopped")
-
-  -- Init set of detected units.
-  self.detectedunits=SET_UNIT:New()
-
-  -- TODO Tasks?
-  self.tasks=tasks or {}
   
   -- Add FSM transitions.
   --                 From State  -->   Event        -->     To State
@@ -150,6 +141,7 @@ end
 -- @return #SQUADRON self
 function SQUADRON:SetLivery(liveryname)
   self.livery=liveryname
+  return self
 end
 
 --- Set airwing.
@@ -158,8 +150,32 @@ end
 -- @return #SQUADRON self
 function SQUADRON:SetAirwing(Airwing)
   self.airwing=Airwing
+  return self
 end
 
+--- Add airwing asset to squadron.
+-- @param #SQUADRON self
+-- @param Ops.AirWing#AIRWING.SquadronAsset Asset The airwing asset.
+-- @return #SQUADRON self
+function SQUADRON:AddAsset(Asset)
+  table.insert(self.assets, Asset)
+  return self
+end
+
+--- Remove airwing asset from squadron.
+-- @param #SQUADRON self
+-- @param Ops.AirWing#AIRWING.SquadronAsset Asset The airwing asset.
+-- @return #SQUADRON self
+function SQUADRON:DelAsset(Asset)
+  for i,_asset in pairs(self.assets) do
+    local asset=_asset --Ops.AirWing#AIRWING.SquadronAsset
+    if Asset.uid==asset.uid then
+      table.remove(self.assets, i)
+      break
+    end
+  end
+  return self
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start & Status
@@ -196,8 +212,8 @@ function SQUADRON:onafterStatus(From, Event, To)
   self:_CheckAssetStatus()
 
   -- Short info.
-  local text=string.format("Flight status %s [%d/%d]. Task=%d/%d. Waypoint=%d/%d. Detected=%d", fsmstate, #self.element, #self.element, self.taskcurrent, #self.taskqueue, self.currentwp or 0, #self.waypoints or 0, self.detectedunits:Count())
-  self:I(self.sid..text)
+  --local text=string.format("Flight status %s [%d/%d]. Task=%d/%d. Waypoint=%d/%d. Detected=%d", fsmstate, #self.element, #self.element, self.taskcurrent, #self.taskqueue, self.currentwp or 0, #self.waypoints or 0, self.detectedunits:Count())
+  --self:I(self.sid..text)
   
 end
 
@@ -214,4 +230,8 @@ function SQUADRON:_CheckAssetStatus()
   end
 
 end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
