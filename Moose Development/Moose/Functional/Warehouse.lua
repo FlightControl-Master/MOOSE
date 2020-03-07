@@ -4250,11 +4250,10 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     -- Get stock item.
     local _assetitem=_assetstock[i] --#WAREHOUSE.Assetitem
 
-       -- Create an alias name with the UIDs for the sending warehouse, asset and request.
-    --local _alias=self:_alias(_assetitem.unittype, self.uid, _assetitem.uid, Request.uid)
-
+    -- Spawn group name
     local _alias=_assetitem.spawngroupname
 
+    -- Set Request ID.
     _assetitem.rid=Request.uid
 
     -- Asset is transport.
@@ -5374,11 +5373,11 @@ function WAREHOUSE:_SpawnAssetRequest(Request)
     -- Set asset status to not spawned until we capture its birth event.
     asset.spawned=false
     asset.iscargo=true
+    
+    -- Set request ID.
     asset.rid=Request.uid
 
-    -- Alias of the group.
-    --local _alias=self:_Alias(asset, Request)
-
+    -- Spawn group name.
     local _alias=asset.spawngroupname
 
     -- Spawn an asset group.
@@ -7594,25 +7593,32 @@ end
 -- @return #boolean True if group is transport, false if group is cargo and nil otherwise.
 function WAREHOUSE:_GroupIsTransport(group, request)
 
-  -- Name of the group under question.
-  local groupname=self:_GetNameWithOut(group)
+  local asset=self:FindAssetInDB(group)
+  
+  if asset and asset.iscargo~=nil then
+    return not asset.iscargo
+  else
 
-  if request.transportgroupset then
-    local transporters=request.transportgroupset:GetSetObjects()
-
-    for _,transport in pairs(transporters) do
-      if transport:GetName()==groupname then
-        return true
+    -- Name of the group under question.
+    local groupname=self:_GetNameWithOut(group)
+  
+    if request.transportgroupset then
+      local transporters=request.transportgroupset:GetSetObjects()
+  
+      for _,transport in pairs(transporters) do
+        if transport:GetName()==groupname then
+          return true
+        end
       end
     end
-  end
-
-  if request.cargogroupset then
-    local cargos=request.cargogroupset:GetSetObjects()
-
-    for _,cargo in pairs(cargos) do
-      if self:_GetNameWithOut(cargo)==groupname then
-        return false
+  
+    if request.cargogroupset then
+      local cargos=request.cargogroupset:GetSetObjects()
+  
+      for _,cargo in pairs(cargos) do
+        if self:_GetNameWithOut(cargo)==groupname then
+          return false
+        end
       end
     end
   end
@@ -7621,35 +7627,12 @@ function WAREHOUSE:_GroupIsTransport(group, request)
 end
 
 
---- Creates a unique name for spawned assets. From the group name the original warehouse, global asset and the request can be derived.
--- @param #WAREHOUSE self
--- @param #WAREHOUSE.Assetitem _assetitem Asset for which the name is created.
--- @param #WAREHOUSE.Queueitem _queueitem (Optional) Request specific name.
--- @return #string Alias name "UnitType\_WID-%d\_AID-%d\_RID-%d"
-function WAREHOUSE:_Alias(_assetitem,_queueitem)
-  return self:_alias(_assetitem.unittype, self.uid, _assetitem.uid,_queueitem.uid)
-end
-
---- Creates a unique name for spawned assets. From the group name the original warehouse, global asset and the request can be derived.
--- @param #WAREHOUSE self
--- @param #string unittype Type of unit.
--- @param #number wid Warehouse id.
--- @param #number aid Asset item id.
--- @param #number qid Queue/request item id.
--- @return #string Alias name "UnitType\_WID-%d\_AID-%d\_RID-%d"
-function WAREHOUSE:_alias(unittype, wid, aid, qid)
-  local _alias=string.format("%s_WID-%d_AID-%d", unittype, wid, aid)
-  if qid then
-    _alias=_alias..string.format("_RID-%d", qid)
-  end
-  return _alias
-end
-
 --- Get group name without any spawn or cargo suffix #CARGO etc.
 -- @param #WAREHOUSE self
 -- @param Wrapper.Group#GROUP group The group from which the info is gathered.
 -- @return #string Name of the object without trailing #...
 function WAREHOUSE:_GetNameWithOut(group)
+
   if group then
     local name
     if type(group)=="string" then
@@ -7657,18 +7640,23 @@ function WAREHOUSE:_GetNameWithOut(group)
     else
       name=group:GetName()
     end
-    local namewithout=UTILS.Split(name, "#")[1]
+    
+    local namewithout=UTILS.Split(name, "#CARGO")[1]
+    
     if namewithout then
       return namewithout
     else
       return name
     end
   end
+  
+  
   if type(group)=="string" then
     return group
   else
     return group:GetName()
   end
+  
 end
 
 

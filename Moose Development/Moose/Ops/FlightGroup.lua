@@ -49,7 +49,8 @@
 -- @field #boolean fuellowrtb RTB on low fuel switch.
 -- @field #boolean fuelcritical Fuel critical switch.
 -- @field #number fuelcriticalthresh Critical fuel threshold in percent.
--- @field #boolean fuelcriticalrtb RTB on critical fuel switch. 
+-- @field #boolean fuelcriticalrtb RTB on critical fuel switch.
+-- @field #boolean passedfinalwp Group has passed the final waypoint.
 -- @field Ops.Airwing#AIRWING airwing The airwing the flight group belongs to.
 -- @field Ops.FlightControl#FLIGHTCONTROL flightcontrol The flightcontrol handling this group.
 -- @field Core.UserFlag#USERFLAG flaghold Flag for holding.
@@ -1265,7 +1266,7 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   local nTaskTot, nTaskSched, nTaskWP=self:CountRemainingTasks()
 
   -- Short info.
-  local text=string.format("Flight status %s [%d/%d]. Tasks=%d (%d,%d) Current=%d. Waypoint=%d/%d. Detected=%d. Destination=%s, FC=%s",
+  local text=string.format("Status %s [%d/%d]: Tasks=%d (%d,%d) Current=%d. Waypoint=%d/%d. Detected=%d. Destination=%s, FC=%s",
   fsmstate, #self.elements, #self.elements, nTaskTot, nTaskSched, nTaskWP, self.taskcurrent, self.currentwp or 0, self.waypoints and #self.waypoints or 0, 
   self.detectedunits:Count(), self.destbase and self.destbase:GetName() or "unknown", self.flightcontrol and self.flightcontrol.airbasename or "none")
   self:I(self.lid..text)
@@ -2215,7 +2216,6 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
   MESSAGE:New(text, 10):ToAllIf(false)
   self:I(self.lid..text)
   
-  
   -- Update waypoint tasks, i.e. inject WP tasks into waypoint table.
   self:_UpdateWaypointTasks()
 
@@ -2270,21 +2270,24 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
     -- No waypoints left
     ---
   
-    self:E(self.lid.."WARNING: No waypoints left. Dunno what to do!")
+    if self.passedfinalwp then
     
-    --[[
+      self:I(self.lid.."UpdateRoute: Passed Final WP ==> RTB/RTZ/Wait!")
   
-    -- Send flight to destination. NOTE that if there are still remaining tasks, the RTB call is delayed by 10 sec until all tasks are done.
-    if self.destbase then
-      self:__RTB(-1, self.destbase)
-    elseif self.destzone then
-      self:__RTZ(-1, self.destzone)
+      -- Send flight to destination. NOTE that if there are still remaining tasks, the RTB call is delayed by 10 sec until all tasks are done.
+      if self.destbase then
+        self:I(self.lid.."UpdateRoute: Passed Final WP ==> RTB!")
+        self:__RTB(-1, self.destbase)
+      elseif self.destzone then
+        self:I(self.lid.."UpdateRoute: Passed Final WP ==> RTZ!")
+        self:__RTZ(-1, self.destzone)
+      else
+        self:I(self.lid.."UpdateRoute: Passed Final WP ==> Wait!")
+        self:__Wait(-1)
+      end
     else
-      self:__Wait(-1)
-      self:E(self.lid.."ERROR: Reached final waypoint but no destination set! Don't know what to do?!")
+      self:E(self.lid.."WARNING: No waypoints left. Dunno what to do!")
     end
-    
-    ]]
     
   end
 
@@ -2297,6 +2300,8 @@ end
 -- @param #string To To state.
 -- @param #table Template The template used to respawn the group.
 function FLIGHTGROUP:onafterRespawn(From, Event, To, Template)
+
+  self:I(self.lid.."Respawning group!")
 
   local template=UTILS.DeepCopy(Template or self.template)
   
@@ -2320,14 +2325,12 @@ function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
   self:I(self.lid..text)
   MESSAGE:New(text, 30, "DEBUG"):ToAllIf(self.Debug)
   
-  if true then
-  
   -- Get all waypoint tasks.
   local tasks=self:GetTasksWaypoint(n)
   
   -- Debug info.
   local text=string.format("WP %d/%d tasks:", n, N)
-  if tasks then
+  if #tasks>0 then
     for i,_task in pairs(tasks) do
       local task=_task --#FLIGHTGROUP.Task
       text=text..string.format("\n[%d] %s", i, task.description)
@@ -2365,27 +2368,26 @@ function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
     self:PushTask(self.group:TaskCombo(taskswp))
   end
   
-  end
-  
   -- Final AIR waypoint reached?
   if n==N then
 
     --TODO: Find better way to RTB!
     self:I(self.lid.."FF group passed final waypoint!")
-  
-    --[[
-  
-    -- Send flight to destination. NOTE that if there are still remaining tasks, the RTB call is delayed by 10 sec until all tasks are done.
-    if self.destbase then
-      self:__RTB(-1, self.destbase)
-    elseif self.destzone then
-      self:__RTZ(-1, self.destzone)
-    else
-      self:__Wait(-1)
-      self:E(self.lid.."ERROR: Reached final waypoint but no destination set! Don't know what to do?!")
-    end
     
-    ]]
+    self.passedfinalwp=true
+    
+    if #taskswp==0 then
+
+      if self.destbase then
+        self:__RTB(-1, self.destbase)
+      elseif self.destzone then
+        self:__RTZ(-1, self.destzone)
+      else
+        self:__Wait(-1)
+        self:E(self.lid.."ERROR: Reached final waypoint but no destination set! Don't know what to do?!")
+      end
+
+    end
 
   end
   
@@ -2480,6 +2482,8 @@ end
 -- @param #number SpeedHold Holding speed in knots. Default 250 kts.
 -- @param #number SpeedLand Landing speed in knots. Default 170 kts.
 function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, SpeedLand)
+
+  self:I(self.lid..string.format("RTB: event=%s: %s --> %s", Event, From, To))
   
   -- Defaults:
   SpeedTo=SpeedTo or 350
@@ -2559,9 +2563,12 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
   if fc or world.event.S_EVENT_KILL then
   
     -- Just route the group. Respawn will happen when going from holding to final.
+    env.info("FF route (not repawn)")
     self:Route(wp, 1)
  
   else 
+  
+    env.info("FF respawn (not route)")
   
     -- Get group template.
     local Template=self.group:GetTemplate()
@@ -3958,6 +3965,13 @@ function FLIGHTGROUP:InitWaypoints(waypoints)
   
   -- Update route.
   if #self.waypoints>0 then
+  
+    -- Check if only 1 wp?
+    if #self.waypoints==1 then
+      self.passedfinalwp=true
+    end
+    
+    -- Update route (when airborne).
     self:__UpdateRoute(-1)
   end
 
@@ -3976,6 +3990,10 @@ function FLIGHTGROUP:AddWaypointAir(coordinate, wpnumber, speed, updateroute)
   -- Waypoint number.
   --TODO: by default add after last AIR waypoint! Last WP could be landing...
   wpnumber=wpnumber or #self.waypoints+1
+  
+  if wpnumber>self.currentwp then
+    self.passedfinalwp=false
+  end
   
   -- Speed in knots.
   speed=speed or 350
@@ -4006,7 +4024,7 @@ function FLIGHTGROUP:AddWaypointAir(coordinate, wpnumber, speed, updateroute)
     if mission.waypointindex and mission.waypointindex>=wpnumber then
       mission.waypointindex=mission.waypointindex+1
     end
-  end  
+  end
   
   -- Update route.
   if updateroute==nil or updateroute==true then

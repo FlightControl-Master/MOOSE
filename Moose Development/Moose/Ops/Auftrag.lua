@@ -703,6 +703,12 @@ end
 -- @param #string status New status.
 function AUFTRAG:SetFlightStatus(flightgroup, status)
   self.flightdata[flightgroup.groupname].status=status
+
+  -- Check if ALL flights are done with their mission.
+  if self:IsNotOver() and self:CheckFlightsDone() then
+    self:Done()
+  end  
+  
 end
 
 --- Get flightgroup mission status.
@@ -907,7 +913,7 @@ end
 --- Add asset to mission.
 -- @param #AUFTRAG self
 -- @param Ops.AirWing#AIRWING.SquadronAsset Asset The asset to be added to the mission.
--- @return #AIRWING self
+-- @return #AUFTRAG self
 function AUFTRAG:AddAsset(Asset)
 
   self.assets=self.assets or {}
@@ -920,7 +926,7 @@ end
 --- Delete asset from mission.
 -- @param #AUFTRAG self
 -- @param Ops.AirWing#AIRWING.SquadronAsset Asset  The asset to be removed.
--- @return #AIRWING self
+-- @return #AUFTRAG self
 function AUFTRAG:DelAsset(Asset)
 
   for i,_asset in pairs(self.assets or {}) do
@@ -928,10 +934,12 @@ function AUFTRAG:DelAsset(Asset)
     
     if asset.uid==Asset.uid then
       table.remove(self.assets, i)
+      return self
     end
     
   end
 
+  return self
 end
 
 
@@ -1004,6 +1012,19 @@ function AUFTRAG:GetTargetCoordinate()
   end
 
   return nil
+end
+
+--- Get coordinate of target. First unit/group of the set is used.
+-- @param #AUFTRAG self
+-- @return #string
+function AUFTRAG:GetMissionTypesText(MissionTypes)
+
+  local text=""
+  for _,missiontype in pairs(MissionTypes) do
+    text=text..string.format("%s, ", missiontype)
+  end
+
+  return text
 end
 
 --- Get DCS task table for the given mission.

@@ -131,8 +131,7 @@ function AIRWING:New(warehousename, airwingname)
   -- Add FSM transitions.
   --                 From State  -->   Event      -->     To State
   self:AddTransition("*",             "MissionRequest",   "*")           -- Add a (mission) request to the warehouse.
-  self:AddTransition("*",             "MissionDone",      "*")           -- Mission is over.
-  self:AddTransition("*",             "MissionCancel",    "*")           -- Mission is over.
+  self:AddTransition("*",             "MissionCancel",    "*")           -- Cancel mission.
 
   ------------------------
   --- Pseudo Functions ---
@@ -222,6 +221,11 @@ function AIRWING:NewPayload(Unit, MissionTypes, Npayloads, Unlimited)
   -- If a GROUP object was given, get the first unit.
   if Unit:IsInstanceOf("GROUP") then
     Unit=Unit:GetUnit(1)
+  end
+
+  -- Ensure Missiontypes is a table.
+  if MissionTypes and type(MissionTypes)~="table" then
+    MissionTypes={MissionTypes}
   end
   
   if Unit then
@@ -512,6 +516,13 @@ function AIRWING:onafterStatus(From, Event, To)
             
       text=text..string.format("\n  -[%d] %s*%d: spawned=%s, mission=%s%s", j, typename, asset.nunits, spawned, tostring(self:IsAssetOnMission(asset)), missiontext)
       
+      local payload=asset.payload
+      if payload then
+        text=text.." payload "..table.concat(payload.missiontypes, ", ")
+      else
+        text=text.." NO payload!"
+      end
+      
     end
   end
   self:I(self.lid..text)
@@ -798,6 +809,10 @@ function AIRWING:onafterNewAsset(From, Event, To, asset, assignment)
   -- Call parent warehouse function first.
   self:GetParent(self).onafterNewAsset(self, From, Event, To, asset, assignment)
   
+  -- Debug text.
+  local text=string.format("New asset %s with assignment %s and request assignment %s", asset.spawngroupname, tostring(asset.assignment), tostring(assignment))
+  self:I(self.lid..text)
+  
   -- Get squadron.
   local squad=self:GetSquadron(asset.assignment)
 
@@ -815,14 +830,21 @@ function AIRWING:onafterNewAsset(From, Event, To, asset, assignment)
       
     else
     
+      self:I(self.lid..string.format("Asset %s from squadron %s returned! asset.assignment=\"%s\", assignment=\"%s\"", asset.spawngroupname, squad.name, tostring(asset.assignment), tostring(assignment)))
+      self:ReturnPayloadFromAsset(asset)
+      
+      -- Mission might already be removed from the queue!
+      --[[
       local mission=self:GetMissionByID(assignment)
       
       if mission then
         local text=string.format("Asset %s returned from %s mission %s", asset.spawngroupname, mission.type, mission.name)
         self:I(self.lid..text)
+        self:ReturnPayloadFromAsset(asset)
       else
-        self:E(self.lid.."ERROR: new asset not beloning to any s")
+        self:E(self.lid..string.format("ERROR: asset %s from squadron %s returned but could not find its mission! asset.assignment=\"%s\", assignment=\"%s\"", asset.spawngroupname, squad.name, tostring(asset.assignment), tostring(assignment)))
       end
+      ]]
     
     end
         
@@ -1189,7 +1211,10 @@ function AIRWING:CanMission(MissionType, Nassets)
   -- Now clear all reserved payloads.
   for _,_asset in pairs(Assets) do
     local asset=_asset --#AIRWING.SquadronAsset
-    self:ReturnPayloadFromAsset(asset)
+    -- Only unspawned payloads are returned.
+    if not asset.spawned then
+      self:ReturnPayloadFromAsset(asset)
+    end
   end
   
   return Can, Assets
