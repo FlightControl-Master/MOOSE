@@ -5611,6 +5611,11 @@ function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrol
 
       if asset.payload then
         unit.payload=asset.payload.pylons
+        env.info("FF payload")
+        self:I({playload=unit.payload})
+        self:I(asset)
+      else
+        env.info("FF No payload for asset!")
       end
 
     end

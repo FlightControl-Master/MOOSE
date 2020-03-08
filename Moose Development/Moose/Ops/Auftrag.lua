@@ -60,6 +60,7 @@
 -- @field #table assets Airwing Assets assigned for this mission.
 -- @field #number nassets Number of required assets by the Airwing.
 -- @field #number requestID The ID of the queued warehouse request. Necessary to cancel the request if the mission was cancelled before the request is processed.
+-- @field #boolean cancelContactLost If true, cancel mission if the contact is lost.
 -- 
 -- @field #number optionROE ROE.
 -- @field #number optionROT ROT.
@@ -185,6 +186,12 @@ AUFTRAG.FlightStatus={
   DONE="done",
   CANCELLED="cancelled",
 }
+
+--- Mission success.
+-- @type AUFTRAG.Success
+-- @field #string ENGAGED Target was engaged.
+-- @field #string DAMAGED Target was damaged.
+-- @field #string DESTROYED Target was destroyed.
 
 --- Flight specific data. Each flight subscribed to this mission has different data for this.
 -- @type AUFTRAG.FlightData
@@ -647,7 +654,7 @@ function AUFTRAG:onafterStatus(From, Event, To)
   local Nflights=self:CountFlightGroups()
 
   -- Cancel mission if stop time passed.
-  if self.Tstop and timer.getAbsTime()>self.Tstop then
+  if self.Tstop and timer.getAbsTime()>self.Tstop+10 then
     self:Cancel()
   end
 
@@ -702,7 +709,12 @@ end
 -- @param Ops.FlightGroup#FLIGHTGROUP flightgroup The flight group.
 -- @param #string status New status.
 function AUFTRAG:SetFlightStatus(flightgroup, status)
-  self.flightdata[flightgroup.groupname].status=status
+
+  if self:GetFlightStatus(flightgroup)==AUFTRAG.FlightStatus.CANCELLED and status==AUFTRAG.FlightStatus.DONE then
+    -- Do not overwrite a CANCELLED status with a DONE status.
+  else
+    self.flightdata[flightgroup.groupname].status=status
+  end
 
   -- Check if ALL flights are done with their mission.
   if self:IsNotOver() and self:CheckFlightsDone() then

@@ -483,11 +483,28 @@ end
 -- @return #boolean If true, contact was not detected for at least *dTforget* seconds.
 function INTEL:CheckContactLost(Contact)
 
+  -- Group dead?
+  if Contact.group==nil or not Contact.group:IsAlive() then
+    return true
+  end
+
   -- Time since last detected.
   local dT=timer.getAbsTime()-Contact.Tdetected
   
+  local dTforget=self.dTforget
+  if Contact.category==Group.Category.GROUND then
+    dTforget=60*60*2  -- 2 hours
+  elseif Contact.category==Group.Category.AIRPLANE then
+    dTforget=60*10    -- 10 min
+  elseif Contact.category==Group.Category.HELICOPTER then
+    dTforget=60*20    -- 20 min
+  elseif Contact.category==Group.Category.SHIP then
+    dTforget=60*60    -- 1 hour
+  elseif Contact.category==Group.Category.TRAIN then
+    dTforget=60*60    -- 1 hour
+  end
   
-  if dT>self.dTforget then
+  if dT>dTforget then
     return true
   else
     return false

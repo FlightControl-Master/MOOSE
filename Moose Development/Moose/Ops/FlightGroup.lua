@@ -1229,7 +1229,9 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   ---
   
   -- Check if group has detected any units.
-  self:_CheckDetectedUnits()
+  if self.DetectionON then
+    self:_CheckDetectedUnits()
+  end
   
   ---
   -- Parking
@@ -1264,10 +1266,11 @@ function FLIGHTGROUP:onafterFlightStatus(From, Event, To)
   ---
   
   local nTaskTot, nTaskSched, nTaskWP=self:CountRemainingTasks()
+  local nMissions=self:CountRemainingMissison()
 
   -- Short info.
-  local text=string.format("Status %s [%d/%d]: Tasks=%d (%d,%d) Current=%d. Waypoint=%d/%d. Detected=%d. Destination=%s, FC=%s",
-  fsmstate, #self.elements, #self.elements, nTaskTot, nTaskSched, nTaskWP, self.taskcurrent, self.currentwp or 0, self.waypoints and #self.waypoints or 0, 
+  local text=string.format("Status %s [%d/%d]: Tasks=%d (%d,%d) Current=%d. Missions=%s. Waypoint=%d/%d. Detected=%d. Destination=%s, FC=%s",
+  fsmstate, #self.elements, #self.elements, nTaskTot, nTaskSched, nTaskWP, self.taskcurrent, nMissions, self.currentwp or 0, self.waypoints and #self.waypoints or 0, 
   self.detectedunits:Count(), self.destbase and self.destbase:GetName() or "unknown", self.flightcontrol and self.flightcontrol.airbasename or "none")
   self:I(self.lid..text)
 
@@ -2197,6 +2200,17 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
     allowed=false    
   end
   
+  if self.taskcurrent>0 then
+    self:I(self.lid.."FF update route denied because taskcurrent>0")
+    allowed=false
+  end
+  
+  if self.currentmission then
+    -- Not good, because mission will never start. Better only check if there is a current task!
+    --self:I(self.lid.."FF update route denied because currentmission~=nil")
+    --allowed=false
+  end
+  
   return allowed
 end
 
@@ -2270,25 +2284,8 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
     -- No waypoints left
     ---
   
-    if self.passedfinalwp then
-    
-      self:I(self.lid.."UpdateRoute: Passed Final WP ==> RTB/RTZ/Wait!")
-  
-      -- Send flight to destination. NOTE that if there are still remaining tasks, the RTB call is delayed by 10 sec until all tasks are done.
-      if self.destbase then
-        self:I(self.lid.."UpdateRoute: Passed Final WP ==> RTB!")
-        self:__RTB(-1, self.destbase)
-      elseif self.destzone then
-        self:I(self.lid.."UpdateRoute: Passed Final WP ==> RTZ!")
-        self:__RTZ(-1, self.destzone)
-      else
-        self:I(self.lid.."UpdateRoute: Passed Final WP ==> Wait!")
-        self:__Wait(-1)
-      end
-    else
-      self:E(self.lid.."WARNING: No waypoints left. Dunno what to do!")
-    end
-    
+    self:_CheckFlightDone()
+          
   end
 
 end
@@ -2371,26 +2368,69 @@ function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
   -- Final AIR waypoint reached?
   if n==N then
 
-    --TODO: Find better way to RTB!
-    self:I(self.lid.."FF group passed final waypoint!")
-    
+    -- Set switch to true.    
     self.passedfinalwp=true
     
-    if #taskswp==0 then
-
-      if self.destbase then
-        self:__RTB(-1, self.destbase)
-      elseif self.destzone then
-        self:__RTZ(-1, self.destzone)
-      else
-        self:__Wait(-1)
-        self:E(self.lid.."ERROR: Reached final waypoint but no destination set! Don't know what to do?!")
-      end
-
-    end
+    -- Check if all tasks/mission are done? If so, RTB or WAIT.
+    -- Note, we delay it for a second to let the OnAfterPassingwaypoint function to be executed in case someone wants to add another waypoint there.
+    self:_CheckFlightDone(1)
 
   end
   
+end
+
+--- Check if flight is done, i.e.
+-- 
+--  * passed the final waypoint, 
+--  * no current task
+--  * no current mission
+--  * number of remaining tasks is zero
+--  * number of remaining missions is zero
+--  
+-- @param #FLIGHTGROUP self
+-- @param #number delay Delay in seconds.
+function FLIGHTGROUP:_CheckFlightDone(delay)
+
+  if delay and delay>0 then
+    -- Delayed call.
+    self:ScheduleOnce(delay, FLIGHTGROUP._CheckFlightDone, self)
+  else
+  
+    local nTasks=self:CountRemainingTasks()
+    local nMissions=self:CountRemainingMissison()
+  
+    -- Final waypoint passed?
+    if self.passedfinalwp then
+    
+      -- Got current mission or task?
+      if self.currentmission==nil and self.taskcurrent==0 then
+      
+        -- Number of remaining tasks/missions?
+        if nTasks==0 and nMissions==0 then
+    
+          -- Send flight to destination.
+          if self.destbase then
+            self:I(self.lid.."Passed Final WP and No current and/or future missions/task ==> RTB!")
+            self:__RTB(-1, self.destbase)
+          elseif self.destzone then
+            self:I(self.lid.."Passed Final WP and No current and/or future missions/task ==> RTZ!")
+            self:__RTZ(-1, self.destzone)
+          else
+            self:I(self.lid.."Passed Final WP and NO Tasks/Missions left. No DestBase or DestZone ==> Wait!")
+            self:__Wait(-1)        
+          end
+          
+        else
+            self:I(self.lid..string.format("Passed Final WP but Tasks=%d or Missions=%d left in the queue. Wait!", nTasks, nMissions))
+            self:__Wait(-1)              
+        end
+      else
+        self:I(self.lid..string.format("Passed Final WP but still have current Tasks or Missions left to do"))
+      end  
+    else
+      self:I(self.lid.."Did NOT pass the final waypoint yet")
+    end  
+  end
 end
 
 --- On after "GotoWaypoint" event. Group will got to the given waypoint and execute its route from there.
@@ -2864,6 +2904,7 @@ function FLIGHTGROUP:_SortTaskQueue()
 
 end
 
+
 --- Count the number of tasks that still pending in the queue.
 -- @param #FLIGHTGROUP self
 -- @return #number Total number of tasks remaining.
@@ -2909,7 +2950,10 @@ function FLIGHTGROUP:CountRemainingMissison()
   -- Loop over mission queue.
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
-    if mission.status~=AUFTRAG.Status.DONE then
+    
+    local status=mission:GetFlightStatus(self)
+    
+    if status~=AUFTRAG.FlightStatus.DONE and status~=AUFTRAG.FlightStatus.CANCELLED then
       N=N+1
     end
   end
@@ -2956,7 +3000,7 @@ function FLIGHTGROUP:onafterTaskExecute(From, Event, To, Task)
     else
       table.insert(DCStasks, Task.dcstask)
     end
-    
+
     -- Combo task.
     local TaskCombo=self.group:TaskCombo(DCStasks)
 
@@ -3110,12 +3154,17 @@ function FLIGHTGROUP:onafterTaskDone(From, Event, To, Task)
   
   -- Check if this task was the task of the current mission ==> Mission Done!
   local Mission=self:GetMissionByTaskID(Task.id)
+  
+  
   if Mission then
     self:MissionDone(Mission)
+  else
+    self:_CheckFlightDone(1)
   end
   
   -- Update route. This is necessary because of the route task being overwritten. But we want to fly to the remaining waypoints.
-  self:__UpdateRoute(-1)
+  -- TODO: Since TaskExecute does use PushTask now, it should not be necessary to update the route, right?
+  --self:__UpdateRoute(-1)
   
 end
 
@@ -3208,6 +3257,10 @@ end
 -- @param Ops.Auftrag#AUFTRAG Mission The mission to be cancelled.
 function FLIGHTGROUP:onafterMissionCancel(From, Event, To, Mission)
 
+  -- Set missin flight status.
+  env.info("FF setting mission to cancelled")
+  Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.CANCELLED)
+
   if self.currentmission and Mission.auftragsnummer==self.currentmission then
     
     -- Get mission waypoint task.
@@ -3227,14 +3280,13 @@ function FLIGHTGROUP:onafterMissionCancel(From, Event, To, Mission)
   else
   
     -- Not the current mission.
-    -- TODO: remove mission from queue?  
+    -- TODO: remove mission from queue?
+    
+    -- Send flight RTB or WAIT if nothing left to do.
+    self:_CheckFlightDone()
     
   end
   
-  -- Set missin flight status.
-  env.info("FF setting mission to cancelled")
-  Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.CANCELLED)  
-
 end
 
 --- On after "MissionDone" event.
@@ -3250,6 +3302,9 @@ function FLIGHTGROUP:onafterMissionDone(From, Event, To, Mission)
   
   -- Set current mission to nil.
   self.currentmission=nil
+  
+  -- Check if flight is done.
+  self:_CheckFlightDone(1)
 
 end
 

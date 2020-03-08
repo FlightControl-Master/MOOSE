@@ -652,8 +652,11 @@ function AIRWING:_GetNextMission()
           -- Get payload for the asset.
           asset.payload=self:FetchPayloadFromStock(asset.unittype, mission.type)
           
+          env.info("FF asset payload for mission "..mission.type)
+          self:I(asset.payload)
+          
           if not asset.payload then
-            self:E("No payload for asset! This should not happen!")
+            self:E(self.lid.."ERROR: No payload for asset! This should not happen!")
           end
           
           mission:AddAsset(asset)
