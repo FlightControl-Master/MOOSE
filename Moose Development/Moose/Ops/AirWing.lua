@@ -479,6 +479,10 @@ function AIRWING:onafterStatus(From, Event, To)
   
   --self:CheckAWACS()
   
+  -- TODO: count payloads, count squadrons, count missions
+  local text=string.format("Status %s: missions=%d, payloads=%d, squads=%d", fsmstate, #self.missionqueue, #self.payloads, #self.squadrons)
+  self:I(self.lid..text)
+  
   ------------------
   -- Mission Info --
   ------------------
@@ -514,21 +518,14 @@ function AIRWING:onafterStatus(From, Event, To)
         missiontext=string.format(" [%s (%s): status=%s]", mission.type, mission.name, mission.status)
       end
             
-      text=text..string.format("\n  -[%d] %s*%d: spawned=%s, mission=%s%s", j, typename, asset.nunits, spawned, tostring(self:IsAssetOnMission(asset)), missiontext)
-      
-      local payload=asset.payload
-      if payload then
-        text=text.." payload "..table.concat(payload.missiontypes, ", ")
-      else
-        text=text.." NO payload!"
-      end
+      text=text..string.format("\n  -[%d] %s*%d \"%s\": spawned=%s, mission=%s%s", j, typename, asset.nunits, asset.spawngroupname, spawned, tostring(self:IsAssetOnMission(asset)), missiontext)
+      local payload=asset.payload and table.concat(asset.payload.missiontypes, ", ") or "None"
+      text=text.." payload="..payload
       
     end
   end
   self:I(self.lid..text)
-  
-  
-  
+   
   --------------
   -- Mission ---
   --------------
@@ -651,14 +648,13 @@ function AIRWING:_GetNextMission()
           
           -- Get payload for the asset.
           asset.payload=self:FetchPayloadFromStock(asset.unittype, mission.type)
-          
-          env.info("FF asset payload for mission "..mission.type)
-          self:I(asset.payload)
-          
+                    
+          -- Should not happen as we just checked!
           if not asset.payload then
             self:E(self.lid.."ERROR: No payload for asset! This should not happen!")
           end
           
+          -- Add asset to mission.
           mission:AddAsset(asset)
         end
         
@@ -762,6 +758,17 @@ function AIRWING:onafterMissionRequest(From, Event, To, Mission)
 
   -- Add request to airwing warehouse.
   if #Assetlist>0 then
+  
+    --local text=string.format("Requesting assets for mission %s:", Mission.name)
+    for i,_asset in pairs(Assetlist) do
+      local asset=_asset --#AIRWING.SquadronAsset
+      
+      -- Set asset to requested! Important so that new requests do not use this asset!
+      asset.requested=true
+      
+      --text=text..string.format("\n[%d] %s spawned=%s type=%s payload=%s", i, asset.spawngroupname, tostring(asset.spawned), asset.unittype, asset.payload and table.concat(asset.payload.missiontypes, ", ") or "no payload!")
+    end
+    --self:I(self.lid..text)
   
     -- Add request to airwing warehouse.
     -- TODO: better Assignment string.
@@ -873,6 +880,9 @@ function AIRWING:onafterAssetSpawned(From, Event, To, group, asset, request)
 
   -- Create a flight group.
   asset.flightgroup=self:_CreateFlightGroup(asset)
+  
+  -- Not requested any more.
+  asset.requested=nil
   
   -- Get Mission (if any).
   local mission=self:GetMissionByID(request.assignment)  
@@ -1051,7 +1061,7 @@ function AIRWING:SquadronCanMission(Squadron, MissionType, Nassets)
           -- Check if the payload of this asset is compatible with the mission.
           if self:CheckMissionType(MissionType, asset.payload.missiontypes) then
             -- TODO: Check if asset actually has weapons left. Difficult!
-            table.insert(assets, asset)
+            --table.insert(assets, asset)
           end
           
         end      
@@ -1065,15 +1075,19 @@ function AIRWING:SquadronCanMission(Squadron, MissionType, Nassets)
         if asset.spawned then
           -- This asset is already spawned. Let's check if it has the right payload.
           if self:CheckMissionType(MissionType, asset.payload.missiontypes) then
-            table.insert(assets, asset)
+            --table.insert(assets, asset)
           end
         else
         
-          -- Check if we got a payload and reserve it for this asset.
-          local payload=self:FetchPayloadFromStock(asset.unittype, MissionType)
-          if payload then
-            asset.payload=payload
-            table.insert(assets, asset)
+          if not asset.requested then
+        
+            -- Check if we got a payload and reserve it for this asset.
+            local payload=self:FetchPayloadFromStock(asset.unittype, MissionType)
+            if payload then
+              asset.payload=payload
+              table.insert(assets, asset)
+            end
+            
           end
         end
         
@@ -1215,7 +1229,7 @@ function AIRWING:CanMission(MissionType, Nassets)
   for _,_asset in pairs(Assets) do
     local asset=_asset --#AIRWING.SquadronAsset
     -- Only unspawned payloads are returned.
-    if not asset.spawned then
+    if not asset.spawned and not asset.requested then
       self:ReturnPayloadFromAsset(asset)
     end
   end

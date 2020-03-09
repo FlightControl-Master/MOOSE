@@ -62,6 +62,8 @@
 -- @field #number requestID The ID of the queued warehouse request. Necessary to cancel the request if the mission was cancelled before the request is processed.
 -- @field #boolean cancelContactLost If true, cancel mission if the contact is lost.
 -- 
+-- @field #number missionAltitude Mission altitude in meters.
+-- 
 -- @field #number optionROE ROE.
 -- @field #number optionROT ROT.
 -- @field #number optionCM Counter measures.
@@ -108,23 +110,23 @@ _AUFTRAGSNR=0
 
 --- Mission types.
 -- @type AUFTRAG.Type
--- @param #string ANTISHIP Anti-ship mission.
--- @param #string AWACS AWACS mission.
--- @param #string BAI Battlefield Air Interdiction.
--- @param #string BOMBING Bombing mission.
--- @param #string CAP Combat Air Patrol.
--- @param #string CAS Close Air Support.
--- @param #string ESCORT Escort mission.
--- @param #string FACA Forward AirController airborne mission.
--- @param #string FERRY Ferry flight mission.
--- @param #string INTERCEPT Intercept mission.
--- @param #string ORBIT Orbit mission.
--- @param #string PATROL Similar to CAP but no auto engage targets.
--- @param #string RECON Recon mission.
--- @param #string SEAD Suppression/destruction of enemy air defences.
--- @param #string STRIKE Strike mission.
--- @param #string TANKER Tanker mission.
--- @param #string TRANSPORT Transport mission.
+-- @field #string ANTISHIP Anti-ship mission.
+-- @field #string AWACS AWACS mission.
+-- @field #string BAI Battlefield Air Interdiction.
+-- @field #string BOMBING Bombing mission.
+-- @field #string CAP Combat Air Patrol.
+-- @field #string CAS Close Air Support.
+-- @field #string ESCORT Escort mission.
+-- @field #string FACA Forward AirController airborne mission.
+-- @field #string FERRY Ferry flight mission.
+-- @field #string INTERCEPT Intercept mission.
+-- @field #string ORBIT Orbit mission.
+-- @field #string PATROL Similar to CAP but no auto engage targets.
+-- @field #string RECON Recon mission.
+-- @field #string SEAD Suppression/destruction of enemy air defences.
+-- @field #string STRIKE Strike mission.
+-- @field #string TANKER Tanker mission.
+-- @field #string TRANSPORT Transport mission.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
   AWACS="AWACS",  
@@ -212,9 +214,10 @@ AUFTRAG.version="0.0.5"
 
 -- TODO: Mission ROE and ROT
 -- TODO: Mission formation, etc.
--- TODO: FSM events.
+-- DONE: FSM events.
 -- TODO: F10 marker functions that are updated on Status event.
 -- TODO: Evaluate mission result ==> SUCCESS/FAILURE
+-- TODO: NewAUTO() NewA2G NewA2A
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -539,6 +542,15 @@ function AUFTRAG:SetWeaponType(WeaponType)
   -- Update the DCS task parameter.
   self.DCStask=self:GetDCSMissionTask()
   
+  return self
+end
+
+--- Set mission altitude.
+-- @param #AUFTRAG self
+-- @param #string Altitude Altitude in feet.
+-- @return #AUFTRAG self
+function AUFTRAG:SetMissionAltitude(Altitude)
+  self.missionAltitude=UTILS.FeetToMeters(Altitude)
   return self
 end
 

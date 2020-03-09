@@ -2518,7 +2518,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Wrapper.Airbase#AIRBASE airbase The airbase to hold at.
--- @param #number SpeedTo Speed used for traveling from current position to holding point in knots. Default 350 kts.
+-- @param #number SpeedTo Speed used for traveling from current position to holding point in knots. Default 75% of max speed.
 -- @param #number SpeedHold Holding speed in knots. Default 250 kts.
 -- @param #number SpeedLand Landing speed in knots. Default 170 kts.
 function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, SpeedLand)
@@ -2526,7 +2526,7 @@ function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, Sp
   self:I(self.lid..string.format("RTB: event=%s: %s --> %s", Event, From, To))
   
   -- Defaults:
-  SpeedTo=SpeedTo or 350
+  SpeedTo=SpeedTo or UTILS.KmphToKnots(self.speedmax*0.75)
   SpeedHold=SpeedHold or 250
   SpeedLand=SpeedLand or 170
 
@@ -3324,8 +3324,13 @@ function FLIGHTGROUP:RouteToMission(mission, delay)
     
     -- Create waypoint coordinate half way between us and the target.
     local targetcoord=mission:GetTargetCoordinate()
-    local flightcoord=self.group:GetCoordinate()    
+    local flightcoord=self.group:GetCoordinate()
     local waypointcoord=flightcoord:GetIntermediateCoordinate(targetcoord, 0.5)
+    
+    -- Set altitude of mission waypoint.
+    if mission.missionAltitude then
+      waypointcoord.y=mission.missionAltitude
+    end
   
     -- Add waypoint.
     self:AddWaypointAir(waypointcoord, nextwaypoint, self.speedmax*0.8, false)

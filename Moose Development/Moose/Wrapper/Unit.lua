@@ -756,6 +756,20 @@ function UNIT:GetDamageRelative()
   return 1
 end
 
+--- Returns the category of the #UNIT.
+-- @param #UNIT self
+-- @return #number Unit category.
+function UNIT:GetCategory()
+  self:F3( self.UnitName )
+
+  local DCSUnit = self:GetDCSObject()
+  if DCSUnit then
+    return DCSUnit:getDesc().category    
+  end
+  
+  return nil
+end
+
 --- Returns the category name of the #UNIT.
 -- @param #UNIT self
 -- @return #string Category name = Helicopter, Airplane, Ground Unit, Ship

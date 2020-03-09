@@ -1608,6 +1608,8 @@ WAREHOUSE = {
 -- @field #boolean spawned If true, asset was spawned into the cruel world. If false, it is still in stock.
 -- @field #string spawngroupname Name of the spawned group.
 -- @field #boolean iscargo If true, asset is cargo. If false asset is transport. Nil if in stock.
+-- @field #number rid The request ID of this asset.
+-- @field #boolean arrived If true, asset arrived at its destination.
 
 --- Item of the warehouse queue table.
 -- @type WAREHOUSE.Queueitem
@@ -3747,12 +3749,6 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
       if asset~=nil then
         self:_DebugMessage(string.format("Warehouse %s: Adding KNOWN asset uid=%d with attribute=%s to stock.", self.alias, asset.uid, asset.attribute), 5)
 
-        -- Asset now belongs to this warehouse. Set warehouse ID.
-        asset.wid=self.uid
-
-        -- No request associated with this asset.
-        asset.rid=nil
-
         -- Set livery.
         if liveries then
           if type(liveries)=="table" then
@@ -3761,13 +3757,20 @@ function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribu
             asset.livery=liveries
           end
         end
-
+        
         -- Set skill.
         asset.skill=skill or asset.skill
+        
+        -- Asset now belongs to this warehouse. Set warehouse ID.
+        asset.wid=self.uid
+
+        -- No request associated with this asset.
+        asset.rid=nil
 
         -- Asset is not spawned.
         asset.spawned=false
         asset.iscargo=nil
+        asset.arrived=nil
 
         -- Add asset to stock.
         table.insert(self.stock, asset)
@@ -4259,6 +4262,7 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
     -- Asset is transport.
     _assetitem.spawned=false
     _assetitem.iscargo=false
+    _assetitem.arrived=false
 
     local spawngroup=nil --Wrapper.Group#GROUP
 
@@ -4675,6 +4679,28 @@ function WAREHOUSE:onafterUnloaded(From, Event, To, group)
   end
 end
 
+--- On before "Arrived" event. Triggered when a group has arrived at its destination warehouse.
+-- @param #WAREHOUSE self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Wrapper.Group#GROUP group The group that was delivered.
+function WAREHOUSE:onbeforeArrived(From, Event, To, group)
+
+  local asset=self:FindAssetInDB(group)
+  
+  if asset then
+    if asset.arrived==true then
+      -- Asset already arrived (e.g. if multiple units trigger the event via landing).
+      return false
+    else
+      asset.arrived=true  --ensure this is not called again from the same asset group.
+      return true
+    end
+  end
+  
+end
+
 --- On after "Arrived" event. Triggered when a group has arrived at its destination warehouse.
 -- The routine should be called by the warehouse sending this asset and not by the receiving warehouse.
 -- It is checked if this asset is cargo (or self propelled) or transport. If it is cargo it is put into the stock of receiving warehouse.
@@ -4718,7 +4744,8 @@ function WAREHOUSE:onafterArrived(From, Event, To, group)
     end
 
     -- Increase number of cargo delivered and transports home.
-    local istransport=warehouse:_GroupIsTransport(group,request)
+    --local istransport=warehouse:_GroupIsTransport(group,request)
+    
     if istransport==true then
       request.ntransporthome=request.ntransporthome+1
       request.transportgroupset:Remove(group:GetName(), true)
@@ -5612,11 +5639,12 @@ function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrol
       if asset.payload then
         unit.payload=asset.payload.pylons
         env.info("FF payload")
-        self:I({playload=unit.payload})
-        self:I(asset)
+        self:I({playload=unit.payload})        
       else
         env.info("FF No payload for asset!")
       end
+      env.info("FF Asset info")
+      self:I(asset)
 
     end
 
@@ -5916,7 +5944,7 @@ end
 -- @param Wrapper.Group#GROUP group The group that arrived.
 -- @param #number n Waypoint passed.
 -- @param #number N Final waypoint.
-function WAREHOUSE:_PassingWaypoint(group,n,N)
+function WAREHOUSE:_PassingWaypoint(group, n, N)
   self:T(self.lid..string.format("Group %s passing waypoint %d of %d!", tostring(group:GetName()), n, N))
 
   -- Final waypoint reached.
@@ -6910,7 +6938,7 @@ function WAREHOUSE:_CheckRequestNow(request)
   if not _enough then
     local text=string.format("Warehouse %s: Request ID=%d denied! Not enough (cargo) assets currently available.", self.alias, request.uid)
     self:_InfoMessage(text, 5)
-    text=string.format("Enough=%s, #_assets=%d, _nassets=%d, request.nasset=%s", tostring(_enough), #_assets,_nassets, tostring(request.nasset))
+    text=string.format("Enough=%s, #assets=%d, nassets=%d, request.nasset=%s", tostring(_enough), #_assets,_nassets, tostring(request.nasset))
     self:T(self.lid..text)
     return false
   end
@@ -7830,18 +7858,15 @@ function WAREHOUSE:_FilterStock(stock, descriptor, attribute, nmax, mobile)
 
     -- Count total number in stock.
     local ntot=0
-    for _,_asset in ipairs(stock) do
-      local asset=_asset --#WAREHOUSE.Assetitem
-      
-      for _,_rasset in pairs(attribute) do
-        local rasset=_rasset --#WAREHOUSE.Assetitem
-      
+    for _,_rasset in pairs(attribute) do
+      local rasset=_rasset --#WAREHOUSE.Assetitem      
+      for _,_asset in ipairs(stock) do
+        local asset=_asset --#WAREHOUSE.Assetitem      
         if rasset.uid==asset.uid then
           table.insert(filtered, asset)
-        end  
-      
-      end
-      
+          break
+        end
+      end      
     end
     
     return filtered, #filtered, #filtered>=#attribute

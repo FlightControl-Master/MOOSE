@@ -17,7 +17,7 @@
 -- @field #boolean Debug Debug mode. Messages to all about status.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #number coalition Coalition side number, e.g. coalition.side.RED.
--- @field #table filter Category filters.
+-- @field #table filterCategory Category filters.
 -- @field Core.Set#SET_ZONE acceptzoneset Set of accept zones. If defined, only contacts in these zones are considered.
 -- @field Core.Set#SET_ZONE rejectzoneset Set of reject zones. Contacts in these zones are not considered.
 -- @field #table Contacts Table of detected items.
@@ -41,7 +41,7 @@ INTEL = {
   ClassName       = "INTEL",
   Debug           =   nil,
   lid             =   nil,
-  filter          =   nil,
+  filterCategory  =    {},
   detectionset    =   nil,
   Contacts        =    {},
   ContactsLost    =    {},
@@ -202,6 +202,32 @@ function INTEL:SetForgetTime(TimeInterval)
   return self
 end
 
+--- Filter group categories. Valid categories are:
+-- 
+-- * Group.Category.AIRPLANE
+-- * Group.Category.HELICOPTER
+-- * Group.Category.GROUND
+-- * Group.Category.SHIP
+-- * Group.Category.TRAIN
+-- 
+-- @param #INTEL self
+-- @param #table Categories Filter categories, e.g. {Group.Category.AIRPLANE, Group.Category.HELICOPTER}.
+-- @return #INTEL self
+function INTEL:SetFilterCategory(Categories)
+  if type(Categories)~="table" then
+    Categories={Categories}
+  end
+  self.filterCategory=Categories
+  
+  local text="Filter categories: "
+  for _,category in pairs(self.filterCategory) do
+    text=text..string.format("%d,", category)
+  end
+  self:I(self.lid..text)
+  
+  return self
+end
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start & Status
@@ -294,22 +320,44 @@ function INTEL:UpdateIntel()
     local unit=_unit --Wrapper.Unit#UNIT
     
     -- Check if unit is in any of the accept zones.
-    local inzone=false
-    for _,_zone in pairs(self.acceptzoneset.Set) do
-      local zone=_zone --Core.Zone#ZONE
-      if unit:IsInZone(zone) then
-        inzone=true
-        break
+    if self.acceptzoneset:Count()>0 then
+      local inzone=false
+      for _,_zone in pairs(self.acceptzoneset.Set) do
+        local zone=_zone --Core.Zone#ZONE
+        if unit:IsInZone(zone) then
+          inzone=true
+          break
+        end
+      end
+      
+      -- Unit is not in accept zone ==> remove!
+      if not inzone then
+        table.insert(remove, unit:GetName())
       end
     end
     
-    -- Unit is not in accept zone ==> remove!
-    if not inzone then
-      table.insert(remove, unit:GetName())
-    end
+    -- Filter unit categories.
+    if #self.filterCategory>0 then
+      local unitcategory=unit:GetCategory()
+      local keepit=false
+      for _,filtercategory in pairs(self.filterCategory) do
+        if unitcategory==filtercategory then
+          keepit=true
+          break
+        end
+      end
+      if not keepit then
+        self:I(self.lid..string.format("Removing unit %s category=%d", unit:GetName(), unit:GetCategory()))
+        table.insert(remove, unit:GetName())
+      end
+    end    
+        
   end
   
   -- Remove filtered units.
+  for _,unitname in pairs(remove) do
+    DetectedSet:Remove(unitname, true)
+  end
   --DetectedSet:RemoveUnitsByName(remove)
   
   -- Create detected contacts.  
