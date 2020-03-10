@@ -64,19 +64,21 @@ SQUADRON.version="0.0.2"
 
 --- Create a new SQUADRON object and start the FSM.
 -- @param #SQUADRON self
--- @param #string SquadName Name of the squadron, e.g. "VFA-37".
--- @param #table tasks Table of squadron tasks, e.g. `{SQUADRON.Task.INTERCEPT, SQUADRON.Task.SEAD}`.
+-- @param #string SquadronName Name of the squadron, e.g. "VFA-37".
+-- @param #string TemplateGroupName Name of the template group.
 -- @return #SQUADRON self
 function SQUADRON:New(SquadronName, TemplateGroupName)
 
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #SQUADRON
 
+  self.templatename=TemplateGroupName
+
   --self.flightgroup=AIGroup
-  self.name=tostring(SquadronName)
+  self.name=tostring(SquadronName or TemplateGroupName)
   
   -- Set some string id for output to DCS.log file.
-  self.sid=string.format("SQUADRON %s | ", self.squadronname)
+  self.lid=string.format("SQUADRON %s | ", self.squadronname)
 
   -- Start State.
   self:SetStartState("Stopped")

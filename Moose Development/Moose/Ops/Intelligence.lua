@@ -313,7 +313,6 @@ function INTEL:UpdateIntel()
   end
   
   -- TODO: Filter units from reject zones.
-  -- TODO: Filter unit types.
   -- TODO: Filter detection methods?
   local remove={}
   for _,_unit in pairs(DetectedSet.Set) do
@@ -358,7 +357,6 @@ function INTEL:UpdateIntel()
   for _,unitname in pairs(remove) do
     DetectedSet:Remove(unitname, true)
   end
-  --DetectedSet:RemoveUnitsByName(remove)
   
   -- Create detected contacts.  
   self:CreateDetectedItems(DetectedSet)

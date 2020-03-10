@@ -417,17 +417,37 @@ function AIRWING:SetNumberAWACS(n)
 end
 
 
---- Add a patrol Point for CAP missions.
+--- Create a new generic patrol point.
 -- @param #AIRWING self
--- @param Core.Zone#ZONE AcceptZone Add a zone to the CAP zone set.
--- @return #AIRWING self
-function AIRWING:AddPatrolPointCAP(Coordinate, Heading, Leg, Speed)
-  
+-- @param Core.Point#COORDINATE Coordinate Coordinate of the patrol point.
+-- @param #number Heading Heading in degrees.
+-- @param #number LegLength Length of race-track orbit in NM.
+-- @param #number Altitude Orbit altitude in feet.
+-- @param #number Speed Orbit speed in knots.
+-- @return #AIRWING.PatrolData Patrol point table.
+function AIRWING:NewPatrolPoint(Coordinate, Heading, LegLength, Altitude, Speed)
+
   local cappoint={}  --#AIRWING.PatrolData
   cappoint.coord=Coordinate
   cappoint.heading=Heading or 090
-  cappoint.leg=Leg or 15
+  cappoint.leg=LegLength or 15
+  cappoint.altitude=Altitude
   cappoint.speed=Speed or 350
+
+  return cappoint
+end
+
+--- Add a patrol Point for CAP missions.
+-- @param #AIRWING self
+-- @param Core.Point#COORDINATE Coordinate Coordinate of the patrol point.
+-- @param #number Heading Heading in degrees.
+-- @param #number LegLength Length of race-track orbit in NM.
+-- @param #number Altitude Orbit altitude in feet.
+-- @param #number Speed Orbit speed in knots.
+-- @return #AIRWING self
+function AIRWING:AddPatrolPointCAP(Coordinate, Heading, LegLength, Altitude, Speed)
+  
+  local cappoint=self:NewPatrolPoint(Coordinate, Heading, LegLength, Speed, Altitude, LegLength)
 
   table.insert(self.cappoints, cappoint)
 
@@ -473,7 +493,7 @@ function AIRWING:onafterStatus(From, Event, To)
   local fsmstate=self:GetState()
   
   -- Check CAP missions.
-  --self:CheckCAP()
+  self:CheckCAP()
   
   --self:CheckTANKER()
   
@@ -798,6 +818,9 @@ function AIRWING:onafterMissionCancel(From, Event, To, Mission)
     if flightgroup then
       flightgroup:MissionCancel(Mission)
     end
+    
+    -- Not requested any more (if it was).
+    asset.requested=nil
   end
   
   -- Remove queued request (if any).
@@ -890,7 +913,7 @@ function AIRWING:onafterAssetSpawned(From, Event, To, group, asset, request)
   -- Add mission to flightgroup queue.
   if mission then
       
-    -- Add mission to flightgroup queue.  
+    -- Add mission to flightgroup queue.
     asset.flightgroup:AddMission(mission)
   end
   
@@ -916,7 +939,12 @@ function AIRWING:onafterAssetDead(From, Event, To, asset, request)
   -- Add group to the detection set of the WINGCOMMANDER.
   if self.wingcommander then
     self.wingcommander.detectionset:RemoveGroupsByName({asset.spawngroupname})
-  end  
+  end
+  
+  --TODO: remove asset from mission.
+  --local mission=self:GetAssetCurrentMission(asset)
+  
+  --TODO: remove asset from squadron.
 end
 
 
@@ -1032,18 +1060,14 @@ end
 -- @return #boolean If true, Squadron can do that type of mission. Available assets are not checked.
 -- @return #table Assets that can do the required mission.
 function AIRWING:SquadronCanMission(Squadron, MissionType, Nassets)
-
-  local cando=true
+  
+  -- Assets available for this mission.
   local assets={}
 
   -- WARNING: This assumes that all assets of the squad can do the same mission types!
-  -- TODO: we could make the mission type as a parameter of the assets! Then we can have heterogenious squads as well!
-  local gotit=self:CheckMissionType(MissionType, Squadron.missiontypes)
+  local cando=self:CheckMissionType(MissionType, Squadron.missiontypes)
   
-  if not gotit then
-    -- This squad cannot do this mission.
-    cando=false
-  else
+  if cando then
 
     for _,_asset in pairs(Squadron.assets) do
       local asset=_asset --#AIRWING.SquadronAsset
@@ -1056,7 +1080,7 @@ function AIRWING:SquadronCanMission(Squadron, MissionType, Nassets)
         ---
 
         --TODO: This only checks if it has an ORBIT mission. It could have others as well!
-        if self:IsAssetOnMission(asset, AUFTRAG.Type.ORBIT) and MissionType~=AUFTRAG.Type.ORBIT then
+        if self:IsAssetOnMission(asset, AUFTRAG.Type.PATROL) and MissionType~=AUFTRAG.Type.PATROL then
 
           -- Check if the payload of this asset is compatible with the mission.
           if self:CheckMissionType(MissionType, asset.payload.missiontypes) then
@@ -1136,6 +1160,23 @@ function AIRWING:IsAssetOnMission(asset, MissionTypes)
       
     end
   
+  end
+  
+  -- Alternative: run over all missions and compare to mission assets.
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+    
+    if mission:IsNotOver() then
+      for _,_asset in pairs(mission.assets) do
+        local sqasset=_asset --#AIRWING.SquadronAsset
+        
+        if sqasset.uid==asset.uid then
+          return true
+        end
+        
+      end
+    end
+    
   end
 
   return false

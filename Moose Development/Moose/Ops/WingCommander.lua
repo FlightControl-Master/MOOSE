@@ -246,65 +246,18 @@ function WINGCOMMANDER:onafterStatus(From, Event, To)
     local contact=_contact --#WINGCOMMANDER.Contact
     local group=contact.group --Wrapper.Group#GROUP
     
-    if group and group:IsAlive() then
+    -- Create a mission based on group category.
+    local mission=AUFTRAG:NewAUTO(group)
     
-      local category=group:GetCategory()
-      local attribute=group:GetAttribute()
-      local threatlevel=group:GetThreatLevel()
-      
-      local mission=nil --Ops.Auftrag#AUFTRAG
-      
-      if category==Group.Category.AIRPLANE or category==Group.Category.HELICOPTER then
-                
-        mission=AUFTRAG:NewINTERCEPT(group)
-        
-      elseif category==Group.Category.GROUND then
-      
-        --TODO: action depends on type
-        -- AA/SAM ==> SEAD
-        -- Tanks ==>
-        -- Artillery ==>
-        -- Infantry ==>
-        -- 
-                
-        if attribute==GROUP.Attribute.GROUND_AAA or attribute==GROUP.Attribute.GROUND_SAM then
-            
-            --TODO: SEAD/DEAD
-        
-        end
-        
-        mission=AUFTRAG:NewBAI(group)
-        
-      
-      elseif category==Group.Category.SHIP then
-      
-        --TODO: ANTISHIP
-        
-        local TargetUnitSet=SET_UNIT:New()
-        
-        for _,_unit in pairs(group:GetUnits()) do
-          local unit=_unit --Wrapper.Unit#UNIT
-          if unit and unit:IsAlive() and unit:GetThreatLevel()>0 then
-            TargetUnitSet:AddUnit(unit)
-          end
-        end
-        
-        if TargetUnitSet:Count()>0 then
-          mission=AUFTRAG:NewANTISHIP(TargetUnitSet)
-        end
-              
-      end
-      
+    
+    -- Add mission to queue.
+    if mission then
+      mission.nassets=1
+      contact.mission=mission
       
       -- Add mission to queue.
-      if mission then
-        mission.nassets=1
-        contact.mission=mission
-        self:AddMission(mission)
-      end
-        
+      self:AddMission(mission)
     end
-    
   end
   
   

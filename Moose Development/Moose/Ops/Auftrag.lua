@@ -64,6 +64,9 @@
 -- 
 -- @field #number missionAltitude Mission altitude in meters.
 -- 
+-- @field #number missionRepeated Number of times mission was repeated.
+-- @field #number missionRepeatMax Number of times mission is repeated if failed.
+-- 
 -- @field #number optionROE ROE.
 -- @field #number optionROT ROT.
 -- @field #number optionCM Counter measures.
@@ -252,6 +255,9 @@ function AUFTRAG:New(Type)
   self:SetPriority()
   self:SetMissionTime()
   
+  self.missionRepeated=0
+  self.missionRepeatMax=1
+  
   -- FMS start state is PLANNED.
   self:SetStartState(self.status)
   
@@ -269,11 +275,21 @@ function AUFTRAG:New(Type)
   self:AddTransition("*",                      "Done",          AUFTRAG.Status.DONE)        -- All assets have reported that mission is done.
   self:AddTransition("*",                      "Cancel",        AUFTRAG.Status.CANCELLED)   -- Command to cancel the mission.
   
-  self:AddTransition("*",                      "Accomplished",  AUFTRAG.Status.SUCCESS)
+  self:AddTransition("*",                      "Success",       AUFTRAG.Status.SUCCESS)
   self:AddTransition("*",                      "Failed",        AUFTRAG.Status.FAILED)
     
   self:AddTransition("*",                      "Status",        "*")
   self:AddTransition("*",                      "Stop",          "Stopped")
+  
+  self:AddTransition("*",                      "Repeat",        AUFTRAG.Status.PLANNED)
+  
+  self:AddTransition("*",                      "AssetDead",     "*")
+
+  --[[
+  self:HandleEvent(EVENTS.PilotDead,      self._UnitDead)
+  self:HandleEvent(EVENTS.Ejection,       self._UnitDead)
+  self:HandleEvent(EVENTS.Crash,          self._UnitDead)
+  ]]
   
   self:__Status(-1)
   
@@ -471,6 +487,69 @@ function AUFTRAG:NewBAI(TargetGroupSet)
   return mission
 end
 
+--- Create a mission to attack a group. Mission type is automatically chosen from the group category.
+-- @param #AUFTRAG self
+-- @param Wrapper.Group#GROUP EngageGroup Group to be engaged.
+-- @return #AUFTRAG self
+function AUFTRAG:NewAUTO(EngageGroup)
+
+  local mission=nil --#AUFTRAG
+  
+  local group=EngageGroup
+
+  if group and group:IsAlive() then
+  
+    local category=group:GetCategory()
+    local attribute=group:GetAttribute()
+    local threatlevel=group:GetThreatLevel()
+  
+    if category==Group.Category.AIRPLANE or category==Group.Category.HELICOPTER then
+              
+      mission=AUFTRAG:NewINTERCEPT(group)
+      
+    elseif category==Group.Category.GROUND then
+    
+      --TODO: action depends on type
+      -- AA/SAM ==> SEAD
+      -- Tanks ==>
+      -- Artillery ==>
+      -- Infantry ==>
+      -- 
+              
+      if attribute==GROUP.Attribute.GROUND_AAA or attribute==GROUP.Attribute.GROUND_SAM then
+          
+          --TODO: SEAD/DEAD
+      
+      end
+      
+      mission=AUFTRAG:NewBAI(group)
+      
+    
+    elseif category==Group.Category.SHIP then
+    
+      --TODO: ANTISHIP
+      
+      local TargetUnitSet=SET_UNIT:New()
+      
+      for _,_unit in pairs(group:GetUnits()) do
+        local unit=_unit --Wrapper.Unit#UNIT
+        if unit and unit:IsAlive() and unit:GetThreatLevel()>0 then
+          TargetUnitSet:AddUnit(unit)
+        end
+      end
+      
+      if TargetUnitSet:Count()>0 then
+        mission=AUFTRAG:NewANTISHIP(TargetUnitSet)
+      end
+            
+    end
+  end
+
+  return mission
+end
+
+
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- User API Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -545,6 +624,20 @@ function AUFTRAG:SetWeaponType(WeaponType)
   return self
 end
 
+--- Set number of weapons to expend.
+-- @param #AUFTRAG self
+-- @param #number WeaponType Weapon type. Default is ENUMS.WeaponFlag.Auto
+-- @return #AUFTRAG self
+function AUFTRAG:SetWeaponExpend(WeaponExpend)
+  
+  self.engageWeaponExpend=WeaponExpend or "Auto"
+  
+  -- Update the DCS task parameter.
+  self.DCStask=self:GetDCSMissionTask()
+  
+  return self
+end
+
 --- Set mission altitude.
 -- @param #AUFTRAG self
 -- @param #string Altitude Altitude in feet.
@@ -554,13 +647,25 @@ function AUFTRAG:SetMissionAltitude(Altitude)
   return self
 end
 
---- Set Rules of Engagement for this mission.
+--- Set Rules of Engagement (ROE) for this mission.
 -- @param #AUFTRAG self
--- @param #number roe ROE
+-- @param #string roe Mision ROE.
 -- @return #AUFTRAG self
 function AUFTRAG:SetROE(roe)
   
   self.optionROE=roe
+  
+  return self
+end
+
+
+--- Set Reaction on Threat (ROT) for this mission.
+-- @param #AUFTRAG self
+-- @param #string roe Mision ROT.
+-- @return #AUFTRAG self
+function AUFTRAG:SetROE(rot)
+  
+  self.optionROT=rot
   
   return self
 end
@@ -675,6 +780,10 @@ function AUFTRAG:onafterStatus(From, Event, To)
     self:Cancel()
   end
   
+  if self:IsNotOver() and #self.assets==0 then
+    self:Cancel()
+  end
+  
   -- Check if ALL flights are done with their mission.
   if self:IsNotOver() and self:CheckFlightsDone() then
     self:Done()
@@ -695,12 +804,13 @@ function AUFTRAG:onafterStatus(From, Event, To)
     self:E(self.lid..string.format("ERROR: FSM state %s != %s mission status!", fsmstate, self.status))
   end
 
-
   -- Check if mission is OVER.
   if self:IsOver() then
     -- TODO: evaluate mission result. self.Ntargets>0 and Ntargets=?
     -- TODO: if failed, repeat mission, i.e. set status to PLANNED? if success, stop and remove from ALL queues.
-    self:Stop()
+    --self:Stop()
+    
+    self:Evaluate()
   else
     self:__Status(-30)
   end
@@ -712,6 +822,12 @@ end
 function AUFTRAG:Evaluate()
 
   local Ntargets=self:CountMissionTargets()
+  
+  if self.Ntargets>Ntargets then
+    self:Failed()
+  else
+    self:Success()
+  end
 
 end
 
@@ -802,6 +918,34 @@ function AUFTRAG:CheckFlightsDone()
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- EVENT Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Flightgroup event function handling the crash of a unit.
+-- @param #FLIGHTGROUP self
+-- @param Core.Event#EVENTDATA EventData Event data.
+function AUFTRAG:OnEventCrash(EventData)
+
+  -- Check that this is the right group.
+  if EventData and EventData.IniGroup and EventData.IniUnit and EventData.IniGroupName and EventData.IniGroupName==self.groupname then
+    local unit=EventData.IniUnit
+    local group=EventData.IniGroup
+    local unitname=EventData.IniUnitName
+
+    -- Get element.
+    local element=self:GetElementByName(unitname)
+
+    if element then
+      self:T3(self.lid..string.format("EVENT: Element %s crashed ==> dead", element.name))
+      self:ElementDead(element)
+    end
+
+  end
+
+end
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -879,6 +1023,35 @@ function AUFTRAG:onafterDone(From, Event, To)
   self:I(self.lid..string.format("New mission status=%s", self.status))
 end
 
+--- On after "AssetDead" event.
+-- @param #AUFTRAG self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param Ops.AirWing#AIRWING.SquadronAsset
+function AUFTRAG:onafterAssetDead(From, Event, To, Asset)
+  
+  -- Delete asset from mission.
+  self:DelAsset(Asset)
+  
+  -- All assets dead?
+  if #self.assets==0 then
+  
+    if self:IsNotOver() then
+    
+      -- Mission failed.
+      self:Failed()
+      
+    else
+    
+      self:Stop()
+      
+    end
+  end
+
+end
+
+
 --- On after "Cancel" event. Cancells the mission.
 -- @param #AUFTRAG self
 -- @param #string From From state.
@@ -905,6 +1078,61 @@ function AUFTRAG:onafterCancel(From, Event, To)
 
 end
 
+--- On after "Failed" event.
+-- @param #AUFTRAG self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function AUFTRAG:onafterFailed(From, Event, To)
+
+  self.status=AUFTRAG.Status.FAILED
+  self:I(self.lid..string.format("New mission status=%s", self.status))
+  
+  if self.missionRepeated>=self.missionRepeatMax then
+  
+    self:Stop()
+    
+  else
+        
+    -- Repeat mission.
+    self:Repeat()
+    
+  end  
+
+end
+
+
+--- On after "Repeat" event.
+-- @param #AUFTRAG self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function AUFTRAG:onafterRepeat(From, Event, To)
+
+  -- Increase repeat counter.
+  self.missionRepeated=self.missionRepeated+1
+  
+  if self.wingcommander then
+  
+  elseif self.airwing then
+  
+  
+  end
+
+end
+
+--- On after "Success" event.
+-- @param #AUFTRAG self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function AUFTRAG:onafterSuccess(From, Event, To)
+
+  self.status=AUFTRAG.Status.SUCCESS
+  self:I(self.lid..string.format("New mission status=%s", self.status))
+
+end
+
 --- On after "Stop" event. Remove mission from AIRWING and FLIGHTGROUP mission queues.
 -- @param #AUFTRAG self
 -- @param #string From From state.
@@ -913,6 +1141,8 @@ end
 function AUFTRAG:onafterStop(From, Event, To)
 
   -- TODO: remove missions from queues in WINGCOMMANDER, AIRWING and FLIGHGROUPS!
+  
+  -- TODO: Mission should be OVER! we dont want to remove running missions from any queues.
   
   if self.wingcommander then
     
@@ -964,6 +1194,24 @@ function AUFTRAG:DelAsset(Asset)
   end
 
   return self
+end
+
+--- Get asset by its spawn group name.
+-- @param #AUFTRAG self
+-- @param #string Name Asset spawn group name.
+-- @return Ops.AirWing#AIRWING.SquadronAsset
+function AUFTRAG:GetAssetByName(Name)
+
+  for i,_asset in pairs(self.assets or {}) do
+    local asset=_asset --Ops.AirWing#AIRWING.SquadronAsset
+    
+    if asset.spawngroupname==Name then
+      return asset
+    end
+    
+  end
+
+  return nil
 end
 
 

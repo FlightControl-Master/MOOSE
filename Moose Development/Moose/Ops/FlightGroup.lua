@@ -69,6 +69,12 @@
 -- @field #number CallsignName Call sign name.
 -- @field #number CallsignNumber Call sign number.
 -- @field #boolean EPLRS If true, turn EPLRS data link on.
+-- 
+-- @field #string ROEdefault Default ROE setting.
+-- @field #string ROTdefault Default ROT setting.
+-- @field #string ROEcurrent Current ROE setting.
+-- @field #string ROTcurrent Current ROT setting.
+-- 
 -- @extends Core.Fsm#FSM
 
 --- *To invent an airplane is nothing. To build one is something. To fly is everything.* -- Otto Lilienthal
@@ -312,6 +318,34 @@ FLIGHTGROUP.TaskType={
 -- @field DCS#Task DCStask DCS task structure table.
 -- @field #number WaypointIndex Waypoint number at which the enroute task is added.
 
+
+--- Rules of Engagement (ROE).
+-- @type FLIGHTGROUP.ROE
+-- @field #string RETURNFIRE
+-- @field #string WEAPONFREE
+-- @field #string WEAPONHOLD
+FLIGHTGROUP.ROE={
+  WEAPONFREE="weapon_free",
+  OPENFIREPRIO="open_fire_prio_designated",
+  OPENFIREDESIG="open_fire_only_designated",
+  RETURNFIRE="return_fire",
+  WEAPONHOLD="weapon_hold",
+}
+
+--- Reaction on Threat (ROT).
+-- @type FLIGHTGROUP.ROT
+-- @field #string NOREACT No defensive actions will take place to counter threats.
+-- @field #string PASSIVE AI will use jammers and other countermeasures in an attempt to defeat the threat. AI will not attempt a maneuver to defeat a threat.
+-- @field #string EVADE AI will react by performing defensive maneuvers against incoming threats, AI will also use passive defense.
+-- @field #string BYPASS aI will attempt to avoid enemy threat zones all together. This includes attempting to fly above or around threats.
+-- @field #string ABORT If a threat is deemed severe enough the AI will abort its mission and return to base.
+FLIGHTGROUP.ROT={
+  NOREACT="no_reaction",
+  PASSIVE="weapon_free",  
+  EVADE="return_fire",
+  BYPASS="bypass_and_escape",
+  ABORT="allow_abort_mission",
+}
 
 --- FLIGHTGROUP class version.
 -- @field #string version
@@ -1980,7 +2014,12 @@ function FLIGHTGROUP:onafterFlightSpawned(From, Event, To)
   self:T(self.lid..string.format("Flight spawned!"))
 
   -- F10 menu.
-  if not self.ai then
+  if self.ai then
+  
+    
+  
+  
+  else
     self.menu=self.menu or {}
     self.menu.atc=self.menu.atc or {}
     self.menu.atc.root=self.menu.atc.root or MENU_GROUP:New(self.group, "ATC")
@@ -2148,7 +2187,17 @@ function FLIGHTGROUP:onafterFlightDead(From, Event, To)
   if self.flightcontrol then
     self.flightcontrol:_RemoveFlight(self)
     self.flightcontrol=nil
-  end  
+  end
+  
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+    
+    local asset=mission:GetAssetByName(self.groupname)
+    if asset then
+      mission:AssetDead(asset)
+    end
+  
+  end
   
   -- Stop
   self:Stop()
@@ -5184,6 +5233,38 @@ function FLIGHTGROUP:_GetTerminal(_attribute, _category)
   end
 
   return _terminal
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- OPTION FUNCTIONS
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Set ROE for a group.
+-- @param #FLIGHTGROUP self
+-- @param #string roe ROE of group. Default is FLIGHTGROUP.ROE.HOLDFIRE.
+function FLIGHTGROUP:SetOptionROE(roe)
+  if roe==FLIGHTGROUP.ROE.RETURNFIRE then
+    self.group:OptionROEReturnFire()
+  elseif roe==FLIGHTGROUP.ROE.WEAPONFREE then
+    self.group:OptionROEWeaponFree()
+  else
+    self.group:OptionROEHoldFire()
+  end
+  self.ROEcurrent=roe
+end
+
+
+--- Set ROT for a group.
+-- @param #FLIGHTGROUP self
+-- @param #string rot ROT of group.
+function FLIGHTGROUP:SetOptionROT(rot)
+  if rot==FLIGHTGROUP.ROT.PASSIVE then
+    self.group:OptionROTPassiveDefense()
+  elseif self.rot==FLIGHTGROUP.ROT.NOREACT then
+    self.group:OptionROTEvadeFire()
+  else
+    self.group:OptionROTNoReaction()
+  end
 end
 
 
