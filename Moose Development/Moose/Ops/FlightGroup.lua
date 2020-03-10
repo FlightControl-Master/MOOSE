@@ -596,7 +596,7 @@ function FLIGHTGROUP:AddTask(task, clock, description, prio, duration)
   
   -- Info.
   self:I(self.lid..string.format("Adding SCHEDULED task %s starting at %s", newtask.description, UTILS.SecondsToClock(time, true)))
-  self:T2({newtask=newtask})
+  self:T3({newtask=newtask})
 
   return newtask
 end
@@ -633,7 +633,7 @@ function FLIGHTGROUP:AddTaskWaypoint(task, waypointindex, description, prio, dur
   
   -- Info.
   self:I(self.lid..string.format("Adding WAYPOINT task %s at WP %d", newtask.description, newtask.waypoint))
-  self:T2({newtask=newtask})
+  self:T3({newtask=newtask})
   
   -- Update route.
   self:__UpdateRoute(-1)
@@ -2218,10 +2218,10 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
 
   if self.group and self.group:IsAlive() and self:IsAirborne() then
     -- Alive & Airborne ==> Update route possible.
-    self:T2(self.lid.."Update route possible. Group is ALIVE and AIRBORNE")
+    self:T3(self.lid.."Update route possible. Group is ALIVE and AIRBORNE")
   elseif self:IsDead() then
     -- Group is dead! No more updates.
-    self:T3(self.lid.."FF update route denied. Group is DEAD!")
+    self:E(self.lid.."Update route denied. Group is DEAD!")
     allowed=false
   else
     -- Not airborne yet. Try again in 1 sec.
@@ -2231,14 +2231,12 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
   end
   
   if n and n<1 then
-    self:T3(self.lid.."FF update route denied because n<1")
-    self:__UpdateRoute(-1, n)
+    self:E(self.lid.."Update route denied because waypoint n<1!")
     allowed=false  
   end
   
   if not self.currentwp then
-    self:T3(self.lid.."FF update route denied because self.currentwp=nil")
-    self:__UpdateRoute(-1, n)
+    self:E(self.lid.."Update route denied because self.currentwp=nil!")
     allowed=false    
   end
   
@@ -2250,12 +2248,12 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
   end
   
   if self.taskcurrent>0 then
-    self:I(self.lid.."FF update route denied because taskcurrent>0")
+    self:E(self.lid.."Update route denied because taskcurrent>0")
     allowed=false
   end
   
+  -- Not good, because mission will never start. Better only check if there is a current task!
   if self.currentmission then
-    -- Not good, because mission will never start. Better only check if there is a current task!
     --self:I(self.lid.."FF update route denied because currentmission~=nil")
     --allowed=false
   end
@@ -2384,7 +2382,7 @@ function FLIGHTGROUP:onafterPassingWaypoint(From, Event, To, n, N)
   else
     text=text.." None"
   end
-  self:I(self.lid..text)
+  self:T(self.lid..text)
   
 
   -- Tasks at this waypoints.
@@ -3229,7 +3227,7 @@ end
 -- @param Ops.Auftrag#AUFTRAG Mission The mission table.
 function FLIGHTGROUP:onbeforeMissionStart(From, Event, To, Mission)
 
-  self:I(self.lid..string.format("FF Starting mission %s, FSM=%s, LateActivated=%s, UnControlled=%s", tostring(Mission.name), self:GetState(), tostring(self:IsLateActivated()), tostring(self:IsUncontrolled())))
+  self:I(self.lid..string.format("Starting mission %s, FSM=%s, LateActivated=%s, UnControlled=%s", tostring(Mission.name), self:GetState(), tostring(self:IsLateActivated()), tostring(self:IsUncontrolled())))
 
   -- Delay for route to mission. Group needs to be activated and controlled.
   local delay=0
@@ -3962,10 +3960,6 @@ function FLIGHTGROUP:GetNextWaypoint()
     Nextwp=self.currentwp+1
   end
 
-  -- Debug output
-  local text=string.format("Current WP=%d/%d, next WP=%d", self.currentwp, #self.waypoints, Nextwp)
-  self:T2(self.lid..text)
-
   -- Next waypoint.
   local nextwp=self.waypoints[Nextwp] --Core.Point#COORDINATE
 
@@ -3992,7 +3986,8 @@ function FLIGHTGROUP:_UpdateWaypointTasks()
     
     if i>self.currentwp or nwaypoints==1 then
     
-      self:I(self.lid..string.format("Updating waypoint task for waypoint %d/%d. Last waypoint passed %d.", i, nwaypoints, self.currentwp))
+      -- Debug info.
+      self:T2(self.lid..string.format("Updating waypoint task for waypoint %d/%d. Last waypoint passed %d.", i, nwaypoints, self.currentwp))
   
       -- Tasks of this waypoint
       local taskswp={}
@@ -4363,7 +4358,7 @@ function FLIGHTGROUP:_AllSimilarStatus(status)
   end
 
   -- Debug info.
-  self:T2(self.lid..string.format("All %d elements have similar status %s ==> returning TRUE", #self.elements, status))
+  self:T3(self.lid..string.format("All %d elements have similar status %s ==> returning TRUE", #self.elements, status))
   
   return true
 end
@@ -4860,7 +4855,6 @@ function FLIGHTGROUP:_GetPlayerUnitAndName(_unitName)
       local playername=DCSunit:getPlayerName()
       local unit=UNIT:Find(DCSunit)
     
-      self:T2({DCSunit=DCSunit, unit=unit, playername=playername})
       if DCSunit and unit and playername then
         return unit, playername
       end
@@ -4972,7 +4966,6 @@ function FLIGHTGROUP:GetParking(airbase)
   local function _overlap(l1,l2,dist)
     local safedist=(l1/2+l2/2)*1.05  -- 5% safety margine added to safe distance!
     local safe = (dist > safedist)
-    self:T3(string.format("l1=%.1f l2=%.1f s=%.1f d=%.1f ==> safe=%s", l1,l2,safedist,dist,tostring(safe)))
     return safe
   end
 

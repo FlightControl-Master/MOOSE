@@ -256,7 +256,7 @@ function AUFTRAG:New(Type)
   self:SetMissionTime()
   
   self.missionRepeated=0
-  self.missionRepeatMax=1
+  self.missionRepeatMax=0
   
   -- FMS start state is PLANNED.
   self:SetStartState(self.status)
@@ -780,10 +780,6 @@ function AUFTRAG:onafterStatus(From, Event, To)
     self:Cancel()
   end
   
-  if self:IsNotOver() and #self.assets==0 then
-    self:Cancel()
-  end
-  
   -- Check if ALL flights are done with their mission.
   if self:IsNotOver() and self:CheckFlightsDone() then
     self:Done()
@@ -804,12 +800,9 @@ function AUFTRAG:onafterStatus(From, Event, To)
     self:E(self.lid..string.format("ERROR: FSM state %s != %s mission status!", fsmstate, self.status))
   end
 
-  -- Check if mission is OVER.
+  -- Check if mission is OVER (done or cancelled).
   if self:IsOver() then
-    -- TODO: evaluate mission result. self.Ntargets>0 and Ntargets=?
-    -- TODO: if failed, repeat mission, i.e. set status to PLANNED? if success, stop and remove from ALL queues.
-    --self:Stop()
-    
+    -- Evaluate success or failure of the mission.
     self:Evaluate()
   else
     self:__Status(-30)
@@ -1039,18 +1032,32 @@ function AUFTRAG:onafterAssetDead(From, Event, To, Asset)
   
     if self:IsNotOver() then
     
-      -- Mission failed.
-      self:Failed()
+      -- Cancel mission. Wait for next update to evaluate SUCCESS or FAILURE.
+      self:Cancel()
       
     else
-    
-      self:Stop()
+      
+      self:E(self.lid.."ERROR: All assets are dead not but mission was already over... Investigate!")
       
     end
   end
 
 end
 
+--- On after "Success" event.
+-- @param #AUFTRAG self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function AUFTRAG:onafterSuccess(From, Event, To)
+
+  self.status=AUFTRAG.Status.SUCCESS
+  self:I(self.lid..string.format("New mission status=%s", self.status))
+  
+  -- Stop mission.
+  self:Stop()
+
+end
 
 --- On after "Cancel" event. Cancells the mission.
 -- @param #AUFTRAG self
@@ -1109,6 +1116,9 @@ end
 -- @param #string To To state.
 function AUFTRAG:onafterRepeat(From, Event, To)
 
+  self.status=AUFTRAG.Status.PLANNED
+  self:I(self.lid..string.format("New mission status=%s (on Repeat)", self.status))  
+
   -- Increase repeat counter.
   self.missionRepeated=self.missionRepeated+1
   
@@ -1117,21 +1127,16 @@ function AUFTRAG:onafterRepeat(From, Event, To)
   elseif self.airwing then
   
   
+  else
+  
   end
+  
+  -- No mission assets.
+  self.assets={}  
 
 end
 
---- On after "Success" event.
--- @param #AUFTRAG self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function AUFTRAG:onafterSuccess(From, Event, To)
 
-  self.status=AUFTRAG.Status.SUCCESS
-  self:I(self.lid..string.format("New mission status=%s", self.status))
-
-end
 
 --- On after "Stop" event. Remove mission from AIRWING and FLIGHTGROUP mission queues.
 -- @param #AUFTRAG self
@@ -1139,6 +1144,9 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function AUFTRAG:onafterStop(From, Event, To)
+
+  self.status="Stopped"
+  self:I(self.lid..string.format("New mission status=%s. Removing missions from queues. Stopping CallScheduler!", self.status))  
 
   -- TODO: remove missions from queues in WINGCOMMANDER, AIRWING and FLIGHGROUPS!
   

@@ -493,7 +493,7 @@ function AIRWING:onafterStatus(From, Event, To)
   local fsmstate=self:GetState()
   
   -- Check CAP missions.
-  self:CheckCAP()
+  --self:CheckCAP()
   
   --self:CheckTANKER()
   
@@ -934,7 +934,7 @@ end
 function AIRWING:onafterAssetDead(From, Event, To, asset, request)
 
   -- Call parent warehouse function first.
-  self:GetParent(self).onafterAssetDead(From, Event, To, asset, request)
+  self:GetParent(self).onafterAssetDead(self, From, Event, To, asset, request)
 
   -- Add group to the detection set of the WINGCOMMANDER.
   if self.wingcommander then
