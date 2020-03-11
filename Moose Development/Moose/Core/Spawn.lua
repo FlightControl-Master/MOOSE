@@ -409,7 +409,11 @@ end
 function SPAWN:NewFromTemplate( SpawnTemplate, SpawnTemplatePrefix, SpawnAliasPrefix )
   local self = BASE:Inherit( self, BASE:New() )
   self:F( { SpawnTemplate, SpawnTemplatePrefix, SpawnAliasPrefix } )
-  
+  if SpawnAliasPrefix == nil or SpawnAliasPrefix == "" then
+    BASE:I("ERROR: in function NewFromTemplate, required paramter SpawnAliasPrefix is not set")
+    return nil
+  end
+
   if SpawnTemplate then
     self.SpawnTemplate = SpawnTemplate              -- Contains the template structure for a Group Spawn from the Mission Editor. Note that this group must have lateActivation always on!!!
     self.SpawnTemplatePrefix = SpawnTemplatePrefix
