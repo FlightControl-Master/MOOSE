@@ -326,6 +326,7 @@ function SPAWN:New( SpawnTemplatePrefix )
     self.SpawnInitRadio = nil                       -- No radio comms setting.
     self.SpawnInitModex = nil
     self.SpawnInitAirbase = nil
+    self.TweakedTemplate = false                      -- Check if the user is using self made template.
 
 		self.SpawnGroups = {}														-- Array containing the descriptions of each Group to be Spawned.
 	else
@@ -379,7 +380,8 @@ function SPAWN:NewWithAlias( SpawnTemplatePrefix, SpawnAliasPrefix )
     self.SpawnInitRadio = nil                       -- No radio comms setting.
     self.SpawnInitModex = nil
     self.SpawnInitAirbase = nil
-    
+    self.TweakedTemplate = false                      -- Check if the user is using self made template.
+
 		self.SpawnGroups = {}														-- Array containing the descriptions of each Group to be Spawned.
 	else
 		error( "SPAWN:New: There is no group declared in the mission editor with SpawnTemplatePrefix = '" .. SpawnTemplatePrefix .. "'" )
@@ -435,6 +437,7 @@ function SPAWN:NewFromTemplate( SpawnTemplate, SpawnTemplatePrefix, SpawnAliasPr
     self.SpawnInitRadio = nil                       -- No radio comms setting.
     self.SpawnInitModex = nil
     self.SpawnInitAirbase = nil
+    self.TweakedTemplate = true                      -- Check if the user is using self made template.
     
     self.SpawnGroups = {}                           -- Array containing the descriptions of each Group to be Spawned.
   else
@@ -2977,9 +2980,14 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) --R2.2
 --	  self.SpawnTemplate = self:_GetTemplate( SpawnTemplatePrefix )
 --	end
 	
-  local SpawnTemplate = self:_GetTemplate( SpawnTemplatePrefix )
-	--local SpawnTemplate = self.SpawnTemplate
-	SpawnTemplate.name = self:SpawnGroupName( SpawnIndex )
+local SpawnTemplate
+if self.TweakedTemplate ~= nil and self.TweakedTemplate == true then
+  BASE:I("WARNING: You are using a tweaked template.")
+  SpawnTemplate = self.SpawnTemplate
+else
+  SpawnTemplate = self:_GetTemplate( SpawnTemplatePrefix )
+end
+
 	
 	SpawnTemplate.groupId = nil
 	--SpawnTemplate.lateActivation = false
