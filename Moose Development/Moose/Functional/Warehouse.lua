@@ -6288,7 +6288,7 @@ function WAREHOUSE:_UnitDead(deadunit, request)
   end
 
 
-  -- Not sure what this does actually and if it would be better to set it to true.
+  -- Dont trigger a Remove event for the group sets.
   local NoTriggerEvent=true
 
   if request.transporttype==WAREHOUSE.TransportType.SELFPROPELLED then
@@ -6300,7 +6300,7 @@ function WAREHOUSE:_UnitDead(deadunit, request)
     -- Remove dead group from cargo group set.
     if groupdead==true then
       request.cargogroupset:Remove(groupname, NoTriggerEvent)
-      self:T(self.lid..string.format("Removed selfpropelled cargo %s: ncargo=%d.", groupname, request.cargogroupset:Count()))
+      self:T(self.lid..string.format("Removed selfpropelled cargo %s: ncargo=%d.", groupname, request.cargogroupset:Count()))      
     end
 
   else
@@ -7666,28 +7666,12 @@ end
 -- @return #string Name of the object without trailing #...
 function WAREHOUSE:_GetNameWithOut(group)
 
-  if group then
-    local name
-    if type(group)=="string" then
-      name=group
-    else
-      name=group:GetName()
-    end
-    
-    local namewithout=UTILS.Split(name, "#CARGO")[1]
-    
-    if namewithout then
-      return namewithout
-    else
-      return name
-    end
-  end
+  local groupname=type(group)=="string" and group or group:GetName()
   
-  
-  if type(group)=="string" then
-    return group
+  if groupname:find("CARGO") then
+    return UTILS.Split(groupname, "#CARGO")[1]
   else
-    return group:GetName()
+    return groupname
   end
   
 end

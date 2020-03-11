@@ -349,7 +349,7 @@ FLIGHTGROUP.ROT={
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="0.3.4"
+FLIGHTGROUP.version="0.3.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -662,16 +662,16 @@ function FLIGHTGROUP:AddTaskEnrouteEngageTargetsInZone(ZoneRadius, TargetTypes, 
 end
 
 
---- Remove task.
+--- Remove task from task queue.
 -- @param #FLIGHTGROUP self
--- @param #number taskid ID of the task to remove.
+-- @param #FLIGHTGROUP.Task Task The task to be removed from the queue.
 -- @return #boolean True if task could be removed.
-function FLIGHTGROUP:RemoveTask(taskid)
+function FLIGHTGROUP:RemoveTask(Task)
 
   for i=#self.taskqueue,1,-1 do
     local task=self.taskqueue[i] --#FLIGHTGROUP.Task
   
-    if task.id==taskid then
+    if task.id==Task.id then
     
       -- Remove task from queue.
       table.remove(self.taskqueue, i)
@@ -724,8 +724,15 @@ function FLIGHTGROUP:RemoveMission(Mission)
     local mission=_mission --Ops.Auftrag#AUFTRAG
     
     if mission.auftragsnummer==Mission.auftragsnummer then
+    
+      -- Remove mission waypoint task.
+      local Task=Mission:GetFlightWaypointTask(self)
+      self:RemoveTask(Task)
+      
+      -- Remove mission from queue.
       table.remove(self.missionqueue, i)
-      break
+      
+      return self
     end
     
   end
@@ -3305,7 +3312,6 @@ end
 function FLIGHTGROUP:onafterMissionCancel(From, Event, To, Mission)
 
   -- Set missin flight status.
-  env.info("FF setting mission to cancelled")
   Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.CANCELLED)
 
   if self.currentmission and Mission.auftragsnummer==self.currentmission then
@@ -3343,6 +3349,8 @@ end
 -- @param #string To To state.
 -- @param Ops.Auftrag#AUFTRAG Mission
 function FLIGHTGROUP:onafterMissionDone(From, Event, To, Mission)
+
+  self:I(self.lid..string.format("Mission %s DONE!", Mission.name))
   
   -- Set Flight status.
   Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.DONE)

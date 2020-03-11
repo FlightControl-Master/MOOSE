@@ -209,7 +209,7 @@ AUFTRAG.FlightStatus={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="0.0.5"
+AUFTRAG.version="0.0.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -688,6 +688,16 @@ function AUFTRAG:AddFlightGroup(FlightGroup)
 
 end
 
+--- Remove a flight group to the mission.
+-- @param #AUFTRAG self
+-- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup The FLIGHTGROUP object.
+function AUFTRAG:DelFlightGroup(FlightGroup)
+  self:I(self.lid..string.format("Removing flight group %s", FlightGroup.groupname))
+
+  self.flightdata[FlightGroup.groupname]=nil
+
+end
+
 --- Check if mission is PLANNED.
 -- @param #AUFTRAG self
 -- @return #boolean If true, mission is in the planning state.
@@ -793,7 +803,7 @@ function AUFTRAG:onafterStatus(From, Event, To)
   local Cstop=self.Tstop and UTILS.SecondsToClock(self.Tstop, true) or "INF"
 
   -- Info message.
-  self:I(self.lid..string.format("Status \"%s\": T=%s-%s flights=%d, targets=%d", self.status, Cstart, Cstop, Nflights, Ntargets))
+  self:I(self.lid..string.format("Status \"%s\": T=%s-%s assets=%d, flights=%d, targets=%d", self.status, Cstart, Cstop, #self.assets, Nflights, Ntargets))
 
   -- Check for error.  
   if fsmstate~=self.status then
@@ -809,19 +819,33 @@ function AUFTRAG:onafterStatus(From, Event, To)
   end
 end
 
---- Set flightgroup mission status.
+--- Evaluate mission outcome - success or failure.
 -- @param #AUFTRAG self
--- @return #string status New status.
+-- @return #AUFTRAG self
 function AUFTRAG:Evaluate()
 
+  -- Assume success and check if any failed condition applies.
+  local failed=false
+
+  -- Current number of mission targets.
   local Ntargets=self:CountMissionTargets()
   
-  if self.Ntargets>Ntargets then
+  -- Number of current targets is still >0 ==> Not everything was destroyed.
+  if self.Ntargets>0 and Ntargets>0 then
+    failed=true
+  end
+  
+  --TODO: all assets dead? Is this a FAILED criterion even if all targets have been destroyed? What if there are no initial targets (e.g. when ORBIT, PATROL, RECON missions).
+  
+  self:I(self.lid..string.format("Evaluating mission: Initial Targets=%d, current targets=%d ==> success=%s", self.Ntargets, Ntargets, tostring(not failed)))
+  
+  if failed then
     self:Failed()
   else
     self:Success()
   end
 
+  return self
 end
 
 
@@ -836,10 +860,15 @@ function AUFTRAG:SetFlightStatus(flightgroup, status)
   else
     self.flightdata[flightgroup.groupname].status=status
   end
+  
+  self:I(self.lid..string.format("Setting flight %s status to %s. IsNotOver=%s  CheckFlightsDone=%s", flightgroup.groupname, self:GetFlightStatus(flightgroup), tostring(self:IsNotOver()), tostring(self:CheckFlightsDone())))
 
   -- Check if ALL flights are done with their mission.
   if self:IsNotOver() and self:CheckFlightsDone() then
+    self:I(self.lid.."All flight done ==> mission DONE!")
     self:Done()
+  else
+    self:I(self.lid.."Mission NOT DONE yet!")
   end  
   
 end
@@ -896,18 +925,19 @@ function AUFTRAG:CheckFlightsDone()
     return false
   end
   
-  -- Assume we are done.
-  local done=true
   
+  -- Check status of all flight groups.
   for groupname,data in pairs(self.flightdata) do
     local flightdata=data --#AUFTRAG.FlightData
-    if flightdata.status~=AUFTRAG.FlightStatus.DONE and flightdata.status~=AUFTRAG.FlightStatus.CANCELLED then
-      -- At least one flight group is not DONE or CANCELLED yet!
-      done=false
+    if flightdata.status==AUFTRAG.FlightStatus.DONE or flightdata.status==AUFTRAG.FlightStatus.CANCELLED then
+      -- This one is done or cancelled.
+    else
+      -- At least this flight is not DONE or CANCELLED.
+      return false      
     end
   end
 
-  return done
+  return true
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1021,18 +1051,21 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Ops.AirWing#AIRWING.SquadronAsset
+-- @param Ops.AirWing#AIRWING.SquadronAsset Asset The asset.
 function AUFTRAG:onafterAssetDead(From, Event, To, Asset)
   
   -- Delete asset from mission.
   self:DelAsset(Asset)
+  
+  -- Remove flightgroup from mission.
+  self:DelFlightGroup(Asset.flightgroup)
   
   -- All assets dead?
   if #self.assets==0 then
   
     if self:IsNotOver() then
     
-      -- Cancel mission. Wait for next update to evaluate SUCCESS or FAILURE.
+      -- Cancel mission. Wait for next mission update to evaluate SUCCESS or FAILURE.
       self:Cancel()
       
     else
@@ -1040,6 +1073,10 @@ function AUFTRAG:onafterAssetDead(From, Event, To, Asset)
       self:E(self.lid.."ERROR: All assets are dead not but mission was already over... Investigate!")
       
     end
+  end
+  
+  if self.airwing then
+    self.airwing:RemoveAssetFromSquadron(Asset)
   end
 
 end
@@ -1097,11 +1134,13 @@ function AUFTRAG:onafterFailed(From, Event, To)
   
   if self.missionRepeated>=self.missionRepeatMax then
   
+    self:I(self.lid..string.format("Mission failed! Number of max repeats reached %d>=%d ==> Stopping mission!", self.missionRepeated, self.missionRepeatMax))
     self:Stop()
     
   else
         
     -- Repeat mission.
+    self:I(self.lid..string.format("Mission failed! Repeating mission for the %d. time (max=%d) ==> Repeat mission!", self.missionRepeated+1, self.missionRepeatMax))
     self:Repeat()
     
   end  
@@ -1132,7 +1171,13 @@ function AUFTRAG:onafterRepeat(From, Event, To)
   end
   
   -- No mission assets.
-  self.assets={}  
+  self.assets={}
+  
+  -- No flight data.
+  self.flightdata={}
+  
+  -- Call status again.
+  self:__Status(-30)
 
 end
 
@@ -1145,11 +1190,9 @@ end
 -- @param #string To To state.
 function AUFTRAG:onafterStop(From, Event, To)
 
-  self.status="Stopped"
-  self:I(self.lid..string.format("New mission status=%s. Removing missions from queues. Stopping CallScheduler!", self.status))  
+  self:I(self.lid..string.format("STOPPED mission in status=%s. Removing missions from queues. Stopping CallScheduler!", self.status))
 
-  -- TODO: remove missions from queues in WINGCOMMANDER, AIRWING and FLIGHGROUPS!
-  
+  -- TODO: remove missions from queues in WINGCOMMANDER, AIRWING and FLIGHGROUPS!  
   -- TODO: Mission should be OVER! we dont want to remove running missions from any queues.
   
   if self.wingcommander then
@@ -1165,7 +1208,15 @@ function AUFTRAG:onafterStop(From, Event, To)
     flightdata.flightgroup:RemoveMission(self)
   end
 
+  -- No mission assets.
+  self.assets={}
+  
+  -- No flight data.
+  self.flightdata={}
+
+  -- Clear pending scheduler calls.
   self.CallScheduler:Clear()
+  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1195,6 +1246,7 @@ function AUFTRAG:DelAsset(Asset)
     local asset=_asset --Ops.AirWing#AIRWING.SquadronAsset
     
     if asset.uid==Asset.uid then
+      self:I(self.lid..string.format("Removing asset \"%s\" from mission", tostring(asset.spawngroupname)))
       table.remove(self.assets, i)
       return self
     end

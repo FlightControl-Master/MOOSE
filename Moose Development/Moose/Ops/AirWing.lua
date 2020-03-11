@@ -88,7 +88,7 @@ AIRWING = {
 
 --- AIRWING class version.
 -- @field #string version
-AIRWING.version="0.1.4"
+AIRWING.version="0.1.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -349,6 +349,30 @@ function AIRWING:GetSquadron(SquadronName)
   return self.squadrons[SquadronName]
 end
 
+--- Get squadron of an asset.
+-- @param #AIRWING self
+-- @param #AIRWING.SquadronAsset Asset
+-- @return #AIRWING.Squadron Squadron table.
+function AIRWING:GetSquadronOfAsset(Asset)
+  return self:GetSquadron(Asset.assignment)
+end
+
+--- Remove asset from squadron.
+-- @param #AIRWING self
+-- @param #AIRWING.SquadronAsset Asset
+-- @return #AIRWING.Squadron Squadron table.
+function AIRWING:RemoveAssetFromSquadron(Asset)
+  local squad=self:GetSquadronOfAsset(Asset)
+  if squad then
+    for i,_asset in pairs(squad.assets) do
+      local asset=_asset --#AIRWING.SquadronAsset
+      if asset.uid==Asset.uid then
+        table.remove(squad.assets, i)
+        return
+      end
+    end
+  end
+end
 
 --- Add mission to queue.
 -- @param #AIRWING self
@@ -1311,6 +1335,28 @@ function AIRWING:GetMissionByID(mid)
   end
   
   return nil
+end
+
+--- Returns the mission for a given request ID.
+-- @param #AIRWING self
+-- @param #number RequestID Unique ID of the request.
+-- @return Ops.Auftrag#AUFTRAG Mission table or *nil*.
+function AIRWING:GetMissionFromRequestID(RequestID)
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+    if mission.requestID and mission.requestID==RequestID then
+      return mission
+    end
+  end
+  return nil
+end
+
+--- Returns the mission for a given request.
+-- @param #AIRWING self
+-- @param Functional.Warehouse#WAREHOUSE.Queueitem Request The warehouse request.
+-- @return Ops.Auftrag#AUFTRAG Mission table or *nil*.
+function AIRWING:GetMissionFromRequest(Request)
+  return self:GetMissionFromRequestID(Request.uid)
 end
 
 
