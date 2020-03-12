@@ -440,7 +440,7 @@ function FLIGHTGROUP:New(groupname, autostart)
 
   self:AddTransition("*",             "PassingWaypoint",   "*")           -- Group passed a waypoint.
   self:AddTransition("*",             "GotoWaypoint",      "*")           -- Group switches to a specific waypoint.
-  self:AddTransition("*",             "Wait",              "Waiting")     -- Group is orbiting.  
+  self:AddTransition("*",             "Wait",              "Waiting")     -- Group is orbiting.
   
   self:AddTransition("*",             "FuelLow",           "*")          -- Fuel state of group is low. Default ~25%.
   self:AddTransition("*",             "FuelCritical",      "*")          -- Fuel state of group is critical. Default ~10%.
@@ -930,6 +930,13 @@ end
 -- @return #boolean If true, flight is airborne.
 function FLIGHTGROUP:IsAirborne()
   return self:Is("Airborne")
+end
+
+--- Check if flight is waiting after passing final waypoint.
+-- @param #FLIGHTGROUP self
+-- @return #boolean If true, flight is waiting.
+function FLIGHTGROUP:IsWaiting()
+  return self:Is("Waiting")
 end
 
 --- Check if flight is landing.
@@ -1473,7 +1480,7 @@ function FLIGHTGROUP:onafterQueueUpdate(From, Event, To)
         -- Current mission but new mission is urgent with higher prio.
         if mission.urgent and mission.prio<currentmission.prio then
           self:MissionCancel(currentmission)
-          self:MissionStart(mission)
+          self:__MissionStart(1, mission)
         end
         
       else
@@ -2223,7 +2230,7 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
   -- Is transition allowed? We assume yes until proven otherwise.
   local allowed=true
 
-  if self.group and self.group:IsAlive() and self:IsAirborne() then
+  if self.group and self.group:IsAlive() and (self:IsAirborne() or self:IsWaiting()) then
     -- Alive & Airborne ==> Update route possible.
     self:T3(self.lid.."Update route possible. Group is ALIVE and AIRBORNE")
   elseif self:IsDead() then
@@ -2249,7 +2256,7 @@ function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n)
   
   local N=n or self.currentwp+1
   if not N or N<1 then
-    self:T3(self.lid.."FF update route denied because N=nil or N<1")
+    self:E(self.lid.."FF update route denied because N=nil or N<1")
     self:__UpdateRoute(-1, n)
     allowed=false    
   end
@@ -2278,11 +2285,6 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
 
   -- TODO: what happens if currentwp=#waypoints
   n=n or self.currentwp+1
-
-  -- Debug info.
-  local text=string.format("Updating route n=%d for group %s", n, self.groupname)
-  MESSAGE:New(text, 10):ToAllIf(false)
-  self:I(self.lid..text)
   
   -- Update waypoint tasks, i.e. inject WP tasks into waypoint table.
   self:_UpdateWaypointTasks()
@@ -2324,7 +2326,7 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n)
   -- Debug info.
   local hb=self.homebase and self.homebase:GetName() or "unknown"
   local db=self.destbase and self.destbase:GetName() or "unknown"
-  self:I(self.lid..string.format("Updating route for WP>=%d/%d (%d) homebase=%s destination=%s", n, #wp, #self.waypoints, hb, db))
+  self:I(self.lid..string.format("Updating route for WP #%d-%d  homebase=%s destination=%s", n, #wp, hb, db))
 
   
   if #wp>1 then
@@ -2479,7 +2481,7 @@ function FLIGHTGROUP:_CheckFlightDone(delay)
             self:__Wait(-1)              
         end
       else
-        self:I(self.lid..string.format("Passed Final WP but still have current Tasks or Missions left to do"))
+        self:I(self.lid..string.format("Passed Final WP but still have current Tasks (%s) or Missions (%s) left to do", tostring(self.taskcurrent), tostring(self.currentmission)))
       end  
     else
       self:I(self.lid.."Did NOT pass the final waypoint yet")
@@ -2537,26 +2539,31 @@ function FLIGHTGROUP:onbeforeRTB(From, Event, To, airbase, SpeedTo, SpeedHold)
     self:E(self.lid.."ERROR: Wrong airbase coalition in RTB() call! We allow only same as group or neutral airbases.")
     allowed=false
   end
-
-  -- Check if there are remaining tasks.
-  local Ntot,Nsched, Nwp=self:CountRemainingTasks()
-
-  if self.taskcurrent>0 then
-    self:I(self.lid..string.format("WARNING: Got current task ==> RTB event is suspended for 10 sec."))
-    Tsuspend=-10
-    allowed=false
-  end
   
-  if Nsched>0 then
-    self:I(self.lid..string.format("WARNING: Still got %d SCHEDULED tasks in the queue ==> RTB event is suspended for 10 sec.", Nsched))
-    Tsuspend=-10
-    allowed=false
-  end
+  -- Only if fuel is not low or critical.
+  if not (self:IsFuelLow() or self:IsFuelCritical()) then
 
-  if Nwp>0 then
-    self:I(self.lid..string.format("WARNING: Still got %d WAYPOINT tasks in the queue ==> RTB event is suspended for 10 sec.", Nwp))
-    Tsuspend=-10
-    allowed=false
+    -- Check if there are remaining tasks.
+    local Ntot,Nsched, Nwp=self:CountRemainingTasks()
+  
+    if self.taskcurrent>0 then
+      self:I(self.lid..string.format("WARNING: Got current task ==> RTB event is suspended for 10 sec."))
+      Tsuspend=-10
+      allowed=false
+    end
+    
+    if Nsched>0 then
+      self:I(self.lid..string.format("WARNING: Still got %d SCHEDULED tasks in the queue ==> RTB event is suspended for 10 sec.", Nsched))
+      Tsuspend=-10
+      allowed=false
+    end
+  
+    if Nwp>0 then
+      self:I(self.lid..string.format("WARNING: Still got %d WAYPOINT tasks in the queue ==> RTB event is suspended for 10 sec.", Nwp))
+      Tsuspend=-10
+      allowed=false
+    end
+    
   end
   
   if Tsuspend and not allowed then
@@ -3211,8 +3218,10 @@ function FLIGHTGROUP:onafterTaskDone(From, Event, To, Task)
   
   
   if Mission then
+    env.info("FF Task Done ==> Mission Done!")
     self:MissionDone(Mission)
   else
+    env.info("FF Task Done but NO mission found ==> _CheckFlightDone in 1 sec")
     self:_CheckFlightDone(1)
   end
   
@@ -3267,6 +3276,7 @@ end
 function FLIGHTGROUP:onafterMissionStart(From, Event, To, Mission)
 
   local text=string.format("Starting Mission %s", tostring(Mission.name))
+  self:I(self.lid..text)
   MESSAGE:New(text, 120, "DEBUG"):ToAllIf(true)
 
   -- Set current mission.
@@ -3311,9 +3321,6 @@ end
 -- @param Ops.Auftrag#AUFTRAG Mission The mission to be cancelled.
 function FLIGHTGROUP:onafterMissionCancel(From, Event, To, Mission)
 
-  -- Set missin flight status.
-  Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.CANCELLED)
-
   if self.currentmission and Mission.auftragsnummer==self.currentmission then
     
     -- Get mission waypoint task.
@@ -3328,15 +3335,18 @@ function FLIGHTGROUP:onafterMissionCancel(From, Event, To, Mission)
     self:TaskCancel(Task)
     
     -- Set current mission to nil.
-    self.currentmission=nil
+    --self.currentmission=nil
     
   else
   
     -- Not the current mission.
     -- TODO: remove mission from queue?
+ 
+    -- Set mission flight status.
+    Mission:SetFlightStatus(self, AUFTRAG.FlightStatus.CANCELLED) 
     
     -- Send flight RTB or WAIT if nothing left to do.
-    self:_CheckFlightDone()
+    self:_CheckFlightDone(1)
     
   end
   
@@ -3417,7 +3427,7 @@ function FLIGHTGROUP._TaskExecute(group, flightgroup, task)
 
   -- Debug message.
   local text=string.format("_TaskExecute %s", task.description)
-  flightgroup:I(flightgroup.lid..text)
+  flightgroup:T3(flightgroup.lid..text)
 
   -- Set current task to nil so that the next in line can be executed.
   if flightgroup then
@@ -3433,7 +3443,7 @@ function FLIGHTGROUP._TaskDone(group, flightgroup, task)
 
   -- Debug message.
   local text=string.format("_TaskDone %s", task.description)
-  flightgroup:I(flightgroup.lid..text)
+  flightgroup:T3(flightgroup.lid..text)
 
   -- Set current task to nil so that the next in line can be executed.
   if flightgroup then

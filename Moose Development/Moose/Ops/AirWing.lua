@@ -78,13 +78,13 @@ AIRWING = {
 -- @field #number navail Number of available payloads of this type.
 -- @field #boolean unlimited If true, this payload is unlimited and does not get consumed.
 
---- CAP data.
+--- Patrol data.
 -- @type AIRWING.PatrolData
--- @field Core.Point#COORDINATE coord CAP coordinate.
--- @field #number heading heading
--- @field #number leg Leg.
--- @field #number speed Speed.
--- @field #boolean occupied Is currently occupied.
+-- @field Core.Point#COORDINATE coord Patrol coordinate.
+-- @field #number heading Heading in degrees.
+-- @field #number leg Leg length in NM.
+-- @field #number speed Speed in knots.
+-- @field #number noccupied Number of flights on this patrol point.
 
 --- AIRWING class version.
 -- @field #string version
@@ -132,6 +132,11 @@ function AIRWING:New(warehousename, airwingname)
   --                 From State  -->   Event      -->     To State
   self:AddTransition("*",             "MissionRequest",   "*")           -- Add a (mission) request to the warehouse.
   self:AddTransition("*",             "MissionCancel",    "*")           -- Cancel mission.
+
+  -- Defaults:
+  self.nflightsCAP=0
+  self.nflightsAWACS=0
+  self.nflightsTANKER=0
 
   ------------------------
   --- Pseudo Functions ---
@@ -331,11 +336,11 @@ function AIRWING:AddAssetToSquadron(SquadronName, Group, Ngroups)
       self:AddAsset(Group, Ngroups, nil, nil, nil, nil, squadron.skill, squadron.livery, squadron.name)
       
     else
-      self:E("ERROR: Group does not exist!")
+      self:E(self.lid.."ERROR: Group does not exist!")
     end
     
   else
-    self:E("ERROR: Squadron does not exit!")
+    self:E(self.lid.."ERROR: Squadron does not exit!")
   end
 
   return self
@@ -457,6 +462,7 @@ function AIRWING:NewPatrolPoint(Coordinate, Heading, LegLength, Altitude, Speed)
   cappoint.leg=LegLength or 15
   cappoint.altitude=Altitude
   cappoint.speed=Speed or 350
+  cappoint.noccupied=0
 
   return cappoint
 end
@@ -517,7 +523,7 @@ function AIRWING:onafterStatus(From, Event, To)
   local fsmstate=self:GetState()
   
   -- Check CAP missions.
-  --self:CheckCAP()
+  self:CheckCAP()
   
   --self:CheckTANKER()
   
@@ -590,11 +596,12 @@ end
 -- @return #AIRWING.PatrolData
 function AIRWING:_GetPatrolData(PatrolPoints)
 
+  -- Sort wrt lowest number of flights on this point.
   local function sort(a,b)
-    return a.noccuied<b.noccuied
+    return a.noccupied<b.noccupied
   end
 
-  if PatrolPoints then
+  if PatrolPoints and #PatrolPoints>0 then
   
     -- Sort data wrt number of flights at that point.
     table.sort(PatrolPoints, sort)
@@ -602,30 +609,32 @@ function AIRWING:_GetPatrolData(PatrolPoints)
 
   else
   
-    local point={} --#AIRWING.PatrolData
+
+    local Coordinate=self:GetCoordinate()
+    local Heading=math.random(360)
+    local LegLength=math.random(10, 15)
+    local Altitude=math.random(10,15)*1000
+    local Speed=math.random(250, 350)
     
-    point.coord=self:GetCoordinate()
-    point.speed=math.random(250, 350)
-    point.heading=math.random(360)
-    point.occupied=false
-  
+    return self:NewPatrolPoint(Coordinate,Heading,LegLength,Altitude,Speed)
+      
   end
 
 
 end
 
---- Get next mission.
+--- Check how many CAP missions are assigned and add number of missing missions.
 -- @param #AIRWING self
--- @return Ops.Auftrag#AUFTRAG Next mission or *nil*.
+-- @return #AIRWING self
 function AIRWING:CheckCAP()
 
-  local Ncap=self:CountAssetsOnMission(AUFTRAG.Type.PATROL)
+  local Ncap=self:CountMissionsInQueue({AUFTRAG.Type.PATROL, AUFTRAG.Type.INTERCEPT})
   
   for i=1,self.nflightsCAP-Ncap do
   
     local patrol=self:_GetPatrolData(self.cappoints)
     
-    local missionCAP=AUFTRAG:NewPATROL(patrol.coord, patrol.speed, patrol.heading, patrol.leg)
+    local missionCAP=AUFTRAG:NewPATROL(patrol.coord, patrol.speed, patrol.heading, patrol.leg, patrol.altitude)
     
     missionCAP.patroldata=patrol
     
@@ -633,6 +642,7 @@ function AIRWING:CheckCAP()
       
   end
   
+  return self
 end
 
 
@@ -788,8 +798,10 @@ function AIRWING:onafterMissionRequest(From, Event, To, Mission)
     if asset.spawned then
     
       if asset.flightgroup then
-        --TODO: cancel current mission if there is any!
+
+        -- Add new mission.
         asset.flightgroup:AddMission(Mission)
+        
       else
         self:E(self.lid.."ERROR: flight group for asset does NOT exist!")
       end    
@@ -889,19 +901,6 @@ function AIRWING:onafterNewAsset(From, Event, To, asset, assignment)
     
       self:I(self.lid..string.format("Asset %s from squadron %s returned! asset.assignment=\"%s\", assignment=\"%s\"", asset.spawngroupname, squad.name, tostring(asset.assignment), tostring(assignment)))
       self:ReturnPayloadFromAsset(asset)
-      
-      -- Mission might already be removed from the queue!
-      --[[
-      local mission=self:GetMissionByID(assignment)
-      
-      if mission then
-        local text=string.format("Asset %s returned from %s mission %s", asset.spawngroupname, mission.type, mission.name)
-        self:I(self.lid..text)
-        self:ReturnPayloadFromAsset(asset)
-      else
-        self:E(self.lid..string.format("ERROR: asset %s from squadron %s returned but could not find its mission! asset.assignment=\"%s\", assignment=\"%s\"", asset.spawngroupname, squad.name, tostring(asset.assignment), tostring(assignment)))
-      end
-      ]]
     
     end
         
@@ -926,7 +925,13 @@ function AIRWING:onafterAssetSpawned(From, Event, To, group, asset, request)
   self:GetParent(self).onafterAssetSpawned(self, From, Event, To, group, asset, request)
 
   -- Create a flight group.
-  asset.flightgroup=self:_CreateFlightGroup(asset)
+  local flightgroup=self:_CreateFlightGroup(asset)
+  
+  -- Set RTB on fuel critical.
+  flightgroup:SetFuelCriticalThreshold(nil, true)
+  
+  -- Set asset flightgroup.
+  asset.flightgroup=flightgroup
   
   -- Not requested any more.
   asset.requested=nil
@@ -936,6 +941,11 @@ function AIRWING:onafterAssetSpawned(From, Event, To, group, asset, request)
 
   -- Add mission to flightgroup queue.
   if mission then
+  
+    -- RTB on low fuel if on PATROL.
+    if mission.type==AUFTRAG.Type.PATROL then
+      flightgroup:SetFuelLowThreshold(nil, true)    
+    end
       
     -- Add mission to flightgroup queue.
     asset.flightgroup:AddMission(mission)
@@ -1103,13 +1113,13 @@ function AIRWING:SquadronCanMission(Squadron, MissionType, Nassets)
         -- This asset is already on a mission
         ---
 
-        --TODO: This only checks if it has an ORBIT mission. It could have others as well!
+        -- Check if this asset is currently on a PATROL mission (STARTED or EXECUTING).
         if self:IsAssetOnMission(asset, AUFTRAG.Type.PATROL) and MissionType~=AUFTRAG.Type.PATROL then
 
           -- Check if the payload of this asset is compatible with the mission.
           if self:CheckMissionType(MissionType, asset.payload.missiontypes) then
             -- TODO: Check if asset actually has weapons left. Difficult!
-            --table.insert(assets, asset)
+            table.insert(assets, asset)
           end
           
         end      
@@ -1121,10 +1131,22 @@ function AIRWING:SquadronCanMission(Squadron, MissionType, Nassets)
         ---
 
         if asset.spawned then
-          -- This asset is already spawned. Let's check if it has the right payload.
-          if self:CheckMissionType(MissionType, asset.payload.missiontypes) then
-            --table.insert(assets, asset)
+        
+          local combatready=false
+          local flightgroup=asset.flightgroup
+          if flightgroup then
+          
+            if (flightgroup:IsAirborne() or flightgroup:IsWaiting()) and not flightgroup:IsFuelLow() then
+              combatready=true
+            end
+          
           end
+        
+          -- This asset is "combatready". Let's check if it has the right payload.
+          if combatready and self:CheckMissionType(MissionType, asset.payload.missiontypes) then
+            table.insert(assets, asset)
+          end
+          
         else
         
           if not asset.requested then
@@ -1153,7 +1175,7 @@ function AIRWING:SquadronCanMission(Squadron, MissionType, Nassets)
   return cando, assets
 end
 
---- Check if an asset is currently on a mission or has one in the queue.
+--- Check if an asset is currently on a mission (STARTED or EXECUTING).
 -- @param #AIRWING self
 -- @param #AIRWING.SquadronAsset asset The asset.
 -- @param #table MissionTypes Types on mission to be checked. Default all.
@@ -1177,8 +1199,8 @@ function AIRWING:IsAssetOnMission(asset, MissionTypes)
       
       local status=mission:GetFlightStatus(asset.flightgroup)
       
-      -- Only if mission is not already over.
-      if status~=AUFTRAG.FlightStatus.DONE and status~=AUFTRAG.FlightStatus.CANCELLED and self:CheckMissionType(mission.type, MissionTypes) then
+      -- Only if mission is started or executing.
+      if (status==AUFTRAG.FlightStatus.STARTED or status==AUFTRAG.FlightStatus.EXECUTING) and self:CheckMissionType(mission.type, MissionTypes) then
         return true
       end
       
@@ -1187,6 +1209,7 @@ function AIRWING:IsAssetOnMission(asset, MissionTypes)
   end
   
   -- Alternative: run over all missions and compare to mission assets.
+  --[[
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
     
@@ -1202,7 +1225,8 @@ function AIRWING:IsAssetOnMission(asset, MissionTypes)
     end
     
   end
-
+  ]]
+  
   return false
 end
 
@@ -1219,6 +1243,27 @@ function AIRWING:GetAssetCurrentMission(asset)
   return nil
 end
 
+--- Count missions in mission queue.
+-- @param #AIRWING self
+-- @param #table MissionTypes Types on mission to be checked. Default *all* possible types `AUFTRAG.Type`.
+-- @return #number Number of missions that are not over yet.
+function AIRWING:CountMissionsInQueue(MissionTypes)
+
+  MissionTypes=MissionTypes or AUFTRAG.Type
+
+  local N=0
+  for _,_mission in pairs(self.missionqueue) do
+    local mission=_mission --Ops.Auftrag#AUFTRAG
+    
+    -- Check if this mission type is requested.
+    if mission:IsNotOver() and self:CheckMissionType(mission.type, MissionTypes) then
+      N=N+1
+    end
+    
+  end
+
+  return N
+end
 
 --- Count assets on mission.
 -- @param #AIRWING self
@@ -1309,6 +1354,10 @@ end
 -- @param #table PossibleTypes A table with possible mission types.
 -- @return #boolean If true, the requested mission type is part of the possible mission types.
 function AIRWING:CheckMissionType(MissionType, PossibleTypes)
+
+  if type(PossibleTypes)=="string" then
+    PossibleTypes={PossibleTypes}
+  end
 
   for _,canmission in pairs(PossibleTypes) do
     if canmission==MissionType then

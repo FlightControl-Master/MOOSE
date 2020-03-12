@@ -867,10 +867,15 @@ end
 
 --- Activates a late activated GROUP.
 -- @param #GROUP self
+-- @param #number delay Delay in seconds, before the group is activated.
 -- @return #GROUP self
-function GROUP:Activate()
+function GROUP:Activate(delay)
   self:F2( { self.GroupName } )
-  trigger.action.activateGroup( self:GetDCSObject() )
+  if delay and delay>0 then
+    self:ScheduleOnce(delay, GROUP.Activate, self)
+  else
+    trigger.action.activateGroup( self:GetDCSObject() )
+  end
   return self
 end
 

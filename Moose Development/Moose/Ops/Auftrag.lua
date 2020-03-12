@@ -258,6 +258,8 @@ function AUFTRAG:New(Type)
   self.missionRepeated=0
   self.missionRepeatMax=0
   
+  self.nassets=1
+  
   -- FMS start state is PLANNED.
   self:SetStartState(self.status)
   
@@ -273,13 +275,13 @@ function AUFTRAG:New(Type)
   self:AddTransition(AUFTRAG.Status.STARTED,   "Executing",     AUFTRAG.Status.EXECUTING)   -- First asset is executing the mission.
   
   self:AddTransition("*",                      "Done",          AUFTRAG.Status.DONE)        -- All assets have reported that mission is done.
-  self:AddTransition("*",                      "Cancel",        AUFTRAG.Status.CANCELLED)   -- Command to cancel the mission.
+  self:AddTransition("*",                      "Cancel",        "*") --AUFTRAG.Status.CANCELLED)   -- Command to cancel the mission.
   
   self:AddTransition("*",                      "Success",       AUFTRAG.Status.SUCCESS)
   self:AddTransition("*",                      "Failed",        AUFTRAG.Status.FAILED)
     
   self:AddTransition("*",                      "Status",        "*")
-  self:AddTransition("*",                      "Stop",          "Stopped")
+  self:AddTransition("*",                      "Stop",          "*")
   
   self:AddTransition("*",                      "Repeat",        AUFTRAG.Status.PLANNED)
   
@@ -322,19 +324,26 @@ end
 
 --- Create an ORBIT mission.
 -- @param #AUFTRAG self
--- @param Core.Point#COORDINATE Coordinate Where to orbit. Altitude is also taken from the coordinate.
--- @param #number Speed Orbit speed in knots. Default 350 kts. 
--- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
+-- @param Core.Point#COORDINATE Coordinate Where to orbit.
+-- @param #number Speed Orbit speed in knots. Default 350 KIAS. 
+-- @param #number Heading Heading of race-track pattern in degrees. Default *random* in [1,360].
 -- @param #number Leg Length of race-track in NM. Default 10 NM.
+-- @param #number Altitude Orbit altitude in feet. Default is y component of `Coordinate`.
 -- @return #AUFTRAG self
-function AUFTRAG:NewORBIT(Coordinate, Speed, Heading, Leg)
+function AUFTRAG:NewORBIT(Coordinate, Speed, Heading, Leg, Altitude)
 
   local auftrag=AUFTRAG:New(AUFTRAG.Type.ORBIT)
   
   auftrag.orbitCoord   = Coordinate
-  auftrag.orbitHeading = Heading or 270
+  auftrag.orbitHeading = Heading or math.random(360)
   auftrag.orbitLeg     = UTILS.NMToMeters(Leg or 10)
-  auftrag.orbitSpeed   = UTILS.KnotsToMps(Speed or 350)  
+  auftrag.orbitSpeed   = UTILS.KnotsToMps(Speed or 350)
+  
+  if Altitude then
+    auftrag.orbitCoord.y=UTILS.FeetToMeters(Altitude)
+  end  
+  
+  auftrag.missionAltitude=auftrag.orbitCoord.y*0.9
 
   auftrag.DCStask=auftrag:GetDCSMissionTask()
 
@@ -352,13 +361,9 @@ end
 function AUFTRAG:NewPATROL(OrbitCoordinate, OrbitSpeed, Heading, Leg, Altitude)
 
   -- Create ORBIT first.
-  local mission=self:NewORBIT(OrbitCoordinate, OrbitSpeed, Heading, Leg)
-  
-  if Altitude then
-    mission.orbitCoord.y=UTILS.FeetToMeters(Altitude)
-  end
-  
-  -- CAP paramters.
+  local mission=self:NewORBIT(OrbitCoordinate, OrbitSpeed, Heading, Leg, Altitude)
+    
+  -- Mission type PATROL.
   mission.type=AUFTRAG.Type.PATROL
   
   return mission
@@ -543,6 +548,10 @@ function AUFTRAG:NewAUTO(EngageGroup)
       end
             
     end
+  end
+  
+  if mission then
+    mission:SetPriority(10, true)
   end
 
   return mission
@@ -780,20 +789,28 @@ function AUFTRAG:onafterStatus(From, Event, To)
   -- Number of alive flights attached to this mission.
   local Nflights=self:CountFlightGroups()
 
-  -- Cancel mission if stop time passed.
-  if self.Tstop and timer.getAbsTime()>self.Tstop+10 then
-    self:Cancel()
+  -- Check if mission is not OVER yet.
+  if self:IsNotOver() then
+
+    if self:CheckFlightsDone() then
+    
+      -- All flights have reported MISSON DONE.
+      self:Done()
+      
+    elseif self.Tstop and timer.getAbsTime()>self.Tstop+10 then
+    
+      -- Cancel mission if stop time passed.
+      self:Cancel()
+      
+    elseif self.Ntargets>0 and Ntargets==0 then
+    
+      -- Cancel mission if all targets were destroyed.
+      self:Cancel()
+      
+    end
+    
   end
 
-  -- Cancel mission if number of targest is 0 (and was >0 before as some missions, e.g. orbit, don't have any target).
-  if self:IsNotOver() and self.Ntargets>0 and Ntargets==0 then
-    self:Cancel()
-  end
-  
-  -- Check if ALL flights are done with their mission.
-  if self:IsNotOver() and self:CheckFlightsDone() then
-    self:Done()
-  end
   
   -- Current FSM state.
   local fsmstate=self:GetState()
@@ -868,7 +885,7 @@ function AUFTRAG:SetFlightStatus(flightgroup, status)
     self:I(self.lid.."All flight done ==> mission DONE!")
     self:Done()
   else
-    self:I(self.lid.."Mission NOT DONE yet!")
+    self:T3(self.lid.."Mission NOT DONE yet!")
   end  
   
 end
@@ -877,7 +894,11 @@ end
 -- @param #AUFTRAG self
 -- @param Ops.FlightGroup#FLIGHTGROUP flightgroup The flight group.
 function AUFTRAG:GetFlightStatus(flightgroup)
-  return self.flightdata[flightgroup.groupname].status
+  if flightgroup then
+    return self.flightdata[flightgroup.groupname].status
+  else
+    return AUFTRAG.FlightStatus.DONE
+  end
 end
 
 
@@ -1103,8 +1124,10 @@ end
 -- @param #string To To state.
 function AUFTRAG:onafterCancel(From, Event, To)
 
-  self.status=AUFTRAG.Status.CANCELLED
-  self:I(self.lid..string.format("New mission status=%s", self.status))
+  --self.status=AUFTRAG.Status.CANCELLED
+  --self:I(self.lid..string.format("New mission status=%s", self.status))
+
+  self:I(self.lid..string.format("CANCELLING mission in status %s. Will wait for flights to report mission DONE before evaluation.", self.status))
 
   if self.airwing then
     
