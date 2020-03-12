@@ -177,6 +177,26 @@ end
 
 --- Add a squadron to the air wing.
 -- @param #AIRWING self
+-- @param Ops.Squadron#SQUADRON Squadron The squadron object.
+-- @return #AIRWING self
+function AIRWING:AddSquadron(Squadron)
+
+  -- Add squadron to airwing.
+  table.insert(self.squadrons, Squadron)
+  
+  -- Add assets to squadron.
+  self:AddAssetToSquadron(Squadron, Squadron.Ngroups)
+
+  -- Set airwing to squadron.
+  Squadron:SetAirwing(self)
+
+  return self
+end
+
+--[[
+
+--- Add a squadron to the air wing.
+-- @param #AIRWING self
 -- @param #string SquadronName Name of the squadron, e.g. "VFA-37".
 -- @param #table MissionTypes Table of mission types this squadron is able to perform.
 -- @param #string Livery The livery for all added flight group. Default is the livery of the template group.
@@ -206,6 +226,7 @@ function AIRWING:AddSquadron(SquadronName, MissionTypes, Livery, Skill)
   
   return squadron
 end
+]]
 
 --- Add a **new** payload to air wing resources.
 -- @param #AIRWING self
@@ -231,6 +252,11 @@ function AIRWING:NewPayload(Unit, MissionTypes, Npayloads, Unlimited)
   -- Ensure Missiontypes is a table.
   if MissionTypes and type(MissionTypes)~="table" then
     MissionTypes={MissionTypes}
+  end
+  
+  -- Add ORBIT for all.  
+  if not self:CheckMissionType(AUFTRAG.Type.ORBIT, MissionTypes) then
+    table.insert(MissionTypes, AUFTRAG.Type.ORBIT)
   end
   
   if Unit then
@@ -312,28 +338,24 @@ function AIRWING:ReturnPayloadFromAsset(asset)
 end
 
 
---- Add flight group(s) to squadron.
+--- Add asset group(s) to squadron.
 -- @param #AIRWING self
--- @param #AIRWING.Squadron SquadronName Name of the squadron.
--- @param Wrapper.Group#GROUP Group The group object.
--- @param #number Ngroups Number of groups to add.
+-- @param Ops.Squadron#SQUADRON Squadron The squadron object.
+-- @param #number Nassets Number of asset groups to add.
 -- @return #AIRWING self
-function AIRWING:AddAssetToSquadron(SquadronName, Group, Ngroups)
+function AIRWING:AddAssetToSquadron(Squadron, Nassets)
 
-  local squadron=self:GetSquadron(SquadronName)
-
-  if squadron then
+  if Squadron then
   
-    if type(Group)=="string" then
-      Group=GROUP:FindByName(Group)
-    end
-    
+    local Group=GROUP:FindByName(Squadron.templatename)
+  
     if Group then
-
-      local text=string.format("FF Adding asset %s to squadron %s", Group:GetName(), squadron.name)
+  
+      local text=string.format("FF Adding asset %s to squadron %s", Group:GetName(), Squadron.name)
       env.info(text)
-    
-      self:AddAsset(Group, Ngroups, nil, nil, nil, nil, squadron.skill, squadron.livery, squadron.name)
+      
+      -- Add assets to airwing warehouse.
+      self:AddAsset(Group, Nassets, nil, nil, nil, nil, Squadron.skill, Squadron.livery, Squadron.name)
       
     else
       self:E(self.lid.."ERROR: Group does not exist!")
@@ -349,15 +371,25 @@ end
 --- Get squadron by name.
 -- @param #AIRWING self
 -- @param #string SquadronName Name of the squadron, e.g. "VFA-37".
--- @return #AIRWING.Squadron Squadron table.
+-- @return Ops.Squadron#SQUADRON The squadron object.
 function AIRWING:GetSquadron(SquadronName)
-  return self.squadrons[SquadronName]
+
+  for _,_squadron in pairs(self.squadrons) do
+    local squadron=_squadron --Ops.Squadron#SQUADRON
+    
+    if squadron.name==SquadronName then
+      return squadron
+    end
+    
+  end
+
+  return nil
 end
 
 --- Get squadron of an asset.
 -- @param #AIRWING self
--- @param #AIRWING.SquadronAsset Asset
--- @return #AIRWING.Squadron Squadron table.
+-- @param #AIRWING.SquadronAsset Asset The squadron asset.
+-- @return Ops.Squadron#SQUADRON The squadron object.
 function AIRWING:GetSquadronOfAsset(Asset)
   return self:GetSquadron(Asset.assignment)
 end

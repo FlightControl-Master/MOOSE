@@ -16,8 +16,14 @@
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug Debug mode. Messages to all about status.
 -- @field #string lid Class id string for output to DCS log file.
+-- @field #string name Name of the squadron.
+-- @field #string templatename Name of the template group.
+-- @field #table assets Squadron assets.
+-- @field #table missiontypes Mission types the squadron can perform.
 -- @field #string livery Livery of the squadron.
--- @field #table assets Table of assets.
+-- @field #number skill Skill of squadron members.
+-- @field Ops.AirWing#AIRWING airwing The AIRWING object the squadron belongs to.
+-- @field #number Ngroups Number of asset flight groups this squadron has. 
 -- @extends Core.Fsm#FSM
 
 --- Be surprised!
@@ -38,9 +44,11 @@ SQUADRON = {
   name           =   nil,
   templatename   =   nil,
   assets         =    {},
+  missiontypes   =    {},
   livery         =   nil,
   skill          =   nil,
   airwing        =   nil,
+  Ngroups        =   nil,
 }
 
 --- Flight group element.
@@ -50,13 +58,15 @@ SQUADRON = {
 
 --- SQUADRON class version.
 -- @field #string version
-SQUADRON.version="0.0.2"
+SQUADRON.version="0.0.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Add tasks.
+-- TODO: Engage radius.
+-- TODO: Modex.
+-- TODO: Call signs.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -64,21 +74,24 @@ SQUADRON.version="0.0.2"
 
 --- Create a new SQUADRON object and start the FSM.
 -- @param #SQUADRON self
--- @param #string SquadronName Name of the squadron, e.g. "VFA-37".
 -- @param #string TemplateGroupName Name of the template group.
+-- @param #number Ngroups Number of asset groups of this squadron. Default 3.
+-- @param #string SquadronName Name of the squadron, e.g. "VFA-37".
 -- @return #SQUADRON self
-function SQUADRON:New(SquadronName, TemplateGroupName)
+function SQUADRON:New(TemplateGroupName, Ngroups, SquadronName)
 
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #SQUADRON
 
   self.templatename=TemplateGroupName
+  
+  self.Ngroups=Ngroups or 3
 
   --self.flightgroup=AIGroup
   self.name=tostring(SquadronName or TemplateGroupName)
   
   -- Set some string id for output to DCS.log file.
-  self.lid=string.format("SQUADRON %s | ", self.squadronname)
+  self.lid=string.format("SQUADRON %s | ", self.name)
 
   -- Start State.
   self:SetStartState("Stopped")
@@ -139,10 +152,43 @@ end
 
 --- Set livery.
 -- @param #SQUADRON self
--- @param #string liveryname Name of the livery.
+-- @param #string LiveryName Name of the livery.
 -- @return #SQUADRON self
-function SQUADRON:SetLivery(liveryname)
-  self.livery=liveryname
+function SQUADRON:SetLivery(LiveryName)
+  self.livery=LiveryName
+  return self
+end
+
+--- Set skill.
+-- @param #SQUADRON self
+-- @param #string skill Skill of all flights.
+-- @return #SQUADRON self
+function SQUADRON:SetSkill(Skill)
+  self.skill=Skill
+  return self
+end
+
+--- Set mission types this squadron is able to perform.
+-- @param #SQUADRON self
+-- @param #table MissionTypes Table of mission types. Can also be passed as a #string if only one type.
+-- @return #SQUADRON self
+function SQUADRON:SetMissonTypes(MissionTypes)
+
+  -- Ensure Missiontypes is a table.
+  if MissionTypes and type(MissionTypes)~="table" then
+    MissionTypes={MissionTypes}
+  end
+  
+  -- Add ORBIT for all.  
+  if not self:CheckMissionType(AUFTRAG.Type.ORBIT, MissionTypes) then
+    table.insert(MissionTypes, AUFTRAG.Type.ORBIT)
+  end
+
+  -- Set table.
+  self.missiontypes=MissionTypes
+  
+  self:I(self.missiontypes)
+  
   return self
 end
 
@@ -211,12 +257,14 @@ function SQUADRON:onafterStatus(From, Event, To)
   local fsmstate=self:GetState()
   
   -- Check if group has detected any units.
-  self:_CheckAssetStatus()
+  --self:_CheckAssetStatus()
 
   -- Short info.
-  --local text=string.format("Flight status %s [%d/%d]. Task=%d/%d. Waypoint=%d/%d. Detected=%d", fsmstate, #self.element, #self.element, self.taskcurrent, #self.taskqueue, self.currentwp or 0, #self.waypoints or 0, self.detectedunits:Count())
-  --self:I(self.sid..text)
+  local text=string.format("Status %s", fsmstate)
+  self:I(self.sid..text)
   
+  
+  self:__Status(-30)
 end
 
 
@@ -231,6 +279,30 @@ function SQUADRON:_CheckAssetStatus()
     
   end
 
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Misc Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Checks if a mission type is contained in a table of possible types.
+-- @param #SQUADRON self
+-- @param #string MissionType The requested mission type.
+-- @param #table PossibleTypes A table with possible mission types.
+-- @return #boolean If true, the requested mission type is part of the possible mission types.
+function SQUADRON:CheckMissionType(MissionType, PossibleTypes)
+
+  if type(PossibleTypes)=="string" then
+    PossibleTypes={PossibleTypes}
+  end
+
+  for _,canmission in pairs(PossibleTypes) do
+    if canmission==MissionType then
+      return true
+    end   
+  end
+
+  return false
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
