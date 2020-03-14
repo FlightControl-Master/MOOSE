@@ -1437,6 +1437,7 @@ function SPAWN:SpawnWithIndex( SpawnIndex, NoBirth )
 			--end
 		end
 		
+		
 		self.SpawnGroups[self.SpawnIndex].Spawned = true
 		return self.SpawnGroups[self.SpawnIndex].Group
 	else
@@ -2984,13 +2985,14 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) --R2.2
 --	  self.SpawnTemplate = self:_GetTemplate( SpawnTemplatePrefix )
 --	end
 	
-local SpawnTemplate
-if self.TweakedTemplate ~= nil and self.TweakedTemplate == true then
-  BASE:I("WARNING: You are using a tweaked template.")
-  SpawnTemplate = self.SpawnTemplate
-else
-  SpawnTemplate = self:_GetTemplate( SpawnTemplatePrefix )
-end
+  local SpawnTemplate
+  if self.TweakedTemplate ~= nil and self.TweakedTemplate == true then
+    BASE:I("WARNING: You are using a tweaked template.")
+    SpawnTemplate = self.SpawnTemplate
+  else
+    SpawnTemplate = self:_GetTemplate( SpawnTemplatePrefix )
+    SpawnTemplate.name = self:SpawnGroupName( SpawnIndex )
+  end
 
 	
 	SpawnTemplate.groupId = nil
