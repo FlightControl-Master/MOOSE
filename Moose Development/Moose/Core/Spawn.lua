@@ -1246,18 +1246,13 @@ function SPAWN:SpawnWithIndex( SpawnIndex, NoBirth )
 	if self:_GetSpawnIndex( SpawnIndex ) then
 		
 		if self.SpawnGroups[self.SpawnIndex].Visible then
-		  env.info("FF visible ==> activate")
 			self.SpawnGroups[self.SpawnIndex].Group:Activate()
 		else
-		
-		  env.info("FF get template")
 
 		  local SpawnTemplate = self.SpawnGroups[self.SpawnIndex].SpawnTemplate
 		  self:T( SpawnTemplate.name )
 
       if SpawnTemplate then
-      
-        env.info("FF found template")
 
         local PointVec3 = POINT_VEC3:New( SpawnTemplate.route.points[1].x, SpawnTemplate.route.points[1].alt, SpawnTemplate.route.points[1].y )
         self:T( { "Current point of ", self.SpawnTemplatePrefix, PointVec3 } )
@@ -1428,14 +1423,6 @@ function SPAWN:SpawnWithIndex( SpawnIndex, NoBirth )
       
 			  SpawnGroup:SetAIOnOff( self.AIOnOff )
 			end
-			
-      env.info("FF Returning spawn group")
-      if SpawnGroup then
-      
-      else
-      
-      end
-			
 
       self:T3( SpawnTemplate.name )
 			
@@ -1448,16 +1435,13 @@ function SPAWN:SpawnWithIndex( SpawnIndex, NoBirth )
 			--if self.Repeat then
 			--	_DATABASE:SetStatusGroup( SpawnTemplate.name, "ReSpawn" )
 			--end
-			
-		--else
-		 -- self:E("ERROR: No spawn template.")
 		end
 		
 		
 		self.SpawnGroups[self.SpawnIndex].Spawned = true
 		return self.SpawnGroups[self.SpawnIndex].Group
 	else
-		self:E( { self.SpawnTemplatePrefix, "No more Groups to Spawn:", SpawnIndex, self.SpawnMaxGroups } )
+		--self:E( { self.SpawnTemplatePrefix, "No more Groups to Spawn:", SpawnIndex, self.SpawnMaxGroups } )
 	end
 
 	return nil
@@ -1958,19 +1942,8 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
       
       SpawnTemplate.uncontrolled = self.SpawnUnControlled
       
-      env.info("FF spawning group with index "..self.SpawnIndex)
-      
       -- Spawn group.
       local GroupSpawned = self:SpawnWithIndex( self.SpawnIndex )
-      
-      if GroupSpawned then
-        env.info("ERROR: spawn group is there!")
-        GroupSpawned:SmokeRed()
-        local n=#GroupSpawned:GetUnits()
-        env.info("FF n="..tostring(n))
-      else
-        env.info("ERROR: spawn group not there!")
-      end
             
       -- When spawned in the air, we need to generate a Takeoff Event.
       if Takeoff == GROUP.Takeoff.Air then
@@ -3012,13 +2985,14 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) --R2.2
 --	  self.SpawnTemplate = self:_GetTemplate( SpawnTemplatePrefix )
 --	end
 	
-local SpawnTemplate
-if self.TweakedTemplate ~= nil and self.TweakedTemplate == true then
-  BASE:I("WARNING: You are using a tweaked template.")
-  SpawnTemplate = self.SpawnTemplate
-else
-  SpawnTemplate = self:_GetTemplate( SpawnTemplatePrefix )
-end
+  local SpawnTemplate
+  if self.TweakedTemplate ~= nil and self.TweakedTemplate == true then
+    BASE:I("WARNING: You are using a tweaked template.")
+    SpawnTemplate = self.SpawnTemplate
+  else
+    SpawnTemplate = self:_GetTemplate( SpawnTemplatePrefix )
+    SpawnTemplate.name = self:SpawnGroupName( SpawnIndex )
+  end
 
 	
 	SpawnTemplate.groupId = nil
